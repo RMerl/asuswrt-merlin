@@ -15,7 +15,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script> 
 <style>
@@ -105,10 +105,8 @@ for(i=0;i<bl_version_array.length;i++){
 	bootLoader_ver +=bl_version_array[i];
 }
 
-<% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var mcast_rates = [
 	["HTMIX 6.5/15", "14", 0, 1, 1],
 	["HTMIX 13/30",	 "15", 0, 1, 1],
@@ -152,7 +150,7 @@ function initial(){
 	if(!band5g_support)
 		$("wl_unit_field").style.display = "none";
 
-	regen_band();
+	regen_band(document.form.wl_unit);
 
 	if(sw_mode == "2"){
 		var _rows = $("WAdvTable").rows;
@@ -407,19 +405,19 @@ function applyRule(){
 
 function validForm(){
 	if(sw_mode != "2"){
-		if(!validate_range(document.form.wl_frag, 256, 2346)
-				|| !validate_range(document.form.wl_rts, 0, 2347)
-				|| !validate_range(document.form.wl_dtim, 1, 255)
-				|| !validate_range(document.form.wl_bcn, 20, 1000)
+		if(!validator.range(document.form.wl_frag, 256, 2346)
+				|| !validator.range(document.form.wl_rts, 0, 2347)
+				|| !validator.range(document.form.wl_dtim, 1, 255)
+				|| !validator.range(document.form.wl_bcn, 20, 1000)
 				){
 			return false;
 		}	
 	}
 	
-	if(!validate_timerange(document.form.wl_radio_time_x_starthour, 0) || !validate_timerange(document.form.wl_radio_time2_x_starthour, 0)
-			|| !validate_timerange(document.form.wl_radio_time_x_startmin, 1) || !validate_timerange(document.form.wl_radio_time2_x_startmin, 1)
-			|| !validate_timerange(document.form.wl_radio_time_x_endhour, 2) || !validate_timerange(document.form.wl_radio_time2_x_endhour, 2)
-			|| !validate_timerange(document.form.wl_radio_time_x_endmin, 3) || !validate_timerange(document.form.wl_radio_time2_x_endmin, 3)
+	if(!validator.timeRange(document.form.wl_radio_time_x_starthour, 0) || !validator.timeRange(document.form.wl_radio_time2_x_starthour, 0)
+			|| !validator.timeRange(document.form.wl_radio_time_x_startmin, 1) || !validator.timeRange(document.form.wl_radio_time2_x_startmin, 1)
+			|| !validator.timeRange(document.form.wl_radio_time_x_endhour, 2) || !validator.timeRange(document.form.wl_radio_time2_x_endhour, 2)
+			|| !validator.timeRange(document.form.wl_radio_time_x_endmin, 3) || !validator.timeRange(document.form.wl_radio_time2_x_endmin, 3)
 			){
 		return false;
 	}
@@ -436,7 +434,7 @@ function validForm(){
 
 	if(userRSSI_support){
 		if(document.form.wl_user_rssi.value != 0){
-			if(!validate_range(document.form.wl_user_rssi, -90, -70)){
+			if(!validator.range(document.form.wl_user_rssi, -90, -70)){
 				document.form.wl_user_rssi.focus();
 				return false;			
 			}
@@ -773,10 +771,10 @@ function set_power(power_value){
 					<tr id="enable_time_week_tr" >
 			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 3);"><#WLANConfig11b_x_RadioEnableTime_itemname#></a></th>
 			  			<td>
-			  				<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_starthour" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 0);" > :
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_startmin" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 1);"> -
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_endhour" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 2);"> :
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_endmin" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 3);">
+			  				<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_starthour" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 0);" > :
+							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_startmin" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 1);"> -
+							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_endhour" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 2);"> :
+							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_endmin" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 3);">
 						</td>
 					</tr>
 					<tr id="enable_date_weekend_tr">
@@ -790,10 +788,10 @@ function set_power(power_value){
 					<tr id="enable_time_weekend_tr">
 			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 3);"><#WLANConfig11b_x_RadioEnableTime_itemname#></a></th>
 			  			<td>
-			  				<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_starthour" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 0);"> :
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_startmin" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 1);"> -
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_endhour" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 2);"> :
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_endmin" onKeyPress="return is_number(this,event)" onblur="validate_timerange(this, 3);">
+			  				<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_starthour" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 0);"> :
+							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_startmin" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 1);"> -
+							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_endhour" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 2);"> :
+							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_endmin" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 3);">
 						</td>
 					</tr>
 
@@ -881,7 +879,7 @@ function set_power(power_value){
 					<tr>
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 9);"><#WLANConfig11b_x_Frag_itemname#></a></th>
 			  			<td>
-			  				<input type="text" maxlength="4" name="wl_frag" id="wl_frag" class="input_6_table" value="<% nvram_get("wl_frag"); %>" onKeyPress="return is_number(this,event)">
+			  				<input type="text" maxlength="4" name="wl_frag" id="wl_frag" class="input_6_table" value="<% nvram_get("wl_frag"); %>" onKeyPress="return validator.isNumber(this,event)">
 						</td>
 					</tr>
 					<tr id='ampdu_rts_tr'>
@@ -896,19 +894,19 @@ function set_power(power_value){
 					<tr id="rts_threshold">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 10);"><#WLANConfig11b_x_RTS_itemname#></a></th>
 			  			<td>
-			  				<input type="text" maxlength="4" name="wl_rts" class="input_6_table" value="<% nvram_get("wl_rts"); %>" onKeyPress="return is_number(this,event)">
+			  				<input type="text" maxlength="4" name="wl_rts" class="input_6_table" value="<% nvram_get("wl_rts"); %>" onKeyPress="return validator.isNumber(this,event)">
 			  			</td>
 					</tr>
 					<tr id="wl_dtim_field">
 			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 11);"><#WLANConfig11b_x_DTIM_itemname#></a></th>
 						<td>
-			  				<input type="text" maxlength="3" name="wl_dtim" class="input_6_table" value="<% nvram_get("wl_dtim"); %>" onKeyPress="return is_number(this,event)">
+			  				<input type="text" maxlength="3" name="wl_dtim" class="input_6_table" value="<% nvram_get("wl_dtim"); %>" onKeyPress="return validator.isNumber(this,event)">
 						</td>			  
 					</tr>
 					<tr id="wl_bcn_field">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 12);"><#WLANConfig11b_x_Beacon_itemname#></a></th>
 						<td>
-							<input type="text" maxlength="4" name="wl_bcn" class="input_6_table" value="<% nvram_get("wl_bcn"); %>" onKeyPress="return is_number(this,event)">
+							<input type="text" maxlength="4" name="wl_bcn" class="input_6_table" value="<% nvram_get("wl_bcn"); %>" onKeyPress="return validator.isNumber(this,event)">
 						</td>
 					</tr>
 					<tr id="wl_frameburst_field">
@@ -1034,7 +1032,7 @@ function set_power(power_value){
 					
 					<!--Broadcom ARM platform only, except RT-AC87U(5G) -->
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,28);">Airtime Fairness</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,32);">Airtime Fairness</a></th>
 						<td>
 							<select name="wl_atf" class="input_option">
 									<option value="0" <% nvram_match("wl_atf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>

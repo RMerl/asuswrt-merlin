@@ -82,7 +82,6 @@ static struct chap_client_state {
 	int flags;
 	char *name;
 	struct chap_digest_type *digest;
-	unsigned char priv[64];		/* private area for digest's use */
 } client;
 
 /*
@@ -478,7 +477,7 @@ chap_respond(struct chap_client_state *cs, int id,
 	p += CHAP_HDRLEN;
 
 	cs->digest->make_response(p, id, cs->name, pkt,
-				  secret, secret_len, cs->priv);
+				  secret, secret_len);
 	memset(secret, 0, secret_len);
 
 	clen = *p;
@@ -509,7 +508,7 @@ chap_handle_status(struct chap_client_state *cs, int code, int id,
 	if (code == CHAP_SUCCESS) {
 		/* used for MS-CHAP v2 mutual auth, yuck */
 		if (cs->digest->check_success != NULL) {
-			if (!(*cs->digest->check_success)(id, pkt, len, cs->priv))
+			if (!(*cs->digest->check_success)(id, pkt, len))
 				code = CHAP_FAILURE;
 		} else
 			msg = "CHAP authentication succeeded";

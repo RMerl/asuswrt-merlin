@@ -8,8 +8,8 @@
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/JavaScript" src="/general.js"></script>
-<script type="text/JavaScript" src="/form.js"></script>
 <script type="text/JavaScript" src="/help.js"></script>
+<script type="text/JavaScript" src="/validator.js"></script>
 <style type="text/css">
 .hintstyle:link{
 	cursor:help;
@@ -320,7 +320,7 @@ function displayDNSCtrl(){
 			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
 			</th>			
 			<td>
-			  <input type="text" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" tabindex="3" onKeyPress="return is_ipaddr(this, event);" maxlength="15" class="input_15_table">
+			  <input type="text" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" tabindex="3" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table">
 			</td>
 		  </tr>
 		  
@@ -329,7 +329,7 @@ function displayDNSCtrl(){
 			  <a class="hintstyle"  href="javascript:void(0);" onClick="openHint(4,2);"><#IPConnection_x_ExternalSubnetMask_itemname#></a>
 			</th>
 			<td>
-				<input type="text" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" tabindex="4" onkeypress="return is_ipaddr(this, event);" maxlength="15" class="input_15_table">
+				<input type="text" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" tabindex="4" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table">
 				<input type="hidden" name="dhcp_start" value="<% nvram_get("dhcp_start"); %>">
 				<input type="hidden" name="dhcp_end" value="<% nvram_get("dhcp_end"); %>">
 			</td>
@@ -338,7 +338,7 @@ function displayDNSCtrl(){
 			<tr>
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
 			<td>
-				<input type="text" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>" tabindex="5" onKeyPress="return is_ipaddr(this, event);" maxlength="15" class="input_15_table">
+				<input type="text" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>" tabindex="5" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table">
 			</td>
 			</tr>
 
@@ -355,7 +355,7 @@ function displayDNSCtrl(){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a>
 			</th>
       <td>
-				<input type="text" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" tabindex="8" onkeypress="return is_ipaddr(this, event)" maxlength="15" class="input_15_table">
+				<input type="text" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" tabindex="8" onkeypress="return validator.isIPAddr(this, event)" maxlength="15" class="input_15_table">
 			</td>
       </tr>
 
@@ -364,7 +364,7 @@ function displayDNSCtrl(){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a>
 			</th>
       <td>
-				<input type="text" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" tabindex="9" onkeypress="return is_ipaddr(this, event)" maxlength="15" class="input_15_table">
+				<input type="text" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" tabindex="9" onkeypress="return validator.isIPAddr(this, event)" maxlength="15" class="input_15_table">
 			</td>
       </tr>  
 		</table>

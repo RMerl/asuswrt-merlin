@@ -16,6 +16,7 @@
 #include "net80211/ieee80211_crypto.h"
 #include "muc_txrx_stats.h"
 #include "qtn/qvsp_common.h"
+#include "qtn/shared_defs.h"
 
 /* packed definitions for each compiler */
 #if defined(MUC_BUILD) || defined(DSP_BUILD) || defined(AUC_BUILD)
@@ -154,13 +155,6 @@ struct host_txdesc {
 
 #define IEEE80211_CHAN_SEC_SHIFT	4
 
-#define QVP_VLAN_PTRU   0       /* VLAN passthrough */
-#define QVP_VLAN_MBSS   1       /* MBSS VLAN  */
-#define QVP_VLAN_TERMINATION	2 /* VLAN termination */
-#define QVP_VLANMODE_SHIFT 16
-#define QVP_VLANMODE_MASK 0xffff0000
-#define QVP_VID_MASK 0x00000fff
-
 struct host_ioctl_hifinfo {
 	uint32_t	hi_mboxstart;			/* Start address for mbox */
 	uint32_t	hi_rxdoneirq;			/* IRQ map for rx done */
@@ -198,7 +192,6 @@ struct host_rxdesc {
 	struct host_rxdesc	*rd_next;
 	struct host_rxdesc	*rd_pa;
 	struct host_rxdesc	*rd_va;
-	uint32_t		vlan_cfg; /* VLAN requirement on this frame */
 	void			*node;		/* Where the frame was from */
 	uint8_t			gain_db;
 };
@@ -369,6 +362,8 @@ struct qtn_baparams_args {
 #define IOCTL_HLINK_DISASSOC_STA	13	/* disassociate station with a given aid */
 #define IOCTL_HLINK_RFIC_CAUSED_REBOOT  14      /* detected RFIC abnormal reset, reboot the system */
 #define IOCTL_HLINK_BA_ADD_START	15	/* start Tx ADDBA REQ sequence */
+#define IOCTL_HLINK_PEER_RTS		16	/* Peer RTS enable or disable */
+#define IOCTL_HLINK_DYN_WMM		17	/* Dynamic WMM enable or disable */
 
 enum {
 	BW_INVALID = 0,
@@ -458,19 +453,6 @@ struct qtn_meas_chan_info {
 		int32_t basic_radar_num;
 		uint8_t basic;
 	} inter_data;
-};
-
-#define VLAN_ID_MAX 4096
-struct qtn_vlan_table {
-#define VID_MODE_SHIFT	0
-#define VID_MODE_MASK	0x07
-#define VID_BSS_SHIFT	3
-#define VID_BSS_MASK	0xf8
-/* [5b,3b]:
-* 5b: Which BSS is this VID assigned to
-* 3b: Which mode is this VID in
-*/
-	uint8_t vlan_entry[VLAN_ID_MAX];
 };
 
 enum scs_lot_tsf_pos {

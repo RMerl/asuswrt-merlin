@@ -11,6 +11,7 @@
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javaScript" src="/general.js"></script>
+<script type="text/javaScript" src="/validator.js"></script>
 <script type="text/javaScript" src="/jquery.js"></script>
 <script>
 var ddns_server_x = '<% nvram_get("ddns_server_x"); %>';
@@ -150,7 +151,7 @@ function validate_ddns_hostname(o){
 		show_alert_block("<#LANHostConfig_x_DDNS_alarm_7#>");
 		return false;
 	}	
-	if(!validate_string(o)){
+	if(!validator.string(o)){
 		return false;
 	}
 	
@@ -164,23 +165,13 @@ function validate_ddns_hostname(o){
 			}
 		}
 		
-		if(!validate_hostnamechar(c)){
+		if(!validator.hostNameChar(c)){
 			show_alert_block("<#LANHostConfig_x_DDNS_alarm_13#> '"+s.charAt(i)+"' !");
 			return false;
 		}
 	}
 	
 	return true;
-}
-
-function validate_hostnamechar(ch){
-	if(ch >= 48 && ch <= 57)	return true;	//0~9		
-	if(ch >= 97 && ch <= 122)	return true;	//little EN
-	if(ch >= 65 && ch <= 90)	return true;	//large EN
-	if(ch == 45)	return true;	//-
-	if(ch == 46)	return true;	//.
-	
-	return false;
 }
 
 function done_validating(action){

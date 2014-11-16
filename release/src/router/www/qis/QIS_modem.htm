@@ -47,7 +47,6 @@
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/JavaScript" src="/general.js"></script>
-<script type="text/JavaScript" src="/form.js"></script>
 <script type="text/javascript" src="/wcdma_list.js"></script>
 <script type="text/JavaScript" src="/help.js"></script>
 <script type="text/javaScript" src="/jquery.js"></script>
@@ -798,7 +797,7 @@ function inet_ntoa(ip_num){
 	</table>
 
 	<div id="applyBtn" class="apply_gen" style="margin-top:20px">
-		<input type="button" id="skipButton" value="Skip" class="button_gen" tabindex="13" onclick="goWireless();">
+		<input type="button" id="skipButton" value="<#CTL_Skip#>" class="button_gen" tabindex="13" onclick="goWireless();">
 		<input type="button" id="nextButton" value="<#CTL_Add_enrollee#>" tabindex="12" class="button_gen" onclick="submitForm();">
 		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">	
 		<span id="loadingNote" style="display:none;"><#Modem_connect_waiting#></span>	
@@ -809,7 +808,7 @@ function inet_ntoa(ip_num){
 			<a id="loadingIcon_iui" class="iuiA" onclick="submitForm();"><#CTL_Add_enrollee#></a>
 		</div>
 		<div class="row_end">
-			<a class="iuiA" onclick="goWireless();">Skip</a>
+			<a class="iuiA" onclick="goWireless();"><#CTL_Skip#></a>
 		</div>
 	</fieldset>
 </div>
@@ -855,7 +854,7 @@ function inet_ntoa(ip_num){
 		</p>
 	</div>
 	<div class="apply_gen" style="margin-top:30px">
-			<input type="button" value="Skip" class="button_gen" onclick="goWireless();">
+			<input type="button" value="<#CTL_Skip#>" class="button_gen" onclick="goWireless();">
 			<input type="button" value="<#CTL_next#>" class="button_gen" onclick="document.getElementById('loadingIcon_IpConflict').style.display='';send_setting();">
 			<img id="loadingIcon_IpConflict" style="display:none;" src="/images/InternetScan.gif">	
 	</div>

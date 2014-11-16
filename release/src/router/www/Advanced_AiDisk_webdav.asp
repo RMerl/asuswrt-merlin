@@ -15,14 +15,11 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>]; // [[MAC, associated, authorized], ...]
 
 function initial(){
 	show_menu();
@@ -50,12 +47,12 @@ function showPortItem(_value){
 
 function applyRule(){
 	if(document.form.st_webdav_mode.value == 0){
-		if(!validate_number_range(document.form.webdav_http_port, 1, 65535)){
+		if(!validator.numberRange(document.form.webdav_http_port, 1, 65535)){
 			return false;	
 		}
 	}
 	else{	
-		if(!validate_number_range(document.form.webdav_https_port, 1, 65535)){
+		if(!validator.numberRange(document.form.webdav_https_port, 1, 65535)){
 			return false;	
 		}
 	}
@@ -148,14 +145,14 @@ function applyRule(){
         	<tr id="webdav_http_port_tr" style="display:none;">
           	<th width="40%">WebDav to Samba Port</th>
 						<td>
-							<input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_http_port"); %>" onKeyPress="return is_number(this, event);">
+							<input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_http_port"); %>" onKeyPress="return validator.isNumber(this, event);">
 						</td>
 					</tr>
 
         	<tr id="webdav_https_port_tr" style="display:none;">
           	<th width="40%">WebDav to Samba Port</th>
 						<td>
-							<input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_https_port"); %>" onKeyPress="return is_number(this, event);">
+							<input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_https_port"); %>" onKeyPress="return validator.isNumber(this, event);">
 						</td>
 					</tr>
 

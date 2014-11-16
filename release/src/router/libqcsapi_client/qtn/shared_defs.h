@@ -47,101 +47,7 @@ EH1*/
 #ifndef _SHARED_DEFS_H_
 #define _SHARED_DEFS_H_
 
-/*
- * Default board type is 0 to match the default (fallback) from get_bootval.
- * Script returns 0 if the parameter is not defined.
- */
-#define  QTN_RUBY_BOARD_TYPE_DEFAULT			0
-
-#define  QTN_RUBY_BRINGUP_BOARD				0
-#define  QTN_RUBY_BRINGUP_BOARD_32_320			1
-#define  QTN_RUBY_BRINGUP_BOARD_16_320			2
-#define  QTN_RUBY_BRINGUP_BOARD_16_160			3
-#define  QTN_RUBY_BRINGUP_BOARD_ETRON			4
-#define  QTN_RUBY_BRINGUP_BOARD_ETRON_320		5
-#define  QTN_RUBY_BRINGUP_BOARD_ETRON_160		6
-#define  QTN_RUBY_BRINGUP_BOARD_16_200			7
-#define  QTN_RUBY_BRINGUP_BOARD_32_200			8
-#define  QTN_RUBY_BRINGUP_BOARD_PCIE			9
-/* diag board ids */
-#define  QTN_RUBY_BRINGUP_BOARD_32_160_ARB		10
-#define  QTN_RUBY_BRINGUP_BOARD_32_160_ARB_1		11
-#define  QTN_RUBY_BRINGUP_BOARD_16_160_ARB_1		12
-#define  QTN_RUBY_BRINGUP_BOARD_32_160_ARB_0		13
-#define  QTN_RUBY_BRINGUP_BOARD_ETRON_160_EMAC1		14
-#define  QTN_RUBY_BRINGUP_BOARD_ETRON_250_EMAC1		15
-#define  QTN_RUBY_BRINGUP_BOARD_ETRON_32_320_EMAC1	16
-#define  QTN_RUBY_BRINGUP_ETRON32_160			17
-#define  QTN_RUBY_BRINGUP_ETRON32_320			18
-#define  QTN_RUBY_BRINGUP_BOARD_MICRON_DUALEMAC		19
-#define  QTN_RUBY_BRINGUP_BOARD_MICRON_DUALEMAC_MII	20
-#define  QTN_RUBY_BRINGUP_BOARD_MICRON_DUALEMAC_LOOPBACK 21
-#define  QTN_RUBY_BRINGUP_BOARD_16_160_DUALEMAC		22
-
-
-#define  QTN_RUBY_REFERENCE_DESIGN_BOARD		1000
-#define  QTN_RUBY_REFERENCE_DESIGN_BOARD_250		1001
-#define  QTN_RUBY_REF_BOARD_DUAL_CON			1002
-#define  QTN_RUBY_REFERENCE_DESIGN_BOARD_320		1003
-#define  QTN_RUBY_ETRON_32_320_EMAC1			1004
-#define  QTN_RUBY_ETRON_32_250_EMAC1			1005
-#define  QTN_RUBY_REFERENCE_DESIGN_BOARD_RGMII_DLL	1006
-#define  QTN_RUBY_QHS710_5S5_SIGE_DDR250		1007
-#define  QTN_RUBY_QHS710_5S5_SIGE_DDR320		1008
-#define  QTN_RUBY_OHS711_PCIE_320DDR			1009
-/* pcie reference ids */
-#define  QTN_RUBY_QHS713_5S1_PCIERC_DDR160		1170
-#define  QTN_RUBY_OHS711_5S13_PCIE_DDR320		1171 /* duplicate of 1009 */
-#define  QTN_RUBY_QHS713_5S1_PCIERC_DDR320		1172
-
-#define  QTN_RUBY_ODM_BOARD_0				1200
-#define  QTN_RUBY_ODM_BOARD_1				1201
-#define  QTN_RUBY_ODM_BOARD_2				1202
-#define  QTN_RUBY_ODM_BOARD_3				1203
-#define  QTN_RUBY_ODM_BOARD_4				1204
-#define  QTN_RUBY_ODM_BOARD_5				1205
-#define  QTN_RUBY_ODM_BOARD_6				1206
-#define  QTN_RUBY_ODM_BOARD_7				1207
-#define  QTN_RUBY_ODM_BOARD_8				1208
-#define  QTN_RUBY_ODM_BOARD_9				1209
-#define  QTN_RUBY_ODM_BOARD_10				1210
-#define  QTN_RUBY_ODM_BOARD_11				1211
-#define  QTN_RUBY_ODM_BOARD_12				1212
-#define  QTN_RUBY_ODM_BOARD_13				1213
-#define  QTN_RUBY_ODM_BOARD_14				1214
-#define  QTN_RUBY_ODM_BOARD_15				1215
-#define  QTN_RUBY_ODM_BOARD_16				1216
-#define  QTN_RUBY_ODM_BOARD_17				1217
-#define  QTN_RUBY_ODM_BOARD_18				1218
-#define  QTN_RUBY_ODM_BOARD_19				1219
-#define  QTN_RUBY_ODM_BOARD_20				1220
-#define  QTN_RUBY_ODM_BOARD_21				1221
-#define  QTN_RUBY_ODM_BOARD_22				1222
-#define  QTN_TOPAZ_FPGAA_BOARD				1223
-#define  QTN_TOPAZ_FPGAB_BOARD				1224
-#define  QTN_TOPAZ_DUAL_EMAC_FPGAA_BOARD		1225
-#define  QTN_TOPAZ_DUAL_EMAC_FPGAB_BOARD		1226
-#define  QTN_TOPAZ_RC_BOARD				1227
-#define  QTN_TOPAZ_EP_BOARD				1228
-#define  QTN_TOPAZ_BB_BOARD				1229
-#define  QTN_TOPAZ_RF_BOARD				1230
-#define  QTN_TOPAZ_QHS840_5S1				1231
-
-#define		QTN_RUBY_AUTOCONFIG_ID				32768
-#define		QTN_RUBY_UNIVERSAL_BOARD_ID			65535
-
-#define  QTN_RUBY_NOSUCH_BOARD_TYPE			-1
-
-#define  QTN_RUBY_BRINGUP_RWPA				0
-#define  QTN_RUBY_REF_RWPA				1
-#define  QTN_RUBY_SIGE					2
-#define  QTN_RUBY_UNDEFINED				3
-#define  QTN_RUBY_WIFI_NONE				4
-#define	 QTN_TPZ_SE5003L1				5
-#define	 QTN_TPZ_SE5003L1_INV				6
-#define  QTN_TPZ_SKY85703				7
-#define  QTN_TPZ_SKY85405_BPF840			8
-#define  QTN_TPZ_SKY85710_NG				11
+#include "shared_defs_common.h"
 
 #ifdef TOPAZ_PLATFORM
 #define QTN_SWITCH_CHANNEL_TIME_AVG	3750	/* microseconds */
@@ -304,6 +210,8 @@ enum qtn_vap_scs_cmds {
 #define IEEE80211_SCS_AS_RX_TIME_SMTH_FCTR_DFT    50
 #define IEEE80211_SCS_AS_TX_TIME_SMTH_FCTR_MAX    100
 #define IEEE80211_SCS_AS_TX_TIME_SMTH_FCTR_DFT    50
+
+#define IEEE80211_SCS_SMTH_RBS_TIME			80
 
 #define IEEE80211_SCS_PMBL_ERR_RANGE_MIN        1000
 #define IEEE80211_SCS_PMBL_ERR_RANGE_MAX        0xFFFF
@@ -510,12 +418,26 @@ enum qtn_ocac_cmds {
 #define QTN_IS_IPAD_AIR_NODE		0x0000800
 #define QTN_IS_IPAD4_NODE		0x0001000
 #define QTN_DYN_ENABLE_RTS		0x0002000
+#define QTN_IS_REALTEK_NODE		0x0004000
+#define QTN_IS_NO_RXAMSDU_NO_BF_NODE	0x0020000
+#define QTN_NODE_RXAMSDU_SUPPORT	0x0040000 /* node support TX amsdu */
 
 /* QTN bandwidth definition */
 #define QTN_BW_20M	0
 #define QTN_BW_40M	1
 #define QTN_BW_80M	2
 
+#define QTN_MAILBOX_INVALID	0xffffffff	/* Invalid value to indicate mailbox is disabled */
+
+/* WoWLAN APIs */
+enum qtn_vap_wowlan_cmds {
+	IEEE80211_WOWLAN_HOST_POWER_SAVE = 1,
+	IEEE80211_WOWLAN_MATCH_TYPE,
+	IEEE80211_WOWLAN_L2_ETHER_TYPE,
+	IEEE80211_WOWLAN_L3_UDP_PORT,
+	IEEE80211_WOWLAN_MAGIC_PATTERN,
+	IEEE80211_WOWLAN_SET_MAX
+};
 /*
  * Definitions relating to individual fields from phy_stats,
  * shared between the Q driver and the APIs.
@@ -565,4 +487,30 @@ enum qtn_phy_stat_field {
 #define MACSTRL "%02x:%02x:%02x:%02x:%02x:%02x"	/* for MuC and Auc which don't support "X" */
 #endif
 
+/*
+ * VSP/QTM
+ * Macro TOPAZ_QTM is used to help identify changes between original VSP and QTM.
+ * In Lhost kernel driver, it must be used within CONFIG_QVSP(in kernel .config).
+ * CONFIG_QVSP	TOPAZ_QTM	ruby		topaz
+ * Y		1		invalid		*QTM works
+ * Y		0		*VSP works	VSP alive but doesn't work for HDP
+ * N		1		invalid		*no VSP/QTM
+ * N		0		*no VSP		no VSP/QTM, and no QTM changes in MuC and AuC
+ * So generally, sololy changing CONFIG_QVSP works for both ruby and topaz as indicated by *.
+ * But to throughly clean QTM code in AuC and MuC, disable TOPAZ_QTM in topaz below.
+ */
+#ifdef TOPAZ_PLATFORM
+	#define TOPAZ_QTM		1
+#else
+	#define TOPAZ_QTM		0
+#endif
+
+#define COMPILE_TIME_ASSERT(constant_expr)	\
+do {						\
+	switch(0) {				\
+		case 0:				\
+		case constant_expr:		\
+		;				\
+	}					\
+} while(0)
 #endif /* _SHARED_DEFS_H_ */

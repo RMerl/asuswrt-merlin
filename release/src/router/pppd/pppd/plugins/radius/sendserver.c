@@ -244,7 +244,7 @@ int rc_send_server (SEND_DATA *data, char *msg, REQUEST_INFO *info)
 	sin = (struct sockaddr_in *) & salocal;
 	memset ((char *) sin, '\0', (size_t) length);
 	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = htonl(INADDR_ANY);
+	sin->sin_addr.s_addr = htonl(rc_own_bind_ipaddress());
 	sin->sin_port = htons ((unsigned short) 0);
 	if (bind (sockfd, (struct sockaddr *) sin, length) < 0 ||
 		   getsockname (sockfd, (struct sockaddr *) sin, &length) < 0)

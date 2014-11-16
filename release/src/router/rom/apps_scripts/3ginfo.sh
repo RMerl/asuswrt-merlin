@@ -17,6 +17,11 @@ lsmod
 echo ">"
 nvram show|grep firm
 echo ">"
+nvram show|grep extendno
+echo ">"
+echo "dualwan nvram:>"
+nvram show|grep ^wans_
+echo ">"
 nvram get Dev3G
 echo ">"
 nvram show|grep g3state
@@ -24,7 +29,13 @@ echo ">"
 nvram show|grep g3err
 echo ">"
 echo "modem nvram:>"
-nvram show|grep modem_
+nvram show|grep ^modem_
+echo ">"
+echo "modem state:>"
+nvram show|grep ^usb_modem_act
+echo ">"
+echo "modem autoapn:>"
+nvram show|grep ^usb_modem_auto
 echo ">"
 echo "resolv.conf >"
 cat /etc/resolv.conf

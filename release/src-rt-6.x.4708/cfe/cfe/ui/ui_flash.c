@@ -257,7 +257,6 @@ static int flash_validate(uint8_t *ptr,int bufsize,int insize,uint8_t **outptr,i
     return 0;
 }
 
-
 /*  *********************************************************************
     *  ui_get_flashbuf(bufptr, bufsize)
     *  

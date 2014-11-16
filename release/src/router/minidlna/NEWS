@@ -1,3 +1,11 @@
+1.1.4 - Released 26-Aug-2014
+--------------------------------
+- Add magic container infrastructure.
+- Add magic containers for 50 recent items for each category.
+- Fix bad null termination in AAC parsing.
+- Fix requests for the last byte of a file, which affected MKV playback on Philips TV's.
+- Support 64-bit time_t values.
+
 1.1.3 - Released 05-June-2014
 --------------------------------
 - Enhance log level settings.

@@ -38,6 +38,10 @@
 #include <ralink.h>
 #endif
 
+#ifdef RTCONFIG_QCA
+#include <qca.h>
+#endif
+
 #define USBLED_NORMAL_PERIOD		1		/* second */
 #define USBLED_URGENT_PERIOD		100 * 1000	/* microsecond */	
 
@@ -50,10 +54,10 @@ static char *usb_path2 = NULL;
 static int status_usb = 0;
 static int status_usb_old = 0;
 
-#ifdef LED_USB3
 static int got_usb2 = 0;
-static int got_usb2_old = 0;
 static int got_usb3 = 0;
+#ifdef RTCONFIG_USB_XHCI
+static int got_usb2_old = 0;
 static int got_usb3_old = 0;
 #endif
 
@@ -67,7 +71,7 @@ alarmtimer(unsigned long sec, unsigned long usec)
 }
 
 static int
-usb_status()
+usb_status(void)
 {
 	if (usb_busy)
 		return 0;
@@ -77,23 +81,24 @@ usb_status()
 		return 0;
 }
 
+#ifdef RTCONFIG_USB_XHCI
 static int
-check_usb2()
+check_usb2(void)
 {
-	if(usb_busy)
+	if (usb_busy)
 		return 0;
-	else if((model==MODEL_RTN18U || model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U||model==MODEL_RTAC3200) && strlen(nvram_safe_get("usb_led2")) > 0)
+	else if (have_usb3_led(model) && strlen(nvram_safe_get("usb_led2")) > 0)
 		return 1;
 	else
 		return 0;
 }
-#ifdef LED_USB3
+
 static int
-check_usb3()
+check_usb3(void)
 {
-	if(usb_busy)
+	if (usb_busy)
 		return 0;
-	else if((model==MODEL_RTN18U || model==MODEL_RTAC56U||model==MODEL_RTAC56S||model==MODEL_RTAC68U||model==MODEL_DSLAC68U||model==MODEL_RTAC3200) && strlen(nvram_safe_get("usb_led1")) > 0)
+	else if (have_usb3_led(model) && nvram_invmatch("usb_led1", ""))
 		return 1;
 	else
 		return 0;
@@ -102,25 +107,20 @@ check_usb3()
 
 static void no_blink(int sig)
 {
-//	dbG("\n\n\nreceive SIGUSR2 in usbled\n\n\n");
-
 	alarmtimer(USBLED_NORMAL_PERIOD, 0);
 	status_usb = -1;
-#ifdef LED_USB3
-	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_DSLAC68U || model==MODEL_RTAC3200)
-	{
+	if (have_usb3_led(model)) {
 		got_usb2 = -1;
 		got_usb3 = -1;
 	}
-#endif
 	usb_busy = 0;
 }
 
-#ifdef RTCONFIG_USBEJECT
+#ifdef RTCONFIG_LED_BTN
 static void reset_status(int sig)
 {
 	status_usb_old = -1;
-#ifdef LED_USB3
+#ifdef RTCONFIG_USB_XHCI
 	got_usb2_old = -1;
 	got_usb3_old = -1;
 #endif
@@ -129,8 +129,6 @@ static void reset_status(int sig)
 
 static void blink(int sig)
 {
-//	dbG("\n\n\nreceive SIGUSR1 to usbled\n\n\n");
-
 	alarmtimer(0, USBLED_URGENT_PERIOD);
 	usb_busy = 1;
 }
@@ -139,20 +137,15 @@ static void usbled_exit(int sig)
 {
 	alarmtimer(0, 0);
 	status_usb = 0;
-#ifdef LED_USB3
-	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_DSLAC68U || model==MODEL_RTAC3200)
-	{
+	if (have_usb3_led(model)) {
 		got_usb2 = 0;
 		got_usb3 = 0;
 	}
-#endif
 	usb_busy = 0;
 
 	led_control(LED_USB, LED_OFF);
-#ifdef LED_USB3
-	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_DSLAC68U || model==MODEL_RTAC3200)
+	if (have_usb3_led(model))
 		led_control(LED_USB3, LED_OFF);
-#endif
 
 	remove("/var/run/usbled.pid");
 	exit(0);
@@ -165,8 +158,8 @@ static void usbled(int sig)
 	status_usb_old = status_usb;
 	status_usb = usb_status();
 
-#ifdef LED_USB3
-	if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_DSLAC68U || model==MODEL_RTAC3200){
+#ifdef RTCONFIG_USB_XHCI
+	if (have_usb3_led(model)) {
 		got_usb2_old = got_usb2;
 		got_usb2 = check_usb2();
 		got_usb3_old = got_usb3;
@@ -174,38 +167,37 @@ static void usbled(int sig)
 	}
 #endif
 
-	if(nvram_match("asus_mfg", "1")
-#ifdef RTCONFIG_USBEJECT
+	if (nvram_match("asus_mfg", "1")
+#ifdef RTCONFIG_LED_BTN
 			|| !nvram_get_int("AllLED")
 #endif
 			)
 		no_blink(sig);
 	else if (!usb_busy
-#ifdef RTCONFIG_USBEJECT
+#ifdef RTCONFIG_LED_BTN
 			&& nvram_get_int("AllLED")
 #endif
 			)
 	{
-#ifdef LED_USB3
-		if(model==MODEL_RTN18U || model==MODEL_RTAC56U || model==MODEL_RTAC56S || model==MODEL_RTAC68U || model==MODEL_DSLAC68U || model==MODEL_RTAC3200){
-			if(model==MODEL_RTN18U && (nvram_match("bl_version", "3.0.0.7") || nvram_match("bl_version", "1.0.0.0"))){
-				if((got_usb2 != got_usb2_old) || (got_usb3 != got_usb3_old)){
-					if(!got_usb2 && !got_usb3)
+#ifdef RTCONFIG_USB_XHCI
+		if (have_usb3_led(model)) {
+			if (model==MODEL_RTN18U && (nvram_match("bl_version", "3.0.0.7") || nvram_match("bl_version", "1.0.0.0"))) {
+				if ((got_usb2 != got_usb2_old) || (got_usb3 != got_usb3_old)) {
+					if (!got_usb2 && !got_usb3)
 						led_control(LED_USB, LED_OFF);
 					else
 						led_control(LED_USB, LED_ON);
 				}
 			}
-			else{
-
-				if(got_usb2 != got_usb2_old){
-					if(got_usb2)
+			else {
+				if (got_usb2 != got_usb2_old) {
+					if (got_usb2)
 						led_control(LED_USB, LED_ON);
 					else
 						led_control(LED_USB, LED_OFF);
 				}
-				if(got_usb3 != got_usb3_old){
-					if(got_usb3)
+				if (got_usb3 != got_usb3_old) {
+					if (got_usb3)
 						led_control(LED_USB3, LED_ON);
 					else
 						led_control(LED_USB3, LED_OFF);
@@ -223,7 +215,7 @@ static void usbled(int sig)
 		}
 	}
 	else
-#ifdef RTCONFIG_USBEJECT
+#ifdef RTCONFIG_LED_BTN
 	if (nvram_get_int("AllLED"))
 #endif
 	{
@@ -233,14 +225,18 @@ static void usbled(int sig)
 		}
 		else
 		{
-			count = (count+1) % 20;
+			int led_id = nvram_get_int("usb_led_id");
 
+			if (led_id != LED_USB && led_id != LED_USB3)
+				led_id = LED_USB;
+
+			count = (count+1) % 20;
 			/* 0123456710 */
 			/* 1010101010 */
 			if (((count % 2) == 0) && (count > 8))
-				led_control(LED_USB, LED_ON);
+				led_control(led_id, LED_ON);
 			else
-				led_control(LED_USB, LED_OFF);
+				led_control(led_id, LED_OFF);
 			alarmtimer(0, USBLED_URGENT_PERIOD);
 		}
 	}
@@ -268,7 +264,7 @@ usbled_main(int argc, char *argv[])
 	sigaddset(&sigs_to_catch, SIGTERM);
 	sigaddset(&sigs_to_catch, SIGUSR1);
 	sigaddset(&sigs_to_catch, SIGUSR2);
-#ifdef RTCONFIG_USBEJECT
+#ifdef RTCONFIG_LED_BTN
 	sigaddset(&sigs_to_catch, SIGTSTP);
 #endif
 	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
@@ -277,7 +273,7 @@ usbled_main(int argc, char *argv[])
 	signal(SIGTERM, usbled_exit);
 	signal(SIGUSR1, blink);
 	signal(SIGUSR2, no_blink);
-#ifdef RTCONFIG_USBEJECT
+#ifdef RTCONFIG_LED_BTN
 	signal(SIGTSTP, reset_status);
 #endif
 	alarmtimer(USBLED_NORMAL_PERIOD, 0);

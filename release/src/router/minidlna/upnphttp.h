@@ -86,7 +86,7 @@ struct upnphttp {
 	int req_contentlen;
 	int req_contentoff;     /* header length */
 	enum httpCommands req_command;
-	enum client_types req_client;
+	struct client_cache_s * req_client;
 	const char * req_soapAction;
 	int req_soapActionLen;
 	const char * req_Callback;	/* For SUBSCRIBE */
@@ -179,19 +179,5 @@ Send501(struct upnphttp *);
 void
 SendResp_upnphttp(struct upnphttp *);
 
-void
-SendResp_icon(struct upnphttp *, char * url);
-void
-SendResp_albumArt(struct upnphttp *, char * url);
-void
-SendResp_caption(struct upnphttp *, char * url);
-void
-SendResp_resizedimg(struct upnphttp *, char * url);
-void
-SendResp_thumbnail(struct upnphttp *, char * url);
-/* SendResp_dlnafile()
- * send the actual file data for a UPnP-A/V or DLNA request. */
-void
-SendResp_dlnafile(struct upnphttp *, char * url);
 #endif
 

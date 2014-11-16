@@ -589,6 +589,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif	/* RTCONFIG_HAS_5G */
 	else if (!strcmp(command, "Set_RestoreDefault")) {
+		nvram_set("restore_defaults", "1");
 		ResetDefault();
 		return 0;
 	}
@@ -610,14 +611,6 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif
 #ifdef CONFIG_BCMWL5
-	else if (!strcmp(command, "Set_TelnetEnabled")) {
-		if( !setTelnetEnable(value) )
-		{
-			puts("ATE_ERROR_INCORRECT_PARAMETER");
-			return EINVAL;
-		}
-		return 0;
-	}
 	else if (!strcmp(command, "Set_WaitTime")) {
 		if( !setWaitTime(value) )
 		{
@@ -1052,10 +1045,6 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts(nvram_safe_get("x_Setting"));
 		return 0;
 	}
-	else if (!strcmp(command, "Get_TelnetEnabled")) {
-		puts(nvram_safe_get("Ate_telnet"));
-		return 0;
-	}
 	else if (!strcmp(command, "Get_WaitTime")) {
 		puts(nvram_safe_get("wait_time"));
 		return 0;
@@ -1072,11 +1061,6 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			return EINVAL;
 		}
 		return 0;
-	}
-#endif
-#ifdef RTCONFIG_TMOBILE
-	else if(!strcmp(command, "Format_2nd_jffs2")) {
-		format_mount_2nd_jffs2();
 	}
 #endif
 	else

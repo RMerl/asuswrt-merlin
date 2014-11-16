@@ -31,175 +31,104 @@ body {
 	background-position:50% 61.10%;
 	cursor:pointer;
 }
+.clientIcon:hover{
+	background-image:url('/images/New_ui/networkmap/client-listover.png') !important;
+}
+
+/*
+Unknown			0 
+Windows     	1
+Router			2
+AP				3
+NAS				4
+IPCam			5
+Unknown			6
+PlayStation		7
+XBox			8
+Android			9
+iOS				10
+AppleTV			11
+Setup Box		12
+NB				13
+Macintosh		14
+ROG				15
+PlayStation4	16
+XBoxOne			17
+*/
 .type0{
 	background-image:url('/images/New_ui/networkmap/client.png') !important;
 	background-position:57% 102% !important;
 }
 .type1{
-	background-position:52% 61.10% !important;
+	background-position:52% 58.3% !important;
 }
 .type2{
-	background-position:52% 0.85% !important;
+	background-position:52% 0.75% !important;
 }
 .type3{
 	background-position:52% 0.85% !important;
 }
 .type4{
-	background-position:52% 7.55% !important;
+	background-position:52% 7.15% !important;
 }
 .type5{
-	background-position:52% 14.20% !important;
+	background-position:52% 13.55% !important;
 }
 .type6{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:57% 102% !important;
+	/* TYPE 13 */
+	background-position:52% 45.55% !important;
 }
 .type7{
-	background-position:52% 81.10% !important;
+	background-position:52% 77.5% !important;
 }
 .type8{
-	background-position:52% 94.50% !important;
+	background-position:52% 90.25% !important;
 }
 .type9{
-	background-position:52% 20.95% !important;
+	background-position:52% 19.95% !important;
 }
 .type10{
-	background-position:52% 27.65% !important;
+	background-position:52% 26.35% !important;
 }
 .type11{
-	background-position:52% 34.35% !important
+	background-position:52% 32.75% !important;
 }
 .type12{
-	background-position:52% 41.00% !important
+	background-position:52% 39.15% !important;
 }
 .type13{
-	background-position:52% 47.7% !important
+	background-position:52% 45.55% !important;
 }
 .type14{
-	background-position:52% 54.4% !important
+	background-position:52% 51.9% !important;
 }
 .type15{
-	background-position:52% 67.7% !important
+	background-position:52% 64.68% !important;
 }
 .type16{
-	background-position:52% 74.45% !important
+	background-position:52% 71.1% !important;
 }
 .type17{
-	background-position:52% 87.80% !important
+	background-position:52% 83.85% !important;
+}
+.type18{
+	background-position:52% 96.68% !important;
 }
 
 .type0:hover{
 	background-image:url('/images/New_ui/networkmap/client.png') !important;
 	background-position:57% -3% !important;
 }
-.type1:hover{
-	background-position:52% 64.45% !important;
-}
-.type2:hover{
-	background-position:52% 4.20% !important;
-}
 .type3:hover{
 	background-position:52% 4.20% !important;
-}
-.type4:hover{
-	background-position:52% 10.90% !important;
-}
-.type5:hover{
-	background-position:52% 17.60% !important;
-}
-.type6:hover{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:57% -3% !important;
-}
-.type7:hover{
-	background-position:52% 84.45% !important;
-}
-.type8:hover{
-	background-position:52% 97.8% !important;
-}
-.type9:hover{
-	background-position:52% 24.3% !important;
-}
-.type10:hover{
-	background-position:52% 30.95% !important;
-}
-.type11:hover{
-	background-position:52% 37.65% !important
-}
-.type12:hover{
-	background-position:52% 44.4% !important
-}
-.type13:hover{
-	background-position:52% 51.10% !important
-}
-.type14:hover{
-	background-position:52% 57.75% !important
-}
-.type15:hover{
-	background-position:52% 71.05% !important
-}
-.type16:hover{
-	background-position:52% 77.75% !important
-}
-.type17:hover{
-	background-position:52% 91.10% !important
 }
 
 .type0.clicked{
 	background-image:url('/images/New_ui/networkmap/client.png') !important;
 	background-position:57% -3% !important;
 }
-.type1.clicked{
-	background-position:52% 64.45% !important;
-}
-.type2.clicked{
-	background-position:52% 4.2% !important;
-}
 .type3.clicked{
 	background-position:52% 4.2% !important;
-}
-.type4.clicked{
-	background-position:52% 10.9% !important;
-}
-.type5.clicked{
-	background-position:52% 17.6% !important;
-}
-.type6.clicked{
-	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:57% -3% !important;
-}
-.type7.clicked{
-	background-position:52% 84.45% !important;
-}
-.type8.clicked{
-	background-position:52% 97.8% !important;
-}
-.type9.clicked{
-	background-position:52% 24.3% !important;
-}
-.type10.clicked{
-	background-position:52% 30.95% !important;
-}
-.type11.clicked{
-	background-position:52% 37.70% !important
-}
-.type12.clicked{
-	background-position:52% 44.40% !important
-}
-.type13.clicked{
-	background-position:52% 51.10% !important
-}
-.type14.clicked{
-	background-position:52% 57.75% !important
-}
-.type15.clicked{
-	background-position:52% 71.05% !important
-}
-.type16.clicked{
-	background-position:52% 77.75% !important
-}
-.type17.clicked{
-	background-position:52% 91.1% !important
 }
 
 .clientBg{

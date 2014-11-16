@@ -43,10 +43,47 @@
 #include "config.h"
 #include "log.h"
 
-static int number_of_children = 0;
+struct child *children = NULL;
+int number_of_children = 0;
+
+static void
+add_process_info(pid_t pid, struct client_cache_s *client)
+{
+	struct child *child;
+	int i;
+
+	for (i = 0; i < runtime_vars.max_connections; i++)
+	{
+		child = children+i;
+		if (child->pid)
+			continue;
+		child->pid = pid;
+		child->client = client;
+		child->age = time(NULL);
+		break;
+	}
+}
+
+static inline void
+remove_process_info(pid_t pid)
+{
+	struct child *child;
+	int i;
+
+	for (i = 0; i < runtime_vars.max_connections; i++)
+	{
+		child = children+i;
+		if (child->pid != pid)
+			continue;
+		child->pid = 0;
+		if (child->client)
+			child->client->connections--;
+		break;
+	}
+}
 
 pid_t
-process_fork(void)
+process_fork(struct client_cache_s *client)
 {
 	if (number_of_children >= runtime_vars.max_connections)
 	{
@@ -58,7 +95,13 @@ process_fork(void)
 
 	pid_t pid = fork();
 	if (pid > 0)
-		++number_of_children;
+	{
+		number_of_children++;
+		if (client)
+			client->connections++;
+		add_process_info(pid, client);
+	}
+
 	return pid;
 }
 
@@ -76,7 +119,8 @@ process_handle_child_termination(int signal)
 			else
 				break;
 		}
-		--number_of_children;
+		number_of_children--;
+		remove_process_info(pid);
 	}
 }
 
@@ -87,7 +131,7 @@ process_daemonize(void)
 #ifndef USE_DAEMON
 	int i;
 
-	switch(process_fork())
+	switch(fork())
 	{
 		/* fork error */
 		case -1:
@@ -156,4 +200,18 @@ process_check_if_running(const char *fname)
 	close(pidfile);
 
 	return 0;
+}
+
+void
+process_reap_children(void)
+{
+	struct child *child;
+	int i;
+
+	for (i = 0; i < runtime_vars.max_connections; i++)
+	{
+		child = children+i;
+		if (child->pid)
+			kill(child->pid, SIGKILL);
+	}
 }

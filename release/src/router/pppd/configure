@@ -44,7 +44,7 @@ case $system in
        /opt/SUNWspro/bin/cc -flags >/dev/null 2>&1; then
       if [ "$archvariant" = "-64x" ]; then
         ( cd /tmp; echo "int x;" > ppp$$.c
-	  /opt/SUNWspro/bin/cc -c -errwarn -xchip=opteron -xarch=amd64 ppp$$.c >/dev/null 2>&1 || (
+	  /opt/SUNWspro/bin/cc -c -errwarn -xchip=opteron -m64 ppp$$.c >/dev/null 2>&1 || (
 	    echo "WorkShop C is unable to make 64 bit modules, and your $karch system needs"
 	    echo "them.  Consider upgrading cc on this machine."
 	    rm -f ppp$$.c

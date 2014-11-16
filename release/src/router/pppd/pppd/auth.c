@@ -570,7 +570,7 @@ void start_link(unit)
      /* we are called via link_terminated, must be ignored */
     if (phase == PHASE_DISCONNECT)
 	return;
-    status = EXIT_NEGOTIATION_FAILED;
+    status = EXIT_CONNECT_FAILED;
     new_phase(PHASE_SERIALCONN);
 
     hungup = 0;
@@ -605,6 +605,7 @@ void start_link(unit)
 	notice("Starting negotiation on %s", ppp_devnam);
     add_fd(fd_ppp);
 
+    status = EXIT_NEGOTIATION_FAILED;
     new_phase(PHASE_ESTABLISH);
 
     lcp_lowerup(0);
@@ -683,9 +684,11 @@ link_terminated(unit)
 	(*the_channel->cleanup)();
 
     if (doing_multilink && multilink_master) {
-	if (!bundle_terminating)
+	if (!bundle_terminating) {
 	    new_phase(PHASE_MASTER);
-	else
+	    if (master_detach && !detached)
+		detach();
+	} else
 	    mp_bundle_terminated();
     } else
 	new_phase(PHASE_DEAD);

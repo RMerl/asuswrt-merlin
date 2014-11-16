@@ -232,9 +232,10 @@ void generate_switch_para(void)
 		if (cfg < SWCFG_DEFAULT || cfg > SWCFG_STB34)
 			cfg = SWCFG_DEFAULT;
 	}
-        else if (nvram_get_int("sw_mode") == SW_MODE_REPEATER ||
-                ((nvram_get_int("sw_mode") == SW_MODE_AP) && (nvram_get_int("wlc_psta") == 1)))
-		cfg = SWCFG_PSTA;
+	/* don't do this to save ports */
+        //else if (nvram_get_int("sw_mode") == SW_MODE_REPEATER ||
+        //        ((nvram_get_int("sw_mode") == SW_MODE_AP) && (nvram_get_int("wlc_psta") == 1)))
+	//	cfg = SWCFG_PSTA;
 	else if (nvram_get_int("sw_mode") == SW_MODE_AP)
 		cfg = SWCFG_BRIDGE;
 	else	
@@ -1507,17 +1508,23 @@ void load_wl_war()
 void load_wl()
 {
 	char module[80], *modules, *next;
+#ifdef RTCONFIG_NOWL
+	modules = "dhd";
+#else
 #ifdef RTCONFIG_DHDAP
 	modules = "dpsta dhd wl";
 #else
 	modules = "dpsta wl";
 #endif
+#endif
 	int i = 0, maxwl_eth = 0, maxunit = -1;
 	int unit = -1;
 	char ifname[16] = {0};
 	char instance_base[128];
+#ifndef RTCONFIG_NOWL
 #ifndef RTCONFIG_DPSTA
 	if (first_load) load_wl_war();
+#endif
 #endif
 	foreach(module, modules, next) {
 		if ((strcmp(module, "dhd") == 0) || (strcmp(module, "wl") == 0)) {
@@ -1537,8 +1544,10 @@ void load_wl()
 		}
 		else {
 			eval("insmod", module);
+#ifndef RTCONFIG_NOWL
 #ifdef RTCONFIG_DPSTA
 			if (first_load) load_wl_war();
+#endif
 #endif
 		}
 	}
@@ -1675,11 +1684,7 @@ void init_syspara(void)
 	int model;
 
 	nvram_set("firmver", rt_version);
-#ifndef RTCONFIG_TMOBILE
 	nvram_set("productid", rt_buildname);
-#else
-	nvram_set("productid", nvram_safe_get("odmpid"));
-#endif
 	nvram_set("buildno", rt_serialno);
 	nvram_set("extendno", rt_extendno);
 	nvram_set("buildinfo", rt_buildinfo);
@@ -3667,7 +3672,7 @@ void generate_wl_para(int unit, int subunit)
 #ifdef RTCONFIG_PROXYSTA
 	char os_interface[NVRAM_MAX_PARAM_LEN];
 	char lan_ifnames[NVRAM_MAX_PARAM_LEN] = "lan_ifnames";
-	bool psta, psr, db_rpt;
+	bool psta=0, psr=0, db_rpt=0;
 #endif
 
 	if (subunit == -1)
@@ -3697,14 +3702,28 @@ void generate_wl_para(int unit, int subunit)
 				nvram_set(strcat_r(prefix2, "wpa_psk", tmp2), nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
 			}
 		}
+
+		if ((unit == 0) && (nvram_get_int("smart_connect_x") == 1))
+			nvram_set_int(strcat_r(prefix, "taf_enable", tmp), 1);
+		else if ((unit == 1) && nvram_get_int("smart_connect_x"))
+			nvram_set_int(strcat_r(prefix, "taf_enable", tmp), 1);
+		else if ((unit == 2) && nvram_get_int("smart_connect_x"))
+			nvram_set_int(strcat_r(prefix, "taf_enable", tmp), 1);
+		else
+			nvram_set_int(strcat_r(prefix, "taf_enable", tmp), 0);
 #endif
 
 #ifdef RTCONFIG_PROXYSTA
 		/* See if other interface also has psta or psr enabled */
-		psta = is_psta(unit);
-		psr = is_psr(unit);
-		db_rpt = ((psta_exist_except(unit) || psr_exist_except(unit)) &&
-			  (psta || psr));
+		char words[256], *if_next;
+		int if_unit=0;
+		foreach (words, nvram_safe_get("wl_ifnames"), if_next) {
+			psta = is_psta(if_unit);
+			psr = is_psr(if_unit);
+			db_rpt |= ((psta_exist_except(if_unit) || psr_exist_except(if_unit)) &&
+			  	(psta || psr));
+			if_unit++;
+		}
 
 		/* Disable all VIFS wlX.2 onwards */
 		if (is_psta(unit) || is_psr(unit))
@@ -3717,21 +3736,22 @@ void generate_wl_para(int unit, int subunit)
 			 * (dual band repeater) set nvram variable dpsta_ifnames to upstream
 			 * interfaces.
 			 */
-			if (db_rpt) {
+			if (db_rpt && *nvram_safe_get("wlc_band_ex")) {
 				char if_list[NVRAM_MAX_VALUE_LEN];
 				int if_list_size = sizeof(if_list);
 
+				memset(if_list, 0, sizeof(if_list));
 				strcpy(tmp, "dpsta_ifnames");
-				sprintf(nv_interface, "wl0");
+				sprintf(nv_interface, "wl%s", nvram_safe_get("wlc_band"));
 				nvifname_to_osifname(nv_interface, os_interface,
 					sizeof(os_interface));
 				add_to_list(os_interface, if_list, if_list_size);
-				sprintf(nv_interface, "wl1");
+				sprintf(nv_interface, "wl%s", nvram_safe_get("wlc_band_ex"));
 				nvifname_to_osifname(nv_interface, os_interface,
 					sizeof(os_interface));
 				add_to_list(os_interface, if_list, if_list_size);
 				nvram_set(tmp, if_list);
-			} else
+			} else if(!db_rpt)
 				nvram_set("dpsta_ifnames", "");
 
 			sprintf(nv_interface, "wl%d.1", unit);
@@ -3766,7 +3786,8 @@ void generate_wl_para(int unit, int subunit)
 #endif
 		{
 #ifdef RTCONFIG_PROXYSTA
-			nvram_set("dpsta_ifnames", "");
+			if(!db_rpt)
+				nvram_set("dpsta_ifnames", "");
 #endif
 			memset(interface_list, 0, interface_list_size);
 			for (i = 1; i < max_no_vifs; i++) {
@@ -3906,7 +3927,7 @@ void generate_wl_para(int unit, int subunit)
 	else nvram_set(strcat_r(prefix, "wep", tmp), "disabled");
 
 	if (nvram_match(strcat_r(prefix, "mode", tmp), "ap") &&
-	    strstr(nvram_safe_get(strcat_r(prefix, "akm", tmp)), "wpa"))
+	    strstr(nvram_safe_get(strcat_r(prefix, "akm", tmp2)), "wpa"))
 		nvram_set(strcat_r(prefix, "preauth", tmp), "1");
 	else
 		nvram_set(strcat_r(prefix, "preauth", tmp), "");
@@ -4322,17 +4343,20 @@ void generate_wl_para(int unit, int subunit)
 		nvram_set(strcat_r(prefix, "net_reauth", tmp), tmp2);
 
 		if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
-			if (	((get_model() == MODEL_RTAC68U || get_model() == MODEL_DSLAC68U) &&
-				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+                        if (    ((get_model() == MODEL_RTAC68U || get_model() == MODEL_DSLAC68U) &&
 				nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") &&
-				nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) /*||
-				((get_model() == MODEL_RTAC66U) &&
-				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-				nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
-				((get_model() == MODEL_RTN66U) &&
-				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-				nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))*/
-			)
+                                nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+                                nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
+                                ((get_model() == MODEL_RTAC66U) &&
+				nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") &&
+                                nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+                                nvram_match(strcat_r(prefix, "country_rev", tmp), "31") &&
+                                nvram_match(strcat_r(prefix, "dfs", tmp), "1")) ||
+                                ((get_model() == MODEL_RTN66U) &&
+				nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") &&
+                                nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+                                nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))
+                        )
 			{
 				nvram_set(strcat_r(prefix, "reg_mode", tmp), "h");
 			}
@@ -4351,30 +4375,14 @@ void generate_wl_para(int unit, int subunit)
 	}
 	else
 	{
-#ifdef RTCONFIG_TMOBILE
-		if (subunit == 3)
-			nvram_set(strcat_r(prefix, "bss_maxassoc", tmp), nvram_safe_get(strcat_r(prefix, "maxassoc", tmp2)));
-#endif
 		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
 		{
-#ifdef RTCONFIG_TMOBILE
-			if (subunit == 3)
-			nvram_set(strcat_r(prefix, "osu_ssid", tmp), nvram_safe_get(strcat_r(prefix, "ssid", tmp2)));
-#endif
-#ifdef RTCONFIG_TMOBILE
-			if (subunit != 3)
-#endif
 			nvram_set(strcat_r(prefix, "bss_maxassoc", tmp), nvram_safe_get(strcat_r(prefix2, "bss_maxassoc", tmp2)));
 			nvram_set(strcat_r(prefix, "ap_isolate", tmp), nvram_safe_get(strcat_r(prefix2, "ap_isolate", tmp2)));
 			nvram_set(strcat_r(prefix, "net_reauth", tmp), nvram_safe_get(strcat_r(prefix2, "net_reauth", tmp2)));
-#ifdef RTCONFIG_TMOBILE
-			if (subunit != 3)
-#endif
-			{
-				nvram_set(strcat_r(prefix, "radius_ipaddr", tmp), nvram_safe_get(strcat_r(prefix2, "radius_ipaddr", tmp2)));
-				nvram_set(strcat_r(prefix, "radius_key", tmp), nvram_safe_get(strcat_r(prefix2, "radius_key", tmp2)));
-				nvram_set(strcat_r(prefix, "radius_port", tmp), nvram_safe_get(strcat_r(prefix2, "radius_port", tmp2)));
-			}
+			nvram_set(strcat_r(prefix, "radius_ipaddr", tmp), nvram_safe_get(strcat_r(prefix2, "radius_ipaddr", tmp2)));
+			nvram_set(strcat_r(prefix, "radius_key", tmp), nvram_safe_get(strcat_r(prefix2, "radius_key", tmp2)));
+			nvram_set(strcat_r(prefix, "radius_port", tmp), nvram_safe_get(strcat_r(prefix2, "radius_port", tmp2)));
 			nvram_set(strcat_r(prefix, "wme", tmp), nvram_safe_get(strcat_r(prefix2, "wme", tmp2)));
 			nvram_set(strcat_r(prefix, "wme_bss_disable", tmp), nvram_safe_get(strcat_r(prefix2, "wme_bss_disable", tmp2)));
 			nvram_set(strcat_r(prefix, "wpa_gtk_rekey", tmp), nvram_safe_get(strcat_r(prefix2, "wpa_gtk_rekey", tmp2)));

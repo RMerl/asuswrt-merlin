@@ -15,7 +15,6 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
@@ -25,10 +24,8 @@ if('<% nvram_get("start_aicloud"); %>' == '0')
 
 var $j = jQuery.noConflict();
 
-<% login_state_hook(); %>
 <% wanlink(); %>
 
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
@@ -52,7 +49,6 @@ if(apps_array == ""){
 
 var apps_download_percent_done = 0;
 
-var curr_pool_name = "";
 var stoppullstate = 0;
 var isinstall = 0;
 var installPercent = 1;
@@ -113,9 +109,9 @@ function initial(){
 		/* private */
 		case 0:
 			if(https_port == 443)
-				$("accessMethod").innerHTML = 'Enter AiCloud 2.0 <a id="cloud_url" style="font-weight: bolder;text-decoration: underline;" href="https://router.asus.com" target="_blank">https://router.asus.com</a>';
+				$("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
 			else{
-				$("accessMethod").innerHTML = 'Enter AiCloud 2.0 <a id="cloud_url" style="font-weight: bolder;text-decoration: underline;" href="https://router.asus.com" target="_blank">https://router.asus.com</a>';
+				$("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
 				$('cloud_url').href = "https://"+ theUrl +":" + https_port;
 				$('cloud_url').innerHTML = "https://"+ theUrl +":" + https_port;
 			}
@@ -124,15 +120,15 @@ function initial(){
 		case 1:
 			if('<% nvram_get("ddns_enable_x"); %>' == '1' && ddns_hostname != ''){
 				if(https_port == 443) // if the port number of https is 443, hide it
-					$("accessMethod").innerHTML = 'Enter AiCloud 2.0 <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +'</a><br />';
+					$("accessMethod").innerHTML = "<#AiCloud_enter#> <a style=\"font-weight: bolder;text-decoration: underline;word-break:break-all;\" href=\"https://"+ ddns_hostname + ":"+ https_port +"\" target=\"_blank\">https://"+ ddns_hostname +"</a><br />";
 				else
-					$("accessMethod").innerHTML = 'Enter AiCloud 2.0 <a style="font-weight: bolder;text-decoration: underline;word-break:break-all;" href="https://'+ ddns_hostname + ':'+ https_port +' "target="_blank">https://'+ ddns_hostname +':'+ https_port +'</a><br />';
+					$("accessMethod").innerHTML = "<#AiCloud_enter#> <a style=\"font-weight: bolder;text-decoration: underline;word-break:break-all;\" href=\"https://"+ ddns_hostname + ":"+ https_port +"\" target=\"_blank\">https://"+ ddns_hostname +":"+ https_port +"</a><br />";
 				
-				$("accessMethod").innerHTML += 'To modify the ddns name, please click <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp?af=DDNSName" target="_blank">here</a>.';
+				$("accessMethod").innerHTML += "To modify the ddns name, please click <a style=\"font-weight: bolder;text-decoration: underline;\" href=\"/Advanced_ASUSDDNS_Content.asp?af=DDNSName\" target=\"_blank\">here</a>.";
 			}
 			else{
-				$("accessMethod").innerHTML = 'Enter AiCloud 2.0 <a id="cloud_url" style="font-weight: bolder;text-decoration: underline;" href="https://router.asus.com" target="_blank">https://router.asus.com</a>';
-				$("accessMethod").innerHTML += '<br/>Register for an ASUS DDNS <a style="font-weight: bolder;text-decoration: underline;" href="/Advanced_ASUSDDNS_Content.asp" target="_blank">here</a> to access the cloud disk online.';
+				$("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
+				$("accessMethod").innerHTML += "<br/>Register for an ASUS DDNS <a style=\"font-weight: bolder;text-decoration: underline;\" href=\"/Advanced_ASUSDDNS_Content.asp\" target=\"_blank\">here</a> to access the cloud disk online.";
 			}
 			break;
 	}
@@ -248,8 +244,7 @@ function show_partition(){
 				if(usbDevicesList[i].partition[j].status == "unmounted")
 					continue;
 					
-				if(apps_dev == usbDevicesList[i].partition[j].mountPoint){
-					curr_pool_name = usbDevicesList[i].partition[j].partName;
+				if(usbDevicesList[i].partition[j].isAppDev){
 					if(all_accessable_size > 1)
 						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'install\',\'aicloud\',\''+usbDevicesList[i].partition[j].mountPoint+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
 					else
@@ -670,8 +665,8 @@ The English version of this agreement is the controlling version. Any translatio
 This agreement constitutes the entire agreement between you and ASUS with respect to AiCloud 2.0 and supersedes all previous communications, representations, understandings and agreements, either oral or written, between you and ASUS regarding AiCloud 2.0. This agreement may not be modified or waived except in writing and signed by an officer or other authorized representative of each party. If any provision is held invalid, all other provisions shall remain valid, unless such invalidity would frustrate the purpose of this agreement. The failure of either party to enforce any rights granted hereunder or to take action against the other party in the event of any breach hereunder will not waive that party’s as to subsequent enforcement of rights or subsequent action in the event of future breaches. AiCloud 2.0 reserves the right to: (a) add or remove functions and features or to provide updates, upgrades or programming fixes to AiCloud 2.0 with or without prior notice to you; (b) require you to agree to a new agreement in order to use any new version of AiCloud 2.0 that it releases; or (c) require you to upgrade to a new version of AiCloud 2.0 by discontinuing service or support to any prior version of AiCloud 2.0 without notice.
 </div>
 			<div style="background-image:url(images/Tree/bg_02.png);background-repeat:no-repeat;height:90px;">
-				<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel();" value="<#CTL_Cancel#>">
-				<input class="button_gen" type="button"  onclick="_confirm();" value="<#CTL_ok#>">	
+				<input class="button_gen" type="button" style="margin-left:27%;margin-top:18px;" onclick="cancel();" value="<#CTL_Disagree#>">
+				<input class="button_gen" type="button"  onclick="_confirm();" value="<#CTL_Agree#>">
 			</div>
 	</div>
 	<div id="hiddenMask" class="popup_bg" style="z-index:999;">
@@ -751,7 +746,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
    												<td><div class="formfontdesc" id="usbHint">ASUS AiCloud 2.0 keeps you connected to your data whatever and whenever you have an Internet connection. It links your home network and online web storage service* and lets your access it through the AiCloud 2.0 mobile app on your iOS or Android smartphone or through a personalized URL in a web browser. Now all your data can go where you do.</div></td> 
   										</tr>
 											<tr>
-   												<td><div class="formfontdesc" id="usbHint2">Learn more: <a href="http://aicloud-faq.asuscomm.com/aicloud-faq/" target="_blank" style="color:#FC0;text-decoration: underline; font-family:Lucida Console;">http://aicloud-faq.asuscomm.com/aicloud-faq/</a></div></td> 
+   												<td><div class="formfontdesc" id="usbHint2"><#Learn_more#> : <a href="http://aicloud-faq.asuscomm.com/aicloud-faq/" target="_blank" style="color:#FC0;text-decoration: underline; font-family:Lucida Console;">http://aicloud-faq.asuscomm.com/aicloud-faq/</a></div></td> 
   										</tr>  
   										<tr>
    												<td valign="top"><div id="cloud_movie" style="box-shadow: 2px 2px 15px #222;margin-top: 50px;width:400px;height:241px;margin-left:165px;background:url(images/movie.jpg) no-repeat center;cursor:pointer" onClick="window.open('http://www.youtube.com/watch?v=MgIAfG5ZhPs')"></div></td>
@@ -774,7 +769,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 									  <tr bgcolor="#444f53">
 									    <td colspan="5" bgcolor="#444f53" class="cloud_main_radius">
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-												ASUS AiCloud 2.0 keeps you connected to your data wherever and whenever you have an Internet connection. It links your home network and online web storage service and lets you access it through the AiCloud 2.0 mobile app on your iOS or Android smartphone or through a personalized URL in a web browser. Now all your data can go where you do.
+												<#AiCloud_maintext_note#>
 													<br/><br/>
 													<table width="100%" >
 														<tr>
@@ -784,10 +779,10 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 																 	<div id="accessMethod"></div>
 																 	</li>
 																 	<li style="margin-top:-5px;">
-																	 Find tutorial videos <a style="font-weight: bolder;text-decoration: underline;" href="http://www.youtube.com/asusrouters" target="_blank">GO</a>
+																	 <#Video_Find#> <a style="font-weight: bolder;text-decoration: underline;" href="http://www.youtube.com/asusrouters" target="_blank">GO</a>
 																	</li>
 																	<li style="margin-top:-5px;">
-																	 Find FAQs <a style="font-weight: bolder;text-decoration: underline;" href="http://aicloud-faq.asuscomm.com/aicloud-faq/" target="_blank">GO</a>
+																	 <#FAQ_Find#> <a style="font-weight: bolder;text-decoration: underline;" href="http://aicloud-faq.asuscomm.com/aicloud-faq/" target="_blank">GO</a>
 																	</li>
 																</ul>
 															</td>
@@ -825,7 +820,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 
 									    <td>
 											<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-												Enables USB-attached storage devices to be accessed, streamed or shared through an internet-connected PC or device.
+												<#aicloud_disk_desc#>												
 											</div>
 										</td>
 
@@ -879,7 +874,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 											</td>
 									    <td width="">
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-													Enables Network Place (Samba) networked PCs and devices to be accessed remotely. Smart Access can also wake up a sleeping PC.
+													<#smart_access_desc#>
 												</div>
 											</td>
 									    <td bgcolor="#444f53" class="cloud_main_radius_right" width="100">
@@ -933,7 +928,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 											</td>
 									    <td width="">
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-													Enables synchronization of USB-attached storage with cloud services like <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/navigate/" target="_blank">ASUS webstorage</a> and other AiCloud 2.0-enabled networks.
+													<#smart_sync_desc#>
 												</div>
 											</td>
 									    <td bgcolor="#444f53" class="cloud_main_radius_right" width="100">

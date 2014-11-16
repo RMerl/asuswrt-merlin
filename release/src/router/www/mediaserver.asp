@@ -12,9 +12,9 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
@@ -274,7 +274,7 @@ if(document.form.daapd_enable.value == 1){
 	}
 	else{
 		
-		var alert_str1 = validate_hostname(document.form.daapd_friendly_name);
+		var alert_str1 = validator.hostName(document.form.daapd_friendly_name);
 		if(alert_str1 != ""){
 			showtext($("alert_msg1"), alert_str1);
 			$("alert_msg1").style.display = "";
@@ -298,7 +298,7 @@ if(document.form.dms_enable.value == 1){
 	}
 	else{
 		
-		var alert_str2 = validate_hostname(document.form.dms_friendly_name);
+		var alert_str2 = validator.hostName(document.form.dms_friendly_name);
 		if(alert_str2 != ""){
 			showtext($("alert_msg2"), alert_str2);
 			$("alert_msg2").style.display = "";
@@ -926,7 +926,7 @@ function set_dms_dir(obj){
        	<tr>
        		<th><#iTunesServer_itemname#></th>
 					<td>
-						<div><input name="daapd_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" value=""><br/><div id="alert_msg1" style="color:#FC0;margin-left:10px;"></div></div>
+						<div><input name="daapd_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" maxlength="32" value=""><br/><div id="alert_msg1" style="color:#FC0;margin-left:10px;"></div></div>
 					</td>
       	</tr>
       	</table> 
@@ -971,7 +971,7 @@ function set_dms_dir(obj){
        	<tr>
        		<th><#DLNA_itemname#></th>
 					<td>
-						<div><input name="dms_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" value=""><br/><div id="alert_msg2" style="color:#FC0;margin-left:10px;"></div></div>
+						<div><input name="dms_friendly_name" type="text" style="margin-left:15px;" class="input_15_table" maxlength="32" value=""><br/><div id="alert_msg2" style="color:#FC0;margin-left:10px;"></div></div>
 					</td>
       	</tr>
    			<tr>

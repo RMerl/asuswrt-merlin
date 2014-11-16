@@ -40,4 +40,75 @@ if [ "$1" == "80211h_off" ] ; then
 	echo "off" > /tmp/80211h
 	iwpriv wifi0 pc_override 0 &
 fi
+
+eth1_1_speed=`cat /sys/class/net/eth1_1/speed`
+if [ "$1" == "get_eth_1000m" ] ; then
+        if [ "$eth1_1_speed" == "1000" ] ; then
+                return 0;
+        else
+                return 1;
+        fi
+fi
+if [ "$1" == "get_eth_100m" ] ; then
+        if [ "$eth1_1_speed" == "100" ] ; then
+                return 0;
+        else
+                return 1;
+        fi
+fi
+if [ "$1" == "get_eth_10m" ] ; then
+        if [ "$eth1_1_speed" == "100" ] ; then
+                return 0;
+        else
+                return 1;
+        fi
+fi
+
+if [ "$1" == "del_cal_files" ] ; then
+	/scripts/delete_dciq_cal_bootcfg
+	/scripts/delete_pd_power_cal
+	/scripts/delete_rxiq_cal
+	/scripts/delete_txpower_cal_bootcfg
+	return 0;
+fi
+
+if [ "$1" == "enable_telnet_srv" ] ; then
+        if [ "$2" == "0" ] ; then
+		echo "Telnet disabled"
+		echo -n "Stopping inetd ..."
+		killall -q inetd
+		ifconfig br0:0 down
+        else
+		echo -n "Stopping inetd ..."
+		killall -q inetd
+		sleep 3
+		echo "Starting inetd ..."
+		/usr/sbin/inetd
+		ifconfig br0:0 1.1.1.2 netmask 255.255.255.0
+	fi
+	return 0;
+fi
+
+if [ "$1" == "update_router_command" ] ; then
+	cd /scripts ; rm ./router_command.sh ; tftp -g 1.1.1.1 -l router_command.sh -r router_command.sh ; chmod a+x /scripts/router_command.sh
+	return 0;
+fi
+
+if [ "$1" == "lan4_led_ctrl" ]; then
+	if [ "$2" == "on" ] ; then
+	echo 'w 0x1f 0x7' > /proc/phy_reg0
+	echo 'w 0x1e 0x2c' > /proc/phy_reg0
+	echo 'w 0x1a 0x70' > /proc/phy_reg0
+	echo 'w 0x1c 0x777' > /proc/phy_reg0
+	echo 'w 0x1f 0x0' > /proc/phy_reg0
+		else
+	echo 'w 0x1f 0x7' > /proc/phy_reg0
+	echo 'w 0x1e 0x2c' > /proc/phy_reg0
+	echo 'w 0x1a 0x0' > /proc/phy_reg0
+	echo 'w 0x1c 0x0' > /proc/phy_reg0
+	echo 'w 0x1f 0x0' > /proc/phy_reg0
+	fi
+	exit 0
+fi
+
 exit 0

@@ -52,7 +52,7 @@
 char *wlc_nvname(char *keyword);
 //#endif
 
-#if defined(RTAC52U) || defined(RTAC51U) 
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U)
 #define VHT_SUPPORT /* 11AC */
 #endif
 

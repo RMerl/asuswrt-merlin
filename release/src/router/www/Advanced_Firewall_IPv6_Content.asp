@@ -16,7 +16,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
-<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script>
 var wItem = new Array(new Array("", "", "TCP"),
 	new Array("FTP", "20,21", "TCP"),
@@ -28,8 +28,6 @@ var wItem = new Array(new Array("", "", "TCP"),
 	new Array("POP3", "110", "TCP"),
 	new Array("SNMP", "161", "UDP"),
 	new Array("SNMP TRAP", "162", "UDP"));
-
-<% login_state_hook(); %>
 
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -191,7 +189,7 @@ function addRow_Group(upper){
 function validate_multi_range(val, mini, maxi){
 	var rangere=new RegExp("^([0-9]{1,5})\:([0-9]{1,5})$", "gi");
 	if(rangere.test(val)){
-		if(!validate_each_port(document.form.ipv6_fw_port_x_0, RegExp.$1, mini, maxi) || !validate_each_port(document.form.ipv6_fw_port_x_0, RegExp.$2, mini, maxi)){
+		if(!validator.eachPort(document.form.ipv6_fw_port_x_0, RegExp.$1, mini, maxi) || !validator.eachPort(document.form.ipv6_fw_port_x_0, RegExp.$2, mini, maxi)){
 				return false;								
 		}else if(parseInt(RegExp.$1) >= parseInt(RegExp.$2)){
 				alert("<#JS_validport#>");	
@@ -471,7 +469,7 @@ function changeBgColor(obj, num){
 					<input type="text" maxlength="45" class="input_18_table" name="ipv6_fw_lipaddr_x_0" align="left" style="float:left;" autocomplete="off">
                                 </td>
 				<td width="14%">
-					<input type="text" maxlength="" class="input_12_table" name="ipv6_fw_port_x_0" onkeypress="return is_portrange(this, event)"/>
+					<input type="text" maxlength="" class="input_12_table" name="ipv6_fw_port_x_0" onkeypress="return validator.isPortRange(this, event)"/>
 				</td>
 				<td width="11%">
 					<select name="ipv6_fw_proto_x_0" class="input_option">

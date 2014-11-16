@@ -68,8 +68,7 @@ extern char *strerror();
 static void logit __P((int, char *, va_list));
 static void log_write __P((int, char *));
 static void vslp_printer __P((void *, char *, ...));
-static void format_packet __P((u_char *, int, void (*) (void *, char *, ...),
-			       void *));
+static void format_packet __P((u_char *, int, printer_func, void *));
 
 struct buffer_info {
     char *ptr;
@@ -287,19 +286,6 @@ vslprintf(buf, buflen, fmt, args)
 		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
 	    str = num;
 	    break;
-#if 0	/* not used, and breaks on S/390, apparently */
-	case 'r':
-	    f = va_arg(args, char *);
-#ifndef __powerpc__
-	    n = vslprintf(buf, buflen + 1, f, va_arg(args, va_list));
-#else
-	    /* On the powerpc, a va_list is an array of 1 structure */
-	    n = vslprintf(buf, buflen + 1, f, va_arg(args, void *));
-#endif
-	    buf += n;
-	    buflen -= n;
-	    continue;
-#endif
 	case 't':
 	    time(&t);
 	    str = ctime(&t);
@@ -477,7 +463,7 @@ static void
 format_packet(p, len, printer, arg)
     u_char *p;
     int len;
-    void (*printer) __P((void *, char *, ...));
+    printer_func printer;
     void *arg;
 {
     int i, n;
@@ -615,7 +601,7 @@ void
 print_string(p, len, printer, arg)
     char *p;
     int len;
-    void (*printer) __P((void *, char *, ...));
+    printer_func printer;
     void *arg;
 {
     int c;
@@ -655,10 +641,9 @@ logit(level, fmt, args)
     char *fmt;
     va_list args;
 {
-    int n;
     char buf[1024];
 
-    n = vslprintf(buf, sizeof(buf), fmt, args);
+    vslprintf(buf, sizeof(buf), fmt, args);
     log_write(level, buf);
 }
 

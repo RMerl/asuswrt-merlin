@@ -9,6 +9,7 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
 var smart_connect_tmp = '<% nvram_get("smart_connect_x"); %>';
@@ -51,31 +52,32 @@ var timezones = {
 	"540":"NAST9DST",
 	"480":"PST8DST",
 	"420":"MST7_2",
-	"360":"UTC6",
+	"360":"CST6_2",
 	"300":"UTC5_1",
+	"270":"UTC4.30",
 	"240":"UTC4_1",
 	"210":"NST3.30DST",
 	"180":"UTC3",
 	"120":"NORO2DST",
 	"60":"UTC1",
 	"0":"GMT0",
-	"-60":"UTC-1_1_1",
+	"-60":"UTC-1_2",
 	"-120":"UTC-2_1",
 	"-180":"UTC-3_1",
 	"-210":"UTC-3.30DST",
-	"-240":"UTC-4_2",
+	"-240":"UTC-4_5",
 	"-270":"UTC-4.30",
 	"-300":"UTC-5",
 	"-330":"UTC-5.30_1",
 	"-345":"UTC-5.45",
-	"-360":"UTC-6_1",
+	"-360":"UTC-6",
 	"-390":"UTC-6.30",
 	"-420":"UTC-7",
 	"-480":"CCT-8",
 	"-540":"JST",
-	"-570":"UTC-9.30",
-	"-600":"UTC-10_3",
-	"-660":"UTC-11_2",
+	"-570":"CST-9.30",
+	"-600":"UTC-10_2",
+	"-660":"UTC-11",
 	"-720":"UTC-12",
 	"-780":"UTC-13"
 };
@@ -87,8 +89,9 @@ var timezones_dst = {
 	"540":"NAST9DST",
 	"480":"PST8DST",
 	"420":"MST7DST_1",
-	"360":"CST6DST_1",
+	"360":"UTC6DST",
 	"300":"EST5DST",
+	"270":"UTC4.30",
 	"240":"AST4DST",
 	"210":"NST3.30DST",
 	"180":"EBST3DST_1",
@@ -97,21 +100,21 @@ var timezones_dst = {
 	"0":"GMT0DST_1",
 	"-60":"UTC-1DST_1",
 	"-120":"UTC-2DST",
-	"-180":"IST-3DST",
+	"-180":"IST-3",
 	"-210":"UTC-3.30DST",
 	"-240":"UTC-4DST_2",
 	"-270":"UTC-4.30",
 	"-300":"UTC-5",
 	"-330":"UTC-5.30_1",
 	"-345":"UTC-5.45",
-	"-360":"RFT-6DST",
+	"-360":"RFT-6",
 	"-390":"UTC-6.30",
 	"-420":"UTC-7",
-	"-480":"WAS-8DST",
+	"-480":"CCT-8",
 	"-540":"JST",
-	"-570":"CST-9.30DST",
-	"-600":"TST-10TDT",
-	"-660":"UTC-11_2",
+	"-570":"UTC-9.30DST",
+	"-600":"UTC-10DST_1",
+	"-660":"UTC-11",
 	"-720":"NZST-12DST",
 	"-780":"UTC-13"
 };
@@ -199,9 +202,9 @@ function QKWireless_load_body(){
 		//while %w_Setting% == 1
 		if(parent.w_Setting_tmp == 1 && parent.document.QKform.sw_mode.value != "2"){
 			if(parent.tmo_support)
-					$("Continued_PrevSetting").innerHTML = "Do you want to use the default wireless security settings?";
+				$("Continued_PrevSetting").innerHTML = "<#QIS_factory_WLKep#>";
 			else 
-					$("Continued_PrevSetting").innerHTML = "<#QIS_Previous_WLKey#>";					
+				$("Continued_PrevSetting").innerHTML = "<#QIS_Previous_WLKey#>";					
 					
 			$("Continued_PrevSetting").style.display = "";
 			$("radio_Continued_PrevSetting").style.display = "";
@@ -348,14 +351,14 @@ function submitForm(){
 					wl_confirm++;
 		}
 
-		if(!validate_string_ssid(document.form.wl0_ssid)){
+		if(!validator.stringSSID(document.form.wl0_ssid)){
 			changeiuiBackground(0);
 			return false;
 		}
 
 		if(document.form.wl0_wpa_psk.value.length > 0){
 			document.form.wl0_auth_mode_x.value = "psk2";
-			if(!validate_psk(document.form.wl0_wpa_psk)){
+			if(!validator.psk(document.form.wl0_wpa_psk)){
 					changeiuiBackground(0);
 					return false;
 			}
@@ -417,14 +420,14 @@ function submitForm(){
 						}		
 				}	
 
-				if(!validate_string_ssid(document.form.wl1_ssid)){
+				if(!validator.stringSSID(document.form.wl1_ssid)){
 						changeiuiBackground(0);
 						return false;
 				}
 	
 				if(document.form.wl1_wpa_psk.value.length > 0){
 						document.form.wl1_auth_mode_x.value = "psk2";
-						if(!validate_psk(document.form.wl1_wpa_psk)){
+						if(!validator.psk(document.form.wl1_wpa_psk)){
 								changeiuiBackground(0);
 								return false;
 						}
@@ -481,14 +484,14 @@ function submitForm(){
 						}		
 				}	
 
-				if(!validate_string_ssid(document.form.wl2_ssid)){
+				if(!validator.stringSSID(document.form.wl2_ssid)){
 						changeiuiBackground(0);
 						return false;
 				}
 	
 				if(document.form.wl2_wpa_psk.value.length > 0){
 						document.form.wl2_auth_mode_x.value = "psk2";
-						if(!validate_psk(document.form.wl2_wpa_psk)){
+						if(!validator.psk(document.form.wl2_wpa_psk)){
 								changeiuiBackground(0);
 								return false;
 						}
@@ -583,7 +586,7 @@ function submitForm(){
 		if($('RP_parentSetting').checked == false){		// if doesn't use parent AP setting, it will use WPA2 to be default Authentication method
 			if(document.form.wl0_wpa_psk.value.length > 0){
 				document.form.wl0_auth_mode_x.value = "psk2";
-				if(!validate_psk(document.form.wl0_wpa_psk)){
+				if(!validator.psk(document.form.wl0_wpa_psk)){
 					return false;
 				}	
 			}else{
@@ -594,7 +597,7 @@ function submitForm(){
 			if(band5g_support){
 				if(document.form.wl1_wpa_psk.value.length > 0){
 					document.form.wl1_auth_mode_x.value = "psk2";
-					if(!validate_psk(document.form.wl1_wpa_psk))
+					if(!validator.psk(document.form.wl1_wpa_psk))
 						return false;
 				}else{
 					document.form.wl1_auth_mode_x.value = "open";		
@@ -604,7 +607,7 @@ function submitForm(){
 			if(wl_info.band5g_2_support){
 				if(document.form.wl2_wpa_psk.value.length > 0){
 					document.form.wl2_auth_mode_x.value = "psk2";
-					if(!validate_psk(document.form.wl2_wpa_psk))
+					if(!validator.psk(document.form.wl2_wpa_psk))
 						return false;
 				}else{
 					document.form.wl2_auth_mode_x.value = "open";		
@@ -829,8 +832,8 @@ var retValHandler = {
 		child_macaddr = '';
 	
 		$j.ajax({
-			url: '/apscan.asp',
-			dataType: 'script',
+			url: '/httpd_check.xml',
+			dataType: 'xml',
 			timeout: 2000,
 			error: function(xhr){
 				setTimeout("retValHandler.doQuery();", 1000);
@@ -854,6 +857,20 @@ var retValHandler = {
 					return false;
 				}
 	
+				retValHandler.wlc_isConnected();
+			}
+		});	
+	},
+
+	"wlc_isConnected" : function(){
+		$.ajax({
+			url: '/apscan.asp',
+			dataType: 'script',
+			timeout: 2000,
+			error: function(xhr){
+				setTimeout("retValHandler.wlc_isConnected();", 1000);
+			},
+			success: function(response){
 				if(retValHandler.isConnected(wlc_state)){ // connected
 					location.href = '/qis/QIS_finish.htm';
 				}
@@ -1189,8 +1206,8 @@ var _err = 0;
 var _success = 0;
 function detect_LANStatus(_flag){
 	$j.ajax({
-		url: '/httpd_check.htm',
-		dataType: 'text',
+		url: '/httpd_check.xml',
+		dataType: 'xml',
 		timeout: 3000,
 		error: function(xhr){
 			if(_err == 0){
@@ -1424,7 +1441,7 @@ function detect_LANStatus(_flag){
 	<tr>
 		<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 22);" style="cursor:help;"><#QIS_finish_wireless_item1#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input type="text" id="wl0_ssid" name="wl0_ssid" tabindex="3" onkeypress="return is_string(this, event);" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="32" value="default"/>
+			<input type="text" id="wl0_ssid" name="wl0_ssid" tabindex="3" onkeypress="return validator.isString(this, event);" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="32" value="default"/>
 		</td>
 	</tr>
 	<tr id="wl_unit_field_0">
@@ -1442,7 +1459,7 @@ function detect_LANStatus(_flag){
 	<tr id="wl_unit_field_2">
 		<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 22);" style="cursor:help;"><#QIS_finish_wireless_item1#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input type="text" id="wl1_ssid" name="wl1_ssid" tabindex="6" onkeypress="return is_string(this, event);" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="32" value="default"/>
+			<input type="text" id="wl1_ssid" name="wl1_ssid" tabindex="6" onkeypress="return validator.isString(this, event);" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="32" value="default"/>
 		</td>
 	</tr>
 	<tr id="wl_unit_field_3">
@@ -1460,7 +1477,7 @@ function detect_LANStatus(_flag){
 	<tr id="wl_unit_field_5" style="display:none;">
 		<th width="180"><span onmouseout="return nd();" onclick="openHint(0, 22);" style="cursor:help;"><#QIS_finish_wireless_item1#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input type="text" id="wl2_ssid" name="wl2_ssid" tabindex="9" onkeypress="return is_string(this, event);" onkeyup="Sync_5ghz(5);" style="height:25px;" class="input_32_table" maxlength="32" value="default"/>
+			<input type="text" id="wl2_ssid" name="wl2_ssid" tabindex="9" onkeypress="return validator.isString(this, event);" onkeyup="Sync_5ghz(5);" style="height:25px;" class="input_32_table" maxlength="32" value="default"/>
 		</td>
 	</tr>
 	<tr id="wl_unit_field_6" style="display:none;">
@@ -1478,14 +1495,14 @@ function detect_LANStatus(_flag){
 
 <fieldset class="theFieldset" id="theFieldset" style="display:none;">
 	<div class="row"><a id="loadingIcon_iui" class="iuiA" onclick="submitForm();"><#CTL_next#></a></div>
-	<div id="loadingIcon_fd_div" class="row_end" style="display:none;"><a id="loadingIcon_fd" class="iuiA" onclick="setFactoryDefault();">Use factory default</a></div>
+	<div id="loadingIcon_fd_div" class="row_end" style="display:none;"><a id="loadingIcon_fd" class="iuiA" onclick="setFactoryDefault();"><#CTL_factory_default#></a></div>
 </fieldset>
 
 <div id="applyBtn" class="apply_gen" style="margin-top:10px">
 		<span>
-			<input type="button" id="skipButton" value="Use factory default" tabindex="14" onclick="setFactoryDefault();" style="display:none;" class="button_gen_long">
+			<input type="button" id="skipButton" value="<#CTL_factory_default#>" tabindex="14" onclick="setFactoryDefault();" style="display:none;" class="button_gen_long">
 			<input type="button" id="prevButton" value="<#CTL_prev#>" tabindex="13" onclick="gotoprev(document.form);" style="display:none;" class="button_gen">
-			<input type="submit" id="smartcon_skip_button" value="Skip" tabindex="12" onclick="smartcon_skip();" style="display:none;"  class="button_gen">
+			<input type="submit" id="smartcon_skip_button" value="<#CTL_Skip#>" tabindex="12" onclick="smartcon_skip();" style="display:none;"  class="button_gen">
 			<input type="submit" id="btn_next_step" value="<#CTL_apply#>" tabindex="11" class="button_gen">
 			<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 		</span>

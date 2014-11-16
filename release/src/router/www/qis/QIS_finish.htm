@@ -164,6 +164,30 @@ var timezones = {
 	"UTC-13":	"(GMT+13:00)"
 	};
 
+if(parent.yadns_support){
+	var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
+	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
+}
+
+function yadns_apply(){
+	var enable = document.getElementById("yadns_enable").checked;
+	var defmode = document.getElementById("yadns_defmode").checked;
+	var yadns_update = document.getElementsByName("yadns_update")[0];
+
+	document.getElementById('loadingIcon').style.display='';
+	parent.yadns_done = true;
+	yadns_update.yadns_enable_x.value = enable ? "1" : "0";
+	yadns_update.yadns_mode.value = (enable && defmode) ? "1" : yadns_mode;
+	yadns_update.submit();
+}
+
+function yadns_change(need_apply){
+	var enable = document.getElementById("yadns_enable").checked;
+
+	parent.yadns_done = !need_apply;
+	document.getElementById("yadns_defmode").disabled = !enable;
+}
+
 function doLiveUpdate(_do){
 	if(_do){
 		document.getElementById("newFWDetected").style.display = "none";
@@ -267,8 +291,12 @@ function showLoadingUpdate(){
 
 function QKfinish_load_body(){
 	var shown_str;
+	if(parent.yadns_support && parent.yadns_done){
+		gotoNext();
+		return false;
+	}
 	if(parent.liveUpdateFinish && !parent.new_FW){
-		goto_tutorial();
+		goto_index();
 		document.getElementById("QISmain").style.display = "none";
 		document.getElementById("liveUpdate_div").style.display = "none";
 		return false;
@@ -676,6 +704,13 @@ function QKfinish_load_body(){
 		$("#lanip_item")[0].innerHTML = "LAN IP";
 		$("#lanip")[0].innerHTML = reIP;
 		$(".wlcItem").css("display", "none");
+
+		if(parent.yadns_support){
+			$("#yadns_enable").checked = (yadns_enable != 0) ? true : false;
+			$("#yadns_defmode").checked = (yadns_mode == 1) ? true : false;
+			$(".yadnsItem").css("display", "");
+			yadns_change(false);
+		}
 	}
 
 	// System account
@@ -733,16 +768,11 @@ function QKfinish_load_body(){
 				$("#latestFW")[0].innerHTML += parent.Latest_extendno;
 			}
 			else{
-				goto_tutorial();
+				goto_index();
 			}
 
 			document.getElementById("QISmain").style.display = "none";
 			document.getElementById("liveUpdate_div").style.display = "";
-			document.getElementById("nextButton_doLiveUpdate").style.display = "none";
-		}
-		else{
-			document.getElementById("nextButton").style.display = "none";
-			document.getElementById("nextButton_doLiveUpdate").style.display = "";
 		}
 		
 		parent.set_step("t3");
@@ -754,7 +784,7 @@ function gotoASUS(){
 	parent.location.href = "http://www.asus.com/support/";
 }
 
-function goto_tutorial(){
+function goto_index(){
 	parent.location.href = "/index.asp";
 }
 
@@ -765,6 +795,14 @@ function gotoAdvSetting(){
 function startLiveDetect(){
 	document.getElementById('loadingIcon').style.display='';
 	parent.detect_update();
+}
+
+function gotoNext(){
+	if(parent.yadns_support && !parent.yadns_done)
+		return yadns_apply();
+	if(!parent.ISMOBILE && !parent.liveUpdateFinish)
+		return startLiveDetect();
+	return goto_index();
 }
 
 function addBookmarkForBrowser(sTitle) {
@@ -805,7 +843,7 @@ function submitenter(myfield,event){
 	var keyPressed;
 	keyPressed = event.keyCode ? event.keyCode : event.which;
 	if (keyPressed == 13){
-		startLiveDetect();
+		gotoNext();
 	}
 	else
 		return true;
@@ -872,7 +910,7 @@ function showclock(){
 <input type="hidden" name="action_wait" value="">
 </form>
 
-<form method="post" name="form" action="" target="hidden_frame" onsubmit="goto_tutorial();">
+<form method="post" name="form" action="" target="hidden_frame" onsubmit="goto_index();">
 <input type="hidden" name="wl0_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>">
 <input type="hidden" name="wl1_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>">
 <input type="hidden" name="wl0_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>">
@@ -1013,10 +1051,22 @@ function showclock(){
 			<span id="account"></span>
 	  </td>
 	</tr>
+
 	<tr style="display:none;">
 	  <th width="180"><span id="password_item"></span></th>
 	  <td class="QISformtd">
 			<span id="password"></span>
+	  </td>
+	</tr>
+
+	<tr class="yadnsItem" style="display:none;">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#YandexDNS#></td>
+	<tr>
+	<tr class="yadnsItem" style="display:none;">
+	  <td class="QISformtd" colspan="4">
+		<#YandexDNS_desc1#><br>
+		<input type="checkbox" id="yadns_enable" colspan="4" onchange="yadns_change(true);" <% nvram_match("yadns_enable_x", "1", "checked"); %>><#YandexDNS_qis_lua#><br>
+		<input type="checkbox" id="yadns_defmode" colspan="4" onchange="yadns_change(true);" <% nvram_match("yadns_mode", "1", "checked"); %>><#YandexDNS_qis_default#>
 	  </td>
 	</tr>
 
@@ -1087,8 +1137,7 @@ function showclock(){
 </div>
 
 <div id="applyBtn" class="apply_gen" style="margin-top:5px">
-	<input type="button" id="nextButton" value="<#CTL_next#>" onclick="goto_tutorial();" class="button_gen">
-	<input type="button" id="nextButton_doLiveUpdate" value="<#CTL_next#>" onclick="startLiveDetect();" class="button_gen">
+	<input type="button" id="nextButton" value="<#CTL_next#>" onclick="gotoNext();" class="button_gen">
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>
 </div>
@@ -1205,6 +1254,16 @@ function showclock(){
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
 </form>
-
+<form method="post" name="yadns_update" action="/start_apply2.htm" target="hidden_frame">
+<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+<input type="hidden" name="flag" value="next">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="restart_yadns">
+<input type="hidden" name="action_wait" value="1">
+<input type="hidden" name="yadns_enable_x" value="<% nvram_get("yadns_enable_x"); %>">
+<input type="hidden" name="yadns_mode" value="<% nvram_get("yadns_mode"); %>">
+</form>
 </body>
 </html>

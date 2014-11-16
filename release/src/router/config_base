@@ -173,9 +173,9 @@ RTCONFIG_HAS_5G=y
 # RTCONFIG_N18UTXBF is not set
 # RTCONFIG_BWDPI is not set
 # RTCONFIG_BONDING is not set
-# RTCONFIG_TMOBILE is not set
-# RTCONFIG_NOPP is not set
 # RTCONFIG_UIDEBUG is not set
 # RTCONFIG_ROG is not set
 # RTCONFIG_GEOIP is not set
+# RTCONFIG_NOWL is not set
+# RTCONFIG_TTL is not set
 

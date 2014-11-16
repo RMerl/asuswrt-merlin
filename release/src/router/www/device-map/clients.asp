@@ -11,6 +11,27 @@
 p{
 	font-weight: bolder;
 }
+.circle {
+	position: absolute;
+	width: 23px;
+	height: 23px;
+	border-radius: 50%;
+	background: #333;
+	margin-top: -77px;
+	margin-left: 57px;
+}
+.circle div{
+	height: 23px;
+	text-align: center;
+	margin-top: 4px;
+}
+.ipMethod{
+	background-color: #222;
+	font-size: 10px;
+	font-family: monospace;
+	padding: 2px;
+	border-radius: 3px;
+}
 </style>
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
 <link href="/NM_style.css" rel="stylesheet" type="text/css" />
@@ -26,13 +47,13 @@ overlib.isOut = true;
 var $j = jQuery.noConflict();
 var pagesVar = {
 	curTab: "online",
-	CLIENTSPERPAGE: 6,
+	CLIENTSPERPAGE: 7,
 	startIndex: 0,
-	endIndex: 6, /* refer to startIndex + CLIENTSPERPAGE */
+	endIndex: 7, /* refer to startIndex + CLIENTSPERPAGE */
 	startArray: [0],
 
 	resetVar: function(){
-		pagesVar.CLIENTSPERPAGE = 6;
+		pagesVar.CLIENTSPERPAGE = 7;
 		pagesVar.startIndex = 0;
 		pagesVar.endIndex = pagesVar.startIndex + pagesVar.CLIENTSPERPAGE;
 		pagesVar.startArray = [0];
@@ -75,7 +96,7 @@ function drawClientList(tab){
 		if(tab == 'online' && !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
 		if((tab == 'wired' && clientObj.isWL != 0) || !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
 		if((tab == 'wireless' && clientObj.isWL == 0) || !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
-		if(tab == 'custom' && !clientObj.isCustom){i++; pagesVar.endIndex++; continue;}
+		if(tab == 'custom' && clientObj.from != "customList"){i++; pagesVar.endIndex++; continue;}
 		if(clientObj.name.toString().toLowerCase().indexOf(document.getElementById("searchingBar").value.toLowerCase()) == -1){i++; pagesVar.endIndex++; continue;}
 		// filter */ 
 
@@ -94,21 +115,33 @@ function drawClientList(tab){
 		clientHtmlTd += clientObj.name;
 		clientHtmlTd += '</td></tr><tr><td style="height:20px;">';
 		clientHtmlTd += (clientObj.isWebServer) ? '<a class="link" href="http://' + clientObj.ip + '" target="_blank">' + clientObj.ip + '</a>' : clientObj.ip;
-		clientHtmlTd += '</td></tr><tr><td><div style="margin-top:-15px;" class="link" onclick="oui_query(\'';
+		clientHtmlTd += ' <span class="ipMethod" onmouseover="return overlib(\''
+		clientHtmlTd += clientObj.isStaticIP ? "<#BOP_ctype_title5#>" : "<#BOP_ctype_title1#>";
+		clientHtmlTd += '\')" onmouseout="nd();">'
+		clientHtmlTd += clientObj.isStaticIP ? "Static" : "DHCP";
+		clientHtmlTd += '</span></td></tr><tr><td><div style="margin-top:-15px;" class="link" onclick="oui_query(\'';
 		clientHtmlTd += clientObj.mac;
 		clientHtmlTd += '\');return overlib(\'';
 		clientHtmlTd += retOverLibStr(clientObj);
 		clientHtmlTd += '\', HAUTO, VAUTO);" onmouseout="nd();">';
 		clientHtmlTd += clientObj.mac;
 		clientHtmlTd += '</td></tr></table></div>';
+
+		// display how many clients that hide behind a repeater.
+		if(clientObj.macRepeat > 1){
+			clientHtmlTd += '<div class="circle"><div>';
+			clientHtmlTd += clientObj.macRepeat;
+			clientHtmlTd += '</div></div>';
+		}
+
 		i++;
 	}
 
-	if(originData.fromNetworkmapd == ''){
-		clientHtmlTd = '<div style="color:#FC0;height:30px;text-align:center;margin-top:15px"><#Device_Searching#><img src="/images/InternetScan.gif"></div>';
-	}
-	else if(clientHtmlTd == ''){
-		clientHtmlTd = '<div style="color:#FC0;height:30px;text-align:center;margin-top:15px"><#IPConnection_VSList_Norule#></div>';
+	if(clientHtmlTd == ''){
+		if(networkmap_fullscan == 1)
+			clientHtmlTd = '<div style="color:#FC0;height:30px;text-align:center;margin-top:15px"><#Device_Searching#><img src="/images/InternetScan.gif"></div>';
+		else
+			clientHtmlTd = '<div style="color:#FC0;height:30px;text-align:center;margin-top:15px"><#IPConnection_VSList_Norule#></div>';
 	}
 
 	clientHtml += clientHtmlTd;
@@ -129,6 +162,15 @@ function drawClientList(tab){
 		$j("#client_list_Block").fadeIn(300);
 		pagesVar.curTab = tab;
 	}
+
+	
+	$j(".circle").mouseover(function(){
+		return overlib(this.firstChild.innerHTML + " clients are connecting to <% nvram_get("productid"); %> through this device.");
+	});
+
+	$j(".circle").mouseout(function(){
+		nd();
+	});
 }
 
 function updatePagesVar(direction){
@@ -196,13 +238,12 @@ function updateClientList(e){
 		success: function(response){
 			document.getElementById("loadingIcon").style.visibility = (networkmap_fullscan == 1 && parent.manualUpdate) ? "visible" : "hidden";
 
-			if(isJsonChanged(originData, originDataTmp)){
+			if(isJsonChanged(originData, originDataTmp) || originData.fromNetworkmapd == ""){
 				drawClientList();
 				parent.show_client_status(totalClientNum.online);
 			}
 
 			if(networkmap_fullscan == 0) parent.manualUpdate = false; 
-
 			setTimeout("updateClientList();", 3000);				
 		}    
 	});

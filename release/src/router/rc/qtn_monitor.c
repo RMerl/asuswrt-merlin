@@ -277,6 +277,10 @@ QTN_RESET:
 		if (ret < 0)
 			dbG("qtn reload_in_mode STA fail\n");
 	}
+	if(nvram_get_int("QTNTELNETSRV") == 1 && nvram_get_int("sw_mode") == SW_MODE_ROUTER){
+		dbG("[QTNT] enable telnet server\n");
+		qcsapi_wifi_run_script("router_command.sh", "enable_telnet_srv 1");
+	}
 
 	dbG("[dbg] qtn_monitor startup\n");
 ERROR:

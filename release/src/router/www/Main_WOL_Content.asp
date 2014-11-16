@@ -50,10 +50,10 @@
 }	
 </style>	
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" language="JavaScript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script>
@@ -252,7 +252,10 @@ function del_Row(r){
 
 function showLANIPList(){
 	if(clientList.length == 0){
-		setTimeout("showLANIPList();", 500);
+		setTimeout(function() {
+			genClientList();
+			showLANIPList();
+		}, 500);
 		return false;
 	}
 
@@ -365,7 +368,7 @@ function applyRule(){
 										<tr>
 											<th width="20%"><#NetworkTools_target#></th>
 											<td>
-												<input type="text" class="input_20_table" maxlength="17" name="destIP" value="" placeholder="ex: <% nvram_get("lan_hwaddr"); %>" onKeyPress="return is_hwaddr(this,event);">
+												<input type="text" class="input_20_table" maxlength="17" name="destIP" value="" placeholder="ex: <% nvram_get("lan_hwaddr"); %>" onKeyPress="return validator.isHWAddr(this,event);">
 												<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="<#NetworkTools_WOL_btn#>">
 												<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 											</td>										
@@ -393,7 +396,7 @@ function applyRule(){
 											<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				            			</td>
 				            			<td width="40%">
-				                		<input type="text" class="input_20_table" maxlength="17" name="wollist_macAddr" style="" onKeyPress="return is_hwaddr(this,event)">
+				                		<input type="text" class="input_20_table" maxlength="17" name="wollist_macAddr" style="" onKeyPress="return validator.isHWAddr(this,event)">
 		                			</td>
 				            			<td width="20%">
 														<div> 

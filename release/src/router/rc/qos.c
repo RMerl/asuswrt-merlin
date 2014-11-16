@@ -92,23 +92,6 @@ void del_EbtablesRules(void)
 	etable_flag = 0;
 }
 
-#ifdef RTCONFIG_TMOBILE_QOS
-void add_EbtablesRules(void)
-{
-	// class : 0/1/2/3/4 
-	nvram_set("qos_inuse", "31");
-	eval("ebtables", "-t", "nat", "-F");
-	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "wl0.1", "-j", "mark", "--mark-or", "3", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "wl0.1", "-j", "mark", "--mark-or", "3", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "wl1.1", "-j", "mark", "--mark-or", "3", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "wl1.1", "-j", "mark", "--mark-or", "3", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-j", "mark", "--mark-or", "2", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth1", "-j", "mark", "--mark-or", "2", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", "eth2", "-j", "mark", "--mark-or", "2", "--mark-target", "ACCEPT");
-	eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth2", "-j", "mark", "--mark-or", "2", "--mark-target", "ACCEPT");
-	start_iQos();
-}
-#else
 void add_EbtablesRules(void)
 {
 	if(etable_flag == 1) return;
@@ -143,7 +126,6 @@ void add_EbtablesRules(void)
 
 	etable_flag = 1;
 }
-#endif
 #endif
 
 void del_iQosRules(void)
@@ -192,7 +174,8 @@ int add_iQosRules(char *pcWANIF)
 
 	inuse = sticky_enable = 0;
 
-	if(get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC56S || get_model()==MODEL_RTAC68U || get_model()==MODEL_DSLAC68U || get_model()==MODEL_RTAC87U)
+	if(get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC56S || get_model()==MODEL_RTAC68U ||
+		get_model()==MODEL_DSLAC68U || get_model()==MODEL_RTAC87U || get_model()==MODEL_RTAC3200)
 		manual_return = 1;
 
 	if(nvram_match("qos_sticky", "0"))
@@ -352,6 +335,8 @@ int add_iQosRules(char *pcWANIF)
 						else{
 							sprintf(saddr_1, "-m iprange --src-range %s-%s", rule, inet_ntoa(range_C)); 		// IP-range
 						}
+
+						free(rule);
 					}
 					else{ // step4
 						sprintf(saddr_1, "-s %s", addr_t);	// IP

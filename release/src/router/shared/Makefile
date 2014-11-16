@@ -100,11 +100,13 @@ endif
 
 ifeq ($(RTCONFIG_QTN),y)
 OBJS += web-qtn.o
+OBJS += rpc_raw.o
+OBJS += rpc_raw_clnt.o
 #OBJS += find_host_addr.o
 endif
 
 ifeq ($(RTCONFIG_QTN),y)
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink sysdeps/qtn $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_ComponentSrcDirs) $(TOP)/libqcsapi_client/qcsapi_rpc_common/client
+vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink sysdeps/qtn $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_ComponentSrcDirs) $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/libqcsapi_client/qcsapi_rpc_common/common
 else
 vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_StdSrcDirsA) $(WLAN_ComponentSrcDirs) 
 endif

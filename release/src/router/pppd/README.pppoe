@@ -33,7 +33,7 @@ received from the PPPoE layer just as if the link was a serial line
 
 With this in mind, the goal of the implementation of PPPoE support in
 Linux is to allow users to simply specify that the device they intend
-to use for the PPP connection is an ethernet device (i.e. "eth0") and
+to use for the PPP connection is an ethernet device (e.g. "eth0") and
 the rest of the system should function as usual.
 
 2. Using PPPoE

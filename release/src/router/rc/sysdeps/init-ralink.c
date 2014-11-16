@@ -760,6 +760,12 @@ void init_syspara(void)
 		nvram_set("wl0_country_code", country_code);
 		nvram_set("wl1_country_code", country_code);
 	}
+#if defined(RTN14U) // for CE Adaptivity
+	if ((strcmp(country_code, "DE") == 0) || (strcmp(country_code, "EU") == 0))
+		nvram_set("reg_spec", "CE");
+	else
+		nvram_set("reg_spec", "NDF");
+#endif
 #else	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
 	dst = buffer;
 

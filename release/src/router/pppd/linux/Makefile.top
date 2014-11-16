@@ -1,8 +1,5 @@
 # PPP top-level Makefile for Linux.
 
-PPPD_DIR = $(ROOTDIR)/user/pppd
-INSTROOT = $(ROOTDIR)/romfs
-
 DESTDIR = $(INSTROOT)@DESTDIR@
 BINDIR = $(DESTDIR)/sbin
 INCDIR = $(DESTDIR)/include
@@ -18,16 +15,6 @@ all:
 	cd pppd; $(MAKE) $(MFLAGS) all
 	cd pppstats; $(MAKE) $(MFLAGS) all
 	cd pppdump; $(MAKE) $(MFLAGS) all
-
-romfs:
-	cd pppd; $(MAKE) $(MFLAGS) all
-	cd pppd/plugins; $(MAKE) $(MFLAGS) all
-	$(ROMFSINST) -d pppd/pppd /usr/sbin/pppd
-	$(STRIP) $(INSTROOT)/usr/sbin/pppd
-	$(ROMFSINST) -d pppd/plugins/rp-pppoe/rp-pppoe.so /usr/lib/pppd/rp-pppoe.so
-	$(ROMFSINST) -d pppd/plugins/pppol2tp/pppol2tp.so /usr/lib/pppd/pppol2tp.so
-	$(ROMFSINST) -d pppd/plugins/pptp/pptp.so /usr/lib/pppd/pptp.so
-	$(STRIP) $(INSTROOT)/usr/lib/pppd/*.so
 
 install: $(BINDIR) $(MANDIR)/man8 install-progs install-devel
 

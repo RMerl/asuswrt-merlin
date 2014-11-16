@@ -128,11 +128,7 @@ ifeq ($(RTAC87U), 1)
 else
 ifeq ($(RTAC68U), 1)
 ifeq ($(PATYPE), 0)
-ifeq ($(TMO), 1)
-	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u.bin -s 00 rt-ac68u_nvram_tmo.txt
-else
 	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u.bin -s 00 rt-ac68u_nvram.txt
-endif
 	cp cfe_rt-ac68u.bin ../../../..
 else ifeq ($(PATYPE), 5023)
 	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac68u_v2_5023.bin -s 00 rt-ac68u_v2_5023_nvram.txt

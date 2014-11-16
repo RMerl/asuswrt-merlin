@@ -44,6 +44,7 @@
 #include "sql.h"
 #include "scanner.h"
 #include "albumart.h"
+#include "containers.h"
 #include "log.h"
 
 #if SCANDIR_CONST
@@ -579,6 +580,25 @@ CreateDatabase(void)
 		                   containers[i], containers[i+1], GetFolderMetadata(containers[i+2], NULL, NULL, NULL, 0), containers[i+2]);
 		if( ret != SQLITE_OK )
 			goto sql_failed;
+	}
+	for( i=0; magic_containers[i].objectid_match; i++ )
+	{
+		struct magic_container_s *magic = &magic_containers[i];
+		if (!magic->name)
+			continue;
+		if( sql_get_int_field(db, "SELECT 1 from OBJECTS where OBJECT_ID = '%s'", magic->objectid_match) == 0 )
+		{
+			char *parent = strdup(magic->objectid_match);
+			if (strrchr(parent, '$'))
+				*strrchr(parent, '$') = '\0';
+			ret = sql_exec(db, "INSERT into OBJECTS (OBJECT_ID, PARENT_ID, DETAIL_ID, CLASS, NAME)"
+			                   " values "
+					   "('%s', '%s', %lld, 'container.storageFolder', '%q')",
+					   magic->objectid_match, parent, GetFolderMetadata(magic->name, NULL, NULL, NULL, 0), magic->name);
+			free(parent);
+			if( ret != SQLITE_OK )
+				goto sql_failed;
+		}
 	}
 	sql_exec(db, "create INDEX IDX_OBJECTS_OBJECT_ID ON OBJECTS(OBJECT_ID);");
 	sql_exec(db, "create INDEX IDX_OBJECTS_PARENT_ID ON OBJECTS(PARENT_ID);");

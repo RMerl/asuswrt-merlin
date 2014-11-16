@@ -8,8 +8,8 @@
 #define MAC_UNITS		1
 
 #if defined(TOPAZ_PLATFORM) && defined(TOPAZ_128_NODE_MODE)
-#define QTN_NCIDX_MAX			104
-#define QTN_NODE_TBL_SIZE_LHOST		96
+#define QTN_NCIDX_MAX			128
+#define QTN_NODE_TBL_SIZE_LHOST		118
 #else
 #define QTN_NCIDX_MAX			64
 #define QTN_NODE_TBL_SIZE_LHOST		56

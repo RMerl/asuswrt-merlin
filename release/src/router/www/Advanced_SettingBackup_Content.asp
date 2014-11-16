@@ -18,7 +18,6 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ajax.js"></script>
 <script>
 var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
@@ -84,8 +83,8 @@ var dead = 0;
 function detect_httpd(){
 
 	$j.ajax({
-    		url: '/httpd_check.htm',
-    		dataType: 'text',
+    		url: '/httpd_check.xml',
+    		dataType: 'xml',
 				timeout: 1500,
     		error: function(xhr){
     				dead++;

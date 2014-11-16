@@ -64,6 +64,8 @@
 	(_tid == QTN_TID_MGMT)	? QTN_AC_MGMT :	\
 	WMM_AC_BE)
 
+#define QTN_TID_COLLAPSE(_tid)	WMM_AC_TO_TID(TID_TO_WMM_AC(_tid))
+
 #define AC_TO_QTN_QNUM(_ac)		\
 	(((_ac) == WME_AC_BE) ? 1 :	\
 	 ((_ac) == WME_AC_BK) ? 0 :	\

@@ -39,7 +39,6 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ajax.js"></script>
 <script>
 
 var $j = jQuery.noConflict();
@@ -56,6 +55,16 @@ var varload = 0;
 
 function initial(){
 	show_menu();
+
+	if(bwdpi_support) {
+		document.getElementById("sig_ver_field").style.display="";
+		var sig_ver = '<% nvram_get("bwdpi_sig_ver"); %>';
+		if(sig_ver == "")
+			document.getElementById("sig_ver_word").innerHTML = "1.008";
+		else
+			document.getElementById("sig_ver_word").innerHTML = sig_ver;
+	}
+
 	if(!live_update_support)
 		$("update").style.display = "none";
 	else if('<% nvram_get("webs_state_update"); %>' != '')
@@ -130,26 +139,27 @@ function detect_update(){
 var dead = 0;
 function detect_httpd(){
 	$j.ajax({
-    		url: '/httpd_check.htm',
-    		dataType: 'text',
-				timeout: 1500,
-    		error: function(xhr){
-    				dead++;
-    				if(dead < 6)
-    						setTimeout("detect_httpd();", 1000);
-    				else{
-    						$('loading_block1').style.display = "none";
-    						$('loading_block2').style.display = "none";
-    						$('loading_block3').style.display = "";
-    						$('loading_block3').innerHTML = "<div><#Firm_reboot_manually#></div>";
-    				}
-    		},
+		url: '/httpd_check.xml',
+		dataType: 'xml',
+		timeout: 1500,
+		error: function(xhr){
+			if(dead > 5){
+				$('loading_block1').style.display = "none";
+				$('loading_block2').style.display = "none";
+				$('loading_block3').style.display = "";
+				$('loading_block3').innerHTML = "<div><#Firm_reboot_manually#></div>";
+			}
+			else{
+				dead++;
+			}
 
-    		success: function(){
-    				setTimeout("hideLoadingBar();",1000);
-      			location.href = "index.asp";
-  			}
-  		});
+			setTimeout("detect_httpd();", 1000);
+		},
+
+		success: function(){
+			location.href = "index.asp";
+		}
+	});
 }
 
 var rebooting = 0;
@@ -337,6 +347,10 @@ function submitForm(){
 -->
 
 <!--###HTML_PREP_END###-->
+			<tr id="sig_ver_field" style="display:none">
+				<th>Signature Version</th>
+				<td id="sig_ver_word"></td>
+			</tr>
 			<tr>
 				<th><#FW_item2#></th>
 				<td><input type="text" name="firmver_table" class="input_20_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1">&nbsp&nbsp&nbsp<!--/td-->

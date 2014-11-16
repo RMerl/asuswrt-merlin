@@ -77,6 +77,7 @@ struct ieee80211_key {
 #define	IEEE80211_KEY_GROUP	0x04	/* key used for WPA group operation */
 #define	IEEE80211_KEY_SWCRYPT	0x10	/* host-based encrypt/decrypt */
 #define	IEEE80211_KEY_SWMIC	0x20	/* host-based enmic/demic */
+#define IEEE80211_KEY_VLANGROUP	0x40	/* VLAN group key */
 	u_int16_t wk_keyix;		/* key index */
 	u_int8_t wk_key[IEEE80211_KEYBUF_SIZE+IEEE80211_MICBUF_SIZE];
 #define	wk_txmic	wk_key + IEEE80211_KEYBUF_SIZE + 0
@@ -99,6 +100,7 @@ struct ieee80211_key {
 #define	IEEE80211_CIPHER_TKIP		1
 #define	IEEE80211_CIPHER_AES_OCB	2
 #define	IEEE80211_CIPHER_AES_CCM	3
+#define IEEE80211_CIPHER_AES_CMAC	4
 #define	IEEE80211_CIPHER_CKIP		5
 #define	IEEE80211_CIPHER_NONE		6	/* pseudo value */
 

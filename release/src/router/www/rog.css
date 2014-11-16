@@ -13,6 +13,9 @@
 	margin-left:10px;
 	background-position:50% 61.10%;
 }
+.trafficIcons:hover{
+	background-image:url('/images/New_ui/networkmap/client-listover.png');
+}
 .appIcons{
 	width:32px;
 	height:32px;

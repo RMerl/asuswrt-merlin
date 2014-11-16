@@ -10,7 +10,6 @@
 <link href="/NM_style.css" rel="stylesheet" type="text/css" />
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/ajax.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <style type="text/css">
@@ -112,13 +111,16 @@ function initial(){
 		if(wl_info.band5g_2_support)
 			tab_reset(0);
 
-	if(smart_connect_support)
+	if(smart_connect_support && parent.sw_mode != 4)
 			change_smart_connect('<% nvram_get("smart_connect_x"); %>');	
 	
 		
 		// disallow to use the other band as a wireless AP
 		if(parent.sw_mode == 4 && !localAP_support){
-			$('t'+((parseInt(<% nvram_get("wlc_band"); %>+1))%2)).style.display = 'none';
+			for(var x=0; x<wl_info.wl_if_total;x++){
+				if(x != '<% nvram_get("wlc_band"); %>')
+					$('t'+parseInt(x)).style.display = 'none';			
+			}
 		}
 	}
 	else{
@@ -437,7 +439,7 @@ function change_smart_connect(v){
 		</tr>
 			
 			<tr>
-				<td style="border-bottom:3px #15191b solid;padding:0px 10px 5px 10px;"></td>
+				<td style="border-bottom:5px #2A3539 solid;padding:0px 10px 5px 10px;"></td>
 			</tr>
  		</table>
 		</div>

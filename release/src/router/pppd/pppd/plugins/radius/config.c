@@ -216,8 +216,8 @@ int rc_read_config(char *filename)
 		p[pos] = '\0';
 
 		if ((option = find_option(p, OT_ANY)) == NULL) {
-			error("%s: line %d: unrecognized keyword: %s", filename, line, p);
-			return (-1);
+			warn("%s: line %d: unrecognized keyword: %s", filename, line, p);
+			continue;
 		}
 
 		if (option->status != ST_UNDEF) {

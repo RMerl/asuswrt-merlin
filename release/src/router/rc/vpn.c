@@ -283,6 +283,7 @@ void start_pptpd(void)
 		"iptables -t nat -I PREROUTING -i $1 -p udp -m udp --sport 9 -j DNAT --to-destination %s "	// rule for wake on lan over pptp tunnel
 		"%s\n", bcast,
 		nvram_get("pptpd_ipup_script") ? nvram_get("pptpd_ipup_script") : "");
+	fprintf(fp, "iptables -t mangle -A FORWARD -i $1 -m state --state NEW -j MARK --set-mark 0x01/0x7\n");
 	fclose(fp);
 	fp = fopen("/tmp/pptpd/ip-down", "w");
 	fprintf(fp, "#!/bin/sh\n" "grep -v $1  /tmp/pptp_connected > /tmp/pptp_connected.new\n" 
@@ -293,6 +294,7 @@ void start_pptpd(void)
 		"iptables -t nat -D PREROUTING -i $1 -p udp -m udp --sport 9 -j DNAT --to-destination %s "	// rule for wake on lan over pptp tunnel
 		"%s\n", bcast,
 		nvram_get("pptpd_ipdown_script") ? nvram_get("pptpd_ipdown_script") : "");
+	fprintf(fp, "iptables -t mangle -D FORWARD -i $1 -m state --state NEW -j MARK --set-mark 0x01/0x7\n");
 	fclose(fp);
 	chmod("/tmp/pptpd/ip-up", 0744);
 	chmod("/tmp/pptpd/ip-down", 0744);

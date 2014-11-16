@@ -15,16 +15,7 @@ if(${EXT_CER_ID})
 	add_definitions(-DEXT_CER_ID=${EXT_CER_ID})
 endif(${EXT_CER_ID})
 
-if(${EXT_S46})
-	add_definitions(-DEXT_S46=${EXT_S46})
-endif(${EXT_S46})
-
-if(${EXT_BFD_PING})
-	add_definitions(-DEXT_BFD_PING)
-	set(BFD_SOURCE src/bfd.c)
-endif(${EXT_BFD_PING})
-
-add_executable(odhcp6c src/odhcp6c.c src/dhcpv6.c src/ra.c src/script.c src/md5.c ${BFD_SOURCE})
+add_executable(odhcp6c src/odhcp6c.c src/dhcpv6.c src/ra.c src/script.c src/md5.c)
 target_link_libraries(odhcp6c resolv)
 
 # Installation

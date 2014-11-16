@@ -59,44 +59,49 @@
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
-<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/JavaScript" src="/jquery.js"></script>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
-<% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
-wl_channel_list_2g = '<% channel_list_2g(); %>';
-wl_channel_list_5g = '<% channel_list_5g(); %>';
-
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var wl_wdslist_array = '<% nvram_get("wl_wdslist"); %>';
 var wds_aplist = "";
 var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
-	change_wireless_bridge(document.form.wl_mode_x.value);;	
+	change_wireless_bridge(document.form.wl_mode_x.value);	
 
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=5; i>=3; i--)
-			$("MainTable1").deleteRow(i);
+			document.getElementById("MainTable1").deleteRow(i);
 		for(var i=2; i>=0; i--)
-			$("MainTable2").deleteRow(i);
-		$("repeaterModeHint").style.display = "";
-		$("wl_wdslist_Block").style.display = "none";
-		$("submitBtn").style.display = "none";
+			document.getElementById("MainTable2").deleteRow(i);
+		
+		document.getElementById("repeaterModeHint").style.display = "";
+		document.getElementById("wl_wdslist_Block").style.display = "none";
+		document.getElementById("submitBtn").style.display = "none";
 	}
-	else
+	else{
 		show_wl_wdslist();
-
+	}
+		
 	if(!band5g_support){
-		$("wl_5g_mac").style.display = "none";
-		$("wl_unit_field").style.display = "none";		
-	}	
+		document.getElementById("wl_5g_mac").style.display = "none";
+		document.getElementById("wl_unit_field").style.display = "none";
+	}
+	
+	if(wl_info.band5g_2_support){
+		document.getElementById("wl_5g_mac_2").style.display = "";
+		document.getElementById("wl_5g_mac_th1").innerHTML = "5GHz-1 MAC";
+	}
+
+	regen_band(document.form.wl_unit);
+
+	if(based_modelid == "RT-AC87U" && document.form.wl_unit[1].selected == true){
+		document.getElementById("wds_mode_field").style.display = "none";
+		document.form.wl_mode_x.value="2";
+	}
 
 	wl_bwch_hint();
 	setTimeout("wds_scan();", 500);
@@ -116,18 +121,18 @@ function show_wl_wdslist(){
 			code +='<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this);\" value=\"\"/></td></tr>';
 		}
 	}
-  code +='</tr></table>';	
-	$("wl_wdslist_Block").innerHTML = code;
+	
+	code +='</tr></table>';	
+	document.getElementById("wl_wdslist_Block").innerHTML = code;
 }
 
 function deleteRow(r){
-  var i=r.parentNode.parentNode.rowIndex;
-  $('wl_wdslist_table').deleteRow(i);
-  
-  var wl_wdslist_value = "";
-	for(i=0; i<$('wl_wdslist_table').rows.length; i++){
+	var i=r.parentNode.parentNode.rowIndex;
+	document.getElementById('wl_wdslist_table').deleteRow(i);
+	var wl_wdslist_value = "";
+	for(i=0; i< document.getElementById('wl_wdslist_table').rows.length; i++){
 		wl_wdslist_value += "&#60";
-		wl_wdslist_value += $('wl_wdslist_table').rows[i].cells[0].innerHTML;
+		wl_wdslist_value += document.getElementById('wl_wdslist_table').rows[i].cells[0].innerHTML;
 	}
 	
 	wl_wdslist_array = wl_wdslist_value;
@@ -136,8 +141,8 @@ function deleteRow(r){
 }
 
 function addRow(obj, upper){
-	var rule_num = $('wl_wdslist_table').rows.length;
-	var item_num = $('wl_wdslist_table').rows[0].cells.length;
+	var rule_num = document.getElementById('wl_wdslist_table').rows.length;
+	var item_num = document.getElementById('wl_wdslist_table').rows[0].cells.length;
 	
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
@@ -156,48 +161,55 @@ function addRow(obj, upper){
 	}
 		
 		//Viz check same rule
-		for(i=0; i<rule_num; i++){
-			for(j=0; j<item_num-1; j++){	
-				if(obj.value.toLowerCase() == $('wl_wdslist_table').rows[i].cells[j].innerHTML.toLowerCase()){
-					alert("<#JS_duplicate#>");
-					return false;
-				}	
-			}		
-		}
+	for(i=0; i<rule_num; i++){
+		for(j=0; j<item_num-1; j++){	
+			if(obj.value.toLowerCase() == document.getElementById('wl_wdslist_table').rows[i].cells[j].innerHTML.toLowerCase()){
+				alert("<#JS_duplicate#>");
+				return false;
+			}	
+		}		
+	}
 		
-		wl_wdslist_array += "&#60";
-		wl_wdslist_array += obj.value;
-		obj.value = "";
-		show_wl_wdslist();
-	
+	wl_wdslist_array += "&#60";
+	wl_wdslist_array += obj.value;
+	obj.value = "";
+	show_wl_wdslist();
 }
 
 function applyRule(){
-	var rule_num = $('wl_wdslist_table').rows.length;
-	var item_num = $('wl_wdslist_table').rows[0].cells.length;
+	var rule_num = document.getElementById('wl_wdslist_table').rows.length;
+	var item_num = document.getElementById('wl_wdslist_table').rows[0].cells.length;
 	var tmp_value = "";
-
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"		
 		for(j=0; j<item_num-1; j++){	
-			tmp_value += $('wl_wdslist_table').rows[i].cells[j].innerHTML;
+			tmp_value += document.getElementById('wl_wdslist_table').rows[i].cells[j].innerHTML;
 			if(j != item_num-2)	
 				tmp_value += ">";
 		}
 	}
-	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
+	
+	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<"){
 		tmp_value = "";	
+	}	
 	
 	document.form.wl_wdslist.value = tmp_value;
-
 	if(document.form.wl_mode_x.value == "0"){
 		inputRCtrl1(document.form.wl_wdsapply_x, 1);
 		inputRCtrl2(document.form.wl_wdsapply_x, 1);
 	}
 	
-	if(document.form.wl_mode_x.value == "1")
-		inputRCtrl1(document.form.wl_wdsapply_x, 1);
-
+	if(document.form.wl_mode_x.value == "1"){
+		document.form.wl_wdsapply_x.value = "1";
+	}
+		
+	if(wl6_support){
+		document.form.action_wait.value = 8;
+	}
+	else{
+		document.form.action_wait.value = 3;
+	}
+		
 	showLoading();	
 	document.form.submit();
 }
@@ -211,6 +223,8 @@ function wds_scan(){
 	var ajaxURL = '/wds_aplist_2g.asp';
 	if('<% nvram_get("wl_unit"); %>' == '1')
 		var ajaxURL = '/wds_aplist_5g.asp';
+	else if('<% nvram_get("wl_unit"); %>' == '2')
+		var ajaxURL = '/wds_aplist_5g_2.asp';
 
 	$j.ajax({
 		url: ajaxURL,
@@ -248,15 +262,13 @@ function showLANIPList(){
 			else
 				show_name = wds_aplist[i][0];
 			
-			show_name = show_name.replace(/\&/g,"&amp;");
-			show_name = show_name.replace(/\</g,"&lt;");
-			show_name = show_name.replace(/\>/g,"&gt;");
 			if(wds_aplist[i][1]){
 				code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP('+i+');"><strong>'+show_name+'</strong>';
 				if(show_name && show_name.length > 0)
 					code += '( '+wds_aplist[i][1]+')';
 				else
 					code += wds_aplist[i][1];
+				
 				code += ' </div></a>';
 			}
 		}
@@ -295,57 +307,52 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<br><br><#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<br><br><#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
+		document.getElementById("check_mac").style.display = "";
 		return false;	
 	}else if(flag == 2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<br><br><#IPConnection_x_illegal_mac#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<br><br><#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").style.display = "";
 		return false;			
 	}else{
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	} 	
 }
 /*---------- Site Survey End -----------------*/
 
- /* only for AP mode case of WDS page */
-/*function bridge_mode_channel_check(){
-	if(document.form.wl_mode_x.value != 0 && document.form.wl_channel.value == 0){
-		alert("<#JS_fixchannel#>");
-		document.form.wl_channel.options[0].selected = 0;
-		document.form.wl_channel.options[1].selected = 1;
-		document.form.wl_channel.focus();
-	}
-}*/
 
-function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=1(20/40) or wl_channel=0(Auto)
-		$("wl_bw_hint").style.display=(document.form.wl_bw.value == "1") ? "" : "none";
-		$("wl_ch_hint").style.display=(document.form.wl_channel.value == "0") ? "" : "none";
+/* Control display chanspec hint when wl_bw=0(20/40/80) or wl_chanspec=0(Auto) */
+function wl_bwch_hint(){ 
+	if(wl6_support){
+		document.getElementById("wl_bw_hint").style.display=(document.form.wl_bw.value == "0") ? "" : "none";
+		document.getElementById("wl_ch_hint").style.display=(document.form.wl_chanspec.value == "0") ? "" : "none";
+	}
+	else{
+		document.getElementById("wl_bw_hint").style.display=(document.form.wl_bw.value == "1") ? "" : "none";
+		document.getElementById("wl_ch_hint").style.display=(document.form.wl_channel.value == "0") ? "" : "none";
+	}
 }
 </script>
 </head>
 
 <body onload="initial();" onunLoad="return unload_body();">
 <div id="TopBanner"></div>
-
 <div id="Loading" class="popup_bg"></div>
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
+<form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" value="<% nvram_get("productid"); %>" name="productid" >
-<input type="hidden" value="<% nvram_get("wan_route_x"); %>" name="wan_route_x" >
-<input type="hidden" value="<% nvram_get("wan_nat_x"); %>" name="wan_nat_x" >
 <input type="hidden" name="current_page" value="Advanced_WMode_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_WMode_Content.asp">
 <input type="hidden" name="group_id" value="wl_wdslist">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply_new">
-<input type="hidden" name="action_wait" value="3">
+<input type="hidden" name="action_wait" value="8">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
@@ -355,6 +362,7 @@ function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=1(20/40) or
 <input type="hidden" name="wl_nmode_x" value='<% nvram_get("wl_nmode_x"); %>'>
 <input type="hidden" name="wl_bw" value='<% nvram_get("wl_bw"); %>'>
 <input type="hidden" name="wl_channel" value='<% nvram_get("wl_channel"); %>'>
+<input type="hidden" name="wl_chanspec" value='<% nvram_get("wl_chanspec"); %>'>
 <input type="hidden" name="wl_nctrlsb_old" value='<% nvram_get("wl_nctrlsb"); %>'>
 <input type="hidden" name="wl_wdslist" value=''>
 <input type="hidden" name="wl_subunit" value="-1">
@@ -362,177 +370,137 @@ function wl_bwch_hint(){  //Control display chanspec hint when wl_bw=1(20/40) or
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
-		
 		<td valign="top" width="202">				
 		<div id="mainMenu"></div>	
 		<div id="subMenu"></div>		
 		</td>				
 		
     	<td valign="top">
-		<div id="tabMenu" class="submenuBlock"></div>
-
+			<div id="tabMenu" class="submenuBlock"></div>
 		<!--===================================Beginning of Main Content===========================================-->
-<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-	<tr>
-		<td align="left" valign="top" >
-		
-<table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
-<tbody>
-		<tr>
-		  	<td bgcolor="#4D595D" valign="top">
-		  	<div>&nbsp;</div>
-		  	<div class="formfonttitle"><#menu5_1#> - <#menu5_1_3#></div>
-		  	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  	<div class="formfontdesc"><#WLANConfig11b_display1_sectiondesc#></div>
-		  	<div class="formfontdesc" style="color:#FFCC00;"><#ADSL_FW_note#><#WLANConfig11b_display2_sectiondesc#></div>
-		  	<div class="formfontdesc"><#WLANConfig11b_display3_sectiondesc#>
-				<ul>
-					<li><#WLANConfig11b_display31_sectiondesc#></li>
-					<li><#WLANConfig11b_display32_sectiondesc#></li>
-					<li><#WLANConfig11b_display33_sectiondesc#></li>
-					<li><#WLANConfig11b_display34_sectiondesc#></li>					
-				</ul>					
-			</div>
-			<div id="wl_bw_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;"><#WLANConfig11b_display41_sectiondesc#></div>
-			<div id="wl_ch_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;"><#WLANConfig11b_display42_sectiondesc#></div>
-			
-			<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-			  <thead>
-			  <tr>
-				<td colspan="2"><#t2BC#></td>
-			  </tr>
-			  </thead>		
-
+			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
-					<th>2.4GHz MAC</th>
-					<td>
-							<input type="text" maxlength="17" class="input_20_table" id="wl0_hwaddr" name="wl0_hwaddr" value="<% nvram_get("wl0_hwaddr"); %>" readonly>
-					</td>		
-			  </tr>
-
-				
-				<tr id="wl_5g_mac">
-					<th>5GHz MAC</th>
-					<td>
-							<input type="text" maxlength="17" class="input_20_table" id="wl1_hwaddr" name="wl1_hwaddr" value="<% nvram_get("wl1_hwaddr"); %>" readonly>
-					</td>		
-			  </tr>			  
-
-				<tr id="wl_unit_field">
-					<th><#Interface#></th>
-					<td>
-						<select name="wl_unit" class="input_option" onChange="change_wl_unit();">
-							<option class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
-							<option class="content_input_fd" value="1"<% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
-						</select>			
-					</td>
-			  </tr>
-
-				<tr id="repeaterModeHint" style="display:none;">
-					<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
-			  </tr>
-			
-				<tr>
-					<th align="right" >
-						<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,1);">
-						<#WLANConfig11b_x_APMode_itemname#></a>
-					</th>
-					<td>
-						<select name="wl_mode_x" class="input_option" onChange="change_wireless_bridge(this.value);">
-							<option value="0" <% nvram_match("wl_mode_x", "0","selected"); %>><#WLANConfig11b_x_APMode_option0#></option>
-							<option value="1" <% nvram_match("wl_mode_x", "1","selected"); %>><#WLANConfig11b_x_APMode_option1#></option>
-							<option value="2" <% nvram_match("wl_mode_x", "2","selected"); %>><#WLANConfig11b_x_APMode_option2#></option>
-					  	</select>
-					</td>
-				</tr>
-
-				<tr>
-					<th align="right">
-						<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,3);">
-						<#WLANConfig11b_x_BRApply_itemname#>
-						</a>
-					</th>
-					<td>
-						<input type="radio" value="1" name="wl_wdsapply_x" class="input" <% nvram_match("wl_wdsapply_x", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" value="0" name="wl_wdsapply_x" class="input" <% nvram_match("wl_wdsapply_x", "0", "checked"); %>><#checkbox_No#>
-					</td>
-				</tr>			
-
-				<!--tr>
-					<th align="right">
-						<a class="hintstyle"href="javascript:void(0);"  onClick="openHint(1,2);">
-						<#WLANConfig11b_Channel_itemname#>
-						</a>
-					</th>
-					<td>
-						<select name="wl_channel" class="input_option" onChange="bridge_mode_channel_check();">
-						<% select_channel("WLANConfig11b"); %>
-						</select>
-					</td>
-				</tr>
-	
-			  <tr style="display:none;">
-				 	<th><#WLANConfig11b_EChannel_itemname#></th>
-			  	<td>
-					<select name="wl_nctrlsb">
-						<option value="lower" <% nvram_match("wl_nctrlsb", "lower", "selected"); %>>lower</option>
-						<option value="upper"<% nvram_match("wl_nctrlsb", "upper", "selected"); %>>upper</option>
-					</select>
-					</td>
-			  </tr-->
-			</table>
-			
-			<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable_table">
-			  <thead>
-			  <tr>
-				<td colspan="4"><#WLANConfig11b_RBRList_groupitemdesc#>&nbsp;(<#List_limit#>&nbsp;4)</td>
-			  </tr>
-			  </thead>		
-
-          		<tr>
-            		<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
-								 <#WLANConfig11b_RBRList_groupitemdesc#>
-								</th>
-								<th class="edit_table" width="20%"><#list_add_delete#></th>
-          		</tr>
-          		<tr>
-            		<td width="80%">
-              		<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return is_hwaddr(this,event)">
-									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_AP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
-									<div id="WDSAPList" class="WDSAPList">
-										<div style="width:98px">
-											<img height="15px" style="margin-left:5px;margin-top:2px;" src="/images/InternetScan.gif">
-										</div>
+					<td align="left" valign="top" >		
+						<table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
+							<tbody>
+							<tr>
+								<td bgcolor="#4D595D" valign="top">
+									<div>&nbsp;</div>
+									<div class="formfonttitle"><#menu5_1#> - <#menu5_1_3#></div>
+									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div class="formfontdesc"><#WLANConfig11b_display1_sectiondesc#></div>
+									<div class="formfontdesc" style="color:#FFCC00;"><#ADSL_FW_note#><#WLANConfig11b_display2_sectiondesc#></div>
+									<div class="formfontdesc"><#WLANConfig11b_display3_sectiondesc#>
+										<ol>
+											<li><#WLANConfig11b_display31_sectiondesc#></li>
+											<li><#WLANConfig11b_display32_sectiondesc#></li>
+											<li><#WLANConfig11b_display33_sectiondesc#></li>
+											<li><#WLANConfig11b_display34_sectiondesc#></li>					
+										</ol>					
 									</div>
-              	</td>
-              	<td width="20%">	
-              		<input type="button" class="add_btn" onClick="addRow(document.form.wl_wdslist_0, 4);" value="">
-              	</td>
-          		</tr>
-        		</table>
-        		
-          			<div id="wl_wdslist_Block"></div>
-          		
-				<div class="apply_gen">
-					<input class="button_gen" id="submitBtn" onclick="applyRule()" type="button" value="<#CTL_apply#>" />
-				</div>        		
-
-        	</td>
-	</tr>
-	</tbody>	
-</table>
-
-
-</td>
+									<div id="wl_bw_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;"><#WLANConfig11b_display41_sectiondesc#></div>
+									<div id="wl_ch_hint" style="font-size:13px;font-family: Arial, Helvetica, sans-serif;color:#FC0;margin-left:28px;"><#WLANConfig11b_display42_sectiondesc#></div>	
+									<table id="MainTable1" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+										<thead>
+										<tr>
+											<td colspan="2"><#t2BC#></td>
+										</tr>
+										</thead>		  
+										<tr>
+											<th>2.4GHz MAC</th>
+											<td>
+												<input type="text" maxlength="17" class="input_20_table" id="wl0_hwaddr" name="wl0_hwaddr" value="<% nvram_get("wl0_hwaddr"); %>" readonly>
+											</td>		
+										</tr>					
+										<tr id="wl_5g_mac">
+											<th id="wl_5g_mac_th1">5GHz MAC</th>
+											<td>
+												<input type="text" maxlength="17" class="input_20_table" id="wl1_hwaddr" name="wl1_hwaddr" value="<% nvram_get("wl1_hwaddr"); %>" readonly>
+											</td>		
+										</tr>	
+										<tr id="wl_5g_mac_2" style="display:none">
+											<th>5GHz-2 MAC</th>
+											<td>
+												<input type="text" maxlength="17" class="input_20_table" id="wl2_hwaddr" name="wl2_hwaddr" value="<% nvram_get("wl2_hwaddr"); %>" readonly>
+											</td>		
+										</tr>			  
+										<tr id="wl_unit_field">
+											<th><#Interface#></th>
+											<td>
+												<select name="wl_unit" class="input_option" onChange="change_wl_unit();">
+													<option class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
+													<option class="content_input_fd" value="1"<% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
+												</select>			
+											</td>
+										</tr>
+										<tr id="repeaterModeHint" style="display:none;">
+											<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
+										</tr>			
+										<tr id="wds_mode_field">
+											<th align="right">
+												<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,1);">
+												<#WLANConfig11b_x_APMode_itemname#></a>
+											</th>
+											<td>
+												<select name="wl_mode_x" class="input_option" onChange="change_wireless_bridge(this.value);">
+													<option value="0" <% nvram_match("wl_mode_x", "0","selected"); %>><#WLANConfig11b_x_APMode_option0#></option>
+													<option value="1" <% nvram_match("wl_mode_x", "1","selected"); %>><#WLANConfig11b_x_APMode_option1#></option>
+													<option value="2" <% nvram_match("wl_mode_x", "2","selected"); %>><#WLANConfig11b_x_APMode_option2#></option>
+												</select>
+											</td>
+										</tr>
+										<tr>
+											<th align="right">
+												<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,3);">
+												<#WLANConfig11b_x_BRApply_itemname#>
+												</a>
+											</th>
+											<td>
+												<input type="radio" value="1" name="wl_wdsapply_x" class="input" <% nvram_match("wl_wdsapply_x", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" value="0" name="wl_wdsapply_x" class="input" <% nvram_match("wl_wdsapply_x", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>			
+									</table>	
+									<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable_table">
+										<thead>
+										<tr>
+											<td colspan="4"><#WLANConfig11b_RBRList_groupitemdesc#>&nbsp;(<#List_limit#>&nbsp;4)</td>
+										</tr>
+										</thead>		
+										<tr>
+											<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#WLANConfig11b_RBRList_groupitemdesc#></th>
+											<th class="edit_table" width="20%"><#list_add_delete#></th>		
+										</tr>
+										<tr>
+											<td width="80%">
+												<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return validator.isHWAddr(this,event)">
+												<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_AP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
+												<div id="WDSAPList" class="WDSAPList">
+													<div style="width:98px">
+														<img height="15px" style="margin-left:5px;margin-top:2px;" src="/images/InternetScan.gif">
+													</div>
+												</div>
+											</td>
+											<td width="20%">	
+												<input type="button" class="add_btn" onClick="addRow(document.form.wl_wdslist_0, 4);" value="">
+											</td>
+										</tr>
+									</table>       		
+									<div id="wl_wdslist_Block"></div>     		
+									<div class="apply_gen">
+										<input class="button_gen" id="submitBtn" onclick="applyRule()" type="button" value="<#CTL_apply#>" />
+									</div>        		
+								</td>
+							</tr>
+							</tbody>	
+						</table>
+					</td>
 </form>
-		
-  </tr>
-</table>				
+				</tr>
+			</table>				
 <!--===================================Ending of Main Content===========================================-->		
-	
-	</td>
-		
-    <td width="10" align="center" valign="top">&nbsp;</td>
+		</td>	
+		<td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
 

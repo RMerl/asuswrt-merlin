@@ -16,14 +16,12 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
-<script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var autofw_rulelist_array = "<% nvram_char_to_ascii("","autofw_rulelist"); %>";
 
 function initial(){
@@ -114,8 +112,8 @@ function validForm(){
 	
 	}
 	
-	if(!validate_number_range(document.form.autofw_outport_x_0, 1, 65535)
-		|| !validate_number_range(document.form.autofw_inport_x_0, 1, 65535)){		
+	if(!validator.numberRange(document.form.autofw_outport_x_0, 1, 65535)
+		|| !validator.numberRange(document.form.autofw_inport_x_0, 1, 65535)){		
 			return false;
 	}
 	
@@ -348,7 +346,7 @@ function trigger_validate_duplicate(o, v, l, off){
               		</div>
             	</td>
             	<td width="21%">
-              		<input type="text" maxlength="11" class="input_12_table" name="autofw_inport_x_0" onKeyPress="return is_portrange(this,event)">
+              		<input type="text" maxlength="11" class="input_12_table" name="autofw_inport_x_0" onKeyPress="return validator.isPortRange(this,event)">
             	</td>
             	<td width="10%">
               		<select name="autofw_inproto_x_0" class="input_option">

@@ -58,6 +58,15 @@ static char if_name[IF_NAMESIZE] = {0};
 static volatile int rs_attempt = 0;
 static struct in6_addr lladdr = IN6ADDR_ANY_INIT;
 
+struct {
+	struct icmp6_hdr hdr;
+	struct icmpv6_opt lladdr;
+} rs = {
+	.hdr = {ND_ROUTER_SOLICIT, 0, 0, {{0}}},
+	.lladdr = {ND_OPT_SOURCE_LINKADDR, 1, {0}},
+};
+
+
 static void ra_send_rs(int signal __attribute__((unused)));
 
 int ra_init(const char *ifname, const struct in6_addr *ifid)
@@ -97,6 +106,7 @@ int ra_init(const char *ifname, const struct in6_addr *ifid)
 		.ifi = {.ifi_index = if_index}
 	};
 	send(rtnl, &req, sizeof(req), 0);
+	ra_link_up();
 
 	// Filter ICMPv6 package types
 	struct icmp6_filter filt;
@@ -137,9 +147,16 @@ int ra_init(const char *ifname, const struct in6_addr *ifid)
 
 static void ra_send_rs(int signal __attribute__((unused)))
 {
-	const struct icmp6_hdr rs = {ND_ROUTER_SOLICIT, 0, 0, {{0}}};
 	const struct sockaddr_in6 dest = {AF_INET6, 0, 0, ALL_IPV6_ROUTERS, if_index};
-	sendto(sock, &rs, sizeof(rs), MSG_DONTWAIT, (struct sockaddr*)&dest, sizeof(dest));
+	const struct icmpv6_opt llnull = {ND_OPT_SOURCE_LINKADDR, 1, {0}};
+	size_t len;
+
+	if ((rs_attempt % 2 == 0) && memcmp(&rs.lladdr, &llnull, sizeof(llnull)))
+		len = sizeof(rs);
+	else
+		len = sizeof(struct icmp6_hdr);
+
+	sendto(sock, &rs, len, MSG_DONTWAIT, (struct sockaddr*)&dest, sizeof(dest));
 
 	if (++rs_attempt <= 3)
 		alarm(4);
@@ -183,6 +200,14 @@ bool ra_link_up(void)
 				resp.hdr.nlmsg_type != RTM_NEWLINK ||
 				resp.msg.ifi_index != if_index)
 			continue;
+
+		ssize_t alen = NLMSG_PAYLOAD(&resp.hdr, sizeof(resp.msg));
+		for (struct rtattr *rta = (struct rtattr*)(resp.pad);
+				RTA_OK(rta, alen); rta = RTA_NEXT(rta, alen)) {
+			if (rta->rta_type == IFLA_ADDRESS &&
+					RTA_PAYLOAD(rta) >= sizeof(rs.lladdr.data))
+				memcpy(rs.lladdr.data, RTA_DATA(rta), sizeof(rs.lladdr.data));
+		}
 
 		bool hascarrier = resp.msg.ifi_flags & IFF_LOWER_UP;
 		if (!firstcall && nocarrier != !hascarrier)

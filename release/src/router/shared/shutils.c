@@ -76,6 +76,8 @@
 #define STR_REALLOC		0x1				/* Reallocate the buffer as required */
 #define STR_INC			64				/* Growth increment */
 
+unsigned char	used_shift='C';
+
 typedef struct {
 	char		*s;						/* Pointer to buffer */
 	int		size;						/* Current buffer size */
@@ -103,15 +105,43 @@ enum flag {
  */
 void dbgprintf (const char * format, ...)
 {
-	FILE *dbg = fopen("/dev/console", "w");
-	if(dbg)
-	{
-		va_list args;
-		va_start (args, format);
-		vfprintf (dbg, format, args);
-		va_end (args);
-		fclose(dbg);
+	FILE *f;
+	int nfd;
+	va_list args;
+
+	if((nfd = open("/dev/console", O_WRONLY | O_NONBLOCK)) > 0){
+		if((f = fdopen(nfd, "w")) != NULL){
+			va_start(args, format);
+			vfprintf(f, format, args);
+			va_end(args);
+			fclose(f);
+		}
+		close(nfd);
 	}
+}
+
+void dbg(const char * format, ...)
+{
+	FILE *f;
+	int nfd;
+	va_list args;
+
+	if (((nfd = open("/dev/console", O_WRONLY | O_NONBLOCK)) > 0) &&
+	    (f = fdopen(nfd, "w")))
+	{
+		va_start(args, format);
+		vfprintf(f, format, args);
+		va_end(args);
+		fclose(f);
+	}
+	else
+	{
+		va_start(args, format);
+		vfprintf(stderr, format, args);
+		va_end(args);
+	}
+
+	if (nfd != -1) close(nfd);
 }
 
 /*
@@ -269,14 +299,14 @@ EXIT:
 		for (n = 0; argv[n]; ++n) cprintf("%s ", argv[n]);
 		cprintf("\n");
 		
-		if ((fd = open("/dev/console", O_RDWR)) >= 0) {
+		if ((fd = open("/dev/console", O_RDWR | O_NONBLOCK)) >= 0) {
 			dup2(fd, STDIN_FILENO);
 			dup2(fd, STDOUT_FILENO);
 			dup2(fd, STDERR_FILENO);
 		}
 		else {
 			sprintf(s, "/tmp/eval.%d", pid);
-			if ((fd = open(s, O_CREAT|O_RDWR, 0600)) >= 0) {
+			if ((fd = open(s, O_CREAT | O_RDWR | O_NONBLOCK, 0600)) >= 0) {
 				dup2(fd, STDOUT_FILENO);
 				dup2(fd, STDERR_FILENO);
 			}
@@ -286,7 +316,7 @@ EXIT:
 
 	// Redirect stdout & stderr to <path>
 	if (path) {
-		flags = O_WRONLY | O_CREAT;
+		flags = O_WRONLY | O_CREAT | O_NONBLOCK;
 		if (*path == '>') {
 			++path;
 			if (*path == '>') {
@@ -557,6 +587,7 @@ char *ether_etoa2(const unsigned char *e, char *a)
 void cprintf(const char *format, ...)
 {
 	FILE *f;
+	int nfd;
 	va_list args;
 
 #ifdef DEBUG_NOISY
@@ -564,11 +595,14 @@ void cprintf(const char *format, ...)
 #else
 	if (nvram_match("debug_cprintf", "1")) {
 #endif
-		if ((f = fopen("/dev/console", "w")) != NULL) {
-			va_start(args, format);
-			vfprintf(f, format, args);
-			va_end(args);
-			fclose(f);
+		if((nfd = open("/dev/console", O_WRONLY | O_NONBLOCK)) > 0){
+			if((f = fdopen(nfd, "w")) != NULL){
+				va_start(args, format);
+				vfprintf(f, format, args);
+				va_end(args);
+				fclose(f);
+			}
+			close(nfd);
 		}
 	}
 #if 1	
@@ -1624,3 +1658,86 @@ wl_ether_etoa(const struct ether_addr *n)
 	return etoa_buf;
 }
 #endif
+
+void
+shortstr_encrypt(unsigned char *src, unsigned char *dst, unsigned char *shift)
+{
+    unsigned char carry, temp, bytes, bits;
+    char i;
+
+    bytes = (*shift % (DATA_WORDS_LEN - 1)) + 1;
+    for(i=0; i<DATA_WORDS_LEN; i++) {
+        dst[(i + bytes) % DATA_WORDS_LEN] = src[i];
+    }
+
+    carry = 0;
+    bits = (*shift % 7) + 1;
+    for(i=0; i<DATA_WORDS_LEN; i++) {
+        temp = dst[i] << (8 - bits);
+        dst[i] = (dst[i] >> bits) | carry;
+        carry = temp;
+    }
+    dst[0] |= carry;
+
+    for(i=0; i<DATA_WORDS_LEN; i++) {
+        dst[i] ^= ENC_XOR + i * 5;
+    }
+}
+
+void
+shortstr_decrypt(unsigned char *src, unsigned char *dst, unsigned char shift)
+{
+    unsigned char carry, temp, bytes, bits;
+    char i;
+
+    for(i=0; i<DATA_WORDS_LEN; i++) {
+        src[i] ^= ENC_XOR + i * 5;
+    }
+    carry = 0;
+    bits = (shift % 7) + 1;
+    for(i=DATA_WORDS_LEN - 1; i>=0; i--) {
+        temp = src[i] >> (8 - bits);
+        src[i] = (src[i] << bits) | carry;
+        carry = temp;
+    }
+    src[DATA_WORDS_LEN - 1] |= carry;
+
+    bytes = (shift % (DATA_WORDS_LEN - 1)) + 1;
+    for(i=0; i<DATA_WORDS_LEN; i++) {
+        dst[i] = src[(i + bytes) % DATA_WORDS_LEN];
+    }
+
+    dst[DATA_WORDS_LEN] = 0;
+}
+
+
+char *enc_str(char *str, char *enc_buf)
+{
+        unsigned char buf[DATA_WORDS_LEN + 1];
+        unsigned char buf2[DATA_WORDS_LEN + 1];
+
+        memset(buf, 0, sizeof(buf));
+        memset(buf2, 0, sizeof(buf2));
+        memset(enc_buf, 0, sizeof(enc_buf));
+
+        strcpy(buf, str);
+
+        shortstr_encrypt(buf, buf2, &used_shift);
+        memcpy(enc_buf, buf2, DATA_WORDS_LEN);
+        enc_buf[DATA_WORDS_LEN] = used_shift;
+
+        return enc_buf;
+}
+
+char *dec_str(char *ec_str, char *dec_buf)
+{
+        unsigned char buf[DATA_WORDS_LEN + 1];
+
+        memset(buf, 0, sizeof(buf));
+        memset(dec_buf, 0, sizeof(dec_buf));
+        memcpy(buf, ec_str, DATA_WORDS_LEN+1);
+        buf[DATA_WORDS_LEN] = 0;
+        shortstr_decrypt(buf, dec_buf, used_shift);
+
+        return dec_buf;
+}

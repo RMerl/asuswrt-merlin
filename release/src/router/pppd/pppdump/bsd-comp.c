@@ -560,7 +560,7 @@ bsd_decompress(state, cmsg, inlen, dmp, outlenp)
     u_int incode, oldcode, finchar;
     u_char *p, *rptr, *wptr;
     int ilen;
-    int dlen=0, codelen, extra;
+    int codelen, extra;
 
     rptr = cmsg;
     if (*rptr == 0)
@@ -620,8 +620,8 @@ bsd_decompress(state, cmsg, inlen, dmp, outlenp)
 	    if (db->debug) {
 		printf("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
 		       db->unit, incode, oldcode);
-		printf("max_ent=0x%x dlen=%d seqno=%d\n",
-		       max_ent, dlen, db->seqno);
+		printf("max_ent=0x%x seqno=%d\n",
+		       max_ent, db->seqno);
 	    }
 	    return DECOMP_FATALERROR;	/* probably a bug */
 	}

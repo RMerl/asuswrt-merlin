@@ -9,13 +9,12 @@
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/JavaScript" src="/alttxt.js"></script>
 <script type="text/JavaScript" src="/general.js"></script>
-<script type="text/JavaScript" src="/form.js"></script>
 <script type="text/JavaScript" src="/help.js"></script>
+<script type="text/JavaScript" src="/validator.js"></script>
 <script type="text/JavaScript">
 <% wanlink(); %>
 
-var client_ip = parent.login_ip_str_now();
-var client_mac = parent.login_mac_str();
+<% login_state_hook(); %>
 
 var now_flag = '<% get_parameter("flag"); %>';
 var original_wan_proto = wanlink_type();
@@ -609,11 +608,11 @@ function validate_dns(){
 		}
 		else{
 			if(document.form.wan_dns1_x.value.length > 0 
-					&& !validate_ipaddr_final(document.form.wan_dns1_x, "wan_dns1_x")){
+					&& !validator.ipAddrFinalQIS(document.form.wan_dns1_x, "wan_dns1_x")){
 					return false;
 				}
 			else if(document.form.wan_dns2_x.value.length > 0 
-					&& !validate_ipaddr_final(document.form.wan_dns2_x, "wan_dns2_x")){
+					&& !validator.ipAddrFinalQIS(document.form.wan_dns2_x, "wan_dns2_x")){
 					return false;					
 				}
 			}
@@ -632,7 +631,7 @@ function remove_red_field(){
 
 function showMAC(){
 	var tempMAC = "";	
-	document.form.wan_hwaddr_x.value = this.client_mac;
+	document.form.wan_hwaddr_x.value = login_mac_str();
 	document.form.wan_hwaddr_x.focus();
 }
 
@@ -691,7 +690,7 @@ function validForm(){
 			return false;
 		}
 		
-		if(!validate_string(document.form.wan_heartbeat_x)){
+		if(!validator.string(document.form.wan_heartbeat_x)){
 			changeiuiBackground(0);
 			return false;
 		}
@@ -923,16 +922,16 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_ExternalIPAddress_itemdesc#>');" style="cursor:help;"><#IPConnection_ExternalIPAddress_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>" tabindex="3" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
-				<!--input type="hidden" id="wan_ipaddr_x" name="wan_ipaddr_x" value="" maxlength="15" onkeypress="return is_ipaddr(this, event);" title="WAN IP"-->
+	    	<input type="text" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>" tabindex="3" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+				<!--input type="hidden" id="wan_ipaddr_x" name="wan_ipaddr_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" title="WAN IP"-->
 				<div class="IPaddr_qis" id="wan_ipaddr_x_div" style="display:none;">
-					<input maxlength="3" name="wan_ipaddr_x1"; onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);"
+					<input maxlength="3" name="wan_ipaddr_x1"; onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
                     onpaste="return   !clipboardData.getData('text').match(/\D/)" ndragenter="return false" autocomplete="off" />.
-					<input maxlength="3" id="wan_ipaddr2" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);"
+					<input maxlength="3" id="wan_ipaddr2" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
                     onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-					<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);"
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
                     onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-					<input maxlength="3" name="wan_ipaddr_x4"; onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);"
+					<input maxlength="3" name="wan_ipaddr_x4"; onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
                     onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
 				</div>
 			</td>
@@ -943,16 +942,16 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalSubnetMask_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalSubnetMask_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>" tabindex="4" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+	    	<input type="text" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>" tabindex="4" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
 				<!--input type="hidden" id="wan_netmask_x" name="wan_netmask_x" value="" maxlength="15"  title="WAN Subnet Mask"-->
 				<div class="IPaddr_qis" id="wan_netmask_x_div" style="display:none;">
-					<input maxlength="3" name="wan_netmask_x1" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+					<input maxlength="3" name="wan_netmask_x1" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
 					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-					<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
 					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-					<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
 					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-					<input maxlength="3" name="wan_netmask_x4" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+					<input maxlength="3" name="wan_netmask_x4" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
 					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
 				</div>
 			</td>
@@ -963,16 +962,16 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalGateway_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalGateway_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>" tabindex="5" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
-				<!--input type="hidden" id="wan_gateway_x" name="wan_gateway_x" value="" maxlength="15" onkeypress="return is_ipaddr(this, event);" class="input"-->
+	    	<input type="text" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>" tabindex="5" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+				<!--input type="hidden" id="wan_gateway_x" name="wan_gateway_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" class="input"-->
 				<div class="IPaddr_qis" id="wan_gateway_x_div" style="display:none;">
-					<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);" 
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);" 
 					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-					<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                     onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-					<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                     onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-					<input maxlength="3" name="wan_gateway_x4" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+					<input maxlength="3" name="wan_gateway_x4" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                     onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
 				</div>
 			</td>
@@ -996,16 +995,16 @@ function displayDNSCtrl(){
 			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer1_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer1_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 	  </th>
 	  <td class="QISformtd">
-    	<input type="text" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>" tabindex="8" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
-			<!--input type="hidden" id="wan_dns1_x" name="wan_dns1_x" value="" onkeypress="return is_ipaddr(this, event);" maxlength="15"-->
+    	<input type="text" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>" tabindex="8" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+			<!--input type="hidden" id="wan_dns1_x" name="wan_dns1_x" value="" onkeypress="return validator.isIPAddr(this, event);" maxlength="15"-->
 			<div class="IPaddr_qis" id="wan_dns1_x_div" style="display:none;">
-				<input maxlength="3" name="wan_dns1_x1" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+				<input maxlength="3" name="wan_dns1_x1" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                 onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-				<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                 onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-				<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                 onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-				<input maxlength="3" name="wan_dns1_x4" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+				<input maxlength="3" name="wan_dns1_x4" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                 onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
 			</div>
 	  </td>
@@ -1016,16 +1015,16 @@ function displayDNSCtrl(){
 			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer2_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer2_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 	  </th>
 	  <td class="QISformtd">
-    	<input type="text" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>" tabindex="9" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
-			<!--input type="hidden" id="wan_dns2_x" name="wan_dns2_x" value="" maxlength="15" onkeypress="return is_ipaddr(this, event);" -->
+    	<input type="text" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>" tabindex="9" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+			<!--input type="hidden" id="wan_dns2_x" name="wan_dns2_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" -->
 			<div class="IPaddr_qis" id="wan_dns2_x_div" style="display:none;">
-				<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                 onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-				<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                 onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-				<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                 onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
-				<input maxlength="3" name="wan_dns2_x4" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
+				<input maxlength="3" name="wan_dns2_x4" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
                 onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
 			</div>
 	  </td>
@@ -1070,7 +1069,7 @@ function displayDNSCtrl(){
 			<div onmouseout="return nd();" onclick="overlib('<#PPPConnection_x_MacAddressForISP_itemdesc#>', FIXX, 285, FIXY,50);" style="white-space:normal;cursor:help;"><#BOP_isp_mac_item#><img align="right" style="cursor:pointer;margin-top:-14px \9;" src="/images/New_ui/helpicon.png"></div>
 			</th>
 			<td class="QISformtd">
-				<input type="text" name="wan_hwaddr_x" tabindex="13" onkeypress="return is_hwaddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="">
+				<input type="text" name="wan_hwaddr_x" tabindex="13" onkeypress="return validator.isHWAddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="">
 				<input type="button" class="button_gen_long" tabindex="14" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
 			</td>
 		</tr>
@@ -1158,7 +1157,7 @@ function displayDNSCtrl(){
 		<fieldset>
 			<div class="row_end">
 				<label><#BOP_isp_mac_item#></label>
-				<input type="text" name="wan_hwaddr_x_m" onkeypress="return is_hwaddr(this,event);" placeholder="" maxlength="17" value=""/>
+				<input type="text" name="wan_hwaddr_x_m" onkeypress="return validator.isHWAddr(this,event);" placeholder="" maxlength="17" value=""/>
 			</div>
 		</fieldset>
 		<br />

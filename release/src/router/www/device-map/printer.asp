@@ -14,6 +14,8 @@
 <script type="text/javascript" src="/state.js"></script>
 <script>
 
+<% login_state_hook(); %>
+
 function initial(){
 	showtext($("printerModel"), parent.usbPorts[parent.currentUsbPort].deviceName);
 	
@@ -30,7 +32,7 @@ function initial(){
 		$("button_descrition").style.display = "none";
 	}
 
-	if('<% nvram_get("mfp_ip_monopoly"); %>' != "" && '<% nvram_get("mfp_ip_monopoly"); %>' != parent.login_ip_str()){
+	if('<% nvram_get("mfp_ip_monopoly"); %>' != "" && '<% nvram_get("mfp_ip_monopoly"); %>' != login_ip_str()){
 		$("monoBtn").style.display = "none";
 		$("monoDesc").style.display = "";
  		$("monoP").style.width = "";

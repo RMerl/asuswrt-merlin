@@ -29,11 +29,7 @@
 #define JFFS2_PARTITION	"jffs2"
 #endif
 
-#ifdef RTCONFIG_TMOBILE
-#define SECOND_JFFS2_PATH 	"/T-Mobile"
-#else
 #define SECOND_JFFS2_PATH	"/asus_jffs"
-#endif
 
 static void error(const char *message)
 {
@@ -43,7 +39,7 @@ static void error(const char *message)
 	notice_set("jffs", s);
 }
 
-#if defined(RTCONFIG_TMOBILE) || defined(RTCONFIG_JFFS2ND_BACKUP)
+#if defined(RTCONFIG_JFFS2ND_BACKUP)
 #define SECOND_JFFS2_PARTITION  "asus"
 
 void mount_2nd_jffs2(void)

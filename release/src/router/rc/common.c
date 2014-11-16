@@ -374,8 +374,9 @@ int pppstatus(void)
 	FILE *fp;
 	char sline[128], buf[128], *p;
 
-	if ((fp=fopen("/tmp/wanstatus.log", "r")) && fgets(sline, sizeof(sline), fp))
+	if ((fp = fopen("/tmp/wanstatus.log", "r")) && fgets(sline, sizeof(sline), fp))
 	{
+		fcntl(fileno(fp), F_SETFL, fcntl(fileno(fp), F_GETFL) | O_NONBLOCK);
 		p = strstr(sline, ",");
 		strcpy(buf, p+1);
 	}
@@ -1241,6 +1242,26 @@ void time_zone_x_mapping(void)
 		nvram_set("time_zone", "UCT-9_1");
 	else if (nvram_match("time_zone", "RFT-9RFTDST"))
 		nvram_set("time_zone", "UCT-9_2");
+	else if (nvram_match("time_zone", "UTC-2DST_1"))	/*Minsk*/
+		nvram_set("time_zone", "UTC-3_3");
+	else if (nvram_match("time_zone", "UTC-4_2"))		/*Moscow, St. Petersburg*/
+		nvram_set("time_zone", "UTC-3_4");
+	else if (nvram_match("time_zone", "UTC-4_3"))		/*Volgograd*/
+		nvram_set("time_zone", "UTC-3_5");
+	else if (nvram_match("time_zone", "UTC-6_1"))		/*Yekaterinburg*/
+		nvram_set("time_zone", "UTC-5_1");
+	else if (nvram_match("time_zone", "UTC-7_1"))		/*Novosibirsk*/
+		nvram_set("time_zone", "UTC-6_2");
+	else if (nvram_match("time_zone", "CST-8_2"))		/*Krasnoyarsk*/
+		nvram_set("time_zone", "CST-7_2");
+	else if (nvram_match("time_zone", "UTC-9_2"))		/*Irkutsk*/
+		nvram_set("time_zone", "UTC-8_1");
+	else if (nvram_match("time_zone", "UTC-10_3"))		/*Yakutsk*/
+		nvram_set("time_zone", "UTC-9_3");
+	else if (nvram_match("time_zone", "UTC-11_2"))		/*Vladivostok*/
+		nvram_set("time_zone", "UTC-10_4");
+	else if (nvram_match("time_zone", "UTC-12_1"))          /*Magadan*/
+		nvram_set("time_zone", "UTC-10_5");
 
 	snprintf(tmpstr, sizeof(tmpstr), "%s", nvram_safe_get("time_zone"));
 	/* replace . with : */

@@ -91,7 +91,7 @@ static struct dev_ops ppp_ops = {
 
 static struct modldrv modldrv = {
     &mod_driverops,			/* says this is a pseudo driver */
-    "PPP-2.3 multiplexing driver",
+    "PPP-2.4.7 multiplexing driver",
     &ppp_ops				/* driver ops */
 };
 

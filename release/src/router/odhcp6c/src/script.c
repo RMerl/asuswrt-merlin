@@ -41,8 +41,6 @@ static const int8_t hexvals[] = {
 
 
 static char *argv[4] = {NULL, NULL, NULL, NULL};
-static volatile char *delayed_call = NULL;
-static bool dont_delay = false;
 
 
 int script_init(const char *path, const char *ifname)
@@ -209,7 +207,7 @@ static void entry_to_env(const char *name, const void *data, size_t len, enum en
 	putenv(buf);
 }
 
-#ifdef EXT_S46
+
 static void s46_to_env_portparams(const uint8_t *data, size_t len, FILE *fp)
 {
 	uint8_t *odata;
@@ -223,7 +221,7 @@ static void s46_to_env_portparams(const uint8_t *data, size_t len, FILE *fp)
 		}
 	}
 }
-#endif
+
 
 static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len)
 {
@@ -237,7 +235,6 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 	fputs(name, fp);
 	fputc('=', fp);
 
-#ifdef EXT_S46
 	const char *type = (state == STATE_S46_MAPE) ? "map-e" :
 			(state == STATE_S46_MAPT) ? "map-t" : "lw4o6";
 
@@ -327,46 +324,21 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 
 		fputc(' ', fp);
 	}
-#else
-	if (data && len) {}
-#endif
 
 	fclose(fp);
 	putenv(str);
 }
 
 
-static void script_call_delayed(int signal __attribute__((unused)))
-{
-	if (delayed_call)
-		script_call((char*)delayed_call);
-}
-
-
-void script_delay_call(const char *status, int timeout)
-{
-	if (dont_delay) {
-		script_call(status);
-	} else if (!delayed_call) {
-		delayed_call = strdup(status);
-		signal(SIGALRM, script_call_delayed);
-		alarm(timeout);
-	}
-}
-
-
 void script_call(const char *status)
 {
 	size_t dns_len, search_len, custom_len, sntp_ip_len, ntp_ip_len, ntp_dns_len;
-	size_t sip_ip_len, sip_fqdn_len, aftr_name_len, cer_len;
+	size_t sip_ip_len, sip_fqdn_len, aftr_name_len, cer_len, addr_len;
 	size_t s46_mapt_len, s46_mape_len, s46_lw_len, passthru_len;
 
 	odhcp6c_expire();
-	if (delayed_call) {
-		alarm(0);
-		dont_delay = true;
-	}
 
+	struct in6_addr *addr = odhcp6c_get_state(STATE_SERVER_ADDR, &addr_len);
 	struct in6_addr *dns = odhcp6c_get_state(STATE_DNS, &dns_len);
 	uint8_t *search = odhcp6c_get_state(STATE_SEARCH, &search_len);
 	uint8_t *custom = odhcp6c_get_state(STATE_CUSTOM_OPTS, &custom_len);
@@ -391,6 +363,7 @@ void script_call(const char *status)
 
 	// Don't set environment before forking, because env is leaky.
 	if (fork() == 0) {
+		ipv6_to_env("SERVER", addr, addr_len / sizeof(*addr));
 		ipv6_to_env("RDNSS", dns, dns_len / sizeof(*dns));
 		ipv6_to_env("SNTP_IP", sntp, sntp_ip_len / sizeof(*sntp));
 		ipv6_to_env("NTP_IP", ntp, ntp_ip_len / sizeof(*ntp));
@@ -405,8 +378,12 @@ void script_call(const char *status)
 		s46_to_env(STATE_S46_MAPT, s46_mapt, s46_mapt_len);
 		s46_to_env(STATE_S46_LW, s46_lw, s46_lw_len);
 		bin_to_env(custom, custom_len);
-		entry_to_env("PREFIXES", prefix, prefix_len, ENTRY_PREFIX);
-		entry_to_env("ADDRESSES", address, address_len, ENTRY_ADDRESS);
+
+		if (odhcp6c_is_bound()) {
+			entry_to_env("PREFIXES", prefix, prefix_len, ENTRY_PREFIX);
+			entry_to_env("ADDRESSES", address, address_len, ENTRY_ADDRESS);
+		}
+
 		entry_to_env("RA_ADDRESSES", ra_pref, ra_pref_len, ENTRY_ADDRESS);
 		entry_to_env("RA_ROUTES", ra_route, ra_route_len, ENTRY_ROUTE);
 		entry_to_env("RA_DNS", ra_dns, ra_dns_len, ENTRY_HOST);

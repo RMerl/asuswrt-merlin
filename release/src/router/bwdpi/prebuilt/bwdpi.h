@@ -103,8 +103,8 @@ struct mail_info{
 	(uint8_t) o[12], (uint8_t) o[13], (uint8_t) o[14], (uint8_t) o[15]
 
 //iqos.c
-extern char *dev_wan;
 extern char *dev_lan;
+extern void check_qosd_wan_setting(char *dev_wan);
 extern void setup_qos_conf();
 extern void stop_tm_qos();
 extern void start_tm_qos();
@@ -121,7 +121,6 @@ extern void start_wrs();
 extern int wrs_main(char *cmd);
 extern int set_cc(char *cmd);
 extern int set_vp(char *cmd);
-extern void setup_cc_conf();
 extern void setup_vp_conf();
 void free_id_list(cid_s **target_list);
 cid_s *get_id_list(cid_s **target_list, char *target_string);
@@ -152,10 +151,13 @@ extern int get_anomaly_main(char *cmd);
 extern int get_app_patrol_main();
 
 //dpi.c
-extern void stop_dpi_engine_service();
+extern int check_bwdpi_nvram_setting();
+extern void stop_dpi_engine_service(int forced);
 extern void run_dpi_engine_service();
 extern void start_dpi_engine_service();
 extern void save_version_of_bwdpi();
+extern void stop_bwdpi_monitor_service();
+extern void start_bwdpi_monitor_service();
 
 //web_history.c
 extern int web_history_main(char *MAC);

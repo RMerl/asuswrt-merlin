@@ -9,8 +9,8 @@
 
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/alttxt.js"></script>
-<script type="text/JavaScript" src="/form.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script>
 var now_flag = '<% get_parameter("flag"); %>';
 
@@ -68,7 +68,7 @@ function gotoAccount(){
 		return false;
 	}
 	
-	if(!validate_string(document.form.wan_heartbeat_x))
+	if(!validator.string(document.form.wan_heartbeat_x))
 		return false;
 	
 	get_value_to_parent();
@@ -136,7 +136,7 @@ function focus_radio(obj){
 				<span onmouseout="return nd();" onclick="overlib('<#BOP_isp_heart_desc2#>', FIXX, 270, FIXY, 30);" style="cursor:help;"><#BOP_isp_heart_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-				<input type="text" id="wan_heartbeat_x" name="wan_heartbeat_x" tabindex="3" title="<#BOP_isp_heart_item#>" value="" size="36" maxlength="64" onkeypress="return is_string(this, event);" class="input_32_table">
+				<input type="text" id="wan_heartbeat_x" name="wan_heartbeat_x" tabindex="3" title="<#BOP_isp_heart_item#>" value="" size="36" maxlength="64" onkeypress="return validator.isString(this, event);" class="input_32_table">
 			</td>
 		</tr>
 	</table>

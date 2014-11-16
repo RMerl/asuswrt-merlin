@@ -27,21 +27,6 @@ function cmpDualFields(a, b) {
 		return cmpHist(a,b);
 }
 
-function validate_iplist(o, event) {
-        if (event.which == null)
-                keyPressed = event.keyCode;     // IE
-         else if (event.which != 0 && event.charCode != 0)
-                keyPressed = event.which        // All others
-        else
-                return true;                    // Special key
-
-        if ((keyPressed>=48&&keyPressed<=57) || //0-9
-           (keyPressed==46) ||                  //.
-           (keyPressed==44)) return true;	//,
-
-        return false;
-}
-
 function getYMD(n) {
 	// [y,m,d]
 	return [(((n >> 16) & 0xFF) + 1900), ((n >>> 8) & 0xFF), (n & 0xFF)];

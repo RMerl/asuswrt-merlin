@@ -16,7 +16,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
@@ -24,9 +24,6 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 <% wanlink(); %>
 
-
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var origin_lan_ip = '<% nvram_get("lan_ipaddr"); %>';
 if(pptpd_support){	
 	var pptpd_clients = '<% nvram_get("pptpd_clients"); %>';
@@ -155,7 +152,7 @@ function validForm(){
 	if(wanip_obj != "0.0.0.0"){				
 		if(sw_mode == 1 && document.form.wan_ipaddr_x.value != "0.0.0.0" && document.form.wan_ipaddr_x.value != "" 
 				&& document.form.wan_netmask_x.value != "0.0.0.0" && document.form.wan_netmask_x.value != ""){
-			if(matchSubnet2(document.form.wan_ipaddr_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
+			if(validator.matchSubnet2(document.form.wan_ipaddr_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
 						document.form.lan_ipaddr.focus();
 						document.form.lan_ipaddr.select();
 						alert("<#IPConnection_x_WAN_LAN_conflict#>");
@@ -237,8 +234,8 @@ function done_validating(action){
 // step1. check IP changed. // step2. check Subnet is the same 
 function changed_DHCP_IP_pool(){
 	if(document.form.lan_ipaddr.value != origin_lan_ip){ // IP changed
-		if(!matchSubnet(document.form.lan_ipaddr.value, document.form.dhcp_start.value, 3) ||
-				!matchSubnet(document.form.lan_ipaddr.value, document.form.dhcp_end.value, 3)){ // Different Subnet
+		if(!validator.matchSubnet(document.form.lan_ipaddr.value, document.form.dhcp_start.value, 3) ||
+				!validator.matchSubnet(document.form.lan_ipaddr.value, document.form.dhcp_end.value, 3)){ // Different Subnet
 				document.form.dhcp_start.value = subnetPrefix(document.form.lan_ipaddr.value, document.form.dhcp_start.value, 3);
 				document.form.dhcp_end.value = subnetPrefix(document.form.lan_ipaddr.value, document.form.dhcp_end.value, 3);				
 		}
@@ -434,7 +431,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
 			</th>			
 			<td>
-			  <input type="text" maxlength="15" class="input_15_table" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event);">
+			  <input type="text" maxlength="15" class="input_15_table" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event);">
 			</td>
 		  </tr>
 		  
@@ -443,7 +440,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 			  <a class="hintstyle"  href="javascript:void(0);" onClick="openHint(4,2);"><#IPConnection_x_ExternalSubnetMask_itemname#></a>
 			</th>
 			<td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" onkeypress="return is_ipaddr(this, event);" >
+				<input type="text" maxlength="15" class="input_15_table" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" onkeypress="return validator.isIPAddr(this, event);" >
 			  <input type="hidden" name="dhcp_start" value="<% nvram_get("dhcp_start"); %>">
 			  <input type="hidden" name="dhcp_end" value="<% nvram_get("dhcp_end"); %>">
 			</td>
@@ -452,7 +449,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 			<tr id="table_gateway">
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
 			<td>
-				<input type="text" name="lan_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("lan_gateway"); %>" onKeyPress="return is_ipaddr(this, event);">
+				<input type="text" name="lan_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("lan_gateway"); %>" onKeyPress="return validator.isIPAddr(this, event);">
 			</td>
 			</tr>
 
@@ -469,7 +466,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a>
 			</th>
       <td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" onkeypress="return is_ipaddr(this, event)" >
+				<input type="text" maxlength="15" class="input_15_table" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" onkeypress="return validator.isIPAddr(this, event)" >
 			</td>
       </tr>
 
@@ -478,7 +475,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a>
 			</th>
       <td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" onkeypress="return is_ipaddr(this, event)" >
+				<input type="text" maxlength="15" class="input_15_table" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" onkeypress="return validator.isIPAddr(this, event)" >
 			</td>
       </tr>  
 

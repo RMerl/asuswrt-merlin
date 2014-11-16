@@ -1718,6 +1718,94 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		}
 	}
 
+#ifdef RTCONFIG_TMOBILE
+	snprintf(prefix, sizeof(prefix), "wl%d.3_", unit);
+	if (nvram_match(strcat_r(prefix, "hs2en", tmp), "1")) {
+		snprintf(prefix, sizeof(prefix), "wl%d.3_", unit);
+			ret += websWrite(wp, "\n");
+
+			ret += wl_status_hspot(eid, wp, argc, argv, unit);
+
+			sprintf(name_vif, "wl%d.3", unit);
+
+			/* query wl for authenticated sta list */
+			strcpy((char*)auth, "authe_sta_list");
+			if (wl_ioctl(name_vif, WLC_GET_VAR, auth, maclist_size))
+				goto exit;
+
+			/* query wl for associated sta list */
+			assoc->count = max_sta_count;
+			if (wl_ioctl(name_vif, WLC_GET_ASSOCLIST, assoc, maclist_size))
+				goto exit;
+
+			/* query wl for authorized sta list */
+			strcpy((char*)authorized, "autho_sta_list");
+			if (wl_ioctl(name_vif, WLC_GET_VAR, authorized, maclist_size))
+				goto exit;
+
+			ret += websWrite(wp, "\n");
+			ret += websWrite(wp, "Stations List                           \n");
+			ret += websWrite(wp, "----------------------------------------\n");
+#ifdef RTCONFIG_BCMARM
+			ret += websWrite(wp, "%-18s%-11s%-11s%-8s%-4s%-4s%-5s%-8s%-8s%-12s\n",
+						"MAC", "Associated", "Authorized", "   RSSI", "PSM", "SGI", "STBC", "Tx rate", "Rx rate", "Connect Time");
+#else
+			ret += websWrite(wp, "%-18s%-11s%-11s%-8s%-4s%-8s%-8s%-12s\n",
+						"MAC", "Associated", "Authorized", "   RSSI", "PSM", "Tx rate", "Rx rate", "Connect Time");
+#endif
+
+			for (ii = 0; ii < auth->count; ii++) {
+				ret += websWrite(wp, "%s ", ether_etoa((void *)&auth->ea[ii], ea));
+
+				for (jj = 0; jj < assoc->count; jj++) {
+					if (!bcmp((void *)&auth->ea[ii], (void *)&assoc->ea[jj], ETHER_ADDR_LEN)) {
+						is_associated = 1;
+						break;
+					}
+				}
+
+				for (jj = 0; jj < authorized->count; jj++) {
+					if (!bcmp((void *)&auth->ea[ii], (void *)&authorized->ea[jj], ETHER_ADDR_LEN)) {
+						is_authorized = 1;
+						break;
+					}
+				}
+
+				ret += websWrite(wp, "%-11s%-11s", is_associated ? "Yes" : " ", is_authorized ? "Yes" : "");
+
+				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
+				if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
+					ret += websWrite(wp, "%-8s", "");
+				else
+					ret += websWrite(wp, "%4ddBm ", scb_val.val);
+
+				sta_info_t *sta = wl_sta_info(name, &auth->ea[ii]);
+				if (sta && (sta->flags & WL_STA_SCBSTATS))
+				{
+#ifdef RTCONFIG_BCMARM
+					ret += websWrite(wp, "%-4s%-4s%-5s",
+						(sta->flags & WL_STA_PS) ? "Yes" : "No",
+						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "Yes" : "No",
+						((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "Yes" : "No");
+#else
+					ret += websWrite(wp, "%-4s",
+						(sta->flags & WL_STA_PS) ? "Yes" : "No");
+#endif
+					ret += websWrite(wp, "%s", print_rate_buf(sta->tx_rate, rate_buf));
+					ret += websWrite(wp, "%s", print_rate_buf(sta->rx_rate, rate_buf));
+
+					hr = sta->in / 3600;
+					min = (sta->in % 3600) / 60;
+					sec = sta->in - hr * 3600 - min * 60;
+					ret += websWrite(wp, "%02d:%02d:%02d", hr, min, sec);
+				}
+
+				ret += websWrite(wp, "\n");
+			}
+		}
+	}
+#endif
+
 	ret += websWrite(wp, "\n");
 	/* error/exit */
 exit:

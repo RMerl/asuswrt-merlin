@@ -16,7 +16,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
@@ -134,9 +134,7 @@
 <script>
 var $j = jQuery.noConflict();
 window.onresize = cal_panel_block;
-<% login_state_hook(); %>
 <% get_AiDisk_status(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
@@ -224,7 +222,7 @@ function showInvitation(){
 		htmlCode += "</td></tr>";
 		
 		if(decode_array[3] != ""){
-			htmlCode += "<tr id='verification' height='40px'><td width='30%'>Verification</td><td><input id='veriCode' type='text' onkeypress='return is_number(this,event)' class='input_6_table' style='margin-left:0px;' maxlength='4' value=''>";
+			htmlCode += "<tr id='verification' height='40px'><td width='30%'>Verification</td><td><input id='veriCode' type='text' onkeypress='return validator.isNumber(this,event)' class='input_6_table' style='margin-left:0px;' maxlength='4' value=''>";
 			htmlCode += "<span style='color:#FC0;display:none;margin-left:5px;' id='codeHint'>Invalid verification code!</span></td></tr>";
 		}
 
@@ -300,7 +298,7 @@ function initial_dir(){
 	$j.get(url,function(data){initial_dir_status(data.split(",")[0]);});
 }
 
-function initial_dir_status(data){console.log(data)
+function initial_dir_status(data){
 	if(data != "" && data.length != 2){
 		var default_dir = data.replace(/\"/g, "");
 		document.form.cloud_dir.value = "/mnt/" + default_dir.substr(0, default_dir.indexOf("#")) + "/MySyncFolder";
@@ -342,6 +340,15 @@ function Do_addRow_Group(){
 }
 
 function edit_Row(r){
+	var showOneProvider = function (imgName, providerName) {
+		var htmlCode = '<div><img style="margin-top: -2px;" src="'+ imgName +'"></div>';
+		htmlCode+= '<div style="font-size:18px;font-weight: bolder;margin-left: 45px;margin-top: -27px;font-family: Calibri;">'+ providerName +'</div>';
+
+		document.getElementById("divOneProvider").innerHTML = htmlCode;
+		document.getElementById("divOneProvider").style.display = "";
+		document.getElementById("povider_tr").style.display = "none";
+	};
+
 	if(cloud_synclist_all == "")
 		return true;
 		
@@ -351,6 +358,7 @@ function edit_Row(r){
 		document.form.cloud_password.value = cloud_synclist_all[r][2];
 		document.form.cloud_rule.value = cloud_synclist_all[r][4];
 		document.form.cloud_dir.value = cloud_synclist_all[r][5].substring(4);	
+		showOneProvider("/images/cloudsync/ASUS-WebStorage.png", "ASUS WebStorage");
 	}
 	else if(cloud_synclist_all[r][0] == 3){
 		change_service("Dropbox");
@@ -358,6 +366,7 @@ function edit_Row(r){
 		document.form.cloud_password.value = cloud_synclist_all[r][3];
 		document.form.cloud_rule.value = cloud_synclist_all[r][5];
 		document.form.cloud_dir.value = cloud_synclist_all[r][6].substring(4);	
+		showOneProvider("/images/cloudsync/dropbox.png", "Dropbox");
 	}
 	else if(cloud_synclist_all[r][0] == 4){
 		change_service("Samba");
@@ -368,6 +377,7 @@ function edit_Row(r){
 		document.form.cloud_password.value = cloud_synclist_all[r][5];
 		document.form.cloud_rule.value = cloud_synclist_all[r][6];
 		document.form.cloud_dir.value = cloud_synclist_all[r][7].substring(4);	
+		showOneProvider("/images/cloudsync/ftp_server.png", "Samba");
 	}
 	else{
 		var ftp_protocol_temp ="";
@@ -382,7 +392,7 @@ function edit_Row(r){
 		document.form.ftp_root_path.value = cloud_synclist_all[r][5];
 		document.form.cloud_rule.value = cloud_synclist_all[r][7];
 		document.form.cloud_dir.value = cloud_synclist_all[r][8].substring(4);	
-		
+		showOneProvider("/images/cloudsync/ftp_server.png", "FTP Server");
 	}
 }
 
@@ -531,8 +541,10 @@ function getDropBoxClientName(token, uid){
       		getDropBoxClientName();
     	},
     	success: function(response){
-    		if(document.getElementById("cloudListUserName_" + uid))
-    			document.getElementById("cloudListUserName_" + uid).innerHTML = response.email;
+    		if(document.getElementById("cloudListUserName_" + uid)) {
+    			document.getElementById("cloudListUserName_" + uid).innerHTML = response.email.shorter(20);
+    			document.getElementById("cloudListUserName_" + uid).title = response.email;
+    		}
     		else
       			getDropBoxClientName();    			
     	}
@@ -841,7 +853,7 @@ function validform(){
 		return false;
 	}
 	
-	if(!validate_string(document.form.cloud_dir))
+	if(!validator.string(document.form.cloud_dir))
 		return false;
 
 	if(!Block_chars(document.form.cloud_username, ["<", ">"]))
@@ -896,6 +908,32 @@ function validform(){
 		document.form.cloud_dir.focus();
 		return false;
 	}
+
+	// add mode need check account whether had created or not.
+	if(editRule == -1) {
+		// ASUS WebStorage and Dropbox only suport one accoumt
+		var cloud_sync_array = cloud_sync.split('<');
+		var selProvider = document.getElementById("select_service").innerHTML;
+		var selProviderIdx;
+		var repeatHint = "";
+		switch (selProvider) {
+			case "WebStorage" :
+				selProviderIdx = 0;
+				repeatHint = "You had created an ASUS WebStorage account.";
+				break;
+			case "Dropbox" :
+				selProviderIdx = 3;
+				repeatHint = "You had created a Dropbox account.";
+				break;
+		}
+		for(var i = 0; i < cloud_sync_array.length; i += 1) {
+			if(cloud_sync_array[i][0] == selProviderIdx) {
+				alert(repeatHint);
+				return false;
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -1009,6 +1047,9 @@ function showAddTable(srv, row_number){
 	else if(_srv == "new_rule"){
 		$j("#cloudAddTable").fadeIn();
 		$("creatBtn").style.display = "none";
+		document.getElementById("divOneProvider").style.display = "none";
+		document.getElementById("povider_tr").style.display = "";
+		editRule = -1;
 		$j("#applyDiv").fadeIn();
 		change_service("WebStorage");
 		$("cloud_username").value = "";
@@ -1606,6 +1647,7 @@ function onDropBoxLogin(token, uid){
 									Provider
 								</th>
 								<td>				
+									<div id="divOneProvider" style="display:none;"></div>				
 									<ul id="povider_tr" class="navigation" style="margin:-15px 0 0 -39px;*margin:-20px 0 0 0;">  
 										<li >
 											<dl>
@@ -1634,7 +1676,7 @@ function onDropBoxLogin(token, uid){
 								Server Name
 							</th>			
 							<td>
-							  <input type="text"  class="input_32_table" style="height: 23px;" id="sambaclient_name" name="sambaclient_name">
+							  <input type="text" class="input_32_table" maxlength="32" style="height: 23px;" id="sambaclient_name" name="sambaclient_name">
 							  &nbsp;
 							  <span>(Optional)</span>
 							</td>

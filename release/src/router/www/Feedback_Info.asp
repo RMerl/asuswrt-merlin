@@ -18,7 +18,6 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
 <script>
 var fb_state = "<% nvram_get("fb_state"); %>";
 	

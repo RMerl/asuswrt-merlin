@@ -10,6 +10,7 @@
 <link rel="stylesheet" type="text/css" href="aidisk.css">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <script type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script>
 var next_page = "";
 var dummyShareway = 0;
@@ -148,7 +149,7 @@ function checkPasswdValid(obj){
 		return false;
 	}	
 	
-	if(!validate_string(obj)){
+	if(!validator.string(obj)){
 			obj.focus();
 			obj.select();
 			return false;	
@@ -237,7 +238,7 @@ function checkPasswdValid(obj){
                 
                 	<tr id="target2">
                   	<td height="35"><span id="user2" style="color:#FFFFFF;"></span></td>
-                  	<td><input type="text" name="userpasswd2" id="userpasswd2" value="" class="input_25_table" onKeyPress="return is_string(this, event);" maxlength="16"></td>
+                  	<td><input type="text" name="userpasswd2" id="userpasswd2" value="" class="input_25_table" onKeyPress="return validator.isString(this, event);" maxlength="16"></td>
                   	<td align="center"><img src="/images/New_ui/checkbox.png"></td>
                   	<td align="center">&nbsp;</td>
                 	</tr>

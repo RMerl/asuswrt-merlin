@@ -79,13 +79,15 @@ var retHostName = function(_mac){
 }
 /* end */
 
-var networkmap_fullscan = '<% nvram_get("networkmap_fullscan"); %>'
+var networkmap_fullscan = '<% nvram_get("networkmap_fullscan"); %>';
+var fromNetworkmapdCache = '<% nvram_get("client_info_tmp"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<").split('<');
 
 var originDataTmp;
 var originData = {
 	customList: decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	asusDevice: decodeURIComponent('<% nvram_char_to_ascii("", "asus_device_list"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	fromDHCPLease: '',
+	staticList: decodeURIComponent('<% nvram_char_to_ascii("", "dhcp_staticlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	fromNetworkmapd: '<% get_client_detail_info(); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	fromBWDPI: '<% bwdpi_device_info(); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	wlList_2g: [<% wl_sta_list_2g(); %>],
@@ -105,6 +107,8 @@ var setClientAttr = function(){
 	this.name = "";
 	this.ip = "offline";
 	this.mac = "";
+	this.from = "";
+	this.macRepeat = 1;
 	this.group = "";
 	this.dpiType = "";
 	this.rssi = "";
@@ -124,13 +128,16 @@ var setClientAttr = function(){
 	this.isASUS = false;
 	this.isLogin = false;
 	this.isOnline = false;
-	this.isCustom = false;
+	this.isStaticIP = false;
 }
 
 var clientList = new Array(0);
 function genClientList(){
 	clientList = [];
 	totalClientNum.wireless = 0;
+
+	if(fromNetworkmapdCache.length > 1 && networkmap_fullscan == 1)
+		originData.fromNetworkmapd = fromNetworkmapdCache;
 
 	for(var i=0; i<originData.asusDevice.length; i++){
 		var thisClient = originData.asusDevice[i].split(">");
@@ -140,9 +147,18 @@ function genClientList(){
 			continue;
 		}
 
-		clientList.push(thisClientMacAddr);
-		clientList[thisClientMacAddr] = new setClientAttr();
-
+		if(typeof clientList[thisClientMacAddr] == "undefined"){
+			clientList.push(thisClientMacAddr);
+			clientList[thisClientMacAddr] = new setClientAttr();
+			clientList[thisClientMacAddr].from = "asusDevice";
+		}
+		else{
+			if(clientList[thisClientMacAddr].from == "asusDevice")
+				clientList[thisClientMacAddr].macRepeat++;
+			else
+				clientList[thisClientMacAddr].from = "asusDevice";
+		}
+		
 		clientList[thisClientMacAddr].type = thisClient[0];
 		clientList[thisClientMacAddr].name = thisClient[1];
 		clientList[thisClientMacAddr].ip = thisClient[2];
@@ -167,6 +183,13 @@ function genClientList(){
 		if(typeof clientList[thisClientMacAddr] == "undefined"){
 			clientList.push(thisClientMacAddr);
 			clientList[thisClientMacAddr] = new setClientAttr();
+			clientList[thisClientMacAddr].from = "networkmapd";
+		}
+		else{
+			if(clientList[thisClientMacAddr].from == "networkmapd")
+				clientList[thisClientMacAddr].macRepeat++;
+			else
+				clientList[thisClientMacAddr].from = "networkmapd";
 		}
 
 		if(clientList[thisClientMacAddr].type == "")
@@ -220,6 +243,7 @@ function genClientList(){
 		if(typeof clientList[thisClientMacAddr] == "undefined"){
 			clientList.push(thisClientMacAddr);
 			clientList[thisClientMacAddr] = new setClientAttr();
+			clientList[thisClientMacAddr].from = "customList";
 		}
 
 		clientList[thisClientMacAddr].name = thisClient[0];
@@ -227,7 +251,6 @@ function genClientList(){
 		clientList[thisClientMacAddr].group = thisClient[2];
 		clientList[thisClientMacAddr].type = thisClient[3];
 		clientList[thisClientMacAddr].callback = thisClient[4];
-		clientList[thisClientMacAddr].isCustom = true;
 	}
 
 	for(var i=0; i<originData.wlList_2g.length; i++){
@@ -273,6 +296,19 @@ function genClientList(){
 
 		if(typeof clientList[thisClientMacAddr] != "undefined"){
 			clientList[thisClientMacAddr].qosLevel = thisClient[5];
+		}
+	}
+
+	for(var i=0; i<originData.staticList.length; i++){
+		var thisClient = originData.staticList[i].split(">");
+		var thisClientMacAddr = (typeof thisClient[0] == "undefined") ? false : thisClient[0].toUpperCase();
+
+		if(!thisClientMacAddr || typeof clientList[thisClientMacAddr] == "undefined"){
+			continue;
+		}
+
+		if(typeof clientList[thisClientMacAddr] != "undefined"){
+			clientList[thisClientMacAddr].isStaticIP = true;
 		}
 	}
 

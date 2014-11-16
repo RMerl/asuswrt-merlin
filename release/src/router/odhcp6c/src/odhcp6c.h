@@ -73,17 +73,15 @@ enum dhcvp6_opt {
 	/* draft-donley-dhc-cer-id-option-03 */
 	DHCPV6_OPT_CER_ID = EXT_CER_ID,
 #endif
-#ifdef EXT_S46
-	/* draft-ietf-softwire-map-dhcp-07 */
-	DHCPV6_OPT_S46_RULE = EXT_S46,
-	DHCPV6_OPT_S46_BR = EXT_S46 + 1,
-	DHCPV6_OPT_S46_DMR = EXT_S46 + 2,
-	DHCPV6_OPT_S46_V4V6BIND = EXT_S46 + 3,
-	DHCPV6_OPT_S46_PORTPARAMS = EXT_S46 + 4,
-	DHCPV6_OPT_S46_CONT_MAPE = EXT_S46 + 5,
-	DHCPV6_OPT_S46_CONT_MAPT = EXT_S46 + 6,
-	DHCPV6_OPT_S46_CONT_LW = EXT_S46 + 7,
-#endif
+	/* draft-ietf-softwire-map-dhcp-08 */
+	DHCPV6_OPT_S46_RULE = 89,
+	DHCPV6_OPT_S46_BR = 90,
+	DHCPV6_OPT_S46_DMR = 91,
+	DHCPV6_OPT_S46_V4V6BIND = 92,
+	DHCPV6_OPT_S46_PORTPARAMS = 93,
+	DHCPV6_OPT_S46_CONT_MAPE = 94,
+	DHCPV6_OPT_S46_CONT_MAPT = 95,
+	DHCPV6_OPT_S46_CONT_LW = 96,
 };
 
 enum dhcpv6_opt_npt {
@@ -125,7 +123,7 @@ enum dhcpv6_config {
 };
 
 typedef int(reply_handler)(enum dhcpv6_msg orig, const int rc,
-		const void *opt, const void *end);
+		const void *opt, const void *end, const struct sockaddr_in6 *from);
 
 // retransmission strategy
 struct dhcpv6_retx {
@@ -248,6 +246,7 @@ enum odhcp6c_state {
 	STATE_CLIENT_ID,
 	STATE_SERVER_ID,
 	STATE_SERVER_CAND,
+	STATE_SERVER_ADDR,
 	STATE_ORO,
 	STATE_DNS,
 	STATE_SEARCH,
@@ -326,7 +325,6 @@ int set_rtnetlink_addr(int ifindex, const struct in6_addr *addr,
 int script_init(const char *path, const char *ifname);
 ssize_t script_unhexlify(uint8_t *dst, size_t len, const char *src);
 void script_call(const char *status);
-void script_delay_call(const char *status, int timeout);
 
 bool odhcp6c_signal_process(void);
 uint64_t odhcp6c_get_milli_time(void);
@@ -350,4 +348,4 @@ bool odhcp6c_update_entry_safe(enum odhcp6c_state state, struct odhcp6c_entry *n
 void odhcp6c_expire(void);
 uint32_t odhcp6c_elapsed(void);
 
-int loglevel;
+extern int loglevel;

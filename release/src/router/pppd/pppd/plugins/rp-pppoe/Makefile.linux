@@ -25,8 +25,8 @@ INSTALL	= install
 # Version is set ONLY IN THE MAKEFILE!  Don't delete this!
 RP_VERSION=3.11p
 
-COPTS=-O2 -g -fno-strict-aliasing -Wall -Wstrict-prototypes
-CFLAGS=$(COPTS) -I../../../include '-DRP_VERSION="$(RP_VERSION)"' -DPLUGIN=1
+COPTS=-O2 -g
+CFLAGS=$(COPTS) -I../../../include '-DRP_VERSION="$(RP_VERSION)"' $(EXTRACFLAGS) -DPLUGIN=1
 all: rp-pppoe.so
 
 rp-pppoe.so: plugin.o libplugin.a
@@ -34,7 +34,7 @@ rp-pppoe.so: plugin.o libplugin.a
 
 install: all
 	$(INSTALL) -d -m 755 $(LIBDIR)
-	$(INSTALL) -s -c -m 4550 rp-pppoe.so $(LIBDIR)
+	$(INSTALL) -s -c -m 755 rp-pppoe.so $(LIBDIR)
 
 clean:
 	rm -f *.o *.so *.a

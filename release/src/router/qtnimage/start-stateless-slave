@@ -12,6 +12,20 @@ else
 	. ${base_scripts}/stateless_slave_config
 fi
 
+telnet_ate() {
+	TELNETSRV=`get_bootval REMOVEQTNTELNETSRV`
+	calstate=`cat /proc/bootcfg/env | grep calstate| cut -d '=' -f2`
+        if [ "$TELNETSRV" == "0" ] ; then
+		if [ "$calstate" == "1" ] ; then
+			ifconfig br0:0 1.1.1.2 netmask 255.255.255.0
+		else
+			echo "Telnet disabled"
+		fi
+        elif [ -f /etc/inetd.conf ]; then
+		ifconfig br0:0 1.1.1.2 netmask 255.255.255.0
+        fi
+}
+
 ifconfig_all_ether() {
 	echo_with_logging "=== Disabling network interfaces"
 	if [ -e /sys/class/net/eth1_0 ]; then
@@ -156,9 +170,11 @@ echo_with_logging "=== Apply some hardware wireless setting"
 
 if [ -n "${server_ipaddr}" ]; then
 	echo_with_logging "=== Setting IP address and netmask to ${server_ipaddr}"
-	# ${INVOKE_QCSAPI} store_ipaddr ${slave_ipaddr}
+	${INVOKE_QCSAPI} store_ipaddr ${slave_ipaddr}
 	ifconfig br0 ${server_ipaddr} netmask 255.255.255.0
+	# ifconfig br0 0.0.0.0
 fi
+# ifconfig br0 0.0.0.0
 
 echo "=== skip get tweak_qcomm"
 # tftp -g ${client_ipaddr} -r tweak_qcomm -l /mnt/jffs2/tweak_qcomm
@@ -170,3 +186,7 @@ echo_with_logging "=== fix 10M issue"
 ${INVOKE_QCSAPI} -q pm off
 
 echo_with_logging "=== Done setting up stateless slave"
+
+echo_with_logging "=== Enable telnet for ATE"
+# telnet_ate
+

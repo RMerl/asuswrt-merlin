@@ -16,14 +16,12 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/JavaScript" src="/jquery.js"></script>
 <script>
 
-<% login_state_hook(); %>
 <% wan_get_parameter(); %>
 
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var wan_proto_orig = '<% nvram_get("wan_proto"); %>';
 var ipv6_proto_orig = '<% nvram_get("ipv6_service"); %>';
 var ipv6_tun6rd_dhcp = '<% nvram_get("ipv6_6rd_dhcp"); %>';
@@ -32,6 +30,11 @@ var machine_name = '<% get_machine_name(); %>';
 var machine_arm = (machine_name.search("arm") == -1) ? false : true;
 var ipv6_dhcp_start_orig = '<% nvram_get("ipv6_dhcp_start"); %>';
 var ipv6_dhcp_end_orig = '<% nvram_get("ipv6_dhcp_end"); %>';
+
+if(yadns_support){
+	var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
+	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
+}
 
 var $j = jQuery.noConflict();
 
@@ -42,6 +45,14 @@ function initial(){
 	}
 	show_menu();
 	showInputfield(ipv6_proto_orig);
+
+	if(yadns_support){
+		if(yadns_enable != 0 && yadns_mode != -1){
+			$("yadns_hint").style.display = "";
+			$("yadns_hint").innerHTML = "<span><#YandexDNS_settings_hint#></span>";
+		}
+	}
+
 	addOnlineHelp($("faq"), ["ASUSWRT", "IPv6"]);
 }
 
@@ -583,13 +594,13 @@ function validForm(){
 
 	if(document.form.ipv6_service.value=="other"){
 				if(!ipv6_valid(document.form.ipv6_ipaddr) ||
-						!validate_range(document.form.ipv6_prefix_len_wan, 3, 64) ||
+						!validator.range(document.form.ipv6_prefix_len_wan, 3, 64) ||
 						!ipv6_valid(document.form.ipv6_gateway)){
 						return false;
 				}
 
 				//!ipv6_valid(document.form.ipv6_prefix) || Viz rm 2013.05
-				if(	!validate_range(document.form.ipv6_prefix_length, 3, 64) ||
+				if(	!validator.range(document.form.ipv6_prefix_length, 3, 64) ||
 						!ipv6_valid(document.form.ipv6_rtr_addr)){
 						return false;
 				}
@@ -626,7 +637,7 @@ function validForm(){
 						}
 			}
 
-			if(!validate_range(document.form.ipv6_dhcp_lifetime, 120, 604800)){
+			if(!validator.range(document.form.ipv6_dhcp_lifetime, 120, 604800)){
 						document.form.ipv6_dhcp_lifetime.focus();
 						document.form.ipv6_dhcp_lifetime.select();
 						return false;
@@ -652,8 +663,8 @@ function validForm(){
 
 	}else	if(document.form.ipv6_service.value=="6to4" ||document.form.ipv6_service.value=="6in4" ||document.form.ipv6_service.value=="6rd" ){
 
-			if(!validate_range_sp(document.form.ipv6_tun_mtu,1280,1480,0))  return false;  //MTU
-			if(!validate_range_sp(document.form.ipv6_tun_ttl,0,255,255))  return false;  //TTL
+			if(!validator.rangeAllowZero(document.form.ipv6_tun_mtu,1280,1480,0))  return false;  //MTU
+			if(!validator.rangeAllowZero(document.form.ipv6_tun_ttl,0,255,255))  return false;  //TTL				
 
 			if(document.form.ipv6_dns1.value != ""){
 					if(!ipv6_valid(document.form.ipv6_dns1)) return false;
@@ -671,19 +682,19 @@ function validForm(){
 	}
 
 	if(document.form.ipv6_service.value=="6in4"){
-			if(!validate_iprange(document.form.ipv6_tun_v4end, "")) return false;  //6in4 tun endpoint
+			if(!validator.ipRang(document.form.ipv6_tun_v4end, "")) return false;  //6in4 tun endpoint
 			if(!ipv6_valid(document.form.ipv6_tun_addr)) return false;  //6in4 Client IPv6 Address
-			if(!validate_range(document.form.ipv6_tun_addrlen, 3, 64))  return false;
+			if(!validator.range(document.form.ipv6_tun_addrlen, 3, 64))  return false;
 			if(document.form.ipv6_tun_peer.value != "" && !ipv6_valid(document.form.ipv6_tun_peer)) return false;
 	}
 
 	if(document.form.ipv6_service.value=="6rd" && document.form.ipv6_6rd_dhcp[1].checked){
 			if(!ipv6_valid(document.form.ipv6_6rd_prefix) ||
-					!validate_range(document.form.ipv6_6rd_prefixlen, 3, 64)){
+					!validator.range(document.form.ipv6_6rd_prefixlen, 3, 64)){
 					return false;
 			}
-			if(!validate_iprange(document.form.ipv6_6rd_router, "")) return false;  //6rd ip4 router
-			if(!validate_range(document.form.ipv6_6rd_ip4size, 0, 32)) return false;  //6rd ip4 router mask length
+			if(!validator.ipRange(document.form.ipv6_6rd_router, "")) return false;  //6rd ip4 router
+			if(!validator.range(document.form.ipv6_6rd_ip4size, 0, 32)) return false;  //6rd ip4 router mask length
 	}
 
 	return true;
@@ -1064,7 +1075,7 @@ function showInfo(){
 		     	<tr>
 		     		<th>Lifetime (sec)</th>
 		     		<td>
-		     			<input type="text" maxlength="6" class="input_6_table" name="ipv6_dhcp_lifetime" value="<% nvram_get("ipv6_dhcp_lifetime"); %>" onkeypress="return is_number(this,event)">
+		     			<input type="text" maxlength="6" class="input_6_table" name="ipv6_dhcp_lifetime" value="<% nvram_get("ipv6_dhcp_lifetime"); %>" onkeypress="return validator.isNumber(this,event)">
 		     		</td>
 		    	</tr>
 			</table>
@@ -1082,6 +1093,7 @@ function showInfo(){
 		     		<td>
 								<input type="radio" name="ipv6_dnsenable" class="input" value="1" onclick="showInputfield2('ipv6_dnsenable', this.value);" <% nvram_match("ipv6_dnsenable", "1","checked"); %>><#WLANConfig11b_WirelessCtrl_button1name#>
 								<input type="radio" name="ipv6_dnsenable" class="input" value="0" onclick="showInputfield2('ipv6_dnsenable', this.value);" <% nvram_match("ipv6_dnsenable", "0","checked"); %>><#btn_disable#>
+								<div id="yadns_hint" style="display:none;"></div>
 		     		</td>
 		     	</tr>
 					<tr style="display:none;">

@@ -11,6 +11,7 @@
 
 <script type="text/javascript" src="../state.js"></script>
 <script type="text/javascript" src="../help.js"></script>
+<script type="text/javascript" src="../validator.js"></script>
 <script type="text/javascript">
 var selectedAccount = parent.getSelectedAccount();
 
@@ -53,7 +54,7 @@ function validForm(){
 			return false;
 	}
 	else{				
-			var alert_str = validate_hostname($("new_account"));
+			var alert_str = validator.hostName($("new_account"));
 			if(alert_str != ""){
 				alert(alert_str);
 				$("new_account").focus();
@@ -98,7 +99,7 @@ function validForm(){
 		return false;
 	}
 
-	if(!validate_string(document.modifyAccountForm.new_password)){
+	if(!validator.string(document.modifyAccountForm.new_password)){
 		$("new_password").focus();
 		$("new_password").select();
 		return false;
@@ -137,11 +138,11 @@ function validForm(){
     </tr>
     <tr>
       <th><#ModAccountPassword#>: </th>
-      <td><input type="password" class="input_15_table" autocapitalization="off" name="new_password" id="new_password" onKeyPress="return is_string(this, event);" maxlength="17"></td>
+      <td><input type="password" class="input_15_table" autocapitalization="off" name="new_password" id="new_password" onKeyPress="return validator.isString(this, event);" maxlength="17"></td>
     </tr>
     <tr>
       <th><#Confirmpassword#>: </th>
-      <td><input type="password" class="input_15_table" autocapitalization="off" name="confirm_password" id="confirm_password" onKeyPress="return is_string(this, event);" maxlength="17">
+      <td><input type="password" class="input_15_table" autocapitalization="off" name="confirm_password" id="confirm_password" onKeyPress="return validator.isString(this, event);" maxlength="17">
       		<br/><span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>	
       </td>
     </tr>

@@ -16,8 +16,8 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
-<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <style>
@@ -75,7 +75,6 @@ var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 
-<% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
 var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
@@ -83,7 +82,7 @@ var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
 function initial(){
 	show_menu();
 
-	regen_band();
+	regen_band(document.form.wl_unit);
 
 	if((sw_mode == 2 || sw_mode == 4) && document.form.wl_unit.value == '<% nvram_get("wlc_band"); %>'){
 		for(var i=3; i>=3; i--)
@@ -433,7 +432,7 @@ function enable_macMode(){
 							</tr>
 							<tr>
 								<td width="30%">
-									<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
+									<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return validator.isHWAddr(this,event)" onClick="hideClients_Block();">
 									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="<#select_wireless_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 									<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
 					              		</td>

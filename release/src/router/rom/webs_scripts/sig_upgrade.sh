@@ -13,9 +13,13 @@ rsa_enabled=`nvram show | grep rc_support | grep HTTPS`
 touch /tmp/update_url
 update_url=`cat /tmp/update_url`
 #update_url="http://192.168.123.198"
-sig_file=`nvram get productid`_`nvram get sig_state_info`_un.zip
+
+get_productid=`nvram get productid`
+get_productid=`echo $get_productid | sed s/+/plus/;`    #replace 'plus' to '+' for one time
+
+sig_file=`echo $get_productid`_`nvram get sig_state_info`_un.zip
 if [ "$rsa_enabled" != "" ]; then
-sig_rsasign=`nvram get productid`_`nvram get sig_state_info`_rsa.zip
+sig_rsasign=`echo $get_productid`_`nvram get sig_state_info`_rsa.zip
 fi
 
 # get signature zip file

@@ -283,7 +283,7 @@ ERROR:
 }
 #endif
 static void
-psta_keepalive()
+psta_keepalive(int ex)
 {
 	char tmp[NVRAM_BUFSIZE], prefix[] = "wlXXXXXXXXXX_";
 	char *name = NULL;
@@ -293,8 +293,10 @@ psta_keepalive()
 	struct ether_addr bssid;
 	unsigned char bssid_null[6] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 	char macaddr[18];
+	char band_var[16];
 
-	unit = nvram_get_int("wlc_band");
+	sprintf(band_var, "wlc_band%s", ex?"_ex":"");
+	unit = nvram_get_int(band_var);
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
 	if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta"))
@@ -378,7 +380,9 @@ psta_monitor(int sig)
 {
 	if (sig == SIGALRM)
 	{
-		psta_keepalive();
+		psta_keepalive(0);
+		if(nvram_match("exband", "1"))
+			psta_keepalive(1);
 		alarm(NORMAL_PERIOD);
 	}
 }

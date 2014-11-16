@@ -587,7 +587,7 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
         strcpy(trx_name, "nflash1.trx");
         strcpy(os_name, "nflash0.os");
 
-        if (!nvram_match("no_rescue", "1") && DETECT()) {
+        if (DETECT()) {
                 xprintf("Hello!! Enter Rescue Mode: (by Force)\n\n");
                 /* Wait forever for an image */
                 while ((ret = ui_docommand("flash -noheader : nflash1.trx")) == CFE_ERR_TIMEOUT) {

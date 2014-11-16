@@ -15,18 +15,13 @@
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var client_mac = login_mac_str();
 var macfilter_num_x = '<% nvram_get("macfilter_num_x"); %>';
-var smac = client_mac.split(":");
-var simply_client_mac = smac[0] + smac[1] + smac[2] + smac[3] + smac[4] + smac[5];
 var macfilter_rulelist_array = '<% nvram_get("macfilter_rulelist"); %>';
 
 function initial(){
@@ -269,7 +264,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
        	</tr>
         	<tr>
           		<td width="40%">
-          			<input type="text" maxlength="17" class="input_macaddr_table" name="macfilter_list_x_0"  onKeyPress="return is_hwaddr(this,event)">
+          			<input type="text" maxlength="17" class="input_macaddr_table" name="macfilter_list_x_0"  onKeyPress="return validator.isHWAddr(this,event)">
 		  	</td>          			
 			<td width="40%">
 				<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="macfilter_name_x_0">

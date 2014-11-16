@@ -80,7 +80,6 @@ PATYPE := 0
 MTDSIZE ?= $(LINUX_MTD)
 MTDSIZE ?= 32
 DUAL_TRX := 0
-TMO := 0
 
 # HND source base
 SRCBASE := $(shell cd ../../../.. && pwd)
@@ -137,12 +136,7 @@ CFLAGS += -DDUAL_TRX
 endif
 
 ifeq ($(strip $(RTAC68U)),1)
-ifeq ($(strip $(TMO)),1)
-MTDSIZE := 48
-CFLAGS += -DDUAL_TRX
-else
 MTDSIZE := 64
-endif
 CFLAGS += -DRTAC68U
 endif
 

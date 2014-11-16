@@ -174,7 +174,7 @@ struct ieee80211_ctlframe_addr2 {
 
 struct ieee80211_vht_su_ndpa {
 	uint8_t i_fc[2];
-	uint8_t i_dur[2];
+	__le16 i_dur;
 	uint8_t i_addr1[IEEE80211_ADDR_LEN];
 	uint8_t i_addr2[IEEE80211_ADDR_LEN];
 	uint8_t i_diagtoken;
@@ -603,6 +603,7 @@ struct ieee80211_ie_qtn_scs {
 	/* following depends on scs_ie_type */
 	uint32_t sp_fail;		/* short preamble failure in last second */
 	uint32_t lp_fail;		/* long preamble failure in last second */
+	uint16_t others_time;		/* rx + tx time for all nodes */
 } __packed;
 #define QTN_SCS_IE_LEN_MIN              7    /* till scs ie type */
 #define QTN_SCS_IE_STA_INTF_RPT_LEN_MIN     (QTN_SCS_IE_LEN_MIN + 8)
@@ -945,8 +946,19 @@ struct ieee80211_action {
 #define IEEE80211_ACTION_CAT_BA			3	/* block ack */
 #define IEEE80211_ACTION_CAT_PUBLIC		4	/* Public */
 #define IEEE80211_ACTION_CAT_RM			5	/* Radio measurement */
+#define IEEE80211_ACTION_CAT_FBSS		6	/* Fast BSS */
 #define IEEE80211_ACTION_CAT_HT			7	/* HT */
+#define IEEE80211_ACTION_CAT_SA_QUERY		8	/* SA Query */
+#define IEEE80211_ACTION_CAT_PROT_DUAL_PA	9	/* Protected Dual of Public Action */
+#define IEEE80211_ACTION_CAT_WNM		10	/* WNM */
+#define IEEE80211_ACTION_CAT_UNPROT_WNM		11	/* Unprotected WNM */
+#define IEEE80211_ACTION_CAT_TDLS		12	/* TDLS */
+#define IEEE80211_ACTION_CAT_MESH		13	/* Mesh */
+#define IEEE80211_ACTION_CAT_MULTIHOP		14	/* Multihop */
+#define IEEE80211_ACTION_CAT_SELF_PROT		15	/* self protected */
+
 #define IEEE80211_ACTION_CAT_VHT		21	/* VHT */
+#define IEEE80211_ACTION_CAT_VEND_PROT	126	/* Protected Vendor specific Action frame */
 #define IEEE80211_ACTION_CAT_VENDOR		0x7F	/* Vendor specific Action frame */
 
 struct ieee80211_ie_power_capability {
@@ -1704,6 +1716,27 @@ struct ieee80211_action_ba_delba {
 #define IEEE80211_A_BA_DELBA_TID			0xF000
 #define IEEE80211_A_BA_DELBA_TID_S			12
 
+/* Move to a .config file later. */
+#define CONFIG_QHOP 1
+
+#ifdef CONFIG_QHOP
+#define QDRV_ACTION_TYPE_QHOP        0x19
+#define QDRV_ACTION_QHOP_DFS_REPORT  0x1
+#define QDRV_ACTION_QHOP_SCS_REPORT  0x2
+
+struct qdrv_vendor_action_header {
+	uint8_t category;
+	uint8_t oui[3];
+	uint8_t type;
+	uint8_t action;
+} __packed;
+
+struct qdrv_vendor_action_qhop_dfs_data {
+	uint8_t cur_chan;
+} __packed;
+
+#endif
+
 #ifdef CONFIG_QVSP
 
 /**
@@ -1762,6 +1795,17 @@ struct ieee80211_qvsp_act_vsp_ctrl_s {
 } __packed;
 
 #endif
+
+/*
+ * 802.11w / PMF SA Query Action Frame
+ */
+#define IEEE80211_ACTION_W_SA_QUERY_REQ		0
+#define IEEE80211_ACTION_W_SA_QUERY_RESP	1
+
+struct ieee80211_action_sa_query {
+	struct ieee80211_action		at_header;
+	u_int16_t			at_tid;
+} __packed;
 
 /*
  * Control frames.
@@ -1945,6 +1989,16 @@ struct ieee80211_ie_wpa {
 	u_int16_t wpa_pmkidcnt;		/* 802.11i pmkid count */
 	u_int16_t wpa_pmkids[8];		/* 802.11i pmkids */
 } __packed;
+
+/* Extender Role IE */
+struct ieee80211_ie_qtn_extender {
+	uint8_t id;		/* IEEE80211_ELEMID_VENDOR */
+	uint8_t len;		/* 5 */
+	uint8_t qtn_ie_oui[3];	/* QTN_OUI - 0x00, 0x26, 0x86*/
+	uint8_t qtn_ie_type;	/* QTN_OUI_EXTENDER_ROLE */
+	uint8_t role;		/* extender device role */
+} __packed;
+
 /*
  * 802.11n AMPDU delimiters and frame structure
  */
@@ -2635,6 +2689,7 @@ struct ieee80211_country_ie {
 #define	QTN_OUI_RM_ALL		0x11		/* Radio measurement all group */
 #define QTN_OUI_SCS             0x12            /* SCS status report and control */
 #define QTN_OUI_QWME            0x13            /* WME IE between QSTA */
+#define QTN_OUI_EXTENDER_ROLE	0x14		/* WDS Extender Role */
 
 #define QTN_QWME_IE_VERSION	1
 
@@ -2669,14 +2724,21 @@ struct ieee80211_country_ie {
 #define	RSN_CSE_WRAP		0x03
 #define	RSN_CSE_CCMP		0x04
 #define	RSN_CSE_WEP104		0x05
+#define	RSN_CSE_BIP		0x06
 
 #define	RSN_ASE_NONE		0x00
 #define	RSN_ASE_8021X_UNSPEC	0x01
 #define	RSN_ASE_8021X_PSK	0x02
+#define	RSN_ASE_8021X_SHA256	0x05
+#define	RSN_ASE_8021X_PSK_SHA256 0x06
 
 #define	RSN_CAP_PREAUTH		0x01
+#define	RSN_CAP_MFP_REQ		0x0040
+#define	RSN_CAP_MFP_CAP		0x0080
 #define	RSN_CAP_SPP_CAP		0x0400
 #define	RSN_CAP_SPP_REQ		0x0800
+
+#define RSN_IS_MFP(_rsn_caps) (((_rsn_caps) & RSN_CAP_MFP_REQ) || ((_rsn_caps) & RSN_CAP_MFP_CAP))
 
 #define	WME_OUI			0xf25000
 #define	WME_OUI_TYPE		0x02
@@ -2686,11 +2748,16 @@ struct ieee80211_country_ie {
 
 #define RLNK_OUI		0x430C00	/* Ralink OUI */
 
-#define PEER_VENDOR_NONE	0x0
-#define PEER_VENDOR_QTN		0x1
-#define PEER_VENDOR_BRCM	0x2
-#define PEER_VENDOR_ATH		0x4
-#define PEER_VENDOR_RLNK	0x8
+#define RTK_OUI			0x4ce000	/* Realtek OUI */
+#define EDIMAX_OUI		0x021f80	/* Edimax OUI */
+
+#define PEER_VENDOR_NONE	0x00
+#define PEER_VENDOR_QTN		0x01
+#define PEER_VENDOR_BRCM	0x02
+#define PEER_VENDOR_ATH		0x04
+#define PEER_VENDOR_RLNK	0x08
+#define PEER_VENDOR_RTK		0x10
+#define PEER_VENDOR_INTEL	0x20
 
 /*
  * 802.11ac VHT Capabilities element
@@ -2737,13 +2804,25 @@ struct ieee80211_ie_vhtcap {
 #define IEEE80211_VHTCAP_GET_RXLDPC(vhtcap) \
 	(((vhtcap)->vht_cap[0] & 0x10) >> 4)
 
+/* B5 Short GI for 80MHz support */
+#define IEEE80211_VHTCAP_GET_SGI_80MHZ(vhtcap) \
+	(((vhtcap)->vht_cap[0] & 0x20) >> 5)
+
 /* B7 TX STBC */
 #define IEEE80211_VHTCAP_GET_TXSTBC(vhtcap) \
-	(((vhtcap)->vht_cap[1] & 0x80) >> 7)
+	(((vhtcap)->vht_cap[0] & 0x80) >> 7)
 
 /* B8-10 RX STBC */
 #define IEEE80211_VHTCAP_GET_RXSTBC(vhtcap) \
 	(enum ieee80211_vht_rxstbc)((vhtcap)->vht_cap[1] & 0x07)
+
+/* B11 SU Beam-former */
+#define IEEE80211_VHTCAP_GET_SU_BEAMFORMER(vhtcap) \
+	(((vhtcap)->vht_cap[1] & 0x08) >> 3)
+
+/* B12 SU Beam-formee */
+#define IEEE80211_VHTCAP_GET_SU_BEAMFORMEE(vhtcap) \
+	(((vhtcap)->vht_cap[1] & 0x10) >> 4)
 
 /* B13-15 Beamformee STS capability */
 #define IEEE80211_VHTCAP_GET_BFSTSCAP(vhtcap) \
@@ -2984,6 +3063,24 @@ struct ieee80211_ie_opmodenotice {
 	u_int8_t	opn_opmode;	/* Op Mode */
 } __packed;
 
+enum {
+	IEEE80211_TIMEOUT_REASSOC_DEADLINE		= 1,
+	IEEE80211_TIMEOUT_KEY_LIFETIME			= 2,
+	IEEE80211_TIMEOUT_ASSOC_COMEBACK		= 3,
+};
+
+#define IEEE80211_W_ASSOC_COMEBACK_TO		1000
+
+/*
+ * 802.11w timeout information IE
+ */
+struct ieee80211_timout_int_ie {
+	u_int8_t	timout_int_ie;			/* IEEE80211_ELEMID_TIMEOUT_INT */
+	u_int8_t	timout_int_len;
+	u_int8_t	timout_int_type;		/* Timeout Interval Type */
+	u_int32_t	timout_int_value;		/* in tus */
+} __packed;
+
 /*
  * Add the Quantenna OUI to a frame
  */
@@ -3085,6 +3182,8 @@ enum {
 	IEEE80211_STATUS_SHORTSLOT_REQUIRED	= 25,
 	IEEE80211_STATUS_DSSSOFDM_REQUIRED	= 26,
 	IEEE80211_STATUS_HT_FEATURE		= 27,
+	IEEE80211_STATUS_PMF_REJECT_RETRY		= 30,
+	IEEE80211_STATUS_PMF_VIOLATION		= 31,
 	IEEE80211_STATUS_PEER_MECHANISM_REJECT	= 37,
 	/* Quantenna */
 	IEEE80211_STATUS_DENIED			= 100,
@@ -3168,15 +3267,6 @@ struct wmm_params {
 #define IEEE80211_DEFAULT_BA_WINSIZE_H	256	/* use for implicit BA, large size to support large aggregates and high throughput */
 #define IEEE80211_MAX_BA_WINSIZE	0x3FF
 
-#define COMPILE_TIME_ASSERT(constant_expr)	\
-do {						\
-	switch(0) {				\
-		case 0:				\
-		case constant_expr:		\
-		;				\
-	}					\
-} while(0)
-
 /*value assignment for the little-endian*/
 #define	ADDINT16LE(frm, v) do {			\
 	frm[0] = (v) & 0xff;				\
@@ -3221,6 +3311,7 @@ do {						\
 	frm += 8;							\
 } while (0)
 
+#define IEEE80211_IE_LEADER_STR_VHTCAP	"vhtcap_ie="
 #define IEEE80211_IE_LEADER_STR_HTCAP	"htcap_ie="
 #define IEEE80211_IE_LEADER_STR_RSN	"rsn_ie="
 #define IEEE80211_IE_LEADER_STR_WPA	"wpa_ie="
@@ -3234,6 +3325,55 @@ static __inline__ int ieee80211_is_bcst(const void *p)
 
 	return (p16[0] == 0xFFFF) && (p16[1] == 0xFFFF) && (p16[2] == 0xFFFF);
 }
+
+#ifdef TOPAZ_PLATFORM
+/*
+ * IEEE802.11w spec - Table 8-38 and section 11.1.7
+ */
+static __inline__ int ieee80211_mgmt_is_robust(const struct ieee80211_frame *wh) {
+
+	int is_robust_mgmt = 0;
+	const uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	switch (subtype){
+		case IEEE80211_FC0_SUBTYPE_DEAUTH:
+		case IEEE80211_FC0_SUBTYPE_DISASSOC:
+			is_robust_mgmt = 1;
+			break;
+		case IEEE80211_FC0_SUBTYPE_ACTION:
+		{
+			struct ieee80211_action *ia;
+			ia = (struct ieee80211_action *) (void*)&wh[1];
+
+			switch (ia->ia_category) {
+				case IEEE80211_ACTION_CAT_SPEC_MGMT:
+				case IEEE80211_ACTION_CAT_QOS:
+				case IEEE80211_ACTION_CAT_DLS:
+				case IEEE80211_ACTION_CAT_BA:
+				case IEEE80211_ACTION_CAT_RM:
+				case IEEE80211_ACTION_CAT_FBSS:
+				case IEEE80211_ACTION_CAT_SA_QUERY:
+				case IEEE80211_ACTION_CAT_PROT_DUAL_PA:
+				case IEEE80211_ACTION_CAT_WNM:
+				case IEEE80211_ACTION_CAT_MESH:
+				case IEEE80211_ACTION_CAT_MULTIHOP:
+				case IEEE80211_ACTION_CAT_VEND_PROT:
+					is_robust_mgmt = 1;
+					break;
+				default:
+					is_robust_mgmt = 0;
+					break;
+			}
+			break;
+		}
+		default:
+			break;
+
+	}
+
+	return is_robust_mgmt;
+}
+#endif
 #endif
 
 #define IEEE80211_N_RATE_PREFIX 0x7F000000

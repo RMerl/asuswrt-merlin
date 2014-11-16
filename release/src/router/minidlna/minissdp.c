@@ -319,7 +319,7 @@ ParseUPnPClient(char *location)
 	char *off = NULL, *p;
 	int content_len = sizeof(buf);
 	struct NameValueParserData xml;
-	int client;
+	struct client_cache_s *client;
 	int type = 0;
 	char *model, *serial, *name;
 
@@ -458,14 +458,14 @@ close:
 		return;
 	/* Add this client to the cache if it's not there already. */
 	client = SearchClientCache(dest.sin_addr, 1);
-	if (client < 0)
+	if (!client)
 	{
 		AddClientCache(dest.sin_addr, type);
 	}
 	else
 	{
-		clients[client].type = type;
-		clients[client].age = time(NULL);
+		client->type = &client_types[type];
+		client->age = time(NULL);
 	}
 }
 
@@ -546,13 +546,13 @@ ProcessSSDPRequest(int s, unsigned short port)
 		    (strstrc(srv, "DigiOn DiXiM", '\r') != NULL)) /* Marantz Receiver */
 		{
 			/* Check if the client is already in cache */
-			i = SearchClientCache(sendername.sin_addr, 1);
-			if (i >= 0)
+			struct client_cache_s *client = SearchClientCache(sendername.sin_addr, 1);
+			if (client)
 			{
-				if (clients[i].type < EStandardDLNA150 &&
-				    clients[i].type != ESamsungSeriesA)
+				if (client->type->type < EStandardDLNA150 &&
+				    client->type->type != ESamsungSeriesA)
 				{
-					clients[i].age = time(NULL);
+					client->age = time(NULL);
 					return;
 				}
 			}

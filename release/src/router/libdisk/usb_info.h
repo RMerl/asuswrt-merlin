@@ -96,6 +96,7 @@ extern int hadOptionModule(void);
 extern int hadSerialModule(void);
 extern int hadACMModule(void);
 extern int hadRNDISModule(void);
+extern int isTTYNode(const char *device_name);
 extern int isSerialNode(const char *device_name);
 extern int isACMNode(const char *device_name);
 extern int isSerialInterface(const char *interface_name, const int specifics, const unsigned int vid, const unsigned int pid);

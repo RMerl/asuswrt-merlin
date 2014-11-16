@@ -50,6 +50,9 @@
 	background-repeat: no-repeat;
 	background-position:50% 61.10%;
 }
+#client_image:hover{
+	background-image: url('/images/New_ui/networkmap/client-listover.png');
+}
 #custom_image table{
 	border: 1px solid #000000;
 	border-collapse: collapse;
@@ -62,9 +65,33 @@
 	cursor:pointer;
 	background-position:-21px 0%;
 }
+#custom_image div:hover{
+	background-image:url('/images/New_ui/networkmap/client-listover.png');
+}
 #custom_image td:hover{
 	border-radius: 7px;
 	background-color:#84C1FF;
+}
+.disabled{
+	background:#475a5f;
+	width:200px;
+	height:15px;
+	padding:5px 0px 5px 5px;
+	margin-left:2px;
+	border-radius:5px;
+}
+#ipLockIcon{
+	cursor: pointer;
+	margin-top:-2px;
+	background-repeat:no-repeat;
+	height: 25px;
+	width: 25px;
+}
+.dhcp{
+	background-image: url('/images/New_ui/networkmap/unlock.png');
+}
+.static{
+	background-image: url('/images/New_ui/networkmap/lock.png');
 }
 </style>
 <script type="text/javascript" src="/md5.js"></script>
@@ -73,17 +100,16 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
-<script type="text/javascript" src="/disk_functions.js"></script>
 <script>
 var $j = jQuery.noConflict();	
 
 if(location.pathname == "/"){
 	if('<% nvram_get("x_Setting"); %>' == '0'){
 		if(tmo_support){
-			location.href = '/QIS_wizard_m.htm';
+			location.href = '/MobileQIS_Login.asp';
 		}
 		else{
 			location.href = '/QIS_wizard.htm?flag=welcome';
@@ -92,8 +118,6 @@ if(location.pathname == "/"){
 	else if('<% nvram_get("w_Setting"); %>' == '0' && sw_mode != 2)
 		location.href = '/QIS_wizard.htm?flag=wireless';
 }
-<% login_state_hook(); %>
-
 
 // Live Update
 var webs_state_update= '<% nvram_get("webs_state_update"); %>';
@@ -114,15 +138,13 @@ var flag = '<% get_parameter("flag"); %>';
 var wan0_primary = '<% nvram_get("wan0_primary"); %>';
 var wan1_primary = '<% nvram_get("wan1_primary"); %>';
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
-var wans_mode = '<%nvram_get("wans_mode");%>';	
+var wans_mode = '<%nvram_get("wans_mode");%>';
+var dhcp_staticlist_orig = decodeURIComponent('<% nvram_char_to_ascii("", "dhcp_staticlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<")
+
 if(wans_dualwan_orig.search(" ") == -1)
 	var wans_flag = 0;
 else
 	var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
-
-
-// Client list
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 // USB function
 var currentUsbPort = new Number();
@@ -134,7 +156,6 @@ window.onresize = cal_panel_block;
 
 function initial(){   
 	show_menu();
-
 	var isIE6 = navigator.userAgent.search("MSIE 6") > -1;
 	if(isIE6)
 		alert("<#ALERT_TO_CHANGE_BROWSER#>");
@@ -150,26 +171,24 @@ function initial(){
 
 	set_default_choice();
 
-	var clientNumber = '<% get_client_detail_info(); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<").split('<').length - 1;
-	show_client_status(clientNumber);		
+	var get_client_detail_info = '<% get_client_detail_info(); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
+	show_client_status(get_client_detail_info.split('<').length - 1);
+	document.networkmapdRefresh.client_info_tmp.value = get_client_detail_info.replace(/\s/g, "");
 
 	if(!parent.usb_support || usbPortMax == 0){
 		$("line3_td").height = '40px';
 		$("line3_img").src = '/images/New_ui/networkmap/line_dualwan.png';
-		$("clients_tr").colSpan = "3";
-		$("clients_tr").className = 'NM_radius';
-		$("clients_tr").width = '350';
+		$("clients_td").colSpan = "3";
+		$("clients_td").width = '350';
 		$("clientspace_td").style.display = "none";
-		$("usb1_html").style.display = "none";
-		$("usb2_html").style.display = "none";
-		$("bottomspace_tr").style.display = "";
+		$("usb_td").style.display = "none";
 	}
 
 	for(var i=0; i<usbPortMax; i++){
 		var tmpDisk = new newDisk();
 		tmpDisk.usbPath = i+1;
 		show_USBDevice(tmpDisk);
-		$("usbPathContianer_"+parseInt(i+1)).style.display = "";	
+		$("usbPathContainer_"+parseInt(i+1)).style.display = "";
 	}
 	
 	check_usb3();
@@ -218,6 +237,8 @@ function initial(){
 		$("bgimg").options[NM_table_img[4]].selected = 1;
 	}
 	update_wan_status();
+
+	document.list_form.dhcp_staticlist.value = dhcp_staticlist_orig;
 }
 
 function show_ddns_status(){
@@ -664,7 +685,7 @@ function check_status(_device){
 	if(got_code_1){
 		// red
 		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -6px';
-		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
+		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 99%';
 	}
 	else if(got_code_2 || got_code_3){
 		// white
@@ -830,7 +851,7 @@ function validForm(){
 	}
 	else{
 
-		var alert_str = validate_hostname(document.getElementById('client_name'));
+		var alert_str = validator.hostName(document.getElementById('client_name'));
 
 		if(alert_str != ""){
 			alert(alert_str);
@@ -846,31 +867,104 @@ function validForm(){
 
 var custom_name = decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
 function edit_confirm(){
-	if(validForm()){
-			var originalCustomListArray = new Array();
-			var onEditClient = new Array();
-
-			originalCustomListArray = custom_name.split('<');
-			onEditClient[0] = document.getElementById('client_name').value.trim();
-			onEditClient[1] = document.getElementById('macaddr_field').innerHTML;
-			onEditClient[2] = 0;
-			onEditClient[3] = document.getElementById('client_image').className.replace("type", "");
-			onEditClient[4] = "";
-			onEditClient[5] = "";
-
-			for(var i=0; i<originalCustomListArray.length; i++){
-				if(originalCustomListArray[i].split('>')[1] == onEditClient[1]){
-						originalCustomListArray.splice(i, 1);
-				}
+	var updateStaticList = function(){
+		var validateIpRange = function(ip_obj){
+			var retFlag = 1
+			var ip_num = inet_network(ip_obj.value);
+			
+			if(ip_num <= 0){
+				alert(ip_obj.value+" <#JS_validip#>");
+				ip_obj.value = document.getElementById("ipaddr_field_orig").value;
+				ip_obj.focus();
+				retFlag = 0;
+			}
+			else if(ip_num <= getSubnet('<% nvram_get("lan_ipaddr"); %>', '<% nvram_get("lan_netmask"); %>', "head") ||
+				 ip_num >= getSubnet('<% nvram_get("lan_ipaddr"); %>', '<% nvram_get("lan_netmask"); %>', "end")){
+				alert(ip_obj.value+" <#JS_validip#>");
+				ip_obj.value = document.getElementById("ipaddr_field_orig").value;
+				ip_obj.focus();
+				retFlag = 0;
+			}
+			else if(!validator.validIPForm(document.getElementById("ipaddr_field"), 0)){
+				ip_obj.value = document.getElementById("ipaddr_field_orig").value;
+				ip_obj.focus();
+				retFlag = 0;
 			}
 
-			originalCustomListArray.push(onEditClient.join('>'));
-			custom_name = originalCustomListArray.join('<');	
-			document.list_form.custom_clientlist.value = custom_name;
-			document.list_form.submit();
+			document.list_form.dhcp_staticlist.value.split("<").forEach(function(element, index){
+				if(element.indexOf(document.getElementById("ipaddr_field").value) != -1){
+					if(element.indexOf(document.getElementById("macaddr_field").value) == -1){
+						alert("<#JS_duplicate#>");
+						ip_obj.value = document.getElementById("ipaddr_field_orig").value;
+						ip_obj.focus();
+						retFlag = 0;
+					}
+				}
+			});
+			
+			return retFlag;
+		}
 
-			$("loadingIcon").style.display = "";
+		if(validateIpRange(document.getElementById("ipaddr_field")) == true){									
+			document.list_form.dhcp_staticlist.value.split("<").forEach(function(element, index){
+				if(element.indexOf(document.getElementById("macaddr_field").value) != -1){
+					var tmpArray = document.list_form.dhcp_staticlist.value.split("<")
+					tmpArray[index] = document.getElementById("macaddr_field").value;
+					tmpArray[index] += ">";
+					tmpArray[index] += document.getElementById("ipaddr_field").value;
+					document.list_form.dhcp_staticlist.value = tmpArray.join("<");
+				}
+			});
+
+			return true;
+		}
+		else		
+			return false;
+	}
+
+	if(!updateStaticList())
+		return false;
+	else{
+		if(document.list_form.dhcp_staticlist.value != dhcp_staticlist_orig){
+			document.list_form.action_script.value = "restart_net_and_phy";
+			document.list_form.action_wait.value = "30";
+			document.list_form.dhcp_staticlist.disabled = false;
+			dhcp_staticlist_orig = document.list_form.dhcp_staticlist.value;
+
+			setTimeout(function(){
+				document.networkmapdRefresh.submit();
+			}, 25000);
+		}
+	}
+
+	if(validForm()){
+		var originalCustomListArray = new Array();
+		var onEditClient = new Array();
+
+		originalCustomListArray = custom_name.split('<');
+		onEditClient[0] = document.getElementById('client_name').value.trim();
+		onEditClient[1] = document.getElementById('macaddr_field').value;
+		onEditClient[2] = 0;
+		onEditClient[3] = document.getElementById('client_image').className.replace("type", "");
+		onEditClient[4] = "";
+		onEditClient[5] = "";
+
+		for(var i=0; i<originalCustomListArray.length; i++){
+			if(originalCustomListArray[i].split('>')[1] == onEditClient[1]){
+					originalCustomListArray.splice(i, 1);
+			}
+		}
+
+		originalCustomListArray.push(onEditClient.join('>'));
+		custom_name = originalCustomListArray.join('<');
+		document.list_form.custom_clientlist.value = custom_name;
+		document.list_form.submit();
+
+		$("loadingIcon").style.display = "";
+
+		setTimeout(function(){
 			document.getElementById("statusframe").contentWindow.refreshpage();
+		}, document.list_form.action_wait.value * 1000);
 	}		
 }
 
@@ -882,7 +976,7 @@ function edit_cancel(){
 }
 
 function edit_delete(){
-	var target_mac = $('macaddr_field').innerHTML;
+	var target_mac = $('macaddr_field').value;
 	var custom_name_row = custom_name.split('<');
 	var custom_name_row_temp = custom_name.split('<');
 	var custom_name_temp = "";
@@ -946,7 +1040,7 @@ function select_image(type){
 	$('edit_client_block').style.height = "250px";
 	document.getElementById('client_image').className = type;
 
-	if(type == "type0" || type == "type6")
+	if(type == "type0")
 		document.getElementById('client_image').style.backgroundSize = "74px";
 	else
 		document.getElementById('client_image').style.backgroundSize = "130px";		
@@ -960,9 +1054,11 @@ function hideEditBlock(){
 
 function popupEditBlock(clientObj){
 	document.getElementById('client_name').value = clientObj.name;
-	document.getElementById('ipaddr_field').innerHTML = clientObj.ip;
-	document.getElementById('macaddr_field').innerHTML = clientObj.mac;
+	document.getElementById('ipaddr_field_orig').value = clientObj.ip;
+	document.getElementById('ipaddr_field').value = clientObj.ip;
+	document.getElementById('macaddr_field').value = clientObj.mac;
 	select_image("type" + parseInt(clientObj.type));
+	document.getElementById("ipLockIcon").className = clientObj.isStaticIP ? "static" : "dhcp";
 
 	cal_panel_block();
 	$j("#edit_client_block").fadeIn(300);
@@ -999,6 +1095,26 @@ function check_usb3(){
 		document.getElementById('usb1_image').src = "images/New_ui/networkmap/USB3.png";
 		document.getElementById('usb2_image').src = "images/New_ui/networkmap/USB3.png";
 	}
+}
+
+
+function addToList(macAddr){
+	if(document.list_form.dhcp_staticlist.value.indexOf(macAddr) == -1){
+		document.list_form.dhcp_staticlist.value += "<";
+		document.list_form.dhcp_staticlist.value += macAddr;
+		document.list_form.dhcp_staticlist.value += ">";
+		document.list_form.dhcp_staticlist.value += document.getElementById("ipaddr_field").value;
+	}
+}
+
+function delFromList(macAddr){
+	document.list_form.dhcp_staticlist.value.split("<").forEach(function(element, index){
+		if(element.indexOf(macAddr) != -1){
+			var tmpArray = document.list_form.dhcp_staticlist.value.split("<")
+			tmpArray.splice(index, 1);
+			document.list_form.dhcp_staticlist.value = tmpArray.join("<");
+		}
+	})
 }
 </script>
 </head>
@@ -1060,6 +1176,16 @@ function check_usb3(){
 	<input type="hidden" name="action_script" value="saveNvram">
 	<input type="hidden" name="action_wait" value="1">
 	<input type="hidden" name="custom_clientlist" value="">
+	<input type="hidden" name="dhcp_staticlist" value="" disabled>
+</form>
+<!-- update Client List -->
+<form method="post" name="networkmapdRefresh" action="/apply.cgi" target="hidden_frame">
+	<input type="hidden" name="action_mode" value="update_client_list">
+	<input type="hidden" name="action_script" value="">
+	<input type="hidden" name="action_wait" value="1">
+	<input type="hidden" name="current_page" value="httpd_check.xml">
+	<input type="hidden" name="next_page" value="httpd_check.xml">
+	<input type="hidden" name="client_info_tmp" value="">	
 </form>
 
 <div id="edit_client_block" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;display:none;">
@@ -1085,17 +1211,54 @@ function check_usb3(){
 					<table width="99%;"align="center" cellpadding="4" cellspacing="0">
 						<tr>
 							<td>
-								<input id="client_name" name="client_name" type="text" value="" class="input_32_table" style="float:left;width:200px;"></input>								
+								<input id="client_name" name="client_name" type="text" value="" class="input_32_table disabled" maxlength="32" style="float:left;width:200px;">							
+								<script>
+									document.getElementById("client_name").onclick = function(){
+										$j(this).removeClass("disabled");
+									}
+									document.getElementById("client_name").onblur = function(){
+										$j(this).addClass("disabled");
+									}
+								</script>
 							</td>
 						</tr>
 						<tr>
 							<td>
-								<div id="macaddr_field" style="font-family:Lucida Console;background:#475a5f;width:200px;height:18px;padding:5px 0px 0px 5px;margin-left:2px;border-radius:5px;"></div>
+								<input id="macaddr_field" type="text" value="" class="input_32_table disabled" style="float:left;width:200px;" disabled>
 							</td>
 						</tr>
 						<tr>
 							<td>
-								<div id="ipaddr_field" style="font-family:Lucida Console;background:#475a5f;width:200px;height:18px;padding:5px 0px 0px 5px;margin-left:2px;border-radius:5px;"></div>
+								<input id="ipaddr_field_orig" type="hidden" value="" disabled="">
+								<input id="ipaddr_field" type="text" value="" class="input_32_table disabled" style="float:left;width:200px;" onkeypress="return validator.isIPAddr(this,event)">
+								<script>
+									document.getElementById("ipaddr_field").onclick = function(){
+										$j(this).removeClass("disabled");
+									}
+									document.getElementById("ipaddr_field").onblur = function(){
+										$j(this).addClass("disabled");
+									}
+									document.getElementById("ipaddr_field").onkeypress = function(){
+										document.getElementById("ipLockIcon").className = "static";
+										delFromList(document.getElementById("macaddr_field").value);
+										addToList(document.getElementById("macaddr_field").value);
+									}
+								</script>
+
+								<div style="margin-top: 2px;margin-left: 215px;"><div id="ipLockIcon" class="dhcp"></div></div>
+								<script>
+									document.getElementById("ipLockIcon").onclick = function(){
+										if(this.className == "dhcp"){
+											this.className = "static";
+											addToList(document.getElementById("macaddr_field").value);
+										}
+										else{
+											this.className = "dhcp";
+											delFromList(document.getElementById("macaddr_field").value);
+											document.getElementById("ipaddr_field").value = document.getElementById("ipaddr_field_orig").value;
+										}
+									}
+								</script>
 							</td>
 						</tr>
 					</table>
@@ -1121,13 +1284,16 @@ function check_usb3(){
 								<div class="type5" onclick="select_image(this.className);"></div>
 							</td>
 							<td>
-								<div class="type7" onclick="select_image(this.className);"></div>
+								<div class="type6" onclick="select_image(this.className);"></div>
 							</td>
 							<td>
-								<div class="type8" onclick="select_image(this.className);"></div>
+								<div class="type7" onclick="select_image(this.className);"></div>
 							</td>
 						</tr>
 						<tr>
+							<td>
+								<div class="type8" onclick="select_image(this.className);"></div>
+							</td>
 							<td>
 								<div class="type9" onclick="select_image(this.className);"></div>
 							</td>
@@ -1143,11 +1309,11 @@ function check_usb3(){
 							<td>
 								<div class="type13" onclick="select_image(this.className);"></div>
 							</td>
+						</tr>
+						<tr>
 							<td>
 								<div class="type14" onclick="select_image(this.className);"></div>
 							</td>
-						</tr>
-						<tr>
 							<td>
 								<div class="type15" onclick="select_image(this.className);"></div>
 							</td>
@@ -1158,8 +1324,7 @@ function check_usb3(){
 								<div class="type17" onclick="select_image(this.className);"></div>
 							</td>
 							<td>
-							</td>
-							<td>
+								<div class="type18" onclick="select_image(this.className);"></div>
 							</td>
 							<td>
 							</td>
@@ -1224,7 +1389,7 @@ function check_usb3(){
 							<span style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;">WAN IP:</span>
 							<strong id="index_status" class="index_status" style="font-size:14px;"></strong>
 						</div>
-						<div id="ddnsHostName_div" style="margin-top:5px;word-break:break-all;word-wrap:break-word;">
+						<div id="ddnsHostName_div" style="margin-top:5px;word-break:break-all;word-wrap:break-word;width:180px;">
 							<span style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;">DDNS:</span>
 							<strong id="ddnsHostName" class="index_status" style="font-size:14px;"><#QIS_detectWAN_desc2#></strong>
 							<span id="ddns_fail_hint" class="notificationoff" onClick="show_ddns_fail_hint();" onMouseOut="nd();"></span>
@@ -1244,7 +1409,7 @@ function check_usb3(){
 							<div id="helpname" style="padding-top:10px;font-size:16px;"></div>
 						</div>							
 						<div>
-							<iframe id="statusframe" class="NM_radius_bottom" style="margin-left:45px;margin-top:-2px;" name="statusframe" width="320" height="680" frameborder="0" allowtransparency="true" style="background-color:transparent; margin-left:10px;" src="device-map/router_status.asp"></iframe>
+							<iframe id="statusframe" class="NM_radius_bottom" style="margin-left:45px;margin-top:-2px;" name="statusframe" width="320" height="735" frameborder="0" allowtransparency="true" style="background-color:transparent; margin-left:10px;" src="device-map/router_status.asp"></iframe>
 						</div>
 					</td>	
 				</tr>			
@@ -1257,7 +1422,7 @@ function check_usb3(){
 						<div id="secondary_line" class="secondary_wan_connected"></div>
 					</td>
 					<!--==line of single wan==-->
-					<td id="single_wan_line" colspan="5" height="19px">
+					<td id="single_wan_line" colspan="3" align="center" height="19px">
 						<div id="single_wan" class="single_wan_connected"></div>
 					</td>
 				</tr>			
@@ -1280,39 +1445,37 @@ function check_usb3(){
 					</td>
 				</tr>
 				<tr>
-					<td id="clients_tr" width="150" height="170" bgcolor="#444f53" align="center" valign="top" class="NM_radius_top" onclick="showstausframe('Client');">
-						<a id="clientStatusLink" href="device-map/clients.asp" target="statusframe"><!--lock 1226-->
+					<td id="clients_td" height="170" width="150" bgcolor="#444f53" align="center" valign="top" class="NM_radius" style="padding-bottom:15px;">
+						<div id="clientsContainer" onclick="showstausframe('Client');">
+							<a id="clientStatusLink" href="device-map/clients.asp" target="statusframe">
 							<div id="iconClient" style="margin-top:20px;" onclick="clickEvent(this);"></div>
-						</a>
-						<div class="clients" id="clientNumber" style="cursor:pointer;"></div>
+							</a>
+							<div class="clients" id="clientNumber" style="cursor:pointer;"></div>
+						</div>
+						<!--div id="" onclick="">
+							<img style="margin-top:15px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
+							<a id="" href="device-map/clients.asp" target="statusframe">
+							<div id="iconClient" style="margin-top:20px;" onclick=""></div>
+							</a>
+							<div class="clients" id="" style="cursor:pointer;">Wireless Clients:</div>
+						</div-->
 					</td>
 
 					<td width="36" rowspan="6" id="clientspace_td"></td>
 
-					<td id="usb1_html" width="160" bgcolor="#444f53" align="center" valign="top" class="NM_radius_top">
-						<div id="usbPathContianer_1" style="display:none">
+					<td id="usb_td" width="160" bgcolor="#444f53" align="center" valign="top" class="NM_radius" style="padding-bottom:5px;">
+						<div id="usbPathContainer_1" style="display:none">
 							<div style="margin-top:20px;margin-bottom:10px;" id="deviceIcon_1"></div>
 							<div><img id="usb1_image" src="images/New_ui/networkmap/USB2.png"></div>
 							<div style="margin:10px 0px;">
 								<span id="deviceText_1"></span>
 								<select id="deviceOption_1" class="input_option" style="display:none;height:20px;width:130px;font-size:12px;"></select>	
 							</div>
-							
 							<div id="deviceDec_1"></div>
 						</div>
-					</td>
-				</tr>				
-				<tr id="usb2_html">
-					<td bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom">
-						<!--a id="" href="device-map/clients.asp" target="statusframe">
-							<div id="iconClient" style="margin-top:20px;" onclick=""></div>
-						</a>	
-						<div class="clients" id="" style="cursor:pointer;">Wireless Clients:</div-->
-					</td>
-					<td height="150" bgcolor="#444f53" align="center" valign="top" class="NM_radius_bottom">
-						<div id="usbPathContianer_2" style="display:none">
-							<img style="margin-top:15px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
-							<div style="margin-top:10px;margin-bottom:10px;" id="deviceIcon_2"></div>
+						<div id="usbPathContainer_2" style="display:none">
+							<img style="margin-top:5px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
+							<div style="margin-top:15px;margin-bottom:10px;" id="deviceIcon_2"></div>
 							<div><img id="usb2_image" src="images/New_ui/networkmap/USB2.png"></div>
 							<div style="margin:10px 0px;">
 								<span id="deviceText_2"></span>
@@ -1321,10 +1484,6 @@ function check_usb3(){
 							<div id="deviceDec_2"></div>
 						</div>
 					</td>
-				</tr>
-
-				<tr id="bottomspace_tr" style="display:none">
-					<td colspan="3" height="200px"></td>
 				</tr>
 			</table>
 		</div>
@@ -1348,32 +1507,35 @@ function check_usb3(){
 
 	document.getElementById('deviceOption_1').onchange = function(){
 	 	require(['/require/modules/diskList.js'], function(diskList){
-	 		var usbDevicesList = diskList.list();
-			show_USBDevice(usbDevicesList[document.getElementById('deviceOption_1').value]);
-			setSelectedDiskOrder('iconUSBdisk_1');
+	 		diskList.update(function(){
+		 		var usbDevicesList = diskList.list();
+				show_USBDevice(usbDevicesList[document.getElementById('deviceOption_1').value]);
+				setSelectedDiskOrder('iconUSBdisk_1');
 
-			if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "modem")
-				clickEvent(document.getElementById('iconModem_1'));
-			else if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "printer")
-				clickEvent(document.getElementById('iconPrinter_1'));
-			else
-				clickEvent(document.getElementById('iconUSBdisk_1'));
+				if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "modem")
+					clickEvent(document.getElementById('iconModem_1'));
+				else if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "printer")
+					clickEvent(document.getElementById('iconPrinter_1'));
+				else
+					clickEvent(document.getElementById('iconUSBdisk_1'));
+			});
 		});
 	}
 
 	document.getElementById('deviceOption_2').onchange = function(){
 	 	require(['/require/modules/diskList.js'], function(diskList){
-	 		var usbDevicesList = diskList.list();
+	 		diskList.update(function(){
+		 		var usbDevicesList = diskList.list();
+				show_USBDevice(usbDevicesList[document.getElementById('deviceOption_2').value]);
+				setSelectedDiskOrder('iconUSBdisk_2');
 
-			show_USBDevice(usbDevicesList[document.getElementById('deviceOption_2').value]);
-			setSelectedDiskOrder('iconUSBdisk_2');
-
-			if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "modem")
-				clickEvent(document.getElementById('iconModem_2'));
-			else if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "printer")
-				clickEvent(document.getElementById('iconPrinter_2'));
-			else
-				clickEvent(document.getElementById('iconUSBdisk_2'));
+				if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "modem")
+					clickEvent(document.getElementById('iconModem_2'));
+				else if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "printer")
+					clickEvent(document.getElementById('iconPrinter_2'));
+				else
+					clickEvent(document.getElementById('iconUSBdisk_2'));
+			});
 		});
 	}
 
@@ -1383,13 +1545,4 @@ function check_usb3(){
 	}, 2000);
 </script>
 </body>
-
-<form method="post" name="networkmapdRefresh" action="/apply.cgi" target="hidden_frame">
-	<input type="hidden" name="action_mode" value="update_client_list">
-	<input type="hidden" name="action_script" value="">
-	<input type="hidden" name="action_wait" value="1">
-	<input type="hidden" name="current_page" value="httpd_check.htm">
-	<input type="hidden" name="next_page" value="httpd_check.htm">
-</form>
-
 </html>

@@ -152,6 +152,10 @@ typedef struct pw_auth_hdr
 #define PW_MS_CHAP_MPPE_KEYS		12	/* string */
 #define PW_MS_MPPE_SEND_KEY		16	/* string */
 #define PW_MS_MPPE_RECV_KEY		17	/* string */
+#define PW_MS_PRIMARY_DNS_SERVER	28	/* ipaddr */
+#define PW_MS_SECONDARY_DNS_SERVER	29	/* ipaddr */
+#define PW_MS_PRIMARY_NBNS_SERVER	30	/* ipaddr */
+#define PW_MS_SECONDARY_NBNS_SERVER	31	/* ipaddr */
 
 /*	Accounting */
 

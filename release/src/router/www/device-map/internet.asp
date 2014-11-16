@@ -6,7 +6,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>Untitled Document</title>
+<title></title>
 <link rel="stylesheet" type="text/css" href="../NM_style.css">
 <link rel="stylesheet" type="text/css" href="../form_style.css">
 <script type="text/javascript" src="/general.js"></script>
@@ -21,6 +21,7 @@ var $j = jQuery.noConflict();
 <% secondary_wanlink(); %>
 
 var wanip = wanlink_ipaddr();
+var wan_subnet_mask = wanlink_netmask();
 var wandns = wanlink_dns();
 var wangateway = wanlink_gateway();
 var wanxip = wanlink_xipaddr();
@@ -52,10 +53,13 @@ var loadBalance_Ratio = '<%nvram_get("wans_lb_ratio");%>';
 
 <% wan_get_parameter(); %>
 
-var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
-var yadns_mode = '<% nvram_get("yadns_mode"); %>';
-
 var wan_unit = '<% nvram_get("wan_unit"); %>' || 0;
+
+if(yadns_support){
+	var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
+	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
+	var yadns_servers = [ <% yadns_servers(); %> ];
+}
 
 function add_lanport_number(if_name)
 {
@@ -84,14 +88,6 @@ function format_time(seconds, error)
 	if (Seconds != 0)
 		value += Seconds.toString() + " <#Second#>";
 	return value;
-}
-
-function showtext2(obj, str, visible)
-{
-	if (obj) {
-		obj.innerHTML = str;
-		obj.style.display = (visible) ? "" : "none";
-	}
 }
 
 function initial(){
@@ -189,19 +185,15 @@ function initial(){
 
 	update_connection_type(unit);
 
-	if (yadns_support) {
-		if (yadns_enable != 0) {
-			if (yadns_mode == 1)
-				showtext($("yadns_mode"), "<#YandexDNS_mode1#>");
-			else if (yadns_mode == 2)
-				showtext($("yadns_mode"), "<#YandexDNS_mode2#>");
-			else
-				showtext($("yadns_mode"), "<#YandexDNS_mode0#>");
+	if(yadns_support){
+		if(yadns_enable != 0 && yadns_mode != -1){
+			showtext($("yadns_mode"), get_yadns_modedesc(yadns_mode));
+			showtext2($j("#yadns_DNS1")[0], yadns_servers[0], yadns_servers[0]);
+			showtext2($j("#yadns_DNS2")[0], yadns_servers[1], yadns_servers[1]);
 			$('yadns_ctrl').style.display = "";
 		}
 	}
-
-	update_all_ip(wanip, wandns, wangateway , unit);
+	update_all_ip(wanip, wan_subnet_mask, wandns, wangateway , unit);
 	update_all_xip(wanxip, wanxdns, wanxgateway, unit);
 }
 
@@ -256,7 +248,9 @@ function loadBalance_form(lb_unit){
 		$("dualwan_row_secondary").style.display = "none";	
 		update_connection_type(0);
 		$('primary_WANIP_ctrl').style.display = "";
+		$('primary_subnet_mask_ctrl').style.display = "";
 		$('secondary_WANIP_ctrl').style.display = "none";
+		$('secondary_subnet_mask_ctrl').style.display = "none";
 		$('primary_DNS_ctrl').style.display = "";
 		$('secondary_DNS_ctrl').style.display = "none";
 		$('primary_gateway_ctrl').style.display = "";
@@ -272,7 +266,9 @@ function loadBalance_form(lb_unit){
 		showtext($j("#dualwan_secondary_if")[0], sec_if);
 		update_connection_type(1);
 		$('primary_WANIP_ctrl').style.display = "none";
+		$('primary_subnet_mask_ctrl').style.display = "none";
 		$('secondary_WANIP_ctrl').style.display = "";
+		$('secondary_subnet_mask_ctrl').style.display = "";
 		$('primary_DNS_ctrl').style.display = "none";
 		$('secondary_DNS_ctrl').style.display = "";
 		$('primary_gateway_ctrl').style.display = "none";
@@ -290,7 +286,9 @@ function failover_form(fo_unit, primary_if, secondary_if){
 		showtext($j("#dualwan_current")[0], primary_if);
 		update_connection_type(0);
 		$('primary_WANIP_ctrl').style.display = "";
+		$('primary_subnet_mask_ctrl').style.display = "";
 		$('secondary_WANIP_ctrl').style.display = "none";
+		$('secondary_subnet_mask_ctrl').style.display = "none";
 		$('primary_DNS_ctrl').style.display = "";
 		$('secondary_DNS_ctrl').style.display = "none";
 		$('primary_gateway_ctrl').style.display = "";
@@ -305,7 +303,9 @@ function failover_form(fo_unit, primary_if, secondary_if){
 		showtext($j("#dualwan_current")[0], secondary_if);
 		update_connection_type(1);
 		$('primary_WANIP_ctrl').style.display = "none";
+		$('primary_subnet_mask_ctrl').style.display = "none";
 		$('secondary_WANIP_ctrl').style.display = "";
+		$('secondary_subnet_mask_ctrl').style.display = "";
 		$('primary_DNS_ctrl').style.display = "none";
 		$('secondary_DNS_ctrl').style.display = "";
 		$('primary_gateway_ctrl').style.display = "none";
@@ -317,10 +317,11 @@ function failover_form(fo_unit, primary_if, secondary_if){
 	}
 }
 
-function update_all_ip(wanip, wandns, wangateway, unit){
+function update_all_ip(wanip, subnet_mask, wandns, wangateway, unit){
 	var dnsArray = wandns.split(" ");
 	if(unit == 0){		
 		showtext($j("#WANIP")[0], wanip);
+		showtext($j("#primary_subnet_mask")[0], subnet_mask);
 		showtext2($j("#DNS1")[0], dnsArray[0], dnsArray[0]);
 		showtext2($j("#DNS2")[0], dnsArray[1], dnsArray[1]);
 		showtext($j("#gateway")[0], wangateway);
@@ -333,6 +334,7 @@ function update_all_ip(wanip, wandns, wangateway, unit){
 	}
 	else{
 		showtext($j("#secondary_WANIP")[0], wanip);
+		showtext($j("#secondary_subnet_mask")[0], subnet_mask);
 		showtext2($j("#secondary_DNS1")[0], dnsArray[0], dnsArray[0]);
 		showtext2($j("#secondary_DNS2")[0], dnsArray[1], dnsArray[1]);
 		showtext($j("#secondary_gateway")[0], wangateway);
@@ -402,6 +404,7 @@ function update_wanip(e) {
     },
     success: function(response) {
 		wanip = wanlink_ipaddr();
+		wan_subnet_mask = wanlink_netmask();
 		wandns = wanlink_dns();
 		wangateway = wanlink_gateway();
 		wanxip = wanlink_xipaddr();
@@ -409,6 +412,7 @@ function update_wanip(e) {
 		wanxgateway = wanlink_xgateway();
 		if(parent.wans_flag){
 			secondary_wanip = secondary_wanlink_ipaddr();
+			secondary_wan_subnet_mask = secondary_wanlink_netmask();
 			secondary_wandns = secondary_wanlink_dns();
 			secondary_wangateway = secondary_wanlink_gateway();
 			secondary_wanxip = secondary_wanlink_xipaddr();
@@ -422,10 +426,10 @@ function update_wanip(e) {
 			refreshpage();
 		}
 		else{
-			update_all_ip(wanip, wandns, wangateway, 0);
+			update_all_ip(wanip, wan_subnet_mask, wandns, wangateway, 0);
 			update_all_xip(wanxip, wanxdns, wanxgateway, 0);
 			if(parent.wans_flag){
-				update_all_ip(secondary_wanip, secondary_wandns, secondary_wangateway, 1);
+				update_all_ip(secondary_wanip, secondary_wan_subnet_mask, secondary_wandns, secondary_wangateway, 1);
 				update_all_xip(secondary_wanxip, secondary_wanxdns, secondary_wanxgateway, 1);
 			}
 			setTimeout("update_wanip();", 3000);
@@ -457,11 +461,21 @@ function goToWAN(){
 	if(parent.wans_flag){
 		if(wans_dualwan.split(" ")[wan_unit].toUpperCase == "USB")
 			parent.location.href = '/Advanced_Modem_Content.asp';
+		else if(dsl_support){
+			if(wans_dualwan.split(" ")[wan_unit].toUpperCase == "WAN" || wans_dualwan.split(" ")[wan_unit].toUpperCase == "LAN")
+				parent.location.href = '/Advanced_WAN_Content.asp';
+			else
+				parent.location.href = '/Advanced_DSL_Content.asp';
+		}
 		else
 			parent.location.href = '/Advanced_WAN_Content.asp';
 	}
-	else
-		parent.location.href = '/Advanced_WAN_Content.asp';
+	else{
+		if(dsl_support)			
+			parent.location.href = '/Advanced_DSL_Content.asp';
+		else
+			parent.location.href = '/Advanced_WAN_Content.asp';
+	}
 }
 
 function goToDualWAN(){
@@ -638,14 +652,6 @@ function manualSetup(){
     </td>
 </tr>
 
-<tr style="display:none;" id="yadns_ctrl">
-    <td style="padding:5px 10px 5px 15px;">
-    		<p class="formfonttitle_nwm"><#YandexDNS#></p>
-    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="yadns_mode"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
-    </td>
-</tr>
-
 <tr id="primary_WANIP_ctrl">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#WAN_IP#></p>
@@ -655,12 +661,38 @@ function manualSetup(){
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>
+<tr id="primary_subnet_mask_ctrl">
+    <td style="padding:5px 10px 5px 15px;">
+    		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalSubnetMask_itemname#></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="primary_subnet_mask"></p>
+      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    </td>
+</tr>
 <tr style="display:none;" id="secondary_WANIP_ctrl">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#WAN_IP#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_WANIP"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xWANIP"></p>
     		<span id="wan_status" style="display:none"></span>
+      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    </td>
+</tr>
+<tr style="display:none;" id="secondary_subnet_mask_ctrl">
+    <td style="padding:5px 10px 5px 15px;">
+    		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalSubnetMask_itemname#></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_subnet_mask"></p>
+      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    </td>
+</tr>
+
+<tr style="display:none;" id="yadns_ctrl">
+    <td style="padding:5px 10px 5px 15px;">
+    		<p class="formfonttitle_nwm"><#YandexDNS#></p>
+    		<a href="/YandexDNS.asp" target="_parent">
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="yadns_mode"></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="yadns_DNS1"></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="yadns_DNS2"></p>
+    		</a>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>
@@ -737,15 +769,14 @@ function manualSetup(){
 <tr id="goDualWANSetting">
 	<td height="50" style="padding:10px 15px 0px 15px;">
 		<p class="formfonttitle_nwm" style="float:left;width:116px;">Dual WAN setting</p>
-		<input type="button" class="button_gen_long" onclick="goToDualWAN();" value="<#btn_go#>" style="margin-top:-10px;">
+		<input type="button" class="button_gen_long" onclick="goToDualWAN();" value="<#btn_go#>" style="margin-top:-35px;margin-left:115px;">
 		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
 	</td>
 </tr>
 <tr id="goSetting" style="display:none">
-	<td height="50" style="padding:10px 15px 0px 15px;">
+	<td height="30" style="padding:10px 15px 0px 15px;">
 		<p class="formfonttitle_nwm" style="float:left;width:116px;"><#btn_to_WAN#></p>
-		<input type="button" class="button_gen_long" onclick="goToWAN();" value="<#btn_go#>" style="margin-top:-10px;">
-		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+		<input type="button" class="button_gen_long" onclick="goToWAN();" value="<#btn_go#>" style="margin-top:-33px;margin-left:115px;">
 	</td>
 </tr>
 

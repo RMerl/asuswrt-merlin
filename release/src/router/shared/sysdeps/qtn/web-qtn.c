@@ -55,6 +55,7 @@ extern uint8 wf_chspec_ctlchan(chanspec_t chspec);
 extern chanspec_t wf_chspec_aton(const char *a);
 extern char *wl_vifname_qtn(int unit, int subunit);
 
+#if 1	/* replaced by raw Ethernet RPC */
 int rpc_qcsapi_init(int verbose)
 {
 	// const char *host;
@@ -96,6 +97,46 @@ int rpc_qcsapi_init(int verbose)
 
 	return -1;
 }
+#else
+int rpc_qcsapi_init(int verbose)
+{
+	// const char *host;
+	char host[18];
+	CLIENT *clnt;
+	int retry = 0;
+	time_t start_time = uptime();
+	char hwaddr_5g[18];
+	uint8_t dst_mac[ETH_HLEN];
+
+	/* setup RPC based on udp protocol */
+	do {
+		if (verbose)
+		dbG("#%d attempt to create RPC connection\n", retry + 1);
+
+		// host = client_qcsapi_find_host_addr(0, NULL);
+		if (str_to_mac(nvram_safe_get("1:macaddr"), dst_mac) < 0) {
+			dbG("QRPC: Wrong destination MAC address format. "
+				"Use the following format: XX:XX:XX:XX:XX:XX\n");
+			sleep(1);
+			continue;
+		}
+
+		clnt = qrpc_clnt_raw_create(QCSAPI_PROG, QCSAPI_VERS, "br0", dst_mac);
+
+		if (clnt == NULL) {
+			clnt_pcreateerror("QRPC: ");
+			sleep(1);
+			continue;
+		} else {
+			client_qcsapi_set_rpcclient(clnt);
+			qtn_qcsapi_init = 1;
+			return 0;
+		}
+	} while ((retry++ < MAX_RETRY_TIMES) && ((uptime() - start_time) < MAX_TOTAL_TIME));
+
+	return -1;
+}
+#endif
 
 int rpc_qtn_ready()
 {

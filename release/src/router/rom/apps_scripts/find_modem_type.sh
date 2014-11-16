@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "This is a script to find the modem type out."
+# echo "This is a script to find the modem type out."
 
 
 modem_act_path=`nvram get usb_modem_act_path`
@@ -16,10 +16,10 @@ _find_act_type(){
 		path=`readlink -f $home/$node/driver 2>/dev/null`
 
 		t=${path##*drivers/}
-		if [ "$t" == "option" ] || [ "$t" == "usbserial" ] || [ "$t" == "usbserial_generic" ]; then
+		if [ "$t" == "option" -o "$t" == "usbserial" -o "$t" == "usbserial_generic" ]; then
 			got_tty=1
 			continue
-		elif [ "$t" == "cdc_acm" ] || [ "$t" == "acm" ]; then
+		elif [ "$t" == "cdc_acm" -o "$t" == "acm" ]; then
 			got_tty=1
 			continue
 		elif [ "$t" == "cdc_ether" ]; then
@@ -46,10 +46,14 @@ _find_act_type(){
 			got_other=1
 			echo "mbim"
 			break
+		elif [ "$t" == "GobiNet" ]; then
+			got_other=1
+			echo "gobi"
+			break
 		fi
 	done
 
-	if [ $got_tty -eq 1 ] && [ $got_other -ne 1 ]; then
+	if [ $got_tty -eq 1 -a $got_other -ne 1 ]; then
 		echo "tty"
 	fi
 }

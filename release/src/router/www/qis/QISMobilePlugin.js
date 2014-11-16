@@ -38,24 +38,6 @@ function genErrorHint(){
 } 
 
 if(parent.ISMOBILE){
-	var cssNode = document.createElement('link');
-	cssNode.type = 'text/css';
-	cssNode.rel = 'stylesheet';
-	cssNode.href = "/qis/qis_style_m.css";
-	document.getElementsByTagName("head")[0].appendChild(cssNode);
-
-	if(navigator.userAgent.indexOf("iP") != -1){
-		parent.window.scrollTo(0, 1);
-	}
-
-	addEventListener("click", function(event){
-		var div = myfindParent(event.target, "div");
-		if (div && myhasClass(div, "toggle"))
-		{
-			div.setAttribute("toggled", div.getAttribute("toggled") != "true");
-			event.preventDefault();		   
-		}
-	}, true);
 }
 else{
 	var cssNode = document.createElement('link');
@@ -73,8 +55,6 @@ function changeiuiBackground(loading){
 		document.getElementById("loadingIcon_iui").style.marginRight = '5px';
 	}
 	else{
-		document.getElementById("loadingIcon_iui").style.background = 'url(/iui/listArrow.png) no-repeat right center';
-		document.getElementById("loadingIcon_iui").style.marginRight = '0px';
 	}
 }
 
@@ -86,8 +66,6 @@ function changeiuiBackground2(obj,loading){
 		document.getElementById(obj).style.marginRight = '5px';
 	}
 	else{
-		document.getElementById(obj).style.background = 'url(/iui/listArrow.png) no-repeat right center';
-		document.getElementById(obj).style.marginRight = '0px';
 	}
 }
 

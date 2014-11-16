@@ -15,21 +15,28 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 function initial(){
 	show_menu();
 
-	regen_band();
+	// special case after modifing GuestNetwork
+	if("<% nvram_get("wl_unit"); %>" == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
+		var guestWLUnit = '<% get_parameter("gwlu"); %>';
+		if(guestWLUnit === "1") {
+			document.form.wl_unit.value = "1";
+		}
+		change_wl_unit();
+	}
+
+	regen_band(document.form.wl_unit);
 
 	if(!band5g_support || based_modelid == "RT-AC87U")	
 		$("wl_unit_field").style.display = "none";
@@ -45,19 +52,18 @@ function initial(){
 function applyRule(){
 	if(validForm()){
 		showLoading()
-		document.form.current_page.value = "/Advanced_Wireless_Content.asp";
 		document.form.submit();
 	}
 }
 
 function validForm(){
-	if(!validate_ipaddr_final(document.form.wl_radius_ipaddr, 'wl_radius_ipaddr'))
+	if(!validator.ipAddrFinal(document.form.wl_radius_ipaddr, 'wl_radius_ipaddr'))
 		return false;
 	
-	if(!validate_range(document.form.wl_radius_port, 0, 65535))
+	if(!validator.range(document.form.wl_radius_port, 0, 65535))
 		return false;
 	
-	if(!validate_string(document.form.wl_radius_key))
+	if(!validator.string(document.form.wl_radius_key))
 		return false;
 	
 	return true;
@@ -135,7 +141,7 @@ function done_validating(action){
 			  	<#WLANAuthentication11a_ExAuthDBIPAddr_itemname#></a>			  
 			</th>
 			<td>
-				<input type="text" maxlength="15" class="input_15_table" name="wl_radius_ipaddr" value="<% nvram_get("wl_radius_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event)">
+				<input type="text" maxlength="15" class="input_15_table" name="wl_radius_ipaddr" value="<% nvram_get("wl_radius_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)">
 			</td>
 		</tr>
 		<tr>
@@ -144,7 +150,7 @@ function done_validating(action){
 			  	<#WLANAuthentication11a_ExAuthDBPortNumber_itemname#></a>
 			</th>
 			<td>
-				<input type="text" maxlength="5" class="input_6_table" name="wl_radius_port" value="<% nvram_get("wl_radius_port"); %>" onkeypress="return is_number(this,event)"/>
+				<input type="text" maxlength="5" class="input_6_table" name="wl_radius_port" value="<% nvram_get("wl_radius_port"); %>" onkeypress="return validator.isNumber(this,event)"/>
 			</td>
 		</tr>
 		<tr>

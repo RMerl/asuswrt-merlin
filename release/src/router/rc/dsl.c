@@ -192,11 +192,19 @@ void convert_dsl_wan_settings(int req)
 
 	if (req == 2)
 	{
-		convert_dsl_config_num();
-		eval("req_dsl_drv", "reloadpvc");
 #ifdef RTCONFIG_DSL_TCLINUX
 		eval("req_dsl_drv", "rmvlan", nvram_safe_get("dslx_rmvlan"));
+
+		//set debug mode before reloadpvc
+		if(strstr(nvram_safe_get("dslx_pppoe_options"), "debug")) {
+			eval("req_dsl_drv", "wandebug", "on");
+		}
+		else {
+			eval("req_dsl_drv", "wandebug", "off");
+		}
 #endif
+		convert_dsl_config_num();
+		eval("req_dsl_drv", "reloadpvc");
 		convert_dsl_wan();
 	}
 }

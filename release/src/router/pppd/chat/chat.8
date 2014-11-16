@@ -50,7 +50,7 @@ keyword. When echoing is enabled, all output from the modem is echoed
 to \fIstderr\fR.
 .TP
 .B \-E
-Enables environment variable substituion within chat scripts using the
+Enables environment variable substitution within chat scripts using the
 standard \fI$xxx\fR syntax.
 .TP
 .B \-v
@@ -77,12 +77,12 @@ SYSLOG.  The use of \-S will prevent both log messages from '\-v' and
 error messages from being sent to the SYSLOG.
 .TP
 .B \-T \fI<phone number>
-Pass in an arbitary string, usually a phone number, that will be
-substituted for the \\T substitution metacharacter in a send string.
+Pass in an arbitrary string, usually a phone number, that will be
+substituted for the \eT substitution metacharacter in a send string.
 .TP
 .B \-U \fI<phone number 2>
 Pass in a second string, usually a phone number, that will be
-substituted for the \\U substitution metacharacter in a send string.
+substituted for the \eU substitution metacharacter in a send string.
 This is useful when dialing an ISDN terminal adapter that requires two 
 numbers.
 .TP
@@ -111,7 +111,7 @@ prompt for the password, it will send the password hello2u2.
 .LP
 A carriage return is normally sent following the reply string. It is not
 expected in the "expect" string unless it is specifically requested by using
-the \\r character sequence.
+the \er character sequence.
 .LP
 The expect sequence should contain only what is needed to identify the
 string. Since it is normally stored on a disk file, it should not contain
@@ -204,7 +204,7 @@ terminal), standard error will normally be redirected to the file
 .LP
 \fBSAY\fR strings must be enclosed in single or double quotes. If
 carriage return and line feed are needed in the string to be output,
-you must explicitely add them to your string.
+you must explicitly add them to your string.
 .LP
 The SAY strings could be used to give progress messages in sections of
 the script where you want to have 'ECHO OFF' but still let the user
@@ -214,7 +214,7 @@ ABORT BUSY
 .br
 ECHO OFF 
 .br
-SAY "Dialling your ISP...\\n" 
+SAY "Dialling your ISP...\en" 
 .br
 \&'' ATDT5551212 
 .br
@@ -224,14 +224,15 @@ SAY "Waiting up to 2 minutes for connection ... "
 .br
 CONNECT '' 
 .br
-SAY "Connected, now logging in ...\n"
+SAY "Connected, now logging in ...\en"
 .br
 ogin: account
 .br
 ssword: pass
 .br
-$ \c
-SAY "Logged in OK ...\n"
+$ \ec
+.br
+SAY "Logged in OK ...\en"
 \fIetc ...\fR
 .LP
 This sequence will only present the SAY strings to the user and all
@@ -288,15 +289,15 @@ ABORT   'BUSY'
 .br
 ABORT   'NO CARRIER'
 .br
-''      ATZ
+\&''      ATZ
 .br
-OK\\r\\n  ATD1234567
+OK\er\en  ATD1234567
 .br
-\\r\\n    \\c
+\er\en    \ec
 .br
 ECHO    ON
 .br
-CONNECT \\c
+CONNECT \ec
 .br
 ogin:   account
 .LP
@@ -318,13 +319,13 @@ signal behavior.  Here is an (simple) example script:
 .IP
 ABORT   'BUSY'
 .br
-''      ATZ
+\&''      ATZ
 .br
-OK\\r\\n  ATD1234567
+OK\er\en  ATD1234567
 .br
-\\r\\n    \\c
+\er\en    \ec
 .br
-CONNECT \\c
+CONNECT \ec
 .br
 \&'Callback login:' call_back_ID
 .br
@@ -336,7 +337,7 @@ ABORT "Bad Login"
 .br
 TIMEOUT 120
 .br
-CONNECT \\c
+CONNECT \ec
 .br
 HANGUP ON
 .br
@@ -365,7 +366,6 @@ The special reply string of \fIEOT\fR indicates that the chat program
 should send an EOT character to the remote. This is normally the
 End-of-file character sequence. A return character is not sent
 following the EOT.
-.PR
 The EOT sequence may be embedded into the send string using the
 sequence \fI^D\fR.
 .SH GENERATING BREAK
@@ -374,9 +374,8 @@ to be sent. The break is a special signal on the transmitter. The
 normal processing on the receiver is to change the transmission rate.
 It may be used to cycle through the available transmission rates on
 the remote until you are able to receive a valid login prompt.
-.PR
 The break sequence may be embedded into the send string using the
-\fI\\K\fR sequence.
+\fI\eK\fR sequence.
 .SH ESCAPE SEQUENCES
 The expect and reply strings may contain escape sequences. All of the
 sequences are legal in the reply string. Many are legal in the expect.
@@ -387,64 +386,64 @@ Expects or sends a null string. If you send a null string then it will still
 send the return character. This sequence may either be a pair of apostrophe
 or quote characters.
 .TP
-.B \\\\b
+.B \eb
 represents a backspace character.
 .TP
-.B \\\\c
+.B \ec
 Suppresses the newline at the end of the reply string. This is the only
 method to send a string without a trailing return character. It must
 be at the end of the send string. For example,
-the sequence hello\\c will simply send the characters h, e, l, l, o.
+the sequence hello\ec will simply send the characters h, e, l, l, o.
 .I (not valid in expect.)
 .TP
-.B \\\\d
+.B \ed
 Delay for one second. The program uses sleep(1) which will delay to a
 maximum of one second.
 .I (not valid in expect.)
 .TP
-.B \\\\K
+.B \eK
 Insert a BREAK
 .I (not valid in expect.)
 .TP
-.B \\\\n
+.B \en
 Send a newline or linefeed character.
 .TP
-.B \\\\N
-Send a null character. The same sequence may be represented by \\0.
+.B \eN
+Send a null character. The same sequence may be represented by \e0.
 .I (not valid in expect.)
 .TP
-.B \\\\p
+.B \ep
 Pause for a fraction of a second. The delay is 1/10th of a second.
 .I (not valid in expect.)
 .TP
-.B \\\\q
+.B \eq
 Suppress writing the string to the SYSLOG file. The string ?????? is
 written to the log in its place.
 .I (not valid in expect.)
 .TP
-.B \\\\r
+.B \er
 Send or expect a carriage return.
 .TP
-.B \\\\s
+.B \es
 Represents a space character in the string. This may be used when it
 is not desirable to quote the strings which contains spaces. The
-sequence 'HI TIM' and HI\\sTIM are the same.
+sequence 'HI TIM' and HI\esTIM are the same.
 .TP
-.B \\\\t
+.B \et
 Send or expect a tab character.
 .TP
-.B \\\\T
+.B \eT
 Send the phone number string as specified with the \fI\-T\fR option
 .I (not valid in expect.)
 .TP
-.B \\\\U
+.B \eU
 Send the phone number 2 string as specified with the \fI\-U\fR option
 .I (not valid in expect.)
 .TP
-.B \\\\\\\\
+.B \e\e
 Send or expect a backslash character.
 .TP
-.B \\\\ddd
+.B \eddd
 Collapse the octal digits (ddd) into a single ASCII character and send that
 character.
 .I (some characters are not valid in expect.)
@@ -457,7 +456,7 @@ For example, the character DC1 (17) is shown as \^^Q.
 Environment variables are available within chat scripts, if  the \fI\-E\fR
 option was specified in the command line. The metacharacter \fI$\fR is used
 to introduce the name of the environment variable to substitute. If the
-substition fails, because the requested environment variable is not set,
+substitution fails, because the requested environment variable is not set,
 \fInothing\fR is replaced for the variable.
 .SH TERMINATION CODES
 The \fIchat\fR program will terminate with the following completion

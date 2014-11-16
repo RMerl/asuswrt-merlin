@@ -139,6 +139,9 @@ start_u2ec()
 void
 stop_u2ec()
 {
+#if defined(RTCONFIG_QCA)
+	nvram_commit();
+#endif   
 	if(getpid()!=1) {
 		notify_rc("stop_u2ec");
 		return;
@@ -303,7 +306,7 @@ void start_usb(void)
 #endif
 
 #if defined (RTCONFIG_USB_XHCI)
-#if defined(RTN65U)
+#if defined(RTN65U) || defined(RTCONFIG_QCA)
 		{
 			char *param = "u3intf=0";
 
@@ -346,14 +349,18 @@ void start_usb(void)
 #endif
 #ifdef RTCONFIG_USB_MODEM
 		modprobe("usbnet");
+#ifdef RT4GAC55U
+		modprobe("gobi");
+#else
 		modprobe("asix");
 		modprobe("cdc_ether");
 		modprobe("rndis_host");
 		modprobe("cdc_ncm");
 		modprobe("cdc_wdm");
-		modprobe("qmi_wwan");
+		if(nvram_get_int("usb_qmi"))
+			modprobe("qmi_wwan");
 		modprobe("cdc_mbim");
-		eval("insmod", "gobi");
+#endif
 #endif
 	}
 }
@@ -364,7 +371,10 @@ void remove_usb_modem_modules(void)
 #ifdef RTCONFIG_USB_BECEEM
 	modprobe_r("drxvi314");
 #endif
-	eval("rmmod", "gobi");
+#ifdef RT4GAC55U
+	killall_tk("gobi");
+	modprobe_r("gobi");
+#else
 	modprobe_r("cdc_mbim");
 	modprobe_r("qmi_wwan");
 	modprobe_r("cdc_wdm");
@@ -372,7 +382,10 @@ void remove_usb_modem_modules(void)
 	modprobe_r("rndis_host");
 	modprobe_r("cdc_ether");
 	modprobe_r("asix");
+#endif
 	modprobe_r("usbnet");
+	modprobe_r("sr_mod");
+	modprobe_r("cdrom");
 #endif
 }
 
@@ -447,9 +460,6 @@ void remove_usb_storage_module(void)
 	modprobe_r(USBSTORAGE_MOD);
 #ifdef LINUX26
 	modprobe_r(SCSI_WAIT_MOD);
-#endif
-#if defined(RTCONFIG_BCMARM) || defined(RTAC52U)
-	modprobe_r("sr_mod");
 #endif
 	modprobe_r(SCSI_MOD);
 #endif
@@ -553,7 +563,7 @@ void stop_usb(void)
 	if (disabled || nvram_get_int("usb_uhci") != 1) modprobe_r(USBUHCI_MOD);
 	if (disabled || nvram_get_int("usb_usb2") != 1) modprobe_r(USB20_MOD);
 #if defined (RTCONFIG_USB_XHCI)
-#if defined(RTN65U)
+#if defined(RTN65U) || defined(RTCONFIG_QCA)
 	if (disabled) modprobe_r(USB30_MOD);
 #elif defined(RTCONFIG_XHCIMODE)
 	modprobe_r(USB30_MOD);
@@ -664,10 +674,13 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 
 			sprintf(options + strlen(options), ",shortname=winnt" + (options[0] ? 0 : 1));
 #ifdef RTCONFIG_TFAT
-#ifndef RTCONFIG_BCMARM
+#if defined(RTCONFIG_QCA)
+			sprintf(options + strlen(options), ",nodev" + (options[0] ? 0 : 1));
+#elif defined(RTCONFIG_BCMARM)
+			sprintf(options + strlen(options), ",nodev,iostreaming" + (options[0] ? 0 : 1));
+#else
 			sprintf(options + strlen(options), ",noatime" + (options[0] ? 0 : 1));
 #endif
-			sprintf(options + strlen(options), ",nodev,iostreaming" + (options[0] ? 0 : 1));
 #else
 #ifdef LINUX26
 			sprintf(options + strlen(options), ",flush" + (options[0] ? 0 : 1));
@@ -2164,7 +2177,7 @@ void start_dms(void)
 	FILE *f;
 	int port, pid;
 	char dbdir[100];
-	char *argv[] = { MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", "-R", NULL };
+	char *argv[] = { MEDIA_SERVER_APP, "-f", "/etc/"MEDIA_SERVER_APP".conf", "-R", NULL , NULL};
 	static int once = 1;
 	int i, j;
 	char serial[18];
@@ -2176,6 +2189,7 @@ void start_dms(void)
 	int default_dms_dir_used = 0;
 	unsigned char type = 0;
 	char types[5];
+	int index = 4;
 
 	if (getpid() != 1) {
 		notify_rc("start_dms");
@@ -2192,7 +2206,7 @@ void start_dms(void)
 
 		if ((!once) && (nvram_get_int("dms_rescan") == 0)) {
 			// no forced rescan
-			argv[3] = NULL;
+			argv[--index] = NULL;
 		}
 
 		if ((f = fopen(argv[2], "w")) != NULL) {
@@ -2358,7 +2372,11 @@ void start_dms(void)
 
 			fclose(f);
 		}
-			dircount = 0;
+
+		dircount = 0;
+
+		if (nvram_get_int("dms_dbg"))
+			argv[index++] = "-v";
 
 		use_custom_config(MEDIA_SERVER_APP".conf","/etc/"MEDIA_SERVER_APP".conf");
 		run_postconf(MEDIA_SERVER_APP".postconf", "/etc/"MEDIA_SERVER_APP".conf");
@@ -2720,11 +2738,11 @@ void start_cloudsync(int fromUI)
 	int count;
 	char cloud_token[PATH_MAX];
 	char mounted_path[PATH_MAX], *ptr, *other_path;
-	int pid;
-	char *cmd1_argv[] = { "inotify", NULL };
-	char *cmd2_argv[] = { "asuswebstorage", NULL };
+	int pid, s = 3;
+	char *cmd1_argv[] = { "nice", "-n", "10", "inotify", NULL };
+	char *cmd2_argv[] = { "nice", "-n", "10", "asuswebstorage", NULL };
 	char *cmd3_argv[] = { "touch", cloud_token, NULL };
-	char *cmd4_argv[] = { "webdav_client", NULL };
+	char *cmd4_argv[] = { "nice", "-n", "10", "webdav_client", NULL };
 	char *cmd5_argv[] = { "dropbox_client", NULL };
 	char *cmd6_argv[] = { "ftpclient", NULL};
 	char *cmd7_argv[] = { "sambaclient", NULL};
@@ -2745,6 +2763,10 @@ void start_cloudsync(int fromUI)
 		return;
 	}
 
+	/* If total memory size < 200MB, reduce priority of inotify, asuswebstorage, webdavclient, etc. */
+	if (get_meminfo_item("MemTotal") < 200*1024)
+		s = 0;
+
 	cloud_setting = nvram_safe_get("cloud_sync");
 
 	nv = nvp = strdup(nvram_safe_get("cloud_sync"));
@@ -2762,10 +2784,10 @@ void start_cloudsync(int fromUI)
 
 			if(type == 1){
 				if(!pids("inotify"))
-					_eval(cmd1_argv, NULL, 0, &pid);
+					_eval(&cmd1_argv[s], NULL, 0, &pid);
 
 				if(!pids("webdav_client")){
-					_eval(cmd4_argv, NULL, 0, &pid);
+					_eval(&cmd4_argv[s], NULL, 0, &pid);
 					sleep(2); // wait webdav_client.
 				}
 
@@ -2885,10 +2907,10 @@ _dprintf("start_cloudsync: No token file.\n");
 				_eval(cmd3_argv, NULL, 0, NULL);
 
 				if(!pids("inotify"))
-					_eval(cmd1_argv, NULL, 0, &pid);
+					_eval(&cmd1_argv[s], NULL, 0, &pid);
 
 				if(!pids("asuswebstorage")){
-					_eval(cmd2_argv, NULL, 0, &pid);
+					_eval(&cmd2_argv[s], NULL, 0, &pid);
 					sleep(2); // wait asuswebstorage.
 				}
 
@@ -3009,7 +3031,7 @@ void start_nas_services(int force)
 		return;
 	}
 
-	create_passwd();
+	setup_passwd();
 #ifdef RTCONFIG_SAMBASRV
 	start_samba();
 #endif
@@ -3098,7 +3120,7 @@ void restart_sambaftp(int stop, int start)
 
 	if (start) {
 #ifdef RTCONFIG_SAMBA_SRV
-		create_passwd();
+		setup_passwd();
 		start_samba();
 #endif
 #ifdef RTCONFIG_NFS
