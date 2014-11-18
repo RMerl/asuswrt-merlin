@@ -86,7 +86,8 @@ function initial(){
 	document.form.wl_key4.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl_key4"); %>');
 	document.form.wl_phrase_x.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl_phrase_x"); %>');
 	document.form.wl_channel.value = document.form.wl_channel_orig.value;
-
+	
+	regen_band(document.form.wl_unit);
 	if(document.form.wl_unit[0].selected == true){
 		$("wl_gmode_checkbox").style.display = "";
 	}
@@ -108,7 +109,6 @@ function initial(){
 	else
 		document.form.wl_gmode_check.checked = false;
 
-	regen_band(document.form.wl_unit);
 	if(smart_connect_support){
 		var flag = '<% get_parameter("flag"); %>';		
 		inputCtrl(document.form.smart_connect_t, 1);
@@ -239,7 +239,16 @@ function genBWTable(_unit){
 					bws = [1, 2, 3];
 					bwsDesc = ["20 MHz", "40 MHz", "80 MHz"];
 				}
-			}else{	
+			}
+			else if((based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || 
+				based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" || 
+				based_modelid == "RT-AC66U" || 
+				based_modelid == "RT-AC3200" || 
+				based_modelid == "RT-AC53U") && document.form.wl_nmode_x.value == 1){		//N only
+				bws = [0, 1, 2];
+				bwsDesc = ["20/40 MHz", "20 MHz", "40 MHz"];
+			}
+			else{	
 				bws = [0, 1, 2, 3];
 				bwsDesc = ["20/40/80 MHz", "20 MHz", "40 MHz", "80 MHz"];
 			}
@@ -496,24 +505,11 @@ function regen_5G_mode(obj,flag){	//please sync to initial() : //Change wireless
 			obj.options[0] = new Option("<#Auto#>", 0);
 			obj.options[1] = new Option("N only", 1);			
 		}
-		else if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || 
-				based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" || 
-				based_modelid == "RT-AC3200" || 
-				based_modelid == "RT-AC53U"){
+		else{
 			obj.options[0] = new Option("<#Auto#>", 0);
 			obj.options[1] = new Option("N only", 1);
 			obj.options[2] = new Option("N/AC mixed", 8);
 			obj.options[3] = new Option("Legacy", 2);	
-		}
-		else{
-			obj.options[0] = new Option("<#Auto#>", 0);
-
-			if(based_modelid == "RT-AC66U")
-				obj.options[1] = new Option("N + AC", 8);
-			else
-				obj.options[1] = new Option("N + AC", 1);
-
-			obj.options[2] = new Option("Legacy", 2);
 		}
 	}
 	
@@ -546,17 +542,6 @@ function tmo_wl_nmode(){
 	else{           //5GHz
 		for(var i = 0; i < tmo5nmode.length; i++){
 			add_option(document.form.wl_nmode_x,tmo5nmode[i][1], tmo5nmode[i][0],(document.form.wl_nmode_x_orig.value == tmo5nmode[i][0]));
-		}
-	}
-}
-
-function check_WPS(){
-	if(document.form.wl_closed[0].checked && document.form.wps_enable.value == 1){
-		if(confirm("Selecting Hide SSID will disable WPS. Are you sure?")){
-			document.form.wps_enable.value = "0";	
-		}
-		else{	
-			return false;	
 		}
 	}
 }

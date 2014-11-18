@@ -4143,7 +4143,7 @@ TRACE_PT("write url filter\n");
 		}
 #ifdef RTCONFIG_BCMARM
 		/* mark STUN connection*/
-		if (nvram_match("fw_pt_stun", "1")) {
+		if (nvram_match("ctf_pt_udp", "1")) {
 			eval("iptables", "-t", "mangle", "-A", "FORWARD",
 			     "-p", "udp",
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
@@ -4449,7 +4449,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		}
 #ifdef RTCONFIG_BCMARM
 		/* mark STUN connection*/
-		if (nvram_match("fw_pt_stun", "1")) {
+		if (nvram_match("ctf_pt_udp", "1")) {
 			eval("iptables", "-t", "mangle", "-A", "FORWARD",
 			     "-p", "udp",
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");

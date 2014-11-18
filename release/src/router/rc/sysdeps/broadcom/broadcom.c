@@ -3223,7 +3223,7 @@ reset_countryrev_5g(void)
 	doSystem("nvram set wl0_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
 #endif
 #ifdef RTAC66U
-	if (nvram_match("wl1_dfs", "1"))
+	if (nvram_match("wl1_country_code", "EU") && nvram_match("wl1_dfs", "1"))
 		nvram_set("wl1_country_rev", "31");
 #endif
 #ifdef RTAC3200

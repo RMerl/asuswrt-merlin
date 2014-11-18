@@ -210,7 +210,6 @@ int ip6up_main(int argc, char **argv)
 		return 0;
 
 	wan6_up(wan_ifname);
-	start_firewall(wan_primary_ifunit(), 0);
 
 	return 0;
 }

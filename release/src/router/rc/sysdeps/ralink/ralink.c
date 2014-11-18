@@ -2015,8 +2015,14 @@ int gen_ralink_config(int band, int is_iNIC)
 			if (atoi(str) == 0)
 			{
 				fprintf(fp, "AutoChannelSelect=%d\n", 2);
-				if(band && nvram_get_int(strcat_r(prefix, "bw", tmp)) > 0)
+				if (band && nvram_get_int(strcat_r(prefix, "bw", tmp)) > 0) {
+#ifdef RTN56U
+					if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
+						fprintf(fp, "AutoChannelSkipList=%d;%d\n", 56, 165);
+					else
+#endif
 					fprintf(fp, "AutoChannelSkipList=%d\n", 165); // skip 165 in A band when bw setting to 20/40Mhz or 40Mhz.
+				}
 			}
 			else
 				fprintf(fp, "AutoChannelSelect=%d\n", 0);

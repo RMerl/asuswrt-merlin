@@ -632,6 +632,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_RGMII_BCM_FA
 	{ "ctf_fa_mode_close",		"0"		},
 #endif
+#ifdef RTCONFIG_BCMARM
+	{ "ctf_pt_udp",			"0"		},
+#endif
 #endif
 #if 0
 #ifdef RTCONFIG_USB_MODEM
@@ -1166,9 +1169,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "fw_pt_h323", "1" },
 	{ "fw_pt_sip", "1" },
 	{ "fw_pt_pppoerelay", "0"},
-#ifdef RTCONFIG_BCMARM
-	{ "fw_pt_stun", "1"},
-#endif
 	{ "misc_http_x", "0" },
 	{ "misc_httpport_x", "8080" },
 #ifdef RTCONFIG_HTTPS

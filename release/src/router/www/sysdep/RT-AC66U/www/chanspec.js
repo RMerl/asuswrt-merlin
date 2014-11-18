@@ -50,7 +50,7 @@ function wl_chanspec_list_change(){
 												}else if(country == "TW" && parseInt(wl_channel_list_5g[i]) >= 56 && parseInt(wl_channel_list_5g[i]) <= 64){	// belong to 40MHz
 														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 												}
-												else if(tmo_support && document.form.wl_nmode_x.value ==1){
+												else if(document.form.wl_nmode_x.value ==1){
 													wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 												}
 												else{	

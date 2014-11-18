@@ -2070,8 +2070,14 @@ _dprintf("wanduck(%d) 5: conn_state %d, conn_state_old %d, conn_changed_state %d
 
 				if(other_wan_unit == WAN_FB_UNIT && conn_state[other_wan_unit] == CONNED){
 					current_state[other_wan_unit] = nvram_get_int(nvram_state[other_wan_unit]);
-					conn_state[other_wan_unit] = if_wan_connected(other_wan_unit, current_state[other_wan_unit]);
-					csprintf("wanduck: detect the fail-back line(%d): %d.\n", other_wan_unit+1, conn_state[other_wan_unit]);
+#ifdef RTCONFIG_USB_MODEM
+					if(!(dualwan_unit__usbif(other_wan_unit) && current_state[other_wan_unit] == WAN_STATE_INITIALIZING))
+#endif
+						conn_state[other_wan_unit] = if_wan_connected(other_wan_unit, current_state[other_wan_unit]);
+					csprintf("wanduck: detect the fail-back line(%d)...\n", other_wan_unit);
+if(test_log)
+_dprintf("wanduck(%d) fail-back: conn_state %d, conn_state_old %d, conn_changed_state %d, current_state %d.\n"
+		, other_wan_unit, conn_state[other_wan_unit], conn_state_old[other_wan_unit], conn_changed_state[other_wan_unit], current_state[other_wan_unit]);
 				}
 			}
 
@@ -2513,7 +2519,9 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 		if(!strcmp(dualwan_mode, "fb") && other_wan_unit == WAN_FB_UNIT && conn_state[other_wan_unit] == CONNED
 				&& get_disconn_count(other_wan_unit) >= max_fb_count
 				){
-			csprintf("# wanduck: returning the connect to the %d WAN line...\n", other_wan_unit);
+			csprintf("# wanduck: returning to the primary WAN line(%d)...\n", other_wan_unit);
+			rule_setup = 1;
+			handle_wan_line(other_wan_unit, rule_setup);
 			switch_wan_line(other_wan_unit, 0);
 		}
 #endif

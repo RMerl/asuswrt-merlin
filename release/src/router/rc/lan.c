@@ -2379,11 +2379,9 @@ NEITHER_WDS_OR_PSTA:
 
 				snprintf(nvram_name, 32, "usb_path%s_act", port_path);
 
-				if(!strcmp(nvram_safe_get(nvram_name), "")) {
-					nvram_set(nvram_name, interface);
-					nvram_set("usb_modem_act_path", usb_node);
-					nvram_set("usb_modem_act_dev", interface);
-				}
+				nvram_set(nvram_name, interface);
+				nvram_set("usb_modem_act_path", usb_node);
+				nvram_set("usb_modem_act_dev", interface);
 			}
 			// Beceem dongle.
 			else{
