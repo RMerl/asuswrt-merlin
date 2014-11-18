@@ -2942,7 +2942,7 @@ int init_nvram(void)
 
 	case MODEL_RTAC68U:
 #ifdef RTAC68U
-		update_cfe();
+//		update_cfe();
 #endif
 		nvram_set("vlan1hwname", "et0");
 		nvram_set("vlan2hwname", "et0");

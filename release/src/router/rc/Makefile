@@ -240,7 +240,7 @@ OBJS += pwdec.o
 endif
 
 ifeq ($(RTAC68U),y)
-OBJS += sysdeps/broadcom/cfe.o
+#OBJS += sysdeps/broadcom/cfe.o
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)

@@ -128,13 +128,13 @@ ifeq ($(RTCONFIG_RALINK_RT3883),y)
 	cp -rf wlan/RT3662_AP_2T2R_V0_0.bin $(INSTALLDIR)/rom/wlan/
 endif
 
-ifeq ($(RTAC68U),y)
-	mkdir -p $(INSTALLDIR)/rom/cfe
-	cp -rf cfe/cfe_tmo_2.1.2.2.bin $(INSTALLDIR)/rom/cfe/
-	cp -rf cfe/cfe_1.0.2.0.bin $(INSTALLDIR)/rom/cfe
-	cp -rf cfe/cfe_1.0.2.0_esmt.bin $(INSTALLDIR)/rom/cfe
-	cp -rf cfe/mtd-write $(INSTALLDIR)/rom/cfe/
-endif
+#ifeq ($(RTAC68U),y)
+#	mkdir -p $(INSTALLDIR)/rom/cfe
+#	cp -rf cfe/cfe_tmo_2.1.2.2.bin $(INSTALLDIR)/rom/cfe/
+#	cp -rf cfe/cfe_1.0.2.0.bin $(INSTALLDIR)/rom/cfe
+#	cp -rf cfe/cfe_1.0.2.0_esmt.bin $(INSTALLDIR)/rom/cfe
+#	cp -rf cfe/mtd-write $(INSTALLDIR)/rom/cfe/
+#endif
 
 ifeq ($(RTCONFIG_MEDIA_SERVER),y)
 	mkdir -p $(INSTALLDIR)/rom/dlna
