@@ -4387,6 +4387,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "wme_bss_disable", tmp), nvram_safe_get(strcat_r(prefix2, "wme_bss_disable", tmp2)));
 			nvram_set(strcat_r(prefix, "wpa_gtk_rekey", tmp), nvram_safe_get(strcat_r(prefix2, "wpa_gtk_rekey", tmp2)));
 			nvram_set(strcat_r(prefix, "wmf_bss_enable", tmp), nvram_safe_get(strcat_r(prefix2, "wmf_bss_enable", tmp2)));
+			/*
 			if (!nvram_match(strcat_r(prefix2, "macmode", tmp2), "disabled"))
 			{
 				nvram_set(strcat_r(prefix, "macmode", tmp), nvram_safe_get(strcat_r(prefix2, "macmode", tmp2)));
@@ -4397,11 +4398,29 @@ void generate_wl_para(int unit, int subunit)
 				nvram_set(strcat_r(prefix, "macmode", tmp), "disabled");
 				nvram_set(strcat_r(prefix, "maclist", tmp), "");
 			}
+			*/
+                        if (!nvram_match(strcat_r(prefix, "macmode", tmp), "disabled"))
+			{
+			/* Allow guest macmode independent of base macmode, initialize maclist with base macmode */
+				if (!nvram_match("guest_maclist_ovr", "1"))
+				{
+					nvram_set(strcat_r(prefix, "maclist", tmp), nvram_safe_get(strcat_r(prefix2, "maclist", tmp2)));
+					nvram_set(strcat_r(prefix, "maclist_x", tmp), nvram_safe_get(strcat_r(prefix2, "maclist_x", tmp2)));
+				}
+			}
+			else
+			/* Clear maclist when disabled from gui */
+			{
+				nvram_set(strcat_r(prefix, "maclist", tmp), "");
+				nvram_set(strcat_r(prefix, "maclist_x", tmp), "");
+			}
 		}
 		else
 		{
 			nvram_set(strcat_r(prefix, "macmode", tmp), "disabled");
+			/* Do not clear guest maclist on guest disable network
 			nvram_set(strcat_r(prefix, "maclist", tmp), "");
+			nvram_set(strcat_r(prefix, "maclist_x", tmp), ""); */
 		}
 	}
 
