@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.48_2 (08-Nov-2014)
+Asuswrt-Merlin - build 376.48_3 (20-Nov-2014)
 =============================================
 
 About
@@ -572,6 +572,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.48_3 (20-Nov-2014)
+   - FIXED: NAT loopback was broken on MIPS devices
+            (backported Asus fix from 376_3626)
+
+
 376.48_2 (8-Nov-2014)
    - FIXED: Samba would fail to start on the RT-N16 due to a
             missing library.
