@@ -1840,7 +1840,7 @@ function show_top_status(){
 	}
 	
 	var topbanner_ssid_2g = handle_show_str(ssid_status_2g);
-	if(topbanner_ssid_2g.length >18){
+	if(topbanner_ssid_2g.length >33){
 		$('elliptic_ssid_2g').innerHTML = extend_display_ssid(topbanner_ssid_2g)+"...";
 	}
 	else{
@@ -1850,7 +1850,7 @@ function show_top_status(){
 
 
 	var topbanner_ssid_5g = handle_show_str(ssid_status_5g);
-	if(topbanner_ssid_5g.length >18){
+	if(topbanner_ssid_5g.length >33){
 		$('elliptic_ssid_5g').innerHTML = extend_display_ssid(topbanner_ssid_5g)+"...";
 	}
 	else{
@@ -1861,7 +1861,7 @@ function show_top_status(){
 
 	if(wl_info.band5g_2_support){
 		var topbanner_ssid_5g_2 = handle_show_str(ssid_status_5g_2);
-		if(topbanner_ssid_5g_2.length >18){
+		if(topbanner_ssid_5g_2.length >33){
 			$('elliptic_ssid_5g_2').innerHTML = extend_display_ssid(topbanner_ssid_5g_2)+"...";
 		}
 		else{
@@ -1907,56 +1907,56 @@ function show_top_status(){
 }
 
 function extend_display_ssid(ssid){		//"&amp;"5&; "&lt;"4< ; "&gt;"4> ; "&nbsp;"6space
-		//alert(ssid.substring(0,20)+" : "+ssid.substring(0,20).lastIndexOf("&nbsp;")+" <&nbsp>");
-		if(ssid.substring(0,20).lastIndexOf("&nbsp;") >=15 || ssid.substring(0,20).lastIndexOf("&nbsp;") < 10 ){
-				//alert(ssid.substring(0,19)+" : "+ssid.substring(0,19).lastIndexOf("&amp;")+" <&amp>");
-				if(ssid.substring(0,19).lastIndexOf("&amp;") >=15 || ssid.substring(0,19).lastIndexOf("&amp;") < 11 ){
-						//alert(ssid.substring(0,18)+" : "+ssid.substring(0,18).lastIndexOf("&lt;")+" <&lt>");
-						if(ssid.substring(0,18).lastIndexOf("&lt;") >=15 || ssid.substring(0,19).lastIndexOf("&lt;") < 12 ){
-								//alert(ssid.substring(0,18)+" : "+ssid.substring(0,18).lastIndexOf("&gt;")+" <&gt>");
-								if(ssid.substring(0,18).lastIndexOf("&gt;") >=15 || ssid.substring(0,19).lastIndexOf("&gt;") < 12 ){
-										//alert(ssid.substring(0,15));
-										return ssid.substring(0,15);
+		//alert(ssid.substring(0,35)+" : "+ssid.substring(0,35).lastIndexOf("&nbsp;")+" <&nbsp>");
+		if(ssid.substring(0,35).lastIndexOf("&nbsp;") >=30 || ssid.substring(0,35).lastIndexOf("&nbsp;") < 25 ){
+				//alert(ssid.substring(0,34)+" : "+ssid.substring(0,34).lastIndexOf("&amp;")+" <&amp>");
+				if(ssid.substring(0,34).lastIndexOf("&amp;") >=30 || ssid.substring(0,34).lastIndexOf("&amp;") < 26 ){
+						//alert(ssid.substring(0,33)+" : "+ssid.substring(0,33).lastIndexOf("&lt;")+" <&lt>");
+						if(ssid.substring(0,33).lastIndexOf("&lt;") >=30 || ssid.substring(0,34).lastIndexOf("&lt;") < 27 ){
+								//alert(ssid.substring(0,33)+" : "+ssid.substring(0,33).lastIndexOf("&gt;")+" <&gt>");
+								if(ssid.substring(0,33).lastIndexOf("&gt;") >=30 || ssid.substring(0,34).lastIndexOf("&gt;") < 27 ){
+										//alert(ssid.substring(0,30));
+										return ssid.substring(0,30);
 								}
 								else{
-										switch(ssid.substring(0,18).lastIndexOf("&gt;")){
+										switch(ssid.substring(0,33).lastIndexOf("&gt;")){
 												case 12:
-																	return ssid.substring(0,16);
+																	return ssid.substring(0,31);
 																	break;
 												case 13:
-																	return ssid.substring(0,17);	
+																	return ssid.substring(0,32);	
 																	break;
 												case 14:
-																	return ssid.substring(0,18);		
+																	return ssid.substring(0,33);		
 																	break;	
 										}
 								}
 						}
 						else{
-									switch(ssid.substring(0,18).lastIndexOf("&lt;")){
+									switch(ssid.substring(0,33).lastIndexOf("&lt;")){
 											case 12:
-																return ssid.substring(0,16);
+																return ssid.substring(0,31);
 																break;
 											case 13:
-																return ssid.substring(0,17);
+																return ssid.substring(0,32);
 																break;
 											case 14:
-																return ssid.substring(0,18);
+																return ssid.substring(0,33);
 																break;
 
 									}			
 						}
 				}
 				else{
-							switch (ssid.substring(0,19).lastIndexOf("&amp;")){
+							switch (ssid.substring(0,34).lastIndexOf("&amp;")){
 									case 11:
-														return ssid.substring(0,16);
+														return ssid.substring(0,31);
 														break;
 									case 12:
-														return ssid.substring(0,17);
+														return ssid.substring(0,32);
 														break;
 									case 13:
-														return ssid.substring(0,18);
+														return ssid.substring(0,33);
 														break;
 									case 14:
 														return ssid.substring(0,19);
@@ -1966,21 +1966,21 @@ function extend_display_ssid(ssid){		//"&amp;"5&; "&lt;"4< ; "&gt;"4> ; "&nbsp;"
 				}
 		}
 		else{
-					switch (ssid.substring(0,20).lastIndexOf("&nbsp;")){
+					switch (ssid.substring(0,35).lastIndexOf("&nbsp;")){
 									case 10:			
-														return ssid.substring(0,16);
+														return ssid.substring(0,31);
 														break;			
 									case 11:
-														return ssid.substring(0,17);
+														return ssid.substring(0,32);
 														break;
 									case 12:
-														return ssid.substring(0,18);
+														return ssid.substring(0,33);
 														break;
 									case 13:
-														return ssid.substring(0,19);
+														return ssid.substring(0,34);
 														break;
 									case 14:
-														return ssid.substring(0,20);
+														return ssid.substring(0,35);
 														break;					
 					}
 		}
