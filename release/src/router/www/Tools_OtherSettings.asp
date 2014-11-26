@@ -14,6 +14,7 @@
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
@@ -740,7 +741,7 @@ function done_validating(action){
 					</tr>
 					<tr>
 				        	<th>Starting day of monthly cycle</th>
-			        		<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
+			        		<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
 			        	</tr>
 					<tr id="cstats_enable_tr">
 			        		<th>Enable IPTraffic (per IP monitoring)</i></th>
@@ -796,7 +797,7 @@ function done_validating(action){
 					<tr>
 						<th>Disk spindown idle time (in seconds)<br><i>0 = disable feature</i></th>
 						<td>
-							<input type="text" maxlength="6" class="input_12_table"name="usb_idle_timeout" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 43200)"value="<% nvram_get("usb_idle_timeout"); %>">
+							<input type="text" maxlength="6" class="input_12_table"name="usb_idle_timeout" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 0, 43200)"value="<% nvram_get("usb_idle_timeout"); %>">
 						</td>
 					</tr>
 					<tr>
@@ -831,14 +832,14 @@ function done_validating(action){
  					<tr>
 						<th>TCP connections limit</th>
 						<td>
-							<input type="text" maxlength="6" class="input_12_table" name="ct_max" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 256, 300000)" value="<% nvram_get("ct_max"); %>">
+							<input type="text" maxlength="6" class="input_12_table" name="ct_max" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 256, 300000)" value="<% nvram_get("ct_max"); %>">
 						</td>
 						</tr>
 
 						<tr>
 							<th>TCP Timeout: Established</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_established" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 432000)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="tcp_established" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 432000)" value="">
 								<span id="ct_established_default">Default: 1200</span>
 							</td>
 
@@ -847,7 +848,7 @@ function done_validating(action){
  						<tr>
 							<th>TCP Timeout: syn_sent</th>
 							<td>
- 								<input type="text" maxlength="5" class="input_6_table" name="tcp_syn_sent" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
+ 								<input type="text" maxlength="5" class="input_6_table" name="tcp_syn_sent" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 120</span>
 							</td>
 						</tr>
@@ -855,7 +856,7 @@ function done_validating(action){
 						<tr>
 							<th>TCP Timeout: syn_recv</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_syn_recv" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="tcp_syn_recv" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 60</span>
 							</td>
 						</tr>
@@ -863,7 +864,7 @@ function done_validating(action){
 						<tr>
 							<th>TCP Timeout: fin_wait</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_fin_wait" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="tcp_fin_wait" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 120</span>
 							</td>
 						</tr>
@@ -871,7 +872,7 @@ function done_validating(action){
 						<tr>
 							<th>TCP Timeout: time_wait</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_time_wait" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="tcp_time_wait" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 120</span>
 							</td>
 						</tr>
@@ -879,7 +880,7 @@ function done_validating(action){
 						<tr>
 							<th>TCP Timeout: close</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_close" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="tcp_close" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 10</span>
 							</td>
 						</tr>
@@ -887,7 +888,7 @@ function done_validating(action){
 						<tr>
 							<th>TCP Timeout: close_wait</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_close_wait" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="tcp_close_wait" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 60</span>
 							</td>
 						</tr>
@@ -895,7 +896,7 @@ function done_validating(action){
 						<tr>
 							<th>TCP Timeout: last_ack</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_last_ack" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="tcp_last_ack" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 30</span>
 							</td>
 						</tr>
@@ -903,7 +904,7 @@ function done_validating(action){
 						<tr>
 							<th>UDP Timeout: Assured</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="udp_assured" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="udp_assured" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 86400)" value="">
 								<span>Default: 180</span>
 							</td>
 						</tr>
@@ -911,7 +912,7 @@ function done_validating(action){
 						<tr>
 							<th>UDP Timeout: Unreplied</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="udp_unreplied" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1,86400)" value="">
+								<input type="text" maxlength="5" class="input_6_table" name="udp_unreplied" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1,86400)" value="">
 								<span>Default: 30</span>
 							</td>
 						</tr>

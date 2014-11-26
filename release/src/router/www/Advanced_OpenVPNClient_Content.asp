@@ -16,6 +16,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" language="JavaScript" src="/merlin.js"></script>
 
 <script type="text/javascript" src="/jquery.js"></script>
@@ -629,7 +630,7 @@ function update_local_ip(object){
 						<th>Server Address and Port</th>
 						<td>
 							<label>Address:</label><input type="text" maxlength="128" class="input_25_table" name="vpn_client_addr" value="<% nvram_get("vpn_client_addr"); %>">
-							<label style="margin-left: 4em;">Port:</label><input type="text" maxlength="5" class="input_6_table" name="vpn_client_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("vpn_client_port"); %>" >
+							<label style="margin-left: 4em;">Port:</label><input type="text" maxlength="5" class="input_6_table" name="vpn_client_port" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("vpn_client_port"); %>" >
 						</td>
 					</tr>
 
@@ -721,16 +722,16 @@ function update_local_ip(object){
 					<tr id="client_local_1">
 						<th>Local/remote endpoint addresses</th>
 						<td>
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_local_1" onkeypress="return is_ipaddr(this, event);" onblur="update_local_ip(this);" value="<% nvram_get("vpn_client_local"); %>">
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_remote" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client_remote"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_local_1" onkeypress="return validator.isIPAddr(this, event);" onblur="update_local_ip(this);" value="<% nvram_get("vpn_client_local"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_remote" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_client_remote"); %>">
 						</td>
 					</tr>
 
 					<tr id="client_local_2">
 						<th>Tunnel address/netmask</th>
 						<td>
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_local_2" onkeypress="return is_ipaddr(this, event);" onblur="update_local_ip(this);" value="<% nvram_get("vpn_client_local"); %>">
-							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_nm" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client_nm"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_local_2" onkeypress="return validator.isIPAddr(this, event);" onblur="update_local_ip(this);" value="<% nvram_get("vpn_client_local"); %>">
+							<input type="text" maxlength="15" class="input_15_table" name="vpn_client_nm" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_client_nm"); %>">
 						</td>
 					</tr>
 
@@ -748,7 +749,7 @@ function update_local_ip(object){
 					<tr>
 						<th><#vpn_openvpn_PollInterval#><br><i>( <#zero_disable#> )</i></th>
 						<td>
-							<input type="text" maxlength="4" class="input_6_table" name="vpn_client_poll" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 1440)" value="<% nvram_get("vpn_client_poll"); %>">
+							<input type="text" maxlength="4" class="input_6_table" name="vpn_client_poll" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 0, 1440)" value="<% nvram_get("vpn_client_poll"); %>">
 						</td>
 					</tr>
 
@@ -757,7 +758,7 @@ function update_local_ip(object){
 						<td>
 							<input type="radio" name="vpn_client_rgw" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_client_rgw", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="vpn_client_rgw" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_client_rgw", "0", "checked"); %>><#checkbox_No#>
-							<label style="padding-left:3em;" id="client_gateway_label">Gateway:</label><input type="text" maxlength="15" class="input_15_table" id="vpn_client_gw" name="vpn_client_gw" onkeypress="return is_ipaddr(this, event);" value="<% nvram_get("vpn_client_gw"); %>">
+							<label style="padding-left:3em;" id="client_gateway_label">Gateway:</label><input type="text" maxlength="15" class="input_15_table" id="vpn_client_gw" name="vpn_client_gw" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_client_gw"); %>">
 						</td>
  					</tr>
 

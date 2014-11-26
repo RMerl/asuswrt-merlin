@@ -18,6 +18,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 var $j = jQuery.noConflict();
@@ -901,10 +902,10 @@ function enable_openvpn(state){
 												<td width="15%" style="text-align:center;">-
 												</td>
 												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_username" onKeyPress="return is_string(this, event)">
+													<input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_username" onKeyPress="return validator.isString(this, event)">
 												</td>
 												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return is_string(this, event)">
+													<input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return validator.isString(this, event)">
 												</td>
 												<td width="15%">
 													<div><input type="button" class="add_btn" onClick="addRow_Group(64, 'pptpd');" value=""></div>
@@ -944,10 +945,10 @@ function enable_openvpn(state){
 												<td width="15%" style="text-align:center;">-
 												</td>
 												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_username" onKeyPress="return is_string(this, event)">
+													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_username" onKeyPress="return validator.isString(this, event)">
 												</td>
 												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_password" onKeyPress="return is_string(this, event)">
+													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_password" onKeyPress="return validator.isString(this, event)">
 												</td>
 												<td width="15%">
 													<div><input type="button" class="add_btn" onClick="addRow_Group(64, 'openvpnd');" value=""></div>

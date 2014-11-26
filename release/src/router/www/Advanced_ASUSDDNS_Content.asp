@@ -388,7 +388,7 @@ function onSubmitApply(s){
 			<tr>
 				<th>Forced refresh interval (in days)</th>
 				<td>
-					<input type="text" maxlength="3" name="ddns_refresh_x" class="input_3_table" value="<% nvram_get("ddns_refresh_x"); %>" onKeyPress="return is_number(this,event)">
+					<input type="text" maxlength="3" name="ddns_refresh_x" class="input_3_table" value="<% nvram_get("ddns_refresh_x"); %>" onKeyPress="return validator.isNumber(this,event)">
 				</td>
 			</tr>
 			<tr id="check_ddns_field" style="display:none;">

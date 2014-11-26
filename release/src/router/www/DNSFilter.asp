@@ -20,6 +20,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 
@@ -137,7 +138,7 @@ function gen_mainTable(){
 	code +='<tr><td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="rule_devname" onkeypress="return is_alphanum(this,event);" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">';
 	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
-	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="rule_mac" onKeyPress="return is_hwaddr(this,event)"></td>';
+	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="rule_mac" onKeyPress="return validator.isHWAddr(this,event)"></td>';
 	code +='<td style="border-bottom:2px solid #000;">'+gen_modeselect("rule_mode", "-1", "")+'</td>';
 	code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(64)" value=""></td></tr>';
 
@@ -417,19 +418,19 @@ function changeRow_main(r){
 				<tr id="dnsfilter_custom1">
 					<th width="200">Custom (user-defined) DNS 1</th>
 					<td>
-						<input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom1" value="<% nvram_get("dnsfilter_custom1"); %>" onKeyPress="return is_ipaddr(this,event)">
+						<input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom1" value="<% nvram_get("dnsfilter_custom1"); %>" onKeyPress="return validator.isIPAddr(this,event)">
 					</td>
 				</tr>
                                 <tr id="dnsfilter_custom2">
                                         <th width="200">Custom (user-defined) DNS 2</th>
                                         <td>
-                                                <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom2" value="<% nvram_get("dnsfilter_custom2"); %>" onKeyPress="return is_ipaddr(this,event)">
+                                                <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom2" value="<% nvram_get("dnsfilter_custom2"); %>" onKeyPress="return validator.isIPAddr(this,event)">
                                         </td>
                                 </tr>
                                 <tr id="dnsfilter_custom3">
                                         <th width="200">Custom (user-defined) DNS 3</th>
                                         <td>
-                                                <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom3" value="<% nvram_get("dnsfilter_custom3"); %>" onKeyPress="return is_ipaddr(this,event)">
+                                                <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom3" value="<% nvram_get("dnsfilter_custom3"); %>" onKeyPress="return validator.isIPAddr(this,event)">
                                         </td>
                                 </tr>
 			</table>
