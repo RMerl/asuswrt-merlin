@@ -14,7 +14,6 @@
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <link rel="stylesheet" type="text/css" href="rog.css">
-<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
@@ -184,7 +183,7 @@ function drawClient(){
 			Param.selectedClient = rogClientList[i];
 			$j(".appTraffic").remove();
 			$j(".trafficIcons").removeClass("clicked");
-			$j("#" + this.id.replace(/:/g, "") + "_Icon").addClass("clicked");
+			$j("#" + rogClientList[i].replace(/:/g, "") + "_Icon").addClass("clicked");
 		}
 
 		updateBarPercent(rogClientList[i]);
@@ -350,7 +349,7 @@ function calTotalTraffic(val, narrow){
 									<div class="formfonttitle" style="font-size:14px;">
 										<#Spectrum_refresh#>
 										<select class="input_option" id="refreshFreq">
-											<option class="content_input_fd" value="300">Never</option>
+											<option class="content_input_fd" value="0.1">ASAP</option>
 											<option class="content_input_fd" value="1">1</option>
 											<option class="content_input_fd" value="2">2</option>
 											<option class="content_input_fd" value="3">3</option>

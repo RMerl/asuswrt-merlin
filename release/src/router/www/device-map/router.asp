@@ -10,14 +10,20 @@
 <link href="/NM_style.css" rel="stylesheet" type="text/css" />
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/ajax.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 var $j = jQuery.noConflict();
 <% wl_get_parameter(); %>
 var flag = '<% get_parameter("flag"); %>';
+
+if(yadns_support){
+	var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
+	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
+	var yadns_clients = [ <% yadns_clients(); %> ];
+}
 
 function initial(){
 	if(sw_mode == 2){
@@ -77,14 +83,17 @@ function initial(){
 
 		// disallow to use the other band as a wireless AP
 		if(parent.sw_mode == 4 && !localAP_support){
-			$('t'+((parseInt(<% nvram_get("wlc_band"); %>+1))%2)).style.display = 'none';
+			for(var x=0; x<wl_info.wl_if_total;x++){
+				if(x != '<% nvram_get("wlc_band"); %>')
+					$('t'+parseInt(x)).style.display = 'none';			
+			}
 		}
 	}
 	else{
 		$("t0").style.display = "";	
 	}
 
-	if(smart_connect_support){
+	if(smart_connect_support && parent.sw_mode != 4){
 
 		var smart_connect_flag_t;
 
@@ -309,27 +318,39 @@ function show_LAN_info(){
 	else	
 		showtext($("LANIP"), '<% nvram_get("lan_ipaddr"); %>');
 
+	if(yadns_support){
+		var mode = (yadns_enable != 0) ? yadns_mode : -1;
+		showtext($("yadns_mode"), get_yadns_modedesc(mode));
+		for(var i = 0; i < 3; i++){
+			var visible = (yadns_enable != 0 && i != mode && yadns_clients[i]) ? true : false;
+			var modedesc = visible ? get_yadns_modedesc(i) + ": <#Full_Clients#> " + yadns_clients[i] : "";
+			showtext2($("yadns_mode" + i), modedesc, visible);
+		}
+		$("yadns_status").style.display = "";
+	}
+
 	showtext($("PINCode"), '<% nvram_get("secret_code"); %>');
 	showtext($("MAC"), '<% nvram_get("lan_hwaddr"); %>');
 	showtext($("MAC_wl2"), '<% nvram_get("wl0_hwaddr"); %>');
-	showtext($("MAC_wl5"), '<% nvram_get("wl1_hwaddr"); %>');
-	showtext($("MAC_wl5_2"), '<% nvram_get("wl2_hwaddr"); %>');
+	if(document.form.wl_unit.value == 1)
+		showtext($("MAC_wl5"), '<% nvram_get("wl1_hwaddr"); %>');
+	else if(document.form.wl_unit.value == 2)
+		showtext($("MAC_wl5"), '<% nvram_get("wl2_hwaddr"); %>');
 
 	if(document.form.wl_unit.value == 0){
 		$("macaddr_wl5").style.display = "none";
-		$("macaddr_wl5_2").style.display = "none";
 		if(!band5g_support)
 			$("macaddr_wl2_title").style.display = "none";
 	}
 	else if (document.form.wl_unit.value == 1){
 		$("macaddr_wl2").style.display = "none";
-		$("macaddr_wl5_2").style.display = "none";
+		if(wl_info.band5g_2_support)
+			$("macaddr_wl5_title").innerHTML = "5GHz-1 ";
 	}
 	else if (document.form.wl_unit.value == 2){
 		$("macaddr_wl2").style.display = "none";
-		$("macaddr_wl5").style.display = "none";
+		$("macaddr_wl5_title").innerHTML = "5GHz-2 ";
 	}
-
 }
 
 var secs;
@@ -352,7 +373,7 @@ function submitForm(){
 	if(document.form.wl_wpa_psk.value == "<#wireless_psk_fillin#>")
 		document.form.wl_wpa_psk.value = "";
 		
-	if(!validate_string_ssid(document.form.wl_ssid))
+	if(!validator.stringSSID(document.form.wl_ssid))
 		return false;
 	
 	stopFlag = 1;
@@ -360,7 +381,7 @@ function submitForm(){
 	document.form.next_page.value = "/index.asp";
 	
 	if(auth_mode == "psk" || auth_mode == "psk2" || auth_mode == "pskpsk2"){
-		if(!validate_psk(document.form.wl_wpa_psk))
+		if(!validator.psk(document.form.wl_wpa_psk))
 			return false;
 	}
 	else if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius"){
@@ -368,7 +389,7 @@ function submitForm(){
 		document.form.next_page.value = "/Advanced_WSecurity_Content.asp";
 	}
 	else{
-		if(!validate_wlkey(document.form.wl_asuskey1))
+		if(!validator.wlKey(document.form.wl_asuskey1))
 			return false;
 	}
 	
@@ -674,7 +695,7 @@ function change_smart_connect(v){
 			</td>
   		</tr>  		
   		<!--   Viz add 2011.12 for RT-N56U Ralink   end  }} -->	
-  		<tr id='smart_connect_x'>
+  		<tr style="display:none">
 			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
 	  			<p class="formfonttitle_nwm" >Smart Connect Combo</p>
 	  			<select style="*margin-top:-7px;" name="smart_connect_x" class="input_option" onchange="change_smart_connect(this.value);">
@@ -693,12 +714,12 @@ function change_smart_connect(v){
 	<td> 			
  		<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="table1px">
   		<tr id="apply_tr">
-    			<td style="border-bottom:3px #15191b solid;padding:0px 10px 5px 10px;">
+    			<td style="border-bottom:5px #2A3539 solid;padding:5px 10px 5px 10px;">
     				<input id="applySecurity" type="button" class="button_gen" value="<#CTL_apply#>" onclick="submitForm();" style="margin-left:90px;">
     			</td>
   		</tr>
   		<tr>
-    			<td style="padding:5px 10px 0px 10px;">
+    			<td style="padding:10px 10px 0px 10px;">
     				<p class="formfonttitle_nwm" ><#LAN_IP#></p>
     				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; margin-right:10px; background-color:#444f53; line-height:20px;" id="LANIP"></p>
       			<img style="margin-top:5px; *margin-top:-10px;" src="/images/New_ui/networkmap/linetwo2.png">
@@ -708,6 +729,18 @@ function change_smart_connect(v){
     			<td style="padding:5px 10px 0px 10px;">
     				<p class="formfonttitle_nwm" ><#PIN_code#></p>
     				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; margin-right:10px; background-color:#444f53; line-height:20px;" id="PINCode"></p>
+      			<img style="margin-top:5px; *margin-top:-10px;" src="/images/New_ui/networkmap/linetwo2.png">
+    			</td>
+  		</tr>
+  		<tr id="yadns_status" style="display:none;">
+    			<td style="padding:5px 10px 0px 10px;">
+    				<p class="formfonttitle_nwm" ><#YandexDNS#></p>
+    				<a href="/YandexDNS.asp" target="_parent">
+    				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; margin-right:10px; background-color:#444f53; line-height:20px;" id="yadns_mode"></p>
+    				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; margin-right:10px; background-color:#444f53; line-height:20px;" id="yadns_mode0"></p>
+    				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; margin-right:10px; background-color:#444f53; line-height:20px;" id="yadns_mode1"></p>
+    				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; margin-right:10px; background-color:#444f53; line-height:20px;" id="yadns_mode2"></p>
+    				</a>
       			<img style="margin-top:5px; *margin-top:-10px;" src="/images/New_ui/networkmap/linetwo2.png">
     			</td>
   		</tr>
@@ -721,22 +754,13 @@ function change_smart_connect(v){
   		<tr id="macaddr_wl2">
     			<td style="padding:5px 10px 0px 10px;">
     				<p class="formfonttitle_nwm" >Wireless <span id="macaddr_wl2_title">2.4GHz </span><#MAC_Address#></p>
-    				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; padding-bottom:3px; margin-right:10px; background-color:#444f53; line-height:20px;" id="MAC_wl2"></p>
-    				<img style="margin-top:5px; *margin-top:-10px;" src="/images/New_ui/networkmap/linetwo2.png">
+    				<p style="padding-left:10px; margin-bottom:5px; margin-top:3px; *margin-top:-5px; padding-bottom:3px; margin-right:10px; background-color:#444f53; line-height:20px;" id="MAC_wl2"></p>
     			</td>
   		</tr>     
   		<tr id="macaddr_wl5">
     			<td style="padding:5px 10px 0px 10px;">
     				<p class="formfonttitle_nwm" >Wireless 5GHz <#MAC_Address#></p>
-    				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; padding-bottom:3px; margin-right:10px; background-color:#444f53; line-height:20px;" id="MAC_wl5"></p>
-    				<img style="margin-top:5px; *margin-top:-10px;" src="/images/New_ui/networkmap/linetwo2.png">
-    			</td>
-  		</tr>
-  		<tr id="macaddr_wl5_2">
-    			<td style="padding:5px 10px 0px 10px;">
-    				<p class="formfonttitle_nwm" >Wireless 5GHz <#MAC_Address#></p>
-    				<p style="padding-left:10px; margin-top:3px; *margin-top:-5px; padding-bottom:3px; margin-right:10px; background-color:#444f53; line-height:20px;" id="MAC_wl5_2"></p>
-    				<img style="margin-top:5px; *margin-top:-10px;" src="/images/New_ui/networkmap/linetwo2.png">
+    				<p style="padding-left:10px; margin-bottom:5px; margin-top:3px; *margin-top:-5px; padding-bottom:3px; margin-right:10px; background-color:#444f53; line-height:20px;" id="MAC_wl5"></p>
     			</td>
   		</tr>
 		</table>

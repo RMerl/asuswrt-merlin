@@ -3,10 +3,15 @@
 	the_array_is_end : "end here.",
 	namecheap_username_title: "Domain Name",
 	link_rate : "Link rate",
+	ASUSGATE_note9 : "Your DSL line appears to be unstable. DLA (Dynamic Line Adjustment) which enabled by default already adopted necessary changes and ensure stability. However if interruption continues please submit a feedback form for our analysis.",
 	ASUSGATE_note6 : "Your DSL line appears to be unstable. We strongly recommend that you submit a feedback form for our analysis.",
 	ASUSGATE_note7 : "If you are experiencing any DSL related issues or have any comments / suggestions, please feel free to inform our support team.",
 	JS_validclientname : "Client device name only accept alphanumeric characters, under line and dash symbol. The first character cannot be dash \"-\" or under line \"_\".",
-	ASUSGATE_act_feedback : "Feedback now"
+	ASUSGATE_act_feedback : "Feedback now",
+	ASUSGATE_DSL_setting : "Go setting DSL",
+	ISP_not_support : 'We currently do not support this location, please use <b>Manual</b>.',
+	period_time_validation : 'The value of check period can\'t be less than',
+	filter_lw_date_valid : 'Please select at least one day or disable this feature.'
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 
@@ -18,14 +23,6 @@ if(isSupport("tmo"))
         var theUrl = "cellspot.router";
 else
         var theUrl = "router.asus.com";
-
-// init Helper
-function addNewScript_help(scriptName){
-	var script = document.createElement("script");
-	script.type = "text/javascript";
-	script.src = scriptName;
-	document.getElementsByTagName("head")[0].appendChild(script);
-}
 
 /* convert some special character for shown string */
 function handle_show_str(show_str)
@@ -80,8 +77,17 @@ function isMobile_help(){
 
 var helptitle = new Array();
 var helpcontent = new Array();
-if(!isMobile_help())
-	setTimeout("addNewScript_help('/help_content.js');", 2000);
+
+(function(){
+	if(!isMobile_help()){
+		setTimeout(function(){
+			var newScript = document.createElement("script");
+			newScript.type = "text/javascript";
+			newScript.src = '/help_content.js';
+			document.getElementsByTagName("head")[0].appendChild(newScript);
+		}, 2000);
+	}
+})();
 
 function suspendconn(wanenable){
 	document.internetForm_title.wan_enable.value = wanenable;
@@ -157,7 +163,9 @@ function overHint(itemNum){
 	if(itemNum == 24)		
 		statusmenu += "<span>The USB 3.0 cable without well-shielded would affect the 2.4Ghz wireless range.Enabling this feature to ensure the best wireless performance If your USB 3.0 device is not USB-IF certified.</span>";
 	
-	//for AiProtection-Router Security Scan
+	//for AiProtection-Router Security Assessment
+	if(itemNum == 25)
+		statusmenu += "<span>Disable Wi-Fi Protected Setup to avoid attacker to obtain the keys via an intelligent brute force </span>";
 	if(itemNum == 23)		
 		statusmenu += "<span><#AiProtection_scan_note23#></span>";
 	if(itemNum == 22)		

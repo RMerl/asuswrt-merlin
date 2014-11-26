@@ -1123,7 +1123,6 @@ trx_validate(uint8_t *ptr, int *insize)
 #else
 	char *flashdev = "flash1.trx";
 #endif
-
 	if (ltoh32(hdr->magic) != TRX_MAGIC) {
 		xprintf("\nTRX magic number error!");
 		return CFE_ERR;

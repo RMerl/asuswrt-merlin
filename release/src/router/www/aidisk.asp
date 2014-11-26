@@ -14,15 +14,12 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
 <script>
-<% login_state_hook(); %>
 <% get_AiDisk_status(); %>
 
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var account_num;
 //var accounts;
 var pools = [];
@@ -117,9 +114,6 @@ function createAccount(){
 		document.applyForm.password.value = $("passwd1").value;
 		
 		document.applyForm.submit();
-	/*}
-	else
-		alert("Wrong! No account!");//*/    // No translate
 }
 
 function resultOfCreateAccount(){
@@ -161,9 +155,6 @@ function submitChangePermission(account, permission, protocol){
 		}
 	}
 	
-	/*accounts.shift();
-	
-	if(accounts.length > 0)//*/
 	if($("dummyShareway").value == "1"){
 		$("dummyShareway").value = "";
 

@@ -374,7 +374,7 @@ rescan:
 #if USE_FORK
 		scanning = 1;
 		sqlite3_close(db);
-		*scanner_pid = process_fork();
+		*scanner_pid = fork();
 		open_db(&db);
 		if (*scanner_pid == 0) /* child (scanner) process */
 		{
@@ -464,6 +464,16 @@ static int strtobool(const char *str)
 	return ((strcasecmp(str, "yes") == 0) ||
 		(strcasecmp(str, "true") == 0) ||
 		(atoi(str) == 1));
+}
+
+static void init_nls(void)
+{
+#ifdef ENABLE_NLS
+	setlocale(LC_MESSAGES, "");
+	setlocale(LC_CTYPE, "en_US.utf8");
+	DPRINTF(E_DEBUG, L_GENERAL, "Using locale dir %s\n", bindtextdomain("minidlna", getenv("TEXTDOMAINDIR")));
+	textdomain("minidlna");
+#endif
 }
 
 // add for getting scanning status
@@ -994,6 +1004,13 @@ init(int argc, char **argv)
 		DPRINTF(E_FATAL, L_GENERAL, "Failed to switch to uid '%d'. [%s] EXITING.\n",
 			uid, strerror(errno));
 
+	children = calloc(runtime_vars.max_connections, sizeof(struct child));
+	if (!children)
+	{
+		DPRINTF(E_ERROR, L_GENERAL, "Allocation failed\n");
+		return 1;
+	}
+
 	// remove working flag
 	remove_scantag();
 
@@ -1131,12 +1148,7 @@ main(int argc, char **argv)
 
 	for (i = 0; i < L_MAX; i++)
 		log_level[i] = E_WARN;
-#ifdef ENABLE_NLS
-	setlocale(LC_MESSAGES, "");
-	setlocale(LC_CTYPE, "en_US.utf8");
-	DPRINTF(E_DEBUG, L_GENERAL, "Using locale dir %s\n", bindtextdomain("minidlna", getenv("TEXTDOMAINDIR")));
-	textdomain("minidlna");
-#endif
+	init_nls();
 
 	ret = init(argc, argv);
 	if (ret != 0)
@@ -1320,11 +1332,6 @@ main(int argc, char **argv)
 				i++;
 			}
 		}
-#ifdef DEBUG
-		/* for debug */
-		if (i > 1)
-			DPRINTF(E_DEBUG, L_GENERAL, "%d active incoming HTTP connections\n", i);
-#endif
 		FD_ZERO(&writeset);
 		upnpevents_selectfds(&readset, &writeset, &max_fd);
 
@@ -1423,7 +1430,11 @@ main(int argc, char **argv)
 shutdown:
 	/* kill the scanner */
 	if (scanning && scanner_pid)
-		kill(scanner_pid, 9);
+		kill(scanner_pid, SIGKILL);
+
+	/* kill other child processes */
+	process_reap_children();
+	free(children);
 
 	/* close out open sockets */
 	while (upnphttphead.lh_first != NULL)
@@ -1436,10 +1447,10 @@ shutdown:
 		close(sssdp);
 	if (shttpl >= 0)
 		close(shttpl);
-	#ifdef TIVO_SUPPORT
+#ifdef TIVO_SUPPORT
 	if (sbeacon >= 0)
 		close(sbeacon);
-	#endif
+#endif
 	
 	for (i = 0; i < n_lan_addr; i++)
 	{

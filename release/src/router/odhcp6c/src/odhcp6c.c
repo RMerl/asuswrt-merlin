@@ -32,9 +32,6 @@
 #include "odhcp6c.h"
 #include "ra.h"
 
-#ifdef EXT_BFD_PING
-#include "bfd.h"
-#endif
 
 
 static void sighandler(int signal);
@@ -54,6 +51,8 @@ static time_t last_update = 0;
 
 static unsigned int min_update_interval = DEFAULT_MIN_UPDATE_INTERVAL;
 
+int loglevel = LOG_NOTICE;
+
 int main(_unused int argc, char* const argv[])
 {
 	// Allocate ressources
@@ -70,19 +69,11 @@ int main(_unused int argc, char* const argv[])
 	static struct in6_addr ifid = IN6ADDR_ANY_INIT;
 	int sol_timeout = DHCPV6_SOL_MAX_RT;
 
-#ifdef EXT_BFD_PING
-	int bfd_interval = 0, bfd_loss = 3;
-#endif
 
 	bool help = false, daemonize = false;
 	int logopt = LOG_PID;
 	int c;
-	unsigned int client_options = DHCPV6_ACCEPT_RECONFIGURE;
-
-#ifdef EXT_CLIENT_FQDN
-	client_options | = DHCPV6_CLIENT_FQDN;
-#endif
-	loglevel = LOG_NOTICE;
+	unsigned int client_options = DHCPV6_CLIENT_FQDN | DHCPV6_ACCEPT_RECONFIGURE;
 
 	while ((c = getopt(argc, argv, "S::N:V:P:FB:c:i:r:Ru:s:kt:m:hedp:fal:")) != -1) {
 		switch (c) {
@@ -145,12 +136,6 @@ int main(_unused int argc, char* const argv[])
 			allow_slaac_only = -1;
 			ia_pd_mode = IA_MODE_FORCE;
 			break;
-
-#ifdef EXT_BFD_PING
-		case 'B':
-			bfd_interval = atoi(optarg);
-			break;
-#endif
 
 		case 'c':
 			l = script_unhexlify(&buf[4], sizeof(buf) - 4, optarg);
@@ -220,11 +205,9 @@ int main(_unused int argc, char* const argv[])
 			pidfile = optarg;
 			break;
 
-#ifdef EXT_CLIENT_FQDN
 		case 'f':
 			client_options &= ~DHCPV6_CLIENT_FQDN;
 			break;
-#endif
 
 		case 'a':
 			client_options &= ~DHCPV6_ACCEPT_RECONFIGURE;
@@ -289,6 +272,7 @@ int main(_unused int argc, char* const argv[])
 
 	while (!signal_term) { // Main logic
 		odhcp6c_clear_state(STATE_SERVER_ID);
+		odhcp6c_clear_state(STATE_SERVER_ADDR);
 		odhcp6c_clear_state(STATE_IA_NA);
 		odhcp6c_clear_state(STATE_IA_PD);
 		odhcp6c_clear_state(STATE_SNTP_IP);
@@ -358,13 +342,9 @@ int main(_unused int argc, char* const argv[])
 			break;
 
 		case DHCPV6_STATEFUL:
-			script_call("bound");
 			bound = true;
+			script_call("bound");
 			syslog(loglevel, "entering stateful-mode on %s", ifname);
-#ifdef EXT_BFD_PING
-			if (bfd_interval > 0)
-				bfd_start(ifname, bfd_loss, bfd_interval);
-#endif
 
 			while (!signal_usr2 && !signal_term) {
 				// Renew Cycle
@@ -392,6 +372,7 @@ int main(_unused int argc, char* const argv[])
 				}
 
 				odhcp6c_clear_state(STATE_SERVER_ID); // Remove binding
+				odhcp6c_clear_state(STATE_SERVER_ADDR);
 
 				size_t ia_pd_len, ia_na_len;
 				odhcp6c_get_state(STATE_IA_PD, &ia_pd_len);
@@ -407,9 +388,6 @@ int main(_unused int argc, char* const argv[])
 				if (res > 0)
 					script_call("rebound");
 				else {
-#ifdef EXT_BFD_PING
-					bfd_stop();
-#endif
 					break;
 				}
 			}
@@ -450,9 +428,6 @@ static int usage(void)
 	"	-P <length>	Request IPv6-Prefix (0 = auto)\n"
 	"	-F		Force IPv6-Prefix\n"
 	"	-V <class>	Set vendor-class option (base-16 encoded)\n"
-#ifdef EXT_BFD_PING
-	"	-B <interval>	Enable BFD ping check\n"
-#endif
 	"	-u <user-class> Set user-class option string\n"
 	"	-c <clientid>	Override client-ID (base-16 encoded)\n"
 	"	-i <iface-id>	Use a custom interface identifier for RA handling\n"
@@ -460,9 +435,7 @@ static int usage(void)
 	"	-R		Do not request any options except those specified with -r\n"
 	"	-s <script>	Status update script (/usr/sbin/odhcp6c-update)\n"
 	"	-a		Don't send Accept Reconfigure option\n"
-#ifdef EXT_CLIENT_FQDN
 	"	-f		Don't send Client FQDN option\n"
-#endif
 	"	-k		Don't send a RELEASE when stopping\n"
 	"	-t <seconds>	Maximum timeout for DHCPv6-SOLICIT (3600)\n"
 	"	-m <seconds>	Minimum time between accepting updates (30)\n"
@@ -514,14 +487,8 @@ bool odhcp6c_signal_process(void)
 		if (ra_link_up())
 			signal_usr2 = true;
 
-		if (ra_updated && (bound || allow_slaac_only == 0))
+		if (ra_updated && (bound || allow_slaac_only >= 0))
 			script_call("ra-updated"); // Immediate process urgent events
-		else if (ra_updated && !bound && allow_slaac_only > 0)
-			script_delay_call("ra-updated", allow_slaac_only);
-
-#ifdef EXT_BFD_PING
-		bfd_receive();
-#endif
 	}
 
 	return signal_usr1 || signal_usr2 || signal_term;

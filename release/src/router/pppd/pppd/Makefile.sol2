@@ -32,12 +32,12 @@ LIBS	+= -ldl
 #
 # Solaris 8 and on includes support for IPv6
 #
-#CFLAGS	+= -DINET6
-#OBJS	+= ipv6cp.o eui64.o
+CFLAGS	+= -DINET6
+OBJS	+= ipv6cp.o eui64.o
 
 # Uncomment to enable MS-CHAP
-#CFLAGS += -DUSE_CRYPT -DCHAPMS -DMSLANMAN -DHAVE_CRYPT_H
-#OBJS += chap_ms.o pppcrypt.o md4.o sha1.o
+CFLAGS += -DUSE_CRYPT -DCHAPMS -DMSLANMAN -DHAVE_CRYPT_H
+OBJS += chap_ms.o pppcrypt.o md4.o sha1.o
 
 # Uncomment for CBCP
 #CFLAGS += -DCBCP_SUPPORT

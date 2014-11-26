@@ -28,6 +28,10 @@
 #include "shutils.h"
 #include "shared.h"
 
+#include <linux/version.h>
+#ifndef LINUX_KERNEL_VERSION
+#define LINUX_KERNEL_VERSION LINUX_VERSION_CODE
+#endif
 
 /* Serialize using fcntl() calls 
  */
@@ -254,7 +258,11 @@ int exec_for_host(int host, int obsolete, uint flags, host_exec func)
 		    !strcmp(dp->d_name, "..")
 		   )
 			continue;
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(3,3,0)
+		snprintf(device_path, sizeof(device_path), "/sys/block/%s", dp->d_name);
+#else
 		snprintf(device_path, sizeof(device_path), "/sys/block/%s/device", dp->d_name);
+#endif
 		if (readlink(device_path, linkbuf, sizeof(linkbuf)) == -1)
 			continue;
 		h = strstr(linkbuf, "/host");

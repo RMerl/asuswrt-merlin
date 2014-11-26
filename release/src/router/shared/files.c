@@ -15,6 +15,7 @@
 #include <dirent.h>
 #include <bcmnvram.h>
 #include <syslog.h>
+#include <sys/file.h>
 #include "shutils.h"
 #include "shared.h"
 
@@ -38,6 +39,19 @@ unsigned long f_size(const char *path)	// 4GB-1	-1 = error
 	return (unsigned long)-1;
 }
 
+int f_read_excl(const char *path, void *buffer, int max)
+{
+	int f;
+	int n;
+
+	if ((f = open(path, O_RDONLY)) < 0) return -1;
+	flock(f, LOCK_EX);
+	n = read(f, buffer, max);
+	flock(f, LOCK_UN);
+	close(f);
+	return n;
+}
+
 int f_read(const char *path, void *buffer, int max)
 {
 	int f;
@@ -47,6 +61,33 @@ int f_read(const char *path, void *buffer, int max)
 	n = read(f, buffer, max);
 	close(f);
 	return n;
+}
+
+int f_write_excl(const char *path, const void *buffer, int len, unsigned flags, unsigned cmode)
+{
+	static const char nl = '\n';
+	int f, fl;
+	int r = -1;
+	mode_t m;
+
+	m = umask(0);
+	if (cmode == 0) cmode = 0666;
+	if ((fl = open(ACTION_LOCK_FILE, O_WRONLY|O_CREAT|O_EXCL|O_TRUNC, 0600)) >= 0) { // own the lock
+		if (( f = open(path, (flags & FW_APPEND) ? (O_WRONLY|O_CREAT|O_APPEND) : (O_WRONLY|O_CREAT|O_TRUNC), cmode)) >= 0) {
+			flock(f, LOCK_EX);
+			if ((buffer == NULL) || ((r = write(f, buffer, len)) == len)) {
+				if (flags & FW_NEWLINE) {
+					if (write(f, &nl, 1) == 1) ++r;
+				}
+			}
+			flock(f, LOCK_UN);
+			close(f);
+		}
+		close(fl);
+		unlink(ACTION_LOCK_FILE);
+	}
+	umask(m);
+	return r;
 }
 
 int f_write(const char *path, const void *buffer, int len, unsigned flags, unsigned cmode)

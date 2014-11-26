@@ -49,8 +49,8 @@ struct runtime_vars_s {
 	int port;	/* HTTP Port */
 	int notify_interval;	/* seconds between SSDP announces */
 	int max_connections;	/* max number of simultaneous conenctions */
-	char *root_container;	/* root ObjectID (instead of "0") */
-	char *ifaces[MAX_LAN_ADDR];	/* list of configured network interfaces */
+	const char *root_container;	/* root ObjectID (instead of "0") */
+	const char *ifaces[MAX_LAN_ADDR];	/* list of configured network interfaces */
 };
 
 struct string_s {

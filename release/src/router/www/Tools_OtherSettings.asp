@@ -16,7 +16,6 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" language="JavaScript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>

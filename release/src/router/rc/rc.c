@@ -127,11 +127,7 @@ static int rctest_main(int argc, char *argv[])
 #endif
 				}
 #endif
-#ifdef RTCONFIG_TMOBILE_QOS
-			add_EbtablesRules();
-#else
 			add_iQosRules(get_wan_ifname(0));
-#endif
 #ifdef RTCONFIG_BWDPI
 				if(nvram_get_int("qos_type") == 1)
 					start_dpi_engine_service();
@@ -167,7 +163,7 @@ static int rctest_main(int argc, char *argv[])
 #endif
 #ifdef RTCONFIG_BWDPI
 				if(nvram_get_int("qos_type") == 1){
-					stop_dpi_engine_service();
+					stop_dpi_engine_service(1);
 				}
 				else
 #endif
@@ -199,6 +195,15 @@ static int rctest_main(int argc, char *argv[])
 		else if (strcmp(argv[1], "pwr_usb") == 0) {
 			set_pwr_usb(atoi(argv[2]));
 			_dprintf("done.\n");
+		}
+		else if (strcmp(argv[1], "enc_chk") == 0) {
+        		unsigned char enc_buf[ENC_WORDS_LEN];
+        		unsigned char dec_buf[DATA_WORDS_LEN + 1];
+
+        		_dprintf("get enc str:[%s]\n", enc_str(argv[2], enc_buf));
+        		_dprintf("get dec str:[%s]\n", dec_str(enc_buf, dec_buf));
+
+       			_dprintf("done(%d)\n", strcmp(argv[2], dec_buf));
 		}
 #ifdef RTCONFIG_BCMFA
 		else if (strcmp(argv[1], "fa_rev") == 0) {
@@ -330,16 +335,14 @@ static const applets_t applets[] = {
 #ifdef RTCONFIG_HTTPS
 	{ "rsasign_check",		rsasign_check_main		},
 #endif
-	{ "service",		service_main		},
+	{ "service",			service_main			},
 	{ "speedtest",			speedtest_main			},
 #ifdef RTCONFIG_BWDPI
-	{ "bwdpi",				bwdpi_main			},
+	{ "bwdpi",			bwdpi_main			},
 	{ "bwdpi_monitor",		bwdpi_monitor_main		},
 	{ "bwdpi_check",		bwdpi_check_main		},
+	{ "bwdpi_wred_alive",		bwdpi_wred_alive_main		},
 	{ "rsasign_sig_check",		rsasign_sig_check_main		},
-#endif
-#ifdef RTCONFIG_TMOBILE
-	{ "sendm",			sendm_main			},
 #endif
 	{NULL, NULL}
 };
@@ -825,6 +828,60 @@ int main(int argc, char **argv)
 	else if(!strcmp(base, "write_3g_ppp_conf")){
 		write_3g_ppp_conf();
 
+		return 0;
+	}
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+	else if(!strcmp(base, "modem_bytes_plus")){
+		char buf[32];
+		unsigned long long rx_old, tx_old;
+		unsigned long long rx, tx;
+
+		if(f_exists("/jffs/modem_bytes_rx_old")){
+			f_read_excl("/jffs/modem_bytes_rx_old", buf, 32);
+			rx_old = strtoull(buf, NULL, 10);
+		}
+		else
+			rx_old = 0;
+		if(f_exists("/jffs/modem_bytes_tx_old")){
+			f_read_excl("/jffs/modem_bytes_tx_old", buf, 32);
+			tx_old = strtoull(buf, NULL, 10);
+		}
+		else
+			tx_old = 0;
+		if(f_exists("/jffs/modem_bytes_rx")){
+			f_read_excl("/jffs/modem_bytes_rx", buf, 32);
+			rx = strtoull(buf, NULL, 10);
+		}
+		else
+			rx = 0;
+		if(f_exists("/jffs/modem_bytes_tx")){
+			f_read_excl("/jffs/modem_bytes_tx", buf, 32);
+			tx = strtoull(buf, NULL, 10);
+		}
+		else
+			tx = 0;
+
+		rx += rx_old;
+		tx += tx_old;
+
+		snprintf(buf, 32, "%llu", rx);
+		f_write_excl("/jffs/modem_bytes_rx_old", buf, strlen(buf), 0, 0);
+		nvram_set("modem_bytes_rx_old", buf);
+		snprintf(buf, 32, "%llu", tx);
+		f_write_excl("/jffs/modem_bytes_tx_old", buf, strlen(buf), 0, 0);
+		nvram_set("modem_bytes_tx_old", buf);
+
+		return 0;
+	}
+#endif
+#endif
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_WIDEDHCP6)
+	else if(!strcmp(base, "stop_ipv6")) {
+		stop_ipv6();
+		return 0;
+	}
+	else if(!strcmp(base, "start_dhcp6c")) {
+		start_dhcp6c();
 		return 0;
 	}
 #endif

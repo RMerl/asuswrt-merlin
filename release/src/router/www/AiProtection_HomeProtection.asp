@@ -13,7 +13,6 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
@@ -85,11 +84,11 @@ var AM_to_cifs = get_share_management_status("cifs");  // Account Management for
 var AM_to_ftp = get_share_management_status("ftp");  // Account Management for FTP
 var $j = jQuery.noConflict();
 var button_flag = 0;
-var malicious_cat_id = "39,73,74,75,76,77,78,79,80,81,82,83,84,85,86,92";
-//var malicious_cat_id = "39,73,74,75,76,77,78,79,80,81,82,83,84,85,86,88,92";
 
 function initial(){
 	show_menu();
+	$("option4").innerHTML = '<table><tbody><tr><td><div id="index_img4"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
+	$("option4").className = "m4_r";
 }
 
 function applyRule(){
@@ -103,6 +102,7 @@ function check_weakness(){
 	check_login_name_password();
 	check_wireless_password();
 	check_wireless_encryption();
+	check_WPS();
 	check_upnp();
 	check_wan_access();
 	check_ping_form_wan();
@@ -132,20 +132,29 @@ function enable_whole_security(){
 	var port_forwarding_enable = document.form.vts_enable_x.value;
 	var ftp_account_mode = get_manage_type('ftp');
 	var samba_account_mode = get_manage_type('cifs');
-	var wrs_enable = document.form.wrs_enable.value;
-	var wrs_app_enable = document.form.wrs_app_enable.value;
 	var wrs_cc_enable = document.form.wrs_cc_enable.value;
 	var wrs_vp_enable = document.form.wrs_vp_enable.value;
+	var wrs_mals_enable = document.form.wrs_mals_enable.value;
+	var wps_enable = document.form.wps_enable.value;
 	var restart_wan = 0;
 	var restart_time = 0;
 	var restart_firewall = 0;
 	var restart_wrs = 0;
+	var restart_wireless = 0;
+	
+	if(wps_enable == 1){
+		document.form.wps_enable.value = 0;
+		document.form.wps_sta_pin.value = "";
+		document.form.wps_enable.disabled = false;
+		document.form.wps_sta_pin.disabled = false;
+		restart_wireless = 1;
+	}
 	
 	if(wan0_upnp_enable == 1 || wan1_upnp_enable == 1){		
 		document.form.wan0_upnp_enable.value = 0;
 		document.form.wan1_upnp_enable.value = 0;
-		document.form.wan0_upnp_enable.disabled = false;;	
-		document.form.wan1_upnp_enable.disabled = false;;	
+		document.form.wan0_upnp_enable.disabled = false;
+		document.form.wan1_upnp_enable.disabled = false;
 		restart_wan = 1;
 	}
 	
@@ -182,14 +191,7 @@ function enable_whole_security(){
 	if(ftp_account_mode == 0 || samba_account_mode == 0){	
 		switchAccount();
 	}
-	
-	if(wrs_enable == 0 || wrs_app_enable == 0){
-		document.form.wrs_enable.value = 1;
-		document.form.wrs_app_enable.value = 1;
-		restart_firewall = 1;
-		restart_wrs = 1;
-	}
-	
+
 	if(wrs_cc_enable == 0){
 		document.form.wrs_cc_enable.value = 1;
 		restart_firewall = 1;
@@ -202,6 +204,12 @@ function enable_whole_security(){
 		restart_wrs = 1;
 	}
 
+	if(wrs_mals_enable == 0){
+		document.form.wrs_mals_enable.value = 1;
+		restart_firewall = 1;
+		restart_wrs = 1;
+	}
+	
 	if(restart_wan == 1){
 		if(action_script_temp == "")
 			action_script_temp += "restart_wan_if";
@@ -230,6 +238,15 @@ function enable_whole_security(){
 			action_script_temp += ";restart_firewall";	
 	}
 	
+	if(restart_wireless == 1){
+		if(action_script_temp == ""){
+			action_script_temp += "restart_wireless";
+		}	
+		else{
+			action_script_temp += ";restart_wireless";	
+		}	
+	}
+	
 	document.form.action_script.value = action_script_temp;
 	document.form.submit();
 	if(ftp_account_mode == 0 || samba_account_mode == 0){
@@ -241,13 +258,13 @@ function check_login_name_password(){
 	var password = document.form.http_passwd.value;
 
 	if(username == "admin" || password == "admin"){
-		$('login_password').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'>No</a>";
+		$('login_password').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'><#checkbox_No#></a>";
 		$('login_password').className = "status_no";	
 		$('login_password').onmouseover = function(){overHint(10);}
 		$('login_password').onmouseout = function(){nd();}
 	}
 	else{
-		$('login_password').innerHTML = "Yes";
+		$('login_password').innerHTML = "<#checkbox_Yes#>";
 		$('login_password').className = "status_yes";
 	}
 }
@@ -264,7 +281,6 @@ function check_wireless_password(){
 
 function check_wireless_encryption(){
 	var encryption_type = document.form.wl_auth_mode_x.value;
-	
 	if(encryption_type == "psk2" || encryption_type == "pskpsk2" || encryption_type == "wpa2" || encryption_type == "wpawpa2"){		
 		$('wireless_encryption').innerHTML = "<#PASS_score3#>";
 		$('wireless_encryption').className = "status_yes";
@@ -277,16 +293,30 @@ function check_wireless_encryption(){
 	}
 }
 
+function check_WPS(){
+	var wps_enable = document.form.wps_enable.value;
+	if(wps_enable == 0){
+		$('wps_status').innerHTML = "<#checkbox_Yes#>";
+		$('wps_status').className = "status_yes";
+	}
+	else{
+		$('wps_status').innerHTML = "<a href='Advanced_WWPS_Content.asp' target='_blank'><#checkbox_No#></a>";
+		$('wps_status').className = "status_no";	
+		$('wps_status').onmouseover = function(){overHint(25);}
+		$('wps_status').onmouseout = function(){nd();}
+	}
+}
+
 function check_upnp(){
 	var wan0_unpn_enable = document.form.wan0_upnp_enable.value;
 	var wan1_unpn_enable = document.form.wan1_upnp_enable.value;
 	
 	if(wan0_unpn_enable == 0 && wan1_unpn_enable == 0){
-		$('upnp_service').innerHTML = "Yes";
+		$('upnp_service').innerHTML = "<#checkbox_Yes#>";
 		$('upnp_service').className = "status_yes";
 	}
 	else{
-		$('upnp_service').innerHTML = "<a href='Advanced_WAN_Content.asp' target='_blank'>No</a>";
+		$('upnp_service').innerHTML = "<a href='Advanced_WAN_Content.asp' target='_blank'><#checkbox_No#></a>";
 		$('upnp_service').className = "status_no";
 		$('upnp_service').onmouseover = function(){overHint(13);}
 		$('upnp_service').onmouseout = function(){nd();}
@@ -297,11 +327,11 @@ function check_wan_access(){
 	var wan_access_enable = document.form.misc_http_x.value;
 
 	if(wan_access_enable == 0){
-		$('access_from_wan').innerHTML = "Yes";
+		$('access_from_wan').innerHTML = "<#checkbox_Yes#>";
 		$('access_from_wan').className = "status_yes";
 	}
 	else{
-		$('access_from_wan').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'>No</a>";
+		$('access_from_wan').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'><#checkbox_No#></a>";
 		$('access_from_wan').className = "status_no";
 		$('access_from_wan').onmouseover = function(){overHint(14);}
 		$('access_from_wan').onmouseout = function(){nd();}
@@ -312,11 +342,11 @@ function check_ping_form_wan(){
 	var wan_ping_enable = document.form.misc_ping_x.value;
 
 	if(wan_ping_enable == 0){
-		$('ping_from_wan').innerHTML = "Yes";
+		$('ping_from_wan').innerHTML = "<#checkbox_Yes#>";
 		$('ping_from_wan').className = "status_yes";
 	}
 	else{
-		$('ping_from_wan').innerHTML = "<a href='Advanced_BasicFirewall_Content.asp' target='_blank'>No</a>";
+		$('ping_from_wan').innerHTML = "<a href='Advanced_BasicFirewall_Content.asp' target='_blank'><#checkbox_No#></a>";
 		$('ping_from_wan').className = "status_no";
 		$('ping_from_wan').onmouseover = function(){overHint(15);}
 		$('ping_from_wan').onmouseout = function(){nd();}
@@ -325,11 +355,11 @@ function check_ping_form_wan(){
 
 function check_dmz(){
 	if(document.form.dmz_ip.value == ""){
-		$('dmz_service').innerHTML = "Yes";
+		$('dmz_service').innerHTML = "<#checkbox_Yes#>";
 		$('dmz_service').className = "status_yes";
 	}
 	else{
-		$('dmz_service').innerHTML = "<a href='Advanced_Exposed_Content.asp' target='_blank'>No</a>";
+		$('dmz_service').innerHTML = "<a href='Advanced_Exposed_Content.asp' target='_blank'><#checkbox_No#></a>";
 		$('dmz_service').className = "status_no";
 		$('dmz_service').onmouseover = function(){overHint(16);}
 		$('dmz_service').onmouseout = function(){nd();}
@@ -340,11 +370,11 @@ function check_port_trigger(){
 	var port_trigger_enable = document.form.autofw_enable_x.value;
 
 	if(port_trigger_enable == 0){
-		$('port_tirgger').innerHTML = "Yes";
+		$('port_tirgger').innerHTML = "<#checkbox_Yes#>";
 		$('port_tirgger').className = "status_yes";
 	}
 	else{
-		$('port_tirgger').innerHTML = "<a href='Advanced_PortTrigger_Content.asp' target='_blank'>No</a>";
+		$('port_tirgger').innerHTML = "<a href='Advanced_PortTrigger_Content.asp' target='_blank'><#checkbox_No#></a>";
 		$('port_tirgger').className = "status_no";
 		$('port_tirgger').onmouseover = function(){overHint(17);}
 		$('port_tirgger').onmouseout = function(){nd();}
@@ -356,11 +386,11 @@ function check_port_forwarding(){
 	var port_forwarding_enable = document.form.vts_enable_x.value;
 
 	if(port_forwarding_enable == 0){
-		$('port_forwarding').innerHTML = "Yes";
+		$('port_forwarding').innerHTML = "<#checkbox_Yes#>";
 		$('port_forwarding').className = "status_yes";
 	}
 	else{
-		$('port_forwarding').innerHTML = "<a href='Advanced_VirtualServer_Content.asp' target='_blank'>No</a>";
+		$('port_forwarding').innerHTML = "<a href='Advanced_VirtualServer_Content.asp' target='_blank'><#checkbox_No#></a>";
 		$('port_forwarding').className = "status_no";
 		$('port_forwarding').onmouseover = function(){overHint(18);}
 		$('port_forwarding').onmouseout = function(){nd();}
@@ -371,13 +401,13 @@ function check_ftp_anonymous(){
 	var ftp_account_mode = get_manage_type('ftp');		//0: shared mode, 1: account mode
 	
 	if(ftp_account_mode == 0){
-		$('ftp_account').innerHTML = "<a href='Advanced_AiDisk_ftp.asp' target='_blank'>No</a>";
+		$('ftp_account').innerHTML = "<a href='Advanced_AiDisk_ftp.asp' target='_blank'><#checkbox_No#></a>";
 		$('ftp_account').className = "status_no";
 		$('ftp_account').onmouseover = function(){overHint(19);}
 		$('ftp_account').onmouseout = function(){nd();}
 	}
 	else{
-		$('ftp_account').innerHTML = "Yes";
+		$('ftp_account').innerHTML = "<#checkbox_Yes#>";
 		$('ftp_account').className = "status_yes";
 	}
 }
@@ -386,51 +416,50 @@ function check_samba_anonymous(){
 	var samba_account_mode = get_manage_type('cifs');
 	
 	if(samba_account_mode == 0){
-		$('samba_account').innerHTML = "<a href='Advanced_AiDisk_samba.asp' target='_blank'>No</a>";
+		$('samba_account').innerHTML = "<a href='Advanced_AiDisk_samba.asp' target='_blank'><#checkbox_No#></a>";
 		$('samba_account').className = "status_no";
 		$('samba_account').onmouseover = function(){overHint(20);}
 		$('samba_account').onmouseout = function(){nd();}
 	}
 	else{
-		$('samba_account').innerHTML = "Yes";
+		$('samba_account').innerHTML = "<#checkbox_Yes#>";
 		$('samba_account').className = "status_yes";
 	}
 }
 
 function check_TM_feature(){
-	var wrs_enable = document.form.wrs_enable.value;
-	var wrs_app_enable = document.form.wrs_app_enable.value;
 	var wrs_cc_enable = document.form.wrs_cc_enable.value;
 	var wrs_vp_enable = document.form.wrs_vp_enable.value;
+	var wrs_mals_enable = document.form.wrs_mals_enable.value;
 
-	if(wrs_enable == 1 || wrs_app_enable == 1){
-		$('wrs_service').innerHTML = "Yes";
+	if(wrs_mals_enable == 1){
+		$('wrs_service').innerHTML = "<#checkbox_Yes#>";
 		$('wrs_service').className = "status_yes";
 	}
 	else{
-		$('wrs_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'>No</a>";
+		$('wrs_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
 		$('wrs_service').className = "status_no";
 		$('wrs_service').onmouseover = function(){overHint(21);}
 		$('wrs_service').onmouseout = function(){nd();}
 	}
 
 	if(wrs_vp_enable == 1){
-		$('vp_service').innerHTML = "Yes";
+		$('vp_service').innerHTML = "<#checkbox_Yes#>";
 		$('vp_service').className = "status_yes";
 	}
 	else{
-		$('vp_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'>No</a>";
+		$('vp_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
 		$('vp_service').className = "status_no";
 		$('vp_service').onmouseover = function(){overHint(22);}
 		$('vp_service').onmouseout = function(){nd();}
 	}
 	
 	if(wrs_cc_enable == 1){
-		$('cc_service').innerHTML = "Yes";
+		$('cc_service').innerHTML = "<#checkbox_Yes#>";
 		$('cc_service').className = "status_yes";
 	}
 	else{
-		$('cc_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'>No</a>";
+		$('cc_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
 		$('cc_service').className = "status_no";
 		$('cc_service').onmouseover = function(){overHint(23);}
 		$('cc_service').onmouseout = function(){nd();}
@@ -479,9 +508,16 @@ function resultOfSwitchShareMode(){
 }
 
 function show_tm_eula(){
-	$j.get("tm_eula.html", function(data){
-		$('agreement_panel').innerHTML= data;
-	});
+	if(document.form.preferred_lang.value == "JP"){
+			$j.get("JP_tm_eula.htm", function(data){
+				$('agreement_panel').innerHTML= data;
+			});
+	}
+	else{
+			$j.get("tm_eula.htm", function(data){
+				$('agreement_panel').innerHTML= data;
+			});
+	}
 	dr_advise();
 	cal_agreement_block();
 	$j("#agreement_panel").fadeIn(300);
@@ -518,15 +554,12 @@ function cancel(){
 function eula_confirm(){
 	document.form.TM_EULA.value = 1;
 	if(button_flag == 1){
-		document.form.wrs_enable.value = 1;	
-		document.form.wrs_app_enable.value = 1;
+		document.form.wrs_mals_enable.value = 1;
 	}
 	else if(button_flag == 2){
 		document.form.wrs_vp_enable.value = 1;
 	}
 	else{
-		document.form.wrs_enable.value = 1;
-		document.form.wrs_app_enable.value = 1;
 		document.form.wrs_cc_enable.value = 1;
 	}
 	
@@ -611,6 +644,12 @@ function apply_alert_preference(){
 							<th><#AiProtection_scan_item3#> -</th>
 							<td>
 								<div id="wireless_encryption"></div>
+							</td>			
+						</tr>
+						<tr>
+							<th>WPS disabled -</th>
+							<td>
+								<div id="wps_status"></div>
 							</td>			
 						</tr>
 						<tr>
@@ -776,8 +815,7 @@ function apply_alert_preference(){
 <input type="hidden" name="action_script" value="restart_wrs;restart_firewall">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="wrs_enable" value="<% nvram_get("wrs_enable"); %>">
-<input type="hidden" name="wrs_app_enable" value="<% nvram_get("wrs_app_enable"); %>">
+<input type="hidden" name="wrs_mals_enable" value="<% nvram_get("wrs_mals_enable"); %>">
 <input type="hidden" name="wrs_cc_enable" value="<% nvram_get("wrs_cc_enable"); %>">
 <input type="hidden" name="wrs_vp_enable" value="<% nvram_get("wrs_vp_enable"); %>">
 <input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>" disabled>
@@ -791,8 +829,9 @@ function apply_alert_preference(){
 <input type="hidden" name="dmz_ip" value="<% nvram_get("dmz_ip"); %>" disabled>
 <input type="hidden" name="autofw_enable_x" value="<% nvram_get("autofw_enable_x"); %>" disabled>
 <input type="hidden" name="vts_enable_x" value="<% nvram_get("vts_enable_x"); %>" disabled>
+<input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>" disabled>
+<input type="hidden" name="wps_sta_pin" value="<% nvram_get("wps_sta_pin"); %>" disabled>
 <input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
-<input type="hidden" name="wrs_mals_list" value="<% nvram_get("wrs_mals_list"); %>">
 <input type="hidden" name="PM_SMTP_SERVER" value="<% nvram_get("PM_SMTP_SERVER"); %>">
 <input type="hidden" name="PM_SMTP_PORT" value="<% nvram_get("PM_SMTP_PORT"); %>">
 <input type="hidden" name="PM_MY_EMAIL" value="<% nvram_get("PM_MY_EMAIL"); %>">
@@ -839,6 +878,7 @@ function apply_alert_preference(){
 														<tr>
 															<td>
 																<div style="width:430px"><#AiProtection_HomeDesc2#></div>
+																<div style="width:430px"><a style="text-decoration:underline;" href="http://www.asus.com/us/support/FAQ/1008719/" target="_blank"><#AiProtection_Home#> FAQ</a></div>
 															</td>
 															<td>
 																<div style="width:100px;height:48px;margin-left:-40px;background-image:url('images/New_ui/tm_logo.png');"></div>
@@ -846,15 +886,12 @@ function apply_alert_preference(){
 														</tr>
 														<tr>
 															<td rowspan="2">
-																<div style="margin-top:5px;">
+																<div>
 																	<img src="/images/New_ui/Home_Protection_Scenario.png">
 																</div>
 															</td>
-														</tr>
-													
+														</tr>												
 													</table>
-													
-
 												</td>
 											</tr>									
 										</table>
@@ -917,10 +954,10 @@ function apply_alert_preference(){
 														<table>
 															<tr>
 																<td>
-																	<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_wrs_enable"></div>
+																	<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_mals_enable"></div>
 																	<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 																		<script type="text/javascript">
-																			$j('#radio_wrs_enable').iphoneSwitch('<% nvram_get("wrs_enable"); %>',
+																			$j('#radio_mals_enable').iphoneSwitch('<% nvram_get("wrs_mals_enable"); %>',
 																				function(){																					
 																					if(document.form.TM_EULA.value == 0){
 																						button_flag = 1;
@@ -928,19 +965,11 @@ function apply_alert_preference(){
 																						return;
 																					}
 																				
-																					document.form.wrs_enable.value = 1;
-																					document.form.wrs_app_enable.value = 1;
-																					document.form.wrs_mals_list.value = malicious_cat_id;
+																					document.form.wrs_mals_enable.value = 1;
 																					applyRule();																				
 																				},
 																				function(){
-																					document.form.wrs_enable.value = 0;
-																					document.form.wrs_app_enable.value = 0;	
-																					document.form.wrs_mals_list.value = "";
-																					if(document.form.wrs_cc_enable.value == 1){
-																						document.form.wrs_cc_enable.value = 0;
-																					}
-																					
+																					document.form.wrs_mals_enable.value = 0;
 																					applyRule();
 																				},
 																						{
@@ -1008,10 +1037,7 @@ function apply_alert_preference(){
 																		return;
 																	}
 																
-																	document.form.wrs_enable.value = 1;
-																	document.form.wrs_app_enable.value = 1;
 																	document.form.wrs_cc_enable.value = 1;	
-																	document.form.wrs_mals_list.value = malicious_cat_id;
 																	applyRule();	
 																},
 																function(){
@@ -1030,7 +1056,7 @@ function apply_alert_preference(){
 											</tr>
 										</table>
 									</div>
-									<div style="width:135px;height:60px;margin:5px 0px 0px 585px;background-image:url('images/New_ui/tm_logo_power.png');"></div>
+									<div style="width:135px;height:55px;position:absolute;bottom:5px;right:5px;background-image:url('images/New_ui/tm_logo_power.png');"></div>
 								</td>
 							</tr>
 							</tbody>	

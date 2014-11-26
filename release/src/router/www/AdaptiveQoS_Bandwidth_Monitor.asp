@@ -13,7 +13,6 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <link rel="stylesheet" type="text/css" href="/device-map/device-map.css" />
-<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
@@ -50,10 +49,13 @@
 	margin-left:10px;
 	background-position:50% 61.10%;
 }
+.trafficIcons:hover{
+	background-image:url('/images/New_ui/networkmap/client-listover.png');
+}
 .trafficIcons_clicked{
 	width:56px;
 	height:56px;
-	background-image:url('/images/New_ui/networkmap/client-list.png');
+	background-image:url('/images/New_ui/networkmap/client-listover.png');
 	background-repeat:no-repeat;
 	border-radius:10px;
 	margin-left:10px;
@@ -306,6 +308,21 @@ function show_clients(priority_type){
 	}
 	
 	clearTimeout(device_time_flag);
+	clientList.sort(function(a,b){		//sort client by priority level
+		if(clientList[a].qosLevel == "" && clientList[b].qosLevel == ""){
+			return 0;
+		}
+		else if(clientList[a].qosLevel == "" && clientList[b].qosLevel != ""){
+			return 1;
+		}
+		else if(clientList[a].qosLevel != "" && clientList[b].qosLevel == ""){
+			return -1;
+		}
+		else{
+			return clientList[a].qosLevel - clientList[b].qosLevel;
+		}
+	});
+	
 	for(i=0; i<clientList.length; i++){
 		var clientObj = clientList[clientList[i]];
 
@@ -536,8 +553,8 @@ function calculate_traffic(array_traffic){
 	var client_traffic_new = new Array();
 
 	for(i=0;i< array_traffic.length;i++){
-		if(typeof(clientList[array_traffic[i][0]]) != "undefined"){
-			client_traffic_new[i] = array_traffic[i][0];	
+		if(typeof(clientList[array_traffic[i][0]]) != "undefined"){	
+			client_traffic_new.push(array_traffic[i][0]);	
 			client_traffic_new[array_traffic[i][0]] = {"tx":array_traffic[i][1], "rx":array_traffic[i][2]};								
 		}	
 	}
@@ -558,7 +575,6 @@ function calculate_traffic(array_traffic){
 			
 			diff_tx = diff_tx*8/detect_interval;
 			diff_rx = diff_rx*8/detect_interval;
-	
 	
 			diff_tx_kb = diff_tx/1024;
 			diff_rx_kb = diff_rx/1024;
@@ -581,7 +597,6 @@ function calculate_traffic(array_traffic){
 						tx_width = 1;
 					
 					$(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-
 				}
 
 				if(diff_tx_kb < 1024){	
@@ -605,9 +620,7 @@ function calculate_traffic(array_traffic){
 				tx_width += 55;
 				$(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
 				$(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				$(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";
-			
-			
+				$(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";	
 			}
 			else if((diff_tx_kb >= upload_maximum*3/5) && (diff_tx_kb < upload_maximum*4/5)){
 				tx_width = parseInt((diff_tx_kb - (upload_maximum*3/5))/(upload_maximum/5)*15);
@@ -647,14 +660,12 @@ function calculate_traffic(array_traffic){
 					
 				if(diff_rx_kb < 1024){
 					$(client_traffic_new[i]+'_download').innerHTML = diff_rx_kb.toFixed(1);
-					$(client_traffic_new[i]+'_download_unit').innerHTML = "Kb";
-				
+					$(client_traffic_new[i]+'_download_unit').innerHTML = "Kb";			
 				}
 				else{
 					$(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
 					$(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";				
-				}
-									
+				}									
 			}
 			else if((diff_rx_kb >= download_maximum/5) && (diff_rx_kb < download_maximum*2/5)){		//	25%
 				rx_width = parseInt((diff_rx_kb - (download_maximum/5))/(download_maximum/5)*25);
@@ -856,7 +867,6 @@ function calculate_apps_traffic(apps_traffic){
 					$(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 				}
 			}		
-
 		}	
 	}
 	
@@ -1047,10 +1057,17 @@ function cancel(){
 															<script type="text/javascript">
 																$j('#apps_analysis_enable').iphoneSwitch('<% nvram_get("apps_analysis"); %>',
 																	function(){
-																		if(document.form.TM_EULA.value == 0){		
-																			$j.get("tm_eula.html", function(data){
-																				$('agreement_panel').innerHTML= data;
-																			});
+																		if(document.form.TM_EULA.value == 0){
+																			if(document.form.preferred_lang.value == "JP"){
+																				$j.get("JP_tm_eula.htm", function(data){
+																					$('agreement_panel').innerHTML= data;
+																				});
+																			}
+																			else{
+																				$j.get("tm_eula.htm", function(data){
+																					$('agreement_panel').innerHTML= data;
+																				});
+																			}	
 																			dr_advise();
 																			cal_agreement_block();
 																			$j("#agreement_panel").fadeIn(300);
@@ -1204,7 +1221,10 @@ function cancel(){
 						</tr>
 						<tr>
 							<td>
-								<div style=" *width:136px;margin:5px 0px 0px 300px;" class="titlebtn" align="center" onClick="applyRule();"><span><#CTL_apply#></span></div>
+								<div style=" *width:136px;margin:5px 0px 0px 300px;" class="titlebtn" align="center" onClick="applyRule();">
+									<span><#CTL_apply#></span>
+									<div style="margin:-30px 0 0px -480px;"><a style="text-decoration:underline;" href="http://www.asus.com/us/support/FAQ/1008717/" target="_blank"><#Bandwidth_monitor_WANLAN#> FAQ</a></div>
+								</div>
 							</td>
 						</tr>		
 					</table>

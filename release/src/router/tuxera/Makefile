@@ -10,7 +10,11 @@ endif
 DSTDIR = $(INSTALLDIR)/lib/modules/$(LINUX_KERNEL)/kernel/fs
 else
 ifeq ($(RTCONFIG_BCMARM),y)
+ifeq ($(RTCONFIG_BCM7),y)
+SRCFILE = broadcom_arm_7
+else
 SRCFILE = broadcom_arm
+endif
 DSTDIR = $(INSTALLDIR)/lib/modules/2.6.36.4brcmarm/kernel/fs
 else
 SRCFILE = broadcom

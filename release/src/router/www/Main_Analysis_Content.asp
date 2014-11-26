@@ -53,6 +53,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
 function initial(){
@@ -62,7 +63,7 @@ function initial(){
 
 function validForm(){
 	if(document.form.cmdMethod.value == "ping"){
-		if(!validate_range(document.form.pingCNT, 1, 9))
+		if(!validator.range(document.form.pingCNT, 1, 9))
 			return false;
 	}
 
@@ -262,7 +263,7 @@ function pullLANIPList(obj){
 										<tr id="pingCNT_tr">
 											<th width="20%"><#NetworkTools_Count#></th>
 											<td>
-		              			<input type="text" name="pingCNT" class="input_3_table" maxlength="1" value="" onblur="" onKeyPress="return is_number(this, event);" placeholder="5">
+		              			<input type="text" name="pingCNT" class="input_3_table" maxlength="1" value="" onblur="" onKeyPress="return validator.isNumber(this, event);" placeholder="5">
 											</td>
 										</tr>
 									</table>

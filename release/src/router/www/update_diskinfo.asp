@@ -4,6 +4,22 @@
 	<% get_printer_info(); %>
 	<% get_modem_info(); %>
 
+	String.prototype.toArray = function(){
+		var ret = eval(this.toString());
+		if(Object.prototype.toString.apply(ret) === '[object Array]')
+			return ret;
+		return [];
+	}
+
+	var decodeURIComponentSafe = function(_ascii){
+		try{
+			return decodeURIComponent(_ascii);
+		}
+		catch(err){
+			return _ascii;
+		}
+	}
+
 	var initialValue = {
 		"usbPortMax" :  '<% nvram_get("rc_support"); %>'.charAt('<% nvram_get("rc_support"); %>'.indexOf("usbX")+4),
 		"apps_dev" : '<% nvram_get("apps_dev"); %>',
@@ -64,7 +80,7 @@
 		tmpDisk.mountNumber = foreign_disk_total_mounted_number()[i];
 		tmpDisk.partNumber = foreign_disk_pool_number()[i];
 
-		var _part = 0;
+		var _part = 0;	
 		while (_part < tmpDisk.partNumber && allPartIndex < pool_name.length){
 			var tmpParts = new newPartition();
 			tmpParts.partName = pool_names()[allPartIndex];

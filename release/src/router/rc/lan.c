@@ -62,6 +62,9 @@ typedef u_int8_t u8;
 #ifdef RTCONFIG_USB_MODEM
 #include <usb_info.h>
 #endif
+#ifdef RTCONFIG_DPSTA
+#include <dpsta_linux.h>
+#endif
 
 #define sin_addr(s) (((struct sockaddr_in *)(s))->sin_addr)
 
@@ -232,9 +235,6 @@ static int wlconf(char *ifname, int unit, int subunit)
 	int txpower;
 	int model = get_model();
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
-#ifdef RTCONFIG_TMOBILE
-	int disable_dhcp_server = 0;
-#endif
 
 #ifdef RTCONFIG_QTN
 	if (!strcmp(ifname, "wifi0"))
@@ -249,11 +249,6 @@ static int wlconf(char *ifname, int unit, int subunit)
 			goto GEN_CONF;
 #endif
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-#ifdef RTCONFIG_TMOBILE
-		if (nvram_match(strcat_r(prefix, "mode_x", tmp), "1") &&
-		   !disable_dhcp_server)
-			disable_dhcp_server = 1;
-#endif
 
 #if 0
 #ifdef RTCONFIG_BCMWL6
@@ -283,11 +278,6 @@ GEN_CONF:
 			eval("wl", "-i", ifname, "radio", "off");
 			return -1;
 		}
-
-#ifdef RTCONFIG_TMOBILE
-		if (disable_dhcp_server)
-			start_dnsmasq();
-#endif
 	}
 
 #if 0
@@ -396,17 +386,15 @@ GEN_CONF:
 					eval("wl", "-i", ifname, "radarthrs",
 					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
 #elif defined(RTAC66U) || defined(RTN66U)
-#if 0
 				if (((get_model() == MODEL_RTAC66U) &&
 					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-					nvram_match(strcat_r(prefix, "country_rev", tmp), "13") &&
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "31") &&
 					nvram_match(strcat_r(prefix, "dfs", tmp), "1")) ||
 					((get_model() == MODEL_RTN66U) &&
 					nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
 					nvram_match(strcat_r(prefix, "country_rev", tmp), "0")))
 					eval("wl", "-i", ifname, "radarthrs",
 					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
-#endif
 #endif
 			}
 #endif
@@ -1245,6 +1233,32 @@ ALL:
 }
 #endif
 
+#ifdef RTCONFIG_DPSTA
+static int
+dpsta_ioctl(char *name, void *buf, int len)
+{
+	struct ifreq ifr;
+	int ret = 0;
+	int s;
+
+	/* open socket to kernel */
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("socket");
+		return errno;
+	}
+
+	strncpy(ifr.ifr_name, name, IFNAMSIZ);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+	ifr.ifr_data = (caddr_t)buf;
+	if ((ret = ioctl(s, SIOCDEVPRIVATE, &ifr)) < 0)
+		perror(ifr.ifr_name);
+
+	/* cleanup */
+	close(s);
+	return ret;
+}
+#endif
+
 void start_lan(void)
 {
 	char *lan_ifname;
@@ -1263,9 +1277,13 @@ void start_lan(void)
 #ifdef RTCONFIG_WIRELESSREPEATER
 	char domain_mapping[64];
 #endif
-
-	_dprintf("%s %d\n", __func__, __LINE__);
-
+#ifdef RTCONFIG_DPSTA
+	char hwaddr[ETHER_ADDR_LEN];
+	char macaddr[18];
+	int s=0;
+	int dpsta=0;
+	dpsta_enable_info_t info = { 0 };
+#endif
 	update_lan_state(LAN_STATE_INITIALIZING, 0);
 
 	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER) {
@@ -1371,14 +1389,10 @@ void start_lan(void)
 
 		eval("brctl", "addbr", lan_ifname);
 		eval("brctl", "setfd", lan_ifname, "0");
-#ifdef RTCONFIG_TMOBILE
-		eval("brctl", "stp", lan_ifname, nvram_safe_get("lan_stp"));
-#else
 		if (is_routing_enabled())
 			eval("brctl", "stp", lan_ifname, nvram_safe_get("lan_stp"));
 		else
 			eval("brctl", "stp", lan_ifname, "0");
-#endif
 
 #ifdef RTCONFIG_IPV6
 		if (get_ipv6_service() != IPV6_DISABLED) {
@@ -1393,12 +1407,8 @@ void start_lan(void)
 			eval("igs", "add", "bridge", lan_ifname);
 		}
 #endif
-
 		inet_aton(nvram_safe_get("lan_ipaddr"), (struct in_addr *)&ip);
-#ifdef RTCONFIG_TMOBILE
-//		restore_defaults_tmobile_hs2();
-		wl_defaults();
-#endif
+
 		hwaddrset = 0;
 		sta = 0;
 		if ((lan_ifnames = strdup(nvram_safe_get("lan_ifnames"))) != NULL) {
@@ -1508,6 +1518,9 @@ void start_lan(void)
 					if (ioctl(sfd, SIOCGIFHWADDR, &ifr) == 0) {
 						strlcpy(ifr.ifr_name, lan_ifname, IFNAMSIZ);
 						ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
+#ifdef RTCONFIG_DPSTA
+                                		memcpy(hwaddr, ifr.ifr_hwaddr.sa_data, ETHER_ADDR_LEN);
+#endif
 						_dprintf("%s: setting MAC of %s bridge to %s\n", __FUNCTION__,
 							ifr.ifr_name, ether_etoa(ifr.ifr_hwaddr.sa_data, eabuf));
 						ioctl(sfd, SIOCSIFHWADDR, &ifr);
@@ -1550,6 +1563,34 @@ void start_lan(void)
 
 					i++;
 				}
+#if defined(RTCONFIG_PROXYSTA) && defined(RTCONFIG_DPSTA)
+				/* Dont add main wl i/f when proxy sta is
+			 	 * enabled in both bands. Instead add the
+			 	 * dpsta interface.
+			 	 */
+				if (strstr(nvram_safe_get("dpsta_ifnames"), ifname)) {
+					ifname = !dpsta ? "dpsta" : "";
+					dpsta++;
+
+					/* Assign hw address */
+					if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
+						strncpy(ifr.ifr_name, "dpsta", IFNAMSIZ);
+                                        if (ioctl(s, SIOCGIFHWADDR, &ifr) == 0 &&
+                                                memcmp(ifr.ifr_hwaddr.sa_data, "\0\0\0\0\0\0",
+                                                ETHER_ADDR_LEN) == 0) {
+							ether_etoa((const unsigned char *) hwaddr, macaddr);
+                                                        ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
+                                                        memcpy(ifr.ifr_hwaddr.sa_data, hwaddr,
+                                                                ETHER_ADDR_LEN);
+                                                        if (ioctl(s, SIOCSIFHWADDR, &ifr)) {
+                                                                close(s);
+                                                                return;
+							}
+						}
+						close(s);
+					}
+				}
+#endif
 #ifdef RTCONFIG_GMAC3
 				/* In 3GMAC mode, skip wl interfaces that avail of hw switching.
 			 	 *
@@ -1594,6 +1635,28 @@ gmac3_no_swbr:
 	/* Set initial QoS mode for LAN ports. */
 #ifdef CONFIG_BCMWL5
 	set_et_qos_mode();
+#endif
+
+#ifdef RTCONFIG_DPSTA
+	/* Configure dpsta module */
+	if (dpsta) {
+		int di = 0;
+
+		/* Enable and set the policy to in-band and cross-band
+		 * forwarding policy.
+		 */
+		info.enable = 1;
+		info.policy = atoi(nvram_safe_get("dpsta_policy"));
+		info.lan_uif = atoi(nvram_safe_get("dpsta_lan_uif"));
+		foreach(name, nvram_safe_get("dpsta_ifnames"), next) {
+			strcpy((char *)info.upstream_if[di], name);
+			di++;
+		}
+		dpsta_ioctl("dpsta", &info, sizeof(dpsta_enable_info_t));
+
+		/* Bring up dpsta interface */
+		ifconfig("dpsta", IFUP, NULL, NULL);
+	}
 #endif
 
 	// bring up and configure LAN interface
@@ -2110,7 +2173,8 @@ NEITHER_WDS_OR_PSTA:
 
 		if(!strcmp(action, "add")) {
 			unsigned int vid, pid;
-			char buf[8];
+			char buf[32];
+			int i = 0;
 
 			logmessage("hotplug", "add net %s.", interface);
 			_dprintf("hotplug net: add net %s.\n", interface);
@@ -2118,57 +2182,107 @@ NEITHER_WDS_OR_PSTA:
 			snprintf(device_path, 128, "%s/%s/device", SYS_NET, interface);
 
 			memset(usb_path, 0, PATH_MAX);
-			if(realpath(device_path, usb_path) == NULL)
+			if(realpath(device_path, usb_path) == NULL){
+				_dprintf("hotplug net(%s): skip 1. device_path %s.\n", interface, device_path);
 				return;
+			}
 
-			if(get_usb_node_by_string(usb_path, usb_node, 32) == NULL)
+			if(get_usb_node_by_string(usb_path, usb_node, 32) == NULL){
+				_dprintf("hotplug net(%s): skip 2. usb_path %s.\n", interface, usb_path);
 				return;
+			}
 
-			if(get_path_by_node(usb_node, port_path, 8) == NULL)
+			if(get_path_by_node(usb_node, port_path, 8) == NULL){
+				_dprintf("hotplug net(%s): skip 3. usb_node %s.\n", interface, usb_node);
 				return;
+			}
+
+			snprintf(buf, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+			if(strcmp(buf, "") && strcmp(buf, usb_node)){
+				_dprintf("hotplug net(%s): skip 4. port_path %s.\n", interface, port_path);
+				return;
+			}
+
+			if(!strcmp(buf, ""))
+				nvram_set("usb_modem_act_path", usb_node); // needed by find_modem_type.sh.
+
+			while(!strcmp(nvram_safe_get("usb_modem_act_type"), "") && i++ < 3){
+				_dprintf("hotplug net(%s): wait for the modem driver at %d second...\n", interface, i);
+				eval("find_modem_type.sh");
+				sleep(1);
+			}
+
+			snprintf(buf, 32, "%s", nvram_safe_get("usb_modem_act_type"));
+			_dprintf("hotplug net: usb_modem_act_type=%s.\n", buf);
+			if(!strcmp(buf, "mbim")){
+				_dprintf("hotplug net(%s): skip the MBIM interface.\n", interface);
+				return;
+			}
 
 			vid = get_usb_vid(usb_node);
 			pid = get_usb_pid(usb_node);
-logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
-_dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
+			logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
+			_dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
+
+#ifdef RT4GAC55U
+			if(vid == 0x05c6 && pid == 0x9026 && !strcmp(port_path, "2") && nvram_get_int("usb_gobi") != 1)
+				return;
+#endif
+
+			if(!strcmp(interface, "usb0")){
+				_dprintf("hotplug net(%s): let usb0 wait for usb1.\n", interface);
+				sleep(1);
+			}
 
 			snprintf(nvram_name, 32, "usb_path%s_act", port_path);
 			snprintf(word, PATH_MAX, "%s", nvram_safe_get(nvram_name));
+			_dprintf("hotplug net(%s): %s %s.\n", interface, nvram_name, word);
 
-			if(!strcmp(word, "usb1") && strcmp(interface, "usb1")){
+			//if(!strcmp(word, "usb1") && strcmp(interface, "usb1")){
+			if(!strcmp(word, "usb1")){
 				// If there are 2 usbX, use QMI:usb1 to connect.
 				logmessage("hotplug", "skip to set net %s.", interface);
 				_dprintf("hotplug net: skip to set net %s.\n", interface);
+				return;
 			}
 			else{
 				logmessage("hotplug", "set net %s.", interface);
 				_dprintf("hotplug net: set net %s.\n", interface);
 				nvram_set(nvram_name, interface);
-				//snprintf(nvram_name, 32, "usb_path%s", port_path);
-				//nvram_set(nvram_name, "modem");
-				nvram_set("usb_modem_act_path", usb_node);
-				snprintf(buf, 8, "%u", vid);
+				snprintf(buf, 32, "%u", vid);
 				nvram_set("usb_modem_act_vid", buf);
-				snprintf(buf, 8, "%u", pid);
+				snprintf(buf, 32, "%u", pid);
 				nvram_set("usb_modem_act_pid", buf);
 				nvram_set("usb_modem_act_dev", interface);
 				nvram_set(strcat_r(prefix, "ifname", tmp), interface);
 			}
 
-			eval("find_modem_type.sh");
+			// won't wait at the busy time of every start_wan when booting.
+			if(!strcmp(nvram_safe_get("success_start_service"), "1")){
+				// wait for Andorid phones.
+				_dprintf("hotplug net INTERFACE=%s ACTION=%s: wait 2 seconds...\n", interface, action);
+				sleep(2);
+			}
+			else{
+				// wait that the modem nvrams are ready during booting.
+				// e.q. Huawei E398.
+				int i = 0;
+				snprintf(nvram_name, 32, "usb_path%s", port_path);
+				while(strcmp(nvram_safe_get(nvram_name), "modem") && i++ < 3){
+					_dprintf("%s: waiting %d second for the modem nvrams...", __FUNCTION__, i);
+					sleep(1);
+				}
+			}
 
-			// wait for Andorid phones.
-			_dprintf("hotplug net INTERFACE=%s ACTION=%s: wait 2 seconds...\n", interface, action);
-			sleep(2);
-
-			if(!strcmp(nvram_safe_get("success_start_service"), "1")
 #ifdef RTCONFIG_DUALWAN
-					&& (dualwan_unit__usbif(wan_primary_ifunit()) || nvram_match("wans_mode", "lb"))
-#endif
+			// avoid the busy time of every start_wan when booting.
+			if(!strcmp(nvram_safe_get("success_start_service"), "0")
+					&& (unit == WAN_UNIT_FIRST || nvram_match("wans_mode", "lb"))
 					){
 				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);
 			}
+#endif
 		}
 		else{
 			logmessage("hotplug", "remove net %s.", interface);
@@ -2185,11 +2299,8 @@ _dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
 
 			if(!strcmp(nvram_safe_get(nvram_name), interface)) {
 				nvram_unset(nvram_name);
-				nvram_unset("usb_modem_act_vid");
-				nvram_unset("usb_modem_act_pid");
-				nvram_unset("usb_modem_act_path");
-				nvram_unset("usb_modem_act_type");
-				nvram_unset("usb_modem_act_dev");
+
+				clean_modem_state(1);
 			}
 
 			if(strlen(port_path) <= 0)
@@ -2213,9 +2324,16 @@ _dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
 		if(nvram_get_int("sw_mode") != SW_MODE_ROUTER)
 			return;
 
+#ifdef RTCONFIG_RALINK
+		// In the Ralink platform eth2 isn't defined at wan_ifnames or other nvrams,
+		// so it need to deny additionally.
+		if(!strncmp(interface, "eth2", 4))
+			return;
+#else
 		// for all models, ethernet's physical interface.
 		if(!strcmp(interface, "eth0"))
 			return;
+#endif
 
 		// Not wired ethernet.
 		foreach(word, nvram_safe_get("wan_ifnames"), next)
@@ -2231,13 +2349,6 @@ _dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
 		foreach(word, nvram_safe_get("wl_ifnames"), next)
 			if(!strcmp(interface, word))
 				return;
-
-#ifdef RTCONFIG_RALINK
-		// In the Ralink platform eth2 isn't defined at wan_ifnames or other nvrams,
-		// so it need to deny additionally.
-		if(!strcmp(interface, "eth2"))
-			return;
-#endif
 
 		if ((unit = get_usbif_dualwan_unit()) < 0) {
 			usb_dbg("(%s): in the current dual wan mode, didn't support the USB modem.\n", interface);
@@ -2268,27 +2379,24 @@ _dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
 
 				snprintf(nvram_name, 32, "usb_path%s_act", port_path);
 
-				if(!strcmp(nvram_safe_get(nvram_name), "")) {
-					nvram_set(nvram_name, interface);
-					nvram_set("usb_modem_act_path", usb_node);
-					nvram_set("usb_modem_act_dev", interface);
-				}
+				nvram_set(nvram_name, interface);
+				nvram_set("usb_modem_act_path", usb_node);
+				nvram_set("usb_modem_act_dev", interface);
 			}
 			// Beceem dongle.
 			else{
 				// do nothing.
 			}
 
-			eval("find_modem_type.sh");
-
-			if(!strcmp(nvram_safe_get("success_start_service"), "1")
 #ifdef RTCONFIG_DUALWAN
-					&& (dualwan_unit__usbif(wan_primary_ifunit()) || nvram_match("wans_mode", "lb"))
-#endif
+			// avoid the busy time of every start_wan when booting.
+			if(!strcmp(nvram_safe_get("success_start_service"), "0")
+					&& (unit == WAN_UNIT_FIRST || nvram_match("wans_mode", "lb"))
 					){
 				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);
 			}
+#endif
 		}
 		else{
 			nvram_set(strcat_r(prefix, "ifname", tmp), "");
@@ -2306,9 +2414,8 @@ _dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
 
 			if(!strcmp(nvram_safe_get(nvram_name), interface)) {
 				nvram_unset(nvram_name);
-				nvram_unset("usb_modem_act_path");
-				nvram_unset("usb_modem_act_type");
-				nvram_unset("usb_modem_act_dev");
+
+				clean_modem_state(1);
 			}
 
 			char dhcp_pid_file[1024];
@@ -2349,20 +2456,21 @@ _dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
 
 			nvram_set(strcat_r(prefix, "ifname", tmp), interface);
 
-			_dprintf("hotplug net INTERFACE=%s ACTION=%s: wait 2 seconds...\n", interface, action);
-			sleep(2);
-
 			snprintf(nvram_name, 32, "usb_path%s_act", port_path);
 			nvram_set(nvram_name, interface);
 
-			if(!strcmp(nvram_safe_get("success_start_service"), "1")
+			_dprintf("hotplug net INTERFACE=%s ACTION=%s: wait 2 seconds...\n", interface, action);
+			sleep(2);
+
 #ifdef RTCONFIG_DUALWAN
-					&& (dualwan_unit__usbif(wan_primary_ifunit()) || nvram_match("wans_mode", "lb"))
-#endif
+			// avoid the busy time of every start_wan when booting.
+			if(!strcmp(nvram_safe_get("success_start_service"), "0")
+					&& (unit == WAN_UNIT_FIRST || nvram_match("wans_mode", "lb"))
 					){
-				_dprintf("%s: and(%d)!\n", __FUNCTION__, unit);
+				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);
 			}
+#endif
 		}
 		else // remove: do nothing.
 			;
@@ -3161,9 +3269,6 @@ void start_lan_wl(void)
 							if (!strcmp(nv3, wif_to_vif(ifname)))
 							{
 								nvram_set(nv2, nvram_safe_get(nv));
-#ifdef RTCONFIG_TMOBILE
-								if (nvram_get_int("wl_subunit") != 3)
-#endif
 								nvram_set("wl_unit", "-1");
 								nvram_set("wl_subunit", "-1");
 							}
@@ -3910,10 +4015,12 @@ int reset_qtn(int restart)
 	system("cp /rom/qtn/* /tmp/");
 	if( restart == 0){
 		lanport_ctrl(0);
+#if 1	/* replaced by raw Ethernet frame */
 		if(!nvram_match("QTN_RPC_CLIENT", ""))
 			eval("ifconfig", "br0:0", nvram_safe_get("QTN_RPC_CLIENT"), "netmask", "255.255.255.0");
 		else
 			eval("ifconfig", "br0:0", "169.254.39.1", "netmask", "255.255.255.0");
+#endif
 		eval("ifconfig", "br0:1", "1.1.1.1", "netmask", "255.255.255.0");
 		eval("tftpd");
 	}

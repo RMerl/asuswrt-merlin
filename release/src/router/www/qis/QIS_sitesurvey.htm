@@ -10,6 +10,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/JavaScript">
 var aplist = new Array();
 var Profiles = new Array();
@@ -155,7 +156,7 @@ var saveToForm = {
 	}
 }
 
-var validator = {
+var validator_key = {
 	"key" : function(keyObj, alg){
 		var isCurrect = true;
 		var altStr = "";
@@ -163,10 +164,10 @@ var validator = {
 		if(alg == "wep"){
 			altStr = "<#JS_wepkey#>";
 		
-			if((keyObj.value.length == 5 || keyObj.value.length == 13) && parent.validate_string(keyObj)){
+			if((keyObj.value.length == 5 || keyObj.value.length == 13) && validator.string(keyObj)){
 				isCurrect = true;
 			}
-			else if((keyObj.value.length == 10 || keyObj.value.length == 26)&& parent.validate_hex(keyObj)){
+			else if((keyObj.value.length == 10 || keyObj.value.length == 26)&& validator.hex(keyObj)){
 				isCurrect = true;
 			}
 			else{
@@ -184,7 +185,7 @@ var validator = {
 			if(psk_length < 8 || psk_length > 64){
 				isCurrect = false;
 			}	
-			else if(psk_length == 64 && !parent.validate_hex(keyObj)){
+			else if(psk_length == 64 && !validator.hex(keyObj)){
 				isCurrect = false;
 			}
 		}
@@ -267,10 +268,10 @@ var btnAction = {
 				wlclient.alg = "WEP";
 			}
 
-			if(!validator.key(document.getElementById("thekey_manual"), wlclient.alg.toLowerCase()))
+			if(!validator_key.key(document.getElementById("thekey_manual"), wlclient.alg.toLowerCase()))
 				return false;
 
-			if(!validator.isNull(document.getElementById("wlc_ssid_manual")))
+			if(!validator_key.isNull(document.getElementById("wlc_ssid_manual")))
 				return false;
 		}
 		else{ // via AP list
@@ -283,7 +284,7 @@ var btnAction = {
 			if(document.getElementById("thekey_wep_method_tmp"))
 				wlclient.thekeyauthmode = document.getElementById("thekey_wep_method_tmp").value;	
 
-			if(!validator.key(document.getElementById("thekey_tmp"), wlclient.alg.toLowerCase()))
+			if(!validator_key.key(document.getElementById("thekey_tmp"), wlclient.alg.toLowerCase()))
 				return false;
 		}
 	
@@ -313,11 +314,11 @@ var btnAction = {
 
 	"submitForm" : function(){
 		if(parent.localAP_support){
-			if(!validator.isNull(document.getElementById("wl_ssid")))
+			if(!validator_key.isNull(document.getElementById("wl_ssid")))
 				return false;
 			
 			if(document.getElementById("wl_wpa_psk").value.length > 0){
-				if(!validator.key(document.getElementById("wl_wpa_psk"), "psk"))
+				if(!validator_key.key(document.getElementById("wl_wpa_psk"), "psk"))
 					return false;
 			}
 			else{
@@ -586,7 +587,7 @@ var bindEvent = {
 			var unSupport = '<td style="border:0px;"><span style="color:#FFCC00;">Non supported Authentication Method.</span></td>';
 			var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" autocapitalization="off" id="thekey_tmp" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;"><input type="checkbox" onclick="pass_checked(this, document.getElementById(\'thekey_tmp\'));"><span style="color:#FFF"><#QIS_show_pass#></span></td>';
 			var connectBtn = '<td style="border:0px;text-align:right"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.saveWlcVar('+ bindEvent.idx +', false)" class="button_gen"></td></tr>';
-			var wep_auth = '<tr><td style="border:0px;"><span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_AuthenticationMethod_itemname#></span><select id="thekey_wep_method_tmp" class="input_option" style="margin-left:5px;"><option value="open" selected>open</option><option value="shared">shared</option></select>';
+			var wep_auth = "<tr><td style=\"border:0px;\"><span style=\"margin-left:5px;color:#FFFFFF;\"><#WLANConfig11b_AuthenticationMethod_itemname#></span><select id=\"thekey_wep_method_tmp\" class=\"input_option\" style=\"margin-left:5px;\"><option value=\"open\" selected>open</option><option value=\"shared\">shared</option></select>";
 			var wepkeyIndex = '<span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select id="thekey_index_tmp" class="input_option" style="margin-left:5px;"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td></tr>';
 			var endOfRow = '</table></td></tr>';
 	
@@ -758,7 +759,7 @@ function showSiteTable(){
 				htmlCode += '<span style="font-weight:bolder;">' + parent.document.getElementById("stassid").innerHTML + '</span> <#APSurvey_action_ConnectingStatus1#>';
 			}
 			else{ // p-ap does not exist
-				htmlCode += '<#APSurvey_action_ConnectingStatus0#>';
+				htmlCode += "<#APSurvey_action_ConnectingStatus0#>";
 			}
 		}
 		else{
@@ -770,7 +771,7 @@ function showSiteTable(){
 				htmlCode += '<span style="font-weight:bolder;">' + parent.document.getElementById("stassid").innerHTML + '</span> <#APSurvey_action_ConnectingStatus1#>';
 			}
 			else{ // p-ap does not exist
-				htmlCode += '<#APSurvey_action_ConnectingStatus0#>';
+				htmlCode += "<#APSurvey_action_ConnectingStatus0#>";
 			}
 		}
 		htmlCode += '</span></td></tr>';
@@ -975,7 +976,7 @@ function QKInternet_load_body(){
 		  <tr>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#WLANConfig11b_SSID_itemname#></a></th>
 				<td>
-					<input type="text" maxlength="32" class="input_32_table" id="wlc_ssid_manual" value="" onkeypress="return validator.isString(this, event);">
+					<input type="text" maxlength="32" class="input_32_table" id="wlc_ssid_manual" value="" onkeypress="return validator_key.isString(this, event);">
 				</td>
 		  </tr>
 
@@ -1050,7 +1051,7 @@ function QKInternet_load_body(){
 			<tr>
 				<th width="25%"><#QIS_finish_wireless_item1#></th>
 				<td>
-					<input type="text" id="wl_ssid" onkeypress="return validator.isString(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="">
+					<input type="text" id="wl_ssid" onkeypress="return validator_key.isString(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="">
 				</td>
 	  	</tr>
 			<tr>

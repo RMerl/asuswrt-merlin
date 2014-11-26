@@ -48,6 +48,8 @@ static char const RCSID[] =
 
 #define MD5_HASH_SIZE	16
 
+#define MSDNS 1
+
 static char *config_file = NULL;
 static int add_avp(char **);
 static struct avpopt {
@@ -543,6 +545,14 @@ radius_setparams(VALUE_PAIR *vp, char *msg, REQUEST_INFO *req_info,
     int mppe_enc_policy = 0;
     int mppe_enc_types = 0;
 #endif
+#ifdef MSDNS
+    ipcp_options *wo = &ipcp_wantoptions[0];
+    ipcp_options *ao = &ipcp_allowoptions[0];
+    int got_msdns_1 = 0;
+    int got_msdns_2 = 0;
+    int got_wins_1 = 0;
+    int got_wins_2 = 0;
+#endif
 
     /* Send RADIUS attributes to anyone else who might be interested */
     if (radius_attributes_hook) {
@@ -581,6 +591,18 @@ radius_setparams(VALUE_PAIR *vp, char *msg, REQUEST_INFO *req_info,
 		/* Session timeout */
 		maxconnect = vp->lvalue;
 		break;
+           case PW_FILTER_ID:
+               /* packet filter, will be handled via ip-(up|down) script */
+               script_setenv("RADIUS_FILTER_ID", vp->strvalue, 1);
+               break;
+           case PW_FRAMED_ROUTE:
+               /* route, will be handled via ip-(up|down) script */
+               script_setenv("RADIUS_FRAMED_ROUTE", vp->strvalue, 1);
+               break;
+           case PW_IDLE_TIMEOUT:
+               /* idle parameter */
+               idle_time_limit = vp->lvalue;
+               break;
 #ifdef MAXOCTETS
 	    case PW_SESSION_OCTETS_LIMIT:
 		/* Session traffic limit */
@@ -619,6 +641,9 @@ radius_setparams(VALUE_PAIR *vp, char *msg, REQUEST_INFO *req_info,
 		    rstate.ip_addr = remote;
 		}
 		break;
+            case PW_NAS_IP_ADDRESS:
+                wo->ouraddr = htonl(vp->lvalue);
+                break;
 	    case PW_CLASS:
 		/* Save Class attribute to pass it in accounting request */
 		if (vp->lvalue <= MAXCLASSLEN) {
@@ -632,8 +657,8 @@ radius_setparams(VALUE_PAIR *vp, char *msg, REQUEST_INFO *req_info,
 	    }
 
 
-#ifdef CHAPMS
 	} else if (vp->vendorcode == VENDOR_MICROSOFT) {
+#ifdef CHAPMS
 	    switch (vp->attribute) {
 	    case PW_MS_CHAP2_SUCCESS:
 		if ((vp->lvalue != 43) || strncmp(vp->strvalue + 1, "S=", 2)) {
@@ -676,13 +701,32 @@ radius_setparams(VALUE_PAIR *vp, char *msg, REQUEST_INFO *req_info,
 		break;
 
 #endif /* MPPE */
-#if 0
+#ifdef MSDNS
 	    case PW_MS_PRIMARY_DNS_SERVER:
-	    case PW_MS_SECONDARY_DNS_SERVER:
-	    case PW_MS_PRIMARY_NBNS_SERVER:
-	    case PW_MS_SECONDARY_NBNS_SERVER:
+		ao->dnsaddr[0] = htonl(vp->lvalue);
+		got_msdns_1 = 1;
+		if (!got_msdns_2)
+		    ao->dnsaddr[1] = ao->dnsaddr[0];
 		break;
-#endif
+	    case PW_MS_SECONDARY_DNS_SERVER:
+		ao->dnsaddr[1] = htonl(vp->lvalue);
+		got_msdns_2 = 1;
+		if (!got_msdns_1)
+		    ao->dnsaddr[0] = ao->dnsaddr[1];
+		break;
+	    case PW_MS_PRIMARY_NBNS_SERVER:
+		ao->winsaddr[0] = htonl(vp->lvalue);
+		got_wins_1 = 1;
+		if (!got_wins_2)
+		    ao->winsaddr[1] = ao->winsaddr[0];
+		break;
+	    case PW_MS_SECONDARY_NBNS_SERVER:
+		ao->winsaddr[1] = htonl(vp->lvalue);
+		got_wins_2 = 1;
+		if (!got_wins_1)
+		    ao->winsaddr[0] = ao->winsaddr[1];
+		break;
+#endif /* MSDNS */
 	    }
 #endif /* CHAPMS */
 	}

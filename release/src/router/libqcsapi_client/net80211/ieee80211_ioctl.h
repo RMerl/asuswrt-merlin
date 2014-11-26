@@ -236,6 +236,7 @@ struct ieee80211req_key {
 /* NB: IEEE80211_KEY_XMIT and IEEE80211_KEY_RECV defined elsewhere */
 #define	IEEE80211_KEY_DEFAULT	0x80	/* default xmit key */
 	u_int8_t ik_macaddr[IEEE80211_ADDR_LEN];
+	u_int16_t ik_vlan;
 	u_int64_t ik_keyrsc;		/* key receive sequence counter */
 	u_int64_t ik_keytsc;		/* key transmit sequence counter */
 	u_int8_t ik_keydata[IEEE80211_KEYBUF_SIZE+IEEE80211_MICBUF_SIZE];
@@ -398,7 +399,7 @@ struct ieeee80211_dscp2ac {
 	uint8_t list_len;
 	uint8_t ac;
 };
-/* 
+/*
  * MAC ACL operations.
  */
 enum {
@@ -1004,47 +1005,47 @@ enum {
 	IEEE80211_PARAM_MARKDFS		= 58,	/* mark a dfs interference channel when found */
 	IEEE80211_PARAM_REGCLASS	= 59,	/* enable regclass ids in country IE */
 	IEEE80211_PARAM_DROPUNENC_EAPOL	= 60,	/* drop unencrypted eapol frames */
- 	IEEE80211_PARAM_SHPREAMBLE	= 61,	/* Short Preamble */
- 	IEEE80211_PARAM_FIXED_TX_RATE = 62,	/* Set fixed TX rate          */
- 	IEEE80211_PARAM_MIMOMODE = 63,		/* Select antenna to use      */
- 	IEEE80211_PARAM_AGGREGATION	= 64,	/* Enable/disable aggregation */
+	IEEE80211_PARAM_SHPREAMBLE	= 61,	/* Short Preamble */
+	IEEE80211_PARAM_FIXED_TX_RATE = 62,	/* Set fixed TX rate          */
+	IEEE80211_PARAM_MIMOMODE = 63,		/* Select antenna to use      */
+	IEEE80211_PARAM_AGGREGATION	= 64,	/* Enable/disable aggregation */
 	IEEE80211_PARAM_RETRY_COUNT = 65,	/* Set retry count            */
 	IEEE80211_PARAM_VAP_DBG    = 66,		/* Set the VAP debug verbosity . */
 	IEEE80211_PARAM_VCO_CALIB = 67,		/* Set VCO calibration */
-	IEEE80211_PARAM_EXP_MAT_SEL = 68,	/* Select different exp mat */ 
-	IEEE80211_PARAM_BW_SEL = 69,		/* Select BW */ 
-	IEEE80211_PARAM_RG = 70,			/* Let software fill in the duration update*/ 
-	IEEE80211_PARAM_BW_SEL_MUC = 71,	/* Let software fill in the duration update*/ 
-	IEEE80211_PARAM_ACK_POLICY = 72,   	/* 1 for ACK, zero for no ACK */
-	IEEE80211_PARAM_LEGACY_MODE = 73,  	/* 1 for legacy, zero for HT*/
-	IEEE80211_PARAM_MAX_AGG_SUBFRM = 74,   	/* Maximum number if subframes to allow for aggregation */
-	IEEE80211_PARAM_ADD_WDS_MAC = 75,  	/* Add MAC address for WDS peer */
-	IEEE80211_PARAM_DEL_WDS_MAC = 76,  	/* Delete MAC address for WDS peer */
-	IEEE80211_PARAM_TXBF_CTRL = 77,   	/* Control TX beamforming */
-	IEEE80211_PARAM_TXBF_PERIOD = 78,  	/* Set TX beamforming period */
-	IEEE80211_PARAM_BSSID = 79,  		/* Set BSSID */
+	IEEE80211_PARAM_EXP_MAT_SEL = 68,	/* Select different exp mat */
+	IEEE80211_PARAM_BW_SEL = 69,		/* Select BW */
+	IEEE80211_PARAM_RG = 70,			/* Let software fill in the duration update*/
+	IEEE80211_PARAM_BW_SEL_MUC = 71,	/* Let software fill in the duration update*/
+	IEEE80211_PARAM_ACK_POLICY = 72,	/* 1 for ACK, zero for no ACK */
+	IEEE80211_PARAM_LEGACY_MODE = 73,	/* 1 for legacy, zero for HT*/
+	IEEE80211_PARAM_MAX_AGG_SUBFRM = 74,	/* Maximum number if subframes to allow for aggregation */
+	IEEE80211_PARAM_ADD_WDS_MAC = 75,	/* Add MAC address for WDS peer */
+	IEEE80211_PARAM_DEL_WDS_MAC = 76,	/* Delete MAC address for WDS peer */
+	IEEE80211_PARAM_TXBF_CTRL = 77,		/* Control TX beamforming */
+	IEEE80211_PARAM_TXBF_PERIOD = 78,	/* Set TX beamforming period */
+	IEEE80211_PARAM_BSSID = 79,			/* Set BSSID */
 	IEEE80211_PARAM_HTBA_SEQ_CTRL = 80, /* Control HT Block ACK */
 	IEEE80211_PARAM_HTBA_SIZE_CTRL = 81, /* Control HT Block ACK */
 	IEEE80211_PARAM_HTBA_TIME_CTRL = 82, /* Control HT Block ACK */
-	IEEE80211_PARAM_HT_ADDBA = 83,   	/* ADDBA control */
-	IEEE80211_PARAM_HT_DELBA = 84,  	/* DELBA control */
+	IEEE80211_PARAM_HT_ADDBA = 83,		/* ADDBA control */
+	IEEE80211_PARAM_HT_DELBA = 84,		/* DELBA control */
 	IEEE80211_PARAM_CHANNEL_NOSCAN = 85, /* Disable the scanning for fixed channels */
-	IEEE80211_PARAM_MUC_PROFILE = 86,  	/* Control MuC profiling */
-	IEEE80211_PARAM_MUC_PHY_STATS = 87,  	/* Control MuC phy stats */
-	IEEE80211_PARAM_MUC_SET_PARTNUM = 88,  	/* set muc part num for cal */
-	IEEE80211_PARAM_ENABLE_GAIN_ADAPT = 89,  	/* turn on the anlg gain tuning */
-	IEEE80211_PARAM_GET_RFCHIP_ID = 90,  	/* Get RF chip frequency id */
-	IEEE80211_PARAM_GET_RFCHIP_VERID = 91,  	/* Get RF chip version id */
-	IEEE80211_PARAM_ADD_WDS_MAC_DOWN = 92,  	/* Add MAC address for WDS downlink peer */
+	IEEE80211_PARAM_MUC_PROFILE = 86,	/* Control MuC profiling */
+	IEEE80211_PARAM_MUC_PHY_STATS = 87,	/* Control MuC phy stats */
+	IEEE80211_PARAM_MUC_SET_PARTNUM = 88,	/* set muc part num for cal */
+	IEEE80211_PARAM_ENABLE_GAIN_ADAPT = 89,	/* turn on the anlg gain tuning */
+	IEEE80211_PARAM_GET_RFCHIP_ID = 90,	/* Get RF chip frequency id */
+	IEEE80211_PARAM_GET_RFCHIP_VERID = 91,	/* Get RF chip version id */
+	IEEE80211_PARAM_ADD_WDS_MAC_DOWN = 92,	/* Add MAC address for WDS downlink peer */
 	IEEE80211_PARAM_SHORT_GI = 93,			/* Set to 1 for turning on SGI */
 	IEEE80211_PARAM_LINK_LOSS = 94,			/* Set to 1 for turning on Link Loss feature */
 	IEEE80211_PARAM_BCN_MISS_THR = 95,			/* Set to 0 for default value (50 Beacons). */
 	IEEE80211_PARAM_FORCE_SMPS = 96,		/* Force the SMPS mode to transition the mode (STA) - includes
-							 * sending out the ACTION frame to the AP.
-							 */
+		* sending out the ACTION frame to the AP.
+		*/
 	IEEE80211_PARAM_FORCEMICERROR = 97,	/* Force a MIC error - does loopback through the MUC back up to QDRV thence
-						 * through the normal TKIP MIC error path.
-						 */
+	   * through the normal TKIP MIC error path.
+	   */
 	IEEE80211_PARAM_ENABLECOUNTERMEASURES = 98, /* Enable/disable countermeasures */
 	IEEE80211_PARAM_IMPLICITBA = 99,	/* Set the implicit BA flags in the QIE */
 	IEEE80211_PARAM_CLIENT_REMOVE = 100,	/* Remove clients but DON'T deauth them */
@@ -1053,7 +1054,7 @@ enum {
 	IEEE80211_PARAM_GLOBAL_BA_CONTROL = 103, /* Set the global BA flags */
 	IEEE80211_PARAM_NO_SSID_ASSOC = 104,	/* Enable/disable associations without SSIDs */
 	IEEE80211_PARAM_FIXED_SGI = 105,	/* Choose between node based SGI or fixed SGI */
-	IEEE80211_PARAM_CONFIG_TXPOWER = 106,	/* configure TX power for a band (start chan to stop chan) */	
+	IEEE80211_PARAM_CONFIG_TXPOWER = 106,	/* configure TX power for a band (start chan to stop chan) */
 	IEEE80211_PARAM_SKB_LIST_MAX = 107,	/* Configure the max len of the skb list shared b/n drivers */
 	IEEE80211_PARAM_VAP_STATS = 108,		/* Show VAP stats */
 	IEEE80211_PARAM_RATE_CTRL_FLAGS = 109,  /* Configure flags to tweak rate control algorithm */
@@ -1216,26 +1217,41 @@ enum {
 	IEEE80211_PARAM_DUMP_CONFIG_TXPOWER = 265,	/* Dump configured txpower for all channels */
 	IEEE80211_PARAM_EMI_POWER_SWITCHING = 266,	/* Enable/Disable EMI power switching */
 	IEEE80211_PARAM_CONFIG_BW_TXPOWER = 267,	/* Configure the TX powers different bandwidths */
-	IEEE80211_PARAM_SCAN_CANCEL = 268,			/* Cancel any ongoing scanning */
+	IEEE80211_PARAM_SCAN_CANCEL = 268,		/* Cancel any ongoing scanning */
 	IEEE80211_PARAM_VHT_NSS_CAP = 269,	/* Set max spatial streams for VHT mode */
 	IEEE80211_PARAM_FIXED_BW = 270,		/* Configure fixed tx bandwidth without changing BSS bandwidth */
 	IEEE80211_PARAM_DYN_RTSCTS = 271,	/* Dynamic RTS/CTS paramters */
 	IEEE80211_PARAM_TUNEPD = 272,       /* Specify number of tunning packets to send for power detector tuning */
 	IEEE80211_PARAM_TUNEPD_DONE = 273,              /* Specify number of tunning packets to send for power detector tuning */
-	IEEE80211_PARAM_BF_RX_STS = 274,	/* Set max BF sounding receive STS */
-	IEEE80211_PARAM_PC_OVERRIDE = 275,              /* RSSI based Power-contraint override */
-	IEEE80211_PARAM_INTRA_BSS_ISOLATE = 276,/* Intra BSS isolation */
-	IEEE80211_PARAM_BSS_ISOLATE = 277,      /* BSS isolation */
-	IEEE80211_PARAM_RX_AMSDU_ENABLE = 278,     /* RX AMSDU: 0 - disable, 1 - enable, 2 - enable dynamically */
-	IEEE80211_PARAM_DISASSOC_REASON = 279,	/* Get Disassoc reason */
-	IEEE80211_PARAM_RX_AMSDU_THRESHOLD_CCA = 280,	/* The threshold of cca intf for dynamic RX AMSDU */
-	IEEE80211_PARAM_RX_AMSDU_THRESHOLD_PMBL = 281,	/* The threshold of pmbl error for dynamic RX AMSDU */
-	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_SP = 282,	/* The weight factor of short preamble error for calculating the pmbl error */
-	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_LP = 283,	/* The weight factor of long preamble error for calculating the pmbl error */
-	IEEE80211_PARAM_BA_SETUP_ENABLE = 284,	/* enable the BA according the rssi threshold, 0 - disable, 1 - enable */
-	IEEE80211_PARAM_BB_PARAM = 285,	/* Baseband param */
-	IEEE80211_PARAM_NDPA_DUR = 286,         /* set vht NDPA duration field */
-	IEEE80211_PARAM_TXBF_PKT_CNT = 287,     /* set the pkt cnt per txbf interval to fire sounding to a node */
+	IEEE80211_PARAM_CONFIG_PMF = 274,       /* Enable/Disable 802.11w / PMF */
+
+	IEEE80211_PARAM_AUTO_CCA_ENABLE = 275,	/* Enable/disable auto-cca-threshold feature */
+	IEEE80211_PARAM_AUTO_CCA_PARAMS = 276,	/* Configure the threshold parameter  */
+	IEEE80211_PARAM_AUTO_CCA_DEBUG = 277,	/* Configure the auto-cca debug flag */
+	IEEE80211_PARAM_INTRA_BSS_ISOLATE = 278,/* Intra BSS isolation */
+	IEEE80211_PARAM_BSS_ISOLATE = 279,      /* BSS isolation */
+	IEEE80211_PARAM_BF_RX_STS = 280,	/* Set max BF sounding receive STS */
+	IEEE80211_PARAM_WOWLAN = 281,
+	IEEE80211_PARAM_WDS_MODE = 282,	/* WDS mode */
+	IEEE80211_PARAM_EXTENDER_ROLE = 283, /* EXTENDER Device role */
+	IEEE80211_PARAM_EXTENDER_MBS_BEST_RSSI = 284, /* MBS best rssi threshold */
+	IEEE80211_PARAM_EXTENDER_RBS_BEST_RSSI = 285, /* RBS best rssi threshold */
+	IEEE80211_PARAM_EXTENDER_MBS_WGT = 286, /* MBS RSSI weight */
+	IEEE80211_PARAM_EXTENDER_RBS_WGT = 287, /* RBS RSSI weight */
+	IEEE80211_PARAM_AIRFAIR = 288,              /* Set airtime fairness configuration */
+	IEEE80211_PARAM_SET_STA_VLAN = 289,	/* Place a STA into a VLAN */
+	IEEE80211_PARAM_RX_AMSDU_ENABLE = 290,      /* RX AMSDU: 0 - disable, 1 - enable, 2 - enable dynamically */
+	IEEE80211_PARAM_DISASSOC_REASON = 291,	/* Get Disassoc reason */
+	IEEE80211_PARAM_TX_QOS_SCHED = 292,	/* TX QoS hold-time table */
+	IEEE80211_PARAM_RX_AMSDU_THRESHOLD_CCA = 293,	/* The threshold of cca intf for dynamic RX AMSDU */
+	IEEE80211_PARAM_RX_AMSDU_THRESHOLD_PMBL = 294,	/* The threshold of pmbl error for dynamic RX AMSDU */
+	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_SP = 295,	/* The weight factor of short preamble error for calculating the pmbl error */
+	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_LP = 296,	/* The weight factor of long preamble error for calculating the pmbl error */
+	IEEE80211_PARAM_AGGRESSIVE_AGG = 297,	/* Compound aggressive agg params */
+	IEEE80211_PARAM_BA_SETUP_ENABLE = 298,	/* enable the BA according the rssi threshold, 0 - disable, 1 - enable */
+	IEEE80211_PARAM_PEER_RTS_MODE = 299,		/* Mode setting for peer RTS */
+	IEEE80211_PARAM_DYN_WMM = 300,			/* Dynamic WMM enable */
+	IEEE80211_PARAM_BB_PARAM = 301,	/* Baseband param */
 };
 
 #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)
@@ -1250,6 +1266,7 @@ enum {
 #define SIOCR80211STATS                 (SIOCDEVPRIVATE+0xA) /* This define always has to sync up with SIOCRDEVSTATS in /linux/sockios.h */
 #define IEEE80211_IOCTL_GET_ASSOC_TBL	(SIOCDEVPRIVATE+0xB)
 #define IEEE80211_IOCTL_GET_RATES	(SIOCDEVPRIVATE+0xC)
+#define IEEE80211_IOCTL_SET_RATES	(SIOCDEVPRIVATE+0xD)
 #define IEEE80211_IOCTL_EXT		(SIOCDEVPRIVATE+0xF) /* This command is used to support sub-ioctls */
 
 /*
@@ -1271,6 +1288,10 @@ enum {
 #define SIOCDEV_SUBIO_GET_DSCP2AC_MAP	(SIOCDEV_SUBIO_BASE + 12)
 #define SIOCDEV_SUBIO_SET_DSCP2AC_MAP	(SIOCDEV_SUBIO_BASE + 13)
 #define SIOCDEV_SUBIO_SET_MARK_DFS_CHAN	(SIOCDEV_SUBIO_BASE + 14)
+#define SIOCDEV_SUBIO_WOWLAN		(SIOCDEV_SUBIO_BASE + 15)
+#define SIOCDEV_SUBIO_GET_STA_AUTH	(SIOCDEV_SUBIO_BASE + 16) /* Command to get auth algo,cipher and key management */
+#define SIOCDEV_SUBIO_GET_STA_VENDOR	(SIOCDEV_SUBIO_BASE + 17) /* Command to get peer vendor */
+
 
 struct ieee80211_clone_params {
 	char icp_name[IFNAMSIZ];		/* device name */
@@ -1341,6 +1362,70 @@ enum vendor_fix_idx {
 	VENDOR_FIX_IDX_BRCM_IGMP = 2,
 	VENDOR_FIX_IDX_MAX = VENDOR_FIX_IDX_BRCM_IGMP,
 };
+
+struct ieee80211req_wowlan {
+	uint32_t is_op;
+	const uint8_t *is_data;
+	int32_t is_data_len;
+};
+
+#define IEEE80211_AUTHDESCR_KEYMGMT_NONE		0x00
+#define IEEE80211_AUTHDESCR_KEYMGMT_EAP			0x01
+#define IEEE80211_AUTHDESCR_KEYMGMT_PSK			0x02
+#define IEEE80211_AUTHDESCR_KEYMGMT_WEP			0x03
+
+#define IEEE80211_AUTHDESCR_KEYPROTO_NONE		0x00
+#define IEEE80211_AUTHDESCR_KEYPROTO_WPA		0x01
+#define IEEE80211_AUTHDESCR_KEYPROTO_RSN		0x02
+
+#define IEEE80211_AUTHDESCR_ALGO_POS			0x00
+#define IEEE80211_AUTHDESCR_KEYMGMT_POS			0x01
+#define IEEE80211_AUTHDESCR_KEYPROTO_POS		0x02
+#define IEEE80211_AUTHDESCR_CIPHER_POS			0x03
+
+
+struct ieee80211req_auth_description {
+	uint8_t macaddr[IEEE80211_ADDR_LEN];
+	uint32_t description;
+};
+
+enum ieee80211_extender_role {
+	IEEE80211_EXTENDER_ROLE_NONE = 0x00,
+	IEEE80211_EXTENDER_ROLE_MBS = 0x01,
+	IEEE80211_EXTENDER_ROLE_RBS = 0x02
+};
+
+#define WDS_EXT_RECEIVED_MBS_IE	0
+#define WDS_EXT_RECEIVED_RBS_IE	1
+#define WDS_EXT_LINK_STATUS_UPDATE	2
+#define IEEE80211_MAX_EXT_EVENT_DATA_LEN	256
+
+#define IEEE80211_EXTENDER_ROLE_MIN	0
+#define IEEE80211_EXTENDER_ROLE_MAX	2
+#define IEEE80211_EXTENDER_MIN_RSSI	0
+#define IEEE80211_EXTENDER_MAX_RSSI	70
+#define	IEEE80211_EXTENDER_MIN_WGT	0
+#define	IEEE80211_EXTENDER_MAX_WGT	10
+
+/**
+ * Structure contains data of wds extender event.
+ * @name will always be "QTN-WDS-EXT"
+ * @cmd message type.
+ * @mac specify wds peer mac address
+ * @link_status specify the wds link state.
+ * @ie_len when the message contains an wds extender IE, ie_len is larger than 0.
+ */
+struct qtn_wds_ext_event_data {
+	char name[12];
+	uint8_t cmd;
+	uint8_t mac[IEEE80211_ADDR_LEN];
+	uint8_t extender_role;
+	uint8_t link_status;
+	uint8_t channel;
+	uint8_t ssid[IEEE80211_NWID_LEN + 1];
+	uint8_t ie_len;
+	uint8_t wds_extender_ie[0];
+}__packed;
 
 #endif /* __linux__ */
 

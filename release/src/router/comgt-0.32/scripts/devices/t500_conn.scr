@@ -21,7 +21,7 @@ goto error
 
 :set_apn
 system "nvram set g3state_apn=1"
-send "AT+CFUN=1;+CGDCONT=1,\"IP\",\"internet\"^m"
+send "AT+CGDCONT=1,\"IP\",\"internet\"^m"
 waitfor 10 "OK","ERR","ERROR"
 if % = -1 goto apntimeerror
 if % = 0 goto set_dial

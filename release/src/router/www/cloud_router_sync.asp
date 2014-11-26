@@ -14,8 +14,8 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/general.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
@@ -123,9 +123,7 @@ sizingMethod='scale')";
 <script>
 var $j = jQuery.noConflict();
 <% wanlink(); %>
-<% login_state_hook(); %>
 <% get_AiDisk_status(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
@@ -1173,12 +1171,12 @@ function checkDDNSReturnCode(){
 									<td>&nbsp;&nbsp;</td>
 									<td>
 										<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:break-all;">
-											Smart Sync let you to sync your cloud disk with other AiCloud 2.0 account, fill the forms below then generate an invitation to your friend.<br>
-											1. Fill the invitation form as below.<br>
-											2. Select a way to get a security code.<br>
-											3. Click "Generate" to get a invitation.<br>
-											4. Copy the contents of invitation and mail to your friends.<br>
-											<span class="formfontdesc" id="wan_ip_hide2" style="color:#FFCC00;display:none;margin-left:0px;">5. You might not use smart sync with your friends due to ISP firewall issue, please contact your ISP. For advanced users, please enter a specific "Host name" below to use smart sync with your friends.</span>
+											<#sync_router_desc0#><br>											
+												1. <#sync_router_desc1#><br>
+												2. <#sync_router_desc2#><br>
+												3. <#sync_router_desc3#><br>
+												4. <#sync_router_desc4#><br>
+												<span class="formfontdesc" id="wan_ip_hide2" style="color:#FFCC00;display:none;margin-left:0px;">5. <#sync_router_desc5#></span>
 										</div>
 									</td>
 								</tr>
@@ -1190,7 +1188,7 @@ function checkDDNSReturnCode(){
 								<table>
 									<tr>
 										<td>
-											<div style="margin-left:15px;margin-top:3px;">Invitation Generator</div>
+											<div style="margin-left:15px;margin-top:3px;"><#sync_router_Invitation#></div>
 										</td>
 									</tr>
 								</table>
@@ -1201,7 +1199,7 @@ function checkDDNSReturnCode(){
 									<tr style="height:40px;">
 										<th width="25%"><#IPConnection_autofwDesc_itemname#></th>
 										<td>
-											<input name="router_sync_desc" type="text" class="input_32_table" style="height:25px;font-size:13px;"  value="My new sync">
+											<input name="router_sync_desc" type="text" class="input_32_table" maxlength="64" style="height:25px;font-size:13px;"  value="My new sync">
 										</td>
 									</tr>
 									<tr id="host_name_tr">
@@ -1211,13 +1209,13 @@ function checkDDNSReturnCode(){
 												<option value="0">Http</option>
 												<option value="1">Https</option>
 											</select>
-											<input id="host_name" type="text" maxlength="32"  class="input_32_table" style="height:25px;font-size:13px;"  onKeyPress="return is_string(this, event)">&nbsp:
-											<input type="text" maxlength="6" id="url_port" class="input_6_table" style="height:25px;font-size:13px;"  onKeyPress="return is_string(this, event)">
+											<input id="host_name" type="text" maxlength="32"  class="input_32_table" style="height:25px;font-size:13px;"  onKeyPress="return validator.isString(this, event)">&nbsp:
+											<input type="text" maxlength="6" id="url_port" class="input_6_table" style="height:25px;font-size:13px;"  onKeyPress="return validator.isString(this, event)">
 										</td>
 									</tr>
 									<tr style="height:40px;">
 										<th>
-											<div style="margin-top:5px;">Local sync folder</div>
+											<div style="margin-top:5px;"><#sync_router_localfolder#></div>
 										</th>
 										<td>
 											<input type="text" id="PATH" class="input_25_table" style="height: 25px;" name="cloud_dir" value="" >
@@ -1246,11 +1244,11 @@ function checkDDNSReturnCode(){
 											<div >
 												<select id="captcha_rule" class="input_option" onchange="captcha_style()" style="height:27px;">
 													<option value="0"><#wl_securitylevel_0#></option>
-													<option value="1">Manual assign</option>
-													<option value="2">Auto generate</option>
+													<option value="1"><#Manual_Setting_assign#></option>
+													<option value="2"><#sync_router_generate#></option>
 												</select>
 												<span id="captcha_input" style="display:none;">											
-													<input id="captcha_inputfield" type="text" class="input_6_table" style="margin-left:10px;" maxlength="4" value="" onclick=""  onkeypress="return is_number(this,event);">
+													<input id="captcha_inputfield" type="text" class="input_6_table" style="margin-left:10px;" maxlength="4" value="" onclick=""  onkeypress="return validator.isNumber(this,event);">
 												</span>
 											</div>
 										</td>				
@@ -1285,15 +1283,15 @@ function checkDDNSReturnCode(){
    					<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" id="cloudlistTable" style="margin-top:20px;">
 	  					<thead>
 							<tr>
-								<td colspan="6" id="cloud_synclist">Sync List</td>
+								<td colspan="6" id="cloud_synclist"><#sync_router_list#></td>
 							</tr>
 	  					</thead>		  
     					<tr>
 							<th width="10%"><#Provider#></th>
 							<th width="25%"><#IPConnection_autofwDesc_itemname#></a></th>
 							<th width="10%"><#Cloudsync_Rule#></a></th>
-							<th width="30%">Local Sync Folder</th>
-							<th width="15%">Invitation</th>
+							<th width="30%"><#sync_router_localfolder#></th>
+							<th width="15%"><#Invitation#></th>
 							<th width="10%"><#CTL_del#></th>
     					</tr>
 					</table>
@@ -1302,7 +1300,7 @@ function checkDDNSReturnCode(){
 
 
 	  				<div class="apply_gen" id="creatBtn" style="margin-top:30px;">
-							<input name="applybutton" id="applybutton" type="button" class="button_gen" onclick="location.href='cloud_syslog.asp'" value="Check log" style="word-wrap:break-word;word-break:normal;">
+							<input name="applybutton" id="applybutton" type="button" class="button_gen" onclick="location.href='cloud_syslog.asp'" value="<#CTL_check_log#>" style="word-wrap:break-word;word-break:normal;">
 							<!--img id="update_scan" style="display:none;" src="images/InternetScan.gif" /-->
 	  				</div>
 					</div>

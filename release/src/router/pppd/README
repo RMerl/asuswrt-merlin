@@ -61,8 +61,38 @@ use any IP address.  (This only applies where the peer is
 authenticating itself to you, of course.)
 
 
-What's new in ppp-2.4.5.
+What's new in ppp-2.4.7.
 ************************
+
+* Fixed a potential security issue in parsing option files (CVE-2014-3158).
+
+* There is a new "stop-bits" option, which takes an argument of 1 or 2,
+  indicating the number of stop bits to use for async serial ports.
+
+* Various bug fixes.
+
+
+What was new in ppp-2.4.6.
+**************************
+
+* Man page updates.
+
+* Several bug fixes.
+
+* Options files can now set and unset environment variables for
+  scripts.
+
+* The timeout for chat scripts can now be taken from an environment
+  variable.
+
+* There is a new option, master_detach, which allows pppd to detach
+  from the controlling terminal when it is the multilink bundle master
+  but its own link has terminated, even if the nodetach option has
+  been given.
+
+
+What was new in ppp-2.4.5.
+**************************
 
 * Under Linux, pppd can now operate in a mode where it doesn't request
   the peer's IP address, as some peers refuse to supply an IP address.

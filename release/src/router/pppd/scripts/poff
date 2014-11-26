@@ -91,7 +91,7 @@ if test "$#" -eq 0 -o "$MODE" = "all" ; then
 fi
 
 # There is an argument, so kill the pppd started on that provider.
-PID=`ps axw | grep "[ /]pppd call $1 *\$" | awk '{print $1}'`
+PID=`ps axw | grep "[ /]pppd call $1" | awk '{print $1}'`
 if test -n "$PID" ; then
     $KILL -$SIG $PID || {
         echo "$0: $KILL failed.  None ${DONE}."

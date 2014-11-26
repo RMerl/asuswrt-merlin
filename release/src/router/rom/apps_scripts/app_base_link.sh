@@ -77,8 +77,8 @@ for obj in $objs; do
 		continue
 	fi
 
-	if [ -d "$APP_LINK_DIR/$obj" ]; then
-		rm -rf $APP_LINK_DIR/$obj
+	if [ -d "$APP_LINK_BIN/$obj" ]; then
+		rm -rf $APP_LINK_BIN/$obj
 	fi
 	ln -sf $APP_BIN/$obj $APP_LINK_BIN/$obj 
 done
@@ -97,8 +97,8 @@ for obj in $objs; do
 		continue
 	fi
 
-	if [ -d "$APP_LINK_DIR/$obj" ]; then
-		rm -rf $APP_LINK_DIR/$obj
+	if [ -d "$APP_LINK_LIB/$obj" ]; then
+		rm -rf $APP_LINK_LIB/$obj
 	fi
 	ln -sf $APP_LIB/$obj $APP_LINK_LIB/$obj 
 done

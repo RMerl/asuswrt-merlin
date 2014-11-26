@@ -16,7 +16,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <style>
 .Portrange{
@@ -66,9 +66,6 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 var qos_rulelist_array = "<% nvram_char_to_ascii("","qos_rulelist"); %>";
 
@@ -400,7 +397,7 @@ function validate_multi_range(val, mini, maxi){
 	var rangere=new RegExp("^([0-9]{1,5})\:([0-9]{1,5})$", "gi");
 	if(rangere.test(val)){
 		
-		if(!validate_each_port(document.form.qos_port_x_0, RegExp.$1, mini, maxi) || !validate_each_port(document.form.qos_port_x_0, RegExp.$2, mini, maxi)){
+		if(!validator.eachPort(document.form.qos_port_x_0, RegExp.$1, mini, maxi) || !validator.eachPort(document.form.qos_port_x_0, RegExp.$2, mini, maxi)){
 				return false;								
 		}else if(parseInt(RegExp.$1) >= parseInt(RegExp.$2)){
 				alert("<#JS_validport#>");	
@@ -725,12 +722,12 @@ function valid_IPorMAC(obj){
     					return true;
 			}		
 			else if(obj.value.split("*").length >= 2){
-					if(!valid_IP_subnet(obj))
+					if(!validator.ipSubnet(obj))
 							return false;
 					else
 							return true;				
 			}
-			else if(!valid_IP_form(obj, 0)){
+			else if(!validator.validIPForm(obj, 0)){
     			return false;
 			}
 			else
@@ -894,7 +891,7 @@ function linkport(obj){
 							</tr>							
 							<tr>
 								<td width="21%">							
-									<input type="text" maxlength="32" class="input_12_table" style="float:left;width:105px;" placeholder="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return is_string(this, event)">
+									<input type="text" maxlength="32" class="input_12_table" style="float:left;width:105px;" placeholder="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return validator.isString(this, event)">
 									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullQoSList(this);" title="<#select_service#>">
 									<div id="QoSList_Block" class="QoSList_Block" onclick="hideClients_Block()"></div>
 								</td>
@@ -905,7 +902,7 @@ function linkport(obj){
 								</td>
 								
 								
-								<td width="14%"><input type="text" maxlength="32" class="input_12_table" name="qos_port_x_0" onKeyPress="return is_portrange(this, event)"></td>
+								<td width="14%"><input type="text" maxlength="32" class="input_12_table" name="qos_port_x_0" onKeyPress="return validator.isPortRange(this, event)"></td>
 								<td width="12%">
 									<select name="qos_proto_x_0" class="input_option" style="width:75px;" onChange="linkport(this);">
 										<option value="tcp">TCP</option>
@@ -918,8 +915,8 @@ function linkport(obj){
 									</select>
 								</td>
 								<td width="15%">
-									<input type="text" class="input_3_table" maxlength="7" onKeyPress="return is_number(this,event);" onblur="conv_to_transf();" name="qos_min_transferred_x_0">~
-									<input type="text" class="input_3_table" maxlength="7" onKeyPress="return is_number(this,event);" onblur="conv_to_transf();" name="qos_max_transferred_x_0"> KB
+									<input type="text" class="input_3_table" maxlength="7" onKeyPress="return validator.isNumber(this,event);" onblur="conv_to_transf();" name="qos_min_transferred_x_0">~
+									<input type="text" class="input_3_table" maxlength="7" onKeyPress="return validator.isNumber(this,event);" onblur="conv_to_transf();" name="qos_max_transferred_x_0"> KB
 									<input type="hidden" name="qos_transferred_x_0" value="">
 								</td>
 								<td width="9%">

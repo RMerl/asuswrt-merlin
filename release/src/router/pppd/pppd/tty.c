@@ -136,6 +136,7 @@ struct stat devstat;		/* result of stat() on devnam */
 
 /* option variables */
 int	crtscts = 0;		/* Use hardware flow control */
+int	stop_bits = 1;		/* Number of serial port stop bits */
 bool	modem = 1;		/* Use modem control lines */
 int	inspeed = 0;		/* Input/Output speed requested */
 bool	lockflag = 0;		/* Create lock file to lock the serial dev */
@@ -218,6 +219,9 @@ option_t tty_options[] = {
       OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(-1) },
     { "xonxoff", o_special_noarg, (void *)setxonxoff,
       "Set software (XON/XOFF) flow control", OPT_PRIOSUB },
+    { "stop-bits", o_int, &stop_bits,
+      "Number of stop bits in serial port",
+      OPT_PRIO | OPT_PRIVFIX | OPT_LIMITS, NULL, 2, 1 },
 
     { "modem", o_bool, &modem,
       "Use modem control lines", OPT_PRIO | 1 },

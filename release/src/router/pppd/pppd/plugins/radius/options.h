@@ -55,6 +55,7 @@ static OPTION config_options[] = {
 {"radius_timeout",	OT_INT, ST_UNDEF, NULL},
 {"radius_retries",	OT_INT,	ST_UNDEF, NULL},
 {"nas_identifier",      OT_STR, ST_UNDEF, ""},
+{"bindaddr",            OT_STR, ST_UNDEF, NULL},
 /* local options */
 {"login_local",		OT_STR, ST_UNDEF, NULL},
 };

@@ -15,14 +15,12 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var filter_lwlist_array = '<% nvram_get("filter_lwlist"); %>';
 
 function initial(){
@@ -86,14 +84,14 @@ function applyRule(){
 }
 
 function validForm(){
-	if(!validate_timerange(document.form.filter_lw_time_x_starthour, 0)||!validate_timerange(document.form.filter_lw_time2_x_starthour, 0)
-			|| !validate_timerange(document.form.filter_lw_time_x_startmin, 1)||!validate_timerange(document.form.filter_lw_time2_x_startmin, 1)
-			|| !validate_timerange(document.form.filter_lw_time_x_endhour, 2)||!validate_timerange(document.form.filter_lw_time2_x_endhour, 2)
-			|| !validate_timerange(document.form.filter_lw_time_x_endmin, 3)||!validate_timerange(document.form.filter_lw_time2_x_endmin, 3)
+	if(!validator.timeRange(document.form.filter_lw_time_x_starthour, 0)||!validator.timeRange(document.form.filter_lw_time2_x_starthour, 0)
+			|| !validator.timeRange(document.form.filter_lw_time_x_startmin, 1)||!validator.timeRange(document.form.filter_lw_time2_x_startmin, 1)
+			|| !validator.timeRange(document.form.filter_lw_time_x_endhour, 2)||!validator.timeRange(document.form.filter_lw_time2_x_endhour, 2)
+			|| !validator.timeRange(document.form.filter_lw_time_x_endmin, 3)||!validator.timeRange(document.form.filter_lw_time2_x_endmin, 3)
 			)
 		return false;
 	
-	if(!validate_portlist(document.form.filter_lw_icmp_x, 'filter_lw_icmp_x'))
+	if(!validator.portList(document.form.filter_lw_icmp_x, 'filter_lw_icmp_x'))
 		return false;
 		
 	/*if(document.form.filter_lw_time_x_starthour.value > document.form.filter_lw_time_x_endhour.value){
@@ -186,15 +184,15 @@ function addRow_Group(upper){
 					return false;
 	}else{		
 					if(document.form.filter_lw_srcip_x_0.value.split("*").length >= 2){
-								if(!valid_IP_subnet(document.form.filter_lw_srcip_x_0))
+								if(!validator.ipSubnet(document.form.filter_lw_srcip_x_0))
 										return false;
-					}else if(!valid_IP_form(document.form.filter_lw_srcip_x_0, 0))
+					}else if(!validator.validIPForm(document.form.filter_lw_srcip_x_0, 0))
 								return false;
 
 					if(document.form.filter_lw_dstip_x_0.value.split("*").length >= 2){
-								if(!valid_IP_subnet(document.form.filter_lw_dstip_x_0))
+								if(!validator.ipSubnet(document.form.filter_lw_dstip_x_0))
 										return false;
-					}else if(!valid_IP_form(document.form.filter_lw_dstip_x_0, 0))
+					}else if(!validator.validIPForm(document.form.filter_lw_dstip_x_0, 0))
 								return false;		
 	}
 		
@@ -205,16 +203,16 @@ function addRow_Group(upper){
 	if(document.form.filter_lw_srcport_x_0.value == "" && document.form.filter_lw_dstport_x_0.value == ""){
 		
 	}else	if(document.form.filter_lw_srcport_x_0.value==""){
-					if(!validate_number_range(document.form.filter_lw_dstport_x_0, 1, 65535) )
+					if(!validator.numberRange(document.form.filter_lw_dstport_x_0, 1, 65535) )
 							return false;					
 					
 	}else if(document.form.filter_lw_dstport_x_0.value==""){	
-					if(!validate_number_range(document.form.filter_lw_srcport_x_0, 1, 65535))
+					if(!validator.numberRange(document.form.filter_lw_srcport_x_0, 1, 65535))
 							return false;
 
 	}else{
-					if(!validate_number_range(document.form.filter_lw_srcport_x_0, 1, 65535)							
-							|| !validate_number_range(document.form.filter_lw_dstport_x_0, 1, 65535) )
+					if(!validator.numberRange(document.form.filter_lw_srcport_x_0, 1, 65535)							
+							|| !validator.numberRange(document.form.filter_lw_dstport_x_0, 1, 65535) )
 								return false;					
 	}
 	
@@ -502,10 +500,10 @@ function updateDateTime(){
         					<tr id="enable_time_week_tr">
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,2);"><#FirewallConfig_LanWanActiveTime_itemname#></a></th>
           						<td>
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_starthour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 0);"> :
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_startmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 1);"> -
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_endhour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 2);"> :
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_endmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 3);">		  
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_starthour" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 0);"> :
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_startmin" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 1);"> -
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_endhour" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 2);"> :
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time_x_endmin" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 3);">		  
 		  					</td>
         					</tr>
 							<tr>
@@ -518,16 +516,16 @@ function updateDateTime(){
 							<tr id="enable_time_weekend_tr">
           						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,2);"><#FirewallConfig_LanWanActiveTime_itemname#></a></th>
           						<td>
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_starthour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 0);"> :
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_startmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 1);"> -
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_endhour" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 2);"> :
-								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_endmin" onKeyPress="return is_number(this,event);" onblur="validate_timerange(this, 3);">		  
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_starthour" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 0);"> :
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_startmin" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 1);"> -
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_endhour" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 2);"> :
+								<input type="text" maxlength="2" class="input_3_table" name="filter_lw_time2_x_endmin" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 3);">		  
 		  					</td>
         					</tr>
         					<tr>
           						<th ><a class="hintstyle" href="javascript:void(0);" onClick="openHint(10,4);"><#FirewallConfig_LanWanICMP_itemname#></a></th>
           						<td>
-          							<input type="text" maxlength="32" class="input_32_table" name="filter_lw_icmp_x" value="<% nvram_get("filter_lw_icmp_x"); %>" onKeyPress="return is_portlist(this,event)">
+          							<input type="text" maxlength="32" class="input_32_table" name="filter_lw_icmp_x" value="<% nvram_get("filter_lw_icmp_x"); %>" onKeyPress="return validator.isPortlist(this,event)">
           						</td>
         					</tr>
 
@@ -548,10 +546,10 @@ function updateDateTime(){
             					<th><#list_add_delete#></th>
           					</tr>
           					<tr>
-          						<td width="20%"><input type="text" maxlength="15" class="input_15_table" name="filter_lw_srcip_x_0" onKeyPress="return is_iprange(this, event)"></td>
-            					<td width="15%"><input type="text" maxlength="11" class="input_12_table" name="filter_lw_srcport_x_0" onKeyPress="return is_portrange(this,event)" value=""></td>
-            					<td width="20%"><input type="text" maxlength="15" class="input_15_table" name="filter_lw_dstip_x_0" onKeyPress="return is_iprange(this, event)"></td>
-            					<td width="15%"><input type="text" maxlength="11" class="input_12_table" name="filter_lw_dstport_x_0" onKeyPress="return is_portrange(this,event)" value=""></td>
+          						<td width="20%"><input type="text" maxlength="15" class="input_15_table" name="filter_lw_srcip_x_0" onKeyPress="return validator.isIPRange(this, event)"></td>
+            					<td width="15%"><input type="text" maxlength="11" class="input_12_table" name="filter_lw_srcport_x_0" onKeyPress="return validator.isPortRange(this,event)" value=""></td>
+            					<td width="20%"><input type="text" maxlength="15" class="input_15_table" name="filter_lw_dstip_x_0" onKeyPress="return validator.isIPRange(this, event)"></td>
+            					<td width="15%"><input type="text" maxlength="11" class="input_12_table" name="filter_lw_dstport_x_0" onKeyPress="return validator.isPortRange(this,event)" value=""></td>
             					<td width="15%">
 								<select name="filter_lw_proto_x_0" class="input_option">
 									<option value="TCP">TCP</option>

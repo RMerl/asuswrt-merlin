@@ -11,6 +11,22 @@
 	<% get_modem_info(); %>
 
 	function genUSBDevices(){
+		var decodeURIComponentSafe = function(_ascii){
+			try{
+				return decodeURIComponent(_ascii);
+			}
+			catch(err){
+				return _ascii;
+			}
+		}
+
+		String.prototype.toArray = function(){
+			var ret = eval(this.toString());
+			if(Object.prototype.toString.apply(ret) === '[object Array]')
+				return ret;
+			return [];
+		}
+
 		/*initial variable*/
 		var initialValue = {
 			"usbPortMax" :  '<% nvram_get("rc_support"); %>'.charAt('<% nvram_get("rc_support"); %>'.indexOf("usbX")+4),
@@ -101,7 +117,6 @@
 				tmpDisk.totalSize = parseInt(tmpDisk.totalSize + tmpParts.size);
 				tmpDisk.totalUsed = parseInt(tmpDisk.totalUsed + tmpParts.used);
 				_part++;
-
 				allPartIndex++;
 			}
 
@@ -146,27 +161,16 @@
 		return usbDevicesList;
 	};
 
-	var mounted_partition_old = 0;
 	diskList.prototype = {
 		update: function(callback){
-			var mounted_partition = 0;
-			
+			window.usbDevicesListUpdated = [];
+
 			$j.ajax({ 
 				url: '/update_diskinfo.asp',
 				dataType: 'script',
 
 				success: function(){
-					if(typeof window.usbDevicesListUpdated != "undefined"){
-						for(i=0; i<window.usbDevicesListUpdated.length; i++){
-							if(parseInt(window.usbDevicesListUpdated[i].mountNumber) > 0){
-								mounted_partition += parseInt(window.usbDevicesListUpdated[i].mountNumber);
-							}
-						}
-
-						if(mounted_partition != mounted_partition_old){
-							callback();
-						}
-					}
+					callback();
 				}
 			}); 
 		},

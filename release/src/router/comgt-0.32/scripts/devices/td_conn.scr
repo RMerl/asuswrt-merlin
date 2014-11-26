@@ -22,16 +22,6 @@ goto error
 
 
 :set_parameters
-system "nvram set g3state_q0=1"
-send "AT+CFUN=1^m"
-waitfor 10 "OK","ERR","ERROR"
-if % = -1 goto timeerror
-if % = 0 goto set_parameters2
-system "nvram set g3state_q0=-1"
-goto error
-
-
-:set_parameters2
 system "nvram set g3state_cd=1"
 send "ATS0=0^m"
 waitfor 10 "OK","ERR","ERROR"

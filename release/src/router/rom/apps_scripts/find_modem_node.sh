@@ -1,9 +1,13 @@
 #!/bin/sh
-echo "This is a script to find the modem act TTY nodes out."
+# echo "This is a script to find the modem act TTY nodes out."
 
 
 modem_act_path=`nvram get usb_modem_act_path`
+modem_type=`nvram get usb_modem_act_type`
+modem_vid=`nvram get usb_modem_act_vid`
 dev_home=/dev
+
+at_lock="flock -x /tmp/at_cmd_lock"
 
 
 _find_act_devs(){
@@ -66,7 +70,7 @@ _find_in_out_devs(){
 				got_out=1
 			fi
 
-			if [ $got_in -eq 1 ] && [ $got_out -eq 1 ]; then
+			if [ $got_in -eq 1 -a $got_out -eq 1 ]; then
 				if [ -n "$io_devs" ]; then
 					io_devs=$io_devs" "$dev
 				else
@@ -96,11 +100,11 @@ _find_dial_devs(){
 	count=0
 	for dev in $1; do
 		t=`echo $dev |head -c 6`
-		if [ $got_acm -eq 1 ] && [ "$t" == "ttyUSB" ]; then
+		if [ $got_acm -eq 1 -a "$t" == "ttyUSB" ]; then
 			continue
 		fi
 
-		chat -t 1 -e '' 'ATQ0' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		$at_lock chat -t 1 -e '' 'ATQ0' OK >> /dev/$dev < /dev/$dev 2>/dev/null
 		if [ "$?" == "0" ]; then
 			count=$((count+1))
 
@@ -208,72 +212,6 @@ _except_first_int_dev(){
 	done
 }
 
-_find_usb3_path(){
-	all_paths=`nvram get xhci_ports`
-
-	count=1
-	for path in $all_paths; do
-		len=${#path}
-		target=`echo $1 |head -c $len`
-		if [ "$target" == "$path" ]; then
-			echo "$count"
-			return
-		fi
-
-		count=$(($count+1))
-	done
-
-	echo "-1"
-}
-
-_find_usb2_path(){
-	all_paths=`nvram get ehci_ports`
-
-	count=1
-	for path in $all_paths; do
-		len=${#path}
-		target=`echo $1 |head -c $len`
-		if [ "$target" == "$path" ]; then
-			echo "$count"
-			return
-		fi
-
-		count=$(($count+1))
-	done
-
-	echo "-1"
-}
-
-_find_usb1_path(){
-	all_paths=`nvram get ohci_ports`
-
-	count=1
-	for path in $all_paths; do
-		len=${#path}
-		target=`echo $1 |head -c $len`
-		if [ "$target" == "$path" ]; then
-			echo "$count"
-			return
-		fi
-
-		count=$(($count+1))
-	done
-
-	echo "-1"
-}
-
-_find_usb_path(){
-	ret=`_find_usb3_path "$1"`
-	if [ "$ret" == "-1" ]; then
-		ret=`_find_usb2_path "$1"`
-		if [ "$ret" == "-1" ]; then
-			ret=`_find_usb1_path "$1"`
-		fi
-	fi
-
-	echo "$ret"
-}
-
 
 act_devs=`_find_act_devs`
 echo "act_devs=$act_devs."
@@ -281,17 +219,22 @@ echo "act_devs=$act_devs."
 io_devs=`_find_in_out_devs "$act_devs"`
 echo "io_devs=$io_devs."
 
-dial_devs=`_find_dial_devs "$io_devs"`
-echo "dial_devs=$dial_devs."
+if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
+	first_int_dev=`_find_first_int_dev "$io_devs"`
+	echo "first_int_dev=$first_int_dev."
 
-first_int_dev=`_find_first_int_dev "$dial_devs"`
-echo "first_int_dev=$first_int_dev."
+	first_bulk_dev=""
+	echo "first_bulk_dev=$first_bulk_dev."
+else
+	dial_devs=`_find_dial_devs "$io_devs"`
+	echo "dial_devs=$dial_devs."
 
-first_bulk_dev=`_except_first_int_dev "$dial_devs"`
-echo "first_bulk_dev=$first_bulk_dev."
+	first_int_dev=`_find_first_int_dev "$dial_devs"`
+	echo "first_int_dev=$first_int_dev."
 
-path=`_find_usb_path "$modem_act_path"`
-echo "usb_path=$path."
+	first_bulk_dev=`_except_first_int_dev "$dial_devs"`
+	echo "first_bulk_dev=$first_bulk_dev."
+fi
 
 nvram set usb_modem_act_int=$first_int_dev
 nvram set usb_modem_act_bulk=$first_bulk_dev

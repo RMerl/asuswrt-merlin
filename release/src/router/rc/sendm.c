@@ -1,9 +1,9 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
 #include <shutils.h>
+#include <shared.h>
 #include <bcmnvram.h>
 
 #include <unistd.h>

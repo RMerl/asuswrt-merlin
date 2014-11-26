@@ -16,8 +16,8 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <style>
 #ClientList_Block_PC{
 	border:1px outset #999;
@@ -71,8 +71,6 @@ if((location.href.search('https://') >= 0) || (location.href.search('HTTPS://') 
         isFromHTTPS = true;
 }
 
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var http_clientlist_array = '<% nvram_get("http_clientlist"); %>';
 var accounts = [<% get_all_accounts(); %>];
 for(var i=0; i<accounts.length; i++){
@@ -267,7 +265,7 @@ function validForm(){
 		return false;
 	}
 	else{
-		var alert_str = validate_hostname(document.form.http_username);
+		var alert_str = validator.hostName(document.form.http_username);
 
 		if(alert_str != ""){
 			showtext($("alert_msg1"), alert_str);
@@ -316,14 +314,14 @@ function validForm(){
 		return false;
 	}
 
-	if(!validate_string(document.form.http_passwd2)){
+	if(!validator.string(document.form.http_passwd2)){
 		document.form.http_passwd2.focus();
 		document.form.http_passwd2.select();
 		return false;
 	}
 
-	if(!validate_ipaddr_final(document.form.log_ipaddr, 'log_ipaddr')
-			|| !validate_string(document.form.ntp_server0)
+	if(!validator.ipAddrFinal(document.form.log_ipaddr, 'log_ipaddr')
+			|| !validator.string(document.form.ntp_server0)
 			)
 		return false;
 
@@ -340,13 +338,13 @@ function validForm(){
 		alert("<#File_Pop_content_alert_desc10#>");
 		
 	if (document.form.misc_http_x[0].checked) {
-		if (!validate_range(document.form.misc_httpport_x, 1024, 65535))
+		if (!validator.range(document.form.misc_httpport_x, 1024, 65535))
 			return false;
 	
-		if (HTTPS_support && !validate_range(document.form.https_lanport, 1024, 65535) && !tmo_support)
+		if (HTTPS_support && !validator.range(document.form.https_lanport, 1024, 65535) && !tmo_support)
 			return false;
 
-		if (HTTPS_support && !validate_range(document.form.misc_httpsport_x, 1024, 65535))
+		if (HTTPS_support && !validator.range(document.form.misc_httpsport_x, 1024, 65535))
 			return false;
 	}
 	else{
@@ -355,7 +353,7 @@ function validForm(){
 	}	
 
 	if(document.form.sshd_enable[0].checked){
-		if (!validate_range(document.form.sshd_port, 0, 65535))
+		if (!validator.range(document.form.sshd_port, 0, 65535))
 			return false;
 	}
 	else{
@@ -383,11 +381,11 @@ function validForm(){
 		return false;
 	}
 	else if(document.form.misc_httpsport_x.value == document.form.misc_httpport_x.value && HTTPS_support){
-		alert("Duplicate port number with HTTP and HTTPS WAN port setting.");
+		alert("<#https_port_conflict#>");
 		document.form.misc_httpsport_x.focus();
 		return false;
 	}
-	else if(!validate_range_sp(document.form.http_autologout, 10, 999, '<% nvram_get("http_autologout"); %>'))
+	else if(!validator.rangeAllowZero(document.form.http_autologout, 10, 999, '<% nvram_get("http_autologout"); %>'))
 		return false;
 
 	return true;
@@ -453,14 +451,14 @@ var timezones = [
 	["MST7DST_1",	"(GMT-07:00) <#TZ06#>"],
 	["MST7_2",	"(GMT-07:00) <#TZ07#>"],
 	["MST7DST_3",	"(GMT-07:00) <#TZ08#>"],
-	["CST6DST_1",	"(GMT-06:00) <#TZ09#>"],
-	["CST6DST_2",	"(GMT-06:00) <#TZ10#>"],
+	["CST6_2",	"(GMT-06:00) <#TZ10#>"],
 	["CST6DST_3",	"(GMT-06:00) <#TZ11#>"],
 	["CST6DST_3_1",	"(GMT-06:00) <#TZ12#>"],
-	["UTC6",	"(GMT-06:00) <#TZ13#>"],
+	["UTC6DST",	"(GMT-06:00) <#TZ13#>"],
 	["EST5DST",	"(GMT-05:00) <#TZ14#>"],
 	["UTC5_1",	"(GMT-05:00) <#TZ15#>"],
 	["UTC5_2",	"(GMT-05:00) <#TZ16#>"],
+	["UTC4.30",	"(GMT-04:30) <#TZ18_1#>"],
 	["AST4DST",	"(GMT-04:00) <#TZ17#>"],
 	["UTC4_1",	"(GMT-04:00) <#TZ18#>"],
 	["UTC4DST_2",	"(GMT-04:00) <#TZ19#>"],
@@ -474,9 +472,9 @@ var timezones = [
 	["GMT0",	"(GMT) <#TZ27#>"],
 	["GMT0DST_1",	"(GMT) <#TZ27_2#>"],
 	["GMT0DST_2",	"(GMT) <#TZ28#>"],
-	/*["GMT0DST_3",	"(GMT) <#TZ85#>"],	use adj_dst to desc*/
+	["GMT0_2",	"(GMT) <#TZ28_1#>"],
 	["UTC-1DST_1",	"(GMT+01:00) <#TZ29#>"],
-	["UTC-1_1_1",	"(GMT+01:00) <#TZ30#>"],
+	["UTC-1DST_1_1","(GMT+01:00) <#TZ30#>"],
 	["UTC-1_2",	"(GMT+01:00) <#TZ31#>"],
 	["UTC-1DST_2",	"(GMT+01:00) <#TZ32#>"],
 	["MET-1DST",	"(GMT+01:00) <#TZ33#>"],
@@ -485,51 +483,61 @@ var timezones = [
 	["MEZ-1DST_1",	"(GMT+01:00) <#TZ36#>"],
 	["UTC-1_3",	"(GMT+01:00) <#TZ37#>"],
 	["UTC-2DST",	"(GMT+02:00) <#TZ38#>"],
+	["UTC-2DST_3",	"(GMT+02:00) <#TZ33_1#>"],
 	["EST-2DST",	"(GMT+02:00) <#TZ39#>"],
-	["UTC-2_1",	"(GMT+02:00) <#TZ40#>"],
+	["UTC-2DST_1",	"(GMT+02:00) <#TZ40#>"],
 	["UTC-2DST_2",	"(GMT+02:00) <#TZ41#>"],
 	["IST-2DST",	"(GMT+02:00) <#TZ42#>"],
-	["SAST-2",	"(GMT+02:00) <#TZ43#>"],
 	["EET-2DST",	"(GMT+02:00) <#TZ43_2#>"],
+	["UTC-2_1",	"(GMT+02:00) <#TZ40_2#>"],
+	["SAST-2",	"(GMT+02:00) <#TZ43#>"],
 	["UTC-3_1",	"(GMT+03:00) <#TZ46#>"],
 	["UTC-3_2",	"(GMT+03:00) <#TZ47#>"],
-	["IST-3DST",	"(GMT+03:00) <#TZ48#>"],
-	["UTC-3.30DST",	"(GMT+03:30) <#TZ49#>"],
-	["UTC-4_2",	"(GMT+04:00) <#TZ44#>"],
-	["UTC-4_3",	"(GMT+04:00) <#TZ45#>"],
+	["UTC-3_3",	"(GMT+03:00) <#TZ40_1#>"],
+	["UTC-3_4",	"(GMT+03:00) <#TZ44#>"],
+	["UTC-3_5",	"(GMT+03:00) <#TZ45#>"],
+	["IST-3",	"(GMT+03:00) <#TZ48#>"],
+	["UTC-3.30DST",	"(GMT+03:30) <#TZ49#>"],	
 	["UTC-4_1",	"(GMT+04:00) <#TZ50#>"],
+	["UTC-4_5",	"(GMT+04:00) <#TZ50_2#>"],
+	["UTC-4_4",	"(GMT+04:00) <#TZ50_1#>"],
 	["UTC-4DST_2",	"(GMT+04:00) <#TZ51#>"],
 	["UTC-4.30",	"(GMT+04:30) <#TZ52#>"],
 	["UTC-5",	"(GMT+05:00) <#TZ54#>"],
+	["UTC-5_1",	"(GMT+05:00) <#TZ53#>"],
 	["UTC-5.30_2",	"(GMT+05:30) <#TZ55#>"],
 	["UTC-5.30_1",	"(GMT+05:30) <#TZ56#>"],
 	["UTC-5.30",	"(GMT+05:30) <#TZ59#>"],
 	["UTC-5.45",	"(GMT+05:45) <#TZ57#>"],
-	["RFT-6DST",	"(GMT+06:00) <#TZ60#>"],
-	["UTC-6_1",	"(GMT+06:00) <#TZ53#>"],
+	["RFT-6",	"(GMT+06:00) <#TZ60#>"],
 	["UTC-6",	"(GMT+06:00) <#TZ58#>"],
+	["UTC-6_2",	"(GMT+06:00) <#TZ62_1#>"],
 	["UTC-6.30",	"(GMT+06:30) <#TZ61#>"],
 	["UTC-7",	"(GMT+07:00) <#TZ62#>"],
-	["CST-8_2",	"(GMT+08:00) <#TZ63#>"],
+	["UTC-7_2",	"(GMT+07:00) <#TZ63#>"],
 	["CST-8",	"(GMT+08:00) <#TZ64#>"],
 	["CST-8_1",	"(GMT+08:00) <#TZ65#>"],
 	["SST-8",	"(GMT+08:00) <#TZ66#>"],
 	["CCT-8",	"(GMT+08:00) <#TZ67#>"],
-	["WAS-8DST",	"(GMT+08:00) <#TZ68#>"],
-	["UTC-8DST",	"(GMT+08:00) <#TZ69#>"],
-	["UTC-9_1",	"(GMT+09:00) <#TZ70#>"],
+	["WAS-8",	"(GMT+08:00) <#TZ68#>"],
+	["UTC-8",	"(GMT+08:00) <#TZ69#>"],
+	["UTC-8_1",     "(GMT+08:00) <#TZ70#>"],
+	["UTC-9_1",	"(GMT+09:00) <#TZ70_1#>"],
+	["UTC-9_3",	"(GMT+09:00) <#TZ72#>"],	
 	["JST",		"(GMT+09:00) <#TZ71#>"],
-	["CST-9.30DST",	"(GMT+09:30) <#TZ73#>"],
-	["UTC-9.30",	"(GMT+09:30) <#TZ74#>"],
-	["UTC-10_3",	"(GMT+10:00) <#TZ72#>"],
-	["UTC-10_1",	"(GMT+10:00) <#TZ75#>"],
+	["CST-9.30",	"(GMT+09:30) <#TZ73#>"],
+	["UTC-9.30DST",	"(GMT+09:30) <#TZ74#>"],
+	["UTC-10DST_1",	"(GMT+10:00) <#TZ75#>"],
 	["UTC-10_2",	"(GMT+10:00) <#TZ76#>"],
+	["UTC-10_4",	"(GMT+10:00) <#TZ78#>"],
+	["UTC-10_5",	"(GMT+10:00) <#TZ82_1#>"],
 	["TST-10TDT",	"(GMT+10:00) <#TZ77#>"],
 	["UTC-10_5",	"(GMT+10:00) <#TZ79#>"],
-	["UTC-11_2",	"(GMT+11:00) <#TZ78#>"],
 	["UTC-11",	"(GMT+11:00) <#TZ80#>"],
 	["UTC-11_1",	"(GMT+11:00) <#TZ81#>"],
-	["UTC-12",	"(GMT+12:00) <#TZ82#>"],
+	["UTC-11_3",	"(GMT+11:00) <#TZ86#>"],
+	["UTC-12",      "(GMT+12:00) <#TZ82#>"],
+	["UTC-12_2",      "(GMT+12:00) <#TZ85#>"],	
 	["NZST-12DST",	"(GMT+12:00) <#TZ83#>"],
 	["UTC-13",	"(GMT+13:00) <#TZ84#>"]];
 
@@ -753,7 +761,7 @@ function addRow(obj, upper){
 		obj.select();			
 		return false;
 	}
-	else if(valid_IP_form(obj, 0) != true){
+	else if(validator.validIPForm(obj, 0) != true){
 		return false;
 	}
 	else{		
@@ -997,7 +1005,7 @@ function check_sshd_enable(obj_value){
 				<tr>
 					<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 					<td>
-						<input type="password" autocapitalization="off" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return is_string(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
+						<input type="password" autocapitalization="off" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return validator.isString(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
 						&nbsp;&nbsp;
 						<div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 							<div id="score"></div>
@@ -1009,7 +1017,7 @@ function check_sshd_enable(obj_value){
 				<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
 					<td>
-						<input type="password" autocapitalization="off" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return is_string(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" />
+						<input type="password" autocapitalization="off" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return validator.isString(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" />
 						<div style="margin:-25px 0px 5px 135px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 						<span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
 					
@@ -1062,7 +1070,7 @@ function check_sshd_enable(obj_value){
 				<tr id="sshd_port_tr">
 					<th>SSH service port</th>
 					<td>
-						<input type="text" maxlength="5" class="input_6_table" name="sshd_port" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("sshd_port"); %>">
+						<input type="text" maxlength="5" class="input_6_table" name="sshd_port" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 65535)" value="<% nvram_get("sshd_port"); %>">
 					</td>
 				</tr>
 
@@ -1112,7 +1120,7 @@ function check_sshd_enable(obj_value){
 				</tr>
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
-					<td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event)" ></td>
+					<td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" ></td>
 				</tr>
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
@@ -1147,7 +1155,7 @@ function check_sshd_enable(obj_value){
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,3)"><#LANHostConfig_x_NTPServer_itemname#></a></th>
 					<td>
-						<input type="text" maxlength="256" class="input_32_table" name="ntp_server0" value="<% nvram_get("ntp_server0"); %>" onKeyPress="return is_string(this, event);">
+						<input type="text" maxlength="256" class="input_32_table" name="ntp_server0" value="<% nvram_get("ntp_server0"); %>" onKeyPress="return validator.isString(this, event);">
 						<a href="javascript:openLink('x_NTPServer1')"  name="x_NTPServer1_link" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_NTPServer1_linkname#></a>
 						<div id="svc_hint_div" style="display:none;"><span style="color:#FFCC00;"><#General_x_SystemTime_syncNTP#></span></div>
 					</td>
@@ -1173,7 +1181,7 @@ function check_sshd_enable(obj_value){
 				<tr id="https_lanport">
 					<th>HTTPS Lan port</th>
 					<td>
-						<input type="text" maxlength="5" class="input_6_table" name="https_lanport" value="<% nvram_get("https_lanport"); %>" onKeyPress="return is_number(this,event);" onBlur="change_url(this.value, 'https_lan');">
+						<input type="text" maxlength="5" class="input_6_table" name="https_lanport" value="<% nvram_get("https_lanport"); %>" onKeyPress="return validator.isNumber(this,event);" onBlur="change_url(this.value, 'https_lan');">
 						<span id="https_access_page"></span>
 					</td>
 				</tr>
@@ -1189,16 +1197,24 @@ function check_sshd_enable(obj_value){
 				<tr id="accessfromwan_port">
 					<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,3);"><#FirewallConfig_x_WanWebPort_itemname#></a></th>
 					<td>
-						<span style="margin-left:5px;" id="http_port">HTTP: <input type="text" maxlength="5" name="misc_httpport_x" class="input_6_table" value="<% nvram_get("misc_httpport_x"); %>" onKeyPress="return is_number(this,event);"/>&nbsp;&nbsp;</span>
-						<span style="margin-left:5px;" id="https_port">HTTPS: <input type="text" maxlength="5" name="misc_httpsport_x" class="input_6_table" value="<% nvram_get("misc_httpsport_x"); %>" onKeyPress="return is_number(this,event);"/></span>
+						<span style="margin-left:5px;" id="http_port">HTTP: <input type="text" maxlength="5" name="misc_httpport_x" class="input_6_table" value="<% nvram_get("misc_httpport_x"); %>" onKeyPress="return validator.isNumber(this,event);"/>&nbsp;&nbsp;</span>
+						<span style="margin-left:5px;" id="https_port">HTTPS: <input type="text" maxlength="5" name="misc_httpsport_x" class="input_6_table" value="<% nvram_get("misc_httpsport_x"); %>" onKeyPress="return validator.isNumber(this,event);"/></span>
 					</td>
 				</tr>		  	
 			
 				<tr>
 					<th><#System_AutoLogout#></th>
 					<td>
-						<input type="text" class="input_3_table" maxlength="3" name="http_autologout" value='<% nvram_get("http_autologout"); %>' onKeyPress="return is_number(this,event);" > <#Minute#>
+						<input type="text" class="input_3_table" maxlength="3" name="http_autologout" value='<% nvram_get("http_autologout"); %>' onKeyPress="return validator.isNumber(this,event);" > <#Minute#>
 						<span>(<#zero_disable#>)</span>
+					</td>
+				</tr>
+
+				<tr>
+					<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,6);">Enable WAN down browser redirect notice</a></th>
+					<td>
+						<input type="radio" name="nat_redirect_enable" class="input" value="1" <% nvram_match_x("","nat_redirect_enable","1", "checked"); %> ><#checkbox_Yes#>
+						<input type="radio" name="nat_redirect_enable" class="input" value="0" <% nvram_match_x("","nat_redirect_enable","0", "checked"); %> ><#checkbox_No#>
 					</td>
 				</tr>
 

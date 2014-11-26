@@ -18,11 +18,8 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/md5.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
 var radio_2 = '<% nvram_get("wl0_radio"); %>';
 var radio_5 = '<% nvram_get("wl1_radio"); %>';
 <% radio_status(); %>
@@ -32,13 +29,10 @@ var wl0_macmode = '<% nvram_get("wl0_macmode"); %>';
 var wl1_nmode_x = '<% nvram_get("wl1_nmode_x"); %>';
 var wl0_nmode_x = '<% nvram_get("wl0_nmode_x"); %>';
 if(wl_info.band5g_2_support){
-var wl2_nmode_x = '<% nvram_get("wl2_nmode_x"); %>';
-var wl2_macmode = '<% nvram_get("wl2_macmode"); %>';
+	var wl2_nmode_x = '<% nvram_get("wl2_nmode_x"); %>';
+	var wl2_macmode = '<% nvram_get("wl2_macmode"); %>';
 }
 
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-
-<% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
 wl_channel_list_2g = '<% channel_list_2g(); %>';
@@ -47,46 +41,44 @@ wl_channel_list_5g = '<% channel_list_5g(); %>';
 function initial(){
 	show_menu();	
 	//insertExtChannelOption();		
-
 	if(downsize_4m_support || downsize_8m_support)
 		document.getElementById("guest_image").parentNode.parentNode.removeChild(document.getElementById("guest_image").parentNode);
 
 	mbss_display_ctrl();
 	gen_gntable();
 	guest_divctrl(0);
-
-
 	if(document.form.wl_gmode_protection.value == "auto")
 		document.form.wl_gmode_check.checked = true;
 	else
 		document.form.wl_gmode_check.checked = false;
 
 	if(!band5g_support || no5gmssid_support)
-		$("guest_table5").style.display = "none";
+		document.getElementById("guest_table5").style.display = "none";
+	
 	if(wl_info.band5g_2_support){
-		$("wl_opt1").innerHTML = "5GHz-1";
-		$("wl_opt2").style.display = "";
-		$("guest_table5_2").style.display = "";
+		document.getElementById("wl_opt1").innerHTML = "5GHz-1";
+		document.getElementById("wl_opt2").style.display = "";
+		document.getElementById("guest_table5_2").style.display = "";
 	}
 
 	if(radio_2 != 1){
-		$('2g_radio_hint').style.display ="";
+		document.getElementById('2g_radio_hint').style.display ="";
 	}
 	if(radio_5 != 1){
-		$('5g_radio_hint').style.display ="";
+		document.getElementById('5g_radio_hint').style.display ="";
 	}
 
 	if(document.form.preferred_lang.value == "JP"){    //use unique font-family for JP
-		$('2g_radio_hint').style.fontFamily = "MS UI Gothic,MS P Gothic";
-		$('5g_radio_hint').style.fontFamily = "MS UI Gothic,MS P Gothic";
+		document.getElementById('2g_radio_hint').style.fontFamily = "MS UI Gothic,MS P Gothic";
+		document.getElementById('5g_radio_hint').style.fontFamily = "MS UI Gothic,MS P Gothic";
 	}	
 	
 	if("<% get_parameter("af"); %>" == "wl_NOnly_note"){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","wl_NOnly_note");
 		childsel.style.color="#FFCC00";
-		$('gn_desc').parentNode.appendChild(childsel);
-		$("wl_NOnly_note").innerHTML="* Please change the guest network authentication to WPA2 Personal AES.";	
+		document.getElementById('gn_desc').parentNode.appendChild(childsel);
+		document.getElementById("wl_NOnly_note").innerHTML="* Please change the guest network authentication to WPA2 Personal AES.";	
 	}
 }
 
@@ -273,9 +265,7 @@ function gen_gntable(){
 
 	htmlcode += '<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_head_table" id="gninfo_table_2g">';
 	htmlcode += '<tr id="2g_title"><td align="left" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><span>2.4GHz</span>';
-	htmlcode += '<span id="2g_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(0);"><#btn_go#></a></span></td></tr>';
-	
-	
+	htmlcode += '<span id="2g_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(0);"><#btn_go#></a></span></td></tr>';	
 	while(gn_array_2g_tmp.length > 4){
 		htmlcode += '<tr><td>';
 		htmlcode += gen_gntable_tr(0, gn_array_2g_tmp.slice(0, 4), band2sb);
@@ -288,7 +278,7 @@ function gen_gntable(){
 	htmlcode += gen_gntable_tr(0, gn_array_2g_tmp, band2sb);
 	htmlcode += '</td></tr>';
 	htmlcode += '</table>';
-	$("guest_table2").innerHTML = htmlcode;
+	document.getElementById("guest_table2").innerHTML = htmlcode;
 	
 	htmlcode5 += '<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_head_table" id="gninfo_table_5g">';
 	htmlcode5 += '<tr id="5g_title"><td align="left" style="color:#5AD; font-size:16px; border-bottom:1px dashed #AAA;">';
@@ -310,13 +300,12 @@ function gen_gntable(){
 	htmlcode5 += gen_gntable_tr(1, gn_array_5g_tmp, band5sb);
 	htmlcode5 += '</td></tr>';
 	htmlcode5 += '</table>';	
-	$("guest_table5").innerHTML = htmlcode5;
+	document.getElementById("guest_table5").innerHTML = htmlcode5;
 
   if(wl_info.band5g_2_support){
 	htmlcode5_2 += '<table style="margin-left:20px;margin-top:25px;" width="95%" align="center" cellpadding="4" cellspacing="0" class="gninfo_head_table" id="gninfo_table_5g_2">';
 	htmlcode5_2 += '<tr id="5g_2_title"><td align="left" style="color:#5AD; font-size:16px; border-bottom:1px dashed #AAA;"><span>5GHz-2</span>';
 	htmlcode5_2 += '<span id="5g_2_radio_hint" style="font-size: 14px;display:none;color:#FC0;margin-left:17px;">* <#GuestNetwork_Radio_Status#>	<a style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;" onclick="_change_wl_unit_status(1);"><#btn_go#></a></span></td></tr>';
-
 	while(gn_array_5g_2_tmp.length > 4){
 		htmlcode5_2 += '<tr><td >';
 		htmlcode5_2 += gen_gntable_tr(2, gn_array_5g_2_tmp.slice(0, 4), band5sb_2);
@@ -329,9 +318,8 @@ function gen_gntable(){
 	htmlcode5_2 += gen_gntable_tr(2, gn_array_5g_2_tmp, band5sb_2);
 	htmlcode5_2 += '</td></tr>';
 	htmlcode5_2 += '</table>';	
-	$("guest_table5_2").innerHTML = htmlcode5_2;
+	document.getElementById("guest_table5_2").innerHTML = htmlcode5_2;
   }
-
 }
 
 function add_options_value(o, arr, orig){
@@ -342,6 +330,7 @@ function add_options_value(o, arr, orig){
 }
 
 function applyRule(){
+	var auth_mode = document.form.wl_auth_mode_x.value;
 	if(document.form.wl_wpa_psk.value == "<#wireless_psk_fillin#>")
 		document.form.wl_wpa_psk.value = "";
 
@@ -356,7 +345,6 @@ function applyRule(){
 		inputCtrl(document.form.wl_key3, 1);
 		inputCtrl(document.form.wl_key4, 1);
 		inputCtrl(document.form.wl_phrase_x, 1);
-
 		if(document.form.wl_expire_radio[0].checked)
 			document.form.wl_expire.value = document.form.wl_expire_hr.value*3600 + document.form.wl_expire_min.value*60;
 		else
@@ -374,6 +362,13 @@ function applyRule(){
 			document.form.wl_macmode.value = macmode;
 		}
 
+		if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius") {
+			document.form.next_page.value = "/Advanced_WSecurity_Content.asp?gwlu=" + document.form.wl_unit.value;
+		}
+
+		if(based_modelid == "RT-AC87U") //MODELDEP: RT-AC87U need to extend waiting time to get new wl value
+			document.form.action_wait.value = parseInt(document.form.action_wait.value)+3;
+
 		document.form.submit();
 	}
 }
@@ -381,19 +376,19 @@ function applyRule(){
 function validForm(){
 	var auth_mode = document.form.wl_auth_mode_x.value;
 	
-	if(!validate_string_ssid(document.form.wl_ssid))
+	if(!validator.stringSSID(document.form.wl_ssid))
 		return false;
 	
 	if(document.form.wl_wep_x.value != "0")
 		if(!validate_wlphrase('WLANConfig11b', 'wl_phrase_x', document.form.wl_phrase_x))
 			return false;	
 	if(auth_mode == "psk" || auth_mode == "psk2" || auth_mode == "pskpsk2"){ //2008.08.04 lock modified
-		if(!validate_psk(document.form.wl_wpa_psk, document.form.wl_unit.value))
+		if(!validator.psk(document.form.wl_wpa_psk, document.form.wl_unit.value))
 			return false;
 	}
 	else{
 		var cur_wep_key = eval('document.form.wl_key'+document.form.wl_key.value);		
-		if(auth_mode != "radius" && !validate_wlkey(cur_wep_key))
+		if(auth_mode != "radius" && !validator.wlKey(cur_wep_key))
 			return false;
 	}	
 	return true;
@@ -404,7 +399,7 @@ function done_validating(action){
 }
 
 function validate_wlphrase(s, v, obj){
-	if(!validate_string(obj)){
+	if(!validator.string(obj)){
 		is_wlphrase(s, v, obj);
 		return(false);
 	}
@@ -414,62 +409,67 @@ function validate_wlphrase(s, v, obj){
 
 function disableAdvFn(){
 	for(var i=16; i>=1; i--)
-		$("WLgeneral").deleteRow(i);
+		document.getElementById("WLgeneral").deleteRow(i);
 }
 
 function guest_divctrl(flag){	
 	if(flag == 1){
-		$("guest_table2").style.display = "none";
+		document.getElementById("guest_table2").style.display = "none";
 		if(band5g_support)
-			$("guest_table5").style.display = "none";
+			document.getElementById("guest_table5").style.display = "none";
+		
 		if(wl_info.band5g_2_support)
-			$("guest_table5_2").style.display = "none";
-		$("gnset_table").style.display = "";
+			document.getElementById("guest_table5_2").style.display = "none";
+		
+		document.getElementById("gnset_table").style.display = "";
 		if(sw_mode == "3")
-				inputCtrl(document.form.wl_lanaccess, 0);
-		$("applyButton").style.display = "";
+			inputCtrl(document.form.wl_lanaccess, 0);
+		
+		document.getElementById("applyButton").style.display = "";
 	}
 	else{
-		$("guest_table2").style.display = "";
+		document.getElementById("guest_table2").style.display = "";
 		if(!band5g_support || no5gmssid_support){
-				$("guest_table5").style.display = "none";
+			document.getElementById("guest_table5").style.display = "none";
 			if(!wl_info.band5g_2_support)
-				("guest_table5_2").style.display = "none";
+				document.getElementById("guest_table5_2").style.display = "none";
 		}
-		else
-				$("guest_table5").style.display = "";
-				if(wl_info.band5g_2_support)
-					$("guest_table5_2").style.display = "";
-		$("gnset_table").style.display = "none";
-		$("applyButton").style.display = "none";
+		else{
+			document.getElementById("guest_table5").style.display = "";
+		}		
+		
+		if(wl_info.band5g_2_support)
+			document.getElementById("guest_table5_2").style.display = "";
+		
+		document.getElementById("gnset_table").style.display = "none";
+		document.getElementById("applyButton").style.display = "none";
 	}
 }
 
 function mbss_display_ctrl(){
 	// generate options
 	if(wl_vifnames != ""){
-		$("wl_channel_field").style.display = "none";
-		$("wl_nctrlsb_field").style.display = "none";
-			for(var i=1; i<multissid_support+1; i++)
-				add_options_value(document.form.wl_subunit, i, '<% nvram_get("wl_subunit"); %>');
+		document.getElementById("wl_channel_field").style.display = "none";
+		document.getElementById("wl_nctrlsb_field").style.display = "none";
+		for(var i=1; i<multissid_support+1; i++)
+			add_options_value(document.form.wl_subunit, i, '<% nvram_get("wl_subunit"); %>');
 	}
 	else{
-		$("gnset_table").style.display = "none";
-		$("guest_table2").style.display = "none";
+		document.getElementById("gnset_table").style.display = "none";
+		document.getElementById("guest_table2").style.display = "none";
 		if(band5g_support)
-			$("guest_table5").style.display = "none";
+			document.getElementById("guest_table5").style.display = "none";
 		if(wl_info.band5g_2_support)
-			$("guest_table5_2").style.display = "none";
+			document.getElementById("guest_table5_2").style.display = "none";
 		
-		$("applyButton").style.display = "none";
-		$("applyButton").innerHTML = "Not support!";
-		$("applyButton").style.fontSize = "25px";
-		$("applyButton").style.marginTop = "125px";
+		document.getElementById("applyButton").style.display = "none";
+		document.getElementById("applyButton").innerHTML = "Not support!";
+		document.getElementById("applyButton").style.fontSize = "25px";
+		document.getElementById("applyButton").style.marginTop = "125px";
 	}
 }
 
-function en_dis_guest_unit(_unit, _subunit, _setting)
-{
+function en_dis_guest_unit(_unit, _subunit, _setting){
 	var NewInput = document.createElement("input");
 	NewInput.type = "hidden";
 	NewInput.name = "wl"+ _unit + "." + _subunit +"_bss_enabled";
@@ -503,12 +503,12 @@ function change_guest_unit(_unit, _subunit){
 			document.form.wl_nmode_x.value = wl2_nmode_x;
 			break;
 	}
+	
 	idx = _subunit - 1;
-
 	limit_auth_method(_unit);	
 	document.form.wl_unit.value = _unit;
 	document.form.wl_subunit.value = _subunit;
-	$("wl_vifname").innerHTML = document.form.wl_subunit.value;
+	document.getElementById("wl_vifname").innerHTML = document.form.wl_subunit.value;
 	document.form.wl_bss_enabled.value = decodeURIComponent(gn_array[idx][0]);
 	document.form.wl_ssid.value = decodeURIComponent(gn_array[idx][1]);
 	document.form.wl_auth_mode_x.value = decodeURIComponent(gn_array[idx][2]);
@@ -523,13 +523,11 @@ function change_guest_unit(_unit, _subunit){
 	document.form.wl_key4.value = decodeURIComponent(gn_array[idx][10]);
 	document.form.wl_expire.value = decodeURIComponent(gn_array[idx][11]);
 	document.form.wl_lanaccess.value = decodeURIComponent(gn_array[idx][12]);
-	if(decodeURIComponent(gn_array[idx][14]) == "disabled")
-	{
+	if(decodeURIComponent(gn_array[idx][14]) == "disabled"){
 		document.form.wl_macmode_option.options[0].selected = 0;
 		document.form.wl_macmode_option.options[1].selected = 1;
 	}
-	else
-	{
+	else{
 		document.form.wl_macmode_option.options[0].selected = 1;
 		document.form.wl_macmode_option.options[1].selected = 0;
 	}
@@ -538,14 +536,15 @@ function change_guest_unit(_unit, _subunit){
 	change_wl_expire_radio();
 	if(macmode == "disabled"){
 		document.form.wl_macmode_option.disabled = "disabled";
-		$('ACL_disabled_hint').style.display = "";
-		$('ACL_enabled_hint').style.display = "none";
+		document.getElementById('ACL_disabled_hint').style.display = "";
+		document.getElementById('ACL_enabled_hint').style.display = "none";
 	}
 	else{
 		document.form.wl_macmode_option.disabled = "";
-		$('ACL_disabled_hint').style.display = "none";
-		$('ACL_enabled_hint').style.display = "";
+		document.getElementById('ACL_disabled_hint').style.display = "none";
+		document.getElementById('ACL_enabled_hint').style.display = "";
 	}
+	
 	guest_divctrl(1);
 }
 
@@ -562,6 +561,7 @@ function create_guest_unit(_unit, _subunit){
 			gn_array = gn_array_5g_2;
 			break;						
 	}
+	
 	if(gn_array[_subunit-1][15] != "1"){
 		change_guest_unit(_unit, _subunit);
 		document.form.wl_bss_enabled.value = "1";
@@ -572,7 +572,6 @@ function create_guest_unit(_unit, _subunit){
 
 function genBWTable(_unit){
 	cur = '<% nvram_get("wl_bw"); %>';
-
 	if(document.form.wl_nmode_x.value == 2){
 		var bws = new Array("1");
 		var bwsDesc = new Array("20 MHz");
@@ -590,7 +589,6 @@ function genBWTable(_unit){
 	for (var i in bws) {
 		document.form.wl_bw[i] = new Option(bwsDesc[i], bws[i]);
 		document.form.wl_bw[i].value = bws[i];
-
 		if (bws[i] == cur) {
 			document.form.wl_bw[i].selected = true;
 		}
@@ -635,8 +633,6 @@ function genBWTable(_unit){
 </form>
 <form method="post" name="form" action="/start_apply2.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-<input type="hidden" name="wan_route_x" value="<% nvram_get("wan_route_x"); %>">
-<input type="hidden" name="wan_nat_x" value="<% nvram_get("wan_nat_x"); %>" disabled>
 <input type="hidden" name="current_page" value="Guest_network.asp">
 <input type="hidden" name="next_page" value="Guest_network.asp">
 <input type="hidden" name="modified" value="0">
@@ -661,281 +657,253 @@ function genBWTable(_unit){
 <input type="hidden" name="wl_expire" value='<% nvram_get("wl_expire"); %>'>
 <input type="hidden" name="wl_macmode" value='<% nvram_get("wl_macmode"); %>'>
 <input type="hidden" name="wl_mbss" value="1">
-
 <input type="hidden" name="wl_gmode_protection" value="<% nvram_get("wl_gmode_protection"); %>" disabled>
 <input type="hidden" name="wl_mode_x" value="<% nvram_get("wl_mode_x"); %>" disabled>
 <select name="wl_subunit" class="input_option" onChange="change_wl_unit();" style="display:none"></select>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
-  <tr>
-	<td width="17">&nbsp;</td>
-	
+	<tr>
+		<td width="17">&nbsp;</td>	
 	<!--=====Beginning of Main Menu=====-->
-	<td valign="top" width="202">
-	  <div id="mainMenu"></div>
-	  <div id="subMenu"></div>
-	</td>
-	
-	<td valign="top">
-	  <div id="tabMenu" class="submenuBlock" style="*margin-top:-155px;"></div>
+		<td valign="top" width="202">
+			<div id="mainMenu"></div>
+			<div id="subMenu"></div>
+		</td>	
+		<td valign="top">
+			<div id="tabMenu" class="submenuBlock" style="*margin-top:-155px;"></div>
 
 <!--===================================Beginning of Main Content===========================================-->
 <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-  <tr>
-	<td align="left" valign="top" >
-	  <table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" style="-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;" id="FormTitle">
-		<tbody>
-		<tr>
-		  <td bgcolor="#4D595D" valign="top" id="table_height"  >
-		  <div>&nbsp;</div>
-
-		  <div class="formfonttitle"><#Guest_Network#></div>
-	    <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-
-			<div>
-				<table width="650px" style="margin:25px;">
-					<tr>
-						<td width="120px">
-							<img id="guest_image" src="/images/New_ui/network_config.png">
-						</td>
-						<td>
-							<div id="gn_desc" class="formfontdesc" style="font-style: italic;font-size: 14px;"><#GuestNetwork_desc#></div>
-							
-						</td>
-					</tr>
-				</table>
-			</div>
-			
-			<!-- info table -->
-			<div id="guest_table2"></div>			
-			<div id="guest_table5"></div>
-			<div id="guest_table5_2"></div>
-
-			<!-- setting table -->
-			<table width="80%" border="1" align="center" style="margin-top:10px;margin-bottom:20px;display:none" cellpadding="4" cellspacing="0" id="gnset_table" class="FormTable">
-				<tr id="wl_unit_field" style="display:none">
-					<th><#Interface#></th>
-					<td>
-						<select name="wl_unit" class="input_option" onChange="change_wl_unit();" style="display:none">
-							<option id="wl_opt0" class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
-							<option id="wl_opt1" class="content_input_fd" value="1" <% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
-							<option id="wl_opt2" class="content_input_fd" value="2" <% nvram_match("wl_unit", "2","selected"); %>>5GHz-2</option>
-						</select>			
-						<p id="wl_ifname">2.4GHz</p>
-					</td>
-		  	</tr>
-
-				<tr style="display:none">
-					<td>
-						<span><span><input type="hidden" name="wl_wpa_gtk_rekey" value="<% nvram_get("wl_wpa_gtk_rekey"); %>" disabled></span></span>
-					</td>
-		  	</tr>
-
+	<tr>
+		<td align="left" valign="top" >
+			<table width="760px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" style="-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;" id="FormTitle">
+				<tbody>
 				<tr>
-					<th><#Guest_network_index#></th>
-					<td>
-						<p id="wl_vifname"></p>
-					</td>
-		  	</tr>
-
-				<tr style="display:none">
-					<th><#Guest_Network_enable#></th>
-					<td>
-						<select id="wl_bss_enabled_field" name="wl_bss_enabled" class="input_option">
-							<option class="content_input_fd" value="0" <% nvram_match("wl_bss_enabled", "0","selected"); %>><#checkbox_No#></option>
-							<option class="content_input_fd" value="1" <% nvram_match("wl_bss_enabled", "1","selected"); %>><#checkbox_Yes#></option>
-						</select>			
-					</td>
-		  	</tr>
-
-				<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#QIS_finish_wireless_item1#></a></th>
-					<td>
-						<input type="text" maxlength="32" class="input_32_table" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>" onkeypress="return is_string(this, event)">
-					</td>
-		  	</tr>
-			  
-				<!-- Hidden and disable item, start -->
-			  <tr style="display:none">
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode11g_itemname#></a></th>
-					<td>									
-						<select name="wl_nmode_x" class="input_option" onChange="wireless_mode_change(this);" disabled>
-							<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>><#Auto#></option>
-							<option value="1" <% nvram_match("wl_nmode_x", "1","selected"); %>>N Only</option>
-							<option value="2" <% nvram_match("wl_nmode_x", "2","selected"); %>>Legacy</option>
-						</select>
-						<input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="wl_gmode_protection_check();"> b/g Protection</input>
-						<!--span id="wl_nmode_x_hint" style="display:none"><#WLANConfig11n_automode_limition_hint#></span-->
-					</td>
-			  </tr>
-
-				<tr id="wl_channel_field">
-					<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
-					<td>
-				 		<select name="wl_channel" class="input_option" onChange="insertExtChannelOption();" disabled>
-							<% select_channel("WLANConfig11b"); %>
-				 		</select>
-					</td>
-			  </tr>
-			  
-			 	<tr id="wl_bw_field" style="display:none;">
-			   	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 14);"><#WLANConfig11b_ChannelBW_itemname#></a></th>
-			   	<td>				    			
-						<select name="wl_bw" class="input_option" onChange="insertExtChannelOption();" disabled>
-							<option class="content_input_fd" value="0" <% nvram_match("wl_bw", "0","selected"); %>>20 MHz</option>
-							<option class="content_input_fd" value="1" <% nvram_match("wl_bw", "1","selected"); %>>20/40 MHz</option>
-							<option class="content_input_fd" value="2" <% nvram_match("wl_bw", "2","selected"); %>>40 MHz</option>
-						</select>				
-			   	</td>
-			 	</tr>
-				<!-- Hidden and disable item, end -->
-
-			  <tr id="wl_nctrlsb_field">
-			  	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 15);"><#WLANConfig11b_EChannel_itemname#></a></th>
-		   		<td>
-					<select name="wl_nctrlsb" class="input_option" disabled>
-						<option value="lower" <% nvram_match("wl_nctrlsb", "lower", "selected"); %>>lower</option>
-						<option value="upper"<% nvram_match("wl_nctrlsb", "upper", "selected"); %>>upper</option>
-					</select>
-					</td>
-		  	</tr>
-			  
-		  	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 5);"><#WLANConfig11b_AuthenticationMethod_itemname#></a></th>
-					<td>
-				  		<select name="wl_auth_mode_x" class="input_option" onChange="authentication_method_change(this);">
-								<option value="open"    <% nvram_match("wl_auth_mode_x", "open",   "selected"); %>>Open System</option>
-								<option value="shared"  <% nvram_match("wl_auth_mode_x", "shared", "selected"); %>>Shared Key</option>
-								<option value="psk"     <% nvram_match("wl_auth_mode_x", "psk",    "selected"); %>>WPA-Personal</option>
-								<option value="psk2"    <% nvram_match("wl_auth_mode_x", "psk2",   "selected"); %>>WPA2-Personal</option>
-								<option value="pskpsk2" <% nvram_match("wl_auth_mode_x", "pskpsk2","selected"); %>>WPA-Auto-Personal</option>
-				  		</select>
-				  		<br>
-				  		<span id="wl_nmode_x_hint" style="display:none;"><#WLANConfig11n_automode_limition_hint#></span>
-					</td>
-		  	</tr>
-			  	
-		  	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 6);"><#WLANConfig11b_WPAType_itemname#></a></th>
-					<td>		
-			  		<select name="wl_crypto" class="input_option" onChange="authentication_method_change(this);">
-							<option value="aes" <% nvram_match("wl_crypto", "aes", "selected"); %>>AES</option>
-							<option value="tkip+aes" <% nvram_match("wl_crypto", "tkip+aes", "selected"); %>>TKIP+AES</option>
-			  		</select>
-					</td>
-		  	</tr>
-			  
-		  	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 7);"><#WLANConfig11b_x_PSKKey_itemname#></a></th>
-					<td>
-			  		<input type="text" name="wl_wpa_psk" maxlength="64" class="input_32_table" value="<% nvram_get("wl_wpa_psk"); %>">
-					</td>
-		  	</tr>
-			  		  
-		  	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
-					<td>
-			  		<select name="wl_wep_x" class="input_option" onChange="wep_encryption_change(this);">
-							<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
-							<option value="1" <% nvram_match("wl_wep_x", "1", "selected"); %>>WEP-64bits</option>
-							<option value="2" <% nvram_match("wl_wep_x", "2", "selected"); %>>WEP-128bits</option>
-			  		</select>
-			  		<span name="key_des"></span>
-					</td>
-		  	</tr>
-			  
-		  	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 10);"><#WLANConfig11b_WEPDefaultKey_itemname#></a></th>
-					<td>		
-				 		<select name="wl_key" class="input_option"  onChange="wep_key_index_change(this);">
-							<option value="1" <% nvram_match("wl_key", "1","selected"); %>>1</option>
-							<option value="2" <% nvram_match("wl_key", "2","selected"); %>>2</option>
-							<option value="3" <% nvram_match("wl_key", "3","selected"); %>>3</option>
-							<option value="4" <% nvram_match("wl_key", "4","selected"); %>>4</option>
-			  		</select>
-					</td>
-			 	</tr>
-			  
-			 	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey1_itemname#></th>
-					<td><input type="text" name="wl_key1" id="wl_key1" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key1"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
-			 	</tr>
-			  
-			 	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey2_itemname#></th>
-					<td><input type="text" name="wl_key2" id="wl_key2" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key2"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
-			 	</tr>
-			  
-			 	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey3_itemname#></th>
-					<td><input type="text" name="wl_key3" id="wl_key3" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key3"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
-			 	</tr>
-			  
-			 	<tr>
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey4_itemname#></th>
-					<td><input type="text" name="wl_key4" id="wl_key4" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key4"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
-		  	</tr>
-
-			 	<tr style="display:none">
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 8);"><#WLANConfig11b_x_Phrase_itemname#></a></th>
-					<td>
-				  		<input type="text" name="wl_phrase_x" maxlength="64" class="input_32_table" value="<% nvram_get("wl_phrase_x"); %>" onKeyUp="return is_wlphrase('WLANConfig11b', 'wl_phrase_x', this);">
-					</td>
-			 	</tr>
-
-			 	<tr>
-					<th><#Access_Time#></th>
-					<td>
-         		<input type="radio" value="1" name="wl_expire_radio" class="content_input_fd" onClick="">
-						<input type="text" maxlength="2" name="wl_expire_hr" class="input_3_table"  value="" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 23)"> <#Hour#>
-						<input type="text" maxlength="2" name="wl_expire_min" class="input_3_table"  value="" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 0, 59)"> <#Minute#>
-         		<input type="radio" value="0" name="wl_expire_radio" class="content_input_fd" onClick=""><#Limitless#>
-					</td>
-			 	</tr>
-
-			 	<tr>
-					<th><#Access_Intranet#></th>
-					<td>
-				 		<select name="wl_lanaccess" class="input_option">
-							<option value="on" <% nvram_match("wl_lanaccess", "on","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
-							<option value="off" <% nvram_match("wl_lanaccess", "off","selected"); %>><#btn_disable#></option>
-			  		</select>
-					</td>
-			 	</tr>
-
-				<tr>
-					<th><#enable_macmode#></th>
-					<td>
-						<select name="wl_macmode_option" class="input_option">
-							<option class="content_input_fd" value="" <% nvram_match("wl_macmode", "","selected"); %>><#checkbox_Yes#></option>
-							<option class="content_input_fd" value="disabled" <% nvram_match("wl_macmode", "disabled","selected"); %>><#checkbox_No#></option>
-						</select>
-						&nbsp;
-						<span id="ACL_enabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#FirewallConfig_MFList_groupitemname#></span>
-						<span id="ACL_disabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#Guest_Network_enable_ACL#></span>	
+					<td bgcolor="#4D595D" valign="top" id="table_height"  >
+						<div>&nbsp;</div>
+						<div class="formfonttitle"><#Guest_Network#></div>
+						<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+						<div>
+							<table width="650px" style="margin:25px;">
+								<tr>
+									<td width="120px">
+										<img id="guest_image" src="/images/New_ui/network_config.png">
+									</td>
+									<td>
+										<div id="gn_desc" class="formfontdesc" style="font-style: italic;font-size: 14px;"><#GuestNetwork_desc#></div>
+										
+									</td>
+								</tr>
+							</table>
+						</div>			
+					<!-- info table -->
+						<div id="guest_table2"></div>			
+						<div id="guest_table5"></div>
+						<div id="guest_table5_2"></div>
+					<!-- setting table -->
+						<table width="80%" border="1" align="center" style="margin-top:10px;margin-bottom:20px;display:none" cellpadding="4" cellspacing="0" id="gnset_table" class="FormTable">
+							<tr id="wl_unit_field" style="display:none">
+								<th><#Interface#></th>
+								<td>
+									<select name="wl_unit" class="input_option" onChange="change_wl_unit();" style="display:none">
+										<option id="wl_opt0" class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
+										<option id="wl_opt1" class="content_input_fd" value="1" <% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
+										<option id="wl_opt2" class="content_input_fd" value="2" <% nvram_match("wl_unit", "2","selected"); %>>5GHz-2</option>
+									</select>			
+									<p id="wl_ifname">2.4GHz</p>
+								</td>
+							</tr>
+							<tr style="display:none">
+								<td>
+									<span><span><input type="hidden" name="wl_wpa_gtk_rekey" value="<% nvram_get("wl_wpa_gtk_rekey"); %>" disabled></span></span>
+								</td>
+							</tr>
+							<tr>
+								<th><#Guest_network_index#></th>
+								<td>
+									<p id="wl_vifname"></p>
+								</td>
+							</tr>
+							<tr style="display:none">
+								<th><#Guest_Network_enable#></th>
+								<td>
+									<select id="wl_bss_enabled_field" name="wl_bss_enabled" class="input_option">
+										<option class="content_input_fd" value="0" <% nvram_match("wl_bss_enabled", "0","selected"); %>><#checkbox_No#></option>
+										<option class="content_input_fd" value="1" <% nvram_match("wl_bss_enabled", "1","selected"); %>><#checkbox_Yes#></option>
+									</select>			
+								</td>
+							</tr>
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#QIS_finish_wireless_item1#></a></th>
+								<td>
+									<input type="text" maxlength="32" class="input_32_table" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>" onkeypress="return validator.isString(this, event)">
+								</td>
+							</tr>	  
+						<!-- Hidden and disable item, start -->
+							<tr style="display:none">
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode11g_itemname#></a></th>
+								<td>									
+									<select name="wl_nmode_x" class="input_option" onChange="wireless_mode_change(this);" disabled>
+										<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>><#Auto#></option>
+										<option value="1" <% nvram_match("wl_nmode_x", "1","selected"); %>>N Only</option>
+										<option value="2" <% nvram_match("wl_nmode_x", "2","selected"); %>>Legacy</option>
+									</select>
+									<input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="wl_gmode_protection_check();"> b/g Protection</input>
+									<!--span id="wl_nmode_x_hint" style="display:none"><#WLANConfig11n_automode_limition_hint#></span-->
+								</td>
+							</tr>
+							<tr id="wl_channel_field">
+								<th><a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a></th>
+								<td>
+									<select name="wl_channel" class="input_option" onChange="insertExtChannelOption();" disabled>
+										<% select_channel("WLANConfig11b"); %>
+									</select>
+								</td>
+							</tr>			  
+							<tr id="wl_bw_field" style="display:none;">
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 14);"><#WLANConfig11b_ChannelBW_itemname#></a></th>
+								<td>				    			
+									<select name="wl_bw" class="input_option" onChange="insertExtChannelOption();" disabled>
+										<option class="content_input_fd" value="0" <% nvram_match("wl_bw", "0","selected"); %>>20 MHz</option>
+										<option class="content_input_fd" value="1" <% nvram_match("wl_bw", "1","selected"); %>>20/40 MHz</option>
+										<option class="content_input_fd" value="2" <% nvram_match("wl_bw", "2","selected"); %>>40 MHz</option>
+									</select>				
+								</td>
+							</tr>
+						<!-- Hidden and disable item, end -->
+							<tr id="wl_nctrlsb_field">
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 15);"><#WLANConfig11b_EChannel_itemname#></a></th>
+								<td>
+									<select name="wl_nctrlsb" class="input_option" disabled>
+										<option value="lower" <% nvram_match("wl_nctrlsb", "lower", "selected"); %>>lower</option>
+										<option value="upper"<% nvram_match("wl_nctrlsb", "upper", "selected"); %>>upper</option>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 5);"><#WLANConfig11b_AuthenticationMethod_itemname#></a></th>
+								<td>
+									<select name="wl_auth_mode_x" class="input_option" onChange="authentication_method_change(this);">
+										<option value="open"    <% nvram_match("wl_auth_mode_x", "open",   "selected"); %>>Open System</option>
+										<option value="shared"  <% nvram_match("wl_auth_mode_x", "shared", "selected"); %>>Shared Key</option>
+										<option value="psk"     <% nvram_match("wl_auth_mode_x", "psk",    "selected"); %>>WPA-Personal</option>
+										<option value="psk2"    <% nvram_match("wl_auth_mode_x", "psk2",   "selected"); %>>WPA2-Personal</option>
+										<option value="pskpsk2" <% nvram_match("wl_auth_mode_x", "pskpsk2","selected"); %>>WPA-Auto-Personal</option>
+									</select>
+									<br>
+									<span id="wl_nmode_x_hint" style="display:none;"><#WLANConfig11n_automode_limition_hint#></span>
+								</td>
+							</tr>					
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 6);"><#WLANConfig11b_WPAType_itemname#></a></th>
+								<td>		
+									<select name="wl_crypto" class="input_option" onChange="authentication_method_change(this);">
+										<option value="aes" <% nvram_match("wl_crypto", "aes", "selected"); %>>AES</option>
+										<option value="tkip+aes" <% nvram_match("wl_crypto", "tkip+aes", "selected"); %>>TKIP+AES</option>
+									</select>
+								</td>
+							</tr>	  
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 7);"><#WLANConfig11b_x_PSKKey_itemname#></a></th>
+								<td>
+									<input type="text" name="wl_wpa_psk" maxlength="64" class="input_32_table" value="<% nvram_get("wl_wpa_psk"); %>">
+								</td>
+							</tr>						  
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 9);"><#WLANConfig11b_WEPType_itemname#></a></th>
+								<td>
+									<select name="wl_wep_x" class="input_option" onChange="wep_encryption_change(this);">
+										<option value="0" <% nvram_match("wl_wep_x", "0", "selected"); %>><#wl_securitylevel_0#></option>
+										<option value="1" <% nvram_match("wl_wep_x", "1", "selected"); %>>WEP-64bits</option>
+										<option value="2" <% nvram_match("wl_wep_x", "2", "selected"); %>>WEP-128bits</option>
+									</select>
+									<span name="key_des"></span>
+								</td>
+							</tr>	  
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 10);"><#WLANConfig11b_WEPDefaultKey_itemname#></a></th>
+								<td>		
+									<select name="wl_key" class="input_option"  onChange="wep_key_index_change(this);">
+										<option value="1" <% nvram_match("wl_key", "1","selected"); %>>1</option>
+										<option value="2" <% nvram_match("wl_key", "2","selected"); %>>2</option>
+										<option value="3" <% nvram_match("wl_key", "3","selected"); %>>3</option>
+										<option value="4" <% nvram_match("wl_key", "4","selected"); %>>4</option>
+									</select>
+								</td>
+							</tr>				  
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey1_itemname#></th>
+								<td><input type="text" name="wl_key1" id="wl_key1" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key1"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
+							</tr>				  
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey2_itemname#></th>
+								<td><input type="text" name="wl_key2" id="wl_key2" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key2"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
+							</tr>				  
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey3_itemname#></th>
+								<td>
+									<input type="text" name="wl_key3" id="wl_key3" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key3"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');">
+								</td>
+							</tr>				  
+							<tr>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey4_itemname#></th>
+								<td>
+									<input type="text" name="wl_key4" id="wl_key4" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key4"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');">
+								</td>
+							</tr>
+							<tr style="display:none">
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 8);"><#WLANConfig11b_x_Phrase_itemname#></a></th>
+								<td>
+									<input type="text" name="wl_phrase_x" maxlength="64" class="input_32_table" value="<% nvram_get("wl_phrase_x"); %>" onKeyUp="return is_wlphrase('WLANConfig11b', 'wl_phrase_x', this);">
+								</td>
+							</tr>
+							<tr>
+								<th><#Access_Time#></th>
+								<td>
+									<input type="radio" value="1" name="wl_expire_radio" class="content_input_fd" onClick="">
+									<input type="text" maxlength="2" name="wl_expire_hr" class="input_3_table"  value="" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 0, 23)"> <#Hour#>
+									<input type="text" maxlength="2" name="wl_expire_min" class="input_3_table"  value="" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 0, 59)"> <#Minute#>
+									<input type="radio" value="0" name="wl_expire_radio" class="content_input_fd" onClick=""><#Limitless#>
+								</td>
+							</tr>
+							<tr>
+								<th><#Access_Intranet#></th>
+								<td>
+									<select name="wl_lanaccess" class="input_option">
+										<option value="on" <% nvram_match("wl_lanaccess", "on","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+										<option value="off" <% nvram_match("wl_lanaccess", "off","selected"); %>><#btn_disable#></option>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<th><#enable_macmode#></th>
+								<td>
+									<select name="wl_macmode_option" class="input_option">
+										<option class="content_input_fd" value="" <% nvram_match("wl_macmode", "","selected"); %>><#checkbox_Yes#></option>
+										<option class="content_input_fd" value="disabled" <% nvram_match("wl_macmode", "disabled","selected"); %>><#checkbox_No#></option>
+									</select>
+									&nbsp;
+									<span id="ACL_enabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#FirewallConfig_MFList_groupitemname#></span>
+									<span id="ACL_disabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#Guest_Network_enable_ACL#></span>	
+								</td>
+							</tr>
+						</table>
+						<div class="apply_gen" id="applyButton" style="display:none">
+							<input type="button" class="button_gen" value="<#CTL_Cancel#>" onclick="guest_divctrl(0);">
+							<input type="button" class="button_gen" value="<#CTL_apply#>" onclick="applyRule();">
+						</div>			  	
 					</td>
 				</tr>
+				</tbody>		
 			</table>
-
-			<div class="apply_gen" id="applyButton" style="display:none">
-				<input type="button" class="button_gen" value="<#CTL_Cancel#>" onclick="guest_divctrl(0);">
-				<input type="button" class="button_gen" value="<#CTL_apply#>" onclick="applyRule();">
-			</div>			  	
-		  </td>
-		</tr>
-		</tbody>
-		
-	  </table>
-	</td>
+		</td>
 </form>
-</tr>
+	</tr>
 </table>
 <!--===================================Ending of Main Content===========================================-->
-
-	</td>
-	
-	<td width="10" align="center" valign="top"></td>
-  </tr>
+		</td>	
+		<td width="10" align="center" valign="top"></td>
+	</tr>
 </table>
 
 <div id="footer"></div>

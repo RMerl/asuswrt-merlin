@@ -13,12 +13,9 @@ top ?= $(CURDIR)
 
 CFLAGS += $(if $(EXT_PREFIX_CLASS),-DEXT_PREFIX_CLASS=$(EXT_PREFIX_CLASS),)
 CFLAGS += $(if $(EXT_CER_ID),-DEXT_CER_ID=$(EXT_CER_ID),)
-CFLAGS += $(if $(EXT_S46),-DEXT_S46=$(EXT_S46),)
-CFLAGS += $(if $(EXT_BFD_PING),-DEXT_BFD_PING,)
-CFLAGS += $(if $(EXT_CLIENT_FQDN),-DEXT_CLIENT_FQDN,)
 
-OBJS := odhcp6c.o dhcpv6.o ra.o script.o md5.o $(if $(EXT_BFD_PING),bpf.o,)
-HDRS := odhcp6c.h ra.h md5.h $(if $(EXT_BFD_PING),bpf.h,)
+OBJS := odhcp6c.o dhcpv6.o ra.o script.o md5.o
+HDRS := odhcp6c.h ra.h md5.h
 
 all: $(BUILDDIR)
 	@cd $(BUILDDIR) && $(MAKE) top="$(top)" -f $(top)/Makefile odhcp6c

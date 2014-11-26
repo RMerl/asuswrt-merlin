@@ -973,7 +973,7 @@ string_to_number_ll(const char *s, unsigned long long min, unsigned long long ma
 	/* Handle hex, octal, etc. */
 	errno = 0;
 	number = strtoull(s, &end, 0);
-	if (*end == '\0' && end != s) {
+	if ((*end == '\0' || *end == '/') && end != s) {
 		/* we parsed a number, let's see if we want this */
 		if (errno != ERANGE && min <= number && (!max || number <= max)) {
 			*ret = number;

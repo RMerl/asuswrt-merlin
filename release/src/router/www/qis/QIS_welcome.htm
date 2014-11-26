@@ -16,31 +16,41 @@
 var based_modelid = '<% nvram_get("productid"); %>';
 var hw_ver = '<% nvram_get("hardware_version"); %>';
 var usb_flag = '<% nvram_get("ehci_ports"); %>';
+
 var odmpid = '<% nvram_get("odmpid"); %>';
 var color = '<% nvram_get("color"); %>';
+color = color.toUpperCase();
+var MP_png_path = "/images/Model_product_"+ color +".png";
+
 <% wanlink(); %>
+
+function LinkCheck(url)
+{
+    var http = new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    return http.status!="404";
+}
  
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - Welcome!";
 	parent.set_step("t0");		
 
-	//load Product img //MODELDEP
-	if((odmpid != "" || odmpid != null) && odmpid != based_modelid){
-		if(odmpid == "RT-N66W" || odmpid == "RT-AC66W" || odmpid == "RT-AC68W")
-			document.getElementById("ModelPid_img").src="/images/"+ odmpid +"Model_producticon.png";
-		else if(odmpid == "RT-AC68RW")
-			document.getElementById("ModelPid_img").src="/images/RT-AC68WModel_producticon.png";
+	//load Product img
+	if(color.length > 0){
+		if(LinkCheck(MP_png_path))	//if file exist
+			document.getElementById("ModelPid_img").src=MP_png_path;
 		else
-			document.getElementById("ModelPid_img").src="/images/Model_producticon.png";
+			document.getElementById("ModelPid_img").src="/images/Model_product.png";
 	}
-	else if(based_modelid == "RT-N66U"){
-		if(color == "W")
-			document.getElementById("ModelPid_img").src="/images/RT-N66WModel_producticon.png";
+	else if(odmpid.length > 0 && odmpid != based_modelid){	//odmpid MODELDEP
+		if(odmpid == "RT-N66W" || odmpid == "RT-AC66W" || odmpid == "RT-AC68W" || odmpid == "RT-AC68RW")
+			document.getElementById("ModelPid_img").src="/images/Model_product_W.png";
 		else
-			document.getElementById("ModelPid_img").src="/images/Model_producticon.png";
-	}
+			document.getElementById("ModelPid_img").src="/images/Model_product.png";
+	}		
 	else
-		document.getElementById("ModelPid_img").src="/images/Model_producticon.png";
+		document.getElementById("ModelPid_img").src="/images/Model_product.png";
 
 	if(parent.ISMOBILE){
 		document.getElementById("QISmain").style.display = "none";
@@ -134,9 +144,9 @@ function detect_if_wan_plug(flag){
 						document.getElementById("noti_wan_uplus").style.display = "none";
 						document.getElementById("Productdesc_1").innerHTML = "<#web_redirect_suggestion1#>";
 						document.getElementById("Productdesc_1").style.color = "#FC0";
-						document.getElementById("Productdesc_2").innerHTML = 'After connecting the router to the modem, click "GO" to launch the quick setup wizard.';
-						document.getElementById("Productdesc_3").innerHTML = 'If you need to set up '+based_modelid+' WAN connection offline or change the operation mode to access point, click "Manual Setting".';
-						document.getElementById("Productdesc_4").innerHTML = 'For security reasons, we will ask you to set up the login name and password in the next  step.';
+						document.getElementById("Productdesc_2").innerHTML = '<#web_redirect_suggestion7#>';
+						document.getElementById("Productdesc_3").innerHTML = '<#web_redirect_suggestion8#>';
+						document.getElementById("Productdesc_4").innerHTML = '<#web_redirect_suggestion9#>';
 					}
 
 					if(parent.ISMOBILE){

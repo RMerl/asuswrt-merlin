@@ -15,7 +15,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
-<script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <style>
 #ClientList_Block_PC{
@@ -61,8 +61,6 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var sr_rulelist_array = '<% nvram_get("sr_rulelist"); %>';
 
 function initial(){
@@ -154,7 +152,7 @@ function addRow_Group(upper){
 		document.form.sr_gateway_x_0.focus();
 		document.form.sr_gateway_x_0.select();		
 		return false;
-	}else if(valid_IP_form(document.form.sr_ipaddr_x_0, 0) && valid_IP_form(document.form.sr_gateway_x_0, 0)){	
+	}else if(validator.validIPForm(document.form.sr_ipaddr_x_0, 0) && validator.validIPForm(document.form.sr_gateway_x_0, 0)){	
 		
 		//2011.11 Viz add to valid netmask { start	// test if netmask is valid.
 		var default_netmask = "";
@@ -408,13 +406,13 @@ function Ctrl_LANIPList(obj){
 			  <tr>
 			  	<!-- client info -->		
 					<td width="18%">
-						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" onKeyPress="return is_ipaddr(this, event)">
-					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return is_ipaddr(this, event)" ></td>
-					<td width="34%"><input type="text" class="input_20_table" maxlength="15" name="sr_gateway_x_0" style="margin-left:-22px;width:180px;" onKeyPress="return is_ipaddr(this, event)"  onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
+						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" onKeyPress="return validator.isIPAddr(this, event)">
+					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return validator.isIPAddr(this, event)" ></td>
+					<td width="34%"><input type="text" class="input_20_table" maxlength="15" name="sr_gateway_x_0" style="margin-left:-22px;width:180px;" onKeyPress="return validator.isIPAddr(this, event)"  onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
 					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#1335#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 					</td>
-					<td width="8%"><input type="text" maxlength="3" class="input_3_table" name="sr_matric_x_0"  onKeyPress="return is_number(this, event);"></td>
+					<td width="8%"><input type="text" maxlength="3" class="input_3_table" name="sr_matric_x_0"  onKeyPress="return validator.isNumber(this, event);"></td>
 					<td width="10%">
 						<select name="sr_if_x_0" class="input_option" style="width:62px;" onchange="Ctrl_LANIPList(this);">
 							<option value="LAN">LAN</option>

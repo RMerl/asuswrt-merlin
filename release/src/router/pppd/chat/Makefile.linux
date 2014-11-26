@@ -11,7 +11,7 @@ CDEF4=	-DFNDELAY=O_NDELAY		# Old name value
 CDEFS=	$(CDEF1) $(CDEF2) $(CDEF3) $(CDEF4)
 
 COPTS=	-O2 -g -pipe
-CFLAGS=	$(COPTS) $(CDEFS)
+CFLAGS=	$(COPTS) $(CDEFS) $(EXTRACFLAGS)
 
 INSTALL= install
 

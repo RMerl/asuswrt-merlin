@@ -44,11 +44,7 @@
 #include <disk_io_tools.h>
 #endif
 
-#ifdef RTCONFIG_TMOBILE
-#define DEFAULT_SCAN_INTERVAL 3
-#else
 #define DEFAULT_SCAN_INTERVAL 5
-#endif
 #define TCPCHECK_TIMEOUT 3
 #define PING_RESULT_FILE "/tmp/ping_success"
 #define RX_THRESHOLD 40
@@ -81,6 +77,7 @@
 #define D2C			4
 #define PHY_RECONN	5
 #define SET_ETH_MODEM	6
+#define SET_PIN	7
 
 #define CASE_NONE          0
 #define CASE_DISWAN        1
@@ -155,14 +152,19 @@ typedef struct REQCLIENT{
 #pragma pack() // End.
 
 // var
+int test_log = 0;
 char router_name[PATHLEN];
 int sw_mode, isFirstUse;
+int boot_end;
 #ifdef RTCONFIG_DUALWAN
 char dualwan_mode[8];
 
 char wandog_target[PATH_MAX];
 int wandog_delay, delay_detect;
 int WAN_FB_UNIT;
+#endif
+#ifdef RTCONFIG_USB_MODEM
+char modem_type[32];
 #endif
 
 int scan_interval;
@@ -206,6 +208,9 @@ int other_wan_unit = WAN_UNIT_SECOND;
 int current_state[WAN_UNIT_MAX];
 
 char nvram_state[WAN_UNIT_MAX][16], nvram_sbstate[WAN_UNIT_MAX][16], nvram_auxstate[WAN_UNIT_MAX][16];
+
+static int nat_redirect_enable;
+static int nat_redirect_enable_old;
 
 #ifdef RTCONFIG_WIRELESSREPEATER
 int setAP, wlc_state = 0;

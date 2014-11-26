@@ -16,7 +16,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
-<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script>
 var wItem = new Array(new Array("", "", "TCP"),
 											new Array("FTP", "20,21", "TCP"),
@@ -47,13 +47,9 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-var client_ip = login_ip_str();
-var client_mac = login_mac_str();
-
 var overlib_str0 = new Array();	//Viz add 2011.07 for record longer virtual srvr rule desc
 var overlib_str = new Array();	//Viz add 2011.07 for record longer virtual srvr portrange value
 
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 var vts_rulelist_array = "<% nvram_char_to_ascii("","vts_rulelist"); %>";
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
@@ -90,7 +86,7 @@ function isChange(){
 function applyRule(){
 
 	if(parent.usb_support){
-		if(!validate_number_range(document.form.vts_ftpport, 1, 65535)){
+		if(!validator.numberRange(document.form.vts_ftpport, 1, 65535)){
 			return false;	
 		}	
 	}	
@@ -158,7 +154,7 @@ function change_wizard(o, id){
 				else if(wItem[i][2] == "OTHER")
 					document.form.vts_proto_x_0.options[3].selected = 1;
 				
-				document.form.vts_ipaddr_x_0.value = client_ip;
+				document.form.vts_ipaddr_x_0.value = login_ip_str();
 				document.form.vts_port_x_0.value = wItem[i][1];
 				document.form.vts_desc_x_0.value = wItem[i][0]+" Server";				
 				break;
@@ -190,7 +186,7 @@ function change_wizard(o, id){
 				else if(wItem2[i][2] == "OTHER")
 					document.form.vts_proto_x_0.options[3].selected = 1;
 				
-				document.form.vts_ipaddr_x_0.value = client_ip;
+				document.form.vts_ipaddr_x_0.value = login_ip_str();
 				document.form.vts_port_x_0.value = wItem2[i][1];
 				document.form.vts_desc_x_0.value = wItem2[i][0];
 				
@@ -244,7 +240,7 @@ function hideClients_Block(){
 	$("pull_arrow").src = "/images/arrow-down.gif";
 	$('ClientList_Block').style.display='none';
 	isMenuopen = 0;
-	valid_IP_form(document.form.vts_ipaddr_x_0, 0);
+	validator.validIPForm(document.form.vts_ipaddr_x_0, 0);
 }
 /*----------} Mouse event of fake LAN IP select menu-----------------*/
 
@@ -278,7 +274,7 @@ function validForm(){
 	}
 	
 	if(document.form.vts_lport_x_0.value.length > 0
-			&& !validate_number_range(document.form.vts_lport_x_0, 1, 65535)){
+			&& !validator.numberRange(document.form.vts_lport_x_0, 1, 65535)){
 		return false;	
 	}
 	
@@ -295,7 +291,7 @@ function validForm(){
 		return false;
 	}
 	if(!validate_multi_range(document.form.vts_port_x_0, 1, 65535)
-		|| !valid_IP_form(document.form.vts_ipaddr_x_0, 0)){			
+		|| !validator.validIPForm(document.form.vts_ipaddr_x_0, 0)){			
 		return false;	
 	}			
 	
@@ -356,7 +352,7 @@ function validate_multi_range(val, mini, maxi){
 	var rangere=new RegExp("^([0-9]{1,5})\:([0-9]{1,5})$", "gi");
 	if(rangere.test(val)){
 		
-		if(!validate_each_port(document.form.vts_port_x_0, RegExp.$1, mini, maxi) || !validate_each_port(document.form.vts_port_x_0, RegExp.$2, mini, maxi)){
+		if(!validator.eachPort(document.form.vts_port_x_0, RegExp.$1, mini, maxi) || !validator.eachPort(document.form.vts_port_x_0, RegExp.$2, mini, maxi)){
 				return false;								
 		}else if(parseInt(RegExp.$1) >= parseInt(RegExp.$2)){
 				alert("<#JS_validport#>");	
@@ -596,7 +592,7 @@ function changeBgColor(obj, num){
 		  <tr>
 				<th><#IPConnection_VSList_ftpport#></th>
 				<td>
-			  	<input type="text" maxlength="5" name="vts_ftpport" class="input_6_table" value="<% nvram_get("vts_ftpport"); %>" onkeypress="return is_number(this,event);">
+			  	<input type="text" maxlength="5" name="vts_ftpport" class="input_6_table" value="<% nvram_get("vts_ftpport"); %>" onkeypress="return validator.isNumber(this,event);">
 				</td>
 		  </tr>
 
@@ -623,15 +619,15 @@ function changeBgColor(obj, num){
   					<input type="text" maxlength="30" class="input_20_table" name="vts_desc_x_0" onKeyPress="return is_alphanum(this, event)"/>
   				</td>
         			<td width="15%">
-					<input type="text" maxlength="" class="input_12_table" name="vts_port_x_0" onkeypress="return is_portrange(this, event)"/>
+					<input type="text" maxlength="" class="input_12_table" name="vts_port_x_0" onkeypress="return validator.isPortRange(this, event)"/>
 				</td>
 				<td width="21%">
-					<input type="text" maxlength="15" class="input_15_table" name="vts_ipaddr_x_0" align="left" onkeypress="return is_ipaddr(this, event)" style="float:left;"/ autocomplete="off" onblur="if(!over_var){hideClients_Block();}" onClick="hideClients_Block();">
+					<input type="text" maxlength="15" class="input_15_table" name="vts_ipaddr_x_0" align="left" onkeypress="return validator.isIPAddr(this, event)" style="float:left;"/ autocomplete="off" onblur="if(!over_var){hideClients_Block();}" onClick="hideClients_Block();">
 					<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" align="right" onclick="pullLANIPList(this);" title="<#select_IP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 					<div id="ClientList_Block" class="ClientList_Block"></div>
 				</td>
 				<td width="10%">
-					<input type="text" maxlength="5"  class="input_6_table" name="vts_lport_x_0" onKeyPress="return is_number(this,event);"/>
+					<input type="text" maxlength="5"  class="input_6_table" name="vts_lport_x_0" onKeyPress="return validator.isNumber(this,event);"/>
 				</td>
 				<td width="13%">
 					<select name="vts_proto_x_0" class="input_option">

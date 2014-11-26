@@ -69,7 +69,6 @@
 <script>
 var $j = jQuery.noConflict();
 
-<% login_state_hook(); %>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
@@ -82,7 +81,6 @@ var apps_download_percent_done = 0;
 
 <% apps_action(); %> //trigger apps_action.
 
-var curr_pool_name = "";
 var stoppullstate = 0;
 var isinstall = 0;
 var installPercent = 1;
@@ -185,11 +183,11 @@ function update_appstate(e){
 			if(stoppullstate == 1)
 				return false;
 			else if(!check_appstate()){
-      	setTimeout("update_appstate();", 1000);
+      			setTimeout("update_appstate();", 1000);
 				calHeight(0);
 			}
 			else
-      	setTimeout("update_applist();", 3000);
+      			setTimeout("update_applist();", 3000);
 		}    
   });
 }
@@ -200,7 +198,7 @@ function update_applist(e){
     dataType: 'script',
 	
     error: function(xhr){
-      update_applist();
+		update_applist();
     },
     success: function(response){
 			if(isinstall > 0 && cookie.get("apps_last") == "downloadmaster"){
@@ -218,7 +216,7 @@ function update_applist(e){
 				$("return_btn").style.display = "";
 			}
 			else{
-				setTimeout('show_partition();', 100);
+				// setTimeout('show_partition();', 100);
 				setTimeout('show_apps();', 100);
 			}
 		}    
@@ -238,8 +236,6 @@ function check_appstate(){
 		if(apps_state_install == 5 || apps_state_upgrade == 4){
 			if(installPercent > 1 && installPercent < 95)
 				installPercent = 95;
-			/*else if(installPercent < 98)
-				installPercent = installPercent + 1;*/
 			else
 				return true;
 		}
@@ -250,10 +246,7 @@ function check_appstate(){
 	var errorcode;
 	var proceed = 0.6;
 
-	/*if(apps_state_install == 5 || apps_state_upgrade == 4 || (apps_state_enable == 1 && apps_state_install == 4)){
-		$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
-	}
-	else */if(apps_state_upgrade != 4 && apps_state_upgrade != ""){ // upgrade error handler
+	if(apps_state_upgrade != 4 && apps_state_upgrade != ""){ // upgrade error handler
 		errorcode = "apps_state_upgrade = " + apps_state_upgrade;
 		if(apps_state_error == 1)
 			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
@@ -454,7 +447,6 @@ function check_appstate(){
 	else
 		$("return_btn").style.display = "none";
 
-	//$("apps_state_desc").innerHTML += '<span class="app_action" onclick="apps_form(\'cancel\',\'\',\'\');">(<#CTL_Cancel#>)</span>';
 	$("cancelBtn").style.display = "";
 	return false;
 }
@@ -561,16 +553,14 @@ function show_apps(){
 		htmlcode += '<tr style="height: 100px;"><td class="app_table_radius_left" align="center" style="width:85px">\n';
 		if(apps_array[i][4] == "yes" && apps_array[i][3] == "yes"){
 			if(apps_array[i][6] != ""){
-					//htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/mediaserver.png" style="cursor:pointer" onclick="location.href=\''+ apps_array[i][6] +'\';"></td>\n';
-					htmlcode += '<div id="'+apps_array[i][0]+'_png" style="cursor:pointer" onclick="location.href=\''+ apps_array[i][6] +'\';"></div>';
+				htmlcode += '<div id="'+apps_array[i][0]+'_png" style="cursor:pointer" onclick="location.href=\''+ apps_array[i][6] +'\';"></div>';
 			}
 			else{
-					//htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/'+ apps_array[i][0] +'.png"></td>\n';
-					htmlcode += '<div id="'+apps_array[i][0]+'_png"></div>';	
+				htmlcode += '<div id="'+apps_array[i][0]+'_png"></div>';	
 			}
 		}	
 		else{
-				htmlcode += '<div id="'+apps_array[i][0]+'_png"></div>';
+			htmlcode += '<div id="'+apps_array[i][0]+'_png"></div>';
 		}
 		htmlcode += '</td>\n';
 
@@ -702,11 +692,11 @@ var hasNewVer = function(arr){
 		return false;
 	
 	for(var i=0; i<4; i++){ 
-		if(newVer[i] > oldVer[i]){
+		if(parseInt(newVer[i]) > parseInt(oldVer[i])){
 			return true;
 			break;
 		}
-		else if(newVer[i] == oldVer[i])
+		else if(parseInt(newVer[i]) == parseInt(oldVer[i]))
 			continue;
 		else
 			return false;
@@ -731,7 +721,7 @@ function show_partition(){
  	require(['/require/modules/diskList.js'], function(diskList){
 		var htmlcode = "";
 		var mounted_partition = 0;
-		
+		partitions_array = [];
 		$("app_table").style.display = "none";
 		htmlcode += '<table align="center" style="margin:auto;border-collapse:collapse;">';
 
@@ -740,34 +730,34 @@ function show_partition(){
 		for(var i=0; i < usbDevicesList.length; i++){
 			for(var j=0; j < usbDevicesList[i].partition.length; j++){
 				partitions_array.push(usbDevicesList[i].partition[j].mountPoint);
-				var all_accessable_size = simpleNum(usbDevicesList[i].partition[j].size-usbDevicesList[i].partition[j].used);
-				var all_total_size = simpleNum(usbDevicesList[i].partition[j].size);
+				var accessableSize = simpleNum(usbDevicesList[i].partition[j].size-usbDevicesList[i].partition[j].used);
+				var totalSize = simpleNum(usbDevicesList[i].partition[j].size);
 
 				if(usbDevicesList[i].partition[j].status == "unmounted")
 					continue;
 					
-				if(apps_dev == usbDevicesList[i].partition[j].mountPoint){
-					curr_pool_name = usbDevicesList[i].partition[j].partName;
-					if(all_accessable_size > 1)
-						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'install\',\''+ _appname +'\',\''+ usbDevicesList[i].partition[j].mountPoint +'\');"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
+				if(usbDevicesList[i].partition[j].isAppDev){
+					if(accessableSize > 1)
+						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'install\',\'' + _appname +'\',\'' + usbDevicesList[i].partition[j].mountPoint +'\');"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
 					else
 						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
+
 					htmlcode += '<div class="app_desc"><b>'+ usbDevicesList[i].partition[j].partName + ' (active)</b></div>';
 				}
 				else{
-					if(all_accessable_size > 1)
+					if(accessableSize > 1)
 						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="apps_form(\'switch\',\''+_appname+'\',\''+usbDevicesList[i].partition[j].mountPoint+'\');"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
 					else
 						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:300px;">\n';
 					htmlcode += '<div class="app_desc"><b>'+ usbDevicesList[i].partition[j].partName + '</b></div>'; 
 				}
 
-				if(all_accessable_size > 1)
-					htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB" + '</b></div>'; 
+				if(accessableSize > 1)
+					htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ accessableSize+" GB" + '</b></div>'; 
 				else
-					htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB <span style=\'color:#FFCC00\'>(Disk quota can not less than 1GB)" + '</span></b></div>'; 
+					htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ accessableSize+" GB <span style=\'color:#FFCC00\'>(Disk quota can not less than 1GB)" + '</span></b></div>'; 
 
-				htmlcode += '<div class="app_desc"><#Totalspace#>: <b>'+ all_total_size+" GB" + '</b></div>'; 
+				htmlcode += '<div class="app_desc"><#Totalspace#>: <b>'+ totalSize+" GB" + '</b></div>'; 
 				htmlcode += '<div class="app_desc"><b>' + usbDevicesList[i].deviceName + '</b></div>'; 
 				htmlcode += '</div><br/><br/></td></tr>\n';
 				mounted_partition++;	
@@ -811,7 +801,7 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 	}
 	else if(flag2 != "none"){ // partition list
 		detectUSBStatusApp();
-		show_partition()
+		show_partition();
 		$("return_btn").style.display = "";
 		calHeight(1);
 	}
@@ -889,9 +879,7 @@ function reloadAPP(){
 <table>
 
   <tr>
-  	<td class="formfonttitle"><!--#Menu_usb_application#>
-			<img id="return_btn" onclick="show_apps();" align="right" style="cursor:pointer;margin-right:10px;margin-top:-10px" title="<#menu5_4#>" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"-->
-
+  	<td class="formfonttitle">
 				<div style="width:730px">
 					<table width="730px">
 						<tr>

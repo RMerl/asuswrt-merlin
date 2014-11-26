@@ -1225,6 +1225,9 @@ set_up_tty(fd, local)
     }
 #endif
 
+    if (stop_bits >= 2)
+	tios.c_cflag |= CSTOPB;
+
     tios.c_cflag |= CS8 | CREAD | HUPCL;
     if (local || !modem)
 	tios.c_cflag |= CLOCAL;

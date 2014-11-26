@@ -6,9 +6,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<script type="text/JavaScript" language="JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
-if(typeof jQuery != "undefined") var $j = jQuery.noConflict();
 
 var page_modified = 0;
 var restart_time = 0;
@@ -24,9 +22,9 @@ var group_id = '<% get_parameter("group_id"); %>';
 var getflag = '<% get_parameter("flag"); %>';
 
 if(tmo_support)
-        var theUrl = "cellspot.router"; 
+	var theUrl = "cellspot.router"; 
 else
-        var theUrl = "router.asus.com";
+	var theUrl = "router.asus.com";
 
 function started_validating(){
 }
@@ -78,21 +76,75 @@ function redirect_qis(){
 	parent.location.href = 'http://'+parent.document.form.lan_ipaddr.value+'/index.asp';
 }
 
-function update_dsl_info(){
-	if(typeof $j == "undefined") return false;
-
-	$j.ajax({
-		url: '/start_dsl_autodet.asp',
-		dataType: 'script',
-		error: function(xhr){
-			update_dsl_info();              
-		},
-		success: function(response){
-		}
-	});     
+function hideLoading(){
+	parent.document.getElementById("loadingBlock").style.visibility = "hidden";
 }
 
+var makeRequest = {
+	_notSuccessCount: 0,
+	_notSupportXML: false,
+
+	start: function(url, callBackSuccess, callBackError){
+		var xmlHttp;
+		if(window.XMLHttpRequest)
+			xmlHttp = new XMLHttpRequest();
+		else if(window.ActiveXObject)
+			xmlHttp = new ActiveXObject("Microsoft.XMLHTTP");
+		else{
+			makeRequest._notSupportXML = true;
+			alert("Your browser does not support XMLHTTP.");
+			return false;
+		}
+
+		xmlHttp.onreadystatechange = function(){
+			if(xmlHttp.readyState == 4){
+				if(xmlHttp.status == 200){
+					callBackSuccess(xmlHttp.responseXML);
+				}
+				else{
+					makeRequest._notSuccessCount++;
+					callBackError();
+				}	
+	 		}
+		}
+
+		xmlHttp.open('GET', url, true);
+		xmlHttp.send(null);
+	}
+};
+
 function initial(){
+	var getXMLAndRedirect = function(){
+		if(makeRequest._notSupportXML){
+			if(getflag !== ""){
+				parent.location.href = "/QIS_wizard.htm?flag=finish";
+			}
+
+			if(current_page.length > 0){
+				parent.location.href = current_page;
+			}
+		}
+
+		makeRequest.start('/httpd_check.xml', function(xmldoc){
+			var httpds = xmldoc.getElementsByTagName("httpd");
+			if (httpds !== null && httpds[0] !== null) {
+				if(parent.parent.document.getElementById("drword")) {
+					parent.parent.document.getElementById("drword").innerHTML = "<#DrSurf_sweet_advise2#><br/><br/>";
+				}
+				var redirectPage = current_page;
+				if(redirectPage.length > 0) {
+					if (getflag !== "") {
+						redirectPage = next_page + "?flag=" + getflag;
+					}
+
+					setTimeout(function(){
+						parent.location.href = redirectPage;
+					}, 1000);
+				}
+			}
+		}, getXMLAndRedirect);
+	};
+
 	if(getflag == "vpnClient" || getflag == "background" || action_script == "saveNvram"){
 		return false;
 	}
@@ -102,10 +154,15 @@ function initial(){
 		else
 			parent.parent.location.href = parent.parent.location.href.split('#')[0];
 	}
+	else if(next_page.indexOf("MobileQIS_Login") >= 0){
+	}
 	else if(next_page.indexOf("QIS_") >= 0){
 		if(dsl_support){
-			if(current_page.indexOf("QIS_annex_setting.htm") >= 0){
-				setTimeout("update_dsl_info();",700);
+			if(current_page.indexOf("QIS_annex_setting.htm") >= 0 || current_page.indexOf("QIS_detect.htm") >= 0){
+				var update_dsl_info = function(){
+					makeRequest.start('/start_dsl_autodet.asp', function(){}, update_dsl_info);
+				};
+				setTimeout(update_dsl_info, 700);
 			}
 			setTimeout("delay_redirect('"+next_page+"');", restart_time*1000);
 		}
@@ -121,12 +178,6 @@ function initial(){
 				else if(getflag == "dongle_mode"){
 					setTimeout("parent.detect3GConn();", restart_time*1000);
 					return;
-				}
-				
-				if(tmo_support){	
-					parent.document.getElementById("logout_cont").style.display = "";
-					parent.document.getElementById("congratschangepwd").style.display = "none";
-					parent.document.getElementById("congratschangessid").style.display = "none";
 				}
 				else{
 					setTimeout("qis_delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
@@ -149,27 +200,39 @@ function initial(){
 					return;
 				}
 				else{			
-					//if(tmo_support){
-						//location.href = "Logout.asp";				
-					//}
-					//else{
-						parent.showLoading(restart_time, "waiting");
-						if(parent.parent.isWLclient())
-							setTimeout("parent.parent.detectLANstatus('"+next_page+"', '"+getflag+"');", restart_time*1000);
-						else
-							setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
-					//}
+					parent.showLoading(restart_time, "waiting");
+
+					var isWLclient = function () {  //detect login client is by wireless or wired
+						<% login_state_hook(); %>
+						var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
+							
+						if(wireless.length > 0) {
+							for(var i = 0; i < wireless.length; i += 1) {
+								if(wireless[i][0].toUpperCase() == login_mac_str().toUpperCase()) {
+									return true;  //wireless
+								}
+							}
+						}
+
+						return false; //wired
+					};
+
+					if(isWLclient()) {
+							setTimeout(getXMLAndRedirect, restart_time*1000);
+					}
+					else
+						setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 				}
 			}
 		}
 	}
 	else if(current_page.indexOf("ParentalControl_") >= 0){
 		parent.showLoading(restart_time, "waiting");
-		setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);		
+		setTimeout(getXMLAndRedirect, restart_time*1000);
 	}
 	else if(current_page.indexOf("AiProtection_") >= 0){
 		parent.showLoading(restart_time, "waiting");
-		setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);		
+		setTimeout(getXMLAndRedirect, restart_time*1000);
 	}
 	else if(current_page.indexOf("Feedback") >= 0){
 		setTimeout("parent.redirect();", 60000);
@@ -191,10 +254,6 @@ function initial(){
   		setTimeout("parent.startDownloading();", 1000);
 	}
 	else if(action_script == "restart_cloudsync"){
-		/* if multi-rule
-		setTimeout("parent.isonEdit=0;", restart_time*1000);
-		setTimeout("parent.document.getElementById('update_scan').style.display = 'none';", restart_time*1000);*/
-		/* if one rule */
 		parent.showLoading(restart_time, "waiting");
 		setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000); 
 	}
@@ -249,12 +308,11 @@ function initial(){
 					setTimeout("parent.parent.location.href='"+current_page+"';", restart_time*1000);
 			}
 			else{
-				setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);
+				setTimeout(getXMLAndRedirect, restart_time*1000);
 			}
 		}
 	}
 	else{
-		
 		if(current_page.length > 0){
 			setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
 		}
@@ -262,11 +320,6 @@ function initial(){
 			setTimeout("delay_redirect('"+next_page+"');", restart_time*1000);
 		}
 	}
-}
-
-function hideLoading(){
-	parent.document.getElementById("loadingBlock").style.visibility = "hidden";
-	//parent.htmlbodyforIE[0].style.overflow = "";	  //hidden the Y-scrollbar for preventing from user scroll it.
 }
 </script>
 </head>

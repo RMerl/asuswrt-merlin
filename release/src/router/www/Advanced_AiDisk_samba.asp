@@ -17,7 +17,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript">
@@ -616,7 +616,7 @@ function applyRule(){
 
 function validForm(){
 
-	if(!validate_range(document.form.st_max_user, 1, 10)){
+	if(!validator.range(document.form.st_max_user, 1, 5)){
 			document.form.st_max_user.focus();
 			document.form.st_max_user.select();
 		return false;
@@ -630,7 +630,7 @@ function validForm(){
 	}
 	else{
 		
-		var alert_str = validate_hostname(document.form.computer_name);
+		var alert_str = validator.hostName(document.form.computer_name);
 		if(alert_str != ""){
 			showtext($("alert_msg1"), alert_str);
 			$("alert_msg1").style.display = "";

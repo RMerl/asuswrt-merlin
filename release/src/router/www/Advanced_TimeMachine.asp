@@ -17,20 +17,19 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 
-<% login_state_hook(); %>
 var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
 	$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#menu5_4#></div></td></tr></tbody></table>';
 	$("option5").className = "m5_r";
-	detectUSBStatusApp();
+
 	if('<% nvram_get("tm_device_name"); %>' != '')
 		$("tmPath").innerHTML = '/mnt/<% nvram_get("tm_device_name"); %>';
 	else
@@ -47,6 +46,8 @@ function initial(){
 
 	if(document.form.tm_vol_size.value != "")	
 		document.form.tm_vol_size.value = document.form.tm_vol_size.value/1024;
+
+	detectUSBStatusApp();
 }
 
 function selPartition(){
@@ -59,7 +60,6 @@ function cancel_folderTree(){
 	$j("#folderTree_panel").fadeOut(300);
 }
 
-var apps_dev = "<% nvram_get("tm_device_name"); %>";
 function show_partition(){
  	require(['/require/modules/diskList.js'], function(diskList){
 		var htmlcode = "";
@@ -76,8 +76,7 @@ function show_partition(){
 				if(usbDevicesList[i].partition[j].status== "unmounted")
 					continue;
 
-				if(apps_dev == usbDevicesList[i].partition[j].partName){
-					curr_pool_name = usbDevicesList[i].partition[j].partName;
+				if(usbDevicesList[i].partition[j].isAppDev){
 					if(all_accessable_size > 1)
 						htmlcode += '<tr style="cursor:pointer;" onclick="setPart(\''+ usbDevicesList[i].partition[j].partName +'\', \''+ all_accessable_size +'\', \''+ all_total_size +'\');"><td class="app_table_radius_left"><div class="iconUSBdisk"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
 					else
@@ -136,7 +135,7 @@ function applyRule(){
 		return false;
 	}
 
-	if(!validate_range_sp(document.form.tm_vol_size, 0, parseInt(availSpace), document.form.tm_vol_size.value))
+	if(!validator.rangeAllowZero(document.form.tm_vol_size, 0, parseInt(availSpace), document.form.tm_vol_size.value))
 		return false;
 	else
 		document.form.tm_vol_size.value = document.form.tm_vol_size.value*1024;
@@ -324,7 +323,7 @@ function cal_panel_block(obj_id){
 					<tr id="volSize_tr">
 						<th><#TimeMach_vol_size#></a></th>
 						<td>
-							<input id="tm_vol_size" name="tm_vol_size" maxlength="5" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>" onKeyPress="return is_number(this,event);" placeholder="0" /> GB (0: <#Limitless#>)
+							<input id="tm_vol_size" name="tm_vol_size" maxlength="5" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>" onKeyPress="return validator.isNumber(this,event);" placeholder="0" /> GB (0: <#Limitless#>)
 							&nbsp;<span id="maxVolSize"></span>
 						</td>
 					</tr>

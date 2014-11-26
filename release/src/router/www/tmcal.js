@@ -227,27 +227,47 @@ function loadData()
 			if (h.tx_max > xx_max) xx_max = h.tx_max;
 
 			if (i == "WIRELESS1")
-				t = '<#tm_wireless#> (5GHz)';
+				t = "<#tm_wireless#> (5GHz)";
 			else if (i == "WIRELESS0")
-				t = '<#tm_wireless#> (2.4GHz)';
+				t = "<#tm_wireless#> (2.4GHz)";
 			else if (i == "WIRED")
-				t = '<#tm_wired#>';
+				t = "<#tm_wired#>";
 			else if (i == "BRIDGE")				
-				t = 'LAN';
+				t = "LAN";
 			else if (i == "INTERNET"){
-				if(dualWAN_support)
-					t = '<#dualwan_primary#>';
+				if(dualWAN_support){
+					if(wans_dualwan[0] == "usb"){
+						if(gobi_support)
+							t = "<#Mobile_title#>";
+						else
+							t = "USB Modem";
+					}
+					else if(wans_dualwan[0] == "wan")
+						t = "Ethernet WAN (WAN)";
+					else if(wans_dualwan[0] == "lan")
+						t = "Ethernet WAN (LAN)";
+				}				
 				else
-					t = '<#Internet#>';
-			}else if (i == "INTERNET1")
-				t = '<#dualwan_secondary#>';				
+					t = "<#Internet#>";
+			}else if (i == "INTERNET1"){
+				if(wans_dualwan[1] == "usb"){
+					if(gobi_support)
+						t = "<#Mobile_title#>";
+					else
+						t = "USB Modem";
+				}
+				else if(wans_dualwan[1] == "wan")
+					t = "Ethernet WAN (WAN)";
+				else if(wans_dualwan[1] == "lan")
+					t = "Ethernet WAN (LAN)";
+			}
 			else if (i.search("WIRELESS") > -1 && i.search(".") > -1)
-				t = 'NotUsed';
+				t = "NotUsed";
 			else
 				t = i;			
  
 			if(t != "LAN" && t != "NotUsed"){ // hide Tabs
-				if(i == "INTERNET")
+				/*if(i == "INTERNET")
 					tabs.push(['speed-tab-' + i, t]);
 				else if(i == "INTERNET1")
 					tabs.push(['speed-tab-' + i, t]);
@@ -259,15 +279,15 @@ function loadData()
 					tabs.push(['speed-tab-' + i, t]);
 				else if	(i == "BRIDGE")
 					tabs.push(['speed-tab-' + i, t]);//tabs[4] = ['speed-tab-' + i, t];
-					
-			//	tabs.push(['speed-tab-' + i, t]);
+				*/	
+				tabs.push(['speed-tab-' + i, t]);
 
 			
 			}
 		}
 		
 		//Sort tab by Viz 2014.06
-		var tabsort = ["speed-tab-INTERNET,<#Internet#>", "speed-tab-INTERNET,<#dualwan_primary#>","speed-tab-INTERNET1,<#dualwan_secondary#>","speed-tab-WIRED,<#tm_wired#>","speed-tab-WIRELESS0,<#tm_wireless#> (2.4GHz)","speed-tab-WIRELESS1,<#tm_wireless#> (5GHz)","speed-tab-BRIDGE,LAN"];
+		var tabsort = ["speed-tab-INTERNET,<#Internet#>", "speed-tab-INTERNET,<#dualwan_primary#>","speed-tab-INTERNET1,<#dualwan_secondary#>","speed-tab-INTERNET,Ethernet WAN (WAN)","speed-tab-INTERNET,Ethernet WAN (LAN)","speed-tab-INTERNET,USB Modem","speed-tab-INTERNET,<#Mobile_title#>","speed-tab-INTERNET1,Ethernet WAN (WAN)","speed-tab-INTERNET1,Ethernet WAN (LAN)","speed-tab-INTERNET1,<#Mobile_title#>","speed-tab-INTERNET1,USB Modem","speed-tab-WIRED,<#tm_wired#>","speed-tab-WIRELESS0,<#tm_wireless#> (2.4GHz)","speed-tab-WIRELESS1,<#tm_wireless#> (5GHz)","speed-tab-BRIDGE,LAN"];
 		var sortabs = [];		
 		for(var i=0;i<tabsort.length;i++){
 			for(var j=0;j<tabs.length;j++){	

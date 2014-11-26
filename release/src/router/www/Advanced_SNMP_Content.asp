@@ -15,7 +15,6 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
-<script type="text/javascript" language="JavaScript" src="/detect.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';

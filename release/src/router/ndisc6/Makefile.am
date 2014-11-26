@@ -14,7 +14,7 @@ AUTOMAKE_OPTIONS = \
 	std-options \
 	-Wall
 
-SUBDIRS = po compat rdnssd
+SUBDIRS = po compat src rdnssd
 DIST_SUBDIRS = m4 $(SUBDIRS)
 noinst_HEADERS = include/gettext.h
 

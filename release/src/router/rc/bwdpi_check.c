@@ -27,37 +27,25 @@ static void run_engine()
 	}
 
 	if(!f_exists("/tmp/bwdpi/bwdpi.app.db")){
-		stop_dpi_engine_service();
+		stop_dpi_engine_service(1);
 	}
 }
 
 static void check_dpi_alive()
 {
-	int enabled = 0;
 	debug = nvram_get_int("bwdpi_debug");
+	int enabled = check_bwdpi_nvram_setting();
 
-	// check no qos service
-	if(nvram_get_int("wrs_enable") == 0 && nvram_get_int("wrs_app_enable") == 0 && 
-		nvram_get_int("wrs_vp_enable") == 0 && nvram_get_int("wrs_cc_enable") == 0 &&
-		nvram_get_int("qos_enable") == 0)
-		enabled = 1;
+	if(debug) dbg("[bwdpi check] enabled= %d, if enabled = 0, need to enable DPI engine!\n", enabled);
 
-	// check traditional qos service
-	if(nvram_get_int("wrs_enable") == 0 && nvram_get_int("wrs_app_enable") == 0 && 
-		nvram_get_int("wrs_vp_enable") == 0 && nvram_get_int("wrs_cc_enable") == 0 &&
-		nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)
-		enabled = 1;
-
-	if(debug) dbg("[bwdpi check] enabled= %d\n", enabled);
-
-	if(enabled)
+	if(!enabled)
 	{
 		if(debug) dbg("[bwdpi check] count=%2d\n", count);
 		run_engine();
 	
 		count -= 3;
 		if(count <= 0){
-			stop_dpi_engine_service();
+			stop_dpi_engine_service(1);
 			pause();
 		}
 		else 

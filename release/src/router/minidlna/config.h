@@ -390,7 +390,7 @@
 #define PACKAGE_NAME "MiniDLNA"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "MiniDLNA 1.1.3"
+#define PACKAGE_STRING "MiniDLNA 1.1.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "minidlna"
@@ -399,7 +399,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.3"
+#define PACKAGE_VERSION "1.1.4"
 
 /* Define to 5 if you want to enable NETGEAR ReadyNAS PnP-X support */
 /* #undef PNPX */
@@ -451,7 +451,7 @@
 
 
 /* Version number of package */
-#define VERSION "1.1.3"
+#define VERSION "1.1.4"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

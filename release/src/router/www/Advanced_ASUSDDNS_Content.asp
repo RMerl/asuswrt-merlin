@@ -15,121 +15,115 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
-<script type="text/javascript" language="JavaScript" src="/detect.js"></script>
+<script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script type="text/javaScript" src="/jquery.js"></script>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
 <% wanlink(); %>
 
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var $j = jQuery.noConflict();
-
+var ddns_hostname_x_t = '<% nvram_get("ddns_hostname_x"); %>';
 function init(){
-        ddns_load_body();
+	show_menu();
+    valid_wan_ip();
+    ddns_load_body();
 }
 
 function check_update(){
     var ddns_ipaddr_t = '<% nvram_get("ddns_ipaddr"); %>';
-    ddns_ipaddr_t = ddns_ipaddr_t.replace(/&#10/g,"");
-    var ddns_server_x_t = '<% nvram_get("ddns_server_x"); %>';
-    var ddns_hostname_x_t = '<% nvram_get("ddns_hostname_x"); %>';
+		ddns_ipaddr_t = ddns_ipaddr_t.replace(/&#10/g,"");
+  
+	var ddns_server_x_t = '<% nvram_get("ddns_server_x"); %>';
     var ddns_updated_t = '<% nvram_get("ddns_updated"); %>';
-        if ((wanlink_ipaddr() == ddns_ipaddr_t) &&
-             (ddns_server_x_t == document.form.ddns_server_x.value) &&
-             (ddns_hostname_x_t == document.form.ddns_hostname_x.value) &&
-                 ddns_updated_t == '1') {
-            force_update();
-        }else{
-            document.form.submit();
-            showLoading();
-        }
+    if ((wanlink_ipaddr() == ddns_ipaddr_t) &&
+        (ddns_server_x_t == document.form.ddns_server_x.value) &&
+        (ddns_hostname_x_t == document.form.ddns_hostname_x.value) &&
+			ddns_updated_t == '1'){
+			force_update();
+    }else{
+			document.form.submit();
+			showLoading();
+    }
 }
 
 function force_update() {
     var r = confirm("IP address, server and hostname have not changed since the last update. If you want to update, please click 'yes'");
-    if (r == true) {
-            document.form.submit();
-            showLoading();
-    }else
-                return false;
+	if(r == false)
+		return false
+		
+	document.form.submit();
+	showLoading();	
 }
 
 function valid_wan_ip() {
-        // test if WAN IP is a private IP.
-        var A_class_start = inet_network("10.0.0.0");
-        var A_class_end = inet_network("10.255.255.255");
-        var B_class_start = inet_network("172.16.0.0");
-        var B_class_end = inet_network("172.31.255.255");
-        var C_class_start = inet_network("192.168.0.0");
-        var C_class_end = inet_network("192.168.255.255");
-       
-        var ip_obj = wanlink_ipaddr();
-        var ip_num = inet_network(ip_obj);
-        var ip_class = "";
+    // test if WAN IP is a private IP.
+    var A_class_start = inet_network("10.0.0.0");
+    var A_class_end = inet_network("10.255.255.255");
+    var B_class_start = inet_network("172.16.0.0");
+    var B_class_end = inet_network("172.31.255.255");
+    var C_class_start = inet_network("192.168.0.0");
+    var C_class_end = inet_network("192.168.255.255");     
+    var ip_obj = wanlink_ipaddr();
+    var ip_num = inet_network(ip_obj);
+    var ip_class = "";
 
-        if(ip_num > A_class_start && ip_num < A_class_end)
-                ip_class = 'A';
-        else if(ip_num > B_class_start && ip_num < B_class_end)
-                ip_class = 'B';
-        else if(ip_num > C_class_start && ip_num < C_class_end)
-                ip_class = 'C';
-        else if(ip_num != 0){
+    if(ip_num > A_class_start && ip_num < A_class_end)
+        ip_class = 'A';
+    else if(ip_num > B_class_start && ip_num < B_class_end)
+        ip_class = 'B';
+    else if(ip_num > C_class_start && ip_num < C_class_end)
+        ip_class = 'C';
+    else if(ip_num != 0){
         showhide("wan_ip_hide2", 0);
         showhide("wan_ip_hide3", 0);
         return;
-        }
+    }
+		
     showhide("wan_ip_hide2", 1);
     showhide("wan_ip_hide3", 0);
     return;
 }
 
 function ddns_load_body(){
-    show_menu();
-    valid_wan_ip();
-
-    var hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
     var ddns_return_code = '<% nvram_get_ddns("LANHostConfig","ddns_return_code"); %>';
     var ddns_old_name = '<% nvram_get("ddns_old_name"); %>';
     var ddns_server_x = '<% nvram_get("ddns_server_x"); %>';
+	var ddns_enable_x = '<% nvram_get("ddns_enable_x"); %>';
    
-    if('<% nvram_get("ddns_enable_x"); %>' == 1){
-            inputCtrl(document.form.ddns_server_x, 1);
-            document.getElementById('ddns_hostname_tr').style.display = "";
-            if('<% nvram_get("ddns_server_x"); %>' == "WWW.ASUS.COM" || '<% nvram_get("ddns_server_x"); %>' == ""){
-                    document.form.ddns_hostname_x.parentNode.style.display = "none";
-                    document.form.DDNSName.parentNode.style.display = "";
-                    var ddns_hostname_title = hostname_x.substring(0, hostname_x.indexOf('.asuscomm.com'));
-                    if(hostname_x != '' && ddns_hostname_title)
-                            document.getElementById("DDNSName").value = ddns_hostname_title;
-                    else
-                            document.getElementById("DDNSName").value = "<#asusddns_inputhint#>";
-            }else{
-                    document.form.ddns_hostname_x.parentNode.style.display = "";
-                    document.form.DDNSName.parentNode.style.display = "none";
-                    inputCtrl(document.form.ddns_username_x, 1);
-                    inputCtrl(document.form.ddns_passwd_x, 1);                   
-                    if(hostname_x != '')
-                            document.getElementById("ddns_hostname_x").value = hostname_x;
-                    else
-                            document.getElementById("ddns_hostname_x").value = "<#asusddns_inputhint#>";
-            }
-            change_ddns_setting(document.form.ddns_server_x.value);       
+    if(ddns_enable_x == 1){
+        inputCtrl(document.form.ddns_server_x, 1);
+        document.getElementById('ddns_hostname_tr').style.display = "";
+        if(ddns_server_x == "WWW.ASUS.COM" || ddns_server_x == ""){
+            document.form.ddns_hostname_x.parentNode.style.display = "none";
+            document.form.DDNSName.parentNode.style.display = "";
+            var ddns_hostname_title = ddns_hostname_x_t.substring(0, ddns_hostname_x_t.indexOf('.asuscomm.com'));
+            if(ddns_hostname_x_t != '' && ddns_hostname_title)
+                document.getElementById("DDNSName").value = ddns_hostname_title;
+            else
+                document.getElementById("DDNSName").value = "<#asusddns_inputhint#>";
+        }else{
+            document.form.ddns_hostname_x.parentNode.style.display = "";
+            document.form.DDNSName.parentNode.style.display = "none";
+            inputCtrl(document.form.ddns_username_x, 1);
+            inputCtrl(document.form.ddns_passwd_x, 1);                   
+            if(ddns_hostname_x_t != '')
+                document.getElementById("ddns_hostname_x").value = ddns_hostname_x_t;
+            else
+                document.getElementById("ddns_hostname_x").value = "<#asusddns_inputhint#>";
+        }
+		
+        change_ddns_setting(document.form.ddns_server_x.value);       
     }else{
-            inputCtrl(document.form.ddns_server_x, 0);
-            document.getElementById('ddns_hostname_tr').style.display = "none";
-            inputCtrl(document.form.ddns_username_x, 0);
-            inputCtrl(document.form.ddns_passwd_x, 0);
-            document.form.ddns_wildcard_x[0].disabled= 1;
-            document.form.ddns_wildcard_x[1].disabled= 1;
-            showhide("wildcard_field",0);
+        inputCtrl(document.form.ddns_server_x, 0);
+        document.getElementById('ddns_hostname_tr').style.display = "none";
+        inputCtrl(document.form.ddns_username_x, 0);
+        inputCtrl(document.form.ddns_passwd_x, 0);
+        document.form.ddns_wildcard_x[0].disabled= 1;
+        document.form.ddns_wildcard_x[1].disabled= 1;
+        showhide("wildcard_field",0);
     }   
    
     hideLoading();
-
-    var ddnsHint = getDDNSState(ddns_return_code, hostname_x, ddns_old_name);
+    var ddnsHint = getDDNSState(ddns_return_code, ddns_hostname_x_t, ddns_old_name);
     if(ddnsHint != "")
         alert(ddnsHint);
     if(ddns_return_code.indexOf('200')!=-1 || ddns_return_code.indexOf('220')!=-1 || ddns_return_code == 'register,230'){
@@ -141,61 +135,64 @@ function ddns_load_body(){
 
 function applyRule(){
     if(validForm()){
-        if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.selectedIndex == 0){
-                //document.form.action_script.value = "adm_asusddns_register";               
-                document.form.ddns_hostname_x.value = document.form.DDNSName.value+".asuscomm.com";   
+        if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.selectedIndex == 0){          
+            document.form.ddns_hostname_x.value = document.form.DDNSName.value+".asuscomm.com";   
         }
+
         check_update();
     }
 }
 
 function validForm(){
-		
 	if(document.form.ddns_enable_x[0].checked){		//ddns enable
 		if(document.form.ddns_server_x.selectedIndex == 0){		//WWW.ASUS.COM	
 			if(document.form.DDNSName.value == ""){
-					alert("<#LANHostConfig_x_DDNS_alarm_14#>");
+				alert("<#LANHostConfig_x_DDNS_alarm_14#>");
+				document.form.DDNSName.focus();
+				document.form.DDNSName.select();
+				return false;
+			}else{
+				if(!validate_ddns_hostname(document.form.DDNSName)){
 					document.form.DDNSName.focus();
 					document.form.DDNSName.select();
 					return false;
-			}else{
-					if(!validate_ddns_hostname(document.form.DDNSName)){
-							document.form.DDNSName.focus();
-							document.form.DDNSName.select();				
-							return false;
-					}
-					return true;		
 			}
 		}else{
-
 			if(!validate_range(document.form.ddns_refresh_x, 0, 365))
 				return false;
 		
 			if(document.form.ddns_hostname_x.value == ""){
-					alert("<#LANHostConfig_x_DDNS_alarm_14#>");
-					document.form.ddns_hostname_x.focus();
-					document.form.ddns_hostname_x.select();
-					return false;
-			}else if(!validate_string(document.form.ddns_hostname_x)){
-					return false;
+				alert("<#LANHostConfig_x_DDNS_alarm_14#>");
+				document.form.ddns_hostname_x.focus();
+				document.form.ddns_hostname_x.select();
+				return false;
+			}else if(!validator.string(document.form.ddns_hostname_x)){
+				return false;
 			}
 			
 			if(document.form.ddns_username_x.value == ""){
-					alert("<#QKSet_account_nameblank#>");
-					document.form.ddns_username_x.focus();
-					document.form.ddns_username_x.select();
-					return false;
-			}else if(!validate_string(document.form.ddns_username_x)){
-					return false;
+				alert("<#QKSet_account_nameblank#>");
+				document.form.ddns_username_x.focus();
+				document.form.ddns_username_x.select();
+				return false;
+			}else if(!validator.string(document.form.ddns_username_x)){
+				return false;
 			}
 			
 			if(document.form.ddns_passwd_x.value == ""){
-					alert("<#File_Pop_content_alert_desc6#>");
-					document.form.ddns_passwd_x.focus();
-					document.form.ddns_passwd_x.select();
-					return false;
-			}else if(!validate_string(document.form.ddns_passwd_x)){
-					return false;
+				alert("<#File_Pop_content_alert_desc6#>");
+				document.form.ddns_passwd_x.focus();
+				document.form.ddns_passwd_x.select();
+				return false;
+			}else if(!validator.string(document.form.ddns_passwd_x)){
+				return false;
+			}
+			
+			if(document.form.ddns_regular_period.value < 30){	
+				alert("The value of check period can't be less than 30 minutes");
+				document.form.ddns_regular_period.focus();
+				document.form.ddns_regular_period.select();
+				return false;
 			}
 		
 			return true;
@@ -209,75 +206,80 @@ function checkDDNSReturnCode(){
     $j.ajax({
     	url: '/ajax_ddnscode.asp',
     	dataType: 'script', 
-
     	error: function(xhr){
       		checkDDNSReturnCode();
     	},
     	success: function(response){
-                if(ddns_return_code == 'ddns_query')
-        	        setTimeout("checkDDNSReturnCode();", 500);
-                else 
-                        refreshpage();
+            if(ddns_return_code == 'ddns_query')
+        	    setTimeout("checkDDNSReturnCode();", 500);
+            else 
+                refreshpage();
        }
    });
 }
 
-function validate_ddns_hostname(o)
-{	
-		dot=0;
-		s=o.value;
+function validate_ddns_hostname(o){
+	dot=0;
+	s=o.value;
 
-		if(s == ""){
-				show_alert_block("<#QKSet_account_nameblank#>");
-				return false;
-		}		
+	if(s == ""){
+		show_alert_block("<#QKSet_account_nameblank#>");
+		return false;
+	}		
 
-		var unvalid_start=new RegExp("^[0-9].*", "gi");
-		if(unvalid_start.test(s) ){
+	var unvalid_start=new RegExp("^[0-9].*", "gi");
+	if(unvalid_start.test(s) ){
+		show_alert_block("<#LANHostConfig_x_DDNS_alarm_7#>");
+		return false;
+	}
+	
+	if (!validator.string(o)){
+		return false;
+	}
+		
+	for(i=0;i<s.length;i++){
+		c = s.charCodeAt(i);
+		if (c==46){
+			dot++;
+			if(dot>0){
 				show_alert_block("<#LANHostConfig_x_DDNS_alarm_7#>");
 				return false;
-		}
-		if (!validate_string(o)){
-				return false;
+			}
 		}
 		
-		for(i=0;i<s.length;i++){
-				c = s.charCodeAt(i);
-				if (c==46){
-						dot++;
-						if(dot>0){
-									show_alert_block("<#LANHostConfig_x_DDNS_alarm_7#>");
-									return false;
-						}
-				}
-				if (!validate_hostnamechar(c)){
-						show_alert_block("<#LANHostConfig_x_DDNS_alarm_13#> '" + s.charAt(i) +"' !");
-						return false;
-				}
+		if (!validator.hostNameChar(c)){
+			show_alert_block("<#LANHostConfig_x_DDNS_alarm_13#> '" + s.charAt(i) +"' !");
+			return false;
 		}
-		return true;
-}
-
-function validate_hostnamechar(ch){
-	if (ch>=48&&ch<=57) return true;	//0-9
-	if (ch>=97&&ch<=122) return true;	//little EN
-	if (ch>=65&&ch<=90) return true; 	//Large EN
-	if (ch==45) return true;	//-
-	if (ch==46) return true;	//.
-	
-	return false;
+	}
+		
+	return true;
 }
 
 function show_alert_block(alert_str){
 	$("alert_block").style.display = "block";
-	
 	showtext($("alert_str"), alert_str);
 }
 
 function cleandef(){
-		if(document.form.DDNSName.value == "<#asusddns_inputhint#>")
-				document.form.DDNSName.value = "";	
+	if(document.form.DDNSName.value == "<#asusddns_inputhint#>")
+		document.form.DDNSName.value = "";	
 }
+
+function onSubmitApply(s){
+	if(s == "hostname_check"){
+		showLoading();
+		if(!validate_ddns_hostname(document.form.ddns_hostname_x)){
+			hideLoading();
+			return false;
+		}
+	}
+	
+	document.form.action_mode.value = "Update";
+	document.form.action_script.value = s;
+	return true;
+}
+
 </script>
 </head>
 
@@ -289,17 +291,12 @@ function cleandef(){
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-<input type="hidden" name="wan_route_x" value="<% nvram_get("wan_route_x"); %>">
-<input type="hidden" name="wan_nat_x" value="<% nvram_get("wan_nat_x"); %>">
-
 <input type="hidden" name="current_page" value="Advanced_ASUSDDNS_Content.asp">
 <input type="hidden" name="next_page" value="">
-<input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_ddns">
-<input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 
@@ -347,11 +344,11 @@ function cleandef(){
                     			<option value="WWW.DYNDNS.ORG" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG","selected"); %>>WWW.DYNDNS.ORG</option>
                     			<option value="WWW.DYNDNS.ORG(CUSTOM)" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG(CUSTOM)","selected"); %>>WWW.DYNDNS.ORG(CUSTOM)</option>
                     			<option value="WWW.DYNDNS.ORG(STATIC)" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG(STATIC)","selected"); %>>WWW.DYNDNS.ORG(STATIC)</option>
-                    			<option value="WWW.TZO.COM" <% nvram_match("ddns_server_x", "WWW.TZO.COM","selected"); %>>WWW.TZO.COM</option>
                     			<option value="WWW.ZONEEDIT.COM" <% nvram_match("ddns_server_x", "WWW.ZONEEDIT.COM","selected"); %>>WWW.ZONEEDIT.COM</option>
                     			<option value="WWW.DNSOMATIC.COM" <% nvram_match("ddns_server_x", "WWW.DNSOMATIC.COM","selected"); %>>WWW.DNSOMATIC.COM</option>
                     			<option value="WWW.TUNNELBROKER.NET" <% nvram_match("ddns_server_x", "WWW.TUNNELBROKER.NET","selected"); %>>WWW.TUNNELBROKER.NET</option>
 					<option value="WWW.NO-IP.COM" <% nvram_match("ddns_server_x", "WWW.NO-IP.COM","selected"); %>>WWW.NO-IP.COM</option>
+								<option value="WWW.NO-IP.COM" <% nvram_match("ddns_server_x", "WWW.NO-IP.COM","selected"); %>>WWW.NO-IP.COM</option>
                     			<option value="WWW.NAMECHEAP.COM" <% nvram_match("ddns_server_x", "WWW.NAMECHEAP.COM","selected"); %>>WWW.NAMECHEAP.COM</option>
                   		</select>
 				<a id="link" href="javascript:openLink('x_DDNSServer')" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_DDNSServer_linkname#></a>
@@ -362,10 +359,10 @@ function cleandef(){
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,13);"><#LANHostConfig_x_DDNSHostNames_itemname#></a></th>
 				<td>
 					<div id="ddnsname_input" style="display:none;">
-						<input type="text" maxlength="63" class="input_25_table" name="ddns_hostname_x" id="ddns_hostname_x" value="<% nvram_get("ddns_hostname_x"); %>" onKeyPress="return is_string(this, event)">
+						<input type="text" maxlength="64" class="input_25_table" name="ddns_hostname_x" id="ddns_hostname_x" value="<% nvram_get("ddns_hostname_x"); %>" onKeyPress="return validator.isString(this, event)">
 					</div>
 					<div id="asusddnsname_input" style="display:none;">
-						<input type="text" maxlength="32" class="input_32_table" name="DDNSName" id="DDNSName" class="inputtext" onKeyPress="return is_string(this, event)" OnClick="cleandef();">.asuscomm.com
+						<input type="text" maxlength="32" class="input_32_table" name="DDNSName" id="DDNSName" class="inputtext" onKeyPress="return validator.isString(this, event)" OnClick="cleandef();">.asuscomm.com
 						<div id="alert_block" style="color:#FFCC00; margin-left:5px; font-size:11px;display:none;">
 								<span id="alert_str"></span>
 						</div>						
@@ -375,7 +372,7 @@ function cleandef(){
 			</tr>			
 			<tr>
 				<th id="ddns_username_th"><#LANHostConfig_x_DDNSUserName_itemname#></th>
-				<td><input type="text" maxlength="32" class="input_25_table" name="ddns_username_x" value="<% nvram_get("ddns_username_x"); %>" onKeyPress="return is_string(this, event)"></td>
+				<td><input type="text" maxlength="32" class="input_25_table" name="ddns_username_x" value="<% nvram_get("ddns_username_x"); %>" onKeyPress="return validator.isString(this, event)"></td>
 			</tr>
 			<tr>
 				<th><#LANHostConfig_x_DDNSPassword_itemname#></th>
@@ -392,6 +389,19 @@ function cleandef(){
 				<th>Forced refresh interval (in days)</th>
 				<td>
 					<input type="text" maxlength="3" name="ddns_refresh_x" class="input_3_table" value="<% nvram_get("ddns_refresh_x"); %>" onKeyPress="return is_number(this,event)">
+				</td>
+			</tr>
+			<tr id="check_ddns_field" style="display:none;">
+				<th><#DDNS_verification_enable#></th>
+				<td>
+					<input type="radio" value="1" name="ddns_regular_check" onClick="change_ddns_setting(document.form.ddns_server_x.value);" <% nvram_match("ddns_regular_check", "1", "checked"); %>><#checkbox_Yes#>
+					<input type="radio" value="0" name="ddns_regular_check" onClick="change_ddns_setting(document.form.ddns_server_x.value);" <% nvram_match("ddns_regular_check", "0", "checked"); %>><#checkbox_No#>
+				</td>
+			</tr>
+			<tr style="display:none;">
+				<th><#DDNS_verification_frequency#></th>
+				<td>
+					<input type="text"  class="input_3_table" name="ddns_regular_period" value="<% nvram_get("ddns_regular_period"); %>"> <#Minute#>
 				</td>
 			</tr>
 			<tr style="display:none;">

@@ -18,7 +18,6 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 
 <script>
 function initial(){
@@ -50,7 +49,7 @@ function applyRule(){
 			document.form.PM_attach_iptables.value = 0;
                 
 		if(document.form.fb_email.value == ""){
-			if(!confirm("E-mail address field is empty. Are you sure you want to proceed?")){
+			if(!confirm("<#feedback_email_confirm#>")){
 				document.form.fb_email.focus();
 				return false;
 			}
@@ -58,7 +57,7 @@ function applyRule(){
 		else{	//validate email
 			
 				if(!isEmail(document.form.fb_email.value)){
-						alert("The format of E-mail address is not valid.");    					
+						alert("<#feedback_email_alert#>");    					
 						document.form.fb_email.focus();
 						return false;
 				}
@@ -193,7 +192,8 @@ function textCounter(field, cnt, upper) {
 	</th>
 	<td>
 		<textarea name="fb_comment" maxlength="2000" cols="55" rows="8" style="font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" onKeyDown="textCounter(this,document.form.msglength,2000);" onKeyUp="textCounter(this,document.form.msglength,2000)"></textarea>
-		<i>Maximum of 2000 characters - characters left : <input type="text" class="input_6_table" name="msglength" id="msglength" maxlength="4" value="2000" readonly></i>
+		<span style="color:#FC0">Maximum of 2000 characters - characters left : </span>
+		<input type="text" class="input_6_table" name="msglength" id="msglength" maxlength="4" value="2000" readonly>
 	</td>
 </tr>
 
@@ -208,9 +208,9 @@ function textCounter(field, cnt, upper) {
 	<td colspan="2">
 		<strong><#FW_note#></strong>
 		<ul>
-			<li>The Firmware and DSL Driver Version will be submitted in addition to any info you choose to include above.</li>
-			<li>DSL feedback will be used to diagnose problems and help to improve the firmware of <#Web_Title2#>, any personal information you submitted, whether explicitly or incidentally will be protected in accordance with our <a style='font-weight: bolder;text-decoration:underline;cursor:pointer;' href='http://www.asus.com/Terms_of_Use_Notice_Privacy_Policy/Privacy_Policy/' target='_blank'>privacy policy</a>.</li>
-			<li>By submitting this DSL Feedback, you agree that ASUS may use feedback that you provided to improve ASUS xDSL modem router product.</li>
+			<li><#feedback_note1#></li>
+			<li><#feedback_note2#></li>
+			<li><#feedback_note3#></li>
 		</ul>
 	</td>
 </tr>	

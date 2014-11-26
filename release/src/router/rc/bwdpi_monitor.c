@@ -5,15 +5,50 @@
 #include <rc.h>
 #include <bwdpi.h>
 
-// TEST 1 : every 30 secs
-// TEST 0 : every hour
-#define TEST 0
-
 static int sig_cur = -1;
 
 static void save_traffic_record()
 {
-	system("bwdpi_sqlite -e");
+	char *db_type;
+	char buf[120]; // path buff = 120
+	int db_mode;
+
+	debug = nvram_get_int("sqlite_debug");
+
+	memset(buf, 0, sizeof(buf));
+
+	// bwdpi_db_type
+	db_type = nvram_safe_get("bwdpi_db_type");
+	if(!strcmp(db_type, "") || db_type == NULL)
+		db_mode = 0;
+	else
+		db_mode = atoi(db_type);
+
+	if(db_mode == 0)
+	{
+		sprintf(buf, "bwdpi_sqlite -e -s NULL");
+	}
+	else if(db_mode == 1)
+	{
+		if(!strcmp(nvram_safe_get("bwdpi_db_path"), ""))
+			sprintf(buf, "bwdpi_sqlite -e -s NULL");
+		else
+			sprintf(buf, "bwdpi_sqlite -e -p %s -s NULL", nvram_safe_get("bwdpi_db_path"));
+	}
+	else if(db_mode == 2)
+	{
+		// cloud server : not ready
+		printf("traffic statistics not support cloud server yet!!\n");
+	}
+	else
+	{
+		printf("Not such database type!!\n");
+		return;
+	}
+
+	if(debug) dbg("db_mode = %d, buf = %s\n", db_mode, buf);
+
+	system(buf);
 }
 
 static void catch_sig(int sig)
@@ -37,11 +72,21 @@ int bwdpi_monitor_main(int argc, char **argv)
 
 	FILE *fp;
 	sigset_t sigs_to_catch;
-#ifdef TEST
-	debug = 1;
-#else
-	debug = nvram_get_int("bwdpi_debug");
-#endif
+	int mode;
+
+	debug = nvram_get_int("sqlite_debug");
+
+	// bwdpi_sqlite_enable != 1
+	if(strcmp(nvram_safe_get("bwdpi_db_enable"), "1")){
+		printf("bwdpi_monitor is disabled!!\n");
+		exit(0);
+	}
+
+	// bwdpi_monitor != 1
+	if(strcmp(nvram_safe_get("bwdpi_db_debug"), "1"))
+		mode = 0;
+	else
+		mode = 1;
 	
 	/* write pid */
 	if ((fp = fopen("/var/run/bwdpi_monitor.pid", "w")) != NULL)
@@ -72,26 +117,27 @@ int bwdpi_monitor_main(int argc, char **argv)
 			if(debug) dbg("[bwdpi monitor]: %d-%d-%d, %d:%d:%d\n",
 				local.tm_year+1900, local.tm_mon+1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec);
 
-#if TEST
-			/* every 30 secs */
-			if(local.tm_sec < 30 && local.tm_sec >= 0)
-				diff_sec = 30 - local.tm_sec;
-			else if(local.tm_sec < 60 && local.tm_sec >= 30)
-				diff_sec = 60 - local.tm_sec;
-			alarm(diff_sec);
-			pause();
-#else
-			/* every hour */
-			if((local.tm_min != 0) || (local.tm_sec != 0)){
-				diff_sec = 3600 - (local.tm_min * 60 + local.tm_sec);
+			if(mode){
+				/* every 30 secs */
+				if(local.tm_sec < 30 && local.tm_sec >= 0)
+					diff_sec = 30 - local.tm_sec;
+				else if(local.tm_sec < 60 && local.tm_sec >= 30)
+					diff_sec = 60 - local.tm_sec;
 				alarm(diff_sec);
 				pause();
 			}
 			else{
-				alarm(3600);
-				pause();
+				/* every hour */
+				if((local.tm_min != 0) || (local.tm_sec != 0)){
+					diff_sec = 3600 - (local.tm_min * 60 + local.tm_sec);
+					alarm(diff_sec);
+					pause();
+				}
+				else{
+					alarm(3600);
+					pause();
+				}
 			}
-#endif
 		}
 		else
 		{

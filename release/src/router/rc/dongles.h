@@ -221,5 +221,6 @@
 #define SN_Huawei_K5150                         0x031f
 
 #define SN_ZTE_MF823				0x0320
+#define SN_Huawei_E3276S150			0x0321
 
 #endif

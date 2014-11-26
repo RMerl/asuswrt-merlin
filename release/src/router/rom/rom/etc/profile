@@ -1,5 +1,4 @@
 export PATH="/bin:/usr/bin:/sbin:/usr/sbin:/home/$USER:/mmc/sbin:/mmc/bin:/mmc/usr/sbin:/mmc/usr/bin:/opt/sbin:/opt/bin:/opt/usr/sbin:/opt/usr/bin"
-export PATH="$PATH:`nvram get env_path`"
 export PS1='\u@\h:\w\$ '
 
 alias l='ls -lFA'

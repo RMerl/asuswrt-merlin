@@ -105,9 +105,9 @@ function initial(){
 												<td align="center" class="app_table_radius_left" style="width:85px;">
 													<img style="margin-top:0px;" src="/images/New_ui/parental-control.png" onclick="location.href='AiProtection_WebProtector.asp';">
 												</td>
-												<td class="app_table_radius_right" style="width:350px;height:120px;"">
+												<td class="app_table_radius_right" style="width:350px;height:120px;">
 													<div class="app_name">
-														<a style="text-decoration: underline;" href="AiProtection_WebProtector.asp">Parental Controls</a>
+														<a style="text-decoration: underline;" href="AiProtection_WebProtector.asp"><#Parental_Control#></a>
 													</div>
 													<div class="app_desc" style="height:60px;">
 														<li><#Time_Scheduling#></li>
@@ -136,7 +136,8 @@ function initial(){
 							</td> 
 						</tr>  
 					</table>
-						<div style="width:100px;height:48px;margin:415px 0px 0px 625px;background-image:url('images/New_ui/tm_logo.png');"></div>
+
+					<div style="width:135px;height:55px;position:absolute;bottom:5px;right:5px;background-image:url('images/New_ui/tm_logo_power.png');"></div>
 				</div>
 		<!--=====End of Main Content=====-->
 			</td>

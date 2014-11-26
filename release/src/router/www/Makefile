@@ -3,7 +3,7 @@ include ../common.mak
 ASUSWRTTOOLSDIR = $(SRCBASE)/router/tools/Lnx_AsusWrtDictPrep
 ASUSWRTTOOLSDIR2 = $(SRCBASE)/router/tools/Lnx_ToolHelp
 
-MODELS_HAVE_USB3 = "DSL-AC68U RT-AC3200 RT-AC87U RT-AC69U RT-AC68U RT-AC56S RT-AC56U RT-AC55U RT-N18U TM-AC1900"
+MODELS_HAVE_USB3 = "DSL-AC68U RT-AC3200 RT-AC87U RT-AC69U RT-AC68U RT-AC56S RT-AC56U RT-AC55U RT-N18U TM-AC1900 RT-N65U"
 
 all:
 
@@ -72,11 +72,20 @@ ifeq ($(RTCONFIG_8M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
+	rm -rf $(INSTALLDIR)/www/images/wl_device/wl_devices.png
+	rm -rf $(INSTALLDIR)/www/images/backtohome.png
+	rm -rf $(INSTALLDIR)/www/images/backtohomeclick.png
+	rm -rf $(INSTALLDIR)/www/images/wifi_hw_sw.png
+	rm -rf $(INSTALLDIR)/www/images/qis/security_key.png
+	rm -rf $(INSTALLDIR)/www/images/qis/select_wireless.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-listover.png
+	cd $(INSTALLDIR)/www/images/New_ui/networkmap && ln -sf client-list.png client-listover.png && cd $(TOP)/www
 endif
 ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/cloudsync/invite_model.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/bg.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-list.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-listover.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client.png
 	rm -rf $(INSTALLDIR)/www/Main_ConnStatus_Content.asp
 	rm -rf $(INSTALLDIR)/www/svghtc
@@ -113,7 +122,6 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/fan.svg
 #	rm -rf $(INSTALLDIR)/www/detect_firmware.asp
 	rm -rf $(INSTALLDIR)/www/ajax_coretmp.asp
-	rm -rf $(INSTALLDIR)/www/qis/QIS_tutorial.htm
 	rm -rf $(INSTALLDIR)/www/qis/QIS_internet_ruisp.htm
 	rm -rf $(INSTALLDIR)/www/qis/ruisp.js
 	rm -rf $(INSTALLDIR)/www/images/New_ui/network_config.png
@@ -128,11 +136,6 @@ endif
 ifneq ($(RTCONFIG_PROXYSTA),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
 endif
-# Replace png file for RTCONFIG_TMOBILE
-ifeq ($(RTCONFIG_TMOBILE), y)
-	mv $(INSTALLDIR)/www/images/tmo_modem_plug.png $(INSTALLDIR)/www/images/modem_plug.png
-	mv $(INSTALLDIR)/www/images/tmo_modem_unplug.png $(INSTALLDIR)/www/images/modem_unplug.png
-else
 	rm -rf $(INSTALLDIR)/www/MobileQIS_Login.asp
 	rm -rf $(INSTALLDIR)/www/AjaxLogin.asp
 	rm -rf $(INSTALLDIR)/www/Passpoint_hidden.asp
@@ -145,12 +148,11 @@ else
 	rm -rf $(INSTALLDIR)/www/iui/default.css
 	rm -rf $(INSTALLDIR)/www/iui/registerEvent.js
 	rm -rf $(INSTALLDIR)/www/iui/tmo-logo.png
-endif
 ifneq ($(RTCONFIG_SNMPD),y)
 	rm -rf $(INSTALLDIR)/www/Advanced_SNMP_Content.asp
 endif
 ifeq ($(RTCONFIG_DSL),y)
-	rm -rf $(INSTALLDIR)/www/images/Model_producticon.png
+	rm -rf $(INSTALLDIR)/www/images/Model_product.png
 	rm -rf $(INSTALLDIR)/www/qis/QIS_welcome.htm
 	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
@@ -272,11 +274,10 @@ ifeq ($(RTCONFIG_OPENVPN), y)
 	cd $(INSTALLDIR)/www && ln -sf ../etc/openvpn/server1/client.ovpn client1.ovpn && cd $(TOP)/www
 	cd $(INSTALLDIR)/www && ln -sf ../etc/openvpn/server2/client.ovpn client2.ovpn && cd $(TOP)/www
 else
+	rm -rf $(INSTALLDIR)/www/ajax_openvpn_server.asp
 ifneq ($(RTCONFIG_ACCEL_PPTPD), y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/vpnstatus.png
-	rm -rf $(INSTALLDIR)/www/ajax_openvpn_server.asp
-	rm -rf $(INSTALLDIR)/www/Advanced_VPNAdvanced_Content.asp
-	rm -rf $(INSTALLDIR)/www/Advanced_VPN_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_VPN_PPTP.asp
 endif
 endif
 ifneq ($(RTCONFIG_VPNC), y)	
@@ -302,12 +303,6 @@ ifneq ($(RTCONFIG_KYIVSTAR),y)
 	rm -rf $(INSTALLDIR)/www/userRpm/SoftwareUpgradeRpm.htm
 endif
 
-ifeq ($(RTCONFIG_ODMPID),y)
-	@if [ ! -e $(INSTALLDIR)/www/images/$(subst U,R,$(BUILD_NAME))Model_producticon.png ] ; then \
-		 ln -sf Model_producticon.png $(INSTALLDIR)/www/images/$(subst U,R,$(BUILD_NAME))Model_producticon.png ; \
-	fi
-endif
-
 ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Adaptive.asp
 	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Bandwidth_Monitor.asp
@@ -321,16 +316,13 @@ ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/getWebHistory.asp
 	rm -rf $(INSTALLDIR)/www/getAppTraffic.asp
 	rm -rf $(INSTALLDIR)/www/getWanTraffic.asp
-	rm -rf $(INSTALLDIR)/www/tm_eula.html
+	rm -rf $(INSTALLDIR)/www/tm_eula.htm
+	rm -rf $(INSTALLDIR)/www/JP_tm_eula.htm
 	rm -rf $(INSTALLDIR)/www/images/New_ui/HomeProtection.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/Web_Apps_Restriction.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/AiProtection.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/Home_Protection_Scenario.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/left-light.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/left-dark.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/right-light.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/right-dark.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo_power.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/TM_product.png	

@@ -495,7 +495,7 @@ static const struct usb_device_id products[] = {
 
 	/* 3. Combined interface devices matching on interface number */
 	{QMI_FIXED_INTF(0x0408, 0xea42, 4)},	/* Yota / Megafon M100-1 */
-	{QMI_FIXED_INTF(0x12d1, 0x140c, 1)},	/* Huawei E173 */
+	//{QMI_FIXED_INTF(0x12d1, 0x140c, 1)},	/* Huawei EC serials can't use qmi to connect Internet. */
 	//{QMI_FIXED_INTF(0x19d2, 0x0002, 1)},	// ZTE MF637U: when use uqmi, it will notify USB_CDC_NOTIFY_SERIAL_STATE, and can't support.
 	{QMI_FIXED_INTF(0x19d2, 0x0012, 1)},
 	{QMI_FIXED_INTF(0x19d2, 0x0017, 3)},

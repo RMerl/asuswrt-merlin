@@ -196,9 +196,12 @@ negotiation, unless the \fIipcp\-accept\-local\fR and/or
 .B +ipv6
 Enable the IPv6CP and IPv6 protocols.
 .TP
+.B +ipv6
+Enable the IPv6CP and IPv6 protocols.
+.TP
 .B ipv6 \fI<local_interface_identifier>\fR,\fI<remote_interface_identifier>
 Set the local and/or remote 64-bit interface identifier. Either one may be
-omitted. The identifier must be specified in standard ascii notation of
+omitted. The identifier must be specified in standard ASCII notation of
 IPv6 addresses (e.g. ::dead:beef). If the
 \fIipv6cp\-use\-ipaddr\fR
 option is given, the local identifier is the local IPv4 address (see above).
@@ -320,8 +323,9 @@ can do either.)
 .TP
 .B demand
 Initiate the link only on demand, i.e. when data traffic is present.
-With this option, the remote IP address must be specified by the user
-on the command line or in an options file.  Pppd will initially
+With this option, the remote IP address may be specified by the user
+on the command line or in an options file, or if not, pppd will use
+an arbitrary address in the 10.x.x.x range.  Pppd will initially
 configure the interface and enable it for IP traffic without
 connecting to the peer.  When traffic is available, pppd will
 connect to the peer and perform negotiation, authentication, etc.
@@ -331,7 +335,7 @@ When this is completed, pppd will commence passing data packets
 The \fIdemand\fR option implies the \fIpersist\fR option.  If this
 behaviour is not desired, use the \fInopersist\fR option after the
 \fIdemand\fR option.  The \fIidle\fR and \fIholdoff\fR
-options are also useful in conjuction with the \fIdemand\fR option.
+options are also useful in conjunction with the \fIdemand\fR option.
 .TP
 .B domain \fId
 Append the domain name \fId\fR to the local host name for authentication
@@ -454,6 +458,11 @@ parameter to those scripts.
 .TP
 .B ipv6cp\-accept\-local
 With this option, pppd will accept the peer's idea of our local IPv6
+interface identifier, even if the local IPv6 interface identifier
+was specified in an option.
+.TP
+.B ipv6cp\-accept\-local
+With this option, pppd will accept the peer's idea of our local IPv6
 address, even if the local IPv6 address was specified in an option.
 .TP
 .B ipv6cp\-accept\-remote
@@ -536,7 +545,7 @@ Set the maximum number of IPXCP NAK frames which the local system will
 send before it rejects the options. The default value is 3.
 .TP
 .B ipxcp\-max\-terminate \fIn
-Set the maximum nuber of IPXCP terminate request frames before the
+Set the maximum number of IPXCP terminate request frames before the
 local system considers that the peer is not listening to them. The
 default value is 3.
 .TP
@@ -630,6 +639,14 @@ PAP, and record the user in the system wtmp file.  Note that the peer
 must have an entry in the /etc/ppp/pap\-secrets file as well as the
 system password database to be allowed access.  See also the
 \fBenable\-session\fR option.
+.TP
+.B master_detach
+If multilink is enabled and this pppd process is the multilink bundle
+master, and the link controlled by this pppd process terminates, this
+pppd process continues to run in order to maintain the bundle.  If the
+\fBmaster_detach\fR option has been given, pppd will detach from its
+controlling terminal in this situation, even if the \fBnodetach\fR
+option has been given.
 .TP
 .B maxconnect \fIn
 Terminate the connection when it has been available for network
@@ -845,8 +862,9 @@ do so by placing this option in the /etc/ppp/options file.
 .B noremoteip
 Allow pppd to operate without having an IP address for the peer.  This
 option is only available under Linux.  Normally, pppd will request the
-peer's IP address, and if the peer does not supply it, pppd will not
-bring up the link for IP traffic.  With this option, if the peer does
+peer's IP address, and if the peer does not supply it, pppd will use
+an arbitrary address in the 10.x.x.x subnet.
+With this option, if the peer does
 not supply its IP address, pppd will not ask the peer for it, and will
 not set the destination address of the ppp interface.  In this
 situation, the ppp interface can be used for routing by creating
@@ -954,7 +972,7 @@ pseudo-tty master/slave pair and use the slave as its terminal
 device.  The \fIscript\fR will be run in a child process with the
 pseudo-tty master as its standard input and output.  An explicit
 device name may not be given if this option is used.  (Note: if the
-\fIrecord\fR option is used in conjuction with the \fIpty\fR option,
+\fIrecord\fR option is used in conjunction with the \fIpty\fR option,
 the child process will have pipes on its standard input and output.)
 .TP
 .B receive\-all
@@ -1038,6 +1056,13 @@ Authentication Protocol] authentication.
 Require the peer to authenticate itself using PAP [Password
 Authentication Protocol] authentication.
 .TP
+.B set \fIname\fR=\fIvalue
+Set an environment variable for scripts that are invoked by pppd.
+When set by a privileged source, the variable specified by \fIname\fR
+cannot be changed by options contained in an unprivileged source.  See
+also the \fIunset\fR option and the environment described in
+\fISCRIPTS\fR.
+.TP
 .B show\-password
 When logging the contents of PAP packets, this option causes pppd to
 show the password string in the log message.
@@ -1065,7 +1090,7 @@ in the pseudonym.
 .TP
 .B srp\-use\-pseudonym
 When operating as an EAP SRP\-SHA1 client, attempt to use the pseudonym
-stored in ~/.ppp_psuedonym first as the identity, and save in this
+stored in ~/.ppp_pseudonym first as the identity, and save in this
 file any pseudonym offered by the peer during authentication.
 .TP
 .B sync
@@ -1077,6 +1102,13 @@ under Linux and FreeBSD 2.2.8 and later.
 .B unit \fInum
 Sets the ppp unit number (for a ppp0 or ppp1 etc interface name) for outbound
 connections.
+.TP
+.B unset \fIname
+Remove a variable from the environment variable for scripts that are
+invoked by pppd.  When specified by a privileged source, the variable
+\fIname\fR cannot be set by options contained in an unprivileged
+source.  See also the \fIset\fR option and the environment described
+in \fISCRIPTS\fR.
 .TP
 .B minunit \fInum
 Such as unit, but always select bigger interface
@@ -1140,7 +1172,7 @@ the initial /dev/ is removed from the terminal name, and any remaining
 .PP
 An options file is parsed into a series of words, delimited by
 whitespace.  Whitespace can be included in a word by enclosing the
-word in double-quotes (").  A backslash (\\) quotes the following character.
+word in double-quotes (").  A backslash (\e) quotes the following character.
 A hash (#) starts a comment, which continues until the end of the
 line.  There is no restriction on using the \fIfile\fR or \fIcall\fR
 options within an options file.
@@ -1452,9 +1484,9 @@ OK "atdt2468135"
 .br
 "name:" "^Umyuserid"
 .br
-"word:" "\\qmypassword"
+"word:" "\eqmypassword"
 .br
-"ispts" "\\q^Uppp"
+"ispts" "\eq^Uppp"
 .br
 "~\-^Uppp\-~"
 .LP
@@ -1651,20 +1683,23 @@ The logical name of the link, set with the \fIlinkname\fR option.
 .TP
 .B DNS1
 If the peer supplies DNS server addresses, this variable is set to the
-first DNS server address supplied.
+first DNS server address supplied (whether or not the usepeerdns
+option was given).
 .TP
 .B DNS2
 If the peer supplies DNS server addresses, this variable is set to the
-second DNS server address supplied.
+second DNS server address supplied (whether or not the usepeerdns
+option was given).
 .TP
 .B WINS1
 If the peer supplies WINS server addresses, this variable is set to the
-first WINS server address supplied.
+first WINS server address supplied (whether or not the usepeerwins
+option was given).
 .TP
 .B WINS2
 If the peer supplies WINS server addresses, this variable is set to the
-second WINS server address supplied.
-.P
+second WINS server address supplied (whether or not the usepeerwins
+option was given).
 .P
 Pppd invokes the following scripts, if they exist.  It is not an error
 if they don't exist.
@@ -1961,7 +1996,7 @@ are met:
    prior written permission.
 .LP
 4. Redistributions of any form whatsoever must retain the following
-   acknowledgments:
+   acknowledgements:
 .br
    "This product includes software developed by Computing Services
     at Carnegie Mellon University (http://www.cmu.edu/computing/)."

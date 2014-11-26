@@ -7,7 +7,7 @@
 include Makedefs.sol2
 
 # Sun's cc flag for LP64 compilation / linkage
-COPTS 		+= -errwarn -xtarget=opteron -xarch=amd64 -xmodel=kernel \
+COPTS 		+= -errwarn -xtarget=opteron -m64 -xmodel=kernel \
 		   -Ui386 -U__i386 -D__amd64 -xO2
 
 # subdirectory where 64-bit objects / binaries will be placed

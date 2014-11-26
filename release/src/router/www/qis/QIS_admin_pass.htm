@@ -21,6 +21,7 @@
 <script type="text/javascript" language="JavaScript" src="../state.js"></script>
 <script type="text/javascript" language="JavaScript" src="../help.js"></script>
 <script type="text/JavaScript" language="JavaScript" src="../jquery.js"></script>
+<script type="text/JavaScript" language="JavaScript" src="../validator.js"></script>
 <script type="text/javascript">
 var $j = jQuery.noConflict();
 var accounts = [<% get_all_accounts(); %>];
@@ -35,11 +36,14 @@ for(var i=0; i<accounts.length; i++){
 
 function QKinternettype_load_body(){
 
-	if(tmo_support){			
+	if(tmo_support){	//MODELDEP : T-Mobile (TM-AC1900)
 			document.getElementById("skip_btn").style.display = "";
 			document.getElementById("prev_btn").style.display = "none";
 			document.getElementById("pass_Desc1").innerHTML = "For security purposes, you MUST change your login username/password before continuing.";
 			document.getElementById("tmo_desc4").style.display = "";
+	}
+	else if(parent.based_modelid == "RT-N11P"){	//MODELDEP : RT-N11P (RT-N12+, RT-N12E_B)
+			document.getElementById("point4").style.display = "none";
 	}
 	else{
 			document.getElementById("general_desc4").style.display = "";
@@ -65,7 +69,7 @@ function QKinternettype_load_body(){
 
 		if (dsl_support) {
 			document.getElementById("prev_btn").style.display = "none";
-			var detect_status = '<% nvram_get("dsltmp_autodet_state"); %>';	
+			var detect_status = "<% nvram_get("dsltmp_autodet_state"); %>";	
 			if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") || 
 				(detect_status == "init") || (detect_status == "initializing") || 
 				(detect_status == "up") || (detect_status == "wait") || (detect_status == "down")) {
@@ -88,9 +92,9 @@ function QKinternettype_load_body(){
 	
 	document.form.http_username.value= accounts[0];	
 
-	if(parent.based_modelid == "DSL-AC68U"){
-			var RetryCountDown_fail = 5;
-			update_dsl_info();
+	if(parent.based_modelid == "DSL-AC68U"){	//dsl detect trigger, MODELDEP : DSL-AC68U
+		var RetryCountDown_fail = 5;
+		update_dsl_info();
 	}
 }
 
@@ -112,7 +116,7 @@ function submitForm(){
 	}
 	else{
 		
-		var alert_str = validate_hostname(document.form.http_username);
+		var alert_str = validator.hostName(document.form.http_username);
 		if(alert_str != ""){
 			showtext($("alert_msg1"), alert_str);
 			$("alert_msg1").style.display = "";
@@ -178,7 +182,7 @@ function submitForm(){
 		return false;
 	}
 
-	if(!validate_string(document.form.http_passwd)){
+	if(!validator.string(document.form.http_passwd)){
 		document.form.http_passwd.focus();
 		document.form.http_passwd.select();
 		changeiuiBackground(0);
@@ -200,7 +204,7 @@ function submitForm(){
 		return;
 	}
 
-	if(document.form.http_passwd.value == 'admin' && parent.based_modelid == "RT-AC87U"){
+	if(document.form.http_passwd.value == 'admin' && parent.based_modelid == "RT-AC87U"){	//MODELDEP : RT-AC87U
 		if(http_passwd_flag == 0){
 			alert('The new password is the same as system default password. We strongly recommend that you set a more complex password.');
 			document.form.http_passwd.focus();
@@ -384,7 +388,7 @@ function clean_scorebar(obj){
 	<div id="adminPassDesc" class="QISTutorFont_admin_pass" style="height:200px;margin-left:-10px;">
 		<ul>
 			<li><#QIS_pass_desc3#>
-			<li><div id="general_desc4" style="display:none;"><#QIS_pass_desc4#></div><div id="tmo_desc4" style="display:none;"><#QIS_pass_desc4_tmo#></div>
+			<li id="point4"><div id="general_desc4" style="display:none;"><#QIS_pass_desc4#></div><div id="tmo_desc4" style="display:none;"><#QIS_pass_desc4_tmo#></div>
 			<li><#QIS_pass_desc5#>&nbsp;<% nvram_default_get("http_username"); %>&nbsp;/&nbsp;<% nvram_default_get("http_passwd"); %>
 		</ul>
 	</div>
@@ -394,11 +398,11 @@ function clean_scorebar(obj){
 
 <fieldset class="theFieldset" id="theFieldset2" style="display:none;">
 	<div class="row"><a id="loadingIcon_iui" class="iuiA" onclick="submitForm();"><#CTL_next#></a></div>
-	<div class="row_end"><a id="loadingIcon_skip" class="iuiA" onclick="skipsetting();">Skip</a></div>
+	<div class="row_end"><a id="loadingIcon_skip" class="iuiA" onclick="skipsetting();"><#CTL_Skip#></a></div>
 </fieldset>
 
 <div class="apply_gen" id="applyBtn">
-	<span id="skip_btn" style="display:none;"><input type="button" value="Skip" tabindex="6" onclick="skipsetting();" class="button_gen"></span>
+	<span id="skip_btn" style="display:none;"><input type="button" value="<#CTL_Skip#>" tabindex="6" onclick="skipsetting();" class="button_gen"></span>
 	<span id="prev_btn"><input type="button" value="<#CTL_prev#>" tabindex="6" onclick="gotoPrev();" class="button_gen"></span>
 	<input type="submit" id="nextButton" tabindex="5"	value="<#CTL_next#>" class="button_gen">
 </div>

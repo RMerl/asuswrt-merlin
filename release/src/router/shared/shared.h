@@ -137,13 +137,11 @@ extern const char *ipv6_gateway_address(void);
 #define ipv6_enabled()	(0)
 #endif
 extern void notice_set(const char *path, const char *format, ...);
-#ifdef REMOVE
-extern const dns_list_t *get_dns(void);
-#endif
 extern void set_action(int a);
 extern int check_action(void);
 extern int wait_action_idle(int n);
 extern int wl_client(int unit, int subunit);
+extern const char *_getifaddr(char *ifname, int family, int flags, char *buf, int size);
 extern const char *getifaddr(char *ifname, int family, int flags);
 extern long uptime(void);
 extern char *wl_nvname(const char *nv, int unit, int subunit);
@@ -316,10 +314,14 @@ extern void file_unlock(int lockfd);
 #define FW_APPEND	1
 #define FW_NEWLINE	2
 
+#define ACTION_LOCK_FILE "/var/lock/a_w_l" // action write lock
+
 extern unsigned long f_size(const char *path);
 extern int f_exists(const char *file);
 extern int d_exists(const char *path);
+extern int f_read_excl(const char *path, void *buffer, int max);
 extern int f_read(const char *file, void *buffer, int max);												// returns bytes read
+extern int f_write_excl(const char *path, const void *buffer, int len, unsigned flags, unsigned cmode);
 extern int f_write(const char *file, const void *buffer, int len, unsigned flags, unsigned cmode);		//
 extern int f_read_string(const char *file, char *buffer, int max);										// returns bytes read, not including term; max includes term
 extern int f_write_string(const char *file, const char *buffer, unsigned flags, unsigned cmode);		//
@@ -374,6 +376,20 @@ extern int f_wait_notexists(const char *name, int max);
 #define FAN_ON				3
 #define HAVE_FAN_OFF			4
 #define	HAVE_FAN_ON			5
+
+static inline int have_usb3_led(int model)
+{
+	switch (model) {
+		case MODEL_RTN18U:
+		case MODEL_RTAC56U:
+		case MODEL_RTAC56S:
+		case MODEL_RTAC68U:
+		case MODEL_DSLAC68U:
+		case MODEL_RTAC3200:
+			return 1;
+	}
+	return 0;
+}
 
 #define MAX_NR_WLVIF			3
 enum iface_id {
@@ -661,5 +677,19 @@ extern int psta_exist();
 extern int psta_exist_except(int unit);
 extern int psr_exist_except(int unit);
 extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
+
+enum {
+	YADNS_DISABLED = -1,
+	YADNS_BASIC,
+	YADNS_SAFE,
+	YADNS_FAMILY,
+	YADNS_COUNT,
+	YADNS_FIRST = YADNS_DISABLED + 1,
+};
+
+#ifdef RTCONFIG_YANDEXDNS
+#define YADNS_DNSPORT 1253
+int get_yandex_dns(int family, int mode, char **server, int max_count);
+#endif
 
 #endif

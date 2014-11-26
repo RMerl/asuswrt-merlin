@@ -199,7 +199,7 @@ int setAllLedOn_qtn(void)
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
-	ret = qcsapi_wifi_run_script("set_test_mode", "lan4_led_ctrl on");
+	ret = qcsapi_wifi_run_script("router_command.sh", "lan4_led_ctrl on");
 	if (ret < 0) {
 		fprintf(stderr, "ATE command error\n");
 		return -1;
@@ -227,7 +227,7 @@ int setAllLedOff_qtn(void)
 		return -1;
 	}
 
-	ret = qcsapi_wifi_run_script("set_test_mode", "lan4_led_ctrl off");
+	ret = qcsapi_wifi_run_script("router_command.sh", "lan4_led_ctrl off");
 	if (ret < 0) {
 		fprintf(stderr, "ATE command error\n");
 		return -1;
@@ -462,11 +462,11 @@ int GetPhyStatus_qtn(void)
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
-	ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_1000m");
+	ret = qcsapi_wifi_run_script("router_command.sh", "get_eth_1000m");
 	if (ret < 0) {
-		ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_100m");
+		ret = qcsapi_wifi_run_script("router_command.sh", "get_eth_100m");
 		if (ret < 0) {
-			ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_10m");
+			ret = qcsapi_wifi_run_script("router_command.sh", "get_eth_10m");
 			if (ret < 0) {
 				// fprintf(stderr, "ATE command error\n");
 				return 0;
@@ -698,36 +698,24 @@ int enable_qtn_telnetsrv(int enable_flag)
 		return -1;
 	}
 	if(enable_flag == 0){
-		ret = qcsapi_wifi_run_script("set_test_mode", "enable_telnet_srv 0");
+		nvram_set("QTNTELNETSRV", "0");
+		ret = qcsapi_wifi_run_script("router_command.sh", "enable_telnet_srv 0");
 	}else{
-		ret = qcsapi_wifi_run_script("set_test_mode", "enable_telnet_srv 1");
+		nvram_set("QTNTELNETSRV", "1");
+		ret = qcsapi_wifi_run_script("router_command.sh", "enable_telnet_srv 1");
 	}
 	if (ret < 0) {
 		fprintf(stderr, "[ate] set telnet server error\n");
 		return -1;
 	}
+	nvram_commit();
 	return 0;
 }
 
 int getstatus_qtn_telnetsrv(void)
 {
-	int ret;
-	char value[20] = {0};
+	puts(nvram_safe_get("QTNTELNETSRV"));
 
-	if (!rpc_qtn_ready()) {
-		fprintf(stderr, "ATE command error\n");
-		return -1;
-	}
-
-	ret = qcsapi_bootcfg_get_parameter("QTNTELNETSRV", value, sizeof(value));
-	if (ret < 0) {
-		fprintf(stderr, "[ate] get telnet server status error\n");
-		puts("0");
-		return -1;
-	}else{
-		fprintf(stderr, "[ate] get telnet server status:[%s]\n", value);
-		puts("1");
-	}
 	return 0;
 }
 
@@ -739,7 +727,7 @@ int del_qtn_cal_files(void)
 		fprintf(stderr, "ATE command error\n");
 		return -1;
 	}
-	ret = qcsapi_wifi_run_script("set_test_mode", "del_cal_files");
+	ret = qcsapi_wifi_run_script("router_command.sh", "del_cal_files");
 	if (ret < 0) {
 		fprintf(stderr, "[ate] delete calibration files error\n");
 		return -1;

@@ -1693,6 +1693,52 @@ safe_fork(int infd, int outfd, int errfd)
 	return 0;
 }
 
+static bool
+add_script_env(pos, newstring)
+    int pos;
+    char *newstring;
+{
+    if (pos + 1 >= s_env_nalloc) {
+	int new_n = pos + 17;
+	char **newenv = realloc(script_env, new_n * sizeof(char *));
+	if (newenv == NULL) {
+	    free(newstring - 1);
+	    return 0;
+	}
+	script_env = newenv;
+	s_env_nalloc = new_n;
+    }
+    script_env[pos] = newstring;
+    script_env[pos + 1] = NULL;
+    return 1;
+}
+
+static void
+remove_script_env(pos)
+    int pos;
+{
+    free(script_env[pos] - 1);
+    while ((script_env[pos] = script_env[pos + 1]) != NULL)
+	pos++;
+}
+
+/*
+ * update_system_environment - process the list of set/unset options
+ * and update the system environment.
+ */
+static void
+update_system_environment()
+{
+    struct userenv *uep;
+
+    for (uep = userenv_list; uep != NULL; uep = uep->ue_next) {
+	if (uep->ue_isset)
+	    setenv(uep->ue_name, uep->ue_value, 1);
+	else
+	    unsetenv(uep->ue_name);
+    }
+}
+
 /*
  * device_script - run a program to talk to the specified fds
  * (e.g. to run the connector or disconnector script).
@@ -1748,12 +1794,51 @@ device_script(program, in, out, dont_wait)
 	fprintf(stderr, "pppd: setuid failed\n");
 	exit(1);
     }
+    update_system_environment();
     execl("/bin/sh", "sh", "-c", program, (char *)0);
     perror("pppd: could not exec /bin/sh");
     _exit(99);
     /* NOTREACHED */
 }
 
+
+/*
+ * update_script_environment - process the list of set/unset options
+ * and update the script environment.  Note that we intentionally do
+ * not update the TDB.  These changes are layered on top right before
+ * exec.  It is not possible to use script_setenv() or
+ * script_unsetenv() safely after this routine is run.
+ */
+static void
+update_script_environment()
+{
+    struct userenv *uep;
+
+    for (uep = userenv_list; uep != NULL; uep = uep->ue_next) {
+	int i;
+	char *p, *newstring;
+	int nlen = strlen(uep->ue_name);
+
+	for (i = 0; (p = script_env[i]) != NULL; i++) {
+	    if (strncmp(p, uep->ue_name, nlen) == 0 && p[nlen] == '=')
+		break;
+	}
+	if (uep->ue_isset) {
+	    nlen += strlen(uep->ue_value) + 2;
+	    newstring = malloc(nlen + 1);
+	    if (newstring == NULL)
+		continue;
+	    *newstring++ = 0;
+	    slprintf(newstring, nlen, "%s=%s", uep->ue_name, uep->ue_value);
+	    if (p != NULL)
+		script_env[i] = newstring;
+	    else
+		add_script_env(i, newstring);
+	} else {
+	    remove_script_env(i);
+	}
+    }
+}
 
 /*
  * run_program - execute a program with given arguments,
@@ -1825,6 +1910,7 @@ run_program(prog, args, must_exist, done, arg, wait)
 #endif
 
     /* run the program */
+    update_script_environment();
     execve(prog, args, script_env);
     if (must_exist || errno != ENOENT) {
 	/* have to reopen the log, there's nowhere else
@@ -2047,25 +2133,16 @@ script_setenv(var, value, iskey)
     } else {
 	/* no space allocated for script env. ptrs. yet */
 	i = 0;
-	script_env = (char **) malloc(16 * sizeof(char *));
-	if (script_env == 0)
+	script_env = malloc(16 * sizeof(char *));
+	if (script_env == 0) {
+	    free(newstring - 1);
 	    return;
+	}
 	s_env_nalloc = 16;
     }
 
-    /* reallocate script_env with more space if needed */
-    if (i + 1 >= s_env_nalloc) {
-	int new_n = i + 17;
-	char **newenv = (char **) realloc((void *)script_env,
-					  new_n * sizeof(char *));
-	if (newenv == 0)
-	    return;
-	script_env = newenv;
-	s_env_nalloc = new_n;
-    }
-
-    script_env[i] = newstring;
-    script_env[i+1] = 0;
+    if (!add_script_env(i, newstring))
+	return;
 
 #ifdef USE_TDB
     if (pppdb != NULL) {
@@ -2096,9 +2173,7 @@ script_unsetenv(var)
 	    if (p[-1] && pppdb != NULL)
 		delete_db_key(p);
 #endif
-	    free(p-1);
-	    while ((script_env[i] = script_env[i+1]) != 0)
-		++i;
+	    remove_script_env(i);
 	    break;
 	}
     }

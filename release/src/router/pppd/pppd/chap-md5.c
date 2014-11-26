@@ -86,8 +86,7 @@ chap_md5_verify_response(int id, char *name,
 
 static void
 chap_md5_make_response(unsigned char *response, int id, char *our_name,
-		       unsigned char *challenge, char *secret, int secret_len,
-		       unsigned char *private)
+		       unsigned char *challenge, char *secret, int secret_len)
 {
 	MD5_CTX ctx;
 	unsigned char idbyte = id;

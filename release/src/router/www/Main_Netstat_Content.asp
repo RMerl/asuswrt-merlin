@@ -14,6 +14,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <style>
@@ -58,7 +59,7 @@
 <script>
 option_netstat = new Array("<#sockets_all#>","<#sockets_TCP#>","<#sockets_UDP#>","<#sockets_RAW#>","<#sockets_UNIX#>","<#sockets_listening#>","<#Display_routingtable#>");
 optval_netstat = new Array("-a","-t","-u","-w","-x","-l","-r");
-option_netstat_nat = new Array("Connections to NAT", "By source IP", "SNAT connections");
+option_netstat_nat = new Array("<#Netstatnat_option1#>", "<#Netstatnat_option2#>", "<#Netstatnat_option3#>");
 optval_netstat_nat = new Array("-L","-s","-S");
 	
 function key_event(evt){
@@ -331,7 +332,7 @@ function validForm(){
 										<tr id="targetip_tr" style="display:none;">
 											<th width="20%"><#NetworkTools_target#> IP</th>
 											<td>
-													<input type="text" id="targetip" class="input_15_table" maxlength="15" name="targetip" onKeyPress="return is_ipaddr(this,event)" onClick="hideClients_Block();">
+													<input type="text" id="targetip" class="input_15_table" maxlength="15" name="targetip" onKeyPress="return validator.isIPAddr(this,event)" onClick="hideClients_Block();">
 												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 											</td>										
@@ -340,11 +341,11 @@ function validForm(){
 											<th width="20%"><#NetworkTools_extended_option#></th>
 											<td>
 												<select id="ExtOption" class="input_option" name="ExtOption">
-													<option value="-r state" selected>Sort by state</option>
-													<option value="-r src">Sort by src</option>
-													<option value="-r dst">Sort by dst</option>
-													<option value="-r src-port">Sort by src-port</option>
-													<option value="-r dst-port">Sort by dst-port</option>
+													<option value="-r state" selected><#Netstatnat_sort_state#></option>
+													<option value="-r src"><#Netstatnat_sort_src#></option>
+													<option value="-r dst"><#Netstatnat_sort_dst#></option>
+													<option value="-r src-port"><#Netstatnat_sort_src_port#></option>
+													<option value="-r dst-port"><#Netstatnat_sort_dst_port#></option>
  												</select>
 											</td>										
 										</tr>						

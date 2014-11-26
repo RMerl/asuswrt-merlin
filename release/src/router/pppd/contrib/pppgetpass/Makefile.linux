@@ -3,9 +3,9 @@ all: pppgetpass.vt pppgetpass.gtk
 pppgetpass.vt: pppgetpass.vt.o
 
 pppgetpass.gtk: pppgetpass.gtk.o
-	$(CC) $(LDFLAGS) pppgetpass.gtk.o `gtk-config --libs` -o pppgetpass.gtk
+	$(CC) $(LDFLAGS) pppgetpass.gtk.o -o pppgetpass.gtk `pkg-config --libs glib-2.0 gtk+-2.0`
 pppgetpass.gtk.o: pppgetpass.gtk.c
-	$(CC) $(CFLAGS) -c pppgetpass.gtk.c `gtk-config --cflags`
+	$(CC) $(CFLAGS) -c pppgetpass.gtk.c `pkg-config --cflags glib-2.0 gtk+-2.0`
 
 install: all
 	install -m 755 pppgetpass.sh /usr/bin/pppgetpass

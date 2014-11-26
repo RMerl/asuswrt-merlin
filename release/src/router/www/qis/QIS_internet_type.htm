@@ -56,7 +56,10 @@ function QKinternettype_load_body(){
 	}
 	else{
 		parent.set_step("t2");
-		document.applyForm.wan_proto.value = '<% nvram_get("wan_proto"); %>';
+		if('<% nvram_get("autodet_state"); %>' == "6" || '<% nvram_get("autodet_auxstate"); %>' == "6")
+			document.applyForm.wan_proto.value = "pppoe"
+		else			
+			document.applyForm.wan_proto.value = '<% nvram_get("wan_proto"); %>';
 	
 		if(document.applyForm.wan_proto.value == 'pppoe')
 			inputCCtrl4(document.applyForm.x_WANType, 1);
@@ -437,64 +440,82 @@ function detect_if_wan_plug(flag){
 <div id='dhcppppoe_sec' style="margin-top:15px; margin-left:-40px;">
   <table id="tblsetting" class="QISform2" style="width:400px;margin-left:110px" border=0 align="left" cellpadding="2" cellspacing="0"> 
   	<tr>
-		  <td align="center"><input type="radio" id="d1" name="x_WANType" value="0" tabindex="1" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-		  <td class="wan_type_title"><label for="d1"><#BOP_ctype_title1#> (DHCP)</label></td>
-		</tr>
-		<tr>
-		  <td align="center"></td>
-		  <td><span class="wan_type_dec"><#BOP_ctype_item1#></span></td>
-		</tr>
-		<tr>
-		  <td align="center"><input type="radio" id="d2" name="x_WANType" value="1" tabindex="2" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-		  <td class="wan_type_title"><label for="d2">PPPoE </label></td>
-		</tr>
-		<tr>
-		  <td align="center"></td>
-		  <td><span class="wan_type_dec"><#BOP_ctype_item2#></span></td>
-		</tr>
+		<td align="center">
+			<input type="radio" id="d1" name="x_WANType" value="0" tabindex="1" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">
+		</td>
+		<td class="wan_type_title">
+			<label for="d1"><#BOP_ctype_title1#> (DHCP)</label>
+		</td>
+	</tr>
 
-		<tr id="wd3" style="display:none;">
-		  <td align="center"><input type="radio" id="d3" name="x_WANType" value="4" tabindex="3" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-		  <td class="wan_type_title"><label for="d3"><#BOP_ctype_title5#></label></td>
-		</tr>
-		<tr id="wd3_1" style="display:none;">
-		  <td align="center"></td>
-		  <td><span class="wan_type_dec"><#BOP_ctype_item5#></span></td>
-		</tr>
-		<tr id="wd4" style="display:none;">
-			<td align="center"><input type="radio" id="d4" name="x_WANType" value="2" tabindex="4" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-			<td class="wan_type_title"><label for="d4">PPTP</label></td>
-		</tr>
-		<tr id="wd4_1" style="display:none;">
-			<td align="center"></td>
-			<td><span class="wan_type_dec"><#BOP_ctype_item3#></span></td>
-		</tr>
-		<tr id="wd5" style="display:none;">
-			<td align="center"><input type="radio" id="d5" name="x_WANType" value="3" tabindex="5" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-			<td class="wan_type_title"><label for="d5">L2TP </label></td>
-		</tr>
-		<tr id="wd5_1" style="display:none;">
-		  <td align="center"></td>
-		  <td><span class="wan_type_dec"><#BOP_ctype_item4#></span></td>
-		</tr>
+	<tr height="40px">
+		<td align="center"></td>
+		<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item1#></span></td>
+	</tr>
+	
+	<tr>
+		<td align="center"><input type="radio" id="d2" name="x_WANType" value="1" tabindex="2" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
+		<td class="wan_type_title"><label for="d2">PPPoE </label></td>
+	</tr>
 
-		<tr id="specialISP_tr">
-			<td align="center">
-        <input type="checkbox" id="specialisp" name="specialisp" onclick="hide_specialISP();">
-			</td>
-			<td><label for="specialisp">
+	<tr height="40px">
+		<td align="center"></td>
+		<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item2#></span></td>
+	</tr>
+
+	<tr id="wd3" style="display:none;">
+		<td align="center">
+			<input type="radio" id="d3" name="x_WANType" value="4" tabindex="3" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">
+		</td>
+		<td class="wan_type_title"><label for="d3"><#BOP_ctype_title5#></label></td>
+	</tr>
+
+	<tr height="40px" id="wd3_1" style="display:none;">
+		<td align="center"></td>
+		<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item5#></span></td>
+	</tr>
+	
+	<tr id="wd4" style="display:none;">
+		<td align="center">
+			<input type="radio" id="d4" name="x_WANType" value="2" tabindex="4" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">
+		</td>
+		<td class="wan_type_title"><label for="d4">PPTP</label></td>
+	</tr>
+	
+	<tr height="40px" id="wd4_1" style="display:none;">
+		<td align="center"></td>
+		<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item3#></span></td>
+	</tr>
+	
+	<tr id="wd5" style="display:none;">
+		<td align="center"><input type="radio" id="d5" name="x_WANType" value="3" tabindex="5" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
+		<td class="wan_type_title"><label for="d5">L2TP </label></td>
+	</tr>
+
+	<tr height="40px" id="wd5_1" style="display:none;">
+		<td align="center"></td>
+		<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item4#></span></td>
+	</tr>
+
+	<tr id="specialISP_tr">
+		<td align="center">
+    	    <input type="checkbox" id="specialisp" name="specialisp" onclick="hide_specialISP();">
+		</td>
+		<td>
+			<label for="specialisp">
 				<span class="QISGeneralFont" style="margin-left:0px;font-style:normal;color:#66CCFF;font-size:12px;font-weight:bolder;"><#PPPConnection_x_HostNameForISP_sectionname#></span>
-			</label></td>
-		</tr>
+			</label>
+		</td>
+	</tr>
 
-		<tr>
-			<td align="center" colspan="2">
-				<div id="apply_gen" class="apply_gen">
-				 	<input id="ruisp_btn" type="button" value="Russia ISP" tabindex="7" onclick="location.href='QIS_internet_ruisp.htm';" class="button_gen" width="70px" align="center" style="display:none;">
-				 	<input id="ff123" name="ff123" type="button" value="<#CTL_next#>" tabindex="6" onclick="submitForm();" class="button_gen" width="70px" align="center">
-				</div>
-			</td>
-		</tr>
+	<tr>
+		<td align="center" colspan="2">
+			<div id="apply_gen" class="apply_gen">
+				<input id="ruisp_btn" type="button" value="Russia ISP" tabindex="7" onclick="location.href='QIS_internet_ruisp.htm';" class="button_gen" width="70px" align="center" style="display:none;">
+				<input id="ff123" name="ff123" type="button" value="<#CTL_next#>" tabindex="6" onclick="submitForm();" class="button_gen" width="70px" align="center">
+			</div>
+		</td>
+	</tr>
 
   </table> 
 </div>   
@@ -577,7 +598,7 @@ function detect_if_wan_plug(flag){
 	<fieldset class="theFieldset" id="unifyBtn">
 		<div class="row_end">
 			<a class="iuiA_unsel_check" id="unify_switcher" onclick="document.applyForm.specialisp.checked=this.getAttribute('myselected');mySel(this, false);" myselected="false">Unify</a>
-			<span class="sel_check" onclick='showHidden_slide("field_mobile_unify", ["internetType_m", "unifyBtn", "theDesc"]);'><img width="50px" src="/iui/listArrow_setting.png" style="position:relative;left:20"></span>
+			<span class="sel_check" onclick='showHidden_slide("field_mobile_unify", ["internetType_m", "unifyBtn", "theDesc"]);'></span>
 		</div>
 	</fieldset>
 
@@ -600,9 +621,7 @@ function detect_if_wan_plug(flag){
 			</div>
 			<div class="row_end">
 				<a class="iuiA_unsel_check" onclick="document.applyForm.switch_wantag.value='manual';mySel(this, false);" myselected="false"><#Manual_Setting_btn#></a>
-				<span class="sel_check" onclick='showHidden_slide("unify_input", ["field_mobile_unify"]);'>
-					<img width="50px" src="/iui/listArrow_setting.png">
-				</span>
+				<span class="sel_check" onclick='showHidden_slide("unify_input", ["field_mobile_unify"]);'></span>
 			</div>
 		</fieldset>
 		<div class="QISGeneralFont" id="voipport" style="margin-left:0px;">VoIP Port: <b style="color:#FC0">LAN3</b></div>

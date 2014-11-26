@@ -25,12 +25,19 @@ PCIE_PROG_OBJS = \
 	qcsapi_rpc/client/pcie/qcsapi_pcie_rpc_client.o	\
 	qcsapi_rpc_common/client/rpc_pci_clnt.o	\
 
+SOCKET_RAW_PROG_OBJS = \
+	$(COMMON_PROG_OBJS)				\
+	qcsapi_rpc/client/socket_raw/qcsapi_socketraw_rpc_client.o	\
+	qcsapi_rpc_common/client/rpc_raw_clnt.o	\
+	qcsapi_rpc_common/common/rpc_raw.o
+
 LIB_OBJS = \
 	qcsapi_rpc/generated/qcsapi_rpc_xdr.o	\
 	qcsapi_rpc/generated/qcsapi_rpc_clnt_adapter.o	\
 
-#TARGETS = c_rpc_qcsapi_sample qcsapi_sockrpc qcsapi_sockrpc_static qcsapi_pcie qcsapi_pcie_static $(LIB_REALNAME)
-TARGETS = qcsapi_sockrpc $(LIB_REALNAME)
+TARGETS = qcsapi_sockrpc \
+	qcsapi_sockraw \
+	$(LIB_REALNAME)
 
 all: $(TARGETS)
 
@@ -56,6 +63,12 @@ qcsapi_sockrpc: ${SOCKET_PROG_OBJS:%=build/%} $(LIB_REALNAME)
 qcsapi_sockrpc_static: ${SOCKET_PROG_OBJS:%=build/%} ${LIB_OBJS}
 	${CC} $(filter %.o, $^) -o $@
 
+qcsapi_sockraw: ${SOCKET_RAW_PROG_OBJS:%=build/%} $(LIB_REALNAME)
+	${CC} $(filter %.o, $^) -L. -l$(LIB_NAME) -o $@
+
+qcsapi_sockraw_static: ${SOCKET_RAW_PROG_OBJS:%=build/%} ${LIB_OBJS}
+	${CC} $(filter %.o, $^) -o $@
+
 $(LIB_REALNAME): ${LIB_OBJS:%=build/%}
 	${CC} -shared -s -o $@ -Wl,-soname,$(LIB_SONAME) -lc $^
 	cd ${@D} ; ln -fs $(LIB_REALNAME) $(LIB_SONAME)
@@ -66,5 +79,5 @@ build/%.o: %.c
 	${CC} ${CFLAGS} $< -c -o $@ -MD -MF $@.d
 
 clean:
-	rm -rf build $(LIB_LDNAME)* $(TARGETS)
+	rm -rf build $(LIB_LDNAME)* $(TARGETS) $(LIB_OBJS)
 

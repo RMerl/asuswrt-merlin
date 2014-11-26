@@ -99,7 +99,7 @@ static int icmp_recv (int fd)
 		if (icmp6.nd_ra_router_lifetime == 0)
 		{
 			mylog("IPv6 router lifetime reach 0");
-			system("rc rc_service stop_ipv6");
+			system("stop_ipv6");
 			last_flag = 1;
 			return 0;
 		}
@@ -108,7 +108,7 @@ static int icmp_recv (int fd)
 		if (flags != last_flag)
 		{
 			if (last_flag != 1)
-				system("rc rc_service stop_ipv6");
+				system("stop_ipv6");
 			mylog("Get IPv6 address from %s & DNS from %s",
 				(flags & ND_RA_FLAG_MANAGED) ? "DHCPv6" : "RA",
 				(flags & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER)) ? "DHCPv6" : "RA");
@@ -118,7 +118,7 @@ static int icmp_recv (int fd)
 				nvram_set("ipv6_ra_conf", "oset");
 			else
 				nvram_set("ipv6_ra_conf", "noneset");
-			system("rc rc_service start_dhcp6c");
+			system("start_dhcp6c");
 			last_flag = flags;
 
 			if ((flags & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER)) == 0 &&

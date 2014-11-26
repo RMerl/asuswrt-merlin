@@ -14,7 +14,6 @@
 <script type="text/javascript" src="/state.js"></script>
 <!--<script type="text/javascript" src="/popup.js"></script>-->
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/md5.js"></script>
 <!--<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>-->
@@ -29,7 +28,6 @@ var restart_time = 0;
 
 var $j = jQuery.noConflict();
 
-<% login_state_hook(); %>
 <% wanlink(); %>
 
 var process_times = 0;
@@ -70,8 +68,8 @@ function initial(){
 			if(tmo_support)
 				var theUrl = "cellspot.router"; 
 			else
-				var theUrl = "router.asus.com";	
-			$("aicloud_main_text").innerHTML = 'Invalid IP Address! You can set wan ip <a href="Advanced_WAN_Content.asp" style="text-decoration:underline">here</a>, or go to <a href="https://'+ theUrl +'" style="text-decoration:underline">aicloud</a>.';
+				var theUrl = "router.asus.com";
+			$("aicloud_main_text").innerHTML = "<#AiCloud_maintext_note0#>"+ theUrl +"<#AiCloud_maintext_note1#>";
 		}
 	}
 	else{
@@ -217,18 +215,10 @@ function restart_needed_time(second){
 	<div style="width:95%;height:500px;position:relative;padding:10px;font-style:italic;font-size:14px;background-color:#21333E;color:#fff">
 		<div style="background-image:url('/images/aicloud_logo.png');width:250px;height:50px;left:110px;top:80px;position:absolute;"></div>
 		<div id="aicloud_main_text" style="width:320px;position:absolute;top:150px;left:120px;font-size:18px;">
-			ASUS AiCloud 2.0 keeps you connected to your
-		data wherever and whenever you have an
-		Internet connection. It links your home
-		network and online Web storage service*
-		and lets you access it through the AiCloud 2.0
-		mobile app on your iOS or Android
-		smartphone or through a personalized URL
-		in a Web browser. Now all your data can go
-		where you do.
+			<#AiCloud_maintext_note#>
 		</div>
 		<div id="aicloud_learn_more" style="position:absolute;top:400px;left:370px">
-			<a href="#" style="font-weight: bolder;text-decoration: underline;" target="_blank">Learn more</a>
+			<a href="#" style="font-weight: bolder;text-decoration: underline;" target="_blank"><#Learn_more#></a>
 		</div>
 		
 		<div id="process_status" style="position:absolute;top:250px;left:570px;font-size:24px;display:none">		

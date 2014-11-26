@@ -23,7 +23,6 @@
 
 var remoteIP = '<% nvram_get("lan_gateway"); %>';
 var reIP = '<% nvram_get("lan_ipaddr"); %>';
-var clientIP = login_ip_str_now();
 
 function initial(){
 
@@ -32,7 +31,7 @@ function initial(){
 	document.getElementById("repeaterIP").innerHTML = reIP;
 	document.getElementById("repeaterIP2").innerHTML = reIP;
 
-	document.getElementById("clientIP").innerHTML = clientIP;
+	document.getElementById("clientIP").innerHTML = login_ip_str_now();
 }
 
 function gotoAdvSetting(){

@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=1"/>
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
@@ -11,9 +12,13 @@
 <!--link rel="stylesheet" type="text/css" href="form_style.css"-->
 <!--link rel="stylesheet" type="text/css" href="other.css"-->
 <style>
-	body {
+.page_body{
 	background-color:#21333e;
 	margin:10px auto;
+}
+.page_body_mobile{
+	background-color:black;
+	margin:0px auto;
 }
 .loadingBarBlock{
 	filter:alpha(opacity=90);
@@ -24,7 +29,6 @@
 	behavior: url(/PIE.htc);
 	border-radius: 10px 10px 10px 10px;
 	border: 0px;
-	/*margin-top:200px;*/
 	width:300px;
 	font-size:12px;
 	font-family:Verdana, Arial, Helvetica, sans-serif;
@@ -58,12 +62,6 @@
 	background: -ms-linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* IE10+ */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7d7e7d', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
 	background: linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* W3C */
-	-webkit-border-top-left-radius: 10px;
-	-webkit-border-top-right-radius: 10px;
-	-moz-border-radius-topleft: 10px;
-	-moz-border-radius-topright: 10px;
-	border-top-left-radius: 10px;
-	border-top-right-radius: 10px;
 }
 
 .erTable tbody th{
@@ -89,6 +87,7 @@
 	-moz-border-radius-bottomleft: 10px;
 	border-bottom-right-radius: 10px;
 	border-bottom-left-radius: 10px;
+	
 }
 .Epagecontent{
 	font-size:12px;
@@ -118,7 +117,6 @@
 	color:#FC0;
 	background-color:#000000;
 	font-weight:bolder;
-	width:450px;
 	height:30px;
 	line-height:24px;
 	margin:5px 0px 0px 20px;
@@ -195,6 +193,40 @@
 	outline: none; /* for Firefox */
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
 }
+
+.radius{
+	-webkit-border-top-left-radius: 10px;
+	-webkit-border-top-right-radius: 10px;
+	-moz-border-radius-topleft: 10px;
+	-moz-border-radius-topright: 10px;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px
+}
+
+.footer_mobile{
+	height:36px;
+	background: #0e0e0e; /* Old browsers */
+	background: -moz-linear-gradient(top, #0e0e0e 0%, #7d7e7d 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#0e0e0e), color-stop(100%,#7d7e7d)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Opera11.10+ */
+	background: -ms-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* IE10+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0e0e0e', endColorstr='#7d7e7d',GradientType=0 ); /* IE6-9 */
+	background: linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* W3C */
+	box-sizing:border-box;
+	position:relative;
+	bottom:0;
+	height:36px;
+	width:100%;
+}
+
+.content_block{
+	width:500px;
+	margin:40px auto 0px auto;
+}
+.content_block_mobile{
+	width:100%;
+}
 </style>	
 <script type="text/JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
@@ -211,11 +243,7 @@ var _wlc_ssid = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wlc
 // get the wan state at the first time.
 <% wanstate(); %>
 <% login_state_hook(); %>
-var LoginIP = login_ip_str();
-var nowIP = login_ip_str_now();
-
 var done_setting_lan = 0;
-
 var winH, winW;
 var progress, y;
 
@@ -230,40 +258,73 @@ if(tmo_support)
 else
         var theUrl = "router.asus.com";
 
+//Dual WAN unit
+var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
+if(wans_dualwan_orig.search(" ") == -1)
+        var wans_flag = 0;
+else
+        var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+
 var casenum = '<% get_parameter("flag"); %>';
 
+var dsl_support = isSupport("dsl");
+
 function initial(){
+	var LoginIP = login_ip_str();
+	var nowIP = login_ip_str_now();
+	
+	if(isMobile()){
+		document.getElementById('body_tag').className = "page_body_mobile";
+		document.getElementById('main_content').className = "content_block_mobile";
+		document.getElementById('footer').className = "";
+		document.getElementById('failReason').style.fontSize = "16px";
+		document.getElementById('suggestion_block').style.fontSize = "16px";
+	}
+	else{
+		document.getElementById('table_head').className = "radius";
+	}
+	
 	var html_code = '';
 	var html_code_notlogin = "<ul>\n<li>Please check with your network administrator.</li>\n</ul>\n";	
-	
 	hideLinkTag();
-	
 	if(casenum == 1){
 		showtext($("#failReason1")[0], "<#web_redirect_reason1#>");
-		
-		$("#case1").show();
+		html_code += "<ul>";
+		html_code += "<li><#web_redirect_suggestion1#></li>";
+		html_code += "</ul>";
 	}
 	else if(casenum == 2){
+		html_code += "<ul>";					
+		html_code += "<li>";												
 		if(wansbstate == 2 || wanauxstate == 3){
-			showtext($("#failReason1")[0], "<#web_redirect_reason2_1#>");
-			
-			$("#ppp_input_error").show();
+			showtext($("#failReason1")[0], "<#web_redirect_reason2_1#>");			
+			html_code += "<div>";
+			html_code += "<a href='javascript:pppoeLink();' style='color:#569AC7;text-decoration:underline;'><#web_redirect_suggestion2_1#></a>";
+			html_code += "<span><#web_redirect_suggestion2_1_desc#></span>";
+			html_code += "</div>";
 		}
 		else{
 			showtext($("#failReason1")[0], "<#web_redirect_reason2_2#>");
-			
-			$("#ppp_no_response").show();
-		}
+			html_code += "<div>";
+			html_code += "<a href='javascript:detectLink();' style='color:#569AC7; text-decoration:underline;'><#web_redirect_suggestion2_2#></a>";
+			html_code += "<span><#web_redirect_suggestion2_2_desc#></span>";
+			html_code += "</div>";		
+		}	
 		
-		$("#case2").show();
+		html_code += "</li>";					
+		html_code += "</ul>";	
 	}
 	else if(casenum == 3){
 		showtext($("#failReason1")[0], "<#qis_fail_desc5#>");
+		html_code += "<ul>";
+		html_code += "<li><#web_redirect_suggestion3#></li>";
+		html_code += "</ul>";
 	}
 	else if(casenum == 4){
 		showtext($("#failReason1")[0], "<#web_redirect_reason4#>");
-		
-		$("#case4").show();
+		html_code += "<ul>";					
+		html_code += "<li><#web_redirect_suggestion4#></li>";					
+		html_code += "</ul>";		
 	}
 	else if(casenum == 5){
 		if(wanstate == 5)
@@ -276,70 +337,85 @@ function initial(){
 			html_code += '<li><#web_redirect_suggestion5_1#></li>\n';
 		else
 			html_code += '<li><#web_redirect_suggestion5_2#></li>\n';
-		html_code += '</ul>\n';
 		
+		html_code += '</ul>\n';
 		if(wanstate == 5){
 			html_code += '<ul>\n';
 			html_code += '<li><a href="javascript:manually_start_wan_Link();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion_manually_start_wan#></a></li>\n';
 			html_code += '</ul>\n';
-		}
-		
-		$("#case5")[0].innerHTML = html_code;
-		$("#case5").show();
+		}	
 	}
 	else if(casenum == 6){
 		new_lan_ip = get_new_lanip();
-
 		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
-					showtext($("#failReason1")[0], "IP conflict detected. Please check again.");
-					$("#case6")[0].innerHTML = html_code_notlogin;
-					$("#Epage_Suggest1")[0].style.display= "none";
-					$("#Epage_Suggest2")[0].style.display= "";
+			showtext($("#failReason1")[0], "IP conflict detected. Please check again.");
+			html_code = html_code_notlogin;
+			$("#Epage_Suggest1")[0].style.display= "none";
+			$("#Epage_Suggest2")[0].style.display= "";
 		}else{		
-				showtext($("#failReason1")[0], "<#web_redirect_reason6#>");
-				html_code += "<ul>\n";
-				html_code += "<li><#web_redirect_case6_desc1#><br>";
-				html_code += "<B>"+new_lan_ip+"</B></li>\n";
-				html_code += "<li><#web_redirect_case6_desc2#></li>\n";
-				html_code += "</ul>\n";
-				html_code += "<br>\n";
-				html_code += "<div style=\"text-align: right;\">\n";
-				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"change_lan_subnet();\" value=\"<#CTL_next#>\">\n";
-				html_code += "</div>\n";	
-				$("#case6")[0].innerHTML = html_code;
+			showtext($("#failReason1")[0], "<#web_redirect_reason6#>");
+			html_code += "<ul>\n";
+			html_code += "<li><#web_redirect_case6_desc1#><br>";
+			html_code += "<B>"+new_lan_ip+"</B></li>\n";
+			html_code += "<li><#web_redirect_case6_desc2#></li>\n";
+			html_code += "</ul>\n";
+			html_code += "<br>\n";
+			html_code += "<div style=\"text-align: right;\">\n";
+			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"change_lan_subnet();\" value=\"<#CTL_next#>\">\n";
+			html_code += "</div>\n";	
 		}			
-		$("#case6").show();
+
 		$("#suggestion").hide();
 	}
 	else if(casenum == 8){
-		
 		showtext($("#failReason1")[0], "<#APSurvey_action_ConnectingStatus0#>");		
 		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
-					$("#case8")[0].innerHTML = html_code_notlogin;
-					$("#Epage_Suggest1")[0].style.display= "none";
-					$("#Epage_Suggest2")[0].style.display= "";
+			html_code = html_code_notlogin;
+			$("#Epage_Suggest1")[0].style.display= "none";
+			$("#Epage_Suggest2")[0].style.display= "";
 		}
 		else{		
-				html_code += "<ul>\n";
-				html_code += "<li><#APSurvey_action_search_again_hint2#>";
-				html_code += "<span style=\"text-align: right;\">\n";
-				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://"+ theUrl +"/QIS_wizard.htm?flag=sitesurvey\';\" value=\"<#QIS_rescan#>\">";
-				html_code += "</span>\n";
-				html_code += "</li>\n";
-
-				html_code += "<li><#QKSet_finish_moveto8#>";
-				html_code += "<span style=\"text-align: right;\">\n";
-				html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'QIS_wizard.htm?flag=manual\';\" value=\"<#Manual_Setting_btn#>\">";
-				html_code += "</span>\n";
-				html_code += "</li>\n";
-				html_code += "</ul>\n";			
-				$("#case8")[0].innerHTML = html_code;				
+			html_code += "<ul>\n";
+			html_code += "<li><#APSurvey_action_search_again_hint2#>";
+			html_code += "<span style=\"text-align: right;\">\n";
+			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://"+ theUrl +"/QIS_wizard.htm?flag=sitesurvey\';\" value=\"<#QIS_rescan#>\">";
+			html_code += "</span>\n";
+			html_code += "</li>\n";
+			html_code += "<li><#QKSet_finish_moveto8#>";
+			html_code += "<span style=\"text-align: right;\">\n";
+			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'QIS_wizard.htm?flag=manual\';\" value=\"<#Manual_Setting_btn#>\">";
+			html_code += "</span>\n";
+			html_code += "</li>\n";
+			html_code += "</ul>\n";						
 		}
-		$("#case8").show();
+		
 		$("#suggestion").hide();
 	}
 	else{
 		parent.location = "/index.asp";
+	}
+	
+	if(tmo_support && isMobile()){
+		$('#Epage_Suggest').hide();
+		$('#suggestion_block').hide();
+	}
+	
+	$("#case_content")[0].innerHTML = html_code;
+}
+
+function isMobile(){
+	if(	navigator.userAgent.match(/iPhone/i) || 
+		navigator.userAgent.match(/iPod/i)    ||
+		navigator.userAgent.match(/iPad/i)    ||
+		(navigator.userAgent.match(/Android/i) && (navigator.userAgent.match(/Mobile/i) || navigator.userAgent.match(/Tablet/i))) ||
+		(navigator.userAgent.match(/Opera/i) && (navigator.userAgent.match(/Mobi/i) || navigator.userAgent.match(/Mini/i))) ||		// Opera mobile or Opera Mini
+		navigator.userAgent.match(/IEMobile/i)	||		// IE Mobile
+		navigator.userAgent.match(/BlackBerry/i)		//BlackBerry
+	 ){
+		return true;
+	}
+	else{
+		return false;
 	}
 }
 
@@ -358,7 +434,24 @@ function hideLinkTag(){
 }
 
 function wanLink(){
-	location.href = "/Advanced_WAN_Content.asp";
+	if(wans_flag){
+                if(wans_dualwan_orig.split(" ")[0].toUpperCase == "USB")
+                        location.href = '/Advanced_Modem_Content.asp';
+                else if(dsl_support){
+                        if(wans_dualwan_orig.split(" ")[0].toUpperCase == "WAN" || wans_dualwan_orig.split(" ")[0].toUpperCase == "LAN")
+                                location.href = '/Advanced_WAN_Content.asp';
+                        else
+                                location.href = '/Advanced_DSL_Content.asp';
+                }
+                else
+                        location.href = '/Advanced_WAN_Content.asp';
+        }
+        else{
+                if(dsl_support)                 
+                        location.href = '/Advanced_DSL_Content.asp';
+                else
+                        location.href = '/Advanced_WAN_Content.asp';
+        }
 }
 
 function pppoeLink(){
@@ -375,9 +468,7 @@ function manually_start_wan_Link(){
 
 function change_lan_subnet(){
 	showLoadingBar(reboot_time);
-	
 	send_setting();
-	
 	setTimeout("check_system_ready();", reboot_time*1000);
 }
 
@@ -433,14 +524,11 @@ function get_new_lanip(){
 				return "192.168.24.1";
 		else
 				return "192.168.29.1";	
-		
 	}
 	else{
-		
 		var reverse_mask_num = ~(inet_aton(current_mask));
 		var current_lanip_num = inet_aton(current_lanip);
-		var new_lanip_num = current_lanip_num+reverse_mask_num+1;
-			
+		var new_lanip_num = current_lanip_num+reverse_mask_num+1;	
 		return inet_ntoa(new_lanip_num);
 	}	
 }
@@ -454,8 +542,7 @@ function inet_aton(ip_str){
 		var v1 = parseInt(RegExp.$1);
 		var v2 = parseInt(RegExp.$2);
 		var v3 = parseInt(RegExp.$3);
-		var v4 = parseInt(RegExp.$4);
-		
+		var v4 = parseInt(RegExp.$4);	
 		if(v1 < 256 && v2 < 256 && v3 < 256 && v4 < 256)
 			return v1*256*256*256+v2*256*256+v3*256+v4;
 	}
@@ -474,7 +561,7 @@ function inet_ntoa(ip_num){
 	v2 = (ip_num&0x00ff0000)>>>16;
 	v3 = (ip_num&0x0000ff00)>>>8;
 	v4 = (ip_num&0x000000ff);
-	
+
 	ip_str = v1+"."+v2+"."+v3+"."+v4;
 	
 	return ip_str;
@@ -541,117 +628,69 @@ function hideLoadingBar(){
 </script>
 </head>
 
-<body onload="initial();">
-<div id="LoadingBar" class="popup_bar_bg">
-<table cellpadding="5" cellspacing="0" id="loadingBarBlock" class="loadingBarBlock" align="center">
-	<tr>
-		<td height="80">
-		<div class="Bar_container">
-			<span id="proceeding_img_text"></span>
-			<div id="proceeding_img"></div>
-		</div>
-		<div id="proceeding_action" style="margin:5px auto; width:85%;">Changing the local subnet...</div>
-		</td>
-	</tr>
-</table>
-<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
-</div>
+<body id="body_tag" onload="initial();" class="page_body">
+	<div id="LoadingBar" class="popup_bar_bg">
+		<table cellpadding="5" cellspacing="0" id="loadingBarBlock" class="loadingBarBlock" align="center">
+			<tr>
+				<td height="80">
+					<div class="Bar_container">
+						<span id="proceeding_img_text"></span>
+						<div id="proceeding_img"></div>
+					</div>
+					<div id="proceeding_action" style="margin:5px auto; width:85%;">Changing the local subnet...</div>
+				</td>
+			</tr>
+		</table>
+	<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
+	</div>
 
-<br><br>
-<table width="500" border="0" align="center" cellspacing="0" class="erTable">
-<thead>
-  <tr>
-    <td height="52" align="left" valign="top"><span class="modelName"><#Web_Title2#></span></td>
-  </tr>
-</thead>
-  <tr>
-    <th valign="top" height="60px" background="images/statusTitle.gif"><div class="er_title"><#web_redirect_message#></div></th>
-  </tr>
-  
-
-  <tr>
-    <td  valign="top" class="erpage_td">
-  	  <!--div class="alertImg"><img src="images/alertImg.png"></div-->
-  	  <span class="Epagetitle"><#web_redirect_fail_reason0#> :</span>
-	  
-	  <div id="failReason" class="Epagecontent" style="color:red">
-	    <ul>
-		  <li>
-		    <span id="failReason1"></span>
-		  </li>
-	    </ul>
-	  </div>
-	  
-		<div class="Epagetitle">
-		<div id="Epage_Suggest1"><span><#web_redirect_suggestion0#>: (<#web_redirect_suggestion0_1#>)</span></div>
-			<div id="Epage_Suggest2" style="display:none;"><span><#web_redirect_suggestion0#>: </span></div>	
-		</div>
-	<!--span id="suggestion_title" class="Epagetitle"><#web_redirect_suggestion0#>: (<#web_redirect_suggestion0_1#>)</span-->
-	<div class="Epagecontent">
-		<div id="case1" style="display:none;">
-		  <ul>
-			 <li><#web_redirect_suggestion1#></li>
-		  </ul>
-		</div>
+	<div id="main_content" class="content_block">   
+		<table style="width:100%" border="0" align="center" cellspacing="0" class="erTable">
+			<thead>
+				<tr>
+					<td id="table_head" height="52" align="left" valign="top"><span class="modelName"><#Web_Title2#></span></td>
+				</tr>
+			</thead>
+			<tr>
+				<th valign="top" height="60px" background="images/statusTitle.gif"><div class="er_title"><#web_redirect_message#></div></th>
+			</tr>
 		
-		<div id="case2" style="display:none;">
-		  <ul>
-			 <li>
-			 	<div id="ppp_input_error" style="display:none;">
-			 	  <a href="javascript:pppoeLink();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion2_1#></a>
-			 	  <span><#web_redirect_suggestion2_1_desc#></span>
-			 	</div>
-			 	
-			 	<div id="ppp_no_response" style="display:none;">
-			 	  <a href="javascript:detectLink();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion2_2#></a>
-			 	  <span><#web_redirect_suggestion2_2_desc#></span>
-			 	</div>
-			 </li>
-		  </ul>
-		</div>
-		
-		<div id="case3" style="display:none;">
-		  <ul>
-			 <li><#web_redirect_suggestion3#></li>
-		  </ul>
-		</div>
-		
-		<div id="case4" style="display:none;">
-		  <ul>	  	
-			 <li><#web_redirect_suggestion4#></li>
-		  </ul>
-		</div>
-		
-		<div id="case5" style="display:none;"></div>
-		
-		<div id="case6" style="display:none;">
-			<ul>
-				<li><#web_redirect_suggestion6#></li>
-			</ul>
-		</div>
-		
-		<div id="case8" style="display:none;">
-			<ul>
-				<li><#APSurvey_action_ConnectingStatus0#></li>
-			</ul>
-		</div>
-
-		<div id="suggestion" style="display:;">
-		<ul>
-		  <li>
-		  	<span id="suggestion_final"><#web_redirect_suggestion_final#></span>&nbsp;
-		  	<a href="javascript:wanLink();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion_etc#></a>&nbsp;
-		   	<span><#web_redirect_suggestion_etc_desc#></span>
-		  </li>
-		</ul>
-		</div>
-	  </div>
-	</td>
-  </tr>
-  
-  <tr>
-    <td height="22" class="erpage_footer"><span></span></td>
-  </tr>
-</table>
+			<tr>
+				<td  valign="top" class="erpage_td">
+					<!--div class="alertImg"><img src="images/alertImg.png"></div-->
+					<span class="Epagetitle"><#web_redirect_fail_reason0#> :</span>
+				  
+					<div id="failReason" class="Epagecontent" style="color:red">
+						<ul>
+							<li>
+								<span id="failReason1"></span>
+							</li>
+						</ul>
+					</div>
+				  
+					<div id="Epage_Suggest" class="Epagetitle">
+						<div id="Epage_Suggest1"><span><#web_redirect_suggestion0#>: (<#web_redirect_suggestion0_1#>)</span></div>
+						<div id="Epage_Suggest2" style="display:none;"><span><#web_redirect_suggestion0#>: </span></div>	
+					</div>
+					<div id="suggestion_block" class="Epagecontent">
+						<div id="case_content"></div>
+						<div id="suggestion" style="">
+							<ul>
+								<li>
+									<span id="suggestion_final"><#web_redirect_suggestion_final#></span>&nbsp;
+									<a href="javascript:wanLink();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion_etc#></a>&nbsp;
+									<span><#web_redirect_suggestion_etc_desc#></span>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</td>
+			</tr>
+		  
+			<tr>
+				<td id="footer" height="22" class="erpage_footer"><span></span></td>
+			</tr>
+		</table>
+	</div>
 </body>
 </html>

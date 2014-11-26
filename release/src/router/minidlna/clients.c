@@ -240,7 +240,7 @@ struct client_type_s client_types[] =
 
 struct client_cache_s clients[CLIENT_CACHE_SLOTS];
 
-int
+struct client_cache_s *
 SearchClientCache(struct in_addr addr, int quiet)
 {
 	int i;
@@ -263,20 +263,20 @@ SearchClientCache(struct in_addr addr, int quiet)
 				else
 				{
 					memset(&clients[i], 0, sizeof(struct client_cache_s));
-					return -1;
+					return NULL;
 				}
 			}
 			if (!quiet)
 				DPRINTF(E_DEBUG, L_HTTP, "Client found in cache. [%s/entry %d]\n",
-					client_types[clients[i].type].name, i);
-			return i;
+					clients[i].type->name, i);
+			return &clients[i];
 		}
 	}
 
-	return -1;
+	return NULL;
 }
 
-int
+struct client_cache_s *
 AddClientCache(struct in_addr addr, int type)
 {
 	int i;
@@ -287,15 +287,15 @@ AddClientCache(struct in_addr addr, int type)
 			continue;
 		get_remote_mac(addr, clients[i].mac);
 		clients[i].addr = addr;
-		clients[i].type = type;
+		clients[i].type = &client_types[type];
 		clients[i].age = time(NULL);
 		DPRINTF(E_DEBUG, L_HTTP, "Added client [%s/%s/%02X:%02X:%02X:%02X:%02X:%02X] to cache slot %d.\n",
 					client_types[type].name, inet_ntoa(clients[i].addr),
 					clients[i].mac[0], clients[i].mac[1], clients[i].mac[2],
 					clients[i].mac[3], clients[i].mac[4], clients[i].mac[5], i);
-		return 0;
+		return &clients[i];
 	}
 
-	return -1;
+	return NULL;
 }
 

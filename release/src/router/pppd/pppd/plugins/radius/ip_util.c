@@ -135,3 +135,31 @@ UINT4 rc_own_ipaddress(void)
 
 	return this_host_ipaddr;
 }
+
+/*
+ * Function: rc_own_bind_ipaddress
+ *
+ * Purpose: get the IP address to be used as a source address
+ *          for sending requests in host order
+ *
+ * Returns: IP address
+ *
+ */
+
+UINT4 rc_own_bind_ipaddress(void)
+{
+	char *bindaddr;
+	UINT4 rval = 0;
+
+	if ((bindaddr = rc_conf_str("bindaddr")) == NULL ||
+	    strcmp(rc_conf_str("bindaddr"), "*") == 0) {
+		rval = INADDR_ANY;
+	} else {
+		if ((rval = rc_get_ipaddr(bindaddr)) == 0) {
+			error("rc_own_bind_ipaddress: couldn't get IP address from bindaddr");
+			rval = INADDR_ANY;
+		}
+	}
+
+	return rval;
+}

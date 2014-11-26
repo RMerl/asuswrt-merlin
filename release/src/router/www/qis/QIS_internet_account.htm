@@ -10,6 +10,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/alttxt.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script>
 var now_flag = '<% get_parameter("flag"); %>';
 <% wan_get_parameter(); %>
@@ -90,14 +91,14 @@ function submitForm(o, s){
 		changeiuiBackground(0);
 		return false;
 	}
-	if(!validate_string(document.form.wan_pppoe_username)){
+	if(!validator.string(document.form.wan_pppoe_username)){
 		document.form.wan_pppoe_username.select();
 		document.form.wan_pppoe_username.focus();
 		changeiuiBackground(0);
 		return false;
 	}
 	
-	if(!validate_string(document.form.wan_pppoe_passwd)){
+	if(!validator.string(document.form.wan_pppoe_passwd)){
 		document.form.wan_pppoe_passwd.select();
 		document.form.wan_pppoe_passwd.focus();
 		changeiuiBackground(0);
@@ -250,14 +251,14 @@ function pass_checked(obj){
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_UserName_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return is_string(this, event);" class="input_32_table" size="36"/>
+	  <input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36"/>
 	</td>
   </tr>
 
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_Password_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" tabindex="2" onkeypress="return is_string(this, event);" class="input_32_table" size="36"/>	  
+	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" tabindex="2" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36"/>	  
 	</td>
   </tr>
 	<tr>
