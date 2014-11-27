@@ -873,7 +873,7 @@ void start_dnsmasq(int force)
 	if (have_dhcp) {
 		/* Maximum leases */
 		if ((i = get_dhcpd_lmax()) > 0)
-			fprintf(fp, "dhcp-lease-max=%d\n", 253);
+			fprintf(fp, "dhcp-lease-max=%d\n", i);
 
 		/* Faster for moving clients, if authoritative */
 		if (nvram_get_int("dhcpd_auth") >= 0)
