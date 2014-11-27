@@ -1477,6 +1477,7 @@ start_wan_if(int unit)
 #ifdef RTCONFIG_IPV6
 		if (unit == wan_primary_ifunit()) {
 			if (nvram_match("ipv6_ifdev", "ppp") &&
+			    (unit == WAN_UNIT_FIRST || !nvram_match("wans_mode", "fb")) &&
 			    (strcmp(wan_proto, "dhcp") == 0 ||
 			     strcmp(wan_proto, "static") == 0)) {
 				nvram_set("ipv6_ifdev", "eth");
@@ -2321,6 +2322,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 		if (wan_unit == wan_primary_ifunit()) {
 			if (nvram_match("ipv6_ifdev", "ppp") &&
+			    (wan_unit == WAN_UNIT_FIRST || !nvram_match("wans_mode", "fb")) &&
 			    (strcmp(wan_proto, "dhcp") == 0 ||
 			     strcmp(wan_proto, "static") == 0)) {
 				nvram_set("ipv6_ifdev", "eth");
@@ -2412,6 +2414,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #ifdef RTCONFIG_IPV6
 	if (wan_unit == wan_primary_ifunit()) {
 		if (nvram_match("ipv6_ifdev", "ppp") &&
+		    (wan_unit == WAN_UNIT_FIRST || !nvram_match("wans_mode", "fb")) &&
 		    (strcmp(wan_proto, "dhcp") == 0 ||
 		     strcmp(wan_proto, "static") == 0)) {
 			nvram_set("ipv6_ifdev", "eth");
