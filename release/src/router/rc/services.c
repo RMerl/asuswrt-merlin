@@ -4582,7 +4582,7 @@ check_ddr_done:
 		}
 		if(action&RC_SERVICE_START) {
 			setup_passwd();
-			set_device_hostname();
+			set_hostname();
 			start_samba();
 			start_ftpd();
 		}

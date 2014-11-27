@@ -774,8 +774,6 @@ void restart_cstats(void);
 void stop_cstats(void);
 
 // lan.c
-extern void set_device_hostname(void);
-
 #ifdef RTCONFIG_TIMEMACHINE
 extern int start_timemachine(void);
 extern void stop_timemachine(void);
