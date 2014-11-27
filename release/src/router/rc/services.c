@@ -5608,7 +5608,7 @@ void stop_nat_rules(void)
 
 #ifdef WEB_REDIRECT
 	// dnsmasq will handle wildcard resolution
-	restart_dnsmasq(1);
+	start_dnsmasq(1);
 #endif
 }
 
