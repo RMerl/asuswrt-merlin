@@ -36,13 +36,9 @@ function initial(){
 	
 	show_menu();		
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "VPN"]);
-	//if support pptpd and openvpnd then show switch button
-	if(pptpd_support && openvpnd_support) {
-		document.getElementById("divSwitchMenu").style.display = "";
-	}
 	
 	check_pptpd_broadcast();
-	formShowAndHide(document.form.VPNServer_enable.value, document.form.VPNServer_mode.value);	
+	formShowAndHide(document.form.pptpd_enable.value, document.form.VPNServer_mode.value);	
 	if(dualwan_mode == "lb"){
 		document.getElementById("wan_ctrl").style.display = "none";
 		document.getElementById("dualwan_ctrl").style.display = "";	
@@ -99,7 +95,7 @@ function initial(){
 }
 
 function formShowAndHide(server_enable, server_type) {
-	if(server_enable == "1" && server_type == "pptpd"){
+	if(server_enable == "1"){
 		document.getElementById("trVPNServerMode").style.display = "";
 		document.getElementById('pptp_samba').style.display = "";
 		document.getElementById('PPTP_setting').style.display = "";
@@ -146,9 +142,6 @@ function pptpd_connected_status(){
 
 function applyRule() {
 	var confirmFlag = true;
-	if(document.form.VPNServer_mode.value != "pptpd" && document.form.VPNServer_enable.value == '1') {
-		 confirmFlag = confirm("ASUSWRT only support one VPN server mode connection at one time. If you enable \"PPTP server\", \"OpenVPN server\" will be disable automatically. Are you should you want to enable?");
-	}
 
 	if(confirmFlag){
 		var get_group_value = function () {
@@ -175,9 +168,9 @@ function applyRule() {
 			return tmp_value;
 		};
 
-		if(document.form.VPNServer_enable.value == "1") {
+		if(document.form.pptpd_enable.value == "1") {
 			document.form.VPNServer_mode.value = 'pptpd';
-			document.form.action_script.value = "restart_vpnd";
+			document.form.action_script.value = "restart_pptpd";
 			document.form.pptpd_clientlist.value = get_group_value();
 			document.form.pptpd_enable.value = "1";
 			if(!validator.isLegalIP(document.form._pptpd_clients_start, "")) {
@@ -285,7 +278,7 @@ function applyRule() {
 			}		
 		}
 		else {		//disable server
-			document.form.action_script.value = "stop_vpnd";
+			document.form.action_script.value = "stop_pptpd";
 			document.form.pptpd_enable.value = "0";
 			document.form.pptpd_clientlist.value = get_group_value();
 		}
@@ -637,7 +630,6 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="VPNServer_enable" value="<% nvram_get("VPNServer_enable"); %>">
 <input type="hidden" name="VPNServer_mode" value="<% nvram_get("VPNServer_mode"); %>">
 <input type="hidden" name="pptpd_enable" value="<% nvram_get("pptpd_enable"); %>">
 <input type="hidden" name="pptpd_broadcast" value="<% nvram_get("pptpd_broadcast"); %>">	
@@ -676,17 +668,13 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 											<td>
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_VPNServer_enable"></div>												
 												<script type="text/javascript">
-													var VPNServerEnable = document.form.VPNServer_enable.value;
-													if(document.form.VPNServer_mode.value != "pptpd") {
-														VPNServerEnable = 0;
-													}
-													$j('#radio_VPNServer_enable').iphoneSwitch(VPNServerEnable,
+													$j('#radio_VPNServer_enable').iphoneSwitch('<% nvram_get("pptpd_enable"); %>',
 													function(){
-														document.form.VPNServer_enable.value = "1";
+														document.form.pptpd_enable.value = "1";
 														formShowAndHide(1, "pptpd");						
 													},
 													function(){
-														document.form.VPNServer_enable.value = "0";
+														document.form.pptpd_enable.value = "0";
 														formShowAndHide(0, "pptpd");
 													},
 													{
