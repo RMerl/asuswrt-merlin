@@ -908,7 +908,7 @@ void start_dnsmasq(int force)
 
 #ifdef WEB_REDIRECT
 	/* Web redirection - all unresolvable will return the router's IP */
-	if((nvram_get_int("nat_state") == NAT_STATE_REDIRECT) && (nvram_get_int("web_redirect") > 0))
+	if(nvram_get_int("nat_state") == NAT_STATE_REDIRECT)
 		fprintf(fp, "address=/#/10.0.0.1\n");
 #endif
 
@@ -5608,7 +5608,7 @@ void stop_nat_rules(void)
 
 #ifdef WEB_REDIRECT
 	// dnsmasq will handle wildcard resolution
-	if (nvram_get_int("web_redirect") > 0) start_dnsmasq(1);
+	restart_dnsmasq(1);
 #endif
 }
 
