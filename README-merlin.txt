@@ -579,6 +579,11 @@ History
   - CHANGED: Removed SSLv2 and v3 support from OpenSSL
              (we had already stopped using these in
              376.48, so this removes unused code)
+  - CHANGED: The VPN webui is a bit closer to Asus's code.
+             This will mostly make it easier to keep in
+             sync with future changes to that UI by
+             Asus (they just revamped it a bit in
+             376_36xx).
   - REMOVED: The web redirection control setting was
              removed, as it is being replaced by the
              (simpler) redirection setting Asus added
