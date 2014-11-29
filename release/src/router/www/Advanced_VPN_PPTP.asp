@@ -630,7 +630,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="VPNServer_mode" value="<% nvram_get("VPNServer_mode"); %>">
+<input type="hidden" name="VPNServer_mode" value="pptpd">
 <input type="hidden" name="pptpd_enable" value="<% nvram_get("pptpd_enable"); %>">
 <input type="hidden" name="pptpd_broadcast" value="<% nvram_get("pptpd_broadcast"); %>">	
 <input type="hidden" name="pptpd_clientlist" value="<% nvram_get("pptpd_clientlist"); %>">
