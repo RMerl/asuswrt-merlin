@@ -2625,7 +2625,11 @@ function refreshStatus(xmldoc){
 		vpnc_state_t = vpnStatus[1].firstChild.nodeValue.replace("vpnc_state_t=", "");
 
 	vpnc_sbstate_t = vpnStatus[2].firstChild.nodeValue.replace("vpnc_sbstate_t=", "");
-	vpnd_state = vpnStatus[5].firstChild.nodeValue;
+	if('<% nvram_get("vpn_server_unit"); %>' == 1)
+		vpnd_state = vpnStatus[6].firstChild.nodeValue.replace("vpn_client1_state=", "");
+	else    //unit 2
+		vpnd_state = vpnStatus[7].firstChild.nodeValue.replace("vpn_client2_state=", "");
+//	vpnd_state = vpnStatus[5].firstChild.nodeValue;
 
 	if(location.pathname == "/"+ QISWIZARD)
 		return false;	

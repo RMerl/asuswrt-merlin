@@ -69,17 +69,15 @@ var $j = jQuery.noConflict();
 var vpn_server_clientlist_array_ori = '<% nvram_char_to_ascii("","vpn_server_clientlist"); %>';
 var vpn_server_clientlist_array = decodeURIComponent(vpn_server_clientlist_array_ori);
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
-var vpn_server_enable = '<% nvram_get("VPNServer_enable"); %>';
-var vpn_server_mode = '<% nvram_get("VPNServer_mode"); %>';
-var open_vpn_enable = vpn_server_enable;
-if(vpn_server_mode != "openvpn") {
-	open_vpn_enable = 0;
-}
+var vpn_server_mode = 'openvpn';	// Hardcoded for this page, as we support both simultaneously
+var openvpn_eas = '<% nvram_get("vpn_serverx_eas"); %>';
+var vpn_server_enable = (openvpn_eas.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0";
+
 var service_state = "";
 if (openvpn_unit == '1')
 	service_state = '<% nvram_get("vpn_server1_state"); %>';
 else if (openvpn_unit == '2')
-	ervice_state = '<% nvram_get("vpn_server2_state"); %>';
+	service_state = '<% nvram_get("vpn_server2_state"); %>';
 else
 	service_state = false;	
 
@@ -110,10 +108,6 @@ function initial(){
 	var currentcipher = "<% nvram_get("vpn_server_cipher"); %>";
 	show_menu();		
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "VPN"]);
-	//if support pptpd and openvpnd then show switch button
-	if(pptpd_support && openvpnd_support) {
-		document.getElementById("divSwitchMenu").style.display = "";
-	}
 
 	formShowAndHide(vpn_server_enable, vpn_server_mode);
 	//check DUT is belong to private IP.
@@ -131,16 +125,21 @@ function initial(){
 	for(var i = 0; i < ciphersarray.length; i += 1){
 		add_option(document.form.vpn_server_cipher, ciphersarray[i][0], ciphersarray[i][0], (currentcipher == ciphersarray[i][0]));
 	}
-			
-	// Set these based on a compound field
-	setRadioValue(document.form.vpn_server_x_eas, ((document.form.vpn_serverx_eas.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
+	// We don't use the global switch, so set it to current instance state instead
+	document.form.VPNServer_enable.value = vpn_server_enable;
+	// Set this based on a compound field
 	setRadioValue(document.form.vpn_server_x_dns, ((document.form.vpn_serverx_dns.value.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0"));
+
 	update_visibility();
+
+	// Decode into editable format
+	openvpn_decodeKeys(0);
+
 	/*Advanced Setting end */
 }
 
 function formShowAndHide(server_enable, server_type) {
-	if(server_enable == 1 && server_type == "openvpn"){
+	if(server_enable == 1){
 		document.getElementById("trVPNServerMode").style.display = "";
 		document.getElementById("selSwitchMode").value = "1";
 		document.getElementById('openvpn_export').style.display = "";	
@@ -199,9 +198,6 @@ function openvpnd_connected_status(){
 
 function applyRule(){
 	var confirmFlag = true;
-	if(document.form.VPNServer_mode.value != "openvpn" && vpn_server_enable == '1') {
-		 confirmFlag = confirm("ASUSWRT only support one VPN server mode connection at one time. If you enable \"OpenVPN server\", \"PPTP server\" will be disable automatically. Are you should you want to enable?");
-	}
 
 	/* Advanced setting start */
 	var check_openvpn_conflict = function () {		//if conflict with LAN ip & DHCP ip pool & static
@@ -340,7 +336,7 @@ function applyRule(){
 				for(var i = 1; i < staticclist_row.length; i +=1 ) {
 					var static_subnet = static_ip.split(".")[0]+"."+static_ip.split(".")[1]+"."+static_ip.split(".")[2]+".";
 					var static_end = parseInt(static_ip.split(".")[3]);					
-					var static_ip = staticclist_row[i].split('>')[1];
+					var static_ip = staticclist_row[i].split('&#62')[1];
 					if(static_subnet != openvpn_clients_start_subnet) {
 						alert(document.form.vpn_server_r1.value + " <#JS_validip#>");
 						document.form.vpn_server_r1.focus();
@@ -393,9 +389,12 @@ function applyRule(){
 			return tmp_value;
 		};
 
+	if (service_state) {
+		document.form.action_script.value = "restart_vpnserver" + openvpn_unit;
+	}
 		if(document.form.VPNServer_enable.value == "1") {
 			document.form.VPNServer_mode.value = 'openvpn';
-			document.form.action_script.value = "restart_vpnd;restart_chpass";
+			document.form.action_script.value = "restart_chpass;restart_vpnserver" + openvpn_unit;
 			document.form.vpn_server_clientlist.value = get_group_value();
 			/* Advanced setting start */
 			//Viz add 2014.06
@@ -424,19 +423,7 @@ function applyRule(){
 					tmp_value = "";
 
 				document.form.vpn_server_ccd_val.value = tmp_value;
-				tmp_value = "";
-				for (var i = 1; i < 3; i += 1) {
-					if (i == openvpn_unit) {
-						if(getRadioValue(document.form.vpn_server_x_eas) == 1)
-							tmp_value += ""+i+",";
-					} 
-					else{
-						if(document.form.vpn_serverx_eas.value.indexOf(''+(i)) >= 0)
-							tmp_value += ""+i+","
-					}
-				}	
 				
-				document.form.vpn_serverx_eas.value = tmp_value;
 				tmp_value = "";
 				for (var i = 1; i < 3; i += 1) {
 					if (i == openvpn_unit) {
@@ -456,7 +443,7 @@ function applyRule(){
 			/* Advanced setting end */	
 		}
 		else {		//disable server
-			document.form.action_script.value = "stop_vpnd";
+			document.form.action_script.value = "stop_vpnserver" + openvpn_unit;
 			document.form.vpn_server_clientlist.value = get_group_value();
 		}	
 		
@@ -645,22 +632,22 @@ function update_vpn_server_state() {
 		},
 
 		success: function() {
-			if(vpnd_state != '2' && (vpn_server1_errno == '1' || vpn_server1_errno == '2')){
+			if(vpnd_state != '2' && (vpnd_errno == '1' || vpnd_errno == '2')){
 				document.getElementById('openvpn_initial').style.display = "none";    						
 				document.getElementById('openvpn_error_message').innerHTML = "<span><#vpn_openvpn_fail1#></span>";
 				document.getElementById('openvpn_error_message').style.display = "";
 			}
-			else if(vpnd_state != '2' && vpn_server1_errno == '4'){
+			else if(vpnd_state != '2' && vpnd_errno == '4'){
 				document.getElementById('openvpn_initial').style.display = "none";
 				document.getElementById('openvpn_error_message').innerHTML = "<span><#vpn_openvpn_fail2#></span>";
 				document.getElementById('openvpn_error_message').style.display = "";
 			}
-			else if(vpnd_state != '2' && vpn_server1_errno == '5'){
+			else if(vpnd_state != '2' && vpnd_errno == '5'){
 				document.getElementById('openvpn_initial').style.display = "none";
 				document.getElementById('openvpn_error_message').innerHTML = "<span><#vpn_openvpn_fail3#></span>";
 				document.getElementById('openvpn_error_message').style.display = "";
 			}
-			else if(vpnd_state == '-1' && vpn_server1_errno == '0'){
+			else if(vpnd_state == '-1' && vpnd_errno == '0'){
 				document.getElementById('openvpn_initial').style.display = "none";
 				document.getElementById('openvpn_error_message').innerHTML = "<span><#vpn_openvpn_fail4#></span>";
 				document.getElementById('openvpn_error_message').style.display = "";
@@ -714,6 +701,21 @@ function switchMode(mode){
 	}
 }
 
+function enable_openvpn(state){
+	var tmp_value = "";
+
+	for (var i=1; i < 3; i++) {
+		if (i == openvpn_unit) {
+			if (state == 1)
+				tmp_value += ""+i+",";
+		} else {
+			if (document.form.vpn_serverx_eas.value.indexOf(''+(i)) >= 0)
+				tmp_value += ""+i+","
+		}
+	}
+	document.form.vpn_serverx_eas.value = tmp_value;
+}
+
 /* Advanced Setting start */ 
 function change_vpn_unit(val){
 	FormActions("apply.cgi", "change_vpn_server_unit", "", "");
@@ -725,6 +727,7 @@ function update_visibility(){
 	var auth = document.form.vpn_server_crypt.value;
 	var iface = document.form.vpn_server_if.value;
 	var hmac = document.form.vpn_server_hmac.value;
+	userpass = getRadioValue(document.form.vpn_server_userpass_auth);
 	var dhcp = getRadioValue(document.form.vpn_server_dhcp);
 	var dns = getRadioValue(document.form.vpn_serverx_dns);
 	if(auth != "tls")
@@ -747,6 +750,23 @@ function update_visibility(){
 	showhide("server_tls_crypto_text", (auth == "tls"));		//add by Viz
 	showhide("server_static_crypto_text", (auth == "secret"));		//add by Viz
 	showhide("server_custom_crypto_text", (auth == "custom"));
+	showhide("server_igncrt", (userpass == 1));
+
+// Since instancing certs/keys would waste many KBs of nvram,
+// we instead handle these at the webui level, loading both instances.
+	showhide("edit_vpn_crt_server1_ca",(openvpn_unit == "1"));
+	showhide("edit_vpn_crt_server1_crt", (openvpn_unit == "1"));
+	showhide("edit_vpn_crt_server1_key",(openvpn_unit == "1"));
+	showhide("edit_vpn_crt_server1_dh",(openvpn_unit == "1"));
+	showhide("edit_vpn_crt_server1_crl",(openvpn_unit == "1"));
+	showhide("edit_vpn_crt_server2_ca",(openvpn_unit == "2"));
+	showhide("edit_vpn_crt_server2_crt", (openvpn_unit == "2"));
+	showhide("edit_vpn_crt_server2_key",(openvpn_unit == "2"));
+	showhide("edit_vpn_crt_server2_dh",(openvpn_unit == "2"));
+	showhide("edit_vpn_crt_server2_crl",(openvpn_unit == "2"));
+
+	showhide("edit_vpn_crt_server1_static", (openvpn_unit == "1"));
+	showhide("edit_vpn_crt_server2_static", (openvpn_unit == "2"));
 }
 
 function set_Keys(auth) {
@@ -775,10 +795,17 @@ function updateCRTValue(auth){
 				document.openvpnTLSKeyForm.edit_vpn_crt_server1_key.value = vpn_crt_server1_key;
 				document.openvpnTLSKeyForm.edit_vpn_crt_server1_dh.value = vpn_crt_server1_dh;
 				document.openvpnTLSKeyForm.edit_vpn_crt_server1_crl.value = vpn_crt_server1_crl;
+				document.openvpnTLSKeyForm.edit_vpn_crt_server2_ca.value = vpn_crt_server2_ca;
+				document.openvpnTLSKeyForm.edit_vpn_crt_server2_crt.value = vpn_crt_server2_crt;
+				document.openvpnTLSKeyForm.edit_vpn_crt_server2_key.value = vpn_crt_server2_key;
+				document.openvpnTLSKeyForm.edit_vpn_crt_server2_dh.value = vpn_crt_server2_dh;
+				document.openvpnTLSKeyForm.edit_vpn_crt_server2_crl.value = vpn_crt_server2_crl;
 			}
 			else if(auth == "secret") {
 				document.openvpnStaticKeyForm.edit_vpn_crt_server1_static.value = vpn_crt_server1_static;
+				document.openvpnStaticKeyForm.edit_vpn_crt_server2_static.value = vpn_crt_server2_static;
 			}
+			openvpn_decodeKeys(1);
 		}
 	})
 }
@@ -909,10 +936,37 @@ function cancel_Key_panel(auth) {
 		this.FromObject ="0";			
 		$j("#staticKey_panel").fadeOut(300);
 	}
+
+	setTimeout("openvpn_decodeKeys(1);", 400);
 }
+
+function openvpn_decodeKeys(entities){
+	var expr;
+
+	if (entities == 1)
+		expr = new RegExp('&#62;','gm');
+	else
+		expr = new RegExp('>','gm');
+
+	document.openvpnStaticKeyForm.edit_vpn_crt_server1_static.value = document.openvpnStaticKeyForm.edit_vpn_crt_server1_static.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server1_ca.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_ca.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server1_key.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_key.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server1_crt.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_crt.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server1_dh.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_dh.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server1_crl.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_crl.value.replace(expr,"\r\n");
+
+	document.openvpnStaticKeyForm.edit_vpn_crt_server2_static.value = document.openvpnStaticKeyForm.edit_vpn_crt_server2_static.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server2_ca.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_ca.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server2_key.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_key.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server2_crt.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_crt.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server2_dh.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_dh.value.replace(expr,"\r\n");
+	document.openvpnTLSKeyForm.edit_vpn_crt_server2_crl.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_crl.value.replace(expr,"\r\n");
+}
+
 
 function save_keys(auth) {
 	if(auth == 'tls') {
+		if (openvpn_unit == "1") {
 		document.openvpnTLSKeyForm.vpn_crt_server1_ca.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_ca.value;
 		document.openvpnTLSKeyForm.vpn_crt_server1_crt.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_crt.value;
 		document.openvpnTLSKeyForm.vpn_crt_server1_key.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_key.value;
@@ -923,12 +977,30 @@ function save_keys(auth) {
 		document.openvpnTLSKeyForm.vpn_crt_server1_key.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server1_dh.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server1_crl.disabled = false;
+		}else {
+			document.openvpnTLSKeyForm.vpn_crt_server2_ca.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_ca.value;
+			document.openvpnTLSKeyForm.vpn_crt_server2_crt.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_crt.value;
+			document.openvpnTLSKeyForm.vpn_crt_server2_key.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_key.value;
+			document.openvpnTLSKeyForm.vpn_crt_server2_dh.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_dh.value;
+			document.openvpnTLSKeyForm.vpn_crt_server2_crl.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_crl.value;
+			document.openvpnTLSKeyForm.vpn_crt_server2_ca.disabled = false;
+			document.openvpnTLSKeyForm.vpn_crt_server2_crt.disabled = false;
+			document.openvpnTLSKeyForm.vpn_crt_server2_key.disabled = false;
+			document.openvpnTLSKeyForm.vpn_crt_server2_dh.disabled = false;
+			document.openvpnTLSKeyForm.vpn_crt_server2_crl.disabled = false;
+		}
 		document.openvpnTLSKeyForm.submit();
 		cancel_Key_panel('tls');
 	}
 	else if(auth == 'secret') {			
+		if (openvpn_unit == "1") {
 		document.openvpnStaticKeyForm.vpn_crt_server1_static.value = document.openvpnStaticKeyForm.edit_vpn_crt_server1_static.value;
 		document.openvpnStaticKeyForm.vpn_crt_server1_static.disabled = false;
+
+		} else {
+			document.openvpnStaticKeyForm.vpn_crt_server2_static.value = document.openvpnStaticKeyForm.edit_vpn_crt_server2_static.value;
+			document.openvpnStaticKeyForm.vpn_crt_server2_static.disabled = false;
+		}
 		document.openvpnStaticKeyForm.submit();
 		cancel_Key_panel('secret');		
 	}		
@@ -979,13 +1051,18 @@ function cal_panel_block(){
 		<input type="hidden" name="vpn_crt_server1_key" value="<% nvram_clean_get("vpn_crt_server1_key"); %>" disabled>
 		<input type="hidden" name="vpn_crt_server1_dh" value="<% nvram_clean_get("vpn_crt_server1_dh"); %>" disabled>
 		<input type="hidden" name="vpn_crt_server1_crl" value="<% nvram_clean_get("vpn_crt_server1_crl"); %>" disabled>	
+		<input type="hidden" name="vpn_crt_server2_ca" value="<% nvram_clean_get("vpn_crt_server2_ca"); %>" disabled>
+		<input type="hidden" name="vpn_crt_server2_crt" value="<% nvram_clean_get("vpn_crt_server2_crt"); %>" disabled>
+		<input type="hidden" name="vpn_crt_server2_key" value="<% nvram_clean_get("vpn_crt_server2_key"); %>" disabled>
+		<input type="hidden" name="vpn_crt_server2_dh" value="<% nvram_clean_get("vpn_crt_server2_dh"); %>" disabled>
+		<input type="hidden" name="vpn_crt_server2_crl" value="<% nvram_clean_get("vpn_crt_server2_crl"); %>" disabled>
 		<tr>
 			<div class="description_down"><#vpn_openvpn_Keys_Cert#></div>
 		</tr>
 		<tr>
 			<div style="margin-left:30px; margin-top:10px;">
 				<p><#vpn_openvpn_KC_Edit1#> <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> <#vpn_openvpn_KC_Edit2#>
-				<p><#vpn_openvpn_KC_Limit#>
+				<p>Limit: 3499 characters per field
 			</div>
 			<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 		</tr>				
@@ -996,34 +1073,39 @@ function cal_panel_block(){
 					<tr>
 						<td valign="top">
 							<table width="100%" id="page1_tls" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
-								<tr>
+								<tr id="edit_tls1">
 									<th><#vpn_openvpn_KC_CA#></th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" name="edit_vpn_crt_server1_ca" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_ca"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_ca" name="edit_vpn_crt_server1_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_ca"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_ca" name="edit_vpn_crt_server2_ca" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_ca"); %></textarea>
 									</td>
 								</tr>
-								<tr>
+								<tr id="edit_tls2">
 									<th><#vpn_openvpn_KC_SA#></th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" name="edit_vpn_crt_server1_crt" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_crt"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_crt" name="edit_vpn_crt_server1_crt" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_crt"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_crt" name="edit_vpn_crt_server2_crt" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_crt"); %></textarea>
 									</td>
 								</tr>
-								<tr>
+								<tr id="edit_tls3">
 									<th><#vpn_openvpn_KC_SK#></th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" name="edit_vpn_crt_server1_key" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_key"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_key" name="edit_vpn_crt_server1_key" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_key"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_key" name="edit_vpn_crt_server2_key" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_key"); %></textarea>
 									</td>
 								</tr>
-								<tr>
+								<tr id="edit_tls4">
 									<th><#vpn_openvpn_KC_DH#></th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" name="edit_vpn_crt_server1_dh" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_dh"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_dh" name="edit_vpn_crt_server1_dh" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_dh"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_dh" name="edit_vpn_crt_server2_dh" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_dh"); %></textarea>
 									</td>
 								</tr>
-								<tr>
+								<tr id="edit_tls5">
 									<th>Certificate Revocation List (Optional)</th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" name="edit_vpn_crt_server1_crl" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_crl"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_crl" name="edit_vpn_crt_server1_crl" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_crl"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_crl" name="edit_vpn_crt_server2_crl" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_crl"); %></textarea>
 									</td>
 								</tr>
 							</table>
@@ -1055,13 +1137,14 @@ function cal_panel_block(){
 		<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 		<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 		<input type="hidden" name="vpn_crt_server1_static" value="<% nvram_clean_get("vpn_crt_server1_static"); %>" disabled>
+		<input type="hidden" name="vpn_crt_server2_static" value="<% nvram_clean_get("vpn_crt_server2_static"); %>" disabled>
 		<tr>
 			<div class="description_down"><#vpn_openvpn_Keys_Cert#></div>
 		</tr>
 		<tr>
 			<div style="margin-left:30px; margin-top:10px;">
 				<p><#vpn_openvpn_KC_Edit1#> <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> <#vpn_openvpn_KC_Edit2#>
-				<p><#vpn_openvpn_KC_Limit#>
+				<p>Limit: 3499 characters per field
 			</div>
 			<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 		</tr>	
@@ -1075,7 +1158,8 @@ function cal_panel_block(){
 								<tr>
 									<th><#vpn_openvpn_KC_StaticK#></th>
 									<td>
-										<textarea rows="8" class="textarea_ssh_table" name="edit_vpn_crt_server1_static" cols="65" maxlength="2999"><% nvram_clean_get("vpn_crt_server1_static"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server1_static" name="edit_vpn_crt_server1_static" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server1_static"); %></textarea>
+										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server2_static" name="edit_vpn_crt_server2_static" cols="65" maxlength="3499"><% nvram_clean_get("vpn_crt_server2_static"); %></textarea>
 									</td>
 								</tr>
 							</table>
@@ -1141,16 +1225,27 @@ function cal_panel_block(){
 										</tr>
 										</thead>				
 										<tr>
+											<th>Server instance</th>
+											<td>
+												<select id="openvpn_unit" name="vpn_server_unit" class="input_option" onChange="change_vpn_unit(this.value);">
+													<option value="1" <% nvram_match("vpn_server_unit","1","selected"); %> >Server 1</option>
+													<option value="2" <% nvram_match("vpn_server_unit","2","selected"); %> >Server 2</option>
+												</select>
+											</td>
+										</tr>
+										<tr>
 											<th><#vpn_enable#></th>
 											<td>
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_VPNServer_enable"></div>												
 												<script type="text/javascript">													
-													$j('#radio_VPNServer_enable').iphoneSwitch(open_vpn_enable,
+													$j('#radio_VPNServer_enable').iphoneSwitch(vpn_server_enable,
 													function(){
+														enable_openvpn(1);
 														document.form.VPNServer_enable.value = "1";
 														formShowAndHide(1, "openvpn");
 													},
 													function(){
+														enable_openvpn(0);
 														document.form.VPNServer_enable.value = "0";
 														formShowAndHide(0, "openvpn");
 													},
@@ -1178,7 +1273,7 @@ function cal_panel_block(){
 												</div>
 												<script type="text/javascript">
 													document.getElementById("exportToLocal").onclick = function(){
-														location.href = 'client.ovpn';
+													location.href = 'client<% nvram_get("vpn_server_unit"); %>.ovpn';
 													}
 													document.getElementById("exportViaEmail").onclick = function(){
 														showMailPanel();
@@ -1198,7 +1293,6 @@ function cal_panel_block(){
 										<div class="formfontdesc">
 											<#vpn_openvpn_desc1#>&nbsp;<#vpn_openvpn_desc3#>&nbsp;<#vpn_openvpn_desc2#> <#menu5#>
 											<br />
-											<#vpn_openvpn_FAQ#>
 											<ol>
 												<li><a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/1A935B95-C237-4281-AE86-C824737D11F9/" target="_blank" style="text-decoration:underline;">Windows</a>
 												<li><a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/C77ADCBF-F5C4-46B4-8A0D-B64F09AB881F/" target="_blank" style="text-decoration:underline;">Mac OS</a>
@@ -1250,15 +1344,6 @@ function cal_panel_block(){
 											</tr>
 											</thead>
 											<tr style="display:none;">
-												<th>Select server instance</th>
-												<td>
-													<select name="vpn_server_unit" class="input_option" onChange="change_vpn_unit(this.value);">
-														<option value="1" <% nvram_match("vpn_server_unit","1","selected"); %> >Server 1</option>
-														<option value="2" <% nvram_match("vpn_server_unit","2","selected"); %> >Server 2</option>
-													</select>
-												</td>
-											</tr>
-											<tr style="display:none;">
 												<th>Service state</th>
 												<td>
 													<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
@@ -1289,13 +1374,6 @@ function cal_panel_block(){
 													<span>Warning: any unsaved change will be lost.</span>
 												</td>
 											</tr>
-											<tr style="display:none;">
-												<th>Start with WAN</th>
-												<td>
-													<input type="radio" name="vpn_server_x_eas" class="input" value="1"><#checkbox_Yes#>
-													<input type="radio" name="vpn_server_x_eas" class="input" value="0"><#checkbox_No#>
-												</td>
-		 									</tr>
 											<tr>
 												<th><#vpn_openvpn_interface#></th>
 												<td>
@@ -1345,6 +1423,13 @@ function cal_panel_block(){
 												</td>
 											</tr>
 											<tr>
+												<th>Username/Password Authentication</th>
+												<td>
+													<input type="radio" name="vpn_server_userpass_auth" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "1", "checked"); %>><#checkbox_Yes#>
+													<input type="radio" name="vpn_server_userpass_auth" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "0", "checked"); %>><#checkbox_No#>
+												</td>
+											</tr>
+											<tr id="server_igncrt">
 												<th><#vpn_openvpn_AuthOnly#></th>
 												<td>
 													<input type="radio" name="vpn_server_igncrt" class="input" value="1" <% nvram_match_x("", "vpn_server_igncrt", "1", "checked"); %>><#checkbox_Yes#>
@@ -1552,7 +1637,7 @@ function cal_panel_block(){
 			<input type="hidden" name="action_wait" value="5">
 			<input type="hidden" name="flag" value="background">
 			<input type="hidden" name="PM_MAIL_SUBJECT" value="My ovpn file">
-			<input type="hidden" name="PM_MAIL_FILE" value="/www/client.ovpn">
+			<input type="hidden" name="PM_MAIL_FILE" value="/www/client<% nvram_get("vpn_server_unit"); %>.ovpn">
 			<input type="hidden" name="PM_LETTER_CONTENT" value="Here is the ovpn file.">
 
 			<div class="panelTableTitle">

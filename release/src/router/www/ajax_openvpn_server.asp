@@ -19,3 +19,10 @@ vpn_crt_server1_key='<% nvram_clean_get("vpn_crt_server1_key"); %>';
 vpn_crt_server1_dh='<% nvram_clean_get("vpn_crt_server1_dh"); %>';
 vpn_crt_server1_crl='<% nvram_clean_get("vpn_crt_server1_crl"); %>';
 vpn_crt_server1_static='<% nvram_clean_get("vpn_crt_server1_static"); %>';
+vpn_crt_server2_ca='<% nvram_clean_get("vpn_crt_server2_ca"); %>';
+vpn_crt_server2_crt='<% nvram_clean_get("vpn_crt_server2_crt"); %>';
+vpn_crt_server2_key='<% nvram_clean_get("vpn_crt_server2_key"); %>';
+vpn_crt_server2_dh='<% nvram_clean_get("vpn_crt_server2_dh"); %>';
+vpn_crt_server2_crl='<% nvram_clean_get("vpn_crt_server2_crl"); %>';
+vpn_crt_server2_static='<% nvram_clean_get("vpn_crt_server2_static"); %>';
+
