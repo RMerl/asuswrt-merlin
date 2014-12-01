@@ -1452,10 +1452,6 @@ multi_client_connect_post (struct multi_context *m,
 			     option_types_found,
 			     mi->context.c2.es);
 
-      if (!platform_unlink (dc_file))
-	msg (D_MULTI_ERRORS, "MULTI: problem deleting temporary file: %s",
-	     dc_file);
-
       /*
        * If the --client-connect script generates a config file
        * with an --ifconfig-push directive, it will override any
@@ -1698,6 +1694,11 @@ multi_connection_established (struct multi_context *m, struct multi_instance *mi
 	      multi_client_connect_post (m, mi, dc_file, option_permissions_mask, &option_types_found);
 	      ++cc_succeeded_count;
 	    }
+
+	  if (!platform_unlink (dc_file))
+	    msg (D_MULTI_ERRORS, "MULTI: problem deleting temporary file: %s",
+		 dc_file);
+
         script_depr_failed:
 	  argv_reset (&argv);
 	}
@@ -1751,6 +1752,11 @@ multi_connection_established (struct multi_context *m, struct multi_instance *mi
 	    }
 	  else
 	    cc_succeeded = false;
+
+	  if (!platform_unlink (dc_file))
+	    msg (D_MULTI_ERRORS, "MULTI: problem deleting temporary file: %s",
+		 dc_file);
+
         script_failed:
 	  argv_reset (&argv);
 	}
@@ -2153,8 +2159,17 @@ multi_process_incoming_link (struct multi_context *m, struct multi_instance *ins
 	      /* make sure that source address is associated with this client */
 	      else if (multi_get_instance_by_virtual_addr (m, &src, true) != m->pending)
 		{
-		  msg (D_MULTI_DROPPED, "MULTI: bad source address from client [%s], packet dropped",
-		       mroute_addr_print (&src, &gc));
+		  /* IPv6 link-local address (fe80::xxx)? */
+		  if ( (src.type & MR_ADDR_MASK) == MR_ADDR_IPV6 &&
+		        src.addr[0] == 0xfe && src.addr[1] == 0x80 )
+		    {
+		      /* do nothing, for now.  TODO: add address learning */
+		    }
+		  else
+		    {
+		      msg (D_MULTI_DROPPED, "MULTI: bad source address from client [%s], packet dropped",
+		           mroute_addr_print (&src, &gc));
+		    }
 		  c->c2.to_tun.len = 0;
 		}
 	      /* client-to-client communication enabled? */

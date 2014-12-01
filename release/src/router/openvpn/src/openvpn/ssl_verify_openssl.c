@@ -97,9 +97,7 @@ static
 bool extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
 {
   bool retval = false;
-  X509_EXTENSION *pExt;
   char *buf = 0;
-  int length = 0;
   GENERAL_NAMES *extensions;
   int nid = OBJ_txt2nid(fieldname);
 
@@ -591,12 +589,12 @@ x509_verify_crl(const char *crl_file, X509 *peer_cert, const char *subject)
   in = BIO_new_file (crl_file, "r");
 
   if (in == NULL) {
-    msg (M_ERR, "CRL: cannot read: %s", crl_file);
+    msg (M_WARN, "CRL: cannot read: %s", crl_file);
     goto end;
   }
   crl=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
   if (crl == NULL) {
-    msg (M_ERR, "CRL: cannot read CRL from file %s", crl_file);
+    msg (M_WARN, "CRL: cannot read CRL from file %s", crl_file);
     goto end;
   }
 

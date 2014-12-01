@@ -380,7 +380,7 @@ x509_verify_cert_eku (x509_cert *cert, const char * const expected_oid)
 		}
 	    }
 
-	  if (0 == x509_oid_get_numeric_string( oid_num_str,
+	  if (0 < x509_oid_get_numeric_string( oid_num_str,
 	      sizeof (oid_num_str), oid))
 	    {
 	      msg (D_HANDSHAKE, "++ Certificate has EKU (oid) %s, expects %s",
@@ -414,9 +414,12 @@ x509_verify_crl(const char *crl_file, x509_cert *cert, const char *subject)
   result_t retval = FAILURE;
   x509_crl crl = {0};
 
-  if (x509parse_crlfile(&crl, crl_file) != 0)
+  int polar_retval = x509parse_crlfile(&crl, crl_file);
+  if (polar_retval != 0)
     {
-      msg (M_ERR, "CRL: cannot read CRL from file %s", crl_file);
+      char errstr[128];
+      error_strerror(polar_retval, errstr, sizeof(errstr));
+      msg (M_WARN, "CRL: cannot read CRL from file %s (%s)", crl_file, errstr);
       goto end;
     }
 

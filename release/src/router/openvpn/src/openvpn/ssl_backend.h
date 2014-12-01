@@ -114,7 +114,7 @@ void tls_clear_error();
 #define TLS_VER_1_0     1
 #define TLS_VER_1_1     2
 #define TLS_VER_1_2     3
-int tls_version_min_parse(const char *vstr, const char *extra);
+int tls_version_parse(const char *vstr, const char *extra);
 
 /**
  * Return the maximum TLS version (as a TLS_VER_x constant)
@@ -472,6 +472,6 @@ void get_highest_preference_tls_cipher (char *buf, int size);
  * return a pointer to a static memory area containing the
  * name and version number of the SSL library in use
  */
-char * get_ssl_library_version(void);
+const char * get_ssl_library_version(void);
 
 #endif /* SSL_BACKEND_H_ */

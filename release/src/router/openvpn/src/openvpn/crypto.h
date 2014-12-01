@@ -32,8 +32,6 @@
 
 #ifdef ENABLE_CRYPTO
 
-#define ALLOW_NON_CBC_CIPHERS
-
 #include "crypto_backend.h"
 #include "basic.h"
 #include "buffer.h"
@@ -188,8 +186,6 @@ bool write_key (const struct key *key, const struct key_type *kt,
 		struct buffer *buf);
 
 int read_key (struct key *key, const struct key_type *kt, struct buffer *buf);
-
-bool cfb_ofb_mode (const struct key_type* kt);
 
 void init_key_type (struct key_type *kt, const char *ciphername,
     bool ciphername_defined, const char *authname, bool authname_defined,
