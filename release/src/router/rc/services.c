@@ -1251,7 +1251,11 @@ void start_radvd(void)
 			mtu = 1480;
 	} else {
 		if (nvram_match("ipv6_ifdev", "ppp"))
-			mtu = 1492;
+		{
+			/* get_wan6face uses unit 0, so use that unit's MTU as MTU for IPv6 */
+			if ((mtu = nvram_get_int("wan0_pppoe_mtu")) <= 0)
+				mtu = 1492;
+		}
 		else if ((mtu = nvram_get_int("ipv6_mtu")) < 0)
 			mtu = 0;
 	}
