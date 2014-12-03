@@ -1552,7 +1552,7 @@ miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
 	$(MAKE) -C miniupnpd -f Makefile.merlin $(PARALLEL_BUILD)
 
 miniupnpd-clean:
-	-@$(MAKE) -C miniupnpd -f Makefile.linux clean
+	-@$(MAKE) -C miniupnpd -f Makefile.merlin clean
 	-@rm miniupnpd/config.h
 
 miniupnpd-install:
