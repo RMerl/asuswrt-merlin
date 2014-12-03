@@ -1369,6 +1369,7 @@ void stop_rdnssd(void)
 	killall_tk("rdnssd");
 	unlink("/var/run/rdnssd.pid");
 }
+#endif /* RTCONFIG_WIDEDHCP6 */
 
 void start_ipv6(void)
 {
@@ -1477,7 +1478,6 @@ int no_need_to_start_wps(void)
 
 	return ret;
 }
-#endif /* RTCONFIG_WIDEDHCP6 */
 
 /* @wps_band:	if wps_band < 0 and RTCONFIG_WPSMULTIBAND is defined, check radio of all band */
 int wps_band_radio_off(int wps_band)
