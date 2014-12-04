@@ -816,9 +816,14 @@ void start_dnsmasq(int force)
 				lan_ifname, dhcp_lifetime);
 			have_dhcp |= 2; /* DHCPv6 */
 		} else if (nvram_get_int("ipv6_radvd")) {
-			fprintf(fp, "dhcp-range=lan,::,constructor:%s,ra-stateless,%d,%d\n",
-				lan_ifname, 64, ra_lifetime);
-			have_dhcp |= 2; /* DHCPv6 */
+			if (nvram_get_int("ipv6_dhcp6s_enable")) {
+				fprintf(fp, "dhcp-range=lan,::,constructor:%s,ra-stateless,%d,%d\n",
+					lan_ifname, 64, ra_lifetime);
+				have_dhcp |= 2; /* DHCPv6 */
+			} else {
+				fprintf(fp, "dhcp-range=lan,::,constructor:%s,ra-only,%d,%d\n",
+					lan_ifname, 64, ra_lifetime);
+			}
 		}
 
 #ifdef RTCONFIG_YANDEXDNS
