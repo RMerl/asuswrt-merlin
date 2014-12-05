@@ -983,6 +983,9 @@ skip:
 
 int dhcp6c_wan(int argc, char **argv)
 {
+
+	if (argv[2]) run_custom_script("dhcpc-event", argv[2]);
+
 	if (!argv[1] || !argv[2])
 		return EINVAL;
 	else if (strcmp(argv[2], "started") == 0 ||
