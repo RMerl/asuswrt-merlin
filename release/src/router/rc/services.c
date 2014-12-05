@@ -816,9 +816,14 @@ void start_dnsmasq(int force)
 				lan_ifname, dhcp_lifetime);
 			have_dhcp |= 2; /* DHCPv6 */
 		} else if (nvram_get_int("ipv6_radvd")) {
-			fprintf(fp, "dhcp-range=lan,::,constructor:%s,ra-stateless,%d,%d\n",
-				lan_ifname, 64, ra_lifetime);
-			have_dhcp |= 2; /* DHCPv6 */
+			if (nvram_get_int("ipv6_dhcp6s_enable")) {
+				fprintf(fp, "dhcp-range=lan,::,constructor:%s,ra-stateless,%d,%d\n",
+					lan_ifname, 64, ra_lifetime);
+				have_dhcp |= 2; /* DHCPv6 */
+			} else {
+				fprintf(fp, "dhcp-range=lan,::,constructor:%s,ra-only,%d,%d\n",
+					lan_ifname, 64, ra_lifetime);
+			}
 		}
 
 #ifdef RTCONFIG_YANDEXDNS
@@ -892,6 +897,9 @@ void start_dnsmasq(int force)
 	/* Don't log DHCP queries */
 	if (nvram_match("dhcpd_querylog","0")) {
 		fprintf(fp,"quiet-dhcp\n");
+#ifndef RTCONFIG_WIDEDHCP6
+		fprintf(fp,"quiet-dhcp6\n");
+#endif
 	} else {
 		if (nvram_get_int("log_level") < 7) {
 			nvram_set("log_level", "7");
