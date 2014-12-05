@@ -291,7 +291,7 @@ void start_vpnclient(int clientNum)
 
 		sprintf(&buffer[0], "vpn_crt_client%d_crl", clientNum);
 		if ( !nvram_is_empty(&buffer[0]) )
-			fprintf(fp, "crl-veirfy crl.pem\n");
+			fprintf(fp, "crl-verify crl.pem\n");
 	}
 	else if ( cryptMode == SECRET )
 	{
