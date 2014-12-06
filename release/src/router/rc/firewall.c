@@ -61,7 +61,7 @@ void redirect_setting();
 
 #ifdef RTCONFIG_DNSFILTER
 void dnsfilter_settings(FILE *fp, char *lan_ip);
-void dnsfilter6_settings();
+void dnsfilter6_settings(FILE *fp, char *lan_if, char *lan_ip);
 #endif
 
 struct datetime{
@@ -4240,13 +4240,6 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 #endif
 	}
 
-/* DNSFilter - prevent DNS access over IPv6 since all our filters are IPv4-only anyway*/
-#ifdef RTCONFIG_DNSFILTER
-#ifdef RTCONFIG_IPV6
-	dnsfilter6_settings();
-#endif
-#endif
-
 /* For NAT loopback */
 //	eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 //	     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
@@ -4263,7 +4256,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 #ifdef RTCONFIG_IPV6
 	if (nvram_get_int("yadns_enable_x") && ipv6_enabled()) {
 		FILE *fp;
-		
+
 		fp = fopen("/tmp/mangle_rules_ipv6.yadns", "w");
 		if (fp != NULL) {
 			fprintf(fp, "*mangle\n"
@@ -4280,6 +4273,28 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	}
 #endif /* RTCONFIG_IPV6 */
 #endif /* RTCONFIG_YANDEXDNS */
+
+#ifdef RTCONFIG_DNSFILTER
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("dnsfilter_enable_x") && ipv6_enabled()) {
+		FILE *fp;
+
+		fp = fopen("/tmp/mangle_rules_ipv6.dnsfilter", "w");
+		if (fp != NULL) {
+			fprintf(fp, "*mangle\n"
+			    ":DNSFILTERI - [0:0]\n"
+			    ":DNSFILTERF - [0:0]\n");
+
+			dnsfilter6_settings(fp, lan_if, lan_ip);
+
+			fprintf(fp, "COMMIT\n");
+			fclose(fp);
+
+			eval("ip6tables-restore", "/tmp/mangle_rules_ipv6.dnsfilter");
+		}
+	}
+#endif /* RTCONFIG_IPV6 */
+#endif /* RTCONFIG_DNSFILTER */
 
 /* In Bangladesh, ISPs force the packet TTL as 1 at modem side to block ip sharing. Increase the TTL once the packet come at WAN with TTL=1 */
 #ifdef RTCONFIG_TTL
@@ -4371,12 +4386,28 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #endif
 	}
 
-/* DNSFilter - prevent DNS access over IPv6 since all our filters are IPv4-only anyway*/
 #ifdef RTCONFIG_DNSFILTER
 #ifdef RTCONFIG_IPV6
-	dnsfilter6_settings();
-#endif
-#endif
+	if (nvram_get_int("dnsfilter_enable_x") && ipv6_enabled()) {
+		FILE *fp;
+
+		fp = fopen("/tmp/mangle_rules_ipv6.dnsfilter", "w");
+		if (fp != NULL) {
+			fprintf(fp, "*mangle\n"
+				":DNSFILTERI - [0:0]\n"
+				":DNSFILTERF - [0:0]\n");
+
+			dnsfilter6_settings(fp, lan_if, lan_ip);
+
+			fprintf(fp, "COMMIT\n");
+			fclose(fp);
+
+			eval("ip6tables-restore", "/tmp/mangle_rules_ipv6.dnsfilter");
+		}
+	}
+#endif /* RTCONFIG_IPV6 */
+#endif /* RTCONFIG_DNSFILTER */
+
 
 /* For NAT loopback */
 /* Untested yet */
@@ -4963,9 +4994,8 @@ void dnsfilter_settings(FILE *fp, char *lan_ip) {
 	if (nvram_get_int("dnsfilter_enable_x")) {
 		/* Reroute all DNS requests from LAN */
 		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
-		fprintf(fp,
-			"-A PREROUTING -s %s -p udp -m udp --dport 53 -j DNSFILTER\n"
-			"-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j DNSFILTER\n",
+		fprintf(fp, "-A PREROUTING -s %s -p udp -m udp --dport 53 -m u32 --u32 0>>22&0x3c@8>>15&1=0 -j DNSFILTER\n"
+			    "-A PREROUTING -s %s -p tcp -m tcp --dport 53 -m u32 --u32 0>>22&0x3c@12>>26&0x3c@8>>15&1=0 -j DNSFILTER\n",
 			lan_class, lan_class);
 
 		/* Protection level per client */
@@ -4976,47 +5006,69 @@ void dnsfilter_settings(FILE *fp, char *lan_ip) {
 			if (!*mac || !*mode || !ether_atoe(mac, ea))
 				continue;
 			if (atoi(mode) == 0)
-                                fprintf(fp,
+				fprintf(fp,
 					"-A DNSFILTER -m mac --mac-source %s -j RETURN\n",
 					mac);
 			else
 				fprintf(fp,
 					"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
-					mac, dns_filter(atoi(mode)));
+					mac, dns_filter(AF_INET, atoi(mode)));
 		}
 		free(nv);
 
 		/* Send other queries to the default server */
 		if (nvram_get_int("dnsfilter_mode") != 0) {
-			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dns_filter(nvram_get_int("dnsfilter_mode")));
+			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dns_filter(AF_INET, nvram_get_int("dnsfilter_mode")));
 		}
 	}
 }
 
 
 #ifdef RTCONFIG_IPV6
-void dnsfilter6_settings() {
+void dnsfilter6_settings(FILE *fp, char *lan_if, char *lan_ip) {
+
 	char *nv, *nvp, *b;
-	char *name, *mac, *mode;
+	char *name, *mac, *mode, *server;
 	unsigned char ea[ETHER_ADDR_LEN];
+	int defmode;
 
-	if(nvram_match("dnsfilter_enable_x", "1")) {
-		eval("ip6tables", "-t", "mangle", "-N", "DNSFILTER");
-		eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "udp", "--dport", "53", "-j", "DNSFILTER");
-		eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "tcp", "--dport", "53", "-j", "DNSFILTER");
+	fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -m u32 --u32 48>>15&1=0 -j DNSFILTERI\n"
+		    "-A INPUT -i %s -p tcp -m tcp --dport 53 -m u32 --u32 52>>26&0x3c@8>>15&1=0 -j DNSFILTERI\n"
+		    "-A FORWARD -i %s -p udp -m udp --dport 53 -m u32 --u32 48>>15&1=0 -j DNSFILTERF\n"
+		    "-A FORWARD -i %s -p tcp -m tcp --dport 53 -m u32 --u32 52>>26&0x3c@8>>15&1=0 -j DNSFILTERF\n",
+		lan_if, lan_if, lan_if, lan_if);
 
-		nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
-		while (nv && (b = strsep(&nvp, "<")) != NULL) {
-			if (vstrsep(b, ">", &name, &mac, &mode) != 3)
-				continue;
-			if (!*mac || (atoi(mode) == 0) || !ether_atoe(mac, ea))
-				continue;
-			if (atoi(mode) == 0)
-				eval("ip6tables", "-t", "mangle", "-A", "DNSFILTER", "-m", "mac", "--mac-source", mac, "-j", "RETURN");
-			else
-				eval("ip6tables", "-t", "mangle", "-A", "DNSFILTER", "-m", "mac", "--mac-source", mac, "-j", "DROP");
+	nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
+	while (nv && (b = strsep(&nvp, "<")) != NULL) {
+		if (vstrsep(b, ">", &name, &mac, &mode) != 3)
+			continue;
+		if (!*mac || (atoi(mode) == 0) || !ether_atoe(mac, ea))
+			continue;
+		if (atoi(mode) == 0) {	/* Unfiltered */
+			fprintf(fp, "-A DNSFILTERI -m mac --mac-source %s -j ACCEPT\n"
+				    "-A DNSFILTERF -m mac --mac-source %s -j ACCEPT\n", 
+				mac, mac);
+		} else {	// Filtered
+			server = dns_filter(AF_INET6, atoi(mode));
+			fprintf(fp, "-A DNSFILTERI -m mac --mac-source %s -j DROP\n", mac);
+			if (strlen(server)) {
+				fprintf(fp, "-A DNSFILTERF -m mac --mac-source %s -d %s -j ACCEPT\n", mac, server);
+			}
 		}
-		free(nv);
+	}
+	free(nv);
+
+	defmode = nvram_get_int("dnsfilter_mode");
+	if (defmode) {
+		/* Allow other queries to the default server, and drop the rest */
+		server = dns_filter(AF_INET6, defmode);
+		if (strlen(server)) {
+			fprintf(fp, "-A DNSFILTERI -d %s -j ACCEPT\n"
+				    "-A DNSFILTERF -d %s -j ACCEPT\n",
+				server, server);
+		}
+		fprintf(fp, "-A DNSFILTERI -j DROP\n"
+			    "-A DNSFILTERF -j DROP\n");
 	}
 }
 #endif	// RTCONFIG_IPV6

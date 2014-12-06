@@ -6173,13 +6173,13 @@ void restart_cstats(void)
 }
 
 #ifdef RTCONFIG_DNSFILTER
-const char *dns_filter(int mode)
+const char *dns_filter(int proto, int mode)
 {
 	char *dnsptr;
 	static const char *server[] = {
 		"",			/* 0: Unfiltered (handled separately below) */
 		"208.67.222.222",	/* 1: OpenDNS */
-                "199.85.126.10",	/* 2: Norton Connect Safe A (Security) */
+		"199.85.126.10",	/* 2: Norton Connect Safe A (Security) */
 		"199.85.126.20",	/* 3: Norton Connect Safe B (Security + Adult) */
 		"199.85.126.30",	/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
 		"77.88.8.88",		/* 5: Secure Mode safe.dns.yandex.ru */
@@ -6191,6 +6191,23 @@ const char *dns_filter(int mode)
 		"",			/* 11: Router */
 		"8.26.56.26"		/* 12: Comodo Secure DNS */
         };
+#ifdef RTCONFIG_IPV6
+	static const char *server6[] = {
+		"",		/* 0: Unfiltered (handled separately below) */
+		"",		/* 1: OpenDNS */
+		"",		/* 2: Norton Connect Safe A (Security) */
+		"",		/* 3: Norton Connect Safe B (Security + Adult) */
+		"",		/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
+		"2a02:6b8::feed:bad",		/* 5: Secure Mode safe.dns.yandex.ru */
+		"2a02:6b8::feed:bad",		/* 6: Family Mode family.dns.yandex.ru */
+		"",			/* 7: OpenDNS Family Shield */
+		"",			/* 8: Custom1 */
+		"",			/* 9: Custom2 */
+		"",			/* 10: Custom3 */
+		"",			/* 11: Router */
+		""			/* 12: Comodo Secure DNS */
+        };
+#endif
 
 	if (mode > 11) mode = 0;
 
@@ -6206,13 +6223,31 @@ const char *dns_filter(int mode)
 	else if (mode == 10)
 		dnsptr = nvram_safe_get("dnsfilter_custom3");
 	// Force to use what's returned by the router's DHCP server to clients (which means either
-        // the router's IP, or a user-defined nameserver from the DHCP webui page)
+	// the router's IP, or a user-defined nameserver from the DHCP webui page)
 	else if (mode == 11)
 		dnsptr = nvram_safe_get("dhcp_dns1_x");
-	else
-		dnsptr = server[mode];
+	else {
+#ifdef RTCONFIG_IPV6
+		if (proto == AF_INET6) {
+			dnsptr = server6[mode];
+		} else 
+#endif
+		{
+			dnsptr = server[mode];
+		}
+	}
 
-	return (strlen(dnsptr) ? dnsptr : nvram_safe_get("lan_ipaddr"));
+// Ensure that custom DNS do contain something
+	if (((mode == 8) || (mode == 9) || (mode == 10)) && (!strlen(dnsptr))) {
+#ifdef RTCONFIG_IPV6
+		if (proto == AF_INET6)
+			dnsptr = nvram_safe_get("ipv6_rtr_addr");
+		else
+#endif
+			dnsptr = nvram_safe_get("lan_ipaddr");
+	}
+
+	return dnsptr;
 }
 #endif
 
