@@ -6209,7 +6209,7 @@ const char *dns_filter(int proto, int mode)
         };
 #endif
 
-	if (mode > 11) mode = 0;
+	if (mode >= (sizeof(server)/sizeof(server[0])) mode = 0;
 
 	// Unfiltered - don't return anything, the calling function should take care of handling it
         // (currently, dnsfilter_settings() will simply not enforce anything, as if dnsfilter was disabled)
