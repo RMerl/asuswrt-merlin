@@ -212,7 +212,7 @@ function addRow_main(upper){
 		return false;
 	}
 
-	if(!validate_string(document.form.rule_devname))
+	if(!validator.string(document.form.rule_devname))
 		return false;
 
 	if(document.form.rule_devname.value == ""){
