@@ -5032,6 +5032,8 @@ void dnsfilter6_settings(FILE *fp, char *lan_if, char *lan_ip) {
 	unsigned char ea[ETHER_ADDR_LEN];
 	int defmode;
 
+	if (!ipv6_enabled()) return;
+
 	fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -j DNSFILTERI\n"
 		    "-A INPUT -i %s -p tcp -m tcp --dport 53 -j DNSFILTERI\n"
 		    "-A FORWARD -i %s -p udp -m udp --dport 53 -j DNSFILTERF\n"

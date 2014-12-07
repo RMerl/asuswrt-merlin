@@ -6215,22 +6215,22 @@ const char *dns_filter(int proto, int mode)
         // (currently, dnsfilter_settings() will simply not enforce anything, as if dnsfilter was disabled)
 	if (mode == 0)
 		return "";
-	// Custom IP, will fallback to router IP if it's not defined
-	else if (mode == 8)
+	// Custom IP, will fallback to router IP if it's not defined.  Only IPv4 supported.
+	else if ((mode == 8) && (proto == AF_INET))
 		dnsptr = nvram_safe_get("dnsfilter_custom1");
-	else if (mode == 9)
+	else if ((mode == 9) && (proto == AF_INET))
 		dnsptr = nvram_safe_get("dnsfilter_custom2");
-	else if (mode == 10)
+	else if ((mode == 10) && (proto == AF_INET))
 		dnsptr = nvram_safe_get("dnsfilter_custom3");
 	// Force to use what's returned by the router's DHCP server to clients (which means either
 	// the router's IP, or a user-defined nameserver from the DHCP webui page)
 	else if (mode == 11)
 		dnsptr = nvram_safe_get("dhcp_dns1_x");
 	else {
-#ifdef RTCONFIG_IPV6
+#ifdef RTCONFIG_IPV6	// Also handle IPv6 custom servers, which are always empty for now
 		if (proto == AF_INET6) {
 			dnsptr = server6[mode];
-		} else 
+		} else
 #endif
 		{
 			dnsptr = server[mode];
@@ -6238,13 +6238,8 @@ const char *dns_filter(int proto, int mode)
 	}
 
 // Ensure that custom DNS do contain something
-	if (((mode == 8) || (mode == 9) || (mode == 10)) && (!strlen(dnsptr))) {
-#ifdef RTCONFIG_IPV6
-		if (proto == AF_INET6)
-			dnsptr = nvram_safe_get("ipv6_rtr_addr");
-		else
-#endif
-			dnsptr = nvram_safe_get("lan_ipaddr");
+	if (((mode == 8) || (mode == 9) || (mode == 10)) && (!strlen(dnsptr)) && (proto == AF_INET)) {
+		dnsptr = nvram_safe_get("lan_ipaddr");
 	}
 
 	return dnsptr;
