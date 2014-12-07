@@ -4994,8 +4994,8 @@ void dnsfilter_settings(FILE *fp, char *lan_ip) {
 	if (nvram_get_int("dnsfilter_enable_x")) {
 		/* Reroute all DNS requests from LAN */
 		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
-		fprintf(fp, "-A PREROUTING -s %s -p udp -m udp --dport 53 -m u32 --u32 0>>22&0x3c@8>>15&1=0 -j DNSFILTER\n"
-			    "-A PREROUTING -s %s -p tcp -m tcp --dport 53 -m u32 --u32 0>>22&0x3c@12>>26&0x3c@8>>15&1=0 -j DNSFILTER\n",
+		fprintf(fp, "-A PREROUTING -s %s -p udp -m udp --dport 53 -j DNSFILTER\n"
+			    "-A PREROUTING -s %s -p tcp -m tcp --dport 53 -j DNSFILTER\n",
 			lan_class, lan_class);
 
 		/* Protection level per client */
@@ -5032,10 +5032,10 @@ void dnsfilter6_settings(FILE *fp, char *lan_if, char *lan_ip) {
 	unsigned char ea[ETHER_ADDR_LEN];
 	int defmode;
 
-	fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -m u32 --u32 48>>15&1=0 -j DNSFILTERI\n"
-		    "-A INPUT -i %s -p tcp -m tcp --dport 53 -m u32 --u32 52>>26&0x3c@8>>15&1=0 -j DNSFILTERI\n"
-		    "-A FORWARD -i %s -p udp -m udp --dport 53 -m u32 --u32 48>>15&1=0 -j DNSFILTERF\n"
-		    "-A FORWARD -i %s -p tcp -m tcp --dport 53 -m u32 --u32 52>>26&0x3c@8>>15&1=0 -j DNSFILTERF\n",
+	fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -j DNSFILTERI\n"
+		    "-A INPUT -i %s -p tcp -m tcp --dport 53 -j DNSFILTERI\n"
+		    "-A FORWARD -i %s -p udp -m udp --dport 53 -j DNSFILTERF\n"
+		    "-A FORWARD -i %s -p tcp -m tcp --dport 53 -j DNSFILTERF\n",
 		lan_if, lan_if, lan_if, lan_if);
 
 	nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
