@@ -864,6 +864,43 @@ void start_dnsmasq(int force)
 		}
 #endif /* RTCONFIG_YANDEXDNS */
 
+#ifdef RTCONFIG_DNSFILTER
+		if (nvram_get_int("dnsfilter_enable_x")) {
+			unsigned char ea[ETHER_ADDR_LEN];
+			char *name, *mac, *mode, *enable, *server[2];
+			char *nv, *nvp, *b;
+			int count, dnsmode, defmode = nvram_get_int("dnsfilter_mode");
+
+			for (dnsmode = 1; dnsmode < 13; dnsmode++) {
+				if (dnsmode == defmode)
+					continue;
+				count = get_dns_filter(AF_INET6, dnsmode, server);
+				if (count == 0)
+					continue;
+				fprintf(fp, "dhcp-option=dnsf%u,option6:23,[%s]", dnsmode, server[0]);
+				if (count == 2)
+					fprintf(fp, ",[%s]", server[1]);
+				fprintf(fp, "\n");
+			}
+			/* DNS server per client */
+			nv = nvp = strdup(nvram_safe_get("dnsfilter_rulelist"));
+			while (nv && (b = strsep(&nvp, "<")) != NULL) {
+				if (vstrsep(b, ">", &name, &mac, &mode, &enable) < 3)
+					continue;
+				if (enable && atoi(enable) == 0)
+					continue;
+				if (!*mac || !*mode || !ether_atoe(mac, ea))
+					continue;
+				dnsmode = atoi(mode);
+				/* Skip unfiltered, default, or non-IPv6 capable levels */
+				if ((dnsmode == 0) || (dnsmode == defmode) || (get_dns_filter(AF_INET6, dnsmode, server) == 0))
+					continue;
+				fprintf(fp, "dhcp-host=%s,set:dnsf%u\n", mac, dnsmode);
+			}
+			free(nv);
+		}
+#endif
+
 		/* DNS server */
 		fprintf(fp, "dhcp-option=lan,option6:23,[::]\n");
 
@@ -6173,76 +6210,85 @@ void restart_cstats(void)
 }
 
 #ifdef RTCONFIG_DNSFILTER
-const char *dns_filter(int proto, int mode)
+// ARG: server must be an array of two pointers, each pointing to an array of chars
+int get_dns_filter(int proto, int mode, char **server)
 {
-	char *dnsptr;
-	static const char *server[] = {
-		"",			/* 0: Unfiltered (handled separately below) */
-		"208.67.222.222",	/* 1: OpenDNS */
-		"199.85.126.10",	/* 2: Norton Connect Safe A (Security) */
-		"199.85.126.20",	/* 3: Norton Connect Safe B (Security + Adult) */
-		"199.85.126.30",	/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
-		"77.88.8.88",		/* 5: Secure Mode safe.dns.yandex.ru */
-		"77.88.8.7",		/* 6: Family Mode family.dns.yandex.ru */
-		"208.67.222.123",	/* 7: OpenDNS Family Shield */
-		"",			/* 8: Custom1 */
-		"",			/* 9: Custom2 */
-		"",			/* 10: Custom3 */
-		"",			/* 11: Router */
-		"8.26.56.26"		/* 12: Comodo Secure DNS */
+	int count = 0;
+	static const char *server_table[13][2] = {
+		{"", ""},				/* 0: Unfiltered (handled separately below) */
+		{"208.67.222.222", ""},	/* 1: OpenDNS */
+		{"199.85.126.10", ""},	/* 2: Norton Connect Safe A (Security) */
+		{"199.85.126.20", ""},	/* 3: Norton Connect Safe B (Security + Adult) */
+		{"199.85.126.30", ""},	/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
+		{"77.88.8.88", ""},		/* 5: Secure Mode safe.dns.yandex.ru */
+		{"77.88.8.7", ""},		/* 6: Family Mode family.dns.yandex.ru */
+		{"208.67.222.123", ""},	/* 7: OpenDNS Family Shield */
+		{"", ""},				/* 8: Custom1 */
+		{"", ""},				/* 9: Custom2 */
+		{"", ""},				/* 10: Custom3 */
+		{"", ""},				/* 11: Router */
+		{"8.26.56.26", ""}		/* 12: Comodo Secure DNS */
         };
 #ifdef RTCONFIG_IPV6
-	static const char *server6[] = {
-		"",		/* 0: Unfiltered (handled separately below) */
-		"",		/* 1: OpenDNS */
-		"",		/* 2: Norton Connect Safe A (Security) */
-		"",		/* 3: Norton Connect Safe B (Security + Adult) */
-		"",		/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
-		"2a02:6b8::feed:bad",		/* 5: Secure Mode safe.dns.yandex.ru */
-		"2a02:6b8::feed:bad",		/* 6: Family Mode family.dns.yandex.ru */
-		"",			/* 7: OpenDNS Family Shield */
-		"",			/* 8: Custom1 */
-		"",			/* 9: Custom2 */
-		"",			/* 10: Custom3 */
-		"",			/* 11: Router */
-		""			/* 12: Comodo Secure DNS */
+	static const char *server6_table[][2] = {
+		{"", ""},		/* 0: Unfiltered (handled separately below) */
+		{"", ""},		/* 1: OpenDNS */
+		{"", ""},		/* 2: Norton Connect Safe A (Security) */
+		{"", ""},		/* 3: Norton Connect Safe B (Security + Adult) */
+		{"", ""},		/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
+		{"2a02:6b8::feed:bad","2a02:6b8:0:1::feed:bad"},		/* 5: Secure Mode safe.dns.yandex.ru */
+		{"2a02:6b8::feed:a11","2a02:6b8:0:1::feed:a11"},		/* 6: Family Mode family.dns.yandex.ru */
+		{"", ""},			/* 7: OpenDNS Family Shield */
+		{"", ""},			/* 8: Custom1 - not supported yet */
+		{"", ""},			/* 9: Custom2 - not supported yet */
+		{"", ""},			/* 10: Custom3 - not supported yet */
+		{"", ""},			/* 11: Router */
+		{"", ""}			/* 12: Comodo Secure DNS */
         };
 #endif
+	// Initialize
+	server[0] = server_table[0][0];
+	server[1] = server_table[0][1];
 
-	if (mode >= (sizeof(server)/sizeof(server[0])) mode = 0;
+	if (mode >= (sizeof(server_table)/sizeof(server_table[0]))) mode = 0;
 
-	// Unfiltered - don't return anything, the calling function should take care of handling it
-        // (currently, dnsfilter_settings() will simply not enforce anything, as if dnsfilter was disabled)
-	if (mode == 0)
-		return "";
 	// Custom IP, will fallback to router IP if it's not defined.  Only IPv4 supported.
-	else if ((mode == 8) && (proto == AF_INET))
-		dnsptr = nvram_safe_get("dnsfilter_custom1");
-	else if ((mode == 9) && (proto == AF_INET))
-		dnsptr = nvram_safe_get("dnsfilter_custom2");
-	else if ((mode == 10) && (proto == AF_INET))
-		dnsptr = nvram_safe_get("dnsfilter_custom3");
+	if ((mode == 8) && (proto == AF_INET)) {
+		server[0] = nvram_safe_get("dnsfilter_custom1");
+		server[1] = server_table[mode][1];
+	} else if ((mode == 9) && (proto == AF_INET)) {
+		server[0] = nvram_safe_get("dnsfilter_custom2");
+		server[1] = server_table[mode][1];
+	} else if ((mode == 10) && (proto == AF_INET)) {
+		server[0] = nvram_safe_get("dnsfilter_custom3");
+		server[1] = server_table[mode][1];
 	// Force to use what's returned by the router's DHCP server to clients (which means either
 	// the router's IP, or a user-defined nameserver from the DHCP webui page)
-	else if (mode == 11)
-		dnsptr = nvram_safe_get("dhcp_dns1_x");
-	else {
+	} else if (mode == 11) {
+		server[0] = nvram_safe_get("dhcp_dns1_x");
+		server[1] = server_table[mode][1];
+	} else {
 #ifdef RTCONFIG_IPV6	// Also handle IPv6 custom servers, which are always empty for now
 		if (proto == AF_INET6) {
-			dnsptr = server6[mode];
+			server[0] = server6_table[mode][0];
+			server[1] = server6_table[mode][1];
 		} else
 #endif
 		{
-			dnsptr = server[mode];
+			server[0] = server_table[mode][0];
+			server[1] = server_table[mode][1];
 		}
 	}
 
 // Ensure that custom DNS do contain something
-	if (((mode == 8) || (mode == 9) || (mode == 10)) && (!strlen(dnsptr)) && (proto == AF_INET)) {
-		dnsptr = nvram_safe_get("lan_ipaddr");
+	if (((mode == 8) || (mode == 9) || (mode == 10)) && (!strlen(server[0])) && (proto == AF_INET)) {
+		server[0] = nvram_safe_get("lan_ipaddr");
 	}
 
-	return dnsptr;
+// Report how many non-empty server we are returning
+	if (strlen(server[0])) count++;
+	if (strlen(server[1])) count++;
+	return count;
 }
 #endif
 

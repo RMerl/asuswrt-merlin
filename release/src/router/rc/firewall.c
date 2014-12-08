@@ -4985,11 +4985,11 @@ void ipt_account(FILE *fp, char *interface) {
 
 #ifdef RTCONFIG_DNSFILTER
 void dnsfilter_settings(FILE *fp, char *lan_ip) {
-
-	char *name, *mac, *mode;
+	char *name, *mac, *mode, *server[2];
 	unsigned char ea[ETHER_ADDR_LEN];
 	char *nv, *nvp, *b;
 	char lan_class[32];
+	int dnsmode;
 
 	if (nvram_get_int("dnsfilter_enable_x")) {
 		/* Reroute all DNS requests from LAN */
@@ -5005,20 +5005,22 @@ void dnsfilter_settings(FILE *fp, char *lan_ip) {
 				continue;
 			if (!*mac || !*mode || !ether_atoe(mac, ea))
 				continue;
-			if (atoi(mode) == 0)
+			dnsmode = atoi(mode);
+			if (dnsmode == 0) {
 				fprintf(fp,
 					"-A DNSFILTER -m mac --mac-source %s -j RETURN\n",
 					mac);
-			else
-				fprintf(fp,
-					"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
-					mac, dns_filter(AF_INET, atoi(mode)));
+			} else if (get_dns_filter(AF_INET, dnsmode, server)) {
+					fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
+						mac, server[0]);
+			}
 		}
 		free(nv);
 
 		/* Send other queries to the default server */
-		if (nvram_get_int("dnsfilter_mode") != 0) {
-			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dns_filter(AF_INET, nvram_get_int("dnsfilter_mode")));
+		dnsmode = nvram_get_int("dnsfilter_mode");
+		if ((dnsmode) && get_dns_filter(AF_INET, dnsmode, server)) {
+			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", server[0]);
 		}
 	}
 }
@@ -5026,11 +5028,10 @@ void dnsfilter_settings(FILE *fp, char *lan_ip) {
 
 #ifdef RTCONFIG_IPV6
 void dnsfilter6_settings(FILE *fp, char *lan_if, char *lan_ip) {
-
 	char *nv, *nvp, *b;
-	char *name, *mac, *mode, *server;
+	char *name, *mac, *mode, *server[2];
 	unsigned char ea[ETHER_ADDR_LEN];
-	int defmode;
+	int dnsmode, count;
 
 	if (!ipv6_enabled()) return;
 
@@ -5044,30 +5045,39 @@ void dnsfilter6_settings(FILE *fp, char *lan_if, char *lan_ip) {
 	while (nv && (b = strsep(&nvp, "<")) != NULL) {
 		if (vstrsep(b, ">", &name, &mac, &mode) != 3)
 			continue;
-		if (!*mac || (atoi(mode) == 0) || !ether_atoe(mac, ea))
+		dnsmode = atoi(mode);
+		if (!*mac || !ether_atoe(mac, ea))
 			continue;
-		if (atoi(mode) == 0) {	/* Unfiltered */
+		if (dnsmode == 0) {	/* Unfiltered */
 			fprintf(fp, "-A DNSFILTERI -m mac --mac-source %s -j ACCEPT\n"
 				    "-A DNSFILTERF -m mac --mac-source %s -j ACCEPT\n", 
-				mac, mac);
+					mac, mac);
 		} else {	// Filtered
-			server = dns_filter(AF_INET6, atoi(mode));
+			count = get_dns_filter(AF_INET6, dnsmode, server);
 			fprintf(fp, "-A DNSFILTERI -m mac --mac-source %s -j DROP\n", mac);
-			if (strlen(server)) {
-				fprintf(fp, "-A DNSFILTERF -m mac --mac-source %s -d %s -j ACCEPT\n", mac, server);
+			if (count) {
+				fprintf(fp, "-A DNSFILTERF -m mac --mac-source %s -d %s -j ACCEPT\n", mac, server[0]);
+			}
+			if (count == 2) {
+				fprintf(fp, "-A DNSFILTERF -m mac --mac-source %s -d %s -j ACCEPT\n", mac, server[1]);
 			}
 		}
 	}
 	free(nv);
 
-	defmode = nvram_get_int("dnsfilter_mode");
-	if (defmode) {
+	dnsmode = nvram_get_int("dnsfilter_mode");
+	if (dnsmode) {
 		/* Allow other queries to the default server, and drop the rest */
-		server = dns_filter(AF_INET6, defmode);
-		if (strlen(server)) {
+		count = get_dns_filter(AF_INET6, dnsmode, server);
+		if (count) {
 			fprintf(fp, "-A DNSFILTERI -d %s -j ACCEPT\n"
 				    "-A DNSFILTERF -d %s -j ACCEPT\n",
-				server, server);
+				server[0], server[0]);
+		}
+		if (count == 2) {
+			fprintf(fp, "-A DNSFILTERI -d %s -j ACCEPT\n"
+				    "-A DNSFILTERF -d %s -j ACCEPT\n",
+				server[1], server[1]);
 		}
 		fprintf(fp, "-A DNSFILTERI -j DROP\n"
 			    "-A DNSFILTERF -j DROP\n");

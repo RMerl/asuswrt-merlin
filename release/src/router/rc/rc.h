@@ -741,7 +741,7 @@ extern int write_3g_ppp_conf(void);
 extern void setup_leds();
 extern void write_static_leases(char *file);
 #ifdef RTCONFIG_DNSFILTER
-extern const char *dns_filter(int proto, int mode);
+extern int get_dns_filter(int proto, int mode, char **server);
 #endif
 extern void start_dnsmasq(int force);
 extern void stop_dnsmasq(int force);
