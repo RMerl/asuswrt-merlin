@@ -576,6 +576,11 @@ History
    - NEW: Merged with Asus GPL 376_3626.  This new code
           includes a lot of changes related to USB modem
           support.
+  - NEW: IPv6 handling based on dnsmasq + odhcp6c.  This new
+         code which has been developped by Asus these past few
+         months but kept disabled so far has been enabled.
+         Initial tests show much better reliability with
+         different ISPs.
   - NEW: Added IPv6 support to DNSFilter (currently only 
          Yandex has IPv6 servers).  Note that unlike IPv4
          filtering, we cannot automatically NAT queries
@@ -587,14 +592,18 @@ History
   - CHANGED: Removed SSLv2 and v3 support from OpenSSL
              (we had already stopped using these in
              376.48, so this removes unused code)
-  - CHANGED: The VPN webui is a bit closer to Asus's code.
+  - CHANGED: The VPN webui is now a bit closer to Asus's code.
              This will mostly make it easier to keep in
              sync with future changes to that UI by
-             Asus (they just revamped it a bit in
+             Asus (they rearranged the layout a bit in
              376_36xx).
   - CHANGED: Updated OpenVPN to 2.3.6
+  - CHANGED: Reverted to Asus's max-lease number calculation
+             for dnsmasq
   - FIXED: vsftpd wasn't properly compiled with SSL
            support.
+  - FIXED: MAC filtering couldn't be disabled on Guest
+           networks (Asus bug) (Patch by John9527)
   - REMOVED: The web redirection control setting was
              removed, as it is being replaced by the
              (simpler) redirection setting Asus added
