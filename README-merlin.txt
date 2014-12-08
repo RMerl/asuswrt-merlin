@@ -576,6 +576,14 @@ History
    - NEW: Merged with Asus GPL 376_3626.  This new code
           includes a lot of changes related to USB modem
           support.
+  - NEW: Added IPv6 support to DNSFilter (currently only 
+         Yandex has IPv6 servers).  Note that unlike IPv4
+         filtering, we cannot automatically NAT queries
+         to the desire server, so the current implementation
+         works like Asus's YandexDNS service, where IPv6 servers
+         are simply returned to DHCPv6/RA client queries,
+         and ip6tables ensures that you cannot override
+         them, by rejecting connection to other DNS servers.
   - CHANGED: Removed SSLv2 and v3 support from OpenSSL
              (we had already stopped using these in
              376.48, so this removes unused code)
@@ -584,6 +592,9 @@ History
              sync with future changes to that UI by
              Asus (they just revamped it a bit in
              376_36xx).
+  - CHANGED: Updated OpenVPN to 2.3.6
+  - FIXED: vsftpd wasn't properly compiled with SSL
+           support.
   - REMOVED: The web redirection control setting was
              removed, as it is being replaced by the
              (simpler) redirection setting Asus added
