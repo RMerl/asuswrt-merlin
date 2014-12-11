@@ -994,6 +994,7 @@ enableFTP=Povolit FTP
 Encap_mode_help=ZVMODELVZ provides two modes for encapsulating or transporting LAN and WAN protocols via ATM. Please select the appropriate Encapsulation Mode.
 Excute_processing=Instalování
 External=Pouze externí
+Extend_TTL_Value=Extend the TTL value
 EZQoS=Správa EZQoS připojení
 EzQoS_desc=Funkce Quality of Service (QoS) zajišťuje potřebnou šířku pásma pro upřednostňované úlohy a aplikace.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Adaptivní funkce QoS</span> zaručuje u kabelových i bezdrátových připojení dostatečnou šířku pásma pro příchozí a odchozí datové pakety upřednostňovaných aplikací a úloh prostřednictvím předvoleb nastavených přetažením myší: hry, streamování médií, VoIP, procházení webu a přenos souborů.
@@ -1094,7 +1095,7 @@ FolderName=Název složky
 FTP_desc=Nastavte účet a oprávnění služby FTP. 
 Full_Clients=Klienti
 FW_desc0=Získejte verzi firmwaru na stránkách podpory ASUS na adrese <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=Nejnovější firmware je k dispozici na stránkách podpory společnosti ASUS (http://www.asus.com/support/).
+FW_desc1=Nejnovější firmware je k dispozici na stránkách podpory společnosti ASUS http://www.asus.com/support/.
 fw_downloading=Stáhněte firmware
 FW_item1=Identifikační číslo produktu
 FW_item2=Verze firmwaru

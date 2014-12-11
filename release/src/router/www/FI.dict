@@ -994,6 +994,7 @@ enableFTP=Ota FTP käyttöön
 Encap_mode_help=ZVMODELVZ tarjoaa kaksi LAN- ja WAN-ptotokollien kapselointi- tai kuljetustapaa ATM:n kautta. Valitse sopiva kapselointitapa.
 Excute_processing=Asennetaan...
 External=Vain ulkoinen
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS-kaistanleveyden hallinta
 EzQoS_desc=Quality of Service (QoS) varmistaa kaistanleveyden ensisijaisille tehtäville ja applications.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Adaptiivinen QoS</span> varmistaa tulevan ja lähtevän kaistanleveyden sekä langallisille että langattomille yhteyksille ensisijaisille sovelluksille ja tehtäville esimääritetyillä, vedä ja pudota -esiasetuksilla: pelaaminen, median suoratoisto, VoIP, web-surffailu ja tiedostonsiirto.
@@ -1094,7 +1095,7 @@ FolderName=Kansion nimi
 FTP_desc=Aseta FTP:n tili ja käyttöoikeudet. 
 Full_Clients=Asiakkaat
 FW_desc0=Hae uusin laiteohjelmistoversio ASUS-tukisivustolta osoitteesta <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=Siirry ASUS-tukisivustolle osoitteeseen (http://www.asus.com/support/) saadaksesi uusimmat laiteohjelmistot.
+FW_desc1=Siirry ASUS-tukisivustolle osoitteeseen http://www.asus.com/support/ saadaksesi uusimmat laiteohjelmistot.
 fw_downloading=Lataa laiteohjelmisto
 FW_item1=Tuotteen tunnus
 FW_item2=Laiteohjelmistoversio

@@ -994,6 +994,7 @@ enableFTP=啟用 FTP
 Encap_mode_help=ZVMODELVZ provides two modes for encapsulating or transporting LAN and WAN protocols via ATM. Please select the appropriate Encapsulation Mode.
 Excute_processing=安裝中
 External=僅外部
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS 頻寬管理
 EzQoS_desc=Quality of Service (QoS) ensures bandwidth for prioritized tasks and applications.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Adaptive QoS</span> ensures inbound and outbound bandwidth on both wired and wireless connections for prioritized applications and tasks via pre-defined, drag-and-drop presets: gaming, media streaming, VoIP, web surfing and file transferring.
@@ -1093,8 +1094,8 @@ FirewallIPv6_list=Inbound Firewall Rules
 FolderName=資料夾名稱
 FTP_desc=設定 FTP 的帳號與權限。
 Full_Clients=用戶數
-FW_desc0=從華碩支援網站﹝<a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>﹞獲得最新版本的韌體
-FW_desc1=請造訪華碩技術支援網站（ http://www.asus.com/support/ ）獲取最新韌體。
+FW_desc0=從華碩支援網站 <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a> 獲得最新版本的韌體
+FW_desc1=請造訪華碩技術支援網站 http://www.asus.com/support/ 獲取最新韌體。
 fw_downloading=下載韌體
 FW_item1=產品型號
 FW_item2=韌體版本
@@ -1797,7 +1798,7 @@ TZ63=克拉斯諾亞爾斯克
 TZ64=北京，香港
 TZ65=重慶，烏魯木齊
 TZ66=吉隆坡，新加坡
-TZ67=台北
+TZ67=臺北
 TZ68=伯斯
 TZ69=烏蘭巴圖
 TZ70=伊爾庫次克

@@ -179,6 +179,10 @@ function applyRule(){
 			inputCtrl(document.form.wan_dns2_x, 1);
 		}
 
+		if(document.form.ttl_inc_enable.value != '<% nvram_get("ttl_inc_enable"); %>'){
+			document.form.action_script.value += ";restart_firewall";
+		}
+
 		// Turn CTF into level 1, and turn back to level 2 if there exists nvram ctf_fa_mode_close.
 		if(ctf.changeType() && ctf.getLevel() == 2 && ctf.level2_supprot){
 			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
@@ -895,8 +899,7 @@ function pass_checked(obj){
 											to
 										<input type="text" maxlength="5" name="upnp_max_port_ext" class="input_6_table" value="<% nvram_get("upnp_max_port_ext"); %>" onkeypress="return validator.isNumber(this,event);">
 									</td>
-							</tr>
-
+							</tr>										
 						</table>
 
 						<table id="IPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -1073,6 +1076,13 @@ function pass_checked(obj){
                 <th>Manual clientid (for some ISPs)</th>
                 <td><input type="text" name="wan_dhcpc_options" class="input_32_table" maxlength="128" value="<% nvram_get("wan_dhcpc_options"); %>" onkeypress="return is_string(this, event)"></td>
                 </tr>
+		<tr>
+			<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#Extend_TTL_Value#></a></th>
+				<td>
+					<input type="radio" name="ttl_inc_enable" class="input" value="1" <% nvram_match("ttl_inc_enable", "1", "checked"); %>><#checkbox_Yes#>
+					<input type="radio" name="ttl_inc_enable" class="input" value="0" <% nvram_match("ttl_inc_enable", "0", "checked"); %>><#checkbox_No#>
+				</td>
+		</tr>	
 		</table>
 	  <div class="apply_gen" style="height:auto">
 			<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>

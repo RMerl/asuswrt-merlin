@@ -994,6 +994,7 @@ enableFTP=FTP engedélyezése
 Encap_mode_help=A ZVMODELVZ két módot kínál a LAN és WAN protokollok beágyazásához és szállításához ATM-en keresztül. Kérjük, válassza ki a megfelelő Beágyazási módot.
 Excute_processing=Telepítés...
 External=Csak külső
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS sávszélesség-kezelés
 EzQoS_desc=A Quality of Service (QoS) sávszélességet biztosít a kiemelt feladatoknak.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Adaptív QoS</span> biztosítja a ki és bemeneti sávszélességet mind a vezetékes mind a vezeték nélküli kapcsolaton a applikációknak és előre drag-and-drop kiválasztással beállított feladatoknak: játék, média streamelés, VoIP, általános böngészés és file továbbítás.
@@ -1094,7 +1095,7 @@ FolderName=Mappanév
 FTP_desc=Állítsa be az FTP szolgáltatás fiókját és jogosultságát. 
 Full_Clients=Kliensek
 FW_desc0=A legújabb firmware verzió letölthető az ASUS Támogató oldaláról itt: <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=Nézze meg az ASUS támogatási honlapot a ( http://www.asus.com/support/ ) címen a legújabb firmware beszerzését illetően.
+FW_desc1=Nézze meg az ASUS támogatási honlapot a http://www.asus.com/support/ címen a legújabb firmware beszerzését illetően.
 fw_downloading=Firmware letöltése
 FW_item1=Termékazonosító
 FW_item2=Firmware verzió

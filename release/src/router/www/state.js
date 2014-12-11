@@ -1626,18 +1626,21 @@ function show_footer(){
 				footer_code += '<td width="300" id="bottom_help_link" align="left">&nbsp&nbsp<a style="font-weight: bolder;text-decoration:underline;cursor:pointer;" href="http://www.asus.com'+ href_lang +'Networking/'+ model_name_supportsite +'/HelpDesk_Manual/" target="_blank">Manual</a>&nbsp|&nbsp<a style="font-weight: bolder;text-decoration:underline;cursor:pointer;" href="http://www.asus.com'+ href_lang +'Networking/' + model_name_supportsite + '/HelpDesk_Download/" target="_blank">Utility</a>';	
 		}
 	}
-	else if(productid == "DSL-N55U"){	//MODELDEP : DSL-N55U
+	else if(based_modelid == "DSL-N55U"){	//MODELDEP : DSL-N55U
 		footer_code += '<td width="300" id="bottom_help_link" align="left">&nbsp&nbsp<a style="font-weight: bolder;text-decoration:underline;cursor:pointer;" href="http://www.asus.com/Networking/DSLN55U_Annex_A/HelpDesk_Manual/" target="_blank">Manual</a>&nbsp|&nbsp<a style="font-weight: bolder;text-decoration:underline;cursor:pointer;" href="http://www.asus.com/Networking/DSLN55U_Annex_A/HelpDesk_Download/" target="_blank">Utility</a>';
 	}
-	else if(productid == "DSL-N55U-B"){	//MODELDEP : DSL-N55U-B
-		footer_code += '<td width="300" id="bottom_help_link" align="left">&nbsp&nbsp<a style="font-weight: bolder;text-decoration:underline;cursor:pointer;" href="http://www.asus.com/Networking/DSLN55U_Annex_B/HelpDesk_Manual/" target="_blank">Manual</a>&nbsp|&nbsp<a style="font-weight: bolder;text-decoration:underline;cursor:pointer;" href="http://www.asus.com/Networking/DSLN55U_Annex_B/HelpDesk_Download/" target="_blank">Utility</a>';
+	else if(based_modelid == "DSL-N55U-B"){	//MODELDEP : DSL-N55U-B
+								
+		footer_codk_Download += '<td width="300" id="bottom_help_link" align="left">&nbsp&nbsp<a style="font-weight: bolder;text-decoration:underline;cursor:pointer;" href="http://www.asus.com/Networking/DSLN55U_Annex_B/HelpDesk_Manual/" target="_blank">Manual</a>&nbsp|&nbsp<a style="font-weight: bolder;text-decoration:underline;cursor:pointer;" href="http://www.asus.com/Networking/DSLN55U_Annex_B/HelpDesk_Download/" target="_blank">Utility</a>';
 	}
 	else{
-		if(productid == "DSL-AC68U" || productid == "DSL-AC68R" || productid == "RT-N11P" || productid == "RT-N12+")
-			href_lang = "";	//global only
+		if(based_modelid == "DSL-AC68U" || based_modelid == "DSL-AC68R" || based_modelid == "RT-N11P")
+			href_lang = "/";	//global only
 
-		if(productid == "RT-N12+")
+		if(odmpid == "RT-N12+")
 			model_name_supportsite = "RTN12Plus";
+		else if(odmpid.search("RT-N12E_B") != -1)	//RT-N12E_B or RT-N12E_B1
+			model_name_supportsite = "RTN12E_B1";
 
 		if(tmo_support){
 				footer_code += '<td width="300" id="bottom_help_link" align="left">&nbsp';	

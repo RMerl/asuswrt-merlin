@@ -338,12 +338,12 @@ elif [ "$1" == "band" ]; then
 		nvram set usb_modem_act_band="$ret"
 	fi
 elif [ "$1" == "scan" ]; then
-	nvram set usb_modem_act_scanning=1
+	nvram set usb_modem_act_scanning=2
 	at_ret=`$at_lock modem_at.sh '+COPS=2' |grep "OK" 2>/dev/null`
 
 	at_ret=`$at_lock modem_at.sh '+COPS=?' $modem_roaming_scantime 2>/dev/null`
 	ret=`echo "$at_ret" |grep '+COPS: ' |awk '{FS=": "; print $2}' |awk '{FS=",,"; print $1}' 2>/dev/null`
-	nvram set usb_modem_act_scanning=0
+	nvram set usb_modem_act_scanning=1
 	if [ "$ret" == "" ]; then
 		echo "Fail to scan the stations."
 		exit 17
@@ -377,7 +377,8 @@ elif [ "$1" == "scan" ]; then
 		i=$((i+1))
 	done
 	list=$list"]"
-	echo "$list" > $modem_roaming_scanlist
+	echo -n "$list" > $modem_roaming_scanlist
+	nvram set usb_modem_act_scanning=0
 	echo "Got the list."
 elif [ "$1" == "station" ]; then
 	$at_lock modem_at.sh "+COPS=1,0,\"$2\"" 1,2>/dev/null

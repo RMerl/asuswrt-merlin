@@ -1117,10 +1117,6 @@ define RouterOptions
 		sed -i "/RTCONFIG_NOWL/d" $(1); \
 		echo "RTCONFIG_NOWL=y" >>$(1); \
 	fi; \
-	if [ "$(TTL)" = "y" ]; then \
-		sed -i "/RTCONFIG_TTL/d" $(1); \
-		echo "RTCONFIG_TTL=y" >>$(1); \
-	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef
@@ -1492,12 +1488,20 @@ define KernelConfig
 		if [ "$(LESSMODEM)" = "y" ]; then \
 			sed -i "/CONFIG_HSO/d" $(1); \
 			echo "# CONFIG_HSO is not set" >>$(1); \
+			sed -i "/CONFIG_USB_IPHETH/d" $(1); \
+			echo "# CONFIG_USB_IPHETH is not set" >>$(1); \
 		fi; \
 	else \
 		sed -i "/CONFIG_USB_SERIAL/d" $(1); \
 		echo "# CONFIG_USB_SERIAL is not set" >>$(1); \
 		sed -i "/CONFIG_USB_ACM/d" $(1); \
 		echo "# CONFIG_USB_ACM is not set" >>$(1); \
+		sed -i "/CONFIG_USB_USBNET/d" $(1); \
+		echo "# CONFIG_USB_USBNET is not set" >>$(1); \
+		sed -i "/CONFIG_USB_WDM/d" $(1); \
+		echo "# CONFIG_USB_WDM is not set" >>$(1); \
+		sed -i "/CONFIG_USB_IPHETH/d" $(1); \
+		echo "# CONFIG_USB_IPHETH is not set" >>$(1); \
 	fi; \
 	if [ "$(AP_CARRIER_DETECTION)" = "y" ]; then \
 		sed -i "/CONFIG_RALINK_TIMER_DFS/d" $(1); \
@@ -1877,12 +1881,6 @@ define KernelConfig
 		echo "CONFIG_DPSTA=m" >>$(1); \
 		sed -i "/CONFIG_DHDAP/d" $(1); \
 		echo "CONFIG_DHDAP=m" >>$(1); \
-	fi; \
-	if [ "$(TTL)" = "y" ]; then \
-		sed -i "/CONFIG_NETFILTER_XT_TARGET_HL/d" $(1); \
-		echo "CONFIG_NETFILTER_XT_TARGET_HL=y" >>$(1); \
-		sed -i "/CONFIG_NETFILTER_XT_MATCH_HL/d" $(1); \
-		echo "CONFIG_NETFILTER_XT_MATCH_HL=y" >>$(1); \
 	fi; \
 	)
 	$(call platformKernelConfig, $(1))

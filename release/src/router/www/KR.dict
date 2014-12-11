@@ -994,6 +994,7 @@ enableFTP=FTP 사용
 Encap_mode_help=ZVMODELVZ는 ATM을 통해 LAN과 WAN 프로토콜을 압축 또는 변환하는 두 가지 모드를 제공합니다. 적절한 압축 모드를 선택하십시오.
 Excute_processing=설치 중…
 External=외부 전용
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS 대역폭 관리
 EzQoS_desc=서비스 품질 (QoS)은 우선 순위 작업과 애플리케이션을위한 대역폭을 보장합니다.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">적응 형 QoS</span> 미리 정의 된, 드래그 드롭 사전 설정을 통해 우선 순위 응용 프로그램 및 작업에 대한 유선 및 무선 연결에 대한 인바운드 및 아웃 바운드 대역폭을 보장합니다: 게임, 미디어 스트리밍, VoIP를, 웹 서핑 및 파일 전송.
@@ -1094,7 +1095,7 @@ FolderName=폴더명
 FTP_desc=FTP 서비스의 계정과 권한을 설정
 Full_Clients=클라이언트
 FW_desc0=ASUS 지원 사이트 <a style="font-weight: bolder;text-decoration: underline;color:#000000;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>에서 최신 펌웨어 버전을 다운로드 받으십시오.
-FW_desc1=최신 펌웨어를 얻으려면 ASUS 지원 사이트 ( http://support.asus.com )을 방문하십시오.
+FW_desc1=최신 펌웨어를 얻으려면 ASUS 지원 사이트  http://support.asus.com 을 방문하십시오.
 fw_downloading=다운로드 펌웨어
 FW_item1=제품 ID
 FW_item2=펌웨어 버전

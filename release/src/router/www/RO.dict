@@ -994,6 +994,7 @@ enableFTP=Activare FTP
 Encap_mode_help=Dispozitivul ZVMODELVZ oferă două moduri pentru încapsularea sau transportarea protocoalelor LAN şi WAN prin ATM. Selectaţi modul de încapsulare corespunzător.
 Excute_processing=Se instalează...
 External=Doar externă
+Extend_TTL_Value=Extend the TTL value
 EZQoS=Gestionare EZQoS a lăţimii de bandă
 EzQoS_desc=QoS (Quality of Service - Calitatea serviciului) asigură lățime de bandă pentru activități și aplicații cu prioritate.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">QoS Adaptiv</span> asigură lățime de bandă la intrare și la ieșire pentru aplicații și activități cu prioritate prin intermediul unor presetări predefinite prin glisare și fixare: jocuri, redare în flux a conținutului media, VoIP, navigare pe Web și transfer de fișiere.
@@ -1094,7 +1095,7 @@ FolderName=Nume folder
 FTP_desc=Setaţi contul şi permisiunea pentru serviciul FTP. 
 Full_Clients=Clienţi
 FW_desc0=Puteţi obţine cea mai recentă versiune de firmware accesând site-ul de asistenţă ASUS la adresa <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=Vizitaţi site-ul de asistenţă ASUS (http://www.asus.com/support/) pentru a obţine cel mai recent firmware.
+FW_desc1=Vizitaţi site-ul de asistenţă ASUS http://www.asus.com/support/ pentru a obţine cel mai recent firmware.
 fw_downloading=Descărcare Firmware
 FW_item1=ID produs
 FW_item2=Versiune firmware

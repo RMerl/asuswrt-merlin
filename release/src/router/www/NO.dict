@@ -994,6 +994,7 @@ enableFTP=Aktiver FTP
 Encap_mode_help=ZVMODELVZ leverer to moduser for innkapsling eller transportering av LAN- og WAN-protokoller via ATM. Velg passende innkapslingsmodus.
 Excute_processing=Installerer 
 External=Bare ekstern
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS Båndbreddestyring
 EzQoS_desc=Tjenestekvalitet (QoS) sikrer båndbredde for prioriterte oppgaver og programmer.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Tilpasset QoS</span> sikrer inngående og utgående båndbredde på både kablede og trådløse tilkoblinger for prioriterte programmer og oppgaver via forhåndsdefinerte forhåndsinnstillinger som kan defineres via dra-og-slipp: spilling, direkteavspilling av media, VoIP, nettsurfing og filoverføring.
@@ -1094,7 +1095,7 @@ FolderName=Mappenavn
 FTP_desc=Angi kontoen og rettigheten til FTP-tjenesten. 
 Full_Clients=Klienter
 FW_desc0=Få den nyeste fastvareversjonen fra ASUS-støtteområdet på <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=Besøk ASUS' støttenettsted (http://www.asus.com/support/) for å få den siste fastvaren.
+FW_desc1=Besøk ASUS' støttenettsted http://www.asus.com/support/ for å få den siste fastvaren.
 fw_downloading=Last ned fastvare
 FW_item1=Produkt-ID
 FW_item2=Fastvareversjon

@@ -994,6 +994,7 @@ enableFTP=Активувати FTP
 Encap_mode_help=ZVMODELVZ надає два режими формування пакетів даних і передачі протоколів LAN і WAN через ATM. Будь ласка, виберіть правильний режим формування пакетів.
 Excute_processing=Інсталяція...
 External=Лише зовнішній
+Extend_TTL_Value=Extend the TTL value
 EZQoS=Керування шириною смуги EZQoS
 EzQoS_desc=Детальніше про EZQoS
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Адаптивна QoS</span> гарантує вхідну та вихідну пропускну здатність на проводових і бездротових інтерфейсах для пріоритетних програм та сервісів з використанням попередньо визначених профілів: ігри, потокове відтворення, VoIP, себ-серфінг та передача файлів.
@@ -1094,7 +1095,7 @@ FolderName=Назва папки
 FTP_desc=Вкажіть обліковий запис і дозвіл послуги FTP. 
 Full_Clients=Клієнти
 FW_desc0=Отримайте найновішу версію мікропрограми з сайту підтримки ASUS: <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=Будь ласка, відвідайте сайт підтримки ASUS ( http://www.asus.com/support/ ), щоб отримати найновішу мікропрограму.
+FW_desc1=Будь ласка, відвідайте сайт підтримки ASUS http://www.asus.com/support/ , щоб отримати найновішу мікропрограму.
 fw_downloading=Завантажити мікропрограму
 FW_item1=Ідентифікація виробу
 FW_item2=Версія мікропрограми

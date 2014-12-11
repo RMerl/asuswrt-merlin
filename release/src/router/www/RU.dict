@@ -994,6 +994,7 @@ enableFTP=Включить FTP
 Encap_mode_help=ZVMODELVZ обеспечивает два режима для инкапсуляции или транспортировки интернет протоколов через ATM. Пожалуйста, выберите соответствующий режима инкапсуляции.
 Excute_processing=Установка...
 External=Только внешний
+Extend_TTL_Value=Extend the TTL value
 EZQoS=Управление полосой пропускания EZQoS
 EzQoS_desc=Служба QoS обеспечивает приоритетное использование пропускной способности интернет-соединения определенными приложениями.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Адаптивная служба QoS</span> позволяет задать приоритеты с помощью предустановленных режимов: игры, потоковое видео/аудио, интернет-телефония, веб-серфинг, передача файлов.
@@ -1094,7 +1095,7 @@ FolderName=Имя папки
 FTP_desc=Установите учетную запись и права доступа к службе FTP
 Full_Clients=Клиенты
 FW_desc0=Скачать последнюю версию прошивки можно с сайта ASUS {<a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>}
-FW_desc1=Пожалуйста, посетите сайт ASUS (http://www.asus.com/support/) для получения последней версии прошивки
+FW_desc1=Пожалуйста, посетите сайт ASUS http://www.asus.com/support/ для получения последней версии прошивки
 fw_downloading=Скачать прошивку
 FW_item1=Идентификатор изделия
 FW_item2=Версия прошивки

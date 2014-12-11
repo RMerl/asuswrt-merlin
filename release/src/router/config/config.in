@@ -760,7 +760,3 @@ config RTCONFIG_GEOIP
 config RTCONFIG_NOWL
 	bool "no load wl module (only dhd test)"
 	default n
-
-config RTCONFIG_TTL
-       bool "insert netfilter ttl module"
-       default n

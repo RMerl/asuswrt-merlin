@@ -994,6 +994,7 @@ enableFTP=Mendayakan FTP
 Encap_mode_help=ZVMODELVZ provides two modes for encapsulating or transporting LAN and WAN protocols via ATM. Please select the appropriate Encapsulation Mode.
 Excute_processing=Memasang...
 External=Luaran sahaja
+Extend_TTL_Value=Extend the TTL value
 EZQoS=Pengurusan Lebar Jalur EZQoS
 EzQoS_desc=Kualiti Perkhidmatan (QoS) memastikan jalur lebar untuk tugasan utama dan aplikasi.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">QoS Mudah Suai</span> memastikan lebar jalur dalam dan luar pada kedua-dua sambungan wayarles dan tanpa wayar untuk aplikasi dan tugasan utama melalui pratetapan, pratetap seret dan jatuh;  permainan, penstriman media, VoIP, melayari internet dan memindahkan fail.
@@ -1094,7 +1095,7 @@ FolderName=Nama Folder
 FTP_desc=Tetapkan akaun dan izin perkhidmatan FTP. 
 Full_Clients=Klien
 FW_desc0=Dapatkan versi perisian tegar terkini dari tapak Sokongan ASUS di <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=Sila kunjungi tapak sokongan ASUS (http://www.asus.com/support/) untuk mendapatkan perisian tegar terkini.
+FW_desc1=Sila kunjungi tapak sokongan ASUS http://www.asus.com/support/ untuk mendapatkan perisian tegar terkini.
 fw_downloading=Muat Turun Perisian Tegar
 FW_item1=ID Produk
 FW_item2=Versi Perisian Tegar

@@ -994,6 +994,7 @@ enableFTP=FTP aktivieren
 Encap_mode_help=ZVMODELVZ provides two modes for encapsulating or transporting LAN and WAN protocols via ATM. Please select the appropriate Encapsulation Mode.
 Excute_processing=Installieren...
 External=Nur extern
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS-Bandbreitenmanagement
 EzQoS_desc=Quality of Service (QoS) reserviert Bandbreite für bevorzugte Aufgaben und Anwendungen.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Adaptives QoS</span> reserviert eingehende und ausgehende Bandbreite für LAN- und WLAN-Verbindungen für bevorzugte Aufgaben und Anwendungen über vordefinierte Profile per Drag&Drop: Spiele, Medienstreaming, VoIP, Internetsurfen, und Datentransfer.

@@ -71,12 +71,12 @@ function gen_list(){
 		passlist = new Array("", "", "", "", "", "", "", "", "", "");
 	}
 	else if(country == "AT"){
-		protolist = new Array("1", "1", "1", "1");
-		isplist = new Array("A1 TA", "3", "yesss!", "T-Mobile AT", "Orange AT");
-		apnlist = new Array("A1.net", "drei.at", "web.yesss.at", "gprsinternet", "web.one.at");
-		daillist = new Array("#*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#");
-		userlist = new Array("ppp@a1plus.at", "", "", "GPRS", "web");
-		passlist = new Array("ppp", "", "", "", "web");
+		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1");
+		isplist = new Array("T-Mobile", "Orange APN", "Mobilkom Austria (A1)", "3 Österreich", "Ge org", "Bob.at", "tele.ring", "yesss");
+		apnlist = new Array("gprsinternet", "web.one.at", "a1.net", "drei.at", "web", "bob.at", "WEB", "web.yesss.at");
+		daillist = new Array("*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#");
+		userlist = new Array("gprs", "web", "ppp@a1plus.at", "", "web@telering.at", "data@bob.at", "web@telering.at", "");
+		passlist = new Array("", "web", "ppp", "", "d2Vi", "ppp", "web", "");
 	}
 	else if(country == "BA"){
 		protolist = new Array("1");
@@ -168,11 +168,11 @@ function gen_list(){
 	}
 	else if(country == "DE"){
 		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1");
-		isplist = new Array("Vodafone", "T-mobile", "E-Plus", "O2", "O2 Prepaid", "Telogic ex. Vistream", "EDEKAmobil", "Tchibo", "mp3mobile", "Ring", "BILDmobil", "Alice", "Congstar", "klarmobil", "callmobile", "REWE", "simply", "Tangens", "ja!mobil", "penny", "Milleni.com", "PAYBACK", "smobil", "BASE", "Blau", "MEDION-Mobile", "simyo", "uboot", "vybemobile", "Aldi Talk", "Fonic", "igge&ko", "PTTmobile", "solomo", "sunsim", "telesim");
-		apnlist = new Array("web.vodafone.de", "internet.t-mobile", "internet.eplus.de", "internet", "pinternet.interkom.de", "internet.vistream.net", "data.access.de", "webmobil1", "gprs.gtcom.de", "internet.ring.de", "access.vodafone.de", "internet.partner1", "internet.t-mobile", "internet.t-mobile", "internet.t-mobile", "internet.t-mobile", "internet.t-mobile", "internet.t-mobile", "internet.t-mobile", "internet.t-mobile", "web.vodafone.de", "web.vodafone.de", "web.vodafone.de", "internet.eplus.de", "internet.eplus.de", "internet.eplus.de", "internet.eplus.de", "internet.eplus.de", "internet.eplus.de", "internet.eplus.de", "internet", "pinternet.interkom.de", "internet.vistream.net", "internet.vistream.net", "internet.vistream.net", "internet.vistream.net", "internet.vistream.net");
-		daillist = new Array("*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#", "*99***1#");
-		userlist = new Array("vodafone", "tm", "eplus", "", "", "WAP", "", "", "", "", "", "", "tm", "tm", "tm", "tm", "tm", "tm", "tm", "tm", "vodafone", "vodafone", "vodafone", "eplus", "eplus", "eplus", "eplus", "eplus", "eplus", "eplus", "", "WAP", "WAP", "WAP", "WAP", "WAP");
-		passlist = new Array("nternet", "tm", "gprs", "", "", "Vistream", "", "", "", "", "", "", "tm", "tm", "tm", "tm", "tm", "tm", "tm", "tm", "internet", "internet", "internet", "gprs", "gprs", "gprs", "gprs", "gprs", "gprs", "gprs", "", "Vistream", "Vistream", "Vistream", "Vistream", "Vistream");
+		isplist = new Array("Call & Surf via Funk LTE", "T-Mobile MagentaMobil", "T-Mobile Data Comfort", "T-Mobile Xtra Prepaid", "congstar", "congstar LTE", "klarmobile (0151)", "Callmobile", "ja!mobile", "Vodafone Vertragstarife", "Vodafone Websessions", "1&1 D-Netz", "klarmobile (0152)", "Bildmobil (auch RTL)", "Fyve Mobil", "otelo Smartphone", "otelo Datentarife", "Edeka Mobil", "BASE Prepaid", "1&1 E-Netz", "Simyo", "Blau", "Blau Tages-Surfflat", "Ay Yildiz", "Aldi Talk", "Aldi Talk Tages-Surfflat", "O2 Blue (Smartphone)", "O2 go mobil", "O2 Prepaid", "Fonic", "klarmobile (0176)", "Tschibo Prepaid", "Tschibo Vertrag", "Lidl Mobil", "Saturn Daten Tarif LTE", "Mediamarkt Datentarif LTE");
+		apnlist = new Array("internet.home", "internet.telekom", "internet.telekom", "internet.t-mobile", "internet.t-mobile", "internet.telekom", "internet.t-d1.de", "internet.t-mobile", "internet.t-mobile", "web.vodafone.de", "event.vodafone.de", "web.vodafone.de", "web.vodafone.de", "event.vodafone.de", "event.vodafone.de", "web.vodafone.de", "data.otelo.de", "data.access.de", "internet.eplus.de", "internet.eplus.de", "internet.eplus.de", "internet.eplus.de", "tagesflat.eplus.de", "internet.eplus.de", "internet.eplus.de", "tagesflat.eplus.de", "internet", "surfo2", "pinternet.interkom.de", "pinternet.interkom.de", "internet.mobilcom", "webmobil1", "surfmobil2", "pinternet.interkom.de", "surfo2", "surfo2");
+		daillist = new Array("*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#", "*99#");
+		userlist = new Array("tmobile", "tmobile", "tmobile", "tmobile", "tmobile", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "simyo", "blau", "", "eplus", "eplus", "", "", "", "", "", "", "", "", "", "", "");
+		passlist = new Array("tm", "tm", "tm", "tm", "tm", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "simyo", "blau", "", "gprs", "gprs", "", "", "", "", "", "", "", "", "", "", "");
 	}
 	else if(country == "HK"){
 		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1");

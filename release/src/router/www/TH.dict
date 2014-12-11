@@ -994,6 +994,7 @@ enableFTP=เปิดทำงาน FTP
 Encap_mode_help=ZVMODELVZ มี โหมดเอ็นแคปซูเลชั่น หรือการขนส่งโปรโตคอล LAN และ WAN ผ่าน ATM 2 โหมด โปรดเลือกโหมดเอ็นแคปซูเลชั่นที่เหมาะสม
 Excute_processing=กำลังติดตั้ง...
 External=ภายนอกเท่านั้น
+Extend_TTL_Value=Extend the TTL value
 EZQoS=การจัดการแบนด์วิดธ์ EZQoS 
 EzQoS_desc=คุณภาพของบริการ (QoS) ช่วยให้มั่นใจถึงแบนด์วิดธ์สำหรับงานและแอปพลิเคชั่น.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">อะแดปทีฟ QoS</span> ช่วยให้มั่นใจถึงแบนด์วิดธ์ขาเข้าและขาออก บนทั้งการเชื่อมต่อแบบมีสายและไร้สายสำหรับแอปพลิเคชั่นและงานที่มีความสำคัญ ผ่านการพรีเซ็ตที่กำหนดล่วงหน้า โดยการลากและปล่อย: เกม, การสตรีมมีเดีย, VoIP, การท่องเว็บ และการถ่ายโอนไฟล์.
@@ -1094,7 +1095,7 @@ FolderName=ชื่อโฟลเดอร์
 FTP_desc=ตั้งค่าบัญชีและการอนุญาตของบริการ FTP
 Full_Clients=ไคลเอ็นต์
 FW_desc0=รับเฟิร์มแวร์เวอร์ชั่นล่าสุดจากไซต์สนับสนุนของ ASUS ที่ <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=โปรดเยี่ยมชมไซต์สนับสนุนของ ASUS (http://www.asus.com/support/) เพื่อรับเฟิร์มแวร์ล่าสุด
+FW_desc1=โปรดเยี่ยมชมไซต์สนับสนุนของ ASUS http://www.asus.com/support/ เพื่อรับเฟิร์มแวร์ล่าสุด
 fw_downloading=ดาวน์โหลดเฟิร์มแวร์
 FW_item1=หมายเลขผลิตภัณฑ์
 FW_item2=เวอร์ชั่นเฟิร์มแวร์

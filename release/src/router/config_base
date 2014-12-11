@@ -177,5 +177,4 @@ RTCONFIG_HAS_5G=y
 # RTCONFIG_ROG is not set
 # RTCONFIG_GEOIP is not set
 # RTCONFIG_NOWL is not set
-# RTCONFIG_TTL is not set
 

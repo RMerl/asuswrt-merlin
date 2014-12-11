@@ -92,13 +92,13 @@ function wl_chanspec_list_change(){
 									wl_channel_list_5g.splice(index, 1);
 								}
 	
-								if(wl_channel_list_5g.indexOf("116") != -1){			// remove channel 116, 
-									var index = wl_channel_list_5g.indexOf("116");
+								if(wl_channel_list_5g.indexOf("116l") != -1){			// remove channel 116, 
+									var index = wl_channel_list_5g.indexOf("116l");
 									wl_channel_list_5g.splice(index, 1);
 								}
 		
-								if(wl_channel_list_5g.indexOf("140") != -1){			// remove channel 140
-									index = wl_channel_list_5g.indexOf("140");
+								if(wl_channel_list_5g.indexOf("140l") != -1){			// remove channel 140
+									index = wl_channel_list_5g.indexOf("140l");
 									wl_channel_list_5g.splice(index, 1);
 								}
 						}
@@ -352,13 +352,13 @@ function wl_chanspec_list_change(){
 										wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);	
 								}								
 	
-								if(wl_channel_list_5g_2.indexOf("116") != -1){			// remove channel 116, 
-									var index = wl_channel_list_5g_2.indexOf("116");
+								if(wl_channel_list_5g_2.indexOf("116l") != -1){			// remove channel 116, 
+									var index = wl_channel_list_5g_2.indexOf("116l");
 									wl_channel_list_5g_2.splice(index, 1);
 								}
 		
-								if(wl_channel_list_5g_2.indexOf("140") != -1){			// remove channel 140
-									index = wl_channel_list_5g_2.indexOf("140");
+								if(wl_channel_list_5g_2.indexOf("140l") != -1){			// remove channel 140
+									index = wl_channel_list_5g_2.indexOf("140l");
 									wl_channel_list_5g_2.splice(index, 1);
 								}
 						}

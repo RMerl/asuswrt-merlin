@@ -994,6 +994,7 @@ enableFTP=Enable FTP
 Encap_mode_help=ZVMODELVZ provides two modes for encapsulating or transporting LAN and WAN protocols via ATM. Please select the appropriate Encapsulation Mode.
 Excute_processing=Installing...
 External=External only
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS Bandwidth Management
 EzQoS_desc=Quality of Service (QoS) ensures bandwidth for prioritized tasks and applications.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Adaptive QoS</span> ensures inbound and outbound bandwidth on both wired and wireless connections for prioritized applications and tasks via pre-defined, drag-and-drop presets: gaming, media streaming, VoIP, web surfing and file transferring.
@@ -1094,7 +1095,7 @@ FolderName=Folder Name
 FTP_desc=Set the account and permission of FTP service. 
 Full_Clients=Clients
 FW_desc0=Get the latest firmware version from ASUS Support site at <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>
-FW_desc1=Please visit the ASUS support site ( http://www.asus.com/support/ ) to get the latest firmware.
+FW_desc1=Please visit the ASUS support site http://www.asus.com/support/ to get the latest firmware.
 fw_downloading=Download Firmware
 FW_item1=Product ID
 FW_item2=Firmware Version

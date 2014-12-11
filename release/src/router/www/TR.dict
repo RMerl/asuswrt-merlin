@@ -994,6 +994,7 @@ enableFTP=FTP'yi Etkinleştir
 Encap_mode_help=ZVMODELVZ, LAN ve WAN protokollerini ATM aracılığıyla kapsülleyerek veya taşıyarak iki mod sağlar. Lütfen uygun Kapsülleme Modunu seçin.
 Excute_processing=Yükleniyor...
 External=Yalnız harici
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS Bant Genişliği Yönetimi
 EzQoS_desc=Quality of Service (QoS), öncelik tanınan görev ve uygulamalara bant genişliği atanmasını sağlar.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Uyarlanabilir QoS</span>, ön tanımlı, sürükle-bırak tipi ön ayarlar aracılığıyla öncelik tanınan görev ve uygulamalar (oyun, medya akışı, VoIP, web'de gezinme, dosya aktarımı) için hem kablolu hem de kablosuz bağlantılara gelen ve giden bant genişliği atanmasını sağlar.
@@ -1094,7 +1095,7 @@ FolderName=Klasör Adı
 FTP_desc=FTP hizmetinin hesap ve iznini ayarlayın. 
 Full_Clients=İstemciler
 FW_desc0=En son aygıt yazılımı sürümünü <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a> adresindeki ASUS Destek sitesinden edinin.
-FW_desc1=Güncel aygıt yazılımını almak için lütfen ASUS destek sitesini (http://www.asus.com/support/) ziyaret edin.
+FW_desc1=Güncel aygıt yazılımını almak için lütfen ASUS destek sitesini http://www.asus.com/support/ ziyaret edin.
 fw_downloading=Firma Yazılımını indirin
 FW_item1=Ürün Kimliği
 FW_item2=Donanım Yazılımı Sürümü

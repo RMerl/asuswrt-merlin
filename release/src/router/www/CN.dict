@@ -994,6 +994,7 @@ enableFTP=启用 FTP
 Encap_mode_help=ZVMODELVZ provides two modes for encapsulating or transporting LAN and WAN protocols via ATM. Please select the appropriate Encapsulation Mode.
 Excute_processing=正在安装
 External=仅外部
+Extend_TTL_Value=Extend the TTL value
 EZQoS=EZQoS 带宽管理
 EzQoS_desc=Quality of Service (QoS) ensures bandwidth for prioritized tasks and applications.
 EzQoS_desc_Adaptive=<span style="font-weight:bolder;font-size:14px;">Adaptive QoS</span> ensures inbound and outbound bandwidth on both wired and wireless connections for prioritized applications and tasks via pre-defined, drag-and-drop presets: gaming, media streaming, VoIP, web surfing and file transferring.
@@ -1093,8 +1094,8 @@ FirewallIPv6_list=Inbound Firewall Rules
 FolderName=文件夹名称
 FTP_desc=设定 FTP 的账号与许可。
 Full_Clients=用户数
-FW_desc0=从华硕支持网站﹝<a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>﹞ 获得最新版本固件
-FW_desc1=请造访华硕技术支持网站（http://www.asus.com/support/）获取最新韧体。
+FW_desc0=从华硕支持网站　<a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="http://www.asus.com/support/" target="_blank">http://www.asus.com/support/</a>　获得最新版本固件
+FW_desc1=请造访华硕技术支持网站 http://www.asus.com/support/ 获取最新韧体。
 fw_downloading=下载固件
 FW_item1=产品型号
 FW_item2=固件版本
