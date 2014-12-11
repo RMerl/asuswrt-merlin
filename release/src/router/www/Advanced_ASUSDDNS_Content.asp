@@ -159,7 +159,7 @@ function validForm(){
 				}
 			}
 		}else{
-			if(!validate_range(document.form.ddns_refresh_x, 0, 365))
+			if(!validator.numberRange(document.form.ddns_refresh_x, 0, 365))
 				return false;
 		
 			if(document.form.ddns_hostname_x.value == ""){

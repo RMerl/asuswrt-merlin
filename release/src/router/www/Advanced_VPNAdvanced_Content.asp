@@ -491,9 +491,9 @@ function pptpd_applyRule(){
 	if(check_pptpd_clients_range() == false)
 		return false;
 
-	if(!validate_range(document.form.pptpd_mru, 576, 1492))
+	if(!validator.numberRange(document.form.pptpd_mru, 576, 1492))
 		return false;
-	if(!validate_range(document.form.pptpd_mtu, 576, 1492))
+	if(!validator.numberRange(document.form.pptpd_mtu, 576, 1492))
 		return false;
 
 	showLoading();
@@ -1421,7 +1421,7 @@ function cal_panel_block(){
 									<tr id="server_reneg">
 										<th><#vpn_openvpn_TLSTime#><br><i>( <#MinusOne_default#> )</th>
 										<td>
-											<input type="text" maxlength="5" class="input_6_table" name="vpn_server_reneg" onblur="validate_range(this, -1, 2147483647)" value="<% nvram_get("vpn_server_reneg"); %>"> <#Second#>
+											<input type="text" maxlength="5" class="input_6_table" name="vpn_server_reneg" onblur="validator.numberRange(this, -1, 2147483647)" value="<% nvram_get("vpn_server_reneg"); %>"> <#Second#>
 										</td>
 									</tr>
 

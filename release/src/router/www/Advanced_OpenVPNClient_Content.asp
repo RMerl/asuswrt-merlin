@@ -798,14 +798,14 @@ function update_local_ip(object){
 					<tr id="client_reneg">
 						<th>TLS Renegotiation Time<br><i>(in seconds, -1 for default)</th>
 						<td>
-							<input type="text" maxlength="5" class="input_6_table" name="vpn_client_reneg" onblur="validate_range(this, -1, 2147483647)" value="<% nvram_get("vpn_client_reneg"); %>">
+							<input type="text" maxlength="5" class="input_6_table" name="vpn_client_reneg" onblur="validator.numberRange(this, -1, 2147483647)" value="<% nvram_get("vpn_client_reneg"); %>">
 						</td>
 					</tr>
 
 					<tr>
 						<th>Connection Retry<br><i>(in seconds, -1 for infinite)</th>
 						<td>
-							<input type="text" maxlength="5" class="input_6_table" name="vpn_client_retry" onblur="validate_range(this, -1, 32767)" value="<% nvram_get("vpn_client_retry"); %>">
+							<input type="text" maxlength="5" class="input_6_table" name="vpn_client_retry" onblur="validator.numberRange(this, -1, 32767)" value="<% nvram_get("vpn_client_retry"); %>">
 						</td>
 					</tr>
 
