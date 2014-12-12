@@ -5451,7 +5451,6 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		websApply(wp, "Restarting.asp");
 		shutdown(fileno(wp), SHUT_RDWR);
 		nvram_set("restore_defaults", "1");
-		nvram_commit();
 		sys_default();
 		return (0);
 	}

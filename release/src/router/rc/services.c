@@ -4949,6 +4949,10 @@ check_ddr_done:
 		if(action&RC_SERVICE_STOP) stop_bwdpi_monitor_service();
 		if(action&RC_SERVICE_START) start_bwdpi_monitor_service();
 	}
+	else if (strcmp(script, "wrs_force") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_dpi_engine_service(1);
+	}
 #endif
 	else if (strcmp(script, "logger") == 0)
 	{

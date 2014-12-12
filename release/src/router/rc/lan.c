@@ -2274,6 +2274,13 @@ NEITHER_WDS_OR_PSTA:
 				}
 			}
 
+			if(nvram_get_int("usb_modem_act_reset") != 0){
+				logmessage("hotplug", "Modem had been reset and woken up net %s.", interface);
+				_dprintf("hotplug net(%s) had been reset and woken up.\n", interface);
+				nvram_set("usb_modem_act_reset", "2");
+				return;
+			}
+
 #ifdef RTCONFIG_DUALWAN
 			// avoid the busy time of every start_wan when booting.
 			if(!strcmp(nvram_safe_get("success_start_service"), "0")

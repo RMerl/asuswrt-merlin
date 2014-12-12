@@ -192,6 +192,7 @@ int ppp_fail_state;
 int rule_setup;
 int link_setup[WAN_UNIT_MAX], link_wan[WAN_UNIT_MAX];
 int got_notify;
+int modem_act_reset;
 
 char prefix_lan[8];
 int current_lan_unit = 0;

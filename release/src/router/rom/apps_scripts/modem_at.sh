@@ -4,33 +4,39 @@
 
 
 modem_type=`nvram get usb_modem_act_type`
-modem_act_node1=`nvram get usb_modem_act_int`
-modem_act_node2=`nvram get usb_modem_act_bulk`
+act_node1="usb_modem_act_int"
+act_node2="usb_modem_act_bulk"
 modem_vid=`nvram get usb_modem_act_vid`
 
 at_ret="/tmp/at_ret"
 
 
-modem_act_node=
-if [ "$modem_type" == "tty" -o "$modem_type" == "mbim" ]; then
-	if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
-		modem_act_node=$modem_act_node1
-	else
-		modem_act_node=$modem_act_node2
+act_node=
+#if [ "$modem_type" == "tty" -o "$modem_type" == "mbim" ]; then
+#	if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
+#		act_node=$act_node1
+#	else
+#		act_node=$act_node2
+#	fi
+#else
+	act_node=$act_node1
+#fi
+
+modem_act_node=`nvram get $act_node`
+if [ "$modem_act_node" == "" ]; then
+	find_modem_node.sh
+
+	modem_act_node=`nvram get $act_node`
+	if [ "$modem_act_node" == "" ]; then
+		echo "Can't get $act_node!"
+		exit 1
 	fi
-else
-	modem_act_node=$modem_act_node1
 fi
 
 if [ "$2" != "" ]; then
 	waited_sec=$2
 else
 	waited_sec=1
-fi
-
-if [ "$modem_act_node" == "" ]; then
-	echo "Can't get the active serial node."
-	exit 1
 fi
 
 if [ "$1" == "" ]; then

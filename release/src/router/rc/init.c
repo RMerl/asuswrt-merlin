@@ -766,6 +766,8 @@ restore_defaults(void)
 	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
 	int unit;
 
+	nvram_unset(ASUS_STOP_COMMIT);
+
 	// Restore defaults if nvram version mismatch
 	restore_defaults = RESTORE_DEFAULTS();
 
@@ -975,6 +977,8 @@ restore_defaults(void)
 #endif
 
 	clean_modem_state(1);
+	nvram_unset("usb_modem_act_reset"); // only be unset at boot.
+	nvram_unset("usb_modem_act_reset_path"); // only be unset at boot.
 
 	for(i = 0; i < MAX_USB_TTY_NUM; ++i) { // MAX ttyUSB number is 10.
 		snprintf(prefix, sizeof(prefix), "usb_path_ttyUSB%d", i);
@@ -1651,7 +1655,6 @@ int init_nvram(void)
 #endif
 
 	/* set default value */
-	nvram_unset(ASUS_STOP_COMMIT);
 	nvram_set("rc_support", "");
 	nvram_set_int("btn_rst_gpio", 0xff);
 	nvram_set_int("btn_wps_gpio", 0xff);

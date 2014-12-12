@@ -2840,6 +2840,13 @@ int asus_sd(const char *device_name, const char *action){
 		nvram_unset(buf1);
 		nvram_unset(strcat_r(buf1, "_label", tmp));
 
+		snprintf(nvram_value, 32, "%s", nvram_safe_get("usb_modem_act_reset_path"));
+		if(!strcmp(nvram_value, usb_node)){
+			usb_dbg("(%s): the device is resetting...(%s)\n", device_name, action);
+			file_unlock(isLock);
+			return 0;
+		}
+
 		if(get_path_by_node(usb_node, port_path, 8) == NULL){
 			usb_dbg("(%s): Fail to get usb path.\n", usb_node);
 			file_unlock(isLock);

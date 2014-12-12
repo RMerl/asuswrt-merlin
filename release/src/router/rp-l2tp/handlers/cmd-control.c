@@ -72,26 +72,37 @@ send_cmd(char const *cmd, char const *sockpath)
     return fd;
 }
 
+static void
+usage(int argc, char *argv[], int exitcode)
+{
+    fprintf(stderr, "Usage: %s [-s socket] command\n", argv[0]);
+    exit(exitcode);
+}
+
 int
 main(int argc, char *argv[])
 {
     int fd;
     int n;
+    int opt;
     char buf[4096];
     char *sockpath = "/var/run/l2tpctrl";
 
-    if (argc > 2 && !strcmp(argv[1],"-s") && argv[2] && argv[2][0]) {
-	sockpath = argv[2];
-	argv += 2;
-	argc -= 2;
+    while((opt = getopt(argc, argv, "s:h")) != -1) {
+	switch(opt) {
+	case 's':
+	    sockpath = optarg;
+	    break;
+	default:
+	    usage(argc, argv, (opt == 'h') ? EXIT_SUCCESS : EXIT_FAILURE);
+	}
     }
 
-    if (argc != 2) {
-	fprintf(stderr, "Usage: %s [-s socket] command\n", argv[0]);
-	return 1;
+    if (optind >= argc) {
+	usage(argc, argv, EXIT_FAILURE);
     }
 
-    fd = send_cmd(argv[1], sockpath);
+    fd = send_cmd(argv[optind], sockpath);
     if (fd < 0) {
 	return 1;
     }

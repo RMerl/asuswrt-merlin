@@ -2508,7 +2508,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		if(debug) dbg("[wan up] enabled= %d\n", enabled);
 
 		if(enabled){
-			_dprintf("[wan up] do dpi engine start\n");
+			_dprintf("[%s] do dpi engine service ... \n", __FUNCTION__);
 			// if Adaptive QoS or AiProtection is enabled
 			int count = 0;
 			int val = 0;
@@ -2522,7 +2522,12 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 			if(debug) dbg("[wan up] found_default_route result: %d\n", val);
 
 			if(val){
-				stop_dpi_engine_service(0);
+				// if restart_wan_if, remove dpi engine related
+				if(f_exists("/dev/detector") || f_exists("/dev/idpfw")){
+					_dprintf("[%s] stop dpi engine service\n", __FUNCTION__);
+					stop_dpi_engine_service(1);
+				}
+				_dprintf("[%s] start dpi engine service\n", __FUNCTION__);
 				start_dpi_engine_service();
 				start_firewall(wan_unit, 0);
 			}
@@ -2867,7 +2872,7 @@ start_wan(void)
 	start_wan_if(WAN_UNIT_FIRST);
 
 #ifdef RTCONFIG_USB_MODEM
-	if (is_usb_modem_ready() == 1) {
+	if(is_usb_modem_ready() == 1 && nvram_get_int("success_start_service") == 1){
 		_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, WAN_UNIT_SECOND);
 		start_wan_if(WAN_UNIT_SECOND);
 	}

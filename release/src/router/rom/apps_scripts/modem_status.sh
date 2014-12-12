@@ -4,8 +4,8 @@
 
 
 modem_type=`nvram get usb_modem_act_type`
-modem_act_node1=`nvram get usb_modem_act_int`
-modem_act_node2=`nvram get usb_modem_act_bulk`
+act_node1="usb_modem_act_int"
+act_node2="usb_modem_act_bulk"
 modem_vid=`nvram get usb_modem_act_vid`
 modem_pid=`nvram get usb_modem_act_pid`
 modem_dev=`nvram get usb_modem_act_dev`
@@ -46,20 +46,26 @@ _get_qcqmi_by_usbnet(){
 }
 
 
-modem_act_node=
-if [ "$modem_type" == "tty" -o "$modem_type" == "mbim" ]; then
-	if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
-		modem_act_node=$modem_act_node1
-	else
-		modem_act_node=$modem_act_node2
-	fi
-else
-	modem_act_node=$modem_act_node1
-fi
+act_node=
+#if [ "$modem_type" == "tty" -o "$modem_type" == "mbim" ]; then
+#	if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
+#		act_node=$act_node1
+#	else
+#		act_node=$act_node2
+#	fi
+#else
+	act_node=$act_node1
+#fi
 
+modem_act_node=`nvram get $act_node`
 if [ "$modem_act_node" == "" ]; then
-	echo "Can't get the active serial node."
-	exit 1
+	find_modem_node.sh
+
+	modem_act_node=`nvram get $act_node`
+	if [ "$modem_act_node" == "" ]; then
+		echo "Can't get $act_node!"
+		exit 1
+	fi
 fi
 
 if [ "$1" == "bytes" -o "$1" == "bytes+" ]; then
@@ -288,15 +294,17 @@ elif [ "$1" == "imei" ]; then
 	echo "Got IMEI."
 	nvram set usb_modem_act_imei=$ret
 elif [ "$1" == "iccid" ]; then
-	at_ret=`$at_lock modem_at.sh '+ICCID' 2>/dev/null`
-	ret=`echo "$at_ret" |grep "ICCID: " |awk '{FS="ICCID: "; print $2}' 2>/dev/null`
-	if [ "$ret" == "" ]; then
-		echo "Fail to get the ICCID from $modem_act_node."
-		exit 13
-	fi
+	if [ "$modem_vid" == "1478" -a "$modem_pid" == "36902" ]; then
+		at_ret=`$at_lock modem_at.sh '+ICCID' 2>/dev/null`
+		ret=`echo "$at_ret" |grep "ICCID: " |awk '{FS="ICCID: "; print $2}' 2>/dev/null`
+		if [ "$ret" == "" ]; then
+			echo "Fail to get the ICCID from $modem_act_node."
+			exit 13
+		fi
 
-	echo "Got ICCID."
-	nvram set usb_modem_act_iccid=$ret
+		echo "Got ICCID."
+		nvram set usb_modem_act_iccid=$ret
+	fi
 elif [ "$1" == "rate" ]; then
 	if [ "$modem_vid" == "1478" -a "$modem_pid" == "36902" ]; then
 		qcqmi=`_get_qcqmi_by_usbnet $modem_dev 2>/dev/null`

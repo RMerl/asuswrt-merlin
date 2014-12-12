@@ -50,7 +50,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.376_3657 source code from Asus
+   - Based on 3.0.0.4.376_3677 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -573,7 +573,7 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 376.49 (xx-xxx-2014)
-   - NEW: Merged with Asus GPL 376_3657.  This new code
+   - NEW: Merged with Asus GPL 376_3677.  This new code
           includes a lot of changes related to USB modem
           support.
   - NEW: IPv6 handling based on dnsmasq + odhcp6c.  This new

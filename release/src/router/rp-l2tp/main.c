@@ -109,6 +109,7 @@ main(int argc, char *argv[])
     int opt;
     int do_fork = 1;
     int debugmask = 0;
+    /* ASUS char *config_file = SYSCONFDIR"/l2tp/l2tp.conf"; */
     char *config_file = SYSCONFDIR"/l2tp.conf";
     char *pidfile = "/var/run/l2tpd.pid";
 
@@ -144,7 +145,6 @@ main(int argc, char *argv[])
 	l2tp_die();
     }
 
-    /* ASUS if (l2tp_parse_config_file(es, SYSCONFDIR"/l2tp/l2tp.conf") < 0) { */
     if (l2tp_parse_config_file(es, config_file) < 0) {
 	l2tp_die();
     }

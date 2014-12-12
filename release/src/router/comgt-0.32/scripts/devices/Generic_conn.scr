@@ -46,7 +46,8 @@ system "nvram set g3state_class=1"
 send "AT+FCLASS=0^m"
 waitfor 10 "OK","ERR","ERROR","COMMAND NOT SUPPORT"
 if % = -1 goto timeerror
-if % = 0 goto set_mode
+#if % = 0 goto set_mode
+if % = 0 goto set_apn
 system "nvram set g3state_class=-1"
 
 

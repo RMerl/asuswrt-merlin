@@ -714,9 +714,17 @@ int if_wan_phyconnected(int wan_unit){
 		wired_link_nvram = "link_wan";
 
 #ifdef RTCONFIG_USB_MODEM
-	if (dualwan_unit__usbif(wan_unit)) {
+	if(dualwan_unit__usbif(wan_unit)){
 		char prefix[32] = "wanXXXXXX_", tmp[100] = "";
 		int find_modem_node = 0;
+		int wan_state = nvram_get_int(nvram_state[wan_unit]);
+
+		modem_act_reset = nvram_get_int("usb_modem_act_reset");
+		if(modem_act_reset == 1 || modem_act_reset == 2)
+			return CONNED;
+
+		if(wan_state == WAN_STATE_CONNECTING)
+			return CONNED;
 
 		link_wan[wan_unit] = is_usb_modem_ready(); // include find_modem_type.sh
 		snprintf(modem_type, 32, "%s", nvram_safe_get("usb_modem_act_type"));
@@ -750,10 +758,10 @@ int if_wan_phyconnected(int wan_unit){
 					eval("find_modem_node.sh");
 
 				if(!strcmp(modem_type, "tty") && !strcmp(nvram_safe_get("usb_modem_act_vid"), "6610")){ // e.q. ZTE MF637U
-					if(nvram_get_int(nvram_state[wan_unit]) == WAN_STATE_INITIALIZING)
+					if(wan_state == WAN_STATE_INITIALIZING)
 						eval("modem_status.sh", "sim");
 				}
-				else if(nvram_get_int(nvram_state[wan_unit]) != WAN_STATE_CONNECTING) 
+				else
 					eval("modem_status.sh", "sim");
 
 				sim_state = nvram_get_int("usb_modem_act_sim");
@@ -1581,6 +1589,7 @@ int wanduck_main(int argc, char *argv[]){
 
 	rule_setup = 0;
 	got_notify = 0;
+	modem_act_reset = 0;
 	clilen = sizeof(cliaddr);
 
 	sprintf(router_name, "%s", DUT_DOMAIN_NAME);
@@ -1594,7 +1603,7 @@ int wanduck_main(int argc, char *argv[]){
 
 	for(wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit){
 		link_setup[wan_unit] = 0;
-		link_wan[wan_unit] = DISCONN;
+		link_wan[wan_unit] = 0;
 
 		changed_count[wan_unit] = S_IDLE;
 		disconn_case[wan_unit] = CASE_NONE;
@@ -1819,6 +1828,16 @@ _dprintf("wanduck(%d) 2: conn_state %d, conn_state_old %d, conn_changed_state %d
 					disconn_case[wan_unit] = CASE_OTHERS;
 					conn_state[wan_unit] = DISCONN;
 				}
+#ifdef RTCONFIG_USB_MODEM
+				else if(dualwan_unit__usbif(wan_unit)
+						&& (modem_act_reset == 1 || modem_act_reset == 2)
+						){
+_dprintf("wanduck(%d): detect the modem to be reset...\n", wan_unit);
+					disconn_case[wan_unit] = CASE_OTHERS;
+					conn_state[wan_unit] = DISCONN;
+					set_disconn_count(wan_unit, S_IDLE);
+				}
+#endif
 				else{
 					conn_state[wan_unit] = if_wan_phyconnected(wan_unit);
 					if(conn_state[wan_unit] == CONNED){
@@ -1948,6 +1967,16 @@ _dprintf("wanduck(%d) 3: conn_state %d, conn_state_old %d, conn_changed_state %d
 				conn_state[current_wan_unit] = DISCONN;
 				set_disconn_count(current_wan_unit, S_IDLE);
 			}
+#ifdef RTCONFIG_USB_MODEM
+			else if(dualwan_unit__usbif(current_wan_unit)
+					&& (modem_act_reset == 1 || modem_act_reset == 2)
+					){
+_dprintf("wanduck(%d): detect the modem to be reset...\n", current_wan_unit);
+				disconn_case[current_wan_unit] = CASE_OTHERS;
+				conn_state[current_wan_unit] = DISCONN;
+				set_disconn_count(current_wan_unit, S_IDLE);
+			}
+#endif
 			else{
 				if(conn_state[current_wan_unit] == CONNED){
 #ifdef RTCONFIG_USB_MODEM
@@ -2022,10 +2051,10 @@ _dprintf("wanduck(%d) 4: conn_state %d, conn_state_old %d, conn_changed_state %d
 			if(get_disconn_count(current_wan_unit) != S_IDLE){
 				if(get_disconn_count(current_wan_unit) < max_disconn_count){
 					set_disconn_count(current_wan_unit, get_disconn_count(current_wan_unit)+1);
-					csprintf("# wanduck: wait time for switching: %d/%d.\n", get_disconn_count(current_wan_unit)*scan_interval, max_wait_time);
+					csprintf("# wanduck(%d): wait time for switching: %d/%d.\n", current_wan_unit, get_disconn_count(current_wan_unit)*scan_interval, max_wait_time);
 				}
 				else{
-					csprintf("# wanduck: set S_COUNT: changed_count[] >= max_disconn_count.\n");
+					csprintf("# wanduck(%d): set S_COUNT: changed_count[] >= max_disconn_count.\n", current_wan_unit);
 					set_disconn_count(current_wan_unit, S_COUNT);
 				}
 			}
@@ -2060,6 +2089,16 @@ _dprintf("wanduck(%d) 5: conn_state %d, conn_state_old %d, conn_changed_state %d
 				conn_state[current_wan_unit] = DISCONN;
 				set_disconn_count(current_wan_unit, S_IDLE);
 			}
+#ifdef RTCONFIG_USB_MODEM
+			else if(dualwan_unit__usbif(current_wan_unit)
+					&& (modem_act_reset == 1 || modem_act_reset == 2)
+					){
+_dprintf("wanduck(%d): detect the modem to be reset...\n", current_wan_unit);
+				disconn_case[current_wan_unit] = CASE_OTHERS;
+				conn_state[current_wan_unit] = DISCONN;
+				set_disconn_count(current_wan_unit, S_IDLE);
+			}
+#endif
 			else{
 				if(conn_state[current_wan_unit] == CONNED){
 #ifdef RTCONFIG_USB_MODEM
@@ -2154,10 +2193,10 @@ _dprintf("wanduck(%d) fail-back: conn_state %d, conn_state_old %d, conn_changed_
 			if(get_disconn_count(current_wan_unit) != S_IDLE){
 				if(get_disconn_count(current_wan_unit) < max_disconn_count){
 					set_disconn_count(current_wan_unit, get_disconn_count(current_wan_unit)+1);
-					csprintf("# wanduck: wait time for switching: %d/%d.\n", get_disconn_count(current_wan_unit)*scan_interval, max_wait_time);
+					csprintf("# wanduck(%d): wait time for switching: %d/%d.\n", current_wan_unit, get_disconn_count(current_wan_unit)*scan_interval, max_wait_time);
 				}
 				else{
-					csprintf("# wanduck: set S_COUNT: changed_count[] >= max_disconn_count.\n");
+					csprintf("# wanduck(%d): set S_COUNT: changed_count[] >= max_disconn_count.\n", current_wan_unit);
 					set_disconn_count(current_wan_unit, S_COUNT);
 				}
 			}
@@ -2202,6 +2241,16 @@ _dprintf("wanduck(%d) fail-back: conn_state %d, conn_state_old %d, conn_changed_
 
 				set_disconn_count(current_wan_unit, S_IDLE);
 			}
+#ifdef RTCONFIG_USB_MODEM
+			else if(dualwan_unit__usbif(current_wan_unit)
+					&& (modem_act_reset == 1 || modem_act_reset == 2)
+					){
+_dprintf("wanduck(%d): detect the modem to be reset...\n", current_wan_unit);
+				disconn_case[current_wan_unit] = CASE_OTHERS;
+				conn_state[current_wan_unit] = DISCONN;
+				set_disconn_count(current_wan_unit, S_IDLE);
+			}
+#endif
 			else{
 				conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit);
 				if(conn_state[current_wan_unit] == CONNED){
@@ -2289,10 +2338,10 @@ _dprintf("wanduck(%d) fail-back: conn_state %d, conn_state_old %d, conn_changed_
 			if(get_disconn_count(current_wan_unit) != S_IDLE){
 				if(get_disconn_count(current_wan_unit) < max_disconn_count){
 					set_disconn_count(current_wan_unit, get_disconn_count(current_wan_unit)+1);
-					csprintf("# wanduck: wait time for switching: %d/%d.\n", get_disconn_count(current_wan_unit)*scan_interval, max_wait_time);
+					csprintf("# wanduck(%d): wait time for switching: %d/%d.\n", current_wan_unit, get_disconn_count(current_wan_unit)*scan_interval, max_wait_time);
 				}
 				else{
-					csprintf("# wanduck: set S_COUNT: changed_count[] >= max_disconn_count.\n");
+					csprintf("# wanduck(%d): set S_COUNT: changed_count[] >= max_disconn_count.\n", current_wan_unit);
 					set_disconn_count(current_wan_unit, S_COUNT);
 				}
 			}
@@ -2485,9 +2534,9 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 					)
 			{
 				if(current_wan_unit)
-					csprintf("# Switching the connect to the first WAN line...\n");
+					csprintf("# wanduck(%d): Switching the connect to the first WAN line...\n", current_wan_unit);
 				else
-					csprintf("# Switching the connect to the second WAN line...\n");
+					csprintf("# wanduck(%d): Switching the connect to the second WAN line...\n", current_wan_unit);
 				if(!link_wan[current_wan_unit] && dualwan_unit__usbif(current_wan_unit))
 					switch_wan_line(other_wan_unit, 0);
 				else

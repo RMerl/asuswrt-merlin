@@ -26,18 +26,12 @@ static char const RCSID[] =
 #include <linux/if_ether.h>
 #include <linux/if_pppol2tp.h>
 #include <linux/if_pppox.h>
-#include <linux/version.h>
 
 #define HANDLER_NAME "sync-pppd"
 
 #define DEFAULT_PPPD_PATH "/usr/sbin/pppd"
 
 #define MAX_FDS 256
-
-/* Use management tunnel socket under 2.6.23+ */
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,23)
-#define PPPOL2TP_V1
-#endif
 
 extern int pty_get(int *mfp, int *sfp);
 static int establish_tunnel(l2tp_tunnel *tun);
@@ -72,9 +66,6 @@ static l2tp_call_ops my_ops = {
 struct master {
     EventSelector *es;		/* Event selector */
     int fd;			/* Tunnel UDP socket for event-handler loop */
-#ifdef PPPOL2TP_V1
-    int m_fd;			/* Tunnel PPPO2TP socket */
-#endif
     EventHandler *event;	/* Event handler */
 };
 
@@ -352,6 +343,8 @@ establish_session(l2tp_session *ses)
 	    free(sl);
             return -1;
         }
+
+        memset(&sax, 0, sizeof(sax));
         sax.sa_family = AF_PPPOX;
         sax.sa_protocol = PX_PROTO_OL2TP;
         sax.pppol2tp.pid = 0;
@@ -514,12 +507,10 @@ static int establish_tunnel(l2tp_tunnel *tunnel)
     EventSelector *es = tunnel->es;
     struct master *tun;
     struct sockaddr_in addr;
+    struct sockaddr_pppol2tp sax;
     socklen_t sock_len;
     int fd = -1;
-#ifdef PPPOL2TP_V1
-    struct sockaddr_pppol2tp sax;
     int m_fd = -1;
-#endif
     int flags;
 
     if (!kernel_mode)
@@ -580,7 +571,6 @@ static int establish_tunnel(l2tp_tunnel *tunnel)
 	goto err;
     }
 
-#ifdef PPPOL2TP_V1
     m_fd = socket(AF_PPPOX, SOCK_DGRAM, PX_PROTO_OL2TP);
     if (m_fd < 0) {
         l2tp_set_errmsg("Unable to allocate tunnel PPPoL2TP socket.");
@@ -593,6 +583,7 @@ static int establish_tunnel(l2tp_tunnel *tunnel)
 	goto err;
     }
 
+    memset(&sax, 0, sizeof(sax));
     sax.sa_family = AF_PPPOX;
     sax.sa_protocol = PX_PROTO_OL2TP;
     sax.pppol2tp.pid = 0;
@@ -608,23 +599,18 @@ static int establish_tunnel(l2tp_tunnel *tunnel)
 	l2tp_set_errmsg("Unable to connect tunnel PPPoL2TP socket.");
 	goto err;
     }
-#endif
+    close(m_fd);
 
     tunnel->private = tun;
     tun->es = es;
     tun->fd = fd;
-#ifdef PPPOL2TP_V1
-    tun->m_fd = m_fd;
-#endif
     tun->event = Event_AddHandler(es, fd, EVENT_FLAG_READABLE,
 				  network_readable, NULL);
     return 0;
 
 err:
+    if (m_fd >= 0) close(m_fd);
     if (fd >= 0) close(fd);
-#ifdef PPPOL2TP_V1
-    if (m_fd >= 0) close(tun->m_fd);
-#endif
     if (tun) free(tun);
     return -1;
 }
@@ -637,9 +623,6 @@ static void close_tunnel(l2tp_tunnel *tunnel)
 	return;
 
     tunnel->private = NULL;
-#ifdef PPPOL2TP_V1
-    if (tun->m_fd >= 0) close(tun->m_fd);
-#endif
     if (tun->fd >= 0) close(tun->fd);
     if (tun->event) Event_DelHandler(tun->es, tun->event);
 
