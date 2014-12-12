@@ -1,3 +1,4 @@
 build
 libqcsapi_client.so*
 qcsapi_sockrpc
+qcsapi_sockraw
