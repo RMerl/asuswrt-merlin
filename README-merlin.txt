@@ -589,6 +589,8 @@ History
          are simply returned to DHCPv6/RA client queries,
          and ip6tables ensures that you cannot override
          them, by rejecting connection to other DNS servers.
+  - CHANGED: Merged newer DPI engine from 378_3123 beta
+             (AC87)
   - CHANGED: Removed SSLv2 and v3 support from OpenSSL
              (we had already stopped using these in
              376.48, so this removes unused code)
