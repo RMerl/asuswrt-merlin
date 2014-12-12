@@ -109,7 +109,7 @@ ifeq ($(RTCONFIG_BWDPI),y)
 LIBS += -L$(TOP)/bwdpi -lbwdpi
 LIBS += -L$(TOP)/bwdpi_sqlite -lbwdpi_sql
 LIBS += -L$(TOP)/sqlite/.libs -lsqlite3
-#LIBS += -lpthread
+LIBS += -lpthread
 endif
 
 ifeq ($(RTCONFIG_GEOIP),y)
