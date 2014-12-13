@@ -230,7 +230,7 @@ function addRow_Group(upper, flag, idx){
 				}
 
 				// update vpnc_pptp_options_x
-				ocument.form.vpnc_pptp_options_x.value = "";
+				document.form.vpnc_pptp_options_x.value = "";
 				if(vpnc_clientlist_col[1] == "PPTP" && document.form.selPPTPOption.value != "auto") {
 					document.form.vpnc_pptp_options_x.value = document.form.selPPTPOption.value;
 				}
