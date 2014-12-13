@@ -574,11 +574,11 @@ int drop_privs(char *user) {
 
     /* drop privs */
     if(getuid() == (uid_t)0) {
-        if(atoi(user)) {
-            pw=getpwuid((uid_t)atoi(user)); /* doh! */
-        } else {
+        //if(atoi(user)) {
+        //    pw=getpwuid((uid_t)atoi(user)); /* doh! */
+        //} else {
             pw=getpwnam(config.runas);
-        }
+        //}
 
         if(pw) {
             if(initgroups(user,pw->pw_gid) != 0 ||
