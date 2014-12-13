@@ -86,7 +86,7 @@ function xps(n){
 	if(n<5){
 		var currUnit;
 		x = n*10+40;
-		if(top.getCookie("CoreTmpUnit") == "1"){
+		if(top.cookie.get("CoreTmpUnit") == "1"){
 			currUnit = " \'F";
 			x = x*9/5+32;
 		}
