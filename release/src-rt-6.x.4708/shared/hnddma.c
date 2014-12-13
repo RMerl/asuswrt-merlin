@@ -3394,7 +3394,8 @@ _dma_rxtx_error(dma_info_t *di, bool istx)
 
 			if ((status1 & D64_XS1_XE_MASK) != D64_XS1_XE_NOERR)
 				return TRUE;
-			else if (si_coreid(di->sih) == GMAC_CORE_ID && si_corerev(di->sih) >= 4) {
+			else if ((si_coreid(di->sih) == GMAC_CORE_ID && si_corerev(di->sih) >= 4) ||
+				(si_coreid(di->sih) == D11_CORE_ID)) {	//cathy add D11_CORE_ID
 				curr = (uint16)(B2I(((R_REG(di->osh, &di->d64txregs->status0) &
 					D64_XS0_CD_MASK) - di->xmtptrbase) &
 					D64_XS0_CD_MASK, dma64dd_t));
