@@ -682,7 +682,7 @@ function validForm(){
 	}
 
 	if(document.form.ipv6_service.value=="6in4"){
-			if(!validator.ipRang(document.form.ipv6_tun_v4end, "")) return false;  //6in4 tun endpoint
+			if(!validator.ipRange(document.form.ipv6_tun_v4end, "")) return false;  //6in4 tun endpoint
 			if(!ipv6_valid(document.form.ipv6_tun_addr)) return false;  //6in4 Client IPv6 Address
 			if(!validator.range(document.form.ipv6_tun_addrlen, 3, 64))  return false;
 			if(document.form.ipv6_tun_peer.value != "" && !ipv6_valid(document.form.ipv6_tun_peer)) return false;
