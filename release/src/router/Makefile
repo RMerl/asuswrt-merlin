@@ -438,7 +438,9 @@ ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-N66U RT-AC66U RT-AC68U TM-AC1900
 SNMPD_CFLAGS += -DDUAL_BAND
 endif
 obj-$(RTCONFIG_SNMPD) += openssl
+ifeq ($(RTCONFIG_SNMPD),y)
 obj-$(RTCONFIG_BCMWL6) += libnmp
+endif
 obj-$(RTCONFIG_SNMPD) += net-snmp-5.7.2
 ifeq ($(RTCONFIG_SNMPD),y)
 ifeq ($(BUILD_NAME),TM-AC1900)
