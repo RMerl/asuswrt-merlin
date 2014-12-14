@@ -803,6 +803,19 @@ UNUSUAL_DEV(  0x05e3, 0x0723, 0x9451, 0x9451,
 		"USB to SATA",
 		US_SC_DEVICE, US_PR_DEVICE, NULL,
 		US_FL_SANE_SENSE ),
+		
+#if 1
+/* The device always reports command failed in CSW to the first INQUIRY command.
+ * The sense data shows code: 0x70, key: 0x7, ASC: 0x21, ASCQ: 0x0 and it means
+ * illegal request for the logical block address out of range.
+ * SCSI driver did not send any read/write command yet, so the response is unreasonable.
+ */
+UNUSUAL_DEV(  0x05e3, 0x0731, 0x9094, 0x9094,
+		"Genesys Logic",
+		"USB to SATA",
+		US_SC_DEVICE, US_PR_DEVICE, NULL,
+		US_FL_FIX_INQUIRY ),
+#endif		
 
 /* Reported by Hanno Boeck <hanno@gmx.de>
  * Taken from the Lycoris Kernel */

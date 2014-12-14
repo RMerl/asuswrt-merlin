@@ -62,7 +62,9 @@
 #include <linux/blkdev.h>
 #include "../../scsi/sd.h"
 
-
+#ifdef CONFIG_BCM47XX
+extern int csw_retry;
+#endif /* CONFIG_BCM47XX */
 /***********************************************************************
  * Data transfer routines
  ***********************************************************************/
@@ -1026,6 +1028,9 @@ int usb_stor_Bulk_transport(struct scsi_cmnd *srb, struct us_data *us)
 	int fake_sense = 0;
 	unsigned int cswlen;
 	unsigned int cbwlen = US_BULK_CB_WRAP_LEN;
+#ifdef CONFIG_BCM47XX
+	int retry = csw_retry;
+#endif /* CONFIG_BCM47XX */
 
 	/* Take care of BULK32 devices; set extra byte to 0 */
 	if (unlikely(us->fflags & US_FL_BULK32)) {
@@ -1090,6 +1095,10 @@ int usb_stor_Bulk_transport(struct scsi_cmnd *srb, struct us_data *us)
 	 * an explanation of how this code works.
 	 */
 
+#ifdef CONFIG_BCM47XX
+	memset(bcs, 0, sizeof(struct bulk_cs_wrap));
+#endif /* CONFIG_BCM47XX */
+
 	/* get CSW for device status */
 	US_DEBUGP("Attempting to get CSW...\n");
 	result = usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
@@ -1118,6 +1127,25 @@ int usb_stor_Bulk_transport(struct scsi_cmnd *srb, struct us_data *us)
 	US_DEBUGP("Bulk status result = %d\n", result);
 	if (result != USB_STOR_XFER_GOOD)
 		return USB_STOR_TRANSPORT_ERROR;
+
+#ifdef CONFIG_BCM47XX
+	while (retry && (bcs->Signature == 0) && (cswlen == US_BULK_CS_WRAP_LEN)) {
+		retry--;
+		mdelay(1);
+	}
+
+	if (retry != csw_retry) {
+		US_DEBUGP("retry = %d\n", retry);
+
+		if (retry == 0) {
+			US_DEBUGP("CSW: us->S 0x%x us->T 0x%x S 0x%x T 0x%x R %u Stat 0x%x\n",
+				le32_to_cpu(us->bcs_signature), us->tag,
+				le32_to_cpu(bcs->Signature), bcs->Tag,
+				residue, bcs->Status);
+			return USB_STOR_TRANSPORT_GOOD;
+		}
+	}
+#endif /* CONFIG_BCM47XX */
 
 	/* check bulk status */
 	residue = le32_to_cpu(bcs->Residue);
