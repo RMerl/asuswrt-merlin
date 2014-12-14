@@ -933,7 +933,7 @@ bound6(char *wan_ifname, int bound)
 			if (nvram_get_int("ipv6_dhcp_no_ia_na") == 0) {
 				stop_dhcp6c();
 				nvram_set_int("ipv6_dhcp_no_ia_na", 1);
-				// Restart using rc to prevent leaking enviroment variables.
+				// Restart using rc to prevent leaking environment variables.
 				system("rc rc_service start_dhcp6c");
 				return 1;
 			} else {
