@@ -604,6 +604,10 @@ History
              for dnsmasq
   - CHANGED: Hide wireless key on settings page unless field
              has focus (patch by John9527)
+  - CHANGED: Ported USB 3.0 (XHCI) kernel driver from
+             Netgear GPL (which seems to have in turn
+             backported it from upstream kernel 3.x)
+  - CHANGED: Updated Quantenna to v36.7.3.23 (AC87)
   - FIXED: vsftpd wasn't properly compiled with SSL
            support.
   - FIXED: MAC filtering couldn't be disabled on Guest
