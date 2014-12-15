@@ -388,12 +388,12 @@ function show_wsc_status(wps_infos){
 			document.getElementById("wps_band_word").innerHTML = "<del>" + $("wps_band_word").innerHTML + "</del>";
 	};
 	// First filter whether turn on Wi-Fi or not
-	if(currentBand === 0 && radio_2 !== "1") {	//2.4GHz
+	if(currentBand === 0 && radio_2 != "1") {	//2.4GHz
 		document.getElementById("wps_enable_hint").innerHTML = "* Turn Wi-Fi on to operate the WPS. <a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;cursor:pointer;' onclick=\"_change_wl_advanced_unit_status(" + wps_infos[12].firstChild.nodeValue + ");\"><#btn_go#></a>"
 		controlDisplayItem();
 		return;
 	}
-	else if(currentBand === 1 && radio_5 !== "1") {	//5GHz
+	else if(currentBand === 1 && radio_5 != "1") {	//5GHz
 		document.getElementById("wps_enable_hint").innerHTML = "* Turn Wi-Fi on to operate the WPS. <a style='color:#FC0; text-decoration: underline; font-family:Lucida Console;cursor:pointer;' onclick=\"_change_wl_advanced_unit_status(" + wps_infos[12].firstChild.nodeValue + ");\"><#btn_go#></a>"
 		controlDisplayItem();
 		return;
