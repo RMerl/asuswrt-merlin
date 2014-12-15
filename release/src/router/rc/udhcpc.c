@@ -927,6 +927,21 @@ bound6(char *wan_ifname, int bound)
 		if (sscanf(value, "%[^/]/%d", addr, &size) != 2)
 			goto skip;
 
+		if (strncmp(addr, "fe80", 4) == 0) {
+			// Restart odhcp6c with "-N none" to work around buggy ISP behavior
+			// when DHCPv6-PD returns a non-routable prefix if "-N try" is used.
+			if (nvram_get_int("ipv6_dhcp_no_ia_na") == 0) {
+				stop_dhcp6c();
+				nvram_set_int("ipv6_dhcp_no_ia_na", 1);
+				// Restart using rc to prevent leaking environment variables.
+				system("rc rc_service start_dhcp6c");
+				return 1;
+			} else {
+				// Prevent infinite restarting.
+				goto skip;
+			}
+		}
+
 		prefix_changed = (!nvram_match("ipv6_prefix", addr) ||
 				  nvram_get_int("ipv6_prefix_length") != size);
 		if (prefix_changed) {
@@ -1012,7 +1027,7 @@ start_dhcp6c(void)
 		"-df", "-R",
 		"-p", "/var/run/odhcp6c.pid",
 		"-s", "/tmp/dhcp6c",
-		"-N", "try",
+		"-N", nvram_get_int("ipv6_dhcp_no_ia_na") ? "none" : "try",
 		NULL, NULL,	/* -c duid */
 		NULL, NULL,	/* -FP len:iaidhex */
 		NULL, NULL,	/* -rdns -rdomain */
@@ -1087,6 +1102,7 @@ start_dhcp6c(void)
 void stop_dhcp6c(void)
 {
 	killall_tk("odhcp6c");
+	nvram_set_int("ipv6_dhcp_no_ia_na", 0);
 }
 #endif  /* !RTCONFIG_WIDEDHCP6 */
 #endif	// RTCONFIG_IPV6
