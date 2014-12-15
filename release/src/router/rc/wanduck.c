@@ -2453,8 +2453,8 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 						led_control(LED_WAN, LED_ON);
 						eval("et", "robowr", "0", "0x18", "0x01fe");
 						eval("et", "robowr", "0", "0x1a", "0x01fe");
-					}
 #endif
+					}
 					csprintf("\n# Enable direct rule if not tunnelled (C2D)\n");
 				}
 				else
