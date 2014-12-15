@@ -2444,14 +2444,16 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 		else if(conn_changed_state[current_wan_unit] == C2D || (conn_changed_state[current_wan_unit] == CONNED && isFirstUse)){
 			if(rule_setup == 0){
 				if(conn_changed_state[current_wan_unit] == C2D){
+					if (nvram_get_int("led_disable") == 0) {
 #ifdef RTCONFIG_DSL /* Paul add 2012/10/18 */
-					led_control(LED_WAN, LED_OFF);
+						led_control(LED_WAN, LED_OFF);
 #elif RTAC3200
-					led_control(LED_WAN, LED_ON);
+						led_control(LED_WAN, LED_ON);
 #elif RTAC87U
-					led_control(LED_WAN, LED_ON);
-					eval("et", "robowr", "0", "0x18", "0x01fe");
-					eval("et", "robowr", "0", "0x1a", "0x01fe");
+						led_control(LED_WAN, LED_ON);
+						eval("et", "robowr", "0", "0x18", "0x01fe");
+						eval("et", "robowr", "0", "0x1a", "0x01fe");
+					}
 #endif
 					csprintf("\n# Enable direct rule if not tunnelled (C2D)\n");
 				}
