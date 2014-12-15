@@ -232,13 +232,14 @@ struct muc_tx_stats {
 	uint32_t	gi_cnt;			/* times GI has been set for any node */
 	uint32_t	gi_ncidx;		/* last node to have GI set */
 	uint32_t	gi_val;			/* SGI enabled state for this node */
-	uint32_t	select_state_cnt;	/* times qn_select state has changed for any node */
 	uint32_t	select_state_ncidx;	/* last node to have qn_select state set */
 	uint32_t	select_state_val;	/* PPPC state for this node */
 	uint32_t	pppc_scale_cnt;		/* times Tx gain scaling has been set for any node */
 	uint32_t	pppc_scale_ncidx;	/* last node to have Tx gain scaling set */
 	uint32_t	pppc_scale_val;		/* Tx gain scaling for this node (0 is max) */
-	uint32_t	pppc_scale_base_cnt;	/* times Tx gain scaling base has been set for any node */
+	uint32_t	pppc_scale_last_gput;		/* The last goodput used by PPPC */
+	uint32_t	pppc_scale_last_gput_idx;	/* The PPPC index of the last goodput value */
+	uint32_t	pppc_scale_base_cnt;		/* times Tx gain scaling base has been set for any node */
 	uint32_t	pppc_scale_base_1ss_20m;	/* times Tx gain scaling base for 20MHz and 1SS */
 	uint32_t	pppc_scale_base_1ss_40m;	/* times Tx gain scaling base for 40MHz and 1SS */
 	uint32_t	pppc_scale_base_1ss_80m;	/* times Tx gain scaling base for 80MHz and 1SS */

@@ -116,6 +116,7 @@ struct __rpc_qcsapi_node_stats {
 	uint32_t tx_unicast;
 	uint32_t tx_multicast;
 	uint32_t tx_broadcast;
+	uint32_t tx_phy_rate;
 	uint64_t rx_bytes;
 	uint32_t rx_pkts;
 	uint32_t rx_discard;
@@ -124,6 +125,12 @@ struct __rpc_qcsapi_node_stats {
 	uint32_t rx_multicast;
 	uint32_t rx_broadcast;
 	uint32_t rx_unknown;
+	uint32_t rx_phy_rate;
+	__rpc_qcsapi_mac_addr mac_addr;
+	int32_t hw_noise;
+	int32_t snr;
+	int32_t rssi;
+	int32_t bw;
 };
 typedef struct __rpc_qcsapi_node_stats __rpc_qcsapi_node_stats;
 
@@ -231,10 +238,10 @@ struct __rpc_qcsapi_calcmd_rssi_rsp {
 };
 typedef struct __rpc_qcsapi_calcmd_rssi_rsp __rpc_qcsapi_calcmd_rssi_rsp;
 
-struct __rpc_qcsapi_data_128bytes {
-	uint8_t data[128];
+struct __rpc_qcsapi_data_256bytes {
+	uint8_t data[256];
 };
-typedef struct __rpc_qcsapi_data_128bytes __rpc_qcsapi_data_128bytes;
+typedef struct __rpc_qcsapi_data_256bytes __rpc_qcsapi_data_256bytes;
 
 struct qcsapi_bootcfg_get_parameter_rpcdata {
 	__rpc_string *param_name;
@@ -560,6 +567,13 @@ struct qcsapi_interface_get_status_rpcdata {
 };
 typedef struct qcsapi_interface_get_status_rpcdata qcsapi_interface_get_status_rpcdata;
 
+struct qcsapi_interface_get_netmask_rpcdata {
+	__rpc_string *ifname;
+	__rpc_string *iface_netmask;
+	int return_code;
+};
+typedef struct qcsapi_interface_get_netmask_rpcdata qcsapi_interface_get_netmask_rpcdata;
+
 struct qcsapi_interface_get_counter_rpcdata {
 	__rpc_string *ifname;
 	int qcsapi_counter;
@@ -658,6 +672,12 @@ struct qcsapi_wifi_startprod_rpcdata {
 	int return_code;
 };
 typedef struct qcsapi_wifi_startprod_rpcdata qcsapi_wifi_startprod_rpcdata;
+
+struct qcsapi_is_startprod_done_rpcdata {
+	int *p_status;
+	int return_code;
+};
+typedef struct qcsapi_is_startprod_done_rpcdata qcsapi_is_startprod_done_rpcdata;
 
 struct qcsapi_wifi_rfstatus_rpcdata {
 	__rpc_string *ifname;
@@ -758,6 +778,13 @@ struct qcsapi_wifi_get_BSSID_rpcdata {
 };
 typedef struct qcsapi_wifi_get_BSSID_rpcdata qcsapi_wifi_get_BSSID_rpcdata;
 
+struct qcsapi_wifi_get_config_BSSID_rpcdata {
+	__rpc_string *ifname;
+	__rpc_qcsapi_mac_addr_p config_BSSID;
+	int return_code;
+};
+typedef struct qcsapi_wifi_get_config_BSSID_rpcdata qcsapi_wifi_get_config_BSSID_rpcdata;
+
 struct qcsapi_wifi_get_SSID_rpcdata {
 	__rpc_string *ifname;
 	__rpc_string *SSID_str;
@@ -797,6 +824,19 @@ struct qcsapi_wifi_disassociate_rpcdata {
 	int return_code;
 };
 typedef struct qcsapi_wifi_disassociate_rpcdata qcsapi_wifi_disassociate_rpcdata;
+
+struct qcsapi_wifi_disassociate_sta_rpcdata {
+	__rpc_string *ifname;
+	__rpc_qcsapi_mac_addr_p mac;
+	int return_code;
+};
+typedef struct qcsapi_wifi_disassociate_sta_rpcdata qcsapi_wifi_disassociate_sta_rpcdata;
+
+struct qcsapi_wifi_reassociate_rpcdata {
+	__rpc_string *ifname;
+	int return_code;
+};
+typedef struct qcsapi_wifi_reassociate_rpcdata qcsapi_wifi_reassociate_rpcdata;
 
 struct qcsapi_wifi_get_disconn_info_rpcdata {
 	__rpc_string *ifname;
@@ -1258,6 +1298,14 @@ struct qcsapi_wifi_set_bss_isolate_rpcdata {
 };
 typedef struct qcsapi_wifi_set_bss_isolate_rpcdata qcsapi_wifi_set_bss_isolate_rpcdata;
 
+struct qcsapi_wifi_disable_dfs_channels_rpcdata {
+	__rpc_string *ifname;
+	int disable_dfs;
+	int channel;
+	int return_code;
+};
+typedef struct qcsapi_wifi_disable_dfs_channels_rpcdata qcsapi_wifi_disable_dfs_channels_rpcdata;
+
 struct qcsapi_wifi_create_restricted_bss_rpcdata {
 	__rpc_string *ifname;
 	__rpc_qcsapi_mac_addr_p mac_addr;
@@ -1629,9 +1677,9 @@ typedef struct qcsapi_wifi_set_pmf_rpcdata qcsapi_wifi_set_pmf_rpcdata;
 
 struct qcsapi_wifi_get_wpa_status_rpcdata {
 	__rpc_string *ifname;
+	__rpc_string *mac_addr;
 	u_int max_len;
 	__rpc_string *wpa_status;
-	__rpc_string *mac_addr;
 	int return_code;
 };
 typedef struct qcsapi_wifi_get_wpa_status_rpcdata qcsapi_wifi_get_wpa_status_rpcdata;
@@ -3114,13 +3162,11 @@ struct qcsapi_calcmd_clear_counter_rpcdata {
 };
 typedef struct qcsapi_calcmd_clear_counter_rpcdata qcsapi_calcmd_clear_counter_rpcdata;
 
-struct qcsapi_wifi_disable_dfs_channels_rpcdata {
-	__rpc_string *ifname;
-	int disable_dfs;
-	int channel;
+struct qcsapi_calcmd_get_info_rpcdata {
+	__rpc_string *output_info;
 	int return_code;
 };
-typedef struct qcsapi_wifi_disable_dfs_channels_rpcdata qcsapi_wifi_disable_dfs_channels_rpcdata;
+typedef struct qcsapi_calcmd_get_info_rpcdata qcsapi_calcmd_get_info_rpcdata;
 
 struct qcsapi_get_carrier_id_rpcdata {
 	u_int *p_carrier_id;
@@ -3186,6 +3232,20 @@ struct qcsapi_wowlan_set_match_type_rpcdata {
 };
 typedef struct qcsapi_wowlan_set_match_type_rpcdata qcsapi_wowlan_set_match_type_rpcdata;
 
+struct qcsapi_wifi_get_tx_amsdu_rpcdata {
+	__rpc_string *ifname;
+	int *enable;
+	int return_code;
+};
+typedef struct qcsapi_wifi_get_tx_amsdu_rpcdata qcsapi_wifi_get_tx_amsdu_rpcdata;
+
+struct qcsapi_wifi_set_tx_amsdu_rpcdata {
+	__rpc_string *ifname;
+	int enable;
+	int return_code;
+};
+typedef struct qcsapi_wifi_set_tx_amsdu_rpcdata qcsapi_wifi_set_tx_amsdu_rpcdata;
+
 struct qcsapi_wowlan_set_L2_type_rpcdata {
 	__rpc_string *ifname;
 	uint32_t ether_type;
@@ -3202,11 +3262,51 @@ typedef struct qcsapi_wowlan_set_udp_port_rpcdata qcsapi_wowlan_set_udp_port_rpc
 
 struct qcsapi_wowlan_set_magic_pattern_rpcdata {
 	__rpc_string *ifname;
-	__rpc_qcsapi_data_128bytes *pattern;
 	uint32_t len;
+	__rpc_qcsapi_data_256bytes *pattern;
 	int return_code;
 };
 typedef struct qcsapi_wowlan_set_magic_pattern_rpcdata qcsapi_wowlan_set_magic_pattern_rpcdata;
+
+struct qcsapi_wifi_wowlan_get_host_state_rpcdata {
+	__rpc_string *ifname;
+	uint16_t *p_value;
+	uint32_t *len;
+	int return_code;
+};
+typedef struct qcsapi_wifi_wowlan_get_host_state_rpcdata qcsapi_wifi_wowlan_get_host_state_rpcdata;
+
+struct qcsapi_wifi_wowlan_get_match_type_rpcdata {
+	__rpc_string *ifname;
+	uint16_t *p_value;
+	uint32_t *len;
+	int return_code;
+};
+typedef struct qcsapi_wifi_wowlan_get_match_type_rpcdata qcsapi_wifi_wowlan_get_match_type_rpcdata;
+
+struct qcsapi_wifi_wowlan_get_l2_type_rpcdata {
+	__rpc_string *ifname;
+	uint16_t *p_value;
+	uint32_t *len;
+	int return_code;
+};
+typedef struct qcsapi_wifi_wowlan_get_l2_type_rpcdata qcsapi_wifi_wowlan_get_l2_type_rpcdata;
+
+struct qcsapi_wifi_wowlan_get_udp_port_rpcdata {
+	__rpc_string *ifname;
+	uint16_t *p_value;
+	uint32_t *len;
+	int return_code;
+};
+typedef struct qcsapi_wifi_wowlan_get_udp_port_rpcdata qcsapi_wifi_wowlan_get_udp_port_rpcdata;
+
+struct qcsapi_wifi_wowlan_get_magic_pattern_rpcdata {
+	__rpc_string *ifname;
+	__rpc_qcsapi_data_256bytes *p_value;
+	uint32_t *len;
+	int return_code;
+};
+typedef struct qcsapi_wifi_wowlan_get_magic_pattern_rpcdata qcsapi_wifi_wowlan_get_magic_pattern_rpcdata;
 
 struct qcsapi_wifi_get_disassoc_reason_rpcdata {
 	__rpc_string *ifname;
@@ -3229,6 +3329,34 @@ struct qcsapi_wifi_set_bb_param_rpcdata {
 };
 typedef struct qcsapi_wifi_set_bb_param_rpcdata qcsapi_wifi_set_bb_param_rpcdata;
 
+struct qcsapi_wifi_set_scan_buf_max_size_rpcdata {
+	__rpc_string *ifname;
+	u_int max_buf_size;
+	int return_code;
+};
+typedef struct qcsapi_wifi_set_scan_buf_max_size_rpcdata qcsapi_wifi_set_scan_buf_max_size_rpcdata;
+
+struct qcsapi_wifi_get_scan_buf_max_size_rpcdata {
+	__rpc_string *ifname;
+	u_int *max_buf_size;
+	int return_code;
+};
+typedef struct qcsapi_wifi_get_scan_buf_max_size_rpcdata qcsapi_wifi_get_scan_buf_max_size_rpcdata;
+
+struct qcsapi_wifi_set_scan_table_max_len_rpcdata {
+	__rpc_string *ifname;
+	u_int max_table_len;
+	int return_code;
+};
+typedef struct qcsapi_wifi_set_scan_table_max_len_rpcdata qcsapi_wifi_set_scan_table_max_len_rpcdata;
+
+struct qcsapi_wifi_get_scan_table_max_len_rpcdata {
+	__rpc_string *ifname;
+	u_int *max_table_len;
+	int return_code;
+};
+typedef struct qcsapi_wifi_get_scan_table_max_len_rpcdata qcsapi_wifi_get_scan_table_max_len_rpcdata;
+
 #define QCSAPI_PROG 0x20000002
 #define QCSAPI_VERS 1
 
@@ -3236,2436 +3364,2538 @@ typedef struct qcsapi_wifi_set_bb_param_rpcdata qcsapi_wifi_set_bb_param_rpcdata
 #define QCSAPI_BOOTCFG_GET_PARAMETER_REMOTE 1
 extern  enum clnt_stat qcsapi_bootcfg_get_parameter_remote_1(qcsapi_bootcfg_get_parameter_rpcdata *, qcsapi_bootcfg_get_parameter_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_bootcfg_get_parameter_remote_1_svc(qcsapi_bootcfg_get_parameter_rpcdata *, qcsapi_bootcfg_get_parameter_rpcdata *, struct svc_req *);
-#define QCSAPI_BOOTCFG_UPDATE_PARAMETER_REMOTE 2
+#define QCSAPI_BOOTCFG_UPDATE_PARAMETER_REMOTE 11
 extern  enum clnt_stat qcsapi_bootcfg_update_parameter_remote_1(qcsapi_bootcfg_update_parameter_rpcdata *, qcsapi_bootcfg_update_parameter_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_bootcfg_update_parameter_remote_1_svc(qcsapi_bootcfg_update_parameter_rpcdata *, qcsapi_bootcfg_update_parameter_rpcdata *, struct svc_req *);
-#define QCSAPI_BOOTCFG_COMMIT_REMOTE 3
+#define QCSAPI_BOOTCFG_COMMIT_REMOTE 21
 extern  enum clnt_stat qcsapi_bootcfg_commit_remote_1(qcsapi_bootcfg_commit_rpcdata *, qcsapi_bootcfg_commit_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_bootcfg_commit_remote_1_svc(qcsapi_bootcfg_commit_rpcdata *, qcsapi_bootcfg_commit_rpcdata *, struct svc_req *);
-#define QCSAPI_TELNET_ENABLE_REMOTE 4
+#define QCSAPI_TELNET_ENABLE_REMOTE 31
 extern  enum clnt_stat qcsapi_telnet_enable_remote_1(qcsapi_telnet_enable_rpcdata *, qcsapi_telnet_enable_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_telnet_enable_remote_1_svc(qcsapi_telnet_enable_rpcdata *, qcsapi_telnet_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SCS_CCE_CHANNELS_REMOTE 5
+#define QCSAPI_WIFI_GET_SCS_CCE_CHANNELS_REMOTE 41
 extern  enum clnt_stat qcsapi_wifi_get_scs_cce_channels_remote_1(qcsapi_wifi_get_scs_cce_channels_rpcdata *, qcsapi_wifi_get_scs_cce_channels_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_scs_cce_channels_remote_1_svc(qcsapi_wifi_get_scs_cce_channels_rpcdata *, qcsapi_wifi_get_scs_cce_channels_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SCS_ENABLE_REMOTE 6
+#define QCSAPI_WIFI_SCS_ENABLE_REMOTE 51
 extern  enum clnt_stat qcsapi_wifi_scs_enable_remote_1(qcsapi_wifi_scs_enable_rpcdata *, qcsapi_wifi_scs_enable_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_scs_enable_remote_1_svc(qcsapi_wifi_scs_enable_rpcdata *, qcsapi_wifi_scs_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SCS_SWITCH_CHANNEL_REMOTE 7
+#define QCSAPI_WIFI_SCS_SWITCH_CHANNEL_REMOTE 61
 extern  enum clnt_stat qcsapi_wifi_scs_switch_channel_remote_1(qcsapi_wifi_scs_switch_channel_rpcdata *, qcsapi_wifi_scs_switch_channel_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_scs_switch_channel_remote_1_svc(qcsapi_wifi_scs_switch_channel_rpcdata *, qcsapi_wifi_scs_switch_channel_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_VERBOSE_REMOTE 8
+#define QCSAPI_WIFI_SET_SCS_VERBOSE_REMOTE 71
 extern  enum clnt_stat qcsapi_wifi_set_scs_verbose_remote_1(qcsapi_wifi_set_scs_verbose_rpcdata *, qcsapi_wifi_set_scs_verbose_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_verbose_remote_1_svc(qcsapi_wifi_set_scs_verbose_rpcdata *, qcsapi_wifi_set_scs_verbose_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SCS_STATUS_REMOTE 9
+#define QCSAPI_WIFI_GET_SCS_STATUS_REMOTE 81
 extern  enum clnt_stat qcsapi_wifi_get_scs_status_remote_1(qcsapi_wifi_get_scs_status_rpcdata *, qcsapi_wifi_get_scs_status_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_scs_status_remote_1_svc(qcsapi_wifi_get_scs_status_rpcdata *, qcsapi_wifi_get_scs_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_SMPL_ENABLE_REMOTE 10
+#define QCSAPI_WIFI_SET_SCS_SMPL_ENABLE_REMOTE 91
 extern  enum clnt_stat qcsapi_wifi_set_scs_smpl_enable_remote_1(qcsapi_wifi_set_scs_smpl_enable_rpcdata *, qcsapi_wifi_set_scs_smpl_enable_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_smpl_enable_remote_1_svc(qcsapi_wifi_set_scs_smpl_enable_rpcdata *, qcsapi_wifi_set_scs_smpl_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_SMPL_DWELL_TIME_REMOTE 11
+#define QCSAPI_WIFI_SET_SCS_SMPL_DWELL_TIME_REMOTE 101
 extern  enum clnt_stat qcsapi_wifi_set_scs_smpl_dwell_time_remote_1(qcsapi_wifi_set_scs_smpl_dwell_time_rpcdata *, qcsapi_wifi_set_scs_smpl_dwell_time_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_smpl_dwell_time_remote_1_svc(qcsapi_wifi_set_scs_smpl_dwell_time_rpcdata *, qcsapi_wifi_set_scs_smpl_dwell_time_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_SAMPLE_INTV_REMOTE 12
+#define QCSAPI_WIFI_SET_SCS_SAMPLE_INTV_REMOTE 111
 extern  enum clnt_stat qcsapi_wifi_set_scs_sample_intv_remote_1(qcsapi_wifi_set_scs_sample_intv_rpcdata *, qcsapi_wifi_set_scs_sample_intv_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_sample_intv_remote_1_svc(qcsapi_wifi_set_scs_sample_intv_rpcdata *, qcsapi_wifi_set_scs_sample_intv_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_INTF_DETECT_INTV_REMOTE 13
+#define QCSAPI_WIFI_SET_SCS_INTF_DETECT_INTV_REMOTE 121
 extern  enum clnt_stat qcsapi_wifi_set_scs_intf_detect_intv_remote_1(qcsapi_wifi_set_scs_intf_detect_intv_rpcdata *, qcsapi_wifi_set_scs_intf_detect_intv_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_intf_detect_intv_remote_1_svc(qcsapi_wifi_set_scs_intf_detect_intv_rpcdata *, qcsapi_wifi_set_scs_intf_detect_intv_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_THRSHLD_REMOTE 14
+#define QCSAPI_WIFI_SET_SCS_THRSHLD_REMOTE 131
 extern  enum clnt_stat qcsapi_wifi_set_scs_thrshld_remote_1(qcsapi_wifi_set_scs_thrshld_rpcdata *, qcsapi_wifi_set_scs_thrshld_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_thrshld_remote_1_svc(qcsapi_wifi_set_scs_thrshld_rpcdata *, qcsapi_wifi_set_scs_thrshld_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_REPORT_ONLY_REMOTE 15
+#define QCSAPI_WIFI_SET_SCS_REPORT_ONLY_REMOTE 141
 extern  enum clnt_stat qcsapi_wifi_set_scs_report_only_remote_1(qcsapi_wifi_set_scs_report_only_rpcdata *, qcsapi_wifi_set_scs_report_only_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_report_only_remote_1_svc(qcsapi_wifi_set_scs_report_only_rpcdata *, qcsapi_wifi_set_scs_report_only_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SCS_STAT_REPORT_REMOTE 16
+#define QCSAPI_WIFI_GET_SCS_STAT_REPORT_REMOTE 151
 extern  enum clnt_stat qcsapi_wifi_get_scs_stat_report_remote_1(qcsapi_wifi_get_scs_stat_report_rpcdata *, qcsapi_wifi_get_scs_stat_report_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_scs_stat_report_remote_1_svc(qcsapi_wifi_get_scs_stat_report_rpcdata *, qcsapi_wifi_get_scs_stat_report_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SCS_CURRCHAN_REPORT_REMOTE 17
+#define QCSAPI_WIFI_GET_SCS_CURRCHAN_REPORT_REMOTE 161
 extern  enum clnt_stat qcsapi_wifi_get_scs_currchan_report_remote_1(qcsapi_wifi_get_scs_currchan_report_rpcdata *, qcsapi_wifi_get_scs_currchan_report_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_scs_currchan_report_remote_1_svc(qcsapi_wifi_get_scs_currchan_report_rpcdata *, qcsapi_wifi_get_scs_currchan_report_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_STATS_REMOTE 18
+#define QCSAPI_WIFI_SET_SCS_STATS_REMOTE 171
 extern  enum clnt_stat qcsapi_wifi_set_scs_stats_remote_1(qcsapi_wifi_set_scs_stats_rpcdata *, qcsapi_wifi_set_scs_stats_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_stats_remote_1_svc(qcsapi_wifi_set_scs_stats_rpcdata *, qcsapi_wifi_set_scs_stats_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_AUTOCHAN_REPORT_REMOTE 19
+#define QCSAPI_WIFI_GET_AUTOCHAN_REPORT_REMOTE 181
 extern  enum clnt_stat qcsapi_wifi_get_autochan_report_remote_1(qcsapi_wifi_get_autochan_report_rpcdata *, qcsapi_wifi_get_autochan_report_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_autochan_report_remote_1_svc(qcsapi_wifi_get_autochan_report_rpcdata *, qcsapi_wifi_get_autochan_report_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_CCA_INTF_SMTH_FCTR_REMOTE 20
+#define QCSAPI_WIFI_SET_SCS_CCA_INTF_SMTH_FCTR_REMOTE 191
 extern  enum clnt_stat qcsapi_wifi_set_scs_cca_intf_smth_fctr_remote_1(qcsapi_wifi_set_scs_cca_intf_smth_fctr_rpcdata *, qcsapi_wifi_set_scs_cca_intf_smth_fctr_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_cca_intf_smth_fctr_remote_1_svc(qcsapi_wifi_set_scs_cca_intf_smth_fctr_rpcdata *, qcsapi_wifi_set_scs_cca_intf_smth_fctr_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SCS_CHAN_MTRC_MRGN_REMOTE 21
+#define QCSAPI_WIFI_SET_SCS_CHAN_MTRC_MRGN_REMOTE 201
 extern  enum clnt_stat qcsapi_wifi_set_scs_chan_mtrc_mrgn_remote_1(qcsapi_wifi_set_scs_chan_mtrc_mrgn_rpcdata *, qcsapi_wifi_set_scs_chan_mtrc_mrgn_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_scs_chan_mtrc_mrgn_remote_1_svc(qcsapi_wifi_set_scs_chan_mtrc_mrgn_rpcdata *, qcsapi_wifi_set_scs_chan_mtrc_mrgn_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SCS_CCA_INTF_REMOTE 22
+#define QCSAPI_WIFI_GET_SCS_CCA_INTF_REMOTE 211
 extern  enum clnt_stat qcsapi_wifi_get_scs_cca_intf_remote_1(qcsapi_wifi_get_scs_cca_intf_rpcdata *, qcsapi_wifi_get_scs_cca_intf_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_scs_cca_intf_remote_1_svc(qcsapi_wifi_get_scs_cca_intf_rpcdata *, qcsapi_wifi_get_scs_cca_intf_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SCS_PARAM_REPORT_REMOTE 23
+#define QCSAPI_WIFI_GET_SCS_PARAM_REPORT_REMOTE 221
 extern  enum clnt_stat qcsapi_wifi_get_scs_param_report_remote_1(qcsapi_wifi_get_scs_param_report_rpcdata *, qcsapi_wifi_get_scs_param_report_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_scs_param_report_remote_1_svc(qcsapi_wifi_get_scs_param_report_rpcdata *, qcsapi_wifi_get_scs_param_report_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SCS_DFS_REENTRY_REQUEST_REMOTE 24
+#define QCSAPI_WIFI_GET_SCS_DFS_REENTRY_REQUEST_REMOTE 231
 extern  enum clnt_stat qcsapi_wifi_get_scs_dfs_reentry_request_remote_1(qcsapi_wifi_get_scs_dfs_reentry_request_rpcdata *, qcsapi_wifi_get_scs_dfs_reentry_request_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_scs_dfs_reentry_request_remote_1_svc(qcsapi_wifi_get_scs_dfs_reentry_request_rpcdata *, qcsapi_wifi_get_scs_dfs_reentry_request_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_START_OCAC_REMOTE 25
+#define QCSAPI_WIFI_START_OCAC_REMOTE 241
 extern  enum clnt_stat qcsapi_wifi_start_ocac_remote_1(qcsapi_wifi_start_ocac_rpcdata *, qcsapi_wifi_start_ocac_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_start_ocac_remote_1_svc(qcsapi_wifi_start_ocac_rpcdata *, qcsapi_wifi_start_ocac_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_STOP_OCAC_REMOTE 26
+#define QCSAPI_WIFI_STOP_OCAC_REMOTE 251
 extern  enum clnt_stat qcsapi_wifi_stop_ocac_remote_1(qcsapi_wifi_stop_ocac_rpcdata *, qcsapi_wifi_stop_ocac_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_stop_ocac_remote_1_svc(qcsapi_wifi_stop_ocac_rpcdata *, qcsapi_wifi_stop_ocac_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_OCAC_STATUS_REMOTE 27
+#define QCSAPI_WIFI_GET_OCAC_STATUS_REMOTE 261
 extern  enum clnt_stat qcsapi_wifi_get_ocac_status_remote_1(qcsapi_wifi_get_ocac_status_rpcdata *, qcsapi_wifi_get_ocac_status_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_ocac_status_remote_1_svc(qcsapi_wifi_get_ocac_status_rpcdata *, qcsapi_wifi_get_ocac_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_OCAC_DWELL_TIME_REMOTE 28
+#define QCSAPI_WIFI_SET_OCAC_DWELL_TIME_REMOTE 271
 extern  enum clnt_stat qcsapi_wifi_set_ocac_dwell_time_remote_1(qcsapi_wifi_set_ocac_dwell_time_rpcdata *, qcsapi_wifi_set_ocac_dwell_time_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_ocac_dwell_time_remote_1_svc(qcsapi_wifi_set_ocac_dwell_time_rpcdata *, qcsapi_wifi_set_ocac_dwell_time_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_OCAC_DURATION_REMOTE 29
+#define QCSAPI_WIFI_SET_OCAC_DURATION_REMOTE 281
 extern  enum clnt_stat qcsapi_wifi_set_ocac_duration_remote_1(qcsapi_wifi_set_ocac_duration_rpcdata *, qcsapi_wifi_set_ocac_duration_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_ocac_duration_remote_1_svc(qcsapi_wifi_set_ocac_duration_rpcdata *, qcsapi_wifi_set_ocac_duration_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_OCAC_CAC_TIME_REMOTE 30
+#define QCSAPI_WIFI_SET_OCAC_CAC_TIME_REMOTE 291
 extern  enum clnt_stat qcsapi_wifi_set_ocac_cac_time_remote_1(qcsapi_wifi_set_ocac_cac_time_rpcdata *, qcsapi_wifi_set_ocac_cac_time_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_ocac_cac_time_remote_1_svc(qcsapi_wifi_set_ocac_cac_time_rpcdata *, qcsapi_wifi_set_ocac_cac_time_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_OCAC_REPORT_ONLY_REMOTE 31
+#define QCSAPI_WIFI_SET_OCAC_REPORT_ONLY_REMOTE 301
 extern  enum clnt_stat qcsapi_wifi_set_ocac_report_only_remote_1(qcsapi_wifi_set_ocac_report_only_rpcdata *, qcsapi_wifi_set_ocac_report_only_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_ocac_report_only_remote_1_svc(qcsapi_wifi_set_ocac_report_only_rpcdata *, qcsapi_wifi_set_ocac_report_only_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_OCAC_THRSHLD_REMOTE 32
+#define QCSAPI_WIFI_SET_OCAC_THRSHLD_REMOTE 311
 extern  enum clnt_stat qcsapi_wifi_set_ocac_thrshld_remote_1(qcsapi_wifi_set_ocac_thrshld_rpcdata *, qcsapi_wifi_set_ocac_thrshld_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_ocac_thrshld_remote_1_svc(qcsapi_wifi_set_ocac_thrshld_rpcdata *, qcsapi_wifi_set_ocac_thrshld_rpcdata *, struct svc_req *);
-#define QCSAPI_INIT_REMOTE 33
+#define QCSAPI_INIT_REMOTE 321
 extern  enum clnt_stat qcsapi_init_remote_1(qcsapi_init_rpcdata *, qcsapi_init_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_init_remote_1_svc(qcsapi_init_rpcdata *, qcsapi_init_rpcdata *, struct svc_req *);
-#define QCSAPI_CONSOLE_DISCONNECT_REMOTE 34
+#define QCSAPI_CONSOLE_DISCONNECT_REMOTE 331
 extern  enum clnt_stat qcsapi_console_disconnect_remote_1(qcsapi_console_disconnect_rpcdata *, qcsapi_console_disconnect_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_console_disconnect_remote_1_svc(qcsapi_console_disconnect_rpcdata *, qcsapi_console_disconnect_rpcdata *, struct svc_req *);
-#define QCSAPI_SYSTEM_GET_TIME_SINCE_START_REMOTE 35
+#define QCSAPI_SYSTEM_GET_TIME_SINCE_START_REMOTE 341
 extern  enum clnt_stat qcsapi_system_get_time_since_start_remote_1(qcsapi_system_get_time_since_start_rpcdata *, qcsapi_system_get_time_since_start_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_system_get_time_since_start_remote_1_svc(qcsapi_system_get_time_since_start_rpcdata *, qcsapi_system_get_time_since_start_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_SYSTEM_STATUS_REMOTE 36
+#define QCSAPI_GET_SYSTEM_STATUS_REMOTE 351
 extern  enum clnt_stat qcsapi_get_system_status_remote_1(qcsapi_get_system_status_rpcdata *, qcsapi_get_system_status_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_get_system_status_remote_1_svc(qcsapi_get_system_status_rpcdata *, qcsapi_get_system_status_rpcdata *, struct svc_req *);
-#define QCSAPI_CONFIG_GET_PARAMETER_REMOTE 37
+#define QCSAPI_CONFIG_GET_PARAMETER_REMOTE 361
 extern  enum clnt_stat qcsapi_config_get_parameter_remote_1(qcsapi_config_get_parameter_rpcdata *, qcsapi_config_get_parameter_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_config_get_parameter_remote_1_svc(qcsapi_config_get_parameter_rpcdata *, qcsapi_config_get_parameter_rpcdata *, struct svc_req *);
-#define QCSAPI_CONFIG_UPDATE_PARAMETER_REMOTE 38
+#define QCSAPI_CONFIG_UPDATE_PARAMETER_REMOTE 371
 extern  enum clnt_stat qcsapi_config_update_parameter_remote_1(qcsapi_config_update_parameter_rpcdata *, qcsapi_config_update_parameter_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_config_update_parameter_remote_1_svc(qcsapi_config_update_parameter_rpcdata *, qcsapi_config_update_parameter_rpcdata *, struct svc_req *);
-#define QCSAPI_CONFIG_GET_SSID_PARAMETER_REMOTE 39
+#define QCSAPI_CONFIG_GET_SSID_PARAMETER_REMOTE 381
 extern  enum clnt_stat qcsapi_config_get_ssid_parameter_remote_1(qcsapi_config_get_ssid_parameter_rpcdata *, qcsapi_config_get_ssid_parameter_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_config_get_ssid_parameter_remote_1_svc(qcsapi_config_get_ssid_parameter_rpcdata *, qcsapi_config_get_ssid_parameter_rpcdata *, struct svc_req *);
-#define QCSAPI_CONFIG_UPDATE_SSID_PARAMETER_REMOTE 40
+#define QCSAPI_CONFIG_UPDATE_SSID_PARAMETER_REMOTE 391
 extern  enum clnt_stat qcsapi_config_update_ssid_parameter_remote_1(qcsapi_config_update_ssid_parameter_rpcdata *, qcsapi_config_update_ssid_parameter_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_config_update_ssid_parameter_remote_1_svc(qcsapi_config_update_ssid_parameter_rpcdata *, qcsapi_config_update_ssid_parameter_rpcdata *, struct svc_req *);
-#define QCSAPI_FILE_PATH_GET_CONFIG_REMOTE 41
+#define QCSAPI_FILE_PATH_GET_CONFIG_REMOTE 401
 extern  enum clnt_stat qcsapi_file_path_get_config_remote_1(qcsapi_file_path_get_config_rpcdata *, qcsapi_file_path_get_config_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_file_path_get_config_remote_1_svc(qcsapi_file_path_get_config_rpcdata *, qcsapi_file_path_get_config_rpcdata *, struct svc_req *);
-#define QCSAPI_FILE_PATH_SET_CONFIG_REMOTE 42
+#define QCSAPI_FILE_PATH_SET_CONFIG_REMOTE 411
 extern  enum clnt_stat qcsapi_file_path_set_config_remote_1(qcsapi_file_path_set_config_rpcdata *, qcsapi_file_path_set_config_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_file_path_set_config_remote_1_svc(qcsapi_file_path_set_config_rpcdata *, qcsapi_file_path_set_config_rpcdata *, struct svc_req *);
-#define QCSAPI_RESTORE_DEFAULT_CONFIG_REMOTE 43
+#define QCSAPI_RESTORE_DEFAULT_CONFIG_REMOTE 421
 extern  enum clnt_stat qcsapi_restore_default_config_remote_1(qcsapi_restore_default_config_rpcdata *, qcsapi_restore_default_config_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_restore_default_config_remote_1_svc(qcsapi_restore_default_config_rpcdata *, qcsapi_restore_default_config_rpcdata *, struct svc_req *);
-#define QCSAPI_STORE_IPADDR_REMOTE 44
+#define QCSAPI_STORE_IPADDR_REMOTE 431
 extern  enum clnt_stat qcsapi_store_ipaddr_remote_1(qcsapi_store_ipaddr_rpcdata *, qcsapi_store_ipaddr_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_store_ipaddr_remote_1_svc(qcsapi_store_ipaddr_rpcdata *, qcsapi_store_ipaddr_rpcdata *, struct svc_req *);
-#define QCSAPI_INTERFACE_ENABLE_REMOTE 45
+#define QCSAPI_INTERFACE_ENABLE_REMOTE 441
 extern  enum clnt_stat qcsapi_interface_enable_remote_1(qcsapi_interface_enable_rpcdata *, qcsapi_interface_enable_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_interface_enable_remote_1_svc(qcsapi_interface_enable_rpcdata *, qcsapi_interface_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_INTERFACE_GET_STATUS_REMOTE 46
+#define QCSAPI_INTERFACE_GET_STATUS_REMOTE 451
 extern  enum clnt_stat qcsapi_interface_get_status_remote_1(qcsapi_interface_get_status_rpcdata *, qcsapi_interface_get_status_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_interface_get_status_remote_1_svc(qcsapi_interface_get_status_rpcdata *, qcsapi_interface_get_status_rpcdata *, struct svc_req *);
-#define QCSAPI_INTERFACE_GET_COUNTER_REMOTE 47
+#define QCSAPI_INTERFACE_GET_NETMASK_REMOTE 4431
+extern  enum clnt_stat qcsapi_interface_get_netmask_remote_1(qcsapi_interface_get_netmask_rpcdata *, qcsapi_interface_get_netmask_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_interface_get_netmask_remote_1_svc(qcsapi_interface_get_netmask_rpcdata *, qcsapi_interface_get_netmask_rpcdata *, struct svc_req *);
+#define QCSAPI_INTERFACE_GET_COUNTER_REMOTE 461
 extern  enum clnt_stat qcsapi_interface_get_counter_remote_1(qcsapi_interface_get_counter_rpcdata *, qcsapi_interface_get_counter_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_interface_get_counter_remote_1_svc(qcsapi_interface_get_counter_rpcdata *, qcsapi_interface_get_counter_rpcdata *, struct svc_req *);
-#define QCSAPI_INTERFACE_GET_MAC_ADDR_REMOTE 48
+#define QCSAPI_INTERFACE_GET_MAC_ADDR_REMOTE 481
 extern  enum clnt_stat qcsapi_interface_get_mac_addr_remote_1(qcsapi_interface_get_mac_addr_rpcdata *, qcsapi_interface_get_mac_addr_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_interface_get_mac_addr_remote_1_svc(qcsapi_interface_get_mac_addr_rpcdata *, qcsapi_interface_get_mac_addr_rpcdata *, struct svc_req *);
-#define QCSAPI_INTERFACE_SET_MAC_ADDR_REMOTE 49
+#define QCSAPI_INTERFACE_SET_MAC_ADDR_REMOTE 491
 extern  enum clnt_stat qcsapi_interface_set_mac_addr_remote_1(qcsapi_interface_set_mac_addr_rpcdata *, qcsapi_interface_set_mac_addr_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_interface_set_mac_addr_remote_1_svc(qcsapi_interface_set_mac_addr_rpcdata *, qcsapi_interface_set_mac_addr_rpcdata *, struct svc_req *);
-#define QCSAPI_PM_GET_COUNTER_REMOTE 50
+#define QCSAPI_PM_GET_COUNTER_REMOTE 501
 extern  enum clnt_stat qcsapi_pm_get_counter_remote_1(qcsapi_pm_get_counter_rpcdata *, qcsapi_pm_get_counter_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_pm_get_counter_remote_1_svc(qcsapi_pm_get_counter_rpcdata *, qcsapi_pm_get_counter_rpcdata *, struct svc_req *);
-#define QCSAPI_SET_ASPM_L1_REMOTE 51
+#define QCSAPI_SET_ASPM_L1_REMOTE 511
 extern  enum clnt_stat qcsapi_set_aspm_l1_remote_1(qcsapi_set_aspm_l1_rpcdata *, qcsapi_set_aspm_l1_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_set_aspm_l1_remote_1_svc(qcsapi_set_aspm_l1_rpcdata *, qcsapi_set_aspm_l1_rpcdata *, struct svc_req *);
-#define QCSAPI_PM_GET_ELAPSED_TIME_REMOTE 52
+#define QCSAPI_PM_GET_ELAPSED_TIME_REMOTE 531
 extern  enum clnt_stat qcsapi_pm_get_elapsed_time_remote_1(qcsapi_pm_get_elapsed_time_rpcdata *, qcsapi_pm_get_elapsed_time_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_pm_get_elapsed_time_remote_1_svc(qcsapi_pm_get_elapsed_time_rpcdata *, qcsapi_pm_get_elapsed_time_rpcdata *, struct svc_req *);
-#define QCSAPI_ETH_PHY_POWER_CONTROL_REMOTE 53
+#define QCSAPI_ETH_PHY_POWER_CONTROL_REMOTE 541
 extern  enum clnt_stat qcsapi_eth_phy_power_control_remote_1(qcsapi_eth_phy_power_control_rpcdata *, qcsapi_eth_phy_power_control_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_eth_phy_power_control_remote_1_svc(qcsapi_eth_phy_power_control_rpcdata *, qcsapi_eth_phy_power_control_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MODE_REMOTE 54
+#define QCSAPI_WIFI_GET_MODE_REMOTE 551
 extern  enum clnt_stat qcsapi_wifi_get_mode_remote_1(qcsapi_wifi_get_mode_rpcdata *, qcsapi_wifi_get_mode_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_mode_remote_1_svc(qcsapi_wifi_get_mode_rpcdata *, qcsapi_wifi_get_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_MODE_REMOTE 55
+#define QCSAPI_WIFI_SET_MODE_REMOTE 561
 extern  enum clnt_stat qcsapi_wifi_set_mode_remote_1(qcsapi_wifi_set_mode_rpcdata *, qcsapi_wifi_set_mode_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_mode_remote_1_svc(qcsapi_wifi_set_mode_rpcdata *, qcsapi_wifi_set_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_PHY_MODE_REMOTE 56
+#define QCSAPI_WIFI_GET_PHY_MODE_REMOTE 571
 extern  enum clnt_stat qcsapi_wifi_get_phy_mode_remote_1(qcsapi_wifi_get_phy_mode_rpcdata *, qcsapi_wifi_get_phy_mode_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_phy_mode_remote_1_svc(qcsapi_wifi_get_phy_mode_rpcdata *, qcsapi_wifi_get_phy_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_PHY_MODE_REMOTE 57
+#define QCSAPI_WIFI_SET_PHY_MODE_REMOTE 581
 extern  enum clnt_stat qcsapi_wifi_set_phy_mode_remote_1(qcsapi_wifi_set_phy_mode_rpcdata *, qcsapi_wifi_set_phy_mode_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_phy_mode_remote_1_svc(qcsapi_wifi_set_phy_mode_rpcdata *, qcsapi_wifi_set_phy_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_RELOAD_IN_MODE_REMOTE 58
+#define QCSAPI_WIFI_RELOAD_IN_MODE_REMOTE 591
 extern  enum clnt_stat qcsapi_wifi_reload_in_mode_remote_1(qcsapi_wifi_reload_in_mode_rpcdata *, qcsapi_wifi_reload_in_mode_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_reload_in_mode_remote_1_svc(qcsapi_wifi_reload_in_mode_rpcdata *, qcsapi_wifi_reload_in_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_RFENABLE_REMOTE 59
+#define QCSAPI_WIFI_RFENABLE_REMOTE 601
 extern  enum clnt_stat qcsapi_wifi_rfenable_remote_1(qcsapi_wifi_rfenable_rpcdata *, qcsapi_wifi_rfenable_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_rfenable_remote_1_svc(qcsapi_wifi_rfenable_rpcdata *, qcsapi_wifi_rfenable_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_STARTPROD_REMOTE 60
+#define QCSAPI_WIFI_STARTPROD_REMOTE 611
 extern  enum clnt_stat qcsapi_wifi_startprod_remote_1(qcsapi_wifi_startprod_rpcdata *, qcsapi_wifi_startprod_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_startprod_remote_1_svc(qcsapi_wifi_startprod_rpcdata *, qcsapi_wifi_startprod_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_RFSTATUS_REMOTE 61
+#define QCSAPI_IS_STARTPROD_DONE_REMOTE 621
+extern  enum clnt_stat qcsapi_is_startprod_done_remote_1(qcsapi_is_startprod_done_rpcdata *, qcsapi_is_startprod_done_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_is_startprod_done_remote_1_svc(qcsapi_is_startprod_done_rpcdata *, qcsapi_is_startprod_done_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_RFSTATUS_REMOTE 631
 extern  enum clnt_stat qcsapi_wifi_rfstatus_remote_1(qcsapi_wifi_rfstatus_rpcdata *, qcsapi_wifi_rfstatus_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_rfstatus_remote_1_svc(qcsapi_wifi_rfstatus_rpcdata *, qcsapi_wifi_rfstatus_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BW_REMOTE 62
+#define QCSAPI_WIFI_GET_BW_REMOTE 641
 extern  enum clnt_stat qcsapi_wifi_get_bw_remote_1(qcsapi_wifi_get_bw_rpcdata *, qcsapi_wifi_get_bw_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_bw_remote_1_svc(qcsapi_wifi_get_bw_rpcdata *, qcsapi_wifi_get_bw_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BW_REMOTE 63
+#define QCSAPI_WIFI_SET_BW_REMOTE 651
 extern  enum clnt_stat qcsapi_wifi_set_bw_remote_1(qcsapi_wifi_set_bw_rpcdata *, qcsapi_wifi_set_bw_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_bw_remote_1_svc(qcsapi_wifi_set_bw_rpcdata *, qcsapi_wifi_set_bw_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_UBOOT_INFO_REMOTE 64
+#define QCSAPI_GET_UBOOT_INFO_REMOTE 661
 extern  enum clnt_stat qcsapi_get_uboot_info_remote_1(qcsapi_get_uboot_info_rpcdata *, qcsapi_get_uboot_info_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_get_uboot_info_remote_1_svc(qcsapi_get_uboot_info_rpcdata *, qcsapi_get_uboot_info_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_CHANNEL_REMOTE 65
+#define QCSAPI_WIFI_GET_CHANNEL_REMOTE 671
 extern  enum clnt_stat qcsapi_wifi_get_channel_remote_1(qcsapi_wifi_get_channel_rpcdata *, qcsapi_wifi_get_channel_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_channel_remote_1_svc(qcsapi_wifi_get_channel_rpcdata *, qcsapi_wifi_get_channel_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_CHANNEL_REMOTE 66
+#define QCSAPI_WIFI_SET_CHANNEL_REMOTE 681
 extern  enum clnt_stat qcsapi_wifi_set_channel_remote_1(qcsapi_wifi_set_channel_rpcdata *, qcsapi_wifi_set_channel_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_channel_remote_1_svc(qcsapi_wifi_set_channel_rpcdata *, qcsapi_wifi_set_channel_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_CHAN_PRI_INACTIVE_REMOTE 67
+#define QCSAPI_WIFI_SET_CHAN_PRI_INACTIVE_REMOTE 691
 extern  enum clnt_stat qcsapi_wifi_set_chan_pri_inactive_remote_1(qcsapi_wifi_set_chan_pri_inactive_rpcdata *, qcsapi_wifi_set_chan_pri_inactive_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_chan_pri_inactive_remote_1_svc(qcsapi_wifi_set_chan_pri_inactive_rpcdata *, qcsapi_wifi_set_chan_pri_inactive_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BEACON_INTERVAL_REMOTE 68
+#define QCSAPI_WIFI_GET_BEACON_INTERVAL_REMOTE 701
 extern  enum clnt_stat qcsapi_wifi_get_beacon_interval_remote_1(qcsapi_wifi_get_beacon_interval_rpcdata *, qcsapi_wifi_get_beacon_interval_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_beacon_interval_remote_1_svc(qcsapi_wifi_get_beacon_interval_rpcdata *, qcsapi_wifi_get_beacon_interval_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BEACON_INTERVAL_REMOTE 69
+#define QCSAPI_WIFI_SET_BEACON_INTERVAL_REMOTE 711
 extern  enum clnt_stat qcsapi_wifi_set_beacon_interval_remote_1(qcsapi_wifi_set_beacon_interval_rpcdata *, qcsapi_wifi_set_beacon_interval_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_beacon_interval_remote_1_svc(qcsapi_wifi_set_beacon_interval_rpcdata *, qcsapi_wifi_set_beacon_interval_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DTIM_REMOTE 70
+#define QCSAPI_WIFI_GET_DTIM_REMOTE 721
 extern  enum clnt_stat qcsapi_wifi_get_dtim_remote_1(qcsapi_wifi_get_dtim_rpcdata *, qcsapi_wifi_get_dtim_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_dtim_remote_1_svc(qcsapi_wifi_get_dtim_rpcdata *, qcsapi_wifi_get_dtim_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_DTIM_REMOTE 71
+#define QCSAPI_WIFI_SET_DTIM_REMOTE 731
 extern  enum clnt_stat qcsapi_wifi_set_dtim_remote_1(qcsapi_wifi_set_dtim_rpcdata *, qcsapi_wifi_set_dtim_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_dtim_remote_1_svc(qcsapi_wifi_set_dtim_rpcdata *, qcsapi_wifi_set_dtim_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_ASSOC_LIMIT_REMOTE 72
+#define QCSAPI_WIFI_GET_ASSOC_LIMIT_REMOTE 741
 extern  enum clnt_stat qcsapi_wifi_get_assoc_limit_remote_1(qcsapi_wifi_get_assoc_limit_rpcdata *, qcsapi_wifi_get_assoc_limit_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_assoc_limit_remote_1_svc(qcsapi_wifi_get_assoc_limit_rpcdata *, qcsapi_wifi_get_assoc_limit_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_ASSOC_LIMIT_REMOTE 73
+#define QCSAPI_WIFI_SET_ASSOC_LIMIT_REMOTE 751
 extern  enum clnt_stat qcsapi_wifi_set_assoc_limit_remote_1(qcsapi_wifi_set_assoc_limit_rpcdata *, qcsapi_wifi_set_assoc_limit_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_assoc_limit_remote_1_svc(qcsapi_wifi_set_assoc_limit_rpcdata *, qcsapi_wifi_set_assoc_limit_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BSSID_REMOTE 74
+#define QCSAPI_WIFI_GET_BSSID_REMOTE 761
 extern  enum clnt_stat qcsapi_wifi_get_bssid_remote_1(qcsapi_wifi_get_BSSID_rpcdata *, qcsapi_wifi_get_BSSID_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_bssid_remote_1_svc(qcsapi_wifi_get_BSSID_rpcdata *, qcsapi_wifi_get_BSSID_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SSID_REMOTE 75
+#define QCSAPI_WIFI_GET_CONFIG_BSSID_REMOTE 771
+extern  enum clnt_stat qcsapi_wifi_get_config_bssid_remote_1(qcsapi_wifi_get_config_BSSID_rpcdata *, qcsapi_wifi_get_config_BSSID_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_config_bssid_remote_1_svc(qcsapi_wifi_get_config_BSSID_rpcdata *, qcsapi_wifi_get_config_BSSID_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_SSID_REMOTE 781
 extern  enum clnt_stat qcsapi_wifi_get_ssid_remote_1(qcsapi_wifi_get_SSID_rpcdata *, qcsapi_wifi_get_SSID_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_ssid_remote_1_svc(qcsapi_wifi_get_SSID_rpcdata *, qcsapi_wifi_get_SSID_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SSID_REMOTE 76
+#define QCSAPI_WIFI_SET_SSID_REMOTE 791
 extern  enum clnt_stat qcsapi_wifi_set_ssid_remote_1(qcsapi_wifi_set_SSID_rpcdata *, qcsapi_wifi_set_SSID_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_ssid_remote_1_svc(qcsapi_wifi_set_SSID_rpcdata *, qcsapi_wifi_set_SSID_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_IEEE_802_11_STANDARD_REMOTE 77
+#define QCSAPI_WIFI_GET_IEEE_802_11_STANDARD_REMOTE 801
 extern  enum clnt_stat qcsapi_wifi_get_ieee_802_11_standard_remote_1(qcsapi_wifi_get_IEEE_802_11_standard_rpcdata *, qcsapi_wifi_get_IEEE_802_11_standard_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_ieee_802_11_standard_remote_1_svc(qcsapi_wifi_get_IEEE_802_11_standard_rpcdata *, qcsapi_wifi_get_IEEE_802_11_standard_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_LIST_CHANNELS_REMOTE 78
+#define QCSAPI_WIFI_GET_LIST_CHANNELS_REMOTE 811
 extern  enum clnt_stat qcsapi_wifi_get_list_channels_remote_1(qcsapi_wifi_get_list_channels_rpcdata *, qcsapi_wifi_get_list_channels_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_list_channels_remote_1_svc(qcsapi_wifi_get_list_channels_rpcdata *, qcsapi_wifi_get_list_channels_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MODE_SWITCH_REMOTE 79
+#define QCSAPI_WIFI_GET_MODE_SWITCH_REMOTE 821
 extern  enum clnt_stat qcsapi_wifi_get_mode_switch_remote_1(qcsapi_wifi_get_mode_switch_rpcdata *, qcsapi_wifi_get_mode_switch_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_mode_switch_remote_1_svc(qcsapi_wifi_get_mode_switch_rpcdata *, qcsapi_wifi_get_mode_switch_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_DISASSOCIATE_REMOTE 80
+#define QCSAPI_WIFI_DISASSOCIATE_REMOTE 831
 extern  enum clnt_stat qcsapi_wifi_disassociate_remote_1(qcsapi_wifi_disassociate_rpcdata *, qcsapi_wifi_disassociate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_disassociate_remote_1_svc(qcsapi_wifi_disassociate_rpcdata *, qcsapi_wifi_disassociate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DISCONN_INFO_REMOTE 81
+#define QCSAPI_WIFI_DISASSOCIATE_STA_REMOTE 841
+extern  enum clnt_stat qcsapi_wifi_disassociate_sta_remote_1(qcsapi_wifi_disassociate_sta_rpcdata *, qcsapi_wifi_disassociate_sta_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_disassociate_sta_remote_1_svc(qcsapi_wifi_disassociate_sta_rpcdata *, qcsapi_wifi_disassociate_sta_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_REASSOCIATE_REMOTE 4441
+extern  enum clnt_stat qcsapi_wifi_reassociate_remote_1(qcsapi_wifi_reassociate_rpcdata *, qcsapi_wifi_reassociate_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_reassociate_remote_1_svc(qcsapi_wifi_reassociate_rpcdata *, qcsapi_wifi_reassociate_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_DISCONN_INFO_REMOTE 851
 extern  enum clnt_stat qcsapi_wifi_get_disconn_info_remote_1(qcsapi_wifi_get_disconn_info_rpcdata *, qcsapi_wifi_get_disconn_info_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_disconn_info_remote_1_svc(qcsapi_wifi_get_disconn_info_rpcdata *, qcsapi_wifi_get_disconn_info_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_DISABLE_WPS_REMOTE 82
+#define QCSAPI_WIFI_DISABLE_WPS_REMOTE 861
 extern  enum clnt_stat qcsapi_wifi_disable_wps_remote_1(qcsapi_wifi_disable_wps_rpcdata *, qcsapi_wifi_disable_wps_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_disable_wps_remote_1_svc(qcsapi_wifi_disable_wps_rpcdata *, qcsapi_wifi_disable_wps_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_ASSOCIATE_REMOTE 83
+#define QCSAPI_WIFI_ASSOCIATE_REMOTE 871
 extern  enum clnt_stat qcsapi_wifi_associate_remote_1(qcsapi_wifi_associate_rpcdata *, qcsapi_wifi_associate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_associate_remote_1_svc(qcsapi_wifi_associate_rpcdata *, qcsapi_wifi_associate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_START_CCA_REMOTE 84
+#define QCSAPI_WIFI_START_CCA_REMOTE 881
 extern  enum clnt_stat qcsapi_wifi_start_cca_remote_1(qcsapi_wifi_start_cca_rpcdata *, qcsapi_wifi_start_cca_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_start_cca_remote_1_svc(qcsapi_wifi_start_cca_rpcdata *, qcsapi_wifi_start_cca_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_NOISE_REMOTE 85
+#define QCSAPI_WIFI_GET_NOISE_REMOTE 891
 extern  enum clnt_stat qcsapi_wifi_get_noise_remote_1(qcsapi_wifi_get_noise_rpcdata *, qcsapi_wifi_get_noise_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_noise_remote_1_svc(qcsapi_wifi_get_noise_rpcdata *, qcsapi_wifi_get_noise_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RSSI_BY_CHAIN_REMOTE 86
+#define QCSAPI_WIFI_GET_RSSI_BY_CHAIN_REMOTE 901
 extern  enum clnt_stat qcsapi_wifi_get_rssi_by_chain_remote_1(qcsapi_wifi_get_rssi_by_chain_rpcdata *, qcsapi_wifi_get_rssi_by_chain_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_rssi_by_chain_remote_1_svc(qcsapi_wifi_get_rssi_by_chain_rpcdata *, qcsapi_wifi_get_rssi_by_chain_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_AVG_SNR_REMOTE 87
+#define QCSAPI_WIFI_GET_AVG_SNR_REMOTE 911
 extern  enum clnt_stat qcsapi_wifi_get_avg_snr_remote_1(qcsapi_wifi_get_avg_snr_rpcdata *, qcsapi_wifi_get_avg_snr_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_avg_snr_remote_1_svc(qcsapi_wifi_get_avg_snr_rpcdata *, qcsapi_wifi_get_avg_snr_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_PRIMARY_INTERFACE_REMOTE 88
+#define QCSAPI_GET_PRIMARY_INTERFACE_REMOTE 921
 extern  enum clnt_stat qcsapi_get_primary_interface_remote_1(qcsapi_get_primary_interface_rpcdata *, qcsapi_get_primary_interface_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_get_primary_interface_remote_1_svc(qcsapi_get_primary_interface_rpcdata *, qcsapi_get_primary_interface_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_INTERFACE_BY_INDEX_REMOTE 89
+#define QCSAPI_GET_INTERFACE_BY_INDEX_REMOTE 931
 extern  enum clnt_stat qcsapi_get_interface_by_index_remote_1(qcsapi_get_interface_by_index_rpcdata *, qcsapi_get_interface_by_index_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_get_interface_by_index_remote_1_svc(qcsapi_get_interface_by_index_rpcdata *, qcsapi_get_interface_by_index_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_WIFI_MACADDR_REMOTE 90
+#define QCSAPI_WIFI_SET_WIFI_MACADDR_REMOTE 941
 extern  enum clnt_stat qcsapi_wifi_set_wifi_macaddr_remote_1(qcsapi_wifi_set_wifi_macaddr_rpcdata *, qcsapi_wifi_set_wifi_macaddr_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_wifi_macaddr_remote_1_svc(qcsapi_wifi_set_wifi_macaddr_rpcdata *, qcsapi_wifi_set_wifi_macaddr_rpcdata *, struct svc_req *);
-#define QCSAPI_INTERFACE_GET_BSSID_REMOTE 91
+#define QCSAPI_INTERFACE_GET_BSSID_REMOTE 951
 extern  enum clnt_stat qcsapi_interface_get_bssid_remote_1(qcsapi_interface_get_BSSID_rpcdata *, qcsapi_interface_get_BSSID_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_interface_get_bssid_remote_1_svc(qcsapi_interface_get_BSSID_rpcdata *, qcsapi_interface_get_BSSID_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RATES_REMOTE 92
+#define QCSAPI_WIFI_GET_RATES_REMOTE 961
 extern  enum clnt_stat qcsapi_wifi_get_rates_remote_1(qcsapi_wifi_get_rates_rpcdata *, qcsapi_wifi_get_rates_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_rates_remote_1_svc(qcsapi_wifi_get_rates_rpcdata *, qcsapi_wifi_get_rates_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_RATES_REMOTE 93
+#define QCSAPI_WIFI_SET_RATES_REMOTE 971
 extern  enum clnt_stat qcsapi_wifi_set_rates_remote_1(qcsapi_wifi_set_rates_rpcdata *, qcsapi_wifi_set_rates_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_rates_remote_1_svc(qcsapi_wifi_set_rates_rpcdata *, qcsapi_wifi_set_rates_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_MAX_BITRATE_REMOTE 94
+#define QCSAPI_GET_MAX_BITRATE_REMOTE 981
 extern  enum clnt_stat qcsapi_get_max_bitrate_remote_1(qcsapi_get_max_bitrate_rpcdata *, qcsapi_get_max_bitrate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_get_max_bitrate_remote_1_svc(qcsapi_get_max_bitrate_rpcdata *, qcsapi_get_max_bitrate_rpcdata *, struct svc_req *);
-#define QCSAPI_SET_MAX_BITRATE_REMOTE 95
+#define QCSAPI_SET_MAX_BITRATE_REMOTE 991
 extern  enum clnt_stat qcsapi_set_max_bitrate_remote_1(qcsapi_set_max_bitrate_rpcdata *, qcsapi_set_max_bitrate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_set_max_bitrate_remote_1_svc(qcsapi_set_max_bitrate_rpcdata *, qcsapi_set_max_bitrate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_QOS_GET_PARAM_REMOTE 96
+#define QCSAPI_WIFI_QOS_GET_PARAM_REMOTE 1001
 extern  enum clnt_stat qcsapi_wifi_qos_get_param_remote_1(qcsapi_wifi_qos_get_param_rpcdata *, qcsapi_wifi_qos_get_param_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_qos_get_param_remote_1_svc(qcsapi_wifi_qos_get_param_rpcdata *, qcsapi_wifi_qos_get_param_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_QOS_SET_PARAM_REMOTE 97
+#define QCSAPI_WIFI_QOS_SET_PARAM_REMOTE 1011
 extern  enum clnt_stat qcsapi_wifi_qos_set_param_remote_1(qcsapi_wifi_qos_set_param_rpcdata *, qcsapi_wifi_qos_set_param_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_qos_set_param_remote_1_svc(qcsapi_wifi_qos_set_param_rpcdata *, qcsapi_wifi_qos_set_param_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_WMM_AC_MAP_REMOTE 98
+#define QCSAPI_WIFI_GET_WMM_AC_MAP_REMOTE 1021
 extern  enum clnt_stat qcsapi_wifi_get_wmm_ac_map_remote_1(qcsapi_wifi_get_wmm_ac_map_rpcdata *, qcsapi_wifi_get_wmm_ac_map_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_wmm_ac_map_remote_1_svc(qcsapi_wifi_get_wmm_ac_map_rpcdata *, qcsapi_wifi_get_wmm_ac_map_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_WMM_AC_MAP_REMOTE 99
+#define QCSAPI_WIFI_SET_WMM_AC_MAP_REMOTE 1031
 extern  enum clnt_stat qcsapi_wifi_set_wmm_ac_map_remote_1(qcsapi_wifi_set_wmm_ac_map_rpcdata *, qcsapi_wifi_set_wmm_ac_map_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_wmm_ac_map_remote_1_svc(qcsapi_wifi_set_wmm_ac_map_rpcdata *, qcsapi_wifi_set_wmm_ac_map_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DSCP_8021P_MAP_REMOTE 100
+#define QCSAPI_WIFI_GET_DSCP_8021P_MAP_REMOTE 1041
 extern  enum clnt_stat qcsapi_wifi_get_dscp_8021p_map_remote_1(qcsapi_wifi_get_dscp_8021p_map_rpcdata *, qcsapi_wifi_get_dscp_8021p_map_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_dscp_8021p_map_remote_1_svc(qcsapi_wifi_get_dscp_8021p_map_rpcdata *, qcsapi_wifi_get_dscp_8021p_map_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DSCP_AC_MAP_REMOTE 101
+#define QCSAPI_WIFI_GET_DSCP_AC_MAP_REMOTE 1051
 extern  enum clnt_stat qcsapi_wifi_get_dscp_ac_map_remote_1(qcsapi_wifi_get_dscp_ac_map_rpcdata *, qcsapi_wifi_get_dscp_ac_map_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_dscp_ac_map_remote_1_svc(qcsapi_wifi_get_dscp_ac_map_rpcdata *, qcsapi_wifi_get_dscp_ac_map_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_DSCP_8021P_MAP_REMOTE 102
+#define QCSAPI_WIFI_SET_DSCP_8021P_MAP_REMOTE 1061
 extern  enum clnt_stat qcsapi_wifi_set_dscp_8021p_map_remote_1(qcsapi_wifi_set_dscp_8021p_map_rpcdata *, qcsapi_wifi_set_dscp_8021p_map_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_dscp_8021p_map_remote_1_svc(qcsapi_wifi_set_dscp_8021p_map_rpcdata *, qcsapi_wifi_set_dscp_8021p_map_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_DSCP_AC_MAP_REMOTE 103
+#define QCSAPI_WIFI_SET_DSCP_AC_MAP_REMOTE 1071
 extern  enum clnt_stat qcsapi_wifi_set_dscp_ac_map_remote_1(qcsapi_wifi_set_dscp_ac_map_rpcdata *, qcsapi_wifi_set_dscp_ac_map_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_dscp_ac_map_remote_1_svc(qcsapi_wifi_set_dscp_ac_map_rpcdata *, qcsapi_wifi_set_dscp_ac_map_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_PRIORITY_REMOTE 104
+#define QCSAPI_WIFI_GET_PRIORITY_REMOTE 1081
 extern  enum clnt_stat qcsapi_wifi_get_priority_remote_1(qcsapi_wifi_get_priority_rpcdata *, qcsapi_wifi_get_priority_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_priority_remote_1_svc(qcsapi_wifi_get_priority_rpcdata *, qcsapi_wifi_get_priority_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_PRIORITY_REMOTE 105
+#define QCSAPI_WIFI_SET_PRIORITY_REMOTE 1091
 extern  enum clnt_stat qcsapi_wifi_set_priority_remote_1(qcsapi_wifi_set_priority_rpcdata *, qcsapi_wifi_set_priority_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_priority_remote_1_svc(qcsapi_wifi_set_priority_rpcdata *, qcsapi_wifi_set_priority_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_AIRFAIR_REMOTE 106
+#define QCSAPI_WIFI_GET_AIRFAIR_REMOTE 1101
 extern  enum clnt_stat qcsapi_wifi_get_airfair_remote_1(qcsapi_wifi_get_airfair_rpcdata *, qcsapi_wifi_get_airfair_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_airfair_remote_1_svc(qcsapi_wifi_get_airfair_rpcdata *, qcsapi_wifi_get_airfair_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_AIRFAIR_REMOTE 107
+#define QCSAPI_WIFI_SET_AIRFAIR_REMOTE 1111
 extern  enum clnt_stat qcsapi_wifi_set_airfair_remote_1(qcsapi_wifi_set_airfair_rpcdata *, qcsapi_wifi_set_airfair_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_airfair_remote_1_svc(qcsapi_wifi_set_airfair_rpcdata *, qcsapi_wifi_set_airfair_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_DWELL_TIMES_REMOTE 108
+#define QCSAPI_WIFI_SET_DWELL_TIMES_REMOTE 1121
 extern  enum clnt_stat qcsapi_wifi_set_dwell_times_remote_1(qcsapi_wifi_set_dwell_times_rpcdata *, qcsapi_wifi_set_dwell_times_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_dwell_times_remote_1_svc(qcsapi_wifi_set_dwell_times_rpcdata *, qcsapi_wifi_set_dwell_times_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DWELL_TIMES_REMOTE 109
+#define QCSAPI_WIFI_GET_DWELL_TIMES_REMOTE 1131
 extern  enum clnt_stat qcsapi_wifi_get_dwell_times_remote_1(qcsapi_wifi_get_dwell_times_rpcdata *, qcsapi_wifi_get_dwell_times_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_dwell_times_remote_1_svc(qcsapi_wifi_get_dwell_times_rpcdata *, qcsapi_wifi_get_dwell_times_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BGSCAN_DWELL_TIMES_REMOTE 110
+#define QCSAPI_WIFI_SET_BGSCAN_DWELL_TIMES_REMOTE 1141
 extern  enum clnt_stat qcsapi_wifi_set_bgscan_dwell_times_remote_1(qcsapi_wifi_set_bgscan_dwell_times_rpcdata *, qcsapi_wifi_set_bgscan_dwell_times_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_bgscan_dwell_times_remote_1_svc(qcsapi_wifi_set_bgscan_dwell_times_rpcdata *, qcsapi_wifi_set_bgscan_dwell_times_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BGSCAN_DWELL_TIMES_REMOTE 111
+#define QCSAPI_WIFI_GET_BGSCAN_DWELL_TIMES_REMOTE 1151
 extern  enum clnt_stat qcsapi_wifi_get_bgscan_dwell_times_remote_1(qcsapi_wifi_get_bgscan_dwell_times_rpcdata *, qcsapi_wifi_get_bgscan_dwell_times_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_bgscan_dwell_times_remote_1_svc(qcsapi_wifi_get_bgscan_dwell_times_rpcdata *, qcsapi_wifi_get_bgscan_dwell_times_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_START_SCAN_REMOTE 112
+#define QCSAPI_WIFI_START_SCAN_REMOTE 1161
 extern  enum clnt_stat qcsapi_wifi_start_scan_remote_1(qcsapi_wifi_start_scan_rpcdata *, qcsapi_wifi_start_scan_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_start_scan_remote_1_svc(qcsapi_wifi_start_scan_rpcdata *, qcsapi_wifi_start_scan_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_CANCEL_SCAN_REMOTE 113
+#define QCSAPI_WIFI_CANCEL_SCAN_REMOTE 1171
 extern  enum clnt_stat qcsapi_wifi_cancel_scan_remote_1(qcsapi_wifi_cancel_scan_rpcdata *, qcsapi_wifi_cancel_scan_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_cancel_scan_remote_1_svc(qcsapi_wifi_cancel_scan_rpcdata *, qcsapi_wifi_cancel_scan_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SCAN_STATUS_REMOTE 114
+#define QCSAPI_WIFI_GET_SCAN_STATUS_REMOTE 1181
 extern  enum clnt_stat qcsapi_wifi_get_scan_status_remote_1(qcsapi_wifi_get_scan_status_rpcdata *, qcsapi_wifi_get_scan_status_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_scan_status_remote_1_svc(qcsapi_wifi_get_scan_status_rpcdata *, qcsapi_wifi_get_scan_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_CAC_STATUS_REMOTE 115
+#define QCSAPI_WIFI_GET_CAC_STATUS_REMOTE 1191
 extern  enum clnt_stat qcsapi_wifi_get_cac_status_remote_1(qcsapi_wifi_get_cac_status_rpcdata *, qcsapi_wifi_get_cac_status_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_cac_status_remote_1_svc(qcsapi_wifi_get_cac_status_rpcdata *, qcsapi_wifi_get_cac_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_WAIT_SCAN_COMPLETES_REMOTE 116
+#define QCSAPI_WIFI_WAIT_SCAN_COMPLETES_REMOTE 1201
 extern  enum clnt_stat qcsapi_wifi_wait_scan_completes_remote_1(qcsapi_wifi_wait_scan_completes_rpcdata *, qcsapi_wifi_wait_scan_completes_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_wait_scan_completes_remote_1_svc(qcsapi_wifi_wait_scan_completes_rpcdata *, qcsapi_wifi_wait_scan_completes_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_TX_POWER_REMOTE 117
+#define QCSAPI_WIFI_GET_TX_POWER_REMOTE 1211
 extern  enum clnt_stat qcsapi_wifi_get_tx_power_remote_1(qcsapi_wifi_get_tx_power_rpcdata *, qcsapi_wifi_get_tx_power_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_tx_power_remote_1_svc(qcsapi_wifi_get_tx_power_rpcdata *, qcsapi_wifi_get_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_TX_POWER_REMOTE 118
+#define QCSAPI_WIFI_SET_TX_POWER_REMOTE 1221
 extern  enum clnt_stat qcsapi_wifi_set_tx_power_remote_1(qcsapi_wifi_set_tx_power_rpcdata *, qcsapi_wifi_set_tx_power_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_tx_power_remote_1_svc(qcsapi_wifi_set_tx_power_rpcdata *, qcsapi_wifi_set_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BW_POWER_REMOTE 119
+#define QCSAPI_WIFI_GET_BW_POWER_REMOTE 1231
 extern  enum clnt_stat qcsapi_wifi_get_bw_power_remote_1(qcsapi_wifi_get_bw_power_rpcdata *, qcsapi_wifi_get_bw_power_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_bw_power_remote_1_svc(qcsapi_wifi_get_bw_power_rpcdata *, qcsapi_wifi_get_bw_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BW_POWER_REMOTE 120
+#define QCSAPI_WIFI_SET_BW_POWER_REMOTE 1241
 extern  enum clnt_stat qcsapi_wifi_set_bw_power_remote_1(qcsapi_wifi_set_bw_power_rpcdata *, qcsapi_wifi_set_bw_power_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_bw_power_remote_1_svc(qcsapi_wifi_set_bw_power_rpcdata *, qcsapi_wifi_set_bw_power_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_SET_BW_POWER_REMOTE 121
+#define QCSAPI_REGULATORY_SET_BW_POWER_REMOTE 1251
 extern  enum clnt_stat qcsapi_regulatory_set_bw_power_remote_1(qcsapi_regulatory_set_bw_power_rpcdata *, qcsapi_regulatory_set_bw_power_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_regulatory_set_bw_power_remote_1_svc(qcsapi_regulatory_set_bw_power_rpcdata *, qcsapi_regulatory_set_bw_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BF_POWER_REMOTE 122
+#define QCSAPI_WIFI_GET_BF_POWER_REMOTE 1261
 extern  enum clnt_stat qcsapi_wifi_get_bf_power_remote_1(qcsapi_wifi_get_bf_power_rpcdata *, qcsapi_wifi_get_bf_power_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_bf_power_remote_1_svc(qcsapi_wifi_get_bf_power_rpcdata *, qcsapi_wifi_get_bf_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BF_POWER_REMOTE 123
+#define QCSAPI_WIFI_SET_BF_POWER_REMOTE 1271
 extern  enum clnt_stat qcsapi_wifi_set_bf_power_remote_1(qcsapi_wifi_set_bf_power_rpcdata *, qcsapi_wifi_set_bf_power_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_bf_power_remote_1_svc(qcsapi_wifi_set_bf_power_rpcdata *, qcsapi_wifi_set_bf_power_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_SET_BF_POWER_REMOTE 124
+#define QCSAPI_REGULATORY_SET_BF_POWER_REMOTE 1281
 extern  enum clnt_stat qcsapi_regulatory_set_bf_power_remote_1(qcsapi_regulatory_set_bf_power_rpcdata *, qcsapi_regulatory_set_bf_power_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_regulatory_set_bf_power_remote_1_svc(qcsapi_regulatory_set_bf_power_rpcdata *, qcsapi_regulatory_set_bf_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_CARRIER_INTERFERENCE_REMOTE 125
+#define QCSAPI_WIFI_GET_CARRIER_INTERFERENCE_REMOTE 1291
 extern  enum clnt_stat qcsapi_wifi_get_carrier_interference_remote_1(qcsapi_wifi_get_carrier_interference_rpcdata *, qcsapi_wifi_get_carrier_interference_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_carrier_interference_remote_1_svc(qcsapi_wifi_get_carrier_interference_rpcdata *, qcsapi_wifi_get_carrier_interference_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_CONGESTION_INDEX_REMOTE 126
+#define QCSAPI_WIFI_GET_CONGESTION_INDEX_REMOTE 1301
 extern  enum clnt_stat qcsapi_wifi_get_congestion_index_remote_1(qcsapi_wifi_get_congestion_index_rpcdata *, qcsapi_wifi_get_congestion_index_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_congestion_index_remote_1_svc(qcsapi_wifi_get_congestion_index_rpcdata *, qcsapi_wifi_get_congestion_index_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SUPPORTED_TX_POWER_LEVELS_REMOTE 127
+#define QCSAPI_WIFI_GET_SUPPORTED_TX_POWER_LEVELS_REMOTE 1311
 extern  enum clnt_stat qcsapi_wifi_get_supported_tx_power_levels_remote_1(qcsapi_wifi_get_supported_tx_power_levels_rpcdata *, qcsapi_wifi_get_supported_tx_power_levels_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_supported_tx_power_levels_remote_1_svc(qcsapi_wifi_get_supported_tx_power_levels_rpcdata *, qcsapi_wifi_get_supported_tx_power_levels_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_CURRENT_TX_POWER_LEVEL_REMOTE 128
+#define QCSAPI_WIFI_GET_CURRENT_TX_POWER_LEVEL_REMOTE 1321
 extern  enum clnt_stat qcsapi_wifi_get_current_tx_power_level_remote_1(qcsapi_wifi_get_current_tx_power_level_rpcdata *, qcsapi_wifi_get_current_tx_power_level_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_current_tx_power_level_remote_1_svc(qcsapi_wifi_get_current_tx_power_level_rpcdata *, qcsapi_wifi_get_current_tx_power_level_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_POWER_CONSTRAINT_REMOTE 129
+#define QCSAPI_WIFI_SET_POWER_CONSTRAINT_REMOTE 1331
 extern  enum clnt_stat qcsapi_wifi_set_power_constraint_remote_1(qcsapi_wifi_set_power_constraint_rpcdata *, qcsapi_wifi_set_power_constraint_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_power_constraint_remote_1_svc(qcsapi_wifi_set_power_constraint_rpcdata *, qcsapi_wifi_set_power_constraint_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_POWER_CONSTRAINT_REMOTE 130
+#define QCSAPI_WIFI_GET_POWER_CONSTRAINT_REMOTE 1341
 extern  enum clnt_stat qcsapi_wifi_get_power_constraint_remote_1(qcsapi_wifi_get_power_constraint_rpcdata *, qcsapi_wifi_get_power_constraint_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_power_constraint_remote_1_svc(qcsapi_wifi_get_power_constraint_rpcdata *, qcsapi_wifi_get_power_constraint_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_TPC_INTERVAL_REMOTE 131
+#define QCSAPI_WIFI_SET_TPC_INTERVAL_REMOTE 1351
 extern  enum clnt_stat qcsapi_wifi_set_tpc_interval_remote_1(qcsapi_wifi_set_tpc_interval_rpcdata *, qcsapi_wifi_set_tpc_interval_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_tpc_interval_remote_1_svc(qcsapi_wifi_set_tpc_interval_rpcdata *, qcsapi_wifi_set_tpc_interval_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_TPC_INTERVAL_REMOTE 132
+#define QCSAPI_WIFI_GET_TPC_INTERVAL_REMOTE 1361
 extern  enum clnt_stat qcsapi_wifi_get_tpc_interval_remote_1(qcsapi_wifi_get_tpc_interval_rpcdata *, qcsapi_wifi_get_tpc_interval_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_tpc_interval_remote_1_svc(qcsapi_wifi_get_tpc_interval_rpcdata *, qcsapi_wifi_get_tpc_interval_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_ASSOC_RECORDS_REMOTE 133
+#define QCSAPI_WIFI_GET_ASSOC_RECORDS_REMOTE 1371
 extern  enum clnt_stat qcsapi_wifi_get_assoc_records_remote_1(qcsapi_wifi_get_assoc_records_rpcdata *, qcsapi_wifi_get_assoc_records_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_assoc_records_remote_1_svc(qcsapi_wifi_get_assoc_records_rpcdata *, qcsapi_wifi_get_assoc_records_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_AP_ISOLATE_REMOTE 134
+#define QCSAPI_WIFI_GET_AP_ISOLATE_REMOTE 1381
 extern  enum clnt_stat qcsapi_wifi_get_ap_isolate_remote_1(qcsapi_wifi_get_ap_isolate_rpcdata *, qcsapi_wifi_get_ap_isolate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_ap_isolate_remote_1_svc(qcsapi_wifi_get_ap_isolate_rpcdata *, qcsapi_wifi_get_ap_isolate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_AP_ISOLATE_REMOTE 135
+#define QCSAPI_WIFI_SET_AP_ISOLATE_REMOTE 1391
 extern  enum clnt_stat qcsapi_wifi_set_ap_isolate_remote_1(qcsapi_wifi_set_ap_isolate_rpcdata *, qcsapi_wifi_set_ap_isolate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_ap_isolate_remote_1_svc(qcsapi_wifi_set_ap_isolate_rpcdata *, qcsapi_wifi_set_ap_isolate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_INTRA_BSS_ISOLATE_REMOTE 136
+#define QCSAPI_WIFI_GET_INTRA_BSS_ISOLATE_REMOTE 1401
 extern  enum clnt_stat qcsapi_wifi_get_intra_bss_isolate_remote_1(qcsapi_wifi_get_intra_bss_isolate_rpcdata *, qcsapi_wifi_get_intra_bss_isolate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_intra_bss_isolate_remote_1_svc(qcsapi_wifi_get_intra_bss_isolate_rpcdata *, qcsapi_wifi_get_intra_bss_isolate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_INTRA_BSS_ISOLATE_REMOTE 137
+#define QCSAPI_WIFI_SET_INTRA_BSS_ISOLATE_REMOTE 1411
 extern  enum clnt_stat qcsapi_wifi_set_intra_bss_isolate_remote_1(qcsapi_wifi_set_intra_bss_isolate_rpcdata *, qcsapi_wifi_set_intra_bss_isolate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_intra_bss_isolate_remote_1_svc(qcsapi_wifi_set_intra_bss_isolate_rpcdata *, qcsapi_wifi_set_intra_bss_isolate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BSS_ISOLATE_REMOTE 138
+#define QCSAPI_WIFI_GET_BSS_ISOLATE_REMOTE 1421
 extern  enum clnt_stat qcsapi_wifi_get_bss_isolate_remote_1(qcsapi_wifi_get_bss_isolate_rpcdata *, qcsapi_wifi_get_bss_isolate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_bss_isolate_remote_1_svc(qcsapi_wifi_get_bss_isolate_rpcdata *, qcsapi_wifi_get_bss_isolate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BSS_ISOLATE_REMOTE 139
+#define QCSAPI_WIFI_SET_BSS_ISOLATE_REMOTE 1431
 extern  enum clnt_stat qcsapi_wifi_set_bss_isolate_remote_1(qcsapi_wifi_set_bss_isolate_rpcdata *, qcsapi_wifi_set_bss_isolate_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_bss_isolate_remote_1_svc(qcsapi_wifi_set_bss_isolate_rpcdata *, qcsapi_wifi_set_bss_isolate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_CREATE_RESTRICTED_BSS_REMOTE 140
-extern  enum clnt_stat qcsapi_wifi_create_restricted_bss_remote_1(qcsapi_wifi_create_restricted_bss_rpcdata *, qcsapi_wifi_create_restricted_bss_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_create_restricted_bss_remote_1_svc(qcsapi_wifi_create_restricted_bss_rpcdata *, qcsapi_wifi_create_restricted_bss_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_CREATE_BSS_REMOTE 141
-extern  enum clnt_stat qcsapi_wifi_create_bss_remote_1(qcsapi_wifi_create_bss_rpcdata *, qcsapi_wifi_create_bss_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_create_bss_remote_1_svc(qcsapi_wifi_create_bss_rpcdata *, qcsapi_wifi_create_bss_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_REMOVE_BSS_REMOTE 142
-extern  enum clnt_stat qcsapi_wifi_remove_bss_remote_1(qcsapi_wifi_remove_bss_rpcdata *, qcsapi_wifi_remove_bss_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_remove_bss_remote_1_svc(qcsapi_wifi_remove_bss_rpcdata *, qcsapi_wifi_remove_bss_rpcdata *, struct svc_req *);
-#define QCSAPI_WDS_ADD_PEER_REMOTE 143
-extern  enum clnt_stat qcsapi_wds_add_peer_remote_1(qcsapi_wds_add_peer_rpcdata *, qcsapi_wds_add_peer_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wds_add_peer_remote_1_svc(qcsapi_wds_add_peer_rpcdata *, qcsapi_wds_add_peer_rpcdata *, struct svc_req *);
-#define QCSAPI_WDS_ADD_PEER_ENCRYPT_REMOTE 144
-extern  enum clnt_stat qcsapi_wds_add_peer_encrypt_remote_1(qcsapi_wds_add_peer_encrypt_rpcdata *, qcsapi_wds_add_peer_encrypt_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wds_add_peer_encrypt_remote_1_svc(qcsapi_wds_add_peer_encrypt_rpcdata *, qcsapi_wds_add_peer_encrypt_rpcdata *, struct svc_req *);
-#define QCSAPI_WDS_REMOVE_PEER_REMOTE 145
-extern  enum clnt_stat qcsapi_wds_remove_peer_remote_1(qcsapi_wds_remove_peer_rpcdata *, qcsapi_wds_remove_peer_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wds_remove_peer_remote_1_svc(qcsapi_wds_remove_peer_rpcdata *, qcsapi_wds_remove_peer_rpcdata *, struct svc_req *);
-#define QCSAPI_WDS_GET_PEER_ADDRESS_REMOTE 146
-extern  enum clnt_stat qcsapi_wds_get_peer_address_remote_1(qcsapi_wds_get_peer_address_rpcdata *, qcsapi_wds_get_peer_address_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wds_get_peer_address_remote_1_svc(qcsapi_wds_get_peer_address_rpcdata *, qcsapi_wds_get_peer_address_rpcdata *, struct svc_req *);
-#define QCSAPI_WDS_SET_PSK_REMOTE 147
-extern  enum clnt_stat qcsapi_wds_set_psk_remote_1(qcsapi_wds_set_psk_rpcdata *, qcsapi_wds_set_psk_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wds_set_psk_remote_1_svc(qcsapi_wds_set_psk_rpcdata *, qcsapi_wds_set_psk_rpcdata *, struct svc_req *);
-#define QCSAPI_WDS_SET_MODE_REMOTE 148
-extern  enum clnt_stat qcsapi_wds_set_mode_remote_1(qcsapi_wds_set_mode_rpcdata *, qcsapi_wds_set_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wds_set_mode_remote_1_svc(qcsapi_wds_set_mode_rpcdata *, qcsapi_wds_set_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WDS_GET_MODE_REMOTE 149
-extern  enum clnt_stat qcsapi_wds_get_mode_remote_1(qcsapi_wds_get_mode_rpcdata *, qcsapi_wds_get_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wds_get_mode_remote_1_svc(qcsapi_wds_get_mode_rpcdata *, qcsapi_wds_get_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_EXTENDER_PARAMS_REMOTE 150
-extern  enum clnt_stat qcsapi_wifi_set_extender_params_remote_1(qcsapi_wifi_set_extender_params_rpcdata *, qcsapi_wifi_set_extender_params_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_extender_params_remote_1_svc(qcsapi_wifi_set_extender_params_rpcdata *, qcsapi_wifi_set_extender_params_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_EXTENDER_PARAMS_REMOTE 151
-extern  enum clnt_stat qcsapi_wifi_get_extender_params_remote_1(qcsapi_wifi_get_extender_params_rpcdata *, qcsapi_wifi_get_extender_params_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_extender_params_remote_1_svc(qcsapi_wifi_get_extender_params_rpcdata *, qcsapi_wifi_get_extender_params_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_ENABLE_BGSCAN_REMOTE 152
-extern  enum clnt_stat qcsapi_wifi_enable_bgscan_remote_1(qcsapi_wifi_enable_bgscan_rpcdata *, qcsapi_wifi_enable_bgscan_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_enable_bgscan_remote_1_svc(qcsapi_wifi_enable_bgscan_rpcdata *, qcsapi_wifi_enable_bgscan_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BGSCAN_STATUS_REMOTE 153
-extern  enum clnt_stat qcsapi_wifi_get_bgscan_status_remote_1(qcsapi_wifi_get_bgscan_status_rpcdata *, qcsapi_wifi_get_bgscan_status_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_bgscan_status_remote_1_svc(qcsapi_wifi_get_bgscan_status_rpcdata *, qcsapi_wifi_get_bgscan_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BEACON_TYPE_REMOTE 154
-extern  enum clnt_stat qcsapi_wifi_get_beacon_type_remote_1(qcsapi_wifi_get_beacon_type_rpcdata *, qcsapi_wifi_get_beacon_type_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_beacon_type_remote_1_svc(qcsapi_wifi_get_beacon_type_rpcdata *, qcsapi_wifi_get_beacon_type_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BEACON_TYPE_REMOTE 155
-extern  enum clnt_stat qcsapi_wifi_set_beacon_type_remote_1(qcsapi_wifi_set_beacon_type_rpcdata *, qcsapi_wifi_set_beacon_type_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_beacon_type_remote_1_svc(qcsapi_wifi_set_beacon_type_rpcdata *, qcsapi_wifi_set_beacon_type_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_WEP_KEY_INDEX_REMOTE 156
-extern  enum clnt_stat qcsapi_wifi_get_wep_key_index_remote_1(qcsapi_wifi_get_WEP_key_index_rpcdata *, qcsapi_wifi_get_WEP_key_index_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_wep_key_index_remote_1_svc(qcsapi_wifi_get_WEP_key_index_rpcdata *, qcsapi_wifi_get_WEP_key_index_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_WEP_KEY_INDEX_REMOTE 157
-extern  enum clnt_stat qcsapi_wifi_set_wep_key_index_remote_1(qcsapi_wifi_set_WEP_key_index_rpcdata *, qcsapi_wifi_set_WEP_key_index_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_wep_key_index_remote_1_svc(qcsapi_wifi_set_WEP_key_index_rpcdata *, qcsapi_wifi_set_WEP_key_index_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_WEP_KEY_PASSPHRASE_REMOTE 158
-extern  enum clnt_stat qcsapi_wifi_get_wep_key_passphrase_remote_1(qcsapi_wifi_get_WEP_key_passphrase_rpcdata *, qcsapi_wifi_get_WEP_key_passphrase_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_wep_key_passphrase_remote_1_svc(qcsapi_wifi_get_WEP_key_passphrase_rpcdata *, qcsapi_wifi_get_WEP_key_passphrase_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_WEP_KEY_PASSPHRASE_REMOTE 159
-extern  enum clnt_stat qcsapi_wifi_set_wep_key_passphrase_remote_1(qcsapi_wifi_set_WEP_key_passphrase_rpcdata *, qcsapi_wifi_set_WEP_key_passphrase_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_wep_key_passphrase_remote_1_svc(qcsapi_wifi_set_WEP_key_passphrase_rpcdata *, qcsapi_wifi_set_WEP_key_passphrase_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_WEP_ENCRYPTION_LEVEL_REMOTE 160
-extern  enum clnt_stat qcsapi_wifi_get_wep_encryption_level_remote_1(qcsapi_wifi_get_WEP_encryption_level_rpcdata *, qcsapi_wifi_get_WEP_encryption_level_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_wep_encryption_level_remote_1_svc(qcsapi_wifi_get_WEP_encryption_level_rpcdata *, qcsapi_wifi_get_WEP_encryption_level_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BASIC_ENCRYPTION_MODES_REMOTE 161
-extern  enum clnt_stat qcsapi_wifi_get_basic_encryption_modes_remote_1(qcsapi_wifi_get_basic_encryption_modes_rpcdata *, qcsapi_wifi_get_basic_encryption_modes_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_basic_encryption_modes_remote_1_svc(qcsapi_wifi_get_basic_encryption_modes_rpcdata *, qcsapi_wifi_get_basic_encryption_modes_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BASIC_ENCRYPTION_MODES_REMOTE 162
-extern  enum clnt_stat qcsapi_wifi_set_basic_encryption_modes_remote_1(qcsapi_wifi_set_basic_encryption_modes_rpcdata *, qcsapi_wifi_set_basic_encryption_modes_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_basic_encryption_modes_remote_1_svc(qcsapi_wifi_set_basic_encryption_modes_rpcdata *, qcsapi_wifi_set_basic_encryption_modes_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BASIC_AUTHENTICATION_MODE_REMOTE 163
-extern  enum clnt_stat qcsapi_wifi_get_basic_authentication_mode_remote_1(qcsapi_wifi_get_basic_authentication_mode_rpcdata *, qcsapi_wifi_get_basic_authentication_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_basic_authentication_mode_remote_1_svc(qcsapi_wifi_get_basic_authentication_mode_rpcdata *, qcsapi_wifi_get_basic_authentication_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BASIC_AUTHENTICATION_MODE_REMOTE 164
-extern  enum clnt_stat qcsapi_wifi_set_basic_authentication_mode_remote_1(qcsapi_wifi_set_basic_authentication_mode_rpcdata *, qcsapi_wifi_set_basic_authentication_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_basic_authentication_mode_remote_1_svc(qcsapi_wifi_set_basic_authentication_mode_rpcdata *, qcsapi_wifi_set_basic_authentication_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_WEP_KEY_REMOTE 165
-extern  enum clnt_stat qcsapi_wifi_get_wep_key_remote_1(qcsapi_wifi_get_WEP_key_rpcdata *, qcsapi_wifi_get_WEP_key_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_wep_key_remote_1_svc(qcsapi_wifi_get_WEP_key_rpcdata *, qcsapi_wifi_get_WEP_key_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_WEP_KEY_REMOTE 166
-extern  enum clnt_stat qcsapi_wifi_set_wep_key_remote_1(qcsapi_wifi_set_WEP_key_rpcdata *, qcsapi_wifi_set_WEP_key_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_wep_key_remote_1_svc(qcsapi_wifi_set_WEP_key_rpcdata *, qcsapi_wifi_set_WEP_key_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_WPA_ENCRYPTION_MODES_REMOTE 167
-extern  enum clnt_stat qcsapi_wifi_get_wpa_encryption_modes_remote_1(qcsapi_wifi_get_WPA_encryption_modes_rpcdata *, qcsapi_wifi_get_WPA_encryption_modes_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_wpa_encryption_modes_remote_1_svc(qcsapi_wifi_get_WPA_encryption_modes_rpcdata *, qcsapi_wifi_get_WPA_encryption_modes_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_WPA_ENCRYPTION_MODES_REMOTE 168
-extern  enum clnt_stat qcsapi_wifi_set_wpa_encryption_modes_remote_1(qcsapi_wifi_set_WPA_encryption_modes_rpcdata *, qcsapi_wifi_set_WPA_encryption_modes_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_wpa_encryption_modes_remote_1_svc(qcsapi_wifi_set_WPA_encryption_modes_rpcdata *, qcsapi_wifi_set_WPA_encryption_modes_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_WPA_AUTHENTICATION_MODE_REMOTE 169
-extern  enum clnt_stat qcsapi_wifi_get_wpa_authentication_mode_remote_1(qcsapi_wifi_get_WPA_authentication_mode_rpcdata *, qcsapi_wifi_get_WPA_authentication_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_wpa_authentication_mode_remote_1_svc(qcsapi_wifi_get_WPA_authentication_mode_rpcdata *, qcsapi_wifi_get_WPA_authentication_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_WPA_AUTHENTICATION_MODE_REMOTE 170
-extern  enum clnt_stat qcsapi_wifi_set_wpa_authentication_mode_remote_1(qcsapi_wifi_set_WPA_authentication_mode_rpcdata *, qcsapi_wifi_set_WPA_authentication_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_wpa_authentication_mode_remote_1_svc(qcsapi_wifi_set_WPA_authentication_mode_rpcdata *, qcsapi_wifi_set_WPA_authentication_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_IEEE11I_ENCRYPTION_MODES_REMOTE 171
-extern  enum clnt_stat qcsapi_wifi_get_ieee11i_encryption_modes_remote_1(qcsapi_wifi_get_IEEE11i_encryption_modes_rpcdata *, qcsapi_wifi_get_IEEE11i_encryption_modes_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_ieee11i_encryption_modes_remote_1_svc(qcsapi_wifi_get_IEEE11i_encryption_modes_rpcdata *, qcsapi_wifi_get_IEEE11i_encryption_modes_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_IEEE11I_ENCRYPTION_MODES_REMOTE 172
-extern  enum clnt_stat qcsapi_wifi_set_ieee11i_encryption_modes_remote_1(qcsapi_wifi_set_IEEE11i_encryption_modes_rpcdata *, qcsapi_wifi_set_IEEE11i_encryption_modes_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_ieee11i_encryption_modes_remote_1_svc(qcsapi_wifi_set_IEEE11i_encryption_modes_rpcdata *, qcsapi_wifi_set_IEEE11i_encryption_modes_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_IEEE11I_AUTHENTICATION_MODE_REMOTE 173
-extern  enum clnt_stat qcsapi_wifi_get_ieee11i_authentication_mode_remote_1(qcsapi_wifi_get_IEEE11i_authentication_mode_rpcdata *, qcsapi_wifi_get_IEEE11i_authentication_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_ieee11i_authentication_mode_remote_1_svc(qcsapi_wifi_get_IEEE11i_authentication_mode_rpcdata *, qcsapi_wifi_get_IEEE11i_authentication_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_IEEE11I_AUTHENTICATION_MODE_REMOTE 174
-extern  enum clnt_stat qcsapi_wifi_set_ieee11i_authentication_mode_remote_1(qcsapi_wifi_set_IEEE11i_authentication_mode_rpcdata *, qcsapi_wifi_set_IEEE11i_authentication_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_ieee11i_authentication_mode_remote_1_svc(qcsapi_wifi_set_IEEE11i_authentication_mode_rpcdata *, qcsapi_wifi_set_IEEE11i_authentication_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MICHAEL_ERRCNT_REMOTE 175
-extern  enum clnt_stat qcsapi_wifi_get_michael_errcnt_remote_1(qcsapi_wifi_get_michael_errcnt_rpcdata *, qcsapi_wifi_get_michael_errcnt_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_michael_errcnt_remote_1_svc(qcsapi_wifi_get_michael_errcnt_rpcdata *, qcsapi_wifi_get_michael_errcnt_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_PRE_SHARED_KEY_REMOTE 176
-extern  enum clnt_stat qcsapi_wifi_get_pre_shared_key_remote_1(qcsapi_wifi_get_pre_shared_key_rpcdata *, qcsapi_wifi_get_pre_shared_key_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_pre_shared_key_remote_1_svc(qcsapi_wifi_get_pre_shared_key_rpcdata *, qcsapi_wifi_get_pre_shared_key_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_PRE_SHARED_KEY_REMOTE 177
-extern  enum clnt_stat qcsapi_wifi_set_pre_shared_key_remote_1(qcsapi_wifi_set_pre_shared_key_rpcdata *, qcsapi_wifi_set_pre_shared_key_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_pre_shared_key_remote_1_svc(qcsapi_wifi_set_pre_shared_key_rpcdata *, qcsapi_wifi_set_pre_shared_key_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_EAP_SHARED_KEY_REMOTE 178
-extern  enum clnt_stat qcsapi_wifi_get_eap_shared_key_remote_1(qcsapi_wifi_get_eap_shared_key_rpcdata *, qcsapi_wifi_get_eap_shared_key_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_eap_shared_key_remote_1_svc(qcsapi_wifi_get_eap_shared_key_rpcdata *, qcsapi_wifi_get_eap_shared_key_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_EAP_SHARED_KEY_REMOTE 179
-extern  enum clnt_stat qcsapi_wifi_set_eap_shared_key_remote_1(qcsapi_wifi_set_eap_shared_key_rpcdata *, qcsapi_wifi_set_eap_shared_key_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_eap_shared_key_remote_1_svc(qcsapi_wifi_set_eap_shared_key_rpcdata *, qcsapi_wifi_set_eap_shared_key_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_EAP_RADIUS_IPADDR_REMOTE 180
-extern  enum clnt_stat qcsapi_wifi_get_eap_radius_ipaddr_remote_1(qcsapi_wifi_get_eap_radius_ipaddr_rpcdata *, qcsapi_wifi_get_eap_radius_ipaddr_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_eap_radius_ipaddr_remote_1_svc(qcsapi_wifi_get_eap_radius_ipaddr_rpcdata *, qcsapi_wifi_get_eap_radius_ipaddr_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_EAP_RADIUS_IPADDR_REMOTE 181
-extern  enum clnt_stat qcsapi_wifi_set_eap_radius_ipaddr_remote_1(qcsapi_wifi_set_eap_radius_ipaddr_rpcdata *, qcsapi_wifi_set_eap_radius_ipaddr_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_eap_radius_ipaddr_remote_1_svc(qcsapi_wifi_set_eap_radius_ipaddr_rpcdata *, qcsapi_wifi_set_eap_radius_ipaddr_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_EAP_RADIUS_PORT_REMOTE 182
-extern  enum clnt_stat qcsapi_wifi_get_eap_radius_port_remote_1(qcsapi_wifi_get_eap_radius_port_rpcdata *, qcsapi_wifi_get_eap_radius_port_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_eap_radius_port_remote_1_svc(qcsapi_wifi_get_eap_radius_port_rpcdata *, qcsapi_wifi_get_eap_radius_port_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_EAP_RADIUS_PORT_REMOTE 183
-extern  enum clnt_stat qcsapi_wifi_set_eap_radius_port_remote_1(qcsapi_wifi_set_eap_radius_port_rpcdata *, qcsapi_wifi_set_eap_radius_port_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_eap_radius_port_remote_1_svc(qcsapi_wifi_set_eap_radius_port_rpcdata *, qcsapi_wifi_set_eap_radius_port_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_OWN_IP_ADDR_REMOTE 184
-extern  enum clnt_stat qcsapi_wifi_set_own_ip_addr_remote_1(qcsapi_wifi_set_own_ip_addr_rpcdata *, qcsapi_wifi_set_own_ip_addr_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_own_ip_addr_remote_1_svc(qcsapi_wifi_set_own_ip_addr_rpcdata *, qcsapi_wifi_set_own_ip_addr_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_KEY_PASSPHRASE_REMOTE 185
-extern  enum clnt_stat qcsapi_wifi_get_key_passphrase_remote_1(qcsapi_wifi_get_key_passphrase_rpcdata *, qcsapi_wifi_get_key_passphrase_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_key_passphrase_remote_1_svc(qcsapi_wifi_get_key_passphrase_rpcdata *, qcsapi_wifi_get_key_passphrase_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_KEY_PASSPHRASE_REMOTE 186
-extern  enum clnt_stat qcsapi_wifi_set_key_passphrase_remote_1(qcsapi_wifi_set_key_passphrase_rpcdata *, qcsapi_wifi_set_key_passphrase_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_key_passphrase_remote_1_svc(qcsapi_wifi_set_key_passphrase_rpcdata *, qcsapi_wifi_set_key_passphrase_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_GROUP_KEY_INTERVAL_REMOTE 187
-extern  enum clnt_stat qcsapi_wifi_get_group_key_interval_remote_1(qcsapi_wifi_get_group_key_interval_rpcdata *, qcsapi_wifi_get_group_key_interval_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_group_key_interval_remote_1_svc(qcsapi_wifi_get_group_key_interval_rpcdata *, qcsapi_wifi_get_group_key_interval_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_GROUP_KEY_INTERVAL_REMOTE 188
-extern  enum clnt_stat qcsapi_wifi_set_group_key_interval_remote_1(qcsapi_wifi_set_group_key_interval_rpcdata *, qcsapi_wifi_set_group_key_interval_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_group_key_interval_remote_1_svc(qcsapi_wifi_set_group_key_interval_rpcdata *, qcsapi_wifi_set_group_key_interval_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_PMF_REMOTE 189
-extern  enum clnt_stat qcsapi_wifi_get_pmf_remote_1(qcsapi_wifi_get_pmf_rpcdata *, qcsapi_wifi_get_pmf_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_pmf_remote_1_svc(qcsapi_wifi_get_pmf_rpcdata *, qcsapi_wifi_get_pmf_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_PMF_REMOTE 190
-extern  enum clnt_stat qcsapi_wifi_set_pmf_remote_1(qcsapi_wifi_set_pmf_rpcdata *, qcsapi_wifi_set_pmf_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_pmf_remote_1_svc(qcsapi_wifi_set_pmf_rpcdata *, qcsapi_wifi_set_pmf_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_WPA_STATUS_REMOTE 191
-extern  enum clnt_stat qcsapi_wifi_get_wpa_status_remote_1(qcsapi_wifi_get_wpa_status_rpcdata *, qcsapi_wifi_get_wpa_status_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_wpa_status_remote_1_svc(qcsapi_wifi_get_wpa_status_rpcdata *, qcsapi_wifi_get_wpa_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_PSK_AUTH_FAILURES_REMOTE 192
-extern  enum clnt_stat qcsapi_wifi_get_psk_auth_failures_remote_1(qcsapi_wifi_get_psk_auth_failures_rpcdata *, qcsapi_wifi_get_psk_auth_failures_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_psk_auth_failures_remote_1_svc(qcsapi_wifi_get_psk_auth_failures_rpcdata *, qcsapi_wifi_get_psk_auth_failures_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_AUTH_STATE_REMOTE 193
-extern  enum clnt_stat qcsapi_wifi_get_auth_state_remote_1(qcsapi_wifi_get_auth_state_rpcdata *, qcsapi_wifi_get_auth_state_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_auth_state_remote_1_svc(qcsapi_wifi_get_auth_state_rpcdata *, qcsapi_wifi_get_auth_state_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_SECURITY_DEFER_MODE_REMOTE 194
-extern  enum clnt_stat qcsapi_wifi_set_security_defer_mode_remote_1(qcsapi_wifi_set_security_defer_mode_rpcdata *, qcsapi_wifi_set_security_defer_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_security_defer_mode_remote_1_svc(qcsapi_wifi_set_security_defer_mode_rpcdata *, qcsapi_wifi_set_security_defer_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SECURITY_DEFER_MODE_REMOTE 195
-extern  enum clnt_stat qcsapi_wifi_get_security_defer_mode_remote_1(qcsapi_wifi_get_security_defer_mode_rpcdata *, qcsapi_wifi_get_security_defer_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_security_defer_mode_remote_1_svc(qcsapi_wifi_get_security_defer_mode_rpcdata *, qcsapi_wifi_get_security_defer_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_APPLY_SECURITY_CONFIG_REMOTE 196
-extern  enum clnt_stat qcsapi_wifi_apply_security_config_remote_1(qcsapi_wifi_apply_security_config_rpcdata *, qcsapi_wifi_apply_security_config_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_apply_security_config_remote_1_svc(qcsapi_wifi_apply_security_config_rpcdata *, qcsapi_wifi_apply_security_config_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_MAC_ADDRESS_FILTERING_REMOTE 197
-extern  enum clnt_stat qcsapi_wifi_set_mac_address_filtering_remote_1(qcsapi_wifi_set_mac_address_filtering_rpcdata *, qcsapi_wifi_set_mac_address_filtering_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_mac_address_filtering_remote_1_svc(qcsapi_wifi_set_mac_address_filtering_rpcdata *, qcsapi_wifi_set_mac_address_filtering_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MAC_ADDRESS_FILTERING_REMOTE 198
-extern  enum clnt_stat qcsapi_wifi_get_mac_address_filtering_remote_1(qcsapi_wifi_get_mac_address_filtering_rpcdata *, qcsapi_wifi_get_mac_address_filtering_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_mac_address_filtering_remote_1_svc(qcsapi_wifi_get_mac_address_filtering_rpcdata *, qcsapi_wifi_get_mac_address_filtering_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_AUTHORIZE_MAC_ADDRESS_REMOTE 199
-extern  enum clnt_stat qcsapi_wifi_authorize_mac_address_remote_1(qcsapi_wifi_authorize_mac_address_rpcdata *, qcsapi_wifi_authorize_mac_address_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_authorize_mac_address_remote_1_svc(qcsapi_wifi_authorize_mac_address_rpcdata *, qcsapi_wifi_authorize_mac_address_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_DENY_MAC_ADDRESS_REMOTE 200
-extern  enum clnt_stat qcsapi_wifi_deny_mac_address_remote_1(qcsapi_wifi_deny_mac_address_rpcdata *, qcsapi_wifi_deny_mac_address_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_deny_mac_address_remote_1_svc(qcsapi_wifi_deny_mac_address_rpcdata *, qcsapi_wifi_deny_mac_address_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_REMOVE_MAC_ADDRESS_REMOTE 201
-extern  enum clnt_stat qcsapi_wifi_remove_mac_address_remote_1(qcsapi_wifi_remove_mac_address_rpcdata *, qcsapi_wifi_remove_mac_address_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_remove_mac_address_remote_1_svc(qcsapi_wifi_remove_mac_address_rpcdata *, qcsapi_wifi_remove_mac_address_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_IS_MAC_ADDRESS_AUTHORIZED_REMOTE 202
-extern  enum clnt_stat qcsapi_wifi_is_mac_address_authorized_remote_1(qcsapi_wifi_is_mac_address_authorized_rpcdata *, qcsapi_wifi_is_mac_address_authorized_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_is_mac_address_authorized_remote_1_svc(qcsapi_wifi_is_mac_address_authorized_rpcdata *, qcsapi_wifi_is_mac_address_authorized_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_AUTHORIZED_MAC_ADDRESSES_REMOTE 203
-extern  enum clnt_stat qcsapi_wifi_get_authorized_mac_addresses_remote_1(qcsapi_wifi_get_authorized_mac_addresses_rpcdata *, qcsapi_wifi_get_authorized_mac_addresses_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_authorized_mac_addresses_remote_1_svc(qcsapi_wifi_get_authorized_mac_addresses_rpcdata *, qcsapi_wifi_get_authorized_mac_addresses_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DENIED_MAC_ADDRESSES_REMOTE 204
-extern  enum clnt_stat qcsapi_wifi_get_denied_mac_addresses_remote_1(qcsapi_wifi_get_denied_mac_addresses_rpcdata *, qcsapi_wifi_get_denied_mac_addresses_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_denied_mac_addresses_remote_1_svc(qcsapi_wifi_get_denied_mac_addresses_rpcdata *, qcsapi_wifi_get_denied_mac_addresses_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_ACCEPT_OUI_FILTER_REMOTE 205
-extern  enum clnt_stat qcsapi_wifi_set_accept_oui_filter_remote_1(qcsapi_wifi_set_accept_oui_filter_rpcdata *, qcsapi_wifi_set_accept_oui_filter_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_accept_oui_filter_remote_1_svc(qcsapi_wifi_set_accept_oui_filter_rpcdata *, qcsapi_wifi_set_accept_oui_filter_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_ACCEPT_OUI_FILTER_REMOTE 206
-extern  enum clnt_stat qcsapi_wifi_get_accept_oui_filter_remote_1(qcsapi_wifi_get_accept_oui_filter_rpcdata *, qcsapi_wifi_get_accept_oui_filter_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_accept_oui_filter_remote_1_svc(qcsapi_wifi_get_accept_oui_filter_rpcdata *, qcsapi_wifi_get_accept_oui_filter_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_CLEAR_MAC_ADDRESS_FILTERS_REMOTE 207
-extern  enum clnt_stat qcsapi_wifi_clear_mac_address_filters_remote_1(qcsapi_wifi_clear_mac_address_filters_rpcdata *, qcsapi_wifi_clear_mac_address_filters_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_clear_mac_address_filters_remote_1_svc(qcsapi_wifi_clear_mac_address_filters_rpcdata *, qcsapi_wifi_clear_mac_address_filters_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_OPTION_REMOTE 208
-extern  enum clnt_stat qcsapi_wifi_get_option_remote_1(qcsapi_wifi_get_option_rpcdata *, qcsapi_wifi_get_option_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_option_remote_1_svc(qcsapi_wifi_get_option_rpcdata *, qcsapi_wifi_get_option_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_OPTION_REMOTE 209
-extern  enum clnt_stat qcsapi_wifi_set_option_remote_1(qcsapi_wifi_set_option_rpcdata *, qcsapi_wifi_set_option_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_option_remote_1_svc(qcsapi_wifi_set_option_rpcdata *, qcsapi_wifi_set_option_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_BOARD_PARAMETER_REMOTE 210
-extern  enum clnt_stat qcsapi_get_board_parameter_remote_1(qcsapi_get_board_parameter_rpcdata *, qcsapi_get_board_parameter_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_get_board_parameter_remote_1_svc(qcsapi_get_board_parameter_rpcdata *, qcsapi_get_board_parameter_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_CREATE_SSID_REMOTE 211
-extern  enum clnt_stat qcsapi_ssid_create_ssid_remote_1(qcsapi_SSID_create_SSID_rpcdata *, qcsapi_SSID_create_SSID_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_create_ssid_remote_1_svc(qcsapi_SSID_create_SSID_rpcdata *, qcsapi_SSID_create_SSID_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_REMOVE_SSID_REMOTE 212
-extern  enum clnt_stat qcsapi_ssid_remove_ssid_remote_1(qcsapi_SSID_remove_SSID_rpcdata *, qcsapi_SSID_remove_SSID_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_remove_ssid_remote_1_svc(qcsapi_SSID_remove_SSID_rpcdata *, qcsapi_SSID_remove_SSID_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_VERIFY_SSID_REMOTE 213
-extern  enum clnt_stat qcsapi_ssid_verify_ssid_remote_1(qcsapi_SSID_verify_SSID_rpcdata *, qcsapi_SSID_verify_SSID_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_verify_ssid_remote_1_svc(qcsapi_SSID_verify_SSID_rpcdata *, qcsapi_SSID_verify_SSID_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_RENAME_SSID_REMOTE 214
-extern  enum clnt_stat qcsapi_ssid_rename_ssid_remote_1(qcsapi_SSID_rename_SSID_rpcdata *, qcsapi_SSID_rename_SSID_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_rename_ssid_remote_1_svc(qcsapi_SSID_rename_SSID_rpcdata *, qcsapi_SSID_rename_SSID_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_SSID_LIST_REMOTE 215
-extern  enum clnt_stat qcsapi_ssid_get_ssid_list_remote_1(qcsapi_SSID_get_SSID_list_rpcdata *, qcsapi_SSID_get_SSID_list_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_ssid_list_remote_1_svc(qcsapi_SSID_get_SSID_list_rpcdata *, qcsapi_SSID_get_SSID_list_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_SET_PROTOCOL_REMOTE 216
-extern  enum clnt_stat qcsapi_ssid_set_protocol_remote_1(qcsapi_SSID_set_protocol_rpcdata *, qcsapi_SSID_set_protocol_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_set_protocol_remote_1_svc(qcsapi_SSID_set_protocol_rpcdata *, qcsapi_SSID_set_protocol_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_PROTOCOL_REMOTE 217
-extern  enum clnt_stat qcsapi_ssid_get_protocol_remote_1(qcsapi_SSID_get_protocol_rpcdata *, qcsapi_SSID_get_protocol_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_protocol_remote_1_svc(qcsapi_SSID_get_protocol_rpcdata *, qcsapi_SSID_get_protocol_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_ENCRYPTION_MODES_REMOTE 218
-extern  enum clnt_stat qcsapi_ssid_get_encryption_modes_remote_1(qcsapi_SSID_get_encryption_modes_rpcdata *, qcsapi_SSID_get_encryption_modes_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_encryption_modes_remote_1_svc(qcsapi_SSID_get_encryption_modes_rpcdata *, qcsapi_SSID_get_encryption_modes_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_SET_ENCRYPTION_MODES_REMOTE 219
-extern  enum clnt_stat qcsapi_ssid_set_encryption_modes_remote_1(qcsapi_SSID_set_encryption_modes_rpcdata *, qcsapi_SSID_set_encryption_modes_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_set_encryption_modes_remote_1_svc(qcsapi_SSID_set_encryption_modes_rpcdata *, qcsapi_SSID_set_encryption_modes_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_GROUP_ENCRYPTION_REMOTE 220
-extern  enum clnt_stat qcsapi_ssid_get_group_encryption_remote_1(qcsapi_SSID_get_group_encryption_rpcdata *, qcsapi_SSID_get_group_encryption_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_group_encryption_remote_1_svc(qcsapi_SSID_get_group_encryption_rpcdata *, qcsapi_SSID_get_group_encryption_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_SET_GROUP_ENCRYPTION_REMOTE 221
-extern  enum clnt_stat qcsapi_ssid_set_group_encryption_remote_1(qcsapi_SSID_set_group_encryption_rpcdata *, qcsapi_SSID_set_group_encryption_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_set_group_encryption_remote_1_svc(qcsapi_SSID_set_group_encryption_rpcdata *, qcsapi_SSID_set_group_encryption_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_AUTHENTICATION_MODE_REMOTE 222
-extern  enum clnt_stat qcsapi_ssid_get_authentication_mode_remote_1(qcsapi_SSID_get_authentication_mode_rpcdata *, qcsapi_SSID_get_authentication_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_authentication_mode_remote_1_svc(qcsapi_SSID_get_authentication_mode_rpcdata *, qcsapi_SSID_get_authentication_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_SET_AUTHENTICATION_MODE_REMOTE 223
-extern  enum clnt_stat qcsapi_ssid_set_authentication_mode_remote_1(qcsapi_SSID_set_authentication_mode_rpcdata *, qcsapi_SSID_set_authentication_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_set_authentication_mode_remote_1_svc(qcsapi_SSID_set_authentication_mode_rpcdata *, qcsapi_SSID_set_authentication_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_PRE_SHARED_KEY_REMOTE 224
-extern  enum clnt_stat qcsapi_ssid_get_pre_shared_key_remote_1(qcsapi_SSID_get_pre_shared_key_rpcdata *, qcsapi_SSID_get_pre_shared_key_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_pre_shared_key_remote_1_svc(qcsapi_SSID_get_pre_shared_key_rpcdata *, qcsapi_SSID_get_pre_shared_key_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_SET_PRE_SHARED_KEY_REMOTE 225
-extern  enum clnt_stat qcsapi_ssid_set_pre_shared_key_remote_1(qcsapi_SSID_set_pre_shared_key_rpcdata *, qcsapi_SSID_set_pre_shared_key_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_set_pre_shared_key_remote_1_svc(qcsapi_SSID_set_pre_shared_key_rpcdata *, qcsapi_SSID_set_pre_shared_key_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_KEY_PASSPHRASE_REMOTE 226
-extern  enum clnt_stat qcsapi_ssid_get_key_passphrase_remote_1(qcsapi_SSID_get_key_passphrase_rpcdata *, qcsapi_SSID_get_key_passphrase_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_key_passphrase_remote_1_svc(qcsapi_SSID_get_key_passphrase_rpcdata *, qcsapi_SSID_get_key_passphrase_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_SET_KEY_PASSPHRASE_REMOTE 227
-extern  enum clnt_stat qcsapi_ssid_set_key_passphrase_remote_1(qcsapi_SSID_set_key_passphrase_rpcdata *, qcsapi_SSID_set_key_passphrase_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_set_key_passphrase_remote_1_svc(qcsapi_SSID_set_key_passphrase_rpcdata *, qcsapi_SSID_set_key_passphrase_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_PMF_REMOTE 228
-extern  enum clnt_stat qcsapi_ssid_get_pmf_remote_1(qcsapi_SSID_get_pmf_rpcdata *, qcsapi_SSID_get_pmf_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_pmf_remote_1_svc(qcsapi_SSID_get_pmf_rpcdata *, qcsapi_SSID_get_pmf_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_SET_PMF_REMOTE 229
-extern  enum clnt_stat qcsapi_ssid_set_pmf_remote_1(qcsapi_SSID_set_pmf_rpcdata *, qcsapi_SSID_set_pmf_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_set_pmf_remote_1_svc(qcsapi_SSID_set_pmf_rpcdata *, qcsapi_SSID_set_pmf_rpcdata *, struct svc_req *);
-#define QCSAPI_SSID_GET_WPS_SSID_REMOTE 230
-extern  enum clnt_stat qcsapi_ssid_get_wps_ssid_remote_1(qcsapi_SSID_get_wps_SSID_rpcdata *, qcsapi_SSID_get_wps_SSID_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_ssid_get_wps_ssid_remote_1_svc(qcsapi_SSID_get_wps_SSID_rpcdata *, qcsapi_SSID_get_wps_SSID_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_VLAN_CONFIG_REMOTE 231
-extern  enum clnt_stat qcsapi_wifi_vlan_config_remote_1(qcsapi_wifi_vlan_config_rpcdata *, qcsapi_wifi_vlan_config_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_vlan_config_remote_1_svc(qcsapi_wifi_vlan_config_rpcdata *, qcsapi_wifi_vlan_config_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SHOW_VLAN_CONFIG_REMOTE 232
-extern  enum clnt_stat qcsapi_wifi_show_vlan_config_remote_1(qcsapi_wifi_show_vlan_config_rpcdata *, qcsapi_wifi_show_vlan_config_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_show_vlan_config_remote_1_svc(qcsapi_wifi_show_vlan_config_rpcdata *, qcsapi_wifi_show_vlan_config_rpcdata *, struct svc_req *);
-#define QCSAPI_ENABLE_VLAN_PASS_THROUGH_REMOTE 233
-extern  enum clnt_stat qcsapi_enable_vlan_pass_through_remote_1(qcsapi_enable_vlan_pass_through_rpcdata *, qcsapi_enable_vlan_pass_through_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_enable_vlan_pass_through_remote_1_svc(qcsapi_enable_vlan_pass_through_rpcdata *, qcsapi_enable_vlan_pass_through_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_VLAN_PROMISC_REMOTE 234
-extern  enum clnt_stat qcsapi_wifi_set_vlan_promisc_remote_1(qcsapi_wifi_set_vlan_promisc_rpcdata *, qcsapi_wifi_set_vlan_promisc_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_vlan_promisc_remote_1_svc(qcsapi_wifi_set_vlan_promisc_rpcdata *, qcsapi_wifi_set_vlan_promisc_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_REGISTRAR_REPORT_BUTTON_PRESS_REMOTE 235
-extern  enum clnt_stat qcsapi_wps_registrar_report_button_press_remote_1(qcsapi_wps_registrar_report_button_press_rpcdata *, qcsapi_wps_registrar_report_button_press_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_registrar_report_button_press_remote_1_svc(qcsapi_wps_registrar_report_button_press_rpcdata *, qcsapi_wps_registrar_report_button_press_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_REGISTRAR_REPORT_PIN_REMOTE 236
-extern  enum clnt_stat qcsapi_wps_registrar_report_pin_remote_1(qcsapi_wps_registrar_report_pin_rpcdata *, qcsapi_wps_registrar_report_pin_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_registrar_report_pin_remote_1_svc(qcsapi_wps_registrar_report_pin_rpcdata *, qcsapi_wps_registrar_report_pin_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_REGISTRAR_GET_PP_DEVNAME_REMOTE 237
-extern  enum clnt_stat qcsapi_wps_registrar_get_pp_devname_remote_1(qcsapi_wps_registrar_get_pp_devname_rpcdata *, qcsapi_wps_registrar_get_pp_devname_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_registrar_get_pp_devname_remote_1_svc(qcsapi_wps_registrar_get_pp_devname_rpcdata *, qcsapi_wps_registrar_get_pp_devname_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_REGISTRAR_SET_PP_DEVNAME_REMOTE 238
-extern  enum clnt_stat qcsapi_wps_registrar_set_pp_devname_remote_1(qcsapi_wps_registrar_set_pp_devname_rpcdata *, qcsapi_wps_registrar_set_pp_devname_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_registrar_set_pp_devname_remote_1_svc(qcsapi_wps_registrar_set_pp_devname_rpcdata *, qcsapi_wps_registrar_set_pp_devname_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_ENROLLEE_REPORT_BUTTON_PRESS_REMOTE 239
-extern  enum clnt_stat qcsapi_wps_enrollee_report_button_press_remote_1(qcsapi_wps_enrollee_report_button_press_rpcdata *, qcsapi_wps_enrollee_report_button_press_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_enrollee_report_button_press_remote_1_svc(qcsapi_wps_enrollee_report_button_press_rpcdata *, qcsapi_wps_enrollee_report_button_press_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_ENROLLEE_REPORT_PIN_REMOTE 240
-extern  enum clnt_stat qcsapi_wps_enrollee_report_pin_remote_1(qcsapi_wps_enrollee_report_pin_rpcdata *, qcsapi_wps_enrollee_report_pin_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_enrollee_report_pin_remote_1_svc(qcsapi_wps_enrollee_report_pin_rpcdata *, qcsapi_wps_enrollee_report_pin_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_ENROLLEE_GENERATE_PIN_REMOTE 241
-extern  enum clnt_stat qcsapi_wps_enrollee_generate_pin_remote_1(qcsapi_wps_enrollee_generate_pin_rpcdata *, qcsapi_wps_enrollee_generate_pin_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_enrollee_generate_pin_remote_1_svc(qcsapi_wps_enrollee_generate_pin_rpcdata *, qcsapi_wps_enrollee_generate_pin_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_AP_PIN_REMOTE 242
-extern  enum clnt_stat qcsapi_wps_get_ap_pin_remote_1(qcsapi_wps_get_ap_pin_rpcdata *, qcsapi_wps_get_ap_pin_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_ap_pin_remote_1_svc(qcsapi_wps_get_ap_pin_rpcdata *, qcsapi_wps_get_ap_pin_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_SET_AP_PIN_REMOTE 243
-extern  enum clnt_stat qcsapi_wps_set_ap_pin_remote_1(qcsapi_wps_set_ap_pin_rpcdata *, qcsapi_wps_set_ap_pin_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_set_ap_pin_remote_1_svc(qcsapi_wps_set_ap_pin_rpcdata *, qcsapi_wps_set_ap_pin_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_SAVE_AP_PIN_REMOTE 244
-extern  enum clnt_stat qcsapi_wps_save_ap_pin_remote_1(qcsapi_wps_save_ap_pin_rpcdata *, qcsapi_wps_save_ap_pin_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_save_ap_pin_remote_1_svc(qcsapi_wps_save_ap_pin_rpcdata *, qcsapi_wps_save_ap_pin_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_ENABLE_AP_PIN_REMOTE 245
-extern  enum clnt_stat qcsapi_wps_enable_ap_pin_remote_1(qcsapi_wps_enable_ap_pin_rpcdata *, qcsapi_wps_enable_ap_pin_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_enable_ap_pin_remote_1_svc(qcsapi_wps_enable_ap_pin_rpcdata *, qcsapi_wps_enable_ap_pin_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_STA_PIN_REMOTE 246
-extern  enum clnt_stat qcsapi_wps_get_sta_pin_remote_1(qcsapi_wps_get_sta_pin_rpcdata *, qcsapi_wps_get_sta_pin_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_sta_pin_remote_1_svc(qcsapi_wps_get_sta_pin_rpcdata *, qcsapi_wps_get_sta_pin_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_STATE_REMOTE 247
-extern  enum clnt_stat qcsapi_wps_get_state_remote_1(qcsapi_wps_get_state_rpcdata *, qcsapi_wps_get_state_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_state_remote_1_svc(qcsapi_wps_get_state_rpcdata *, qcsapi_wps_get_state_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_CONFIGURED_STATE_REMOTE 248
-extern  enum clnt_stat qcsapi_wps_get_configured_state_remote_1(qcsapi_wps_get_configured_state_rpcdata *, qcsapi_wps_get_configured_state_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_configured_state_remote_1_svc(qcsapi_wps_get_configured_state_rpcdata *, qcsapi_wps_get_configured_state_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_RUNTIME_STATE_REMOTE 249
-extern  enum clnt_stat qcsapi_wps_get_runtime_state_remote_1(qcsapi_wps_get_runtime_state_rpcdata *, qcsapi_wps_get_runtime_state_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_runtime_state_remote_1_svc(qcsapi_wps_get_runtime_state_rpcdata *, qcsapi_wps_get_runtime_state_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_SET_CONFIGURED_STATE_REMOTE 250
-extern  enum clnt_stat qcsapi_wps_set_configured_state_remote_1(qcsapi_wps_set_configured_state_rpcdata *, qcsapi_wps_set_configured_state_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_set_configured_state_remote_1_svc(qcsapi_wps_set_configured_state_rpcdata *, qcsapi_wps_set_configured_state_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_PARAM_REMOTE 251
-extern  enum clnt_stat qcsapi_wps_get_param_remote_1(qcsapi_wps_get_param_rpcdata *, qcsapi_wps_get_param_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_param_remote_1_svc(qcsapi_wps_get_param_rpcdata *, qcsapi_wps_get_param_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_SET_TIMEOUT_REMOTE 252
-extern  enum clnt_stat qcsapi_wps_set_timeout_remote_1(qcsapi_wps_set_timeout_rpcdata *, qcsapi_wps_set_timeout_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_set_timeout_remote_1_svc(qcsapi_wps_set_timeout_rpcdata *, qcsapi_wps_set_timeout_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_ON_HIDDEN_SSID_REMOTE 253
-extern  enum clnt_stat qcsapi_wps_on_hidden_ssid_remote_1(qcsapi_wps_on_hidden_ssid_rpcdata *, qcsapi_wps_on_hidden_ssid_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_on_hidden_ssid_remote_1_svc(qcsapi_wps_on_hidden_ssid_rpcdata *, qcsapi_wps_on_hidden_ssid_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_ON_HIDDEN_SSID_STATUS_REMOTE 254
-extern  enum clnt_stat qcsapi_wps_on_hidden_ssid_status_remote_1(qcsapi_wps_on_hidden_ssid_status_rpcdata *, qcsapi_wps_on_hidden_ssid_status_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_on_hidden_ssid_status_remote_1_svc(qcsapi_wps_on_hidden_ssid_status_rpcdata *, qcsapi_wps_on_hidden_ssid_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_UPNP_ENABLE_REMOTE 255
-extern  enum clnt_stat qcsapi_wps_upnp_enable_remote_1(qcsapi_wps_upnp_enable_rpcdata *, qcsapi_wps_upnp_enable_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_upnp_enable_remote_1_svc(qcsapi_wps_upnp_enable_rpcdata *, qcsapi_wps_upnp_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_UPNP_STATUS_REMOTE 256
-extern  enum clnt_stat qcsapi_wps_upnp_status_remote_1(qcsapi_wps_upnp_status_rpcdata *, qcsapi_wps_upnp_status_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_upnp_status_remote_1_svc(qcsapi_wps_upnp_status_rpcdata *, qcsapi_wps_upnp_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_ALLOW_PBC_OVERLAP_REMOTE 257
-extern  enum clnt_stat qcsapi_wps_allow_pbc_overlap_remote_1(qcsapi_wps_allow_pbc_overlap_rpcdata *, qcsapi_wps_allow_pbc_overlap_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_allow_pbc_overlap_remote_1_svc(qcsapi_wps_allow_pbc_overlap_rpcdata *, qcsapi_wps_allow_pbc_overlap_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_ALLOW_PBC_OVERLAP_STATUS_REMOTE 258
-extern  enum clnt_stat qcsapi_wps_get_allow_pbc_overlap_status_remote_1(qcsapi_wps_get_allow_pbc_overlap_status_rpcdata *, qcsapi_wps_get_allow_pbc_overlap_status_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_allow_pbc_overlap_status_remote_1_svc(qcsapi_wps_get_allow_pbc_overlap_status_rpcdata *, qcsapi_wps_get_allow_pbc_overlap_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_SET_ACCESS_CONTROL_REMOTE 259
-extern  enum clnt_stat qcsapi_wps_set_access_control_remote_1(qcsapi_wps_set_access_control_rpcdata *, qcsapi_wps_set_access_control_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_set_access_control_remote_1_svc(qcsapi_wps_set_access_control_rpcdata *, qcsapi_wps_set_access_control_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_ACCESS_CONTROL_REMOTE 260
-extern  enum clnt_stat qcsapi_wps_get_access_control_remote_1(qcsapi_wps_get_access_control_rpcdata *, qcsapi_wps_get_access_control_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_access_control_remote_1_svc(qcsapi_wps_get_access_control_rpcdata *, qcsapi_wps_get_access_control_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_SET_PARAM_REMOTE 261
-extern  enum clnt_stat qcsapi_wps_set_param_remote_1(qcsapi_wps_set_param_rpcdata *, qcsapi_wps_set_param_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_set_param_remote_1_svc(qcsapi_wps_set_param_rpcdata *, qcsapi_wps_set_param_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_CANCEL_REMOTE 262
-extern  enum clnt_stat qcsapi_wps_cancel_remote_1(qcsapi_wps_cancel_rpcdata *, qcsapi_wps_cancel_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_cancel_remote_1_svc(qcsapi_wps_cancel_rpcdata *, qcsapi_wps_cancel_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_SET_PBC_IN_SRCM_REMOTE 263
-extern  enum clnt_stat qcsapi_wps_set_pbc_in_srcm_remote_1(qcsapi_wps_set_pbc_in_srcm_rpcdata *, qcsapi_wps_set_pbc_in_srcm_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_set_pbc_in_srcm_remote_1_svc(qcsapi_wps_set_pbc_in_srcm_rpcdata *, qcsapi_wps_set_pbc_in_srcm_rpcdata *, struct svc_req *);
-#define QCSAPI_WPS_GET_PBC_IN_SRCM_REMOTE 264
-extern  enum clnt_stat qcsapi_wps_get_pbc_in_srcm_remote_1(qcsapi_wps_get_pbc_in_srcm_rpcdata *, qcsapi_wps_get_pbc_in_srcm_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wps_get_pbc_in_srcm_remote_1_svc(qcsapi_wps_get_pbc_in_srcm_rpcdata *, qcsapi_wps_get_pbc_in_srcm_rpcdata *, struct svc_req *);
-#define QCSAPI_REGISTRAR_SET_DEFAULT_PBC_BSS_REMOTE 265
-extern  enum clnt_stat qcsapi_registrar_set_default_pbc_bss_remote_1(qcsapi_registrar_set_default_pbc_bss_rpcdata *, qcsapi_registrar_set_default_pbc_bss_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_registrar_set_default_pbc_bss_remote_1_svc(qcsapi_registrar_set_default_pbc_bss_rpcdata *, qcsapi_registrar_set_default_pbc_bss_rpcdata *, struct svc_req *);
-#define QCSAPI_REGISTRAR_GET_DEFAULT_PBC_BSS_REMOTE 266
-extern  enum clnt_stat qcsapi_registrar_get_default_pbc_bss_remote_1(qcsapi_registrar_get_default_pbc_bss_rpcdata *, qcsapi_registrar_get_default_pbc_bss_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_registrar_get_default_pbc_bss_remote_1_svc(qcsapi_registrar_get_default_pbc_bss_rpcdata *, qcsapi_registrar_get_default_pbc_bss_rpcdata *, struct svc_req *);
-#define QCSAPI_GPIO_SET_CONFIG_REMOTE 267
-extern  enum clnt_stat qcsapi_gpio_set_config_remote_1(qcsapi_gpio_set_config_rpcdata *, qcsapi_gpio_set_config_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_gpio_set_config_remote_1_svc(qcsapi_gpio_set_config_rpcdata *, qcsapi_gpio_set_config_rpcdata *, struct svc_req *);
-#define QCSAPI_GPIO_GET_CONFIG_REMOTE 268
-extern  enum clnt_stat qcsapi_gpio_get_config_remote_1(qcsapi_gpio_get_config_rpcdata *, qcsapi_gpio_get_config_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_gpio_get_config_remote_1_svc(qcsapi_gpio_get_config_rpcdata *, qcsapi_gpio_get_config_rpcdata *, struct svc_req *);
-#define QCSAPI_LED_GET_REMOTE 269
-extern  enum clnt_stat qcsapi_led_get_remote_1(qcsapi_led_get_rpcdata *, qcsapi_led_get_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_led_get_remote_1_svc(qcsapi_led_get_rpcdata *, qcsapi_led_get_rpcdata *, struct svc_req *);
-#define QCSAPI_LED_SET_REMOTE 270
-extern  enum clnt_stat qcsapi_led_set_remote_1(qcsapi_led_set_rpcdata *, qcsapi_led_set_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_led_set_remote_1_svc(qcsapi_led_set_rpcdata *, qcsapi_led_set_rpcdata *, struct svc_req *);
-#define QCSAPI_LED_PWM_ENABLE_REMOTE 271
-extern  enum clnt_stat qcsapi_led_pwm_enable_remote_1(qcsapi_led_pwm_enable_rpcdata *, qcsapi_led_pwm_enable_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_led_pwm_enable_remote_1_svc(qcsapi_led_pwm_enable_rpcdata *, qcsapi_led_pwm_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_LED_BRIGHTNESS_REMOTE 272
-extern  enum clnt_stat qcsapi_led_brightness_remote_1(qcsapi_led_brightness_rpcdata *, qcsapi_led_brightness_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_led_brightness_remote_1_svc(qcsapi_led_brightness_rpcdata *, qcsapi_led_brightness_rpcdata *, struct svc_req *);
-#define QCSAPI_GPIO_ENABLE_WPS_PUSH_BUTTON_REMOTE 273
-extern  enum clnt_stat qcsapi_gpio_enable_wps_push_button_remote_1(qcsapi_gpio_enable_wps_push_button_rpcdata *, qcsapi_gpio_enable_wps_push_button_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_gpio_enable_wps_push_button_remote_1_svc(qcsapi_gpio_enable_wps_push_button_rpcdata *, qcsapi_gpio_enable_wps_push_button_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_COUNT_ASSOCIATIONS_REMOTE 274
-extern  enum clnt_stat qcsapi_wifi_get_count_associations_remote_1(qcsapi_wifi_get_count_associations_rpcdata *, qcsapi_wifi_get_count_associations_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_count_associations_remote_1_svc(qcsapi_wifi_get_count_associations_rpcdata *, qcsapi_wifi_get_count_associations_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_ASSOCIATED_DEVICE_MAC_ADDR_REMOTE 275
-extern  enum clnt_stat qcsapi_wifi_get_associated_device_mac_addr_remote_1(qcsapi_wifi_get_associated_device_mac_addr_rpcdata *, qcsapi_wifi_get_associated_device_mac_addr_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_associated_device_mac_addr_remote_1_svc(qcsapi_wifi_get_associated_device_mac_addr_rpcdata *, qcsapi_wifi_get_associated_device_mac_addr_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_ASSOCIATED_DEVICE_IP_ADDR_REMOTE 276
-extern  enum clnt_stat qcsapi_wifi_get_associated_device_ip_addr_remote_1(qcsapi_wifi_get_associated_device_ip_addr_rpcdata *, qcsapi_wifi_get_associated_device_ip_addr_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_associated_device_ip_addr_remote_1_svc(qcsapi_wifi_get_associated_device_ip_addr_rpcdata *, qcsapi_wifi_get_associated_device_ip_addr_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_LINK_QUALITY_REMOTE 277
-extern  enum clnt_stat qcsapi_wifi_get_link_quality_remote_1(qcsapi_wifi_get_link_quality_rpcdata *, qcsapi_wifi_get_link_quality_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_link_quality_remote_1_svc(qcsapi_wifi_get_link_quality_rpcdata *, qcsapi_wifi_get_link_quality_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RX_BYTES_PER_ASSOCIATION_REMOTE 278
-extern  enum clnt_stat qcsapi_wifi_get_rx_bytes_per_association_remote_1(qcsapi_wifi_get_rx_bytes_per_association_rpcdata *, qcsapi_wifi_get_rx_bytes_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_rx_bytes_per_association_remote_1_svc(qcsapi_wifi_get_rx_bytes_per_association_rpcdata *, qcsapi_wifi_get_rx_bytes_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_TX_BYTES_PER_ASSOCIATION_REMOTE 279
-extern  enum clnt_stat qcsapi_wifi_get_tx_bytes_per_association_remote_1(qcsapi_wifi_get_tx_bytes_per_association_rpcdata *, qcsapi_wifi_get_tx_bytes_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_tx_bytes_per_association_remote_1_svc(qcsapi_wifi_get_tx_bytes_per_association_rpcdata *, qcsapi_wifi_get_tx_bytes_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RX_PACKETS_PER_ASSOCIATION_REMOTE 280
-extern  enum clnt_stat qcsapi_wifi_get_rx_packets_per_association_remote_1(qcsapi_wifi_get_rx_packets_per_association_rpcdata *, qcsapi_wifi_get_rx_packets_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_rx_packets_per_association_remote_1_svc(qcsapi_wifi_get_rx_packets_per_association_rpcdata *, qcsapi_wifi_get_rx_packets_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_TX_PACKETS_PER_ASSOCIATION_REMOTE 281
-extern  enum clnt_stat qcsapi_wifi_get_tx_packets_per_association_remote_1(qcsapi_wifi_get_tx_packets_per_association_rpcdata *, qcsapi_wifi_get_tx_packets_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_tx_packets_per_association_remote_1_svc(qcsapi_wifi_get_tx_packets_per_association_rpcdata *, qcsapi_wifi_get_tx_packets_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_TX_ERR_PACKETS_PER_ASSOCIATION_REMOTE 282
-extern  enum clnt_stat qcsapi_wifi_get_tx_err_packets_per_association_remote_1(qcsapi_wifi_get_tx_err_packets_per_association_rpcdata *, qcsapi_wifi_get_tx_err_packets_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_tx_err_packets_per_association_remote_1_svc(qcsapi_wifi_get_tx_err_packets_per_association_rpcdata *, qcsapi_wifi_get_tx_err_packets_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RSSI_PER_ASSOCIATION_REMOTE 283
-extern  enum clnt_stat qcsapi_wifi_get_rssi_per_association_remote_1(qcsapi_wifi_get_rssi_per_association_rpcdata *, qcsapi_wifi_get_rssi_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_rssi_per_association_remote_1_svc(qcsapi_wifi_get_rssi_per_association_rpcdata *, qcsapi_wifi_get_rssi_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RSSI_IN_DBM_PER_ASSOCIATION_REMOTE 284
-extern  enum clnt_stat qcsapi_wifi_get_rssi_in_dbm_per_association_remote_1(qcsapi_wifi_get_rssi_in_dbm_per_association_rpcdata *, qcsapi_wifi_get_rssi_in_dbm_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_rssi_in_dbm_per_association_remote_1_svc(qcsapi_wifi_get_rssi_in_dbm_per_association_rpcdata *, qcsapi_wifi_get_rssi_in_dbm_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BW_PER_ASSOCIATION_REMOTE 285
-extern  enum clnt_stat qcsapi_wifi_get_bw_per_association_remote_1(qcsapi_wifi_get_bw_per_association_rpcdata *, qcsapi_wifi_get_bw_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_bw_per_association_remote_1_svc(qcsapi_wifi_get_bw_per_association_rpcdata *, qcsapi_wifi_get_bw_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_TX_PHY_RATE_PER_ASSOCIATION_REMOTE 286
-extern  enum clnt_stat qcsapi_wifi_get_tx_phy_rate_per_association_remote_1(qcsapi_wifi_get_tx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_tx_phy_rate_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_tx_phy_rate_per_association_remote_1_svc(qcsapi_wifi_get_tx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_tx_phy_rate_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RX_PHY_RATE_PER_ASSOCIATION_REMOTE 287
-extern  enum clnt_stat qcsapi_wifi_get_rx_phy_rate_per_association_remote_1(qcsapi_wifi_get_rx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_rx_phy_rate_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_rx_phy_rate_per_association_remote_1_svc(qcsapi_wifi_get_rx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_rx_phy_rate_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_TX_MCS_PER_ASSOCIATION_REMOTE 288
-extern  enum clnt_stat qcsapi_wifi_get_tx_mcs_per_association_remote_1(qcsapi_wifi_get_tx_mcs_per_association_rpcdata *, qcsapi_wifi_get_tx_mcs_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_tx_mcs_per_association_remote_1_svc(qcsapi_wifi_get_tx_mcs_per_association_rpcdata *, qcsapi_wifi_get_tx_mcs_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RX_MCS_PER_ASSOCIATION_REMOTE 289
-extern  enum clnt_stat qcsapi_wifi_get_rx_mcs_per_association_remote_1(qcsapi_wifi_get_rx_mcs_per_association_rpcdata *, qcsapi_wifi_get_rx_mcs_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_rx_mcs_per_association_remote_1_svc(qcsapi_wifi_get_rx_mcs_per_association_rpcdata *, qcsapi_wifi_get_rx_mcs_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_ACHIEVABLE_TX_PHY_RATE_PER_ASSOCIATION_REMOTE 290
-extern  enum clnt_stat qcsapi_wifi_get_achievable_tx_phy_rate_per_association_remote_1(qcsapi_wifi_get_achievable_tx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_achievable_tx_phy_rate_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_achievable_tx_phy_rate_per_association_remote_1_svc(qcsapi_wifi_get_achievable_tx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_achievable_tx_phy_rate_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_ACHIEVABLE_RX_PHY_RATE_PER_ASSOCIATION_REMOTE 291
-extern  enum clnt_stat qcsapi_wifi_get_achievable_rx_phy_rate_per_association_remote_1(qcsapi_wifi_get_achievable_rx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_achievable_rx_phy_rate_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_achievable_rx_phy_rate_per_association_remote_1_svc(qcsapi_wifi_get_achievable_rx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_achievable_rx_phy_rate_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_AUTH_ENC_PER_ASSOCIATION_REMOTE 292
-extern  enum clnt_stat qcsapi_wifi_get_auth_enc_per_association_remote_1(qcsapi_wifi_get_auth_enc_per_association_rpcdata *, qcsapi_wifi_get_auth_enc_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_auth_enc_per_association_remote_1_svc(qcsapi_wifi_get_auth_enc_per_association_rpcdata *, qcsapi_wifi_get_auth_enc_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_VENDOR_PER_ASSOCIATION_REMOTE 293
-extern  enum clnt_stat qcsapi_wifi_get_vendor_per_association_remote_1(qcsapi_wifi_get_vendor_per_association_rpcdata *, qcsapi_wifi_get_vendor_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_vendor_per_association_remote_1_svc(qcsapi_wifi_get_vendor_per_association_rpcdata *, qcsapi_wifi_get_vendor_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SNR_PER_ASSOCIATION_REMOTE 294
-extern  enum clnt_stat qcsapi_wifi_get_snr_per_association_remote_1(qcsapi_wifi_get_snr_per_association_rpcdata *, qcsapi_wifi_get_snr_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_snr_per_association_remote_1_svc(qcsapi_wifi_get_snr_per_association_rpcdata *, qcsapi_wifi_get_snr_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_TIME_ASSOCIATED_PER_ASSOCIATION_REMOTE 295
-extern  enum clnt_stat qcsapi_wifi_get_time_associated_per_association_remote_1(qcsapi_wifi_get_time_associated_per_association_rpcdata *, qcsapi_wifi_get_time_associated_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_time_associated_per_association_remote_1_svc(qcsapi_wifi_get_time_associated_per_association_rpcdata *, qcsapi_wifi_get_time_associated_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_NODE_PARAM_REMOTE 296
-extern  enum clnt_stat qcsapi_wifi_get_node_param_remote_1(qcsapi_wifi_get_node_param_rpcdata *, qcsapi_wifi_get_node_param_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_node_param_remote_1_svc(qcsapi_wifi_get_node_param_rpcdata *, qcsapi_wifi_get_node_param_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_NODE_COUNTER_REMOTE 297
-extern  enum clnt_stat qcsapi_wifi_get_node_counter_remote_1(qcsapi_wifi_get_node_counter_rpcdata *, qcsapi_wifi_get_node_counter_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_node_counter_remote_1_svc(qcsapi_wifi_get_node_counter_rpcdata *, qcsapi_wifi_get_node_counter_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_NODE_STATS_REMOTE 298
-extern  enum clnt_stat qcsapi_wifi_get_node_stats_remote_1(qcsapi_wifi_get_node_stats_rpcdata *, qcsapi_wifi_get_node_stats_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_node_stats_remote_1_svc(qcsapi_wifi_get_node_stats_rpcdata *, qcsapi_wifi_get_node_stats_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MAX_QUEUED_REMOTE 299
-extern  enum clnt_stat qcsapi_wifi_get_max_queued_remote_1(qcsapi_wifi_get_max_queued_rpcdata *, qcsapi_wifi_get_max_queued_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_max_queued_remote_1_svc(qcsapi_wifi_get_max_queued_rpcdata *, qcsapi_wifi_get_max_queued_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_HW_NOISE_PER_ASSOCIATION_REMOTE 300
-extern  enum clnt_stat qcsapi_wifi_get_hw_noise_per_association_remote_1(qcsapi_wifi_get_hw_noise_per_association_rpcdata *, qcsapi_wifi_get_hw_noise_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_hw_noise_per_association_remote_1_svc(qcsapi_wifi_get_hw_noise_per_association_rpcdata *, qcsapi_wifi_get_hw_noise_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_LIST_REGULATORY_REGIONS_REMOTE 301
-extern  enum clnt_stat qcsapi_wifi_get_list_regulatory_regions_remote_1(qcsapi_wifi_get_list_regulatory_regions_rpcdata *, qcsapi_wifi_get_list_regulatory_regions_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_list_regulatory_regions_remote_1_svc(qcsapi_wifi_get_list_regulatory_regions_rpcdata *, qcsapi_wifi_get_list_regulatory_regions_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_REGIONS_REMOTE 302
-extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_regions_remote_1(qcsapi_regulatory_get_list_regulatory_regions_rpcdata *, qcsapi_regulatory_get_list_regulatory_regions_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_get_list_regulatory_regions_remote_1_svc(qcsapi_regulatory_get_list_regulatory_regions_rpcdata *, qcsapi_regulatory_get_list_regulatory_regions_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_LIST_REGULATORY_CHANNELS_REMOTE 303
-extern  enum clnt_stat qcsapi_wifi_get_list_regulatory_channels_remote_1(qcsapi_wifi_get_list_regulatory_channels_rpcdata *, qcsapi_wifi_get_list_regulatory_channels_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_list_regulatory_channels_remote_1_svc(qcsapi_wifi_get_list_regulatory_channels_rpcdata *, qcsapi_wifi_get_list_regulatory_channels_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_CHANNELS_REMOTE 304
-extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_channels_remote_1(qcsapi_regulatory_get_list_regulatory_channels_rpcdata *, qcsapi_regulatory_get_list_regulatory_channels_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_get_list_regulatory_channels_remote_1_svc(qcsapi_regulatory_get_list_regulatory_channels_rpcdata *, qcsapi_regulatory_get_list_regulatory_channels_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_BANDS_REMOTE 305
-extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_bands_remote_1(qcsapi_regulatory_get_list_regulatory_bands_rpcdata *, qcsapi_regulatory_get_list_regulatory_bands_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_get_list_regulatory_bands_remote_1_svc(qcsapi_regulatory_get_list_regulatory_bands_rpcdata *, qcsapi_regulatory_get_list_regulatory_bands_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_REGULATORY_TX_POWER_REMOTE 306
-extern  enum clnt_stat qcsapi_wifi_get_regulatory_tx_power_remote_1(qcsapi_wifi_get_regulatory_tx_power_rpcdata *, qcsapi_wifi_get_regulatory_tx_power_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_regulatory_tx_power_remote_1_svc(qcsapi_wifi_get_regulatory_tx_power_rpcdata *, qcsapi_wifi_get_regulatory_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_GET_REGULATORY_TX_POWER_REMOTE 307
-extern  enum clnt_stat qcsapi_regulatory_get_regulatory_tx_power_remote_1(qcsapi_regulatory_get_regulatory_tx_power_rpcdata *, qcsapi_regulatory_get_regulatory_tx_power_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_get_regulatory_tx_power_remote_1_svc(qcsapi_regulatory_get_regulatory_tx_power_rpcdata *, qcsapi_regulatory_get_regulatory_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_CONFIGURED_TX_POWER_REMOTE 308
-extern  enum clnt_stat qcsapi_wifi_get_configured_tx_power_remote_1(qcsapi_wifi_get_configured_tx_power_rpcdata *, qcsapi_wifi_get_configured_tx_power_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_configured_tx_power_remote_1_svc(qcsapi_wifi_get_configured_tx_power_rpcdata *, qcsapi_wifi_get_configured_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_GET_CONFIGURED_TX_POWER_REMOTE 309
-extern  enum clnt_stat qcsapi_regulatory_get_configured_tx_power_remote_1(qcsapi_regulatory_get_configured_tx_power_rpcdata *, qcsapi_regulatory_get_configured_tx_power_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_get_configured_tx_power_remote_1_svc(qcsapi_regulatory_get_configured_tx_power_rpcdata *, qcsapi_regulatory_get_configured_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_REGULATORY_REGION_REMOTE 310
-extern  enum clnt_stat qcsapi_wifi_set_regulatory_region_remote_1(qcsapi_wifi_set_regulatory_region_rpcdata *, qcsapi_wifi_set_regulatory_region_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_regulatory_region_remote_1_svc(qcsapi_wifi_set_regulatory_region_rpcdata *, qcsapi_wifi_set_regulatory_region_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_SET_REGULATORY_REGION_REMOTE 311
-extern  enum clnt_stat qcsapi_regulatory_set_regulatory_region_remote_1(qcsapi_regulatory_set_regulatory_region_rpcdata *, qcsapi_regulatory_set_regulatory_region_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_set_regulatory_region_remote_1_svc(qcsapi_regulatory_set_regulatory_region_rpcdata *, qcsapi_regulatory_set_regulatory_region_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_RESTORE_REGULATORY_TX_POWER_REMOTE 312
-extern  enum clnt_stat qcsapi_regulatory_restore_regulatory_tx_power_remote_1(qcsapi_regulatory_restore_regulatory_tx_power_rpcdata *, qcsapi_regulatory_restore_regulatory_tx_power_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_restore_regulatory_tx_power_remote_1_svc(qcsapi_regulatory_restore_regulatory_tx_power_rpcdata *, qcsapi_regulatory_restore_regulatory_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_REGULATORY_REGION_REMOTE 313
-extern  enum clnt_stat qcsapi_wifi_get_regulatory_region_remote_1(qcsapi_wifi_get_regulatory_region_rpcdata *, qcsapi_wifi_get_regulatory_region_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_regulatory_region_remote_1_svc(qcsapi_wifi_get_regulatory_region_rpcdata *, qcsapi_wifi_get_regulatory_region_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_OVERWRITE_COUNTRY_CODE_REMOTE 314
-extern  enum clnt_stat qcsapi_regulatory_overwrite_country_code_remote_1(qcsapi_regulatory_overwrite_country_code_rpcdata *, qcsapi_regulatory_overwrite_country_code_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_overwrite_country_code_remote_1_svc(qcsapi_regulatory_overwrite_country_code_rpcdata *, qcsapi_regulatory_overwrite_country_code_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_REGULATORY_CHANNEL_REMOTE 315
-extern  enum clnt_stat qcsapi_wifi_set_regulatory_channel_remote_1(qcsapi_wifi_set_regulatory_channel_rpcdata *, qcsapi_wifi_set_regulatory_channel_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_regulatory_channel_remote_1_svc(qcsapi_wifi_set_regulatory_channel_rpcdata *, qcsapi_wifi_set_regulatory_channel_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_SET_REGULATORY_CHANNEL_REMOTE 316
-extern  enum clnt_stat qcsapi_regulatory_set_regulatory_channel_remote_1(qcsapi_regulatory_set_regulatory_channel_rpcdata *, qcsapi_regulatory_set_regulatory_channel_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_set_regulatory_channel_remote_1_svc(qcsapi_regulatory_set_regulatory_channel_rpcdata *, qcsapi_regulatory_set_regulatory_channel_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_GET_DB_VERSION_REMOTE 317
-extern  enum clnt_stat qcsapi_regulatory_get_db_version_remote_1(qcsapi_regulatory_get_db_version_rpcdata *, qcsapi_regulatory_get_db_version_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_get_db_version_remote_1_svc(qcsapi_regulatory_get_db_version_rpcdata *, qcsapi_regulatory_get_db_version_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_APPLY_TX_POWER_CAP_REMOTE 318
-extern  enum clnt_stat qcsapi_regulatory_apply_tx_power_cap_remote_1(qcsapi_regulatory_apply_tx_power_cap_rpcdata *, qcsapi_regulatory_apply_tx_power_cap_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_apply_tx_power_cap_remote_1_svc(qcsapi_regulatory_apply_tx_power_cap_rpcdata *, qcsapi_regulatory_apply_tx_power_cap_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_LIST_DFS_CHANNELS_REMOTE 319
-extern  enum clnt_stat qcsapi_wifi_get_list_dfs_channels_remote_1(qcsapi_wifi_get_list_DFS_channels_rpcdata *, qcsapi_wifi_get_list_DFS_channels_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_list_dfs_channels_remote_1_svc(qcsapi_wifi_get_list_DFS_channels_rpcdata *, qcsapi_wifi_get_list_DFS_channels_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_GET_LIST_DFS_CHANNELS_REMOTE 320
-extern  enum clnt_stat qcsapi_regulatory_get_list_dfs_channels_remote_1(qcsapi_regulatory_get_list_DFS_channels_rpcdata *, qcsapi_regulatory_get_list_DFS_channels_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_get_list_dfs_channels_remote_1_svc(qcsapi_regulatory_get_list_DFS_channels_rpcdata *, qcsapi_regulatory_get_list_DFS_channels_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_IS_CHANNEL_DFS_REMOTE 321
-extern  enum clnt_stat qcsapi_wifi_is_channel_dfs_remote_1(qcsapi_wifi_is_channel_DFS_rpcdata *, qcsapi_wifi_is_channel_DFS_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_is_channel_dfs_remote_1_svc(qcsapi_wifi_is_channel_DFS_rpcdata *, qcsapi_wifi_is_channel_DFS_rpcdata *, struct svc_req *);
-#define QCSAPI_REGULATORY_IS_CHANNEL_DFS_REMOTE 322
-extern  enum clnt_stat qcsapi_regulatory_is_channel_dfs_remote_1(qcsapi_regulatory_is_channel_DFS_rpcdata *, qcsapi_regulatory_is_channel_DFS_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_regulatory_is_channel_dfs_remote_1_svc(qcsapi_regulatory_is_channel_DFS_rpcdata *, qcsapi_regulatory_is_channel_DFS_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DFS_CCE_CHANNELS_REMOTE 323
-extern  enum clnt_stat qcsapi_wifi_get_dfs_cce_channels_remote_1(qcsapi_wifi_get_dfs_cce_channels_rpcdata *, qcsapi_wifi_get_dfs_cce_channels_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_dfs_cce_channels_remote_1_svc(qcsapi_wifi_get_dfs_cce_channels_rpcdata *, qcsapi_wifi_get_dfs_cce_channels_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DFS_ALT_CHANNEL_REMOTE 324
-extern  enum clnt_stat qcsapi_wifi_get_dfs_alt_channel_remote_1(qcsapi_wifi_get_DFS_alt_channel_rpcdata *, qcsapi_wifi_get_DFS_alt_channel_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_dfs_alt_channel_remote_1_svc(qcsapi_wifi_get_DFS_alt_channel_rpcdata *, qcsapi_wifi_get_DFS_alt_channel_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_DFS_ALT_CHANNEL_REMOTE 325
-extern  enum clnt_stat qcsapi_wifi_set_dfs_alt_channel_remote_1(qcsapi_wifi_set_DFS_alt_channel_rpcdata *, qcsapi_wifi_set_DFS_alt_channel_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_dfs_alt_channel_remote_1_svc(qcsapi_wifi_set_DFS_alt_channel_rpcdata *, qcsapi_wifi_set_DFS_alt_channel_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_START_DFS_REENTRY_REMOTE 326
-extern  enum clnt_stat qcsapi_wifi_start_dfs_reentry_remote_1(qcsapi_wifi_start_dfs_reentry_rpcdata *, qcsapi_wifi_start_dfs_reentry_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_start_dfs_reentry_remote_1_svc(qcsapi_wifi_start_dfs_reentry_rpcdata *, qcsapi_wifi_start_dfs_reentry_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_START_SCAN_EXT_REMOTE 327
-extern  enum clnt_stat qcsapi_wifi_start_scan_ext_remote_1(qcsapi_wifi_start_scan_ext_rpcdata *, qcsapi_wifi_start_scan_ext_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_start_scan_ext_remote_1_svc(qcsapi_wifi_start_scan_ext_rpcdata *, qcsapi_wifi_start_scan_ext_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_CSW_RECORDS_REMOTE 328
-extern  enum clnt_stat qcsapi_wifi_get_csw_records_remote_1(qcsapi_wifi_get_csw_records_rpcdata *, qcsapi_wifi_get_csw_records_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_csw_records_remote_1_svc(qcsapi_wifi_get_csw_records_rpcdata *, qcsapi_wifi_get_csw_records_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RADAR_STATUS_REMOTE 329
-extern  enum clnt_stat qcsapi_wifi_get_radar_status_remote_1(qcsapi_wifi_get_radar_status_rpcdata *, qcsapi_wifi_get_radar_status_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_radar_status_remote_1_svc(qcsapi_wifi_get_radar_status_rpcdata *, qcsapi_wifi_get_radar_status_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RESULTS_AP_SCAN_REMOTE 330
-extern  enum clnt_stat qcsapi_wifi_get_results_ap_scan_remote_1(qcsapi_wifi_get_results_AP_scan_rpcdata *, qcsapi_wifi_get_results_AP_scan_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_results_ap_scan_remote_1_svc(qcsapi_wifi_get_results_AP_scan_rpcdata *, qcsapi_wifi_get_results_AP_scan_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_COUNT_APS_SCANNED_REMOTE 331
-extern  enum clnt_stat qcsapi_wifi_get_count_aps_scanned_remote_1(qcsapi_wifi_get_count_APs_scanned_rpcdata *, qcsapi_wifi_get_count_APs_scanned_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_count_aps_scanned_remote_1_svc(qcsapi_wifi_get_count_APs_scanned_rpcdata *, qcsapi_wifi_get_count_APs_scanned_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_PROPERTIES_AP_REMOTE 332
-extern  enum clnt_stat qcsapi_wifi_get_properties_ap_remote_1(qcsapi_wifi_get_properties_AP_rpcdata *, qcsapi_wifi_get_properties_AP_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_properties_ap_remote_1_svc(qcsapi_wifi_get_properties_AP_rpcdata *, qcsapi_wifi_get_properties_AP_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_BACKOFF_FAIL_MAX_REMOTE 333
-extern  enum clnt_stat qcsapi_wifi_backoff_fail_max_remote_1(qcsapi_wifi_backoff_fail_max_rpcdata *, qcsapi_wifi_backoff_fail_max_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_backoff_fail_max_remote_1_svc(qcsapi_wifi_backoff_fail_max_rpcdata *, qcsapi_wifi_backoff_fail_max_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_BACKOFF_TIMEOUT_REMOTE 334
-extern  enum clnt_stat qcsapi_wifi_backoff_timeout_remote_1(qcsapi_wifi_backoff_timeout_rpcdata *, qcsapi_wifi_backoff_timeout_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_backoff_timeout_remote_1_svc(qcsapi_wifi_backoff_timeout_rpcdata *, qcsapi_wifi_backoff_timeout_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MCS_RATE_REMOTE 335
-extern  enum clnt_stat qcsapi_wifi_get_mcs_rate_remote_1(qcsapi_wifi_get_mcs_rate_rpcdata *, qcsapi_wifi_get_mcs_rate_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_mcs_rate_remote_1_svc(qcsapi_wifi_get_mcs_rate_rpcdata *, qcsapi_wifi_get_mcs_rate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_MCS_RATE_REMOTE 336
-extern  enum clnt_stat qcsapi_wifi_set_mcs_rate_remote_1(qcsapi_wifi_set_mcs_rate_rpcdata *, qcsapi_wifi_set_mcs_rate_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_mcs_rate_remote_1_svc(qcsapi_wifi_set_mcs_rate_rpcdata *, qcsapi_wifi_set_mcs_rate_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_PAIRING_ID_REMOTE 337
-extern  enum clnt_stat qcsapi_wifi_set_pairing_id_remote_1(qcsapi_wifi_set_pairing_id_rpcdata *, qcsapi_wifi_set_pairing_id_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_pairing_id_remote_1_svc(qcsapi_wifi_set_pairing_id_rpcdata *, qcsapi_wifi_set_pairing_id_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_PAIRING_ID_REMOTE 338
-extern  enum clnt_stat qcsapi_wifi_get_pairing_id_remote_1(qcsapi_wifi_get_pairing_id_rpcdata *, qcsapi_wifi_get_pairing_id_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_pairing_id_remote_1_svc(qcsapi_wifi_get_pairing_id_rpcdata *, qcsapi_wifi_get_pairing_id_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_PAIRING_ENABLE_REMOTE 339
-extern  enum clnt_stat qcsapi_wifi_set_pairing_enable_remote_1(qcsapi_wifi_set_pairing_enable_rpcdata *, qcsapi_wifi_set_pairing_enable_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_pairing_enable_remote_1_svc(qcsapi_wifi_set_pairing_enable_rpcdata *, qcsapi_wifi_set_pairing_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_PAIRING_ENABLE_REMOTE 340
-extern  enum clnt_stat qcsapi_wifi_get_pairing_enable_remote_1(qcsapi_wifi_get_pairing_enable_rpcdata *, qcsapi_wifi_get_pairing_enable_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_pairing_enable_remote_1_svc(qcsapi_wifi_get_pairing_enable_rpcdata *, qcsapi_wifi_get_pairing_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_NON_WPS_SET_PP_ENABLE_REMOTE 341
-extern  enum clnt_stat qcsapi_non_wps_set_pp_enable_remote_1(qcsapi_non_wps_set_pp_enable_rpcdata *, qcsapi_non_wps_set_pp_enable_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_non_wps_set_pp_enable_remote_1_svc(qcsapi_non_wps_set_pp_enable_rpcdata *, qcsapi_non_wps_set_pp_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_NON_WPS_GET_PP_ENABLE_REMOTE 342
-extern  enum clnt_stat qcsapi_non_wps_get_pp_enable_remote_1(qcsapi_non_wps_get_pp_enable_rpcdata *, qcsapi_non_wps_get_pp_enable_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_non_wps_get_pp_enable_remote_1_svc(qcsapi_non_wps_get_pp_enable_rpcdata *, qcsapi_non_wps_get_pp_enable_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_VENDOR_FIX_REMOTE 343
-extern  enum clnt_stat qcsapi_wifi_set_vendor_fix_remote_1(qcsapi_wifi_set_vendor_fix_rpcdata *, qcsapi_wifi_set_vendor_fix_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_vendor_fix_remote_1_svc(qcsapi_wifi_set_vendor_fix_rpcdata *, qcsapi_wifi_set_vendor_fix_rpcdata *, struct svc_req *);
-#define QCSAPI_ERRNO_GET_MESSAGE_REMOTE 344
-extern  enum clnt_stat qcsapi_errno_get_message_remote_1(qcsapi_errno_get_message_rpcdata *, qcsapi_errno_get_message_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_errno_get_message_remote_1_svc(qcsapi_errno_get_message_rpcdata *, qcsapi_errno_get_message_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_INTERFACE_STATS_REMOTE 345
-extern  enum clnt_stat qcsapi_get_interface_stats_remote_1(qcsapi_get_interface_stats_rpcdata *, qcsapi_get_interface_stats_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_get_interface_stats_remote_1_svc(qcsapi_get_interface_stats_rpcdata *, qcsapi_get_interface_stats_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_PHY_STATS_REMOTE 346
-extern  enum clnt_stat qcsapi_get_phy_stats_remote_1(qcsapi_get_phy_stats_rpcdata *, qcsapi_get_phy_stats_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_get_phy_stats_remote_1_svc(qcsapi_get_phy_stats_rpcdata *, qcsapi_get_phy_stats_rpcdata *, struct svc_req *);
-#define QCSAPI_RESET_ALL_COUNTERS_REMOTE 347
-extern  enum clnt_stat qcsapi_reset_all_counters_remote_1(qcsapi_reset_all_counters_rpcdata *, qcsapi_reset_all_counters_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_reset_all_counters_remote_1_svc(qcsapi_reset_all_counters_rpcdata *, qcsapi_reset_all_counters_rpcdata *, struct svc_req *);
-#define QCSAPI_FIRMWARE_GET_VERSION_REMOTE 348
-extern  enum clnt_stat qcsapi_firmware_get_version_remote_1(qcsapi_firmware_get_version_rpcdata *, qcsapi_firmware_get_version_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_firmware_get_version_remote_1_svc(qcsapi_firmware_get_version_rpcdata *, qcsapi_firmware_get_version_rpcdata *, struct svc_req *);
-#define QCSAPI_FLASH_IMAGE_UPDATE_REMOTE 349
-extern  enum clnt_stat qcsapi_flash_image_update_remote_1(qcsapi_flash_image_update_rpcdata *, qcsapi_flash_image_update_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_flash_image_update_remote_1_svc(qcsapi_flash_image_update_rpcdata *, qcsapi_flash_image_update_rpcdata *, struct svc_req *);
-#define QCSAPI_SET_SOC_MAC_ADDR_REMOTE 350
-extern  enum clnt_stat qcsapi_set_soc_mac_addr_remote_1(qcsapi_set_soc_mac_addr_rpcdata *, qcsapi_set_soc_mac_addr_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_set_soc_mac_addr_remote_1_svc(qcsapi_set_soc_mac_addr_rpcdata *, qcsapi_set_soc_mac_addr_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_CUSTOM_VALUE_REMOTE 351
-extern  enum clnt_stat qcsapi_get_custom_value_remote_1(qcsapi_get_custom_value_rpcdata *, qcsapi_get_custom_value_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_get_custom_value_remote_1_svc(qcsapi_get_custom_value_rpcdata *, qcsapi_get_custom_value_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MLME_STATS_PER_MAC_REMOTE 352
-extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_per_mac_remote_1(qcsapi_wifi_get_mlme_stats_per_mac_rpcdata *, qcsapi_wifi_get_mlme_stats_per_mac_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_mlme_stats_per_mac_remote_1_svc(qcsapi_wifi_get_mlme_stats_per_mac_rpcdata *, qcsapi_wifi_get_mlme_stats_per_mac_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MLME_STATS_PER_ASSOCIATION_REMOTE 353
-extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_per_association_remote_1(qcsapi_wifi_get_mlme_stats_per_association_rpcdata *, qcsapi_wifi_get_mlme_stats_per_association_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_mlme_stats_per_association_remote_1_svc(qcsapi_wifi_get_mlme_stats_per_association_rpcdata *, qcsapi_wifi_get_mlme_stats_per_association_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_MLME_STATS_MACS_LIST_REMOTE 354
-extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_macs_list_remote_1(qcsapi_wifi_get_mlme_stats_macs_list_rpcdata *, qcsapi_wifi_get_mlme_stats_macs_list_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_mlme_stats_macs_list_remote_1_svc(qcsapi_wifi_get_mlme_stats_macs_list_rpcdata *, qcsapi_wifi_get_mlme_stats_macs_list_rpcdata *, struct svc_req *);
-#define QCSAPI_PM_SET_MODE_REMOTE 355
-extern  enum clnt_stat qcsapi_pm_set_mode_remote_1(qcsapi_pm_set_mode_rpcdata *, qcsapi_pm_set_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_pm_set_mode_remote_1_svc(qcsapi_pm_set_mode_rpcdata *, qcsapi_pm_set_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_PM_GET_MODE_REMOTE 356
-extern  enum clnt_stat qcsapi_pm_get_mode_remote_1(qcsapi_pm_get_mode_rpcdata *, qcsapi_pm_get_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_pm_get_mode_remote_1_svc(qcsapi_pm_get_mode_rpcdata *, qcsapi_pm_get_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_QPM_LEVEL_REMOTE 357
-extern  enum clnt_stat qcsapi_get_qpm_level_remote_1(qcsapi_get_qpm_level_rpcdata *, qcsapi_get_qpm_level_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_get_qpm_level_remote_1_svc(qcsapi_get_qpm_level_rpcdata *, qcsapi_get_qpm_level_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_GET_STATE_REMOTE 358
-extern  enum clnt_stat qcsapi_vsp_get_state_remote_1(qcsapi_vsp_get_state_rpcdata *, qcsapi_vsp_get_state_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_get_state_remote_1_svc(qcsapi_vsp_get_state_rpcdata *, qcsapi_vsp_get_state_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_GET_STATE_ALL_REMOTE 359
-extern  enum clnt_stat qcsapi_vsp_get_state_all_remote_1(qcsapi_vsp_get_state_all_rpcdata *, qcsapi_vsp_get_state_all_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_get_state_all_remote_1_svc(qcsapi_vsp_get_state_all_rpcdata *, qcsapi_vsp_get_state_all_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_SET_STATE_REMOTE 360
-extern  enum clnt_stat qcsapi_vsp_set_state_remote_1(qcsapi_vsp_set_state_rpcdata *, qcsapi_vsp_set_state_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_set_state_remote_1_svc(qcsapi_vsp_set_state_rpcdata *, qcsapi_vsp_set_state_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_GET_CONFIG_REMOTE 361
-extern  enum clnt_stat qcsapi_vsp_get_config_remote_1(qcsapi_vsp_get_config_rpcdata *, qcsapi_vsp_get_config_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_get_config_remote_1_svc(qcsapi_vsp_get_config_rpcdata *, qcsapi_vsp_get_config_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_GET_CONFIG_ALL_REMOTE 362
-extern  enum clnt_stat qcsapi_vsp_get_config_all_remote_1(qcsapi_vsp_get_config_all_rpcdata *, qcsapi_vsp_get_config_all_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_get_config_all_remote_1_svc(qcsapi_vsp_get_config_all_rpcdata *, qcsapi_vsp_get_config_all_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_SET_CONFIG_REMOTE 363
-extern  enum clnt_stat qcsapi_vsp_set_config_remote_1(qcsapi_vsp_set_config_rpcdata *, qcsapi_vsp_set_config_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_set_config_remote_1_svc(qcsapi_vsp_set_config_rpcdata *, qcsapi_vsp_set_config_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_DEL_WL_INDEX_REMOTE 364
-extern  enum clnt_stat qcsapi_vsp_del_wl_index_remote_1(qcsapi_vsp_del_wl_index_rpcdata *, qcsapi_vsp_del_wl_index_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_del_wl_index_remote_1_svc(qcsapi_vsp_del_wl_index_rpcdata *, qcsapi_vsp_del_wl_index_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_DEL_RULE_INDEX_REMOTE 365
-extern  enum clnt_stat qcsapi_vsp_del_rule_index_remote_1(qcsapi_vsp_del_rule_index_rpcdata *, qcsapi_vsp_del_rule_index_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_del_rule_index_remote_1_svc(qcsapi_vsp_del_rule_index_rpcdata *, qcsapi_vsp_del_rule_index_rpcdata *, struct svc_req *);
-#define QCSAPI_VSP_GET_INACTIVE_FLAGS_REMOTE 366
-extern  enum clnt_stat qcsapi_vsp_get_inactive_flags_remote_1(qcsapi_vsp_get_inactive_flags_rpcdata *, qcsapi_vsp_get_inactive_flags_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_vsp_get_inactive_flags_remote_1_svc(qcsapi_vsp_get_inactive_flags_rpcdata *, qcsapi_vsp_get_inactive_flags_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_RUN_SCRIPT_REMOTE 367
-extern  enum clnt_stat qcsapi_wifi_run_script_remote_1(qcsapi_wifi_run_script_rpcdata *, qcsapi_wifi_run_script_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_run_script_remote_1_svc(qcsapi_wifi_run_script_rpcdata *, qcsapi_wifi_run_script_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_TEST_TRAFFIC_REMOTE 368
-extern  enum clnt_stat qcsapi_wifi_test_traffic_remote_1(qcsapi_wifi_test_traffic_rpcdata *, qcsapi_wifi_test_traffic_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_test_traffic_remote_1_svc(qcsapi_wifi_test_traffic_rpcdata *, qcsapi_wifi_test_traffic_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_ADD_IPFF_REMOTE 369
-extern  enum clnt_stat qcsapi_wifi_add_ipff_remote_1(qcsapi_wifi_add_ipff_rpcdata *, qcsapi_wifi_add_ipff_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_add_ipff_remote_1_svc(qcsapi_wifi_add_ipff_rpcdata *, qcsapi_wifi_add_ipff_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_DEL_IPFF_REMOTE 370
-extern  enum clnt_stat qcsapi_wifi_del_ipff_remote_1(qcsapi_wifi_del_ipff_rpcdata *, qcsapi_wifi_del_ipff_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_del_ipff_remote_1_svc(qcsapi_wifi_del_ipff_rpcdata *, qcsapi_wifi_del_ipff_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_IPFF_REMOTE 371
-extern  enum clnt_stat qcsapi_wifi_get_ipff_remote_1(qcsapi_wifi_get_ipff_rpcdata *, qcsapi_wifi_get_ipff_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_ipff_remote_1_svc(qcsapi_wifi_get_ipff_rpcdata *, qcsapi_wifi_get_ipff_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_RTS_THRESHOLD_REMOTE 372
-extern  enum clnt_stat qcsapi_wifi_get_rts_threshold_remote_1(qcsapi_wifi_get_rts_threshold_rpcdata *, qcsapi_wifi_get_rts_threshold_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_get_rts_threshold_remote_1_svc(qcsapi_wifi_get_rts_threshold_rpcdata *, qcsapi_wifi_get_rts_threshold_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_RTS_THRESHOLD_REMOTE 373
-extern  enum clnt_stat qcsapi_wifi_set_rts_threshold_remote_1(qcsapi_wifi_set_rts_threshold_rpcdata *, qcsapi_wifi_set_rts_threshold_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_wifi_set_rts_threshold_remote_1_svc(qcsapi_wifi_set_rts_threshold_rpcdata *, qcsapi_wifi_set_rts_threshold_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_TEMPERATURE_INFO_REMOTE 374
-extern  enum clnt_stat qcsapi_get_temperature_info_remote_1(qcsapi_get_temperature_info_rpcdata *, qcsapi_get_temperature_info_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_get_temperature_info_remote_1_svc(qcsapi_get_temperature_info_rpcdata *, qcsapi_get_temperature_info_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_SET_TEST_MODE_REMOTE 375
-extern  enum clnt_stat qcsapi_calcmd_set_test_mode_remote_1(qcsapi_calcmd_set_test_mode_rpcdata *, qcsapi_calcmd_set_test_mode_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_set_test_mode_remote_1_svc(qcsapi_calcmd_set_test_mode_rpcdata *, qcsapi_calcmd_set_test_mode_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_SHOW_TEST_PACKET_REMOTE 376
-extern  enum clnt_stat qcsapi_calcmd_show_test_packet_remote_1(qcsapi_calcmd_show_test_packet_rpcdata *, qcsapi_calcmd_show_test_packet_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_show_test_packet_remote_1_svc(qcsapi_calcmd_show_test_packet_rpcdata *, qcsapi_calcmd_show_test_packet_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_SEND_TEST_PACKET_REMOTE 377
-extern  enum clnt_stat qcsapi_calcmd_send_test_packet_remote_1(qcsapi_calcmd_send_test_packet_rpcdata *, qcsapi_calcmd_send_test_packet_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_send_test_packet_remote_1_svc(qcsapi_calcmd_send_test_packet_rpcdata *, qcsapi_calcmd_send_test_packet_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_STOP_TEST_PACKET_REMOTE 378
-extern  enum clnt_stat qcsapi_calcmd_stop_test_packet_remote_1(qcsapi_calcmd_stop_test_packet_rpcdata *, qcsapi_calcmd_stop_test_packet_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_stop_test_packet_remote_1_svc(qcsapi_calcmd_stop_test_packet_rpcdata *, qcsapi_calcmd_stop_test_packet_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_SEND_DC_CW_SIGNAL_REMOTE 379
-extern  enum clnt_stat qcsapi_calcmd_send_dc_cw_signal_remote_1(qcsapi_calcmd_send_dc_cw_signal_rpcdata *, qcsapi_calcmd_send_dc_cw_signal_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_send_dc_cw_signal_remote_1_svc(qcsapi_calcmd_send_dc_cw_signal_rpcdata *, qcsapi_calcmd_send_dc_cw_signal_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_STOP_DC_CW_SIGNAL_REMOTE 380
-extern  enum clnt_stat qcsapi_calcmd_stop_dc_cw_signal_remote_1(qcsapi_calcmd_stop_dc_cw_signal_rpcdata *, qcsapi_calcmd_stop_dc_cw_signal_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_stop_dc_cw_signal_remote_1_svc(qcsapi_calcmd_stop_dc_cw_signal_rpcdata *, qcsapi_calcmd_stop_dc_cw_signal_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_GET_TEST_MODE_ANTENNA_SEL_REMOTE 381
-extern  enum clnt_stat qcsapi_calcmd_get_test_mode_antenna_sel_remote_1(qcsapi_calcmd_get_test_mode_antenna_sel_rpcdata *, qcsapi_calcmd_get_test_mode_antenna_sel_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_get_test_mode_antenna_sel_remote_1_svc(qcsapi_calcmd_get_test_mode_antenna_sel_rpcdata *, qcsapi_calcmd_get_test_mode_antenna_sel_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_GET_TEST_MODE_MCS_REMOTE 382
-extern  enum clnt_stat qcsapi_calcmd_get_test_mode_mcs_remote_1(qcsapi_calcmd_get_test_mode_mcs_rpcdata *, qcsapi_calcmd_get_test_mode_mcs_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_get_test_mode_mcs_remote_1_svc(qcsapi_calcmd_get_test_mode_mcs_rpcdata *, qcsapi_calcmd_get_test_mode_mcs_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_GET_TEST_MODE_BW_REMOTE 383
-extern  enum clnt_stat qcsapi_calcmd_get_test_mode_bw_remote_1(qcsapi_calcmd_get_test_mode_bw_rpcdata *, qcsapi_calcmd_get_test_mode_bw_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_get_test_mode_bw_remote_1_svc(qcsapi_calcmd_get_test_mode_bw_rpcdata *, qcsapi_calcmd_get_test_mode_bw_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_GET_TX_POWER_REMOTE 384
-extern  enum clnt_stat qcsapi_calcmd_get_tx_power_remote_1(qcsapi_calcmd_get_tx_power_rpcdata *, qcsapi_calcmd_get_tx_power_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_get_tx_power_remote_1_svc(qcsapi_calcmd_get_tx_power_rpcdata *, qcsapi_calcmd_get_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_SET_TX_POWER_REMOTE 385
-extern  enum clnt_stat qcsapi_calcmd_set_tx_power_remote_1(qcsapi_calcmd_set_tx_power_rpcdata *, qcsapi_calcmd_set_tx_power_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_set_tx_power_remote_1_svc(qcsapi_calcmd_set_tx_power_rpcdata *, qcsapi_calcmd_set_tx_power_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_GET_TEST_MODE_RSSI_REMOTE 386
-extern  enum clnt_stat qcsapi_calcmd_get_test_mode_rssi_remote_1(qcsapi_calcmd_get_test_mode_rssi_rpcdata *, qcsapi_calcmd_get_test_mode_rssi_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_get_test_mode_rssi_remote_1_svc(qcsapi_calcmd_get_test_mode_rssi_rpcdata *, qcsapi_calcmd_get_test_mode_rssi_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_SET_MAC_FILTER_REMOTE 387
-extern  enum clnt_stat qcsapi_calcmd_set_mac_filter_remote_1(qcsapi_calcmd_set_mac_filter_rpcdata *, qcsapi_calcmd_set_mac_filter_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_set_mac_filter_remote_1_svc(qcsapi_calcmd_set_mac_filter_rpcdata *, qcsapi_calcmd_set_mac_filter_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_GET_ANTENNA_COUNT_REMOTE 388
-extern  enum clnt_stat qcsapi_calcmd_get_antenna_count_remote_1(qcsapi_calcmd_get_antenna_count_rpcdata *, qcsapi_calcmd_get_antenna_count_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_get_antenna_count_remote_1_svc(qcsapi_calcmd_get_antenna_count_rpcdata *, qcsapi_calcmd_get_antenna_count_rpcdata *, struct svc_req *);
-#define QCSAPI_CALCMD_CLEAR_COUNTER_REMOTE 389
-extern  enum clnt_stat qcsapi_calcmd_clear_counter_remote_1(qcsapi_calcmd_clear_counter_rpcdata *, qcsapi_calcmd_clear_counter_rpcdata *, CLIENT *);
-extern  bool_t qcsapi_calcmd_clear_counter_remote_1_svc(qcsapi_calcmd_clear_counter_rpcdata *, qcsapi_calcmd_clear_counter_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_DISABLE_DFS_CHANNELS_REMOTE 390
+#define QCSAPI_WIFI_DISABLE_DFS_CHANNELS_REMOTE 4061
 extern  enum clnt_stat qcsapi_wifi_disable_dfs_channels_remote_1(qcsapi_wifi_disable_dfs_channels_rpcdata *, qcsapi_wifi_disable_dfs_channels_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_disable_dfs_channels_remote_1_svc(qcsapi_wifi_disable_dfs_channels_rpcdata *, qcsapi_wifi_disable_dfs_channels_rpcdata *, struct svc_req *);
-#define QCSAPI_GET_CARRIER_ID_REMOTE 391
+#define QCSAPI_WIFI_CREATE_RESTRICTED_BSS_REMOTE 1441
+extern  enum clnt_stat qcsapi_wifi_create_restricted_bss_remote_1(qcsapi_wifi_create_restricted_bss_rpcdata *, qcsapi_wifi_create_restricted_bss_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_create_restricted_bss_remote_1_svc(qcsapi_wifi_create_restricted_bss_rpcdata *, qcsapi_wifi_create_restricted_bss_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_CREATE_BSS_REMOTE 1451
+extern  enum clnt_stat qcsapi_wifi_create_bss_remote_1(qcsapi_wifi_create_bss_rpcdata *, qcsapi_wifi_create_bss_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_create_bss_remote_1_svc(qcsapi_wifi_create_bss_rpcdata *, qcsapi_wifi_create_bss_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_REMOVE_BSS_REMOTE 1461
+extern  enum clnt_stat qcsapi_wifi_remove_bss_remote_1(qcsapi_wifi_remove_bss_rpcdata *, qcsapi_wifi_remove_bss_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_remove_bss_remote_1_svc(qcsapi_wifi_remove_bss_rpcdata *, qcsapi_wifi_remove_bss_rpcdata *, struct svc_req *);
+#define QCSAPI_WDS_ADD_PEER_REMOTE 1471
+extern  enum clnt_stat qcsapi_wds_add_peer_remote_1(qcsapi_wds_add_peer_rpcdata *, qcsapi_wds_add_peer_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wds_add_peer_remote_1_svc(qcsapi_wds_add_peer_rpcdata *, qcsapi_wds_add_peer_rpcdata *, struct svc_req *);
+#define QCSAPI_WDS_ADD_PEER_ENCRYPT_REMOTE 1481
+extern  enum clnt_stat qcsapi_wds_add_peer_encrypt_remote_1(qcsapi_wds_add_peer_encrypt_rpcdata *, qcsapi_wds_add_peer_encrypt_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wds_add_peer_encrypt_remote_1_svc(qcsapi_wds_add_peer_encrypt_rpcdata *, qcsapi_wds_add_peer_encrypt_rpcdata *, struct svc_req *);
+#define QCSAPI_WDS_REMOVE_PEER_REMOTE 1491
+extern  enum clnt_stat qcsapi_wds_remove_peer_remote_1(qcsapi_wds_remove_peer_rpcdata *, qcsapi_wds_remove_peer_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wds_remove_peer_remote_1_svc(qcsapi_wds_remove_peer_rpcdata *, qcsapi_wds_remove_peer_rpcdata *, struct svc_req *);
+#define QCSAPI_WDS_GET_PEER_ADDRESS_REMOTE 1501
+extern  enum clnt_stat qcsapi_wds_get_peer_address_remote_1(qcsapi_wds_get_peer_address_rpcdata *, qcsapi_wds_get_peer_address_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wds_get_peer_address_remote_1_svc(qcsapi_wds_get_peer_address_rpcdata *, qcsapi_wds_get_peer_address_rpcdata *, struct svc_req *);
+#define QCSAPI_WDS_SET_PSK_REMOTE 1511
+extern  enum clnt_stat qcsapi_wds_set_psk_remote_1(qcsapi_wds_set_psk_rpcdata *, qcsapi_wds_set_psk_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wds_set_psk_remote_1_svc(qcsapi_wds_set_psk_rpcdata *, qcsapi_wds_set_psk_rpcdata *, struct svc_req *);
+#define QCSAPI_WDS_SET_MODE_REMOTE 1521
+extern  enum clnt_stat qcsapi_wds_set_mode_remote_1(qcsapi_wds_set_mode_rpcdata *, qcsapi_wds_set_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wds_set_mode_remote_1_svc(qcsapi_wds_set_mode_rpcdata *, qcsapi_wds_set_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WDS_GET_MODE_REMOTE 1531
+extern  enum clnt_stat qcsapi_wds_get_mode_remote_1(qcsapi_wds_get_mode_rpcdata *, qcsapi_wds_get_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wds_get_mode_remote_1_svc(qcsapi_wds_get_mode_rpcdata *, qcsapi_wds_get_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_EXTENDER_PARAMS_REMOTE 1541
+extern  enum clnt_stat qcsapi_wifi_set_extender_params_remote_1(qcsapi_wifi_set_extender_params_rpcdata *, qcsapi_wifi_set_extender_params_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_extender_params_remote_1_svc(qcsapi_wifi_set_extender_params_rpcdata *, qcsapi_wifi_set_extender_params_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_EXTENDER_PARAMS_REMOTE 1551
+extern  enum clnt_stat qcsapi_wifi_get_extender_params_remote_1(qcsapi_wifi_get_extender_params_rpcdata *, qcsapi_wifi_get_extender_params_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_extender_params_remote_1_svc(qcsapi_wifi_get_extender_params_rpcdata *, qcsapi_wifi_get_extender_params_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_ENABLE_BGSCAN_REMOTE 1561
+extern  enum clnt_stat qcsapi_wifi_enable_bgscan_remote_1(qcsapi_wifi_enable_bgscan_rpcdata *, qcsapi_wifi_enable_bgscan_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_enable_bgscan_remote_1_svc(qcsapi_wifi_enable_bgscan_rpcdata *, qcsapi_wifi_enable_bgscan_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_BGSCAN_STATUS_REMOTE 1571
+extern  enum clnt_stat qcsapi_wifi_get_bgscan_status_remote_1(qcsapi_wifi_get_bgscan_status_rpcdata *, qcsapi_wifi_get_bgscan_status_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_bgscan_status_remote_1_svc(qcsapi_wifi_get_bgscan_status_rpcdata *, qcsapi_wifi_get_bgscan_status_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_BEACON_TYPE_REMOTE 1581
+extern  enum clnt_stat qcsapi_wifi_get_beacon_type_remote_1(qcsapi_wifi_get_beacon_type_rpcdata *, qcsapi_wifi_get_beacon_type_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_beacon_type_remote_1_svc(qcsapi_wifi_get_beacon_type_rpcdata *, qcsapi_wifi_get_beacon_type_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_BEACON_TYPE_REMOTE 1591
+extern  enum clnt_stat qcsapi_wifi_set_beacon_type_remote_1(qcsapi_wifi_set_beacon_type_rpcdata *, qcsapi_wifi_set_beacon_type_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_beacon_type_remote_1_svc(qcsapi_wifi_set_beacon_type_rpcdata *, qcsapi_wifi_set_beacon_type_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_WEP_KEY_INDEX_REMOTE 1601
+extern  enum clnt_stat qcsapi_wifi_get_wep_key_index_remote_1(qcsapi_wifi_get_WEP_key_index_rpcdata *, qcsapi_wifi_get_WEP_key_index_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_wep_key_index_remote_1_svc(qcsapi_wifi_get_WEP_key_index_rpcdata *, qcsapi_wifi_get_WEP_key_index_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_WEP_KEY_INDEX_REMOTE 1611
+extern  enum clnt_stat qcsapi_wifi_set_wep_key_index_remote_1(qcsapi_wifi_set_WEP_key_index_rpcdata *, qcsapi_wifi_set_WEP_key_index_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_wep_key_index_remote_1_svc(qcsapi_wifi_set_WEP_key_index_rpcdata *, qcsapi_wifi_set_WEP_key_index_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_WEP_KEY_PASSPHRASE_REMOTE 1621
+extern  enum clnt_stat qcsapi_wifi_get_wep_key_passphrase_remote_1(qcsapi_wifi_get_WEP_key_passphrase_rpcdata *, qcsapi_wifi_get_WEP_key_passphrase_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_wep_key_passphrase_remote_1_svc(qcsapi_wifi_get_WEP_key_passphrase_rpcdata *, qcsapi_wifi_get_WEP_key_passphrase_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_WEP_KEY_PASSPHRASE_REMOTE 1631
+extern  enum clnt_stat qcsapi_wifi_set_wep_key_passphrase_remote_1(qcsapi_wifi_set_WEP_key_passphrase_rpcdata *, qcsapi_wifi_set_WEP_key_passphrase_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_wep_key_passphrase_remote_1_svc(qcsapi_wifi_set_WEP_key_passphrase_rpcdata *, qcsapi_wifi_set_WEP_key_passphrase_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_WEP_ENCRYPTION_LEVEL_REMOTE 1641
+extern  enum clnt_stat qcsapi_wifi_get_wep_encryption_level_remote_1(qcsapi_wifi_get_WEP_encryption_level_rpcdata *, qcsapi_wifi_get_WEP_encryption_level_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_wep_encryption_level_remote_1_svc(qcsapi_wifi_get_WEP_encryption_level_rpcdata *, qcsapi_wifi_get_WEP_encryption_level_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_BASIC_ENCRYPTION_MODES_REMOTE 1651
+extern  enum clnt_stat qcsapi_wifi_get_basic_encryption_modes_remote_1(qcsapi_wifi_get_basic_encryption_modes_rpcdata *, qcsapi_wifi_get_basic_encryption_modes_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_basic_encryption_modes_remote_1_svc(qcsapi_wifi_get_basic_encryption_modes_rpcdata *, qcsapi_wifi_get_basic_encryption_modes_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_BASIC_ENCRYPTION_MODES_REMOTE 1661
+extern  enum clnt_stat qcsapi_wifi_set_basic_encryption_modes_remote_1(qcsapi_wifi_set_basic_encryption_modes_rpcdata *, qcsapi_wifi_set_basic_encryption_modes_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_basic_encryption_modes_remote_1_svc(qcsapi_wifi_set_basic_encryption_modes_rpcdata *, qcsapi_wifi_set_basic_encryption_modes_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_BASIC_AUTHENTICATION_MODE_REMOTE 1671
+extern  enum clnt_stat qcsapi_wifi_get_basic_authentication_mode_remote_1(qcsapi_wifi_get_basic_authentication_mode_rpcdata *, qcsapi_wifi_get_basic_authentication_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_basic_authentication_mode_remote_1_svc(qcsapi_wifi_get_basic_authentication_mode_rpcdata *, qcsapi_wifi_get_basic_authentication_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_BASIC_AUTHENTICATION_MODE_REMOTE 1681
+extern  enum clnt_stat qcsapi_wifi_set_basic_authentication_mode_remote_1(qcsapi_wifi_set_basic_authentication_mode_rpcdata *, qcsapi_wifi_set_basic_authentication_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_basic_authentication_mode_remote_1_svc(qcsapi_wifi_set_basic_authentication_mode_rpcdata *, qcsapi_wifi_set_basic_authentication_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_WEP_KEY_REMOTE 1691
+extern  enum clnt_stat qcsapi_wifi_get_wep_key_remote_1(qcsapi_wifi_get_WEP_key_rpcdata *, qcsapi_wifi_get_WEP_key_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_wep_key_remote_1_svc(qcsapi_wifi_get_WEP_key_rpcdata *, qcsapi_wifi_get_WEP_key_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_WEP_KEY_REMOTE 1701
+extern  enum clnt_stat qcsapi_wifi_set_wep_key_remote_1(qcsapi_wifi_set_WEP_key_rpcdata *, qcsapi_wifi_set_WEP_key_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_wep_key_remote_1_svc(qcsapi_wifi_set_WEP_key_rpcdata *, qcsapi_wifi_set_WEP_key_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_WPA_ENCRYPTION_MODES_REMOTE 1711
+extern  enum clnt_stat qcsapi_wifi_get_wpa_encryption_modes_remote_1(qcsapi_wifi_get_WPA_encryption_modes_rpcdata *, qcsapi_wifi_get_WPA_encryption_modes_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_wpa_encryption_modes_remote_1_svc(qcsapi_wifi_get_WPA_encryption_modes_rpcdata *, qcsapi_wifi_get_WPA_encryption_modes_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_WPA_ENCRYPTION_MODES_REMOTE 1721
+extern  enum clnt_stat qcsapi_wifi_set_wpa_encryption_modes_remote_1(qcsapi_wifi_set_WPA_encryption_modes_rpcdata *, qcsapi_wifi_set_WPA_encryption_modes_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_wpa_encryption_modes_remote_1_svc(qcsapi_wifi_set_WPA_encryption_modes_rpcdata *, qcsapi_wifi_set_WPA_encryption_modes_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_WPA_AUTHENTICATION_MODE_REMOTE 1731
+extern  enum clnt_stat qcsapi_wifi_get_wpa_authentication_mode_remote_1(qcsapi_wifi_get_WPA_authentication_mode_rpcdata *, qcsapi_wifi_get_WPA_authentication_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_wpa_authentication_mode_remote_1_svc(qcsapi_wifi_get_WPA_authentication_mode_rpcdata *, qcsapi_wifi_get_WPA_authentication_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_WPA_AUTHENTICATION_MODE_REMOTE 1741
+extern  enum clnt_stat qcsapi_wifi_set_wpa_authentication_mode_remote_1(qcsapi_wifi_set_WPA_authentication_mode_rpcdata *, qcsapi_wifi_set_WPA_authentication_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_wpa_authentication_mode_remote_1_svc(qcsapi_wifi_set_WPA_authentication_mode_rpcdata *, qcsapi_wifi_set_WPA_authentication_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_IEEE11I_ENCRYPTION_MODES_REMOTE 1751
+extern  enum clnt_stat qcsapi_wifi_get_ieee11i_encryption_modes_remote_1(qcsapi_wifi_get_IEEE11i_encryption_modes_rpcdata *, qcsapi_wifi_get_IEEE11i_encryption_modes_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_ieee11i_encryption_modes_remote_1_svc(qcsapi_wifi_get_IEEE11i_encryption_modes_rpcdata *, qcsapi_wifi_get_IEEE11i_encryption_modes_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_IEEE11I_ENCRYPTION_MODES_REMOTE 1761
+extern  enum clnt_stat qcsapi_wifi_set_ieee11i_encryption_modes_remote_1(qcsapi_wifi_set_IEEE11i_encryption_modes_rpcdata *, qcsapi_wifi_set_IEEE11i_encryption_modes_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_ieee11i_encryption_modes_remote_1_svc(qcsapi_wifi_set_IEEE11i_encryption_modes_rpcdata *, qcsapi_wifi_set_IEEE11i_encryption_modes_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_IEEE11I_AUTHENTICATION_MODE_REMOTE 1771
+extern  enum clnt_stat qcsapi_wifi_get_ieee11i_authentication_mode_remote_1(qcsapi_wifi_get_IEEE11i_authentication_mode_rpcdata *, qcsapi_wifi_get_IEEE11i_authentication_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_ieee11i_authentication_mode_remote_1_svc(qcsapi_wifi_get_IEEE11i_authentication_mode_rpcdata *, qcsapi_wifi_get_IEEE11i_authentication_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_IEEE11I_AUTHENTICATION_MODE_REMOTE 1781
+extern  enum clnt_stat qcsapi_wifi_set_ieee11i_authentication_mode_remote_1(qcsapi_wifi_set_IEEE11i_authentication_mode_rpcdata *, qcsapi_wifi_set_IEEE11i_authentication_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_ieee11i_authentication_mode_remote_1_svc(qcsapi_wifi_set_IEEE11i_authentication_mode_rpcdata *, qcsapi_wifi_set_IEEE11i_authentication_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_MICHAEL_ERRCNT_REMOTE 1791
+extern  enum clnt_stat qcsapi_wifi_get_michael_errcnt_remote_1(qcsapi_wifi_get_michael_errcnt_rpcdata *, qcsapi_wifi_get_michael_errcnt_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_michael_errcnt_remote_1_svc(qcsapi_wifi_get_michael_errcnt_rpcdata *, qcsapi_wifi_get_michael_errcnt_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_PRE_SHARED_KEY_REMOTE 1801
+extern  enum clnt_stat qcsapi_wifi_get_pre_shared_key_remote_1(qcsapi_wifi_get_pre_shared_key_rpcdata *, qcsapi_wifi_get_pre_shared_key_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_pre_shared_key_remote_1_svc(qcsapi_wifi_get_pre_shared_key_rpcdata *, qcsapi_wifi_get_pre_shared_key_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_PRE_SHARED_KEY_REMOTE 1811
+extern  enum clnt_stat qcsapi_wifi_set_pre_shared_key_remote_1(qcsapi_wifi_set_pre_shared_key_rpcdata *, qcsapi_wifi_set_pre_shared_key_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_pre_shared_key_remote_1_svc(qcsapi_wifi_set_pre_shared_key_rpcdata *, qcsapi_wifi_set_pre_shared_key_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_EAP_SHARED_KEY_REMOTE 1821
+extern  enum clnt_stat qcsapi_wifi_get_eap_shared_key_remote_1(qcsapi_wifi_get_eap_shared_key_rpcdata *, qcsapi_wifi_get_eap_shared_key_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_eap_shared_key_remote_1_svc(qcsapi_wifi_get_eap_shared_key_rpcdata *, qcsapi_wifi_get_eap_shared_key_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_EAP_SHARED_KEY_REMOTE 1831
+extern  enum clnt_stat qcsapi_wifi_set_eap_shared_key_remote_1(qcsapi_wifi_set_eap_shared_key_rpcdata *, qcsapi_wifi_set_eap_shared_key_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_eap_shared_key_remote_1_svc(qcsapi_wifi_set_eap_shared_key_rpcdata *, qcsapi_wifi_set_eap_shared_key_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_EAP_RADIUS_IPADDR_REMOTE 1841
+extern  enum clnt_stat qcsapi_wifi_get_eap_radius_ipaddr_remote_1(qcsapi_wifi_get_eap_radius_ipaddr_rpcdata *, qcsapi_wifi_get_eap_radius_ipaddr_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_eap_radius_ipaddr_remote_1_svc(qcsapi_wifi_get_eap_radius_ipaddr_rpcdata *, qcsapi_wifi_get_eap_radius_ipaddr_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_EAP_RADIUS_IPADDR_REMOTE 1851
+extern  enum clnt_stat qcsapi_wifi_set_eap_radius_ipaddr_remote_1(qcsapi_wifi_set_eap_radius_ipaddr_rpcdata *, qcsapi_wifi_set_eap_radius_ipaddr_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_eap_radius_ipaddr_remote_1_svc(qcsapi_wifi_set_eap_radius_ipaddr_rpcdata *, qcsapi_wifi_set_eap_radius_ipaddr_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_EAP_RADIUS_PORT_REMOTE 1861
+extern  enum clnt_stat qcsapi_wifi_get_eap_radius_port_remote_1(qcsapi_wifi_get_eap_radius_port_rpcdata *, qcsapi_wifi_get_eap_radius_port_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_eap_radius_port_remote_1_svc(qcsapi_wifi_get_eap_radius_port_rpcdata *, qcsapi_wifi_get_eap_radius_port_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_EAP_RADIUS_PORT_REMOTE 1871
+extern  enum clnt_stat qcsapi_wifi_set_eap_radius_port_remote_1(qcsapi_wifi_set_eap_radius_port_rpcdata *, qcsapi_wifi_set_eap_radius_port_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_eap_radius_port_remote_1_svc(qcsapi_wifi_set_eap_radius_port_rpcdata *, qcsapi_wifi_set_eap_radius_port_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_OWN_IP_ADDR_REMOTE 1881
+extern  enum clnt_stat qcsapi_wifi_set_own_ip_addr_remote_1(qcsapi_wifi_set_own_ip_addr_rpcdata *, qcsapi_wifi_set_own_ip_addr_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_own_ip_addr_remote_1_svc(qcsapi_wifi_set_own_ip_addr_rpcdata *, qcsapi_wifi_set_own_ip_addr_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_KEY_PASSPHRASE_REMOTE 1891
+extern  enum clnt_stat qcsapi_wifi_get_key_passphrase_remote_1(qcsapi_wifi_get_key_passphrase_rpcdata *, qcsapi_wifi_get_key_passphrase_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_key_passphrase_remote_1_svc(qcsapi_wifi_get_key_passphrase_rpcdata *, qcsapi_wifi_get_key_passphrase_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_KEY_PASSPHRASE_REMOTE 1901
+extern  enum clnt_stat qcsapi_wifi_set_key_passphrase_remote_1(qcsapi_wifi_set_key_passphrase_rpcdata *, qcsapi_wifi_set_key_passphrase_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_key_passphrase_remote_1_svc(qcsapi_wifi_set_key_passphrase_rpcdata *, qcsapi_wifi_set_key_passphrase_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_GROUP_KEY_INTERVAL_REMOTE 1911
+extern  enum clnt_stat qcsapi_wifi_get_group_key_interval_remote_1(qcsapi_wifi_get_group_key_interval_rpcdata *, qcsapi_wifi_get_group_key_interval_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_group_key_interval_remote_1_svc(qcsapi_wifi_get_group_key_interval_rpcdata *, qcsapi_wifi_get_group_key_interval_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_GROUP_KEY_INTERVAL_REMOTE 1921
+extern  enum clnt_stat qcsapi_wifi_set_group_key_interval_remote_1(qcsapi_wifi_set_group_key_interval_rpcdata *, qcsapi_wifi_set_group_key_interval_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_group_key_interval_remote_1_svc(qcsapi_wifi_set_group_key_interval_rpcdata *, qcsapi_wifi_set_group_key_interval_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_PMF_REMOTE 1931
+extern  enum clnt_stat qcsapi_wifi_get_pmf_remote_1(qcsapi_wifi_get_pmf_rpcdata *, qcsapi_wifi_get_pmf_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_pmf_remote_1_svc(qcsapi_wifi_get_pmf_rpcdata *, qcsapi_wifi_get_pmf_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_PMF_REMOTE 1941
+extern  enum clnt_stat qcsapi_wifi_set_pmf_remote_1(qcsapi_wifi_set_pmf_rpcdata *, qcsapi_wifi_set_pmf_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_pmf_remote_1_svc(qcsapi_wifi_set_pmf_rpcdata *, qcsapi_wifi_set_pmf_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_WPA_STATUS_REMOTE 1951
+extern  enum clnt_stat qcsapi_wifi_get_wpa_status_remote_1(qcsapi_wifi_get_wpa_status_rpcdata *, qcsapi_wifi_get_wpa_status_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_wpa_status_remote_1_svc(qcsapi_wifi_get_wpa_status_rpcdata *, qcsapi_wifi_get_wpa_status_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_PSK_AUTH_FAILURES_REMOTE 1961
+extern  enum clnt_stat qcsapi_wifi_get_psk_auth_failures_remote_1(qcsapi_wifi_get_psk_auth_failures_rpcdata *, qcsapi_wifi_get_psk_auth_failures_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_psk_auth_failures_remote_1_svc(qcsapi_wifi_get_psk_auth_failures_rpcdata *, qcsapi_wifi_get_psk_auth_failures_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_AUTH_STATE_REMOTE 1971
+extern  enum clnt_stat qcsapi_wifi_get_auth_state_remote_1(qcsapi_wifi_get_auth_state_rpcdata *, qcsapi_wifi_get_auth_state_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_auth_state_remote_1_svc(qcsapi_wifi_get_auth_state_rpcdata *, qcsapi_wifi_get_auth_state_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_SECURITY_DEFER_MODE_REMOTE 1981
+extern  enum clnt_stat qcsapi_wifi_set_security_defer_mode_remote_1(qcsapi_wifi_set_security_defer_mode_rpcdata *, qcsapi_wifi_set_security_defer_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_security_defer_mode_remote_1_svc(qcsapi_wifi_set_security_defer_mode_rpcdata *, qcsapi_wifi_set_security_defer_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_SECURITY_DEFER_MODE_REMOTE 1991
+extern  enum clnt_stat qcsapi_wifi_get_security_defer_mode_remote_1(qcsapi_wifi_get_security_defer_mode_rpcdata *, qcsapi_wifi_get_security_defer_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_security_defer_mode_remote_1_svc(qcsapi_wifi_get_security_defer_mode_rpcdata *, qcsapi_wifi_get_security_defer_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_APPLY_SECURITY_CONFIG_REMOTE 2001
+extern  enum clnt_stat qcsapi_wifi_apply_security_config_remote_1(qcsapi_wifi_apply_security_config_rpcdata *, qcsapi_wifi_apply_security_config_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_apply_security_config_remote_1_svc(qcsapi_wifi_apply_security_config_rpcdata *, qcsapi_wifi_apply_security_config_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_MAC_ADDRESS_FILTERING_REMOTE 2011
+extern  enum clnt_stat qcsapi_wifi_set_mac_address_filtering_remote_1(qcsapi_wifi_set_mac_address_filtering_rpcdata *, qcsapi_wifi_set_mac_address_filtering_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_mac_address_filtering_remote_1_svc(qcsapi_wifi_set_mac_address_filtering_rpcdata *, qcsapi_wifi_set_mac_address_filtering_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_MAC_ADDRESS_FILTERING_REMOTE 2021
+extern  enum clnt_stat qcsapi_wifi_get_mac_address_filtering_remote_1(qcsapi_wifi_get_mac_address_filtering_rpcdata *, qcsapi_wifi_get_mac_address_filtering_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_mac_address_filtering_remote_1_svc(qcsapi_wifi_get_mac_address_filtering_rpcdata *, qcsapi_wifi_get_mac_address_filtering_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_AUTHORIZE_MAC_ADDRESS_REMOTE 2031
+extern  enum clnt_stat qcsapi_wifi_authorize_mac_address_remote_1(qcsapi_wifi_authorize_mac_address_rpcdata *, qcsapi_wifi_authorize_mac_address_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_authorize_mac_address_remote_1_svc(qcsapi_wifi_authorize_mac_address_rpcdata *, qcsapi_wifi_authorize_mac_address_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_DENY_MAC_ADDRESS_REMOTE 2041
+extern  enum clnt_stat qcsapi_wifi_deny_mac_address_remote_1(qcsapi_wifi_deny_mac_address_rpcdata *, qcsapi_wifi_deny_mac_address_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_deny_mac_address_remote_1_svc(qcsapi_wifi_deny_mac_address_rpcdata *, qcsapi_wifi_deny_mac_address_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_REMOVE_MAC_ADDRESS_REMOTE 2051
+extern  enum clnt_stat qcsapi_wifi_remove_mac_address_remote_1(qcsapi_wifi_remove_mac_address_rpcdata *, qcsapi_wifi_remove_mac_address_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_remove_mac_address_remote_1_svc(qcsapi_wifi_remove_mac_address_rpcdata *, qcsapi_wifi_remove_mac_address_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_IS_MAC_ADDRESS_AUTHORIZED_REMOTE 2061
+extern  enum clnt_stat qcsapi_wifi_is_mac_address_authorized_remote_1(qcsapi_wifi_is_mac_address_authorized_rpcdata *, qcsapi_wifi_is_mac_address_authorized_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_is_mac_address_authorized_remote_1_svc(qcsapi_wifi_is_mac_address_authorized_rpcdata *, qcsapi_wifi_is_mac_address_authorized_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_AUTHORIZED_MAC_ADDRESSES_REMOTE 2071
+extern  enum clnt_stat qcsapi_wifi_get_authorized_mac_addresses_remote_1(qcsapi_wifi_get_authorized_mac_addresses_rpcdata *, qcsapi_wifi_get_authorized_mac_addresses_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_authorized_mac_addresses_remote_1_svc(qcsapi_wifi_get_authorized_mac_addresses_rpcdata *, qcsapi_wifi_get_authorized_mac_addresses_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_DENIED_MAC_ADDRESSES_REMOTE 2081
+extern  enum clnt_stat qcsapi_wifi_get_denied_mac_addresses_remote_1(qcsapi_wifi_get_denied_mac_addresses_rpcdata *, qcsapi_wifi_get_denied_mac_addresses_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_denied_mac_addresses_remote_1_svc(qcsapi_wifi_get_denied_mac_addresses_rpcdata *, qcsapi_wifi_get_denied_mac_addresses_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_ACCEPT_OUI_FILTER_REMOTE 2091
+extern  enum clnt_stat qcsapi_wifi_set_accept_oui_filter_remote_1(qcsapi_wifi_set_accept_oui_filter_rpcdata *, qcsapi_wifi_set_accept_oui_filter_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_accept_oui_filter_remote_1_svc(qcsapi_wifi_set_accept_oui_filter_rpcdata *, qcsapi_wifi_set_accept_oui_filter_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_ACCEPT_OUI_FILTER_REMOTE 2101
+extern  enum clnt_stat qcsapi_wifi_get_accept_oui_filter_remote_1(qcsapi_wifi_get_accept_oui_filter_rpcdata *, qcsapi_wifi_get_accept_oui_filter_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_accept_oui_filter_remote_1_svc(qcsapi_wifi_get_accept_oui_filter_rpcdata *, qcsapi_wifi_get_accept_oui_filter_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_CLEAR_MAC_ADDRESS_FILTERS_REMOTE 2111
+extern  enum clnt_stat qcsapi_wifi_clear_mac_address_filters_remote_1(qcsapi_wifi_clear_mac_address_filters_rpcdata *, qcsapi_wifi_clear_mac_address_filters_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_clear_mac_address_filters_remote_1_svc(qcsapi_wifi_clear_mac_address_filters_rpcdata *, qcsapi_wifi_clear_mac_address_filters_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_OPTION_REMOTE 2121
+extern  enum clnt_stat qcsapi_wifi_get_option_remote_1(qcsapi_wifi_get_option_rpcdata *, qcsapi_wifi_get_option_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_option_remote_1_svc(qcsapi_wifi_get_option_rpcdata *, qcsapi_wifi_get_option_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_OPTION_REMOTE 2131
+extern  enum clnt_stat qcsapi_wifi_set_option_remote_1(qcsapi_wifi_set_option_rpcdata *, qcsapi_wifi_set_option_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_option_remote_1_svc(qcsapi_wifi_set_option_rpcdata *, qcsapi_wifi_set_option_rpcdata *, struct svc_req *);
+#define QCSAPI_GET_BOARD_PARAMETER_REMOTE 2141
+extern  enum clnt_stat qcsapi_get_board_parameter_remote_1(qcsapi_get_board_parameter_rpcdata *, qcsapi_get_board_parameter_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_get_board_parameter_remote_1_svc(qcsapi_get_board_parameter_rpcdata *, qcsapi_get_board_parameter_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_CREATE_SSID_REMOTE 2151
+extern  enum clnt_stat qcsapi_ssid_create_ssid_remote_1(qcsapi_SSID_create_SSID_rpcdata *, qcsapi_SSID_create_SSID_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_create_ssid_remote_1_svc(qcsapi_SSID_create_SSID_rpcdata *, qcsapi_SSID_create_SSID_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_REMOVE_SSID_REMOTE 2161
+extern  enum clnt_stat qcsapi_ssid_remove_ssid_remote_1(qcsapi_SSID_remove_SSID_rpcdata *, qcsapi_SSID_remove_SSID_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_remove_ssid_remote_1_svc(qcsapi_SSID_remove_SSID_rpcdata *, qcsapi_SSID_remove_SSID_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_VERIFY_SSID_REMOTE 2171
+extern  enum clnt_stat qcsapi_ssid_verify_ssid_remote_1(qcsapi_SSID_verify_SSID_rpcdata *, qcsapi_SSID_verify_SSID_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_verify_ssid_remote_1_svc(qcsapi_SSID_verify_SSID_rpcdata *, qcsapi_SSID_verify_SSID_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_RENAME_SSID_REMOTE 2181
+extern  enum clnt_stat qcsapi_ssid_rename_ssid_remote_1(qcsapi_SSID_rename_SSID_rpcdata *, qcsapi_SSID_rename_SSID_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_rename_ssid_remote_1_svc(qcsapi_SSID_rename_SSID_rpcdata *, qcsapi_SSID_rename_SSID_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_SSID_LIST_REMOTE 2191
+extern  enum clnt_stat qcsapi_ssid_get_ssid_list_remote_1(qcsapi_SSID_get_SSID_list_rpcdata *, qcsapi_SSID_get_SSID_list_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_ssid_list_remote_1_svc(qcsapi_SSID_get_SSID_list_rpcdata *, qcsapi_SSID_get_SSID_list_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_SET_PROTOCOL_REMOTE 2201
+extern  enum clnt_stat qcsapi_ssid_set_protocol_remote_1(qcsapi_SSID_set_protocol_rpcdata *, qcsapi_SSID_set_protocol_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_set_protocol_remote_1_svc(qcsapi_SSID_set_protocol_rpcdata *, qcsapi_SSID_set_protocol_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_PROTOCOL_REMOTE 2211
+extern  enum clnt_stat qcsapi_ssid_get_protocol_remote_1(qcsapi_SSID_get_protocol_rpcdata *, qcsapi_SSID_get_protocol_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_protocol_remote_1_svc(qcsapi_SSID_get_protocol_rpcdata *, qcsapi_SSID_get_protocol_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_ENCRYPTION_MODES_REMOTE 2221
+extern  enum clnt_stat qcsapi_ssid_get_encryption_modes_remote_1(qcsapi_SSID_get_encryption_modes_rpcdata *, qcsapi_SSID_get_encryption_modes_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_encryption_modes_remote_1_svc(qcsapi_SSID_get_encryption_modes_rpcdata *, qcsapi_SSID_get_encryption_modes_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_SET_ENCRYPTION_MODES_REMOTE 2231
+extern  enum clnt_stat qcsapi_ssid_set_encryption_modes_remote_1(qcsapi_SSID_set_encryption_modes_rpcdata *, qcsapi_SSID_set_encryption_modes_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_set_encryption_modes_remote_1_svc(qcsapi_SSID_set_encryption_modes_rpcdata *, qcsapi_SSID_set_encryption_modes_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_GROUP_ENCRYPTION_REMOTE 2241
+extern  enum clnt_stat qcsapi_ssid_get_group_encryption_remote_1(qcsapi_SSID_get_group_encryption_rpcdata *, qcsapi_SSID_get_group_encryption_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_group_encryption_remote_1_svc(qcsapi_SSID_get_group_encryption_rpcdata *, qcsapi_SSID_get_group_encryption_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_SET_GROUP_ENCRYPTION_REMOTE 2251
+extern  enum clnt_stat qcsapi_ssid_set_group_encryption_remote_1(qcsapi_SSID_set_group_encryption_rpcdata *, qcsapi_SSID_set_group_encryption_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_set_group_encryption_remote_1_svc(qcsapi_SSID_set_group_encryption_rpcdata *, qcsapi_SSID_set_group_encryption_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_AUTHENTICATION_MODE_REMOTE 2261
+extern  enum clnt_stat qcsapi_ssid_get_authentication_mode_remote_1(qcsapi_SSID_get_authentication_mode_rpcdata *, qcsapi_SSID_get_authentication_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_authentication_mode_remote_1_svc(qcsapi_SSID_get_authentication_mode_rpcdata *, qcsapi_SSID_get_authentication_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_SET_AUTHENTICATION_MODE_REMOTE 2271
+extern  enum clnt_stat qcsapi_ssid_set_authentication_mode_remote_1(qcsapi_SSID_set_authentication_mode_rpcdata *, qcsapi_SSID_set_authentication_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_set_authentication_mode_remote_1_svc(qcsapi_SSID_set_authentication_mode_rpcdata *, qcsapi_SSID_set_authentication_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_PRE_SHARED_KEY_REMOTE 2281
+extern  enum clnt_stat qcsapi_ssid_get_pre_shared_key_remote_1(qcsapi_SSID_get_pre_shared_key_rpcdata *, qcsapi_SSID_get_pre_shared_key_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_pre_shared_key_remote_1_svc(qcsapi_SSID_get_pre_shared_key_rpcdata *, qcsapi_SSID_get_pre_shared_key_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_SET_PRE_SHARED_KEY_REMOTE 2291
+extern  enum clnt_stat qcsapi_ssid_set_pre_shared_key_remote_1(qcsapi_SSID_set_pre_shared_key_rpcdata *, qcsapi_SSID_set_pre_shared_key_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_set_pre_shared_key_remote_1_svc(qcsapi_SSID_set_pre_shared_key_rpcdata *, qcsapi_SSID_set_pre_shared_key_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_KEY_PASSPHRASE_REMOTE 2301
+extern  enum clnt_stat qcsapi_ssid_get_key_passphrase_remote_1(qcsapi_SSID_get_key_passphrase_rpcdata *, qcsapi_SSID_get_key_passphrase_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_key_passphrase_remote_1_svc(qcsapi_SSID_get_key_passphrase_rpcdata *, qcsapi_SSID_get_key_passphrase_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_SET_KEY_PASSPHRASE_REMOTE 2311
+extern  enum clnt_stat qcsapi_ssid_set_key_passphrase_remote_1(qcsapi_SSID_set_key_passphrase_rpcdata *, qcsapi_SSID_set_key_passphrase_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_set_key_passphrase_remote_1_svc(qcsapi_SSID_set_key_passphrase_rpcdata *, qcsapi_SSID_set_key_passphrase_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_PMF_REMOTE 2321
+extern  enum clnt_stat qcsapi_ssid_get_pmf_remote_1(qcsapi_SSID_get_pmf_rpcdata *, qcsapi_SSID_get_pmf_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_pmf_remote_1_svc(qcsapi_SSID_get_pmf_rpcdata *, qcsapi_SSID_get_pmf_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_SET_PMF_REMOTE 2331
+extern  enum clnt_stat qcsapi_ssid_set_pmf_remote_1(qcsapi_SSID_set_pmf_rpcdata *, qcsapi_SSID_set_pmf_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_set_pmf_remote_1_svc(qcsapi_SSID_set_pmf_rpcdata *, qcsapi_SSID_set_pmf_rpcdata *, struct svc_req *);
+#define QCSAPI_SSID_GET_WPS_SSID_REMOTE 2341
+extern  enum clnt_stat qcsapi_ssid_get_wps_ssid_remote_1(qcsapi_SSID_get_wps_SSID_rpcdata *, qcsapi_SSID_get_wps_SSID_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_ssid_get_wps_ssid_remote_1_svc(qcsapi_SSID_get_wps_SSID_rpcdata *, qcsapi_SSID_get_wps_SSID_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_VLAN_CONFIG_REMOTE 2351
+extern  enum clnt_stat qcsapi_wifi_vlan_config_remote_1(qcsapi_wifi_vlan_config_rpcdata *, qcsapi_wifi_vlan_config_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_vlan_config_remote_1_svc(qcsapi_wifi_vlan_config_rpcdata *, qcsapi_wifi_vlan_config_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SHOW_VLAN_CONFIG_REMOTE 2361
+extern  enum clnt_stat qcsapi_wifi_show_vlan_config_remote_1(qcsapi_wifi_show_vlan_config_rpcdata *, qcsapi_wifi_show_vlan_config_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_show_vlan_config_remote_1_svc(qcsapi_wifi_show_vlan_config_rpcdata *, qcsapi_wifi_show_vlan_config_rpcdata *, struct svc_req *);
+#define QCSAPI_ENABLE_VLAN_PASS_THROUGH_REMOTE 2371
+extern  enum clnt_stat qcsapi_enable_vlan_pass_through_remote_1(qcsapi_enable_vlan_pass_through_rpcdata *, qcsapi_enable_vlan_pass_through_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_enable_vlan_pass_through_remote_1_svc(qcsapi_enable_vlan_pass_through_rpcdata *, qcsapi_enable_vlan_pass_through_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_VLAN_PROMISC_REMOTE 2381
+extern  enum clnt_stat qcsapi_wifi_set_vlan_promisc_remote_1(qcsapi_wifi_set_vlan_promisc_rpcdata *, qcsapi_wifi_set_vlan_promisc_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_vlan_promisc_remote_1_svc(qcsapi_wifi_set_vlan_promisc_rpcdata *, qcsapi_wifi_set_vlan_promisc_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_REGISTRAR_REPORT_BUTTON_PRESS_REMOTE 2391
+extern  enum clnt_stat qcsapi_wps_registrar_report_button_press_remote_1(qcsapi_wps_registrar_report_button_press_rpcdata *, qcsapi_wps_registrar_report_button_press_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_registrar_report_button_press_remote_1_svc(qcsapi_wps_registrar_report_button_press_rpcdata *, qcsapi_wps_registrar_report_button_press_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_REGISTRAR_REPORT_PIN_REMOTE 2401
+extern  enum clnt_stat qcsapi_wps_registrar_report_pin_remote_1(qcsapi_wps_registrar_report_pin_rpcdata *, qcsapi_wps_registrar_report_pin_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_registrar_report_pin_remote_1_svc(qcsapi_wps_registrar_report_pin_rpcdata *, qcsapi_wps_registrar_report_pin_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_REGISTRAR_GET_PP_DEVNAME_REMOTE 2411
+extern  enum clnt_stat qcsapi_wps_registrar_get_pp_devname_remote_1(qcsapi_wps_registrar_get_pp_devname_rpcdata *, qcsapi_wps_registrar_get_pp_devname_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_registrar_get_pp_devname_remote_1_svc(qcsapi_wps_registrar_get_pp_devname_rpcdata *, qcsapi_wps_registrar_get_pp_devname_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_REGISTRAR_SET_PP_DEVNAME_REMOTE 2421
+extern  enum clnt_stat qcsapi_wps_registrar_set_pp_devname_remote_1(qcsapi_wps_registrar_set_pp_devname_rpcdata *, qcsapi_wps_registrar_set_pp_devname_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_registrar_set_pp_devname_remote_1_svc(qcsapi_wps_registrar_set_pp_devname_rpcdata *, qcsapi_wps_registrar_set_pp_devname_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_ENROLLEE_REPORT_BUTTON_PRESS_REMOTE 2431
+extern  enum clnt_stat qcsapi_wps_enrollee_report_button_press_remote_1(qcsapi_wps_enrollee_report_button_press_rpcdata *, qcsapi_wps_enrollee_report_button_press_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_enrollee_report_button_press_remote_1_svc(qcsapi_wps_enrollee_report_button_press_rpcdata *, qcsapi_wps_enrollee_report_button_press_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_ENROLLEE_REPORT_PIN_REMOTE 2441
+extern  enum clnt_stat qcsapi_wps_enrollee_report_pin_remote_1(qcsapi_wps_enrollee_report_pin_rpcdata *, qcsapi_wps_enrollee_report_pin_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_enrollee_report_pin_remote_1_svc(qcsapi_wps_enrollee_report_pin_rpcdata *, qcsapi_wps_enrollee_report_pin_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_ENROLLEE_GENERATE_PIN_REMOTE 2451
+extern  enum clnt_stat qcsapi_wps_enrollee_generate_pin_remote_1(qcsapi_wps_enrollee_generate_pin_rpcdata *, qcsapi_wps_enrollee_generate_pin_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_enrollee_generate_pin_remote_1_svc(qcsapi_wps_enrollee_generate_pin_rpcdata *, qcsapi_wps_enrollee_generate_pin_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_AP_PIN_REMOTE 2461
+extern  enum clnt_stat qcsapi_wps_get_ap_pin_remote_1(qcsapi_wps_get_ap_pin_rpcdata *, qcsapi_wps_get_ap_pin_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_ap_pin_remote_1_svc(qcsapi_wps_get_ap_pin_rpcdata *, qcsapi_wps_get_ap_pin_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_SET_AP_PIN_REMOTE 2471
+extern  enum clnt_stat qcsapi_wps_set_ap_pin_remote_1(qcsapi_wps_set_ap_pin_rpcdata *, qcsapi_wps_set_ap_pin_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_set_ap_pin_remote_1_svc(qcsapi_wps_set_ap_pin_rpcdata *, qcsapi_wps_set_ap_pin_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_SAVE_AP_PIN_REMOTE 2481
+extern  enum clnt_stat qcsapi_wps_save_ap_pin_remote_1(qcsapi_wps_save_ap_pin_rpcdata *, qcsapi_wps_save_ap_pin_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_save_ap_pin_remote_1_svc(qcsapi_wps_save_ap_pin_rpcdata *, qcsapi_wps_save_ap_pin_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_ENABLE_AP_PIN_REMOTE 2491
+extern  enum clnt_stat qcsapi_wps_enable_ap_pin_remote_1(qcsapi_wps_enable_ap_pin_rpcdata *, qcsapi_wps_enable_ap_pin_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_enable_ap_pin_remote_1_svc(qcsapi_wps_enable_ap_pin_rpcdata *, qcsapi_wps_enable_ap_pin_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_STA_PIN_REMOTE 2501
+extern  enum clnt_stat qcsapi_wps_get_sta_pin_remote_1(qcsapi_wps_get_sta_pin_rpcdata *, qcsapi_wps_get_sta_pin_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_sta_pin_remote_1_svc(qcsapi_wps_get_sta_pin_rpcdata *, qcsapi_wps_get_sta_pin_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_STATE_REMOTE 2511
+extern  enum clnt_stat qcsapi_wps_get_state_remote_1(qcsapi_wps_get_state_rpcdata *, qcsapi_wps_get_state_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_state_remote_1_svc(qcsapi_wps_get_state_rpcdata *, qcsapi_wps_get_state_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_CONFIGURED_STATE_REMOTE 2521
+extern  enum clnt_stat qcsapi_wps_get_configured_state_remote_1(qcsapi_wps_get_configured_state_rpcdata *, qcsapi_wps_get_configured_state_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_configured_state_remote_1_svc(qcsapi_wps_get_configured_state_rpcdata *, qcsapi_wps_get_configured_state_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_RUNTIME_STATE_REMOTE 2531
+extern  enum clnt_stat qcsapi_wps_get_runtime_state_remote_1(qcsapi_wps_get_runtime_state_rpcdata *, qcsapi_wps_get_runtime_state_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_runtime_state_remote_1_svc(qcsapi_wps_get_runtime_state_rpcdata *, qcsapi_wps_get_runtime_state_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_SET_CONFIGURED_STATE_REMOTE 2541
+extern  enum clnt_stat qcsapi_wps_set_configured_state_remote_1(qcsapi_wps_set_configured_state_rpcdata *, qcsapi_wps_set_configured_state_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_set_configured_state_remote_1_svc(qcsapi_wps_set_configured_state_rpcdata *, qcsapi_wps_set_configured_state_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_PARAM_REMOTE 2551
+extern  enum clnt_stat qcsapi_wps_get_param_remote_1(qcsapi_wps_get_param_rpcdata *, qcsapi_wps_get_param_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_param_remote_1_svc(qcsapi_wps_get_param_rpcdata *, qcsapi_wps_get_param_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_SET_TIMEOUT_REMOTE 2561
+extern  enum clnt_stat qcsapi_wps_set_timeout_remote_1(qcsapi_wps_set_timeout_rpcdata *, qcsapi_wps_set_timeout_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_set_timeout_remote_1_svc(qcsapi_wps_set_timeout_rpcdata *, qcsapi_wps_set_timeout_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_ON_HIDDEN_SSID_REMOTE 2571
+extern  enum clnt_stat qcsapi_wps_on_hidden_ssid_remote_1(qcsapi_wps_on_hidden_ssid_rpcdata *, qcsapi_wps_on_hidden_ssid_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_on_hidden_ssid_remote_1_svc(qcsapi_wps_on_hidden_ssid_rpcdata *, qcsapi_wps_on_hidden_ssid_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_ON_HIDDEN_SSID_STATUS_REMOTE 2581
+extern  enum clnt_stat qcsapi_wps_on_hidden_ssid_status_remote_1(qcsapi_wps_on_hidden_ssid_status_rpcdata *, qcsapi_wps_on_hidden_ssid_status_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_on_hidden_ssid_status_remote_1_svc(qcsapi_wps_on_hidden_ssid_status_rpcdata *, qcsapi_wps_on_hidden_ssid_status_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_UPNP_ENABLE_REMOTE 2591
+extern  enum clnt_stat qcsapi_wps_upnp_enable_remote_1(qcsapi_wps_upnp_enable_rpcdata *, qcsapi_wps_upnp_enable_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_upnp_enable_remote_1_svc(qcsapi_wps_upnp_enable_rpcdata *, qcsapi_wps_upnp_enable_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_UPNP_STATUS_REMOTE 2601
+extern  enum clnt_stat qcsapi_wps_upnp_status_remote_1(qcsapi_wps_upnp_status_rpcdata *, qcsapi_wps_upnp_status_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_upnp_status_remote_1_svc(qcsapi_wps_upnp_status_rpcdata *, qcsapi_wps_upnp_status_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_ALLOW_PBC_OVERLAP_REMOTE 2611
+extern  enum clnt_stat qcsapi_wps_allow_pbc_overlap_remote_1(qcsapi_wps_allow_pbc_overlap_rpcdata *, qcsapi_wps_allow_pbc_overlap_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_allow_pbc_overlap_remote_1_svc(qcsapi_wps_allow_pbc_overlap_rpcdata *, qcsapi_wps_allow_pbc_overlap_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_ALLOW_PBC_OVERLAP_STATUS_REMOTE 2621
+extern  enum clnt_stat qcsapi_wps_get_allow_pbc_overlap_status_remote_1(qcsapi_wps_get_allow_pbc_overlap_status_rpcdata *, qcsapi_wps_get_allow_pbc_overlap_status_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_allow_pbc_overlap_status_remote_1_svc(qcsapi_wps_get_allow_pbc_overlap_status_rpcdata *, qcsapi_wps_get_allow_pbc_overlap_status_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_SET_ACCESS_CONTROL_REMOTE 2631
+extern  enum clnt_stat qcsapi_wps_set_access_control_remote_1(qcsapi_wps_set_access_control_rpcdata *, qcsapi_wps_set_access_control_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_set_access_control_remote_1_svc(qcsapi_wps_set_access_control_rpcdata *, qcsapi_wps_set_access_control_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_ACCESS_CONTROL_REMOTE 2641
+extern  enum clnt_stat qcsapi_wps_get_access_control_remote_1(qcsapi_wps_get_access_control_rpcdata *, qcsapi_wps_get_access_control_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_access_control_remote_1_svc(qcsapi_wps_get_access_control_rpcdata *, qcsapi_wps_get_access_control_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_SET_PARAM_REMOTE 2651
+extern  enum clnt_stat qcsapi_wps_set_param_remote_1(qcsapi_wps_set_param_rpcdata *, qcsapi_wps_set_param_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_set_param_remote_1_svc(qcsapi_wps_set_param_rpcdata *, qcsapi_wps_set_param_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_CANCEL_REMOTE 2661
+extern  enum clnt_stat qcsapi_wps_cancel_remote_1(qcsapi_wps_cancel_rpcdata *, qcsapi_wps_cancel_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_cancel_remote_1_svc(qcsapi_wps_cancel_rpcdata *, qcsapi_wps_cancel_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_SET_PBC_IN_SRCM_REMOTE 2671
+extern  enum clnt_stat qcsapi_wps_set_pbc_in_srcm_remote_1(qcsapi_wps_set_pbc_in_srcm_rpcdata *, qcsapi_wps_set_pbc_in_srcm_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_set_pbc_in_srcm_remote_1_svc(qcsapi_wps_set_pbc_in_srcm_rpcdata *, qcsapi_wps_set_pbc_in_srcm_rpcdata *, struct svc_req *);
+#define QCSAPI_WPS_GET_PBC_IN_SRCM_REMOTE 2681
+extern  enum clnt_stat qcsapi_wps_get_pbc_in_srcm_remote_1(qcsapi_wps_get_pbc_in_srcm_rpcdata *, qcsapi_wps_get_pbc_in_srcm_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wps_get_pbc_in_srcm_remote_1_svc(qcsapi_wps_get_pbc_in_srcm_rpcdata *, qcsapi_wps_get_pbc_in_srcm_rpcdata *, struct svc_req *);
+#define QCSAPI_REGISTRAR_SET_DEFAULT_PBC_BSS_REMOTE 2691
+extern  enum clnt_stat qcsapi_registrar_set_default_pbc_bss_remote_1(qcsapi_registrar_set_default_pbc_bss_rpcdata *, qcsapi_registrar_set_default_pbc_bss_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_registrar_set_default_pbc_bss_remote_1_svc(qcsapi_registrar_set_default_pbc_bss_rpcdata *, qcsapi_registrar_set_default_pbc_bss_rpcdata *, struct svc_req *);
+#define QCSAPI_REGISTRAR_GET_DEFAULT_PBC_BSS_REMOTE 2701
+extern  enum clnt_stat qcsapi_registrar_get_default_pbc_bss_remote_1(qcsapi_registrar_get_default_pbc_bss_rpcdata *, qcsapi_registrar_get_default_pbc_bss_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_registrar_get_default_pbc_bss_remote_1_svc(qcsapi_registrar_get_default_pbc_bss_rpcdata *, qcsapi_registrar_get_default_pbc_bss_rpcdata *, struct svc_req *);
+#define QCSAPI_GPIO_SET_CONFIG_REMOTE 2711
+extern  enum clnt_stat qcsapi_gpio_set_config_remote_1(qcsapi_gpio_set_config_rpcdata *, qcsapi_gpio_set_config_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_gpio_set_config_remote_1_svc(qcsapi_gpio_set_config_rpcdata *, qcsapi_gpio_set_config_rpcdata *, struct svc_req *);
+#define QCSAPI_GPIO_GET_CONFIG_REMOTE 2721
+extern  enum clnt_stat qcsapi_gpio_get_config_remote_1(qcsapi_gpio_get_config_rpcdata *, qcsapi_gpio_get_config_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_gpio_get_config_remote_1_svc(qcsapi_gpio_get_config_rpcdata *, qcsapi_gpio_get_config_rpcdata *, struct svc_req *);
+#define QCSAPI_LED_GET_REMOTE 2731
+extern  enum clnt_stat qcsapi_led_get_remote_1(qcsapi_led_get_rpcdata *, qcsapi_led_get_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_led_get_remote_1_svc(qcsapi_led_get_rpcdata *, qcsapi_led_get_rpcdata *, struct svc_req *);
+#define QCSAPI_LED_SET_REMOTE 2741
+extern  enum clnt_stat qcsapi_led_set_remote_1(qcsapi_led_set_rpcdata *, qcsapi_led_set_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_led_set_remote_1_svc(qcsapi_led_set_rpcdata *, qcsapi_led_set_rpcdata *, struct svc_req *);
+#define QCSAPI_LED_PWM_ENABLE_REMOTE 2751
+extern  enum clnt_stat qcsapi_led_pwm_enable_remote_1(qcsapi_led_pwm_enable_rpcdata *, qcsapi_led_pwm_enable_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_led_pwm_enable_remote_1_svc(qcsapi_led_pwm_enable_rpcdata *, qcsapi_led_pwm_enable_rpcdata *, struct svc_req *);
+#define QCSAPI_LED_BRIGHTNESS_REMOTE 2761
+extern  enum clnt_stat qcsapi_led_brightness_remote_1(qcsapi_led_brightness_rpcdata *, qcsapi_led_brightness_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_led_brightness_remote_1_svc(qcsapi_led_brightness_rpcdata *, qcsapi_led_brightness_rpcdata *, struct svc_req *);
+#define QCSAPI_GPIO_ENABLE_WPS_PUSH_BUTTON_REMOTE 2781
+extern  enum clnt_stat qcsapi_gpio_enable_wps_push_button_remote_1(qcsapi_gpio_enable_wps_push_button_rpcdata *, qcsapi_gpio_enable_wps_push_button_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_gpio_enable_wps_push_button_remote_1_svc(qcsapi_gpio_enable_wps_push_button_rpcdata *, qcsapi_gpio_enable_wps_push_button_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_COUNT_ASSOCIATIONS_REMOTE 2791
+extern  enum clnt_stat qcsapi_wifi_get_count_associations_remote_1(qcsapi_wifi_get_count_associations_rpcdata *, qcsapi_wifi_get_count_associations_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_count_associations_remote_1_svc(qcsapi_wifi_get_count_associations_rpcdata *, qcsapi_wifi_get_count_associations_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_ASSOCIATED_DEVICE_MAC_ADDR_REMOTE 2801
+extern  enum clnt_stat qcsapi_wifi_get_associated_device_mac_addr_remote_1(qcsapi_wifi_get_associated_device_mac_addr_rpcdata *, qcsapi_wifi_get_associated_device_mac_addr_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_associated_device_mac_addr_remote_1_svc(qcsapi_wifi_get_associated_device_mac_addr_rpcdata *, qcsapi_wifi_get_associated_device_mac_addr_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_ASSOCIATED_DEVICE_IP_ADDR_REMOTE 2811
+extern  enum clnt_stat qcsapi_wifi_get_associated_device_ip_addr_remote_1(qcsapi_wifi_get_associated_device_ip_addr_rpcdata *, qcsapi_wifi_get_associated_device_ip_addr_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_associated_device_ip_addr_remote_1_svc(qcsapi_wifi_get_associated_device_ip_addr_rpcdata *, qcsapi_wifi_get_associated_device_ip_addr_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_LINK_QUALITY_REMOTE 2821
+extern  enum clnt_stat qcsapi_wifi_get_link_quality_remote_1(qcsapi_wifi_get_link_quality_rpcdata *, qcsapi_wifi_get_link_quality_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_link_quality_remote_1_svc(qcsapi_wifi_get_link_quality_rpcdata *, qcsapi_wifi_get_link_quality_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RX_BYTES_PER_ASSOCIATION_REMOTE 2831
+extern  enum clnt_stat qcsapi_wifi_get_rx_bytes_per_association_remote_1(qcsapi_wifi_get_rx_bytes_per_association_rpcdata *, qcsapi_wifi_get_rx_bytes_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_rx_bytes_per_association_remote_1_svc(qcsapi_wifi_get_rx_bytes_per_association_rpcdata *, qcsapi_wifi_get_rx_bytes_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_TX_BYTES_PER_ASSOCIATION_REMOTE 2841
+extern  enum clnt_stat qcsapi_wifi_get_tx_bytes_per_association_remote_1(qcsapi_wifi_get_tx_bytes_per_association_rpcdata *, qcsapi_wifi_get_tx_bytes_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_tx_bytes_per_association_remote_1_svc(qcsapi_wifi_get_tx_bytes_per_association_rpcdata *, qcsapi_wifi_get_tx_bytes_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RX_PACKETS_PER_ASSOCIATION_REMOTE 2851
+extern  enum clnt_stat qcsapi_wifi_get_rx_packets_per_association_remote_1(qcsapi_wifi_get_rx_packets_per_association_rpcdata *, qcsapi_wifi_get_rx_packets_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_rx_packets_per_association_remote_1_svc(qcsapi_wifi_get_rx_packets_per_association_rpcdata *, qcsapi_wifi_get_rx_packets_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_TX_PACKETS_PER_ASSOCIATION_REMOTE 2861
+extern  enum clnt_stat qcsapi_wifi_get_tx_packets_per_association_remote_1(qcsapi_wifi_get_tx_packets_per_association_rpcdata *, qcsapi_wifi_get_tx_packets_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_tx_packets_per_association_remote_1_svc(qcsapi_wifi_get_tx_packets_per_association_rpcdata *, qcsapi_wifi_get_tx_packets_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_TX_ERR_PACKETS_PER_ASSOCIATION_REMOTE 2871
+extern  enum clnt_stat qcsapi_wifi_get_tx_err_packets_per_association_remote_1(qcsapi_wifi_get_tx_err_packets_per_association_rpcdata *, qcsapi_wifi_get_tx_err_packets_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_tx_err_packets_per_association_remote_1_svc(qcsapi_wifi_get_tx_err_packets_per_association_rpcdata *, qcsapi_wifi_get_tx_err_packets_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RSSI_PER_ASSOCIATION_REMOTE 2881
+extern  enum clnt_stat qcsapi_wifi_get_rssi_per_association_remote_1(qcsapi_wifi_get_rssi_per_association_rpcdata *, qcsapi_wifi_get_rssi_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_rssi_per_association_remote_1_svc(qcsapi_wifi_get_rssi_per_association_rpcdata *, qcsapi_wifi_get_rssi_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RSSI_IN_DBM_PER_ASSOCIATION_REMOTE 2891
+extern  enum clnt_stat qcsapi_wifi_get_rssi_in_dbm_per_association_remote_1(qcsapi_wifi_get_rssi_in_dbm_per_association_rpcdata *, qcsapi_wifi_get_rssi_in_dbm_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_rssi_in_dbm_per_association_remote_1_svc(qcsapi_wifi_get_rssi_in_dbm_per_association_rpcdata *, qcsapi_wifi_get_rssi_in_dbm_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_BW_PER_ASSOCIATION_REMOTE 2901
+extern  enum clnt_stat qcsapi_wifi_get_bw_per_association_remote_1(qcsapi_wifi_get_bw_per_association_rpcdata *, qcsapi_wifi_get_bw_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_bw_per_association_remote_1_svc(qcsapi_wifi_get_bw_per_association_rpcdata *, qcsapi_wifi_get_bw_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_TX_PHY_RATE_PER_ASSOCIATION_REMOTE 2911
+extern  enum clnt_stat qcsapi_wifi_get_tx_phy_rate_per_association_remote_1(qcsapi_wifi_get_tx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_tx_phy_rate_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_tx_phy_rate_per_association_remote_1_svc(qcsapi_wifi_get_tx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_tx_phy_rate_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RX_PHY_RATE_PER_ASSOCIATION_REMOTE 2921
+extern  enum clnt_stat qcsapi_wifi_get_rx_phy_rate_per_association_remote_1(qcsapi_wifi_get_rx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_rx_phy_rate_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_rx_phy_rate_per_association_remote_1_svc(qcsapi_wifi_get_rx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_rx_phy_rate_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_TX_MCS_PER_ASSOCIATION_REMOTE 2931
+extern  enum clnt_stat qcsapi_wifi_get_tx_mcs_per_association_remote_1(qcsapi_wifi_get_tx_mcs_per_association_rpcdata *, qcsapi_wifi_get_tx_mcs_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_tx_mcs_per_association_remote_1_svc(qcsapi_wifi_get_tx_mcs_per_association_rpcdata *, qcsapi_wifi_get_tx_mcs_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RX_MCS_PER_ASSOCIATION_REMOTE 2941
+extern  enum clnt_stat qcsapi_wifi_get_rx_mcs_per_association_remote_1(qcsapi_wifi_get_rx_mcs_per_association_rpcdata *, qcsapi_wifi_get_rx_mcs_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_rx_mcs_per_association_remote_1_svc(qcsapi_wifi_get_rx_mcs_per_association_rpcdata *, qcsapi_wifi_get_rx_mcs_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_ACHIEVABLE_TX_PHY_RATE_PER_ASSOCIATION_REMOTE 2951
+extern  enum clnt_stat qcsapi_wifi_get_achievable_tx_phy_rate_per_association_remote_1(qcsapi_wifi_get_achievable_tx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_achievable_tx_phy_rate_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_achievable_tx_phy_rate_per_association_remote_1_svc(qcsapi_wifi_get_achievable_tx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_achievable_tx_phy_rate_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_ACHIEVABLE_RX_PHY_RATE_PER_ASSOCIATION_REMOTE 2961
+extern  enum clnt_stat qcsapi_wifi_get_achievable_rx_phy_rate_per_association_remote_1(qcsapi_wifi_get_achievable_rx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_achievable_rx_phy_rate_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_achievable_rx_phy_rate_per_association_remote_1_svc(qcsapi_wifi_get_achievable_rx_phy_rate_per_association_rpcdata *, qcsapi_wifi_get_achievable_rx_phy_rate_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_AUTH_ENC_PER_ASSOCIATION_REMOTE 2971
+extern  enum clnt_stat qcsapi_wifi_get_auth_enc_per_association_remote_1(qcsapi_wifi_get_auth_enc_per_association_rpcdata *, qcsapi_wifi_get_auth_enc_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_auth_enc_per_association_remote_1_svc(qcsapi_wifi_get_auth_enc_per_association_rpcdata *, qcsapi_wifi_get_auth_enc_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_VENDOR_PER_ASSOCIATION_REMOTE 3001
+extern  enum clnt_stat qcsapi_wifi_get_vendor_per_association_remote_1(qcsapi_wifi_get_vendor_per_association_rpcdata *, qcsapi_wifi_get_vendor_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_vendor_per_association_remote_1_svc(qcsapi_wifi_get_vendor_per_association_rpcdata *, qcsapi_wifi_get_vendor_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_SNR_PER_ASSOCIATION_REMOTE 3011
+extern  enum clnt_stat qcsapi_wifi_get_snr_per_association_remote_1(qcsapi_wifi_get_snr_per_association_rpcdata *, qcsapi_wifi_get_snr_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_snr_per_association_remote_1_svc(qcsapi_wifi_get_snr_per_association_rpcdata *, qcsapi_wifi_get_snr_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_TIME_ASSOCIATED_PER_ASSOCIATION_REMOTE 3021
+extern  enum clnt_stat qcsapi_wifi_get_time_associated_per_association_remote_1(qcsapi_wifi_get_time_associated_per_association_rpcdata *, qcsapi_wifi_get_time_associated_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_time_associated_per_association_remote_1_svc(qcsapi_wifi_get_time_associated_per_association_rpcdata *, qcsapi_wifi_get_time_associated_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_NODE_PARAM_REMOTE 3031
+extern  enum clnt_stat qcsapi_wifi_get_node_param_remote_1(qcsapi_wifi_get_node_param_rpcdata *, qcsapi_wifi_get_node_param_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_node_param_remote_1_svc(qcsapi_wifi_get_node_param_rpcdata *, qcsapi_wifi_get_node_param_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_NODE_COUNTER_REMOTE 3041
+extern  enum clnt_stat qcsapi_wifi_get_node_counter_remote_1(qcsapi_wifi_get_node_counter_rpcdata *, qcsapi_wifi_get_node_counter_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_node_counter_remote_1_svc(qcsapi_wifi_get_node_counter_rpcdata *, qcsapi_wifi_get_node_counter_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_NODE_STATS_REMOTE 3051
+extern  enum clnt_stat qcsapi_wifi_get_node_stats_remote_1(qcsapi_wifi_get_node_stats_rpcdata *, qcsapi_wifi_get_node_stats_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_node_stats_remote_1_svc(qcsapi_wifi_get_node_stats_rpcdata *, qcsapi_wifi_get_node_stats_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_MAX_QUEUED_REMOTE 3061
+extern  enum clnt_stat qcsapi_wifi_get_max_queued_remote_1(qcsapi_wifi_get_max_queued_rpcdata *, qcsapi_wifi_get_max_queued_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_max_queued_remote_1_svc(qcsapi_wifi_get_max_queued_rpcdata *, qcsapi_wifi_get_max_queued_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_HW_NOISE_PER_ASSOCIATION_REMOTE 3071
+extern  enum clnt_stat qcsapi_wifi_get_hw_noise_per_association_remote_1(qcsapi_wifi_get_hw_noise_per_association_rpcdata *, qcsapi_wifi_get_hw_noise_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_hw_noise_per_association_remote_1_svc(qcsapi_wifi_get_hw_noise_per_association_rpcdata *, qcsapi_wifi_get_hw_noise_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_LIST_REGULATORY_REGIONS_REMOTE 3081
+extern  enum clnt_stat qcsapi_wifi_get_list_regulatory_regions_remote_1(qcsapi_wifi_get_list_regulatory_regions_rpcdata *, qcsapi_wifi_get_list_regulatory_regions_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_list_regulatory_regions_remote_1_svc(qcsapi_wifi_get_list_regulatory_regions_rpcdata *, qcsapi_wifi_get_list_regulatory_regions_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_REGIONS_REMOTE 3091
+extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_regions_remote_1(qcsapi_regulatory_get_list_regulatory_regions_rpcdata *, qcsapi_regulatory_get_list_regulatory_regions_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_get_list_regulatory_regions_remote_1_svc(qcsapi_regulatory_get_list_regulatory_regions_rpcdata *, qcsapi_regulatory_get_list_regulatory_regions_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_LIST_REGULATORY_CHANNELS_REMOTE 3101
+extern  enum clnt_stat qcsapi_wifi_get_list_regulatory_channels_remote_1(qcsapi_wifi_get_list_regulatory_channels_rpcdata *, qcsapi_wifi_get_list_regulatory_channels_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_list_regulatory_channels_remote_1_svc(qcsapi_wifi_get_list_regulatory_channels_rpcdata *, qcsapi_wifi_get_list_regulatory_channels_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_CHANNELS_REMOTE 3111
+extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_channels_remote_1(qcsapi_regulatory_get_list_regulatory_channels_rpcdata *, qcsapi_regulatory_get_list_regulatory_channels_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_get_list_regulatory_channels_remote_1_svc(qcsapi_regulatory_get_list_regulatory_channels_rpcdata *, qcsapi_regulatory_get_list_regulatory_channels_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_BANDS_REMOTE 3121
+extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_bands_remote_1(qcsapi_regulatory_get_list_regulatory_bands_rpcdata *, qcsapi_regulatory_get_list_regulatory_bands_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_get_list_regulatory_bands_remote_1_svc(qcsapi_regulatory_get_list_regulatory_bands_rpcdata *, qcsapi_regulatory_get_list_regulatory_bands_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_REGULATORY_TX_POWER_REMOTE 3131
+extern  enum clnt_stat qcsapi_wifi_get_regulatory_tx_power_remote_1(qcsapi_wifi_get_regulatory_tx_power_rpcdata *, qcsapi_wifi_get_regulatory_tx_power_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_regulatory_tx_power_remote_1_svc(qcsapi_wifi_get_regulatory_tx_power_rpcdata *, qcsapi_wifi_get_regulatory_tx_power_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_GET_REGULATORY_TX_POWER_REMOTE 3141
+extern  enum clnt_stat qcsapi_regulatory_get_regulatory_tx_power_remote_1(qcsapi_regulatory_get_regulatory_tx_power_rpcdata *, qcsapi_regulatory_get_regulatory_tx_power_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_get_regulatory_tx_power_remote_1_svc(qcsapi_regulatory_get_regulatory_tx_power_rpcdata *, qcsapi_regulatory_get_regulatory_tx_power_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_CONFIGURED_TX_POWER_REMOTE 3151
+extern  enum clnt_stat qcsapi_wifi_get_configured_tx_power_remote_1(qcsapi_wifi_get_configured_tx_power_rpcdata *, qcsapi_wifi_get_configured_tx_power_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_configured_tx_power_remote_1_svc(qcsapi_wifi_get_configured_tx_power_rpcdata *, qcsapi_wifi_get_configured_tx_power_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_GET_CONFIGURED_TX_POWER_REMOTE 3161
+extern  enum clnt_stat qcsapi_regulatory_get_configured_tx_power_remote_1(qcsapi_regulatory_get_configured_tx_power_rpcdata *, qcsapi_regulatory_get_configured_tx_power_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_get_configured_tx_power_remote_1_svc(qcsapi_regulatory_get_configured_tx_power_rpcdata *, qcsapi_regulatory_get_configured_tx_power_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_REGULATORY_REGION_REMOTE 3171
+extern  enum clnt_stat qcsapi_wifi_set_regulatory_region_remote_1(qcsapi_wifi_set_regulatory_region_rpcdata *, qcsapi_wifi_set_regulatory_region_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_regulatory_region_remote_1_svc(qcsapi_wifi_set_regulatory_region_rpcdata *, qcsapi_wifi_set_regulatory_region_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_SET_REGULATORY_REGION_REMOTE 3181
+extern  enum clnt_stat qcsapi_regulatory_set_regulatory_region_remote_1(qcsapi_regulatory_set_regulatory_region_rpcdata *, qcsapi_regulatory_set_regulatory_region_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_set_regulatory_region_remote_1_svc(qcsapi_regulatory_set_regulatory_region_rpcdata *, qcsapi_regulatory_set_regulatory_region_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_RESTORE_REGULATORY_TX_POWER_REMOTE 3191
+extern  enum clnt_stat qcsapi_regulatory_restore_regulatory_tx_power_remote_1(qcsapi_regulatory_restore_regulatory_tx_power_rpcdata *, qcsapi_regulatory_restore_regulatory_tx_power_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_restore_regulatory_tx_power_remote_1_svc(qcsapi_regulatory_restore_regulatory_tx_power_rpcdata *, qcsapi_regulatory_restore_regulatory_tx_power_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_REGULATORY_REGION_REMOTE 3201
+extern  enum clnt_stat qcsapi_wifi_get_regulatory_region_remote_1(qcsapi_wifi_get_regulatory_region_rpcdata *, qcsapi_wifi_get_regulatory_region_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_regulatory_region_remote_1_svc(qcsapi_wifi_get_regulatory_region_rpcdata *, qcsapi_wifi_get_regulatory_region_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_OVERWRITE_COUNTRY_CODE_REMOTE 3211
+extern  enum clnt_stat qcsapi_regulatory_overwrite_country_code_remote_1(qcsapi_regulatory_overwrite_country_code_rpcdata *, qcsapi_regulatory_overwrite_country_code_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_overwrite_country_code_remote_1_svc(qcsapi_regulatory_overwrite_country_code_rpcdata *, qcsapi_regulatory_overwrite_country_code_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_REGULATORY_CHANNEL_REMOTE 3221
+extern  enum clnt_stat qcsapi_wifi_set_regulatory_channel_remote_1(qcsapi_wifi_set_regulatory_channel_rpcdata *, qcsapi_wifi_set_regulatory_channel_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_regulatory_channel_remote_1_svc(qcsapi_wifi_set_regulatory_channel_rpcdata *, qcsapi_wifi_set_regulatory_channel_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_SET_REGULATORY_CHANNEL_REMOTE 3231
+extern  enum clnt_stat qcsapi_regulatory_set_regulatory_channel_remote_1(qcsapi_regulatory_set_regulatory_channel_rpcdata *, qcsapi_regulatory_set_regulatory_channel_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_set_regulatory_channel_remote_1_svc(qcsapi_regulatory_set_regulatory_channel_rpcdata *, qcsapi_regulatory_set_regulatory_channel_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_GET_DB_VERSION_REMOTE 3241
+extern  enum clnt_stat qcsapi_regulatory_get_db_version_remote_1(qcsapi_regulatory_get_db_version_rpcdata *, qcsapi_regulatory_get_db_version_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_get_db_version_remote_1_svc(qcsapi_regulatory_get_db_version_rpcdata *, qcsapi_regulatory_get_db_version_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_APPLY_TX_POWER_CAP_REMOTE 3251
+extern  enum clnt_stat qcsapi_regulatory_apply_tx_power_cap_remote_1(qcsapi_regulatory_apply_tx_power_cap_rpcdata *, qcsapi_regulatory_apply_tx_power_cap_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_apply_tx_power_cap_remote_1_svc(qcsapi_regulatory_apply_tx_power_cap_rpcdata *, qcsapi_regulatory_apply_tx_power_cap_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_LIST_DFS_CHANNELS_REMOTE 3261
+extern  enum clnt_stat qcsapi_wifi_get_list_dfs_channels_remote_1(qcsapi_wifi_get_list_DFS_channels_rpcdata *, qcsapi_wifi_get_list_DFS_channels_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_list_dfs_channels_remote_1_svc(qcsapi_wifi_get_list_DFS_channels_rpcdata *, qcsapi_wifi_get_list_DFS_channels_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_GET_LIST_DFS_CHANNELS_REMOTE 3271
+extern  enum clnt_stat qcsapi_regulatory_get_list_dfs_channels_remote_1(qcsapi_regulatory_get_list_DFS_channels_rpcdata *, qcsapi_regulatory_get_list_DFS_channels_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_get_list_dfs_channels_remote_1_svc(qcsapi_regulatory_get_list_DFS_channels_rpcdata *, qcsapi_regulatory_get_list_DFS_channels_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_IS_CHANNEL_DFS_REMOTE 3281
+extern  enum clnt_stat qcsapi_wifi_is_channel_dfs_remote_1(qcsapi_wifi_is_channel_DFS_rpcdata *, qcsapi_wifi_is_channel_DFS_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_is_channel_dfs_remote_1_svc(qcsapi_wifi_is_channel_DFS_rpcdata *, qcsapi_wifi_is_channel_DFS_rpcdata *, struct svc_req *);
+#define QCSAPI_REGULATORY_IS_CHANNEL_DFS_REMOTE 3291
+extern  enum clnt_stat qcsapi_regulatory_is_channel_dfs_remote_1(qcsapi_regulatory_is_channel_DFS_rpcdata *, qcsapi_regulatory_is_channel_DFS_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_regulatory_is_channel_dfs_remote_1_svc(qcsapi_regulatory_is_channel_DFS_rpcdata *, qcsapi_regulatory_is_channel_DFS_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_DFS_CCE_CHANNELS_REMOTE 3301
+extern  enum clnt_stat qcsapi_wifi_get_dfs_cce_channels_remote_1(qcsapi_wifi_get_dfs_cce_channels_rpcdata *, qcsapi_wifi_get_dfs_cce_channels_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_dfs_cce_channels_remote_1_svc(qcsapi_wifi_get_dfs_cce_channels_rpcdata *, qcsapi_wifi_get_dfs_cce_channels_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_DFS_ALT_CHANNEL_REMOTE 3311
+extern  enum clnt_stat qcsapi_wifi_get_dfs_alt_channel_remote_1(qcsapi_wifi_get_DFS_alt_channel_rpcdata *, qcsapi_wifi_get_DFS_alt_channel_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_dfs_alt_channel_remote_1_svc(qcsapi_wifi_get_DFS_alt_channel_rpcdata *, qcsapi_wifi_get_DFS_alt_channel_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_DFS_ALT_CHANNEL_REMOTE 3321
+extern  enum clnt_stat qcsapi_wifi_set_dfs_alt_channel_remote_1(qcsapi_wifi_set_DFS_alt_channel_rpcdata *, qcsapi_wifi_set_DFS_alt_channel_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_dfs_alt_channel_remote_1_svc(qcsapi_wifi_set_DFS_alt_channel_rpcdata *, qcsapi_wifi_set_DFS_alt_channel_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_START_DFS_REENTRY_REMOTE 3331
+extern  enum clnt_stat qcsapi_wifi_start_dfs_reentry_remote_1(qcsapi_wifi_start_dfs_reentry_rpcdata *, qcsapi_wifi_start_dfs_reentry_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_start_dfs_reentry_remote_1_svc(qcsapi_wifi_start_dfs_reentry_rpcdata *, qcsapi_wifi_start_dfs_reentry_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_START_SCAN_EXT_REMOTE 3341
+extern  enum clnt_stat qcsapi_wifi_start_scan_ext_remote_1(qcsapi_wifi_start_scan_ext_rpcdata *, qcsapi_wifi_start_scan_ext_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_start_scan_ext_remote_1_svc(qcsapi_wifi_start_scan_ext_rpcdata *, qcsapi_wifi_start_scan_ext_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_CSW_RECORDS_REMOTE 3351
+extern  enum clnt_stat qcsapi_wifi_get_csw_records_remote_1(qcsapi_wifi_get_csw_records_rpcdata *, qcsapi_wifi_get_csw_records_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_csw_records_remote_1_svc(qcsapi_wifi_get_csw_records_rpcdata *, qcsapi_wifi_get_csw_records_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RADAR_STATUS_REMOTE 3361
+extern  enum clnt_stat qcsapi_wifi_get_radar_status_remote_1(qcsapi_wifi_get_radar_status_rpcdata *, qcsapi_wifi_get_radar_status_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_radar_status_remote_1_svc(qcsapi_wifi_get_radar_status_rpcdata *, qcsapi_wifi_get_radar_status_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RESULTS_AP_SCAN_REMOTE 3371
+extern  enum clnt_stat qcsapi_wifi_get_results_ap_scan_remote_1(qcsapi_wifi_get_results_AP_scan_rpcdata *, qcsapi_wifi_get_results_AP_scan_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_results_ap_scan_remote_1_svc(qcsapi_wifi_get_results_AP_scan_rpcdata *, qcsapi_wifi_get_results_AP_scan_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_COUNT_APS_SCANNED_REMOTE 3381
+extern  enum clnt_stat qcsapi_wifi_get_count_aps_scanned_remote_1(qcsapi_wifi_get_count_APs_scanned_rpcdata *, qcsapi_wifi_get_count_APs_scanned_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_count_aps_scanned_remote_1_svc(qcsapi_wifi_get_count_APs_scanned_rpcdata *, qcsapi_wifi_get_count_APs_scanned_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_PROPERTIES_AP_REMOTE 3391
+extern  enum clnt_stat qcsapi_wifi_get_properties_ap_remote_1(qcsapi_wifi_get_properties_AP_rpcdata *, qcsapi_wifi_get_properties_AP_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_properties_ap_remote_1_svc(qcsapi_wifi_get_properties_AP_rpcdata *, qcsapi_wifi_get_properties_AP_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_BACKOFF_FAIL_MAX_REMOTE 3401
+extern  enum clnt_stat qcsapi_wifi_backoff_fail_max_remote_1(qcsapi_wifi_backoff_fail_max_rpcdata *, qcsapi_wifi_backoff_fail_max_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_backoff_fail_max_remote_1_svc(qcsapi_wifi_backoff_fail_max_rpcdata *, qcsapi_wifi_backoff_fail_max_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_BACKOFF_TIMEOUT_REMOTE 3411
+extern  enum clnt_stat qcsapi_wifi_backoff_timeout_remote_1(qcsapi_wifi_backoff_timeout_rpcdata *, qcsapi_wifi_backoff_timeout_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_backoff_timeout_remote_1_svc(qcsapi_wifi_backoff_timeout_rpcdata *, qcsapi_wifi_backoff_timeout_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_MCS_RATE_REMOTE 3421
+extern  enum clnt_stat qcsapi_wifi_get_mcs_rate_remote_1(qcsapi_wifi_get_mcs_rate_rpcdata *, qcsapi_wifi_get_mcs_rate_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_mcs_rate_remote_1_svc(qcsapi_wifi_get_mcs_rate_rpcdata *, qcsapi_wifi_get_mcs_rate_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_MCS_RATE_REMOTE 3431
+extern  enum clnt_stat qcsapi_wifi_set_mcs_rate_remote_1(qcsapi_wifi_set_mcs_rate_rpcdata *, qcsapi_wifi_set_mcs_rate_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_mcs_rate_remote_1_svc(qcsapi_wifi_set_mcs_rate_rpcdata *, qcsapi_wifi_set_mcs_rate_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_PAIRING_ID_REMOTE 3441
+extern  enum clnt_stat qcsapi_wifi_set_pairing_id_remote_1(qcsapi_wifi_set_pairing_id_rpcdata *, qcsapi_wifi_set_pairing_id_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_pairing_id_remote_1_svc(qcsapi_wifi_set_pairing_id_rpcdata *, qcsapi_wifi_set_pairing_id_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_PAIRING_ID_REMOTE 3451
+extern  enum clnt_stat qcsapi_wifi_get_pairing_id_remote_1(qcsapi_wifi_get_pairing_id_rpcdata *, qcsapi_wifi_get_pairing_id_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_pairing_id_remote_1_svc(qcsapi_wifi_get_pairing_id_rpcdata *, qcsapi_wifi_get_pairing_id_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_PAIRING_ENABLE_REMOTE 3461
+extern  enum clnt_stat qcsapi_wifi_set_pairing_enable_remote_1(qcsapi_wifi_set_pairing_enable_rpcdata *, qcsapi_wifi_set_pairing_enable_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_pairing_enable_remote_1_svc(qcsapi_wifi_set_pairing_enable_rpcdata *, qcsapi_wifi_set_pairing_enable_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_PAIRING_ENABLE_REMOTE 3471
+extern  enum clnt_stat qcsapi_wifi_get_pairing_enable_remote_1(qcsapi_wifi_get_pairing_enable_rpcdata *, qcsapi_wifi_get_pairing_enable_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_pairing_enable_remote_1_svc(qcsapi_wifi_get_pairing_enable_rpcdata *, qcsapi_wifi_get_pairing_enable_rpcdata *, struct svc_req *);
+#define QCSAPI_NON_WPS_SET_PP_ENABLE_REMOTE 3481
+extern  enum clnt_stat qcsapi_non_wps_set_pp_enable_remote_1(qcsapi_non_wps_set_pp_enable_rpcdata *, qcsapi_non_wps_set_pp_enable_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_non_wps_set_pp_enable_remote_1_svc(qcsapi_non_wps_set_pp_enable_rpcdata *, qcsapi_non_wps_set_pp_enable_rpcdata *, struct svc_req *);
+#define QCSAPI_NON_WPS_GET_PP_ENABLE_REMOTE 3491
+extern  enum clnt_stat qcsapi_non_wps_get_pp_enable_remote_1(qcsapi_non_wps_get_pp_enable_rpcdata *, qcsapi_non_wps_get_pp_enable_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_non_wps_get_pp_enable_remote_1_svc(qcsapi_non_wps_get_pp_enable_rpcdata *, qcsapi_non_wps_get_pp_enable_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_VENDOR_FIX_REMOTE 3501
+extern  enum clnt_stat qcsapi_wifi_set_vendor_fix_remote_1(qcsapi_wifi_set_vendor_fix_rpcdata *, qcsapi_wifi_set_vendor_fix_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_vendor_fix_remote_1_svc(qcsapi_wifi_set_vendor_fix_rpcdata *, qcsapi_wifi_set_vendor_fix_rpcdata *, struct svc_req *);
+#define QCSAPI_ERRNO_GET_MESSAGE_REMOTE 3511
+extern  enum clnt_stat qcsapi_errno_get_message_remote_1(qcsapi_errno_get_message_rpcdata *, qcsapi_errno_get_message_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_errno_get_message_remote_1_svc(qcsapi_errno_get_message_rpcdata *, qcsapi_errno_get_message_rpcdata *, struct svc_req *);
+#define QCSAPI_GET_INTERFACE_STATS_REMOTE 3521
+extern  enum clnt_stat qcsapi_get_interface_stats_remote_1(qcsapi_get_interface_stats_rpcdata *, qcsapi_get_interface_stats_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_get_interface_stats_remote_1_svc(qcsapi_get_interface_stats_rpcdata *, qcsapi_get_interface_stats_rpcdata *, struct svc_req *);
+#define QCSAPI_GET_PHY_STATS_REMOTE 3531
+extern  enum clnt_stat qcsapi_get_phy_stats_remote_1(qcsapi_get_phy_stats_rpcdata *, qcsapi_get_phy_stats_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_get_phy_stats_remote_1_svc(qcsapi_get_phy_stats_rpcdata *, qcsapi_get_phy_stats_rpcdata *, struct svc_req *);
+#define QCSAPI_RESET_ALL_COUNTERS_REMOTE 3541
+extern  enum clnt_stat qcsapi_reset_all_counters_remote_1(qcsapi_reset_all_counters_rpcdata *, qcsapi_reset_all_counters_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_reset_all_counters_remote_1_svc(qcsapi_reset_all_counters_rpcdata *, qcsapi_reset_all_counters_rpcdata *, struct svc_req *);
+#define QCSAPI_FIRMWARE_GET_VERSION_REMOTE 3551
+extern  enum clnt_stat qcsapi_firmware_get_version_remote_1(qcsapi_firmware_get_version_rpcdata *, qcsapi_firmware_get_version_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_firmware_get_version_remote_1_svc(qcsapi_firmware_get_version_rpcdata *, qcsapi_firmware_get_version_rpcdata *, struct svc_req *);
+#define QCSAPI_FLASH_IMAGE_UPDATE_REMOTE 3561
+extern  enum clnt_stat qcsapi_flash_image_update_remote_1(qcsapi_flash_image_update_rpcdata *, qcsapi_flash_image_update_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_flash_image_update_remote_1_svc(qcsapi_flash_image_update_rpcdata *, qcsapi_flash_image_update_rpcdata *, struct svc_req *);
+#define QCSAPI_SET_SOC_MAC_ADDR_REMOTE 3571
+extern  enum clnt_stat qcsapi_set_soc_mac_addr_remote_1(qcsapi_set_soc_mac_addr_rpcdata *, qcsapi_set_soc_mac_addr_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_set_soc_mac_addr_remote_1_svc(qcsapi_set_soc_mac_addr_rpcdata *, qcsapi_set_soc_mac_addr_rpcdata *, struct svc_req *);
+#define QCSAPI_GET_CUSTOM_VALUE_REMOTE 3581
+extern  enum clnt_stat qcsapi_get_custom_value_remote_1(qcsapi_get_custom_value_rpcdata *, qcsapi_get_custom_value_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_get_custom_value_remote_1_svc(qcsapi_get_custom_value_rpcdata *, qcsapi_get_custom_value_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_MLME_STATS_PER_MAC_REMOTE 3591
+extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_per_mac_remote_1(qcsapi_wifi_get_mlme_stats_per_mac_rpcdata *, qcsapi_wifi_get_mlme_stats_per_mac_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_mlme_stats_per_mac_remote_1_svc(qcsapi_wifi_get_mlme_stats_per_mac_rpcdata *, qcsapi_wifi_get_mlme_stats_per_mac_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_MLME_STATS_PER_ASSOCIATION_REMOTE 3601
+extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_per_association_remote_1(qcsapi_wifi_get_mlme_stats_per_association_rpcdata *, qcsapi_wifi_get_mlme_stats_per_association_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_mlme_stats_per_association_remote_1_svc(qcsapi_wifi_get_mlme_stats_per_association_rpcdata *, qcsapi_wifi_get_mlme_stats_per_association_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_MLME_STATS_MACS_LIST_REMOTE 3611
+extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_macs_list_remote_1(qcsapi_wifi_get_mlme_stats_macs_list_rpcdata *, qcsapi_wifi_get_mlme_stats_macs_list_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_mlme_stats_macs_list_remote_1_svc(qcsapi_wifi_get_mlme_stats_macs_list_rpcdata *, qcsapi_wifi_get_mlme_stats_macs_list_rpcdata *, struct svc_req *);
+#define QCSAPI_PM_SET_MODE_REMOTE 3621
+extern  enum clnt_stat qcsapi_pm_set_mode_remote_1(qcsapi_pm_set_mode_rpcdata *, qcsapi_pm_set_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_pm_set_mode_remote_1_svc(qcsapi_pm_set_mode_rpcdata *, qcsapi_pm_set_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_PM_GET_MODE_REMOTE 3631
+extern  enum clnt_stat qcsapi_pm_get_mode_remote_1(qcsapi_pm_get_mode_rpcdata *, qcsapi_pm_get_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_pm_get_mode_remote_1_svc(qcsapi_pm_get_mode_rpcdata *, qcsapi_pm_get_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_GET_QPM_LEVEL_REMOTE 3641
+extern  enum clnt_stat qcsapi_get_qpm_level_remote_1(qcsapi_get_qpm_level_rpcdata *, qcsapi_get_qpm_level_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_get_qpm_level_remote_1_svc(qcsapi_get_qpm_level_rpcdata *, qcsapi_get_qpm_level_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_GET_STATE_REMOTE 3651
+extern  enum clnt_stat qcsapi_vsp_get_state_remote_1(qcsapi_vsp_get_state_rpcdata *, qcsapi_vsp_get_state_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_get_state_remote_1_svc(qcsapi_vsp_get_state_rpcdata *, qcsapi_vsp_get_state_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_GET_STATE_ALL_REMOTE 3661
+extern  enum clnt_stat qcsapi_vsp_get_state_all_remote_1(qcsapi_vsp_get_state_all_rpcdata *, qcsapi_vsp_get_state_all_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_get_state_all_remote_1_svc(qcsapi_vsp_get_state_all_rpcdata *, qcsapi_vsp_get_state_all_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_SET_STATE_REMOTE 3671
+extern  enum clnt_stat qcsapi_vsp_set_state_remote_1(qcsapi_vsp_set_state_rpcdata *, qcsapi_vsp_set_state_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_set_state_remote_1_svc(qcsapi_vsp_set_state_rpcdata *, qcsapi_vsp_set_state_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_GET_CONFIG_REMOTE 3681
+extern  enum clnt_stat qcsapi_vsp_get_config_remote_1(qcsapi_vsp_get_config_rpcdata *, qcsapi_vsp_get_config_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_get_config_remote_1_svc(qcsapi_vsp_get_config_rpcdata *, qcsapi_vsp_get_config_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_GET_CONFIG_ALL_REMOTE 3691
+extern  enum clnt_stat qcsapi_vsp_get_config_all_remote_1(qcsapi_vsp_get_config_all_rpcdata *, qcsapi_vsp_get_config_all_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_get_config_all_remote_1_svc(qcsapi_vsp_get_config_all_rpcdata *, qcsapi_vsp_get_config_all_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_SET_CONFIG_REMOTE 3701
+extern  enum clnt_stat qcsapi_vsp_set_config_remote_1(qcsapi_vsp_set_config_rpcdata *, qcsapi_vsp_set_config_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_set_config_remote_1_svc(qcsapi_vsp_set_config_rpcdata *, qcsapi_vsp_set_config_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_DEL_WL_INDEX_REMOTE 3731
+extern  enum clnt_stat qcsapi_vsp_del_wl_index_remote_1(qcsapi_vsp_del_wl_index_rpcdata *, qcsapi_vsp_del_wl_index_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_del_wl_index_remote_1_svc(qcsapi_vsp_del_wl_index_rpcdata *, qcsapi_vsp_del_wl_index_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_DEL_RULE_INDEX_REMOTE 3771
+extern  enum clnt_stat qcsapi_vsp_del_rule_index_remote_1(qcsapi_vsp_del_rule_index_rpcdata *, qcsapi_vsp_del_rule_index_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_del_rule_index_remote_1_svc(qcsapi_vsp_del_rule_index_rpcdata *, qcsapi_vsp_del_rule_index_rpcdata *, struct svc_req *);
+#define QCSAPI_VSP_GET_INACTIVE_FLAGS_REMOTE 3811
+extern  enum clnt_stat qcsapi_vsp_get_inactive_flags_remote_1(qcsapi_vsp_get_inactive_flags_rpcdata *, qcsapi_vsp_get_inactive_flags_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_vsp_get_inactive_flags_remote_1_svc(qcsapi_vsp_get_inactive_flags_rpcdata *, qcsapi_vsp_get_inactive_flags_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_RUN_SCRIPT_REMOTE 3821
+extern  enum clnt_stat qcsapi_wifi_run_script_remote_1(qcsapi_wifi_run_script_rpcdata *, qcsapi_wifi_run_script_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_run_script_remote_1_svc(qcsapi_wifi_run_script_rpcdata *, qcsapi_wifi_run_script_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_TEST_TRAFFIC_REMOTE 3831
+extern  enum clnt_stat qcsapi_wifi_test_traffic_remote_1(qcsapi_wifi_test_traffic_rpcdata *, qcsapi_wifi_test_traffic_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_test_traffic_remote_1_svc(qcsapi_wifi_test_traffic_rpcdata *, qcsapi_wifi_test_traffic_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_ADD_IPFF_REMOTE 3841
+extern  enum clnt_stat qcsapi_wifi_add_ipff_remote_1(qcsapi_wifi_add_ipff_rpcdata *, qcsapi_wifi_add_ipff_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_add_ipff_remote_1_svc(qcsapi_wifi_add_ipff_rpcdata *, qcsapi_wifi_add_ipff_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_DEL_IPFF_REMOTE 3851
+extern  enum clnt_stat qcsapi_wifi_del_ipff_remote_1(qcsapi_wifi_del_ipff_rpcdata *, qcsapi_wifi_del_ipff_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_del_ipff_remote_1_svc(qcsapi_wifi_del_ipff_rpcdata *, qcsapi_wifi_del_ipff_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_IPFF_REMOTE 3861
+extern  enum clnt_stat qcsapi_wifi_get_ipff_remote_1(qcsapi_wifi_get_ipff_rpcdata *, qcsapi_wifi_get_ipff_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_ipff_remote_1_svc(qcsapi_wifi_get_ipff_rpcdata *, qcsapi_wifi_get_ipff_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_RTS_THRESHOLD_REMOTE 3871
+extern  enum clnt_stat qcsapi_wifi_get_rts_threshold_remote_1(qcsapi_wifi_get_rts_threshold_rpcdata *, qcsapi_wifi_get_rts_threshold_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_rts_threshold_remote_1_svc(qcsapi_wifi_get_rts_threshold_rpcdata *, qcsapi_wifi_get_rts_threshold_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_RTS_THRESHOLD_REMOTE 3881
+extern  enum clnt_stat qcsapi_wifi_set_rts_threshold_remote_1(qcsapi_wifi_set_rts_threshold_rpcdata *, qcsapi_wifi_set_rts_threshold_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_rts_threshold_remote_1_svc(qcsapi_wifi_set_rts_threshold_rpcdata *, qcsapi_wifi_set_rts_threshold_rpcdata *, struct svc_req *);
+#define QCSAPI_GET_TEMPERATURE_INFO_REMOTE 3891
+extern  enum clnt_stat qcsapi_get_temperature_info_remote_1(qcsapi_get_temperature_info_rpcdata *, qcsapi_get_temperature_info_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_get_temperature_info_remote_1_svc(qcsapi_get_temperature_info_rpcdata *, qcsapi_get_temperature_info_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_SET_TEST_MODE_REMOTE 3901
+extern  enum clnt_stat qcsapi_calcmd_set_test_mode_remote_1(qcsapi_calcmd_set_test_mode_rpcdata *, qcsapi_calcmd_set_test_mode_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_set_test_mode_remote_1_svc(qcsapi_calcmd_set_test_mode_rpcdata *, qcsapi_calcmd_set_test_mode_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_SHOW_TEST_PACKET_REMOTE 3911
+extern  enum clnt_stat qcsapi_calcmd_show_test_packet_remote_1(qcsapi_calcmd_show_test_packet_rpcdata *, qcsapi_calcmd_show_test_packet_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_show_test_packet_remote_1_svc(qcsapi_calcmd_show_test_packet_rpcdata *, qcsapi_calcmd_show_test_packet_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_SEND_TEST_PACKET_REMOTE 3921
+extern  enum clnt_stat qcsapi_calcmd_send_test_packet_remote_1(qcsapi_calcmd_send_test_packet_rpcdata *, qcsapi_calcmd_send_test_packet_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_send_test_packet_remote_1_svc(qcsapi_calcmd_send_test_packet_rpcdata *, qcsapi_calcmd_send_test_packet_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_STOP_TEST_PACKET_REMOTE 3931
+extern  enum clnt_stat qcsapi_calcmd_stop_test_packet_remote_1(qcsapi_calcmd_stop_test_packet_rpcdata *, qcsapi_calcmd_stop_test_packet_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_stop_test_packet_remote_1_svc(qcsapi_calcmd_stop_test_packet_rpcdata *, qcsapi_calcmd_stop_test_packet_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_SEND_DC_CW_SIGNAL_REMOTE 3941
+extern  enum clnt_stat qcsapi_calcmd_send_dc_cw_signal_remote_1(qcsapi_calcmd_send_dc_cw_signal_rpcdata *, qcsapi_calcmd_send_dc_cw_signal_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_send_dc_cw_signal_remote_1_svc(qcsapi_calcmd_send_dc_cw_signal_rpcdata *, qcsapi_calcmd_send_dc_cw_signal_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_STOP_DC_CW_SIGNAL_REMOTE 3951
+extern  enum clnt_stat qcsapi_calcmd_stop_dc_cw_signal_remote_1(qcsapi_calcmd_stop_dc_cw_signal_rpcdata *, qcsapi_calcmd_stop_dc_cw_signal_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_stop_dc_cw_signal_remote_1_svc(qcsapi_calcmd_stop_dc_cw_signal_rpcdata *, qcsapi_calcmd_stop_dc_cw_signal_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_GET_TEST_MODE_ANTENNA_SEL_REMOTE 3961
+extern  enum clnt_stat qcsapi_calcmd_get_test_mode_antenna_sel_remote_1(qcsapi_calcmd_get_test_mode_antenna_sel_rpcdata *, qcsapi_calcmd_get_test_mode_antenna_sel_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_get_test_mode_antenna_sel_remote_1_svc(qcsapi_calcmd_get_test_mode_antenna_sel_rpcdata *, qcsapi_calcmd_get_test_mode_antenna_sel_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_GET_TEST_MODE_MCS_REMOTE 3971
+extern  enum clnt_stat qcsapi_calcmd_get_test_mode_mcs_remote_1(qcsapi_calcmd_get_test_mode_mcs_rpcdata *, qcsapi_calcmd_get_test_mode_mcs_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_get_test_mode_mcs_remote_1_svc(qcsapi_calcmd_get_test_mode_mcs_rpcdata *, qcsapi_calcmd_get_test_mode_mcs_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_GET_TEST_MODE_BW_REMOTE 3981
+extern  enum clnt_stat qcsapi_calcmd_get_test_mode_bw_remote_1(qcsapi_calcmd_get_test_mode_bw_rpcdata *, qcsapi_calcmd_get_test_mode_bw_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_get_test_mode_bw_remote_1_svc(qcsapi_calcmd_get_test_mode_bw_rpcdata *, qcsapi_calcmd_get_test_mode_bw_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_GET_TX_POWER_REMOTE 3991
+extern  enum clnt_stat qcsapi_calcmd_get_tx_power_remote_1(qcsapi_calcmd_get_tx_power_rpcdata *, qcsapi_calcmd_get_tx_power_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_get_tx_power_remote_1_svc(qcsapi_calcmd_get_tx_power_rpcdata *, qcsapi_calcmd_get_tx_power_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_SET_TX_POWER_REMOTE 4001
+extern  enum clnt_stat qcsapi_calcmd_set_tx_power_remote_1(qcsapi_calcmd_set_tx_power_rpcdata *, qcsapi_calcmd_set_tx_power_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_set_tx_power_remote_1_svc(qcsapi_calcmd_set_tx_power_rpcdata *, qcsapi_calcmd_set_tx_power_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_GET_TEST_MODE_RSSI_REMOTE 4011
+extern  enum clnt_stat qcsapi_calcmd_get_test_mode_rssi_remote_1(qcsapi_calcmd_get_test_mode_rssi_rpcdata *, qcsapi_calcmd_get_test_mode_rssi_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_get_test_mode_rssi_remote_1_svc(qcsapi_calcmd_get_test_mode_rssi_rpcdata *, qcsapi_calcmd_get_test_mode_rssi_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_SET_MAC_FILTER_REMOTE 4021
+extern  enum clnt_stat qcsapi_calcmd_set_mac_filter_remote_1(qcsapi_calcmd_set_mac_filter_rpcdata *, qcsapi_calcmd_set_mac_filter_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_set_mac_filter_remote_1_svc(qcsapi_calcmd_set_mac_filter_rpcdata *, qcsapi_calcmd_set_mac_filter_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_GET_ANTENNA_COUNT_REMOTE 4031
+extern  enum clnt_stat qcsapi_calcmd_get_antenna_count_remote_1(qcsapi_calcmd_get_antenna_count_rpcdata *, qcsapi_calcmd_get_antenna_count_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_get_antenna_count_remote_1_svc(qcsapi_calcmd_get_antenna_count_rpcdata *, qcsapi_calcmd_get_antenna_count_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_CLEAR_COUNTER_REMOTE 4041
+extern  enum clnt_stat qcsapi_calcmd_clear_counter_remote_1(qcsapi_calcmd_clear_counter_rpcdata *, qcsapi_calcmd_clear_counter_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_clear_counter_remote_1_svc(qcsapi_calcmd_clear_counter_rpcdata *, qcsapi_calcmd_clear_counter_rpcdata *, struct svc_req *);
+#define QCSAPI_CALCMD_GET_INFO_REMOTE 4051
+extern  enum clnt_stat qcsapi_calcmd_get_info_remote_1(qcsapi_calcmd_get_info_rpcdata *, qcsapi_calcmd_get_info_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_calcmd_get_info_remote_1_svc(qcsapi_calcmd_get_info_rpcdata *, qcsapi_calcmd_get_info_rpcdata *, struct svc_req *);
+#define QCSAPI_GET_CARRIER_ID_REMOTE 4071
 extern  enum clnt_stat qcsapi_get_carrier_id_remote_1(qcsapi_get_carrier_id_rpcdata *, qcsapi_get_carrier_id_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_get_carrier_id_remote_1_svc(qcsapi_get_carrier_id_rpcdata *, qcsapi_get_carrier_id_rpcdata *, struct svc_req *);
-#define QCSAPI_SET_CARRIER_ID_REMOTE 392
+#define QCSAPI_SET_CARRIER_ID_REMOTE 4081
 extern  enum clnt_stat qcsapi_set_carrier_id_remote_1(qcsapi_set_carrier_id_rpcdata *, qcsapi_set_carrier_id_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_set_carrier_id_remote_1_svc(qcsapi_set_carrier_id_rpcdata *, qcsapi_set_carrier_id_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_VHT_REMOTE 393
+#define QCSAPI_WIFI_SET_VHT_REMOTE 4091
 extern  enum clnt_stat qcsapi_wifi_set_vht_remote_1(qcsapi_wifi_set_vht_rpcdata *, qcsapi_wifi_set_vht_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_vht_remote_1_svc(qcsapi_wifi_set_vht_rpcdata *, qcsapi_wifi_set_vht_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_VHT_REMOTE 394
+#define QCSAPI_WIFI_GET_VHT_REMOTE 4101
 extern  enum clnt_stat qcsapi_wifi_get_vht_remote_1(qcsapi_wifi_get_vht_rpcdata *, qcsapi_wifi_get_vht_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_vht_remote_1_svc(qcsapi_wifi_get_vht_rpcdata *, qcsapi_wifi_get_vht_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_SPINOR_JEDECID_REMOTE 395
+#define QCSAPI_WIFI_GET_SPINOR_JEDECID_REMOTE 4121
 extern  enum clnt_stat qcsapi_wifi_get_spinor_jedecid_remote_1(qcsapi_wifi_get_spinor_jedecid_rpcdata *, qcsapi_wifi_get_spinor_jedecid_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_spinor_jedecid_remote_1_svc(qcsapi_wifi_get_spinor_jedecid_rpcdata *, qcsapi_wifi_get_spinor_jedecid_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_NSS_CAP_REMOTE 396
+#define QCSAPI_WIFI_SET_NSS_CAP_REMOTE 4131
 extern  enum clnt_stat qcsapi_wifi_set_nss_cap_remote_1(qcsapi_wifi_set_nss_cap_rpcdata *, qcsapi_wifi_set_nss_cap_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_nss_cap_remote_1_svc(qcsapi_wifi_set_nss_cap_rpcdata *, qcsapi_wifi_set_nss_cap_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_NSS_CAP_REMOTE 397
+#define QCSAPI_WIFI_GET_NSS_CAP_REMOTE 4141
 extern  enum clnt_stat qcsapi_wifi_get_nss_cap_remote_1(qcsapi_wifi_get_nss_cap_rpcdata *, qcsapi_wifi_get_nss_cap_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_nss_cap_remote_1_svc(qcsapi_wifi_get_nss_cap_rpcdata *, qcsapi_wifi_get_nss_cap_rpcdata *, struct svc_req *);
-#define QCSAPI_SET_HOST_STATE_REMOTE 398
+#define QCSAPI_SET_HOST_STATE_REMOTE 4151
 extern  enum clnt_stat qcsapi_set_host_state_remote_1(qcsapi_set_host_state_rpcdata *, qcsapi_set_host_state_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_set_host_state_remote_1_svc(qcsapi_set_host_state_rpcdata *, qcsapi_set_host_state_rpcdata *, struct svc_req *);
-#define QCSAPI_WOWLAN_SET_MATCH_TYPE_REMOTE 399
+#define QCSAPI_WOWLAN_SET_MATCH_TYPE_REMOTE 4161
 extern  enum clnt_stat qcsapi_wowlan_set_match_type_remote_1(qcsapi_wowlan_set_match_type_rpcdata *, qcsapi_wowlan_set_match_type_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wowlan_set_match_type_remote_1_svc(qcsapi_wowlan_set_match_type_rpcdata *, qcsapi_wowlan_set_match_type_rpcdata *, struct svc_req *);
-#define QCSAPI_WOWLAN_SET_L2_TYPE_REMOTE 400
+#define QCSAPI_WIFI_GET_TX_AMSDU_REMOTE 4171
+extern  enum clnt_stat qcsapi_wifi_get_tx_amsdu_remote_1(qcsapi_wifi_get_tx_amsdu_rpcdata *, qcsapi_wifi_get_tx_amsdu_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_tx_amsdu_remote_1_svc(qcsapi_wifi_get_tx_amsdu_rpcdata *, qcsapi_wifi_get_tx_amsdu_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_TX_AMSDU_REMOTE 4181
+extern  enum clnt_stat qcsapi_wifi_set_tx_amsdu_remote_1(qcsapi_wifi_set_tx_amsdu_rpcdata *, qcsapi_wifi_set_tx_amsdu_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_tx_amsdu_remote_1_svc(qcsapi_wifi_set_tx_amsdu_rpcdata *, qcsapi_wifi_set_tx_amsdu_rpcdata *, struct svc_req *);
+#define QCSAPI_WOWLAN_SET_L2_TYPE_REMOTE 4191
 extern  enum clnt_stat qcsapi_wowlan_set_l2_type_remote_1(qcsapi_wowlan_set_L2_type_rpcdata *, qcsapi_wowlan_set_L2_type_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wowlan_set_l2_type_remote_1_svc(qcsapi_wowlan_set_L2_type_rpcdata *, qcsapi_wowlan_set_L2_type_rpcdata *, struct svc_req *);
-#define QCSAPI_WOWLAN_SET_UDP_PORT_REMOTE 401
+#define QCSAPI_WOWLAN_SET_UDP_PORT_REMOTE 4201
 extern  enum clnt_stat qcsapi_wowlan_set_udp_port_remote_1(qcsapi_wowlan_set_udp_port_rpcdata *, qcsapi_wowlan_set_udp_port_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wowlan_set_udp_port_remote_1_svc(qcsapi_wowlan_set_udp_port_rpcdata *, qcsapi_wowlan_set_udp_port_rpcdata *, struct svc_req *);
-#define QCSAPI_WOWLAN_SET_MAGIC_PATTERN_REMOTE 402
+#define QCSAPI_WOWLAN_SET_MAGIC_PATTERN_REMOTE 4211
 extern  enum clnt_stat qcsapi_wowlan_set_magic_pattern_remote_1(qcsapi_wowlan_set_magic_pattern_rpcdata *, qcsapi_wowlan_set_magic_pattern_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wowlan_set_magic_pattern_remote_1_svc(qcsapi_wowlan_set_magic_pattern_rpcdata *, qcsapi_wowlan_set_magic_pattern_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_DISASSOC_REASON_REMOTE 403
+#define QCSAPI_WIFI_WOWLAN_GET_HOST_STATE_REMOTE 4221
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_host_state_remote_1(qcsapi_wifi_wowlan_get_host_state_rpcdata *, qcsapi_wifi_wowlan_get_host_state_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_wowlan_get_host_state_remote_1_svc(qcsapi_wifi_wowlan_get_host_state_rpcdata *, qcsapi_wifi_wowlan_get_host_state_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_WOWLAN_GET_MATCH_TYPE_REMOTE 4231
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_match_type_remote_1(qcsapi_wifi_wowlan_get_match_type_rpcdata *, qcsapi_wifi_wowlan_get_match_type_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_wowlan_get_match_type_remote_1_svc(qcsapi_wifi_wowlan_get_match_type_rpcdata *, qcsapi_wifi_wowlan_get_match_type_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_WOWLAN_GET_L2_TYPE_REMOTE 4241
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_l2_type_remote_1(qcsapi_wifi_wowlan_get_l2_type_rpcdata *, qcsapi_wifi_wowlan_get_l2_type_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_wowlan_get_l2_type_remote_1_svc(qcsapi_wifi_wowlan_get_l2_type_rpcdata *, qcsapi_wifi_wowlan_get_l2_type_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_WOWLAN_GET_UDP_PORT_REMOTE 4251
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_udp_port_remote_1(qcsapi_wifi_wowlan_get_udp_port_rpcdata *, qcsapi_wifi_wowlan_get_udp_port_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_wowlan_get_udp_port_remote_1_svc(qcsapi_wifi_wowlan_get_udp_port_rpcdata *, qcsapi_wifi_wowlan_get_udp_port_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_WOWLAN_GET_MAGIC_PATTERN_REMOTE 4261
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_magic_pattern_remote_1(qcsapi_wifi_wowlan_get_magic_pattern_rpcdata *, qcsapi_wifi_wowlan_get_magic_pattern_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_wowlan_get_magic_pattern_remote_1_svc(qcsapi_wifi_wowlan_get_magic_pattern_rpcdata *, qcsapi_wifi_wowlan_get_magic_pattern_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_DISASSOC_REASON_REMOTE 4271
 extern  enum clnt_stat qcsapi_wifi_get_disassoc_reason_remote_1(qcsapi_wifi_get_disassoc_reason_rpcdata *, qcsapi_wifi_get_disassoc_reason_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_disassoc_reason_remote_1_svc(qcsapi_wifi_get_disassoc_reason_rpcdata *, qcsapi_wifi_get_disassoc_reason_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_GET_BB_PARAM_REMOTE 404
+#define QCSAPI_WIFI_GET_BB_PARAM_REMOTE 4281
 extern  enum clnt_stat qcsapi_wifi_get_bb_param_remote_1(qcsapi_wifi_get_bb_param_rpcdata *, qcsapi_wifi_get_bb_param_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_get_bb_param_remote_1_svc(qcsapi_wifi_get_bb_param_rpcdata *, qcsapi_wifi_get_bb_param_rpcdata *, struct svc_req *);
-#define QCSAPI_WIFI_SET_BB_PARAM_REMOTE 405
+#define QCSAPI_WIFI_SET_BB_PARAM_REMOTE 4291
 extern  enum clnt_stat qcsapi_wifi_set_bb_param_remote_1(qcsapi_wifi_set_bb_param_rpcdata *, qcsapi_wifi_set_bb_param_rpcdata *, CLIENT *);
 extern  bool_t qcsapi_wifi_set_bb_param_remote_1_svc(qcsapi_wifi_set_bb_param_rpcdata *, qcsapi_wifi_set_bb_param_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_SCAN_BUF_MAX_SIZE_REMOTE 4301
+extern  enum clnt_stat qcsapi_wifi_set_scan_buf_max_size_remote_1(qcsapi_wifi_set_scan_buf_max_size_rpcdata *, qcsapi_wifi_set_scan_buf_max_size_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_scan_buf_max_size_remote_1_svc(qcsapi_wifi_set_scan_buf_max_size_rpcdata *, qcsapi_wifi_set_scan_buf_max_size_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_SCAN_BUF_MAX_SIZE_REMOTE 4311
+extern  enum clnt_stat qcsapi_wifi_get_scan_buf_max_size_remote_1(qcsapi_wifi_get_scan_buf_max_size_rpcdata *, qcsapi_wifi_get_scan_buf_max_size_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_scan_buf_max_size_remote_1_svc(qcsapi_wifi_get_scan_buf_max_size_rpcdata *, qcsapi_wifi_get_scan_buf_max_size_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_SET_SCAN_TABLE_MAX_LEN_REMOTE 4321
+extern  enum clnt_stat qcsapi_wifi_set_scan_table_max_len_remote_1(qcsapi_wifi_set_scan_table_max_len_rpcdata *, qcsapi_wifi_set_scan_table_max_len_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_set_scan_table_max_len_remote_1_svc(qcsapi_wifi_set_scan_table_max_len_rpcdata *, qcsapi_wifi_set_scan_table_max_len_rpcdata *, struct svc_req *);
+#define QCSAPI_WIFI_GET_SCAN_TABLE_MAX_LEN_REMOTE 4331
+extern  enum clnt_stat qcsapi_wifi_get_scan_table_max_len_remote_1(qcsapi_wifi_get_scan_table_max_len_rpcdata *, qcsapi_wifi_get_scan_table_max_len_rpcdata *, CLIENT *);
+extern  bool_t qcsapi_wifi_get_scan_table_max_len_remote_1_svc(qcsapi_wifi_get_scan_table_max_len_rpcdata *, qcsapi_wifi_get_scan_table_max_len_rpcdata *, struct svc_req *);
 extern int qcsapi_prog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
 #define QCSAPI_BOOTCFG_GET_PARAMETER_REMOTE 1
 extern  enum clnt_stat qcsapi_bootcfg_get_parameter_remote_1();
 extern  bool_t qcsapi_bootcfg_get_parameter_remote_1_svc();
-#define QCSAPI_BOOTCFG_UPDATE_PARAMETER_REMOTE 2
+#define QCSAPI_BOOTCFG_UPDATE_PARAMETER_REMOTE 11
 extern  enum clnt_stat qcsapi_bootcfg_update_parameter_remote_1();
 extern  bool_t qcsapi_bootcfg_update_parameter_remote_1_svc();
-#define QCSAPI_BOOTCFG_COMMIT_REMOTE 3
+#define QCSAPI_BOOTCFG_COMMIT_REMOTE 21
 extern  enum clnt_stat qcsapi_bootcfg_commit_remote_1();
 extern  bool_t qcsapi_bootcfg_commit_remote_1_svc();
-#define QCSAPI_TELNET_ENABLE_REMOTE 4
+#define QCSAPI_TELNET_ENABLE_REMOTE 31
 extern  enum clnt_stat qcsapi_telnet_enable_remote_1();
 extern  bool_t qcsapi_telnet_enable_remote_1_svc();
-#define QCSAPI_WIFI_GET_SCS_CCE_CHANNELS_REMOTE 5
+#define QCSAPI_WIFI_GET_SCS_CCE_CHANNELS_REMOTE 41
 extern  enum clnt_stat qcsapi_wifi_get_scs_cce_channels_remote_1();
 extern  bool_t qcsapi_wifi_get_scs_cce_channels_remote_1_svc();
-#define QCSAPI_WIFI_SCS_ENABLE_REMOTE 6
+#define QCSAPI_WIFI_SCS_ENABLE_REMOTE 51
 extern  enum clnt_stat qcsapi_wifi_scs_enable_remote_1();
 extern  bool_t qcsapi_wifi_scs_enable_remote_1_svc();
-#define QCSAPI_WIFI_SCS_SWITCH_CHANNEL_REMOTE 7
+#define QCSAPI_WIFI_SCS_SWITCH_CHANNEL_REMOTE 61
 extern  enum clnt_stat qcsapi_wifi_scs_switch_channel_remote_1();
 extern  bool_t qcsapi_wifi_scs_switch_channel_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_VERBOSE_REMOTE 8
+#define QCSAPI_WIFI_SET_SCS_VERBOSE_REMOTE 71
 extern  enum clnt_stat qcsapi_wifi_set_scs_verbose_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_verbose_remote_1_svc();
-#define QCSAPI_WIFI_GET_SCS_STATUS_REMOTE 9
+#define QCSAPI_WIFI_GET_SCS_STATUS_REMOTE 81
 extern  enum clnt_stat qcsapi_wifi_get_scs_status_remote_1();
 extern  bool_t qcsapi_wifi_get_scs_status_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_SMPL_ENABLE_REMOTE 10
+#define QCSAPI_WIFI_SET_SCS_SMPL_ENABLE_REMOTE 91
 extern  enum clnt_stat qcsapi_wifi_set_scs_smpl_enable_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_smpl_enable_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_SMPL_DWELL_TIME_REMOTE 11
+#define QCSAPI_WIFI_SET_SCS_SMPL_DWELL_TIME_REMOTE 101
 extern  enum clnt_stat qcsapi_wifi_set_scs_smpl_dwell_time_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_smpl_dwell_time_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_SAMPLE_INTV_REMOTE 12
+#define QCSAPI_WIFI_SET_SCS_SAMPLE_INTV_REMOTE 111
 extern  enum clnt_stat qcsapi_wifi_set_scs_sample_intv_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_sample_intv_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_INTF_DETECT_INTV_REMOTE 13
+#define QCSAPI_WIFI_SET_SCS_INTF_DETECT_INTV_REMOTE 121
 extern  enum clnt_stat qcsapi_wifi_set_scs_intf_detect_intv_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_intf_detect_intv_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_THRSHLD_REMOTE 14
+#define QCSAPI_WIFI_SET_SCS_THRSHLD_REMOTE 131
 extern  enum clnt_stat qcsapi_wifi_set_scs_thrshld_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_thrshld_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_REPORT_ONLY_REMOTE 15
+#define QCSAPI_WIFI_SET_SCS_REPORT_ONLY_REMOTE 141
 extern  enum clnt_stat qcsapi_wifi_set_scs_report_only_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_report_only_remote_1_svc();
-#define QCSAPI_WIFI_GET_SCS_STAT_REPORT_REMOTE 16
+#define QCSAPI_WIFI_GET_SCS_STAT_REPORT_REMOTE 151
 extern  enum clnt_stat qcsapi_wifi_get_scs_stat_report_remote_1();
 extern  bool_t qcsapi_wifi_get_scs_stat_report_remote_1_svc();
-#define QCSAPI_WIFI_GET_SCS_CURRCHAN_REPORT_REMOTE 17
+#define QCSAPI_WIFI_GET_SCS_CURRCHAN_REPORT_REMOTE 161
 extern  enum clnt_stat qcsapi_wifi_get_scs_currchan_report_remote_1();
 extern  bool_t qcsapi_wifi_get_scs_currchan_report_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_STATS_REMOTE 18
+#define QCSAPI_WIFI_SET_SCS_STATS_REMOTE 171
 extern  enum clnt_stat qcsapi_wifi_set_scs_stats_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_stats_remote_1_svc();
-#define QCSAPI_WIFI_GET_AUTOCHAN_REPORT_REMOTE 19
+#define QCSAPI_WIFI_GET_AUTOCHAN_REPORT_REMOTE 181
 extern  enum clnt_stat qcsapi_wifi_get_autochan_report_remote_1();
 extern  bool_t qcsapi_wifi_get_autochan_report_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_CCA_INTF_SMTH_FCTR_REMOTE 20
+#define QCSAPI_WIFI_SET_SCS_CCA_INTF_SMTH_FCTR_REMOTE 191
 extern  enum clnt_stat qcsapi_wifi_set_scs_cca_intf_smth_fctr_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_cca_intf_smth_fctr_remote_1_svc();
-#define QCSAPI_WIFI_SET_SCS_CHAN_MTRC_MRGN_REMOTE 21
+#define QCSAPI_WIFI_SET_SCS_CHAN_MTRC_MRGN_REMOTE 201
 extern  enum clnt_stat qcsapi_wifi_set_scs_chan_mtrc_mrgn_remote_1();
 extern  bool_t qcsapi_wifi_set_scs_chan_mtrc_mrgn_remote_1_svc();
-#define QCSAPI_WIFI_GET_SCS_CCA_INTF_REMOTE 22
+#define QCSAPI_WIFI_GET_SCS_CCA_INTF_REMOTE 211
 extern  enum clnt_stat qcsapi_wifi_get_scs_cca_intf_remote_1();
 extern  bool_t qcsapi_wifi_get_scs_cca_intf_remote_1_svc();
-#define QCSAPI_WIFI_GET_SCS_PARAM_REPORT_REMOTE 23
+#define QCSAPI_WIFI_GET_SCS_PARAM_REPORT_REMOTE 221
 extern  enum clnt_stat qcsapi_wifi_get_scs_param_report_remote_1();
 extern  bool_t qcsapi_wifi_get_scs_param_report_remote_1_svc();
-#define QCSAPI_WIFI_GET_SCS_DFS_REENTRY_REQUEST_REMOTE 24
+#define QCSAPI_WIFI_GET_SCS_DFS_REENTRY_REQUEST_REMOTE 231
 extern  enum clnt_stat qcsapi_wifi_get_scs_dfs_reentry_request_remote_1();
 extern  bool_t qcsapi_wifi_get_scs_dfs_reentry_request_remote_1_svc();
-#define QCSAPI_WIFI_START_OCAC_REMOTE 25
+#define QCSAPI_WIFI_START_OCAC_REMOTE 241
 extern  enum clnt_stat qcsapi_wifi_start_ocac_remote_1();
 extern  bool_t qcsapi_wifi_start_ocac_remote_1_svc();
-#define QCSAPI_WIFI_STOP_OCAC_REMOTE 26
+#define QCSAPI_WIFI_STOP_OCAC_REMOTE 251
 extern  enum clnt_stat qcsapi_wifi_stop_ocac_remote_1();
 extern  bool_t qcsapi_wifi_stop_ocac_remote_1_svc();
-#define QCSAPI_WIFI_GET_OCAC_STATUS_REMOTE 27
+#define QCSAPI_WIFI_GET_OCAC_STATUS_REMOTE 261
 extern  enum clnt_stat qcsapi_wifi_get_ocac_status_remote_1();
 extern  bool_t qcsapi_wifi_get_ocac_status_remote_1_svc();
-#define QCSAPI_WIFI_SET_OCAC_DWELL_TIME_REMOTE 28
+#define QCSAPI_WIFI_SET_OCAC_DWELL_TIME_REMOTE 271
 extern  enum clnt_stat qcsapi_wifi_set_ocac_dwell_time_remote_1();
 extern  bool_t qcsapi_wifi_set_ocac_dwell_time_remote_1_svc();
-#define QCSAPI_WIFI_SET_OCAC_DURATION_REMOTE 29
+#define QCSAPI_WIFI_SET_OCAC_DURATION_REMOTE 281
 extern  enum clnt_stat qcsapi_wifi_set_ocac_duration_remote_1();
 extern  bool_t qcsapi_wifi_set_ocac_duration_remote_1_svc();
-#define QCSAPI_WIFI_SET_OCAC_CAC_TIME_REMOTE 30
+#define QCSAPI_WIFI_SET_OCAC_CAC_TIME_REMOTE 291
 extern  enum clnt_stat qcsapi_wifi_set_ocac_cac_time_remote_1();
 extern  bool_t qcsapi_wifi_set_ocac_cac_time_remote_1_svc();
-#define QCSAPI_WIFI_SET_OCAC_REPORT_ONLY_REMOTE 31
+#define QCSAPI_WIFI_SET_OCAC_REPORT_ONLY_REMOTE 301
 extern  enum clnt_stat qcsapi_wifi_set_ocac_report_only_remote_1();
 extern  bool_t qcsapi_wifi_set_ocac_report_only_remote_1_svc();
-#define QCSAPI_WIFI_SET_OCAC_THRSHLD_REMOTE 32
+#define QCSAPI_WIFI_SET_OCAC_THRSHLD_REMOTE 311
 extern  enum clnt_stat qcsapi_wifi_set_ocac_thrshld_remote_1();
 extern  bool_t qcsapi_wifi_set_ocac_thrshld_remote_1_svc();
-#define QCSAPI_INIT_REMOTE 33
+#define QCSAPI_INIT_REMOTE 321
 extern  enum clnt_stat qcsapi_init_remote_1();
 extern  bool_t qcsapi_init_remote_1_svc();
-#define QCSAPI_CONSOLE_DISCONNECT_REMOTE 34
+#define QCSAPI_CONSOLE_DISCONNECT_REMOTE 331
 extern  enum clnt_stat qcsapi_console_disconnect_remote_1();
 extern  bool_t qcsapi_console_disconnect_remote_1_svc();
-#define QCSAPI_SYSTEM_GET_TIME_SINCE_START_REMOTE 35
+#define QCSAPI_SYSTEM_GET_TIME_SINCE_START_REMOTE 341
 extern  enum clnt_stat qcsapi_system_get_time_since_start_remote_1();
 extern  bool_t qcsapi_system_get_time_since_start_remote_1_svc();
-#define QCSAPI_GET_SYSTEM_STATUS_REMOTE 36
+#define QCSAPI_GET_SYSTEM_STATUS_REMOTE 351
 extern  enum clnt_stat qcsapi_get_system_status_remote_1();
 extern  bool_t qcsapi_get_system_status_remote_1_svc();
-#define QCSAPI_CONFIG_GET_PARAMETER_REMOTE 37
+#define QCSAPI_CONFIG_GET_PARAMETER_REMOTE 361
 extern  enum clnt_stat qcsapi_config_get_parameter_remote_1();
 extern  bool_t qcsapi_config_get_parameter_remote_1_svc();
-#define QCSAPI_CONFIG_UPDATE_PARAMETER_REMOTE 38
+#define QCSAPI_CONFIG_UPDATE_PARAMETER_REMOTE 371
 extern  enum clnt_stat qcsapi_config_update_parameter_remote_1();
 extern  bool_t qcsapi_config_update_parameter_remote_1_svc();
-#define QCSAPI_CONFIG_GET_SSID_PARAMETER_REMOTE 39
+#define QCSAPI_CONFIG_GET_SSID_PARAMETER_REMOTE 381
 extern  enum clnt_stat qcsapi_config_get_ssid_parameter_remote_1();
 extern  bool_t qcsapi_config_get_ssid_parameter_remote_1_svc();
-#define QCSAPI_CONFIG_UPDATE_SSID_PARAMETER_REMOTE 40
+#define QCSAPI_CONFIG_UPDATE_SSID_PARAMETER_REMOTE 391
 extern  enum clnt_stat qcsapi_config_update_ssid_parameter_remote_1();
 extern  bool_t qcsapi_config_update_ssid_parameter_remote_1_svc();
-#define QCSAPI_FILE_PATH_GET_CONFIG_REMOTE 41
+#define QCSAPI_FILE_PATH_GET_CONFIG_REMOTE 401
 extern  enum clnt_stat qcsapi_file_path_get_config_remote_1();
 extern  bool_t qcsapi_file_path_get_config_remote_1_svc();
-#define QCSAPI_FILE_PATH_SET_CONFIG_REMOTE 42
+#define QCSAPI_FILE_PATH_SET_CONFIG_REMOTE 411
 extern  enum clnt_stat qcsapi_file_path_set_config_remote_1();
 extern  bool_t qcsapi_file_path_set_config_remote_1_svc();
-#define QCSAPI_RESTORE_DEFAULT_CONFIG_REMOTE 43
+#define QCSAPI_RESTORE_DEFAULT_CONFIG_REMOTE 421
 extern  enum clnt_stat qcsapi_restore_default_config_remote_1();
 extern  bool_t qcsapi_restore_default_config_remote_1_svc();
-#define QCSAPI_STORE_IPADDR_REMOTE 44
+#define QCSAPI_STORE_IPADDR_REMOTE 431
 extern  enum clnt_stat qcsapi_store_ipaddr_remote_1();
 extern  bool_t qcsapi_store_ipaddr_remote_1_svc();
-#define QCSAPI_INTERFACE_ENABLE_REMOTE 45
+#define QCSAPI_INTERFACE_ENABLE_REMOTE 441
 extern  enum clnt_stat qcsapi_interface_enable_remote_1();
 extern  bool_t qcsapi_interface_enable_remote_1_svc();
-#define QCSAPI_INTERFACE_GET_STATUS_REMOTE 46
+#define QCSAPI_INTERFACE_GET_STATUS_REMOTE 451
 extern  enum clnt_stat qcsapi_interface_get_status_remote_1();
 extern  bool_t qcsapi_interface_get_status_remote_1_svc();
-#define QCSAPI_INTERFACE_GET_COUNTER_REMOTE 47
+#define QCSAPI_INTERFACE_GET_NETMASK_REMOTE 4431
+extern  enum clnt_stat qcsapi_interface_get_netmask_remote_1();
+extern  bool_t qcsapi_interface_get_netmask_remote_1_svc();
+#define QCSAPI_INTERFACE_GET_COUNTER_REMOTE 461
 extern  enum clnt_stat qcsapi_interface_get_counter_remote_1();
 extern  bool_t qcsapi_interface_get_counter_remote_1_svc();
-#define QCSAPI_INTERFACE_GET_MAC_ADDR_REMOTE 48
+#define QCSAPI_INTERFACE_GET_MAC_ADDR_REMOTE 481
 extern  enum clnt_stat qcsapi_interface_get_mac_addr_remote_1();
 extern  bool_t qcsapi_interface_get_mac_addr_remote_1_svc();
-#define QCSAPI_INTERFACE_SET_MAC_ADDR_REMOTE 49
+#define QCSAPI_INTERFACE_SET_MAC_ADDR_REMOTE 491
 extern  enum clnt_stat qcsapi_interface_set_mac_addr_remote_1();
 extern  bool_t qcsapi_interface_set_mac_addr_remote_1_svc();
-#define QCSAPI_PM_GET_COUNTER_REMOTE 50
+#define QCSAPI_PM_GET_COUNTER_REMOTE 501
 extern  enum clnt_stat qcsapi_pm_get_counter_remote_1();
 extern  bool_t qcsapi_pm_get_counter_remote_1_svc();
-#define QCSAPI_SET_ASPM_L1_REMOTE 51
+#define QCSAPI_SET_ASPM_L1_REMOTE 511
 extern  enum clnt_stat qcsapi_set_aspm_l1_remote_1();
 extern  bool_t qcsapi_set_aspm_l1_remote_1_svc();
-#define QCSAPI_PM_GET_ELAPSED_TIME_REMOTE 52
+#define QCSAPI_PM_GET_ELAPSED_TIME_REMOTE 531
 extern  enum clnt_stat qcsapi_pm_get_elapsed_time_remote_1();
 extern  bool_t qcsapi_pm_get_elapsed_time_remote_1_svc();
-#define QCSAPI_ETH_PHY_POWER_CONTROL_REMOTE 53
+#define QCSAPI_ETH_PHY_POWER_CONTROL_REMOTE 541
 extern  enum clnt_stat qcsapi_eth_phy_power_control_remote_1();
 extern  bool_t qcsapi_eth_phy_power_control_remote_1_svc();
-#define QCSAPI_WIFI_GET_MODE_REMOTE 54
+#define QCSAPI_WIFI_GET_MODE_REMOTE 551
 extern  enum clnt_stat qcsapi_wifi_get_mode_remote_1();
 extern  bool_t qcsapi_wifi_get_mode_remote_1_svc();
-#define QCSAPI_WIFI_SET_MODE_REMOTE 55
+#define QCSAPI_WIFI_SET_MODE_REMOTE 561
 extern  enum clnt_stat qcsapi_wifi_set_mode_remote_1();
 extern  bool_t qcsapi_wifi_set_mode_remote_1_svc();
-#define QCSAPI_WIFI_GET_PHY_MODE_REMOTE 56
+#define QCSAPI_WIFI_GET_PHY_MODE_REMOTE 571
 extern  enum clnt_stat qcsapi_wifi_get_phy_mode_remote_1();
 extern  bool_t qcsapi_wifi_get_phy_mode_remote_1_svc();
-#define QCSAPI_WIFI_SET_PHY_MODE_REMOTE 57
+#define QCSAPI_WIFI_SET_PHY_MODE_REMOTE 581
 extern  enum clnt_stat qcsapi_wifi_set_phy_mode_remote_1();
 extern  bool_t qcsapi_wifi_set_phy_mode_remote_1_svc();
-#define QCSAPI_WIFI_RELOAD_IN_MODE_REMOTE 58
+#define QCSAPI_WIFI_RELOAD_IN_MODE_REMOTE 591
 extern  enum clnt_stat qcsapi_wifi_reload_in_mode_remote_1();
 extern  bool_t qcsapi_wifi_reload_in_mode_remote_1_svc();
-#define QCSAPI_WIFI_RFENABLE_REMOTE 59
+#define QCSAPI_WIFI_RFENABLE_REMOTE 601
 extern  enum clnt_stat qcsapi_wifi_rfenable_remote_1();
 extern  bool_t qcsapi_wifi_rfenable_remote_1_svc();
-#define QCSAPI_WIFI_STARTPROD_REMOTE 60
+#define QCSAPI_WIFI_STARTPROD_REMOTE 611
 extern  enum clnt_stat qcsapi_wifi_startprod_remote_1();
 extern  bool_t qcsapi_wifi_startprod_remote_1_svc();
-#define QCSAPI_WIFI_RFSTATUS_REMOTE 61
+#define QCSAPI_IS_STARTPROD_DONE_REMOTE 621
+extern  enum clnt_stat qcsapi_is_startprod_done_remote_1();
+extern  bool_t qcsapi_is_startprod_done_remote_1_svc();
+#define QCSAPI_WIFI_RFSTATUS_REMOTE 631
 extern  enum clnt_stat qcsapi_wifi_rfstatus_remote_1();
 extern  bool_t qcsapi_wifi_rfstatus_remote_1_svc();
-#define QCSAPI_WIFI_GET_BW_REMOTE 62
+#define QCSAPI_WIFI_GET_BW_REMOTE 641
 extern  enum clnt_stat qcsapi_wifi_get_bw_remote_1();
 extern  bool_t qcsapi_wifi_get_bw_remote_1_svc();
-#define QCSAPI_WIFI_SET_BW_REMOTE 63
+#define QCSAPI_WIFI_SET_BW_REMOTE 651
 extern  enum clnt_stat qcsapi_wifi_set_bw_remote_1();
 extern  bool_t qcsapi_wifi_set_bw_remote_1_svc();
-#define QCSAPI_GET_UBOOT_INFO_REMOTE 64
+#define QCSAPI_GET_UBOOT_INFO_REMOTE 661
 extern  enum clnt_stat qcsapi_get_uboot_info_remote_1();
 extern  bool_t qcsapi_get_uboot_info_remote_1_svc();
-#define QCSAPI_WIFI_GET_CHANNEL_REMOTE 65
+#define QCSAPI_WIFI_GET_CHANNEL_REMOTE 671
 extern  enum clnt_stat qcsapi_wifi_get_channel_remote_1();
 extern  bool_t qcsapi_wifi_get_channel_remote_1_svc();
-#define QCSAPI_WIFI_SET_CHANNEL_REMOTE 66
+#define QCSAPI_WIFI_SET_CHANNEL_REMOTE 681
 extern  enum clnt_stat qcsapi_wifi_set_channel_remote_1();
 extern  bool_t qcsapi_wifi_set_channel_remote_1_svc();
-#define QCSAPI_WIFI_SET_CHAN_PRI_INACTIVE_REMOTE 67
+#define QCSAPI_WIFI_SET_CHAN_PRI_INACTIVE_REMOTE 691
 extern  enum clnt_stat qcsapi_wifi_set_chan_pri_inactive_remote_1();
 extern  bool_t qcsapi_wifi_set_chan_pri_inactive_remote_1_svc();
-#define QCSAPI_WIFI_GET_BEACON_INTERVAL_REMOTE 68
+#define QCSAPI_WIFI_GET_BEACON_INTERVAL_REMOTE 701
 extern  enum clnt_stat qcsapi_wifi_get_beacon_interval_remote_1();
 extern  bool_t qcsapi_wifi_get_beacon_interval_remote_1_svc();
-#define QCSAPI_WIFI_SET_BEACON_INTERVAL_REMOTE 69
+#define QCSAPI_WIFI_SET_BEACON_INTERVAL_REMOTE 711
 extern  enum clnt_stat qcsapi_wifi_set_beacon_interval_remote_1();
 extern  bool_t qcsapi_wifi_set_beacon_interval_remote_1_svc();
-#define QCSAPI_WIFI_GET_DTIM_REMOTE 70
+#define QCSAPI_WIFI_GET_DTIM_REMOTE 721
 extern  enum clnt_stat qcsapi_wifi_get_dtim_remote_1();
 extern  bool_t qcsapi_wifi_get_dtim_remote_1_svc();
-#define QCSAPI_WIFI_SET_DTIM_REMOTE 71
+#define QCSAPI_WIFI_SET_DTIM_REMOTE 731
 extern  enum clnt_stat qcsapi_wifi_set_dtim_remote_1();
 extern  bool_t qcsapi_wifi_set_dtim_remote_1_svc();
-#define QCSAPI_WIFI_GET_ASSOC_LIMIT_REMOTE 72
+#define QCSAPI_WIFI_GET_ASSOC_LIMIT_REMOTE 741
 extern  enum clnt_stat qcsapi_wifi_get_assoc_limit_remote_1();
 extern  bool_t qcsapi_wifi_get_assoc_limit_remote_1_svc();
-#define QCSAPI_WIFI_SET_ASSOC_LIMIT_REMOTE 73
+#define QCSAPI_WIFI_SET_ASSOC_LIMIT_REMOTE 751
 extern  enum clnt_stat qcsapi_wifi_set_assoc_limit_remote_1();
 extern  bool_t qcsapi_wifi_set_assoc_limit_remote_1_svc();
-#define QCSAPI_WIFI_GET_BSSID_REMOTE 74
+#define QCSAPI_WIFI_GET_BSSID_REMOTE 761
 extern  enum clnt_stat qcsapi_wifi_get_bssid_remote_1();
 extern  bool_t qcsapi_wifi_get_bssid_remote_1_svc();
-#define QCSAPI_WIFI_GET_SSID_REMOTE 75
+#define QCSAPI_WIFI_GET_CONFIG_BSSID_REMOTE 771
+extern  enum clnt_stat qcsapi_wifi_get_config_bssid_remote_1();
+extern  bool_t qcsapi_wifi_get_config_bssid_remote_1_svc();
+#define QCSAPI_WIFI_GET_SSID_REMOTE 781
 extern  enum clnt_stat qcsapi_wifi_get_ssid_remote_1();
 extern  bool_t qcsapi_wifi_get_ssid_remote_1_svc();
-#define QCSAPI_WIFI_SET_SSID_REMOTE 76
+#define QCSAPI_WIFI_SET_SSID_REMOTE 791
 extern  enum clnt_stat qcsapi_wifi_set_ssid_remote_1();
 extern  bool_t qcsapi_wifi_set_ssid_remote_1_svc();
-#define QCSAPI_WIFI_GET_IEEE_802_11_STANDARD_REMOTE 77
+#define QCSAPI_WIFI_GET_IEEE_802_11_STANDARD_REMOTE 801
 extern  enum clnt_stat qcsapi_wifi_get_ieee_802_11_standard_remote_1();
 extern  bool_t qcsapi_wifi_get_ieee_802_11_standard_remote_1_svc();
-#define QCSAPI_WIFI_GET_LIST_CHANNELS_REMOTE 78
+#define QCSAPI_WIFI_GET_LIST_CHANNELS_REMOTE 811
 extern  enum clnt_stat qcsapi_wifi_get_list_channels_remote_1();
 extern  bool_t qcsapi_wifi_get_list_channels_remote_1_svc();
-#define QCSAPI_WIFI_GET_MODE_SWITCH_REMOTE 79
+#define QCSAPI_WIFI_GET_MODE_SWITCH_REMOTE 821
 extern  enum clnt_stat qcsapi_wifi_get_mode_switch_remote_1();
 extern  bool_t qcsapi_wifi_get_mode_switch_remote_1_svc();
-#define QCSAPI_WIFI_DISASSOCIATE_REMOTE 80
+#define QCSAPI_WIFI_DISASSOCIATE_REMOTE 831
 extern  enum clnt_stat qcsapi_wifi_disassociate_remote_1();
 extern  bool_t qcsapi_wifi_disassociate_remote_1_svc();
-#define QCSAPI_WIFI_GET_DISCONN_INFO_REMOTE 81
+#define QCSAPI_WIFI_DISASSOCIATE_STA_REMOTE 841
+extern  enum clnt_stat qcsapi_wifi_disassociate_sta_remote_1();
+extern  bool_t qcsapi_wifi_disassociate_sta_remote_1_svc();
+#define QCSAPI_WIFI_REASSOCIATE_REMOTE 4441
+extern  enum clnt_stat qcsapi_wifi_reassociate_remote_1();
+extern  bool_t qcsapi_wifi_reassociate_remote_1_svc();
+#define QCSAPI_WIFI_GET_DISCONN_INFO_REMOTE 851
 extern  enum clnt_stat qcsapi_wifi_get_disconn_info_remote_1();
 extern  bool_t qcsapi_wifi_get_disconn_info_remote_1_svc();
-#define QCSAPI_WIFI_DISABLE_WPS_REMOTE 82
+#define QCSAPI_WIFI_DISABLE_WPS_REMOTE 861
 extern  enum clnt_stat qcsapi_wifi_disable_wps_remote_1();
 extern  bool_t qcsapi_wifi_disable_wps_remote_1_svc();
-#define QCSAPI_WIFI_ASSOCIATE_REMOTE 83
+#define QCSAPI_WIFI_ASSOCIATE_REMOTE 871
 extern  enum clnt_stat qcsapi_wifi_associate_remote_1();
 extern  bool_t qcsapi_wifi_associate_remote_1_svc();
-#define QCSAPI_WIFI_START_CCA_REMOTE 84
+#define QCSAPI_WIFI_START_CCA_REMOTE 881
 extern  enum clnt_stat qcsapi_wifi_start_cca_remote_1();
 extern  bool_t qcsapi_wifi_start_cca_remote_1_svc();
-#define QCSAPI_WIFI_GET_NOISE_REMOTE 85
+#define QCSAPI_WIFI_GET_NOISE_REMOTE 891
 extern  enum clnt_stat qcsapi_wifi_get_noise_remote_1();
 extern  bool_t qcsapi_wifi_get_noise_remote_1_svc();
-#define QCSAPI_WIFI_GET_RSSI_BY_CHAIN_REMOTE 86
+#define QCSAPI_WIFI_GET_RSSI_BY_CHAIN_REMOTE 901
 extern  enum clnt_stat qcsapi_wifi_get_rssi_by_chain_remote_1();
 extern  bool_t qcsapi_wifi_get_rssi_by_chain_remote_1_svc();
-#define QCSAPI_WIFI_GET_AVG_SNR_REMOTE 87
+#define QCSAPI_WIFI_GET_AVG_SNR_REMOTE 911
 extern  enum clnt_stat qcsapi_wifi_get_avg_snr_remote_1();
 extern  bool_t qcsapi_wifi_get_avg_snr_remote_1_svc();
-#define QCSAPI_GET_PRIMARY_INTERFACE_REMOTE 88
+#define QCSAPI_GET_PRIMARY_INTERFACE_REMOTE 921
 extern  enum clnt_stat qcsapi_get_primary_interface_remote_1();
 extern  bool_t qcsapi_get_primary_interface_remote_1_svc();
-#define QCSAPI_GET_INTERFACE_BY_INDEX_REMOTE 89
+#define QCSAPI_GET_INTERFACE_BY_INDEX_REMOTE 931
 extern  enum clnt_stat qcsapi_get_interface_by_index_remote_1();
 extern  bool_t qcsapi_get_interface_by_index_remote_1_svc();
-#define QCSAPI_WIFI_SET_WIFI_MACADDR_REMOTE 90
+#define QCSAPI_WIFI_SET_WIFI_MACADDR_REMOTE 941
 extern  enum clnt_stat qcsapi_wifi_set_wifi_macaddr_remote_1();
 extern  bool_t qcsapi_wifi_set_wifi_macaddr_remote_1_svc();
-#define QCSAPI_INTERFACE_GET_BSSID_REMOTE 91
+#define QCSAPI_INTERFACE_GET_BSSID_REMOTE 951
 extern  enum clnt_stat qcsapi_interface_get_bssid_remote_1();
 extern  bool_t qcsapi_interface_get_bssid_remote_1_svc();
-#define QCSAPI_WIFI_GET_RATES_REMOTE 92
+#define QCSAPI_WIFI_GET_RATES_REMOTE 961
 extern  enum clnt_stat qcsapi_wifi_get_rates_remote_1();
 extern  bool_t qcsapi_wifi_get_rates_remote_1_svc();
-#define QCSAPI_WIFI_SET_RATES_REMOTE 93
+#define QCSAPI_WIFI_SET_RATES_REMOTE 971
 extern  enum clnt_stat qcsapi_wifi_set_rates_remote_1();
 extern  bool_t qcsapi_wifi_set_rates_remote_1_svc();
-#define QCSAPI_GET_MAX_BITRATE_REMOTE 94
+#define QCSAPI_GET_MAX_BITRATE_REMOTE 981
 extern  enum clnt_stat qcsapi_get_max_bitrate_remote_1();
 extern  bool_t qcsapi_get_max_bitrate_remote_1_svc();
-#define QCSAPI_SET_MAX_BITRATE_REMOTE 95
+#define QCSAPI_SET_MAX_BITRATE_REMOTE 991
 extern  enum clnt_stat qcsapi_set_max_bitrate_remote_1();
 extern  bool_t qcsapi_set_max_bitrate_remote_1_svc();
-#define QCSAPI_WIFI_QOS_GET_PARAM_REMOTE 96
+#define QCSAPI_WIFI_QOS_GET_PARAM_REMOTE 1001
 extern  enum clnt_stat qcsapi_wifi_qos_get_param_remote_1();
 extern  bool_t qcsapi_wifi_qos_get_param_remote_1_svc();
-#define QCSAPI_WIFI_QOS_SET_PARAM_REMOTE 97
+#define QCSAPI_WIFI_QOS_SET_PARAM_REMOTE 1011
 extern  enum clnt_stat qcsapi_wifi_qos_set_param_remote_1();
 extern  bool_t qcsapi_wifi_qos_set_param_remote_1_svc();
-#define QCSAPI_WIFI_GET_WMM_AC_MAP_REMOTE 98
+#define QCSAPI_WIFI_GET_WMM_AC_MAP_REMOTE 1021
 extern  enum clnt_stat qcsapi_wifi_get_wmm_ac_map_remote_1();
 extern  bool_t qcsapi_wifi_get_wmm_ac_map_remote_1_svc();
-#define QCSAPI_WIFI_SET_WMM_AC_MAP_REMOTE 99
+#define QCSAPI_WIFI_SET_WMM_AC_MAP_REMOTE 1031
 extern  enum clnt_stat qcsapi_wifi_set_wmm_ac_map_remote_1();
 extern  bool_t qcsapi_wifi_set_wmm_ac_map_remote_1_svc();
-#define QCSAPI_WIFI_GET_DSCP_8021P_MAP_REMOTE 100
+#define QCSAPI_WIFI_GET_DSCP_8021P_MAP_REMOTE 1041
 extern  enum clnt_stat qcsapi_wifi_get_dscp_8021p_map_remote_1();
 extern  bool_t qcsapi_wifi_get_dscp_8021p_map_remote_1_svc();
-#define QCSAPI_WIFI_GET_DSCP_AC_MAP_REMOTE 101
+#define QCSAPI_WIFI_GET_DSCP_AC_MAP_REMOTE 1051
 extern  enum clnt_stat qcsapi_wifi_get_dscp_ac_map_remote_1();
 extern  bool_t qcsapi_wifi_get_dscp_ac_map_remote_1_svc();
-#define QCSAPI_WIFI_SET_DSCP_8021P_MAP_REMOTE 102
+#define QCSAPI_WIFI_SET_DSCP_8021P_MAP_REMOTE 1061
 extern  enum clnt_stat qcsapi_wifi_set_dscp_8021p_map_remote_1();
 extern  bool_t qcsapi_wifi_set_dscp_8021p_map_remote_1_svc();
-#define QCSAPI_WIFI_SET_DSCP_AC_MAP_REMOTE 103
+#define QCSAPI_WIFI_SET_DSCP_AC_MAP_REMOTE 1071
 extern  enum clnt_stat qcsapi_wifi_set_dscp_ac_map_remote_1();
 extern  bool_t qcsapi_wifi_set_dscp_ac_map_remote_1_svc();
-#define QCSAPI_WIFI_GET_PRIORITY_REMOTE 104
+#define QCSAPI_WIFI_GET_PRIORITY_REMOTE 1081
 extern  enum clnt_stat qcsapi_wifi_get_priority_remote_1();
 extern  bool_t qcsapi_wifi_get_priority_remote_1_svc();
-#define QCSAPI_WIFI_SET_PRIORITY_REMOTE 105
+#define QCSAPI_WIFI_SET_PRIORITY_REMOTE 1091
 extern  enum clnt_stat qcsapi_wifi_set_priority_remote_1();
 extern  bool_t qcsapi_wifi_set_priority_remote_1_svc();
-#define QCSAPI_WIFI_GET_AIRFAIR_REMOTE 106
+#define QCSAPI_WIFI_GET_AIRFAIR_REMOTE 1101
 extern  enum clnt_stat qcsapi_wifi_get_airfair_remote_1();
 extern  bool_t qcsapi_wifi_get_airfair_remote_1_svc();
-#define QCSAPI_WIFI_SET_AIRFAIR_REMOTE 107
+#define QCSAPI_WIFI_SET_AIRFAIR_REMOTE 1111
 extern  enum clnt_stat qcsapi_wifi_set_airfair_remote_1();
 extern  bool_t qcsapi_wifi_set_airfair_remote_1_svc();
-#define QCSAPI_WIFI_SET_DWELL_TIMES_REMOTE 108
+#define QCSAPI_WIFI_SET_DWELL_TIMES_REMOTE 1121
 extern  enum clnt_stat qcsapi_wifi_set_dwell_times_remote_1();
 extern  bool_t qcsapi_wifi_set_dwell_times_remote_1_svc();
-#define QCSAPI_WIFI_GET_DWELL_TIMES_REMOTE 109
+#define QCSAPI_WIFI_GET_DWELL_TIMES_REMOTE 1131
 extern  enum clnt_stat qcsapi_wifi_get_dwell_times_remote_1();
 extern  bool_t qcsapi_wifi_get_dwell_times_remote_1_svc();
-#define QCSAPI_WIFI_SET_BGSCAN_DWELL_TIMES_REMOTE 110
+#define QCSAPI_WIFI_SET_BGSCAN_DWELL_TIMES_REMOTE 1141
 extern  enum clnt_stat qcsapi_wifi_set_bgscan_dwell_times_remote_1();
 extern  bool_t qcsapi_wifi_set_bgscan_dwell_times_remote_1_svc();
-#define QCSAPI_WIFI_GET_BGSCAN_DWELL_TIMES_REMOTE 111
+#define QCSAPI_WIFI_GET_BGSCAN_DWELL_TIMES_REMOTE 1151
 extern  enum clnt_stat qcsapi_wifi_get_bgscan_dwell_times_remote_1();
 extern  bool_t qcsapi_wifi_get_bgscan_dwell_times_remote_1_svc();
-#define QCSAPI_WIFI_START_SCAN_REMOTE 112
+#define QCSAPI_WIFI_START_SCAN_REMOTE 1161
 extern  enum clnt_stat qcsapi_wifi_start_scan_remote_1();
 extern  bool_t qcsapi_wifi_start_scan_remote_1_svc();
-#define QCSAPI_WIFI_CANCEL_SCAN_REMOTE 113
+#define QCSAPI_WIFI_CANCEL_SCAN_REMOTE 1171
 extern  enum clnt_stat qcsapi_wifi_cancel_scan_remote_1();
 extern  bool_t qcsapi_wifi_cancel_scan_remote_1_svc();
-#define QCSAPI_WIFI_GET_SCAN_STATUS_REMOTE 114
+#define QCSAPI_WIFI_GET_SCAN_STATUS_REMOTE 1181
 extern  enum clnt_stat qcsapi_wifi_get_scan_status_remote_1();
 extern  bool_t qcsapi_wifi_get_scan_status_remote_1_svc();
-#define QCSAPI_WIFI_GET_CAC_STATUS_REMOTE 115
+#define QCSAPI_WIFI_GET_CAC_STATUS_REMOTE 1191
 extern  enum clnt_stat qcsapi_wifi_get_cac_status_remote_1();
 extern  bool_t qcsapi_wifi_get_cac_status_remote_1_svc();
-#define QCSAPI_WIFI_WAIT_SCAN_COMPLETES_REMOTE 116
+#define QCSAPI_WIFI_WAIT_SCAN_COMPLETES_REMOTE 1201
 extern  enum clnt_stat qcsapi_wifi_wait_scan_completes_remote_1();
 extern  bool_t qcsapi_wifi_wait_scan_completes_remote_1_svc();
-#define QCSAPI_WIFI_GET_TX_POWER_REMOTE 117
+#define QCSAPI_WIFI_GET_TX_POWER_REMOTE 1211
 extern  enum clnt_stat qcsapi_wifi_get_tx_power_remote_1();
 extern  bool_t qcsapi_wifi_get_tx_power_remote_1_svc();
-#define QCSAPI_WIFI_SET_TX_POWER_REMOTE 118
+#define QCSAPI_WIFI_SET_TX_POWER_REMOTE 1221
 extern  enum clnt_stat qcsapi_wifi_set_tx_power_remote_1();
 extern  bool_t qcsapi_wifi_set_tx_power_remote_1_svc();
-#define QCSAPI_WIFI_GET_BW_POWER_REMOTE 119
+#define QCSAPI_WIFI_GET_BW_POWER_REMOTE 1231
 extern  enum clnt_stat qcsapi_wifi_get_bw_power_remote_1();
 extern  bool_t qcsapi_wifi_get_bw_power_remote_1_svc();
-#define QCSAPI_WIFI_SET_BW_POWER_REMOTE 120
+#define QCSAPI_WIFI_SET_BW_POWER_REMOTE 1241
 extern  enum clnt_stat qcsapi_wifi_set_bw_power_remote_1();
 extern  bool_t qcsapi_wifi_set_bw_power_remote_1_svc();
-#define QCSAPI_REGULATORY_SET_BW_POWER_REMOTE 121
+#define QCSAPI_REGULATORY_SET_BW_POWER_REMOTE 1251
 extern  enum clnt_stat qcsapi_regulatory_set_bw_power_remote_1();
 extern  bool_t qcsapi_regulatory_set_bw_power_remote_1_svc();
-#define QCSAPI_WIFI_GET_BF_POWER_REMOTE 122
+#define QCSAPI_WIFI_GET_BF_POWER_REMOTE 1261
 extern  enum clnt_stat qcsapi_wifi_get_bf_power_remote_1();
 extern  bool_t qcsapi_wifi_get_bf_power_remote_1_svc();
-#define QCSAPI_WIFI_SET_BF_POWER_REMOTE 123
+#define QCSAPI_WIFI_SET_BF_POWER_REMOTE 1271
 extern  enum clnt_stat qcsapi_wifi_set_bf_power_remote_1();
 extern  bool_t qcsapi_wifi_set_bf_power_remote_1_svc();
-#define QCSAPI_REGULATORY_SET_BF_POWER_REMOTE 124
+#define QCSAPI_REGULATORY_SET_BF_POWER_REMOTE 1281
 extern  enum clnt_stat qcsapi_regulatory_set_bf_power_remote_1();
 extern  bool_t qcsapi_regulatory_set_bf_power_remote_1_svc();
-#define QCSAPI_WIFI_GET_CARRIER_INTERFERENCE_REMOTE 125
+#define QCSAPI_WIFI_GET_CARRIER_INTERFERENCE_REMOTE 1291
 extern  enum clnt_stat qcsapi_wifi_get_carrier_interference_remote_1();
 extern  bool_t qcsapi_wifi_get_carrier_interference_remote_1_svc();
-#define QCSAPI_WIFI_GET_CONGESTION_INDEX_REMOTE 126
+#define QCSAPI_WIFI_GET_CONGESTION_INDEX_REMOTE 1301
 extern  enum clnt_stat qcsapi_wifi_get_congestion_index_remote_1();
 extern  bool_t qcsapi_wifi_get_congestion_index_remote_1_svc();
-#define QCSAPI_WIFI_GET_SUPPORTED_TX_POWER_LEVELS_REMOTE 127
+#define QCSAPI_WIFI_GET_SUPPORTED_TX_POWER_LEVELS_REMOTE 1311
 extern  enum clnt_stat qcsapi_wifi_get_supported_tx_power_levels_remote_1();
 extern  bool_t qcsapi_wifi_get_supported_tx_power_levels_remote_1_svc();
-#define QCSAPI_WIFI_GET_CURRENT_TX_POWER_LEVEL_REMOTE 128
+#define QCSAPI_WIFI_GET_CURRENT_TX_POWER_LEVEL_REMOTE 1321
 extern  enum clnt_stat qcsapi_wifi_get_current_tx_power_level_remote_1();
 extern  bool_t qcsapi_wifi_get_current_tx_power_level_remote_1_svc();
-#define QCSAPI_WIFI_SET_POWER_CONSTRAINT_REMOTE 129
+#define QCSAPI_WIFI_SET_POWER_CONSTRAINT_REMOTE 1331
 extern  enum clnt_stat qcsapi_wifi_set_power_constraint_remote_1();
 extern  bool_t qcsapi_wifi_set_power_constraint_remote_1_svc();
-#define QCSAPI_WIFI_GET_POWER_CONSTRAINT_REMOTE 130
+#define QCSAPI_WIFI_GET_POWER_CONSTRAINT_REMOTE 1341
 extern  enum clnt_stat qcsapi_wifi_get_power_constraint_remote_1();
 extern  bool_t qcsapi_wifi_get_power_constraint_remote_1_svc();
-#define QCSAPI_WIFI_SET_TPC_INTERVAL_REMOTE 131
+#define QCSAPI_WIFI_SET_TPC_INTERVAL_REMOTE 1351
 extern  enum clnt_stat qcsapi_wifi_set_tpc_interval_remote_1();
 extern  bool_t qcsapi_wifi_set_tpc_interval_remote_1_svc();
-#define QCSAPI_WIFI_GET_TPC_INTERVAL_REMOTE 132
+#define QCSAPI_WIFI_GET_TPC_INTERVAL_REMOTE 1361
 extern  enum clnt_stat qcsapi_wifi_get_tpc_interval_remote_1();
 extern  bool_t qcsapi_wifi_get_tpc_interval_remote_1_svc();
-#define QCSAPI_WIFI_GET_ASSOC_RECORDS_REMOTE 133
+#define QCSAPI_WIFI_GET_ASSOC_RECORDS_REMOTE 1371
 extern  enum clnt_stat qcsapi_wifi_get_assoc_records_remote_1();
 extern  bool_t qcsapi_wifi_get_assoc_records_remote_1_svc();
-#define QCSAPI_WIFI_GET_AP_ISOLATE_REMOTE 134
+#define QCSAPI_WIFI_GET_AP_ISOLATE_REMOTE 1381
 extern  enum clnt_stat qcsapi_wifi_get_ap_isolate_remote_1();
 extern  bool_t qcsapi_wifi_get_ap_isolate_remote_1_svc();
-#define QCSAPI_WIFI_SET_AP_ISOLATE_REMOTE 135
+#define QCSAPI_WIFI_SET_AP_ISOLATE_REMOTE 1391
 extern  enum clnt_stat qcsapi_wifi_set_ap_isolate_remote_1();
 extern  bool_t qcsapi_wifi_set_ap_isolate_remote_1_svc();
-#define QCSAPI_WIFI_GET_INTRA_BSS_ISOLATE_REMOTE 136
+#define QCSAPI_WIFI_GET_INTRA_BSS_ISOLATE_REMOTE 1401
 extern  enum clnt_stat qcsapi_wifi_get_intra_bss_isolate_remote_1();
 extern  bool_t qcsapi_wifi_get_intra_bss_isolate_remote_1_svc();
-#define QCSAPI_WIFI_SET_INTRA_BSS_ISOLATE_REMOTE 137
+#define QCSAPI_WIFI_SET_INTRA_BSS_ISOLATE_REMOTE 1411
 extern  enum clnt_stat qcsapi_wifi_set_intra_bss_isolate_remote_1();
 extern  bool_t qcsapi_wifi_set_intra_bss_isolate_remote_1_svc();
-#define QCSAPI_WIFI_GET_BSS_ISOLATE_REMOTE 138
+#define QCSAPI_WIFI_GET_BSS_ISOLATE_REMOTE 1421
 extern  enum clnt_stat qcsapi_wifi_get_bss_isolate_remote_1();
 extern  bool_t qcsapi_wifi_get_bss_isolate_remote_1_svc();
-#define QCSAPI_WIFI_SET_BSS_ISOLATE_REMOTE 139
+#define QCSAPI_WIFI_SET_BSS_ISOLATE_REMOTE 1431
 extern  enum clnt_stat qcsapi_wifi_set_bss_isolate_remote_1();
 extern  bool_t qcsapi_wifi_set_bss_isolate_remote_1_svc();
-#define QCSAPI_WIFI_CREATE_RESTRICTED_BSS_REMOTE 140
-extern  enum clnt_stat qcsapi_wifi_create_restricted_bss_remote_1();
-extern  bool_t qcsapi_wifi_create_restricted_bss_remote_1_svc();
-#define QCSAPI_WIFI_CREATE_BSS_REMOTE 141
-extern  enum clnt_stat qcsapi_wifi_create_bss_remote_1();
-extern  bool_t qcsapi_wifi_create_bss_remote_1_svc();
-#define QCSAPI_WIFI_REMOVE_BSS_REMOTE 142
-extern  enum clnt_stat qcsapi_wifi_remove_bss_remote_1();
-extern  bool_t qcsapi_wifi_remove_bss_remote_1_svc();
-#define QCSAPI_WDS_ADD_PEER_REMOTE 143
-extern  enum clnt_stat qcsapi_wds_add_peer_remote_1();
-extern  bool_t qcsapi_wds_add_peer_remote_1_svc();
-#define QCSAPI_WDS_ADD_PEER_ENCRYPT_REMOTE 144
-extern  enum clnt_stat qcsapi_wds_add_peer_encrypt_remote_1();
-extern  bool_t qcsapi_wds_add_peer_encrypt_remote_1_svc();
-#define QCSAPI_WDS_REMOVE_PEER_REMOTE 145
-extern  enum clnt_stat qcsapi_wds_remove_peer_remote_1();
-extern  bool_t qcsapi_wds_remove_peer_remote_1_svc();
-#define QCSAPI_WDS_GET_PEER_ADDRESS_REMOTE 146
-extern  enum clnt_stat qcsapi_wds_get_peer_address_remote_1();
-extern  bool_t qcsapi_wds_get_peer_address_remote_1_svc();
-#define QCSAPI_WDS_SET_PSK_REMOTE 147
-extern  enum clnt_stat qcsapi_wds_set_psk_remote_1();
-extern  bool_t qcsapi_wds_set_psk_remote_1_svc();
-#define QCSAPI_WDS_SET_MODE_REMOTE 148
-extern  enum clnt_stat qcsapi_wds_set_mode_remote_1();
-extern  bool_t qcsapi_wds_set_mode_remote_1_svc();
-#define QCSAPI_WDS_GET_MODE_REMOTE 149
-extern  enum clnt_stat qcsapi_wds_get_mode_remote_1();
-extern  bool_t qcsapi_wds_get_mode_remote_1_svc();
-#define QCSAPI_WIFI_SET_EXTENDER_PARAMS_REMOTE 150
-extern  enum clnt_stat qcsapi_wifi_set_extender_params_remote_1();
-extern  bool_t qcsapi_wifi_set_extender_params_remote_1_svc();
-#define QCSAPI_WIFI_GET_EXTENDER_PARAMS_REMOTE 151
-extern  enum clnt_stat qcsapi_wifi_get_extender_params_remote_1();
-extern  bool_t qcsapi_wifi_get_extender_params_remote_1_svc();
-#define QCSAPI_WIFI_ENABLE_BGSCAN_REMOTE 152
-extern  enum clnt_stat qcsapi_wifi_enable_bgscan_remote_1();
-extern  bool_t qcsapi_wifi_enable_bgscan_remote_1_svc();
-#define QCSAPI_WIFI_GET_BGSCAN_STATUS_REMOTE 153
-extern  enum clnt_stat qcsapi_wifi_get_bgscan_status_remote_1();
-extern  bool_t qcsapi_wifi_get_bgscan_status_remote_1_svc();
-#define QCSAPI_WIFI_GET_BEACON_TYPE_REMOTE 154
-extern  enum clnt_stat qcsapi_wifi_get_beacon_type_remote_1();
-extern  bool_t qcsapi_wifi_get_beacon_type_remote_1_svc();
-#define QCSAPI_WIFI_SET_BEACON_TYPE_REMOTE 155
-extern  enum clnt_stat qcsapi_wifi_set_beacon_type_remote_1();
-extern  bool_t qcsapi_wifi_set_beacon_type_remote_1_svc();
-#define QCSAPI_WIFI_GET_WEP_KEY_INDEX_REMOTE 156
-extern  enum clnt_stat qcsapi_wifi_get_wep_key_index_remote_1();
-extern  bool_t qcsapi_wifi_get_wep_key_index_remote_1_svc();
-#define QCSAPI_WIFI_SET_WEP_KEY_INDEX_REMOTE 157
-extern  enum clnt_stat qcsapi_wifi_set_wep_key_index_remote_1();
-extern  bool_t qcsapi_wifi_set_wep_key_index_remote_1_svc();
-#define QCSAPI_WIFI_GET_WEP_KEY_PASSPHRASE_REMOTE 158
-extern  enum clnt_stat qcsapi_wifi_get_wep_key_passphrase_remote_1();
-extern  bool_t qcsapi_wifi_get_wep_key_passphrase_remote_1_svc();
-#define QCSAPI_WIFI_SET_WEP_KEY_PASSPHRASE_REMOTE 159
-extern  enum clnt_stat qcsapi_wifi_set_wep_key_passphrase_remote_1();
-extern  bool_t qcsapi_wifi_set_wep_key_passphrase_remote_1_svc();
-#define QCSAPI_WIFI_GET_WEP_ENCRYPTION_LEVEL_REMOTE 160
-extern  enum clnt_stat qcsapi_wifi_get_wep_encryption_level_remote_1();
-extern  bool_t qcsapi_wifi_get_wep_encryption_level_remote_1_svc();
-#define QCSAPI_WIFI_GET_BASIC_ENCRYPTION_MODES_REMOTE 161
-extern  enum clnt_stat qcsapi_wifi_get_basic_encryption_modes_remote_1();
-extern  bool_t qcsapi_wifi_get_basic_encryption_modes_remote_1_svc();
-#define QCSAPI_WIFI_SET_BASIC_ENCRYPTION_MODES_REMOTE 162
-extern  enum clnt_stat qcsapi_wifi_set_basic_encryption_modes_remote_1();
-extern  bool_t qcsapi_wifi_set_basic_encryption_modes_remote_1_svc();
-#define QCSAPI_WIFI_GET_BASIC_AUTHENTICATION_MODE_REMOTE 163
-extern  enum clnt_stat qcsapi_wifi_get_basic_authentication_mode_remote_1();
-extern  bool_t qcsapi_wifi_get_basic_authentication_mode_remote_1_svc();
-#define QCSAPI_WIFI_SET_BASIC_AUTHENTICATION_MODE_REMOTE 164
-extern  enum clnt_stat qcsapi_wifi_set_basic_authentication_mode_remote_1();
-extern  bool_t qcsapi_wifi_set_basic_authentication_mode_remote_1_svc();
-#define QCSAPI_WIFI_GET_WEP_KEY_REMOTE 165
-extern  enum clnt_stat qcsapi_wifi_get_wep_key_remote_1();
-extern  bool_t qcsapi_wifi_get_wep_key_remote_1_svc();
-#define QCSAPI_WIFI_SET_WEP_KEY_REMOTE 166
-extern  enum clnt_stat qcsapi_wifi_set_wep_key_remote_1();
-extern  bool_t qcsapi_wifi_set_wep_key_remote_1_svc();
-#define QCSAPI_WIFI_GET_WPA_ENCRYPTION_MODES_REMOTE 167
-extern  enum clnt_stat qcsapi_wifi_get_wpa_encryption_modes_remote_1();
-extern  bool_t qcsapi_wifi_get_wpa_encryption_modes_remote_1_svc();
-#define QCSAPI_WIFI_SET_WPA_ENCRYPTION_MODES_REMOTE 168
-extern  enum clnt_stat qcsapi_wifi_set_wpa_encryption_modes_remote_1();
-extern  bool_t qcsapi_wifi_set_wpa_encryption_modes_remote_1_svc();
-#define QCSAPI_WIFI_GET_WPA_AUTHENTICATION_MODE_REMOTE 169
-extern  enum clnt_stat qcsapi_wifi_get_wpa_authentication_mode_remote_1();
-extern  bool_t qcsapi_wifi_get_wpa_authentication_mode_remote_1_svc();
-#define QCSAPI_WIFI_SET_WPA_AUTHENTICATION_MODE_REMOTE 170
-extern  enum clnt_stat qcsapi_wifi_set_wpa_authentication_mode_remote_1();
-extern  bool_t qcsapi_wifi_set_wpa_authentication_mode_remote_1_svc();
-#define QCSAPI_WIFI_GET_IEEE11I_ENCRYPTION_MODES_REMOTE 171
-extern  enum clnt_stat qcsapi_wifi_get_ieee11i_encryption_modes_remote_1();
-extern  bool_t qcsapi_wifi_get_ieee11i_encryption_modes_remote_1_svc();
-#define QCSAPI_WIFI_SET_IEEE11I_ENCRYPTION_MODES_REMOTE 172
-extern  enum clnt_stat qcsapi_wifi_set_ieee11i_encryption_modes_remote_1();
-extern  bool_t qcsapi_wifi_set_ieee11i_encryption_modes_remote_1_svc();
-#define QCSAPI_WIFI_GET_IEEE11I_AUTHENTICATION_MODE_REMOTE 173
-extern  enum clnt_stat qcsapi_wifi_get_ieee11i_authentication_mode_remote_1();
-extern  bool_t qcsapi_wifi_get_ieee11i_authentication_mode_remote_1_svc();
-#define QCSAPI_WIFI_SET_IEEE11I_AUTHENTICATION_MODE_REMOTE 174
-extern  enum clnt_stat qcsapi_wifi_set_ieee11i_authentication_mode_remote_1();
-extern  bool_t qcsapi_wifi_set_ieee11i_authentication_mode_remote_1_svc();
-#define QCSAPI_WIFI_GET_MICHAEL_ERRCNT_REMOTE 175
-extern  enum clnt_stat qcsapi_wifi_get_michael_errcnt_remote_1();
-extern  bool_t qcsapi_wifi_get_michael_errcnt_remote_1_svc();
-#define QCSAPI_WIFI_GET_PRE_SHARED_KEY_REMOTE 176
-extern  enum clnt_stat qcsapi_wifi_get_pre_shared_key_remote_1();
-extern  bool_t qcsapi_wifi_get_pre_shared_key_remote_1_svc();
-#define QCSAPI_WIFI_SET_PRE_SHARED_KEY_REMOTE 177
-extern  enum clnt_stat qcsapi_wifi_set_pre_shared_key_remote_1();
-extern  bool_t qcsapi_wifi_set_pre_shared_key_remote_1_svc();
-#define QCSAPI_WIFI_GET_EAP_SHARED_KEY_REMOTE 178
-extern  enum clnt_stat qcsapi_wifi_get_eap_shared_key_remote_1();
-extern  bool_t qcsapi_wifi_get_eap_shared_key_remote_1_svc();
-#define QCSAPI_WIFI_SET_EAP_SHARED_KEY_REMOTE 179
-extern  enum clnt_stat qcsapi_wifi_set_eap_shared_key_remote_1();
-extern  bool_t qcsapi_wifi_set_eap_shared_key_remote_1_svc();
-#define QCSAPI_WIFI_GET_EAP_RADIUS_IPADDR_REMOTE 180
-extern  enum clnt_stat qcsapi_wifi_get_eap_radius_ipaddr_remote_1();
-extern  bool_t qcsapi_wifi_get_eap_radius_ipaddr_remote_1_svc();
-#define QCSAPI_WIFI_SET_EAP_RADIUS_IPADDR_REMOTE 181
-extern  enum clnt_stat qcsapi_wifi_set_eap_radius_ipaddr_remote_1();
-extern  bool_t qcsapi_wifi_set_eap_radius_ipaddr_remote_1_svc();
-#define QCSAPI_WIFI_GET_EAP_RADIUS_PORT_REMOTE 182
-extern  enum clnt_stat qcsapi_wifi_get_eap_radius_port_remote_1();
-extern  bool_t qcsapi_wifi_get_eap_radius_port_remote_1_svc();
-#define QCSAPI_WIFI_SET_EAP_RADIUS_PORT_REMOTE 183
-extern  enum clnt_stat qcsapi_wifi_set_eap_radius_port_remote_1();
-extern  bool_t qcsapi_wifi_set_eap_radius_port_remote_1_svc();
-#define QCSAPI_WIFI_SET_OWN_IP_ADDR_REMOTE 184
-extern  enum clnt_stat qcsapi_wifi_set_own_ip_addr_remote_1();
-extern  bool_t qcsapi_wifi_set_own_ip_addr_remote_1_svc();
-#define QCSAPI_WIFI_GET_KEY_PASSPHRASE_REMOTE 185
-extern  enum clnt_stat qcsapi_wifi_get_key_passphrase_remote_1();
-extern  bool_t qcsapi_wifi_get_key_passphrase_remote_1_svc();
-#define QCSAPI_WIFI_SET_KEY_PASSPHRASE_REMOTE 186
-extern  enum clnt_stat qcsapi_wifi_set_key_passphrase_remote_1();
-extern  bool_t qcsapi_wifi_set_key_passphrase_remote_1_svc();
-#define QCSAPI_WIFI_GET_GROUP_KEY_INTERVAL_REMOTE 187
-extern  enum clnt_stat qcsapi_wifi_get_group_key_interval_remote_1();
-extern  bool_t qcsapi_wifi_get_group_key_interval_remote_1_svc();
-#define QCSAPI_WIFI_SET_GROUP_KEY_INTERVAL_REMOTE 188
-extern  enum clnt_stat qcsapi_wifi_set_group_key_interval_remote_1();
-extern  bool_t qcsapi_wifi_set_group_key_interval_remote_1_svc();
-#define QCSAPI_WIFI_GET_PMF_REMOTE 189
-extern  enum clnt_stat qcsapi_wifi_get_pmf_remote_1();
-extern  bool_t qcsapi_wifi_get_pmf_remote_1_svc();
-#define QCSAPI_WIFI_SET_PMF_REMOTE 190
-extern  enum clnt_stat qcsapi_wifi_set_pmf_remote_1();
-extern  bool_t qcsapi_wifi_set_pmf_remote_1_svc();
-#define QCSAPI_WIFI_GET_WPA_STATUS_REMOTE 191
-extern  enum clnt_stat qcsapi_wifi_get_wpa_status_remote_1();
-extern  bool_t qcsapi_wifi_get_wpa_status_remote_1_svc();
-#define QCSAPI_WIFI_GET_PSK_AUTH_FAILURES_REMOTE 192
-extern  enum clnt_stat qcsapi_wifi_get_psk_auth_failures_remote_1();
-extern  bool_t qcsapi_wifi_get_psk_auth_failures_remote_1_svc();
-#define QCSAPI_WIFI_GET_AUTH_STATE_REMOTE 193
-extern  enum clnt_stat qcsapi_wifi_get_auth_state_remote_1();
-extern  bool_t qcsapi_wifi_get_auth_state_remote_1_svc();
-#define QCSAPI_WIFI_SET_SECURITY_DEFER_MODE_REMOTE 194
-extern  enum clnt_stat qcsapi_wifi_set_security_defer_mode_remote_1();
-extern  bool_t qcsapi_wifi_set_security_defer_mode_remote_1_svc();
-#define QCSAPI_WIFI_GET_SECURITY_DEFER_MODE_REMOTE 195
-extern  enum clnt_stat qcsapi_wifi_get_security_defer_mode_remote_1();
-extern  bool_t qcsapi_wifi_get_security_defer_mode_remote_1_svc();
-#define QCSAPI_WIFI_APPLY_SECURITY_CONFIG_REMOTE 196
-extern  enum clnt_stat qcsapi_wifi_apply_security_config_remote_1();
-extern  bool_t qcsapi_wifi_apply_security_config_remote_1_svc();
-#define QCSAPI_WIFI_SET_MAC_ADDRESS_FILTERING_REMOTE 197
-extern  enum clnt_stat qcsapi_wifi_set_mac_address_filtering_remote_1();
-extern  bool_t qcsapi_wifi_set_mac_address_filtering_remote_1_svc();
-#define QCSAPI_WIFI_GET_MAC_ADDRESS_FILTERING_REMOTE 198
-extern  enum clnt_stat qcsapi_wifi_get_mac_address_filtering_remote_1();
-extern  bool_t qcsapi_wifi_get_mac_address_filtering_remote_1_svc();
-#define QCSAPI_WIFI_AUTHORIZE_MAC_ADDRESS_REMOTE 199
-extern  enum clnt_stat qcsapi_wifi_authorize_mac_address_remote_1();
-extern  bool_t qcsapi_wifi_authorize_mac_address_remote_1_svc();
-#define QCSAPI_WIFI_DENY_MAC_ADDRESS_REMOTE 200
-extern  enum clnt_stat qcsapi_wifi_deny_mac_address_remote_1();
-extern  bool_t qcsapi_wifi_deny_mac_address_remote_1_svc();
-#define QCSAPI_WIFI_REMOVE_MAC_ADDRESS_REMOTE 201
-extern  enum clnt_stat qcsapi_wifi_remove_mac_address_remote_1();
-extern  bool_t qcsapi_wifi_remove_mac_address_remote_1_svc();
-#define QCSAPI_WIFI_IS_MAC_ADDRESS_AUTHORIZED_REMOTE 202
-extern  enum clnt_stat qcsapi_wifi_is_mac_address_authorized_remote_1();
-extern  bool_t qcsapi_wifi_is_mac_address_authorized_remote_1_svc();
-#define QCSAPI_WIFI_GET_AUTHORIZED_MAC_ADDRESSES_REMOTE 203
-extern  enum clnt_stat qcsapi_wifi_get_authorized_mac_addresses_remote_1();
-extern  bool_t qcsapi_wifi_get_authorized_mac_addresses_remote_1_svc();
-#define QCSAPI_WIFI_GET_DENIED_MAC_ADDRESSES_REMOTE 204
-extern  enum clnt_stat qcsapi_wifi_get_denied_mac_addresses_remote_1();
-extern  bool_t qcsapi_wifi_get_denied_mac_addresses_remote_1_svc();
-#define QCSAPI_WIFI_SET_ACCEPT_OUI_FILTER_REMOTE 205
-extern  enum clnt_stat qcsapi_wifi_set_accept_oui_filter_remote_1();
-extern  bool_t qcsapi_wifi_set_accept_oui_filter_remote_1_svc();
-#define QCSAPI_WIFI_GET_ACCEPT_OUI_FILTER_REMOTE 206
-extern  enum clnt_stat qcsapi_wifi_get_accept_oui_filter_remote_1();
-extern  bool_t qcsapi_wifi_get_accept_oui_filter_remote_1_svc();
-#define QCSAPI_WIFI_CLEAR_MAC_ADDRESS_FILTERS_REMOTE 207
-extern  enum clnt_stat qcsapi_wifi_clear_mac_address_filters_remote_1();
-extern  bool_t qcsapi_wifi_clear_mac_address_filters_remote_1_svc();
-#define QCSAPI_WIFI_GET_OPTION_REMOTE 208
-extern  enum clnt_stat qcsapi_wifi_get_option_remote_1();
-extern  bool_t qcsapi_wifi_get_option_remote_1_svc();
-#define QCSAPI_WIFI_SET_OPTION_REMOTE 209
-extern  enum clnt_stat qcsapi_wifi_set_option_remote_1();
-extern  bool_t qcsapi_wifi_set_option_remote_1_svc();
-#define QCSAPI_GET_BOARD_PARAMETER_REMOTE 210
-extern  enum clnt_stat qcsapi_get_board_parameter_remote_1();
-extern  bool_t qcsapi_get_board_parameter_remote_1_svc();
-#define QCSAPI_SSID_CREATE_SSID_REMOTE 211
-extern  enum clnt_stat qcsapi_ssid_create_ssid_remote_1();
-extern  bool_t qcsapi_ssid_create_ssid_remote_1_svc();
-#define QCSAPI_SSID_REMOVE_SSID_REMOTE 212
-extern  enum clnt_stat qcsapi_ssid_remove_ssid_remote_1();
-extern  bool_t qcsapi_ssid_remove_ssid_remote_1_svc();
-#define QCSAPI_SSID_VERIFY_SSID_REMOTE 213
-extern  enum clnt_stat qcsapi_ssid_verify_ssid_remote_1();
-extern  bool_t qcsapi_ssid_verify_ssid_remote_1_svc();
-#define QCSAPI_SSID_RENAME_SSID_REMOTE 214
-extern  enum clnt_stat qcsapi_ssid_rename_ssid_remote_1();
-extern  bool_t qcsapi_ssid_rename_ssid_remote_1_svc();
-#define QCSAPI_SSID_GET_SSID_LIST_REMOTE 215
-extern  enum clnt_stat qcsapi_ssid_get_ssid_list_remote_1();
-extern  bool_t qcsapi_ssid_get_ssid_list_remote_1_svc();
-#define QCSAPI_SSID_SET_PROTOCOL_REMOTE 216
-extern  enum clnt_stat qcsapi_ssid_set_protocol_remote_1();
-extern  bool_t qcsapi_ssid_set_protocol_remote_1_svc();
-#define QCSAPI_SSID_GET_PROTOCOL_REMOTE 217
-extern  enum clnt_stat qcsapi_ssid_get_protocol_remote_1();
-extern  bool_t qcsapi_ssid_get_protocol_remote_1_svc();
-#define QCSAPI_SSID_GET_ENCRYPTION_MODES_REMOTE 218
-extern  enum clnt_stat qcsapi_ssid_get_encryption_modes_remote_1();
-extern  bool_t qcsapi_ssid_get_encryption_modes_remote_1_svc();
-#define QCSAPI_SSID_SET_ENCRYPTION_MODES_REMOTE 219
-extern  enum clnt_stat qcsapi_ssid_set_encryption_modes_remote_1();
-extern  bool_t qcsapi_ssid_set_encryption_modes_remote_1_svc();
-#define QCSAPI_SSID_GET_GROUP_ENCRYPTION_REMOTE 220
-extern  enum clnt_stat qcsapi_ssid_get_group_encryption_remote_1();
-extern  bool_t qcsapi_ssid_get_group_encryption_remote_1_svc();
-#define QCSAPI_SSID_SET_GROUP_ENCRYPTION_REMOTE 221
-extern  enum clnt_stat qcsapi_ssid_set_group_encryption_remote_1();
-extern  bool_t qcsapi_ssid_set_group_encryption_remote_1_svc();
-#define QCSAPI_SSID_GET_AUTHENTICATION_MODE_REMOTE 222
-extern  enum clnt_stat qcsapi_ssid_get_authentication_mode_remote_1();
-extern  bool_t qcsapi_ssid_get_authentication_mode_remote_1_svc();
-#define QCSAPI_SSID_SET_AUTHENTICATION_MODE_REMOTE 223
-extern  enum clnt_stat qcsapi_ssid_set_authentication_mode_remote_1();
-extern  bool_t qcsapi_ssid_set_authentication_mode_remote_1_svc();
-#define QCSAPI_SSID_GET_PRE_SHARED_KEY_REMOTE 224
-extern  enum clnt_stat qcsapi_ssid_get_pre_shared_key_remote_1();
-extern  bool_t qcsapi_ssid_get_pre_shared_key_remote_1_svc();
-#define QCSAPI_SSID_SET_PRE_SHARED_KEY_REMOTE 225
-extern  enum clnt_stat qcsapi_ssid_set_pre_shared_key_remote_1();
-extern  bool_t qcsapi_ssid_set_pre_shared_key_remote_1_svc();
-#define QCSAPI_SSID_GET_KEY_PASSPHRASE_REMOTE 226
-extern  enum clnt_stat qcsapi_ssid_get_key_passphrase_remote_1();
-extern  bool_t qcsapi_ssid_get_key_passphrase_remote_1_svc();
-#define QCSAPI_SSID_SET_KEY_PASSPHRASE_REMOTE 227
-extern  enum clnt_stat qcsapi_ssid_set_key_passphrase_remote_1();
-extern  bool_t qcsapi_ssid_set_key_passphrase_remote_1_svc();
-#define QCSAPI_SSID_GET_PMF_REMOTE 228
-extern  enum clnt_stat qcsapi_ssid_get_pmf_remote_1();
-extern  bool_t qcsapi_ssid_get_pmf_remote_1_svc();
-#define QCSAPI_SSID_SET_PMF_REMOTE 229
-extern  enum clnt_stat qcsapi_ssid_set_pmf_remote_1();
-extern  bool_t qcsapi_ssid_set_pmf_remote_1_svc();
-#define QCSAPI_SSID_GET_WPS_SSID_REMOTE 230
-extern  enum clnt_stat qcsapi_ssid_get_wps_ssid_remote_1();
-extern  bool_t qcsapi_ssid_get_wps_ssid_remote_1_svc();
-#define QCSAPI_WIFI_VLAN_CONFIG_REMOTE 231
-extern  enum clnt_stat qcsapi_wifi_vlan_config_remote_1();
-extern  bool_t qcsapi_wifi_vlan_config_remote_1_svc();
-#define QCSAPI_WIFI_SHOW_VLAN_CONFIG_REMOTE 232
-extern  enum clnt_stat qcsapi_wifi_show_vlan_config_remote_1();
-extern  bool_t qcsapi_wifi_show_vlan_config_remote_1_svc();
-#define QCSAPI_ENABLE_VLAN_PASS_THROUGH_REMOTE 233
-extern  enum clnt_stat qcsapi_enable_vlan_pass_through_remote_1();
-extern  bool_t qcsapi_enable_vlan_pass_through_remote_1_svc();
-#define QCSAPI_WIFI_SET_VLAN_PROMISC_REMOTE 234
-extern  enum clnt_stat qcsapi_wifi_set_vlan_promisc_remote_1();
-extern  bool_t qcsapi_wifi_set_vlan_promisc_remote_1_svc();
-#define QCSAPI_WPS_REGISTRAR_REPORT_BUTTON_PRESS_REMOTE 235
-extern  enum clnt_stat qcsapi_wps_registrar_report_button_press_remote_1();
-extern  bool_t qcsapi_wps_registrar_report_button_press_remote_1_svc();
-#define QCSAPI_WPS_REGISTRAR_REPORT_PIN_REMOTE 236
-extern  enum clnt_stat qcsapi_wps_registrar_report_pin_remote_1();
-extern  bool_t qcsapi_wps_registrar_report_pin_remote_1_svc();
-#define QCSAPI_WPS_REGISTRAR_GET_PP_DEVNAME_REMOTE 237
-extern  enum clnt_stat qcsapi_wps_registrar_get_pp_devname_remote_1();
-extern  bool_t qcsapi_wps_registrar_get_pp_devname_remote_1_svc();
-#define QCSAPI_WPS_REGISTRAR_SET_PP_DEVNAME_REMOTE 238
-extern  enum clnt_stat qcsapi_wps_registrar_set_pp_devname_remote_1();
-extern  bool_t qcsapi_wps_registrar_set_pp_devname_remote_1_svc();
-#define QCSAPI_WPS_ENROLLEE_REPORT_BUTTON_PRESS_REMOTE 239
-extern  enum clnt_stat qcsapi_wps_enrollee_report_button_press_remote_1();
-extern  bool_t qcsapi_wps_enrollee_report_button_press_remote_1_svc();
-#define QCSAPI_WPS_ENROLLEE_REPORT_PIN_REMOTE 240
-extern  enum clnt_stat qcsapi_wps_enrollee_report_pin_remote_1();
-extern  bool_t qcsapi_wps_enrollee_report_pin_remote_1_svc();
-#define QCSAPI_WPS_ENROLLEE_GENERATE_PIN_REMOTE 241
-extern  enum clnt_stat qcsapi_wps_enrollee_generate_pin_remote_1();
-extern  bool_t qcsapi_wps_enrollee_generate_pin_remote_1_svc();
-#define QCSAPI_WPS_GET_AP_PIN_REMOTE 242
-extern  enum clnt_stat qcsapi_wps_get_ap_pin_remote_1();
-extern  bool_t qcsapi_wps_get_ap_pin_remote_1_svc();
-#define QCSAPI_WPS_SET_AP_PIN_REMOTE 243
-extern  enum clnt_stat qcsapi_wps_set_ap_pin_remote_1();
-extern  bool_t qcsapi_wps_set_ap_pin_remote_1_svc();
-#define QCSAPI_WPS_SAVE_AP_PIN_REMOTE 244
-extern  enum clnt_stat qcsapi_wps_save_ap_pin_remote_1();
-extern  bool_t qcsapi_wps_save_ap_pin_remote_1_svc();
-#define QCSAPI_WPS_ENABLE_AP_PIN_REMOTE 245
-extern  enum clnt_stat qcsapi_wps_enable_ap_pin_remote_1();
-extern  bool_t qcsapi_wps_enable_ap_pin_remote_1_svc();
-#define QCSAPI_WPS_GET_STA_PIN_REMOTE 246
-extern  enum clnt_stat qcsapi_wps_get_sta_pin_remote_1();
-extern  bool_t qcsapi_wps_get_sta_pin_remote_1_svc();
-#define QCSAPI_WPS_GET_STATE_REMOTE 247
-extern  enum clnt_stat qcsapi_wps_get_state_remote_1();
-extern  bool_t qcsapi_wps_get_state_remote_1_svc();
-#define QCSAPI_WPS_GET_CONFIGURED_STATE_REMOTE 248
-extern  enum clnt_stat qcsapi_wps_get_configured_state_remote_1();
-extern  bool_t qcsapi_wps_get_configured_state_remote_1_svc();
-#define QCSAPI_WPS_GET_RUNTIME_STATE_REMOTE 249
-extern  enum clnt_stat qcsapi_wps_get_runtime_state_remote_1();
-extern  bool_t qcsapi_wps_get_runtime_state_remote_1_svc();
-#define QCSAPI_WPS_SET_CONFIGURED_STATE_REMOTE 250
-extern  enum clnt_stat qcsapi_wps_set_configured_state_remote_1();
-extern  bool_t qcsapi_wps_set_configured_state_remote_1_svc();
-#define QCSAPI_WPS_GET_PARAM_REMOTE 251
-extern  enum clnt_stat qcsapi_wps_get_param_remote_1();
-extern  bool_t qcsapi_wps_get_param_remote_1_svc();
-#define QCSAPI_WPS_SET_TIMEOUT_REMOTE 252
-extern  enum clnt_stat qcsapi_wps_set_timeout_remote_1();
-extern  bool_t qcsapi_wps_set_timeout_remote_1_svc();
-#define QCSAPI_WPS_ON_HIDDEN_SSID_REMOTE 253
-extern  enum clnt_stat qcsapi_wps_on_hidden_ssid_remote_1();
-extern  bool_t qcsapi_wps_on_hidden_ssid_remote_1_svc();
-#define QCSAPI_WPS_ON_HIDDEN_SSID_STATUS_REMOTE 254
-extern  enum clnt_stat qcsapi_wps_on_hidden_ssid_status_remote_1();
-extern  bool_t qcsapi_wps_on_hidden_ssid_status_remote_1_svc();
-#define QCSAPI_WPS_UPNP_ENABLE_REMOTE 255
-extern  enum clnt_stat qcsapi_wps_upnp_enable_remote_1();
-extern  bool_t qcsapi_wps_upnp_enable_remote_1_svc();
-#define QCSAPI_WPS_UPNP_STATUS_REMOTE 256
-extern  enum clnt_stat qcsapi_wps_upnp_status_remote_1();
-extern  bool_t qcsapi_wps_upnp_status_remote_1_svc();
-#define QCSAPI_WPS_ALLOW_PBC_OVERLAP_REMOTE 257
-extern  enum clnt_stat qcsapi_wps_allow_pbc_overlap_remote_1();
-extern  bool_t qcsapi_wps_allow_pbc_overlap_remote_1_svc();
-#define QCSAPI_WPS_GET_ALLOW_PBC_OVERLAP_STATUS_REMOTE 258
-extern  enum clnt_stat qcsapi_wps_get_allow_pbc_overlap_status_remote_1();
-extern  bool_t qcsapi_wps_get_allow_pbc_overlap_status_remote_1_svc();
-#define QCSAPI_WPS_SET_ACCESS_CONTROL_REMOTE 259
-extern  enum clnt_stat qcsapi_wps_set_access_control_remote_1();
-extern  bool_t qcsapi_wps_set_access_control_remote_1_svc();
-#define QCSAPI_WPS_GET_ACCESS_CONTROL_REMOTE 260
-extern  enum clnt_stat qcsapi_wps_get_access_control_remote_1();
-extern  bool_t qcsapi_wps_get_access_control_remote_1_svc();
-#define QCSAPI_WPS_SET_PARAM_REMOTE 261
-extern  enum clnt_stat qcsapi_wps_set_param_remote_1();
-extern  bool_t qcsapi_wps_set_param_remote_1_svc();
-#define QCSAPI_WPS_CANCEL_REMOTE 262
-extern  enum clnt_stat qcsapi_wps_cancel_remote_1();
-extern  bool_t qcsapi_wps_cancel_remote_1_svc();
-#define QCSAPI_WPS_SET_PBC_IN_SRCM_REMOTE 263
-extern  enum clnt_stat qcsapi_wps_set_pbc_in_srcm_remote_1();
-extern  bool_t qcsapi_wps_set_pbc_in_srcm_remote_1_svc();
-#define QCSAPI_WPS_GET_PBC_IN_SRCM_REMOTE 264
-extern  enum clnt_stat qcsapi_wps_get_pbc_in_srcm_remote_1();
-extern  bool_t qcsapi_wps_get_pbc_in_srcm_remote_1_svc();
-#define QCSAPI_REGISTRAR_SET_DEFAULT_PBC_BSS_REMOTE 265
-extern  enum clnt_stat qcsapi_registrar_set_default_pbc_bss_remote_1();
-extern  bool_t qcsapi_registrar_set_default_pbc_bss_remote_1_svc();
-#define QCSAPI_REGISTRAR_GET_DEFAULT_PBC_BSS_REMOTE 266
-extern  enum clnt_stat qcsapi_registrar_get_default_pbc_bss_remote_1();
-extern  bool_t qcsapi_registrar_get_default_pbc_bss_remote_1_svc();
-#define QCSAPI_GPIO_SET_CONFIG_REMOTE 267
-extern  enum clnt_stat qcsapi_gpio_set_config_remote_1();
-extern  bool_t qcsapi_gpio_set_config_remote_1_svc();
-#define QCSAPI_GPIO_GET_CONFIG_REMOTE 268
-extern  enum clnt_stat qcsapi_gpio_get_config_remote_1();
-extern  bool_t qcsapi_gpio_get_config_remote_1_svc();
-#define QCSAPI_LED_GET_REMOTE 269
-extern  enum clnt_stat qcsapi_led_get_remote_1();
-extern  bool_t qcsapi_led_get_remote_1_svc();
-#define QCSAPI_LED_SET_REMOTE 270
-extern  enum clnt_stat qcsapi_led_set_remote_1();
-extern  bool_t qcsapi_led_set_remote_1_svc();
-#define QCSAPI_LED_PWM_ENABLE_REMOTE 271
-extern  enum clnt_stat qcsapi_led_pwm_enable_remote_1();
-extern  bool_t qcsapi_led_pwm_enable_remote_1_svc();
-#define QCSAPI_LED_BRIGHTNESS_REMOTE 272
-extern  enum clnt_stat qcsapi_led_brightness_remote_1();
-extern  bool_t qcsapi_led_brightness_remote_1_svc();
-#define QCSAPI_GPIO_ENABLE_WPS_PUSH_BUTTON_REMOTE 273
-extern  enum clnt_stat qcsapi_gpio_enable_wps_push_button_remote_1();
-extern  bool_t qcsapi_gpio_enable_wps_push_button_remote_1_svc();
-#define QCSAPI_WIFI_GET_COUNT_ASSOCIATIONS_REMOTE 274
-extern  enum clnt_stat qcsapi_wifi_get_count_associations_remote_1();
-extern  bool_t qcsapi_wifi_get_count_associations_remote_1_svc();
-#define QCSAPI_WIFI_GET_ASSOCIATED_DEVICE_MAC_ADDR_REMOTE 275
-extern  enum clnt_stat qcsapi_wifi_get_associated_device_mac_addr_remote_1();
-extern  bool_t qcsapi_wifi_get_associated_device_mac_addr_remote_1_svc();
-#define QCSAPI_WIFI_GET_ASSOCIATED_DEVICE_IP_ADDR_REMOTE 276
-extern  enum clnt_stat qcsapi_wifi_get_associated_device_ip_addr_remote_1();
-extern  bool_t qcsapi_wifi_get_associated_device_ip_addr_remote_1_svc();
-#define QCSAPI_WIFI_GET_LINK_QUALITY_REMOTE 277
-extern  enum clnt_stat qcsapi_wifi_get_link_quality_remote_1();
-extern  bool_t qcsapi_wifi_get_link_quality_remote_1_svc();
-#define QCSAPI_WIFI_GET_RX_BYTES_PER_ASSOCIATION_REMOTE 278
-extern  enum clnt_stat qcsapi_wifi_get_rx_bytes_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_rx_bytes_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_TX_BYTES_PER_ASSOCIATION_REMOTE 279
-extern  enum clnt_stat qcsapi_wifi_get_tx_bytes_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_tx_bytes_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_RX_PACKETS_PER_ASSOCIATION_REMOTE 280
-extern  enum clnt_stat qcsapi_wifi_get_rx_packets_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_rx_packets_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_TX_PACKETS_PER_ASSOCIATION_REMOTE 281
-extern  enum clnt_stat qcsapi_wifi_get_tx_packets_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_tx_packets_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_TX_ERR_PACKETS_PER_ASSOCIATION_REMOTE 282
-extern  enum clnt_stat qcsapi_wifi_get_tx_err_packets_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_tx_err_packets_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_RSSI_PER_ASSOCIATION_REMOTE 283
-extern  enum clnt_stat qcsapi_wifi_get_rssi_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_rssi_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_RSSI_IN_DBM_PER_ASSOCIATION_REMOTE 284
-extern  enum clnt_stat qcsapi_wifi_get_rssi_in_dbm_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_rssi_in_dbm_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_BW_PER_ASSOCIATION_REMOTE 285
-extern  enum clnt_stat qcsapi_wifi_get_bw_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_bw_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_TX_PHY_RATE_PER_ASSOCIATION_REMOTE 286
-extern  enum clnt_stat qcsapi_wifi_get_tx_phy_rate_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_tx_phy_rate_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_RX_PHY_RATE_PER_ASSOCIATION_REMOTE 287
-extern  enum clnt_stat qcsapi_wifi_get_rx_phy_rate_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_rx_phy_rate_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_TX_MCS_PER_ASSOCIATION_REMOTE 288
-extern  enum clnt_stat qcsapi_wifi_get_tx_mcs_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_tx_mcs_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_RX_MCS_PER_ASSOCIATION_REMOTE 289
-extern  enum clnt_stat qcsapi_wifi_get_rx_mcs_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_rx_mcs_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_ACHIEVABLE_TX_PHY_RATE_PER_ASSOCIATION_REMOTE 290
-extern  enum clnt_stat qcsapi_wifi_get_achievable_tx_phy_rate_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_achievable_tx_phy_rate_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_ACHIEVABLE_RX_PHY_RATE_PER_ASSOCIATION_REMOTE 291
-extern  enum clnt_stat qcsapi_wifi_get_achievable_rx_phy_rate_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_achievable_rx_phy_rate_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_AUTH_ENC_PER_ASSOCIATION_REMOTE 292
-extern  enum clnt_stat qcsapi_wifi_get_auth_enc_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_auth_enc_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_VENDOR_PER_ASSOCIATION_REMOTE 293
-extern  enum clnt_stat qcsapi_wifi_get_vendor_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_vendor_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_SNR_PER_ASSOCIATION_REMOTE 294
-extern  enum clnt_stat qcsapi_wifi_get_snr_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_snr_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_TIME_ASSOCIATED_PER_ASSOCIATION_REMOTE 295
-extern  enum clnt_stat qcsapi_wifi_get_time_associated_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_time_associated_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_NODE_PARAM_REMOTE 296
-extern  enum clnt_stat qcsapi_wifi_get_node_param_remote_1();
-extern  bool_t qcsapi_wifi_get_node_param_remote_1_svc();
-#define QCSAPI_WIFI_GET_NODE_COUNTER_REMOTE 297
-extern  enum clnt_stat qcsapi_wifi_get_node_counter_remote_1();
-extern  bool_t qcsapi_wifi_get_node_counter_remote_1_svc();
-#define QCSAPI_WIFI_GET_NODE_STATS_REMOTE 298
-extern  enum clnt_stat qcsapi_wifi_get_node_stats_remote_1();
-extern  bool_t qcsapi_wifi_get_node_stats_remote_1_svc();
-#define QCSAPI_WIFI_GET_MAX_QUEUED_REMOTE 299
-extern  enum clnt_stat qcsapi_wifi_get_max_queued_remote_1();
-extern  bool_t qcsapi_wifi_get_max_queued_remote_1_svc();
-#define QCSAPI_WIFI_GET_HW_NOISE_PER_ASSOCIATION_REMOTE 300
-extern  enum clnt_stat qcsapi_wifi_get_hw_noise_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_hw_noise_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_LIST_REGULATORY_REGIONS_REMOTE 301
-extern  enum clnt_stat qcsapi_wifi_get_list_regulatory_regions_remote_1();
-extern  bool_t qcsapi_wifi_get_list_regulatory_regions_remote_1_svc();
-#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_REGIONS_REMOTE 302
-extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_regions_remote_1();
-extern  bool_t qcsapi_regulatory_get_list_regulatory_regions_remote_1_svc();
-#define QCSAPI_WIFI_GET_LIST_REGULATORY_CHANNELS_REMOTE 303
-extern  enum clnt_stat qcsapi_wifi_get_list_regulatory_channels_remote_1();
-extern  bool_t qcsapi_wifi_get_list_regulatory_channels_remote_1_svc();
-#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_CHANNELS_REMOTE 304
-extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_channels_remote_1();
-extern  bool_t qcsapi_regulatory_get_list_regulatory_channels_remote_1_svc();
-#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_BANDS_REMOTE 305
-extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_bands_remote_1();
-extern  bool_t qcsapi_regulatory_get_list_regulatory_bands_remote_1_svc();
-#define QCSAPI_WIFI_GET_REGULATORY_TX_POWER_REMOTE 306
-extern  enum clnt_stat qcsapi_wifi_get_regulatory_tx_power_remote_1();
-extern  bool_t qcsapi_wifi_get_regulatory_tx_power_remote_1_svc();
-#define QCSAPI_REGULATORY_GET_REGULATORY_TX_POWER_REMOTE 307
-extern  enum clnt_stat qcsapi_regulatory_get_regulatory_tx_power_remote_1();
-extern  bool_t qcsapi_regulatory_get_regulatory_tx_power_remote_1_svc();
-#define QCSAPI_WIFI_GET_CONFIGURED_TX_POWER_REMOTE 308
-extern  enum clnt_stat qcsapi_wifi_get_configured_tx_power_remote_1();
-extern  bool_t qcsapi_wifi_get_configured_tx_power_remote_1_svc();
-#define QCSAPI_REGULATORY_GET_CONFIGURED_TX_POWER_REMOTE 309
-extern  enum clnt_stat qcsapi_regulatory_get_configured_tx_power_remote_1();
-extern  bool_t qcsapi_regulatory_get_configured_tx_power_remote_1_svc();
-#define QCSAPI_WIFI_SET_REGULATORY_REGION_REMOTE 310
-extern  enum clnt_stat qcsapi_wifi_set_regulatory_region_remote_1();
-extern  bool_t qcsapi_wifi_set_regulatory_region_remote_1_svc();
-#define QCSAPI_REGULATORY_SET_REGULATORY_REGION_REMOTE 311
-extern  enum clnt_stat qcsapi_regulatory_set_regulatory_region_remote_1();
-extern  bool_t qcsapi_regulatory_set_regulatory_region_remote_1_svc();
-#define QCSAPI_REGULATORY_RESTORE_REGULATORY_TX_POWER_REMOTE 312
-extern  enum clnt_stat qcsapi_regulatory_restore_regulatory_tx_power_remote_1();
-extern  bool_t qcsapi_regulatory_restore_regulatory_tx_power_remote_1_svc();
-#define QCSAPI_WIFI_GET_REGULATORY_REGION_REMOTE 313
-extern  enum clnt_stat qcsapi_wifi_get_regulatory_region_remote_1();
-extern  bool_t qcsapi_wifi_get_regulatory_region_remote_1_svc();
-#define QCSAPI_REGULATORY_OVERWRITE_COUNTRY_CODE_REMOTE 314
-extern  enum clnt_stat qcsapi_regulatory_overwrite_country_code_remote_1();
-extern  bool_t qcsapi_regulatory_overwrite_country_code_remote_1_svc();
-#define QCSAPI_WIFI_SET_REGULATORY_CHANNEL_REMOTE 315
-extern  enum clnt_stat qcsapi_wifi_set_regulatory_channel_remote_1();
-extern  bool_t qcsapi_wifi_set_regulatory_channel_remote_1_svc();
-#define QCSAPI_REGULATORY_SET_REGULATORY_CHANNEL_REMOTE 316
-extern  enum clnt_stat qcsapi_regulatory_set_regulatory_channel_remote_1();
-extern  bool_t qcsapi_regulatory_set_regulatory_channel_remote_1_svc();
-#define QCSAPI_REGULATORY_GET_DB_VERSION_REMOTE 317
-extern  enum clnt_stat qcsapi_regulatory_get_db_version_remote_1();
-extern  bool_t qcsapi_regulatory_get_db_version_remote_1_svc();
-#define QCSAPI_REGULATORY_APPLY_TX_POWER_CAP_REMOTE 318
-extern  enum clnt_stat qcsapi_regulatory_apply_tx_power_cap_remote_1();
-extern  bool_t qcsapi_regulatory_apply_tx_power_cap_remote_1_svc();
-#define QCSAPI_WIFI_GET_LIST_DFS_CHANNELS_REMOTE 319
-extern  enum clnt_stat qcsapi_wifi_get_list_dfs_channels_remote_1();
-extern  bool_t qcsapi_wifi_get_list_dfs_channels_remote_1_svc();
-#define QCSAPI_REGULATORY_GET_LIST_DFS_CHANNELS_REMOTE 320
-extern  enum clnt_stat qcsapi_regulatory_get_list_dfs_channels_remote_1();
-extern  bool_t qcsapi_regulatory_get_list_dfs_channels_remote_1_svc();
-#define QCSAPI_WIFI_IS_CHANNEL_DFS_REMOTE 321
-extern  enum clnt_stat qcsapi_wifi_is_channel_dfs_remote_1();
-extern  bool_t qcsapi_wifi_is_channel_dfs_remote_1_svc();
-#define QCSAPI_REGULATORY_IS_CHANNEL_DFS_REMOTE 322
-extern  enum clnt_stat qcsapi_regulatory_is_channel_dfs_remote_1();
-extern  bool_t qcsapi_regulatory_is_channel_dfs_remote_1_svc();
-#define QCSAPI_WIFI_GET_DFS_CCE_CHANNELS_REMOTE 323
-extern  enum clnt_stat qcsapi_wifi_get_dfs_cce_channels_remote_1();
-extern  bool_t qcsapi_wifi_get_dfs_cce_channels_remote_1_svc();
-#define QCSAPI_WIFI_GET_DFS_ALT_CHANNEL_REMOTE 324
-extern  enum clnt_stat qcsapi_wifi_get_dfs_alt_channel_remote_1();
-extern  bool_t qcsapi_wifi_get_dfs_alt_channel_remote_1_svc();
-#define QCSAPI_WIFI_SET_DFS_ALT_CHANNEL_REMOTE 325
-extern  enum clnt_stat qcsapi_wifi_set_dfs_alt_channel_remote_1();
-extern  bool_t qcsapi_wifi_set_dfs_alt_channel_remote_1_svc();
-#define QCSAPI_WIFI_START_DFS_REENTRY_REMOTE 326
-extern  enum clnt_stat qcsapi_wifi_start_dfs_reentry_remote_1();
-extern  bool_t qcsapi_wifi_start_dfs_reentry_remote_1_svc();
-#define QCSAPI_WIFI_START_SCAN_EXT_REMOTE 327
-extern  enum clnt_stat qcsapi_wifi_start_scan_ext_remote_1();
-extern  bool_t qcsapi_wifi_start_scan_ext_remote_1_svc();
-#define QCSAPI_WIFI_GET_CSW_RECORDS_REMOTE 328
-extern  enum clnt_stat qcsapi_wifi_get_csw_records_remote_1();
-extern  bool_t qcsapi_wifi_get_csw_records_remote_1_svc();
-#define QCSAPI_WIFI_GET_RADAR_STATUS_REMOTE 329
-extern  enum clnt_stat qcsapi_wifi_get_radar_status_remote_1();
-extern  bool_t qcsapi_wifi_get_radar_status_remote_1_svc();
-#define QCSAPI_WIFI_GET_RESULTS_AP_SCAN_REMOTE 330
-extern  enum clnt_stat qcsapi_wifi_get_results_ap_scan_remote_1();
-extern  bool_t qcsapi_wifi_get_results_ap_scan_remote_1_svc();
-#define QCSAPI_WIFI_GET_COUNT_APS_SCANNED_REMOTE 331
-extern  enum clnt_stat qcsapi_wifi_get_count_aps_scanned_remote_1();
-extern  bool_t qcsapi_wifi_get_count_aps_scanned_remote_1_svc();
-#define QCSAPI_WIFI_GET_PROPERTIES_AP_REMOTE 332
-extern  enum clnt_stat qcsapi_wifi_get_properties_ap_remote_1();
-extern  bool_t qcsapi_wifi_get_properties_ap_remote_1_svc();
-#define QCSAPI_WIFI_BACKOFF_FAIL_MAX_REMOTE 333
-extern  enum clnt_stat qcsapi_wifi_backoff_fail_max_remote_1();
-extern  bool_t qcsapi_wifi_backoff_fail_max_remote_1_svc();
-#define QCSAPI_WIFI_BACKOFF_TIMEOUT_REMOTE 334
-extern  enum clnt_stat qcsapi_wifi_backoff_timeout_remote_1();
-extern  bool_t qcsapi_wifi_backoff_timeout_remote_1_svc();
-#define QCSAPI_WIFI_GET_MCS_RATE_REMOTE 335
-extern  enum clnt_stat qcsapi_wifi_get_mcs_rate_remote_1();
-extern  bool_t qcsapi_wifi_get_mcs_rate_remote_1_svc();
-#define QCSAPI_WIFI_SET_MCS_RATE_REMOTE 336
-extern  enum clnt_stat qcsapi_wifi_set_mcs_rate_remote_1();
-extern  bool_t qcsapi_wifi_set_mcs_rate_remote_1_svc();
-#define QCSAPI_WIFI_SET_PAIRING_ID_REMOTE 337
-extern  enum clnt_stat qcsapi_wifi_set_pairing_id_remote_1();
-extern  bool_t qcsapi_wifi_set_pairing_id_remote_1_svc();
-#define QCSAPI_WIFI_GET_PAIRING_ID_REMOTE 338
-extern  enum clnt_stat qcsapi_wifi_get_pairing_id_remote_1();
-extern  bool_t qcsapi_wifi_get_pairing_id_remote_1_svc();
-#define QCSAPI_WIFI_SET_PAIRING_ENABLE_REMOTE 339
-extern  enum clnt_stat qcsapi_wifi_set_pairing_enable_remote_1();
-extern  bool_t qcsapi_wifi_set_pairing_enable_remote_1_svc();
-#define QCSAPI_WIFI_GET_PAIRING_ENABLE_REMOTE 340
-extern  enum clnt_stat qcsapi_wifi_get_pairing_enable_remote_1();
-extern  bool_t qcsapi_wifi_get_pairing_enable_remote_1_svc();
-#define QCSAPI_NON_WPS_SET_PP_ENABLE_REMOTE 341
-extern  enum clnt_stat qcsapi_non_wps_set_pp_enable_remote_1();
-extern  bool_t qcsapi_non_wps_set_pp_enable_remote_1_svc();
-#define QCSAPI_NON_WPS_GET_PP_ENABLE_REMOTE 342
-extern  enum clnt_stat qcsapi_non_wps_get_pp_enable_remote_1();
-extern  bool_t qcsapi_non_wps_get_pp_enable_remote_1_svc();
-#define QCSAPI_WIFI_SET_VENDOR_FIX_REMOTE 343
-extern  enum clnt_stat qcsapi_wifi_set_vendor_fix_remote_1();
-extern  bool_t qcsapi_wifi_set_vendor_fix_remote_1_svc();
-#define QCSAPI_ERRNO_GET_MESSAGE_REMOTE 344
-extern  enum clnt_stat qcsapi_errno_get_message_remote_1();
-extern  bool_t qcsapi_errno_get_message_remote_1_svc();
-#define QCSAPI_GET_INTERFACE_STATS_REMOTE 345
-extern  enum clnt_stat qcsapi_get_interface_stats_remote_1();
-extern  bool_t qcsapi_get_interface_stats_remote_1_svc();
-#define QCSAPI_GET_PHY_STATS_REMOTE 346
-extern  enum clnt_stat qcsapi_get_phy_stats_remote_1();
-extern  bool_t qcsapi_get_phy_stats_remote_1_svc();
-#define QCSAPI_RESET_ALL_COUNTERS_REMOTE 347
-extern  enum clnt_stat qcsapi_reset_all_counters_remote_1();
-extern  bool_t qcsapi_reset_all_counters_remote_1_svc();
-#define QCSAPI_FIRMWARE_GET_VERSION_REMOTE 348
-extern  enum clnt_stat qcsapi_firmware_get_version_remote_1();
-extern  bool_t qcsapi_firmware_get_version_remote_1_svc();
-#define QCSAPI_FLASH_IMAGE_UPDATE_REMOTE 349
-extern  enum clnt_stat qcsapi_flash_image_update_remote_1();
-extern  bool_t qcsapi_flash_image_update_remote_1_svc();
-#define QCSAPI_SET_SOC_MAC_ADDR_REMOTE 350
-extern  enum clnt_stat qcsapi_set_soc_mac_addr_remote_1();
-extern  bool_t qcsapi_set_soc_mac_addr_remote_1_svc();
-#define QCSAPI_GET_CUSTOM_VALUE_REMOTE 351
-extern  enum clnt_stat qcsapi_get_custom_value_remote_1();
-extern  bool_t qcsapi_get_custom_value_remote_1_svc();
-#define QCSAPI_WIFI_GET_MLME_STATS_PER_MAC_REMOTE 352
-extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_per_mac_remote_1();
-extern  bool_t qcsapi_wifi_get_mlme_stats_per_mac_remote_1_svc();
-#define QCSAPI_WIFI_GET_MLME_STATS_PER_ASSOCIATION_REMOTE 353
-extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_per_association_remote_1();
-extern  bool_t qcsapi_wifi_get_mlme_stats_per_association_remote_1_svc();
-#define QCSAPI_WIFI_GET_MLME_STATS_MACS_LIST_REMOTE 354
-extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_macs_list_remote_1();
-extern  bool_t qcsapi_wifi_get_mlme_stats_macs_list_remote_1_svc();
-#define QCSAPI_PM_SET_MODE_REMOTE 355
-extern  enum clnt_stat qcsapi_pm_set_mode_remote_1();
-extern  bool_t qcsapi_pm_set_mode_remote_1_svc();
-#define QCSAPI_PM_GET_MODE_REMOTE 356
-extern  enum clnt_stat qcsapi_pm_get_mode_remote_1();
-extern  bool_t qcsapi_pm_get_mode_remote_1_svc();
-#define QCSAPI_GET_QPM_LEVEL_REMOTE 357
-extern  enum clnt_stat qcsapi_get_qpm_level_remote_1();
-extern  bool_t qcsapi_get_qpm_level_remote_1_svc();
-#define QCSAPI_VSP_GET_STATE_REMOTE 358
-extern  enum clnt_stat qcsapi_vsp_get_state_remote_1();
-extern  bool_t qcsapi_vsp_get_state_remote_1_svc();
-#define QCSAPI_VSP_GET_STATE_ALL_REMOTE 359
-extern  enum clnt_stat qcsapi_vsp_get_state_all_remote_1();
-extern  bool_t qcsapi_vsp_get_state_all_remote_1_svc();
-#define QCSAPI_VSP_SET_STATE_REMOTE 360
-extern  enum clnt_stat qcsapi_vsp_set_state_remote_1();
-extern  bool_t qcsapi_vsp_set_state_remote_1_svc();
-#define QCSAPI_VSP_GET_CONFIG_REMOTE 361
-extern  enum clnt_stat qcsapi_vsp_get_config_remote_1();
-extern  bool_t qcsapi_vsp_get_config_remote_1_svc();
-#define QCSAPI_VSP_GET_CONFIG_ALL_REMOTE 362
-extern  enum clnt_stat qcsapi_vsp_get_config_all_remote_1();
-extern  bool_t qcsapi_vsp_get_config_all_remote_1_svc();
-#define QCSAPI_VSP_SET_CONFIG_REMOTE 363
-extern  enum clnt_stat qcsapi_vsp_set_config_remote_1();
-extern  bool_t qcsapi_vsp_set_config_remote_1_svc();
-#define QCSAPI_VSP_DEL_WL_INDEX_REMOTE 364
-extern  enum clnt_stat qcsapi_vsp_del_wl_index_remote_1();
-extern  bool_t qcsapi_vsp_del_wl_index_remote_1_svc();
-#define QCSAPI_VSP_DEL_RULE_INDEX_REMOTE 365
-extern  enum clnt_stat qcsapi_vsp_del_rule_index_remote_1();
-extern  bool_t qcsapi_vsp_del_rule_index_remote_1_svc();
-#define QCSAPI_VSP_GET_INACTIVE_FLAGS_REMOTE 366
-extern  enum clnt_stat qcsapi_vsp_get_inactive_flags_remote_1();
-extern  bool_t qcsapi_vsp_get_inactive_flags_remote_1_svc();
-#define QCSAPI_WIFI_RUN_SCRIPT_REMOTE 367
-extern  enum clnt_stat qcsapi_wifi_run_script_remote_1();
-extern  bool_t qcsapi_wifi_run_script_remote_1_svc();
-#define QCSAPI_WIFI_TEST_TRAFFIC_REMOTE 368
-extern  enum clnt_stat qcsapi_wifi_test_traffic_remote_1();
-extern  bool_t qcsapi_wifi_test_traffic_remote_1_svc();
-#define QCSAPI_WIFI_ADD_IPFF_REMOTE 369
-extern  enum clnt_stat qcsapi_wifi_add_ipff_remote_1();
-extern  bool_t qcsapi_wifi_add_ipff_remote_1_svc();
-#define QCSAPI_WIFI_DEL_IPFF_REMOTE 370
-extern  enum clnt_stat qcsapi_wifi_del_ipff_remote_1();
-extern  bool_t qcsapi_wifi_del_ipff_remote_1_svc();
-#define QCSAPI_WIFI_GET_IPFF_REMOTE 371
-extern  enum clnt_stat qcsapi_wifi_get_ipff_remote_1();
-extern  bool_t qcsapi_wifi_get_ipff_remote_1_svc();
-#define QCSAPI_WIFI_GET_RTS_THRESHOLD_REMOTE 372
-extern  enum clnt_stat qcsapi_wifi_get_rts_threshold_remote_1();
-extern  bool_t qcsapi_wifi_get_rts_threshold_remote_1_svc();
-#define QCSAPI_WIFI_SET_RTS_THRESHOLD_REMOTE 373
-extern  enum clnt_stat qcsapi_wifi_set_rts_threshold_remote_1();
-extern  bool_t qcsapi_wifi_set_rts_threshold_remote_1_svc();
-#define QCSAPI_GET_TEMPERATURE_INFO_REMOTE 374
-extern  enum clnt_stat qcsapi_get_temperature_info_remote_1();
-extern  bool_t qcsapi_get_temperature_info_remote_1_svc();
-#define QCSAPI_CALCMD_SET_TEST_MODE_REMOTE 375
-extern  enum clnt_stat qcsapi_calcmd_set_test_mode_remote_1();
-extern  bool_t qcsapi_calcmd_set_test_mode_remote_1_svc();
-#define QCSAPI_CALCMD_SHOW_TEST_PACKET_REMOTE 376
-extern  enum clnt_stat qcsapi_calcmd_show_test_packet_remote_1();
-extern  bool_t qcsapi_calcmd_show_test_packet_remote_1_svc();
-#define QCSAPI_CALCMD_SEND_TEST_PACKET_REMOTE 377
-extern  enum clnt_stat qcsapi_calcmd_send_test_packet_remote_1();
-extern  bool_t qcsapi_calcmd_send_test_packet_remote_1_svc();
-#define QCSAPI_CALCMD_STOP_TEST_PACKET_REMOTE 378
-extern  enum clnt_stat qcsapi_calcmd_stop_test_packet_remote_1();
-extern  bool_t qcsapi_calcmd_stop_test_packet_remote_1_svc();
-#define QCSAPI_CALCMD_SEND_DC_CW_SIGNAL_REMOTE 379
-extern  enum clnt_stat qcsapi_calcmd_send_dc_cw_signal_remote_1();
-extern  bool_t qcsapi_calcmd_send_dc_cw_signal_remote_1_svc();
-#define QCSAPI_CALCMD_STOP_DC_CW_SIGNAL_REMOTE 380
-extern  enum clnt_stat qcsapi_calcmd_stop_dc_cw_signal_remote_1();
-extern  bool_t qcsapi_calcmd_stop_dc_cw_signal_remote_1_svc();
-#define QCSAPI_CALCMD_GET_TEST_MODE_ANTENNA_SEL_REMOTE 381
-extern  enum clnt_stat qcsapi_calcmd_get_test_mode_antenna_sel_remote_1();
-extern  bool_t qcsapi_calcmd_get_test_mode_antenna_sel_remote_1_svc();
-#define QCSAPI_CALCMD_GET_TEST_MODE_MCS_REMOTE 382
-extern  enum clnt_stat qcsapi_calcmd_get_test_mode_mcs_remote_1();
-extern  bool_t qcsapi_calcmd_get_test_mode_mcs_remote_1_svc();
-#define QCSAPI_CALCMD_GET_TEST_MODE_BW_REMOTE 383
-extern  enum clnt_stat qcsapi_calcmd_get_test_mode_bw_remote_1();
-extern  bool_t qcsapi_calcmd_get_test_mode_bw_remote_1_svc();
-#define QCSAPI_CALCMD_GET_TX_POWER_REMOTE 384
-extern  enum clnt_stat qcsapi_calcmd_get_tx_power_remote_1();
-extern  bool_t qcsapi_calcmd_get_tx_power_remote_1_svc();
-#define QCSAPI_CALCMD_SET_TX_POWER_REMOTE 385
-extern  enum clnt_stat qcsapi_calcmd_set_tx_power_remote_1();
-extern  bool_t qcsapi_calcmd_set_tx_power_remote_1_svc();
-#define QCSAPI_CALCMD_GET_TEST_MODE_RSSI_REMOTE 386
-extern  enum clnt_stat qcsapi_calcmd_get_test_mode_rssi_remote_1();
-extern  bool_t qcsapi_calcmd_get_test_mode_rssi_remote_1_svc();
-#define QCSAPI_CALCMD_SET_MAC_FILTER_REMOTE 387
-extern  enum clnt_stat qcsapi_calcmd_set_mac_filter_remote_1();
-extern  bool_t qcsapi_calcmd_set_mac_filter_remote_1_svc();
-#define QCSAPI_CALCMD_GET_ANTENNA_COUNT_REMOTE 388
-extern  enum clnt_stat qcsapi_calcmd_get_antenna_count_remote_1();
-extern  bool_t qcsapi_calcmd_get_antenna_count_remote_1_svc();
-#define QCSAPI_CALCMD_CLEAR_COUNTER_REMOTE 389
-extern  enum clnt_stat qcsapi_calcmd_clear_counter_remote_1();
-extern  bool_t qcsapi_calcmd_clear_counter_remote_1_svc();
-#define QCSAPI_WIFI_DISABLE_DFS_CHANNELS_REMOTE 390
+#define QCSAPI_WIFI_DISABLE_DFS_CHANNELS_REMOTE 4061
 extern  enum clnt_stat qcsapi_wifi_disable_dfs_channels_remote_1();
 extern  bool_t qcsapi_wifi_disable_dfs_channels_remote_1_svc();
-#define QCSAPI_GET_CARRIER_ID_REMOTE 391
+#define QCSAPI_WIFI_CREATE_RESTRICTED_BSS_REMOTE 1441
+extern  enum clnt_stat qcsapi_wifi_create_restricted_bss_remote_1();
+extern  bool_t qcsapi_wifi_create_restricted_bss_remote_1_svc();
+#define QCSAPI_WIFI_CREATE_BSS_REMOTE 1451
+extern  enum clnt_stat qcsapi_wifi_create_bss_remote_1();
+extern  bool_t qcsapi_wifi_create_bss_remote_1_svc();
+#define QCSAPI_WIFI_REMOVE_BSS_REMOTE 1461
+extern  enum clnt_stat qcsapi_wifi_remove_bss_remote_1();
+extern  bool_t qcsapi_wifi_remove_bss_remote_1_svc();
+#define QCSAPI_WDS_ADD_PEER_REMOTE 1471
+extern  enum clnt_stat qcsapi_wds_add_peer_remote_1();
+extern  bool_t qcsapi_wds_add_peer_remote_1_svc();
+#define QCSAPI_WDS_ADD_PEER_ENCRYPT_REMOTE 1481
+extern  enum clnt_stat qcsapi_wds_add_peer_encrypt_remote_1();
+extern  bool_t qcsapi_wds_add_peer_encrypt_remote_1_svc();
+#define QCSAPI_WDS_REMOVE_PEER_REMOTE 1491
+extern  enum clnt_stat qcsapi_wds_remove_peer_remote_1();
+extern  bool_t qcsapi_wds_remove_peer_remote_1_svc();
+#define QCSAPI_WDS_GET_PEER_ADDRESS_REMOTE 1501
+extern  enum clnt_stat qcsapi_wds_get_peer_address_remote_1();
+extern  bool_t qcsapi_wds_get_peer_address_remote_1_svc();
+#define QCSAPI_WDS_SET_PSK_REMOTE 1511
+extern  enum clnt_stat qcsapi_wds_set_psk_remote_1();
+extern  bool_t qcsapi_wds_set_psk_remote_1_svc();
+#define QCSAPI_WDS_SET_MODE_REMOTE 1521
+extern  enum clnt_stat qcsapi_wds_set_mode_remote_1();
+extern  bool_t qcsapi_wds_set_mode_remote_1_svc();
+#define QCSAPI_WDS_GET_MODE_REMOTE 1531
+extern  enum clnt_stat qcsapi_wds_get_mode_remote_1();
+extern  bool_t qcsapi_wds_get_mode_remote_1_svc();
+#define QCSAPI_WIFI_SET_EXTENDER_PARAMS_REMOTE 1541
+extern  enum clnt_stat qcsapi_wifi_set_extender_params_remote_1();
+extern  bool_t qcsapi_wifi_set_extender_params_remote_1_svc();
+#define QCSAPI_WIFI_GET_EXTENDER_PARAMS_REMOTE 1551
+extern  enum clnt_stat qcsapi_wifi_get_extender_params_remote_1();
+extern  bool_t qcsapi_wifi_get_extender_params_remote_1_svc();
+#define QCSAPI_WIFI_ENABLE_BGSCAN_REMOTE 1561
+extern  enum clnt_stat qcsapi_wifi_enable_bgscan_remote_1();
+extern  bool_t qcsapi_wifi_enable_bgscan_remote_1_svc();
+#define QCSAPI_WIFI_GET_BGSCAN_STATUS_REMOTE 1571
+extern  enum clnt_stat qcsapi_wifi_get_bgscan_status_remote_1();
+extern  bool_t qcsapi_wifi_get_bgscan_status_remote_1_svc();
+#define QCSAPI_WIFI_GET_BEACON_TYPE_REMOTE 1581
+extern  enum clnt_stat qcsapi_wifi_get_beacon_type_remote_1();
+extern  bool_t qcsapi_wifi_get_beacon_type_remote_1_svc();
+#define QCSAPI_WIFI_SET_BEACON_TYPE_REMOTE 1591
+extern  enum clnt_stat qcsapi_wifi_set_beacon_type_remote_1();
+extern  bool_t qcsapi_wifi_set_beacon_type_remote_1_svc();
+#define QCSAPI_WIFI_GET_WEP_KEY_INDEX_REMOTE 1601
+extern  enum clnt_stat qcsapi_wifi_get_wep_key_index_remote_1();
+extern  bool_t qcsapi_wifi_get_wep_key_index_remote_1_svc();
+#define QCSAPI_WIFI_SET_WEP_KEY_INDEX_REMOTE 1611
+extern  enum clnt_stat qcsapi_wifi_set_wep_key_index_remote_1();
+extern  bool_t qcsapi_wifi_set_wep_key_index_remote_1_svc();
+#define QCSAPI_WIFI_GET_WEP_KEY_PASSPHRASE_REMOTE 1621
+extern  enum clnt_stat qcsapi_wifi_get_wep_key_passphrase_remote_1();
+extern  bool_t qcsapi_wifi_get_wep_key_passphrase_remote_1_svc();
+#define QCSAPI_WIFI_SET_WEP_KEY_PASSPHRASE_REMOTE 1631
+extern  enum clnt_stat qcsapi_wifi_set_wep_key_passphrase_remote_1();
+extern  bool_t qcsapi_wifi_set_wep_key_passphrase_remote_1_svc();
+#define QCSAPI_WIFI_GET_WEP_ENCRYPTION_LEVEL_REMOTE 1641
+extern  enum clnt_stat qcsapi_wifi_get_wep_encryption_level_remote_1();
+extern  bool_t qcsapi_wifi_get_wep_encryption_level_remote_1_svc();
+#define QCSAPI_WIFI_GET_BASIC_ENCRYPTION_MODES_REMOTE 1651
+extern  enum clnt_stat qcsapi_wifi_get_basic_encryption_modes_remote_1();
+extern  bool_t qcsapi_wifi_get_basic_encryption_modes_remote_1_svc();
+#define QCSAPI_WIFI_SET_BASIC_ENCRYPTION_MODES_REMOTE 1661
+extern  enum clnt_stat qcsapi_wifi_set_basic_encryption_modes_remote_1();
+extern  bool_t qcsapi_wifi_set_basic_encryption_modes_remote_1_svc();
+#define QCSAPI_WIFI_GET_BASIC_AUTHENTICATION_MODE_REMOTE 1671
+extern  enum clnt_stat qcsapi_wifi_get_basic_authentication_mode_remote_1();
+extern  bool_t qcsapi_wifi_get_basic_authentication_mode_remote_1_svc();
+#define QCSAPI_WIFI_SET_BASIC_AUTHENTICATION_MODE_REMOTE 1681
+extern  enum clnt_stat qcsapi_wifi_set_basic_authentication_mode_remote_1();
+extern  bool_t qcsapi_wifi_set_basic_authentication_mode_remote_1_svc();
+#define QCSAPI_WIFI_GET_WEP_KEY_REMOTE 1691
+extern  enum clnt_stat qcsapi_wifi_get_wep_key_remote_1();
+extern  bool_t qcsapi_wifi_get_wep_key_remote_1_svc();
+#define QCSAPI_WIFI_SET_WEP_KEY_REMOTE 1701
+extern  enum clnt_stat qcsapi_wifi_set_wep_key_remote_1();
+extern  bool_t qcsapi_wifi_set_wep_key_remote_1_svc();
+#define QCSAPI_WIFI_GET_WPA_ENCRYPTION_MODES_REMOTE 1711
+extern  enum clnt_stat qcsapi_wifi_get_wpa_encryption_modes_remote_1();
+extern  bool_t qcsapi_wifi_get_wpa_encryption_modes_remote_1_svc();
+#define QCSAPI_WIFI_SET_WPA_ENCRYPTION_MODES_REMOTE 1721
+extern  enum clnt_stat qcsapi_wifi_set_wpa_encryption_modes_remote_1();
+extern  bool_t qcsapi_wifi_set_wpa_encryption_modes_remote_1_svc();
+#define QCSAPI_WIFI_GET_WPA_AUTHENTICATION_MODE_REMOTE 1731
+extern  enum clnt_stat qcsapi_wifi_get_wpa_authentication_mode_remote_1();
+extern  bool_t qcsapi_wifi_get_wpa_authentication_mode_remote_1_svc();
+#define QCSAPI_WIFI_SET_WPA_AUTHENTICATION_MODE_REMOTE 1741
+extern  enum clnt_stat qcsapi_wifi_set_wpa_authentication_mode_remote_1();
+extern  bool_t qcsapi_wifi_set_wpa_authentication_mode_remote_1_svc();
+#define QCSAPI_WIFI_GET_IEEE11I_ENCRYPTION_MODES_REMOTE 1751
+extern  enum clnt_stat qcsapi_wifi_get_ieee11i_encryption_modes_remote_1();
+extern  bool_t qcsapi_wifi_get_ieee11i_encryption_modes_remote_1_svc();
+#define QCSAPI_WIFI_SET_IEEE11I_ENCRYPTION_MODES_REMOTE 1761
+extern  enum clnt_stat qcsapi_wifi_set_ieee11i_encryption_modes_remote_1();
+extern  bool_t qcsapi_wifi_set_ieee11i_encryption_modes_remote_1_svc();
+#define QCSAPI_WIFI_GET_IEEE11I_AUTHENTICATION_MODE_REMOTE 1771
+extern  enum clnt_stat qcsapi_wifi_get_ieee11i_authentication_mode_remote_1();
+extern  bool_t qcsapi_wifi_get_ieee11i_authentication_mode_remote_1_svc();
+#define QCSAPI_WIFI_SET_IEEE11I_AUTHENTICATION_MODE_REMOTE 1781
+extern  enum clnt_stat qcsapi_wifi_set_ieee11i_authentication_mode_remote_1();
+extern  bool_t qcsapi_wifi_set_ieee11i_authentication_mode_remote_1_svc();
+#define QCSAPI_WIFI_GET_MICHAEL_ERRCNT_REMOTE 1791
+extern  enum clnt_stat qcsapi_wifi_get_michael_errcnt_remote_1();
+extern  bool_t qcsapi_wifi_get_michael_errcnt_remote_1_svc();
+#define QCSAPI_WIFI_GET_PRE_SHARED_KEY_REMOTE 1801
+extern  enum clnt_stat qcsapi_wifi_get_pre_shared_key_remote_1();
+extern  bool_t qcsapi_wifi_get_pre_shared_key_remote_1_svc();
+#define QCSAPI_WIFI_SET_PRE_SHARED_KEY_REMOTE 1811
+extern  enum clnt_stat qcsapi_wifi_set_pre_shared_key_remote_1();
+extern  bool_t qcsapi_wifi_set_pre_shared_key_remote_1_svc();
+#define QCSAPI_WIFI_GET_EAP_SHARED_KEY_REMOTE 1821
+extern  enum clnt_stat qcsapi_wifi_get_eap_shared_key_remote_1();
+extern  bool_t qcsapi_wifi_get_eap_shared_key_remote_1_svc();
+#define QCSAPI_WIFI_SET_EAP_SHARED_KEY_REMOTE 1831
+extern  enum clnt_stat qcsapi_wifi_set_eap_shared_key_remote_1();
+extern  bool_t qcsapi_wifi_set_eap_shared_key_remote_1_svc();
+#define QCSAPI_WIFI_GET_EAP_RADIUS_IPADDR_REMOTE 1841
+extern  enum clnt_stat qcsapi_wifi_get_eap_radius_ipaddr_remote_1();
+extern  bool_t qcsapi_wifi_get_eap_radius_ipaddr_remote_1_svc();
+#define QCSAPI_WIFI_SET_EAP_RADIUS_IPADDR_REMOTE 1851
+extern  enum clnt_stat qcsapi_wifi_set_eap_radius_ipaddr_remote_1();
+extern  bool_t qcsapi_wifi_set_eap_radius_ipaddr_remote_1_svc();
+#define QCSAPI_WIFI_GET_EAP_RADIUS_PORT_REMOTE 1861
+extern  enum clnt_stat qcsapi_wifi_get_eap_radius_port_remote_1();
+extern  bool_t qcsapi_wifi_get_eap_radius_port_remote_1_svc();
+#define QCSAPI_WIFI_SET_EAP_RADIUS_PORT_REMOTE 1871
+extern  enum clnt_stat qcsapi_wifi_set_eap_radius_port_remote_1();
+extern  bool_t qcsapi_wifi_set_eap_radius_port_remote_1_svc();
+#define QCSAPI_WIFI_SET_OWN_IP_ADDR_REMOTE 1881
+extern  enum clnt_stat qcsapi_wifi_set_own_ip_addr_remote_1();
+extern  bool_t qcsapi_wifi_set_own_ip_addr_remote_1_svc();
+#define QCSAPI_WIFI_GET_KEY_PASSPHRASE_REMOTE 1891
+extern  enum clnt_stat qcsapi_wifi_get_key_passphrase_remote_1();
+extern  bool_t qcsapi_wifi_get_key_passphrase_remote_1_svc();
+#define QCSAPI_WIFI_SET_KEY_PASSPHRASE_REMOTE 1901
+extern  enum clnt_stat qcsapi_wifi_set_key_passphrase_remote_1();
+extern  bool_t qcsapi_wifi_set_key_passphrase_remote_1_svc();
+#define QCSAPI_WIFI_GET_GROUP_KEY_INTERVAL_REMOTE 1911
+extern  enum clnt_stat qcsapi_wifi_get_group_key_interval_remote_1();
+extern  bool_t qcsapi_wifi_get_group_key_interval_remote_1_svc();
+#define QCSAPI_WIFI_SET_GROUP_KEY_INTERVAL_REMOTE 1921
+extern  enum clnt_stat qcsapi_wifi_set_group_key_interval_remote_1();
+extern  bool_t qcsapi_wifi_set_group_key_interval_remote_1_svc();
+#define QCSAPI_WIFI_GET_PMF_REMOTE 1931
+extern  enum clnt_stat qcsapi_wifi_get_pmf_remote_1();
+extern  bool_t qcsapi_wifi_get_pmf_remote_1_svc();
+#define QCSAPI_WIFI_SET_PMF_REMOTE 1941
+extern  enum clnt_stat qcsapi_wifi_set_pmf_remote_1();
+extern  bool_t qcsapi_wifi_set_pmf_remote_1_svc();
+#define QCSAPI_WIFI_GET_WPA_STATUS_REMOTE 1951
+extern  enum clnt_stat qcsapi_wifi_get_wpa_status_remote_1();
+extern  bool_t qcsapi_wifi_get_wpa_status_remote_1_svc();
+#define QCSAPI_WIFI_GET_PSK_AUTH_FAILURES_REMOTE 1961
+extern  enum clnt_stat qcsapi_wifi_get_psk_auth_failures_remote_1();
+extern  bool_t qcsapi_wifi_get_psk_auth_failures_remote_1_svc();
+#define QCSAPI_WIFI_GET_AUTH_STATE_REMOTE 1971
+extern  enum clnt_stat qcsapi_wifi_get_auth_state_remote_1();
+extern  bool_t qcsapi_wifi_get_auth_state_remote_1_svc();
+#define QCSAPI_WIFI_SET_SECURITY_DEFER_MODE_REMOTE 1981
+extern  enum clnt_stat qcsapi_wifi_set_security_defer_mode_remote_1();
+extern  bool_t qcsapi_wifi_set_security_defer_mode_remote_1_svc();
+#define QCSAPI_WIFI_GET_SECURITY_DEFER_MODE_REMOTE 1991
+extern  enum clnt_stat qcsapi_wifi_get_security_defer_mode_remote_1();
+extern  bool_t qcsapi_wifi_get_security_defer_mode_remote_1_svc();
+#define QCSAPI_WIFI_APPLY_SECURITY_CONFIG_REMOTE 2001
+extern  enum clnt_stat qcsapi_wifi_apply_security_config_remote_1();
+extern  bool_t qcsapi_wifi_apply_security_config_remote_1_svc();
+#define QCSAPI_WIFI_SET_MAC_ADDRESS_FILTERING_REMOTE 2011
+extern  enum clnt_stat qcsapi_wifi_set_mac_address_filtering_remote_1();
+extern  bool_t qcsapi_wifi_set_mac_address_filtering_remote_1_svc();
+#define QCSAPI_WIFI_GET_MAC_ADDRESS_FILTERING_REMOTE 2021
+extern  enum clnt_stat qcsapi_wifi_get_mac_address_filtering_remote_1();
+extern  bool_t qcsapi_wifi_get_mac_address_filtering_remote_1_svc();
+#define QCSAPI_WIFI_AUTHORIZE_MAC_ADDRESS_REMOTE 2031
+extern  enum clnt_stat qcsapi_wifi_authorize_mac_address_remote_1();
+extern  bool_t qcsapi_wifi_authorize_mac_address_remote_1_svc();
+#define QCSAPI_WIFI_DENY_MAC_ADDRESS_REMOTE 2041
+extern  enum clnt_stat qcsapi_wifi_deny_mac_address_remote_1();
+extern  bool_t qcsapi_wifi_deny_mac_address_remote_1_svc();
+#define QCSAPI_WIFI_REMOVE_MAC_ADDRESS_REMOTE 2051
+extern  enum clnt_stat qcsapi_wifi_remove_mac_address_remote_1();
+extern  bool_t qcsapi_wifi_remove_mac_address_remote_1_svc();
+#define QCSAPI_WIFI_IS_MAC_ADDRESS_AUTHORIZED_REMOTE 2061
+extern  enum clnt_stat qcsapi_wifi_is_mac_address_authorized_remote_1();
+extern  bool_t qcsapi_wifi_is_mac_address_authorized_remote_1_svc();
+#define QCSAPI_WIFI_GET_AUTHORIZED_MAC_ADDRESSES_REMOTE 2071
+extern  enum clnt_stat qcsapi_wifi_get_authorized_mac_addresses_remote_1();
+extern  bool_t qcsapi_wifi_get_authorized_mac_addresses_remote_1_svc();
+#define QCSAPI_WIFI_GET_DENIED_MAC_ADDRESSES_REMOTE 2081
+extern  enum clnt_stat qcsapi_wifi_get_denied_mac_addresses_remote_1();
+extern  bool_t qcsapi_wifi_get_denied_mac_addresses_remote_1_svc();
+#define QCSAPI_WIFI_SET_ACCEPT_OUI_FILTER_REMOTE 2091
+extern  enum clnt_stat qcsapi_wifi_set_accept_oui_filter_remote_1();
+extern  bool_t qcsapi_wifi_set_accept_oui_filter_remote_1_svc();
+#define QCSAPI_WIFI_GET_ACCEPT_OUI_FILTER_REMOTE 2101
+extern  enum clnt_stat qcsapi_wifi_get_accept_oui_filter_remote_1();
+extern  bool_t qcsapi_wifi_get_accept_oui_filter_remote_1_svc();
+#define QCSAPI_WIFI_CLEAR_MAC_ADDRESS_FILTERS_REMOTE 2111
+extern  enum clnt_stat qcsapi_wifi_clear_mac_address_filters_remote_1();
+extern  bool_t qcsapi_wifi_clear_mac_address_filters_remote_1_svc();
+#define QCSAPI_WIFI_GET_OPTION_REMOTE 2121
+extern  enum clnt_stat qcsapi_wifi_get_option_remote_1();
+extern  bool_t qcsapi_wifi_get_option_remote_1_svc();
+#define QCSAPI_WIFI_SET_OPTION_REMOTE 2131
+extern  enum clnt_stat qcsapi_wifi_set_option_remote_1();
+extern  bool_t qcsapi_wifi_set_option_remote_1_svc();
+#define QCSAPI_GET_BOARD_PARAMETER_REMOTE 2141
+extern  enum clnt_stat qcsapi_get_board_parameter_remote_1();
+extern  bool_t qcsapi_get_board_parameter_remote_1_svc();
+#define QCSAPI_SSID_CREATE_SSID_REMOTE 2151
+extern  enum clnt_stat qcsapi_ssid_create_ssid_remote_1();
+extern  bool_t qcsapi_ssid_create_ssid_remote_1_svc();
+#define QCSAPI_SSID_REMOVE_SSID_REMOTE 2161
+extern  enum clnt_stat qcsapi_ssid_remove_ssid_remote_1();
+extern  bool_t qcsapi_ssid_remove_ssid_remote_1_svc();
+#define QCSAPI_SSID_VERIFY_SSID_REMOTE 2171
+extern  enum clnt_stat qcsapi_ssid_verify_ssid_remote_1();
+extern  bool_t qcsapi_ssid_verify_ssid_remote_1_svc();
+#define QCSAPI_SSID_RENAME_SSID_REMOTE 2181
+extern  enum clnt_stat qcsapi_ssid_rename_ssid_remote_1();
+extern  bool_t qcsapi_ssid_rename_ssid_remote_1_svc();
+#define QCSAPI_SSID_GET_SSID_LIST_REMOTE 2191
+extern  enum clnt_stat qcsapi_ssid_get_ssid_list_remote_1();
+extern  bool_t qcsapi_ssid_get_ssid_list_remote_1_svc();
+#define QCSAPI_SSID_SET_PROTOCOL_REMOTE 2201
+extern  enum clnt_stat qcsapi_ssid_set_protocol_remote_1();
+extern  bool_t qcsapi_ssid_set_protocol_remote_1_svc();
+#define QCSAPI_SSID_GET_PROTOCOL_REMOTE 2211
+extern  enum clnt_stat qcsapi_ssid_get_protocol_remote_1();
+extern  bool_t qcsapi_ssid_get_protocol_remote_1_svc();
+#define QCSAPI_SSID_GET_ENCRYPTION_MODES_REMOTE 2221
+extern  enum clnt_stat qcsapi_ssid_get_encryption_modes_remote_1();
+extern  bool_t qcsapi_ssid_get_encryption_modes_remote_1_svc();
+#define QCSAPI_SSID_SET_ENCRYPTION_MODES_REMOTE 2231
+extern  enum clnt_stat qcsapi_ssid_set_encryption_modes_remote_1();
+extern  bool_t qcsapi_ssid_set_encryption_modes_remote_1_svc();
+#define QCSAPI_SSID_GET_GROUP_ENCRYPTION_REMOTE 2241
+extern  enum clnt_stat qcsapi_ssid_get_group_encryption_remote_1();
+extern  bool_t qcsapi_ssid_get_group_encryption_remote_1_svc();
+#define QCSAPI_SSID_SET_GROUP_ENCRYPTION_REMOTE 2251
+extern  enum clnt_stat qcsapi_ssid_set_group_encryption_remote_1();
+extern  bool_t qcsapi_ssid_set_group_encryption_remote_1_svc();
+#define QCSAPI_SSID_GET_AUTHENTICATION_MODE_REMOTE 2261
+extern  enum clnt_stat qcsapi_ssid_get_authentication_mode_remote_1();
+extern  bool_t qcsapi_ssid_get_authentication_mode_remote_1_svc();
+#define QCSAPI_SSID_SET_AUTHENTICATION_MODE_REMOTE 2271
+extern  enum clnt_stat qcsapi_ssid_set_authentication_mode_remote_1();
+extern  bool_t qcsapi_ssid_set_authentication_mode_remote_1_svc();
+#define QCSAPI_SSID_GET_PRE_SHARED_KEY_REMOTE 2281
+extern  enum clnt_stat qcsapi_ssid_get_pre_shared_key_remote_1();
+extern  bool_t qcsapi_ssid_get_pre_shared_key_remote_1_svc();
+#define QCSAPI_SSID_SET_PRE_SHARED_KEY_REMOTE 2291
+extern  enum clnt_stat qcsapi_ssid_set_pre_shared_key_remote_1();
+extern  bool_t qcsapi_ssid_set_pre_shared_key_remote_1_svc();
+#define QCSAPI_SSID_GET_KEY_PASSPHRASE_REMOTE 2301
+extern  enum clnt_stat qcsapi_ssid_get_key_passphrase_remote_1();
+extern  bool_t qcsapi_ssid_get_key_passphrase_remote_1_svc();
+#define QCSAPI_SSID_SET_KEY_PASSPHRASE_REMOTE 2311
+extern  enum clnt_stat qcsapi_ssid_set_key_passphrase_remote_1();
+extern  bool_t qcsapi_ssid_set_key_passphrase_remote_1_svc();
+#define QCSAPI_SSID_GET_PMF_REMOTE 2321
+extern  enum clnt_stat qcsapi_ssid_get_pmf_remote_1();
+extern  bool_t qcsapi_ssid_get_pmf_remote_1_svc();
+#define QCSAPI_SSID_SET_PMF_REMOTE 2331
+extern  enum clnt_stat qcsapi_ssid_set_pmf_remote_1();
+extern  bool_t qcsapi_ssid_set_pmf_remote_1_svc();
+#define QCSAPI_SSID_GET_WPS_SSID_REMOTE 2341
+extern  enum clnt_stat qcsapi_ssid_get_wps_ssid_remote_1();
+extern  bool_t qcsapi_ssid_get_wps_ssid_remote_1_svc();
+#define QCSAPI_WIFI_VLAN_CONFIG_REMOTE 2351
+extern  enum clnt_stat qcsapi_wifi_vlan_config_remote_1();
+extern  bool_t qcsapi_wifi_vlan_config_remote_1_svc();
+#define QCSAPI_WIFI_SHOW_VLAN_CONFIG_REMOTE 2361
+extern  enum clnt_stat qcsapi_wifi_show_vlan_config_remote_1();
+extern  bool_t qcsapi_wifi_show_vlan_config_remote_1_svc();
+#define QCSAPI_ENABLE_VLAN_PASS_THROUGH_REMOTE 2371
+extern  enum clnt_stat qcsapi_enable_vlan_pass_through_remote_1();
+extern  bool_t qcsapi_enable_vlan_pass_through_remote_1_svc();
+#define QCSAPI_WIFI_SET_VLAN_PROMISC_REMOTE 2381
+extern  enum clnt_stat qcsapi_wifi_set_vlan_promisc_remote_1();
+extern  bool_t qcsapi_wifi_set_vlan_promisc_remote_1_svc();
+#define QCSAPI_WPS_REGISTRAR_REPORT_BUTTON_PRESS_REMOTE 2391
+extern  enum clnt_stat qcsapi_wps_registrar_report_button_press_remote_1();
+extern  bool_t qcsapi_wps_registrar_report_button_press_remote_1_svc();
+#define QCSAPI_WPS_REGISTRAR_REPORT_PIN_REMOTE 2401
+extern  enum clnt_stat qcsapi_wps_registrar_report_pin_remote_1();
+extern  bool_t qcsapi_wps_registrar_report_pin_remote_1_svc();
+#define QCSAPI_WPS_REGISTRAR_GET_PP_DEVNAME_REMOTE 2411
+extern  enum clnt_stat qcsapi_wps_registrar_get_pp_devname_remote_1();
+extern  bool_t qcsapi_wps_registrar_get_pp_devname_remote_1_svc();
+#define QCSAPI_WPS_REGISTRAR_SET_PP_DEVNAME_REMOTE 2421
+extern  enum clnt_stat qcsapi_wps_registrar_set_pp_devname_remote_1();
+extern  bool_t qcsapi_wps_registrar_set_pp_devname_remote_1_svc();
+#define QCSAPI_WPS_ENROLLEE_REPORT_BUTTON_PRESS_REMOTE 2431
+extern  enum clnt_stat qcsapi_wps_enrollee_report_button_press_remote_1();
+extern  bool_t qcsapi_wps_enrollee_report_button_press_remote_1_svc();
+#define QCSAPI_WPS_ENROLLEE_REPORT_PIN_REMOTE 2441
+extern  enum clnt_stat qcsapi_wps_enrollee_report_pin_remote_1();
+extern  bool_t qcsapi_wps_enrollee_report_pin_remote_1_svc();
+#define QCSAPI_WPS_ENROLLEE_GENERATE_PIN_REMOTE 2451
+extern  enum clnt_stat qcsapi_wps_enrollee_generate_pin_remote_1();
+extern  bool_t qcsapi_wps_enrollee_generate_pin_remote_1_svc();
+#define QCSAPI_WPS_GET_AP_PIN_REMOTE 2461
+extern  enum clnt_stat qcsapi_wps_get_ap_pin_remote_1();
+extern  bool_t qcsapi_wps_get_ap_pin_remote_1_svc();
+#define QCSAPI_WPS_SET_AP_PIN_REMOTE 2471
+extern  enum clnt_stat qcsapi_wps_set_ap_pin_remote_1();
+extern  bool_t qcsapi_wps_set_ap_pin_remote_1_svc();
+#define QCSAPI_WPS_SAVE_AP_PIN_REMOTE 2481
+extern  enum clnt_stat qcsapi_wps_save_ap_pin_remote_1();
+extern  bool_t qcsapi_wps_save_ap_pin_remote_1_svc();
+#define QCSAPI_WPS_ENABLE_AP_PIN_REMOTE 2491
+extern  enum clnt_stat qcsapi_wps_enable_ap_pin_remote_1();
+extern  bool_t qcsapi_wps_enable_ap_pin_remote_1_svc();
+#define QCSAPI_WPS_GET_STA_PIN_REMOTE 2501
+extern  enum clnt_stat qcsapi_wps_get_sta_pin_remote_1();
+extern  bool_t qcsapi_wps_get_sta_pin_remote_1_svc();
+#define QCSAPI_WPS_GET_STATE_REMOTE 2511
+extern  enum clnt_stat qcsapi_wps_get_state_remote_1();
+extern  bool_t qcsapi_wps_get_state_remote_1_svc();
+#define QCSAPI_WPS_GET_CONFIGURED_STATE_REMOTE 2521
+extern  enum clnt_stat qcsapi_wps_get_configured_state_remote_1();
+extern  bool_t qcsapi_wps_get_configured_state_remote_1_svc();
+#define QCSAPI_WPS_GET_RUNTIME_STATE_REMOTE 2531
+extern  enum clnt_stat qcsapi_wps_get_runtime_state_remote_1();
+extern  bool_t qcsapi_wps_get_runtime_state_remote_1_svc();
+#define QCSAPI_WPS_SET_CONFIGURED_STATE_REMOTE 2541
+extern  enum clnt_stat qcsapi_wps_set_configured_state_remote_1();
+extern  bool_t qcsapi_wps_set_configured_state_remote_1_svc();
+#define QCSAPI_WPS_GET_PARAM_REMOTE 2551
+extern  enum clnt_stat qcsapi_wps_get_param_remote_1();
+extern  bool_t qcsapi_wps_get_param_remote_1_svc();
+#define QCSAPI_WPS_SET_TIMEOUT_REMOTE 2561
+extern  enum clnt_stat qcsapi_wps_set_timeout_remote_1();
+extern  bool_t qcsapi_wps_set_timeout_remote_1_svc();
+#define QCSAPI_WPS_ON_HIDDEN_SSID_REMOTE 2571
+extern  enum clnt_stat qcsapi_wps_on_hidden_ssid_remote_1();
+extern  bool_t qcsapi_wps_on_hidden_ssid_remote_1_svc();
+#define QCSAPI_WPS_ON_HIDDEN_SSID_STATUS_REMOTE 2581
+extern  enum clnt_stat qcsapi_wps_on_hidden_ssid_status_remote_1();
+extern  bool_t qcsapi_wps_on_hidden_ssid_status_remote_1_svc();
+#define QCSAPI_WPS_UPNP_ENABLE_REMOTE 2591
+extern  enum clnt_stat qcsapi_wps_upnp_enable_remote_1();
+extern  bool_t qcsapi_wps_upnp_enable_remote_1_svc();
+#define QCSAPI_WPS_UPNP_STATUS_REMOTE 2601
+extern  enum clnt_stat qcsapi_wps_upnp_status_remote_1();
+extern  bool_t qcsapi_wps_upnp_status_remote_1_svc();
+#define QCSAPI_WPS_ALLOW_PBC_OVERLAP_REMOTE 2611
+extern  enum clnt_stat qcsapi_wps_allow_pbc_overlap_remote_1();
+extern  bool_t qcsapi_wps_allow_pbc_overlap_remote_1_svc();
+#define QCSAPI_WPS_GET_ALLOW_PBC_OVERLAP_STATUS_REMOTE 2621
+extern  enum clnt_stat qcsapi_wps_get_allow_pbc_overlap_status_remote_1();
+extern  bool_t qcsapi_wps_get_allow_pbc_overlap_status_remote_1_svc();
+#define QCSAPI_WPS_SET_ACCESS_CONTROL_REMOTE 2631
+extern  enum clnt_stat qcsapi_wps_set_access_control_remote_1();
+extern  bool_t qcsapi_wps_set_access_control_remote_1_svc();
+#define QCSAPI_WPS_GET_ACCESS_CONTROL_REMOTE 2641
+extern  enum clnt_stat qcsapi_wps_get_access_control_remote_1();
+extern  bool_t qcsapi_wps_get_access_control_remote_1_svc();
+#define QCSAPI_WPS_SET_PARAM_REMOTE 2651
+extern  enum clnt_stat qcsapi_wps_set_param_remote_1();
+extern  bool_t qcsapi_wps_set_param_remote_1_svc();
+#define QCSAPI_WPS_CANCEL_REMOTE 2661
+extern  enum clnt_stat qcsapi_wps_cancel_remote_1();
+extern  bool_t qcsapi_wps_cancel_remote_1_svc();
+#define QCSAPI_WPS_SET_PBC_IN_SRCM_REMOTE 2671
+extern  enum clnt_stat qcsapi_wps_set_pbc_in_srcm_remote_1();
+extern  bool_t qcsapi_wps_set_pbc_in_srcm_remote_1_svc();
+#define QCSAPI_WPS_GET_PBC_IN_SRCM_REMOTE 2681
+extern  enum clnt_stat qcsapi_wps_get_pbc_in_srcm_remote_1();
+extern  bool_t qcsapi_wps_get_pbc_in_srcm_remote_1_svc();
+#define QCSAPI_REGISTRAR_SET_DEFAULT_PBC_BSS_REMOTE 2691
+extern  enum clnt_stat qcsapi_registrar_set_default_pbc_bss_remote_1();
+extern  bool_t qcsapi_registrar_set_default_pbc_bss_remote_1_svc();
+#define QCSAPI_REGISTRAR_GET_DEFAULT_PBC_BSS_REMOTE 2701
+extern  enum clnt_stat qcsapi_registrar_get_default_pbc_bss_remote_1();
+extern  bool_t qcsapi_registrar_get_default_pbc_bss_remote_1_svc();
+#define QCSAPI_GPIO_SET_CONFIG_REMOTE 2711
+extern  enum clnt_stat qcsapi_gpio_set_config_remote_1();
+extern  bool_t qcsapi_gpio_set_config_remote_1_svc();
+#define QCSAPI_GPIO_GET_CONFIG_REMOTE 2721
+extern  enum clnt_stat qcsapi_gpio_get_config_remote_1();
+extern  bool_t qcsapi_gpio_get_config_remote_1_svc();
+#define QCSAPI_LED_GET_REMOTE 2731
+extern  enum clnt_stat qcsapi_led_get_remote_1();
+extern  bool_t qcsapi_led_get_remote_1_svc();
+#define QCSAPI_LED_SET_REMOTE 2741
+extern  enum clnt_stat qcsapi_led_set_remote_1();
+extern  bool_t qcsapi_led_set_remote_1_svc();
+#define QCSAPI_LED_PWM_ENABLE_REMOTE 2751
+extern  enum clnt_stat qcsapi_led_pwm_enable_remote_1();
+extern  bool_t qcsapi_led_pwm_enable_remote_1_svc();
+#define QCSAPI_LED_BRIGHTNESS_REMOTE 2761
+extern  enum clnt_stat qcsapi_led_brightness_remote_1();
+extern  bool_t qcsapi_led_brightness_remote_1_svc();
+#define QCSAPI_GPIO_ENABLE_WPS_PUSH_BUTTON_REMOTE 2781
+extern  enum clnt_stat qcsapi_gpio_enable_wps_push_button_remote_1();
+extern  bool_t qcsapi_gpio_enable_wps_push_button_remote_1_svc();
+#define QCSAPI_WIFI_GET_COUNT_ASSOCIATIONS_REMOTE 2791
+extern  enum clnt_stat qcsapi_wifi_get_count_associations_remote_1();
+extern  bool_t qcsapi_wifi_get_count_associations_remote_1_svc();
+#define QCSAPI_WIFI_GET_ASSOCIATED_DEVICE_MAC_ADDR_REMOTE 2801
+extern  enum clnt_stat qcsapi_wifi_get_associated_device_mac_addr_remote_1();
+extern  bool_t qcsapi_wifi_get_associated_device_mac_addr_remote_1_svc();
+#define QCSAPI_WIFI_GET_ASSOCIATED_DEVICE_IP_ADDR_REMOTE 2811
+extern  enum clnt_stat qcsapi_wifi_get_associated_device_ip_addr_remote_1();
+extern  bool_t qcsapi_wifi_get_associated_device_ip_addr_remote_1_svc();
+#define QCSAPI_WIFI_GET_LINK_QUALITY_REMOTE 2821
+extern  enum clnt_stat qcsapi_wifi_get_link_quality_remote_1();
+extern  bool_t qcsapi_wifi_get_link_quality_remote_1_svc();
+#define QCSAPI_WIFI_GET_RX_BYTES_PER_ASSOCIATION_REMOTE 2831
+extern  enum clnt_stat qcsapi_wifi_get_rx_bytes_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_rx_bytes_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_TX_BYTES_PER_ASSOCIATION_REMOTE 2841
+extern  enum clnt_stat qcsapi_wifi_get_tx_bytes_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_tx_bytes_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_RX_PACKETS_PER_ASSOCIATION_REMOTE 2851
+extern  enum clnt_stat qcsapi_wifi_get_rx_packets_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_rx_packets_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_TX_PACKETS_PER_ASSOCIATION_REMOTE 2861
+extern  enum clnt_stat qcsapi_wifi_get_tx_packets_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_tx_packets_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_TX_ERR_PACKETS_PER_ASSOCIATION_REMOTE 2871
+extern  enum clnt_stat qcsapi_wifi_get_tx_err_packets_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_tx_err_packets_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_RSSI_PER_ASSOCIATION_REMOTE 2881
+extern  enum clnt_stat qcsapi_wifi_get_rssi_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_rssi_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_RSSI_IN_DBM_PER_ASSOCIATION_REMOTE 2891
+extern  enum clnt_stat qcsapi_wifi_get_rssi_in_dbm_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_rssi_in_dbm_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_BW_PER_ASSOCIATION_REMOTE 2901
+extern  enum clnt_stat qcsapi_wifi_get_bw_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_bw_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_TX_PHY_RATE_PER_ASSOCIATION_REMOTE 2911
+extern  enum clnt_stat qcsapi_wifi_get_tx_phy_rate_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_tx_phy_rate_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_RX_PHY_RATE_PER_ASSOCIATION_REMOTE 2921
+extern  enum clnt_stat qcsapi_wifi_get_rx_phy_rate_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_rx_phy_rate_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_TX_MCS_PER_ASSOCIATION_REMOTE 2931
+extern  enum clnt_stat qcsapi_wifi_get_tx_mcs_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_tx_mcs_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_RX_MCS_PER_ASSOCIATION_REMOTE 2941
+extern  enum clnt_stat qcsapi_wifi_get_rx_mcs_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_rx_mcs_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_ACHIEVABLE_TX_PHY_RATE_PER_ASSOCIATION_REMOTE 2951
+extern  enum clnt_stat qcsapi_wifi_get_achievable_tx_phy_rate_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_achievable_tx_phy_rate_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_ACHIEVABLE_RX_PHY_RATE_PER_ASSOCIATION_REMOTE 2961
+extern  enum clnt_stat qcsapi_wifi_get_achievable_rx_phy_rate_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_achievable_rx_phy_rate_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_AUTH_ENC_PER_ASSOCIATION_REMOTE 2971
+extern  enum clnt_stat qcsapi_wifi_get_auth_enc_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_auth_enc_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_VENDOR_PER_ASSOCIATION_REMOTE 3001
+extern  enum clnt_stat qcsapi_wifi_get_vendor_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_vendor_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_SNR_PER_ASSOCIATION_REMOTE 3011
+extern  enum clnt_stat qcsapi_wifi_get_snr_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_snr_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_TIME_ASSOCIATED_PER_ASSOCIATION_REMOTE 3021
+extern  enum clnt_stat qcsapi_wifi_get_time_associated_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_time_associated_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_NODE_PARAM_REMOTE 3031
+extern  enum clnt_stat qcsapi_wifi_get_node_param_remote_1();
+extern  bool_t qcsapi_wifi_get_node_param_remote_1_svc();
+#define QCSAPI_WIFI_GET_NODE_COUNTER_REMOTE 3041
+extern  enum clnt_stat qcsapi_wifi_get_node_counter_remote_1();
+extern  bool_t qcsapi_wifi_get_node_counter_remote_1_svc();
+#define QCSAPI_WIFI_GET_NODE_STATS_REMOTE 3051
+extern  enum clnt_stat qcsapi_wifi_get_node_stats_remote_1();
+extern  bool_t qcsapi_wifi_get_node_stats_remote_1_svc();
+#define QCSAPI_WIFI_GET_MAX_QUEUED_REMOTE 3061
+extern  enum clnt_stat qcsapi_wifi_get_max_queued_remote_1();
+extern  bool_t qcsapi_wifi_get_max_queued_remote_1_svc();
+#define QCSAPI_WIFI_GET_HW_NOISE_PER_ASSOCIATION_REMOTE 3071
+extern  enum clnt_stat qcsapi_wifi_get_hw_noise_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_hw_noise_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_LIST_REGULATORY_REGIONS_REMOTE 3081
+extern  enum clnt_stat qcsapi_wifi_get_list_regulatory_regions_remote_1();
+extern  bool_t qcsapi_wifi_get_list_regulatory_regions_remote_1_svc();
+#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_REGIONS_REMOTE 3091
+extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_regions_remote_1();
+extern  bool_t qcsapi_regulatory_get_list_regulatory_regions_remote_1_svc();
+#define QCSAPI_WIFI_GET_LIST_REGULATORY_CHANNELS_REMOTE 3101
+extern  enum clnt_stat qcsapi_wifi_get_list_regulatory_channels_remote_1();
+extern  bool_t qcsapi_wifi_get_list_regulatory_channels_remote_1_svc();
+#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_CHANNELS_REMOTE 3111
+extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_channels_remote_1();
+extern  bool_t qcsapi_regulatory_get_list_regulatory_channels_remote_1_svc();
+#define QCSAPI_REGULATORY_GET_LIST_REGULATORY_BANDS_REMOTE 3121
+extern  enum clnt_stat qcsapi_regulatory_get_list_regulatory_bands_remote_1();
+extern  bool_t qcsapi_regulatory_get_list_regulatory_bands_remote_1_svc();
+#define QCSAPI_WIFI_GET_REGULATORY_TX_POWER_REMOTE 3131
+extern  enum clnt_stat qcsapi_wifi_get_regulatory_tx_power_remote_1();
+extern  bool_t qcsapi_wifi_get_regulatory_tx_power_remote_1_svc();
+#define QCSAPI_REGULATORY_GET_REGULATORY_TX_POWER_REMOTE 3141
+extern  enum clnt_stat qcsapi_regulatory_get_regulatory_tx_power_remote_1();
+extern  bool_t qcsapi_regulatory_get_regulatory_tx_power_remote_1_svc();
+#define QCSAPI_WIFI_GET_CONFIGURED_TX_POWER_REMOTE 3151
+extern  enum clnt_stat qcsapi_wifi_get_configured_tx_power_remote_1();
+extern  bool_t qcsapi_wifi_get_configured_tx_power_remote_1_svc();
+#define QCSAPI_REGULATORY_GET_CONFIGURED_TX_POWER_REMOTE 3161
+extern  enum clnt_stat qcsapi_regulatory_get_configured_tx_power_remote_1();
+extern  bool_t qcsapi_regulatory_get_configured_tx_power_remote_1_svc();
+#define QCSAPI_WIFI_SET_REGULATORY_REGION_REMOTE 3171
+extern  enum clnt_stat qcsapi_wifi_set_regulatory_region_remote_1();
+extern  bool_t qcsapi_wifi_set_regulatory_region_remote_1_svc();
+#define QCSAPI_REGULATORY_SET_REGULATORY_REGION_REMOTE 3181
+extern  enum clnt_stat qcsapi_regulatory_set_regulatory_region_remote_1();
+extern  bool_t qcsapi_regulatory_set_regulatory_region_remote_1_svc();
+#define QCSAPI_REGULATORY_RESTORE_REGULATORY_TX_POWER_REMOTE 3191
+extern  enum clnt_stat qcsapi_regulatory_restore_regulatory_tx_power_remote_1();
+extern  bool_t qcsapi_regulatory_restore_regulatory_tx_power_remote_1_svc();
+#define QCSAPI_WIFI_GET_REGULATORY_REGION_REMOTE 3201
+extern  enum clnt_stat qcsapi_wifi_get_regulatory_region_remote_1();
+extern  bool_t qcsapi_wifi_get_regulatory_region_remote_1_svc();
+#define QCSAPI_REGULATORY_OVERWRITE_COUNTRY_CODE_REMOTE 3211
+extern  enum clnt_stat qcsapi_regulatory_overwrite_country_code_remote_1();
+extern  bool_t qcsapi_regulatory_overwrite_country_code_remote_1_svc();
+#define QCSAPI_WIFI_SET_REGULATORY_CHANNEL_REMOTE 3221
+extern  enum clnt_stat qcsapi_wifi_set_regulatory_channel_remote_1();
+extern  bool_t qcsapi_wifi_set_regulatory_channel_remote_1_svc();
+#define QCSAPI_REGULATORY_SET_REGULATORY_CHANNEL_REMOTE 3231
+extern  enum clnt_stat qcsapi_regulatory_set_regulatory_channel_remote_1();
+extern  bool_t qcsapi_regulatory_set_regulatory_channel_remote_1_svc();
+#define QCSAPI_REGULATORY_GET_DB_VERSION_REMOTE 3241
+extern  enum clnt_stat qcsapi_regulatory_get_db_version_remote_1();
+extern  bool_t qcsapi_regulatory_get_db_version_remote_1_svc();
+#define QCSAPI_REGULATORY_APPLY_TX_POWER_CAP_REMOTE 3251
+extern  enum clnt_stat qcsapi_regulatory_apply_tx_power_cap_remote_1();
+extern  bool_t qcsapi_regulatory_apply_tx_power_cap_remote_1_svc();
+#define QCSAPI_WIFI_GET_LIST_DFS_CHANNELS_REMOTE 3261
+extern  enum clnt_stat qcsapi_wifi_get_list_dfs_channels_remote_1();
+extern  bool_t qcsapi_wifi_get_list_dfs_channels_remote_1_svc();
+#define QCSAPI_REGULATORY_GET_LIST_DFS_CHANNELS_REMOTE 3271
+extern  enum clnt_stat qcsapi_regulatory_get_list_dfs_channels_remote_1();
+extern  bool_t qcsapi_regulatory_get_list_dfs_channels_remote_1_svc();
+#define QCSAPI_WIFI_IS_CHANNEL_DFS_REMOTE 3281
+extern  enum clnt_stat qcsapi_wifi_is_channel_dfs_remote_1();
+extern  bool_t qcsapi_wifi_is_channel_dfs_remote_1_svc();
+#define QCSAPI_REGULATORY_IS_CHANNEL_DFS_REMOTE 3291
+extern  enum clnt_stat qcsapi_regulatory_is_channel_dfs_remote_1();
+extern  bool_t qcsapi_regulatory_is_channel_dfs_remote_1_svc();
+#define QCSAPI_WIFI_GET_DFS_CCE_CHANNELS_REMOTE 3301
+extern  enum clnt_stat qcsapi_wifi_get_dfs_cce_channels_remote_1();
+extern  bool_t qcsapi_wifi_get_dfs_cce_channels_remote_1_svc();
+#define QCSAPI_WIFI_GET_DFS_ALT_CHANNEL_REMOTE 3311
+extern  enum clnt_stat qcsapi_wifi_get_dfs_alt_channel_remote_1();
+extern  bool_t qcsapi_wifi_get_dfs_alt_channel_remote_1_svc();
+#define QCSAPI_WIFI_SET_DFS_ALT_CHANNEL_REMOTE 3321
+extern  enum clnt_stat qcsapi_wifi_set_dfs_alt_channel_remote_1();
+extern  bool_t qcsapi_wifi_set_dfs_alt_channel_remote_1_svc();
+#define QCSAPI_WIFI_START_DFS_REENTRY_REMOTE 3331
+extern  enum clnt_stat qcsapi_wifi_start_dfs_reentry_remote_1();
+extern  bool_t qcsapi_wifi_start_dfs_reentry_remote_1_svc();
+#define QCSAPI_WIFI_START_SCAN_EXT_REMOTE 3341
+extern  enum clnt_stat qcsapi_wifi_start_scan_ext_remote_1();
+extern  bool_t qcsapi_wifi_start_scan_ext_remote_1_svc();
+#define QCSAPI_WIFI_GET_CSW_RECORDS_REMOTE 3351
+extern  enum clnt_stat qcsapi_wifi_get_csw_records_remote_1();
+extern  bool_t qcsapi_wifi_get_csw_records_remote_1_svc();
+#define QCSAPI_WIFI_GET_RADAR_STATUS_REMOTE 3361
+extern  enum clnt_stat qcsapi_wifi_get_radar_status_remote_1();
+extern  bool_t qcsapi_wifi_get_radar_status_remote_1_svc();
+#define QCSAPI_WIFI_GET_RESULTS_AP_SCAN_REMOTE 3371
+extern  enum clnt_stat qcsapi_wifi_get_results_ap_scan_remote_1();
+extern  bool_t qcsapi_wifi_get_results_ap_scan_remote_1_svc();
+#define QCSAPI_WIFI_GET_COUNT_APS_SCANNED_REMOTE 3381
+extern  enum clnt_stat qcsapi_wifi_get_count_aps_scanned_remote_1();
+extern  bool_t qcsapi_wifi_get_count_aps_scanned_remote_1_svc();
+#define QCSAPI_WIFI_GET_PROPERTIES_AP_REMOTE 3391
+extern  enum clnt_stat qcsapi_wifi_get_properties_ap_remote_1();
+extern  bool_t qcsapi_wifi_get_properties_ap_remote_1_svc();
+#define QCSAPI_WIFI_BACKOFF_FAIL_MAX_REMOTE 3401
+extern  enum clnt_stat qcsapi_wifi_backoff_fail_max_remote_1();
+extern  bool_t qcsapi_wifi_backoff_fail_max_remote_1_svc();
+#define QCSAPI_WIFI_BACKOFF_TIMEOUT_REMOTE 3411
+extern  enum clnt_stat qcsapi_wifi_backoff_timeout_remote_1();
+extern  bool_t qcsapi_wifi_backoff_timeout_remote_1_svc();
+#define QCSAPI_WIFI_GET_MCS_RATE_REMOTE 3421
+extern  enum clnt_stat qcsapi_wifi_get_mcs_rate_remote_1();
+extern  bool_t qcsapi_wifi_get_mcs_rate_remote_1_svc();
+#define QCSAPI_WIFI_SET_MCS_RATE_REMOTE 3431
+extern  enum clnt_stat qcsapi_wifi_set_mcs_rate_remote_1();
+extern  bool_t qcsapi_wifi_set_mcs_rate_remote_1_svc();
+#define QCSAPI_WIFI_SET_PAIRING_ID_REMOTE 3441
+extern  enum clnt_stat qcsapi_wifi_set_pairing_id_remote_1();
+extern  bool_t qcsapi_wifi_set_pairing_id_remote_1_svc();
+#define QCSAPI_WIFI_GET_PAIRING_ID_REMOTE 3451
+extern  enum clnt_stat qcsapi_wifi_get_pairing_id_remote_1();
+extern  bool_t qcsapi_wifi_get_pairing_id_remote_1_svc();
+#define QCSAPI_WIFI_SET_PAIRING_ENABLE_REMOTE 3461
+extern  enum clnt_stat qcsapi_wifi_set_pairing_enable_remote_1();
+extern  bool_t qcsapi_wifi_set_pairing_enable_remote_1_svc();
+#define QCSAPI_WIFI_GET_PAIRING_ENABLE_REMOTE 3471
+extern  enum clnt_stat qcsapi_wifi_get_pairing_enable_remote_1();
+extern  bool_t qcsapi_wifi_get_pairing_enable_remote_1_svc();
+#define QCSAPI_NON_WPS_SET_PP_ENABLE_REMOTE 3481
+extern  enum clnt_stat qcsapi_non_wps_set_pp_enable_remote_1();
+extern  bool_t qcsapi_non_wps_set_pp_enable_remote_1_svc();
+#define QCSAPI_NON_WPS_GET_PP_ENABLE_REMOTE 3491
+extern  enum clnt_stat qcsapi_non_wps_get_pp_enable_remote_1();
+extern  bool_t qcsapi_non_wps_get_pp_enable_remote_1_svc();
+#define QCSAPI_WIFI_SET_VENDOR_FIX_REMOTE 3501
+extern  enum clnt_stat qcsapi_wifi_set_vendor_fix_remote_1();
+extern  bool_t qcsapi_wifi_set_vendor_fix_remote_1_svc();
+#define QCSAPI_ERRNO_GET_MESSAGE_REMOTE 3511
+extern  enum clnt_stat qcsapi_errno_get_message_remote_1();
+extern  bool_t qcsapi_errno_get_message_remote_1_svc();
+#define QCSAPI_GET_INTERFACE_STATS_REMOTE 3521
+extern  enum clnt_stat qcsapi_get_interface_stats_remote_1();
+extern  bool_t qcsapi_get_interface_stats_remote_1_svc();
+#define QCSAPI_GET_PHY_STATS_REMOTE 3531
+extern  enum clnt_stat qcsapi_get_phy_stats_remote_1();
+extern  bool_t qcsapi_get_phy_stats_remote_1_svc();
+#define QCSAPI_RESET_ALL_COUNTERS_REMOTE 3541
+extern  enum clnt_stat qcsapi_reset_all_counters_remote_1();
+extern  bool_t qcsapi_reset_all_counters_remote_1_svc();
+#define QCSAPI_FIRMWARE_GET_VERSION_REMOTE 3551
+extern  enum clnt_stat qcsapi_firmware_get_version_remote_1();
+extern  bool_t qcsapi_firmware_get_version_remote_1_svc();
+#define QCSAPI_FLASH_IMAGE_UPDATE_REMOTE 3561
+extern  enum clnt_stat qcsapi_flash_image_update_remote_1();
+extern  bool_t qcsapi_flash_image_update_remote_1_svc();
+#define QCSAPI_SET_SOC_MAC_ADDR_REMOTE 3571
+extern  enum clnt_stat qcsapi_set_soc_mac_addr_remote_1();
+extern  bool_t qcsapi_set_soc_mac_addr_remote_1_svc();
+#define QCSAPI_GET_CUSTOM_VALUE_REMOTE 3581
+extern  enum clnt_stat qcsapi_get_custom_value_remote_1();
+extern  bool_t qcsapi_get_custom_value_remote_1_svc();
+#define QCSAPI_WIFI_GET_MLME_STATS_PER_MAC_REMOTE 3591
+extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_per_mac_remote_1();
+extern  bool_t qcsapi_wifi_get_mlme_stats_per_mac_remote_1_svc();
+#define QCSAPI_WIFI_GET_MLME_STATS_PER_ASSOCIATION_REMOTE 3601
+extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_per_association_remote_1();
+extern  bool_t qcsapi_wifi_get_mlme_stats_per_association_remote_1_svc();
+#define QCSAPI_WIFI_GET_MLME_STATS_MACS_LIST_REMOTE 3611
+extern  enum clnt_stat qcsapi_wifi_get_mlme_stats_macs_list_remote_1();
+extern  bool_t qcsapi_wifi_get_mlme_stats_macs_list_remote_1_svc();
+#define QCSAPI_PM_SET_MODE_REMOTE 3621
+extern  enum clnt_stat qcsapi_pm_set_mode_remote_1();
+extern  bool_t qcsapi_pm_set_mode_remote_1_svc();
+#define QCSAPI_PM_GET_MODE_REMOTE 3631
+extern  enum clnt_stat qcsapi_pm_get_mode_remote_1();
+extern  bool_t qcsapi_pm_get_mode_remote_1_svc();
+#define QCSAPI_GET_QPM_LEVEL_REMOTE 3641
+extern  enum clnt_stat qcsapi_get_qpm_level_remote_1();
+extern  bool_t qcsapi_get_qpm_level_remote_1_svc();
+#define QCSAPI_VSP_GET_STATE_REMOTE 3651
+extern  enum clnt_stat qcsapi_vsp_get_state_remote_1();
+extern  bool_t qcsapi_vsp_get_state_remote_1_svc();
+#define QCSAPI_VSP_GET_STATE_ALL_REMOTE 3661
+extern  enum clnt_stat qcsapi_vsp_get_state_all_remote_1();
+extern  bool_t qcsapi_vsp_get_state_all_remote_1_svc();
+#define QCSAPI_VSP_SET_STATE_REMOTE 3671
+extern  enum clnt_stat qcsapi_vsp_set_state_remote_1();
+extern  bool_t qcsapi_vsp_set_state_remote_1_svc();
+#define QCSAPI_VSP_GET_CONFIG_REMOTE 3681
+extern  enum clnt_stat qcsapi_vsp_get_config_remote_1();
+extern  bool_t qcsapi_vsp_get_config_remote_1_svc();
+#define QCSAPI_VSP_GET_CONFIG_ALL_REMOTE 3691
+extern  enum clnt_stat qcsapi_vsp_get_config_all_remote_1();
+extern  bool_t qcsapi_vsp_get_config_all_remote_1_svc();
+#define QCSAPI_VSP_SET_CONFIG_REMOTE 3701
+extern  enum clnt_stat qcsapi_vsp_set_config_remote_1();
+extern  bool_t qcsapi_vsp_set_config_remote_1_svc();
+#define QCSAPI_VSP_DEL_WL_INDEX_REMOTE 3731
+extern  enum clnt_stat qcsapi_vsp_del_wl_index_remote_1();
+extern  bool_t qcsapi_vsp_del_wl_index_remote_1_svc();
+#define QCSAPI_VSP_DEL_RULE_INDEX_REMOTE 3771
+extern  enum clnt_stat qcsapi_vsp_del_rule_index_remote_1();
+extern  bool_t qcsapi_vsp_del_rule_index_remote_1_svc();
+#define QCSAPI_VSP_GET_INACTIVE_FLAGS_REMOTE 3811
+extern  enum clnt_stat qcsapi_vsp_get_inactive_flags_remote_1();
+extern  bool_t qcsapi_vsp_get_inactive_flags_remote_1_svc();
+#define QCSAPI_WIFI_RUN_SCRIPT_REMOTE 3821
+extern  enum clnt_stat qcsapi_wifi_run_script_remote_1();
+extern  bool_t qcsapi_wifi_run_script_remote_1_svc();
+#define QCSAPI_WIFI_TEST_TRAFFIC_REMOTE 3831
+extern  enum clnt_stat qcsapi_wifi_test_traffic_remote_1();
+extern  bool_t qcsapi_wifi_test_traffic_remote_1_svc();
+#define QCSAPI_WIFI_ADD_IPFF_REMOTE 3841
+extern  enum clnt_stat qcsapi_wifi_add_ipff_remote_1();
+extern  bool_t qcsapi_wifi_add_ipff_remote_1_svc();
+#define QCSAPI_WIFI_DEL_IPFF_REMOTE 3851
+extern  enum clnt_stat qcsapi_wifi_del_ipff_remote_1();
+extern  bool_t qcsapi_wifi_del_ipff_remote_1_svc();
+#define QCSAPI_WIFI_GET_IPFF_REMOTE 3861
+extern  enum clnt_stat qcsapi_wifi_get_ipff_remote_1();
+extern  bool_t qcsapi_wifi_get_ipff_remote_1_svc();
+#define QCSAPI_WIFI_GET_RTS_THRESHOLD_REMOTE 3871
+extern  enum clnt_stat qcsapi_wifi_get_rts_threshold_remote_1();
+extern  bool_t qcsapi_wifi_get_rts_threshold_remote_1_svc();
+#define QCSAPI_WIFI_SET_RTS_THRESHOLD_REMOTE 3881
+extern  enum clnt_stat qcsapi_wifi_set_rts_threshold_remote_1();
+extern  bool_t qcsapi_wifi_set_rts_threshold_remote_1_svc();
+#define QCSAPI_GET_TEMPERATURE_INFO_REMOTE 3891
+extern  enum clnt_stat qcsapi_get_temperature_info_remote_1();
+extern  bool_t qcsapi_get_temperature_info_remote_1_svc();
+#define QCSAPI_CALCMD_SET_TEST_MODE_REMOTE 3901
+extern  enum clnt_stat qcsapi_calcmd_set_test_mode_remote_1();
+extern  bool_t qcsapi_calcmd_set_test_mode_remote_1_svc();
+#define QCSAPI_CALCMD_SHOW_TEST_PACKET_REMOTE 3911
+extern  enum clnt_stat qcsapi_calcmd_show_test_packet_remote_1();
+extern  bool_t qcsapi_calcmd_show_test_packet_remote_1_svc();
+#define QCSAPI_CALCMD_SEND_TEST_PACKET_REMOTE 3921
+extern  enum clnt_stat qcsapi_calcmd_send_test_packet_remote_1();
+extern  bool_t qcsapi_calcmd_send_test_packet_remote_1_svc();
+#define QCSAPI_CALCMD_STOP_TEST_PACKET_REMOTE 3931
+extern  enum clnt_stat qcsapi_calcmd_stop_test_packet_remote_1();
+extern  bool_t qcsapi_calcmd_stop_test_packet_remote_1_svc();
+#define QCSAPI_CALCMD_SEND_DC_CW_SIGNAL_REMOTE 3941
+extern  enum clnt_stat qcsapi_calcmd_send_dc_cw_signal_remote_1();
+extern  bool_t qcsapi_calcmd_send_dc_cw_signal_remote_1_svc();
+#define QCSAPI_CALCMD_STOP_DC_CW_SIGNAL_REMOTE 3951
+extern  enum clnt_stat qcsapi_calcmd_stop_dc_cw_signal_remote_1();
+extern  bool_t qcsapi_calcmd_stop_dc_cw_signal_remote_1_svc();
+#define QCSAPI_CALCMD_GET_TEST_MODE_ANTENNA_SEL_REMOTE 3961
+extern  enum clnt_stat qcsapi_calcmd_get_test_mode_antenna_sel_remote_1();
+extern  bool_t qcsapi_calcmd_get_test_mode_antenna_sel_remote_1_svc();
+#define QCSAPI_CALCMD_GET_TEST_MODE_MCS_REMOTE 3971
+extern  enum clnt_stat qcsapi_calcmd_get_test_mode_mcs_remote_1();
+extern  bool_t qcsapi_calcmd_get_test_mode_mcs_remote_1_svc();
+#define QCSAPI_CALCMD_GET_TEST_MODE_BW_REMOTE 3981
+extern  enum clnt_stat qcsapi_calcmd_get_test_mode_bw_remote_1();
+extern  bool_t qcsapi_calcmd_get_test_mode_bw_remote_1_svc();
+#define QCSAPI_CALCMD_GET_TX_POWER_REMOTE 3991
+extern  enum clnt_stat qcsapi_calcmd_get_tx_power_remote_1();
+extern  bool_t qcsapi_calcmd_get_tx_power_remote_1_svc();
+#define QCSAPI_CALCMD_SET_TX_POWER_REMOTE 4001
+extern  enum clnt_stat qcsapi_calcmd_set_tx_power_remote_1();
+extern  bool_t qcsapi_calcmd_set_tx_power_remote_1_svc();
+#define QCSAPI_CALCMD_GET_TEST_MODE_RSSI_REMOTE 4011
+extern  enum clnt_stat qcsapi_calcmd_get_test_mode_rssi_remote_1();
+extern  bool_t qcsapi_calcmd_get_test_mode_rssi_remote_1_svc();
+#define QCSAPI_CALCMD_SET_MAC_FILTER_REMOTE 4021
+extern  enum clnt_stat qcsapi_calcmd_set_mac_filter_remote_1();
+extern  bool_t qcsapi_calcmd_set_mac_filter_remote_1_svc();
+#define QCSAPI_CALCMD_GET_ANTENNA_COUNT_REMOTE 4031
+extern  enum clnt_stat qcsapi_calcmd_get_antenna_count_remote_1();
+extern  bool_t qcsapi_calcmd_get_antenna_count_remote_1_svc();
+#define QCSAPI_CALCMD_CLEAR_COUNTER_REMOTE 4041
+extern  enum clnt_stat qcsapi_calcmd_clear_counter_remote_1();
+extern  bool_t qcsapi_calcmd_clear_counter_remote_1_svc();
+#define QCSAPI_CALCMD_GET_INFO_REMOTE 4051
+extern  enum clnt_stat qcsapi_calcmd_get_info_remote_1();
+extern  bool_t qcsapi_calcmd_get_info_remote_1_svc();
+#define QCSAPI_GET_CARRIER_ID_REMOTE 4071
 extern  enum clnt_stat qcsapi_get_carrier_id_remote_1();
 extern  bool_t qcsapi_get_carrier_id_remote_1_svc();
-#define QCSAPI_SET_CARRIER_ID_REMOTE 392
+#define QCSAPI_SET_CARRIER_ID_REMOTE 4081
 extern  enum clnt_stat qcsapi_set_carrier_id_remote_1();
 extern  bool_t qcsapi_set_carrier_id_remote_1_svc();
-#define QCSAPI_WIFI_SET_VHT_REMOTE 393
+#define QCSAPI_WIFI_SET_VHT_REMOTE 4091
 extern  enum clnt_stat qcsapi_wifi_set_vht_remote_1();
 extern  bool_t qcsapi_wifi_set_vht_remote_1_svc();
-#define QCSAPI_WIFI_GET_VHT_REMOTE 394
+#define QCSAPI_WIFI_GET_VHT_REMOTE 4101
 extern  enum clnt_stat qcsapi_wifi_get_vht_remote_1();
 extern  bool_t qcsapi_wifi_get_vht_remote_1_svc();
-#define QCSAPI_WIFI_GET_SPINOR_JEDECID_REMOTE 395
+#define QCSAPI_WIFI_GET_SPINOR_JEDECID_REMOTE 4121
 extern  enum clnt_stat qcsapi_wifi_get_spinor_jedecid_remote_1();
 extern  bool_t qcsapi_wifi_get_spinor_jedecid_remote_1_svc();
-#define QCSAPI_WIFI_SET_NSS_CAP_REMOTE 396
+#define QCSAPI_WIFI_SET_NSS_CAP_REMOTE 4131
 extern  enum clnt_stat qcsapi_wifi_set_nss_cap_remote_1();
 extern  bool_t qcsapi_wifi_set_nss_cap_remote_1_svc();
-#define QCSAPI_WIFI_GET_NSS_CAP_REMOTE 397
+#define QCSAPI_WIFI_GET_NSS_CAP_REMOTE 4141
 extern  enum clnt_stat qcsapi_wifi_get_nss_cap_remote_1();
 extern  bool_t qcsapi_wifi_get_nss_cap_remote_1_svc();
-#define QCSAPI_SET_HOST_STATE_REMOTE 398
+#define QCSAPI_SET_HOST_STATE_REMOTE 4151
 extern  enum clnt_stat qcsapi_set_host_state_remote_1();
 extern  bool_t qcsapi_set_host_state_remote_1_svc();
-#define QCSAPI_WOWLAN_SET_MATCH_TYPE_REMOTE 399
+#define QCSAPI_WOWLAN_SET_MATCH_TYPE_REMOTE 4161
 extern  enum clnt_stat qcsapi_wowlan_set_match_type_remote_1();
 extern  bool_t qcsapi_wowlan_set_match_type_remote_1_svc();
-#define QCSAPI_WOWLAN_SET_L2_TYPE_REMOTE 400
+#define QCSAPI_WIFI_GET_TX_AMSDU_REMOTE 4171
+extern  enum clnt_stat qcsapi_wifi_get_tx_amsdu_remote_1();
+extern  bool_t qcsapi_wifi_get_tx_amsdu_remote_1_svc();
+#define QCSAPI_WIFI_SET_TX_AMSDU_REMOTE 4181
+extern  enum clnt_stat qcsapi_wifi_set_tx_amsdu_remote_1();
+extern  bool_t qcsapi_wifi_set_tx_amsdu_remote_1_svc();
+#define QCSAPI_WOWLAN_SET_L2_TYPE_REMOTE 4191
 extern  enum clnt_stat qcsapi_wowlan_set_l2_type_remote_1();
 extern  bool_t qcsapi_wowlan_set_l2_type_remote_1_svc();
-#define QCSAPI_WOWLAN_SET_UDP_PORT_REMOTE 401
+#define QCSAPI_WOWLAN_SET_UDP_PORT_REMOTE 4201
 extern  enum clnt_stat qcsapi_wowlan_set_udp_port_remote_1();
 extern  bool_t qcsapi_wowlan_set_udp_port_remote_1_svc();
-#define QCSAPI_WOWLAN_SET_MAGIC_PATTERN_REMOTE 402
+#define QCSAPI_WOWLAN_SET_MAGIC_PATTERN_REMOTE 4211
 extern  enum clnt_stat qcsapi_wowlan_set_magic_pattern_remote_1();
 extern  bool_t qcsapi_wowlan_set_magic_pattern_remote_1_svc();
-#define QCSAPI_WIFI_GET_DISASSOC_REASON_REMOTE 403
+#define QCSAPI_WIFI_WOWLAN_GET_HOST_STATE_REMOTE 4221
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_host_state_remote_1();
+extern  bool_t qcsapi_wifi_wowlan_get_host_state_remote_1_svc();
+#define QCSAPI_WIFI_WOWLAN_GET_MATCH_TYPE_REMOTE 4231
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_match_type_remote_1();
+extern  bool_t qcsapi_wifi_wowlan_get_match_type_remote_1_svc();
+#define QCSAPI_WIFI_WOWLAN_GET_L2_TYPE_REMOTE 4241
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_l2_type_remote_1();
+extern  bool_t qcsapi_wifi_wowlan_get_l2_type_remote_1_svc();
+#define QCSAPI_WIFI_WOWLAN_GET_UDP_PORT_REMOTE 4251
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_udp_port_remote_1();
+extern  bool_t qcsapi_wifi_wowlan_get_udp_port_remote_1_svc();
+#define QCSAPI_WIFI_WOWLAN_GET_MAGIC_PATTERN_REMOTE 4261
+extern  enum clnt_stat qcsapi_wifi_wowlan_get_magic_pattern_remote_1();
+extern  bool_t qcsapi_wifi_wowlan_get_magic_pattern_remote_1_svc();
+#define QCSAPI_WIFI_GET_DISASSOC_REASON_REMOTE 4271
 extern  enum clnt_stat qcsapi_wifi_get_disassoc_reason_remote_1();
 extern  bool_t qcsapi_wifi_get_disassoc_reason_remote_1_svc();
-#define QCSAPI_WIFI_GET_BB_PARAM_REMOTE 404
+#define QCSAPI_WIFI_GET_BB_PARAM_REMOTE 4281
 extern  enum clnt_stat qcsapi_wifi_get_bb_param_remote_1();
 extern  bool_t qcsapi_wifi_get_bb_param_remote_1_svc();
-#define QCSAPI_WIFI_SET_BB_PARAM_REMOTE 405
+#define QCSAPI_WIFI_SET_BB_PARAM_REMOTE 4291
 extern  enum clnt_stat qcsapi_wifi_set_bb_param_remote_1();
 extern  bool_t qcsapi_wifi_set_bb_param_remote_1_svc();
+#define QCSAPI_WIFI_SET_SCAN_BUF_MAX_SIZE_REMOTE 4301
+extern  enum clnt_stat qcsapi_wifi_set_scan_buf_max_size_remote_1();
+extern  bool_t qcsapi_wifi_set_scan_buf_max_size_remote_1_svc();
+#define QCSAPI_WIFI_GET_SCAN_BUF_MAX_SIZE_REMOTE 4311
+extern  enum clnt_stat qcsapi_wifi_get_scan_buf_max_size_remote_1();
+extern  bool_t qcsapi_wifi_get_scan_buf_max_size_remote_1_svc();
+#define QCSAPI_WIFI_SET_SCAN_TABLE_MAX_LEN_REMOTE 4321
+extern  enum clnt_stat qcsapi_wifi_set_scan_table_max_len_remote_1();
+extern  bool_t qcsapi_wifi_set_scan_table_max_len_remote_1_svc();
+#define QCSAPI_WIFI_GET_SCAN_TABLE_MAX_LEN_REMOTE 4331
+extern  enum clnt_stat qcsapi_wifi_get_scan_table_max_len_remote_1();
+extern  bool_t qcsapi_wifi_get_scan_table_max_len_remote_1_svc();
 extern int qcsapi_prog_1_freeresult ();
 #endif /* K&R C */
 
@@ -5696,7 +5926,7 @@ extern  bool_t xdr___rpc_qcsapi_mlme_stats (XDR *, __rpc_qcsapi_mlme_stats*);
 extern  bool_t xdr___rpc_qcsapi_mlme_stats_macs (XDR *, __rpc_qcsapi_mlme_stats_macs*);
 extern  bool_t xdr___rpc_qcsapi_calcmd_tx_power_rsp (XDR *, __rpc_qcsapi_calcmd_tx_power_rsp*);
 extern  bool_t xdr___rpc_qcsapi_calcmd_rssi_rsp (XDR *, __rpc_qcsapi_calcmd_rssi_rsp*);
-extern  bool_t xdr___rpc_qcsapi_data_128bytes (XDR *, __rpc_qcsapi_data_128bytes*);
+extern  bool_t xdr___rpc_qcsapi_data_256bytes (XDR *, __rpc_qcsapi_data_256bytes*);
 extern  bool_t xdr_qcsapi_bootcfg_get_parameter_rpcdata (XDR *, qcsapi_bootcfg_get_parameter_rpcdata*);
 extern  bool_t xdr_qcsapi_bootcfg_update_parameter_rpcdata (XDR *, qcsapi_bootcfg_update_parameter_rpcdata*);
 extern  bool_t xdr_qcsapi_bootcfg_commit_rpcdata (XDR *, qcsapi_bootcfg_commit_rpcdata*);
@@ -5743,6 +5973,7 @@ extern  bool_t xdr_qcsapi_restore_default_config_rpcdata (XDR *, qcsapi_restore_
 extern  bool_t xdr_qcsapi_store_ipaddr_rpcdata (XDR *, qcsapi_store_ipaddr_rpcdata*);
 extern  bool_t xdr_qcsapi_interface_enable_rpcdata (XDR *, qcsapi_interface_enable_rpcdata*);
 extern  bool_t xdr_qcsapi_interface_get_status_rpcdata (XDR *, qcsapi_interface_get_status_rpcdata*);
+extern  bool_t xdr_qcsapi_interface_get_netmask_rpcdata (XDR *, qcsapi_interface_get_netmask_rpcdata*);
 extern  bool_t xdr_qcsapi_interface_get_counter_rpcdata (XDR *, qcsapi_interface_get_counter_rpcdata*);
 extern  bool_t xdr_qcsapi_interface_get_mac_addr_rpcdata (XDR *, qcsapi_interface_get_mac_addr_rpcdata*);
 extern  bool_t xdr_qcsapi_interface_set_mac_addr_rpcdata (XDR *, qcsapi_interface_set_mac_addr_rpcdata*);
@@ -5757,6 +5988,7 @@ extern  bool_t xdr_qcsapi_wifi_set_phy_mode_rpcdata (XDR *, qcsapi_wifi_set_phy_
 extern  bool_t xdr_qcsapi_wifi_reload_in_mode_rpcdata (XDR *, qcsapi_wifi_reload_in_mode_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_rfenable_rpcdata (XDR *, qcsapi_wifi_rfenable_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_startprod_rpcdata (XDR *, qcsapi_wifi_startprod_rpcdata*);
+extern  bool_t xdr_qcsapi_is_startprod_done_rpcdata (XDR *, qcsapi_is_startprod_done_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_rfstatus_rpcdata (XDR *, qcsapi_wifi_rfstatus_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_bw_rpcdata (XDR *, qcsapi_wifi_get_bw_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_set_bw_rpcdata (XDR *, qcsapi_wifi_set_bw_rpcdata*);
@@ -5771,12 +6003,15 @@ extern  bool_t xdr_qcsapi_wifi_set_dtim_rpcdata (XDR *, qcsapi_wifi_set_dtim_rpc
 extern  bool_t xdr_qcsapi_wifi_get_assoc_limit_rpcdata (XDR *, qcsapi_wifi_get_assoc_limit_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_set_assoc_limit_rpcdata (XDR *, qcsapi_wifi_set_assoc_limit_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_BSSID_rpcdata (XDR *, qcsapi_wifi_get_BSSID_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_get_config_BSSID_rpcdata (XDR *, qcsapi_wifi_get_config_BSSID_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_SSID_rpcdata (XDR *, qcsapi_wifi_get_SSID_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_set_SSID_rpcdata (XDR *, qcsapi_wifi_set_SSID_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_IEEE_802_11_standard_rpcdata (XDR *, qcsapi_wifi_get_IEEE_802_11_standard_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_list_channels_rpcdata (XDR *, qcsapi_wifi_get_list_channels_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_mode_switch_rpcdata (XDR *, qcsapi_wifi_get_mode_switch_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_disassociate_rpcdata (XDR *, qcsapi_wifi_disassociate_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_disassociate_sta_rpcdata (XDR *, qcsapi_wifi_disassociate_sta_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_reassociate_rpcdata (XDR *, qcsapi_wifi_reassociate_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_disconn_info_rpcdata (XDR *, qcsapi_wifi_get_disconn_info_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_disable_wps_rpcdata (XDR *, qcsapi_wifi_disable_wps_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_associate_rpcdata (XDR *, qcsapi_wifi_associate_rpcdata*);
@@ -5836,6 +6071,7 @@ extern  bool_t xdr_qcsapi_wifi_get_intra_bss_isolate_rpcdata (XDR *, qcsapi_wifi
 extern  bool_t xdr_qcsapi_wifi_set_intra_bss_isolate_rpcdata (XDR *, qcsapi_wifi_set_intra_bss_isolate_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_bss_isolate_rpcdata (XDR *, qcsapi_wifi_get_bss_isolate_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_set_bss_isolate_rpcdata (XDR *, qcsapi_wifi_set_bss_isolate_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_disable_dfs_channels_rpcdata (XDR *, qcsapi_wifi_disable_dfs_channels_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_create_restricted_bss_rpcdata (XDR *, qcsapi_wifi_create_restricted_bss_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_create_bss_rpcdata (XDR *, qcsapi_wifi_create_bss_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_remove_bss_rpcdata (XDR *, qcsapi_wifi_remove_bss_rpcdata*);
@@ -6086,7 +6322,7 @@ extern  bool_t xdr_qcsapi_calcmd_get_test_mode_rssi_rpcdata (XDR *, qcsapi_calcm
 extern  bool_t xdr_qcsapi_calcmd_set_mac_filter_rpcdata (XDR *, qcsapi_calcmd_set_mac_filter_rpcdata*);
 extern  bool_t xdr_qcsapi_calcmd_get_antenna_count_rpcdata (XDR *, qcsapi_calcmd_get_antenna_count_rpcdata*);
 extern  bool_t xdr_qcsapi_calcmd_clear_counter_rpcdata (XDR *, qcsapi_calcmd_clear_counter_rpcdata*);
-extern  bool_t xdr_qcsapi_wifi_disable_dfs_channels_rpcdata (XDR *, qcsapi_wifi_disable_dfs_channels_rpcdata*);
+extern  bool_t xdr_qcsapi_calcmd_get_info_rpcdata (XDR *, qcsapi_calcmd_get_info_rpcdata*);
 extern  bool_t xdr_qcsapi_get_carrier_id_rpcdata (XDR *, qcsapi_get_carrier_id_rpcdata*);
 extern  bool_t xdr_qcsapi_set_carrier_id_rpcdata (XDR *, qcsapi_set_carrier_id_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_set_vht_rpcdata (XDR *, qcsapi_wifi_set_vht_rpcdata*);
@@ -6096,12 +6332,23 @@ extern  bool_t xdr_qcsapi_wifi_set_nss_cap_rpcdata (XDR *, qcsapi_wifi_set_nss_c
 extern  bool_t xdr_qcsapi_wifi_get_nss_cap_rpcdata (XDR *, qcsapi_wifi_get_nss_cap_rpcdata*);
 extern  bool_t xdr_qcsapi_set_host_state_rpcdata (XDR *, qcsapi_set_host_state_rpcdata*);
 extern  bool_t xdr_qcsapi_wowlan_set_match_type_rpcdata (XDR *, qcsapi_wowlan_set_match_type_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_get_tx_amsdu_rpcdata (XDR *, qcsapi_wifi_get_tx_amsdu_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_set_tx_amsdu_rpcdata (XDR *, qcsapi_wifi_set_tx_amsdu_rpcdata*);
 extern  bool_t xdr_qcsapi_wowlan_set_L2_type_rpcdata (XDR *, qcsapi_wowlan_set_L2_type_rpcdata*);
 extern  bool_t xdr_qcsapi_wowlan_set_udp_port_rpcdata (XDR *, qcsapi_wowlan_set_udp_port_rpcdata*);
 extern  bool_t xdr_qcsapi_wowlan_set_magic_pattern_rpcdata (XDR *, qcsapi_wowlan_set_magic_pattern_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_wowlan_get_host_state_rpcdata (XDR *, qcsapi_wifi_wowlan_get_host_state_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_wowlan_get_match_type_rpcdata (XDR *, qcsapi_wifi_wowlan_get_match_type_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_wowlan_get_l2_type_rpcdata (XDR *, qcsapi_wifi_wowlan_get_l2_type_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_wowlan_get_udp_port_rpcdata (XDR *, qcsapi_wifi_wowlan_get_udp_port_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_wowlan_get_magic_pattern_rpcdata (XDR *, qcsapi_wifi_wowlan_get_magic_pattern_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_disassoc_reason_rpcdata (XDR *, qcsapi_wifi_get_disassoc_reason_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_get_bb_param_rpcdata (XDR *, qcsapi_wifi_get_bb_param_rpcdata*);
 extern  bool_t xdr_qcsapi_wifi_set_bb_param_rpcdata (XDR *, qcsapi_wifi_set_bb_param_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_set_scan_buf_max_size_rpcdata (XDR *, qcsapi_wifi_set_scan_buf_max_size_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_get_scan_buf_max_size_rpcdata (XDR *, qcsapi_wifi_get_scan_buf_max_size_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_set_scan_table_max_len_rpcdata (XDR *, qcsapi_wifi_set_scan_table_max_len_rpcdata*);
+extern  bool_t xdr_qcsapi_wifi_get_scan_table_max_len_rpcdata (XDR *, qcsapi_wifi_get_scan_table_max_len_rpcdata*);
 
 #else /* K&R C */
 extern bool_t xdr_str ();
@@ -6128,7 +6375,7 @@ extern bool_t xdr___rpc_qcsapi_mlme_stats ();
 extern bool_t xdr___rpc_qcsapi_mlme_stats_macs ();
 extern bool_t xdr___rpc_qcsapi_calcmd_tx_power_rsp ();
 extern bool_t xdr___rpc_qcsapi_calcmd_rssi_rsp ();
-extern bool_t xdr___rpc_qcsapi_data_128bytes ();
+extern bool_t xdr___rpc_qcsapi_data_256bytes ();
 extern bool_t xdr_qcsapi_bootcfg_get_parameter_rpcdata ();
 extern bool_t xdr_qcsapi_bootcfg_update_parameter_rpcdata ();
 extern bool_t xdr_qcsapi_bootcfg_commit_rpcdata ();
@@ -6175,6 +6422,7 @@ extern bool_t xdr_qcsapi_restore_default_config_rpcdata ();
 extern bool_t xdr_qcsapi_store_ipaddr_rpcdata ();
 extern bool_t xdr_qcsapi_interface_enable_rpcdata ();
 extern bool_t xdr_qcsapi_interface_get_status_rpcdata ();
+extern bool_t xdr_qcsapi_interface_get_netmask_rpcdata ();
 extern bool_t xdr_qcsapi_interface_get_counter_rpcdata ();
 extern bool_t xdr_qcsapi_interface_get_mac_addr_rpcdata ();
 extern bool_t xdr_qcsapi_interface_set_mac_addr_rpcdata ();
@@ -6189,6 +6437,7 @@ extern bool_t xdr_qcsapi_wifi_set_phy_mode_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_reload_in_mode_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_rfenable_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_startprod_rpcdata ();
+extern bool_t xdr_qcsapi_is_startprod_done_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_rfstatus_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_bw_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_set_bw_rpcdata ();
@@ -6203,12 +6452,15 @@ extern bool_t xdr_qcsapi_wifi_set_dtim_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_assoc_limit_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_set_assoc_limit_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_BSSID_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_get_config_BSSID_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_SSID_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_set_SSID_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_IEEE_802_11_standard_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_list_channels_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_mode_switch_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_disassociate_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_disassociate_sta_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_reassociate_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_disconn_info_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_disable_wps_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_associate_rpcdata ();
@@ -6268,6 +6520,7 @@ extern bool_t xdr_qcsapi_wifi_get_intra_bss_isolate_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_set_intra_bss_isolate_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_bss_isolate_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_set_bss_isolate_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_disable_dfs_channels_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_create_restricted_bss_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_create_bss_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_remove_bss_rpcdata ();
@@ -6518,7 +6771,7 @@ extern bool_t xdr_qcsapi_calcmd_get_test_mode_rssi_rpcdata ();
 extern bool_t xdr_qcsapi_calcmd_set_mac_filter_rpcdata ();
 extern bool_t xdr_qcsapi_calcmd_get_antenna_count_rpcdata ();
 extern bool_t xdr_qcsapi_calcmd_clear_counter_rpcdata ();
-extern bool_t xdr_qcsapi_wifi_disable_dfs_channels_rpcdata ();
+extern bool_t xdr_qcsapi_calcmd_get_info_rpcdata ();
 extern bool_t xdr_qcsapi_get_carrier_id_rpcdata ();
 extern bool_t xdr_qcsapi_set_carrier_id_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_set_vht_rpcdata ();
@@ -6528,12 +6781,23 @@ extern bool_t xdr_qcsapi_wifi_set_nss_cap_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_nss_cap_rpcdata ();
 extern bool_t xdr_qcsapi_set_host_state_rpcdata ();
 extern bool_t xdr_qcsapi_wowlan_set_match_type_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_get_tx_amsdu_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_set_tx_amsdu_rpcdata ();
 extern bool_t xdr_qcsapi_wowlan_set_L2_type_rpcdata ();
 extern bool_t xdr_qcsapi_wowlan_set_udp_port_rpcdata ();
 extern bool_t xdr_qcsapi_wowlan_set_magic_pattern_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_wowlan_get_host_state_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_wowlan_get_match_type_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_wowlan_get_l2_type_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_wowlan_get_udp_port_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_wowlan_get_magic_pattern_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_disassoc_reason_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_get_bb_param_rpcdata ();
 extern bool_t xdr_qcsapi_wifi_set_bb_param_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_set_scan_buf_max_size_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_get_scan_buf_max_size_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_set_scan_table_max_len_rpcdata ();
+extern bool_t xdr_qcsapi_wifi_get_scan_table_max_len_rpcdata ();
 
 #endif /* K&R C */
 

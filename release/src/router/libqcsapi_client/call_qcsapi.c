@@ -133,9 +133,11 @@ static const struct
 	{ e_qcsapi_wifi_rfenable,		"rfenable" },
 	{ e_qcsapi_wifi_rfstatus,		"rfstatus" },
 	{ e_qcsapi_wifi_startprod,		"startprod" },
+	{ e_qcsapi_is_startprod_done,	        "is_startprod_done"},
 	{ e_qcsapi_wifi_get_bw,			"get_bw" },
 	{ e_qcsapi_wifi_set_bw,			"set_bw" },
 	{ e_qcsapi_wifi_get_BSSID,		"get_BSSID" },
+	{ e_qcsapi_wifi_get_config_BSSID,	"get_config_BSSID" },
 	{ e_qcsapi_wifi_get_SSID,		"get_SSID" },
 	{ e_qcsapi_wifi_set_SSID,		"set_SSID" },
 	{ e_qcsapi_wifi_get_channel,		"get_channel" },
@@ -149,6 +151,7 @@ static const struct
 	{ e_qcsapi_wifi_get_assoc_limit,	"get_assoc_limit" },
 	{ e_qcsapi_wifi_set_assoc_limit,	"set_assoc_limit" },
 	{ e_qcsapi_interface_get_status,	"get_status" },
+	{ e_qcsapi_interface_get_netmask,	"get_netmask" },
 	{ e_qcsapi_wifi_get_list_channels,	"get_list_of_channels" },
 	{ e_qcsapi_wifi_get_list_channels,	"get_channel_list" },
 	{ e_qcsapi_wifi_get_mode_switch,	"get_mode_switch" },
@@ -290,6 +293,9 @@ static const struct
 	{ e_qcsapi_wifi_get_max_queued,		"get_max_queued" },
 
 	{ e_qcsapi_wifi_disassociate,	"disassociate" },
+	{ e_qcsapi_wifi_disassociate_sta,	"disassociate_sta" },
+	{ e_qcsapi_wifi_reassociate,	"reassociate" },
+
 	{ e_qcsapi_wifi_associate,	"associate" },
 
 	{ e_qcsapi_wifi_get_mac_address_filtering, "get_macaddr_filter" },
@@ -515,6 +521,7 @@ static const struct
 	{ e_qcsapi_calcmd_set_mac_filter,		"calcmd_set_mac_filter" },
 	{ e_qcsapi_calcmd_get_antenna_count,		"get_test_mode_antenna_count" },
 	{ e_qcsapi_calcmd_clear_counter,		"calcmd_clear_counter" },
+	{ e_qcsapi_calcmd_get_info,                     "get_info" },
 	{ e_qcsapi_wifi_disable_dfs_channels,		"disable_dfs_channels" },
 
 	{ e_qcsapi_br_vlan_promisc,			"enable_vlan_promisc" },
@@ -548,6 +555,11 @@ static const struct
 	{ e_qcsapi_wowlan_L2_type,			"wowlan_L2_type" },
 	{ e_qcsapi_wowlan_udp_port,			"wowlan_udp_port" },
 	{ e_qcsapi_wowlan_pattern,			"wowlan_pattern" },
+	{ e_qcsapi_wowlan_get_host_state,		"wowlan_get_host_state" },
+	{ e_qcsapi_wowlan_get_match_type,		"wowlan_get_match_type" },
+	{ e_qcsapi_wowlan_get_L2_type,			"wowlan_get_L2_type" },
+	{ e_qcsapi_wowlan_get_udp_port,			"wowlan_get_udp_port" },
+	{ e_qcsapi_wowlan_get_pattern,			"wowlan_get_pattern" },
 
 	{ e_qcsapi_wifi_set_extender_params,		"set_extender_params" },
 	{ e_qcsapi_wifi_get_extender_status,		"get_extender_status" },
@@ -557,9 +569,16 @@ static const struct
 
 	{ e_qcsapi_get_uboot_info,	"get_uboot_info"},
 	{ e_qcsapi_wifi_get_disassoc_reason,	"get_disassoc"},
+	{ e_qcsapi_wifi_get_tx_amsdu,   "get_tx_amsdu" },
+	{ e_qcsapi_wifi_set_tx_amsdu,   "set_tx_amsdu" },
 
 	{ e_qcsapi_get_bb_param,	"get_bb_param" },
 	{ e_qcsapi_set_bb_param,	"set_bb_param" },
+
+	{ e_qcsapi_wifi_set_scan_buf_max_size,		"set_scan_buf_max_size" },
+	{ e_qcsapi_wifi_get_scan_buf_max_size,		"get_scan_buf_max_size" },
+	{ e_qcsapi_wifi_set_scan_table_max_len,		"set_scan_table_max_len" },
+	{ e_qcsapi_wifi_get_scan_table_max_len,		"get_scan_table_max_len" },
 
 	{ e_qcsapi_nosuch_api, NULL }
 };
@@ -747,8 +766,7 @@ char *support_script_table[] = {
 		"send_cw_signal_4chain",
 		"show_test_packet",
 		"transmit_file",
- 		"remote_command",
- 		"router_command.sh"
+		"remote_command"
 };
 
 static const struct{
@@ -3088,6 +3106,30 @@ call_qcsapi_wifi_startprod(const call_qcsapi_bundle *p_calling_bundle, int argc,
 	return statval;
 }
 
+ 
+static int
+call_qcsapi_is_startprod_done(call_qcsapi_bundle *p_calling_bundle,
+	int argc, char *argv[])
+{
+    int qcsapi_retval=0;
+    int status=0;
+
+    qcsapi_output *print = p_calling_bundle->caller_output;
+
+    qcsapi_retval = qcsapi_is_startprod_done(&status);
+
+    if (qcsapi_retval < 0) {
+        report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+        return 1;
+    }
+
+    if (verbose_flag >= 0) {
+        print_out(print, "%d\n",status);
+    }
+
+    return 0;
+}
+
 static int
 call_qcsapi_wifi_get_bw( const call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[] )
 {
@@ -3170,6 +3212,36 @@ call_qcsapi_wifi_get_BSSID( const call_qcsapi_bundle *p_calling_bundle, int argc
 	  qcsapi_retval = qcsapi_wifi_get_BSSID( the_interface, NULL );
 	else
 	  qcsapi_retval = qcsapi_wifi_get_BSSID( the_interface, the_mac_addr );
+
+	if (qcsapi_retval >= 0)
+	{
+		if (verbose_flag >= 0)
+		{
+			dump_mac_addr(p_calling_bundle->caller_output, the_mac_addr );
+		}
+	}
+	else
+	{
+		report_qcsapi_error( p_calling_bundle, qcsapi_retval );
+		statval = 1;
+	}
+
+	return( statval );
+}
+
+static int
+call_qcsapi_wifi_get_config_BSSID( const call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[] )
+{
+	int	statval = 0;
+	qcsapi_mac_addr	 the_mac_addr;
+	int		 qcsapi_retval;
+	const char	*the_interface = p_calling_bundle->caller_interface;
+
+	if (argc > 0 && strcmp(argv[0], "NULL" ) == 0) {
+		qcsapi_retval = qcsapi_wifi_get_config_BSSID( the_interface, NULL );
+	} else {
+		qcsapi_retval = qcsapi_wifi_get_config_BSSID( the_interface, the_mac_addr );
+	}
 
 	if (qcsapi_retval >= 0)
 	{
@@ -3626,6 +3698,37 @@ call_qcsapi_interface_get_status( const call_qcsapi_bundle *p_calling_bundle, in
 			report_qcsapi_error( p_calling_bundle, qcsapi_retval );
 		}
 
+		statval = 1;
+	}
+
+	return( statval );
+}
+
+static int
+call_qcsapi_interface_get_netmask( const call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[] )
+{
+	int     statval = 0;
+	string_16	if_netmask;
+	char		*p_if_netmask = NULL;
+	int              qcsapi_retval;
+	const char      *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output   *print = p_calling_bundle->caller_output;
+
+	if (argc < 1 || strcmp( argv[ 0 ], "NULL" ) != 0)
+		p_if_netmask = &if_netmask[ 0 ];
+
+	qcsapi_retval = qcsapi_interface_get_netmask(the_interface, p_if_netmask);
+
+	if (qcsapi_retval >= 0)
+	{
+		print_out(print, "%s\n", p_if_netmask);
+	}
+	else
+	{
+		if (verbose_flag >= 0)
+		{
+			report_qcsapi_error( p_calling_bundle, qcsapi_retval );
+		}
 		statval = 1;
 	}
 
@@ -9188,6 +9291,7 @@ call_qcsapi_wifi_get_node_stats(call_qcsapi_bundle *p_calling_bundle, int argc, 
 				       "tx_unicast:\t%lu\n"
 				       "tx_multicast:\t%lu\n"
 				       "tx_broadcast:\t%lu\n"
+				       "tx_phy_rate:\t%lu\n"
 				       "rx_bytes:\t%llu\n"
 				       "rx_pkts:\t%lu\n"
 				       "rx_discard:\t%lu\n"
@@ -9195,22 +9299,42 @@ call_qcsapi_wifi_get_node_stats(call_qcsapi_bundle *p_calling_bundle, int argc, 
 				       "rx_unicast:\t%lu\n"
 				       "rx_multicast:\t%lu\n"
 				       "rx_broadcast:\t%lu\n"
-				       "rx_unknown:\t%lu\n",
+				       "rx_unknown:\t%lu\n"
+				       "rx_phy_rate:\t%lu\n"
+				       "mac_addr:\t%.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n"
+				       "hw_noise:\t%d\n"
+				       "snr:\t\t%d\n"
+				       "rssi:\t\t%d\n"
+				       "bw:\t\t%d\n"
+					,
 					node_stats.tx_bytes,
-					node_stats.tx_pkts,
-					node_stats.tx_discard,
-					node_stats.tx_err,
-					node_stats.tx_unicast,
-					node_stats.tx_multicast,
-					node_stats.tx_broadcast,
+					(unsigned long)node_stats.tx_pkts,
+					(unsigned long)node_stats.tx_discard,
+					(unsigned long)node_stats.tx_err,
+					(unsigned long)node_stats.tx_unicast,
+					(unsigned long)node_stats.tx_multicast,
+					(unsigned long)node_stats.tx_broadcast,
+					(unsigned long)node_stats.tx_phy_rate,
 					node_stats.rx_bytes,
-					node_stats.rx_pkts,
-					node_stats.rx_discard,
-					node_stats.rx_err,
-					node_stats.rx_unicast,
-					node_stats.rx_multicast,
-					node_stats.rx_broadcast,
-					node_stats.rx_unknown);
+					(unsigned long)node_stats.rx_pkts,
+					(unsigned long)node_stats.rx_discard,
+					(unsigned long)node_stats.rx_err,
+					(unsigned long)node_stats.rx_unicast,
+					(unsigned long)node_stats.rx_multicast,
+					(unsigned long)node_stats.rx_broadcast,
+					(unsigned long)node_stats.rx_unknown,
+					(unsigned long)node_stats.rx_phy_rate,
+					node_stats.mac_addr[0],
+					node_stats.mac_addr[1],
+					node_stats.mac_addr[2],
+					node_stats.mac_addr[3],
+					node_stats.mac_addr[4],
+					node_stats.mac_addr[5],
+					node_stats.hw_noise,
+					node_stats.snr,
+					node_stats.rssi,
+					node_stats.bw
+				);
 		}
 	} else {
 		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
@@ -9316,6 +9440,60 @@ call_qcsapi_wifi_disassociate(call_qcsapi_bundle *p_calling_bundle, int argc, ch
 	}
 
 	return( statval );
+}
+
+static int
+call_qcsapi_wifi_disassociate_sta(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
+{
+	int                  statval = 1;
+	int                  qcsapi_retval;
+	const char*          the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output*       print = p_calling_bundle->caller_output;
+	qcsapi_mac_addr      mac_addr = {0};
+
+	if (argc < 1) {
+		print_err( print, "MAC address required to be passed as a parameter\n");
+	} else {
+		qcsapi_retval = parse_mac_addr( argv[ 0 ], mac_addr );
+
+		if (qcsapi_retval >= 0) {
+			qcsapi_retval = qcsapi_wifi_disassociate_sta(the_interface, mac_addr);
+			if (qcsapi_retval >= 0) {
+				statval = 0;
+
+				if (verbose_flag >= 0) {
+					print_out( print, "complete\n");
+				}
+			} else {
+				report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+			}
+		} else {
+			print_out( print, "Error parsing MAC address %s\n", argv[ 0 ] );
+		}
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_reassociate(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval;
+	const char* the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output* print = p_calling_bundle->caller_output;
+
+	qcsapi_retval = qcsapi_wifi_reassociate(the_interface);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0) {
+			print_out(print, "complete\n");
+		}
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
 }
 
 static int
@@ -16058,6 +16236,28 @@ call_qcsapi_calcmd_clear_counter(call_qcsapi_bundle *p_calling_bundle, int argc,
 	return qcsapi_retval;
 }
 
+static int
+call_qcsapi_calcmd_get_info(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
+{
+	int qcsapi_retval;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	string_1024 output_info;
+
+	qcsapi_retval = qcsapi_calcmd_get_info(output_info);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0) {
+			print_out(print, "%s\n", output_info);
+			print_out(print, "Complete.\n");
+		}
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		return 1;
+	}
+
+	return qcsapi_retval;
+}
+
+
 int
 call_qcsapi_disable_dfs_channels(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
 {
@@ -16655,6 +16855,29 @@ call_qcsapi_wifi_host_state_set(const call_qcsapi_bundle *p_calling_bundle, int 
 }
 
 static int
+call_qcsapi_wifi_host_state_get(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	uint16_t host_state;
+	qcsapi_unsigned_int host_state_len = sizeof(host_state);
+
+	qcsapi_retval = qcsapi_wifi_wowlan_get_host_state(the_interface, &host_state, &host_state_len);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "%u\n", host_state);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
 call_qcsapi_wifi_wowlan_match_type_set(const call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
 {
 	int statval = 0;
@@ -16692,6 +16915,28 @@ call_qcsapi_wifi_wowlan_match_type_set(const call_qcsapi_bundle *p_calling_bundl
 }
 
 static int
+call_qcsapi_wifi_wowlan_match_type_get(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	uint16_t match_type;
+	qcsapi_unsigned_int len = sizeof(match_type);
+
+	qcsapi_retval = qcsapi_wifi_wowlan_get_match_type(the_interface, &match_type, &len);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "%u\n", match_type);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+static int
 call_qcsapi_wifi_wowlan_L2_type_set(const call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
 {
 	int statval = 0;
@@ -16727,6 +16972,28 @@ call_qcsapi_wifi_wowlan_L2_type_set(const call_qcsapi_bundle *p_calling_bundle, 
 }
 
 static int
+call_qcsapi_wifi_wowlan_L2_type_get(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	uint16_t l2_type;
+	qcsapi_unsigned_int len = sizeof(l2_type);
+
+	qcsapi_retval = qcsapi_wifi_wowlan_get_l2_type(the_interface, &l2_type, &len);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "%u\n", l2_type);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+static int
 call_qcsapi_wifi_wowlan_udp_port_set(const call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
 {
 	int statval = 0;
@@ -16761,6 +17028,28 @@ call_qcsapi_wifi_wowlan_udp_port_set(const call_qcsapi_bundle *p_calling_bundle,
 	return( statval );
 }
 
+static int
+call_qcsapi_wifi_wowlan_udp_port_get(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	uint16_t udp_port;
+	qcsapi_unsigned_int len = sizeof(udp_port);
+
+	qcsapi_retval = qcsapi_wifi_wowlan_get_udp_port(the_interface, &udp_port, &len);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "%u\n", udp_port);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
 #define MAX_USER_DEFINED_MAGIC	256
 void str_to_hex(uint8_t *pbDest, const char *pbSrc, int nLen)
 {
@@ -16811,7 +17100,7 @@ call_qcsapi_wifi_wowlan_pattern_set(const call_qcsapi_bundle *p_calling_bundle, 
 	const char *the_interface = p_calling_bundle->caller_interface;
 	qcsapi_output *print = p_calling_bundle->caller_output;
 	uint8_t pattern[MAX_USER_DEFINED_MAGIC];
-	struct qcsapi_data_128bytes pattern_data;
+	struct qcsapi_data_256bytes pattern_data;
 	uint32_t input_string_len;
 	uint32_t actual_string_len;
 
@@ -16848,6 +17137,41 @@ call_qcsapi_wifi_wowlan_pattern_set(const call_qcsapi_bundle *p_calling_bundle, 
 		statval = 1;
 	}
 	return( statval );
+}
+
+static void
+dump_magic_pattern(qcsapi_output *print, struct qcsapi_data_256bytes *magic_pattern, qcsapi_unsigned_int pattern_len)
+{
+	int i;
+
+	for (i = 0; i < pattern_len; i++) {
+		print_out(print, "%02X", magic_pattern->data[i]);
+	}
+	print_out(print, "\n");
+}
+
+static int
+call_qcsapi_wifi_wowlan_pattern_get(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	struct qcsapi_data_256bytes magic_pattern;
+	qcsapi_unsigned_int pattern_len = sizeof(magic_pattern);
+
+	memset(&magic_pattern, 0, sizeof(magic_pattern));
+	qcsapi_retval = qcsapi_wifi_wowlan_get_magic_pattern(the_interface, &magic_pattern, &pattern_len);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			dump_magic_pattern(print, &magic_pattern, pattern_len);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
 }
 
 static int call_qcsapi_wifi_set_extender_params(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
@@ -16988,6 +17312,61 @@ print_extender_params(qcsapi_extender_type type, int value, qcsapi_output *print
 }
 
 static int
+call_qcsapi_wifi_get_tx_amsdu(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int enable, qcsapi_retval;
+	const char *wifi = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+
+	qcsapi_retval = qcsapi_wifi_get_tx_amsdu(wifi, &enable);
+
+	if (qcsapi_retval >= 0) {
+		print_out(print, "%d\n", enable);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_set_tx_amsdu(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int enable, qcsapi_retval;
+	const char *wifi = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+
+	if (argc < 1) {
+		print_err(print, "Usage: call_qcsapi set_tx_amsdu "
+				"<WiFi interface> { 0 | 1 }\n");
+		return 1;
+	}
+
+	enable = atoi(argv[0]);
+	if ((enable != 0) && (enable != 1)) {
+		print_err(print, "bad parameter %s\n", argv[0]);
+		return 1;
+	}
+
+	qcsapi_retval = qcsapi_wifi_set_tx_amsdu(wifi, enable);
+
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "success\n");
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
 call_qcsapi_wifi_get_extender_status(call_qcsapi_bundle *p_calling_bundle,
 	int argc, char *argv[])
 {
@@ -17099,6 +17478,108 @@ call_qcsapi_wifi_set_bb_param(call_qcsapi_bundle *p_calling_bundle, int argc, ch
 
         return( statval );
 }
+
+static int
+call_qcsapi_wifi_set_scan_buf_max_size(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	qcsapi_unsigned_int max_buf_size;
+
+	if (argc < 1) {
+		print_err(print, "Not enough parameters, count is %d\n", argc);
+		return 1;
+	}
+
+	max_buf_size = (qcsapi_unsigned_int)atoi(argv[0]);
+
+	qcsapi_retval = qcsapi_wifi_set_scan_buf_max_size(the_interface, max_buf_size);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "complete\n");
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_get_scan_buf_max_size(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	qcsapi_unsigned_int max_buf_size;
+
+	qcsapi_retval = qcsapi_wifi_get_scan_buf_max_size(the_interface, &max_buf_size);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "%u\n", max_buf_size);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_set_scan_table_max_len(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	qcsapi_unsigned_int max_table_len;
+
+	if (argc < 1) {
+		print_err(print, "Not enough parameters, count is %d\n", argc);
+		return 1;
+	}
+
+	max_table_len = (qcsapi_unsigned_int)atoi(argv[0]);
+	qcsapi_retval = qcsapi_wifi_set_scan_table_max_len(the_interface, max_table_len);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "complete\n");
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_get_scan_table_max_len(call_qcsapi_bundle *p_calling_bundle,
+		int argc, char *argv[])
+{
+	int statval = 0;
+	int qcsapi_retval = 0;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	qcsapi_unsigned_int max_table_len;
+
+	qcsapi_retval = qcsapi_wifi_get_scan_table_max_len(the_interface, &max_table_len);
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "%u\n", max_table_len);
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
 
 /* end of programs to call individual QCSAPIs */
 
@@ -17250,6 +17731,10 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 		statval = call_qcsapi_wifi_startprod( p_calling_bundle, argc, argv );
 		break;
 
+	  case e_qcsapi_is_startprod_done:
+		statval = call_qcsapi_is_startprod_done(p_calling_bundle, argc, argv);
+		break;
+
 	  case e_qcsapi_wifi_get_bw:
 		statval = call_qcsapi_wifi_get_bw( p_calling_bundle, argc, argv );
 		break;
@@ -17272,6 +17757,10 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 
 	  case e_qcsapi_wifi_get_BSSID:
 		statval = call_qcsapi_wifi_get_BSSID( p_calling_bundle, argc, argv );
+		break;
+
+	  case e_qcsapi_wifi_get_config_BSSID:
+		statval = call_qcsapi_wifi_get_config_BSSID( p_calling_bundle, argc, argv );
 		break;
 
 	  case e_qcsapi_wifi_get_SSID:
@@ -17320,6 +17809,10 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 
 	  case e_qcsapi_interface_get_status:
 		statval = call_qcsapi_interface_get_status( p_calling_bundle, argc, argv );
+		break;
+
+	  case e_qcsapi_interface_get_netmask:
+		statval = call_qcsapi_interface_get_netmask( p_calling_bundle, argc, argv );
 		break;
 
 	  case e_qcsapi_pm_get_counter:
@@ -17966,6 +18459,14 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 		statval = call_qcsapi_wifi_disassociate(p_calling_bundle, argc, argv);
 		break;
 
+	  case e_qcsapi_wifi_disassociate_sta:
+		statval = call_qcsapi_wifi_disassociate_sta(p_calling_bundle, argc, argv);
+		break;
+
+	  case e_qcsapi_wifi_reassociate:
+		statval = call_qcsapi_wifi_reassociate(p_calling_bundle, argc, argv);
+		break;
+
 	  case e_qcsapi_wifi_associate:
 		statval = call_qcsapi_wifi_associate(p_calling_bundle, argc, argv);
 		break;
@@ -18485,6 +18986,11 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 	  case e_qcsapi_calcmd_clear_counter:
 		statval = call_qcsapi_calcmd_clear_counter(p_calling_bundle, argc, argv);
 		break;
+
+	  case e_qcsapi_calcmd_get_info:
+		statval = call_qcsapi_calcmd_get_info(p_calling_bundle, argc, argv);
+		break;
+
 	  case e_qcsapi_set_soc_macaddr:
 		  statval = call_qcsapi_wifi_set_soc_macaddr( p_calling_bundle, argc, argv );
 		break;
@@ -18556,6 +19062,21 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 	  case e_qcsapi_wowlan_pattern:
 		statval = call_qcsapi_wifi_wowlan_pattern_set(p_calling_bundle, argc, argv);
 		break;
+	  case e_qcsapi_wowlan_get_host_state:
+		statval = call_qcsapi_wifi_host_state_get(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wowlan_get_match_type:
+		statval = call_qcsapi_wifi_wowlan_match_type_get(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wowlan_get_L2_type:
+		statval = call_qcsapi_wifi_wowlan_L2_type_get(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wowlan_get_udp_port:
+		statval = call_qcsapi_wifi_wowlan_udp_port_get(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wowlan_get_pattern:
+		statval = call_qcsapi_wifi_wowlan_pattern_get(p_calling_bundle, argc, argv);
+		break;
 	  case e_qcsapi_wifi_set_extender_params:
 		statval = call_qcsapi_wifi_set_extender_params(p_calling_bundle,
 			argc, argv);
@@ -18584,6 +19105,25 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 	  case e_qcsapi_set_bb_param:
                 statval = call_qcsapi_wifi_set_bb_param(p_calling_bundle, argc, argv);
 		break;
+	  case e_qcsapi_wifi_get_tx_amsdu:
+		statval = call_qcsapi_wifi_get_tx_amsdu(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_set_tx_amsdu:
+		statval = call_qcsapi_wifi_set_tx_amsdu(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_set_scan_buf_max_size:
+		statval = call_qcsapi_wifi_set_scan_buf_max_size(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_get_scan_buf_max_size:
+		statval = call_qcsapi_wifi_get_scan_buf_max_size(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_set_scan_table_max_len:
+		statval = call_qcsapi_wifi_set_scan_table_max_len(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_wifi_get_scan_table_max_len:
+		statval = call_qcsapi_wifi_get_scan_table_max_len(p_calling_bundle, argc, argv);
+		break;
+
 	  default:
 		print_out( print, "no interface program (yet) for QCS API enum %d\n", p_calling_bundle->caller_qcsapi );
 	}

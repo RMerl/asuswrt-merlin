@@ -378,17 +378,15 @@ enum qtn_ocac_cmds {
 
 
 /* Common definitions for flags used to indicate ieee80211_node's states */
-#define	IEEE80211_NODE_AUTH	0x0001		/* authorized for data */
-#define	IEEE80211_NODE_QOS	0x0002		/* QoS enabled */
-#define	IEEE80211_NODE_ERP	0x0004		/* ERP enabled */
-#define	IEEE80211_NODE_HT	0x0008		/* HT enabled */
+#define	IEEE80211_NODE_AUTH		0x0001	/* authorized for data */
+#define	IEEE80211_NODE_QOS		0x0002	/* QoS enabled */
+#define	IEEE80211_NODE_ERP		0x0004	/* ERP enabled */
+#define	IEEE80211_NODE_HT		0x0008	/* HT enabled */
 /* NB: this must have the same value as IEEE80211_FC1_PWR_MGT */
-#define	IEEE80211_NODE_PWR_MGT	0x0010		/* power save mode enabled */
+#define	IEEE80211_NODE_PWR_MGT		0x0010	/* power save mode enabled */
 #define	IEEE80211_NODE_PS_DELIVERING	0x0040	/* STA out of PS, getting delivery */
-#define	IEEE80211_NODE_PS_POLL	0x0080		/* power save ps poll mode */
-#define	IEEE80211_NODE_AREF	0x0020		/* authentication ref held */
-#define	IEEE80211_NODE_TX_RESTRICTED	0x0100	/* restricted tx enabled */
-#define	IEEE80211_NODE_TX_RESTRICT_RTS	0x0200	/* use RTS to confirm node is lost */
+#define	IEEE80211_NODE_PS_POLL		0x0080	/* power save ps poll mode */
+#define	IEEE80211_NODE_AREF		0x0020	/* authentication ref held */
 #define IEEE80211_NODE_2_TX_CHAINS      0x0400  /* this node needs to use 2 TX chain only, for IOT purpose */
 #define IEEE80211_NODE_UAPSD_TRIG	0x0800
 #define IEEE80211_NODE_UAPSD		0x1000
@@ -403,7 +401,7 @@ enum qtn_ocac_cmds {
 #define QTN_TACMAP_PRI_PER_VAP		8	/* for maximum 8 TIDs */
 #define QTN_TACMAP_SW_PRI_BASE		64	/* values below this are used for "bad apple" nodes */
 
-/* Quantenna specific flags (ni_qtn_flags) */
+/* Quantenna specific flags (ni_qtn_flags), do not modify in Auc */
 #define QTN_IS_BCM_NODE			0x0000001
 #define QTN_IS_IPAD_NODE		0x0000002
 #define QTN_IS_IPHONE5_NODE		0x0000004
@@ -419,6 +417,8 @@ enum qtn_ocac_cmds {
 #define QTN_IS_IPAD4_NODE		0x0001000
 #define QTN_DYN_ENABLE_RTS		0x0002000
 #define QTN_IS_REALTEK_NODE		0x0004000
+#define	QTN_NODE_TX_RESTRICTED		0x0008000 /* restricted tx enabled */
+#define	QTN_NODE_TX_RESTRICT_RTS	0x0010000 /* use RTS to confirm node is lost */
 #define QTN_IS_NO_RXAMSDU_NO_BF_NODE	0x0020000
 #define QTN_NODE_RXAMSDU_SUPPORT	0x0040000 /* node support TX amsdu */
 
@@ -436,6 +436,7 @@ enum qtn_vap_wowlan_cmds {
 	IEEE80211_WOWLAN_L2_ETHER_TYPE,
 	IEEE80211_WOWLAN_L3_UDP_PORT,
 	IEEE80211_WOWLAN_MAGIC_PATTERN,
+	IEEE80211_WOWLAN_MAGIC_PATTERN_GET,
 	IEEE80211_WOWLAN_SET_MAX
 };
 /*

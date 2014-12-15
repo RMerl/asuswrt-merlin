@@ -17,6 +17,9 @@
 #define QVLAN_MASK_MODE			0xffff0000
 #define QVLAN_MASK_VID			0x00000fff
 
+#define QVLAN_MODE(x)			(uint16_t)((x) >> QVLAN_SHIFT_MODE)
+#define QVLAN_VID(x)			(uint16_t)((x) & QVLAN_MASK_VID)
+
 #define QVLAN_CMD_PTHRU			0
 #define QVLAN_CMD_UNPTHRU		1
 #define QVLAN_CMD_PTHRU_ALL		2

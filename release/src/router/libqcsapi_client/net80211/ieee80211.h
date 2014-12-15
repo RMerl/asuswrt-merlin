@@ -174,7 +174,7 @@ struct ieee80211_ctlframe_addr2 {
 
 struct ieee80211_vht_su_ndpa {
 	uint8_t i_fc[2];
-	__le16 i_dur;
+	uint8_t i_dur[2];
 	uint8_t i_addr1[IEEE80211_ADDR_LEN];
 	uint8_t i_addr2[IEEE80211_ADDR_LEN];
 	uint8_t i_diagtoken;

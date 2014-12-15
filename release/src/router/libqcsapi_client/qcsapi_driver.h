@@ -113,6 +113,7 @@ typedef enum {
 	e_qcsapi_interface_set_mac_addr,
 	e_qcsapi_interface_get_counter,
 	e_qcsapi_interface_get_status,
+	e_qcsapi_interface_get_netmask,
 
 	e_qcsapi_pm_get_counter,
 	e_qcsapi_pm_get_elapsed_time,
@@ -154,6 +155,7 @@ typedef enum {
 	e_qcsapi_wifi_get_bw,
 	e_qcsapi_wifi_set_bw,
 	e_qcsapi_wifi_get_BSSID,
+	e_qcsapi_wifi_get_config_BSSID,
 	e_qcsapi_wifi_get_SSID,
 	e_qcsapi_wifi_set_SSID,
 	e_qcsapi_wifi_get_channel,
@@ -518,6 +520,7 @@ typedef enum {
 	e_qcsapi_calcmd_set_mac_filter,
 	e_qcsapi_calcmd_get_antenna_count,
 	e_qcsapi_calcmd_clear_counter,
+	e_qcsapi_calcmd_get_info,
 
 	e_qcsapi_wifi_disable_dfs_channels,
 	e_qcsapi_get_carrier_id,
@@ -553,6 +556,11 @@ typedef enum {
 	e_qcsapi_wowlan_L2_type,
 	e_qcsapi_wowlan_udp_port,
 	e_qcsapi_wowlan_pattern,
+	e_qcsapi_wowlan_get_host_state,
+	e_qcsapi_wowlan_get_match_type,
+	e_qcsapi_wowlan_get_L2_type,
+	e_qcsapi_wowlan_get_udp_port,
+	e_qcsapi_wowlan_get_pattern,
 
 	e_qcsapi_wifi_set_extender_params,
 	e_qcsapi_wifi_get_extender_status,
@@ -562,9 +570,21 @@ typedef enum {
 
 	e_qcsapi_get_uboot_info,
 	e_qcsapi_wifi_get_disassoc_reason,
+	e_qcsapi_wifi_get_tx_amsdu,
+	e_qcsapi_wifi_set_tx_amsdu,
 
 	e_qcsapi_get_bb_param,
 	e_qcsapi_set_bb_param,
+
+	e_qcsapi_wifi_disassociate_sta,
+	e_qcsapi_wifi_reassociate,
+
+	e_qcsapi_wifi_set_scan_buf_max_size,
+	e_qcsapi_wifi_get_scan_buf_max_size,
+	e_qcsapi_wifi_set_scan_table_max_len,
+	e_qcsapi_wifi_get_scan_table_max_len,
+
+	e_qcsapi_is_startprod_done,
 
 	e_qcsapi_nosuch_api = 0
 } qcsapi_entry_point;

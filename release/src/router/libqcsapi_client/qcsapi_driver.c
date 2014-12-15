@@ -244,6 +244,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_mac_addr
 	},
+	{ e_qcsapi_wifi_get_config_BSSID,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_mac_addr
+	},
 	{ e_qcsapi_wifi_get_SSID,
 	  e_qcsapi_get_api,
 	  e_qcsapi_none,
@@ -300,6 +305,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_unsigned_int
 	},
 	{ e_qcsapi_interface_get_status,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_interface_get_netmask,
 	  e_qcsapi_get_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
@@ -1799,6 +1809,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
+	{ e_qcsapi_calcmd_get_info,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
 	{ e_qcsapi_set_soc_macaddr,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
@@ -1944,6 +1959,31 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_integer
 	},
+	{ e_qcsapi_wowlan_get_host_state,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wowlan_get_match_type,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wowlan_get_L2_type,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wowlan_get_udp_port,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wowlan_get_pattern,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
 	{ e_qcsapi_wifi_set_extender_params,
 	  e_qcsapi_set_api,
 	  e_qcsapi_extender_params,
@@ -1964,17 +2004,26 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
-	{
-	  e_qcsapi_get_uboot_info,
+	{ e_qcsapi_get_uboot_info,
 	  e_qcsapi_get_api_without_ifname_parameter,
-          e_qcsapi_none,
-          e_qcsapi_unsigned_int
-        },
-        { e_qcsapi_wifi_get_disassoc_reason,
-          e_qcsapi_get_api,
-          e_qcsapi_none,
-          e_qcsapi_unsigned_int
-        },
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_disassoc_reason,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_disassociate_sta,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_mac_addr
+	},
+	{ e_qcsapi_wifi_reassociate,
+	  e_qcsapi_set_api_without_parameter,
+	  e_qcsapi_none,
+	  e_qcsapi_nosuch_specific_parameter
+	},
         { e_qcsapi_get_bb_param,
           e_qcsapi_get_api,
           e_qcsapi_none,
@@ -1985,6 +2034,41 @@ static const qcsapi_entry qcsapi_entry_table[] =
           e_qcsapi_none,
           e_qcsapi_unsigned_int
         },
+	{ e_qcsapi_wifi_get_tx_amsdu,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_integer
+	},
+	{ e_qcsapi_wifi_set_tx_amsdu,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_integer
+	},
+	{ e_qcsapi_wifi_set_scan_buf_max_size,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_scan_buf_max_size,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_set_scan_table_max_len,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_scan_table_max_len,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+        { e_qcsapi_is_startprod_done,
+	  e_qcsapi_get_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
 };
 
 static const unsigned int	sizeof_entry_table = sizeof( qcsapi_entry_table ) / sizeof( qcsapi_entry_table[ 0 ] );

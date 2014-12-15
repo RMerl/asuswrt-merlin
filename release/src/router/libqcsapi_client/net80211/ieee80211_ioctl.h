@@ -429,6 +429,13 @@ struct ieee80211req_chaninfo {
 };
 
 /*
+ * Set the active channel list for 20Mhz, 40Mhz and 80Mhz
+ */
+struct ieee80211_active_chanlist {
+	u_int8_t bw;
+	u_int8_t channels[IEEE80211_CHAN_BYTES];
+};
+/*
  * Retrieve the WPA/RSN information element for an associated station.
  */
 struct ieee80211req_wpaie {
@@ -1252,6 +1259,13 @@ enum {
 	IEEE80211_PARAM_PEER_RTS_MODE = 299,		/* Mode setting for peer RTS */
 	IEEE80211_PARAM_DYN_WMM = 300,			/* Dynamic WMM enable */
 	IEEE80211_PARAM_BB_PARAM = 301,	/* Baseband param */
+	IEEE80211_PARAM_VAP_TX_AMSDU = 302,     /* Enable/disable A-MSDU for VAP */
+        IEEE80211_PARAM_PC_OVERRIDE = 303,              /* RSSI based Power-contraint override */
+	IEEE80211_PARAM_NDPA_DUR = 304,         /* set vht NDPA duration field */
+	IEEE80211_PARAM_TXBF_PKT_CNT = 305,     /* set the pkt cnt per txbf interval to fire sounding to a node */
+	IEEE80211_PARAM_WMAC_RX_POOL_CHK_TIMER = 306,	/* enable the timer for the wmac rx pool checking */
+	IEEE80211_PARAM_SCAN_TBL_LEN_MAX = 307,
+	IEEE80211_PARAM_MAX_SYSTEM_BW = 308,
 };
 
 #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)
@@ -1291,7 +1305,8 @@ enum {
 #define SIOCDEV_SUBIO_WOWLAN		(SIOCDEV_SUBIO_BASE + 15)
 #define SIOCDEV_SUBIO_GET_STA_AUTH	(SIOCDEV_SUBIO_BASE + 16) /* Command to get auth algo,cipher and key management */
 #define SIOCDEV_SUBIO_GET_STA_VENDOR	(SIOCDEV_SUBIO_BASE + 17) /* Command to get peer vendor */
-
+#define SIOCDEV_SUBIO_DI_DFS_CHANNELS	(SIOCDEV_SUBIO_BASE + 18) /* Command to deactive DFS channels */
+#define SIOCDEV_SUBIO_SET_ACTIVE_CHANNEL_LIST (SIOCDEV_SUBIO_BASE + 19)
 
 struct ieee80211_clone_params {
 	char icp_name[IFNAMSIZ];		/* device name */
@@ -1356,6 +1371,7 @@ struct ieee80211req_set_filter {
 #define VENDOR_FIX_BRCM_REPLACE_IGMP_SRCMAC	0x02
 #define VENDOR_FIX_BRCM_REPLACE_IP_SRCMAC	0x04
 #define VENDOR_FIX_BRCM_DROP_STA_IGMPQUERY	0x08
+#define VENDOR_FIX_BRCM_AP_GEN_IGMPQUERY	0x10
 
 enum vendor_fix_idx {
 	VENDOR_FIX_IDX_BRCM_DHCP = 1,
@@ -1365,7 +1381,7 @@ enum vendor_fix_idx {
 
 struct ieee80211req_wowlan {
 	uint32_t is_op;
-	const uint8_t *is_data;
+	uint8_t *is_data;
 	int32_t is_data_len;
 };
 

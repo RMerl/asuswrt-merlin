@@ -2,3 +2,8 @@ build
 libqcsapi_client.so*
 qcsapi_sockrpc
 qcsapi_sockraw
+c_rpc_qcsapi_sample
+qcsapi_pcie
+qcsapi_pcie_static
+qcsapi_sockraw_static
+qcsapi_sockrpc_static
