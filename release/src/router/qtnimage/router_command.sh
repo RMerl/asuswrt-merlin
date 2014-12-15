@@ -19,6 +19,21 @@ if [ "$1" == "update_stateless_slave_config" ] ; then
 	killall monitor_wifi
 	tftp -g 1.1.1.1 -r stateless_slave_config -l /scripts/stateless_slave_config
 fi
+if [ "$1" == "get_file_from_qtn" ] ; then
+	tftp -p $2 -r $4 -l $3
+fi
+if [ "$1" == "get_syslog_from_qtn" ] ; then
+	logmsg -t time `uptime`
+	logmsg -t time `date`
+	tftp -p $2 -r syslog.qtn -l /tmp/syslog.log
+fi
+if [ "$1" == "put_file_to_qtn" ] ; then
+	tftp -g $2 -r $3 -l $4
+fi
+if [ "$1" == "run_cmd" ] ; then
+	chmod a+x $2
+	$2
+fi
 if [ "$1" == "run_start_stateless_slave" ] ; then
 	killall monitor_wifi
 	start-stateless-slave &
