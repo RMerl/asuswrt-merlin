@@ -2346,6 +2346,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "ddns_update_by_wdog", ""},
 	{ "reboot_time", "70"},
 	{ "nmp_client_list",		""},
+	{ "ttl_inc_enable",		"0"},		/* enable TTL increment */
 	{ NULL, NULL }
 };
 
