@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.49 (xx-xxx-2014)
+Asuswrt-Merlin - build 376.49 (19-Dec-2014)
 ===========================================
 
 About
@@ -572,7 +572,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.49 (xx-xxx-2014)
+376.49 (19-Dec-2014)
    - NEW: Merged with Asus GPL 376_3677.  This new code
           includes a lot of changes related to USB modem
           support.
@@ -612,6 +612,8 @@ History
            support.
   - FIXED: MAC filtering couldn't be disabled on Guest
            networks (Asus bug) (Patch by John9527)
+  - FIXED: Various fixes and tweaks to the new IPv6
+           code from Pinwing and saintdev
   - REMOVED: The web redirection control setting was
              removed, as it is being replaced by the
              (simpler) redirection setting Asus added
