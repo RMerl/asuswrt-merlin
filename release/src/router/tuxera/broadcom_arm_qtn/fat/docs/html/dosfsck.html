@@ -1,0 +1,590 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Jul 14 01:50:02 2014 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>DOSFSCK</title>
+
+</head>
+<body>
+
+<h1 align="center">DOSFSCK</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#EXIT STATUS">EXIT STATUS</a><br>
+<a href="#FILES">FILES</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>dosfsck</b>
+&minus; check and repair MS&minus;DOS filesystems</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>dosfsck</b>|<b>fsck.msdos</b>|<b>fsck.vfat</b>
+[&minus;aAflnrtvVwy] [&minus;d <i>PATH</i>
+&minus;d&nbsp;<i>...</i>] [&minus;u&nbsp;<i>PATH</i>
+&minus;u <i>...</i>] <i>DEVICE</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>dosfsck</b></i>
+verifies the consistency of MS&minus;DOS filesystems and
+optionally tries to repair them.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The following
+filesystem problems can be corrected (in this order):</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>FAT contains invalid cluster numbers. Cluster is changed
+to EOF.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>File&rsquo;s cluster chain contains a loop. The loop is
+broken.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Bad clusters (read errors). The clusters are marked bad
+and they are removed from files owning them. This check is
+optional.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Directories with a large number of bad entries (probably
+corrupt). The directory can be deleted.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Files . and .. are non&minus;directories. They can be
+deleted or renamed.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Directories . and .. in root directory. They are
+deleted.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Bad filenames. They can be renamed.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Duplicate directory entries. They can be deleted or
+renamed.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Directories with non&minus;zero size field. Size is set
+to zero.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Directory . does not point to parent directory. The
+start pointer is adjusted.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Directory .. does not point to parent of parent
+directory. The start pointer is adjusted.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Start cluster number of a file is invalid. The file is
+truncated.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>File contains bad or free clusters. The file is
+truncated.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>File&rsquo;s cluster chain is longer than indicated by
+the size fields. The file is truncated.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Two or more files share the same cluster(s). All but one
+of the files are truncated. If the file being truncated is a
+directory file that has already been read, the filesystem
+check is restarted after truncation.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>File&rsquo;s cluster chain is shorter than indicated by
+the size fields. The file is truncated.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Clusters are marked as used but are not owned by a file.
+They are marked as free.</p></td></tr>
+</table>
+
+<p style="margin-left:11%; margin-top: 1em">Additionally,
+the following problems are detected, but not repaired:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em">*</p></td>
+<td width="5%"></td>
+<td width="78%">
+
+
+<p style="margin-top: 1em">Invalid parameters in boot
+sector.</p> </td>
+<td width="5%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>*</p></td>
+<td width="5%"></td>
+<td width="78%">
+
+
+<p>Absence of . and .. entries in non&minus;root
+directories</p> </td>
+<td width="5%">
+</td></tr>
+</table>
+
+<p style="margin-left:11%; margin-top: 1em">When
+<b>dosfsck</b> checks a filesystem, it accumulates all
+changes in memory and performs them only after all checks
+are complete. This can be disabled with the <b>&minus;w</b>
+option.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p style="margin-top: 1em"><b>&minus;a</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p style="margin-top: 1em">Automatically repair the
+filesystem. No user intervention is necessary. Whenever
+there is more than one method to solve a problem, the least
+destructive approach is used.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;A</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Repair the volume if it appears to be in need of a
+repair. This options makes <b>dosfsck</b> exit immediately
+if the volume appears to be in order (no dirty flag set),
+but otherwise a full repair is performed.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;d</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Delete the specified file. If more that one file with
+that name exists, the first one is deleted.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;f</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Salvage unused cluster chains to files. By default,
+unused clusters are added to the free disk space except in
+auto mode (<b>&minus;a</b>).</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;l</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>List path names of files being processed.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;n</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>No&minus;operation mode: non&minus;interactively check
+for errors, but don&rsquo;t write anything to the
+filesystem.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;r</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Interactively repair the filesystem. The user is asked
+for advice whenever there is more than one approach to fix
+an inconsistency.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;t</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Mark unreadable clusters as bad.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;u</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Try to undelete the specified file. <b>dosfsck</b> tries
+to allocate a chain of contiguous unallocated clusters
+beginning with the start cluster of the undeleted file.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;v</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Verbose mode. Generates slightly more output.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;V</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Perform a verification pass. The filesystem check is
+repeated after the first run. The second pass should never
+report any fixable errors. It may take considerably longer
+than the first pass, because the first pass may have
+generated long list of modifications that have to be scanned
+for each disk read.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;w</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Write changes to disk immediately.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;y</b></p></td>
+<td width="3%"></td>
+<td width="83%">
+
+
+<p>Same as <b>&minus;a</b> (automatically repair
+filesystem) for compatibility with other fsck tools.</p></td></tr>
+</table>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Note:</b> If
+<b>&minus;a</b> and <b>&minus;r</b> are absent, the
+filesystem is only checked, but not repaired.</p>
+
+<h2>EXIT STATUS
+<a name="EXIT STATUS"></a>
+</h2>
+
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em">0</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p style="margin-top: 1em">No recoverable errors have been
+detected.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>1</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Recoverable errors have been detected or <b>dosfsck</b>
+has discovered an internal inconsistency.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p>2</p></td>
+<td width="5%"></td>
+<td width="83%">
+
+
+<p>Usage error. <b>dosfsck</b> did not access the
+filesystem.</p> </td></tr>
+</table>
+
+<h2>FILES
+<a name="FILES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">fsck0000.rec,
+fsck0001.rec, ...</p>
+
+<p style="margin-left:17%;">When recovering from a
+corrupted filesystem, <b>dosfsck</b> dumps recovered data
+into files named &rsquo;fsckNNNN.rec&rsquo; in the top level
+directory of the filesystem.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Does not create
+. and .. files where necessary. Does not remove entirely
+empty directories. Should give more diagnostic messages.
+Undeleting files should use a more sophisticated
+algorithm.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>dosfslabel</b>(8)
+<b><br>
+mkdosfs</b>(8)</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>dosfstools</b>
+were written by Werner Almesberger
+&lt;<i>werner.almesberger@lrc.di.epfl.ch</i>&gt;, Roman
+Hodek &lt;<i>Roman.Hodek@informatik.uni-erlangen.de</i>&gt;,
+Daniel Baumann &lt;<i>daniel@debian.org</i>&gt;, Sougata
+Santra &lt;<i>sougata@tuxera.com</i>&gt; (Tuxera Inc.) and
+others.</p>
+<hr>
+</body>
+</html>

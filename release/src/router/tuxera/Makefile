@@ -13,7 +13,11 @@ ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_BCM7),y)
 SRCFILE = broadcom_arm_7
 else
+ifeq ($(RTCONFIG_QTN),y)
+SRCFILE = broadcom_arm_qtn
+else
 SRCFILE = broadcom_arm
+endif
 endif
 DSTDIR = $(INSTALLDIR)/lib/modules/2.6.36.4brcmarm/kernel/fs
 else
