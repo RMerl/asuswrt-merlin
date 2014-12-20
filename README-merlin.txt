@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.49 (19-Dec-2014)
+Asuswrt-Merlin - build 376.49 (21-Dec-2014)
 ===========================================
 
 About
@@ -572,7 +572,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.49 (19-Dec-2014)
+376.49 (21-Dec-2014)
    - NEW: Merged with Asus GPL 376_3677.  This new code
           includes a lot of changes related to USB modem
           support.
@@ -614,6 +614,9 @@ History
            networks (Asus bug) (Patch by John9527)
   - FIXED: Various fixes and tweaks to the new IPv6
            code from Pinwing and saintdev
+  - FIXED: Editing a client on the networkmap would 
+           cause any matching DHCP reservation entry to
+           lost its hostname
   - REMOVED: The web redirection control setting was
              removed, as it is being replaced by the
              (simpler) redirection setting Asus added
