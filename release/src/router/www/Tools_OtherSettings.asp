@@ -838,7 +838,7 @@ function done_validating(action){
 						<tr>
 							<th>TCP Timeout: Established</th>
 							<td>
-								<input type="text" maxlength="5" class="input_6_table" name="tcp_established" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 432000)" value="">
+								<input type="text" maxlength="6" class="input_6_table" name="tcp_established" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 432000)" value="">
 								<span id="ct_established_default">Default: 1200</span>
 							</td>
 
