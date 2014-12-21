@@ -66,7 +66,7 @@ var $j = jQuery.noConflict();
 <% wanlink(); %>
 <% vpn_server_get_parameter(); %>;
 
-var vpn_server_clientlist_array_ori = '<% nvram_char_to_ascii("","vpn_server_clientlist"); %>';
+var vpn_server_clientlist_array_ori = '<% nvram_char_to_ascii("","vpn_serverx_clientlist"); %>';
 var vpn_server_clientlist_array = decodeURIComponent(vpn_server_clientlist_array_ori);
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 var vpn_server_mode = 'openvpn';	// Hardcoded for this page, as we support both simultaneously
@@ -395,7 +395,7 @@ function applyRule(){
 		if(document.form.VPNServer_enable.value == "1") {
 			document.form.VPNServer_mode.value = 'openvpn';
 			document.form.action_script.value = "restart_chpass;restart_vpnserver" + openvpn_unit;
-			document.form.vpn_server_clientlist.value = get_group_value();
+			document.form.vpn_serverx_clientlist.value = get_group_value();
 			/* Advanced setting start */
 			//Viz add 2014.06
 			if(document.getElementById("server_reneg").style.display == "none")
@@ -444,7 +444,7 @@ function applyRule(){
 		}
 		else {		//disable server
 			document.form.action_script.value = "stop_vpnserver" + openvpn_unit;
-			document.form.vpn_server_clientlist.value = get_group_value();
+			document.form.vpn_serverx_clientlist.value = get_group_value();
 		}	
 		
 		showLoading();
@@ -1193,7 +1193,7 @@ function cal_panel_block(){
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="VPNServer_enable" value="<% nvram_get("VPNServer_enable"); %>">
 <input type="hidden" name="VPNServer_mode" value="<% nvram_get("VPNServer_mode"); %>">
-<input type="hidden" name="vpn_server_clientlist" value="">
+<input type="hidden" name="vpn_serverx_clientlist" value="">
 <input type="hidden" name="vpn_serverx_eas" value="<% nvram_get("vpn_serverx_eas"); %>">
 <input type="hidden" name="vpn_serverx_dns" value="<% nvram_get("vpn_serverx_dns"); %>">
 <input type="hidden" name="vpn_server_ccd_val" value="">
