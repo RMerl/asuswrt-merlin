@@ -157,6 +157,8 @@ function validForm(){
 					document.form.DDNSName.select();
 					return false;
 				}
+
+				return true;
 			}
 		}else{
 			if(!validator.numberRange(document.form.ddns_refresh_x, 0, 365))
