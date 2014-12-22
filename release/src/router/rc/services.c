@@ -936,7 +936,6 @@ void start_dnsmasq(int force)
 		fprintf(fp,"quiet-dhcp\n");
 #ifndef RTCONFIG_WIDEDHCP6
 		fprintf(fp,"quiet-dhcp6\n");
-		fprintf(fp,"quiet-ra\n");
 #endif
 	} else {
 		if (nvram_get_int("log_level") < 7) {
