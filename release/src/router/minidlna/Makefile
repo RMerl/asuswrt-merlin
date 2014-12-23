@@ -50,6 +50,10 @@ ifeq ($(RTN65U), y)
 	CFLAGS += -DRTN56U
 endif
 
+ifeq ($(RTN66U), y)
+	CFLAGS += -DRTN66U
+endif
+
 INSTALLPREFIX ?= $(DESTDIR)/usr
 SBININSTALLDIR = $(INSTALLPREFIX)/sbin
 ETCINSTALLDIR = $(DESTDIR)/etc
