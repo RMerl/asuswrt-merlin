@@ -575,6 +575,7 @@ History
 376.49_2 (23-Dec-2014)
    - FIXED: Asus DDNS couldn't be configured on the webui
    - FIXED: OpenVPN server wouldn't let you edit user accounts
+   - FIXED: Missing DLNA icon on clients (Asus bug) (N66, AC66)
 
 
 376.49 (21-Dec-2014)
