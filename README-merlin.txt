@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.49 (21-Dec-2014)
-===========================================
+Asuswrt-Merlin - build 376.49_2 (23-Dec-2014)
+=============================================
 
 About
 -----
@@ -572,6 +572,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.49_2 (23-Dec-2014)
+   - FIXED: Asus DDNS couldn't be configured on the webui
+   - FIXED: OpenVPN server wouldn't let you edit user accounts
+
+
 376.49 (21-Dec-2014)
    - NEW: Merged with Asus GPL 376_3677.  This new code
           includes a lot of changes related to USB modem
