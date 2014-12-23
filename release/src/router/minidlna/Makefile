@@ -50,7 +50,7 @@ ifeq ($(RTN65U), y)
 	CFLAGS += -DRTN56U
 endif
 
-ifeq ($(RTN66U), y)
+ifeq ($(or $(RTN66U),$(RTAC66U)),y)
 	CFLAGS += -DRTN66U
 endif
 
