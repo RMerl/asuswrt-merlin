@@ -729,7 +729,7 @@ function update_visibility(){
 	var hmac = document.form.vpn_server_hmac.value;
 	userpass = getRadioValue(document.form.vpn_server_userpass_auth);
 	var dhcp = getRadioValue(document.form.vpn_server_dhcp);
-	var dns = getRadioValue(document.form.vpn_serverx_dns);
+	var dns = getRadioValue(document.form.vpn_server_x_dns);
 	if(auth != "tls")
 		ccd = 0;
 	else
