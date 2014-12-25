@@ -4245,7 +4245,7 @@ fa_mode_adjust()
 
 #ifdef RTCONFIG_RGMII_BCM_FA
 	if (nvram_get_int("sw_mode") == SW_MODE_ROUTER || nvram_get_int("sw_mode") == SW_MODE_AP) {
-		if (!nvram_match("ctf_disable_force", "1")) {
+		if (!nvram_match("ctf_disable_force", "1") && !nvram_match("ctf_disable", "1")){
 			nvram_set_int("ctf_fa_mode", CTF_FA_NORMAL);
 		}else{
 			nvram_set_int("ctf_fa_mode", CTF_FA_DISABLED);
