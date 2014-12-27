@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.49_4 (xx-Dec-2014)
+Asuswrt-Merlin - build 376.49_4 (27-Dec-2014)
 =============================================
 
 About
@@ -572,7 +572,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.49_4 (xx-Dec-2014)
+376.49_4 (27-Dec-2014)
    - FIXED: WAN page error when entering a hostname, and broken 
             UPNP FAQ link
    - FIXED: OpenVPN Server wasn't showing the Advertize DNS to
