@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.49_4 (27-Dec-2014)
-=============================================
+Asuswrt-Merlin - build 376.50 (xx-xxx-2015)
+===========================================
 
 About
 -----
@@ -572,6 +572,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.50 (xx-xxx-2015)
+   - FIXED: OpenVPN server page would report an initializing
+            state when it was already running under certain
+            conditions
+
+
 376.49_4 (27-Dec-2014)
    - FIXED: WAN page error when entering a hostname, and broken 
             UPNP FAQ link
