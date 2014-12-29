@@ -1343,13 +1343,10 @@ void start_vpnserver(int serverNum)
 		vpnlog(VPN_LOG_EXTRA,"Done adding cron job");
 	}
 
-	if ( cryptMode == SECRET || cryptMode == CUSTOM)
-	{
-		sprintf(&buffer[0], "vpn_server%d_state", serverNum);
-		nvram_set(&buffer[0], "2");	//running
-		sprintf(&buffer[0], "vpn_server%d_errno", serverNum);
-		nvram_set(&buffer[0], "0");
-	}
+	sprintf(&buffer[0], "vpn_server%d_state", serverNum);
+	nvram_set(&buffer[0], "2");	//running
+	sprintf(&buffer[0], "vpn_server%d_errno", serverNum);
+	nvram_set(&buffer[0], "0");
 
 #ifdef LINUX26
 //	sprintf(&buffer[0], "vpn_server%d", serverNum);
