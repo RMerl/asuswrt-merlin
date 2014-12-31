@@ -2216,12 +2216,12 @@ good amount of the limited available nvram. ***
 Contact information
 -------------------
 SmallNetBuilder forums (preferred method: http://forums.smallnetbuilder.com/showthread.php?t=7047 as RMerlin)
-Website: http://www.lostrealm.ca/
+Website: http://asuswrt.lostrealm.ca/
 Github: https://github.com/RMerl/asuswrt-merlin
 Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
 IRC: #asuswrt on DALnet
-Download: http://www.lostrealm.ca/asuswrt-merlin/download
+Download: http://asuswrt.lostrealm.ca/download
 
 Development news will be posted on Twitter.  You can also keep a closer 
 eye on development as it happens through the Github site.
