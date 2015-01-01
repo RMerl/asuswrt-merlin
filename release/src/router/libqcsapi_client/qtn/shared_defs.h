@@ -293,6 +293,11 @@ enum qtn_ocac_cmds {
 	IEEE80211_OCAC_SET_MAX
 };
 
+enum qtn_ocac_get_cmds {
+	IEEE80211_OCAC_GET_STATUS = 1,
+	IEEE80211_OCAC_GET_AVAILABILITY,
+};
+
 #define IEEE80211_OCAC_CLEAN_STATS_STOP		0
 #define IEEE80211_OCAC_CLEAN_STATS_START	1
 #define IEEE80211_OCAC_CLEAN_STATS_RESET	2
@@ -369,7 +374,7 @@ enum qtn_ocac_cmds {
 #if !defined(MUC_BUILD) && !defined(DSP_BUILD) && !defined(AUC_BUILD)
 #define OCACDBG(_level, _fmt, ...)            do {               \
 		if (ic->ic_ocac.ocac_cfg.ocac_debug_level >= (_level)) {  \
-			DBGFN("OCAC: " _fmt, ##__VA_ARGS__);     \
+			DBGFN("DFS_s_radio: " _fmt, ##__VA_ARGS__);     \
 		}                                               \
         } while (0)
 #endif
@@ -415,17 +420,18 @@ enum qtn_ocac_cmds {
 #define QTN_IS_INTEL_NODE		0x0000400
 #define QTN_IS_IPAD_AIR_NODE		0x0000800
 #define QTN_IS_IPAD4_NODE		0x0001000
-#define QTN_DYN_ENABLE_RTS		0x0002000
 #define QTN_IS_REALTEK_NODE		0x0004000
 #define	QTN_NODE_TX_RESTRICTED		0x0008000 /* restricted tx enabled */
 #define	QTN_NODE_TX_RESTRICT_RTS	0x0010000 /* use RTS to confirm node is lost */
 #define QTN_IS_NO_RXAMSDU_NO_BF_NODE	0x0020000
 #define QTN_NODE_RXAMSDU_SUPPORT	0x0040000 /* node support TX amsdu */
+#define QTN_NODE_11N_TXAMSDU_OFF        0x0080000
 
 /* QTN bandwidth definition */
 #define QTN_BW_20M	0
 #define QTN_BW_40M	1
 #define QTN_BW_80M	2
+#define QTN_BW_MAX	QTN_BW_80M
 
 #define QTN_MAILBOX_INVALID	0xffffffff	/* Invalid value to indicate mailbox is disabled */
 
@@ -460,6 +466,9 @@ enum qtn_phy_stat_field {
 	QTN_PHY_NOSUCH_FIELD = -1,
 	QTN_PHY_AVG_ERROR_SUM_NSYM_FIELD,
 };
+
+#define QTN_M2A_TX_SCALE_BITS	4
+#define QTN_M2A_TX_SCALE_MASK	((1 << QTN_M2A_TX_SCALE_BITS) - 1)
 
 /* only for little endian */
 #if defined(AUC_BUILD)
@@ -514,4 +523,8 @@ do {						\
 		;				\
 	}					\
 } while(0)
+/* Used to scale temperature measurements */
+#define QDRV_TEMPSENS_COEFF    100000
+#define QDRV_TEMPSENS_COEFF10  (10 * QDRV_TEMPSENS_COEFF)
+
 #endif /* _SHARED_DEFS_H_ */

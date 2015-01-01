@@ -240,18 +240,10 @@ struct muc_tx_stats {
 	uint32_t	pppc_scale_last_gput;		/* The last goodput used by PPPC */
 	uint32_t	pppc_scale_last_gput_idx;	/* The PPPC index of the last goodput value */
 	uint32_t	pppc_scale_base_cnt;		/* times Tx gain scaling base has been set for any node */
-	uint32_t	pppc_scale_base_1ss_20m;	/* times Tx gain scaling base for 20MHz and 1SS */
-	uint32_t	pppc_scale_base_1ss_40m;	/* times Tx gain scaling base for 40MHz and 1SS */
-	uint32_t	pppc_scale_base_1ss_80m;	/* times Tx gain scaling base for 80MHz and 1SS */
-	uint32_t	pppc_scale_base_2ss_20m;	/* times Tx gain scaling base for 20MHz and 2SS */
-	uint32_t	pppc_scale_base_2ss_40m;	/* times Tx gain scaling base for 40MHz and 2SS */
-	uint32_t	pppc_scale_base_2ss_80m;	/* times Tx gain scaling base for 80MHz and 2SS */
-	uint32_t	pppc_scale_base_3ss_20m;	/* times Tx gain scaling base for 20MHz and 3SS */
-	uint32_t	pppc_scale_base_3ss_40m;	/* times Tx gain scaling base for 40MHz and 3SS */
-	uint32_t	pppc_scale_base_3ss_80m;	/* times Tx gain scaling base for 80MHz and 3SS */
-	uint32_t	pppc_scale_base_4ss_20m;	/* times Tx gain scaling base for 20MHz and 4SS */
-	uint32_t	pppc_scale_base_4ss_40m;	/* times Tx gain scaling base for 40MHz and 4SS */
-	uint32_t	pppc_scale_base_4ss_80m;	/* times Tx gain scaling base for 80MHz and 4SS */
+	uint32_t	pppc_scale_base_20m;	/* Combined tx scale bases for different bf/nss cases in 20MHz */
+	uint32_t	pppc_scale_base_40m;	/* Combined tx scale bases for different bf/nss cases in 40MHz */
+	uint32_t	pppc_scale_base_80m;	/* Combined tx scale bases for different bf/nss cases in 80MHz */
+	uint32_t	pppc_scale_base_copy;	/* combined the flags indicating the tx scale bases are copied bfoff 1ss cases */
 	uint32_t	pppc_scale_overstep;	/* tx scale exceed the maximum scale indices */
 	uint32_t	pppc_scale_rollback;	/* tx scale roll back because scale index over step */
 	uint32_t	pppc_0_gput;		/* times pppc comparing goodput and both are zero */
@@ -264,6 +256,8 @@ struct muc_tx_stats {
 	uint32_t	tx_beacon_done;
 	uint32_t	sfs_peer_rts;
 	uint32_t	sfs_peer_rts_flags;
+	uint32_t	sfs_local_rts;
+	uint32_t	sfs_local_rts_flags;
 	uint32_t	sfs_dyn_wmm;
 	uint32_t	sfs_dyn_wmm_flags;
 };
@@ -313,7 +307,12 @@ struct muc_rx_stats {
 	u_int32_t	accel_msdu;
 	u_int32_t	accel_no_buffer;
 	u_int32_t	accel_fwt_lu_timeout;
-	u_int32_t	accel_mcast_err;
+	u_int32_t	accel_mcast_send;
+	u_int32_t	accel_mcast_drop;
+	u_int32_t	accel_no_match;
+	u_int32_t	accel_drop;
+	u_int32_t	accel_err;
+	u_int32_t	accel_train;
 
 	/**
 	 * This counter shows the number of MPDUs within an AMPDU that have been

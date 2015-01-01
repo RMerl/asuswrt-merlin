@@ -165,6 +165,7 @@ struct host_ioctl_hifinfo {
 	uint32_t	hi_dspgpios;
 	uint32_t	hi_vsp_stats_phys;
 	uint32_t	hi_vapnode_idx;			/* node_idx of the vap node for tx */
+	uint8_t		hi_vapid;
 	char		hi_name[NAMESIZE];		/* Device name */
 	char		hi_version[VERSION_SIZE];	/* basic firmware version */
 	char		hi_algover[VERSION_SIZE];	/* calibration algorithm version */
@@ -239,6 +240,7 @@ struct host_ioctl {
 
 struct qtn_vap_args {
 	char vap_name[17];
+	uint8_t vap_id;
 	uint8_t vap_macaddr[IEEE80211_ADDR_LEN];
 };
 
@@ -307,6 +309,7 @@ struct qtn_baparams_args {
 #define IOCTL_DEV_SET_OCAC		46
 #define IOCTL_DEV_MEAS_CHANNEL		47	/* notify MUC to execute measurement */
 #define IOCTL_DEV_GET_LINK_MARGIN_INFO	48	/* get rssi info */
+#define IOCTL_DEV_SET_RX_GAIN_PARAMS	56	/* Set RX gain params */
 
 #define IOCTL_DEV_CMD_MEMDBG_DUMP	1	/* Dump MuC memory */
 #define IOCTL_DEV_CMD_MEMDBG_DUMPCFG	2	/* Configuration for dumping MuC memory */
@@ -660,6 +663,14 @@ struct qtn_ocac_info {
 	uint64_t		tsf_log[OCAC_TSF_LOG_NUM];	/* event tsf log, written by MuC */
 };
 
+struct qtn_rf_rxgain_params
+{
+	uint8_t *gain_entry_tbl;
+	uint8_t lna_on_indx;
+	uint8_t max_gain_idx;
+	uint16_t cs_threshold_value;
+};
+
 /* MuC fops requst */
 #define MUC_FOPS_MAX_FNAME_SIZE (50)
 enum {
@@ -786,6 +797,7 @@ struct qtn_node_args
 	uint8_t	ni_qtn_ie_flags;
 	uint8_t ni_vendor;
 	uint8_t ni_bbf_disallowed;      /* flag to disallow BBF */
+	uint8_t ni_std_bf_disallowed;      /* flag to disallow standard BF */
 	uint8_t	ni_htcap[sizeof(struct ieee80211_htcap)];	/* Processed HT capabilities */
 	uint8_t	ni_htinfo[sizeof(struct ieee80211_htinfo)];	/* Processed HT info */
 	uint8_t	ni_vhtcap[sizeof(struct ieee80211_vhtcap)];	/* Processed VHT capabilities */

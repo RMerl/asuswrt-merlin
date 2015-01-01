@@ -262,16 +262,22 @@ enum ieee80211_ba_type {
 	IEEE80211_BA_IMMEDIATE = 1,
 };
 
-enum ieee80211_power_index_bf_ss {
-	PWR_IDX_BFOFF = 0,
-	PWR_IDX_BFON_1SS = 0,	/* Use the same power as bfoff case */
-	PWR_IDX_BFON_2SS = 1,
-	PWR_IDX_BFON_3SS = 2,
-	PWR_IDX_BFON_4SS = 3,
-	PWR_IDX_BF_SS_MAX = 4
+/* power index definition */
+enum ieee80211_power_index_beamforming {
+	PWR_IDX_BF_OFF = 0,
+	PWR_IDX_BF_ON = 1,
+	PWR_IDX_BF_MAX = 2
 };
 
-enum ieee80211_power_index_bw {
+enum ieee80211_power_index_spatial_stream {
+	PWR_IDX_1SS = 0,
+	PWR_IDX_2SS = 1,
+	PWR_IDX_3SS = 2,
+	PWR_IDX_4SS = 3,
+	PWR_IDX_SS_MAX = 4
+};
+
+enum ieee80211_power_index_bandwidth {
 	PWR_IDX_20M = 0,
 	PWR_IDX_40M = 1,
 	PWR_IDX_80M = 2,
@@ -290,7 +296,7 @@ struct ieee80211_channel {
 	int8_t ic_minpower;	/* minimum tx power in dBm */
 	int8_t ic_maxpower_normal;	/* backup max tx power for short-range workaround */
 	int8_t ic_minpower_normal;	/* backup min tx power for short-range workaround */
-	int8_t ic_maxpower_table[PWR_IDX_BF_SS_MAX][PWR_IDX_BW_MAX];	/* the maximum powers for different cases */
+	int8_t ic_maxpower_table[PWR_IDX_BF_MAX][PWR_IDX_SS_MAX][PWR_IDX_BW_MAX];	/* the maximum powers for different cases */
 	u_int32_t ic_radardetected; /* number that radar signal has been detected on this channel */
 	u_int8_t ic_center_f_80MHz;
 	u_int8_t ic_center_f_160MHz;
@@ -553,7 +559,7 @@ struct ieee80211_channel {
 /* Dynamic WMM */
 #define IEEE80211_DYN_WMM_OFF			0
 #define IEEE80211_DYN_WMM_ON			1
-#define IEEE80211_DYN_WMM_DEFAULT		IEEE80211_DYN_WMM_OFF
+#define IEEE80211_DYN_WMM_DEFAULT		IEEE80211_DYN_WMM_ON
 
 #define IEEE80211_DYN_WMM_LOCAL_AIFS_DELTA	-2
 #define IEEE80211_DYN_WMM_LOCAL_CWMIN_DELTA	-2
@@ -658,6 +664,9 @@ struct ieee80211_channel {
 /* rate table index = (MCS set index << 3) + MCS index */
 #define IEEE80211_HT_RATE_TABLE_IDX(_s,_i) \
 		(((_s) << 3) + (_i))
+
+/* Supported rate label */
+#define IEEE80211_RATE_11MBPS	22
 
 #if 0
 /* integer portion of HT rates */

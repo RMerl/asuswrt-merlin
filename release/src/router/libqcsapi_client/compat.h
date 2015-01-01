@@ -80,10 +80,12 @@
 #endif
 
 /* Bit map related macros. */
+#ifndef setbit
 #define	setbit(a,i)	((a)[(i)/NBBY] |= 1<<((i)%NBBY))
 #define	clrbit(a,i)	((a)[(i)/NBBY] &= ~(1<<((i)%NBBY)))
 #define	isset(a,i)	((a)[(i)/NBBY] & (1<<((i)%NBBY)))
 #define	isclr(a,i)	(((a)[(i)/NBBY] & (1<<((i)%NBBY))) == 0)
+#endif /* setbit */
 
 #ifndef __packed
 #define	__packed	__attribute__((__packed__))
