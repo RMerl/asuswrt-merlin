@@ -118,6 +118,7 @@ function initial(){
 
 											<tr id="dnsfilter">
 												<td align="center" class="app_table_radius_left" style="width:85px;">
+                                                    <img style="margin-top:0px;" src="/images/New_ui/DnsFiltering.png" onclick="location.href='DNSFilter.asp';">
 												</td>
 												<td class="app_table_radius_right" style="width:350px;height:120px;"">
 													<div class="app_name">
