@@ -356,11 +356,11 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 #ifdef RTCONFIG_QTN
 unsigned int get_qtn_temperature(void)
 {
-        int temp_external, temp_internal;
+        int temp_external, temp_internal, temp_bb;
 	if (!rpc_qtn_ready())
 		return 0;
 
-        if (qcsapi_get_temperature_info(&temp_external, &temp_internal) >= 0)
+        if (qcsapi_get_temperature_info(&temp_external, &temp_internal, &temp_bb) >= 0)
 		return temp_internal / 1000000.0f;
 
 	return 0;
