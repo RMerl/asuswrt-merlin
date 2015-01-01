@@ -160,9 +160,9 @@ extern void stop_bwdpi_monitor_service();
 extern void start_bwdpi_monitor_service();
 
 //web_history.c
-extern int web_history_main(char *MAC, char *page);
-extern void get_web_stat(char *MAC, char *page);
-extern void get_web_hook(char *MAC, char *page, int *retval, webs_t wp);
+extern int web_history_main(char *MAC);
+extern void get_web_stat(char *MAC);
+extern void get_web_hook(char *MAC, int *retval, webs_t wp);
 
 //wrs_app.c
 extern void setup_wrs_app_conf();

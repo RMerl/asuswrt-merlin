@@ -13,6 +13,9 @@ LDFLAGS += -L$(TOP)/sqlite/.libs -lsqlite3
 ifeq ($(RTCONFIG_QTN),y)
 CFLAGS += -I$(TOP)/libqcsapi_client
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+PBDIR = prebuilt_qtn
+else
+PBDIR = prebuilt
 endif
 
 # ASUSWRT
@@ -24,8 +27,8 @@ endif
 
 ifeq ($(wildcard $(SRCBASE)/router/bwdpi_sqlite/*.c),)
 all:
-	-cp -f prebuilt/bwdpi_sqlite bwdpi_sqlite
-	-cp -f prebuilt/libbwdpi_sql.so libbwdpi_sql.so
+	-cp -f $(PBDIR)/bwdpi_sqlite bwdpi_sqlite
+	-cp -f $(PBDIR)/libbwdpi_sql.so libbwdpi_sql.so
 else
 all: bwdpi_sqlite libbwdpi_sql.so
 endif
