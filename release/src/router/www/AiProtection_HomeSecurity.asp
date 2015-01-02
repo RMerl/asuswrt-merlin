@@ -115,6 +115,7 @@ function initial(){
 													</div>
 												</td>
 											</tr>
+											<tr style="height:50px;"></tr>
 
 											<tr id="dnsfilter">
 												<td align="center" class="app_table_radius_left" style="width:85px;">
