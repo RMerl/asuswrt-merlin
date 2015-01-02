@@ -25,4 +25,4 @@ of the routers.  Same with the "W" variants that are simply white.
 
 Firmware builds can be downloaded from the official download site:
 
-http://www.lostrealm.ca/asuswrt-merlin/download
+http://asuswrt.lostrealm.ca/download
