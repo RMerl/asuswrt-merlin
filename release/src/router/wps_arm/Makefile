@@ -205,7 +205,11 @@ clean:
 install: all
 	install -d $(INSTALLDIR)/wps$(BCMEX)/bin
 ifeq ($(REBUILD),0)
+ifeq ($(RTCONFIG_QTN),y)
+	install prebuilt/wps_monitor_qtn $(INSTALLDIR)/wps$(BCMEX)/bin/wps_monitor
+else
 	install prebuilt/wps_monitor $(INSTALLDIR)/wps$(BCMEX)/bin
+endif
 else
 	install wps_monitor $(INSTALLDIR)/wps$(BCMEX)/bin
 endif
