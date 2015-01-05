@@ -22,7 +22,7 @@ xtables_multi_CFLAGS  += -DENABLE_IPV6
 xtables_multi_LDADD   += ../libiptc/libip6tc.la ../extensions/libext6.a
 endif
 xtables_multi_SOURCES += xshared.c
-xtables_multi_LDADD   += ../libxtables/libxtables.la -lm
+xtables_multi_LDADD   += ../libxtables/libxtables.la -lm -ldl
 
 sbin_PROGRAMS    = xtables-multi
 man_MANS         = iptables.8 iptables-restore.8 iptables-save.8 \

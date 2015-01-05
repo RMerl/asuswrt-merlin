@@ -77,7 +77,24 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 
 <% wl_get_parameter(); %>
 
-var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
+// merge wl_maclist_x
+var wl_maclist_x_array = (function(){
+	var wl0_maclist_x_array = '<% nvram_get("wl0_maclist_x"); %>'.split("&#60");
+
+	if(wl_info.band5g_support){
+		'<% nvram_get("wl1_maclist_x"); %>'.split("&#60").forEach(function(element, index){
+			if(wl0_maclist_x_array.indexOf(element) == -1) wl0_maclist_x_array.push(element);
+		});
+	}
+
+	if(wl_info.band5g_2_support){
+		'<% nvram_get("wl2_maclist_x"); %>'.split("&#60").forEach(function(element, index){
+			if(wl0_maclist_x_array.indexOf(element) == -1) wl0_maclist_x_array.push(element);
+		});
+	}
+
+	return wl0_maclist_x_array.join("&#60");
+})();
 
 function initial(){
 	show_menu();
@@ -97,9 +114,6 @@ function initial(){
 		show_wl_maclist_x();
 
 	setTimeout("showWLMACList();", 1000);	
-	if(!band5g_support)
-		document.getElementById("wl_unit_field").style.display = "none";
-
 	check_macMode();
 }
 
@@ -208,7 +222,14 @@ function applyRule(){
 		document.form.wl_macmode.value = document.form.wl_macmode_show.value;
 	
 	if(prevent_lock(tmp_value)){
-		document.form.wl_maclist_x.value = tmp_value;
+		document.form.wl0_macmode.value = document.form.wl_macmode.value;
+		document.form.wl1_macmode.value = document.form.wl_macmode.value;
+		document.form.wl2_macmode.value = document.form.wl_macmode.value;
+
+		document.form.wl0_maclist_x.value = tmp_value;
+		document.form.wl1_maclist_x.value = tmp_value;
+		document.form.wl2_maclist_x.value = tmp_value;
+
 		showLoading();
 		document.form.submit();	
 	}
@@ -283,7 +304,7 @@ function showWLMACList(){
 	for(var i=0; i<clientList.length;i++){
 		var clientObj = clientList[clientList[i]];
 
-		if(clientObj.isWL != 0 && (clientObj.isWL == (parseInt(document.form.wl_unit.value)+1))){
+		if(clientList[clientList[i]].isWL != 0){		//0: wired, 1: 2.4GHz, 2: 5GHz, filter clients under current band
 			wireless_flag = 1;
 			if(clientObj.name.length > 25) clientObj.name = clientObj.name.substring(0, 23) + "..";
 
@@ -329,13 +350,15 @@ function enable_macMode(){
 		document.getElementById('mac_filter_mode').style.display = "";
 		document.getElementById('MainTable2').style.display = "";
 		document.getElementById('wl_maclist_x_Block').style.display = "";
-		document.form.wl_maclist_x.disabled = false;
+		document.form.wl0_maclist_x.disabled = false;
+		document.form.wl1_maclist_x.disabled = false;
 	}
 	else{
 		document.getElementById('mac_filter_mode').style.display = "none";
 		document.getElementById('MainTable2').style.display = "none";
 		document.getElementById('wl_maclist_x_Block').style.display = "none";
-		document.form.wl_maclist_x.disabled = true;
+		document.form.wl0_maclist_x.disabled = true;
+		document.form.wl1_maclist_x.disabled = true;
 	}	
 }
 </script>
@@ -364,9 +387,15 @@ function enable_macMode(){
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="wl_maclist_x" value="">		
+<input type="hidden" name="wl_maclist_x" value="" disabled>
+<input type="hidden" name="wl0_maclist_x" value="">		
+<input type="hidden" name="wl1_maclist_x" value="">		
+<input type="hidden" name="wl2_maclist_x" value="">		
+<input type="hidden" name="wl_macmode" value="<% nvram_get("wl_macmode"); %>" disabled>
+<input type="hidden" name="wl0_macmode" value="<% nvram_get("wl_macmode"); %>">
+<input type="hidden" name="wl1_macmode" value="<% nvram_get("wl_macmode"); %>">
+<input type="hidden" name="wl2_macmode" value="<% nvram_get("wl_macmode"); %>">
 <input type="hidden" name="wl_subunit" value="-1">
-<input type="hidden" name="wl_macmode" value="<% nvram_get("wl_macmode"); %>">
 
 <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 	<tr>
@@ -387,7 +416,7 @@ function enable_macMode(){
 						  </tr>
 						</thead>		
 
-						<tr id="wl_unit_field">
+						<tr id="wl_unit_field" style="display:none;">
 							<th><#Interface#></th>
 							<td>
 								<select name="wl_unit" class="input_option" onChange="change_wl_unit();">

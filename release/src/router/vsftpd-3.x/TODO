@@ -1,0 +1,56 @@
+CRITICAL
+========
+
+
+NOT SO CRITICAL
+===============
+
+- ABOR handling broken for SSL connections (does any client actually use it?)
+- Add -Wconversion
+- Don't leak SSL private key to compromised process? May be impossible. We'll
+see, would be an interesting security story.
+- Better reporting of failed uploads due to out of device space or quota all
+used.
+- Upload file size limits.
+
+- Improve FAQ, docs (ongoing..)
+- Sweedish, Russian etc. characters showing as ? in the log - many complaints.
+- "add_group" support.
+- Still reports FlashFXP broken when trying to do FXP.
+- Add negation, other support to regex handler.
+- Allow groups to be listed in user lists.
+- Allow space in username.
+- Minor: background should happen after listen has completed so that failure
+can result in a non-zero exit code.
+- option to chroot to home dir and THEN apply init_dir
+- separate upload/download max rates
+- select() is assuming Linux behaviour (not threatening stability)
+- add example global bandwidth limiting.
+- have a chown_uploads for non-anon users too; also more control over
+permissions of uploaded file
+
+ON THE BACK BURNER
+==================
+
+- MLST, MLSD
+- LPRT, LPSV
+- log logout (pam session support provides this for locals)
+- Limits on GIDs allowed to authenticate?
+- Dynamic login info e.g. you are user XXX of YYY.
+- Handle SIGINT.
+- Session byte transfer counts in STAT output.
+- Test vsftpd with pam_opie (issues with challenge/response vs. FTP protocol?)
+- SITE GROUP support.
+- SITE UTIME?
+- Allow listener to listen on multiple IPs, protocols; bonus points if the
+different IPs can have different configs.
+
+NOT PLANNED
+===========
+
+- telnet strings (no demand)
+- "Minimal" build support
+- transparent tar / compression support (no demand)
+- put anon FTP users in wtmp too?
+
+- Integrated test suite (I'm so lazy..) SORRY.

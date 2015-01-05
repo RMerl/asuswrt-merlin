@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <signal.h>
-#include "endianness.h"
+#include <asm/byteorder.h>
 #include <iboxcom.h>
 #include "../shared/shutils.h"
 
@@ -135,7 +135,8 @@ int SendHttpReq(unsigned char *des_ip)
 int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab)
 {
     struct sockaddr_in my_addr, other_addr1, other_addr2;
-    int sock_nbns, status, other_addr_len1, other_addr_len2, sendlen, recvlen, retry=1, exit=0;
+    int sock_nbns, status, sendlen, recvlen, retry=1, exit=0;
+    socklen_t other_addr_len1, other_addr_len2;
     char sendbuf[50] = {0x87, 0x96, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x20, 0x43, 0x4b, 0x41,
                         0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41,
@@ -1220,25 +1221,16 @@ SMBretry:
                                 smb_hdr.Command = 0x72;
                                 bzero(smb_hdr.Status, 4);
                                 smb_hdr.Flags = 0x18;
-                                smb_hdr.Flags2 = 0xc853;
-				#ifdef B_ENDIAN
-				    swapbytes16(smb_hdr.Flags2);
-				#endif
+                                smb_hdr.Flags2 = __cpu_to_le16(0xc853);
                                 bzero(&smb_hdr.Pad, 12);
                                 smb_hdr.Tid = 0x0000;
-                                smb_hdr.Pid = 0xFEFF;
-				#ifdef B_ENDIAN
-				    swapbytes16(smb_hdr.Pid);
-				#endif
+                                smb_hdr.Pid = __cpu_to_le16(0xFEFF);
                                 smb_hdr.Uid = 0x0000;
                                 smb_hdr.Mid = 0x0000;
                                 memcpy(buf+4, &smb_hdr, 32);
                                 WordCount = 0x00;
                                 memcpy(buf+36, &WordCount, 1);
-                                ByteCount = 0x0062;
-                                #ifdef B_ENDIAN
-				    swapbytes16(ByteCount);
-                                #endif
+                                ByteCount = __cpu_to_le16(0x0062);
                                 memcpy(buf+37, &ByteCount, 2);
                                 memcpy(buf+39, smb_buf, 98);
 
@@ -1321,21 +1313,12 @@ SMBretry:
                                 smb_hdr.Command = 0x73;
                                 bzero(smb_hdr.Status, 4);
                                 smb_hdr.Flags = 0x18;
-                                smb_hdr.Flags2 = 0xc807;
-                                #ifdef B_ENDIAN
-				    swapbytes16(smb_hdr.Flags2);
-                                #endif
+                                smb_hdr.Flags2 = __cpu_to_le16(0xc807);
                                 bzero(&smb_hdr.Pad, 12);
                                 smb_hdr.Tid = 0x0000;
-                                smb_hdr.Pid = 0xFEFF;
-                                #ifdef B_ENDIAN
-				    swapbytes16(smb_hdr.Pid);
-                                #endif
+                                smb_hdr.Pid = __cpu_to_le16(0xFEFF);
                                 smb_hdr.Uid = 0x0000;
-                                smb_hdr.Mid = 0x0010;
-                                #ifdef B_ENDIAN
-				    swapbytes16(smb_hdr.Mid);
-                                #endif
+                                smb_hdr.Mid = __cpu_to_le16(0x0010);
                                 memcpy(buf+offsetlen, &smb_hdr, 32);
                                 offsetlen += 32; // 36
                                 //-------------------------------------------------- SMB base header
@@ -1357,10 +1340,7 @@ SMBretry:
                                 seX_req.MaxBufferSize = 4356;
                                 memcpy(buf+offsetlen, &seX_req.MaxBufferSize, 2);
                                 offsetlen += 2;  // 43
-                                seX_req.MaxMpxCount = 0x000a;
-                                #ifdef B_ENDIAN
-				    swapbytes16(seX_req.MaxMpxCount);
-                                #endif
+                                seX_req.MaxMpxCount = __cpu_to_le16(0x000a);
                                 memcpy(buf+offsetlen, &seX_req.MaxMpxCount, 2);
                                 offsetlen += 2; // 45
                                 seX_req.VcNumber = 0x0000;
@@ -1369,25 +1349,16 @@ SMBretry:
                                 seX_req.SessionKey = 0x00000000;
                                 memcpy(buf+offsetlen, &seX_req.SessionKey, 4);
                                 offsetlen += 4; // 51
-                                seX_req.CaseInsensitivePasswordLength = 0x0001;
-                                #ifdef B_ENDIAN
-				    swapbytes16(seX_req.CaseInsensitivePasswordLength);
-                                #endif
+                                seX_req.CaseInsensitivePasswordLength = __cpu_to_le16(0x0001);
                                 memcpy(buf+offsetlen, &seX_req.CaseInsensitivePasswordLength, 2);
                                 offsetlen += 2; // 53
-                                seX_req.CaseSensitivePasswordLength = 0x0001;
-                                #ifdef B_ENDIAN
-				    swapbytes16(seX_req.CaseSensitivePasswordLength);
-                                #endif
+                                seX_req.CaseSensitivePasswordLength = __cpu_to_le16(0x0001);
                                 memcpy(buf+offsetlen, &seX_req.CaseSensitivePasswordLength, 2);
                                 offsetlen += 2; // 55
                                 seX_req.Reserved = 0x00000000;
                                 memcpy(buf+offsetlen, &seX_req.Reserved, 4);
                                 offsetlen += 4; // 59
-                                seX_req.Capabilities = 0x000000d4;
-                                #ifdef B_ENDIAN
-				    swapbytes32(seX_req.Capabilities);
-                                #endif
+                                seX_req.Capabilities = __cpu_to_le32(0x000000d4);
                                 memcpy(buf+offsetlen, &seX_req.Capabilities, 4);
                                 offsetlen += 4; // 63
                                 //---------------------------------------------------------------SMB Session and X header
@@ -1664,10 +1635,10 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 	int lock;
 
         NMP_DEBUG("*FindAllApp: %d -> %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",p_client_detail_info_tab->detail_info_num,
-                (int *)p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][0],
-		(int *)p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][1],
-		(int *)p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][2],
-		(int *)p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][3],
+                p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][0],
+		p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][1],
+		p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][2],
+		p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][3],
  	        p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][0],
                 p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][1],
                 p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][2],

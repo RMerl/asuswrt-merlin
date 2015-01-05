@@ -129,17 +129,6 @@ void start_pptpd(void)
 		fprintf(fp, "plugin radius.so\nplugin radattr.so\n"
 			"radius-config-file /tmp/pptpd/radius/radiusclient.conf\n");
 
-	cprintf("check if wan_wins = zero\n");
-	int nowins = 0;
-
-	if (nvram_match("wan_wins", "0.0.0.0")) {
-		nvram_set("wan_wins", "");
-		nowins = 1;
-	}
-	if (strlen(nvram_safe_get("wan_wins")) == 0)
-		nowins = 1;
-
-	cprintf("write config\n");
 	fprintf(fp, "lock\n"
 		"name *\n"
 		"proxyarp\n"
@@ -172,16 +161,15 @@ void start_pptpd(void)
 		"mtu %s\n" "mru %s\n",
 		nvram_get("pptpd_mtu") ? nvram_get("pptpd_mtu") : "1450",
 		nvram_get("pptpd_mru") ? nvram_get("pptpd_mru") : "1450");
-	//WINS Server
-	if (!nowins) {
-		fprintf(fp, "ms-wins %s\n", nvram_safe_get("wan_wins"));
-	}
-	if (strlen(nvram_safe_get("pptpd_wins1"))) {
-		fprintf(fp, "ms-wins %s\n", nvram_safe_get("pptpd_wins1"));
-	}
-	if (strlen(nvram_safe_get("pptpd_wins2"))) {
-		fprintf(fp, "ms-wins %s\n", nvram_safe_get("pptpd_wins2"));
-	}
+        //WINS Server
+	int wins_count = 0;
+        if (nvram_match("pptpd_ms_network", "1") && nvram_match("smbd_enable", "1"))
+                wins_count += fprintf(fp, "ms-wins %s\n", nvram_safe_get("lan_ipaddr")) > 0 ? 1 : 0;
+        if (strlen(nvram_safe_get("pptpd_wins1")) && (wins_count < 2))
+                wins_count += fprintf(fp,"ms-wins %s\n", nvram_safe_get("pptpd_wins1")) > 0 ? 1 : 0;
+        if (strlen(nvram_safe_get("pptpd_wins2")) && (wins_count < 2))
+                wins_count += fprintf(fp,"ms-wins %s\n", nvram_safe_get("pptpd_wins2")) > 0 ? 1 : 0;
+
 	//DNS Server
 	if (strlen(nvram_safe_get("pptpd_dns1"))) {
 		fprintf(fp, "ms-dns %s\n", nvram_safe_get("pptpd_dns1"));
@@ -283,7 +271,31 @@ void start_pptpd(void)
 		"iptables -t nat -I PREROUTING -i $1 -p udp -m udp --sport 9 -j DNAT --to-destination %s "	// rule for wake on lan over pptp tunnel
 		"%s\n", bcast,
 		nvram_get("pptpd_ipup_script") ? nvram_get("pptpd_ipup_script") : "");
-	fprintf(fp, "iptables -t mangle -A FORWARD -i $1 -m state --state NEW -j MARK --set-mark 0x01/0x7\n");
+
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_BCMWL6) || defined(RTCONFIG_BCMARM)
+        /* mark connect to bypass CTF */
+        if(nvram_match("ctf_disable", "0"))
+		fprintf(fp, "iptables -t mangle -A FORWARD -i $1 -m state --state NEW -j MARK --set-mark 0x01/0x7\n");
+#endif
+
+        //Add static router for vpn client
+        char *nv, *nvp, *b;
+        char *pptpd_client, *vpn_network, *vpn_netmask;
+        char buf[64];
+
+        nv = nvp = strdup(nvram_safe_get("pptpd_sr_rulelist"));
+        if(nv) {
+                while ((b = strsep(&nvp, "<")) != NULL) {
+                        if((vstrsep(b, ">", &pptpd_client, &vpn_network, &vpn_netmask)!=3)) continue;
+                        if(strlen(pptpd_client)==0||strlen(vpn_network)==0||strlen(vpn_netmask)==0) continue;
+printf("write: %s %s %s\n", pptpd_client, vpn_network, vpn_netmask);
+                        fprintf(fp, "if[ \"$PEERNAME\" == \"%s\" ] then;\n", pptpd_client);
+                        fprintf(fp, "route del -net %s netmask %s\n", vpn_network, vpn_netmask);
+                        fprintf(fp, "route add -net %s netmask %s dev $1\n", vpn_network, vpn_netmask);
+                        fprintf(fp, "fi\n");
+                }
+                free(nv);
+        }
 	fclose(fp);
 	fp = fopen("/tmp/pptpd/ip-down", "w");
 	fprintf(fp, "#!/bin/sh\n" "grep -v $1  /tmp/pptp_connected > /tmp/pptp_connected.new\n" 
@@ -294,7 +306,11 @@ void start_pptpd(void)
 		"iptables -t nat -D PREROUTING -i $1 -p udp -m udp --sport 9 -j DNAT --to-destination %s "	// rule for wake on lan over pptp tunnel
 		"%s\n", bcast,
 		nvram_get("pptpd_ipdown_script") ? nvram_get("pptpd_ipdown_script") : "");
-	fprintf(fp, "iptables -t mangle -D FORWARD -i $1 -m state --state NEW -j MARK --set-mark 0x01/0x7\n");
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_BCMWL6) || defined(RTCONFIG_BCMARM)
+        /* mark connect to bypass CTF */
+        if(nvram_match("ctf_disable", "0"))
+		fprintf(fp, "iptables -t mangle -D FORWARD -i $1 -m state --state NEW -j MARK --set-mark 0x01/0x7\n");
+#endif
 	fclose(fp);
 	chmod("/tmp/pptpd/ip-up", 0744);
 	chmod("/tmp/pptpd/ip-down", 0744);

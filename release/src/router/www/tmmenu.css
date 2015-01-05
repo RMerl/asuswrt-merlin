@@ -138,9 +138,15 @@ select {
 	text-align: center;
 	text-decoration: none;
 	height: 15px;
-	color: #000000
-	background-color: #1F2D35;
-	background: url(/images/statusTitle.gif) repeat-x;"
+	color: #000000;
+	background: #92A0A5; /* Old browsers */
+	background: -moz-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#92A0A5 ), color-stop(100%,#66757C)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 }
 
 .active {
@@ -386,7 +392,7 @@ table.fields {
 }
 .rtitle {
 	width: 25%;
-	background: url(/images/general_th.gif) repeat;
+	background:#2F3A3E;
 }
 .bwmg {
 	width: 25%;
@@ -450,7 +456,7 @@ table.fields {
 	padding-left: 10px;
 	border: 1px solid #222;
 	border-collapse: collapse;
-	background: url(/images/general_th.gif) repeat;
+	background:#2F3A3E;
 }
 .DescTable td{
 	padding-left: 10px;

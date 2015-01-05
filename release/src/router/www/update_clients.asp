@@ -8,6 +8,7 @@ originData = {
 	fromBWDPI: '<% bwdpi_device_info(); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	wlList_2g: [<% wl_sta_list_2g(); %>],
 	wlList_5g: [<% wl_sta_list_5g(); %>],
+	wlList_5g_2: [<% wl_sta_list_5g_2(); %>],
 	qosRuleList: decodeURIComponent('<% nvram_char_to_ascii("", "qos_rulelist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<')
 }
 networkmap_fullscan = '<% nvram_get("networkmap_fullscan"); %>';

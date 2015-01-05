@@ -57,8 +57,8 @@ int blkid_flush_cache(blkid_cache cache)
 {
 	struct list_head *p;
 	char *tmp = NULL;
-	const char *opened = NULL;
-	const char *filename;
+	char *opened = NULL;
+	char *filename;
 	FILE *file = NULL;
 	int fd, ret = 0;
 	struct stat st;
@@ -72,7 +72,22 @@ int blkid_flush_cache(blkid_cache cache)
 		return 0;
 	}
 
-	filename = cache->bic_filename ? cache->bic_filename: BLKID_CACHE_FILE;
+	filename = cache->bic_filename ? cache->bic_filename :
+					 blkid_get_cache_filename(NULL);
+	if (!filename)
+		return -BLKID_ERR_PARAM;
+
+	if (strncmp(filename,
+	    BLKID_RUNTIME_DIR "/", sizeof(BLKID_RUNTIME_DIR)) == 0) {
+
+		/* default destination, create the directory if necessary */
+		if (stat(BLKID_RUNTIME_DIR, &st) && errno == ENOENT) {
+
+			mkdir(BLKID_RUNTIME_DIR, S_IWUSR|
+						 S_IRUSR|S_IRGRP|S_IROTH|
+						 S_IXUSR|S_IXGRP|S_IXOTH);
+		}
+	}
 
 	/* If we can't write to the cache file, then don't even try */
 	if (((ret = stat(filename, &st)) < 0 && errno != ENOENT) ||
@@ -149,14 +164,22 @@ int blkid_flush_cache(blkid_cache cache)
 				}
 				free(backup);
 			}
-			rename(opened, filename);
-			DBG(DEBUG_SAVE,
-			    printf("moved temp cache %s\n", opened));
+			if (rename(opened, filename)) {
+				ret = errno;
+				DBG(DEBUG_SAVE,
+					printf("can't rename %s to %s\n",
+						opened, filename));
+			} else {
+				DBG(DEBUG_SAVE,
+				    printf("moved temp cache %s\n", opened));
+			}
 		}
 	}
 
 errout:
 	free(tmp);
+	if (filename != cache->bic_filename)
+		free(filename);
 	return ret;
 }
 

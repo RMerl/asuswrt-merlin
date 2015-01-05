@@ -411,11 +411,17 @@ int start_vlan(void)
 			eval("vconfig", "set_ingress_map", vlan_id, prio, prio);
 		}
 	}
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U)
-	eval("vconfig", "set_egress_map", "vlan2", "0", nvram_safe_get("switch_wan0prio"));
-#endif
 	close(s);
 
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+	eval("vconfig", "set_egress_map", "vlan2", "0", nvram_safe_get("switch_wan0prio"));
+#elif defined(RTCONFIG_QCA)
+	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))
+	{
+		char *wan_base_if = "eth0";
+		set_wan_tag(wan_base_if);
+	}
+#endif
 #ifdef CONFIG_BCMWL5
 	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))
 		set_wan_tag(&ifr.ifr_name);

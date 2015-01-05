@@ -7,8 +7,6 @@ usrsbin_exec_PROGRAMS =
 
 dist_man_MANS = script.1 scriptreplay.1
 
-EXTRA_DIST = README.modems-with-agetty
-
 script_LDADD =
 
 if HAVE_UTIL
@@ -44,7 +42,7 @@ if BUILD_RESET
 dist_usrbin_exec_SCRIPTS = reset
 dist_man_MANS += reset.1
 endif
-EXTRA_DIST += reset.033c
+EXTRA_DIST = reset.033c
 
 if BUILD_MESG
 usrbin_exec_PROGRAMS += mesg

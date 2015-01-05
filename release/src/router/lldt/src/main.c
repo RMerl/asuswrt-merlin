@@ -68,11 +68,6 @@ init_from_conf_file()
     ssize_t numread;
     int     assigns;
     char    default_icon_path[] = {"/rom/etc/icon.ico"};
-#ifdef RTCONFIG_RALINK
-    char    default_wl_interface[] = {"ra0"};
-#else
-    char    default_wl_interface[] = {"eth1"};
-#endif
 
     /* Set default values for configuration options */
     /* (avoid strdup() since it doesn't use xmalloc wrapper) */
@@ -199,6 +194,8 @@ main(int argc, char **argv)
             g_interface = strstr(g_Progname,"x86") != NULL ? "eth0" : "br0";
 #ifdef RTCONFIG_RALINK
             g_wl_interface = strstr(g_Progname,"x86") != NULL ? "eth0" : "ra0";
+#elif defined(RTCONFIG_QCA)
+            g_wl_interface = strstr(g_Progname,"x86") != NULL ? "eth0" : "ath0";	/* FIXME */
 #else
             g_wl_interface = strstr(g_Progname,"x86") != NULL ? "eth0" : "eth1";
 #endif
@@ -226,6 +223,8 @@ main(int argc, char **argv)
 #else
 #ifdef RTCONFIG_RALINK
 		g_wl_interface = strstr(g_Progname,"x86") != NULL ? "eth0" : "ra0";
+#elif defined(RTCONFIG_QCA)
+		g_wl_interface = strstr(g_Progname,"x86") != NULL ? "eth0" : "ath0";	/* FIXME */
 #else
 		g_wl_interface = strstr(g_Progname,"x86") != NULL ? "eth0" : "eth1";
 #endif

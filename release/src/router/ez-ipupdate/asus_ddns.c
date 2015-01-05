@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <stdlib.h>
 
 #include "md5.h"
 #include "asus_ddns.h"
@@ -191,15 +192,15 @@ int main(void)
 	memset (key, 0, sizeof (key));
 	memset (key, 0x0b, 16);
 	memset (data, 0, sizeof (data));
-	strcpy (data, "Hi There");
+	strcpy ((char*)data, "Hi There");
 	hm(data, 8, key, 16, digest);
 	printf ("case 1:"); dump (digest, 16);
 	
 	// case 2
 	memset (key, 0, sizeof (key));
-	strcpy (key, "Jefe");
+	strcpy ((char*)key, "Jefe");
 	memset (data, 0, sizeof (data));
-	strcpy (data, "what do ya want for nothing?");
+	strcpy ((char*)data, "what do ya want for nothing?");
 	hm(data, 28, key, 4, digest);
 	printf ("case 2:"); dump (digest, 16);
 	

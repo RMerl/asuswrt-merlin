@@ -51,8 +51,6 @@ static time_t last_update = 0;
 
 static unsigned int min_update_interval = DEFAULT_MIN_UPDATE_INTERVAL;
 
-int loglevel = LOG_NOTICE;
-
 int main(_unused int argc, char* const argv[])
 {
 	// Allocate ressources
@@ -68,6 +66,7 @@ int main(_unused int argc, char* const argv[])
 	int ia_pd_iaid_index = 0;
 	static struct in6_addr ifid = IN6ADDR_ANY_INIT;
 	int sol_timeout = DHCPV6_SOL_MAX_RT;
+	int verbosity = 0;
 
 
 	bool help = false, daemonize = false;
@@ -75,7 +74,7 @@ int main(_unused int argc, char* const argv[])
 	int c;
 	unsigned int client_options = DHCPV6_CLIENT_FQDN | DHCPV6_ACCEPT_RECONFIGURE;
 
-	while ((c = getopt(argc, argv, "S::N:V:P:FB:c:i:r:Ru:s:kt:m:hedp:fal:")) != -1) {
+	while ((c = getopt(argc, argv, "S::N:V:P:FB:c:i:r:Ru:s:kt:m:hedp:fav")) != -1) {
 		switch (c) {
 		case 'S':
 			allow_slaac_only = (optarg) ? atoi(optarg) : -1;
@@ -213,8 +212,8 @@ int main(_unused int argc, char* const argv[])
 			client_options &= ~DHCPV6_ACCEPT_RECONFIGURE;
 			break;
 
-		case 'l':
-			loglevel = atoi(optarg);
+		case 'v':
+			++verbosity;
 			break;
 
 		default:
@@ -224,6 +223,9 @@ int main(_unused int argc, char* const argv[])
 	}
 
 	openlog("odhcp6c", logopt, LOG_DAEMON);
+	if (!verbosity)
+		setlogmask(LOG_UPTO(LOG_WARNING));
+
 	const char *ifname = argv[optind];
 
 	if (help || !ifname)
@@ -252,19 +254,15 @@ int main(_unused int argc, char* const argv[])
 			return 4;
 		}
 
-		char pidbuf[128];
 		if (!pidfile) {
-			snprintf(pidbuf, sizeof(pidbuf),
-					"/var/run/odhcp6c.%s.pid", ifname);
-			pidfile = pidbuf;
+			snprintf((char*)buf, sizeof(buf), "/var/run/odhcp6c.%s.pid", ifname);
+			pidfile = (char*)buf;
 		}
 
-		int fd = open(pidfile, O_WRONLY | O_CREAT, 0644);
-		if (fd >= 0) {
-			char buf[8];
-			int len = snprintf(buf, sizeof(buf), "%i\n", getpid());
-			write(fd, buf, len);
-			close(fd);
+		FILE *fp = fopen(pidfile, "w");
+		if (fp) {
+			fprintf(fp, "%i\n", getpid());
+			fclose(fp);
 		}
 	}
 
@@ -283,7 +281,7 @@ int main(_unused int argc, char* const argv[])
 		dhcpv6_set_ia_mode(ia_na_mode, ia_pd_mode);
 		bound = false;
 
-		syslog(loglevel, "(re)starting transaction on %s", ifname);
+		syslog(LOG_NOTICE, "(re)starting transaction on %s", ifname);
 
 		signal_usr1 = signal_usr2 = false;
 		int mode = dhcpv6_request(DHCPV6_MSG_SOLICIT);
@@ -313,7 +311,7 @@ int main(_unused int argc, char* const argv[])
 		switch (mode) {
 		case DHCPV6_STATELESS:
 			bound = true;
-			syslog(loglevel, "entering stateless-mode on %s", ifname);
+			syslog(LOG_NOTICE, "entering stateless-mode on %s", ifname);
 
 			while (!signal_usr2 && !signal_term) {
 				signal_usr1 = false;
@@ -344,7 +342,7 @@ int main(_unused int argc, char* const argv[])
 		case DHCPV6_STATEFUL:
 			bound = true;
 			script_call("bound");
-			syslog(loglevel, "entering stateful-mode on %s", ifname);
+			syslog(LOG_NOTICE, "entering stateful-mode on %s", ifname);
 
 			while (!signal_usr2 && !signal_term) {
 				// Renew Cycle
@@ -397,6 +395,8 @@ int main(_unused int argc, char* const argv[])
 			break;
 		}
 
+		odhcp6c_expire();
+
 		size_t ia_pd_len, ia_na_len, server_id_len;
 		odhcp6c_get_state(STATE_IA_PD, &ia_pd_len);
 		odhcp6c_get_state(STATE_IA_NA, &ia_na_len);
@@ -443,8 +443,7 @@ static int usage(void)
 	"	-p <pidfile>	Set pidfile (/var/run/odhcp6c.pid)\n"
 	"	-d		Daemonize\n"
 	"	-e		Write logmessages to stderr\n"
-	//"	-v		Increase logging verbosity\n"
-	"	-l <level>	Set desired log level (notice)\n"
+	"	-v		Increase logging verbosity\n"
 	"	-h		Show this help\n\n";
 	write(STDERR_FILENO, buf, sizeof(buf));
 	return 1;
@@ -568,7 +567,8 @@ struct odhcp6c_entry* odhcp6c_find_entry(enum odhcp6c_state state, const struct 
 }
 
 
-bool odhcp6c_update_entry_safe(enum odhcp6c_state state, struct odhcp6c_entry *new, uint32_t safe)
+bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new,
+		uint32_t safe, bool filterexcess)
 {
 	size_t len;
 	struct odhcp6c_entry *x = odhcp6c_find_entry(state, new);
@@ -579,7 +579,8 @@ bool odhcp6c_update_entry_safe(enum odhcp6c_state state, struct odhcp6c_entry *n
 
 	if (new->valid > 0) {
 		if (x) {
-			if (new->valid >= x->valid && new->valid != UINT32_MAX &&
+			if (filterexcess && new->valid >= x->valid &&
+					new->valid != UINT32_MAX &&
 					new->valid - x->valid < min_update_interval &&
 					new->preferred >= x->preferred &&
 					new->preferred != UINT32_MAX &&
@@ -599,12 +600,6 @@ bool odhcp6c_update_entry_safe(enum odhcp6c_state state, struct odhcp6c_entry *n
 		odhcp6c_remove_state(state, (x - start) * sizeof(*x), sizeof(*x));
 	}
 	return true;
-}
-
-
-bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new)
-{
-	return odhcp6c_update_entry_safe(state, new, 0);
 }
 
 

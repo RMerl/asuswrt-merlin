@@ -827,15 +827,6 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		return ret;
 	}
 #endif
-#ifdef RTCONFIG_WIRELESSREPEATER
-	if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
-		&& (nvram_get_int("wlc_band") == unit))
-	{
-		sprintf(name_vif, "wl%d.%d", unit, 1);
-		name = name_vif;
-	}
-	else
-#endif
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 	wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
 	val &= WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE;
@@ -895,6 +886,15 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			(nvram_get_int("wlc_psta") == 1) &&
 			(nvram_get_int("wlc_band") == unit))
 		ret += websWrite(wp, "Mode	: Media Bridge\n");
+	}
+#endif
+
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
+		&& (nvram_get_int("wlc_band") == unit))
+	{
+		sprintf(name_vif, "wl%d.%d", unit, 1);
+		name = name_vif;
 	}
 #endif
 
@@ -1725,81 +1725,6 @@ ej_wps_info_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return wl_wps_info(eid, wp, argc, argv, 0);
 }
-
-/* Dump NAT table <tr><td>destination</td><td>MAC</td><td>IP</td><td>expires</td></tr> format */
-int
-ej_nat_table(int eid, webs_t wp, int argc, char_t **argv)
-{
-	int ret = 0;
-#ifdef REMOVE
-	int needlen = 0, listlen, i
-	netconf_nat_t *nat_list = 0;
-	netconf_nat_t **plist, *cur;
-	char line[256], tstr[32];
-#endif
-	ret += websWrite(wp, "Destination     Proto.  Port Range  Redirect to\n");
-
-	// find another way to show iptable
-#ifdef REMOVE
-	netconf_get_nat(NULL, &needlen);
-
-	if (needlen > 0)
-	{
-		nat_list = (netconf_nat_t *) malloc(needlen);
-		if (nat_list) {
-			memset(nat_list, 0, needlen);
-			listlen = needlen;
-			if (netconf_get_nat(nat_list, &listlen) == 0 && needlen == listlen) {
-				listlen = needlen/sizeof(netconf_nat_t);
-
-				for(i=0;i<listlen;i++)
-				{
-				//printf("%d %d %d\n", nat_list[i].target,
-				//		nat_list[i].match.ipproto,
-				//		nat_list[i].match.dst.ipaddr.s_addr);
-				if (nat_list[i].target==NETCONF_DNAT)
-				{
-					if (nat_list[i].match.dst.ipaddr.s_addr==0)
-					{
-						sprintf(line, "%-15s", "all");
-					}
-					else
-					{
-						sprintf(line, "%-15s", inet_ntoa(nat_list[i].match.dst.ipaddr));
-					}
-
-
-					if (ntohs(nat_list[i].match.dst.ports[0])==0)
-						sprintf(line, "%s %-7s", line, "ALL");
-					else if (nat_list[i].match.ipproto==IPPROTO_TCP)
-						sprintf(line, "%s %-7s", line, "TCP");
-					else sprintf(line, "%s %-7s", line, "UDP");
-
-					if (nat_list[i].match.dst.ports[0] == nat_list[i].match.dst.ports[1])
-					{
-						if (ntohs(nat_list[i].match.dst.ports[0])==0)
-						sprintf(line, "%s %-11s", line, "ALL");
-						else
-						sprintf(line, "%s %-11d", line, ntohs(nat_list[i].match.dst.ports[0]));
-					}
-					else 
-					{
-						sprintf(tstr, "%d:%d", ntohs(nat_list[i].match.dst.ports[0]),
-						ntohs(nat_list[i].match.dst.ports[1]));
-						sprintf(line, "%s %-11s", line, tstr);
-					}
-					sprintf(line, "%s %s\n", line, inet_ntoa(nat_list[i].ipaddr));
-					ret += websWrite(wp, line);
-				}
-				}
-			}
-			free(nat_list);
-		}
-	}
-#endif
-	return ret;
-}
-
 
 static int wpa_key_mgmt_to_bitfield(const unsigned char *s)
 {

@@ -130,8 +130,8 @@ function initial(){
 	reloadProfile();
 
 	if(!dualWAN_support){		
-		$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-		$("option5").className = "m5_r";
+		document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
+		document.getElementById("_APP_Installation").className = "menu_clicked";
 	}
 
   if(!wimax_support){
@@ -321,7 +321,7 @@ function show_ISP_list(){
 			if(document.form.modem_isp.options.length > 0)
 				continue;
 			else{
-				alert('We currently do not support this location, please use "Manual"!');
+				alert(Untranslated.ISP_not_support);
 				document.form.modem_country.focus();
 				document.form.modem_country.selectedIndex = countrylist.length-1;
 				break;

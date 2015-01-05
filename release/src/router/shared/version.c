@@ -1,3 +1,4 @@
+#include <string.h>
 #include "shared.h"
 #include "version.h"
 

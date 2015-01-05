@@ -31,7 +31,10 @@ bpc_ds = [<% show_file_content("/var/tmp/spectrum-bpc-ds"); %>];
 snr = [<% show_file_content("/var/tmp/spectrum-snr"); %>];
 var spec_running = '<% nvram_get("spectrum_hook_is_running"); %>';
 
-var delay_time = 45;
+if(based_modelid == "DSL-AC68U" && "<% nvram_get("dslx_transmode"); %>" == "atm")
+	var delay_time = 15;
+else
+	var delay_time = 45;
 
 // disable auto log out
 AUTOLOGOUT_MAX_MINUTE = 0;
@@ -67,8 +70,8 @@ function update_spectrum(){
     	setTimeout("$('signals_collect_scan').style.display=\"none\";", delay_time*1000);
     	setTimeout("$('signals_collect').style.display=\"none\";", delay_time*1000);
     	setTimeout("$('signals_update').style.display=\"\";", delay_time*1000);
-			setTimeout("update_spectrum();", 3000);			
-		}		
+	setTimeout("update_spectrum();", 15000); //Keep refresh ajax shortly to avoid 2 times delay_time to update Spectrum image (especially for vdsl)
+    }		
   });
 }
 

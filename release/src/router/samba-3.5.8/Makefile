@@ -11,6 +11,8 @@ SMBCFLAGS += -DBCMARM
 SMBLDFLAGS += -lgcc_s
 endif
 
+SMBLDFLAGS += -ldl
+
 ifneq ($(CONFIG_LINUX26),y)
 SMBCFLAGS += -DMAX_DEBUG_LEVEL="-1"
 endif

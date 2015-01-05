@@ -1,0 +1,7 @@
+#ifndef VSF_DUMMYINC_PAM_APPL_H
+#define VSF_DUMMYINC_PAM_APPL_H
+
+#undef VSF_SYSDEP_HAVE_PAM
+
+#endif /* VSF_DUMMYINC_PAM_APPL_H */
+

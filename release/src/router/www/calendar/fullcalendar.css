@@ -126,12 +126,12 @@ html .fc,
 ------------------------------------------------------------------------*/
 
 .fc-widget-header    /* <th>, usually */{
-	background: url(/images/general_th.gif) repeat;
+	background:#2F3A3E;
 	border: 1px solid #ccc;
 	}
 .fc-widget-content {  /* <td>, usually */
 	border: 1px solid #ccc;
-	}
+}
 	
 .fc-state-highlight { /* <td> today cell */ /* TODO: add .fc-today to <th> */
 	//background: #222;
@@ -286,13 +286,8 @@ a.fc-event {
 	
 .fc-event-skin {
 	border-color: #000;     /* default BORDER color */
-	/*background-color: #EC6; /* default BACKGROUND color */
-	/*background: url(/images/general_th.gif) repeat;*/
 	color: #FFF;            /* default TEXT color */
-	/*-webkit-border-radius: 7px;
-	-moz-border-radius: 7px;
-	border-radius: 7px;*/
-	}
+}
 	
 .fc-event-inner {
 	position: relative;
@@ -307,8 +302,14 @@ a.fc-event {
 	word-wrap:break-word; 
 	overflow:hidden;	
 	padding: 0 1px;
-	background-color: #EC6; /* default BACKGROUND color */
-	background: url(/images/statusTitle.gif) repeat;
+	background: #92A0A5; /* Old browsers */
+	background: -moz-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#92A0A5 ), color-stop(100%,#66757C)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 	-webkit-border-top-left-radius: 7px;
 	-webkit-border-top-right-radius: 7px;
 	-moz-border-radius-topleft: 7px;
@@ -567,8 +568,8 @@ table.fc-border-separate {
 .fc-agenda-slots th {
 	border:1px solid #222;
 	border-width: 1px 1px 0;
-	background: url(/images/general_th.gif) repeat;
-	}
+	background:#2F3A3E;
+}
 	
 .fc-agenda-slots td {
 	border:1px solid #222;

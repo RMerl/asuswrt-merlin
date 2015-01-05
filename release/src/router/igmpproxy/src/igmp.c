@@ -216,8 +216,9 @@ void acceptIgmp(int recvlen) {
             case IGMPV3_MODE_IS_EXCLUDE:
             case IGMPV3_CHANGE_TO_EXCLUDE:
             case IGMPV3_ALLOW_NEW_SOURCES:
-            case IGMPV3_BLOCK_OLD_SOURCES:
                 acceptGroupReport(src, group, IGMP_V2_MEMBERSHIP_REPORT);
+                break;
+            case IGMPV3_BLOCK_OLD_SOURCES:
                 break;
             default:
                 my_log(LOG_INFO, 0,

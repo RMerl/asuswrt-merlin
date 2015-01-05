@@ -199,19 +199,69 @@ legend {
 	padding:2px;
 }
 
-.lefttabhead {margin-top:12px;width:190px;text-align:center;font-family:Verdana ;color: #94ccf2;background:url(/images/New_ui/lefttabhead.png) no-repeat; color:#ffffff;font-weight:bold; padding-top:0px;	position:relative;}
-.lefttabmidfocus {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(/images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold; padding-left:0px; position:relative;}
+.lefttabhead {
+	margin-top:12px;
+	width:185px;
+	text-align:center;
+	font-family:Verdana;
+	color:#ffffff;
+	font-weight:bold;
+	padding-top:0px;
+	position:relative;
+	background-color:#4E5659;
+	border: 2px groove #6B7071;
+	border-top-left-radius:8px;
+	border-top-right-radius:8px;
+	height:33px;
+}
+
+.lefttabmidfocus {
+	margin-top: -2px;
+	width:185px;
+	height: 50px;
+	font-family:Verdana;
+	font-size : 12px;
+	color:#ffffff;
+	font-weight:bold;
+	padding-left:0px;
+	position:relative;
+	background: #8AA6BE; /* Old browsers */
+	background: -moz-linear-gradient(top, #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#8AA6BE ), color-stop(44%,#668CAD), color-stop(45%,#4A779D), color-stop(46%,#3A6894), color-stop(100%,#376C9B)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%,#376C9B 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #8AA6BE 0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8AA6BE', endColorstr='#376C9B',GradientType=0 ); /* IE6-9 */
+	border:2px groove #8AA6BE;
+	border-bottom-color: #6297A9;
+}
+
 .lefttabmid {
-	width:189px;
-	height:52px;
+	width:185px;
+	height:50px;
 	font-family:Verdana;
 	font-size:12px;
 	text-align:left;
 	position:relative;
 	margin-top: -2px;
-	background: url(/images/New_ui/lefttabdown_n.png);
+	background-color:#3A4042;
+	border: 2px groove #6B7071;
 }
-
+@-moz-document url-prefix(){
+	.lefttabmid{
+		border: 1px groove #6B7071;
+	}
+	
+	.lefttabmidfocus{
+		border:1px groove #8AA6BE;
+	}
+	
+	.lefttabhead{
+		border: 1px groove #6B7071;
+	}
+	
+}
 /* show loading */ 
 .popup_bg{
 	position:absolute;	
@@ -297,6 +347,42 @@ legend {
 	LINE-HEIGHT:18px;
 }
 
+.QISWireless_DescFont{
+	font-size: 12px;
+	width:590px;
+	font-family:Segoe UI, Arial, sans-serif;
+	margin-left:45px;
+	*margin-left:65px;
+	color:white;
+	LINE-HEIGHT:18px;
+}
+
+.QISWireless_DescSetting{
+	font-style:normal;
+	font-size: 13px;
+	font-weight:bold;
+	margin-left:20px;
+	*margin-left:40px;
+	margin-top:5px;
+	color:white;
+}
+
+.QISWireless_DescSecurity{
+	width:160px;
+	padding-top:12px;
+}
+
+.QISSmartCon_table{
+	width:630px;
+	margin-left:25px;
+}
+
+.QISSmartCon_desc{
+	 font-style:italic;
+	 font-size:15px;
+	 padding:5px 0px 0px 7px;
+}
+
 .contentM_qis{
 	margin-top:-160px;
 	position:relative;
@@ -330,7 +416,7 @@ legend {
 	border: 1px solid #334044;
 }
 .test_css{	
-	font-size:13px;
+	font-size:16px;
 	font-weight:bolder;
 	color:#FFFFFF;
 }

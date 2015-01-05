@@ -19,11 +19,11 @@ else ifeq ($(RTAC87U), y)
 	install icon.rtac87u.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtac87u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
 else ifeq ($(RTAC68U), y)
-ifeq ($(RTCONFIG_TMOBILE), y)
-	install lld2d.rtac68u.tmo $(INSTALLDIR)/usr/sbin/lld2d
-else
 	install lld2d.rtac68u $(INSTALLDIR)/usr/sbin/lld2d
-endif
+	install lld2d.rtac68p $(INSTALLDIR)/usr/sbin/lld2d.rtac68p
+	install lld2d.rtac68r $(INSTALLDIR)/usr/sbin/lld2d.rtac68r
+	install lld2d.rtac68w $(INSTALLDIR)/usr/sbin/lld2d.rtac68w
+	install lld2d.rtac68rw $(INSTALLDIR)/usr/sbin/lld2d.rtac68rw
 	install icon.rtac68u.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtac68u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
 else

@@ -129,7 +129,11 @@ start_wps_method(void)
 #ifdef RTCONFIG_QTN
 	int retval;
 
+#ifdef RTCONFIG_WPS_DUALBAND
+	if (1)
+#else
 	if (wps_band)
+#endif
 	{
 		if (strlen(wps_sta_pin) && strcmp(wps_sta_pin, "00000000") && (wl_wpsPincheck(wps_sta_pin) == 0))
 		{
@@ -144,7 +148,11 @@ start_wps_method(void)
 				dbG("rpc_qcsapi_wps_registrar_report_button_press %s error, return: %d\n", WIFINAME, retval);
 		}
 
+#ifdef RTCONFIG_WPS_DUALBAND
+		// return 0;
+#else
 		return 0;
+#endif
 	}
 #endif
 
@@ -261,6 +269,11 @@ stop_wps_method(void)
 int is_wps_stopped(void)
 {
 	int ret = 1;
+#ifdef RTCONFIG_QTN
+#ifdef RTCONFIG_WPS_DUALBAND
+	int ret_qtn = 1;
+#endif
+#endif
 	int status = nvram_get_int("wps_proc_status");
 	time_t now = uptime();
 	time_t wps_uptime = strtoul(nvram_safe_get("wps_uptime"), NULL, 10);
@@ -273,7 +286,11 @@ int is_wps_stopped(void)
 	char wps_state[32], state_str[32];
 	int retval, state = -1 ;
 
+#ifdef RTCONFIG_WPS_DUALBAND
+	if (nvram_get_int("wps_enable"))
+#else
 	if (nvram_get_int("wps_enable") && nvram_get_int("wps_band"))
+#endif
 	{
 		retval = rpc_qcsapi_wps_get_state(WIFINAME, wps_state, sizeof(wps_state));
 		if (retval < 0)
@@ -285,31 +302,41 @@ int is_wps_stopped(void)
 
 			switch (state) {
 				case 0: /* WPS_INITIAL */
-					dbg("Init\n");
+					dbg("QTN: WPS Init\n");
 					break;
 				case 1: /* WPS_START */
-					dbg("Processing WPS start...\n");
+					dbg("QTN: Processing WPS start...\n");
 					ret = 0;
+#ifdef RTCONFIG_WPS_DUALBAND
+					ret_qtn = 0;
+#endif
 					break;
 				case 2: /* WPS_SUCCESS */
-					dbg("WPS Success\n");
+					dbg("QTN: WPS Success\n");
 					break;
 				case 3: /* WPS_ERROR */
-					dbg("WPS Fail due to message exange error!\n");
+					dbg("QTN: WPS Fail due to message exange error!\n");
 					break;
 				case 4: /* WPS_TIMEOUT */
-					dbg("WPS Fail due to time out!\n");
+					dbg("QTN: WPS Fail due to time out!\n");
 					break;
 				case 5: /* WPS_OVERLAP */
-					dbg("WPS Fail due to PBC session overlap!\n");
+					dbg("QTN: WPS Fail due to PBC session overlap!\n");
 					break;
 				default:
 					ret = 0;
+#ifdef RTCONFIG_WPS_DUALBAND
+					ret_qtn = 0;
+#endif
 					break;
 			}
 		}
 
+#ifdef RTCONFIG_WPS_DUALBAND
+		// return ret;
+#else
 		return ret;
+#endif
 	}
 #endif
 
@@ -346,6 +373,16 @@ int is_wps_stopped(void)
 			break;
 	}
 
+#ifdef RTCONFIG_WPS_DUALBAND
+	if(ret == 1 || ret_qtn == 1){
+		nvram_set("wps_proc_status", "0");
+		return 1;
+	}else{
+		return 0;
+	}
+	// return ret;
+#else
 	return ret;
+#endif
 	// TODO: handle enrollee
 }

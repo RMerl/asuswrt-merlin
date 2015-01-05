@@ -17,7 +17,7 @@ CFLAGS += $(if $(EXT_CER_ID),-DEXT_CER_ID=$(EXT_CER_ID),)
 OBJS := odhcp6c.o dhcpv6.o ra.o script.o md5.o
 HDRS := odhcp6c.h ra.h md5.h
 
-all: $(BUILDDIR)
+all: $(BUILDDIR) dummy
 	@cd $(BUILDDIR) && $(MAKE) top="$(top)" -f $(top)/Makefile odhcp6c
 
 clean:
@@ -41,4 +41,4 @@ $(OBJS:.o=.c) $(HDRS):
 odhcp6c: $(HDRS) $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS) 
 
-.PHONY : all clean install install-common
+.PHONY : all clean install install-common dummy

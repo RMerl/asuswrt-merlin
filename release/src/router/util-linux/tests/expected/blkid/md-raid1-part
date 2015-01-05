@@ -1,21 +1,24 @@
 Create partitions
-Device contains neither a valid DOS partition table, nor Sun, SGI or OSF disklabel
+
 
 Changes will remain in memory only, until you decide to write them.
-After that, of course, the previous content won't be recoverable.
+Be careful before using the write command.
 
-Warning: invalid flag 0x0000 of partition table 4 will be corrected by w(rite)
+Device does not contain a recognized partition table
+
 
 Command (m for help): Partition type:
    p   primary (0 primary, 0 extended, 4 free)
    e   extended
 Select (default p): Partition number (1-4, default 1): First sector (2048-104447, default 2048): Using default value 2048
-Last sector, +sectors or +size{K,M,G} (2048-104447, default 104447): 
+Last sector, +sectors or +size{K,M,G} (2048-104447, default 104447): Partition 1 of type Linux and of size 25 MiB is set
+
 Command (m for help): Partition type:
    p   primary (1 primary, 0 extended, 3 free)
    e   extended
 Select (default p): Partition number (1-4, default 2): First sector (53248-104447, default 53248): Using default value 53248
 Last sector, +sectors or +size{K,M,G} (53248-104447, default 104447): Using default value 104447
+Partition 2 of type Linux and of size 25 MiB is set
 
 Command (m for help): 
 Disk /dev/...: 53 MB, 53477376 bytes

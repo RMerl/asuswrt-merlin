@@ -1,7 +1,7 @@
 #ifndef MD5_H
 #define MD5_H
 
-#if HAVE_STDINT_H
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
 #else
 typedef unsigned int uint32_t;

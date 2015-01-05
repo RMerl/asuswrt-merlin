@@ -89,7 +89,7 @@ char *safe_getenv(const char *arg)
 
 	if (ruid != 0 || (ruid != geteuid()) || (getgid() != getegid()))
 		return NULL;
-#if HAVE_PRCTL
+#ifdef HAVE_PRCTL
 	if (prctl(PR_GET_DUMPABLE, 0, 0, 0, 0) == 0)
 		return NULL;
 #else

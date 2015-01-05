@@ -54,7 +54,7 @@ struct libmnt_cache {
 	 * 1/ all tags are evaluated by udev /dev/disk/by-* symlinks,
 	 *    then the blkid_cache is NULL.
 	 *
-	 * 2/ all tags are read from /etc/blkid.tab and verified by /dev
+	 * 2/ all tags are read from blkid.tab and verified by /dev
 	 *    scanning, then the blkid_cache is not NULL and then it's
 	 *    better to reuse the blkid_cache.
 	 */
@@ -681,7 +681,7 @@ int test_read_tags(struct libmnt_test *ts, int argc, char *argv[])
 
 		if (*line == '/') {
 			if (mnt_cache_read_tags(cache, line) < 0)
-				fprintf(stderr, "%s: read tags faild\n", line);
+				fprintf(stderr, "%s: read tags failed\n", line);
 
 		} else if (strchr(line, '=')) {
 			char *tag, *val;

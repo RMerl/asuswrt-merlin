@@ -87,8 +87,8 @@ var button_flag = 0;
 
 function initial(){
 	show_menu();
-	$("option4").innerHTML = '<table><tbody><tr><td><div id="index_img4"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
-	$("option4").className = "m4_r";
+	document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
+	document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 }
 
 function applyRule(){
@@ -748,7 +748,7 @@ function apply_alert_preference(){
 			<td>
 				<table class="FormTable" width="99%" border="1" align="center" cellpadding="4" cellspacing="0">
 					<tr>
-						<th>Provider</th>
+						<th><#Provider#></th>
 						<td>
 							<div>
 								<select class="input_option" id="mail_provider">
@@ -774,7 +774,7 @@ function apply_alert_preference(){
 						</td>
 					</tr>
 					<tr>
-						<th>Password</th>
+						<th><#PPPConnection_Password_itemname#></th>
 						<td>
 							<div>
 								<input type="password" class="input_30_table" id="mail_password" maxlength="100" value="">
@@ -788,7 +788,7 @@ function apply_alert_preference(){
 			<td>
 				<div style="text-align:center;margin-top:20px;">
 					<input class="button_gen" type="button" onclick="close_alert_preference();" value="<#CTL_close#>">
-					<input class="button_gen_long" type="button" onclick="apply_alert_preference();" value="Apply">
+					<input class="button_gen_long" type="button" onclick="apply_alert_preference();" value="<#CTL_apply#>">
 				</div>
 			</td>		
 		</tr>
@@ -971,10 +971,8 @@ function apply_alert_preference(){
 																				function(){
 																					document.form.wrs_mals_enable.value = 0;
 																					applyRule();
-																				},
-																						{
-																						switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-																				});
+																				}
+																			);
 																		</script>			
 																	</div>
 																</td>													
@@ -998,10 +996,8 @@ function apply_alert_preference(){
 																				function(){
 																					document.form.wrs_vp_enable.value = 0;	
 																					applyRule();	
-																				},
-																						{
-																						switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-																				});
+																				}
+																			);
 																		</script>			
 																	</div>
 																</td>													
@@ -1043,10 +1039,8 @@ function apply_alert_preference(){
 																function(){
 																	document.form.wrs_cc_enable.value = 0;
 																	applyRule();
-																},
-																		{
-																switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-															});
+																}
+															);
 														</script>			
 													</div>
 													<div style="margin-top:-15px;">

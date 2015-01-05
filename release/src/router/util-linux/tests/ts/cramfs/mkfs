@@ -64,7 +64,7 @@ md5sum $IMAGE_NAME 2>&1 | sort >> $TS_OUTPUT
 echo >> $TS_OUTPUT
 
 ts_log "create loop device from image"
-DEVICE=$($TS_CMD_LOSETUP -s -f $IMAGE_PATH)
+DEVICE=$($TS_CMD_LOSETUP --show -f $IMAGE_PATH)
 
 ts_log "check the image"
 ts_device_has "TYPE" "cramfs" $DEVICE

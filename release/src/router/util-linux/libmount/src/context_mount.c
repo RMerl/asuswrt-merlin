@@ -27,19 +27,21 @@
  */
 static int fix_optstr(struct libmnt_context *cxt)
 {
-	int rc = 0, se_rem = 0, se_fix = 0;
+	int rc = 0;
 	char *next;
 	char *name, *val;
 	size_t namesz, valsz;
 	struct libmnt_fs *fs;
-
+#ifdef HAVE_LIBSELINUX
+	int se_fix = 0, se_rem = 0;
+#endif
 	assert(cxt);
 	assert(cxt->fs);
 	assert((cxt->flags & MNT_FL_MOUNTFLAGS_MERGED));
 
 	if (!cxt)
 		return -EINVAL;
-	if (!cxt->fs)
+	if (!cxt->fs || (cxt->flags & MNT_FL_MOUNTOPTS_FIXED))
 		return 0;
 
 	DBG(CXT, mnt_debug_h(cxt, "mount: fixing optstr"));
@@ -125,7 +127,7 @@ static int fix_optstr(struct libmnt_context *cxt)
 			goto done;
 	}
 
-	if (!rc && cxt->user_mountflags && MNT_MS_USER)
+	if (!rc && cxt->user_mountflags & MNT_MS_USER)
 		rc = mnt_optstr_fix_user(&fs->user_optstr);
 
 	/* refresh merged optstr */
@@ -133,6 +135,8 @@ static int fix_optstr(struct libmnt_context *cxt)
 	fs->optstr = NULL;
 	fs->optstr = mnt_fs_strdup_options(fs);
 done:
+	cxt->flags |= MNT_FL_MOUNTOPTS_FIXED;
+
 	DBG(CXT, mnt_debug_h(cxt, "fixed options [rc=%d]: "
 		"vfs: '%s' fs: '%s' user: '%s', optstr: '%s'", rc,
 		fs->vfs_optstr, fs->fs_optstr, fs->user_optstr, fs->optstr));
@@ -145,11 +149,16 @@ done:
  */
 static int generate_helper_optstr(struct libmnt_context *cxt, char **optstr)
 {
+	struct libmnt_optmap const *maps[1];
+	char *next, *name, *val;
+	size_t namesz, valsz;
 	int rc = 0;
 
 	assert(cxt);
 	assert(cxt->fs);
 	assert(optstr);
+
+	DBG(CXT, mnt_debug_h(cxt, "mount: generate heper mount options"));
 
 	*optstr = mnt_fs_strdup_options(cxt->fs);
 	if (!*optstr)
@@ -157,13 +166,32 @@ static int generate_helper_optstr(struct libmnt_context *cxt, char **optstr)
 
 	if (cxt->flags & MNT_FL_SAVED_USER)
 		rc = mnt_optstr_set_option(optstr, "user", cxt->orig_user);
-	if (rc) {
-		free(*optstr);
-		*optstr = NULL;
+	if (rc)
+		goto err;
+
+	/* remove userspace options with MNT_NOHLPS flag */
+	maps[0] = mnt_get_builtin_optmap(MNT_USERSPACE_MAP);
+	next = *optstr;
+
+	while (!mnt_optstr_next_option(&next, &name, &namesz, &val, &valsz)) {
+		const struct libmnt_optmap *ent;
+
+		mnt_optmap_get_entry(maps, 1, name, namesz, &ent);
+		if (ent && ent->id && (ent->mask & MNT_NOHLPS)) {
+			next = name;
+			rc = mnt_optstr_remove_option_at(optstr, name,
+					val ? val + valsz : name + namesz);
+			if (rc)
+				goto err;
+		}
 	}
+
+	return rc;
+err:
+	free(*optstr);
+	*optstr = NULL;
 	return rc;
 }
-
 
 /*
  * this has to be called before fix_optstr()
@@ -171,7 +199,6 @@ static int generate_helper_optstr(struct libmnt_context *cxt, char **optstr)
 static int evaluate_permissions(struct libmnt_context *cxt)
 {
 	unsigned long u_flags = 0;
-	const char *srcpath;
 
 	assert(cxt);
 	assert(cxt->fs);
@@ -200,7 +227,7 @@ static int evaluate_permissions(struct libmnt_context *cxt)
 		 */
 		if (!(cxt->flags & MNT_FL_TAB_APPLIED))
 		{
-			DBG(CXT, mnt_debug_h(cxt, "fstab not applied, ignore user mount"));
+			DBG(CXT, mnt_debug_h(cxt, "perms: fstab not applied, ignore user mount"));
 			return -EPERM;
 		}
 
@@ -209,9 +236,6 @@ static int evaluate_permissions(struct libmnt_context *cxt)
 		 * are applied by mnt_optstr_get_flags() from mnt_context_merge_mflags()
 		 */
 
-		srcpath = mnt_fs_get_srcpath(cxt->fs);
-		if (!srcpath)
-			return -EINVAL;
 
 		/*
 		 * MS_OWNER: Allow owners to mount when fstab contains the
@@ -222,6 +246,21 @@ static int evaluate_permissions(struct libmnt_context *cxt)
 		 */
 		if (u_flags & (MNT_MS_OWNER | MNT_MS_GROUP)) {
 			struct stat sb;
+			struct libmnt_cache *cache = NULL;
+			char *xsrc = NULL;
+			const char *srcpath = mnt_fs_get_srcpath(cxt->fs);
+
+			if (!srcpath) {					/* Ah... source is TAG */
+				cache = mnt_context_get_cache(cxt);
+				xsrc = mnt_resolve_spec(
+						mnt_context_get_source(cxt),
+						cache);
+				srcpath = xsrc;
+			}
+			if (!srcpath) {
+				DBG(CXT, mnt_debug_h(cxt, "perms: src undefined"));
+				return -EPERM;
+			}
 
 			if (strncmp(srcpath, "/dev/", 5) == 0 &&
 			    stat(srcpath, &sb) == 0 &&
@@ -229,6 +268,9 @@ static int evaluate_permissions(struct libmnt_context *cxt)
 			     ((u_flags & MNT_MS_GROUP) && mnt_in_group(sb.st_gid))))
 
 				cxt->user_mountflags |= MNT_MS_USER;
+
+			if (!cache)
+				free(xsrc);
 		}
 
 		if (!(cxt->user_mountflags & (MNT_MS_USER | MNT_MS_USERS))) {
@@ -345,7 +387,6 @@ static int exec_helper(struct libmnt_context *cxt)
 		}
 		args[i] = NULL;				/* 12 */
 #ifdef CONFIG_LIBMOUNT_DEBUG
-		i = 0;
 		for (i = 0; args[i]; i++)
 			DBG(CXT, mnt_debug_h(cxt, "argv[%d] = \"%s\"",
 							i, args[i]));
@@ -439,10 +480,6 @@ static int do_mount(struct libmnt_context *cxt, const char *try_type)
 			rc = mnt_fs_set_fstype(fs, try_type);
 	}
 
-	/* TODO: check if the result is really read-only/read-write
-	 *       and if necessary update cxt->mountflags
-	 */
-
 	return rc;
 }
 
@@ -461,7 +498,7 @@ static int do_mount_by_pattern(struct libmnt_context *cxt, const char *pattern)
 		 */
 		char *p, *p0;
 
-		DBG(CXT, mnt_debug_h(cxt, "tring mount by FS pattern list"));
+		DBG(CXT, mnt_debug_h(cxt, "trying to mount by FS pattern list"));
 
 		p0 = p = strdup(pattern);
 		if (!p)
@@ -483,7 +520,7 @@ static int do_mount_by_pattern(struct libmnt_context *cxt, const char *pattern)
 	/*
 	 * try /etc/filesystems and /proc/filesystems
 	 */
-	DBG(CXT, mnt_debug_h(cxt, "tring mount by filesystems lists"));
+	DBG(CXT, mnt_debug_h(cxt, "trying to mount by filesystems lists"));
 
 	rc = mnt_get_filesystems(&filesystems, neg ? pattern : NULL);
 	if (rc)
@@ -515,7 +552,7 @@ int mnt_context_prepare_mount(struct libmnt_context *cxt)
 	assert(cxt->helper_exec_status == 1);
 	assert(cxt->syscall_status == 1);
 
-	if (!cxt || !cxt->fs || (cxt->fs->flags & MNT_FS_SWAP))
+	if (!cxt || !cxt->fs || mnt_fs_is_swaparea(cxt->fs))
 		return -EINVAL;
 	if (!mnt_fs_get_source(cxt->fs) && !mnt_fs_get_target(cxt->fs))
 		return -EINVAL;
@@ -556,6 +593,13 @@ int mnt_context_prepare_mount(struct libmnt_context *cxt)
  *
  * Call mount(2) or mount.type helper. Unnecessary for mnt_context_mount().
  *
+ * Note that this function could be called only once. If you want to mount
+ * another source or target than you have to call mnt_reset_context().
+ *
+ * If you want to call mount(2) for the same source and target with a diffrent
+ * mount flags or fstype then you call mnt_context_reset_status() and then try
+ * again mnt_context_do_mount().
+ *
  * WARNING: non-zero return code does not mean that mount(2) syscall or
  *          umount.type helper wasn't sucessfully called.
  *
@@ -568,6 +612,7 @@ int mnt_context_prepare_mount(struct libmnt_context *cxt)
 int mnt_context_do_mount(struct libmnt_context *cxt)
 {
 	const char *type;
+	int res;
 
 	assert(cxt);
 	assert(cxt->fs);
@@ -584,9 +629,40 @@ int mnt_context_do_mount(struct libmnt_context *cxt)
 
 	type = mnt_fs_get_fstype(cxt->fs);
 	if (type)
-		return do_mount(cxt, NULL);
+		res = do_mount(cxt, NULL);
+	else
+		res = do_mount_by_pattern(cxt, cxt->fstype_pattern);
 
-	return do_mount_by_pattern(cxt, cxt->fstype_pattern);
+	if (mnt_context_get_status(cxt)
+	    && !(cxt->flags & MNT_FL_FAKE)
+	    && !cxt->helper) {
+		/*
+		 * Mounted by mount(2), do some post-mount checks
+		 *
+		 * Kernel allows to use MS_RDONLY for bind mounts, but the
+		 * read-only request could be silently ignored. Check it to
+		 * avoid 'ro' in mtab and 'rw' in /proc/mounts.
+		 */
+		if ((cxt->mountflags & MS_BIND)
+		    && (cxt->mountflags & MS_RDONLY)
+		    && !mnt_is_readonly(mnt_context_get_target(cxt)))
+
+			mnt_context_set_mflags(cxt,
+					cxt->mountflags & ~MS_RDONLY);
+
+
+		/* Kernel can silently add MS_RDONLY flag when mounting file
+		 * system that does not have write support. Check this to avoid
+		 * 'ro' in /proc/mounts and 'rw' in mtab.
+		 */
+		if (!(cxt->mountflags & (MS_RDONLY | MS_PROPAGATION | MS_MOVE))
+		    && mnt_is_readonly(mnt_context_get_target(cxt)))
+
+			mnt_context_set_mflags(cxt,
+					cxt->mountflags | MS_RDONLY);
+	}
+
+	return res;
 }
 
 /**
@@ -626,6 +702,11 @@ int mnt_context_finalize_mount(struct libmnt_context *cxt)
  *	mnt_context_finalize_mount(cxt);
  *
  * See also mnt_context_disable_helpers().
+ *
+ * Note that this function could be called only once. If you want to mount with
+ * different setting than you have to call mnt_reset_context(). It's NOT enough
+ * to call mnt_context_reset_status() if you want call this function more than
+ * once, whole context has to be reseted.
  *
  * WARNING: non-zero return code does not mean that mount(2) syscall or
  *          mount.type helper wasn't sucessfully called.
@@ -726,10 +807,10 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 	DBG(CXT, mnt_debug_h(cxt, "next-mount: trying %s", tgt));
 
 	/*  ignore swap */
-	if (((*fs)->flags & MNT_FS_SWAP) ||
+	if (mnt_fs_is_swaparea(*fs) ||
 
 	/* ignore root filesystem */
-	  (tgt && (strcmp(tgt, "/") == 0 || strcmp(tgt, "root") == 0)) ||
+	   (tgt && (strcmp(tgt, "/") == 0 || strcmp(tgt, "root") == 0)) ||
 
 	/* ignore noauto filesystems */
 	   (o && mnt_optstr_get_option(o, "noauto", NULL, NULL) == 0) ||
@@ -762,12 +843,30 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 		return 0;
 	}
 
+	if (mnt_context_is_fork(cxt)) {
+		rc = mnt_fork_context(cxt);
+		if (rc)
+			return rc;		/* fork error */
+
+		if (mnt_context_is_parent(cxt)) {
+			return 0;		/* parent */
+		}
+	}
+
+	/* child or non-forked */
+
 	rc = mnt_context_set_fs(cxt, *fs);
-	if (rc)
-		return rc;
-	rc = mnt_context_mount(cxt);
-	if (mntrc)
-		*mntrc = rc;
+	if (!rc) {
+		rc = mnt_context_mount(cxt);
+		if (mntrc)
+			*mntrc = rc;
+	}
+
+	if (mnt_context_is_child(cxt)) {
+		DBG(CXT, mnt_debug_h(cxt, "next-mount: child exit [rc=%d]", rc));
+		DBG_FLUSH;
+		exit(rc);
+	}
 	return 0;
 }
 

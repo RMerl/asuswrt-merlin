@@ -12,16 +12,30 @@
   <wan>wlan1_radio_flag=<% nvram_get("wl1_radio"); %></wan>
   <wan>data_rate_info_2g=<% wl_rate_2g(); %></wan>  
   <wan>data_rate_info_5g=<% wl_rate_5g(); %></wan>  
-  <wan>data_rate_info_5g_2=<% wl_rate_5g_2(); %></wan> 
+  <wan>data_rate_info_5g_2=<% wl_rate_5g_2(); %></wan>
+  <wan>wan_diag_state=<% nvram_get("dslx_diag_state"); %></wan>
   <vpn>vpnc_proto=<% nvram_get("vpnc_proto"); %></vpn>  
   <vpn>vpnc_state_t=<% nvram_get("vpnc_state_t"); %></vpn>  
   <vpn>vpnc_sbstate_t=<% nvram_get("vpnc_sbstate_t"); %></vpn>
   <vpn>vpn_client1_state=<% nvram_get("vpn_client1_state"); %></vpn>  
   <vpn>vpn_client2_state=<% nvram_get("vpn_client2_state"); %></vpn>
   <vpn>vpnd_state=<% nvram_get("VPNServer_enable"); %></vpn>
+  <vpn>vpn_client1_errno=<% nvram_get("vpn_client1_errno"); %></vpn>
+  <vpn>vpn_client2_errno=<% nvram_get("vpn_client2_errno"); %></vpn>
   <vpn>vpn_server1_state=<% nvram_get("vpn_server1_state"); %></vpn>
   <vpn>vpn_server2_state=<% nvram_get("vpn_server2_state"); %></vpn>
   <qtn>qtn_state=<% nvram_get("qtn_ready"); %></qtn>
   <% secondary_ajax_wanstate(); %>
 	<usb>'<% show_usb_path(); %>'</usb>
+  <% ajax_dualwanstate(); %>
+  <sim>sim_state=<% nvram_get("usb_modem_act_sim"); %></sim>
+  <sim>sim_signal=<% nvram_get("usb_modem_act_signal"); %></sim>
+  <sim>sim_operation=<% nvram_get("usb_modem_act_operation"); %></sim>
+  <sim>sim_isp=<% nvram_get("modem_isp"); %></sim>
+  <sim>roaming=<% nvram_get("modem_roaming"); %></sim>
+  <sim>roaming_imsi=<% nvram_get("modem_roaming_imsi"); %></sim>
+  <sim>sim_imsi=<% nvram_get("usb_modem_act_imsi"); %></sim>
+  <sim>g3err_pin=<% nvram_get("g3err_pin"); %></sim>
+  <sim>pin_remaining_count=<% nvram_get("usb_modem_act_auth_pin"); %></sim>
+  <sim>sim_spn=<% nvram_get("modem_spn"); %></sim>
 </devicemap>

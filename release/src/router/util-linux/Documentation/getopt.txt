@@ -1,0 +1,31 @@
+This package contains a reimplementation of getopt(1).
+
+PREFACE
+
+Getopt(1) is a program to help shell scripts parse command-line parameters.
+
+HIGHLIGHTS
+
+It can do anything that the GNU getopt(3) routines can do.
+
+It can cope with spaces and shell metacharacters within arguments.
+
+It can parse long parameters.
+
+It can shuffle parameters, so you can mix options and other parameters on
+the command-line.
+
+It can be easily identified as an enhanced getopt(1) from within shell scripts.
+
+It can report parse errors as coming from the shell script.
+
+It is fully compatible with other getopt(1) implementations.
+
+COPYING
+
+This program comes under the GNU general public license version 2. See the
+file COPYING included in this package. Note that though you may freely
+copy it, it is copyright (c) 1997-2005 by Frodo Looijaard
+<frodo@frodo.looijaard.name>.
+Files in the gnu directory are from glibc-2.0.4: copyright (C) 1987, 88,
+89, 90, 91, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.

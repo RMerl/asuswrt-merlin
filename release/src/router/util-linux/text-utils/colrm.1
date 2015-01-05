@@ -31,44 +31,45 @@
 .\"
 .\"     @(#)colrm.1	6.6 (Berkeley) 3/14/91
 .\"
-.Dd May 2011 "  "
-.Dt COLRM(1) "" "User Commands"
-.Os util-linux
-.Sh NAME
-.Nm colrm
-.Nd remove columns from a file
-.Sh SYNOPSIS
-.Nm colrm
-.Op Ar startcol Op Ar endcol
-.Sh DESCRIPTION
-.Nm
+.TH COLRM "1" "September 2011" "util-linux" "User Commands"
+.SH NAME
+colrm \- remove columns from a file
+.SH SYNOPSIS
+.B colrm
+.RI [ first \ [ last ]]
+.SH DESCRIPTION
+.B colrm
 removes selected columns from a file.  Input is taken from standard input.
 Output is sent to standard output.
-.Pp
-If called with one parameter the columns
-of each line will be removed starting with the specified column.
-If called with two parameters the columns from the first column
-to the last column will be removed.
-.Pp
+.PP
+If called with one parameter the columns of each line will be removed
+starting with the specified
+.I first
+column.  If called with two parameters the columns from the
+.I first
+column to the
+.I last
+column will be removed.
+.PP
 Column numbering starts with column 1.
-.Pp
-The options are as follows:
-.Bl -tag -width "-lnum"
-.It Fl V, Fl Fl version
+.SH OPTIONS
+.TP
+\fB\-V\fR, \fB\-\-version\fR
 Output version information and exit.
-.It Fl H, Fl Fl help
+.TP
+\fB\-h\fR, \fB\-\-help\fR
 Output help and exit.
-.El
-.Sh SEE ALSO
-.Xr awk 1 ,
-.Xr column 1 ,
-.Xr expand 1 ,
-.Xr paste 1
-.Sh HISTORY
+.SH SEE ALSO
+.BR awk (1),
+.BR column (1),
+.BR expand (1),
+.BR paste (1)
+.SH HISTORY
 The
-.Nm
-command appeared in 
-.Bx 3.0 .
-.Sh AVAILABILITY
+.B colrm
+command appeared in 3.0BSD.
+.SH AVAILABILITY
 The colrm command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

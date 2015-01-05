@@ -65,8 +65,6 @@ EOF
 
 ts_device_deinit $DEVICE
 
-# remove disk ID 
-sed -i -e 's/Disk identifier:.*//g' $TS_OUTPUT
-sed -i -e 's/Building a new.*//g' $TS_OUTPUT
+ts_fdisk_clean
 
 ts_finalize

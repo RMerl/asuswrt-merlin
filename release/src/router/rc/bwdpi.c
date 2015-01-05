@@ -28,6 +28,7 @@ int bwdpi_main(int argc, char **argv)
 	int c;
 	char *mode = NULL, *name = NULL, *dura = NULL, *date = NULL;
 	char *MAC = NULL;
+	char *page = NULL;
 	int clean_flag = 0;
 
 	if (argc == 1){
@@ -35,7 +36,7 @@ int bwdpi_main(int argc, char **argv)
 		printf("  bwdpi [iqos/qosd/wrs] [start/stop/restart]\n");
 		printf("  bwdpi dc [start/stop/restart] [ptah]\n");
 		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
-		printf("  bwpdi history -m [MAC] -z\n");
+		printf("  bwpdi history -m [MAC] -z -p [page]\n");
 		printf("  bwpdi app [0/1]\n");
 		printf("  bwpdi cc [0/1]\n");
 		printf("  bwpdi vp [0/1]\n");
@@ -114,7 +115,7 @@ int bwdpi_main(int argc, char **argv)
 		return stat_main(mode, name, dura, date);
 	}
 	else if (!strcmp(argv[1], "history")){
-		while ((c = getopt(argc, argv, "m:z")) != -1)
+		while ((c = getopt(argc, argv, "m:zp:")) != -1)
 		{
 			switch(c)
 			{
@@ -126,8 +127,11 @@ int bwdpi_main(int argc, char **argv)
 					printf("clear web history\n");
 					clean_flag = 1;
 					break;
+				case 'p':
+					page = optarg;
+					break;
 				default:
-					printf("  bwpdi history -m [MAC] -z\n");
+					printf("  bwpdi history -m [MAC] -z -p [page]\n");
 					break;
 			}
 		}
@@ -138,7 +142,7 @@ int bwdpi_main(int argc, char **argv)
 		}
 		else
 		{
-			return web_history_main(MAC);
+			return web_history_main(MAC, page);
 		}
 	}
 	else if (!strcmp(argv[1], "app")){
@@ -301,7 +305,7 @@ int bwdpi_main(int argc, char **argv)
 		printf("  bwdpi [iqos/qosd/wrs] [start/stop/restart]\n");
 		printf("  bwdpi dc [start/stop/restart] [ptah]\n");
 		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
-		printf("  bwpdi history -m [MAC] -z\n");
+		printf("  bwpdi history -m [MAC] -z -p [page]\n");
 		printf("  bwpdi app [0/1]\n");
 		printf("  bwpdi cc [0/1]\n");
 		printf("  bwpdi vp [0/1]\n");

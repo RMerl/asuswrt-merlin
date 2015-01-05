@@ -349,7 +349,7 @@ static int probe_vfat(blkid_probe pr, const struct blkid_idmag *mag)
 			}
 
 			/* get FAT entry */
-			fat_entry_off = (reserved * sector_size) +
+			fat_entry_off = ((uint64_t) reserved * sector_size) +
 				(next * sizeof(uint32_t));
 			buf = blkid_probe_get_buffer(pr, fat_entry_off, buf_size);
 			if (buf == NULL)

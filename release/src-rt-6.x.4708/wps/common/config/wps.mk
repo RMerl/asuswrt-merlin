@@ -16,6 +16,8 @@ ifeq ($(BLDTYPE), debug)
 WPSFLAGS += -D_TUDEBUGTRACE
 endif
 
+WPSFLAGS += -Os
+
 ifeq ($(WCN_NET), 1)
 WPSFLAGS += -DWCN_NET_SUPPORT   
 endif

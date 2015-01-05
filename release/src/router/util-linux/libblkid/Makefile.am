@@ -12,5 +12,5 @@ pkgconfig_DATA = blkid.pc
 
 dist_man_MANS = libblkid.3
 
-EXTRA_DIST = COPYING.libblkid README.blkid blkid.pc.in libblkid.3
+EXTRA_DIST = blkid.pc.in libblkid.3
 

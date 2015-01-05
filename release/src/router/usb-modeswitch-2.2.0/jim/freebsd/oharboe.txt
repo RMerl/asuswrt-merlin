@@ -1,0 +1,85 @@
+                                                                                                                                                                                                                                                            
+Received: by 10.100.7.20 with HTTP; Wed, 16 Jul 2008 10:12:05 -0700 (PDT)
+Message-ID: <c09652430807161012m178c5fbesef9a3f831e4d1dac@mail.gmail.com>
+Date: Wed, 16 Jul 2008 19:12:05 +0200
+From: "=?ISO-8859-1?Q?=D8yvind_Harboe?=" <oyvind.harboe@zylin.com>
+Sender: oyvindharboe@gmail.com
+To: jim-devel@lists.berlios.de
+Subject: Re: Change Jim Tcl license
+In-Reply-To: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+References: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+Delivered-To: oyvindharboe@gmail.com
+X-Google-Sender-Auth: fc18e85532eee8f2
+
+For the record:
+
+I would like my contributions  to Jim Tcl to be under a FreeBSD license too=
+.
+
+On Wed, Jul 16, 2008 at 9:34 AM, =D8yvind Harboe <oyvind.harboe@zylin.com> =
+wrote:
+> Hi all,
+>
+> I'm currently the maintainer of Jim Tcl trying as best as I can
+> to fill Salvatore's shoes.
+>
+> Short story:
+>
+> If you have contributed to Jim Tcl, please reply to this email
+> that you agree that we can switch Jim Tcl to a FreeBSD license.
+>
+> Once I have a record of all contributors agreeing to switch
+> to a FreeBSD license, I'll update CVS.
+>
+> Long story:
+>
+> The current Jim Tcl license has a problem with GPL. If you
+> link GPL code and Jim Tcl, the result is no license at all.
+>
+> This prevents Jim Tcl from being used in GPL projects.
+>
+> Lately Jim Tcl has been used with OpenOCD, a GPL project,
+> and the license issue must be resolved one way or another.
+>
+> Upon conferring with Jonathan Larmour <jifl@ecoscentric.com>, who
+> has kindly helped out with his knowledge on the topic, I have
+> concluded that the best way to rectify this is to change the
+> Jim Tcl license to a FreeBSD license. See OpenOCD mailing
+> list for a discussion on this if you want details.
+>
+> http://www.fsf.org/licensing/licenses/index_html#FreeBSD
+>
+> As far as I can determine, below is the complete list of contributors.
+>
+>
+> antirez - Salvatore Sanfilippo <antirez@gmail.com>
+> patthoyts - ?? Pat Thoyts <patthoyts@users.sf.net>
+> oharboe - =D8yvind Harboe - soyvind.harboe@zylin.com
+> chi - ??
+> Andrew Lunn <andrew@lunn.ch>
+> Duane Ellis <openocd@duaneellis.com>
+> Uwe Klein <uklein@klein-messgeraete.de>
+> Clemens Hintze ml-jim@qiao.in-berlin.de
+>
+> Please let me know if any of the emails below are wrong(chi is
+> missing) or the list is not complete.
+>
+>
+> --
+> =D8yvind Harboe
+> http://www.zylin.com/zy1000.html
+> ARM7 ARM9 XScale Cortex
+> JTAG debugger and flash programmer
+>
+
+
+
+--=20
+=D8yvind Harboe
+http://www.zylin.com/zy1000.html
+ARM7 ARM9 XScale Cortex
+JTAG debugger and flash programmer

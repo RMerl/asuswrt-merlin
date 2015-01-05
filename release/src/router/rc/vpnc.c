@@ -339,7 +339,7 @@ stop_vpnc(void)
 	/* Stop pppd */
 	if (kill_pidfile_s(pidfile, SIGHUP) == 0 &&
 	    kill_pidfile_s(pidfile, SIGTERM) == 0) {
-		usleep(1000*1000);
+		usleep(3000*1000);
 		kill_pidfile_tk(pidfile);
 	}
 }

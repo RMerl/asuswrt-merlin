@@ -1,0 +1,7 @@
+What is here
+------------
+
+The util-linux contains supplementary textual material, such as
+readme files, release notes, licenses and so on. Common to these
+files is that they contain information for contributors but
+should not end up to end user installation.

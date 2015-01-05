@@ -22,6 +22,9 @@ TS_DESC="basic paths"
 ts_init "$*"
 ts_skip_nonroot
 
+$TS_CMD_MOUNT -V | grep -q "libmount"
+[ $? -eq 0 ] && ts_skip "libmount version"
+
 $TS_CMD_MOUNT -n -f -v -v -v /dev/dummy /mnt &> $TS_OUTPUT
 
 ts_finalize

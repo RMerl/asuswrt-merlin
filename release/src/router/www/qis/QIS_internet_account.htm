@@ -9,9 +9,11 @@
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
+<script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/alttxt.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
 <script>
+<% login_state_hook(); %>
 var now_flag = '<% get_parameter("flag"); %>';
 <% wan_get_parameter(); %>
 
@@ -45,6 +47,7 @@ function get_value_from_parent(){
 	else
 		document.form.wan_proto.value = parent.document.QKform.wan_proto.value;
 	
+	document.form.wan_hwaddr_x.value = parent.document.QKform.wan_hwaddr_x.value;
 	document.form.wan_pppoe_username.value = parent.document.QKform.wan_pppoe_username.value;
 	document.form.wan_pppoe_passwd.value = parent.document.QKform.wan_pppoe_passwd.value;
 	
@@ -82,6 +85,7 @@ function submitForm(o, s){
 	if(parent.ISMOBILE){
 		document.form.wan_pppoe_username.value = document.form.wan_pppoe_username_m.value;
 		document.form.wan_pppoe_passwd.value = document.form.wan_pppoe_passwd_m.value;
+		document.form.wan_hwaddr_x.value = document.form.wan_hwaddr_x_m.value;
 	}
 
 	if(document.form.wan_pppoe_username.value.length == 0){
@@ -104,6 +108,12 @@ function submitForm(o, s){
 		changeiuiBackground(0);
 		return false;
 	}
+
+	if(!check_macaddr(document.form.wan_hwaddr_x,check_hwaddr_flag(document.form.wan_hwaddr_x))){
+		document.form.wan_hwaddr_x.select();
+		document.form.wan_hwaddr_x.focus();
+		return false;
+	}
 	
 	if(now_flag == "auto_way"){
 		//parent.showLoading();
@@ -117,11 +127,14 @@ function submitForm(o, s){
 		document.form.wan_heartbeat_x.disabled = false;
 		
 		$("x_Setting").disabled = false;
-		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
-		
+		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';		
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
 		
-		document.form.flag.value = "verify_detect";
+		if(parent.isManual)
+			document.form.flag.value = "manual";
+		else
+			document.form.flag.value = "verify_detect";
+
 		document.form.next_page.value = "/QIS_wizard.htm";	
 		document.form.submit();
 	}
@@ -150,13 +163,19 @@ function submitForm(o, s){
 		$("x_Setting").disabled = false;
 		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
-		document.form.flag.value = "verify_detect";
+
+		if(parent.isManual)
+			document.form.flag.value = "manual";
+		else
+			document.form.flag.value = "verify_detect";
+
 		document.form.next_page.value = "/QIS_wizard.htm";
 		document.form.submit();
 	}
 	else if(document.form.wan_proto.value == 'pptp'|| document.form.wan_proto.value == 'l2tp'){
 		document.form.next_page.value = "QIS_internet_ip.htm";
 		
+		parent.document.QKform.wan_hwaddr_x.value = document.form.wan_hwaddr_x.value;
 		parent.document.QKform.wan_pppoe_username.value = document.form.wan_pppoe_username.value;
 		parent.document.QKform.wan_pppoe_passwd.value = document.form.wan_pppoe_passwd.value;
 		
@@ -190,6 +209,44 @@ function submitenter(myfield,e)
 /* password item show or not */
 function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
+}
+
+function showMAC(){
+	var tempMAC = "";
+	document.form.wan_hwaddr_x.value = login_mac_str();
+	document.form.wan_hwaddr_x.focus();
+}
+
+function showMAC_m(){
+	var tempMAC = "";
+	if(document.getElementById("toggleDNS").getAttribute("toggled") == "true"){	
+		document.form.wan_hwaddr_x_m.value = login_mac_str();
+		document.form.wan_hwaddr_x.value = login_mac_str();
+	}
+	else{
+		document.form.wan_hwaddr_x_m.value = "";
+	}
+}
+
+function check_macaddr(obj,flag){ //control hint of input mac address
+	if(flag == 1){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		return false;
+	}else if(flag == 2){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		return false;
+	}else{
+		$("check_mac") ? $("check_mac").style.display="none" : true;
+		return true;
+	}
 }
 
 </script>                                          
@@ -251,14 +308,14 @@ function pass_checked(obj){
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_UserName_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36"/>
+	  <input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36" autocapitalization="off" autocomplete="off"/>
 	</td>
   </tr>
 
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_Password_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" tabindex="2" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36"/>	  
+	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" tabindex="2" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36" autocapitalization="off" autocomplete="off"/>	  
 	</td>
   </tr>
 	<tr>
@@ -266,6 +323,18 @@ function pass_checked(obj){
 		<td>
 			<input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.wan_pppoe_passwd);"><#QIS_show_pass#>
 		</td>
+	</tr>
+	<tr>
+	  <th width="185">
+			<span onmouseout="return nd();" onclick="overlib('<#PPPConnection_x_MacAddressForISP_itemdesc#>', FIXX, 270, FIXY, 30);" style="cursor:help;">
+				<#BOP_isp_mac_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png">
+			</span>
+		</th>
+	  <td class="QISformtd">
+		<input type="text" name="wan_hwaddr_x" tabindex="2" onkeypress="return validator.isHWAddr(this,event);" class="input_20_table" maxlength="17" value=""/>
+		&nbsp&nbsp&nbsp
+		<input type="button" class="button_gen_long" tabindex="3" onclick="showMAC();" value="<#BOP_isp_MACclone#>">		
+	  </td>
 	</tr>
   <tr><td colspan=2>&nbsp;</td></tr>
   <tr>
@@ -289,11 +358,24 @@ function pass_checked(obj){
 		<div id="DNSDiv">
 			<div class="row">
 				<label><#PPPConnection_UserName_itemname#></label>
-				<input type="text" name="wan_pppoe_username_m" placeholder="" maxlength="64" value=""/>
+				<input type="text" name="wan_pppoe_username_m" placeholder="" maxlength="64" value="" autocapitalization="off" autocomplete="off"/>
 			</div>
-			<div class="row_end">
+			<div class="row">
 				<label><#PPPConnection_Password_itemname#></label>
-				<input name="wan_pppoe_passwd_m" type="text" placeholder="" autocapitalization="off" maxlength="64">
+				<input name="wan_pppoe_passwd_m" type="text" placeholder="" maxlength="64" autocapitalization="off" autocomplete="off">
+			</div>
+			<div class="row">
+				<label><#BOP_isp_MACclone#></label>
+				<div id="toggleDNS" class="toggle" onclick="showMAC_m();" toggled="false">
+					<span class="thumb"></span>
+					<span class="toggleOn"><#checkbox_Yes#></span>
+					<span class="toggleOff"><#checkbox_No#></span>
+				</div>
+			</div>
+
+			<div class="row_end">
+				<label>MAC Address:</label>
+				<input name="wan_hwaddr_x_m" type="text" placeholder="" onkeypress="return validator.isHWAddr(this,event);" autocapitalization="off" maxlength="17">
 			</div>
 		</div>
 	</fieldset>

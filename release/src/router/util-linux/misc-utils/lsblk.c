@@ -41,6 +41,10 @@
 
 #include <blkid.h>
 
+#ifdef HAVE_LIBUDEV
+#include <libudev.h>
+#endif
+
 #include <assert.h>
 
 #include "pathnames.h"
@@ -84,8 +88,6 @@ enum {
 	COL_DGRAN,
 	COL_DMAX,
 	COL_DZERO,
-
-	__NCOLUMNS
 };
 
 /* column names */
@@ -97,8 +99,8 @@ struct colinfo {
 };
 
 /* columns descriptions */
-static struct colinfo infos[__NCOLUMNS] = {
-	[COL_NAME]   = { "NAME",    0.25, TT_FL_TREE, N_("device name") },
+static struct colinfo infos[] = {
+	[COL_NAME]   = { "NAME",    0.25, TT_FL_TREE | TT_FL_NOEXTREMES, N_("device name") },
 	[COL_KNAME]  = { "KNAME",   0.3, 0, N_("internal kernel device name") },
 	[COL_MAJMIN] = { "MAJ:MIN", 6, 0, N_("major:minor device number") },
 	[COL_FSTYPE] = { "FSTYPE",  0.1, TT_FL_TRUNC, N_("filesystem type") },
@@ -136,7 +138,9 @@ struct lsblk {
 };
 
 struct lsblk *lsblk;	/* global handler */
-int columns[__NCOLUMNS];/* enabled columns */
+
+#define NCOLS ARRAY_SIZE(infos)
+int columns[NCOLS];/* enabled columns */
 int ncolumns;		/* number of enabled columns */
 
 int excludes[256];
@@ -186,9 +190,9 @@ static int is_maj_excluded(int maj)
 /* array with IDs of enabled columns */
 static int get_column_id(int num)
 {
-	assert(ARRAY_SIZE(columns) == __NCOLUMNS);
+	assert(ARRAY_SIZE(columns) == NCOLS);
 	assert(num < ncolumns);
-	assert(columns[num] < __NCOLUMNS);
+	assert(columns[num] < (int) NCOLS);
 	return columns[num];
 }
 
@@ -199,9 +203,9 @@ static struct colinfo *get_column_info(int num)
 
 static int column_name_to_id(const char *name, size_t namesz)
 {
-	int i;
+	size_t i;
 
-	for (i = 0; i < __NCOLUMNS; i++) {
+	for (i = 0; i < NCOLS; i++) {
 		const char *cn = infos[i].name;
 
 		if (!strncasecmp(name, cn, namesz) && !*(cn + namesz))
@@ -284,20 +288,58 @@ static char *get_device_mountpoint(struct blkdev_cxt *cxt)
 	return strlen(mnt) ? xstrdup(mnt) : NULL;
 }
 
-/* TODO: read info from udev db (if possible) for non-root users
- */
+#ifndef HAVE_LIBUDEV
+static int probe_device_by_udev(struct blkdev_cxt *cxt
+				__attribute__((__unused__)))
+{
+	return -1;
+}
+#else
+static int probe_device_by_udev(struct blkdev_cxt *cxt)
+{
+	struct udev *udev;
+	struct udev_device *dev;
+
+	udev = udev_new();
+	if (!udev)
+		return -1;
+
+	dev = udev_device_new_from_subsystem_sysname(udev, "block", cxt->name);
+	if (dev) {
+		const char *data;
+
+		if ((data = udev_device_get_property_value(dev, "ID_FS_LABEL")))
+			cxt->label = xstrdup(data);
+		if ((data = udev_device_get_property_value(dev, "ID_FS_TYPE")))
+			cxt->fstype = xstrdup(data);
+		if ((data = udev_device_get_property_value(dev, "ID_FS_UUID")))
+			cxt->uuid = xstrdup(data);
+
+		udev_device_unref(dev);
+	}
+
+	udev_unref(udev);
+        return 0;
+}
+#endif /* HAVE_LIBUDEV */
+
 static void probe_device(struct blkdev_cxt *cxt)
 {
-	char *path = NULL;
 	blkid_probe pr = NULL;
 
 	if (cxt->probed)
 		return;
+
 	cxt->probed = 1;
 
 	if (!cxt->size)
 		return;
 
+	/* try udev DB */
+	if (probe_device_by_udev(cxt) == 0)
+		return;				/* success */
+
+	/* try libblkid */
 	pr = blkid_new_probe_from_filename(cxt->filename);
 	if (!pr)
 		return;
@@ -320,7 +362,6 @@ static void probe_device(struct blkdev_cxt *cxt)
 			cxt->label = xstrdup(data);
 	}
 
-	free(path);
 	blkid_free_probe(pr);
 	return;
 }
@@ -428,10 +469,11 @@ static void set_tt_data(struct blkdev_cxt *cxt, int col, int id, struct tt_line 
 {
 	char buf[1024];
 	char *p = NULL;
+	int st_rc = 0;
 
 	if (!cxt->st.st_rdev && (id == COL_OWNER || id == COL_GROUP ||
 				 id == COL_MODE))
-		stat(cxt->filename, &cxt->st);
+		st_rc = stat(cxt->filename, &cxt->st);
 
 	switch(id) {
 	case COL_NAME:
@@ -446,14 +488,14 @@ static void set_tt_data(struct blkdev_cxt *cxt, int col, int id, struct tt_line 
 		break;
 	case COL_OWNER:
 	{
-		struct passwd *pw = getpwuid(cxt->st.st_uid);
+		struct passwd *pw = st_rc ? NULL : getpwuid(cxt->st.st_uid);
 		if (pw)
 			tt_line_set_data(ln, col, xstrdup(pw->pw_name));
 		break;
 	}
 	case COL_GROUP:
 	{
-		struct group *gr = getgrgid(cxt->st.st_gid);
+		struct group *gr = st_rc ? NULL : getgrgid(cxt->st.st_gid);
 		if (gr)
 			tt_line_set_data(ln, col, xstrdup(gr->gr_name));
 		break;
@@ -461,8 +503,11 @@ static void set_tt_data(struct blkdev_cxt *cxt, int col, int id, struct tt_line 
 	case COL_MODE:
 	{
 		char md[11];
-		strmode(cxt->st.st_mode, md);
-		tt_line_set_data(ln, col, xstrdup(md));
+
+		if (!st_rc) {
+			strmode(cxt->st.st_mode, md);
+			tt_line_set_data(ln, col, xstrdup(md));
+		}
 		break;
 	}
 	case COL_MAJMIN:
@@ -866,7 +911,7 @@ static void parse_excludes(const char *str)
 
 static void __attribute__((__noreturn__)) help(FILE *out)
 {
-	int i;
+	size_t i;
 
 	fprintf(out, _(
 		"\nUsage:\n"
@@ -892,7 +937,7 @@ static void __attribute__((__noreturn__)) help(FILE *out)
 
 	fprintf(out, _("\nAvailable columns:\n"));
 
-	for (i = 0; i < __NCOLUMNS; i++)
+	for (i = 0; i < NCOLS; i++)
 		fprintf(out, " %10s  %s\n", infos[i].name, _(infos[i].help));
 
 	fprintf(out, _("\nFor more information see lsblk(8).\n"));
@@ -904,6 +949,13 @@ static void __attribute__((__noreturn__))
 errx_mutually_exclusive(const char *opts)
 {
 	errx(EXIT_FAILURE, "%s %s", opts, _("options are mutually exclusive"));
+}
+
+static void check_sysdevblock(void)
+{
+	if (access(_PATH_SYS_DEVBLOCK, R_OK) != 0)
+		err(EXIT_FAILURE, _("failed to access sysfs directory: %s"),
+		    _PATH_SYS_DEVBLOCK);
 }
 
 int main(int argc, char *argv[])
@@ -993,6 +1045,7 @@ int main(int argc, char *argv[])
 			columns[ncolumns++] = COL_NAME;
 			columns[ncolumns++] = COL_FSTYPE;
 			columns[ncolumns++] = COL_LABEL;
+			columns[ncolumns++] = COL_UUID;
 			columns[ncolumns++] = COL_TARGET;
 			break;
 		case 'm':
@@ -1017,6 +1070,8 @@ int main(int argc, char *argv[])
 			help(stderr);
 		}
 	}
+
+	check_sysdevblock();
 
 	if (!ncolumns) {
 		columns[ncolumns++] = COL_NAME;

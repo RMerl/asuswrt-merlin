@@ -1,0 +1,8 @@
+I'm not sure what you expected to find in this file :-)
+
+Anyway, this is to explain that vsftpd is not as much code as you might
+expect from running a command like "wc -l *.c". Why? Simply because I use
+a very verbose style of coding in vsftpd, which consumes a lot of lines.
+Verbose code is very important in a secure program. How can you verify a
+program's security if it is not readable?
+

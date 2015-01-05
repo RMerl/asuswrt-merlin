@@ -70,6 +70,14 @@ var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
+
+	regen_band(document.form.wl_unit);
+
+	if(based_modelid == "RT-AC87U" && document.form.wl_unit[1].selected == true){
+		document.getElementById("wds_mode_field").style.display = "none";
+		document.form.wl_mode_x.value="2";
+	}
+
 	change_wireless_bridge(document.form.wl_mode_x.value);	
 
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
@@ -96,14 +104,9 @@ function initial(){
 		document.getElementById("wl_5g_mac_th1").innerHTML = "5GHz-1 MAC";
 	}
 
-	regen_band(document.form.wl_unit);
-
-	if(based_modelid == "RT-AC87U" && document.form.wl_unit[1].selected == true){
-		document.getElementById("wds_mode_field").style.display = "none";
-		document.form.wl_mode_x.value="2";
-	}
-
 	wl_bwch_hint();
+	if(based_modelid == "RT-AC55U" || based_modelid == "4G-AC55U")
+		wl_vht_hint();
 	setTimeout("wds_scan();", 500);
 }
 
@@ -197,6 +200,11 @@ function applyRule(){
 	if(document.form.wl_mode_x.value == "0"){
 		inputRCtrl1(document.form.wl_wdsapply_x, 1);
 		inputRCtrl2(document.form.wl_wdsapply_x, 1);
+		if(based_modelid == "RT-AC55U" || based_modelid == "4G-AC55U")
+		{
+			inputRCtrl1(document.form.wl_wds_vht, 1);
+			inputRCtrl2(document.form.wl_wds_vht, 1);
+		}   
 	}
 	
 	if(document.form.wl_mode_x.value == "1"){
@@ -337,6 +345,15 @@ function wl_bwch_hint(){
 		document.getElementById("wl_ch_hint").style.display=(document.form.wl_channel.value == "0") ? "" : "none";
 	}
 }
+
+function wl_vht_hint(){ 
+	var u='<% nvram_get("wl_unit"); %>';	
+   	if(u=='1')
+	   $("wlvht").style.display ="";  
+   	else
+	   $("wlvht").style.display ="none";  
+}
+
 </script>
 </head>
 
@@ -366,7 +383,6 @@ function wl_bwch_hint(){
 <input type="hidden" name="wl_nctrlsb_old" value='<% nvram_get("wl_nctrlsb"); %>'>
 <input type="hidden" name="wl_wdslist" value=''>
 <input type="hidden" name="wl_subunit" value="-1">
-
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
@@ -449,6 +465,13 @@ function wl_bwch_hint(){
 												</select>
 											</td>
 										</tr>
+										<tr id="wlvht" class="wlvht" style="display:none;">
+											<th>VHT MODE</th>
+											<td>
+												<input type="radio" value="1" name="wl_wds_vht" class="input" <% nvram_match("wl_wds_vht", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" value="0" name="wl_wds_vht" class="input" <% nvram_match("wl_wds_vht", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>	
 										<tr>
 											<th align="right">
 												<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,3);">

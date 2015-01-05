@@ -13,6 +13,7 @@ td.sidenav { width:200px;}
 	-webkit-border-radius: 3px;
 	-moz-border-radius: 3px;
 	border-radius: 3px;
+	min-height:580px;
 }
 .line_export{
 	height:20px;

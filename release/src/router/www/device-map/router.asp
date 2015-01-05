@@ -18,6 +18,7 @@
 var $j = jQuery.noConflict();
 <% wl_get_parameter(); %>
 var flag = '<% get_parameter("flag"); %>';
+var smart_connect_flag_t;
 
 if(yadns_support){
 	var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
@@ -65,11 +66,10 @@ function initial(){
 	else
 		document.form.wl_subunit.value = -1;
 	
-	if(smart_connect_support)
-		inputCtrl(document.form.smart_connect_x, 1);
-	else
-		inputCtrl(document.form.smart_connect_x, 0);
-
+	if(smart_connect_support){
+		document.getElementById("smartcon_enable_field").style.display = '';
+		document.getElementById("smartcon_enable_line").style.display = '';
+	}
 
 	if(band5g_support){
 		$("t0").style.display = "";
@@ -93,19 +93,6 @@ function initial(){
 		$("t0").style.display = "";	
 	}
 
-	if(smart_connect_support && parent.sw_mode != 4){
-
-		var smart_connect_flag_t;
-
-		if(flag == '')
-			smart_connect_flag_t = '<% nvram_get("smart_connect_x"); %>';
-		else
-			smart_connect_flag_t = flag;	
-
-			document.form.smart_connect_x.value = smart_connect_flag_t;		
-			change_smart_connect(smart_connect_flag_t);	
-	}
-
 	if($("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
 		$("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink 			
 
@@ -124,6 +111,18 @@ function initial(){
 	limit_auth_method();
 	wl_auth_mode_change(1);
 	show_LAN_info();
+
+	if(smart_connect_support && parent.sw_mode != 4){
+
+		if(flag == '')
+			smart_connect_flag_t = '<% nvram_get("smart_connect_x"); %>';
+		else
+			smart_connect_flag_t = flag;	
+
+			document.form.smart_connect_x.value = smart_connect_flag_t;		
+			change_smart_connect(smart_connect_flag_t);	
+	}
+
 	if(parent.sw_mode == 4)
 		parent.show_middle_status('<% nvram_get("wlc_auth_mode"); %>', 0);		
 	else
@@ -311,7 +310,7 @@ function show_key(){
 	
 }
 
-function show_LAN_info(){
+function show_LAN_info(v){
 	var lan_ipaddr_t = '<% nvram_get("lan_ipaddr_t"); %>';
 	if(lan_ipaddr_t != '')
 		showtext($("LANIP"), lan_ipaddr_t);
@@ -335,21 +334,39 @@ function show_LAN_info(){
 	if(document.form.wl_unit.value == 1)
 		showtext($("MAC_wl5"), '<% nvram_get("wl1_hwaddr"); %>');
 	else if(document.form.wl_unit.value == 2)
-		showtext($("MAC_wl5"), '<% nvram_get("wl2_hwaddr"); %>');
+		showtext($("MAC_wl5_2"), '<% nvram_get("wl2_hwaddr"); %>');
 
 	if(document.form.wl_unit.value == 0){
 		$("macaddr_wl5").style.display = "none";
+		if(wl_info.band5g_2_support)
+			$("macaddr_wl5_2").style.display = "none";	
 		if(!band5g_support)
 			$("macaddr_wl2_title").style.display = "none";
 	}
 	else if (document.form.wl_unit.value == 1){
 		$("macaddr_wl2").style.display = "none";
+		$("macaddr_wl5_2").style.display = "none";
 		if(wl_info.band5g_2_support)
 			$("macaddr_wl5_title").innerHTML = "5GHz-1 ";
+
 	}
 	else if (document.form.wl_unit.value == 2){
 		$("macaddr_wl2").style.display = "none";
-		$("macaddr_wl5_title").innerHTML = "5GHz-2 ";
+		$("macaddr_wl5").style.display = "none";
+	}
+	if(smart_connect_support){
+		if(v == '1'){
+			showtext($("MAC_wl2"), '<% nvram_get("wl0_hwaddr"); %>');
+			showtext($("MAC_wl5"), '<% nvram_get("wl1_hwaddr"); %>');
+			showtext($("MAC_wl5_2"), '<% nvram_get("wl2_hwaddr"); %>');
+			$("macaddr_wl5_title").innerHTML = "5GHz-1 ";
+			$("macaddr_wl2").style.display = "";
+			$("macaddr_wl5").style.display = "";
+			$("macaddr_wl5_2").style.display = "";
+			parent.document.getElementById("statusframe").height = 760;
+		}else{
+			parent.document.getElementById("statusframe").height = 735;
+		}
 	}
 }
 
@@ -475,6 +492,8 @@ function tab_reset(v){
 }
 
 function change_smart_connect(v){
+	document.form.smart_connect_x.value = v;
+	show_LAN_info(v);
 	switch(v){
 		case '0':
 				tab_reset(0);	
@@ -527,6 +546,7 @@ function change_smart_connect(v){
 <input type="hidden" name="wl_subunit" value="-1">
 <input type="hidden" name="wl_radio" value="<% nvram_get("wl_radio"); %>">
 <input type="hidden" name="wl_txbf" value="<% nvram_get("wl_txbf"); %>">
+<input type="hidden" name="smart_connect_x" value="<% nvram_get("smart_connect_x"); %>">
 
 <table border="0" cellpadding="0" cellspacing="0">
 <tr>
@@ -571,6 +591,42 @@ function change_smart_connect(v){
 		</table>
 
 		<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="table1px" id="WLnetworkmap">
+  		<tr id="smartcon_enable_field" style="display:none">
+			  	<td>
+			  	<div><table><tr>
+			  		<td style="padding:8px 5px 0px 0px;">
+			  			<p class="formfonttitle_nwm" >Smart Connect: </p>
+			  		</td>
+			  		<td>
+					<div id="smartcon_enable_block" style="display:none;">
+			    		<span style="color:#FFF;" id="smart_connect_enable_word">&nbsp;&nbsp;</span>
+			    		<input type="button" name="enableSmartConbtn" id="enableSmartConbtn" value="" class="button_gen" onClick="change_smart_connect();">
+			    		<br>
+			    	</div>
+			    		<div class="left" style="width: 94px;" id="radio_smartcon_enable"></div>
+						<div class="clear"></div>					
+						<script type="text/javascript">
+								var flag = '<% get_parameter("flag"); %>';
+
+							if(flag == '')
+								smart_connect_flag_t = '<% nvram_get("smart_connect_x"); %>';
+							else
+								smart_connect_flag_t = flag;
+
+								$j('#radio_smartcon_enable').iphoneSwitch(smart_connect_flag_t>0, 
+								 function() {
+									change_smart_connect('1');
+								 },
+								 function() {
+									change_smart_connect('0');
+								 }
+							);
+						</script>			  			
+			  		</td>
+			  	</tr></table></div>
+		  	  </td>			
+  		</tr>  		
+  		<tr id="smartcon_enable_line" style="display:none"><td><img style="margin-top:-2px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png"></td></tr>
   		<tr>
     			<td style="padding:5px 10px 0px 10px; ">
   	  			<p class="formfonttitle_nwm" ><#Wireless_name#>(SSID)</p>
@@ -660,9 +716,6 @@ function change_smart_connect(v){
 							 },
 							 function() {
 								document.form.wl_radio.value = "0";
-							 },
-							 {
-								switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 							 }
 						);
 				</script>
@@ -685,27 +738,13 @@ function change_smart_connect(v){
 							 function() {
 								document.form.wl_txbf.value = "0";
 								return true;
-							 },
-							 {
-								switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 							 }
 						);
 				</script>
       			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
 			</td>
   		</tr>  		
-  		<!--   Viz add 2011.12 for RT-N56U Ralink   end  }} -->	
-  		<tr style="display:none">
-			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
-	  			<p class="formfonttitle_nwm" >Smart Connect Combo</p>
-	  			<select style="*margin-top:-7px;" name="smart_connect_x" class="input_option" onchange="change_smart_connect(this.value);">
-					<option value="0" <% nvram_match("smart_connect_x", "0", "selected"); %>>none</option>
-					<option value="1" <% nvram_match("smart_connect_x", "1", "selected"); %>>Tri-band Smart Connect</option>
-					<option value="2" <% nvram_match("smart_connect_x", "2", "selected"); %>>5Ghz Smart Connect</option>
-	  			</select>	  			
-	  			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
-			</td>
-  		</tr>  		
+  		<!--   Viz add 2011.12 for RT-N56U Ralink   end  }} -->			
  		</table>		
   	</td>
 </tr>
@@ -759,10 +798,16 @@ function change_smart_connect(v){
   		</tr>     
   		<tr id="macaddr_wl5">
     			<td style="padding:5px 10px 0px 10px;">
-    				<p class="formfonttitle_nwm" >Wireless 5GHz <#MAC_Address#></p>
+    				<p class="formfonttitle_nwm" >Wireless <span id="macaddr_wl5_title">5GHz </span><#MAC_Address#></p>
     				<p style="padding-left:10px; margin-bottom:5px; margin-top:3px; *margin-top:-5px; padding-bottom:3px; margin-right:10px; background-color:#444f53; line-height:20px;" id="MAC_wl5"></p>
     			</td>
   		</tr>
+  		<tr id="macaddr_wl5_2" style="display:none;">
+    			<td style="padding:5px 10px 0px 10px;">
+    				<p class="formfonttitle_nwm" >Wireless <span id="macaddr_wl5_title">5GHz-2 </span><#MAC_Address#></p>
+    				<p style="padding-left:10px; margin-bottom:5px; margin-top:3px; *margin-top:-5px; padding-bottom:3px; margin-right:10px; background-color:#444f53; line-height:20px;" id="MAC_wl5_2"></p>
+    			</td>
+  		</tr>  
 		</table>
 	</td>
 </tr>

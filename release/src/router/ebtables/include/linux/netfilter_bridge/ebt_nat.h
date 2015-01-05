@@ -10,5 +10,5 @@ struct ebt_nat_info
 };
 #define EBT_SNAT_TARGET "snat"
 #define EBT_DNAT_TARGET "dnat"
-
+#define EBT_ARPNAT_TARGET "arpnat"
 #endif

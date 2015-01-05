@@ -203,57 +203,57 @@ static struct tabdiff_entry *tabdiff_get_mount(struct libmnt_tabdiff *df,
 /**
  * mnt_diff_tables:
  * @df: diff handler
- * @old: old table
- * @new: new table
+ * @old_tab: old table
+ * @new_tab: new table
  *
- * Compares @old and @new, the result is stored in @df and accessible by
+ * Compares @old_tab and @new_tab, the result is stored in @df and accessible by
  * mnt_tabdiff_next_change().
  *
  * Returns: number of changes, negative number in case of error.
  */
-int mnt_diff_tables(struct libmnt_tabdiff *df, struct libmnt_table *old,
-		    struct libmnt_table *new)
+int mnt_diff_tables(struct libmnt_tabdiff *df, struct libmnt_table *old_tab,
+		    struct libmnt_table *new_tab)
 {
 	struct libmnt_fs *fs;
 	struct libmnt_iter itr;
 	int no, nn;
 
-	if (!df || !old || !new)
+	if (!df || !old_tab || !new_tab)
 		return -EINVAL;
 
 	tabdiff_reset(df);
 
-	no = mnt_table_get_nents(old);
-	nn = mnt_table_get_nents(new);
+	no = mnt_table_get_nents(old_tab);
+	nn = mnt_table_get_nents(new_tab);
 
 	if (!no && !nn)			/* both tables are empty */
 		return 0;
 
 	DBG(DIFF, mnt_debug_h(df, "analyze new=%p (%d entries), "
 				          "old=%p (%d entries)",
-				new, nn, old, no));
+				new_tab, nn, old_tab, no));
 
 	mnt_reset_iter(&itr, MNT_ITER_FORWARD);
 
 	/* all mounted or umounted */
 	if (!no && nn) {
-		while(mnt_table_next_fs(new, &itr, &fs) == 0)
+		while(mnt_table_next_fs(new_tab, &itr, &fs) == 0)
 			tabdiff_add_entry(df, NULL, fs, MNT_TABDIFF_MOUNT);
 		goto done;
 
 	} else if (no && !nn) {
-		while(mnt_table_next_fs(old, &itr, &fs) == 0)
+		while(mnt_table_next_fs(old_tab, &itr, &fs) == 0)
 			tabdiff_add_entry(df, fs, NULL, MNT_TABDIFF_UMOUNT);
 		goto done;
 	}
 
 	/* search newly mounted or modified */
-	while(mnt_table_next_fs(new, &itr, &fs) == 0) {
+	while(mnt_table_next_fs(new_tab, &itr, &fs) == 0) {
 		struct libmnt_fs *o_fs;
 		const char *src = mnt_fs_get_source(fs),
 			   *tgt = mnt_fs_get_target(fs);
 
-		o_fs = mnt_table_find_pair(old, src, tgt, MNT_ITER_FORWARD);
+		o_fs = mnt_table_find_pair(old_tab, src, tgt, MNT_ITER_FORWARD);
 		if (!o_fs)
 			/* 'fs' is not in the old table -- so newly mounted */
 			tabdiff_add_entry(df, NULL, fs, MNT_TABDIFF_MOUNT);
@@ -269,11 +269,11 @@ int mnt_diff_tables(struct libmnt_tabdiff *df, struct libmnt_table *old,
 
 	/* search umounted or moved */
 	mnt_reset_iter(&itr, MNT_ITER_FORWARD);
-	while(mnt_table_next_fs(old, &itr, &fs) == 0) {
+	while(mnt_table_next_fs(old_tab, &itr, &fs) == 0) {
 		const char *src = mnt_fs_get_source(fs),
 			   *tgt = mnt_fs_get_target(fs);
 
-		if (!mnt_table_find_pair(new, src, tgt, MNT_ITER_FORWARD)) {
+		if (!mnt_table_find_pair(new_tab, src, tgt, MNT_ITER_FORWARD)) {
 			struct tabdiff_entry *de;
 
 			de = tabdiff_get_mount(df, src,	mnt_fs_get_id(fs));
@@ -343,6 +343,7 @@ done:
 	mnt_free_table(tb_old);
 	mnt_free_table(tb_new);
 	mnt_free_tabdiff(diff);
+	mnt_free_iter(itr);
 	return rc;
 }
 

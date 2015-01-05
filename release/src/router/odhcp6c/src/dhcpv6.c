@@ -153,10 +153,17 @@ int init_dhcpv6(const char *ifname, unsigned int options, int sol_timeout)
 	client_options = options;
 	dhcpv6_retx[DHCPV6_MSG_SOLICIT].max_timeo = sol_timeout;
 
+#ifdef SOCK_CLOEXEC
+	sock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+#else
 	sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	if (sock >= 0 && fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
+		close(sock);
+		sock = -1;
+	}
+#endif
 	if (sock < 0)
 		return -1;
-	fcntl(sock, F_SETFD, FD_CLOEXEC);
 
 	// Detect interface
 	struct ifreq ifr;
@@ -368,6 +375,11 @@ static void dhcpv6_send(enum dhcpv6_msg type, uint8_t trid[3], uint32_t ecs)
 					.addr = e[j].target
 				};
 
+				if (type == DHCPV6_MSG_REQUEST) {
+					p.preferred = htonl(e[j].preferred);
+					p.valid = htonl(e[j].valid);
+				}
+
 				memcpy(ia_pd + ia_pd_len, &p, sizeof(p));
 				ia_pd_len += sizeof(p);
 
@@ -412,8 +424,14 @@ static void dhcpv6_send(enum dhcpv6_msg type, uint8_t trid[3], uint32_t ecs)
 		pa[i].type = htons(DHCPV6_OPT_IA_ADDR);
 		pa[i].len = htons(sizeof(pa[i]) - 4U);
 		pa[i].addr = e[i].target;
-		pa[i].preferred = 0;
-		pa[i].valid = 0;
+
+		if (type == DHCPV6_MSG_REQUEST) {
+			pa[i].preferred = htonl(e[i].preferred);
+			pa[i].valid = htonl(e[i].valid);
+		} else {
+			pa[i].preferred = 0;
+			pa[i].valid = 0;
+		}
 	}
 
 	ia_na = pa;
@@ -504,7 +522,8 @@ static void dhcpv6_send(enum dhcpv6_msg type, uint8_t trid[3], uint32_t ecs)
 
 	struct sockaddr_in6 srv = {AF_INET6, htons(DHCPV6_SERVER_PORT),
 		0, ALL_DHCPV6_RELAYS, ifindex};
-	struct msghdr msg = {&srv, sizeof(srv), iov, cnt, NULL, 0, 0};
+	struct msghdr msg = {.msg_name = &srv, .msg_namelen = sizeof(srv),
+			.msg_iov = iov, .msg_iovlen = cnt};
 
 	sendmsg(sock, &msg, 0);
 }
@@ -526,8 +545,8 @@ int dhcpv6_request(enum dhcpv6_msg type)
 
 	if (retx->delay) {
 		struct timespec ts = {0, 0};
-		ts.tv_nsec = dhcpv6_rand_delay(10 * DHCPV6_REQ_DELAY);
-		nanosleep(&ts, NULL);
+		ts.tv_nsec = (dhcpv6_rand_delay((10000 * DHCPV6_REQ_DELAY) / 2) + (1000 * DHCPV6_REQ_DELAY) / 2) * 1000000;
+		while (nanosleep(&ts, &ts) < 0 && errno == EINTR);
 	}
 
 	if (type == DHCPV6_MSG_UNKNOWN)
@@ -540,7 +559,7 @@ int dhcpv6_request(enum dhcpv6_msg type)
 	if (timeout == 0)
 		return -1;
 
-	syslog(loglevel, "Starting %s transaction (timeout %llus, max rc %d)",
+	syslog(LOG_NOTICE, "Starting %s transaction (timeout %llus, max rc %d)",
 			retx->name, (unsigned long long)timeout, retx->max_rc);
 
 	uint64_t start = odhcp6c_get_milli_time(), round_start = start, elapsed;
@@ -580,7 +599,7 @@ int dhcpv6_request(enum dhcpv6_msg type)
 		// Built and send package
 		if (type != DHCPV6_MSG_UNKNOWN) {
 			if (type != DHCPV6_MSG_SOLICIT)
-				syslog(loglevel, "Send %s message (elapsed %llums, rc %d)",
+				syslog(LOG_NOTICE, "Send %s message (elapsed %llums, rc %d)",
 						retx->name, (unsigned long long)elapsed, rc);
 			dhcpv6_send(type, trid, elapsed / 10);
 			rc++;
@@ -592,8 +611,9 @@ int dhcpv6_request(enum dhcpv6_msg type)
 			uint8_t buf[1536], cmsg_buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 			struct iovec iov = {buf, sizeof(buf)};
 			struct sockaddr_in6 addr;
-			struct msghdr msg = {&addr, sizeof(addr), &iov, 1,
-					cmsg_buf, sizeof(cmsg_buf), 0};
+			struct msghdr msg = {.msg_name = &addr, .msg_namelen = sizeof(addr),
+					.msg_iov = &iov, .msg_iovlen = 1, .msg_control = cmsg_buf,
+					.msg_controllen = sizeof(cmsg_buf)};
 			struct in6_pktinfo *pktinfo = NULL;
 
 
@@ -637,7 +657,7 @@ int dhcpv6_request(enum dhcpv6_msg type)
 
 			round_start = odhcp6c_get_milli_time();
 			elapsed = round_start - start;
-			syslog(loglevel, "Got a valid reply after "
+			syslog(LOG_NOTICE, "Got a valid reply after "
 					"%llums", (unsigned long long)elapsed);
 
 			if (retx->handler_reply)
@@ -1240,7 +1260,7 @@ static int dhcpv6_parse_ia(void *opt, void *end)
 			}
 
 			if (ok) {
-				odhcp6c_update_entry(STATE_IA_PD, &entry);
+				odhcp6c_update_entry(STATE_IA_PD, &entry, 0, false);
 				parsed_ia++;
 			}
 
@@ -1275,7 +1295,7 @@ static int dhcpv6_parse_ia(void *opt, void *end)
 					entry.class = sdata[0] << 8 | sdata[1];
 #endif
 
-			odhcp6c_update_entry(STATE_IA_NA, &entry);
+			odhcp6c_update_entry(STATE_IA_NA, &entry, 0, false);
 			parsed_ia++;
 		}
 	}
@@ -1394,23 +1414,8 @@ static void dhcpv6_handle_ia_status_code(const enum dhcpv6_msg orig,
 		}
 		break;
 
-	case DHCPV6_NoAddrsAvail:
-	case DHCPV6_NoPrefixAvail:
-		switch (orig) {
-		case DHCPV6_MSG_REQUEST:
-			if (*ret != 0)
-				*ret = 0;
-			break;
-		default:
-			break;
-		}
-		break;
-
-	case DHCPV6_NotOnLink:
-		// TODO handle not onlink in case of confirm
-		break;
-
 	default:
+		*ret = 0;
 		break;
 	}
 }

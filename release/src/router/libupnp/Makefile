@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012, Broadcom Corporation
+# Copyright (C) 2014, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -7,7 +7,7 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 341899 2012-06-29 04:06:38Z $
+# $Id: Makefile 403251 2013-05-20 05:15:55Z $
 #
 
 include ../common.mak
@@ -21,6 +21,9 @@ CFLAGS += ${INCLUDES}
 
 CFLAGS += -Wall -Wunused -g -s -Werror -fPIC
 
+ifeq ($(RTCONFIG_BCM7),y)
+CFLAGS += -DBCM7
+endif
 
 LDFLAGS = -L$(TOP)/libbcmcrypto -lbcmcrypto
 
@@ -30,7 +33,7 @@ endif
 
 vpath %.c $(SRCPATH) $(UPNPLIB)/linux
 ifeq ($(RTCONFIG_BCMARM),y)
-vpath %.o $(UPNPLIB)/prebuilt.arm
+vpath %.o $(UPNPLIB)/prebuilt.$(BCMEX)$(EX7)
 else
 vpath %.o $(UPNPLIB)/prebuilt.mipsel
 endif

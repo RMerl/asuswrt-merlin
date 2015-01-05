@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 {
 	int ch;
 	int ctrl;
-	int verify;
+	int verify = 1;
 	struct stat st;
 
 	static const struct option longopts[] = {

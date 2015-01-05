@@ -82,10 +82,8 @@ $TS_CMD_BLKID -p -o udev ${DEVICE}2 2>&1 | sort >> $TS_OUTPUT
 sleep 3
 rmmod scsi_debug
 
-# remove device name used, disk ID and generated UUIDs
-sed -i -e "s/\/dev\/${DEVNAME}/\/dev\/.../g" $TS_OUTPUT
-sed -i -e 's/Disk identifier:.*//g' $TS_OUTPUT
-sed -i -e 's/Building a new.*//g' $TS_OUTPUT
+ts_fdisk_clean
+# remove generated UUIDs
 sed -i -e 's/ID_FS_UUID.*//g' $TS_OUTPUT
 
 ts_finalize

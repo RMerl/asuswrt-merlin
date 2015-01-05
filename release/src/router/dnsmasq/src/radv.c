@@ -32,7 +32,7 @@ struct ra_param {
   char *if_name;
   struct dhcp_netid *tags;
   struct in6_addr link_local, link_global, ula;
-  unsigned int glob_pref_time, link_pref_time, ula_pref_time, adv_interval;
+  unsigned int glob_pref_time, link_pref_time, ula_pref_time, adv_interval, prio;
 };
 
 struct search_param {
@@ -210,18 +210,7 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
 #ifdef HAVE_LINUX_NETWORK
   FILE *f;
 #endif
- 
-  save_counter(0);
-  ra = expand(sizeof(struct ra_packet));
   
-  ra->type = ND_ROUTER_ADVERT;
-  ra->code = 0;
-  ra->hop_limit = hop_limit;
-  ra->flags = calc_prio(ra_param);
-  ra->lifetime = htons(calc_lifetime(ra_param));
-  ra->reachable_time = 0;
-  ra->retrans_time = 0;
-
   parm.ind = iface;
   parm.managed = 0;
   parm.other = 0;
@@ -232,7 +221,19 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
   parm.now = now;
   parm.glob_pref_time = parm.link_pref_time = parm.ula_pref_time = 0;
   parm.adv_interval = calc_interval(ra_param);
+  parm.prio = calc_prio(ra_param);
   
+  save_counter(0);
+  ra = expand(sizeof(struct ra_packet));
+  
+  ra->type = ND_ROUTER_ADVERT;
+  ra->code = 0;
+  ra->hop_limit = hop_limit;
+  ra->flags = parm.prio;
+  ra->lifetime = htons(calc_lifetime(ra_param));
+  ra->reachable_time = 0;
+  ra->retrans_time = 0;
+
   /* set tag with name == interface */
   iface_id.net = iface_name;
   iface_id.next = NULL;

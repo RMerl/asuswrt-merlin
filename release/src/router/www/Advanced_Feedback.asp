@@ -22,6 +22,18 @@
 <script>
 function initial(){
 	show_menu();
+	change_dsl_diag_enable(0);
+}
+
+function updateUSBStatus(){	
+	if(allUsbStatus.search("storage") == "-1"){			
+			document.getElementById("storage_ready").style.display = "none";
+			document.getElementById("be_lack_storage").style.display = "";
+	}
+	else{		
+			document.getElementById("storage_ready").style.display = "";
+			document.getElementById("be_lack_storage").style.display = "none";
+	}					
 }
 
 function redirect(){
@@ -63,7 +75,11 @@ function applyRule(){
 				}
 		}
 		document.form.fb_browserInfo.value = navigator.userAgent;
-		showLoading(60);
+		if(document.form.dslx_diag_enable[0].checked == true){
+			document.form.action_wait.value="120";
+			showLoading(120);
+		}else	
+			showLoading(60);
 		document.form.submit();
 	}
 	else{
@@ -84,6 +100,23 @@ function textCounter(field, cnt, upper) {
                 field.value = field.value.substring(0, upper);
         else
                 cnt.value = upper - field.value.length;
+}
+
+function change_dsl_diag_enable(value) {
+	if(value) {
+		if(allUsbStatus.search("storage") == "-1"){
+			alert("USB disk required in order to store the debug log, please plug-in a USB disk to <#Web_Title2#> and Enable DSL Line Diagnostic again.");
+			document.form.dslx_diag_enable[1].checked = true;
+			return;
+		}
+		else{
+			alert("While debug log capture in progress, please do not unplug the USB disk as the debug log would be stored in the disk. UI top right globe icon flashing in yellow indicating that debug log capture in progress. Click on the yellow globe icon could cancel the debug log capture. Please note that xDSL line would resync in one minute after Feedback form submitted.");
+		}
+		showhide("dslx_diag_duration",1);
+	}
+	else {
+		showhide("dslx_diag_duration",0);
+	}
 }
 
 </script>
@@ -111,7 +144,7 @@ function textCounter(field, cnt, upper) {
 <input type="hidden" name="current_page" value="Advanced_Feedback.asp">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_DSLsendmail">
-<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="action_wait" value="60">
 <input type="hidden" name="PM_attach_syslog" value="">
 <input type="hidden" name="PM_attach_cfgfile" value="">
 <input type="hidden" name="PM_attach_iptables" value="">	
@@ -175,9 +208,33 @@ function textCounter(field, cnt, upper) {
 </tr>
 
 <tr>
+	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,11);">Enable DSL Line Diagnostic *</a></th>
+	<td>
+		<input type="radio" name="dslx_diag_enable" class="input" value="1" onclick="change_dsl_diag_enable(1);"><#checkbox_Yes#>
+		<input type="radio" name="dslx_diag_enable" class="input" value="0" onclick="change_dsl_diag_enable(0);" checked><#checkbox_No#>
+		<br>	
+		<span id="storage_ready" style="display:none;color:#FC0">* USB disk is ready.</span>
+		<span id="be_lack_storage" style="display:none;color:#FC0">* No USB disk pluggin.</span>
+	</td>
+</tr>
+
+<tr id="dslx_diag_duration">
+	<th>Diagnostic debug log capture duration *</th>
+	<td>
+		<select id="" class="input_option" name="dslx_diag_duration">
+			<option value="0" selected><#Auto#></option>
+			<option value="3600">1 <#Hour#></option>
+			<option value="18000">5 <#Hour#></option>
+			<option value="43200">12 <#Hour#></option>
+			<option value="86400">24 <#Hour#></option>
+		</select>
+	</td>
+</tr>
+
+<tr>
 <th><#feedback_connection_type#></th>
 <td>
-	<select id="" class="input_option" name="fb_availability">
+	<select class="input_option" name="fb_availability">
 		<option value="Not_selected"><#Select_menu_default#> ...</option>
 		<option value="Stable_connection"><#feedback_stable#></option>
 		<option value="Occasional_interruptions"><#feedback_Occasion_interrupt#></option>

@@ -13,6 +13,7 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript">
 <% start_autodet(); %> // initial QIS detecting process.
+<% check_modem_sim(); %>
 var based_modelid = '<% nvram_get("productid"); %>';
 var hw_ver = '<% nvram_get("hardware_version"); %>';
 var usb_flag = '<% nvram_get("ehci_ports"); %>';
@@ -54,7 +55,9 @@ function QKinternettype_load_body(){
 
 	if(parent.ISMOBILE){
 		document.getElementById("QISmain").style.display = "none";
-		document.getElementById("QISmain_m").style.display = "";		
+		document.getElementById("QISmain_m").style.display = "";
+		if(based_modelid == "4G-AC55U")
+			document.getElementById("Productdesc_0_m").style.display = "";
 		return true;
 	}
 
@@ -101,12 +104,23 @@ function QKinternettype_load_body(){
 		document.getElementById("Productdesc_4").innerHTML = check_desc4;
 	}	
 	
+	if(based_modelid == "4G-AC55U"){
+		var check_desc0 = "<#QIS_welcome_feature0#>";	
+		document.getElementById("Productdesc_0").style.display = "";	
+		document.getElementById("Productdesc_0").innerHTML = check_desc0;
+	}
+
 	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900"){	//MODELDEP
 		document.getElementById("AreaHint").style.display = "";	
 		document.getElementById("desc_Hint_RT-AC68U").style.display = "";
 	}
 	
 	document.getElementById("btn_next_step").focus();
+}
+
+function redirect_page(redirect_flag){
+	document.redirectForm.action = "/qis/QIS_"+redirect_flag+".htm";
+	document.redirectForm.submit();
 }
 
 function submitForm(mode){
@@ -135,7 +149,13 @@ function detect_if_wan_plug(flag){
 		},
 		success: function(response){
 			if(autodet_state == 4){ // ethernet did not plug
-				if(parent.hadPlugged("modem")){
+				if(based_modelid == "4G-AC55U"){
+					if( sim_state == -1)
+						redirect_page("unplug_ethsim");
+					else
+						submitForm(1);
+				}	
+				else if(parent.hadPlugged("modem")){
 					submitForm("modem");
 				}	
 				else if(flag == null){
@@ -250,6 +270,9 @@ function submitenter(myfield,e)
 </script>
 </head>  
 <body onLoad="QKinternettype_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="flag" value="">
+</form>
 <form method="post" name="form" action="/start_apply.htm">
 <input type="hidden" name="current_page" value="QIS_welcome.htm">
 <input type="hidden" name="next_page" value="">   
@@ -274,6 +297,7 @@ function submitenter(myfield,e)
 							<div id="productDesc" style="font-style:italic;">				
 								<p style="font-size:20px;font-weight:bolder;margin-bottom:15px;"><#statusTitle_System#></p>
 								<ul>		
+									<li style="line-height:25px; display:none" id="Productdesc_0"></li>								
 									<li style="line-height:25px;" id="Productdesc_1"></li>
 									<li style="line-height:25px;" id="Productdesc_2"></li>
 									<li style="line-height:25px;" id="Productdesc_3"></li>
@@ -323,6 +347,7 @@ function submitenter(myfield,e)
 <div style="display:none;" id="QISmain_m">
 	<div id="QISFeature" style="margin-left:-20px;">
 		<ul>		
+			<li style="line-height:25px; display:none" id="Productdesc_0_m"><#QIS_welcome_feature0#></li>				
 			<li style="line-height:25px;"><#QIS_welcome_feature1#></li>
 			<li style="line-height:25px;"><#QIS_welcome_feature2#></li>
 			<li style="line-height:25px;"><#QIS_welcome_feature3#></li>

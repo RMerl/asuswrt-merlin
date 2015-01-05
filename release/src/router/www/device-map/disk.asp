@@ -34,18 +34,9 @@ a:active {
 var $j = jQuery.noConflict();
 var diskOrder = parent.getSelectedDiskOrder();
 
-var ddns_result = '<% nvram_get("ddns_return_code_chk");%>'; //Boyau
 <% get_AiDisk_status(); %>
 
-var FTP_status = get_ftp_status();  // FTP
-var FTP_mode = get_share_management_status("ftp");
-var accounts = [<% get_all_accounts(); %>];
-
-var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';
-var ddns_server = '<% nvram_get("ddns_server_x"); %>';
-var ddns_hostname = '<% nvram_get("ddns_hostname_x"); %>';
 var apps_array = <% apps_info("asus"); %>;
-var dummyShareway = '<% nvram_get("dummyShareway"); %>';
 
 function initial(){
 	$("t0").className = "tabclick_NW";
@@ -79,15 +70,12 @@ function showDiskUsage(device){
 
 	if(device.mountNumber > 0){
 		showtext($("disk_total_size"), simpleNum(device.totalSize) + " GB");		
-		showtext($("disk_avail_size"), simpleNum(device.totalSize - device.totalUsed) +" GB");		
-		showdisklink();
-		$("mounted_item1").style.display = "";
-		$("mounted_item2").style.display = "";
+		showtext($("disk_avail_size"), simpleNum(device.totalSize - device.totalUsed) +" GB");
+		$("mounted_item1").style.display = "";		
 		$("unmounted_refresh").style.display = "none";
 	}
 	else{
 		$("mounted_item1").style.display = "none";
-		$("mounted_item2").style.display = "none";
 		$("unmounted_refresh").style.display = "";
 	}
 
@@ -101,98 +89,6 @@ function showDiskUsage(device){
 	}
 
 	thisForeignDisksIndex = device.node;
-}
-
-function showdisklink(){
-	// access the disk from WAN
-	if(sw_mode != "3" && FTP_status == 1 && ddns_enable == 1 && ddns_server.length > 0 && ddns_hostname.length > 0){
-		if(FTP_mode == 1){
-			if((ddns_result.indexOf(",200") >= 0) || //Boyau
-   			 (ddns_result.indexOf(",220") >= 0) || 
-   			 (ddns_result.indexOf(",230") >= 0) )
-   				$("ddnslink1").style.display = "";
-			else
-   				$("desc_1").style.display = "none";
-
-			$("desc_2").style.display = "";
-			$("ddnslink1_LAN").style.display = "";
-		}
-		else{
-			$("ddnslink2").style.display = "";
-			$("desc_2").style.display = "";			
-			$("ddnslink2_LAN").style.display = "";
-			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
-				$("selected_account_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("ddns_hostname_x"); %>';
-			else
-				$("selected_account_link").href = 'ftp://<% nvram_get("ddns_hostname_x"); %>';
-			showtext($("selected_account_str"), 'ftp://<% nvram_get("ddns_hostname_x"); %>');
-			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
-				$("selected_account_link_LAN").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
-			else
-				$("selected_account_link_LAN").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
-			showtext($("selected_account_str_LAN"), 'ftp://<% nvram_get("lan_ipaddr"); %>');
-		}
-		
-		if('<% nvram_get("enable_samba"); %>' == '1'
-				&& navigator.appName.indexOf("Microsoft") >= 0
-				&& (( navigator.userAgent.indexOf("MSIE 7.0") >= 0 && navigator.userAgent.indexOf("Trident") < 0 )
-							|| ( navigator.userAgent.indexOf("MSIE 7.0") >= 0 && navigator.userAgent.indexOf("Trident/4.0") >= 0 )
-							|| ( navigator.userAgent.indexOf("MSIE 8.0") >= 0 && navigator.userAgent.indexOf("Trident/4.0") >= 0 ))
-				&& FTP_mode == 1			
-		){
-			// IE 7, IE 8
-			$("desc_3").style.display = "";
-			$("ddnslink3_LAN").style.display = "";
-		}else if('<% nvram_get("enable_samba"); %>' == '1'
-				&& navigator.appName.indexOf("Microsoft") >= 0){
-			// IE else
-			$("desc_3").style.display = "";
-			$("ddnslink_non_LAN").style.display = "";	
-		}	
-	}
-	else{
-		$("noWAN_link").style.display = "";
-		$("ddnslink3").style.display = "";
-		if(FTP_mode == 1){
-			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
-				$("ftp_account_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
-			else
-				$("ftp_account_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
-		}else{
-			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
-				$("ftp_account_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
-			else
-				$("ftp_account_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
-				$("ftp_account_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
-		}		
-						
-		if('<% nvram_get("enable_samba"); %>' == '1'
-				&& navigator.appName.indexOf("Microsoft") >= 0
-				&& (( navigator.userAgent.indexOf("MSIE 7.0") >= 0 && navigator.userAgent.indexOf("Trident") < 0 )
-							|| ( navigator.userAgent.indexOf("MSIE 7.0") >= 0 && navigator.userAgent.indexOf("Trident/4.0") >= 0 )
-							|| ( navigator.userAgent.indexOf("MSIE 8.0") >= 0 && navigator.userAgent.indexOf("Trident/4.0") >= 0 ))
-		){
-			// IE 7, IE 8
-			$("desc_3").style.display = "";
-			$("ddnslink3_LAN").style.display = "";
-		}else if('<% nvram_get("enable_samba"); %>' == '1'
-				&& navigator.appName.indexOf("Microsoft") >= 0){
-			// IE else
-			$("desc_3").style.display = "";
-			$("ddnslink_non_LAN").style.display = "";		
-		}	
-	
-		if(FTP_status != 1){
-			$("ddnslink3").style.display = "none";
-			showtext($("noWAN_link"), '<#linktoFTP_no_1#><br>');
-		}else if(ddns_enable != 1 && sw_mode != "2" && sw_mode != "3")			
-			showtext($("noWAN_link"), "<br><#linktoFTP_no_2#>");
-		else if(ddns_hostname.length <= 0 && sw_mode != "2" && sw_mode != "3")
-			showtext($("noWAN_link"), "<br><#linktoFTP_no_3#>");
-		else
-			return false;
-			//alert("System error!");
-	}
 }
 
 function goUPnP(){
@@ -236,12 +132,12 @@ function remove_disk(){
 	<td>		
 		<table id="diskTab" width="100px" border="0" align="left" style="margin-left:5px;display:none;" cellpadding="0" cellspacing="0">
   		<td>
-				<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="">
+				<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;margin-right:2px;" onclick="">
 					<span id="span1" style="cursor:pointer;font-weight: bolder;"><#diskUtility_information#></span>
 				</div>
 			</td>
   		<td>
-				<div id="t1" class="tab_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="location.href='disk_utility.asp'">
+				<div id="t1" class="tab_NW" align="center" style="font-weight: bolder;margin-right:2px;" onclick="location.href='disk_utility.asp'">
 					<span id="span1" style="cursor:pointer;font-weight: bolder;"><#diskUtility#></span>
 				</div>
 			</td>
@@ -337,10 +233,8 @@ function remove_disk(){
 					function(){		//OFF:1
 						document.form.usb_usb3.value = 1;
 						document.form.submit();
-					},
-					{
-						switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-					})
+					}
+				);
 			</script>
 			</form>
 		</td>
@@ -351,35 +245,6 @@ function remove_disk(){
 <ul style="font-size:11px; font-family:Arial; padding:0px; margin:0px; list-style:outside; line-height:150%;">
 	<li><#DiskStatus_refresh1#><a href="/" target="_parent"><#DiskStatus_refresh2#></a><#DiskStatus_refresh3#></li>
 </ul>
-</div>
-<div id="mounted_item2" style="padding:5px 0px 5px 25px;">
-<ul style="font-size:11px; font-family:Arial; padding:0px; margin:0px; list-style:outside; line-height:150%;">
-	<li id="desc_1">
-	  <span id="ddnslink1" style="display:none;"><#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#><br><a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a></span>
-	  <span id="ddnslink2" style="display:none;"><#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#><br><a id="selected_account_link" href="" onclick="alert('<#AiDiskWelcome_desp1#>');" target="_blank"><span id="selected_account_str"></span></a></span>
-	  <span id="ddnslink3" style="display:none;"><#AiDisk_linktoFTP_fromInternet#><br><a id="ftp_account_link" target="_blank" href="" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a></span>
-		<span id="noWAN_link" style="display:none;"></span>
-	</li>
-	<li id="desc_2" style="display:none;">
-		<span id="ddnslink1_LAN" style="display:none;"><#linktodisk#><br>
-	  	<a target="_blank" href="ftp://<% nvram_get("lan_ipaddr"); %>" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>
-	  </span>
-	  <span id="ddnslink2_LAN" style="display:none;"><#linktodisk#><br>
-	  	<a id="selected_account_link_LAN" href="" target="_blank" style="text-decoration: underline; font-family:Lucida Console;"><span id="selected_account_str_LAN"></span></a>
-	  </span>
-	</li>
-	<li id="desc_3" style="display:none;">
-		<span id="ddnslink3_LAN" style="display:none;"><#menu5_4_1#><span id="clouddiskstr"> / Cloud Disk :</span><br>
-			<a target="_blank" href="\\<% nvram_get("lan_ipaddr"); %>" style="text-decoration:underline; font-family:Lucida Console;">\\<% nvram_get("lan_ipaddr"); %></a>
-		</span>
-		<span id="ddnslink_non_LAN" style="display:none;"><#menu5_4_1#><span id="clouddiskstr"> / Cloud Disk :</span><br>
-			<span style="text-decoration:underline;font-family:Lucida Console;" title="<#samba_tips#>">file://<% nvram_get("lan_ipaddr"); %></span>
-		</span>		
-	</li>
-</ul>
-<div id="DMhint" class="DMhint">
-	<#DM_hint1#> <span id="DMFail_reason"></span>
-</div>
 </div>
 
 <form method="post" name="diskForm" action="">

@@ -831,7 +831,7 @@ xattrs are supported, you can save time not having to label every file by
 assigning the entire disk one security context.
 
 A commonly used option for removable media is
-.BR context=system_u:object_r:removable_t .
+.BR context="system_u:object_r:removable_t" .
 
 Two other options are
 .BR fscontext=
@@ -867,8 +867,23 @@ useful for things like stateless linux.
 Note that kernel rejects any remount request that includes the context
 option even if unchanged from the current context.
 
+.B Warning that \fIcontext\fP value might contains comma
+and in this case the value has to be properly quoted otherwise
+.BR mount (8)
+will interpret the comma as separator between mount options. Don't forget that
+shell strips off quotes and
+.BR "double quoting is required" ,
+for example:
+.RS
+.RS
+.sp
+mount -t tmpfs none /mnt \-o 'context="system_u:object_r:tmp_t:s0:c127,c456",noexec'
+.sp
+.RE
+
 For more details, see
 .BR selinux (8)
+.RE
 
 .TP
 .B defaults
@@ -1254,11 +1269,13 @@ to the options given in
 .IR /etc/fstab .)
 
 .TP
-.BR check= { none | nocheck }
+.BR check=none " or " nocheck
 No checking is done at mount time. This is the default. This is fast.
 It is wise to invoke
 .BR e2fsck (8)
-every now and then, e.g. at boot time.
+every now and then, e.g. at boot time. The non-default behavior is unssuported
+(check=normal and check=strict options have been removed). Note that these mount options
+don't have to be supported if ext4 kernel driver is used for ext2 and ext3 filesystems.
 .TP
 .B debug
 Print debugging info upon each (re)mount.
@@ -1401,7 +1418,7 @@ Enable POSIX Access Control Lists. See the
 manual page.
 
 .SH "Mount options for ext4"
-The ext4 filesystem is an an advanced level of the ext3 filesystem which
+The ext4 filesystem is an advanced level of the ext3 filesystem which
 incorporates scalability and reliability enhancements for supporting large
 filesystem.
 

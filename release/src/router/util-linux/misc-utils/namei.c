@@ -134,9 +134,9 @@ add_id(struct idcache **ic, char *name, unsigned long int id, int *width)
 	else
 		*ic = nc;
 	if (w <= 0)
-		w = strlen(nc->name);
-	*width = *width < w ? w : *width;
+		w = nc->name ? strlen(nc->name) : 0;
 
+	*width = *width < w ? w : *width;
 	return;
 }
 

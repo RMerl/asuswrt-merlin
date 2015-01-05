@@ -97,7 +97,7 @@ ttymsg(struct iovec *iov, size_t iovcnt, char *line, int tmout) {
 			return (NULL);
 		if (strlen(strerror(errno)) > 1000)
 			return (NULL);
-		(void) sprintf(errbuf, "%s: %s", device, strerror(errno));
+		(void) sprintf(errbuf, "%s: %m", device);
 		errbuf[1024] = 0;
 		return (errbuf);
 	}

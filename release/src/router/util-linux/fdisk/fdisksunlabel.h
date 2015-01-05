@@ -77,7 +77,6 @@ struct sun_disk_label {
 
 /* fdisksunlabel.c */
 extern struct systypes sun_sys_types[];
-extern void guess_device_type(int fd);
 extern int check_sun_label(void);
 extern void sun_nolabel(void);
 extern void create_sunlabel(void);

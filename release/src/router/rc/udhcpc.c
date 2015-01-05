@@ -567,8 +567,14 @@ bound_lan(void)
 	char *lan_ifname = safe_getenv("interface");
 	char *value;
 
-	if ((value = getenv("ip")))
+	if ((value = getenv("ip"))) {
+		/* restart httpd after lan_ipaddr udpating through lan dhcp client */
+		if (!nvram_match("lan_ipaddr", trim_r(value))) {
+			stop_httpd();
+			start_httpd();
+		}
 		nvram_set("lan_ipaddr", trim_r(value));
+	}
 	if ((value = getenv("subnet")))
 		nvram_set("lan_netmask", trim_r(value));
 	if ((value = getenv("router")))
@@ -711,14 +717,12 @@ skip:
 	if (dns_changed && nvram_get_int("ipv6_dnsenable"))
 		update_resolvconf();
 
-#ifdef RTCONFIG_WIDEDHCP6
 	if (lanaddr_changed ||
 	    (prefix_changed && nvram_get_int("ipv6_autoconf_type")) ||
 	    !pids("dhcp6s"))
 		start_dhcp6s();
 	if (prefix_changed || lanaddr_changed || !pids("radvd"))
 		start_radvd();
-#endif /* RTCONFIG_WIDEDHCP6 */
 
 	return 0;
 }
@@ -758,12 +762,10 @@ start_dhcp6c(void)
 		(nvram_match("ipv6_ra_conf", "mset") ||
 	         nvram_match("ipv6_ra_conf", "oset"));
 
-#ifdef RTCONFIG_WIDEDHCP6
 	if (!nvram_get_int("ipv6_dhcp_pd")) {
 		start_dhcp6s();
 		start_radvd();
 	}
-#endif
 
 	if (!need_wanaddr && !need_prefix && !need_dns)
 		return 0;
@@ -854,7 +856,7 @@ void stop_dhcp6c(void)
 		eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
 	eval("ip", "-6", "neigh", "flush", "dev", lan_ifname);
 }
-#else  /* !RTCONFIG_WIDEDHCP6 */
+#else /* !RTCONFIG_WIDEDHCP6 */
 
 static int
 deconfig6(char *wan_ifname)
@@ -895,7 +897,7 @@ bound6(char *wan_ifname, int bound)
 	char addr[INET6_ADDRSTRLEN + 1], *value;
 	char tmp[100], *next;
 	int wanaddr_changed, prefix_changed, dns_changed;
-	int size, start, end;
+	int size, start, end, mtu;
 
 	value = safe_getenv("ADDRESSES");
 	if (*value) {
@@ -959,6 +961,11 @@ bound6(char *wan_ifname, int bound)
 	}
 skip:
 
+	/* propagate ipv6 mtu */
+	mtu = ipv6_getconf(wan_ifname, "mtu");
+	if (mtu)
+		ipv6_sysconf(lan_ifname, "mtu", mtu);
+
 	dns_changed = env2nv("RDNSS", "ipv6_get_dns");
 	dns_changed += env2nv("DOMAINS", "ipv6_get_domain");
 	if (dns_changed && nvram_get_int("ipv6_dnsenable"))
@@ -1009,18 +1016,22 @@ start_dhcp6c(void)
 {
 	char *wan_ifname = (char *)get_wan6face();
 	char *dhcp6c_argv[] = { "odhcp6c",
-		"-df", "-R",
-		"-p", "/var/run/odhcp6c.pid",
+#ifdef RTCONFIG_BCMARM
+		"-df",
+#else
+		"-f",
+#endif
+		"-R",
 		"-s", "/tmp/dhcp6c",
 		"-N", "try",
 		NULL, NULL,	/* -c duid */
 		NULL, NULL,	/* -FP len:iaidhex */
 		NULL, NULL,	/* -rdns -rdomain */
 		NULL, NULL, 	/* -rsolmaxrt -r infmaxrt */
-		NULL,		/* -lloglevel */
+		NULL,		/* -v */
 		NULL,		/* interface */
 		NULL };
-	int index = 9;
+	int index = 7;
 	unsigned long iaid = 0;
 	struct {
 		uint16_t type;
@@ -1029,6 +1040,7 @@ start_dhcp6c(void)
 	} __attribute__ ((__packed__)) duid;
 	char duid_arg[sizeof(duid)*2+1];
 	char prefix_arg[sizeof("128:xxxxxxxx")];
+	pid_t pid;
 	int i;
 
 	/* Check if enabled */
@@ -1076,17 +1088,17 @@ start_dhcp6c(void)
 	dhcp6c_argv[index++] = "-r82";	/* sol_max_rt */
 	dhcp6c_argv[index++] = "-r83";	/* inf_max_rt */
 
-	if (!nvram_get_int("ipv6_debug"))
-		dhcp6c_argv[index++] = "-l7";	/* LOG_DEBUG */
+	if (nvram_get_int("ipv6_debug"))
+		dhcp6c_argv[index++] = "-v";
 
 	dhcp6c_argv[index++] = wan_ifname;
 
-	return _eval(dhcp6c_argv, NULL, 0, NULL);
+	return _eval(dhcp6c_argv, NULL, 0, &pid);
 }
 
 void stop_dhcp6c(void)
 {
 	killall_tk("odhcp6c");
 }
-#endif  /* !RTCONFIG_WIDEDHCP6 */
-#endif	// RTCONFIG_IPV6
+#endif /* !RTCONFIG_WIDEDHCP6 */
+#endif // RTCONFIG_IPV6

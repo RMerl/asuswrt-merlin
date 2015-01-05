@@ -1,0 +1,7 @@
+#ifndef VSF_DUMMYINC_UTMPX_H
+#define VSF_DUMMYINC_UTMPX_H
+
+#undef VSF_SYSDEP_HAVE_UTMPX
+
+#endif /* VSF_DUMMYINC_UTMPX_H */
+

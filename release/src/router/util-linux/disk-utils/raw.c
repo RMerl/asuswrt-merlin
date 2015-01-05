@@ -40,8 +40,8 @@ int	master_fd;
 int	raw_minor;
 
 void open_raw_ctl(void);
-int  query(int minor, const char *raw_name, int quiet);
-int  bind (int minor, int block_major, int block_minor);
+static int query(int minor_raw, const char *raw_name, int quiet);
+static int bind(int minor_raw, int block_major, int block_minor);
 
 
 static void usage(int err)
@@ -142,8 +142,8 @@ int main(int argc, char *argv[])
 		err = stat(block_name, &statbuf);
 		if (err) {
 			fprintf (stderr,
-				 _("Cannot locate block device '%s' (%s)\n"),
-				 block_name, strerror(errno));
+				 _("Cannot locate block device '%s' (%m)\n"),
+				 block_name);
 			exit(2);
 		}
 
@@ -168,8 +168,6 @@ int main(int argc, char *argv[])
 	}
 
 	return bind(raw_minor, block_major, block_minor);
-	return 0;
-
 }
 
 
@@ -190,7 +188,7 @@ void open_raw_ctl(void)
 	}
 }
 
-int query(int minor, const char *raw_name, int quiet)
+static int query(int minor_raw, const char *raw_name, int quiet)
 {
 	struct raw_config_request rq;
 	static int has_worked = 0;
@@ -201,8 +199,8 @@ int query(int minor, const char *raw_name, int quiet)
 
 		err = stat(raw_name, &statbuf);
 		if (err) {
-			fprintf (stderr, _("Cannot locate raw device '%s' (%s)\n"),
-				 raw_name, strerror(errno));
+			fprintf (stderr, _("Cannot locate raw device '%s' (%m)\n"),
+				 raw_name);
 			exit(2);
 		}
 
@@ -216,10 +214,10 @@ int query(int minor, const char *raw_name, int quiet)
 				 raw_name);
 			exit(2);
 		}
-		minor = minor(statbuf.st_rdev);
+		minor_raw = minor(statbuf.st_rdev);
 	}
 
-	rq.raw_minor = minor;
+	rq.raw_minor = minor_raw;
 	err = ioctl(master_fd, RAW_GETBIND, &rq);
 	if (err < 0) {
 		if (quiet && errno == ENODEV)
@@ -227,8 +225,7 @@ int query(int minor, const char *raw_name, int quiet)
 		if (has_worked && errno == EINVAL)
 			return 0;
 		fprintf (stderr,
-			 _("Error querying raw device (%s)\n"),
-			 strerror(errno));
+			 _("Error querying raw device (%m)\n"));
 		exit(3);
 	}
 	/* If one query has worked, mark that fact so that we don't
@@ -238,23 +235,22 @@ int query(int minor, const char *raw_name, int quiet)
 	if (quiet && !rq.block_major && !rq.block_minor)
 		return 0;
 	printf (_("%sraw%d:  bound to major %d, minor %d\n"),
-		RAWDEVDIR, minor, (int) rq.block_major, (int) rq.block_minor);
+		RAWDEVDIR, minor_raw, (int) rq.block_major, (int) rq.block_minor);
 	return 0;
 }
 
-int bind(int minor, int block_major, int block_minor)
+static int bind(int minor_raw, int block_major, int block_minor)
 {
 	struct raw_config_request rq;
 	int err;
 
-	rq.raw_minor   = minor;
+	rq.raw_minor   = minor_raw;
 	rq.block_major = block_major;
 	rq.block_minor = block_minor;
 	err = ioctl(master_fd, RAW_SETBIND, &rq);
 	if (err < 0) {
 		fprintf (stderr,
-			 _("Error setting raw device (%s)\n"),
-			 strerror(errno));
+			 _("Error setting raw device (%m)\n"));
 		exit(3);
 	}
 	printf (_("%sraw%d:  bound to major %d, minor %d\n"),

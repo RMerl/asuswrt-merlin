@@ -6,8 +6,6 @@ sbin_PROGRAMS =
 usrsbin_exec_PROGRAMS =
 dist_man_MANS =
 
-EXTRA_DIST = README.poeigl
-
 if BUILD_LAST
 usrbin_exec_PROGRAMS += last
 dist_man_MANS += last.1
@@ -27,7 +25,8 @@ chfn_SOURCES = chfn.c $(chfn_chsh_common)
 chsh_SOURCES = chsh.c $(chfn_chsh_common)
 chfn_chsh_common = islocal.c setpwnam.c islocal.h setpwnam.h \
 	$(top_srcdir)/lib/env.c
-login_SOURCES = login.c login.h $(top_srcdir)/lib/setproctitle.c
+login_SOURCES = login.c logindefs.c logindefs.h \
+		$(top_srcdir)/lib/setproctitle.c
 vipw_SOURCES = vipw.c setpwnam.h
 
 chfn_LDADD = $(login_ldadd_common)
@@ -44,16 +43,9 @@ chfn_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 chsh_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 newgrp_LDFLAGS = $(SUID_LDFLAGS) $(AM_LDFLAGS)
 
-if HAVE_PAM
 login_ldadd_common += -lpam -lpam_misc
-else
-if NEED_LIBCRYPT
-login_ldadd_common += -lcrypt
-endif
-login_SOURCES += checktty.c
-endif #! HAVE_PAM
 
-if NEED_LIBCRYPT
+if HAVE_LIBCRYPT
 newgrp_LDADD += -lcrypt
 endif
 
@@ -74,9 +66,9 @@ install-exec-hook::
 
 endif
 
-noinst_PROGRAMS = checktty_test islocal_test
-checktty_test_SOURCES = checktty.c login.h
-checktty_test_CPPFLAGS = -DMAIN_TEST_CHECKTTY $(AM_CPPFLAGS)
-islocal_test_SOURCES = islocal.c
-islocal_test_CPPFLAGS = -DMAIN_TEST_ISLOCAL $(AM_CPPFLAGS)
+noinst_PROGRAMS = test_islocal test_logindefs
+test_islocal_SOURCES = islocal.c
+test_islocal_CPPFLAGS = -DTEST_PROGRAM $(AM_CPPFLAGS)
 
+test_logindefs_SOURCES = logindefs.c logindefs.h
+test_logindefs_CPPFLAGS = -DTEST_PROGRAM $(AM_CPPFLAGS)

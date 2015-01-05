@@ -10,7 +10,7 @@ UTILS := hub-ctrl
 all: $(UTILS)
 
 hub-ctrl: hub-ctrl.o
-	$(CC) $(LDFLAGS) -o $@ -L$(TOP)/libusb10/libusb/.libs -lusb-1.0 $<
+	$(CC) $(LDFLAGS) -o $@ -L$(TOP)/libusb10/libusb/.libs -lusb-1.0 -lpthread -ldl $<
 
 hub-ctrl.o: hub-ctrl.c
 	$(CC) -c $(CFLAGS) -o $@ -I$(TOP)/libusb10/libusb -I$(TOP)/libusb10/ $<

@@ -26,7 +26,17 @@ function wl_chanspec_list_change(){
 				if(wl_channel_list_5g instanceof Array && wl_channel_list_5g != ["0"]){	//With wireless channel 5g hook or return not ["0"]
 						if(based_modelid == "RT-AC3200")
 							wl_channel_list_5g = [36,40,44,48];
-						else
+						else if(based_modelid == "RT-AC87U"){
+							if(document.form.wl_bw.value==1){
+								wl_channel_list_5g = eval('<% channel_list_5g_20m(); %>');
+							}else if(document.form.wl_bw.value==2){
+								wl_channel_list_5g = eval('<% channel_list_5g_40m(); %>');
+							}else  if(document.form.wl_bw.value==3){
+								wl_channel_list_5g = eval('<% channel_list_5g_80m(); %>');
+							}else{
+								wl_channel_list_5g = eval('<% channel_list_5g(); %>');
+							}
+						}else
 							wl_channel_list_5g = eval('<% channel_list_5g(); %>');
 					
 					extend_channel = ["<#Auto#>"];		 // for 5GHz, extension channel always displays Auto
@@ -38,7 +48,9 @@ function wl_chanspec_list_change(){
 							$('wl_nctrlsb_field').style.display = "";
 								for(var i=0;i<wl_channel_list_5g.length;i++){
 										if(wl_channel_list_5g[i] == "165")		//165 belong to 20MHz
-												wl_channel_list_5g[i] = wl_channel_list_5g[i];
+											wl_channel_list_5g[i] = wl_channel_list_5g[i];
+										else if((wl_channel_list_5g[i] == "56") && country == "TW")		//56 belong 20MHz only for TW
+											wl_channel_list_5g[i] = wl_channel_list_5g[i];
 										else if(document.form.preferred_lang.value == "UK")		// auto for UK
 												wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 										else if(band5g_11ac_support){

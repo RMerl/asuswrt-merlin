@@ -9,7 +9,12 @@
 
 #include "utils.h"
 #include "shutils.h"
+
 #include "shared.h"
+
+#if defined(RTCONFIG_BLINK_LED)
+#include <bled_defs.h>
+#endif
 
 #ifdef RTCONFIG_RALINK
 
@@ -18,33 +23,15 @@
 
 #endif
 
+int led_control(int which, int mode);
+
 static int gpio_values_loaded = 0;
-
-#define GPIO_ACTIVE_LOW 0x1000
-
-#define GPIO_DIR_IN	0
-#define GPIO_DIR_OUT	1
 
 int btn_rst_gpio = 0x0ff;
 int btn_wps_gpio = 0xff;
-int led_pwr_gpio = 0xff;
-int led_wps_gpio = 0xff;
-int led_usb_gpio = 0xff;
-int led_usb3_gpio = 0xff;
-int led_turbo_gpio = 0xff;
-int led_5g_gpio = 0xff;
-int led_2g_gpio = 0xff;
-int led_lan_gpio = 0xff;
-#ifdef RTCONFIG_LAN4WAN_LED
-int led_lan1_gpio = 0xff;
-int led_lan2_gpio = 0xff;
-int led_lan3_gpio = 0xff;
-int led_lan4_gpio = 0xff;
-#endif  /* LAN4WAN_LED */
-int led_wan_gpio = 0xff;
-#ifdef RTCONFIG_LED_ALL
-int led_all_gpio = 0xff;
-#endif
+
+static int led_gpio_table[LED_ID_MAX];
+
 int wan_port = 0xff;
 int fan_gpio = 0xff;
 int have_fan_gpio = 0xff;
@@ -60,6 +47,9 @@ int btn_turbo_gpio = 0xff;
 #ifdef RTCONFIG_LED_BTN
 int btn_led_gpio = 0xff;
 #endif
+#ifdef RT4GAC55U
+int btn_lte_gpio = 0xff;
+#endif
 #ifdef RTCONFIG_SWMODE_SWITCH
 int btn_swmode_sw_router = 0xff;
 int btn_swmode_sw_repeater = 0xff;
@@ -68,6 +58,16 @@ int btn_swmode_sw_ap = 0xff;
 #ifdef RTCONFIG_QTN
 int reset_qtn_gpio = 0xff;
 #endif
+
+int extract_gpio_pin(const char *gpio)
+{
+	char *p;
+
+	if (!gpio || !(p = nvram_get(gpio)))
+		return -1;
+
+	return (atoi(p) & GPIO_PIN_MASK);
+}
 
 int init_gpio(void)
 {
@@ -81,7 +81,16 @@ int init_gpio(void)
 #ifdef RTCONFIG_SWMODE_SWITCH
 		, "btn_swmode1_gpio", "btn_swmode2_gpio", "btn_swmode3_gpio"
 #endif
-		, "btn_turbo_gpio", "btn_led_gpio" };
+#ifdef RTCONFIG_TURBO
+		, "btn_turbo_gpio"
+#endif
+#ifdef RTCONFIG_LED_BTN
+		, "btn_led_gpio"
+#endif
+#ifdef RT4GAC55U
+		, "btn_lte_gpio"
+#endif
+	};
 	char *led_list[] = { "led_turbo_gpio", "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "fan_gpio", "have_fan_gpio", "led_lan_gpio", "led_wan_gpio", "led_usb3_gpio", "led_2g_gpio", "led_5g_gpio" 
 #ifdef RTCONFIG_LAN4WAN_LED
 		, "led_lan1_gpio", "led_lan2_gpio", "led_lan3_gpio", "led_lan4_gpio"
@@ -89,17 +98,32 @@ int init_gpio(void)
 #ifdef RTCONFIG_LED_ALL
 		, "led_all_gpio"
 #endif
+		, "led_wan_red_gpio"
 #ifdef RTCONFIG_QTN
 		, "reset_qtn_gpio"
+#endif
+#ifdef RTCONFIG_USBRESET
+		, "pwr_usb_gpio"
+		, "pwr_usb_gpio2"
+#endif
+#ifdef RT4GAC55U
+		, "led_lte_gpio", "led_sig1_gpio", "led_sig2_gpio", "led_sig3_gpio"
 #endif
 			   };
 	int use_gpio, gpio_pin;
 	int enable, disable;
 	int i;
 
+#ifdef RT4GAC55U
+	void get_gpio_values_once(void);
+	get_gpio_values_once();		// for filling data to led_gpio_table[]
+#endif	/* RT4GAC55U */
+
 	/* btn input */
 	for(i = 0; i < ASIZE(btn_list); i++)
 	{
+		if (!nvram_get(btn_list[i]))
+			continue;
 		use_gpio = nvram_get_int(btn_list[i]);
 		if((gpio_pin = use_gpio & 0xff) == 0xff)
 			continue;
@@ -109,6 +133,14 @@ int init_gpio(void)
 	/* led output */
 	for(i = 0; i < ASIZE(led_list); i++)
 	{
+		if (!nvram_get(led_list[i]))
+			continue;
+#if defined(RTCONFIG_ETRON_XHCI_USB3_LED)
+		if (!strcmp(led_list[i], "led_usb3_gpio") && nvram_match("led_usb3_gpio", "etron")) {
+			led_control(LED_USB3, LED_OFF);
+			continue;
+		}
+#endif
 		use_gpio = nvram_get_int(led_list[i]);
 
 		if((gpio_pin = use_gpio & 0xff) == 0xff)
@@ -121,13 +153,24 @@ int init_gpio(void)
 
 		disable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 0: 1;
 		gpio_dir(gpio_pin, GPIO_DIR_OUT);
+
+		/* If WAN RED LED is defined, keep it on until Internet connection ready in router mode. */
+		if (!strcmp(led_list[i], "led_wan_red_gpio") && nvram_get_int("sw_mode") == SW_MODE_ROUTER)
+			disable = !disable;
+
 		set_gpio(gpio_pin, disable);
+#ifdef RT4GAC55U	// save setting value
+		{ int i; char led[16]; for(i=0; i<LED_ID_MAX; i++) if(gpio_pin == (led_gpio_table[i]&0xff)){snprintf(led, sizeof(led), "led%02d", i); nvram_set_int(led, LED_OFF); break;}}
+#endif	/* RT4GAC55U */
 	}
 
 	if((gpio_pin = (use_gpio = nvram_get_int("led_pwr_gpio")) & 0xff) != 0xff)
 	{
 		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 		set_gpio(gpio_pin, enable);
+#ifdef RT4GAC55U	// save setting value
+		{ int i; char led[16]; for(i=0; i<LED_ID_MAX; i++) if(gpio_pin == (led_gpio_table[i]&0xff)){snprintf(led, sizeof(led), "led%02d", i); nvram_set_int(led, LED_ON); break;}}
+#endif	/* RT4GAC55U */
 	}
 
 	// Power of USB.
@@ -173,9 +216,22 @@ int set_pwr_usb(int boolOn){
 	return 0;
 }
 
+/* Return GPIO# of specified nvram variable.
+ * @return:
+ * 	-1:	nvram variables doesn't not exist.
+ */
+static int __get_gpio(char *name)
+{
+	if (!nvram_get(name))
+		return -1;
+
+	return nvram_get_int(name);
+}
+
 // this is shared by every process, so, need to get nvram for first time it called per process
 void get_gpio_values_once(void)
 {
+	int i;
 	//int model;
 	if (gpio_values_loaded) return;
 
@@ -184,48 +240,62 @@ void get_gpio_values_once(void)
 
 	// TODO : add other models
 
-	btn_rst_gpio = nvram_get_int("btn_rst_gpio");
-	btn_wps_gpio = nvram_get_int("btn_wps_gpio");
-	led_pwr_gpio = nvram_get_int("led_pwr_gpio");
-	led_wps_gpio = nvram_get_int("led_wps_gpio");
-	led_2g_gpio = nvram_get_int("led_2g_gpio");
-	led_5g_gpio = nvram_get_int("led_5g_gpio");
+	btn_rst_gpio = __get_gpio("btn_rst_gpio");
+	btn_wps_gpio = __get_gpio("btn_wps_gpio");
+
+	for (i = 0; i < ARRAY_SIZE(led_gpio_table); ++i) {
+		led_gpio_table[i] = -1;
+	}
+	led_gpio_table[LED_POWER] = __get_gpio("led_pwr_gpio");
+	led_gpio_table[LED_WPS] = __get_gpio("led_wps_gpio");
+	led_gpio_table[LED_2G] = __get_gpio("led_2g_gpio");
+	led_gpio_table[LED_5G] = __get_gpio("led_5g_gpio");
 #ifdef RTCONFIG_LAN4WAN_LED
-	led_lan1_gpio = nvram_get_int("led_lan1_gpio");
-	led_lan2_gpio = nvram_get_int("led_lan2_gpio");
-	led_lan3_gpio = nvram_get_int("led_lan3_gpio");
-	led_lan4_gpio = nvram_get_int("led_lan4_gpio");
+	led_gpio_table[LED_LAN1] = __get_gpio("led_lan1_gpio");
+	led_gpio_table[LED_LAN2] = __get_gpio("led_lan2_gpio");
+	led_gpio_table[LED_LAN3] = __get_gpio("led_lan3_gpio");
+	led_gpio_table[LED_LAN4] = __get_gpio("led_lan4_gpio");
 #else
-	led_lan_gpio = nvram_get_int("led_lan_gpio");
+	led_gpio_table[LED_LAN] = __get_gpio("led_lan_gpio");
 #endif	/* LAN4WAN_LED */
-	led_wan_gpio = nvram_get_int("led_wan_gpio");
-	led_usb_gpio = nvram_get_int("led_usb_gpio");
-	led_usb3_gpio = nvram_get_int("led_usb3_gpio");
+	led_gpio_table[LED_WAN] = __get_gpio("led_wan_gpio");
+	led_gpio_table[LED_USB] = __get_gpio("led_usb_gpio");
+	led_gpio_table[LED_USB3] = __get_gpio("led_usb3_gpio");
 #ifdef RTCONFIG_LED_ALL
-	led_all_gpio = nvram_get_int("led_all_gpio");
+	led_gpio_table[LED_ALL] = __get_gpio("led_all_gpio");
 #endif
-	led_turbo_gpio = nvram_get_int("led_turbo_gpio");
+	led_gpio_table[LED_TURBO] = __get_gpio("led_turbo_gpio");
+	led_gpio_table[LED_WAN_RED] = __get_gpio("led_wan_red_gpio");
+#ifdef RT4GAC55U
+	led_gpio_table[LED_LTE] = __get_gpio("led_lte_gpio");
+	led_gpio_table[LED_SIG1] = __get_gpio("led_sig1_gpio");
+	led_gpio_table[LED_SIG2] = __get_gpio("led_sig2_gpio");
+	led_gpio_table[LED_SIG3] = __get_gpio("led_sig3_gpio");
+#endif
 
 #ifdef RTCONFIG_SWMODE_SWITCH
-	btn_swmode_sw_router = nvram_get_int("btn_swmode1_gpio");
-	btn_swmode_sw_repeater = nvram_get_int("btn_swmode2_gpio");
-	btn_swmode_sw_ap = nvram_get_int("btn_swmode3_gpio");
+	btn_swmode_sw_router = __get_gpio("btn_swmode1_gpio");
+	btn_swmode_sw_repeater = __get_gpio("btn_swmode2_gpio");
+	btn_swmode_sw_ap = __get_gpio("btn_swmode3_gpio");
 #endif
 
 #ifdef RTCONFIG_WIRELESS_SWITCH
-	btn_wifi_sw = nvram_get_int("btn_wifi_gpio");
+	btn_wifi_sw = __get_gpio("btn_wifi_gpio");
 #endif
 #ifdef RTCONFIG_WIFI_TOG_BTN
-	btn_wltog_gpio = nvram_get_int("btn_wltog_gpio");
+	btn_wltog_gpio = __get_gpio("btn_wltog_gpio");
 #endif
 #ifdef RTCONFIG_TURBO
-	btn_turbo_gpio = nvram_get_int("btn_turbo_gpio");
+	btn_turbo_gpio = __get_gpio("btn_turbo_gpio");
 #endif
 #ifdef RTCONFIG_LED_BTN
-	btn_led_gpio = nvram_get_int("btn_led_gpio");
+	btn_led_gpio = __get_gpio("btn_led_gpio");
 #endif
 #ifdef RTCONFIG_QTN
 	reset_qtn_gpio = nvram_get_int("reset_qtn_gpio");
+#endif
+#ifdef RT4GAC55U
+	btn_lte_gpio = __get_gpio("btn_lte_gpio");
 #endif
 }
 
@@ -279,6 +349,11 @@ int button_pressed(int which)
 			use_gpio = btn_led_gpio;
 			break;
 #endif
+#ifdef RT4GAC55U
+		case BTN_LTE:
+			use_gpio = btn_lte_gpio;
+			break;
+#endif
 		default:
 			use_gpio = 0xff;
 			break;
@@ -300,13 +375,27 @@ int button_pressed(int which)
 
 
 int led_control(int which, int mode)
-{
-	int use_gpio;
-//	int gpio_value;
-	int enable, disable;
-	int model;
+#ifdef RT4GAC55U
+{ //save value
+	char name[16];
 
-	model = get_model();
+	snprintf(name, sizeof(name), "led%02d", which);
+	if(nvram_get_int(name) != mode)
+		nvram_set_int(name, mode);
+
+	if (nvram_match(LED_CTRL_HIPRIO, "1"))
+		return 0;
+
+	int do_led_control(int which, int mode);
+	return do_led_control(which, mode);
+}
+
+int do_led_control(int which, int mode)
+#endif
+{
+	int use_gpio, gpio_nr;
+	int v = (mode == LED_OFF)? 0:1;
+	int model;
 
 	// Did the user disable the leds?
 	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1) && (which != LED_TURBO)
@@ -314,22 +403,58 @@ int led_control(int which, int mode)
 		&& (which != BTN_QTN_RESET)
 #endif
 	)
+	{
 		return 0;
+	}
+
+	if (which < 0 || which >= LED_ID_MAX || mode < 0 || mode >= LED_FAN_MODE_MAX)
+		return -1;
 
 	get_gpio_values_once();
+	use_gpio = led_gpio_table[which];
+	gpio_nr = use_gpio & 0xFF;
+
+#if defined(RTCONFIG_ETRON_XHCI_USB3_LED)
+	if (which == LED_USB3 && nvram_match("led_usb3_gpio", "etron")) {
+		char *onoff = "2";	/* LED OFF */
+
+		if (mode == LED_ON || mode == FAN_ON || mode == HAVE_FAN_ON)
+			onoff = "3";	/* LED ON */
+
+		f_write_string("/sys/bus/pci/drivers/xhci_hcd/port_led", onoff, 0, 0);
+		return 0;
+	}
+#endif
+
+#if defined(RTAC56U) || defined(RTAC56S)
+	if (which == LED_5G && nvram_match("5g_fail", "1"))
+		return -1;
+#endif
+
+	if (use_gpio < 0 || gpio_nr == 0xFF)
+		return -1;
+
+	if (use_gpio & GPIO_ACTIVE_LOW)
+		v ^= 1;
+
+	if (mode == LED_OFF) {
+		stop_bled(use_gpio);
+	}
+
+	set_gpio(gpio_nr, v);
+
+	if (mode == LED_ON) {
+		start_bled(use_gpio);
+	}
+
+	return 0;
+/* Original code that's specific to stealth mode */
+/* TODO: re-implement within the new bled architecture
+ * 		possibly by moving to a new function that we'd only use when enabling
+		or disabling stealth mode?
+  */
+/*
 	switch(which) {
-		case LED_POWER:
-			use_gpio = led_pwr_gpio;
-			break;
-		case LED_USB:
-			use_gpio = led_usb_gpio;
-			break;
-		case LED_USB3:
-			use_gpio = led_usb3_gpio;
-			break;
-		case LED_WPS:	
-			use_gpio = led_wps_gpio;
-			break;
 		case LED_2G:
 			if ((model == MODEL_RTN66U) || (model == MODEL_RTAC66U) || (model == MODEL_RTN16)) {
 				if (mode == LED_ON)
@@ -379,37 +504,6 @@ int led_control(int which, int mode)
                         } else {
                                 use_gpio = led_5g_gpio;
 			}
-#if defined(RTAC56U) || defined(RTAC56S)
-			if(nvram_match("5g_fail", "1"))
-				return -1;
-#endif
-			break;
-#ifdef RTCONFIG_LAN4WAN_LED
-		case LED_LAN1:
-			use_gpio = led_lan1_gpio;
-			break;
-		case LED_LAN2:
-			use_gpio = led_lan2_gpio;
-			break;
-		case LED_LAN3:
-			use_gpio = led_lan3_gpio;
-			break;
-		case LED_LAN4:
-			use_gpio = led_lan4_gpio;
-			break;
-#else
-		case LED_LAN:
-			use_gpio = led_lan_gpio;
-			break;
-#endif
-		case LED_WAN:
-			use_gpio = led_wan_gpio;
-			break;
-		case FAN:
-			use_gpio = fan_gpio;
-			break;
-		case HAVE_FAN:
-			use_gpio = have_fan_gpio;
 			break;
 		case LED_SWITCH:
 			if (mode == LED_ON) {
@@ -421,51 +515,55 @@ int led_control(int which, int mode)
 			}
 			use_gpio = 0xff;
 			break;
-#ifdef RTCONFIG_LED_ALL
-		case LED_ALL:
-			use_gpio = led_all_gpio;
-			break;
-#endif
-		case LED_TURBO:
-			use_gpio = led_turbo_gpio;
-			break;
-#ifdef RTCONFIG_QTN
-		case BTN_QTN_RESET:
-			use_gpio = reset_qtn_gpio;
-			break;
-#endif
-		default:
-			use_gpio = 0xff;
-			break;
-	}
 
-	if((use_gpio&0xff) != 0xff)
-	{
-		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
-		disable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 0: 1;
+	return 0;
+*/
+}
 
-		switch(mode) {
-			case LED_ON:
-			case FAN_ON:
-			case HAVE_FAN_ON:
-				set_gpio((use_gpio&0xff), enable);
-				break;
-			case LED_OFF:	
-			case FAN_OFF:
-			case HAVE_FAN_OFF:
-				set_gpio((use_gpio&0xff), disable);
-				break;
+#ifdef RT4GAC55U
+void led_control_lte(int percent)
+{
+	if(percent >= 0)
+	{ //high priority led for LTE
+		int LTE_LED[] = { LED_SIG1, LED_SIG2, LED_SIG3, LED_USB, LED_LAN, LED_2G, LED_5G, LED_WAN, LED_LTE, LED_POWER };
+		int i;
+		nvram_set(LED_CTRL_HIPRIO, "1");
+		for(i = 0; i < ARRAY_SIZE(LTE_LED); i++)
+		{
+			if((percent/9) > i)
+				do_led_control(LTE_LED[i], LED_ON);
+			else
+				do_led_control(LTE_LED[i], LED_OFF);
 		}
 	}
-	return 0;
+	else if(nvram_match(LED_CTRL_HIPRIO, "1"))
+	{ //restore
+		int which, mode;
+		char name[16];
+		char *p;
+
+		nvram_unset(LED_CTRL_HIPRIO);
+
+		for(which = 0; which < LED_ID_MAX; which++)
+		{
+			sprintf(name, "led%02d", which);
+			if ((p = nvram_get(name)) != NULL)
+			{
+				mode = atoi(p);
+				do_led_control(which, mode);
+			}
+		}
+	}
 }
+#endif	/* RT4GAC55U */
+
 
 extern uint32_t get_phy_status(uint32_t portmask);
 extern uint32_t set_phy_ctrl(uint32_t portmask, int ctrl);
 
 int wanport_status(int wan_unit)
 {
-#ifdef RTCONFIG_RALINK
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
 	return rtkswitch_wanPort_phyStatus(wan_unit);
 #else
 	char word[100], *next;
@@ -530,6 +628,12 @@ int wanport_ctrl(int ctrl)
 	return 1;
 #endif
 	return 1;
+#elif defined(RTCONFIG_QCA)
+	if(ctrl)
+		rtkswitch_WanPort_linkUp();
+	else
+		rtkswitch_WanPort_linkDown();
+	return 1;
 #else
 	char word[100], *next;
 	int mask;
@@ -560,6 +664,8 @@ int lanport_status(void)
 	return rtkswitch_lanPorts_phyStatus();
 #endif	
 	
+#elif defined(RTCONFIG_QCA)
+	return rtkswitch_lanPorts_phyStatus();
 #else
 	char word[100], *next;
 	int mask;
@@ -576,7 +682,9 @@ int lanport_status(void)
 int lanport_speed(void)
 {
 #ifdef RTCONFIG_RALINK
-	return 1;
+	return get_phy_speed(0);	/* FIXME */
+#elif defined(RTCONFIG_QCA)
+	return get_phy_speed(0);	/* FIXME */
 #else
 	char word[100], *next;
 	int mask;
@@ -597,6 +705,14 @@ int lanport_ctrl(int ctrl)
 
 	if(ctrl) rtkswitch_LanPort_linkUp();
 	else rtkswitch_LanPort_linkDown();
+	return 1;
+
+#elif defined(RTCONFIG_QCA)
+
+	if(ctrl)
+		rtkswitch_LanPort_linkUp();
+	else
+		rtkswitch_LanPort_linkDown();
 	return 1;
 
 #else

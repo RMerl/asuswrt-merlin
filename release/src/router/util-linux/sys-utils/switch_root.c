@@ -32,10 +32,16 @@
 #include <errno.h>
 #include <ctype.h>
 #include <dirent.h>
+
 #include "c.h"
+#include "nls.h"
 
 #ifndef MS_MOVE
 #define MS_MOVE 8192
+#endif
+
+#ifndef MNT_DETACH
+#define MNT_DETACH       0x00000002	/* Just detach from the tree */
 #endif
 
 /* remove all files/directories below dirName -- don't cross mountpoints */
@@ -47,7 +53,7 @@ static int recursiveRemove(int fd)
 	int dfd;
 
 	if (!(dir = fdopendir(fd))) {
-		warn("failed to open directory");
+		warn(_("failed to open directory"));
 		goto done;
 	}
 
@@ -55,7 +61,7 @@ static int recursiveRemove(int fd)
 	dfd = dirfd(dir);
 
 	if (fstat(dfd, &rb)) {
-		warn("failed to stat directory");
+		warn(_("failed to stat directory"));
 		goto done;
 	}
 
@@ -65,7 +71,7 @@ static int recursiveRemove(int fd)
 		errno = 0;
 		if (!(d = readdir(dir))) {
 			if (errno) {
-				warn("failed to read directory");
+				warn(_("failed to read directory"));
 				goto done;
 			}
 			break;	/* end of directory */
@@ -78,7 +84,7 @@ static int recursiveRemove(int fd)
 			struct stat sb;
 
 			if (fstatat(dfd, d->d_name, &sb, AT_SYMLINK_NOFOLLOW)) {
-				warn("failed to stat %s", d->d_name);
+				warn(_("failed to stat %s"), d->d_name);
 				continue;
 			}
 
@@ -97,7 +103,7 @@ static int recursiveRemove(int fd)
 
 		if (unlinkat(dfd, d->d_name,
 			     d->d_type == DT_DIR ? AT_REMOVEDIR : 0))
-			warn("failed to unlink %s", d->d_name);
+			warn(_("failed to unlink %s"), d->d_name);
 	}
 
 	rc = 0;	/* success */
@@ -111,38 +117,52 @@ done:
 static int switchroot(const char *newroot)
 {
 	/*  Don't try to unmount the old "/", there's no way to do it. */
-	const char *umounts[] = { "/dev", "/proc", "/sys", NULL };
+	const char *umounts[] = { "/dev", "/proc", "/sys", "/run", NULL };
 	int i;
 	int cfd;
 	pid_t pid;
+	struct stat newroot_stat, sb;
+
+	if (stat(newroot, &newroot_stat) != 0) {
+		warn(_("failed to stat directory %s"), newroot);
+		return -1;
+	}
 
 	for (i = 0; umounts[i] != NULL; i++) {
 		char newmount[PATH_MAX];
 
 		snprintf(newmount, sizeof(newmount), "%s%s", newroot, umounts[i]);
 
+		if ((stat(newmount, &sb) != 0) || (sb.st_dev != newroot_stat.st_dev)) {
+			/* mount point seems to be mounted already or stat failed */
+			umount2(umounts[i], MNT_DETACH);
+			continue;
+		}
+
 		if (mount(umounts[i], newmount, NULL, MS_MOVE, NULL) < 0) {
-			warn("failed to mount moving %s to %s",
+			warn(_("failed to mount moving %s to %s"),
 				umounts[i], newmount);
-			warnx("forcing unmount of %s", umounts[i]);
+			warnx(_("forcing unmount of %s"), umounts[i]);
 			umount2(umounts[i], MNT_FORCE);
 		}
 	}
 
 	if (chdir(newroot)) {
-		warn("failed to change directory to %s", newroot);
+		warn(_("failed to change directory to %s"), newroot);
 		return -1;
 	}
 
 	cfd = open("/", O_RDONLY);
 
 	if (mount(newroot, "/", NULL, MS_MOVE, NULL) < 0) {
-		warn("failed to mount moving %s to /", newroot);
+		close(cfd);
+		warn(_("failed to mount moving %s to /"), newroot);
 		return -1;
 	}
 
 	if (chroot(".")) {
-		warn("failed to change root");
+		close(cfd);
+		warn(_("failed to change root"));
 		return -1;
 	}
 
@@ -158,18 +178,17 @@ static int switchroot(const char *newroot)
 	return 0;
 }
 
-static void usage(FILE *output)
+static void __attribute__((__noreturn__)) usage(FILE *output)
 {
-	fprintf(output, "usage: %s <newrootdir> <init> <args to init>\n",
-			program_invocation_short_name);
-	exit(output == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
-}
+	fputs(USAGE_HEADER, output);
+	fprintf(output, _(" %s [options] <newrootdir> <init> <args to init>\n"),
+		program_invocation_short_name);
+	fputs(USAGE_OPTIONS, output);
+	fputs(USAGE_HELP, output);
+	fputs(USAGE_VERSION, output);
+	fprintf(output, USAGE_MAN_TAIL("switch_root(8)"));
 
-static void version(void)
-{
-	fprintf(stdout,  "%s from %s\n", program_invocation_short_name,
-			PACKAGE_STRING);
-	exit(EXIT_SUCCESS);
+	exit(output == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[])
@@ -178,8 +197,10 @@ int main(int argc, char *argv[])
 
 	if (argv[1] && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")))
 		usage(stdout);
-	if (argv[1] && (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-V")))
-		version();
+	if (argv[1] && (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-V"))) {
+		printf(UTIL_LINUX_VERSION);
+		return EXIT_SUCCESS;
+	}
 	if (argc < 3)
 		usage(stderr);
 
@@ -191,12 +212,12 @@ int main(int argc, char *argv[])
 		usage(stderr);
 
 	if (switchroot(newroot))
-		errx(EXIT_FAILURE, "failed. Sorry.");
+		errx(EXIT_FAILURE, _("failed. Sorry."));
 
 	if (access(init, X_OK))
-		warn("cannot access %s", init);
+		warn(_("cannot access %s"), init);
 
 	execv(init, initargs);
-	err(EXIT_FAILURE, "failed to execute %s", init);
+	err(EXIT_FAILURE, _("failed to execute %s"), init);
 }
 

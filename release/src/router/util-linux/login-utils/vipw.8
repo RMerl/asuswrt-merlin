@@ -31,61 +31,59 @@
 .\"
 .\"     from: @(#)vipw.8	6.7 (Berkeley) 3/16/91
 .\"
-.Dd July 1996 "  "
-.Dt VIPW(8) "" "System Administration"
-.Os util-linux
-.Sh NAME
-.Nm vipw, vigr
-.Nd edit the password or group file
-.Sh SYNOPSIS
-.Nm vipw
-.Op Fl V
-.Op Fl -version
-.Nm vigr
-.Op Fl V
-.Op Fl -version
-.Sh DESCRIPTION
-.Nm vipw
+.TH VIPW "8" "September 2011" "util-linux" "System Administration"
+.SH NAME
+vipw, vigr \- edit the password or group file
+.SH SYNOPSIS
+.B vipw
+[options]
+.br
+.B vigr
+[options]
+.SH DESCRIPTION
+.B vipw
 edits the password file after setting the appropriate locks,
 and does any necessary processing after the password file is unlocked.
 If the password file is already locked for editing by another user,
-.Nm vipw
+.B vipw
 will ask you
 to try again later.  The default editor for
-.Nm vipw
+.B vipw
 and
-.Nm vigr
+.B vigr
 is
-.Xr vi 1 .
-.Nm vigr
+.BR vi (1).
+.B vigr
 edits the group file in the same manner as
-.Nm vipw
+.B vipw
 does the passwd file.
-.Sh ENVIRONMENT
+.SH ENVIRONMENT
 If the following environment variable exists it will be utilized by
-.Nm vipw
+.B vipw
 and
-.Nm vigr :
-.Bl -tag -width EDITOR
-.It Ev EDITOR
+.BR vigr :
+.I
+.TP
+.B EDITOR
 The editor specified by the string
-.Ev EDITOR
+.B EDITOR
 will be invoked instead of the default editor
-.Xr vi 1 .
+.BR vi (1).
 .El
-.Sh SEE ALSO
-.Xr passwd 1 ,
-.Xr vi 1 ,
-.Xr passwd 5
-.Sh HISTORY
+.SH SEE ALSO
+.BR passwd (1),
+.BR vi (1),
+.BR passwd (5)
+.SH HISTORY
 The
-.Nm vipw
-command appeared in
-.Bx 4.0 .
+.B vipw
+command appeared in 4.0BSD.
 .br
 The
-.Nm vigr
+.B vigr
 command appeared in Util-Linux 2.6.
-.Sh AVAILABILITY
+.SH AVAILABILITY
 The vigr and vipw commands are part of the util-linux package and are available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

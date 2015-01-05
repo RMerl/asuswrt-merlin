@@ -14,6 +14,11 @@
 #include "pathnames.h"
 #include "fsprobe.h"
 
+/*
+ * THIS IS DEPRECATED -- use blkid_evaluate_* API rather than this extra layer
+ */
+
+
 static blkid_cache blcache;
 static blkid_probe blprobe;
 

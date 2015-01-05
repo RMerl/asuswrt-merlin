@@ -202,6 +202,9 @@ function initial(){
 			if(parent.parent.ISMOBILE){
 				alert("<#DrSurf_sweet_advise1#>");
 			}
+			else if(action_script == "saveNvram"){
+				return;
+			}
 			else{
 				parent.parent.dr_advise();
 				parent.parent.document.getElementById('disconnect_hint').style.display = "";
@@ -209,8 +212,10 @@ function initial(){
 				return false;
 			}
 		}
-
-		if(getflag == "finish"){
+		else if(getflag == "background"){
+			return;
+		}
+		else if(getflag == "finish"){
 			if(parent.$("hidden_frame")){
 				setTimeout("parent.location.href='/qis/QIS_finish.htm';", restart_time*1000);  // Get
 			}
@@ -218,13 +223,17 @@ function initial(){
 				parent.parent.showLoading(restart_time, "waiting");
 				setTimeout("showdr_advise('finish');", (restart_time+1)*1000);
 			}
-		}
+		} 
 		else if(getflag == "liveUpdate"){
 			setTimeout("parent.parent.detect_firmware();", restart_time*1000);
 			setTimeout("afterLiveUpdate();", (restart_time+12)*1000);
 		}		
 		else if(getflag == "adv_ap_mode"){
-			parent.parent.$('drword').innerHTML = "<#LANConfig_ChangedLANIP#>";
+			if(parent.findasus_support){
+				parent.parent.$('drword').innerHTML = "You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.";
+			}else{
+				parent.parent.$('drword').innerHTML = "<#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#>";
+			}
 			setTimeout("parent.parent.hideLoading();	",15000);
 			setTimeout("parent.parent.dr_advise();",15000);
 		}
@@ -238,6 +247,9 @@ function initial(){
 			else
 				setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 		}
+	}
+	else if(getflag == "background"){
+			return;
 	}
 	else if(action_script == "reboot"){
 		parent.showLoading(restart_time);

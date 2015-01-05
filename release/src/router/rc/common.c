@@ -49,6 +49,10 @@
 #include <ralink.h>
 #endif
 
+#ifdef RTCONFIG_QCA
+#include <qca.h>
+#endif
+
 #include <mtd.h>
 
 void update_lan_status(int);
@@ -975,6 +979,10 @@ void remove_conntrack(void)
 #ifdef LINUX26
 	ct_modprobe_r("sip");
 #endif
+#if defined(RTCONFIG_QCA)
+	modprobe_r("fast_classifier");
+	modprobe_r("shortcut_fe");
+#endif
 }
 
 void inc_mac(char *mac, int plus)
@@ -1301,7 +1309,7 @@ void
 setup_timezone(void)
 {
 #ifndef RC_BUILDTIME
-#define RC_BUILDTIME	1293840000	// Jan 1 00:00:00 GMT 2011
+#define RC_BUILDTIME	1417392000	// Dec 1 00:00:00 GMT 2014
 #endif
 	time_t now;
 	struct tm gm, local;
@@ -1385,7 +1393,6 @@ is_valid_hostname(const char *name)
 
 int get_meminfo_item(const char *name)
 {
-	int ret = 0;
 	FILE *fp;
 	char memdata[256] = {0};
 	int mem = 0;
@@ -1397,7 +1404,7 @@ int get_meminfo_item(const char *name)
 		/* get one memory parameter specified by the name */
 		while (fgets(memdata, 255, fp) != NULL) {
 			if (strstr(memdata, name) != NULL) {
-				ret = sscanf(memdata, "%*s %d kB", &mem);
+				sscanf(memdata, "%*s %d kB", &mem);
 				break;
 			}
 		}
@@ -1446,7 +1453,7 @@ void restart_lfp()
 #endif
 
 #ifdef RTCONFIG_WIRELESSREPEATER
-void setup_dnsmq(int mode)
+int setup_dnsmq(int mode)
 {
 	char v[32];
 	char tmp[32];
@@ -1479,6 +1486,8 @@ void setup_dnsmq(int mode)
 	
 		f_write_string("/proc/net/dnsmqctrl", "", 0, 0);
 	}
+
+	return 0;
 }
 #endif
 

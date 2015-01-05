@@ -38,6 +38,9 @@
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
 #endif
+#ifdef RTCONFIG_QCA
+#include <qca.h>
+#endif
 #include <shared.h>
 
 #include <syslog.h>
@@ -65,6 +68,8 @@
 #endif
 #endif
 
+
+
 #define BCM47XX_SOFTWARE_RESET	0x40		/* GPIO 6 */
 #define RESET_WAIT		2		/* seconds */
 #define RESET_WAIT_COUNT	RESET_WAIT * 10 /* 10 times a second */
@@ -76,6 +81,9 @@
 #define DAY_PERIOD		2 * 60 * 24	/* 1 day (in 30 sec periods) */
 
 #define WPS_TIMEOUT_COUNT	121 * 20
+#ifdef RTCONFIG_WPS_LED
+#define WPS_SUCCESS_COUNT	3
+#endif
 #define WPS_WAIT		1		/* seconds */
 #define WPS_WAIT_COUNT		WPS_WAIT * 20	/* 20 times a second */
 
@@ -118,9 +126,11 @@ static int btn_pressed_toggle_radio = 0;
 #endif
 static long ddns_update_timer = 0;
 
-#ifdef RTCONFIG_WIRELESS_SWITCH
+#if defined(RTCONFIG_WIRELESS_SWITCH) && defined(RTCONFIG_DSL)
 // for WLAN sw init, only for slide switch
 static int wlan_sw_init = 0;
+#elif defined(RTCONFIG_WIRELESS_SWITCH) && defined(RTCONFIG_QCA)
+static int wifi_sw_old = -1;
 #endif
 #ifdef RTCONFIG_LED_BTN
 static int LED_status_old = -1;
@@ -137,9 +147,13 @@ static int wlonunit = -1;
 
 extern int g_wsc_configured;
 extern int g_isEnrollee[MAX_NR_WL_IF];
+int g_wl0_led_status=0xFF;
+int g_wl1_led_status=0xFF;
 
 #define REGULAR_DDNS_CHECK	10 //10x30 sec
 static int ddns_check_count = 0;
+static int freeze_duck_count = 0;
+
 void
 sys_exit()
 {
@@ -161,6 +175,19 @@ extern int no_need_to_start_wps();
 
 void led_control_normal(void)
 {
+#ifdef RTCONFIG_WPS_LED
+	int v = LED_OFF;
+	// the behavior in normal when wps led != power led
+	// wps led = off, power led = on
+
+	if (nvram_match("wps_success", "1"))
+		v = LED_ON;
+	__wps_led_control(v);
+#else
+	led_control(LED_WPS, LED_ON);
+#endif
+	// in case LED_WPS != LED_POWER
+
 #if defined(RTCONFIG_LED_BTN) && defined(RTAC87U)
 	LED_switch_count = nvram_get_int("LED_switch_count");
 	if(nvram_get_int("AllLED") == 0) return;
@@ -232,6 +259,10 @@ void btn_check(void)
 			TRACE_PT("button WIFI_SW pressed\n");
 			nvram_set("btn_wifi_sw", "1");
 		}
+		else
+		{
+			nvram_set("btn_wifi_sw", "0");
+		}
 #endif
 #if defined(RTCONFIG_WIFI_TOG_BTN)
 		if (button_pressed(BTN_WIFI_TOG))
@@ -264,6 +295,13 @@ void btn_check(void)
 			nvram_set("btn_led", "0");
 		}
 #endif
+#endif
+#ifdef RT4GAC55U
+		if (button_pressed(BTN_LTE))
+		{
+			TRACE_PT("button LTE pressed\n");
+			nvram_set("btn_lte", "1");
+		}
 #endif
 		return;
 	}
@@ -327,7 +365,7 @@ void btn_check(void)
 #endif	/* ! RTCONFIG_WPS_RST_BTN */
 			}
 	}
-#ifdef RTCONFIG_WIRELESS_SWITCH
+#if defined(RTCONFIG_WIRELESS_SWITCH) && defined(RTCONFIG_DSL)
 	else if (button_pressed(BTN_WIFI_SW))
 	{
 		//TRACE_PT("button BTN_WIFI_SW pressed\n");
@@ -377,7 +415,7 @@ void btn_check(void)
 				}
 			}
 	}
-#endif
+#endif	/* RTCONFIG_WIRELESS_SWITCH && RTCONFIG_DSL */
 	else
 	{
 #ifdef RTCONFIG_WPS_RST_BTN
@@ -433,7 +471,7 @@ void btn_check(void)
 				alarmtimer(NORMAL_PERIOD, 0);
 			}
 		}
-#ifdef RTCONFIG_WIRELESS_SWITCH
+#if defined(RTCONFIG_WIRELESS_SWITCH) && defined(RTCONFIG_DSL)
 		else
 		{
 			// no button is pressed or released
@@ -471,7 +509,7 @@ void btn_check(void)
 				}
 			}
 		}
-#endif
+#endif	/* RTCONFIG_WIRELESS_SWITCH && RTCONFIG_DSL */
 	}
 
 #ifdef BTN_SETUP
@@ -482,6 +520,34 @@ void btn_check(void)
 	// wait until wl is ready
 	if (!nvram_get_int("wlready")) return;
 #endif
+
+#if defined(RTCONFIG_WIRELESS_SWITCH) && defined(RTCONFIG_QCA)
+	if (wifi_sw_old != button_pressed(BTN_WIFI_SW))
+	{
+		wifi_sw_old = button_pressed(BTN_WIFI_SW);
+		if(wifi_sw_old != 0 && (!nvram_match("wl0_radio", "1") || !nvram_match("wl1_radio", "1")))
+		{
+			TRACE_PT("button BTN_WIFI_SW pressed: ON\n");
+			nvram_set("wl0_radio", "1");
+			nvram_set("wl1_radio", "1");
+			nvram_set("wl0_HW_switch", "0");	// 0 to be ON
+			nvram_set("wl1_HW_switch", "0");	// 0 to be ON
+//			nvram_commit();
+			eval("radio", "on");			// ON
+		}
+		else if(wifi_sw_old == 0 && (!nvram_match("wl0_radio", "0") || !nvram_match("wl1_radio", "0")))
+		{
+			TRACE_PT("button BTN_WIFI_SW released: OFF\n");
+			eval("radio", "off");			// OFF
+			nvram_set("wl0_radio", "0");
+			nvram_set("wl1_radio", "0");
+			nvram_set("wl0_HW_switch", "1");	// 1 to be OFF
+			nvram_set("wl1_HW_switch", "1");	// 1 to be OFF
+//			nvram_commit();
+		}
+	}
+#endif	/* RTCONFIG_WIRELESS_SWITCH && RTCONFIG_QCA */
+
 
 #ifndef RTCONFIG_WPS_RST_BTN
 	// independent wifi-toggle btn or Added WPS button radio toggle option
@@ -503,6 +569,7 @@ void btn_check(void)
 		btn_pressed_toggle_radio = 0;
 	}
 #endif	/* RTCONFIG_WPS_RST_BTN */
+
 
 #ifdef RTCONFIG_TURBO
 	if (button_pressed(BTN_TURBO))
@@ -570,8 +637,13 @@ void btn_check(void)
 		{
 			led_control(LED_POWER, LED_ON);
 
+#ifdef RTAC3200
+			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
+#else
 			eval("et", "robowr", "0", "0x18", "0x01ff");
 			eval("et", "robowr", "0", "0x1a", "0x01ff");
+#endif
+
 			if (wlonunit == -1 || wlonunit == 0) {
 #ifdef RTAC68U
 				eval("wl", "ledbh", "10", "7");
@@ -679,7 +751,8 @@ void btn_check(void)
 		    !nvram_match("wps_ign_btn", "1"))
 #endif	/* ! RTCONFIG_WPS_RST_BTN */
 		{
-			TRACE_PT("button WPS pressed\n");
+			if (nvram_match("wps_enable", "1")) {
+				TRACE_PT("button WPS pressed\n");
 
 				if (btn_pressed_setup == BTNSETUP_NONE)
 				{
@@ -703,14 +776,29 @@ void btn_check(void)
 						wsc_timeout = WPS_TIMEOUT_COUNT;
 					}
 				}
+			} else {
+				TRACE_PT("button WPS pressed, skip\n");
+			}
 		}
 		else if (btn_pressed_setup == BTNSETUP_DETECT)
 		{
 			btn_pressed_setup = BTNSETUP_NONE;
 			btn_count_setup = 0;
-			led_control(LED_POWER, LED_ON);
+#ifndef RTCONFIG_WPS_LED
+			wps_led_control(LED_ON);
+#endif
 			alarmtimer(NORMAL_PERIOD, 0);
 		}
+#ifdef RTCONFIG_WPS_LED
+		else
+		{
+			if (nvram_match("wps_success", "1") && ++btn_count_setup_second > WPS_SUCCESS_COUNT) {
+				btn_count_setup_second = 0;
+				nvram_set("wps_success", "0");
+				__wps_led_control(LED_OFF);
+			}
+		}
+#endif
 	}
 	else
 	{
@@ -749,7 +837,7 @@ void btn_check(void)
 
 				alarmtimer(NORMAL_PERIOD, 0);
 #if (!defined(W7_LOGO) && !defined(WIFI_LOGO))
-#ifdef RTCONFIG_RALINK
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
 				stop_wps_method();
 #else
 				restart_wps_monitor();
@@ -765,9 +853,9 @@ void btn_check(void)
 		/* 0123456789 */
 		/* 1010101010 */
 		if ((btn_count_setup % 2) == 0 && (btn_count_setup > 10))
-			led_control(LED_WPS, LED_ON);
+			wps_led_control(LED_ON);
 		else
-			led_control(LED_WPS, LED_OFF);
+			wps_led_control(LED_OFF);
 	}
 #endif
 }
@@ -1283,7 +1371,21 @@ void led_check(void)
 		fake_wl_led_5g();
 	}
 #endif
+	
 
+#if defined(RTN56UV2)
+                if(nvram_get_int("wl1_ledon") == 1 && g_wl1_led_status!=1)
+                        led_control(LED_5G, LED_ON);
+		else if(nvram_get_int("wl1_ledon") == 0 && g_wl1_led_status!=0)
+                        led_control(LED_5G, LED_OFF);
+		g_wl1_led_status=nvram_get_int("wl1_ledon");
+
+                if(nvram_get_int("wl0_ledon") == 1 && g_wl0_led_status!=1)
+                        led_control(LED_2G, LED_ON);
+		else if(nvram_get_int("wl0_ledon") == 0 && g_wl0_led_status!=0)
+                        led_control(LED_2G, LED_OFF);
+		g_wl0_led_status=nvram_get_int("wl0_ledon");
+#endif		
 // it is not really necessary, but if required, add internet led check here
 // using wan_primary_ifunit() to get current working wan unit wan0 or wan1
 // using wan0_state_t or wan1_state_t to get status of working wan,
@@ -1433,7 +1535,13 @@ void swmode_check()
 	}
 }
 #endif
-
+#ifdef WEB_REDIRECT
+void wanduck_check(void)
+{
+	if((freeze_duck_count = nvram_get_int("freeze_duck")) > 0)
+		nvram_set_int("freeze_duck", --freeze_duck_count);
+}
+#endif
 void regular_ddns_check(void)
 {
 	struct in_addr ip_addr;
@@ -1536,9 +1644,10 @@ void syslog_commit_check(void)
 
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 void modem_flow_check(void){
-	time_t now, start, diff;
-	char timebuf[16];
-	int day_now, day_start, day_cycle;
+	time_t now, start, diff_mon;
+	struct tm tm_now, tm_start;
+	char timebuf[32];
+	int day_cycle;
 	int reset;
 	int unit;
 
@@ -1550,47 +1659,83 @@ void modem_flow_check(void){
 		return;
 
 	if(++modem_flow_count >= MODEM_FLOW_PERIOD){
+		time(&now);
+		memcpy(&tm_now, localtime(&now), sizeof(struct tm));
+		if(nvram_get_int("modem_bytes_data_cycle_debug") == 1)
+			_dprintf("modem_flow_check:   now. year %4d, month %2d, day %2d, hour, %2d, minute %2d.\n", tm_now.tm_year+1900, tm_now.tm_mon+1, tm_now.tm_mday, tm_now.tm_hour, tm_now.tm_min);
+
 		start = strtol(nvram_safe_get("modem_bytes_data_start"), NULL, 10);
-		strftime(timebuf, 16, "%d", gmtime(&start));
-		day_start = strtol(timebuf, NULL, 10);
-
-		now = uptime();
-		strftime(timebuf, 16, "%d", gmtime(&now));
-		day_now = strtol(timebuf, NULL, 10);
-
-		strftime(timebuf, 16, "%b", gmtime(&start));
+		memcpy(&tm_start, localtime(&start), sizeof(struct tm));
+		if(nvram_get_int("modem_bytes_data_cycle_debug") == 1)
+			_dprintf("modem_flow_check: start. year %4d, month %2d, day %2d, hour, %2d, minute %2d.\n", tm_start.tm_year+1900, tm_start.tm_mon+1, tm_start.tm_mday, tm_start.tm_hour, tm_start.tm_min);
 
 		day_cycle = strtol(nvram_safe_get("modem_bytes_data_cycle"), NULL, 10);
-		if(day_cycle > 0 && !strcmp("modem_bytes_data_cycle_debug", "1"))
-			_dprintf("modem_flow_check: start=%d, %s, now=%d, cycle=%d.\n", day_start, timebuf, day_now, day_cycle);
+		if(nvram_get_int("modem_bytes_data_cycle_debug") == 1)
+			_dprintf("modem_flow_check: cycle=%d.\n", day_cycle);
 
-		diff = now-start;
 		reset = 0;
-		if(day_cycle > 0){
-			if(day_now == day_cycle){
-				if(now-start < 30)
-					reset = 1;
-			}
-			// 2419200 = 28 days
-			// 2592000 = 30 days
-			// 2678400 = 31 days
-			else if(diff > 2678400){
+		if(day_cycle >= 1 && day_cycle <= 31 && tm_now.tm_year+1900 >= 2014){
+			if(!start || tm_start.tm_year+1900 < 2014){
+				_dprintf("Start the cycle of the data count!\n");
 				reset = 1;
 			}
-			else if(diff > 2592000){
-				if(strcmp(timebuf, "Jan") && strcmp(timebuf, "Mar") && strcmp(timebuf, "May") && strcmp(timebuf, "Jul") && strcmp(timebuf, "Aug") && strcmp(timebuf, "Oct") && strcmp(timebuf, "Dec"))
+			else{
+				if(tm_now.tm_mday == day_cycle){
+					// ex: day_cycle=20, start=2015/2/15 or 2014/4/30, now=2015/3/20. it should be reset by 2015/3/20, but in fact didn't yet.
+					if(tm_now.tm_mday != tm_start.tm_mday || tm_now.tm_mon != tm_start.tm_mon || tm_now.tm_year != tm_start.tm_year)
+						reset = 1;
+				}
+				else if(tm_now.tm_year != tm_start.tm_year){
 					reset = 1;
-			}
-			else if(diff > 2419200){
-				if(strcmp(timebuf, "Apr") && strcmp(timebuf, "Jun") && strcmp(timebuf, "Sep") && strcmp(timebuf, "Nov"))
-					reset = 1;
+				}
+				else if(tm_now.tm_mon < tm_start.tm_mon){
+					diff_mon = tm_now.tm_mon+12-tm_start.tm_mon;
+					// ex: over 2 months. it should be reset, but in fact didn't yet.
+					if(diff_mon > 1)
+						reset = 1;
+					else if(diff_mon == 1){
+						// ex: day_cycle=20, start=12/15, now=1/2. it should be reset by 12/20, but in fact didn't yet.
+						// tm_start.tm_mday >= day_cycle: it had been reset.
+						if(tm_start.tm_mday < day_cycle)
+							reset = 1;
+						// ex: day_cycle=20, start=12/25, now=1/21. it should be reset by 1/20, but in fact didn't yet.
+						// tm_now.tm_mday < day_cycle: it didn't need to be reset.
+						// tm_now.tm_mday == day_cycle: it had been reset by the above codes.
+						else if(tm_now.tm_mday > day_cycle)
+							reset = 1;
+					}
+				}
+				else if(tm_now.tm_mon > tm_start.tm_mon){
+					diff_mon = tm_now.tm_mon-tm_start.tm_mon;
+					// ex: over 2 months. it should be reset, but in fact didn't yet.
+					if(diff_mon > 1)
+						reset = 1;
+					else if(diff_mon == 1){
+						// ex: day_cycle=31, start=2/28, now=3/1. it should be reset by 2/28(31?), but in fact didn't yet.
+						// tm_start.tm_mday >= day_cycle: it had been reset.
+						if(tm_start.tm_mday < day_cycle)
+							reset = 1;
+						// ex: day_cycle=20, start=2/25, now=3/21. it should be reset by 3/20, but in fact didn't yet.
+						// tm_now.tm_mday < day_cycle: it didn't need to be reset.
+						// tm_now.tm_mday == day_cycle: it had been reset by the above codes.
+						else if(tm_now.tm_mday > day_cycle)
+							reset = 1;
+					}
+				}
+				else{ // tm_now.tm_mon == tm_start.tm_mon
+					// ex: day_cycle=20, start=2/15, now=2/28. it should be reset by 2/20, but in fact didn't yet.
+					// tm_now.tm_mday < day_cycle: it didn't need to be reset.
+					// tm_now.tm_mday == day_cycle: it had been reset by the above codes.
+					// tm_start.tm_mday >= day_cycle: it had been reset.
+					if(tm_now.tm_mday > day_cycle && tm_start.tm_mday < day_cycle)
+						reset = 1;
+				}
 			}
 		}
 
 		if(reset){
 			eval("modem_status.sh", "bytes-");
-			//snprintf(timebuf, 16, "%d", 86400*day_cycle);
-			snprintf(timebuf, 16, "%d", (int)now);
+			snprintf(timebuf, 32, "%d", (int)now);
 			nvram_set("modem_bytes_data_start", timebuf);
 			nvram_commit();
 		}
@@ -1892,6 +2037,7 @@ void init_wllc()
 #if defined(RTCONFIG_RALINK)
 #elif defined(RTCONFIG_QCA)
 #else
+#define	MAX_STA_COUNT	128
 void rssi_check_unit(int unit)
 {
 	int lrsi = 0, lrc = 0;
@@ -1903,8 +2049,8 @@ void rssi_check_unit(int unit)
 	char *name;
 	int val = 0;
 	char name_vif[] = "wlX.Y_XXXXXXXXXX";
-	struct maclist *assoc;
-	int max_sta_count = 128, maclist_size;
+	struct maclist *mac_list;
+	int mac_list_size;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
@@ -1920,15 +2066,11 @@ void rssi_check_unit(int unit)
 			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
 		return;
 	}
-#endif
-#ifdef RTCONFIG_WIRELESSREPEATER
-	if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
-		&& (nvram_get_int("wlc_band") == unit))
+	else if (is_psta(unit))
 	{
-		sprintf(name_vif, "wl%d.%d", unit, 1);
-		name = name_vif;
+		dbg("skip interface %s under psta mode\n", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+		return;
 	}
-	else
 #endif
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 	wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
@@ -1941,25 +2083,36 @@ void rssi_check_unit(int unit)
 		return;
 	}
 
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
+		&& (nvram_get_int("wlc_band") == unit))
+	{
+		sprintf(name_vif, "wl%d.%d", unit, 1);
+		name = name_vif;
+	}
+#endif
+
 	/* buffers and length */
-	maclist_size = sizeof(assoc->count) + max_sta_count * sizeof(struct ether_addr);
-	assoc = malloc(maclist_size);
+	mac_list_size = sizeof(mac_list->count) + MAX_STA_COUNT * sizeof(struct ether_addr);
+	mac_list = malloc(mac_list_size);
 
-	if (!assoc)
+	if (!mac_list)
 		goto exit;
 
-	/* query wl for associated sta list */
-	assoc->count = max_sta_count;
-	if (wl_ioctl(name, WLC_GET_ASSOCLIST, assoc, maclist_size))
+	memset(mac_list, 0, mac_list_size);
+
+	/* query wl for authenticated sta list */
+	strcpy((char*) mac_list, "authe_sta_list");
+	if (wl_ioctl(name, WLC_GET_VAR, mac_list, mac_list_size))
 		goto exit;
 
-	for (i = 0; i < assoc->count; i ++) {
-		memcpy(&scb_val.ea, &assoc->ea[i], ETHER_ADDR_LEN);
+	for (i = 0; i < mac_list->count; i ++) {
+		memcpy(&scb_val.ea, &mac_list->ea[i], ETHER_ADDR_LEN);
 
 		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
 			continue;
 
-		ether_etoa((void *)&assoc->ea[i], ea);
+		ether_etoa((void *)&mac_list->ea[i], ea);
 
 		_dprintf("rssi chk.1. wlif(%s), chk ea=%s, rssi=%d(%d), lowr_cnt=%d, lrc=%d\n", name, ea, scb_val.val, lrsi, wllc[unit].lowc, lrc);
 
@@ -1989,18 +2142,20 @@ void rssi_check_unit(int unit)
 		{
 			sprintf(name_vif, "wl%d.%d", unit, i);
 
-			/* query wl for associated sta list */
-			assoc->count = max_sta_count;
-			if (wl_ioctl(name_vif, WLC_GET_ASSOCLIST, assoc, maclist_size))
+			memset(mac_list, 0, mac_list_size);
+
+			/* query wl for authenticated sta list */
+			strcpy((char*) mac_list, "authe_sta_list");
+			if (wl_ioctl(name_vif, WLC_GET_VAR, mac_list, mac_list_size))
 				goto exit;
 
-			for (ii = 0; ii < assoc->count; ii ++) {
-				memcpy(&scb_val.ea, &assoc->ea[ii], ETHER_ADDR_LEN);
+			for (ii = 0; ii < mac_list->count; ii ++) {
+				memcpy(&scb_val.ea, &mac_list->ea[ii], ETHER_ADDR_LEN);
 
 				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
 					continue;
 
-				ether_etoa((void *)&assoc->ea[ii], ea);
+				ether_etoa((void *)&mac_list->ea[ii], ea);
 
 				_dprintf("rssi chk.1. wlif(%s), chk ea=%s, rssi=%d(%d), lowr_cnt=%d, lrc=%d\n", name_vif, ea, scb_val.val, lrsi, wllc[unit].lowc, lrc);
 
@@ -2023,7 +2178,7 @@ void rssi_check_unit(int unit)
 
 	/* error/exit */
 exit:
-	if (assoc) free(assoc);
+	if (mac_list) free(mac_list);
 
 	return;
 }
@@ -2135,6 +2290,12 @@ static void capture_bwdpi_log()
 	int flag = merge_log(path);
 	//printf("[capture log] flag = %d, path = %s\n", flag, path);
 	if(flag) send_wrslog_email(path);
+}
+
+static void check_bwdpi_monitor()
+{
+	if(!pids("bwdpi_monitor"))
+		start_bwdpi_monitor_service();
 }
 
 static void auto_sig_check()
@@ -2255,7 +2416,8 @@ void watchdog(int sig)
 		&& nvram_get_int("AllLED")
 #endif
 	)
-		led_check();
+	
+	led_check();
 
 #ifdef RTCONFIG_RALINK
 	if(need_restart_wsc) {
@@ -2273,7 +2435,9 @@ void watchdog(int sig)
 #ifdef RTCONFIG_SWMODE_SWITCH
 	swmode_check();
 #endif
-
+#ifdef WEB_REDIRECT
+	wanduck_check();
+#endif
 	/* if timer is set to less than 1 sec, then bypass the following */
 	if (itv.it_value.tv_sec == 0) return;
 
@@ -2334,6 +2498,7 @@ void watchdog(int sig)
 #ifdef RTCONFIG_BWDPI
 	auto_sig_check();
 	capture_bwdpi_log();
+	check_bwdpi_monitor();
 #endif
 
 	return;
@@ -2388,11 +2553,16 @@ watchdog_main(int argc, char *argv[])
 #ifdef RTCONFIG_DSL //Paul add 2012/6/27
 	nvram_set("btn_rst", "0");
 	nvram_set("btn_ez", "0");
-	nvram_set("btn_wifi_sw", "0");
 	nvram_set("dsltmp_syncloss", "0");
 	nvram_set("dsltmp_syncloss_apply", "0");
 #endif
+#ifdef RTCONFIG_WIRELESS_SWITCH
+	nvram_set("btn_wifi_sw", "0");
+#endif
 	nvram_unset("wps_ign_btn");
+#ifdef RT4GAC55U
+	nvram_set("btn_lte", "0");
+#endif
 
 	if (!pids("ots"))
 		start_ots();

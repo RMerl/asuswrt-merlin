@@ -23,6 +23,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include "kill.h"
+#include "xalloc.h"
 
 extern char *mybasename (char *);
 static char *parse_parens (char *buf);
@@ -68,8 +69,8 @@ get_pids (char *process_name, int get_all) {
 	    fp = fopen (fname, "r");
 	    if (! fp) continue;
 	    cp = fgets (buf, sizeof (buf), fp);
-	    if (cp == NULL) continue;
 	    fclose (fp);
+	    if (cp == NULL) continue;
 	    cp = parse_parens (buf);
 	    if (cp == NULL) continue;
 	}
@@ -77,13 +78,15 @@ get_pids (char *process_name, int get_all) {
 	if (strcmp (process_name, mybasename (cp))) continue;
 	while (pids_size < num_pids + 2) {
 	    pids_size += 5;
-	    pids = (int *) realloc (pids, sizeof (int) * pids_size);
+	    pids = (int *) xrealloc (pids, sizeof (int) * pids_size);
 	}
-	pids[num_pids++] = pid;
-	pids[num_pids] = -1;
+	if (pids) {
+		pids[num_pids++] = pid;
+		pids[num_pids] = -1;
+	}
     }
     closedir (dir);
-    return (pids);
+    return pids;
 }
 
 /*

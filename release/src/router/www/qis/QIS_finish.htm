@@ -351,17 +351,17 @@ function QKfinish_load_body(){
 		}
 		else if(auth_mode2 == "psk"){
 			$("#security2")[0].innerHTML = "WPA-Personal - TKIP";
-			$("#key2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+			$("#key2_item")[0].innerHTML = "<#Network_key#>";
 			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
 		}
 		else if(auth_mode2 == "psk2"){
 			$("#security2")[0].innerHTML = "WPA2-Personal - AES";
-			$("#key2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+			$("#key2_item")[0].innerHTML = "<#Network_key#>";
 			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
 		}	
 		else if(auth_mode2 == "pskpsk2"){
 			$("#security2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
-			$("#key2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+			$("#key2_item")[0].innerHTML = "<#Network_key#>";
 			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
 		}
 		else{
@@ -411,17 +411,17 @@ function QKfinish_load_body(){
 			}
 			else if(auth_mode == "psk"){
 				$("#security5")[0].innerHTML = "WPA-Personal - TKIP";
-				$("#key5_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				$("#key5_item")[0].innerHTML = "<#Network_key#>";
 				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
 			}
 			else if(auth_mode == "psk2"){
 				$("#security5")[0].innerHTML = "WPA2-Personal - AES";
-				$("#key5_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				$("#key5_item")[0].innerHTML = "<#Network_key#>";
 				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
 			}
 			else if(auth_mode == "pskpsk2"){
 				$("#security5")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
-				$("#key5_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				$("#key5_item")[0].innerHTML = "<#Network_key#>";
 				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
 			}
 			else{	
@@ -444,7 +444,7 @@ function QKfinish_load_body(){
 			shown_str = "";
 			if(auth_mode_5_2 == "open" && wep_x_5_2 == "0"){
 				$("#security5_2")[0].innerHTML = "Open System";
-				$("#key5_block_2")[0].style.display = "none";
+				$("#key5_2_block")[0].style.display = "none";
 			}
 			else if(auth_mode_5_2 == "open" && wep_x_5_2 != "0"){
 				$("#security5_2")[0].innerHTML = "Open System";
@@ -472,17 +472,17 @@ function QKfinish_load_body(){
 			}
 			else if(auth_mode_5_2 == "psk"){
 				$("#security5_2")[0].innerHTML = "WPA-Personal - TKIP";
-				$("#key5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
 				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
 			}
 			else if(auth_mode_5_2 == "psk2"){
 				$("#security5_2")[0].innerHTML = "WPA2-Personal - AES";
-				$("#key5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
 				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
 			}
 			else if(auth_mode_5_2 == "pskpsk2"){
 				$("#security5_2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
-				$("#key5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
 				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
 			}
 			else{	
@@ -535,17 +535,17 @@ function QKfinish_load_body(){
 			}
 			else if(auth_mode2 == "psk"){
 					$("#security2")[0].innerHTML = "WPA-Personal - TKIP";
-					$("#key2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+					$("#key2_item")[0].innerHTML = "<#Network_key#>";
 					$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
 			}
 			else if(auth_mode2 == "psk2"){
 					$("#security2")[0].innerHTML = "WPA2-Personal - AES";
-					$("#key2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+					$("#key2_item")[0].innerHTML = "<#Network_key#>";
 					$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
 			}	
 			else if(auth_mode2 == "pskpsk2"){
 					$("#security2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
-					$("#key2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+					$("#key2_item")[0].innerHTML = "<#Network_key#>";
 					$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
 			}
 			else{
@@ -603,17 +603,17 @@ function QKfinish_load_body(){
 						}
 						else if(auth_mode == "psk"){
 								$("#security5")[0].innerHTML = "WPA-Personal - TKIP";
-								$("#key5_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+								$("#key5_item")[0].innerHTML = "<#Network_key#>";
 								$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
 						}
 						else if(auth_mode == "psk2"){
 								$("#security5")[0].innerHTML = "WPA2-Personal - AES";
-								$("#key5_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+								$("#key5_item")[0].innerHTML = "<#Network_key#>";
 								$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
 						}
 						else if(auth_mode == "pskpsk2"){
 								$("#security5")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
-								$("#key5_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+								$("#key5_item")[0].innerHTML = "<#Network_key#>";
 								$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
 						}
 						else{	
@@ -1163,7 +1163,7 @@ function showclock(){
 	<div id="newFWDetected">
 		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
 			<div style="text-align:left;" id="showLiveUpdateResult_div">
-			<#exist_new#>
+			<#exist_new#><br><br>Do not power off <#Web_Title2#> while upgrade in progress.
 			<br>
 			<br>
 			<div id="current_fw_div" style="display:none;">Your current firmware version is <span style="font-family:Segoe UI, Arial, sans-serif;font-size:18px;" id="currentFW"></span></div>
@@ -1195,7 +1195,7 @@ function showclock(){
 
 	<div id="progressBar" class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;display:none;*margin-left:70px;">
 		<div style="text-align:left;">
-		<#FIRM_ok_desc#>
+		<#FIRM_ok_desc#><br>Do not power off <#Web_Title2#> while upgrade in progress.
 		</div>
 		<br>
 		<div id="updateProgress_bg" style="text-align:left;*margin-left:-65px;">

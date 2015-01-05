@@ -26,12 +26,6 @@
 #define cround(n)	(display_in_cyl_units ? ((n)/units_per_sector)+1 : (n))
 #define scround(x)	(((x)+units_per_sector-1)/units_per_sector)
 
-#if defined(__GNUC__) && (defined(__arm__) || defined(__alpha__))
-# define PACKED __attribute__ ((packed))
-#else
-# define PACKED
-#endif
-
 struct partition {
 	unsigned char boot_ind;         /* 0x80 - active */
 	unsigned char head;             /* starting head */
@@ -43,13 +37,18 @@ struct partition {
 	unsigned char end_cyl;          /* end cylinder */
 	unsigned char start4[4];        /* starting sector counting from 0 */
 	unsigned char size4[4];         /* nr of sectors in partition */
-} PACKED;
+} __attribute__ ((packed));
+
+enum menutype {
+	MAIN_MENU,
+	EXPERT_MENU,
+};
 
 enum failure {ioctl_error,
 	unable_to_open, unable_to_read, unable_to_seek,
 	unable_to_write};
 
-enum action {fdisk, require, try_only, create_empty_dos, create_empty_sun};
+enum action {fdisk, try_only};
 
 struct geom {
 	unsigned int heads;
@@ -64,7 +63,6 @@ extern unsigned int display_in_cyl_units, units_per_sector;
 extern void change_units(void);
 extern void fatal(enum failure why);
 extern void get_geometry(int fd, struct geom *);
-extern int get_boot(enum action what);
 extern int  get_partition(int warn, int max);
 extern void list_types(struct systypes *sys);
 extern int read_line (int *asked);
@@ -75,6 +73,8 @@ extern struct partition *get_part_table(int);
 extern int valid_part_table_flag(unsigned char *b);
 extern unsigned int read_int(unsigned int low, unsigned int dflt,
 			     unsigned int high, unsigned int base, char *mesg);
+extern void print_menu(enum menutype);
+extern void print_partition_size(int num, unsigned long long start, unsigned long long stop, int sysid);
 
 extern unsigned char *MBRbuffer;
 extern void zeroize_mbr_buffer(void);
@@ -95,22 +95,19 @@ extern unsigned long long get_start_sect(struct partition *p);
 extern unsigned long long get_nr_sects(struct partition *p);
 
 enum labeltype {
-	DOS_LABEL,
-	SUN_LABEL,
-	SGI_LABEL,
-	AIX_LABEL,
-	OSF_LABEL,
-	MAC_LABEL
+	DOS_LABEL = 1,
+	SUN_LABEL = 2,
+	SGI_LABEL = 4,
+	AIX_LABEL = 8,
+	OSF_LABEL = 16,
+	MAC_LABEL = 32,
+	ANY_LABEL = -1
 };
 
 extern enum labeltype disklabel;
 
 /* prototypes for fdiskbsdlabel.c */
-extern void bselect(void);
+extern void bsd_command_prompt(void);
 extern int check_osf_label(void);
 extern int btrydev(char * dev);
 extern void xbsd_print_disklabel(int);
-
-/* prototypes for fdisksgilabel.c */
-extern int valid_part_table_flag(unsigned char *b);
-

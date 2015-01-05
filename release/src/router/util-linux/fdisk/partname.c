@@ -5,13 +5,14 @@
 #include "blkdev.h"
 #include "pathnames.h"
 #include "common.h"
+#include "c.h"
 
 /*
  * return partition name - uses static storage unless buf is supplied
  */
 char *
 partname(char *dev, int pno, int lth) {
-	static char bufp[80];
+	static char bufp[PATH_MAX];
 	char *p;
 	int w, wp;
 

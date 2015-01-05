@@ -15,45 +15,28 @@ include $(SRCBASE)/profile.mak
 include $(SRCBASE)/target.mak
 include $(SRCBASE)/platform.mak
 
+ifeq ($(or $(PLATFORM),$(CROSS_COMPILE),$(CONFIGURE),$(ARCH),$(HOST)),)
+$(error Define Platform-specific definitions in platform.mak)
+endif
+
 export BUILD := $(shell (gcc -dumpmachine))
 export HOSTCC := gcc
-
-ifeq ($(RTCONFIG_BCMARM),y)
-export PLATFORM := arm-uclibc
-export CROSS_COMPILE := arm-brcm-linux-uclibcgnueabi-
-export CROSS_COMPILER := $(CROSS_COMPILE)
-export CONFIGURE := ./configure --host=arm-linux --build=$(BUILD)
-export HOSTCONFIG := linux-armv4
-export BCMEX := _arm
-export EXTRA_FLAG := -lgcc_s
-export ARCH := arm
-export HOST := arm-linux
-export TOOLS := $(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3
-export RTVER := 0.9.32.1
-export BCMSUB := brcmarm
-else
-export PLATFORM := mipsel-uclibc
-export CROSS_COMPILE := mipsel-uclibc-
-export CROSS_COMPILER := $(CROSS_COMPILE)
-export CONFIGURE := ./configure --host=mipsel-linux --build=$(BUILD)
-export HOSTCONFIG := linux-mipsel
-export ARCH := mips
-export HOST := mipsel-linux
-export TOOLS := $(SRCBASE)/../../tools/brcm/hndtools-mipsel-linux
-export RTVER := 0.9.30.1
-endif
 
 export PLT := $(ARCH)
 export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
 
 export CC := $(CROSS_COMPILE)gcc
+export GCC := $(CROSS_COMPILE)gcc
 export CXX := $(CROSS_COMPILE)g++
 export AR := $(CROSS_COMPILE)ar
 export AS := $(CROSS_COMPILE)as
 export LD := $(CROSS_COMPILE)ld
 export NM := $(CROSS_COMPILE)nm
 export OBJCOPY := $(CROSS_COMPILE)objcopy
+export OBJDUMP := $(CROSS_COMPILE)objdump
 export RANLIB := $(CROSS_COMPILE)ranlib
+export READELF ?= $(CROSS_COMPILE)readelf
+export STRIPX := $(CROSS_COMPILE)strip -x
 ifeq ($(RTCONFIG_BCMARM),y)
 export STRIP := $(CROSS_COMPILE)strip
 else
@@ -75,6 +58,7 @@ LINUX_KERNEL_VERSION=$(shell expr $(KVERSION) \* 65536 + $(KPATCHLEVEL) \* 256 +
 ifeq ($(LINUX_KERNEL),)
 $(error Empty LINUX_KERNEL variable)
 endif
+export LINUX_KERNEL
 
 
 include $(SRCBASE)/target.mak
@@ -86,34 +70,19 @@ export PLATFORMDIR := $(TOP)/$(PLATFORM)
 export INSTALLDIR := $(PLATFORMDIR)/install
 export TARGETDIR := $(PLATFORMDIR)/target
 export STAGEDIR := $(PLATFORMDIR)/stage
+export PKG_CONFIG_SYSROOT_DIR := $(STAGEDIR)
+export PKG_CONFIG_PATH := $(STAGEDIR)/usr/lib/pkgconfig:$(STAGEDIR)/etc/lib/pkgconfig
 
-ifeq ($(EXTRACFLAGS),)
-ifeq ($(RTCONFIG_BCMARM),y)
-export EXTRACFLAGS := -DBCMWPA2 -DBCMARM -fno-delete-null-pointer-checks -marm
-else
-export EXTRACFLAGS := -DBCMWPA2 -fno-delete-null-pointer-checks -mips32r2 -mtune=mips32r2
-endif
-endif
-export EXTRACFLAGS += -DLINUX_KERNEL_VERSION=$(LINUX_KERNEL_VERSION)
+export EXTRACFLAGS += -DLINUX_KERNEL_VERSION=$(LINUX_KERNEL_VERSION) $(if $(STAGING_DIR),--sysroot=$(STAGING_DIR))
 
 CPTMP = @[ -d $(TOP)/dbgshare ] && cp $@ $(TOP)/dbgshare/ || true
 
 
 ifeq ($(CONFIG_RALINK),y)
-
-# Ralink SoC
-ifeq ($(CONFIG_LINUX30),y)
-# linux-3.x, e.g. RT-N65U.
-export KERNELCC := $(CC)
-export KERNELLD := $(LD)
-else
-# linux-2.6.21.x, e.g. RT-N56U.
-export KERNELCC := /opt/buildroot-gcc342/bin/mipsel-linux-uclibc-gcc
-export KERNELLD := /opt/buildroot-gcc342/bin/mipsel-linux-uclibc-ld
-endif
-
-else # CONFIG_RALINK != y
-
+# Move to platform.mak
+else ifeq ($(CONFIG_QCA),y)
+# Move to platform.mak
+else # CONFIG_RALINK != y && CONFIG_QCA != y
 # Broadcom SoC
 ifeq ($(CONFIG_LINUX26),y)
 ifeq ($(RTCONFIG_BCMWL6),y)
@@ -140,6 +109,13 @@ endif
 else # RTCONFIG_BCMWL6 != y
 export KERNELLD := $(LD)
 endif
+endif
+
+ifeq ($(KERNELCC),)
+export KERNELCC := $(CC)
+endif
+ifeq ($(KERNELLD),)
+export KERNELLD := $(LD)
 endif
 
 #	ifneq ($(STATIC),1)

@@ -16,20 +16,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <stdlib.h>
 #include <ctype.h>
 #include <fcntl.h>
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #include <dirent.h>
-#if HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#if HAVE_ERRNO_H
+#ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
 #include <time.h>
@@ -91,10 +91,7 @@ blkid_dev blkid_get_dev(blkid_cache cache, const char *devname, int flags)
 		 * it.
 		 */
 		list_for_each_safe(p, pnext, &cache->bic_devs) {
-			blkid_dev dev2;
-			if (!p)
-				break;
-			dev2 = list_entry(p, struct blkid_struct_dev, bid_devs);
+			blkid_dev dev2 = list_entry(p, struct blkid_struct_dev, bid_devs);
 			if (dev2->bid_flags & BLKID_BID_FL_VERIFIED)
 				continue;
 			if (!dev->bid_type || !dev2->bid_type ||
@@ -263,8 +260,7 @@ static dev_t lvm_get_devno(const char *lvm_device)
 
 	DBG(DEBUG_DEVNAME, printf("opening %s\n", lvm_device));
 	if ((lvf = fopen(lvm_device, "r")) == NULL) {
-		DBG(DEBUG_DEVNAME, printf("%s: (%d) %s\n", lvm_device, errno,
-					  strerror(errno)));
+		DBG(DEBUG_DEVNAME, printf("%s: (%d) %m\n", lvm_device, errno));
 		return 0;
 	}
 

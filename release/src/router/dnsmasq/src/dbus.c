@@ -35,6 +35,11 @@ const char* introspection_xml_template =
 "    <method name=\"GetVersion\">\n"
 "      <arg name=\"version\" direction=\"out\" type=\"s\"/>\n"
 "    </method>\n"
+#ifdef HAVE_LOOP
+"    <method name=\"GetLoopServers\">\n"
+"      <arg name=\"server\" direction=\"out\" type=\"as\"/>\n"
+"    </method>\n"
+#endif
 "    <method name=\"SetServers\">\n"
 "      <arg name=\"servers\" direction=\"in\" type=\"av\"/>\n"
 "    </method>\n"
@@ -204,6 +209,29 @@ static void dbus_read_servers(DBusMessage *message)
   /* unlink and free anything still marked. */
   cleanup_servers();
 }
+
+#ifdef HAVE_LOOP
+static DBusMessage *dbus_reply_server_loop(DBusMessage *message)
+{
+  DBusMessageIter args, args_iter;
+  struct server *serv;
+  DBusMessage *reply = dbus_message_new_method_return(message);
+   
+  dbus_message_iter_init_append (reply, &args);
+  dbus_message_iter_open_container (&args, DBUS_TYPE_ARRAY,DBUS_TYPE_STRING_AS_STRING, &args_iter);
+
+  for (serv = daemon->servers; serv; serv = serv->next)
+    if (serv->flags & SERV_LOOP)
+      {
+	prettyprint_addr(&serv->addr, daemon->addrbuff);
+	dbus_message_iter_append_basic (&args_iter, DBUS_TYPE_STRING, &daemon->addrbuff);
+      }
+  
+  dbus_message_iter_close_container (&args, &args_iter);
+
+  return reply;
+}
+#endif
 
 static DBusMessage* dbus_read_servers_ex(DBusMessage *message, int strings)
 {
@@ -398,7 +426,7 @@ static DBusMessage *dbus_set_bool(DBusMessage *message, int flag, char *name)
     }
   else
     {
-      my_syslog(LOG_INFO, "Disabling --$s option from D-Bus", name);
+      my_syslog(LOG_INFO, "Disabling --%s option from D-Bus", name);
       reset_option_bool(flag);
     }
 
@@ -433,6 +461,12 @@ DBusHandlerResult message_handler(DBusConnection *connection,
       
       dbus_message_append_args(reply, DBUS_TYPE_STRING, &v, DBUS_TYPE_INVALID);
     }
+#ifdef HAVE_LOOP
+  else if (strcmp(method, "GetLoopServers") == 0)
+    {
+      reply = dbus_reply_server_loop(message);
+    }
+#endif
   else if (strcmp(method, "SetServers") == 0)
     {
       dbus_read_servers(message);
@@ -599,7 +633,7 @@ void emit_dbus_signal(int action, struct dhcp_lease *lease, char *hostname)
    if (lease->flags & (LEASE_TA | LEASE_NA))
      {
        print_mac(mac, lease->clid, lease->clid_len);
-       inet_ntop(AF_INET6, lease->hwaddr, daemon->addrbuff, ADDRSTRLEN);
+       inet_ntop(AF_INET6, &lease->addr6, daemon->addrbuff, ADDRSTRLEN);
      }
    else
 #endif

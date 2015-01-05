@@ -1,5 +1,7 @@
 include ../common.mak
 
+#BUILD_READMEM=y
+
 CFLAGS += -Wall -Os $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -idirafter$(LINUXDIR)/include
 CFLAGS += -I$(TOP)/openssl/include
@@ -11,6 +13,7 @@ CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -DDLM -DASUS_DDNS -DASUS_EXT -DBTN_SETUP -DWEB_REDIRECT -DRTCONFIG_CROND
 
 CFLAGS += -DDEBUG_RCTEST
+CFLAGS += -DQCA_WIFI_INS_RM
 
 ifeq ($(RTCONFIG_WPS),y)
 CFLAGS += -I$(SRCBASE)/wps/brcm_apps/include
@@ -26,9 +29,13 @@ export CFLAGS += -DCE_ADAPTIVITY
 endif
 endif
 
+ifeq ($(RTCONFIG_QCA),y)
+CFLAGS += -I$(TOP)/shared/sysdeps/qca -I$(TOP)/wireless_tools
+endif
+
 include $(SRCBASE)/.config
 
-LDFLAGS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TOP)/libbcmcrypto -lbcmcrypto
+LDFLAGS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TOP)/libbcmcrypto -lbcmcrypto -ldl
 
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DHAVE_TYPE_FLOAT
@@ -51,6 +58,11 @@ CFLAGS += -I$(TOP)/bwdpi/
 CFLAGS += -I$(TOP)/httpd/
 CFLAGS += -I$(TOP)/util-linux/include
 LDFLAGS += -L$(TOP)/bwdpi -lbwdpi
+endif
+
+ifeq ($(RTCONFIG_SPEEDTEST),y)
+LDFLAGS += -lm
+LDFLAGS += -lpthread
 endif
 
 ifeq ($(RTCONFIG_BCMSMP),y)
@@ -117,6 +129,8 @@ OBJS += init-ralink.o wps-ralink.o ralink.o
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += init-ralink-dsl.o 
 endif
+else ifeq ($(RTCONFIG_QCA),y)
+OBJS += init-qca.o wps-qca.o qca.o ctl.o
 else
 OBJS += init-broadcom.o wps-broadcom.o broadcom.o
 ifeq ($(RTCONFIG_DSL),y)
@@ -125,9 +139,17 @@ endif
 endif
 
 # TODO, speedtest
+ifeq ($(RTCONFIG_SPEEDTEST),y)
+OBJS += speedtest.o
+endif
 
 OBJS += wanduck.o
 OBJS += tcpcheck.o
+
+ifeq ($(BUILD_READMEM),y)
+CFLAGS += -DBUILD_READMEM
+OBJS += readmem.o
+endif
 
 ifeq ($(RTCONFIG_USB),y)
 OBJS += usb.o
@@ -177,6 +199,7 @@ endif
 
 ifeq ($(RTCONFIG_PARENTALCTRL),y)
 OBJS += pc.o
+OBJS += pc_block.o
 endif
 
 ifeq ($(RTCONFIG_DSL),y)
@@ -209,12 +232,16 @@ OBJS += vpnc.o
 endif
 
 ifeq ($(RTCONFIG_SHP),y)
-export CFLAGS += -DSHP
+CFLAGS += -DSHP
 endif
 
 ifeq ($(RTCONFIG_TIMEMACHINE),y)
 OBJS += timemachine.o
 endif
+
+CFLAGS += $(if $(RTCONFIG_BLINK_LED),-I$(TOP)/bled)
+
+export CFLAGS
 
 ifeq ($(RTCONFIG_QTN),y)
 OBJS += qtn.o
@@ -229,14 +256,16 @@ OBJS += bwdpi_check.o
 OBJS += bwdpi_wred_alive.o
 endif
 
-OBJS += speedtest.o
-
 ifeq ($(RTCONFIG_IPERF),y)
 OBJS += monitor.o
 endif
 
 ifeq ($(RTCONFIG_HTTPS),y)
 OBJS += pwdec.o
+endif
+
+ifeq ($(RT4GAC55U),y)
+OBJS += lteled.o
 endif
 
 ifeq ($(RTAC68U),y)
@@ -249,8 +278,12 @@ vpath %.c sysdeps sysdeps/broadcom sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rp
 else
 vpath %.c sysdeps sysdeps/broadcom $(SRCBASE)/shared
 endif
+else ifeq ($(RTCONFIG_RALINK),y)
+vpath %.c sysdeps sysdeps/ralink
+else ifeq ($(RTCONFIG_QCA),y)
+vpath %.c sysdeps sysdeps/qca
 else
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink
+vpath %.c sysdeps sysdeps/broadcom
 endif
 
 all: rc
@@ -319,6 +352,9 @@ endif
 
 ifeq ($(RTCONFIG_WPS),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wpsaide
+ifeq ($(RTCONFIG_QCA),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc get_wps_er
+endif
 endif
 
 #	ifeq ($(RTCONFIG_HEARTBEAT),y)
@@ -336,6 +372,11 @@ ifeq ($(RTCONFIG_DSL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc convert_dsl_wan_settings
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
+endif
+
+ifeq ($(RTCONFIG_QCA),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
+	@cd $(INSTALLDIR)/sbin && ln -sf rc delay_exec
 endif
 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wanduck
@@ -366,9 +407,11 @@ ifeq ($(RTCONFIG_BCMARM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc nvram_erase
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ATE
-ifeq ($(RTCONFIG_RALINK),y)
+ifeq ($(or $(RTCONFIG_RALINK),$(RTCONFIG_QCA)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc FWRITE
 	@cd $(INSTALLDIR)/sbin && ln -sf rc FREAD
+endif
+ifeq ($(RTCONFIG_RALINK),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asuscfe_2g
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asuscfe_5g
 	@cd $(INSTALLDIR)/sbin && ln -sf rc stainfo_2g
@@ -376,6 +419,10 @@ ifeq ($(RTCONFIG_RALINK),y)
 ifeq ($(RTCONFIG_DSL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc gen_ralink_config
 endif
+endif
+ifeq ($(RTCONFIG_QCA),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc FWRITE
+	@cd $(INSTALLDIR)/sbin && ln -sf rc FREAD
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd 
 ifeq ($(RTCONFIG_SSH),y)
@@ -385,6 +432,7 @@ endif
 
 ifeq ($(RTCONFIG_PARENTALCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc pc
+	@cd $(INSTALLDIR)/sbin && ln -sf rc pc_block
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wlcscan
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wlcconnect
@@ -398,17 +446,22 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_status
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_speed
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_check
+ifeq ($(BUILD_READMEM),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc readmem
+endif
 ifeq ($(RTCONFIG_HTTPS),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rsasign_check
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc test_endian
 ifeq ($(RTCONFIG_BWDPI),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rsasign_sig_check
-	@cd $(INSTALLDIR)/sbin && ln -sf rc speedtest
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_monitor
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_check
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_wred_alive
+endif
+ifeq ($(RTCONFIG_SPEEDTEST),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc speedtest
 endif
 ifeq ($(RTCONFIG_USB_MODEM),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc write_3g_ppp_conf
@@ -417,7 +470,6 @@ endif
 ifeq ($(RTCONFIG_IPERF),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc monitor
 endif
-
 ifeq ($(RT4GAC55U),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc lteled
 endif

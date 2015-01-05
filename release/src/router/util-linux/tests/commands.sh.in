@@ -24,19 +24,27 @@ TS_HELPER_LIBMOUNT_UPDATE="$top_builddir/libmount/src/test_tab_update"
 TS_HELPER_LIBMOUNT_CONTEXT="$top_builddir/libmount/src/test_context"
 TS_HELPER_LIBMOUNT_TABDIFF="$top_builddir/libmount/src/test_tab_diff"
 
+TS_HELPER_ISLOCAL="$top_builddir/login-utils/test_islocal"
+TS_HELPER_LOGINDEFS="$top_builddir/login-utils/test_logindefs"
+
 # TODO: use partx
 TS_HELPER_PARTITIONS="$top_builddir/libblkid/samples/partitions"
 
 U_L_LIBRARY_PATH="$top_builddir/libblkid/src/.libs:$top_builddir/libuuid/src/.libs"
 
 # paths to commands
-TS_CMD_MOUNT=${TS_CMD_MOUNT:-"$top_builddir/mount/mount"}
-TS_CMD_UMOUNT=${TS_CMD_UMOUNT:-"$top_builddir/mount/umount"}
-TS_CMD_SWAPON=${TS_CMD_SWAPON:-"$top_builddir/mount/.libs/swapon"}
-TS_CMD_SWAPOFF=${TS_CMD_SWAPOFF:-"$top_builddir/mount/.libs/swapoff"}
-TS_CMD_LOSETUP=${TS_CMD_LOSETUP:-"$top_builddir/mount/losetup"}
+if [ -x "$top_builddir/sys-utils/mount" ]; then
+ TS_CMD_MOUNT=${TS_CMD_MOUNT:-"$top_builddir/sys-utils/mount"}
+ TS_CMD_UMOUNT=${TS_CMD_UMOUNT:-"$top_builddir/sys-utils/umount"}
+else
+ TS_CMD_MOUNT=${TS_CMD_MOUNT:-"$top_builddir/mount/mount"}
+ TS_CMD_UMOUNT=${TS_CMD_UMOUNT:-"$top_builddir/mount/umount"}
+ TS_CMD_MTABLOCK=${TS_CMD_MTABLOCK:-"$top_builddir/mount/mtab_lock_test"}
+fi
 
-TS_CMD_MTABLOCK=${TS_CMD_MTABLOCK:-"$top_builddir/mount/mtab_lock_test"}
+TS_CMD_SWAPON=${TS_CMD_SWAPON:-"$top_builddir/sys-utils/.libs/swapon"}
+TS_CMD_SWAPOFF=${TS_CMD_SWAPOFF:-"$top_builddir/sys-utils/.libs/swapoff"}
+TS_CMD_LOSETUP=${TS_CMD_LOSETUP:-"$top_builddir/sys-utils/losetup"}
 
 TS_CMD_MKSWAP=${TS_CMD_MKSWAP:-"$top_builddir/disk-utils/mkswap"}
 TS_CMD_MKCRAMFS=${TS_CMD_MKCRAMFS:-"$top_builddir/disk-utils/mkfs.cramfs"}
@@ -55,8 +63,6 @@ TS_CMD_LOOK=${TS_CMD_LOOK-"$top_builddir/misc-utils/look"}
 TS_CMD_CAL=${TS_CMD_CAL-"$top_builddir/misc-utils/cal"}
 TS_CMD_SCRIPT=${TS_CMD_SCRIPT-"$top_builddir/term-utils/script"}
 
-TS_CMD_CHECKTTY=${TS_CMD_CHECKTTY-"$top_builddir/login-utils/checktty_test"}
-TS_CMD_ISLOCAL=${TS_CMD_ISLOCAL-"$top_builddir/login-utils/islocal_test"}
 
 TS_CMD_HWCLOCK=${TS_CMD_HWCLOCK-"$top_builddir/hwclock/hwclock"}
 TS_CMD_LSCPU=${TS_CMD_LSCPU-"$top_builddir/sys-utils/lscpu"}

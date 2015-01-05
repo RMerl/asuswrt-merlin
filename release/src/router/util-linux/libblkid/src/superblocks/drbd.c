@@ -27,7 +27,8 @@
  * user/drbdmeta.c
  * We only support v08 for now
  */
-#define DRBD_MD_MAGIC_08 (DRBD_MAGIC+4)
+#define DRBD_MD_MAGIC_08         (DRBD_MAGIC+4)
+#define DRBD_MD_MAGIC_84_UNCLEAN (DRBD_MAGIC+5)
 
 /*
  * drbd/linux/drbd.h
@@ -83,7 +84,8 @@ static int probe_drbd(blkid_probe pr,
 	if (!md)
 		return -1;
 
-	if (be32_to_cpu(md->magic) != DRBD_MD_MAGIC_08)
+	if (be32_to_cpu(md->magic) != DRBD_MD_MAGIC_08 &&
+			be32_to_cpu(md->magic) != DRBD_MD_MAGIC_84_UNCLEAN)
 		return -1;
 
 	/*

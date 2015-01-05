@@ -9,7 +9,7 @@ CFLAGS += -DWITH_GDBM
 CFLAGS += -DNOT_HAVE_SA_LEN -DSETPGRP_VOID -DVERSION=\"0.2.4.2\" -DPACKAGE=\"mt-daapd\" -I./
 CFLAGS += -I$(TOP)/libgdbm -I$(TOP)/libid3tag -I$(TOP)/zlib
 
-LDLIBS = -lpthread
+LDLIBS = -lpthread -ldl
 
 ifeq ($(STATIC),1)
 LDLIBS += $(TOP)/libgdbm/.libs/libgdbm.a $(TOP)/libid3tag/.libs/libid3tag.a $(TOP)/zlib/libz.a

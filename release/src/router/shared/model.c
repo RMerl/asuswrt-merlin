@@ -14,7 +14,28 @@ struct model_s {
 };
 
 static const struct model_s model_list[] = {
-#if !defined(RTCONFIG_RALINK)
+#if defined(RTCONFIG_RALINK)
+#ifdef RTCONFIG_DSL
+	{ "DSL-N55U",	MODEL_DSLN55U	},
+	{ "DSL-N55U-B",	MODEL_DSLN55U	},
+#endif
+	{ "EA-N66",	MODEL_EAN66	},
+	{ "RT-N11P",	MODEL_RTN11P	},
+	{ "RT-N13U",	MODEL_RTN13U	},
+	{ "RT-N14U",	MODEL_RTN14U	},
+	{ "RT-AC52U",	MODEL_RTAC52U	},
+	{ "RT-AC51U",	MODEL_RTAC51U	},
+	{ "RT-N54U",	MODEL_RTN54U	},
+	{ "RT-N56UV2",	MODEL_RTN56UV2	},
+	{ "RT-N36U3",	MODEL_RTN36U3	},
+	{ "RT-N56U",	MODEL_RTN56U	},
+	{ "RT-N65U",	MODEL_RTN65U	},
+	{ "RT-N67U",	MODEL_RTN67U	},
+	{ "RT-AC1200HP",MODEL_RTAC1200HP},
+#elif defined(RTCONFIG_QCA)
+	{ "RT-AC55U",	MODEL_RTAC55U	},
+	{ "4G-AC55U",	MODEL_RT4GAC55U	},
+#else
 	{ "RT-N66U",	MODEL_RTN66U	},
 	{ "RT-AC56S",	MODEL_RTAC56S	},
 	{ "RT-AC56U",	MODEL_RTAC56U	},
@@ -45,27 +66,13 @@ static const struct model_s model_list[] = {
 	{ "RT-N10D1",	MODEL_RTN10D1	},
 	{ "RT-N10PV2",	MODEL_RTN10PV2	},
 	{ "DSL-AC68U",	MODEL_DSLAC68U	},
-#else	/* RTCONFIG_RALINK */
-#ifdef RTCONFIG_DSL
-	{ "DSL-N55U",	MODEL_DSLN55U	},
-	{ "DSL-N55U-B",	MODEL_DSLN55U	},
-#endif
-	{ "EA-N66",	MODEL_EAN66	},
-	{ "RT-N11P",	MODEL_RTN11P	},
-	{ "RT-N13U",	MODEL_RTN13U	},
-	{ "RT-N14U",	MODEL_RTN14U	},
-	{ "RT-AC52U",	MODEL_RTAC52U	},
-	{ "RT-AC51U",	MODEL_RTAC51U	},
-	{ "RT-N54U",	MODEL_RTN54U	},
-	{ "RT-N36U3",	MODEL_RTN36U3	},
-	{ "RT-N56U",	MODEL_RTN56U	},
-	{ "RT-N65U",	MODEL_RTN65U	},
-	{ "RT-N67U",	MODEL_RTN67U	},
 #endif	/* !RTCONFIG_RALINK */
 	{ NULL, 0 },
 };
 
-#if !defined(RTCONFIG_RALINK)
+#if defined(RTCONFIG_RALINK)
+#elif defined(RTCONFIG_QCA)
+#else
 static int get_model_by_hw(void)
 {
 	char *hw_version = nvram_safe_get("hardware_version");
@@ -135,7 +142,9 @@ int get_model(void)
 			break;
 		}
 	}
-#if !defined(RTCONFIG_RALINK)
+#if defined(RTCONFIG_RALINK)
+#elif defined(RTCONFIG_QCA)
+#else
 	if (model == MODEL_RTN12)
 		model = get_model_by_hw();
 	if (model == MODEL_APN12)
@@ -144,7 +153,9 @@ int get_model(void)
 	return model;
 }
 
-#if !defined(RTCONFIG_RALINK)
+#if defined(RTCONFIG_RALINK)
+#elif defined(RTCONFIG_QCA)
+#else
 /* returns product id */
 char *get_modelid(int model)
 {

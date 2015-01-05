@@ -208,7 +208,8 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 		    struct in_addr netmask, addr, broadcast;
 		    char *label = NULL;
 
-		    netmask.s_addr = htonl(0xffffffff << (32 - ifa->ifa_prefixlen));
+		    netmask.s_addr = htonl(~(in_addr_t)0 << (32 - ifa->ifa_prefixlen));
+
 		    addr.s_addr = 0;
 		    broadcast.s_addr = 0;
 		    

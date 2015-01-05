@@ -83,7 +83,7 @@ const struct blkid_idinfo btrfs_idinfo =
 	.name		= "btrfs",
 	.usage		= BLKID_USAGE_FILESYSTEM,
 	.probefunc	= probe_btrfs,
-	.minsz		= 256 * 1024 * 1024,
+	.minsz		= 1024 * 1024,
 	.magics		=
 	{
 		{ .magic = "_BHRfS_M", .len = 8, .kboff = 64, .sboff = 0x40 },

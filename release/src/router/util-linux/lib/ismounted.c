@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
-#if HAVE_MNTENT_H
+#ifdef HAVE_MNTENT_H
 #include <mntent.h>
 #endif
 #include <string.h>

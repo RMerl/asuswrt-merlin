@@ -102,6 +102,19 @@ var current_extendno = "";
 var liveUpdateFinish = false;
 var new_FW = false;
 var retry = 0;
+var isManual = false;
+
+function add_options_x2(o, arr, varr, orig){
+	free_options(o);
+	
+	for(var i = 0; i < arr.length; ++i){
+		if(orig == varr[i])
+			add_option(o, arr[i], varr[i], 1);
+		else
+			add_option(o, arr[i], varr[i], 0);
+	}
+}
+
 function detect_firmware(){
         
 	// Disable FW check
@@ -187,7 +200,7 @@ function QIS_load_body(){
 	winW_H();
 
 	if(psta_support){
-		if(document.QKform.sw_mode.value == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
+		if((document.QKform.sw_mode.value == 2 || document.QKform.sw_mode.value == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 			document.QKform.sw_mode.value = 4;
 	}
 
@@ -452,7 +465,7 @@ function check_DUT(){
 <table width="998px"  border="0" align="center" cellpadding="0" cellspacing="0" background="/images/New_ui/middown_bg.png">
   <tr>
 		<td style="width:218px;*width:263px;" valign="top">
-			<div class="m_qis_r" style="margin-left: 15px;margin-top: -160px;cursor:pointer;" onclick="gotoIndex();"><table><tbody><tr><td><div id="index_img1"></div></td><td><div><#CTL_Setting#></div></td></tr></tbody></table></div>
+			<div class="m_qis_r" style="margin-left: 15px;margin-top: -160px;cursor:pointer;" onclick="gotoIndex();"><table><tbody><tr><td><div class="_index"></div></td><td><div><#CTL_Setting#></div></td></tr></tbody></table></div>
 			<div class="lefttabhead" style="margin-left:15px;" id="option0"><table width="192px" height="37px"><tbody><tr><td><#QIS_title#></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t1" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep1.png"></td><td><div class="qismenu"><#QIS_step2#></div></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t2" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep2.png"></td><td><div class="qismenu"><#QIS_step3#></div></td></tr></tbody></table></div>

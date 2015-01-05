@@ -32,7 +32,7 @@ echo "$0 called with \"$*\""
 EOF
 chmod +x $MOUNTER
 
-$TS_CMD_MOUNT -v -v -v -t mytest  /foo /bar &> $TS_OUTPUT
+$TS_CMD_MOUNT -t mytest /foo /bar &> $TS_OUTPUT
 
 rm -f $MOUNTER
 

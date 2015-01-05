@@ -386,16 +386,21 @@ static int find_interface_v4(struct in_addr local, int if_index, char *label,
 			     struct in_addr netmask, struct in_addr broadcast, void *vparam)
 {
   struct dhcp_lease *lease;
-  
+  int prefix = netmask_length(netmask);
+
   (void) label;
   (void) broadcast;
   (void) vparam;
 
   for (lease = leases; lease; lease = lease->next)
-    if (!(lease->flags & (LEASE_TA | LEASE_NA)))
-      if (is_same_net(local, lease->addr, netmask))
-	lease_set_interface(lease, if_index, *((time_t *)vparam));
-  
+    if (!(lease->flags & (LEASE_TA | LEASE_NA)) &&
+	is_same_net(local, lease->addr, netmask) && 
+	prefix > lease->new_prefixlen) 
+      {
+	lease->new_interface = if_index;
+        lease->new_prefixlen = prefix;
+      }
+
   return 1;
 }
 
@@ -405,17 +410,23 @@ static int find_interface_v6(struct in6_addr *local,  int prefix,
 			     int preferred, int valid, void *vparam)
 {
   struct dhcp_lease *lease;
-  
+
   (void)scope;
   (void)flags;
   (void)preferred;
   (void)valid;
+  (void)vparam;
 
   for (lease = leases; lease; lease = lease->next)
     if ((lease->flags & (LEASE_TA | LEASE_NA)))
-      if (is_same_net6(local, &lease->addr6, prefix))
-	lease_set_interface(lease, if_index, *((time_t *)vparam));
-  
+      if (is_same_net6(local, &lease->addr6, prefix) && prefix > lease->new_prefixlen) {
+        /* save prefix length for comparison, as we might get shorter matching
+         * prefix in upcoming netlink GETADDR responses
+         * */
+        lease->new_interface = if_index;
+        lease->new_prefixlen = prefix;
+      }
+
   return 1;
 }
 
@@ -448,10 +459,19 @@ void lease_update_slaac(time_t now)
    start-time. */
 void lease_find_interfaces(time_t now)
 {
+  struct dhcp_lease *lease;
+  
+  for (lease = leases; lease; lease = lease->next)
+    lease->new_prefixlen = lease->new_interface = 0;
+
   iface_enumerate(AF_INET, &now, find_interface_v4);
 #ifdef HAVE_DHCP6
   iface_enumerate(AF_INET6, &now, find_interface_v6);
 #endif
+
+  for (lease = leases; lease; lease = lease->next)
+    if (lease->new_interface != 0) 
+      lease_set_interface(lease, lease->new_interface, now);
 }
 
 #ifdef HAVE_DHCP6

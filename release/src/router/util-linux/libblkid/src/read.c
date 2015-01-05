@@ -19,13 +19,13 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#if HAVE_ERRNO_H
+#ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
 
 #include "blkidP.h"
 
-#if HAVE_STDLIB_H
+#ifdef HAVE_STDLIB_H
 # ifndef _XOPEN_SOURCE
 #  define _XOPEN_SOURCE 600	/* for inclusion of strtoull */
 # endif
@@ -370,10 +370,12 @@ static int blkid_parse_line(blkid_cache cache, blkid_dev *dev_p, char *cp)
 		DBG(DEBUG_READ,
 		    printf("blkid: device %s has no TYPE\n",dev->bid_name));
 		blkid_free_dev(dev);
+		goto done;
 	}
 
 	DBG(DEBUG_READ, blkid_debug_dump_dev(dev));
 
+done:
 	return ret;
 }
 
@@ -423,7 +425,7 @@ void blkid_read_cache(blkid_cache cache)
 			continue;
 		end = strlen(buf) - 1;
 		/* Continue reading next line if it ends with a backslash */
-		while (buf[end] == '\\' && end < sizeof(buf) - 2 &&
+		while (end < (sizeof(buf) - 2) && buf[end] == '\\' &&
 		       fgets(buf + end, sizeof(buf) - end, file)) {
 			end = strlen(buf) - 1;
 			lineno++;
@@ -489,7 +491,7 @@ int main(int argc, char**argv)
 	}
 	if ((ret = blkid_get_cache(&cache, argv[1])) < 0)
 		fprintf(stderr, "error %d reading cache file %s\n", ret,
-			argv[1] ? argv[1] : BLKID_CACHE_FILE);
+			argv[1] ? argv[1] : blkid_get_cache_filename(NULL));
 
 	blkid_put_cache(cache);
 

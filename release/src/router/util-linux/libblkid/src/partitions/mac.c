@@ -58,11 +58,11 @@ struct mac_driver_desc {
 
 static inline unsigned char *get_mac_block(
 					blkid_probe pr,
-					struct mac_driver_desc *md,
+					uint16_t block_size,
 					uint32_t num)
 {
 	return blkid_probe_get_buffer(pr,
-			(blkid_loff_t) num * md->block_size, num);
+			(blkid_loff_t) num * block_size, block_size);
 }
 
 static inline int has_part_signature(struct mac_partition *p)
@@ -78,6 +78,7 @@ static int probe_mac_pt(blkid_probe pr,
 	struct mac_partition *p;
 	blkid_parttable tab = NULL;
 	blkid_partlist ls;
+	uint16_t block_size;
 	uint16_t ssf;	/* sector size fragment */
 	uint32_t nblks, i;
 
@@ -89,11 +90,12 @@ static int probe_mac_pt(blkid_probe pr,
 	if (!md)
 		goto nothing;
 
+	block_size = be16_to_cpu(md->block_size);
 
 	/* The partition map always begins at physical block 1,
 	 * the second block on the disk.
 	 */
-	p = (struct mac_partition *) get_mac_block(pr, md, 1);
+	p = (struct mac_partition *) get_mac_block(pr, block_size, 1);
 	if (!p)
 		goto nothing;
 
@@ -113,7 +115,7 @@ static int probe_mac_pt(blkid_probe pr,
 	if (!tab)
 		goto err;
 
-	ssf = md->block_size / 512;
+	ssf = block_size / 512;
 	nblks = be32_to_cpu(p->map_count);
 
 	for (i = 1; i <= nblks; ++i) {
@@ -121,7 +123,7 @@ static int probe_mac_pt(blkid_probe pr,
 		uint32_t start;
 		uint32_t size;
 
-		p = (struct mac_partition *) get_mac_block(pr, md, i);
+		p = (struct mac_partition *) get_mac_block(pr, block_size, i);
 		if (!p)
 			goto nothing;
 		if (!has_part_signature(p))

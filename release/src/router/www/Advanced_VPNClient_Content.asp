@@ -93,6 +93,12 @@ var restart_vpncall_flag = 0; //Viz add 2014.04 for Edit Connecting rule then re
 function initial(){
 	show_menu();
 	show_vpnc_rulelist();
+
+	document.getElementById('edit_vpn_crt_client1_ca').value = '<% nvram_get("vpn_crt_client1_ca"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
+	document.getElementById('edit_vpn_crt_client1_crt').value = '<% nvram_get("vpn_crt_client1_crt"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
+	document.getElementById('edit_vpn_crt_client1_key').value = '<% nvram_get("vpn_crt_client1_key"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
+	document.getElementById('edit_vpn_crt_client1_static').value = '<% nvram_get("vpn_crt_client1_static"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
+	document.getElementById('edit_vpn_crt_client1_crl').value = '<% nvram_get("vpn_crt_client1_crl"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 }
 
 function Add_profile(){
@@ -571,11 +577,13 @@ function show_vpnc_rulelist(){
 				vpnc_clientlist_col[3] == document.form.vpnc_pppoe_username.value)
 			{
 				if(vpnc_state_t == 0 || vpnc_state_t ==1) // Initial or Connecting
-					code +='<td width="10%"><img src="/images/InternetScan.gif"></td>';
+						code +='<td width="10%"><img title="<#CTL_Add_enrollee#>" src="/images/InternetScan.gif"></td>';
 				else if(vpnc_state_t == 2) // Connected
-					code +='<td width="10%"><img src="/images/checked_parentctrl.png" style="width:25px;"></td>';
+						code +='<td width="10%"><img title="<#Connected#>" src="/images/checked_parentctrl.png" style="width:25px;"></td>';
+					else if(vpnc_state_t == 4 && vpnc_sbstate_t == 2)
+						code +='<td width="10%"><img title="<#qis_fail_desc1#>" src="/images/button-close2.png" style="width:25px;"></td>';
 				else // Stop connection
-					code +='<td width="10%"><img src="/images/button-close2.png" style="width:25px;"></td>';
+						code +='<td width="10%"><img title="<#ConnectionFailed#>" src="/images/button-close2.png" style="width:25px;"></td>';
 			}
 			else
 				code +='<td width="10%">-</td>';
@@ -914,14 +922,14 @@ function del_Row(rowdata, flag){
 					<tr>
 						<th><#PPPConnection_UserName_itemname#></th>
 						<td>
-							<input type="text" maxlength="64" name="vpnc_account_edit" value="" class="input_32_table" style="float:left;"></input>
+							<input type="text" maxlength="64" name="vpnc_account_edit" value="" class="input_32_table" style="float:left;" autocapitalization="off" autocomplete="off"></input>
 						</td>
 					</tr>
 
 					<tr>
 						<th><#PPPConnection_Password_itemname#></th>
 						<td>
-							<input type="text" maxlength="64" name="vpnc_pwd_edit" value="" class="input_32_table" style="float:left;"></input>
+							<input type="text" maxlength="64" name="vpnc_pwd_edit" value="" class="input_32_table" style="float:left;" autocapitalization="off" autocomplete="off"></input>
 						</td>
 					</tr>
 

@@ -47,6 +47,8 @@
 #define SOA_REFRESH 1200 /* SOA refresh default */
 #define SOA_RETRY 180 /* SOA retry default */
 #define SOA_EXPIRY 1209600 /* SOA expiry default */
+#define LOOP_TEST_DOMAIN "test" /* domain for loop testing, "test" is reserved by RFC 2606 and won't therefore clash */
+#define LOOP_TEST_TYPE T_TXT
  
 /* compile-time options: uncomment below to enable or do eg.
    make COPTS=-DHAVE_BROKEN_RTC
@@ -114,6 +116,12 @@ HAVE_AUTH
 HAVE_DNSSEC
    include DNSSEC validator.
 
+HAVE_LOOP
+   include functionality to probe for and remove DNS forwarding loops.
+
+HAVE_INOTIFY
+   use inotify instead of polling on Linux
+
 NO_IPV6
 NO_TFTP
 NO_DHCP
@@ -121,7 +129,6 @@ NO_DHCP6
 NO_SCRIPT
 NO_LARGEFILE
 NO_AUTH
-NO_IPSET
    these are avilable to explictly disable compile time options which would 
    otherwise be enabled automatically (HAVE_IPV6, >2Gb file sizes) or 
    which are enabled  by default in the distributed source tree. Building dnsmasq
@@ -156,6 +163,8 @@ RESOLVFILE
 #define HAVE_SCRIPT
 #define HAVE_AUTH
 #define HAVE_IPSET 
+#define HAVE_LOOP
+#define HAVE_INOTIFY
 
 /* Build options which require external libraries.
    
@@ -352,6 +361,14 @@ HAVE_SOCKADDR_SA_LEN
 #undef HAVE_IPSET
 #endif
 
+#ifdef NO_LOOP
+#undef HAVE_LOOP
+#endif
+
+#if defined(NO_INOTIFY) || !defined(HAVE_LINUX_NETWORK)
+#undef HAVE_INOTIFY
+#endif
+
 /* Define a string indicating which options are in use.
    DNSMASQP_COMPILE_OPTS is only defined in dnsmasq.c */
 
@@ -421,7 +438,11 @@ static char *compile_opts =
 #ifndef HAVE_DNSSEC
 "no-"
 #endif
-"DNSSEC";
+"DNSSEC "
+#ifndef HAVE_LOOP
+"no-"
+#endif
+"loop-detect";
 
 
 #endif

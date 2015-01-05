@@ -1,6 +1,8 @@
 #ifndef FSPROBE_H
 #define FSPROBE_H
 /*
+ * THIS IS DEPRECATED -- use blkid_evaluate_* API rather than this extra layer
+ *
  * This is the generic interface for filesystem guessing libraries.
  * Implementations are provided by
  */

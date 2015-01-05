@@ -29,6 +29,7 @@
 #define _PATH_WTMPLOCK		"/etc/wtmplock"
 
 #define	_PATH_HUSHLOGIN		".hushlogin"
+#define	_PATH_HUSHLOGINS	"/etc/hushlogins"
 
 #ifndef _PATH_MAILDIR
 #define	_PATH_MAILDIR		"/var/spool/mail"
@@ -70,6 +71,8 @@
 
 /* used in term-utils/agetty.c */
 #define _PATH_ISSUE		"/etc/issue"
+
+#define _PATH_LOGINDEFS		"/etc/login.defs"
 
 /* used in misc-utils/look.c */
 #define _PATH_WORDS             "/usr/share/dict/words"
@@ -118,7 +121,9 @@
 #endif
 
 #define _PATH_DEV_LOOP		"/dev/loop"
+#define _PATH_DEV_LOOPCTL	"/dev/loop-control"
 #define _PATH_DEV_TTY		"/dev/tty"
+
 
 /* udev paths */
 #define _PATH_DEV_BYLABEL	"/dev/disk/by-label"
@@ -133,6 +138,10 @@
 # define _PATH_RTC_DEV		"/dev/efirtc"
 #else
 # define _PATH_RTC_DEV		"/dev/rtc"
+#endif
+
+#ifndef _PATH_BTMP
+#define _PATH_BTMP		"/var/log/btmp"
 #endif
 
 #endif /* PATHNAMES_H */

@@ -28,8 +28,8 @@ ifeq ($(BLDTYPE),debug)
 export CFLAGS = -Wall -Wnested-externs -g -D_TUDEBUGTRACE
 export CXXFLAGS = -Wall -Wnested-externs -g -D_TUDEBUGTRACE
 else
-export CFLAGS = -Wall -Wnested-externs
-export CXXFLAGS = -Wall -Wnested-externs
+export CFLAGS = -Os -Wall -Wnested-externs
+export CXXFLAGS = -Os -Wall -Wnested-externs
 endif
 
 

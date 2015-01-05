@@ -1,10 +1,10 @@
 include $(top_srcdir)/config/include-Makefile.am
 
-EXTRA_DIST = README.fdisk README.cfdisk sfdisk.examples partitiontype.c
+EXTRA_DIST = partitiontype.c
 
 fdisk_common = i386_sys_types.c common.h gpt.c gpt.h \
 	$(top_srcdir)/lib/blkdev.c $(top_srcdir)/lib/wholedisk.c \
-	$(top_srcdir)/lib/mbsalign.c
+	$(top_srcdir)/lib/mbsalign.c $(top_srcdir)/lib/strutils.c
 
 if LINUX
 fdisk_common += $(top_srcdir)/lib/linux_version.c

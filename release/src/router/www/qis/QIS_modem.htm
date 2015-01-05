@@ -70,6 +70,8 @@ var apnlist = new Array();
 var daillist = new Array();
 var userlist = new Array();
 var passlist = new Array();
+var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
+var dualwan_set = 1;
 
 function QKInternet_load_body(){
 	parent.document.title = "<#Web_Title#> - <#menu5_4_4#>";
@@ -95,6 +97,19 @@ function QKInternet_load_body(){
 
 	if(!dualWAN_support)
 		document.form.wans_dualwan.disabled = true;
+
+	for(var i = 0; i < wans_dualwan.length; i++){//check whether wans_dualwan is set or not.
+		if (wans_dualwan[i] == 'none'){
+			dualwan_set = 0;
+			break;
+		}
+	}	
+
+	if(dualwan_set)
+		document.form.action_script.disabled = true;
+			
+	if(based_modelid == "4G-AC55U")
+    	document.getElementById("adapter_type").style.display = "none";	
 }
 
 function check_dongle_status(){
@@ -134,9 +149,15 @@ function submitForm(){
 	document.getElementById("skipButton").style.display = "none";
 	document.getElementById("nextButton").style.display = "none";
 	document.getElementById("loadingIcon").style.display = "";
-	document.getElementById("loadingNote").style.display = "";
 	changeiuiBackground(1);
-	document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 30");
+	if(dualwan_set){
+		document.getElementById("loadingNote1m").style.display = "";			
+		document.form.action_wait.value	= 60;
+	}
+	else{
+		document.getElementById("loadingNote").style.display = "";		
+		document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 30");
+	}
 	document.form.submit();
 }
 
@@ -215,6 +236,7 @@ function connVerify(conn){
 		document.getElementById("nextButton").style.display = "none";
 		document.getElementById("loadingIcon").style.display = "none";
 		document.getElementById("loadingNote").style.display = "none";
+		document.getElementById("loadingNote1m").style.display = "none";
 		document.getElementById("resetField").style.display = "none";			
 		document.getElementById("theFieldset").style.display = "none";			
 		document.getElementById("applyBtn").style.display = "none";
@@ -234,6 +256,7 @@ function connVerify(conn){
 			document.getElementById("nextButton").style.display = "";
 			document.getElementById("loadingIcon").style.display = "none";
 			document.getElementById("loadingNote").style.display = "none";
+			document.getElementById("loadingNote1m").style.display = "none";			
 			document.getElementById("resetField").style.display = "none";	
 			document.getElementById("theFieldset").style.display = "none";			
 			document.getElementById("applyBtn").style.display = "none";
@@ -254,6 +277,7 @@ function connVerify(conn){
 			document.getElementById("nextButton").style.display = "";
 			document.getElementById("loadingIcon").style.display = "none";
 			document.getElementById("loadingNote").style.display = "none";
+			document.getElementById("loadingNote1m").style.display = "none";			
 			document.getElementById("resetField").style.display = "";			
 			document.getElementById("theFieldset").style.display = "none";			
 			document.getElementById("applyBtn").style.display = "none";
@@ -762,7 +786,7 @@ function inet_ntoa(ip_num){
 		<tr style="display:none;">
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,2);"><#PIN_code#></a></th>
 			<td>
-				<input id="modem_pincode" name="modem_pincode" tabindex="8" class="input_20_table" type="password" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/>
+				<input id="modem_pincode" name="modem_pincode" tabindex="8" class="input_20_table" type="password" maxLength="8" value="<% nvram_get("modem_pincode"); %>" autocapitalization="off" autocomplete="off"/>
 				<br><span id="pincode_status" style="display:none;"><#pincode_wrong#></span>
 			</td>
 		</tr>
@@ -770,14 +794,14 @@ function inet_ntoa(ip_num){
 		<tr>
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,11);"><#HSDPAConfig_Username_itemname#></a></th>
 			<td>
-			<input id="modem_user" name="modem_user" tabindex="9" class="input_20_table" type="text" value="<% nvram_get("modem_user"); %>"/>
+			<input id="modem_user" name="modem_user" tabindex="9" class="input_20_table" type="text" value="<% nvram_get("modem_user"); %>" autocapitalization="off" autocomplete="off"/>
 			</td>
 		</tr>
                           
 		<tr>
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,12);"><#PPPConnection_Password_itemname#></a></th>
 			<td>
-				<input id="modem_pass" name="modem_pass" tabindex="10" class="input_20_table" type="password" value="<% nvram_get("modem_pass"); %>"/>
+				<input id="modem_pass" name="modem_pass" tabindex="10" class="input_20_table" type="password" value="<% nvram_get("modem_pass"); %>" autocapitalization="off" autocomplete="off"/>
 			</td>
 		</tr>
 
@@ -788,7 +812,7 @@ function inet_ntoa(ip_num){
 			</td>
 		</tr>
                           
-		<tr>
+		<tr id="adapter_type">
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,13);"><#HSDPAConfig_USBAdapter_itemname#></a></th>
 			<td>
 				<select name="Dev3G" id="shown_modems" class="input_option" disabled="disabled"></select>
@@ -801,6 +825,7 @@ function inet_ntoa(ip_num){
 		<input type="button" id="nextButton" value="<#CTL_Add_enrollee#>" tabindex="12" class="button_gen" onclick="submitForm();">
 		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">	
 		<span id="loadingNote" style="display:none;"><#Modem_connect_waiting#></span>	
+		<span id="loadingNote1m" style="display:none;"><#Modem_connect_waiting_1m#></span>
 	</div>
 
 	<fieldset class="theFieldset" id="theFieldset_apply" style="display:none;margin-top:10px">

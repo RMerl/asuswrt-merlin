@@ -640,3 +640,9 @@
 # Include another lot of configuration options.
 #conf-file=/etc/dnsmasq.more.conf
 #conf-dir=/etc/dnsmasq.d
+
+# Include all the files in a directory except those ending in .bak
+#conf-dir=/etc/dnsmasq.d,.bak
+
+# Include all files in a directory which end in .conf
+#conf-dir=/etc/dnsmasq.d/,*.conf

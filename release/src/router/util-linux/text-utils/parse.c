@@ -80,7 +80,7 @@ void addfile(char *name)
 void add(const char *fmt)
 {
 	const char *p;
-	static FS **nextfs;
+	static FS **nextfs = NULL;
 	FS *tfs;
 	FU *tfu, **nextfu;
 	const char *savep;
@@ -89,8 +89,9 @@ void add(const char *fmt)
 	tfs = xcalloc(1, sizeof(FS));
 	if (!fshead)
 		fshead = tfs;
-	else
+	else if (nextfs)
 		*nextfs = tfs;
+
 	nextfs = &tfs->nextfs;
 	nextfu = &tfs->nextfu;
 
@@ -222,7 +223,7 @@ void rewrite(FS *fs)
 			pr = xcalloc(1, sizeof(PR));
 			if (!fu->nextpr)
 				fu->nextpr = pr;
-			else
+			else if (nextpr)
 				*nextpr = pr;
 
 			/* Skip preceding text and up to the next % sign. */

@@ -625,6 +625,11 @@ void start_vpnserver(int serverNum)
 	// Build interface name
 	snprintf(&iface[0], IF_SIZE, "%s%d", nvram_safe_get(&buffer[0]), serverNum+SERVER_IF_START);
 
+	//
+	if(is_intf_up(&iface[0]) && ifType == TAP) {
+		eval("brctl", "delif", nvram_safe_get("lan_ifname"), &iface[0]);
+	}
+
 	// Determine encryption mode
 	sprintf(&buffer[0], "vpn_server%d_crypt", serverNum);
 	if ( nvram_contains_word(&buffer[0], "tls") )
@@ -758,6 +763,10 @@ void start_vpnserver(int serverNum)
 			fprintf(fp_client, "ifconfig %s ", nvram_safe_get(&buffer[0]));
 			sprintf(&buffer[0], "vpn_server%d_local", serverNum);
 			fprintf(fp_client, "%s\n", nvram_safe_get(&buffer[0]));
+		}
+		else if ( ifType == TAP )
+		{
+			fprintf(fp_client, "dev tap\n");
 		}
 	}
 	//protocol
@@ -919,8 +928,6 @@ void start_vpnserver(int serverNum)
 		{
 			if ( nvram_safe_get("wan_domain")[0] != '\0' )
 				fprintf(fp, "push \"dhcp-option DOMAIN %s\"\n", nvram_safe_get("wan_domain"));
-			if ( (nvram_safe_get("wan_wins")[0] != '\0' && strcmp(nvram_safe_get("wan_wins"), "0.0.0.0") != 0) )
-				fprintf(fp, "push \"dhcp-option WINS %s\"\n", nvram_safe_get("wan_wins"));
 			fprintf(fp, "push \"dhcp-option DNS %s\"\n", nvram_safe_get("lan_ipaddr"));
 		}
 

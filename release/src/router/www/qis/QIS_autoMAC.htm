@@ -61,7 +61,7 @@ function ajax_detectWAN(){
 		},
 		success: function(response){
 			if(autodet_state >= 2 && wanstate == 2 && wanauxstate != 1){
-				$("#img_obj2")[0].src = "/images/checked_qis.gif";
+				$("#img_obj2")[0].src = "/images/checked_qis.png";
 				$("#string_obj2")[0].innerHTML = "<#QIS_autoMAC_result_desc2#>";
 				
 				document.redirectForm.prev_page.value = "/qis/QIS_autoMAC.htm";

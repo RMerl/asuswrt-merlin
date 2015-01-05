@@ -61,13 +61,33 @@ extern int __cpuset_count_s(size_t setsize, const cpu_set_t *set);
 
 #define cpuset_nbits(setsize)	(8 * (setsize))
 
+/*
+ * The @idx parametr returns an index of the first mask from @ary array where
+ * the @cpu is set.
+ *
+ * Returns: 0 if found, otherwise 1.
+ */
+static inline int cpuset_ary_isset(size_t cpu, cpu_set_t **ary, size_t nmemb,
+				   size_t setsize, size_t *idx)
+{
+	size_t i;
+
+	for (i = 0; i < nmemb; i++) {
+		if (CPU_ISSET_S(cpu, setsize, ary[i])) {
+			*idx = i;
+			return 0;
+		}
+	}
+	return 1;
+}
+
 extern int get_max_number_of_cpus(void);
 
 extern cpu_set_t *cpuset_alloc(int ncpus, size_t *setsize, size_t *nbits);
 extern void cpuset_free(cpu_set_t *set);
 
 extern char *cpulist_create(char *str, size_t len, cpu_set_t *set, size_t setsize);
-extern int cpulist_parse(const char *str, cpu_set_t *set, size_t setsize);
+extern int cpulist_parse(const char *str, cpu_set_t *set, size_t setsize, int fail);
 
 extern char *cpumask_create(char *str, size_t len, cpu_set_t *set, size_t setsize);
 extern int cpumask_parse(const char *str, cpu_set_t *set, size_t setsize);

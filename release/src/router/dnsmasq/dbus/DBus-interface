@@ -160,6 +160,15 @@ for SetServersEx is represented as
   "/eng.mycorp.com/lab.mycorp.com/1003:1234:abcd::1%eth0"
 ]
 
+GetLoopServers
+--------------
+
+(Only available if dnsmasq compiled with HAVE_LOOP)
+
+Return an array of strings, each string is the IP address of an upstream
+server which has been found to loop queries back to this dnsmasq instance, and 
+it therefore not being used.
+
 
 
 2. SIGNALS

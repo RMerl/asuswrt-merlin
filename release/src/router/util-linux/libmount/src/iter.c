@@ -56,7 +56,7 @@ void mnt_reset_iter(struct libmnt_iter *itr, int direction)
 {
 	assert(itr);
 
-	if (direction == -1)
+	if (direction == -1 && itr)
 		direction = itr->direction;
 
 	if (itr) {

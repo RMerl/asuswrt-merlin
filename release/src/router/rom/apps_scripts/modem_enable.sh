@@ -1,5 +1,4 @@
 #!/bin/sh
-# $1: ifname.
 # echo "This is a script to enable the modem."
 
 
@@ -22,6 +21,7 @@ modem_pin=`nvram get modem_pincode`
 modem_pdp=`nvram get modem_pdp`
 modem_isp=`nvram get modem_isp`
 modem_apn=`nvram get modem_apn`
+modem_spn=`nvram get modem_spn`
 modem_user=`nvram get modem_user`
 modem_pass=`nvram get modem_pass`
 
@@ -317,7 +317,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		ret=`echo "$at_ret" |grep "COMMAND NOT SUPPORT"`
 		if [ "$ret" == "" ]; then
 			echo "COPS: Can execute +COPS..."
-			ret=`echo "$at_ret" |grep "+COPS: 0,"`
+			ret=`echo "$at_ret" |grep "+COPS: 0"`
 			if [ "$ret" == "" ]; then
 				echo "COPS: set +COPS=0."
 				at_ret=`$at_lock modem_at.sh '+COPS=0' |grep "OK" 2>/dev/null`
@@ -348,19 +348,24 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 			modem_isp=`nvram get modem_isp`
 			modem_apn=`nvram get modem_apn`
+			modem_spn=`nvram get modem_spn`
 			modem_user=`nvram get modem_user`
 			modem_pass=`nvram get modem_pass`
 		fi
 	elif [ "$modem_roaming_mode" == "1" ]; then
 		# roaming manually...
 		echo "roaming manually..."
-		modem_status.sh station "$modem_roaming_isp"
-		modem_autoapn.sh set $modem_roaming_imsi
+		if [ -n "$modem_roaming_isp" ]; then
+			modem_status.sh station "$modem_roaming_isp"
+		fi
+		# Don't need to change the modem settings.
+		#modem_autoapn.sh set $modem_roaming_imsi
 
-		modem_isp=`nvram get modem_isp`
-		modem_apn=`nvram get modem_apn`
-		modem_user=`nvram get modem_user`
-		modem_pass=`nvram get modem_pass`
+		#modem_isp=`nvram get modem_isp`
+		#modem_apn=`nvram get modem_apn`
+		#modem_spn=`nvram get modem_spn`
+		#modem_user=`nvram get modem_user`
+		#modem_pass=`nvram get modem_pass`
 	else
 		# roaming automatically...
 		echo "roaming automatically..."
@@ -506,12 +511,16 @@ elif [ "$modem_type" == "gobi" ]; then
 
 	gobi_pid=`pidof gobi`
 	if [ "$gobi_pid" != "" ]; then
+		# connect to GobiNet.
+		echo -n "1,$qcqmi," >> $cmd_pipe
+		sleep 1
+
 		# WDS stop the data session
-		echo "4" >> $cmd_pipe
+		echo -n "4" >> $cmd_pipe
 		sleep 1
 
 		# disconnect to GobiNet.
-		echo "2" >> $cmd_pipe
+		echo -n "2" >> $cmd_pipe
 		sleep 1
 
 		killall gobi
@@ -522,27 +531,40 @@ elif [ "$modem_type" == "gobi" ]; then
 	sleep 1
 
 	# connect to GobiNet.
-	echo "1,$qcqmi," >> $cmd_pipe
+	echo -n "1,$qcqmi," >> $cmd_pipe
 	sleep 1
 
 	# set the default profile to auto-connect.
-	modem_isp=`echo $modem_isp |cut -c 1-15`
-	echo "5,$modem_pdp,$modem_isp,$modem_apn,$modem_user,$modem_pass," >> $cmd_pipe
+	echo -n "5,$modem_pdp,$modem_isp,$modem_apn,$modem_user,$modem_pass," >> $cmd_pipe
 	sleep 1
 
 	# WDS set the autoconnect & roaming
 	# autoconnect: 0, disable; 1, enable; 2, pause.
 	# roaming: 0, allow; 1, disable. Only be activated when autoconnect is enabled.
 	if [ "$modem_roaming" != "1" ]; then
-		echo "7,1,1," >> $cmd_pipe
+		echo -n "7,1,1," >> $cmd_pipe
+	elif [ "$modem_roaming_mode" == "1" ]; then
+		echo "roaming manually..."
+		if [ -n "$modem_roaming_isp" ]; then
+			echo -n "7,1,0," >> $cmd_pipe
+		else
+			echo -n "7,0,0," >> $cmd_pipe
+		fi
 	else
-		echo "7,1,0," >> $cmd_pipe
+		echo "roaming automatically..."
+		echo -n "7,1,0," >> $cmd_pipe
 	fi
 	sleep 1
 
 	# WDS start the data session
-	#echo "3" >> $cmd_pipe
+	#echo -n "3" >> $cmd_pipe
 	#sleep 3
+
+	echo -n "2" >> $cmd_pipe
+	sleep 1
+
+	killall gobi
+	sleep 1
 
 	modem_status.sh rate
 	modem_status.sh band

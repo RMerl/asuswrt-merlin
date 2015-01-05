@@ -16,6 +16,7 @@
 #include <stddef.h>
 
 #include "mountP.h"
+#include "strutils.h"
 
 /**
  * mnt_new_fs:
@@ -436,18 +437,9 @@ int mnt_fs_set_target(struct libmnt_fs *fs, const char *target)
 	return 0;
 }
 
-int __mnt_fs_get_flags(struct libmnt_fs *fs)
+static int mnt_fs_get_flags(struct libmnt_fs *fs)
 {
 	return fs ? fs->flags : 0;
-}
-
-int __mnt_fs_set_flags(struct libmnt_fs *fs, int flags)
-{
-	if (fs) {
-		fs->flags = flags;
-		return 0;
-	}
-	return -EINVAL;
 }
 
 /**
@@ -458,7 +450,40 @@ int __mnt_fs_set_flags(struct libmnt_fs *fs, int flags)
  */
 int mnt_fs_is_kernel(struct libmnt_fs *fs)
 {
-	return __mnt_fs_get_flags(fs) & MNT_FS_KERNEL;
+	return mnt_fs_get_flags(fs) & MNT_FS_KERNEL;
+}
+
+/**
+ * mnt_fs_is_swaparea:
+ * @fs: filesystem
+ *
+ * Returns: 1 if the filesystem uses "swap" as a type
+ */
+int mnt_fs_is_swaparea(struct libmnt_fs *fs)
+{
+	return mnt_fs_get_flags(fs) & MNT_FS_SWAP;
+}
+
+/**
+ * mnt_fs_is_pseudofs:
+ * @fs: filesystem
+ *
+ * Returns: 1 if the filesystem is a pseudo fs type (proc, cgroups)
+ */
+int mnt_fs_is_pseudofs(struct libmnt_fs *fs)
+{
+	return mnt_fs_get_flags(fs) & MNT_FS_PSEUDO;
+}
+
+/**
+ * mnt_fs_is_netfs:
+ * @fs: filesystem
+ *
+ * Returns: 1 if the filesystem is a network filesystem
+ */
+int mnt_fs_is_netfs(struct libmnt_fs *fs)
+{
+	return mnt_fs_get_flags(fs) & MNT_FS_NET;
 }
 
 /**
@@ -1080,7 +1105,8 @@ int mnt_fs_get_attribute(struct libmnt_fs *fs, const char *name,
  *
  * Returns: 1 if @fs target is equal to @target else 0.
  */
-int mnt_fs_match_target(struct libmnt_fs *fs, const char *target, struct libmnt_cache *cache)
+int mnt_fs_match_target(struct libmnt_fs *fs, const char *target,
+			struct libmnt_cache *cache)
 {
 	int rc = 0;
 
@@ -1126,7 +1152,8 @@ int mnt_fs_match_target(struct libmnt_fs *fs, const char *target, struct libmnt_
  *
  * Returns: 1 if @fs source is equal to @source else 0.
  */
-int mnt_fs_match_source(struct libmnt_fs *fs, const char *source, struct libmnt_cache *cache)
+int mnt_fs_match_source(struct libmnt_fs *fs, const char *source,
+			struct libmnt_cache *cache)
 {
 	char *cn;
 	const char *src, *t, *v;
@@ -1142,7 +1169,7 @@ int mnt_fs_match_source(struct libmnt_fs *fs, const char *source, struct libmnt_
 		return 0;
 
 	/* 1) native paths/tags */
-	if (!strcmp(source, fs->source))
+	if (streq_except_trailing_slash(source, fs->source))
 		return 1;
 
 	if (!cache)
@@ -1156,7 +1183,7 @@ int mnt_fs_match_source(struct libmnt_fs *fs, const char *source, struct libmnt_
 
 	/* 2) canonicalized and native */
 	src = mnt_fs_get_srcpath(fs);
-	if (src && !strcmp(cn, src))
+	if (src && streq_except_trailing_slash(cn, src))
 		return 1;
 
 	/* 3) canonicalized and canonicalized */

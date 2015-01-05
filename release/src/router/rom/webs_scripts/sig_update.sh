@@ -18,6 +18,15 @@ echo $current_sig_ver
 
 # get signature information
 forsq=`nvram get apps_sq`
+
+wl0_support=`nvram show | grep rc_support | grep 2.4G`
+
+if [ "$wl0_support" != "" ]; then
+	country_code=`nvram get wl0_country_code`
+else
+	country_code=`nvram get wl1_country_code`
+fi
+
 model=`nvram get productid`
 if [ "$forsq" == "1" ]; then
                 echo "---- sig update sq normal----" > /tmp/sig_upgrade.log
@@ -31,8 +40,14 @@ if [ "$?" != "0" ]; then
 	nvram set sig_state_error=1
 else
 	# TODO get and parse information
-	sig_ver=`grep $model /tmp/sig_update.txt | sed s/.*#//;`
+	sig_ver=`grep $country_code /tmp/sig_update.txt | sed s/.*#//;`
 	echo $sig_ver
+	if [ "$sig_ver" == "" ]; then
+		sig_ver=`grep WW /tmp/sig_update.txt | sed s/.*#//;`
+		nvram set SKU="WW";
+	else
+		nvram set SKU=$country_code;
+	fi
 	sig_ver=`echo $sig_ver | sed s/'\.'//g;`
 	echo $sig_ver
 	nvram set sig_state_info=${sig_ver}

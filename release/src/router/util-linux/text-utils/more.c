@@ -1332,6 +1332,7 @@ int command (char *filename, register FILE *f)
 	    break;
 	case 'n':
 	    lastp++;
+	    /* fallthrough */
 	case '/':
 	    if (nlines == 0) nlines++;
 	    kill_line ();

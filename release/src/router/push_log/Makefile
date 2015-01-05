@@ -6,7 +6,7 @@ PROGS = libpush_log.so push_log
 CFLAGS += -fPIC $(EXTRACFLAGS) -Wall
 CFLAGS += -I. -I$(LINUXDIR)/include -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/wb/ws_src
 
-LDFLAGS = -L. -lpush_log
+LDFLAGS = -L. -lpush_log -lpthread -ldl -lm
 LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram
 LDFLAGS += -L$(TOP)/shared -lshared
 LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl

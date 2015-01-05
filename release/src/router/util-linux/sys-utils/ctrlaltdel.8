@@ -1,6 +1,6 @@
 .\" Copyright 1992, 1993 Rickard E. Faith (faith@cs.unc.edu)
 .\" May be distributed under the GNU General Public License
-.TH CTRLALTDEL 8 "October 1993" "util-linux" "System Administration"
+.TH CTRLALTDEL 8 "August 2011" "util-linux" "System Administration"
 .SH NAME
 ctrlaltdel \- set the function of the Ctrl-Alt-Del combination
 .SH SYNOPSIS
@@ -24,18 +24,28 @@ program must support this feature.  Since there are now several
 .BR init (8)
 programs in the Linux community, please consult the documentation for the
 version that you are currently using.
-
+.PP
 .B ctrlaltdel
 is usually used in the
 .I /etc/rc.local
 file.
+.SH OPTIONS
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Output version information and exit.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display help and exit.
 .SH FILES
 .I /etc/rc.local
 .SH "SEE ALSO"
-.BR simpleinit (8),
 .BR init (8)
 .SH AUTHOR
-Peter Orbaek (poe@daimi.aau.dk)
+.UR poe@daimi.aau.dk
+Peter Orbaek
+.UE
 .SH AVAILABILITY
 The ctrlaltdel command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

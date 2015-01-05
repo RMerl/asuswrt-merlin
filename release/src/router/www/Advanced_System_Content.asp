@@ -90,6 +90,7 @@ if(sw_mode == 3 || (sw_mode == 4))
 function initial(){
 	show_menu();
 	show_http_clientlist();
+	display_spec_IP(document.form.http_client.value);
 	corrected_timezone();
 	load_timezones();
 	show_dst_chk();
@@ -155,7 +156,7 @@ function initial(){
 	}
 	else{
 		document.getElementById("telnet_tr").style.display = "";
-                document.form.telnetd_enable[0].disabled = false;
+		document.form.telnetd_enable[0].disabled = false;
 		document.form.telnetd_enable[1].disabled = false;
 	}	
 }
@@ -194,7 +195,10 @@ function applyRule(){
 			document.form.http_passwd.disabled = false;
 		}
 
-		if(document.form.time_zone_dst_chk.checked){	// Exist dstoffset
+		var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
+		// match "[std name][offset][dst name]"
+		if(document.form.time_zone_select.value.match(tzdst)){		// Exist dstoffset
+
 				time_zone_tmp = document.form.time_zone_select.value.split("_");	//0:time_zone 1:serial number
 				time_zone_s_tmp = "M"+document.form.dst_start_m.value+"."+document.form.dst_start_w.value+"."+document.form.dst_start_d.value+"/"+document.form.dst_start_h.value;
 				time_zone_e_tmp = "M"+document.form.dst_end_m.value+"."+document.form.dst_end_w.value+"."+document.form.dst_end_d.value+"/"+document.form.dst_end_h.value;
@@ -325,12 +329,14 @@ function validForm(){
 			)
 		return false;
 
-	if(document.form.time_zone_dst_chk.checked 
-			&& document.getElementById("chkbox_time_zone_dst").style.display == ""
+
+	var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
+	// match "[std name][offset][dst name]"
+	if(document.form.time_zone_select.value.match(tzdst)			// Exist dstoffset
 			&& document.form.dst_start_m.value == document.form.dst_end_m.value
 			&& document.form.dst_start_w.value == document.form.dst_end_w.value
 			&& document.form.dst_start_d.value == document.form.dst_end_d.value){
-		alert("<#FirewallConfig_URLActiveTime_itemhint4#>");
+		alert("<#FirewallConfig_URLActiveTime_itemhint4#>");	//At same day
 		return false;
 	}
 
@@ -421,24 +427,19 @@ function show_dst_chk(){
 	var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
 	// match "[std name][offset][dst name]"
 	if(document.form.time_zone_select.value.match(tzdst)){
-		document.getElementById("chkbox_time_zone_dst").style.display="";	
-		document.getElementById("adj_dst").innerHTML = "<#System_Change_TimeZone_manual#>";
-		if(!document.getElementById("time_zone_dst_chk").checked){
-				document.form.time_zone_dst.value=0;
-				document.getElementById("dst_start").style.display="none";
-				document.getElementById("dst_end").style.display="none";
-		}else{
-				parse_dstoffset();
-				document.form.time_zone_dst.value=1;
-				document.getElementById("dst_start").style.display="";
-				document.getElementById("dst_end").style.display="";
-		}
+			parse_dstoffset();
+			document.form.time_zone_dst.value=1;
+			document.getElementById("dst_changes_start").style.display="";
+			document.getElementById("dst_changes_end").style.display="";
+			document.getElementById("dst_start").style.display="";
+			document.getElementById("dst_end").style.display="";
+		
 	}else{
-		document.getElementById("chkbox_time_zone_dst").style.display="none";
-		document.getElementById("chkbox_time_zone_dst").checked=false;
-		document.form.time_zone_dst.value=0;
-		document.getElementById("dst_start").style.display="none";
-		document.getElementById("dst_end").style.display="none";
+			document.form.time_zone_dst.value=0;
+			document.getElementById("dst_changes_start").style.display="none";
+			document.getElementById("dst_changes_end").style.display="none";
+			document.getElementById("dst_start").style.display="none";
+			document.getElementById("dst_end").style.display="none";
 	}	
 }
 
@@ -485,7 +486,7 @@ var timezones = [
 	["UTC-2DST",	"(GMT+02:00) <#TZ38#>"],
 	["UTC-2DST_3",	"(GMT+02:00) <#TZ33_1#>"],
 	["EST-2DST",	"(GMT+02:00) <#TZ39#>"],
-	["UTC-2DST_1",	"(GMT+02:00) <#TZ40#>"],
+	["UTC-2DST_4",	"(GMT+02:00) <#TZ40#>"],
 	["UTC-2DST_2",	"(GMT+02:00) <#TZ41#>"],
 	["IST-2DST",	"(GMT+02:00) <#TZ42#>"],
 	["EET-2DST",	"(GMT+02:00) <#TZ43_2#>"],
@@ -550,9 +551,9 @@ function load_timezones(){
 	}
 }
 
-var dst_month = new Array("", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12");
-var dst_week = new Array("", "1", "2", "3", "4", "5");
-var dst_day = new Array("0", "1", "2", "3", "4", "5", "6");
+var dst_month = new Array("", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
+var dst_week = new Array("", "1st", "2nd", "3rd", "4th", "5th");
+var dst_day = new Array("<#date_Sun_itemdesc#>", "<#date_Mon_itemdesc#>", "<#date_Tue_itemdesc#>", "<#date_Wed_itemdesc#>", "<#date_Thu_itemdesc#>", "<#date_Fri_itemdesc#>", "<#date_Sat_itemdesc#>");
 var dst_hour = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
 													"13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23");
 var dstoff_start_m,dstoff_start_w,dstoff_start_d,dstoff_start_h;
@@ -862,39 +863,22 @@ function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
-function daylight_save_check(){
-	if (document.form.time_zone_dst_chk.checked){
-		document.form.time_zone_dst.value = "1";
-		document.getElementById("dst_start").style.display="";	
-		document.getElementById("dst_end").style.display="";					
-	}else{
-		document.form.time_zone_dst.value = "0";	
-		document.getElementById("dst_start").style.display="none";	
-		document.getElementById("dst_end").style.display="none";
-	}
-}
-
 function select_time_zone(){
 	var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i"); // match "[std name][offset][dst name]"
 
 	if(document.form.time_zone_select.value.match(tzdst)){
-		document.getElementById("chkbox_time_zone_dst").style.display="";	
-		document.getElementById("adj_dst").innerHTML = "<#System_Change_TimeZone_manual#>";
-		if(!document.getElementById("time_zone_dst_chk").checked){
-			document.form.time_zone_dst.value=0;
-			document.getElementById("dst_start").style.display="none";
-			document.getElementById("dst_end").style.display="none";
-		}else{
 			document.form.time_zone_dst.value=1;
+			document.getElementById("dst_changes_start").style.display="";
+			document.getElementById("dst_changes_end").style.display="";
 			document.getElementById("dst_start").style.display="";	
 			document.getElementById("dst_end").style.display="";						
-		}
+		
 	}else{
-		document.getElementById("chkbox_time_zone_dst").style.display="none";	
-		document.getElementById("time_zone_dst_chk").checked = false;
-		document.form.time_zone_dst.value=0;			
-		document.getElementById("dst_start").style.display="none";
-		document.getElementById("dst_end").style.display="none";
+			document.form.time_zone_dst.value=0;
+			document.getElementById("dst_changes_start").style.display="none";
+			document.getElementById("dst_changes_end").style.display="none";
+			document.getElementById("dst_start").style.display="none";
+			document.getElementById("dst_end").style.display="none";
 	}
 }
 
@@ -937,6 +921,17 @@ function check_sshd_enable(obj_value){
 	}
 
 }*/
+
+function display_spec_IP(flag){
+	if(flag == 0){
+			document.getElementById("http_client_table").style.display = "none";
+			document.getElementById("http_clientlist_Block").style.display = "none";
+	}
+	else{
+			document.getElementById("http_client_table").style.display = "";
+			document.getElementById("http_clientlist_Block").style.display = "";
+	}
+}
 </script>
 </head>
 
@@ -998,7 +993,7 @@ function check_sshd_enable(obj_value){
 				<tr>
 				  <th width="40%"><#Router_Login_Name#></th>
 					<td>
-						<div><input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20"><br/><span id="alert_msg1" style="color:#FC0;margin-left:8px;"></span></div>
+						<div><input type="text" id="http_username" name="http_username" tabindex="1" autocapitalization="off" autocomplete="off" style="height:25px;" class="input_15_table" maxlength="20"><br/><span id="alert_msg1" style="color:#FC0;margin-left:8px;"></span></div>
 					</td>
 				</tr>
 
@@ -1125,31 +1120,36 @@ function check_sshd_enable(obj_value){
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
 					<td>
-						<select name="time_zone_select" class="input_option" onchange="select_time_zone();"></select>				
-						<div>
-							<span id="chkbox_time_zone_dst" style="color:white;display:none;">
-								<input type="checkbox" name="time_zone_dst_chk" id="time_zone_dst_chk" <% nvram_match("time_zone_dst", "1", "checked"); %> class="input" onClick="daylight_save_check();">
-								<label for="time_zone_dst_chk"><span id="adj_dst"></span></label>
-								<br>
-							</span>	
-							<span id="dst_start" style="color:white;display:none;">
-								<b>DST start time</b>
-								<select name="dst_start_m" class="input_option" onchange=""></select>&nbsp;month &nbsp;
-								<select name="dst_start_w" class="input_option" onchange=""></select>&nbsp;week &nbsp;
-								<select name="dst_start_d" class="input_option" onchange=""></select>&nbsp;weekday &nbsp;
-								<select name="dst_start_h" class="input_option" onchange=""></select>&nbsp;hour &nbsp;
-								<br>
-							</span>
-							<span id="dst_end" style="color:white;display:none;">
-								<b>DST end time</b>&nbsp;&nbsp;
-								<select name="dst_end_m" class="input_option" onchange=""></select>&nbsp;month &nbsp;
-								<select name="dst_end_w" class="input_option" onchange=""></select>&nbsp;week &nbsp;
-								<select name="dst_end_d" class="input_option" onchange=""></select>&nbsp;weekday &nbsp;
-								<select name="dst_end_h" class="input_option" onchange=""></select>&nbsp;hour &nbsp;
-								<br>
-							</span>          			
+						<select name="time_zone_select" class="input_option" onchange="select_time_zone();"></select>
+						<div>							         			
 							<span id="timezone_hint" style="display:none;"></span>
 						</div>
+					</td>
+				</tr>
+				<tr id="dst_changes_start" style="display:none;">
+					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,7)">DST time zone changes starts</a></th>
+					<td>
+								<div id="dst_start" style="color:white;display:none;">
+									<div>
+										<select name="dst_start_m" class="input_option"></select>&nbsp;month &nbsp;
+										<select name="dst_start_w" class="input_option"></select>&nbsp;
+										<select name="dst_start_d" class="input_option"></select>&nbsp;weekday &nbsp;
+										<select name="dst_start_h" class="input_option"></select>&nbsp;hour &nbsp;
+									</div>
+								</div>
+					</td>	
+				</tr>
+				<tr id="dst_changes_end" style="display:none;">
+					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,8)">DST time zone changes ends</a></th>
+					<td>
+								<div id="dst_end" style="color:white;display:none;">
+									<div>
+										<select name="dst_end_m" class="input_option"></select>&nbsp;month &nbsp;
+										<select name="dst_end_w" class="input_option"></select>&nbsp;
+										<select name="dst_end_d" class="input_option"></select>&nbsp;weekday &nbsp;
+										<select name="dst_end_h" class="input_option"></select>&nbsp;hour &nbsp;
+									</div>
+								</div>
 					</td>
 				</tr>
 				<tr>
@@ -1221,8 +1221,8 @@ function check_sshd_enable(obj_value){
 				<tr id="http_client_tr">
 					<th><#System_login_specified_IP#></th>
 					<td>
-						<input type="radio" name="http_client" class="input" value="1" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="http_client" class="input" value="0" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="http_client" class="input" value="1" onclick="display_spec_IP(1);" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="http_client" class="input" value="0" onclick="display_spec_IP(0);" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>

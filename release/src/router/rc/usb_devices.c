@@ -1558,6 +1558,176 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "TargetProduct=0x%04x\n",	0x1405);
 			fprintf(fp, "StandardEject=1\n");
 			break;
+		/* 141112 */
+		case SN_Alcatel_TL131:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x05c6);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x9024);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x05c6);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x9025);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_AVM_Fritz_V2:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x057c);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x62ff);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x057c);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x8501);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000ff0000000000000000000000");
+			break;
+		case SN_Quanta_MobileGenie_4G_lte:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x0408);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0xea43);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x0408);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0xea47);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Pantech_LTE:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x10a9);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x6080);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x10a9);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x6085);
+			fprintf(fp, "PantechMode=1\n");
+			break;
+		case SN_BlackBerry_Q10:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x0fca);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x8020);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x0fca);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x8012);
+			fprintf(fp, "BlackberryMode=1\n");
+			break;
+		case SN_Huawei_K4305:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1f15);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x1400);
+			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011062000000000000100000000000000");
+			break;
+		case SN_Huawei_E3276s:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x156a);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "TargetProductList=%s\n",	"156b,156c");
+			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011062000000100000000000000000000");
+			break;
+		case SN_Huawei_E3131:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x155b);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x1506);
+			fprintf(fp, "MessageContent=%s\n",	"55534243000000000000000000000011060000000100000000000000000000");
+			break;
+		case SN_Teracom_LW272:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x230d);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0103);
+			fprintf(fp, "Configuration=2\n");
+			break;
+		case SN_TP_Link_MA260:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x2357);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0xf000);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x2357);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x9000);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Quanta_1K3_LTE:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x0408);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0xea25);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x0408);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0xea26);
+			fprintf(fp, "QuantaMode=1\n");
+			break;
+		case SN_WeTelecom_WMD200:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x22de);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x6801);
+			fprintf(fp, "TargetClass=0x%04x\n",	0xff);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061e000000000000000000000000000000");
+			fprintf(fp, "MessageContent2=%s\n",	"5553424312345679000000000000061b000000020000000000000000000000");
+			break;
+		case SN_ZTE_MF680:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1227);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x1252);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			fprintf(fp, "NeedResponse=1\n");
+			break;
+		case SN_ZTE_MF656A:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0150);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x0124);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			fprintf(fp, "NeedResponse=1\n");
+			break;
+		case SN_ZTE_MF196:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1528);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x1527);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			fprintf(fp, "NeedResponse=1\n");
+			break;
+		case SN_Mediatek_MT6229:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x2020);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0002);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x2020);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x2000);
+			fprintf(fp, "MessageContent=%s\n",	"555342430820298900000000000003f0010100000000000000000000000000");
+			break;
+		case SN_DLINK_DWR_510:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x2001);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0xa805);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x2001);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x7e12);
+			fprintf(fp, "MessageContent=%s\n",	"5553424308407086000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Novatel_MC996D:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1410);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x5023);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x1410);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x7030);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Pantech_UML290:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x106c);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x3b11);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x106c);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x3718);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Onda_MT8205_LTE:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x19d2);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0266);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x19d2);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x0265);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Axesstel_Modems:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x05c6);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0010);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x05c6);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x00a0);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Nokia_CS_12:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x0421);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0618);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x0421);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x0619);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Onda_WM301:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1ee8);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0068);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x1ee8);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x0069);
+			fprintf(fp, "MessageContent=%s\n",	"5553424312345678000000000000061b000000020000000000000000000000");
+			break;
+		case SN_Onda_TM201_14_4:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x1ee8);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0063);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x1ee8);
+			fprintf(fp, "TargetProduct=0x%04x\n",	0x0064);
+			fprintf(fp, "MessageContent=%s\n",	"555342431234567800000000000008FF000000000000030000000000000000");
+			break;
 		default:
 			fprintf(fp, "\n");
 			if(vid != 0 && pid != 0){
@@ -1627,15 +1797,29 @@ usb_dbg("3G: Auto setting.\n");
 
 		if(vid == 0x0408 && (pid == 0xea02 || pid == 0x1000))
 			write_3g_conf(fp, SN_MU_Q101, 1, vid, pid);
+		else if(vid == 0x0408 && pid == 0xea43)
+			write_3g_conf(fp, SN_Quanta_MobileGenie_4G_lte, 1, vid, pid);
+		else if(vid == 0x0408 && pid == 0xea25)
+			write_3g_conf(fp, SN_Quanta_1K3_LTE, 1, vid, pid);
+		else if(vid == 0x05c6 && pid == 0x1000) // also Option-GlobeSurfer-Icon72(may have new fw setting, bug not included here), Option-GlobeTrotter-GT-MAX36.....Option-Globexx series, AnyDATA-ADU-500A, Samsung-SGH-Z810, Vertex Wireless 100 Series
+			write_3g_conf(fp, SN_Option_GlobeSurfer_Icon, 1, vid, pid);
+		else if(vid == 0x05c6 && pid == 0x2001)
+			write_3g_conf(fp, SN_D_Link_DWM162_U5, 1, vid, pid);
+		else if(vid == 0x05c6 && pid == 0xf000)
+			write_3g_conf(fp, SN_Siptune_LM75, 1, vid, pid);
+		else if(vid == 0x05c6 && pid == 0x9024)
+			write_3g_conf(fp, SN_Alcatel_TL131, 1, vid, pid);
+		else if(vid == 0x05c6 && pid == 0x2000)
+			write_3g_conf(fp, SN_dealextreme, 1, vid, pid);
+		else if(vid == 0x05c6 && pid == 0x0010)
+			write_3g_conf(fp, SN_Axesstel_Modems, 1, vid, pid);
+		else if(vid == 0x1e0e && pid == 0xf000)	// A-Link-3GU
+			write_3g_conf(fp, SN_Option_iCON210, 1, vid, pid);
 		else if(vid == 0x0af0 && pid == 0x6971)
 		{
 			nvram_set("d3g", "OPTION-ICON225");
 			write_3g_conf(fp, SN_OPTION_ICON225, 1, vid, pid);
 		}
-		else if(vid == 0x05c6 && pid == 0x1000) // also Option-GlobeSurfer-Icon72(may have new fw setting, bug not included here), Option-GlobeTrotter-GT-MAX36.....Option-Globexx series, AnyDATA-ADU-500A, Samsung-SGH-Z810, Vertex Wireless 100 Series
-			write_3g_conf(fp, SN_Option_GlobeSurfer_Icon, 1, vid, pid);
-		else if(vid == 0x1e0e && pid == 0xf000)	// A-Link-3GU
-			write_3g_conf(fp, SN_Option_iCON210, 1, vid, pid);
 		else if(vid == 0x0af0 && pid == 0x7011)
 		{
 			nvram_set("d3g", "Option-GlobeTrotter-HSUPA-Modem");
@@ -1656,6 +1840,14 @@ usb_dbg("3G: Auto setting.\n");
 			nvram_set("d3g", "ATT-USBConnect-Quicksilver");
 			write_3g_conf(fp, SN_ATT_USBConnect_Quicksilver, 1, vid, pid);
 		}
+		else if(vid == 0x0af0 && pid == 0x7a05)
+			write_3g_conf(fp, SN_OPTION_ICON_461, 1, vid, pid);
+		else if(vid == 0x0af0 && pid == 0xd001)
+			write_3g_conf(fp, SN_Option_GI1515, 1, vid, pid);
+		else if(vid == 0x0af0 && pid == 0x8006)
+			write_3g_conf(fp, SN_Option_Globetrotter, 1, vid, pid);
+		else if(vid == 0x0af0 && pid == 0x4007)
+			write_3g_conf(fp, SN_Option_ICON_711, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x1505)
 			write_3g_conf(fp, SN_Huawei_EC156, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x1001)
@@ -1672,302 +1864,316 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_Huawei_E630, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x1446)	// E1550, E1612, E1690
 			write_3g_conf(fp, SN_Huawei_E270, 1, vid, pid);
-			//write_3g_conf(fp, SN_Huawei_E1550, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x2000)	// also ZTE622, 628, 626, 6535-Z, K3520-Z, K3565, ONDA-MT503HS, ONDA-MT505UP
-			write_3g_conf(fp, SN_ZTE_MF626, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0xfff5)
-			write_3g_conf(fp, SN_ZTE_AC2710, 1, vid, pid);	// 2710
-		else if(vid == 0x1410 && pid == 0x5010)	// U727
-			write_3g_conf(fp, SN_Novatel_Wireless_Ovation_MC950D, 1, vid, pid);
-		else if(vid == 0x1410 && pid == 0x5020)
-			write_3g_conf(fp, SN_Novatel_MC990D, 1, vid, pid);
-		else if(vid == 0x1410 && pid == 0x5030)
-			write_3g_conf(fp, SN_Novatel_U760, 1, vid, pid);
-		else if(vid == 0x1c9e && pid == 0x1001)
-			write_3g_conf(fp, SN_Alcatel_X020, 1, vid, pid);
-		else if(vid == 0x1bbb && pid == 0xf000)
-			write_3g_conf(fp, SN_Alcatel_X200, 1, vid, pid);
-		//else if(vid == 0x1a8d && pid == 0x1000)
-		//	write_3g_conf(fp, SN_BandLuxe_C120, 1, vid, pid);
-		else if(vid == 0x1dd6 && pid == 0x1000)
-			write_3g_conf(fp, SN_Solomon_S3Gm660, 1, vid, pid);
-		else if(vid == 0x16d8 && pid == 0x6803)
-			write_3g_conf(fp, SN_C_motechD50, 1, vid, pid);
-		else if(vid == 0x16d8 && pid == 0xf000)
-			write_3g_conf(fp, SN_C_motech_CGU628, 1, vid, pid);
-		else if(vid == 0x0930 && pid == 0x0d46)
-			write_3g_conf(fp, SN_Toshiba_G450, 1, vid, pid);
-		else if(vid == 0x106c && pid == 0x3b03)
-			write_3g_conf(fp, SN_UTStarcom_UM175, 1, vid, pid);
-		else if(vid == 0x1ab7 && pid == 0x5700)
-			write_3g_conf(fp, SN_Hummer_DTM5731, 1, vid, pid);
-		else if(vid == 0x1199 && pid == 0x0fff)	// Sierra881U
-			write_3g_conf(fp, SN_Sierra_Wireless_Compass597, 1, vid, pid);
-		else if(vid == 0x0fce && pid == 0xd0e1)
-			write_3g_conf(fp, SN_Sony_Ericsson_MD400, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x1000)
-			write_3g_conf(fp, SN_LG_LDU_1900D, 1, vid, pid);
-		else if(vid == 0x1c9e && pid == 0xf000)	// ST-Mobile, MobiData MBD-200HU, // BSNL 310G
-			write_3g_conf(fp, SN_BSNL_310G, 1, vid, pid);
-		else if(vid == 0x1c9e && pid == 0x9605)	// chk BSNL 310G
-			write_3g_conf(fp, SN_BSNL_310G, 1, vid, pid);
-		else if(vid == 0x230d && pid == 0x0001)
-			write_3g_conf(fp, SN_BSNL_LW272, 1, vid, pid);
-		else if(vid == 0x1c9e && pid == 0x9200)
-			write_3g_conf(fp, SN_MyWave_SW006, 1, vid, pid);
-		else if(vid == 0x1f28 && pid == 0x0021)
-			write_3g_conf(fp, SN_Cricket_A600, 1, vid, pid);
-		else if(vid == 0x1b7d && pid == 0x0700)
-			write_3g_conf(fp, SN_EpiValley_SEC7089, 1, vid, pid);
-		else if(vid == 0x04e8 && pid == 0xf000)
-			write_3g_conf(fp, SN_Samsung_U209, 1, vid, pid);
-		else if(vid == 0x05c6 && pid == 0x2001)
-			write_3g_conf(fp, SN_D_Link_DWM162_U5, 1, vid, pid);
-		else if(vid == 0x1410 && pid == 0x5031)
-			write_3g_conf(fp, SN_Novatel_MC760, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x0053)
-			write_3g_conf(fp, SN_ZTE_MF110, 1, vid, pid);
-		else if(vid == 0x0471 && pid == 0x1237)	// HuaXing E600
-			write_3g_conf(fp, SN_Philips_TalkTalk, 1, vid, pid);
-		else if(vid == 0x16d8 && pid == 0x700a)
-			write_3g_conf(fp, SN_C_motech_CHU_629S, 1, vid, pid);
-		else if(vid == 0x0421 && pid == 0x060c)	
-			write_3g_conf(fp, SN_Nokia_CS10, 1, vid, pid);
-		else if(vid == 0x0421 && pid == 0x0610)
-			write_3g_conf(fp, SN_Nokia_CS15, 1, vid, pid);
-		else if(vid == 0x0421 && pid == 0x0622)	
-			write_3g_conf(fp, SN_Nokia_CS17, 1, vid, pid);
-		else if(vid == 0x0421 && pid == 0x0627)	
-			write_3g_conf(fp, SN_Nokia_CS18, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x1520)
 			write_3g_conf(fp, SN_Huawei_K3765, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x1521)
 			write_3g_conf(fp, SN_Huawei_K4505, 1, vid, pid);
-		else if(vid == 0x0471 && pid == 0x1210)
-			write_3g_conf(fp, SN_Vodafone_MD950, 1, vid, pid);
-		else if(vid == 0x05c6 && pid == 0xf000)
-			write_3g_conf(fp, SN_Siptune_LM75, 1, vid, pid);
-		/* 0715 add */
-		else if(vid == 0x1c9e && pid == 0x9800)	
-			write_3g_conf(fp, SN_SU9800, 1, vid, pid);
-		else if(vid == 0x0af0 && pid == 0x7a05)	
-			write_3g_conf(fp, SN_OPTION_ICON_461, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x14c4)	
+		else if(vid == 0x12d1 && pid == 0x14c4)
 			write_3g_conf(fp, SN_Huawei_K3771, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x14d1)	
+		else if(vid == 0x12d1 && pid == 0x14d1)
 			write_3g_conf(fp, SN_Huawei_K3770, 1, vid, pid);
-		else if(vid == 0x0df7 && pid == 0x0800)	
-			write_3g_conf(fp, SN_Mobile_Action, 1, vid, pid);
-		else if(vid == 0x03f0 && pid == 0x002a)	
-			write_3g_conf(fp, SN_HP_P1102, 1, vid, pid);
-		else if(vid == 0x230d && pid == 0x0007)	
-			write_3g_conf(fp, SN_Visiontek_82GH, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x0149)	
-			write_3g_conf(fp, SN_ZTE_MF190_var, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x1216)	
-			write_3g_conf(fp, SN_ZTE_MF192, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x1201)	
-			write_3g_conf(fp, SN_ZTE_MF691, 1, vid, pid);
-		else if(vid == 0x16d8 && pid == 0x700b)	
-			write_3g_conf(fp, SN_CHU_629S, 1, vid, pid);
-		else if(vid == 0x198a && pid == 0x0003)	
-			write_3g_conf(fp, SN_JOA_LM_700r, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x1224)	
-			write_3g_conf(fp, SN_ZTE_MF190, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0xffe6)	
-			write_3g_conf(fp, SN_ZTE_ffe, 1, vid, pid);
-		else if(vid == 0x0fce && pid == 0xd103)	
-			write_3g_conf(fp, SN_SE_MD400G, 1, vid, pid);
-		/*else if(vid == 0x07d1 && pid == 0xa800)	
-			write_3g_conf(fp, SN_DLINK_DWM_156_A1, 1, vid, pid);//*/ // Couldn't usb usb_modeswitch.
-		else if(vid == 0x07d1 && pid == 0xa804)	
-			write_3g_conf(fp, SN_DLINK_DWM_156_A3, 1, vid, pid);
-		else if(vid == 0x2001 && pid == 0xa706)	
-			write_3g_conf(fp, SN_DLINK_DWM_156_A7_1, 1, vid, pid);
-		else if(vid == 0x2001 && pid == 0xa707)	
-			write_3g_conf(fp, SN_DLINK_DWM_156_A7_2, 1, vid, pid);
-		else if(vid == 0x2001 && pid == 0xa708)	
-			write_3g_conf(fp, SN_DLINK_DWM_156_A7_3, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x1030)	
+		else if(vid == 0x12d1 && pid == 0x1030)
 			write_3g_conf(fp, SN_Huawei_U8220, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x14fe)	
+		else if(vid == 0x12d1 && pid == 0x14fe)
 			write_3g_conf(fp, SN_Huawei_T_Mobile_NL, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x157c)	
+		else if(vid == 0x12d1 && pid == 0x157c)
 			write_3g_conf(fp, SN_Huawei_E3276S150, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x0013)	
-			write_3g_conf(fp, SN_ZTE_K3806Z, 1, vid, pid);
-		else if(vid == 0x1c9e && pid == 0x6061)	
-			write_3g_conf(fp, SN_Vibe_3G, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x0110)	
-			write_3g_conf(fp, SN_ZTE_MF637, 1, vid, pid);
-		else if(vid == 0x1ee8 && pid == 0x0040)	
-			write_3g_conf(fp, SN_ONDA_MW836UP_K, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x1009)	
+		else if(vid == 0x12d1 && pid == 0x1009)
 			write_3g_conf(fp, SN_Huawei_V725, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x1da1)	
+		else if(vid == 0x12d1 && pid == 0x1da1)
 			write_3g_conf(fp, SN_Huawei_ET8282, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x1449)	
+		else if(vid == 0x12d1 && pid == 0x1449)
 			write_3g_conf(fp, SN_Huawei_E352, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x380b)	
+		else if(vid == 0x12d1 && pid == 0x380b)
 			write_3g_conf(fp, SN_Huawei_BM358, 1, vid, pid);
-		else if(vid == 0x201e && pid == 0x2009)	
-			write_3g_conf(fp, SN_Haier_CE_100, 1, vid, pid);
-		else if(vid == 0x1fac && pid == 0x0032)	
-			write_3g_conf(fp, SN_Franklin_Wireless_U210_var, 1, vid, pid);
-		else if(vid == 0x8888 && pid == 0x6500)	
-			write_3g_conf(fp, SN_Exiss_E_190, 1, vid, pid);
-		else if(vid == 0x05c6 && pid == 0x2000)	
-			write_3g_conf(fp, SN_dealextreme, 1, vid, pid);
-		else if(vid == 0x16d8 && pid == 0x6281)	
-			write_3g_conf(fp, SN_CHU_628S, 1, vid, pid);
-		/*else if(vid == 0x0e8d && pid == 0x7109)	
-			write_3g_conf(fp, SN_MediaTek_Wimax_USB, 1, vid, pid);//*/ // Couldn't usb usb_modeswitch.
-		else if(vid == 0x1edf && pid == 0x6003)	
-			write_3g_conf(fp, SN_AirPlus_MCD_800, 1, vid, pid);
-		else if(vid == 0x106c && pid == 0x3b05)	
-			write_3g_conf(fp, SN_UMW190, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x6190)	
-			write_3g_conf(fp, SN_LG_AD600, 1, vid, pid);
-		else if(vid == 0x0fd1 && pid == 0x1000)	
-			write_3g_conf(fp, SN_GW_D301, 1, vid, pid);
-		else if(vid == 0x05c7 && pid == 0x1000)	
-			write_3g_conf(fp, SN_Qtronix_EVDO_3G, 1, vid, pid);
-		else if(vid == 0x0b3c && pid == 0xf000)	
-			write_3g_conf(fp, SN_Olicard_145, 1, vid, pid);
-		else if(vid == 0x1ee8 && pid == 0x0009)	
-			write_3g_conf(fp, SN_ONDA_MW833UP, 1, vid, pid);
-		else if(vid == 0x0d46 && pid == 0x45a5)	
-			write_3g_conf(fp, SN_Kobil_mIdentity_3G_2, 1, vid, pid);
-		else if(vid == 0x0d46 && pid == 0x45a1)	
-			write_3g_conf(fp, SN_Kobil_mIdentity_3G_1, 1, vid, pid);
-		else if(vid == 0x04e8 && pid == 0x689a)	
-			write_3g_conf(fp, SN_Samsung_GT_B3730, 1, vid, pid);
-		else if(vid == 0x1c9e && pid == 0x9e00)	
-			write_3g_conf(fp, SN_BSNL_Capitel, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x1031)	
+		else if(vid == 0x12d1 && pid == 0x1031)
 			write_3g_conf(fp, SN_Huawei_U8110, 1, vid, pid);
-		else if(vid == 0x1ee8 && pid == 0x0013)	
-			write_3g_conf(fp, SN_ONDA_MW833UP_2, 1, vid, pid);
-		else if(vid == 0x0cf3 && pid == 0x20ff)	
-			write_3g_conf(fp, SN_Netgear_WNDA3200, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x1523)	
+		else if(vid == 0x12d1 && pid == 0x1523)
 			write_3g_conf(fp, SN_Huawei_R201, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x14c1)	
+		else if(vid == 0x12d1 && pid == 0x14c1)
 			write_3g_conf(fp, SN_Huawei_K4605, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x613f)	
-			write_3g_conf(fp, SN_LG_LUU_2100TI, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x613a)	
-			write_3g_conf(fp, SN_LG_L_05A, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x0003)	
-			write_3g_conf(fp, SN_ZTE_MU351, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x0083)	
-			write_3g_conf(fp, SN_ZTE_MF110_var, 1, vid, pid);
-		else if(vid == 0x0b3c && pid == 0xc700)	
-			write_3g_conf(fp, SN_Olicard_100, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x0103)	
-			write_3g_conf(fp, SN_ZTE_MF112, 1, vid, pid);
-		else if(vid == 0x1fac && pid == 0x0130)	
-			write_3g_conf(fp, SN_Franklin_Wireless_U210, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x1001)	
-			write_3g_conf(fp, SN_ZTE_K3805_Z, 1, vid, pid);
-		else if(vid == 0x0fce && pid == 0xd0cf)	
-			write_3g_conf(fp, SN_SE_MD300, 1, vid, pid);
-		else if(vid == 0x1266 && pid == 0x1000)	
-			write_3g_conf(fp, SN_Digicom_8E4455, 1, vid, pid);
-		else if(vid == 0x0482 && pid == 0x024d)	
-			write_3g_conf(fp, SN_Kyocera_W06K, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x607f)	
-			write_3g_conf(fp, SN_LG_HDM_2100, 1, vid, pid);
-		else if(vid == 0x198f && pid == 0xbccd)	
-			write_3g_conf(fp, SN_Beceem_BCSM250, 1, vid, pid);
-		else if(vid == 0x0b05 && pid == 0xbccd)	
-			write_3g_conf(fp, SN_Beceem_BCSM250_ASUS, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0xbccd)	
-			write_3g_conf(fp, SN_ZTEAX226, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x101e)	
+		else if(vid == 0x12d1 && pid == 0x101e)
 			write_3g_conf(fp, SN_Huawei_U7510, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x0026)	
-			write_3g_conf(fp, SN_ZTE_AC581, 1, vid, pid);
-		else if(vid == 0x106c && pid == 0x3b06)	
-			write_3g_conf(fp, SN_UTStarcom_UM185E, 1, vid, pid);
-		else if(vid == 0x057c && pid == 0x84ff)	
-			write_3g_conf(fp, SN_AVM_Fritz, 1, vid, pid);
-		/* 0818 add */
-		else if(vid == 0x2020 && pid == 0xf00e)
-			write_3g_conf(fp, SN_SU_8000U, 1, vid, pid);
-		else if(vid == 0x1307 && pid == 0x1169)
-			write_3g_conf(fp, SN_Cisco_AM10, 1, vid, pid);
-		else if(vid == 0x1410 && pid == 0x2110)
-			write_3g_conf(fp, SN_NovatelU720, 1, vid, pid);
-		else if(vid == 0x106c && pid == 0x3711)
-			write_3g_conf(fp, SN_Pantech_UM150, 1, vid, pid);
-		else if(vid == 0x106c && pid == 0x3714)
-			write_3g_conf(fp, SN_Pantech_UM175, 1, vid, pid);
-		else if(vid == 0x1199 && pid == 0x0120)
-			write_3g_conf(fp, SN_Sierra_U595, 1, vid, pid);
-		/* 120703 add */
-		else if(vid == 0x1da5 && pid == 0xf000)
-			write_3g_conf(fp, SN_Qisda_H21, 1, vid, pid);
-		else if(vid == 0x21f5 && pid == 0x1000)
-			write_3g_conf(fp, SN_StrongRising_Air_FlexiNet, 1, vid, pid);
-		else if(vid == 0x1a8d && pid == 0x2000)
-			write_3g_conf(fp, SN_BandLuxe_C339, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x1f01)
 			write_3g_conf(fp, SN_Huawei_E353, 1, vid, pid);
-		else if(vid == 0x201e && pid == 0x1023)
-			write_3g_conf(fp, SN_Haier_CE682, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x61dd)
-			write_3g_conf(fp, SN_LG_L_02C_LTE, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x61e7)
-			write_3g_conf(fp, SN_LG_SD711, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x61eb)
-			write_3g_conf(fp, SN_LG_L_08C, 1, vid, pid);
-		else if(vid == 0x04bb && pid == 0xbccd)
-			write_3g_conf(fp, SN_IODATA_WMX2_U, 1, vid, pid);
-		else if(vid == 0x0af0 && pid == 0xd001)
-			write_3g_conf(fp, SN_Option_GI1515, 1, vid, pid);
-		else if(vid == 0x1004 && pid == 0x614e)
-			write_3g_conf(fp, SN_LG_L_07A, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x14c3)
+			write_3g_conf(fp, SN_Huawei_K5005, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x1c24)
+			write_3g_conf(fp, SN_Huawei_E173_MoiveStar, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x1f16)
+			write_3g_conf(fp, SN_Huawei_K5150, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x1f15)
+			write_3g_conf(fp, SN_Huawei_K4305, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x156a)
+			write_3g_conf(fp, SN_Huawei_E3276s, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x2000)	// also ZTE622, 628, 626, 6535-Z, K3520-Z, K3565, ONDA-MT503HS, ONDA-MT505UP
+			write_3g_conf(fp, SN_ZTE_MF626, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0xfff5)
+			write_3g_conf(fp, SN_ZTE_AC2710, 1, vid, pid);	// 2710
+		else if(vid == 0x19d2 && pid == 0xbccd)
+			write_3g_conf(fp, SN_ZTEAX226, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0026)
+			write_3g_conf(fp, SN_ZTE_AC581, 1, vid, pid);
 		else if(vid == 0x19d2 && pid == 0x0169)
 			write_3g_conf(fp, SN_ZTE_A371B, 1, vid, pid);
 		else if(vid == 0x19d2 && pid == 0x1520)
 			write_3g_conf(fp, SN_ZTE_MF652, 1, vid, pid);
 		else if(vid == 0x19d2 && pid == 0x0146)
 			write_3g_conf(fp, SN_ZTE_MF652_VAR, 1, vid, pid);
-		else if(vid == 0x2077 && pid == 0xf000)
-			write_3g_conf(fp, SN_T_W_WU160, 1, vid, pid);
-		else if(vid == 0x0421 && pid == 0x0637)
-			write_3g_conf(fp, SN_Nokia_CS_21M_02, 1, vid, pid);
-		else if(vid == 0x1c9e && pid == 0x98ff)
-			write_3g_conf(fp, SN_Telewell_TW_3G, 1, vid, pid);
 		else if(vid == 0x19d2 && pid == 0x0031)
 			write_3g_conf(fp, SN_ZTE_MF637_2, 1, vid, pid);
-		else if(vid == 0x04e8 && pid == 0x680c)
-			write_3g_conf(fp, SN_Samsung_GT_B1110, 1, vid, pid);
 		else if(vid == 0x19d2 && pid == 0x1514)
 			write_3g_conf(fp, SN_ZTE_MF192_VAR, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x1225)
+			write_3g_conf(fp, SN_ZTE_MF823, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0053)
+			write_3g_conf(fp, SN_ZTE_MF110, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0149)
+			write_3g_conf(fp, SN_ZTE_MF190_var, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x1216)
+			write_3g_conf(fp, SN_ZTE_MF192, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x1201)
+			write_3g_conf(fp, SN_ZTE_MF691, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x1224)
+			write_3g_conf(fp, SN_ZTE_MF190, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0xffe6)
+			write_3g_conf(fp, SN_ZTE_ffe, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0013)
+			write_3g_conf(fp, SN_ZTE_K3806Z, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0110)
+			write_3g_conf(fp, SN_ZTE_MF637, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0003)
+			write_3g_conf(fp, SN_ZTE_MU351, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0083)
+			write_3g_conf(fp, SN_ZTE_MF110_var, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0103)
+			write_3g_conf(fp, SN_ZTE_MF112, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x1001)
+			write_3g_conf(fp, SN_ZTE_K3805_Z, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x1227)
+			write_3g_conf(fp, SN_ZTE_MF680, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0150)
+			write_3g_conf(fp, SN_ZTE_MF656A, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x1528)
+			write_3g_conf(fp, SN_ZTE_MF196, 1, vid, pid);
+		else if(vid == 0x19d2 && pid == 0x0266)
+			write_3g_conf(fp, SN_Onda_MT8205_LTE, 1, vid, pid);
+		else if(vid == 0x1410 && pid == 0x5010)	// U727
+			write_3g_conf(fp, SN_Novatel_Wireless_Ovation_MC950D, 1, vid, pid);
+		else if(vid == 0x1410 && pid == 0x5020)
+			write_3g_conf(fp, SN_Novatel_MC990D, 1, vid, pid);
+		else if(vid == 0x1410 && pid == 0x5030)
+			write_3g_conf(fp, SN_Novatel_U760, 1, vid, pid);
+		else if(vid == 0x1410 && pid == 0x5031)
+			write_3g_conf(fp, SN_Novatel_MC760, 1, vid, pid);
+		else if(vid == 0x1410 && pid == 0x2110)
+			write_3g_conf(fp, SN_NovatelU720, 1, vid, pid);
+		else if(vid == 0x1410 && pid == 0x5023)
+			write_3g_conf(fp, SN_Novatel_MC996D, 1, vid, pid);
+		else if(vid == 0x1c9e && pid == 0x1001)
+			write_3g_conf(fp, SN_Alcatel_X020, 1, vid, pid);
+		else if(vid == 0x1c9e && pid == 0xf000)	// ST-Mobile, MobiData MBD-200HU, // BSNL 310G
+			write_3g_conf(fp, SN_BSNL_310G, 1, vid, pid);
+		else if(vid == 0x1c9e && pid == 0x9605)	// chk BSNL 310G
+			write_3g_conf(fp, SN_BSNL_310G, 1, vid, pid);
+		else if(vid == 0x1c9e && pid == 0x9200)
+			write_3g_conf(fp, SN_MyWave_SW006, 1, vid, pid);
+		else if(vid == 0x1c9e && pid == 0x9800)
+			write_3g_conf(fp, SN_SU9800, 1, vid, pid);
+		else if(vid == 0x1c9e && pid == 0x6061)
+			write_3g_conf(fp, SN_Vibe_3G, 1, vid, pid);
+		else if(vid == 0x1c9e && pid == 0x9e00)
+			write_3g_conf(fp, SN_BSNL_Capitel, 1, vid, pid);
+		else if(vid == 0x1c9e && pid == 0x98ff)
+			write_3g_conf(fp, SN_Telewell_TW_3G, 1, vid, pid);
+		else if(vid == 0x1bbb && pid == 0xf000)
+			write_3g_conf(fp, SN_Alcatel_X200, 1, vid, pid);
+		else if(vid == 0x1dd6 && pid == 0x1000)
+			write_3g_conf(fp, SN_Solomon_S3Gm660, 1, vid, pid);
+		else if(vid == 0x16d8 && pid == 0x6803)
+			write_3g_conf(fp, SN_C_motechD50, 1, vid, pid);
+		else if(vid == 0x16d8 && pid == 0xf000)
+			write_3g_conf(fp, SN_C_motech_CGU628, 1, vid, pid);
+		else if(vid == 0x16d8 && pid == 0x700a)
+			write_3g_conf(fp, SN_C_motech_CHU_629S, 1, vid, pid);
+		else if(vid == 0x16d8 && pid == 0x700b)
+			write_3g_conf(fp, SN_CHU_629S, 1, vid, pid);
+		else if(vid == 0x16d8 && pid == 0x6281)
+			write_3g_conf(fp, SN_CHU_628S, 1, vid, pid);
+		else if(vid == 0x0930 && pid == 0x0d46)
+			write_3g_conf(fp, SN_Toshiba_G450, 1, vid, pid);
+		else if(vid == 0x106c && pid == 0x3b03)
+			write_3g_conf(fp, SN_UTStarcom_UM175, 1, vid, pid);
+		else if(vid == 0x106c && pid == 0x3b05)
+			write_3g_conf(fp, SN_UMW190, 1, vid, pid);
+		else if(vid == 0x106c && pid == 0x3b06)
+			write_3g_conf(fp, SN_UTStarcom_UM185E, 1, vid, pid);
+		else if(vid == 0x106c && pid == 0x3711)
+			write_3g_conf(fp, SN_Pantech_UM150, 1, vid, pid);
+		else if(vid == 0x106c && pid == 0x3714)
+			write_3g_conf(fp, SN_Pantech_UM175, 1, vid, pid);
+		else if(vid == 0x106c && pid == 0x3b11)
+			write_3g_conf(fp, SN_Pantech_UML290, 1, vid, pid);
+		else if(vid == 0x1ab7 && pid == 0x5700)
+			write_3g_conf(fp, SN_Hummer_DTM5731, 1, vid, pid);
+		else if(vid == 0x1199 && pid == 0x0fff)	// Sierra881U
+			write_3g_conf(fp, SN_Sierra_Wireless_Compass597, 1, vid, pid);
+		else if(vid == 0x1199 && pid == 0x0120)
+			write_3g_conf(fp, SN_Sierra_U595, 1, vid, pid);
+		else if(vid == 0x0fce && pid == 0xd0e1)
+			write_3g_conf(fp, SN_Sony_Ericsson_MD400, 1, vid, pid);
+		else if(vid == 0x0fce && pid == 0xd103)
+			write_3g_conf(fp, SN_SE_MD400G, 1, vid, pid);
+		else if(vid == 0x230d && pid == 0x0001)
+			write_3g_conf(fp, SN_BSNL_LW272, 1, vid, pid);
+		else if(vid == 0x230d && pid == 0x0103)
+			write_3g_conf(fp, SN_Teracom_LW272, 1, vid, pid);
+		else if(vid == 0x1f28 && pid == 0x0021)
+			write_3g_conf(fp, SN_Cricket_A600, 1, vid, pid);
+		else if(vid == 0x1b7d && pid == 0x0700)
+			write_3g_conf(fp, SN_EpiValley_SEC7089, 1, vid, pid);
+		else if(vid == 0x04e8 && pid == 0xf000)
+			write_3g_conf(fp, SN_Samsung_U209, 1, vid, pid);
+		else if(vid == 0x04e8 && pid == 0x689a)
+			write_3g_conf(fp, SN_Samsung_GT_B3730, 1, vid, pid);
+		else if(vid == 0x04e8 && pid == 0x680c)
+			write_3g_conf(fp, SN_Samsung_GT_B1110, 1, vid, pid);
+		else if(vid == 0x0471 && pid == 0x1237)	// HuaXing E600
+			write_3g_conf(fp, SN_Philips_TalkTalk, 1, vid, pid);
+		else if(vid == 0x0471 && pid == 0x1210)
+			write_3g_conf(fp, SN_Vodafone_MD950, 1, vid, pid);
+		else if(vid == 0x0421 && pid == 0x060c)
+			write_3g_conf(fp, SN_Nokia_CS10, 1, vid, pid);
+		else if(vid == 0x0421 && pid == 0x0610)
+			write_3g_conf(fp, SN_Nokia_CS15, 1, vid, pid);
+		else if(vid == 0x0421 && pid == 0x0622)
+			write_3g_conf(fp, SN_Nokia_CS17, 1, vid, pid);
+		else if(vid == 0x0421 && pid == 0x0627)
+			write_3g_conf(fp, SN_Nokia_CS18, 1, vid, pid);
+		else if(vid == 0x0421 && pid == 0x0637)
+			write_3g_conf(fp, SN_Nokia_CS_21M_02, 1, vid, pid);
+		else if(vid == 0x0421 && pid == 0x0618)
+			write_3g_conf(fp, SN_Nokia_CS_12, 1, vid, pid);
+		else if(vid == 0x0df7 && pid == 0x0800)
+			write_3g_conf(fp, SN_Mobile_Action, 1, vid, pid);
+		else if(vid == 0x03f0 && pid == 0x002a)
+			write_3g_conf(fp, SN_HP_P1102, 1, vid, pid);
+		else if(vid == 0x198a && pid == 0x0003)
+			write_3g_conf(fp, SN_JOA_LM_700r, 1, vid, pid);
+		else if(vid == 0x07d1 && pid == 0xa804)
+			write_3g_conf(fp, SN_DLINK_DWM_156_A3, 1, vid, pid);
+		else if(vid == 0x2001 && pid == 0xa706)
+			write_3g_conf(fp, SN_DLINK_DWM_156_A7_1, 1, vid, pid);
+		else if(vid == 0x2001 && pid == 0xa707)
+			write_3g_conf(fp, SN_DLINK_DWM_156_A7_2, 1, vid, pid);
+		else if(vid == 0x2001 && pid == 0xa708)
+			write_3g_conf(fp, SN_DLINK_DWM_156_A7_3, 1, vid, pid);
+		else if(vid == 0x2001 && pid == 0xa805)
+			write_3g_conf(fp, SN_DLINK_DWR_510, 1, vid, pid);
+		else if(vid == 0x1ee8 && pid == 0x0040)
+			write_3g_conf(fp, SN_ONDA_MW836UP_K, 1, vid, pid);
+		else if(vid == 0x1ee8 && pid == 0x0009)
+			write_3g_conf(fp, SN_ONDA_MW833UP, 1, vid, pid);
+		else if(vid == 0x1ee8 && pid == 0x0013)
+			write_3g_conf(fp, SN_ONDA_MW833UP_2, 1, vid, pid);
+		else if(vid == 0x1ee8 && pid == 0x0060)
+			write_3g_conf(fp, SN_Onda_MSA14_4, 1, vid, pid);
+		else if(vid == 0x1ee8 && pid == 0x0068)
+			write_3g_conf(fp, SN_Onda_WM301, 1, vid, pid);
+		else if(vid == 0x1ee8 && pid == 0x0063)
+			write_3g_conf(fp, SN_Onda_TM201_14_4, 1, vid, pid);
+		else if(vid == 0x201e && pid == 0x2009)
+			write_3g_conf(fp, SN_Haier_CE_100, 1, vid, pid);
+		else if(vid == 0x201e && pid == 0x1023)
+			write_3g_conf(fp, SN_Haier_CE682, 1, vid, pid);
+		else if(vid == 0x1fac && pid == 0x0032)
+			write_3g_conf(fp, SN_Franklin_Wireless_U210_var, 1, vid, pid);
+		else if(vid == 0x1fac && pid == 0x0130)
+			write_3g_conf(fp, SN_Franklin_Wireless_U210, 1, vid, pid);
+		else if(vid == 0x8888 && pid == 0x6500)
+			write_3g_conf(fp, SN_Exiss_E_190, 1, vid, pid);
+		else if(vid == 0x1edf && pid == 0x6003)
+			write_3g_conf(fp, SN_AirPlus_MCD_800, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x1000)
+			write_3g_conf(fp, SN_LG_LDU_1900D, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x6190)
+			write_3g_conf(fp, SN_LG_AD600, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x613f)
+			write_3g_conf(fp, SN_LG_LUU_2100TI, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x613a)
+			write_3g_conf(fp, SN_LG_L_05A, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x607f)
+			write_3g_conf(fp, SN_LG_HDM_2100, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x61dd)
+			write_3g_conf(fp, SN_LG_L_02C_LTE, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x61e7)
+			write_3g_conf(fp, SN_LG_SD711, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x61eb)
+			write_3g_conf(fp, SN_LG_L_08C, 1, vid, pid);
+		else if(vid == 0x1004 && pid == 0x614e)
+			write_3g_conf(fp, SN_LG_L_07A, 1, vid, pid);
+		else if(vid == 0x0fd1 && pid == 0x1000)
+			write_3g_conf(fp, SN_GW_D301, 1, vid, pid);
+		else if(vid == 0x05c7 && pid == 0x1000)
+			write_3g_conf(fp, SN_Qtronix_EVDO_3G, 1, vid, pid);
+		else if(vid == 0x0b3c && pid == 0xf000)
+			write_3g_conf(fp, SN_Olicard_145, 1, vid, pid);
+		else if(vid == 0x0b3c && pid == 0xc700)
+			write_3g_conf(fp, SN_Olicard_100, 1, vid, pid);
+		else if(vid == 0x0d46 && pid == 0x45a5)
+			write_3g_conf(fp, SN_Kobil_mIdentity_3G_2, 1, vid, pid);
+		else if(vid == 0x0d46 && pid == 0x45a1)
+			write_3g_conf(fp, SN_Kobil_mIdentity_3G_1, 1, vid, pid);
+		else if(vid == 0x0cf3 && pid == 0x20ff)
+			write_3g_conf(fp, SN_Netgear_WNDA3200, 1, vid, pid);
+		else if(vid == 0x0fce && pid == 0xd0cf)
+			write_3g_conf(fp, SN_SE_MD300, 1, vid, pid);
+		else if(vid == 0x1266 && pid == 0x1000)
+			write_3g_conf(fp, SN_Digicom_8E4455, 1, vid, pid);
+		else if(vid == 0x0482 && pid == 0x024d)
+			write_3g_conf(fp, SN_Kyocera_W06K, 1, vid, pid);
+		else if(vid == 0x198f && pid == 0xbccd)
+			write_3g_conf(fp, SN_Beceem_BCSM250, 1, vid, pid);
+		else if(vid == 0x0b05 && pid == 0xbccd)
+			write_3g_conf(fp, SN_Beceem_BCSM250_ASUS, 1, vid, pid);
+		else if(vid == 0x057c && pid == 0x84ff)
+			write_3g_conf(fp, SN_AVM_Fritz, 1, vid, pid);
+		else if(vid == 0x057c && pid == 0x62ff)
+			write_3g_conf(fp, SN_AVM_Fritz_V2, 1, vid, pid);
+		else if(vid == 0x2020 && pid == 0xf00e)
+			write_3g_conf(fp, SN_SU_8000U, 1, vid, pid);
+		else if(vid == 0x2020 && pid == 0x0002)
+			write_3g_conf(fp, SN_Mediatek_MT6229, 1, vid, pid);
+		else if(vid == 0x1307 && pid == 0x1169)
+			write_3g_conf(fp, SN_Cisco_AM10, 1, vid, pid);
+		else if(vid == 0x1da5 && pid == 0xf000)
+			write_3g_conf(fp, SN_Qisda_H21, 1, vid, pid);
+		else if(vid == 0x21f5 && pid == 0x1000)
+			write_3g_conf(fp, SN_StrongRising_Air_FlexiNet, 1, vid, pid);
+		else if(vid == 0x1a8d && pid == 0x2000)
+			write_3g_conf(fp, SN_BandLuxe_C339, 1, vid, pid);
+		else if(vid == 0x04bb && pid == 0xbccd)
+			write_3g_conf(fp, SN_IODATA_WMX2_U, 1, vid, pid);
+		else if(vid == 0x2077 && pid == 0xf000)
+			write_3g_conf(fp, SN_T_W_WU160, 1, vid, pid);
 		else if(vid == 0x0e8d && pid == 0x0002)
 			write_3g_conf(fp, SN_MediaTek_MT6276M, 1, vid, pid);
 		else if(vid == 0x22f4 && pid == 0x0021)
 			write_3g_conf(fp, SN_Tata_Photon_plus, 1, vid, pid);
-		else if(vid == 0x0af0 && pid == 0x8006)
-			write_3g_conf(fp, SN_Option_Globetrotter, 1, vid, pid);
-		else if(vid == 0x0af0 && pid == 0x4007)
-			write_3g_conf(fp, SN_Option_ICON_711, 1, vid, pid);
 		else if(vid == 0x109b && pid == 0xf009)
 			write_3g_conf(fp, SN_HISENSE_E910, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x14c3)
-			write_3g_conf(fp, SN_Huawei_K5005, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x1c24)
-			write_3g_conf(fp, SN_Huawei_E173_MoiveStar, 1, vid, pid);
-		else if(vid == 0x1ee8 && pid == 0x0060)
-			write_3g_conf(fp, SN_Onda_MSA14_4, 1, vid, pid);
 		else if(vid == 0x22de && pid == 0x6803)
 			write_3g_conf(fp, SN_WeTelecom_WMD300, 1, vid, pid);
-		else if(vid == 0x12d1 && pid == 0x1f16)
-			write_3g_conf(fp, SN_Huawei_K5150, 1, vid, pid);
-		else if(vid == 0x19d2 && pid == 0x1225)
-			write_3g_conf(fp, SN_ZTE_MF823, 1, vid, pid);
+		else if(vid == 0x22de && pid == 0x6801)
+			write_3g_conf(fp, SN_WeTelecom_WMD200, 1, vid, pid);
+		else if(vid == 0x10a9 && pid == 0x6080)
+			write_3g_conf(fp, SN_Pantech_LTE, 1, vid, pid);
+		else if(vid == 0x0fca && pid == 0x8020)
+			write_3g_conf(fp, SN_BlackBerry_Q10, 1, vid, pid);
+		else if(vid == 0x2357 && pid == 0xf000)
+			write_3g_conf(fp, SN_TP_Link_MA260, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x155b)
+			write_3g_conf(fp, SN_Huawei_E3131, 1, vid, pid);
 		else if(vid == 0x12d1)
 			write_3g_conf(fp, UNKNOWNDEV, 1, vid, pid);
 		else{
@@ -2100,8 +2306,6 @@ usb_dbg("3G: manaul setting.\n");
 			write_3g_conf(fp, SN_Sierra881U, 0, vid, pid);
 		} else if (strcmp(dongle_name, "Sony-Ericsson-MD400") == 0){
 			write_3g_conf(fp, SN_Sony_Ericsson_MD400, 0, vid, pid);
-		//} else if (strcmp(dongle_name, "Sony-Ericsson-W910i") == 0){		// on list
-		//	write_3g_conf(fp, UNKNOWNDEV, 0, vid, pid);
 		} else if (strcmp(dongle_name, "LG-LDU-1900D") == 0){
 			write_3g_conf(fp, SN_LG_LDU_1900D, 0, vid, pid);
 		} else if (strcmp(dongle_name, "Samsung-SGH-Z810") == 0){
@@ -2807,6 +3011,7 @@ int asus_sd(const char *device_name, const char *action){
 	char speed[256];
 #endif
 	char *ptr;
+	int model = get_model();
 #ifdef RTCONFIG_USB_PRINTER
 	int retry;
 #endif
@@ -3018,6 +3223,13 @@ after_change_xhcimode:
 		}
 	}
 
+	if (have_usb3_led(model)) {
+		if (is_usb3_port(usb_node))
+			nvram_set_int("usb_led_id", LED_USB3);
+		else
+			nvram_set_int("usb_led_id", LED_USB);
+	}
+
 	kill_pidfile_s("/var/run/usbled.pid", SIGUSR1);	// inform usbled to start blinking USB LED
 
 	putenv("INTERFACE=8/0/0");
@@ -3034,6 +3246,8 @@ after_change_xhcimode:
 	eval("hotplug", "block");
 
 	kill_pidfile_s("/var/run/usbled.pid", SIGUSR2); // inform usbled to stop blinking USB LED
+	if (have_usb3_led(model))
+		nvram_unset("usb_led_id");
 
 	unsetenv("INTERFACE");
 	unsetenv("ACTION");
@@ -3492,9 +3706,6 @@ int asus_tty(const char *device_name, const char *action){
 				modprobe_r("cdc-acm");
 				++retry;
 			}
-
-			// Notify wanduck to switch the wan line to WAN port.
-			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 		}
 
 		if(strlen(usb_node) > 0){
@@ -3721,9 +3932,6 @@ usb_dbg("Didn't support the USB connection now...\n");
 	}
 #endif
 
-	// Notify wanduck that DUT can switch the wan line to the USB Modem.
-	kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
-
 	usb_dbg("(%s): Success!\n", device_name);
 	file_unlock(isLock_tty);
 	file_unlock(isLock);
@@ -3923,15 +4131,13 @@ int asus_usb_interface(const char *device_name, const char *action){
 				nvram_unset("usb_modem_act_vid");
 				nvram_unset("usb_modem_act_pid");
 				nvram_unset(tmp);
-
-				// Notify wanduck to switch the wan line to WAN port.
-				kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 			}
 #endif
 
 			snprintf(conf_file, 32, "%s.%s", USB_MODESWITCH_CONF, port_path);
 			unlink(conf_file);
 
+#ifndef RT4GAC55U
 			// When ACM dongles are removed, there are no removed hotplugs of ttyACM nodes.
 			if(!strncmp(buf, "ttyACM", 6)){
 				// No methods let DUT restore the normal state after removing the ACM dongle.
@@ -3939,6 +4145,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 				file_unlock(isLock);
 				return 0;
 			}
+#endif
 		}
 #endif
 
@@ -3956,6 +4163,11 @@ int asus_usb_interface(const char *device_name, const char *action){
 	}
 
 	snprintf(nvram_usb_path, 32, "usb_led%d", port_num);
+#ifdef RT4GAC55U
+	if(nvram_get_int("usb_buildin") == port_num)
+		; //skip this LED
+	else
+#endif	/* RT4GAC55U */
 	if(strcmp(nvram_safe_get(nvram_usb_path), "1"))
 		nvram_set(nvram_usb_path, "1");
 
@@ -4089,9 +4301,6 @@ int asus_usb_interface(const char *device_name, const char *action){
 		nvram_set("usb_modem_act_vid", buf);
 		snprintf(buf, 128, "%u",  pid);
 		nvram_set("usb_modem_act_pid", buf);
-
-		// Notify wanduck that DUT can switch the wan line to the USB Modem.
-		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 	}
 	else if(is_gct_dongle(1, vid, pid)){
 		// need to run one time and fillfull the nvram: usb_path%d_act.
@@ -4103,9 +4312,6 @@ int asus_usb_interface(const char *device_name, const char *action){
 		nvram_set("usb_modem_act_vid", buf);
 		snprintf(buf, 128, "%u",  pid);
 		nvram_set("usb_modem_act_pid", buf);
-
-		// Notify wanduck that DUT can switch the wan line to the USB Modem.
-		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 	}
 	else
 #endif
@@ -4132,6 +4338,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 			){
 		usb_dbg("(%s): Android phone: Runing RNDIS...\n", device_name);
 	}
+#if !defined(RT4GAC55U)	//skip other 3G and 4G dongle
 	else if(isSerialInterface(device_name, 1, vid, pid)){
 		usb_dbg("(%s): Runing USB serial with (0x%04x/0x%04x)...\n", device_name, vid, pid);
 		sleep(1);
@@ -4144,6 +4351,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 		eval("insmod", "option", modem_cmd, buf);
 		sleep(1);
 	}
+#endif	/* RT4GAC55U */
 	else if(isACMInterface(device_name, 1, vid, pid)){
 #ifdef RT4GAC55U
 		if(vid == 0x05c6 && pid == 0x9026 && !strcmp(port_path, "2") && nvram_get_int("usb_gobi") != 1)

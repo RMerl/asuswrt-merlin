@@ -94,7 +94,12 @@ function detect_httpd(){
     						$('loading_block1').style.display = "none";
     						$('loading_block2').style.display = "none";
     						$('loading_block3').style.display = "";
-    						$('loading_block3').innerHTML = "<div><#LANConfig_ChangedLANIP#></div>";
+						if(findasus_support){
+    							$('loading_block3').innerHTML = "<div>You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</div>";
+						}else{
+							$('loading_block3').innerHTML = "<div><#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#></div>";
+						}
+							
     				}
     		},
 

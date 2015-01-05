@@ -174,6 +174,8 @@ struct options {
 #define F_NONL		(1<<17) /* No newline before issue */
 #define F_NOHOSTNAME	(1<<18) /* Do not show the hostname */
 #define F_LONGHNAME	(1<<19) /* Show Full qualified hostname */
+#define F_NOHINTS	(1<<20) /* Don't print hints */
+#define F_REMOTE	(1<<21) /* Add '-h fakehost' to login(1) command line */
 
 #define serial_tty_option(opt, flag)	\
 	(((opt)->flags & (F_VCONSOLE|(flag))) == (flag))
@@ -188,7 +190,7 @@ struct chardata {
 };
 
 /* Initial values for the above. */
-struct chardata init_chardata = {
+static const struct chardata init_chardata = {
 	DEF_ERASE,		/* default erase character */
 	DEF_KILL,		/* default kill character */
 	13,			/* default eol char */
@@ -201,7 +203,7 @@ struct Speedtab {
 	speed_t code;
 };
 
-static struct Speedtab speedtab[] = {
+static const struct Speedtab speedtab[] = {
 	{50, B50},
 	{75, B75},
 	{110, B110},
@@ -280,7 +282,7 @@ int main(int argc, char **argv)
 	char *username = NULL;			/* login name, given to /bin/login */
 	struct chardata chardata;		/* will be set by get_logname() */
 	struct termios termios;			/* terminal mode bits */
-	static struct options options = {
+	struct options options = {
 		.flags  =  F_ISSUE,		/* show /etc/issue (SYSV_STYLE) */
 		.login  =  _PATH_LOGIN,		/* default login program */
 		.tty    = "tty1",		/* default tty line */
@@ -419,12 +421,18 @@ int main(int argc, char **argv)
 		 */
 		login_options_to_argv(login_argv, &login_argc,
 				      options.logopt, username);
-	} else if (username) {
-		if (options.autolog)
-			login_argv[login_argc++] = "-f";
-		else
-			login_argv[login_argc++] = "--";
-		login_argv[login_argc++] = username;
+	} else {
+		if (fakehost && (options.flags & F_REMOTE)) {
+			login_argv[login_argc++] = "-h";
+			login_argv[login_argc++] = fakehost;
+		}
+		if (username) {
+			if (options.autolog)
+				login_argv[login_argc++] = "-f";
+			else
+				login_argv[login_argc++] = "--";
+			login_argv[login_argc++] = username;
+		}
 	}
 
 	login_argv[login_argc] = NULL;	/* last login argv */
@@ -538,6 +546,7 @@ static void parse_args(int argc, char **argv, struct options *op)
 
 	enum {
 		VERSION_OPTION = CHAR_MAX + 1,
+		NOHINTS_OPTION,
 		NOHOSTNAME_OPTION,
 		LONGHOSTNAME_OPTION,
 		HELP_OPTION
@@ -548,6 +557,7 @@ static void parse_args(int argc, char **argv, struct options *op)
 		{  "noreset",	     no_argument,	 0,  'c'  },
 		{  "chdir",	     required_argument,	 0,  'C'  },
 		{  "delay",	     required_argument,	 0,  'd'  },
+		{  "remote",         no_argument,        0,  'E'  },
 		{  "issue-file",     required_argument,  0,  'f'  },
 		{  "flow-control",   no_argument,	 0,  'h'  },
 		{  "host",	     required_argument,  0,  'H'  },
@@ -568,6 +578,7 @@ static void parse_args(int argc, char **argv, struct options *op)
 		{  "timeout",	     required_argument,  0,  't'  },
 		{  "detect-case",    no_argument,	 0,  'U'  },
 		{  "wait-cr",	     no_argument,	 0,  'w'  },
+		{  "nohints",        no_argument,        0,  NOHINTS_OPTION },
 		{  "nohostname",     no_argument,	 0,  NOHOSTNAME_OPTION },
 		{  "long-hostname",  no_argument,	 0,  LONGHOSTNAME_OPTION },
 		{  "version",	     no_argument,	 0,  VERSION_OPTION  },
@@ -576,7 +587,7 @@ static void parse_args(int argc, char **argv, struct options *op)
 	};
 
 	while ((c = getopt_long(argc, argv,
-			   "8a:cC:d:f:hH:iI:Jl:LmnNo:pP:r:Rst:Uw", longopts,
+			   "8a:cC:d:Ef:hH:iI:Jl:LmnNo:pP:r:Rst:Uw", longopts,
 			    NULL)) != -1) {
 		switch (c) {
 		case '8':
@@ -593,6 +604,9 @@ static void parse_args(int argc, char **argv, struct options *op)
 			break;
 		case 'd':
 			op->delay = atoi(optarg);
+			break;
+		case 'E':
+			op->flags |= F_REMOTE;
 			break;
 		case 'f':
 			op->flags |= F_CUSTISSUE;
@@ -653,6 +667,9 @@ static void parse_args(int argc, char **argv, struct options *op)
 			break;
 		case 'w':
 			op->flags |= F_WAITCRLF;
+			break;
+		case NOHINTS_OPTION:
+			op->flags |= F_NOHINTS;
 			break;
 		case NOHOSTNAME_OPTION:
 			op->flags |= F_NOHOSTNAME;
@@ -908,7 +925,7 @@ static void open_tty(char *tty, struct termios *tp, struct options *op)
 
 		if (((tid = tcgetsid(fd)) < 0) || (pid != tid)) {
 			if (ioctl(fd, TIOCSCTTY, 1) == -1)
-				log_err("/dev/%s: cannot get controlling tty: %m", tty);
+				log_warn("/dev/%s: cannot get controlling tty: %m", tty);
 		}
 
 		if (op->flags & F_HANGUP) {
@@ -933,7 +950,7 @@ static void open_tty(char *tty, struct termios *tp, struct options *op)
 			log_err(_("/dev/%s: cannot open as standard input: %m"), tty);
 		if (((tid = tcgetsid(STDIN_FILENO)) < 0) || (pid != tid)) {
 			if (ioctl(STDIN_FILENO, TIOCSCTTY, 1) == -1)
-				log_err("/dev/%s: cannot get controlling tty: %m", tty);
+				log_warn("/dev/%s: cannot get controlling tty: %m", tty);
 		}
 
 	} else {
@@ -985,7 +1002,7 @@ static void open_tty(char *tty, struct termios *tp, struct options *op)
 	 * In case of a virtual console the ioctl TIOCMGET fails and
 	 * the error number will be set to EINVAL.
 	 */
-	if (ioctl(STDIN_FILENO, TIOCMGET, &serial) < 0 && (errno = EINVAL)) {
+	if (ioctl(STDIN_FILENO, TIOCMGET, &serial) < 0 && (errno == EINVAL)) {
 		op->flags |= F_VCONSOLE;
 		if (!op->term)
 			op->term = DEFAULT_VCTERM;
@@ -1074,7 +1091,8 @@ static void termio_init(struct options *op, struct termios *tp)
 #else
 	tp->c_iflag = 0;
 #endif
-	tp->c_lflag = tp->c_oflag = 0;
+	tp->c_lflag = 0;
+	tp->c_oflag &= OPOST | ONLCR;
 
 	if ((op->flags & F_KEEPCFLAGS) == 0)
 		tp->c_cflag = CS8 | HUPCL | CREAD | (tp->c_cflag & CLOCAL);
@@ -1298,7 +1316,8 @@ static void do_prompt(struct options *op, struct termios *tp)
 		getc(stdin);
 	}
 #ifdef KDGKBLED
-	if (op->autolog == (char*)0 && (op->flags & F_VCONSOLE)) {
+	if (!(op->flags & F_NOHINTS) && !op->autolog &&
+	    (op->flags & F_VCONSOLE)) {
 		int kb = 0;
 
 		if (ioctl(STDIN_FILENO, KDGKBLED, &kb) == 0) {
@@ -1459,7 +1478,7 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 			case '#':
 				cp->erase = ascval; /* set erase character */
 				if (bp > logname) {
-					if ((tp->c_cflag & (ECHO)) == 0)
+					if ((tp->c_lflag & ECHO) == 0)
 						write_all(1, erase[cp->parity], 3);
 					bp--;
 				}
@@ -1468,7 +1487,7 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 			case '@':
 				cp->kill = ascval;		/* set kill character */
 				while (bp > logname) {
-					if ((tp->c_cflag & (ECHO)) == 0)
+					if ((tp->c_lflag & ECHO) == 0)
 						write_all(1, erase[cp->parity], 3);
 					bp--;
 				}
@@ -1480,7 +1499,7 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 					break;
 				if ((size_t)(bp - logname) >= sizeof(logname) - 1)
 					log_err(_("%s: input overrun"), op->tty);
-				if ((tp->c_cflag & (ECHO)) == 0)
+				if ((tp->c_lflag & ECHO) == 0)
 					write_all(1, &c, 1);	/* echo the character */
 				*bp++ = ascval;			/* and store it */
 				break;
@@ -1618,7 +1637,7 @@ static int caps_lock(char *s)
 /* Convert speed string to speed code; return 0 on failure. */
 static speed_t bcode(char *s)
 {
-	struct Speedtab *sp;
+	const struct Speedtab *sp;
 	long speed = atol(s);
 
 	for (sp = speedtab; sp->speed; sp++)
@@ -1655,6 +1674,7 @@ static void __attribute__ ((__noreturn__)) usage(FILE * out)
 		       " -U, --detect-case          detect uppercase terminal\n"
 		       " -w, --wait-cr              wait carriage-return\n"
 		       "     --noclear              do not clear the screen before prompt\n"
+		       "     --nohints              do not print hints\n"
 		       "     --nonewline            do not print a newline before issue\n"
 		       "     --no-hostname          no hostname at all will be shown\n"
 		       "     --long-hostname        show full qualified hostname\n"
@@ -1798,6 +1818,9 @@ static void output_special_char(unsigned char c, struct options *op,
 
 		time(&now);
 		tm = localtime(&now);
+
+		if (!tm)
+			break;
 
 		if (c == 'd') /* ISO 8601 */
 			printf("%s %s %d  %d",

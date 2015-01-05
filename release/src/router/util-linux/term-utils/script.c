@@ -55,7 +55,6 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <libintl.h>
 #include <limits.h>
 #include <locale.h>
 #include <stddef.h>
@@ -63,12 +62,12 @@
 #include "nls.h"
 #include "c.h"
 
-#if HAVE_LIBUTIL && HAVE_PTY_H
-#include <pty.h>
+#if defined(HAVE_LIBUTIL) && defined(HAVE_PTY_H)
+# include <pty.h>
 #endif
 
 #ifdef HAVE_LIBUTEMPTER
-#include <utempter.h>
+# include <utempter.h>
 #endif
 
 #define DEFAULT_OUTPUT "typescript"
@@ -289,7 +288,7 @@ main(int argc, char **argv) {
 }
 
 void
-doinput() {
+doinput(void) {
 	ssize_t cc;
 	char ibuf[BUFSIZ];
 
@@ -409,7 +408,7 @@ dooutput(FILE *timingfd) {
 }
 
 void
-doshell() {
+doshell(void) {
 	char *shname;
 
 #if 0
@@ -448,7 +447,7 @@ doshell() {
 }
 
 void
-fixtty() {
+fixtty(void) {
 	struct termios rtt;
 
 	rtt = tt;
@@ -458,14 +457,14 @@ fixtty() {
 }
 
 void
-fail() {
+fail(void) {
 
 	kill(0, SIGTERM);
 	done();
 }
 
 void
-done() {
+done(void) {
 	time_t tvec;
 
 	if (subchild) {
@@ -499,8 +498,8 @@ done() {
 }
 
 void
-getmaster() {
-#if HAVE_LIBUTIL && HAVE_PTY_H
+getmaster(void) {
+#if defined(HAVE_LIBUTIL) && defined(HAVE_PTY_H)
 	tcgetattr(STDIN_FILENO, &tt);
 	ioctl(STDIN_FILENO, TIOCGWINSZ, (char *)&win);
 	if (openpty(&master, &slave, NULL, &tt, &win) < 0) {
@@ -546,7 +545,7 @@ getmaster() {
 }
 
 void
-getslave() {
+getslave(void) {
 #ifndef HAVE_LIBUTIL
 	line[strlen("/dev/")] = 't';
 	slave = open(line, O_RDWR);

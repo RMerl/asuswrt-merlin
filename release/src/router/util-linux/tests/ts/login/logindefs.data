@@ -1,0 +1,16 @@
+#
+# this is /etc/login.defs sample
+#
+
+HELLO_WORLD	"hello world!"
+STRING		this_is_string		# another comment
+NUMBER		123456
+BOOLEAN		yEs
+
+CRAZY1 = "this is crazy format"
+CRAZY2=fooBar
+CRAZY3    FoooBaaar
+
+EMPTY
+
+END	"the is end"

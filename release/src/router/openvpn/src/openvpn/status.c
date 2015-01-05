@@ -304,8 +304,15 @@ void update_nvram_status(int flag)
 
 	switch(flag) {
 	case EXIT_GOOD:
-		sprintf(buf, "vpn_%s_state", p);
-		nvram_set_int(buf, ST_EXIT);
+		sprintf(buf, "vpn_%s_errno", p);
+		if(nvram_get_int(buf)) {
+			sprintf(buf, "vpn_%s_state", p);
+			nvram_set_int(buf, ST_ERROR);
+		}
+		else {
+			sprintf(buf, "vpn_%s_state", p);
+			nvram_set_int(buf, ST_EXIT);
+		}
 		break;
 	case EXIT_ERROR:
 		sprintf(buf, "vpn_%s_state", p);
@@ -337,6 +344,10 @@ void update_nvram_status(int flag)
 	case SSLPARAM_DH_ERROR:
 		sprintf(buf, "vpn_%s_errno", p);
 		nvram_set_int(buf, ERRNO_DH);
+		break;
+	case RCV_AUTH_FAILED_ERROR:
+		sprintf(buf, "vpn_%s_errno", p);
+		nvram_set_int(buf, ERRNO_AUTH);
 		break;
 	}
 }

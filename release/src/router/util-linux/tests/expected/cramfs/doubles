@@ -1,0 +1,3 @@
+create mountpoint dir
+create cramfs image
+umount the image

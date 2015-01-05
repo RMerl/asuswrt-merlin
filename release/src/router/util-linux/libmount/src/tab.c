@@ -11,7 +11,7 @@
  * @short_description: container for entries from fstab, mtab or mountinfo
  *
  * Note that mnt_table_find_* functions are mount(8) compatible. These functions
- * try to found an entry in more iterations where the first attempt is always
+ * try to find an entry in more iterations where the first attempt is always
  * based on comparison with unmodified (non-canonicalized or un-evaluated)
  * paths or tags. For example fstab with two entries:
  * <informalexample>
@@ -44,6 +44,7 @@
 #include <blkid.h>
 
 #include "mountP.h"
+#include "strutils.h"
 
 /**
  * mnt_new_table:
@@ -455,7 +456,7 @@ struct libmnt_fs *mnt_table_find_target(struct libmnt_table *tb, const char *pat
 	while(mnt_table_next_fs(tb, &itr, &fs) == 0) {
 		char *p;
 
-		if (!fs->target || !(fs->flags & MNT_FS_SWAP) ||
+		if (!fs->target || !mnt_fs_is_swaparea(fs) ||
 		    (*fs->target == '/' && *(fs->target + 1) == '\0'))
 		       continue;
 
@@ -506,7 +507,7 @@ struct libmnt_fs *mnt_table_find_srcpath(struct libmnt_table *tb, const char *pa
 
 		if (path == NULL && src == NULL)
 			return fs;			/* source is "none" */
-		if (p && strcmp(p, path) == 0)
+		if (path && p && streq_except_trailing_slash(p, path))
 			return fs;
 		if (!p && src)
 			ntags++;			/* mnt_fs_get_srcpath() returs nothing, it's TAG */
@@ -520,7 +521,7 @@ struct libmnt_fs *mnt_table_find_srcpath(struct libmnt_table *tb, const char *pa
 		mnt_reset_iter(&itr, direction);
 		while(mnt_table_next_fs(tb, &itr, &fs) == 0) {
 			p = mnt_fs_get_srcpath(fs);
-			if (p && strcmp(p, cn) == 0)
+			if (p && streq_except_trailing_slash(p, cn))
 				return fs;
 		}
 	}
@@ -551,7 +552,7 @@ struct libmnt_fs *mnt_table_find_srcpath(struct libmnt_table *tb, const char *pa
 				 if (mnt_fs_get_tag(fs, &t, &v))
 					 continue;
 				 x = mnt_resolve_tag(t, v, tb->cache);
-				 if (x && !strcmp(x, cn))
+				 if (x && streq_except_trailing_slash(x, cn))
 					 return fs;
 			 }
 		}
@@ -561,12 +562,12 @@ struct libmnt_fs *mnt_table_find_srcpath(struct libmnt_table *tb, const char *pa
 	if (ntags <= mnt_table_get_nents(tb)) {
 		mnt_reset_iter(&itr, direction);
 		while(mnt_table_next_fs(tb, &itr, &fs) == 0) {
-			if (fs->flags & (MNT_FS_NET | MNT_FS_PSEUDO))
+			if (mnt_fs_is_netfs(fs) || mnt_fs_is_pseudofs(fs))
 				continue;
 			p = mnt_fs_get_srcpath(fs);
 			if (p)
 				p = mnt_resolve_path(p, tb->cache);
-			if (p && strcmp(cn, p) == 0)
+			if (p && streq_except_trailing_slash(cn, p))
 				return fs;
 		}
 	}
@@ -730,18 +731,22 @@ struct libmnt_fs *mnt_table_get_fs_root(struct libmnt_table *tb,
 
 	if (tb && (mountflags & MS_BIND)) {
 		const char *src, *src_root;
+		char *xsrc = NULL;
 
 		DBG(TAB, mnt_debug("fs-root for bind"));
 
-		src = mnt_resolve_spec(mnt_fs_get_source(fs), tb->cache);
-		if (!src)
-			goto err;
+		src = xsrc = mnt_resolve_spec(mnt_fs_get_source(fs), tb->cache);
+		if (src)
+			mnt = mnt_get_mountpoint(src);
+		if (mnt)
+			root = mnt_get_fs_root(src, mnt);
 
-		mnt = mnt_get_mountpoint(src);
+		if (xsrc && !tb->cache) {
+			free(xsrc);
+			src = NULL;
+		}
 		if (!mnt)
 			goto err;
-
-		root = mnt_get_fs_root(src, mnt);
 
 		src_fs = mnt_table_find_target(tb, mnt, MNT_ITER_BACKWARD);
 		if (!src_fs)  {
@@ -826,12 +831,13 @@ int mnt_table_is_fs_mounted(struct libmnt_table *tb, struct libmnt_fs *fstab_fs)
 	char *root = NULL;
 	struct libmnt_fs *src_fs;
 	const char *src, *tgt;
+	char *xsrc = NULL;
 	int flags = 0, rc = 0;
 
 	assert(tb);
 	assert(fstab_fs);
 
-	if (fstab_fs->flags & MNT_FS_SWAP)
+	if (mnt_fs_is_swaparea(fstab_fs))
 		return 0;
 
 	if (mnt_fs_get_option(fstab_fs, "bind", NULL, NULL) == 0)
@@ -840,12 +846,15 @@ int mnt_table_is_fs_mounted(struct libmnt_table *tb, struct libmnt_fs *fstab_fs)
 	src_fs = mnt_table_get_fs_root(tb, fstab_fs, flags, &root);
 	if (src_fs)
 		src = mnt_fs_get_srcpath(src_fs);
+	else if (mnt_fs_is_pseudofs(fstab_fs))
+		src = mnt_fs_get_source(fstab_fs);
 	else
-		src = mnt_resolve_spec(mnt_fs_get_source(fstab_fs), tb->cache);
+		src = xsrc = mnt_resolve_spec(mnt_fs_get_source(fstab_fs),
+					      tb->cache);
 
 	tgt = mnt_fs_get_target(fstab_fs);
 
-	if (tgt || src || root) {
+	if (tgt && src && root) {
 		struct libmnt_iter itr;
 		struct libmnt_fs *fs;
 
@@ -856,13 +865,22 @@ int mnt_table_is_fs_mounted(struct libmnt_table *tb, struct libmnt_fs *fstab_fs)
 				   *t = mnt_fs_get_target(fs),
 				   *r = mnt_fs_get_root(fs);
 
-			if (s && t && r && !strcmp(t, tgt) &&
-			    !strcmp(s, src) && !strcmp(r, root))
+			/*
+			 * Note that kernel can add tailing slash to the
+			 * network filesystem source paths.
+			 */
+			if (t && s && r &&
+			    strcmp(t, tgt) == 0 &&
+			    streq_except_trailing_slash(s, src) &&
+			    strcmp(r, root) == 0)
 				break;
 		}
 		if (fs)
 			rc = 1;		/* success */
 	}
+
+	if (xsrc && !tb->cache)
+		free(xsrc);
 
 	free(root);
 	return rc;

@@ -62,12 +62,13 @@ static void usage(int error)
 		"Usage:\n"
 		" %1$s -L <label> | -U <uuid>\n\n"
 		" %1$s [-c <file>] [-ghlLv] [-o <format>] [-s <tag>] \n"
-		"       [-t <token>] [-w <file>] [<dev> ...]\n\n"
+		"       [-t <token>] [<dev> ...]\n\n"
 		" %1$s -p [-s <tag>] [-O <offset>] [-S <size>] \n"
 		"       [-o <format>] <dev> ...\n\n"
 		" %1$s -i [-s <tag>] [-o <format>] <dev> ...\n\n"
 		"Options:\n"
-		" -c <file>   cache file (default: /etc/blkid.tab, /dev/null = none)\n"
+		" -c <file>   read from <file> instead of reading from the default\n"
+		"               cache file (-c /dev/null means no cache)\n"
 		" -d          don't encode non-printing characters\n"
 		" -h          print this usage message and exit\n"
 		" -g          garbage collect the blkid cache\n"
@@ -80,7 +81,6 @@ static void usage(int error)
 		" -L <label>  convert LABEL to device name\n"
 		" -U <uuid>   convert UUID to device name\n"
 		" -v          print version and exit\n"
-		" -w <file>   write cache to different file (/dev/null = no write)\n"
 		" <dev>       specify device(s) to probe (default: all devices)\n\n"
 		"Low-level probing options:\n"
 		" -p          low-level superblocks probing (bypass cache)\n"
@@ -191,7 +191,8 @@ static void pretty_print_line(const char *device, const char *fs_type,
 	len = pretty_print_word(device, device_len, 0, 1);
 	len = pretty_print_word(fs_type, fs_type_len, len, 0);
 	len = pretty_print_word(label, label_len, len, 0);
-	len = pretty_print_word(mtpt, mtpt_len, len, 0);
+	pretty_print_word(mtpt, mtpt_len, len, 0);
+
 	fputs(uuid, stdout);
 	fputc('\n', stdout);
 }
@@ -448,15 +449,15 @@ done:
 static int lowprobe_superblocks(blkid_probe pr)
 {
 	struct stat st;
-	int rc;
+	int rc, fd = blkid_probe_get_fd(pr);
 
-	if (fstat(blkid_probe_get_fd(pr), &st))
+	if (fd < 0 || fstat(fd, &st))
 		return -1;
 
 	blkid_probe_enable_partitions(pr, 1);
-	blkid_probe_set_partitions_flags(pr, BLKID_PARTS_ENTRY_DETAILS);
 
-	if (!S_ISCHR(st.st_mode) && blkid_probe_get_size(pr) <= 1024 * 1440) {
+	if (!S_ISCHR(st.st_mode) && blkid_probe_get_size(pr) <= 1024 * 1440 &&
+	    blkid_probe_is_wholedisk(pr)) {
 		/*
 		 * check if the small disk is partitioned, if yes then
 		 * don't probe for filesystems.
@@ -469,11 +470,9 @@ static int lowprobe_superblocks(blkid_probe pr)
 
 		if (blkid_probe_lookup_value(pr, "PTTYPE", NULL, NULL) == 0)
 			return 0;	/* partition table detected */
-
-		/* small whole-disk is unpartitioned, probe for filesystems only */
-		blkid_probe_enable_partitions(pr, 0);
 	}
 
+	blkid_probe_set_partitions_flags(pr, BLKID_PARTS_ENTRY_DETAILS);
 	blkid_probe_enable_superblocks(pr, 1);
 
 	return blkid_do_safeprobe(pr);
@@ -504,7 +503,7 @@ static int lowprobe_device(blkid_probe pr, const char *devname,
 
 	fd = open(devname, O_RDONLY);
 	if (fd < 0) {
-		fprintf(stderr, "error: %s: %s\n", devname, strerror(errno));
+		fprintf(stderr, "error: %s: %m\n", devname);
 		return 2;
 	}
 	if (blkid_probe_set_device(pr, fd, offset, size))
@@ -675,7 +674,6 @@ int main(int argc, char **argv)
 	char *show[128] = { NULL, };
 	char *search_type = NULL, *search_value = NULL;
 	char *read = NULL;
-	char *write = NULL;
 	int fltr_usage = 0;
 	char **fltr_type = NULL;
 	int fltr_flag = BLKID_FLTR_ONLYIN;
@@ -697,8 +695,6 @@ int main(int argc, char **argv)
 				read = NULL;
 			else
 				read = optarg;
-			if (!write)
-				write = read;
 			break;
 		case 'd':
 			raw_chars = 1;
@@ -805,13 +801,11 @@ int main(int argc, char **argv)
 			version = 1;
 			break;
 		case 'w':
-			if (optarg && !*optarg)
-				write = NULL;
-			else
-				write = optarg;
+			/* ignore - backward compatibility */
 			break;
 		case 'h':
 			err = 0;
+			/* fallthrough */
 		default:
 			usage(err);
 		}
@@ -824,10 +818,10 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Failed to allocate device name array\n");
 			goto exit;
 		}
-	}
 
-	while (optind < argc)
-		devices[numdev++] = argv[optind++];
+		while (optind < argc)
+			devices[numdev++] = argv[optind++];
+	}
 
 	if (version) {
 		print_version(stdout);

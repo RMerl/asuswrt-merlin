@@ -10,6 +10,11 @@ CFLAGS += -DRalink_WPS
 CFLAGS += -I$(TOP)/shared/sysdeps/ralink -I$(TOP)/wireless_tools
 endif
 
+ifeq ($(RTCONFIG_QCA),y)
+CFLAGS += -DQCA_WPS
+CFLAGS += -I$(TOP)/shared/sysdeps/qca -I$(TOP)/wireless_tools
+endif
+
 include $(SRCBASE)/.config
 
 ifeq ($(RTN11P),y)
@@ -20,7 +25,7 @@ ifeq ($(RTN14U),y)
 CFLAGS += -DBAND_2G_ONLY
 endif
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN54U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN54U)$(RTAC1200HP)$(RTN56UV2),y)
 CFLAGS += -DRA_ESW
 endif
 
@@ -33,7 +38,7 @@ CFLAGS += -DDNSMASQ
 endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
-CFLAGS += -I$(TOP)/bwdpi/ -I$(TOP)/sqlite
+CFLAGS += -I$(TOP)/bwdpi/ -I$(TOP)/sqlite -I$(TOP)/bwdpi_sqlite
 endif
 
 OBJS = httpd.o cgi.o ej.o 
@@ -41,8 +46,11 @@ OBJS += web.o common.o nvram_f.o
 OBJS += aspbw.o initial_web_hook.o
 OBJS += apps.o
 OBJS += sysinfo.o
+
 ifeq ($(CONFIG_RALINK),y)
 OBJS += web-ralink.o
+else ifeq ($(CONFIG_QCA),y)
+OBJS += web-qca.o
 else
 ifeq ($(RTCONFIG_BCMWL6),y)
 OBJS += web-broadcom-wl6.o
@@ -72,7 +80,7 @@ endif
 LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
-LIBS += -L$(TOP)/openssl -lcrypto -lssl
+LIBS += -L$(TOP)/openssl -lcrypto -lssl -ldl
 LIBS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
 LIBS += -L$(TOP)/libxml2/.libs -lxml2
 LIBS += -L$(TOP)/wb -lws
@@ -97,12 +105,12 @@ ifeq ($(RTCONFIG_HTTPS),y)
 CFLAGS += -I$(TOP)/mssl
 CFLAGS += -I$(TOP)/openssl/include
 LIBS += -L$(TOP)/mssl -lmssl
-LIBS += -L$(TOP)/openssl -lssl -lcrypto
+LIBS += -L$(TOP)/openssl -lssl -lcrypto -ldl
 endif
 
 ifeq ($(RTCONFIG_OPENVPN),y)
 OBJS += openvpn_options.o
-LIBS += -L$(TOP)/openssl -lssl -lcrypto
+LIBS += -L$(TOP)/openssl -lssl -lcrypto -ldl
 endif
 
 ifeq ($(RTCONFIG_BWDPI),y)

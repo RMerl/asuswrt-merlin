@@ -1,5 +1,40 @@
 export LINUXDIR := $(SRCBASE)/linux/linux-2.6
 
+ifeq ($(RTCONFIG_BCMARM),y)
+ifeq ($(EXTRACFLAGS),)
+export EXTRACFLAGS := -DBCMWPA2 -DBCMARM -fno-delete-null-pointer-checks -marm
+endif
+
+export KERNEL_BINARY=$(LINUXDIR)/arch/arm/boot/zImage
+export PLATFORM := arm-uclibc
+export CROSS_COMPILE := arm-brcm-linux-uclibcgnueabi-
+export CROSS_COMPILER := $(CROSS_COMPILE)
+export CONFIGURE := ./configure --host=arm-linux --build=$(BUILD)
+export HOSTCONFIG := linux-armv4
+export BCMEX := _arm
+export EXTRA_FLAG := -lgcc_s
+export ARCH := arm
+export HOST := arm-linux
+export TOOLS := $(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3
+export RTVER := 0.9.32.1
+export BCMSUB := brcmarm
+ifeq ($(EXTRACFLAGS),)
+export EXTRACFLAGS := -DBCMWPA2 -fno-delete-null-pointer-checks -mips32$(MIPS32) -mtune=mips32$(MIPS32)
+endif
+
+else
+export KERNEL_BINARY=$(LINUXDIR)/arch/mips/brcm-boards/bcm947xx/compressed/zImage
+export PLATFORM := mipsel-uclibc
+export CROSS_COMPILE := mipsel-uclibc-
+export CROSS_COMPILER := $(CROSS_COMPILE)
+export READELF := mipsel-linux-readelf
+export CONFIGURE := ./configure --host=mipsel-linux --build=$(BUILD)
+export HOSTCONFIG := linux-mipsel
+export ARCH := mips
+export HOST := mipsel-linux
+export TOOLS := $(SRCBASE)/../../tools/brcm/hndtools-mipsel-linux
+export RTVER := 0.9.30.1
+endif
 EXTRA_CFLAGS := -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DTTEST
 
 export CONFIG_LINUX26=y
@@ -47,17 +82,11 @@ define platformKernelConfig
 		mkdir -p $(SRCBASE)/router/ctf_arm/linux;\
 		cp -f $(SRCBASE)/router/ctf_arm/bcm6x/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 		if [ "$(BCM7)" = "y" ]; then \
-			cp -f $(SRCBASE)/../../dhd/src/shared/rtecdc_43602a0.h.in $(SRCBASE)/../../dhd/src/shared/rtecdc_43602a0.h;\
-			cp -f $(SRCBASE)/../../dhd/src/shared/rtecdc_43602a1.h.in $(SRCBASE)/../../dhd/src/shared/rtecdc_43602a1.h;\
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 			else \
-				if [ "$(DPSTA)" = "y" ]; then \
-					cp -f $(SRCBASE)/router/ctf_arm/bcm7_dpsta/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
-					cp -f $(SRCBASE)/router/dpsta/bcm7_3200/dpsta.o $(SRCBASE)/router/dpsta/linux;\
-				else \
-					cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
-				fi; \
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+				cp -f $(SRCBASE)/router/dpsta/bcm7_3200/dpsta.o $(SRCBASE)/router/dpsta/linux;\
 			fi; \
 		else \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \

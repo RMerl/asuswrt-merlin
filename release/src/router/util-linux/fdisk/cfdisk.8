@@ -44,6 +44,12 @@ argument are:
 .RE
 .fi
 
+Note that
+.B cfdisk
+does not align partitions to block device I/O limits. This functionality is
+provided by
+.BR fdisk (8).
+
 In order to write the partition table
 .B cfdisk
 needs something called the `geometry' of the disk: the number

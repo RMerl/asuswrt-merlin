@@ -15,6 +15,7 @@ PATH=$APPS_PATH/usr/bin:$APPS_PATH/bin:$APPS_PATH/usr/sbin:$APPS_PATH/sbin:/usr/
 unset LD_LIBRARY_PATH
 unset LD_PRELOAD
 
+
 if [ -n "$1" ] && [ -n "$2" ];then
 	APPS_DEV=$1
 	APPS_MOUNTED_PATH=$2

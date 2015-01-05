@@ -17,10 +17,14 @@
 	background-image:url('/images/New_ui/networkmap/client-listover.png');
 }
 .appIcons{
-	width:32px;
-	height:32px;
+	width:40px;
+	height:40px;
+	border-style: outset;
+	border-radius: 5px;
+	border-width: 1px;
+	border-color: #708090;
 	background-repeat:no-repeat;
-	margin-left:10px;
+	background-position:50% 50%
 }
 .txNarrow{
 	width:0;
@@ -51,7 +55,7 @@
 .weight{
 	height:8px;
 }
-#indicator_upload, #indicator_download{
+#indicator_tx, #indicator_rx{
 	-webkit-transform:rotate(-123deg);
     -moz-transform:rotate(-123deg);
     -o-transform:rotate(-123deg);
@@ -70,22 +74,14 @@
 	overflow:auto;
 	cursor:pointer;
 }
-/*
-#appTrafficDiv div table:hover{
-	cursor: pointer;
-	color: #000;
-	background-color: #66777D;
-	font-weight: bolder;
-}
-*/
 .appName{
 	width:180px;
-	font-size:14px;
+	font-size:12px;
 	word-break:break-all;
 }
 .trafficNum{
 	position:absolute;
-	font-size:24px;
+	font-size:21px;
 	text-align:center;
 	width:60px;
 	font-family: Lucida Console;
@@ -111,5 +107,5 @@
 	color:#FC0;
 }
 .dots{
-	border-top:1px dotted #333;	
+	border-top:2px dotted #333;	
 }

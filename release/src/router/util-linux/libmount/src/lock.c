@@ -32,9 +32,9 @@ struct libmnt_lock {
 	char	*linkfile;	/* path to link file (e.g. /etc/mtab~.<id>) */
 	int	lockfile_fd;	/* lock file descriptor */
 
-	int	locked : 1;	/* do we own the lock? */
-	int	sigblock : 1;	/* block signals when locked */
-	int	simplelock : 1;	/* use flock rather than normal mtab lock */
+	unsigned int	locked :1,	/* do we own the lock? */
+			sigblock :1,	/* block signals when locked */
+			simplelock :1;	/* use flock rather than normal mtab lock */
 
 	sigset_t oldsigmask;
 };
@@ -298,7 +298,7 @@ static int mnt_wait_mtab_lock(struct libmnt_lock *ml, struct flock *fl, time_t m
  *
  * Where does the link point to? Obvious choices are mtab and mtab~~.
  * HJLu points out that the latter leads to races. Right now we use
- * mtab~.<pid> instead.
+ * mtab~.pid instead.
  *
  *
  * The original mount locking code has used sleep(1) between attempts and
@@ -319,7 +319,7 @@ static int mnt_wait_mtab_lock(struct libmnt_lock *ml, struct flock *fl, time_t m
  * backwardly compatible code.
  *
  * Don't forget that this code has to be compatible with 3rd party mounts
- * (/sbin/mount.<foo>) and has to work with NFS.
+ * (/sbin/mount.foo) and has to work with NFS.
  * -- kzak@redhat.com [May-2009]
  */
 

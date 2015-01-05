@@ -63,7 +63,7 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 		" -m, --minimum <num> minimum extent length to discard\n"
 		" -v, --verbose       print number of discarded bytes\n"), out);
 
-	fputs(_("\nFor more information see fstrim(1).\n"), out);
+	fputs(_("\nFor more information see fstrim(8).\n"), out);
 
 	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }

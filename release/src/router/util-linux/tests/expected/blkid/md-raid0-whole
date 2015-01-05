@@ -1,23 +1,26 @@
 Initialize devices
 Create RAID device
 Create partitions on RAID device
-Device contains neither a valid DOS partition table, nor Sun, SGI or OSF disklabel
+
 
 Changes will remain in memory only, until you decide to write them.
-After that, of course, the previous content won't be recoverable.
+Be careful before using the write command.
 
-Warning: invalid flag 0x0000 of partition table 4 will be corrected by w(rite)
+Device does not contain a recognized partition table
+
 
 Command (m for help): Partition type:
    p   primary (0 primary, 0 extended, 4 free)
    e   extended
 Select (default p): Partition number (1-4, default 1): First sector (2048-204543, default 2048): Using default value 2048
-Last sector, +sectors or +size{K,M,G} (2048-204543, default 204543): 
+Last sector, +sectors or +size{K,M,G} (2048-204543, default 204543): Partition 1 of type Linux and of size 10 MiB is set
+
 Command (m for help): Partition type:
    p   primary (1 primary, 0 extended, 3 free)
    e   extended
 Select (default p): Partition number (1-4, default 2): First sector (22528-204543, default 22528): Using default value 22528
 Last sector, +sectors or +size{K,M,G} (22528-204543, default 204543): Using default value 204543
+Partition 2 of type Linux and of size 88.9 MiB is set
 
 Command (m for help): 
 Disk /dev/md8: 104 MB, 104726528 bytes

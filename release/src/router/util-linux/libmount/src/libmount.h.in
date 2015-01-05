@@ -70,6 +70,7 @@ struct libmnt_optmap
 #define MNT_INVERT	(1 << 1) /* invert the mountflag */
 #define MNT_NOMTAB	(1 << 2) /* skip in the mtab option string */
 #define MNT_PREFIX	(1 << 3) /* prefix used for some options (e.g. "x-foo") */
+#define MNT_NOHLPS	(1 << 4) /* don't add the option to mount.<type> helpers command line */
 
 /**
  * libmnt_fs:
@@ -120,6 +121,7 @@ extern void mnt_init_debug(int mask);
 /* version.c */
 extern int mnt_parse_version_string(const char *ver_string);
 extern int mnt_get_library_version(const char **ver_string);
+extern int mnt_get_library_features(const char ***features);
 
 /* utils.c */
 extern char *mnt_mangle(const char *str);
@@ -263,6 +265,9 @@ extern int mnt_fs_match_options(struct libmnt_fs *fs, const char *options);
 extern int mnt_fs_print_debug(struct libmnt_fs *fs, FILE *file);
 
 extern int mnt_fs_is_kernel(struct libmnt_fs *fs);
+extern int mnt_fs_is_swaparea(struct libmnt_fs *fs);
+extern int mnt_fs_is_netfs(struct libmnt_fs *fs);
+extern int mnt_fs_is_pseudofs(struct libmnt_fs *fs);
 
 extern void mnt_free_mntent(struct mntent *mnt);
 extern int mnt_fs_to_mntent(struct libmnt_fs *fs, struct mntent **mnt);
@@ -273,6 +278,8 @@ extern struct libmnt_table *mnt_new_table_from_dir(const char *dirname);
 extern int mnt_table_parse_stream(struct libmnt_table *tb, FILE *f,
 				  const char *filename);
 extern int mnt_table_parse_file(struct libmnt_table *tb, const char *filename);
+extern int mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname);
+
 extern int mnt_table_parse_fstab(struct libmnt_table *tb, const char *filename);
 extern int mnt_table_parse_mtab(struct libmnt_table *tb, const char *filename);
 extern int mnt_table_set_parser_errcb(struct libmnt_table *tb,
@@ -285,7 +292,6 @@ extern int mnt_reset_table(struct libmnt_table *tb);
 extern int mnt_table_get_nents(struct libmnt_table *tb);
 extern int mnt_table_set_cache(struct libmnt_table *tb, struct libmnt_cache *mpc);
 extern struct libmnt_cache *mnt_table_get_cache(struct libmnt_table *tb);
-extern const char *mnt_table_get_name(struct libmnt_table *tb);
 extern int mnt_table_add_fs(struct libmnt_table *tb, struct libmnt_fs *fs);
 extern int mnt_table_remove_fs(struct libmnt_table *tb, struct libmnt_fs *fs);
 extern int mnt_table_next_fs(struct libmnt_table *tb, struct libmnt_iter *itr,
@@ -341,8 +347,8 @@ extern struct libmnt_tabdiff *mnt_new_tabdiff(void);
 extern void mnt_free_tabdiff(struct libmnt_tabdiff *df);
 
 extern int mnt_diff_tables(struct libmnt_tabdiff *df,
-			   struct libmnt_table *old,
-			   struct libmnt_table *new);
+			   struct libmnt_table *old_tab,
+			   struct libmnt_table *new_tab);
 
 extern int mnt_tabdiff_next_change(struct libmnt_tabdiff *df,
 				   struct libmnt_iter *itr,
@@ -352,7 +358,9 @@ extern int mnt_tabdiff_next_change(struct libmnt_tabdiff *df,
 
 /* context.c */
 
-/* mode for mount options from fstab */
+/*
+ * Mode for mount options from fstab (or mtab), see mnt_context_set_optsmode().
+ */
 enum {
 	MNT_OMODE_IGNORE  = (1 << 1),	/* ignore mtab/fstab options */
 	MNT_OMODE_APPEND  = (1 << 2),	/* append mtab/fstab options to existing options */
@@ -363,6 +371,7 @@ enum {
 
 	MNT_OMODE_FSTAB   = (1 << 10),	/* read from fstab */
 	MNT_OMODE_MTAB    = (1 << 11),	/* read from mtab if fstab not enabled or failed */
+	MNT_OMODE_NOTAB   = (1 << 12),	/* do not read fstab/mtab at all */
 
 	/* default */
 	MNT_OMODE_AUTO   = (MNT_OMODE_PREPEND | MNT_OMODE_FSTAB | MNT_OMODE_MTAB),
@@ -390,6 +399,7 @@ extern int mnt_context_disable_mtab(struct libmnt_context *cxt, int disable);
 extern int mnt_context_enable_force(struct libmnt_context *cxt, int enable);
 extern int mnt_context_enable_verbose(struct libmnt_context *cxt, int enable);
 extern int mnt_context_enable_loopdel(struct libmnt_context *cxt, int enable);
+extern int mnt_context_enable_fork(struct libmnt_context *cxt, int enable);
 
 extern int mnt_context_get_optsmode(struct libmnt_context *cxt);
 extern int mnt_context_is_lazy(struct libmnt_context *cxt);
@@ -399,6 +409,13 @@ extern int mnt_context_is_fake(struct libmnt_context *cxt);
 extern int mnt_context_is_nomtab(struct libmnt_context *cxt);
 extern int mnt_context_is_force(struct libmnt_context *cxt);
 extern int mnt_context_is_verbose(struct libmnt_context *cxt);
+
+extern int mnt_context_is_fork(struct libmnt_context *cxt);
+extern int mnt_context_is_parent(struct libmnt_context *cxt);
+extern int mnt_context_is_child(struct libmnt_context *cxt);
+
+extern int mnt_context_wait_for_children(struct libmnt_context *cxt,
+                                  int *nchildren, int *nerrs);
 
 extern int mnt_context_is_fs_mounted(struct libmnt_context *cxt,
                               struct libmnt_fs *fs, int *mounted);
@@ -419,6 +436,10 @@ extern int mnt_context_set_fstype_pattern(struct libmnt_context *cxt,
 				      const char *pattern);
 extern int mnt_context_set_options_pattern(struct libmnt_context *cxt,
 				      const char *pattern);
+
+extern int mnt_context_set_passwd_cb(struct libmnt_context *cxt,
+			      char *(*get)(struct libmnt_context *),
+			      void (*release)(struct libmnt_context *, char *));
 
 extern int mnt_context_set_tables_errcb(struct libmnt_context *cxt,
         int (*cb)(struct libmnt_table *tb, const char *filename, int line));
@@ -447,13 +468,25 @@ extern int mnt_context_get_user_mflags(struct libmnt_context *cxt,
 
 extern int mnt_context_set_mountdata(struct libmnt_context *cxt, void *data);
 extern int mnt_context_apply_fstab(struct libmnt_context *cxt);
+
+extern int mnt_context_reset_status(struct libmnt_context *cxt);
 extern int mnt_context_get_status(struct libmnt_context *cxt);
+
+extern int mnt_context_helper_executed(struct libmnt_context *cxt);
+extern int mnt_context_get_helper_status(struct libmnt_context *cxt);
+
+extern int mnt_context_syscall_called(struct libmnt_context *cxt);
+extern int mnt_context_get_syscall_errno(struct libmnt_context *cxt);
+
 extern int mnt_context_strerror(struct libmnt_context *cxt, char *buf,
 				size_t bufsiz);
 
 extern int mnt_context_mount(struct libmnt_context *cxt);
 extern int mnt_context_umount(struct libmnt_context *cxt);
 extern int mnt_context_next_mount(struct libmnt_context *cxt,
+			   struct libmnt_iter *itr, struct libmnt_fs **fs,
+			   int *mntrc, int *ignored);
+extern int mnt_context_next_umount(struct libmnt_context *cxt,
 			   struct libmnt_iter *itr, struct libmnt_fs **fs,
 			   int *mntrc, int *ignored);
 
@@ -484,6 +517,7 @@ extern int mnt_context_set_syscall_status(struct libmnt_context *cxt, int status
 #define MNT_MS_XCOMMENT (1 << 13)
 #define MNT_MS_OFFSET   (1 << 14)
 #define MNT_MS_SIZELIMIT (1 << 15)
+#define MNT_MS_ENCRYPTION (1 << 16)
 
 /*
  * mount(2) MS_* masks (MNT_MAP_LINUX map)

@@ -3,6 +3,20 @@
 # $1: package name, $2: device name.
 
 
+autorun_file=.asusrouter
+nonautorun_file=$autorun_file.disabled
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+SWAP_ENABLE=`nvram get apps_swap_enable`
+SWAP_FILE=`nvram get apps_swap_file`
+ORIG_APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+ORIG_APPS_INSTALL_PATH=$ORIG_APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+apps_local_space=`nvram get apps_local_space`
+APPS_PATH=/opt
+PATH=$APPS_PATH/usr/bin:$APPS_PATH/bin:$APPS_PATH/usr/sbin:$APPS_PATH/sbin:/usr/bin:/bin:/usr/sbin:/sbin
+unset LD_LIBRARY_PATH
+unset LD_PRELOAD
+
+
 # $1: installed path.
 _build_dir(){
 	if [ -z "$1" ]; then
@@ -18,19 +32,6 @@ _build_dir(){
 
 nvram set apps_state_switch=0 # INITIALIZING
 nvram set apps_state_error=0
-autorun_file=.asusrouter
-nonautorun_file=$autorun_file.disabled
-APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
-SWAP_ENABLE=`nvram get apps_swap_enable`
-SWAP_FILE=`nvram get apps_swap_file`
-ORIG_APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
-ORIG_APPS_INSTALL_PATH=$ORIG_APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
-apps_local_space=`nvram get apps_local_space`
-APPS_PATH=/opt
-PATH=$APPS_PATH/usr/bin:$APPS_PATH/bin:$APPS_PATH/usr/sbin:$APPS_PATH/sbin:/usr/bin:/bin:/usr/sbin:/sbin
-unset LD_LIBRARY_PATH
-unset LD_PRELOAD
-
 if [ -z "$1" ]; then
 	echo "Usage: app_switch.sh <Package name> <device name>"
 	nvram set apps_state_error=1

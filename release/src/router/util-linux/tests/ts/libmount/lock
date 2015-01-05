@@ -31,7 +31,7 @@ echo 0 > $TS_OUTPUT
 SYNCTIME=$(( $(date +%s) + 5 ))
 
 for id in $(seq 0 $(( $NPROCESSES - 1 ))); do
-	$TESTPROG --lock --synctime $SYNCTIME $TS_OUTPUT $NLOOPS >> $TS_OUTPUT.debug 2>&1 &
+	ts_valgrind $TESTPROG --lock --synctime $SYNCTIME $TS_OUTPUT $NLOOPS >> $TS_OUTPUT.debug 2>&1 &
 done
 
 wait

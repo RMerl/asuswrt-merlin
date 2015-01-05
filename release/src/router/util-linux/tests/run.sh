@@ -17,21 +17,47 @@
 #
 
 TS_TOPDIR=$(cd $(dirname $0) && pwd)
-comps=$(find $TS_TOPDIR/ts/ -type f -perm /a+x -regex ".*/[^\.~]*" |  sort)
+SUBTESTS=
+OPTS=
 
-if [ -n "$1" ]; then
-	if [ -d "$TS_TOPDIR/ts/$1" ]; then
-		comps=$(find $TS_TOPDIR/ts/$1 -type f -perm /a+x -regex ".*/[^\.~]*" |  sort)
-	else
-		echo
-		echo "usage: $0 [<component>]"
-		echo "supported components:"
-			for ts in $comps; do
-				echo -e "\t$(basename $(dirname $ts))"
-			done | sort -u
-		echo
+while [ -n "$1" ]; do
+	case "$1" in
+	--force)
+		OPTS="$OPTS --force"
+		;;
+	--fake)
+		OPTS="$OPTS --fake"
+		;;
+	--memcheck)
+		OPTS="$OPTS --memcheck"
+		;;
+	--*)
+		echo "Unknown option $1"
+		echo "Usage: run [--fake] [--force] [<component> ...]"
 		exit 1
-	fi
+		;;
+
+	*)
+		SUBTESTS="$SUBTESTS $1"
+		;;
+	esac
+	shift
+done
+
+if [ -n "$SUBTESTS" ]; then
+	# selected tests only
+	for s in $SUBTESTS; do
+		if [ -d "$TS_TOPDIR/ts/$s" ]; then
+			co=$(find $TS_TOPDIR/ts/$s -type f -perm /a+x -regex ".*/[^\.~]*" |  sort)
+			comps="$comps $co"
+		else
+			echo "Unknown test component '$s'"
+			exit 1
+		fi
+	done
+else
+	# all tests
+	comps=$(find $TS_TOPDIR/ts/ -type f -perm /a+x -regex ".*/[^\.~]*" |  sort)
 fi
 
 echo
@@ -44,7 +70,7 @@ echo
 res=0
 count=0
 for ts in $comps; do
-	$ts "$1"
+	$ts "$OPTS"
 	res=$(( $res + $? ))
 	count=$(( $count + 1 ))
 done

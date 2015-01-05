@@ -388,6 +388,9 @@ int wlcscan_core_qtn(char *ofile, char *ifname)
 		dbG("5 GHz radio is not ready\n");
 		return -1;
 	}
+
+	logmessage("wlcscan", "start wlcscan scan\n");
+
 	/* clean APSCAN_INFO */
 	lock_qtn_apscan = file_lock("sitesurvey");
 	if((fp_apscan = fopen(ofile, "a")) != NULL){
@@ -396,7 +399,8 @@ int wlcscan_core_qtn(char *ofile, char *ifname)
 	file_unlock(lock_qtn_apscan);
 	
 	// start scan AP
-	if(qcsapi_wifi_start_scan(ifname)){
+	// if(qcsapi_wifi_start_scan(ifname)){
+	if(qcsapi_wifi_start_scan_ext(ifname, IEEE80211_PICK_ALL | IEEE80211_PICK_NOPICK_BG)){
 		dbg("fail to start AP scan\n");
 		return 0;
 	}
@@ -987,6 +991,7 @@ void check_2nd_jffs(void)
 
 	if(access("/asus_jffs/bootcfg.tgz", R_OK ) != -1 ) {
 		logmessage("qtn", "bootcfg.tgz exists");
+		system("rm -f /tmp/bootcfg.tgz");
 	} else {
 		logmessage("qtn", "bootcfg.tgz does not exist");
 		sprintf(s, MTD_BLKDEV(%d), part);
@@ -995,6 +1000,7 @@ void check_2nd_jffs(void)
 			logmessage("qtn", "cannot store bootcfg.tgz");
 		}else{
 			system("cp /tmp/bootcfg.tgz /asus_jffs");
+			system("rm -f /tmp/bootcfg.tgz");
 			logmessage("qtn", "backup bootcfg.tgz ok");
 		}
 	}

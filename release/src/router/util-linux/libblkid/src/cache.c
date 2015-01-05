@@ -10,7 +10,7 @@
  * %End-Header%
  */
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #ifdef HAVE_ERRNO_H
@@ -31,7 +31,7 @@ int blkid_debug_mask = 0;
  * @title: Cache
  * @short_description: basic routines to work with libblkid cache
  *
- * Block device information is normally kept in a cache file /etc/blkid.tab and is
+ * Block device information is normally kept in a cache file blkid.tab and is
  * verified to still be valid before being returned to the user (if the user has
  * read permission on the raw block device, otherwise not).  The cache file also
  * allows unprivileged users (normally anyone other than root, or those not in the
@@ -95,6 +95,16 @@ void blkid_init_debug(int mask)
 }
 #endif
 
+static const char *get_default_cache_filename(void)
+{
+	struct stat st;
+
+	if (stat(BLKID_RUNTIME_TOPDIR, &st) == 0 && S_ISDIR(st.st_mode))
+		return BLKID_CACHE_FILE;	/* cache in /run */
+
+	return BLKID_CACHE_FILE_OLD;	/* cache in /etc */
+}
+
 /* returns allocated path to cache */
 char *blkid_get_cache_filename(struct blkid_config *conf)
 {
@@ -108,7 +118,7 @@ char *blkid_get_cache_filename(struct blkid_config *conf)
 	else {
 		struct blkid_config *c = blkid_read_config(NULL);
 		if (!c)
-			filename = blkid_strdup(BLKID_CACHE_FILE);
+			filename = blkid_strdup(get_default_cache_filename());
 		else {
 			filename = c->cachefile;  /* already allocated */
 			c->cachefile = NULL;
@@ -217,8 +227,6 @@ void blkid_gc_cache(blkid_cache cache)
 
 	list_for_each_safe(p, pnext, &cache->bic_devs) {
 		blkid_dev dev = list_entry(p, struct blkid_struct_dev, bid_devs);
-		if (!p)
-			break;
 		if (stat(dev->bid_name, &st) < 0) {
 			DBG(DEBUG_CACHE,
 			    printf("freeing %s\n", dev->bid_name));
@@ -246,7 +254,7 @@ int main(int argc, char** argv)
 
 	if ((ret = blkid_get_cache(&cache, argv[1])) < 0) {
 		fprintf(stderr, "error %d parsing cache file %s\n", ret,
-			argv[1] ? argv[1] : BLKID_CACHE_FILE);
+			argv[1] ? argv[1] : blkid_get_cache_filename(NULL));
 		exit(1);
 	}
 	if ((ret = blkid_get_cache(&cache, "/dev/null")) != 0) {
@@ -254,7 +262,7 @@ int main(int argc, char** argv)
 			argv[0], ret);
 		exit(1);
 	}
-	if ((ret = blkid_probe_all(cache) < 0))
+	if ((ret = blkid_probe_all(cache)) < 0)
 		fprintf(stderr, "error probing devices\n");
 
 	blkid_put_cache(cache);

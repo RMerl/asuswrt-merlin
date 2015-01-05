@@ -71,8 +71,8 @@ var curState = '<% nvram_get("wrs_enable"); %>';
 function initial(){
 	show_menu();
 	//show_inner_tab();
-	$("option4").innerHTML = '<table><tbody><tr><td><div id="index_img4"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
-	$("option4").className = "m4_r";
+	document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
+	document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 	translate_category_id();
 	genMain_table();
 	if('<% nvram_get("wrs_enable"); %>' == 1)
@@ -313,14 +313,14 @@ function genMain_table(){
 	var code = "";	
 	code += '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
 	code += '<thead><tr>';
-	code += '<td colspan="5"><#ConnectedClient#>&nbsp;(<#List_limit#>：&nbsp;16)</td>';
+	code += '<td colspan="5"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;16)</td>';
 	code += '</tr></thead>';	
 	code += '<tbody>';
 	code += '<tr>';
 	code += '<th width="5%" height="30px" title="<#select_all#>">';
 	code += '<input id="selAll" type="checkbox" onclick="selectAll(this, 0);" value="">';
 	code += '</th>';
-	code += '<th width="40%">Client name</th>';
+	code += '<th width="40%">Client\'s MAC address</th>';
 	code += '<th width="40%"><#AiProtection_filter_category#></th>';
 	code += '<th width="10%"><#list_add_delete#></th>';
 	code += '</tr>';
@@ -329,7 +329,7 @@ function genMain_table(){
 	code += '<input type="checkbox" checked="">';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
-	code += '<input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>">';
+	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>">';
 	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code += '<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>';	
 	code += '</td>';
@@ -650,8 +650,7 @@ function translate_category_id(){
 	
 	if(wrs_filter != "" || wrs_app_filter != ""){
 		wrs_filter_row =  wrs_filter.split("<");
-		wrs_app_filter_row =  wrs_app_filter.split("<");
-	
+		wrs_app_filter_row =  wrs_app_filter.split("<");	
 	}
 	
 	var apps_filter_temp = "";
@@ -909,6 +908,7 @@ function eula_confirm(){
 															document.form.wrs_app_enable.value = 0;
 															showhide("list_table",0);
 															document.form.wrs_rulelist.disabled = true;
+															document.form.wrs_app_rulelist.disabled = true;
 															if(document.form.wrs_enable_ori.value == 1){
 																applyRule();
 															}
@@ -916,10 +916,8 @@ function eula_confirm(){
 																curState = 0;
 															}
 																														
-														},
-															{
-																switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-														});
+														}
+													);
 												</script>			
 											</div>
 										</td>
@@ -936,10 +934,8 @@ function eula_confirm(){
 														},
 														function(){
 																					
-														},
-															{
-																switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-														});
+														}
+													);
 												</script>			
 											</div>
 										</td>			

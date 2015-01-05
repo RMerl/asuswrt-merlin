@@ -1,82 +1,83 @@
 /* Original author unknown, may be "krishna balasub@cis.ohio-state.edu" */
 /*
+ * Modified Sat Oct  9 10:55:28 1993 for 0.99.13
+ *
+ * Patches from Mike Jagdis (jaggy@purplet.demon.co.uk) applied Wed Feb 8
+ * 12:12:21 1995 by faith@cs.unc.edu to print numeric uids if no passwd file
+ * entry.
+ *
+ * Patch from arnolds@ifns.de (Heinz-Ado Arnolds) applied Mon Jul 1 19:30:41
+ * 1996 by janl@math.uio.no to add code missing in case PID: clauses.
+ *
+ * Patched to display the key field -- hy@picksys.com 12/18/96
+ *
+ * 1999-02-22 Arkadiusz Mi¶kiewicz <misiek@pld.ORG.PL>
+ * - added Native Language Support
+ */
 
-  Modified Sat Oct  9 10:55:28 1993 for 0.99.13
-
-  Patches from Mike Jagdis (jaggy@purplet.demon.co.uk) applied Wed Feb
-  8 12:12:21 1995 by faith@cs.unc.edu to print numeric uids if no
-  passwd file entry.
-
-  Patch from arnolds@ifns.de (Heinz-Ado Arnolds) applied Mon Jul 1
-  19:30:41 1996 by janl@math.uio.no to add code missing in case PID:
-  clauses.
-
-  Patched to display the key field -- hy@picksys.com 12/18/96
-
-  1999-02-22 Arkadiusz Mi¶kiewicz <misiek@pld.ORG.PL>
-  - added Native Language Support
-
-*/
-
+#include <errno.h>
+#include <features.h>
+#include <getopt.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
-#include <errno.h>
-#include <time.h>
-#include <pwd.h>
-#include <grp.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/sem.h>
 #include <sys/msg.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "nls.h"
 #include "c.h"
+#include "nls.h"
 
-/*-------------------------------------------------------------------*/
-/* SHM_DEST and SHM_LOCKED are defined in kernel headers,
-   but inside #ifdef __KERNEL__ ... #endif */
+/*
+ * SHM_DEST and SHM_LOCKED are defined in kernel headers, but inside
+ * #ifdef __KERNEL__ ... #endif
+ */
 #ifndef SHM_DEST
-/* shm_mode upper byte flags */
-#define SHM_DEST        01000   /* segment will be destroyed on last detach */
-#define SHM_LOCKED      02000   /* segment will not be swapped */
+  /* shm_mode upper byte flags */
+# define SHM_DEST	01000	/* segment will be destroyed on last detach */
+# define SHM_LOCKED	02000	/* segment will not be swapped */
 #endif
 
 /* For older kernels the same holds for the defines below */
 #ifndef MSG_STAT
-#define MSG_STAT	11
-#define MSG_INFO	12
+# define MSG_STAT	11
+# define MSG_INFO	12
 #endif
 
 #ifndef SHM_STAT
-#define SHM_STAT        13
-#define SHM_INFO        14
+# define SHM_STAT	13
+# define SHM_INFO	14
 struct shm_info {
-     int   used_ids;
-     ulong shm_tot; /* total allocated shm */
-     ulong shm_rss; /* total resident shm */
-     ulong shm_swp; /* total swapped shm */
-     ulong swap_attempts;
-     ulong swap_successes;
+	int used_ids;
+	ulong shm_tot;		/* total allocated shm */
+	ulong shm_rss;		/* total resident shm */
+	ulong shm_swp;		/* total swapped shm */
+	ulong swap_attempts;
+	ulong swap_successes;
 };
 #endif
 
 #ifndef SEM_STAT
-#define SEM_STAT	18
-#define SEM_INFO	19
+# define SEM_STAT	18
+# define SEM_INFO	19
 #endif
 
 /* Some versions of libc only define IPC_INFO when __USE_GNU is defined. */
 #ifndef IPC_INFO
-#define IPC_INFO        3
+# define IPC_INFO	3
 #endif
-/*-------------------------------------------------------------------*/
 
-/* The last arg of semctl is a union semun, but where is it defined?
-   X/OPEN tells us to define it ourselves, but until recently
-   Linux include files would also define it. */
+/*
+ * The last arg of semctl is a union semun, but where is it defined? X/OPEN
+ * tells us to define it ourselves, but until recently Linux include files
+ * would also define it.
+ */
 #ifndef HAVE_UNION_SEMUN
 /* according to X/OPEN we have to define it ourselves */
 union semun {
@@ -87,13 +88,15 @@ union semun {
 };
 #endif
 
-/* X/OPEN (Jan 1987) does not define fields key, seq in struct ipc_perm;
-   glibc-1.09 has no support for sysv ipc.
-   glibc 2 uses __key, __seq */
+/*
+ * X/OPEN (Jan 1987) does not define fields key, seq in struct ipc_perm;
+ *	glibc-1.09 has no support for sysv ipc.
+ *	glibc 2 uses __key, __seq
+ */
 #if defined (__GLIBC__) && __GLIBC__ >= 2
-#define KEY __key
+# define KEY __key
 #else
-#define KEY key
+# define KEY key
 #endif
 
 #define LIMITS 1
@@ -109,54 +112,58 @@ void print_shm (int id);
 void print_msg (int id);
 void print_sem (int id);
 
-static void
-usage(int rc) {
-	printf (_("Usage: %1$s [-asmq] [-t|-c|-l|-u|-p]\n"
-	          "       %1$s [-s|-m|-q] -i id\n"
-	          "       %1$s -h for help\n"),
-		program_invocation_short_name);
-	exit(rc);
+static void __attribute__ ((__noreturn__)) usage(FILE * out)
+{
+	fprintf(out, USAGE_HEADER);
+	fprintf(out, " %s [resource ...] [output-format]\n", program_invocation_short_name);
+	fprintf(out, " %s [resource] -i <id>\n", program_invocation_short_name);
+	fprintf(out, USAGE_OPTIONS);
+	fputs(_(" -i, --id <id>  print details on resource identified by id\n"), out);
+	fprintf(out, USAGE_HELP);
+	fprintf(out, USAGE_VERSION);
+	fputs(_("\n"), out);
+	fputs(_("Resource options:\n"), out);
+	fputs(_(" -m, --shmems      shared memory segments\n"), out);
+	fputs(_(" -q, --queues      message queues\n"), out);
+	fputs(_(" -s, --semaphores  semaphores\n"), out);
+	fputs(_(" -a, --all         all (default)\n"), out);
+	fputs(_("\n"), out);
+	fputs(_("Output format:\n"), out);
+	fputs(_(" -t, --time        show attach, detach and change times\n"), out);
+	fputs(_(" -p, --pid         show creator and last operations PIDs\n"), out);
+	fputs(_(" -c, --creator     show creator and owner\n"), out);
+	fputs(_(" -l, --limits      show resource limits\n"), out);
+	fputs(_(" -u, --summary     show status summary\n"), out);
+	fprintf(out, USAGE_MAN_TAIL("ipcs(1)"));
+	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-static void
-help (int rc) {
-	printf (_("Usage: %1$s [resource]... [output-format]\n"
-	          "       %1$s [resource] -i id\n\n"),
-		program_invocation_short_name);
-
-	printf (_("Provide information on IPC facilities for which you "
-		  "have read access.\n\n"));
-
-	printf (_(
-	"    -h      display this help\n"
-	"    -i id   print details on resource identified by id\n\n"));
-
-	printf (_("Resource options:\n"
-	"    -m      shared memory segments\n"
-	"    -q      message queues\n"
-	"    -s      semaphores\n"
-	"    -a      all (default)\n\n"));
-
-	printf (_("Output format:\n"
-	"    -t      time\n"
-	"    -p      pid\n"
-	"    -c      creator\n"
-	"    -l      limits\n"
-	"    -u      summary\n"));
-	exit(rc);
-}
-
-int
-main (int argc, char **argv) {
+int main (int argc, char **argv)
+{
 	int opt, msg = 0, sem = 0, shm = 0, id=0, print=0;
 	char format = 0;
-	char options[] = "atcluphsmqi:";
+	static const struct option longopts[] = {
+		{"id", required_argument, NULL, 'i'},
+		{"shmems", no_argument, NULL, 'm'},
+		{"queues", no_argument, NULL, 'q'},
+		{"semaphores", no_argument, NULL, 's'},
+		{"all", no_argument, NULL, 'a'},
+		{"time", no_argument, NULL, 't'},
+		{"pid", no_argument, NULL, 'p'},
+		{"creator", no_argument, NULL, 'c'},
+		{"limits", no_argument, NULL, 'l'},
+		{"summary", no_argument, NULL, 'u'},
+		{"version", no_argument, NULL, 'V'},
+		{"help", no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
+	char options[] = "i:mqsatpcluVh";
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	while ((opt = getopt (argc, argv, options)) != -1) {
+	while ((opt = getopt_long(argc, argv, options, longopts, NULL)) != -1) {
 		switch (opt) {
 		case 'i':
 			id = atoi (optarg);
@@ -190,22 +197,24 @@ main (int argc, char **argv) {
 			format = STATUS;
 			break;
 		case 'h':
-			help(EXIT_SUCCESS);
-		case '?':
-			usage(EXIT_SUCCESS);
+			usage(stdout);
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
+		default:
+			usage(stderr);
 		}
 	}
 
-
 	if  (print) {
-	        if (shm)
+		if (shm)
 			print_shm (id);
 		if (sem)
 			print_sem (id);
 		if (msg)
 			print_msg (id);
 		if (!shm && !sem && !msg )
-			usage (EXIT_FAILURE);
+			usage (stderr);
 	} else {
 		if ( !shm && !msg && !sem)
 			msg = sem = shm = 1;
@@ -227,9 +236,8 @@ main (int argc, char **argv) {
 	return EXIT_SUCCESS;
 }
 
-
-static void
-print_perms (int id, struct ipc_perm *ipcp) {
+static void print_perms (int id, struct ipc_perm *ipcp)
+{
 	struct passwd *pw;
 	struct group *gr;
 
@@ -254,7 +262,6 @@ print_perms (int id, struct ipc_perm *ipcp) {
 		printf(" %-10u\n", ipcp->gid);
 }
 
-
 void do_shm (char format)
 {
 	int maxid, shmid, id;
@@ -275,8 +282,10 @@ void do_shm (char format)
 		printf (_("------ Shared Memory Limits --------\n"));
 		if ((shmctl (0, IPC_INFO, (struct shmid_ds *) (void *) &shminfo)) < 0 )
 			return;
-		/* glibc 2.1.3 and all earlier libc's have ints as fields
-		   of struct shminfo; glibc 2.1.91 has unsigned long; ach */
+		/*
+		 * glibc 2.1.3 and all earlier libc's have ints as fields of
+		 * struct shminfo; glibc 2.1.91 has unsigned long; ach
+		 */
 		printf (_("max number of segments = %lu\n"),
 			(unsigned long) shminfo.shmmni);
 		printf (_("max seg size (kbytes) = %lu\n"),
@@ -289,21 +298,22 @@ void do_shm (char format)
 
 	case STATUS:
 		printf (_("------ Shared Memory Status --------\n"));
-		/* TRANSLATORS: This output format is mantained for backward compatibility
-		   as ipcs is used in scripts. For consistency with the rest, the translated
-		   form can follow this model:
-
-		   "segments allocated = %d\n"
-		   "pages allocated = %ld\n"
-		   "pages resident = %ld\n"
-		   "pages swapped = %ld\n"
-		   "swap performance = %ld attempts, %ld successes\n"
-		*/
+		/*
+		 * TRANSLATORS: This output format is mantained for backward
+		 * compatibility as ipcs is used in scripts. For consistency
+		 * with the rest, the translated form can follow this model:
+		 *
+		 * "segments allocated = %d\n"
+		 * "pages allocated = %ld\n"
+		 * "pages resident = %ld\n"
+		 * "pages swapped = %ld\n"
+		 * "swap performance = %ld attempts, %ld successes\n"
+		 */
 		printf (_("segments allocated %d\n"
-		          "pages allocated %ld\n"
-		          "pages resident  %ld\n"
-		          "pages swapped   %ld\n"
-		          "Swap performance: %ld attempts\t %ld successes\n"),
+			  "pages allocated %ld\n"
+			  "pages resident  %ld\n"
+			  "pages swapped   %ld\n"
+			  "Swap performance: %ld attempts\t %ld successes\n"),
 			shm_info.used_ids,
 			shm_info.shm_tot,
 			shm_info.shm_rss,
@@ -371,7 +381,7 @@ void do_shm (char format)
 			break;
 
 		default:
-		        printf("0x%08x ",ipcp->KEY );
+			printf("0x%08x ",ipcp->KEY );
 			if (pw)
 				printf ("%-10d %-10.10s", shmid, pw->pw_name);
 			else
@@ -394,7 +404,6 @@ void do_shm (char format)
 	}
 	return;
 }
-
 
 void do_sem (char format)
 {
@@ -478,7 +487,7 @@ void do_sem (char format)
 			break;
 
 		default:
-		        printf("0x%08x ", ipcp->KEY);
+			printf("0x%08x ", ipcp->KEY);
 			if (pw)
 				printf ("%-10d %-10.10s", semid, pw->pw_name);
 			else
@@ -486,17 +495,16 @@ void do_sem (char format)
 			printf (" %-10o %-10ld\n",
 				ipcp->mode & 0777,
 				/*
-				 * glibc-2.1.3 and earlier has unsigned short;
-				 * glibc-2.1.91 has variation between
-				 * unsigned short and unsigned long
-				 * Austin prescribes unsigned short.
+				 * glibc-2.1.3 and earlier has unsigned
+				 * short. glibc-2.1.91 has variation between
+				 * unsigned short and unsigned long. Austin
+				 * prescribes unsigned short.
 				 */
 				(long) semary.sem_nsems);
 			break;
 		}
 	}
 }
-
 
 void do_msg (char format)
 {
@@ -587,7 +595,7 @@ void do_msg (char format)
 			break;
 
 		default:
-		        printf( "0x%08x ",ipcp->KEY );
+			printf( "0x%08x ",ipcp->KEY );
 			if (pw)
 				printf ("%-10d %-10.10s", msqid, pw->pw_name);
 			else
@@ -595,10 +603,10 @@ void do_msg (char format)
 			printf (" %-10o %-12ld %-12ld\n",
 				ipcp->mode & 0777,
 				/*
-				 * glibc-2.1.3 and earlier has unsigned short;
-				 * glibc-2.1.91 has variation between
-				 * unsigned short, unsigned long
-				 * Austin has msgqnum_t
+				 * glibc-2.1.3 and earlier has unsigned
+				 * short. glibc-2.1.91 has variation between
+				 * unsigned short, unsigned long. Austin has
+				 * msgqnum_t
 				 */
 				(long) msgque.msg_cbytes,
 				(long) msgque.msg_qnum);
@@ -607,7 +615,6 @@ void do_msg (char format)
 	}
 	return;
 }
-
 
 void print_shm (int shmid)
 {
@@ -648,9 +655,8 @@ void print_msg (int msqid)
 		ipcp->uid, ipcp->gid, ipcp->cuid, ipcp->cgid, ipcp->mode);
 	printf (_("cbytes=%ld\tqbytes=%ld\tqnum=%ld\tlspid=%d\tlrpid=%d\n"),
 		/*
-		 * glibc-2.1.3 and earlier has unsigned short;
-		 * glibc-2.1.91 has variation between
-		 * unsigned short, unsigned long
+		 * glibc-2.1.3 and earlier has unsigned short. glibc-2.1.91
+		 * has variation between unsigned short, unsigned long.
 		 * Austin has msgqnum_t (for msg_qbytes)
 		 */
 		(long) buf.msg_cbytes, (long) buf.msg_qbytes,

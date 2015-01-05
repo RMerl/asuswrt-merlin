@@ -482,7 +482,19 @@ void remove_usb_host_module(void)
 	modprobe_r(USB30_MOD);
 #endif
 
-	modprobe_r(USBCORE_MOD);
+#if defined(RTCONFIG_BLINK_LED)
+	/* If both bled and USB Bus traffic statistics are enabled,
+	 * don't remove USB core and USB common kernel module.
+	 */
+	if (!((nvram_get_int("led_usb_gpio") | nvram_get_int("led_usb3_gpio")) & GPIO_BLINK_LED)) {
+#endif
+		modprobe_r(USBCORE_MOD);
+#if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(3,2,0))
+		modprobe_r("usb_common");
+#endif
+#if defined(RTCONFIG_BLINK_LED)
+	}
+#endif
 }
 
 void remove_usb_module(void)
@@ -581,7 +593,19 @@ void stop_usb(void)
 #if defined (RTCONFIG_USB_XHCI)
 		modprobe_r(USB30_MOD);
 #endif
-		modprobe_r(USBCORE_MOD);
+#if defined(RTCONFIG_BLINK_LED)
+		/* If both bled and USB Bus traffic statistics are enabled,
+		 * don't remove USB core and USB common kernel module.
+		 */
+		if (!((nvram_get_int("led_usb_gpio") | nvram_get_int("led_usb3_gpio")) & GPIO_BLINK_LED)) {
+#endif
+			modprobe_r(USBCORE_MOD);
+#if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(3,2,0))
+			modprobe_r("usb_common");
+#endif
+#if defined(RTCONFIG_BLINK_LED)
+		}
+#endif
 	}
 }
 
@@ -1054,6 +1078,11 @@ _dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 	}
 #endif
 
+#ifdef RTCONFIG_DSL_TCLINUX
+	eval("req_dsl_drv", "runtcc");
+	eval("req_dsl_drv", "dumptcc");
+#endif
+
 	if(!g_reboot && nvram_match("apps_mounted_path", mnt->mnt_dir))
 		stop_app();
 #endif
@@ -1243,6 +1272,11 @@ done:
 				}
 			}
 		}
+#endif
+
+#ifdef RTCONFIG_DSL_TCLINUX
+		if(nvram_match("dslx_diag_enable", "1") && nvram_match("dslx_diag_state", "1"))
+			start_dsl_diag();
 #endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
@@ -1459,7 +1493,6 @@ _dprintf("test b. USB RESET finish.\n");
 		}
 	}
 #endif
-
 	return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 }
 
@@ -2268,14 +2301,18 @@ void start_dms(void)
 
 			if (nv) free(nv);
 			if (nv2) free(nv2);
-
+#if 0
 			if (!dircount)
+#else
+			if (!nvram_get_int("dms_dir_manual"))
+#endif
 			{
 				strcpy(dirlist[dircount++], nvram_default_get("dms_dir"));
 				typelist[typecount++] = ALL_MEDIA;
 				default_dms_dir_used = 1;
 			}
 
+			memset(dbdir, 0, sizeof(dbdir));
 			if (default_dms_dir_used)
 				find_dms_dbdir(dbdir);
 			else {
@@ -2293,6 +2330,7 @@ void start_dms(void)
 				}
 			}
 
+			if (strlen(dbdir))
 			mkdir_if_none(dbdir);
 			if (!check_if_dir_exist(dbdir))
 			{
@@ -2356,12 +2394,12 @@ void start_dms(void)
 					sharecount++;
 				}
 			}
-
+#if 0
 			if (!sharecount)
 			fprintf(f,
 				"media_dir=%s\n",
 				nvram_default_get("dms_dir"));
-
+#endif
 			fprintf(f,
 				"serial=%s\n"
 				"model_number=%s.%s\n",
@@ -2490,7 +2528,9 @@ start_mt_daapd()
 	if(strlen(servername)==0) strncpy(servername, get_productid(), sizeof(servername));
 	write_mt_daapd_conf(servername);
 
+#if !(defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS))
 	if (is_routing_enabled())
+#endif
 	{
 		system("mt-daapd -m");
 #if defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS)
@@ -2499,13 +2539,10 @@ start_mt_daapd()
 		doSystem("mDNSResponder %s thehost %s _daap._tcp. 3689 &", nvram_safe_get("lan_ipaddr"), servername);
 #endif
 	}
-	else{
+#if !(defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS))
+	else
 		system("mt-daapd");
-#if defined(RTCONFIG_TIMEMACHINE) || defined(RTCONFIG_MDNS)
-	if (pids("avahi-daemon"))
-		restart_mdns();
 #endif
-	}
 
 	if (pids("mt-daapd"))
 	{

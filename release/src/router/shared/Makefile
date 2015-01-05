@@ -3,8 +3,12 @@ include $(SRCBASE)/.config
 
 CFLAGS += -Os -Wall $(EXTRACFLAGS) -fPIC
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include
+ifneq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(TOP)/kernel_header/include
+else
 CFLAGS += -I$(LINUXDIR)/include
 CFLAGS += -D__EXPORTED_HEADERS__
+endif
 
 ifeq ($(RTCONFIG_SHP),y)
 CFLAGS += -DSHP
@@ -12,6 +16,10 @@ endif
 
 ifeq ($(RTCONFIG_RALINK),y)
 CFLAGS += -I./sysdeps/ralink -I$(TOP)/wireless_tools/ -DWE_NOLIBM 
+endif
+
+ifeq ($(RTCONFIG_QCA),y)
+CFLAGS += -I./sysdeps/qca -I$(TOP)/wireless_tools/ -DWE_NOLIBM
 endif
 
 ifeq ($(RTCONFIG_BCMWL6),y)
@@ -70,13 +78,19 @@ OBJS += flash_mtd.o api-ralink.o
 ifeq ($(RTCONFIG_RALINK_RT3052),y)
 OBJS += ra3052.o
 endif
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN54U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN54U)$(RTAC1200HP)$(RTN56UV2),y)
 CFLAGS += -DRA_ESW
 OBJS += mt7620.o
 else
 OBJS += rtkswitch.o
 endif
+
+else ifeq ($(RTCONFIG_QCA),y)
+# Qualcomm Atheros
+OBJS += $(TOP)/wireless_tools/iwlib.o
+OBJS += flash_mtd.o api-qca.o qca8337.o
 else
+# Broadcom
 OBJS += wl.o wl_linux.o
 OBJS += broadcom.o api-broadcom.o
 ifeq ($(RTCONFIG_DSL_TCLINUX),y)
@@ -92,6 +106,9 @@ OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
 OBJS += $(if $(HFS),$(TOP)/busybox/util-linux/volume_id/hfs.o)
+ifeq ($(RTCONFIG_USB_MODEM),y)
+OBJS += at_cmd.o
+endif
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -105,10 +122,20 @@ OBJS += rpc_raw_clnt.o
 #OBJS += find_host_addr.o
 endif
 
-ifeq ($(RTCONFIG_QTN),y)
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink sysdeps/qtn $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_ComponentSrcDirs) $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/libqcsapi_client/qcsapi_rpc_common/common
+ifeq ($(RTCONFIG_BLINK_LED),y)
+CFLAGS	+= -I$(TOP)/bled
+OBJS	+= bled.o
+endif
+
+vpath %.c sysdeps $(SRCBASE)/shared/ $(WLAN_ComponentSrcDirs)
+ifeq ($(RTCONFIG_RALINK),y)
+vpath %.c sysdeps/ralink
+else ifeq ($(RTCONFIG_QCA),y)
+vpath %.c sysdeps/qca
+else ifeq ($(RTCONFIG_QTN),y)
+vpath %.c sysdeps sysdeps/broadcom sysdeps/qtn $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_StdSrcDirsA) $(WLAN_ComponentSrcDirs) $(TOP)/libqcsapi_client/qcsapi_rpc_common/client  $(TOP)/libqcsapi_client/qcsapi_rpc_common/common
 else
-vpath %.c sysdeps sysdeps/broadcom sysdeps/ralink $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_StdSrcDirsA) $(WLAN_ComponentSrcDirs) 
+vpath %.c sysdeps/broadcom  $(SRCBASE)/shared/bcmwifi/src
 endif
 
 all: libshared.so libshared.a

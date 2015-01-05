@@ -12,7 +12,7 @@ CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared
 #CFLAGS = -g -rdynamic
 CFLAGS += -D_FILE_OFFSET_BITS=64
 LDFLAGS =  -L$(TOP)/curl-7.21.7/lib/.libs  -L$(TOP)/libxml2/.libs  -L$(TOP)/openssl -L$(TOP)/nvram${BCMEX} -L$(TOP)/shared -lshared
-LIBS = -lcurl -lxml2 -lssl -lcrypto -lpthread -lnvram
+LIBS = -lcurl -lxml2 -lssl -lcrypto -lpthread -ldl -lnvram -lm
 
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -DHAVE_TYPE_FLOAT

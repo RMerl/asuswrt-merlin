@@ -109,7 +109,7 @@ void notify_nas(const char *ifname)
 #endif
 #endif
 
-#if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER))
+#if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)) || defined(RTCONFIG_QCA)
 #define APSCAN_INFO "/tmp/apscan_info.txt"
 
 static int lock = -1;
@@ -157,7 +157,7 @@ int wlcscan_main(void)
 	return 1;
 }
 
-#endif /* CONFIG_BCMWL5 || (RTCONFIG_RALINK && RTCONFIG_WIRELESSREPEATER) */
+#endif /* CONFIG_BCMWL5 || (RTCONFIG_RALINK && RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_QCA) */
 
 #ifdef RTCONFIG_WIRELESSREPEATER
 
@@ -178,6 +178,10 @@ int wlcconnect_main(void)
 _dprintf("%s: Start to run...\n", __FUNCTION__);
 	int ret;
 	int old_ret = -1;
+#if defined(RTCONFIG_BLINK_LED)
+	int unit = nvram_get_int("wlc_band");
+	char *led_gpio = NULL, ifname[IFNAMSIZ];
+#endif
 
 	signal(SIGTERM, wlcconnect_safeleave);
 
@@ -196,7 +200,6 @@ _dprintf("%s: Start to run...\n", __FUNCTION__);
 	int wanduck_notify = NOTIFY_IDLE;
 	while(1) {
 		ret = wlcconnect_core();
-
 		if(ret == WLC_STATE_CONNECTED) nvram_set_int("wlc_state", WLC_STATE_CONNECTED);
 		else if(ret == WLC_STATE_CONNECTING) {
 			nvram_set_int("wlc_state", WLC_STATE_STOPPED);
@@ -221,6 +224,13 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 #ifdef RTCONFIG_RALINK
 					sleep(1);
 #else
+#ifdef RTCONFIG_QCA
+#ifdef RTCONFIG_PROXYSTA
+					if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_psta") == 1)
+						sleep(10);
+					else
+#endif
+#endif
 					sleep(5);
 #endif
 					continue;
@@ -251,6 +261,23 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 					notify_rc_and_wait("restart_wlcmode 1");
 				else
 					notify_rc_and_wait("restart_wlcmode 0");
+
+#if defined(RTCONFIG_BLINK_LED)
+#if defined(RTCONFIG_QCA)
+				if (unit == 0)
+					led_gpio = "led_2g_gpio";
+				else if (unit == 1)
+					led_gpio = "led_5g_gpio";
+
+				if (led_gpio) {
+					sprintf(ifname, "sta%d", unit);
+					if (wanduck_notify == NOTIFY_CONN)
+						append_netdev_bled_if(led_gpio, ifname);
+					else
+						remove_netdev_bled_if(led_gpio, ifname);
+				}
+#endif
+#endif
 			}
 
 #ifdef WEB_REDIRECT

@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 	cpu_set_t *new_set;
 	pid_t pid = 0;
 	int c, all_tasks = 0;
-	unsigned int ncpus;
+	int ncpus;
 	size_t new_setsize, nbits;
 	struct taskset ts;
 
@@ -208,7 +208,7 @@ int main(int argc, char **argv)
 		ts.get_only = 1;
 
 	else if (ts.use_list) {
-		if (cpulist_parse(argv[optind], new_set, new_setsize))
+		if (cpulist_parse(argv[optind], new_set, new_setsize, 0))
 			errx(EXIT_FAILURE, _("failed to parse CPU list: %s"),
 			     argv[optind]);
 	} else if (cpumask_parse(argv[optind], new_set, new_setsize)) {

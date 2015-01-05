@@ -1,0 +1,20 @@
+.TH "USB_MODESWITCH_DISPATCHER" "1"
+.SH "NAME"
+usb_modeswitch_dispatcher - wrapper for usb_modeswitch, not intended for direct invocation.
+.SH "SYNOPSIS"
+.PP
+\fBusb_modeswitch_dispatcher\fR
+.SH "DESCRIPTION"
+.PP
+usb_modeswitch_dispatcher will do detailed device checking and will subsequently
+use the usb_modeswitch binary together with the selected device config file to
+switch the mode of certain USB devices.
+.PP
+If no drivers are taking care of the device after the mode switch, the dispatcher
+will try to load and bind the "option" serial driver, in order to make the device
+useable.
+.PP
+This program is called by udev and is not supposed to be called directly
+by the user.
+.SH SEE ALSO
+.BR usb_modeswitch(1).

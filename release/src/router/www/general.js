@@ -254,11 +254,19 @@ function change_wireless_bridge(m){
 	if (m == "0"){
 		inputRCtrl2(document.form.wl_wdsapply_x, 1);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
+		if(Qcawifi_support)
+		{
+			inputRCtrl2(document.form.wl_wds_vht, 1);
+			inputRCtrl1(document.form.wl_wds_vht, 0);
+		}   
 	}else if (m == "1" && Rawifi_support){	 // N66U-spec
 		inputRCtrl2(document.form.wl_wdsapply_x, 0);
 		inputRCtrl1(document.form.wl_wdsapply_x, 0);
 	}else{
 		inputRCtrl1(document.form.wl_wdsapply_x, 1);
+		if(Qcawifi_support)
+			inputRCtrl1(document.form.wl_wds_vht, 1);
+		
 	}
 }
 
@@ -722,28 +730,57 @@ function insertExtChannelOption_5g(){
 		if(wl_channel_list_5g != ""){	//With wireless channel 5g hook
 				wl_channel_list_5g = eval('<% channel_list_5g(); %>');
 				if(document.form.wl_bw.value != "0" && document.form.wl_nmode_x.value != "2")
-				{ //cut channels >= 165 when bw != 20MHz
+				{ //not Legacy mode and BW > 20MHz
 					var i;
+					//cut channels >= 165 when bw != 20MHz
 					for(i=0; i < wl_channel_list_5g.length; i++)
 						if(wl_channel_list_5g[i] == "165")
 						{
 							wl_channel_list_5g.splice(i,(wl_channel_list_5g.length - i));
 							break;
 						}
-					//remove ch56 when bw == 40MHz or remove ch56,60,64 when bw == 80MHz, on NO ch52 is provided.
 					for(i=0; i < wl_channel_list_5g.length; i++)
 					{
+						//remove ch56 when bw == 40MHz or remove ch56,60,64 when bw == 80MHz, on NO ch52 is provided.
 						if(wl_channel_list_5g[i] == "56" && (i == 0 || wl_channel_list_5g[i-1] != "52"))
 						{
-							if(Rawifi_support && band5g_11ac_support && (document.form.wl_bw.value == "3" || document.form.wl_bw.value == "1") && (document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "8"))
+							if(!(Rawifi_support || Qcawifi_support))
+								;
+							else if(band5g_11ac_support && (document.form.wl_bw.value == "3" || document.form.wl_bw.value == "1") && (document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "8"))
 							{
 								for(var j=wl_channel_list_5g.length; j>=i ; j--)
 									if(wl_channel_list_5g[j] >= "56" && wl_channel_list_5g[j] <= "64")
 										wl_channel_list_5g.splice(j,1);
+								i--;
 							} else {
 								wl_channel_list_5g.splice(i,1);
+								i--;
 							}
-							break;
+						}
+						//remove ch116 when bw != 20MHz when bw == 80MHz, on NO ch120 is provided.
+						if(wl_channel_list_5g[i] == "116" && (i + 1 < wl_channel_list_5g.length && wl_channel_list_5g[i+1] != "120"))
+						{
+							if(Rawifi_support || Qcawifi_support)
+							{
+								wl_channel_list_5g.splice(i,1);
+								i--;
+							}
+						}
+						//remove ch132~140 when bw == 80MHz or ch140 when bw != 20MHz, on NO ch120 is provided.
+						if(!(Rawifi_support || Qcawifi_support))
+							;
+						else if((document.form.wl_bw.value == "3" || document.form.wl_bw.value == "1") && (document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "8"))
+						{
+							if(wl_channel_list_5g[i] == "132" || wl_channel_list_5g[i] == "136" || wl_channel_list_5g[i] == "140")
+							{
+								wl_channel_list_5g.splice(i,1);
+								i--;
+							}
+						}
+						else if(wl_channel_list_5g[i] == "140")
+						{
+							wl_channel_list_5g.splice(i,1);
+							i--;
 						}
 					}
 				}
@@ -1244,9 +1281,9 @@ function wl_auth_mode_change(isload){
 		}
 	}
 	
-	/*For Protected Management Frames, only enable for WPA2-Personal and WPA2-Enterprise, ARM platform,*/
+	/*For Protected Management Frames, only enable for "(wpa)psk2" or "wpa2" on ARM platform (wl_mfp_support)*/
 	if(wl_mfp_support && (document.form.wl_mfp != null)){
-		if ((mode == "psk2" || mode == "wpa2") && !(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1')){
+		if ((mode.search("psk2") >= 0 || mode.search("wpa2") >= 0) && !(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1')){
 			inputCtrl(document.form.wl_mfp,  1);	
 		}
 		else{

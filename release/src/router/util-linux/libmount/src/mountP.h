@@ -53,14 +53,24 @@
 # include <stdio.h>
 # include <stdarg.h>
 
-# define DBG(m,x)	do { \
-				if ((MNT_DEBUG_ ## m) & libmount_debug_mask) {\
-					fprintf(stderr, "libmount: %8s: ", # m); \
+# define ON_DBG(m, x)	do { \
+				if ((MNT_DEBUG_ ## m) & libmount_debug_mask) { \
 					x; \
 				} \
-			} while(0)
+			} while (0)
 
-# define DBG_FLUSH	do { fflush(stderr); } while(0)
+# define DBG(m, x)	do { \
+				if ((MNT_DEBUG_ ## m) & libmount_debug_mask) { \
+					fprintf(stderr, "%d: libmount: %8s: ", getpid(), # m); \
+					x; \
+				} \
+			} while (0)
+
+# define DBG_FLUSH	do { \
+				if (libmount_debug_mask && \
+				    libmount_debug_mask != MNT_DEBUG_INIT) \
+					fflush(stderr); \
+			} while(0)
 
 extern int libmount_debug_mask;
 
@@ -87,11 +97,12 @@ mnt_debug_h(void *handler, const char *mesg, ...)
 }
 
 #else /* !CONFIG_LIBMOUNT_DEBUG */
-# define DBG(m,x) do { ; } while(0)
+# define ON_DBG(m,x) do { ; } while (0)
+# define DBG(m,x) do { ; } while (0)
 # define DBG_FLUSH do { ; } while(0)
 #endif
 
-/* extension for files in the /etc/fstab.d directory */
+/* extension for files in the directory */
 #define MNT_MNTTABDIR_EXT	".fstab"
 
 /* library private paths */
@@ -117,6 +128,10 @@ extern int mnt_run_test(struct libmnt_test *tests, int argc, char *argv[]);
 /* utils.c */
 extern int endswith(const char *s, const char *sx);
 extern int startswith(const char *s, const char *sx);
+
+extern int mnt_is_readonly(const char *path);
+
+extern int mnt_parse_offset(const char *str, size_t len, uintmax_t *res);
 
 extern int mnt_chdir_to_parent(const char *target, char **filename);
 extern char *mnt_get_username(const uid_t uid);
@@ -211,9 +226,9 @@ struct libmnt_fs {
 #define MNT_FS_KERNEL	(1 << 4) /* data from /proc/{mounts,self/mountinfo} */
 #define MNT_FS_MERGED	(1 << 5) /* already merged data from /run/mount/utab */
 
-extern int __mnt_fs_get_flags(struct libmnt_fs *fs);
-extern int __mnt_fs_set_flags(struct libmnt_fs *fs, int flags);
-
+#define mnt_fs_is_regular(_f)	(!(mnt_fs_is_pseudofs(_f) \
+				   || mnt_fs_is_netfs(_f) \
+				   || mnt_fs_is_swaparea(_f)))
 
 /*
  * mtab/fstab/mountinfo file
@@ -263,6 +278,9 @@ struct libmnt_context
 	int	(*table_errcb)(struct libmnt_table *tb,	/* callback for libmnt_table structs */
 			 const char *filename, int line);
 
+	char	*(*pwd_get_cb)(struct libmnt_context *);		/* get encryption password */
+	void	(*pwd_release_cb)(struct libmnt_context *, char *);	/* release password */
+
 	int	optsmode;	/* fstab optstr mode MNT_OPTSMODE_{AUTO,FORCE,IGNORE} */
 	int	loopdev_fd;	/* open loopdev */
 
@@ -290,6 +308,11 @@ struct libmnt_context
 
 	char	*orig_user;	/* original (non-fixed) user= option */
 
+	pid_t	*children;	/* "mount -a --fork" PIDs */
+	int	nchildren;	/* number of children */
+	pid_t	pid;		/* 0=parent; PID=child */
+
+
 	int	syscall_status;	/* 1: not called yet, 0: success, <0: -errno */
 };
 
@@ -304,6 +327,7 @@ struct libmnt_context
 #define MNT_FL_FORCE		(1 << 8)
 #define MNT_FL_NOCANONICALIZE	(1 << 9)
 #define MNT_FL_RDONLY_UMOUNT	(1 << 11)	/* remount,ro after EBUSY umount(2) */
+#define MNT_FL_FORK		(1 << 12)
 
 #define MNT_FL_EXTERN_FS	(1 << 15)	/* cxt->fs is not private */
 #define MNT_FL_EXTERN_FSTAB	(1 << 16)	/* cxt->fstab is not private */
@@ -316,6 +340,7 @@ struct libmnt_context
 #define MNT_FL_PREPARED		(1 << 24)
 #define MNT_FL_HELPER		(1 << 25)	/* [u]mount.<type> */
 #define MNT_FL_LOOPDEV_READY	(1 << 26)	/* /dev/loop<N> initialized by library */
+#define MNT_FL_MOUNTOPTS_FIXED  (1 << 27)
 
 /* default flags */
 #define MNT_FL_DEFAULT		0
@@ -360,6 +385,8 @@ extern int mnt_context_is_loopdev(struct libmnt_context *cxt);
 extern int mnt_context_setup_loopdev(struct libmnt_context *cxt);
 extern int mnt_context_delete_loopdev(struct libmnt_context *cxt);
 extern int mnt_context_clear_loopdev(struct libmnt_context *cxt);
+
+extern int mnt_fork_context(struct libmnt_context *cxt);
 
 /* tab_update.c */
 extern struct libmnt_fs *mnt_update_get_fs(struct libmnt_update *upd);

@@ -139,11 +139,13 @@ int main(int argc, char **argv)
 	int keep_contents = 0;
 	uint32_t offset = 0;
 	uint32_t length = -1;
+	char *mtd_dev = "/dev/mtd10", data_str[20];
+	int data = -1;
 
 	seed = time(NULL);
 
 	for (;;) {
-		static const char *short_options="hkl:mo:p:s:";
+		static const char *short_options="hkl:mo:p:s:d:";
 		static const struct option long_options[] = {
 			{ "help", no_argument, 0, 'h' },
 			{ "markbad", no_argument, 0, 'm' },
@@ -152,6 +154,7 @@ int main(int argc, char **argv)
 			{ "offset", required_argument, 0, 'o' },
 			{ "length", required_argument, 0, 'l' },
 			{ "keep", no_argument, 0, 'k' },
+			{ "data", required_argument, 0, 'd' },
 			{0, 0, 0, 0},
 		};
 		int option_index = 0;
@@ -182,19 +185,31 @@ int main(int argc, char **argv)
 			break;
 
 		case 'o':
-			offset = atol(optarg);
+			offset = strtol(optarg, NULL, 0);
 			break;
 
 		case 'l':
 			length = strtol(optarg, NULL, 0);
 			break;
 
+		case 'd':
+			data = (int)strtol(optarg, NULL, 0) & 0xFF;
+			sprintf(data_str, "0x%02X", data);
+			break;
+
 		}
 	}
+#if defined(RTAC55U)
+	if (argc - optind == 1)
+		mtd_dev = argv[optind];
+#else
 	if (argc - optind != 1)
 		usage();
 
-	fd = open(argv[optind], O_RDWR);
+	mtd_dev = argv[optind];
+#endif
+
+	fd = open(mtd_dev, O_RDWR);
 	if (fd < 0) {
 		perror("open");
 		exit(1);
@@ -206,8 +221,19 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (length == -1)
+	if (length == -1) {
+#if defined(RTAC55U)
+		if (!strcmp(mtd_dev, "/dev/mtd10") && !offset) {
+			/* skip first block of /dev/mtd10 for RT-AC55U. */
+			offset = meminfo.erasesize;
+			length = meminfo.size - offset;
+		} else {
+			length = meminfo.size;
+		}
+#else
 		length = meminfo.size;
+#endif
+	}
 
 	if (offset % meminfo.erasesize) {
 		fprintf(stderr, "Offset %x not multiple of erase size %x\n",
@@ -240,10 +266,23 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (!offset) {
+		char c;
+
+		fprintf(stderr, "Offset = 0.  Start test (Y/N)?");
+		c = getchar();
+		if (c != 'y' && c != 'Y')
+			exit(1);
+	}
+
+	printf("MTD device     : %s\n", mtd_dev);
 	printf("ECC corrections: %d\n", oldstats.corrected);
 	printf("ECC failures   : %d\n", oldstats.failed);
 	printf("Bad blocks     : %d\n", oldstats.badblocks);
 	printf("BBT blocks     : %d\n", oldstats.bbtblocks);
+	printf("Pattern        : %s\n", (data >= 0 && data <= 0xFF)? data_str:"random");
+	printf("Start offset   : %08x\n", offset);
+	printf("Length         : %08x\n", length);
 
 	srand(seed);
 
@@ -261,8 +300,12 @@ int main(int argc, char **argv)
 				continue;
 			}
 
-			for (i=0; i<meminfo.erasesize; i++)
-				wbuf[i] = rand();
+			if (data >= 0 && data <= 0xFF) {
+				memset(wbuf, data, meminfo.erasesize);
+			} else {
+				for (i=0; i<meminfo.erasesize; i++)
+					wbuf[i] = rand();
+			}
 
 			if (keep_contents) {
 				printf("\r%08x: reading... ", (unsigned)test_ofs);

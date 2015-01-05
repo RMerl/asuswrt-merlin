@@ -208,7 +208,7 @@ function change_v3_priv_type(type){
 
         <tr>
           <th>SNMPv3 Authentication Password</th>
-          <td><input type="text" maxlength="64" class="input_32_table" name="v3_auth_passwd" value="<% nvram_get("v3_auth_passwd"); %>" ></td>
+          <td><input type="text" maxlength="64" class="input_32_table" name="v3_auth_passwd" value="<% nvram_get("v3_auth_passwd"); %>" autocapitalization="off" autocomplete="off"></td>
         </tr>
 
         <tr>
@@ -224,7 +224,7 @@ function change_v3_priv_type(type){
 
         <tr>
           <th>SNMPv3 Privacy Password</th>
-          <td><input type="text" maxlength="64" class="input_32_table" name="v3_priv_passwd" value="<% nvram_get("v3_priv_passwd"); %>" ></td>
+          <td><input type="text" maxlength="64" class="input_32_table" name="v3_priv_passwd" value="<% nvram_get("v3_priv_passwd"); %>" autocapitalization="off" autocomplete="off"></td>
         </tr>
 
         </table>

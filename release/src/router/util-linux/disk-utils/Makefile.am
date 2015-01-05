@@ -54,18 +54,17 @@ dist_man_MANS += elvtune.8
 elvtune_SOURCES = elvtune.c $(top_srcdir)/lib/linux_version.c
 endif
 
-if HAVE_RAW
 if BUILD_RAW
 sbin_PROGRAMS += raw
 dist_man_MANS += raw.8
-endif
 endif
 
 if BUILD_CRAMFS
 cramfs_common = $(utils_common) cramfs.h cramfs_common.c
 sbin_PROGRAMS += fsck.cramfs mkfs.cramfs
 fsck_cramfs_SOURCES = fsck.cramfs.c $(cramfs_common)
-mkfs_cramfs_SOURCES = mkfs.cramfs.c $(cramfs_common) $(top_srcdir)/lib/md5.c $(top_srcdir)/lib/strutils.c
+mkfs_cramfs_SOURCES = mkfs.cramfs.c $(cramfs_common) $(top_srcdir)/lib/md5.c \
+		      $(top_srcdir)/lib/strutils.c
 fsck_cramfs_LDADD = -lz
 mkfs_cramfs_LDADD = -lz
 endif

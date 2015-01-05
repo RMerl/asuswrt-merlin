@@ -141,8 +141,8 @@ function daapd_display(){
 
 function initial(){
 	show_menu();
-	$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-	$("option5").className = "m5_r";
+	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
+	document.getElementById("_APP_Installation").className = "menu_clicked";
 
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
@@ -190,7 +190,6 @@ function initial_dir(){
 function initial_dir_status(data){
 	if(data != "" && data.length != 2){		
 		get_layer_items("0");
-		eval("var default_dir=" + data);
 	}
 	else if( (_dms_dir == "/tmp/mnt" && data == "") || data == ""){
 		$("noUSB").style.display = "";
@@ -228,7 +227,7 @@ function applyRule(){
 						if(item_num >1){
 							for(i=0; i<rule_num; i++){			
 								dms_dir_tmp_value += "<";
-								dms_dir_tmp_value += document.getElementById("dlna_path_table").rows[i].cells[0].innerHTML;
+								dms_dir_tmp_value += document.getElementById("dlna_path_table").rows[i].cells[0].title;
 						
 								var type_translate_tmp = "";
 								dms_dir_type_tmp_value += "<";
@@ -648,7 +647,7 @@ function del_Row(r){
 	for(var k=0; k<document.getElementById("dlna_path_table").rows.length; k++){
 			var tmp_type = "";
 			dms_dir_x_tmp += "&#60";
-			dms_dir_x_tmp += document.getElementById("dlna_path_table").rows[k].cells[0].innerHTML;
+			dms_dir_x_tmp += document.getElementById("dlna_path_table").rows[k].cells[0].title;
 			dms_dir_type_x_tmp += "&#60";
 				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Audio")>=0? "A " : "";
 				tmp_type += document.getElementById("dlna_path_table").rows[k].cells[1].innerHTML.indexOf("Image")>=0? "P " : "";
@@ -698,7 +697,7 @@ function addRow_Group(upper){
 	//Viz check same rule  //match(path) is not accepted
 		if(item_num >=2){
 			for(i=0; i<rule_num; i++){
-					if(document.getElementById("PATH").value.toLowerCase() == document.getElementById("dlna_path_table").rows[i].cells[0].innerHTML.toLowerCase()){
+					if(document.getElementById("PATH").value.toLowerCase() == document.getElementById("dlna_path_table").rows[i].cells[0].title.toLowerCase()){
 						alert("<#JS_duplicate#>");
 						document.getElementById("PATH").focus();
 						document.getElementById("PATH").select();
@@ -740,7 +739,7 @@ function show_dlna_path(){
 			var tmp_type = "";
 			code +='<tr id="row'+i+'">';
 			
-			code +='<td width="45%" class="dlna_path_td">'+ dms_dir_x_array_row[i] +'</td>';
+			code +='<td width="45%" class="dlna_path_td" title="'+ dms_dir_x_array_row[i] +'">'+ dms_dir_x_array_row[i] +'</td>';
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("A")>=0? "Audio " : "";
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("P")>=0? "Image " : "";
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("V")>=0? "Video " : "";
@@ -915,9 +914,6 @@ function set_dms_dir(obj){
 											document.form.daapd_friendly_name.parentNode.parentNode.parentNode.style.display = "none";
 											document.form.daapd_enable.value = 0;
 											do_get_friendly_name("daapd");
-										 },
-										 {
-											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 										 }
 									);
 							</script>
@@ -959,9 +955,6 @@ function set_dms_dir(obj){
 											document.getElementById("dlna_path_div").style.display = "none";
 											document.form.dms_enable.value = 0;
 											do_get_friendly_name("dms");
-										 },
-										 {
-											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 										 }
 									);
 							</script>

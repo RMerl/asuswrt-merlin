@@ -5,8 +5,7 @@ SUBDIRS = helpers
 EXTRA_DIST = 	expected \
 		ts \
 		functions.sh \
-		README \
 		run.sh
 
-clean-local:
+distclean-local:
 	rm -rf output diff

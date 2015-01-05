@@ -20,7 +20,7 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <style type="text/css">
-.contentM_qis{ 
+.contentM_qis{
 	width:650px;
 	height:475px;
 	margin-top:-160px;
@@ -92,7 +92,7 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
 var sw_mode_orig = '<% nvram_get("sw_mode"); %>';
-if(sw_mode_orig == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
+if((sw_mode_orig == 2 || sw_mode_orig == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode_orig = 4;
 
 function initial(){
@@ -246,9 +246,15 @@ function saveMode(){
 				$("wl_unit_field_5").style.display = "";
 				$("wl_unit_field_6").style.display = "";	
 				$("wl_unit_field_1_1").innerHTML = '5 GHz-1 - <#Security#>';
-				$("syncCheckbox").innerHTML = 'Copy 2.4 GHz to 5 GHz-1 settings.';
-				$("syncCheckbox_5_2").innerHTML = 'Copy 5 GHz-1 to 5 GHz-2 settings.';
+				$("syncCheckbox").innerHTML = '<#qis_ssid_desc1#>';
+				$("syncCheckbox_5_2").innerHTML = '<#qis_ssid_desc2#>';
 				$('routerSSID').style.height="520px";
+			}
+
+			if(smart_connect_support){
+				document.getElementById("smart_connect_table").style.display="";
+				$('routerSSID').style.height="620px";
+				change_smart_con('<% nvram_get("smart_connect_x"); %>');
 			}
 			
 			cal_panel_block();
@@ -361,7 +367,11 @@ function setScenerion(mode){
 		$j("#Internet_span").css("display", "block");
 		$j("#ap-line").css("display", "none");
 		$j("#AP").html("<#Device_type_02_RT#>");
-		$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");
+		if(findasus_support){
+			$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\">You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</span>");
+		}else{
+			$j("#mode_desc").html("<#OP_AP_desc#><br/><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");
+		}
 		$j("#nextButton").attr("value","<#CTL_next#>");
 		clearTimeout(id_WANunplungHint);
 		$j("#Unplug-hint").css("display", "none");
@@ -408,7 +418,6 @@ function setScenerion(mode){
 function Sync_2ghz(band){
 	if(band == 2){
 		if(document.form.sync_with_2ghz.checked == true){
-			document.form.wl1_ssid.value = document.form.wl0_ssid.value; 
 			document.form.wl1_wpa_psk.value = document.form.wl0_wpa_psk.value; 
 		}
 	}
@@ -419,7 +428,6 @@ function Sync_2ghz(band){
 function Sync_5ghz(band){
 	if(band == 2){
 		if(document.form.sync_with_5ghz.checked == true){
-			document.form.wl2_ssid.value = document.form.wl1_ssid.value; 
 			document.form.wl2_wpa_psk.value = document.form.wl1_wpa_psk.value; 
 		}
 	}
@@ -468,6 +476,35 @@ function cancel_SSID_Block(){
 	$j("#forSSID_bg").fadeOut(300);
 	//$("hiddenMask").style.visibility = "hidden";
 	//$("forSSID_bg").style.visibility = "hidden";
+}
+
+function change_smart_con(v){
+	if(v == '1'){
+		document.getElementById("wl_unit_field_1").style.display = "none";
+		document.getElementById("wl_unit_field_2").style.display = "none";
+		document.getElementById("wl_unit_field_3").style.display = "none";
+		document.getElementById("wl_unit_field_4").style.display = "none";
+		document.getElementById("wl_unit_field_5").style.display = "none";
+		document.getElementById("wl_unit_field_6").style.display = "none";
+		document.getElementById("wl0_desc_name").innerHTML = "Tri-band Smart Connect Security";
+		document.getElementById("wl0_desc_name").style = "padding-bottom:10px";
+		$("wl0_ssid").onkeyup = function(){Sync_2ghz('Tri-band');};
+		$("wl0_wpa_psk").onkeyup = function(){Sync_2ghz('Tri-band');};
+		$('routerSSID').style.height="450px";
+		document.form.smart_connect_x.value = 1;
+	}else if (v == '0'){
+		document.getElementById("wl_unit_field_1").style.display = "";
+		document.getElementById("wl_unit_field_2").style.display = "";
+		document.getElementById("wl_unit_field_3").style.display = "";
+		document.getElementById("wl_unit_field_4").style.display = "";
+		document.getElementById("wl_unit_field_5").style.display = "";
+		document.getElementById("wl_unit_field_6").style.display = "";
+		document.getElementById("wl0_desc_name").innerHTML = "2.4 GHz - <#Security#>";
+		$("wl0_ssid").onkeyup = function(){Sync_2ghz(2);};
+		$("wl0_wpa_psk").onkeyup = function(){Sync_2ghz(2);};
+		$('routerSSID').style.height="620px";
+		document.form.smart_connect_x.value = 0;
+	}
 }
 </script>
 </head>
@@ -518,12 +555,33 @@ function cancel_SSID_Block(){
 <input type="hidden" name="wl1_crypto" value="<% nvram_get("wl1_crypto"); %>" disabled="disabled">
 <input type="hidden" name="wl2_auth_mode_x" value="<% nvram_get("wl2_auth_mode_x"); %>" disabled="disabled">
 <input type="hidden" name="wl2_crypto" value="<% nvram_get("wl2_crypto"); %>" disabled="disabled">
+<input type="hidden" name="smart_connect_x" value="<% nvram_get("smart_connect_x"); %>">
 <input type="hidden" name="w_Setting" value="1">
 <!-- AC66U's repeater mode -->
 <input type="hidden" name="wlc_psta" value="<% nvram_get("wlc_psta"); %>" disabled>
 
 <!-- Input SSID and Password block for switching Repeater to Router mode -->
 <div id="routerSSID" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
+	<table id="smart_connect_table" style="display:none;" class="QISSmartCon_table">
+		<tr>
+			<td width="200px">
+			<div id="smart_connect_image" style="background: url(/images/New_ui/smart_connect.png); width: 130px; height: 87px; margin-left:115px; margin-top:20px; no-repeat;"></div>
+			</td>
+			<td>			
+				<table style="margin-left:30px; margin-top:20px;">
+						<td style="font-style:normal;font-size:13px;font-weight:bold;" >
+							<input type="radio" value="1" id="smart_connect_t" name="smart_connect_t" class="input" onclick="return change_smart_con(this.value)" <% nvram_match("smart_connect_x", "1", "checked"); %>>Tri-band Smart Connect
+						</td>
+					</tr>
+					<tr>
+						<td style="font-style:normal;font-size:13px;font-weight:bold;">
+							<input type="radio" value="0" name="smart_connect_t" class="input" onclick="return change_smart_con(this.value)" <% nvram_match("smart_connect_x", "0", "checked"); %>>Standard Setup
+						</td>
+					</tr>									
+				</table>
+			</td>
+		</tr>
+	</table>
 	<table class="QISform_wireless" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
 		<tr>
 			<div class="description_down"><#QKSet_wireless_webtitle#></div>
@@ -535,7 +593,7 @@ function cancel_SSID_Block(){
 			<div style="margin:5px;*margin-left:-5px;"><img style="width: 640px; *width: 640px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 		</tr>
 		<tr>
-			<th width="180">2.4GHz - <#Security#></th>
+			<th width="180" id="wl0_desc_name">2.4GHz - <#Security#></th>
 			<td class="QISformtd"></td>
 		</tr>
 		<tr>

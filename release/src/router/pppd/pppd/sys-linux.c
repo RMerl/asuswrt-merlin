@@ -343,7 +343,7 @@ void sys_cleanup(void)
 #ifdef INET6
     if (if6_is_up)
 	sif6down(0);
-#endif
+#endif /* INET6 */
 
 /*
  * Delete any routes through the device.

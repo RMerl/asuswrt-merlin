@@ -735,6 +735,7 @@ function update_visibility(){
 	else
 		ccd = getRadioValue(document.form.vpn_server_ccd);
 		
+	showhide("server_authhmac", (auth != "secret"));
 	showhide("server_snnm", ((auth == "tls") && (iface == "tun")));
 	showhide("server_plan", ((auth == "tls") && (iface == "tun")));
 	showhide("server_local", ((auth == "secret") && (iface == "tun")));
@@ -1033,7 +1034,7 @@ function cal_panel_block(){
 </script>
 </head>
 <body onload="initial();">
-<div id="tlsKey_panel"  class="contentM_qis" style="box-shadow: 3px 3px 10px #000;" disabled>
+<div id="tlsKey_panel"  class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
 	<!--===================================Beginning of tls Content===========================================-->
 	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
 	<form method="post" name="openvpnTLSKeyForm" action="/start_apply.htm" target="hidden_frame">
@@ -1123,7 +1124,7 @@ function cal_panel_block(){
 	</table>
 	<!--===================================Ending of tls Content===========================================-->			
 </div>
-<div id="staticKey_panel"   class="contentM_qis" style="box-shadow: 3px 3px 10px #000;" disabled>
+<div id="staticKey_panel"   class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
 	<!--===================================Beginning of tls Content===========================================-->
 	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
 		<form method="post" name="openvpnStaticKeyForm" action="/start_apply.htm" target="hidden_frame">
@@ -1248,10 +1249,8 @@ function cal_panel_block(){
 														enable_openvpn(0);
 														document.form.VPNServer_enable.value = "0";
 														formShowAndHide(0, "openvpn");
-													},
-													{
-														switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-													});
+													}
+													);
 												</script>			
 											</td>			
 										</tr>
@@ -1334,7 +1333,8 @@ function cal_panel_block(){
 										<div class="formfontdesc">
 											<p><#vpn_openvpn_desc3#><br />
 											<p><#vpn_openvpn_hint1#><br />
-											<p><#vpn_openvpn_hint2#>
+											<p><#vpn_openvpn_hint2#><br />
+											<p>Before changing any value in advanced settings, please check the openVPN client software ability.
 										</div>
 										<!-- Advanced setting table start-->
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
@@ -1365,9 +1365,6 @@ function cal_panel_block(){
 																document.form.action_script.value = "stop_vpnserver"+openvpn_unit;
 																parent.showLoading();
 																document.form.submit();
-															},
-															{
-																switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 															}
 														);
 													</script>
@@ -1436,7 +1433,7 @@ function cal_panel_block(){
 													<input type="radio" name="vpn_server_igncrt" class="input" value="0" <% nvram_match_x("", "vpn_server_igncrt", "0", "checked"); %>><#checkbox_No#>
 												</td>
 											</tr>
-											<tr>
+											<tr id="server_authhmac">
 												<th><#vpn_openvpn_AuthHMAC#></th>
 												<td>
 													<select name="vpn_server_hmac" class="input_option">

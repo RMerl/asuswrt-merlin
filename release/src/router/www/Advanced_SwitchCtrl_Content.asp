@@ -72,7 +72,7 @@ function applyRule(){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="reboot">
-<input type="hidden" name="action_wait" value="60">
+<input type="hidden" name="action_wait" value="<% nvram_get("reboot_time"); %>">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -115,8 +115,8 @@ function applyRule(){
 		      									<th><#NAT_Acceleration#></th>
 												<td>
 													<select name="ctf_disable_force" class="input_option">
-														<option class="content_input_fd" value="1" <% nvram_match("ctf_disable_force", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-														<option class="content_input_fd" value="0" <% nvram_match("ctf_disable_force", "0","selected"); %>>Auto</option>
+														<option class="content_input_fd" value="1" <% nvram_match("ctf_disable", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+														<option class="content_input_fd" value="0" <% nvram_match("ctf_disable", "0","selected"); %>>Auto</option>
 													</select>
 													&nbsp
 													<span id="ctfLevelDesc"></span>

@@ -16,6 +16,7 @@ libmount_la_SOURCES =	mountP.h version.c utils.c test.c init.c cache.c \
 			context_loopdev.c \
 			$(mountinc_HEADERS) \
 			$(top_srcdir)/lib/at.c \
+			$(top_srcdir)/lib/match.c \
 			$(top_srcdir)/include/list.h \
 			$(top_srcdir)/lib/mangle.c \
 			$(top_srcdir)/lib/canonicalize.c \

@@ -1,7 +1,5 @@
 include $(top_srcdir)/config/include-Makefile.am
 
-EXTRA_DIST = README.clear README.col
-
 usrbin_exec_PROGRAMS = col colcrt colrm column hexdump rev tailf
 
 column_SOURCES = column.c $(top_srcdir)/lib/strutils.c
@@ -42,5 +40,3 @@ more_LDADD = -ltermcap
 dist_man_MANS += more.1
 endif
 endif
-
-EXTRA_DIST += README.pg LICENSE.pg

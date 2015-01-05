@@ -23,6 +23,8 @@ ts_skip_nonroot
 
 set -o pipefail
 
+[ -x $TS_CMD_MKMINIX ] || ts_skip "mkfs.minix not compiled"
+
 IMAGE="$TS_OUTDIR/${TS_TESTNAME}-loop.img"
 DEVICE=$(ts_device_init)
 

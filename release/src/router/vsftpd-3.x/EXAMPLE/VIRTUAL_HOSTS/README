@@ -1,0 +1,77 @@
+This example shows how you might set up virtual hosts. Virtual hosting is
+where different clients access your machine on different IP addresses (virtual
+IPs) and get redirected to different ftp sites.
+
+For example, if your machine responds to two IPs - 127.0.0.1 and 127.0.0.2,
+you could have the two different IPs represent two totally different FTP sites.
+
+For this example, we are going to build on the "INTERNET_SITE" example.
+
+Step 1) Set up a virtual IP address.
+
+ifconfig eth0:1 192.168.1.10 up
+(the standard IP address is 192.168.1.2)
+(note - this isn't quite complete, the route for local connects hasn't been
+added, but it will do for now)
+
+
+Step 2) Create a user / location for the new virtual site.
+
+useradd -d /var/ftp_site2 ftp_site2
+chown root.root /var/ftp_site2
+chmod a+rx /var/ftp_site2
+umask 022
+mkdir /var/ftp_site2/pub
+echo "test" > /var/ftp_site2/pub/content
+
+
+Step 3) Modify the existing site to respond to the primary IP.
+
+Edit /etc/xinetd.d/vsftpd, and add the config line:
+
+bind = 192.168.1.2
+
+
+Step 4) Create the new site, responding on the virtual IP.
+
+cp /etc/xinetd.d/vsftpd /etc/xinetd.d/vsftpd2
+
+Edit vsftpd2, and change
+- The bind line to refer to the IP address 192.168.1.10
+- Add the line
+server_args = /etc/vsftpd_site2.conf
+
+This launches this FTP site with a different vsftpd configuration file.
+
+cp /etc/vsftpd.conf /etc/vsftpd_site2.conf
+
+Add two lines:
+ftp_username=ftp_site2
+ftpd_banner=This is the alternative FTP site.
+
+
+Step 5) Restart xinetd and test!
+
+/etc/rc.d/init.d/xinetd restart
+
+[chris@localhost vsftpd]$ ftp 192.168.1.2
+Connected to 192.168.1.2 (192.168.1.2).
+220 ready, dude (vsFTPd 1.1.0: beat me, break me)
+Name (192.168.1.2:chris): [chris@localhost vsftpd]$
+[chris@localhost vsftpd]$ ftp 192.168.1.2
+Connected to 192.168.1.2 (192.168.1.2).
+220 ready, dude (vsFTPd 1.1.0: beat me, break me)
+Name (192.168.1.2:chris):
+530 This FTP server is anonymous only.
+Login failed.
+ftp> quit
+221 Goodbye.
+
+[chris@localhost vsftpd]$ ftp 192.168.1.10
+Connected to 192.168.1.10 (192.168.1.10).
+220 This is the alternative FTP site.
+Name (192.168.1.10:chris):
+530 This FTP server is anonymous only.
+Login failed.
+ftp>
+

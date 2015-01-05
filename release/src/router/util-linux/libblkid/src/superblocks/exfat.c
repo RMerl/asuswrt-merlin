@@ -127,7 +127,7 @@ static int probe_exfat(blkid_probe pr, const struct blkid_idmag *mag)
 			sb->volume_serial[3], sb->volume_serial[2],
 			sb->volume_serial[1], sb->volume_serial[0]);
 
-	blkid_probe_sprintf_version(pr, "%hu.%hu",
+	blkid_probe_sprintf_version(pr, "%u.%u",
 			sb->version.major, sb->version.minor);
 
 	return 0;

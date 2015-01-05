@@ -27,7 +27,14 @@ function initial(){
 }
 
 function check_info(){
-	document.getElementById("fb_success").style.display = "";
+
+	if(wan_diag_state == "4"){	
+		document.getElementById("fb_send_debug_log").style.display = "";
+		document.getElementById("Email_subject").href = "mailto:xdsl_feedback@asus.com?Subject="+based_modelid;
+		get_debug_log_info();
+	}else
+		document.getElementById("fb_success").style.display = "";
+
 	if(fb_state == "2"){
 		document.getElementById("fb_fail").style.display = "";
 	}else{	// 0:init 2:Fail 3:limit reached?
@@ -35,8 +42,35 @@ function check_info(){
 	}
 }
 
+function get_debug_log_info(){
+
+	var desc = "DSL DIAGNOSTIC LOG\n";
+	desc += "----------------------------------------------------------------------\n";
+
+	desc += "Model: "+based_modelid+"\n";
+	desc += "Firmware Version: <% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>\n";
+	desc += "Inner Version: <% nvram_get("innerver"); %>\n";
+	desc += "DSL Firmware Version: <% nvram_get("dsllog_fwver"); %>\n";
+	desc += "DSL Driver Version:  <% nvram_get("dsllog_drvver"); %>\n\n";
+
+	desc += "PIN Code: <% nvram_get("secret_code"); %>\n";
+	desc += "MAC Address: <% nvram_get("lan_hwaddr"); %>\n\n";
+
+	desc += "Diagnostic debug log capture duration: <% nvram_get("dslx_diag_duration"); %>\n";
+	desc += "DSL connection: <% nvram_get("fb_availability"); %>\n";
+
+	document.uiForm.fb_send_debug_log_content.value = desc;
+	
+}
+
 function redirect(){
 	document.location.href = "Advanced_Feedback.asp";
+}
+
+function reset_diag_state(){	
+	document.diagform.dslx_diag_state.value = 0;	
+	document.diagform.submit();
+	setTimeout("location.href='TCC.log.gz';", 300);
 }
 
 </script>
@@ -62,13 +96,14 @@ function redirect(){
 
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-<form method="post" name="form" action="" target="hidden_frame">
+<form method="post" name="diagform" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
-<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="">
-<input type="hidden" name="action_wait" value=""></form>
+<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="dslx_diag_state" value="<% nvram_get("dslx_diag_state"); %>">
+</form>
 <FORM METHOD="POST" ACTION="" name="uiForm" target="hidden_frame">
-<INPUT TYPE="HIDDEN" NAME="dhcppoolFlag" VALUE="0">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 <tr>
 <td width="17">&nbsp;</td>
@@ -95,9 +130,9 @@ function redirect(){
 	<div class="feedback_info_0">Thanks for taking the time to submit your feedback.</div>
 	<br>
 <div id="fb_fail" style="display:none;" class="feedback_info_1">
-	However system currently experiencing issue connecting to mail server, it could be caused by your ISP blocked SMTP port 25. Thus please send us an email directly (<a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a>). Simply copy from following text area and paste as mail content.
+	However system currently experiencing issue connecting to mail server, it could be caused by your ISP blocked SMTP port 25. Thus please send us an email directly ( <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a>). Simply copy from following text area and paste as mail content.
 	<br>
-	<textarea name="fb_fail_content" cols="70" rows="10" style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("fb_fail_content", ""); %></textarea>
+	<textarea name="fb_fail_content" cols="70" rows="10" style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" readonly><% nvram_dump("fb_fail_content", ""); %></textarea>
 	<br>
 </div>
 	<br>
@@ -106,6 +141,18 @@ function redirect(){
 	<br>
 	<div class="feedback_info_1">To get help from other users, you could post your question in the <a href="http://vip.asus.com/forum/topic.aspx?board_id=11&SLanguage=en-us" style="color:#FFCC00;" target="_blank">ASUS VIP Forum</a>.</div>
 	<br>
+	<br>	
+</div>
+
+<div id="fb_send_debug_log" style="display:none;">
+	<br>
+	<br>
+	<div class="feedback_info_0">Diagnostic DSL debug log capture completed.</div>
+	<br>
+	<br>
+	<div class="feedback_info_1">Please send us an email directly ( <a id="Email_subject" href="" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com</a> ). Simply copy from following text area and paste as mail content. <br><div onClick="reset_diag_state();" style="text-decoration: underline; font-family:Lucida Console; cursor:pointer;">Click here to download the debug log and add as mail attachment.</div></div>
+	<br>
+	<textarea name="fb_send_debug_log_content" cols="70" rows="15" style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" readonly></textarea>
 	<br>	
 </div>
 

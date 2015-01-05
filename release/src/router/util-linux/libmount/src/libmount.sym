@@ -163,7 +163,6 @@ global:
 	mnt_table_find_tag;
 	mnt_table_find_target;
 	mnt_table_get_cache;
-	mnt_table_get_name;
 	mnt_table_get_nents;
 	mnt_table_get_root_fs;
 	mnt_table_next_child_fs;
@@ -205,3 +204,24 @@ global:
 	mnt_tabdiff_next_change;
 	mnt_table_is_fs_mounted;
 } MOUNT_2.19;
+
+MOUNT_2.21 {
+global:
+	mnt_context_enable_fork;
+	mnt_context_get_helper_status;
+	mnt_context_get_syscall_errno;
+	mnt_context_helper_executed;
+	mnt_context_is_child;
+	mnt_context_is_fork;
+	mnt_context_is_parent;
+	mnt_context_next_umount;
+	mnt_context_reset_status;
+	mnt_context_set_passwd_cb;
+	mnt_context_syscall_called;
+	mnt_context_wait_for_children;
+	mnt_fs_is_netfs;
+	mnt_fs_is_pseudofs;
+	mnt_fs_is_swaparea;
+	mnt_get_library_features;
+	mnt_table_parse_dir;
+} MOUNT_2.20;

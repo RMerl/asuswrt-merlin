@@ -22,6 +22,7 @@
 #include <asm/param.h>
 #include <asm/byteorder.h>
 #include <ctype.h>
+#include <shared.h>
 
 #ifdef	SUPPORT_LPRng
 #endif
@@ -2669,7 +2670,9 @@ int MFP_state(int state)
 		else if (state == MFP_IN_U2EC)
 			nvram_set("MFP_busy", "2");
 #if __BYTE_ORDER == __BIG_ENDIAN
+#if !defined(RTCONFIG_QCA)
 		nvram_commit();
+#endif		
 #endif
 #endif
 		return MFP_is_busy = state;
@@ -2880,7 +2883,7 @@ int usb_connection(int sockfd)
 		pirp_save->Size = SWAP32(pirp_save->Size);
 		pirp_save->NeedSize = SWAP32(pirp_save->NeedSize);
 		pirp_save->Device = SWAP64(pirp_save->Device);
-		pirp_save_swap->BYTE = SWAP8(pirp_save_swap->BYTE);
+		pirp_save_swap->BYTE = pirp_save_swap->BYTE;
 		pirp_save->Irp = SWAP32(pirp_save->Irp);
 		pirp_save->Status = SWAP32(pirp_save->Status);
 		pirp_save->Information = SWAP64(pirp_save->Information);
@@ -2901,7 +2904,7 @@ int usb_connection(int sockfd)
 				purb->UrbHeader.Length = SWAP16(purb->UrbHeader.Length);
 				purb->UrbHeader.Function = SWAP16(purb->UrbHeader.Function);
 				purb->UrbHeader.Status = SWAP32(purb->UrbHeader.Status);
-				purb->UrbHeader.UsbdDeviceHandle = SWAP32(purb->UrbHeader.UsbdDeviceHandle);
+				purb->UrbHeader.UsbdDeviceHandle = (PVOID) SWAP32(purb->UrbHeader.UsbdDeviceHandle);
 				purb->UrbHeader.UsbdFlags = SWAP32(purb->UrbHeader.UsbdFlags);
 
 				if (purb->UrbHeader.Function == URB_FUNCTION_GET_DESCRIPTOR_FROM_INTERFACE ||
@@ -2909,21 +2912,21 @@ int usb_connection(int sockfd)
 				    purb->UrbHeader.Function == 0x2a	// _URB_OS_FEATURE_DESCRIPTOR_REQUEST_FULL
 				)
 				{
-					purb->UrbControlDescriptorRequest.Reserved = SWAP32(purb->UrbControlDescriptorRequest.Reserved);
+					purb->UrbControlDescriptorRequest.Reserved = (PVOID) SWAP32(purb->UrbControlDescriptorRequest.Reserved);
 					purb->UrbControlDescriptorRequest.Reserved0 = SWAP32(purb->UrbControlDescriptorRequest.Reserved0);
 					purb->UrbControlDescriptorRequest.TransferBufferLength = SWAP32(purb->UrbControlDescriptorRequest.TransferBufferLength);
-					purb->UrbControlDescriptorRequest.TransferBuffer = SWAP32(purb->UrbControlDescriptorRequest.TransferBuffer);
-					purb->UrbControlDescriptorRequest.TransferBufferMDL = SWAP32(purb->UrbControlDescriptorRequest.TransferBufferMDL);
-					purb->UrbControlDescriptorRequest.UrbLink = SWAP32(purb->UrbControlDescriptorRequest.UrbLink);
+					purb->UrbControlDescriptorRequest.TransferBuffer = (PVOID) SWAP32(purb->UrbControlDescriptorRequest.TransferBuffer);
+					purb->UrbControlDescriptorRequest.TransferBufferMDL = (PMDL) SWAP32(purb->UrbControlDescriptorRequest.TransferBufferMDL);
+					purb->UrbControlDescriptorRequest.UrbLink = (struct _URB *) SWAP32(purb->UrbControlDescriptorRequest.UrbLink);
 
-					purb->UrbControlDescriptorRequest.hca.HcdEndpoint = SWAP32(purb->UrbControlDescriptorRequest.hca.HcdEndpoint);
-					purb->UrbControlDescriptorRequest.hca.HcdIrp = SWAP32(purb->UrbControlDescriptorRequest.hca.HcdIrp);
-					purb->UrbControlDescriptorRequest.hca.HcdListEntry.Flink = SWAP32(purb->UrbControlDescriptorRequest.hca.HcdListEntry.Flink);
-					purb->UrbControlDescriptorRequest.hca.HcdListEntry.Blink = SWAP32(purb->UrbControlDescriptorRequest.hca.HcdListEntry.Blink);
-					purb->UrbControlDescriptorRequest.hca.HcdListEntry2.Flink = SWAP32(purb->UrbControlDescriptorRequest.hca.HcdListEntry2.Flink);
-					purb->UrbControlDescriptorRequest.hca.HcdListEntry2.Blink = SWAP32(purb->UrbControlDescriptorRequest.hca.HcdListEntry2.Blink);
-					purb->UrbControlDescriptorRequest.hca.HcdCurrentIoFlushPointer = SWAP32(purb->UrbControlDescriptorRequest.hca.HcdCurrentIoFlushPointer);
-					purb->UrbControlDescriptorRequest.hca.HcdExtension = SWAP32(purb->UrbControlDescriptorRequest.hca.HcdExtension);
+					purb->UrbControlDescriptorRequest.hca.HcdEndpoint = (PVOID) SWAP32(purb->UrbControlDescriptorRequest.hca.HcdEndpoint);
+					purb->UrbControlDescriptorRequest.hca.HcdIrp = (PIRP) SWAP32(purb->UrbControlDescriptorRequest.hca.HcdIrp);
+					purb->UrbControlDescriptorRequest.hca.HcdListEntry.Flink = (struct _LIST_ENTRY *) SWAP32(purb->UrbControlDescriptorRequest.hca.HcdListEntry.Flink);
+					purb->UrbControlDescriptorRequest.hca.HcdListEntry.Blink = (struct _LIST_ENTRY *) SWAP32(purb->UrbControlDescriptorRequest.hca.HcdListEntry.Blink);
+					purb->UrbControlDescriptorRequest.hca.HcdListEntry2.Flink = (struct _LIST_ENTRY *) SWAP32(purb->UrbControlDescriptorRequest.hca.HcdListEntry2.Flink);
+					purb->UrbControlDescriptorRequest.hca.HcdListEntry2.Blink = (struct _LIST_ENTRY *) SWAP32(purb->UrbControlDescriptorRequest.hca.HcdListEntry2.Blink);
+					purb->UrbControlDescriptorRequest.hca.HcdCurrentIoFlushPointer = (PVOID) SWAP32(purb->UrbControlDescriptorRequest.hca.HcdCurrentIoFlushPointer);
+					purb->UrbControlDescriptorRequest.hca.HcdExtension = (PVOID) SWAP32(purb->UrbControlDescriptorRequest.hca.HcdExtension);
 
 					purb->UrbControlDescriptorRequest.Reserved1 = SWAP16(purb->UrbControlDescriptorRequest.Reserved1);
 					purb->UrbControlDescriptorRequest.Reserved2 = SWAP16(purb->UrbControlDescriptorRequest.Reserved2);
@@ -2931,8 +2934,8 @@ int usb_connection(int sockfd)
 				}
 				else if (purb->UrbHeader.Function == URB_FUNCTION_SELECT_CONFIGURATION)
 				{
-					purb->UrbSelectConfiguration.ConfigurationDescriptor = SWAP32(purb->UrbSelectConfiguration.ConfigurationDescriptor);
-					purb->UrbSelectConfiguration.ConfigurationHandle = SWAP32(purb->UrbSelectConfiguration.ConfigurationHandle);
+					purb->UrbSelectConfiguration.ConfigurationDescriptor = (PUSB_CONFIGURATION_DESCRIPTOR) SWAP32(purb->UrbSelectConfiguration.ConfigurationDescriptor);
+					purb->UrbSelectConfiguration.ConfigurationHandle = (USBD_CONFIGURATION_HANDLE) SWAP32(purb->UrbSelectConfiguration.ConfigurationHandle);
 
 					if (purb->UrbSelectConfiguration.ConfigurationDescriptor != 0x0)
 					{
@@ -2941,12 +2944,12 @@ int usb_connection(int sockfd)
 
 						for (i = 0; tmp_len > 0; i++) {
 							(*(USBD_INTERFACE_INFORMATION*)tmp).Length = SWAP16((*(USBD_INTERFACE_INFORMATION*)tmp).Length);
-							(*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle);
+							(*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle = (USBD_INTERFACE_HANDLE) SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle);
 							(*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes);
 
 							for (j = 0; j < (*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes; j++) {
 								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumPacketSize = SWAP16((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumPacketSize);
-								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle);
+								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle = (USBD_PIPE_HANDLE) SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle);
 								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumTransferSize = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumTransferSize);
 								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeFlags = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeFlags);
 							}
@@ -2957,16 +2960,16 @@ int usb_connection(int sockfd)
 				}
 				else if (purb->UrbHeader.Function == URB_FUNCTION_SELECT_INTERFACE)
 				{
-					purb->UrbSelectInterface.ConfigurationHandle = SWAP32(purb->UrbSelectInterface.ConfigurationHandle);
+					purb->UrbSelectInterface.ConfigurationHandle = (USBD_CONFIGURATION_HANDLE) SWAP32(purb->UrbSelectInterface.ConfigurationHandle);
 					tmp = (char*)&(purb->UrbSelectInterface.Interface);
 
 					(*(USBD_INTERFACE_INFORMATION*)tmp).Length = SWAP16((*(USBD_INTERFACE_INFORMATION*)tmp).Length);
-					(*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle);
+					(*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle = (USBD_INTERFACE_HANDLE) SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle);
 					(*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes);
 
 					for (j = 0; j < (*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes; j++) {
 						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumPacketSize = SWAP16((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumPacketSize);
-						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle);
+						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle = (USBD_PIPE_HANDLE) SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle);
 						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumTransferSize = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumTransferSize);
 						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeFlags = SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeFlags);
 					}
@@ -2975,21 +2978,21 @@ int usb_connection(int sockfd)
 					 purb->UrbHeader.Function == URB_FUNCTION_CLASS_OTHER
 				)
 				{
-					purb->UrbControlVendorClassRequest.Reserved = SWAP32(purb->UrbControlVendorClassRequest.Reserved);
+					purb->UrbControlVendorClassRequest.Reserved = (PVOID) SWAP32(purb->UrbControlVendorClassRequest.Reserved);
 					purb->UrbControlVendorClassRequest.TransferFlags = SWAP32(purb->UrbControlVendorClassRequest.TransferFlags);
 					purb->UrbControlVendorClassRequest.TransferBufferLength = SWAP32(purb->UrbControlVendorClassRequest.TransferBufferLength);
-					purb->UrbControlVendorClassRequest.TransferBuffer = SWAP32(purb->UrbControlVendorClassRequest.TransferBuffer);
-					purb->UrbControlVendorClassRequest.TransferBufferMDL = SWAP32(purb->UrbControlVendorClassRequest.TransferBufferMDL);
-					purb->UrbControlVendorClassRequest.UrbLink = SWAP32(purb->UrbControlVendorClassRequest.UrbLink);
+					purb->UrbControlVendorClassRequest.TransferBuffer = (PVOID) SWAP32(purb->UrbControlVendorClassRequest.TransferBuffer);
+					purb->UrbControlVendorClassRequest.TransferBufferMDL = (PMDL) SWAP32(purb->UrbControlVendorClassRequest.TransferBufferMDL);
+					purb->UrbControlVendorClassRequest.UrbLink = (struct _URB *) SWAP32(purb->UrbControlVendorClassRequest.UrbLink);
 
-					purb->UrbControlVendorClassRequest.hca.HcdEndpoint = SWAP32(purb->UrbControlVendorClassRequest.hca.HcdEndpoint);
-					purb->UrbControlVendorClassRequest.hca.HcdIrp = SWAP32(purb->UrbControlVendorClassRequest.hca.HcdIrp);
-					purb->UrbControlVendorClassRequest.hca.HcdListEntry.Flink = SWAP32(purb->UrbControlVendorClassRequest.hca.HcdListEntry.Flink);
-					purb->UrbControlVendorClassRequest.hca.HcdListEntry.Blink = SWAP32(purb->UrbControlVendorClassRequest.hca.HcdListEntry.Blink);
-					purb->UrbControlVendorClassRequest.hca.HcdListEntry2.Flink = SWAP32(purb->UrbControlVendorClassRequest.hca.HcdListEntry2.Flink);
-					purb->UrbControlVendorClassRequest.hca.HcdListEntry2.Blink = SWAP32(purb->UrbControlVendorClassRequest.hca.HcdListEntry2.Blink);
-					purb->UrbControlVendorClassRequest.hca.HcdCurrentIoFlushPointer = SWAP32(purb->UrbControlVendorClassRequest.hca.HcdCurrentIoFlushPointer);
-					purb->UrbControlVendorClassRequest.hca.HcdExtension = SWAP32(purb->UrbControlVendorClassRequest.hca.HcdExtension);
+					purb->UrbControlVendorClassRequest.hca.HcdEndpoint = (PVOID) SWAP32(purb->UrbControlVendorClassRequest.hca.HcdEndpoint);
+					purb->UrbControlVendorClassRequest.hca.HcdIrp = (PIRP) SWAP32(purb->UrbControlVendorClassRequest.hca.HcdIrp);
+					purb->UrbControlVendorClassRequest.hca.HcdListEntry.Flink = (struct _LIST_ENTRY *) SWAP32(purb->UrbControlVendorClassRequest.hca.HcdListEntry.Flink);
+					purb->UrbControlVendorClassRequest.hca.HcdListEntry.Blink = (struct _LIST_ENTRY *) SWAP32(purb->UrbControlVendorClassRequest.hca.HcdListEntry.Blink);
+					purb->UrbControlVendorClassRequest.hca.HcdListEntry2.Flink = (struct _LIST_ENTRY *) SWAP32(purb->UrbControlVendorClassRequest.hca.HcdListEntry2.Flink);
+					purb->UrbControlVendorClassRequest.hca.HcdListEntry2.Blink = (struct _LIST_ENTRY *) SWAP32(purb->UrbControlVendorClassRequest.hca.HcdListEntry2.Blink);
+					purb->UrbControlVendorClassRequest.hca.HcdCurrentIoFlushPointer = (PVOID) SWAP32(purb->UrbControlVendorClassRequest.hca.HcdCurrentIoFlushPointer);
+					purb->UrbControlVendorClassRequest.hca.HcdExtension = (PVOID) SWAP32(purb->UrbControlVendorClassRequest.hca.HcdExtension);
 
 					purb->UrbControlVendorClassRequest.Value = SWAP16(purb->UrbControlVendorClassRequest.Value);
 					purb->UrbControlVendorClassRequest.Index = SWAP16(purb->UrbControlVendorClassRequest.Index);
@@ -2997,26 +3000,26 @@ int usb_connection(int sockfd)
 				}
 				else if (purb->UrbHeader.Function == URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER)
 				{
-					purb->UrbBulkOrInterruptTransfer.PipeHandle = SWAP32(purb->UrbBulkOrInterruptTransfer.PipeHandle);
+					purb->UrbBulkOrInterruptTransfer.PipeHandle = (USBD_PIPE_HANDLE) SWAP32(purb->UrbBulkOrInterruptTransfer.PipeHandle);
 					purb->UrbBulkOrInterruptTransfer.TransferFlags = SWAP32(purb->UrbBulkOrInterruptTransfer.TransferFlags);
 					purb->UrbBulkOrInterruptTransfer.TransferBufferLength = SWAP32(purb->UrbBulkOrInterruptTransfer.TransferBufferLength);
-					purb->UrbBulkOrInterruptTransfer.TransferBuffer = SWAP32(purb->UrbBulkOrInterruptTransfer.TransferBuffer);
-					purb->UrbBulkOrInterruptTransfer.TransferBufferMDL = SWAP32(purb->UrbBulkOrInterruptTransfer.TransferBufferMDL);
-					purb->UrbBulkOrInterruptTransfer.UrbLink = SWAP32(purb->UrbBulkOrInterruptTransfer.UrbLink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdEndpoint = SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdEndpoint);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdIrp = SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdIrp);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Flink = SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Flink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Blink = SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Blink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Flink = SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Flink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Blink = SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Blink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdCurrentIoFlushPointer = SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdCurrentIoFlushPointer);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdExtension = SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdExtension);
+					purb->UrbBulkOrInterruptTransfer.TransferBuffer = (PVOID) SWAP32(purb->UrbBulkOrInterruptTransfer.TransferBuffer);
+					purb->UrbBulkOrInterruptTransfer.TransferBufferMDL = (PMDL) SWAP32(purb->UrbBulkOrInterruptTransfer.TransferBufferMDL);
+					purb->UrbBulkOrInterruptTransfer.UrbLink = (struct _URB *) SWAP32(purb->UrbBulkOrInterruptTransfer.UrbLink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdEndpoint = (PVOID) SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdEndpoint);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdIrp = (PIRP) SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdIrp);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Flink = (struct _LIST_ENTRY *) SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Flink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Blink = (struct _LIST_ENTRY *) SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Blink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Flink = (struct _LIST_ENTRY *) SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Flink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Blink = (struct _LIST_ENTRY *) SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Blink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdCurrentIoFlushPointer = (PVOID) SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdCurrentIoFlushPointer);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdExtension = (PVOID) SWAP32(purb->UrbBulkOrInterruptTransfer.hca.HcdExtension);
 				}
 				else if (purb->UrbHeader.Function == URB_FUNCTION_ABORT_PIPE ||
 					 purb->UrbHeader.Function == URB_FUNCTION_RESET_PIPE
 				)
 				{
-					purb->UrbPipeRequest.PipeHandle = SWAP32(purb->UrbPipeRequest.PipeHandle);
+					purb->UrbPipeRequest.PipeHandle = (USBD_PIPE_HANDLE) SWAP32(purb->UrbPipeRequest.PipeHandle);
 				}
 			}
 			else
@@ -3301,7 +3304,7 @@ EXCHANGE_IRP:
 				purb->UrbHeader.Length = SWAP_BACK16(purb->UrbHeader.Length);
 				purb->UrbHeader.Function = SWAP_BACK16(purb->UrbHeader.Function);
 				purb->UrbHeader.Status = SWAP_BACK32(purb->UrbHeader.Status);
-				purb->UrbHeader.UsbdDeviceHandle = SWAP_BACK32(purb->UrbHeader.UsbdDeviceHandle);
+				purb->UrbHeader.UsbdDeviceHandle = (PVOID) SWAP_BACK32(purb->UrbHeader.UsbdDeviceHandle);
 				purb->UrbHeader.UsbdFlags = SWAP_BACK32(purb->UrbHeader.UsbdFlags);
 
 				if (((PURB)pirp_save->Buffer)->UrbHeader.Function == URB_FUNCTION_GET_DESCRIPTOR_FROM_INTERFACE ||
@@ -3311,21 +3314,21 @@ EXCHANGE_IRP:
 				    ((PURB)pirp_save->Buffer)->UrbHeader.Function == 0x2a	// _URB_OS_FEATURE_DESCRIPTOR_REQUEST_FULL
 				)
 				{
-					purb->UrbControlTransfer.PipeHandle = SWAP_BACK32(purb->UrbControlTransfer.PipeHandle);
+					purb->UrbControlTransfer.PipeHandle = (USBD_PIPE_HANDLE) SWAP_BACK32(purb->UrbControlTransfer.PipeHandle);
 					purb->UrbControlTransfer.TransferFlags = SWAP_BACK32(purb->UrbControlTransfer.TransferFlags);
 					purb->UrbControlTransfer.TransferBufferLength = SWAP_BACK32(purb->UrbControlTransfer.TransferBufferLength);
-					purb->UrbControlTransfer.TransferBuffer = SWAP_BACK32(purb->UrbControlTransfer.TransferBuffer);
-					purb->UrbControlTransfer.TransferBufferMDL = SWAP_BACK32(purb->UrbControlTransfer.TransferBufferMDL);
-					purb->UrbControlTransfer.UrbLink = SWAP_BACK32(purb->UrbControlTransfer.UrbLink);
+					purb->UrbControlTransfer.TransferBuffer = (PVOID) SWAP_BACK32(purb->UrbControlTransfer.TransferBuffer);
+					purb->UrbControlTransfer.TransferBufferMDL = (PMDL) SWAP_BACK32(purb->UrbControlTransfer.TransferBufferMDL);
+					purb->UrbControlTransfer.UrbLink = (struct _URB *) SWAP_BACK32(purb->UrbControlTransfer.UrbLink);
 
-					purb->UrbControlTransfer.hca.HcdEndpoint = SWAP_BACK32(purb->UrbControlTransfer.hca.HcdEndpoint);
-					purb->UrbControlTransfer.hca.HcdIrp = SWAP_BACK32(purb->UrbControlTransfer.hca.HcdIrp);
-					purb->UrbControlTransfer.hca.HcdListEntry.Flink = SWAP_BACK32(purb->UrbControlTransfer.hca.HcdListEntry.Flink);
-					purb->UrbControlTransfer.hca.HcdListEntry.Blink = SWAP_BACK32(purb->UrbControlTransfer.hca.HcdListEntry.Blink);
-					purb->UrbControlTransfer.hca.HcdListEntry2.Flink = SWAP_BACK32(purb->UrbControlTransfer.hca.HcdListEntry2.Flink);
-					purb->UrbControlTransfer.hca.HcdListEntry2.Blink = SWAP_BACK32(purb->UrbControlTransfer.hca.HcdListEntry2.Blink);
-					purb->UrbControlTransfer.hca.HcdCurrentIoFlushPointer = SWAP_BACK32(purb->UrbControlTransfer.hca.HcdCurrentIoFlushPointer);
-					purb->UrbControlTransfer.hca.HcdExtension = SWAP_BACK32(purb->UrbControlTransfer.hca.HcdExtension);
+					purb->UrbControlTransfer.hca.HcdEndpoint = (PVOID) SWAP_BACK32(purb->UrbControlTransfer.hca.HcdEndpoint);
+					purb->UrbControlTransfer.hca.HcdIrp = (PIRP) SWAP_BACK32(purb->UrbControlTransfer.hca.HcdIrp);
+					purb->UrbControlTransfer.hca.HcdListEntry.Flink = (struct _LIST_ENTRY *) SWAP_BACK32(purb->UrbControlTransfer.hca.HcdListEntry.Flink);
+					purb->UrbControlTransfer.hca.HcdListEntry.Blink = (struct _LIST_ENTRY *) SWAP_BACK32(purb->UrbControlTransfer.hca.HcdListEntry.Blink);
+					purb->UrbControlTransfer.hca.HcdListEntry2.Flink = (struct _LIST_ENTRY *) SWAP_BACK32(purb->UrbControlTransfer.hca.HcdListEntry2.Flink);
+					purb->UrbControlTransfer.hca.HcdListEntry2.Blink = (struct _LIST_ENTRY *) SWAP_BACK32(purb->UrbControlTransfer.hca.HcdListEntry2.Blink);
+					purb->UrbControlTransfer.hca.HcdCurrentIoFlushPointer = (PVOID) SWAP_BACK32(purb->UrbControlTransfer.hca.HcdCurrentIoFlushPointer);
+					purb->UrbControlTransfer.hca.HcdExtension = (PVOID) SWAP_BACK32(purb->UrbControlTransfer.hca.HcdExtension);
 
 					purb->UrbControlDescriptorRequest.Reserved1 = SWAP_BACK16(purb->UrbControlDescriptorRequest.Reserved1);
 					purb->UrbControlDescriptorRequest.Reserved2 = SWAP_BACK16(purb->UrbControlDescriptorRequest.Reserved2);
@@ -3333,8 +3336,8 @@ EXCHANGE_IRP:
 				}
 				else if (((PURB)pirp_save->Buffer)->UrbHeader.Function == URB_FUNCTION_SELECT_CONFIGURATION)
 				{
-					purb->UrbSelectConfiguration.ConfigurationDescriptor = SWAP_BACK32(purb->UrbSelectConfiguration.ConfigurationDescriptor);
-					purb->UrbSelectConfiguration.ConfigurationHandle = SWAP_BACK32(purb->UrbSelectConfiguration.ConfigurationHandle);
+					purb->UrbSelectConfiguration.ConfigurationDescriptor = (PUSB_CONFIGURATION_DESCRIPTOR) SWAP_BACK32(purb->UrbSelectConfiguration.ConfigurationDescriptor);
+					purb->UrbSelectConfiguration.ConfigurationHandle = (USBD_CONFIGURATION_HANDLE) SWAP_BACK32(purb->UrbSelectConfiguration.ConfigurationHandle);
 
 					if (SWAP32(purb->UrbSelectConfiguration.ConfigurationDescriptor) != 0x0)
 					{
@@ -3343,12 +3346,12 @@ EXCHANGE_IRP:
 
 						for (i = 0; tmp_len > 0; i++) {
 							(*(USBD_INTERFACE_INFORMATION*)tmp).Length = SWAP_BACK16((*(USBD_INTERFACE_INFORMATION*)tmp).Length);
-							(*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle);
+							(*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle = (USBD_INTERFACE_HANDLE) SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle);
 							(*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes);
 
 							for (j = 0; j < SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes); j++) {
 								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumPacketSize = SWAP_BACK16((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumPacketSize);
-								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle);
+								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle = (USBD_PIPE_HANDLE) SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle);
 								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumTransferSize = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumTransferSize);
 								(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeFlags = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeFlags);
 							}
@@ -3359,42 +3362,42 @@ EXCHANGE_IRP:
 				}
 				else if (((PURB)pirp_save->Buffer)->UrbHeader.Function == URB_FUNCTION_SELECT_INTERFACE)
 				{
-					purb->UrbSelectInterface.ConfigurationHandle = SWAP_BACK32(purb->UrbSelectInterface.ConfigurationHandle);
+					purb->UrbSelectInterface.ConfigurationHandle = (USBD_CONFIGURATION_HANDLE) SWAP_BACK32(purb->UrbSelectInterface.ConfigurationHandle);
 					tmp = (char*)&(purb->UrbSelectInterface.Interface);
 
 					(*(USBD_INTERFACE_INFORMATION*)tmp).Length = SWAP_BACK16((*(USBD_INTERFACE_INFORMATION*)tmp).Length);
-					(*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle);
+					(*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle = (USBD_INTERFACE_HANDLE) SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).InterfaceHandle);
 					(*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes);
 
 					for (j = 0; j < SWAP32((*(USBD_INTERFACE_INFORMATION*)tmp).NumberOfPipes); j++) {
 						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumPacketSize = SWAP_BACK16((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumPacketSize);
-						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle);
+						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle = (USBD_PIPE_HANDLE) SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeHandle);
 						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumTransferSize = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].MaximumTransferSize);
 						(*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeFlags = SWAP_BACK32((*(USBD_INTERFACE_INFORMATION*)tmp).Pipes[j].PipeFlags);
 					}
 				}
 				else if (((PURB)pirp_save->Buffer)->UrbHeader.Function == URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER)
 				{
-					purb->UrbBulkOrInterruptTransfer.PipeHandle = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.PipeHandle);
+					purb->UrbBulkOrInterruptTransfer.PipeHandle = (USBD_PIPE_HANDLE) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.PipeHandle);
 					purb->UrbBulkOrInterruptTransfer.TransferFlags = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.TransferFlags);
 					purb->UrbBulkOrInterruptTransfer.TransferBufferLength = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.TransferBufferLength);
-					purb->UrbBulkOrInterruptTransfer.TransferBuffer = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.TransferBuffer);
-					purb->UrbBulkOrInterruptTransfer.TransferBufferMDL = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.TransferBufferMDL);
-					purb->UrbBulkOrInterruptTransfer.UrbLink = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.UrbLink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdEndpoint = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdEndpoint);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdIrp = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdIrp);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Flink = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Flink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Blink = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Blink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Flink = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Flink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Blink = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Blink);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdCurrentIoFlushPointer = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdCurrentIoFlushPointer);
-					purb->UrbBulkOrInterruptTransfer.hca.HcdExtension = SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdExtension);
+					purb->UrbBulkOrInterruptTransfer.TransferBuffer = (PVOID) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.TransferBuffer);
+					purb->UrbBulkOrInterruptTransfer.TransferBufferMDL = (PMDL) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.TransferBufferMDL);
+					purb->UrbBulkOrInterruptTransfer.UrbLink = (struct _URB *) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.UrbLink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdEndpoint = (PVOID) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdEndpoint);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdIrp = (PIRP) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdIrp);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Flink = (struct _LIST_ENTRY *) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Flink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Blink = (struct _LIST_ENTRY *) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry.Blink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Flink = (struct _LIST_ENTRY *) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Flink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Blink = (struct _LIST_ENTRY *) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdListEntry2.Blink);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdCurrentIoFlushPointer = (PVOID) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdCurrentIoFlushPointer);
+					purb->UrbBulkOrInterruptTransfer.hca.HcdExtension = (PVOID) SWAP_BACK32(purb->UrbBulkOrInterruptTransfer.hca.HcdExtension);
 				}
 				else if (((PURB)pirp_save->Buffer)->UrbHeader.Function == URB_FUNCTION_ABORT_PIPE ||
 					 ((PURB)pirp_save->Buffer)->UrbHeader.Function == URB_FUNCTION_RESET_PIPE
 				)
 				{
-					purb->UrbPipeRequest.PipeHandle = SWAP_BACK32(purb->UrbPipeRequest.PipeHandle);
+					purb->UrbPipeRequest.PipeHandle = (USBD_PIPE_HANDLE) SWAP_BACK32(purb->UrbPipeRequest.PipeHandle);
 				}
 			}
 			else
@@ -4003,13 +4006,16 @@ int main(int argc, char *argv[])
 
 	printf("U2EC starting ...\n");
 
+	nvram_set("mfp_ip_requeue", "");
 #ifdef	SUPPORT_LPRng
 	lock = file_lock("printer");
 	nvram_set("MFP_busy", "0");
 	nvram_set("u2ec_device", "");
 	nvram_set("u2ec_busyip", "");
 #if __BYTE_ORDER == __BIG_ENDIAN
+#if !defined(RTCONFIG_QCA)
 	nvram_commit();
+#endif	
 #endif
 	file_unlock(lock);
 #endif

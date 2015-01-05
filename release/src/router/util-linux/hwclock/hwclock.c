@@ -1171,7 +1171,7 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
 	 */
 	time_t hclocktime = 0;
 	/* local return code */
-	int rc;
+	int rc = 0;
 
 	if (!systz && !predict) {
 		no_auth = ur->get_permissions();
@@ -1187,7 +1187,6 @@ manipulate_clock(const bool show, const bool adjust, const bool noadjfile,
 	} else {
 		/* A little trick to avoid reading the file if we don't have to */
 		adjtime.dirty = FALSE;
-		rc = 0;
 	}
 
 	universal = hw_clock_is_utc(utc, local_opt, adjtime);
@@ -1416,14 +1415,13 @@ static void usage(const char *fmt, ...)
 		 "\n"), usageto);
 #endif
 
-	fflush(usageto);
 	if (fmt) {
-		usageto = stderr;
 		va_start(ap, fmt);
-		vfprintf(stderr, fmt, ap);
+		vfprintf(usageto, fmt, ap);
 		va_end(ap);
 	}
 
+	fflush(usageto);
 	hwclock_exit(fmt ? EX_USAGE : EX_OK);
 }
 

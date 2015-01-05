@@ -36,6 +36,7 @@
 #include "xalloc.h"
 #include "strutils.h"
 #include "writeall.h"
+#include "match.h"
 #include "c.h"
 
 struct wipe_desc {
@@ -49,11 +50,15 @@ struct wipe_desc {
 	char		*label;		/* FS label */
 	char		*uuid;		/* FS uuid */
 
+	int		on_disk;
+
 	struct wipe_desc	*next;
 };
 
 #define WP_MODE_PRETTY		0		/* default */
 #define WP_MODE_PARSABLE	1
+
+static const char *type_pattern;
 
 static void
 print_pretty(struct wipe_desc *wp, int line)
@@ -127,10 +132,7 @@ add_offset(struct wipe_desc *wp0, loff_t offset, int zap)
 		wp = wp->next;
 	}
 
-	wp = calloc(1, sizeof(struct wipe_desc));
-	if (!wp)
-		err(EXIT_FAILURE, _("calloc failed"));
-
+	wp = xcalloc(1, sizeof(struct wipe_desc));
 	wp->offset = offset;
 	wp->next = wp0;
 	wp->zap = zap;
@@ -138,73 +140,106 @@ add_offset(struct wipe_desc *wp0, loff_t offset, int zap)
 }
 
 static struct wipe_desc *
-get_offset_from_probe(struct wipe_desc *wp, blkid_probe pr, int zap)
+get_desc_for_probe(struct wipe_desc *wp, blkid_probe pr)
 {
-	const char *off, *type, *usage, *mag;
+	const char *off, *type, *mag, *p, *usage = NULL;
 	size_t len;
+	loff_t offset;
+	int rc;
 
-	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) == 0 &&
-	    blkid_probe_lookup_value(pr, "SBMAGIC_OFFSET", &off, NULL) == 0 &&
-	    blkid_probe_lookup_value(pr, "SBMAGIC", &mag, &len) == 0 &&
-	    blkid_probe_lookup_value(pr, "USAGE", &usage, NULL) == 0) {
+	/* superblocks */
+	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) == 0) {
+		rc = blkid_probe_lookup_value(pr, "SBMAGIC_OFFSET", &off, NULL);
+		if (!rc)
+			rc = blkid_probe_lookup_value(pr, "SBMAGIC", &mag, &len);
+		if (rc)
+			return wp;
 
-		loff_t offset = strtoll(off, NULL, 10);
-		const char *p;
+	/* partitions */
+	} else if (blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL) == 0) {
+		rc = blkid_probe_lookup_value(pr, "PTMAGIC_OFFSET", &off, NULL);
+		if (!rc)
+			rc = blkid_probe_lookup_value(pr, "PTMAGIC", &mag, &len);
+		if (rc)
+			return wp;
+		usage = "partition table";
+	} else
+		return wp;
 
-		wp = add_offset(wp, offset, zap);
-		if (!wp)
-			return NULL;
+	if (type_pattern && !match_fstype(type, type_pattern))
+		return wp;
 
+	offset = strtoll(off, NULL, 10);
+
+	wp = add_offset(wp, offset, 0);
+	if (!wp)
+		return NULL;
+
+	if (usage || blkid_probe_lookup_value(pr, "USAGE", &usage, NULL) == 0)
 		wp->usage = xstrdup(usage);
-		wp->type = xstrdup(type);
 
-		wp->magic = xmalloc(len);
-		memcpy(wp->magic, mag, len);
-		wp->len = len;
+	wp->type = xstrdup(type);
+	wp->on_disk = 1;
 
-		if (blkid_probe_lookup_value(pr, "LABEL", &p, NULL) == 0)
-			wp->label = xstrdup(p);
+	wp->magic = xmalloc(len);
+	memcpy(wp->magic, mag, len);
+	wp->len = len;
 
-		if (blkid_probe_lookup_value(pr, "UUID", &p, NULL) == 0)
-			wp->uuid = xstrdup(p);
-	}
+	if (blkid_probe_lookup_value(pr, "LABEL", &p, NULL) == 0)
+		wp->label = xstrdup(p);
+
+	if (blkid_probe_lookup_value(pr, "UUID", &p, NULL) == 0)
+		wp->uuid = xstrdup(p);
 
 	return wp;
 }
 
-static struct wipe_desc *
-read_offsets(struct wipe_desc *wp, const char *fname, int zap)
+static blkid_probe
+new_probe(const char *devname, int mode)
 {
 	blkid_probe pr;
-	int rc;
 
-	if (!fname)
+	if (!devname)
 		return NULL;
 
-	pr = blkid_new_probe_from_filename(fname);
+	if (mode) {
+		int fd = open(devname, mode);
+		if (fd < 0)
+			goto error;
+
+		pr = blkid_new_probe();
+		if (pr && blkid_probe_set_device(pr, fd, 0, 0))
+			goto error;
+	} else
+		pr = blkid_new_probe_from_filename(devname);
+
 	if (!pr)
-		errx(EXIT_FAILURE, _("error: %s: probing initialization failed"), fname);
-
-	blkid_probe_enable_superblocks(pr, 0);	/* enabled by default ;-( */
-
-	blkid_probe_enable_partitions(pr, 1);
-	rc = blkid_do_fullprobe(pr);
-	blkid_probe_enable_partitions(pr, 0);
-
-	if (rc == 0) {
-		const char *type = NULL;
-		blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL);
-		warnx(_("WARNING: %s: appears to contain '%s' "
-				"partition table"), fname, type);
-	}
+		goto error;
 
 	blkid_probe_enable_superblocks(pr, 1);
 	blkid_probe_set_superblocks_flags(pr, BLKID_SUBLKS_MAGIC |
 			BLKID_SUBLKS_TYPE | BLKID_SUBLKS_USAGE |
 			BLKID_SUBLKS_LABEL | BLKID_SUBLKS_UUID);
 
+	blkid_probe_enable_partitions(pr, 1);
+	blkid_probe_set_partitions_flags(pr, BLKID_PARTS_MAGIC);
+
+	return pr;
+error:
+	err(EXIT_FAILURE, _("error: %s: probing initialization failed"), devname);
+	return NULL;
+}
+
+static struct wipe_desc *
+read_offsets(struct wipe_desc *wp, const char *devname)
+{
+	blkid_probe pr = new_probe(devname, 0);
+
+	if (!pr)
+		return NULL;
+
 	while (blkid_do_probe(pr) == 0) {
-		wp = get_offset_from_probe(wp, pr, zap);
+		wp = get_desc_for_probe(wp, pr);
 		if (!wp)
 			break;
 	}
@@ -213,60 +248,54 @@ read_offsets(struct wipe_desc *wp, const char *fname, int zap)
 	return wp;
 }
 
-static int
-do_wipe_offset(int fd, struct wipe_desc *wp, const char *fname, int noact)
+static struct wipe_desc *
+do_wipe(struct wipe_desc *wp, const char *devname, int noact, int all)
 {
-	char buf[BUFSIZ];
-	off_t l;
-	size_t i, len;
+	blkid_probe pr = new_probe(devname, O_RDWR);
+	struct wipe_desc *w;
 
-	if (!wp->type) {
-		warnx(_("no magic string found at offset "
-			"0x%jx -- ignored"), wp->offset);
-		return 0;
+	if (!pr)
+		return NULL;
+
+	while (blkid_do_probe(pr) == 0) {
+		w = get_desc_for_probe(wp, pr);
+		if (!w)
+			break;
+		wp = w;
+		if (!wp->on_disk)
+			continue;
+		wp->zap = all ? 1 : wp->zap;
+		if (!wp->zap)
+			continue;
+
+		if (blkid_do_wipe(pr, noact))
+			warn(_("failed to erase %s magic string at offset 0x%08jx"),
+			     wp->type, wp->offset);
+		else {
+			size_t i;
+
+			printf(_("%zd bytes were erased at offset 0x%08jx (%s): "),
+				wp->len, wp->offset, wp->type);
+
+			for (i = 0; i < wp->len; i++) {
+				printf("%02x", wp->magic[i]);
+				if (i + 1 < wp->len)
+					fputc(' ', stdout);
+			}
+			putchar('\n');
+		}
 	}
 
-	l = lseek(fd, wp->offset, SEEK_SET);
-	if (l == (off_t) -1)
-		err(EXIT_FAILURE, _("%s: failed to seek to offset 0x%jx"),
-				fname, wp->offset);
-
-	len = wp->len > sizeof(buf) ? sizeof(buf) : wp->len;
-
-	memset(buf, 0, len);
-	if (noact == 0 && write_all(fd, buf, len))
-		err(EXIT_FAILURE, _("%s: write failed"), fname);
-
-	printf(_("%zd bytes were erased at offset 0x%jx (%s)\nthey were: "),
-	       wp->len, wp->offset, wp->type);
-
-	for (i = 0; i < len; i++) {
-		printf("%02x", wp->magic[i]);
-		if (i + 1 < len)
-			fputc(' ', stdout);
+	for (w = wp; w != NULL; w = w->next) {
+		if (!w->on_disk)
+			warnx(_("offset 0x%jx not found"), w->offset);
 	}
 
-	printf("\n");
-	return 0;
-}
+	fsync(blkid_probe_get_fd(pr));
+	close(blkid_probe_get_fd(pr));
+	blkid_free_probe(pr);
 
-static int
-do_wipe(struct wipe_desc *wp, const char *fname, int noact)
-{
-	int fd;
-
-	fd = open(fname, O_WRONLY);
-	if (fd < 0)
-		err(EXIT_FAILURE, _("%s: open failed"), fname);
-
-	while (wp) {
-		if (wp->zap)
-			do_wipe_offset(fd, wp, fname, noact);
-		wp = wp->next;
-	}
-
-	close(fd);
-	return 0;
+	return wp;
 }
 
 static void
@@ -310,6 +339,7 @@ usage(FILE *out)
 		" -n, --no-act        do everything except the actual write() call\n"
 		" -o, --offset <num>  offset to erase, in bytes\n"
 		" -p, --parsable      print out in parsable instead of printable format\n"
+		" -t, --types <list>  limit the set of filesystem, RAIDs or partition tables\n"
 		" -V, --version       output version information and exit\n"), out);
 
 	fprintf(out, _("\nFor more information see wipefs(8).\n"));
@@ -323,7 +353,7 @@ main(int argc, char **argv)
 {
 	struct wipe_desc *wp = NULL;
 	int c, all = 0, has_offset = 0, noact = 0, mode = 0;
-	const char *fname;
+	const char *devname;
 
 	static const struct option longopts[] = {
 	    { "all",       0, 0, 'a' },
@@ -331,6 +361,7 @@ main(int argc, char **argv)
 	    { "no-act",    0, 0, 'n' },
 	    { "offset",    1, 0, 'o' },
 	    { "parsable",  0, 0, 'p' },
+	    { "types",     1, 0, 't' },
 	    { "version",   0, 0, 'V' },
 	    { NULL,        0, 0, 0 }
 	};
@@ -339,7 +370,7 @@ main(int argc, char **argv)
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	while ((c = getopt_long(argc, argv, "ahno:pV", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "ahno:pt:V", longopts, NULL)) != -1) {
 		switch(c) {
 		case 'a':
 			all++;
@@ -357,6 +388,9 @@ main(int argc, char **argv)
 		case 'p':
 			mode = WP_MODE_PARSABLE;
 			break;
+		case 't':
+			type_pattern = optarg;
+			break;
 		case 'V':
 			printf(_("%s from %s\n"), program_invocation_short_name,
 				PACKAGE_STRING);
@@ -372,20 +406,25 @@ main(int argc, char **argv)
 	if (optind == argc)
 		usage(stderr);
 
-	fname = argv[optind++];
+	devname = argv[optind++];
 
 	if (optind != argc)
 		errx(EXIT_FAILURE, _("only one device as argument is currently supported."));
 
-	wp = read_offsets(wp, fname, all);
-
-	if (wp) {
-		if (has_offset || all)
-			do_wipe(wp, fname, noact);
-		else
+	if (!all && !has_offset) {
+		/*
+		 * Print only
+		 */
+		wp = read_offsets(wp, devname);
+		if (wp)
 			print_all(wp, mode);
-
-		free_wipe(wp);
+	} else {
+		/*
+		 * Erase
+		 */
+		wp = do_wipe(wp, devname, noact, all);
 	}
+
+	free_wipe(wp);
 	return EXIT_SUCCESS;
 }

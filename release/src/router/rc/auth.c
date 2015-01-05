@@ -49,7 +49,9 @@ start_wpa_supplicant(int unit, int restart)
 	cli_argv[3] = wpa_argv[4];
 
 	/* Get driver, wired default */
-#ifndef RTCONFIG_RALINK /* Both BCM 5.x and 6.x */
+#ifdef RTCONFIG_RALINK
+#elif defined(RTCONFIG_QCA)
+#else	/* Both BCM 5.x and 6.x */
 	if (get_switch() == SWITCH_BCM5325)
 		wpa_argv[6] = "roboswitch";
 #endif

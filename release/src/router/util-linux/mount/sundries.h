@@ -13,6 +13,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#define XALLOC_EXIT_CODE 2 /* same as EX_SYSERR, for backwards compatibility */
+#include "xalloc.h"
+
 /* global mount, umount, and losetup variables */
 extern int mount_quiet;
 extern int verbose;
@@ -20,6 +23,7 @@ extern int nocanonicalize;
 extern char *progname;
 
 #define streq(s, t)	(strcmp ((s), (t)) == 0)
+#define my_free(_p)  free((void *) _p)
 
 void block_signals (int how);
 
@@ -30,8 +34,6 @@ void die(int err, const char *fmt, ...)
 
 int matching_type (const char *type, const char *types);
 int matching_opts (const char *options, const char *test_opts);
-void *xmalloc (size_t size);
-char *xstrdup (const char *s);
 char *xstrndup (const char *s, int n);
 char *xstrconcat3 (char *, const char *, const char *);
 char *xstrconcat4 (char *, const char *, const char *, const char *);

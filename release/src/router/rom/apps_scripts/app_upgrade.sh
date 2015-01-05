@@ -3,8 +3,25 @@
 
 
 apps_ipkg_old=`nvram get apps_ipkg_old`
-is_arm_machine=`uname -m |grep arm`
-
+f=`nvram get apps_install_folder`
+case $f in
+	"asusware.arm")
+		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
+		;;
+	"asusware.big")
+		pkg_type="mipsbig"
+		;;
+	"asusware.mipsbig")
+		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
+		;;
+	"asusware")
+		pkg_type="mipsel"
+		;;
+	*)
+		echo "Unknown apps_install_folder: $f"
+		exit 1
+		;;
+esac
 APPS_PATH=/opt
 CONF_FILE=$APPS_PATH/etc/ipkg.conf
 ASUS_SERVER=`nvram get apps_ipkg_server`
@@ -12,6 +29,7 @@ wget_timeout=`nvram get apps_wget_timeout`
 #wget_options="-nv -t 2 -T $wget_timeout --dns-timeout=120"
 wget_options="-q -t 2 -T $wget_timeout"
 download_file=
+
 
 # $1: package name.
 # return value. 1: have package. 0: no package.
@@ -135,7 +153,7 @@ _download_package(){
 	# Geting the app's file name...
 	server_names=`grep -n '^src.*' $CONF_FILE |sort -r |awk '{print $3}'`
 	for s in $server_names; do
-		if [ -z "$is_arm_machine" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+		if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
 			pkg_file=`_get_pkg_file_name_old $1 $s 0`
 		else
 			pkg_file=`_get_pkg_file_name $1`
@@ -152,14 +170,14 @@ _download_package(){
 	fi
 
 	# Downloading the app's file name...
-	if [ -z "$is_arm_machine" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ] && [ "$pkg_server" == "$ASUS_SERVER" ]; then
+	if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ] && [ "$pkg_server" == "$ASUS_SERVER" ]; then
 		download_file=`_get_pkg_file_name_old $1 $pkg_server 1`
 	else
 		download_file=$pkg_file
 	fi
 
 	target=$2/$download_file
-	nvram set apps_download_file=$target
+	nvram set apps_download_file=$download_file
 	nvram set apps_download_percent=0
 	wget -c $wget_options $pkg_server/$pkg_file -O $target &
 	wget_pid=`pidof wget`

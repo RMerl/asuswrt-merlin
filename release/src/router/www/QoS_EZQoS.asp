@@ -146,8 +146,14 @@ function submitQoS(){
 		document.form.qos_ibw.value = document.form.ibw.value*1024;
 	}	
 
-	if(document.form.qos_enable.value != document.form.qos_enable_orig.value)
-		FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");	
+	if(document.form.qos_enable.value != document.form.qos_enable_orig.value){
+		if(Rawifi_support || Qcawifi_support){
+			document.form.action_script.value = "restart_qos;restart_firewall";
+		}
+		else{		//Broadcom
+			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		}
+	}
 
 	showLoading();
 	document.form.submit();		
@@ -157,8 +163,9 @@ function change_qos_type(value){
 	if(value == 0){		//Traditional
 		$('int_type').checked = false;
 		$('trad_type').checked = true;	
-		if(document.form.qos_type_orig.value == 0 && document.form.qos_enable_orig.value != 0)
+		if(document.form.qos_type_orig.value == 0 && document.form.qos_enable_orig.value != 0){
 			document.form.action_script.value = "restart_qos;restart_firewall";
+		}	
 		else{
 			document.form.action_script.value = "reboot";
 			document.form.next_page.value = "Advanced_QOSUserRules_Content.asp";
@@ -278,7 +285,6 @@ function change_qos_type(value){
 															 function() {
 																document.form.qos_enable.value = 1;
 																if(document.form.qos_enable_orig.value != 1){
-																	document.form.action_script.value = "reboot";
 																	if($('int_type').checked == true && bwdpi_support)
 																		document.form.next_page.value = "AdaptiveQoS_Adaptive.asp";
 																	else
@@ -294,18 +300,14 @@ function change_qos_type(value){
 																}	
 															 },
 															 function() {
-																document.form.qos_enable.value = 0;
-																if(document.form.qos_enable_orig.value != 0)
-																	document.form.action_script.value = "reboot";
-																
+																document.form.qos_enable.value = 0;																
 																$('upload_tr').style.display = "none";
 																$('download_tr').style.display = "none";
 	
-																if(bwdpi_support)
+																if(bwdpi_support){
 																	$('qos_type_tr').style.display = "none";
-															 },
-															 {
-																switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+																	$('qos_enable_hint').style.display = "none";
+																}	
 															 }
 														);
 													</script>			

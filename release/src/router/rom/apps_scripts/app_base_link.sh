@@ -1,14 +1,31 @@
 #!/bin/sh
 
 
-is_arm_machine=`uname -m |grep arm`
-
+f=`nvram get apps_install_folder`
+case $f in
+	"asusware.arm")
+		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
+		;;
+	"asusware.big")
+		pkg_type="mipsbig"
+		;;
+	"asusware.mipsbig")
+		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
+		;;
+	"asusware")
+		pkg_type="mipsel"
+		;;
+	*)
+		echo "Unknown apps_install_folder: $f"
+		exit 1
+		;;
+esac
 APP_UCLIBC_VERSION=0.9.28
-
 APPS_DEV=`nvram get apps_dev`
 APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
 APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+
 
 if [ -z "$APPS_MOUNTED_PATH" ]; then
 	nvram set apps_state_error=2
@@ -115,7 +132,7 @@ ln -sf $APP_LIB/libuClibc-${APP_UCLIBC_VERSION}.so $APP_LINK_LIB/libc.so
 ln -sf $APP_LIB/libcrypt-${APP_UCLIBC_VERSION}.so $APP_LINK_LIB/libcrypt.so.0
 ln -sf $APP_LIB/libcrypt-${APP_UCLIBC_VERSION}.so $APP_LINK_LIB/libcrypt.so
 ln -sf $APP_LIB/libgcc_s.so.1 $APP_LINK_LIB/libgcc_s.so
-if [ -n "$is_arm_machine" ]; then
+if [ "$pkg_type" == "arm" ]; then
 	ln -sf $APP_LIB/libstdc++.so.6.0.2 $APP_LINK_LIB/libstdc++.so.6
 	ln -sf $APP_LIB/libstdc++.so.6.0.2 $APP_LINK_LIB/libstdc++.so
 else

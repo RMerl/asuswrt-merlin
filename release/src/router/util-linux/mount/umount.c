@@ -11,12 +11,12 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/mount.h>
+
 #include "mount_constants.h"
 #include "sundries.h"
 #include "getusername.h"
 #include "pathnames.h"
-#include "lomount.h"
-#include "loop.h"
+#include "loopdev.h"
 #include "fstab.h"
 #include "env.h"
 #include "nls.h"
@@ -100,7 +100,8 @@ static int fake = 0;
 static int
 check_special_umountprog(const char *node,
 			 const char *type, int *status) {
-	char umountprog[120];
+	char search_path[] = FS_SEARCH_PATH;
+	char *path, umountprog[150];
 	struct stat statbuf;
 	int res;
 
@@ -110,10 +111,16 @@ check_special_umountprog(const char *node,
 	if (type == NULL || strcmp(type, "none") == 0)
 		return 0;
 
-	if (strlen(type) < 100) {
+	path = strtok(search_path, ":");
+	while (path) {
 		int type_opt = 0;
 
-		sprintf(umountprog, "/sbin/umount.%s", type);
+		res = snprintf(umountprog, sizeof(umountprog), "%s/umount.%s",
+			       path, type);
+		path = strtok(NULL, ":");
+		if (res < 0 || (size_t) res >= sizeof(umountprog))
+			continue;
+
 		res = stat(umountprog, &statbuf);
 		if (res == -1 && errno == ENOENT && strchr(type, '.')) {
 			/* If type ends with ".subtype" try without it */
@@ -128,10 +135,10 @@ check_special_umountprog(const char *node,
 				int i = 0;
 
 				if(setgid(getgid()) < 0)
-					die(EX_FAIL, _("umount: cannot set group id: %s"), strerror(errno));
+					die(EX_FAIL, _("umount: cannot set group id: %m"));
 
 				if(setuid(getuid()) < 0)
-					die(EX_FAIL, _("umount: cannot set user id: %s"), strerror(errno));
+					die(EX_FAIL, _("umount: cannot set user id: %m"));
 
 				umountargs[i++] = umountprog;
 				umountargs[i++] = xstrdup(node);
@@ -243,12 +250,10 @@ static const char *chdir_to_parent(const char *node, char **resbuf)
 	}
 
 	if (chdir(parent) == -1)
-		die (2, _("umount: failed to chdir to %s: %s"),
-					parent, strerror(errno));
+		die (2, _("umount: failed to chdir to %s: %m"), parent);
 
 	if (!getcwd(buf, sizeof(buf)))
-		die (2, _("umount: failed to obtain current directory: %s"),
-			strerror(errno));
+		die (2, _("umount: failed to obtain current directory: %m"));
 
 	if (strcmp(buf, parent) != 0)
 		die (2, _("umount: mountpoint moved (%s -> %s)"), parent, buf);
@@ -300,7 +305,7 @@ umount_one (const char *spec, const char *node, const char *type,
 	 * Ignore the option "-d" for non-loop devices and loop devices with
 	 * LO_FLAGS_AUTOCLEAR flag.
 	 */
-	if (delloop && is_loop_device(spec))
+	if (delloop && is_loopdev(spec))
 		myloop = 1;
 
 	if (restricted) {
@@ -408,8 +413,8 @@ umount_one (const char *spec, const char *node, const char *type,
 			loopdev = spec;
 	}
  gotloop:
-	if (loopdev && !is_loop_autoclear(loopdev))
-		del_loop(loopdev);
+	if (loopdev && !loopdev_is_autoclear(loopdev))
+		loopdev_delete(loopdev);
 
  writemtab:
 	if (!nomtab &&
@@ -560,8 +565,8 @@ is_valid_loop(struct mntentchn *mc, struct mntentchn *fs)
 	}
 
 	/* check association */
-	if (loopfile_used_with((char *) mc->m.mnt_fsname,
-				fs->m.mnt_fsname, offset) == 1) {
+	if (loopdev_is_used((char *) mc->m.mnt_fsname, fs->m.mnt_fsname,
+				offset, LOOPDEV_FL_OFFSET) == 1) {
 		if (verbose > 1)
 			printf(_("device %s is associated with %s\n"),
 			       mc->m.mnt_fsname, fs->m.mnt_fsname);
@@ -645,20 +650,18 @@ try_loopdev:
 	 * (only if it is a regular file)
 	 */
 	if (!mc && !loopdev && !stat(file, &statbuf) && S_ISREG(statbuf.st_mode)) {
-		switch (find_loopdev_by_backing_file(file, &loopdev)) {
-		case 0:
+		int count = loopdev_count_by_backing_file(file, &loopdev);
+
+		if (count == 1) {
 			if (verbose)
 				printf(_("%s is associated with %s\n"),
 				       arg, loopdev);
 			file = loopdev;
 			goto try_loopdev;
-			break;
-		case 2:
-			if (verbose)
-				printf(_("%s is associated with more than one loop device: not unmounting\n"),
-				       arg);
-			break;
-		}
+
+		} else if (count > 1)
+			fprintf(stderr, _("umount: warning: %s is associated "
+				"with more than one loop device\n"), arg);
 	}
 
 	if (mc) {

@@ -9,7 +9,7 @@
 	JS_validclientname : "Client device name only accept alphanumeric characters, under line and dash symbol. The first character cannot be dash \"-\" or under line \"_\".",
 	ASUSGATE_act_feedback : "Feedback now",
 	ASUSGATE_DSL_setting : "Go setting DSL",
-	ISP_not_support : 'We currently do not support this location, please use <b>Manual</b>.',
+	ISP_not_support : 'We currently do not support this location, please use "Manual".',
 	period_time_validation : 'The value of check period can\'t be less than',
 	filter_lw_date_valid : 'Please select at least one day or disable this feature.'
 };
@@ -23,6 +23,8 @@ if(isSupport("tmo"))
         var theUrl = "cellspot.router";
 else
         var theUrl = "router.asus.com";
+
+var gobi_support = isSupport("gobi");
 
 /* convert some special character for shown string */
 function handle_show_str(show_str)
@@ -135,11 +137,33 @@ function high_channel(a, b)
         return a > b ? a : b;
 }
 
+function gotoModem(){	
+	document.titleForm.wan_unit.value = usb_index;
+	if( usb_index == -1){
+		top.location.href = "/Advanced_WANPort_Content.asp";	
+	}
+	else{
+		if(gobi_support)
+			document.titleForm.current_page.value = "Advanced_MobileBroadband_Content.asp?af=pincode";
+		else
+			document.titleForm.current_page.value = "Advanced_Modem_Content.asp";
+		document.titleForm.action_mode.value = "change_wan_unit";
+		document.titleForm.action = "apply.cgi";
+		document.titleForm.target = "";
+		document.titleForm.submit();		
+	}
+}
+
+var debug_end_time = parseInt("<% nvram_get("dslx_diag_end_uptime"); %>");
 function overHint(itemNum){
 	var statusmenu = "";
 	var title2 = 0;
 	var title5 = 0;
-	var title5_2 = 0;
+	var title5_2 = 0;	
+	
+	if(itemNum == 50){
+		statusmenu ="<span>Enable PPTP or L2TP client (optional)</span>";
+	}
 	
 	if(itemNum == 91){
 		statusmenu ="<span><#Adaptive_Category1#></span>";
@@ -156,10 +180,47 @@ function overHint(itemNum){
 	else if(itemNum == 95){
 		statusmenu ="<span><#Adaptive_Category5#></span>";
 	}
+	
 	if(itemNum == 96){
 		statusmenu ="<span><#Adaptive_Category6#></span>";
 	}
 	
+	if(itemNum == 98){
+		var signal = parseInt(sim_signal);
+		if(isNaN(signal) || signal <= 0){
+			statusmenu += "<div class='StatusHint'><#Mobile_no_signal#></div>";
+		}
+		else if(usb_state == 2 && usb_sbstate == 0 && usb_auxstate == 0){
+			statusmenu += "<div class='StatusHint'><#Connected#> ISP: </div><span>" + sim_spn + "</span>";
+		}
+		else{
+			statusmenu += "<div class='StatusHint'><#Disconnected#></div>";
+		}
+	}	
+
+	if(itemNum == 99){
+		if(sim_state == "1")
+			statusmenu += "<div class='StatusHint'><#Mobile_sim_ready#></div>";
+		else if(sim_state == "2"){
+			if( g3err_pin == "1" && pin_remaining_count < 3)
+				statusmenu += "<div class='StatusHint'>Wrong PIN code. Please input the correct PIN code.</div>";
+			else
+				statusmenu += "<div class='StatusHint'><#Mobile_need_pin#></div>";
+		}
+		else if(sim_state == "3")
+			statusmenu += "<div class='StatusHint'><#Mobile_need_puk#></div>";
+		else if(sim_state == "4")
+			statusmenu += "<div class='StatusHint'><#Mobile_need_pin2#></div>";
+		else if(sim_state == "5")
+			statusmenu += "<div class='StatusHint'><#Mobile_need_puk2#></div>";		
+		else if(sim_state == "6")
+			statusmenu += "<div class='StatusHint'><#Mobile_wait_sim#></div>";	
+		else if(sim_state == "-1")
+			statusmenu += "<div class='StatusHint'><#Mobile_sim_miss#></div>";
+		else
+			statusmenu += "<div class='StatusHint'><#Mobile_sim_fail#></div>";
+	}	
+		
 	if(itemNum == 24)		
 		statusmenu += "<span>The USB 3.0 cable without well-shielded would affect the 2.4Ghz wireless range.Enabling this feature to ensure the best wireless performance If your USB 3.0 device is not USB-IF certified.</span>";
 	
@@ -196,9 +257,13 @@ function overHint(itemNum){
 		statusmenu += "<span><#AiProtection_scan_note10#></span>";	
 	
 	// Viz add 2013.04 for dsl sync status
-	if(itemNum == 9){
-		statusmenu = "<div class='StatusHint'>ADSL :</div>";
-		if(wan_line_state == "up")
+	if(itemNum == 9){		
+		statusmenu = "<div class='StatusHint'>DSL :</div>";
+		if(wan_diag_state == "1" && allUsbStatus.search("storage") >= 0){
+			lineDesc = "Diagnostic debug log capture in progress.<br>";
+			lineDesc += show_diagTime();
+		}
+		else if(wan_line_state == "up")
 			lineDesc = "Link up";
 		else if(wan_line_state == "wait for init")
 			lineDesc = "Wait for init";
@@ -206,8 +271,8 @@ function overHint(itemNum){
 			lineDesc = "Initializing";
 		else
 			lineDesc = "Link down";
-
-		statusmenu += "<span>" + lineDesc + "</span>";
+					
+		statusmenu += "<span>" + lineDesc + "</span>";		
 
 	}
 
@@ -272,8 +337,12 @@ function overHint(itemNum){
 				else
 					statusmenu += "<div><#CTL_Disabled#></div>";
 			}
+
+			if(statusmenu != "")
+				return overlib(statusmenu, OFFSETX, -160, LEFT, DELAY, 400);
 		});
 	}
+
 	if(itemNum == 5){
 		statusmenu = "<span class='StatusHint'><#no_printer_detect#></span>";	
 	}
@@ -293,21 +362,21 @@ function overHint(itemNum){
 				statusmenu += "<span>" + show_str + " (";
 
 				if(gn_array_2g[i][11] == 0)
-					statusmenu += '<#Limitless#>';
+					statusmenu += "<#Limitless#>)</span><br>";
 				else{
 					var expire_hr = Math.floor(gn_array_2g[i][13]/3600);
 					var expire_min = Math.floor((gn_array_2g[i][13]%3600)/60);
-					if(expire_hr > 0)
-						statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+					if(expire_hr > 0){
+						statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
+					}
 					else{
 						if(expire_min > 0)
-								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
 						else	
-								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min';
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min(s)';
 					}
+					statusmenu += " left)</span><br>";
 				}
-
-				statusmenu += " left)</span><br>";
 			}
 		}
 		if(band5g_support){
@@ -327,21 +396,21 @@ function overHint(itemNum){
 					statusmenu += "<span>" + show_str + " (";
 
 					if(gn_array_5g[i][11] == 0)
-						statusmenu += '<#Limitless#>';
+						statusmenu += '<#Limitless#>)</span><br>';
 					else{
 						var expire_hr = Math.floor(gn_array_5g[i][13]/3600);
 						var expire_min = Math.floor((gn_array_5g[i][13]%3600)/60);
-						if(expire_hr > 0)
-							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+						if(expire_hr > 0){
+							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
+						}
 						else{
 							if(expire_min > 0)
-								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
 							else	
-								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min';
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min(s)';
 						}
+						statusmenu += " left)</span><br>";
 					}
-
-					statusmenu += " left)</span><br>";
 				}
 			}
 		}
@@ -359,21 +428,21 @@ function overHint(itemNum){
 					statusmenu += "<span>" + show_str + " (";
 
 					if(gn_array_5g_2[i][11] == 0)
-						statusmenu += '<#Limitless#>';
+						statusmenu += '<#Limitless#>)</span><br>';
 					else{
 						var expire_hr = Math.floor(gn_array_5g_2[i][13]/3600);
 						var expire_min = Math.floor((gn_array_5g_2[i][13]%3600)/60);
-						if(expire_hr > 0)
-							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+						if(expire_hr > 0){
+							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
+						}
 						else{
 							if(expire_min > 0)
-								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min(s)';
 							else	
-								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min';
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min(s)';
 						}
+						statusmenu += " left)</span><br>";
 					}
-
-					statusmenu += " left)</span><br>";
 				}
 			}
 		}
@@ -408,7 +477,7 @@ function overHint(itemNum){
 			}
 			else if(sw_mode == 2 || sw_mode == 4){
 				if(_wlc_state == "wlc_state=2"){
-					statusmenu = "<span class='StatusHint'><#APSurvey_msg_connected#></span><br><br>";
+					statusmenu = "<span class='StatusHint'><#APSurvey_msg_connected#></span><br>";
 					if(wlc_band == 0)	
 						statusmenu += "<b>Link rate: </b>"+ data_rate_info_2g;
 					else if(wlc_band == 1)
@@ -431,45 +500,85 @@ function overHint(itemNum){
 	 	require(['/require/modules/diskList.js'], function(diskList){
 	 		var usbDevicesList = diskList.list();
 
-			if(!usbDevicesList.length){
-				statusmenu = "<div class='StatusHint'><#no_usb_found#></div>";
-			}
-			else{
-				statusmenu = "";
-				for(var i=0; i<usbDevicesList.length; i++){
-					if(usbDevicesList[i].deviceType == "printer") continue;
+			statusmenu = "";
+			for(var i=0; i<usbDevicesList.length; i++){
+				if(usbDevicesList[i].deviceType == "printer") continue;
 
-					statusmenu += "<div class='StatusHint' style='margin-top:8px'>" + usbDevicesList[i].deviceName + ":</div>";
-					statusmenu += "<div>" + usbDevicesList[i].deviceType.charAt(0).toUpperCase() + usbDevicesList[i].deviceType.substring(1).toLowerCase() + "</div>";
+				statusmenu += "<div class='StatusHint' style='margin-top:8px'>" + usbDevicesList[i].deviceName + ":</div>";
+				statusmenu += "<div>" + usbDevicesList[i].deviceType.charAt(0).toUpperCase() + usbDevicesList[i].deviceType.substring(1).toLowerCase() + "</div>";
 
-					if(usbDevicesList[i].deviceType == "storage" && usbDevicesList[i].mountNumber == 0)
-						statusmenu += "<div><#DISK_UNMOUNTED#></div>";
-					else if(usbDevicesList[i].hasErrPart)
-						statusmenu += "<div><#diskUtility_crash_found#></div>";
-					else{				
-						if(usbDevicesList[i].hasAppDev)
-							statusmenu += "<div><#menu5_4#></div>";
-						if(usbDevicesList[i].hasTM)
-							statusmenu += "<div>Time Machine</div>";
-					}
+				if(usbDevicesList[i].deviceType == "storage" && usbDevicesList[i].mountNumber == 0)
+					statusmenu += "<div><#DISK_UNMOUNTED#></div>";
+				else if(usbDevicesList[i].hasErrPart)
+					statusmenu += "<div><#diskUtility_crash_found#></div>";
+				else{				
+					if(usbDevicesList[i].hasAppDev)
+						statusmenu += "<div><#menu5_4#></div>";
+					if(usbDevicesList[i].hasTM)
+						statusmenu += "<div>Time Machine</div>";
 				}
 			}
+			if(statusmenu == ""){
+				statusmenu = "<div class='StatusHint'><#no_usb_found#></div>";
+			}
+
+			if( statusmenu == "" )
+				statusmenu = "<div class='StatusHint'><#no_usb_found#></div>";
 
 			return overlib(statusmenu, OFFSETX, -160, LEFT, DELAY, 400);
 		});
 	}
 
-	return overlib(statusmenu, OFFSETX, -160, LEFT, DELAY, 400);
+	if( statusmenu != "" )
+		return overlib(statusmenu, OFFSETX, -160, LEFT, DELAY, 400);
+}
+
+function show_diagTime(){
+				
+	Etime = debug_end_time - boottime;
+	EHours = Math.floor((Etime / 3600) % 24);	
+	EMinutes = Math.floor(Etime % 3600 / 60);	
+	boottime += 1;
+	//setTimeout("show_diagTime();", 1000);
+	if(EHours <= 0 && EMinutes <= 0)
+		return "<#mssid_time_remaining#> : <span>0</span> <#Hour#> <span>0</span> <#Minute#>";
+	else
+		return "<#mssid_time_remaining#> : <span>"+EHours+"</span> <#Hour#> <span>"+EMinutes+"</span> <#Minute#>";
+}
+
+function cancel_diag(){
+		parent.document.canceldiagForm.submit();
 }
 
 function openHint(hint_array_id, hint_show_id, flag){
 	if(hint_array_id == 24){
 		var _caption = "";
 
-		if(hint_show_id == 6){	// Viz add 2013.04 for dsl sync status
-			statusmenu = "<span class='StatusClickHint' onclick='gotoDSL_log();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Go to ADSL Log</span>";
-			_caption = "ADSL Log";
+		if(hint_show_id == 8){	//2014.10 Viz add for dsl dslx_diag_state
+			statusmenu = "<span class='StatusClickHint' onclick='cancel_diag();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Cancel debug capture</span>";
+			_caption = "DSL Line Diagnostic capture";
 		}
+		if(hint_show_id == 7){
+			statusmenu = "<span class='StatusClickHint' onclick='gotoModem();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
+			if(usb_index == -1){
+				statusmenu += "Go to Dual WAN Setting, and activate USB modem.</span>"
+				_caption = "<#dualwan#>";
+			}
+			else{
+				if(gobi_support){
+					statusmenu += "Go to Mobile Broadband Setting.</span>"
+					_caption = "<#Mobile_title#>";
+				}
+				else{		
+					statusmenu += "<#GO_HSDPA_SETTING#></span>"
+					_caption = "<#menu5_4_4#>";
+				}	
+			}
+		}
+		else if(hint_show_id == 6){	// Viz add 2013.04 for dsl sync status
+			statusmenu = "<span class='StatusClickHint' onclick='gotoDSL_log();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Go to DSL Log</span>";
+			_caption = "DSL Log";
+		}		
 		else if(hint_show_id == 5){
 			statusmenu = "<span class='StatusClickHint' onclick='gotocooler();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Go to Performance tuning</span>";
 			_caption = "Perfomance Tuning";

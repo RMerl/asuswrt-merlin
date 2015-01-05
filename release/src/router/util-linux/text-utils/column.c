@@ -106,6 +106,7 @@ int main(int argc, char **argv)
 {
 	struct winsize win;
 	int ch, tflag = 0, xflag = 0;
+	int i;
 	long termwidth = 80;
 	int entries = 0;		/* number of records */
 	unsigned int eval = 0;		/* exit value */
@@ -198,7 +199,7 @@ int main(int argc, char **argv)
 	else
 		r_columnate(maxlength, termwidth, list, entries);
 
-	for (int i = 0; i < entries; i++)
+	for (i = 0; i < entries; i++)
 		free(list[i]);
 	free(list);
 
@@ -304,8 +305,8 @@ static void maketbl(wchar_t **list, int entries, wchar_t *separator)
 				cols = xrealloc(cols, maxcols * sizeof(wchar_t *));
 				lens = xrealloc(lens, maxcols * sizeof(ssize_t));
 				/* zero fill only new memory */
-				memset(lens + ((maxcols - DEFCOLS) * sizeof(ssize_t)), 0,
-				       DEFCOLS * sizeof(int));
+				memset(lens + (maxcols - DEFCOLS), 0,
+				       DEFCOLS * sizeof(*lens));
 			}
 			p = NULL;
 		}
@@ -394,9 +395,7 @@ static wchar_t *mbs_to_wcs(const char *s)
 	n = mbstowcs((wchar_t *)0, s, 0);
 	if (n < 0)
 		return NULL;
-	wcs = malloc((n + 1) * sizeof(wchar_t));
-	if (!wcs)
-		return NULL;
+	wcs = xmalloc((n + 1) * sizeof(wchar_t));
 	n = mbstowcs(wcs, s, n + 1);
 	if (n < 0)
 		return NULL;

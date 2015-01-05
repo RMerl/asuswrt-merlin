@@ -43,23 +43,36 @@ options.
 The exit code returned by
 .B fsck
 is the sum of the following conditions:
-.br
-\	0\	\-\ No errors
-.br
-\	1\	\-\ Filesystem errors corrected
-.br
-\	2\	\-\ System should be rebooted
-.br
-\	4\	\-\ Filesystem errors left uncorrected
-.br
-\	8\	\-\ Operational error
-.br
-\	16\	\-\ Usage or syntax error
-.br
-\	32\	\-\ Fsck canceled by user request
-.br
-\	128\	\-\ Shared-library error
-.br
+.PP
+.RS
+.PD 0
+.TP
+.B 0
+No errors
+.TP
+.B 1
+Filesystem errors corrected
+.TP
+.B 2
+System should be rebooted
+.TP
+.B 4
+Filesystem errors left uncorrected
+.TP
+.B 8
+Operational error
+.TP
+.B 16
+Usage or syntax error
+.TP
+.B 32
+Fsck canceled by user request
+.TP
+.B 128
+Shared-library error
+.PD
+.RE
+.PP
 The exit code returned when multiple filesystems are checked
 is the bit-wise OR of the exit codes for each
 filesystem that is checked.
@@ -241,8 +254,7 @@ may be used to have
 skip non-existing devices.
 .B fsck
 also skips non-existing devices that have the special filesystem type
-.B auto
-.
+.BR auto .
 .TP
 .B \-C\fR [ \fI "fd" \fR ]
 Display completion/progress bars for those filesystem checkers (currently
@@ -365,10 +377,14 @@ do not support the
 .B -y
 option as of this writing.
 .SH AUTHOR
-Theodore Ts'o (tytso@mit.edu)
+.UR tytso\@mit.edu
+Theodore Ts'o
+.UE
 .SH AVAILABILITY
 The fsck command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .
 .SH FILES
 .IR /etc/fstab .
 .SH ENVIRONMENT VARIABLES

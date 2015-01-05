@@ -361,7 +361,7 @@ static void reset_partlist(blkid_partlist ls)
 	ls->next_partno = 1;
 	INIT_LIST_HEAD(&ls->l_tabs);
 
-	DBG(DEBUG_LOWPROBE, printf("partlist reseted\n"));
+	DBG(DEBUG_LOWPROBE, printf("partlist reset\n"));
 }
 
 static blkid_partlist partitions_init_data(struct blkid_chain *chn)
@@ -530,15 +530,17 @@ int blkid_is_nested_dimension(blkid_partition par,
 	return 1;
 }
 
-static int idinfo_probe(blkid_probe pr, const struct blkid_idinfo *id)
+static int idinfo_probe(blkid_probe pr, const struct blkid_idinfo *id,
+			struct blkid_chain *chn)
 {
-	const struct blkid_idmag *mag;
+	const struct blkid_idmag *mag = NULL;
+	blkid_loff_t off;
 	int rc = 1;		/* = nothing detected */
 
 	if (pr->size <= 0 || (id->minsz && id->minsz > pr->size))
 		goto nothing;	/* the device is too small */
 
-	if (blkid_probe_get_idmag(pr, id, NULL, &mag))
+	if (blkid_probe_get_idmag(pr, id, &off, &mag))
 		goto nothing;
 
 	/* final check by probing function */
@@ -549,9 +551,15 @@ static int idinfo_probe(blkid_probe pr, const struct blkid_idinfo *id)
 	        if (rc == -1) {
 			/* reset after error */
 			reset_partlist(blkid_probe_get_partlist(pr));
+			if (chn && !chn->binary)
+				blkid_probe_chain_reset_vals(pr, chn);
 			DBG(DEBUG_LOWPROBE, printf(
 				"%s probefunc failed\n", id->name));
 		}
+		if (rc == 0 && mag && chn && !chn->binary)
+			rc = blkid_probe_set_magic(pr, off, mag->len,
+					(unsigned char *) mag->magic);
+
 		DBG(DEBUG_LOWPROBE, printf(
 			"%s: <--- (rc = %d)\n", id->name, rc));
 	}
@@ -594,7 +602,7 @@ static int partitions_probe(blkid_probe pr, struct blkid_chain *chn)
 			continue;
 
 		/* apply checks from idinfo */
-		if (idinfo_probe(pr, idinfos[i]) != 0)
+		if (idinfo_probe(pr, idinfos[i], chn) != 0)
 			continue;
 
 		name = idinfos[i]->name;
@@ -665,7 +673,7 @@ int blkid_partitions_do_subprobe(blkid_probe pr, blkid_partition parent,
 
 	blkid_probe_set_dimension(prc, off, sz);
 
-	/* clone is always with reseted chain, fix it */
+	/* clone is always with reset chain, fix it */
 	prc->cur_chain = blkid_probe_get_chain(pr);
 
 	/*
@@ -678,7 +686,7 @@ int blkid_partitions_do_subprobe(blkid_probe pr, blkid_partition parent,
 
 	blkid_probe_set_partlist(prc, ls);
 
-	rc = idinfo_probe(prc, id);
+	rc = idinfo_probe(prc, id, blkid_probe_get_chain(pr));
 
 	blkid_probe_set_partlist(prc, NULL);
 	blkid_partlist_set_parent(ls, NULL);
