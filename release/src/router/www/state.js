@@ -894,6 +894,10 @@ function remove_url(){
 	if(!snmp_support){
 		remove_menu_item("Advanced_SNMP_Content.asp");
 	}
+	if(!smart_connect_support){
+		remove_menu_item("Advanced_Smart_Connect.asp");
+	}
+
 }
 
 function remove_menu_item(remove_url){
@@ -1618,9 +1622,6 @@ function addOnlineHelp(obj, keywordArray){
 			obj.href += keywordArray[i];
 			obj.href += "%20";
 		}
-	}
-	if(!smart_connect_support){
-			remove_menu_item("Advanced_Smart_Connect.asp");
 	}
 }
 
