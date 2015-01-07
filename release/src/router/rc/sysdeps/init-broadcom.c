@@ -1960,7 +1960,7 @@ void init_others(void)
 #endif
 	}
 #ifdef RTAC68U
-	update_cfe();
+//	update_cfe();
 #endif
 #ifdef RTAC3200
 	if (nvram_match("bl_version", "1.0.1.3")) {
