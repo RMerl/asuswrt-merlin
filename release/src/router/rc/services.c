@@ -6460,18 +6460,18 @@ void setup_leds()
 		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC56S) || (model == MODEL_RTAC68U) || (model == MODEL_RTAC87U)) {
 			setAllLedOff();
 			if (model == MODEL_RTAC87U)
-				led_control(LED_5G, LED_OFF);
+				led_control_atomic(LED_5G, LED_OFF);
 		} else {        // TODO: Can other routers also use the same code?
-			led_control(LED_2G, LED_OFF);
-			led_control(LED_5G, LED_OFF);
-			led_control(LED_POWER, LED_OFF);
-			led_control(LED_SWITCH, LED_OFF);
-			led_control(LED_LAN, LED_OFF);
-			led_control(LED_WAN, LED_OFF);
+			led_control_atomic(LED_2G, LED_OFF);
+			led_control_atomic(LED_5G, LED_OFF);
+			led_control_atomic(LED_POWER, LED_OFF);
+			led_control_atomic(LED_SWITCH, LED_OFF);
+			led_control_atomic(LED_LAN, LED_OFF);
+			led_control_atomic(LED_WAN, LED_OFF);
 		}
 #ifdef RTCONFIG_USB
 		stop_usbled();
-		led_control(LED_USB, LED_OFF);
+		led_control_atomic(LED_USB, LED_OFF);
 #endif
 
 	} else {
@@ -6479,20 +6479,20 @@ void setup_leds()
 		start_usbled();
 #endif
 #ifdef RTCONFIG_LED_ALL
-		led_control(LED_ALL, LED_ON);
+		led_control_atomic(LED_ALL, LED_ON);
 #endif
 
 		if (nvram_match("wl1_radio", "1")) {
-			led_control(LED_5G_FORCED, LED_ON);
+			led_control_atomic(LED_5G_FORCED, LED_ON);
 		}
 		if (nvram_match("wl0_radio", "1")) {
-			led_control(LED_2G, LED_ON);
+			led_control_atomic(LED_2G, LED_ON);
 		}
 #ifdef RTCONFIG_QTN
 		setAllLedOn_qtn();
 #endif
-		led_control(LED_SWITCH, LED_ON);
-		led_control(LED_POWER, LED_ON);
+		led_control_atomic(LED_SWITCH, LED_ON);
+		led_control_atomic(LED_POWER, LED_ON);
 	}
 }
 

@@ -748,7 +748,7 @@ int main(int argc, char **argv)
 		if (argc != 3)
 			return 0;
 
-		return(led_control(atoi(argv[1]), atoi(argv[2])));
+		return(led_control_atomic(atoi(argv[1]), atoi(argv[2])));
 	}
 
 #ifdef RTCONFIG_BCMARM

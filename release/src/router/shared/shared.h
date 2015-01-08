@@ -591,6 +591,7 @@ extern int init_gpio(void);
 extern int set_pwr_usb(int boolOn);
 extern int button_pressed(int which);
 extern int led_control(int which, int mode);
+extern int led_control_atomic(int which, int mode);
 
 /* api-*.c */
 extern uint32_t gpio_dir(uint32_t gpio, int dir);

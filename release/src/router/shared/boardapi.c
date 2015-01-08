@@ -395,7 +395,6 @@ int do_led_control(int which, int mode)
 {
 	int use_gpio, gpio_nr;
 	int v = (mode == LED_OFF)? 0:1;
-	int model;
 
 	// Did the user disable the leds?
 	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1) && (which != LED_TURBO)
@@ -448,12 +447,21 @@ int do_led_control(int which, int mode)
 	}
 
 	return 0;
-/* Original code that's specific to stealth mode */
-/* TODO: re-implement within the new bled architecture
- * 		possibly by moving to a new function that we'd only use when enabling
-		or disabling stealth mode?
-  */
-/*
+}
+
+/* Led control code used by Stealth Mode.  Unlike led_control(), this
+ * function can also use other methods of enabling/disabling a LED
+ * beside gpio - required for some models
+ *
+ * Also call led_control(), as it will handle gpio-based leds.
+*/
+
+int led_control_atomic(int which, int mode)
+{
+	int model;
+
+	model = get_model();
+
 	switch(which) {
 		case LED_2G:
 			if ((model == MODEL_RTN66U) || (model == MODEL_RTAC66U) || (model == MODEL_RTN16)) {
@@ -461,7 +469,6 @@ int do_led_control(int which, int mode)
 					eval("wl", "-i", "eth1", "leddc", "0");
 				else if (mode == LED_OFF)
 					eval("wl", "-i", "eth1", "leddc", "1");
-				use_gpio = 0xff;
 			} else if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC56S)) {
 				if (mode == LED_ON)
 					eval("wl", "-i", "eth1", "ledbh", "3", "7");
@@ -472,8 +479,6 @@ int do_led_control(int which, int mode)
 					eval("wl", "ledbh", "10", "7");
 				else if (mode == LED_OFF)
 					eval("wl", "ledbh", "10", "0");
-			} else {
-				use_gpio = led_2g_gpio;
 			}
 			break;
 		case LED_5G_FORCED:
@@ -485,7 +490,6 @@ int do_led_control(int which, int mode)
 					nvram_set("led_5g", "0");
 					eval("wl", "-i", "eth2", "ledbh", "10", "0");
 				}
-				use_gpio = led_5g_gpio;
 			}
 			// Fall through regular LED_5G to handle other models
 		case LED_5G:
@@ -494,15 +498,11 @@ int do_led_control(int which, int mode)
                                         eval("wl", "-i", "eth2", "leddc", "0");
                                 else if (mode == LED_OFF)
                                         eval("wl", "-i", "eth2", "leddc", "1");
-				use_gpio = 0xff;
 			} else if ((model == MODEL_RTAC66U) || (model == MODEL_RTAC56U) || (model == MODEL_RTAC56S)) {
 				if (mode == LED_ON)
 					nvram_set("led_5g", "1");
 				else if (mode == LED_OFF)
 					nvram_set("led_5g", "0");
-				use_gpio = led_5g_gpio;
-                        } else {
-                                use_gpio = led_5g_gpio;
 			}
 			break;
 		case LED_SWITCH:
@@ -513,11 +513,10 @@ int do_led_control(int which, int mode)
 				eval("et", "robowr", "0x00", "0x18", "0x01e0");
 				eval("et", "robowr", "0x00", "0x1a", "0x01e0");
 			}
-			use_gpio = 0xff;
 			break;
+	}
 
-	return 0;
-*/
+	return led_control(which, mode);
 }
 
 #ifdef RT4GAC55U
