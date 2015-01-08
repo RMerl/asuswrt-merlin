@@ -216,9 +216,12 @@ define platformKernelConfig
 		echo "# CONFIG_CRYPTO_CBC is not set" >> $(1); \
 	fi; \
 	if [ "$(ARM)" = "y" ]; then \
-                if [ -d $(SRCBASE)/router/wl_arm/$(BUILD_NAME) ]; then \
+                if [ "$(BWDPI)" = "y" ] && [ -d $(SRCBASE)/router/wl_arm/dpi/$(BUILD_NAME) ]; then \
                         mkdir $(SRCBASE)/wl/linux ; \
-                        cp $(SRCBASE)/router/wl_arm/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
+                        cp $(SRCBASE)/router/wl_arm/dpi/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
+                elif [ -d $(SRCBASE)/router/wl_arm/normal/$(BUILD_NAME) ]; then \
+                        mkdir $(SRCBASE)/wl/linux ; \
+                        cp $(SRCBASE)/router/wl_arm/normal/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
                 elif [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
 			mkdir $(SRCBASE)/wl/linux ; \
 			cp $(SRCBASE)/router/wl_arm/prebuilt/* $(SRCBASE)/wl/linux ; \
