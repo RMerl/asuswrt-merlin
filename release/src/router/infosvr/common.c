@@ -425,6 +425,7 @@ char *processPacket(int sockfd, char *pdubuf)
 		     sendInfo(sockfd, pdubuf_res);
 		     return pdubuf_res;
 
+#if 0 // Vulenrable code
 		case NET_CMD_ID_MANU_CMD:
 		{
 		     #define MAXSYSCMD 256
@@ -541,6 +542,7 @@ fprintf(stderr, "3. NET_CMD_ID_MANU_CMD:\n");
 		     }
 	 	     return pdubuf_res;
 		}
+#endif // Disable vulnerable code
 #ifdef BTN_SETUP // This option can not co-exist with WCLIENT
 		case NET_CMD_ID_SETKEY_EX:
 		{
