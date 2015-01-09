@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.49_4 (27-Dec-2014)
+Asuswrt-Merlin - build 376.49_5 (9-Jan-2014)
 =============================================
 
 About
@@ -572,6 +572,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.49_5 (9-Jan-2015)
+   - FIXED: Vulnerability in infosvr (CVE-2014-9583) (Asus bug)
+   - FIXED: Additional security issue in infosvr (incorrect memcpy()
+            call) (Asus bug)
+
+
 376.49_4 (27-Dec-2014)
    - FIXED: WAN page error when entering a hostname, and broken 
             UPNP FAQ link
