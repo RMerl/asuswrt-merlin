@@ -224,7 +224,7 @@ char *processPacket(int sockfd, char *pdubuf)
 		phdr_ex = (IBOX_COMM_PKT_HDR_EX *)pdubuf;	
 		
 		// Check Mac Address
-		if (memcpy(phdr_ex->MacAddress, mac, 6)==0)
+		if (memcmp(phdr_ex->MacAddress, mac, 6)==0)
 		{
 			_dprintf("Mac Error %2x%2x%2x%2x%2x%2x\n",
 				(unsigned char)phdr_ex->MacAddress[0],
