@@ -224,7 +224,7 @@ char *processPacket(int sockfd, char *pdubuf)
 		phdr_ex = (IBOX_COMM_PKT_HDR_EX *)pdubuf;	
 		
 		// Check Mac Address
-		if (memcpy(phdr_ex->MacAddress, mac, 6)==0)
+		if (memcmp(phdr_ex->MacAddress, mac, 6)==0)
 		{
 			_dprintf("Mac Error %2x%2x%2x%2x%2x%2x\n",
 				(unsigned char)phdr_ex->MacAddress[0],
@@ -512,7 +512,7 @@ fprintf(stderr, "3. NET_CMD_ID_MANU_CMD:\n");
 #endif
 		     {
 			sprintf(cmdstr, "%s > /tmp/syscmd.out", syscmd->cmd);
-			system(cmdstr);
+//			system(cmdstr);	//CVE-2014-9583
 
 			fprintf(stderr,"rund: %s\n", cmdstr);
 			fp = fopen("/tmp/syscmd.out", "r");
