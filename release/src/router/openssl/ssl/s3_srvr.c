@@ -246,6 +246,7 @@ int ssl3_accept(SSL *s)
 					}
 				if (!BUF_MEM_grow(buf,SSL3_RT_MAX_PLAIN_LENGTH))
 					{
+					BUF_MEM_free(buf);
 					ret= -1;
 					goto end;
 					}
@@ -379,20 +380,11 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SW_KEY_EXCH_B:
 			alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
-			/* clear this, it may get reset by
-			 * send_server_key_exchange */
-			if ((s->options & SSL_OP_EPHEMERAL_RSA)
-#ifndef OPENSSL_NO_KRB5
-				&& !(alg_k & SSL_kKRB5)
-#endif /* OPENSSL_NO_KRB5 */
-				)
-				/* option SSL_OP_EPHEMERAL_RSA sends temporary RSA key
-				 * even when forbidden by protocol specs
-				 * (handshake may fail as clients are not required to
-				 * be able to handle this) */
-				s->s3->tmp.use_rsa_tmp=1;
-			else
-				s->s3->tmp.use_rsa_tmp=0;
+			/*
+			 * clear this, it may get reset by
+			 * send_server_key_exchange
+			 */
+			s->s3->tmp.use_rsa_tmp=0;
 
 
 			/* only send if a DH key exchange, fortezza or
@@ -406,7 +398,7 @@ int ssl3_accept(SSL *s)
 			 * server certificate contains the server's
 			 * public key for key exchange.
 			 */
-			if (s->s3->tmp.use_rsa_tmp
+			if (0
 			/* PSK: send ServerKeyExchange if PSK identity
 			 * hint if provided */
 #ifndef OPENSSL_NO_PSK
@@ -2014,6 +2006,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 		unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
 		int decrypt_len;
 		unsigned char decrypt_good, version_good;
+		size_t j;
 
 		/* FIX THIS UP EAY EAY EAY EAY */
 		if (s->s3->tmp.use_rsa_tmp)
@@ -2052,14 +2045,29 @@ int ssl3_get_client_key_exchange(SSL *s)
 				{
 				if (!(s->options & SSL_OP_TLS_D5_BUG))
 					{
+					al = SSL_AD_DECODE_ERROR;
 					SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
-					goto err;
+					goto f_err;
 					}
 				else
 					p-=2;
 				}
 			else
 				n=i;
+			}
+
+		/*
+		 * Reject overly short RSA ciphertext because we want to be sure
+		 * that the buffer size makes it safe to iterate over the entire
+		 * size of a premaster secret (SSL_MAX_MASTER_KEY_LENGTH). The
+		 * actual expected size is larger due to RSA padding, but the
+		 * bound is sufficient to be safe.
+		 */
+		if (n < SSL_MAX_MASTER_KEY_LENGTH)
+			{
+			al = SSL_AD_DECRYPT_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
+			goto f_err;
 			}
 
 		/* We must not leak whether a decryption failure occurs because
@@ -2109,19 +2117,23 @@ int ssl3_get_client_key_exchange(SSL *s)
 		 * to remain non-zero (0xff). */
 		decrypt_good &= version_good;
 
-		/* Now copy rand_premaster_secret over p using
-		 * decrypt_good_mask. */
-		for (i = 0; i < (int) sizeof(rand_premaster_secret); i++)
+		/*
+		 * Now copy rand_premaster_secret over from p using
+		 * decrypt_good_mask. If decryption failed, then p does not
+		 * contain valid plaintext, however, a check above guarantees
+		 * it is still sufficiently large to read from.
+		 */
+		for (j = 0; j < sizeof(rand_premaster_secret); j++)
 			{
-			p[i] = constant_time_select_8(decrypt_good, p[i],
-						      rand_premaster_secret[i]);
+			p[j] = constant_time_select_8(decrypt_good, p[j],
+						      rand_premaster_secret[j]);
 			}
 
 		s->session->master_key_length=
 			s->method->ssl3_enc->generate_master_secret(s,
 				s->session->master_key,
-				p,i);
-		OPENSSL_cleanse(p,i);
+				p,sizeof(rand_premaster_secret));
+		OPENSSL_cleanse(p,sizeof(rand_premaster_secret));
 		}
 	else
 #endif
@@ -2753,7 +2765,7 @@ int ssl3_get_cert_verify(SSL *s)
 	if (s->s3->tmp.message_type != SSL3_MT_CERTIFICATE_VERIFY)
 		{
 		s->s3->tmp.reuse_message=1;
-		if ((peer != NULL) && (type & EVP_PKT_SIGN))
+		if (peer != NULL)
 			{
 			al=SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_MISSING_VERIFY_MESSAGE);
@@ -3083,6 +3095,11 @@ int ssl3_send_server_certificate(SSL *s)
 			}
 
 		l=ssl3_output_cert_chain(s,x);
+		if (!l)
+			{
+			SSLerr(SSL_F_SSL3_SEND_SERVER_CERTIFICATE,ERR_R_INTERNAL_ERROR);
+			return(0);
+			}
 		s->state=SSL3_ST_SW_CERT_B;
 		s->init_num=(int)l;
 		s->init_off=0;

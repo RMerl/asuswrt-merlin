@@ -182,6 +182,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	 * at once (as long as it fits into the buffer). */
 	if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
 		{
+		if (left == 0 && extend)
+			return 0;
 		if (left > 0 && n > left)
 			n = left;
 		}
@@ -816,8 +818,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		wr->data=p;
 		}
 
-	/* ssl3_enc can only have an error on read */
-	s->method->ssl3_enc->enc(s,1);
+	if(s->method->ssl3_enc->enc(s,1)<1) goto err;
 
 	/* record length after mac and block padding */
 	s2n(wr->length,plen);
