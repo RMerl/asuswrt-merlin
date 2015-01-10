@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/include-Makefile.am
 
-SUBDIRS = src samples
+SUBDIRS = src
 
 if ENABLE_GTK_DOC
 SUBDIRS += docs
@@ -10,4 +10,4 @@ endif
 pkgconfigdir = $(usrlib_execdir)/pkgconfig
 pkgconfig_DATA = mount.pc
 
-EXTRA_DIST = COPYING.libmount mount.pc.in
+EXTRA_DIST = mount.pc.in

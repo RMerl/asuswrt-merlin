@@ -21,6 +21,9 @@ static int to_source_supplied, to_dest_supplied;
 #define NAT_S_TARGET '2'
 #define NAT_D_TARGET '2'
 #define NAT_S_ARP '3'
+
+#define NAT_ARP_TARGET '2'
+
 static struct option opts_s[] =
 {
 	{ "to-source"     , required_argument, 0, NAT_S },
@@ -29,6 +32,13 @@ static struct option opts_s[] =
 	{ "snat-arp"      ,       no_argument, 0, NAT_S_ARP },
 	{ 0 }
 };
+
+static struct option opts_arpnat[] =
+{
+	{ "arpnat-target"   , required_argument, 0, NAT_ARP_TARGET },
+	{ 0 }
+};
+
 
 static struct option opts_d[] =
 {
@@ -45,6 +55,13 @@ static void print_help_s()
 	" --to-src address       : MAC address to map source to\n"
 	" --snat-target target   : ACCEPT, DROP, RETURN or CONTINUE\n"
 	" --snat-arp             : also change src address in arp msg\n");
+}
+
+static void print_help_arpnat()
+{
+	printf(
+	"arpnat options:\n"
+	" --arpnat-target target   : ACCEPT, DROP, RETURN or CONTINUE\n");
 }
 
 static void print_help_d()
@@ -72,6 +89,57 @@ static void init_d(struct ebt_entry_target *target)
 	natinfo->target = EBT_ACCEPT;
 	return;
 }
+
+static void init_arpnat(struct ebt_entry_target *target)
+{
+	struct ebt_nat_info *natinfo = (struct ebt_nat_info *)target->data;
+
+	natinfo->target = EBT_ACCEPT;
+	return;
+}
+#define OPT_ARPNAT_TARGET 0x2
+static int parse_arpnat(int c, char **argv, int argc,
+   const struct ebt_u_entry *entry, unsigned int *flags,
+   struct ebt_entry_target **target)
+{
+	struct ebt_nat_info *natinfo = (struct ebt_nat_info *)(*target)->data;
+
+	switch (c) {
+	case NAT_ARP_TARGET:
+		ebt_check_option2(flags, OPT_ARPNAT_TARGET);
+		if (FILL_TARGET(optarg, natinfo->target))
+			ebt_print_error2("Illegal --arpnat-target target");
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
+static void final_check_arpnat(const struct ebt_u_entry *entry,
+   const struct ebt_entry_target *target, const char *name,
+   unsigned int hookmask, unsigned int time)
+{
+	struct ebt_nat_info *natinfo = (struct ebt_nat_info *)target->data;
+
+	if (BASE_CHAIN && natinfo->target == EBT_RETURN)
+		ebt_print_error("--arpnat-target RETURN not allowed on base chain");
+	CLEAR_BASE_CHAIN_BIT;
+	if (((hookmask & ~((1 << NF_BR_PRE_ROUTING) | (1 << NF_BR_POST_ROUTING)))
+	   || strcmp(name, "nat")))
+		ebt_print_error("Wrong chain for arpnat");
+}
+
+static void print_arpnat(const struct ebt_u_entry *entry,
+   const struct ebt_entry_target *target)
+{
+	struct ebt_nat_info *natinfo = (struct ebt_nat_info *)target->data;
+
+	printf(" --arpnat-target %s", TARGET_NAME(natinfo->target));
+}
+
+
+
 
 #define OPT_SNAT         0x01
 #define OPT_SNAT_TARGET  0x02
@@ -230,9 +298,23 @@ static struct ebt_u_target dnat_target =
 	.compare	= compare,
 	.extra_ops	= opts_d,
 };
+static struct ebt_u_target arpnat_target =
+{
+	.name		= EBT_ARPNAT_TARGET,
+	.size		= sizeof(struct ebt_nat_info),
+	.help		= print_help_arpnat,
+	.init		= init_arpnat,
+	.parse		= parse_arpnat,
+	.final_check	= final_check_arpnat,
+	.print		= print_arpnat,
+	.compare	= compare,
+	.extra_ops	= opts_arpnat,
+};
+
 
 void _init(void)
 {
 	ebt_register_target(&snat_target);
 	ebt_register_target(&dnat_target);
+	ebt_register_target(&arpnat_target);
 }

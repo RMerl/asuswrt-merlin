@@ -412,10 +412,8 @@ function selectRows_main(r){
 									function(){
 										document.form.yadns_enable_x.value = 0;
 										showhide("mainTable",0);
-									},
-										{
-											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-									});
+									}
+								);
 							</script>
 						</div>
 					</td>

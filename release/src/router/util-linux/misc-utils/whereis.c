@@ -37,6 +37,10 @@
  * - added Native Language Support
  */
 
+/* 2011-08-12 Davidlohr Bueso <dave@gnu.org>
+ * - added $PATH lookup
+ */
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -45,6 +49,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+#include "xalloc.h"
 #include "nls.h"
 #include "c.h"
 
@@ -124,7 +130,7 @@ static char *srcdirs[] = {
 };
 
 static char sflag = 1, bflag = 1, mflag = 1, uflag;
-static char **Sflag, **Bflag, **Mflag;
+static char **Sflag, **Bflag, **Mflag, **dirp, **pathdir;
 static int Scnt, Bcnt, Mcnt, count, print;
 
 static void __attribute__ ((__noreturn__)) usage(FILE * out)
@@ -233,9 +239,62 @@ findin(char *dir, char *cp)
 
 }
 
+static int inpath(const char *str)
+{
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(bindirs) - 1 ; i++)
+		if (!strcmp(bindirs[i], str))
+			return 1;
+
+	for (i = 0; i < ARRAY_SIZE(mandirs) - 1; i++)
+		if (!strcmp(mandirs[i], str))
+			return 1;
+
+	for (i = 0; i < ARRAY_SIZE(srcdirs) - 1; i++)
+		if (!strcmp(srcdirs[i], str))
+			return 1;
+
+	return 0;
+}
+
+static void fillpath(void)
+{
+	char *key=NULL, *tok=NULL, *pathcp, *path = getenv("PATH");
+	int i = 0;
+
+
+	if (!path)
+		return;
+	pathcp = xstrdup(path);
+
+	for (tok = strtok_r(pathcp, ":", &key); tok;
+	     tok = strtok_r(NULL, ":", &key)) {
+
+		/* make sure we don't repeat the search path */
+		if (inpath(tok))
+			continue;
+
+		pathdir = xrealloc(pathdir, (i + 1) * sizeof(char *));
+		pathdir[i++] = xstrdup(tok);
+	}
+
+	pathdir = xrealloc(pathdir, (i + 1) * sizeof(char *));
+	pathdir[i] = NULL;
+
+	dirp = pathdir;
+	free(pathcp);
+}
+
+static void freepath(void)
+{
+	free(pathdir);
+}
+
 static void
 findv(char **dirv, int dirc, char *cp)
 {
+
 	while (dirc > 0)
 		findin(*dirv++, cp), dirc--;
 }
@@ -252,9 +311,11 @@ looksrc(char *cp)
 static void
 lookbin(char *cp)
 {
-	if (Bflag == 0)
+	if (Bflag == 0) {
 		findv(bindirs, ARRAY_SIZE(bindirs)-1, cp);
-	else
+		while (*dirp)
+			findin(*dirp++, cp);		/* look $PATH */
+	 } else
 		findv(Bflag, Bcnt, cp);
 }
 
@@ -280,7 +341,7 @@ getlist(int *argcp, char ***argvp, char ***flagp, int *cntp)
 }
 
 static void
-zerof()
+zerof(void)
 {
 	if (sflag && bflag && mflag)
 		sflag = bflag = mflag = 0;
@@ -410,8 +471,13 @@ main(int argc, char **argv)
 				usage(stderr);
 			}
 			argv++;
-		} else
+		} else {
+			if (Bcnt == 0 && pathdir == NULL)
+				fillpath();
 			lookup(*argv++);
+		}
 	while (--argc > 0);
+
+	freepath();
 	return EXIT_SUCCESS;
 }

@@ -37,7 +37,7 @@ ifeq ($(RTCONFIG_BCMARM),y)
 LDFLAGS += -lpthread
 endif
 LDFLAGS += -L$(TOP)/libusb10/libusb/.libs -lusb-1.0
-LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl -lpthread -ldl
 LDFLAGS += -L$(TOP)/zlib -lz
 #LDFLAGS += -ldbus-1
 

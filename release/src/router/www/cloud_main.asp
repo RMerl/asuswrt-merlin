@@ -713,16 +713,16 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 							<div class="tabclick"><span>AiCloud 2.0</span></div>
 						</td>
 						<td>
-							<a href="cloud_sync.asp"><div class="tab" id="tab_smartsync"><span>Smart Sync</span></div></a>
+							<a href="cloud_sync.asp"><div class="tab" id="tab_smartsync"><span><#smart_sync#></span></div></a>
 						</td>
 						<td>
-							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab" id="tab_routersync"><span>Sync Server</span></div></a>
+							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab" id="tab_routersync"><span><#Server_Sync#></span></div></a>
 						</td>
 						<td>
-							<a href="cloud_settings.asp"><div class="tab" id="tab_setting"><span>Settings</span></div></a>
+							<a href="cloud_settings.asp"><div class="tab" id="tab_setting"><span><#Settings#></span></div></a>
 						</td>
 						<td>
-							<a href="cloud_syslog.asp"><div class="tab" id="tab_syslog"><span>Log</span></div></a>
+							<a href="cloud_syslog.asp"><div class="tab" id="tab_syslog"><span><#Log#></span></div></a>
 						</td>
 					</tr>
 					</tbody>
@@ -796,10 +796,6 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 											</td>
 									  </tr>
 
-									  <!--tr bgcolor="#444f53">
-									    <td height="40"><div align="center" style="margin-top:-30px;font-size: 18px;text-shadow: 1px 1px 0px black;">Cloud Disk</div></td>
-									  </tr-->
-
 									  <tr height="10px">
 											<td colspan="3">
 											</td>
@@ -808,7 +804,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 									  <tr bgcolor="#444f53" width="235px">
 									    <td bgcolor="#444f53" class="cloud_main_radius_left" width="20%" height="50px">
 												<div style="padding:10px;" align="center"><img src="/images/cloudsync/001.png">
-													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;">Cloud Disk</div>
+													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;"><#Cloud_Disk#></div>
 												</div>
 											</td>
 
@@ -845,9 +841,6 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 															FormActions("start_apply.htm", "apply", "restart_webdav", "3");
 															showLoading();	
 															document.form.submit();
-														 },
-														 {
-															switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 														 }
 													);
 												</script>
@@ -863,7 +856,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 									  <tr bgcolor="#444f53">
 									    <td bgcolor="#444f53" class="cloud_main_radius_left" width="20%" height="50px">
 												<div align="center"><img src="/images/cloudsync/002.png">
-													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;">Smart Access</div>
+													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;"><#Smart_Access#></div>
 												</div>
 											</td>
 									    <td>
@@ -898,9 +891,6 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 															FormActions("start_apply.htm", "apply", "restart_webdav", "3");
 															showLoading();	
 															document.form.submit();
-														 },
-														 {
-															switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 														 }
 													);
 												</script>			
@@ -917,7 +907,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 									    <td bgcolor="#444f53" class="cloud_main_radius_left" width="20%" height="50px">
 												<div align="center">
 													<img src="/images/cloudsync/003.png">
-													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;">Smart Sync</div>
+													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;"><#smart_sync#></div>
 												</div>
 											</td>
 									    <td>
@@ -947,9 +937,6 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 															FormActions("start_apply.htm", "apply", "restart_cloudsync", "3");
 															showLoading();	
 															document.form.submit();	
-														},
-														{
-															switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 														}
 													);
 												</script>			

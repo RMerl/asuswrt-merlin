@@ -28,12 +28,14 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 
 wl_channel_list_2g = '<% channel_list_2g(); %>';
 wl_channel_list_5g = '<% channel_list_5g(); %>';
-
+var wl_unit_value = '<% nvram_get("wl_unit"); %>';
+var wl_subunit_value = '<% nvram_get("wl_subunit"); %>';
+var wlc_band_value = '<% nvram_get("wlc_band"); %>';
 function initial(){
 	show_menu();	
 
-	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
-		_change_wl_unit('<% nvram_get("wl_unit"); %>');
+	if((sw_mode == 2 || sw_mode == 4) && wl_unit_value == wlc_band_value && wl_subunit_value != '1'){
+		_change_wl_unit(wl_unit_value);
 	}
 
 	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){
@@ -42,20 +44,26 @@ function initial(){
 		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 4)};
 	}
 
+	if(Qcawifi_support) {
+		//left only Auto and Legacy mode
+		document.form.wl_nmode_x.remove(3);	//remove "N/AC Mixed"
+		document.form.wl_nmode_x.remove(1);	//remove "N Only"
+	}
+	else
 	if(!(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true))
 	{
 		document.form.wl_nmode_x.remove(3); //remove "N/AC Mixed" for NON-AC router and NOT in 5G
 	}
 
 	// special case after modifing GuestNetwork
-	if("<% nvram_get("wl_unit"); %>" == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
+	if(wl_unit_value == "-1" && wl_subunit_value == "-1"){
 		change_wl_unit();
 	}
 
 	if('<% nvram_get("wl_nmode_x"); %>' == "2")
 			inputCtrl(document.form.wl_bw, 0);
 
-	if('<% nvram_get("wl_unit"); %>' == '1')		
+	if(wl_unit_value == '1')		
 		insertExtChannelOption_5g();
 	else
 		check_channel_2g();
@@ -102,7 +110,7 @@ function initial(){
 	handle_11ac_80MHz();
 
 	if(sw_mode == 2 || sw_mode == 4)
-		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;	
+		document.form.wl_subunit.value = (wl_unit_value == wlc_band_value) ? 1 : -1;	
 	
 	$('WPS_hideSSID_hint').innerHTML = "<#WPS_hideSSID_hint#>";	
 	if("<% nvram_get("wl_closed"); %>" == 1){
@@ -180,9 +188,9 @@ function check_channel_2g(){
 
 function mbss_display_ctrl(){
 	// generate options
-	if(wl_vifnames != ""){
+	if(multissid_support){
 		for(var i=1; i<multissid_support+1; i++)
-			add_options_value(document.form.wl_subunit, i, '<% nvram_get("wl_subunit"); %>');
+			add_options_value(document.form.wl_subunit, i, wl_subunit_value);
 	}	
 	else
 		$("wl_subunit_field").style.display = "none";
@@ -210,9 +218,54 @@ function applyRule(){
 		document.form.wl_wpa_psk.value = "";
 		
 	if(validForm()){
-		showLoading();
-		document.form.wps_config_state.value = "1";
+		if(document.form.wl_closed[0].checked && document.form.wps_enable.value == 1){
+			if(confirm("Selecting Hide SSID will disable WPS. Are you sure?")){
+				document.form.wps_enable.value = "0";	
+			}
+			else{	
+				return false;	
+			}
+		}
+	
+		if(document.form.wps_enable.value == 1){		//disable WPS if choose WEP or WPA/TKIP Encryption
+			if(wps_multiband_support && (document.form.wps_multiband.value == 1	|| document.form.wps_band.value == wl_unit_value)){		//Ralink, Qualcomm Atheros
+				if(document.form.wl_auth_mode_x.value == "open" && document.form.wl_wep_x.value == "0"){
+					if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))
+						return false;		
+				}
 		
+				if( document.form.wl_auth_mode_x.value == "shared"
+				 ||	document.form.wl_auth_mode_x.value == "psk" || document.form.wl_auth_mode_x.value == "wpa"
+				 || document.form.wl_auth_mode_x.value == "open" && (document.form.wl_wep_x.value == "1" || document.form.wl_wep_x.value == "2")){		//open wep case			
+					if(confirm("Selecting WEP or TKIP Encryption will disable the WPS. Are you sure ?")){
+						document.form.wps_enable.value = "0";	
+					}
+					else{	
+						return false;	
+					}			
+				}
+			}
+			else{			//Broadcom 
+				if(document.form.wl_auth_mode_x.value == "open" && document.form.wl_wep_x.value == "0"){
+					if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))
+						return false;		
+				}
+		
+				if( document.form.wl_auth_mode_x.value == "shared"
+				 ||	document.form.wl_auth_mode_x.value == "psk" || document.form.wl_auth_mode_x.value == "wpa"
+				 || document.form.wl_auth_mode_x.value == "open" && (document.form.wl_wep_x.value == "1" || document.form.wl_wep_x.value == "2")){		//open wep case			
+					if(confirm("Selecting WEP or TKIP Encryption will disable the WPS. Are you sure ?")){
+						document.form.wps_enable.value = "0";	
+					}
+					else{	
+						return false;	
+					}			
+				} 
+			}
+		}
+
+		showLoading();
+		document.form.wps_config_state.value = "1";		
 		if((auth_mode == "shared" || auth_mode == "wpa" || auth_mode == "wpa2"  || auth_mode == "wpawpa2" || auth_mode == "radius" ||
 				((auth_mode == "open") && !(document.form.wl_wep_x.value == "0")))
 				&& document.form.wps_mode.value == "enabled")
@@ -221,7 +274,7 @@ function applyRule(){
 		if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius")
 			document.form.next_page.value = "/Advanced_WSecurity_Content.asp";
 			
-		if(document.form.wl_nmode_x.value == "1" && "<% nvram_get("wl_unit"); %>" == "0")
+		if(document.form.wl_nmode_x.value == "1" && wl_unit_value == "0")
 			document.form.wl_gmode_protection.value = "off";
 		
 		/*  Viz 2012.08.15 seems ineeded
@@ -294,7 +347,7 @@ function disableAdvFn(){
 }
 
 function _change_wl_unit(val){
-	if((sw_mode == 2 || sw_mode == 4) && val == '<% nvram_get("wlc_band"); %>')
+	if((sw_mode == 2 || sw_mode == 4) && val == wlc_band_value)
 		document.form.wl_subunit.value = 1;
 	else
 		document.form.wl_subunit.value = -1;
@@ -312,7 +365,7 @@ function check_NOnly_to_GN(){
 	//var gn_array_5g = [["1", "ASUS_5G_Guest1", "open", "aes", "", "0", "1", "", "", "", "", "0", "off", "0"], ["0", "ASUS_5G_Guest2", "open", "aes", "", "0", "1", "", "", "", "", "0", "off", ""], ["0", "ASUS_5G_Guest3", "open", "aes", "", "0", "1", "", "", "", "", "0", "off", ""]];
 	// Viz add 2012.11.05 restriction for 'N Only' mode  ( start 	
 	if(document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "1"){
-		if("<% nvram_get("wl_unit"); %>" == "1"){		//5G
+		if(wl_unit_value == "1"){		//5G
 			for(var i=0;i<gn_array_5g.length;i++){
 				if(gn_array_5g[i][0] == "1" && (gn_array_5g[i][3] == "tkip" || gn_array_5g[i][5] == "1" || gn_array_5g[i][5] == "2")){
 					if(document.form.wl_nmode_x.value == "0")
@@ -326,7 +379,7 @@ function check_NOnly_to_GN(){
 				}
 			}		
 		}
-		else if("<% nvram_get("wl_unit"); %>" == "0"){		//2.4G
+		else if(wl_unit_value == "0"){		//2.4G
 			for(var i=0;i<gn_array_2g.length;i++){
 				if(gn_array_2g[i][0] == "1" && (gn_array_2g[i][3] == "tkip" || gn_array_2g[i][5] == "1" || gn_array_2g[i][5] == "2")){
 					if(document.form.wl_nmode_x.value == "0")
@@ -432,6 +485,10 @@ function high_power_auto_channel(){
 <input type="hidden" name="wl_wep_x_orig" value='<% nvram_get("wl_wep_x"); %>'>
 <input type="hidden" name="wl_optimizexbox" value='<% nvram_get("wl_optimizexbox"); %>'>
 <input type="hidden" name="wl_subunit" value='-1'>
+<input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>">
+<input type="hidden" name="wps_band" value="<% nvram_get("wps_band"); %>" disabled>
+<input type="hidden" name="wps_multiband" value="<% nvram_get("wps_multiband"); %>" disabled>
+<input type="hidden" name="w_Setting" value="1">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>

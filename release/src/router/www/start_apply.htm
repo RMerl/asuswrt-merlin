@@ -20,6 +20,7 @@ var action_mode = '<% get_parameter("action_mode"); %>';
 var action_wait = '<% get_parameter("action_wait"); %>';
 var group_id = '<% get_parameter("group_id"); %>';
 var getflag = '<% get_parameter("flag"); %>';
+var lan_proto = '<% get_parameter("lan_proto"); %>';
 
 if(tmo_support)
 	var theUrl = "cellspot.router"; 
@@ -169,8 +170,11 @@ function initial(){
 		else {
 			if(getflag.length > 0)
 				document.redirectForm.flag.value = getflag;
-				
-			if(parent.document.getElementById("hidden_frame")){
+			
+			if(getflag == "manual"){
+				setTimeout("qis_delay_redirect('/qis/QIS_wireless.htm');", restart_time*1000);
+			}
+			else if(parent.document.getElementById("hidden_frame")){
 				if(getflag == "verify_detect_reboot"){
 					setTimeout("parent.parent.check_DUT();", restart_time*1000);
 					return;
@@ -235,7 +239,7 @@ function initial(){
 		setTimeout(getXMLAndRedirect, restart_time*1000);
 	}
 	else if(current_page.indexOf("Feedback") >= 0){
-		setTimeout("parent.redirect();", 60000);
+		setTimeout("parent.redirect();", action_wait*1000);
 	}	
 	else if(getflag == "ddnscheck"){
 		setTimeout("parent.go_index_page();", 2000);
@@ -292,7 +296,12 @@ function initial(){
 				setTimeout("redirect()", restart_time*1000);
 			}
 			else if(current_page.indexOf("Advanced_LAN_Content.asp") >= 0){
-				parent.document.getElementById('drword').innerHTML = "<#LAN_IP_changed_suggedtion1#>"+parent.document.form.lan_ipaddr.value+"<#LAN_IP_changed_suggedtion2#><br/>";
+				if(lan_proto == "dhcp"){
+					parent.document.getElementById('drword').innerHTML = "<#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#>";
+				}
+				else{
+					parent.document.getElementById('drword').innerHTML = "<#LAN_IP_changed_suggedtion1#>"+parent.document.form.lan_ipaddr.value+"<#LAN_IP_changed_suggedtion2#><br/>";
+				}
 				setTimeout("hideLoading();",20000);
 				setTimeout("parent.dr_advise();",20000);
 				setTimeout("redirect_qis()",restart_time*1000);

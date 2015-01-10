@@ -65,7 +65,7 @@ void sig_do_nothing(int sig)
 
 void load_sysparam(void)
 {
-	char macstr[32];
+	char *p, macstr[32];
 #if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_PROXYSTA)
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 #endif

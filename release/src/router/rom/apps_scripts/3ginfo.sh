@@ -15,7 +15,9 @@ ifconfig
 echo ">"
 lsmod
 echo ">"
-nvram show|grep firm
+nvram get firmver
+echo ">"
+nvram get buildno
 echo ">"
 nvram show|grep extendno
 echo ">"
@@ -29,10 +31,49 @@ echo ">"
 nvram show|grep g3err
 echo ">"
 echo "modem nvram:>"
-nvram show|grep ^modem_
+nvram show|grep ^modem_ |grep -v "modem_pincode="
 echo ">"
 echo "modem state:>"
-nvram show|grep ^usb_modem_act
+str=`nvram get usb_modem_act_path`
+echo "usb_modem_act_path=$str"
+str=`nvram get usb_modem_act_type`
+echo "usb_modem_act_type=$str"
+str=`nvram get usb_modem_act_dev`
+echo "usb_modem_act_dev=$str"
+str=`nvram get usb_modem_act_int`
+echo "usb_modem_act_int=$str"
+str=`nvram get usb_modem_act_bulk`
+echo "usb_modem_act_bulk=$str"
+str=`nvram get usb_modem_act_vid`
+echo "usb_modem_act_vid=$str"
+str=`nvram get usb_modem_act_pid`
+echo "usb_modem_act_pid=$str"
+str=`nvram get usb_modem_act_sim`
+echo "usb_modem_act_sim=$str"
+str=`nvram get usb_modem_act_signal`
+echo "usb_modem_act_signal=$str"
+str=`nvram get usb_modem_act_operation`
+echo "usb_modem_act_operation=$str"
+str=`nvram get usb_modem_act_imsi |cut -c '1-6'`
+echo "usb_modem_act_imsi=$str"
+str=`nvram get usb_modem_act_tx`
+echo "usb_modem_act_tx=$str"
+str=`nvram get usb_modem_act_rx`
+echo "usb_modem_act_rx=$str"
+str=`nvram get usb_modem_act_hwver`
+echo "usb_modem_act_hwver=$str"
+str=`nvram get usb_modem_act_band`
+echo "usb_modem_act_band=$str"
+str=`nvram get usb_modem_act_scanning`
+echo "usb_modem_act_scanning=$str"
+str=`nvram get usb_modem_act_auth`
+echo "usb_modem_act_auth=$str"
+str=`nvram get usb_modem_act_auth_pin`
+echo "usb_modem_act_auth_pin=$str"
+str=`nvram get usb_modem_act_auth_puk`
+echo "usb_modem_act_auth_puk=$str"
+str=`nvram get usb_modem_act_startsec`
+echo "usb_modem_act_startsec=$str"
 echo ">"
 echo "modem autoapn:>"
 nvram show|grep ^usb_modem_auto

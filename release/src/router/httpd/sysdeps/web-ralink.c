@@ -82,88 +82,6 @@ static int wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit);
 
 #include <dirent.h>
 
-/* Dump NAT table <tr><td>destination</td><td>MAC</td><td>IP</td><td>expires</td></tr> format */
-int
-ej_nat_table(int eid, webs_t wp, int argc, char_t **argv)
-{
-#ifdef REMOVE
-	int needlen = 0, listlen, i;
-	netconf_nat_t *nat_list = 0;
-//	netconf_nat_t **plist, *cur;
-#endif
-	// value need to init
-	int ret = 0;
-
-	if (nvram_match("wan_nat_x", "1"))
-	{
-#ifndef RTCONFIG_DSL
-		ret += websWrite(wp, "Hardware NAT: %s\n", module_loaded("hw_nat") ? "Enabled": "Disabled");
-#endif
-		ret += websWrite(wp, "Software QoS: %s\n", nvram_match("qos_enable", "1") ? "Enabled": "Disabled");
-	}
-
-	ret += websWrite(wp, "Destination     Proto.  Port Range  Redirect to\n");
-
-#ifdef REMOVE
-	netconf_get_nat(NULL, &needlen);
-
-	if (needlen > 0)
-	{
-
-		nat_list = (netconf_nat_t *) malloc(needlen);
-		if (nat_list) {
-			memset(nat_list, 0, needlen);
-			listlen = needlen;
-			if (netconf_get_nat(nat_list, &listlen) == 0 && needlen == listlen) {
-				listlen = needlen/sizeof(netconf_nat_t);
-
-				for (i=0;i<listlen;i++)
-				{
-				//printf("%d %d %d\n", nat_list[i].target,
-				//		nat_list[i].match.ipproto,
-				//		nat_list[i].match.dst.ipaddr.s_addr);
-				if (nat_list[i].target==NETCONF_DNAT)
-				{
-					if (nat_list[i].match.dst.ipaddr.s_addr==0)
-					{
-						sprintf(line, "%-15s", "all");
-					}
-					else
-					{
-						sprintf(line, "%-15s", inet_ntoa(nat_list[i].match.dst.ipaddr));
-					}
-
-					if (ntohs(nat_list[i].match.dst.ports[0])==0)
-						sprintf(line, "%s %-7s", line, "ALL");
-					else if (nat_list[i].match.ipproto==IPPROTO_TCP)
-						sprintf(line, "%s %-7s", line, "TCP");
-					else sprintf(line, "%s %-7s", line, "UDP");
-
-					if (nat_list[i].match.dst.ports[0] == nat_list[i].match.dst.ports[1])
-					{
-						if (ntohs(nat_list[i].match.dst.ports[0])==0)
-						sprintf(line, "%s %-11s", line, "ALL");
-						else
-						sprintf(line, "%s %-11d", line, ntohs(nat_list[i].match.dst.ports[0]));
-					}
-					else
-					{
-						sprintf(tstr, "%d:%d", ntohs(nat_list[i].match.dst.ports[0]),
-						ntohs(nat_list[i].match.dst.ports[1]));
-						sprintf(line, "%s %-11s", line, tstr);
-					}
-					sprintf(line, "%s %s\n", line, inet_ntoa(nat_list[i].ipaddr));
-					ret += websWrite(wp, line);
-				}
-				}
-			}
-			free(nat_list);
-		}
-	}
-#endif
-	return ret;
-}
-
 
 /************************ CONSTANTS & MACROS ************************/
 
@@ -368,7 +286,7 @@ char* GetBW(int BW)
 		case BW_40:
 			return "40M";
 
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP)
 		case BW_80:
 			return "80M";
 #endif
@@ -393,7 +311,7 @@ char* GetPhyMode(int Mode)
 		case MODE_HTGREENFIELD:
 			return "GREEN";
 
-#if defined(RTAC52U) || defined(RTAC51U)  || defined(RTN54U) 
+#if defined(RTAC52U) || defined(RTAC51U)  || defined(RTN54U) || defined(RTAC1200HP) 
 		case MODE_VHT:
 			return "VHT";
 #endif
@@ -629,7 +547,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	else
 		ret+=websWrite(wp, "OP Mode		: AP\n");
 
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U)  || defined(RTAC1200HP)
 	if (unit == 1)
 	{
 		char *p = tmp;
@@ -1638,3 +1556,20 @@ ej_wl_rate_5g(int eid, webs_t wp, int argc, char_t **argv)
 	else
 	   	return 0;
 }
+
+#ifdef RTCONFIG_PROXYSTA
+int
+ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int retval = 0;
+
+	if(nvram_match("wlc_state", "2"))	//connected
+		retval += websWrite(wp, "wlc_state=1;wlc_state_auth=0;");
+	//else if(?)				//authorization failed
+	//	retval += websWrite(wp, "wlc_state=2;wlc_state_auth=1;");
+	else					//disconnected
+		retval += websWrite(wp, "wlc_state=0;wlc_state_auth=0;");
+
+	return retval;
+}
+#endif

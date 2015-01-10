@@ -1,6 +1,7 @@
 #!/bin/sh
 # $1: filesystem type, $2: device path.
 
+
 if [ -z "$1" ] || [ -z "$2" ]; then
 	echo "Usage: app_fsck.sh [filesystem type] [device's path]"
 	exit 0

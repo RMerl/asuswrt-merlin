@@ -15,15 +15,16 @@ program. Unshareable namespaces are:
 .TP
 .BR "mount namespace"
 mounting and unmounting filesystems will not affect rest of the system
-(\fBCLONE_NEWNS\fP flag),
+(\fBCLONE_NEWNS\fP flag), except for filesystems which are explicitly marked as
+shared (by mount --make-shared). See /proc/self/mountinfo for the shared flags.
 .TP
 .BR "UTS namespace"
 setting hostname, domainname will not affect rest of the system
-(\fBCLONE_NEWUTS\fP flag),
+(\fBCLONE_NEWUTS\fP flag).
 .TP
 .BR "IPC namespace"
 process will have independent namespace for System V message queues, semaphore
-sets and shared memory segments (\fBCLONE_NEWIPC\fP flag),
+sets and shared memory segments (\fBCLONE_NEWIPC\fP flag).
 .TP
 .BR "network namespace"
 process will have independent IPv4 and IPv6 stacks, IP routing tables, firewall

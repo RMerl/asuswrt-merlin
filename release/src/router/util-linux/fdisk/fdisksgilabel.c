@@ -193,8 +193,7 @@ sgi_list_table(int xtra) {
 			 "Units = %s of %d * %d bytes\n\n"),
 		       disk_device, heads, sectors, cylinders,
 		       SSWAP16(sgiparam.pcylcount),
-		       SSWAP16(sgiparam.sparecyl),
-		       SSWAP16(sgiparam.ilfact),
+		       (int) sgiparam.sparecyl, SSWAP16(sgiparam.ilfact),
 		       (char *)sgilabel,
 		       str_units(PLURAL), units_per_sector,
                        sector_size);
@@ -262,13 +261,13 @@ sgi_get_sysid(int i)
 int
 sgi_get_bootpartition(void)
 {
-	return SSWAP16(sgilabel->boot_part);
+	return (short) SSWAP16(sgilabel->boot_part);
 }
 
 int
 sgi_get_swappartition(void)
 {
-	return SSWAP16(sgilabel->swap_part);
+	return (short) SSWAP16(sgilabel->swap_part);
 }
 
 void
@@ -316,20 +315,21 @@ sgi_check_bootfile(const char* aFile) {
 	return 0;	/* filename did not change */
 }
 
-const char *
-sgi_get_bootfile(void) {
-	return (char *) sgilabel->boot_file;
-}
-
 void
-sgi_set_bootfile(const char* aFile) {
+sgi_set_bootfile(void)
+{
+	printf(_("\nThe current boot file is: %s\n"), sgilabel->boot_file);
+	if (read_chars(_("Please enter the name of the new boot file: ")) == '\n') {
+		printf(_("Boot file unchanged\n"));
+		return;
+	}
 
-	if (sgi_check_bootfile(aFile)) {
+	if (sgi_check_bootfile(line_ptr)) {
 		size_t i = 0;
 		while (i < 16) {
-			if ((aFile[i] != '\n')	/* in principle caught again by next line */
-			    &&  (strlen(aFile) > i))
-				sgilabel->boot_file[i] = aFile[i];
+			if ((line_ptr[i] != '\n')	/* in principle caught again by next line */
+			    &&  (strlen(line_ptr) > i))
+				sgilabel->boot_file[i] = line_ptr[i];
 			else
 				sgilabel->boot_file[i] = 0;
 			i++;
@@ -451,7 +451,7 @@ verify_sgi(int verbose)
 		lastblock = sgi_get_num_sectors(Index[0]);
 	} else {
 		if (verbose)
-			printf(_("One Partition (#11) should cover the entire disk.\n"));
+			printf(_("Partition 11 should cover the entire disk.\n"));
 		if (debug>2)
 			printf("sysid=%d\tpartition=%d\n",
 			       sgi_get_sysid(Index[0]), Index[0]+1);
@@ -513,10 +513,10 @@ verify_sgi(int verbose)
 	 * Go for details now
 	 */
 	if (verbose) {
-		if (!sgi_get_num_sectors(sgi_get_bootpartition())) {
+		if (sgi_get_bootpartition() < 0 || !sgi_get_num_sectors(sgi_get_bootpartition())) {
 			printf(_("\nThe boot partition does not exist.\n"));
 		}
-		if (!sgi_get_num_sectors(sgi_get_swappartition())) {
+		if (sgi_get_swappartition() < 0 || !sgi_get_num_sectors(sgi_get_swappartition())) {
 			printf(_("\nThe swap partition does not exist.\n"));
 		} else {
 			if ((sgi_get_sysid(sgi_get_swappartition()) != SGI_SWAP)
@@ -569,7 +569,9 @@ sgi_set_partition(int i, unsigned int start, unsigned int length, int sys) {
 	sgilabel->partitions[i].start_sector = SSWAP32(start);
 	set_changed(i);
 	if (sgi_gaps() < 0)	/* rebuild freelist */
-		printf(_("Do You know, You got a partition overlap on the disk?\n"));
+		printf(_("Partition overlap on the disk.\n"));
+	if (length)
+		print_partition_size(i + 1, start, start + length, sys);
 }
 
 static void
@@ -656,8 +658,8 @@ sgi_add_partition(int n, int sys)
 		}
 		if (display_in_cyl_units)
 			first *= units_per_sector;
-		else
-			first = first; /* align to cylinder if you know how ... */
+		/*else
+			first = first; * align to cylinder if you know how ... */
 		if (!last)
 			last = isinfreelist(first);
 		if (last == 0) {
@@ -671,8 +673,8 @@ sgi_add_partition(int n, int sys)
 			scround(first), mesg)+1;
 	if (display_in_cyl_units)
 		last *= units_per_sector;                                     
-	else                                                             
-		last = last; /* align to cylinder if You know how ... */
+	/*else                                                             
+		last = last; * align to cylinder if You know how ... */
 	if ((sys == SGI_VOLUME) && (first != 0 || last != sgi_get_lastblock()))
 		printf(_("It is highly recommended that eleventh partition\n"
 			 "covers the entire disk and is of type `SGI volume'\n"));
@@ -696,9 +698,7 @@ create_sgilabel(void)
 	sec_fac = sector_size / 512;	/* determine the sector factor */
 
 	fprintf(stderr,
-		_("Building a new SGI disklabel. Changes will remain in memory only,\n"
-		  "until you decide to write them. After that, of course, the previous\n"
-		  "content will be unrecoverably lost.\n\n"));
+		_("Building a new SGI disklabel.\n"));
 
 	other_endian = (BYTE_ORDER == LITTLE_ENDIAN);
 
@@ -733,13 +733,18 @@ create_sgilabel(void)
 				old[i].sysid = get_part_table(i)->sys_ind;
 				old[i].start = get_start_sect(get_part_table(i));
 				old[i].nsect = get_nr_sects(get_part_table(i));
-				printf(_("Trying to keep parameters of partition %d.\n"), i);
 				if (debug)
 					printf(_("ID=%02x\tSTART=%d\tLENGTH=%d\n"),
 					       old[i].sysid, old[i].start, old[i].nsect);
 			}
 		}
 	}
+
+	for (i = 0; i < 4; i++)
+		if (old[i].sysid) {
+			printf(_("Trying to keep parameters of partitions already set.\n"));
+			break;
+		}
 
 	zeroize_mbr_buffer();
 	sgilabel->magic = SSWAP32(SGI_LABEL_MAGIC);

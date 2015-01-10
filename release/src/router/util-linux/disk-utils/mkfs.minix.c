@@ -121,7 +121,6 @@ static int badblocks;
 static size_t namelen = 30;
 static size_t dirsize = 32;
 static int magic = MINIX_SUPER_MAGIC2;
-static int version2;
 
 static char root_block[MINIX_BLOCK_SIZE];
 
@@ -179,6 +178,8 @@ static void super_set_state(void)
 	case 2:
 		Super.s_state |= MINIX_VALID_FS;
 		Super.s_state &= ~MINIX_ERROR_FS;
+		break;
+	default: /* v3 */
 		break;
 	}
 }
@@ -398,8 +399,7 @@ static void make_root_inode_v2_v3 (void) {
 		inode->i_size = 3 * dirsize;
 	else {
 		root_block[2 * dirsize] = '\0';
-		if (fs_version == 2)
-			inode->i_size = 2 * dirsize;
+		inode->i_size = 2 * dirsize;
 	}
 
 	inode->i_mode = S_IFDIR + 0755;
@@ -420,6 +420,8 @@ static void super_set_nzones(void)
 {
 	switch (fs_version) {
 	case 3:
+		Super3.s_zones = BLOCKS;
+		break;
 	case 2:
 		Super.s_zones = BLOCKS;
 		break;
@@ -487,7 +489,7 @@ static void setup_tables(void) {
 
 	if (fs_version == 3) {
 		Super3.s_log_zone_size = 0;
-		Super3.s_blocksize = BLOCKS;
+		Super3.s_blocksize = MINIX_BLOCK_SIZE;
 	}
 	else {
 		Super.s_log_zone_size = 0;
@@ -509,12 +511,14 @@ static void setup_tables(void) {
 	else
 		inodes = ((inodes + MINIX_INODES_PER_BLOCK - 1) &
 			  ~(MINIX_INODES_PER_BLOCK - 1));
-	if (inodes > MINIX_MAX_INODES)
-		inodes = MINIX_MAX_INODES;
+
 	if (fs_version == 3)
 		Super3.s_ninodes = inodes;
-	else
+	else {
 		Super.s_ninodes = inodes;
+		if (inodes > MINIX_MAX_INODES)
+			inodes = MINIX_MAX_INODES;
+	}
 
 	super_set_map_blocks(inodes);
 	imaps = get_nimaps();
@@ -697,10 +701,11 @@ int main(int argc, char ** argv) {
 		case '2':
 		case 'v': /* kept for backwards compatiblitly */
 			fs_version = 2;
-			version2 = 1;
 			break;
 		case '3':
 			fs_version = 3;
+			namelen = 60;
+			dirsize = 64;
 			break;
 		default:
 			usage();
@@ -725,14 +730,25 @@ int main(int argc, char ** argv) {
 	}
 	check_mount();		/* is it already mounted? */
 	tmp = root_block;
-	*(short *)tmp = 1;
-	strcpy(tmp+2,".");
-	tmp += dirsize;
-	*(short *)tmp = 1;
-	strcpy(tmp+2,"..");
-	tmp += dirsize;
-	*(short *)tmp = 2;
-	strcpy(tmp+2,".badblocks");
+	if (fs_version == 3) {
+		*(uint32_t *)tmp = 1;
+		strcpy(tmp+4,".");
+		tmp += dirsize;
+		*(uint32_t *)tmp = 1;
+		strcpy(tmp+4,"..");
+		tmp += dirsize;
+		*(uint32_t *)tmp = 2;
+		strcpy(tmp+4, ".badblocks");
+	} else {
+		*(uint16_t *)tmp = 1;
+		strcpy(tmp+2,".");
+		tmp += dirsize;
+		*(uint16_t *)tmp = 1;
+		strcpy(tmp+2,"..");
+		tmp += dirsize;
+		*(uint16_t *)tmp = 2;
+		strcpy(tmp+2, ".badblocks");
+	}
 	if (stat(device_name, &statbuf) < 0)
 		err(MKFS_ERROR, _("%s: stat failed"), device_name);
 	if (S_ISBLK(statbuf.st_mode))
@@ -772,13 +788,12 @@ int main(int argc, char ** argv) {
 
 	if (fs_version == 3)
 		magic = MINIX3_SUPER_MAGIC;
-
-	if (fs_version == 2) {
+	else if (fs_version == 2) {
 		if (namelen == 14)
 			magic = MINIX2_SUPER_MAGIC;
 		else
 			magic = MINIX2_SUPER_MAGIC2;
-	} else
+	} else /* fs_version == 1 */
 		if (BLOCKS > MINIX_MAX_INODES)
 			BLOCKS = MINIX_MAX_INODES;
 	setup_tables();

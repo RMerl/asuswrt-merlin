@@ -85,11 +85,43 @@ enum {
 	CPU_PORT=6,
 	P7_PORT=7,
 };
+#elif defined(RTAC1200HP)
+enum {
+	WAN_PORT=5,
+	LAN1_PORT=0,
+	LAN2_PORT=1,
+	LAN3_PORT=2,
+	LAN4_PORT=3,
+	P5_PORT=4,
+	CPU_PORT=6,
+	P7_PORT=7,
+};
+#elif defined(RTN56UV2)
+enum {
+	WAN_PORT=4,
+	LAN1_PORT=3,
+	LAN2_PORT=2,
+	LAN3_PORT=1,
+	LAN4_PORT=0,
+	P5_PORT=5,
+	CPU_PORT=6,
+	P7_PORT=7,
+};
+#define MT7621_GSW
 #endif
 
 #define BIT(n)	(1 << (n))
 /* 0: LAN, 1:WAN or STB */
 static const int lan_wan_partition[] = {
+#ifdef MT7621_GSW
+	BIT( WAN_PORT ) | BIT( P5_PORT ),					// WAN
+	BIT( WAN_PORT ) | BIT( P5_PORT ) | BIT( LAN1_PORT ),			// WAN + LAN1
+	BIT( WAN_PORT ) | BIT( P5_PORT ) | BIT( LAN2_PORT ),			// WAN + LAN2
+	BIT( WAN_PORT ) | BIT( P5_PORT ) | BIT( LAN3_PORT ),			// WAN + LAN3
+	BIT( WAN_PORT ) | BIT( P5_PORT ) | BIT( LAN4_PORT ),			// WAN + LAN4
+	BIT( WAN_PORT ) | BIT( P5_PORT ) | BIT( LAN1_PORT ) | BIT( LAN2_PORT ),	// WAN + LAN1+2
+	BIT( WAN_PORT ) | BIT( P5_PORT ) | BIT( LAN3_PORT ) | BIT( LAN4_PORT ),	// WAN + LAN3+4
+#else
 	BIT( WAN_PORT ),					// WAN
 	BIT( WAN_PORT ) | BIT( LAN1_PORT ),			// WAN + LAN1
 	BIT( WAN_PORT ) | BIT( LAN2_PORT ),			// WAN + LAN2
@@ -97,6 +129,7 @@ static const int lan_wan_partition[] = {
 	BIT( WAN_PORT ) | BIT( LAN4_PORT ),			// WAN + LAN4
 	BIT( WAN_PORT ) | BIT( LAN1_PORT ) | BIT( LAN2_PORT ),	// WAN + LAN1+2
 	BIT( WAN_PORT ) | BIT( LAN3_PORT ) | BIT( LAN4_PORT ),	// WAN + LAN3+4
+#endif
 	0,							// ALL LAN
 };
 
@@ -416,7 +449,7 @@ int mt7620_vlan_unset(int vid)
 }
 
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) 
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
 /**
  * Get TX or RX byte count of WAN and WANS_LAN
  * @unit:	WAN unit.
@@ -443,8 +476,8 @@ int __mt7620_wan_bytecount(int unit, unsigned long *tx, unsigned long *rx)
 	for (dir = 0; dir <= 1; ++dir) {
 		count[dir] = 0;
 		addr = dir? REG_ESW_PORT_RGOCN_P0:REG_ESW_PORT_TGOCN_P0;
-		m = get_wan_port_mask(unit) & ((1U << NR_WANLAN_PORT) - 1);
-		for (i = 0; m && i < NR_WANLAN_PORT; ++i, m >>= 1, addr += 0x100) {
+		m = get_wan_port_mask(unit) & ((1U << (NR_WANLAN_PORT+1)) - 1);
+		for (i = 0; m && i <= NR_WANLAN_PORT; ++i, m >>= 1, addr += 0x100) {
 			if (!(m & 1))
 				continue;
 
@@ -478,8 +511,8 @@ static void get_mt7620_esw_phy_linkStatus(unsigned int mask, unsigned int *linkS
 	if (switch_init() < 0)
 		return;
 
-	m = mask & ((1U << NR_WANLAN_PORT) - 1);
-	for (i = 0; m && !value && i < NR_WANLAN_PORT; ++i, m >>= 1) {
+	m = mask & ((1U << (NR_WANLAN_PORT+1)) - 1);
+	for (i = 0; m && !value && i <= NR_WANLAN_PORT; ++i, m >>= 1) {
 		if (!(m & 1))
 			continue;
 
@@ -518,7 +551,7 @@ static void build_wan_lan_mask(int stb)
 	}
 
 	wan_mask = lan_wan_partition[stb];
-	lan_mask = ((1<<NR_WANLAN_PORT) -1) & ~lan_wan_partition[stb];
+	lan_mask = ((1<<(NR_WANLAN_PORT+1)) -1) & ~lan_wan_partition[stb];
 
 	//DUALWAN
 	if (wanscap_lan) {
@@ -595,7 +628,7 @@ static void config_mt7620_esw_LANWANPartition(int type)
 	_dprintf("%s: LAN/WAN/WANS_LAN portmask %08x/%08x/%08x\n", __func__, lan_mask, wan_mask, wans_lan_mask);
 
 	//set PVID
-	for (i = 0, m = 1; i < NR_WANLAN_PORT; ++i, m <<= 1) {
+	for (i = 0, m = 1; i <= NR_WANLAN_PORT; ++i, m <<= 1) {
 		if (lan_mask & m)
 			v = 1;	//LAN
 		else if (wanscap_lan && (wans_lan_mask & m))
@@ -608,8 +641,8 @@ static void config_mt7620_esw_LANWANPartition(int type)
 	mt7620_reg_write((REG_ESW_PORT_PPBV1_P0 + 0x100*P5_PORT), 0x10001);
 
 	//VLAN member port: WAN, LAN, WANS_LAN
-	//LAN: P7, P6, P5, lan_mask
-	__create_port_map(0xE0 | lan_mask, portmap);
+	//LAN: P7, P6, lan_mask
+	__create_port_map(0xC0 | lan_mask, portmap);
 	mt7620_vlan_set(0, 1, portmap, 0);
 
 	if (sw_mode == SW_MODE_ROUTER) {
@@ -648,8 +681,8 @@ static void get_mt7620_esw_WAN_Speed(unsigned int *speed)
 	if (switch_init() < 0)
 		return;
 
-	m = (get_wan_port_mask(0) | get_wan_port_mask(1)) & ((1U << NR_WANLAN_PORT) - 1);
-	for (i = 0; m && i < NR_WANLAN_PORT; ++i, m >>= 1) {
+	m = (get_wan_port_mask(0) | get_wan_port_mask(1)) & ((1U << (NR_WANLAN_PORT+1)) - 1);
+	for (i = 0; m && i <= NR_WANLAN_PORT; ++i, m >>= 1) {
 		if (!(m & 1))
 			continue;
 
@@ -685,7 +718,7 @@ static void link_down_up_mt7620_PHY(unsigned int mask, int status, int inverse)
 	if (!status)		//power down PHY
 		value[1] = '9';
 
-	for (i = 0, m = mask; m && i < NR_WANLAN_PORT; ++i, m >>= 1) {
+	for (i = 0, m = mask; m && i <= NR_WANLAN_PORT; ++i, m >>= 1) {
 		if (!(m & 1))
 			continue;
 		sprintf(idx, "%d", i);
@@ -768,12 +801,12 @@ static void set_Vlan_PRIO(int prio)
 	nvram_set("vlan_prio", tmp);
 }
 
-//convert port mapping from  RT-N56U   to   RT-N14U / RT-AC52U / RT-AC51U (MT7620) /RT-N54U
+//convert port mapping from  RT-N56U   to   RT-N14U / RT-AC52U / RT-AC51U (MT7620) /RT-N54U /RT-AC1200HP /RT-N56UV2
 static int convert_port_bitmask(int orig)
 {
 	int i, mask, result;
 	result = 0;
-	for(i = 0; i < NR_WANLAN_PORT; i++) {
+	for(i = 0; i <= NR_WANLAN_PORT; i++) {
 		mask = (1 << i);
 		if (orig & mask)
 			result |= (1 << switch_port_mapping[i]);
@@ -847,7 +880,7 @@ static void initialize_Vlan(int stb_bitmask)
 	switch_fini();
 }
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
 static void fix_up_hwnat_for_wifi(void)
 {
 	int i, j, m, r, v, isp_profile_hwnat_not_safe = 0;
@@ -855,7 +888,7 @@ static void fix_up_hwnat_for_wifi(void)
 	char bss[] = "wl0.1_bss_enabledXXXXXX";
 	char mode_x[] = "wl0_mode_xXXXXXX";
 	struct wifi_if_vid_s w = {
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
 		.wl_vid = { 21, 43 },		/* DP_RA0  ~ DP_RA3:  21, 22, 23, 24;	DP_RAI0  ~ DP_RAI3:  43, 44, 45, 46 */
 		.wl_wds_vid = { 37, 59 },	/* DP_WDS0 ~ DP_WDS3: 37, 38, 39, 40;	DP_WDSI0 ~ DP_WDSI3: 59, 60, 61, 62 */
 #elif defined(RTN14U) || defined(RTN11P)
@@ -976,7 +1009,7 @@ static void create_Vlan(int bitmask)
 
 	strcpy(portmap, "00000000"); // init
 	//convert port mapping
-	for(i = 0; i < NR_WANLAN_PORT; i++) {
+	for(i = 0; i <= NR_WANLAN_PORT; i++) {
 		mask = (1 << i);
 		if (mbr & mask)
 			portmap[ switch_port_mapping[i] ]='1';
@@ -1023,7 +1056,7 @@ static void is_singtel_mio(int is)
 	if (switch_init() < 0)
 		return;
 
-	for (i = 0; i < NR_WANLAN_PORT; i++) { //WAN/LAN, admit all frames
+	for (i = 0; i <= NR_WANLAN_PORT; i++) { //WAN/LAN, admit all frames
 		mt7620_reg_read((REG_ESW_PORT_PVC_P0 + 0x100*i), &value);
 		value &= 0xfffffffc;
 		mt7620_reg_write((REG_ESW_PORT_PVC_P0 + 0x100*i), value);
@@ -1211,7 +1244,7 @@ ralink_gpio_write_bit(int idx, int value)
 	}	
 	else if (idx==72) 
 	{              
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) //wlan led
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)//wlan led
 		req=RALINK_ATE_GPIO72;
 		idx=value;
 #else
@@ -1301,7 +1334,7 @@ ralink_gpio_init(unsigned int idx, int dir)
 	int fd, req;
 	unsigned long arg;
 	
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)  || defined(RTN54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)  || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
 	if(idx==72) //discard gpio72
 		return 0;
 #endif
@@ -1480,7 +1513,7 @@ void ATE_mt7620_esw_port_status(void)
 	if (switch_init() < 0)
 		return;
 
-	for (i = 0; i < NR_WANLAN_PORT; i++) {
+	for (i = 0; i <= NR_WANLAN_PORT; i++) {
 		pS.link[i] = 0;
 		pS.speed[i] = 0;
 		mt7620_reg_read((REG_ESW_MAC_PMSR_P0 + 0x100*i), &value);

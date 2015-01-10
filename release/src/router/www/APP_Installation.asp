@@ -109,7 +109,7 @@ function initial(){
 												["<#Servers_Center#>", tablink[4][1], "<#UPnPMediaServer_Help#>", "server_png", ""],
 												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer_png", ""],
 												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem_png", ""],
-												["Time Machine", "Advanced_TimeMachine.asp", "Enable Time Machine functionality.", "TimeMachine_png", "1.0.0.1"]];
+												["Time Machine", "Advanced_TimeMachine.asp", "<#TimeMach_enable_hint#>", "TimeMachine_png", "1.0.0.1"]];
 	
 	if(!media_support){
 			default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");						
@@ -123,11 +123,13 @@ function initial(){
 		default_apps_array.splice(3, 1);
 		default_apps_array.splice(0, 1);
 	}
-	if(!modem_support)
-		default_apps_array.splice(3, 1);
 
 	if(!timemachine_support){
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("Time Machine")[0]);
+	}
+
+	if(!modem_support || based_modelid == "4G-AC55U"){
+		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("3G/4G")[0]);		
 	}
 
 	trNum = default_apps_array.length;
@@ -148,7 +150,6 @@ function initial(){
 	}
 
 	if(!nodm_support){
-		addOnlineHelp($("faq"), ["ASUSWRT", "download","master"]);
 		addOnlineHelp($("faq2"), ["ASUSWRT", "download","associated"]);
 	}
 }
@@ -162,10 +163,9 @@ function calHeight(_trNum){
 	var optionHeight = 52;
 	var manualOffSet = 28;
 	menu_height = Math.round(optionHeight*calculate_height - manualOffSet*calculate_height/14 - $("tabMenu").clientHeight) - 18;
-
 	if(menu_height > _trNum){
-		if(menu_height < 522)
-			$("applist_table").style.height = "522px";
+		if(menu_height < 580)
+			$("applist_table").style.height = "580px";
 		else	
 			$("applist_table").style.height = menu_height + "px";
 	}	
@@ -459,7 +459,7 @@ function show_apps(){
 	appnum = 0;
 	
 	if(apps_array == "" && (appnet_support || appbase_support)){
-		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "PC-free download manager.", "downloadmaster_png", "", "", ""],
+		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "<#DM_EnableHint#>", "downloadmaster_png", "", "", ""],
 									["mediaserver", "", "", "no", "no", "", "", "", "mediaserver_png", "", "", ""]];
 		if(nodm_support)
 			apps_array[1][0] = "mediaserver2";
@@ -934,7 +934,7 @@ function reloadAPP(){
 						<ul style="margin-left:10px;">
 							<br>
 							<li>
-								<a id="faq" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master FAQ</a>
+								<a id="faq" href="http://www.asus.com/support/FAQ/1009773/" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master FAQ</a>
 							</li>
 							<li style="margin-top:10px;">
 								<a id="faq2" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master Tool FAQ</a>

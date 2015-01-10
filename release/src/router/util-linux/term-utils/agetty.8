@@ -97,6 +97,10 @@ option is added to the login command line.
 Don't reset terminal cflags (control modes). See \fItermios(3)\fP for more
 details.
 .TP
+\-E, \-\-remote
+If \-H \fIfakehost\fP option is given then \-r \fIfakehost\fP options is
+added to the the \fB/bin/login\fP command line.
+.TP
 \-f, \-\-issue\-file \fIissue_file\fP
 Display the contents of \fIissue_file\fP instead of \fI/etc/issue\fP.
 This allows custom messages to be displayed on different terminals.
@@ -197,6 +201,9 @@ and the login prompt. Very useful in connection with the \-I option.
 \-\-noclear
 Do not clear the screen before prompting for the login name
 (the screen is normally cleared).
+.TP
+\-\-nohints
+Do not print hints about Num, Caps and Scroll Locks.
 .TP
 \-\-nonewline
 Do not print a newline before writing out /etc/issue.

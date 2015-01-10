@@ -21,7 +21,7 @@ TS_DESC="islocal"
 . $TS_TOPDIR/functions.sh
 ts_init "$*"
 
-$TS_CMD_ISLOCAL "$TS_SELF/islocal.data" root nobody "" youngman youngman2 \
+$TS_HELPER_ISLOCAL "$TS_SELF/islocal.data" root nobody "" youngman youngman2 \
     abcdefghx nobo long rot al malformed \
     nonl znobody >> $TS_OUTPUT
 ts_finalize

@@ -56,6 +56,8 @@ Print the SIZE column in bytes rather than in human-readable format.
 Delete the specified partitions or all partitions.
 .IP "\fB\-g, \-\-noheadings\fP"
 Do not print a header line.
+.IP "\fB\-h, \-\-help\fP"
+Print a help text and exit.
 .IP "\fB\-l, \-\-list\fP"
 List the partitions.  Note that all numbers are in 512-byte sectors.  This output
 format is DEPRECATED in favour of \fB\-\-show\fP.  Don't use it in newly written
@@ -64,14 +66,8 @@ scripts.
 Define the output columns to use for \fB\-\-show\fP and  \fB\-\-raw\fP output.
 If no output arrangement is specified, then a default set is used.
 Use \fB\-\-help\fP to  get list of all supported columns.
-.IP "\fB\-r, \-\-raw\fP"
-Use the raw output format.
-.IP "\fB\-s, \-\-show\fP"
-List the partitions.  All numbers (except SIZE) are in 512-byte sectors.  The output
-columns can be rearranged with the \fB\-\-output\fP option.
-.IP "\fB\-t, \-\-type \fItype\fP"
-Specify the partition table type -- aix, bsd, dos, gpt, mac, minix, sgi, solaris_x86,
-sun, ultrix or unixware.
+.IP "\fB\-P, \-\-pairs\fP"
+Use key="value" output format.
 .IP "\fB\-n, \-\-nr \fIM:N\fP"
 Specify the range of partitions.  For backward compatibility also the format
 <M-N> is supported.  The range may contain negative
@@ -93,6 +89,16 @@ or
 .B <M-N>
 Specifies lower and upper limits (e.g. --nr 2:4).
 .RE
+.IP "\fB\-r, \-\-raw\fP"
+Use the raw output format.
+.IP "\fB\-s, \-\-show\fP"
+List the partitions.  All numbers (except SIZE) are in 512-byte sectors.  The output
+columns can be rearranged with the \fB\-\-output\fP option.
+.IP "\fB\-t, \-\-type \fItype\fP"
+Specify the partition table type -- aix, bsd, dos, gpt, mac, minix, sgi, solaris_x86,
+sun, ultrix or unixware.
+.IP "\fB\-v, \-\-verbose\fP"
+Verbose mode.
 .SH EXAMPLES
 .IP "\fBpartx \-\-show /dev/sdb3\fP"
 .IP "\fBpartx \-\-show --nr 3 /dev/sdb\fP"

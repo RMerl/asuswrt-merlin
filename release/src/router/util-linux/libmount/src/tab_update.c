@@ -169,7 +169,7 @@ int mnt_update_set_fs(struct libmnt_update *upd, unsigned long mountflags,
 		return -EINVAL;
 
 	DBG(UPDATE, mnt_debug_h(upd,
-			"reseting FS [fs=0x%p, target=%s, flags=0x%08lx]",
+			"resetting FS [fs=0x%p, target=%s, flags=0x%08lx]",
 			fs, target, mountflags));
 	if (fs) {
 		DBG(UPDATE, mnt_debug_h(upd, "FS template:"));
@@ -517,7 +517,6 @@ static int update_table(struct libmnt_update *upd, struct libmnt_table *tb)
 		struct stat st;
 		struct libmnt_iter itr;
 		struct libmnt_fs *fs;
-		int fd;
 
 		mnt_reset_iter(&itr, MNT_ITER_FORWARD);
 		while(mnt_table_next_fs(tb, &itr, &fs) == 0) {
@@ -538,7 +537,6 @@ static int update_table(struct libmnt_update *upd, struct libmnt_table *tb)
 			goto leave;
 		}
 
-		fd = fileno(f);
 		rc = fchmod(fd, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) ? -errno : 0;
 
 		if (!rc && stat(upd->filename, &st) == 0)
@@ -546,13 +544,19 @@ static int update_table(struct libmnt_update *upd, struct libmnt_table *tb)
 			rc = fchown(fd, st.st_uid, st.st_gid) ? -errno : 0;
 
 		fclose(f);
-		rc = rename(uq, upd->filename) ? -errno : 0;
+		f = NULL;
+
+		if (!rc)
+			rc = rename(uq, upd->filename) ? -errno : 0;
 	} else {
 		rc = -errno;
 		close(fd);
 	}
 
 leave:
+	if (f)
+		fclose(f);
+
 	unlink(uq);	/* be paranoid */
 	free(uq);
 	return rc;
@@ -718,7 +722,7 @@ int mnt_update_table(struct libmnt_update *upd, struct libmnt_lock *lc)
 
 	assert(upd);
 
-	if (!upd->filename || !upd)
+	if (!upd || !upd->filename)
 		return -EINVAL;
 	if (!upd->ready)
 		return 0;
@@ -780,6 +784,7 @@ static int update(const char *target, struct libmnt_fs *fs, unsigned long mountf
 
 	rc = mnt_update_table(upd, NULL);
 done:
+	mnt_free_update(upd);
 	return rc;
 }
 

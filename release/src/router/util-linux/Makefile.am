@@ -62,14 +62,10 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = \
 		.version \
 		autogen.sh \
-		README.devel \
 		README.licensing \
-		DEPRECATED \
-		licenses \
-		example.files \
 		po/update-potfiles \
 		tools \
-		docs
+		Documentation
 
 # Arrange so that .tarball-version appears only in the distribution
 # tarball, and never in a checked-out repository.
@@ -93,16 +89,29 @@ checkconfig:
 		-name '*.[hcS]' -type f -print | sort -u \
 		| xargs $(top_srcdir)/tools/checkconfig.sh $(top_srcdir)
 
+checkxalloc:
+	@ $(top_srcdir)/tools/checkxalloc.sh
 
-ENABLE_ALL = --enable-static-programs \
- --enable-elvtune --enable-kill --enable-last \
- --enable-mesg --enable-partx --enable-raw --enable-rdev --enable-reset \
- --enable-login-utils --enable-write --enable-arch --enable-mount
-
+ENABLE_ALL = --enable-static-programs --enable-most-builds
 DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc --disable-use-tty-group $(ENABLE_ALL)
 
 
 BUILT_SOURCES = .version
 .version:
 	echo $(VERSION) > $@-t && mv $@-t $@
+
+CHANGELOG_FILE = v$(VERSION)-ChangeLog
+
+$(CHANGELOG_FILE):
+	@ if test "x$$PREVIOUS_VERSION" == "x"; then \
+		echo "Usage make changelog PREVIOUS_VERSION=<version>"; \
+		exit 1; \
+	fi
+	@ echo "Changes between v$(PREVIOUS_VERSION) and v$(VERSION)" > $(CHANGELOG_FILE)
+	@ echo "--------------------------------------------" >> $(CHANGELOG_FILE)
+	@ echo >> $(CHANGELOG_FILE)
+	$(AM_V_GEN) git log --stat v$(PREVIOUS_VERSION)..HEAD >> $(CHANGELOG_FILE)
+
+changelog: $(CHANGELOG_FILE)
+
 

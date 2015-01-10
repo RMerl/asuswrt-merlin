@@ -17,7 +17,12 @@
 #include <bcmnvram.h>
 #include <asm/byteorder.h>
 #include "iboxcom.h"         //const INFO_PDU_LENGTH
+#include "packet.h"          //const RESPONSE_HDR_OK
 #include "asusdiscovery.h"
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(ary) (sizeof(ary) / sizeof((ary)[0]))
+#endif
 
 //char txMac[6] = {0};
 int a_bEndApp = 0;
@@ -58,7 +63,7 @@ int asusdiscovery()
 		printf("LINE : SO_REUSEADDR setsockopt() error!!!\n");
 		return 0;
 	}		
-	
+
 	char *lan_ifname;
 	lan_ifname = nvram_safe_get("lan_ifname");
 	setsockopt(a_socket, SOL_SOCKET, SO_BINDTODEVICE, lan_ifname, strlen(lan_ifname));
@@ -102,7 +107,8 @@ int asusdiscovery()
 	memset(&serv, 0, sizeof(serv));
 	serv.sin_family = AF_INET;
 	serv.sin_port = htons(INFO_SERVER_PORT);
-	serv.sin_addr.s_addr = inet_addr("255.255.255.255");
+	//serv.sin_addr.s_addr = inet_addr("255.255.255.255");
+	memcpy(&serv.sin_addr.s_addr, bcast_ipaddr, 4);
     
 	char pdubuf[INFO_PDU_LENGTH] = {0};
 	pdubuf[0] = 0x0C; //12
@@ -190,7 +196,6 @@ int asusdiscovery()
 	//printf("a_GetRouterCount = %d\n",a_GetRouterCount);
 	for (getRouterIndex = 0; getRouterIndex < a_GetRouterCount; getRouterIndex++)
 	{
-		
 		ip_addr_t = inet_addr(searchRouterInfo[getRouterIndex].IPAddress);
 		sprintf(asus_device_buf, "<%d>%s>%s>%s>%d>>>%s>%s",
 		3,
@@ -236,93 +241,6 @@ int ParseASUSDiscoveryPackage(int socket)
 	return 1;
 }
 
-void PROCESS_UNPACK_GET_INFO(char *pbuf, struct sockaddr_in from_addr)
-{
-    //printf("start PROCESS_UNPACK_GET_INFO\n");
-    PKT_GET_INFO get_discovery_info;
-	
-    if (UnpackasusGetInfo(pbuf, &get_discovery_info) == 0){
-	//printf("error data\n");
-        return; // error data
-    }
-	
-    if (a_GetRouterCount >= 128){
-	//printf("a_GetRouterCount >= 128\n");
-        return;
-	}
-	
-    //memcpy(txMac, get_discovery_info.MacAddress, 6);
-    
-	//check MAC address for duplicate response
-	int getRouterIndex = 0;
-    for (getRouterIndex = 0; getRouterIndex < a_GetRouterCount; getRouterIndex++)
-    {
-        if (memcmp(searchRouterInfo[getRouterIndex].MacAddress, get_discovery_info.MacAddress, 6) == 0){
-		//printf("check MAC address for duplicate response\n");
-            return;
-	}
-    }
-	
-	// check for correct operation mode
-    switch(get_discovery_info.OperationMode)
-    {
-		case OPERATION_MODE_WB:
-		case OPERATION_MODE_AP:
-			break;
-		default: // incorrect operation mode
-			return;
-    }
-	
-
-	char cTemp1[128] = {0}; 
-    if ((get_discovery_info.PrinterInfo[0] == ' ' && get_discovery_info.PrinterInfo[1] == ' ' && get_discovery_info.PrinterInfo[2] == '\0') ||
-        (get_discovery_info.PrinterInfo[0] == '\0' && get_discovery_info.PrinterInfo[1] == '\0' && get_discovery_info.PrinterInfo[2] == '\0'))
-	{
-        //[sPrinterInfo stringWithFormat: @"%s", ""];
-	}
-    else
-    {
-	int i=0;
-        for (i=0; i<sizeof(get_discovery_info.PrinterInfo); i++)
-        {
-            cTemp1[i] = get_discovery_info.PrinterInfo[i];
-        }
-    }
-	memcpy(searchRouterInfo[a_GetRouterCount].PrinterInfo, cTemp1, 128);
-
-	char *pTemp = inet_ntoa(from_addr.sin_addr);
-	memcpy(searchRouterInfo[a_GetRouterCount].IPAddress, pTemp, 32);
-	
-	char cTemp2[32] = {0};
-    sprintf(cTemp2, "%02X:%02X:%02X:%02X:%02X:%02X",(unsigned char)get_discovery_info.MacAddress[0], (unsigned char)get_discovery_info.MacAddress[1], (unsigned char)get_discovery_info.MacAddress[2], (unsigned char)get_discovery_info.MacAddress[3], (unsigned char)get_discovery_info.MacAddress[4], (unsigned char)get_discovery_info.MacAddress[5]);
-    memcpy(searchRouterInfo[a_GetRouterCount].RealMacAddress, cTemp2, 17);
-    memset(searchRouterInfo[a_GetRouterCount].SSID, '\0', 64);
-    memcpy(searchRouterInfo[a_GetRouterCount].SSID,            get_discovery_info.SSID,              32);
-    memcpy(searchRouterInfo[a_GetRouterCount].SubMask,         get_discovery_info.NetMask,           32);
-    memcpy(searchRouterInfo[a_GetRouterCount].ProductID,       get_discovery_info.ProductID,         32);
-    memcpy(searchRouterInfo[a_GetRouterCount].FirmwareVersion, get_discovery_info.FirmwareVersion,   16);
-	memcpy(searchRouterInfo[a_GetRouterCount].MacAddress,      get_discovery_info.MacAddress,        6);
-    searchRouterInfo[a_GetRouterCount].OperationMode =  get_discovery_info.OperationMode;    
-    searchRouterInfo[a_GetRouterCount].Regulation =     get_discovery_info.Regulation;
-	searchRouterInfo[a_GetRouterCount].RouterOperateMode = pbuf[16];
-    
-#if 0
-    char cTemp[512];
-    printf("********************* Search a Router ********************\n");
-    sprintf(cTemp, "ProductID : %s\n", searchRouterInfo[a_GetRouterCount].ProductID);
-    printf(cTemp);
-    sprintf(cTemp, "SSID : %s\n", searchRouterInfo[a_GetRouterCount].SSID);
-    printf(cTemp);
-    sprintf(cTemp, "IPAddress : %s\n", searchRouterInfo[a_GetRouterCount].IPAddress);
-    printf(cTemp);
-    sprintf(cTemp, "MacAddress : %s\n", searchRouterInfo[a_GetRouterCount].RealMacAddress);
-    printf(cTemp);
-#endif
-    
-	a_GetRouterCount++;
-}
-
-#if 1
 int UnpackasusGetInfo(char *pdubuf, PKT_GET_INFO *Info)
 {
 	unsigned int realOPCode;
@@ -341,4 +259,93 @@ int UnpackasusGetInfo(char *pdubuf, PKT_GET_INFO *Info)
         memcpy(Info, pdubuf+sizeof(IBOX_COMM_PKT_RES), sizeof(PKT_GET_INFO));
         return 1;
 }
+
+void PROCESS_UNPACK_GET_INFO(char *pbuf, struct sockaddr_in from_addr)
+{
+	//printf("start PROCESS_UNPACK_GET_INFO\n");
+	int inc = 1;
+	PKT_GET_INFO get_discovery_info;
+	SearchRouterInfoStruct *p;
+
+	if (UnpackasusGetInfo(pbuf, &get_discovery_info) == 0) {
+		//printf("error data\n");
+		return;		// error data
+	}
+
+	if (a_GetRouterCount >= ARRAY_SIZE(searchRouterInfo)) {
+		//printf("a_GetRouterCount >= 128\n");
+		return;
+	}
+	//memcpy(txMac, get_discovery_info.MacAddress, 6);
+
+	//check MAC address for duplicate response
+	int getRouterIndex = 0;
+	for (p = &searchRouterInfo[0], getRouterIndex = 0; getRouterIndex < a_GetRouterCount; getRouterIndex++, p++) {
+		if (!memcmp(p->MacAddress, get_discovery_info.MacAddress, 6)) {
+			//printf("check MAC address for duplicate response\n");
+			inc = 0;
+			break;
+		}
+	}
+
+	// check for correct operation mode
+	switch (get_discovery_info.OperationMode) {
+	case OPERATION_MODE_WB:
+	case OPERATION_MODE_AP:
+		break;
+	default:		// incorrect operation mode
+		return;
+	}
+
+	char cTemp1[128] = { 0 };
+	if ((get_discovery_info.PrinterInfo[0] == ' ' && get_discovery_info.PrinterInfo[1] == ' ' && get_discovery_info.PrinterInfo[2] == '\0') ||
+	    (get_discovery_info.PrinterInfo[0] == '\0' && get_discovery_info.PrinterInfo[1] == '\0' && get_discovery_info.PrinterInfo[2] == '\0'))
+	{
+		//[sPrinterInfo stringWithFormat: @"%s", ""];
+	} else {
+		int i = 0;
+		for (i = 0; i < sizeof(get_discovery_info.PrinterInfo); i++) {
+			cTemp1[i] = get_discovery_info.PrinterInfo[i];
+		}
+	}
+	memcpy(p->PrinterInfo, cTemp1, 128);
+
+	char *pTemp = inet_ntoa(from_addr.sin_addr);
+	memcpy(p->IPAddress, pTemp, 32);
+
+	char cTemp2[32] = { 0 };
+	sprintf(cTemp2, "%02X:%02X:%02X:%02X:%02X:%02X",
+		(unsigned char)get_discovery_info.MacAddress[0],
+		(unsigned char)get_discovery_info.MacAddress[1],
+		(unsigned char)get_discovery_info.MacAddress[2],
+		(unsigned char)get_discovery_info.MacAddress[3],
+		(unsigned char)get_discovery_info.MacAddress[4],
+		(unsigned char)get_discovery_info.MacAddress[5]);
+	memcpy(p->RealMacAddress, cTemp2, 17);
+	memset(p->SSID, '\0', 64);
+	memcpy(p->SSID, get_discovery_info.SSID, 32);
+	memcpy(p->SubMask, get_discovery_info.NetMask, 32);
+	memcpy(p->ProductID, get_discovery_info.ProductID, 32);
+	memcpy(p->FirmwareVersion, get_discovery_info.FirmwareVersion, 16);
+	memcpy(p->MacAddress, get_discovery_info.MacAddress, 6);
+	p->OperationMode = get_discovery_info.OperationMode;
+	p->Regulation = get_discovery_info.Regulation;
+	p->RouterOperateMode = pbuf[16];
+
+#if 0
+	char cTemp[512];
+	printf("********************* Search a Router ********************\n");
+	sprintf(cTemp, "ProductID : %s\n", p->ProductID);
+	printf(cTemp);
+	sprintf(cTemp, "SSID : %s\n", p->SSID);
+	printf(cTemp);
+	sprintf(cTemp, "IPAddress : %s\n", p->IPAddress);
+	printf(cTemp);
+	sprintf(cTemp, "MacAddress : %s\n", p->RealMacAddress);
+	printf(cTemp);
 #endif
+
+	if (inc)
+		a_GetRouterCount++;
+}
+

@@ -107,8 +107,6 @@ static char *ttyconv(char *);
 
 int
 main(int argc, char **argv) {
-	extern int	optind;
-	extern char	*optarg;
 	int	ch;
 
 	setlocale(LC_ALL, "");
@@ -369,7 +367,9 @@ want(struct utmp *bp, int check) {
 			if ((in_addr_t) bp->ut_addr == inet_addr(step->name))
 			  return YES;
 			break;
-	}
+		default:
+			abort();
+		}
 	return NO;
 }
 
@@ -444,11 +444,11 @@ ttyconv(char *arg) {
 	if (strlen(arg) == 2) {
 		/* either 6 for "ttyxx" or 8 for "console" */
 		mval = xmalloc(8);
-		if (!strcmp(arg, "co"))
+		if (!strncmp(arg, "co", 2))
 			(void)strcpy(mval, "console");
 		else {
 			(void)strcpy(mval, "tty");
-			(void)strcpy(mval + 3, arg);
+			(void)strncpy(mval + 3, arg, 4);
 		}
 		return mval;
 	}

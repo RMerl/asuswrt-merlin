@@ -33,111 +33,123 @@
 .\"
 .\" Section on valid facility and level strings added by
 .\" and1000@debian.org, 26 Oct 1997.
-.Dd August 2011 "  "
-.Dt LOGGER(1) "" "User Commands"
-.Os util-linux
-.Sh NAME
-.Nm logger
-.Nd a shell command interface to the syslog(3) system log module
-.Sh SYNOPSIS
-.Nm logger
-.Op Fl dhisV
-.Op Fl f Ar file
-.Op Fl n Ar server
-.Op Fl P Ar port
-.Op Fl p Ar pri
-.Op Fl t Ar tag
-.Op Fl u Ar socket
-.Op Ar message
-.Sh DESCRIPTION
-.Nm logger
-makes entries in the system log.
-It provides a shell command interface to the
-.Xr syslog  3
+.TH LOGGER "1" "September 2011" "util-linux" "User Commands"
+.SH NAME
+logger \- a shell command interface to the syslog(3) system log module
+.SH SYNOPSIS
+.B logger
+[options] [message]
+.SH DESCRIPTION
+.B logger
+makes entries in the system log.  It provides a shell command
+interface to the
+.BR syslog (3)
 system log module.
-.Pp
-Options:
-.Pp
-.Bl -tag -width "message"
-.It Fl d, Fl Fl udp
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-udp\fR
 Use datagram (UDP) instead of the default stream connection (TCP).
-.It Fl i, Fl Fl id
+.TP
+\fB\-i\fR, \fB\-\-id\fR
 Log the process ID of the logger process with each line.
-.It Fl f, Fl Fl file Ar file
-Log the contents of the specified \fIfile\fR.  This option cannot be
-combined with a command-line message.
-.It Fl h, Fl Fl help
+.TP
+\fB\-f\fR, \fB\-\-file\fR \fIfile\fR
+Log the contents of the specified
+.IR file .
+This option cannot be combined with a command-line message.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
 Display a help text and exit.
-.It Fl n, Fl Fl server Ar server
+.TP
+\fB\-n\fR, \fB\-\-server\fR \fIserver\fR
 Write to the specified remote syslog
-.Ar server
+.I server
 using UDP instead of to the builtin syslog routines.
-.It Fl P, Fl Fl port Ar port
+.TP
+\fB\-P\fR, \fB\-\-port\fR \fIport\fR
 Use the specified UDP
-.Ar port  .
+.IR port .
 The default port number is 514.
-.It Fl p, Fl Fl priority Ar priority
+.TP
+\fB\-p\fR, \fB\-\-priority\fR \fIpriority\fR
 Enter the message into the log with the specified
-.Ar priority  .
-The priority may be specified numerically or as a \fIfacility.level\fR
+.IR priority  .
+The priority may be specified numerically or as a
+.I facility.level
 pair.
-For example, \fB-p local3.info\fR logs the message as
-informational in the local3 facility.
-The default is \fIuser.notice\fR.
-.It Fl s, Fl Fl stderr
+For example,
+.B -p
+.I local3.info
+logs the message as informational in the local3 facility.
+The default is
+.IR user.notice .
+.TP
+\fB\-s\fR, \fB\-\-stderr\fR
 Output the message to standard error as well as to the system log.
-.It Fl t, Fl Fl tag Ar tag
+.TP
+\fB\-t\fR, \fB\-\-tag\fR \fItag\fR
 Mark every line to be logged with the specified
-.Ar tag  .
-.It Fl u, Fl Fl socket Ar socket
+.IR tag .
+.TP
+\fB\-u\fR, \fB\-\-socket\fR \fIsocket\fR
 Write to the specified
-.Ar socket
+.I socket
 instead of to the builtin syslog routines.
-.It Fl V, Fl Fl version
+.TP
+\fB\-V\fR, \fB\-\-version\fR
 Display version information and exit.
-.It --
-End the argument list. This is to allow the
-.Ar message
+.TP
+\fB\-\-\fR
+End the argument list.  This is to allow the
+.I message
 to start with a hyphen (\-).
-.It Ar message
+.TP
+.I message
 Write the message to log; if not specified, and the
-.Fl f
-flag is not
-provided, standard input is logged.
-.El
-.Pp
+.I \-f
+flag is not provided, standard input is logged.
+.PP
 The
-.Nm logger
+.B logger
 utility exits 0 on success, and >0 if an error occurs.
-.Pp
-Valid facility names are: auth, authpriv (for security information of a
-sensitive nature), cron, daemon, ftp, kern (can't be generated from user
-process), lpr, mail, news, security (deprecated synonym for auth), syslog,
-user, uucp, and local0 to local7, inclusive.
-.Pp
+.PP
+Valid facility names are:
+.IR auth , \ authpriv
+(for security information of a sensitive nature),
+.IR cron , \ daemon , \ ftp , \ kern
+(can't be generated from user process),
+.IR lpr , \ mail , \ news , \ security
+(deprecated synonym for
+.IR auth ), \ syslog , \ user , \ uucp ,
+and
+.IR local0 \ to \ local7 ,
+inclusive.
+.PP
 Valid level names are:
-alert, crit, debug, emerg, err, error (deprecated synonym for err),
-info, notice, panic (deprecated synonym for emerg), warning,
-warn (deprecated synonym for warning).
+.IR alert , \ crit , \ debug , \ emerg , \ err , \ error
+(deprecated synonym for
+.IR err ), \ info , \ notice , \ panic
+(deprecated synonym for
+.IR  emerg ), \ warning , \ warn
+(deprecated synonym for
+.IR warning ).
 For the priority order and intended purposes of these levels, see
-.Xr syslog 3 .
-.Sh EXAMPLES
-.Bd -literal -offset indent -compact
+.BR syslog (3).
+.SH EXAMPLES
 logger System rebooted
-
+.br
 logger \-p local0.notice \-t HOSTIDM \-f /dev/idmc
-
+.br
 logger \-n loghost.example.com System rebooted
-.Ed
-.Sh SEE ALSO
-.Xr syslog 3 ,
-.Xr syslogd 8
-.Sh STANDARDS
+.SH SEE ALSO
+.BR syslog (3),
+.BR syslogd (8)
+.SH STANDARDS
 The
-.Nm logger
-command is expected to be
-.St -p1003.2
-compatible.
-.Sh AVAILABILITY
+.B logger
+command is expected to be IEEE Std 1003.2 ("POSIX.2") compatible.
+.SH AVAILABILITY
 The logger command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

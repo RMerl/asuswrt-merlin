@@ -152,7 +152,6 @@ ifneq ($(RTCONFIG_SNMPD),y)
 	rm -rf $(INSTALLDIR)/www/Advanced_SNMP_Content.asp
 endif
 ifeq ($(RTCONFIG_DSL),y)
-	rm -rf $(INSTALLDIR)/www/images/Model_product.png
 	rm -rf $(INSTALLDIR)/www/qis/QIS_welcome.htm
 	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
@@ -162,6 +161,12 @@ else
 	rm -rf $(INSTALLDIR)/www/SNR.svg
 	rm -rf $(INSTALLDIR)/www/BPC.svg
 	rm -rf $(INSTALLDIR)/www/ajax_signals.asp
+endif
+
+ifeq ($(BUILD_NAME),DSL-N55U)
+ifeq ($(BUILD_NAME),DSL-N55U-B)
+	rm -rf $(INSTALLDIR)/www/images/Model_product.png
+endif
 endif
 
 ifneq ($(BUILD_NAME),DSL-N55U)
@@ -311,7 +316,9 @@ ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/AiProtection_Group.asp
 	rm -rf $(INSTALLDIR)/www/AiProtection_HomeProtection.asp
 	rm -rf $(INSTALLDIR)/www/AiProtection_WebProtector.asp
+ifneq ($(RTCONFIG_PARENTALCTRL),y)
 	rm -rf $(INSTALLDIR)/www/blocking.asp
+endif
 	rm -rf $(INSTALLDIR)/www/getTraffic.asp
 	rm -rf $(INSTALLDIR)/www/getWebHistory.asp
 	rm -rf $(INSTALLDIR)/www/getAppTraffic.asp
@@ -325,12 +332,17 @@ ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/Home_Protection_Scenario.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo_power.png	
-	rm -rf $(INSTALLDIR)/www/images/New_ui/TM_product.png	
+	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo_1.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/sample_35.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/app_icons
 ifneq ($(RTCONFIG_ROG),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/indicator.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/speedmeter.png
+endif
+ifneq ($(BUILD_NAME),RT-AC3200)
+	rm -rf $(INSTALLDIR)/www/TrafficAnalyzer_Statistic.asp.asp
+	rm -rf $(INSTALLDIR)/www/chart.js
+	rm -rf $(INSTALLDIR)/www/datepicker.css
 endif
 endif
 
@@ -356,3 +368,19 @@ endif
 ifneq ($(RTCONFIG_OLD_PARENTALCTRL), y)	
 	rm -rf $(INSTALLDIR)/www/Advanced_MACFilter_Content.asp
 endif
+
+ifneq ($(BUILD_NAME),RT-AC3200)
+	rm -rf $(INSTALLDIR)/www/Advanced_Smart_Connect.asp
+	rm -rf $(INSTALLDIR)/www/images/New_ui/smart_connect.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/smart_connect_concept.gif
+endif
+
+ifneq ($(RTCONFIG_FINDASUS), y)
+	rm -rf $(INSTALLDIR)/www/find_device.asp
+	rm -rf $(INSTALLDIR)/www/images/New_ui/wifi-logo.png
+endif
+
+ifneq ($(RTCONFIG_JFFS2USERICON), y)
+	rm -rf $(INSTALLDIR)/www/ajax_uploadicon.asp
+endif
+

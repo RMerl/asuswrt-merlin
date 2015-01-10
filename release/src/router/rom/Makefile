@@ -10,10 +10,27 @@ ifeq ($(RTCONFIG_BCMARM),y)
 	pkg_type=arm
 	DM_VERSION=3.1.0.93
 	HTTP_VERSION=3.1.0.86
+else ifeq ($(RTCONFIG_QCA),y)
+	pkg_type=mipsbig
+	DM_VERSION=3.1.0.90
+	HTTP_VERSION=3.1.0.83
 else
 	pkg_type=mipsel
 	DM_VERSION=3.1.0.78
 	HTTP_VERSION=3.1.0.71
+endif
+
+PKG_LIST := readline wxbase expat openssl zlib libevent ncurses libxml2 pcre spawn-fcgi
+
+ifeq ($(RTCONFIG_BCMARM),y)
+PKG_LIST += libcurl libsigc++ libpar2
+else ifeq ($(RTCONFIG_QCA),y)
+# libuclibc++, libcurl, libsigc++, and libpar2 are not required
+else
+PKG_LIST += libuclibc++ libcurl libsigc++ libpar2
+endif
+
+ifeq ($(RTCONFIG_APP_PREINSTALLED),y)
 endif
 
 all:
@@ -34,29 +51,14 @@ ifeq ($(RTCONFIG_BCMARM),y)
 	install -m 0644 optware.mbwe-bluering $(INSTALLDIR)/rom
 else
 	install -m 0644 optware.oleg $(INSTALLDIR)/rom
-
-	-install -m 0644 packages/libuclibc++_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 endif
-	-install -m 0644 packages/readline_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/wxbase_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/expat_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 	install -m 0644 packages/asus_base_apps_$(pkg_type).tgz $(INSTALLDIR)/rom # Don't need if installing from Internet.
+	-install -m 0644 $(foreach pkg,$(PKG_LIST),packages/$(pkg)_*_$(pkg_type).ipk) $(INSTALLDIR)/rom
 	-install -m 0644 packages/downloadmaster_$(DM_VERSION)_$(pkg_type).ipk $(INSTALLDIR)/rom
 	-install -m 0644 packages/bzip2_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 ifneq ($(HTTP_VERSION),)
 	-install -m 0644 packages/asuslighttpd_$(HTTP_VERSION)_$(pkg_type).ipk $(INSTALLDIR)/rom
 endif
-
-	-install -m 0644 packages/openssl_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/zlib_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/libcurl_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/libevent_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/ncurses_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/libxml2_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/libsigc++_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/libpar2_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/pcre_*_$(pkg_type).ipk $(INSTALLDIR)/rom
-	-install -m 0644 packages/spawn-fcgi_*_$(pkg_type).ipk $(INSTALLDIR)/rom
 endif
 
 	mkdir -p $(INSTALLDIR)/usr/sbin
@@ -153,7 +155,7 @@ else ifeq ($(RTAC87U), y)
 	cp -rf dlna/icon_sm.rtac87u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
 	cp -rf dlna/icon_lrg.rtac87u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg
 	cp -rf dlna/icon_lrg.rtac87u.png $(INSTALLDIR)/rom/dlna/icon_lrg.png
-else ifeq ($(RTAC68U)$(DSLAC68U),y)
+else ifeq ($(RTAC68U)$(DSLAC68U)$(RT4GAC55U),y)
 	cp -rf dlna/icon_sm.rtac68u.jpg $(INSTALLDIR)/rom/dlna/icon_sm.jpg
 	cp -rf dlna/icon_sm.rtac68u.png $(INSTALLDIR)/rom/dlna/icon_sm.png
 	cp -rf dlna/icon_lrg.rtac68u.jpg $(INSTALLDIR)/rom/dlna/icon_lrg.jpg

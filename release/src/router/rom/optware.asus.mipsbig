@@ -1,0 +1,446 @@
+Package: DM2_Utility
+Version: 2.0.4.2
+Depends: 
+OptionalUtility: 2.1.0.0+
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 
+Filename: DM2_2042.zip
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+Description: Download tools
+URL: 
+
+
+Package: asuslighttpd
+Version: 3.1.0.83
+Depends: pcre, zlib, uclibc-opt, openssl, spawn-fcgi, bzip2
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 164011
+Filename: asuslighttpd_3.1.0.83_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+Description: 
+URL: 
+
+
+Package: downloadmaster
+Version: 3.1.0.90
+Depends: uclibc-opt, openssl, zlib, libevent, ncurses, libxml2, pcre, spawn-fcgi, readline, asuslighttpd, wxbase
+OptionalUtility: 1.0.0.2+
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 3277862
+Filename: downloadmaster_3.1.0.90_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+Description: Download tools
+URL: http://www.asusnetwork.net:8081/downloadmaster/index.asp
+
+
+Package: mediaserver
+Version: 1.0.0.35
+Depends: uclibc-opt, zlib, gdbm, sqlite, libjpeg, libexif, libogg, flac, libvorbis, asusffmpeg, asuslighttpd
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 2340892
+Filename: mediaserver_1.0.0.35_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+Description: 
+URL: http://www.asusnetwork.net:8081/mediaserverui/mediaserver.asp
+
+
+Package: asuswebstorage
+Version: 1.0.0.3
+Depends: uclibc-opt,inotify,libcurl,openssl,libxml2,zlib
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 867618
+Filename: asuswebstorage_1.0.0.3_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+Description: 
+URL: http://www.asusnetwork.net/cloud_sync.asp
+
+
+Package: inotify
+Version: 1.0.0.2
+Depends: uclibc-opt
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 12167
+Filename: inotify_1.0.0.2_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+Description: 
+
+
+Package: aicloud
+Version: 1.0.0.6
+Depends: uclibc-opt,pcre,sqlite,libxml2,openssl,smartsync
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 3603672
+Filename: aicloud_1.0.0.6_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+Description: 
+
+
+Package: lamp
+Version: 1.0.0.1
+Depends: uclibc-opt
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 10783108
+Filename: lamp_1.0.0.1_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+Description: 
+URL: 
+
+
+Package: e2fslibs
+Version: 1.41.12-1
+Section: lib
+Architecture: mipsbig
+Maintainer: Inge Arnesen <inge.arnesen@gmail.com>
+Size: 155672
+Filename: e2fslibs_1.41.12-1_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/e2fsprogs/e2fsprogs-1.41.12.tar.gz
+Description: Ext2 Filesystem Libraries
+
+
+Package: e2fsprogs
+Version: 1.41.12-1
+Depends: e2fslibs
+Section: utils
+Architecture: mipsbig
+Maintainer: Inge Arnesen <inge.arnesen@gmail.com>
+Size: 330278
+Filename: e2fsprogs_1.41.12-1_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/e2fsprogs/e2fsprogs-1.41.12.tar.gz
+Description: Ext2 Filesystem Utilities
+
+
+Package: expat
+Version: 2.0.1-1
+Section: libraries
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 164080
+Filename: expat_2.0.1-1_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/expat/expat-2.0.1.tar.gz
+Description: XML Parser library
+
+
+Package: ffmpeg
+Version: 0.svn20080409-3
+Section: tool
+Architecture: mipsbig
+Maintainer: Keith Garry Boyce <nslu2-linux@yahoogroups.com>
+Size: 2284940
+Filename: ffmpeg_0.svn20080409-3_mipsbig.ipk
+Source: /ffmpeg-0.svn20080409.tar.bz2
+Description: FFmpeg is an audio/video conversion tool.
+
+
+Package: flac
+Version: 1.2.1-1
+Depends: libogg
+Section: compression
+Architecture: mipsbig
+Maintainer: Josh Coalson <jcoalson@users.sourceforge.net>
+Size: 1733827
+Filename: flac_1.2.1-1_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/flac/flac-1.2.1.tar.gz
+Description: FLAC is a free lossless audio codec.  This package contains the codec libraries and the command-line tools flac and metaflac.
+
+
+Package: gdbm
+Version: 1.8.3-4
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 36419
+Filename: gdbm_1.8.3-4_mipsbig.ipk
+Source: ftp://ftp.gnu.org/gnu/gdbm/gdbm-1.8.3.tar.gz
+Description: GNU dbm is a set of database routines that use extensible hashing. It works similar to the standard UNIX dbm routines.
+
+
+Package: libcurl
+Version: 7.24.0-1
+Depends: openssl, zlib
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 340744
+Filename: libcurl_7.24.0-1_mipsbig.ipk
+Source: http://curl.haxx.se/download/curl-7.24.0.tar.gz
+Description: Curl is a command line tool for transferring files with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, GOPHER, TELNET, DICT, FILE and LDAP. Curl supports HTTPS certificates, HTTP POST, HTTP PUT, FTP uploading, kerberos, HTTP form based upload, proxies, cookies, user+password authentication, file transfer resume, http proxy tunneling and a busload of other useful tricks.
+
+
+Package: libevent
+Version: 2.0.20-1
+Section: libs
+Architecture: mipsbig
+Maintainer: Jean-Fabrice <jeanfabrice@users.sourceforge.net>
+Size: 823138
+Filename: libevent_2.0.20-1_mipsbig.ipk
+Source: https://github.com/downloads/libevent/libevent/libevent-2.0.20-stable.tar.gz
+Description: libevent to implement an event loop
+
+
+Package: libexif
+Version: 0.6.19-1
+Section: lib
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 151953
+Filename: libexif_0.6.19-1_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/libexif/libexif-0.6.19.tar.bz2
+Description: Library to parse EXIF info in JPEG file and read/write the data from those tags.
+
+
+Package: libid3tag
+Version: 0.15.1b-1
+Depends: zlib
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 34356
+Filename: libid3tag_0.15.1b-1_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/mad/libid3tag-0.15.1b.tar.gz
+Description: The library used for ID3 tag reading
+
+
+Package: libjpeg
+Version: 6b-3
+Section: net
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 164237
+Filename: libjpeg_6b-3_mipsbig.ipk
+Source: http://www.ijg.org/files/jpegsrc.v6b.tar.gz
+Description: collection of jpeg tools
+
+
+Package: libogg
+Version: 1.2.1-1
+Section: lib
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 95364
+Filename: libogg_1.2.1-1_mipsbig.ipk
+Source: http://downloads.xiph.org/releases/ogg/libogg-1.2.1.tar.gz
+Description: Ogg is a multimedia container format.
+
+
+Package: libpar2
+Version: 0.2-5
+Depends: libsigc++
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 143166
+Filename: libpar2_0.2-5_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/parchive/libpar2-0.2.tar.gz
+Description: A library for performing common tasks related to PAR recovery sets
+
+
+Package: libsigc++
+Version: 2.2.3-1
+Depends: uclibc-opt
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 7527
+Filename: libsigc++_2.2.3-1_mipsbig.ipk
+Source: http://ftp.gnome.org/pub/GNOME/sources/libsigc++/2.2/libsigc++-2.2.3.tar.gz
+Description: libsigc++ implements a typesafe callback system for standard C++.
+
+
+Package: libuclibc++
+Version: 0.2.2-9
+Provides: uclibc-opt
+Section: libs
+Architecture: mipsbig
+Maintainer: Leon Kos <leon.kos@amis.net>
+Size: 66160
+Filename: libuclibc++_0.2.2-9_mipsbig.ipk
+Source: /uClibc++-0.2.2+r26250.tbz2
+Description: C++ standard library designed for use in embedded systems
+
+
+Package: libvorbis
+Version: 1.3.2-1
+Depends: libogg
+Section: lib
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 504914
+Filename: libvorbis_1.3.2-1_mipsbig.ipk
+Source: http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.2.tar.gz
+Description: Ogg Vorbis compressed audio format.
+
+
+Package: libxml2
+Version: 2.7.8-1
+Depends: zlib (>=1.2.5)
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 1980209
+Filename: libxml2_2.7.8-1_mipsbig.ipk
+Source: ftp://xmlsoft.org/libxml2/libxml2-2.7.8.tar.gz
+Description: Libxml2 is the XML C parser and toolkit developed for the Gnome project.
+
+
+Package: ncurses
+Version: 5.7-3
+Section: net
+Architecture: mipsbig
+Maintainer: Christopher Blunck <christopher.blunck@gmail.com>
+Size: 849412
+Filename: ncurses_5.7-3_mipsbig.ipk
+Source: ftp://invisible-island.net/ncurses/ncurses-5.7.tar.gz
+Description: NCurses libraries
+
+
+Package: openssl
+Version: 0.9.8v-2
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 1004973
+Filename: openssl_0.9.8v-2_mipsbig.ipk
+Source: http://www.openssl.org/source/openssl-0.9.7m.tar.gz
+Description: Openssl provides the ssl implementation in libraries libcrypto and libssl, and is needed by many other applications and libraries.
+
+
+Package: pcre
+Version: 8.31-1
+Section: util
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 247817
+Filename: pcre_8.31-1_mipsbig.ipk
+Source: ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.31.tar.bz2
+Description: Perl-compatible regular expression library
+
+
+Package: spawn-fcgi
+Version: 1.6.3-1
+Section: utils
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 16917
+Filename: spawn-fcgi_1.6.3-1_mipsbig.ipk
+Source: http://www.lighttpd.net/download/spawn-fcgi-1.6.3.tar.bz2
+Description: spawn-fcgi is used to spawn fastcgi applications
+
+
+Package: readline
+Version: 6.1-2
+Depends: ncurses
+Section: misc
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 375243
+Filename: readline_6.1-2_mipsbig.ipk
+Source: http://ftp.gnu.org/pub/gnu/readline/readline-6.1.tar.gz
+Description: The GNU Readline library provides a set of functions for use by applications that allow users to edit command lines as they are typed in
+
+
+Package: sqlite
+Version: 3.7.14.1-1
+Depends: readline, ncurses
+Section: misc
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 1181098
+Filename: sqlite_3.7.14.1-1_mipsbig.ipk
+Source: http://www.sqlite.org/sqlite-autoconf-3071401.tar.gz
+Description: SQLite is a small C library that implements a self-contained, embeddable, zero-configuration SQL database engine.
+
+
+Package: wxbase
+Version: 2.8.12-1
+Depends: expat, zlib
+Section: libs
+Architecture: mipsbig
+Maintainer: Gorion <mail4tmp@gmail.com>
+Size: 1092979
+Filename: wxbase_2.8.12-1_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/wxwindows/wxWidgets-2.8.12.tar.bz2
+Description: wxbase is a basic (non-windows) part of wxWidget toolkit
+
+
+Package: zlib
+Version: 1.2.5-1
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 172217
+Filename: zlib_1.2.5-1_mipsbig.ipk
+Source: http://downloads.sourceforge.net/sourceforge/libpng/zlib-1.2.5.tar.bz2
+Description: zlib is a library implementing the 'deflate' compression system.
+
+Package: webdavclient
+Version: 1.0.0.1
+Depends: inotify,openssl,libxml2,zlib
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 108378
+Filename: webdavclient_1.0.0.1_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+URL: http://www.asusnetwork.net/cloud_sync.asp
+Description: Cloud client
+
+Package: smartsync
+Version: 1.0.0.1
+Depends: webdavclient,asuswebstorage
+Section: net
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 1613
+Filename: smartsync_1.0.0.1_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+URL: http://www.asusnetwork.net/cloud_sync.asp
+Description: Cloud control script
+
+
+
+Package: bzip2
+Version: 1.0.6-1
+Depends: 
+Section: compression
+Architecture: mipsbig
+Maintainer: Christopher Blunck <christopher.blunck@gmail.com>
+Size: 111126
+Filename: bzip2_1.0.6-1_mipsbig.ipk
+Source: http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
+URL: 
+Description: 
+
+Package: asusffmpeg
+Version: 1.0.0.2
+Depends: 
+Section: tool
+Architecture: mipsbig
+Maintainer: ASUS
+Size: 500656
+Filename: asusffmpeg_1.0.0.2_mipsbig.ipk
+Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
+URL: 
+Description: 
+

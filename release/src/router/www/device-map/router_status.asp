@@ -230,7 +230,7 @@ function detect_CPU_Status(){
     	},
     	success: function(){
 			render_CPU(cpu_percentage);		
-			setTimeout("detect_CPU_Status();", 3000);
+			setTimeout("detect_CPU_Status();", 2000);
   		}
 	});
 }

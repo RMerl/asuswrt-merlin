@@ -1,0 +1,40 @@
+As of vsftpd version 2.0.0, SSL / TLS support is provided.
+
+The SSL / TLS support provides the ability to encrypt FTP logins and subsequent
+commands, as well as the data transfers themselves. The encyption will, for
+example, stop the stealing of sensitive passwords via network snooping.
+
+By default, SSL support is disabled both at compile time and at runtime.
+Before considering enabling / using SSL support, there are some security
+considerations:
+
+- Only enable SSL if absolutely necessary. Enabling SSL will allow attackers
+to make use of any security problems in the OpenSSL libraries. Note that
+the OpenSSL libraries are a large quantity of code and have had the occasional
+security problem in the past.
+For example, your server might use virtual users to control access to
+non-sensitive download content. In this case, the passwords might not be
+worth securing with SSL.
+
+- After enabling SSL, consider restricting access to an SSL enabled server
+where feasible. For example, only the internal network might need access.
+
+
+In order to enable and use SSL support, you need the following:
+
+- vsftpd built with OpenSSL support. This is a decision your vsftpd packager
+made, or if you are building vsftpd yourself, edit "builddefs.h" and change the
+"#undef VSF_BUILD_SSL" to "#define VSF_BUILD_SSL".
+- "ssl_enable=YES" in your vsftpd.conf.
+- A SSL certificate. By default, an RSA certificate is looked for at the
+location /usr/share/ssl/certs/vsftpd.pem. To get an RSA certificate, either
+buy one from a certificate authority, or you can create your own self-signed
+certificate. If you have OpenSSL installed, you may find a "Makefile" in
+your shared certificates directory, e.g. /usr/share/ssl/certs. In that case,
+go to that directory and type e.g. "make vsftpd.pem". Then answer the
+questions you are asked. Alternatively, read the man page for "openssl".
+- Also be aware of the following SSL related parameters. Read the vsftpd.conf.5
+manual page to learn about them: allow_anon_ssl, force_local_logins_ssl,
+force_local_data_ssl, ssl_sslv2, ssl_sslv3, ssl_tlsv1, rsa_cert_file,
+dsa_cert_file, ssl_ciphers.
+

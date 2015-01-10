@@ -33,56 +33,54 @@
 .\"
 .\" Modified for Linux, Mon Mar  8 18:07:38 1993, faith@cs.unc.edu
 .\"
-.Dd April 2011 "  "
-.Dt WALL(1) "" "User Commands"
-.Os util-linux
-.Sh NAME
-.Nm wall
-.Nd write a message to users
-.Sh SYNOPSIS
-.Nm wall
-.Op Ar -n
-.Op Ar -t TIMEOUT
-.Op Ar file
-.Sh DESCRIPTION
-.Nm Wall
+.TH WALL "1" "September 2011" "util-linux" "User Commands"
+.SH NAME
+wall \- write a message to users
+.SH SYNOPSIS
+.B wall
+[-n] [-t TIMEOUT] [file]
+.SH DESCRIPTION
+.B Wall
 displays the contents of
-.Ar file
-or, by default, its standard input, on the terminals of all
-currently logged in users. The command will cut over 79 character
-long lines to new lines. Short lines are white space padded to
-have 79 characters. The command will always put carriage return
-and new line at the end of each line.
-.Pp
-Only the super-user can write on the
-terminals of users who have chosen
-to deny messages or are using a program which
-automatically denies messages.
-.Pp
-Reading from a file is refused when the invoker is not superuser
-and the program is suid or sgid.
-.Sh OPTIONS
-.Bl -tag -width Fl
-.It Fl n, Fl Fl nobanner
+.I file
+or, by default, its standard input, on the terminals of all currently logged
+in users.  The command will cut over 79 character long lines to new lines.
+Short lines are white space padded to have 79 characters.  The command will
+always put carriage return and new line at the end of each line.
+.PP
+Only the super-user can write on the terminals of users who have chosen to
+deny messages or are using a program which automatically denies messages.
+.PP
+Reading from a file is refused when the invoker is not superuser and the
+program is suid or sgid.
+.SH OPTIONS
+.TP
+\fB\-n\fR, \fB\-\-nobanner\fR
 Supress banner
-.It Fl t, Fl Fl timeout Ar TIMEOUT
-Write timeout to terminals in seconds. Argument must be positive
-integer. Default value is 300 seconds, which is a legacy from
-time when people ran terminals over modem lines.
-.It Fl V, Fl Fl version
+.TP
+\fB\-t\fR, \fB\-\-timeout\fR \fItimeout\fR
+Write
+.I timeout
+to terminals in seconds.  Argument must be positive integer.  Default value
+is 300 seconds, which is a legacy from time when people ran terminals over
+modem lines.
+.TP
+\fB\-V\fR, \fB\-\-version\fR
 Output version and exit.
-.It Fl h, Fl Fl help
+.TP
+\fB\-h\fR, \fB\-\-help\fR
 Output help and exit.
-.Sh SEE ALSO
-.Xr mesg 1 ,
-.Xr talk 1 ,
-.Xr write 1 ,
-.Xr shutdown 8
-.Sh HISTORY
+.SH SEE ALSO
+.BR mesg (1),
+.BR talk (1),
+.BR write (1),
+.BR shutdown (8)
+.SH HISTORY
 A
-.Nm
-command appeared in
-.At v7 .
-.Sh AVAILABILITY
+.B wall
+command appeared in Version 7 AT&T UNIX.
+.SH AVAILABILITY
 The wall command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

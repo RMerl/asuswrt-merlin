@@ -63,8 +63,8 @@ struct device_parameter { /* 48 bytes */
 
 typedef struct {
 	unsigned int   magic;		 /* expect SGI_LABEL_MAGIC */
-	unsigned short boot_part;        /* active boot partition */
-	unsigned short swap_part;        /* active swap partition */
+	short boot_part;		/* active boot partition */
+	short swap_part;		/* active swap partition */
 	unsigned char  boot_file[16];    /* name of the bootfile */
 	struct device_parameter devparam;	/*  1 * 48 bytes */
 	struct volume_directory {		/* 15 * 16 bytes */
@@ -133,7 +133,6 @@ extern void	sgi_set_bootpartition( int i );
 extern void	sgi_set_swappartition( int i );
 extern int	sgi_get_bootpartition( void );
 extern int	sgi_get_swappartition( void );
-extern void	sgi_set_bootfile( const char* aFile );
-extern const char *sgi_get_bootfile( void );
+extern void	sgi_set_bootfile(void);
 
 #endif /* FDISK_SGI_LABEL_H */

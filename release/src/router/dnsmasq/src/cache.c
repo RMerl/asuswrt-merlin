@@ -322,7 +322,7 @@ static int is_expired(time_t now, struct crec *crecp)
   return 1;
 }
 
-static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsigned short flags)
+static struct crec *cache_scan_free(char *name, struct all_addr *addr, time_t now, unsigned short flags)
 {
   /* Scan and remove old entries.
      If (flags & F_FORWARD) then remove any forward entries for name and any expired
@@ -331,8 +331,8 @@ static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsign
      entries in the whole cache.
      If (flags == 0) remove any expired entries in the whole cache. 
 
-     In the flags & F_FORWARD case, the return code is valid, and returns zero if the
-     name exists in the cache as a HOSTS or DHCP entry (these are never deleted)
+     In the flags & F_FORWARD case, the return code is valid, and returns a non-NULL pointer
+     to a cache entry if the name exists in the cache as a HOSTS or DHCP entry (these are never deleted)
 
      We take advantage of the fact that hash chains have stuff in the order <reverse>,<other>,<immortal>
      so that when we hit an entry which isn't reverse and is immortal, we're done. */
@@ -361,7 +361,7 @@ static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsign
 		  (((crecp->flags | flags) & F_CNAME) && !(crecp->flags & (F_DNSKEY | F_DS))))
 		{
 		  if (crecp->flags & (F_HOSTS | F_DHCP | F_CONFIG))
-		    return 0;
+		    return crecp;
 		  *up = crecp->hash_next;
 		  cache_unlink(crecp);
 		  cache_free(crecp);
@@ -378,7 +378,7 @@ static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsign
 		   crecp->addr.sig.type_covered == addr->addr.dnssec.type))
 		{
 		  if (crecp->flags & F_CONFIG)
-		    return 0;
+		    return crecp;
 		  *up = crecp->hash_next;
 		  cache_unlink(crecp);
 		  cache_free(crecp);
@@ -423,7 +423,7 @@ static int cache_scan_free(char *name, struct all_addr *addr, time_t now, unsign
 	    up = &crecp->hash_next;
     }
   
-  return 1;
+  return NULL;
 }
 
 /* Note: The normal calling sequence is
@@ -471,10 +471,26 @@ struct crec *cache_insert(char *name, struct all_addr *addr,
     return NULL;
   
   /* First remove any expired entries and entries for the name/address we
-     are currently inserting. Fail if we attempt to delete a name from
-     /etc/hosts or DHCP. */
-  if (!cache_scan_free(name, addr, now, flags))
+     are currently inserting. */
+  if ((new = cache_scan_free(name, addr, now, flags)))
     {
+      /* We're trying to insert a record over one from 
+	 /etc/hosts or DHCP, or other config. If the 
+	 existing record is for an A or AAAA and
+	 the record we're trying to insert is the same, 
+	 just drop the insert, but don't error the whole process. */
+      if ((flags & (F_IPV4 | F_IPV6)) && (flags & F_FORWARD))
+	{
+	  if ((flags & F_IPV4) && (new->flags & F_IPV4) &&
+	      new->addr.addr.addr.addr4.s_addr == addr->addr.addr4.s_addr)
+	    return new;
+#ifdef HAVE_IPV6
+	  else if ((flags & F_IPV6) && (new->flags & F_IPV6) &&
+		   IN6_ARE_ADDR_EQUAL(&new->addr.addr.addr.addr6, &addr->addr.addr6))
+	    return new;
+#endif
+	}
+      
       insert_error = 1;
       return NULL;
     }
@@ -636,7 +652,7 @@ struct crec *cache_find_by_name(struct crec *crecp, char *name, time_t now, unsi
 	    {
 	      if ((crecp->flags & F_FORWARD) && 
 #ifdef HAVE_DNSSEC
-		  ((crecp->flags & (F_DNSKEY | F_DS)) == (prot & (F_DNSKEY | F_DS))) &&
+		  (((crecp->flags & (F_DNSKEY | F_DS)) == (prot & (F_DNSKEY | F_DS))) || (prot & F_NSIGMATCH)) &&
 #endif
 		  (crecp->flags & prot) &&
 		  hostname_isequal(cache_get_name(crecp), name))
@@ -696,7 +712,7 @@ struct crec *cache_find_by_name(struct crec *crecp, char *name, time_t now, unsi
   if (ans && 
       (ans->flags & F_FORWARD) &&
 #ifdef HAVE_DNSSEC
-      ((ans->flags & (F_DNSKEY | F_DS)) == (prot & (F_DNSKEY | F_DS))) &&
+      (((ans->flags & (F_DNSKEY | F_DS)) == (prot & (F_DNSKEY | F_DS))) || (prot & F_NSIGMATCH)) &&
 #endif
       (ans->flags & prot) &&     
       hostname_isequal(cache_get_name(ans), name))
@@ -1411,7 +1427,7 @@ void dump_cache(time_t now)
 	    *a = 0;
 	    if (strlen(n) == 0 && !(cache->flags & F_REVERSE))
 	      n = "<Root>";
-	    p += sprintf(p, "%-40.40s ", n);
+	    p += sprintf(p, "%-30.30s ", n);
 	    if ((cache->flags & F_CNAME) && !is_outdated_cname_pointer(cache))
 	      a = cache_get_cname_target(cache);
 #ifdef HAVE_DNSSEC
@@ -1454,7 +1470,7 @@ void dump_cache(time_t now)
 	    else if (cache->flags & F_DNSKEY)
 	      t = "K";
 #endif
-	    p += sprintf(p, "%-30.30s %s%s%s%s%s%s%s%s%s  ", a, t,
+	    p += sprintf(p, "%-40.40s %s%s%s%s%s%s%s%s%s  ", a, t,
 			 cache->flags & F_FORWARD ? "F" : " ",
 			 cache->flags & F_REVERSE ? "R" : " ",
 			 cache->flags & F_IMMORTAL ? "I" : " ",

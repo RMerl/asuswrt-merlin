@@ -60,8 +60,8 @@ blkid_dev blkid_verify(blkid_cache cache, blkid_dev dev)
 
 	if (stat(dev->bid_name, &st) < 0) {
 		DBG(DEBUG_PROBE,
-		    printf("blkid_verify: error %s (%d) while "
-			   "trying to stat %s\n", strerror(errno), errno,
+		    printf("blkid_verify: error %m (%d) while "
+			   "trying to stat %s\n", errno,
 			   dev->bid_name));
 	open_err:
 		if ((errno == EPERM) || (errno == EACCES) || (errno == ENOENT)) {
@@ -113,8 +113,8 @@ blkid_dev blkid_verify(blkid_cache cache, blkid_dev dev)
 
 	fd = open(dev->bid_name, O_RDONLY);
 	if (fd < 0) {
-		DBG(DEBUG_PROBE, printf("blkid_verify: error %s (%d) while "
-					"opening %s\n", strerror(errno), errno,
+		DBG(DEBUG_PROBE, printf("blkid_verify: error %m (%d) while "
+					"opening %s\n", errno,
 					dev->bid_name));
 		goto open_err;
 	}

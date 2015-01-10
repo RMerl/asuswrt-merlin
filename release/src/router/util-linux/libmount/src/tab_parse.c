@@ -5,6 +5,12 @@
  * GNU Lesser General Public License.
  */
 
+#ifdef HAVE_SCANDIRAT
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif	/* !__USE_GNU */
+#endif	/* HAVE_SCANDIRAT */
+
 #include <ctype.h>
 #include <limits.h>
 #include <dirent.h>
@@ -14,6 +20,7 @@
 #include "mangle.h"
 #include "mountP.h"
 #include "pathnames.h"
+#include "strutils.h"
 
 static inline char *skip_spaces(char *s)
 {
@@ -51,43 +58,61 @@ static int next_number(char **s, int *num)
  */
 static int mnt_parse_table_line(struct libmnt_fs *fs, char *s)
 {
-	int rc, n = 0;
-	char *src, *fstype, *optstr;
+	int rc, n = 0, xrc;
+	char *src = NULL, *fstype = NULL, *optstr = NULL;
 
-	rc = sscanf(s,	"%ms "	/* (1) source */
-			"%ms "	/* (2) target */
-			"%ms "	/* (3) FS type */
-			"%ms "  /* (4) options */
-			"%n",	/* byte count */
+	rc = sscanf(s,	UL_SCNsA" "	/* (1) source */
+			UL_SCNsA" "	/* (2) target */
+			UL_SCNsA" "	/* (3) FS type */
+			UL_SCNsA" "	/* (4) options */
+			"%n",		/* byte count */
+
 			&src,
 			&fs->target,
 			&fstype,
 			&optstr,
 			&n);
+	xrc = rc;
 
-	if (rc == 4) {
+	if (rc == 3 || rc == 4) {			/* options are optional */
 		unmangle_string(src);
 		unmangle_string(fs->target);
 		unmangle_string(fstype);
-		unmangle_string(optstr);
 
+		if (optstr && *optstr)
+			unmangle_string(optstr);
+
+		/* note that __foo functions does not reallocate the string
+		 */
 		rc = __mnt_fs_set_source_ptr(fs, src);
-		if (!rc)
+		if (!rc) {
+			src = NULL;
 			rc = __mnt_fs_set_fstype_ptr(fs, fstype);
-		if (!rc)
+			if (!rc)
+				fstype = NULL;
+		}
+		if (!rc && optstr)
 			rc = mnt_fs_set_options(fs, optstr);
 		free(optstr);
+		optstr = NULL;
 	} else {
 		DBG(TAB, mnt_debug("tab parse error: [sscanf rc=%d]: '%s'", rc, s));
 		rc = -EINVAL;
 	}
 
-	if (rc)
+	if (rc) {
+		free(src);
+		free(fstype);
+		free(optstr);
+		DBG(TAB, mnt_debug("tab parse error: [set vars, rc=%d]\n", rc));
 		return rc;	/* error */
+	}
 
 	fs->passno = fs->freq = 0;
-	s = skip_spaces(s + n);
-	if (*s) {
+
+	if (xrc == 4 && n)
+		s = skip_spaces(s + n);
+	if (xrc == 4 && *s) {
 		if (next_number(&s, &fs->freq) != 0) {
 			if (*s) {
 				DBG(TAB, mnt_debug("tab parse error: [freq]"));
@@ -109,14 +134,14 @@ static int mnt_parse_mountinfo_line(struct libmnt_fs *fs, char *s)
 {
 	int rc, end = 0;
 	unsigned int maj, min;
-	char *fstype, *src, *p;
+	char *fstype = NULL, *src = NULL, *p;
 
 	rc = sscanf(s,	"%u "		/* (1) id */
 			"%u "		/* (2) parent */
 			"%u:%u "	/* (3) maj:min */
-			"%ms "		/* (4) mountroot */
-			"%ms "		/* (5) target */
-			"%ms"		/* (6) vfs options (fs-independent) */
+			UL_SCNsA" "	/* (4) mountroot */
+			UL_SCNsA" "	/* (5) target */
+			UL_SCNsA	/* (6) vfs options (fs-independent) */
 			"%n",		/* number of read bytes */
 
 			&fs->id,
@@ -138,9 +163,9 @@ static int mnt_parse_mountinfo_line(struct libmnt_fs *fs, char *s)
 	}
 	s = p + 3;
 
-	rc += sscanf(s,	"%ms "		/* (8) FS type */
-			"%ms "		/* (9) source */
-			"%ms",		/* (10) fs options (fs specific) */
+	rc += sscanf(s,	UL_SCNsA" "	/* (8) FS type */
+			UL_SCNsA" "	/* (9) source */
+			UL_SCNsA,	/* (10) fs options (fs specific) */
 
 			&fstype,
 			&src,
@@ -163,14 +188,20 @@ static int mnt_parse_mountinfo_line(struct libmnt_fs *fs, char *s)
 			unmangle_string(fs->fs_optstr);
 
 		rc = __mnt_fs_set_fstype_ptr(fs, fstype);
-		if (!rc)
+		if (!rc) {
+			fstype = NULL;
 			rc = __mnt_fs_set_source_ptr(fs, src);
+			if (!rc)
+				src = NULL;
+		}
 
 		/* merge VFS and FS options to the one string */
 		fs->optstr = mnt_fs_strdup_options(fs);
 		if (!fs->optstr)
 			rc = -ENOMEM;
 	} else {
+		free(fstype);
+		free(src);
 		DBG(TAB, mnt_debug(
 			"mountinfo parse error [sscanf rc=%d]: '%s'", rc, s));
 		rc = -EINVAL;
@@ -420,44 +451,91 @@ int mnt_table_parse_file(struct libmnt_table *tb, const char *filename)
 	return rc;
 }
 
-static int mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
+static int mnt_table_parse_dir_filter(const struct dirent *d)
+{
+	size_t namesz;
+
+#ifdef _DIRENT_HAVE_D_TYPE
+	if (d->d_type != DT_UNKNOWN && d->d_type != DT_REG &&
+	    d->d_type != DT_LNK)
+		return 0;
+#endif
+	if (*d->d_name == '.')
+		return 0;
+
+#define MNT_MNTTABDIR_EXTSIZ	(sizeof(MNT_MNTTABDIR_EXT) - 1)
+
+	namesz = strlen(d->d_name);
+	if (!namesz || namesz < MNT_MNTTABDIR_EXTSIZ + 1 ||
+	    strcmp(d->d_name + (namesz - MNT_MNTTABDIR_EXTSIZ),
+		   MNT_MNTTABDIR_EXT))
+		return 0;
+
+	/* Accept this */
+	return 1;
+}
+
+#ifdef HAVE_SCANDIRAT
+static int __mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
 {
 	int n = 0, i;
+	int dd;
+	struct dirent **namelist = NULL;
+
+	dd = open(dirname, O_RDONLY|O_CLOEXEC|O_DIRECTORY);
+	if (dd < 0)
+	        return -errno;
+
+	n = scandirat(dd, ".", &namelist, mnt_table_parse_dir_filter, versionsort);
+	if (n <= 0) {
+	        close(dd);
+	        return 0;
+	}
+
+	for (i = 0; i < n; i++) {
+		struct dirent *d = namelist[i];
+		struct stat st;
+		FILE *f;
+
+		if (fstat_at(dd, ".", d->d_name, &st, 0) ||
+		    !S_ISREG(st.st_mode))
+			continue;
+
+		f = fopen_at(dd, ".", d->d_name, O_RDONLY, "r");
+		if (f) {
+			mnt_table_parse_stream(tb, f, d->d_name);
+			fclose(f);
+		}
+	}
+
+	for (i = 0; i < n; i++)
+		free(namelist[i]);
+	free(namelist);
+	close(dd);
+	return 0;
+}
+#else
+static int __mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
+{
+	int n = 0, i, r = 0;
 	DIR *dir = NULL;
 	struct dirent **namelist = NULL;
 
-	/* TODO: it would be nice to have a scandir() implementation that
-	 *       is able to use already opened directory */
-	n = scandir(dirname, &namelist, NULL, versionsort);
+	n = scandir(dirname, &namelist, mnt_table_parse_dir_filter, versionsort);
 	if (n <= 0)
 		return 0;
 
 	/* let use "at" functions rather than play crazy games with paths... */
 	dir = opendir(dirname);
-	if (!dir)
-		return -errno;
+	if (!dir) {
+		r = -errno;
+		goto out;
+	}
 
 	for (i = 0; i < n; i++) {
 		struct dirent *d = namelist[i];
 		struct stat st;
-		size_t namesz;
 		FILE *f;
-
-#ifdef _DIRENT_HAVE_D_TYPE
-		if (d->d_type != DT_UNKNOWN && d->d_type != DT_REG &&
-		    d->d_type != DT_LNK)
-			continue;
-#endif
-		if (*d->d_name == '.')
-			continue;
-
-#define MNT_MNTTABDIR_EXTSIZ	(sizeof(MNT_MNTTABDIR_EXT) - 1)
-
-		namesz = strlen(d->d_name);
-		if (!namesz || namesz < MNT_MNTTABDIR_EXTSIZ + 1 ||
-		    strcmp(d->d_name + (namesz - MNT_MNTTABDIR_EXTSIZ),
-			    MNT_MNTTABDIR_EXT))
-				continue;
 
 		if (fstat_at(dirfd(dir), _PATH_MNTTAB_DIR, d->d_name, &st, 0) ||
 		    !S_ISREG(st.st_mode))
@@ -471,12 +549,31 @@ static int mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
 		}
 	}
 
+out:
 	for (i = 0; i < n; i++)
 		free(namelist[i]);
 	free(namelist);
 	if (dir)
 		closedir(dir);
-	return 0;
+	return r;
+}
+#endif
+
+/**
+ * mnt_table_parse_dir:
+ * @tb: mount table
+ * @dirname: directory
+ *
+ * The directory:
+ *	- files are sorted by strverscmp(3)
+ *	- files that starts with "." are ignored (e.g. ".10foo.fstab")
+ *	- files without the ".fstab" extension are ignored
+ *
+ * Returns: 0 on success or negative number in case of error.
+ */
+int mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
+{
+	return __mnt_table_parse_dir(tb, dirname);
 }
 
 struct libmnt_table *__mnt_new_table_from_file(const char *filename, int fmt)
@@ -519,7 +616,7 @@ struct libmnt_table *mnt_new_table_from_file(const char *filename)
 
 /**
  * mnt_new_table_from_dir
- * @dirname: for example /etc/fstab.d
+ * @dirname: directory with *.fstab files
  *
  * Returns: newly allocated tab on success and NULL in case of error.
  */
@@ -568,14 +665,8 @@ int mnt_table_set_parser_errcb(struct libmnt_table *tb,
  * @tb: table
  * @filename: overwrites default (/etc/fstab or $LIBMOUNT_FSTAB) or NULL
  *
- * This function parses /etc/fstab or /etc/fstab.d and appends new lines to the
- * @tab. If the system contains classic fstab file and also fstab.d directory
- * then the fstab file is parsed before the fstab.d directory.
- *
- * The fstab.d directory:
- *	- files are sorted by strverscmp(3)
- *	- files that starts with "." are ignored (e.g. ".10foo.fstab")
- *	- files without the ".fstab" extension are ignored
+ * This function parses /etc/fstab and appends new lines to the @tab. If the
+ * @filename is a directory then mnt_table_parse_dir() is called.
  *
  * See also mnt_table_set_parser_errcb().
  *
@@ -583,7 +674,8 @@ int mnt_table_set_parser_errcb(struct libmnt_table *tb,
  */
 int mnt_table_parse_fstab(struct libmnt_table *tb, const char *filename)
 {
-	FILE *f;
+	struct stat st;
+	int rc = 0;
 
 	assert(tb);
 
@@ -592,24 +684,19 @@ int mnt_table_parse_fstab(struct libmnt_table *tb, const char *filename)
 	if (!filename)
 		filename = mnt_get_fstab_path();
 
+	if (!filename || stat(filename, &st))
+		return -EINVAL;
+
 	tb->fmt = MNT_FMT_FSTAB;
 
-	f = fopen(filename, "r");
-	if (f) {
-		int rc = mnt_table_parse_stream(tb, f, filename);
-		fclose(f);
+	if (S_ISREG(st.st_mode))
+		rc = mnt_table_parse_file(tb, filename);
+	else if (S_ISDIR(st.st_mode))
+		rc = mnt_table_parse_dir(tb, filename);
+	else
+		rc = -EINVAL;
 
-		if (rc)
-			return rc;
-
-		if (strcmp(filename, _PATH_MNTTAB))
-			/* /etc/fstab.d sould be used together with /etc/fstab only */
-			return 0;
-	}
-
-	if (!access(_PATH_MNTTAB_DIR, R_OK))
-		return mnt_table_parse_dir(tb, _PATH_MNTTAB_DIR);
-	return 0;
+	return rc;
 }
 
 /*
@@ -653,8 +740,14 @@ static struct libmnt_fs *mnt_table_merge_user_fs(struct libmnt_table *tb, struct
 		if (fs->flags & MNT_FS_MERGED)
 			continue;
 
-		if (s && t && r && !strcmp(t, target) &&
-		    !strcmp(s, src) && !strcmp(r, root))
+		/*
+		 * Note that kernel can add tailing slash to the network
+		 * filesystem source path
+		 */
+		if (s && t && r &&
+		    strcmp(t, target) == 0 &&
+		    streq_except_trailing_slash(s, src) &&
+		    strcmp(r, root) == 0)
 			break;
 	}
 

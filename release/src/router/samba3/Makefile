@@ -4,6 +4,7 @@ srcdir=source
 
 SMBCFLAGS = $(EXTRACFLAGS) -Os -ffunction-sections -fdata-sections
 SMBLDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections
+SMBLDFLAGS += -ldl
 
 ifneq ($(CONFIG_LINUX26),y)
 SMBCFLAGS += -DMAX_DEBUG_LEVEL="-1"

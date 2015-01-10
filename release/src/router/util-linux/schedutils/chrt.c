@@ -267,6 +267,7 @@ int main(int argc, char **argv)
 			return EXIT_SUCCESS;
 		case 'h':
 			ret = EXIT_SUCCESS;
+			/* fallthrough */
 		default:
 			show_usage(ret);
 		}

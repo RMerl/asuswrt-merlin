@@ -11,8 +11,9 @@
 #include <sys/time.h>
 #include "../shared/shutils.h"    // for eval()
 #include <bcmnvram.h>
+#include <stdlib.h>
+#include <asm/byteorder.h>
 #include "networkmap.h"
-#include "endianness.h"
 #include <rtconfig.h>
 
 unsigned char my_hwaddr[6];
@@ -149,7 +150,7 @@ int main()
 
 	//Get Router's IP/Mac
 	strcpy(router_ipaddr, nvram_safe_get("lan_ipaddr"));
-#ifdef RTCONFIG_RGMII_BRCM5301X
+#if defined(RTCONFIG_RGMII_BRCM5301X) || defined(RTCONFIG_QCA)
 	strcpy(router_mac, nvram_safe_get("et1macaddr"));
 #else
 	strcpy(router_mac, nvram_safe_get("et0macaddr"));

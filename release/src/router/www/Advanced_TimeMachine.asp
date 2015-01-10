@@ -27,8 +27,8 @@ var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
-	$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#menu5_4#></div></td></tr></tbody></table>';
-	$("option5").className = "m5_r";
+	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#menu5_4#></div></td></tr></tbody></table>';
+	document.getElementById("_APP_Installation").className = "menu_clicked";
 
 	if('<% nvram_get("tm_device_name"); %>' != '')
 		$("tmPath").innerHTML = '/mnt/<% nvram_get("tm_device_name"); %>';
@@ -302,9 +302,6 @@ function cal_panel_block(obj_id){
 										document.form.timemachine_enable.value = "0";
 										$j("#backupPath_tr").fadeOut(300);
 										$j("#volSize_tr").fadeOut(300);
-									 },
-									 {
-										switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 									 }
 								);
 							</script>			

@@ -4,6 +4,7 @@
 
 ret_dir=/tmp/fsck_ret
 
+
 # $1: device path, $2: error code.
 _set_fsck_code(){
 	pool_name=`echo "$1" |awk '{FS="/"; print $NF}'`
@@ -28,6 +29,7 @@ _get_fsck_logfile(){
 
 	echo "$ret_dir/$pool_name.log"
 }
+
 
 if [ -z "$1" ] || [ -z "$2" ]; then
 	echo "Usage: app_fsck.sh [filesystem type] [device's path]"

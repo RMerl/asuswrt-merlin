@@ -722,6 +722,8 @@ CONFIG_STRINGS=y
 # CONFIG_VOLNAME is not set
 # CONFIG_WALL is not set
 # CONFIG_WATCHDOG is not set
+# CONFIG_MDMM is not set
+# CONFIG_ETHREG is not set
 
 #
 # Networking Utilities

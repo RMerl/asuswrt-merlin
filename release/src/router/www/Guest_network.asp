@@ -448,7 +448,7 @@ function guest_divctrl(flag){
 
 function mbss_display_ctrl(){
 	// generate options
-	if(wl_vifnames != ""){
+	if(multissid_support){
 		document.getElementById("wl_channel_field").style.display = "none";
 		document.getElementById("wl_nctrlsb_field").style.display = "none";
 		for(var i=1; i<multissid_support+1; i++)

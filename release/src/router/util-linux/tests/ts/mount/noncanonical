@@ -24,6 +24,9 @@ ts_skip_nonroot
 
 [ ! -e "/etc" ] && ts_skip "/etc not such file of directory"
 
+$TS_CMD_MOUNT -V | grep -q "libmount"
+[ $? -eq 0 ] && ts_skip "libmount version"
+
 # Don't canonicalize SPEC for cifs, nfs, smbfs, ...
 $TS_CMD_MOUNT -v -v -v -f -i -n -t cifs //etc /foo | grep "spec:" >> $TS_OUTPUT 2>&1
 

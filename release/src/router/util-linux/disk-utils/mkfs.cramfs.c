@@ -725,10 +725,15 @@ int main(int argc, char **argv)
 		case 'h':
 			usage(MKFS_OK);
 		case 'b':
-			blksize = strtoll_or_err(optarg, _("failed to parse blocksize argument"));
-			if (blksize <= 0)
-				usage(MKFS_USAGE);
+		{
+			long long tmp = strtoll_or_err(optarg,
+					_("failed to parse blocksize argument"));
+
+			if (tmp <= 0 || UINT_MAX < tmp)
+				errx(MKFS_USAGE, _("invalid block size"));
+			blksize = tmp;
 			break;
+		}
 		case 'E':
 			opt_errors = 1;
 			break;
@@ -794,6 +799,9 @@ int main(int argc, char **argv)
 
 	root_entry->size = parse_directory(root_entry, dirname, &root_entry->child, &fslen_ub);
 
+	/* find duplicate files */
+	eliminate_doubles(root_entry,root_entry, &fslen_ub);
+
 	/* always allocate a multiple of blksize bytes because that's
 	   what we're going to write later on */
 	fslen_ub = ((fslen_ub - 1) | (blksize - 1)) + 1;
@@ -807,9 +815,6 @@ int main(int argc, char **argv)
 			fslen_max >> 20);
 		fslen_ub = fslen_max;
 	}
-
-	/* find duplicate files */
-	eliminate_doubles(root_entry,root_entry, &fslen_ub);
 
 	/* TODO: Why do we use a private/anonymous mapping here
 	   followed by a write below, instead of just a shared mapping
@@ -875,6 +880,7 @@ int main(int argc, char **argv)
 			(long long) fslen_ub, offset);
 
 	written = write(fd, rom_image, offset);
+	close(fd);
 	if (written < 0)
 		err(MKFS_ERROR, _("ROM image"));
 	if (offset != written)

@@ -32,6 +32,7 @@
 #include "wholedisk.h"
 #include "pathnames.h"
 #include "canonicalize.h"
+#include "strutils.h"
 
 #include "fdisksunlabel.h"
 #include "fdisksgilabel.h"
@@ -50,6 +51,7 @@
 
 #include "gpt.h"
 
+static int get_boot(enum action what);
 static void delete_partition(int i);
 
 #define hex_val(c)	({ \
@@ -75,6 +77,60 @@ static void delete_partition(int i);
 				c = sector & 0xff;	\
 				s |= (sector >> 2) & 0xc0;	\
 			}
+
+/* menu list description */
+
+struct menulist_descr {
+	char command;				/* command key */
+	char *description;			/* command description */
+	enum labeltype label[2];		/* disklabel types associated with main and expert menu */
+};
+
+static const struct menulist_descr menulist[] = {
+	{'a', N_("toggle a bootable flag"), {DOS_LABEL, 0}},
+	{'a', N_("toggle a read only flag"), {SUN_LABEL, 0}},
+	{'a', N_("select bootable partition"), {SGI_LABEL, 0}},
+	{'a', N_("change number of alternate cylinders"), {0, SUN_LABEL}},
+	{'b', N_("edit bsd disklabel"), {DOS_LABEL, 0}},
+	{'b', N_("edit bootfile entry"), {SGI_LABEL, 0}},
+	{'b', N_("move beginning of data in a partition"), {0, DOS_LABEL}},
+	{'c', N_("toggle the dos compatibility flag"), {DOS_LABEL, 0}},
+	{'c', N_("toggle the mountable flag"), {SUN_LABEL, 0}},
+	{'c', N_("select sgi swap partition"), {SGI_LABEL, 0}},
+	{'c', N_("change number of cylinders"), {0, DOS_LABEL | SUN_LABEL}},
+	{'d', N_("delete a partition"), {DOS_LABEL | SUN_LABEL | SGI_LABEL | OSF_LABEL, 0}},
+	{'d', N_("print the raw data in the partition table"), {0, ANY_LABEL}},
+	{'e', N_("change number of extra sectors per cylinder"), {0, SUN_LABEL}},
+	{'e', N_("list extended partitions"), {0, DOS_LABEL}},
+	{'e', N_("edit drive data"), {OSF_LABEL, 0}},
+	{'f', N_("fix partition order"), {0, DOS_LABEL}},
+	{'g', N_("create an IRIX (SGI) partition table"), {0, ANY_LABEL}},
+	{'h', N_("change number of heads"), {0, DOS_LABEL | SUN_LABEL}},
+	{'i', N_("change interleave factor"), {0, SUN_LABEL}},
+	{'i', N_("change the disk identifier"), {0, DOS_LABEL}},
+	{'i', N_("install bootstrap"), {OSF_LABEL, 0}},
+	{'l', N_("list known partition types"), {DOS_LABEL | SUN_LABEL | SGI_LABEL | OSF_LABEL, 0}},
+	{'m', N_("print this menu"), {ANY_LABEL, ANY_LABEL}},
+	{'n', N_("add a new partition"), {DOS_LABEL | SUN_LABEL | SGI_LABEL | OSF_LABEL, 0}},
+	{'o', N_("create a new empty DOS partition table"), {~OSF_LABEL, 0}},
+	{'o', N_("change rotation speed (rpm)"), {0, SUN_LABEL}},
+	{'p', N_("print the partition table"), {DOS_LABEL | SUN_LABEL | SGI_LABEL | OSF_LABEL, DOS_LABEL | SUN_LABEL}},
+	{'q', N_("quit without saving changes"), {ANY_LABEL, ANY_LABEL}},
+	{'r', N_("return to main menu"), {OSF_LABEL, DOS_LABEL | SUN_LABEL | SGI_LABEL | OSF_LABEL}},
+	{'s', N_("create a new empty Sun disklabel"), {~OSF_LABEL, 0}},
+	{'s', N_("change number of sectors/track"), {0, DOS_LABEL | SUN_LABEL}},
+	{'s', N_("show complete disklabel"), {OSF_LABEL, 0}},
+	{'t', N_("change a partition's system id"), {DOS_LABEL | SUN_LABEL | SGI_LABEL | OSF_LABEL, 0}},
+	{'u', N_("change display/entry units"), {DOS_LABEL | SUN_LABEL | SGI_LABEL | OSF_LABEL, 0}},
+	{'v', N_("verify the partition table"), {DOS_LABEL | SUN_LABEL | SGI_LABEL, DOS_LABEL | SUN_LABEL | SGI_LABEL}},
+	{'w', N_("write table to disk and exit"), {DOS_LABEL | SUN_LABEL | SGI_LABEL, DOS_LABEL | SUN_LABEL | SGI_LABEL}},
+	{'w', N_("write disklabel to disk"), {OSF_LABEL, 0}},
+	{'x', N_("extra functionality (experts only)"), {DOS_LABEL | SUN_LABEL | SGI_LABEL, 0}},
+#if !defined (__alpha__)
+	{'x', N_("link BSD partition to non-BSD partition"), {OSF_LABEL, 0}},
+#endif
+	{'y', N_("change number of physical cylinders"), {0, SUN_LABEL}},
+};
 
 /* A valid partition table sector ends in 0x55 0xaa */
 static unsigned int
@@ -175,9 +231,6 @@ get_random_id(void) {
 	return (unsigned int)(tv.tv_sec + (tv.tv_usec << 12) + getpid());
 }
 
-/* normally O_RDWR, -l option gives O_RDONLY */
-static int type_open = O_RDWR;
-
 /*
  * Raw disk label. For DOS-type partition tables the MBR,
  * with descriptions of the primary partitions.
@@ -235,9 +288,7 @@ unsigned long grain = DEFAULT_SECTOR_SIZE,
 	      alignment_offset;
 int has_topology;
 
-enum labeltype disklabel = DOS_LABEL;	/* Current disklabel */
-
-int	possibly_osf_label = 0;
+enum labeltype disklabel;	/* Current disklabel */
 
 jmp_buf listingbuf;
 
@@ -373,143 +424,15 @@ is_dos_partition(int t) {
 		t == 0xc1 || t == 0xc4 || t == 0xc6);
 }
 
-static void
-menu(void) {
-	if (disklabel == SUN_LABEL) {
-	   puts(_("Command action"));
-	   puts(_("   a   toggle a read only flag"));		/* sun */
-	   puts(_("   b   edit bsd disklabel"));
-	   puts(_("   c   toggle the mountable flag"));		/* sun */
-	   puts(_("   d   delete a partition"));
-	   puts(_("   l   list known partition types"));
-	   puts(_("   m   print this menu"));
-	   puts(_("   n   add a new partition"));
-	   puts(_("   o   create a new empty DOS partition table"));
-	   puts(_("   p   print the partition table"));
-	   puts(_("   q   quit without saving changes"));
-	   puts(_("   s   create a new empty Sun disklabel"));	/* sun */
-	   puts(_("   t   change a partition's system id"));
-	   puts(_("   u   change display/entry units"));
-	   puts(_("   v   verify the partition table"));
-	   puts(_("   w   write table to disk and exit"));
-	   puts(_("   x   extra functionality (experts only)"));
-	}
-	else if (disklabel == SGI_LABEL) {
-	   puts(_("Command action"));
-	   puts(_("   a   select bootable partition"));    /* sgi flavour */
-	   puts(_("   b   edit bootfile entry"));          /* sgi */
-	   puts(_("   c   select sgi swap partition"));    /* sgi flavour */
-	   puts(_("   d   delete a partition"));
-	   puts(_("   l   list known partition types"));
-	   puts(_("   m   print this menu"));
-	   puts(_("   n   add a new partition"));
-	   puts(_("   o   create a new empty DOS partition table"));
-	   puts(_("   p   print the partition table"));
-	   puts(_("   q   quit without saving changes"));
-	   puts(_("   s   create a new empty Sun disklabel"));	/* sun */
-	   puts(_("   t   change a partition's system id"));
-	   puts(_("   u   change display/entry units"));
-	   puts(_("   v   verify the partition table"));
-	   puts(_("   w   write table to disk and exit"));
-	}
-	else if (disklabel == AIX_LABEL || disklabel == MAC_LABEL) {
-	   puts(_("Command action"));
-	   puts(_("   m   print this menu"));
-	   puts(_("   o   create a new empty DOS partition table"));
-	   puts(_("   q   quit without saving changes"));
-	   puts(_("   s   create a new empty Sun disklabel"));	/* sun */
-	}
-	else {
-	   puts(_("Command action"));
-	   puts(_("   a   toggle a bootable flag"));
-	   puts(_("   b   edit bsd disklabel"));
-	   puts(_("   c   toggle the dos compatibility flag"));
-	   puts(_("   d   delete a partition"));
-	   puts(_("   l   list known partition types"));
-	   puts(_("   m   print this menu"));
-	   puts(_("   n   add a new partition"));
-	   puts(_("   o   create a new empty DOS partition table"));
-	   puts(_("   p   print the partition table"));
-	   puts(_("   q   quit without saving changes"));
-	   puts(_("   s   create a new empty Sun disklabel"));	/* sun */
-	   puts(_("   t   change a partition's system id"));
-	   puts(_("   u   change display/entry units"));
-	   puts(_("   v   verify the partition table"));
-	   puts(_("   w   write table to disk and exit"));
-	   puts(_("   x   extra functionality (experts only)"));
-	}
-}
+void print_menu(enum menutype menu)
+{
+	size_t i;
 
-static void
-xmenu(void) {
-	if (disklabel == SUN_LABEL) {
-	   puts(_("Command action"));
-	   puts(_("   a   change number of alternate cylinders"));      /*sun*/
-	   puts(_("   c   change number of cylinders"));
-	   puts(_("   d   print the raw data in the partition table"));
-	   puts(_("   e   change number of extra sectors per cylinder"));/*sun*/
-	   puts(_("   h   change number of heads"));
-	   puts(_("   i   change interleave factor"));			/*sun*/
-	   puts(_("   o   change rotation speed (rpm)"));		/*sun*/
-	   puts(_("   m   print this menu"));
-	   puts(_("   p   print the partition table"));
-	   puts(_("   q   quit without saving changes"));
-	   puts(_("   r   return to main menu"));
-	   puts(_("   s   change number of sectors/track"));
-	   puts(_("   v   verify the partition table"));
-	   puts(_("   w   write table to disk and exit"));
-	   puts(_("   y   change number of physical cylinders"));	/*sun*/
-	}
-	else if (disklabel == SGI_LABEL) {
-	   puts(_("Command action"));
-	   puts(_("   b   move beginning of data in a partition")); /* !sun */
-	   puts(_("   c   change number of cylinders"));
-	   puts(_("   d   print the raw data in the partition table"));
-	   puts(_("   e   list extended partitions"));		/* !sun */
-	   puts(_("   g   create an IRIX (SGI) partition table"));/* sgi */
-	   puts(_("   h   change number of heads"));
-	   puts(_("   m   print this menu"));
-	   puts(_("   p   print the partition table"));
-	   puts(_("   q   quit without saving changes"));
-	   puts(_("   r   return to main menu"));
-	   puts(_("   s   change number of sectors/track"));
-	   puts(_("   v   verify the partition table"));
-	   puts(_("   w   write table to disk and exit"));
-	}
-	else if (disklabel == AIX_LABEL || disklabel == MAC_LABEL) {
-	   puts(_("Command action"));
-	   puts(_("   b   move beginning of data in a partition")); /* !sun */
-	   puts(_("   c   change number of cylinders"));
-	   puts(_("   d   print the raw data in the partition table"));
-	   puts(_("   e   list extended partitions"));		/* !sun */
-	   puts(_("   g   create an IRIX (SGI) partition table"));/* sgi */
-	   puts(_("   h   change number of heads"));
-	   puts(_("   m   print this menu"));
-	   puts(_("   p   print the partition table"));
-	   puts(_("   q   quit without saving changes"));
-	   puts(_("   r   return to main menu"));
-	   puts(_("   s   change number of sectors/track"));
-	   puts(_("   v   verify the partition table"));
-	   puts(_("   w   write table to disk and exit"));
-	}
-	else {
-	   puts(_("Command action"));
-	   puts(_("   b   move beginning of data in a partition")); /* !sun */
-	   puts(_("   c   change number of cylinders"));
-	   puts(_("   d   print the raw data in the partition table"));
-	   puts(_("   e   list extended partitions"));		/* !sun */
-	   puts(_("   f   fix partition order"));		/* !sun, !aix, !sgi */
-	   puts(_("   g   create an IRIX (SGI) partition table"));/* sgi */
-	   puts(_("   h   change number of heads"));
-	   puts(_("   i   change the disk identifier")); /* dos only */
-	   puts(_("   m   print this menu"));
-	   puts(_("   p   print the partition table"));
-	   puts(_("   q   quit without saving changes"));
-	   puts(_("   r   return to main menu"));
-	   puts(_("   s   change number of sectors/track"));
-	   puts(_("   v   verify the partition table"));
-	   puts(_("   w   write table to disk and exit"));
-	}
+	puts(_("Command action"));
+
+	for (i = 0; i < ARRAY_SIZE(menulist); i++)
+		if (menulist[i].label[menu] & disklabel)
+			printf("   %c   %s\n", menulist[i].command, menulist[i].description);
 }
 
 static int
@@ -614,6 +537,10 @@ set_partition(int i, int doext, unsigned long long start,
 	p->sys_ind = sysid;
 	set_start_sect(p, start - offset);
 	set_nr_sects(p, stop - start + 1);
+
+	if (!doext)
+		print_partition_size(i + 1, start, stop, sysid);
+
 	if (dos_compatible_flag && (start/(sectors*heads) > 1023))
 		start = heads*sectors*1024 - 1;
 	set_hsc(p->head, p->sector, p->cyl, start);
@@ -923,31 +850,48 @@ dos_set_mbr_id(void) {
 	dos_print_mbr_id();
 }
 
+static void dos_init(void)
+{
+	int i;
+
+	disklabel = DOS_LABEL;
+	partitions = 4;
+	ext_index = 0;
+	extended_offset = 0;
+
+	for (i = 0; i < 4; i++) {
+		struct pte *pe = &ptes[i];
+
+		pe->part_table = pt_offset(MBRbuffer, i);
+		pe->ext_pointer = NULL;
+		pe->offset = 0;
+		pe->sectorbuffer = MBRbuffer;
+		pe->changed = 0;
+	}
+
+	warn_geometry();
+	warn_limits();
+	warn_alignment();
+}
+
 static void
 create_doslabel(void) {
 	unsigned int id = get_random_id();
 
-	fprintf(stderr,
-	_("Building a new DOS disklabel with disk identifier 0x%08x.\n"
-	  "Changes will remain in memory only, until you decide to write them.\n"
-	  "After that, of course, the previous content won't be recoverable.\n\n"),
-		id);
+	fprintf(stderr, _("Building a new DOS disklabel with disk identifier 0x%08x.\n"), id);
 	sun_nolabel();  /* otherwise always recognised as sun */
 	sgi_nolabel();  /* otherwise always recognised as sgi */
-	disklabel = DOS_LABEL;
-	possibly_osf_label = 0;
-	partitions = 4;
 
-	/* Zero out the MBR buffer */
-	extended_offset = 0;
+	dos_init();
+	zeroize_mbr_buffer();
+
 	set_all_unchanged();
 	set_changed(0);
-	get_boot(create_empty_dos);
 
 	/* Generate an MBR ID for this disk */
 	dos_write_mbr_id(MBRbuffer, id);
 
-	/* Mark it bootable (unfortunately required) */
+	/* Put MBR signature */
 	write_part_table_flag(MBRbuffer);
 }
 
@@ -1109,7 +1053,6 @@ get_geometry(int fd, struct geom *g) {
 	unsigned long long llcyls, nsects = 0;
 
 	get_topology(fd);
-	guess_device_type(fd);
 	heads = cylinders = sectors = 0;
 	kern_heads = kern_sectors = 0;
 	pt_heads = pt_sectors = 0;
@@ -1163,107 +1106,14 @@ void zeroize_mbr_buffer(void)
 		memset(MBRbuffer, 0, MAX_SECTOR_SIZE);
 }
 
-/*
- * Read MBR.  Returns:
- *   -1: no 0xaa55 flag present (possibly entire disk BSD)
- *    0: found or created label
- *    1: I/O error
- */
-int
-get_boot(enum action what) {
+static int check_dos_label(void)
+{
 	int i;
 
-	partitions = 4;
-	ext_index = 0;
-	extended_offset = 0;
-
-	for (i = 0; i < 4; i++) {
-		struct pte *pe = &ptes[i];
-
-		pe->part_table = pt_offset(MBRbuffer, i);
-		pe->ext_pointer = NULL;
-		pe->offset = 0;
-		pe->sectorbuffer = MBRbuffer;
-		pe->changed = (what == create_empty_dos);
-	}
-
-	if (what == create_empty_sun && check_sun_label())
+	if (!valid_part_table_flag(MBRbuffer))
 		return 0;
 
-	memset(MBRbuffer, 0, 512);
-
-	if (what == create_empty_dos)
-		goto got_dos_table;		/* skip reading disk */
-
-	if (what != try_only) {
-		if ((fd = open(disk_device, type_open)) < 0) {
-			if ((fd = open(disk_device, O_RDONLY)) < 0)
-				fatal(unable_to_open);
-			else
-				printf(_("You will not be able to write "
-					    "the partition table.\n"));
-		}
-	}
-
-	if (512 != read(fd, MBRbuffer, 512)) {
-		if (what == try_only)
-			return 1;
-		fatal(unable_to_read);
-	}
-
-	get_geometry(fd, NULL);
-
-	update_units();
-
-	if (check_sun_label())
-		return 0;
-
-	if (check_sgi_label())
-		return 0;
-
-	if (check_aix_label())
-		return 0;
-
-	if (check_mac_label())
-		return 0;
-
-	if (check_osf_label()) {
-		possibly_osf_label = 1;
-		if (!valid_part_table_flag(MBRbuffer)) {
-			disklabel = OSF_LABEL;
-			return 0;
-		}
-		printf(_("This disk has both DOS and BSD magic.\n"
-			 "Give the 'b' command to go to BSD mode.\n"));
-	}
-
-got_dos_table:
-
-	if (!valid_part_table_flag(MBRbuffer)) {
-		switch(what) {
-		case fdisk:
-			fprintf(stderr,
-				_("Device contains neither a valid DOS "
-				  "partition table, nor Sun, SGI or OSF "
-				  "disklabel\n"));
-#ifdef __sparc__
-			create_sunlabel();
-#else
-			create_doslabel();
-#endif
-			return 0;
-		case require:
-			return -1;
-		case try_only:
-		        return -1;
-		case create_empty_dos:
-		case create_empty_sun:
-			break;
-		default:
-			fprintf(stderr, _("Internal error\n"));
-			exit(1);
-		}
-	}
+	dos_init();
 
 	for (i = 0; i < 4; i++) {
 		struct pte *pe = &ptes[i];
@@ -1289,10 +1139,67 @@ got_dos_table:
 		}
 	}
 
-	warn_geometry();
-	warn_limits();
-	warn_alignment();
+	return 1;
+}
 
+/*
+ * Read MBR.  Returns:
+ *   -1: no 0xaa55 flag present (possibly entire disk BSD)
+ *    0: found or created label
+ *    1: I/O error
+ */
+static int
+get_boot(enum action what) {
+
+	disklabel = ANY_LABEL;
+	memset(MBRbuffer, 0, 512);
+
+	if (what != try_only) {
+		if ((fd = open(disk_device, O_RDWR)) < 0) {
+			if ((fd = open(disk_device, O_RDONLY)) < 0)
+				fatal(unable_to_open);
+			else
+				printf(_("You will not be able to write "
+					    "the partition table.\n"));
+		}
+	}
+
+	if (512 != read(fd, MBRbuffer, 512)) {
+		if (what == try_only)
+			return 1;
+		fatal(unable_to_read);
+	}
+
+	get_geometry(fd, NULL);
+
+	update_units();
+
+	if (!check_dos_label())
+		if (check_sun_label() || check_sgi_label() || check_aix_label() || check_mac_label())
+			return 0;
+
+	if (check_osf_label()) {
+		if (!valid_part_table_flag(MBRbuffer)) {
+			disklabel = OSF_LABEL;
+			return 0;
+		}
+		printf(_("This disk has both DOS and BSD magic.\n"
+			 "Give the 'b' command to go to BSD mode.\n"));
+		return 0;
+	}
+
+	if (disklabel == ANY_LABEL) {
+		if (what == try_only)
+			return -1;
+
+		fprintf(stderr,
+			_("Device does not contain a recognized partition table\n"));
+#ifdef __sparc__
+		create_sunlabel();
+#else
+		create_doslabel();
+#endif
+	}
 	return 0;
 }
 
@@ -1391,11 +1298,12 @@ read_hex(struct systypes *sys)
 }
 
 static unsigned int
-read_int_sx(unsigned int low, unsigned int dflt, unsigned int high,
-	 unsigned int base, char *mesg, int *suffix)
+read_int_with_suffix(unsigned int low, unsigned int dflt, unsigned int high,
+	 unsigned int base, char *mesg, int *is_suffix_used)
 {
-	unsigned int i;
+	unsigned int res;
 	int default_ok = 1;
+	int absolute = 0;
 	static char *ms = NULL;
 	static size_t mslen = 0;
 
@@ -1424,10 +1332,10 @@ read_int_sx(unsigned int low, unsigned int dflt, unsigned int high,
 
 		if (*line_ptr == '+' || *line_ptr == '-') {
 			int minus = (*line_ptr == '-');
-			int absolute = 0;
 			int suflen;
 
-			i = atoi(line_ptr+1);
+			absolute = 0;
+			res = atoi(line_ptr + 1);
 
 			while (isdigit(*++line_ptr))
 				use_default = 0;
@@ -1446,7 +1354,7 @@ read_int_sx(unsigned int low, unsigned int dflt, unsigned int high,
 				 * Cylinders
 				 */
 				if (!display_in_cyl_units)
-					i *= heads * sectors;
+					res *= heads * sectors;
 			} else if (*line_ptr &&
 				   *(line_ptr + 1) == 'B' &&
 				   *(line_ptr + 2) == '\0') {
@@ -1484,36 +1392,38 @@ read_int_sx(unsigned int low, unsigned int dflt, unsigned int high,
 				continue;
 			}
 
-			if (absolute && i) {
+			if (absolute && res) {
 				unsigned long long bytes;
 				unsigned long unit;
 
-				bytes = (unsigned long long) i * absolute;
+				bytes = (unsigned long long) res * absolute;
 				unit = sector_size * units_per_sector;
 				bytes += unit/2;	/* round */
 				bytes /= unit;
-				i = bytes;
-				if (suffix)
-					*suffix = absolute;
+				res = bytes;
 			}
 			if (minus)
-				i = -i;
-			i += base;
+				res = -res;
+			res += base;
 		} else {
-			i = atoi(line_ptr);
+			res = atoi(line_ptr);
 			while (isdigit(*line_ptr)) {
 				line_ptr++;
 				use_default = 0;
 			}
 		}
-		if (use_default)
-			printf(_("Using default value %u\n"), i = dflt);
-		if (i >= low && i <= high)
+		if (use_default) {
+			printf(_("Using default value %u\n"), dflt);
+			return dflt;
+		}
+		if (res >= low && res <= high)
 			break;
 		else
 			printf(_("Value out of range.\n"));
 	}
-	return i;
+	if (is_suffix_used)
+			*is_suffix_used = absolute > 0;
+	return res;
 }
 
 /*
@@ -1527,7 +1437,7 @@ unsigned int
 read_int(unsigned int low, unsigned int dflt, unsigned int high,
 	 unsigned int base, char *mesg)
 {
-	return read_int_sx(low, dflt, high, base, mesg, NULL);
+	return read_int_with_suffix(low, dflt, high, base, mesg, NULL);
 }
 
 
@@ -1558,10 +1468,15 @@ get_partition(int warn, int max) {
 	return get_partition_dflt(warn, max, 0);
 }
 
+/* User partition selection unless one partition only is available */
+
 static int
 get_existing_partition(int warn, int max) {
 	int pno = -1;
 	int i;
+
+	if (disklabel != DOS_LABEL)
+		goto not_implemented;
 
 	for (i = 0; i < max; i++) {
 		struct pte *pe = &ptes[i];
@@ -1581,7 +1496,8 @@ get_existing_partition(int warn, int max) {
 	printf(_("No partition is defined yet!\n"));
 	return -1;
 
- not_unique:
+not_implemented:
+not_unique:
 	return get_partition(warn, max);
 }
 
@@ -1615,11 +1531,11 @@ get_nonexisting_partition(int warn, int max) {
 }
 
 const char *
-str_units(int n) {	/* n==1: use singular */
-	if (n == 1)
-		return display_in_cyl_units ? _("cylinder") : _("sector");
-	else
-		return display_in_cyl_units ? _("cylinders") : _("sectors");
+str_units(int n)
+{
+	if (display_in_cyl_units)
+		return P_("cylinder", "cylinders", n);
+	return P_("sector", "sectors", n);
 }
 
 void change_units(void)
@@ -1657,29 +1573,14 @@ toggle_dos_compatibility_flag(void) {
 	update_sector_offset();
 }
 
-static void
-delete_partition(int i) {
+static void dos_delete_partition(int i)
+{
 	struct pte *pe = &ptes[i];
 	struct partition *p = pe->part_table;
 	struct partition *q = pe->ext_pointer;
 
-/* Note that for the fifth partition (i == 4) we don't actually
- * decrement partitions.
- */
-
-	if (warn_geometry())
-		return;		/* C/H/S not set */
-	pe->changed = 1;
-
-	if (disklabel == SUN_LABEL) {
-		sun_delete_partition(i);
-		return;
-	}
-
-	if (disklabel == SGI_LABEL) {
-		sgi_delete_partition(i);
-		return;
-	}
+	/* Note that for the fifth partition (i == 4) we don't actually
+	   decrement partitions. */
 
 	if (i < 4) {
 		if (IS_EXTENDED (p->sys_ind) && i == ext_index) {
@@ -1688,10 +1589,7 @@ delete_partition(int i) {
 			extended_offset = 0;
 		}
 		clear_partition(p);
-		return;
-	}
-
-	if (!q->sys_ind && i > 4) {
+	} else if (!q->sys_ind && i > 4) {
 		/* the last one in the chain - just delete */
 		--partitions;
 		--i;
@@ -1731,19 +1629,33 @@ delete_partition(int i) {
 }
 
 static void
+delete_partition(int i)
+{
+	if (i < 0)
+		return;
+
+	if (warn_geometry())
+		return;		/* C/H/S not set */
+
+	ptes[i].changed = 1;
+
+	if (disklabel == DOS_LABEL)
+		dos_delete_partition(i);
+	else if (disklabel == SUN_LABEL)
+		sun_delete_partition(i);
+	else if (disklabel == SGI_LABEL)
+		sgi_delete_partition(i);
+
+	printf(_("Partition %d is deleted\n"), i + 1);
+}
+
+static void
 change_sysid(void) {
 	char *temp;
 	int i, sys, origsys;
 	struct partition *p;
 
-	/* If sgi_label then don't use get_existing_partition,
-	   let the user select a partition, since get_existing_partition()
-	   only works for Linux like partition tables. */
-	if (disklabel != SGI_LABEL) {
-		i = get_existing_partition(0, partitions);
-	} else {
-		i = get_partition(0, partitions);
-	}
+	i = get_existing_partition(0, partitions);
 
 	if (i == -1)
 		return;
@@ -2319,6 +2231,14 @@ get_unused_start(int part_n,
 	return start;
 }
 
+void print_partition_size(int num, unsigned long long start, unsigned long long stop, int sysid)
+{
+	char *str = size_to_human_string(SIZE_SUFFIX_3LETTER | SIZE_SUFFIX_SPACE,
+				     (stop - start + 1) * sector_size);
+	printf(_("Partition %d of type %s and of size %s is set\n"), num, partition_type(sysid), str);
+	free(str);
+}
+
 static void
 add_partition(int n, int sys) {
 	char mesg[256];		/* 48 does not suffice in Japanese */
@@ -2419,21 +2339,21 @@ add_partition(int n, int sys) {
 	if (cround(start) == cround(limit)) {
 		stop = limit;
 	} else {
-		int sx = 0;
+		int is_suffix_used = 0;
 
 		snprintf(mesg, sizeof(mesg),
 			_("Last %1$s, +%2$s or +size{K,M,G}"),
 			 str_units(SINGULAR), str_units(PLURAL));
 
-		stop = read_int_sx(cround(start), cround(limit), cround(limit),
-				cround(start), mesg, &sx);
+		stop = read_int_with_suffix(cround(start), cround(limit), cround(limit),
+				cround(start), mesg, &is_suffix_used);
 		if (display_in_cyl_units) {
 			stop = stop * units_per_sector - 1;
 			if (stop >limit)
 				stop = limit;
 		}
 
-		if (sx && alignment_required) {
+		if (is_suffix_used && alignment_required) {
 			/* the last sector has not been exactly requested (but
 			 * defined by +size{K,M,G} convention), so be smart
 			 * and align the end of the partition. The next
@@ -2630,10 +2550,10 @@ reread_partition_table(int leave) {
         }
 
 	if (i) {
-		printf(_("\nWARNING: Re-reading the partition table failed with error %d: %s.\n"
+		printf(_("\nWARNING: Re-reading the partition table failed with error %d: %m.\n"
 			 "The kernel still uses the old table. The new table will be used at\n"
 			 "the next reboot or after you run partprobe(8) or kpartx(8)\n"),
-			errno, strerror(errno));
+			errno);
 	}
 
 	if (dos_changed)
@@ -2734,7 +2654,8 @@ move_begin(int i) {
 }
 
 static void
-xselect(void) {
+expert_command_prompt(void)
+{
 	char c;
 
 	while(1) {
@@ -2823,42 +2744,21 @@ xselect(void) {
 				sun_set_pcylcount();
 			break;
 		default:
-			xmenu();
+			print_menu(EXPERT_MENU);
 		}
 	}
 }
 
-static int
-is_ide_cdrom_or_tape(char *device) {
-	FILE *procf;
-	char buf[100];
-	struct stat statbuf;
-	int is_ide = 0;
+static int is_ide_cdrom_or_tape(char *device)
+{
+	int fd, ret;
 
-	/* No device was given explicitly, and we are trying some
-	   likely things.  But opening /dev/hdc may produce errors like
-           "hdc: tray open or drive not ready"
-	   if it happens to be a CD-ROM drive. It even happens that
-	   the process hangs on the attempt to read a music CD.
-	   So try to be careful. This only works since 2.1.73. */
-
-	if (strncmp("/dev/hd", device, 7))
+	if ((fd = open(device, O_RDONLY)) < 0)
 		return 0;
+	ret = blkdev_is_cdrom(fd);
 
-	snprintf(buf, sizeof(buf), "/proc/ide/%s/media", device+5);
-	procf = fopen(buf, "r");
-	if (procf != NULL && fgets(buf, sizeof(buf), procf))
-		is_ide = (!strncmp(buf, "cdrom", 5) ||
-			  !strncmp(buf, "tape", 4));
-	else
-		/* Now when this proc file does not exist, skip the
-		   device when it is read-only. */
-		if (stat(device, &statbuf) == 0)
-			is_ide = ((statbuf.st_mode & 0222) == 0);
-
-	if (procf)
-		fclose(procf);
-	return is_ide;
+	close(fd);
+	return ret;
 }
 
 static void
@@ -2869,18 +2769,18 @@ gpt_warning(char *dev)
 			"The util fdisk doesn't support GPT. Use GNU Parted.\n\n"), dev);
 }
 
+/* Print disk geometry and partition table of a specified device (-l option) */
+
 static void
-try(char *device, int user_specified) {
+print_partition_table_from_option(char *device)
+{
 	int gb;
 
 	disk_device = device;
 	if (setjmp(listingbuf))
 		return;
-	if (!user_specified)
-		if (is_ide_cdrom_or_tape(device))
-			return;
 	gpt_warning(device);
-	if ((fd = open(disk_device, type_open)) >= 0) {
+	if ((fd = open(disk_device, O_RDONLY)) >= 0) {
 		gb = get_boot(try_only);
 		if (gb > 0) { /* I/O error */
 		} else if (gb < 0) { /* no DOS signature */
@@ -2909,7 +2809,8 @@ try(char *device, int user_specified) {
  * try all things in /proc/partitions that look like a full disk
  */
 static void
-tryprocpt(void) {
+print_all_partition_table_from_option(void)
+{
 	FILE *procpt;
 	char line[128], ptname[128], devname[256];
 	int ma, mi;
@@ -2929,7 +2830,8 @@ tryprocpt(void) {
 		if (is_whole_disk(devname)) {
 			char *cn = canonicalize_path(devname);
 			if (cn) {
-				try(cn, 0);
+				if (!is_ide_cdrom_or_tape(cn))
+					print_partition_table_from_option(cn);
 				free(cn);
 			}
 		}
@@ -2944,7 +2846,111 @@ unknown_command(int c) {
 	printf(_("%c: unknown command\n"), c);
 }
 
+static void command_prompt(void)
+{
+	int c;
 
+	if (disklabel == OSF_LABEL) {
+		putchar('\n');
+		/* OSF label, and no DOS label */
+		printf(_("Detected an OSF/1 disklabel on %s, entering "
+			 "disklabel mode.\n"),
+		       disk_device);
+		bsd_command_prompt();
+		/* If we return we may want to make an empty DOS label? */
+		disklabel = DOS_LABEL;
+	}
+
+	while (1) {
+		putchar('\n');
+		c = tolower(read_char(_("Command (m for help): ")));
+		switch (c) {
+		case 'a':
+			if (disklabel == DOS_LABEL)
+				toggle_active(get_partition(1, partitions));
+			else if (disklabel == SUN_LABEL)
+				toggle_sunflags(get_partition(1, partitions),
+						SUN_FLAG_UNMNT);
+			else if (disklabel == SGI_LABEL)
+				sgi_set_bootpartition(
+					get_partition(1, partitions));
+			else
+				unknown_command(c);
+			break;
+		case 'b':
+			if (disklabel == SGI_LABEL)
+				sgi_set_bootfile();
+			else if (disklabel == DOS_LABEL) {
+				disklabel = OSF_LABEL;
+				bsd_command_prompt();
+				disklabel = DOS_LABEL;
+			} else
+				unknown_command(c);
+			break;
+		case 'c':
+			if (disklabel == DOS_LABEL)
+				toggle_dos_compatibility_flag();
+			else if (disklabel == SUN_LABEL)
+				toggle_sunflags(get_partition(1, partitions),
+						SUN_FLAG_RONLY);
+			else if (disklabel == SGI_LABEL)
+				sgi_set_swappartition(
+						get_partition(1, partitions));
+			else
+				unknown_command(c);
+			break;
+		case 'd':
+			delete_partition(get_existing_partition(1, partitions));
+			break;
+		case 'i':
+			if (disklabel == SGI_LABEL)
+				create_sgiinfo();
+			else
+				unknown_command(c);
+			break;
+		case 'l':
+			list_types(get_sys_types());
+			break;
+		case 'm':
+			print_menu(MAIN_MENU);
+			break;
+		case 'n':
+			new_partition();
+			break;
+		case 'o':
+			create_doslabel();
+			break;
+		case 'p':
+			list_table(0);
+			break;
+		case 'q':
+			close(fd);
+			printf("\n");
+			exit(0);
+		case 's':
+			create_sunlabel();
+			break;
+		case 't':
+			change_sysid();
+			break;
+		case 'u':
+			change_units();
+			break;
+		case 'v':
+			verify();
+			break;
+		case 'w':
+			write_table(); 		/* does not return */
+			break;
+		case 'x':
+			expert_command_prompt();
+			break;
+		default:
+			unknown_command(c);
+			print_menu(MAIN_MENU);
+		}
+	}
+}
 
 int
 main(int argc, char **argv) {
@@ -3028,7 +3034,6 @@ main(int argc, char **argv) {
 
 	if (optl) {
 		nowarn = 1;
-		type_open = O_RDONLY;
 		if (argc > optind) {
 			int k;
 			/* avoid gcc warning:
@@ -3036,12 +3041,9 @@ main(int argc, char **argv) {
 			dummy(&k);
 			listing = 1;
 			for (k = optind; k < argc; k++)
-				try(argv[k], 1);
-		} else {
-			/* we no longer have default device names */
-			/* but we can use /proc/partitions instead */
-			tryprocpt();
-		}
+				print_partition_table_from_option(argv[k]);
+		} else
+			print_all_partition_table_from_option();
 		exit(0);
 	}
 
@@ -3049,7 +3051,6 @@ main(int argc, char **argv) {
 		unsigned long long size;
 
 		nowarn = 1;
-		type_open = O_RDONLY;
 
 		opts = argc - optind;
 		if (opts <= 0)
@@ -3057,7 +3058,7 @@ main(int argc, char **argv) {
 
 		for (j = optind; j < argc; j++) {
 			disk_device = argv[j];
-			if ((fd = open(disk_device, type_open)) < 0)
+			if ((fd = open(disk_device, O_RDONLY)) < 0)
 				fatal(unable_to_open);
 			if (blkdev_get_sectors(fd, &size) == -1)
 				fatal(ioctl_error);
@@ -3075,123 +3076,14 @@ main(int argc, char **argv) {
 	else
 		usage(stderr);
 
+	fprintf(stderr, _("Welcome to fdisk (%s).\n\n"
+		"Changes will remain in memory only, until you decide to write them.\n"
+		"Be careful before using the write command.\n\n"), PACKAGE_STRING);
+
 	gpt_warning(disk_device);
 	get_boot(fdisk);
 
-	if (disklabel == OSF_LABEL) {
-		/* OSF label, and no DOS label */
-		printf(_("Detected an OSF/1 disklabel on %s, entering "
-			 "disklabel mode.\n"),
-		       disk_device);
-		bselect();
-		/* If we return we may want to make an empty DOS label? */
-		disklabel = DOS_LABEL;
-	}
+	command_prompt();
 
-	while (1) {
-		putchar('\n');
-		c = tolower(read_char(_("Command (m for help): ")));
-		switch (c) {
-		case 'a':
-			if (disklabel == DOS_LABEL)
-				toggle_active(get_partition(1, partitions));
-			else if (disklabel == SUN_LABEL)
-				toggle_sunflags(get_partition(1, partitions),
-						SUN_FLAG_UNMNT);
-			else if (disklabel == SGI_LABEL)
-				sgi_set_bootpartition(
-					get_partition(1, partitions));
-			else
-				unknown_command(c);
-			break;
-		case 'b':
-			if (disklabel == SGI_LABEL) {
-				printf(_("\nThe current boot file is: %s\n"),
-				       sgi_get_bootfile());
-				if (read_chars(_("Please enter the name of the "
-					       "new boot file: ")) == '\n')
-					printf(_("Boot file unchanged\n"));
-				else
-					sgi_set_bootfile(line_ptr);
-			} else
-				bselect();
-			break;
-		case 'c':
-			if (disklabel == DOS_LABEL)
-				toggle_dos_compatibility_flag();
-			else if (disklabel == SUN_LABEL)
-				toggle_sunflags(get_partition(1, partitions),
-						SUN_FLAG_RONLY);
-			else if (disklabel == SGI_LABEL)
-				sgi_set_swappartition(
-						get_partition(1, partitions));
-			else
-				unknown_command(c);
-			break;
-		case 'd':
-        		/* If sgi_label then don't use get_existing_partition,
-			   let the user select a partition, since
-			   get_existing_partition() only works for Linux-like
-			   partition tables */
-			if (disklabel != SGI_LABEL) {
-                		j = get_existing_partition(1, partitions);
-        		} else {
-                		j = get_partition(1, partitions);
-        		}
-			if (j >= 0)
-				delete_partition(j);
-			break;
-		case 'i':
-			if (disklabel == SGI_LABEL)
-				create_sgiinfo();
-			else
-				unknown_command(c);
-		case 'l':
-			list_types(get_sys_types());
-			break;
-		case 'm':
-			menu();
-			break;
-		case 'n':
-			new_partition();
-			break;
-		case 'o':
-			create_doslabel();
-			break;
-		case 'p':
-			list_table(0);
-			break;
-		case 'q':
-			close(fd);
-			printf("\n");
-			exit(0);
-		case 's':
-			create_sunlabel();
-			break;
-		case 't':
-			change_sysid();
-			break;
-		case 'u':
-			change_units();
-			break;
-		case 'v':
-			verify();
-			break;
-		case 'w':
-			write_table(); 		/* does not return */
-			break;
-		case 'x':
-			if (disklabel == SGI_LABEL) {
-				fprintf(stderr,
-					_("\n\tSorry, no experts menu for SGI "
-					"partition tables available.\n\n"));
-			} else
-				xselect();
-			break;
-		default:
-			unknown_command(c);
-			menu();
-		}
-	}
 	return 0;
 }

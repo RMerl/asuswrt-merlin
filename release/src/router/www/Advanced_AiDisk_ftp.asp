@@ -52,8 +52,8 @@ var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';
 
 function initial(){
 	show_menu();
-	$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-	$("option5").className = "m5_r";
+	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
+	document.getElementById("_APP_Installation").className = "menu_clicked";
 	
 	document.aidiskForm.protocol.value = PROTOCOL;
 	
@@ -729,9 +729,6 @@ function validForm(){
 									},
 									function() {
 										switchAppStatus(PROTOCOL);
-									},
-									{
-										switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 									}
 								);
 							</script>			
@@ -751,9 +748,6 @@ function validForm(){
 									},
 									function() {
 										switchAccount(PROTOCOL);
-									},
-									{
-										switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 									}
 								);
 							</script>

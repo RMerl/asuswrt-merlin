@@ -24,7 +24,7 @@
 #if !defined(__m68k__) || !defined(KDGHWCLK)
 
 #include <stddef.h>
-struct clock_ops *probe_for_kd_clock()
+struct clock_ops *probe_for_kd_clock(void)
 {
 	return NULL;
 }

@@ -551,6 +551,8 @@ createMail(void)
 	}
 
 	dsbDestroy(msg);
-	sendmail(global_msg);
+	if(sendmail(global_msg) == ERROR) {
+		properExit(ERROR);
+	}
 }
 

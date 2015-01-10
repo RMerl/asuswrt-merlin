@@ -13,27 +13,35 @@
 #include <syslog.h>
 #include "iboxcom.h"
 
+#include <endian.h>
+#if __BYTE_ORDER == __BIG_ENDIAN
+#include <linux/byteorder/big_endian.h>
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
+#include <linux/byteorder/little_endian.h>
+#else
+#error Unknown endian
+#endif
+
 int getStorageStatus(STORAGE_INFO_T *st)
 {
 	memset(st, sizeof(st), 0);
 
-	st->AppHttpPort = nvram_get_int("dm_http_port");
+	st->AppHttpPort = __cpu_to_le16(nvram_get_int("dm_http_port"));
 
 	if(nvram_get_int("sw_mode")!=SW_MODE_ROUTER) {
 		return 0;
 	}
 
-	
-	st->MagicWord = EXTEND_MAGIC;
+	st->MagicWord = __cpu_to_le16(EXTEND_MAGIC);
 	st->AppAPILevel = EXTEND_API_LEVEL;
 	st->ExtendCap = 0;
 
 #ifdef RTCONFIG_WEBDAV
-	st->ExtendCap |= EXTEND_CAP_WEBDAV;
+	st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_WEBDAV);
 #else
 	st->ExtendCap = 0;
 	if(check_if_file_exist("/opt/etc/init.d/S50aicloud")) 
-		st->ExtendCap |= EXTEND_CAP_WEBDAV;
+		st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_WEBDAV);
 #endif
 
 	if(nvram_get_int("enable_webdav")) 	
@@ -54,10 +62,10 @@ int getStorageStatus(STORAGE_INFO_T *st)
 	}
 
 	// setup st->u.WANIPAddr
-	st->u.wt.WANIPAddr = inet_network(get_wanip());
+	st->u.wt.WANIPAddr = __cpu_to_le32(inet_network(get_wanip()));
 
-	st->u.wt.WANState = get_wanstate(); 
 	st->u.wt.isNotDefault = nvram_get_int("x_Setting");
+
 	return 0;
 }
 

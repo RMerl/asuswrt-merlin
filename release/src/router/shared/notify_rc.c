@@ -142,6 +142,8 @@ static int notify_rc_internal(const char *event_name, bool do_wait, int wait)
 			_dprintf("%s %d: waiting after %d/%d.\n", event_name, getpid(), i, wait);
 			sleep(1);
 		}
+		if(i == 0 && nvram_match("rc_service", (char *)event_name))
+			return 2;
 	}
 
 	return 0;

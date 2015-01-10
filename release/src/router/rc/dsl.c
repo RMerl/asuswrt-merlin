@@ -151,6 +151,7 @@ void convert_dsl_wan()
 			nvram_set("wan_proto",nvram_safe_get("wan0_proto"));
 		}
 	}
+	nvram_commit();
 }
 
 
@@ -300,6 +301,7 @@ void start_dsl()
 	eval("ifconfig", "vlan2", buf_ip);
 #endif
 
+#ifndef RTCONFIG_DSL_TCLINUX
 #ifdef RTCONFIG_DUALWAN
 	if (get_dualwan_secondary()==WANS_DUALWAN_IF_NONE)
 	{
@@ -312,6 +314,7 @@ void start_dsl()
 			return;
 		}
 	}
+#endif
 #endif
 
 	_eval(argv_tp_init, NULL, 0, &pid);

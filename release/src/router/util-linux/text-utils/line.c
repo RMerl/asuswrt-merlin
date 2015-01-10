@@ -29,7 +29,7 @@ doline(int fd)
 }
 
 int
-main(int argc, char **argv)
+main(void)
 {
 	doline(0);
 	return status;

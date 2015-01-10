@@ -50,7 +50,11 @@ usage(void)
 #ifdef RTCONFIG_DSL
 #define PROFILE_HEADER_NEW      "N55U"
 #else
+#ifdef RTCONFIG_QCA
+#define PROFILE_HEADER_NEW      "AC55U"
+#else
 #define PROFILE_HEADER_NEW      "HDR2"
+#endif
 #endif
 
 

@@ -26,6 +26,7 @@
 
 /* Signature - “EFI PART” */
 #define GPT_HEADER_SIGNATURE 0x5452415020494645ULL
+#define GPT_HEADER_SIGNATURE_STR "EFI PART"
 
 /* basic types */
 typedef uint16_t efi_char16_t;
@@ -132,10 +133,12 @@ static void swap_efi_guid(efi_guid_t *uid)
 static int last_lba(blkid_probe pr, uint64_t *lba)
 {
 	blkid_loff_t sz = blkid_probe_get_size(pr);
-	if (sz < blkid_probe_get_sectorsize(pr))
+	unsigned int ssz = blkid_probe_get_sectorsize(pr);
+
+	if (sz < ssz)
 		return -1;
 
-	*lba = (sz >> 9) - 1;
+	*lba = (sz / ssz) - 1ULL;
 	return 0;
 }
 
@@ -313,6 +316,11 @@ static int probe_gpt_pt(blkid_probe pr,
 		goto nothing;
 
 	blkid_probe_use_wiper(pr, lba * blkid_probe_get_size(pr), 8);
+
+	if (blkid_probe_set_magic(pr, lba << 9,
+			      sizeof(GPT_HEADER_SIGNATURE_STR) - 1,
+			      (unsigned char *) GPT_HEADER_SIGNATURE_STR))
+		goto err;
 
 	if (blkid_partitions_need_typeonly(pr))
 		/* caller does not ask for details about partitions */

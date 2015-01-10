@@ -228,6 +228,9 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 	const char *name = (state == STATE_S46_MAPE) ? "MAPE" :
 			(state == STATE_S46_MAPT) ? "MAPT" : "LW4O6";
 
+	if (len == 0)
+		return;
+
 	char *str;
 	size_t strsize;
 

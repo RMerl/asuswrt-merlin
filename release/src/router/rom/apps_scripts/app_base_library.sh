@@ -2,15 +2,38 @@
 # $1: device name, $2: DM_file.
 
 
-is_arm_machine=`uname -m |grep arm`
-productid=`nvram get productid`
-
+f=`nvram get apps_install_folder`
+case $f in
+	"asusware.arm")
+		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
+		PKG_LIST="openssl zlib libcurl libevent ncurses libxml2 libsigc++ libpar2 pcre spawn-fcgi"
+		;;
+	"asusware.big")
+		# DSL big-endian MIPS: DSL-N66U
+		pkg_type="mipsbig"
+		PKG_LIST="openssl zlib libevent ncurses libxml2 pcre spawn-fcgi"
+		;;
+	"asusware.mipsbig")
+		# QCA big-endian MIPS: RT-AC55U
+		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
+		PKG_LIST="openssl zlib libevent ncurses libxml2 pcre spawn-fcgi"
+		;;
+	"asusware")
+		pkg_type="mipsel"
+		PKG_LIST="openssl zlib libcurl libevent ncurses libxml2 libuclibc++ libsigc++ libpar2 pcre spawn-fcgi"
+		;;
+	*)
+		echo "Unknown apps_install_folder: $f"
+		exit 1
+		;;
+esac
 autorun_file=.asusrouter
 nonautorun_file=$autorun_file.disabled
 APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
 APPS_DEV=`nvram get apps_dev`
 apps_from_internet=`nvram get rc_support |grep appnet`
 apps_local_space=`nvram get apps_local_space`
+
 
 # $1: package name.
 # return value. 1: have package. 0: no package.
@@ -107,13 +130,6 @@ _log_ipkg_install(){
 	return 0
 }
 
-if [ -n "$is_arm_machine" ]; then
-	pkg_type="arm"
-elif [ -n "$productid" ] && [ "$productid" == "DSL-N66U" ]; then
-	pkg_type="mipsbig"
-else
-	pkg_type="mipsel"
-fi
 
 if [ -n "$apps_from_internet" ]; then
 	exit 0
@@ -158,150 +174,21 @@ fi
 install_log=$APPS_INSTALL_PATH/ipkg_log.txt
 list_installed=`ipkg list_installed`
 
-if [ -z "`echo "$list_installed" |grep "openssl - "`" ]; then
-	echo "Installing the package: openssl..."
-	ipkg install $apps_local_space/openssl_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install openssl!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "zlib - "`" ]; then
-	echo "Installing the package: zlib..."
-	ipkg install $apps_local_space/zlib_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install zlib!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "libcurl - "`" ]; then
-	echo "Installing the package: libcurl..."
-	ipkg install $apps_local_space/libcurl_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install libcurl!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "libevent - "`" ]; then
-	echo "Installing the package: libevent..."
-	ipkg install $apps_local_space/libevent_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install libevent!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "ncurses - "`" ]; then
-	echo "Installing the package: ncurses..."
-	ipkg install $apps_local_space/ncurses_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install ncurses!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "libxml2 - "`" ]; then
-	echo "Installing the package: libxml2..."
-	ipkg install $apps_local_space/libxml2_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install libxml2!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "$is_arm_machine" ]; then
-	if [ -z "`echo "$list_installed" |grep "libuclibc++ - "`" ]; then
-		echo "Installing the package: libuclibc++..."
-		ipkg install $apps_local_space/libuclibc++_*_$pkg_type.ipk 1>$install_log &
+for pkg in $PKG_LIST ; do
+	echo "Checking the package: $pkg..."
+	if [ -z "`echo "$list_installed" |grep "$pkg - "`" ]; then
+		echo "Installing the package: $pkg..."
+		ipkg install $apps_local_space/${pkg}_*_${pkg_type}.ipk 1>$install_log &
 		result=`_log_ipkg_install downloadmaster $install_log`
 		if [ "$result" == "error" ]; then
-			echo "Failed to install libuclibc++!"
+			echo "Failed to install $pkg!"
 			nvram set apps_state_error=4
 			exit 1
 		else
 			rm -f $install_log
 		fi
 	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "libsigc++ - "`" ]; then
-	echo "Installing the package: libsigc++..."
-	ipkg install $apps_local_space/libsigc++_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install libsigc++!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "libpar2 - "`" ]; then
-	echo "Installing the package: libpar2..."
-	ipkg install $apps_local_space/libpar2_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install libpar2!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "pcre - "`" ]; then
-	echo "Installing the package: pcre..."
-	ipkg install $apps_local_space/pcre_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install pcre!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
-
-if [ -z "`echo "$list_installed" |grep "spawn-fcgi - "`" ]; then
-	echo "Installing the package: spawn-fcgi..."
-	ipkg install $apps_local_space/spawn-fcgi_*_$pkg_type.ipk 1>$install_log &
-	result=`_log_ipkg_install downloadmaster $install_log`
-	if [ "$result" == "error" ]; then
-		echo "Failed to install spawn-fcgi!"
-		nvram set apps_state_error=4
-		exit 1
-	else
-		rm -f $install_log
-	fi
-fi
+done
 
 DM_file=`ls $apps_local_space/downloadmaster_*_$pkg_type.ipk`
 if [ -n "$DM_file" ]; then

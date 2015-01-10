@@ -285,7 +285,7 @@ ERROR:
 static void
 psta_keepalive(int ex)
 {
-	char tmp[NVRAM_BUFSIZE], prefix[] = "wlXXXXXXXXXX_";
+	char tmp[NVRAM_BUFSIZE], tmp2[NVRAM_BUFSIZE], prefix[] = "wlXXXXXXXXXX_";
 	char *name = NULL;
 	struct maclist *mac_list = NULL;
 	int mac_list_size, i, unit;
@@ -295,11 +295,12 @@ psta_keepalive(int ex)
 	char macaddr[18];
 	char band_var[16];
 
-	sprintf(band_var, "wlc_band%s", ex?"_ex":"");
+	sprintf(band_var, "wlc_band%s", ex ? "_ex" : "");
 	unit = nvram_get_int(band_var);
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
-	if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta"))
+	if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta") &&
+	    !nvram_match(strcat_r(prefix, "mode", tmp2), "psr"))
 		goto PSTA_ERR;
 
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
@@ -381,8 +382,10 @@ psta_monitor(int sig)
 	if (sig == SIGALRM)
 	{
 		psta_keepalive(0);
-		if(nvram_match("exband", "1"))
+#ifdef PXYSTA_DUALBAND
+		if (!nvram_match("dpsta_ifnames", ""))
 			psta_keepalive(1);
+#endif
 		alarm(NORMAL_PERIOD);
 	}
 }
@@ -428,6 +431,9 @@ psta_monitor_main(int argc, char *argv[])
 
 	signal(SIGALRM, psta_monitor);
 	signal(SIGTERM, psta_monitor_exit);
+
+	/* turn off nonwork-band led */
+	setWlOffLed();
 
 	alarm(NORMAL_PERIOD);
 

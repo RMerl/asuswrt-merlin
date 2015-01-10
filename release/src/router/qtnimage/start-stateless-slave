@@ -81,6 +81,12 @@ do
 	fi
 done
 
+backup_bootcfg /mnt/jffs2/bootcfg
+tar zcf /tmp/bootcfg.tgz /mnt/jffs2/bootcfg
+tftp -p 1.1.1.1 -l /tmp/bootcfg.tgz -r bootcfg.tgz
+rm -rf /mnt/jffs2/bootcfg
+rm -f /tmp/bootcfg.tgz
+
 echo_with_logging "=== Running start-prod"
 ${INVOKE_QCSAPI} startprod
 

@@ -109,8 +109,10 @@ static int probe_md_tp(blkid_probe pr,
 	if (ioctl(fd, GET_ARRAY_INFO, &md))
 		goto nothing;
 
-	if (fd != pr->fd)
+	if (fd >= 0 && fd != pr->fd) {
 		close(fd);
+		fd = -1;
+	}
 
 	/*
 	 * Ignore levels we don't want aligned (e.g. linear)
@@ -138,7 +140,7 @@ static int probe_md_tp(blkid_probe pr,
 	return 0;
 
 nothing:
-	if (fd != -1 && fd != pr->fd)
+	if (fd >= 0 && fd != pr->fd)
 		close(fd);
 	return 1;
 }

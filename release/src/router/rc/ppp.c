@@ -205,9 +205,22 @@ ippreup_main(int argc, char **argv)
 int ip6up_main(int argc, char **argv)
 {
 	char *wan_ifname = safe_getenv("IFNAME");
+	char *wan_linkname = safe_getenv("LINKNAME");
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	int unit;
 
 	if (!wan_ifname || strlen(wan_ifname) <= 0)
 		return 0;
+
+	/* Get unit from LINKNAME: ppp[UNIT] */
+	if ((unit = ppp_linkunit(wan_linkname)) < 0)
+		return 0;
+
+	_dprintf("%s: unit=%d ifname=%s\n", __FUNCTION__, unit, wan_ifname);
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	/* share the same interface with pppoe ipv4 connection */
+	nvram_set(strcat_r(prefix, "pppoe_ifname", tmp), wan_ifname);
 
 	wan6_up(wan_ifname);
 
@@ -222,7 +235,7 @@ int ip6down_main(int argc, char **argv)
 
 	return 0;
 }
-#endif  // IPV6
+#endif	// IPV6
 
 /*
  * Called when link closing with auth fail

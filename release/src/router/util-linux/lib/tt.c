@@ -326,6 +326,10 @@ static char *line_get_data(struct tt_line *ln, struct tt_column *cl,
 		buf[bufsz - 1] = '\0';
 		return buf;
 	}
+
+	/*
+	 * Tree stuff
+	 */
 	if (ln->parent) {
 		p = line_get_ascii_art(ln->parent, buf, &bufsz);
 		if (!p)
@@ -344,63 +348,138 @@ static char *line_get_data(struct tt_line *ln, struct tt_column *cl,
 	return buf;
 }
 
+/*
+ * This function counts column width.
+ *
+ * For the TT_FL_NOEXTREMES columns is possible to call this function two
+ * times.  The first pass counts width and average width. If the column
+ * contains too large fields (width greater than 2 * average) then the column
+ * is marked as "extreme". In the second pass all extreme fields are ignored
+ * and column width is counted from non-extreme fields only.
+ */
+static void count_column_width(struct tt *tb, struct tt_column *cl,
+				 char *buf, size_t bufsz)
+{
+	struct list_head *lp;
+	int count = 0;
+	size_t sum = 0;
+
+	cl->width = 0;
+
+	list_for_each(lp, &tb->tb_lines) {
+		struct tt_line *ln = list_entry(lp, struct tt_line, ln_lines);
+		char *data = line_get_data(ln, cl, buf, bufsz);
+		size_t len = data ? mbs_width(data) : 0;
+
+		if (len > cl->width_max)
+			cl->width_max = len;
+
+		if (cl->is_extreme && len > cl->width_avg * 2)
+			continue;
+		else if (cl->flags & TT_FL_NOEXTREMES) {
+			sum += len;
+			count++;
+		}
+		if (len > cl->width)
+			cl->width = len;
+	}
+
+	if (count && cl->width_avg == 0) {
+		cl->width_avg = sum / count;
+
+		if (cl->width_max > cl->width_avg * 2)
+			cl->is_extreme = 1;
+	}
+
+	/* check and set minimal column width */
+	if (cl->name)
+		cl->width_min = mbs_width(cl->name);
+
+	/* enlarge to minimal width */
+	if (cl->width < cl->width_min && !(cl->flags & TT_FL_STRICTWIDTH))
+		cl->width = cl->width_min;
+
+	/* use relative size for large columns */
+	else if (cl->width_hint >= 1 && cl->width < (size_t) cl->width_hint &&
+		 cl->width_min < (size_t) cl->width_hint)
+
+		cl->width = (size_t) cl->width_hint;
+}
+
+/*
+ * This is core of the tt_* voodo...
+ */
 static void recount_widths(struct tt *tb, char *buf, size_t bufsz)
 {
 	struct list_head *p;
-	size_t width = 0;
+	size_t width = 0;	/* output width */
 	int trunc_only;
+	int extremes = 0;
 
-	/* set width according to the size of data
+	/* set basic columns width
 	 */
 	list_for_each(p, &tb->tb_columns) {
 		struct tt_column *cl =
 				list_entry(p, struct tt_column, cl_columns);
-		struct list_head *lp;
 
-		list_for_each(lp, &tb->tb_lines) {
-			struct tt_line *ln =
-				list_entry(lp, struct tt_line, ln_lines);
+		count_column_width(tb, cl, buf, bufsz);
+		width += cl->width + (is_last_column(tb, cl) ? 0 : 1);
+		extremes += cl->is_extreme;
+	}
 
-			char *data = line_get_data(ln, cl, buf, bufsz);
-			size_t len = data ? mbs_width(data) : 0;
+	/* reduce columns with extreme fields
+	 */
+	if (width > tb->termwidth && extremes) {
+		list_for_each(p, &tb->tb_columns) {
+			struct tt_column *cl = list_entry(p, struct tt_column, cl_columns);
+			size_t org_width;
 
-			if (cl->width < len)
-				cl->width = len;
+			if (!cl->is_extreme)
+				continue;
+
+			org_width = cl->width;
+			count_column_width(tb, cl, buf, bufsz);
+
+			if (org_width > cl->width)
+				width -= org_width - cl->width;
+			else
+				extremes--;	/* hmm... nothing reduced */
 		}
 	}
 
-	/* set minimal width (= size of column header)
-	 */
-	list_for_each(p, &tb->tb_columns) {
-		struct tt_column *cl =
-				list_entry(p, struct tt_column, cl_columns);
-
-		if (cl->name)
-			cl->width_min = mbs_width(cl->name);
-
-		if (cl->width < cl->width_min &&
-		    !(cl->flags & TT_FL_STRICTWIDTH))
-			cl->width = cl->width_min;
-
-		else if (cl->width_hint >= 1 &&
-			 cl->width < (size_t) cl->width_hint &&
-			 cl->width_min < (size_t) cl->width_hint)
-
-			cl->width = (size_t) cl->width_hint;
-
-		width += cl->width + (is_last_column(tb, cl) ? 0 : 1);
-	}
-
-	if (width == tb->termwidth)
-		goto leave;
 	if (width < tb->termwidth) {
-		/* cool, use the extra space for the last column */
-		struct tt_column *cl = list_entry(
-			tb->tb_columns.prev, struct tt_column, cl_columns);
+		/* cool, use the extra space for the extreme columns or/and last column
+		 */
+		if (extremes) {
+			/* enlarge the first extreme column */
+			list_for_each(p, &tb->tb_columns) {
+				struct tt_column *cl =
+					list_entry(p, struct tt_column, cl_columns);
+				size_t add;
 
-		if (!(cl->flags & TT_FL_RIGHT) && tb->termwidth - width > 0)
-			cl->width += tb->termwidth - width;
-		goto leave;
+				if (!cl->is_extreme)
+					continue;
+				add = tb->termwidth - width;
+				if (add && cl->width + add > cl->width_max)
+					add = cl->width_max - cl->width;
+
+				cl->width += add;
+				width += add;
+
+				if (width == tb->termwidth)
+					break;
+			}
+		}
+		if (width < tb->termwidth) {
+			/* enalarge the last column */
+			struct tt_column *cl = list_entry(
+				tb->tb_columns.prev, struct tt_column, cl_columns);
+
+			if (!(cl->flags & TT_FL_RIGHT) && tb->termwidth - width > 0) {
+				cl->width += tb->termwidth - width;
+				width = tb->termwidth;
+			}
+		}
 	}
 
 	/* bad, we have to reduce output width, this is done in two steps:
@@ -408,7 +487,7 @@ static void recount_widths(struct tt *tb, char *buf, size_t bufsz)
 	 * 2) reduce columns with a relative width without truncate flag
 	 */
 	trunc_only = 1;
-	while(width > tb->termwidth) {
+	while (width > tb->termwidth) {
 		size_t org = width;
 
 		list_for_each(p, &tb->tb_columns) {
@@ -438,6 +517,7 @@ static void recount_widths(struct tt *tb, char *buf, size_t bufsz)
 				cl->width--;
 				width--;
 			}
+
 		}
 		if (org == width) {
 			if (trunc_only)
@@ -446,7 +526,7 @@ static void recount_widths(struct tt *tb, char *buf, size_t bufsz)
 				break;
 		}
 	}
-leave:
+
 /*
 	fprintf(stderr, "terminal: %d, output: %d\n", tb->termwidth, width);
 
@@ -454,10 +534,13 @@ leave:
 		struct tt_column *cl =
 			list_entry(p, struct tt_column, cl_columns);
 
-		fprintf(stderr, "width: %s=%zd [hint=%d]\n",
+		fprintf(stderr, "width: %s=%zd [hint=%d, avg=%zd, max=%zd, extreme=%s]\n",
 			cl->name, cl->width,
 			cl->width_hint > 1 ? (int) cl->width_hint :
-					     (int) (cl->width_hint * tb->termwidth));
+					     (int) (cl->width_hint * tb->termwidth),
+			cl->width_avg,
+			cl->width_max,
+			cl->is_extreme ? "yes" : "not");
 	}
 */
 	return;
@@ -646,6 +729,7 @@ int tt_print_table(struct tt *tb)
 			line_sz = ln->data_sz;
 	}
 
+	line_sz++;			/* make a space for \0 */
 	line = malloc(line_sz);
 	if (!line)
 		return -1;

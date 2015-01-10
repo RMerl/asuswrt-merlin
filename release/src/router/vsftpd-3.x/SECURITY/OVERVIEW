@@ -1,0 +1,12 @@
+The documents in this directory contain information about the security of
+vsftpd. They explain why various aspects of vsftpd were coded the way they
+are.
+
+File                Contents
+
+DESIGN              Comments on the overall architecture of vsftpd, from a
+                    security standpoint.
+IMPLEMENTATION      Comments on steps taken to ensure a secure implementation.
+TRUST               Comments on external components trusted or distrusted by
+                    vsftpd.
+

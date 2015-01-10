@@ -1183,6 +1183,8 @@ struct ieee80211_ie_measrep_sta_stat {
 	uint8_t data[0];	/*	Optional sub-elements in variable length	*/
 } __packed;
 
+#define IEEE80211_RM_MEAS_SUBTYPE_LEN_MIN	2
+
 /* Quantenna RM group ie, to complement an 802.11k group ie. Node statistics & parameters */
 struct ieee80211_ie_qtn_rm_measure_sta {
 	uint8_t id;	/* IEEE80211_ELEMID_VENDOR */
@@ -1370,7 +1372,8 @@ enum RadioMeasureQTNElementID {
 	RM_QTN_HW_NOISE			=	12,
 	RM_QTN_SOC_MACADDR		=	13,
 	RM_QTN_SOC_IPADDR		=	14,
-	RM_QTN_MAX			=	14,
+	RM_QTN_MAX			=	RM_QTN_SOC_IPADDR,
+	RM_QTN_UNKNOWN			=	15,
 	RM_QTN_CTRL_START		=	16,
 	RM_QTN_RESET_CNTS		=	16,
 	RM_QTN_RESET_QUEUED		=	17,
@@ -1387,6 +1390,8 @@ enum RadioMeasureGrp221ElementID {
 	RM_GRP221_PHY_NOISE		=	(RM_QTN_CTRL_END + 2),
 	RM_GRP221_SOC_MAC		=	(RM_QTN_CTRL_END + 3),
 };
+
+extern const uint8_t ieee80211_meas_sta_qtn_report_subtype_len[RM_QTN_CTRL_END + 1];
 
 /* Standard CCA Flag to used */
 #define RM_STANDARD_CCA 0x1009
@@ -2783,6 +2788,10 @@ struct ieee80211_ie_vhtcap {
 #define IEEE80211_VHTCAP_C_RX_ATN_PATTERN_CONSISTNCY	0x10000000
 #define IEEE80211_VHTCAP_C_TX_ATN_PATTERN_CONSISTNCY	0x20000000
 
+/* VHT mcs info extras */
+#define IEEE80211_VHTCAP_MCS_MAX			8
+#define IEEE80211_VHTCAP_MCS_DISABLED			0x03
+
 /* VHT capability macro */
 /* get macros */
 /* VHT capabilities (all bits) */
@@ -2862,6 +2871,10 @@ struct ieee80211_ie_vhtcap {
 #define IEEE80211_VHTCAP_GET_TX_MCS_NSS(vhtcap) \
 	(((vhtcap)->vht_mcs_nss_set[5] << 8) | \
 	((vhtcap)->vht_mcs_nss_set[4]))
+
+/* VHT-MCS MAP entry for RX or TX MAP */
+#define IEEE80211_VHTCAP_GET_MCS_MAP_ENTRY(mcsmap, idx) \
+	((mcsmap >> (idx * 2)) & 0x3)
 
 /* B16-B28 RX Highest supported Long GI data rates */
 #define IEEE80211_VHTCAP_GET_RX_LGIMAXRATE(vhtcap) \

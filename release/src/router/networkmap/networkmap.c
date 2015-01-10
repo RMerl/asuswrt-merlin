@@ -10,9 +10,11 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "../shared/shutils.h"    // for eval()
+#include "../shared/rtstate.h"
 #include <bcmnvram.h>
+#include <stdlib.h>
+#include <asm/byteorder.h>
 #include "networkmap.h"
-#include "endianness.h"
 //2011.02 Yau add shard memory
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -158,6 +160,36 @@ static void refresh_sig(void)
 #endif
 }
 
+#if defined(RTCONFIG_QCA) && defined(RTCONFIG_WIRELESSREPEATER)
+char *getStaMAC()
+{
+	char buf[512];
+	FILE *fp;
+	int len,unit;
+	char *pt1,*pt2;
+	unit=nvram_get_int("wlc_band");
+
+	sprintf(buf, "ifconfig sta%d", unit);
+
+	fp = popen(buf, "r");
+	if (fp) {
+		memset(buf, 0, sizeof(buf));
+		len = fread(buf, 1, sizeof(buf), fp);
+		pclose(fp);
+		if (len > 1) {
+			buf[len-1] = '\0';
+			pt1 = strstr(buf, "HWaddr ");
+			if (pt1)
+			{
+				pt2 = pt1 + strlen("HWaddr ");
+				chomp(pt2);
+				return pt2;
+			}
+		}
+	}
+	return NULL;
+}
+#endif
 
 #ifdef NMP_DB
 int commit_no = 0;
@@ -361,7 +393,10 @@ int main(int argc, char *argv[])
 	int shm_client_detail_info_id;
 	int ip_dup, mac_dup, real_num;
 	int lock;
-
+	unsigned short msg_type;
+#if defined(RTCONFIG_QCA) && defined(RTCONFIG_WIRELESSREPEATER)	
+	char *mac;
+#endif	
         FILE *fp = fopen("/var/run/networkmap.pid", "w");
         if(fp != NULL){
                 fprintf(fp, "%d", getpid());
@@ -395,11 +430,20 @@ int main(int argc, char *argv[])
 
 	//Get Router's IP/Mac
 	strcpy(router_ipaddr, nvram_safe_get("lan_ipaddr"));
-#ifdef RTCONFIG_RGMII_BRCM5301X
+#if defined(RTCONFIG_RGMII_BRCM5301X)
 	strcpy(router_mac, nvram_safe_get("et1macaddr"));
 #else
+#if defined(RTCONFIG_QCA)
+#ifdef RTCONFIG_WIRELESSREPEATER	
+	if(nvram_get_int("sw_mode")==SW_MODE_REPEATER  && (mac=getStaMAC())!=NULL)	
+		strncpy(router_mac, mac,sizeof(router_mac));	
+	else   
+#endif	   
+		strcpy(router_mac, nvram_safe_get("et1macaddr"));
+#else	
 	strcpy(router_mac, nvram_safe_get("et0macaddr"));
 #endif
+#endif	
         inet_aton(router_ipaddr, &router_addr.sin_addr);
         memcpy(my_ipaddr,  &router_addr.sin_addr, 4);
 
@@ -487,31 +531,30 @@ int main(int argc, char *argv[])
 		else {
 		    arp_ptr = (ARP_HEADER*)(buffer);
                     NMP_DEBUG("*Receive an ARP Packet from: %d.%d.%d.%d to %d.%d.%d.%d:%02X:%02X:%02X:%02X - len:%d\n",
-				(int *)arp_ptr->source_ipaddr[0],(int *)arp_ptr->source_ipaddr[1],
-				(int *)arp_ptr->source_ipaddr[2],(int *)arp_ptr->source_ipaddr[3],
-				(int *)arp_ptr->dest_ipaddr[0],(int *)arp_ptr->dest_ipaddr[1],
-				(int *)arp_ptr->dest_ipaddr[2],(int *)arp_ptr->dest_ipaddr[3],
+				arp_ptr->source_ipaddr[0],arp_ptr->source_ipaddr[1],
+				arp_ptr->source_ipaddr[2],arp_ptr->source_ipaddr[3],
+				arp_ptr->dest_ipaddr[0],arp_ptr->dest_ipaddr[1],
+				arp_ptr->dest_ipaddr[2],arp_ptr->dest_ipaddr[3],
                                 arp_ptr->dest_hwaddr[0],arp_ptr->dest_hwaddr[1],
                                 arp_ptr->dest_hwaddr[2],arp_ptr->dest_hwaddr[3],
 				arp_getlen);
 
 		    //Check ARP packet if source ip and router ip at the same network
                     if( !memcmp(my_ipaddr, arp_ptr->source_ipaddr, 3) ) {
-
-			swapbytes16(arp_ptr->message_type);
+			msg_type = ntohs(arp_ptr->message_type);
 
 			if( //ARP packet to router
-			   (arp_ptr->message_type == 0x02 &&   		       	// ARP response
+			   ( msg_type == 0x02 &&   		       	// ARP response
                        	    memcmp(arp_ptr->dest_ipaddr, my_ipaddr, 4) == 0 && 	// dest IP
                        	    memcmp(arp_ptr->dest_hwaddr, my_hwaddr, 6) == 0) 	// dest MAC
 			    ||
-			   (arp_ptr->message_type == 0x01 &&                    // ARP request
+			   (msg_type == 0x01 &&                    // ARP request
                             memcmp(arp_ptr->dest_ipaddr, my_ipaddr, 4) == 0)    // dest IP
 			){
 			    //NMP_DEBUG("   It's an ARP Response to Router!\n");
                             NMP_DEBUG("*RCV %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",
-                            (int *)arp_ptr->source_ipaddr[0],(int *)arp_ptr->source_ipaddr[1],
-                            (int *)arp_ptr->source_ipaddr[2],(int *)arp_ptr->source_ipaddr[3],
+                            arp_ptr->source_ipaddr[0],arp_ptr->source_ipaddr[1],
+                            arp_ptr->source_ipaddr[2],arp_ptr->source_ipaddr[3],
                             arp_ptr->source_hwaddr[0],arp_ptr->source_hwaddr[1],
                             arp_ptr->source_hwaddr[2],arp_ptr->source_hwaddr[3],
                             arp_ptr->source_hwaddr[4],arp_ptr->source_hwaddr[5]);
@@ -678,6 +721,7 @@ int main(int argc, char *argv[])
 	    if(p_client_detail_info_tab->detail_info_num == p_client_detail_info_tab->ip_mac_num)
 		nvram_set("networkmap_status", "0");    // Done scanning and resolving
 	} //End of main while loop
+	shmdt(p_client_detail_info_tab);
 	close(arp_sockfd);
 	return 0;
 }

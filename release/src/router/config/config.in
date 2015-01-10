@@ -154,6 +154,10 @@ config RTCONFIG_BCMBSD
 	bool "Brcm Band Steer Selection"
 	default n
 
+config RTCONFIG_BCMSSD
+	bool "SSID Steer Daemon"
+	default n
+
 config RTCONFIG_BCMDCS
 	bool "Broadcom Dynamic Channel Selection"
 	default n
@@ -463,6 +467,16 @@ config RTCONFIG_RALINK_MT7620
 	depends on RTCONFIG_RALINK
 	default n
 
+config RTCONFIG_SPI_FAST_CLOCK
+	bool "Ralink Chip - Double SPI clock"
+	depends on RTCONFIG_RALINK
+	default n
+
+config RTCONFIG_EDCCA
+	bool "Ralink Chip - EDCCA Monitor"
+	depends on RTCONFIG_RALINK
+	default n
+
 config RTCONFIG_N56U_SR2
 	bool "RT-N56U SR2 hardware support"
 	depends on RTCONFIG_RALINK
@@ -478,6 +492,10 @@ config RTCONFIG_LOCALE2012
 	depends on RTCONFIG_RALINK_RT3883
 	default n
 
+config RTCONFIG_QCA
+	bool "Qualcomm Atheros Chip Support"
+	default n
+
 config RTCONFIG_ODMPID
 	bool "ODM Product ID"
 	default n
@@ -488,6 +506,10 @@ config RTCONFIG_TIMEMACHINE
 
 config RTCONFIG_MDNS
 	bool "MDNS Support"
+	default n
+
+config RTCONFIG_FINDASUS
+	bool "FINDASUS Support"
 	default n
 
 config RTCONFIG_LED_ALL
@@ -631,6 +653,10 @@ config RTCONFIG_WLMODULE_RLT_WIFI
 	bool "Wireless module RLT WIFI"
 	default n
 
+config RTCONFIG_WLMODULE_MT7603E_AP
+	bool "Wireless module MT7603E ap"
+	default n
+
 config RTCONFIG_PSISTLOG
 	bool "Persistent syslog"
 	default n
@@ -679,6 +705,10 @@ config RTCONFIG_TEMPROOTFS
 	bool "temp rootfilesystem"
 	default n
 
+config RTCONFIG_ATEUSB3_FORCE
+	bool "ATE USB3 control"
+	default n
+
 config RTCONFIG_JFFS2LOG
 	bool "Backup syslog to jffs2"
 	depends on RTCONFIG_JFFS2 || RTCONFIG_BRCM_NAND_JFFS2
@@ -698,6 +728,26 @@ config RTCONFIG_VPNC
 
 config RTCONFIG_KYIVSTAR
 	bool "KYIVSTAR specified"
+	default n
+
+config RTCONFIG_ETRON_XHCI
+	bool "Etron XHCI chip support"
+	default n
+
+config RTCONFIG_ETRON_XHCI_USB3_LED
+	bool "USB3 LED wired to ETRON XHCI chip"
+	default n
+
+config RTCONFIG_WPS_LED
+	bool "Individual WPS LED"
+	default n
+
+config RTCONFIG_WANRED_LED
+	bool "WAN RED LED"
+	default n
+
+config RTCONFIG_BLINK_LED
+	bool "Blink LED(s)"
 	default n
 
 config RTCONFIG_CFE_NVRAM_CHK
@@ -733,12 +783,20 @@ config RTCONFIG_RGMII_BRCM5301X
 	bool "Config 5301x to RGMII mode"
 	default n
 
+config RTCONFIG_WPS_DUALBAND
+	bool "Config WPS DUALBAND"
+	default n
+
 config RTCONFIG_N18UTXBF
 	bool "enable TXBF for RT-N18U"
 	default n
 
 config RTCONFIG_BWDPI
 	bool "TrendMicro DPI engine and iQoS and Partenl Control"
+	default n
+
+config RTCONFIG_SPEEDTEST
+	bool "BRCM Speedtest for detect upload / downlad bandwidth "
 	default n
 
 config RTCONFIG_BONDING
@@ -759,4 +817,12 @@ config RTCONFIG_GEOIP
 
 config RTCONFIG_NOWL
 	bool "no load wl module (only dhd test)"
+	default n
+
+config RTCONFIG_WIFILOGO
+	bool "building for Wi-Fi certification"
+	default n
+
+config RTCONFIG_JFFS2USERICON
+	bool "Client list user upload icon"
 	default n

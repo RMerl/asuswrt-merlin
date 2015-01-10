@@ -9,6 +9,9 @@ LDFLAGS += $(EXTRALDFLAGS2)
 
 ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+PBDIR = prebuilt_qtn
+else
+PBDIR = prebuilt
 endif
 
 # ASUSWRT
@@ -23,9 +26,9 @@ endif
 
 ifeq ($(wildcard $(SRCBASE)/router/bwdpi/*.c),)
 all:
-	-cp -f prebuilt/libbwdpi.so libbwdpi.so
-	-cp -f prebuilt/wrs wrs
-	-cp -f prebuilt/bwdpi.h bwdpi.h
+	-cp -f $(PBDIR)/libbwdpi.so libbwdpi.so
+	-cp -f $(PBDIR)/wrs wrs
+	-cp -f $(PBDIR)/bwdpi.h bwdpi.h
 else
 all: libbwdpi.so wrs
 endif

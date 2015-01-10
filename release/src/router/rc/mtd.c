@@ -237,7 +237,6 @@ int mtd_write_main(int argc, char *argv[])
 	struct sysinfo si;
 	uint32 ofs;
 	char c;
-	int web = 0;
 	char *iname = NULL;
 	char *dev = NULL;
 	char msg_buf[2048];
@@ -246,16 +245,13 @@ int mtd_write_main(int argc, char *argv[])
 	FILE *of;
 #endif
 
-	while ((c = getopt(argc, argv, "i:d:w")) != -1) {
+	while ((c = getopt(argc, argv, "i:d:")) != -1) {
 		switch (c) {
 		case 'i':
 			iname = optarg;
 			break;
 		case 'd':
 			dev = optarg;
-			break;
-		case 'w':
-			web = 1;
 			break;
 		}
 	}

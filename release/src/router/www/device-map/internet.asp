@@ -459,16 +459,29 @@ function goQIS(){
 
 function goToWAN(){
 	if(parent.wans_flag){
-		if(wans_dualwan.split(" ")[wan_unit].toUpperCase == "USB")
-			parent.location.href = '/Advanced_Modem_Content.asp';
-		else if(dsl_support){
-			if(wans_dualwan.split(" ")[wan_unit].toUpperCase == "WAN" || wans_dualwan.split(" ")[wan_unit].toUpperCase == "LAN")
-				parent.location.href = '/Advanced_WAN_Content.asp';
-			else
-				parent.location.href = '/Advanced_DSL_Content.asp';
+		var wan_selected = parent.document.form.dual_wan_flag.value;
+
+		if(wan_selected == 0){
+			document.act_form.wan_unit.value = 0;
 		}
-		else
-			parent.location.href = '/Advanced_WAN_Content.asp';
+		else if(wan_selected == 1){
+			document.act_form.wan_unit.value = 1;
+		}
+		document.act_form.action_mode.value = "change_wan_unit";
+		document.act_form.target = "";		
+		document.act_form.submit();
+
+		if(wans_dualwan.split(" ")[wan_selected].toUpperCase() == "USB"){
+			if(gobi_support)
+				parent.location.href = "/Advanced_MobileBroadband_Content.asp";
+			else
+				parent.location.href = "/Advanced_Modem_Content.asp";
+		}
+		else if(wans_dualwan.split(" ")[wan_selected].toUpperCase() == "WAN" || wans_dualwan.split(" ")[wan_selected].toUpperCase() == "LAN"){
+			parent.location.href = "/Advanced_WAN_Content.asp";
+		}
+		else if(wans_dualwan.split(" ")[wan_selected].toUpperCase() == "DSL")
+			parent.location.href = "/Advanced_DSL_Content.asp";
 	}
 	else{
 		if(dsl_support)			
@@ -553,9 +566,6 @@ function manualSetup(){
 								parent.showLoading();
 								document.internetForm.submit();	
 								return true;
-							 },
-							 {
-								switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 							 }
 						);
 				</script>
@@ -589,9 +599,6 @@ function manualSetup(){
 								parent.showLoading();
 								document.internetForm.submit();	
 								return true;
-							 },
-							 {
-								switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 							 }
 						);
 				</script>
@@ -846,6 +853,12 @@ function manualSetup(){
 
 </table>
 
+</form>
+<form method="post" name="act_form" action="/apply.cgi" target="hidden_frame">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="wan_unit" value="">
+<input type="hidden" name="current_page" value="">
 </form>
 </body>
 </html>

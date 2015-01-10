@@ -31,7 +31,7 @@ static struct addrlist *find_subnet(struct auth_zone *zone, int flag, struct all
 	  if (!(flag & F_IPV4))
 	    continue;
 	  
-	  netmask.s_addr = htonl(~((1 << (32 - subnet->prefixlen)) - 1));
+	  netmask.s_addr = htonl(~(in_addr_t)0 << (32 - subnet->prefixlen));
 	  
 	  if  (is_same_net(addr, subnet->addr.addr.addr4, netmask))
 	    return subnet;
@@ -363,6 +363,10 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 		 if (((addrlist->flags & ADDRLIST_IPV6)  ? T_AAAA : T_A) == qtype &&
 		     (local_query || filter_zone(zone, flag, &addrlist->addr)))
 		   {
+#ifdef HAVE_IPV6
+		     if (addrlist->flags & ADDRLIST_REVONLY)
+		       continue;
+#endif
 		     found = 1;
 		     log_query(F_FORWARD | F_CONFIG | flag, name, &addrlist->addr, NULL);
 		     if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 

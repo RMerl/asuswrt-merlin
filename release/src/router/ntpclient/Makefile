@@ -12,8 +12,9 @@ CFLAGS += -Wall -O
 
 CFLAGS += -DASUS
 CFLAGS += -I$(TOP)/shared -I$(SRCBASE)/include
-LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram$(BCMEX) -lnvram
+LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP)/nvram${BCMEX} -lnvram
 ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/common/include
 LDFLAGS += -lgcc_s
 endif
 

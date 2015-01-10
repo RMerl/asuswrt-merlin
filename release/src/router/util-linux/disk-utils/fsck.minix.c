@@ -609,17 +609,15 @@ read_tables(void) {
 	if (!inode_map)
 		die(_("Unable to allocate buffer for inode map"));
 	zone_map = malloc(zmaps * MINIX_BLOCK_SIZE);
-	if (!inode_map)
+	if (!zone_map)
 		die(_("Unable to allocate buffer for zone map"));
-	memset(inode_map,0,sizeof(inode_map));
-	memset(zone_map,0,sizeof(zone_map));
 	inode_buffer = malloc(buffsz);
 	if (!inode_buffer)
 		die(_("Unable to allocate buffer for inodes"));
-	inode_count = malloc(inodes + 1);
+	inode_count = calloc(1, inodes + 1);
 	if (!inode_count)
 		die(_("Unable to allocate buffer for inode count"));
-	zone_count = malloc(zones);
+	zone_count = calloc(1, zones);
 	if (!zone_count)
 		die(_("Unable to allocate buffer for zone count"));
 
@@ -1306,7 +1304,7 @@ main(int argc, char ** argv) {
 	}
 	IN = open(device_name,repair?O_RDWR:O_RDONLY);
 	if (IN < 0)
-		die(_("unable to open '%s': %s"), device_name, strerror(errno));
+		die(_("unable to open '%s': %m"), device_name);
 	for (count=0 ; count<3 ; count++)
 		sync();
 	read_superblock();

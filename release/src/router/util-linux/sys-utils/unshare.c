@@ -54,18 +54,21 @@ static void usage(int status)
 {
 	FILE *out = status == EXIT_SUCCESS ? stdout : stderr;
 
-	fputs(_("\nUsage:\n"), out);
+	fputs(USAGE_HEADER, out);
 	fprintf(out,
 	      _(" %s [options] <program> [args...]\n"),	program_invocation_short_name);
 
-	fputs(_("\nOptions:\n"), out);
-	fputs(_(" -h, --help        usage information (this)\n"
-		" -m, --mount       unshare mounts namespace\n"
+	fputs(USAGE_OPTIONS, out);
+	fputs(_(" -m, --mount       unshare mounts namespace\n"
 		" -u, --uts         unshare UTS namespace (hostname etc)\n"
 		" -i, --ipc         unshare System V IPC namespace\n"
 		" -n, --net         unshare network namespace\n"), out);
 
-	fputs(_("\nFor more information see unshare(1).\n"), out);
+	fputs(USAGE_SEPARATOR, out);
+	fputs(USAGE_HELP, out);
+	fputs(USAGE_VERSION, out);
+	fprintf(out, USAGE_MAN_TAIL("unshare(1)"));
+
 	exit(status);
 }
 
@@ -73,6 +76,7 @@ int main(int argc, char *argv[])
 {
 	static const struct option longopts[] = {
 		{ "help", no_argument, 0, 'h' },
+		{ "version", no_argument, 0, 'V'},
 		{ "mount", no_argument, 0, 'm' },
 		{ "uts", no_argument, 0, 'u' },
 		{ "ipc", no_argument, 0, 'i' },
@@ -88,10 +92,13 @@ int main(int argc, char *argv[])
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	while((c = getopt_long(argc, argv, "hmuin", longopts, NULL)) != -1) {
+	while((c = getopt_long(argc, argv, "hVmuin", longopts, NULL)) != -1) {
 		switch(c) {
 		case 'h':
 			usage(EXIT_SUCCESS);
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
 		case 'm':
 			unshare_flags |= CLONE_NEWNS;
 			break;

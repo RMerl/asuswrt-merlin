@@ -2,6 +2,7 @@ PROG        = usb_modeswitch
 VERS        = 2.1.1
 CC          ?= gcc
 CFLAGS      += -Wall
+LDFLAGS     += -ldl
 #LIBS        = `pkg-config --libs --cflags libusb-1.0`
 RM          = /bin/rm -f
 OBJS        = usb_modeswitch.c

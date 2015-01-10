@@ -11,6 +11,8 @@ partx_SOURCES = partx.c partx.h \
 		$(top_srcdir)/lib/at.c \
 		$(top_srcdir)/lib/mbsalign.c \
 		$(top_srcdir)/lib/strutils.c \
+		$(top_srcdir)/lib/canonicalize.c \
+		$(top_srcdir)/lib/loopdev.c \
 		$(top_srcdir)/lib/linux_version.c
 
 partx_CFLAGS = -I$(ul_libblkid_incdir)

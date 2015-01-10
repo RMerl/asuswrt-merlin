@@ -126,16 +126,16 @@ function unlockAcc(){
 							<a href="cloud_main.asp"><div class="tab"><span>AiCloud 2.0</span></div></a>
 						</td>
 						<td>
-							<a href="cloud_sync.asp"><div class="tab"><span>Smart Sync</span></div></a>
+							<a href="cloud_sync.asp"><div class="tab"><span><#smart_sync#></span></div></a>
 						</td>
 						<td>
-							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab"><span>Sync Server</span></div></a>
+							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab"><span><#Server_Sync#></span></div></a>
 						</td>
 						<td>
-							<div class="tabclick"><span>Settings</span></div>
+							<div class="tabclick"><span><#Settings#></span></div>
 						</td>
 						<td>
-							<a href="cloud_syslog.asp"><div class="tab"><span>Log</span></div></a>
+							<a href="cloud_syslog.asp"><div class="tab"><span><#Log#></span></div></a>
 						</td>
 					</tr>
 					</tbody>
@@ -150,7 +150,7 @@ function unlockAcc(){
 							<tr>
 							  <td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
-									<div class="formfonttitle">AiCloud 2.0 - Settings</div>
+									<div class="formfonttitle">AiCloud 2.0 - <#Settings#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 								  <div class="formfontdesc" style="font-style: italic;font-size: 14px;">
@@ -180,9 +180,6 @@ function unlockAcc(){
 																document.form.enable_webdav_lock.value = 0;
 																inputCtrl(document.form.webdav_lock_times, 0);
 																inputCtrl(document.form.webdav_lock_interval, 0);
-															},
-															{
-																switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 															}
 														);
 													</script>			

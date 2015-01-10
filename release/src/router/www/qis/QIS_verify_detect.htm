@@ -20,6 +20,22 @@ var wanauxstate = -1;
 var RetryCountDown = 5;
 var successcase = 0;
 var RetryCountDown_fail = 5;
+var first_wanstate = -1;
+var first_wansbstate = -1;
+var first_wanauxstate = -1;
+var second_wanstate = -1;
+var second_wansbstate = -1;
+var second_wanauxstate = -1;
+var wan_wanstate = -1;
+var wan_wansbstate = -1;
+var wan_wanauxstate = -1;
+var usb_wanstate = -1;
+var usb_wansbstate = -1;
+var usb_wanauxstate = -1;
+var ewan_index = -1;
+var usb_index = -1;
+var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
+var based_modelid = '<% nvram_get("productid"); %>';
 
 function QKDetect_load_body(){
 	parent.set_step("t1");
@@ -29,6 +45,40 @@ function QKDetect_load_body(){
 		hideObjs();
 		document.getElementById("tblsetting_1").style.marginTop = "-30px";
 		parent.set_step("");
+	}
+
+	if(based_modelid == "4G-AC55U")
+	{
+		for(var i = 0; i < wans_dualwan.length; i++){
+			if (wans_dualwan[i] == 'wan')
+				ewan_index = i;
+			else if(wans_dualwan[i] == 'usb')
+				usb_index = i;
+		}
+	}		
+}
+
+function getDualWANState(){
+	if( ewan_index == 0 ){
+		wan_wanstate = first_wanstate;
+		wan_wansbstate = first_wansbstate;
+		wan_wanauxstate = first_wanauxstate;
+	}
+	else if(ewan_index == 1){
+		wan_wanstate = second_wanstate;
+		wan_wansbstate = second_wansbstate;
+		wan_wanauxstate = second_wanauxstate;
+	}
+
+	if( usb_index == 0 ){
+		usb_wanstate = first_wanstate;
+		usb_wansbstate = first_wansbstate;
+		usb_wanauxstate = first_wanauxstate;
+	}
+	else if(usb_index == 1){
+		usb_wanstate = second_wanstate;
+		usb_wansbstate = second_wansbstate;
+		usb_wanauxstate = second_wanauxstate;
 	}
 }
 
@@ -48,6 +98,22 @@ function getWANStatus(){
 		},
 		success: function(response){
 			RetryCountDown_fail = 5;
+			if(based_modelid == "4G-AC55U"){
+				getDualWANState();
+				if(wans_mode == 'lb'){
+					if(wan_wanstate == 2){
+						wanstate = wan_wanstate;
+						wansbstate = wan_wansbstate;
+						wanauxstate = wan_wanauxstate;
+					}
+					else if(usb_wanstate == 2){
+						wanstate = usb_wanstate;
+						wansbstate = usb_wansbstate;
+						wanauxstate = usb_wanauxstate;
+					}
+				}				
+			}
+							
 			if(wanstate == 6){
 				setTimeout("getWANStatus();", 2000);
 				return true;
@@ -92,11 +158,22 @@ function getWANStatus(){
 				if(wanauxstate != 1 && wanstate == 2){ //success case
 					successcase++;
 					if(successcase > 1){
-						if(parent.hadPlugged("modem")){
-							redirect_page("modem");
-						}	
-						else{
-							redirect_page("wireless");
+						if(based_modelid == "4G-AC55U")
+						{
+							if(!(usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0) && sim_state == 1){
+								redirect_page("modem");
+							}
+							else{
+								redirect_page("wireless");
+							}
+						}
+						else{	
+							if(parent.hadPlugged("modem")){
+								redirect_page("modem");
+							}	
+							else{
+								redirect_page("wireless");
+							}
 						}
 					}
 					else

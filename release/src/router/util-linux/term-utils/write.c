@@ -322,7 +322,7 @@ void do_write(char *tty, char *mytty, uid_t myuid)
 
 	if (strlen(tty) + 6 > sizeof(path))
 		errx(EXIT_FAILURE, _("tty path %s too long"), tty);
-	printf(path, "/dev/%s", tty);
+	snprintf(path, sizeof(path), "/dev/%s", tty);
 	if ((freopen(path, "w", stdout)) == NULL)
 		err(EXIT_FAILURE, "%s", path);
 

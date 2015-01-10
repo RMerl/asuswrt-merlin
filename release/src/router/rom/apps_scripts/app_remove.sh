@@ -8,6 +8,7 @@ APPS_DEV=`nvram get apps_dev`
 APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
+
 # $1: package name.
 # return value. 1: have package. 0: no package.
 _check_package(){

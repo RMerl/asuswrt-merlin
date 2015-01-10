@@ -137,7 +137,7 @@ set_option(EventSelector *es,
 	    free(* (char **) desc->addr);
 	}
 	* (char **) desc->addr = strdup(value);
-	if (! * (char *) desc->addr) {
+	if (! * (char **) desc->addr) {
 	    l2tp_set_errmsg("Out of memory");
 	    return -1;
 	}

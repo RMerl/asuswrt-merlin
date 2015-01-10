@@ -32,7 +32,6 @@ ts_fstab_open
 echo "tmpd $MNT tmpfs" >> /etc/fstab
 ts_fstab_close
 
-
 ts_init_subtest "mount"
 $TS_CMD_MOUNT $MNT &> /dev/null
 $TS_CMD_FINDMNT --kernel --target "$MNT" &> /dev/null

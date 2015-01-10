@@ -20,6 +20,10 @@
 
 #if defined(HAVE_IPSET) && defined(HAVE_BSD_NETWORK)
 
+#ifndef __FreeBSD__
+#include <bsd/string.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
@@ -136,7 +140,7 @@ int add_to_ipset(const char *setname, const struct all_addr *ipaddr,
       return -1;
     }
   
-  if (rc = pfr_add_tables(&table, 1, &n, 0)) 
+  if ((rc = pfr_add_tables(&table, 1, &n, 0))) 
     {
       my_syslog(LOG_WARNING, _("warning: pfr_add_tables: %s(%d)"),
 		pfr_strerror(errno),rc);

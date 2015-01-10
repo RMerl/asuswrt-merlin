@@ -733,6 +733,17 @@ function applyRule(){
 				&& (document.form.ipv6_service.value!="dhcp6" && document.form.ipv6_dhcp_pd.value!="0"))	//clean up ipv6_rtr_addr if not other or dhcp_pd=1
 				document.form.ipv6_rtr_addr.value = "";
 
+		//Start:  Viz add to store ipv6_prefix_length & ipv6_rtr_addr for 'other' 2014.12.08
+		if(document.form.ipv6_service.value == "other"){
+				document.form.ipv6_prefix_length_s.value = document.form.ipv6_prefix_length.value;
+				document.form.ipv6_rtr_addr_s.value = document.form.ipv6_rtr_addr.value;
+		}
+		if(document.form.ipv6_service.value == "6in4"){
+				document.form.ipv6_prefix_length_s.value = document.form.ipv6_prefix_length.value;
+				document.form.ipv6_prefix_s.value = document.form.ipv6_prefix.value;
+		}
+		//End
+
 		/*if(machine_arm)	//Viz 2013.06 Don't need to reboot anymore
 		{ // MODELDEP: Machine ARM structure
 			if((document.form.ipv6_service.value == "disabled" && ipv6_proto_orig != "disabled") ||
@@ -748,7 +759,10 @@ function applyRule(){
 		}*/
 
 		showLoading();
-		document.form.submit();
+
+		setTimeout(function(){
+			document.form.submit();
+		},1500);
 	}
 }
 
@@ -824,6 +838,9 @@ function showInfo(){
 <input type="hidden" name="ipv6_ifdev" value="">
 <input type="hidden" name="ipv6_dhcp_start" value="<% nvram_get("ipv6_dhcp_start"); %>" disabled>
 <input type="hidden" name="ipv6_dhcp_end" value="<% nvram_get("ipv6_dhcp_start"); %>" disabled>
+<input type="hidden" name="ipv6_prefix_length_s" value="">
+<input type="hidden" name="ipv6_rtr_addr_s" value="">
+<input type="hidden" name="ipv6_prefix_s" value="">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
 	<td width="17">&nbsp;</td>
@@ -1073,7 +1090,7 @@ function showInfo(){
 		    	</tr>
 
 		     	<tr>
-		     		<th>Lifetime (sec)</th>
+		     		<th><#LANHostConfig_LeaseTime_itemname#></th>
 		     		<td>
 		     			<input type="text" maxlength="6" class="input_6_table" name="ipv6_dhcp_lifetime" value="<% nvram_get("ipv6_dhcp_lifetime"); %>" onkeypress="return validator.isNumber(this,event)">
 		     		</td>

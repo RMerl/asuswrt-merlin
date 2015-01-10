@@ -223,8 +223,8 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 	fd_pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0664);
 	if (fd_pidfile < 0) {
 		if (!quiet)
-			fprintf(stderr, _("Failed to open/create %s: %s\n"),
-				pidfile_path, strerror(errno));
+			fprintf(stderr, _("Failed to open/create %s: %m\n"),
+				pidfile_path);
 		exit(EXIT_FAILURE);
 	}
 	cleanup_pidfile = pidfile_path;
@@ -240,8 +240,7 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 		if ((errno == EAGAIN) || (errno == EINTR))
 			continue;
 		if (!quiet)
-			fprintf(stderr, _("Failed to lock %s: %s\n"),
-				pidfile_path, strerror(errno));
+			fprintf(stderr, _("Failed to lock %s: %m\n"), pidfile_path);
 		exit(EXIT_FAILURE);
 	}
 	ret = call_daemon(socket_path, 0, reply_buf, sizeof(reply_buf), 0, 0);
@@ -255,8 +254,7 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 		if (!quiet)
-			fprintf(stderr, _("Couldn't create unix stream "
-					  "socket: %s"), strerror(errno));
+			fprintf(stderr, _("Couldn't create unix stream socket: %m"));
 		exit(EXIT_FAILURE);
 	}
 
@@ -282,8 +280,7 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 		 sizeof(struct sockaddr_un)) < 0) {
 		if (!quiet)
 			fprintf(stderr,
-				_("Couldn't bind unix socket %s: %s\n"),
-				socket_path, strerror(errno));
+				_("Couldn't bind unix socket %s: %m\n"), socket_path);
 		exit(EXIT_FAILURE);
 	}
 	umask(save_umask);
@@ -291,8 +288,7 @@ static void server_loop(const char *socket_path, const char *pidfile_path,
 	if (listen(s, SOMAXCONN) < 0) {
 		if (!quiet)
 			fprintf(stderr, _("Couldn't listen on unix "
-					  "socket %s: %s\n"), socket_path,
-				strerror(errno));
+					  "socket %s: %m\n"), socket_path);
 		exit(EXIT_FAILURE);
 	}
 
@@ -478,6 +474,7 @@ int main(int argc, char **argv)
 				fprintf(stderr, _("Bad number: %s\n"), optarg);
 				return EXIT_FAILURE;
 			}
+			break;
 		case 'p':
 			pidfile_path = optarg;
 			drop_privs = 1;
@@ -538,8 +535,7 @@ int main(int argc, char **argv)
 		ret = call_daemon(socket_path, do_type + 2, buf,
 				  sizeof(buf), &num, &err_context);
 		if (ret < 0) {
-			printf(_("Error calling uuidd daemon (%s): %s\n"),
-			       err_context, strerror(errno));
+			printf(_("Error calling uuidd daemon (%s): %m\n"), err_context);
 			return EXIT_FAILURE;
 		}
 		if (do_type == UUIDD_OP_TIME_UUID) {
@@ -567,8 +563,7 @@ int main(int argc, char **argv)
 		ret = call_daemon(socket_path, do_type, (char *) &uu,
 				  sizeof(uu), 0, &err_context);
 		if (ret < 0) {
-			printf(_("Error calling uuidd daemon (%s): %s\n"),
-			       err_context, strerror(errno));
+			printf(_("Error calling uuidd daemon (%s): %m\n"), err_context);
 			return EXIT_FAILURE;
 		}
 		if (ret != sizeof(uu))
@@ -588,8 +583,7 @@ int main(int argc, char **argv)
 				if (!quiet)
 					fprintf(stderr,
 						_("Couldn't kill uuidd running "
-						  "at pid %d: %s\n"), do_kill,
-						strerror(errno));
+						  "at pid %d: %m\n"), do_kill);
 				return EXIT_FAILURE;
 			}
 			if (!quiet)

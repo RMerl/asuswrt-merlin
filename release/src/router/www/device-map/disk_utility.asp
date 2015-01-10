@@ -429,12 +429,12 @@ function reset_force_stop(){
 		<td>		
 			<table width="100px" border="0" align="left" style="margin-left:5px;" cellpadding="0" cellspacing="0">
 			<td>
-					<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="location.href='disk.asp'">
+					<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;margin-right:2px;" onclick="location.href='disk.asp'">
 						<span style="cursor:pointer;font-weight: bolder;"><#diskUtility_information#></span>
 					</div>
 				</td>
 			<td>
-					<div id="t1" class="tab_NW" align="center" style="font-weight: bolder;margin-right:2px; width:100px;" onclick="location.href='disk_utility.asp'">
+					<div id="t1" class="tab_NW" align="center" style="font-weight: bolder;margin-right:2px;" onclick="location.href='disk_utility.asp'">
 						<span style="cursor:pointer;font-weight: bolder;"><#diskUtility#></span>
 					</div>
 				</td>

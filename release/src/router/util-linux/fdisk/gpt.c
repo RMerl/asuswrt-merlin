@@ -106,8 +106,7 @@ last_lba(int fd)
 	rc = fstat(fd, &s);
 	if (rc == -1)
 	{
-		fprintf(stderr, "last_lba() could not stat: %s\n",
-			strerror(errno));
+		fprintf(stderr, "last_lba() could not stat: %m\n");
 		return 0;
 	}
 	if (S_ISBLK(s.st_mode))

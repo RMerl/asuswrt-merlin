@@ -6,10 +6,21 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
+<link href="/form_style.css" rel="stylesheet" type="text/css" />
+<link href="/NM_style.css" rel="stylesheet" type="text/css" />
+<link href="/device-map/device-map.css" rel="stylesheet" type="text/css" />
 <title>device-map/clients.asp</title>
 <style>
 p{
 	font-weight: bolder;
+}
+.type0:hover{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:52% 70% !important;
+}
+.type6:hover{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:52% 70% !important;
 }
 .circle {
 	position: absolute;
@@ -25,6 +36,39 @@ p{
 	text-align: center;
 	margin-top: 4px;
 }
+.nav {
+	display:none;
+    float: left;
+    width: 108%;
+    margin-bottom: 30px;
+    margin-top: -5px;
+}
+.nav ul{
+    margin: 0;
+    padding: 0;
+    border-top:solid 2px #666;
+}
+.nav li{
+	font-family:Arial;
+    position: relative;
+    float: left;
+    color: #FFF;
+    list-style: none;
+    background:#4d595d;
+    cursor:pointer;
+    width: 100%;
+}
+.nav li:hover{
+	background-color:#77A5C6;
+}
+.nav li a {
+    display: block; 
+    padding: 6px;      
+    color: #FFF;
+    border-bottom:solid 1px #666;
+    text-decoration: none;
+    cursor:pointer;
+} 
 .ipMethod{
 	background-color: #222;
 	font-size: 10px;
@@ -32,10 +76,17 @@ p{
 	padding: 2px;
 	border-radius: 3px;
 }
+.imgUserIcon{
+	cursor: pointer;
+	position: relative; 
+	left: 15px; 
+	width: 52px;
+	height: 52px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+}
 </style>
-<link href="/form_style.css" rel="stylesheet" type="text/css" />
-<link href="/NM_style.css" rel="stylesheet" type="text/css" />
-<link href="/device-map/device-map.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
@@ -62,6 +113,8 @@ var pagesVar = {
 
 var mapscanning = 0;
 
+var clientMacUploadIcon = new Array();
+
 function initial(){
 	parent.hideEditBlock();
 	updateClientList();
@@ -81,11 +134,12 @@ function drawClientList(tab){
 	var clientHtml = '<table width="100%" cellspacing="0" align="center"><tbody><tr><td>';
 	var clientHtmlTd = '';
 	var i = pagesVar.startIndex;
+	//user icon
+	var userIconBase64 = "NoIcon";
 
 	if(typeof tab == "undefined"){
 		tab = pagesVar.curTab;
 	}
-
 	genClientList();
 	pagesVar.endIndex = pagesVar.startIndex + pagesVar.CLIENTSPERPAGE;
 	while(i < pagesVar.endIndex){
@@ -95,31 +149,76 @@ function drawClientList(tab){
 		if(i > clientList.length-1) break;
 		if(tab == 'online' && !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
 		if((tab == 'wired' && clientObj.isWL != 0) || !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
-		if((tab == 'wireless' && clientObj.isWL == 0) || !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
+		if(((tab == 'wireless' || tab == 'wireless0') && clientObj.isWL == 0) || !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
+		if((tab == 'wireless1' && (clientObj.isWL == 0 || clientObj.isWL == 2 || clientObj.isWL == 3)) || !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
+		if((tab == 'wireless2' && (clientObj.isWL == 0 || clientObj.isWL == 1 || clientObj.isWL == 3)) || !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
+		if((tab == 'wireless3' && (clientObj.isWL == 0 || clientObj.isWL == 1 || clientObj.isWL == 2)) || !clientObj.isOnline){i++; pagesVar.endIndex++; continue;}
 		if(tab == 'custom' && clientObj.from != "customList"){i++; pagesVar.endIndex++; continue;}
 		if(clientObj.name.toString().toLowerCase().indexOf(document.getElementById("searchingBar").value.toLowerCase()) == -1){i++; pagesVar.endIndex++; continue;}
 		// filter */ 
 
-		clientHtmlTd += '<div class="clientBg"><table width="100%" height="85px" border="0"><tr><td rowspan="3" width="85px"><div class="clientIcon type';
-		clientHtmlTd += clientObj.type;
-		clientHtmlTd += '" onclick="popupCustomTable(\'';
-		clientHtmlTd += clientObj.mac;
-		clientHtmlTd += '\')" title="';
-		clientHtmlTd += clientObj.dpiType;
-		clientHtmlTd += '"></div></td><td style="height:30px;" class="radioIcon radio_';
-		clientHtmlTd += convRSSI(clientObj.rssi);
-		if (clientObj.rssi != "") {
-			clientHtmlTd += '"title="' + ((clientObj.isWL == 2) ? "5GHz   (" : "2.4GHz   (") + clientObj.rssi + "dB)";
+		clientHtmlTd += '<div class="clientBg"><table width="100%" height="85px" border="0"><tr><td rowspan="3" width="85px">';
+		if(usericon_support) {
+			if(clientMacUploadIcon[clientObj.mac] == undefined) {
+				var clientMac = clientObj.mac.replace(/\:/g, "");
+				userIconBase64 = getUploadIcon(clientMac);
+				clientMacUploadIcon[clientObj.mac] = userIconBase64;
+			}
+			else {
+				userIconBase64 = clientMacUploadIcon[clientObj.mac];
+			}
+		}
+		if(userIconBase64 != "NoIcon") {
+			clientHtmlTd += '<div title="'+ clientObj.dpiType + '"">';
+			clientHtmlTd += '<img id="imgUserIcon_'+ i +'" class="imgUserIcon" src="' + userIconBase64 + '"';
+			clientHtmlTd += 'onclick="popupCustomTable(\'' + clientObj.mac + '\');">';
+			clientHtmlTd += '</div>';
+		}
+		else {
+			clientHtmlTd += '<div class="clientIcon type';
+			clientHtmlTd += clientObj.type;
+			clientHtmlTd += '" onclick="popupCustomTable(\'';
+			clientHtmlTd += clientObj.mac;
+			clientHtmlTd += '\')" title="';
+			clientHtmlTd += clientObj.dpiType;
+			clientHtmlTd += '"></div>';
+		}
+
+		var rssi_t = 0;
+		rssi_t = convRSSI(clientObj.rssi);
+		clientHtmlTd += '</td><td style="height:30px;" title="'; 
+		if(isNaN(rssi_t))
+			clientHtmlTd += clientObj.name;
+		else if(rssi_t == 1)
+			clientHtmlTd += '<#PASS_score0#>';
+		else if(rssi_t == 2)
+			clientHtmlTd += '<#PASS_score1#>';
+		else if(rssi_t == 3)
+			clientHtmlTd += '<#PASS_score2#>';
+		else if(rssi_t == 4)
+			clientHtmlTd += '<#PASS_score3#>';
+		else if(rssi_t == 5)
+			clientHtmlTd += '<#PASS_score4#>';
+
+		if(parent.sw_mode != 4){
+			clientHtmlTd += '" class="radioIcon radio_';
+			clientHtmlTd += convRSSI(clientObj.rssi);
+		}else{
+			clientHtmlTd += '" class="';
 		}
 		clientHtmlTd += '">';
 		clientHtmlTd += clientObj.name;
 		clientHtmlTd += '</td></tr><tr><td style="height:20px;">';
 		clientHtmlTd += (clientObj.isWebServer) ? '<a class="link" href="http://' + clientObj.ip + '" target="_blank">' + clientObj.ip + '</a>' : clientObj.ip;
-		clientHtmlTd += ' <span class="ipMethod" onmouseover="return overlib(\''
-		clientHtmlTd += clientObj.isStaticIP ? "<#BOP_ctype_title5#>" : "<#BOP_ctype_title1#>";
-		clientHtmlTd += '\')" onmouseout="nd();">'
-		clientHtmlTd += clientObj.isStaticIP ? "Static" : "DHCP";
-		clientHtmlTd += '</span></td></tr><tr><td><div style="margin-top:-15px;" class="link" onclick="oui_query(\'';
+
+		if(parent.sw_mode == 1){
+			clientHtmlTd += ' <span class="ipMethod" onmouseover="return overlib(\''
+			clientHtmlTd += clientObj.isStaticIP ? "<#BOP_ctype_title5#>" : "<#BOP_ctype_title1#>";
+			clientHtmlTd += '\')" onmouseout="nd();">'
+			clientHtmlTd += clientObj.isStaticIP ? "Static" : "DHCP" + '</span>';
+		}
+
+		clientHtmlTd += '</td></tr><tr><td><div style="margin-top:-15px;" class="link" onclick="oui_query(\'';
 		clientHtmlTd += clientObj.mac;
 		clientHtmlTd += '\');return overlib(\'';
 		clientHtmlTd += retOverLibStr(clientObj);
@@ -155,7 +254,30 @@ function drawClientList(tab){
 	document.getElementById("tabWiredNum").innerHTML = 	totalClientNum.wired;
 
 	document.getElementById("tabWireless").style.display = (totalClientNum.wireless == 0)? "none" : "";
-	document.getElementById("tabWirelessNum").innerHTML = totalClientNum.wireless;
+
+	if(smart_connect_support){
+		if(tab.indexOf('wireless') == -1){
+			document.getElementById("select_wlclient_band").style.display="none";
+			display_wlclient_band = '0';
+			document.getElementById("searchingBar").placeholder = 'Search';
+		}
+		document.getElementById("tabWirelessNum").innerHTML = totalClientNum.wireless;
+		document.getElementById("liWirelessNum1").innerHTML = totalClientNum.wireless_1;
+		document.getElementById("liWirelessNum2").innerHTML = totalClientNum.wireless_2;
+		document.getElementById("liWirelessNum3").innerHTML = totalClientNum.wireless_3;
+
+		if(tab == 'wireless1')
+			document.getElementById("searchingBar").placeholder = '[2.4GHz]('+totalClientNum.wireless_1+')';
+		else if(tab =='wireless2')
+			document.getElementById("searchingBar").placeholder = '[5GHz-1]('+totalClientNum.wireless_2+')';
+		else if(tab =='wireless3')
+			document.getElementById("searchingBar").placeholder = '[5GHz-2]('+totalClientNum.wireless_3+')';
+		else if(tab =='wireless0')
+			document.getElementById("searchingBar").placeholder = '[All]('+totalClientNum.wireless+')';				
+	}else{
+		document.getElementById("tabWirelessNum").innerHTML = totalClientNum.wireless;
+	}
+
 
 	if(pagesVar.curTab != tab){
 		document.getElementById("client_list_Block").style.display = 'none';
@@ -205,9 +327,13 @@ function retOverLibStr(client){
 		overlibStr += "<p><#Device_service_Printer#></p>YES";
 	if(client.isITunes)
 		overlibStr += "<p><#Device_service_iTune#></p>YES";
-	if(client.isWL > 0)
-		overlibStr += "<p><#Wireless_Radio#>:</p>" + ((client.isWL == 2) ? "5GHz (" : "2.4GHz (") + client.rssi + "db)";
-
+	if(client.isWL > 0){
+		if(parent.wl_info.band5g_2_support){
+			overlibStr += "<p><#Wireless_Radio#>:</p>" + ((client.isWL == 2) ? "5GHz-1 (" : ((client.isWL == 3) ? "5GHz-2 (" : "2.4GHz (") + client.rssi + "db)");
+		}else{
+			overlibStr += "<p><#Wireless_Radio#>:</p>" + ((client.isWL == 2) ? "5GHz (" : "2.4GHz (") + client.rssi + "db)";
+		}
+	}
 	return overlibStr;
 }
 
@@ -247,6 +373,18 @@ function updateClientList(e){
 			setTimeout("updateClientList();", 3000);				
 		}    
 	});
+}
+
+var display_wlclient_band = '0';
+
+function show_wlclient_band(){
+	if(display_wlclient_band == '0'){
+		document.getElementById("select_wlclient_band").style.display="block";
+		display_wlclient_band = '1';
+	}else{
+		document.getElementById("select_wlclient_band").style.display="none";
+		display_wlclient_band = '0';
+	}
 }
 </script>
 </head>
@@ -300,21 +438,48 @@ function updateClientList(e){
 					</script>
 				</td>
 				<td>
-					<div id="tabWireless" class="tab_NW" align="center" style="display:none">
-						<span>
+					<div id="tabWireless" class="tab_NW" align="center" style="display:none">											
+    					<span>
 							Wireless (<b style="font-size:10px;" id="tabWirelessNum">0</b>)
 						</span>
+						<nav class="nav" id="select_wlclient_band">
+    						<ul>
+        						<li><a onclick="wlclient_band('1')">&nbsp;&nbsp;2.4GHz&nbsp;&nbsp;(<b style="font-size:11px;" id="liWirelessNum1">0</b>)</a></li>
+        						<li><a onclick="wlclient_band('2')">&nbsp;&nbsp;5GHz-1&nbsp;&nbsp;(<b style="font-size:11px;" id="liWirelessNum2">0</b>)</a></li>
+        						<li><a onclick="wlclient_band('3')">&nbsp;&nbsp;5GHz-2&nbsp;&nbsp;(<b style="font-size:11px;" id="liWirelessNum3">0</b>)</a></li>
+        						<li><a onclick="wlclient_band('0')">ALL</a></li>
+							</ul>						
+						</nav>    
 					</div>
 					<script>
-						document.getElementById('tabWireless').onclick = function(){
+						var wband_val="";
+						function switchTab_drawClientList(wband_val){
 							pagesVar.resetVar();
-							drawClientList('wireless');
+							drawClientList('wireless'+parseInt(wband_val));
 							document.getElementById('tabOnline').className = 'tab_NW';
 							document.getElementById('tabWired').className = 'tab_NW';
 							document.getElementById('tabWireless').className = 'tabclick_NW';
 							document.getElementById('tabCustom').className = 'tab_NW';
 						}
-					</script>
+
+						if(smart_connect_support)
+						{
+							document.getElementById('tabWireless').onclick = function(){
+								show_wlclient_band();
+							}
+
+							function wlclient_band(wband_val){						
+								switchTab_drawClientList(wband_val);
+							}								
+
+						}else{
+
+							document.getElementById('tabWireless').onclick = function(){
+								switchTab_drawClientList(0);
+							}
+
+						}
+			</script>
 				</td>
 				<td>
 					<div id="tabCustom" class="tab_NW" align="center" style="display:none">

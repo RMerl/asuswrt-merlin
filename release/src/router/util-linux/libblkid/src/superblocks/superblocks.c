@@ -92,6 +92,7 @@ static const struct blkid_idinfo *idinfos[] =
 	&jmraid_idinfo,
 
 	&drbd_idinfo,
+	&drbdproxy_datalog_idinfo,
 	&lvm2_idinfo,
 	&lvm1_idinfo,
 	&snapcow_idinfo,
@@ -343,6 +344,7 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 		const struct blkid_idinfo *id;
 		const struct blkid_idmag *mag = NULL;
 		blkid_loff_t off = 0;
+		int rc = 0;
 
 		chn->idx = i;
 		id = idinfos[i];
@@ -354,8 +356,6 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 
 		if (id->minsz && id->minsz > pr->size)
 			continue;	/* the device is too small */
-
-		mag = id->magics ? &id->magics[0] : NULL;
 
 		/* don't probe for RAIDs, swap or journal on CD/DVDs */
 		if ((id->usage & (BLKID_USAGE_RAID | BLKID_USAGE_OTHER)) &&
@@ -382,15 +382,21 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 
 		/* all cheks passed */
 		if (chn->flags & BLKID_SUBLKS_TYPE)
-			blkid_probe_set_value(pr, "TYPE",
+			rc = blkid_probe_set_value(pr, "TYPE",
 				(unsigned char *) id->name,
 				strlen(id->name) + 1);
 
-		blkid_probe_set_usage(pr, id->usage);
+		if (!rc)
+			rc = blkid_probe_set_usage(pr, id->usage);
 
-		if (mag)
-			blkid_probe_set_magic(pr, off, mag->len,
+		if (!rc && mag)
+			rc = blkid_probe_set_magic(pr, off, mag->len,
 					(unsigned char *) mag->magic);
+		if (rc) {
+			blkid_probe_chain_reset_vals(pr, chn);
+			DBG(DEBUG_LOWPROBE, printf("failed to set result -- ingnore\n"));
+			continue;
+		}
 
 		DBG(DEBUG_LOWPROBE,
 			printf("<-- leaving probing loop (type=%s) [SUBLKS idx=%d]\n",
@@ -434,10 +440,12 @@ static int superblocks_safeprobe(blkid_probe pr, struct blkid_chain *chn)
 
 		count++;
 
-		if (idinfos[chn->idx]->usage & (BLKID_USAGE_RAID | BLKID_USAGE_CRYPTO))
+		if (chn->idx >= 0 &&
+		    idinfos[chn->idx]->usage & (BLKID_USAGE_RAID | BLKID_USAGE_CRYPTO))
 			break;
 
-		if (!(idinfos[chn->idx]->flags & BLKID_IDINFO_TOLERANT))
+		if (chn->idx >= 0 &&
+		    !(idinfos[chn->idx]->flags & BLKID_IDINFO_TOLERANT))
 			intol++;
 
 		if (count == 1) {
@@ -476,21 +484,6 @@ static int superblocks_safeprobe(blkid_probe pr, struct blkid_chain *chn)
 		pr->prob_flags |= BLKID_PROBE_FL_IGNORE_PT;
 
 	return 0;
-}
-
-int blkid_probe_set_magic(blkid_probe pr, blkid_loff_t offset,
-			size_t len, unsigned char *magic)
-{
-	int rc = 0;
-	struct blkid_chain *chn = blkid_probe_get_chain(pr);
-
-	if (magic && len && (chn->flags & BLKID_SUBLKS_MAGIC)) {
-		rc = blkid_probe_set_value(pr, "SBMAGIC", magic, len);
-		if (!rc)
-			rc = blkid_probe_sprintf_value(pr, "SBMAGIC_OFFSET",
-					"%llu",	offset);
-	}
-	return rc;
 }
 
 int blkid_probe_set_version(blkid_probe pr, const char *version)

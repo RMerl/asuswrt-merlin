@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Karel Zak <kzak@redhat.com>
+ * Copyright (C) 2010,2011,2012 Karel Zak <kzak@redhat.com>
  *
  * This file may be redistributed under the terms of the
  * GNU Lesser General Public License.
@@ -33,6 +33,8 @@
 
 #include "mountP.h"
 
+#include <sys/wait.h>
+
 /**
  * mnt_new_context:
  *
@@ -50,8 +52,8 @@ struct libmnt_context *mnt_new_context(void)
 	ruid = getuid();
 	euid = geteuid();
 
-	cxt->syscall_status = 1;	/* not called yet */
-	cxt->helper_exec_status = 1;
+	mnt_context_reset_status(cxt);
+
 	cxt->loopdev_fd = -1;
 
 	/* if we're really root and aren't running setuid */
@@ -93,6 +95,8 @@ void mnt_free_context(struct libmnt_context *cxt)
 	mnt_context_clear_loopdev(cxt);
 	mnt_free_lock(cxt->lock);
 	mnt_free_update(cxt->update);
+
+	free(cxt->children);
 
 	DBG(CXT, mnt_debug_h(cxt, "<---- free"));
 	free(cxt);
@@ -147,9 +151,8 @@ int mnt_reset_context(struct libmnt_context *cxt)
 	cxt->user_mountflags = 0;
 	cxt->mountdata = NULL;
 	cxt->flags = MNT_FL_DEFAULT;
-	cxt->syscall_status = 1;
-	cxt->helper_exec_status = 1;
-	cxt->helper_status = 0;
+
+	mnt_context_reset_status(cxt);
 
 	/* restore non-resetable flags */
 	cxt->flags |= (fl & MNT_FL_EXTERN_FSTAB);
@@ -161,9 +164,33 @@ int mnt_reset_context(struct libmnt_context *cxt)
 	cxt->flags |= (fl & MNT_FL_NOHELPERS);
 	cxt->flags |= (fl & MNT_FL_LOOPDEL);
 	cxt->flags |= (fl & MNT_FL_LAZY);
+	cxt->flags |= (fl & MNT_FL_FORK);
 	cxt->flags |= (fl & MNT_FL_FORCE);
 	cxt->flags |= (fl & MNT_FL_NOCANONICALIZE);
 	cxt->flags |= (fl & MNT_FL_RDONLY_UMOUNT);
+	return 0;
+}
+
+/**
+ * mnt_context_reset_status:
+ * @cxt: context
+ *
+ * Resets mount(2) and mount.type statuses, so mnt_context_do_mount() or
+ * mnt_context_do_umount() could be again called with the same settings.
+ *
+ * BE CAREFUL -- after this soft reset the libmount will NOT parse mount
+ * options, evaluate permissions or apply stuff from fstab.
+ *
+ * Returns: 0 on success, negative number in case of error.
+ */
+int mnt_context_reset_status(struct libmnt_context *cxt)
+{
+	if (!cxt)
+		return -EINVAL;
+
+	cxt->syscall_status = 1;		/* means not called yet */
+	cxt->helper_exec_status = 1;
+	cxt->helper_status = 0;
 	return 0;
 }
 
@@ -171,10 +198,13 @@ static int set_flag(struct libmnt_context *cxt, int flag, int enable)
 {
 	if (!cxt)
 		return -EINVAL;
-	if (enable)
+	if (enable) {
+		DBG(CXT, mnt_debug_h(cxt, "enabling flag %04x", flag));
 		cxt->flags |= flag;
-	else
+	} else {
+		DBG(CXT, mnt_debug_h(cxt, "disabling flag %04x", flag));
 		cxt->flags &= ~flag;
+	}
 	return 0;
 }
 
@@ -193,9 +223,37 @@ int mnt_context_is_restricted(struct libmnt_context *cxt)
 /**
  * mnt_context_set_optsmode
  * @cxt: mount context
- * @mode: mask, see MNT_OMASK_* flags in libmount mount.h
+ * @mode: MNT_OMASK_* flags
  *
- * Controls how to use mount options from fstab/mtab.
+ * Controls how to use mount optionsmsource and target paths from fstab/mtab.
+ *
+ * @MNT_OMODE_IGNORE: ignore mtab/fstab options
+ *
+ * @MNT_OMODE_APPEND: append mtab/fstab options to existing options
+ *
+ * @MNT_OMODE_PREPEND: prepend mtab/fstab options to existing options
+ *
+ * @MNT_OMODE_REPLACE: replace existing options with options from mtab/fstab
+ *
+ * @MNT_OMODE_FORCE: always read mtab/fstab (although source and target is defined)
+ *
+ * @MNT_OMODE_FSTAB: read from fstab
+ *
+ * @MNT_OMODE_MTAB: read from mtab if fstab not enabled or failed
+ *
+ * @MNT_OMODE_NOTAB: do not read fstab/mtab at all
+ *
+ * @MNT_OMODE_AUTO: default mode (MNT_OMODE_PREPEND | MNT_OMODE_FSTAB | MNT_OMODE_MTAB)
+ *
+ * @MNT_OMODE_USER: default for non-root users (MNT_OMODE_REPLACE | MNT_OMODE_FORCE | MNT_OMODE_FSTAB)
+ *
+ * Notes:
+ *
+ * - MNT_OMODE_USER is always used if mount context is in restricted mode
+ * - MNT_OMODE_AUTO is used if nothing other is defined
+ * - the flags are eavaluated in this order: MNT_OMODE_NOTAB, MNT_OMODE_FORCE,
+ *   MNT_OMODE_FSTAB, MNT_OMODE_MTAB and then the mount options from fstab/mtab
+ *   are set according to MNT_OMODE_{IGNORE,APPEND,PREPAND,REPLACE}
  *
  * Returns: 0 on success, negative number in case of error.
  */
@@ -251,6 +309,21 @@ int mnt_context_disable_canonicalize(struct libmnt_context *cxt, int disable)
 int mnt_context_enable_lazy(struct libmnt_context *cxt, int enable)
 {
 	return set_flag(cxt, MNT_FL_LAZY, enable);
+}
+
+/**
+ * mnt_context_enable_fork:
+ * @cxt: mount context
+ * @enable: TRUE or FALSE
+ *
+ * Enable/disable fork(2) call in mnt_context_next_mount() (see mount(8) man
+ * page, option -F).
+ *
+ * Returns: 0 on success, negative number in case of error.
+ */
+int mnt_context_enable_fork(struct libmnt_context *cxt, int enable)
+{
+	return set_flag(cxt, MNT_FL_FORK, enable);
 }
 
 /**
@@ -874,6 +947,28 @@ struct libmnt_cache *mnt_context_get_cache(struct libmnt_context *cxt)
 }
 
 /**
+ * mnt_context_set_passwd_cb:
+ * @cxt: mount context
+ * @get: callback to get password
+ * @release: callback to release (delallocate) password
+ *
+ * Sets callbacks for encryption password (e.g encrypted loopdev)
+ *
+ * Returns: 0 on success, negative number in case of error.
+ */
+int mnt_context_set_passwd_cb(struct libmnt_context *cxt,
+			      char *(*get)(struct libmnt_context *),
+			      void (*release)(struct libmnt_context *, char *))
+{
+	if (!cxt)
+		return -EINVAL;
+
+	cxt->pwd_get_cb = get;
+	cxt->pwd_release_cb = release;
+	return 0;
+}
+
+/**
  * mnt_context_get_lock:
  * @cxt: mount context
  *
@@ -936,7 +1031,18 @@ int mnt_context_set_mflags(struct libmnt_context *cxt, unsigned long flags)
 {
 	if (!cxt)
 		return -EINVAL;
+
 	cxt->mountflags = flags;
+
+	if ((cxt->flags & MNT_FL_MOUNTOPTS_FIXED) && cxt->fs)
+		/*
+		 * the final mount options are already generated, refresh...
+		 */
+		return mnt_optstr_apply_flags(
+				&cxt->fs->vfs_optstr,
+				cxt->mountflags,
+				mnt_get_builtin_optmap(MNT_LINUX_MAP));
+
 	return 0;
 }
 
@@ -1062,7 +1168,7 @@ int mnt_context_prepare_srcpath(struct libmnt_context *cxt)
 	/* ignore filesystems without source or filesystems
 	 * where the source is quasi-path (//foo/bar)
 	 */
-	if (!src || (cxt->fs->flags & MNT_FS_NET))
+	if (!src || mnt_fs_is_netfs(cxt->fs))
 		return 0;
 
 	DBG(CXT, mnt_debug_h(cxt, "srcpath '%s'", src));
@@ -1078,7 +1184,7 @@ int mnt_context_prepare_srcpath(struct libmnt_context *cxt)
 
 		rc = path ? mnt_fs_set_source(cxt->fs, path) : -EINVAL;
 
-	} else if (cache) {
+	} else if (cache && !mnt_fs_is_pseudofs(cxt->fs)) {
 		/*
 		 * Source is PATH (canonicalize)
 		 */
@@ -1096,7 +1202,7 @@ int mnt_context_prepare_srcpath(struct libmnt_context *cxt)
 		path = src;
 
 	if ((cxt->mountflags & (MS_BIND | MS_MOVE | MS_PROPAGATION)) ||
-	    (cxt->fs->flags & MNT_FS_PSEUDO)) {
+	    mnt_fs_is_pseudofs(cxt->fs)) {
 		DBG(CXT, mnt_debug_h(cxt, "PROPAGATION/pseudo FS source: %s", path));
 		return rc;
 	}
@@ -1142,7 +1248,7 @@ int mnt_context_prepare_target(struct libmnt_context *cxt)
 	}
 
 	if (rc)
-		DBG(CXT, mnt_debug_h(cxt, "failed to prepare target"));
+		DBG(CXT, mnt_debug_h(cxt, "failed to prepare target '%s'", tgt));
 	else
 		DBG(CXT, mnt_debug_h(cxt, "final target '%s'",
 					mnt_fs_get_target(cxt->fs)));
@@ -1231,7 +1337,7 @@ int mnt_context_prepare_helper(struct libmnt_context *cxt, const char *name,
 		type = mnt_fs_get_fstype(cxt->fs);
 
 	if ((cxt->flags & MNT_FL_NOHELPERS) || !type ||
-	    !strcmp(type, "none") || (cxt->fs->flags & MNT_FS_SWAP))
+	    !strcmp(type, "none") || mnt_fs_is_swaparea(cxt->fs))
 		return 0;
 
 	path = strtok_r(search_path, ":", &p);
@@ -1250,7 +1356,9 @@ int mnt_context_prepare_helper(struct libmnt_context *cxt, const char *name,
 		rc = stat(helper, &st);
 		if (rc == -1 && errno == ENOENT && strchr(type, '.')) {
 			/* If type ends with ".subtype" try without it */
-			*strrchr(helper, '.') = '\0';
+			char *hs = strrchr(helper, '.');
+			if (hs)
+				*hs = '\0';
 			rc = stat(helper, &st);
 		}
 
@@ -1259,8 +1367,7 @@ int mnt_context_prepare_helper(struct libmnt_context *cxt, const char *name,
 		if (rc)
 			continue;
 
-		if (cxt->helper)
-			free(cxt->helper);
+		free(cxt->helper);
 		cxt->helper = strdup(helper);
 		if (!cxt->helper)
 			return -ENOMEM;
@@ -1283,11 +1390,6 @@ int mnt_context_merge_mflags(struct libmnt_context *cxt)
 	if (rc)
 		return rc;
 	cxt->mountflags = fl;
-
-	/* TODO: if cxt->fs->fs_optstr contains 'ro' then set the MS_RDONLY to
-	 * mount flags, it's possible that superblock is read-only, but VFS is
-	 * read-write.
-	 */
 
 	fl = 0;
 	rc = mnt_context_get_user_mflags(cxt, &fl);
@@ -1359,7 +1461,7 @@ int mnt_context_prepare_update(struct libmnt_context *cxt)
 
 	if (cxt->action == MNT_ACT_UMOUNT)
 		rc = mnt_update_set_fs(cxt->update, cxt->mountflags,
-					mnt_fs_get_target(cxt->fs), NULL);
+					mnt_context_get_target(cxt), NULL);
 	else
 		rc = mnt_update_set_fs(cxt->update, cxt->mountflags,
 					NULL, cxt->fs);
@@ -1504,7 +1606,10 @@ int mnt_context_apply_fstab(struct libmnt_context *cxt)
 	} else if (cxt->optsmode == 0) {
 		DBG(CXT, mnt_debug_h(cxt, "use default optmode"));
 		cxt->optsmode = MNT_OMODE_AUTO;
-
+	} else if (cxt->optsmode & MNT_OMODE_NOTAB) {
+		cxt->optsmode &= ~MNT_OMODE_FSTAB;
+		cxt->optsmode &= ~MNT_OMODE_MTAB;
+		cxt->optsmode &= ~MNT_OMODE_FORCE;
 	}
 
 	if (cxt->fs) {
@@ -1528,6 +1633,14 @@ int mnt_context_apply_fstab(struct libmnt_context *cxt)
 		return 0;
 	}
 
+	if (!src && tgt
+	    && !(cxt->optsmode & MNT_OMODE_FSTAB)
+	    && !(cxt->optsmode & MNT_OMODE_MTAB)) {
+		DBG(CXT, mnt_debug_h(cxt, "only target; fstab/mtab not required "
+					  "-- skip, probably MS_PROPAGATION"));
+		return 0;
+	}
+
 	DBG(CXT, mnt_debug_h(cxt,
 		"trying to apply fstab (src=%s, target=%s)", src, tgt));
 
@@ -1543,7 +1656,7 @@ int mnt_context_apply_fstab(struct libmnt_context *cxt)
 
 	/* try mtab */
 	if (rc < 0 && (cxt->optsmode & MNT_OMODE_MTAB)) {
-		DBG(CXT, mnt_debug_h(cxt, "tring to apply from mtab"));
+		DBG(CXT, mnt_debug_h(cxt, "trying to apply from mtab"));
 		rc = mnt_context_get_mtab(cxt, &tab);
 		if (!rc)
 			rc = apply_table(cxt, tab, MNT_ITER_BACKWARD);
@@ -1557,7 +1670,13 @@ int mnt_context_apply_fstab(struct libmnt_context *cxt)
  * mnt_context_get_status:
  * @cxt: mount context
  *
- * Returns: 1 if /sbin/mount.type or mount(2) syscall was successfull.
+ * Global libmount status.
+ *
+ * The real exit code of the mount.type helper has to be tested by
+ * mnt_context_get_helper_status(). The mnt_context_get_status() only inform
+ * that exec() has been sucessful.
+ *
+ * Returns: 1 if mount.type or mount(2) syscall has been succesfully called.
  */
 int mnt_context_get_status(struct libmnt_context *cxt)
 {
@@ -1565,15 +1684,65 @@ int mnt_context_get_status(struct libmnt_context *cxt)
 }
 
 /**
+ * mnt_context_helper_executed:
+ * @cxt: mount context
+ *
+ * Returns: 1 if mount.type helper has been executed, or 0.
+ */
+int mnt_context_helper_executed(struct libmnt_context *cxt)
+{
+	return cxt->helper_exec_status != 1;
+}
+
+/**
+ * mnt_context_get_helper_status:
+ * @cxt: mount context
+ *
+ * Return: mount.type helper exit status, result is reliable only if
+ *         mnt_context_helper_executed() returns 1.
+ */
+int mnt_context_get_helper_status(struct libmnt_context *cxt)
+{
+	return cxt->helper_status;
+}
+
+/**
+ * mnt_context_syscall_called:
+ * @cxt: mount context
+ *
+ * Returns: 1 if mount(2) syscall has been called, or 0.
+ */
+int mnt_context_syscall_called(struct libmnt_context *cxt)
+{
+	return cxt->syscall_status != 1;
+}
+
+/**
+ * mnt_context_get_syscall_errno:
+ * @cxt: mount context
+ *
+ * The result from this function is reliable only if
+ * mnt_context_syscall_called() returns 1.
+ *
+ * Returns: mount(2) errno if the syscall failed or 0.
+ */
+int mnt_context_get_syscall_errno(struct libmnt_context *cxt)
+{
+	if (cxt->syscall_status < 0)
+		return -cxt->syscall_status;
+
+	return 0;
+}
+
+/**
  * mnt_context_set_syscall_status:
  * @cxt: mount context
  * @status: mount(2) status
  *
- * The @status should be 0 on succcess, or negative number on error (-1 or
- * -errno).
+ * The @status should be 0 on success, or negative number on error (-errno).
  *
- * This function should be used if [u]mount(2) syscall was NOT called by
- * libmount (by mnt_context_mount() or mnt_context_do_mount()) only.
+ * This function should be used only if [u]mount(2) syscall is NOT called by
+ * libmount code.
  *
  * Returns: 0 or negative number in case of error.
  */
@@ -1592,6 +1761,8 @@ int mnt_context_set_syscall_status(struct libmnt_context *cxt, int status)
  * @cxt: context
  * @buf: buffer
  * @bufsiz: size of the buffer
+ *
+ * Not implemented yet.
  *
  * Returns: 0 or negative number in case of error.
  */
@@ -1684,6 +1855,116 @@ int mnt_context_is_fs_mounted(struct libmnt_context *cxt,
 	return 0;
 }
 
+static int mnt_context_add_child(struct libmnt_context *cxt, pid_t pid)
+{
+	pid_t *pids;
+
+	if (!cxt)
+		return -EINVAL;
+
+	pids = realloc(cxt->children, sizeof(pid_t) * cxt->nchildren + 1);
+	if (!pids)
+		return -ENOMEM;
+
+	DBG(CXT, mnt_debug_h(cxt, "add new child %d", pid));
+	cxt->children = pids;
+	cxt->children[cxt->nchildren++] = pid;
+
+	return 0;
+}
+
+int mnt_fork_context(struct libmnt_context *cxt)
+{
+	int rc = 0;
+	pid_t pid;
+
+	if (!mnt_context_is_parent(cxt))
+		return -EINVAL;
+
+	DBG(CXT, mnt_debug_h(cxt, "forking context"));
+
+	DBG_FLUSH;
+
+	pid = fork();
+
+	switch (pid) {
+	case -1: /* error */
+		DBG(CXT, mnt_debug_h(cxt, "fork failed %m"));
+		return -errno;
+
+	case 0: /* child */
+		cxt->pid = getpid();
+		cxt->flags &= ~MNT_FL_FORK;
+		DBG(CXT, mnt_debug_h(cxt, "child created"));
+		break;
+
+	default:
+		rc = mnt_context_add_child(cxt, pid);
+		break;
+	}
+
+	return rc;
+}
+
+int mnt_context_wait_for_children(struct libmnt_context *cxt,
+				  int *nchildren, int *nerrs)
+{
+	int i;
+
+	if (!cxt)
+		return -EINVAL;
+
+	assert(mnt_context_is_parent(cxt));
+
+	for (i = 0; i < cxt->nchildren; i++) {
+		pid_t pid = cxt->children[i];
+		int rc = 0, ret = 0;
+
+		if (!pid)
+			continue;
+		do {
+			DBG(CXT, mnt_debug_h(cxt,
+					"waiting for child (%d/%d): %d",
+					i + 1, cxt->nchildren, pid));
+			errno = 0;
+			rc = waitpid(pid, &ret, 0);
+
+		} while (rc == -1 && errno == EINTR);
+
+		if (nchildren)
+			(*nchildren)++;
+
+		if (rc != -1 && nerrs) {
+			if (WIFEXITED(ret))
+				(*nerrs) += WEXITSTATUS(ret) == 0 ? 0 : 1;
+			else
+				(*nerrs)++;
+		}
+		cxt->children[i] = 0;
+	}
+
+	cxt->nchildren = 0;
+	free(cxt->children);
+	cxt->children = NULL;
+	return 0;
+}
+
+int mnt_context_is_fork(struct libmnt_context *cxt)
+{
+	return cxt && (cxt->flags & MNT_FL_FORK);
+}
+
+
+int mnt_context_is_parent(struct libmnt_context *cxt)
+{
+	return mnt_context_is_fork(cxt) && cxt->pid == 0;
+}
+
+int mnt_context_is_child(struct libmnt_context *cxt)
+{
+	return !mnt_context_is_fork(cxt) && cxt->pid;
+}
+
 #ifdef TEST_PROGRAM
 
 struct libmnt_lock *lock;
@@ -1726,7 +2007,7 @@ int test_mount(struct libmnt_test *ts, int argc, char *argv[])
 		mnt_context_set_target(cxt, argv[idx++]);
 	}
 
-	/* this is unnecessary -- libmount is able to internaly
+	/* this is unnecessary! -- libmount is able to internaly
 	 * create and manage the lock
 	 */
 	lock = mnt_context_get_lock(cxt);
@@ -1735,10 +2016,11 @@ int test_mount(struct libmnt_test *ts, int argc, char *argv[])
 
 	rc = mnt_context_mount(cxt);
 	if (rc)
-		printf("failed to mount %s\n", strerror(errno));
+		printf("failed to mount: %m\n");
 	else
 		printf("successfully mounted\n");
 
+	lock = NULL;	/* because we use atexit lock_fallback */
 	mnt_free_context(cxt);
 	return rc;
 }
@@ -1793,6 +2075,7 @@ int test_umount(struct libmnt_test *ts, int argc, char *argv[])
 	else
 		printf("successfully umounted\n");
 err:
+	lock = NULL;	/* because we use atexit lock_fallback */
 	mnt_free_context(cxt);
 	return rc;
 }

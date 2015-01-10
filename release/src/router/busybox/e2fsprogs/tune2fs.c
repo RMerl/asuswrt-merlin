@@ -57,6 +57,9 @@
 #include "volume_id.h"
 
 #include "libbb.h"
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(3,3,0)
+typedef unsigned short umode_t;
+#endif
 
 static char * device_name = NULL;
 static char * new_label, *new_last_mounted, *new_UUID;

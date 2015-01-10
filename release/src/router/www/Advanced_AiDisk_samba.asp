@@ -49,8 +49,8 @@ var folderlist = new Array();
 
 function initial(){
 	show_menu();
-	$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-	$("option5").className = "m5_r";
+	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
+	document.getElementById("_APP_Installation").className = "menu_clicked";
 	
 	document.aidiskForm.protocol.value = PROTOCOL;
 
@@ -719,7 +719,7 @@ function validForm(){
 				<table width="730px">
 					<tr>
 						<td align="left">
-							<span class="formfonttitle"><#menu5_4#> - <#menu5_4_1#><span id="clouddiskstr"> / Cloud Disk</span></span>
+							<span class="formfonttitle"><#menu5_4#> - <#menu5_4_1#><span id="clouddiskstr"> / <#Cloud_Disk#></span></span>
 						</td>
 						<td align="right">
 							<img onclick="go_setting('/APP_Installation.asp')" align="right" style="cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="<#Menu_usb_application#>" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
@@ -744,9 +744,6 @@ function validForm(){
 									 },
 									 function() {
 									 	switchAppStatus(PROTOCOL);
-									 },
-									 {
-										switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 									 }
 								);
 							</script>			
@@ -766,9 +763,6 @@ function validForm(){
 									 },
 									 function() {
 									 	switchAccount(PROTOCOL);
-									 },
-									 {
-										switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 									 }
 								);
 							</script>			

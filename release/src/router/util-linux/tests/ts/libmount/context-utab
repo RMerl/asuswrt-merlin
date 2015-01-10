@@ -62,13 +62,13 @@ rm -f $LIBMOUNT_UTAB
 
 ts_init_subtest "mount-by-devname"
 mkdir -p $MOUNTPOINT &>  /dev/null
-$TESTPROG --mount $DEVICE $MOUNTPOINT >> $TS_OUTPUT 2>&1
+ts_valgrind $TESTPROG --mount $DEVICE $MOUNTPOINT >> $TS_OUTPUT 2>&1
 grep -q $DEVICE /proc/mounts || \
 	echo "(by device) cannot find $DEVICE in /proc/mounts" >> $TS_OUTPUT 2>&1
 ts_finalize_subtest
 
 ts_init_subtest "umount-by-devname"
-$TESTPROG --umount $DEVICE >> $TS_OUTPUT 2>&1
+ts_valgrind $TESTPROG --umount $DEVICE >> $TS_OUTPUT 2>&1
 grep -q $DEVICE /proc/mounts &&
 	echo "umount (device) failed: found $DEVICE in /proc/mounts" >> $TS_OUTPUT 2>&1
 ts_finalize_subtest
@@ -76,13 +76,13 @@ ts_finalize_subtest
 
 ts_init_subtest "mount-uhelper"
 mkdir -p $MOUNTPOINT &>  /dev/null
-$TESTPROG --mount -o uhelper=foo,rw LABEL="$LABEL" $MOUNTPOINT >> $TS_OUTPUT 2>&1
+ts_valgrind $TESTPROG --mount -o uhelper=foo,rw LABEL="$LABEL" $MOUNTPOINT >> $TS_OUTPUT 2>&1
 grep -q $DEVICE $LIBMOUNT_UTAB || \
 	echo "(by label) cannot find $DEVICE in $LIBMOUNT_UTAB" >> $TS_OUTPUT 2>&1
 ts_finalize_subtest
 
 ts_init_subtest "umount"
-$TESTPROG --umount $MOUNTPOINT >> $TS_OUTPUT 2>&1
+ts_valgrind $TESTPROG --umount $MOUNTPOINT >> $TS_OUTPUT 2>&1
 grep -q $DEVICE $LIBMOUNT_UTAB && \
 	echo "umount (mountpoint) failed: found $DEVICE in $LIBMOUNT_UTAB" >> $TS_OUTPUT 2>&1
 ts_finalize_subtest
@@ -96,7 +96,7 @@ if [ -x "/sbin/mkfs.btrfs" ]; then
 
 	ts_init_subtest "mount-uhelper-subvol"
 	mkdir -p $MOUNTPOINT &>  /dev/null
-	$TESTPROG --mount -o uhelper=foo,rw,subvol=sub $DEVICE  $MOUNTPOINT >> $TS_OUTPUT 2>&1
+	ts_valgrind $TESTPROG --mount -o uhelper=foo,rw,subvol=sub $DEVICE  $MOUNTPOINT >> $TS_OUTPUT 2>&1
 	grep -q $DEVICE $LIBMOUNT_UTAB || \
 		echo "cannot find $DEVICE in $LIBMOUNT_UTAB" >> $TS_OUTPUT 2>&1
 	ts_finalize_subtest
@@ -106,7 +106,7 @@ if [ -x "/sbin/mkfs.btrfs" ]; then
 	ts_log "---"
 
 	ts_init_subtest "umount-subvol"
-	$TESTPROG --umount $MOUNTPOINT >> $TS_OUTPUT 2>&1
+	ts_valgrind $TESTPROG --umount $MOUNTPOINT >> $TS_OUTPUT 2>&1
 	grep -q $DEVICE $LIBMOUNT_UTAB && \
 		echo "umount (mountpoint) failed: found $DEVICE in $LIBMOUNT_UTAB" >> $TS_OUTPUT 2>&1
 	ts_finalize_subtest

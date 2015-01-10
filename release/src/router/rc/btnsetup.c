@@ -126,6 +126,10 @@
 #include <ralink.h>
 #endif
 
+#ifdef RTCONFIG_QCA
+#include <qca.h>
+#endif
+
 #define logs(fmt, arg...) //syslog(LOG_NOTICE, fmt, ##arg)
 //#include <openssl/dh.h>
 #include "crypto.c"

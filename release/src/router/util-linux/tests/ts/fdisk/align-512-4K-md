@@ -94,9 +94,6 @@ sleep 3
 /sbin/mdadm -q -S ${MD_DEVICE} >> $TS_OUTPUT 2>&1
 rmmod scsi_debug
 
-# remove device name used and disk ID
-sed -i -e "s/\/dev\/${DEVNAME}/\/dev\/.../g" $TS_OUTPUT
-sed -i -e 's/Disk identifier:.*//g' $TS_OUTPUT
-sed -i -e 's/Building a new.*//g' $TS_OUTPUT
+ts_fdisk_clean
 
 ts_finalize

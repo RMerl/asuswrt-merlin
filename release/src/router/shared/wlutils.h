@@ -17,7 +17,9 @@
 
 #include <shared.h>
 
-#ifndef RTCONFIG_RALINK
+#ifdef RTCONFIG_RALINK
+#elif defined(RTCONFIG_QCA)
+#else
 #include <typedefs.h>
 #include <proto/ethernet.h>
 #include <wlioctl.h>

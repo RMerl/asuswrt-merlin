@@ -7,6 +7,7 @@ APPS_PATH=/opt
 TEST_TARGET=/bin/ipkg
 LINK_FILE=$APPS_PATH$TEST_TARGET
 
+
 if [ -z "$1" ] || [ ! -b "/dev/$1" ]; then
 	echo "Usage: apps_check_pool.sh <device name>"
 	exit 1

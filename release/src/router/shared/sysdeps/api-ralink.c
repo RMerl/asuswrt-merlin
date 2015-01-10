@@ -27,7 +27,7 @@
 
 typedef uint32_t __u32;
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
 const char WIF_5G[]	= "rai0";
 const char WIF_2G[]	= "ra0";
 const char WDSIF_5G[]	= "wdsi";
@@ -48,7 +48,6 @@ int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx
 	return __mt7620_wan_bytecount(unit, tx, rx);
 }
 #endif
-
 uint32_t gpio_dir(uint32_t gpio, int dir)
 {
 	return ralink_gpio_init(gpio, dir);
@@ -303,12 +302,16 @@ void set_radio(int on, int unit, int subunit)
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
 	//if (nvram_match(strcat_r(prefix, "radio", tmp), "0")) return;
-
 	// TODO: replace hardcoded 
 	// TODO: handle subunit
 	if(unit==0)
 		doSystem("iwpriv %s set RadioOn=%d", WIF_2G, on);
 	else doSystem("iwpriv %s set RadioOn=%d", WIF_5G, on);
+
+#if defined(RTAC1200HP) //5G
+	if(unit)
+		led_5g_onoff();
+#endif	
 }
 
 char *wif_to_vif(char *wif)
@@ -779,3 +782,13 @@ int get_channel_list_via_country(int unit, const char *country_code, char *buffe
 	return (p - buffer);
 }
 
+
+#if defined(RTAC1200HP)
+void led_5g_onoff(void)
+{   
+	if(get_radio(1, 0))
+		led_control(LED_5G, LED_ON);	
+	else
+		led_control(LED_5G, LED_OFF);	
+}
+#endif

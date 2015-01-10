@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <asm/byteorder.h>
 #include "iboxcom.h"
 #include "packet.h"
 
@@ -108,8 +109,8 @@ DWORD PackCmdHdr(char *pdubuf, WORD cmd, char *mac, char *password)
 	hdr=(IBOX_COMM_PKT_HDR_EX *)pdubuf;     						
 	hdr->ServiceID = NET_SERVICE_ID_IBOX_INFO;
 	hdr->PacketType = NET_PACKET_TYPE_CMD;  
-	hdr->OpCode = cmd;		
-	hdr->Info = GetTransactionID();	 
+	hdr->OpCode = __cpu_to_le16(cmd);
+	hdr->Info = __cpu_to_le32(GetTransactionID());
 	memcpy(hdr->MacAddress, mac, 6);
 	memcpy(hdr->Password, password, 32);   
 	return (hdr->Info);
@@ -147,7 +148,7 @@ int UnpackResHdr(char *pdubuf, WORD opcode, DWORD tid, char *mac)
 
 	if (hdr->ServiceID!=NET_SERVICE_ID_IBOX_INFO || 
 	    hdr->PacketType!=NET_PACKET_TYPE_RES ||	    
-	    hdr->Info != tid ||
+	    hdr->Info != __cpu_to_le32(tid) ||
 	    memcmp(hdr->MacAddress, mac, 6)!=0)
 	    return (RESPONSE_HDR_IGNORE);
 	
@@ -171,7 +172,7 @@ int PackGetInfo(char *pdubuf)
 	hdr=(IBOX_COMM_PKT_HDR_EX *)pdubuf;     						
 	hdr->ServiceID = NET_SERVICE_ID_IBOX_INFO;
 	hdr->PacketType = NET_PACKET_TYPE_CMD;  
-	hdr->OpCode = NET_CMD_ID_GETINFO;		
+	hdr->OpCode = __cpu_to_le16(NET_CMD_ID_GETINFO);
 	hdr->Info = 0;	 
 			
 	return (0);
@@ -185,7 +186,7 @@ int UnpackGetInfo(char *pdubuf, PKT_GET_INFO *Info)
 		
 	if (hdr->ServiceID!=NET_SERVICE_ID_IBOX_INFO || 
 	    hdr->PacketType!=NET_PACKET_TYPE_RES ||
-	    hdr->OpCode!=NET_CMD_ID_GETINFO)	    	    
+	    __le16_to_cpu(hdr->OpCode) != NET_CMD_ID_GETINFO)
 	    return (RESPONSE_HDR_IGNORE);
 	
 	
@@ -201,7 +202,7 @@ int PackGetInfoCurrentAP(char *pdubuf, char *mac, char *password)
 	tid = PackCmdHdr(pdubuf, NET_CMD_ID_GETINFO_EX, mac, password);
 	body = (PKT_GET_INFO_EX1 *)(pdubuf+sizeof(IBOX_COMM_PKT_HDR_EX));			
 	body->FieldCount = 1;
-	body->FieldID = FIELD_GENERAL_CURRENT_AP;
+	body->FieldID = __cpu_to_le16(FIELD_GENERAL_CURRENT_AP);
 	
 	return (tid);
 }
@@ -218,7 +219,7 @@ int UnpackGetInfoCurrentAP(char *pdubuf, DWORD tid, char *mac, PKT_GET_INFO_AP *
 	body = (PKT_GET_INFO_EX1 *)(pdubuf+sizeof(IBOX_COMM_PKT_RES_EX));
 			
 	if (body->FieldCount>0 &&
-	    body->FieldID == FIELD_GENERAL_CURRENT_AP)
+	    __le16_to_cpu(body->FieldID) == FIELD_GENERAL_CURRENT_AP)
 	{		
 		memcpy(curAP, pdubuf+sizeof(IBOX_COMM_PKT_RES_EX)+sizeof(PKT_GET_INFO_EX1), sizeof(PKT_GET_INFO_AP));
 		return (RESPONSE_HDR_OK);
@@ -234,7 +235,7 @@ int PackSetInfoCurrentAP(char *pdubuf, char *mac, char *password, PKT_GET_INFO_A
 	tid = PackCmdHdr(pdubuf, NET_CMD_ID_SETINFO, mac, password);
 	body = (PKT_GET_INFO_EX1 *)(pdubuf+sizeof(IBOX_COMM_PKT_HDR_EX));
 	body->FieldCount = 1;
-	body->FieldID = FIELD_GENERAL_CURRENT_AP;
+	body->FieldID = __cpu_to_le16(FIELD_GENERAL_CURRENT_AP);
 	memcpy(pdubuf+sizeof(IBOX_COMM_PKT_HDR_EX)+sizeof(PKT_GET_INFO_EX1), curAP, sizeof(PKT_GET_INFO_AP));
 	return (tid);
 }
@@ -256,7 +257,7 @@ int PackGetInfoCurrentSTA(char *pdubuf, char *mac, char *password)
 	tid = PackCmdHdr(pdubuf, NET_CMD_ID_GETINFO_EX, mac, password);
 	body = (PKT_GET_INFO_EX1 *)(pdubuf+sizeof(IBOX_COMM_PKT_HDR_EX));
 	body->FieldCount = 1;
-	body->FieldID = FIELD_GENERAL_CURRENT_STA;	
+	body->FieldID = __cpu_to_le16(FIELD_GENERAL_CURRENT_STA);
 	return (tid);
 }
 
@@ -272,7 +273,7 @@ int UnpackGetInfoCurrentSTA(char *pdubuf, DWORD tid, char *mac, PKT_GET_INFO_STA
 	body = (PKT_GET_INFO_EX1 *)(pdubuf+sizeof(IBOX_COMM_PKT_RES_EX));
 			
 	if (body->FieldCount>0 &&
-	    body->FieldID == FIELD_GENERAL_CURRENT_STA)
+	    __le16_to_cpu(body->FieldID) == FIELD_GENERAL_CURRENT_STA)
 	{		
 		memcpy(curSTA, pdubuf+sizeof(IBOX_COMM_PKT_RES_EX)+sizeof(PKT_GET_INFO_EX1), sizeof(PKT_GET_INFO_STA));
 		return (RESPONSE_HDR_OK);
@@ -288,7 +289,7 @@ int PackSetInfoCurrentSTA(char *pdubuf, char *mac, char *password, PKT_GET_INFO_
 	tid = PackCmdHdr(pdubuf, NET_CMD_ID_SETINFO, mac, password);
 	body = (PKT_GET_INFO_EX1 *)(pdubuf+sizeof(IBOX_COMM_PKT_HDR_EX));
 	body->FieldCount = 1;
-	body->FieldID = FIELD_GENERAL_CURRENT_STA;
+	body->FieldID = __cpu_to_le16(FIELD_GENERAL_CURRENT_STA);
 	memcpy(pdubuf+sizeof(IBOX_COMM_PKT_HDR_EX)+sizeof(PKT_GET_INFO_EX1), curSTA, sizeof(PKT_GET_INFO_STA));
 	return (tid);
 }

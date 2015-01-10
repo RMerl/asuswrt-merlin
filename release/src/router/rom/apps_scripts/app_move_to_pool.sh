@@ -7,6 +7,7 @@ APPS_DEV=`nvram get apps_dev`
 APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
 APPS_PATH=/opt
 
+
 if [ -z "$APPS_DEV" ]; then
 	echo "Wrong"
 	APPS_DEV=$1

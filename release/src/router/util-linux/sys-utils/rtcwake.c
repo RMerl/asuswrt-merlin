@@ -49,7 +49,6 @@
 
 #define MAX_LINE		1024
 
-#define VERSION_STRING		"rtcwake from " PACKAGE_STRING
 #define RTC_PATH		"/sys/class/rtc/%s/device/power/wakeup"
 #define SYS_POWER_STATE_PATH	"/sys/power/state"
 #define ADJTIME_PATH		"/etc/adjtime"
@@ -83,11 +82,11 @@ static struct option long_options[] = {
 
 static void __attribute__((__noreturn__)) usage(FILE *out)
 {
-	fputs(_("\nUsage:\n"), out);
+	fputs(USAGE_HEADER, out);
 	fprintf(out,
 	      _(" %s [options]\n"), program_invocation_short_name);
 
-	fputs(_("\nOptions:\n"), out);
+	fputs(USAGE_OPTIONS, out);
 	fputs(_(" -d, --device <device>    select rtc device (rtc0|rtc1|...)\n"
 		" -n, --dry-run            does everything, but suspend\n"
 		" -l, --local              RTC uses local timezone\n"
@@ -95,10 +94,13 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 		" -s, --seconds <seconds>  seconds to sleep\n"
 		" -t, --time <time_t>      time to wake\n"
 		" -u, --utc                RTC uses UTC\n"
-		" -v, --verbose            verbose messages\n"
-		" -V, --version            show version\n"), out);
+		" -v, --verbose            verbose messages\n"), out);
 
-	fputs(_("\nFor more information see rtcwake(8).\n"), out);
+	printf(USAGE_SEPARATOR);
+	printf(USAGE_HELP);
+	printf(USAGE_VERSION);
+
+	printf(USAGE_MAN_TAIL("rtcwake(8)"));
 
 	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
@@ -459,7 +461,7 @@ int main(int argc, char **argv)
 			break;
 
 		case 'V':
-			printf("%s\n", VERSION_STRING);
+			printf(UTIL_LINUX_VERSION);
 			exit(EXIT_SUCCESS);
 
 		case 'h':
@@ -495,7 +497,6 @@ int main(int argc, char **argv)
 
 		strcpy(new_devname, "/dev/");
 		strcat(new_devname, devname);
-		free(devname);
 		devname = new_devname;
 	}
 

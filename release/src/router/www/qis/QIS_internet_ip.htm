@@ -756,7 +756,9 @@ function submitForm(){
 			$("x_Setting").disabled = false;
 			document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
 			document.form.sw_mode.value = 1;
-			document.form.action="/start_apply.htm";
+			document.form.action = "/start_apply.htm";
+			if(parent.isManual) document.form.flag.value = "manual";
+
 			document.form.submit();
 			return true;
 	}

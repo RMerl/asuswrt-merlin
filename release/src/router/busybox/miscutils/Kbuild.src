@@ -48,3 +48,5 @@ lib-$(CONFIG_TTYSIZE)     += ttysize.o
 lib-$(CONFIG_VOLNAME)     += volname.o
 lib-$(CONFIG_WALL)        += wall.o
 lib-$(CONFIG_WATCHDOG)    += watchdog.o
+lib-$(CONFIG_MDMM)        += mdmm.o
+lib-$(CONFIG_ETHREG)      += ethreg.o

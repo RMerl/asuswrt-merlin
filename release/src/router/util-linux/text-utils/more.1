@@ -37,172 +37,213 @@
 .\" conform with the more 5.19 currently in use by the Linux community.
 .\"
 .\" .Dd July 29, 1991 (Modified December 25, 1992)
-.Dd February 2011 "  "
-.Dt MORE(1) "" "User Commands"
-.Os util-linux
-.Sh NAME
-.Nm more
-.Nd file perusal filter for crt viewing
-.Sh SYNOPSIS
-.Nm more
-.Op Fl dlfpcsu
-.Op Fl num
-.Op +/\fIpattern\fP
-.Op +\fIlinenum\fP
-.Op Ar
-.Sh DESCRIPTION
-.Nm
-is a filter for paging through text one screenful at a time.  This version
-is especially primitive.  Users should realize that
-.Xr less 1
+.TH MORE "1" "September 2011" "util-linux" "User Commands"
+.SH NAME
+more \- file perusal filter for crt viewing
+.SH SYNOPSIS
+.B more
+[options] file [...]
+.SH DESCRIPTION
+.B more
+is a filter for paging through text one screenful at a time.  This version is
+especially primitive.  Users should realize that
+.BR less (1)
 provides
-.Xr more 1
+.BR more (1)
 emulation plus extensive enhancements.
-.Sh OPTIONS
-Command-line options are described below.
-Options are also taken from the environment variable
-.Ev MORE
-(make sure to precede them with a dash (``-'')) but command
-line options will override them.
-.Bl -tag -width flag
+.SH OPTIONS
+Command-line options are described below.  Options are also taken from the
+environment variable
+.B MORE
+(make sure to precede them with a dash (``-'')) but command line options will
+override them.
 .It Fl num
-This option specifies an integer which is the screen size (in lines).
-.It Fl d
-.Nm more
+.TP
+.B \-number
+This option specifies an integer
+.I number
+which is the screen size (in lines).
+.TP
+.B \-d
+.B more
 will prompt the user with the message "[Press space to continue, 'q' to
 quit.]" and will display "[Press 'h' for instructions.]" instead of ringing
 the bell when an illegal key is pressed.
-.It Fl l
-.Nm more
+.TP
+.B \-l
+.B more
 usually treats
-.Ic \&^L
+.B \&^L
 (form feed) as a special character, and will pause after any line that
 contains a form feed.  The
-.Fl l
+.B \-l
 option will prevent this behavior.
-.It Fl f
+.TP
+.B -f
 Causes
-.Nm more
-to count logical, rather than screen lines (i.e., long lines are not
-folded).
-.It Fl p
+.B more
+to count logical, rather than screen lines (i.e., long lines are not folded).
+.TP
+.B \-p
 Do not scroll.  Instead, clear the whole screen and then display the text.
-.Pp
-Notice that this option is switched on automatically if the executable is named
-.Nm page .
-.It Fl c
+Notice that this option is switched on automatically if the executable is
+named
+.BR page .
+.TP
+.B \-c
 Do not scroll.  Instead, paint each screen from the top, clearing the
 remainder of each line as it is displayed.
-.It Fl s
+.TP
+.B \-s
 Squeeze multiple blank lines into one.
-.It Fl u
+.TP
+.B \-u
 Suppress underlining.
-.It Ic +/
+.TP
+.B +/
 The
-.Ic +/
-option specifies a string that will be searched for before
-each file is displayed.
-.It Ic +num
-Start at line number
-.Ic num .
-.El
-.Sh COMMANDS
+.B +/
+option specifies a string that will be searched for before each file is
+displayed.
+.TP
+.B +number
+Start at line
+.IR number .
+.SH COMMANDS
 Interactive commands for
-.Nm more
+.B more
 are based on
-.Xr vi  1  .
+.BR vi (1).
 Some commands may be preceded by a decimal number, called k in the
-descriptions below.
-In the following descriptions, ^X means control-X.
-.Pp
-.Bl -tag -width Ic
-.It Ic h No or Ic ?
-Help: display a summary of these commands.
-If you forget all the other commands, remember this one.
-.It Ic SPACE
+descriptions below.  In the following descriptions,
+.B ^X
+means
+.BR control-X .
+.PP
+.RS
+.PD 1
+.TP 10
+.BR h \ or \ ?
+Help: display a summary of these commands.  If you forget all the other
+commands, remember this one.
+.TP
+.B SPACE
 Display next k lines of text.  Defaults to current screen size.
-.It Ic z
+.TP
+.B z
 Display next k lines of text.  Defaults to current screen size.  Argument
 becomes new default.
-.It Ic RETURN
-Display next k lines of text.  Defaults to 1.  Argument becomes new
-default.
-.It Ic d No or Ic \&^D
+.TP
+.B RETURN
+Display next k lines of text.  Defaults to 1.  Argument becomes new default.
+.TP
+.BR d \ or \ \&^D
 Scroll k lines.  Default is current scroll size, initially 11.  Argument
 becomes new default.
-.It Xo
-.Ic q
-.No or
-.Ic Q
-.No or
-.Ic INTERRUPT
-.Xc
+.TP
+.BR q \ or \ Q \ or \ INTERRUPT
 Exit.
-.It Ic s
+.TP
+.B s
 Skip forward k lines of text.  Defaults to 1.
-.It Ic f
+.TP
+.B f
 Skip forward k screenfuls of text.  Defaults to 1.
-.It Ic b No or Ic \&^B
-Skip backwards k screenfuls of text.  Defaults to 1.
-Only works with files, not pipes.
-.It Ic '
+.TP
+.BR b \ or \ \&^B
+Skip backwards k screenfuls of text.  Defaults to 1.  Only works with files,
+not pipes.
+.TP
+.B \'
 Go to place where previous search started.
-.It Ic =
+.TP
+.B =
 Display current line number.
-.It Ic \&/ Ns Ar pattern
+.TP
+.B \&/pattern
 Search for kth occurrence of regular expression.  Defaults to 1.
-.It Ic n
-Search for kth occurrence of last r.e.  Defaults to 1.
-.It Ic !<cmd> No or Ic :!<cmd>
-Execute <cmd> in a subshell
-.It Ic v
-Start up an editor at current line.
-The editor is taken from the environment variable VISUAL if defined,
-or EDITOR if VISUAL is not defined,
-or defaults to "vi" if neither VISUAL nor EDITOR is defined.
-.It Ic \&^L
-Redraw screen
-.It Ic :n
+.TP
+.B n
+Search for kth occurrence of last regular expression.  Defaults to 1.
+.TP
+.BR !command \ or \ :!command
+Execute
+.I command
+in a subshell.
+.TP
+.B v
+Start up an editor at current line.  The editor is taken from the environment
+variable
+.B VISUAL
+if defined, or
+.B EDITOR
+if
+.B VISUAL
+is not defined, or defaults
+to
+.B vi
+if neither
+.B VISUAL
+nor
+.B EDITOR
+is defined.
+.TP
+.B \&^L
+Redraw screen.
+.TP
+.B :n
 Go to kth next file.  Defaults to 1.
-.It Ic :p
+.TP
+.B :P
 Go to kth previous file.  Defaults to 1.
-.It Ic :f
-Display current file name and line number
-.It Ic \&.
-Repeat previous command
-.El
-.Sh ENVIRONMENT
-.Nm More
-utilizes the following environment variables, if they exist:
-.Bl -tag -width Fl
-.It Ev MORE
+.TP
+.B :f
+Display current file name and line number.
+.TP
+.B \&.
+Repeat previous command.
+.SH ENVIRONMENT
+More utilizes the following environment variables, if they exist:
+.TP
+.B MORE
 This variable may be set with favored options to
-.Nm more .
-.It Ev SHELL
+.BR more .
+.TP
+.B SHELL
 Current shell in use (normally set by the shell at login time).
-.It Ev TERM
+.TP
+.B TERM
 Specifies terminal type, used by more to get the terminal
 characteristics necessary to manipulate the screen.
-.El
-.Sh SEE ALSO
-.Xr vi 1 ,
-.Xr less 1
-.Sh AUTHORS
+.TP
+.B VISUAL
+Editor the user is preferring.  Used when key command
+.I v
+is pressed.
+.TP
+.B EDITOR
+Editor of choise when
+.B VISUAL
+is not specified.
+.SH SEE ALSO
+.BR vi (1),
+.BR less (1)
+.SH AUTHORS
 Eric Shienbrood, UC Berkeley
 .br
 Modified by Geoff Peck, UCB to add underlining, single spacing
 .br
 Modified by John Foderaro, UCB to add -c and MORE environment variable
-.Sh HISTORY
+.SH HISTORY
 The
-.Nm more
-command appeared in
-.Bx 3.0 .
-This man page documents
-.Nm more
+.B more
+command appeared in 3.0BSD.  This man page documents
+.B more
 version 5.19 (Berkeley 6/29/88), which is currently in use in the Linux
 community.  Documentation was produced using several other versions of the
 man page, and extensive inspection of the source code.
-.Sh AVAILABILITY
+.SH AVAILABILITY
 The more command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

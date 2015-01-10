@@ -168,6 +168,30 @@ char *strndup(const char *s, size_t n)
 #endif
 
 /*
+ * same as strtod(3) but exit on failure instead of returning crap
+ */
+double strtod_or_err(const char *str, const char *errmesg)
+{
+	double num;
+	char *end = NULL;
+
+	if (str == NULL || *str == '\0')
+		goto err;
+	errno = 0;
+	num = strtod(str, &end);
+
+	if (errno || str == end || (end && *end))
+		goto err;
+
+	return num;
+ err:
+	if (errno)
+		err(EXIT_FAILURE, "%s: '%s'", errmesg, str);
+	else
+		errx(EXIT_FAILURE, "%s: '%s'", errmesg, str);
+	return 0;
+}
+/*
  * same as strtol(3) but exit on failure instead of returning crap
  */
 long strtol_or_err(const char *str, const char *errmesg)
@@ -369,6 +393,8 @@ int string_to_idarray(const char *list, int ary[], size_t arysz,
 		const char *end = NULL;
 		int id;
 
+		if (n >= arysz)
+			return -2;
 		if (!begin)
 			begin = p;		/* begin of the column name */
 		if (*p == ',')
@@ -384,8 +410,6 @@ int string_to_idarray(const char *list, int ary[], size_t arysz,
 		if (id == -1)
 			return -1;
 		ary[ n++ ] = id;
-		if (n >= arysz)
-			return -2;
 		begin = NULL;
 		if (end && !*end)
 			break;
@@ -400,7 +424,7 @@ int string_to_idarray(const char *list, int ary[], size_t arysz,
  * as a possition in the 'ary' bit array. It means that the 'id' has to be in
  * range <0..N> where N < sizeof(ary) * NBBY.
  *
- * Returns: 0 on sucess, <0 on error.
+ * Returns: 0 on success, <0 on error.
  */
 int string_to_bitarray(const char *list,
 		     char *ary,
@@ -436,6 +460,82 @@ int string_to_bitarray(const char *list,
 	}
 	return 0;
 }
+
+/*
+ * Parse the lower and higher values in a string containing
+ * "lower:higher" or "lower-higher" format. Note that either
+ * the lower or the higher values may be missing, and the def
+ * value will be assigned to it by default.
+ *
+ * Returns: 0 on success, <0 on error.
+ */
+int parse_range(const char *str, int *lower, int *upper, int def)
+{
+	char *end = NULL;
+
+	if (!str)
+		return 0;
+
+	*upper = *lower = def;
+	errno = 0;
+
+	if (*str == ':') {				/* <:N> */
+		str++;
+		*upper = strtol(str, &end, 10);
+		if (errno || !end || *end || end == str)
+			return -1;
+	} else {
+		*upper = *lower = strtol(str, &end, 10);
+		if (errno || !end || end == str)
+			return -1;
+
+		if (*end == ':' && !*(end + 1))		/* <M:> */
+			*upper = 0;
+		else if (*end == '-' || *end == ':') {	/* <M:N> <M-N> */
+			str = end + 1;
+			end = NULL;
+			errno = 0;
+			*upper = strtol(str, &end, 10);
+
+			if (errno || !end || *end || end == str)
+				return -1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * Compare two strings for equality, ignoring at most one trailing
+ * slash.
+ */
+int streq_except_trailing_slash(const char *s1, const char *s2)
+{
+	int equal;
+
+	if (!s1 && !s2)
+		return 1;
+	if (!s1 || !s2)
+		return 0;
+
+	equal = !strcmp(s1, s2);
+
+	if (!equal) {
+		size_t len1 = strlen(s1);
+		size_t len2 = strlen(s2);
+
+		if (len1 && *(s1 + len1 - 1) == '/')
+			len1--;
+		if (len2 && *(s2 + len2 - 1) == '/')
+			len2--;
+		if (len1 != len2)
+			return 0;
+
+		equal = !strncmp(s1, s2, len1);
+	}
+
+	return equal;
+}
+
 
 #ifdef TEST_PROGRAM
 

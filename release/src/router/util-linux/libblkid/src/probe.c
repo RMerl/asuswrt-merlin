@@ -21,7 +21,7 @@
  * The probing routines is possible to filter (enable/disable) by type (e.g.
  * fstype "vfat" or partype "gpt") or by usage flags (e.g. BLKID_USAGE_RAID).
  * These filters are per-chain. Note that always when you touch the chain
- * filter the current probing position is reseted and probing starts from
+ * filter the current probing position is reset and probing starts from
  * scratch.  It means that the chain filter should not be modified during
  * probing, for example in loop where you call blkid_do_probe().
  *
@@ -36,7 +36,7 @@
  *      The interface is always specific to the probing chain.
  *
  *  Note that the previous probing result (binary or NAME=value) is always
- *  zeroized when a chain probing function is called. For example
+ *  zeroized when a chain probing function is called. For example:
  *
  * <informalexample>
  *   <programlisting>
@@ -109,6 +109,7 @@
 #endif
 
 #include "blkidP.h"
+#include "writeall.h"
 
 /* chains */
 extern const struct blkid_chaindrv superblocks_drv;
@@ -130,7 +131,7 @@ static void blkid_probe_reset_buffer(blkid_probe pr);
 /**
  * blkid_new_probe:
  *
- * Returns: a pointer to the newly allocated probe struct.
+ * Returns: a pointer to the newly allocated probe struct or NULL in case of error.
  */
 blkid_probe blkid_new_probe(void)
 {
@@ -433,7 +434,7 @@ unsigned long *blkid_probe_get_filter(blkid_probe pr, int chain, int create)
 
 	chn = &pr->chains[chain];
 
-	/* always when you touch the chain filter all indexes are reseted and
+	/* always when you touch the chain filter all indexes are reset and
 	 * probing starts from scratch
 	 */
 	blkid_probe_chain_reset_position(chn);
@@ -707,7 +708,10 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 		pr->flags |= BLKID_FL_TINY_DEV;
 
 #ifdef CDROM_GET_CAPABILITY
-	if (S_ISBLK(sb.st_mode) && ioctl(fd, CDROM_GET_CAPABILITY, NULL) >= 0)
+	if (S_ISBLK(sb.st_mode) &&
+	    !blkid_probe_is_tiny(pr) &&
+	    blkid_probe_is_wholedisk(pr) &&
+	    ioctl(fd, CDROM_GET_CAPABILITY, NULL) >= 0)
 		pr->flags |= BLKID_FL_CDROM_DEV;
 #endif
 
@@ -770,7 +774,7 @@ int blkid_probe_get_idmag(blkid_probe pr, const struct blkid_idinfo *id,
 	blkid_loff_t off = 0;
 
 	if (id)
-		mag = id->magics ? &id->magics[0] : NULL;
+		mag = &id->magics[0];
 	if (res)
 		*res = NULL;
 
@@ -795,7 +799,7 @@ int blkid_probe_get_idmag(blkid_probe pr, const struct blkid_idinfo *id,
 		mag++;
 	}
 
-	if (id->magics && id->magics[0].magic)
+	if (id && id->magics[0].magic)
 		/* magic string(s) defined, but not found */
 		return 1;
 
@@ -827,7 +831,7 @@ static inline void blkid_probe_end(blkid_probe pr)
  * Calls probing functions in all enabled chains. The superblocks chain is
  * enabled by default. The blkid_do_probe() stores result from only one
  * probing function. It's necessary to call this routine in a loop to get
- * results from all probing functions in all chains. The probing is reseted
+ * results from all probing functions in all chains. The probing is reset
  * by blkid_reset_probe() or by filter functions.
  *
  * This is string-based NAME=value interface only.
@@ -914,6 +918,105 @@ int blkid_do_probe(blkid_probe pr)
 }
 
 /**
+ * blkid_do_wipe:
+ * @pr: prober
+ * @dryrun: if TRUE then don't touch the device.
+ *
+ * This function erases the current signature detected by @pr. The @pr has to
+ * be open in O_RDWR mode, BLKID_SUBLKS_MAGIC or/and BLKID_PARTS_MAGIC flags
+ * has to be enabled.
+ *
+ * After successful signature removing the @pr prober will be moved one step
+ * back and the next blkid_do_probe() call will again call previously called
+ * probing function.
+ *
+ *  <example>
+ *  <title>wipe all filesystems or raids from the device</title>
+ *   <programlisting>
+ *      fd = open(devname, O_RDWR);
+ *      blkid_probe_set_device(pr, fd, 0, 0);
+ *
+ *      blkid_probe_enable_superblocks(pr, 1);
+ *      blkid_probe_set_superblocks_flags(pr, BLKID_SUBLKS_MAGIC);
+ *
+ *	while (blkid_do_probe(pr) == 0)
+ *		blkid_do_wipe(pr, FALSE);
+ *  </programlisting>
+ * </example>
+ *
+ * Returns: 0 on success, 1 when probing is done and -1 in case of error.
+ */
+int blkid_do_wipe(blkid_probe pr, int dryrun)
+{
+	const char *off = NULL;
+	size_t len = 0;
+	loff_t offset, l;
+	char buf[BUFSIZ];
+	int fd, rc = 0;
+	struct blkid_chain *chn;
+
+	if (!pr)
+		return -1;
+
+	chn = pr->cur_chain;
+	if (!chn)
+		return -1;
+
+	switch (chn->driver->id) {
+	case BLKID_CHAIN_SUBLKS:
+		rc = blkid_probe_lookup_value(pr, "SBMAGIC_OFFSET", &off, NULL);
+		if (!rc)
+			rc = blkid_probe_lookup_value(pr, "SBMAGIC", NULL, &len);
+		break;
+	case BLKID_CHAIN_PARTS:
+		rc = blkid_probe_lookup_value(pr, "PTMAGIC_OFFSET", &off, NULL);
+		if (!rc)
+			rc = blkid_probe_lookup_value(pr, "PTMAGIC", NULL, &len);
+		break;
+	default:
+		return 0;
+	}
+
+	if (rc || len == 0 || off == NULL)
+		return 0;
+
+	offset = strtoll(off, NULL, 10);
+	fd = blkid_probe_get_fd(pr);
+	if (fd < 0)
+		return -1;
+
+	if (len > sizeof(buf))
+		len = sizeof(buf);
+
+	DBG(DEBUG_LOWPROBE, printf(
+	    "wiping [offset=0x%jx, len=%zd, chain=%s, idx=%d, dryrun=%s]\n",
+	    offset, len, chn->driver->name, chn->idx, dryrun ? "yes" : "not"));
+
+	l = lseek(fd, offset, SEEK_SET);
+	if (l == (off_t) -1)
+		return -1;
+
+	memset(buf, 0, len);
+
+	if (!dryrun && len) {
+		if (write_all(fd, buf, len))
+			return -1;
+		fsync(fd);
+
+		blkid_probe_reset_buffer(pr);
+
+		if (chn->idx >= 0) {
+			chn->idx--;
+			DBG(DEBUG_LOWPROBE,
+				printf("wipe: moving %s chain index to %d\n",
+				chn->driver->name,
+				chn->idx));
+		}
+	}
+	return 0;
+}
+
+/**
  * blkid_do_safeprobe:
  * @pr: prober
  *
@@ -995,7 +1098,6 @@ int blkid_do_fullprobe(blkid_probe pr)
 	blkid_probe_start(pr);
 
 	for (i = 0; i < BLKID_NCHAINS; i++) {
-		int rc;
 		struct blkid_chain *chn;
 
 		chn = pr->cur_chain = &pr->chains[i];
@@ -1095,7 +1197,7 @@ int blkid_probe_vsprintf_value(blkid_probe pr, const char *name,
 		const char *fmt, va_list ap)
 {
 	struct blkid_prval *v;
-	size_t len;
+	ssize_t len;
 
 	v = blkid_probe_assign_value(pr, name);
 	if (!v)
@@ -1124,11 +1226,44 @@ int blkid_probe_sprintf_value(blkid_probe pr, const char *name,
 	return rc;
 }
 
+int blkid_probe_set_magic(blkid_probe pr, blkid_loff_t offset,
+			size_t len, unsigned char *magic)
+{
+	int rc = 0;
+	struct blkid_chain *chn = blkid_probe_get_chain(pr);
+
+	if (!chn || !magic || !len || chn->binary)
+		return 0;
+
+	switch (chn->driver->id) {
+	case BLKID_CHAIN_SUBLKS:
+		if (!(chn->flags & BLKID_SUBLKS_MAGIC))
+			return 0;
+		rc = blkid_probe_set_value(pr, "SBMAGIC", magic, len);
+		if (!rc)
+			rc = blkid_probe_sprintf_value(pr,
+					"SBMAGIC_OFFSET", "%llu", offset);
+		break;
+	case BLKID_CHAIN_PARTS:
+		if (!(chn->flags & BLKID_PARTS_MAGIC))
+			return 0;
+		rc = blkid_probe_set_value(pr, "PTMAGIC", magic, len);
+		if (!rc)
+			rc = blkid_probe_sprintf_value(pr,
+					"PTMAGIC_OFFSET", "%llu", offset);
+		break;
+	default:
+		break;
+	}
+
+	return rc;
+}
+
 /**
  * blkid_probe_get_devno:
  * @pr: probe
  *
- * Returns: block device number, or 0 for regilar files.
+ * Returns: block device number, or 0 for regular files.
  */
 dev_t blkid_probe_get_devno(blkid_probe pr)
 {
@@ -1139,7 +1274,7 @@ dev_t blkid_probe_get_devno(blkid_probe pr)
  * blkid_probe_get_wholedisk_devno:
  * @pr: probe
  *
- * Returns: device number of the wholedisk, or 0 for regilar files.
+ * Returns: device number of the wholedisk, or 0 for regular files.
  */
 dev_t blkid_probe_get_wholedisk_devno(blkid_probe pr)
 {
@@ -1206,6 +1341,9 @@ blkid_probe blkid_probe_get_wholedisk_probe(blkid_probe pr)
 		DBG(DEBUG_LOWPROBE, printf("allocate a wholedisk probe\n"));
 
 		pr->disk_probe = blkid_new_probe_from_filename(disk_path);
+
+		free(disk_path);
+
 		if (!pr->disk_probe)
 			return NULL;	/* ENOMEM? */
 	}

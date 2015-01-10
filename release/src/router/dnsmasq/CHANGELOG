@@ -1,3 +1,29 @@
+version 2.73
+            Fix crash at startup when an empty suffix is supplied to
+	    --conf-dir, also trivial memory leak. Thanks to 
+	    Tomas Hozza for spotting this.
+
+	    Remove floor of 4096 on advertised EDNS0 packet size when 
+	    DNSSEC in use, the original rationale for this has long gone.
+	    Thanks to Anders Kaseorg for spotting this.
+
+	    Use inotify for checking on updates to /etc/resolv.conf and
+	    friends under Linux. This fixes race conditions when the files are 
+	    updated rapidly and saves CPU by noy polling.
+
+	    Fix breakage of --domain=<domain>,<subnet>,local - only reverse
+	    queries were intercepted. THis appears to have been broken 
+	    since 2.69. Thanks to Josh Stone for finding the bug.
+
+	    Eliminate IPv6 privacy addresses and deprecated addresses from
+	    the answers given by --interface-name. Note that reverse queries
+	    (ie looking for names, given addresses) are not affected. 
+	    Thanks to Michael Gorbach for the suggestion.
+
+	    Fix crash in DNSSEC code with long RRs. Thanks to Marco Davids
+	    for the bug report.
+	
+
 version 2.72
             Add ra-advrouter mode, for RFC-3775 mobile IPv6 support.
 
@@ -14,6 +40,33 @@ version 2.72
 	    Fix failure to build against Nettle-3.0. Thanks to Steven 
 	    Barth for spotting this and finding the fix. 
 	    
+	    When assigning existing DHCP leases to intefaces by comparing 
+	    networks, handle the case that two or more interfaces have the
+	    same network part, but different prefix lengths (favour the
+	    longer prefix length.) Thanks to Lung-Pin Chang for the 
+	    patch.
+	    
+	    Add a mode which detects and removes DNS forwarding loops, ie 
+	    a query sent to an upstream server returns as a new query to 
+	    dnsmasq, and would therefore be forwarded again, resulting in 
+	    a query which loops many times before being dropped. Upstream
+	    servers which loop back are disabled and this event is logged.
+	    Thanks to Smoothwall for their sponsorship of this feature.
+
+	    Extend --conf-dir to allow filtering of files. So
+	    --conf-dir=/etc/dnsmasq.d,\*.conf
+	    will load all the files in /etc/dnsmasq.d which end in .conf
+ 
+            Fix bug when resulted in NXDOMAIN answers instead of NODATA in
+            some circumstances.
+
+	    Fix bug which caused dnsmasq to become unresponsive if it 
+	    failed to send packets due to a network interface disappearing.
+	    Thanks to Niels Peen for spotting this.
+	    	    
+            Fix problem with --local-service option on big-endian platforms
+	    Thanks to Richard Genoud for the patch.
+
 
 version 2.71
             Subtle change to error handling to help DNSSEC validation 

@@ -18,10 +18,14 @@ dist_noinst_HEADERS = \
 	list.h \
 	loopdev.h \
 	mangle.h \
+	match.h \
 	mbsalign.h \
 	md5.h \
 	minix.h \
 	nls.h \
+	optutils.h \
+	pamfail.h \
+	path.h \
 	pathnames.h \
 	procutils.h \
 	setproctitle.h \
@@ -34,4 +38,5 @@ dist_noinst_HEADERS = \
 	widechar.h \
 	writeall.h \
 	rpmatch.h \
+	xgetpass.h \
 	xalloc.h

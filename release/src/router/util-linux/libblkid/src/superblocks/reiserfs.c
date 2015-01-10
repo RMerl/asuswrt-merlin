@@ -98,7 +98,7 @@ const struct blkid_idinfo reiser_idinfo =
 	.name		= "reiserfs",
 	.usage		= BLKID_USAGE_FILESYSTEM,
 	.probefunc	= probe_reiser,
-	.minsz		= 4096 * 512,	/* not sure, this is minimal size of journal */
+	.minsz		= 128 * 1024,
 	.magics		=
 	{
 		{ .magic = "ReIsErFs",  .len = 8, .kboff = 8,  .sboff = 0x34 },
@@ -115,7 +115,7 @@ const struct blkid_idinfo reiser4_idinfo =
 	.name		= "reiser4",
 	.usage		= BLKID_USAGE_FILESYSTEM,
 	.probefunc	= probe_reiser4,
-	.minsz		= 4096 * 512,	/* not sure, this is minimal size of journal */
+	.minsz		= 128 * 1024,
 	.magics		=
 	{
 		{ .magic = "ReIsEr4", .len = 7, .kboff = 64 },

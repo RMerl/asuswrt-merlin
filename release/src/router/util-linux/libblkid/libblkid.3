@@ -26,10 +26,8 @@ specific block device names into configuration files.
 The low-level part of the library also allows to extract infomation about
 partitions and block device topology.
 .P
-The high-level part of the library keeps information about block devices
-in a cache file
-.I /etc/blkid.tab
-and is verified to still be valid before being returned to the user
+The high-level part of the library keeps information about block devices in a
+cache file and is verified to still be valid before being returned to the user
 (if the user has read permission on the raw block device, otherwise not).
 The cache file also allows unprivileged users (normally anyone other
 than root, or those not in the "disk" group) to locate devices by label/id.
@@ -58,40 +56,16 @@ in this situation.
 .SH CONFIGURATION FILE
 The standard location of the
 .I /etc/blkid.conf
-config file can be overridden by the environment variable BLKID_CONF.
-The following options control the libblkid library:
-.TP
-.I SEND_UEVENT=<yes|not>
-Sends uevent when
-.I /dev/disk/by-{label,uuid}/
-symlink does not match with LABEL or UUID on the device. Default is "yes".
-.TP
-.I CACHE_FILE=<path>
-Overrides the standard location of the cache file. This setting can be
-overridden by the environment variable BLKID_FILE. Default is
-.I /etc/blkid.tab.
-.TP
-.I EVALUATE=<methods>
-Defines LABEL and UUID evaluation method(s). Currently, the libblkid library
-supports "udev" and "scan" methods. More than one methods may be specified in
-a comma separated list. Default is "udev,scan". The "udev" method uses udev
-.I /dev/disk/by-*
-symlinks and the "scan" method scans all block devices from the
-.I /proc/partitions
-file.
+config file can be overridden by the environment variable BLKID_CONF. For more
+details about the config file see
+.BR blkid (8)
+man page.
 .SH AUTHOR
 .B libblkid
 was written by Andreas Dilger for the ext2 filesystem utilties, with input
 from Ted Ts'o.  The library was subsequently heavily modified by Ted Ts'o.
 
 The low-level probing code was rewritten by Karel Zak.
-.SH FILES
-.TP 18
-.I /etc/blkid.tab
-caches data extracted from each recognized block device
-.TP
-.I /etc/blkid.conf
-configuration file
 .SH AVAILABILITY
 .B libblkid
 is part of the util-linux package since version 2.15 and is available from

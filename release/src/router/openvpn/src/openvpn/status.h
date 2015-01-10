@@ -40,6 +40,7 @@
 #define RUNNING			4
 #define SSLPARAM_ERROR	5
 #define SSLPARAM_DH_ERROR	6
+#define RCV_AUTH_FAILED_ERROR	7
 
 #define ST_EXIT			0
 #define ST_INIT			1
@@ -51,6 +52,7 @@
 #define ERRNO_ROUTE		2
 #define ERRNO_SSL		4
 #define ERRNO_DH		5
+#define ERRNO_AUTH		6
 
 void update_nvram_status(int flag);
 int current_addr(in_addr_t addr);

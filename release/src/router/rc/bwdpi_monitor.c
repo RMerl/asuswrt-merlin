@@ -15,6 +15,11 @@ static void save_traffic_record()
 
 	debug = nvram_get_int("sqlite_debug");
 
+	if(!f_exists("/dev/detector") || !f_exists("/dev/idpfw")){
+		printf("DPI engine doesn't exist, not to save traffic record\n");
+		return;
+	}
+
 	memset(buf, 0, sizeof(buf));
 
 	// bwdpi_db_type
@@ -73,6 +78,7 @@ int bwdpi_monitor_main(int argc, char **argv)
 	FILE *fp;
 	sigset_t sigs_to_catch;
 	int mode;
+	char *db_debug;
 
 	debug = nvram_get_int("sqlite_debug");
 
@@ -83,10 +89,13 @@ int bwdpi_monitor_main(int argc, char **argv)
 	}
 
 	// bwdpi_monitor != 1
-	if(strcmp(nvram_safe_get("bwdpi_db_debug"), "1"))
+	db_debug = nvram_safe_get("bwdpi_db_debug");
+	if(!strcmp(db_debug, "") || db_debug == NULL)
 		mode = 0;
-	else
+	else if(!strcmp(db_debug, "1"))
 		mode = 1;
+	else
+		mode = 0;
 	
 	/* write pid */
 	if ((fp = fopen("/var/run/bwdpi_monitor.pid", "w")) != NULL)
@@ -106,7 +115,7 @@ int bwdpi_monitor_main(int argc, char **argv)
 
 	while(1)
 	{
-		if (nvram_match("svc_ready", "1"))
+		if (nvram_get_int("ntp_ready"))
 		{
 			struct tm local;
 			time_t now;
@@ -124,25 +133,23 @@ int bwdpi_monitor_main(int argc, char **argv)
 				else if(local.tm_sec < 60 && local.tm_sec >= 30)
 					diff_sec = 60 - local.tm_sec;
 				alarm(diff_sec);
-				pause();
 			}
 			else{
 				/* every hour */
 				if((local.tm_min != 0) || (local.tm_sec != 0)){
 					diff_sec = 3600 - (local.tm_min * 60 + local.tm_sec);
 					alarm(diff_sec);
-					pause();
 				}
 				else{
 					alarm(3600);
-					pause();
 				}
 			}
+			pause();
 		}
 		else
 		{
 			if(debug) dbg("[bwdpi monitor] ntp not sync, can't record bwdpi log\n");
-			pause();
+			exit(0);
 		}
 	}
 

@@ -209,10 +209,10 @@ static int find_cmd(char *s)
 	return -1;
 }
 
-void do_commands(int fd, char **argv, int d);
-void report_header(void);
-void report_device(char *device, int quiet);
-void report_all_devices(void);
+static void do_commands(int fd, char **argv, int d);
+static void report_header(void);
+static void report_device(char *device, int quiet);
+static void report_all_devices(void);
 
 int main(int argc, char **argv)
 {
@@ -278,16 +278,16 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-void do_commands(int fd, char **argv, int d)
+static void do_commands(int fd, char **argv, int d)
 {
 	int res, i, j;
-	int iarg;
-	unsigned int uarg;
-	unsigned short huarg;
-	long larg;
-	long long llarg;
-	unsigned long lu;
-	unsigned long long llu;
+	int iarg = 0;
+	unsigned int uarg = 0;
+	unsigned short huarg = 0;
+	long larg = 0;
+	long long llarg = 0;
+	unsigned long lu = 0;
+	unsigned long long llu = 0;
 	int verbose = 0;
 
 	for (i = 1; i < d; i++) {
@@ -405,7 +405,7 @@ void do_commands(int fd, char **argv, int d)
 	}
 }
 
-void report_all_devices(void)
+static void report_all_devices(void)
 {
 	FILE *procpt;
 	char line[200];
@@ -429,7 +429,7 @@ void report_all_devices(void)
 	fclose(procpt);
 }
 
-void report_device(char *device, int quiet)
+static void report_device(char *device, int quiet)
 {
 	int fd;
 	int ro, ssz, bsz;
@@ -462,7 +462,7 @@ void report_device(char *device, int quiet)
 	close(fd);
 }
 
-void report_header()
+static void report_header(void)
 {
 	printf(_("RO    RA   SSZ   BSZ   StartSec            Size   Device\n"));
 }

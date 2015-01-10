@@ -140,3 +140,11 @@ global:
 	blkid_superblocks_get_name;
 } BLKID_2.18;
 
+/*
+ * symbols since util-linux 2.21
+ */
+BLKID_2.21 {
+global:
+	blkid_do_wipe;
+} BLKID_2.20;
+

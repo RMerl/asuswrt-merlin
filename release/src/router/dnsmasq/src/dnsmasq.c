@@ -80,16 +80,13 @@ int main (int argc, char **argv)
   sigaction(SIGPIPE, &sigact, NULL);
 
   umask(022); /* known umask, create leases and pid files as 0644 */
-
+ 
+  rand_init(); /* Must precede read_opts() */
+  
   read_opts(argc, argv, compile_opts);
  
   if (daemon->edns_pktsz < PACKETSZ)
     daemon->edns_pktsz = PACKETSZ;
-#ifdef HAVE_DNSSEC
-  /* Enforce min packet big enough for DNSSEC */
-  if (option_bool(OPT_DNSSEC_VALID) && daemon->edns_pktsz < EDNS_PKTSZ)
-    daemon->edns_pktsz = EDNS_PKTSZ;
-#endif
 
   daemon->packet_buff_sz = daemon->edns_pktsz > DNSMASQ_PACKETSZ ? 
     daemon->edns_pktsz : DNSMASQ_PACKETSZ;
@@ -186,7 +183,10 @@ int main (int argc, char **argv)
     die(_("authoritative DNS not available: set HAVE_AUTH in src/config.h"), NULL, EC_BADCONF);
 #endif
 
-  rand_init();
+#ifndef HAVE_LOOP
+  if (option_bool(OPT_LOOP_DETECT))
+    die(_("Loop detection not available: set HAVE_LOOP in src/config.h"), NULL, EC_BADCONF);
+#endif
   
   now = dnsmasq_time();
 
@@ -310,8 +310,14 @@ int main (int argc, char **argv)
   if (daemon->port != 0)
     {
       cache_init();
+
 #ifdef HAVE_DNSSEC
       blockdata_init();
+#endif
+
+#ifdef HAVE_INOTIFY
+      if (!option_bool(OPT_NO_POLL))
+	inotify_dnsmasq_init();
 #endif
     }
     
@@ -788,6 +794,11 @@ int main (int argc, char **argv)
   
   pid = getpid();
   
+#ifdef HAVE_INOTIFY
+  /* Using inotify, have to select a resolv file at startup */
+  poll_resolv(1, 0, now);
+#endif
+  
   while (1)
     {
       int maxfd = -1;
@@ -857,11 +868,18 @@ int main (int argc, char **argv)
 #if defined(HAVE_LINUX_NETWORK)
       FD_SET(daemon->netlinkfd, &rset);
       bump_maxfd(daemon->netlinkfd, &maxfd);
+#ifdef HAVE_INOTIFY
+      if (daemon->port != 0 && !option_bool(OPT_NO_POLL))
+	{
+	  FD_SET(daemon->inotifyfd, &rset);
+	  bump_maxfd(daemon->inotifyfd, &maxfd);
+	}
+#endif
 #elif defined(HAVE_BSD_NETWORK)
       FD_SET(daemon->routefd, &rset);
       bump_maxfd(daemon->routefd, &maxfd);
 #endif
-
+      
       FD_SET(piperead, &rset);
       bump_maxfd(piperead, &maxfd);
 
@@ -924,6 +942,10 @@ int main (int argc, char **argv)
 	route_sock();
 #endif
 
+#ifdef HAVE_INOTIFY
+      if (daemon->port != 0 && !option_bool(OPT_NO_POLL) && FD_ISSET(daemon->inotifyfd, &rset) && inotify_check())
+	poll_resolv(1, 1, now); 	  
+#else
       /* Check for changes to resolv files once per second max. */
       /* Don't go silent for long periods if the clock goes backwards. */
       if (daemon->last_resolv == 0 || 
@@ -936,7 +958,8 @@ int main (int argc, char **argv)
 	  poll_resolv(0, daemon->last_resolv != 0, now); 	  
 	  daemon->last_resolv = now;
 	}
-      
+#endif
+
       if (FD_ISSET(piperead, &rset))
 	async_event(piperead, now);
       

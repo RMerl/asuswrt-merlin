@@ -1134,16 +1134,16 @@ function checkDDNSReturnCode(){
 							<a href="cloud_main.asp"><div class="tab"><span>AiCloud 2.0</span></div></a>
 						</td>
 						<td>
-							<a href="cloud_sync.asp"><div class="tab"><span>Smart Sync</span></div></a>
+							<a href="cloud_sync.asp"><div class="tab"><span><#smart_sync#></span></div></a>
 						</td>
 						<td>
-							<div class="tabclick"><span>Sync Server</span></div>							
+							<div class="tabclick"><span><#Server_Sync#></span></div>							
 						</td>
 						<td>
-							<a href="cloud_settings.asp"><div class="tab"><span>Settings</span></div></a>
+							<a href="cloud_settings.asp"><div class="tab"><span><#Settings#></span></div></a>
 						</td>
 						<td>
-							<a href="cloud_syslog.asp"><div class="tab"><span>Log</span></div></a>
+							<a href="cloud_syslog.asp"><div class="tab"><span><#Log#></span></div></a>
 						</td>
 					</tr>
 					</tbody>
@@ -1160,7 +1160,7 @@ function checkDDNSReturnCode(){
 						  <td bgcolor="#4D595D" valign="top">
 
 						<div>&nbsp;</div>
-						<div class="formfonttitle">AiCloud 2.0 - Sync Server</div>
+						<div class="formfonttitle">AiCloud 2.0 - <#Server_Sync#></div>
 						<div style="margin-left:5px;margin-top:10px;margin-bottom:10px;"><img src="/images/New_ui/export/line_export.png"></div>
 						<div id="title_desc_block" style="display:none;">
 							<table width="700px" style="margin-left:25px;">
@@ -1256,7 +1256,7 @@ function checkDDNSReturnCode(){
 									<tr style="height:40px;">
 										<td colspan="2">
 											<div  style="text-align:center;margin-top:10px;margin-bottom:10px;">
-												<input  type="button" id="applyButton" class="button_gen" value="Generate" onclick="domain_name_select();">
+												<input  type="button" id="applyButton" class="button_gen" value="<#CTL_Generate#>" onclick="domain_name_select();">
 												<img id="update_scan" style="display:none;" src="images/InternetScan.gif" />
 											</div>
 										</td>
@@ -1272,8 +1272,7 @@ function checkDDNSReturnCode(){
 								<tr>
 									<td>
 										<div style="width:90%;margin:0px auto;">
-											<a href="cloud_main.asp"><span style="font-family:Lucida Console;text-decoration:underline;color:#FC0">Sync Server cannot be enabled.</span></a>
-											Please enable AiCloud 2.0 (Cloud Disk & Smart Access) first. Click here to enable AiCloud 2.0.
+											<a href="cloud_main.asp"><span style="font-family:Lucida Console;text-decoration:underline;color:#FC0"><#routerSync_enable_hint1#></span></a><br><#routerSync_enable_hint2#>
 										</div>
 									</td>
 								</tr>

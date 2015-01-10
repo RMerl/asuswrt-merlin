@@ -32,11 +32,10 @@
 #include "devname.h"
 #include "mount_constants.h"
 #include "sundries.h"
-#include "xmalloc.h"
 #include "mount_mntent.h"
 #include "fstab.h"
-#include "lomount.h"
-#include "loop.h"
+#include "loopdev.h"
+#include "linux_version.h"
 #include "getusername.h"
 #include "env.h"
 #include "nls.h"
@@ -111,6 +110,7 @@ struct opt_map {
   int  skip;			/* skip in mtab option string */
   int  inv;			/* true if flag value should be inverted */
   int  mask;			/* flag mask value */
+  int  cmask;			/* comments mask */
 };
 
 /* Custom mount options for our own purposes.  */
@@ -122,6 +122,9 @@ struct opt_map {
 #define MS_GROUP	0x08000000
 #define MS_COMMENT	0x02000000
 #define MS_LOOP		0x00010000
+
+#define MS_COMMENT_NOFAIL	(1 << 1)
+#define MS_COMMENT_NETDEV	(1 << 2)
 
 /* Options that we keep the mount system call from seeing.  */
 #define MS_NOSYS	(MS_NOAUTO|MS_USERS|MS_USER|MS_COMMENT|MS_LOOP)
@@ -163,7 +166,7 @@ static const struct opt_map opt_map[] = {
   { "noowner",	0, 1, MS_OWNER  },	/* Device owner has no special privs */
   { "group",	0, 0, MS_GROUP  },	/* Let the group of the device mount */
   { "nogroup",	0, 1, MS_GROUP  },	/* Device group has no special privs */
-  { "_netdev",	0, 0, MS_COMMENT},	/* Device requires network */
+  { "_netdev",	0, 0, MS_COMMENT, MS_COMMENT_NETDEV },	/* Device requires network */
   { "comment",	0, 0, MS_COMMENT},	/* fstab comment only (kudzu,_netdev)*/
 
   /* add new options here */
@@ -202,11 +205,13 @@ static const struct opt_map opt_map[] = {
   { "strictatime", 0, 0, MS_STRICTATIME }, /* Strict atime semantics */
   { "nostrictatime", 0, 1, MS_STRICTATIME }, /* kernel default atime */
 #endif
-  { "nofail",	0, 0, MS_COMMENT},	/* Do not fail if ENOENT on dev */
+  { "nofail",	0, 0, MS_COMMENT, MS_COMMENT_NOFAIL },	/* Do not fail if ENOENT on dev */
   { NULL,	0, 0, 0		}
 };
 
-static int opt_nofail = 0;
+static int opt_nofail;
+static int invuser_flags;
+static int comment_flags;
 
 static const char *opt_loopdev, *opt_vfstype, *opt_offset, *opt_sizelimit,
         *opt_encryption, *opt_speed, *opt_comment, *opt_uhelper, *opt_helper;
@@ -241,6 +246,13 @@ clear_string_opts(void) {
 		*(m->valptr) = NULL;
 }
 
+static void
+clear_flags_opts(void) {
+	invuser_flags = 0;
+	comment_flags = 0;
+	opt_nofail = 0;
+}
+
 static int
 parse_string_opt(char *s) {
 	struct string_opt_map *m;
@@ -269,8 +281,8 @@ print_one (const struct my_mntent *me) {
 	 * mount(8) output if the device has been initialized by mount(8).
 	 */
 	if (strncmp(me->mnt_fsname, "/dev/loop", 9) == 0 &&
-	    is_loop_autoclear(me->mnt_fsname))
-		fsname = loopdev_get_loopfile(me->mnt_fsname);
+	    loopdev_is_autoclear(me->mnt_fsname))
+		fsname = loopdev_get_backing_file(me->mnt_fsname);
 
 	if (!fsname)
 		fsname = (char *) me->mnt_fsname;
@@ -446,6 +458,7 @@ static char *remove_context_options(char *opts)
 			p = begin;
 			changed = 1;
 		}
+		begin = end = NULL;
 	}
 
 	if (changed && verbose)
@@ -473,7 +486,7 @@ static int has_context_option(char *opts)
  * For the options uid= and gid= replace user or group name by its value.
  */
 static inline void
-parse_opt(char *opt, int *mask, char **extra_opts) {
+parse_opt(char *opt, int *mask, int *inv_user, char **extra_opts) {
 	const struct opt_map *om;
 
 	for (om = opt_map; om->opt != NULL; om++)
@@ -482,6 +495,9 @@ parse_opt(char *opt, int *mask, char **extra_opts) {
 				*mask &= ~om->mask;
 			else
 				*mask |= om->mask;
+			if (om->inv && ((*mask & MS_USER) || (*mask & MS_USERS))
+			    && (om->mask & MS_SECURE))
+				*inv_user |= om->mask;
 			if ((om->mask == MS_USER || om->mask == MS_USERS)
 			    && !om->inv)
 				*mask |= MS_SECURE;
@@ -494,8 +510,11 @@ parse_opt(char *opt, int *mask, char **extra_opts) {
 				verbose = 0;
 			}
 #endif
-			if (streq(opt, "nofail"))
-				opt_nofail = 1;
+			if (om->mask == MS_COMMENT) {
+				comment_flags |= om->cmask;
+				if (om->cmask == MS_COMMENT_NOFAIL)
+					opt_nofail = 1;
+			}
 			return;
 		}
 
@@ -540,6 +559,7 @@ parse_opt(char *opt, int *mask, char **extra_opts) {
 	*extra_opts = append_opt(*extra_opts, opt, NULL);
 }
 
+
 /* Take -o options list and compute 4th and 5th args to mount(2).  flags
    gets the standard options (indicated by bits) and extra_opts all the rest */
 static void
@@ -548,6 +568,7 @@ parse_opts (const char *options, int *flags, char **extra_opts) {
 	*extra_opts = NULL;
 
 	clear_string_opts();
+	clear_flags_opts();
 
 	if (options != NULL) {
 		char *opts = xstrdup(options);
@@ -566,7 +587,7 @@ parse_opts (const char *options, int *flags, char **extra_opts) {
 			/* end of option item or last item */
 			if (*p == '\0' || *(p+1) == '\0') {
 				if (!parse_string_opt(opt))
-					parse_opt(opt, flags, extra_opts);
+					parse_opt(opt, flags, &invuser_flags, extra_opts);
 				opt = NULL;
 			}
 		}
@@ -587,7 +608,9 @@ parse_opts (const char *options, int *flags, char **extra_opts) {
 
 /* Try to build a canonical options string.  */
 static char *
-fix_opts_string (int flags, const char *extra_opts, const char *user) {
+fix_opts_string (int flags, const char *extra_opts,
+		 const char *user, int inv_user)
+{
 	const struct opt_map *om;
 	const struct string_opt_map *m;
 	char *new_opts;
@@ -597,6 +620,8 @@ fix_opts_string (int flags, const char *extra_opts, const char *user) {
 		if (om->skip)
 			continue;
 		if (om->inv || !om->mask || (flags & om->mask) != om->mask)
+			continue;
+		if (om->mask == MS_COMMENT && !(comment_flags & om->cmask))
 			continue;
 		new_opts = append_opt(new_opts, om->opt, NULL);
 		flags &= ~om->mask;
@@ -610,6 +635,16 @@ fix_opts_string (int flags, const char *extra_opts, const char *user) {
 
 	if (user)
 		new_opts = append_opt(new_opts, "user=", user);
+
+	if (inv_user) {
+		for (om = opt_map; om->opt != NULL; om++) {
+			if (om->mask && om->inv
+			    && (inv_user & om->mask) == om->mask) {
+				new_opts = append_opt(new_opts, om->opt, NULL);
+				inv_user &= ~om->mask;
+			}
+		}
+	}
 
 	return new_opts;
 }
@@ -662,7 +697,7 @@ create_mtab (void) {
 		mnt.mnt_dir = "/";
 		mnt.mnt_fsname = spec_to_devname(fstab->m.mnt_fsname);
 		mnt.mnt_type = fstab->m.mnt_type;
-		mnt.mnt_opts = fix_opts_string (flags, extra_opts, NULL);
+		mnt.mnt_opts = fix_opts_string (flags, extra_opts, NULL, 0);
 		mnt.mnt_freq = mnt.mnt_passno = 0;
 		free(extra_opts);
 
@@ -782,12 +817,12 @@ check_special_mountprog(const char *spec, const char *node, const char *type, in
 			int i = 0;
 
 			if (setgid(getgid()) < 0)
-				die(EX_FAIL, _("mount: cannot set group id: %s"), strerror(errno));
+				die(EX_FAIL, _("mount: cannot set group id: %m"));
 
 			if (setuid(getuid()) < 0)
-				die(EX_FAIL, _("mount: cannot set user id: %s"), strerror(errno));
+				die(EX_FAIL, _("mount: cannot set user id: %m"));
 
-			oo = fix_opts_string (flags, extra_opts, NULL);
+			oo = fix_opts_string(flags, extra_opts, NULL, invuser_flags);
 			mountargs[i++] = mountprog;			/* 1 */
 			mountargs[i++] = (char *) spec;			/* 2 */
 			mountargs[i++] = (char *) node;			/* 3 */
@@ -1161,8 +1196,8 @@ is_mounted_same_loopfile(const char *node0, const char *loopfile, unsigned long 
 		char *p;
 
 		if (strncmp(mnt->m.mnt_fsname, "/dev/loop", 9) == 0)
-			res = loopfile_used_with((char *) mnt->m.mnt_fsname,
-					loopfile, offset);
+			res = loopdev_is_used((char *) mnt->m.mnt_fsname,
+					loopfile, offset, LOOPDEV_FL_OFFSET);
 
 		else if (mnt->m.mnt_opts &&
 			 (p = strstr(mnt->m.mnt_opts, "loop=")))
@@ -1170,7 +1205,8 @@ is_mounted_same_loopfile(const char *node0, const char *loopfile, unsigned long 
 			char *dev = xstrdup(p+5);
 			if ((p = strchr(dev, ',')))
 				*p = '\0';
-			res = loopfile_used_with(dev, loopfile, offset);
+			res =  loopdev_is_used(dev,
+					loopfile, offset, LOOPDEV_FL_OFFSET);
 			free(dev);
 		}
 	}
@@ -1200,6 +1236,7 @@ loop_check(const char **spec, const char **type, int *flags,
 	   const char *node) {
   int looptype;
   uintmax_t offset = 0, sizelimit = 0;
+  struct loopdev_cxt lc;
 
   /*
    * In the case of a loop mount, either type is of the form lo@/dev/loop5
@@ -1250,7 +1287,6 @@ loop_check(const char **spec, const char **type, int *flags,
 	printf(_("mount: skipping the setup of a loop device\n"));
     } else {
       int loop_opts = 0;
-      int res;
 
       /* since 2.6.37 we don't have to store backing filename to mtab
        * because kernel provides the name in /sys
@@ -1260,11 +1296,11 @@ loop_check(const char **spec, const char **type, int *flags,
 
 	if (verbose)
 	  printf(_("mount: enabling autoclear loopdev flag\n"));
-	loop_opts = SETLOOP_AUTOCLEAR;
+	loop_opts = LO_FLAGS_AUTOCLEAR;
       }
 
       if (*flags & MS_RDONLY)
-        loop_opts |= SETLOOP_RDONLY;
+        loop_opts |= LO_FLAGS_READ_ONLY;
 
       if (opt_offset && parse_offset(&opt_offset, &offset)) {
         error(_("mount: invalid offset '%s' specified"), opt_offset);
@@ -1280,55 +1316,91 @@ loop_check(const char **spec, const char **type, int *flags,
         return EX_FAIL;
       }
 
+      loopcxt_init(&lc, 0);
+      /* loopcxt_enable_debug(&lc, 1); */
+
+      if (*loopdev && **loopdev)
+	loopcxt_set_device(&lc, *loopdev);	/* use loop=<devname> */
+
       do {
-        if (!*loopdev || !**loopdev)
-	  *loopdev = find_unused_loop_device();
-	if (!*loopdev)
-	  return EX_SYSERR;	/* no more loop devices */
+	int rc;
+
+        if ((!*loopdev || !**loopdev) && loopcxt_find_unused(&lc) == 0)
+	    *loopdev = loopcxt_strdup_device(&lc);
+
+	if (!*loopdev) {
+	  error(_("mount: failed to found free loop device"));
+	  loopcxt_deinit(&lc);
+	  goto err;	/* no more loop devices */
+	}
 	if (verbose)
 	  printf(_("mount: going to use the loop device %s\n"), *loopdev);
 
-	if ((res = set_loop(*loopdev, *loopfile, offset, sizelimit,
-			    opt_encryption, pfd, &loop_opts))) {
-	  if (res == 2) {
-	     /* loop dev has been grabbed by some other process,
-	        try again, if not given explicitly */
-	     if (!opt_loopdev) {
-	       if (verbose)
-	         printf(_("mount: stolen loop=%s ...trying again\n"), *loopdev);
-	       my_free(*loopdev);
-	       *loopdev = NULL;
-	       continue;
-	     }
-	     error(_("mount: stolen loop=%s"), *loopdev);
-	     return EX_FAIL;
+	rc = loopcxt_set_backing_file(&lc, *loopfile);
 
-	  } else {
-	     if (verbose)
-	       printf(_("mount: failed setting up loop device\n"));
-	     if (!opt_loopdev) {
-	       my_free(*loopdev);
-	       *loopdev = NULL;
-	     }
-	     return EX_FAIL;
-	  }
+	if (!rc && offset)
+	  rc = loopcxt_set_offset(&lc, offset);
+	if (!rc && sizelimit)
+	  rc = loopcxt_set_sizelimit(&lc, sizelimit);
+	if (!rc)
+	  loopcxt_set_flags(&lc, loop_opts);
+
+	if (rc) {
+	   error(_("mount: %s: failed to set loopdev attributes"), *loopdev);
+	   loopcxt_deinit(&lc);
+	   goto err;
 	}
+
+	/* setup the device */
+	rc = loopcxt_setup_device(&lc);
+	if (!rc)
+	  break;	/* success */
+
+	if (rc != -EBUSY) {
+	  if (verbose)
+	    printf(_("mount: failed setting up loop device\n"));
+	  if (!opt_loopdev) {
+	    my_free(*loopdev);
+	    *loopdev = NULL;
+	  }
+	  loopcxt_deinit(&lc);
+	  goto err;
+	}
+
+	if (!opt_loopdev) {
+	  if (verbose)
+	    printf(_("mount: stolen loop=%s ...trying again\n"), *loopdev);
+	    my_free(*loopdev);
+	    *loopdev = NULL;
+	    continue;
+	}
+	error(_("mount: stolen loop=%s"), *loopdev);
+	loopcxt_deinit(&lc);
+	goto err;
+
       } while (!*loopdev);
 
       if (verbose > 1)
 	printf(_("mount: setup loop device successfully\n"));
       *spec = *loopdev;
 
-      if (loop_opts & SETLOOP_RDONLY)
+      if (loopcxt_is_readonly(&lc))
         *flags |= MS_RDONLY;
 
-      if (loop_opts & SETLOOP_AUTOCLEAR)
+      if (loopcxt_is_autoclear(&lc))
         /* Prevent recording loop dev in mtab for cleanup on umount */
         *loop = 0;
+
+      /* We have to keep the device open until mount(2), otherwise it will
+       * be auto-cleared by kernel (because LO_FLAGS_AUTOCLEAR) */
+      loopcxt_set_fd(&lc, -1, 0);
+      loopcxt_deinit(&lc);
     }
   }
 
   return 0;
+err:
+  return EX_FAIL;
 }
 
 
@@ -1471,8 +1543,7 @@ cdrom_setspeed(const char *spec) {
 			    _("mount: cannot open %s for setting speed"),
 			    spec);
 		if (ioctl(cdrom, CDROM_SELECT_SPEED, speed) < 0)
-			die(EX_FAIL, _("mount: cannot set speed: %s"),
-			    strerror(errno));
+			die(EX_FAIL, _("mount: cannot set speed: %m"));
 		close(cdrom);
 	}
 }
@@ -1623,7 +1694,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   }
 
 #ifdef HAVE_LIBMOUNT_MOUNT
-  mtab_opts = fix_opts_string(flags & ~MS_NOMTAB, extra_opts, user);
+  mtab_opts = fix_opts_string(flags & ~MS_NOMTAB, extra_opts, user, 0);
   mtab_flags = flags;
 
   if (fake)
@@ -1667,7 +1738,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   }
 
   if (fake || mnt5_res == 0) {
-      char *mo = fix_opts_string (flags & ~MS_NOMTAB, extra_opts, user);
+      char *mo = fix_opts_string (flags & ~MS_NOMTAB, extra_opts, user, 0);
       const char *tp = types ? types : "unknown";
 
       /* Mount succeeded, report this (if verbose) and write mtab entry.  */
@@ -1695,7 +1766,7 @@ try_mount_one (const char *spec0, const char *node0, const char *types0,
   mnt_err = errno;
 
   if (loop)
-	del_loop(spec);
+	loopdev_delete(spec);
 
   block_signals (SIG_UNBLOCK);
 
@@ -1980,7 +2051,7 @@ is_existing_file (const char *s) {
 static int
 mount_one (const char *spec, const char *node, const char *types,
 	   const char *fstabopts, char *cmdlineopts, int freq, int pass) {
-	const char *nspec;
+	const char *nspec = NULL;
 	char *opts;
 
 	/* Substitute values in opts, if required */
@@ -2010,7 +2081,8 @@ mount_one (const char *spec, const char *node, const char *types,
 			      strncmp(types, "nfs", 3) &&
 			      strncmp(types, "cifs", 4) &&
 			      strncmp(types, "smbfs", 5))) {
-		nspec = spec_to_devname(spec);
+		if (!is_pseudo_fs(types))
+			nspec = spec_to_devname(spec);
 		if (nspec)
 			spec = nspec;
 	}
@@ -2020,11 +2092,15 @@ mount_one (const char *spec, const char *node, const char *types,
 
 #ifdef HAVE_LIBMOUNT_MOUNT
 static struct libmnt_table *minfo;	/* parsed mountinfo file */
-#endif
 
 /* Check if an fsname/dir pair was already in the old mtab.  */
 static int
 mounted (const char *spec0, const char *node0, struct mntentchn *fstab_mc) {
+#else
+static int
+mounted (const char *spec0, const char *node0,
+	 struct mntentchn *fstab_mc __attribute__((__unused__))) {
+#endif
 	struct mntentchn *mc, *mc0;
 	const char *spec, *node;
 	int ret = 0;

@@ -370,13 +370,28 @@ check_mount(void)
 	return 1;
 }
 
+#ifdef HAVE_LIBBLKID
+static blkid_probe
+new_prober(int fd)
+{
+	blkid_probe pr = blkid_new_probe();
+	if (!pr)
+		errx(EXIT_FAILURE, _("unable to alloc new libblkid probe"));
+	if (blkid_probe_set_device(pr, fd, 0, 0))
+		errx(EXIT_FAILURE, _("unable to assign device to libblkid probe"));
+	return pr;
+}
+#endif
+
 static void
-zap_bootbits(int fd, const char *devname, int force, int is_blkdev)
+wipe_device(int fd, const char *devname, int force, int is_blkdev)
 {
 	char *type = NULL;
 	int whole = 0;
 	int zap = 1;
-
+#ifdef HAVE_LIBBLKID
+	blkid_probe pr = NULL;
+#endif
 	if (!force) {
 		if (lseek(fd, 0, SEEK_SET) != 0)
 			errx(EXIT_FAILURE, _("unable to rewind swap-device"));
@@ -388,23 +403,17 @@ zap_bootbits(int fd, const char *devname, int force, int is_blkdev)
 			zap = 0;
 		} else {
 #ifdef HAVE_LIBBLKID
-			blkid_probe pr = blkid_new_probe();
-			if (!pr)
-				errx(EXIT_FAILURE, _("unable to alloc new libblkid probe"));
-			if (blkid_probe_set_device(pr, fd, 0, 0))
-				errx(EXIT_FAILURE, _("unable to assign device to libblkid probe"));
-
+			pr = new_prober(fd);
 			blkid_probe_enable_partitions(pr, 1);
 			blkid_probe_enable_superblocks(pr, 0);
 
-			if (blkid_do_fullprobe(pr) == 0)
-				blkid_probe_lookup_value(pr, "PTTYPE",
-						(const char **) &type, NULL);
-			if (type) {
+			if (blkid_do_fullprobe(pr) == 0 &&
+			    blkid_probe_lookup_value(pr, "PTTYPE",
+					(const char **) &type, NULL) == 0 &&
+			    type) {
 				type = xstrdup(type);
 				zap = 0;
 			}
-			blkid_free_probe(pr);
 #else
 			/* don't zap if compiled without libblkid */
 			zap = 0;
@@ -413,6 +422,9 @@ zap_bootbits(int fd, const char *devname, int force, int is_blkdev)
 	}
 
 	if (zap) {
+		/*
+		 * Wipe boodbits
+		 */
 		char buf[1024];
 
 		if (lseek(fd, 0, SEEK_SET) != 0)
@@ -421,18 +433,34 @@ zap_bootbits(int fd, const char *devname, int force, int is_blkdev)
 		memset(buf, 0, sizeof(buf));
 		if (write_all(fd, buf, sizeof(buf)))
 			errx(EXIT_FAILURE, _("unable to erase bootbits sectors"));
-		return;
-	}
+#ifdef HAVE_LIBBLKID
+		/*
+		 * Wipe rest of the device
+		 */
+		if (!pr)
+			pr = new_prober(fd);
 
-	warnx(_("%s: warning: don't erase bootbits sectors"),
-		devname);
-	if (type)
-		fprintf(stderr, _("        (%s partition table detected). "), type);
-	else if (whole)
-		fprintf(stderr, _("        on whole disk. "));
-	else
-		fprintf(stderr, _("        (compiled without libblkid). "));
-	fprintf(stderr, "Use -f to force.\n");
+		blkid_probe_enable_superblocks(pr, 1);
+		blkid_probe_enable_partitions(pr, 0);
+		blkid_probe_set_superblocks_flags(pr, BLKID_SUBLKS_MAGIC);
+
+		while (blkid_do_probe(pr) == 0)
+			blkid_do_wipe(pr, 0);
+#endif
+	} else {
+		warnx(_("%s: warning: don't erase bootbits sectors"),
+			devname);
+		if (type)
+			fprintf(stderr, _("        (%s partition table detected). "), type);
+		else if (whole)
+			fprintf(stderr, _("        on whole disk. "));
+		else
+			fprintf(stderr, _("        (compiled without libblkid). "));
+		fprintf(stderr, "Use -f to force.\n");
+	}
+#ifdef HAVE_LIBBLKID
+	blkid_free_probe(pr);
+#endif
 }
 
 int
@@ -605,7 +633,7 @@ main(int argc, char **argv) {
 	if (check)
 		check_blocks();
 
-	zap_bootbits(DEV, device_name, force, S_ISBLK(statbuf.st_mode));
+	wipe_device(DEV, device_name, force, S_ISBLK(statbuf.st_mode));
 
 	hdr = (struct swap_header_v1_2 *) signature_page;
 	hdr->version = 1;

@@ -13,6 +13,22 @@
 #include <mntent.h>	// !!TB
 #endif
 
+/* btn_XXX_gpio, led_XXX_gpio */
+#define GPIO_ACTIVE_LOW 0x1000
+#define GPIO_BLINK_LED	0x2000
+#define GPIO_PIN_MASK	0x00FF
+
+#define GPIO_DIR_IN	0
+#define GPIO_DIR_OUT	1
+
+#ifdef RT4GAC55U
+#define DEF_SECOND_WANIF	"usb"
+#else
+#define DEF_SECOND_WANIF	"none"
+#endif
+
+#define ACTION_LOCK		"/var/lock/action"
+
 #ifdef RTCONFIG_PUSH_EMAIL
 //#define logmessage logmessage_push
 #define logmessage logmessage_normal	//tmp
@@ -56,6 +72,7 @@ extern const char *rt_swpjverno;
 #endif
 
 #define ASUS_STOP_COMMIT	"asus_stop_commit"
+#define LED_CTRL_HIPRIO 	"LED_CTRL_HIPRIO"
 
 #ifdef RTCONFIG_IPV6
 enum {
@@ -137,6 +154,9 @@ extern const char *ipv6_gateway_address(void);
 #define ipv6_enabled()	(0)
 #endif
 extern void notice_set(const char *path, const char *format, ...);
+#if defined(RTAC1200HP)
+extern void led_5g_onoff(void);
+#endif
 extern void set_action(int a);
 extern int check_action(void);
 extern int wait_action_idle(int n);
@@ -208,6 +228,10 @@ enum {
 	MODEL_RTAC52U,
 	MODEL_RTAC51U,
 	MODEL_RTN54U,
+	MODEL_RTN56UV2,
+	MODEL_RTAC1200HP,
+	MODEL_RTAC55U,
+	MODEL_RT4GAC55U,
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
 	MODEL_RTN65U,
@@ -343,39 +367,55 @@ extern int f_wait_notexists(const char *name, int max);
 #define BTN_WIFI_TOG			8
 #define BTN_TURBO			9
 #define BTN_LED				0xA
+#define BTN_LTE				11
 
-#define LED_POWER			0
-#define LED_USB				1
-#define LED_WPS				2
-#define FAN				3
-#define HAVE_FAN			4
-#define LED_LAN				5
-#define LED_WAN				6
-#ifdef RTCONFIG_LED_ALL
-#define LED_ALL				0xFE
-#endif
-#define LED_2G				7
-#define LED_5G				8
-#define LED_USB3			9
+enum led_id {
+	LED_POWER = 0,
+	LED_USB,
+	LED_WPS,
+	FAN,
+	HAVE_FAN,
+	LED_LAN,
+	LED_WAN,
+	LED_2G,
+	LED_5G,
+	LED_USB3,
 #ifdef RTCONFIG_LAN4WAN_LED
-#define LED_LAN1        10
-#define LED_LAN2        11
-#define LED_LAN3        12
-#define LED_LAN4        13
+	LED_LAN1,
+	LED_LAN2,
+	LED_LAN3,
+	LED_LAN4,
 #endif
-#define LED_TURBO			14
+	LED_TURBO,
+	LED_WAN_RED,
 #ifdef RTCONFIG_QTN
-#define BTN_QTN_RESET			15
+	BTN_QTN_RESET,	/* QTN platform uses led_control() to control this gpio. */
 #endif
-#define LED_SWITCH			20
-#define LED_5G_FORCED			21	// Will handle ledbh & nvram flag
+#ifdef RTCONFIG_LED_ALL
+	LED_ALL,
+#endif
+#ifdef RT4GAC55U
+	LED_LTE,
+	LED_SIG1,
+	LED_SIG2,
+	LED_SIG3,
+#endif
+	LED_SWITCH,
+	LED_5G_FORCED,	/* Will handle ledbh & nvram flag */
 
-#define	LED_OFF				0
-#define	LED_ON				1
-#define FAN_OFF				2
-#define FAN_ON				3
-#define HAVE_FAN_OFF			4
-#define	HAVE_FAN_ON			5
+	LED_ID_MAX,	/* last item */
+};
+
+enum led_fan_mode_id {
+	LED_OFF = 0,
+	LED_ON,
+	FAN_OFF,
+	FAN_ON,
+	HAVE_FAN_OFF,
+	HAVE_FAN_ON,
+
+	LED_FAN_MODE_MAX,	/* last item */
+};
 
 static inline int have_usb3_led(int model)
 {
@@ -384,6 +424,9 @@ static inline int have_usb3_led(int model)
 		case MODEL_RTAC56U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC68U:
+#ifndef RTCONFIG_ETRON_XHCI_USB3_LED
+		case MODEL_RTAC55U:
+#endif
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC3200:
 			return 1;
@@ -422,6 +465,7 @@ struct ifaces_stats {
 	struct if_stats iface[IFACE_MAIN_IF_MAX];
 	unsigned long rx_shift, tx_shift;
 };
+
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(ary) (sizeof(ary) / sizeof((ary)[0]))
@@ -477,6 +521,7 @@ static inline int get_wps_multiband(void)
 static inline int get_radio_band(int band)
 {
 #if defined(RTCONFIG_WPSMULTIBAND)
+	(void) band;
 	return -1;
 #else
 	return band;
@@ -524,10 +569,29 @@ static inline int get_primaryif_dualwan_unit(void)
 }
 #endif
 
+#if defined RTCONFIG_RALINK
+static inline int guest_wlif(char *ifname)
+{
+	return strncmp(ifname, "ra", 2) == 0 && !strchr(ifname, '0');
+}
+#elif defined(RTCONFIG_QCA)
+static inline int guest_wlif(char *ifname)
+{
+	return strncmp(ifname, "ath00",5)==0 || strncmp(ifname, "ath10",5)==0;
+}
+#else
+/* Broadcom platform. */
+static inline int guest_wlif(char *ifname)
+{
+	return strncmp(ifname, "wl", 2) == 0 && strchr(ifname, '.');
+}
+#endif
+
 extern int init_gpio(void);
 extern int set_pwr_usb(int boolOn);
 extern int button_pressed(int which);
 extern int led_control(int which, int mode);
+extern int led_control_atomic(int which, int mode);
 
 /* api-*.c */
 extern uint32_t gpio_dir(uint32_t gpio, int dir);
@@ -538,7 +602,7 @@ extern uint32_t get_phy_speed(uint32_t portmask);
 extern int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx);
 
 /* sysdeps/ralink/ *.c */
-#ifdef RTCONFIG_RALINK
+#if defined(RTCONFIG_RALINK)
 extern int rtkswitch_ioctl(int val, int val2);
 extern unsigned int rtkswitch_wanPort_phyStatus(int wan_unit);
 extern unsigned int rtkswitch_lanPorts_phyStatus(void);
@@ -558,8 +622,28 @@ extern int config_rtkswitch(int argc, char *argv[]);
 extern int get_channel_list_via_driver(int unit, char *buffer, int len);
 extern int get_channel_list_via_country(int unit, const char *country_code, char *buffer, int len);
 extern int __mt7620_wan_bytecount(int unit, unsigned long *tx, unsigned long *rx);
+#elif defined(RTCONFIG_QCA)
+extern char *wif_to_vif(char *wif);
+extern int config_rtkswitch(int argc, char *argv[]);
+extern unsigned int rtkswitch_wanPort_phyStatus(int wan_unit);
+extern unsigned int rtkswitch_lanPorts_phyStatus(void);
+extern unsigned int rtkswitch_WanPort_phySpeed(void);
+extern void ATE_qca8337_port_status(void);
 #else
 #define wif_to_vif(wif) (wif)
+#endif
+
+#if defined(RTCONFIG_QCA)
+extern unsigned int rtkswitch_wanPort_phyStatus(int wan_unit);
+extern unsigned int rtkswitch_lanPorts_phyStatus(void);
+extern unsigned int rtkswitch_WanPort_phySpeed(void);
+extern int rtkswitch_WanPort_linkUp(void);
+extern int rtkswitch_WanPort_linkDown(void);
+extern int rtkswitch_LanPort_linkUp(void);
+extern int rtkswitch_LanPort_linkDown(void);
+extern int rtkswitch_AllPort_linkUp(void);
+extern int rtkswitch_AllPort_linkDown(void);
+extern int rtkswitch_Reset_Storm_Control(void);
 #endif
 
 // base64.c
@@ -569,6 +653,7 @@ extern int base64_encoded_len(int len);
 extern int base64_decoded_len(int len);										// maximum possible, not actual
 
 /* boardapi.c */
+extern int extract_gpio_pin(const char *gpio);
 extern int lanport_status(void);
 
 /* discover.c */
@@ -624,6 +709,13 @@ extern const char *ipv6_gateway_address(void);
 extern char *get_parsed_crt(const char *name, char *buf);
 extern int set_crt_parsed(const char *name, char *file_path);
 #endif
+extern int get_wifi_unit(char *wif);
+extern int is_psta(int unit);
+extern int is_psr(int unit);
+extern int psta_exist();
+extern int psta_exist_except(int unit);
+extern int psr_exist_except(int unit);
+extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
 
 /* mt7620.c */
 extern void ATE_mt7620_esw_port_status(void);
@@ -670,13 +762,28 @@ extern void add_wan_phy(char *phy);
 /* semaphore.c */
 extern void init_spinlock(void);
 
-/* misc.c */
-extern int is_psta(int unit);
-extern int is_psr(int unit);
-extern int psta_exist();
-extern int psta_exist_except(int unit);
-extern int psr_exist_except(int unit);
-extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
+#if defined(RTCONFIG_WPS_LED)
+static inline int wps_led_control(int onoff)
+{
+	return led_control(LED_WPS, onoff);
+}
+
+static inline int __wps_led_control(int onoff)
+{
+	return led_control(LED_WPS, onoff);
+}
+#else
+static inline int wps_led_control(int onoff)
+{
+	if (nvram_get_int("led_pwr_gpio") != nvram_get_int("led_wps_gpio"))
+		return led_control(LED_WPS, onoff);
+	else
+		return led_control(LED_POWER, onoff);
+}
+
+/* If individual WPS LED absents, don't do anything. */
+static inline int __wps_led_control(int onoff) { return 0; }
+#endif
 
 enum {
 	YADNS_DISABLED = -1,
@@ -692,4 +799,138 @@ enum {
 int get_yandex_dns(int family, int mode, char **server, int max_count);
 #endif
 
+#if defined(RTCONFIG_WANRED_LED)
+static inline int wan_red_led_control(int onoff)
+{
+	return led_control(LED_WAN_RED, onoff);
+}
+#else
+static inline int wan_red_led_control(int onoff) { return 0; }
 #endif
+
+/* bled.c */
+#if defined(RTCONFIG_BLINK_LED)
+extern int __config_netdev_bled(const char *led_gpio, const char *ifname, unsigned int min_blink_speed, unsigned int interval);
+extern int config_netdev_bled(const char *led_gpio, const char *ifname);
+extern int start_bled(unsigned int gpio_nr);
+extern int stop_bled(unsigned int gpio_nr);
+extern int del_bled(unsigned int gpio_nr);
+extern int append_netdev_bled_if(const char *led_gpio, const char *ifname);
+extern int remove_netdev_bled_if(const char *led_gpio, const char *ifname);
+extern int __config_swports_bled(const char *led_gpio, unsigned int port_mask, unsigned int min_blink_speed, unsigned int interval, int sleep);
+extern int update_swports_bled(const char *led_gpio, unsigned int port_mask);
+extern int __config_usbbus_bled(const char *led_gpio, char *bus_list, unsigned int min_blink_speed, unsigned int interval);
+extern int is_swports_bled(const char *led_gpio);
+
+static inline void enable_wifi_bled(char *ifname)
+{
+	int unit;
+	int v = LED_ON;
+
+	if (!ifname || *ifname == '\0')
+		return;
+	unit = get_wifi_unit(ifname);
+	if (unit < 0 || unit > 1) {
+		return;
+	}
+
+	if (!guest_wlif(ifname)) {
+#if defined(RTCONFIG_QCA)
+		v = LED_OFF;	/* WiFi not ready. Don't turn on WiFi LED here. */		
+#endif
+#if defined(RTAC1200HP)
+		if(!get_radio(1, 0) && unit==1) //*5G WiFi not ready. Don't turn on WiFi GPIO LED . */
+		 	v=LED_OFF;
+#endif		
+		led_control((!unit)? LED_2G:LED_5G, v);
+	} else {
+		append_netdev_bled_if((!unit)? "led_2g_gpio":"led_5g_gpio", ifname);
+	}
+}
+
+static inline void disable_wifi_bled(char *ifname)
+{
+	int unit;
+
+	if (!ifname || *ifname == '\0')
+		return;
+	unit = get_wifi_unit(ifname);
+	if (unit < 0 || unit > 1)
+		return;
+
+	if (!guest_wlif(ifname)) {
+		led_control((!unit)? LED_2G:LED_5G, LED_OFF);
+	} else {
+		remove_netdev_bled_if((!unit)? "led_2g_gpio":"led_5g_gpio", ifname);
+	}
+}
+
+static inline int config_swports_bled(const char *led_gpio, unsigned int port_mask)
+{
+	unsigned int min_blink_speed = 10;	/* KB/s */
+	unsigned int interval = 100;		/* ms */
+
+	return __config_swports_bled(led_gpio, port_mask, min_blink_speed, interval, 0);
+}
+
+static inline int config_swports_bled_sleep(const char *led_gpio, unsigned int port_mask)
+{
+	unsigned int min_blink_speed = 10;	/* KB/s */
+	unsigned int interval = 100;		/* ms */
+
+	return __config_swports_bled(led_gpio, port_mask, min_blink_speed, interval, 1);
+}
+
+static inline int config_usbbus_bled(const char *led_gpio, char *bus_list)
+{
+	unsigned int min_blink_speed = 50;	/* KB/s */
+	unsigned int interval = 100;		/* ms */
+
+	return __config_usbbus_bled(led_gpio, bus_list, min_blink_speed, interval);
+}
+#else	/* !RTCONFIG_BLINK_LED */
+static inline int __config_netdev_bled(const char *led_gpio, const char *ifname, unsigned int min_blink_speed, unsigned int interval) { return 0; }
+static inline int config_netdev_bled(const char *led_gpio, const char *ifname) { return 0; }
+static inline int start_bled(unsigned int gpio_nr) { return 0; }
+static inline int stop_bled(unsigned int gpio_nr) { return 0; }
+static inline int chg_bled_state(unsigned int gpio_nr) { return 0; }
+static inline int del_bled(unsigned int gpio_nr) { return 0; }
+static inline int append_netdev_bled_if(const char *led_gpio, const char *ifname) { return 0; }
+static inline int remove_netdev_bled_if(const char *led_gpio, const char *ifname) { return 0; }
+static inline int __config_swports_bled(const char *led_gpio, unsigned int port_mask, unsigned int min_blink_speed, unsigned int interval, int sleep) { return 0; }
+static inline int update_swports_bled(const char *led_gpio, unsigned int port_mask) { return 0; }
+static inline int __config_usbbus_bled(const char *led_gpio, char *bus_list, unsigned int min_blink_speed, unsigned int interval) { return 0; }
+
+static inline void enable_wifi_bled(char *ifname) { }
+static inline void disable_wifi_bled(char *ifname) { }
+static inline int config_swports_bled(const char *led_gpio, unsigned int port_mask) { return 0; }
+static inline int config_swports_bled_sleep(const char *led_gpio, unsigned int port_mask) { return 0; }
+static inline int config_usbbus_bled(const char *led_gpio, char *bus_list) { return 0; }
+static inline int is_swports_bled(const char *led_gpio) { return 0; }
+
+#endif	/* RTCONFIG_BLINK_LED */
+
+#if defined(RTCONFIG_USB)
+static inline int is_usb3_port(char *usb_node)
+{
+	if (!usb_node)
+		return 0;
+
+	if (strstr(usb_node, get_usb_xhci_port(0)) || strstr(usb_node, get_usb_xhci_port(1)))
+		return 1;
+
+#if defined(RTAC55U)
+	/* RT-AC55U equips external Etron XHCI host and enables QCA9557 internal EHCI host.
+	 * To make sure port1 maps to physical USB3 port and port2 maps to physical USB2 port respectively,
+	 * one of xhci usb bus is put to first item of ehci_ports whether USB2-only mode is enabled or not.
+	 * Thus, we have to check first item of ehci_ports here.
+	 */
+	if (strstr(usb_node, get_usb_ehci_port(0)))
+		return 1;
+#endif
+
+	return 0;
+}
+#endif
+
+#endif	/* !__SHARED_H__ */

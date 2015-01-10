@@ -6,6 +6,7 @@
 #include <sys/types.h>
 
 extern int strtosize(const char *str, uintmax_t *res);
+extern double strtod_or_err(const char *str, const char *errmesg);
 extern long strtol_or_err(const char *str, const char *errmesg);
 extern long long strtoll_or_err(const char *str, const char *errmesg);
 extern unsigned long strtoul_or_err(const char *str, const char *errmesg);
@@ -43,5 +44,9 @@ extern int string_to_idarray(const char *list, int ary[], size_t arysz,
 			   int (name2id)(const char *, size_t));
 extern int string_to_bitarray(const char *list, char *ary,
 			    int (*name2bit)(const char *, size_t));
+
+extern int parse_range(const char *str, int *lower, int *upper, int def);
+
+extern int streq_except_trailing_slash(const char *s1, const char *s2);
 
 #endif

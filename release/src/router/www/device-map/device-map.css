@@ -37,7 +37,7 @@ body {
 
 /*
 Unknown			0 
-Windows     	1
+Windows			1
 Router			2
 AP				3
 NAS				4
@@ -54,81 +54,85 @@ Macintosh		14
 ROG				15
 PlayStation4	16
 XBoxOne			17
+Printer			18
 */
 .type0{
 	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:57% 102% !important;
+	background-position:52% -1.5% !important;
 }
 .type1{
-	background-position:52% 58.3% !important;
+	background-position:52% 58.15% !important;
 }
 .type2{
-	background-position:52% 0.75% !important;
+	background-position:52% -0.15% !important;
 }
 .type3{
-	background-position:52% 0.85% !important;
+	/* Same as type 2 */
+	background-position:52% -0.15% !important;
 }
 .type4{
-	background-position:52% 7.15% !important;
+	background-position:52% 6.35% !important;
 }
 .type5{
-	background-position:52% 13.55% !important;
+	background-position:52% 12.85% !important;
 }
 .type6{
-	/* TYPE 13 */
-	background-position:52% 45.55% !important;
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:52% -1.5% !important;
 }
 .type7{
-	background-position:52% 77.5% !important;
-}
-.type8{
-	background-position:52% 90.25% !important;
-}
-.type9{
-	background-position:52% 19.95% !important;
-}
-.type10{
-	background-position:52% 26.35% !important;
-}
-.type11{
-	background-position:52% 32.75% !important;
-}
-.type12{
-	background-position:52% 39.15% !important;
-}
-.type13{
-	background-position:52% 45.55% !important;
-}
-.type14{
-	background-position:52% 51.9% !important;
-}
-.type15{
-	background-position:52% 64.68% !important;
-}
-.type16{
 	background-position:52% 71.1% !important;
 }
+.type8{
+	background-position:52% 90.55% !important;
+}
+.type9{
+	background-position:52% 19.3% !important;
+}
+.type10{
+	background-position:52% 25.75% !important;
+}
+.type11{
+	background-position:52% 32.25% !important;
+}
+.type12{
+	background-position:52% 38.7% !important;
+}
+.type13{
+	background-position:52% 45.2% !important;
+}
+.type14{
+	background-position:52% 51.7% !important;
+}
+.type15{
+	background-position:52% 64.65% !important;
+}
+.type16{
+	background-position:52% 77.6% !important;
+}
 .type17{
-	background-position:52% 83.85% !important;
+	background-position:52% 84.05% !important;
 }
 .type18{
-	background-position:52% 96.68% !important;
+	background-position:52% 97.05% !important;
 }
 
 .type0:hover{
 	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:57% -3% !important;
+	background-position:52% 68% !important;
 }
-.type3:hover{
-	background-position:52% 4.20% !important;
+.type6:hover{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:52% 68% !important;
 }
 
 .type0.clicked{
 	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:57% -3% !important;
+	background-position:52% 68% !important;
 }
-.type3.clicked{
-	background-position:52% 4.2% !important;
+.type6.clicked{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:52% 68% !important;
 }
 
 .clientBg{

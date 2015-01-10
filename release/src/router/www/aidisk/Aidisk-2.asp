@@ -16,18 +16,17 @@ var next_page = "";
 var dummyShareway = 0;
 
 function initial(){
-	//parent.show_help_iframe(2);
+	
 	parent.hideLoading();
 	
 	parent.restore_help_td();	
-	//parent.openHint(15, 2);
+	
 	
 	parent.$("dummyShareway").value = "<% nvram_get("dummyShareway"); %>";
 	if(parent.$("dummyShareway").value == "")
-		parent.$("dummyShareway").value = 0;
+			parent.$("dummyShareway").value = 0;
 
-	//showTextinWizard(parent.$("dummyShareway").value);
-	showTextinWizard(1);
+	showTextinWizard(2);
 }
 
 var lan_hwaddr_array = '<% nvram_get("lan_hwaddr"); %>'.split(':');
@@ -48,8 +47,8 @@ function showTextinWizard(flag){
 	else if(dummyShareway == 1){
 		parent.$("dummyShareway").value = dummyShareway;
 		
-		document.getElementsByName('dummyoption')[0].focus();
-		document.getElementsByName('dummyoption')[0].checked = true;
+		document.getElementsByName('dummyoption')[1].focus();
+		document.getElementsByName('dummyoption')[1].checked = true;
 		
 		showtext($("user1"), '<% nvram_get("http_username"); %>');
 		
@@ -64,8 +63,8 @@ function showTextinWizard(flag){
 	else if(dummyShareway == 2){
 		parent.$("dummyShareway").value = dummyShareway;
 		
-		document.getElementsByName('dummyoption')[1].focus();
-		document.getElementsByName('dummyoption')[1].checked = true;
+		document.getElementsByName('dummyoption')[0].focus();
+		document.getElementsByName('dummyoption')[0].checked = true;
 		
 		showtext($("user1"), '<% nvram_get("http_username"); %>');
 		
@@ -205,11 +204,11 @@ function checkPasswdValid(obj){
     <tr>
       <td valign="top">
 						<div style="margin-left:20px;">
-            <br/><p><input type="radio" id="d2" name="dummyoption" value="1" width="10" onclick="showTextinWizard(this.value);"/> 
-            				<label for="d2"><#Step2_method2#></label>
-            		</p>
             <br/><p><input type="radio" id="d3" name="dummyoption" value="2" width="10" onclick="showTextinWizard(this.value);"/> 
             				<label for="d3"><#Step2_method3#></label>
+            		</p>
+            <br/><p><input type="radio" id="d2" name="dummyoption" value="1" width="10" onclick="showTextinWizard(this.value);"/> 
+            				<label for="d2"><#Step2_method2#></label>
             		</p>
             <br/><p><input type="radio" id="d1" name="dummyoption" value="0" width="10" onclick="showTextinWizard(this.value);"/> 
             				<label for="d1"><#Step2_method1#></label>

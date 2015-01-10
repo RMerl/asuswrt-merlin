@@ -2,12 +2,19 @@
 #include <shutils.h>
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #endif
 #endif
+#ifdef RTCONFIG_QCA
+#include <qca.h>
+#endif
 #include "ate.h"
+#ifdef RT4GAC55U
+#include <at_cmd.h>
+#endif
+
 
 #define MULTICAST_BIT  0x0001
 #define UNIQUE_OUI_BIT 0x0002
@@ -89,7 +96,7 @@ isValidRegrev(char *regrev) {
 
 	len = strlen(regrev);
 
-	if( len==1 || len==2 ) {
+	if( len==1 || len==2 || len ==3) {
 		while(i<len) { //0~9
 			if( (*c>0x2F && *c<0x3A) ) {
 				i++;
@@ -346,6 +353,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #ifdef BCM_BSD
 			stop_bsd();
 #endif
+#ifdef BCM_SSD
+			stop_ssd();
+#endif
 #endif
 			stop_upnp();
 			stop_lltd();
@@ -363,6 +373,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			stop_u2ec();
 #endif
 #endif
+			platform_start_ate_mode();
 		}
 		else
 			puts("ATE_ERROR");
@@ -370,6 +381,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 	else if (!strcmp(command, "Set_AllLedOn")) {
 		return setAllLedOn();
+	}
+	else if (!strcmp(command, "Set_AllLedOn2")) {
+		return setAllLedOn2();
 	}
 	else if (!strcmp(command, "Set_AllLedOff")) {
 		return setAllLedOff();
@@ -462,6 +476,10 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
 		}
+#ifdef RTCONFIG_QCA
+		if ((value2==NULL) || strcmp(value2,"noctl"))
+			setCTL(value);
+#endif
 		return 0;
 	}
 #endif /* RTCONFIG_NEW_REGULATION_DOMAIN */
@@ -591,6 +609,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	else if (!strcmp(command, "Set_RestoreDefault")) {
 		nvram_set("restore_defaults", "1");
 		ResetDefault();
+		nvram_set(ASUS_STOP_COMMIT, "1");
 		return 0;
 	}
 	else if (!strcmp(command, "Set_Eject")) {
@@ -647,6 +666,30 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
+	else if (!strcmp(command, "Set_WanToLan")) {
+	   	set_wantolan();
+		modprobe_r("hw_nat");
+		modprobe("hw_nat");
+		system("killall -9 wanduck");
+		system("killall -9 udhcpc");
+		return 0;
+	}   
+#if defined(RTAC1200HP) 
+        else if (!strcmp(command, "Set_FixChannel")) {
+	   	 FWrite("1", OFFSET_FIX_CHANNEL, 1);	
+                 puts("1");
+                 return 0;
+         }
+        else if (!strcmp(command, "Set_FreeChannel")) {
+	   	 FWrite("0", OFFSET_FIX_CHANNEL, 1);	
+		 nvram_set("wl0_channel","0");
+		 nvram_set("wl1_channel","0");
+		 nvram_set("lan_stp","1");
+		 nvram_commit();
+                 puts("1");
+                 return 0;
+         }
+#endif
 #endif
 	else if (!strcmp(command, "Set_XSetting")) {
 		if(value == NULL || strcmp(value, "1")) {
@@ -678,6 +721,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts(nvram_safe_get("btn_ez"));
 		return 0;
 	}
+#ifdef RT4GAC55U
+	else if (!strcmp(command, "Get_LteButtonStatus")) {
+		puts(nvram_safe_get("btn_lte"));
+		return 0;
+	}
+#endif
 #ifdef RTCONFIG_WIFI_TOG_BTN
 	else if (!strcmp(command, "Get_WirelessButtonStatus")) {
 		puts(nvram_safe_get("btn_wifi_toggle"));
@@ -896,7 +945,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #ifdef RTCONFIG_RALINK
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UV2)
 	else if (!strcmp(command, "Ra_FWRITE")) {
 		return FWRITE(value, value2);
 	}
@@ -918,7 +967,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif
 #endif
-#ifdef RTCONFIG_DSL //For HW WiFi On/Off button check
+#ifdef RTCONFIG_WIRELESS_SWITCH
 	else if (!strcmp(command, "Get_WifiSwStatus")) {
 		puts(nvram_safe_get("btn_wifi_sw"));
 		return 0;
@@ -1063,6 +1112,174 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
+#ifdef RTCONFIG_QCA
+/*
+	else if (!strcmp(command, "Set_ART2")) {
+		// temp solution
+		system("killall rstats");
+		system("killall udhcpc");
+		system("killall wanduck");
+		system("killall networkmap");
+		system("killall -9 hostapd");
+		system("ifconfig ath0 down");
+		system("ifconfig ath1 down");
+		system("killall -9 hostapd");
+		system("brctl delif br0 ath0");
+		system("brctl delif br0 ath1");
+		system("wlanconfig ath0 destroy");
+		system("wlanconfig ath1 destroy");
+		system("ifconfig wifi0 down");
+		system("ifconfig wifi1 down");
+		modprobe_r("umac");
+		modprobe_r("ath_dfs");
+		modprobe_r("ath_dev");
+		modprobe_r("ath_rate_atheros");
+		modprobe_r("ath_spectral");
+		modprobe_r("ath_hal");
+		modprobe_r("adf");
+		modprobe_r("asf");
+		modprobe("art");
+		system("nart.out -port 2390 -console &");
+		system("nart.out -port 2391 -console &");
+		return 0;
+	}
+*/
+	else if (!strncmp(command, "Get_EEPROM_", 11)) {
+		unsigned char buffer[2560];
+		unsigned short len;
+		int lret;
+		char *pt;
+		len=sizeof(buffer);
+		pt = (char*) command + 11;
+		if (!strcmp(pt, "2G"))
+			lret=getEEPROM(&buffer[0], &len, pt);
+		else if (!strcmp(pt, "5G"))
+			lret=getEEPROM(&buffer[0], &len, pt);
+		else if (!strcmp(pt, "CAL_2G"))
+			lret=getEEPROM(&buffer[0], &len, pt);
+		else if (!strcmp(pt, "CAL_5G"))
+			lret=getEEPROM(&buffer[0], &len, pt);
+		else {
+			puts("ATE_UNSUPPORT");
+			return EINVAL;
+		}
+		if ( !lret )
+			hexdump(&buffer[0], len);
+		return 0;
+	}
+	else if (!strcmp(command, "Get_CalCompare")) {
+		unsigned char buffer[2560], buffer2[2560];
+		unsigned short len, len2;
+		int lret=0, cret=0;
+		len=sizeof(buffer);
+		len2=sizeof(buffer2);
+		lret+=getEEPROM(&buffer[0], &len, "2G");
+		lret+=getEEPROM(&buffer2[0], &len2, "CAL_2G");
+		if (lret)
+			return EINVAL;
+		if ((len!=len2) || (memcmp(&buffer[0],&buffer2[0],len)!=0)) {
+			puts("2G EEPROM different!");
+			cret++;
+		}
+		len=sizeof(buffer);
+		len2=sizeof(buffer2);
+		lret+=getEEPROM(&buffer[0], &len, "5G");
+		lret+=getEEPROM(&buffer2[0], &len2, "CAL_5G");
+		if (lret)
+			return EINVAL;
+		if ((len!=len2) || (memcmp(&buffer[0],&buffer2[0],len)!=0)) {
+			puts("5G EEPROM different!");
+			cret++;
+		}
+		if (!cret)
+			puts("1");
+		else
+			puts("0");
+		return 0;
+	}
+#ifdef RTCONFIG_ATEUSB3_FORCE
+	else if (!strcmp(command, "Set_ForceUSB3")) {
+		if (setForceU3(value) < 0)
+		{
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
+			return EINVAL;
+		}
+		getForceU3();
+		return 0;
+	}
+	else if (!strcmp(command, "Get_ForceUSB3")) {
+		getForceU3();
+		return 0;
+	}
+#endif
+#endif	/* RTCONFIG_QCA */
+#ifdef RT4GAC55U
+	else if(!strcmp(command, "Get_GobiSimCard")) {
+		char line[128];
+		if (!Gobi_SimCardReady(Gobi_SimCard(line, sizeof(line))))
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		puts("PASS");
+	}
+	else if(!strcmp(command, "Get_GobiIMEI")) {
+		char line[128];
+		const char *IMEI = Gobi_IMEI(line, sizeof(line));
+		if (IMEI == NULL)
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		puts(IMEI);
+	}
+	else if(!strcmp(command, "Get_GobiConnectISP")) {
+		char line[128];
+		const char *ISP = Gobi_ConnectISP(line, sizeof(line));
+		if (ISP == NULL)
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		puts(ISP);
+	}
+	else if(!strcmp(command, "Get_GobiConnectStatus")) {
+		const char *status = Gobi_ConnectStatus_Str(Gobi_ConnectStatus_Int());
+		if (status == NULL)
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		puts(status);
+	}
+	else if(!strcmp(command, "Get_GobiSignal_Percent")) {
+		int percent = Gobi_SignalQuality_Percent(Gobi_SignalQuality_Int());
+		if (percent < 0)
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		printf("%d\n", percent);
+	}
+	else if(!strcmp(command, "Get_GobiSignal_dbm")) {
+		int dbm = Gobi_SignalLevel_Int();
+		if (dbm >= 0)
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		printf("%d dBm\n", dbm);
+	}
+	else if(!strcmp(command, "Get_GobiVersion")) {
+		char line[128];
+		if (Gobi_Version(line, sizeof(line)) == NULL)
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		printf("%s\n", line);
+	}
+#endif	/* RT4GAC55U */
 	else
 	{
 		puts("ATE_UNSUPPORT");

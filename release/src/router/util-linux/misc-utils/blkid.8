@@ -19,8 +19,6 @@ blkid \- locate/print block device attributes
 .RB [ \-dghlv ]
 .RB [ \-c
 .IR file ]
-.RB [ \-w
-.IR file ]
 .RB [ \-o
 .IR format ]
 .in +6
@@ -78,10 +76,9 @@ same meaning as "KiB") or decimal (10^N) suffixes KB, MB, GB, PB and EB.
 .BI \-c " cachefile"
 Read from
 .I cachefile
-instead of reading from the default cache file
-.IR /etc/blkid.tab .
-If you want to start with a clean cache (i.e. don't report devices previously
-scanned but not necessarily available at this time), specify
+instead of reading from the default cache file (see CONFIGURATION FILE section
+for more details).  If you want to start with a clean cache (i.e. don't report
+devices previously scanned but not necessarily available at this time), specify
 .IR /dev/null .
 .TP
 .B \-d
@@ -101,7 +98,7 @@ Display I/O Limits (aka I/O topology) information.  The 'export' output format i
 automatically enabled.  This option can be used together with the \fB-p\fR option.
 .TP
 .B \-l
-Look up only one device that matches the search parameter specified with the
+Look up only one device that matches the search parameter specified with \fB-t\fR.
 .TP
 .B \-k
 List all known filesystems and RAIDs and exit.
@@ -238,17 +235,6 @@ Look up the device that uses this \fIuuid\fR.  For more details see the \fB-L\fR
 .B \-v
 Display version number and exit.
 .TP
-.BI \-w " writecachefile"
-Write the device cache to
-.I writecachefile
-instead of writing it to the default cache file
-.IR /etc/blkid.tab .
-If you don't want to save the cache at all, specify
-.IR /dev/null.
-If not specified, it will be the same file as that given with the
-.B \-c
-option.
-.TP
 .I device
 Display tokens from only the specified device.  It is possible to
 give multiple
@@ -268,6 +254,33 @@ For usage or other errors, an exit code of 4 is returned.
 
 If the ambivalent low-level probing result was detected, an exit code of 8 is
 returned.
+.SH CONFIGURATION FILE
+The standard location of the
+.I /etc/blkid.conf
+config file can be overridden by the environment variable BLKID_CONF.
+The following options control the libblkid library:
+.TP
+.I SEND_UEVENT=<yes|not>
+Sends uevent when
+.I /dev/disk/by-{label,uuid}/
+symlink does not match with LABEL or UUID on the device. Default is "yes".
+.TP
+.I CACHE_FILE=<path>
+Overrides the standard location of the cache file. This setting can be
+overridden by the environment variable BLKID_FILE. Default is
+.I /run/blkid/blkid.tab
+or
+.I /etc/blkid.tab
+on systems without /run direcotry
+.TP
+.I EVALUATE=<methods>
+Defines LABEL and UUID evaluation method(s). Currently, the libblkid library
+supports "udev" and "scan" methods. More than one methods may be specified in
+a comma separated list. Default is "udev,scan". The "udev" method uses udev
+.I /dev/disk/by-*
+symlinks and the "scan" method scans all block devices from the
+.I /proc/partitions
+file.
 .SH AUTHOR
 .B blkid
 was written by Andreas Dilger for libblkid and improved by Theodore Ts'o

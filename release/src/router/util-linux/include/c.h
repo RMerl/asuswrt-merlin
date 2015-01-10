@@ -6,6 +6,7 @@
 #define UTIL_LINUX_C_H
 
 #include <limits.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -33,7 +34,7 @@
 
 /* &a[0] degrades to a pointer: a different type from an array */
 # define __must_be_array(a) \
-	BUILD_BUG_ON_ZERO(__builtin_types_compatible_p(__typeof__(a), __typeof__(&a[0])))
+	UL_BUILD_BUG_ON_ZERO(__builtin_types_compatible_p(__typeof__(a), __typeof__(&a[0])))
 
 # define ignore_result(x) ({ \
 	__typeof__(x) __dummy __attribute__((__unused__)) = (x); (void) __dummy; \
@@ -69,7 +70,7 @@
  * e.g. in a structure initializer (or where-ever else comma expressions
  * aren't permitted).
  */
-#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
+#define UL_BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
 #define BUILD_BUG_ON_NULL(e) ((void *)sizeof(struct { int:-!!(e); }))
 
 #ifndef ARRAY_SIZE
@@ -103,6 +104,14 @@
 	(void) (&_max1 == &_max2);		\
 	_max1 > _max2 ? _max1 : _max2; })
 #endif
+
+#ifndef offsetof
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#endif
+
+#define container_of(ptr, type, member) ({                       \
+	const __typeof__( ((type *)0)->member ) *__mptr = (ptr); \
+	(type *)( (char *)__mptr - offsetof(type,member) );})
 
 #ifndef HAVE_PROGRAM_INVOCATION_SHORT_NAME
 # ifdef HAVE___PROGNAME
@@ -153,7 +162,7 @@ errmsg(char doexit, int excode, char adderr, const char *fmt, ...)
 			fprintf(stderr, ": ");
 	}
 	if (adderr)
-		fprintf(stderr, "%s", strerror(errno));
+		fprintf(stderr, "%m");
 	fprintf(stderr, "\n");
 	if (doexit)
 		exit(excode);
@@ -198,6 +207,7 @@ static inline int dirfd(DIR *d)
 /*
  * Fallback defines for old versions of glibc
  */
+#include <fcntl.h>
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0
 #endif
@@ -208,6 +218,28 @@ static inline int dirfd(DIR *d)
 
 #ifndef IUTF8
 #define IUTF8 0040000
+#endif
+
+/*
+ * Constant strings for usage() functions. For more info see
+ * Documentation/howto-usage-function.txt and sys-utils/arch.c
+ */
+#define USAGE_HEADER     _("\nUsage:\n")
+#define USAGE_OPTIONS    _("\nOptions:\n")
+#define USAGE_SEPARATOR  _("\n")
+#define USAGE_HELP       _(" -h, --help     display this help and exit\n")
+#define USAGE_VERSION    _(" -V, --version  output version information and exit\n")
+#define USAGE_MAN_TAIL(_man)   _("\nFor more details see %s.\n"), _man
+
+#define UTIL_LINUX_VERSION _("%s from %s\n"), program_invocation_short_name, PACKAGE_STRING
+
+/*
+ * scanf modifiers for "strings allocation"
+ */
+#ifdef HAVE_SCANF_MS_MODIFIER
+#define UL_SCNsA	"%ms"
+#elif defined(HAVE_SCANF_AS_MODIFIER)
+#define UL_SCNsA	"%as"
 #endif
 
 #endif /* UTIL_LINUX_C_H */

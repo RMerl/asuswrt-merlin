@@ -61708,3 +61708,11 @@ const struct clm_data_registry clm_data = {
     rate_sets_80m,
     0
 };
+
+#define CLM_MAJOR_VERSION       1
+#define CLM_MINOR_VERSION       0
+
+const struct clm_data_version clm_version = {
+	CLM_MAJOR_VERSION, CLM_MINOR_VERSION,
+};
+

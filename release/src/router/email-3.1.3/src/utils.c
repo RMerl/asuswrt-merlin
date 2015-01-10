@@ -356,6 +356,10 @@ properExit(int sig)
 	}
 	dsbDestroy(global_msg);
 
+	if(sig == ERROR) {
+		system("nvram set fb_state=2");
+	}
+
 	/* Free lists */
 	if (Mopts.attach) {
 		dlDestroy(Mopts.attach);

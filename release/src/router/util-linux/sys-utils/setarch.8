@@ -1,14 +1,14 @@
-.TH SETARCH 8 "June 2007" "util-linux" "System Administration"
+.TH SETARCH 8 "September 2011" "util-linux" "System Administration"
 .SH NAME
 setarch \- change reported architecture in new program environment and set personality flags
 .SH SYNOPSIS
 .B setarch
-.I arch
+.I <arch>
 .RI [ options ]
 .RI [ program
 .RI [ arguments ]]
 .br
-.I arch
+.B arch
 .RI [ options ]
 .RI [ program
 .RI [ arguments ]]
@@ -28,6 +28,9 @@ Be verbose.
 .TP
 .I "\-h," "\-\-help"
 Display help (it is also displayed when setarch takes no arguments).
+.TP
+.I "\-V," "\-\-version"
+Output version information and exit.
 .TP
 .I "\-\-uname\-2.6"
 Causes the program to see a kernel version number beginning with 2.6.
@@ -68,9 +71,15 @@ setarch ppc32 -v -vL3 rpmbuild --target=ppc --rebuild bar.src.rpm
 .br
 setarch ppc32 --32bit rpmbuild --target=ppc --rebuild foo.src.rpm
 .SH AUTHOR
-Elliot Lee <sopwith@redhat.com>
+.UR sopwith\@redhat.com
+Elliot Lee
+.UE
 .br
-Jindrich Novy <jnovy@redhat.com>
+.UR jnovy\@redhat.com
+Jindrich Novy
+.UE
 .SH AVAILABILITY
 The setarch command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

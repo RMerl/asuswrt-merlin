@@ -34,6 +34,7 @@ BINS += mkfs.ubifs/mkfs.ubifs
 SCRIPTS = flash_eraseall
 
 #Override default binary list
+#BINS = nanddump nandwrite flash_erase
 BINS =
 SCRIPTS =
 

@@ -33,7 +33,7 @@
   
 .parental_th{
 	color:white;
-	background: url(/images/general_th.gif) repeat;
+	background:#2F3A3E;
 	cursor: pointer;
 	width:160px;
 	height:22px;
@@ -203,8 +203,8 @@ function initial(){
 	show_menu();
 	if(bwdpi_support){
 		//show_inner_tab();
-		$("option4").innerHTML = '<table><tbody><tr><td><div id="index_img4"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
-		$("option4").className = "m4_r";
+		document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
+		document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 		document.getElementById('guest_image').style.background = "url(images/New_ui/TimeLimits.png)";
 		$('content_title').innerHTML = "AiProtection - <#Time_Scheduling#>";
 		$('desc_title').innerHTML = "Time Scheduling allows you to set the time limit for a client's network usage. To use Time Scheduling:";		
@@ -1018,10 +1018,8 @@ function show_inner_tab(){
 											return false;
 																					
 											applyRule(1);
-									},
-											{
-											switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-									});
+									}
+								);
 							</script>			
 						</div>
 					</td>			

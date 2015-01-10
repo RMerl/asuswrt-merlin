@@ -31,85 +31,72 @@
 .\"
 .\"     @(#)colcrt.1	8.1 (Berkeley) 6/30/93
 .\"
-.Dd May 2011 "  "
-.Dt COLCRT(1) "" "User Commands"
-.Os util-linux
-.Sh NAME
-.Nm colcrt
-.Nd filter nroff output for CRT previewing
-.Sh SYNOPSIS
-.Nm colcrt
-.Op Fl
-.Op Fl \&2
-.Op Ar
-.Sh DESCRIPTION
-.Nm
-provides virtual half-line and reverse line feed sequences
-for terminals without such capability, and on which overstriking
-is destructive.
-Half-line characters and underlining (changed to dashing `\-')
-are placed on new lines in between the normal output lines.
-.Pp
-Available options:
-.Bl -tag -width Ds
-.It Fl , Fl Fl no-underlining
-Suppress all underlining.
-This option is especially useful for previewing
-.Em allboxed
+.TH COLCRT "1" "September 2011" "util-linux" "User Commands"
+.SH NAME
+colcrt \- filter nroff output for CRT previewing
+.SH SYNOPSIS
+.B colcrt
+[options] [file ...]
+.SH DESCRIPTION
+.B colcrt
+provides virtual half-line and reverse line feed sequences for terminals
+without such capability, and on which overstriking is destructive.
+Half-line characters and underlining (changed to dashing `\-') are placed on
+new lines in between the normal output lines.
+.SH OPTIONS
+.TP
+\fB\-\fR, \fB\-\-no-underlining\fR
+Suppress all underlining.  This option is especially useful for previewing
+.I allboxed
 tables from
-.Xr tbl 1 .
-.It Fl 2, Fl Fl half-lines
+.BR tbl (1).
+.TP
+\fB\-2\fR, \fB\-\-half-lines\fR
 Causes all half-lines to be printed, effectively double spacing the output.
 Normally, a minimal space output format is used which will suppress empty
-lines.
-The program never suppresses two consecutive empty lines, however.
+lines.  The program never suppresses two consecutive empty lines, however.
 The
-.Fl 2
+.B \-2
 option is useful for sending output to the line printer when the output
 contains superscripts and subscripts which would otherwise be invisible.
-.It Fl V, Fl Fl version
+.TP
+\fB\-V\fR, \fB\-\-version\fR
 Output version information and exit.
-.It Fl h, Fl Fl help
+.TP
+\fB\-h\fR, \fB\-\-help\fR
 Output help and exit.
-.El
-.Sh EXAMPLES
+.SH EXAMPLES
 A typical use of
-.Nm colcrt
+.B colcrt
 would be
-.Bd -literal
+.PP
 tbl exum2.n \&| nroff \-ms \&| colcrt \- \&| more
-.Ed
-.Sh SEE ALSO
-.Xr nroff 1 ,
-.Xr troff 1 ,
-.Xr col 1 ,
-.Xr more 1 ,
-.Xr ul 1
-.Sh BUGS
+.SH SEE ALSO
+.BR nroff (1),
+.BR troff (1),
+.BR col (1),
+.BR more (1),
+.BR ul (1)
+.SH BUGS
 Should fold underlines onto blanks even with the
-.Ql Fl
-option so that
-a true underline character would show.
-.Pp
+.B '\-'
+option so that a true underline character would show.
+.PP
 Can't back up more than 102 lines.
-.Pp
-General overstriking is lost;
-as a special case
-.Ql \&|
-overstruck with
-.Ql \-
-or underline becomes
-.Ql \&+ .
-.Pp
+.PP
+General overstriking is lost; as a special case '|' overstruck with '\-' or
+underline becomes '+'.
+.PP
 Lines are trimmed to 132 characters.
-.Pp
-Some provision should be made for processing superscripts and subscripts
-in documents which are already double-spaced.
-.Sh HISTORY
+.PP
+Some provision should be made for processing superscripts and subscripts in
+documents which are already double-spaced.
+.SH HISTORY
 The
-.Nm
-command appeared in 
-.Bx 3.0 .
-.Sh AVAILABILITY
+.B colcrt
+command appeared in 3.0BSD.
+.SH AVAILABILITY
 The colcrt command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

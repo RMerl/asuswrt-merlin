@@ -92,6 +92,7 @@ var originData = {
 	fromBWDPI: '<% bwdpi_device_info(); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	wlList_2g: [<% wl_sta_list_2g(); %>],
 	wlList_5g: [<% wl_sta_list_5g(); %>],
+	wlList_5g_2: [<% wl_sta_list_5g_2(); %>],
 	qosRuleList: decodeURIComponent('<% nvram_char_to_ascii("", "qos_rulelist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	init: true
 }
@@ -99,7 +100,10 @@ var originData = {
 var totalClientNum = {
 	online: 0,
 	wireless: 0,
-	wired: 0
+	wired: 0,
+	wireless_1: 0,
+	wireless_2: 0,
+	wireless_3: 0
 }
 
 var setClientAttr = function(){
@@ -113,7 +117,7 @@ var setClientAttr = function(){
 	this.dpiType = "";
 	this.rssi = "";
 	this.ssid = "";
-	this.isWL = 0; // 0: wired, 1: 2.4GHz, 2: 5GHz.
+	this.isWL = 0; // 0: wired, 1: 2.4GHz, 2: 5GHz/5GHz-1 3:5GHz-2.
 	this.qosLevel = "";
 	this.curTx = "";
 	this.curRx = "";
@@ -135,6 +139,9 @@ var clientList = new Array(0);
 function genClientList(){
 	clientList = [];
 	totalClientNum.wireless = 0;
+	totalClientNum.wireless_1 = 0;
+	totalClientNum.wireless_2 = 0;
+	totalClientNum.wireless_3 = 0;
 
 	if(fromNetworkmapdCache.length > 1 && networkmap_fullscan == 1)
 		originData.fromNetworkmapd = fromNetworkmapdCache;
@@ -236,7 +243,7 @@ function genClientList(){
 		var thisClient = originData.customList[i].split(">");
 		var thisClientMacAddr = (typeof thisClient[1] == "undefined") ? false : thisClient[1].toUpperCase();
 
-		if(!thisClientMacAddr || typeof clientList[thisClientMacAddr] == "undefined"){
+		if(!thisClientMacAddr){
 			continue;
 		}
 
@@ -263,6 +270,7 @@ function genClientList(){
 		clientList[thisClientMacAddr].rssi = originData.wlList_2g[i][3];
 		clientList[thisClientMacAddr].isWL = 1;
 		totalClientNum.wireless++;
+		totalClientNum.wireless_1++;
 	}
 
 	for(var i=0; i<originData.wlList_5g.length; i++){
@@ -275,7 +283,21 @@ function genClientList(){
 		clientList[thisClientMacAddr].rssi = originData.wlList_5g[i][3];
 		clientList[thisClientMacAddr].isWL = 2;
 		totalClientNum.wireless++;
+		totalClientNum.wireless_2++;
 	}
+
+	for(var i=0; i<originData.wlList_5g_2.length; i++){
+		var thisClientMacAddr = (typeof originData.wlList_5g_2[i][0] == "undefined") ? false : originData.wlList_5g_2[i][0].toUpperCase();
+
+		if(!thisClientMacAddr || typeof clientList[thisClientMacAddr] == "undefined"){
+			continue;
+		}
+
+		clientList[thisClientMacAddr].rssi = originData.wlList_5g_2[i][3];
+		clientList[thisClientMacAddr].isWL = 3;
+		totalClientNum.wireless++;
+		totalClientNum.wireless_3++;
+	}	
 
 
 	if(typeof login_mac_str == "function"){
@@ -300,6 +322,8 @@ function genClientList(){
 	}
 
 	for(var i=0; i<originData.staticList.length; i++){
+		if('<% nvram_get("dhcp_static_x"); %>' == "0") break;
+
 		var thisClient = originData.staticList[i].split(">");
 		var thisClientMacAddr = (typeof thisClient[0] == "undefined") ? false : thisClient[0].toUpperCase();
 
@@ -313,6 +337,54 @@ function genClientList(){
 	}
 
 	totalClientNum.wired = parseInt(totalClientNum.online - totalClientNum.wireless);
+}
+
+function getUploadIcon(clientMac) {
+	var result = "NoIcon";
+	$j.ajax({
+		url: '/ajax_uploadicon.asp?clientmac=' + clientMac,
+		async: false,
+		dataType: 'script',
+		error: function(xhr){
+			setTimeout("getUploadIcon('" + clientMac + "');", 1000);
+		},
+		success: function(response){
+			result = upload_icon;
+		}
+	});
+	return result
+}
+
+function getUploadIconCount() {
+	var count = 0;
+	$j.ajax({
+		url: '/ajax_uploadicon.asp',
+		async: false,
+		dataType: 'script',
+		error: function(xhr){
+			setTimeout("getUploadIconCount();", 1000);
+		},
+		success: function(response){
+			count = upload_icon_count;
+		}
+	});
+	return count
+}
+
+function getUploadIconList() {
+	var list = "";
+	$j.ajax({
+		url: '/ajax_uploadicon.asp',
+		async: false,
+		dataType: 'script',
+		error: function(xhr){
+			setTimeout("getUploadIconList();", 1000);
+		},
+		success: function(response){
+			list = upload_icon_list;
+		}
+	});
+	return list
 }
 
 

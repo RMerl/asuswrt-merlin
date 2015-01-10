@@ -89,6 +89,27 @@
     transform:rotate(-123deg);
 }
 
+.imgUserIcon{
+	position: relative;
+	margin-left: 2px;
+	margin-top: 2px;
+	width: 51px;
+	height: 52px;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+}
+.divUserIcon{
+	cursor: pointer;
+	position: relative;
+	margin-left:10px;
+	width:56px;
+	height:56px;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	border-radius:10px;
+}
 </style>
 <script>
 // disable auto log out
@@ -121,6 +142,9 @@ function register_event(){
 				this.style.backgroundColor = "";
 				this.style.fontWeight = "";
 				this.children[0].children[0].style.backgroundColor = color_array[ui.draggable[0].id];
+				if(this.children[0].children[0].className.indexOf("trafficIcons") == -1) {
+					this.children[0].children[0].setAttribute("class", "closed qosLevel divUserIcon");
+				}
 				regen_qos_rule(this.children[0].children[0], ui.draggable[0].id);				
 			}
 		});
@@ -295,6 +319,9 @@ function calculate_router_traffic(traffic){
 function show_clients(priority_type){
 	var code = "";
 	var short_name = "";
+	//user icon
+	var userIconBase64 = "NoIcon";
+
 	if(clientList.length == 0){
 		setTimeout("show_clients();", 500);
 		return false;
@@ -338,7 +365,19 @@ function show_clients(priority_type){
 
 		code += '<table><tr id="icon_tr_'+i+'">';
 		code += '<td style="width:70px;">';		
-		code += '<div id="icon_'+i+'" onclick="show_apps(this);" class="closed trafficIcons type' + clientObj.type + ' qosLevel' + clientObj.qosLevel + '"></div>';				
+
+		if(usericon_support) {
+			var clientMac = clientObj.mac.replace(/\:/g, "");
+			userIconBase64 = getUploadIcon(clientMac);
+		}
+		if(userIconBase64 != "NoIcon") {
+			code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed qosLevel' + clientObj.qosLevel + ' divUserIcon">';
+			code += '<img id="imgUserIcon_'+ i +'" class="imgUserIcon" src="' + userIconBase64 + '">';
+			code += '</div>';
+		}
+		else {
+			code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed trafficIcons type' + clientObj.type + ' qosLevel' + clientObj.qosLevel + '"></div>';
+		}			
 		code += '</td>';
 		code += '<td style="width:180px;">';
 
@@ -401,6 +440,7 @@ function show_apps(obj){
 	var parent_obj = obj.parentNode.parentNode.parentNode.parentNode.parentNode;
 	var parent_obj_temp = obj.parentNode.parentNode.parentNode.parentNode.parentNode;
 	var client_mac = obj.parentNode.parentNode.childNodes[1].firstChild.title;
+	var children_obj = obj.childNodes[0];
 	var clientObj = clientList[client_mac];
 	var code = "";
 
@@ -427,7 +467,12 @@ function show_apps(obj){
 		parent_obj_temp.appendChild(first_element);
 		parent_obj_temp.appendChild(last_element);
 		register_event();
-		obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel);
+		if(children_obj != undefined) {
+			obj.setAttribute("class", "closed qosLevel" + clientObj.qosLevel);
+		}
+		else {
+			obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel);
+		}
 	}
 	else{
 		clearTimeout(device_time_flag);
@@ -449,7 +494,12 @@ function show_apps(obj){
 		parent_obj.removeChild(last_element);
 		parent_obj.appendChild(new_element);
 		parent_obj.appendChild(last_element);
-		obj.setAttribute("class", "opened trafficIcons_clicked type" + clientObj.type + " clicked qosLevel" + clientObj.qosLevel);
+		if(children_obj != undefined) {
+			obj.setAttribute("class", "opened clicked qosLevel" + clientObj.qosLevel);
+		}
+		else {
+			obj.setAttribute("class", "opened trafficIcons_clicked type" + clientObj.type + " clicked qosLevel" + clientObj.qosLevel);
+		}
 		update_device_tarffic();
 		update_apps_tarffic(client_mac, obj, new_element);		
 	}	
@@ -459,6 +509,7 @@ function cancel_previous_device_apps(obj){
 	var parent_obj = obj.parentNode.parentNode.parentNode.parentNode.parentNode;
 	var parent_obj_temp = obj.parentNode.parentNode.parentNode.parentNode.parentNode;
 	var client_mac = obj.parentNode.parentNode.childNodes[1].firstChild.title;
+	var children_obj = obj.childNodes[0];
 	var clientObj = clientList[client_mac];
 
 	clearTimeout(apps_time_flag);
@@ -478,7 +529,12 @@ function cancel_previous_device_apps(obj){
 	$j(parent_obj_temp).empty();
 	parent_obj_temp.appendChild(first_element);
 	parent_obj_temp.appendChild(last_element);
-	obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel);
+	if(children_obj != undefined) {
+		obj.setAttribute("class", "closed qosLevel" + clientObj.qosLevel);
+	}
+	else {
+		obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel);
+	}
 }
 
 function render_apps(apps_array, obj_icon, apps_field){
@@ -1080,10 +1136,8 @@ function cancel(){
 																	function(){
 																		document.form.apps_analysis.value = 0;
 																		applyRule();
-																	},
-																		{
-																			switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-																})
+																	}
+																);
 															</script>			
 														</td>														
 													</tr>

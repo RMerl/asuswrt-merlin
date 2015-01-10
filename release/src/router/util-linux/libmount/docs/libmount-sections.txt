@@ -26,6 +26,7 @@ mnt_context_disable_helpers
 mnt_context_disable_mtab
 mnt_context_enable_fake
 mnt_context_enable_force
+mnt_context_enable_fork
 mnt_context_enable_lazy
 mnt_context_enable_loopdel
 mnt_context_enable_rdonly_umount
@@ -35,26 +36,33 @@ mnt_context_get_cache
 mnt_context_get_fs
 mnt_context_get_fstab
 mnt_context_get_fstype
+mnt_context_get_helper_status
 mnt_context_get_lock
 mnt_context_get_mflags
 mnt_context_get_mtab
 mnt_context_get_optsmode
 mnt_context_get_source
 mnt_context_get_status
+mnt_context_get_syscall_errno
 mnt_context_get_table
 mnt_context_get_target
 mnt_context_get_user_mflags
+mnt_context_helper_executed
 mnt_context_helper_setopt
 mnt_context_init_helper
+mnt_context_is_child
 mnt_context_is_fake
 mnt_context_is_force
+mnt_context_is_fork
 mnt_context_is_fs_mounted
 mnt_context_is_lazy
 mnt_context_is_nomtab
+mnt_context_is_parent
 mnt_context_is_rdonly_umount
 mnt_context_is_restricted
 mnt_context_is_sloppy
 mnt_context_is_verbose
+mnt_context_reset_status
 mnt_context_set_cache
 mnt_context_set_fs
 mnt_context_set_fstab
@@ -65,12 +73,15 @@ mnt_context_set_mountdata
 mnt_context_set_options
 mnt_context_set_options_pattern
 mnt_context_set_optsmode
+mnt_context_set_passwd_cb
 mnt_context_set_source
 mnt_context_set_syscall_status
 mnt_context_set_tables_errcb
 mnt_context_set_target
 mnt_context_set_user_mflags
 mnt_context_strerror
+mnt_context_syscall_called
+mnt_context_wait_for_children
 </SECTION>
 
 <SECTION>
@@ -91,6 +102,7 @@ MNT_MS_NOFAIL
 MNT_MS_OFFSET
 MNT_MS_OWNER
 MNT_MS_SIZELIMIT
+MNT_MS_ENCRYPTION
 MNT_MS_UHELPER
 MNT_MS_USER
 MNT_MS_USERS
@@ -128,6 +140,7 @@ MS_UNBINDABLE
 <FILE>context-umount</FILE>
 mnt_context_do_umount
 mnt_context_finalize_umount
+mnt_context_next_umount
 mnt_context_prepare_umount
 mnt_context_umount
 </SECTION>
@@ -161,6 +174,9 @@ mnt_fs_get_userdata
 mnt_fs_get_user_options
 mnt_fs_get_vfs_options
 mnt_fs_is_kernel
+mnt_fs_is_swaparea
+mnt_fs_is_netfs
+mnt_fs_is_pseudofs
 mnt_fs_match_fstype
 mnt_fs_match_options
 mnt_fs_match_source
@@ -214,6 +230,7 @@ mnt_get_builtin_optmap
 MNT_INVERT
 MNT_NOMTAB
 MNT_PREFIX
+MNT_NOHLPS
 </SECTION>
 
 <SECTION>
@@ -246,13 +263,13 @@ mnt_table_find_srcpath
 mnt_table_find_tag
 mnt_table_find_target
 mnt_table_get_cache
-mnt_table_get_name
 mnt_table_get_nents
 mnt_table_get_root_fs
 mnt_table_is_fs_mounted
 mnt_table_next_child_fs
 mnt_table_next_fs
 mnt_table_parse_file
+mnt_table_parse_dir
 mnt_table_parse_fstab
 mnt_table_parse_mtab
 mnt_table_parse_stream
@@ -290,8 +307,6 @@ mnt_update_table
 mnt_fstype_is_netfs
 mnt_fstype_is_pseudofs
 mnt_get_fstab_path
-mnt_get_fstype
-mnt_get_library_version
 mnt_get_mtab_path
 mnt_has_regular_mtab
 mnt_mangle
@@ -304,5 +319,6 @@ mnt_unmangle
 <FILE>version</FILE>
 mnt_parse_version_string
 mnt_get_library_version
+mnt_get_library_features
 LIBMOUNT_VERSION
 </SECTION>

@@ -86,40 +86,16 @@ enum {
 # define ADDR_LIMIT_3GB          0x8000000
 #endif
 
-/* Options --3gb and --4gb are for compatibitity with an old Debian setarch
-   implementation. */
-static const struct option longopts[] =
-{
-    { "help",               0, 0, 'h' },
-    { "verbose",            0, 0, 'v' },
-    { "addr-no-randomize",  0, 0, 'R' },
-    { "fdpic-funcptrs",     0, 0, 'F' },
-    { "mmap-page-zero",     0, 0, 'Z' },
-    { "addr-compat-layout", 0, 0, 'L' },
-    { "read-implies-exec",  0, 0, 'X' },
-    { "32bit",              0, 0, 'B' },
-    { "short-inode",        0, 0, 'I' },
-    { "whole-seconds",      0, 0, 'S' },
-    { "sticky-timeouts",    0, 0, 'T' },
-    { "3gb",                0, 0, '3' },
-    { "4gb",                0, 0, OPT_4GB },
-    { "uname-2.6",          0, 0, OPT_UNAME26 },
-    { NULL,                 0, 0, 0 }
-};
-
 static void __attribute__((__noreturn__))
 show_help(void)
 {
-  const char *p = program_invocation_short_name;
+   printf(USAGE_HEADER);
+   printf(_(" %s%s [options] [program [program arguments]]\n"),
+         program_invocation_short_name,
+	 !strcmp(program_invocation_short_name, "setarch") ? " <arch>" : "");
 
-  if (!*p)
-    p = "setarch";
-
-  printf(_("Usage: %s%s [options] [program [program arguments]]\n\nOptions:\n"),
-         p, !strcmp(p, "setarch") ? " <arch>" : "");
-
+   printf(USAGE_OPTIONS);
    printf(_(
-   " -h, --help               displays this help text\n"
    " -v, --verbose            says what options are being switched on\n"
    " -R, --addr-no-randomize  disables randomization of the virtual address space\n"
    " -F, --fdpic-funcptrs     makes function pointers point to descriptors\n"
@@ -131,27 +107,29 @@ show_help(void)
    " -S, --whole-seconds      turns on WHOLE_SECONDS\n"
    " -T, --sticky-timeouts    turns on STICKY_TIMEOUTS\n"
    " -3, --3gb                limits the used address space to a maximum of 3 GB\n"
-   "     --4gb                ignored (for backward compatibility only)\n"));
-
-   printf(_(
+   "     --4gb                ignored (for backward compatibility only)\n"
    "     --uname-2.6          turns on UNAME26\n"));
 
-  printf(_("\nFor more information see setarch(8).\n"));
+  printf(USAGE_SEPARATOR);
+  printf(USAGE_HELP);
+  printf(USAGE_VERSION);
+  printf(USAGE_MAN_TAIL("setarch(8)"));
+
   exit(EXIT_SUCCESS);
 }
 
 static void __attribute__((__noreturn__))
 show_usage(const char *s)
 {
-  const char *p = program_invocation_short_name;
-
-  if (!*p)
-    p = "setarch";
-
-  fprintf(stderr, _("%s: %s\nTry `%s --help' for more information.\n"), p, s, p);
-  exit(EXIT_FAILURE);
+  errx(EXIT_FAILURE, _("%s\nTry `%s --help' for more information."), s, program_invocation_short_name);
 }
 
+static void __attribute__((__noreturn__))
+show_version(void)
+{
+  printf(UTIL_LINUX_VERSION);
+  exit(EXIT_SUCCESS);
+}
 
 int set_arch(const char *pers, unsigned long options)
 {
@@ -248,6 +226,28 @@ int main(int argc, char *argv[])
   int verbose = 0;
   int c;
 
+  /* Options --3gb and --4gb are for compatibitity with an old Debian setarch
+     implementation. */
+  static const struct option longopts[] =
+  {
+      { "help",               0, 0, 'h' },
+      { "version",            0, 0, 'V' },
+      { "verbose",            0, 0, 'v' },
+      { "addr-no-randomize",  0, 0, 'R' },
+      { "fdpic-funcptrs",     0, 0, 'F' },
+      { "mmap-page-zero",     0, 0, 'Z' },
+      { "addr-compat-layout", 0, 0, 'L' },
+      { "read-implies-exec",  0, 0, 'X' },
+      { "32bit",              0, 0, 'B' },
+      { "short-inode",        0, 0, 'I' },
+      { "whole-seconds",      0, 0, 'S' },
+      { "sticky-timeouts",    0, 0, 'T' },
+      { "3gb",                0, 0, '3' },
+      { "4gb",                0, 0, OPT_4GB },
+      { "uname-2.6",          0, 0, OPT_UNAME26 },
+      { NULL,                 0, 0, 0 }
+  };
+
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
@@ -265,6 +265,8 @@ int main(int argc, char *argv[])
     argv[0] = argv[-1];      /* for getopt_long() to get the program name */
     if (!strcmp(p, "-h") || !strcmp(p, "--help"))
       show_help();
+    else if (!strcmp(p, "-V") || !strcmp(p, "--version"))
+      show_version();
   }
   #if defined(__sparc64__) || defined(__sparc__)
    if (!strcmp(p, "sparc32bash")) {
@@ -275,10 +277,13 @@ int main(int argc, char *argv[])
    }
   #endif
 
-  while ((c = getopt_long(argc, argv, "+hv3BFILRSTXZ", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "+hVv3BFILRSTXZ", longopts, NULL)) != -1) {
     switch (c) {
     case 'h':
       show_help();
+      break;
+    case 'V':
+      show_version();
       break;
     case 'v':
       verbose = 1;

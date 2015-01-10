@@ -31,84 +31,83 @@
 .\"
 .\"     @(#)ul.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd August 2011 "  "
-.Dt UL(1) "" "User Commands"
-.Os util-linux
-.Sh NAME
-.Nm ul
-.Nd do underlining
-.Sh SYNOPSIS
-.Nm ul
-.Op Fl hiV
-.Op Fl t Ar terminal
-.Op Ar file Ar ...
-.Sh DESCRIPTION
-.Nm ul
-reads the named files (or standard input if none are given)
-and translates occurrences of underscores to the sequence
-which indicates underlining for the terminal in use, as specified
-by the environment variable
-.Ev TERM .
+.TH UL "1" "September 2011" "util-linux" "User Commands"
+.SH NAME
+ul \- do underlining
+.SH SYNOPSIS
+.B ul
+[options] [file ...]
+.SH DESCRIPTION
+.B ul
+reads the named files (or standard input if none are given) and translates
+occurrences of underscores to the sequence which indicates underlining for
+the terminal in use, as specified by the environment variable
+.BR TERM .
 The
-.Pa terminfo
-database is read to determine the appropriate sequences for underlining.
-If the terminal is incapable of underlining but is capable of
-a standout mode, then that is used instead.
-If the terminal can overstrike,
-or handles underlining automatically,
-.Nm ul
+.I terminfo
+database is read to determine the appropriate sequences for underlining.  If
+the terminal is incapable of underlining but is capable of a standout mode,
+then that is used instead.  If the terminal can overstrike, or handles
+underlining automatically,
+.B ul
 degenerates to
-.Xr cat 1 .
+.BR cat (1).
 If the terminal cannot underline, underlining is ignored.
-.Pp
-The following options are available:
-.Bl -tag -width Ds
-.It Fl h
-Display a help text and exit.
-.It Fl i
-Underlining is indicated by a separate line containing appropriate
-dashes `\-'; this is useful when you want to look at the underlining
-which is present in an
-.Xr nroff
+.SH OPTIONS
+.TP
+\fB\-i\fR, \fB\-\-indicated\fR
+Underlining is indicated by a separate line containing appropriate dashes
+`\-'; this is useful when you want to look at the underlining which is
+present in an
+.B nroff
 output stream on a crt-terminal.
+.TP
+\fB\-t\fR, \fB\-\-terminal\fR \fIterminal\fR
 .It Fl t Ar terminal
-Overrides the terminal type specified in the environment with
-.Ar terminal .
-.It Fl V
+Overrides the
+.I terminal
+type specified in the environment with
+.BR TERM .
+.TP
+\fB\-V\fR, \fB\-\-version\fR
 Display version information and exit.
-.El
-.Sh ENVIRONMENT
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display a help text and exit.
+.SH ENVIRONMENT
 The following environment variable is used:
-.Bl -tag -width TERM
-.It Ev TERM
+.TP
+.B TERM
 The
-.Ev TERM
-variable is used to relate a tty device
-with its device capability description (see
-.Xr terminfo 5 ) .
-.Ev TERM
-is set at login time, either by the default terminal type
-specified in
-.Pa /etc/ttys
+.B TERM
+variable is used to relate a tty device with its device capability
+description (see
+.BR terminfo (5)).
+.B TERM
+is set at login time, either by the default terminal type specified in
+.I /etc/ttys
 or as set during the login process by the user in their
-.Pa login
+.B login
 file (see
-.Xr setenv 1 ) .
-.El
-.Sh SEE ALSO
-.Xr man 1 ,
-.Xr nroff 1 ,
-.Xr colcrt 1
-.Sh BUGS
-.Xr Nroff
-usually outputs a series of backspaces and underlines intermixed
-with the text to indicate underlining.  No attempt is made to optimize
-the backward motion.
-.Sh HISTORY
+.BR setenv (1)).
+.SH SEE ALSO
+.BR colcrt (1),
+.BR login (1),
+.BR man (1),
+.BR nroff (1),
+.BR setenv (1),
+.BR terminfo (5)
+.SH BUGS
+.B Nroff
+usually outputs a series of backspaces and underlines intermixed with the
+text to indicate underlining.  No attempt is made to optimize the backward
+motion.
+.SH HISTORY
 The
-.Nm
-command appeared in
-.Bx 3.0 .
-.Sh AVAILABILITY
+.B ul
+command appeared in 3.0BSD.
+.SH AVAILABILITY
 The ul command is part of the util-linux package and is available from
-ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
+.UR ftp://\:ftp.kernel.org\:/pub\:/linux\:/utils\:/util-linux/
+Linux Kernel Archive
+.UE .

@@ -410,7 +410,7 @@ static struct clock_ops rtc = {
 };
 
 /* return &rtc if /dev/rtc can be opened, NULL otherwise */
-struct clock_ops *probe_for_rtc_clock()
+struct clock_ops *probe_for_rtc_clock(void)
 {
 	int rtc_fd = open_rtc();
 	if (rtc_fd >= 0)

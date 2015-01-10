@@ -1601,21 +1601,21 @@ void rpc_update_mbss(const char* name, const char *value)
 		rpc_reload_mbss(unit, subunit, name_mbss);
 }
 
-int
-ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
+int get_wl_channel_list_5g_by_bw(string_1024 list_of_channels, int bw)
 {
 	int ret;
 	int retval = 0;
 	char tmp[256];
-	string_1024 list_of_channels;
 	char *p;
 	int i = 0;;
 	char cur_ccode[20] = {0};
 
 	sprintf(tmp, "[\"%d\"]", 0);
 
-	if (!rpc_qtn_ready())
+	if (!rpc_qtn_ready()){
+		snprintf(tmp, sizeof(tmp), "");
 		goto ERROR;
+	}
 
 	// ret = qcsapi_wifi_get_list_channels(WIFINAME, (char *) &list_of_channels);
 	ret = qcsapi_wifi_get_regulatory_region(WIFINAME, cur_ccode);
@@ -1624,10 +1624,10 @@ ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 		goto ERROR;
 	}
 
-	if(strcmp(cur_ccode, "eu")==0){
+	if(strcmp(cur_ccode, "eu")==0 || strcmp(cur_ccode, "jp")==0){
 		ret = qcsapi_regulatory_get_list_regulatory_channels(cur_ccode, 40 /* bw */, list_of_channels);
 	}else{
-		ret = qcsapi_regulatory_get_list_regulatory_channels(cur_ccode, 20 /* bw */, list_of_channels);
+		ret = qcsapi_regulatory_get_list_regulatory_channels(cur_ccode, bw, list_of_channels);
 	}
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_regulatory_get_list_regulatory_channels %s error, return: %d\n", WIFINAME, ret);
@@ -1650,7 +1650,49 @@ ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 		sprintf(tmp,  "%s]", tmp);
 
 ERROR:
-	retval += websWrite(wp, "%s", tmp);
+	/* list_of_channels = 1024, tmp = 256 */
+	sprintf(list_of_channels, "%s", tmp);
+	return 0;
+}
+
+int ej_wl_channel_list_5g_20m(int eid, webs_t wp, int argc, char_t **argv)
+{
+	static char list_20m[1024] = {0};
+	int retval;
+
+	if(strlen(list_20m) == 0) retval = get_wl_channel_list_5g_by_bw(list_20m, 20);
+	retval = websWrite(wp, "%s", list_20m);
+	return retval;
+}
+
+int ej_wl_channel_list_5g_40m(int eid, webs_t wp, int argc, char_t **argv)
+{
+	static char list_40m[1024] = {0};
+	int retval;
+
+	if(strlen(list_40m) == 0) get_wl_channel_list_5g_by_bw(list_40m, 40);
+	retval = websWrite(wp, "%s", list_40m);
+	return retval;
+}
+
+int ej_wl_channel_list_5g_80m(int eid, webs_t wp, int argc, char_t **argv)
+{
+	static char list_80m[1024] = {0};
+	int retval;
+
+	if(strlen(list_80m) == 0) get_wl_channel_list_5g_by_bw(list_80m, 80);
+	retval = websWrite(wp, "%s", list_80m);
+	return retval;
+}
+
+int
+ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
+{
+	static char list_80m[1024] = {0};
+	int retval;
+
+	if(strlen(list_80m) == 0) get_wl_channel_list_5g_by_bw(list_80m, 80);
+	retval = websWrite(wp, "%s", list_80m);
 	return retval;
 }
 
@@ -1670,7 +1712,7 @@ ej_wl_scan_5g(int eid, webs_t wp, int argc, char_t **argv)
 		return retval;
 	}
 
-	ret = qcsapi_wifi_start_scan(WIFINAME);
+	ret = qcsapi_wifi_start_scan_ext(WIFINAME, IEEE80211_PICK_ALL | IEEE80211_PICK_NOPICK_BG);
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_wifi_start_scan %s error, return: %d\n", WIFINAME, ret);
 		retval += websWrite(wp, "[]");

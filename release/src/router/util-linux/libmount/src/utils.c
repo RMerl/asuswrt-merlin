@@ -21,6 +21,7 @@
 #include "mangle.h"
 #include "canonicalize.h"
 #include "env.h"
+#include "match.h"
 
 int endswith(const char *s, const char *sx)
 {
@@ -53,6 +54,24 @@ int startswith(const char *s, const char *sx)
         return !strncmp(s, sx, off);
 }
 
+int mnt_parse_offset(const char *str, size_t len, uintmax_t *res)
+{
+	char *p;
+	int rc = 0;
+
+	if (!str || !*str)
+		return -EINVAL;
+
+	p = strndup(str, len);
+	if (!p)
+		return -errno;
+
+	if (strtosize(p, res))
+		rc = -EINVAL;
+	free(p);
+	return rc;
+}
+
 /* returns basename and keeps dirname in the @path, if @path is "/" (root)
  * then returns empty string */
 static char *stripoff_last_component(char *path)
@@ -62,34 +81,40 @@ static char *stripoff_last_component(char *path)
 	if (!p)
 		return NULL;
 	*p = '\0';
-	return ++p;
+	return p + 1;
 }
 
-/* Note that the @target has to be absolute path (so at least "/")
+/*
+ * Note that the @target has to be absolute path (so at least "/").  The
+ * @filename returns allocated buffer with last path component, for example:
+ *
+ * mnt_chdir_to_parent("/mnt/test", &buf) ==> chdir("/mnt"), buf="test"
  */
 int mnt_chdir_to_parent(const char *target, char **filename)
 {
-	char *path, *last = NULL;
+	char *buf, *parent, *last = NULL;
 	char cwd[PATH_MAX];
 	int rc = -EINVAL;
 
 	if (!target || *target != '/')
 		return -EINVAL;
 
-	path = strdup(target);
-	if (!path)
+	DBG(UTILS, mnt_debug("moving to %s parent", target));
+
+	buf = strdup(target);
+	if (!buf)
 		return -ENOMEM;
 
-	if (*(path + 1) != '\0') {
-		last = stripoff_last_component(path);
+	if (*(buf + 1) != '\0') {
+		last = stripoff_last_component(buf);
 		if (!last)
 			goto err;
 	}
-	if (!*path)
-		*path = '/';	/* root */
 
-	if (chdir(path) == -1) {
-		DBG(UTILS, mnt_debug("failed to chdir to %s: %m", path));
+	parent = buf && *buf ? buf : "/";
+
+	if (chdir(parent) == -1) {
+		DBG(UTILS, mnt_debug("failed to chdir to %s: %m", parent));
 		rc = -errno;
 		goto err;
 	}
@@ -98,14 +123,17 @@ int mnt_chdir_to_parent(const char *target, char **filename)
 		rc = -errno;
 		goto err;
 	}
-	if (strcmp(cwd, path) != 0) {
-		DBG(UTILS, mnt_debug("path moved (%s -> %s)", path, cwd));
+	if (strcmp(cwd, parent) != 0) {
+		DBG(UTILS, mnt_debug(
+		    "unexpected chdir (expected=%s, cwd=%s)", parent, cwd));
 		goto err;
 	}
 
-	DBG(CXT, mnt_debug("current directory moved to %s", path));
+	DBG(CXT, mnt_debug(
+		"current directory moved to %s [last_component='%s']",
+		parent, last));
 
-	*filename = path;
+	*filename = buf;
 
 	if (!last || !*last)
 		memcpy(*filename, ".", 2);
@@ -113,8 +141,43 @@ int mnt_chdir_to_parent(const char *target, char **filename)
 		memcpy(*filename, last, strlen(last) + 1);
 	return 0;
 err:
-	free(path);
+	free(buf);
 	return rc;
+}
+
+/*
+ * Check if @path is on read-only filesystem independently on file permissions.
+ */
+int mnt_is_readonly(const char *path)
+{
+	if (access(path, W_OK) == 0)
+		return 0;
+	if (errno == EROFS)
+		return 1;
+	if (errno != EACCES)
+		return 0;
+
+#ifdef HAVE_FUTIMENS
+	/*
+	 * access(2) returns EACCES on read-only FS:
+	 *
+	 * - for set-uid application if one component of the path is not
+	 *   accessible for the current rUID. (Note that euidaccess(2) does not
+	 *   check for EROFS at all).
+	 *
+	 * - for read-write filesystem with read-only VFS node (aka -o remount,ro,bind)
+	 */
+	{
+		struct timespec times[2];
+
+		times[0].tv_nsec = UTIME_NOW;	/* atime */
+		times[1].tv_nsec = UTIME_OMIT;	/* mtime */
+
+		if (utimensat(AT_FDCWD, path, times, 0) == -1)
+			return errno == EROFS;
+	}
+#endif
+	return 0;
 }
 
 /**
@@ -218,35 +281,7 @@ int mnt_fstype_is_netfs(const char *type)
  */
 int mnt_match_fstype(const char *type, const char *pattern)
 {
-	int no = 0;		/* negated types list */
-	int len;
-	const char *p;
-
-	if (!pattern && !type)
-		return 1;
-	if (!pattern)
-		return 0;
-
-	if (!strncmp(pattern, "no", 2)) {
-		no = 1;
-		pattern += 2;
-	}
-
-	/* Does type occur in types, separated by commas? */
-	len = strlen(type);
-	p = pattern;
-	while(1) {
-		if (!strncmp(p, "no", 2) && !strncmp(p+2, type, len) &&
-		    (p[len+2] == 0 || p[len+2] == ','))
-			return 0;
-		if (strncmp(p, type, len) == 0 && (p[len] == 0 || p[len] == ','))
-			return !no;
-		p = strchr(p,',');
-		if (!p)
-			break;
-		p++;
-	}
-	return no;
+	return match_fstype(type, pattern);
 }
 
 
@@ -259,7 +294,10 @@ static int check_option(const char *haystack, size_t len,
 	const char *p;
 	int no = 0;
 
-	if (needle_len >= 2 && !strncmp(needle, "no", 2)) {
+	if (needle_len >= 1 && *needle == '+') {
+		needle++;
+		needle_len--;
+	} else if (needle_len >= 2 && !strncmp(needle, "no", 2)) {
 		no = 1;
 		needle += 2;
 		needle_len -= 2;
@@ -291,9 +329,19 @@ static int check_option(const char *haystack, size_t len,
  * Unlike fs type matching, nonetdev,user and nonetdev,nouser have
  * DIFFERENT meanings; each option is matched explicitly as specified.
  *
+ * The "no" prefix interpretation could be disable by "+" prefix, for example
+ * "+noauto" matches if @optstr literally contains "noauto" string.
+ *
  * "xxx,yyy,zzz" : "nozzz"	-> False
  *
  * "xxx,yyy,zzz" : "xxx,noeee"	-> True
+ *
+ * "bar,zzz"     : "nofoo"      -> True
+ *
+ * "nofoo,bar"   : "+nofoo"     -> True
+ *
+ * "bar,zzz"     : "+nofoo"     -> False
+ *
  *
  * Returns: 1 if pattern is matching, else 0. This function also returns 0
  *          if @pattern is NULL and @optstr is non-NULL.
@@ -379,6 +427,7 @@ err:
 
 static int get_filesystems(const char *filename, char ***filesystems, const char *pattern)
 {
+	int rc = 0;
 	FILE *f;
 	char line[128];
 
@@ -388,7 +437,6 @@ static int get_filesystems(const char *filename, char ***filesystems, const char
 
 	while (fgets(line, sizeof(line), f)) {
 		char name[sizeof(line)];
-		int rc;
 
 		if (*line == '#' || strncmp(line, "nodev", 5) == 0)
 			continue;
@@ -398,9 +446,11 @@ static int get_filesystems(const char *filename, char ***filesystems, const char
 			continue;
 		rc = add_filesystem(filesystems, name);
 		if (rc)
-			return rc;
+			break;
 	}
-	return 0;
+
+	fclose(f);
+	return rc;
 }
 
 int mnt_get_filesystems(char ***filesystems, const char *pattern)
@@ -417,6 +467,16 @@ int mnt_get_filesystems(char ***filesystems, const char *pattern)
 	return get_filesystems(_PATH_PROC_FILESYSTEMS, filesystems, pattern);
 }
 
+static size_t get_pw_record_size(void)
+{
+#ifdef _SC_GETPW_R_SIZE_MAX
+	long sz = sysconf(_SC_GETPW_R_SIZE_MAX);
+	if (sz > 0)
+		return sz;
+#endif
+	return 16384;
+}
+
 /*
  * Returns allocated string with username or NULL.
  */
@@ -424,15 +484,8 @@ char *mnt_get_username(const uid_t uid)
 {
         struct passwd pwd;
 	struct passwd *res;
-#ifdef _SC_GETPW_R_SIZE_MAX
-	size_t sz = sysconf(_SC_GETPW_R_SIZE_MAX);
-#else
-	size_t sz = 0;
-#endif
+	size_t sz = get_pw_record_size();
 	char *buf, *username = NULL;
-
-	if (sz <= 0)
-		sz = 16384;        /* Should be more than enough */
 
 	buf = malloc(sz);
 	if (!buf)
@@ -450,13 +503,11 @@ int mnt_get_uid(const char *username, uid_t *uid)
 	int rc = -1;
         struct passwd pwd;
 	struct passwd *pw;
-	size_t sz = sysconf(_SC_GETPW_R_SIZE_MAX);
+	size_t sz = get_pw_record_size();
 	char *buf;
 
 	if (!username || !uid)
 		return -EINVAL;
-	if (sz <= 0)
-		sz = 16384;        /* Should be more than enough */
 
 	buf = malloc(sz);
 	if (!buf)
@@ -479,13 +530,11 @@ int mnt_get_gid(const char *groupname, gid_t *gid)
 	int rc = -1;
         struct group grp;
 	struct group *gr;
-	size_t sz = sysconf(_SC_GETGR_R_SIZE_MAX);
+	size_t sz = get_pw_record_size();
 	char *buf;
 
 	if (!groupname || !gid)
 		return -EINVAL;
-	if (sz <= 0)
-		sz = 16384;        /* Should be more than enough */
 
 	buf = malloc(sz);
 	if (!buf)

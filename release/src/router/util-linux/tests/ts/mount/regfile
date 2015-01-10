@@ -23,7 +23,7 @@ DEVICE=$(awk '/regfile/ { print $1 }' /proc/mounts)
 
 grep -q "$TS_MOUNTPOINT" /proc/mounts || ts_die "Cannot find $TS_MOUNTPOINT in /proc/mounts"
 
-if [ -f "/sys/block/$(basename $DEVICE)/loop" ]; then
+if [ -f "/sys/block/$(basename $DEVICE)/loop/backing_file" ]; then
 	$TS_CMD_UMOUNT $IMAGE || ts_die "Cannot umount $IMAGE"
 else
 	$TS_CMD_UMOUNT $TS_MOUNTPOINT &> /dev/null

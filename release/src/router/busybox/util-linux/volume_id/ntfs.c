@@ -150,7 +150,7 @@ int FAST_FUNC volume_id_probe_ntfs(struct volume_id *id /*,uint64_t off*/)
 
 		attr = (struct file_attribute*) &buf[attr_off];
 		attr_type = le32_to_cpu(attr->type);
-		attr_len = le16_to_cpu(attr->len);
+		attr_len = le32_to_cpu(attr->len);
 		val_off = le16_to_cpu(attr->value_offset);
 		val_len = le32_to_cpu(attr->value_len);
 		attr_off += attr_len;

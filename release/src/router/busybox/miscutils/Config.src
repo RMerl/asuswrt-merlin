@@ -610,4 +610,18 @@ config WATCHDOG
 	  certain amount of time, the watchdog device assumes the system has
 	  hung, and will cause the hardware to reboot.
 
+config MDMM
+	bool "MDMM Utility"
+	default n
+	help
+	  The md/mm utility can be used to read/write memory and memory
+	  mapped registers.
+
+config ETHREG
+	bool "Ethreg Utility"
+	default n
+	help
+	  The ethreg utility can be used to read/write MAC and PHY registers
+	  to change the duplex and speed setting for individual PHYS.
+
 endmenu

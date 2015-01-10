@@ -64,6 +64,7 @@ extern const struct blkid_idinfo bfs_idinfo;
 extern const struct blkid_idinfo vmfs_volume_idinfo;
 extern const struct blkid_idinfo vmfs_fs_idinfo;
 extern const struct blkid_idinfo drbd_idinfo;
+extern const struct blkid_idinfo drbdproxy_datalog_idinfo;
 extern const struct blkid_idinfo befs_idinfo;
 extern const struct blkid_idinfo nilfs2_idinfo;
 extern const struct blkid_idinfo exfat_idinfo;
@@ -71,8 +72,6 @@ extern const struct blkid_idinfo exfat_idinfo;
 /*
  * superblock functions
  */
-extern int blkid_probe_set_magic(blkid_probe pr, blkid_loff_t offset,
-		size_t len, unsigned char *magic);
 extern int blkid_probe_set_version(blkid_probe pr, const char *version);
 extern int blkid_probe_sprintf_version(blkid_probe pr, const char *fmt, ...)
 		__attribute__ ((format (printf, 2, 3)));

@@ -157,11 +157,7 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 #ifdef RTCONFIG_ODMPID
 			static char pattern1[1024];
 			char *p_PID_STR = NULL;
-#ifndef RTCONFIG_TMOBILE
 			char *PID_STR = nvram_safe_get("productid");
-#else
-			char *PID_STR = "RT-AC68U";
-#endif
 			char *ODM_PID_STR = nvram_safe_get("odmpid");
 			char *pSrc, *pDest;
 			int pid_len, odm_len;
@@ -185,36 +181,6 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 				{
 					strcpy(pDest, pSrc);
 					desc = pattern1;
-				}
-			}
-#endif
-#ifdef RTCONFIG_TMOBILE
-			static char pattern2[1024];
-			char *p_DOMAIN_NAME = NULL;
-			char *DOMAIN_NAME = "router.asus.com";
-			char *ODM_DOMAIN_NAME = "cellspot.router";
-			char *pSrc2, *pDest2;
-			int orig_len, odm_len2;
-
-			orig_len = strlen(DOMAIN_NAME);
-			odm_len2 = strlen(ODM_DOMAIN_NAME);
-
-			if (odm_len2 && strcmp(DOMAIN_NAME, ODM_DOMAIN_NAME) != 0) {
-				pSrc2  = desc;
-				pDest2 = pattern2;
-				while((p_DOMAIN_NAME = strstr(pSrc2, DOMAIN_NAME)))
-				{
-					memcpy(pDest2, pSrc2, p_DOMAIN_NAME - pSrc2);
-					pDest2 += (p_DOMAIN_NAME - pSrc2);
-					pSrc2   =  p_DOMAIN_NAME + orig_len;
-
-					memcpy(pDest2, ODM_DOMAIN_NAME, odm_len2);
-					pDest2 += odm_len2;
-				}
-				if(pDest2 != pattern2)
-				{
-					strcpy(pDest2, pSrc2);
-					desc = pattern2;
 				}
 			}
 #endif

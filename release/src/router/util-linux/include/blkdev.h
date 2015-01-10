@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#if HAVE_SYS_MKDEV_H
+#ifdef HAVE_SYS_MKDEV_H
 # include <sys/mkdev.h>		/* major and minor on Solaris */
 #endif
 
@@ -72,6 +72,12 @@
 # ifdef __linux__
 #  define HDIO_GETGEO 0x0301
 # endif
+
+/* uniform CD-ROM information */
+#ifndef CDROM_GET_CAPABILITY
+# define CDROM_GET_CAPABILITY 0x5331
+#endif
+
 struct hd_geometry {
 	unsigned char heads;
 	unsigned char sectors;
@@ -79,6 +85,9 @@ struct hd_geometry {
 	unsigned long start;
 };
 #endif
+
+/* are we working with block device? */
+int is_blkdev(int fd);
 
 /* Determine size in bytes */
 off_t blkdev_find_size (int fd);
@@ -97,5 +106,8 @@ int blkdev_is_misaligned(int fd);
 
 /* get physical block device size */
 int blkdev_get_physector_size(int fd, int *sector_size);
+
+/* is the device cdrom capable? */
+int blkdev_is_cdrom(int fd);
 
 #endif /* BLKDEV_H */

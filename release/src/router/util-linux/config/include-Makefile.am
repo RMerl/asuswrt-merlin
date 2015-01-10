@@ -42,3 +42,9 @@ ul_libmount_incdir = $(ul_libmount_builddir)
 
 $(ul_libmount_la):
 	$(MAKE) -C $(ul_libmount_builddir)
+
+#
+# smatch scan -- smatch and cgcc are expected in $PATH
+#
+checksmatch:
+	$(MAKE) CHECK="smatch --data=$(abs_top_srcdir)/tools/smatch-data" CC=cgcc

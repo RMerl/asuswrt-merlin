@@ -15,24 +15,17 @@
 #include <string.h>		/* strstr */
 #include <unistd.h>		/* write */
 #include <sys/ioctl.h>		/* ioctl */
-#include <sys/stat.h>		/* stat */
-#include <sys/sysmacros.h>	/* major */
 
 #include "nls.h"
 #include "blkdev.h"
 
 #include <endian.h>
-#ifdef HAVE_LINUX_MAJOR_H
-#include <linux/major.h>	/* FLOPPY_MAJOR */
-#endif
 
 #include "common.h"
 #include "fdisk.h"
 #include "fdisksunlabel.h"
 
 static int     other_endian = 0;
-static int     scsi_disk = 0;
-static int     floppy = 0;
 
 struct systypes sun_sys_types[] = {
 	{SUN_TAG_UNASSIGNED, N_("Unassigned")},
@@ -66,37 +59,6 @@ static inline uint32_t __swap32(uint32_t x) {
 #define SSWAP32(x) (other_endian ? __swap32(x) \
 				 : (uint32_t)(x))
 
-#ifndef FLOPPY_MAJOR
-#define FLOPPY_MAJOR 2
-#endif
-#ifndef IDE0_MAJOR
-#define IDE0_MAJOR 3
-#endif
-#ifndef IDE1_MAJOR
-#define IDE1_MAJOR 22
-#endif
-void guess_device_type(int fd)
-{
-	struct stat bootstat;
-
-	if (fstat (fd, &bootstat) < 0) {
-                scsi_disk = 0;
-                floppy = 0;
-	} else if (S_ISBLK(bootstat.st_mode)
-		   && (major(bootstat.st_rdev) == IDE0_MAJOR ||
-		       major(bootstat.st_rdev) == IDE1_MAJOR)) {
-                scsi_disk = 0;
-                floppy = 0;
-	} else if (S_ISBLK(bootstat.st_mode)
-		   && major(bootstat.st_rdev) == FLOPPY_MAJOR) {
-                scsi_disk = 0;
-                floppy = 1;
-	} else {
-                scsi_disk = 1;
-                floppy = 0;
-	}
-}
-
 static void set_sun_partition(int i, uint32_t start, uint32_t stop, uint16_t sysid)
 {
 	sunlabel->part_tags[i].tag = SSWAP16(sysid);
@@ -106,6 +68,13 @@ static void set_sun_partition(int i, uint32_t start, uint32_t stop, uint16_t sys
 	sunlabel->partitions[i].num_sectors =
 		SSWAP32(stop - start);
 	set_changed(i);
+	print_partition_size(i + 1, start, stop, sysid);
+}
+
+static void init(void)
+{
+	disklabel = SUN_LABEL;
+	partitions = SUN_NUM_PARTITIONS;
 }
 
 void sun_nolabel(void)
@@ -124,6 +93,8 @@ int check_sun_label(void)
 		other_endian = 0;
 		return 0;
 	}
+
+	init();
 	other_endian = (sunlabel->magic == SUN_LABEL_MAGIC_SWAPPED);
 
 	ush = ((unsigned short *) (sunlabel + 1)) - 1;
@@ -175,8 +146,6 @@ int check_sun_label(void)
 		}
 	}
 	update_units();
-	disklabel = SUN_LABEL;
-	partitions = SUN_NUM_PARTITIONS;
 	return 1;
 }
 
@@ -188,15 +157,16 @@ void create_sunlabel(void)
 	int res;
 
 	fprintf(stderr,
-	_("Building a new sun disklabel. Changes will remain in memory only,\n"
-       	"until you decide to write them. After that, of course, the previous\n"
-	"content won't be recoverable.\n\n"));
+	_("Building a new Sun disklabel.\n"));
 #if BYTE_ORDER == LITTLE_ENDIAN
 	other_endian = 1;
 #else
 	other_endian = 0;
 #endif
+
+	init();
 	zeroize_mbr_buffer();
+
 	sunlabel->magic = SSWAP16(SUN_LABEL_MAGIC);
 	sunlabel->sanity = SSWAP32(SUN_LABEL_SANE);
 	sunlabel->version = SSWAP32(SUN_LABEL_VERSION);
@@ -268,7 +238,6 @@ void create_sunlabel(void)
 	}
 
 	set_all_unchanged();
-	get_boot(create_empty_sun);
 	set_changed(0);
 }
 

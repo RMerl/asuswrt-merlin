@@ -106,7 +106,7 @@ static char *outbuffer;
 static size_t page_size;
 
 /* Input status of 0 to print help and exit without an error. */
-static void usage(int status)
+static void __attribute__((__noreturn__)) usage(int status)
 {
 	FILE *stream = status ? stderr : stdout;
 
@@ -649,6 +649,7 @@ int main(int argc, char **argv)
 		switch (c) {
 		case 'h':
 			usage(FSCK_OK);
+			break;
 		case 'x':
 #ifdef INCLUDE_FS_TESTS
 			opt_extract = 1;

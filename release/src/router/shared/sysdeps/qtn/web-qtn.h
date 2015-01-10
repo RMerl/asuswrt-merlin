@@ -10,6 +10,7 @@
 #include <qcsapi_rpc_common/common/rpc_raw.h>
 #include "qcsapi_driver.h"
 #include "call_qcsapi.h"
+#include "net80211/ieee80211_dfs_reentry.h"
 
 #define WIFINAME "wifi0"
 

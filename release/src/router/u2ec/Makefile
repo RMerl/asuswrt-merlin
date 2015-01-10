@@ -40,7 +40,7 @@ endif
 	CFLAGS = -DSUPPORT_LPRng
 	CFLAGS += -I. -I$(TOP)/shared
 	CFLAGS += -I$(TOP)/kernel_header/include -I$(SRCBASE)/include
-	LDFLAGS = -lpthread
+	LDFLAGS = -lpthread -ldl
 #	LDFLAGS += -L$(TOP)/libusb10/libusb/.libs -lusb-1.0
 #	LDFLAGS += -L$(TOP)/libusb/libusb/.libs -lusb
 #	LDFLAGS += -L$(TOP)/libusb-0.1.12/.libs -lusb

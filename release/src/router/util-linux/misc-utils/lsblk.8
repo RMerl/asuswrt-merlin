@@ -63,6 +63,15 @@ This option is equivalent to "-o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,RO
 .SH NOTES
 For the partitions are some information (e.g. queue attributes) inherited from
 parental device.
+.PP
+The
+.B lsblk
+needs to be able to lookup sysfs path by major:minor, which is done
+done by using
+.BR /sys/dev/block .
+The block sysfs appeared in kernel 2.6.27 (October 2008).  In case of
+problem with new enough kernel check that CONFIG_SYSFS was enabled at
+the time of kernel build.
 .SH AUTHORS
 .nf
 Milan Broz <mbroz@redhat.com>

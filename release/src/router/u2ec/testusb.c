@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <usb.h>
+#include <bcmnvram.h>
 #include "typeconvert.h"
 #include "usbsock.h"
 

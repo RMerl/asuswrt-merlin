@@ -22,7 +22,6 @@ will list all mounted filesytems or search for a filesystem.  The
 .B findmnt
 command is able to search in
 .IR /etc/fstab ,
-.IR /etc/fstab.d ,
 .IR /etc/mtab
 or
 .IR /proc/self/mountinfo .
@@ -38,9 +37,7 @@ The command prints all mounted filesystems in the tree-like format by default.
 Print help and exit.
 .IP "\fB\-s, \-\-fstab\fP"
 Search in
-.IR /etc/fstab
-and
-.IR /etc/fstab.d .
+.IR /etc/fstab .
 The output is in the list format (see --list).
 .IP "\fB\-m, \-\-mtab\fP"
 Search in
@@ -59,7 +56,10 @@ or
 .IR backward .
 .IP "\fB\-e, \-\-evaluate\fP"
 Convert all tags (LABEL or UUID) to the device names.
-.IP "\fB\-f, \-\-first-only\fP"
+.IP "\fB\-F, \-\-tab\-file \fIpath\fP"
+Search in an alternative file, if used with \fB\-\-fstab\fP, \fB\-\-mtab\fP
+or \fB\-\-kernel\fP then overwrites the default paths.
+.IP "\fB\-f, \-\-first\-only\fP"
 Print the first matching filesystem only.
 .IP "\fB\-i, \-\-invert\fP"
 Invert the sense of matching.
@@ -89,9 +89,9 @@ options are cumulative in effect.  It is different from
 .B \-t
 in that each option is matched exactly; a leading
 .I no
-at the beginning
-of one option does not negate the rest.  For more details see
-.BR mount (8).
+at the beginning does not have global meaning. The "no" could used for
+individual items in the list. The "no" prefix interpratation could be disabled
+by "+" prefix.
 .IP "\fB\-o, \-\-output \fIlist\fP"
 Define output columns.  Currently supported are
 .BR ACTION,
@@ -186,6 +186,13 @@ Monitors mount, umount, remount and move on /mnt/foo.
 Waits for /mnt/foo umount.
 .IP "\fBfindmnt --poll=remount -t ext3 -O ro\fP"
 Monitors remounts to read-only mode on all ext3 filesystems.
+.SH ENVIRONMENT
+.IP LIBMOUNT_FSTAB=<path>
+overrides the default location of the fstab file
+.IP LIBMOUNT_MTAB=<path>
+overrides the default location of the mtab file
+.IP LIBMOUNT_DEBUG=0xffff
+enables debug output
 .SH AUTHORS
 .nf
 Karel Zak <kzak@redhat.com>

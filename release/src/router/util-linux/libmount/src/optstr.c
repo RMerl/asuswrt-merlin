@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2009 Karel Zak <kzak@redhat.com>
+ * Copyright (C) 2008,2009,2012 Karel Zak <kzak@redhat.com>
  *
  * This file may be redistributed under the terms of the
  * GNU Lesser General Public License.
@@ -343,7 +343,7 @@ static int insert_value(char **str, char *pos, const char *substr, char **next)
 
 	if (next) {
 		/* set pointer to the next option */
-		*next = pos + subsz + sep + 1;
+		*next = pos + subsz;
 		if (**next == ',')
 			(*next)++;
 	}
@@ -652,7 +652,7 @@ int mnt_optstr_apply_flags(char **optstr, unsigned long flags,
 	if (!optstr || !map)
 		return -EINVAL;
 
-	DBG(CXT, mnt_debug("appling 0x%08lu flags '%s'", flags, *optstr));
+	DBG(CXT, mnt_debug("applying 0x%08lu flags to '%s'", flags, *optstr));
 
 	maps[0] = map;
 	next = *optstr;
@@ -700,7 +700,7 @@ int mnt_optstr_apply_flags(char **optstr, unsigned long flags,
 					continue;
 				if (ent->id == MS_RDONLY ||
 				    (ent->mask & MNT_INVERT) ||
-				    !(fl & ent->id)) {
+				    (fl & ent->id) != (unsigned long) ent->id) {
 
 					char *end = val ? val + valsz :
 							  name + namesz;
@@ -722,7 +722,9 @@ int mnt_optstr_apply_flags(char **optstr, unsigned long flags,
 		char *p;
 
 		for (ent = map; ent && ent->name; ent++) {
-			if ((ent->mask & MNT_INVERT) || !(fl & ent->id))
+			if ((ent->mask & MNT_INVERT)
+			    || ent->id == 0
+			    || (fl & ent->id) != (unsigned long) ent->id)
 				continue;
 
 			/* don't add options which require values (e.g. offset=%d) */
@@ -745,6 +747,7 @@ int mnt_optstr_apply_flags(char **optstr, unsigned long flags,
 		}
 	}
 
+	DBG(CXT, mnt_debug("new optstr '%s'", *optstr));
 	return rc;
 err:
 	DBG(CXT, mnt_debug("failed to apply flags [rc=%d]", rc));
@@ -845,7 +848,7 @@ static int set_uint_value(char **optstr, unsigned int num,
  * @valsz: size of the value
  * @next: returns pointer to the next option (optional argument)
 
- * Translates "<username>" or "useruid" to the real UID.
+ * Translates "username" or "useruid" to the real UID.
  *
  * For example:
  *	if (!mnt_optstr_get_option(optstr, "uid", &val, &valsz))
@@ -896,7 +899,7 @@ int mnt_optstr_fix_uid(char **optstr, char *value, size_t valsz, char **next)
  * @valsz: size of the value
  * @next: returns pointer to the next option (optional argument)
 
- * Translates "<groupname>" or "usergid" to the real GID.
+ * Translates "groupname" or "usergid" to the real GID.
  *
  * Returns: 0 on success, negative number in case of error.
  */
@@ -991,6 +994,7 @@ int test_append(struct libmnt_test *ts, int argc, char *argv[])
 	rc = mnt_optstr_append_option(&optstr, name, value);
 	if (!rc)
 		printf("result: >%s<\n", optstr);
+	free(optstr);
 	return rc;
 }
 
@@ -1011,6 +1015,7 @@ int test_prepend(struct libmnt_test *ts, int argc, char *argv[])
 	rc = mnt_optstr_prepend_option(&optstr, name, value);
 	if (!rc)
 		printf("result: >%s<\n", optstr);
+	free(optstr);
 	return rc;
 }
 
@@ -1158,6 +1163,7 @@ int test_remove(struct libmnt_test *ts, int argc, char *argv[])
 	rc = mnt_optstr_remove_option(&optstr, name);
 	if (!rc)
 		printf("result: >%s<\n", optstr);
+	free(optstr);
 	return rc;
 }
 

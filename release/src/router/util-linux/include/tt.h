@@ -23,10 +23,11 @@ enum {
 	/*
 	 * Column flags
 	 */
-	TT_FL_TRUNC       = (1 << 5),
-	TT_FL_TREE        = (1 << 6),
-	TT_FL_RIGHT	  = (1 << 7),
-	TT_FL_STRICTWIDTH = (1 << 8)
+	TT_FL_TRUNC       = (1 << 5),	/* truncate fields data if necessary */
+	TT_FL_TREE        = (1 << 6),	/* use tree "ascii art" */
+	TT_FL_RIGHT	  = (1 << 7),	/* align to the right */
+	TT_FL_STRICTWIDTH = (1 << 8),	/* don't reduce width if column is empty */
+	TT_FL_NOEXTREMES  = (1 << 9)    /* ignore extreme fields when count column width*/
 };
 
 struct tt {
@@ -46,10 +47,13 @@ struct tt_column {
 	size_t	seqnum;
 
 	size_t	width;		/* real column width */
-	size_t	width_min;	/* minimal width (width of header) */
+	size_t	width_min;	/* minimal width (usually header width) */
+	size_t  width_max;	/* maximal width */
+	size_t  width_avg;	/* average width, used to detect extreme fields */
 	double	width_hint;	/* hint (N < 1 is in percent of termwidth) */
 
 	int	flags;
+	int	is_extreme;
 
 	struct list_head	cl_columns;
 };

@@ -1212,6 +1212,8 @@ setAllLedOn(void)
 		}
 	}
 
+	wan_red_led_control(LED_ON);
+
 	puts("1");
 	return 0;
 }
@@ -1221,7 +1223,11 @@ setWlOffLed(void)
 {
 	int model;
 	int wlon_unit = nvram_get_int("wlc_band");
-	int wlon_unit_ex = nvram_get_int("exband") ? nvram_get_int("wlc_band_ex") : 0 ;
+#ifdef PXYSTA_DUALBAND
+	int wlon_unit_ex = !nvram_match("dpsta_ifnames", "") ? nvram_get_int("wlc_band_ex") : -1 ;
+#else
+	int wlon_unit_ex = -1;
+#endif
 
 	model = get_model();
 	switch(model) {
@@ -1248,9 +1254,9 @@ setWlOffLed(void)
 		{
 			if (wlon_unit != 0 && wlon_unit_ex != 0)
 				eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 2.4G
-			else if (wlon_unit != 1 && wlon_unit_ex != 1)
+			if (wlon_unit != 1 && wlon_unit_ex != 1)
 				eval("wl", "ledbh", "10", "0");			// wl 5G low
-			else if (wlon_unit != 2 && wlon_unit_ex != 2)
+			if (wlon_unit != 2 && wlon_unit_ex != 2)
 				eval("wl", "-i", "eth3", "ledbh", "10", "0");	// wl 5G high
 			break;
 		}
@@ -1466,6 +1472,8 @@ setAllLedOff(void)
 		}
 	}
 
+	wan_red_led_control(LED_OFF);
+
 	puts("1");
 	return 0;
 }
@@ -1524,6 +1532,7 @@ setATEModeLedOn(void){
 #endif
 			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
+			led_control(LED_WPS, LED_ON);
 			break;
 		}
 		case MODEL_RTAC56S:
@@ -2734,6 +2743,10 @@ next_info:
 			printf("[wlcscan] Output %s error\n", ofile);
 		}else{
 			for (i = 0; i < ap_count; i++){
+#ifdef RTAC3200
+				if (!strcmp(wif, "eth1") && (apinfos[i].ctl_ch > 48))
+					continue;
+#endif
 				/*if(apinfos[i].ctl_ch < 0 ){
 					fprintf(fp, "\"ERR_BNAD\",");
 				}else */if( apinfos[i].ctl_ch > 0 &&
@@ -3072,6 +3085,24 @@ wl_phy_rssi_ant(char *ifname)
 }
 #endif
 
+void set_slave_cotuntry_setting(int unit)
+{
+	char tmp[256], tmp2[256], prefix[] = "wlXXXXXXXXXX_";
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+#ifdef RTCONFIG_BCMWL6
+#ifdef RTCONFIG_PROXYSTA
+	if (is_psta(unit) || is_psr(unit)) {
+		if (nvram_match(strcat_r(prefix, "country_code", tmp), "Q2") &&
+		    nvram_match(strcat_r(prefix, "country_rev", tmp2), "96")) {
+			nvram_set(strcat_r(prefix, "country_code", tmp), "US");
+			nvram_set(strcat_r(prefix, "country_rev", tmp), "184");
+		}
+	}
+#endif
+#endif
+}
+
 int
 reset_countrycode_2g(void)
 {
@@ -3189,6 +3220,13 @@ reset_countryrev_2g(void)
 #else
 	doSystem("nvram set wl1_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
 #endif
+#ifdef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
+	set_slave_cotuntry_setting(0);
+#else
+	set_slave_cotuntry_setting(1);
+#endif
+#endif
 	return 0;
 }
 
@@ -3228,6 +3266,12 @@ reset_countryrev_5g(void)
 #endif
 #ifdef RTAC3200
 	nvram_set("wl2_country_rev", nvram_safe_get("wl0_country_rev"));
+#ifndef RTAC3200_INTF_ORDER
+	set_slave_cotuntry_setting(1);
+#else
+	set_slave_cotuntry_setting(0);
+#endif
+	set_slave_cotuntry_setting(2);
 #endif
 	return 0;
 }

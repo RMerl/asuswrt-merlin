@@ -122,7 +122,7 @@
 	padding-left: 10px;
 	border: 1px solid #222;
 	border-collapse: collapse;
-	background: url(/images/general_th.gif) repeat;
+	background:#2F3A3E;
 }
 .FormTable thead td{
 	color: #FFF;
@@ -134,7 +134,14 @@
 	padding: 3px;
 	padding-left: 10px;
 	border-collapse: collapse;
- 	background: url(/images/statusTitle.gif) repeat-x center;
+ 	background: #92A0A5; /* Old browsers */
+	background: -moz-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#92A0A5 ), color-stop(100%,#66757C)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 }
 .FormTable thead th{
 	color: #000000;
@@ -146,10 +153,9 @@
 }
 .FormTable td{
 	padding-left: 10px;
-	background-color:#475a5f;
+	background-color:#475A5F;
 	border: 1px solid #222;
 	border-collapse: collapse;
-	/*background: url(/images/general_td.gif) repeat-x;*/
 }
 .FormTable td span{
 	background-color:#475a5f;
@@ -176,7 +182,7 @@
 	height:25px;
 	border: 1px solid #222;
 	border-collapse: collapse;
- 	background: url(/images/general_th.gif) repeat-x;
+	background:#2F3A3E;
 }
 .FormTable_table th.select_table{
 	width:100px;
@@ -209,7 +215,14 @@
 	padding: 3px;
 	border-collapse: collapse;
 	padding-left: 10px;
- 	background: url(/images/statusTitle.gif) repeat-x center;
+	background: #92A0A5; /* Old browsers */
+	background: -moz-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#92A0A5 ), color-stop(100%,#66757C)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 }
 .FormTable_table thead th{
 	width: 98px;
@@ -239,7 +252,14 @@
 	height:25px;
 	border: 1px solid #222;
 	border-collapse: collapse;
- 	background: url(/images/statusTitle.gif) repeat-x;
+ 	background: #92A0A5; /* Old browsers */
+	background: -moz-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#92A0A5 ), color-stop(100%,#66757C)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #92A0A5  0%, #66757C 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #92A0A5 0%, #66757C 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #92A0A5  0%, #66757C 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #92A0A5  0%, #66757C 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#92A0A5', endColorstr='#66757C',GradientType=0 ); /* IE6-9 */
 }
 .FormTable_NWM th.select_table{
 	width:100px;
@@ -274,7 +294,7 @@
 	border: 1px solid #222;
 	padding: 2px;
 	border-collapse: collapse;
- 	background: url(/images/general_th.gif) repeat-x center;
+ 	background:#2F3A3E;
 }
 .FormTable_NWM thead th{
 	width: 98px;
@@ -368,6 +388,18 @@
 	padding-left:0.4em;
 	height:23px;
 	width:235px;
+	line-height:23px \9;	/*IE*/
+	font-size:12px;
+	font-family: Lucida Console;
+	background-image:url(/images/New_ui/inputbg.png);
+	border-width:0;
+	color:#FFFFFF;
+}
+.input_22_table{
+	margin-left:2px;
+	padding-left:0.4em;
+	height:23px;
+	width:202px;
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
@@ -1277,87 +1309,6 @@ div.tabclick {
 	font-size: 13px; 
 }	
 
-.radioleft {	
-      background: transparent url(images/New_ui/radioleft.png) no-repeat scroll right top;
-      color: White;
-      display: block;
-      float: left;
-      height: 34px;
-      padding-right: 10px;      
-      margin-right: 0px;
-      text-decoration: none;
-	  width:100px;
-    }
-.radioleft span {
-      background: transparent url(images/New_ui/radioleftspan.png) no-repeat;
-      display: block;
-      padding: 5px 1px 5px 11px;
-      line-height: 24px;	  
-}
-.radioleft:hover{
-	background-position:right -34px;
-}
-   
-.radioleft:hover span{
-	background-position:left -34px;
-} 
-
-
-.radiomiddle {	
-      background: transparent url(images/New_ui/radiomiddle.png) no-repeat scroll right top;
-      color: White;
-      display: block;
-      float: left;
-      height: 34px;
-      padding-right: 10px;      
-      margin-right: 0px;
-      text-decoration: none;
-	  width:100px;
-    }
-.radiomiddle span {
-      background: transparent url(images/New_ui/radiomiddlespan.png) no-repeat;
-      display: block;
-      padding: 5px 1px 5px 11px;
-      line-height: 24px;	  
-}
-.radiomiddle:hover{
-	background-position:right -34px;
-}
-   
-.radiomiddle:hover span{
-	background-position:left -34px;
-} 
-
-
-.radioright {	
-      background: transparent url(images/New_ui/radioright.png) no-repeat scroll right top;
-      color: White;
-      display: block;
-      float: left;
-      height: 34px;
-      padding-right: 10px;      
-      margin-right: 0px;
-      text-decoration: none;
-	  width:100px;
-    }
-.radioright span {
-      background: transparent url(images/New_ui/radiorightspan.png) no-repeat;
-      display: block;
-      padding: 5px 1px 5px 11px;
-      line-height: 24px;	  
-}
-.radioright:hover{
-	background-position:right -34px;
-}
-   
-.radioright:hover span{
-	background-position:left -34px;
-} 
-
-
-
-
-
 .flowfont{
 font:Arial, Helvetica, sans-serif;
 color:#FFFFFF;
@@ -1575,6 +1526,16 @@ padding-top:1px;
 	cursor: pointer;
 }
 /*Viz add 2013.03 for adsl sync status      end*/
+/*Viz add 2014.10 for adsl diag status      start*/
+.linestatusdiag{
+	background-image:url(/images/New_ui/DSL_diag.gif);
+	background-repeat:no-repeat;	
+	background-position:3px 2px;
+	height:29px;
+	width:29px;
+	cursor: pointer;
+}
+/*Viz add 2014.10 for adsl diag status      end*/
 .printstatuson{
 	background-image:url(images/New_ui/printstatus.png);
 	background-repeat:no-repeat;	
@@ -1631,6 +1592,127 @@ padding-top:1px;
 	width:30px;
 	cursor: pointer;
 }
+
+/* Cherry Cho added for mobile broadband in 2014/8/22.*/
+.simexist{
+	background-image:url(images/mobile/sim_state.png);
+	background-repeat:no-repeat;	
+	background-position:4px -23px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+}
+.simnone{
+	background-image:url(images/mobile/sim_state.png);
+	background-repeat:no-repeat;	
+	background-position:4px 2px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+
+.simfail{
+	background-image:url(images/mobile/sim_state.png);
+	background-repeat:no-repeat;	
+	background-position:4px -73px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+
+.simlock{
+	background-image:url(images/mobile/sim_state.png);
+	background-repeat:no-repeat;	
+	background-position:4px -46px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+.simroamingon{
+	background-image:url(images/mobile/roaming.png);
+	background-repeat:no-repeat;	
+	background-position:4px 2px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+}
+.simroamingoff{
+	background-image:url(images/mobile/roaming.png);
+	background-repeat:no-repeat;	
+	background-position:4px -50px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+.simsignalfull{
+	background-image:url(images/mobile/signal_strength.png);
+	background-repeat:no-repeat;	
+	background-position:3px 2px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+}
+.simsignalexcellent{
+	background-image:url(images/mobile/signal_strength.png);
+	background-repeat:no-repeat;	
+	background-position:2px -22px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+.simsignalgood{
+	background-image:url(images/mobile/signal_strength.png);
+	background-repeat:no-repeat;	
+	background-position:2px -47px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+.simsignalok{
+	background-image:url(images/mobile/signal_strength.png);
+	background-repeat:no-repeat;	
+	background-position:2px -72px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+.simsignalmarginal{
+	background-image:url(images/mobile/signal_strength.png);
+	background-repeat:no-repeat;	
+	background-position:2px -97px;
+	height:30px;
+	width:30px;	
+	cursor: pointer;
+}
+.simsignalno{
+	background-image:url(images/mobile/signal_strength.png);
+	background-repeat:no-repeat;	
+	background-position:2px -122px;
+	height:30px;
+	width:30px;
+	cursor: pointer;
+}
+.img_wrap{   
+    width:20px;   
+    height:15px;   
+    overflow:hidden;  
+    position:relative;left:0px;top:0px; 
+} 
+.signalsysimg img{
+	position: relative;
+	top: 0px;
+	left: 4px;
+	max-width:15px;	
+	cursor: pointer;	
+}
+
+.img_wrap2{   
+    width:30px;   
+    height:30px;   
+    overflow:hidden;  
+    position:relative;left:2px;top:2px; 
+} 
+/*--*/
 
 .StatusClickHint_mouseover{
 	cursor: pointer;

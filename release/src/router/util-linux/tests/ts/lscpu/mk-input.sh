@@ -30,6 +30,10 @@ if [ -d "/proc/xen" ]; then
 	fi
 fi
 
+if [ -e "/proc/sysinfo" ]; then
+	$CP /proc/sysinfo $TS_DUMP
+fi
+
 $CP /sys/devices/system/cpu/* $TS_DUMP
 $CP /sys/devices/system/node/*/cpumap $TS_DUMP
 

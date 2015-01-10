@@ -50,7 +50,7 @@ saveSentEmail(dstrbuf *msg)
 
 	save_file = getConfValue("SAVE_SENT_MAIL");
 	if (!save_file) {
-		return ERROR;
+		return SUCCESS;	//ignore if not configure
 	}
 
 	path = expandPath(save_file);

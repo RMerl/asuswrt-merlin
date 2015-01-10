@@ -12,14 +12,15 @@
 #include <sys/time.h>
 #include <time.h>
 #include <mntent.h>
+
 #include "mount_mntent.h"
 #include "fstab.h"
 #include "sundries.h"
-#include "xmalloc.h"
 #include "fsprobe.h"
 #include "pathnames.h"
 #include "nls.h"
 #include "usleep.h"
+#include "strutils.h"
 
 #define streq(s, t)	(strcmp ((s), (t)) == 0)
 
@@ -272,10 +273,15 @@ getmntfilebackward (const char *name, struct mntentchn *mcprev) {
 	mc0 = mtab_head();
 	if (!mcprev)
 		mcprev = mc0;
+
 	for (mc = mcprev->prev; mc && mc != mc0; mc = mc->prev)
-		if (streq(mc->m.mnt_dir, name) ||
-		    streq(mc->m.mnt_fsname, name))
+		if (streq(mc->m.mnt_dir, name))
 			return mc;
+
+	for (mc = mcprev->prev; mc && mc != mc0; mc = mc->prev)
+		if (streq(mc->m.mnt_fsname, name))
+			return mc;
+
 	return NULL;
 }
 
@@ -431,7 +437,7 @@ getfs_by_devdir (const char *dev, const char *dir) {
 				ok = has_uuid(dev, fs + 5);
 			} else {
 				fs = canonicalize_spec(mc->m.mnt_fsname);
-				ok = streq(fs, dev);
+				ok = streq_except_trailing_slash(fs, dev);
 				my_free(fs);
 			}
 		}
@@ -1040,13 +1046,38 @@ update_mtab (const char *dir, struct my_mntent *instead) {
  *  number and writes the number back to the file.
  */
 /* dummy */
-char *fsprobe_get_label_by_devname(const char *spec) { return NULL; }
-char *fsprobe_get_uuid_by_devname(const char *spec) { return NULL; }
-int fsprobe_parse_spec(const char *spec, char **name, char **value) { return 0; }
-struct my_mntent *my_getmntent (mntFILE *mfp) { return NULL; }
-mntFILE *my_setmntent (const char *file, char *mode) { return NULL; }
-void my_endmntent (mntFILE *mfp) { }
-int my_addmntent (mntFILE *mfp, struct my_mntent *mnt) { return 0; }
+char *fsprobe_get_label_by_devname(const char *spec __attribute__((__unused__)))
+{
+	return NULL;
+}
+char *fsprobe_get_uuid_by_devname(const char *spec __attribute__((__unused__)))
+{
+	return NULL;
+}
+int fsprobe_parse_spec(const char *spec __attribute__((__unused__)),
+		       char **name __attribute__((__unused__)),
+		       char **value __attribute__((__unused__)))
+{
+	return 0;
+}
+struct my_mntent *my_getmntent (mntFILE *mfp __attribute__((__unused__)))
+{
+	return NULL;
+}
+mntFILE *my_setmntent (const char *file __attribute__((__unused__)),
+		       char *mode __attribute__((__unused__)))
+{
+	return NULL;
+}
+void my_endmntent (mntFILE *mfp __attribute__((__unused__)))
+{
+	/* nothing */
+}
+int my_addmntent (mntFILE *mfp __attribute__((__unused__)),
+		  struct my_mntent *mnt __attribute__((__unused__)))
+{
+	return 0;
+}
 
 int
 main(int argc, char **argv)
@@ -1073,7 +1104,7 @@ main(int argc, char **argv)
 	nloops = atoi(argv[4]);
 
 	if (stat(filename, &st) < -1)
-		die(EXIT_FAILURE, "%s: %s\n", filename, strerror(errno));
+		die(EXIT_FAILURE, "%s: %m\n", filename);
 
 	fprintf(stderr, "%05d (pid=%05d): START\n", id, pid);
 

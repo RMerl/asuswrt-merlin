@@ -40,6 +40,50 @@ var debugTime = 0;
 var avgMode = 0;
 var wdog = null;
 var wdogWarn = null;
+var href_lang = get_supportsite_lang();
+switch("<% nvram_get("preferred_lang"); %>"){
+	case "KR":
+						href_lang = "/us/";
+						break;
+	case "RO":
+						href_lang = "/us/";
+						break;
+	case "HU":
+						href_lang = "/us/";
+						break;
+	case "IT":
+						href_lang = "/us/";
+						break;
+	case "DA":
+						href_lang = "/us/";
+						break;	
+	case "BR":
+						href_lang = "/us/";
+						break;
+	case "SV":
+						href_lang = "/us/";
+						break;
+	case "FI":
+						href_lang = "/us/";
+						break;
+	case "NO":
+						href_lang = "/us/";
+						break;
+	case "TH":
+						href_lang = "/us/";
+						break;
+	case "DE":
+						href_lang = "/us/";
+						break;
+	case "PL":
+						href_lang = "/us/";
+						break;
+	case "CZ":
+						href_lang = "/us/";
+						break;
+	default:
+						break;
+}
 
 // disable auto log out
 AUTOLOGOUT_MAX_MINUTE = 0;
@@ -147,7 +191,15 @@ function init()
 	watchdogReset();
 
 	ref.start();
-	addOnlineHelp($("faq0"), ["ASUSWRT", "Traffic", "Monitor"]);
+	document.getElementById("faq0").href = "http://www.asus.com"+ href_lang +"support/Search-Result-Detail/69B50762-C9C0-15F1-A5B8-C7B652F50ACF/?keyword=ASUSWRT%20Traffic%20Monitor" ;
+
+	var ctf_disable = '<% nvram_get("ctf_disable"); %>';
+	if(ctf_disable == 1){
+		document.getElementById("ctfLevelDesc").style.display = "none";
+	}
+	else{
+		document.getElementById("ctfLevelDesc").style.display = "";
+	}
 }
 
 function switchPage(page){
@@ -235,7 +287,7 @@ function switchPage(page){
           				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
         			<tr>
-          				<td height="30" align="left" valign="middle" >
+						<td height="30" align="left" valign="middle" >
 							<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc1#></p></div>
           				</td>
         			</tr>
@@ -251,6 +303,14 @@ function switchPage(page){
         			<tr>
           				<td height="30" align="left" valign="middle" >
 							<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc2#></p></div>
+							
+							<div id="ctfLevelDesc" style="display:none" class="formfontcontent">
+								<p class="formfontcontent">
+									<b>NOTE:</b> The wired network traffic bypasses CPU when enabled NAT Acceleration and may affect Traffic Monitor accuracy.
+									Click <a style="text-decoration:underline" href="Advanced_SwitchCtrl_Content.asp?af=ctf_disable_force">HERE</a> to disable NAT Acceleration.  
+								</p>
+							</div>
+
 							<div class="formfontcontent"><p class="formfontcontent"><a id="faq0" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;"><#traffic_monitor#> FAQ</a></p></div>
           				</td>
         			</tr>

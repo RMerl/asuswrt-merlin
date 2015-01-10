@@ -1,30 +1,30 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - Redirect Page</title>                          
+<title><#Web_Title#> - Blocking Page</title>                          
 <style>
 body{
 	background-color:#21333e;
 	margin:10px auto;
+	color:#FFF;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
 }
 
 .erTable thead{
-	color:#FFFFFF;
-	font-weight:bolder;
-	font-size:15px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-weight:bold;
+	font-size:16px;
 	text-align:center;
 	line-height:25px;
 }
 .erTable th{
 	font-weight:bolder;
-	font-size:13px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:14px;
 	line-height:25px;
 	text-align:left;
 }
@@ -38,44 +38,23 @@ body{
 	background: -ms-linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* IE10+ */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7d7e7d', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
 	background: linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* W3C */
-	-webkit-border-top-left-radius: 10px;
-	-webkit-border-top-right-radius: 10px;
-	-moz-border-radius-topleft: 10px;
-	-moz-border-radius-topright: 10px;
 	border-top-left-radius: 10px;
 	border-top-right-radius: 10px;
 }
 
 .erTable tbody th{
 	background: #000; /* Old browsers */
-	font-size:15px;
+	font-size:16px;
 }
 
 .erpage_td{
 	background: #000; /* Old browsers */
 }
 
-.erpage_footer{
-	height:36px;
-	background: #0e0e0e; /* Old browsers */
-	background: -moz-linear-gradient(top, #0e0e0e 0%, #7d7e7d 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#0e0e0e), color-stop(100%,#7d7e7d)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Opera11.10+ */
-	background: -ms-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* IE10+ */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0e0e0e', endColorstr='#7d7e7d',GradientType=0 ); /* IE6-9 */
-	background: linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* W3C */
-	-webkit-border-bottom-right-radius: 10px;
-	-webkit-border-bottom-left-radius: 10px;
-	-moz-border-radius-bottomright: 10px;
-	-moz-border-radius-bottomleft: 10px;
-	border-bottom-right-radius: 10px;
-	border-bottom-left-radius: 10px;
-}
+
 
 .Epagecontent{
 	font-size:12px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
 	border:1px dashed #333;
 	background-color:#FFF;
 	width:90%;
@@ -87,7 +66,6 @@ body{
 
 .Epagetitle{
 	font-size:14px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
 	font-weight: bolder;
 	line-height:30px;
 	color:#FFF;
@@ -107,8 +85,7 @@ body{
 .modelName{
 	color:#FFFFFF;
 	font-size:22px;
-	font-family:Verdana;
-	font-weight:bolder;
+	font-weight:bold;
 	border:0px solid #333;
 	width:300px;
 	position:absolute;
@@ -117,14 +94,15 @@ body{
 	margin:10px 0px 0px 18px;
 }
 
-.desc_info{
-	font-weight:bold;
-	font-size:13px;
-}
+
 </style>	
 <script type="text/javascript">
+var bwdpi_support = ('<% nvram_get("rc_support"); %>'.search('bwdpi') == -1) ? false : true;
+var mac_parameter = '<% get_parameter("mac"); %>'.toUpperCase();
 var casenum = '<% get_parameter("cat_id"); %>';
-var block_info = <% bwdpi_redirect_info(); %>;
+var block_info = '<% bwdpi_redirect_info(); %>';
+if(block_info != "")
+	block_info = JSON.parse(block_info);
 var client_list_array = '<% get_client_detail_info(); %>';
 var custom_name = decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
 var category_info = [["Parental Controls", "1", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites with profane or vulgar content generally considered inappropriate for minors; includes sites that offer erotic content or ads for sexual services, but excludes sites with sexually explicit images."],
@@ -195,7 +173,7 @@ function get_target_info(){
 	
 	for(i=1;i<custom_name_row.length;i++){
 		var custom_name_col = custom_name_row[i].split('>');
-		if(custom_name_col[1] == block_info[0]){
+		if(custom_name_col[1] == block_info[0] || custom_name_col[1] == mac_parameter){
 			target_info.name = custom_name_col[0];	
 			match_flag =1;
 		}
@@ -204,16 +182,22 @@ function get_target_info(){
 	if(match_flag == 0){
 		for(i=1;i< client_list_row.length;i++){
 			var client_list_col = client_list_row[i].split('>');
-			if(client_list_col[3] == block_info[0]){
+			if(client_list_col[3] == block_info[0] || client_list_col[3] == mac_parameter){
 				target_info.name = client_list_col[1];
 			}
 		}
 	}
 
-	target_info.mac = block_info[0];
-	target_info.url = block_info[1];
-	target_info.category_id = block_info[2];
-	get_category_info();
+	if(casenum != ""){		//for AiProtection
+		target_info.mac = block_info[0];
+		target_info.url = block_info[1];
+		target_info.category_id = block_info[2];
+		get_category_info();
+	}
+	else{		//for Parental Controls (Time Scheduling)
+		target_info.mac = mac_parameter;
+		target_info.desc = "This device is blocked to access the Internet at this time";
+	}
 }
 
 function get_category_info(){
@@ -237,11 +221,20 @@ function show_information(){
 	var code = "";	
 	var code_suggestion = "";
 	var code_title = "";
+	var parental_string = "";
 	
 	code = "<ul>";
 	code += "<li><div><span class='desc_info'>Description:</span><br>" + target_info.desc + "</div></li>";
-	code += "<li><div><span class='desc_info'>Host: </span>" + target_info.name + "</div></li>";
-	code += "<li><div><span class='desc_info'>URL: </span>" + target_info.url +"</div></li>";
+	code += "<li><div><span class='desc_info'>Host: </span>";
+	if(target_info.name == target_info.mac)
+		code += target_info.name;
+	else	
+		code += target_info.name + " (" + target_info.mac.toUpperCase() + ")";
+		
+	code += "</div></li>";
+	if(casenum != "")
+		code += "<li><div><span class='desc_info'>URL: </span>" + target_info.url +"</div></li>";
+	
 	if(target_info.category_type == "Parental Controls")
 		code += "<li><div><span class='desc_info'><#AiProtection_filter_category#> :</span>" + target_info.content_category + "</div></li>";	
 	
@@ -254,18 +247,71 @@ function show_information(){
 		code_suggestion += "<li><span>If you are a manager and still want to visit this website, please go to <a href='AiProtection_WebProtector.asp'>Parental Controls</a> for configuration change.</span></li>";
 		code_suggestion += "<li><span>If you are a client and have any problems, please contact your manager.</span></li>";		
 		code_suggestion += "</ul>";
+		document.getElementById('tm_block').style.display = "";
 	}
-	else{
+	else if(target_info.category_type == "Home Protection"){
 		code_title = "<div class='er_title' style='height:auto;'>Warning! The website contains malware. Visiting this site may harm your computer</div>"
 		code_suggestion = "<ul>";
 		code_suggestion += "If you are a manager and want to disable this protection, please go to <a href='AiProtection_HomeProtection.asp'>Home Protection</a> for configuration";
 		code_suggestion += "</ul>";
+		document.getElementById('tm_block').style.display = "";
 	}
-	
+	else{		//for Parental Control(Time Scheduling)
+		code_title = "<div class='er_title' style='height:auto;'>Warning! The device can't access the Internet now.</div>"
+		code_suggestion = "<ul>";
+		if(bwdpi_support)
+			parental_string = "<#Time_Scheduling#>";
+		else
+			parental_string = "<#Parental_Control#>";
+
+		code_suggestion += "If you are a manager and want to access the Internet, please go to <a href='ParentalControl.asp'>"+ parental_string +"</a> for configuration change.";
+		code_suggestion += "<br>";	
+		code_suggestion += "If you are a client and have any problems, please contact your manager.";	
+		code_suggestion += "</ul>";	
+		document.getElementById('tm_block').style.display = "none";
+	}
+
 	document.getElementById('page_title').innerHTML = code_title;
 	document.getElementById('suggestion').innerHTML = code_suggestion;
 }
 </script>
+<style>
+.footer{
+	height:36px;
+	background: #0e0e0e; /* Old browsers */
+	background: -moz-linear-gradient(top, #0e0e0e 0%, #7d7e7d 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#0e0e0e), color-stop(100%,#7d7e7d)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Opera11.10+ */
+	background: -ms-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* IE10+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0e0e0e', endColorstr='#7d7e7d',GradientType=0 ); /* IE6-9 */
+	background: linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* W3C */
+	border-bottom-right-radius: 10px;
+	border-bottom-left-radius: 10px;
+}
+
+.tm_logo{
+	background:url('images/New_ui/tm_logo_1.png');
+	width:268px;
+	height:48px;
+	float:right;
+}
+.desc_info{
+	font-weight:bold;
+	font-size:14px;
+}
+#detail_info{
+	color:red
+}
+
+#tm_block{
+	margin-top:20px;
+}
+
+.erTable tbody th{
+	height:40px;
+}
+</style>
 </head>
 
 <body onload="initial();">
@@ -277,12 +323,12 @@ function show_information(){
 		</tr>
 	</thead>
 	<tr>
-		<th valign="top" style="height:40px;" id="page_title"></th>
+		<th valign="top" id="page_title"></th>
 	</tr>
 	<tr>
 		<td  valign="top" class="erpage_td">
 			<span class="Epagetitle">Detailed informations:</span>	  
-			<div id="detail_info" class="Epagecontent" style="color:red"></div>	  
+			<div id="detail_info" class="Epagecontent"></div>	  
 			<div class="Epagetitle">
 				<div>
 					<span><#web_redirect_suggestion0#>:</span>
@@ -291,24 +337,24 @@ function show_information(){
 			<div class="Epagecontent">
 				<div id="suggestion"></div>
 			</div>
-			<div class="Epagecontent" style="margin-top:20px;display:none;">
+			<div id="tm_block" class="Epagecontent" style="display:none">
 				<table>
+					<tr>				
+						<td>
+							<div>For your client side advanced internet security protection. Trend Micro offer you more advanced home security solution. Please <a href="http://www.trendmicro.com" target="_blank">visit the site</a> for free trial or online scan service.</div>	
+						</td>
+					</tr>
 					<tr>
 						<td>
-							<img src="images/New_ui/TM_product.png">
+							<div class="tm_logo"></div>
 						</td>						
-						<td>
-							<div>
-								For your client side advanced internet security protection. Trend Micro offer you more advanced home security solution. Please <a href="">visit the site</a> for free trial or online scan service.
-							</div>	
-						</td>
 					</tr>
 				</table>
 			</div>
 		</td>
 	</tr>
 	<tr>
-		<td height="22" class="erpage_footer"><span></span></td>
+		<td height="22" class="footer"><span></span></td>
 	</tr>
 </table>
 </body>

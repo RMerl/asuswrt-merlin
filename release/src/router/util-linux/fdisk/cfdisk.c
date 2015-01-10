@@ -485,7 +485,7 @@ get_string(char *str, int len, char *def) {
 		char s[MB_CUR_MAX + 1];
 		int  sz = wctomb(s, wc);
 
-		if (sz + i < len) {
+		if (sz > 0 && sz + i < len) {
 			s[sz] = '\0';
 			mvaddnstr(y, x + cells, s, sz);
 			if (use_def) {

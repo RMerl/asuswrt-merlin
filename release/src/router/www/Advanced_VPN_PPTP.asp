@@ -19,12 +19,36 @@
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<style>
+.contentM_qis{
+	position:absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:200;
+	background-color:#2B373B;
+	display:block;
+	margin-left: 450px;
+	margin-top: -450px;
+	width:340px;
+	height:160px;
+}
+</style>
 <script>
 var $j = jQuery.noConflict();
 <% wanlink(); %>
+<% secondary_wanlink(); %>
+window.onresize = function() {
+	if(document.getElementById("edit_sr_block").style.display == "") {
+		cal_panel_block("edit_sr_block");
+	}
+}
 var pptpd_clientlist_array_ori = '<% nvram_char_to_ascii("","pptpd_clientlist"); %>';
 var pptpd_clientlist_array = decodeURIComponent(pptpd_clientlist_array_ori);
 var pptpd_connected_clients = [];
+var pptpd_sr_rulelist_array_ori = '<% nvram_char_to_ascii("","pptpd_sr_rulelist"); %>';
+var pptpd_sr_rulelist_array = decodeURIComponent(pptpd_sr_rulelist_array_ori);
+var pptpd_sr_edit_username = "";
 
 function initial(){
 	var dualwan_mode = '<% nvram_get("wans_mode"); %>';
@@ -37,16 +61,48 @@ function initial(){
 	show_menu();		
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "VPN"]);
 	
-	check_pptpd_broadcast();
 	formShowAndHide(document.form.pptpd_enable.value, document.form.VPNServer_mode.value);	
 	if(dualwan_mode == "lb"){
-		document.getElementById("wan_ctrl").style.display = "none";
+		var wan0_ipaddr = wanlink_ipaddr();
+		var wan1_ipaddr = secondary_wanlink_ipaddr();		document.getElementById("wan_ctrl").style.display = "none";
 		document.getElementById("dualwan_ctrl").style.display = "";	
+		document.getElementById("dualwan_ctrl").innerHTML = '<#PPTP_desc2#> <span class="formfontdesc">Primary WAN IP : ' + wan0_ipaddr + ' </sapn><span class="formfontdesc">Secondary WAN IP : ' + wan1_ipaddr + '</sapn>';
+		//check DUT is belong to private IP.
+		if(validator.isPrivateIP(wan0_ipaddr) && validator.isPrivateIP(wan1_ipaddr)){
+			document.getElementById("privateIP_notes").style.display = "";
+		}
 	}
-
-	//check DUT is belong to private IP.
-	if(validator.isPrivateIP(wanlink_ipaddr())){
-		document.getElementById("privateIP_notes").style.display = "";
+	else {
+		var wan_primary = '<% nvram_get("wan_primary"); %>';
+		var wan_ipaddr = "";
+		if(wan_primary == 0) {	//primary
+			wan_ipaddr = wanlink_ipaddr();
+		}
+		else {	//secondary
+			wan_ipaddr = secondary_wanlink_ipaddr();
+		}
+		document.getElementById("wan_ctrl").innerHTML = '<#PPTP_desc2#>' +  wan_ipaddr;
+		//check DUT is belong to private IP.
+		if(validator.isPrivateIP(wan_ipaddr)){
+			document.getElementById("privateIP_notes").style.display = "";
+		}
+	}
+	//setting pptpd_ms_network_option and pptpd_broadcast_option	
+	if(document.form.pptpd_ms_network.value == "1") {
+		document.form.pptpd_ms_network_option[0].checked = true;
+		document.form.pptpd_broadcast_option[0].checked = true;
+		document.form.pptpd_broadcast.value = "1";
+		document.form.pptpd_broadcast_option[1].disabled = true;
+		document.getElementById("pptpd_broadcast_hint").style.display = "";
+	}
+	else {
+		document.form.pptpd_ms_network_option[1].checked = true;
+		if(document.form.pptpd_broadcast.value == "1") {
+			document.form.pptpd_broadcast_option[0].checked = true;
+		}
+		else {
+			document.form.pptpd_broadcast_option[1].checked = true;
+		}	
 	}
 
 	/* Advanced Setting start */
@@ -151,14 +207,14 @@ function applyRule() {
 
 			for(var i = 0; i < rule_num; i += 1) {
 				tmp_value += "<"		
-				for(var j = 1; j < item_num - 1; j += 1) {
+				for(var j = 1; j < item_num - 2; j += 1) {
 					if(document.getElementById("pptpd_clientlist_table").rows[i].cells[j].innerHTML.lastIndexOf("...") < 0) {
 						tmp_value += document.getElementById("pptpd_clientlist_table").rows[i].cells[j].innerHTML;
 					}
 					else {
 						tmp_value += document.getElementById("pptpd_clientlist_table").rows[i].cells[j].title;
 					}					
-					if(j != item_num - 2)
+					if(j != item_num - 3)
 						tmp_value += ">";
 				}
 			}
@@ -172,6 +228,7 @@ function applyRule() {
 			document.form.VPNServer_mode.value = 'pptpd';
 			document.form.action_script.value = "restart_pptpd";
 			document.form.pptpd_clientlist.value = get_group_value();
+			document.form.pptpd_sr_rulelist.value = pptpd_sr_rulelist_array;
 			document.form.pptpd_enable.value = "1";
 			if(!validator.isLegalIP(document.form._pptpd_clients_start, "")) {
 				document.form._pptpd_clients_start.focus();
@@ -281,6 +338,7 @@ function applyRule() {
 			document.form.action_script.value = "stop_pptpd";
 			document.form.pptpd_enable.value = "0";
 			document.form.pptpd_clientlist.value = get_group_value();
+			document.form.pptpd_sr_rulelist.value = pptpd_sr_rulelist_array;
 		}
 
 		showLoading();
@@ -354,8 +412,53 @@ function addRow_Group(upper){
 	}
 }
 
+function cal_panel_block(obj) {
+	var blockmarginLeft;
+	if(window.innerWidth) {
+		winWidth = window.innerWidth;
+	}
+	else if((document.body) && (document.body.clientWidth)) {
+		winWidth = document.body.clientWidth;
+	}
+		
+	if(document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth) {
+		winWidth = document.documentElement.clientWidth;
+	}
+		
+	if(winWidth >1050) {	
+		winPadding = (winWidth - 1050) / 2;	
+		winWidth = 1105;
+		blockmarginLeft = (winWidth * 0.35) + winPadding;
+	}
+	else if(winWidth <= 1050) {
+		blockmarginLeft = (winWidth) * 0.35 + document.body.scrollLeft;	
+	}
+
+	document.getElementById(obj).style.marginLeft = blockmarginLeft + "px";
+}
+
+function edit_Row(userName) {
+	pptpd_sr_edit_username = userName;
+	document.form.pptpd_sr_ipaddr.value = "";
+	document.form.pptpd_sr_netmask.value = "";
+
+	$j("#edit_sr_block").fadeIn(300);
+	cal_panel_block("edit_sr_block");
+
+	var pptpd_sr_rulelist_row = pptpd_sr_rulelist_array.split("<");
+	for(var i = 1; i < pptpd_sr_rulelist_row.length; i += 1) {
+		var pptpd_sr_rulelist_col = pptpd_sr_rulelist_row[i].split(">");
+		if(pptpd_sr_rulelist_col[0] == pptpd_sr_edit_username) {
+			document.form.pptpd_sr_ipaddr.value = pptpd_sr_rulelist_col[1];
+			document.form.pptpd_sr_netmask.value = pptpd_sr_rulelist_col[2];
+			break;
+		}
+	}
+}
+
 function del_Row(rowdata){
 	var i = rowdata.parentNode.parentNode.rowIndex;
+	var delUserName = rowdata.parentNode.parentNode.cells[1].innerHTML;
 	document.getElementById("pptpd_clientlist_table").deleteRow(i);
 	var pptpd_clientlist_value = "";
 	var rowLength = document.getElementById("pptpd_clientlist_table").rows.length;
@@ -374,6 +477,17 @@ function del_Row(rowdata){
 	pptpd_clientlist_array = pptpd_clientlist_value;
 	if(pptpd_clientlist_array == "")
 		showpptpd_clientlist();
+
+	//delete username in pptpd_sr_rulelist_array
+	var pptpd_sr_rulelist_temp = "";
+	var pptpd_sr_rulelist_row = pptpd_sr_rulelist_array.split("<");
+	for(var i = 1; i < pptpd_sr_rulelist_row.length; i += 1) {
+		var pptpd_sr_rulelist_col = pptpd_sr_rulelist_row[i].split(">");
+		if(pptpd_sr_rulelist_col[0] != delUserName) {
+			pptpd_sr_rulelist_temp += "<" + pptpd_sr_rulelist_row[i];
+		}
+	}
+	pptpd_sr_rulelist_array = pptpd_sr_rulelist_temp;
 }
 
 var overlib_str0 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
@@ -381,10 +495,11 @@ var overlib_str1 = new Array();	//Viz add 2013.04 for record longer VPN client u
 function showpptpd_clientlist(){
 	var pptpd_clientlist_row = pptpd_clientlist_array.split('<');
 	var code = "";
+	var pptp_user_name = "";
 
 	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="pptpd_clientlist_table">';
 	if(pptpd_clientlist_row.length == 1)
-		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
+		code +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
 	else{
 		for(var i = 1; i < pptpd_clientlist_row.length; i++){
 			overlib_str0[i] = "";
@@ -394,25 +509,28 @@ function showpptpd_clientlist(){
 			code +='<td width="15%" id="status'+i+'"></td>';
 			for(var j = 0; j < pptpd_clientlist_col.length; j++){
 				if(j == 0){
-					if(pptpd_clientlist_col[0].length >32){
+					pptp_user_name = pptpd_clientlist_col[0];
+					if(pptpd_clientlist_col[0].length >28){
 						overlib_str0[i] += pptpd_clientlist_col[0];
-						pptpd_clientlist_col[0]=pptpd_clientlist_col[0].substring(0, 30)+"...";
-						code +='<td width="35%" title="'+overlib_str0[i]+'">'+ pptpd_clientlist_col[0] +'</td>';
+						pptpd_clientlist_col[0]=pptpd_clientlist_col[0].substring(0, 26)+"...";
+						code +='<td width="30%" title="'+overlib_str0[i]+'">'+ pptpd_clientlist_col[0] +'</td>';
 					}else
-						code +='<td width="35%" title="'+pptpd_clientlist_col[0]+'">'+ pptpd_clientlist_col[0] +'</td>';
+						code +='<td width="30%" title="'+pptpd_clientlist_col[0]+'">'+ pptpd_clientlist_col[0] +'</td>';
 				}
 				else if(j == 1){
-					if(pptpd_clientlist_col[1].length >32){
+					if(pptpd_clientlist_col[1].length >28){
 						overlib_str1[i] += pptpd_clientlist_col[1];
-						pptpd_clientlist_col[1]=pptpd_clientlist_col[1].substring(0, 30)+"...";
-						code +='<td width="35%" title="'+overlib_str1[i]+'">'+ pptpd_clientlist_col[1] +'</td>';
+						pptpd_clientlist_col[1]=pptpd_clientlist_col[1].substring(0, 26)+"...";
+						code +='<td width="30%" title="'+overlib_str1[i]+'">'+ pptpd_clientlist_col[1] +'</td>';
 					}else
-						code +='<td width="35%">'+ pptpd_clientlist_col[1] +'</td>';
+						code +='<td width="30%">'+ pptpd_clientlist_col[1] +'</td>';
 				} 
 			}
 			
 			code +='<td width="15%">';
-			code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
+			code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td>';
+			code +='<td width="10%">';
+			code +='<input class="edit_btn" onclick="edit_Row(\''+ pptp_user_name +'\');" value=""/></td></tr>';
 		}
 	}
 	
@@ -455,33 +573,29 @@ function showPPTPClients(uname) {
 }
 
 function set_pptpd_broadcast(obj){
-	var pptpd_temp;	
-	pptpd_temp = document.form.pptpd_broadcast.value;
-	if(obj.value ==1){
-		if(pptpd_temp == "br0")
-			document.form.pptpd_broadcast.value="br0ppp";
-		else	
-			document.form.pptpd_broadcast.value="ppp";
+	if(obj.value == 1) {
+		document.form.pptpd_ms_network.value = "1";
+		document.form.pptpd_broadcast.value = "1";
+		document.form.pptpd_broadcast_option[0].checked = true;
+		document.form.pptpd_broadcast_option[1].disabled = true;
+		document.getElementById("pptpd_broadcast_hint").style.display = "";
 	}
 	else{
-		if(pptpd_temp == "br0ppp")
-			document.form.pptpd_broadcast.value="br0";
-		else	
-			document.form.pptpd_broadcast.value="disable";
+		document.form.pptpd_ms_network.value = "0";
+		document.form.pptpd_broadcast_option[1].disabled = false;
+		document.getElementById("pptpd_broadcast_hint").style.display = "none";
 	}
-	document.form.selpptpd_broadcast.value = document.form.pptpd_broadcast.value;
 }
 
-function setBroadcast() {
-	document.form.pptpd_broadcast.value = document.form.selpptpd_broadcast.value;
-	check_pptpd_broadcast();
-}
-
-function check_pptpd_broadcast(){
-	if(document.form.pptpd_broadcast.value == "ppp" || document.form.pptpd_broadcast.value == "br0ppp")
-		document.form.pptpd_broadcast_ppp[0].checked = true;
-	else
-		document.form.pptpd_broadcast_ppp[1].checked = true;
+function setBroadcast(obj) {
+	if(obj.value == 1) {
+		document.form.pptpd_broadcast.value = "1";
+		document.form.pptpd_broadcast_option[0].checked = true;
+	}
+	else{
+		document.form.pptpd_broadcast.value = "0";
+		document.form.pptpd_broadcast_option[1].checked = true;
+	}
 }
 
 function switchMode(mode){
@@ -495,6 +609,51 @@ function switchMode(mode){
 		document.getElementById("PPTP_setting").style.display = "none";
 		document.getElementById("tbAdvanced").style.display = "";
 	}
+}
+
+function srCancel() {
+	pptpd_sr_edit_username = "";
+	$j("#edit_sr_block").fadeOut(300);
+}
+
+function srConfirm() {
+	var pptpd_sr_ipaddr = document.form.pptpd_sr_ipaddr.value
+	var pptpd_sr_netmask = document.form.pptpd_sr_netmask.value
+	var pptpd_sr_rulelist_array_temp = "";
+	
+	if(pptpd_sr_ipaddr != "" || pptpd_sr_netmask != "") {
+		if(!validator.isLegalIP(document.form.pptpd_sr_ipaddr, "")) {
+			return false;		
+		}
+		if(!validator.isLegalMask(document.form.pptpd_sr_netmask)) {
+			return false;
+		}
+	}
+	
+	var usernameFlag = false;
+	var pptpd_sr_rulelist_row = pptpd_sr_rulelist_array.split("<");
+	for(var i = 1; i < pptpd_sr_rulelist_row.length; i += 1) {
+		var pptpd_sr_rulelist_col = pptpd_sr_rulelist_row[i].split(">");
+		if(pptpd_sr_rulelist_col[0] == pptpd_sr_edit_username) { //username exist in pptpd_sr_rulelist_array
+			usernameFlag = true;
+			if(pptpd_sr_ipaddr != "" && pptpd_sr_netmask != "") { //if not null, update value
+				pptpd_sr_rulelist_array_temp += "<" + pptpd_sr_edit_username + ">"+ pptpd_sr_ipaddr + ">" + pptpd_sr_netmask;
+			}
+		}
+		else { // add old username value
+			pptpd_sr_rulelist_array_temp += "<" + pptpd_sr_rulelist_row[i];
+		}
+	}
+
+	if(!usernameFlag) { //if username not exist, add value
+		if(pptpd_sr_ipaddr != "" && pptpd_sr_netmask != "") {
+			pptpd_sr_rulelist_array_temp += "<" + pptpd_sr_edit_username + ">" + pptpd_sr_ipaddr +  ">" + pptpd_sr_netmask;
+		}
+	}
+
+	pptpd_sr_rulelist_array = pptpd_sr_rulelist_array_temp;
+
+	srCancel();
 }
 
 /* Advanced Setting start */
@@ -632,10 +791,12 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="VPNServer_mode" value="pptpd">
 <input type="hidden" name="pptpd_enable" value="<% nvram_get("pptpd_enable"); %>">
+<input type="hidden" name="pptpd_ms_network" value="<% nvram_get("pptpd_ms_network"); %>">
 <input type="hidden" name="pptpd_broadcast" value="<% nvram_get("pptpd_broadcast"); %>">	
 <input type="hidden" name="pptpd_clientlist" value="<% nvram_get("pptpd_clientlist"); %>">
 <input type="hidden" name="pptpd_clients" value="<% nvram_get("pptpd_clients"); %>">
 <input type="hidden" name="pptpd_mppe" value="<% nvram_get("pptpd_mppe"); %>">	
+<input type="hidden" name="pptpd_sr_rulelist" value="<% nvram_get("pptpd_sr_rulelist"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>		
@@ -676,10 +837,8 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 													function(){
 														document.form.pptpd_enable.value = "0";
 														formShowAndHide(0, "pptpd");
-													},
-													{
-														switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-													});
+													}
+													);
 												</script>															
 											</td>			
 										</tr>
@@ -695,15 +854,15 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 										<tr id="pptp_samba">
 											<th><#vpn_network_place#></th>
 											<td>
-												<input type="radio" value="1" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_Yes#>
-												<input type="radio" value="0" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_No#>										
+												<input type="radio" value="1" name="pptpd_ms_network_option" onClick="set_pptpd_broadcast(this);"/><#checkbox_Yes#>
+												<input type="radio" value="0" name="pptpd_ms_network_option" onClick="set_pptpd_broadcast(this);"/><#checkbox_No#>
 											</td>
 										</tr>
 									</table>										
 									<div id="PPTP_setting" style="display:none;margin-top:8px;">
 										<div class="formfontdesc"><#PPTP_desc#></div>
-										<div id="wan_ctrl" class="formfontdesc"><#PPTP_desc2#> <% nvram_get("wan0_ipaddr"); %></div>
-										<div id="dualwan_ctrl" style="display:none;" class="formfontdesc"><#PPTP_desc2#> <span class="formfontdesc">Primary WAN IP : <% nvram_get("wan0_ipaddr"); %> </sapn><span class="formfontdesc">Secondary WAN IP : <% nvram_get("wan1_ipaddr"); %> </sapn></div>
+										<div id="wan_ctrl" class="formfontdesc"></div>
+										<div id="dualwan_ctrl" style="display:none;" class="formfontdesc"></div>
 										<div class="formfontdesc" style="margin-top:-10px;font-weight: bolder;"><#PPTP_desc3#></div>
 										<div class="formfontdesc" style="margin:-10px 0px 0px -15px;">
 											<ul>
@@ -715,7 +874,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 											<thead>
 											<tr>
-												<td colspan="4"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;16)</td>
+												<td colspan="5"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;16)</td>
 											</tr>
 											</thead>								
 											<tr>
@@ -723,18 +882,20 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 												<th><#PPPConnection_UserName_itemname#></th>
 												<th><#PPPConnection_Password_itemname#></th>
 												<th><#list_add_delete#></th>
+												<th><#pvccfg_edit#></th>
 											</tr>			  
 											<tr>
 												<td width="15%" style="text-align:center;">-</td>
-												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_username" onKeyPress="return validator.isString(this, event)">
+												<td width="30%">
+													<input type="text" class="input_22_table" maxlength="64" name="pptpd_clientlist_username" onKeyPress="return validator.isString(this, event)">
 												</td>
-												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return validator.isString(this, event)">
+												<td width="30%">
+													<input type="text" class="input_22_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return validator.isString(this, event)">
 												</td>
 												<td width="15%">
 													<div><input type="button" class="add_btn" onClick="addRow_Group(16);" value=""></div>
 												</td>
+												<td width="10%">-</td>
 											</tr>	 			  
 										</table>        
 														
@@ -750,12 +911,9 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 										<tr>
 											<th><#vpn_broadcast#></th>
 											<td>
-												<select name="selpptpd_broadcast" class="input_option" onchange="setBroadcast();">
-													<option class="content_input_fd" value="disable" <% nvram_match("pptpd_broadcast", "disable","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-													<option class="content_input_fd" value="br0"<% nvram_match("pptpd_broadcast", "br0","selected"); %>><#vpn_broadcast_opt1#></option>
-													<option class="content_input_fd" value="ppp" <% nvram_match("pptpd_broadcast", "ppp","selected"); %>><#vpn_broadcast_opt2#></option>
-													<option class="content_input_fd" value="br0ppp"<% nvram_match("pptpd_broadcast", "br0ppp","selected"); %>><#vpn_broadcast_opt3#></option>
-												</select>			
+												<input type="radio" value="1" name="pptpd_broadcast_option" onClick="setBroadcast(this);"/><#checkbox_Yes#>
+												<input type="radio" value="0" name="pptpd_broadcast_option" onClick="setBroadcast(this);"/><#checkbox_No#>
+												<span id="pptpd_broadcast_hint" style="font-family: Lucida Console;color: #FFCC00;display: none;">When Network Place enabled, this must be enabled</span>
 											</td>
 										</tr>
 										<tr>
@@ -836,6 +994,31 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 		</td>
 	</tr>
 </table>
+<div id="edit_sr_block" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;display:none;">
+	<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:8px;">
+		<thead>
+			<tr>
+				<td colspan="2">Static Route (Optional)</td>
+			</tr>
+		</thead>
+		<tr>
+			<th width="30%"><#RouterConfig_GWStaticIP_itemname#></th>
+			<td>
+				<input type="text" class="input_20_table" maxlength="15" name="pptpd_sr_ipaddr" onKeyPress="return validator.isIPAddr(this, event)">
+			</td>
+		</tr>
+		<tr>
+			<th width="30%"><#RouterConfig_GWStaticMask_itemname#></th>
+			<td>
+				<input type="text" class="input_20_table" maxlength="15" name="pptpd_sr_netmask" onKeyPress="return validator.isIPAddr(this, event)" >
+			</td>
+		</tr>
+	</table>
+	<div style="margin-top:10px;text-align:center;">
+		<input class="button_gen" type="button" onclick="srCancel();" value="<#CTL_Cancel#>">
+		<input class="button_gen" type="button" onclick="srConfirm();" value="<#CTL_ok#>">
+	</div>	
+</div>
 </form>
 <div id="footer"></div>
 </body>

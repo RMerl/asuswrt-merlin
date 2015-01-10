@@ -133,7 +133,10 @@
 </style>
 <script>
 var $j = jQuery.noConflict();
-window.onresize = cal_panel_block;
+window.onresize = function(){
+	cal_panel_block("cloudAddTable_div");
+	cal_panel_block("folderTree_panel");
+}
 <% get_AiDisk_status(); %>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -212,13 +215,13 @@ function showInvitation(){
 	else{
 		var htmlCode = "";
 		htmlCode += "<table width='98%' style='margin-top:15px'>";
-		htmlCode += "<tr height='40px'><td width='30%'>Descript</td><td style='font-weight:bolder;'>" + decode_array[0] + "</td></tr>";
-		htmlCode += "<tr height='40px'><td width='30%'>Rule</td><td style='font-weight:bolder;'>" + parseRule(decode_array[2]) + "</td></tr>";
+		htmlCode += "<tr height='40px'><td width='30%'><#IPConnection_autofwDesc_itemname#></td><td style='font-weight:bolder;'>" + decode_array[0] + "</td></tr>";
+		htmlCode += "<tr height='40px'><td width='30%'><#Cloudsync_Rule#></td><td style='font-weight:bolder;'>" + parseRule(decode_array[2]) + "</td></tr>";
 		htmlCode += "<tr height='40px'><td width='30%'>Destination</td><td style='font-weight:bolder;'>" + decode_array[1] + "</td></tr>";
 		
-		htmlCode += "<tr height='40px'><td width='30%'>Local path</td><td>";
+		htmlCode += "<tr height='40px'><td width='30%'><#sync_router_localfolder#></td><td>";
 		htmlCode += "<input type='text' id='PATH_rs' class='input_20_table' style='margin-left:0px;height:23px;' name='cloud_dir' value='' onclick=''/>";
-		htmlCode += "<input name='button' type='button' class='button_gen_short' style='margin-left:5px;' onclick='get_disk_tree();$(\"folderTree_panel\").style.marginLeft+=30;' value='Browser'/>";
+		htmlCode += "<input name='button' type='button' class='button_gen_short' style='margin-left:5px;' onclick='get_disk_tree();$(\"folderTree_panel\").style.marginLeft+=30;' value='<#Cloudsync_browser_folder#>'/>";
 		htmlCode += "</td></tr>";
 		
 		if(decode_array[3] != ""){
@@ -602,7 +605,12 @@ function updateCloudStatus(){
 						else if(cloud_msg){
 							if(cloud_msg == "Need to enter the CAPTCHA"){
 								if(captcha_flag == 0){
-									showAddTable(0);
+									for(var i = 0; i < cloud_synclist_all.length; i += 1) {
+										if(cloud_synclist_all[i][0] == 0){ //ASUS WebStorage
+											showAddTable(0, i);
+											editRule = i + 1;
+										}
+									}
 									$('captcha_tr').style.display = "";															
 									autoFocus('captcha_field');	
 									$('captcha_iframe').src = CAPTCHA_URL;
@@ -1376,34 +1384,33 @@ function confirm_folderTree(){
 }
 
 function cal_panel_block(obj){
-	var blockmarginLeft;
-	var multiple = 0;
-	if(obj == "cloudAddTable_div")
-		multiple = 0.2;
-	else
-		multiple = 0.25;	// for panel ID 'folderTree_panel'
+		var blockmarginLeft;
+		var multiple = 0;
+		if(obj == "cloudAddTable_div")
+			multiple = 0.2;
+		else
+			multiple = 0.25;	// for panel ID 'folderTree_panel'
 
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
+		if (window.innerWidth)
+			winWidth = window.innerWidth;
+		else if ((document.body) && (document.body.clientWidth))
+			winWidth = document.body.clientWidth;
 		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
+		if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
+			winWidth = document.documentElement.clientWidth;
+		}
 
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*multiple)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*multiple + document.body.scrollLeft;	
+		if(winWidth >1050){	
+			winPadding = (winWidth-1050)/2;	
+			winWidth = 1105;
+			blockmarginLeft= (winWidth*multiple)+winPadding;
+		}
+		else if(winWidth <=1050){
+			blockmarginLeft= (winWidth)*multiple + document.body.scrollLeft;	
+		}
 
-	}
-
-	$(obj).style.marginLeft = blockmarginLeft+"px";
-	$("invitation").style.marginLeft = blockmarginLeft+"px";
+		$(obj).style.marginLeft = blockmarginLeft+"px";
+		$("invitation").style.marginLeft = blockmarginLeft+"px";
 }
 
 function change_service(obj){
@@ -1636,23 +1643,21 @@ function onDropBoxLogin(token, uid){
 <input type="hidden" name="cloud_sync" value="">
 <input type="hidden" name="enable_cloudsync" value="<% nvram_get("enable_cloudsync"); %>">
 <div id="cloudAddTable_div" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
-					<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="cloudAddTable" style="margin-top:10px;margin-bottom:10px;display:none;">
+					<table width="97%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="cloudAddTable" style="margin-top:10px;margin-bottom:10px;display:none;">
 	  					<thead>
 	   					<tr>
 	   						<td colspan="6" id="cloud_synclist"><#aicloud_cloud_list#></td>
 	   					</tr>
 	  					</thead>		  
 							<tr>
-								<th width="30%" style="height:40px;font-family: Calibri;font-weight: bolder;">
-									Provider
-								</th>
+								<th width="30%" style="height:40px;font-family: Calibri;font-weight: bolder;"><#Provider#></th>
 								<td>				
 									<div id="divOneProvider" style="display:none;"></div>				
 									<ul id="povider_tr" class="navigation" style="margin:-15px 0 0 -39px;*margin:-20px 0 0 0;">  
 										<li >
 											<dl>
 												<dt>
-													<div id="select_service" style="height:35px;margin:-4px 0px 0px 0px;padding:4px;" value="">Add new account</div>
+													<div id="select_service" style="height:35px;margin:-4px 0px 0px 0px;padding:4px;" value=""><#AddAccountTitle#></div>
 												</dt> 
 												<dd style="text-align: center;font-weight: bold;font-size: 13px;padding:3px;width:139px;" onclick="change_service('WebStorage');"> 
 													<div id="WebStorage" style="background: url('/images/cloudsync/ASUS-WebStorage.png') no-repeat; height:35px;"><a style="text-align:left;padding:10px 0px 0px 45px;">WebStorage</a></div>
@@ -1683,7 +1688,7 @@ function onDropBoxLogin(token, uid){
 						</tr>	
 						<tr style="display:none;">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Server IP address
+								<#WLANAuthentication11a_ExAuthDBIPAddr_itemname#>
 							</th>			
 							<td>
 								<span>smb://</span>
@@ -1700,7 +1705,7 @@ function onDropBoxLogin(token, uid){
 						</tr>	
 						<tr style="display:none;">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Server IP
+								<#WLANAuthentication11a_ExAuthDBIPAddr_itemname#>
 							</th>			
 							<td>
 								<select id="ftp_protocol" name="ftp_protocol" class="input_option">
@@ -1750,7 +1755,7 @@ function onDropBoxLogin(token, uid){
 							</th>
 							<td>
 							<input type="text" id="PATH" class="input_32_table" style="height: 23px;" name="cloud_dir" value="" onclick="" autocomplete="off"/>
-		  					<input name="button" type="button" class="button_gen_short" onclick="get_disk_tree();" value="Browser"/>
+		  					<input name="button" type="button" class="button_gen_short" onclick="get_disk_tree();" value="<#Cloudsync_browser_folder#>"/>
 								<div id="noUSB" style="color:#FC0;display:none;margin-left: 3px;"><#no_usb_found#></div>
 							</td>
 						  </tr>
@@ -1814,16 +1819,16 @@ function onDropBoxLogin(token, uid){
 							<a href="cloud_main.asp"><div class="tab"><span>AiCloud 2.0</span></div></a>
 						</td>
 						<td>
-							<div class="tabclick"><span>Smart Sync</span></div>
+							<div class="tabclick"><span><#smart_sync#></span></div>
 						</td>
 						<td>
-							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab"><span>Sync Server</span></div></a>
+							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab"><span><#Server_Sync#></span></div></a>
 						</td>
 						<td>
-							<a href="cloud_settings.asp"><div class="tab"><span>Settings</span></div></a>
+							<a href="cloud_settings.asp"><div class="tab"><span><#Settings#></span></div></a>
 						</td>
 						<td>
-							<a href="cloud_syslog.asp"><div class="tab"><span>Log</span></div></a>
+							<a href="cloud_syslog.asp"><div class="tab"><span><#Log#></span></div></a>
 						</td>
 					</tr>
 					</tbody>
@@ -1840,7 +1845,7 @@ function onDropBoxLogin(token, uid){
 						  <td bgcolor="#4D595D" valign="top">
 
 						<div>&nbsp;</div>
-						<div class="formfonttitle">AiCloud 2.0 - Smart Sync</div>
+						<div class="formfonttitle">AiCloud 2.0 - <#smart_sync#></div>
 						<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 						<div>
@@ -1861,9 +1866,6 @@ function onDropBoxLogin(token, uid){
 													document.enableform.enable_cloudsync.value = 0;
 													showLoading();	
 													document.enableform.submit();	
-												},
-												{
-													switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
 												}
 											);
 										</script>			
@@ -1873,8 +1875,7 @@ function onDropBoxLogin(token, uid){
 									<td>&nbsp;&nbsp;</td>
 									<td>
 										<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:normal;">
-											Enables Smart Sync functionality. For step-by-step instructions, go to 
-											<a href="http://aicloud-faq.asuscomm.com/aicloud-faq/" style="text-decoration:underline;font-weight:bolder;">http://aicloud-faq.asuscomm.com/aicloud-faq/</a>
+											<#smart_sync_help#> <a href="http://aicloud-faq.asuscomm.com/aicloud-faq/" style="text-decoration:underline;font-weight:bolder;">http://aicloud-faq.asuscomm.com/aicloud-faq/</a>
 										</div>
 									</td>
 								</tr>

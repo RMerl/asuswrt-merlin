@@ -40,20 +40,52 @@
 
 static int quiet;
 
-static char *dir_to_device(const char *spec)
+static dev_t dir_to_device(const char *spec)
 {
 	struct libmnt_table *tb = mnt_new_table_from_file("/proc/self/mountinfo");
 	struct libmnt_fs *fs;
-	char *res = NULL;
+	struct libmnt_cache *cache;
+	dev_t res = 0;
 
-	if (!tb)
-		return NULL;
+	if (!tb) {
+		/*
+		 * Fallback. Traditional way to detect mountpoints. This way
+		 * is independent on /proc, but not able to detect bind mounts.
+		 */
+		struct stat pst, st;
+		char buf[PATH_MAX], *cn;
+		int len;
+
+		if (stat(spec, &st) != 0)
+			return 0;
+
+		cn = mnt_resolve_path(spec, NULL);	/* canonicalize */
+
+		len = snprintf(buf, sizeof(buf), "%s/..", cn ? cn : spec);
+		free(cn);
+
+		if (len < 0 || (size_t) len + 1 > sizeof(buf))
+			return 0;
+		if (stat(buf, &pst) !=0)
+			return 0;
+
+		if ((st.st_dev != pst.st_dev) ||
+		    (st.st_dev == pst.st_dev && st.st_ino == pst.st_ino))
+			return st.st_dev;
+
+		return 0;
+	}
+
+	/* to canonicalize all necessary paths */
+	cache = mnt_new_cache();
+	mnt_table_set_cache(tb, cache);
 
 	fs = mnt_table_find_target(tb, spec, MNT_ITER_BACKWARD);
 	if (fs && mnt_fs_get_target(fs))
-		res = xstrdup(mnt_fs_get_source(fs));
+		res = mnt_fs_get_devno(fs);
 
 	mnt_free_table(tb);
+	mnt_free_cache(cache);
 	return res;
 }
 
@@ -146,7 +178,7 @@ int main(int argc, char **argv)
 	if (dev_devno)
 		rc = print_devno(spec, &st);
 	else {
-		char *src;
+		dev_t src;
 
 		if (!S_ISDIR(st.st_mode)) {
 			if (!quiet)
@@ -160,10 +192,9 @@ int main(int argc, char **argv)
 			return EXIT_FAILURE;
 		}
 		if (fs_devno)
-			rc = print_devno(src, NULL);
+			printf("%u:%u\n", major(src), minor(src));
 		else if (!quiet)
 			printf(_("%s is a mountpoint\n"), spec);
-		free(src);
 	}
 
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;

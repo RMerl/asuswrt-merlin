@@ -2788,7 +2788,7 @@ int usb_connection(int sockfd)
 		pirp_save->Size = SWAP32(pirp_save->Size);
 		pirp_save->NeedSize = SWAP32(pirp_save->NeedSize);
 		pirp_save->Device = SWAP64(pirp_save->Device);
-		pirp_save_swap->BYTE = SWAP8(pirp_save_swap->BYTE);
+		pirp_save_swap->BYTE = pirp_save_swap->BYTE;
 		pirp_save->Irp = SWAP32(pirp_save->Irp);
 		pirp_save->Status = SWAP32(pirp_save->Status);
 		pirp_save->Information = SWAP64(pirp_save->Information);

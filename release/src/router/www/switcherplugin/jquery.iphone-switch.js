@@ -5,8 +5,7 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 	var settings = {
 		mouse_over: 'pointer',
 		mouse_out:  'default',
-		switch_on_container_path: '/switcherplugin/iphone_switch_container_on.png',
-		switch_off_container_path: '/switcherplugin/iphone_switch_container_off.png',
+		switch_container_path: '/switcherplugin/iphone_switch_container_on.png',
 		switch_path: '/switcherplugin/iphone_switch.png',
 		switch_height: 32,
 		switch_width: 74
@@ -26,7 +25,7 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 		container = '<div class="iphone_switch_container" style="height:'+settings.switch_height+'px; width:'+settings.switch_width+'px; position: relative; overflow: hidden">';
 		
 		// make the switch image based on starting state
-		image = '<img id="iphone_switch" class="iphone_switch" src="'+(state == '1' ? settings.switch_on_container_path : settings.switch_off_container_path)+'" style="height:'+settings.switch_height+'px; width:'+settings.switch_width+'px; background-image:url('+settings.switch_path+'); background-repeat:none; background-position:'+(state == '1' ? 0 : -37)+'px" /></div>';
+		image = '<img id="iphone_switch" class="iphone_switch" src="'+settings.switch_container_path+'" style="height:'+settings.switch_height+'px; width:'+settings.switch_width+'px; background-image:url('+settings.switch_path+'); background-repeat:no-repeat; background-position:'+(state == '1' ? 0 : -37)+'px" /></div>';
 
 		// insert into placeholder
 		jQuery(this).html(container + image);
@@ -46,7 +45,7 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 
 			if(state == '1') {
 				jQuery(this).find('.iphone_switch').animate({backgroundPosition: -37}, "slow", function() {
-					jQuery(this).attr('src', settings.switch_off_container_path);
+					jQuery(this).attr('src', settings.switch_container_path);
 					switched_off_callback();
 				});
 				state = '0';
@@ -55,7 +54,7 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 				jQuery(this).find('.iphone_switch').animate({backgroundPosition: 0}, "slow", function() {
 					switched_on_callback();
 				});
-				jQuery(this).find('.iphone_switch').attr('src', settings.switch_on_container_path);
+				jQuery(this).find('.iphone_switch').attr('src', settings.switch_container_path);
 				state = '1';
 			}
 		});		

@@ -334,6 +334,16 @@ it will send queries to just one server. Setting this flag forces
 dnsmasq to send all queries to all available servers. The reply from
 the server which answers first will be returned to the original requester.
 .TP
+.B --dns-loop-detect
+Enable code to detect DNS forwarding loops; ie the situation where a query sent to one 
+of the upstream server eventually returns as a new query to the dnsmasq instance. The
+process works by generating TXT queries of the form <hex>.test and sending them to
+each upstream server. The hex is a UID which encodes the instance of dnsmasq sending the query
+and the upstream server to which it was sent. If the query returns to the server which sent it, then
+the upstream server through which it was sent is disabled and this event is logged. Each time the
+set of upstream servers changes, the test is re-run on all of them, including ones which
+were previously disabled.
+.TP
 .B --stop-dns-rebind
 Reject (and log) addresses from upstream nameservers which are in the
 private IP ranges. This blocks an attack where a browser behind a
@@ -1715,12 +1725,16 @@ Specify a different configuration file. The conf-file option is also allowed in
 configuration files, to include multiple configuration files. A
 filename of "-" causes dnsmasq to read configuration from stdin.
 .TP
-.B \-7, --conf-dir=<directory>[,<file-extension>......]
+.B \-7, --conf-dir=<directory>[,<file-extension>......],
 Read all the files in the given directory as configuration
 files. If extension(s) are given, any files which end in those
 extensions are skipped. Any files whose names end in ~ or start with . or start and end
-with # are always skipped. This flag may be given on the command
-line or in a configuration file.
+with # are always skipped. If the extension starts with * then only files 
+which have that extension are loaded. So
+.B --conf-dir=/path/to/dir,*.conf
+loads all files with the suffix .conf in /path/to/dir. This flag may be given on the command
+line or in a configuration file. If giving it on the command line, be sure to
+escape * characters.
 .TP
 .B --servers-file=<file>
 A special case of 
