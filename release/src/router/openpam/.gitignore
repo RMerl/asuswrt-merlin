@@ -9,7 +9,6 @@ aclocal.m4
 autom4te.cache
 Makefile.in
 Makefile
-configure
 config.h
 config.status
 config.guess
