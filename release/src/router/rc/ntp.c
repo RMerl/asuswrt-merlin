@@ -164,7 +164,8 @@ int ntp_main(int argc, char *argv[])
 			stop_ntpc();
 
 			nvram_set("ntp_server_tried", server);
-			logmessage("ntp", "start NTP update");
+			if (nvram_match("ntp_ready", "0"))
+				logmessage("ntp", "start NTP update");
 			ret = _eval(args, NULL, 0, &pid);
 			sleep(SECONDS_TO_WAIT);
 
