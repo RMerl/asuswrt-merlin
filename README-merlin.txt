@@ -13,9 +13,8 @@ Asuswrt-merlin is a customized version of Asus's firmware. The goal is
 to provide bugfixes and minor enhancements to Asus's firmware, with also 
 a few occasional feature additions.  This is done while retaining 
 the look and feel of the original firmware, and also ensuring that 
-the two codebases remain close enough so it will remain 
-possible to keep up with any new features brought by Asus in the 
-original firmware.
+the two codebases remain close enough so it will remain possible 
+to keep up with any new features brought by Asus in the original firmware.
 
 This project's goal is NOT to develop yet another firmware filled with 
 many features that are rarely used by home users - that is already covered 
@@ -70,7 +69,7 @@ Disk sharing:
    - NFS sharing (through webui)
    - Improved compatibility with 3TB+ and Advanced Format HDDs
    - Allow or disable WAN access to the FTP server
-   - Updated Samba version (3.6.x)
+   - Updated Samba version (3.6)
 
 
 Networking:
@@ -449,6 +448,7 @@ during boot, requiring a factory default reset to recover it.
 
 ** NFS Exports **
 IMPORTANT: NFS sharing is still a bit unstable.
+
 In addition to SMB and FTP, you can now also share any plugged 
 hard disk through NFS.  The NFS Exports interface can be accessed 
 from the USB Applications section, under Servers Center.  Click on the 
@@ -575,9 +575,14 @@ History
 378.50 (xx-xxx-2015)
    - NEW: Merged with Asus 378_3762 GPL code.  Most notable changes:
             * TrendMicro DPI engine for RT-AC68U
+            * Various updates to 3G/4G support and Dual WAN
 
    - CHANGED: Added logo to DNSFilter on the AiProtection
               homepage (contributed by Piterel)
+   - CHANGED: Updated Openssl to 1.0.0p
+   - CHANGED: Merged Asus's newer NTP update code, with a fix
+              to prevent hourly log spam from the update process
+              when in a DST enabled timezone.
    - FIXED: OpenVPN server page would report an initializing
             state when it was already running under certain
             conditions
