@@ -572,7 +572,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.50 (xx-xxx-2015)
+378.50 (xx-xxx-2015)
+   - NEW: Merged with Asus 378_3762 GPL code.  Most notable changes:
+            * TrendMicro DPI engine for RT-AC68U
+   - CHANGED: Added logo to DNSFilter on the AiProtection
+              homepage (contributed by Piterel)
    - FIXED: OpenVPN server page would report an initializing
             state when it was already running under certain
             conditions
