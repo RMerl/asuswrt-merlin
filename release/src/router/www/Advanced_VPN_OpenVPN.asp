@@ -1390,7 +1390,7 @@ function cal_panel_block(){
 												</td>
 											</tr>
 											<tr>
-												<th><#WLANAuthentication11a_ExAuthDBPortNumber_itemname#></th>
+												<th>Server Port</th>
 												<td>
 													<input type="text" maxlength="5" class="input_6_table" name="vpn_server_port" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 1, 65535)" value="<% nvram_get("vpn_server_port"); %>" >
 													<span style="color:#FC0">(<#Setting_factorydefault_value#> : 1194)</span>
