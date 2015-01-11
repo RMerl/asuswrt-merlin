@@ -1216,7 +1216,7 @@ else
 endif
 
 e2fsprogs: e2fsprogs/Makefile
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 e2fsprogs-clean:
 	-@$(MAKE) -C e2fsprogs clean
