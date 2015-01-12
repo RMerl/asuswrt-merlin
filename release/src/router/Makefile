@@ -1653,6 +1653,11 @@ vsftpd-install: vsftpd
 
 vsftpd-3.x: $(ftp_dep)
 	@$(SEP)
+ifeq ($(RTCONFIG_FTP_SSL),y)
+	-cp vsftpd-3.x/builddefs-ssl.h vsftpd-3.x/builddefs.h
+else
+	-cp vsftpd-3.x/builddefs-nossl.h vsftpd-3.x/builddefs.h
+endif
 	$(MAKE) -C $@
 
 vsftpd-3.x-install: vsftpd-3.x
