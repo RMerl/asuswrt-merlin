@@ -110,7 +110,7 @@ typedef unsigned long long u64;
 #ifdef RTCONFIG_BWDPI
 #include "bwdpi.h"
 #include "sqlite3.h"
-//#include "bwdpi_sqlite.h"
+#include "bwdpi_sqlite.h"
 #endif
 
 #ifdef RTCONFIG_HTTPS
