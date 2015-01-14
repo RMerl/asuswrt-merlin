@@ -60,9 +60,7 @@ void start_vpnclient(int clientNum)
 	long int nvl;
 	int pid;
 	int userauth, useronly;
-#ifdef RTCONFIG_BCMARM
-        int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
-#endif
+	int taskset_ret;
 
 	sprintf(&buffer[0], "start_vpnclient%d", clientNum);
 	if (getpid() != 1) {
@@ -404,16 +402,13 @@ void start_vpnclient(int clientNum)
 	run_postconf(&buffer[0], &buffer2[0]);
 
 	// Start the VPN client
-#ifdef RTCONFIG_BCMARM
-        if (cpu_num > 1)
-		sprintf(&buffer[0], "taskset -c %d /etc/openvpn/vpnclient%d --cd /etc/openvpn/client%d --config config.ovpn", (clientNum == 2 ? 1 : 0), clientNum, clientNum);
-	else
-#endif
-		sprintf(&buffer[0], "/etc/openvpn/vpnclient%d --cd /etc/openvpn/client%d --config config.ovpn", clientNum, clientNum);
+	sprintf(&buffer[0], "/etc/openvpn/vpnclient%d", clientNum);
+	sprintf(&buffer2[0], "/etc/openvpn/client%d", clientNum);
+	taskset_ret = cpu_eval(NULL, (clientNum == 1 ? CPU1 : CPU0), &buffer[0], "--cd", &buffer2[0], "--config", "config.ovpn");
 
-	vpnlog(VPN_LOG_INFO,"Starting OpenVPN: %s",&buffer[0]);
-	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
-	if ( _eval(argv, NULL, 0, &pid) )
+	vpnlog(VPN_LOG_INFO,"Starting OpenVPN client %d", clientNum);
+
+	if (taskset_ret)
 	{
 		vpnlog(VPN_LOG_ERROR,"Starting OpenVPN failed...");
 		stop_vpnclient(clientNum);
@@ -583,9 +578,7 @@ void start_vpnserver(int serverNum)
 	int nvi, ip[4], nm[4];
 	long int nvl;
 	int pid;
-#ifdef RTCONFIG_BCMARM
-	int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
-#endif
+	int taskset_ret;
 	char nv1[32], nv2[32], nv3[32], fpath[128];
 	int valid = 0;
 	int userauth = 0, useronly = 0;
@@ -1275,16 +1268,16 @@ void start_vpnserver(int serverNum)
 	sprintf(&buffer2[0], "/etc/openvpn/server%d/config.ovpn", serverNum);
 	run_postconf(&buffer[0], &buffer2[0]);
 
-#ifdef RTCONFIG_BCMARM
-        if (cpu_num > 1)
-		sprintf(&buffer[0], "taskset -c %d /etc/openvpn/vpnserver%d --cd /etc/openvpn/server%d --config config.ovpn", (serverNum == 2 ? 1 : 0), serverNum, serverNum);
-	else
-#endif
-		sprintf(&buffer[0], "/etc/openvpn/vpnserver%d --cd /etc/openvpn/server%d --config config.ovpn", serverNum, serverNum);
 
-	vpnlog(VPN_LOG_INFO,"Starting OpenVPN: %s",&buffer[0]);
-	for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
-	if ( _eval(argv, NULL, 0, &pid) )
+
+        // Start the VPN client
+	sprintf(&buffer[0], "/etc/openvpn/vpnserver%d", serverNum);
+	sprintf(&buffer2[0], "/etc/openvpn/server%d", serverNum);
+
+	taskset_ret = cpu_eval(NULL, (serverNum == 1 ? CPU1 : CPU0), &buffer[0], "--cd", &buffer2[0], "--config", "config.ovpn");
+
+	vpnlog(VPN_LOG_INFO,"Starting OpenVPN server %d", serverNum);
+	if (taskset_ret)
 	{
 		vpnlog(VPN_LOG_ERROR,"Starting VPN instance failed...");
 		stop_vpnserver(serverNum);
