@@ -2314,6 +2314,8 @@ start_ddns(void)
 		service = "noip";
 	else if (strcmp(server, "WWW.NAMECHEAP.COM")==0)
 		service = "namecheap";
+        else if (strcmp(server, "CUSTOM")==0)
+                service = "";
 	else if (strcmp(server, "WWW.ASUS.COM")==0) {
 		service = "dyndns", asus_ddns = 1;
 	} else {
@@ -2352,6 +2354,7 @@ start_ddns(void)
 		     "-e", "/sbin/ddns_updated", "-b", "/tmp/ddns.cache");
 	}
 
+	run_custom_script("ddns-start", wan_ip);
 	return 0;
 }
 
