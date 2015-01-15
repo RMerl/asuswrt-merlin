@@ -4299,7 +4299,7 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 		(void)proto_conv(in_proto, in_protoptr);
 		(void)proto_conv(out_proto, out_protoptr);
 
-		fprintf(fp, "-A FORWARD -p %s -m %s --dport %s "
+		fprintf(fp, "-A triggers -p %s -m %s --dport %s "
 			"-j TRIGGER --trigger-type out --trigger-proto %s --trigger-match %s --trigger-relate %s\n",
 			out_protoptr, out_protoptr, out_port,
 			in_protoptr, out_port, in_port);
