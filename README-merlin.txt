@@ -583,9 +583,16 @@ History
    - CHANGED: Merged Asus's newer NTP update code, with a fix
               to prevent hourly log spam from the update process
               when in a DST enabled timezone.
+   - CHANGED: Updated vstpd to 3.0.2 (newer version used by
+              Asus on their Qualcomm-based routers)
    - FIXED: OpenVPN server page would report an initializing
             state when it was already running under certain
             conditions
+   - FIXED: First OpenVPN client/server instance wasn't properly
+            run on the second CPU core, resulting in lower
+            performance (AC56/AC68/AC87)
+   - FIXED: Router IP wasn't advertised through DHCP if WINS
+            was enabled
 
 
 376.49_5 (9-Jan-2015)
