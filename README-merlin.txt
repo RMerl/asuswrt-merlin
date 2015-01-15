@@ -85,6 +85,7 @@ Networking:
    - Configurable min/max UPNP ports
    - IPSec kernel support (N16/N66/AC66 only)
    - DNS-based Filtering, can be applied globally or per client
+   - Custom DDNS (through a user script)
 
 Web interface:
    - Optionally save traffic stats to disk (USB or JFFS partition)
@@ -174,6 +175,14 @@ These are shell scripts that you can create, and which will be run when
 certain events occur.  Those scripts must be saved in /jffs/scripts/ 
 (so, JFFS must be enabled and formatted).  Available scripts:
 
+ * ddns-start: Script called at the end of a DDNS update process.
+               This script is also called when setting the DDNS type
+               to "Custom".
+               The script gets passed the WAN IP as an argument.
+               When handling a "Custom" DDNS, this script is also
+               responsible for reporting the success or failure
+               of the update process.  See the Custom DDNS section
+               below for more information.
  * dhcpc-event: Called whenever a DHCP event occurs on the WAN 
                 interface.  The type of event (bound, release, etc...) 
                 is passed as an argument.
@@ -563,6 +572,37 @@ http://l7-filter.clearfoundation.com/
 
 
 
+** Custom DDNS **
+If you set the DDNS (dynamic DNS) service to "Custom", then you will be able 
+to fully control the update process through a ddns-start user script.  That 
+script could launch a custom DDNS update client, or run a simple "wget" on 
+a provider's update URL.  The ddns-start script will be passed the WAN IP 
+as an argument.
+
+Note that the script will also be responsible for notifying the firmware on 
+the success or failure of the process.  For success, you must set the 
+appropriate nvram values to "200".  On failure, set it to something 
+different, such as "unknown_error".  This can be done like this:
+
+
+   nvram set ddns_return_code=200
+   nvram set ddns_return_code_chk=200
+
+
+If you cannot determine the success or failure, then set these two 
+to "200" anyway to ensure the router does not get stuck waiting for 
+completion of the process.
+
+Here is a basic example of a ddns-start script:
+
+
+   #!/bin/sh
+
+   wget -q "http://ipv4.tunnelbroker.net/ipv4_end.php?ip=AUTO&pass=myMD5password&apikey=myuserkey&tid=mytunnelid"
+   nvram set ddns_return_code=200   
+   nvram set ddns_return_code_chk=200
+
+
 
 
 Source code
@@ -580,6 +620,12 @@ History
             * TrendMicro DPI engine for RT-AC68U
             * Various updates to 3G/4G support and Dual WAN
 
+   - NEW: ddns-start user script, run after the DDNS update was
+          launched
+   - NEW: Custom DDNS (handled through ddns-start script)
+          See the documentation for how to create such
+          a script (it will be responsible for updating
+          the router nvram flag indicating success of failure)
    - CHANGED: Added logo to DNSFilter on the AiProtection
               homepage (contributed by Piterel)
    - CHANGED: Updated Openssl to 1.0.0p
@@ -605,6 +651,8 @@ History
             few months ago, preventing you from removing
             an assigned priority on the Adaptive QoS
             page.  Re-added it.
+  - FIXED: Port triggers weren't written to the correct
+           iptables chain (Asus bug)
 
 
 376.49_5 (9-Jan-2015)
