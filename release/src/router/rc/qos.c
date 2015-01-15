@@ -706,6 +706,8 @@ int add_iQosRules(char *pcWANIF)
 //		eval("ip6tables-restore", (char*)mangle_fn_ipv6);
 	}
 #endif
+
+	run_custom_script("qos-start", "rules");
 	fprintf(stderr, "[qos] iptables DONE!\n");
 
 	return 0;
@@ -985,7 +987,7 @@ int start_iQos(void)
 	chmod(qosfn, 0700);
 	eval((char *)qosfn, "start");
 
-	run_custom_script("qos-start", NULL);
+	run_custom_script("qos-start", "init");
 	fprintf(stderr,"[qos] tc done!\n");
 
 	return 0;

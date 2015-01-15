@@ -194,7 +194,10 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
               device path being mounted as an argument which can be 
               used in the script using $1.
  * qos-start: Called after both the iptables rules and tc configuration 
-              are completed for QoS.
+              are completed for QoS.  This script will be passed an
+              argument, which will be "init" (when QoS is being
+              initialized and it has setup the tc classes) or
+              "rules" (when the iptables rules are being setup).
  * openvpn-event: Called whenever an OpenVPN server gets 
                   started/stopped, or an OpenVPN client connects to a 
                   remote server.  Uses the same syntax/parameters as 
@@ -585,6 +588,9 @@ History
               when in a DST enabled timezone.
    - CHANGED: Updated vstpd to 3.0.2 (newer version used by
               Asus on their Qualcomm-based routers)
+   - CHANGED: the qos-start script will be passed an argument
+              that will contain "init" (when setting up tc)
+              or "rules" (when setting up iptables).
    - FIXED: OpenVPN server page would report an initializing
             state when it was already running under certain
             conditions
