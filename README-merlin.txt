@@ -597,8 +597,14 @@ History
    - FIXED: First OpenVPN client/server instance wasn't properly
             run on the second CPU core, resulting in lower
             performance (AC56/AC68/AC87)
-   - FIXED: Router IP wasn't advertised through DHCP if WINS
-            was enabled
+   - FIXED: Router IP wasn't advertised through DHCP as WINS
+            server if WINS was enabled
+   - FIXED: OpenVPN would crash if specifying "None" as
+            the cipher (regression in OpenVPN 2.3.6)
+   - FIXED: The "empty" category was removed by Asus a
+            few months ago, preventing you from removing
+            an assigned priority on the Adaptive QoS
+            page.  Re-added it.
 
 
 376.49_5 (9-Jan-2015)
