@@ -376,7 +376,7 @@ function clean_scorebar(obj){
 	<fieldset id="theFieldset1" style="display:none;">
 		<div class="row">
 			<label>Username</label>
-			<input type="text" id="_http_username" name="_http_username" placeholder="Your login" onblur="document.form.http_username.value=this.value" value="<% nvram_get('http_username'); %>" autocapitalization="off" autocomplete="off">
+			<input type="text" id="_http_username" name="_http_username" placeholder="Your login" onblur="document.form.http_username.value=this.value" value="<% nvram_get("http_username"); %>" autocapitalization="off" autocomplete="off">
 			<br/><span id="alert_msg1" style="color:red"></span>
 		</div>
 		<div class="row_end">

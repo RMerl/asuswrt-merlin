@@ -1,5 +1,5 @@
 /*
-	bwdpi_check.c for check AiStream Live status
+	bwdpi_check.c for trigger bandwidth monitor when not to enable any TrendMicro Function
 */
 
 #include <rc.h>

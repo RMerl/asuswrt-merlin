@@ -147,6 +147,12 @@ bound(void)
 		expires(wan_ifname, lease);
 	}
 
+#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
+	nvram_unset("vivso");
+	if ((value = getenv("vivso")))
+		nvram_set("vivso", trim_r(value));
+#endif
+
 	/* classful static routes */
 	nvram_set(strcat_r(prefix, "routes", tmp), getenv("routes"));
 	/* ms classless static routes */
@@ -358,11 +364,22 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 #ifdef RTCONFIG_DSL
 		NULL, NULL,	/* -x 61:wan_clientid */
 #endif
+#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
+		NULL, 		/* -x 125:vivso */
+#endif
 		NULL, NULL,	/* -x 61:wan_clientid (non-DSL) */
 		NULL };
 	int index = 7;		/* first NULL */
 	int dr_enable;
-
+#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
+	unsigned char hwaddr[6];
+	char buf_tmp[128], serial_buf[128], oui_buf[32], class_buf[128];
+	char vivso[256];
+	int i = 0;
+	char *c = NULL;
+	int len = 0;
+	char tmp_str[4];
+#endif
 	/* Use unit */
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
@@ -424,6 +441,54 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		dhcp_argv[index++] = "-x";
 		dhcp_argv[index++] = clientid;
 	}
+
+#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
+	/* convert serial number */
+	memset(buf_tmp, 0, sizeof(buf_tmp));
+	memset(serial_buf, 0, sizeof(serial_buf));
+#ifdef RTAC87U
+	ether_atoe(nvram_safe_get("et1macaddr"), hwaddr);
+#else
+	ether_atoe(nvram_safe_get("et0macaddr"), hwaddr);
+#endif
+	snprintf(buf_tmp, sizeof(buf_tmp), "%02X%02X%02X%02X%02X%02X", hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
+	len = strlen(buf_tmp);
+	for (i = 0; i < len; i ++) {
+		snprintf(tmp_str, sizeof(tmp_str), "%02x", buf_tmp[i]);
+		strcat(serial_buf, tmp_str);
+	}
+
+	/* convert oui */
+	memset(buf_tmp, 0, sizeof(buf_tmp));
+	memset(oui_buf, 0, sizeof(oui_buf));
+#ifdef RTAC87U
+	ether_atoe(nvram_safe_get("et1macaddr"), hwaddr);
+#else
+	ether_atoe(nvram_safe_get("et0macaddr"), hwaddr);
+#endif
+	snprintf(buf_tmp, sizeof(buf_tmp), "%02X%02X%02X", hwaddr[0], hwaddr[1], hwaddr[2]);
+	len = strlen(buf_tmp);
+	for (i = 0; i < len; i ++) {
+		snprintf(tmp_str, sizeof(tmp_str), "%02x", buf_tmp[i]);
+		strcat(oui_buf, tmp_str);
+	}
+
+	/* convert class */
+	memset(class_buf, 0, sizeof(class_buf));
+	c = nvram_safe_get("productid");
+	len = strlen(c);
+	for (i = 0; i < len; i ++) {
+		snprintf(tmp_str, sizeof(tmp_str), "%02x", c[i]);
+		strcat(class_buf, tmp_str);
+	}
+	
+	/* convert vivso */
+	snprintf(vivso, sizeof(vivso), "125:%08x%02x01%02x%s02%02x%s03%02x%s", 3561, 6 + (strlen(oui_buf) / 2) + (strlen(serial_buf) /2) + (strlen(class_buf) / 2), strlen(oui_buf) / 2, oui_buf, strlen(serial_buf) / 2, serial_buf, strlen(class_buf) / 2, class_buf);
+
+	dhcp_argv[index++] = "-x";
+	dhcp_argv[index++] = vivso;
+#endif
+
 
 	return _eval(dhcp_argv, NULL, 0, ppid);
 }
@@ -585,6 +650,12 @@ bound_lan(void)
 	}
 	if (nvram_get_int("lan_dnsenable_x") && (value = getenv("dns")))
 		nvram_set("lan_dns", trim_r(value));
+
+#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
+	nvram_unset("vivso");
+	if ((value = getenv("vivso")))
+		nvram_set("vivso", trim_r(value));
+#endif
 
 _dprintf("%s: IFUP.\n", __FUNCTION__);
 #ifdef RTCONFIG_WIRELESSREPEATER

@@ -175,6 +175,7 @@ setMAC_2G(const char *mac)
 		}
 
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -243,6 +244,7 @@ setMAC_5G(const char *mac)
 
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_DSLAC68U:
 		{
@@ -306,6 +308,7 @@ setCountryCode_2G(const char *cc)
 	switch(model) {
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -348,6 +351,7 @@ setCountryCode_5G(const char *cc)
 
 	switch(model) {
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -427,6 +431,7 @@ setRegrev_2G(const char *regrev)
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -480,6 +485,7 @@ setRegrev_5G(const char *regrev)
 		}
 
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -908,6 +914,7 @@ GetPhyStatus(void)
 		break;
 
 	case MODEL_DSLAC68U:
+	case MODEL_RPAC68U:
 	case MODEL_RTAC68U:
 	case MODEL_RTAC3200:
 	case MODEL_RTN18U:
@@ -1066,6 +1073,17 @@ setAllLedOn(void)
 #endif
 			break;
 		}
+		case MODEL_RPAC68U:
+			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+
+			eval("wl", "ledbh", "0", "1");			// wl 2.4G
+			eval("wl", "ledbh", "9", "1");			// wl 2.4G
+			eval("wl", "ledbh", "10", "1");			// wl 2.4G
+			eval("wl", "-i", "eth2", "ledbh", "0", "1");	// wl 5G
+			eval("wl", "-i", "eth2", "ledbh", "9", "1");	// wl 5G
+			eval("wl", "-i", "eth2", "ledbh", "10", "1");	// wl 5G
+			break;
 		case MODEL_RTAC68U:
 		case MODEL_RTAC3200:
 		{
@@ -1242,12 +1260,23 @@ setWlOffLed(void)
 			}
 			break;
 		}
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 			if (wlon_unit != 0) {
 				eval("wl", "ledbh", "10", "0");			// wl 2.4G
+#ifdef RTCONFIG_LEDARRAY
+				eval("wl", "ledbh", "0", "0");			// wl 2.4G
+				eval("wl", "ledbh", "9", "0");			// wl 2.4G
+#endif
 			} else {
 				eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 5G
+#ifdef RTCONFIG_LEDARRAY
+				eval("wl", "-i", "eth2", "ledbh", "0", "0");	// wl 5G
+				eval("wl", "-i", "eth2", "ledbh", "9", "0");	// wl 5G
+#endif
+#ifndef RTCONFIG_LEDARRAY
 				led_control(LED_5G, LED_OFF);
+#endif
 			}
 			break;
 		case MODEL_RTAC3200:
@@ -1347,6 +1376,17 @@ setAllLedOff(void)
 #endif
 			break;
 		}
+		case MODEL_RPAC68U:
+			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
+			eval("et", "robowr", "0", "0x1a", "0x01e0");
+
+			eval("wl", "ledbh", "10", "0");			// wl 2.4G
+			eval("wl", "ledbh", "0", "0");			// wl 2.4G
+			eval("wl", "ledbh", "9", "0");			// wl 2.4G
+			eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 5G
+			eval("wl", "-i", "eth2", "ledbh", "0", "0");	// wl 5G
+			eval("wl", "-i", "eth2", "ledbh", "9", "0");	// wl 5G
+			break;
 		case MODEL_RTAC68U:
 		case MODEL_RTAC3200:
 		{
@@ -1522,6 +1562,7 @@ setATEModeLedOn(void){
 #endif
 			break;
 		}
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC3200:
 		{
@@ -1739,6 +1780,7 @@ getMAC_5G(void)
 		}
 
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -1893,6 +1935,7 @@ getRegrev_2G(void)
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -1932,6 +1975,7 @@ getRegrev_5G(void)
 		}
 
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -2746,6 +2790,8 @@ next_info:
 #ifdef RTAC3200
 				if (!strcmp(wif, "eth1") && (apinfos[i].ctl_ch > 48))
 					continue;
+				else if (!strcmp(wif, "eth3") && (apinfos[i].ctl_ch < 149))
+					continue;
 #endif
 				/*if(apinfos[i].ctl_ch < 0 ){
 					fprintf(fp, "\"ERR_BNAD\",");
@@ -3003,7 +3049,7 @@ int wlcconnect_core(void)
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		// only one client in a system
 		if(is_ure(unit)) {
-			dbg("[rc] [%s] is URE mode\n", word);
+			//dbg("[rc] [%s] is URE mode\n", word);
 			while(count<4){
 				count++;
 
@@ -3017,9 +3063,9 @@ int wlcconnect_core(void)
 				sleep(1);
 			}
 			ret = get_wlc_status(word);
-			dbg("[wlc] get_wlc_status:[%d]\n", ret);
+			dbg("[wlc][%s] get_wlc_status:[%d]\n", word, ret);
 		}else{
-			dbg("[rc] [%s] is not URE mode\n", word);
+			//dbg("[rc] [%s] is not URE mode\n", word);
 		}
 		unit++;
 	}
@@ -3111,6 +3157,7 @@ reset_countrycode_2g(void)
 	switch(get_model()) {
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -3145,6 +3192,7 @@ reset_countrycode_5g(void)
 
 	switch(get_model()) {
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -3204,6 +3252,7 @@ reset_countryrev_2g(void)
 
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -3248,6 +3297,7 @@ reset_countryrev_5g(void)
 			break;
 
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:

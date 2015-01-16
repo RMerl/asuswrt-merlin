@@ -1,5 +1,5 @@
 /*
-	bwdpi_monitor.c for record bwdpi traffic log
+	bwdpi_monitor.c for record bwdpi traffic database
 */
 
 #include <rc.h>

@@ -769,6 +769,7 @@ void generate_switch_para(void)
 			break;
 		}
 
+		case MODEL_RPAC68U:						/* 0  1  2  3  4 */
 		case MODEL_RTAC68U:						/* 0  1  2  3  4 */
 		case MODEL_RTAC3200:
 		case MODEL_RTN18U:						/* 0  1  2  3  4 */
@@ -1322,7 +1323,7 @@ void init_switch()
 //		nvram_set("pktc_disable", "1");
 	}
 #ifdef RTCONFIG_BWDPI
-	else if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 1 && nvram_get_int("sw_mode") == SW_MODE_ROUTER) {
+	else if (check_bwdpi_nvram_setting() && nvram_get_int("sw_mode") == SW_MODE_ROUTER) {
 		nvram_set("ctf_disable", "0");
 	}
 #endif
@@ -1461,6 +1462,7 @@ reset_mssid_hwaddr(int unit)
 				snprintf(macaddr_str, sizeof(macaddr_str), "pci/%d/1/macaddr", unit + 1);
 				break;
 			case MODEL_RTN18U:
+			case MODEL_RPAC68U:
 			case MODEL_RTAC68U:
 			case MODEL_RTAC3200:
 			case MODEL_DSLAC68U:
@@ -1611,6 +1613,7 @@ void init_wl(void)
 	switch(get_model()) {
 		case MODEL_RTAC3200:
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC66U:
 			set_bcm4360ac_vars();
@@ -1710,6 +1713,7 @@ void fini_wl(void)
 
 #ifndef RTCONFIG_BRCM_USBAP
 	if ((get_model() == MODEL_RTAC3200) ||
+		(get_model() == MODEL_RPAC68U) ||
 		(get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
@@ -1831,6 +1835,7 @@ void init_syspara(void)
 			break;
 
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
@@ -1887,7 +1892,7 @@ void init_others(void)
 {
 	int model = get_model();
 
-	if (model == MODEL_RTAC56U || model == MODEL_RTAC56S || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_RTAC87U || model == MODEL_RTN18U) {
+	if (model == MODEL_RTAC56U || model == MODEL_RTAC56S || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_RPAC68U || model == MODEL_RTAC87U || model == MODEL_RTN18U) {
 #ifdef SMP
 		int fd;
 
@@ -2225,6 +2230,7 @@ int set_wltxpower()
 		&& (model != MODEL_RTAC56U)
 		&& (model != MODEL_DSLAC68U)
 		&& (model != MODEL_RTAC87U)
+		&& (model != MODEL_RPAC68U)
 		&& (model != MODEL_RTAC68U)
 		&& (model != MODEL_RTAC3200)
 		&& (model != MODEL_RTN18U))
@@ -2287,6 +2293,7 @@ int set_wltxpower()
 				break;
 
 			case MODEL_RTN18U:
+			case MODEL_RPAC68U:
 			case MODEL_RTAC68U:
 			case MODEL_DSLAC68U:
 			case MODEL_RTAC87U:
@@ -3198,6 +3205,7 @@ int set_wltxpower()
 #endif
 				break;
 
+			case MODEL_RPAC68U:
 			case MODEL_RTAC68U:
 				if (set_wltxpower_once) {
 					if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))	// 2.4G
@@ -4662,6 +4670,7 @@ void generate_wl_para(int unit, int subunit)
 					get_model() == MODEL_RTAC56U ||
 					get_model() == MODEL_RTAC56S ||
 					get_model() == MODEL_RTAC3200 ||
+					get_model() == MODEL_RPAC68U ||
 					get_model() == MODEL_RTAC68U ||
 					get_model() == MODEL_DSLAC68U ||
 					get_model() == MODEL_RTAC87U) &&
@@ -4804,7 +4813,7 @@ void generate_wl_para(int unit, int subunit)
 		nvram_set(strcat_r(prefix, "net_reauth", tmp), tmp2);
 
 		if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
-                        if (    ((get_model() == MODEL_RTAC68U || get_model() == MODEL_DSLAC68U) &&
+			if (	((get_model() == MODEL_RTAC68U || get_model() == MODEL_RPAC68U || get_model() == MODEL_DSLAC68U) &&
 				nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") &&
                                 nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
                                 nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||

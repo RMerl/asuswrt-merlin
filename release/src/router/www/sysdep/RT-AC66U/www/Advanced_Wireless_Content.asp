@@ -361,6 +361,9 @@ function applyRule(){
 				document.form.wl1_80211h.value = "1";	
 		}
 
+		if(smart_connect_support && document.form.smart_connect_x.value == '1')
+			document.form.wl_unit.value = 0;
+
 		if (based_modelid == "RT-AC87U" && "<% nvram_get("wl_unit"); %>" == "1")
 			detect_qtn_ready();
 		else

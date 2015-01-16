@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - Smart Connect</title>
+<title><#Web_Title#> - Smart Connect Rule</title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <script type="text/javascript" src="/state.js"></script>
@@ -325,7 +325,7 @@ function handle_bsd_nvram(){
 
 	set_power(wl1_bsd_sta_select_policy[2],'wl1_bsd_sta_select_policy_phy');
 	document.getElementById('wl1_bsd_sta_select_policy_phy').value = wl1_bsd_sta_select_policy[2];
-	document.form.wl0_bsd_sta_select_policy_phy_s.value  = wl0_bsd_sta_select_policy_bin[5];
+	document.form.wl1_bsd_sta_select_policy_phy_s.value  = wl1_bsd_sta_select_policy_bin[5];
 
 	if(wl1_bsd_sta_select_policy_bin[2] == 0 && wl1_bsd_sta_select_policy_bin[3] == 0)	//all
 		document.form.wl1_bsd_sta_select_policy_vht_s.value = 0;
@@ -924,14 +924,14 @@ function set_power(power_value,flag){
 		<tr>
 		  <td bgcolor="#4D595D" valign="top">
 		  <div>&nbsp;</div>
-		  <div class="formfonttitle"><#menu5_1#> - Smart Connect</div>
+		  <div class="formfonttitle"><#menu5_1#> - Smart Connect Rule</div>
      	  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
       	  <div class="formfontdesc">Set up the Smart Connect related information below.</div>
 		
 			<table cellspacing="0" cellpadding="4" bordercolor="#6b8fa3" border="1" align="center" width="100%" class="FormTable" id="MainTable1">			
 			<thead>
 				<tr>
-					<td colspan="4">Steering Triggler Condition</td>
+					<td colspan="4">Steering Trigger Condition</td>
 				</tr>			
 			</thead>
 			<tr>

@@ -22,6 +22,7 @@
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
+<script type="text/javascript" src="/statistic_default.js"></script>
 <style>
 #holder {
     height: 330px;
@@ -71,6 +72,9 @@ function initial(){
 	show_menu();
 	register_event();
 	load_time();
+	
+	if(document.form.bwdpi_db_enable.value == 1)
+		document.getElementById('statistic_hint').style.display = "none";
 	
 	get_every_client_data("all", "detail", "24", date_second, date_string);		//get clients and find top 5 clients' traffic last 24 hours
 	setTimeout(function(){
@@ -169,10 +173,16 @@ function get_client_used_apps_info(client_index, used_data_array, top5_info, typ
 			if(type == "router")
 				code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + used_data_array[i][0] + "</td>";
 			else{
-				if(clientList[used_data_array[i][0]] != undefined)
-					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + clientList[used_data_array[i][0]].name + "</td>";
-				else
-					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + used_data_array[i][0] + "</td>";
+				if(document.form.bwdpi_db_enable.value == 0){
+					var device_array = ["Jieming-MBP", "Jieming-NB", "iPhone 6", "Jieming-PC", "Padfone"];
+					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + device_array[i] + "</td>";
+				}
+				else{			
+					if(clientList[used_data_array[i][0]] != undefined)
+						code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + clientList[used_data_array[i][0]].name + "</td>";
+					else
+						code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + used_data_array[i][0] + "</td>";
+				}
 			}	
 			code += "<td style='width:100px;padding-top:5px;'>";
 			code += "<div style='width:" + percent + "%;height:15px;background-color:#FFFFFF;opacity:0.5;'></div>";
@@ -297,6 +307,13 @@ function get_client_info(list_info, type){
 		}
 	}
 
+	if(document.form.bwdpi_db_enable.value == 0){
+		var device_array = ["Jieming-PC", "iPhone 6", "Jieming-MBP", "Padfone", "Jieming-NB"];
+		for(i=0;i<top5_client_array.length;i++){
+			top5_client_array[top5_client_array[i]].name = device_array[i];	
+		}
+	}
+	
 	if(type == "router")
 		draw_pie_chart(list_info, top5_client_array, type);		//list_info : all_client_traffic
 	else
@@ -330,7 +347,18 @@ function get_every_client_data(client, mode, dura, time, date_string){
 			//setTimeout("get_app_data(time);", 1000);
 		},
 		success: function(response){
-			all_client_traffic = array_statistics;
+			if(document.form.bwdpi_db_enable.value == 0){
+				if(dura == "24")
+					all_client_traffic = all_client_traffic_24;
+				else if(dura == "31")
+					all_client_traffic = all_client_traffic_31;
+				else if(dura == "7")
+					all_client_traffic = all_client_traffic_7;
+			}
+			else{
+				all_client_traffic = array_statistics;
+			}
+			
 			if(document.getElementById('traffic_option').value == "both"){
 				all_client_traffic.sort(function(a,b){
 					return (b[1] + b[2]) - (a[1] + a[2]);
@@ -362,7 +390,20 @@ function get_every_app_data(client, mode, dura, time, date_string){
 			//setTimeout("get_app_data(time);", 1000);
 		},
 		success: function(response){
-			all_app_traffic = array_statistics;
+			if(document.form.bwdpi_db_enable.value == 0){
+				if(dura == "24")
+					all_app_traffic = all_app_traffic_24;
+				else if(dura == "31"){
+					all_app_traffic = all_app_traffic_31;
+				}
+				else if(dura == "7"){
+					all_app_traffic = all_app_traffic_7;
+				}
+			}
+			else{
+				all_app_traffic = array_statistics;
+			}
+			
 			if(document.getElementById('traffic_option').value == "both"){
 				all_app_traffic.sort(function(a,b){
 					return (b[1] + b[2]) - (a[1] + a[2]);
@@ -408,7 +449,18 @@ function get_client_used_app_data(client, mode, dura, time, date_string, type, i
 
 		},
 		success: function(response){
-			client_used_app_array = array_statistics;
+			if(document.form.bwdpi_db_enable.value == 0){
+				if(dura == "24")
+					client_used_app_array = client_used_app_array_statistics_24[client];
+				else if(dura == "31")
+					client_used_app_array = client_used_app_array_statistics_31[client];
+				else if(dura == "7")
+					client_used_app_array = client_used_app_array_statistics_7[client];
+			}
+			else{
+				client_used_app_array = array_statistics;
+			}
+			
 			if(document.getElementById('traffic_option').value == "both"){
 				client_used_app_array.sort(function(a,b){
 					return (b[1] + b[2]) - (a[1] + a[2]);		//decrease
@@ -550,7 +602,17 @@ function get_app_used_by_client_data(client, mode, dura, time, date_string){
 
 		},
 		success: function(response){
-			app_used_by_client_array = array_statistics;
+			if(document.form.bwdpi_db_enable.value == 0){
+				if(dura == "24")
+					app_used_by_client_array = app_used_by_client_array_statistics_24[client];		
+				else if(dura == "31")
+					app_used_by_client_array = app_used_by_client_array_statistics_31[client];		
+				else if(dura == "7")
+					app_used_by_client_array = app_used_by_client_array_statistics_7[client];		
+			}
+			else{
+				app_used_by_client_array = array_statistics;
+			}
 			if(document.getElementById('traffic_option').value == "both"){
 				app_used_by_client_array.sort(function(a,b){
 					return (b[1] + b[2]) - (a[1] + a[2]);		//decrease
@@ -1011,11 +1073,11 @@ function draw_pie_chart(list_info, top5_info, type){
 
 			pieData.push(temp);
 			if(i == 0)
-				code += '<div onclick=\'change_top5_clients(\"'+i+'\",\"'+type+'\");\' style="width:100px;word-wrap:break-word;padding-left:5px;background-color:'+color[i]+';margin-right:-10px;border-top-left-radius:10px;line-height:30px;cursor:pointer">'+top5_info[top5_info[i]].name+'</div>';
+				code += '<div onclick=\'change_top5_clients(\"'+i+'\",\"'+type+'\");\' style="width:110px;word-wrap:break-word;padding-left:5px;background-color:'+color[i]+';margin-right:-10px;border-top-left-radius:10px;line-height:30px;cursor:pointer">'+top5_info[top5_info[i]].name+'</div>';
 			else if(i == 4)
-				code += '<div onclick=\'change_top5_clients(\"'+i+'\",\"'+type+'\");\' style="width:100px;word-wrap:break-word;padding-left:5px;background-color:'+color[i]+';margin-right:-10px;border-bottom-left-radius:10px;line-height:30px;cursor:pointer">'+top5_info[top5_info[i]].name+'</div>';
+				code += '<div onclick=\'change_top5_clients(\"'+i+'\",\"'+type+'\");\' style="width:110px;word-wrap:break-word;padding-left:5px;background-color:'+color[i]+';margin-right:-10px;border-bottom-left-radius:10px;line-height:30px;cursor:pointer">'+top5_info[top5_info[i]].name+'</div>';
 			else if(i != 5)
-				code += '<div onclick=\'change_top5_clients(\"'+i+'\",\"'+type+'\");\' style="width:100px;word-wrap:break-word;padding-left:5px;background-color:'+color[i]+';margin-right:-10px;line-height:30px;cursor:pointer">'+top5_info[top5_info[i]].name+'</div>';
+				code += '<div onclick=\'change_top5_clients(\"'+i+'\",\"'+type+'\");\' style="width:110px;word-wrap:break-word;padding-left:5px;background-color:'+color[i]+';margin-right:-10px;line-height:30px;cursor:pointer">'+top5_info[top5_info[i]].name+'</div>';
 		}
 	}
 
@@ -1047,6 +1109,28 @@ function draw_flow(date, traffic){
 	var traffic_value_displayed = new Array();
 	var traffic_unit = new Array();
 	var traffic_temp = new Array();
+	
+	if(document.form.bwdpi_db_enable.value == 0){
+		/*traffic = [ [100000000, 2000000],[1000000, 2000000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],
+					[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],
+					[1000, 2000],[1000, 2000],[1000, 2000],[1000000000, 2000]];*/
+		if(document.getElementById('duration_option').value == "daily"){	
+			for(i=0;i<24;i++){			
+				traffic[i] = [parseInt(Math.random()*1000000000), parseInt(Math.random()*1000000000)];
+			}
+		}
+		else if(document.getElementById('duration_option').value == "weekly"){
+			for(i=0;i<7;i++){			
+				traffic[i] = [parseInt(Math.random()*2000000000), parseInt(Math.random()*3000000000)];
+			}
+		}
+		else{
+			for(i=0;i<31;i++){			
+				traffic[i] = [parseInt(Math.random()*3000000000), parseInt(Math.random()*10000000000)];
+			}
+		}
+
+	}
 	
 	var hour_temp = date_array[3], date_temp = date_array[2], month_temp = date_array[1], year_temp = date_array[0];
 	if(document.getElementById('duration_option').value == "daily"){	
@@ -1418,7 +1502,8 @@ function setHover_css(){
 									<div style="margin-left:5px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<div style="margin-left:10px;">
 										<label style="font-size:16px;">Last date:</label>
-										<input class="input_12_table" id="datepicker" value="">								
+										<input class="input_12_table" id="datepicker" value="">	
+										<div id="statistic_hint" style="text-align:right;margin-top:-21px;padding-right:15px;color:#FC0;font-size:14px;">*You should turn on the Traffic Statistic to record the traffic information</div>
 									</div>
 									<div style="margin:10px 0 10px 4px;">
 										<table>
@@ -1499,11 +1584,11 @@ function setHover_css(){
 												<td>
 													<canvas id="pie_chart" width="300" height="300"></canvas>
 												</td>
-												<td style="vertical-align:top;" id="top5_client_banner">
+												<td style="vertical-align:top;width:110px;" id="top5_client_banner">
 													<div onclick="change_top5_clients(0);" style="width:100px;word-wrap:break-word;padding-left:5px;background-color:#B3645B;margin-right:-10px;border-top-left-radius:10px;border-bottom-left-radius:10px;">No Client</div>
 												</td>
 												<td>
-													<div id="top5_info_block" style="width:320px;min-height:330px;;background-color:#B3645B;border-bottom-right-radius:10px;border-bottom-left-radius:10px;border-top-right-radius:10px;box-shadow: 3px 5px 5px #2E3537;">
+													<div id="top5_info_block" style="width:310px;min-height:330px;;background-color:#B3645B;border-bottom-right-radius:10px;border-bottom-left-radius:10px;border-top-right-radius:10px;box-shadow: 3px 5px 5px #2E3537;">
 														<table style="width:99%;padding-top:20px">						
 															<tr>
 																<th style="font-size:16px;text-align:left;padding-left:10px;width:140px;color:#ADADAD" id="top_client_title">Client:</th>

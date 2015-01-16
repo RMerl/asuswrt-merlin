@@ -127,7 +127,10 @@ function getWANStatus(){
 			}
 			else if(autodet_state == "5" && autodet_auxstate != "4"){
 				redirect_page("internet_type");
-			}			
+			}
+			else if(wanstate == 4 && wansbstate == 4){
+				parent.location.href = "/error_page.htm?flag=6";
+			}
 			else if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
 				if(based_modelid == "4G-AC55U")
 				{

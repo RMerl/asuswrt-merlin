@@ -165,18 +165,16 @@ function genWANSoption(){
 		$("WANscap").style.display = "none";
 }
 
-
 function applyRule(){
-	if(ctf.level2_supprot && (based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U") && ctf.changeType()){		//To notify if using Level 2 CTF and change wan type to PPPoE、PPTP、L2TP
-		if((wan_proto_orig == "dhcp" || wan_proto_orig == "static") && ctf.getLevel() == 2){
-			if(confirm("Level 2 CTF can not be supported under PPPoE、PPTP or L2TP. If you want to switch to Level 1 CTF, please click confirm ")){
-				document.form.ctf_disable_force.value = 0;
-				document.form.ctf_fa_mode.value = 0;	
-			}
-			else{				
-				return false;
-			}
-		}	
+	if(ctf.dhcpToPppoe() && ctf.getLevel() == 2){
+		if(confirm("Level 2 CTF can not be supported under PPPoE、PPTP or L2TP. If you want to switch to Level 1 CTF, please click confirm.")){
+			document.form.ctf_disable_force.value = 0;
+			document.form.ctf_fa_mode.value = 0;	
+			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
+		}
+		else{				
+			return false;
+		}
 	}
 
 	if(validForm()){
@@ -196,11 +194,6 @@ function applyRule(){
 			inputCtrl(document.form.wan_dns2_x, 1);
 		}
 
-		// Turn CTF into level 1, and turn back to level 2 if there exists nvram ctf_fa_mode_close.
-		if(ctf.changeType() && ctf.getLevel() == 2 && ctf.level2_supprot){
-			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
-		}
-
 		document.form.submit();	
 	}
 
@@ -208,15 +201,13 @@ function applyRule(){
 
 var ctf = {
 	disable_force: '<% nvram_get("ctf_disable"); %>',
-	fa_mode_close: '<% nvram_get("ctf_fa_mode_close"); %>',
 	fa_mode: '<% nvram_get("ctf_fa_mode"); %>',
-	level2_supprot: ('<% nvram_get("ctf_fa_mode"); %>' == '') ? false : true,
 
-	changeType: function(){
+	dhcpToPppoe: function(){
 		if((document.form.wan_proto.value == 'dhcp' || document.form.wan_proto.value == 'static') && 
 		   (wan_proto_orig == "pppoe" || wan_proto_orig == "pptp" || wan_proto_orig == "l2tp"))
 			return false;
-		else if((document.form.wan_proto.value == "pppoe" || document.form.wan_proto.value == "pptp"	|| document.form.wan_proto.value == "l2tp") && 
+		else if((document.form.wan_proto.value == "pppoe" || document.form.wan_proto.value == "pptp" || document.form.wan_proto.value == "l2tp") && 
 		   (wan_proto_orig == 'dhcp' || wan_proto_orig == 'static'))
 			return true;
 
@@ -226,25 +217,14 @@ var ctf = {
 	getLevel: function(){
 		var curVal;
 
-		if(ctf.fa_mode_close != ''){
-			if(ctf.disable_force == 0 && ctf.fa_mode_close == 1)
-				curVal = 1;
-			else if(ctf.disable_force == 0 && ctf.fa_mode_close == 0)
-				curVal = 2;
-			else
-				curVal = 0;
-		}
-		else{
-			if(ctf.disable_force == 0 && ctf.fa_mode == 0)
-				curVal = 1;
-			else if(ctf.disable_force == 0 && ctf.fa_mode == 2)
-				curVal = 2;
-			else
-				curVal = 0;		
-		}
+		if(ctf.disable_force == '0' && ctf.fa_mode == '0')
+			curVal = 1;
+		else if(ctf.disable_force == '0' && ctf.fa_mode == '2')
+			curVal = 2;
+		else
+			curVal = 0;		
 
 		return curVal;
-
 	}
 }
 

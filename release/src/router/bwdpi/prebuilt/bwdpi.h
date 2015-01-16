@@ -26,15 +26,29 @@
 
 #include <httpd.h>
 
-#define DATABASE		"/tmp/bwdpi/rule.trf"
-#define QOS_CONF		"/tmp/bwdpi/qosd.conf"
-#define WRS_CONF		"/tmp/bwdpi/wred.conf"
-#define APP_SET_CONF		"/tmp/bwdpi/wrs_app.conf"
-#define APP_CLEAN_CONF		"/tmp/bwdpi/wrs_app_clean.conf"
-#define VP_CONF			"/tmp/bwdpi/vp.conf"
-#define USR_BWDPI		"/usr/bwdpi/"
-#define TMP_BWDPI		"/tmp/bwdpi/"
-#define TMP_BWDPI_DC		"/tmp/bwdpi/dc/"
+// command
+#define WRED		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/wred" : "wred"
+#define AGENT		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/bwdpi-rule-agent" : "bwdpi-rule-agent"
+#define QOSD		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/qosd" : "qosd"
+#define DATACOLLD	nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/dc_monitor.sh" : "dc_monitor.sh"
+#define WRED_SET	nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/wred_set_conf" : "wred_set_conf"
+
+// conf / folder path
+#define DATABASE		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/rule.trf" : "/tmp/bwdpi/rule.trf"
+#define QOS_CONF		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/qosd.conf" : "/tmp/bwdpi/qosd.conf"
+#define WRS_CONF		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/wred.conf" : "/tmp/bwdpi/wred.conf"
+#define APP_SET_CONF		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/wrs_app.conf" : "/tmp/bwdpi/wrs_app.conf"
+#define APP_CLEAN_CONF		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/wrs_app_clean.conf" : "/tmp/bwdpi/wrs_app_clean.conf"
+#define TMP_BWDPI		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/" : "/tmp/bwdpi/"
+#define TMP_BWDPI_DC		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/dc/" : "/tmp/bwdpi/dc/"
+#define BWDPI_WAN		nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/dev_wan" : "/tmp/bwdpi/dev_wan"
+
+// module
+#define IDPKO	nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/IDP.ko" : "/usr/bwdpi/IDP.ko"
+#define BWKO	nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/bw_forward.ko" : "/usr/bwdpi/bw_forward.ko"
+#define CTKO	nvram_get_int("bwdpi_debug_path") ? "/jffs/TM/ct_notification.ko" : "/usr/bwdpi/ct_notification.ko"
+
+// log / tmp file
 #define TRAFFIC_PATH		"/tmp/traffic.log"
 #define WRS_FULL_LOG		"/tmp/wrs_full.txt"
 #define VP_FULL_LOG		"/tmp/vp_full.txt"

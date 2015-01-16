@@ -62,6 +62,9 @@ const struct dhcp_optflag dhcp_optflags[] = {
 	{ OPTION_U16                              , 0x84 }, /* DHCP_VLAN_ID       */
 	{ OPTION_U8                               , 0x85 }, /* DHCP_VLAN_PRIORITY */
 #endif
+#if ENABLE_FEATURE_UDHCP_VIVSO
+	{ OPTION_VIVSO               | OPTION_REQ, 0x7d }, /* DHCP_VIVSO          */
+#endif
 #if ENABLE_FEATURE_UDHCP_RFC5969
 	{ OPTION_6RD                              , 0x96 }, /* DHCP_COMCAST_6RD   */
 	{ OPTION_6RD                              , 0xd4 }, /* DHCP_6RD           */
@@ -131,6 +134,9 @@ const char dhcp_option_strings[] ALIGN1 =
 	"vlanid" "\0"      /* DHCP_VLAN_ID        */
 	"vlanpriority" "\0"/* DHCP_VLAN_PRIORITY  */
 #endif
+#if ENABLE_FEATURE_UDHCP_VIVSO
+	"vivso" "\0"       /* DHCP_VIVSO            */
+#endif
 #if ENABLE_FEATURE_UDHCP_RFC5969
 	"ip6rd" "\0"       /* DHCP_COMCAST_6RD    */
 	"ip6rd" "\0"       /* DHCP_6RD            */
@@ -165,6 +171,9 @@ const uint8_t dhcp_option_lengths[] ALIGN1 = {
 	/* Just like OPTION_STRING, we use minimum length here */
 	[OPTION_STATIC_ROUTES] = 5,
 	[OPTION_6RD] =    22,  /* ignored by udhcp_str2optset */
+#if ENABLE_FEATURE_UDHCP_VIVSO
+	[OPTION_VIVSO] =     1,  /* ignored by udhcp_str2optset */
+#endif
 };
 
 

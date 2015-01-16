@@ -452,6 +452,9 @@ ip_conntrack_ipct_delete(struct nf_conn *ct, int ct_timeout)
 	if (!CTF_ENAB(kcih))
 		return (0);
 
+	if (!(ct->ctf_flags & CTF_FLAGS_CACHED))
+		return (0);
+
 	orig = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
 
 	if ((orig->dst.protonum != IPPROTO_TCP) && (orig->dst.protonum != IPPROTO_UDP))

@@ -88,7 +88,6 @@ function initial(){
 	
 	addWANOption(document.form.wans_primary, wans_caps_primary.split(" "));
 	addWANOption(document.form.wans_second, wans_caps_secondary.split(" "));
-	document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
 
     if(based_modelid == "4G-AC55U"){
     	if(document.form.wans_mode.value == "lb")
@@ -107,7 +106,8 @@ function initial(){
 }
 
 function form_show(v){
-	if(v == 0){				//DualWAN disabled
+	if(v == 0){	//DualWAN disabled
+
 		inputCtrl(document.form.wans_second, 0);
 		inputCtrl(document.form.wans_lb_ratio_0, 0);
 		inputCtrl(document.form.wans_lb_ratio_1, 0);
@@ -134,25 +134,32 @@ function form_show(v){
 		document.getElementById("routing_table").style.display = "none";		
 	}
 	else{		//DualWAN enabled
+
 		document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];
 		if(wans_dualwan_orig.split(" ")[1] == "none"){
-			if(wans_dualwan_orig.split(" ")[0] == "wan" || wans_dualwan_orig.split(" ")[0] == "dsl"){
-				document.form.wans_second.value = "usb";
-				document.form.wans_second.index = 1;
+
+			if(wans_dualwan_orig.split(" ")[0] == "dsl"){
+				
+				if(wans_caps.search("wan") >= 0)
+					document.form.wans_second.value = "wan";
+				else if(wans_caps.search("usb") >= 0)
+					document.form.wans_second.value = "usb";
+				else
+					document.form.wans_second.value = "lan";
 			}
-			else if(wans_dualwan_orig.split(" ")[0] == "usb"){
-				document.form.wans_second.value = "lan";
-				document.form.wans_second.index = 2;	
+			else if(wans_dualwan_orig.split(" ")[0] == "wan"){
+
+				if(wans_caps.search("usb") >= 0)
+					document.form.wans_second.value = "usb";
+				else
+					document.form.wans_second.value = "lan";
+
 			}
 			else{
-				if(dsl_support){
-					document.form.wans_second.value = "usb";
-					document.form.wans_second.index = 1;
-				}	
-				else{	
+
+				if(wans_caps.search("wan") >= 0)
 					document.form.wans_second.value = "wan";
-					document.form.wans_second.index = 0;
-				}			
+
 			}
 		}	
 		else
@@ -314,47 +321,51 @@ function addWANOption(obj, wanscapItem){
 function changeWANProto(obj){	
 	if(wans_flag == 1){	//dual WAN on
 		if(document.form.wans_primary.value == document.form.wans_second.value){
+
 			if(obj.name == "wans_primary"){
-				if(obj.value == "wan"){			
-					document.form.wans_second.value = "usb";
-					document.form.wans_second.index = 1;
-				}else if (obj.value == "usb"){
-					if(!dsl_support){
-						document.form.wans_second.value = "wan";
-						document.form.wans_second.index = 0;
-					}
-					else{
-						document.form.wans_second.value = "lan";
-						document.form.wans_second.index = 2;
-					}
-				}else if (obj.value == "lan"){
-					if(!dsl_support){		//for DSL model, because DSL type can't set to secondary wan
-						document.form.wans_second.value = "wan";
-						document.form.wans_second.index = 0;
-					}
-					else{
+
+				if (obj.value == "dsl"){
+					
+					if(wans_caps.search("wan") >= 0)
+	                                        document.form.wans_second.value = "wan";
+					else if(wans_caps.search("usb") >= 0)
 						document.form.wans_second.value = "usb";
-						document.form.wans_second.index = 1;				
-					}
+					else
+						document.form.wans_second.value = "lan";
+
+                                }
+				else if(obj.value == "wan"){			
+					
+					if(wans_caps.search("usb") >= 0)
+                                                document.form.wans_second.value = "usb";
+                                        else
+                                                document.form.wans_second.value = "lan";
+
 				}
-				else if (obj.value == "dsl"){
-					document.form.wans_second.value = "usb";
-					document.form.wans_second.index = 1;
+				else{
+					if(wans_caps.search("wan") >= 0)
+                                                document.form.wans_second.value = "wan";					
 				}
+
 			}
 			else if(obj.name == "wans_second"){
+
 				if(obj.value == "wan"){
-					document.form.wans_primary.value = "usb";
-					document.form.wans_primary.index = 1;
-				}else if (obj.value == "usb" || obj.value == "lan"){
-					if(!dsl_support){
-							document.form.wans_primary.value = "wan";
-							document.form.wans_primary.index = 0;
-					}
-					else{
-							document.form.wans_primary.value = "dsl";
-							document.form.wans_primary.index = 0;
-					}					
+
+					if(wans_caps.search("dsl") >= 0)
+						document.form.wans_primary.value = "dsl";
+					else if(wans_caps.search("usb") >= 0)
+						document.form.wans_primary.value = "usb";
+					else
+						document.form.wans_primary.value = "lan";
+				}
+				else{
+
+					if(wans_caps.search("dsl") >= 0)
+                                                document.form.wans_primary.value = "dsl";
+                                        else if(wans_caps.search("wan") >= 0)
+                                                document.form.wans_primary.value = "wan";
+
 				}
 			}			
 		}

@@ -277,7 +277,7 @@ function generateRogClientList(){
 	for(var i=0; i<clientList.length; i++){
 		var clientObj = clientList[clientList[i]];
 
-		if(clientObj.callback == "")
+		if(clientObj.callback == "" || !clientObj.isOnline)
 			continue;
 
 		if(rogClientList.indexOf(clientObj.mac) == -1){

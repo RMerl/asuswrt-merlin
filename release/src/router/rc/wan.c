@@ -2581,7 +2581,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 				// if restart_wan_if, remove dpi engine related
 				if(f_exists("/dev/detector") || f_exists("/dev/idpfw")){
 					_dprintf("[%s] stop dpi engine service\n", __FUNCTION__);
-					stop_dpi_engine_service(1);
+					stop_dpi_engine_service(0);
 				}
 				_dprintf("[%s] start dpi engine service\n", __FUNCTION__);
 				start_dpi_engine_service();
@@ -2600,6 +2600,10 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 #else
 	start_iQos();
+#endif
+
+#ifdef RTCONFIG_TR069
+	start_tr();
 #endif
 
 _dprintf("%s(%s): done.\n", __FUNCTION__, wan_ifname);
@@ -3085,112 +3089,119 @@ void dumparptable()
 	}
 }
 
-int
-autodet_main(int argc, char *argv[])
-{
+int autodet_main(int argc, char *argv[]){
 	int i;
-	int unit=0; // need to handle multiple wan
+	int unit;
 	char prefix[]="wanXXXXXX_", tmp[100];
+	char prefix2[]="autodetXXXXXX_", tmp2[100];
 	char hwaddr_x[32];
 	int status;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		if(get_dualwan_by_unit(unit) != WANS_DUALWAN_IF_WAN && get_dualwan_by_unit(unit) != WANS_DUALWAN_IF_LAN)
+			continue;
 
-	nvram_set_int("autodet_state", AUTODET_STATE_INITIALIZING);
-	nvram_set_int("autodet_auxstate", AUTODET_STATE_INITIALIZING);
-
-	// it shouldnot happen, because it is only called in default mode
-	if (!nvram_match(strcat_r(prefix, "proto", tmp), "dhcp")) {
-		status = discover_all();
-		if(status == -1)
-			nvram_set_int("autodet_auxstate", AUTODET_STATE_FINISHED_NOLINK);
-		else if(status == 2)
-			nvram_set_int("autodet_auxstate", AUTODET_STATE_FINISHED_WITHPPPOE);
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+		if(unit == WAN_UNIT_FIRST)
+			snprintf(prefix2, sizeof(prefix2), "autodet_");
 		else
-			nvram_set_int("autodet_auxstate", AUTODET_STATE_FINISHED_OK);
-					
-		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_NODHCP);
-		return 0;
-	}
+			snprintf(prefix2, sizeof(prefix2), "autodet%d_", unit);
 
-	// TODO: need every unit of WAN to do the autodet?
-	if (!get_wanports_status(WAN_UNIT_FIRST)) {
-		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_NOLINK);
-		return 0;
-	}
+		nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_INITIALIZING);
+		nvram_set_int(strcat_r(prefix2, "auxstate", tmp2), AUTODET_STATE_INITIALIZING);
 
-	if (get_wan_state(unit)==WAN_STATE_CONNECTED)
-	{
-		i = nvram_get_int(strcat_r(prefix, "lease", tmp));
+		// it shouldnot happen, because it is only called in default mode
+		if(!nvram_match(strcat_r(prefix, "proto", tmp), "dhcp")){
+			status = discover_all();
+			if(status == -1)
+				nvram_set_int(strcat_r(prefix2, "auxstate", tmp2), AUTODET_STATE_FINISHED_NOLINK);
+			else if(status == 2)
+				nvram_set_int(strcat_r(prefix2, "auxstate", tmp2), AUTODET_STATE_FINISHED_WITHPPPOE);
+			else
+				nvram_set_int(strcat_r(prefix2, "auxstate", tmp2), AUTODET_STATE_FINISHED_OK);
 
-		if(i<60&&is_private_subnet(strcat_r(prefix, "ipaddr", tmp))) {
-			sleep(i);
+			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_NODHCP);
+			continue;
 		}
-		//else {
-		//	nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_OK);
-		//	return 0;
-		//}
-	}
 
- 	status = discover_all();
-
-	// check for pppoe status only,
-	if (get_wan_state(unit)==WAN_STATE_CONNECTED) {
-		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_OK);
-		if(status==2)
-			nvram_set_int("autodet_auxstate", AUTODET_STATE_FINISHED_WITHPPPOE);
-		return 0;
-	}
-	else if(status==2) {
-		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_WITHPPPOE);
-		return 0;
-	}
-
-	nvram_set_int("autodet_state", AUTODET_STATE_CHECKING);
-
-	dumparptable();
-
-	// backup hwaddr_x
-	strcpy(hwaddr_x, nvram_safe_get(strcat_r(prefix, "hwaddr_x", tmp)));
-	//nvram_set(strcat_r(prefix, "hwaddr_x", tmp), "");
-
-	char *ptr = nvram_safe_get("autodet_waitsec");
-	int waitsec = 0;
-
-	if(ptr == NULL || strlen(ptr) <= 0)
-		waitsec = 5;
-	else
-		waitsec = atoi(ptr);
-
-	i = 0;
-	while(i < mac_num && get_wan_state(unit) != WAN_STATE_CONNECTED){
-		if( !(nvram_match("wl0_country_code", "SG"))){ // Singpore do not auto clone
-			_dprintf("try clone %s\n", mac_clone[i]);
-			nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
+		// TODO: need every unit of WAN to do the autodet?
+		if(!get_wanports_status(unit)){
+			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_NOLINK);
+			continue;
 		}
-		notify_rc_and_wait("restart_wan");
-		_dprintf("%s: wait a IP during %d seconds...\n", __FUNCTION__, waitsec);
-		int count = 0;
-		while(count < waitsec && get_wan_state(unit) != WAN_STATE_CONNECTED){
-			sleep(1);
 
-			++count;
+		if(get_wan_state(unit) == WAN_STATE_CONNECTED){
+			i = nvram_get_int(strcat_r(prefix, "lease", tmp));
+
+			if(i < 60 && is_private_subnet(strcat_r(prefix, "ipaddr", tmp))){
+				sleep(i);
+			}
+			//else{
+			//	nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_OK);
+			//	continue;
+			//}
 		}
-		++i;
-	}
 
-	if(i == mac_num){
-		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_FAIL);
-		// restore hwaddr_x
-		nvram_set(strcat_r(prefix, "hwaddr_x", tmp), hwaddr_x);
+		status = discover_all();
+
+		// check for pppoe status only,
+		if(get_wan_state(unit) == WAN_STATE_CONNECTED){
+			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_OK);
+			if(status == 2)
+				nvram_set_int(strcat_r(prefix2, "auxstate", tmp2), AUTODET_STATE_FINISHED_WITHPPPOE);
+			continue;
+		}
+		else if(status == 2){
+			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_WITHPPPOE);
+			continue;
+		}
+
+		nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_CHECKING);
+
+		dumparptable();
+
+		// backup hwaddr_x
+		strcpy(hwaddr_x, nvram_safe_get(strcat_r(prefix, "hwaddr_x", tmp)));
+		//nvram_set(strcat_r(prefix, "hwaddr_x", tmp), "");
+
+		char *ptr = nvram_safe_get(strcat_r(prefix2, "waitsec", tmp2));
+		int waitsec = 0;
+
+		if(ptr == NULL || strlen(ptr) <= 0)
+			waitsec = 5;
+		else
+			waitsec = atoi(ptr);
+
+		i = 0;
+		while(i < mac_num && get_wan_state(unit) != WAN_STATE_CONNECTED){
+			if(!(nvram_match("wl0_country_code", "SG"))){ // Singpore do not auto clone
+				_dprintf("try clone %s\n", mac_clone[i]);
+				nvram_set(strcat_r(prefix, "hwaddr_x", tmp), mac_clone[i]);
+			}
+			notify_rc_and_wait("restart_wan");
+			_dprintf("%s: wait a IP during %d seconds...\n", __FUNCTION__, waitsec);
+			int count = 0;
+			while(count < waitsec && get_wan_state(unit) != WAN_STATE_CONNECTED){
+				sleep(1);
+
+				++count;
+			}
+			++i;
+		}
+
+		if(i == mac_num){
+			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_FAIL);
+			// restore hwaddr_x
+			nvram_set(strcat_r(prefix, "hwaddr_x", tmp), hwaddr_x);
+		}
+		else if(i == mac_num-1){ // OK in original mac
+			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_OK);
+		}
+		else{ // OK in cloned mac
+			nvram_set_int(strcat_r(prefix2, "state", tmp2), AUTODET_STATE_FINISHED_OK);
+		}
+		nvram_commit();
 	}
-	else if(i == mac_num-1){ // OK in original mac
-		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_OK);
-	}
-	else{ // OK in cloned mac
-		nvram_set_int("autodet_state", AUTODET_STATE_FINISHED_OK);
-	}
-	nvram_commit();
 
 	return 0;
 }

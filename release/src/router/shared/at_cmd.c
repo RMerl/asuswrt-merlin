@@ -207,11 +207,22 @@ char *Gobi_ConnectISP(char *line, int size)
 		{
 			if (strcmp(str, "0x01") == 0)
 			{
-				if((f = find_field(p, ',', 6, str)) != NULL)
+				if((f = find_field(p, ',', 6, str)) != NULL && strcmp(str, "NULL")) // SPN
 				{
 					strcpy(line,str);
 					return line;
 				}
+				else if((f = find_field(p, ',', 7, str)) != NULL) // long name
+				{
+					strcpy(line,str);
+					return line;
+				}
+				else if((f = find_field(p, ',', 8, str)) != NULL) // short name
+				{
+					strcpy(line,str);
+					return line;
+				}
+				
 			}
 		}
 	}

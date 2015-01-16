@@ -593,7 +593,7 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_BCMWL6
 	{ "acs_ifnames", "", 0 },
-#if defined (RTAC68U) || defined (RTAC66U) || defined (RTN66U) || defined (RTCONFIG_QTN)
+#if defined (RTAC68U) || defined (RTAC66U) || defined (RTN66U) || defined (RTCONFIG_QTN) || defined (DSL_AC68U)
 	{ "acs_dfs", "0", 0},			/* disable DFS channels for acsd by default */
 #endif
 	{ "acs_band1", "0", 0},
@@ -665,8 +665,8 @@ struct nvram_tuple router_defaults[] = {
 #if 0
 	{ "bsd_msglevel", "0x000010", 0 },	/* BSD_DEBUG_STEER */
 #endif
+#ifdef RTAC3200
 	{"bsd_ifnames", "eth2 eth1 eth3", 0 },
-	{"bsd_scheme", "2", 0 },
 	{"wl0_bsd_steering_policy", "0 5 3 0 0 0x50", 0 },
 	{"wl1_bsd_steering_policy", "80 5 3 0 300 0x60", 0 },
 	{"wl2_bsd_steering_policy", "0 5 3 0 300 0x40", 0 },
@@ -679,6 +679,8 @@ struct nvram_tuple router_defaults[] = {
 	{"wl0_bsd_if_qualify_policy", "0 0x0", 0 },
 	{"wl1_bsd_if_qualify_policy", "60 0x0", 0 },
 	{"wl2_bsd_if_qualify_policy", "0 0x0", 0 },
+#endif
+	{"bsd_scheme", "2", 0 },
 	{"bsd_bounce_detect", "180 2 1800", 0 },
 #endif
 #ifdef BCM_SSD
@@ -706,9 +708,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "ctf_disable_force", 		"0"		},
 #ifdef RTCONFIG_BCMFA
 	{ "ctf_fa_mode",		"0"		},
-#ifdef RTCONFIG_RGMII_BCM_FA
-	{ "ctf_fa_mode_close",		"0"		},
-#endif
 #endif
 #ifdef RTCONFIG_BCMARM
 	{ "ctf_pt_udp",			"0"		},
@@ -927,6 +926,7 @@ struct nvram_tuple router_defaults[] = {
 #else
 	{ "wans_dualwan", "wan " DEF_SECOND_WANIF},
 #endif
+	{ "wans_standby", "0"},
 	{ "wans_lanport", "1"},
 	{ "wans_lb_ratio", "3:1" }, 	// only support two wan simultaneously
 	{ "wans_routing_enable", "0" },
@@ -2102,6 +2102,22 @@ struct nvram_tuple router_defaults[] = {
 	{"tm_usb_path_serial", 		""},
 	{"tm_debug", 			"0"},
 #endif
+#if defined(RTCONFIG_TR069)
+	{ "tr_enable", "0"},
+	{ "tr_inform_enable", "1"},
+	{ "tr_inform_interval", "86400"},
+	{ "tr_acs_url", ""},
+	{ "tr_username", ""},
+	{ "tr_passwd", ""},
+	{ "tr_conn_username", "admin"},
+	{ "tr_conn_passwd", "admin"},
+	{ "tr_conn_port", "7547"},
+	{ "tr_ca_cert", ""},
+	{ "tr_client_cert", ""},
+	{ "tr_client_key", ""},
+	{ "tr_client_key", ""},
+	{ "pvgcode", "ASUS"},
+#endif
 	{ "Ate_fw_fail",		"10"},
 	{ "Ate_reboot_delay",		"1"},
 #ifdef RTCONFIG_USER_LOW_RSSI
@@ -2794,6 +2810,12 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:ledbh10", "7", 0 },
 	{ "1:ledbh10", "7", 0 },
+#ifdef RTCONFIG_LEDARRAY
+	{ "0:ledbh0", "7", 0 },
+	{ "0:ledbh9", "7", 0 },
+	{ "1:ledbh0", "7", 0 },
+	{ "1:ledbh9", "7", 0 },
+#endif
 	{ 0, 0, 0 }
 };
 #endif

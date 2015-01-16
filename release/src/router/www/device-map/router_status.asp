@@ -20,7 +20,7 @@
 	margin-bottom:5px;
 }
 
-.ling_image{
+.line_image{
 	margin:5px 0px 0px 10px; 
 	*margin-top:-10px;
 }
@@ -32,18 +32,17 @@
 
 .ram_table td{
 	width:33%;
-
 }
 
 .loading_bar{
-	width:200px;
+	width:150px;
 }
 
 .loading_bar > div{
-	margin-left:20px;
+	margin-left:5px;
 	background-color:black;
 	border-radius:15px;
-	padding:3px;
+	padding:2px;
 }
 
 .status_bar{
@@ -55,25 +54,25 @@
 	background-color:#0096FF;
 }
 
-#cpu1_bar{
+#cpu0_bar{
 	background-color:#FF9000;	
 }
 
-#cpu2_bar{
+#cpu1_bar{
 	background-color:#3CF;
 }
 
+#cpu2_bar{
+	background-color:#FC0;
+}
+
+#cpu3_bar{
+	background-color:#FF44FF;
+}
+
 .percentage_bar{
-	width:75px;
+	width:60px;
 	text-align:center;
-}
-
-.cpu_count{
-	margin:0px 0px -5px 25px;
-}
-
-.cpu_desc{
-	margin: 5px 0px -5px 25px;
 }
 
 .cpu_div{
@@ -82,24 +81,29 @@
 </style>
 <script>
 var $j = jQuery.noConflict();
-/* To check core number  */
-var core_num = 0;
-var cpu_percentage = new Array();
-<%cpu_usage();%>
-core_num = cpu_percentage.length;
-/*  End */
-var ram_usage_array = new Array(31);
-var cpu1_usage_array = new Array(46);
-var cpu2_usage_array = new Array(46);
-for(i=0;i<46;i++){
-	cpu1_usage_array[i] = 101;
-	cpu2_usage_array[i] = 101;
+/*Initialize array*/
+var cpu_info_old = new Array();
+var core_num = '<%cpu_core_num();%>';
+var cpu_usage_array = new Array();
+for(i=0;i<core_num;i++){
+	cpu_info_old[i] = {
+		total:0,
+		usage:0
+	}
+	
+	cpu_usage_array[i] = new Array();
+	for(j=0;j<46;j++){
+		cpu_usage_array[i][j] = 101;
+	}
 }
+var ram_usage_array = new Array(31);
 for(i=0;i<31;i++){
 	ram_usage_array[i] = 101;
 }
+/*End*/
 
 function initial(){
+	generate_cpu_field();
 	if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == '<% nvram_get("wl_unit"); %>')
 		document.form.wl_subunit.value = 1;
 	else
@@ -112,8 +116,7 @@ function initial(){
 			tab_reset(0);
 
 	if(smart_connect_support && parent.sw_mode != 4)
-			change_smart_connect('<% nvram_get("smart_connect_x"); %>');	
-	
+		change_smart_connect('<% nvram_get("smart_connect_x"); %>');	
 		
 		// disallow to use the other band as a wireless AP
 		if(parent.sw_mode == 4 && !localAP_support){
@@ -126,14 +129,8 @@ function initial(){
 	else{
 		$("t0").style.display = "";
 	}	
-	
-	if(core_num == 2){
-		$('cpu2_tr').style.display = "";
-		$('cpu2_graph').style.display = "";
-	}
 
-	detect_RAM_Status();
-	detect_CPU_Status();
+	detect_CPU_RAM();
 }
 
 function tabclickhandler(wl_unit){
@@ -182,55 +179,65 @@ function render_RAM(total, free, used){
 	$('ram_graph').setAttribute('points', pt);
 }
 
-function render_CPU(cpu){
-	var pt1 = "";
-	var pt2 = "";
+function render_CPU(cpu_info_new){
+	var pt;
+	var percentage = 0;
+	var total_diff = 0;
+	var usage_diff = 0;	
+
+	for(i=0;i<core_num;i++){
+		pt = "";
+		total_diff = (cpu_info_old[i].total == 0)? 0 : (cpu_info_new[i].total - cpu_info_old[i].total);
+		usage_diff = (cpu_info_old[i].usage == 0)? 0 : (cpu_info_new[i].usage - cpu_info_old[i].usage);
+		
+		if(total_diff == 0)
+			percentage = 0;
+		else	
+			percentage = parseInt(100*usage_diff/total_diff);
 	
-	$('cpu1_bar').style.width = cpu[0] +"%";
-	$('cpu1_quantification').innerHTML = cpu[0] +"%";
-	cpu1_usage_array.push(100 - cpu[0]);
-	cpu1_usage_array.splice(0,1);
-	for(i=0;i<46;i++){
-		pt1 += i*6 +","+ cpu1_usage_array[i] + " ";	
-	}
-	$('cpu1_graph').setAttribute('points', pt1);
-	
-	if(core_num == 2){
-		$('cpu2_bar').style.width = cpu[1] +"%";
-		$('cpu2_quantification').innerHTML = cpu[1] +"%";
-		cpu2_usage_array.push(100 - cpu[1]);
-		cpu2_usage_array.splice(0,1);
-		for(i=0;i<46;i++){
-			pt2 += i*6 +","+ cpu2_usage_array[i] + " ";
+		$('cpu'+i+'_bar').style.width = percentage +"%";
+		$('cpu'+i+'_quantification').innerHTML = percentage +"%"
+		cpu_usage_array[i].push(100 - percentage);
+		cpu_usage_array[i].splice(0,1);
+		for(j=0;j<46;j++){
+			pt += j*6 +","+ cpu_usage_array[i][j] + " ";	
 		}
-		$('cpu2_graph').setAttribute('points', pt2);
+
+		$('cpu'+i+'_graph').setAttribute('points', pt);
+		cpu_info_old[i].total = cpu_info_new[i].total;
+		cpu_info_old[i].usage = cpu_info_new[i].usage;
 	}
 }
 
-function detect_RAM_Status(){
-	$j.ajax({
-    	url: '/ram_status.asp',
-    	dataType: 'script',
-    	error: function(xhr){
-    		detect_RAM_Status();
-    	},
-    	success: function(){
-			render_RAM(Total, Free, Used);			
-			setTimeout("detect_RAM_Status();", 2000);
-  		}
-	});
-}
 
-function detect_CPU_Status(){
+function detect_CPU_RAM(){
 	$j.ajax({
-    	url: '/cpu_status.asp',
-    	dataType: 'script',
+    	url: '/cpu_ram_status.xml',
+    	dataType: 'xml',
     	error: function(xhr){
-    		detect_CPU_Status();
+    		detect_CPU_RAM();
     	},
-    	success: function(){
-			render_CPU(cpu_percentage);		
-			setTimeout("detect_CPU_Status();", 2000);
+    	success: function(response){
+			var cpu_info_new = new Array();
+			data = response;
+			cpu_object = data.getElementsByTagName('cpu');
+			for(i=0;i<core_num;i++){
+				cpu_info_new[i] = {
+					total: cpu_object[i].childNodes[1].innerHTML,
+					usage: cpu_object[i].childNodes[3].innerHTML
+				};
+			}
+			
+			mem_info = data.getElementsByTagName('mem_info')[0];
+			mem_object = {
+				total: mem_info.getElementsByTagName('total')[0].innerHTML,
+				free: mem_info.getElementsByTagName('free')[0].innerHTML,
+				used: mem_info.getElementsByTagName('used')[0].innerHTML,		
+			}
+			
+			render_CPU(cpu_info_new);
+			render_RAM(mem_object.total, mem_object.free, mem_object.used);	
+			setTimeout("detect_CPU_RAM();", 2000);
   		}
 	});
 }
@@ -238,18 +245,19 @@ function detect_CPU_Status(){
 function tab_reset(v){
 	var tab_array1 = document.getElementsByClassName("tab_NW");
 	var tab_array2 = document.getElementsByClassName("tabclick_NW");
-
 	var tab_width = Math.floor(270/(wl_info.wl_if_total+1));
 	var i = 0;
 	while(i < tab_array1.length){
 		tab_array1[i].style.width=tab_width+'px';
 		tab_array1[i].style.display = "";
-	i++;
+		i++;
 	}
+	
 	if(typeof tab_array2[0] != "undefined"){
 		tab_array2[0].style.width=tab_width+'px';
 		tab_array2[0].style.display = "";
 	}
+	
 	if(v == 0){
 		$("span0").innerHTML = "2.4GHz";
 		if(wl_info.band5g_2_support){
@@ -276,15 +284,42 @@ function tab_reset(v){
 function change_smart_connect(v){
 	switch(v){
 		case '0':
-				tab_reset(0);	
-				break;
+			tab_reset(0);	
+			break;
 		case '1': 
-				tab_reset(1);
-				break;
+			tab_reset(1);
+			break;
 		case '2': 
-				tab_reset(2);
-				break;
+			tab_reset(2);
+			break;
 	}
+}
+
+function generate_cpu_field(){
+	var code = "";
+	for(i=0;i<core_num;i++){
+		code += "<tr><td><div class='cpu_div'><table>";
+		code += "<tr><td><div><table>";
+		code += "<tr>";		
+		code += "<td class='loading_bar' colspan='2'>";
+		code += "<div>";
+		code += "<div id='cpu"+i+"_bar' class='status_bar'></div>";
+		code += "</div>";
+		code += "</td>";	
+		code += "<td>";
+		code += "<div>Core "+parseInt(i+1)+"</div>";
+		code += "</td>";		
+		code += "<td class='percentage_bar'>";
+		code += "<div id='cpu"+i+"_quantification'>0%</div>";
+		code += "</td>";		
+		code += "</tr>";
+		code += "</table></div></td></tr>";
+		code += "</table></div></td></tr>";
+
+		$('cpu'+i+'_graph').style.display = "";
+	}
+
+	document.getElementById('cpu_field').innerHTML = code;
 }
 
 </script>
@@ -336,108 +371,50 @@ function change_smart_connect(v){
 			<tr>
 				<td >
 					<div class="title">CPU</div>
-					<img class="ling_image" src="/images/New_ui/networkmap/linetwo2.png">
+					<img class="line_image" src="/images/New_ui/networkmap/linetwo2.png">
 				</td>
-			</tr >		
+			</tr >
 			<tr>
 				<td>
-					<div class="cpu_div">
-						<table>
-							<tr >
-								<td colspan="2">
-									<div class="cpu_desc">Core 1</div>
-								</td>
-							</tr>							
-							<tr >
-								<td>
-									<div>
-										<table>
-											<tr>
-												<td class="loading_bar" colspan="2">
-													<div>									
-														<div id="cpu1_bar" class="status_bar"></div>
-													</div>
-												</td>
-												<td class="percentage_bar">
-													<div id="cpu1_quantification">0%</div>
-												</td>
-											</tr>
-										</table>
-									</div>
-								</td>
-							</tr> 
-						</table>
-					</div>
-				</td>
-			</tr>
-			<tr id="cpu2_tr" style="display:none;">
-				<td>
-					<div class="cpu_div">
-						<table>
-							<tr >
-								<td colspan="2">
-									<div class="cpu_desc">Core 2</div>
-								</td>
-							</tr>							
-							<tr >
-								<td>
-									<div>
-										<table>
-											<tr>
-												<td class="loading_bar" colspan="2">
-													<div>									
-														<div id="cpu2_bar" class="status_bar"></div>					
-													</div>
-												</td>
-												<td class="percentage_bar">
-													<div id="cpu2_quantification">0%</div>
-												</td>
-											</tr>
-										</table>
-									</div>
-								</td>
-							</tr> 
-						</table>
-					</div>
+					<table id="cpu_field"></table>
 				</td>
 			</tr>
 			
 			<tr style="height:100px;">
-			<td colspan="3">
-				<div style="margin:0px 11px 0px 11px;background-color:black;">
-					<svg width="270px" height="100px">
-						<g>
-							<line stroke-width="1" stroke-opacity="1"   stroke="rgb(255,255,255)" x1="0" y1="0%"   x2="100%" y2="0%" />
-							<line stroke-width="1" stroke-opacity="0.2" stroke="rgb(255,255,255)" x1="0" y1="25%"  x2="100%" y2="25%" />
-							<line stroke-width="1" stroke-opacity="0.2" stroke="rgb(255,255,255)" x1="0" y1="50%"  x2="100%" y2="50%" />
-							<line stroke-width="1" stroke-opacity="0.2" stroke="rgb(255,255,255)" x1="0" y1="75%"  x2="100%" y2="75%" />
-							<line stroke-width="1" stroke-opacity="1"   stroke="rgb(255,255,255)" x1="0" y1="100%" x2="100%" y2="100%" />
-						</g>
-						
-						<g>
-							<text font-family="Verdana" fill="#FFFFFF" font-size="8" x="0" y="98%">0%</text>
-							<text font-family="Verdana" fill="#FFFFFF" font-size="8" x="0" y="55%">50%</text>
-							<text font-family="Verdana" fill="#FFFFFF" font-size="8" x="0" y="11%">100%</text>
-						</g>
-						
-						<line stroke-width="1" stroke-opacity="1"   stroke="rgb(0,0,121)"   x1="0"   y1="0%" x2="0"   y2="100%" id="tick1" />
-						<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="30"  y1="0%" x2="30"  y2="100%" id="tick2" />
-						<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="60"  y1="0%" x2="60"  y2="100%" id="tick3" />
-						<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="90"  y1="0%" x2="90"  y2="100%" id="tick4" />
-						<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="120" y1="0%" x2="120" y2="100%" id="tick5" />
-						<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="150" y1="0%" x2="150" y2="100%" id="tick6" />
-						<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="180" y1="0%" x2="180" y2="100%" id="tick7" />
-						<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="210" y1="0%" x2="210" y2="100%" id="tick8" />
-						<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="240" y1="0%" x2="240" y2="100%" id="tick9" />						
-						<line stroke-width="1" stroke-opacity="1"   stroke="rgb(0,0,121)"   x1="270" y1="0%" x2="270" y2="100%" id="tick10" />
+				<td colspan="3">
+					<div style="margin:0px 11px 0px 11px;background-color:black;">
+						<svg width="270px" height="100px">
+							<g>
+								<line stroke-width="1" stroke-opacity="1"   stroke="rgb(255,255,255)" x1="0" y1="0%"   x2="100%" y2="0%" />
+								<line stroke-width="1" stroke-opacity="0.2" stroke="rgb(255,255,255)" x1="0" y1="25%"  x2="100%" y2="25%" />
+								<line stroke-width="1" stroke-opacity="0.2" stroke="rgb(255,255,255)" x1="0" y1="50%"  x2="100%" y2="50%" />
+								<line stroke-width="1" stroke-opacity="0.2" stroke="rgb(255,255,255)" x1="0" y1="75%"  x2="100%" y2="75%" />
+								<line stroke-width="1" stroke-opacity="1"   stroke="rgb(255,255,255)" x1="0" y1="100%" x2="100%" y2="100%" />
+							</g>							
+							<g>
+								<text font-family="Verdana" fill="#FFFFFF" font-size="8" x="0" y="98%">0%</text>
+								<text font-family="Verdana" fill="#FFFFFF" font-size="8" x="0" y="55%">50%</text>
+								<text font-family="Verdana" fill="#FFFFFF" font-size="8" x="0" y="11%">100%</text>
+							</g>							
+							<line stroke-width="1" stroke-opacity="1"   stroke="rgb(0,0,121)"   x1="0"   y1="0%" x2="0"   y2="100%" id="tick1" />
+							<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="30"  y1="0%" x2="30"  y2="100%" id="tick2" />
+							<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="60"  y1="0%" x2="60"  y2="100%" id="tick3" />
+							<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="90"  y1="0%" x2="90"  y2="100%" id="tick4" />
+							<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="120" y1="0%" x2="120" y2="100%" id="tick5" />
+							<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="150" y1="0%" x2="150" y2="100%" id="tick6" />
+							<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="180" y1="0%" x2="180" y2="100%" id="tick7" />
+							<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="210" y1="0%" x2="210" y2="100%" id="tick8" />
+							<line stroke-width="1" stroke-opacity="0.3" stroke="rgb(40,255,40)" x1="240" y1="0%" x2="240" y2="100%" id="tick9" />						
+							<line stroke-width="1" stroke-opacity="1"   stroke="rgb(0,0,121)"   x1="270" y1="0%" x2="270" y2="100%" id="tick10" />
 
-						<polyline id="cpu1_graph" style="fill:none;stroke:#FF9000;stroke-width:1;width:200px;"  points=""></polyline>
-						<polyline id="cpu2_graph" style="fill:none;stroke:#3CF;stroke-width:1;width:200px;display:none;"  points=""></polyline>
-					</svg>
-				</div>
-			</td>
-		</tr>
-			
+							<polyline id="cpu0_graph" style="fill:none;stroke:#FF9000;stroke-width:1;width:200px;"  points=""></polyline>
+							<polyline id="cpu1_graph" style="fill:none;stroke:#3CF;stroke-width:1;width:200px;display:none;"  points=""></polyline>
+							<polyline id="cpu2_graph" style="fill:none;stroke:#FC0;stroke-width:1;width:200px;display:none;"  points=""></polyline>
+							<polyline id="cpu3_graph" style="fill:none;stroke:#FF44FF;stroke-width:1;width:200px;display:none;"  points=""></polyline>
+						</svg>
+					</div>
+				</td>
+			</tr>			
 			<tr>
 				<td style="border-bottom:5px #2A3539 solid;padding:0px 10px 5px 10px;"></td>
 			</tr>
@@ -453,7 +430,7 @@ function change_smart_connect(v){
 			<tr>
 				<td colspan="3">		
 					<div class="title">RAM</div>
-					<img class="ling_image" src="/images/New_ui/networkmap/linetwo2.png">
+					<img class="line_image" src="/images/New_ui/networkmap/linetwo2.png">
 				</td>
 			</tr>
 			<tr class="ram_table">
@@ -479,6 +456,9 @@ function change_smart_connect(v){
 									<div>
 										<div id="ram_bar" class="status_bar"></div>				
 									</div>
+								</td>
+								<td>
+									<div style="width:39px;"></div>
 								</td>
 								<td class="percentage_bar">
 									<div id="ram_quantification">0%</div>

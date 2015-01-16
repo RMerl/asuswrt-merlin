@@ -443,6 +443,13 @@ function applyRule(){
 		}
 	}
 
+	if(document.form.modem_country.value == ""){
+		var valueStr = "";
+		document.form.modem_isp.disabled = false;;
+		document.form.modem_isp.options.length = 1;
+		document.form.modem_isp.options[0] = new Option(valueStr, valueStr, false, true);
+	}
+
 	showLoading(); 
 	document.form.submit();
 }

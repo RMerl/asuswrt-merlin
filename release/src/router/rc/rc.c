@@ -364,6 +364,9 @@ static const applets_t applets[] = {
 #ifdef RT4GAC55U
 	{ "lteled",			lteled_main			},
 #endif
+#ifdef RTCONFIG_TR069
+	{ "dhcpc_lease",		dhcpc_lease_main		},
+#endif
 	{NULL, NULL}
 };
 

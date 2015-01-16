@@ -981,10 +981,13 @@ handle_request(void)
 			}
 
 			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,".CFG")) && !check_if_file_exist(file)
-#ifdef RTCONFIG_DSL_TCLINUX
-				&& !strstr(file, "TCC.log")
+#ifdef RTCONFIG_USB_MODEM
+					&& !strstr(file, "modemlog.txt")
 #endif
-			){
+#ifdef RTCONFIG_DSL_TCLINUX
+					&& !strstr(file, "TCC.log")
+#endif
+					){
 				send_error( 404, "Not Found", (char*) 0, "File not found." );
 				return;
 			}

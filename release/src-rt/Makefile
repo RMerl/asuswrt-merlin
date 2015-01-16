@@ -843,6 +843,14 @@ define RouterOptions
 		sed -i "/RTCONFIG_USBRESET/d" $(1); \
 		echo "# RTCONFIG_USBRESET is not set" >>$(1); \
 	fi; \
+	if [ "$(WIFIPWR)" = "y" ]; then \
+		sed -i "/RTCONFIG_WIFIPWR/d" $(1); \
+		echo "RTCONFIG_WIFIPWR=y" >>$(1); \
+	fi; \
+	if [ "$(LEDARRAY)" = "y" ]; then \
+		sed -i "/RTCONFIG_LEDARRAY/d" $(1); \
+		echo "RTCONFIG_LEDARRAY=y" >>$(1); \
+	fi; \
 	if [ "$(XHCIMODE)" = "y" ]; then \
 		sed -i "/RTCONFIG_XHCIMODE/d" $(1); \
 		echo "RTCONFIG_XHCIMODE=y" >>$(1); \
@@ -1149,6 +1157,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_PUSH_EMAIL/d" $(1); \
 		echo "RTCONFIG_PUSH_EMAIL=y" >>$(1); \
 	fi; \
+	if [ "$(ADBLOCK)" = "y" ]; then \
+		sed -i "/RTCONFIG_ADBLOCK/d" $(1); \
+		echo "RTCONFIG_ADBLOCK=y" >>$(1); \
+	fi; \
 	if [ "$(SPEEDTEST)" = "y" ]; then \
 		sed -i "/RTCONFIG_SPEEDTEST/d" $(1); \
 		echo "RTCONFIG_SPEEDTEST=y" >>$(1); \
@@ -1170,6 +1182,10 @@ define RouterOptions
 		echo "RTCONFIG_DHDAP=y" >>$(1); \
 		sed -i "/RTCONFIG_GMAC3/d" $(1); \
 		echo "RTCONFIG_GMAC3=y" >>$(1); \
+	fi; \
+	if [ "$(BUILD_BCM7)" = "y" ]; then \
+		sed -i "/RTCONFIG_BUILDBCM7/d" $(1); \
+		echo "RTCONFIG_BUILDBCM7=y" >>$(1); \
 	fi; \
 	if [ "$(SSD)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCMSSD/d" $(1); \
@@ -1201,6 +1217,14 @@ define RouterOptions
 	else \
 		sed -i "/RTCONFIG_JFFS2USERICON/d" $(1); \
 		echo "# RTCONFIG_JFFS2USERICON is not set" >>$(1); \
+	fi; \
+	if [ "$(TR069)" = "y" ]; then \
+		sed -i "/RTCONFIG_TR069/d" $(1); \
+		echo "RTCONFIG_TR069=y" >>$(1); \
+	fi; \
+	if [ "$(TR181)" = "y" ]; then \
+		sed -i "/RTCONFIG_TR181/d" $(1); \
+		echo "RTCONFIG_TR181=y" >>$(1); \
 	fi; \
 	)
 	$(call platformRouterOptions, $(1))
@@ -1469,6 +1493,12 @@ define BusyboxOptions
 	if [ "$(WANRED_LED)" = "y" ]; then \
 		sed -i "/CONFIG_ARPING/d" $(1); \
 		echo "CONFIG_ARPING=y" >>$(1); \
+	fi; \
+	if [ "$(TR069)" = "y" ]; then \
+		if [ "$(TR181)" = "y" ]; then \
+			sed -i "/CONFIG_FEATURE_UDHCP_VIVSO/d" $(1); \
+			echo "CONFIG_FEATURE_UDHCP_VIVSO=y" >>$(1); \
+		fi; \
 	fi; \
 	)
 	$(call platformBusyboxOptions, $(1))
@@ -2047,7 +2077,7 @@ endef
 	$(call save_src_config, RT$@)
 	$(MAKE) bin
 
-rt-% RT-% ea-% EA-% tm-% TM-%:
+rt-% rp-% RT-% RP-% ea-% EA-% tm-% TM-%:
 	$(call save_src_config, $@)
 	$(MAKE) bin
 

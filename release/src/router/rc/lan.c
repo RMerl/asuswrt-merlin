@@ -756,7 +756,7 @@ void wlconf_pre()
 #ifdef RTCONFIG_BCMARM
 		if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))
 		{
-			if (model == MODEL_RTN18U || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_DSLAC68U || model == MODEL_RTAC87U) {
+			if (model == MODEL_RTN18U || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_RPAC68U || model == MODEL_DSLAC68U || model == MODEL_RTAC87U) {
 				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
 					eval("wl", "-i", word, "vht_features", "3");
 				else
@@ -1556,6 +1556,7 @@ void start_lan(void)
 #ifdef CONFIG_BCMWL5
 #ifndef RTCONFIG_BRCM_USBAP
 	if ((get_model() == MODEL_RTAC3200) ||
+		(get_model() == MODEL_RPAC68U) ||
 		(get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
@@ -1608,6 +1609,7 @@ void start_lan(void)
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
 		(get_model() == MODEL_RTAC3200) ||
+		(get_model() == MODEL_RPAC68U) ||
 		(get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
@@ -2989,12 +2991,19 @@ static void led_bh_prep(int post)
 			break;
 		case MODEL_RTAC3200:
 		case MODEL_DSLAC68U:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC87U:
 			if(post)
 			{
 				eval("wl", "ledbh", "10", "7");
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+#ifdef RTCONFIG_LEDARRAY
+				eval("wl", "ledbh", "9", "7");
+				eval("wl", "ledbh", "0", "7");
+				eval("wl", "-i", "eth2", "ledbh", "9", "7");
+				eval("wl", "-i", "eth2", "ledbh", "0", "7");
+#endif
 #ifdef RTAC3200
 				eval("wl", "-i", "eth3", "ledbh", "10", "7");
 #endif
@@ -3003,6 +3012,12 @@ static void led_bh_prep(int post)
 			{
 				eval("wl", "ledbh", "10", "1");
 				eval("wl", "-i", "eth2", "ledbh", "10", "1");
+#ifdef RTCONFIG_LEDARRAY
+				eval("wl", "ledbh", "9", "1");
+				eval("wl", "ledbh", "0", "1");
+				eval("wl", "-i", "eth2", "ledbh", "9", "1");
+				eval("wl", "-i", "eth2", "ledbh", "0", "1");
+#endif
 #ifdef RTAC3200
 				eval("wl", "-i", "eth3", "ledbh", "10", "1");
 #endif
@@ -3491,6 +3506,7 @@ void start_lan_wl(void)
 #ifdef CONFIG_BCMWL5
 #ifndef RTCONFIG_BRCM_USBAP
 	if ((get_model() == MODEL_RTAC3200) ||
+		(get_model() == MODEL_RPAC68U) ||
 		(get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
@@ -3525,6 +3541,7 @@ void start_lan_wl(void)
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
+		(get_model() == MODEL_RPAC68U) ||
 		(get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||

@@ -22,8 +22,10 @@ var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
-	if (!dnsfilter_support)
-		$("dnsfilter").style.display = "none";
+	if(adBlock_support)
+		document.getElementById("adBlock_field").style.display = "";
+	if (dnsfilter_support)
+		document.getElementById("dnsfilter").style.display = "";
 }
 
 </script>
@@ -117,9 +119,25 @@ function initial(){
 											</tr>
 											<tr style="height:50px;"></tr>
 
-											<tr id="dnsfilter">
+											<tr id="adBlock_field" style="display:none">
 												<td align="center" class="app_table_radius_left" style="width:85px;">
-                                                    <img style="margin-top:0px;" src="/images/New_ui/DnsFiltering.png" onclick="location.href='DNSFilter.asp';">
+													<div style="text-align:center;background: url('/images/New_ui/AiProtection.png');width:130px;height:130px;margin-left:30px;background-position:0px -187px;"></div>
+												</td>
+												<td class="app_table_radius_right" style="width:350px;height:120px;">
+													<div class="app_name">
+														<a style="text-decoration: underline;" href="AiProtection_AdBlock.asp">AD Blocking</a>
+													</div>
+													<div class="app_desc" style="height:60px;">
+														<li>Streaming Ad Blocking</li>
+														<li>Pop-Up window Ad Blocking</li>			
+													</div>
+												</td>
+											</tr>
+											<tr style="height:50px;"></tr>
+
+											<tr id="dnsfilter" style="display:none;">
+												<td align="center" class="app_table_radius_left" style="width:85px;">
+													<img style="margin-top:0px;" src="/images/New_ui/DnsFiltering.png" onclick="location.href='DNSFilter.asp';">
 												</td>
 												<td class="app_table_radius_right" style="width:350px;height:120px;"">
 													<div class="app_name">
@@ -131,6 +149,7 @@ function initial(){
 													</div>
 												</td>
 											</tr>
+											
 										</tbody>
 									</table>
 								

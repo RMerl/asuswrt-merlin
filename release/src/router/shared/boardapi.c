@@ -106,6 +106,10 @@ int init_gpio(void)
 		, "pwr_usb_gpio"
 		, "pwr_usb_gpio2"
 #endif
+#ifdef RTCONFIG_WIFIPWR
+		, "pwr_2g_gpio"
+		, "pwr_5g_gpio"
+#endif
 #ifdef RT4GAC55U
 		, "led_lte_gpio", "led_sig1_gpio", "led_sig2_gpio", "led_sig3_gpio"
 #endif

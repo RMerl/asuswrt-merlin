@@ -177,8 +177,7 @@ function clickevent(){
      	 
      	 <span id="haveDDNS">
        <li>
-          <#AiDisk_linktoFTP_fromInternet#>  
-          <a target="_blank" href="ftp://<% nvram_get("ddns_hostname_x"); %>">ftp://<% nvram_get("ddns_hostname_x"); %></a>
+          Internet FTP address: <a target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a>
        </li> 
        </span> 
        <span id="priv_wan_ip" style="color:#FFCC00;">

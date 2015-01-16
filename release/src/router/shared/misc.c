@@ -1022,6 +1022,7 @@ void bcmvlan_models(int model, char *vlan)
 {
 	switch (model) {
 	case MODEL_DSLAC68U:
+	case MODEL_RPAC68U:
 	case MODEL_RTAC68U:
 	case MODEL_RTAC87U:
 	case MODEL_RTAC56S:
@@ -1375,6 +1376,18 @@ char *get_syslog_fname(unsigned int idx)
 	return buf;
 }
 
+#ifdef RTCONFIG_USB_MODEM
+char *get_modemlog_fname(void){
+	char prefix[] = "/tmpXXXXXX";
+	static char buf[PATH_MAX];
+
+	strcpy(prefix, "/tmp");
+	sprintf(buf, "%s/3ginfo.txt", prefix);
+
+	return buf;
+}
+#endif
+
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 int is_psta(int unit)
@@ -1629,6 +1642,40 @@ int get_yandex_dns(int family, int mode, char **server, int max_count)
 	}
 
 	return count;
+}
+#endif
+
+
+#ifdef RTCONFIG_BWDPI
+/*
+	usage in rc or bwdpi for checking service
+*/
+int check_bwdpi_nvram_setting()
+{
+	int enabled = 1;
+	int debug = nvram_get_int("bwdpi_debug");
+
+	// check no qos service
+	if(nvram_get_int("wrs_enable") == 0 && nvram_get_int("wrs_app_enable") == 0 && 
+		nvram_get_int("wrs_vp_enable") == 0 && nvram_get_int("wrs_cc_enable") == 0 &&
+		nvram_get_int("wrs_mals_enable") == 0 &&
+		nvram_get_int("wrs_adblock_popup") == 0 && nvram_get_int("wrs_adblock_stream") == 0 &&
+		nvram_get_int("bwdpi_db_enable") == 0 &&
+		nvram_get_int("qos_enable") == 0)
+		enabled = 0;
+
+	// check traditional qos service
+	if(nvram_get_int("wrs_enable") == 0 && nvram_get_int("wrs_app_enable") == 0 && 
+		nvram_get_int("wrs_vp_enable") == 0 && nvram_get_int("wrs_cc_enable") == 0 &&
+		nvram_get_int("wrs_mals_enable") == 0 &&
+		nvram_get_int("wrs_adblock_popup") == 0 && nvram_get_int("wrs_adblock_stream") == 0 &&
+		nvram_get_int("bwdpi_db_enable") == 0 &&
+		nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)
+		enabled = 0;
+
+	if(debug) dbg("[check_bwdpi_nvram_setting] enabled= %d\n", enabled);
+
+	return enabled;
 }
 #endif
 

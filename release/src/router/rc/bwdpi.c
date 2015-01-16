@@ -7,7 +7,7 @@
 	APP partol	: apps filter
 	C&C		: C&C
 	VP		: virtual patch
-	DC		: data collect
+	DC		: data collection
 */
 
 #include <rc.h>

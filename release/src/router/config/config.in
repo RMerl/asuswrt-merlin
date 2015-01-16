@@ -41,6 +41,10 @@ config RTCONFIG_BCM7
 	bool "Bcm sdk 7"
 	default n
 
+config RTCONFIG_BUILDBCM7
+	bool "build Bcm sdk 7 on 6 platforms"
+	default n
+
 config RTCONFIG_NV128
 	bool "nvram size 128k"
 	default n
@@ -262,6 +266,14 @@ config RTCONFIG_USB
 
 config RTCONFIG_USBRESET
 	bool "USB Power Reset Support"
+	default n
+
+config RTCONFIG_WIFIPWR
+	bool "WIFI Power option"
+	default n
+
+config RTCONFIG_LEDARRAY
+	bool "wifi led array support"
 	default n
 
 config RTCONFIG_XHCIMODE
@@ -795,6 +807,10 @@ config RTCONFIG_BWDPI
 	bool "TrendMicro DPI engine and iQoS and Partenl Control"
 	default n
 
+config RTCONFIG_ADBLOCK
+	bool "Streaming and Pop-Up window Ad Blocking "
+	default n		
+	
 config RTCONFIG_SPEEDTEST
 	bool "BRCM Speedtest for detect upload / downlad bandwidth "
 	default n
@@ -825,4 +841,12 @@ config RTCONFIG_WIFILOGO
 
 config RTCONFIG_JFFS2USERICON
 	bool "Client list user upload icon"
+	default n
+
+config RTCONFIG_TR069
+	bool "TR-069 agent"
+	default n
+
+config RTCONFIG_TR181
+	bool "Support TR-181 data model"
 	default n

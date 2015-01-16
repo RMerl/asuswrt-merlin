@@ -915,6 +915,12 @@ extern int stop_lteled(void);
 extern int monitor_main(int argc, char *argv[]);
 #endif
 
+#ifdef RTCONFIG_TR069
+extern int start_tr(void);
+extern void stop_tr(void);
+extern int dhcpc_lease_main(int argc, char *argv[]);
+#endif
+
 #ifdef BTN_SETUP
 enum BTNSETUP_STATE
 {

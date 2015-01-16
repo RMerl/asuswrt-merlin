@@ -231,7 +231,7 @@ function QKWireless_load_body(){
 		}else{
 			$("Continued_PrevSetting").style.display = "none";
 			$("radio_Continued_PrevSetting").style.display = "none";
-			document.form.wl0_ssid.focus();		
+			setTimeout(function(){document.form.wl0_ssid.focus();}, 1);
 		}
 
 		if(smart_connect_support){
@@ -842,7 +842,7 @@ function reset_wl_hwaddr(prefix){
 
 function show_prev_button(){
 	if(parent.$("flag").value == "wireless"){
-		$("prevButton").value = '<#CTL_AdvSetting#>';
+		$("prevButton").value = '<#menu5#>';
 		document.form.prev_page.value = "/Advanced_Wireless_Content.asp";
 	}
 	else if(parent.$("flag").value == "adv_ap_mode")

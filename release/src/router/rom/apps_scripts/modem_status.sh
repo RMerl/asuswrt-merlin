@@ -370,23 +370,28 @@ elif [ "$1" == "band" ]; then
 		echo "done."
 	fi
 elif [ "$1" == "scan" ]; then
+	echo "Start to scan the stations:"
 	nvram set usb_modem_act_scanning=2
 	at_ret=`$at_lock modem_at.sh '+COPS=2' |grep "OK" 2>/dev/null`
 
+	echo "Scanning the stations."
 	at_ret=`$at_lock modem_at.sh '+COPS=?' $modem_roaming_scantime 2>/dev/null`
 	ret=`echo "$at_ret" |grep '+COPS: ' |awk '{FS=": "; print $2}' |awk '{FS=",,"; print $1}' 2>/dev/null`
+	echo "Finish the scan."
 	nvram set usb_modem_act_scanning=1
 	if [ "$ret" == "" ]; then
 		echo "Fail to scan the stations."
 		exit 17
 	fi
 
+	echo "Count the stations."
 	num=`echo "$ret" |awk '{FS=")"; print NF}' 2>/dev/null`
 	if [ "$num" == "" ]; then
 		echo "Fail to count the stations."
 		exit 18
 	fi
 
+	echo "Work the list."
 	list="["
 	filter=""
 	i=1
@@ -395,16 +400,29 @@ elif [ "$1" == "scan" ]; then
 
 		sta=`echo "$str" |awk '{FS=","; print $2}' 2>/dev/null`
 		sta_code=`echo "$str" |awk '{FS=","; print $4}' 2>/dev/null`
-
-		ret_filter=`echo $filter |grep ",$sta," 2>/dev/null`
-		if [ "$ret_filter" == "" ]; then
-			if [ "$list" != "[" ]; then
-				list=$list",[$sta, $sta_code]"
-			else
-				list=$list"[$sta, $sta_code]"
-			fi
-			filter=$filter","$sta","
+		sta_type_number=`echo "$str" |awk '{FS=","; print $5}' 2>/dev/null`
+		if [ "$sta_type_number" == "0" -o "$sta_type_number" == "1" -o "$sta_type_number" == "3" ]; then
+			sta_type=2G
+		elif [ "$sta_type_number" == "2" ]; then
+			sta_type=3G
+		elif [ "$sta_type_number" == "4" ]; then
+			sta_type=HSDPA
+		elif [ "$sta_type_number" == "5" ]; then
+			sta_type=HSUPA
+		elif [ "$sta_type_number" == "6" ]; then
+			sta_type=H+
+		elif [ "$sta_type_number" == "7" ]; then
+			sta_type=4G
+		else
+			sta_type=unknown
 		fi
+
+		if [ "$list" != "[" ]; then
+			list=$list",[$sta, $sta_code, \"$sta_type\"]"
+		else
+			list=$list"[$sta, $sta_code, \"$sta_type\"]"
+		fi
+		filter=$filter","$sta","
 
 		i=$((i+1))
 	done
@@ -468,9 +486,8 @@ elif [ "$1" == "simauth" ]; then
 		nvram set usb_modem_act_auth_puk=$ret
 
 		echo "SIM PUK retry is $ret."
+		echo "done."
 	fi
-
-	echo "done."
 elif [ "$1" == "simpin" ]; then
 	if [ "$2" == "" ]; then
 		nvram set g3state_pin=2
@@ -572,5 +589,34 @@ elif [ "$1" == "pwdpin" ]; then
 	fi
 
 	echo "done."
+elif [ "$1" == "gnws" ]; then
+	if [ "$modem_vid" == "1478" -a "$modem_pid" == "36902" ]; then
+		at_cgnws=`$at_lock modem_at.sh '+CGNWS' |grep "+CGNWS:" |awk '{FS=":"; print $2}' 2>/dev/null`
+		if [ "$at_cgnws" == "" ]; then
+			echo "Fail to get the CGNWS."
+			exit 39
+		fi
+
+		roaming=`echo "$at_cgnws" |awk '{FS=","; print $1}' 2>/dev/null`
+		signal=`echo "$at_cgnws" |awk '{FS=","; print $2}' 2>/dev/null`
+		reg_type=`echo "$at_cgnws" |awk '{FS=","; print $3}' 2>/dev/null`
+		reg_state=`echo "$at_cgnws" |awk '{FS=","; print $4}' 2>/dev/null`
+		mcc=`echo "$at_cgnws" |awk '{FS=","; print $5}' 2>/dev/null`
+		mnc=`echo "$at_cgnws" |awk '{FS=","; print $6}' 2>/dev/null`
+		spn=`echo "$at_cgnws" |awk '{FS=","; print $7}' 2>/dev/null`
+		isp_long=`echo "$at_cgnws" |awk '{FS=","; print $8}' 2>/dev/null`
+		isp_short=`echo "$at_cgnws" |awk '{FS=","; print $9}' 2>/dev/null`
+
+		echo "   Roaming=$roaming."
+		echo "    Signal=$signal."
+		echo " REG. Type=$reg_type."
+		echo "REG. State=$reg_state."
+		echo "       MCC=$mcc."
+		echo "       MNC=$mnc."
+		echo "       SPN=$spn."
+		echo "  ISP Long=$isp_long."
+		echo " ISP Short=$isp_short."
+		echo "done."
+	fi
 fi
 

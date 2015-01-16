@@ -1945,6 +1945,12 @@ static int validate_apply(webs_t wp) {
 
 	if(nvram_modified)
 	{
+#ifdef RTCONFIG_TR069
+		if(pids("tr069")) {
+			_dprintf("value change from web!\n");
+			eval("sendtocli", "http://127.0.0.1:1234/web/value/change", "\"name=change\"");
+		}
+#endif
 		// TODO: is it necessary to separate the different?
 		if(nvram_match("x_Setting", "0")){
 			nvram_set("x_Setting", "1");
@@ -5658,10 +5664,14 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
 			sys_script("syscmd.sh");        // Immediately run it
 		}
-		else if(!strcmp(current_url, "Main_AdmStatus_Content.asp") && (
-			strncasecmp(system_cmd, "run_telnetd", 11) == 0
-		)){
-			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
+		else if(!strcmp(current_url, "Main_AdmStatus_Content.asp"))
+		{
+			if(strncasecmp(system_cmd, "run_telnetd", 11) == 0){
+				strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
+				sys_script("syscmd.sh");				
+			}else if(strncasecmp(system_cmd, "run_infosvr", 11) == 0){
+				nvram_set("ateCommand_flag", "1");
+			}
 		}
 		else if(!strcmp(current_url, "Main_ConnStatus_Content.asp") && (
 			strncasecmp(system_cmd, "netstat-nat", 11) == 0
@@ -7225,6 +7235,26 @@ static char cache_object[] =
 "Cache-Control: max-age=300"
 ;
 
+#ifdef RTCONFIG_USB_MODEM
+static char modemlog_txt[] =
+"Content-Disposition: attachment;\r\n"
+"filename=modemlog.txt"
+;
+
+static void
+do_modemlog_cgi(char *path, FILE *stream)
+{
+	char *cmd[] = {"/usr/sbin/3ginfo.sh", NULL};
+
+	unlink("/tmp/3ginfo.txt");
+	_eval(cmd, ">/tmp/3ginfo.txt", 0, NULL);
+
+	dump_file(stream, get_modemlog_fname());
+	fputs("\r\n", stream); /* terminator */
+	fputs("\r\n", stream); /* terminator */
+}
+#endif
+
 static void
 do_log_cgi(char *path, FILE *stream)
 {
@@ -7313,9 +7343,12 @@ struct mime_handler mime_handlers[] = {
 	{ "applyapp.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "upgrade.cgi*", "text/html", no_cache_IE7, do_upgrade_post, do_upgrade_cgi, do_auth},
 	{ "upload.cgi*", "text/html", no_cache_IE7, do_upload_post, do_upload_cgi, do_auth },
- 	{ "syslog.txt*", "application/force-download", syslog_txt, do_html_post_and_get, do_log_cgi, do_auth },
+	{ "syslog.txt*", "application/force-download", syslog_txt, do_html_post_and_get, do_log_cgi, do_auth },
+#ifdef RTCONFIG_USB_MODEM
+	{ "modemlog.txt*", "application/force-download", modemlog_txt, do_html_post_and_get, do_modemlog_cgi, do_auth },
+#endif
 #ifdef RTCONFIG_DSL
- 	{ "dsllog.cgi*", "text/txt", no_cache_IE7, do_html_post_and_get, do_adsllog_cgi, do_auth },
+	{ "dsllog.cgi*", "text/txt", no_cache_IE7, do_html_post_and_get, do_adsllog_cgi, do_auth },
 #endif
 	// Viz 2010.08 vvvvv
 	{ "update.cgi*", "text/javascript", no_cache_IE7, do_html_post_and_get, do_update_cgi, do_auth }, // jerry5
@@ -10369,62 +10402,62 @@ int ej_memory_usage(int eid, webs_t wp, int argc, char_t **argv){
 	fscanf(fp, "MemFree: %lu %s\n", &mfree, buf);	
 	used = total - mfree;
 	fclose(fp);
-	websWrite(wp, "Total =%lu \n", total);
-	websWrite(wp, "Free =%lu \n", mfree);
-	websWrite(wp, "Used =%lu \n", used);
-
+	websWrite(wp, "<mem_info>\n");	
+	websWrite(wp, "<total>%lu</total>\n", total);	
+	websWrite(wp, "<free>%lu</free>\n", mfree);	
+	websWrite(wp, "<used>%lu</used>\n", used);	
+	websWrite(wp, "</mem_info>\n");	
 	return 0;
 }
 
-unsigned long prev_total_0 = 0;
-unsigned long prev_user_0 = 0;
-#ifdef RTCONFIG_BCMSMP	
-unsigned long prev_total_1 = 0;
-unsigned long prev_user_1 = 0;
-#endif
-
 int ej_cpu_usage(int eid, webs_t wp, int argc, char_t **argv){
 	unsigned long total, user, nice, system, idle, io, irq, softirq;
-	unsigned long total_0_diff = 0, user_0_diff = 0, cpu0_percentage;
-#ifdef RTCONFIG_BCMSMP	
-	unsigned long total_1_diff = 0, user_1_diff = 0, cpu1_percentage;
-#endif
-
 	char name[10];
 	FILE *fp; 
 	fp = fopen("/proc/stat", "r");
+	int i = 0;;
 	
 	if(fp == NULL)
 		return -1;
 	
+	websWrite(wp, "<cpu_info>\n");	
 	while(fscanf(fp, "%s %lu %lu %lu %lu %lu %lu %lu \n", name, &user, &nice, &system, &idle, &io, &irq, &softirq) != EOF){
-		if(strcmp(name, "cpu0") == 0){
-						total = user + nice + system + idle + io + irq + softirq;
-			total_0_diff = total - prev_total_0;
-			user_0_diff = (system + user + nice + io + irq + softirq) - prev_user_0;
-			prev_total_0 = total;
-			prev_user_0 = system + user + nice + io + irq + softirq;
+		if(strncmp(name, "cpu", 3) == 0){
+			if(i == 0){
+				i++;
+				continue;
+			}
+			
+			total = user + nice + system + idle + io + irq + softirq;			
+			websWrite(wp, "<cpu>\n");	
+			websWrite(wp, "<total>%lu</total>\n", total);	
+			websWrite(wp, "<usage>%lu</usage>\n", total - idle);	
+			websWrite(wp, "</cpu>\n");	
 		}	
-#ifdef RTCONFIG_BCMSMP		
-		else if(strcmp(name, "cpu1") == 0){
-			total = user + nice + system + idle + io + irq + softirq;
-			total_1_diff = total - prev_total_1;
-			user_1_diff = (system + user + nice + io + irq + softirq) - prev_user_1;
-			prev_total_1 = total;
-			prev_user_1 = system + user + nice + io + irq + softirq;
-		}	
-#endif		
 	}
-
+	
 	fclose(fp);
-	cpu0_percentage = (100*user_0_diff/total_0_diff);	
-	websWrite(wp, "cpu_percentage[0] = %lu; \n", cpu0_percentage);	
-#ifdef RTCONFIG_BCMSMP	
-	cpu1_percentage = (100*user_1_diff/total_1_diff);
-	websWrite(wp, "cpu_percentage[1] = %lu; \n", cpu1_percentage);	
-#endif		
-
+	websWrite(wp, "</cpu_info>\n");	
 	return 0;
+}
+
+int ej_cpu_core_num(int eid, webs_t wp, int argc, char_t **argv){
+	char buf[MAX_LINE_SIZE];
+	FILE *fp; 
+	int count = 0;
+	fp = fopen("/proc/cpuinfo", "r");
+
+	if(fp == NULL)
+		return -1;
+
+	while(fgets(buf, MAX_LINE_SIZE, fp)!=NULL){
+		if(strncmp(buf, "processor", 9) == 0){
+			count++;
+		}
+	}
+	
+	fclose(fp);
+	websWrite(wp, "%d", count);	
 }
 
 static int
@@ -10747,6 +10780,7 @@ struct ej_handler ej_handlers[] = {
 	{ "shown_language_css", ej_shown_language_css},
 	{ "memory_usage", ej_memory_usage},
 	{ "cpu_usage", ej_cpu_usage},
+	{ "cpu_core_num", ej_cpu_core_num},
 #ifdef RTCONFIG_RALINK
 #elif defined(RTCONFIG_QCA)
 #else

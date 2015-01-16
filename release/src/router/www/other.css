@@ -165,6 +165,9 @@
 	margin-top:-25px;
 }
 .drword{
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
 	background-color:#FFFFFF;
 	color:#006699;
 	border:1px solid #999;

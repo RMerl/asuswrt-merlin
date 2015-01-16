@@ -1,5 +1,5 @@
 /*
-	bwdpi_check.c for check AiStream Live status
+	bwdpi_check.c for keep wred / data_colld alive
 */
 
 #include <rc.h>

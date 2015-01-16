@@ -214,7 +214,7 @@ function change_dsl_diag_enable(value) {
 		<input type="radio" name="dslx_diag_enable" class="input" value="0" onclick="change_dsl_diag_enable(0);" checked><#checkbox_No#>
 		<br>	
 		<span id="storage_ready" style="display:none;color:#FC0">* USB disk is ready.</span>
-		<span id="be_lack_storage" style="display:none;color:#FC0">* No USB disk pluggin.</span>
+		<span id="be_lack_storage" style="display:none;color:#FC0">* No USB disk plug-in.</span>
 	</td>
 </tr>
 

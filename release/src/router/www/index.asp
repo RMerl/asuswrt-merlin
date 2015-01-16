@@ -1045,13 +1045,12 @@ function edit_confirm(){
 		document.list_form.custom_clientlist.value = custom_name;
 
 		// static IP list
-		if(document.list_form.dhcp_staticlist.value != dhcp_staticlist_orig || document.list_form.dhcp_static_x.value == 0){
-			document.list_form.action_script.value = "restart_net_and_phy";
-			document.list_form.action_wait.value = "35";
-			document.list_form.flag.value = "";
-			document.list_form.dhcp_staticlist.disabled = false;
-			document.list_form.dhcp_static_x.value = 1;
-			document.list_form.dhcp_static_x.disabled = false;
+		if(document.list_form.dhcp_staticlist.value == dhcp_staticlist_orig){
+			document.list_form.action_script.value = "saveNvram";
+			document.list_form.action_wait.value = "1";
+			document.list_form.flag.value = "background";
+			document.list_form.dhcp_staticlist.disabled = true;
+			document.list_form.dhcp_static_x.disabled = true;
 			dhcp_staticlist_orig = document.list_form.dhcp_staticlist.value;
 		}
 
@@ -1350,6 +1349,13 @@ function addToList(macAddr){
 		document.list_form.dhcp_staticlist.value += ">";
 		document.list_form.dhcp_staticlist.value += document.getElementById("client_name").value;
 	}
+
+	document.list_form.action_script.value = "restart_net_and_phy";
+	document.list_form.action_wait.value = "35";
+	document.list_form.flag.value = "";
+	document.list_form.dhcp_staticlist.disabled = false;
+	document.list_form.dhcp_static_x.value = 1;
+	document.list_form.dhcp_static_x.disabled = false;
 }
 
 function delFromList(macAddr){
@@ -1671,7 +1677,7 @@ function previewImage(imageObj) {
 									}
 								</script>
 
-								<div style="margin-top: 2px;margin-left: 215px;"><div id="ipLockIcon" class="dhcp"></div></div>
+								<div style="margin-top: 2px;margin-left: 215px;"><div id="ipLockIcon" class="dhcp" title="Binding IP and MAC Address"></div></div>
 								<script>
 									document.getElementById("ipLockIcon").onclick = function(){
 										if(this.className == "dhcp"){

@@ -332,14 +332,16 @@ static void get_network_nvram(int signo){
 
 static void wan_led_control(int sig) {
 #if defined(RTAC87U) || defined(RTAC3200)
-	if (rule_setup) {
-		led_control(LED_WAN, LED_ON);
-		eval("et", "robowr", "0", "0x18", "0x01fe");
-		eval("et", "robowr", "0", "0x1a", "0x01fe");
-	} else {
-		led_control(LED_WAN, LED_OFF);
-		eval("et", "robowr", "0", "0x18", "0x01ff");
-		eval("et", "robowr", "0", "0x1a", "0x01ff");
+	if(nvram_match("AllLED", "1")){
+		if (rule_setup) {
+			led_control(LED_WAN, LED_ON);
+			eval("et", "robowr", "0", "0x18", "0x01fe");
+			eval("et", "robowr", "0", "0x1a", "0x01fe");
+		} else {
+			led_control(LED_WAN, LED_OFF);
+			eval("et", "robowr", "0", "0x18", "0x01ff");
+			eval("et", "robowr", "0", "0x1a", "0x01ff");
+		}
 	}
 #endif
 }
@@ -2552,12 +2554,15 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 		else if(conn_changed_state[current_wan_unit] == C2D || (conn_changed_state[current_wan_unit] == CONNED && isFirstUse)){
 			if(rule_setup == 0){
 				if(conn_changed_state[current_wan_unit] == C2D){
-					if (nvram_get_int("led_disable") == 0) {
+					if (nvram_match("led_disable", "0")) {
 #ifdef RTCONFIG_DSL /* Paul add 2012/10/18 */
 						led_control(LED_WAN, LED_OFF);
 #elif defined(RTAC87U) || defined(RTAC3200)
-						eval("et", "robowr", "0", "0x18", "0x01fe");
-						eval("et", "robowr", "0", "0x1a", "0x01fe");
+						if(nvram_match("AllLED", "1")){
+							led_control(LED_WAN, LED_ON);
+							eval("et", "robowr", "0", "0x18", "0x01fe");
+							eval("et", "robowr", "0", "0x1a", "0x01fe");
+						}
 #endif
 					}
 					csprintf("\n# Enable direct rule if not tunnelled (C2D)\n");
@@ -2600,26 +2605,28 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 					else
 #endif
 					// C2D: Try to prepare the backup line.
-					if(link_wan[other_wan_unit] == 1){
-						if(get_wan_state(other_wan_unit) != WAN_STATE_CONNECTED){
-							csprintf("\n# wanduck(C2D): Try to prepare the backup line.\n");
-							memset(cmd, 0, 32);
-							sprintf(cmd, "restart_wan_if %d", other_wan_unit);
-							notify_rc_and_wait(cmd);
-						}
+					if(link_wan[other_wan_unit] == 1 && get_wan_state(other_wan_unit) != WAN_STATE_CONNECTED){
+						csprintf("\n# wanduck(C2D): Try to prepare the backup line.\n");
+						memset(cmd, 0, 32);
+						sprintf(cmd, "restart_wan_if %d", other_wan_unit);
+						notify_rc_and_wait(cmd);
 					}
 				}
 			}
 		}
 		else if(conn_changed_state[current_wan_unit] == D2C || conn_changed_state[current_wan_unit] == CONNED){
 			if(rule_setup == 1 && !isFirstUse){
+				if (nvram_match("led_disable", "0")) {
 #ifdef RTCONFIG_DSL /* Paul add 2013/7/30 */
-				led_control(LED_WAN, LED_ON);
+					led_control(LED_WAN, LED_ON);
 #elif defined(RTAC87U) || defined(RTAC3200)
-				led_control(LED_WAN, LED_OFF);
-				eval("et", "robowr", "0", "0x18", "0x01ff");
-				eval("et", "robowr", "0", "0x1a", "0x01ff");
+					if(nvram_match("AllLED", "1")){
+						led_control(LED_WAN, LED_OFF);
+						eval("et", "robowr", "0", "0x18", "0x01ff");
+						eval("et", "robowr", "0", "0x1a", "0x01ff");
+					}
 #endif
+				}
 				csprintf("\n# Disable direct rule if not tunnelled (D2C)\n");
 				rule_setup = 0;
 				handle_wan_line(current_wan_unit, rule_setup);
@@ -2677,6 +2684,15 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 			rule_setup = 1;
 			handle_wan_line(other_wan_unit, rule_setup);
 			switch_wan_line(other_wan_unit, 0);
+		}
+		// hot-standby: Try to prepare the backup line.
+		else if(!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb")){
+			if(nvram_get_int("wans_standby") == 1 && link_wan[other_wan_unit] == 1 && get_wan_state(other_wan_unit) == WAN_STATE_INITIALIZING){
+				csprintf("\n# wanduck(hot-standby): Try to prepare the backup line.\n");
+				memset(cmd, 0, 32);
+				sprintf(cmd, "restart_wan_if %d", other_wan_unit);
+				notify_rc_and_wait(cmd);
+			}
 		}
 #endif
 

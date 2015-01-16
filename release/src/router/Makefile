@@ -609,6 +609,10 @@ obj-$(RTCONFIG_BONDING) += ifenslave
 
 obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2
 
+#For TR-069 agent
+obj-$(RTCONFIG_TR069) += openssl
+obj-$(RTCONFIG_TR069) += tr069
+
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 
@@ -1514,7 +1518,8 @@ dnsmasq:
 	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE -DNO_AUTH -DNO_IPSET -DNO_LOOP -DNO_INOTIFY \
 		$(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6) \
 		$(if $(RTCONFIG_WIDEDHCP6),-DNO_DHCP6,) \
-		$(if $(RTCONFIG_USB_EXTRAS),,-DNO_SCRIPT -DNO_TFTP)" \
+		$(if $(RTCONFIG_USB_EXTRAS)||$(RTCONFIG_TR069),,-DNO_SCRIPT) \
+		$(if $(RTCONFIG_USB_EXTRAS),,-DNO_TFTP)" \
 	CFLAGS="-Os -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
 	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections"
 
@@ -2265,6 +2270,37 @@ wpa_supplicant-install: wpa_supplicant
 
 wpa_supplicant-clean:
 	-@$(MAKE) -C wpa_supplicant/wpa_supplicant clean
+
+tr069:
+	cp tr069/Makefile.ASUSWRT tr069/Makefile
+	$(MAKE) -C $@
+	$(MAKE) -C $@/test
+
+tr069-clean:
+	-$(MAKE) -C tr069 clean
+	-$(MAKE) -C tr069/test clean
+
+tr069-install: tr069
+	install -D tr069/build/bin/tr $(INSTALLDIR)/tr069/sbin/tr069
+	install -D tr069/test/sendtocli $(INSTALLDIR)/tr069/sbin/sendtocli
+	install -D tr069/test/notify $(INSTALLDIR)/tr069/sbin/notify
+	install -D tr069/test/udpclient $(INSTALLDIR)/tr069/sbin/udpclient
+ifeq ($(RTCONFIG_TR181),y)
+	install -D tr069/conf/ASUSWRT/tr_181.xml $(INSTALLDIR)/tr069/usr/tr/tr.xml
+ifeq ($(RTCONFIG_DSL),y)
+	install -D tr069/conf/ASUSWRT/tr_181.xml.dsl $(INSTALLDIR)/tr069/usr/tr/tr.xml
+else
+	install -D tr069/conf/ASUSWRT/tr_181.xml $(INSTALLDIR)/tr069/usr/tr/tr.xml
+endif
+else
+ifeq ($(RTCONFIG_DSL),y)
+	install -D tr069/conf/ASUSWRT/tr_98.xml.dsl $(INSTALLDIR)/tr069/usr/tr/tr.xml
+else
+	install -D tr069/conf/ASUSWRT/tr_98.xml $(INSTALLDIR)/tr069/usr/tr/tr.xml
+endif
+endif
+
+#	$(STRIP) $(INSTALLDIR)/tr/sbin/*
 
 #	libnet:
 #		@$(SEP)

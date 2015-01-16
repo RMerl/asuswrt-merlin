@@ -353,7 +353,7 @@ inotify_insert_file(char * name, const char * path)
 			break;
 	}
 	
-	/* If it's already in the database and hasn't been modified, skip it. */
+	/* If it's already in the database, remove it before re-inserting. */
 	if( stat(path, &st) != 0 )
 		return -1;
 
@@ -364,9 +364,9 @@ inotify_insert_file(char * name, const char * path)
 		inotify_remove_file(path);
 		next_pl_fill = 1;
 	}
-	else if( ts < st.st_mtime )
+	else if( ts > 0 )
 	{
-		if( ts > 0 )
+		if( ts < st.st_mtime )
 			DPRINTF(E_DEBUG, L_INOTIFY, "%s is newer than the last db entry.\n", path);
 		inotify_remove_file(path);
 	}

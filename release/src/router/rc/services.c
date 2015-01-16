@@ -800,6 +800,33 @@ void start_dnsmasq(int force)
 			/*	    "dhcp-option=lan,46,8\n"*/, lan_ipaddr);
 		}
 #endif
+#if (defined(RTCONFIG_TR069) && !defined(RTCONFIG_TR181))
+		unsigned char hwaddr[6];
+		char buf[13];
+
+#ifdef RTAC87U
+		ether_atoe(nvram_safe_get("et1macaddr"), hwaddr);
+#else
+		ether_atoe(nvram_safe_get("et0macaddr"), hwaddr);
+#endif
+		snprintf(buf, sizeof(buf), "%02X%02X%02X",
+			 hwaddr[0], hwaddr[1], hwaddr[2]);
+
+		fprintf(fp, "dhcp-option=cpewan-id,vi-encap:3561,4,\"%s\"\n", buf);
+
+#ifdef RTAC87U
+		ether_atoe(nvram_safe_get("et1macaddr"), hwaddr);
+#else
+		ether_atoe(nvram_safe_get("et0macaddr"), hwaddr);
+#endif
+		snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X",
+			 hwaddr[0], hwaddr[1], hwaddr[2],
+			 hwaddr[3], hwaddr[4], hwaddr[5]);
+
+		fprintf(fp, "dhcp-option=cpewan-id,vi-encap:3561,5,\"%s\"\n", buf);
+		//fprintf(fp, "dhcp-option=cpewan-id,vi-encap:3561,6,\"Wireless Router\"\n");
+		fprintf(fp, "dhcp-option=cpewan-id,vi-encap:3561,6,\"%s\"\n", nvram_safe_get("productid"));
+#endif
 		/* Shut up WPAD info requests */
 		fprintf(fp, "dhcp-option=lan,252,\"\\n\"\n");
 	}
@@ -998,7 +1025,11 @@ void start_dnsmasq(int force)
 	/* Create resolv.dnsmasq with empty server list */
 	f_write(dmservers, NULL, 0, FW_APPEND, 0666);
 
+#if (defined(RTCONFIG_TR069) && !defined(RTCONFIG_TR181))
+	eval("dnsmasq", "--log-async", "-6", "/sbin/dhcpc_lease");
+#else
 	eval("dnsmasq", "--log-async");
+#endif
 
 /* TODO: remove it for here !!!*/
 	char nvram_name[16], wan_proto[16];
@@ -4152,6 +4183,10 @@ again:
 #ifdef RTCONFIG_IPV6
 			stop_dhcp6c();
 #endif
+
+#ifdef RTCONFIG_TR069
+			stop_tr();
+#endif
 			stop_jffs2(1);
 			// TODO free necessary memory here
 		}
@@ -4564,6 +4599,9 @@ again:
 			start_mt_daapd();
 #endif
 		}
+#ifdef RTCONFIG_RGMII_BRCM5301X
+		eval("ifconfig", "lo", "down");
+#endif
 	}
 	else if (strcmp(script, "wireless") == 0) {
 		if(action & RC_SERVICE_STOP) {
@@ -4643,6 +4681,7 @@ check_ddr_done:
 		(get_model() == MODEL_RTAC56S) ||
 		(get_model() == MODEL_RTAC56U) ||
 		(get_model() == MODEL_RTAC3200) ||
+		(get_model() == MODEL_RPAC68U) ||
 		(get_model() == MODEL_RTAC68U) ||
 		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
@@ -5584,6 +5623,12 @@ check_ddr_done:
 			}
 #endif
 		}
+	}
+#endif
+#ifdef RTCONFIG_TR069
+	else if (strncmp(script, "tr", 2) == 0) {
+		if (action & RC_SERVICE_STOP) stop_tr();
+		if (action & RC_SERVICE_START) start_tr();
 	}
 #endif
 	else if (strcmp(script, "sh") == 0) {

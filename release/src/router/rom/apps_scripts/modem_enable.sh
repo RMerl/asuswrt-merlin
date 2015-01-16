@@ -9,7 +9,6 @@ modem_roaming_mode=`nvram get modem_roaming_mode`
 modem_roaming_isp=`nvram get modem_roaming_isp`
 modem_roaming_imsi=`nvram get modem_roaming_imsi`
 modem_autoapn=`nvram get modem_autoapn`
-modem_autoapn_imsi=`nvram get modem_autoapn_imsi`
 modem_act_path=`nvram get usb_modem_act_path`
 modem_type=`nvram get usb_modem_act_type`
 act_node1="usb_modem_act_int"
@@ -17,6 +16,7 @@ act_node2="usb_modem_act_bulk"
 modem_vid=`nvram get usb_modem_act_vid`
 modem_pid=`nvram get usb_modem_act_pid`
 modem_dev=`nvram get usb_modem_act_dev`
+modem_imsi=`nvram get usb_modem_act_imsi`
 modem_pin=`nvram get modem_pincode`
 modem_pdp=`nvram get modem_pdp`
 modem_isp=`nvram get modem_isp`
@@ -310,6 +310,17 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	modem_status.sh iccid
 	modem_status.sh hwver
 
+	# Auto-APN
+	if [ "$modem_isp" == "" -a "$modem_autoapn" != "" -a "$modem_autoapn" != "0" ]; then
+		modem_autoapn.sh
+
+		modem_isp=`nvram get modem_isp`
+		modem_spn=`nvram get modem_spn`
+		modem_apn=`nvram get modem_apn`
+		modem_user=`nvram get modem_user`
+		modem_pass=`nvram get modem_pass`
+	fi
+
 	# set COPS.
 	# Home service.
 	if [ "$modem_roaming" != "1" ]; then
@@ -328,29 +339,6 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			fi
 		else
 			echo "COPS: Don't support +COPS."
-		fi
-
-		if [ "$modem_type" == "gobi" ]; then
-			target=""
-			at_ret=`$at_lock modem_at.sh '+CGNWS' |grep "+CGNWS:" |awk '{FS=":"; print $2}' 2>/dev/null`
-			if [ "$at_ret" != "" ]; then
-				mcc=`echo "$at_ret" |awk '{FS=","; print $5}' 2>/dev/null`
-				mnc=`echo "$at_ret" |awk '{FS=","; print $6}' 2>/dev/null`
-				target=$mcc$mnc
-			fi
-			if [ "$modem_autoapn_imsi" != "" -a "$modem_autoapn_imsi" == "$target" ]; then
-				modem_autoapn=0
-			fi
-		fi
-
-		if [ "$modem_autoapn" != "" -a "$modem_autoapn" != "0" ]; then
-			modem_autoapn.sh
-
-			modem_isp=`nvram get modem_isp`
-			modem_apn=`nvram get modem_apn`
-			modem_spn=`nvram get modem_spn`
-			modem_user=`nvram get modem_user`
-			modem_pass=`nvram get modem_pass`
 		fi
 	elif [ "$modem_roaming_mode" == "1" ]; then
 		# roaming manually...
@@ -393,6 +381,33 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		fi
 	else
 		echo "CGATT: Don't support +CGATT."
+	fi
+
+	at_cgnws=`$at_lock modem_at.sh '+CGNWS' |grep "+CGNWS:" |awk '{FS=":"; print $2}' 2>/dev/null`
+	if [ "$at_cgnws" != "" ]; then
+		mcc=`echo "$at_cgnws" |awk '{FS=","; print $5}' 2>/dev/null`
+		mnc=`echo "$at_cgnws" |awk '{FS=","; print $6}' 2>/dev/null`
+		target=$mcc$mnc
+		len=${#target}
+		target=`echo -n $modem_imsi |cut -c '1-'$len 2>/dev/null`
+
+		if [ "$mcc$mnc" == "$target" ]; then
+			spn=`echo "$at_cgnws" |awk '{FS=","; print $7}' 2>/dev/null`
+			if [ "$modem_spn" == "" -a "$spn" != "" -a "$spn" != "NULL" ]; then
+				nvram set modem_spn=$spn
+			fi
+
+			# useless temparily.
+			#isp=`echo "$at_cgnws" |awk '{FS=","; print $8}' 2>/dev/null` # ISP long name
+			#if [ "$isp" != "" -a "$isp" != "NULL" ]; then
+			#	nvram set modem_isp=$isp
+			#else
+			#	isp=`echo "$at_cgnws" |awk '{FS=","; print $9}' 2>/dev/null` # ISP short name
+			#	if [ "$isp" != "" -a "$isp" != "NULL" ]; then
+			#		nvram set modem_isp=$isp
+			#	fi
+			#fi
+		fi
 	fi
 fi
 

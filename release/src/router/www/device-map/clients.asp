@@ -320,7 +320,7 @@ function retOverLibStr(client){
 	var overlibStr = "<p><#MAC_Address#>:</p>" + client.mac.toUpperCase();
 
 	if(client.ssid)
-		overlibStr += "<p>SSID:</p>" + client.ssid;
+		overlibStr += "<p>SSID:</p>" + client.ssid.replace(/"/g, '&quot;');
 	if(client.isLogin)
 		overlibStr += "<p><#CTL_localdevice#>:</p>YES";
 	if(client.isPrinter)

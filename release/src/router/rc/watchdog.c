@@ -210,6 +210,7 @@ void erase_nvram(void)
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC3200:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
@@ -226,6 +227,7 @@ int init_toggle(void)
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
 		case MODEL_RTAC3200:
+		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
@@ -646,6 +648,10 @@ void btn_check(void)
 
 			if (wlonunit == -1 || wlonunit == 0) {
 #ifdef RTAC68U
+#ifdef RTCONFIG_LEDARRAY
+				eval("wl", "ledbh", "0", "7");
+				eval("wl", "ledbh", "9", "7");
+#endif
 				eval("wl", "ledbh", "10", "7");
 #elif RTAC3200
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
@@ -653,6 +659,10 @@ void btn_check(void)
 			}
 			if (wlonunit == -1 || wlonunit == 1) {
 #ifdef RTAC68U
+#ifdef RTCONFIG_LEDARRAY
+				eval("wl", "-i", "eth2", "ledbh", "0", "7");
+				eval("wl", "-i", "eth2", "ledbh", "9", "7");
+#endif
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
 #elif RTAC3200
 				eval("wl", "ledbh", "10", "7");
@@ -726,6 +736,9 @@ void btn_check(void)
 		}
 		else
 			setAllLedOff();
+
+		/* check LED_WAN status */
+		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 	}
 #endif
 #endif

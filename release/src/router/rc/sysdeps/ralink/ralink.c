@@ -458,7 +458,7 @@ int setRegSpec(const char *regSpec)
 	char file[64];
 	int i;
 
-	if (regSpec == NULL || regSpec[0] == '\0' || strlen(regSpec) > 3)
+	if (regSpec == NULL || regSpec[0] == '\0' || strlen(regSpec) > MAX_REGSPEC_LEN)
 		return -1;
 
 	memset(REGSPEC, 0, sizeof(REGSPEC));

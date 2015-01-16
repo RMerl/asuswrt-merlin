@@ -241,15 +241,15 @@ _dprintf("## pc_block: start ##\n");
 	FD_ZERO(&allset);
 	FD_SET(serv_socket, &allset);
 
-	tval.tv_sec = POLL_INTERVAL_SEC;
-	tval.tv_usec = 0;
-
 	for(fd_idx=0; fd_idx<MAX_CONN; ++fd_idx)
 		client[fd_idx] = -1;
 
 	for(;;){
 		rdset = allset;
-		
+
+		tval.tv_sec = POLL_INTERVAL_SEC;
+		tval.tv_usec = 0;
+
 		if((ready = select(max_fd+1, &rdset, NULL, NULL, &tval)) <=0)
 			continue;
 		if(FD_ISSET(serv_socket, &rdset)){
@@ -298,7 +298,7 @@ _dprintf("## pc_block: start ##\n");
 				perform_http_serv(sockfd, arp_mac(client_addr.sin_addr));
 
 				if(--ready <=0)
-					continue;
+					break;
 			}
 		}
 

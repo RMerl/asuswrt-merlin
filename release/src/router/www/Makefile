@@ -341,9 +341,13 @@ ifneq ($(RTCONFIG_ROG),y)
 endif
 ifneq ($(BUILD_NAME),RT-AC3200)
 	rm -rf $(INSTALLDIR)/www/TrafficAnalyzer_Statistic.asp.asp
+	rm -rf $(INSTALLDIR)/www/statistic_default.js
 	rm -rf $(INSTALLDIR)/www/chart.js
 	rm -rf $(INSTALLDIR)/www/datepicker.css
 endif
+endif
+ifneq ($(RTCONFIG_ADBLOCK),y)
+	rm -rf $(INSTALLDIR)/www/AiProtection_AdBlock.asp
 endif
 
 ifeq ($(findstring $(BUILD_NAME),$(MODELS_HAVE_USB3)),)
@@ -384,3 +388,6 @@ ifneq ($(RTCONFIG_JFFS2USERICON), y)
 	rm -rf $(INSTALLDIR)/www/ajax_uploadicon.asp
 endif
 
+ifneq ($(RTCONFIG_TR069), y)
+	rm -rf $(INSTALLDIR)/www/Advanced_TR069_Content.asp
+endif

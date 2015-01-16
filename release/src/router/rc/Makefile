@@ -272,6 +272,10 @@ ifeq ($(RTAC68U),y)
 OBJS += sysdeps/broadcom/cfe.o
 endif
 
+ifeq ($(RTCONFIG_TR069),y)
+OBJS += tr069.o
+endif
+
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_QTN),y)
 vpath %.c sysdeps sysdeps/broadcom sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/sysdeps/qtn $(SRCBASE)/shared
@@ -477,6 +481,9 @@ endif
 ifeq ($(and $(RTCONFIG_IPV6),$(RTCONFIG_WIDEDHCP6)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc stop_ipv6
 	@cd $(INSTALLDIR)/sbin && ln -sf rc start_dhcp6c
+endif
+ifeq ($(RTCONFIG_TR069),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc dhcpc_lease
 endif
 
 clean:

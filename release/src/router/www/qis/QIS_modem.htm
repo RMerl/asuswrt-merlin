@@ -158,6 +158,14 @@ function submitForm(){
 		document.getElementById("loadingNote").style.display = "";		
 		document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 30");
 	}
+
+	if(document.form.modem_country.value == ""){
+		var valueStr = "";
+		document.form.modem_isp.disabled = false;;
+		document.form.modem_isp.options.length = 1;
+		document.form.modem_isp.options[0] = new Option(valueStr, valueStr, false, true);
+	}
+
 	document.form.submit();
 }
 
@@ -469,7 +477,7 @@ function show_ISP_list(){
 
 	for(var i = 0; i < isplist.length; i++){
 	  if(protolist[i] == 4 && !wimax_support){
-			document.form.modem_isp.options.length = $("modem_isp").options.length - 1;
+			document.form.modem_isp.options.length = document.form.modem_isp.options.length - 1;
 
 			if(document.form.modem_isp.options.length > 0)
 				continue;

@@ -2464,6 +2464,12 @@ TRACE_PT("writing Parental Control\n");
 		}
 #endif
 
+
+#ifdef RTCONFIG_TR069
+		fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, nvram_get_int("tr_conn_port"), logaccept);
+		fprintf(fp, "-A INPUT -i %s -p udp --dport %d -j %s\n", wan_if, nvram_get_int("tr_conn_port"), logaccept);
+#endif
+
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
 	}
 
@@ -3480,6 +3486,18 @@ TRACE_PT("writing Parental Control\n");
 		case IPV6_6RD:
 			fprintf(fp, "-A INPUT -p 41 -j %s\n", "ACCEPT");
 			break;
+		}
+#endif
+
+#ifdef RTCONFIG_TR069
+		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
+				continue;
+
+			wan_if = get_wan_ifname(unit);
+			fprintf(fp, "-A INPUT -i %s -p tcp --dport %d -j %s\n", wan_if, nvram_get_int("tr_conn_port"), logaccept);
+			fprintf(fp, "-A INPUT -i %s -p udp --dport %d -j %s\n", wan_if, nvram_get_int("tr_conn_port"), logaccept);
 		}
 #endif
 
