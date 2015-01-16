@@ -177,8 +177,8 @@ certain events occur.  Those scripts must be saved in /jffs/scripts/
 
  * ddns-start: Script called at the end of a DDNS update process.
                This script is also called when setting the DDNS type
-               to "Custom".
-               The script gets passed the WAN IP as an argument.
+               to "Custom".  The script gets passed the WAN IP as 
+               an argument.
                When handling a "Custom" DDNS, this script is also
                responsible for reporting the success or failure
                of the update process.  See the Custom DDNS section
@@ -580,28 +580,31 @@ a provider's update URL.  The ddns-start script will be passed the WAN IP
 as an argument.
 
 Note that the script will also be responsible for notifying the firmware on 
-the success or failure of the process.  For success, you must set the 
-appropriate nvram values to "200".  On failure, set it to something 
-different, such as "unknown_error".  This can be done like this:
+the success or failure of the process.  To do this you must simply 
+run the following command:
 
+   /sbin/ddns_custom_updated 0|1
 
-   nvram set ddns_return_code=200
-   nvram set ddns_return_code_chk=200
+0 = failure, 1 = successful update
 
+If you cannot determine the success or failure, then report it as a 
+success to ensure that the firmware won't continuously try to 
+force an update.
 
-If you cannot determine the success or failure, then set these two 
-to "200" anyway to ensure the router does not get stuck waiting for 
-completion of the process.
+Here is a working example, for afraid.org's free DDNS (you must update
+the URL to use your private API key from afraid.org):
 
-Here is a basic example of a ddns-start script:
+-----
+    #!/bin/sh
 
+    wget -q http://freedns.afraid.org/dynamic/update.php?your-private-key-goes-here -O - >/dev/null
 
-   #!/bin/sh
-
-   wget -q "http://ipv4.tunnelbroker.net/ipv4_end.php?ip=AUTO&pass=myMD5password&apikey=myuserkey&tid=mytunnelid"
-   nvram set ddns_return_code=200   
-   nvram set ddns_return_code_chk=200
-
+    if [ $? -eq 0 ]; then
+        /sbin/ddns_custom_updated 1
+    else
+        /sbin/ddns_custom_updated 0
+    fi
+-----
 
 
 
