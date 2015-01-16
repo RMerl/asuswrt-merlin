@@ -1174,7 +1174,11 @@ function show_menu(){
 		if(ParentalCtrl2_support && dnsfilter_support){
 			if(bwdpi_support){
 				traffic_L1_dx = 3;
-				L3 = 3;
+				if (adBlock_support) {
+					L3 = 4;
+				} else {
+					L3 = 3;
+				}
 			} else {
 				traffic_L1_dx = 4;
 				L3 = 2;
