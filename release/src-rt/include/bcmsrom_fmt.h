@@ -369,6 +369,8 @@
 #define SROM9_PO_MCS32		202
 #define SROM9_PO_LOFDM40DUP	203
 #define SROM8_RXGAINERR_2G	205
+#define SROM9_EU_EDCRSTH	204
+#define SROM10_EU_EDCRSTH	204
 #define SROM8_RXGAINERR_5GL	206
 #define SROM8_RXGAINERR_5GM	207
 #define SROM8_RXGAINERR_5GH	208
@@ -376,6 +378,7 @@
 #define SROM8_SUBBAND_PPR	210
 #define SROM8_PCIEINGRESS_WAR	211
 #define SROM9_SAR		212
+#define SROM8_EU_EDCRSTH	212
 
 #define SROM8_NOISELVL_2G	213
 #define SROM8_NOISELVL_5GL	214
@@ -384,6 +387,8 @@
 #define SROM8_NOISELVL_5GU	217
 
 #define SROM9_REV_CRC		219
+
+#define SROM11_EU_EDCRSTH	        232
 
 typedef struct {
 	uint8 tssipos;		/* TSSI positive slope, 1: positive, 0: negative */

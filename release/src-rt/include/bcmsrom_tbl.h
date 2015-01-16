@@ -389,6 +389,10 @@ static const sromvar_t pci_sromvars[] = {
 	{"mcs32po",		0xfffffe00,	0,	SROM9_PO_MCS32,			0xffff},
 	{"legofdm40duppo",	0xfffffe00,	0,	SROM9_PO_LOFDM40DUP,		0xffff},
 	{"pcieingress_war",	0xffffff00,	0,	SROM8_PCIEINGRESS_WAR,		0xf},
+	{"eu_edthresh2g",	0x00000100,	0,	SROM8_EU_EDCRSTH,		0x00ff},
+	{"eu_edthresh5g",	0x00000100,	0,	SROM8_EU_EDCRSTH,		0xff00},
+	{"eu_edthresh2g",	0x00000200,	0,	SROM9_EU_EDCRSTH,		0x00ff},
+	{"eu_edthresh5g",	0x00000200,	0,	SROM9_EU_EDCRSTH,		0xff00},
 	{"rxgainerr2ga0",	0xffffff00,	0,	SROM8_RXGAINERR_2G,		0x003f},
 	{"rxgainerr2ga1",	0xffffff00,	0,	SROM8_RXGAINERR_2G,		0x07c0},
 	{"rxgainerr2ga2",	0xffffff00,	0,	SROM8_RXGAINERR_2G,		0xf800},
@@ -422,6 +426,8 @@ static const sromvar_t pci_sromvars[] = {
 	{"noiselvl5gua1",	0xffffff00,	0,	SROM8_NOISELVL_5GU,		0x03e0},
 	{"noiselvl5gua2",	0xffffff00,	0,	SROM8_NOISELVL_5GU,		0x7c00},
 	{"subband5gver",	0xffffff00,	0,	SROM8_SUBBAND_PPR,		0x7},
+	{"eu_edthresh2g",       0x00000400,     0,      SROM10_EU_EDCRSTH,              0x00ff},
+	{"eu_edthresh5g",       0x00000400,     0,      SROM10_EU_EDCRSTH,              0xff00},
 	{NULL,		0,		0,		0,			0}
 };
 
