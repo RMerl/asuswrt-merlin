@@ -1045,7 +1045,7 @@ function toggle_jffs_visibility(state){
 					</td>
 				</tr>
 				<tr id="jffs2_format_tr">
-					<th>Erase JFFS partition at next boot</th>
+					<th>Format JFFS partition at next boot</th>
     				<td>
     					<input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
 					<input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
