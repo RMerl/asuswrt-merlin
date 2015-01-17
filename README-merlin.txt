@@ -154,26 +154,31 @@ to have a USB disk plugged in.  This space will survive reboots (but it
 flashing!).  It will also be available fairly early at boot (before 
 USB disks).
 
-To enable this option, go to the Administration page, under the System 
-tab.
+The option is enabled by default.  You can however disable it, or 
+reformat it from the Administration -> System page.
 
-First time you enable JFFS, it must be formatted.  This can be done 
-through the web page, same page where you enable it.  
-Enabling/Disabling/Formating JFFS requires a reboot to take effect.
+On that page you will also find an option called "Enable custom 
+scripts and configs".  If you intend to use custom scripts or 
+config files, then you need to enable this option.  This is not 
+enabled by default so if you create a broken config/script that 
+prevents the router from booting, you will still be able to regain 
+access by doing a factory default reset.
 
-I do not recommend doing frequent writes to this area, as it will 
+Try to avoid doing too frequent writes to this partition, as it will
 prematuraly wear out the flash storage.  This is a good place to put 
 files that are written once like scripts or kernel modules, or that 
-rarely get written to (like once a day).  Storing files that constantly 
-get written to (like very busy logfiles) is NOT recommended - use a 
+rarely get written to.  Storing files that constantly get written 
+to (like very busy logfiles) is NOT recommended - use a 
 USB disk for that.
 
 
 
 ** User scripts **
 These are shell scripts that you can create, and which will be run when 
-certain events occur.  Those scripts must be saved in /jffs/scripts/ 
-(so, JFFS must be enabled and formatted).  Available scripts:
+certain events occur.  Those scripts must be saved in /jffs/scripts/ ,
+so, JFFS must be enabled, as well as the option to use custom 
+scripts and configs.  This can be configured under Administration -> System.
+Available scripts:
 
  * ddns-start: Script called at the end of a DDNS update process.
                This script is also called when setting the DDNS type
@@ -367,6 +372,10 @@ firmware.  Since some of these entries require dynamic parameters, you
 might be better using the postconf scripts added in 374.36 (see the 
 postconf scripts section below).
 
+Also note that for customized config files to be available, you need 
+to have both JFFS and the custom config and script support options 
+enabled, under Administration -> System.
+
 The list of available config overrides:
 
  * dhcp6s.conf
@@ -406,7 +415,10 @@ before the related service gets started.  This means you can use those
 scripts to manipulate the configuration script, using tools such as 
 "sed" for example.
 
-Postconf scripts must be stored in /jffs/scripts/ .
+Postconf scripts must be stored in /jffs/scripts/ .JFFS must be enabled, 
+as well as the option to use custom scripts and configs.  
+This can be configured under Administration -> System.
+
 The path/filename of the target config file is passed as argument to 
 the postconf script.
 
@@ -606,6 +618,8 @@ the URL to use your private API key from afraid.org):
     fi
 -----
 
+Finally, like all custom scripts, the option to support custom scripts and 
+config files must be enabled under Administration -> System.
 
 
 Source code
@@ -619,16 +633,33 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 378.50 (xx-xxx-2015)
+   - IMPORTANT: There are a lot of changes in this release from Asus.
+                I also took the occasion to do additional changes of 
+                my own at the same time, so it's important that you
+                do a factory default reset after flashing this new
+                version, and manually reconfigure your setting.  Failure
+                to do so can lead to various issues with wifi, OpenVPN,
+                and the new AC68U bootloader.
+
+   - IMPORTANT: Please read this changelog, especially the changes 
+                related to jffs, user scripts/config and OpenVPN.
+
    - NEW: Merged with Asus 378_3873 GPL code.  Most notable changes:
             * TrendMicro DPI engine for RT-AC68U
             * Various updates to 3G/4G support and Dual WAN
 
    - NEW: ddns-start user script, run after the DDNS update was
-          launched
+          launched (can be used to update additional services)
    - NEW: Custom DDNS (handled through ddns-start script)
           See the documentation for how to create such
-          a script (it will be responsible for updating
-          the router nvram flag indicating success of failure)
+          a script.
+   - NEW: Option to enable support for custom scripts and
+          config files.  This option is disabled by default, so 
+          if you have a broken script that prevents the router from 
+          booting, doing a factory default reset will ensure that the 
+          broken script won't be executed, and recover access to the
+          router.  This is necessary since the JFFS2 partition is
+          now enabled by default.
    - CHANGED: Added logo to DNSFilter on the AiProtection
               homepage (contributed by Piterel)
    - CHANGED: Updated Openssl to 1.0.0p
@@ -640,9 +671,12 @@ History
    - CHANGED: the qos-start script will be passed an argument
               that will contain "init" (when setting up tc)
               or "rules" (when setting up iptables).
-   - FIXED: OpenVPN server page would report an initializing
-            state when it was already running under certain
-            conditions
+   - CHANGED: JFFS2 partition is now enabled by default, to be in
+              sync with Asus, who are starting to make use of this
+              partition.
+   - FIXED: Under certain conditions, the OpenVPN server page 
+            would report an initializing state when it was 
+            already running.
    - FIXED: First OpenVPN client/server instance wasn't properly
             run on the second CPU core, resulting in lower
             performance (AC56/AC68/AC87)
@@ -656,6 +690,13 @@ History
             page.  Re-added it.
   - FIXED: Port triggers weren't written to the correct
            iptables chain (Asus bug)
+  - FIXED: When moving from stock to this firmware, the OpenVPN
+           Server 1 instance gets automatically enabled because 
+           Asus hardcodes "1" into the nvram setting that handles
+           start at wan.  Changed to a different nvram to resolve
+           this conflict.  This means everyone must re-enable their
+           OpenVPN server instance after upgrading from any version
+           before 376.50.
 
 
 376.49_5 (9-Jan-2015)
