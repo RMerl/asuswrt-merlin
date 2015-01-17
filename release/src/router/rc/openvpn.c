@@ -1449,7 +1449,7 @@ void start_vpn_eas()
 	char buffer[16], *cur;
 	int nums[4], i;
 
-	if (strlen(nvram_safe_get("vpn_serverx_eas")) == 0 && strlen(nvram_safe_get("vpn_clientx_eas")) == 0) return;
+	if (strlen(nvram_safe_get("vpn_serverx_start")) == 0 && strlen(nvram_safe_get("vpn_clientx_eas")) == 0) return;
 	// wait for time sync for a while
 	i = 10;
 	while (time(0) < 1325376000 && i--) {
@@ -1457,7 +1457,7 @@ void start_vpn_eas()
 	}
 
 	// Parse and start servers
-	strlcpy(&buffer[0], nvram_safe_get("vpn_serverx_eas"), sizeof(buffer));
+	strlcpy(&buffer[0], nvram_safe_get("vpn_serverx_start"), sizeof(buffer));
 	if ( strlen(&buffer[0]) != 0 ) vpnlog(VPN_LOG_INFO, "Starting OpenVPN servers (eas): %s", &buffer[0]);
 	i = 0;
 	for( cur = strtok(&buffer[0],","); cur != NULL && i < 4; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
@@ -1502,7 +1502,7 @@ void stop_vpn_eas()
 	int nums[4], i;
 
 	// Parse and stop servers
-	strlcpy(&buffer[0], nvram_safe_get("vpn_serverx_eas"), sizeof(buffer));
+	strlcpy(&buffer[0], nvram_safe_get("vpn_serverx_start"), sizeof(buffer));
 	if ( strlen(&buffer[0]) != 0 ) vpnlog(VPN_LOG_INFO, "Stopping OpenVPN servers (eas): %s", &buffer[0]);
 	i = 0;
 	for( cur = strtok(&buffer[0],","); cur != NULL && i < 4; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
@@ -1730,7 +1730,7 @@ int _check_ovpn_enabled(int unit, char *config){
 }
 
 int check_ovpn_server_enabled(int unit){
-	return _check_ovpn_enabled(unit, "vpn_serverx_eas");
+	return _check_ovpn_enabled(unit, "vpn_serverx_start");
 }
 
 int check_ovpn_client_enabled(int unit){

@@ -129,7 +129,7 @@ var openvpn_clientlist_array = decodeURIComponent('<% nvram_char_to_ascii("", "v
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 var initial_vpn_mode = "<% nvram_get("VPNServer_mode"); %>";
 
-var openvpn_eas = '<% nvram_get("vpn_serverx_eas"); %>';
+var openvpn_eas = '<% nvram_get("vpn_serverx_start"); %>';
 var openvpn_enabled = (openvpn_eas.indexOf(''+(openvpn_unit)) >= 0);
 
 if (openvpn_unit == '1')
@@ -1177,7 +1177,7 @@ function cal_panel_block(){
 			<input type="hidden" name="action_wait" value="10">
 			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">			
-			<input type="hidden" name="vpn_serverx_eas" value="<% nvram_get("vpn_serverx_eas"); %>">
+			<input type="hidden" name="vpn_serverx_start" value="<% nvram_get("vpn_serverx_start"); %>">
 			<input type="hidden" name="vpn_serverx_dns" value="<% nvram_get("vpn_serverx_dns"); %>">
 			<input type="hidden" name="vpn_server_ccd_val" value="<% nvram_get("vpn_server_ccd_val"); %>">
 			<input type="hidden" name="vpn_crt_server1_ca" value="<% nvram_clean_get("vpn_crt_server1_ca"); %>">

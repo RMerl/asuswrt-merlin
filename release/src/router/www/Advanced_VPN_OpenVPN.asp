@@ -70,7 +70,7 @@ var vpn_server_clientlist_array_ori = '<% nvram_char_to_ascii("","vpn_serverx_cl
 var vpn_server_clientlist_array = decodeURIComponent(vpn_server_clientlist_array_ori);
 var openvpn_unit = '<% nvram_get("vpn_server_unit"); %>';
 var vpn_server_mode = 'openvpn';	// Hardcoded for this page, as we support both simultaneously
-var openvpn_eas = '<% nvram_get("vpn_serverx_eas"); %>';
+var openvpn_eas = '<% nvram_get("vpn_serverx_start"); %>';
 var vpn_server_enable = (openvpn_eas.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0";
 
 var service_state = "";
@@ -709,11 +709,11 @@ function enable_openvpn(state){
 			if (state == 1)
 				tmp_value += ""+i+",";
 		} else {
-			if (document.form.vpn_serverx_eas.value.indexOf(''+(i)) >= 0)
+			if (document.form.vpn_serverx_start.value.indexOf(''+(i)) >= 0)
 				tmp_value += ""+i+","
 		}
 	}
-	document.form.vpn_serverx_eas.value = tmp_value;
+	document.form.vpn_serverx_start.value = tmp_value;
 }
 
 /* Advanced Setting start */ 
@@ -1195,7 +1195,7 @@ function cal_panel_block(){
 <input type="hidden" name="VPNServer_enable" value="<% nvram_get("VPNServer_enable"); %>">
 <input type="hidden" name="VPNServer_mode" value="<% nvram_get("VPNServer_mode"); %>">
 <input type="hidden" name="vpn_serverx_clientlist" value="">
-<input type="hidden" name="vpn_serverx_eas" value="<% nvram_get("vpn_serverx_eas"); %>">
+<input type="hidden" name="vpn_serverx_start" value="<% nvram_get("vpn_serverx_start"); %>">
 <input type="hidden" name="vpn_serverx_dns" value="<% nvram_get("vpn_serverx_dns"); %>">
 <input type="hidden" name="vpn_server_ccd_val" value="">
 <table class="content" align="center" cellpadding="0" cellspacing="0">

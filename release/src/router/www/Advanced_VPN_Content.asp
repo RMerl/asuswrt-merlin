@@ -49,7 +49,7 @@ var dualwan_mode = '<% nvram_get("wans_mode"); %>';
 var pptpd_connected_clients = [];
 var openvpnd_connected_clients = [];
 
-var openvpn_eas = '<% nvram_get("vpn_serverx_eas"); %>';
+var openvpn_eas = '<% nvram_get("vpn_serverx_start"); %>';
 var openvpn_enabled = (openvpn_eas.indexOf(''+(openvpn_unit)) >= 0) ? "1" : "0";
 
 function add_VPN_mode_Option(obj){
@@ -701,11 +701,11 @@ function enable_openvpn(state){
 			if (state == 1)
 				tmp_value += ""+i+",";
 		} else {
-			if (document.form.vpn_serverx_eas.value.indexOf(''+(i)) >= 0)
+			if (document.form.vpn_serverx_start.value.indexOf(''+(i)) >= 0)
 				tmp_value += ""+i+","
 		}
 	}
-	document.form.vpn_serverx_eas.value = tmp_value;
+	document.form.vpn_serverx_start.value = tmp_value;
 }
 
 </script>
@@ -746,7 +746,7 @@ function enable_openvpn(state){
 			<!-- input type="hidden" name="status_pptpd" value="<% nvram_dump("pptp_connected",""); %>" -->
 			<!-- openvpn -->
 			<input type="hidden" name="vpn_serverx_clientlist" value="<% nvram_get("vpn_serverx_clientlist"); %>">
-			<input type="hidden" name="vpn_serverx_eas" value="<% nvram_get("vpn_serverx_eas"); %>">
+			<input type="hidden" name="vpn_serverx_start" value="<% nvram_get("vpn_serverx_start"); %>">
 			<!-- input type="hidden" name="status_openvpnd" value="<% nvram_dump("openvpn_connected",""); %>" -->
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">				
 				<tr>
