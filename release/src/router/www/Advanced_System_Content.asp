@@ -159,6 +159,8 @@ function initial(){
 		document.form.telnetd_enable[0].disabled = false;
 		document.form.telnetd_enable[1].disabled = false;
 	}	
+
+	toggle_jffs_visibility(document.form.jffs2_on.value);
 }
 
 var time_zone_tmp="";
@@ -933,6 +935,15 @@ function display_spec_IP(flag){
 			document.getElementById("http_clientlist_Block").style.display = "";
 	}
 }
+
+function toggle_jffs_visibility(state){
+	var visibility = ( state == 1 ? "" : "none");
+
+	document.getElementById('jffs2_format_tr').style.display = visibility;
+	document.getElementById('jffs2_scripts_tr').style.display = visibility;
+}
+
+
 </script>
 </head>
 
@@ -1029,16 +1040,23 @@ function display_spec_IP(flag){
 				<tr>
 					<th>Enable JFFS partition</th>
 					<td>
-						<input type="radio" name="jffs2_on" class="input" value="1" <% nvram_match("jffs2_on", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_on" class="input" value="0" <% nvram_match("jffs2_on", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="jffs2_on" class="input" value="1" onclick="toggle_jffs_visibility(this.value);" <% nvram_match("jffs2_on", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_on" class="input" value="0" onclick="toggle_jffs_visibility(this.value);" <% nvram_match("jffs2_on", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
-				<tr>
-					<th>Format JFFS partition at next boot</th>
+				<tr id="jffs2_format_tr">
+					<th>Erase JFFS partition at next boot</th>
     				<td>
     					<input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
+					<input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
 					</td>
+				</tr>
+				<tr id="jffs2_scripts_tr">
+					<th>Enable JFFS custom scripts and configs</th>
+					<td>
+						<input type="radio" name="jffs2_scripts" class="input" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_scripts" class="input" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#checkbox_No#>
+						</td>
 				</tr>
 			</table>
 			<table id="ssh_table" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
