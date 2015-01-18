@@ -2933,7 +2933,7 @@ openpam/Makefile:
 	$(MAKE) openpam-configure
 
 openpam-configure:
-	( cd openpam ; \
+	( cd openpam && ./autogen.sh && \
 		LDFLAGS=-ldl \
 		$(CONFIGURE) \
 		--prefix=/usr \
