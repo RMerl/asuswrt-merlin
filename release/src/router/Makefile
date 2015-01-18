@@ -259,7 +259,8 @@ endif
 obj-$(RTCONFIG_BWDPI) += bwdpi
 obj-$(RTCONFIG_BWDPI) += sqlite
 obj-$(RTCONFIG_BWDPI) += bwdpi_sqlite
-obj-$(RTCONFIG_SPEEDTEST) += curl-7.21.7
+#obj-$(RTCONFIG_SPEEDTEST) += curl-7.21.7
+obj-y += curl-7.21.7
 
 # Temporary workaround to separate different emf builds
 ifeq ($(RTCONFIG_BWDPI),y)
@@ -1054,11 +1055,11 @@ ifeq ($(RTCONFIG_QTN),y)
 	install -D qtnimage/start-stateless-slave $(TARGETDIR)/rom/qtn/start-stateless-slave
 	install -D qtnimage/tweak_qcomm $(TARGETDIR)/rom/qtn/tweak_qcomm
 endif
-ifeq ($(RTCONFIG_SPEEDTEST),y)
+#ifeq ($(RTCONFIG_SPEEDTEST),y)
 	# for speedtest
 	install -D curl-7.21.7/src/.libs/curl $(TARGETDIR)/usr/sbin/curl
 	$(STRIP) $(TARGETDIR)/usr/sbin/curl
-endif
+#endif
 ifeq ($(RTCONFIG_BWDPI),y)
 ifeq ($(RTCONFIG_BCM7),y)
 	cp $(TOP)/bwdpi_bin/bwdpi_bcm7/* $(TOP)/bwdpi_bin/
