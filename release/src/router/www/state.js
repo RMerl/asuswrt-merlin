@@ -2097,13 +2097,13 @@ function extend_display_ssid(ssid){		//"&amp;"5&; "&lt;"4< ; "&gt;"4> ; "&nbsp;"
 								}
 								else{
 										switch(ssid.substring(0,33).lastIndexOf("&gt;")){
-												case 12:
+												case 27:
 																	return ssid.substring(0,31);
 																	break;
-												case 13:
+												case 28:
 																	return ssid.substring(0,32);	
 																	break;
-												case 14:
+												case 29:
 																	return ssid.substring(0,33);		
 																	break;	
 										}
@@ -2111,13 +2111,13 @@ function extend_display_ssid(ssid){		//"&amp;"5&; "&lt;"4< ; "&gt;"4> ; "&nbsp;"
 						}
 						else{
 									switch(ssid.substring(0,33).lastIndexOf("&lt;")){
-											case 12:
+											case 27:
 																return ssid.substring(0,31);
 																break;
-											case 13:
+											case 28:
 																return ssid.substring(0,32);
 																break;
-											case 14:
+											case 29:
 																return ssid.substring(0,33);
 																break;
 
@@ -2126,16 +2126,16 @@ function extend_display_ssid(ssid){		//"&amp;"5&; "&lt;"4< ; "&gt;"4> ; "&nbsp;"
 				}
 				else{
 							switch (ssid.substring(0,34).lastIndexOf("&amp;")){
-									case 11:
+									case 26:
 														return ssid.substring(0,31);
 														break;
-									case 12:
+									case 27:
 														return ssid.substring(0,32);
 														break;
-									case 13:
+									case 28:
 														return ssid.substring(0,33);
 														break;
-									case 14:
+									case 29:
 														return ssid.substring(0,19);
 														break;
 
@@ -2144,19 +2144,19 @@ function extend_display_ssid(ssid){		//"&amp;"5&; "&lt;"4< ; "&gt;"4> ; "&nbsp;"
 		}
 		else{
 					switch (ssid.substring(0,35).lastIndexOf("&nbsp;")){
-									case 10:			
+									case 25:
 														return ssid.substring(0,31);
 														break;			
-									case 11:
+									case 26:
 														return ssid.substring(0,32);
 														break;
-									case 12:
+									case 27:
 														return ssid.substring(0,33);
 														break;
-									case 13:
+									case 28:
 														return ssid.substring(0,34);
 														break;
-									case 14:
+									case 29:
 														return ssid.substring(0,35);
 														break;					
 					}
