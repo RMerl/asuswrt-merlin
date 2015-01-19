@@ -674,6 +674,8 @@ History
    - CHANGED: JFFS2 partition is now enabled by default, to be in
               sync with Asus, who are starting to make use of this
               partition.
+   - CHANGED: The Local IP in an IPv6 firewall rule can now be
+              left empty.
    - FIXED: Under certain conditions, the OpenVPN server page 
             would report an initializing state when it was 
             already running.
@@ -697,6 +699,18 @@ History
            this conflict.  This means everyone must re-enable their
            OpenVPN server instance after upgrading from any version
            before 376.50.
+  - FIXED: dnsmasq would run out of available leases if you had a 
+           very small DHCP pool combined with many out-of-pool 
+           reservations.  Now the limit will be either 253 or the 
+           pool size, whichever is the largest (Asus issue)
+  - FIXED: SSHD port forwarding couldn't be configured
+  - FIXED: DHCP log spam when using IPv6 with a Windows 8
+           client (patch by pinwing)
+  - FIXED: snmp exposes a lot of sensitive information such as
+           login credentials, therefore all the custom Asus MIBs
+           have been disabled.
+  - FIXED: Very long SSIDs with special characters/spaces in them 
+           would be shown as "undefined" in the banner.
 
 
 376.49_5 (9-Jan-2015)
