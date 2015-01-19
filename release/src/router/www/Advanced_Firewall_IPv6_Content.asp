@@ -141,13 +141,6 @@ function validForm(){
 		return false;
 	}
 
-	if(document.form.ipv6_fw_lipaddr_x_0.value==""){
-		alert("<#JS_fieldblank#>");
-		document.form.ipv6_fw_lipaddr_x_0.focus();
-		document.form.ipv6_fw_lipaddr_x_0.select();		
-		return false;
-	}
-
 	if(document.form.ipv6_fw_port_x_0.value==""){
 		alert("<#JS_fieldblank#>");
 		document.form.ipv6_fw_port_x_0.focus();
@@ -156,8 +149,8 @@ function validForm(){
 	}
 
 	if(!validate_multi_range(document.form.ipv6_fw_port_x_0, 1, 65535)
-		|| !ipv6_valid(document.form.ipv6_fw_lipaddr_x_0, 0)
-		|| (document.form.ipv6_fw_ripaddr_x_0.value != "" && !ipv6_valid(document.form.ipv6_fw_ripaddr_x_0, 1))) {
+		|| ((document.form.ipv6_fw_lipaddr_x_0.value != "") && !ipv6_valid(document.form.ipv6_fw_lipaddr_x_0, 0))
+		|| ((document.form.ipv6_fw_ripaddr_x_0.value != "") && !ipv6_valid(document.form.ipv6_fw_ripaddr_x_0, 1))) {
 		return false;
 	}
 
