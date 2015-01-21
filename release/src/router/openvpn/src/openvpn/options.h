@@ -100,6 +100,9 @@ struct connection_entry
   int connect_retry_max;
   int connect_timeout;
   bool connect_timeout_defined;
+  int xormethod;
+  const char *xormask;
+  int xormasklen;
 #ifdef ENABLE_HTTP_PROXY
   struct http_proxy_options *http_proxy_options;
 #endif  

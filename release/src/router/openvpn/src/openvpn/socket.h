@@ -250,6 +250,9 @@ struct link_socket
 #endif
 };
 
+int buffer_mask (struct buffer *buf, const char *xormask, int xormasklen);
+int buffer_xorptrpos (struct buffer *buf);
+int buffer_reverse (struct buffer *buf);
 /*
  * Some Posix/Win32 differences.
  */
@@ -875,30 +878,52 @@ static inline int
 link_socket_read (struct link_socket *sock,
 		  struct buffer *buf,
 		  int maxsize,
-		  struct link_socket_actual *from)
+		  struct link_socket_actual *from,
+		  int xormethod,
+		  const char *xormask,
+		  int xormasklen)
 {
+  int res;
   if (proto_is_udp(sock->info.proto)) /* unified UDPv4 and UDPv6 */
     {
-      int res;
 
 #ifdef WIN32
       res = link_socket_read_udp_win32 (sock, buf, from);
 #else
       res = link_socket_read_udp_posix (sock, buf, maxsize, from);
 #endif
-      return res;
     }
   else if (proto_is_tcp(sock->info.proto)) /* unified TCPv4 and TCPv6 */
     {
       /* from address was returned by accept */
       addr_copy_sa(&from->dest, &sock->info.lsa->actual.dest);
-      return link_socket_read_tcp (sock, buf);
+      res = link_socket_read_tcp (sock, buf);
     }
   else
     {
       ASSERT (0);
       return -1; /* NOTREACHED */
     }
+  switch(xormethod)
+    {
+      case 0:
+	break;
+	case 1:
+	  buffer_mask(buf,xormask,xormasklen);
+	  break;
+	case 2:
+	  buffer_xorptrpos(buf);
+	  break;
+	case 3:
+	  buffer_reverse(buf);
+	  break;
+	case 4:
+	  buffer_mask(buf,xormask,xormasklen);
+	  buffer_xorptrpos(buf);
+	  buffer_reverse(buf);
+	  buffer_xorptrpos(buf);
+    }
+  return res;
 }
 
 /*
@@ -982,8 +1007,30 @@ link_socket_write_udp (struct link_socket *sock,
 static inline int
 link_socket_write (struct link_socket *sock,
 		   struct buffer *buf,
-		   struct link_socket_actual *to)
+		   struct link_socket_actual *to,
+		   int xormethod,
+		   const char *xormask,
+		   int xormasklen)
 {
+  switch(xormethod)
+    {
+      case 0:
+	break;
+	case 1:
+	  buffer_mask(buf,xormask,xormasklen);
+	  break;
+	case 2:
+	  buffer_xorptrpos(buf);
+	  break;
+	case 3:
+	  buffer_reverse(buf);
+	  break;
+	case 4:
+	  buffer_xorptrpos(buf);
+	  buffer_reverse(buf);
+	  buffer_xorptrpos(buf);
+	  buffer_mask(buf,xormask,xormasklen);
+    }
   if (proto_is_udp(sock->info.proto)) /* unified UDPv4 and UDPv6 */
     {
       return link_socket_write_udp (sock, buf, to);
