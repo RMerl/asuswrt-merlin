@@ -223,16 +223,15 @@ function detect_CPU_RAM(){
 			cpu_object = data.getElementsByTagName('cpu');
 			for(i=0;i<core_num;i++){
 				cpu_info_new[i] = {
-					total: cpu_object[i].childNodes[1].innerHTML,
-					usage: cpu_object[i].childNodes[3].innerHTML
+					total: cpu_object[i].getElementsByTagName('total')[0].childNodes[0].nodeValue,
+					usage: cpu_object[i].getElementsByTagName('usage')[0].childNodes[0].nodeValue
 				};
 			}
-			
 			mem_info = data.getElementsByTagName('mem_info')[0];
 			mem_object = {
-				total: mem_info.getElementsByTagName('total')[0].innerHTML,
-				free: mem_info.getElementsByTagName('free')[0].innerHTML,
-				used: mem_info.getElementsByTagName('used')[0].innerHTML,		
+				total: mem_info.getElementsByTagName('total')[0].childNodes[0].nodeValue,
+				free: mem_info.getElementsByTagName('free')[0].childNodes[0].nodeValue,
+				used: mem_info.getElementsByTagName('used')[0].childNodes[0].nodeValue
 			}
 			
 			render_CPU(cpu_info_new);
