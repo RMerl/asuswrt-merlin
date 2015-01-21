@@ -711,6 +711,8 @@ History
            have been disabled.
   - FIXED: Very long SSIDs with special characters/spaces in them 
            would be shown as "undefined" in the banner.
+  - FIXED: CPU and RAM usage on main page would report NaN under
+           Internet Explorer (Asus bug)
 
 
 376.49_5 (9-Jan-2015)
