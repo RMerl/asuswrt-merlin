@@ -666,7 +666,7 @@ History
    - CHANGED: Merged Asus's newer NTP update code, with a fix
               to prevent hourly log spam from the update process
               when in a DST enabled timezone.
-   - CHANGED: Updated vstpd to 3.0.2 (newer version used by
+   - CHANGED: Updated vsftpd to 3.0.2 (newer version used by
               Asus on their Qualcomm-based routers)
    - CHANGED: the qos-start script will be passed an argument
               that will contain "init" (when setting up tc)
