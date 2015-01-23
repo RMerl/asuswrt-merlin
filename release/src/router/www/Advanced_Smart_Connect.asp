@@ -227,19 +227,19 @@ var wl_ifnames = '<% nvram_get("wl_ifnames"); %>'.split(" ");
 
 /* [bsd_steering_policy] */
 var wl0_bsd_steering_policy = '<% nvram_get("wl0_bsd_steering_policy"); %>'.split(" ");	//[bw util%, x, x, RSSI threshold, phy rate, flag]
-var wl0_bsd_steering_policy_bin = reverse_bin(createBinaryString(parseInt(wl0_bsd_steering_policy[5])));	//[OP, RSSI, VHT, NONVHT, N_RF, PHYRATE, ...]
+var wl0_bsd_steering_policy_bin = reverse_bin(createBinaryString(parseInt(wl0_bsd_steering_policy[5])));	//[OP, RSSI, VHT, NONVHT, N_RF, PHYRATE, L_BALANCE,...]
 var wl1_bsd_steering_policy = '<% nvram_get("wl1_bsd_steering_policy"); %>'.split(" ");	//[bw util%, x, x, RSSI threshold, phy rate, flag]
-var wl1_bsd_steering_policy_bin = reverse_bin(createBinaryString(parseInt(wl1_bsd_steering_policy[5])));	//[OP, RSSI, VHT, NONVHT, N_RF, PHYRATE, ...]
+var wl1_bsd_steering_policy_bin = reverse_bin(createBinaryString(parseInt(wl1_bsd_steering_policy[5])));	//[OP, RSSI, VHT, NONVHT, N_RF, PHYRATE, L_BALANCE,...]
 var wl2_bsd_steering_policy = '<% nvram_get("wl2_bsd_steering_policy"); %>'.split(" ");	//[bw util%, x, x, RSSI threshold, phy rate, flag]
-var wl2_bsd_steering_policy_bin = reverse_bin(createBinaryString(parseInt(wl2_bsd_steering_policy[5])));	//[OP, RSSI, VHT, NONVHT, N_RF, PHYRATE, ...]
+var wl2_bsd_steering_policy_bin = reverse_bin(createBinaryString(parseInt(wl2_bsd_steering_policy[5])));	//[OP, RSSI, VHT, NONVHT, N_RF, PHYRATE, L_BALANCE,...]
 
 /* [bsd_sta_select_policy] */
 var wl0_bsd_sta_select_policy = '<% nvram_get("wl0_bsd_sta_select_policy"); %>'.split(" ");	//[x, RSSI, phy rate, x, x, x, x, x, x, flag]
-var wl0_bsd_sta_select_policy_bin = reverse_bin(createBinaryString(parseInt(wl0_bsd_sta_select_policy[9])));	//[OP, RSSI, VHT, NONVHT, x, PHYRATE, ...]
+var wl0_bsd_sta_select_policy_bin = reverse_bin(createBinaryString(parseInt(wl0_bsd_sta_select_policy[9])));	//[OP, RSSI, VHT, NONVHT, x, PHYRATE, L_BALANCE,...]
 var wl1_bsd_sta_select_policy = '<% nvram_get("wl1_bsd_sta_select_policy"); %>'.split(" ");	//[x, RSSI, phy rate, x, x, x, x, x, x, flag]
-var wl1_bsd_sta_select_policy_bin = reverse_bin(createBinaryString(parseInt(wl1_bsd_sta_select_policy[9])));	//[OP, RSSI, VHT, NONVHT, x, PHYRATE, ...]
+var wl1_bsd_sta_select_policy_bin = reverse_bin(createBinaryString(parseInt(wl1_bsd_sta_select_policy[9])));	//[OP, RSSI, VHT, NONVHT, x, PHYRATE, L_BALANCE,...]
 var wl2_bsd_sta_select_policy = '<% nvram_get("wl2_bsd_sta_select_policy"); %>'.split(" ");	//[x, RSSI, phy rate, x, x, x, x, x, x, flag]
-var wl2_bsd_sta_select_policy_bin = reverse_bin(createBinaryString(parseInt(wl2_bsd_sta_select_policy[9])));	//[OP, RSSI, VHT, NONVHT, x, PHYRATE, ...]
+var wl2_bsd_sta_select_policy_bin = reverse_bin(createBinaryString(parseInt(wl2_bsd_sta_select_policy[9])));	//[OP, RSSI, VHT, NONVHT, x, PHYRATE, L_BALANCE,...]
 
 /* [Interface Select and Qualify Procedures] */
 var wl0_bsd_if_select_policy = '<% nvram_get("wl0_bsd_if_select_policy"); %>'.split(" ");
@@ -264,6 +264,11 @@ function handle_bsd_nvram(){
 
 	/* [bsd_steering_policy] - bsd_steering_policy setting */
 	set_power(wl0_bsd_steering_policy[0],'wl0_bsd_steering_bandutil');
+	if(wl0_bsd_steering_policy_bin[6] == 0){
+		document.form.wl0_bsd_steering_balance[1].checked = true;
+	}else{
+		document.form.wl0_bsd_steering_balance[0].checked = true;
+	}
 	document.getElementById('wl0_bsd_steering_rssi').value = wl0_bsd_steering_policy[3];
 	document.form.wl0_bsd_steering_rssi_s.value  = wl0_bsd_steering_policy_bin[1];
 	set_power(wl0_bsd_steering_policy[4],'wl0_bsd_steering_phy');
@@ -276,10 +281,20 @@ function handle_bsd_nvram(){
 		document.form.wl0_bsd_steering_vht_s.value = 2;
 
 	set_power(wl1_bsd_steering_policy[0],'wl1_bsd_steering_bandutil');
+	if(wl1_bsd_steering_policy_bin[6] == 0){
+		document.form.wl1_bsd_steering_balance[1].checked = true;
+	}else{
+		document.form.wl1_bsd_steering_balance[0].checked = true;
+	}
 	document.getElementById('wl1_bsd_steering_rssi').value = wl1_bsd_steering_policy[3];
 	document.form.wl1_bsd_steering_rssi_s.value  = wl1_bsd_steering_policy_bin[1];
 
 	set_power(wl1_bsd_steering_policy[4],'wl1_bsd_steering_phy');
+	if(wl2_bsd_steering_policy_bin[6] == 0){
+		document.form.wl2_bsd_steering_balance[1].checked = true;
+	}else{
+		document.form.wl2_bsd_steering_balance[0].checked = true;
+	}
 	document.getElementById('wl1_bsd_steering_phy').value = wl1_bsd_steering_policy[4];
 	document.form.wl1_bsd_steering_phy_s.value  = wl1_bsd_steering_policy_bin[5];
 
@@ -424,6 +439,7 @@ function applyRule(){
 	wl0_bsd_steering_policy[4] = document.form.wl0_bsd_steering_phy.value;
 	wl0_bsd_steering_policy_bin_t[1] = document.form.wl0_bsd_steering_rssi_s.value; 
 	wl0_bsd_steering_policy_bin_t[5] = document.form.wl0_bsd_steering_phy_s.value;
+	wl0_bsd_steering_policy_bin_t[6] = document.form.wl0_bsd_steering_balance.value;
 	if(document.form.wl0_bsd_steering_vht_s.value == 0){
 		wl0_bsd_steering_policy_bin_t[2] = 0;
 		wl0_bsd_steering_policy_bin_t[3] = 0;
@@ -444,6 +460,7 @@ function applyRule(){
 	wl1_bsd_steering_policy[4] = document.form.wl1_bsd_steering_phy.value;
 	wl1_bsd_steering_policy_bin_t[1] = document.form.wl1_bsd_steering_rssi_s.value; 
 	wl1_bsd_steering_policy_bin_t[5] = document.form.wl1_bsd_steering_phy_s.value;
+	wl1_bsd_steering_policy_bin_t[6] = document.form.wl1_bsd_steering_balance.value;
 
 	if(document.form.wl1_bsd_steering_vht_s.value == 0){
 		wl1_bsd_steering_policy_bin_t[2] = 0;
@@ -465,6 +482,7 @@ function applyRule(){
 	wl2_bsd_steering_policy[4] = document.form.wl2_bsd_steering_phy.value;
 	wl2_bsd_steering_policy_bin_t[1] = document.form.wl2_bsd_steering_rssi_s.value; 
 	wl2_bsd_steering_policy_bin_t[5] = document.form.wl2_bsd_steering_phy_s.value;
+	wl2_bsd_steering_policy_bin_t[6] = document.form.wl2_bsd_steering_balance.value;
 
 	if(document.form.wl2_bsd_steering_vht_s.value == 0){
 		wl2_bsd_steering_policy_bin_t[2] = 0;
@@ -486,6 +504,7 @@ function applyRule(){
 	wl0_bsd_sta_select_policy[2] = document.form.wl0_bsd_sta_select_policy_phy.value;
 	wl0_bsd_sta_select_policy_bin_t[1] = document.form.wl0_bsd_sta_select_policy_rssi_s.value;
 	wl0_bsd_sta_select_policy_bin_t[5] = document.form.wl0_bsd_sta_select_policy_phy_s.value;
+	wl0_bsd_sta_select_policy_bin_t[6] = document.form.wl0_bsd_steering_balance.value;
 
 	if(document.form.wl0_bsd_sta_select_policy_vht_s.value == 0){
 		wl0_bsd_sta_select_policy_bin_t[2] = 0;
@@ -506,6 +525,7 @@ function applyRule(){
 	wl1_bsd_sta_select_policy[2] = document.form.wl1_bsd_sta_select_policy_phy.value;
 	wl1_bsd_sta_select_policy_bin_t[1] = document.form.wl1_bsd_sta_select_policy_rssi_s.value;
 	wl1_bsd_sta_select_policy_bin_t[5] = document.form.wl1_bsd_sta_select_policy_phy_s.value;
+	wl1_bsd_sta_select_policy_bin_t[6] = document.form.wl1_bsd_steering_balance.value;
 
 	if(document.form.wl1_bsd_sta_select_policy_vht_s.value == 0){
 		wl1_bsd_sta_select_policy_bin_t[2] = 0;
@@ -526,6 +546,7 @@ function applyRule(){
 	wl2_bsd_sta_select_policy[2] = document.form.wl2_bsd_sta_select_policy_phy.value;
 	wl2_bsd_sta_select_policy_bin_t[1] = document.form.wl2_bsd_sta_select_policy_rssi_s.value;
 	wl2_bsd_sta_select_policy_bin_t[5] = document.form.wl2_bsd_sta_select_policy_phy_s.value;
+	wl2_bsd_sta_select_policy_bin_t[6] = document.form.wl2_bsd_steering_balance.value;
 
 	if(document.form.wl2_bsd_sta_select_policy_vht_s.value == 0){
 		wl2_bsd_sta_select_policy_bin_t[2] = 0;
@@ -866,8 +887,8 @@ function set_power(power_value,flag){
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-<input type="hidden" name="wan_route_x" value="<% nvram_get("wan_route_x"); %>">
-<input type="hidden" name="wan_nat_x" value="<% nvram_get("wan_nat_x"); %>">
+
+
 <input type="hidden" name="wl_nmode_x" value="<% nvram_get("wl_nmode_x"); %>">
 <input type="hidden" name="wl_gmode_protection_x" value="<% nvram_get("wl_gmode_protection_x"); %>">
 <input type="hidden" name="current_page" value="Advanced_Smart_Connect.asp">
@@ -983,6 +1004,21 @@ function set_power(power_value,flag){
 					</div>
 				</td>				
 			</tr>	
+			<tr>
+				<th>Enable Load Balance</th>
+					<td>
+						<input type="radio" name="wl0_bsd_steering_balance" value="1"><#checkbox_Yes#>
+						<input type="radio" name="wl0_bsd_steering_balance" value="0"><#checkbox_No#>
+					</td>
+					<td>
+						<input type="radio" name="wl1_bsd_steering_balance" value="1"><#checkbox_Yes#>
+						<input type="radio" name="wl1_bsd_steering_balance" value="0"><#checkbox_No#>
+					</td>
+					<td>
+						<input type="radio" name="wl2_bsd_steering_balance" value="1"><#checkbox_Yes#>
+						<input type="radio" name="wl2_bsd_steering_balance" value="0"><#checkbox_No#>
+					</td>
+			</tr>
 			<tr>
 				<th>RSSI</th>
 				<td>
@@ -1110,21 +1146,21 @@ function set_power(power_value,flag){
 						<select class="input_option" name="wl0_bsd_steering_vht_s">
 							<option selected="" value="0" class="content_input_fd">all</option>
 							<option value="1" class="content_input_fd">AC only</option>
-							<option value="2" class="content_input_fd">Legacy</option>
+							<option value="2" class="content_input_fd">not-allowed</option>
 						</select>
 					</td>		
 					<td style="padding-left:12px">
 						<select class="input_option" name="wl1_bsd_steering_vht_s">
 							<option selected="" value="0" class="content_input_fd">all</option>
 							<option value="1" class="content_input_fd">AC only</option>
-							<option value="2" class="content_input_fd">Legacy</option>
+							<option value="2" class="content_input_fd">not-allowed</option>
 						</select>
 					</td>											
 					<td style="padding-left:12px">
 						<select class="input_option" name="wl2_bsd_steering_vht_s">
 							<option selected="" value="0" class="content_input_fd">all</option>
 							<option value="1" class="content_input_fd">AC only</option>
-							<option value="2" class="content_input_fd">Legacy</option>
+							<option value="2" class="content_input_fd">not-allowed</option>
 						</select>
 					</td>																	
 			</tr>				
@@ -1257,21 +1293,21 @@ function set_power(power_value,flag){
 						<select class="input_option" name="wl0_bsd_sta_select_policy_vht_s">
 							<option selected="" value="0" class="content_input_fd">all</option>
 							<option value="1" class="content_input_fd">AC only</option>
-							<option value="2" class="content_input_fd">Legacy</option>
+							<option value="2" class="content_input_fd">not-allowed</option>
 						</select>
 					</td>	
 					<td style="padding-left:12px">
 						<select class="input_option" name="wl1_bsd_sta_select_policy_vht_s">
 							<option selected="" value="0" class="content_input_fd">all</option>
 							<option value="1" class="content_input_fd">AC only</option>
-							<option value="2" class="content_input_fd">Legacy</option>
+							<option value="2" class="content_input_fd">not-allowed</option>
 						</select>
 					</td>										
 					<td style="padding-left:12px">
 						<select class="input_option" name="wl2_bsd_sta_select_policy_vht_s">
 							<option selected="" value="0" class="content_input_fd">all</option>
 							<option value="1" class="content_input_fd">AC only</option>
-							<option value="2" class="content_input_fd">Legacy</option>
+							<option value="2" class="content_input_fd">not-allowed</option>
 						</select>
 					</td>																	
 			</tr>	

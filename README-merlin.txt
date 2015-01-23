@@ -49,7 +49,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.378_3873 source code from Asus
+   - Based on 3.0.0.4.378_3913 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -644,7 +644,7 @@ History
    - IMPORTANT: Please read this changelog, especially the changes 
                 related to jffs, user scripts/config and OpenVPN.
 
-   - NEW: Merged with Asus 378_3873 GPL code.  Most notable changes:
+   - NEW: Merged with Asus 378_3913 GPL code.  Most notable changes:
             * TrendMicro DPI engine for RT-AC68U
             * Various updates to 3G/4G support and Dual WAN
 
@@ -711,8 +711,6 @@ History
            have been disabled.
   - FIXED: Very long SSIDs with special characters/spaces in them 
            would be shown as "undefined" in the banner.
-  - FIXED: CPU and RAM usage on main page would report NaN under
-           Internet Explorer (Asus bug)
 
 
 376.49_5 (9-Jan-2015)

@@ -867,7 +867,7 @@ var validator = {
 				return false;
 			}
 			
-			if((wan_route_x == "IP_Bridged" && wan_nat_x == "0") || sw_mode=="2" || sw_mode=="3")	// variables are defined in state.js
+			if(sw_mode == "2" || sw_mode == "3")	// variables are defined in state.js
 				;	// there is no WAN in AP mode, so it wouldn't be compared with the wan ip..., etc.
 			else if(this.requireWANIP(v) && (
 					(v=='wan_ipaddr_x' &&  this.matchSubnet2(o.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)) ||
@@ -903,7 +903,7 @@ var validator = {
 			}
 		}
 		
-		if((wan_route_x == "IP_Bridged" && wan_nat_x == "0") || sw_mode=="2" || sw_mode=="3")	// variables are defined in state.js
+		if(sw_mode=="2" || sw_mode=="3")	// variables are defined in state.js
 				;	// there is no WAN in AP mode, so it wouldn't be compared with the wan ip..., etc.
 		else if(this.requireWANIP(v) && (
 				(v=='wan_netmask_x' &&  this.matchSubnet2(document.form.wan_ipaddr_x.value, o, document.form.lan_ipaddr.value, document.form.lan_netmask)) ||

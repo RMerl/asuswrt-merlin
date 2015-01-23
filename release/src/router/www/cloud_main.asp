@@ -26,10 +26,6 @@ var $j = jQuery.noConflict();
 
 <% wanlink(); %>
 
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 <% apps_action(); %> //trigger apps_action.
 
 var cloud_status;

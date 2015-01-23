@@ -91,11 +91,7 @@
 
 </style>
 <script>
-var $j = jQuery.noConflict();
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-//var flag = 0;
+var $j = jQuery.noConflict();//var flag = 0;
 
 //Get boot loader version and convert type form string to Integer
 var bl_version = '<% nvram_get("bl_version"); %>';
@@ -701,11 +697,7 @@ function set_power(power_value){
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-<input type="hidden" name="wan_route_x" value="<% nvram_get("wan_route_x"); %>">
-<input type="hidden" name="wan_nat_x" value="<% nvram_get("wan_nat_x"); %>">
-
-<input type="hidden" name="wl_nmode_x" value="<% nvram_get("wl_nmode_x"); %>">
+<input type="hidden" name="productid" value="<% nvram_get("productid"); %>"><input type="hidden" name="wl_nmode_x" value="<% nvram_get("wl_nmode_x"); %>">
 <input type="hidden" name="wl_gmode_protection_x" value="<% nvram_get("wl_gmode_protection_x"); %>">
 
 <input type="hidden" name="current_page" value="Advanced_WAdvanced_Content.asp">

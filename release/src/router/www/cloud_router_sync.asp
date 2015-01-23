@@ -124,10 +124,6 @@ sizingMethod='scale')";
 var $j = jQuery.noConflict();
 <% wanlink(); %>
 <% get_AiDisk_status(); %>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var cloud_status = "";
 var cloud_obj = "";
 var cloud_msg = "";

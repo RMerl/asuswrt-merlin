@@ -179,10 +179,6 @@ function entry_cmp(entry, match, len){  //compare string length function
 	return 0;
 }
 
-
-
-
-
 function add_options_x2(o, arr, varr, orig){
 	free_options(o);
 	

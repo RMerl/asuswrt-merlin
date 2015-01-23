@@ -26,10 +26,6 @@
 
 var $j = jQuery.noConflict();
 
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 <% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;
 
 try {

@@ -16,10 +16,6 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <!--script language="JavaScript" type="text/javascript" src="/jquery.js"></script-->
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 function showclock(){
 	JS_timeObj.setTime(systime_millsec);
 	systime_millsec += 1000;

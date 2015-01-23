@@ -43,10 +43,6 @@ var wItem2 = new Array(new Array("", "", "TCP"),
 
 <% login_state_hook(); %>
 
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var overlib_str0 = new Array();	//Viz add 2011.07 for record longer virtual srvr rule desc
 var overlib_str = new Array();	//Viz add 2011.07 for record longer virtual srvr portrange value
 

@@ -121,8 +121,7 @@ function showdr_advise(setting){
 	};
 
 	if(parent.parent.document.forms[0].current_page.value == "/QIS_wizard.htm"
-			&& parent.parent.document.forms[0].wan_route_x.value == "IP_Bridged"
-			&& parent.parent.document.forms[0].wan_nat_x.value == "0"){
+			&& parent.parent.document.forms[0].sw_mode.value == "3"){
 		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
 		setTimeout("parent.parent.$('drword').innerHTML = '<#DrSurf_sweet_advise3#><br/><br/>'", 10000);
 		setTimeout(getXMLAndRedirect, restart_time*1000);

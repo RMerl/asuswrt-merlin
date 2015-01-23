@@ -61,8 +61,8 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
+
+
 var wans_caps = '<% nvram_get("wans_cap"); %>';
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 var wans_routing_rulelist_array = '<% nvram_get("wans_routing_rulelist"); %>';

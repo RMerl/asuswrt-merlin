@@ -37,10 +37,6 @@
 var $j = jQuery.noConflict();
 
 window.onresize = cal_panel_block;
-
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
 tr_enable = '<% nvram_get("tr_enable"); %>';
 
 var jffs2_support = isSupport("jffs2");

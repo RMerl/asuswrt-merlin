@@ -842,6 +842,7 @@ misc_defaults(int restore_defaults)
 #ifdef WEB_REDIRECT
 	nvram_set("freeze_duck", "0");
 #endif
+	nvram_unset("ateCommand_flag");
 }
 
 /* ASUS use erase nvram to reset default only */
@@ -1157,7 +1158,6 @@ restore_defaults(void)
 			break;
 	}
 
-	nvram_unset("ateCommand_flag");
 	misc_defaults(restore_defaults);
 }
 
@@ -4751,10 +4751,6 @@ fa_mode_adjust()
 		nvram_set_int("ctf_fa_mode", CTF_FA_DISABLED);
 		dbG("IPTV environment, disable FA mode\n");
 	}
-#ifdef RTCONFIG_RGMII_BRCM5301X
-	nvram_set_int("ctf_fa_mode", CTF_FA_DISABLED);
-	dbG("br0 issue, disable FA mode\n");
-#endif
 
 	fa_mode = nvram_get_int("ctf_fa_mode");
 }

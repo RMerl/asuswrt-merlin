@@ -199,11 +199,7 @@ var webs_state_info= '<% nvram_get("webs_state_info"); %>';
 
 
 // WAN
-<% wanlink(); %>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-var wanstate = -1;
+<% wanlink(); %>var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
 var Dev3G = '<% nvram_get("d3g"); %>';
@@ -690,12 +686,8 @@ function mouseEvent(obj, key){
 		icon = "iconInternet";
 	else if(obj.id.indexOf("Router") > 0)
 		icon = "iconRouter";
-	else if(obj.id.indexOf("Client") > 0){
-		if(wan_route_x == "IP_Bridged")
-			return;
-
+	else if(obj.id.indexOf("Client") > 0)
 		icon = "iconClient";
-	}
 	else if(obj.id.indexOf("USBdisk") > 0)
 		icon = "iconUSBdisk";
 	else if(obj.id.indexOf("Printer") > 0)

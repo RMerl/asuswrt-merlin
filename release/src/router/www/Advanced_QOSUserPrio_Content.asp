@@ -16,11 +16,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-var qos_orates = '<% nvram_get("qos_orates"); %>';
+<script>var qos_orates = '<% nvram_get("qos_orates"); %>';
 var qos_irates = '<% nvram_get("qos_irates"); %>';
 
 function initial(){

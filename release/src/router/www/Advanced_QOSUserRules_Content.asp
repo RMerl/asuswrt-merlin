@@ -63,10 +63,6 @@
 }
 </style>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var qos_rulelist_array = "<% nvram_char_to_ascii("","qos_rulelist"); %>";
 
 var overlib_str0 = new Array();	//Viz add 2011.06 for record longer qos rule desc

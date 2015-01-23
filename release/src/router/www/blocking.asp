@@ -49,11 +49,7 @@ body{
 
 .erpage_td{
 	background: #000; /* Old browsers */
-}
-
-
-
-.Epagecontent{
+}.Epagecontent{
 	font-size:12px;
 	border:1px dashed #333;
 	background-color:#FFF;

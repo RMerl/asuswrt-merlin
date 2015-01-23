@@ -91,8 +91,12 @@ var helpcontent = new Array();
 	}
 })();
 
-function suspendconn(wanenable){
-	document.internetForm_title.wan_enable.value = wanenable;
+function suspendconn(wan_index, wanenable){
+	if(wan_index == usb_index)
+		document.internetForm_title.modem_enable.value = wanenable;
+	else
+		document.internetForm_title.wan_enable.value = wanenable;
+	document.internetForm_title.wan_unit.value = wan_index;
 	showLoading();
 	document.internetForm_title.submit();	
 }
@@ -155,6 +159,9 @@ function gotoModem(){
 }
 
 var debug_end_time = parseInt("<% nvram_get("dslx_diag_end_uptime"); %>");
+var wans_mode = '<%nvram_get("wans_mode");%>';
+var wans_lanport = '<% nvram_get("wans_lanport"); %>';
+
 function overHint(itemNum){
 	var statusmenu = "";
 	var title2 = 0;
@@ -163,6 +170,13 @@ function overHint(itemNum){
 	
 	if(itemNum == 50){
 		statusmenu ="<span>Enable PPTP or L2TP client (optional)</span>";
+	}
+	
+	if(itemNum == 90){
+		statusmenu ="<span>Enable this function allow you to block websites used to display banner or popup advertisement.</span>";		 
+	}
+	else if(itemNum == 89){
+		statusmenu ="<span>Enable this function allow block advertisement in the streaming video.</span>";		 
 	}
 	
 	if(itemNum == 91){
@@ -217,8 +231,10 @@ function overHint(itemNum){
 			statusmenu += "<div class='StatusHint'><#Mobile_wait_sim#></div>";	
 		else if(sim_state == "-1")
 			statusmenu += "<div class='StatusHint'><#Mobile_sim_miss#></div>";
+		else if(sim_state == "-10" || sim_state == "-2")
+			statusmenu += "<div><#Mobile_sim_fail#></div>";
 		else
-			statusmenu += "<div class='StatusHint'><#Mobile_sim_fail#></div>";
+			statusmenu += "<div><#Mobile_fail_connect#></div>";
 	}	
 		
 	if(itemNum == 24)		
@@ -452,45 +468,272 @@ function overHint(itemNum){
 
 	// internet
 	if(itemNum == 3){
-		if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
-			statusmenu = "<div class='StatusHint'><#statusTitle_Internet#>:</div>";
-			statusmenu += "<span><#Connected#></span>";
-		}
-		else{
-			if(sw_mode == 1){
-				if(link_auxstatus == "1")
-					statusmenu = "<span class='StatusHint'><#QKSet_detect_wanconnfault#></span>";
-				else if(link_sbstatus == "1")
-					statusmenu = "<span class='StatusHint'><#web_redirect_reason3_2#></span>";
-				else if(link_sbstatus == "2")
-					statusmenu = "<span class='StatusHint'><#QKSet_Internet_Setup_fail_reason2#></span>";
-				else if(link_sbstatus == "3")
-					statusmenu = "<span class='StatusHint'><#QKSet_Internet_Setup_fail_reason1#></span>";
-				else if(link_sbstatus == "4")
-					statusmenu = "<span class='StatusHint'><#web_redirect_reason5_2#></span>";
-				else if(link_sbstatus == "5")
-					statusmenu = "<span class='StatusHint'><#web_redirect_reason5_1#></span>";
-				else if(link_sbstatus == "6")
-					statusmenu = "<span class='StatusHint'>WAN_STOPPED_SYSTEM_ERROR</span>";
-				else
-					statusmenu = "<span class='StatusHint'><#web_redirect_reason2_2#></span>";
+		if(dualWAN_support && wans_dualwan_array.indexOf("none") == -1)
+			statusmenu = "<div class='StatusHint'><#dualwan_primary#>:</div>";			
+		else
+			statusmenu = "<div class='StatusHint'><#statusTitle_Internet#>:</div>";	
+
+		if( wans_dualwan_array[0] == "wan")
+			statusmenu += "<b><#Ethernet_wan#> -</b><br>";
+		else if( wans_dualwan_array[0] == "lan")
+			statusmenu += "<b><#menu5_2#>"+wans_lanport+" -</b><br>";
+		else if( wans_dualwan_array[0] == "usb"){
+			if(gobi_support)
+				statusmenu += "<b><#Mobile_title#> -</b><br>";
+			else
+				statusmenu += "<b><#menu5_4_4#> -</b><br>";
+		}	
+
+		if(dualWAN_support && wans_dualwan_array.indexOf("none") == -1 ){
+			if((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")){
+				if((wans_mode == "fo" || wans_mode == "fb") && active_wan_unit == "1")
+					statusmenu += "<span>Standby</span>";
+				else	
+					statusmenu += "<span><#Connected#></span>";
 			}
-			else if(sw_mode == 2 || sw_mode == 4){
-				if(_wlc_state == "wlc_state=2"){
-					statusmenu = "<span class='StatusHint'><#APSurvey_msg_connected#></span><br>";
-					if(wlc_band == 0)	
-						statusmenu += "<b>Link rate: </b>"+ data_rate_info_2g;
-					else if(wlc_band == 1)
-						statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g;
-					else if(wlc_band == 2)
-						statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g_2;
-				}	
-				else{
-					if(_wlc_sbstate == "wlc_sbstate=2")
-						statusmenu = "<span class='StatusHint'><#APSurvey_action_ConnectingStatus1#></span>";
-					else
-						statusmenu = "<span class='StatusHint'><#APSurvey_action_ConnectingStatus0#></span>";
+			else{
+				if(sw_mode == 1){
+					if( wans_dualwan_array[0] == "usb"){
+						if(modem_enable == "0"){
+							if(gobi_support)
+								statusmenu += "<div>Mobile Broadband is disabled.</div>";
+							else
+								statusmenu += "<div>USB Modem is disabled.</div>";
+						}
+						else{	
+							if(sim_state != ""){
+								if(sim_state == "2"){
+									if( g3err_pin == "1" && pin_remaining_count < 3)
+										statusmenu += "<div>Wrong PIN code. Please input the correct PIN code.</div>";
+									else
+										statusmenu += "<div><#Mobile_need_pin#></div>";
+								}
+								else if(sim_state == "3")
+									statusmenu += "<div><#Mobile_need_puk#></div>";
+								else if(sim_state == "4")
+									statusmenu += "<div><#Mobile_need_pin2#></div>";
+								else if(sim_state == "5")
+									statusmenu += "<div><#Mobile_need_puk2#></div>";		
+								else if(sim_state == "6")
+									statusmenu += "<div><#Mobile_wait_sim#></div>";	
+								else if(sim_state == "-1")
+									statusmenu += "<div><#Mobile_sim_miss#></div>";
+								else if(sim_state == "-10" || sim_state == "-2")
+									statusmenu += "<div><#Mobile_sim_fail#></div>";
+								else
+									statusmenu += "<div><#Mobile_fail_connect#></div>";
+							}
+							else
+								statusmenu += "<span><#Disconnected#></span>";											
+						}
+					}
+					else{
+						if(wan0_enable == 0){
+							statusmenu += "<span>WAN is disabled.</span>";
+						}
+						else{
+							if(first_link_auxstatus == "1"){
+								if( wans_dualwan_array[0] == "lan"){
+									statusmenu += "<span>Please check that the ethernet cable is connected properly to the <#menu5_2#>"+wans_lanport+" port.</span>";
+								}
+								else	
+									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";
+							}
+							else if(first_link_sbstatus == "1")
+								statusmenu += "<span><#web_redirect_reason3_2#></span>";
+							else if(first_link_sbstatus == "2")
+								statusmenu += "<span><#QKSet_Internet_Setup_fail_reason2#></span>";
+							else if(first_link_sbstatus == "3")
+								statusmenu += "<span><#QKSet_Internet_Setup_fail_reason1#></span>";
+							else if(first_link_sbstatus == "4")
+								statusmenu += "<span><#web_redirect_reason5_2#></span>";
+							else if(first_link_sbstatus == "5")
+								statusmenu += "<span><#web_redirect_reason5_1#></span>";
+							else if(first_link_sbstatus == "6")
+								statusmenu += "<span>WAN_STOPPED_SYSTEM_ERROR</span>";
+							else
+								//statusmenu += "<span><#web_redirect_reason2_2#></span>";
+								statusmenu += "<span><#Disconnected#></span>";	
+						}	
+					}
+				}		
+			}
+		}
+		else{	
+			if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
+				statusmenu += "<span><#Connected#></span>";
+			}
+			else{
+				if(sw_mode == 1){
+					if( wans_dualwan_array[0] == "usb"){
+						if(modem_enable == "0"){
+							if(gobi_support)
+								statusmenu += "<div>Mobile Broadband is disabled.</div>";
+							else
+								statusmenu += "<div>USB Modem is disabled.</div>";							
+						}
+						else{	
+							if(sim_state != ""){
+								if(sim_state == "2"){
+									if( g3err_pin == "1" && pin_remaining_count < 3)
+										statusmenu += "<div>Wrong PIN code. Please input the correct PIN code.</div>";
+									else
+										statusmenu += "<div><#Mobile_need_pin#></div>";
+								}
+								else if(sim_state == "3")
+									statusmenu += "<div><#Mobile_need_puk#></div>";
+								else if(sim_state == "4")
+									statusmenu += "<div><#Mobile_need_pin2#></div>";
+								else if(sim_state == "5")
+									statusmenu += "<div><#Mobile_need_puk2#></div>";		
+								else if(sim_state == "6")
+									statusmenu += "<div><#Mobile_wait_sim#></div>";	
+								else if(sim_state == "-1")
+									statusmenu += "<div><#Mobile_sim_miss#></div>";
+								else if(sim_state == "-10" || sim_state == "-2")
+									statusmenu += "<div><#Mobile_sim_fail#></div>";
+								else
+									statusmenu += "<div><#Mobile_fail_connect#></div>";
+							}
+							else
+								statusmenu += "<span><#Disconnected#></span>";	
+						}											
+					}
+					else{
+						if(wan0_enable == 0){
+							statusmenu += "<span>WAN is disabled.</span>";
+						}
+						else{
+							if(link_auxstatus == "1"){
+								if( wans_dualwan_array[0] == "lan"){
+									statusmenu += "<span>Please check that the ethernet cable is connected properly to the <#menu5_2#>"+wans_lanport+" port.</span>";
+								}
+								else	
+									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";
+							}
+							else if(link_sbstatus == "1")
+								statusmenu += "<span><#web_redirect_reason3_2#></span>";
+							else if(link_sbstatus == "2")
+								statusmenu += "<span><#QKSet_Internet_Setup_fail_reason2#></span>";
+							else if(link_sbstatus == "3")
+								statusmenu += "<span><#QKSet_Internet_Setup_fail_reason1#></span>";
+							else if(link_sbstatus == "4")
+								statusmenu += "<span><#web_redirect_reason5_2#></span>";
+							else if(link_sbstatus == "5")
+								statusmenu += "<span><#web_redirect_reason5_1#></span>";
+							else if(link_sbstatus == "6")
+								statusmenu += "<span>WAN_STOPPED_SYSTEM_ERROR</span>";
+							else
+								//statusmenu += "<span><#web_redirect_reason2_2#></span>";
+								statusmenu += "<span><#Disconnected#></span>";	
+						}
+					}
 				}
+				else if(sw_mode == 2 || sw_mode == 4){
+					if(_wlc_state == "wlc_state=2"){
+						statusmenu += "<span><#APSurvey_msg_connected#></span><br><br>";
+						if(wlc_band == 0)	
+							statusmenu += "<b>Link rate: </b>"+ data_rate_info_2g;
+						else if(wlc_band == 1)
+							statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g;
+						else if(wlc_band == 2)
+							statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g_2;
+					}	
+					else{
+						if(_wlc_sbstate == "wlc_sbstate=2")
+							statusmenu += "<span><#APSurvey_action_ConnectingStatus1#></span>";
+						else
+							statusmenu += "<span><#APSurvey_action_ConnectingStatus0#></span>";
+					}
+				}
+			}
+		}
+
+		if(sw_mode == 1){
+			if(dualWAN_support && wans_dualwan_array[1] != "none" ){
+				statusmenu += "<div class='StatusHint'><br><#dualwan_secondary#>:</div>";	
+				if( wans_dualwan_array[1] == "wan")
+					statusmenu += "<b><#Ethernet_wan#> -</b><br>";
+				else if( wans_dualwan_array[1] == "lan")
+					statusmenu += "<b><#menu5_2#>"+wans_lanport+" -</b><br>";
+				else if( wans_dualwan_array[1] == "usb"){
+					if(gobi_support)
+						statusmenu += "<b><#Mobile_title#> -</b><br>";
+					else
+						statusmenu += "<b><#menu5_4_4#> -</b><br>";
+				}
+
+				if(secondary_link_status == "2" && (secondary_link_auxstatus == "0" || secondary_link_auxstatus == "2")){				
+					if((wans_mode == "fo" || wans_mode == "fb") && active_wan_unit == "0")
+						statusmenu += "<span>Standby</span>";
+					else	
+						statusmenu += "<span><#Connected#></span>";
+				}
+				else{
+					if( wans_dualwan_array[1] == "usb"){
+						if(modem_enable == "0"){
+							if(gobi_support)
+								statusmenu += "<div>Mobile Broadband is disabled.</div>";
+							else
+								statusmenu += "<div>USB Modem is disabled.</div>";							
+						}
+						else{
+							if(sim_state != ""){
+								if(sim_state == "2"){
+									if( g3err_pin == "1" && pin_remaining_count < 3)
+										statusmenu += "<div>Wrong PIN code. Please input the correct PIN code.</div>";
+									else
+										statusmenu += "<div><#Mobile_need_pin#></div>";
+								}
+								else if(sim_state == "3")
+									statusmenu += "<div><#Mobile_need_puk#></div>";
+								else if(sim_state == "4")
+									statusmenu += "<div><#Mobile_need_pin2#></div>";
+								else if(sim_state == "5")
+									statusmenu += "<div><#Mobile_need_puk2#></div>";		
+								else if(sim_state == "6")
+									statusmenu += "<div><#Mobile_wait_sim#></div>";	
+								else if(sim_state == "-1")
+									statusmenu += "<div><#Mobile_sim_miss#></div>";
+								else if(sim_state == "-10" || sim_state == "-2")
+									statusmenu += "<div><#Mobile_sim_fail#></div>";
+								else
+									statusmenu += "<div><#Mobile_fail_connect#></div>";
+							}
+							else
+								statusmenu += "<span><#Disconnected#></span>";
+						}
+					}
+					else{
+						if(wan1_enable == 0){
+							statusmenu += "<span>WAN is disabled.</span>";
+						}
+						else{
+							if(secondary_link_auxstatus == "1"){
+								if( wans_dualwan_array[1] == "lan"){
+									statusmenu += "<span>Please check that the ethernet cable is connected properly to the <#menu5_2#>"+wans_lanport+" port.</span>";
+								}
+								else	
+									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";
+							}
+							else if(secondary_link_sbstatus == "1")
+								statusmenu += "<span><#web_redirect_reason3_2#></span>";
+							else if(secondary_link_sbstatus == "2")
+								statusmenu += "<span><#QKSet_Internet_Setup_fail_reason2#></span>";
+							else if(secondary_link_sbstatus == "3")
+								statusmenu += "<span><#QKSet_Internet_Setup_fail_reason1#></span>";
+							else if(secondary_link_sbstatus == "4")
+								statusmenu += "<span><#web_redirect_reason5_2#></span>";
+							else if(secondary_link_sbstatus == "5")
+								statusmenu += "<span><#web_redirect_reason5_1#></span>";
+							else if(secondary_link_sbstatus == "6")
+								statusmenu += "<span>WAN_STOPPED_SYSTEM_ERROR</span>";
+							else
+								//statusmenu += "<span><#web_redirect_reason2_2#></span>";
+								statusmenu += "<span><#Disconnected#></span>";
+						}		
+					}
+				}						
 			}
 		}
 	}
@@ -517,9 +760,6 @@ function overHint(itemNum){
 					if(usbDevicesList[i].hasTM)
 						statusmenu += "<div>Time Machine</div>";
 				}
-			}
-			if(statusmenu == ""){
-				statusmenu = "<div class='StatusHint'><#no_usb_found#></div>";
 			}
 
 			if( statusmenu == "" )
@@ -551,6 +791,7 @@ function cancel_diag(){
 }
 
 function openHint(hint_array_id, hint_show_id, flag){
+	statusmenu = "";
 	if(hint_array_id == 24){
 		var _caption = "";
 
@@ -589,37 +830,51 @@ function openHint(hint_array_id, hint_show_id, flag){
 		}
 		else if(hint_show_id == 3){
 			if(sw_mode == 1){				
-				if(!dualWAN_support && 
-						((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2"))
-				)
-					statusmenu = "<span class='StatusClickHint' onclick='suspendconn(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";	
-				else if(dualWAN_support && 
-						((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2"))
-				){
-					if(wans_dualwan_orig.search("none")<0)					
-						statusmenu = "<span class='StatusClickHint' onclick='goToWAN();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#btn_to_WAN#></span>";
-					else
-						statusmenu = "<span class='StatusClickHint' onclick='suspendconn(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";		
-				}					
-				else if(link_status == "5")
-					statusmenu = "<span class='StatusClickHint' onclick='suspendconn(1);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#reconnect_internet#></span>";
+				if(!dualWAN_support || wans_dualwan_array[1] == "none"){
+					if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2"))
+						statusmenu = "<span class='StatusClickHint' onclick='suspendconn(0, 0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";
+					else{
+						statusmenu = "<span class='StatusClickHint' onclick='goToWAN(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
+						if(usb_index == 0){
+							if(gobi_support)
+								statusmenu += "Go to Mobile Broadband Setting.</span>";
+							else
+								statusmenu += "<#GO_HSDPA_SETTING#></span>";
+						}	
+						else
+							statusmenu += "Go to WAN Setting.</span>";	
+					}
+				}	
 				else{
-					if(link_auxstatus == "1")
-						statusmenu = "<span class='StatusHint'><#QKSet_detect_wanconnfault#></span>";
-					else if(link_sbstatus == "1")
-						statusmenu = "<span class='StatusHint'><#web_redirect_reason3_2#></span>";
-					else if(link_sbstatus == "2")
-						statusmenu = "<span class='StatusHint'><#QKSet_Internet_Setup_fail_reason2#></span>";
-					else if(link_sbstatus == "3")
-						statusmenu = "<span class='StatusHint'><#QKSet_Internet_Setup_fail_reason1#></span>";
-					else if(link_sbstatus == "4")
-						statusmenu = "<span class='StatusHint'><#web_redirect_reason5_2#></span>";
-					else if(link_sbstatus == "5")
-						statusmenu = "<span class='StatusHint'><#web_redirect_reason5_1#></span>";
-					else if(link_sbstatus == "6")
-						statusmenu = "<span class='StatusHint'>WAN_STOPPED_SYSTEM_ERROR</span>";
-					else
-						statusmenu = "<span class='StatusHint'><#web_redirect_reason2_2#></span>";
+					statusmenu = "<div class='StatusHint'><#dualwan_primary#>:</div>";			
+					if((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2"))
+						statusmenu += "<span class='StatusClickHint' onclick='suspendconn(0, 0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";
+					else{
+						statusmenu += "<span class='StatusClickHint' onclick='goToWAN(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
+						if(usb_index == 0){
+							if(gobi_support)
+								statusmenu += "Go to Mobile Broadband Setting.</span>";
+							else
+								statusmenu += "<#GO_HSDPA_SETTING#></span>";
+						}	
+						else
+							statusmenu += "Go to WAN Setting.</span>";							
+					}
+
+					statusmenu += "<div class='StatusHint'><br><#dualwan_secondary#>:</div>";
+					if((secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2"))
+						statusmenu += "<span class='StatusClickHint' onclick='suspendconn(1, 0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#disconnect_internet#></span>";
+					else{
+						statusmenu += "<span class='StatusClickHint' onclick='goToWAN(1);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
+						if(usb_index == 1){
+							if(gobi_support)
+								statusmenu += "Go to Mobile Broadband Setting.</span>";
+							else
+								statusmenu += "<#GO_HSDPA_SETTING#></span>";
+						}	
+						else
+							statusmenu += "Go to WAN Setting.</span>";							
+					}				
 				}
 			}
 			else if(sw_mode == 2){
@@ -789,10 +1044,6 @@ if (typeof ol_caps=='undefined') var ol_caps = new Array("Caption 0", "Caption 1
 // END OF CONFIGURATION
 // Don't change anything below this line, all configuration is above.
 ////////
-
-
-
-
 
 ////////
 // INIT
@@ -2400,9 +2651,18 @@ String.prototype.strReverse = function() {
 
 // ---------- Viz add for pwd strength check [End] 2012.12 -----
 
-function goToWAN(){
-	if(dualWAN_support)
-		parent.location.href = '/Advanced_WANPort_Content.asp';
-	else	
-		parent.location.href = '/Advanced_WAN_Content.asp';
+function goToWAN(index){
+	document.titleForm.wan_unit.value = index;
+	if(index == usb_index){
+		if(gobi_support)
+			document.titleForm.current_page.value = "Advanced_MobileBroadband_Content.asp?af=pincode";
+		else
+			document.titleForm.current_page.value = "Advanced_Modem_Content.asp";
+	}
+	else
+		document.titleForm.current_page.value = "Advanced_WAN_Content.asp";
+	document.titleForm.action_mode.value = "change_wan_unit";
+	document.titleForm.action = "apply.cgi";
+	document.titleForm.target = "";
+	document.titleForm.submit();		
 }

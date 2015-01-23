@@ -3085,20 +3085,11 @@ static int secondary_wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 	wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 
 	if (dualwan_unit__usbif(unit)) {
-		if(wan_state == WAN_STATE_INITIALIZING){
-			status = 0;
-		}
-		else if(wan_state == WAN_STATE_CONNECTING){
-			status = 0;
-		}
-		else if(wan_state == WAN_STATE_DISCONNECTED){
-			status = 0;
-		}
-		else if(wan_state == WAN_STATE_STOPPED){
-			status = 0;
+		if(wan_state == WAN_STATE_CONNECTED){
+			status = 1;
 		}
 		else{
-			status = 1;
+			status = 0;
 		}
 	}
 	else if(wan_state == WAN_STATE_DISABLED){

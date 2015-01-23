@@ -26,10 +26,6 @@
 
 var $j = jQuery.noConflict();
 var jData;
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var yadns_rule_list = '<% nvram_get("yadns_rulelist"); %>'.replace(/&#60/g, "<");
 var yadns_rule_list_row = yadns_rule_list.split('<');
 

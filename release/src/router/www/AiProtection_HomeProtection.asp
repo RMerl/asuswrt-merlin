@@ -67,11 +67,7 @@
 	background-color:#FF7575;
 }
 .status_no a{
-	text-decoration:underline;
-
-
-
-}
+	text-decoration:underline;}
 .status_yes{
 	background-color:#1CFE16;
 }

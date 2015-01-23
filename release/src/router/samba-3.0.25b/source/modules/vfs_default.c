@@ -444,7 +444,7 @@ static int vfswrap_rename(vfs_handle_struct *handle,  const char *oldname, const
 
 	START_PROFILE(syscall_rename);
 	result = rename(oldname, newname);
-	if (errno == EXDEV) {
+	if ((result == -1) && (errno == EXDEV)) {
 		/* Rename across filesystems needed. */
 		result = copy_reg(oldname, newname);
 	}
@@ -635,7 +635,7 @@ static int vfswrap_ntimes(vfs_handle_struct *handle, const char *path, const str
 		struct utimbuf times;
 		times.actime = convert_timespec_to_time_t(ts[0]);
 		times.modtime = convert_timespec_to_time_t(ts[1]);
-		result = utime(path, times);
+		result = utime(path, &times);
 	}
 #else
 	errno = ENOSYS;
@@ -717,20 +717,51 @@ static int vfswrap_ftruncate(vfs_handle_struct *handle, files_struct *fsp, int f
 		return result;
 	}
 
+#if 1 // AVM patch - don't growth the file  (too much time and RAM for copy of large files to USB1.1 FAT filesystem)
+	SMB_BIG_UINT big_len = len;
+
+	result = SMB_VFS_FSTAT(fsp,fsp->fh->fd,&st);
+	if (result == -1) {
+		goto done;
+	}
+
+	if (big_len == (SMB_BIG_UINT)st.st_size) {
+		result = 0;
+		goto done;
+	}
+
+	if (big_len > (SMB_BIG_UINT)st.st_size) {
+		SMB_BIG_UINT space_avail;
+		SMB_BIG_UINT bsize,dfree,dsize;
+		big_len -= st.st_size;
+		big_len /= st.st_blksize; /* Len is now number of blocks needed. */
+		space_avail = SMB_VFS_DISK_FREE(fsp->conn ,fsp->fsp_name,False,&bsize,&dfree,&dsize);
+		if (space_avail == (SMB_BIG_UINT)-1) {
+			result = -1;
+			goto done;
+		}
+
+		if (big_len > space_avail) {
+			errno = ENOSPC;
+			result = -1;
+			goto done;
+		}
+
+		// do nothing to be fast!
+		result = 0;
+		goto done;
+	}
+#endif // AVM Patch
+
 	/* we used to just check HAVE_FTRUNCATE_EXTEND and only use
 	   sys_ftruncate if the system supports it. Then I discovered that
 	   you can have some filesystems that support ftruncate
 	   expansion and some that don't! On Linux fat can't do
 	   ftruncate extend but ext2 can. */
 
-#if 1
 	result = sys_ftruncate(fd, len);
-	//if (result == 0)
+	if (result == 0)
 		goto done;
-#else
-	result = 0;
-	goto done;
-#endif
 
 	/* According to W. R. Stevens advanced UNIX prog. Pure 4.3 BSD cannot
 	   extend a file with ftruncate. Provide alternate implementation

@@ -29,11 +29,7 @@ html .fc,
 .fc th {
 	padding: 0;
 	vertical-align: top;
-	}
-
-
-
-/* Header
+	}/* Header
 ------------------------------------------------------------------------*/
 .fc-header{
 	display:none;
