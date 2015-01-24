@@ -69,10 +69,6 @@
 <script>
 var $j = jQuery.noConflict();
 
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var apps_array = <% apps_info("asus"); %>;
 
 <% apps_state_info(); %>

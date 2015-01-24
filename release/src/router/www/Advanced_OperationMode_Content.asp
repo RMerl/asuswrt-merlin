@@ -87,10 +87,6 @@
 }
 </style>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var sw_mode_orig = '<% nvram_get("sw_mode"); %>';
 if((sw_mode_orig == 2 || sw_mode_orig == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode_orig = 4;

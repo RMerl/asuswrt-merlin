@@ -20,11 +20,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-<% wl_get_parameter(); %>
+<script><% wl_get_parameter(); %>
 
 wl_channel_list_2g = '<% channel_list_2g(); %>';
 wl_channel_list_5g = '<% channel_list_5g(); %>';
@@ -454,8 +450,8 @@ function high_power_auto_channel(){
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" action="/start_apply2.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-<input type="hidden" name="wan_route_x" value="<% nvram_get("wan_route_x"); %>">
-<input type="hidden" name="wan_nat_x" value="<% nvram_get("wan_nat_x"); %>">
+
+
 <input type="hidden" name="current_page" value="Advanced_Wireless_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_Wireless_Content.asp">
 <input type="hidden" name="modified" value="0">

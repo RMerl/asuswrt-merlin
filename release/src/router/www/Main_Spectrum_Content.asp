@@ -19,10 +19,6 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type='text/javascript'>
 var $j = jQuery.noConflict();
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var bpc_us = new Array();
 var bpc_ds = new Array();
 var snr = new Array();

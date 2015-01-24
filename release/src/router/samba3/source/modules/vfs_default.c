@@ -718,7 +718,6 @@ static int vfswrap_ftruncate(vfs_handle_struct *handle, files_struct *fsp, int f
 	}
 
 #if 1 // AVM patch - don't growth the file  (too much time and RAM for copy of large files to USB1.1 FAT filesystem)
-	{ 
 	SMB_BIG_UINT big_len = len;
 
 	result = SMB_VFS_FSTAT(fsp,fsp->fh->fd,&st);
@@ -735,7 +734,7 @@ static int vfswrap_ftruncate(vfs_handle_struct *handle, files_struct *fsp, int f
 		SMB_BIG_UINT space_avail;
 		SMB_BIG_UINT bsize,dfree,dsize;
 		big_len -= st.st_size;
-		big_len /= 1024; /* Len is now number of 1k blocks needed. */
+		big_len /= st.st_blksize; /* Len is now number of blocks needed. */
 		space_avail = SMB_VFS_DISK_FREE(fsp->conn ,fsp->fsp_name,False,&bsize,&dfree,&dsize);
 		if (space_avail == (SMB_BIG_UINT)-1) {
 			result = -1;
@@ -752,7 +751,6 @@ static int vfswrap_ftruncate(vfs_handle_struct *handle, files_struct *fsp, int f
 		result = 0;
 		goto done;
 	}
-	} // block
 #endif // AVM Patch
 
 	/* we used to just check HAVE_FTRUNCATE_EXTEND and only use
@@ -851,7 +849,7 @@ static int vfswrap_linux_setlease(vfs_handle_struct *handle, files_struct *fsp, 
 
 	START_PROFILE(syscall_linux_setlease);
 
-#ifdef HAVE_KERNEL_OPLOCKS_LINUX
+#ifdef LINUX
 	/* first set the signal handler */
 	if(linux_set_lease_sighandler(fd) == -1)
 		return -1;

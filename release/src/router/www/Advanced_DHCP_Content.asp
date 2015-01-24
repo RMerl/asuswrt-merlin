@@ -59,10 +59,6 @@
 }
 </style>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var dhcp_staticlist_array = '<% nvram_get("dhcp_staticlist"); %>';
 
 if(pptpd_support){

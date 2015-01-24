@@ -201,7 +201,7 @@ OP_MB_desc4=Nakonfigurujte jeden ZVMODELVZ jako směrovač a druhý ZVMODELVZ ja
 [###MODEL_DEP###][RT-N18U]OP_MB_desc4=Nakonfigurujte jeden ZVMODELVZ jako směrovač a druhý ZVMODELVZ jako most médií 802.11n pro dosažení simultánního připojení 802.11n Wi-Fi pro vaše mediální zařízení, například počítač, chytrý televizor, herní konzolu, DVR nebo přehrávač médií prostřednictvím ethernetového kabelu.
 OP_MB_desc5=Přepnutím na režim mostu médií dosáhnete simultánní připojení 802.11ac Wi-Fi pro vaše mediální zařízení.
 [###MODEL_DEP###][RT-N18U]OP_MB_desc5=Přepnutím na režim mostu médií dosáhnete simultánní připojení 802.11n Wi-Fi pro vaše mediální zařízení.
-OP_MB_desc6=V režimu mediálního mostu se mohou k P-AP připojit pouze bezdrátová zařízení. Klientská zařízení musí být připojena k mediálnímu mostu bez kabelu.
+OP_MB_desc6=V režimu mediálního mostu se mohou k P-AP připojit pouze bezdrátová zařízení. Klientská zařízení musí být k mediálnímu mostu připojena pomocí kabelu.
 OP_MB_desc7=ZVMODELVZ v režimu mediálního mostu. IP adresa byla změněna.
 OP_MB_desc8=Pro identifikaci IP adresy mediálního mostu si stáhněte utilitu k nalezení zařízení <a href='http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/Discovery.zip' target='_blank' style='font-family:Lucida Console;text-decoration:underline;color:#FC0;'>Device Discovery Utility</a>.
 OP_MB_desc9=Zkontrolujte, zda jste odpojili síťový kabel od portu WAN.

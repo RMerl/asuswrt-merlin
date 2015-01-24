@@ -38,7 +38,7 @@
 	*margin-top:27px;	
 	margin-left:35px;
 	*margin-left:-133px;
-	width:350px;
+	width:360px;
 	text-align:left;	
 	height:auto;
 	overflow-y:auto;
@@ -71,10 +71,6 @@
 </style>
 <script>
 var $j = jQuery.noConflict();
-
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-
 <% wl_get_parameter(); %>
 
 // merge wl_maclist_x

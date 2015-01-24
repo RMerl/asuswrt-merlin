@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -76,7 +77,7 @@
 }
 
 .cpu_div{
-	margin-top:-10px;
+	margin-top:-5px;
 }
 </style>
 <script>
@@ -223,15 +224,15 @@ function detect_CPU_RAM(){
 			cpu_object = data.getElementsByTagName('cpu');
 			for(i=0;i<core_num;i++){
 				cpu_info_new[i] = {
-					total: cpu_object[i].getElementsByTagName('total')[0].childNodes[0].nodeValue,
-					usage: cpu_object[i].getElementsByTagName('usage')[0].childNodes[0].nodeValue
+					total: cpu_object[i].childNodes[1].textContent,
+					usage: cpu_object[i].childNodes[3].textContent
 				};
 			}
 			mem_info = data.getElementsByTagName('mem_info')[0];
 			mem_object = {
-				total: mem_info.getElementsByTagName('total')[0].childNodes[0].nodeValue,
-				free: mem_info.getElementsByTagName('free')[0].childNodes[0].nodeValue,
-				used: mem_info.getElementsByTagName('used')[0].childNodes[0].nodeValue
+				total: mem_info.getElementsByTagName('total')[0].textContent,
+				free: mem_info.getElementsByTagName('free')[0].textContent,
+				used: mem_info.getElementsByTagName('used')[0].textContent,	
 			}
 			
 			render_CPU(cpu_info_new);
@@ -318,7 +319,10 @@ function generate_cpu_field(){
 		$('cpu'+i+'_graph').style.display = "";
 	}
 
-	document.getElementById('cpu_field').innerHTML = code;
+	if(getBrowser_info().ie == "9.0")
+		document.getElementById('cpu_field').outerHTML = code;
+	else
+		document.getElementById('cpu_field').innerHTML = code;
 }
 
 </script>

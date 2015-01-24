@@ -23,10 +23,6 @@
 
 <script type='text/javascript'>
 
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 <% backup_nvram("wan_ifname,lan_ifname,wl_ifname,wan_proto,web_svg,rstats_colors,cstats_enable"); %>
 
 var cprefix = 'bw_r';

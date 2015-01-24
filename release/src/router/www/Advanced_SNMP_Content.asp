@@ -15,11 +15,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
-<script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-snmpd_enable = '<% nvram_get("snmpd_enable"); %>';
+<script>snmpd_enable = '<% nvram_get("snmpd_enable"); %>';
 //v3_auth_type = '<% nvram_get("v3_auth_type"); %>';
 //v3_priv_type = '<% nvram_get("v3_priv_type"); %>';
 

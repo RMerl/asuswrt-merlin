@@ -283,11 +283,6 @@ QTN_RESET:
 	}
 
 	dbG("[dbg] qtn_monitor startup\n");
-#ifdef RTCONFIG_RGMII_BRCM5301X
-	/* br0 loop issue */
-//	sleep(2);
-//	eval("ifconfig", "lo", "down");
-#endif
 ERROR:
 	remove("/var/run/qtn_monitor.pid");
 

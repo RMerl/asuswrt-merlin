@@ -157,11 +157,7 @@ function reset_diag_state(){
 </div>
 
 <div id="fb_deny" style="display:none;">
-</div>	
-
-
-
-<div class="apply_gen">
+</div>	<div class="apply_gen">
 			<input class="button_gen" onclick="redirect();" type="button" value="<#Main_alert_proceeding_desc3#>"/>
 </div>
 </td>

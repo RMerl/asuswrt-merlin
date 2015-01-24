@@ -207,8 +207,7 @@ function get_value_from_parent(){
 	document.form.wan_hwaddr_x.value = parent.document.QKform.wan_hwaddr_x.value;
 	document.form.wan_hwaddr_x_m.value = parent.document.QKform.wan_hwaddr_x.value;
 	
-	document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
-	document.form.wan_route_x.value = parent.document.QKform.wan_route_x.value;
+	
 	
 	document.form.lan_ipaddr.value = parent.document.QKform.lan_ipaddr.value;
 	document.form.lan_netmask.value = parent.document.QKform.lan_netmask.value;
@@ -660,11 +659,7 @@ function simplyMAC(fullMAC){
 
 function simple_showLoading(){
 	document.getElementById("loadingIcon").style.display = "";
-}
-
-
-
-function validForm(){
+}function validForm(){
 	if(!validate_ip()){
 		changeiuiBackground(0);
 		return false;
@@ -879,8 +874,8 @@ function displayDNSCtrl(){
 <input type="hidden" name="wan_pppoe_username" value="">
 <input type="hidden" name="wan_pppoe_passwd" value="">
 <input type="hidden" name="wan_hostname" value="">
-<input type="hidden" name="wan_nat_x" value="">
-<input type="hidden" name="wan_route_x" value="">
+
+
 <input type="hidden" name="lan_ipaddr" value="">
 <input type="hidden" name="lan_netmask" value="">
 <input type="hidden" name="x_Setting" id="x_Setting" value="" disabled>

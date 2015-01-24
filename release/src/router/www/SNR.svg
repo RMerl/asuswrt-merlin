@@ -169,11 +169,7 @@ function setText(e, text){
 	if(e.firstChild)
 		e.removeChild(e.firstChild);
 	e.appendChild(document.createTextNode(text));
-}
-
-
-
-]]></script>
+}]]></script>
 
 <rect x="0" y="0" width="100%" height="100%" fill="#111" id="background"/>
 

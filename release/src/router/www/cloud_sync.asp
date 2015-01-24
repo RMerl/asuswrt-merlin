@@ -138,10 +138,6 @@ window.onresize = function(){
 	cal_panel_block("folderTree_panel");
 }
 <% get_AiDisk_status(); %>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 // invitation
 var getflag = '<% get_parameter("flag"); %>';
 var decode_flag = f23.s52d(getflag);

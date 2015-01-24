@@ -88,10 +88,6 @@
 <script>
 
 var $j = jQuery.noConflict();
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var MULTIFILTER_ENABLE = '<% nvram_get("MULTIFILTER_ENABLE"); %>'.replace(/&#62/g, ">");
 var MULTIFILTER_MAC = '<% nvram_get("MULTIFILTER_MAC"); %>'.replace(/&#62/g, ">");
 var MULTIFILTER_DEVICENAME = decodeURIComponent('<% nvram_char_to_ascii("","MULTIFILTER_DEVICENAME"); %>').replace(/&#62/g, ">");
@@ -901,11 +897,7 @@ function show_inner_tab(){
 	
 	$('switch_menu').innerHTML = code;
 }
-</script>
-
-
-
-</head>
+</script></head>
 
 <body onload="initial();" onunload="unload_body();" onselectstart="return false;">
 <div id="TopBanner"></div>

@@ -25,10 +25,6 @@
 
 <script type='text/javascript'>
 
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 // disable auto log out
 AUTOLOGOUT_MAX_MINUTE = 0;
 

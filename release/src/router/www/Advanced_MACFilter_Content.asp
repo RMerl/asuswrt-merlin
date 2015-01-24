@@ -17,10 +17,6 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var macfilter_num_x = '<% nvram_get("macfilter_num_x"); %>';
 var macfilter_rulelist_array = '<% nvram_get("macfilter_rulelist"); %>';
 

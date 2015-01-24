@@ -28,10 +28,6 @@ p{
 <script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script>
 
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 hwacc = "<% nvram_get("ctf_disable"); %>";
 hwacc_force = "<% nvram_get("ctf_disable_force"); %>";
 arplist = [<% get_arp_table(); %>];

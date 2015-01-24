@@ -121,11 +121,11 @@ function initial(){
 
 											<tr id="adBlock_field" style="display:none">
 												<td align="center" class="app_table_radius_left" style="width:85px;">
-													<div style="text-align:center;background: url('/images/New_ui/AiProtection.png');width:130px;height:130px;margin-left:30px;background-position:0px -187px;"></div>
+													<div style="text-align:center;background: url('/images/New_ui/Web_Apps_Restriction.png');width:130px;height:85px;margin-left:30px;"></div>
 												</td>
 												<td class="app_table_radius_right" style="width:350px;height:120px;">
 													<div class="app_name">
-														<a style="text-decoration: underline;" href="AiProtection_AdBlock.asp">AD Blocking</a>
+														<a style="text-decoration: underline;" href="AiProtection_AdBlock.asp">Ad Blocking</a>
 													</div>
 													<div class="app_desc" style="height:60px;">
 														<li>Streaming Ad Blocking</li>

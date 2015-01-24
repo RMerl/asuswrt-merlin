@@ -4601,9 +4601,6 @@ again:
 			start_mt_daapd();
 #endif
 		}
-#ifdef RTCONFIG_RGMII_BRCM5301X
-		eval("ifconfig", "lo", "down");
-#endif
 	}
 	else if (strcmp(script, "wireless") == 0) {
 		if(action & RC_SERVICE_STOP) {

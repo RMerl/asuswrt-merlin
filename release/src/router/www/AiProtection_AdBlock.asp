@@ -41,13 +41,12 @@
 </style>
 <script>
 var $j = jQuery.noConflict();
-window.onresize = cal_agreement_block;						 
-var curState = '<% nvram_get("wrs_enable"); %>';
 
 function initial(){
 	show_menu();
-	//document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
-	//document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
+	document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
+	document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
+	register_event();
 }
 						
 function applyRule(){
@@ -55,58 +54,11 @@ function applyRule(){
 	document.form.submit();
 }
 
-function show_tm_eula(){
-	if(document.form.preferred_lang.value == "JP"){
-		$j.get("JP_tm_eula.htm", function(data){
-			$('agreement_panel').innerHTML= data;
-		});
-	}
-	else{
-		$j.get("tm_eula.htm", function(data){
-			$('agreement_panel').innerHTML= data;
-		});
-	}
-	
-	dr_advise();
-	cal_agreement_block();
-	$j("#agreement_panel").fadeIn(300);
-}
-
-function cal_agreement_block(){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.25)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
-	}
-
-	$("agreement_panel").style.marginLeft = blockmarginLeft+"px";
-}
-
-function cancel(){
-	$j("#agreement_panel").fadeOut(100);
-	$j('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
-	curState = 0;
-	document.form.wrs_adblock_stream.value = document.form.wrs_adblock_stream_ori.value;	
-	document.form.wrs_adblock_popup.value = document.form.wrs_adblock_popup_ori.value;	
-	$("hiddenMask").style.visibility = "hidden";
-}
-
-function eula_confirm(){
-	document.form.TM_EULA.value = 1;
-	applyRule();
+function register_event(){
+	document.getElementById('stream_ad_title').onmouseover = function(){overHint(89);}
+	document.getElementById('stream_ad_title').onmouseout = function(){nd();}
+	document.getElementById('popup_ad_title').onmouseover = function(){overHint(90);}
+	document.getElementById('popup_ad_title').onmouseout = function(){nd();}
 }
 </script>
 </head>
@@ -114,7 +66,6 @@ function eula_confirm(){
 <body onload="initial();" onunload="unload_body();" onselectstart="return false;">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;display:none;position:absolute;"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
@@ -135,7 +86,6 @@ function eula_confirm(){
 <input type="hidden" name="wrs_adblock_stream" value="<% nvram_get("wrs_adblock_stream"); %>">
 <input type="hidden" name="wrs_adblock_popup" value="<% nvram_get("wrs_adblock_popup"); %>">
 <input type="hidden" name="wrs_adblock_popup_ori" value="<% nvram_get("wrs_adblock_popup"); %>">
-<input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0" >
 	<tr>
 		<td width="17">&nbsp;</td>		
@@ -164,15 +114,15 @@ function eula_confirm(){
 									</table>
 								</div>
 								<div style="margin:0px 0px 10px 5px;"><img src="/images/New_ui/export/line_export.png"></div>
-								<div id="PC_desc">
+								<div>
 									<table width="700px" style="margin-left:25px;">
 										<tr>
 											<td>
-												<img id="guest_image" src="/images/New_ui/Web_Apps_Restriction.png">
+												<img src="/images/New_ui/Web_Apps_Restriction.png">
 											</td>
 											<td>&nbsp;&nbsp;</td>
 											<td style="font-style: italic;font-size: 14px;">
-												<span>Allow you to block advertisement</span>
+												<span>Ad Blocking helps you to block advertisement on the web and streaming video page. You can enjoy the content you visit, and spend less time on waiting.</span>
 											</td>
 										</tr>
 									</table>
@@ -181,30 +131,19 @@ function eula_confirm(){
 			<!--=====Beginning of Main Content=====-->
 								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									<tr>
-										<th>Streaming Ad Blocking</th>
+										<th id="stream_ad_title" style="cursor:pointer">Streaming Ad Blocking</th>
 										<td>
 											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="stream_ad_enable"></div>
 											<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
 													$j('#stream_ad_enable').iphoneSwitch('<% nvram_get("wrs_adblock_stream"); %>',
 														function(){
-															/*curState = 1;	
-															if(document.form.TM_EULA.value == 0){
-																show_tm_eula();
-																return;
-															}*/	
-															
 															document.form.wrs_adblock_stream.value = 1;	
 															applyRule();
 														},
 														function(){
 															document.form.wrs_adblock_stream.value = 0;
-															if(document.form.wrs_adblock_stream_ori.value == 1){
-																applyRule();
-															}
-															else{
-																curState = 0;
-															}																														
+															applyRule();																													
 														}
 													);
 												</script>			
@@ -212,30 +151,19 @@ function eula_confirm(){
 										</td>
 									</tr>								
 									<tr>
-										<th>Pop-Up window Ad Blocking</th>
+										<th id="popup_ad_title" style="cursor:pointer">Pop-Up window Ad Blocking</th>
 										<td>
 											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="pop_ad_enable"></div>
 											<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
 													$j('#pop_ad_enable').iphoneSwitch('<% nvram_get("wrs_adblock_popup"); %>',
 														function(){
-															/*curState = 1;
-															if(document.form.TM_EULA.value == 0){
-																show_tm_eula();
-																return;
-															}*/
-
 															document.form.wrs_adblock_popup.value = 1;
 															applyRule();
 														},
 														function(){
 															document.form.wrs_adblock_popup.value = 0;
-															if(document.form.wrs_adblock_popup_ori.value == 1){
-																applyRule();
-															}
-															else{
-																curState = 0;
-															}							
+															applyRule();					
 														}
 													);
 												</script>			

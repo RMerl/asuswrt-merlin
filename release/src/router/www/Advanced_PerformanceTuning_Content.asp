@@ -18,10 +18,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
-<script type='text/javascript'>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
+<script type='text/javascript'>var fanctrl_info = [<% get_fanctrl_info(); %>];
 curr_coreTmp_2 = "<% sysinfo("temperature.2"); %>".replace("&deg;C", "");
 curr_coreTmp_5 = "<% sysinfo("temperature.5"); %>".replace("&deg;C", ""); 
 curr_coreTmp_cpu = "<% get_cpu_temperature(); %>";

@@ -29,10 +29,6 @@ var wItem = new Array(new Array("", "", "TCP"),
 	new Array("SNMP", "161", "UDP"),
 	new Array("SNMP TRAP", "162", "UDP"));
 
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var overlib_str0 = new Array();
 var overlib_str1 = new Array();
 var overlib_str2 = new Array();

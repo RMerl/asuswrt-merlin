@@ -20,11 +20,7 @@
 <script>
 var $j = jQuery.noConflict();
 </script>
-<script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-<% wl_get_parameter(); %>
+<script><% wl_get_parameter(); %>
 
 var wsc_config_state_old = '<% nvram_get("wsc_config_state"); %>';
 var wps_enable_old = '<% nvram_get("wps_enable"); %>';

@@ -20,10 +20,6 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 var $j = jQuery.noConflict();
-
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
 var webdav_acc_lock = '<% nvram_get("webdav_acc_lock"); %>';
 var enable_webdav_lock = '<% nvram_get("enable_webdav_lock"); %>';
 

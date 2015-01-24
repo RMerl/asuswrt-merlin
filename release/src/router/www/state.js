@@ -75,9 +75,6 @@ var boottime = parseInt(uptimeStr.substring(32,42));
 var newformat_systime = uptimeStr.substring(8,11) + " " + uptimeStr.substring(5,7) + " " + uptimeStr.substring(17,25) + " " + uptimeStr.substring(12,16);  //Ex format: Jun 23 10:33:31 2008
 var systime_millsec = Date.parse(newformat_systime); // millsec from system
 var JS_timeObj = new Date(); // 1970.1.1
-var wan_route_x = "";
-var wan_nat_x = "";
-var wan_proto = "";
 var test_page = 0;
 var testEventID = "";
 var httpd_dir = "/cifs1"
@@ -348,9 +345,13 @@ function change_wl_unit_status(_unit){
 	document.titleForm.submit();
 }
 
-var wans_dualwan = new Array();
-wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
-var usb_index = wans_dualwan.getIndexByValue("usb");
+var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
+var wans_dualwan_array = new Array();
+wans_dualwan_array = wans_dualwan_orig.split(" ");
+var usb_index = wans_dualwan_array.getIndexByValue("usb");
+var active_wan_unit = '<% get_wan_unit(); %>';
+var wan0_enable = '<% nvram_get("wan0_enable"); %>';
+var wan1_enable = '<% nvram_get("wan1_enable"); %>';
 
 var banner_code, menu_code="", menu1_code="", menu2_code="", tab_code="", footer_code;
 function show_banner(L3){// L3 = The third Level of Menu
@@ -412,6 +413,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<input type="hidden" name="action_wait" value="5">\n';
 	banner_code +='<input type="hidden" name="wan_enable" value="<% nvram_get("wan_enable"); %>">\n';
 	banner_code +='<input type="hidden" name="wan_unit" value="<% get_wan_unit(); %>">\n';
+	banner_code +='<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">\n';
 	banner_code +='</form>\n';
 
 	banner_code +='<form method="post" name="rebootForm" action="apply.cgi" target="hidden_frame">\n';
@@ -487,10 +489,10 @@ function show_banner(L3){// L3 = The third Level of Menu
 		banner_code +='<td width="30"><div id="sim_status" class="simnone"></div></td>\n';
 	}	
 
-	if(gobi_support && (usb_index != -1)){
-			banner_code +='<td width="30"><div id="simsignal" class="simsignalno"><div class="img_wrap"><div id="signalsys" class="signalsysimg"></div></div></div></td>\n';
-			if(roaming == "1")
-				banner_code +='<td width="30"><div id="simroaming_status" class="simroamingoff"></div></td>\n';		
+	if(gobi_support && (usb_index != -1) && (sim_state != "")){
+		banner_code +='<td width="30"><div id="simsignal" class="simsignalno"><div class="img_wrap"><div id="signalsys" class="signalsysimg"></div></div></div></td>\n';
+		if(roaming == "1")
+			banner_code +='<td width="30"><div id="simroaming_status" class="simroamingoff"></div></td>\n';		
 	}
 	
 	banner_code +='<td width="17"></td>\n';
@@ -784,7 +786,7 @@ function remove_url(){
 		}
 	}
 	else{		
-		var dualwan_pri_if = '<% nvram_get("wans_dualwan"); %>'.split(" ")[0];
+		var dualwan_pri_if = wans_dualwan_array[0];
 		if(dualwan_pri_if == 'lan' || dualwan_pri_if == 'wan'){
 			menuL2_link[4] = "Advanced_WAN_Content.asp";
 			tablink[3][1] = "Advanced_WAN_Content.asp";
@@ -976,7 +978,6 @@ Array.prototype.del = function(n){
 }
 
 var current_url = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
-var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 function show_menu(){
 	var L1 = 0, L2 = 0, L3 = 0;
 	if(current_url == "") current_url = "index.asp";
@@ -2770,6 +2771,13 @@ var usbState;
 var usb_state = -1;
 var usb_sbstate = -1;
 var usb_auxstate = -1;	
+var first_link_status = '';
+var first_link_sbstatus = '';
+var first_link_auxstatus = '';
+var secondary_link_status = '';
+var secondary_link_sbstatus = '';
+var secondary_link_auxstatus = '';
+var modem_enable = '';
 
 function refreshStatus(xmldoc){
 	// restart ajax
@@ -2795,9 +2803,16 @@ function refreshStatus(xmldoc){
 	data_rate_info_5g = wanStatus[14].firstChild.nodeValue.replace("data_rate_info_5g=", "");
 	data_rate_info_5g_2 = wanStatus[15].firstChild.nodeValue.replace("data_rate_info_5g_2=", "");
 	wan_diag_state = wanStatus[16].firstChild.nodeValue.replace("wan_diag_state=", "");
+	active_wan_unit = wanStatus[17].firstChild.nodeValue.replace("active_wan_unit=", "");
+	wan0_enable = wanStatus[18].firstChild.nodeValue.replace("wan0_enable=", "");
+	wan1_enable = wanStatus[19].firstChild.nodeValue.replace("wan1_enable=", "");
 
 	var vpnStatus = devicemapXML[0].getElementsByTagName("vpn");
-	
+
+	var first_wanStatus = devicemapXML[0].getElementsByTagName("first_wan");
+	first_link_status = first_wanStatus[0].firstChild.nodeValue;
+	first_link_sbstatus = first_wanStatus[1].firstChild.nodeValue;
+	first_link_auxstatus = first_wanStatus[2].firstChild.nodeValue;	
 	var secondary_wanStatus = devicemapXML[0].getElementsByTagName("secondary_wan");
 	secondary_link_status = secondary_wanStatus[0].firstChild.nodeValue;
 	secondary_link_sbstatus = secondary_wanStatus[1].firstChild.nodeValue;
@@ -2808,6 +2823,7 @@ function refreshStatus(xmldoc){
 
 	var usbStatus = devicemapXML[0].getElementsByTagName("usb");
 	allUsbStatus = usbStatus[0].firstChild.nodeValue.toString();
+	modem_enable = usbStatus[1].firstChild.nodeValue.replace("modem_enable=", "");
 
 	var simState = devicemapXML[0].getElementsByTagName("sim");
 	sim_state = simState[0].firstChild.nodeValue.replace("sim_state=", "");
@@ -2870,10 +2886,8 @@ function refreshStatus(xmldoc){
 				$("adsl_line_status").onmouseout = function(){nd();}
 		}
 
-		if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2") 
-		|| (secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2")){
+		if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
 			$("connect_status").className = "connectstatuson";
-			$("connect_status").onclick = function(){openHint(24,3);}
 			if(location.pathname == "/" || location.pathname == "/index.asp"){
 				$("NM_connect_status").innerHTML = "<#Connected#>";
 				$('single_wan').className = "single_wan_connected";
@@ -2881,14 +2895,14 @@ function refreshStatus(xmldoc){
 		}
 		else{
 			$("connect_status").className = "connectstatusoff";
-			$("connect_status").onclick = function(){openHint(24,3);}
-
 			if(location.pathname == "/" || location.pathname == "/index.asp"){
 				$("NM_connect_status").innerHTML = '<a style="color:#FFF;text-decoration:underline;" href="/'+ QISWIZARD +'?flag=detect"><#Disconnected#></a>';
 				$('single_wan').className = "single_wan_disconnected";
 				$("wanIP_div").style.display = "none";		
 			}
 		}
+
+		$("connect_status").onclick = function(){openHint(24,3);}
 		$("connect_status").onmouseover = function(){overHint(3);}
 		$("connect_status").onmouseout = function(){nd();}
 	}

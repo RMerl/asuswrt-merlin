@@ -18,10 +18,6 @@
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-
 var autofw_rulelist_array = "<% nvram_char_to_ascii("","autofw_rulelist"); %>";
 
 function initial(){
@@ -373,11 +369,7 @@ function trigger_validate_duplicate(o, v, l, off){
 
 </table>
 </td>
-</form>
-
-
-
-        </tr>
+</form>        </tr>
       </table>				
 		<!--===================================Ending of Main Content===========================================-->		
 	</td>

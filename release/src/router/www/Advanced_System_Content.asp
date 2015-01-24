@@ -57,11 +57,7 @@
 	cursor:default;
 }	
 </style>
-<script>
-wan_route_x = '<% nvram_get("wan_route_x"); %>';
-wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
-wan_proto = '<% nvram_get("wan_proto"); %>';
-time_day = uptimeStr.substring(5,7);//Mon, 01 Aug 2011 16:25:44 +0800(1467 secs since boot....
+<script>time_day = uptimeStr.substring(5,7);//Mon, 01 Aug 2011 16:25:44 +0800(1467 secs since boot....
 time_mon = uptimeStr.substring(9,12);
 time_time = uptimeStr.substring(18,20);
 dstoffset = '<% nvram_get("time_zone_dstoff"); %>';

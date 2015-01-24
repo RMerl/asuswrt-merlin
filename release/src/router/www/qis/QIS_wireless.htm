@@ -297,7 +297,7 @@ function setFactoryDefault(){
 	if(parent.tmo_support)
 		document.form.x_Setting.disabled = false;
 
-	document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
+	
 	document.form.target = "hidden_frame";
 	document.form.next_page.value = "/qis/QIS_finish.htm";	
 	document.form.submit();
@@ -726,7 +726,7 @@ function submitForm(){
 		document.form.http_passwd.disabled = false;
 	}
 
-	document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
+	
 
 	if(smart_connect_support){
 			if(document.form.smart_connect_t[0].checked == true){
@@ -965,7 +965,6 @@ var retValHandler = {
 			location.href = '/qis/QIS_finish.htm';
 		}
 		else{
-			alert("wlc_isConnected QIS_sitesurvey");
 			parent.isSubmit = true;
 			parent.isrescan = 120;
 			location.href = '/qis/QIS_sitesurvey.htm';
@@ -1332,8 +1331,8 @@ function detect_LANStatus(_flag){
 <input type="hidden" name="prev_page" value="QIS_internet_success.htm">
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="wsc_config_state" value="1">
-<input type="hidden" name="wan_nat_x" value="">
-<input type="hidden" name="wan_route_x" value="">
+
+
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="action_script" value="restart_wireless">
