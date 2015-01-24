@@ -236,29 +236,29 @@ function loadData()
 				t = "LAN";
 			else if (i == "INTERNET"){
 				if(dualWAN_support){
-					if(wans_dualwan[0] == "usb"){
+					if(wans_dualwan_array[0] == "usb"){
 						if(gobi_support)
 							t = "<#Mobile_title#>";
 						else
 							t = "USB Modem";
 					}
-					else if(wans_dualwan[0] == "wan")
+					else if(wans_dualwan_array[0] == "wan")
 						t = "<#Ethernet_wan#> (WAN)";
-					else if(wans_dualwan[0] == "lan")
+					else if(wans_dualwan_array[0] == "lan")
 						t = "<#Ethernet_wan#> (LAN)";
 				}				
 				else
 					t = "<#Internet#>";
 			}else if (i == "INTERNET1"){
-				if(wans_dualwan[1] == "usb"){
+				if(wans_dualwan_array[1] == "usb"){
 					if(gobi_support)
 						t = "<#Mobile_title#>";
 					else
 						t = "USB Modem";
 				}
-				else if(wans_dualwan[1] == "wan")
+				else if(wans_dualwan_array[1] == "wan")
 					t = "<#Ethernet_wan#> (WAN)";
-				else if(wans_dualwan[1] == "lan")
+				else if(wans_dualwan_array[1] == "lan")
 					t = "<#Ethernet_wan#> (LAN)";			
 			}
 			else if (i.search("WIRELESS") > -1 && i.search(".") > -1)
