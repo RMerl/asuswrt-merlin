@@ -22,10 +22,14 @@ var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
-	if(adBlock_support)
+	if(adBlock_support) {
 		document.getElementById("adBlock_field").style.display = "";
-	if (dnsfilter_support)
+		document.getElementById("adb_hdr").style.display = "";
+	}
+	if (dnsfilter_support) {
 		document.getElementById("dnsfilter").style.display = "";
+		document.getElementById("dnsf_hdr").style.display = "";
+	}
 }
 
 </script>
@@ -117,7 +121,7 @@ function initial(){
 													</div>
 												</td>
 											</tr>
-											<tr style="height:50px;"></tr>
+											<tr id="adb_hdr" style="height:50px; display:none;"></tr>
 
 											<tr id="adBlock_field" style="display:none">
 												<td align="center" class="app_table_radius_left" style="width:85px;">
@@ -133,7 +137,7 @@ function initial(){
 													</div>
 												</td>
 											</tr>
-											<tr style="height:50px;"></tr>
+											<tr id="dnsf_hdr" style="height:50px; display:none;"></tr>
 
 											<tr id="dnsfilter" style="display:none;">
 												<td align="center" class="app_table_radius_left" style="width:85px;">
