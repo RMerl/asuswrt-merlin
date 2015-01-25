@@ -717,6 +717,8 @@ History
            have been disabled.
   - FIXED: Very long SSIDs with special characters/spaces in them 
            would be shown as "undefined" in the banner.
+  - FIXED: Curl would fail to access SSL sites due to lack of
+           a CA bundle.
 
 
 376.49_5 (9-Jan-2015)

@@ -107,6 +107,9 @@ ifeq ($(RTCONFIG_USB),y)
 # 	cp -f others/usbtest.sh $(INSTALLDIR)/usr/sbin/usbtest.sh
 endif
 
+#	Used by Curl
+	cp -f others/ca-bundle.crt $(INSTALLDIR)/rom/ca-bundle.crt
+
 	# remove comments, compress whitespace
 	sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < rom/etc/services > $(INSTALLDIR)/rom/etc/services
 	sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < rom/etc/protocols > $(INSTALLDIR)/rom/etc/protocols
