@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.50 (xx-xxx-2015)
-===========================================
+Asuswrt-Merlin - build 378.50 beta 1 (25-Jan-2015)
+==================================================
 
 About
 -----
@@ -60,14 +60,13 @@ System:
      all LEDs
    - Entware easy setup script (alternative to Optware - the two are 
      mutually exclusive) (not available on RT-AC56/RT-AC68/RT-AC87)
-   - Full SNMP support (based on experimental code from Asus)
+   - SNMP support (based on experimental code from Asus)
 
 
 Disk sharing:
    - Enable/disable the use of shorter share names
    - Disk spindown after user-configurable inactivity timeout
    - NFS sharing (through webui)
-   - Improved compatibility with 3TB+ and Advanced Format HDDs
    - Allow or disable WAN access to the FTP server
    - Updated Samba version (3.6)
 
@@ -118,6 +117,8 @@ integrated/enabled/re-implemented in the official firmware:
 - The various MAC/IP selection pulldowns will also display hostnames
   when possible instead of just NetBIOS names
 - SSHD
+- Improved compatibility with 3TB+ and Advanced Format HDDs
+
 
 
 Installation
@@ -636,13 +637,10 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-378.50 (xx-xxx-2015)
-   - IMPORTANT: There are a lot of changes in this release from Asus.
-                I also took the occasion to do additional changes of 
-                my own at the same time, so it's important that you
-                do a factory default reset after flashing this new
-                version, and manually reconfigure your setting.  Failure
-                to do so can lead to various issues with wifi, OpenVPN,
+378.50 Beta 1 (25-Jan-2015)
+   - IMPORTANT: You must do a factory default reset, and manually
+                reconfigure your setting.  Failure to do so can 
+                lead to various issues with wifi, OpenVPN,
                 and the new AC68U bootloader.
 
    - IMPORTANT: Please read this changelog, especially the changes 
@@ -682,6 +680,10 @@ History
               partition.
    - CHANGED: The Local IP in an IPv6 firewall rule can now be
               left empty.
+   - CHANGED: Download Master will now be downloaded at install time 
+              rather than included in the firmware, to increase the
+              amount of space available to JFFS - this matches
+              the AC56/AC68. (N16, N66)
    - FIXED: Under certain conditions, the OpenVPN server page 
             would report an initializing state when it was 
             already running.
