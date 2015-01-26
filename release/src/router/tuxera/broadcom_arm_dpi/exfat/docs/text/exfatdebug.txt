@@ -1,0 +1,56 @@
+EXFATDEBUG(8)                                                    EXFATDEBUG(8)
+
+
+
+NAME
+       exfatdebug - Create a metadata dump of an exFAT volume suitable for bug
+       reporting.
+
+SYNOPSIS
+       exfatdebug device|image
+
+DESCRIPTION
+       exfatdebug will efficiently extract all metadata relevant for debugging
+       from  an exFAT volume and dump it to standard output.  It works at disk
+       sector level and copies only the metadata of the exFAT volume  (so  the
+       resulting output is relatively small).
+
+       exfatdebug  is mostly useful when sending bug reports to exFAT develop‐
+       ers.
+
+EXIT CODES
+       The exit code is 0 on success, non-zero otherwise.
+
+EXAMPLES
+       Dump exFAT file system metadata on /dev/sda1 to a local image file:
+
+              exfatdebug /dev/sda1 > sda1.img
+
+       Dump exFAT file system metadata  on  /dev/sda1  to  a  bzip2-compressed
+       local image file:
+
+              exfatdebug /dev/sda1 | bzip2 > sda1.img
+
+       Dump  exFAT  file  system  metadata to a remote host, using ssh. Please
+       note that ssh may ask for a password!
+
+              exfatdebug /dev/sda1 | ssh host 'cat > sda1.img'
+
+
+KNOWN ISSUES
+       There are no known problems with exfatdebug.  If  you  think  you  have
+       found  a  problem then please send an email describing it to exfat-sup‐
+       port@tuxera.com.
+
+AUTHORS
+       exfatdebug was written by Erik Larsson, Tuxera Inc.
+
+AVAILABILITY
+       exfatdebug is part of the Tuxera exFAT package.
+
+SEE ALSO
+       exfat-u(8)
+
+
+
+Tuxera exFAT 3013.11.8           October 2012                    EXFATDEBUG(8)

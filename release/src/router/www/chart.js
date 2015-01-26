@@ -1174,7 +1174,8 @@ var pie_flag;
 			// ctx.lineTo(this.controlPoints.outer.x,this.controlPoints.outer.y);
 			// ctx.stroke();
 
-			// ctx.restore();		}
+			// ctx.restore();
+		}
 	});
 
 	Chart.Arc = Chart.Element.extend({

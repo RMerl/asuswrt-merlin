@@ -1,0 +1,46 @@
+EXFATINFO(8)                                                      EXFATINFO(8)
+
+
+
+NAME
+       exfatinfo - dump a file's attributes
+
+SYNOPSIS
+       exfatinfo [options] device
+
+DESCRIPTION
+       exfatinfo  will  dump  the attributes of inode inode-number or the file
+       path-filename.  Run exfatinfo without arguments  for  a  full  list  of
+       options.
+
+OPTIONS
+       Below  is  a summary of all the options that exfatinfo accepts.  Nearly
+       all options have two equivalent names.  The short name is preceded by -
+       and  the  long name is preceded by --.  Any single letter options, that
+       don't take an argument, can be combined into  a  single  command,  e.g.
+       -fv  is  equivalent to -f -v.  Long named options can be abbreviated to
+       any unique prefix of their name.
+
+       -c, --case-sensitive
+              Use case-sensitive lookup (the default is to ignore case).
+
+       -p, --path PATH
+              Show information about the path or  directory  denoted  by  PATH
+              (must be a POSIX-style absolute path, i.e. starting with a '/').
+
+BUGS
+       There  are  no known problems with exfatinfo.  If you find a bug please
+       send an email describing the problem to exfat-support@tuxera.com.
+
+AUTHORS
+       exfatinfo was written by Erik Larsson, Tuxera Inc.
+
+AVAILABILITY
+       exfatinfo is part of the Tuxera exFAT package.
+
+SEE ALSO
+       exfat-u(8)
+
+
+
+Tuxera exFAT 3013.11.8            August 2011                     EXFATINFO(8)

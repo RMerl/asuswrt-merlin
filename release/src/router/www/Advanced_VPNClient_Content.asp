@@ -701,7 +701,7 @@ function del_Row(rowdata, flag){
 		document.form.action = "/start_apply.htm";
 		document.form.enctype = "application/x-www-form-urlencoded";
 		document.form.encoding = "application/x-www-form-urlencoded";
-		document.vpnclientForm.action_script.value = "restart_vpncall";	
+		document.form.action_script.value = "restart_vpncall";	
 	}
 
 	document.form.vpnc_clientlist.value = vpnc_clientlist_array;

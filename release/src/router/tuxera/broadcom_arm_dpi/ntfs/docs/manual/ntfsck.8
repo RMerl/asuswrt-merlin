@@ -1,0 +1,96 @@
+.TH NTFSCK 8 "October 2012" "Tuxera NTFS Utilities 3014.5.21"
+.SH NAME
+ntfsck \- check and repair an NTFS file system 
+.SH SYNOPSIS
+.B ntfsck
+[\fIoptions\fR] \fIdevice 
+.SH DESCRIPTION
+.B ntfsck
+will check and repair an NTFS file system located on
+.IR device
+or an NTFS image file.
+.SH OPTIONS
+Below is a summary of all the options that
+.B ntfsck
+accepts. Nearly all options have two equivalent names. The short name is
+preceded by
+.B \-
+and the long name is preceded by
+.BR \-\- .
+Any single letter options, that don't take an argument, can be combined into a
+single command, e.g.
+.B \-fv
+is equivalent to
+.BR "\-f \-v" .
+Long named options can be abbreviated to any unique prefix of their name.
+.TP
+\fB\-a\fR, \fB\-\-automatic\-repair\fR
+Repair the volume if it appears to be in need of a repair. This options makes
+.B ntfsck
+exit immediately if the volume appears to be in order (no dirty flag set,
+logfile clean, no hibernated Windows session, ...), but otherwise a full repair
+is performed.
+.TP
+\fB\-c\fR, \fB\-\-fast\-check\fR
+Check if volume is dirty then exit. If the volume is dirty then the exit value 
+will be 100.
+.TP
+\fB\-P\fR, \fB\-\-no\-progress\-bar\fR
+Don't show progress bars.
+.TP
+\fB\-C\fR, \fB\-\-no\-alloc\-check\fR
+Don't check cluster allocations. This option speeds up 
+.B ntfsck.
+Use this option with caution.
+.TP
+\fB\-O\fR, \fB\-\-no\-orpan\-check\fR
+Don't check for orphaned files. This option speeds up 
+.B ntfsck.
+.TP
+\fB\-M\fR, \fB\-\-no\-mft\-scan\fR
+Don't scan $MFT. This option typically slows down 
+.B ntfsck.
+.TP
+\fB\-S\fR, \fB\-\-no\-sync\fR
+Don't sync NTFS metadata before exit. This option speeds up 
+.B ntfsck
+however it's safe to use only if device is not removed/ejected.
+.TP
+\fB\-F\fR, \fB\-\-file\fR FILE
+Check and repair FILE only. FILE is absolute path to a file or directory.
+.TP
+\fB\-i\fR, \fB\-\-inode\fR NUMBER
+Correct inode NUMBER only and its children.
+.TP
+\fB\-f\fR, \fB\-\-force\fR
+This will override some sensible defaults. Use this option with caution.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show a list of options with a brief description of each one.
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Show the version number of
+.BR ntfsck .
+.SH EXIT CODE
+The exit code returned by
+.B ntfsck
+is one of the followings:
+.br
+\       0\      \-\ No errors or file system was successfully repaired
+.br
+\       1\      \-\ File system errors could not be corrected
+.br
+\       23\     \-\ Volume is read-only 
+.br
+\       100\    \-\ Volume is dirty, needs check (\-\-fast-check was used) 
+.br
+.SH BUGS
+If you find a bug please send an email describing the problem to
+ntfs-support@tuxera.com. 
+.SH AVAILABILITY
+.B ntfsck
+is part of the
+.B Tuxera NTFS
+package.
+.SH SEE ALSO
+.BR mkntfs (8)

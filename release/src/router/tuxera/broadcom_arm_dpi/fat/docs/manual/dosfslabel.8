@@ -1,0 +1,26 @@
+.TH DOSFSLABEL 8 "2013\-04\-08" "Tuxera FAT 3013.9.27" "set or get MS\-DOS filesystem label"
+
+.SH NAME
+\fBdosfslabel\fR \- set or get MS\-DOS filesystem label
+
+.SH SYNOPSIS
+\fBdosfslabel\fR \fIDEVICE\fR [\fILABEL\fR]
+
+.SH DESCRIPTION
+\fBdosfslabel\fR set or gets a MS\-DOS filesystem label from a given device.
+.PP
+If the label is omitted, then the label name of the specified device is written on the standard output. A label can't be longer than 11 bytes.
+
+.SH OPTIONS
+.IP "\fB\-h\fR, \fB\-\-help\fR" 4
+Displays a help message.
+.IP "\fB\-V\fR, \fB\-\-version\fR" 4
+Shows version.
+
+.SH SEE ALSO
+\fBfsck_msdos\fR(8)
+.br
+\fBnewfs_msdos\fR(8)
+
+.SH AUTHORS
+\fBdosfstools\fR were written by Werner Almesberger <\fIwerner.almesberger@lrc.di.epfl.ch\fR>, Roman Hodek <\fIRoman.Hodek@informatik.uni-erlangen.de\fR>, Daniel Baumann <\fIdaniel@debian.org\fR>, Sougata Santra <\fIsougata@tuxera.com\fR> (Tuxera Inc.) and others.
