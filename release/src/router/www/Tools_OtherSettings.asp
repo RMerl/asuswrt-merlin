@@ -828,7 +828,7 @@ function done_validating(action){
  					<tr>
 						<th>TCP connections limit</th>
 						<td>
-							<input type="text" maxlength="6" class="input_12_table" name="ct_max" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 256, 300000)" value="<% nvram_get("ct_max"); %>">
+							<input type="text" maxlength="7" class="input_12_table" name="ct_max" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 256, 9999999)" value="<% nvram_get("ct_max"); %>">
 						</td>
 						</tr>
 
