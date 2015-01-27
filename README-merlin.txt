@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 378.50 beta 1 (25-Jan-2015)
+Asuswrt-Merlin - build 378.50 beta 2 (xx-xxx-2015)
 ==================================================
 
 About
@@ -637,6 +637,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+378.50 Beta 2 (xx-xxx-2015)
+   - CHANGED: Moved the AC68U CFE update process to the same location
+              as in GPL 3626 to see if it works more consistently.
+   - FIXED: Non-DPI build of AC56U had incompatible Tuxera modules
+   - FIXED: vsftpd wouldn't start if you had IPv6 enabled.
+
+
 378.50 Beta 1 (25-Jan-2015)
    - IMPORTANT: You must do a factory default reset, and manually
                 reconfigure your setting.  Failure to do so can 
@@ -647,8 +654,8 @@ History
                 related to jffs, user scripts/config and OpenVPN.
 
    - NEW: Merged with Asus 378_3913 GPL code.  Most notable changes:
-            * TrendMicro DPI engine for RT-AC68U
-            * Updated TrendMicro engine for RT-AC87U
+            * Trend Micro DPI engine for RT-AC68U
+            * Updated Trend Micro engine for RT-AC87U
             * Updated Quantenna firmware/driver
             * Various updates to 3G/4G support and Dual WAN
 
