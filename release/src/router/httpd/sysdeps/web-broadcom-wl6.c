@@ -1412,9 +1412,9 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 		ret += websWrite(wp, "%-18s", ether_etoa((void *)&auth->ea[i], ea));
 
+		found = 0;
 		if (arplist) {
 			arplistptr = arplist;
-			found = 0;
 
 			while ((arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%15s %*s %*s %17s",ipentry,macentry) == 2)) {
 				if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
@@ -1425,24 +1425,36 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				}
 			}
 
-			ret += websWrite(wp, "%-16s", (found ? ipentry : ""));
+			if (found || !leaselist) {
+				ret += websWrite(wp, "%-16s", (found ? ipentry : ""));
+			}
 		}
 
 		// Retrieve hostname from dnsmasq leases
 		if (leaselist) {
 			leaselistptr = leaselist;
-			found = 0;
 
-			while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %*s %15s %*s", macentry, hostnameentry) == 2)) {
+			while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, hostnameentry) == 3)) {
 				if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
-					found = 1;
+					found += 2;
 					break;
 				} else {
 					leaselistptr = strstr(leaselistptr,"\n")+1;
 				}
 			}
-
-			ret += websWrite(wp, "%-15s ", (found ? hostnameentry : ""));
+			if (found == 0) {
+				// Not in arplist nor in leaselist
+				ret += websWrite(wp, "%-16s%-15s ", "", "");
+			} else if (found == 1) {
+				// Only in arplist (static IP)
+				ret += websWrite(wp, "%-15s ", "");
+			} else if (found == 2) {
+				// Only in leaselist (dynamic IP that has not communicated with router for a while)
+				ret += websWrite(wp, "%-16s%-15s ", ipentry, hostnameentry);
+			} else if (found == 3) {
+				// In both arplist and leaselist (dynamic IP)
+				ret += websWrite(wp, "%-15s ", hostnameentry);
+			}
 		}
 
 // RSSI
@@ -1512,12 +1524,12 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 				ret += websWrite(wp, "%-18s", ether_etoa((void *)&auth->ea[ii], ea));
 
+				found = 0;
 				if (arplist) {
 					arplistptr = arplist;
-					found = 0;
 
 					while ((arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%15s %*s %*s %17s",ipentry,macentry) == 2)) {
-						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[ii], ea)) == 0) {
+						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
 							found = 1;
 							break;
 						} else {
@@ -1525,24 +1537,36 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 						}
 					}
 
-					ret += websWrite(wp, "%-16s", (found ? ipentry : ""));
+					if (found || !leaselist) {
+						ret += websWrite(wp, "%-16s", (found ? ipentry : ""));
+					}
 				}
 
 				// Retrieve hostname from dnsmasq leases
 				if (leaselist) {
 					leaselistptr = leaselist;
-					found = 0;
 
-					while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %*s %15s %*s", macentry, hostnameentry) == 2)) {
+					while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, hostnameentry) == 3)) {
 						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
-							found = 1;
+							found += 2;
 							break;
 						} else {
 							leaselistptr = strstr(leaselistptr,"\n")+1;
 						}
 					}
-
-					ret += websWrite(wp, "%-15s ", (found ? hostnameentry : ""));
+					if (found == 0) {
+						// Not in arplist nor in leaselist
+						ret += websWrite(wp, "%-16s%-15s ", "", "");
+					} else if (found == 1) {
+						// Only in arplist (static IP)
+						ret += websWrite(wp, "%-15s ", "");
+					} else if (found == 2) {
+						// Only in leaselist (dynamic IP that has not communicated with router for a while)
+						ret += websWrite(wp, "%-16s%-15s ", ipentry, hostnameentry);
+					} else if (found == 3) {
+						// In both arplist and leaselist (dynamic IP)
+						ret += websWrite(wp, "%-15s ", hostnameentry);
+					}
 				}
 
 // RSSI
