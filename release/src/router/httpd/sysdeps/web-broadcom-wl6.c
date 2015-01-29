@@ -1390,9 +1390,9 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	ret += websWrite(wp, "\n");
 #ifdef RTCONFIG_QTN
- 	ret += websWrite(wp, "Stations  (flags: S=Short GI, T=STBC)\n");
+ 	ret += websWrite(wp, "Stations  (flags: S=Short GI, T=STBC, A=Associated, U=Authenticated)\n");
 #else
-	ret += websWrite(wp, "Stations  (flags: P=Powersave Mode, S=Short GI, T=STBC)\n");
+	ret += websWrite(wp, "Stations  (flags: P=Powersave Mode, S=Short GI, T=STBC, A=Associated, U=Authenticated)\n");
 #endif
 
  	ret += websWrite(wp, "----------------------------------------\n");
