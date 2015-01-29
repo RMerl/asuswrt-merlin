@@ -1529,7 +1529,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					arplistptr = arplist;
 
 					while ((arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%15s %*s %*s %17s",ipentry,macentry) == 2)) {
-						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
+						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[ii], ea)) == 0) {
 							found = 1;
 							break;
 						} else {
@@ -1547,7 +1547,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					leaselistptr = leaselist;
 
 					while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, hostnameentry) == 3)) {
-						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
+						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[ii], ea)) == 0) {
 							found += 2;
 							break;
 						} else {
