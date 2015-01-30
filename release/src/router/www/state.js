@@ -537,8 +537,10 @@ if(bwdpi_support){
 else{
 	tabtitle[11] = new Array("", "QoS", "<#traffic_monitor#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>", "Spectrum");
 	tabtitle[12] = new Array("", "<#Parental_Control#>", "<#YandexDNS#>", "DNS Filtering");
+	tabtitle[13] = new Array("");
+	tabtitle[14] = new Array("");
 }
-tabtitle[13] = new Array("", "Sysinfo", "Other Settings");
+tabtitle[15] = new Array("", "Sysinfo", "Other Settings");
 
 var tablink = new Array();
 tablink[0] = new Array("", "Advanced_Wireless_Content.asp", "Advanced_WWPS_Content.asp", "Advanced_WMode_Content.asp", "Advanced_ACL_Content.asp", "Advanced_WSecurity_Content.asp", "Advanced_WAdvanced_Content.asp", "Advanced_Wireless_Survey.asp");
@@ -562,12 +564,16 @@ if(bwdpi_support){
 	else{
 		tablink[11] = new Array("", "AdaptiveQoS_Bandwidth_Monitor.asp", "QoS_EZQoS.asp", "AdaptiveQoS_WebHistory.asp", "AdaptiveQoS_ROG.asp", "Main_TrafficMonitor_realtime.asp", "AdaptiveQoS_WebHistory.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp", "AdaptiveQoS_Adaptive.asp");
 		tablink[12] = new Array("", "AiProtection_HomeProtection.asp", "AiProtection_WebProtector.asp", "AiProtection_AdBlock.asp", "DNSFilter.asp");
+		tablink[13] = new Array("");
+		tablink[14] = new Array("");
 	}
 }else{
 	tablink[11] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "AdaptiveQoS_ROG.asp", "Main_Spectrum_Content.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Main_TrafficMonitor_monthly.asp", "Main_TrafficMonitor_devrealtime.asp", "Main_TrafficMonitor_devdaily.asp", "Main_TrafficMonitor_devmonthly.asp", "Advanced_QOSUserPrio_Content.asp", "Advanced_QOSUserRules_Content.asp");
 	tablink[12] = new Array("", "ParentalControl.asp", "YandexDNS.asp", "DNSFilter.asp");
+	tablink[13] = new Array("");
+	tablink[14] = new Array("");
 }
-tablink[13] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp");
+tablink[15] = new Array("", "Tools_Sysinfo.asp", "Tools_OtherSettings.asp");
 
 // Level 2 Menu
 menuL2_title = new Array("", "<#menu5_1#>", "Passpoint", "<#menu5_2#>", "<#menu5_3#>", "<#menu5_4#>", "IPv6", "VPN", "<#menu5_5#>", "<#menu5_6#>", "<#System_Log#>", "<#Network_Tools#>");
@@ -1067,7 +1073,7 @@ function show_menu(){
 			L3 = 1;
 		}
 		else if(current_url.indexOf("Tools_") == 0){
-			L2 = 14;
+			L2 = 16;
 			L3 = 1;
 		}
 
@@ -1081,7 +1087,7 @@ function show_menu(){
 
 	// tools
 	if(current_url.indexOf("Tools_") == 0) {
-		traffic_L2_dx = 14;
+		traffic_L2_dx = 16;
 		L1 = 7;
 	}
 

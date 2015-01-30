@@ -169,12 +169,7 @@ int add_iQosRules(char *pcWANIF)
 	if(pcWANIF == NULL || nvram_get_int("qos_enable") != 1 || nvram_get_int("qos_type") != 0) return -1;
 	if((fn = fopen(mangle_fn, "w")) == NULL) return -2;
 #ifdef RTCONFIG_IPV6
-#define ipv6_enabled() (0)
-	if(ipv6_enabled() && (fn_ipv6 = fopen(mangle_fn_ipv6, "w")) == NULL)
-	{
-		fclose(fn);
-		return -3;
-	}
+	if(ipv6_enabled() && (fn_ipv6 = fopen(mangle_fn_ipv6, "w")) == NULL) return -3;
 #endif
 
 	inuse = sticky_enable = 0;
@@ -703,7 +698,7 @@ int add_iQosRules(char *pcWANIF)
 		fprintf(fn_ipv6, "COMMIT\n");
 		fclose(fn_ipv6);
 		chmod(mangle_fn_ipv6, 0700);
-//		eval("ip6tables-restore", (char*)mangle_fn_ipv6);
+		eval("ip6tables-restore", (char*)mangle_fn_ipv6);
 	}
 #endif
 
