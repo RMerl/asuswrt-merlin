@@ -6625,13 +6625,13 @@ int get_dns_filter(int proto, int mode, char **server)
 #ifdef RTCONFIG_IPV6
 	static const char *server6_table[][2] = {
 		{"", ""},		/* 0: Unfiltered (handled separately below) */
-		{"", ""},		/* 1: OpenDNS */
+		{"2620:0:ccc::2", "2620:0:ccd::2"},		/* 1: OpenDNS */
 		{"", ""},		/* 2: Norton Connect Safe A (Security) */
 		{"", ""},		/* 3: Norton Connect Safe B (Security + Adult) */
 		{"", ""},		/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
-		{"", ""},		/* 5: Secure Mode safe.dns.yandex.ru */
-		{"", ""},		/* 6: Family Mode family.dns.yandex.ru */
-		{"", ""},			/* 7: OpenDNS Family Shield */
+		{"2a02:6b8::feed:bad", "2a02:6b8::feed:bad"},		/* 5: Secure Mode safe.dns.yandex.ru */
+		{"2a02:6b8::feed:a11", "2a02:6b8::feed:a11"},		/* 6: Family Mode family.dns.yandex.ru */
+		{"2620:0:ccc::2", "2620:0:ccd::2"},			/* 7: OpenDNS Family Shield */
 		{"", ""},			/* 8: Custom1 - not supported yet */
 		{"", ""},			/* 9: Custom2 - not supported yet */
 		{"", ""},			/* 10: Custom3 - not supported yet */
