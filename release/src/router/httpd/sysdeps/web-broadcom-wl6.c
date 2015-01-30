@@ -1483,7 +1483,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			hr = sta->in / 3600;
 			min = (sta->in % 3600) / 60;
 			sec = sta->in - hr * 3600 - min * 60;
-			ret += websWrite(wp, "%02d:%02d:%02d  ", hr, min, sec);
+			ret += websWrite(wp, "%3d:%02d:%02d ", hr, min, sec);
 
 // Flags
 #ifdef RTCONFIG_BCMARM
@@ -1595,7 +1595,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					hr = sta->in / 3600;
 					min = (sta->in % 3600) / 60;
 					sec = sta->in - hr * 3600 - min * 60;
-					ret += websWrite(wp, "%02d:%02d:%02d  ", hr, min, sec);
+					ret += websWrite(wp, "%3d:%02d:%02d ", hr, min, sec);
 
 // Flags
 #ifdef RTCONFIG_BCMARM
