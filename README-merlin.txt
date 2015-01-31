@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 378.50 beta 2 (xx-xxx-2015)
+Asuswrt-Merlin - build 378.50 beta 2 (31-Jan-2015)
 ==================================================
 
 About
@@ -645,7 +645,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-378.50 Beta 2 (xx-xxx-2015)
+378.50 Beta 2 (31-Jan-2015)
    - NEW: Added custom config and postconf support for avahi, netatalk 
           and mt-daapd (iTunes server).
    - CHANGED: Moved the AC68U CFE update process to the same location
