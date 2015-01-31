@@ -382,6 +382,9 @@ enabled, under Administration -> System.
 
 The list of available config overrides:
 
+ * adisk.service
+ * afpd.service
+ * avahi-daemon.conf
  * dhcp6s.conf
  * dnsmasq.conf
  * exports (only exports.add supported)
@@ -390,6 +393,7 @@ The list of available config overrides:
  * group, gshadow, passwd, shadow (only .add versions supported)
  * hosts (for /etc/hosts)
  * minidlna.conf
+ * mt-daap.service
  * pptpd.conf
  * profile (shell profile, only profile.add suypported)
  * radvd.conf
@@ -428,6 +432,9 @@ the postconf script.
 
 The list of available postconf scripts is:
 
+ * adisk.postconf (Time Machine)
+ * afpd.postconf (Time Machine)
+ * avahi-daemon.postconf (Time Machine)
  * dhcp6s.postconf
  * dnsmasq.postconf
  * exports.postconf
@@ -436,6 +443,7 @@ The list of available postconf scripts is:
  * gshadow.postconf
  * hosts.postconf
  * minidlna.postconf
+ * mt-daap.postconf
  * openvpnclient1.postconf (and openvpnclient2.postconf)
  * openvpnserver1.postconf (and openvpnserver2.postconf)
  * passwd.postconf
@@ -638,10 +646,20 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 378.50 Beta 2 (xx-xxx-2015)
+   - NEW: Added custom config and postconf support for avahi, netatalk 
+          and mt-daapd (iTunes server).
    - CHANGED: Moved the AC68U CFE update process to the same location
               as in GPL 3626 to see if it works more consistently.
    - FIXED: Non-DPI build of AC56U had incompatible Tuxera modules
    - FIXED: vsftpd wouldn't start if you had IPv6 enabled.
+   - FIXED: Asus had disabled the NAT loopback fix on MIPS's iptables
+            in GPL 3762.  Re-enabled.
+   - FIXED: Wireless clients that hadn't communicated in a while wouldn't
+            be properly shown on the Wireless log (patch by pinwing)
+   - FIXED: QoS rules weren't applied properly when IPv6 was enabled
+            (was changed in recent GPL - reverted it)
+   - FIXED: Can't apply a Custom DDNS if you don't have something entered
+            in the username/password fields (shown in other DDNS services)
 
 
 378.50 Beta 1 (25-Jan-2015)

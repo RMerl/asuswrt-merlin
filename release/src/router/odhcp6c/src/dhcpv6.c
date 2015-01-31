@@ -932,7 +932,7 @@ static int dhcpv6_handle_reply(enum dhcpv6_msg orig, _unused const int rc,
 {
 	uint8_t *odata;
 	uint16_t otype, olen;
-	uint32_t refresh = UINT32_MAX;
+	uint32_t refresh = 86400;
 	int ret = 1;
 	bool handled_status_codes[_DHCPV6_Status_Max] = { false, };
 
