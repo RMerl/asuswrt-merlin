@@ -3237,7 +3237,10 @@ int generate_mdns_config(void)
 	fprintf(fp, "rlimit-stack=4194304\n");
 	fprintf(fp, "rlimit-nproc=3\n");
 
+	append_custom_config(AVAHI_CONFIG_FN, fp);
 	fclose(fp);
+	use_custom_config(AVAHI_CONFIG_FN, avahi_config);
+	run_postconf("avahi-daemon.postconf", avahi_config);
 
 	return ret;
 }
@@ -3269,7 +3272,10 @@ int generate_afpd_service_config(void)
 	fprintf(fp, "</service>\n");
 	fprintf(fp, "</service-group>\n");
 
+	append_custom_config(AVAHI_AFPD_SERVICE_FN, fp);
 	fclose(fp);
+	use_custom_config(AVAHI_AFPD_SERVICE_FN, afpd_service_config);
+	run_postconf("afpd.postconf", afpd_service_config);
 
 	return ret;
 }
@@ -3297,7 +3303,10 @@ int generate_adisk_service_config(void)
 	fprintf(fp, "</service>\n");
 	fprintf(fp, "</service-group>\n");
 
+	append_custom_config(AVAHI_ADISK_SERVICE_FN, fp);
 	fclose(fp);
+	use_custom_config(AVAHI_ADISK_SERVICE_FN, adisk_service_config);
+	run_postconf("adisk.postconf", adisk_service_config);
 
 	return ret;
 }
@@ -3333,7 +3342,10 @@ int generate_itune_service_config(void)
 	fprintf(fp, "</service>\n");
 	fprintf(fp, "</service-group>\n");
 
+	append_custom_config(AVAHI_ITUNE_SERVICE_FN, fp);
 	fclose(fp);
+	use_custom_config(AVAHI_ITUNE_SERVICE_FN, itune_service_config);
+	run_postconf("mt-daap.postconf", itune_service_config);
 
 	return ret;
 }
