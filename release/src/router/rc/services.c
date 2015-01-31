@@ -3557,10 +3557,7 @@ start_services(void)
 #ifdef RTCONFIG_TOAD
 	start_toads();
 #endif
-
-        // Only start if it wasn't already started by another service
-        if (!pids("miniupnpd"))
-                start_upnp();
+//	start_upnp();
 
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	start_pptpd();
