@@ -660,6 +660,7 @@ History
             (was changed in recent GPL - reverted it)
    - FIXED: Can't apply a Custom DDNS if you don't have something entered
             in the username/password fields (shown in other DDNS services)
+   - FIXED: NFS page wasn't properly loading
 
 
 378.50 Beta 1 (25-Jan-2015)
