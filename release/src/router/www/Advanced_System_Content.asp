@@ -156,7 +156,7 @@ function initial(){
 		document.form.telnetd_enable[1].disabled = false;
 	}	
 
-	toggle_jffs_visibility(document.form.jffs2_on.value);
+	toggle_jffs_visibility('<% nvram_get("jffs2_on"); %>');
 }
 
 var time_zone_tmp="";
@@ -1036,8 +1036,8 @@ function toggle_jffs_visibility(state){
 				<tr>
 					<th>Enable JFFS partition</th>
 					<td>
-						<input type="radio" name="jffs2_on" class="input" value="1" onclick="toggle_jffs_visibility(this.value);" <% nvram_match("jffs2_on", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_on" class="input" value="0" onclick="toggle_jffs_visibility(this.value);" <% nvram_match("jffs2_on", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="jffs2_on" class="input" value="1" onclick="toggle_jffs_visibility(1);" <% nvram_match("jffs2_on", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_on" class="input" value="0" onclick="toggle_jffs_visibility(0);" <% nvram_match("jffs2_on", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 				<tr id="jffs2_format_tr">

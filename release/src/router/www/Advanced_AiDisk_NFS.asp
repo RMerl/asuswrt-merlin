@@ -18,7 +18,6 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
-<script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
 <style type="text/css">
 /* folder tree */
 .mask_bg{
@@ -81,8 +80,8 @@ var nfsd_exportlist_array = '<% nvram_get("nfsd_exportlist"); %>';
 
 function initial(){
 	show_menu();
-	$("option5").innerHTML = '<table><tbody><tr><td><div id="index_img5"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-	$("option5").className = "m5_r";
+	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
+	document.getElementById("_APP_Installation").className = "menu_clicked";
 
 	shownfsd_exportlist();
 
@@ -676,11 +675,8 @@ function check_dir_path(){
 													 },
 													 function() {
 														submit_server(1);
-													 },
-												 {
-												switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
-											 }
-											);
+													 }
+												);
 											</script>
 					        			</td>
 									</tr>
