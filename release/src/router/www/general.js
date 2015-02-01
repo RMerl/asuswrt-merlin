@@ -323,6 +323,7 @@ function change_ddns_setting(v){
 				showhide("check_ddns_field", 0);
 				inputCtrl(document.form.ddns_regular_period, 0);
 				showhide("customnote", 0);
+				showhide("need_custom_scripts", 0);
 		}else if (v == "CUSTOM"){
 				document.form.ddns_hostname_x.parentNode.style.display = "";
 				document.form.DDNSName.parentNode.style.display = "none";
@@ -335,6 +336,10 @@ function change_ddns_setting(v){
 				showhide("linkToHome", 0);
 				showhide("wildcard_field",0);
 				showhide("check_ddns_field", 0);
+				if (('<% nvram_get("jffs2_on"); %>' != '1') || ('<% nvram_get("jffs2_scripts"); %>' != '1'))
+					showhide("need_custom_scripts", 1);
+				else
+					showhide("need_custom_scripts", 0);
 		}else{
 				document.form.ddns_hostname_x.parentNode.style.display = "";
 				document.form.DDNSName.parentNode.style.display = "none";
@@ -361,6 +366,7 @@ function change_ddns_setting(v){
 				else
 					inputCtrl(document.form.ddns_regular_period, 1);
 				showhide("customnote", 0);
+				showhide("need_custom_scripts", 0);
 		}
 		if(v == "WWW.NAMECHEAP.COM")
 			$("ddns_username_th").innerHTML = Untranslated.namecheap_username_title;
