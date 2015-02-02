@@ -939,8 +939,8 @@ int syslogd_main(int argc UNUSED_PARAM, char **argv)
 	//if (opts & OPT_outfile) // -O
 	if (opts & OPT_loglevel) // -l
 		G.logLevel = xatou_range(opt_l, 1, 8);
-	//if (opts & OPT_small) // -S
-	option_mask32 |= OPT_small;     // make syslog smaller.
+	if (opts & OPT_small) // -S
+		option_mask32 |= OPT_small;     // make syslog smaller.
 #if ENABLE_FEATURE_ROTATE_LOGFILE
 	if (opts & OPT_filesize) // -s
 		G.logFileSize = xatou_range(opt_s, 0, INT_MAX/1024) * 1024;
