@@ -1964,9 +1964,9 @@ void init_others(void)
 		nvram_set("txworkq", "1");
 #endif
 	}
-//#ifdef RTAC68U
-//	update_cfe();
-//#endif
+#ifdef RTAC68U
+	update_cfe();
+#endif
 #ifdef RTAC3200
 	if (nvram_match("bl_version", "1.0.1.3")) {
 		system("nvram set asuscfe0:mcsbw205glpo=0x66644200");
