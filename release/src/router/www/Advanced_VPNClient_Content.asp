@@ -92,12 +92,6 @@ var restart_vpncall_flag = 0; //Viz add 2014.04 for Edit Connecting rule then re
 function initial(){
 	show_menu();
 	show_vpnc_rulelist();
-
-	document.getElementById('edit_vpn_crt_client1_ca').value = '<% nvram_get("vpn_crt_client1_ca"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
-	document.getElementById('edit_vpn_crt_client1_crt').value = '<% nvram_get("vpn_crt_client1_crt"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
-	document.getElementById('edit_vpn_crt_client1_key').value = '<% nvram_get("vpn_crt_client1_key"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
-	document.getElementById('edit_vpn_crt_client1_static').value = '<% nvram_get("vpn_crt_client1_static"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
-	document.getElementById('edit_vpn_crt_client1_crl').value = '<% nvram_get("vpn_crt_client1_crl"); %>'.replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 }
 
 function Add_profile(){
@@ -183,21 +177,21 @@ function addRow_Group(upper, flag, idx){
 							document.form.vpnc_proto.value = "openvpn";
 					} 
 					else if(j ==2){
-						if(vpnc_clientlist_col[1] == "OpenVPN")
-							document.form.vpn_client_unit.value = 1;	//1, 2
-						else
+//						if(vpnc_clientlist_col[1] == "OpenVPN")
+//							document.form.vpn_client_unit.value = 1;	//1, 2
+//						else
 							document.form.vpnc_heartbeat_x.value = vpnc_clientlist_col[2];
 					} 
 					else if(j ==3){
-						if(vpnc_clientlist_col[1] == "OpenVPN")
-							document.form.vpn_client1_username.value = vpnc_clientlist_col[3];
-						else
+//						if(vpnc_clientlist_col[1] == "OpenVPN")
+//							document.form.vpn_client1_username.value = vpnc_clientlist_col[3];
+//						else
 							document.form.vpnc_pppoe_username.value = vpnc_clientlist_col[3];
 					} 
 					else if(j ==4){
-						if(vpnc_clientlist_col[1] == "OpenVPN")				
-							document.form.vpn_client1_password.value = vpnc_clientlist_col[4];
-						else	
+//						if(vpnc_clientlist_col[1] == "OpenVPN")
+//							document.form.vpn_client1_password.value = vpnc_clientlist_col[4];
+//						else
 							document.form.vpnc_pppoe_passwd.value = vpnc_clientlist_col[4];
 					} 
 				}
@@ -546,21 +540,21 @@ function connect_Row(rowdata, flag){
 					document.form.vpnc_proto.value = "openvpn";
 			} 
 			else if(j ==2){
-				if(vpnc_clientlist_col[1] == "OpenVPN")
-					document.form.vpn_client_unit.value = 1;	//1, 2
-				else
+//				if(vpnc_clientlist_col[1] == "OpenVPN")
+//					document.form.vpn_client_unit.value = 1;	//1, 2
+//				else
 					document.form.vpnc_heartbeat_x.value = vpnc_clientlist_col[2];
 			} 
 			else if(j ==3){
-				if(vpnc_clientlist_col[1] == "OpenVPN")
-					document.form.vpn_client1_username.value = vpnc_clientlist_col[3];
-				else
+//				if(vpnc_clientlist_col[1] == "OpenVPN")
+//					document.form.vpn_client1_username.value = vpnc_clientlist_col[3];
+//				else
 					document.form.vpnc_pppoe_username.value = vpnc_clientlist_col[3];
 			} 
 			else if(j ==4){
-				if(vpnc_clientlist_col[1] == "OpenVPN")				
-					document.form.vpn_client1_password.value = vpnc_clientlist_col[4];
-				else	
+//				if(vpnc_clientlist_col[1] == "OpenVPN")
+//					document.form.vpn_client1_password.value = vpnc_clientlist_col[4];
+//				else
 					document.form.vpnc_pppoe_passwd.value = vpnc_clientlist_col[4];
 			
 				document.form.vpnc_auto_conn.value = 1;
@@ -733,9 +727,6 @@ function del_Row(rowdata, flag){
 <input type="hidden" name="vpnc_clientlist" value='<% nvram_clean_get("vpnc_clientlist"); %>'>
 <input type="hidden" name="vpnc_type" value="PPTP">
 <input type="hidden" name="vpnc_auto_conn" value="<% nvram_get("vpnc_auto_conn"); %>">
-<input type="hidden" name="vpn_client_unit" value="1">
-<input type="hidden" name="vpn_client1_username" value="<% nvram_get("vpn_client1_username"); %>">
-<input type="hidden" name="vpn_client1_password" value="<% nvram_get("vpn_client1_password"); %>">
 <input type="hidden" name="vpnc_pptp_options_x" value="<% nvram_get("vpnc_pptp_options_x"); %>">
 <input type="hidden" name="vpnc_pptp_options_x_list" value="<% nvram_get("vpnc_pptp_options_x_list"); %>">
 

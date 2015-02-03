@@ -1119,7 +1119,7 @@ function show_menu(){
 			traffic_L2_dx = 13;
 			traffic_L3_dx = 2;				
 			if(yadns_support || dnsfilter_support){
-				traffic_L3_dx = 1;
+				traffic_L3_dx = 2;
 			}
 			
 			L2 = traffic_L2_dx;
