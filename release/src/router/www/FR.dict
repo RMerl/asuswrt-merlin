@@ -261,7 +261,7 @@ QIS_exist_wan_item2=Pour configurer d'autres paramètres WAN, veuillez cliquer <
 QIS_exist_wan_title=Vous avez déjà configuré les paramètres WAN.
 QIS_factory_WLKep=Do you want to use the default wireless security settings?
 QIS_Fail_desc=Le ZVMODELVZ ne parviens pas à détecter le type de connexion. Il se peut que votre connexion ADSL utilise l'un des modes suivants : IP fixe MER, IPoA ou Pont. Veuillez configurer les paramètres WAN manuellement pour résoudre ce problème.
-qis_fail_desc1=Échec d'authentification.
+qis_fail_desc1=Échec d\'authentification.
 qis_fail_desc2=Le nom d'utilisateur et/ou le mot de passe sont invalides.
 qis_fail_desc3=Si vous souhaitez configurer le routeur en mode hors ligne, cliquez sur <b>Configuration sans fil</b> pour ignorer la détection automatique du type de connexion et passer à l'étape de configuration du nom et de la clé de sécurité de votre réseau sans fil.
 qis_fail_desc4=Cliquez sur <b>Type de connexion Internet</b> pour ressaisir l'identifiant et le mot de passe fournis par votre FAI.
@@ -1524,7 +1524,7 @@ PPPConnection_x_PPTPOptions_itemname=Options PPTP
 PPPConnection_x_ServiceName_itemdesc=Ce champ est optionnel et doit être spécifié pour certains fournisseurs d'accès à Internet. Consultez votre fournisseur d'accès saisissez les informations correspondantes.
 PPPConnection_x_ServiceName_itemname=Nom du service
 PPTP_desc=Le serveur VPN permet d'accéder au contenu Internet de votre pays d'origine à tout moment et où que vous soyez.
-PPTP_desc2=Suivez les instructions suivantes pour utiliser un serveur VPN.<br>1. Activez le protocole VPN PPTP.<br>2. Entrez la plage d'adresses IP du client (10 clients maximum).<br>3. Entrez le nom d'utilisateur et le mot de passe du client VPN.<br>4. Ouvrez le programme de connexion VPN sur votre ordinateur ou appareil mobile.<br>5. Créez une nouvelle connexion VPN de type PPTP avec l'adresse de serveur
+PPTP_desc2=Suivez les instructions suivantes pour utiliser un serveur VPN.<br>1. Activez le protocole VPN PPTP.<br>2. Entrez la plage d\'adresses IP du client (10 clients maximum).<br>3. Entrez le nom d\'utilisateur et le mot de passe du client VPN.<br>4. Ouvrez le programme de connexion VPN sur votre ordinateur ou appareil mobile.<br>5. Créez une nouvelle connexion VPN de type PPTP avec l\'adresse de serveur
 PPTP_desc3=6. Si votre adresse IP sans fil est de type dynamique, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">veuillez cliquer ici pour configurer le protocole DDNS.</a>
 Prefix_lan_Length=Réseau local longueur de préfixe
 prev_page=Page précédente
