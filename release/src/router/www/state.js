@@ -1,4 +1,4 @@
-﻿document.write('<script type="text/javascript" src="/require/require.min.js"></script>');
+document.write('<script type="text/javascript" src="/require/require.min.js"></script>');
 
 /* Internet Explorer lacks this array method */
 if (!('indexOf' in Array.prototype)) {
@@ -9,6 +9,7 @@ if (!('indexOf' in Array.prototype)) {
 		for (var n= this.length; i<n; i++)
 			if (i in this && this[i]===find)
 				return i;
+		}
 		return -1;
 	};
 }
@@ -49,11 +50,27 @@ Array.prototype.getIndexByValue2D = function(value){
 	return -1;
 }
 
+Array.prototype.getRowIndexByValue2D = function(value, col){
+	for(var i=0; i<this.length; i++){
+		if(typeof(col) != "undefined" && col >= 0) {
+			if(this[i][col] == value)
+				return i;
+		}
+		else {
+			for(var j=0; j<this[i].length; j++) {
+				if(this[i][j] == value)
+					return i;
+			}
+		}
+	}
+	return -1;
+}
+
 Array.prototype.del = function(n){
-	if(n < 0)
-		return this;
-	else
-		return this.slice(0,n).concat(this.slice(n+1,this.length));
+　if(n < 0)
+　　return this;
+　else
+　　return this.slice(0,n).concat(this.slice(n+1,this.length));
 }
 
 // for compatibility jQuery trim on IE
@@ -221,7 +238,8 @@ var networkTool_support = isSupport("nwtool");
 var band5g_11ac_support = isSupport("11AC");
 var optimizeXbox_support = isSupport("optimize_xbox");
 var spectrum_support = isSupport("spectrum");
-var mediareview_support = isSupport("wlopmode");var userRSSI_support = isSupport("user_low_rssi");
+var mediareview_support = isSupport("wlopmode");
+var userRSSI_support = isSupport("user_low_rssi");
 var timemachine_support = isSupport("timemachine");
 var kyivstar_support = isSupport("kyivstar");
 var email_support = isSupport("email");
@@ -960,22 +978,6 @@ Array.prototype.getIndexByValue2D = function(value){
 	return -1;
 }
 
-Array.prototype.getRowIndexByValue2D = function(value, col){
-	for(var i=0; i<this.length; i++){
-		if(typeof(col) != "undefined" && col >= 0) {
-			if(this[i][col] == value)
-				return i;
-		}
-		else {
-			for(var j=0; j<this[i].length; j++) {
-				if(this[i][j] == value)
-					return i;
-			}
-		}
-	}
-	return -1;
-}
-
 Array.prototype.del = function(n){
 　if(n < 0)
 　　return this;
@@ -1242,6 +1244,10 @@ function show_menu(){
 		}
 	}
 	menu1_code += '<div class="m0_r" id="option0">'+'<table width="192px" height="37px"><tr><td><#menu5#></td></tr></table></div>\n'; 	
+	// for link of support site 
+	menu1_code +='<div id="supported_link">';
+	menu1_code +='<div class="test_text"><a href="http://event.asus.com/2013/nw/ASUSWRT/index.htm" target="_blank" style="text-decoration: underline;">Check ASUSWRT supported models</div>';
+	menu1_code +='<div style="margin-left:11px;"><img style="width:25px;height:25px;" src="images/white arrow.png"></a></div></div>';	
 	$("mainMenu").innerHTML = menu1_code;
 
 	// Advanced
@@ -2010,7 +2016,7 @@ function show_top_status(){
 			$('elliptic_ssid_5g_2').style.cursor="auto";	
 		}
 	}
-	
+
 	var topbanner_ssid_2g = handle_show_str(ssid_status_2g);
 	if(topbanner_ssid_2g.length >33){
 		$('elliptic_ssid_2g').innerHTML = extend_display_ssid(topbanner_ssid_2g)+"...";
@@ -2814,6 +2820,7 @@ function refreshStatus(xmldoc){
 	wan1_enable = wanStatus[19].firstChild.nodeValue.replace("wan1_enable=", "");
 
 	var vpnStatus = devicemapXML[0].getElementsByTagName("vpn");
+	vpnc_proto = vpnStatus[0].firstChild.nodeValue.replace("vpnc_proto=", "");
 
 	var first_wanStatus = devicemapXML[0].getElementsByTagName("first_wan");
 	first_link_status = first_wanStatus[0].firstChild.nodeValue;
@@ -2843,7 +2850,6 @@ function refreshStatus(xmldoc){
 	pin_remaining_count = simState[8].firstChild.nodeValue.replace("pin_remaining_count=", "");		
 	sim_spn = simState[9].firstChild.nodeValue.replace("sim_spn=", "");
 
-	vpnc_proto = vpnStatus[0].firstChild.nodeValue.replace("vpnc_proto=", "");
 	if(vpnc_proto == "openvpn"){
 		if('<% nvram_get("vpn_client_unit"); %>' == 1){
 			vpnc_state_t = vpnStatus[3].firstChild.nodeValue.replace("vpn_client1_state=", "");
