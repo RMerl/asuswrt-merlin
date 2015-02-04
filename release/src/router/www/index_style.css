@@ -1,4 +1,4 @@
-﻿/* CSS Document */
+/* CSS Document */
 body {
 	background-color:#21333e;
 	/*background: url(/images/bg_svg.png) repeat-x;*/
@@ -803,6 +803,26 @@ width:122px;
 .bottom_help_FAQ_icon:active{
   background: url(images/New_ui/bottom_search.png);
   background-position: -0px -64px; width: 32px; height: 32px;
+}
+#supported_link{
+	margin-left:-180px;
+	margin-top:-503px;
+	width:165px;
+	height:110px;
+	background:#000;
+	position:absolute;
+	-webkit-border-radius: 7px;
+	-moz-border-radius: 7px;
+	border-radius: 7px;
+
+}
+.test_text{
+margin-top:22px;
+text-align:left;
+font-family: Verdana, Arial, Helvetica, sans-serif;
+font-size:16px;
+margin-bottom:10px;
+margin-left:10px;
 }
 
 .block_filter{
