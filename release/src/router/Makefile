@@ -362,8 +362,8 @@ obj-$(RTCONFIG_NFS) += nfs-utils
 obj-$(RTCONFIG_NFS) += portmap
 
 #obj-y += dosfstools
-#obj-$(RTCONFIG_FTP) += $(if $(RTCONFIG_QCA),vsftpd-3.x,vsftpd)
-obj-$(RTCONFIG_FTP) += vsftpd-3.x
+obj-$(RTCONFIG_FTP) += $(if $(RTCONFIG_QCA),vsftpd-3.x,vsftpd)
+#obj-$(RTCONFIG_FTP) += vsftpd-3.x
 
 ifeq ($(CONFIG_LINUX26),y)
 ifeq ($(RTCONFIG_SAMBASRV),y)
