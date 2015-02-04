@@ -147,9 +147,9 @@ function deleteRow(r){
   var wl_maclist_x_value = "";
 	for(i=0; i<document.getElementById('wl_maclist_x_table').rows.length; i++){
 		wl_maclist_x_value += "&#60";
-		wl_maclist_x_value += $('wl_maclist_x_table').rows[i].cells[0].innerHTML;
-		wl_maclist_x_value += "&#62";
 		wl_maclist_x_value += document.getElementById('wl_maclist_x_table').rows[i].cells[0].innerHTML;
+		wl_maclist_x_value += "&#62";
+		wl_maclist_x_value += document.getElementById('wl_maclist_x_table').rows[i].cells[1].innerHTML;
 	}
 	
 	wl_maclist_x_array = wl_maclist_x_value;
