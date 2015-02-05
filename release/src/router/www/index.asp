@@ -983,6 +983,8 @@ function validForm(){
 				tmpArray[index] = document.getElementById("macaddr_field").value;
 				tmpArray[index] += ">";
 				tmpArray[index] += document.getElementById("ipaddr_field").value;
+                                tmpArray[index] += ">";
+                                tmpArray[index] += document.getElementById("client_name").value;
 				document.list_form.dhcp_staticlist.value = tmpArray.join("<");
 			}
 		});
