@@ -21,7 +21,6 @@
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
-<script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
 <style type="text/css">
 /* folder tree */
 .mask_bg{
@@ -107,7 +106,7 @@ function initial() {
 		document.form.usb_idle_exclude_i.checked = true;
 
 	if ((productid == "RT-AC56U") || (productid == "RT-AC68U") || (productid == "RT-AC87U"))
-		$("ct_established_default").innerHTML = "Default: 432000 (5 days)";
+		document.getElementById("ct_established_default").innerHTML = "Default: 432000 (5 days)";
 
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();

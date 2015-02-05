@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 378.50 beta 2 (31-Jan-2015)
+Asuswrt-Merlin - build 378.50 beta 3 (xx-Feb-2015)
 ==================================================
 
 About
@@ -645,6 +645,22 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+378.50 (xx-xxx-2015)
+   - CHANGED: Reverted back to vsftpd 2.x, as 3.0.2 doesn't work properly
+              on MIPS architectures (and possibly other particular
+              scenarios as well).
+   - CHANGED: Added warning to the DDNS page if you set the type
+              to Custom and either JFFS or custom script support isn't
+              enabled
+   - FIXED: A few unescaped quotes in the French dict breaking VPN pages
+   - FIXED: MAC list would get corrupted when removing and re-adding
+            entries on the MAC filter list
+   - FIXED: AC68U CFE update wasn't written to flash due to permission
+            issues
+   - FIXED: Static Key field wasn't visible when using HMAC
+   - FIXED: syslogd was always enforcing the -S switch
+
+
 378.50 Beta 2 (31-Jan-2015)
    - NEW: Added custom config and postconf support for avahi, netatalk 
           and mt-daapd (iTunes server).

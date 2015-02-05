@@ -42,26 +42,26 @@ overlib.isOut = true;
 
 function initial(){
 	show_menu();
-	if (!band5g_support) $("wifi5_clients_tr").style.display = "none";
+	if (!band5g_support) document.getElementById("wifi5_clients_tr").style.display = "none";
 	if (based_modelid == "RT-AC87U") {
-		$("wifi5_clients_tr").style.display = "none";
-		$("wifi5_clients_tr_qtn").style.display = "";
-		$("qtn_version").style.display = "";
+		document.getElementById("wifi5_clients_tr").style.display = "none";
+		document.getElementById("wifi5_clients_tr_qtn").style.display = "";
+		document.getElementById("qtn_version").style.display = "";
 	}
 	showbootTime();
 
 	if (odmpid != "")
-		$("model_id").innerHTML = odmpid;
+		document.getElementById("model_id").innerHTML = odmpid;
 	else
-		$("model_id").innerHTML = productid;
+		document.getElementById("model_id").innerHTML = productid;
 
 	var buildno = '<% nvram_get("buildno"); %>';
 	var firmver = '<% nvram_get("firmver"); %>'
 	var extendno = '<% nvram_get("extendno"); %>';
 	if ((extendno == "") || (extendno == "0"))
-		$("fwver").innerHTML = firmver + "." + buildno;
+		document.getElementById("fwver").innerHTML = firmver + "." + buildno;
 	else
-		$("fwver").innerHTML =  firmver + "." + buildno + '_' + extendno.split("-g")[0];
+		document.getElementById("fwver").innerHTML =  firmver + "." + buildno + '_' + extendno.split("-g")[0];
 
 	update_temperatures();
 	hwaccel_state();
@@ -84,7 +84,7 @@ function update_temperatures(){
 			if ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC87U")) {
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + curr_coreTmp_cpu +"&deg;C</span>";
 			}
-			$("temp_td").innerHTML = code;
+			document.getElementById("temp_td").innerHTML = code;
 			setTimeout("update_temperatures();", 3000);
 		}
 	});
@@ -122,7 +122,7 @@ function hwaccel_state(){
 		code = "<span>N/A</span>";
 	}
 
-	$("hwaccel").innerHTML = code;
+	document.getElementById("hwaccel").innerHTML = code;
 }
 
 
@@ -132,10 +132,10 @@ function showbootTime(){
         Minutes = Math.floor(boottime % 3600 / 60);
         Seconds = Math.floor(boottime % 60);
         
-        $("boot_days").innerHTML = Days;
-        $("boot_hours").innerHTML = Hours;
-        $("boot_minutes").innerHTML = Minutes;
-        $("boot_seconds").innerHTML = Seconds;
+        document.getElementById("boot_days").innerHTML = Days;
+        document.getElementById("boot_hours").innerHTML = Hours;
+        document.getElementById("boot_minutes").innerHTML = Minutes;
+        document.getElementById("boot_seconds").innerHTML = Seconds;
         boottime += 1;
         setTimeout("showbootTime()", 1000);
 }
@@ -213,7 +213,7 @@ function show_etherstate(){
 		}
 	}
 	code += code_ports + '</table>';
-	$("etherstate_td").innerHTML = code;
+	document.getElementById("etherstate_td").innerHTML = code;
 }
 
 function updateClientList(e){
