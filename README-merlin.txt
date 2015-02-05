@@ -659,6 +659,10 @@ History
             issues
    - FIXED: Static Key field wasn't visible when using HMAC
    - FIXED: syslogd was always enforcing the -S switch
+   - FIXED: When setting a static DHCP from the networkmap, the user-entered
+            name wouldn't be used.  Now it gets used, and we rely on the rc
+            daemon to properly handle it if it's not a valid hostname (it will
+            simply not provide it to dnsmasq's static name list).
 
 
 378.50 Beta 2 (31-Jan-2015)
