@@ -983,6 +983,8 @@ function validForm(){
 				tmpArray[index] = document.getElementById("macaddr_field").value;
 				tmpArray[index] += ">";
 				tmpArray[index] += document.getElementById("ipaddr_field").value;
+				tmpArray[index] += ">";
+				tmpArray[index] += document.getElementById("client_name").value;
 				document.list_form.dhcp_staticlist.value = tmpArray.join("<");
 			}
 		});
@@ -1641,6 +1643,10 @@ function previewImage(imageObj) {
 										$j(this).removeClass("disabled");
 									}
 									document.getElementById("client_name").onblur = function(){
+										if (document.getElementById("ipLockIcon").className == "static") {
+											delFromList(document.getElementById("macaddr_field").value);
+											addToList(document.getElementById("macaddr_field").value);
+                                                                                }
 										$j(this).addClass("disabled");
 									}
 								</script>
