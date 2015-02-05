@@ -1715,13 +1715,16 @@ function previewImage(imageObj) {
 								<div class="type5" onclick="select_image(this.className);"></div>
 							</td>
 							<td>
-								<div class="type7" onclick="select_image(this.className);"></div>
+								<div class="type6" onclick="select_image(this.className);"></div>
 							</td>
 							<td>
-								<div class="type8" onclick="select_image(this.className);"></div>
+								<div class="type7" onclick="select_image(this.className);"></div>
 							</td>
 						</tr>
 						<tr>
+							<td>
+								<div class="type8" onclick="select_image(this.className);"></div>
+							</td>
 							<td>
 								<div class="type9" onclick="select_image(this.className);"></div>
 							</td>
@@ -1737,11 +1740,11 @@ function previewImage(imageObj) {
 							<td>
 								<div class="type13" onclick="select_image(this.className);"></div>
 							</td>
+						</tr>
+						<tr>
 							<td>
 								<div class="type14" onclick="select_image(this.className);"></div>
 							</td>
-						</tr>
-						<tr>
 							<td>
 								<div class="type15" onclick="select_image(this.className);"></div>
 							</td>
@@ -1758,8 +1761,6 @@ function previewImage(imageObj) {
 								<div id="divUserIcon">Upload
 									<input type="file" name="uploadIcon" id="uploadIcon" onchange="previewImage(this);" />
 								</div>
-							</td>
-							<td>
 							</td>
 						</tr>	
 					</table>

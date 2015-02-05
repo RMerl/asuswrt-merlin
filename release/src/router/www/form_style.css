@@ -1442,6 +1442,41 @@ padding-top:1px;
 	cursor: pointer;
 }
 
+.notification_on{
+	background-image:url(/images/New_ui/notification.png);
+	background-repeat:no-repeat;	
+	background-position:2px 2px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+}
+.notification_off{
+	display: none;
+}
+
+.notification_on1{
+	cursor: pointer;
+}
+
+.vpnstatuson{
+	background-image:url(/images/New_ui/vpnstatus.png);
+	background-repeat:no-repeat;	
+	background-position:2px 2px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+	display: none;
+}
+.vpnstatusoff{
+	background-image:url(/images/New_ui/vpnstatus.png);
+	background-repeat:no-repeat;	
+	background-position:2px -48px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+	display: none;
+}
+
 .wifihwswstatuson{
 	background-image:url(/images/wifi_hw_sw.png);
 	background-repeat:no-repeat;	
@@ -1916,66 +1951,6 @@ padding-top:1px;
 	text-decoration:underline;
 	background-color:#065280;
 }
-.textarea_ssh_table{
-	margin-left:2px;
-	padding-left:0.4em;
-	width: 500px;
-	height:184px;
-	line-height:23px;    /*IE*/
-	font-size:12px;
-	font-family: Lucida Console;
-	background: #576D73;
-	border: 2px ridge #777;
-	border-style:bevel;
-	color:#FFFFFF;
-}
-.notification_on{
-	background-image:url(/images/New_ui/notification.png);
-	background-repeat:no-repeat;	
-	background-position:2px 2px;
-	height:29px;
-	width:30px;
-	cursor: pointer;
-}
-.notification_off{
-	display: none;
-}
-
-.notification_on1{
-	cursor: pointer;
-}
-
-.vpnstatuson{
-	background-image:url(/images/New_ui/vpnstatus.png);
-	background-repeat:no-repeat;	
-	background-position:2px 2px;
-	height:29px;
-	width:30px;
-	cursor: pointer;
-	display: none;
-}
-.vpnstatusoff{
-	background-image:url(/images/New_ui/vpnstatus.png);
-	background-repeat:no-repeat;	
-	background-position:2px -48px;
-	height:29px;
-	width:30px;
-	cursor: pointer;
-	display: none;
-}
-.vpnClientTitle_td_unclick{
-	background-color: #000;
-	height: 30px;
-	cursor: pointer;
-	border: 1px solid #222;
-}
-
-.vpnClientTitle_td_click{
-	background-color: #4D595D;
-	height: 30px;
-	cursor: pointer;
-	border: 1px solid #222;
-}
 
 .traffictable th{
 	height:30px;
@@ -2222,6 +2197,7 @@ padding-top:1px;
 	font-size:12px;
 	line-height:25px;
 }
+
 .single_wan_connected{
 	background-image:url(/images/New_ui/networkmap/line_dualwan.png);
 	background-repeat:no-repeat;
@@ -2278,6 +2254,34 @@ padding-top:1px;
 	*margin-left:103px;
 	height:40px;
 	width:20px;
+}
+
+.textarea_ssh_table{
+	margin-left:2px;
+	padding-left:0.4em;
+	width: 500px;
+	height:184px;
+	line-height:23px;    /*IE*/
+	font-size:12px;
+	font-family: Lucida Console;
+	background: #475A5F;
+	border: 2px ridge #777;
+	border-style:bevel;
+	color:#FFFFFF;
+}
+
+.vpnClientTitle_td_unclick{
+	background-color: #000;
+	height: 30px;
+	cursor: pointer;
+	border: 1px solid #222;
+}
+
+.vpnClientTitle_td_click{
+	background-color: #4D595D;
+	height: 30px;
+	cursor: pointer;
+	border: 1px solid #222;
 }
 .link{
 	cursor:pointer !important;

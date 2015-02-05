@@ -1,4 +1,4 @@
-﻿/* CSS Document */
+/* CSS Document */
 .diagnosebody{
 	margin:5px auto 0px auto;	
 	background-color:#8fb9cc;
@@ -161,7 +161,7 @@
 .drImg{
 	position:absolute;
 	z-index:600;
-	margin-left:380px;
+	margin-left:400px;
 	margin-top:-25px;
 }
 .drword{
