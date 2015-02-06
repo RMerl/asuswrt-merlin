@@ -1,0 +1,105 @@
+
+Contents of the Tor state file
+==============================
+
+The state file is structured with more or less the same rules as torrc.
+Recognized fields are:
+
+  TorVersion
+
+     The version of Tor that wrote this file
+
+  LastWritten
+
+     Time when this state file was written.
+     Given in ISO format (YYYY-MM-DD HH:MM:SS)
+
+  AccountingBytesReadInInterval     (memory unit)
+  AccountingBytesWrittenInInterval  (memory unit)
+  AccountingExpectedUsage           (memory unit)
+  AccountingIntervalStart           (ISO time)
+  AccountingSecondsActive           (time interval)
+  AccountingSecondsToReachSoftLimit (time interval)
+  AccountingSoftLimitHitAt          (ISO time)
+  AccountingBytesAtSoftLimit        (memory unit)
+
+     These fields describe the state of the accounting subsystem.
+
+     The IntervalStart is the time at which the current accounting
+     interval began.  We were expecting to use ExpectedUsage over the
+     course of the interval.  BytesRead/BytesWritten are the total
+     number of bytes transferred over the whole interval.  If Tor has
+     been active during the interval, then AccountingSecondsActive is
+     the amount of time for which it has been active.  We were expecting
+     to hit the bandwidth soft limit in SecondsToReachSoftLimit after we
+     became active.  When we hit the soft limit, we record
+     BytesAtSoftLimit.  If we hit the soft limit already, we did so at
+     SoftLimitHitAt.
+
+  EntryGuard
+  EntryGuardDownSince
+  EntryGuardUnlistedSince
+  EntryGuardAddedBy
+
+      These lines form sections related to entry guards.  Each section
+      starts with a single EntryGuard line, and is then followed by
+      information on the state of the Entry guard.
+
+      The EntryGuard line contains a nickname, then an identity digest, of
+      the guard.
+
+      The EntryGuardDownSince and EntryGuardUnlistedSince lines are present
+      if the entry guard is believed to be non-running or non-listed.  If
+      present, they contain a line in ISO format (YYYY-MM-DD HH:MM:SS).
+
+      The EntryGuardAddedBy line is optional.  It contains three
+      space-separated fields: the identity of the entry guard, the version of
+      Tor that added it, and the ISO time at which it was added.
+
+  TransportProxy
+
+     One or more of these may be present.
+
+     The format is "transportname addr:port", to remember the address
+     at which a pluggable transport was listening. Tor bridges use
+     this information to spawn pluggable transport listeners in the
+     same IP address and TCP port even after tor client restarts.
+
+  BWHistoryReadEnds           (ISO time)
+  BWHistoryReadInterval       (integer, number of seconds)
+  BWHistoryReadValues         (comma-separated list of integer)
+  BWHistoryReadMaxima         (comma-separated list of integer)
+  BWHistoryWriteEnds
+  BWHistoryWriteInterval
+  BWHistoryWriteValues
+  BWHistoryWriteMaxima
+  BWHistoryDirReadEnds
+  BWHistoryDirReadInterval
+  BWHistoryDirReadValues
+  BWHistoryDirReadMaxima
+  BWHistoryDirWriteEnds
+  BWHistoryDirWriteInterval
+  BWHistoryDirWriteValues
+  BWHistoryDirWriteMaxima
+
+     These values record bandwidth history.  The "Values" fields are a list, for
+     some number of "Intervals", of the total amount read/written during that
+     integer.  The "Maxima" are the highest burst for each interval.
+
+     Interval duration is set by the "Interval" field, in seconds.  The
+     "Ends" field is the ending time of the last interval in each list.
+
+     The *Read* and *Write* fields are the total amount read and
+     written; the *DirRead* and *DirWrite* variants are for directory
+     traffic only.
+
+  LastRotatedOnionKey
+
+     The last time that we changed our onion key for a new one.
+     Given in ISO format (YYYY-MM-DD HH:MM:SS)
+
+  TotalBuildTimes
+  CircuitBuildAbandonedCount
+  CircuitBuildTimeBin
+
+      XXXX writeme.

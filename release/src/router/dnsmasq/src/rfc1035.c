@@ -1328,6 +1328,43 @@ int check_for_bogus_wildcard(struct dns_header *header, size_t qlen, char *name,
   return 0;
 }
 
+int check_for_ignored_address(struct dns_header *header, size_t qlen, struct bogus_addr *baddr)
+{
+  unsigned char *p;
+  int i, qtype, qclass, rdlen;
+  struct bogus_addr *baddrp;
+
+  /* skip over questions */
+  if (!(p = skip_questions(header, qlen)))
+    return 0; /* bad packet */
+
+  for (i = ntohs(header->ancount); i != 0; i--)
+    {
+      if (!(p = skip_name(p, header, qlen, 10)))
+	return 0; /* bad packet */
+      
+      GETSHORT(qtype, p); 
+      GETSHORT(qclass, p);
+      p += 4; /* TTL */
+      GETSHORT(rdlen, p);
+      
+      if (qclass == C_IN && qtype == T_A)
+	{
+	  if (!CHECK_LEN(header, p, qlen, INADDRSZ))
+	    return 0;
+	  
+	  for (baddrp = baddr; baddrp; baddrp = baddrp->next)
+	    if (memcmp(&baddrp->addr, p, INADDRSZ) == 0)
+	      return 1;
+	}
+      
+      if (!ADD_RDLEN(header, p, qlen, rdlen))
+	return 0;
+    }
+  
+  return 0;
+}
+
 int add_resource_record(struct dns_header *header, char *limit, int *truncp, int nameoffset, unsigned char **pp, 
 			unsigned long ttl, int *offset, unsigned short type, unsigned short class, char *format, ...)
 {
@@ -1606,7 +1643,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 			      {
 				if (crecp->flags & F_NXDOMAIN)
 				  nxdomain = 1;
-				log_query(F_UPSTREAM, name, NULL, "secure no DS");	
+				log_query(F_UPSTREAM, name, NULL, "no DS");	
 			      }
 			    else if ((keydata = blockdata_retrieve(crecp->addr.ds.keydata, crecp->addr.ds.keylen, NULL)))
 			      {			     			      

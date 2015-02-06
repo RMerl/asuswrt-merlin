@@ -89,13 +89,12 @@ function initial(){
 	display_spec_IP(document.form.http_client.value);
 	corrected_timezone();
 	load_timezones();
-	show_dst_chk();
+	parse_dstoffset();
 	load_dst_m_Options();
 	load_dst_w_Options();
 	load_dst_d_Options();
-	load_dst_h_Options();
-	document.form.http_passwd2.value = "";
-	//Viz banned 2014.04.17 chkPass(" ", 'http_passwd');
+	load_dst_h_Options();	
+	document.form.http_passwd2.value = "";	
 	
 	if(svc_ready == "0")
 		$('svc_hint_div').style.display = "";	
@@ -192,10 +191,8 @@ function applyRule(){
 			document.form.http_passwd.value = document.form.http_passwd2.value;
 			document.form.http_passwd.disabled = false;
 		}
-
-		var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
-		// match "[std name][offset][dst name]"
-		if(document.form.time_zone_select.value.match(tzdst)){		// Exist dstoffset
+		
+		if(document.form.time_zone_select.value.search("DST") >= 0 || document.form.time_zone_select.value.search("TDT") >= 0){		// DST area
 
 				time_zone_tmp = document.form.time_zone_select.value.split("_");	//0:time_zone 1:serial number
 				time_zone_s_tmp = "M"+document.form.dst_start_m.value+"."+document.form.dst_start_w.value+"."+document.form.dst_start_d.value+"/"+document.form.dst_start_h.value;
@@ -203,7 +200,7 @@ function applyRule(){
 				document.form.time_zone_dstoff.value=time_zone_s_tmp+","+time_zone_e_tmp;
 				document.form.time_zone.value = document.form.time_zone_select.value;
 		}else{
-				document.form.time_zone_dstoff.value="";
+				//document.form.time_zone_dstoff.value="";	//Don't change time_zone_dstoff vale
 				document.form.time_zone.value = document.form.time_zone_select.value;
 		}
 		
@@ -327,10 +324,8 @@ function validForm(){
 			)
 		return false;
 
-
-	var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
-	// match "[std name][offset][dst name]"
-	if(document.form.time_zone_select.value.match(tzdst)			// Exist dstoffset
+	
+	if((document.form.time_zone_select.value.search("DST") >= 0 || document.form.time_zone_select.value.search("TDT") >= 0)			// DST area
 			&& document.form.dst_start_m.value == document.form.dst_end_m.value
 			&& document.form.dst_start_w.value == document.form.dst_end_w.value
 			&& document.form.dst_start_d.value == document.form.dst_end_d.value){
@@ -419,27 +414,6 @@ function corrected_timezone(){
 	}
 	else
 		return;	
-}
-
-function show_dst_chk(){
-	var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i");
-	// match "[std name][offset][dst name]"
-	if(document.form.time_zone_select.value.match(tzdst)){
-			if (dstoffset != "")
-				parse_dstoffset();
-			document.form.time_zone_dst.value=1;
-			document.getElementById("dst_changes_start").style.display="";
-			document.getElementById("dst_changes_end").style.display="";
-			document.getElementById("dst_start").style.display="";
-			document.getElementById("dst_end").style.display="";
-		
-	}else{
-			document.form.time_zone_dst.value=0;
-			document.getElementById("dst_changes_start").style.display="none";
-			document.getElementById("dst_changes_end").style.display="none";
-			document.getElementById("dst_start").style.display="none";
-			document.getElementById("dst_end").style.display="none";
-	}	
 }
 
 var timezones = [
@@ -548,6 +522,7 @@ function load_timezones(){
 			timezones[i][1], timezones[i][0],
 			(document.form.time_zone.value == timezones[i][0]));
 	}
+	select_time_zone();	
 }
 
 var dst_month = new Array("", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
@@ -558,27 +533,34 @@ var dst_hour = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
 var dstoff_start_m,dstoff_start_w,dstoff_start_d,dstoff_start_h;
 var dstoff_end_m,dstoff_end_w,dstoff_end_d,dstoff_end_h;
 
-function parse_dstoffset(){	//Mm.w.d/h,Mm.w.d/h
-	var dstoffset_startend = dstoffset.split(",");
-		var dstoffset_start = dstoffset_startend[0];
-		var dstoff_start = dstoffset_start.split(".");
-			dstoff_start_m = dstoff_start[0];
-			dstoff_start_w = dstoff_start[1];
-			dstoff_start_d = dstoff_start[2].split("/")[0];
-			dstoff_start_h = dstoff_start[2].split("/")[1];
-		var dstoffset_end = dstoffset_startend[1];
-		var dstoff_end = dstoffset_end.split(".");
-			dstoff_end_m = dstoff_end[0];
-			dstoff_end_w = dstoff_end[1];
-			dstoff_end_d = dstoff_end[2].split("/")[0];
-			dstoff_end_h = dstoff_end[2].split("/")[1];
+function parse_dstoffset(){     //Mm.w.d/h,Mm.w.d/h
+		if(dstoffset){
+					var dstoffset_startend = dstoffset.split(",");
+    			
+					var dstoffset_start = dstoffset_startend[0];		
+					var dstoff_start = dstoffset_start.split(".");
+					dstoff_start_m = dstoff_start[0];
+					dstoff_start_w = dstoff_start[1];
+					dstoff_start_d = dstoff_start[2].split("/")[0];
+					dstoff_start_h = dstoff_start[2].split("/")[1];
+					
+					var dstoffset_end = dstoffset_startend[1];
+					var dstoff_end = dstoffset_end.split(".");
+					dstoff_end_m = dstoff_end[0];
+					dstoff_end_w = dstoff_end[1];
+					dstoff_end_d = dstoff_end[2].split("/")[0];
+					dstoff_end_h = dstoff_end[2].split("/")[1];
+    			
+					//alert(dstoff_start_m+"."+dstoff_start_w+"."+dstoff_start_d+"/"+dstoff_start_h);
+					//alert(dstoff_end_m+"."+dstoff_end_w+"."+dstoff_end_d+"/"+dstoff_end_h);
+		}
 }
-															
+
 function load_dst_m_Options(){
 	free_options(document.form.dst_start_m);
 	free_options(document.form.dst_end_m);
 	for(var i = 1; i < dst_month.length; i++){
-		if(!dstoffset){		//none dst_offset
+		if(!dstoffset){		//none time_zone_dstoff
 			if(i==3){
 				add_option(document.form.dst_start_m, dst_month[i], i, 1);
 				add_option(document.form.dst_end_m, dst_month[i], i, 0);
@@ -589,13 +571,14 @@ function load_dst_m_Options(){
 				add_option(document.form.dst_start_m, dst_month[i], i, 0);
 				add_option(document.form.dst_end_m, dst_month[i], i, 0);
 			}
-		}else{
-			if(dstoff_start_m =='M'+i)
+		}
+		else{		// exist time_zone_dstoff
+			if(dstoff_start_m == 'M'+i)
 				add_option(document.form.dst_start_m, dst_month[i], i, 1);
 			else	
 				add_option(document.form.dst_start_m, dst_month[i], i, 0);
 			
-			if(dstoff_end_m =='M'+i)
+			if(dstoff_end_m == 'M'+i)
 				add_option(document.form.dst_end_m, dst_month[i], i, 1);
 			else
 				add_option(document.form.dst_end_m, dst_month[i], i, 0);							
@@ -608,7 +591,7 @@ function load_dst_w_Options(){
 	free_options(document.form.dst_start_w);
 	free_options(document.form.dst_end_w);
 	for(var i = 1; i < dst_week.length; i++){
-		if(!dstoffset){		//none dst_offset
+		if(!dstoffset){		//none time_zone_dstoff
 			if(i==2){
 				add_option(document.form.dst_start_w, dst_week[i], i, 1);
 				add_option(document.form.dst_end_w, dst_week[i], i, 1);
@@ -616,7 +599,8 @@ function load_dst_w_Options(){
 				add_option(document.form.dst_start_w, dst_week[i], i, 0);
 				add_option(document.form.dst_end_w, dst_week[i], i, 0);
 			}
-		}else{		
+		}
+		else{		//exist time_zone_dstoff
 			if(dstoff_start_w == i)
 				add_option(document.form.dst_start_w, dst_week[i], i, 1);
 			else	
@@ -862,17 +846,17 @@ function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
-function select_time_zone(){
-	var tzdst = new RegExp("^[a-z]+[0-9\-\.:]+[a-z]+", "i"); // match "[std name][offset][dst name]"
-
-	if(document.form.time_zone_select.value.match(tzdst)){
+function select_time_zone(){	
+		
+	if(document.form.time_zone_select.value.search("DST") >= 0 || document.form.time_zone_select.value.search("TDT") >= 0){	//DST area
 			document.form.time_zone_dst.value=1;
 			document.getElementById("dst_changes_start").style.display="";
 			document.getElementById("dst_changes_end").style.display="";
 			document.getElementById("dst_start").style.display="";	
 			document.getElementById("dst_end").style.display="";						
 		
-	}else{
+	}
+	else{
 			document.form.time_zone_dst.value=0;
 			document.getElementById("dst_changes_start").style.display="none";
 			document.getElementById("dst_changes_end").style.display="none";

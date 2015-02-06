@@ -262,7 +262,7 @@ function change_qos_type(value){
 															<li><#EzQoS_desc_Adaptive#></li>
 															<li><#EzQoS_desc_Traditional#></li>
 														</ul>
-														To enable QoS function, click the QoS slide switch , and fill in the upload and download Get the bandwidth information from ISP or go to <a href="http://speedtest.net" target="_blank" style="text-decoration:underline;">http://speedtest.net</a> to check bandwidth.
+														<#EzQoS_desc_note#>
 													</div>
 													<div class="formfontdesc">
 														<a id="faq" href="http://www.asus.com/us/support/FAQ/1008718/" target="_blank" style="text-decoration:underline;">QoS FAQ</a>

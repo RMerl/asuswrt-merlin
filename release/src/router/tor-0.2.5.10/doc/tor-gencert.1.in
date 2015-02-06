@@ -1,0 +1,117 @@
+'\" t
+.\"     Title: tor-gencert
+.\"    Author: Nick Mathewson
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/11/2014
+.\"    Manual: Tor Manual
+.\"    Source: Tor
+.\"  Language: English
+.\"
+.TH "TOR\-GENCERT" "1" "09/11/2014" "Tor" "Tor Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+tor-gencert \- Generate certs and keys for Tor directory authorities
+.SH "SYNOPSIS"
+.sp
+\fBtor\-gencert\fR [\-h|\-\-help] [\-v] [\-r|\-\-reuse] [\-\-create\-identity\-key] [\-i \fIid_file\fR] [\-c \fIcert_file\fR] [\-m \fInum\fR] [\-a \fIaddress\fR:\fIport\fR]
+.SH "DESCRIPTION"
+.sp
+\fBtor\-gencert\fR generates certificates and private keys for use by Tor directory authorities running the v3 Tor directory protocol, as used by Tor 0\&.2\&.0 and later\&. If you are not running a directory authority, you don\(cqt need to use tor\-gencert\&.
+.sp
+Every directory authority has a long term authority \fIidentity\fR \fIkey\fR (which is distinct from the identity key it uses as a Tor server); this key should be kept offline in a secure location\&. It is used to certify shorter\-lived \fIsigning\fR \fIkeys\fR, which are kept online and used by the directory authority to sign votes and consensus documents\&.
+.sp
+After you use this program to generate a signing key and a certificate, copy those files to the keys subdirectory of your Tor process, and send Tor a SIGHUP signal\&. DO NOT COPY THE IDENTITY KEY\&.
+.SH "OPTIONS"
+.PP
+\fB\-v\fR
+.RS 4
+Display verbose output\&.
+.RE
+.PP
+\fB\-h\fR or \fB\-\-help\fR
+.RS 4
+Display help text and exit\&.
+.RE
+.PP
+\fB\-r\fR or \fB\-\-reuse\fR
+.RS 4
+Generate a new certificate, but not a new signing key\&. This can be used to change the address or lifetime associated with a given key\&.
+.RE
+.PP
+\fB\-\-create\-identity\-key\fR
+.RS 4
+Generate a new identity key\&. You should only use this option the first time you run tor\-gencert; in the future, you should use the identity key that\(cqs already there\&.
+.RE
+.PP
+\fB\-i\fR \fIFILENAME\fR
+.RS 4
+Read the identity key from the specified file\&. If the file is not present and \-\-create\-identity\-key is provided, create the identity key in the specified file\&. Default: "\&./authority_identity_key"
+.RE
+.PP
+\fB\-s\fR \fIFILENAME\fR
+.RS 4
+Write the signing key to the specified file\&. Default: "\&./authority_signing_key"
+.RE
+.PP
+\fB\-c\fR \fIFILENAME\fR
+.RS 4
+Write the certificate to the specified file\&. Default: "\&./authority_certificate"
+.RE
+.PP
+\fB\-m\fR \fINUM\fR
+.RS 4
+Number of months that the certificate should be valid\&. Default: 12\&.
+.RE
+.PP
+\fB\-\-passphrase\-fd\fR \fIFILEDES\fR
+.RS 4
+Filedescriptor to read the file descriptor from\&. Ends at the first NUL or newline\&. Default: read from the terminal\&.
+.RE
+.PP
+\fB\-a\fR \fIaddress\fR:\fIport\fR
+.RS 4
+If provided, advertise the address:port combination as this authority\(cqs preferred directory port in its certificate\&. If the address is a hostname, the hostname is resolved to an IP before it\(cqs published\&.
+.RE
+.SH "BUGS"
+.sp
+This probably doesn\(cqt run on Windows\&. That\(cqs not a big issue, since we don\(cqt really want authorities to be running on Windows anyway\&.
+.SH "SEE ALSO"
+.sp
+\fBtor\fR(1)
+.sp
+See also the "dir\-spec\&.txt" file, distributed with Tor\&.
+.SH "AUTHORS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Roger Dingledine <arma@mit\&.edu>, Nick Mathewson <nickm@alum\&.mit\&.edu>\&.
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBNick Mathewson\fR
+.RS 4
+Author.
+.RE

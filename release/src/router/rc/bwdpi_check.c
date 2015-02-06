@@ -46,6 +46,8 @@ static void check_dpi_alive()
 		count -= 3;
 		if(count <= 0){
 			stop_dpi_engine_service(1);
+			// force to rebuild firewall to avoid some loopback issue
+			start_firewall(wan_primary_ifunit(), 0);
 			pause();
 		}
 		else 

@@ -32,7 +32,7 @@ else ifeq ($(RTN56U)$(RTN65U), y)
 else ifeq ($(DSLN55U), y)
 	install -D icon.DSL-N55U.ico $(INSTALLDIR)/rom/etc/icon.ico
 	install -D icon.large.DSL-N55U.ico $(INSTALLDIR)/rom/etc/icon.large.ico
-else ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN54U)$(RTAC1200HP)$(RTN56UV2),y)
+else ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTAC54U),y)
 	install -D icon.RT-N14U.ico $(INSTALLDIR)/rom/etc/icon.ico
 	install -D icon.large.RT-N14U.ico $(INSTALLDIR)/rom/etc/icon.large.ico
 else

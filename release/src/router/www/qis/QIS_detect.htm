@@ -51,7 +51,7 @@ var puk_remaining_count = '<% nvram_get("usb_modem_act_auth_puk"); %>';
 function QKDetect_load_body(){
 	parent.set_step("t1");
 	parent.document.title = "<#Web_Title#> - <#QKSet_detect_sanglass#>";
-	setTimeout('getWANStatus();', 3000);
+	setTimeout('getWANStatus();', 5000);
 
 	if(parent.ISMOBILE){
 		hideObjs();

@@ -1,0 +1,2349 @@
+'\" t
+.\"     Title: tor
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 10/10/2014
+.\"    Manual: Tor Manual
+.\"    Source: Tor
+.\"  Language: English
+.\"
+.TH "TOR" "1" "10/10/2014" "Tor" "Tor Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+tor \- The second\-generation onion router
+.SH "SYNOPSIS"
+.sp
+\fBtor\fR [\fIOPTION\fR \fIvalue\fR]\&...
+.SH "DESCRIPTION"
+.sp
+Tor is a connection\-oriented anonymizing communication service\&. Users choose a source\-routed path through a set of nodes, and negotiate a "virtual circuit" through the network, in which each node knows its predecessor and successor, but no others\&. Traffic flowing down the circuit is unwrapped by a symmetric key at each node, which reveals the downstream node\&.
+.sp
+Basically, Tor provides a distributed network of servers or relays ("onion routers")\&. Users bounce their TCP streams \(em web traffic, ftp, ssh, etc\&. \(em around the network, and recipients, observers, and even the relays themselves have difficulty tracking the source of the stream\&.
+.sp
+By default, \fBtor\fR will only act as a client only\&. To help the network by providing bandwidth as a relay, change the \fBORPort\fR configuration option \(em see below\&. Please also consult the documentation on the Tor Project\(cqs website\&.
+.SH "COMMAND-LINE OPTIONS"
+.PP
+\fB\-h\fR, \fB\-help\fR
+.RS 4
+Display a short help message and exit\&.
+.RE
+.PP
+\fB\-f\fR \fIFILE\fR
+.RS 4
+Specify a new configuration file to contain further Tor configuration options\&. (Default: @CONFDIR@/torrc, or $HOME/\&.torrc if that file is not found)
+.RE
+.PP
+\fB\-\-allow\-missing\-torrc\fR
+.RS 4
+Do not require that configuration file specified by
+\fB\-f\fR
+exist if default torrc can be accessed\&.
+.RE
+.PP
+\fB\-\-defaults\-torrc\fR \fIFILE\fR
+.RS 4
+Specify a file in which to find default values for Tor options\&. The contents of this file are overridden by those in the regular configuration file, and by those on the command line\&. (Default: @CONFDIR@/torrc\-defaults\&.)
+.RE
+.PP
+\fB\-\-ignore\-missing\-torrc\fR
+.RS 4
+Specifies that Tor should treat a missing torrc file as though it were empty\&. Ordinarily, Tor does this for missing default torrc files, but not for those specified on the command line\&.
+.RE
+.PP
+\fB\-\-hash\-password\fR \fIPASSWORD\fR
+.RS 4
+Generates a hashed password for control port access\&.
+.RE
+.PP
+\fB\-\-list\-fingerprint\fR
+.RS 4
+Generate your keys and output your nickname and fingerprint\&.
+.RE
+.PP
+\fB\-\-verify\-config\fR
+.RS 4
+Verify the configuration file is valid\&.
+.RE
+.PP
+\fB\-\-service install\fR [\fB\-\-options\fR \fIcommand\-line options\fR]
+.RS 4
+Install an instance of Tor as a Windows service, with the provided command\-line options\&. Current instructions can be found at
+https://trac\&.torproject\&.org/projects/tor/wiki/doc/TorFAQ#HowdoIrunmyTorrelayasanNTservice
+.RE
+.PP
+\fB\-\-service\fR \fBremove\fR|\fBstart\fR|\fBstop\fR
+.RS 4
+Remove, start, or stop a configured Tor Windows service\&.
+.RE
+.PP
+\fB\-\-nt\-service\fR
+.RS 4
+Used internally to implement a Windows service\&.
+.RE
+.PP
+\fB\-\-list\-torrc\-options\fR
+.RS 4
+List all valid options\&.
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Display Tor version and exit\&.
+.RE
+.PP
+\fB\-\-quiet\fR|\fB\-\-hush\fR
+.RS 4
+Override the default console log\&. By default, Tor starts out logging messages at level "notice" and higher to the console\&. It stops doing so after it parses its configuration, if the configuration tells it to log anywhere else\&. You can override this behavior with the
+\fB\-\-hush\fR
+option, which tells Tor to only send warnings and errors to the console, or with the
+\fB\-\-quiet\fR
+option, which tells Tor not to log to the console at all\&.
+.RE
+.sp
+Other options can be specified on the command\-line in the format "\-\-option value", in the format "option value", or in a configuration file\&. For instance, you can tell Tor to start listening for SOCKS connections on port 9999 by passing \-\-SOCKSPort 9999 or SOCKSPort 9999 to it on the command line, or by putting "SOCKSPort 9999" in the configuration file\&. You will need to quote options with spaces in them: if you want Tor to log all debugging messages to debug\&.log, you will probably need to say \-\-Log \fIdebug file debug\&.log\fR\&.
+.sp
+Options on the command line override those in configuration files\&. See the next section for more information\&.
+.SH "THE CONFIGURATION FILE FORMAT"
+.sp
+All configuration options in a configuration are written on a single line by default\&. They take the form of an option name and a value, or an option name and a quoted value (option value or option "value")\&. Anything after a # character is treated as a comment\&. Options are case\-insensitive\&. C\-style escaped characters are allowed inside quoted values\&. To split one configuration entry into multiple lines, use a single backslash character (\e) before the end of the line\&. Comments can be used in such multiline entries, but they must start at the beginning of a line\&.
+.sp
+By default, an option on the command line overrides an option found in the configuration file, and an option in a configuration file overrides one in the defaults file\&.
+.sp
+This rule is simple for options that take a single value, but it can become complicated for options that are allowed to occur more than once: if you specify four SOCKSPorts in your configuration file, and one more SOCKSPort on the command line, the option on the command line will replace \fIall\fR of the SOCKSPorts in the configuration file\&. If this isn\(cqt what you want, prefix the option name with a plus sign, and it will be appended to the previous set of options instead\&.
+.sp
+Alternatively, you might want to remove every instance of an option in the configuration file, and not replace it at all: you might want to say on the command line that you want no SOCKSPorts at all\&. To do that, prefix the option name with a forward slash\&.
+.SH "GENERAL OPTIONS"
+.PP
+\fBBandwidthRate\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+A token bucket limits the average incoming bandwidth usage on this node to the specified number of bytes per second, and the average outgoing bandwidth usage to that same value\&. If you want to run a relay in the public network, this needs to be
+\fIat the very least\fR
+30 KBytes (that is, 30720 bytes)\&. (Default: 1 GByte)
+
+With this option, and in other options that take arguments in bytes, KBytes, and so on, other formats are also supported\&. Notably, "KBytes" can also be written as "kilobytes" or "kb"; "MBytes" can be written as "megabytes" or "MB"; "kbits" can be written as "kilobits"; and so forth\&. Tor also accepts "byte" and "bit" in the singular\&. The prefixes "tera" and "T" are also recognized\&. If no units are given, we default to bytes\&. To avoid confusion, we recommend writing "bytes" or "bits" explicitly, since it\(cqs easy to forget that "B" means bytes, not bits\&.
+.RE
+.PP
+\fBBandwidthBurst\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+Limit the maximum token bucket size (also known as the burst) to the given number of bytes in each direction\&. (Default: 1 GByte)
+.RE
+.PP
+\fBMaxAdvertisedBandwidth\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+If set, we will not advertise more than this amount of bandwidth for our BandwidthRate\&. Server operators who want to reduce the number of clients who ask to build circuits through them (since this is proportional to advertised bandwidth rate) can thus reduce the CPU demands on their server without impacting network performance\&.
+.RE
+.PP
+\fBRelayBandwidthRate\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+If not 0, a separate token bucket limits the average incoming bandwidth usage for _relayed traffic_ on this node to the specified number of bytes per second, and the average outgoing bandwidth usage to that same value\&. Relayed traffic currently is calculated to include answers to directory requests, but that may change in future versions\&. (Default: 0)
+.RE
+.PP
+\fBRelayBandwidthBurst\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+If not 0, limit the maximum token bucket size (also known as the burst) for _relayed traffic_ to the given number of bytes in each direction\&. (Default: 0)
+.RE
+.PP
+\fBPerConnBWRate\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+If set, do separate rate limiting for each connection from a non\-relay\&. You should never need to change this value, since a network\-wide value is published in the consensus and your relay will use that value\&. (Default: 0)
+.RE
+.PP
+\fBPerConnBWBurst\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+If set, do separate rate limiting for each connection from a non\-relay\&. You should never need to change this value, since a network\-wide value is published in the consensus and your relay will use that value\&. (Default: 0)
+.RE
+.PP
+\fBClientTransportPlugin\fR \fItransport\fR socks4|socks5 \fIIP\fR:\fIPORT\fR, \fBClientTransportPlugin\fR \fItransport\fR exec \fIpath\-to\-binary\fR [options]
+.RS 4
+In its first form, when set along with a corresponding Bridge line, the Tor client forwards its traffic to a SOCKS\-speaking proxy on "IP:PORT"\&. It\(cqs the duty of that proxy to properly forward the traffic to the bridge\&.
+
+In its second form, when set along with a corresponding Bridge line, the Tor client launches the pluggable transport proxy executable in
+\fIpath\-to\-binary\fR
+using
+\fIoptions\fR
+as its command\-line options, and forwards its traffic to it\&. It\(cqs the duty of that proxy to properly forward the traffic to the bridge\&.
+.RE
+.PP
+\fBServerTransportPlugin\fR \fItransport\fR exec \fIpath\-to\-binary\fR [options]
+.RS 4
+The Tor relay launches the pluggable transport proxy in
+\fIpath\-to\-binary\fR
+using
+\fIoptions\fR
+as its command\-line options, and expects to receive proxied client traffic from it\&.
+.RE
+.PP
+\fBServerTransportListenAddr\fR \fItransport\fR \fIIP\fR:\fIPORT\fR
+.RS 4
+When this option is set, Tor will suggest
+\fIIP\fR:\fIPORT\fR
+as the listening address of any pluggable transport proxy that tries to launch
+\fItransport\fR\&.
+.RE
+.PP
+\fBServerTransportOptions\fR \fItransport\fR \fIk=v\fR \fIk=v\fR \&...
+.RS 4
+When this option is set, Tor will pass the
+\fIk=v\fR
+parameters to any pluggable transport proxy that tries to launch
+\fItransport\fR\&.
+
+(Example: ServerTransportOptions obfs45 shared\-secret=bridgepasswd cache=/var/lib/tor/cache)
+.RE
+.sp
+\fBExtORPort\fR [\fIaddress\fR:]\fIport\fR|\fBauto\fR Open this port to listen for Extended ORPort connections from your pluggable transports\&.
+.PP
+\fBExtORPortCookieAuthFile\fR \fIPath\fR
+.RS 4
+If set, this option overrides the default location and file name for the Extended ORPort\(cqs cookie file \(em the cookie file is needed for pluggable transports to communicate through the Extended ORPort\&.
+.RE
+.PP
+\fBExtORPortCookieAuthFileGroupReadable\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 0, don\(cqt allow the filesystem group to read the Extended OR Port cookie file\&. If the option is set to 1, make the cookie file readable by the default GID\&. [Making the file readable by other groups is not yet implemented; let us know if you need this for some reason\&.] (Default: 0)
+.RE
+.PP
+\fBConnLimit\fR \fINUM\fR
+.RS 4
+The minimum number of file descriptors that must be available to the Tor process before it will start\&. Tor will ask the OS for as many file descriptors as the OS will allow (you can find this by "ulimit \-H \-n")\&. If this number is less than ConnLimit, then Tor will refuse to start\&.
+
+You probably don\(cqt need to adjust this\&. It has no effect on Windows since that platform lacks getrlimit()\&. (Default: 1000)
+.RE
+.PP
+\fBDisableNetwork\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set, we don\(cqt listen for or accept any connections other than controller connections, and we close (and don\(cqt reattempt) any outbound connections\&. Controllers sometimes use this option to avoid using the network until Tor is fully configured\&. (Default: 0)
+.RE
+.PP
+\fBConstrainedSockets\fR \fB0\fR|\fB1\fR
+.RS 4
+If set, Tor will tell the kernel to attempt to shrink the buffers for all sockets to the size specified in
+\fBConstrainedSockSize\fR\&. This is useful for virtual servers and other environments where system level TCP buffers may be limited\&. If you\(cqre on a virtual server, and you encounter the "Error creating network socket: No buffer space available" message, you are likely experiencing this problem\&.
+
+The preferred solution is to have the admin increase the buffer pool for the host itself via /proc/sys/net/ipv4/tcp_mem or equivalent facility; this configuration option is a second\-resort\&.
+
+The DirPort option should also not be used if TCP buffers are scarce\&. The cached directory requests consume additional sockets which exacerbates the problem\&.
+
+You should
+\fBnot\fR
+enable this feature unless you encounter the "no buffer space available" issue\&. Reducing the TCP buffers affects window size for the TCP stream and will reduce throughput in proportion to round trip time on long paths\&. (Default: 0)
+.RE
+.PP
+\fBConstrainedSockSize\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR
+.RS 4
+When
+\fBConstrainedSockets\fR
+is enabled the receive and transmit buffers for all sockets will be set to this limit\&. Must be a value between 2048 and 262144, in 1024 byte increments\&. Default of 8192 is recommended\&.
+.RE
+.PP
+\fBControlPort\fR \fIPORT\fR|\fBauto\fR
+.RS 4
+If set, Tor will accept connections on this port and allow those connections to control the Tor process using the Tor Control Protocol (described in control\-spec\&.txt)\&. Note: unless you also specify one or more of
+\fBHashedControlPassword\fR
+or
+\fBCookieAuthentication\fR, setting this option will cause Tor to allow any process on the local host to control it\&. (Setting both authentication methods means either method is sufficient to authenticate to Tor\&.) This option is required for many Tor controllers; most use the value of 9051\&. Set it to "auto" to have Tor pick a port for you\&. (Default: 0)
+.RE
+.PP
+\fBControlListenAddress\fR \fIIP\fR[:\fIPORT\fR]
+.RS 4
+Bind the controller listener to this address\&. If you specify a port, bind to this port rather than the one specified in ControlPort\&. We strongly recommend that you leave this alone unless you know what you\(cqre doing, since giving attackers access to your control listener is really dangerous\&. This directive can be specified multiple times to bind to multiple addresses/ports\&. (Default: 127\&.0\&.0\&.1)
+.RE
+.PP
+\fBControlSocket\fR \fIPath\fR
+.RS 4
+Like ControlPort, but listens on a Unix domain socket, rather than a TCP socket\&. (Unix and Unix\-like systems only\&.)
+.RE
+.PP
+\fBControlSocketsGroupWritable\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 0, don\(cqt allow the filesystem group to read and write unix sockets (e\&.g\&. ControlSocket)\&. If the option is set to 1, make the control socket readable and writable by the default GID\&. (Default: 0)
+.RE
+.PP
+\fBHashedControlPassword\fR \fIhashed_password\fR
+.RS 4
+Allow connections on the control port if they present the password whose one\-way hash is
+\fIhashed_password\fR\&. You can compute the hash of a password by running "tor \-\-hash\-password
+\fIpassword\fR"\&. You can provide several acceptable passwords by using more than one HashedControlPassword line\&.
+.RE
+.PP
+\fBCookieAuthentication\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 1, allow connections on the control port when the connecting process knows the contents of a file named "control_auth_cookie", which Tor will create in its data directory\&. This authentication method should only be used on systems with good filesystem security\&. (Default: 0)
+.RE
+.PP
+\fBCookieAuthFile\fR \fIPath\fR
+.RS 4
+If set, this option overrides the default location and file name for Tor\(cqs cookie file\&. (See CookieAuthentication above\&.)
+.RE
+.PP
+\fBCookieAuthFileGroupReadable\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 0, don\(cqt allow the filesystem group to read the cookie file\&. If the option is set to 1, make the cookie file readable by the default GID\&. [Making the file readable by other groups is not yet implemented; let us know if you need this for some reason\&.] (Default: 0)
+.RE
+.PP
+\fBControlPortWriteToFile\fR \fIPath\fR
+.RS 4
+If set, Tor writes the address and port of any control port it opens to this address\&. Usable by controllers to learn the actual control port when ControlPort is set to "auto"\&.
+.RE
+.PP
+\fBControlPortFileGroupReadable\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 0, don\(cqt allow the filesystem group to read the control port file\&. If the option is set to 1, make the control port file readable by the default GID\&. (Default: 0)
+.RE
+.PP
+\fBDataDirectory\fR \fIDIR\fR
+.RS 4
+Store working data in DIR (Default: @LOCALSTATEDIR@/lib/tor)
+.RE
+.PP
+\fBFallbackDir\fR \fIaddress\fR:\fIport\fR orport=\fIport\fR id=\fIfingerprint\fR [weight=\fInum\fR]
+.RS 4
+When we\(cqre unable to connect to any directory cache for directory info (usually because we don\(cqt know about any yet) we try a FallbackDir\&. By default, the directory authorities are also FallbackDirs\&.
+.RE
+.PP
+\fBDirAuthority\fR [\fInickname\fR] [\fBflags\fR] \fIaddress\fR:\fIport\fR \fIfingerprint\fR
+.RS 4
+Use a nonstandard authoritative directory server at the provided address and port, with the specified key fingerprint\&. This option can be repeated many times, for multiple authoritative directory servers\&. Flags are separated by spaces, and determine what kind of an authority this directory is\&. By default, an authority is not authoritative for any directory style or version unless an appropriate flag is given\&. Tor will use this authority as a bridge authoritative directory if the "bridge" flag is set\&. If a flag "orport=\fBport\fR" is given, Tor will use the given port when opening encrypted tunnels to the dirserver\&. If a flag "weight=\fBnum\fR" is given, then the directory server is chosen randomly with probability proportional to that weight (default 1\&.0)\&. Lastly, if a flag "v3ident=\fBfp\fR" is given, the dirserver is a v3 directory authority whose v3 long\-term signing key has the fingerprint
+\fBfp\fR\&.
+
+If no
+\fBDirAuthority\fR
+line is given, Tor will use the default directory authorities\&. NOTE: this option is intended for setting up a private Tor network with its own directory authorities\&. If you use it, you will be distinguishable from other users, because you won\(cqt believe the same authorities they do\&.
+.RE
+.PP
+\fBDirAuthorityFallbackRate\fR \fINUM\fR
+.RS 4
+When configured to use both directory authorities and fallback directories, the directory authorities also work as fallbacks\&. They are chosen with their regular weights, multiplied by this number, which should be 1\&.0 or less\&. (Default: 1\&.0)
+.RE
+.PP
+\fBDynamicDHGroups\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 1, when running as a server, generate our own Diffie\-Hellman group instead of using the one from Apache\(cqs mod_ssl\&. This option may help circumvent censorship based on static Diffie\-Hellman parameters\&. (Default: 0)
+.RE
+.sp
+\fBAlternateDirAuthority\fR [\fInickname\fR] [\fBflags\fR] \fIaddress\fR:\fIport\fR \fIfingerprint\fR
+.PP
+\fBAlternateBridgeAuthority\fR [\fInickname\fR] [\fBflags\fR] \fIaddress\fR:\fIport\fR \fI fingerprint\fR
+.RS 4
+These options behave as DirAuthority, but they replace fewer of the default directory authorities\&. Using AlternateDirAuthority replaces the default Tor directory authorities, but leaves the default bridge authorities in place\&. Similarly, AlternateBridgeAuthority replaces the default bridge authority, but leaves the directory authorities alone\&.
+.RE
+.PP
+\fBDisableAllSwap\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor will attempt to lock all current and future memory pages, so that memory cannot be paged out\&. Windows, OS X and Solaris are currently not supported\&. We believe that this feature works on modern Gnu/Linux distributions, and that it should work on *BSD systems (untested)\&. This option requires that you start your Tor as root, and you should use the
+\fBUser\fR
+option to properly reduce Tor\(cqs privileges\&. (Default: 0)
+.RE
+.PP
+\fBDisableDebuggerAttachment\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor will attempt to prevent basic debugging attachment attempts by other processes\&. This may also keep Tor from generating core files if it crashes\&. It has no impact for users who wish to attach if they have CAP_SYS_PTRACE or if they are root\&. We believe that this feature works on modern Gnu/Linux distributions, and that it may also work on *BSD systems (untested)\&. Some modern Gnu/Linux systems such as Ubuntu have the kernel\&.yama\&.ptrace_scope sysctl and by default enable it as an attempt to limit the PTRACE scope for all user processes by default\&. This feature will attempt to limit the PTRACE scope for Tor specifically \- it will not attempt to alter the system wide ptrace scope as it may not even exist\&. If you wish to attach to Tor with a debugger such as gdb or strace you will want to set this to 0 for the duration of your debugging\&. Normal users should leave it on\&. Disabling this option while Tor is running is prohibited\&. (Default: 1)
+.RE
+.PP
+\fBFetchDirInfoEarly\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor will always fetch directory information like other directory caches, even if you don\(cqt meet the normal criteria for fetching early\&. Normal users should leave it off\&. (Default: 0)
+.RE
+.PP
+\fBFetchDirInfoExtraEarly\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor will fetch directory information before other directory caches\&. It will attempt to download directory information closer to the start of the consensus period\&. Normal users should leave it off\&. (Default: 0)
+.RE
+.PP
+\fBFetchHidServDescriptors\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 0, Tor will never fetch any hidden service descriptors from the rendezvous directories\&. This option is only useful if you\(cqre using a Tor controller that handles hidden service fetches for you\&. (Default: 1)
+.RE
+.PP
+\fBFetchServerDescriptors\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 0, Tor will never fetch any network status summaries or server descriptors from the directory servers\&. This option is only useful if you\(cqre using a Tor controller that handles directory fetches for you\&. (Default: 1)
+.RE
+.PP
+\fBFetchUselessDescriptors\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor will fetch every non\-obsolete descriptor from the authorities that it hears about\&. Otherwise, it will avoid fetching useless descriptors, for example for routers that are not running\&. This option is useful if you\(cqre using the contributed "exitlist" script to enumerate Tor nodes that exit to certain addresses\&. (Default: 0)
+.RE
+.PP
+\fBHTTPProxy\fR \fIhost\fR[:\fIport\fR]
+.RS 4
+Tor will make all its directory requests through this host:port (or host:80 if port is not specified), rather than connecting directly to any directory servers\&.
+.RE
+.PP
+\fBHTTPProxyAuthenticator\fR \fIusername:password\fR
+.RS 4
+If defined, Tor will use this username:password for Basic HTTP proxy authentication, as in RFC 2617\&. This is currently the only form of HTTP proxy authentication that Tor supports; feel free to submit a patch if you want it to support others\&.
+.RE
+.PP
+\fBHTTPSProxy\fR \fIhost\fR[:\fIport\fR]
+.RS 4
+Tor will make all its OR (SSL) connections through this host:port (or host:443 if port is not specified), via HTTP CONNECT rather than connecting directly to servers\&. You may want to set
+\fBFascistFirewall\fR
+to restrict the set of ports you might try to connect to, if your HTTPS proxy only allows connecting to certain ports\&.
+.RE
+.PP
+\fBHTTPSProxyAuthenticator\fR \fIusername:password\fR
+.RS 4
+If defined, Tor will use this username:password for Basic HTTPS proxy authentication, as in RFC 2617\&. This is currently the only form of HTTPS proxy authentication that Tor supports; feel free to submit a patch if you want it to support others\&.
+.RE
+.PP
+\fBSandbox\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor will run securely through the use of a syscall sandbox\&. Otherwise the sandbox will be disabled\&. The option is currently an experimental feature\&. (Default: 0)
+.RE
+.PP
+\fBSocks4Proxy\fR \fIhost\fR[:\fIport\fR]
+.RS 4
+Tor will make all OR connections through the SOCKS 4 proxy at host:port (or host:1080 if port is not specified)\&.
+.RE
+.PP
+\fBSocks5Proxy\fR \fIhost\fR[:\fIport\fR]
+.RS 4
+Tor will make all OR connections through the SOCKS 5 proxy at host:port (or host:1080 if port is not specified)\&.
+.RE
+.sp
+\fBSocks5ProxyUsername\fR \fIusername\fR
+.PP
+\fBSocks5ProxyPassword\fR \fIpassword\fR
+.RS 4
+If defined, authenticate to the SOCKS 5 server using username and password in accordance to RFC 1929\&. Both username and password must be between 1 and 255 characters\&.
+.RE
+.PP
+\fBKeepalivePeriod\fR \fINUM\fR
+.RS 4
+To keep firewalls from expiring connections, send a padding keepalive cell every NUM seconds on open connections that are in use\&. If the connection has no open circuits, it will instead be closed after NUM seconds of idleness\&. (Default: 5 minutes)
+.RE
+.PP
+\fBLog\fR \fIminSeverity\fR[\-\fImaxSeverity\fR] \fBstderr\fR|\fBstdout\fR|\fBsyslog\fR
+.RS 4
+Send all messages between
+\fIminSeverity\fR
+and
+\fImaxSeverity\fR
+to the standard output stream, the standard error stream, or to the system log\&. (The "syslog" value is only supported on Unix\&.) Recognized severity levels are debug, info, notice, warn, and err\&. We advise using "notice" in most cases, since anything more verbose may provide sensitive information to an attacker who obtains the logs\&. If only one severity level is given, all messages of that level or higher will be sent to the listed destination\&.
+.RE
+.PP
+\fBLog\fR \fIminSeverity\fR[\-\fImaxSeverity\fR] \fBfile\fR \fIFILENAME\fR
+.RS 4
+As above, but send log messages to the listed filename\&. The "Log" option may appear more than once in a configuration file\&. Messages are sent to all the logs that match their severity level\&.
+.RE
+.sp
+\fBLog\fR \fB[\fR\fIdomain\fR,\&...\fB]\fR\fIminSeverity\fR[\-\fImaxSeverity\fR] \&... \fBfile\fR \fIFILENAME\fR
+.PP
+\fBLog\fR \fB[\fR\fIdomain\fR,\&...\fB]\fR\fIminSeverity\fR[\-\fImaxSeverity\fR] \&... \fBstderr\fR|\fBstdout\fR|\fBsyslog\fR
+.RS 4
+As above, but select messages by range of log severity
+\fIand\fR
+by a set of "logging domains"\&. Each logging domain corresponds to an area of functionality inside Tor\&. You can specify any number of severity ranges for a single log statement, each of them prefixed by a comma\-separated list of logging domains\&. You can prefix a domain with ~ to indicate negation, and use * to indicate "all domains"\&. If you specify a severity range without a list of domains, it matches all domains\&.
+
+This is an advanced feature which is most useful for debugging one or two of Tor\(cqs subsystems at a time\&.
+
+The currently recognized domains are: general, crypto, net, config, fs, protocol, mm, http, app, control, circ, rend, bug, dir, dirserv, or, edge, acct, hist, and handshake\&. Domain names are case\-insensitive\&.
+
+For example, "Log [handshake]debug [~net,~mm]info notice stdout" sends to stdout: all handshake messages of any severity, all info\-and\-higher messages from domains other than networking and memory management, and all messages of severity notice or higher\&.
+.RE
+.PP
+\fBLogMessageDomains\fR \fB0\fR|\fB1\fR
+.RS 4
+If 1, Tor includes message domains with each log message\&. Every log message currently has at least one domain; most currently have exactly one\&. This doesn\(cqt affect controller log messages\&. (Default: 0)
+.RE
+.PP
+\fBOutboundBindAddress\fR \fIIP\fR
+.RS 4
+Make all outbound connections originate from the IP address specified\&. This is only useful when you have multiple network interfaces, and you want all of Tor\(cqs outgoing connections to use a single one\&. This option may be used twice, once with an IPv4 address and once with an IPv6 address\&. This setting will be ignored for connections to the loopback addresses (127\&.0\&.0\&.0/8 and ::1)\&.
+.RE
+.PP
+\fBPidFile\fR \fIFILE\fR
+.RS 4
+On startup, write our PID to FILE\&. On clean shutdown, remove FILE\&.
+.RE
+.PP
+\fBProtocolWarnings\fR \fB0\fR|\fB1\fR
+.RS 4
+If 1, Tor will log with severity \*(Aqwarn\*(Aq various cases of other parties not following the Tor specification\&. Otherwise, they are logged with severity \*(Aqinfo\*(Aq\&. (Default: 0)
+.RE
+.PP
+\fBPredictedPortsRelevanceTime\fR \fINUM\fR
+.RS 4
+Set how long, after the client has mad an anonymized connection to a given port, we will try to make sure that we build circuits to exits that support that port\&. The maximum value for this option is 1 hour\&. (Default: 1 hour)
+.RE
+.PP
+\fBRunAsDaemon\fR \fB0\fR|\fB1\fR
+.RS 4
+If 1, Tor forks and daemonizes to the background\&. This option has no effect on Windows; instead you should use the \-\-service command\-line option\&. (Default: 0)
+.RE
+.PP
+\fBLogTimeGranularity\fR \fINUM\fR
+.RS 4
+Set the resolution of timestamps in Tor\(cqs logs to NUM milliseconds\&. NUM must be positive and either a divisor or a multiple of 1 second\&. Note that this option only controls the granularity written by Tor to a file or console log\&. Tor does not (for example) "batch up" log messages to affect times logged by a controller, times attached to syslog messages, or the mtime fields on log files\&. (Default: 1 second)
+.RE
+.PP
+\fBSafeLogging\fR \fB0\fR|\fB1\fR|\fBrelay\fR
+.RS 4
+Tor can scrub potentially sensitive strings from log messages (e\&.g\&. addresses) by replacing them with the string [scrubbed]\&. This way logs can still be useful, but they don\(cqt leave behind personally identifying information about what sites a user might have visited\&.
+
+If this option is set to 0, Tor will not perform any scrubbing, if it is set to 1, all potentially sensitive strings are replaced\&. If it is set to relay, all log messages generated when acting as a relay are sanitized, but all messages generated when acting as a client are not\&. (Default: 1)
+.RE
+.PP
+\fBUser\fR \fIUID\fR
+.RS 4
+On startup, setuid to this user and setgid to their primary group\&.
+.RE
+.PP
+\fBHardwareAccel\fR \fB0\fR|\fB1\fR
+.RS 4
+If non\-zero, try to use built\-in (static) crypto hardware acceleration when available\&. (Default: 0)
+.RE
+.PP
+\fBAccelName\fR \fINAME\fR
+.RS 4
+When using OpenSSL hardware crypto acceleration attempt to load the dynamic engine of this name\&. This must be used for any dynamic hardware engine\&. Names can be verified with the openssl engine command\&.
+.RE
+.PP
+\fBAccelDir\fR \fIDIR\fR
+.RS 4
+Specify this option if using dynamic hardware acceleration and the engine implementation library resides somewhere other than the OpenSSL default\&.
+.RE
+.PP
+\fBAvoidDiskWrites\fR \fB0\fR|\fB1\fR
+.RS 4
+If non\-zero, try to write to disk less frequently than we would otherwise\&. This is useful when running on flash memory or other media that support only a limited number of writes\&. (Default: 0)
+.RE
+.PP
+\fBCircuitPriorityHalflife\fR \fINUM1\fR
+.RS 4
+If this value is set, we override the default algorithm for choosing which circuit\(cqs cell to deliver or relay next\&. When the value is 0, we round\-robin between the active circuits on a connection, delivering one cell from each in turn\&. When the value is positive, we prefer delivering cells from whichever connection has the lowest weighted cell count, where cells are weighted exponentially according to the supplied CircuitPriorityHalflife value (in seconds)\&. If this option is not set at all, we use the behavior recommended in the current consensus networkstatus\&. This is an advanced option; you generally shouldn\(cqt have to mess with it\&. (Default: not set)
+.RE
+.PP
+\fBDisableIOCP\fR \fB0\fR|\fB1\fR
+.RS 4
+If Tor was built to use the Libevent\(cqs "bufferevents" networking code and you\(cqre running on Windows, setting this option to 1 will tell Libevent not to use the Windows IOCP networking API\&. (Default: 1)
+.RE
+.PP
+\fBUserspaceIOCPBuffers\fR \fB0\fR|\fB1\fR
+.RS 4
+If IOCP is enabled (see DisableIOCP above), setting this option to 1 will tell Tor to disable kernel\-space TCP buffers, in order to avoid needless copy operations and try not to run out of non\-paged RAM\&. This feature is experimental; don\(cqt use it yet unless you\(cqre eager to help tracking down bugs\&. (Default: 0)
+.RE
+.PP
+\fBUseFilteringSSLBufferevents\fR \fB0\fR|\fB1\fR
+.RS 4
+Tells Tor to do its SSL communication using a chain of bufferevents: one for SSL and one for networking\&. This option has no effect if bufferevents are disabled (in which case it can\(cqt turn on), or if IOCP bufferevents are enabled (in which case it can\(cqt turn off)\&. This option is useful for debugging only; most users shouldn\(cqt touch it\&. (Default: 0)
+.RE
+.PP
+\fBCountPrivateBandwidth\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set, then Tor\(cqs rate\-limiting applies not only to remote connections, but also to connections to private addresses like 127\&.0\&.0\&.1 or 10\&.0\&.0\&.1\&. This is mostly useful for debugging rate\-limiting\&. (Default: 0)
+.RE
+.SH "CLIENT OPTIONS"
+.sp
+The following options are useful only for clients (that is, if \fBSocksPort\fR, \fBTransPort\fR, \fBDNSPort\fR, or \fBNATDPort\fR is non\-zero):
+.PP
+\fBAllowInvalidNodes\fR \fBentry\fR|\fBexit\fR|\fBmiddle\fR|\fBintroduction\fR|\fBrendezvous\fR|\fB\&...\fR
+.RS 4
+If some Tor servers are obviously not working right, the directory authorities can manually mark them as invalid, meaning that it\(cqs not recommended you use them for entry or exit positions in your circuits\&. You can opt to use them in some circuit positions, though\&. The default is "middle,rendezvous", and other choices are not advised\&.
+.RE
+.PP
+\fBExcludeSingleHopRelays\fR \fB0\fR|\fB1\fR
+.RS 4
+This option controls whether circuits built by Tor will include relays with the AllowSingleHopExits flag set to true\&. If ExcludeSingleHopRelays is set to 0, these relays will be included\&. Note that these relays might be at higher risk of being seized or observed, so they are not normally included\&. Also note that relatively few clients turn off this option, so using these relays might make your client stand out\&. (Default: 1)
+.RE
+.PP
+\fBBridge\fR [\fItransport\fR] \fIIP\fR:\fIORPort\fR [\fIfingerprint\fR]
+.RS 4
+When set along with UseBridges, instructs Tor to use the relay at "IP:ORPort" as a "bridge" relaying into the Tor network\&. If "fingerprint" is provided (using the same format as for DirAuthority), we will verify that the relay running at that location has the right fingerprint\&. We also use fingerprint to look up the bridge descriptor at the bridge authority, if it\(cqs provided and if UpdateBridgesFromAuthority is set too\&.
+
+If "transport" is provided, and matches to a ClientTransportPlugin line, we use that pluggable transports proxy to transfer data to the bridge\&.
+.RE
+.PP
+\fBLearnCircuitBuildTimeout\fR \fB0\fR|\fB1\fR
+.RS 4
+If 0, CircuitBuildTimeout adaptive learning is disabled\&. (Default: 1)
+.RE
+.PP
+\fBCircuitBuildTimeout\fR \fINUM\fR
+.RS 4
+Try for at most NUM seconds when building circuits\&. If the circuit isn\(cqt open in that time, give up on it\&. If LearnCircuitBuildTimeout is 1, this value serves as the initial value to use before a timeout is learned\&. If LearnCircuitBuildTimeout is 0, this value is the only value used\&. (Default: 60 seconds)
+.RE
+.PP
+\fBCircuitIdleTimeout\fR \fINUM\fR
+.RS 4
+If we have kept a clean (never used) circuit around for NUM seconds, then close it\&. This way when the Tor client is entirely idle, it can expire all of its circuits, and then expire its TLS connections\&. Also, if we end up making a circuit that is not useful for exiting any of the requests we\(cqre receiving, it won\(cqt forever take up a slot in the circuit list\&. (Default: 1 hour)
+.RE
+.PP
+\fBCircuitStreamTimeout\fR \fINUM\fR
+.RS 4
+If non\-zero, this option overrides our internal timeout schedule for how many seconds until we detach a stream from a circuit and try a new circuit\&. If your network is particularly slow, you might want to set this to a number like 60\&. (Default: 0)
+.RE
+.PP
+\fBClientOnly\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor will not run as a relay or serve directory requests, even if the ORPort, ExtORPort, or DirPort options are set\&. (This config option is mostly unnecessary: we added it back when we were considering having Tor clients auto\-promote themselves to being relays if they were stable and fast enough\&. The current behavior is simply that Tor is a client unless ORPort, ExtORPort, or DirPort are configured\&.) (Default: 0)
+.RE
+.PP
+\fBExcludeNodes\fR \fInode\fR,\fInode\fR,\fI\&...\fR
+.RS 4
+A list of identity fingerprints, nicknames, country codes and address patterns of nodes to avoid when building a circuit\&. (Example: ExcludeNodes SlowServer, ABCD1234CDEF5678ABCD1234CDEF5678ABCD1234, {cc}, 255\&.254\&.0\&.0/8)
+
+By default, this option is treated as a preference that Tor is allowed to override in order to keep working\&. For example, if you try to connect to a hidden service, but you have excluded all of the hidden service\(cqs introduction points, Tor will connect to one of them anyway\&. If you do not want this behavior, set the StrictNodes option (documented below)\&.
+
+Note also that if you are a relay, this (and the other node selection options below) only affects your own circuits that Tor builds for you\&. Clients can still build circuits through you to any node\&. Controllers can tell Tor to build circuits through any node\&.
+
+Country codes are case\-insensitive\&. The code "{??}" refers to nodes whose country can\(cqt be identified\&. No country code, including {??}, works if no GeoIPFile can be loaded\&. See also the GeoIPExcludeUnknown option below\&.
+.RE
+.PP
+\fBExcludeExitNodes\fR \fInode\fR,\fInode\fR,\fI\&...\fR
+.RS 4
+A list of identity fingerprints, nicknames, country codes and address patterns of nodes to never use when picking an exit node\-\-\-that is, a node that delivers traffic for you outside the Tor network\&. Note that any node listed in ExcludeNodes is automatically considered to be part of this list too\&. See also the caveats on the "ExitNodes" option below\&.
+.RE
+.PP
+\fBGeoIPExcludeUnknown\fR \fB0\fR|\fB1\fR|\fBauto\fR
+.RS 4
+If this option is set to
+\fIauto\fR, then whenever any country code is set in ExcludeNodes or ExcludeExitNodes, all nodes with unknown country ({??} and possibly {A1}) are treated as excluded as well\&. If this option is set to
+\fI1\fR, then all unknown countries are treated as excluded in ExcludeNodes and ExcludeExitNodes\&. This option has no effect when a GeoIP file isn\(cqt configured or can\(cqt be found\&. (Default: auto)
+.RE
+.PP
+\fBExitNodes\fR \fInode\fR,\fInode\fR,\fI\&...\fR
+.RS 4
+A list of identity fingerprints, nicknames, country codes and address patterns of nodes to use as exit node\-\-\-that is, a node that delivers traffic for you outside the Tor network\&.
+
+Note that if you list too few nodes here, or if you exclude too many exit nodes with ExcludeExitNodes, you can degrade functionality\&. For example, if none of the exits you list allows traffic on port 80 or 443, you won\(cqt be able to browse the web\&.
+
+Note also that not every circuit is used to deliver traffic outside of the Tor network\&. It is normal to see non\-exit circuits (such as those used to connect to hidden services, those that do directory fetches, those used for relay reachability self\-tests, and so on) that end at a non\-exit node\&. To keep a node from being used entirely, see ExcludeNodes and StrictNodes\&.
+
+The ExcludeNodes option overrides this option: any node listed in both ExitNodes and ExcludeNodes is treated as excluded\&.
+
+The \&.exit address notation, if enabled via AllowDotExit, overrides this option\&.
+.RE
+.PP
+\fBEntryNodes\fR \fInode\fR,\fInode\fR,\fI\&...\fR
+.RS 4
+A list of identity fingerprints, nicknames, and country codes of nodes to use for the first hop in your normal circuits\&. Normal circuits include all circuits except for direct connections to directory servers\&. The Bridge option overrides this option; if you have configured bridges and UseBridges is 1, the Bridges are used as your entry nodes\&.
+
+The ExcludeNodes option overrides this option: any node listed in both EntryNodes and ExcludeNodes is treated as excluded\&.
+.RE
+.PP
+\fBStrictNodes\fR \fB0\fR|\fB1\fR
+.RS 4
+If StrictNodes is set to 1, Tor will treat the ExcludeNodes option as a requirement to follow for all the circuits you generate, even if doing so will break functionality for you\&. If StrictNodes is set to 0, Tor will still try to avoid nodes in the ExcludeNodes list, but it will err on the side of avoiding unexpected errors\&. Specifically, StrictNodes 0 tells Tor that it is okay to use an excluded node when it is
+\fBnecessary\fR
+to perform relay reachability self\-tests, connect to a hidden service, provide a hidden service to a client, fulfill a \&.exit request, upload directory information, or download directory information\&. (Default: 0)
+.RE
+.PP
+\fBFascistFirewall\fR \fB0\fR|\fB1\fR
+.RS 4
+If 1, Tor will only create outgoing connections to ORs running on ports that your firewall allows (defaults to 80 and 443; see
+\fBFirewallPorts\fR)\&. This will allow you to run Tor as a client behind a firewall with restrictive policies, but will not allow you to run as a server behind such a firewall\&. If you prefer more fine\-grained control, use ReachableAddresses instead\&.
+.RE
+.PP
+\fBFirewallPorts\fR \fIPORTS\fR
+.RS 4
+A list of ports that your firewall allows you to connect to\&. Only used when
+\fBFascistFirewall\fR
+is set\&. This option is deprecated; use ReachableAddresses instead\&. (Default: 80, 443)
+.RE
+.PP
+\fBReachableAddresses\fR \fIADDR\fR[/\fIMASK\fR][:\fIPORT\fR]\&...
+.RS 4
+A comma\-separated list of IP addresses and ports that your firewall allows you to connect to\&. The format is as for the addresses in ExitPolicy, except that "accept" is understood unless "reject" is explicitly provided\&. For example, \*(AqReachableAddresses 99\&.0\&.0\&.0/8, reject 18\&.0\&.0\&.0/8:80, accept *:80\*(Aq means that your firewall allows connections to everything inside net 99, rejects port 80 connections to net 18, and accepts connections to port 80 otherwise\&. (Default: \*(Aqaccept *:*\*(Aq\&.)
+.RE
+.PP
+\fBReachableDirAddresses\fR \fIADDR\fR[/\fIMASK\fR][:\fIPORT\fR]\&...
+.RS 4
+Like
+\fBReachableAddresses\fR, a list of addresses and ports\&. Tor will obey these restrictions when fetching directory information, using standard HTTP GET requests\&. If not set explicitly then the value of
+\fBReachableAddresses\fR
+is used\&. If
+\fBHTTPProxy\fR
+is set then these connections will go through that proxy\&.
+.RE
+.PP
+\fBReachableORAddresses\fR \fIADDR\fR[/\fIMASK\fR][:\fIPORT\fR]\&...
+.RS 4
+Like
+\fBReachableAddresses\fR, a list of addresses and ports\&. Tor will obey these restrictions when connecting to Onion Routers, using TLS/SSL\&. If not set explicitly then the value of
+\fBReachableAddresses\fR
+is used\&. If
+\fBHTTPSProxy\fR
+is set then these connections will go through that proxy\&.
+
+The separation between
+\fBReachableORAddresses\fR
+and
+\fBReachableDirAddresses\fR
+is only interesting when you are connecting through proxies (see
+\fBHTTPProxy\fR
+and
+\fBHTTPSProxy\fR)\&. Most proxies limit TLS connections (which Tor uses to connect to Onion Routers) to port 443, and some limit HTTP GET requests (which Tor uses for fetching directory information) to port 80\&.
+.RE
+.PP
+\fBHidServAuth\fR \fIonion\-address\fR \fIauth\-cookie\fR [\fIservice\-name\fR]
+.RS 4
+Client authorization for a hidden service\&. Valid onion addresses contain 16 characters in a\-z2\-7 plus "\&.onion", and valid auth cookies contain 22 characters in A\-Za\-z0\-9+/\&. The service name is only used for internal purposes, e\&.g\&., for Tor controllers\&. This option may be used multiple times for different hidden services\&. If a hidden service uses authorization and this option is not set, the hidden service is not accessible\&. Hidden services can be configured to require authorization using the
+\fBHiddenServiceAuthorizeClient\fR
+option\&.
+.RE
+.PP
+\fBCloseHSClientCircuitsImmediatelyOnTimeout\fR \fB0\fR|\fB1\fR
+.RS 4
+If 1, Tor will close unfinished hidden service client circuits which have not moved closer to connecting to their destination hidden service when their internal state has not changed for the duration of the current circuit\-build timeout\&. Otherwise, such circuits will be left open, in the hope that they will finish connecting to their destination hidden services\&. In either case, another set of introduction and rendezvous circuits for the same destination hidden service will be launched\&. (Default: 0)
+.RE
+.PP
+\fBCloseHSServiceRendCircuitsImmediatelyOnTimeout\fR \fB0\fR|\fB1\fR
+.RS 4
+If 1, Tor will close unfinished hidden\-service\-side rendezvous circuits after the current circuit\-build timeout\&. Otherwise, such circuits will be left open, in the hope that they will finish connecting to their destinations\&. In either case, another rendezvous circuit for the same destination client will be launched\&. (Default: 0)
+.RE
+.PP
+\fBLongLivedPorts\fR \fIPORTS\fR
+.RS 4
+A list of ports for services that tend to have long\-running connections (e\&.g\&. chat and interactive shells)\&. Circuits for streams that use these ports will contain only high\-uptime nodes, to reduce the chance that a node will go down before the stream is finished\&. Note that the list is also honored for circuits (both client and service side) involving hidden services whose virtual port is in this list\&. (Default: 21, 22, 706, 1863, 5050, 5190, 5222, 5223, 6523, 6667, 6697, 8300)
+.RE
+.PP
+\fBMapAddress\fR \fIaddress\fR \fInewaddress\fR
+.RS 4
+When a request for address arrives to Tor, it will transform to newaddress before processing it\&. For example, if you always want connections to www\&.example\&.com to exit via
+\fItorserver\fR
+(where
+\fItorserver\fR
+is the nickname of the server), use "MapAddress www\&.example\&.com www\&.example\&.com\&.torserver\&.exit"\&. If the value is prefixed with a "*\&.", matches an entire domain\&. For example, if you always want connections to example\&.com and any if its subdomains to exit via
+\fItorserver\fR
+(where
+\fItorserver\fR
+is the nickname of the server), use "MapAddress *\&.example\&.com *\&.example\&.com\&.torserver\&.exit"\&. (Note the leading "*\&." in each part of the directive\&.) You can also redirect all subdomains of a domain to a single address\&. For example, "MapAddress *\&.example\&.com www\&.example\&.com"\&.
+
+NOTES:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+When evaluating MapAddress expressions Tor stops when it hits the most recently added expression that matches the requested address\&. So if you have the following in your torrc, www\&.torproject\&.org will map to 1\&.1\&.1\&.1:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+MapAddress www\&.torproject\&.org 2\&.2\&.2\&.2
+MapAddress www\&.torproject\&.org 1\&.1\&.1\&.1
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+Tor evaluates the MapAddress configuration until it finds no matches\&. So if you have the following in your torrc, www\&.torproject\&.org will map to 2\&.2\&.2\&.2:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+MapAddress 1\&.1\&.1\&.1 2\&.2\&.2\&.2
+MapAddress www\&.torproject\&.org 1\&.1\&.1\&.1
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+The following MapAddress expression is invalid (and will be ignored) because you cannot map from a specific address to a wildcard address:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+MapAddress www\&.torproject\&.org *\&.torproject\&.org\&.torserver\&.exit
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  4." 4.2
+.\}
+Using a wildcard to match only part of a string (as in *ample\&.com) is also invalid\&.
+.RE
+.RE
+.PP
+\fBNewCircuitPeriod\fR \fINUM\fR
+.RS 4
+Every NUM seconds consider whether to build a new circuit\&. (Default: 30 seconds)
+.RE
+.PP
+\fBMaxCircuitDirtiness\fR \fINUM\fR
+.RS 4
+Feel free to reuse a circuit that was first used at most NUM seconds ago, but never attach a new stream to a circuit that is too old\&. For hidden services, this applies to the
+\fIlast\fR
+time a circuit was used, not the first\&. (Default: 10 minutes)
+.RE
+.PP
+\fBMaxClientCircuitsPending\fR \fINUM\fR
+.RS 4
+Do not allow more than NUM circuits to be pending at a time for handling client streams\&. A circuit is pending if we have begun constructing it, but it has not yet been completely constructed\&. (Default: 32)
+.RE
+.PP
+\fBNodeFamily\fR \fInode\fR,\fInode\fR,\fI\&...\fR
+.RS 4
+The Tor servers, defined by their identity fingerprints or nicknames, constitute a "family" of similar or co\-administered servers, so never use any two of them in the same circuit\&. Defining a NodeFamily is only needed when a server doesn\(cqt list the family itself (with MyFamily)\&. This option can be used multiple times\&. In addition to nodes, you can also list IP address and ranges and country codes in {curly braces}\&.
+.RE
+.PP
+\fBEnforceDistinctSubnets\fR \fB0\fR|\fB1\fR
+.RS 4
+If 1, Tor will not put two servers whose IP addresses are "too close" on the same circuit\&. Currently, two addresses are "too close" if they lie in the same /16 range\&. (Default: 1)
+.RE
+.PP
+\fBSOCKSPort\fR [\fIaddress\fR:]\fIport\fR|\fBauto\fR [\fIflags\fR] [\fIisolation flags\fR]
+.RS 4
+Open this port to listen for connections from SOCKS\-speaking applications\&. Set this to 0 if you don\(cqt want to allow application connections via SOCKS\&. Set it to "auto" to have Tor pick a port for you\&. This directive can be specified multiple times to bind to multiple addresses/ports\&. (Default: 9050)
+
+The
+\fIisolation flags\fR
+arguments give Tor rules for which streams received on this SOCKSPort are allowed to share circuits with one another\&. Recognized isolation flags are:
+.PP
+\fBIsolateClientAddr\fR
+.RS 4
+Don\(cqt share circuits with streams from a different client address\&. (On by default and strongly recommended; you can disable it with
+\fBNoIsolateClientAddr\fR\&.)
+.RE
+.PP
+\fBIsolateSOCKSAuth\fR
+.RS 4
+Don\(cqt share circuits with streams for which different SOCKS authentication was provided\&. (On by default; you can disable it with
+\fBNoIsolateSOCKSAuth\fR\&.)
+.RE
+.PP
+\fBIsolateClientProtocol\fR
+.RS 4
+Don\(cqt share circuits with streams using a different protocol\&. (SOCKS 4, SOCKS 5, TransPort connections, NATDPort connections, and DNSPort requests are all considered to be different protocols\&.)
+.RE
+.PP
+\fBIsolateDestPort\fR
+.RS 4
+Don\(cqt share circuits with streams targetting a different destination port\&.
+.RE
+.PP
+\fBIsolateDestAddr\fR
+.RS 4
+Don\(cqt share circuits with streams targetting a different destination address\&.
+.RE
+.PP
+\fBSessionGroup=\fR\fIINT\fR
+.RS 4
+If no other isolation rules would prevent it, allow streams on this port to share circuits with streams from every other port with the same session group\&. (By default, streams received on different SOCKSPorts, TransPorts, etc are always isolated from one another\&. This option overrides that behavior\&.)
+.RE
+.RE
+.PP
+.RS 4
+Other recognized
+\fIflags\fR
+for a SOCKSPort are:
+.PP
+\fBNoIPv4Traffic\fR
+.RS 4
+Tell exits to not connect to IPv4 addresses in response to SOCKS requests on this connection\&.
+.RE
+.PP
+\fBIPv6Traffic\fR
+.RS 4
+Tell exits to allow IPv6 addresses in response to SOCKS requests on this connection, so long as SOCKS5 is in use\&. (SOCKS4 can\(cqt handle IPv6\&.)
+.RE
+.PP
+\fBPreferIPv6\fR
+.RS 4
+Tells exits that, if a host has both an IPv4 and an IPv6 address, we would prefer to connect to it via IPv6\&. (IPv4 is the default\&.)
+
+NOTE: Although this option allows you to specify an IP address other than localhost, you should do so only with extreme caution\&. The SOCKS protocol is unencrypted and (as we use it) unauthenticated, so exposing it in this way could leak your information to anybody watching your network, and allow anybody to use your computer as an open proxy\&.
+.RE
+.PP
+\fBCacheIPv4DNS\fR
+.RS 4
+Tells the client to remember IPv4 DNS answers we receive from exit nodes via this connection\&. (On by default\&.)
+.RE
+.PP
+\fBCacheIPv6DNS\fR
+.RS 4
+Tells the client to remember IPv6 DNS answers we receive from exit nodes via this connection\&.
+.RE
+.PP
+\fBCacheDNS\fR
+.RS 4
+Tells the client to remember all DNS answers we receive from exit nodes via this connection\&.
+.RE
+.PP
+\fBUseIPv4Cache\fR
+.RS 4
+Tells the client to use any cached IPv4 DNS answers we have when making requests via this connection\&. (NOTE: This option, along UseIPv6Cache and UseDNSCache, can harm your anonymity, and probably won\(cqt help performance as much as you might expect\&. Use with care!)
+.RE
+.PP
+\fBUseIPv6Cache\fR
+.RS 4
+Tells the client to use any cached IPv6 DNS answers we have when making requests via this connection\&.
+.RE
+.PP
+\fBUseDNSCache\fR
+.RS 4
+Tells the client to use any cached DNS answers we have when making requests via this connection\&.
+.RE
+.PP
+\fBPreferIPv6Automap\fR
+.RS 4
+When serving a hostname lookup request on this port that should get automapped (according to AutomapHostsOnResove), if we could return either an IPv4 or an IPv6 answer, prefer an IPv6 answer\&. (On by default\&.)
+.RE
+.PP
+\fBPreferSOCKSNoAuth\fR
+.RS 4
+Ordinarily, when an application offers both "username/password authentication" and "no authentication" to Tor via SOCKS5, Tor selects username/password authentication so that IsolateSOCKSAuth can work\&. This can confuse some applications, if they offer a username/password combination then get confused when asked for one\&. You can disable this behavior, so that Tor will select "No authentication" when IsolateSOCKSAuth is disabled, or when this option is set\&.
+.RE
+.RE
+.PP
+\fBSOCKSListenAddress\fR \fIIP\fR[:\fIPORT\fR]
+.RS 4
+Bind to this address to listen for connections from Socks\-speaking applications\&. (Default: 127\&.0\&.0\&.1) You can also specify a port (e\&.g\&. 192\&.168\&.0\&.1:9100)\&. This directive can be specified multiple times to bind to multiple addresses/ports\&. (DEPRECATED: As of 0\&.2\&.3\&.x\-alpha, you can now use multiple SOCKSPort entries, and provide addresses for SOCKSPort entries, so SOCKSListenAddress no longer has a purpose\&. For backward compatibility, SOCKSListenAddress is only allowed when SOCKSPort is just a port number\&.)
+.RE
+.PP
+\fBSocksPolicy\fR \fIpolicy\fR,\fIpolicy\fR,\fI\&...\fR
+.RS 4
+Set an entrance policy for this server, to limit who can connect to the SocksPort and DNSPort ports\&. The policies have the same form as exit policies below, except that port specifiers are ignored\&. Any address not matched by some entry in the policy is accepted\&.
+.RE
+.PP
+\fBSocksTimeout\fR \fINUM\fR
+.RS 4
+Let a socks connection wait NUM seconds handshaking, and NUM seconds unattached waiting for an appropriate circuit, before we fail it\&. (Default: 2 minutes)
+.RE
+.PP
+\fBTokenBucketRefillInterval\fR \fINUM\fR [\fBmsec\fR|\fBsecond\fR]
+.RS 4
+Set the refill interval of Tor\(cqs token bucket to NUM milliseconds\&. NUM must be between 1 and 1000, inclusive\&. Note that the configured bandwidth limits are still expressed in bytes per second: this option only affects the frequency with which Tor checks to see whether previously exhausted connections may read again\&. (Default: 100 msec)
+.RE
+.PP
+\fBTrackHostExits\fR \fIhost\fR,\fI\&.domain\fR,\fI\&...\fR
+.RS 4
+For each value in the comma separated list, Tor will track recent connections to hosts that match this value and attempt to reuse the same exit node for each\&. If the value is prepended with a \*(Aq\&.\*(Aq, it is treated as matching an entire domain\&. If one of the values is just a \*(Aq\&.\*(Aq, it means match everything\&. This option is useful if you frequently connect to sites that will expire all your authentication cookies (i\&.e\&. log you out) if your IP address changes\&. Note that this option does have the disadvantage of making it more clear that a given history is associated with a single user\&. However, most people who would wish to observe this will observe it through cookies or other protocol\-specific means anyhow\&.
+.RE
+.PP
+\fBTrackHostExitsExpire\fR \fINUM\fR
+.RS 4
+Since exit servers go up and down, it is desirable to expire the association between host and exit server after NUM seconds\&. The default is 1800 seconds (30 minutes)\&.
+.RE
+.PP
+\fBUpdateBridgesFromAuthority\fR \fB0\fR|\fB1\fR
+.RS 4
+When set (along with UseBridges), Tor will try to fetch bridge descriptors from the configured bridge authorities when feasible\&. It will fall back to a direct request if the authority responds with a 404\&. (Default: 0)
+.RE
+.PP
+\fBUseBridges\fR \fB0\fR|\fB1\fR
+.RS 4
+When set, Tor will fetch descriptors for each bridge listed in the "Bridge" config lines, and use these relays as both entry guards and directory guards\&. (Default: 0)
+.RE
+.PP
+\fBUseEntryGuards\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 1, we pick a few long\-term entry servers, and try to stick with them\&. This is desirable because constantly changing servers increases the odds that an adversary who owns some servers will observe a fraction of your paths\&. (Default: 1)
+.RE
+.PP
+\fBUseEntryGuardsAsDirGuards\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 1, and UseEntryGuards is also set to 1, we try to use our entry guards as directory guards, and failing that, pick more nodes to act as our directory guards\&. This helps prevent an adversary from enumerating clients\&. It\(cqs only available for clients (non\-relay, non\-bridge) that aren\(cqt configured to download any non\-default directory material\&. It doesn\(cqt currently do anything when we lack a live consensus\&. (Default: 1)
+.RE
+.PP
+\fBNumEntryGuards\fR \fINUM\fR
+.RS 4
+If UseEntryGuards is set to 1, we will try to pick a total of NUM routers as long\-term entries for our circuits\&. If NUM is 0, we try to learn the number from the NumEntryGuards consensus parameter, and default to 3 if the consensus parameter isn\(cqt set\&. (Default: 0)
+.RE
+.PP
+\fBNumDirectoryGuards\fR \fINUM\fR
+.RS 4
+If UseEntryGuardsAsDirectoryGuards is enabled, we try to make sure we have at least NUM routers to use as directory guards\&. If this option is set to 0, use the value from the NumDirectoryGuards consensus parameter, falling back to the value from NumEntryGuards if the consensus parameter is 0 or isn\(cqt set\&. (Default: 0)
+.RE
+.PP
+\fBGuardLifetime\fR \fIN\fR \fBdays\fR|\fBweeks\fR|\fBmonths\fR
+.RS 4
+If nonzero, and UseEntryGuards is set, minimum time to keep a guard before picking a new one\&. If zero, we use the GuardLifetime parameter from the consensus directory\&. No value here may be less than 1 month or greater than 5 years; out\-of\-range values are clamped\&. (Default: 0)
+.RE
+.PP
+\fBSafeSocks\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor will reject application connections that use unsafe variants of the socks protocol \(em ones that only provide an IP address, meaning the application is doing a DNS resolve first\&. Specifically, these are socks4 and socks5 when not doing remote DNS\&. (Default: 0)
+.RE
+.PP
+\fBTestSocks\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor will make a notice\-level log entry for each connection to the Socks port indicating whether the request used a safe socks protocol or an unsafe one (see above entry on SafeSocks)\&. This helps to determine whether an application using Tor is possibly leaking DNS requests\&. (Default: 0)
+.RE
+.PP
+\fBWarnUnsafeSocks\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor will warn whenever a request is received that only contains an IP address instead of a hostname\&. Allowing applications to do DNS resolves themselves is usually a bad idea and can leak your location to attackers\&. (Default: 1)
+.RE
+.sp
+\fBVirtualAddrNetworkIPv4\fR \fIAddress\fR/\fIbits\fR
+.PP
+\fBVirtualAddrNetworkIPv6\fR [\fIAddress\fR]/\fIbits\fR
+.RS 4
+When Tor needs to assign a virtual (unused) address because of a MAPADDRESS command from the controller or the AutomapHostsOnResolve feature, Tor picks an unassigned address from this range\&. (Defaults: 127\&.192\&.0\&.0/10 and [FE80::]/10 respectively\&.)
+
+When providing proxy server service to a network of computers using a tool like dns\-proxy\-tor, change the IPv4 network to "10\&.192\&.0\&.0/10" or "172\&.16\&.0\&.0/12" and change the IPv6 network to "[FC00]/7"\&. The default
+\fBVirtualAddrNetwork\fR
+address ranges on a properly configured machine will route to the loopback or link\-local interface\&. For local use, no change to the default VirtualAddrNetwork setting is needed\&.
+.RE
+.PP
+\fBAllowNonRFC953Hostnames\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is disabled, Tor blocks hostnames containing illegal characters (like @ and :) rather than sending them to an exit node to be resolved\&. This helps trap accidental attempts to resolve URLs and so on\&. (Default: 0)
+.RE
+.PP
+\fBAllowDotExit\fR \fB0\fR|\fB1\fR
+.RS 4
+If enabled, we convert "www\&.google\&.com\&.foo\&.exit" addresses on the SocksPort/TransPort/NATDPort into "www\&.google\&.com" addresses that exit from the node "foo"\&. Disabled by default since attacking websites and exit relays can use it to manipulate your path selection\&. (Default: 0)
+.RE
+.PP
+\fBFastFirstHopPK\fR \fB0\fR|\fB1\fR|\fBauto\fR
+.RS 4
+When this option is disabled, Tor uses the public key step for the first hop of creating circuits\&. Skipping it is generally safe since we have already used TLS to authenticate the relay and to establish forward\-secure keys\&. Turning this option off makes circuit building a little slower\&. Setting this option to "auto" takes advice from the authorities in the latest consensus about whether to use this feature\&.
+
+Note that Tor will always use the public key step for the first hop if it\(cqs operating as a relay, and it will never use the public key step if it doesn\(cqt yet know the onion key of the first hop\&. (Default: auto)
+.RE
+.PP
+\fBTransPort\fR [\fIaddress\fR:]\fIport\fR|\fBauto\fR [\fIisolation flags\fR]
+.RS 4
+Open this port to listen for transparent proxy connections\&. Set this to 0 if you don\(cqt want to allow transparent proxy connections\&. Set the port to "auto" to have Tor pick a port for you\&. This directive can be specified multiple times to bind to multiple addresses/ports\&. See SOCKSPort for an explanation of isolation flags\&.
+
+TransPort requires OS support for transparent proxies, such as BSDs\*(Aq pf or Linux\(cqs IPTables\&. If you\(cqre planning to use Tor as a transparent proxy for a network, you\(cqll want to examine and change VirtualAddrNetwork from the default setting\&. You\(cqll also want to set the TransListenAddress option for the network you\(cqd like to proxy\&. (Default: 0)
+.RE
+.PP
+\fBTransListenAddress\fR \fIIP\fR[:\fIPORT\fR]
+.RS 4
+Bind to this address to listen for transparent proxy connections\&. (Default: 127\&.0\&.0\&.1)\&. This is useful for exporting a transparent proxy server to an entire network\&. (DEPRECATED: As of 0\&.2\&.3\&.x\-alpha, you can now use multiple TransPort entries, and provide addresses for TransPort entries, so TransListenAddress no longer has a purpose\&. For backward compatibility, TransListenAddress is only allowed when TransPort is just a port number\&.)
+.RE
+.PP
+\fBTransProxyType\fR \fBdefault\fR|\fBTPROXY\fR|\fBipfw\fR|\fBpf\-divert\fR
+.RS 4
+TransProxyType may only be enabled when there is transparent proxy listener enabled\&.
+
+Set this to "TPROXY" if you wish to be able to use the TPROXY Linux module to transparently proxy connections that are configured using the TransPort option\&. This setting lets the listener on the TransPort accept connections for all addresses, even when the TransListenAddress is configured for an internal address\&. Detailed information on how to configure the TPROXY feature can be found in the Linux kernel source tree in the file Documentation/networking/tproxy\&.txt\&.
+
+Set this option to "ipfw" to use the FreeBSD ipfw interface\&.
+
+On *BSD operating systems when using pf, set this to "pf\-divert" to take advantage of
+divert\-to
+rules, which do not modify the packets like
+rdr\-to
+rules do\&. Detailed information on how to configure pf to use
+divert\-to
+rules can be found in the pf\&.conf(5) manual page\&. On OpenBSD,
+divert\-to
+is available to use on versions greater than or equal to OpenBSD 4\&.4\&.
+
+Set this to "default", or leave it unconfigured, to use regular IPTables on Linux, or to use pf
+rdr\-to
+rules on *BSD systems\&.
+
+(Default: "default"\&.)
+.RE
+.PP
+\fBNATDPort\fR [\fIaddress\fR:]\fIport\fR|\fBauto\fR [\fIisolation flags\fR]
+.RS 4
+Open this port to listen for connections from old versions of ipfw (as included in old versions of FreeBSD, etc) using the NATD protocol\&. Use 0 if you don\(cqt want to allow NATD connections\&. Set the port to "auto" to have Tor pick a port for you\&. This directive can be specified multiple times to bind to multiple addresses/ports\&. See SOCKSPort for an explanation of isolation flags\&.
+
+This option is only for people who cannot use TransPort\&. (Default: 0)
+.RE
+.PP
+\fBNATDListenAddress\fR \fIIP\fR[:\fIPORT\fR]
+.RS 4
+Bind to this address to listen for NATD connections\&. (DEPRECATED: As of 0\&.2\&.3\&.x\-alpha, you can now use multiple NATDPort entries, and provide addresses for NATDPort entries, so NATDListenAddress no longer has a purpose\&. For backward compatibility, NATDListenAddress is only allowed when NATDPort is just a port number\&.)
+.RE
+.PP
+\fBAutomapHostsOnResolve\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, and we get a request to resolve an address that ends with one of the suffixes in
+\fBAutomapHostsSuffixes\fR, we map an unused virtual address to that address, and return the new virtual address\&. This is handy for making "\&.onion" addresses work with applications that resolve an address and then connect to it\&. (Default: 0)
+.RE
+.PP
+\fBAutomapHostsSuffixes\fR \fISUFFIX\fR,\fISUFFIX\fR,\fI\&...\fR
+.RS 4
+A comma\-separated list of suffixes to use with
+\fBAutomapHostsOnResolve\fR\&. The "\&." suffix is equivalent to "all addresses\&." (Default: \&.exit,\&.onion)\&.
+.RE
+.PP
+\fBDNSPort\fR [\fIaddress\fR:]\fIport\fR|\fBauto\fR [\fIisolation flags\fR]
+.RS 4
+If non\-zero, open this port to listen for UDP DNS requests, and resolve them anonymously\&. This port only handles A, AAAA, and PTR requests\-\-\-it doesn\(cqt handle arbitrary DNS request types\&. Set the port to "auto" to have Tor pick a port for you\&. This directive can be specified multiple times to bind to multiple addresses/ports\&. See SOCKSPort for an explanation of isolation flags\&. (Default: 0)
+.RE
+.PP
+\fBDNSListenAddress\fR \fIIP\fR[:\fIPORT\fR]
+.RS 4
+Bind to this address to listen for DNS connections\&. (DEPRECATED: As of 0\&.2\&.3\&.x\-alpha, you can now use multiple DNSPort entries, and provide addresses for DNSPort entries, so DNSListenAddress no longer has a purpose\&. For backward compatibility, DNSListenAddress is only allowed when DNSPort is just a port number\&.)
+.RE
+.PP
+\fBClientDNSRejectInternalAddresses\fR \fB0\fR|\fB1\fR
+.RS 4
+If true, Tor does not believe any anonymously retrieved DNS answer that tells it that an address resolves to an internal address (like 127\&.0\&.0\&.1 or 192\&.168\&.0\&.1)\&. This option prevents certain browser\-based attacks; don\(cqt turn it off unless you know what you\(cqre doing\&. (Default: 1)
+.RE
+.PP
+\fBClientRejectInternalAddresses\fR \fB0\fR|\fB1\fR
+.RS 4
+If true, Tor does not try to fulfill requests to connect to an internal address (like 127\&.0\&.0\&.1 or 192\&.168\&.0\&.1)
+\fIunless a exit node is specifically requested\fR
+(for example, via a \&.exit hostname, or a controller request)\&. (Default: 1)
+.RE
+.PP
+\fBDownloadExtraInfo\fR \fB0\fR|\fB1\fR
+.RS 4
+If true, Tor downloads and caches "extra\-info" documents\&. These documents contain information about servers other than the information in their regular router descriptors\&. Tor does not use this information for anything itself; to save bandwidth, leave this option turned off\&. (Default: 0)
+.RE
+.PP
+\fBWarnPlaintextPorts\fR \fIport\fR,\fIport\fR,\fI\&...\fR
+.RS 4
+Tells Tor to issue a warnings whenever the user tries to make an anonymous connection to one of these ports\&. This option is designed to alert users to services that risk sending passwords in the clear\&. (Default: 23,109,110,143)
+.RE
+.PP
+\fBRejectPlaintextPorts\fR \fIport\fR,\fIport\fR,\fI\&...\fR
+.RS 4
+Like WarnPlaintextPorts, but instead of warning about risky port uses, Tor will instead refuse to make the connection\&. (Default: None)
+.RE
+.PP
+\fBAllowSingleHopCircuits\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set, the attached Tor controller can use relays that have the
+\fBAllowSingleHopExits\fR
+option turned on to build one\-hop Tor connections\&. (Default: 0)
+.RE
+.PP
+\fBOptimisticData\fR \fB0\fR|\fB1\fR|\fBauto\fR
+.RS 4
+When this option is set, and Tor is using an exit node that supports the feature, it will try optimistically to send data to the exit node without waiting for the exit node to report whether the connection succeeded\&. This can save a round\-trip time for protocols like HTTP where the client talks first\&. If OptimisticData is set to
+\fBauto\fR, Tor will look at the UseOptimisticData parameter in the networkstatus\&. (Default: auto)
+.RE
+.PP
+\fBTor2webMode\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set, Tor connects to hidden services
+\fBnon\-anonymously\fR\&. This option also disables client connections to non\-hidden\-service hostnames through Tor\&. It
+\fBmust only\fR
+be used when running a tor2web Hidden Service web proxy\&. To enable this option the compile time flag \-\-enable\-tor2webmode must be specified\&. (Default: 0)
+.RE
+.PP
+\fBUseMicrodescriptors\fR \fB0\fR|\fB1\fR|\fBauto\fR
+.RS 4
+Microdescriptors are a smaller version of the information that Tor needs in order to build its circuits\&. Using microdescriptors makes Tor clients download less directory information, thus saving bandwidth\&. Directory caches need to fetch regular descriptors and microdescriptors, so this option doesn\(cqt save any bandwidth for them\&. If this option is set to "auto" (recommended) then it is on for all clients that do not set FetchUselessDescriptors\&. (Default: auto)
+.RE
+.PP
+\fBUseNTorHandshake\fR \fB0\fR|\fB1\fR|\fBauto\fR
+.RS 4
+The "ntor" circuit\-creation handshake is faster and (we think) more secure than the original ("TAP") circuit handshake, but starting to use it too early might make your client stand out\&. If this option is 0, your Tor client won\(cqt use the ntor handshake\&. If it\(cqs 1, your Tor client will use the ntor handshake to extend circuits through servers that support it\&. If this option is "auto", then your client will use the ntor handshake once enough directory authorities recommend it\&. (Default: 1)
+.RE
+.sp
+\fBPathBiasCircThreshold\fR \fINUM\fR
+.sp
+\fBPathBiasNoticeRate\fR \fINUM\fR
+.sp
+\fBPathBiasWarnRate\fR \fINUM\fR
+.sp
+\fBPathBiasExtremeRate\fR \fINUM\fR
+.sp
+\fBPathBiasDropGuards\fR \fINUM\fR
+.PP
+\fBPathBiasScaleThreshold\fR \fINUM\fR
+.RS 4
+These options override the default behavior of Tor\(cqs (\fBcurrently experimental\fR) path bias detection algorithm\&. To try to find broken or misbehaving guard nodes, Tor looks for nodes where more than a certain fraction of circuits through that guard fail to get built\&.
+
+The PathBiasCircThreshold option controls how many circuits we need to build through a guard before we make these checks\&. The PathBiasNoticeRate, PathBiasWarnRate and PathBiasExtremeRate options control what fraction of circuits must succeed through a guard so we won\(cqt write log messages\&. If less than PathBiasExtremeRate circuits succeed
+\fBand\fR
+PathBiasDropGuards is set to 1, we disable use of that guard\&.
+
+When we have seen more than PathBiasScaleThreshold circuits through a guard, we scale our observations by 0\&.5 (governed by the consensus) so that new observations don\(cqt get swamped by old ones\&.
+
+By default, or if a negative value is provided for one of these options, Tor uses reasonable defaults from the networkstatus consensus document\&. If no defaults are available there, these options default to 150, \&.70, \&.50, \&.30, 0, and 300 respectively\&.
+.RE
+.sp
+\fBPathBiasUseThreshold\fR \fINUM\fR
+.sp
+\fBPathBiasNoticeUseRate\fR \fINUM\fR
+.sp
+\fBPathBiasExtremeUseRate\fR \fINUM\fR
+.PP
+\fBPathBiasScaleUseThreshold\fR \fINUM\fR
+.RS 4
+Similar to the above options, these options override the default behavior of Tor\(cqs (\fBcurrently experimental\fR) path use bias detection algorithm\&.
+
+Where as the path bias parameters govern thresholds for successfully building circuits, these four path use bias parameters govern thresholds only for circuit usage\&. Circuits which receive no stream usage are not counted by this detection algorithm\&. A used circuit is considered successful if it is capable of carrying streams or otherwise receiving well\-formed responses to RELAY cells\&.
+
+By default, or if a negative value is provided for one of these options, Tor uses reasonable defaults from the networkstatus consensus document\&. If no defaults are available there, these options default to 20, \&.80, \&.60, and 100, respectively\&.
+.RE
+.PP
+\fBClientUseIPv6\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 1, Tor might connect to entry nodes over IPv6\&. Note that clients configured with an IPv6 address in a
+\fBBridge\fR
+line will try connecting over IPv6 even if
+\fBClientUseIPv6\fR
+is set to 0\&. (Default: 0)
+.RE
+.PP
+\fBClientPreferIPv6ORPort\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set to 1, Tor prefers an OR port with an IPv6 address over one with IPv4 if a given entry node has both\&. Other things may influence the choice\&. This option breaks a tie to the favor of IPv6\&. (Default: 0)
+.RE
+.PP
+\fBPathsNeededToBuildCircuits\fR \fINUM\fR
+.RS 4
+Tor clients don\(cqt build circuits for user traffic until they know about enough of the network so that they could potentially construct enough of the possible paths through the network\&. If this option is set to a fraction between 0\&.25 and 0\&.95, Tor won\(cqt build circuits until it has enough descriptors or microdescriptors to construct that fraction of possible paths\&. Note that setting this option too low can make your Tor client less anonymous, and setting it too high can prevent your Tor client from bootstrapping\&. If this option is negative, Tor will use a default value chosen by the directory authorities\&. (Default: \-1\&.)
+.RE
+.PP
+\fBSupport022HiddenServices\fR \fB0\fR|\fB1\fR|\fBauto\fR
+.RS 4
+Tor hidden services running versions before 0\&.2\&.3\&.x required clients to send timestamps, which can potentially be used to distinguish clients whose view of the current time is skewed\&. If this option is set to 0, we do not send this timestamp, and hidden services on obsolete Tor versions will not work\&. If this option is set to 1, we send the timestamp\&. If this optoin is "auto", we take a recommendation from the latest consensus document\&. (Default: auto)
+.RE
+.SH "SERVER OPTIONS"
+.sp
+The following options are useful only for servers (that is, if ORPort is non\-zero):
+.PP
+\fBAddress\fR \fIaddress\fR
+.RS 4
+The IP address or fully qualified domain name of this server (e\&.g\&. moria\&.mit\&.edu)\&. You can leave this unset, and Tor will guess your IP address\&. This IP address is the one used to tell clients and other servers where to find your Tor server; it doesn\(cqt affect the IP that your Tor client binds to\&. To bind to a different address, use the *ListenAddress and OutboundBindAddress options\&.
+.RE
+.PP
+\fBAllowSingleHopExits\fR \fB0\fR|\fB1\fR
+.RS 4
+This option controls whether clients can use this server as a single hop proxy\&. If set to 1, clients can use this server as an exit even if it is the only hop in the circuit\&. Note that most clients will refuse to use servers that set this option, since most clients have ExcludeSingleHopRelays set\&. (Default: 0)
+.RE
+.PP
+\fBAssumeReachable\fR \fB0\fR|\fB1\fR
+.RS 4
+This option is used when bootstrapping a new Tor network\&. If set to 1, don\(cqt do self\-reachability testing; just upload your server descriptor immediately\&. If
+\fBAuthoritativeDirectory\fR
+is also set, this option instructs the dirserver to bypass remote reachability testing too and list all connected servers as running\&.
+.RE
+.PP
+\fBBridgeRelay\fR \fB0\fR|\fB1\fR
+.RS 4
+Sets the relay to act as a "bridge" with respect to relaying connections from bridge users to the Tor network\&. It mainly causes Tor to publish a server descriptor to the bridge database, rather than publishing a relay descriptor to the public directory authorities\&.
+.RE
+.PP
+\fBContactInfo\fR \fIemail_address\fR
+.RS 4
+Administrative contact information for this relay or bridge\&. This line can be used to contact you if your relay or bridge is misconfigured or something else goes wrong\&. Note that we archive and publish all descriptors containing these lines and that Google indexes them, so spammers might also collect them\&. You may want to obscure the fact that it\(cqs an email address and/or generate a new address for this purpose\&.
+.RE
+.PP
+\fBExitPolicy\fR \fIpolicy\fR,\fIpolicy\fR,\fI\&...\fR
+.RS 4
+Set an exit policy for this server\&. Each policy is of the form "\fBaccept\fR|\fBreject\fR\fIADDR\fR[/\fIMASK\fR][:\fIPORT\fR]"\&. If /\fIMASK\fR
+is omitted then this policy just applies to the host given\&. Instead of giving a host or network you can also use "*" to denote the universe (0\&.0\&.0\&.0/0)\&.
+\fIPORT\fR
+can be a single port number, an interval of ports "\fIFROM_PORT\fR\-\fITO_PORT\fR", or "*"\&. If
+\fIPORT\fR
+is omitted, that means "*"\&.
+
+For example, "accept 18\&.7\&.22\&.69:*,reject 18\&.0\&.0\&.0/8:*,accept *:*" would reject any traffic destined for MIT except for web\&.mit\&.edu, and accept anything else\&.
+
+To specify all internal and link\-local networks (including 0\&.0\&.0\&.0/8, 169\&.254\&.0\&.0/16, 127\&.0\&.0\&.0/8, 192\&.168\&.0\&.0/16, 10\&.0\&.0\&.0/8, and 172\&.16\&.0\&.0/12), you can use the "private" alias instead of an address\&. These addresses are rejected by default (at the beginning of your exit policy), along with your public IP address, unless you set the ExitPolicyRejectPrivate config option to 0\&. For example, once you\(cqve done that, you could allow HTTP to 127\&.0\&.0\&.1 and block all other connections to internal networks with "accept 127\&.0\&.0\&.1:80,reject private:*", though that may also allow connections to your own computer that are addressed to its public (external) IP address\&. See RFC 1918 and RFC 3330 for more details about internal and reserved IP address space\&.
+
+Tor also allow IPv6 exit policy entries\&. For instance, "reject6 [FC00::]/7:*" rejects all destinations that share 7 most significant bit prefix with address FC00::\&. Respectively, "accept6 [C000::]/3:*" accepts all destinations that share 3 most significant bit prefix with address C000::\&.
+
+This directive can be specified multiple times so you don\(cqt have to put it all on one line\&.
+
+Policies are considered first to last, and the first match wins\&. If you want to _replace_ the default exit policy, end your exit policy with either a reject *:* or an accept *:*\&. Otherwise, you\(cqre _augmenting_ (prepending to) the default exit policy\&. The default exit policy is:
+
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+reject *:25
+reject *:119
+reject *:135\-139
+reject *:445
+reject *:563
+reject *:1214
+reject *:4661\-4666
+reject *:6346\-6429
+reject *:6699
+reject *:6881\-6999
+accept *:*
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBExitPolicyRejectPrivate\fR \fB0\fR|\fB1\fR
+.RS 4
+Reject all private (local) networks, along with your own public IP address, at the beginning of your exit policy\&. See above entry on ExitPolicy\&. (Default: 1)
+.RE
+.PP
+\fBIPv6Exit\fR \fB0\fR|\fB1\fR
+.RS 4
+If set, and we are an exit node, allow clients to use us for IPv6 traffic\&. (Default: 0)
+.RE
+.PP
+\fBMaxOnionQueueDelay\fR \fINUM\fR [\fBmsec\fR|\fBsecond\fR]
+.RS 4
+If we have more onionskins queued for processing than we can process in this amount of time, reject new ones\&. (Default: 1750 msec)
+.RE
+.PP
+\fBMyFamily\fR \fInode\fR,\fInode\fR,\fI\&...\fR
+.RS 4
+Declare that this Tor server is controlled or administered by a group or organization identical or similar to that of the other servers, defined by their identity fingerprints or nicknames\&. When two servers both declare that they are in the same \*(Aqfamily\*(Aq, Tor clients will not use them in the same circuit\&. (Each server only needs to list the other servers in its family; it doesn\(cqt need to list itself, but it won\(cqt hurt\&.) Do not list any bridge relay as it would compromise its concealment\&.
+
+When listing a node, it\(cqs better to list it by fingerprint than by nickname: fingerprints are more reliable\&.
+.RE
+.PP
+\fBNickname\fR \fIname\fR
+.RS 4
+Set the server\(cqs nickname to \*(Aqname\*(Aq\&. Nicknames must be between 1 and 19 characters inclusive, and must contain only the characters [a\-zA\-Z0\-9]\&.
+.RE
+.PP
+\fBNumCPUs\fR \fInum\fR
+.RS 4
+How many processes to use at once for decrypting onionskins and other parallelizable operations\&. If this is set to 0, Tor will try to detect how many CPUs you have, defaulting to 1 if it can\(cqt tell\&. (Default: 0)
+.RE
+.PP
+\fBORPort\fR [\fIaddress\fR:]\fIPORT\fR|\fBauto\fR [\fIflags\fR]
+.RS 4
+Advertise this port to listen for connections from Tor clients and servers\&. This option is required to be a Tor server\&. Set it to "auto" to have Tor pick a port for you\&. Set it to 0 to not run an ORPort at all\&. This option can occur more than once\&. (Default: 0)
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Tor recognizes these flags on each ORPort:
+**NoAdvertise**::
+    By default, we bind to a port and tell our users about it\&. If
+    NoAdvertise is specified, we don\*(Aqt advertise, but listen anyway\&.  This
+    can be useful if the port everybody will be connecting to (for
+    example, one that\*(Aqs opened on our firewall) is somewhere else\&.
+**NoListen**::
+    By default, we bind to a port and tell our users about it\&. If
+    NoListen is specified, we don\*(Aqt bind, but advertise anyway\&.  This
+    can be useful if something else  (for example, a firewall\*(Aqs port
+    forwarding configuration) is causing connections to reach us\&.
+**IPv4Only**::
+    If the address is absent, or resolves to both an IPv4 and an IPv6
+    address, only listen to the IPv4 address\&.
+**IPv6Only**::
+    If the address is absent, or resolves to both an IPv4 and an IPv6
+    address, only listen to the IPv6 address\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+For obvious reasons, NoAdvertise and NoListen are mutually exclusive, and
+IPv4Only and IPv6Only are mutually exclusive\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBORListenAddress\fR \fIIP\fR[:\fIPORT\fR]
+.RS 4
+Bind to this IP address to listen for connections from Tor clients and servers\&. If you specify a port, bind to this port rather than the one specified in ORPort\&. (Default: 0\&.0\&.0\&.0) This directive can be specified multiple times to bind to multiple addresses/ports\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+This option is deprecated; you can get the same behavior with ORPort now
+that it supports NoAdvertise and explicit addresses\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBPortForwarding\fR \fB0\fR|\fB1\fR
+.RS 4
+Attempt to automatically forward the DirPort and ORPort on a NAT router connecting this Tor server to the Internet\&. If set, Tor will try both NAT\-PMP (common on Apple routers) and UPnP (common on routers from other manufacturers)\&. (Default: 0)
+.RE
+.PP
+\fBPortForwardingHelper\fR \fIfilename\fR|\fIpathname\fR
+.RS 4
+If PortForwarding is set, use this executable to configure the forwarding\&. If set to a filename, the system path will be searched for the executable\&. If set to a path, only the specified path will be executed\&. (Default: tor\-fw\-helper)
+.RE
+.PP
+\fBPublishServerDescriptor\fR \fB0\fR|\fB1\fR|\fBv3\fR|\fBbridge\fR,\fB\&...\fR
+.RS 4
+This option specifies which descriptors Tor will publish when acting as a relay\&. You can choose multiple arguments, separated by commas\&.
+
+If this option is set to 0, Tor will not publish its descriptors to any directories\&. (This is useful if you\(cqre testing out your server, or if you\(cqre using a Tor controller that handles directory publishing for you\&.) Otherwise, Tor will publish its descriptors of all type(s) specified\&. The default is "1", which means "if running as a server, publish the appropriate descriptors to the authorities"\&.
+.RE
+.PP
+\fBShutdownWaitLength\fR \fINUM\fR
+.RS 4
+When we get a SIGINT and we\(cqre a server, we begin shutting down: we close listeners and start refusing new circuits\&. After
+\fBNUM\fR
+seconds, we exit\&. If we get a second SIGINT, we exit immediately\&. (Default: 30 seconds)
+.RE
+.PP
+\fBSSLKeyLifetime\fR \fIN\fR \fBminutes\fR|\fBhours\fR|\fBdays\fR|\fBweeks\fR
+.RS 4
+When creating a link certificate for our outermost SSL handshake, set its lifetime to this amount of time\&. If set to 0, Tor will choose some reasonable random defaults\&. (Default: 0)
+.RE
+.PP
+\fBHeartbeatPeriod\fR \fIN\fR \fBminutes\fR|\fBhours\fR|\fBdays\fR|\fBweeks\fR
+.RS 4
+Log a heartbeat message every
+\fBHeartbeatPeriod\fR
+seconds\&. This is a log level
+\fInotice\fR
+message, designed to let you know your Tor server is still alive and doing useful things\&. Settings this to 0 will disable the heartbeat\&. (Default: 6 hours)
+.RE
+.PP
+\fBAccountingMax\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR|\fBTBytes\fR
+.RS 4
+Never send more than the specified number of bytes in a given accounting period, or receive more than that number in the period\&. For example, with AccountingMax set to 1 GByte, a server could send 900 MBytes and receive 800 MBytes and continue running\&. It will only hibernate once one of the two reaches 1 GByte\&. When the number of bytes gets low, Tor will stop accepting new connections and circuits\&. When the number of bytes is exhausted, Tor will hibernate until some time in the next accounting period\&. To prevent all servers from waking at the same time, Tor will also wait until a random point in each period before waking up\&. If you have bandwidth cost issues, enabling hibernation is preferable to setting a low bandwidth, since it provides users with a collection of fast servers that are up some of the time, which is more useful than a set of slow servers that are always "available"\&.
+.RE
+.PP
+\fBAccountingStart\fR \fBday\fR|\fBweek\fR|\fBmonth\fR [\fIday\fR] \fIHH:MM\fR
+.RS 4
+Specify how long accounting periods last\&. If
+\fBmonth\fR
+is given, each accounting period runs from the time
+\fIHH:MM\fR
+on the
+\fIdayth\fR
+day of one month to the same day and time of the next\&. (The day must be between 1 and 28\&.) If
+\fBweek\fR
+is given, each accounting period runs from the time
+\fIHH:MM\fR
+of the
+\fIdayth\fR
+day of one week to the same day and time of the next week, with Monday as day 1 and Sunday as day 7\&. If
+\fBday\fR
+is given, each accounting period runs from the time
+\fIHH:MM\fR
+each day to the same time on the next day\&. All times are local, and given in 24\-hour time\&. (Default: "month 1 0:00")
+.RE
+.PP
+\fBRefuseUnknownExits\fR \fB0\fR|\fB1\fR|\fBauto\fR
+.RS 4
+Prevent nodes that don\(cqt appear in the consensus from exiting using this relay\&. If the option is 1, we always block exit attempts from such nodes; if it\(cqs 0, we never do, and if the option is "auto", then we do whatever the authorities suggest in the consensus (and block if the consensus is quiet on the issue)\&. (Default: auto)
+.RE
+.PP
+\fBServerDNSResolvConfFile\fR \fIfilename\fR
+.RS 4
+Overrides the default DNS configuration with the configuration in
+\fIfilename\fR\&. The file format is the same as the standard Unix "\fBresolv\&.conf\fR" file (7)\&. This option, like all other ServerDNS options, only affects name lookups that your server does on behalf of clients\&. (Defaults to use the system DNS configuration\&.)
+.RE
+.PP
+\fBServerDNSAllowBrokenConfig\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is false, Tor exits immediately if there are problems parsing the system DNS configuration or connecting to nameservers\&. Otherwise, Tor continues to periodically retry the system nameservers until it eventually succeeds\&. (Default: 1)
+.RE
+.PP
+\fBServerDNSSearchDomains\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, then we will search for addresses in the local search domain\&. For example, if this system is configured to believe it is in "example\&.com", and a client tries to connect to "www", the client will be connected to "www\&.example\&.com"\&. This option only affects name lookups that your server does on behalf of clients\&. (Default: 0)
+.RE
+.PP
+\fBServerDNSDetectHijacking\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set to 1, we will test periodically to determine whether our local nameservers have been configured to hijack failing DNS requests (usually to an advertising site)\&. If they are, we will attempt to correct this\&. This option only affects name lookups that your server does on behalf of clients\&. (Default: 1)
+.RE
+.PP
+\fBServerDNSTestAddresses\fR \fIaddress\fR,\fIaddress\fR,\fI\&...\fR
+.RS 4
+When we\(cqre detecting DNS hijacking, make sure that these
+\fIvalid\fR
+addresses aren\(cqt getting redirected\&. If they are, then our DNS is completely useless, and we\(cqll reset our exit policy to "reject
+\fB:\fR"\&. This option only affects name lookups that your server does on behalf of clients\&. (Default: "www\&.google\&.com, www\&.mit\&.edu, www\&.yahoo\&.com, www\&.slashdot\&.org")
+.RE
+.PP
+\fBServerDNSAllowNonRFC953Hostnames\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is disabled, Tor does not try to resolve hostnames containing illegal characters (like @ and :) rather than sending them to an exit node to be resolved\&. This helps trap accidental attempts to resolve URLs and so on\&. This option only affects name lookups that your server does on behalf of clients\&. (Default: 0)
+.RE
+.PP
+\fBBridgeRecordUsageByCountry\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled and BridgeRelay is also enabled, and we have GeoIP data, Tor keeps a per\-country count of how many client addresses have contacted it so that it can help the bridge authority guess which countries have blocked access to it\&. (Default: 1)
+.RE
+.PP
+\fBServerDNSRandomizeCase\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set, Tor sets the case of each character randomly in outgoing DNS requests, and makes sure that the case matches in DNS replies\&. This so\-called "0x20 hack" helps resist some types of DNS poisoning attack\&. For more information, see "Increased DNS Forgery Resistance through 0x20\-Bit Encoding"\&. This option only affects name lookups that your server does on behalf of clients\&. (Default: 1)
+.RE
+.PP
+\fBGeoIPFile\fR \fIfilename\fR
+.RS 4
+A filename containing IPv4 GeoIP data, for use with by\-country statistics\&.
+.RE
+.PP
+\fBGeoIPv6File\fR \fIfilename\fR
+.RS 4
+A filename containing IPv6 GeoIP data, for use with by\-country statistics\&.
+.RE
+.PP
+\fBTLSECGroup\fR \fBP224\fR|\fBP256\fR
+.RS 4
+What EC group should we try to use for incoming TLS connections? P224 is faster, but makes us stand out more\&. Has no effect if we\(cqre a client, or if our OpenSSL version lacks support for ECDHE\&. (Default: P256)
+.RE
+.PP
+\fBCellStatistics\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor writes statistics on the mean time that cells spend in circuit queues to disk every 24 hours\&. (Default: 0)
+.RE
+.PP
+\fBDirReqStatistics\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, a Tor directory writes statistics on the number and response time of network status requests to disk every 24 hours\&. (Default: 1)
+.RE
+.PP
+\fBEntryStatistics\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor writes statistics on the number of directly connecting clients to disk every 24 hours\&. (Default: 0)
+.RE
+.PP
+\fBExitPortStatistics\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor writes statistics on the number of relayed bytes and opened stream per exit port to disk every 24 hours\&. (Default: 0)
+.RE
+.PP
+\fBConnDirectionStatistics\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor writes statistics on the bidirectional use of connections to disk every 24 hours\&. (Default: 0)
+.RE
+.PP
+\fBExtraInfoStatistics\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor includes previously gathered statistics in its extra\-info documents that it uploads to the directory authorities\&. (Default: 1)
+.RE
+.PP
+\fBExtendAllowPrivateAddresses\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is enabled, Tor routers allow EXTEND request to localhost, RFC1918 addresses, and so on\&. This can create security issues; you should probably leave it off\&. (Default: 0)
+.RE
+.PP
+\fBMaxMemInQueues\fR \fIN\fR \fBbytes\fR|\fBKB\fR|\fBMB\fR|\fBGB\fR
+.RS 4
+This option configures a threshold above which Tor will assume that it needs to stop queueing or buffering data because it\(cqs about to run out of memory\&. If it hits this threshold, it will begin killing circuits until it has recovered at least 10% of this memory\&. Do not set this option too low, or your relay may be unreliable under load\&. This option only affects some queues, so the actual process size will be larger than this\&. If this option is set to 0, Tor will try to pick a reasonable default based on your system\(cqs physical memory\&. (Default: 0)
+.RE
+.SH "DIRECTORY SERVER OPTIONS"
+.sp
+The following options are useful only for directory servers (that is, if DirPort is non\-zero):
+.PP
+\fBDirPortFrontPage\fR \fIFILENAME\fR
+.RS 4
+When this option is set, it takes an HTML file and publishes it as "/" on the DirPort\&. Now relay operators can provide a disclaimer without needing to set up a separate webserver\&. There\(cqs a sample disclaimer in contrib/operator\-tools/tor\-exit\-notice\&.html\&.
+.RE
+.PP
+\fBHidServDirectoryV2\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set, Tor accepts and serves v2 hidden service descriptors\&. Setting DirPort is not required for this, because clients connect via the ORPort by default\&. (Default: 1)
+.RE
+.PP
+\fBDirPort\fR [\fIaddress\fR:]\fIPORT\fR|\fBauto\fR [\fIflags\fR]
+.RS 4
+If this option is nonzero, advertise the directory service on this port\&. Set it to "auto" to have Tor pick a port for you\&. This option can occur more than once, but only one advertised DirPort is supported: all but one DirPort must have the
+\fBNoAdvertise\fR
+flag set\&. (Default: 0)
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The same flags are supported here as are supported by ORPort\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBDirListenAddress\fR \fIIP\fR[:\fIPORT\fR]
+.RS 4
+Bind the directory service to this address\&. If you specify a port, bind to this port rather than the one specified in DirPort\&. (Default: 0\&.0\&.0\&.0) This directive can be specified multiple times to bind to multiple addresses/ports\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+This option is deprecated; you can get the same behavior with DirPort now
+that it supports NoAdvertise and explicit addresses\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBDirPolicy\fR \fIpolicy\fR,\fIpolicy\fR,\fI\&...\fR
+.RS 4
+Set an entrance policy for this server, to limit who can connect to the directory ports\&. The policies have the same form as exit policies above, except that port specifiers are ignored\&. Any address not matched by some entry in the policy is accepted\&.
+.RE
+.SH "DIRECTORY AUTHORITY SERVER OPTIONS"
+.sp
+The following options enable operation as a directory authority, and control how Tor behaves as a directory authority\&. You should not need to adjust any of them if you\(cqre running a regular relay or exit server on the public Tor network\&.
+.PP
+\fBAuthoritativeDirectory\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set to 1, Tor operates as an authoritative directory server\&. Instead of caching the directory, it generates its own list of good servers, signs it, and sends that to the clients\&. Unless the clients already have you listed as a trusted directory, you probably do not want to set this option\&. Please coordinate with the other admins at
+tor\-ops@torproject\&.org
+if you think you should be a directory\&.
+.RE
+.PP
+\fBV3AuthoritativeDirectory\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set in addition to
+\fBAuthoritativeDirectory\fR, Tor generates version 3 network statuses and serves descriptors, etc as described in doc/spec/dir\-spec\&.txt (for Tor clients and servers running at least 0\&.2\&.0\&.x)\&.
+.RE
+.PP
+\fBVersioningAuthoritativeDirectory\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set to 1, Tor adds information on which versions of Tor are still believed safe for use to the published directory\&. Each version 1 authority is automatically a versioning authority; version 2 authorities provide this service optionally\&. See
+\fBRecommendedVersions\fR,
+\fBRecommendedClientVersions\fR, and
+\fBRecommendedServerVersions\fR\&.
+.RE
+.PP
+\fBNamingAuthoritativeDirectory\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set to 1, then the server advertises that it has opinions about nickname\-to\-fingerprint bindings\&. It will include these opinions in its published network\-status pages, by listing servers with the flag "Named" if a correct binding between that nickname and fingerprint has been registered with the dirserver\&. Naming dirservers will refuse to accept or publish descriptors that contradict a registered binding\&. See
+\fBapproved\-routers\fR
+in the
+\fBFILES\fR
+section below\&.
+.RE
+.PP
+\fBRecommendedVersions\fR \fISTRING\fR
+.RS 4
+STRING is a comma\-separated list of Tor versions currently believed to be safe\&. The list is included in each directory, and nodes which pull down the directory learn whether they need to upgrade\&. This option can appear multiple times: the values from multiple lines are spliced together\&. When this is set then
+\fBVersioningAuthoritativeDirectory\fR
+should be set too\&.
+.RE
+.PP
+\fBRecommendedClientVersions\fR \fISTRING\fR
+.RS 4
+STRING is a comma\-separated list of Tor versions currently believed to be safe for clients to use\&. This information is included in version 2 directories\&. If this is not set then the value of
+\fBRecommendedVersions\fR
+is used\&. When this is set then
+\fBVersioningAuthoritativeDirectory\fR
+should be set too\&.
+.RE
+.PP
+\fBBridgeAuthoritativeDir\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set in addition to
+\fBAuthoritativeDirectory\fR, Tor accepts and serves router descriptors, but it caches and serves the main networkstatus documents rather than generating its own\&. (Default: 0)
+.RE
+.PP
+\fBMinUptimeHidServDirectoryV2\fR \fIN\fR \fBseconds\fR|\fBminutes\fR|\fBhours\fR|\fBdays\fR|\fBweeks\fR
+.RS 4
+Minimum uptime of a v2 hidden service directory to be accepted as such by authoritative directories\&. (Default: 25 hours)
+.RE
+.PP
+\fBRecommendedServerVersions\fR \fISTRING\fR
+.RS 4
+STRING is a comma\-separated list of Tor versions currently believed to be safe for servers to use\&. This information is included in version 2 directories\&. If this is not set then the value of
+\fBRecommendedVersions\fR
+is used\&. When this is set then
+\fBVersioningAuthoritativeDirectory\fR
+should be set too\&.
+.RE
+.PP
+\fBConsensusParams\fR \fISTRING\fR
+.RS 4
+STRING is a space\-separated list of key=value pairs that Tor will include in the "params" line of its networkstatus vote\&.
+.RE
+.PP
+\fBDirAllowPrivateAddresses\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor will accept router descriptors with arbitrary "Address" elements\&. Otherwise, if the address is not an IP address or is a private IP address, it will reject the router descriptor\&. (Default: 0)
+.RE
+.PP
+\fBAuthDirBadDir\fR \fIAddressPattern\&...\fR
+.RS 4
+Authoritative directories only\&. A set of address patterns for servers that will be listed as bad directories in any network status document this authority publishes, if
+\fBAuthDirListBadDirs\fR
+is set\&.
+
+(The address pattern syntax here and in the options below is the same as for exit policies, except that you don\(cqt need to say "accept" or "reject", and ports are not needed\&.)
+.RE
+.PP
+\fBAuthDirBadExit\fR \fIAddressPattern\&...\fR
+.RS 4
+Authoritative directories only\&. A set of address patterns for servers that will be listed as bad exits in any network status document this authority publishes, if
+\fBAuthDirListBadExits\fR
+is set\&.
+.RE
+.PP
+\fBAuthDirInvalid\fR \fIAddressPattern\&...\fR
+.RS 4
+Authoritative directories only\&. A set of address patterns for servers that will never be listed as "valid" in any network status document that this authority publishes\&.
+.RE
+.PP
+\fBAuthDirReject\fR \fIAddressPattern\fR\&...
+.RS 4
+Authoritative directories only\&. A set of address patterns for servers that will never be listed at all in any network status document that this authority publishes, or accepted as an OR address in any descriptor submitted for publication by this authority\&.
+.RE
+.sp
+\fBAuthDirBadDirCCs\fR \fICC\fR,\&...
+.sp
+\fBAuthDirBadExitCCs\fR \fICC\fR,\&...
+.sp
+\fBAuthDirInvalidCCs\fR \fICC\fR,\&...
+.PP
+\fBAuthDirRejectCCs\fR \fICC\fR,\&...
+.RS 4
+Authoritative directories only\&. These options contain a comma\-separated list of country codes such that any server in one of those country codes will be marked as a bad directory/bad exit/invalid for use, or rejected entirely\&.
+.RE
+.PP
+\fBAuthDirListBadDirs\fR \fB0\fR|\fB1\fR
+.RS 4
+Authoritative directories only\&. If set to 1, this directory has some opinion about which nodes are unsuitable as directory caches\&. (Do not set this to 1 unless you plan to list non\-functioning directories as bad; otherwise, you are effectively voting in favor of every declared directory\&.)
+.RE
+.PP
+\fBAuthDirListBadExits\fR \fB0\fR|\fB1\fR
+.RS 4
+Authoritative directories only\&. If set to 1, this directory has some opinion about which nodes are unsuitable as exit nodes\&. (Do not set this to 1 unless you plan to list non\-functioning exits as bad; otherwise, you are effectively voting in favor of every declared exit as an exit\&.)
+.RE
+.PP
+\fBAuthDirRejectUnlisted\fR \fB0\fR|\fB1\fR
+.RS 4
+Authoritative directories only\&. If set to 1, the directory server rejects all uploaded server descriptors that aren\(cqt explicitly listed in the fingerprints file\&. This acts as a "panic button" if we get hit with a Sybil attack\&. (Default: 0)
+.RE
+.PP
+\fBAuthDirMaxServersPerAddr\fR \fINUM\fR
+.RS 4
+Authoritative directories only\&. The maximum number of servers that we will list as acceptable on a single IP address\&. Set this to "0" for "no limit"\&. (Default: 2)
+.RE
+.PP
+\fBAuthDirMaxServersPerAuthAddr\fR \fINUM\fR
+.RS 4
+Authoritative directories only\&. Like AuthDirMaxServersPerAddr, but applies to addresses shared with directory authorities\&. (Default: 5)
+.RE
+.PP
+\fBAuthDirFastGuarantee\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+Authoritative directories only\&. If non\-zero, always vote the Fast flag for any relay advertising this amount of capacity or more\&. (Default: 100 KBytes)
+.RE
+.PP
+\fBAuthDirGuardBWGuarantee\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+Authoritative directories only\&. If non\-zero, this advertised capacity or more is always sufficient to satisfy the bandwidth requirement for the Guard flag\&. (Default: 250 KBytes)
+.RE
+.PP
+\fBBridgePassword\fR \fIPassword\fR
+.RS 4
+If set, contains an HTTP authenticator that tells a bridge authority to serve all requested bridge information\&. Used by the (only partially implemented) "bridge community" design, where a community of bridge relay operators all use an alternate bridge directory authority, and their target user audience can periodically fetch the list of available community bridges to stay up\-to\-date\&. (Default: not set)
+.RE
+.PP
+\fBV3AuthVotingInterval\fR \fIN\fR \fBminutes\fR|\fBhours\fR
+.RS 4
+V3 authoritative directories only\&. Configures the server\(cqs preferred voting interval\&. Note that voting will
+\fIactually\fR
+happen at an interval chosen by consensus from all the authorities\*(Aq preferred intervals\&. This time SHOULD divide evenly into a day\&. (Default: 1 hour)
+.RE
+.PP
+\fBV3AuthVoteDelay\fR \fIN\fR \fBminutes\fR|\fBhours\fR
+.RS 4
+V3 authoritative directories only\&. Configures the server\(cqs preferred delay between publishing its vote and assuming it has all the votes from all the other authorities\&. Note that the actual time used is not the server\(cqs preferred time, but the consensus of all preferences\&. (Default: 5 minutes)
+.RE
+.PP
+\fBV3AuthDistDelay\fR \fIN\fR \fBminutes\fR|\fBhours\fR
+.RS 4
+V3 authoritative directories only\&. Configures the server\(cqs preferred delay between publishing its consensus and signature and assuming it has all the signatures from all the other authorities\&. Note that the actual time used is not the server\(cqs preferred time, but the consensus of all preferences\&. (Default: 5 minutes)
+.RE
+.PP
+\fBV3AuthNIntervalsValid\fR \fINUM\fR
+.RS 4
+V3 authoritative directories only\&. Configures the number of VotingIntervals for which each consensus should be valid for\&. Choosing high numbers increases network partitioning risks; choosing low numbers increases directory traffic\&. Note that the actual number of intervals used is not the server\(cqs preferred number, but the consensus of all preferences\&. Must be at least 2\&. (Default: 3)
+.RE
+.PP
+\fBV3BandwidthsFile\fR \fIFILENAME\fR
+.RS 4
+V3 authoritative directories only\&. Configures the location of the bandwidth\-authority generated file storing information on relays\*(Aq measured bandwidth capacities\&. (Default: unset)
+.RE
+.PP
+\fBV3AuthUseLegacyKey\fR \fB0\fR|\fB1\fR
+.RS 4
+If set, the directory authority will sign consensuses not only with its own signing key, but also with a "legacy" key and certificate with a different identity\&. This feature is used to migrate directory authority keys in the event of a compromise\&. (Default: 0)
+.RE
+.PP
+\fBRephistTrackTime\fR \fIN\fR \fBseconds\fR|\fBminutes\fR|\fBhours\fR|\fBdays\fR|\fBweeks\fR
+.RS 4
+Tells an authority, or other node tracking node reliability and history, that fine\-grained information about nodes can be discarded when it hasn\(cqt changed for a given amount of time\&. (Default: 24 hours)
+.RE
+.PP
+\fBVoteOnHidServDirectoriesV2\fR \fB0\fR|\fB1\fR
+.RS 4
+When this option is set in addition to
+\fBAuthoritativeDirectory\fR, Tor votes on whether to accept relays as hidden service directories\&. (Default: 1)
+.RE
+.PP
+\fBAuthDirHasIPv6Connectivity\fR \fB0\fR|\fB1\fR
+.RS 4
+Authoritative directories only\&. When set to 0, OR ports with an IPv6 address are being accepted without reachability testing\&. When set to 1, IPv6 OR ports are being tested just like IPv4 OR ports\&. (Default: 0)
+.RE
+.PP
+\fBMinMeasuredBWsForAuthToIgnoreAdvertised\fR \fIN\fR
+.RS 4
+A total value, in abstract bandwidth units, describing how much measured total bandwidth an authority should have observed on the network before it will treat advertised bandwidths as wholly unreliable\&. (Default: 500)
+.RE
+.SH "HIDDEN SERVICE OPTIONS"
+.sp
+The following options are used to configure a hidden service\&.
+.PP
+\fBHiddenServiceDir\fR \fIDIRECTORY\fR
+.RS 4
+Store data files for a hidden service in DIRECTORY\&. Every hidden service must have a separate directory\&. You may use this option multiple times to specify multiple services\&. DIRECTORY must be an existing directory\&.
+.RE
+.PP
+\fBHiddenServicePort\fR \fIVIRTPORT\fR [\fITARGET\fR]
+.RS 4
+Configure a virtual port VIRTPORT for a hidden service\&. You may use this option multiple times; each time applies to the service using the most recent hiddenservicedir\&. By default, this option maps the virtual port to the same port on 127\&.0\&.0\&.1 over TCP\&. You may override the target port, address, or both by specifying a target of addr, port, or addr:port\&. You may also have multiple lines with the same VIRTPORT: when a user connects to that VIRTPORT, one of the TARGETs from those lines will be chosen at random\&.
+.RE
+.PP
+\fBPublishHidServDescriptors\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 0, Tor will run any hidden services you configure, but it won\(cqt advertise them to the rendezvous directory\&. This option is only useful if you\(cqre using a Tor controller that handles hidserv publishing for you\&. (Default: 1)
+.RE
+.PP
+\fBHiddenServiceVersion\fR \fIversion\fR,\fIversion\fR,\fI\&...\fR
+.RS 4
+A list of rendezvous service descriptor versions to publish for the hidden service\&. Currently, only version 2 is supported\&. (Default: 2)
+.RE
+.PP
+\fBHiddenServiceAuthorizeClient\fR \fIauth\-type\fR \fIclient\-name\fR,\fIclient\-name\fR,\fI\&...\fR
+.RS 4
+If configured, the hidden service is accessible for authorized clients only\&. The auth\-type can either be \*(Aqbasic\*(Aq for a general\-purpose authorization protocol or \*(Aqstealth\*(Aq for a less scalable protocol that also hides service activity from unauthorized clients\&. Only clients that are listed here are authorized to access the hidden service\&. Valid client names are 1 to 16 characters long and only use characters in A\-Za\-z0\-9+\-_ (no spaces)\&. If this option is set, the hidden service is not accessible for clients without authorization any more\&. Generated authorization data can be found in the hostname file\&. Clients need to put this authorization data in their configuration file using
+\fBHidServAuth\fR\&.
+.RE
+.PP
+\fBRendPostPeriod\fR \fIN\fR \fBseconds\fR|\fBminutes\fR|\fBhours\fR|\fBdays\fR|\fBweeks\fR
+.RS 4
+Every time the specified period elapses, Tor uploads any rendezvous service descriptors to the directory servers\&. This information is also uploaded whenever it changes\&. (Default: 1 hour)
+.RE
+.SH "TESTING NETWORK OPTIONS"
+.sp
+The following options are used for running a testing Tor network\&.
+.PP
+\fBTestingTorNetwork\fR \fB0\fR|\fB1\fR
+.RS 4
+If set to 1, Tor adjusts default values of the configuration options below, so that it is easier to set up a testing Tor network\&. May only be set if non\-default set of DirAuthorities is set\&. Cannot be unset while Tor is running\&. (Default: 0)
+
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+ServerDNSAllowBrokenConfig 1
+DirAllowPrivateAddresses 1
+EnforceDistinctSubnets 0
+AssumeReachable 1
+AuthDirMaxServersPerAddr 0
+AuthDirMaxServersPerAuthAddr 0
+ClientDNSRejectInternalAddresses 0
+ClientRejectInternalAddresses 0
+CountPrivateBandwidth 1
+ExitPolicyRejectPrivate 0
+ExtendAllowPrivateAddresses 1
+V3AuthVotingInterval 5 minutes
+V3AuthVoteDelay 20 seconds
+V3AuthDistDelay 20 seconds
+MinUptimeHidServDirectoryV2 0 seconds
+TestingV3AuthInitialVotingInterval 5 minutes
+TestingV3AuthInitialVoteDelay 20 seconds
+TestingV3AuthInitialDistDelay 20 seconds
+TestingAuthDirTimeToLearnReachability 0 minutes
+TestingEstimatedDescriptorPropagationTime 0 minutes
+TestingServerDownloadSchedule 0, 0, 0, 5, 10, 15, 20, 30, 60
+TestingClientDownloadSchedule 0, 0, 5, 10, 15, 20, 30, 60
+TestingServerConsensusDownloadSchedule 0, 0, 5, 10, 15, 20, 30, 60
+TestingClientConsensusDownloadSchedule 0, 0, 5, 10, 15, 20, 30, 60
+TestingBridgeDownloadSchedule 60, 30, 30, 60
+TestingClientMaxIntervalWithoutRequest 5 seconds
+TestingDirConnectionMaxStall 30 seconds
+TestingConsensusMaxDownloadTries 80
+TestingDescriptorMaxDownloadTries 80
+TestingMicrodescMaxDownloadTries 80
+TestingCertMaxDownloadTries 80
+TestingEnableConnBwEvent 1
+TestingEnableCellStatsEvent 1
+TestingEnableTbEmptyEvent 1
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBTestingV3AuthInitialVotingInterval\fR \fIN\fR \fBminutes\fR|\fBhours\fR
+.RS 4
+Like V3AuthVotingInterval, but for initial voting interval before the first consensus has been created\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 30 minutes)
+.RE
+.PP
+\fBTestingV3AuthInitialVoteDelay\fR \fIN\fR \fBminutes\fR|\fBhours\fR
+.RS 4
+Like V3AuthVoteDelay, but for initial voting interval before the first consensus has been created\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 5 minutes)
+.RE
+.PP
+\fBTestingV3AuthInitialDistDelay\fR \fIN\fR \fBminutes\fR|\fBhours\fR
+.RS 4
+Like V3AuthDistDelay, but for initial voting interval before the first consensus has been created\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 5 minutes)
+.RE
+.PP
+\fBTestingV3AuthVotingStartOffset\fR \fIN\fR \fBseconds\fR|\fBminutes\fR|\fBhours\fR
+.RS 4
+Directory authorities offset voting start time by this much\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 0)
+.RE
+.PP
+\fBTestingAuthDirTimeToLearnReachability\fR \fIN\fR \fBminutes\fR|\fBhours\fR
+.RS 4
+After starting as an authority, do not make claims about whether routers are Running until this much time has passed\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 30 minutes)
+.RE
+.PP
+\fBTestingEstimatedDescriptorPropagationTime\fR \fIN\fR \fBminutes\fR|\fBhours\fR
+.RS 4
+Clients try downloading router descriptors from directory caches after this time\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 10 minutes)
+.RE
+.PP
+\fBTestingMinFastFlagThreshold\fR \fIN\fR \fBbytes\fR|\fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+Minimum value for the Fast flag\&. Overrides the ordinary minimum taken from the consensus when TestingTorNetwork is set\&. (Default: 0\&.)
+.RE
+.PP
+\fBTestingServerDownloadSchedule\fR \fIN\fR,\fIN\fR,\fI\&...\fR
+.RS 4
+Schedule for when servers should download things in general\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 0, 0, 0, 60, 60, 120, 300, 900, 2147483647)
+.RE
+.PP
+\fBTestingClientDownloadSchedule\fR \fIN\fR,\fIN\fR,\fI\&...\fR
+.RS 4
+Schedule for when clients should download things in general\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 0, 0, 60, 300, 600, 2147483647)
+.RE
+.PP
+\fBTestingServerConsensusDownloadSchedule\fR \fIN\fR,\fIN\fR,\fI\&...\fR
+.RS 4
+Schedule for when servers should download consensuses\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 0, 0, 60, 300, 600, 1800, 1800, 1800, 1800, 1800, 3600, 7200)
+.RE
+.PP
+\fBTestingClientConsensusDownloadSchedule\fR \fIN\fR,\fIN\fR,\fI\&...\fR
+.RS 4
+Schedule for when clients should download consensuses\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 0, 0, 60, 300, 600, 1800, 3600, 3600, 3600, 10800, 21600, 43200)
+.RE
+.PP
+\fBTestingBridgeDownloadSchedule\fR \fIN\fR,\fIN\fR,\fI\&...\fR
+.RS 4
+Schedule for when clients should download bridge descriptors\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 3600, 900, 900, 3600)
+.RE
+.PP
+\fBTestingClientMaxIntervalWithoutRequest\fR \fIN\fR \fBseconds\fR|\fBminutes\fR
+.RS 4
+When directory clients have only a few descriptors to request, they batch them until they have more, or until this amount of time has passed\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 10 minutes)
+.RE
+.PP
+\fBTestingDirConnectionMaxStall\fR \fIN\fR \fBseconds\fR|\fBminutes\fR
+.RS 4
+Let a directory connection stall this long before expiring it\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 5 minutes)
+.RE
+.PP
+\fBTestingConsensusMaxDownloadTries\fR \fINUM\fR
+.RS 4
+Try this often to download a consensus before giving up\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 8)
+.RE
+.PP
+\fBTestingDescriptorMaxDownloadTries\fR \fINUM\fR
+.RS 4
+Try this often to download a router descriptor before giving up\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 8)
+.RE
+.PP
+\fBTestingMicrodescMaxDownloadTries\fR \fINUM\fR
+.RS 4
+Try this often to download a microdesc descriptor before giving up\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 8)
+.RE
+.PP
+\fBTestingCertMaxDownloadTries\fR \fINUM\fR
+.RS 4
+Try this often to download a v3 authority certificate before giving up\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 8)
+.RE
+.PP
+\fBTestingDirAuthVoteGuard\fR \fInode\fR,\fInode\fR,\fI\&...\fR
+.RS 4
+A list of identity fingerprints, nicknames, country codes and address patterns of nodes to vote Guard for regardless of their uptime and bandwidth\&. See the
+\fBExcludeNodes\fR
+option for more information on how to specify nodes\&.
+
+In order for this option to have any effect,
+\fBTestingTorNetwork\fR
+has to be set\&.
+.RE
+.PP
+\fBTestingEnableConnBwEvent\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set, then Tor controllers may register for CONN_BW events\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 0)
+.RE
+.PP
+\fBTestingEnableCellStatsEvent\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set, then Tor controllers may register for CELL_STATS events\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 0)
+.RE
+.PP
+\fBTestingEnableTbEmptyEvent\fR \fB0\fR|\fB1\fR
+.RS 4
+If this option is set, then Tor controllers may register for TB_EMPTY events\&. Changing this requires that
+\fBTestingTorNetwork\fR
+is set\&. (Default: 0)
+.RE
+.PP
+\fBTestingMinExitFlagThreshold\fR \fIN\fR \fBKBytes\fR|\fBMBytes\fR|\fBGBytes\fR|\fBKBits\fR|\fBMBits\fR|\fBGBits\fR
+.RS 4
+Sets a lower\-bound for assigning an exit flag when running as an authority on a testing network\&. Overrides the usual default lower bound of 4 KB\&. (Default: 0)
+.RE
+.SH "SIGNALS"
+.sp
+Tor catches the following signals:
+.PP
+\fBSIGTERM\fR
+.RS 4
+Tor will catch this, clean up and sync to disk if necessary, and exit\&.
+.RE
+.PP
+\fBSIGINT\fR
+.RS 4
+Tor clients behave as with SIGTERM; but Tor servers will do a controlled slow shutdown, closing listeners and waiting 30 seconds before exiting\&. (The delay can be configured with the ShutdownWaitLength config option\&.)
+.RE
+.PP
+\fBSIGHUP\fR
+.RS 4
+The signal instructs Tor to reload its configuration (including closing and reopening logs), and kill and restart its helper processes if applicable\&.
+.RE
+.PP
+\fBSIGUSR1\fR
+.RS 4
+Log statistics about current connections, past connections, and throughput\&.
+.RE
+.PP
+\fBSIGUSR2\fR
+.RS 4
+Switch all logs to loglevel debug\&. You can go back to the old loglevels by sending a SIGHUP\&.
+.RE
+.PP
+\fBSIGCHLD\fR
+.RS 4
+Tor receives this signal when one of its helper processes has exited, so it can clean up\&.
+.RE
+.PP
+\fBSIGPIPE\fR
+.RS 4
+Tor catches this signal and ignores it\&.
+.RE
+.PP
+\fBSIGXFSZ\fR
+.RS 4
+If this signal exists on your platform, Tor catches and ignores it\&.
+.RE
+.SH "FILES"
+.PP
+\fB@CONFDIR@/torrc\fR
+.RS 4
+The configuration file, which contains "option value" pairs\&.
+.RE
+.PP
+\fB$HOME/\&.torrc\fR
+.RS 4
+Fallback location for torrc, if @CONFDIR@/torrc is not found\&.
+.RE
+.PP
+\fB@LOCALSTATEDIR@/lib/tor/\fR
+.RS 4
+The tor process stores keys and other data here\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/cached\-status/\fR
+.RS 4
+The most recently downloaded network status document for each authority\&. Each file holds one such document; the filenames are the hexadecimal identity key fingerprints of the directory authorities\&. Mostly obsolete\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/cached\-certs\fR
+.RS 4
+This file holds downloaded directory key certificates that are used to verify authenticity of documents generated by Tor directory authorities\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/cached\-consensus\fR and/or \fBcached\-microdesc\-consensus\fR
+.RS 4
+The most recent consensus network status document we\(cqve downloaded\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/cached\-descriptors\fR and \fBcached\-descriptors\&.new\fR
+.RS 4
+These files hold downloaded router statuses\&. Some routers may appear more than once; if so, the most recently published descriptor is used\&. Lines beginning with @\-signs are annotations that contain more information about a given router\&. The "\&.new" file is an append\-only journal; when it gets too large, all entries are merged into a new cached\-descriptors file\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/cached\-microdescs\fR and \fBcached\-microdescs\&.new\fR
+.RS 4
+These files hold downloaded microdescriptors\&. Lines beginning with @\-signs are annotations that contain more information about a given router\&. The "\&.new" file is an append\-only journal; when it gets too large, all entries are merged into a new cached\-microdescs file\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/cached\-routers\fR and \fBcached\-routers\&.new\fR
+.RS 4
+Obsolete versions of cached\-descriptors and cached\-descriptors\&.new\&. When Tor can\(cqt find the newer files, it looks here instead\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/state\fR
+.RS 4
+A set of persistent key\-value mappings\&. These are documented in the file\&. These include:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The current entry guards and their status\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The current bandwidth accounting values (unused so far; see below)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+When the file was last written
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+What version of Tor generated the state file
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A short history of bandwidth usage, as produced in the router descriptors\&.
+.RE
+.RE
+.PP
+\fIDataDirectory\fR\fB/bw_accounting\fR
+.RS 4
+Used to track bandwidth accounting values (when the current period starts and ends; how much has been read and written so far this period)\&. This file is obsolete, and the data is now stored in the \*(Aqstate\*(Aq file as well\&. Only used when bandwidth accounting is enabled\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/control_auth_cookie\fR
+.RS 4
+Used for cookie authentication with the controller\&. Location can be overridden by the CookieAuthFile config option\&. Regenerated on startup\&. See control\-spec\&.txt for details\&. Only used when cookie authentication is enabled\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/lock\fR
+.RS 4
+This file is used to prevent two Tor instances from using same data directory\&. If access to this file is locked, data directory is already in use by Tor\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/keys/\fR*
+.RS 4
+Only used by servers\&. Holds identity keys and onion keys\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/fingerprint\fR
+.RS 4
+Only used by servers\&. Holds the fingerprint of the server\(cqs identity key\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/hashed\-fingerprint\fR
+.RS 4
+Only used by bridges\&. Holds the hashed fingerprint of the bridge\(cqs identity key\&. (That is, the hash of the hash of the identity key\&.)
+.RE
+.PP
+\fIDataDirectory\fR\fB/approved\-routers\fR
+.RS 4
+Only for naming authoritative directory servers (see
+\fBNamingAuthoritativeDirectory\fR)\&. This file lists nickname to identity bindings\&. Each line lists a nickname and a fingerprint separated by whitespace\&. See your
+\fBfingerprint\fR
+file in the
+\fIDataDirectory\fR
+for an example line\&. If the nickname is
+\fB!reject\fR
+then descriptors from the given identity (fingerprint) are rejected by this server\&. If it is
+\fB!invalid\fR
+then descriptors are accepted but marked in the directory as not valid, that is, not recommended\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/v3\-status\-votes\fR
+.RS 4
+Only for authoritative directory servers\&. This file contains status votes from all the authoritative directory servers and is used to generate the network consensus document\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/unverified\-consensus\fR
+.RS 4
+This file contains a network consensus document that has been downloaded, but which we didn\(cqt have the right certificates to check yet\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/unverified\-microdesc\-consensus\fR
+.RS 4
+This file contains a microdescriptor\-flavored network consensus document that has been downloaded, but which we didn\(cqt have the right certificates to check yet\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/unparseable\-desc\fR
+.RS 4
+Onion router descriptors that Tor was unable to parse are dumped to this file\&. Only used for debugging\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/router\-stability\fR
+.RS 4
+Only used by authoritative directory servers\&. Tracks measurements for router mean\-time\-between\-failures so that authorities have a good idea of how to set their Stable flags\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/stats/dirreq\-stats\fR
+.RS 4
+Only used by directory caches and authorities\&. This file is used to collect directory request statistics\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/stats/entry\-stats\fR
+.RS 4
+Only used by servers\&. This file is used to collect incoming connection statistics by Tor entry nodes\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/stats/bridge\-stats\fR
+.RS 4
+Only used by servers\&. This file is used to collect incoming connection statistics by Tor bridges\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/stats/exit\-stats\fR
+.RS 4
+Only used by servers\&. This file is used to collect outgoing connection statistics by Tor exit routers\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/stats/buffer\-stats\fR
+.RS 4
+Only used by servers\&. This file is used to collect buffer usage history\&.
+.RE
+.PP
+\fIDataDirectory\fR\fB/stats/conn\-stats\fR
+.RS 4
+Only used by servers\&. This file is used to collect approximate connection history (number of active connections over time)\&.
+.RE
+.PP
+\fIHiddenServiceDirectory\fR\fB/hostname\fR
+.RS 4
+The <base32\-encoded\-fingerprint>\&.onion domain name for this hidden service\&. If the hidden service is restricted to authorized clients only, this file also contains authorization data for all clients\&.
+.RE
+.PP
+\fIHiddenServiceDirectory\fR\fB/private_key\fR
+.RS 4
+The private key for this hidden service\&.
+.RE
+.PP
+\fIHiddenServiceDirectory\fR\fB/client_keys\fR
+.RS 4
+Authorization data for a hidden service that is only accessible by authorized clients\&.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBtorsocks\fR(1), \fBtorify\fR(1)
+.sp
+\fBhttps://www\&.torproject\&.org/\fR
+.SH "BUGS"
+.sp
+Plenty, probably\&. Tor is still in development\&. Please report them\&.
+.SH "AUTHORS"
+.sp
+Roger Dingledine [arma at mit\&.edu], Nick Mathewson [nickm at alum\&.mit\&.edu]\&.

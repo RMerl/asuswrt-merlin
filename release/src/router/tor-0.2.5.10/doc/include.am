@@ -1,0 +1,89 @@
+# We use a two-step process to generate documentation from asciidoc files.
+#
+# First, we use asciidoc/a2x to process the asciidoc files into .1.in and
+# .html.in files (see the asciidoc-helper.sh script). These are the same as
+# the regular .1 and .html files, except that they still have some autoconf
+# variables set in them.
+#
+# Second, we use config.status to turn .1.in files into .1 files and
+# .html.in files into .html files.
+#
+# We do the steps in this order so that we can ship the .*.in files as
+# part of the source distribution, so that people without asciidoc can
+# just use the .1 and .html files.
+
+base_mans = doc/tor doc/tor-gencert doc/tor-resolve doc/torify
+all_mans = $(base_mans) doc/tor-fw-helper
+if USE_FW_HELPER
+install_mans = $(all_mans)
+else
+install_mans = $(base_mans)
+endif
+
+if USE_ASCIIDOC
+nodist_man1_MANS = $(install_mans:=.1)
+doc_DATA = $(install_mans:=.html)
+html_in = $(all_mans:=.html.in)
+man_in = $(all_mans:=.1.in)
+txt_in = $(all_mans:=.1.txt)
+else
+html_in =
+man_in =
+txt_in =
+nodist_man1_MANS =
+doc_DATA =
+endif
+
+EXTRA_DIST+= doc/HACKING doc/asciidoc-helper.sh			\
+             $(html_in) $(man_in) $(txt_in)			\
+             doc/state-contents.txt
+
+docdir = @docdir@
+
+asciidoc_product = $(nodist_man1_MANS) $(doc_DATA)
+
+# Generate the html documentation from asciidoc, but don't do
+# machine-specific replacements yet
+$(html_in) :
+	$(AM_V_GEN)$(top_srcdir)/doc/asciidoc-helper.sh html @ASCIIDOC@ $(top_srcdir)/$@
+
+# Generate the manpage from asciidoc, but don't do
+# machine-specific replacements yet
+$(man_in) :
+	$(AM_V_GEN)$(top_srcdir)/doc/asciidoc-helper.sh man @A2X@ $(top_srcdir)/$@
+
+doc/tor.1.in: doc/tor.1.txt
+doc/torify.1.in: doc/torify.1.txt
+doc/tor-gencert.1.in: doc/tor-gencert.1.txt
+doc/tor-resolve.1.in: doc/tor-resolve.1.txt
+doc/tor-fw-helper.1.in: doc/tor-fw-helper.1.txt
+
+doc/tor.html.in: doc/tor.1.txt
+doc/torify.html.in: doc/torify.1.txt
+doc/tor-gencert.html.in: doc/tor-gencert.1.txt
+doc/tor-resolve.html.in: doc/tor-resolve.1.txt
+doc/tor-fw-helper.html.in: doc/tor-fw-helper.1.txt
+
+# use ../config.status to swap all machine-specific magic strings
+# in the asciidoc with their replacements.
+$(asciidoc_product) :
+	$(AM_V_GEN)$(MKDIR_P) $(@D)
+	$(AM_V_at)if test -e $(top_srcdir)/$@.in && ! test -e $@.in ; then \
+		cp $(top_srcdir)/$@.in $@; \
+	fi
+	$(AM_V_at)./config.status -q --file=$@;
+
+doc/tor.html: doc/tor.html.in
+doc/tor-gencert.html: doc/tor-gencert.html.in
+doc/tor-resolve.html: doc/tor-resolve.html.in
+doc/torify.html: doc/torify.html.in
+doc/tor-fw-helper.html: doc/tor-fw-helper.html.in
+
+doc/tor.1: doc/tor.1.in
+doc/tor-gencert.1: doc/tor-gencert.1.in
+doc/tor-resolve.1: doc/tor-resolve.1.in
+doc/torify.1: doc/torify.1.in
+doc/tor-fw-helper.1: doc/tor-fw-helper.1.in
+
+CLEANFILES+= $(asciidoc_product) config.log
+DISTCLEANFILES+= $(html_in) $(man_in)

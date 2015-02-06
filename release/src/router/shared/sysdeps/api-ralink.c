@@ -27,7 +27,7 @@
 
 typedef uint32_t __u32;
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 const char WIF_5G[]	= "rai0";
 const char WIF_2G[]	= "ra0";
 const char WDSIF_5G[]	= "wdsi";
@@ -43,9 +43,17 @@ const char APCLI_2G[]	= "apclii0";
 
 #if defined(RA_ESW)
 /* Read TX/RX byte count information from switch's register. */
+#if defined(RTCONFIG_RALINK_MT7620)
 int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx)
+#elif defined(RTCONFIG_RALINK_MT7621)
+int get_mt7621_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx)
+#endif
 {
+#if defined(RTCONFIG_RALINK_MT7620)
 	return __mt7620_wan_bytecount(unit, tx, rx);
+#elif defined(RTCONFIG_RALINK_MT7621)
+	return __mt7621_wan_bytecount(unit, tx, rx);
+#endif
 }
 #endif
 uint32_t gpio_dir(uint32_t gpio, int dir)

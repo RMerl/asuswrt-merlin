@@ -485,7 +485,9 @@ function overHint(itemNum){
 		}	
 
 		if(dualWAN_support && wans_dualwan_array.indexOf("none") == -1 ){
-			if((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")){
+			if(first_link_status == "1")
+				statusmenu += "<span><#web_redirect_reason2_2#></span>";
+			else if((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")){
 				if((wans_mode == "fo" || wans_mode == "fb") && active_wan_unit == "1")
 					statusmenu += "<span>Standby</span>";
 				else	
@@ -550,9 +552,8 @@ function overHint(itemNum){
 							else if(first_link_sbstatus == "5")
 								statusmenu += "<span><#web_redirect_reason5_1#></span>";
 							else if(first_link_sbstatus == "6")
-								statusmenu += "<span>WAN_STOPPED_SYSTEM_ERROR</span>";
+								statusmenu += "<span>System error. <#Reboot_manually#></span>";
 							else
-								//statusmenu += "<span><#web_redirect_reason2_2#></span>";
 								statusmenu += "<span><#Disconnected#></span>";	
 						}	
 					}
@@ -560,7 +561,9 @@ function overHint(itemNum){
 			}
 		}
 		else{	
-			if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
+			if(link_status == "1")
+				statusmenu += "<span><#web_redirect_reason2_2#></span>";			
+			else if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
 				statusmenu += "<span><#Connected#></span>";
 			}
 			else{
@@ -622,9 +625,8 @@ function overHint(itemNum){
 							else if(link_sbstatus == "5")
 								statusmenu += "<span><#web_redirect_reason5_1#></span>";
 							else if(link_sbstatus == "6")
-								statusmenu += "<span>WAN_STOPPED_SYSTEM_ERROR</span>";
+								statusmenu += "<span>System error. <#Reboot_manually#></span>";
 							else
-								//statusmenu += "<span><#web_redirect_reason2_2#></span>";
 								statusmenu += "<span><#Disconnected#></span>";	
 						}
 					}
@@ -663,7 +665,9 @@ function overHint(itemNum){
 						statusmenu += "<b><#menu5_4_4#> -</b><br>";
 				}
 
-				if(secondary_link_status == "2" && (secondary_link_auxstatus == "0" || secondary_link_auxstatus == "2")){				
+				if(secondary_link_status == "1")
+					statusmenu += "<span><#web_redirect_reason2_2#></span>";
+				else if(secondary_link_status == "2" && (secondary_link_auxstatus == "0" || secondary_link_auxstatus == "2")){				
 					if((wans_mode == "fo" || wans_mode == "fb") && active_wan_unit == "0")
 						statusmenu += "<span>Standby</span>";
 					else	
@@ -727,9 +731,8 @@ function overHint(itemNum){
 							else if(secondary_link_sbstatus == "5")
 								statusmenu += "<span><#web_redirect_reason5_1#></span>";
 							else if(secondary_link_sbstatus == "6")
-								statusmenu += "<span>WAN_STOPPED_SYSTEM_ERROR</span>";
+								statusmenu += "<span>System error. <#Reboot_manually#></span>";
 							else
-								//statusmenu += "<span><#web_redirect_reason2_2#></span>";
 								statusmenu += "<span><#Disconnected#></span>";
 						}		
 					}

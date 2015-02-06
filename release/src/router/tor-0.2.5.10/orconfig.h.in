@@ -1,0 +1,625 @@
+/* orconfig.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define if building universal (internal helper macro) */
+#undef AC_APPLE_UNIVERSAL_BUILD
+
+/* tor's build directory */
+#undef BUILDDIR
+
+/* tor's configuration directory */
+#undef CONFDIR
+
+/* Defined if we have a curve25519 implementation */
+#undef CURVE25519_ENABLED
+
+/* Define to 1 iff memset(0) sets doubles to 0.0 */
+#undef DOUBLE_0_REP_IS_ZERO_BYTES
+
+/* Defined if we try to use freelists for buffer RAM chunks */
+#undef ENABLE_BUF_FREELISTS
+
+/* Defined if we default to host local appdata paths on Windows */
+#undef ENABLE_LOCAL_APPDATA
+
+/* Defined if we try to use mempools for cells being relayed */
+#undef ENABLE_MEMPOOLS
+
+/* Defined if we will try to use multithreading */
+#undef ENABLE_THREADS
+
+/* Define if enum is always signed */
+#undef ENUM_VALS_ARE_SIGNED
+
+/* Define to nothing if C supports flexible array members, and to 1 if it does
+   not. That way, with a declaration like `struct s { int n; double
+   d[FLEXIBLE_ARRAY_MEMBER]; };', the struct hack can be used with pre-C99
+   compilers. When computing the size of such an object, don't use 'sizeof
+   (struct s)' as it overestimates the size. Use 'offsetof (struct s, d)'
+   instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
+   MSVC and with C++ compilers. */
+#undef FLEXIBLE_ARRAY_MEMBER
+
+/* Define to 1 if you have the `accept4' function. */
+#undef HAVE_ACCEPT4
+
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#undef HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* Define to 1 if you have the `backtrace' function. */
+#undef HAVE_BACKTRACE
+
+/* Define to 1 if you have the `backtrace_symbols_fd' function. */
+#undef HAVE_BACKTRACE_SYMBOLS_FD
+
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
+
+/* Define to 1 if you have the <crt_externs.h> header file. */
+#undef HAVE_CRT_EXTERNS_H
+
+/* Define to 1 if you have the <crypto_scalarmult_curve25519.h> header file.
+   */
+#undef HAVE_CRYPTO_SCALARMULT_CURVE25519_H
+
+/* Define to 1 if you have the <cygwin/signal.h> header file. */
+#undef HAVE_CYGWIN_SIGNAL_H
+
+/* Define to 1 if you have the declaration of `mlockall', and to 0 if you
+   don't. */
+#undef HAVE_DECL_MLOCKALL
+
+/* Define to 1 if you have the <dmalloc.h> header file. */
+#undef HAVE_DMALLOC_H
+
+/* Define to 1 if you have the `dmalloc_strdup' function. */
+#undef HAVE_DMALLOC_STRDUP
+
+/* Define to 1 if you have the `dmalloc_strndup' function. */
+#undef HAVE_DMALLOC_STRNDUP
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the <event2/bufferevent_ssl.h> header file. */
+#undef HAVE_EVENT2_BUFFEREVENT_SSL_H
+
+/* Define to 1 if you have the <event2/dns.h> header file. */
+#undef HAVE_EVENT2_DNS_H
+
+/* Define to 1 if you have the <event2/event.h> header file. */
+#undef HAVE_EVENT2_EVENT_H
+
+/* Define to 1 if you have the `event_base_loopexit' function. */
+#undef HAVE_EVENT_BASE_LOOPEXIT
+
+/* Define to 1 if you have the `event_get_method' function. */
+#undef HAVE_EVENT_GET_METHOD
+
+/* Define to 1 if you have the `event_get_version' function. */
+#undef HAVE_EVENT_GET_VERSION
+
+/* Define to 1 if you have the `event_get_version_number' function. */
+#undef HAVE_EVENT_GET_VERSION_NUMBER
+
+/* Define to 1 if you have the `event_set_log_callback' function. */
+#undef HAVE_EVENT_SET_LOG_CALLBACK
+
+/* Define to 1 if you have the `evutil_secure_rng_init' function. */
+#undef HAVE_EVUTIL_SECURE_RNG_INIT
+
+/* Define to 1 if you have the `evutil_secure_rng_set_urandom_device_file'
+   function. */
+#undef HAVE_EVUTIL_SECURE_RNG_SET_URANDOM_DEVICE_FILE
+
+/* Define to 1 if you have the <execinfo.h> header file. */
+#undef HAVE_EXECINFO_H
+
+/* Defined if we have extern char **environ already declared */
+#undef HAVE_EXTERN_ENVIRON_DECLARED
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `flock' function. */
+#undef HAVE_FLOCK
+
+/* Define to 1 if you have the `ftime' function. */
+#undef HAVE_FTIME
+
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
+/* Define this if you have any gethostbyname_r() */
+#undef HAVE_GETHOSTBYNAME_R
+
+/* Define this if gethostbyname_r takes 3 arguments */
+#undef HAVE_GETHOSTBYNAME_R_3_ARG
+
+/* Define this if gethostbyname_r takes 5 arguments */
+#undef HAVE_GETHOSTBYNAME_R_5_ARG
+
+/* Define this if gethostbyname_r takes 6 arguments */
+#undef HAVE_GETHOSTBYNAME_R_6_ARG
+
+/* Define to 1 if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
+
+/* Define to 1 if you have the `getresgid' function. */
+#undef HAVE_GETRESGID
+
+/* Define to 1 if you have the `getresuid' function. */
+#undef HAVE_GETRESUID
+
+/* Define to 1 if you have the `getrlimit' function. */
+#undef HAVE_GETRLIMIT
+
+/* Define to 1 if you have the `gettimeofday' function. */
+#undef HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the `gmtime_r' function. */
+#undef HAVE_GMTIME_R
+
+/* Define to 1 if you have the <grp.h> header file. */
+#undef HAVE_GRP_H
+
+/* Define to 1 if you have the <ifaddrs.h> header file. */
+#undef HAVE_IFADDRS_H
+
+/* Define to 1 if you have the `inet_aton' function. */
+#undef HAVE_INET_ATON
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `ioctl' function. */
+#undef HAVE_IOCTL
+
+/* Define to 1 if you have the `issetugid' function. */
+#undef HAVE_ISSETUGID
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <linux/netfilter_ipv4.h> header file. */
+#undef HAVE_LINUX_NETFILTER_IPV4_H
+
+/* Define to 1 if you have the <linux/types.h> header file. */
+#undef HAVE_LINUX_TYPES_H
+
+/* Define to 1 if you have the `llround' function. */
+#undef HAVE_LLROUND
+
+/* Define to 1 if you have the `localtime_r' function. */
+#undef HAVE_LOCALTIME_R
+
+/* Define to 1 if you have the `lround' function. */
+#undef HAVE_LROUND
+
+/* Define to 1 if you have the <machine/limits.h> header file. */
+#undef HAVE_MACHINE_LIMITS_H
+
+/* Defined if the compiler supports __FUNCTION__ */
+#undef HAVE_MACRO__FUNCTION__
+
+/* Defined if the compiler supports __FUNC__ */
+#undef HAVE_MACRO__FUNC__
+
+/* Defined if the compiler supports __func__ */
+#undef HAVE_MACRO__func__
+
+/* Define to 1 if you have the `mallinfo' function. */
+#undef HAVE_MALLINFO
+
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the <malloc/malloc.h> header file. */
+#undef HAVE_MALLOC_MALLOC_H
+
+/* Define to 1 if you have the <malloc_np.h> header file. */
+#undef HAVE_MALLOC_NP_H
+
+/* Define to 1 if you have the `memmem' function. */
+#undef HAVE_MEMMEM
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mlockall' function. */
+#undef HAVE_MLOCKALL
+
+/* Define to 1 if you have the <nacl/crypto_scalarmult_curve25519.h> header
+   file. */
+#undef HAVE_NACL_CRYPTO_SCALARMULT_CURVE25519_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet/in6.h> header file. */
+#undef HAVE_NETINET_IN6_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <net/if.h> header file. */
+#undef HAVE_NET_IF_H
+
+/* Define to 1 if you have the <net/pfvar.h> header file. */
+#undef HAVE_NET_PFVAR_H
+
+/* Define to 1 if you have the `prctl' function. */
+#undef HAVE_PRCTL
+
+/* Define to 1 if you have the `pthread_create' function. */
+#undef HAVE_PTHREAD_CREATE
+
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
+/* Define to 1 if you have the <pwd.h> header file. */
+#undef HAVE_PWD_H
+
+/* Define to 1 if you have the `rint' function. */
+#undef HAVE_RINT
+
+/* Define to 1 if the system has the type `rlim_t'. */
+#undef HAVE_RLIM_T
+
+/* Define to 1 if the system has the type `sa_family_t'. */
+#undef HAVE_SA_FAMILY_T
+
+/* Define to 1 if you have the <seccomp.h> header file. */
+#undef HAVE_SECCOMP_H
+
+/* Define to 1 if you have the `sigaction' function. */
+#undef HAVE_SIGACTION
+
+/* Define to 1 if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
+/* Define to 1 if you have the `socketpair' function. */
+#undef HAVE_SOCKETPAIR
+
+/* Define to 1 if the system has the type `ssize_t'. */
+#undef HAVE_SSIZE_T
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `strptime' function. */
+#undef HAVE_STRPTIME
+
+/* Define to 1 if you have the `strtok_r' function. */
+#undef HAVE_STRTOK_R
+
+/* Define to 1 if you have the `strtoull' function. */
+#undef HAVE_STRTOULL
+
+/* Define to 1 if `min_heap_idx' is a member of `struct event'. */
+#undef HAVE_STRUCT_EVENT_MIN_HEAP_IDX
+
+/* Define to 1 if the system has the type `struct in6_addr'. */
+#undef HAVE_STRUCT_IN6_ADDR
+
+/* Define to 1 if `s6_addr16' is a member of `struct in6_addr'. */
+#undef HAVE_STRUCT_IN6_ADDR_S6_ADDR16
+
+/* Define to 1 if `s6_addr32' is a member of `struct in6_addr'. */
+#undef HAVE_STRUCT_IN6_ADDR_S6_ADDR32
+
+/* Define to 1 if the system has the type `struct sockaddr_in6'. */
+#undef HAVE_STRUCT_SOCKADDR_IN6
+
+/* Define to 1 if `sin6_len' is a member of `struct sockaddr_in6'. */
+#undef HAVE_STRUCT_SOCKADDR_IN6_SIN6_LEN
+
+/* Define to 1 if `sin_len' is a member of `struct sockaddr_in'. */
+#undef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
+
+/* Define to 1 if `get_cipher_by_char' is a member of `struct ssl_method_st'.
+   */
+#undef HAVE_STRUCT_SSL_METHOD_ST_GET_CIPHER_BY_CHAR
+
+/* Define to 1 if `tv_sec' is a member of `struct timeval'. */
+#undef HAVE_STRUCT_TIMEVAL_TV_SEC
+
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
+/* Define to 1 if you have the `sysctl' function. */
+#undef HAVE_SYSCTL
+
+/* Define to 1 if you have the <syslog.h> header file. */
+#undef HAVE_SYSLOG_H
+
+/* Define to 1 if you have the <sys/fcntl.h> header file. */
+#undef HAVE_SYS_FCNTL_H
+
+/* Define to 1 if you have the <sys/file.h> header file. */
+#undef HAVE_SYS_FILE_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define to 1 if you have the <sys/limits.h> header file. */
+#undef HAVE_SYS_LIMITS_H
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/prctl.h> header file. */
+#undef HAVE_SYS_PRCTL_H
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/sysctl.h> header file. */
+#undef HAVE_SYS_SYSCTL_H
+
+/* Define to 1 if you have the <sys/syslimits.h> header file. */
+#undef HAVE_SYS_SYSLIMITS_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/ucontext.h> header file. */
+#undef HAVE_SYS_UCONTEXT_H
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
+
+/* Define to 1 if you have the <sys/utime.h> header file. */
+#undef HAVE_SYS_UTIME_H
+
+/* Define to 1 if you have the <sys/wait.h> header file. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the <time.h> header file. */
+#undef HAVE_TIME_H
+
+/* Define to 1 if you have the <ucontext.h> header file. */
+#undef HAVE_UCONTEXT_H
+
+/* Define to 1 if the system has the type `uint'. */
+#undef HAVE_UINT
+
+/* Define to 1 if you have the `uname' function. */
+#undef HAVE_UNAME
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `usleep' function. */
+#undef HAVE_USLEEP
+
+/* Define to 1 if you have the <utime.h> header file. */
+#undef HAVE_UTIME_H
+
+/* Define to 1 if the system has the type `u_char'. */
+#undef HAVE_U_CHAR
+
+/* Define to 1 if you have the `vasprintf' function. */
+#undef HAVE_VASPRINTF
+
+/* Define to 1 if you have the `_NSGetEnviron' function. */
+#undef HAVE__NSGETENVIRON
+
+/* Define to 1 if you have the `_vscprintf' function. */
+#undef HAVE__VSCPRINTF
+
+/* Defined if we want to keep track of how much of each kind of resource we
+   download. */
+#undef INSTRUMENT_DOWNLOADS
+
+/* name of the syslog facility */
+#undef LOGFACILITY
+
+/* Define to 1 iff malloc(0) returns a pointer */
+#undef MALLOC_ZERO_WORKS
+
+/* Define to 1 if we are building with UPnP. */
+#undef MINIUPNPC
+
+/* libminiupnpc version 1.5 found */
+#undef MINIUPNPC15
+
+/* Define to 1 if we are building with nat-pmp. */
+#undef NAT_PMP
+
+/* Define to 1 iff memset(0) sets pointers to NULL */
+#undef NULL_REP_IS_ZERO_BYTES
+
+/* "Define to handle pf on OpenBSD properly" */
+#undef OPENBSD
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* How to access the PC from a struct ucontext */
+#undef PC_FROM_UCONTEXT
+
+/* Define to 1 iff right-shifting a negative value performs sign-extension */
+#undef RSHIFT_DOES_SIGN_EXTEND
+
+/* The size of `cell_t', as computed by sizeof. */
+#undef SIZEOF_CELL_T
+
+/* The size of `char', as computed by sizeof. */
+#undef SIZEOF_CHAR
+
+/* The size of `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of `int16_t', as computed by sizeof. */
+#undef SIZEOF_INT16_T
+
+/* The size of `int32_t', as computed by sizeof. */
+#undef SIZEOF_INT32_T
+
+/* The size of `int64_t', as computed by sizeof. */
+#undef SIZEOF_INT64_T
+
+/* The size of `int8_t', as computed by sizeof. */
+#undef SIZEOF_INT8_T
+
+/* The size of `intptr_t', as computed by sizeof. */
+#undef SIZEOF_INTPTR_T
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of `pid_t', as computed by sizeof. */
+#undef SIZEOF_PID_T
+
+/* The size of `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* The size of `size_t', as computed by sizeof. */
+#undef SIZEOF_SIZE_T
+
+/* The size of `socklen_t', as computed by sizeof. */
+#undef SIZEOF_SOCKLEN_T
+
+/* The size of `time_t', as computed by sizeof. */
+#undef SIZEOF_TIME_T
+
+/* The size of `uint16_t', as computed by sizeof. */
+#undef SIZEOF_UINT16_T
+
+/* The size of `uint32_t', as computed by sizeof. */
+#undef SIZEOF_UINT32_T
+
+/* The size of `uint64_t', as computed by sizeof. */
+#undef SIZEOF_UINT64_T
+
+/* The size of `uint8_t', as computed by sizeof. */
+#undef SIZEOF_UINT8_T
+
+/* The size of `uintptr_t', as computed by sizeof. */
+#undef SIZEOF_UINTPTR_T
+
+/* The size of `void *', as computed by sizeof. */
+#undef SIZEOF_VOID_P
+
+/* The size of `__int64', as computed by sizeof. */
+#undef SIZEOF___INT64
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define if time_t is signed */
+#undef TIME_T_IS_SIGNED
+
+/* Defined if we're going to use Libevent's buffered IO API */
+#undef USE_BUFFEREVENTS
+
+/* Defined if we should use an internal curve25519_donna{,_c64} implementation
+   */
+#undef USE_CURVE25519_DONNA
+
+/* Defined if we should use a curve25519 from nacl */
+#undef USE_CURVE25519_NACL
+
+/* Debug memory allocation library */
+#undef USE_DMALLOC
+
+/* "Define to enable transparent proxy support" */
+#undef USE_TRANSPARENT
+
+/* Define to 1 iff we represent negative integers with two's complement */
+#undef USING_TWOS_COMPLEMENT
+
+/* Version number of package */
+#undef VERSION
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* Define on some platforms to activate x_r() functions in time.h */
+#undef _REENTRANT
+
+/* Define to `unsigned short' if <sys/types.h> does not define. */
+#undef u_int16_t
+
+/* Define to `unsigned long' if <sys/types.h> does not define. */
+#undef u_int32_t
+
+/* Define to `unsigned long long' if <sys/types.h> does not define. */
+#undef u_int64_t
+
+/* Define to `unsigned char' if <sys/types.h> does not define. */
+#undef u_int8_t

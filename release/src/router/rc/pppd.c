@@ -143,6 +143,16 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 		}
 
 #ifdef RTCONFIG_DSL
+		if (nvram_match(strcat_r(prefix, "pppoe_auth", tmp), "pap")) {
+			fprintf(fp, "-chap\n"
+						"-mschap\n"
+						"-mschap-v2\n"
+						);
+		}
+		else if (nvram_match(strcat_r(prefix, "pppoe_auth", tmp), "chap")) {
+			fprintf(fp, "-pap\n");
+		}
+
 		if (nvram_match("dsl0_proto", "pppoa")) {
 			FILE *fp_dsl_mac;
 			char *dsl_mac = NULL;

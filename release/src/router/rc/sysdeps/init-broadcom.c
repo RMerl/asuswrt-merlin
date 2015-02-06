@@ -1946,22 +1946,35 @@ void init_others(void)
 				}
 			} else
 #endif
+			{
 #ifdef ASUS_TWEAK
-			if (nvram_match("enable_samba", "0")) {  // not set txworkq
+#ifndef RTCONFIG_BCM7
+				if (nvram_match("asus_tweak", "1")) {
+					system("echo 1 > /proc/irq/179/smp_affinity");	// eth0
+					system("echo 2 > /proc/irq/163/smp_affinity");	// eth1 or eth1/eth2
+					system("echo 2 > /proc/irq/169/smp_affinity");	// eth2 or eth3
+				}
+#endif	// RTCONFIG_BCM7
+//				if (nvram_match("enable_samba", "0"))  // not set txworkq
 #else
-			if (!nvram_match("txworkq", "1")) {
-#endif
-				system("echo 2 > /proc/irq/163/smp_affinity");
-				system("echo 2 > /proc/irq/169/smp_affinity");
+				if (!nvram_match("txworkq", "1"))
+#endif	// ASUS_TWEAK
+				{
+					system("echo 2 > /proc/irq/163/smp_affinity");
+					system("echo 2 > /proc/irq/169/smp_affinity");
+				}
 			}
 #ifdef ASUS_TWEAK
-			system("echo 2 > /proc/irq/111/smp_affinity");
+			system("echo 2 > /proc/irq/111/smp_affinity");		// ehci, ohci
 #endif
-			system("echo 2 > /proc/irq/112/smp_affinity");
+			system("echo 2 > /proc/irq/112/smp_affinity");		// xhci
 		}
-#endif
+#endif // SMP
 #ifdef ASUS_TWEAK
-		nvram_set("txworkq", "1");
+		if (nvram_match("usb_usb3", "1"))
+			nvram_set("txworkq", "1");
+		else
+			nvram_unset("txworkq");
 #endif
 	}
 #ifdef RTAC68U

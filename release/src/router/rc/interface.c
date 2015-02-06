@@ -413,7 +413,7 @@ int start_vlan(void)
 	}
 	close(s);
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1)|| defined(RTAC54U)
 	eval("vconfig", "set_egress_map", "vlan2", "0", nvram_safe_get("switch_wan0prio"));
 #elif defined(RTCONFIG_QCA)
 	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))

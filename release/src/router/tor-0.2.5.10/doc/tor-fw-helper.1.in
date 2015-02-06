@@ -1,0 +1,88 @@
+'\" t
+.\"     Title: tor-fw-helper
+.\"    Author: Jacob Appelbaum
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/11/2014
+.\"    Manual: Tor Manual
+.\"    Source: Tor
+.\"  Language: English
+.\"
+.TH "TOR\-FW\-HELPER" "1" "09/11/2014" "Tor" "Tor Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+tor-fw-helper \- Manage upstream firewall/NAT devices
+.SH "SYNOPSIS"
+.sp
+\fBtor\-fw\-helper\fR [\-h|\-\-help] [\-T|\-\-test\-commandline] [\-v|\-\-verbose] [\-g|\-\-fetch\-public\-ip] [\-p \fIexternal port\fR:\fIinternal_port\fR]
+.SH "DESCRIPTION"
+.sp
+\fBtor\-fw\-helper\fR currently supports Apple\(cqs NAT\-PMP protocol and the UPnP standard for TCP port mapping\&. It is written as the reference implementation of tor\-fw\-helper\-spec\&.txt and conforms to that loose plugin API\&. If your network supports either NAT\-PMP or UPnP, tor\-fw\-helper will attempt to automatically map the required TCP ports for Tor\(cqs Or and Dir ports\&.
+.SH "OPTIONS"
+.PP
+\fB\-h\fR or \fB\-\-help\fR
+.RS 4
+Display help text and exit\&.
+.RE
+.PP
+\fB\-v\fR or \fB\-\-verbose\fR
+.RS 4
+Display verbose output\&.
+.RE
+.PP
+\fB\-T\fR or \fB\-\-test\-commandline\fR
+.RS 4
+Display test information and print the test information in tor\-fw\-helper\&.log
+.RE
+.PP
+\fB\-g\fR or \fB\-\-fetch\-public\-ip\fR
+.RS 4
+Fetch the the public ip address for each supported NAT helper method\&.
+.RE
+.PP
+\fB\-p\fR or \fB\-\-port\fR \fIexternal_port\fR:\fIinternal_port\fR
+.RS 4
+Forward external_port to internal_port\&. This option can appear more than once\&.
+.RE
+.SH "BUGS"
+.sp
+This probably doesn\(cqt run on Windows\&. That\(cqs not a big issue, since we don\(cqt really want to deal with Windows before October 2010 anyway\&.
+.SH "SEE ALSO"
+.sp
+\fBtor\fR(1)
+.sp
+See also the "tor\-fw\-helper\-spec\&.txt" file, distributed with Tor\&.
+.SH "AUTHORS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Jacob Appelbaum <jacob@torproject\&.org>, Steven J\&. Murdoch <Steven\&.Murdoch@cl\&.cam\&.ac\&.uk>
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBJacob Appelbaum\fR
+.RS 4
+Author.
+.RE

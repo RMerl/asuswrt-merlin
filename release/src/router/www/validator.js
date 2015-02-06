@@ -385,6 +385,19 @@ var validator = {
 			return false;
 	},
 
+	isNegativeNumber: function(o,event){
+		var keyPressed = event.keyCode ? event.keyCode : event.which;
+
+		if (this.isFunctionButton(event)){
+			return true;
+		}
+
+		if ((keyPressed == 45) || (keyPressed>47 && keyPressed<58))
+			return true;
+		else
+			return false;
+	},
+
 	isNumber: function(o,event){	
 		var keyPressed = event.keyCode ? event.keyCode : event.which;
 		

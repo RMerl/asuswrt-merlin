@@ -100,6 +100,9 @@ function load_ISP_profile(){
 	else if(document.form.switch_wantag.value == "maxis_fiber_iptv") {
 		setting_value = [["621", "0"], ["824", "0"], ["821,822", "0"], "3"]; 
 	}
+	else if(document.form.switch_wantag.value == "movistar") {
+		setting_value = [["6", "0"], ["2", "0"], ["3", "0"], "6"]; 
+	}
 	
 	if(setting_value.length == 4){
 		document.form.switch_wan0tagid.value = setting_value[0][0];
@@ -138,7 +141,7 @@ function ISP_Profile_Selection(isp){
 	else if(isp == "unifi_biz"){
 		ISP_setting = ["none", "none", "none", "none", "none", "none", "0", "", ""];
 	}
-	else if(isp == "singtel_mio"){
+	else if(isp == "singtel_mio" || isp == "movistar"){
 		ISP_setting = ["none", "", "", "none", "none", "none", "6", "", ""];
 	}
 	else if(isp == "m1_fiber" || isp == "maxis_fiber_sp" || isp == "maxis_fiber"){
@@ -351,6 +354,7 @@ function change_rmvlan(){
 					<option value="m1_fiber" <% nvram_match("switch_wantag", "m1_fiber", "selected"); %>>M1-Fiber</option>
 					<option value="maxis_fiber" <% nvram_match("switch_wantag", "maxis_fiber", "selected"); %>>Maxis-Fiber</option>
 					<option value="maxis_fiber_sp" <% nvram_match("switch_wantag", "maxis_fiber_sp", "selected"); %>>Maxis-Fiber-Special</option>
+					<option value="movistar" <% nvram_match("switch_wantag", "movistar", "selected"); %>>Movistar</option>
 <!--
                                                 <option value="maxis_fiber_iptv" <% nvram_match("switch_wantag", "maxis_fiber_iptv", "selected"); %>>Maxis-Fiber-IPTV</option>
                                                 <option value="maxis_fiber_sp_iptv" <% nvram_match("switch_wantag", "maxis_fiber_sp_iptv", "selected"); %>>Maxis-Fiber-Special-IPTV</option>

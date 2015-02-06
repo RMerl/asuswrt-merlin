@@ -161,6 +161,14 @@ if [ "$modem_type" == "" ]; then
 	fi
 fi
 
+if [ "$modem_enable" == "0" ]; then
+	echo "Don't enable the USB Modem."
+	exit 0
+elif [ "$modem_enable" == "4" ]; then
+	echo "Running the WiMAX procedure..."
+	exit 0
+fi
+
 act_node=
 #if [ "$modem_type" == "tty" -o "$modem_type" == "mbim" ]; then
 #	if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
@@ -184,11 +192,6 @@ if [ "$modem_act_node" == "" ]; then
 fi
 
 echo "VAR: modem_enable($modem_enable) modem_autoapn($modem_autoapn) modem_act_node($modem_act_node) modem_type($modem_type) modem_vid($modem_vid) modem_pid($modem_pid) modem_pin($modem_pin) modem_apn($modem_apn) modem_isp($modem_isp)";
-
-if [ "$modem_enable" == "0" ]; then
-	echo "Don't enable the USB Modem."
-	exit 0
-fi
 
 if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim" -o "$modem_type" == "gobi" ]; then
 	nvram_reset=`nvram get modem_act_reset`

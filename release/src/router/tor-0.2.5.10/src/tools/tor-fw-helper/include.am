@@ -1,0 +1,36 @@
+if USE_FW_HELPER
+bin_PROGRAMS+= src/tools/tor-fw-helper/tor-fw-helper
+endif
+
+src_tools_tor_fw_helper_tor_fw_helper_SOURCES = \
+	src/tools/tor-fw-helper/tor-fw-helper.c \
+	src/tools/tor-fw-helper/tor-fw-helper-natpmp.c \
+	src/tools/tor-fw-helper/tor-fw-helper-upnp.c
+noinst_HEADERS+= \
+	src/tools/tor-fw-helper/tor-fw-helper.h \
+	src/tools/tor-fw-helper/tor-fw-helper-natpmp.h \
+	src/tools/tor-fw-helper/tor-fw-helper-upnp.h
+
+if NAT_PMP
+nat_pmp_ldflags = @TOR_LDFLAGS_libnatpmp@
+nat_pmp_ldadd  = -lnatpmp @TOR_LIB_IPHLPAPI@
+nat_pmp_cppflags = @TOR_CPPFLAGS_libnatpmp@
+else
+nat_pmp_ldflags =
+nat_pmp_ldadd  =
+nat_pmp_cppflags =
+endif
+
+if MINIUPNPC
+miniupnpc_ldflags = @TOR_LDFLAGS_libminiupnpc@
+miniupnpc_ldadd = -lminiupnpc @TOR_LIB_IPHLPAPI@
+miniupnpc_cppflags = @TOR_CPPFLAGS_libminiupnpc@
+else
+miniupnpc_ldflags =
+miniupnpc_ldadd =
+miniupnpc_cppflags =
+endif
+
+src_tools_tor_fw_helper_tor_fw_helper_LDFLAGS = $(nat_pmp_ldflags) $(miniupnpc_ldflags)
+src_tools_tor_fw_helper_tor_fw_helper_LDADD = src/common/libor.a $(nat_pmp_ldadd) $(miniupnpc_ldadd) -lm @TOR_LIB_WS32@
+src_tools_tor_fw_helper_tor_fw_helper_CPPFLAGS = $(nat_pmp_cppflags) $(miniupnpc_cppflags) -I"$(top_srcdir)/src/ext"

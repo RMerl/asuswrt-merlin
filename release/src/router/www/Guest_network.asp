@@ -606,7 +606,7 @@ function genBWTable(_unit){
 		<td>
 			<div class="drword" id="drword"><#Main_alert_proceeding_desc4#> <#Main_alert_proceeding_desc1#>...
 				<br/>
-			<div id="disconnect_hint" style="display:none;">This may interrupt your internet connection.</div>	
+			<div id="disconnect_hint" style="display:none;"><#Main_alert_proceeding_desc2#></div>	
 				<br/>
 		    </div>
 			<div id="wireless_client_detect" style="margin-left:10px;position:absolute;display:none">
@@ -614,7 +614,7 @@ function genBWTable(_unit){
 				<div style="margin:-45px 0 0 75px;"><#QKSet_Internet_Setup_fail_method1#></div>
 			</div>
 			<div class="drImg"><img src="images/alertImg.png"></div>
-			<div style="height:70px; "></div>
+			<div style="height:100px; "></div>
 		</td>
 		</tr>
 	</table>
@@ -741,7 +741,7 @@ function genBWTable(_unit){
 							</tr>	  
 						<!-- Hidden and disable item, start -->
 							<tr style="display:none">
-								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode11g_itemname#></a></th>
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 4);"><#WLANConfig11b_x_Mode_itemname#></a></th>
 								<td>									
 									<select name="wl_nmode_x" class="input_option" onChange="wireless_mode_change(this);" disabled>
 										<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>><#Auto#></option>

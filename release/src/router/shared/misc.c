@@ -1185,7 +1185,11 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 	else if (ifname && (unit = get_wan_unit(ifname)) >= 0)	{
 		if (dualwan_unit__nonusbif(unit)) {
 #if defined(RA_ESW)
+#if defined(RTCONFIG_RALINK_MT7620)
 			get_mt7620_wan_unit_bytecount(unit, tx, rx);
+#elif defined(RTCONFIG_RALINK_MT7621)
+			get_mt7621_wan_unit_bytecount(unit, tx, rx);
+#endif			
 #endif
 			if(strlen(modelvlan) && strcmp(ifname, "eth0")==0) {
 				backup_rx = *rx;

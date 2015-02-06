@@ -328,11 +328,15 @@ void start_usb(void)
 
 		/* if enabled, force USB2 before USB1.1 */
 		if (nvram_get_int("usb_usb2") == 1) {
+#if defined(RTN56UB1)		
+			modprobe(USB20_MOD);
+#else		   
 			i = nvram_get_int("usb_irq_thresh");
 			if ((i < 0) || (i > 6))
 				i = 0;
 			sprintf(param, "log2_irq_thresh=%d", i);
 			modprobe(USB20_MOD, param);
+#endif
 		}
 
 		if (nvram_get_int("usb_uhci") == 1) {
@@ -574,6 +578,11 @@ void stop_usb(void)
 	if (disabled || nvram_get_int("usb_ohci") != 1) modprobe_r(USBOHCI_MOD);
 	if (disabled || nvram_get_int("usb_uhci") != 1) modprobe_r(USBUHCI_MOD);
 	if (disabled || nvram_get_int("usb_usb2") != 1) modprobe_r(USB20_MOD);
+
+#if defined(RTN56UB1)		
+	modprobe_r(USB20_MOD);
+#endif		   
+
 #if defined (RTCONFIG_USB_XHCI)
 #if defined(RTN65U) || defined(RTCONFIG_QCA)
 	if (disabled) modprobe_r(USB30_MOD);
@@ -1167,6 +1176,45 @@ _dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 	return (ret == 0);
 }
 
+static int diskmon_status(int status)
+{
+	static int run_status = DISKMON_IDLE;
+	int old_status = run_status;
+	char *message;
+
+	switch (status) {
+	case DISKMON_IDLE:
+		message = "be idle";
+		break;
+	case DISKMON_START:
+		message = "start...";
+		break;
+	case DISKMON_UMOUNT:
+		message = "unmount partition";
+		break;
+	case DISKMON_SCAN:
+		message = "scan partition";
+		break;
+	case DISKMON_REMOUNT:
+		message = "re-mount partition";
+		break;
+	case DISKMON_FINISH:
+		message = "done";
+		break;
+	case DISKMON_FORCE_STOP:
+		message = "forcely stop";
+		break;
+	default:
+		/* Just return previous status */
+		return old_status;
+	}
+
+	/* Set new status */
+	run_status = status;
+	nvram_set_int("diskmon_status", status);
+	logmessage("disk monitor", message);
+	return old_status;
+}
 
 /* Mount this partition on this disc.
  * If the device is already mounted on any mountpoint, don't mount it again.
@@ -1302,11 +1350,25 @@ done:
 						// there's some problem with fsck.ext4.
 						&& strcmp(type, "ext4")
 						){
+					cprintf("asusware: umount partition %s...\n", dev_name);
+					diskmon_status(DISKMON_UMOUNT);
+
 					findmntents(dev_name, 0, umount_mountpoint, EFH_HP_REMOVE);
+
+					cprintf("asusware: Automatically scan partition %s...\n", dev_name);
+					diskmon_status(DISKMON_SCAN);
+
 					memset(command, 0, PATH_MAX);
 					sprintf(command, "app_fsck.sh %s %s", type, dev_name);
 					system(command);
+
+					cprintf("asusware: re-mount partition %s...\n", dev_name);
+					diskmon_status(DISKMON_REMOUNT);
+
 					mount_r(dev_name, mountpoint, type);
+
+					cprintf("asusware: done.\n");
+					diskmon_status(DISKMON_FINISH);
 				}
 
 				system("rm -rf /tmp/opt");
@@ -3279,46 +3341,6 @@ int ejusb_main(int argc, char *argv[])
 }
 
 #ifdef RTCONFIG_DISK_MONITOR
-static int diskmon_status(int status)
-{
-	static int run_status = DISKMON_IDLE;
-	int old_status = run_status;
-	char *message;
-
-	switch (status) {
-	case DISKMON_IDLE:
-		message = "be idle";
-		break;
-	case DISKMON_START:
-		message = "start...";
-		break;
-	case DISKMON_UMOUNT:
-		message = "unmount partition";
-		break;
-	case DISKMON_SCAN:
-		message = "scan partition";
-		break;
-	case DISKMON_REMOUNT:
-		message = "re-mount partition";
-		break;
-	case DISKMON_FINISH:
-		message = "done";
-		break;
-	case DISKMON_FORCE_STOP:
-		message = "forcely stop";
-		break;
-	default:
-		/* Just return previous status */
-		return old_status;
-	}
-
-	/* Set new status */
-	run_status = status;
-	nvram_set_int("diskmon_status", status);
-	logmessage("disk monitor", message);
-	return old_status;
-}
-
 static int stop_diskscan()
 {
 	return nvram_get_int("diskmon_force_stop");

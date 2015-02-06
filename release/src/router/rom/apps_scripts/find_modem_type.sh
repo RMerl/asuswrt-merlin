@@ -4,6 +4,7 @@
 
 modem_act_path=`nvram get usb_modem_act_path`
 node_home=/sys/devices
+modem_enable_type=`nvram get modem_enable`
 
 
 _find_act_type(){
@@ -58,7 +59,11 @@ _find_act_type(){
 	fi
 }
 
-type=`_find_act_type "$modem_act_path"`
+if [ "$modem_enable_type" == "4" ]; then
+	type="wimax"
+else
+	type=`_find_act_type "$modem_act_path"`
+fi
 echo "type=$type."
 
 nvram set usb_modem_act_type=$type

@@ -132,7 +132,7 @@ var setClientAttr = function(){
 	this.isASUS = false;
 	this.isLogin = false;
 	this.isOnline = false;
-	this.isStaticIP = false;
+	this.ipMethod = "Static";
 }
 
 var clientList = new Array(0);
@@ -321,6 +321,12 @@ function genClientList(){
 		}
 	}
 
+	for(var i = 0; i < leaseArray.mac.length; i += 1) {
+		if(typeof clientList[leaseArray.mac[i]] != "undefined"){
+			clientList[leaseArray.mac[i]].ipMethod = "DHCP";
+		}
+	}
+
 	for(var i=0; i<originData.staticList.length; i++){
 		if('<% nvram_get("dhcp_static_x"); %>' == "0") break;
 
@@ -332,7 +338,9 @@ function genClientList(){
 		}
 
 		if(typeof clientList[thisClientMacAddr] != "undefined"){
-			clientList[thisClientMacAddr].isStaticIP = true;
+			if(clientList[thisClientMacAddr].ip == thisClient[1] && clientList[thisClientMacAddr].ipMethod == "DHCP") {
+				clientList[thisClientMacAddr].ipMethod = "Manual";
+			}
 		}
 	}
 

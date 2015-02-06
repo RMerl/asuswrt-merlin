@@ -429,7 +429,7 @@ static int usage(void)
 	"	-F		Force IPv6-Prefix\n"
 	"	-V <class>	Set vendor-class option (base-16 encoded)\n"
 	"	-u <user-class> Set user-class option string\n"
-	"	-c <clientid>	Override client-ID (base-16 encoded)\n"
+	"	-c <clientid>	Override client-ID (base-16 encoded 16-bit type + value)\n"
 	"	-i <iface-id>	Use a custom interface identifier for RA handling\n"
 	"	-r <options>	Options to be requested (comma-separated)\n"
 	"	-R		Do not request any options except those specified with -r\n"

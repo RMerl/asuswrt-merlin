@@ -1,0 +1,61 @@
+#! /bin/sh
+
+# This script used to call (the now deprecated) tsocks as a fallback in case
+# torsocks wasn't installed.
+# Now, it's just a backwards compatible shim around torsocks with reasonable
+# behavior if -v/--verbose or -h/--help arguments are passed.
+#
+# Copyright (c) 2004, 2006, 2009 Peter Palfrader
+# Modified by Jacob Appelbaum <jacob@appelbaum.net> April 16th 2006
+# Stripped of all the tsocks cruft by ugh on February 22nd 2012
+# May be distributed under the same terms as Tor itself
+
+
+compat() {
+	echo "torify is now just a wrapper around torsocks(1) for backwards compatibility."
+}
+
+usage() {
+	compat
+	echo "Usage: $0 [-hv] <command> [<options>...]"
+}
+
+case $# in 0)
+	usage >&2
+	exit 1
+esac
+
+case $# in 1)
+	case $1 in -h|--help)
+		usage
+		exit 0
+	esac
+esac
+
+case $1 in -v|--verbose)
+	compat >&2
+	shift
+esac
+
+# taken from Debian's Developer's Reference, 6.4
+pathfind() {
+       OLDIFS="$IFS"
+       IFS=:
+       for p in $PATH; do
+               if [ -x "$p/$*" ]; then
+                       IFS="$OLDIFS"
+                       return 0
+               fi
+       done
+       IFS="$OLDIFS"
+       return 1
+}
+
+if pathfind torsocks; then
+    exec torsocks "$@"
+    echo "$0: Failed to exec torsocks $@" >&2
+    exit 1
+else
+    echo "$0: torsocks not found in your PATH.  Perhaps it isn't installed?  (tsocks is no longer supported, for security reasons.)" >&2
+fi
+

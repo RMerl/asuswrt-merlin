@@ -2,7 +2,7 @@
 #include <shutils.h>
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1)|| defined(RTAC54U)
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #endif
@@ -673,8 +673,8 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		system("killall -9 wanduck");
 		system("killall -9 udhcpc");
 		return 0;
-	}   
-#if defined(RTAC1200HP) 
+	}
+#if defined(RTAC1200HP) || defined(RTN56UB1)
         else if (!strcmp(command, "Set_FixChannel")) {
 	   	 FWrite("1", OFFSET_FIX_CHANNEL, 1);	
                  puts("1");
@@ -945,7 +945,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #ifdef RTCONFIG_RALINK
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UV2)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U)
 	else if (!strcmp(command, "Ra_FWRITE")) {
 		return FWRITE(value, value2);
 	}

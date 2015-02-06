@@ -79,8 +79,6 @@ function initial(){
 			tab_reset(0);
 		}
 
-		change_tabclick();
-
 		// disallow to use the other band as a wireless AP
 		if(parent.sw_mode == 4 && !localAP_support){
 			for(var x=0; x<wl_info.wl_if_total;x++){
@@ -93,6 +91,7 @@ function initial(){
 		$("t0").style.display = "";	
 	}
 
+	change_tabclick();
 	if($("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
 		$("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink 			
 

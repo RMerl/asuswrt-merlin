@@ -917,6 +917,9 @@ restore_defaults(void)
 #ifdef RTCONFIG_DSL
 	dsl_defaults();
 #endif
+#ifdef RTAC3200
+	bsd_defaults();
+#endif
 
 	if (restore_defaults) {
 		uint memsize = 0;
@@ -1139,8 +1142,9 @@ restore_defaults(void)
 		case MODEL_RTAC52U:
 			nvram_set("reboot_time", "80");		// default is 70 sec
 			break;
-		case MODEL_RTN56UV2:
+		case MODEL_RTN56UB1:
 		case MODEL_RTN54U:
+		case MODEL_RTAC54U:
 		case MODEL_RTAC1200HP:	
 		case MODEL_RTAC51U:
 		case MODEL_RTN65U:
@@ -2142,28 +2146,41 @@ int init_nvram(void)
 		break;
 #endif	/* RTAC51U */
 
-#if defined(RTN56UV2)
-	case MODEL_RTN56UV2:
+#if defined(RTN56UB1)
+	case MODEL_RTN56UB1:
+		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
+		nvram_set("vlan1hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface
+		//nvram_set("vlan2hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface
+		
 		nvram_set("lan_ifname", "br0");
-		set_basic_ifname_vars("eth3", "eth2", "ra0", "rai0", "usb", "eth2", NULL, "vlan3", 0);
-
+		set_basic_ifname_vars("eth3", "vlan1", "ra0", "rai0", "usb", "vlan1", NULL, "vlan3", 0);
+		
 		nvram_set_int("btn_rst_gpio",  6|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio",  18|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_usb_gpio", 13|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 12|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio",  12|GPIO_ACTIVE_LOW);
-//		nvram_set_int("led_2g_gpio", 72|GPIO_ACTIVE_LOW);
-//		nvram_set_int("led_all_gpio", 10|GPIO_ACTIVE_LOW);
-
+		nvram_set_int("led_5g_gpio", 15|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_2g_gpio", 14|GPIO_ACTIVE_LOW);
+		//nvram_set_int("led_all_gpio", 10|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_lan_gpio", 16|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wan_gpio", 7|GPIO_ACTIVE_LOW);
 		eval("rtkswitch", "11");
 
-		nvram_set("ehci_ports", "1-1");
-		nvram_set("ohci_ports", "2-1");
+		/* enable bled */
+		config_swports_bled("led_wan_gpio", 0); 
+		config_swports_bled("led_lan_gpio", 0);  
+		config_netdev_bled("led_2g_gpio", "ra0");
+		config_netdev_bled("led_5g_gpio", "rai0");
+		config_usbbus_bled("led_usb_gpio", "1 2");
+
+		nvram_set("ehci_ports", "1-1 1-2");
+		nvram_set("ohci_ports", "2-1 2-2");
 		nvram_set("ct_max", "300000"); // force
 
 		if (nvram_get("wl_mssid") && nvram_match("wl_mssid", "1"))
 			add_rc_support("mssid");
-		add_rc_support("2.4G 5G update usbX1");
+		add_rc_support("2.4G 5G update usbX2");
 		add_rc_support("rawifi");
 		add_rc_support("switchctrl");
 		add_rc_support("manual_stb");
@@ -2175,10 +2192,15 @@ int init_nvram(void)
 		nvram_set("wl0_HT_RxStream", "2");
 		nvram_set("wl1_HT_TxStream", "2");
 		nvram_set("wl1_HT_RxStream", "2");
-		break;
-#endif	/* RTN56UV2 */
-#if defined(RTN54U)
+
+		if (nvram_get_int("sw_mode")==SW_MODE_AP) 
+				add_lan_phy("eth3");
+		break;	
+		
+#endif	/* RTN56UB1 */
+#if defined(RTN54U) || defined(RTAC54U)
 	case MODEL_RTN54U:
+	case MODEL_RTAC54U:	
 		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
 		nvram_set("vlan1hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
 		nvram_set("vlan2hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
@@ -2205,7 +2227,9 @@ int init_nvram(void)
 		add_rc_support("rawifi");
 		add_rc_support("switchctrl");
 		add_rc_support("manual_stb");
-		//add_rc_support("11AC");
+#if defined(RTAC54U)		
+		add_rc_support("11AC");
+#endif
 		//either txpower or singlesku supports rc.
 		//add_rc_support("pwrctrl");
 		// the following values is model dep. so move it from default.c to here
@@ -2214,7 +2238,7 @@ int init_nvram(void)
 		nvram_set("wl1_HT_TxStream", "2");
 		nvram_set("wl1_HT_RxStream", "2");
 		break;
-#endif	/* RTN54U */
+#endif	/* RTN54U or RTAC54U*/
 #if defined(RTAC1200HP) 
 	case MODEL_RTAC1200HP:
 		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
@@ -4372,6 +4396,10 @@ int init_nvram(void)
 	add_rc_support("snmp");
 #endif
 
+#ifdef RTCONFIG_TOR
+	add_rc_support("tor");
+#endif
+
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 #ifdef RTCONFIG_BCMARM
 	if (nvram_match("apps_ipkg_old", "1"))
@@ -5267,7 +5295,7 @@ static void sysinit(void)
 	// avoid the process like fsck to devour the memory.
 	// ex: when DUT ran fscking, restarting wireless would let DUT crash.
 	if ((model == MODEL_RTN56U) || (model == MODEL_DSLN55U) || (model == MODEL_RTAC52U) || (model == MODEL_RTAC51U)
-	      ||(model == MODEL_RTN14U) ||(model == MODEL_RTN54U) ||(model == MODEL_RTAC1200HP) || (model == MODEL_RTN56UV2))
+	      ||(model == MODEL_RTN14U) ||(model == MODEL_RTN54U) ||(model == MODEL_RTAC54U) ||(model == MODEL_RTAC1200HP) || (model == MODEL_RTN56UB1))
 		f_write_string("/proc/sys/vm/min_free_kbytes", "4096", 0, 0);
 	else
 		f_write_string("/proc/sys/vm/min_free_kbytes", "2048", 0, 0);
@@ -5873,7 +5901,7 @@ int reboothalt_main(int argc, char *argv[])
 	_dprintf(reboot ? "Rebooting..." : "Shutting down...");
 	kill(1, reboot ? SIGTERM : SIGQUIT);
 
-#if defined(RTN14U) || defined(RTN65U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTCONFIG_QCA) || defined(RTAC1200HP) || defined(RTN56UV2)
+#if defined(RTN14U) || defined(RTN65U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTCONFIG_QCA) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 	def_reset_wait = 50;
 #endif
 

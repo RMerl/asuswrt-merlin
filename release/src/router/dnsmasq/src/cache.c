@@ -461,9 +461,11 @@ struct crec *cache_insert(char *name, struct all_addr *addr,
   if (flags & (F_IPV4 | F_IPV6 | F_CNAME))
     {
       log_query(flags | F_UPSTREAM, name, addr, NULL);
-      /* Don;t mess with TTL for DNSSEC records. */
+      /* Don't mess with TTL for DNSSEC records. */
       if (daemon->max_cache_ttl != 0 && daemon->max_cache_ttl < ttl)
 	ttl = daemon->max_cache_ttl;
+      if (daemon->min_cache_ttl != 0 && daemon->min_cache_ttl > ttl)
+	ttl = daemon->min_cache_ttl;
     }
 
   /* if previous insertion failed give up now. */
@@ -1638,7 +1640,16 @@ void log_query(unsigned int flags, char *name, struct all_addr *addr, char *arg)
   if (strlen(name) == 0)
     name = ".";
 
-  my_syslog(LOG_INFO, "%s %s %s %s", source, name, verb, dest);
+  if (option_bool(OPT_EXTRALOG))
+    {
+      int port = prettyprint_addr(daemon->log_source_addr, daemon->addrbuff2);
+      if (flags & F_NOEXTRA)
+	my_syslog(LOG_INFO, "* %s/%u %s %s %s %s", daemon->addrbuff2, port, source, name, verb, dest);
+      else
+	my_syslog(LOG_INFO, "%u %s/%u %s %s %s %s", daemon->log_display_id, daemon->addrbuff2, port, source, name, verb, dest);
+    }
+  else
+    my_syslog(LOG_INFO, "%s %s %s %s", source, name, verb, dest);
 }
 
  

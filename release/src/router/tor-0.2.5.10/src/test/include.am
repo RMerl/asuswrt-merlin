@@ -1,0 +1,121 @@
+TESTS += src/test/test
+
+noinst_PROGRAMS+= src/test/bench
+if UNITTESTS_ENABLED
+noinst_PROGRAMS+= src/test/test src/test/test-child
+endif
+
+src_test_AM_CPPFLAGS = -DSHARE_DATADIR="\"$(datadir)\"" \
+        -DLOCALSTATEDIR="\"$(localstatedir)\"" \
+        -DBINDIR="\"$(bindir)\""	       \
+	-I"$(top_srcdir)/src/or" -I"$(top_srcdir)/src/ext" \
+	-DTOR_UNIT_TESTS
+
+# -L flags need to go in LDFLAGS. -l flags need to go in LDADD.
+# This seems to matter nowhere but on Windows, but I assure you that it
+# matters a lot there, and is quite hard to debug if you forget to do it.
+
+src_test_test_SOURCES = \
+	src/test/test.c \
+	src/test/test_addr.c \
+	src/test/test_buffers.c \
+	src/test/test_cell_formats.c \
+	src/test/test_circuitlist.c \
+	src/test/test_circuitmux.c \
+	src/test/test_containers.c \
+	src/test/test_controller_events.c \
+	src/test/test_crypto.c \
+	src/test/test_cell_queue.c \
+	src/test/test_data.c \
+	src/test/test_dir.c \
+	src/test/test_extorport.c \
+	src/test/test_introduce.c \
+	src/test/test_logging.c \
+	src/test/test_microdesc.c \
+	src/test/test_oom.c \
+	src/test/test_options.c \
+	src/test/test_pt.c \
+	src/test/test_relaycell.c \
+	src/test/test_replay.c \
+	src/test/test_routerkeys.c \
+	src/test/test_socks.c \
+	src/test/test_util.c \
+	src/test/test_config.c \
+	src/test/test_hs.c \
+	src/test/test_nodelist.c \
+	src/test/test_policy.c \
+	src/test/test_status.c \
+	src/ext/tinytest.c
+
+src_test_test_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
+
+src_test_test_CPPFLAGS= $(src_test_AM_CPPFLAGS)
+
+src_test_bench_SOURCES = \
+	src/test/bench.c
+
+src_test_test_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ \
+        @TOR_LDFLAGS_libevent@
+src_test_test_LDADD = src/or/libtor-testing.a src/common/libor-testing.a \
+	src/common/libor-crypto-testing.a $(LIBDONNA) \
+	src/common/libor-event-testing.a \
+	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ \
+	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
+
+src_test_bench_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ \
+        @TOR_LDFLAGS_libevent@
+src_test_bench_LDADD = src/or/libtor.a src/common/libor.a \
+	src/common/libor-crypto.a $(LIBDONNA) \
+	src/common/libor-event.a \
+	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ \
+	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
+
+noinst_HEADERS+= \
+	src/test/test.h
+
+if CURVE25519_ENABLED
+noinst_PROGRAMS+= src/test/test-ntor-cl
+src_test_test_ntor_cl_SOURCES  = src/test/test_ntor_cl.c
+src_test_test_ntor_cl_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
+src_test_test_ntor_cl_LDADD = src/or/libtor.a src/common/libor.a \
+	src/common/libor-crypto.a $(LIBDONNA) \
+	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ \
+	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
+src_test_test_ntor_cl_AM_CPPFLAGS =	       \
+	-I"$(top_srcdir)/src/or"
+NTOR_TEST_DEPS=src/test/test-ntor-cl
+else
+NTOR_TEST_DEPS=
+endif
+
+if COVERAGE_ENABLED
+CMDLINE_TEST_TOR = ./src/or/tor-cov
+else
+CMDLINE_TEST_TOR = ./src/or/tor
+endif
+
+noinst_PROGRAMS += src/test/test-bt-cl
+src_test_test_bt_cl_SOURCES = src/test/test_bt_cl.c
+src_test_test_bt_cl_LDADD = src/common/libor-testing.a \
+	@TOR_LIB_MATH@ \
+	@TOR_LIB_WS32@ @TOR_LIB_GDI@
+src_test_test_bt_cl_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
+src_test_test_bt_cl_CPPFLAGS= $(src_test_AM_CPPFLAGS)
+
+
+check-local: $(NTOR_TEST_DEPS) $(CMDLINE_TEST_TOR)
+if USEPYTHON
+	$(PYTHON) $(top_srcdir)/src/test/test_cmdline_args.py $(CMDLINE_TEST_TOR) "${top_srcdir}"
+if CURVE25519_ENABLED
+	$(PYTHON) $(top_srcdir)/src/test/ntor_ref.py test-tor
+	$(PYTHON) $(top_srcdir)/src/test/ntor_ref.py self-test
+endif
+	./src/test/test-bt-cl assert | $(PYTHON) $(top_srcdir)/src/test/bt_test.py
+	./src/test/test-bt-cl crash | $(PYTHON) $(top_srcdir)/src/test/bt_test.py
+endif
+
+EXTRA_DIST += \
+	src/test/bt_test.py \
+	src/test/ntor_ref.py \
+	src/test/slownacl_curve25519.py \
+	src/test/test_cmdline_args.py

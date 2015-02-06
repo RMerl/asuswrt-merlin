@@ -10448,6 +10448,10 @@ int ej_cpu_core_num(int eid, webs_t wp, int argc, char_t **argv){
 	}
 	
 	fclose(fp);
+	if(count == 0){		//for Braomcom ARM single core
+		count = 1;
+	}
+
 	websWrite(wp, "%d", count);	
 }
 

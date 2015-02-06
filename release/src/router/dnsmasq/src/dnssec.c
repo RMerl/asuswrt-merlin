@@ -615,6 +615,7 @@ static void sort_rrset(struct dns_header *header, size_t plen, u16 *rr_desc, int
    Return code:
    STAT_SECURE   if it validates.
    STAT_SECURE_WILDCARD if it validates and is the result of wildcard expansion.
+   (In this case *wildcard_out points to the "body" of the wildcard within name.) 
    STAT_NO_SIG no RRsigs found.
    STAT_INSECURE RRset empty.
    STAT_BOGUS    signature is wrong, bad packet.
@@ -625,8 +626,8 @@ static void sort_rrset(struct dns_header *header, size_t plen, u16 *rr_desc, int
 
    name is unchanged on exit. keyname is used as workspace and trashed.
 */
-static int validate_rrset(time_t now, struct dns_header *header, size_t plen, int class, 
-			  int type, char *name, char *keyname, struct blockdata *key, int keylen, int algo_in, int keytag_in)
+static int validate_rrset(time_t now, struct dns_header *header, size_t plen, int class, int type, 
+			  char *name, char *keyname, char **wildcard_out, struct blockdata *key, int keylen, int algo_in, int keytag_in)
 {
   static unsigned char **rrset = NULL, **sigs = NULL;
   static int rrset_sz = 0, sig_sz = 0;
@@ -636,10 +637,13 @@ static int validate_rrset(time_t now, struct dns_header *header, size_t plen, in
   struct crec *crecp = NULL;
   int type_covered, algo, labels, orig_ttl, sig_expiration, sig_inception, key_tag;
   u16 *rr_desc = get_desc(type);
-
+ 
+  if (wildcard_out)
+    *wildcard_out = NULL;
+  
   if (!(p = skip_questions(header, plen)))
     return STAT_BOGUS;
-
+  
   name_labels = count_labels(name); /* For 4035 5.3.2 check */
 
   /* look for RRSIGs for this RRset and get pointers to each RR in the set. */
@@ -798,8 +802,16 @@ static int validate_rrset(time_t now, struct dns_header *header, size_t plen, in
 	    {
 	      int k;
 	      for (k = name_labels - labels; k != 0; k--)
-		while (*name_start != '.' && *name_start != 0)
-		  name_start++;
+		{
+		  while (*name_start != '.' && *name_start != 0)
+		    name_start++;
+		  if (k != 1 && *name_start == '.')
+		    name_start++;
+		}
+	      
+	      if (wildcard_out)
+		*wildcard_out = name_start+1;
+
 	      name_start--;
 	      *name_start = '*';
 	    }
@@ -863,8 +875,7 @@ static int validate_rrset(time_t now, struct dns_header *header, size_t plen, in
 /* The DNS packet is expected to contain the answer to a DNSKEY query.
    Put all DNSKEYs in the answer which are valid into the cache.
    return codes:
-         STAT_INSECURE No DNSKEYs in reply.
-	 STAT_SECURE   At least one valid DNSKEY found and in cache.
+         STAT_SECURE   At least one valid DNSKEY found and in cache.
 	 STAT_BOGUS    No DNSKEYs found, which  can be validated with DS,
 	               or self-sign for DNSKEY RRset is not valid, bad packet.
 	 STAT_NEED_DS  DS records to validate a key not found, name in keyname 
@@ -884,11 +895,8 @@ int dnssec_validate_by_ds(time_t now, struct dns_header *header, size_t plen, ch
   GETSHORT(qtype, p);
   GETSHORT(qclass, p);
   
-  if (qtype != T_DNSKEY || qclass != class)
+  if (qtype != T_DNSKEY || qclass != class || ntohs(header->ancount) == 0)
     return STAT_BOGUS;
-  
-  if (ntohs(header->ancount) == 0)
-    return STAT_INSECURE;
 
   /* See if we have cached a DS record which validates this key */
   if (!(crecp = cache_find_by_name(NULL, name, now, F_DS)))
@@ -974,7 +982,7 @@ int dnssec_validate_by_ds(time_t now, struct dns_header *header, size_t plen, ch
 	      if (recp1->addr.ds.keylen == (int)hash->digest_size &&
 		  (ds_digest = blockdata_retrieve(recp1->addr.key.keydata, recp1->addr.ds.keylen, NULL)) &&
 		  memcmp(ds_digest, digest, recp1->addr.ds.keylen) == 0 &&
-		  validate_rrset(now, header, plen, class, T_DNSKEY, name, keyname, key, rdlen - 4, algo, keytag) == STAT_SECURE)
+		  validate_rrset(now, header, plen, class, T_DNSKEY, name, keyname, NULL, key, rdlen - 4, algo, keytag) == STAT_SECURE)
 		{
 		  valid = 1;
 		  break;
@@ -1030,7 +1038,7 @@ int dnssec_validate_by_ds(time_t now, struct dns_header *header, size_t plen, ch
 		      else
 			{
 			  a.addr.keytag = keytag;
-			  log_query(F_KEYTAG | F_UPSTREAM, name, &a, "DNSKEY keytag %u");
+			  log_query(F_NOEXTRA | F_KEYTAG | F_UPSTREAM, name, &a, "DNSKEY keytag %u");
 			  
 			  recp1->addr.key.keylen = rdlen - 4;
 			  recp1->addr.key.keydata = key;
@@ -1084,24 +1092,24 @@ int dnssec_validate_by_ds(time_t now, struct dns_header *header, size_t plen, ch
       return STAT_SECURE;
     }
 
-  log_query(F_UPSTREAM, name, NULL, "BOGUS DNSKEY");
+  log_query(F_NOEXTRA | F_UPSTREAM, name, NULL, "BOGUS DNSKEY");
   return STAT_BOGUS;
 }
 
 /* The DNS packet is expected to contain the answer to a DS query
    Put all DSs in the answer which are valid into the cache.
    return codes:
-   STAT_INSECURE    no DS in reply or not signed.
    STAT_SECURE      At least one valid DS found and in cache.
    STAT_NO_DS       It's proved there's no DS here.
-   STAT_BOGUS       At least one DS found, which fails validation, bad packet.
+   STAT_NO_NS       It's proved there's no DS _or_ NS here.
+   STAT_BOGUS       no DS in reply or not signed, fails validation, bad packet.
    STAT_NEED_DNSKEY DNSKEY records to validate a DS not found, name in keyname
 */
 
 int dnssec_validate_ds(time_t now, struct dns_header *header, size_t plen, char *name, char *keyname, int class)
 {
   unsigned char *p = (unsigned char *)(header+1);
-  int qtype, qclass, val, i, neganswer;
+  int qtype, qclass, val, i, neganswer, nons;
 
   if (ntohs(header->qdcount) != 1 ||
       !(p = skip_name(p, header, plen, 4)))
@@ -1113,32 +1121,39 @@ int dnssec_validate_ds(time_t now, struct dns_header *header, size_t plen, char 
   if (qtype != T_DS || qclass != class)
     val = STAT_BOGUS;
   else
-    val = dnssec_validate_reply(now, header, plen, name, keyname, NULL, &neganswer);
-
-  if (val == STAT_NO_SIG)
-    val = STAT_INSECURE;
+    val = dnssec_validate_reply(now, header, plen, name, keyname, NULL, &neganswer, &nons);
+  /* Note dnssec_validate_reply() will have cached positive answers */
+  
+  if (val == STAT_NO_SIG || val == STAT_INSECURE)
+    val = STAT_BOGUS;
   
   p = (unsigned char *)(header+1);
   extract_name(header, plen, &p, name, 1, 4);
   p += 4; /* qtype, qclass */
   
   if (!(p = skip_section(p, ntohs(header->ancount), header, plen)))
-    return STAT_BOGUS;
+    val = STAT_BOGUS;
   
   if (val == STAT_BOGUS)
-    log_query(F_UPSTREAM, name, NULL, "BOGUS DS");
-  
-  if ((val == STAT_SECURE || val == STAT_INSECURE) && neganswer)
     {
-      int rdlen, flags = F_FORWARD | F_DS | F_NEG;
+      log_query(F_NOEXTRA | F_UPSTREAM, name, NULL, "BOGUS DS");
+      return STAT_BOGUS;
+    }
+
+  /* By here, the answer is proved secure, and a positive answer has been cached. */
+  if (val == STAT_SECURE && neganswer)
+    {
+      int rdlen, flags = F_FORWARD | F_DS | F_NEG | F_DNSSECOK;
       unsigned long ttl, minttl = ULONG_MAX;
       struct all_addr a;
 
       if (RCODE(header) == NXDOMAIN)
 	flags |= F_NXDOMAIN;
       
-      if (val == STAT_SECURE)
-	flags |= F_DNSSECOK;
+      /* We only cache validated DS records, DNSSECOK flag hijacked 
+	 to store presence/absence of NS. */
+      if (nons)
+	flags &= ~F_DNSSECOK;
       
       for (i = ntohs(header->nscount); i != 0; i--)
 	{
@@ -1184,10 +1199,12 @@ int dnssec_validate_ds(time_t now, struct dns_header *header, size_t plen, char 
 	  a.addr.dnssec.class = class;
 	  cache_insert(name, &a, now, ttl, flags);
 	  
-	  cache_end_insert(); 
+	  cache_end_insert();  
+	  
+	  log_query(F_NOEXTRA | F_UPSTREAM, name, NULL, nons ? "no delegation" : "no DS");
 	}
 
-      return (val == STAT_SECURE) ? STAT_NO_DS : STAT_INSECURE; 
+      return nons ? STAT_NO_NS : STAT_NO_DS; 
     }
 
   return val;
@@ -1311,12 +1328,15 @@ static int find_nsec_records(struct dns_header *header, size_t plen, unsigned ch
 }
 
 static int prove_non_existence_nsec(struct dns_header *header, size_t plen, unsigned char **nsecs, int nsec_count,
-				    char *workspace1, char *workspace2, char *name, int type)
+				    char *workspace1, char *workspace2, char *name, int type, int *nons)
 {
   int i, rc, rdlen;
   unsigned char *p, *psave;
   int offset = (type & 0xff) >> 3;
   int mask = 0x80 >> (type & 0x07);
+
+  if (nons)
+    *nons = 0;
   
   /* Find NSEC record that proves name doesn't exist */
   for (i = 0; i < nsec_count; i++)
@@ -1342,6 +1362,10 @@ static int prove_non_existence_nsec(struct dns_header *header, size_t plen, unsi
 	     that the type in question doesn't appear in the type map */
 	  rdlen -= p - psave;
 	  /* rdlen is now length of type map, and p points to it */
+	  
+	  /* If we can prove that there's no NS record, return that information. */
+	  if (nons && rdlen >= 2 && p[0] == 0 && (p[2] & (0x80 >> T_NS)) == 0)
+	    *nons = 1;
 	  
 	  while (rdlen >= 2)
 	    {
@@ -1443,14 +1467,98 @@ static int base32_decode(char *in, unsigned char *out)
   return p - out;
 }
 
+static int check_nsec3_coverage(struct dns_header *header, size_t plen, int digest_len, unsigned char *digest, int type,
+				char *workspace1, char *workspace2, unsigned char **nsecs, int nsec_count, int *nons)
+{
+  int i, hash_len, salt_len, base32_len, rdlen;
+  unsigned char *p, *psave;
+
+  for (i = 0; i < nsec_count; i++)
+    if ((p = nsecs[i]))
+      {
+       	if (!extract_name(header, plen, &p, workspace1, 1, 0) ||
+	    !(base32_len = base32_decode(workspace1, (unsigned char *)workspace2)))
+	  return 0;
+	
+	p += 8; /* class, type, TTL */
+	GETSHORT(rdlen, p);
+	psave = p;
+	p += 4; /* algo, flags, iterations */
+	salt_len = *p++; /* salt_len */
+	p += salt_len; /* salt */
+	hash_len = *p++; /* p now points to next hashed name */
+	
+	if (!CHECK_LEN(header, p, plen, hash_len))
+	  return 0;
+	
+	if (digest_len == base32_len && hash_len == base32_len)
+	  {
+	    int rc = memcmp(workspace2, digest, digest_len);
+
+	    if (rc == 0)
+	      {
+		/* We found an NSEC3 whose hashed name exactly matches the query, so
+		   we just need to check the type map. p points to the RR data for the record. */
+		
+		int offset = (type & 0xff) >> 3;
+		int mask = 0x80 >> (type & 0x07);
+		
+		p += hash_len; /* skip next-domain hash */
+		rdlen -= p - psave;
+
+		if (!CHECK_LEN(header, p, plen, rdlen))
+		  return 0;
+		
+		/* If we can prove that there's no NS record, return that information. */
+		if (nons && rdlen >= 2 && p[0] == 0 && (p[2] & (0x80 >> T_NS)) == 0)
+		  *nons = 1;
+		
+		while (rdlen >= 2)
+		  {
+		    if (p[0] == type >> 8)
+		      {
+			/* Does the NSEC3 say our type exists? */
+			if (offset < p[1] && (p[offset+2] & mask) != 0)
+			  return STAT_BOGUS;
+			
+			break; /* finshed checking */
+		      }
+		    
+		    rdlen -= p[1];
+		    p +=  p[1];
+		  }
+
+		return 1;
+	      }
+	    else if (rc <= 0)
+	      {
+		/* Normal case, hash falls between NSEC3 name-hash and next domain name-hash,
+		   wrap around case, name-hash falls between NSEC3 name-hash and end */
+		if (memcmp(p, digest, digest_len) > 0 || memcmp(workspace2, p, digest_len) > 0)
+		  return 1;
+	      }
+	    else 
+	      {
+		/* wrap around case, name falls between start and next domain name */
+		if (memcmp(workspace2, p, digest_len) > 0 && memcmp(p, digest, digest_len) > 0)
+		  return 1;
+	      }
+	  }
+      }
+  return 0;
+}
+
 static int prove_non_existence_nsec3(struct dns_header *header, size_t plen, unsigned char **nsecs, int nsec_count,
-				     char *workspace1, char *workspace2, char *name, int type)
+				     char *workspace1, char *workspace2, char *name, int type, char *wildname, int *nons)
 {
   unsigned char *salt, *p, *digest;
-  int digest_len, i, iterations, salt_len, hash_len, base32_len, algo = 0;
+  int digest_len, i, iterations, salt_len, base32_len, algo = 0;
   struct nettle_hash const *hash;
   char *closest_encloser, *next_closest, *wildcard;
- 
+  
+  if (nons)
+    *nons = 0;
+  
   /* Look though the NSEC3 records to find the first one with 
      an algorithm we support (currently only algo == 1).
 
@@ -1520,7 +1628,14 @@ static int prove_non_existence_nsec3(struct dns_header *header, size_t plen, uns
   if (!(hash = hash_find("sha1")))
     return STAT_BOGUS;
 
-  /* Now, we need the "closest encloser NSEC3" */
+  if ((digest_len = hash_name(name, &digest, hash, salt, salt_len, iterations)) == 0)
+    return STAT_BOGUS;
+  
+  if (check_nsec3_coverage(header, plen, digest_len, digest, type, workspace1, workspace2, nsecs, nsec_count, nons))
+    return STAT_SECURE;
+
+  /* Can't find an NSEC3 which covers the name directly, we need the "closest encloser NSEC3" 
+     or an answer inferred from a wildcard record. */
   closest_encloser = name;
   next_closest = NULL;
 
@@ -1528,6 +1643,9 @@ static int prove_non_existence_nsec3(struct dns_header *header, size_t plen, uns
     {
       if (*closest_encloser == '.')
 	closest_encloser++;
+
+      if (wildname && hostname_isequal(closest_encloser, wildname))
+	break;
 
       if ((digest_len = hash_name(closest_encloser, &digest, hash, salt, salt_len, iterations)) == 0)
 	return STAT_BOGUS;
@@ -1551,132 +1669,39 @@ static int prove_non_existence_nsec3(struct dns_header *header, size_t plen, uns
     }
   while ((closest_encloser = strchr(closest_encloser, '.')));
   
-  /* No usable NSEC3s */
-  if (i == nsec_count)
+  if (!closest_encloser)
     return STAT_BOGUS;
   
-  if (!next_closest)
-    {
-      /* We found an NSEC3 whose hashed name exactly matches the query, so
-	 Now we just need to check the type map. p points to the RR data for the record. */
-      int rdlen;
-      unsigned char *psave;
-      int offset = (type & 0xff) >> 3;
-      int mask = 0x80 >> (type & 0x07);
-      
-      p += 8; /* class, type, TTL */
-      GETSHORT(rdlen, p);
-      psave = p;
-      p += 5 + salt_len; /* algo, flags, iterations, salt_len, salt */
-      hash_len = *p++;
-      if (!CHECK_LEN(header, p, plen, hash_len))
-	return STAT_BOGUS; /* bad packet */
-      p += hash_len;
-      rdlen -= p - psave;
-      
-      while (rdlen >= 2)
-	{
-	  if (!CHECK_LEN(header, p, plen, rdlen))
-	    return STAT_BOGUS;
-	  
-	  if (p[0] == type >> 8)
-	    {
-	      /* Does the NSEC3 say our type exists? */
-	      if (offset < p[1] && (p[offset+2] & mask) != 0)
-		return STAT_BOGUS;
-	      
-	      break; /* finshed checking */
-	    }
-	  
-	  rdlen -= p[1];
-	  p +=  p[1];
-	}
-      
-      return STAT_SECURE;
-    }
-
   /* Look for NSEC3 that proves the non-existence of the next-closest encloser */
   if ((digest_len = hash_name(next_closest, &digest, hash, salt, salt_len, iterations)) == 0)
     return STAT_BOGUS;
 
-  for (i = 0; i < nsec_count; i++)
-    if ((p = nsecs[i]))
-      {
-       	if (!extract_name(header, plen, &p, workspace1, 1, 0) ||
-	    !(base32_len = base32_decode(workspace1, (unsigned char *)workspace2)))
-	  return STAT_BOGUS;
-	   
-	p += 15 + salt_len; /* class, type, TTL, rdlen, algo, flags, iterations, salt_len, salt */
-	hash_len = *p++; /* p now points to next hashed name */
- 
-	if (!CHECK_LEN(header, p, plen, hash_len))
-	  return STAT_BOGUS;
-	
-	if (digest_len == base32_len && hash_len == base32_len)
-	  {
-	    if (memcmp(workspace2, digest, digest_len) <= 0)
-	      {
-		/* Normal case, hash falls between NSEC3 name-hash and next domain name-hash,
-		   wrap around case, name-hash falls between NSEC3 name-hash and end */
-		if (memcmp(p, digest, digest_len) > 0 || memcmp(workspace2, p, digest_len) > 0)
-		  return STAT_SECURE;
-	      }
-	    else 
-	      {
-		/* wrap around case, name falls between start and next domain name */
-		if (memcmp(workspace2, p, digest_len) > 0 && memcmp(p, digest, digest_len) > 0)
-		  return STAT_SECURE;
-	      }
-	  }
-      }
+  if (!check_nsec3_coverage(header, plen, digest_len, digest, type, workspace1, workspace2, nsecs, nsec_count, NULL))
+    return STAT_BOGUS;
   
   /* Finally, check that there's no seat of wildcard synthesis */
-  if (!(wildcard = strchr(next_closest, '.')) || wildcard == next_closest)
-    return STAT_BOGUS;
+  if (!wildname)
+    {
+      if (!(wildcard = strchr(next_closest, '.')) || wildcard == next_closest)
+	return STAT_BOGUS;
+      
+      wildcard--;
+      *wildcard = '*';
+      
+      if ((digest_len = hash_name(wildcard, &digest, hash, salt, salt_len, iterations)) == 0)
+	return STAT_BOGUS;
+      
+      if (!check_nsec3_coverage(header, plen, digest_len, digest, type, workspace1, workspace2, nsecs, nsec_count, NULL))
+	return STAT_BOGUS;
+    }
   
-  wildcard--;
-  *wildcard = '*';
-  
-  if ((digest_len = hash_name(wildcard, &digest, hash, salt, salt_len, iterations)) == 0)
-    return STAT_BOGUS;
-  
-  for (i = 0; i < nsec_count; i++)
-    if ((p = nsecs[i]))
-      {
-	if (!extract_name(header, plen, &p, workspace1, 1, 0) ||
-	    !(base32_len = base32_decode(workspace1, (unsigned char *)workspace2)))
-	  return STAT_BOGUS;
-	   
-	p += 15 + salt_len; /* class, type, TTL, rdlen, algo, flags, iterations, salt_len, salt */
-	hash_len = *p++; /* p now points to next hashed name */
- 
-	if (!CHECK_LEN(header, p, plen, hash_len))
-	  return STAT_BOGUS;
-	
-	if (digest_len == base32_len && hash_len == base32_len)
-	  {
-	    if (memcmp(workspace2, digest, digest_len) <= 0)
-	      {
-		/* Normal case, hash falls between NSEC3 name-hash and next domain name-hash,
-		   wrap around case, name-hash falls between NSEC3 name-hash and end */
-		if (memcmp(p, digest, digest_len) > 0 || memcmp(workspace2, p, digest_len) > 0)
-		  return STAT_SECURE;
-	      }
-	    else 
-	      {
-		/* wrap around case, name falls between start and next domain name */
-		if (memcmp(workspace2, p, digest_len) > 0 && memcmp(p, digest, digest_len) > 0)
-		  return STAT_SECURE;
-	      }
-	  }
-      }
-  
-  return STAT_BOGUS;
+  return STAT_SECURE;
 }
     
 /* Validate all the RRsets in the answer and authority sections of the reply (4035:3.2.3) */
 /* Returns are the same as validate_rrset, plus the class if the missing key is in *class */
-int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, char *name, char *keyname, int *class, int *neganswer)
+int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, char *name, char *keyname, 
+			  int *class, int *neganswer, int *nons)
 {
   unsigned char *ans_start, *qname, *p1, *p2, **nsecs;
   int type1, class1, rdlen1, type2, class2, rdlen2, qclass, qtype;
@@ -1792,11 +1817,15 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
 	      struct all_addr a;
 	      struct blockdata *key;
 	      struct crec *crecp;
-	      
-	      rc = validate_rrset(now, header, plen, class1, type1, name, keyname, NULL, 0, 0, 0);
+	      char *wildname;
+	      int have_wildcard = 0;
+
+	      rc = validate_rrset(now, header, plen, class1, type1, name, keyname, &wildname, NULL, 0, 0, 0);
 	      
 	      if (rc == STAT_SECURE_WILDCARD)
 		{
+		  have_wildcard = 1;
+
 		  /* An attacker replay a wildcard answer with a different
 		     answer and overlay a genuine RR. To prove this
 		     hasn't happened, the answer must prove that
@@ -1805,10 +1834,11 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
 		    return STAT_BOGUS; /* No NSECs or bad packet */
 		  
 		  if (nsec_type == T_NSEC)
-		    rc = prove_non_existence_nsec(header, plen, nsecs, nsec_count, daemon->workspacename, keyname, name, type1);
+		    rc = prove_non_existence_nsec(header, plen, nsecs, nsec_count, daemon->workspacename, keyname, name, type1, NULL);
 		  else
-		    rc = prove_non_existence_nsec3(header, plen, nsecs, nsec_count, daemon->workspacename, keyname, name, type1);
-
+		    rc = prove_non_existence_nsec3(header, plen, nsecs, nsec_count, daemon->workspacename, 
+						   keyname, name, type1, wildname, NULL);
+		  
 		  if (rc != STAT_SECURE)
 		    return rc;
 		} 
@@ -1858,7 +1888,7 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
 			      else
 				{
 				  a.addr.keytag = keytag;
-				  log_query(F_KEYTAG | F_UPSTREAM, name, &a, "DS keytag %u");
+				  log_query(F_NOEXTRA | F_KEYTAG | F_UPSTREAM, name, &a, "DS keytag %u");
 				  crecp->addr.ds.digest = digest;
 				  crecp->addr.ds.keydata = key;
 				  crecp->addr.ds.algo = algo;
@@ -1886,7 +1916,11 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
 			      p2 += 13; /* labels, orig_ttl, expiration, inception */
 			      GETSHORT(keytag, p2);
 			      
-			      if ((key = blockdata_alloc((char*)psave, rdlen2)))
+			      /* We don't cache sigs for wildcard answers, because to reproduce the
+				 answer from the cache will require one or more NSEC/NSEC3 records 
+				 which we don't cache. The lack of the RRSIG ensures that a query for
+				 this RRset asking for a secure answer will always be forwarded. */
+			      if (!have_wildcard && (key = blockdata_alloc((char*)psave, rdlen2)))
 				{
 				  if (!(crecp = cache_insert(name, &a, now, ttl,  F_FORWARD | F_DNSKEY | F_DS)))
 				    blockdata_free(key);
@@ -1931,9 +1965,9 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
     return STAT_BOGUS;
   
   if (nsec_type == T_NSEC)
-    return prove_non_existence_nsec(header, plen, nsecs, nsec_count, daemon->workspacename, keyname, name, qtype);
+    return prove_non_existence_nsec(header, plen, nsecs, nsec_count, daemon->workspacename, keyname, name, qtype, nons);
   else
-    return prove_non_existence_nsec3(header, plen, nsecs, nsec_count, daemon->workspacename, keyname, name, qtype);
+    return prove_non_existence_nsec3(header, plen, nsecs, nsec_count, daemon->workspacename, keyname, name, qtype, NULL, nons);
 }
 
 /* Chase the CNAME chain in the packet until the first record which _doesn't validate.
@@ -1980,7 +2014,7 @@ int dnssec_chase_cname(time_t now, struct dns_header *header, size_t plen, char 
 	    return STAT_INSECURE;
 	  
 	  /* validate CNAME chain, return if insecure or need more data */
-	  rc = validate_rrset(now, header, plen, class, type, name, keyname, NULL, 0, 0, 0);
+	  rc = validate_rrset(now, header, plen, class, type, name, keyname, NULL, NULL, 0, 0, 0);
 	  if (rc != STAT_SECURE)
 	    {
 	      if (rc == STAT_NO_SIG)
@@ -2031,10 +2065,10 @@ size_t dnssec_generate_query(struct dns_header *header, char *end, char *name, i
   char *types = querystr("dnssec-query", type);
 
   if (addr->sa.sa_family == AF_INET) 
-    log_query(F_DNSSEC | F_IPV4, name, (struct all_addr *)&addr->in.sin_addr, types);
+    log_query(F_NOEXTRA | F_DNSSEC | F_IPV4, name, (struct all_addr *)&addr->in.sin_addr, types);
 #ifdef HAVE_IPV6
   else
-    log_query(F_DNSSEC | F_IPV6, name, (struct all_addr *)&addr->in6.sin6_addr, types);
+    log_query(F_NOEXTRA | F_DNSSEC | F_IPV6, name, (struct all_addr *)&addr->in6.sin6_addr, types);
 #endif
   
   header->qdcount = htons(1);

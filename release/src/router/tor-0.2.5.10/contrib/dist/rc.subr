@@ -1,0 +1,43 @@
+#!/bin/sh
+# $FreeBSD: ports/security/tor-devel/files/tor.in,v 1.1 2006/02/17 22:21:25 mnag Exp $
+#
+# (rc.subr written by Peter Thoenen for Net/FreeBSD)
+#
+# REQUIRE: NETWORKING SERVERS USR
+# BEFORE: LOGIN
+#
+# Add the following lines to /etc/rc.conf to enable tor
+#
+# tor_enable (bool):    Set to "NO" by default
+#                       Set it to "YES" to enable tor
+# tor_conf (str):       Points to your tor conf file
+#                       Default: /usr/local/etc/tor/torrc
+# tor_user (str):       Tor Daemon user. Default _tor
+#
+
+. /etc/rc.subr
+
+name="tor"
+rcvar=${name}_enable
+
+load_rc_config ${name}
+
+: ${tor_enable="NO"}
+: ${tor_conf="/usr/local/etc/tor/torrc"}
+: ${tor_user="_tor"}
+: ${tor_pidfile="/var/run/tor/tor.pid"}
+: ${tor_logfile="/var/log/tor"}
+: ${tor_datadir="/var/run/tor"}
+
+required_files=${tor_conf}
+required_dirs=${tor_datadir}
+command="/usr/local/bin/${name}"
+command_args="-f ${tor_conf} --pidfile ${tor_pidfile} --runasdaemon 1 --datadirectory ${tor_datadir} --user ${tor_user}"
+extra_commands="log"
+log_cmd="${name}_log"
+
+tor_log() {
+        cat ${tor_logfile}
+}
+
+run_rc_command "$1"

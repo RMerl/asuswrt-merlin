@@ -1,0 +1,1168 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="stylesheet" type="text/css" href="/form_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/JavaScript" src="/alttxt.js"></script>
+<script type="text/JavaScript" src="/general.js"></script>
+<script type="text/JavaScript" src="/help.js"></script>
+<script type="text/JavaScript" src="/validator.js"></script>
+<script type="text/JavaScript">
+<% wanlink(); %>
+
+<% login_state_hook(); %>
+
+var now_flag = '<% get_parameter("flag"); %>';
+var original_wan_proto = wanlink_type();
+var DHCPClient = '<% nvram_get("wan0_dhcpenable_x"); %>';
+var from_page = '<% get_parameter("prev_page"); %>';
+var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
+
+<% wan_get_parameter(); %>
+
+function QKInternet_load_body(){
+	parent.document.title = "<#Web_Title#> - <#QKSet_ISP_head#>";
+	if(parent.ISMOBILE){
+		parent.set_step("internet_type");
+		hideObjs();
+		document.getElementById("QISmain").style.display = "none";
+		document.getElementById("QISmain_m").style.display = "";	
+		displayLANIPCtrl();
+		displayDNSCtrl();
+
+		if(now_flag == "auto_way_vpn" && from_page == "start_apply.htm")
+			now_flag = "auto_way";
+
+		get_value_from_parent();
+		get_value_from_parent_m();
+
+		if(now_flag == "auto_way_static"){
+			blocking_m("showip_m", true);		
+			blocking_m("dns_sec_m", true);		
+			blocking_m("showserver_m", false);		
+			blocking_m("showhwaddr_m", true);
+		}
+		else if(now_flag == "auto_way"){
+			blocking_m("showip_m", true);		
+			blocking_m("dns_sec_m", true);		
+			blocking_m("showserver_m", true);
+			// blocking_m("vpn_enable_block", true);
+			blocking_m("showhwaddr_m", false);
+		}
+		else if(document.form.wan_proto.value == "pptp"	|| document.form.wan_proto.value == "l2tp"){
+			blocking_m("showip_m", true);		
+			blocking_m("dns_sec_m", true);		
+			blocking_m("showserver_m", true);
+			// blocking_m("heartbeat_server", true);
+			blocking_m("showhwaddr_m", false);		
+
+			document.form.prev_page.value = "QIS_internet_account.htm";
+			parent.set_step("internet_account");
+		}
+		else if(document.form.wan_proto.value == "static"){
+			blocking_m("dhcp_info_radio_m", false);
+			blocking_m("showip_m", true);
+			blocking_m("WANIPDiv", true);
+			blocking_m("dns_info_radio_m", false);
+			blocking_m("dns_sec_m", true);
+			blocking_m("DNSDiv", true);
+			blocking_m("showserver_m", false);
+			blocking_m("showhwaddr_m", true);
+
+			$("dns_info_title_m").innerHTML = "<#PPPConnection_x_WANDNSServer_itemname#>";		
+			document.form.wan_dnsenable_x[0].checked = 0;
+			document.form.wan_dnsenable_x[1].checked = 1;
+			document.form.prev_page.value = "QIS_internet_type.htm";
+			parent.set_step("internet_type");
+		}
+		else{	// wan_proto == dhcp
+			blocking_m("showip_m", false);
+			blocking_m("dns_sec_m", true);
+			blocking_m("showserver_m", false);
+			blocking_m("showhwaddr_m", false);
+
+			document.form.prev_page.value = "QIS_internet_isp.htm";
+			parent.set_step("internet_isp");
+		}	
+
+		set_default_state();
+		if(confirm_vpn_enable()){
+			document.form.vpn_enable[0].checked = 1;
+			document.form.vpn_enable[1].checked = 0;
+		}
+		else{
+			document.form.vpn_enable[0].checked = 0;
+			document.form.vpn_enable[1].checked = 1;
+		}
+	}
+	else{
+		parent.set_step("t2");		
+		hideLinkTag();
+		flash_button();
+
+		if(now_flag.length <= 0)
+			showtext($("page_title"), "<#QKSet_ISP_desc#>");
+		else if(DHCPClient == "1")
+			showtext($("page_title"), "<#QKSet_ISP_desc3#>");
+		else	// if(DHCPClient == "0")
+			showtext($("page_title"), "<#QKSet_ISP_desc2#>");
+		
+		if(now_flag == "auto_way_vpn" && from_page == "start_apply.htm")
+			now_flag = "auto_way";
+		
+		get_value_from_parent();
+
+		if(now_flag == "auto_way_static"){
+			blocking("showip", true);		
+			blocking("dns_sec", true);		
+			blocking("showserver", false);		
+			blocking("showhwaddr", true);
+		}
+		else if(now_flag == "auto_way"){
+			blocking("showip", true);		
+			blocking("dns_sec", true);		
+			blocking("showserver", true);
+			blocking("vpn_enable_block", true);
+			blocking("showhwaddr", false);
+		}
+		else if(document.form.wan_proto.value == "pptp"
+						|| document.form.wan_proto.value == "l2tp"){
+			blocking("showip", true);		
+			blocking("dns_sec", true);		
+			blocking("showserver", true);
+			blocking("heartbeat_server", true);
+			inputCtrl(document.form.wan_heartbeat_x, 1);		
+			blocking("showhwaddr", false);		
+			document.form.prev_page.value = "QIS_internet_account.htm";
+		}
+		else if(document.form.wan_proto.value == "static"){
+			$("dhcp_info_radio").style.display = "none";
+			blocking("showip", true);
+			$("dns_info_title").innerHTML = "<#PPPConnection_x_WANDNSServer_itemname#>";		
+			$("dns_info_radio").style.display = "none";
+			blocking("dns_sec", true);
+			blocking("showserver", false);
+			blocking("showhwaddr", true);
+			document.form.prev_page.value = "QIS_internet_type.htm";
+			document.form.wan_dnsenable_x[0].checked = 0;
+			document.form.wan_dnsenable_x[1].checked = 1;
+		}
+		else{	// wan_proto == dhcp
+			blocking("showip", false);
+			blocking("dns_sec", true);
+			blocking("showserver", false);
+			blocking("showhwaddr", false);
+			document.form.prev_page.value = "QIS_internet_isp.htm";
+		}
+		
+		set_default_state();
+		show_prev_button();
+		
+		if(confirm_vpn_enable()){
+			document.form.vpn_enable[0].checked = 1;
+			document.form.vpn_enable[1].checked = 0;
+		}
+		else{
+			document.form.vpn_enable[0].checked = 0;
+			document.form.vpn_enable[1].checked = 1;
+		}
+		show_next_button();
+	
+		if(navigator.platform == 'iPad' || navigator.platform == 'iPhone' || navigator.platform == 'iPod'){
+	    document.getElementsByClassName("IPaddr_qis")[0].style.width = "180px";
+	    document.getElementsByClassName("IPaddr_qis")[1].style.width = "180px";
+	    document.getElementsByClassName("IPaddr_qis")[2].style.width = "180px";
+	    document.getElementsByClassName("IPaddr_qis")[3].style.width = "180px";
+	    document.getElementsByClassName("IPaddr_qis")[4].style.width = "180px";
+		}
+		
+		document.getElementById("nextButton").focus();
+	}
+}
+
+function blocking_m(obj_id, show){
+	var state = show?'block':'none';
+	
+	if(document.getElementById)
+		document.getElementById(obj_id).style.display = state;
+	else if(document.layers)
+		document.layers[obj_id].display = state;
+	else if(document.all)
+		document.all[obj_id].style.display = state;
+}
+
+
+function get_value_from_parent(){
+	document.form.wan_proto.value = parent.document.QKform.wan_proto.value;
+	
+	document.form.wan_pppoe_username.value = parent.document.QKform.wan_pppoe_username.value;
+	document.form.wan_pppoe_passwd.value = parent.document.QKform.wan_pppoe_passwd.value;
+	
+	document.form.wan_hostname.value = parent.document.QKform.wan_hostname.value;
+	document.form.wan_hwaddr_x.value = parent.document.QKform.wan_hwaddr_x.value;
+	document.form.wan_hwaddr_x_m.value = parent.document.QKform.wan_hwaddr_x.value;
+	
+	
+	
+	document.form.lan_ipaddr.value = parent.document.QKform.lan_ipaddr.value;
+	document.form.lan_netmask.value = parent.document.QKform.lan_netmask.value;
+	
+	document.form.wan_ipaddr_x.value = parent.document.QKform.wan_ipaddr_x.value;
+	document.form.wan_netmask_x.value = parent.document.QKform.wan_netmask_x.value;
+	document.form.wan_gateway_x.value = parent.document.QKform.wan_gateway_x.value;
+	
+	document.form.wan_dns1_x.value = parent.document.QKform.wan_dns1_x.value;
+	document.form.wan_dns2_x.value = parent.document.QKform.wan_dns2_x.value;
+	if(parent.document.QKform.vpn_enable.value.length > 0){
+		if(parent.document.QKform.vpn_enable.value == 1){
+			document.form.vpn_enable[0].checked = 1;
+			document.form.vpn_enable[1].checked = 0;
+		}
+		else{
+			document.form.vpn_enable[0].checked = 0;
+			document.form.vpn_enable[1].checked = 1;
+		}
+	}
+	document.form.wan_heartbeat_x.value = parent.document.QKform.wan_heartbeat_x.value;
+	
+}
+
+function get_value_from_parent_m(){
+	document.form.wan_hwaddr_x_m.value = parent.document.QKform.wan_hwaddr_x.value;
+	document.form.wan_ipaddr_x_m.value = parent.document.QKform.wan_ipaddr_x.value;
+	document.form.wan_netmask_x_m.value = parent.document.QKform.wan_netmask_x.value;
+	document.form.wan_gateway_x_m.value = parent.document.QKform.wan_gateway_x.value;
+	document.form.wan_dns1_x_m.value = parent.document.QKform.wan_dns1_x.value;
+	document.form.wan_dns2_x_m.value = parent.document.QKform.wan_dns2_x.value;
+	document.form.wan_heartbeat_x_m.value = parent.document.QKform.wan_heartbeat_x.value;	
+}
+
+function set_value_to_parent(){
+	parent.document.QKform.wan_proto.value = document.form.wan_proto.value;	
+	parent.document.QKform.wan_ipaddr_x.value = document.form.wan_ipaddr_x.value;
+	parent.document.QKform.wan_netmask_x.value = document.form.wan_netmask_x.value;
+	parent.document.QKform.wan_gateway_x.value = document.form.wan_gateway_x.value;
+	parent.document.QKform.wan_dns1_x.value = document.form.wan_dns1_x.value;
+	parent.document.QKform.wan_dns2_x.value = document.form.wan_dns2_x.value;
+	
+	if(document.form.wan_dhcpenable_x[0].checked == 1)
+		parent.document.QKform.wan_dhcpenable_x.value = 0;
+	else
+		parent.document.QKform.wan_dhcpenable_x.value = 1;
+	
+	if(document.form.wan_dnsenable_x[0].checked == 1)
+		parent.document.QKform.wan_dnsenable_x.value = 1;
+	else
+		parent.document.QKform.wan_dnsenable_x.value = 0;
+	
+	if(document.form.vpn_enable[0].checked == 1)
+		parent.document.QKform.vpn_enable.value = 1;
+	else
+		parent.document.QKform.vpn_enable.value = 0;
+}
+
+function set_default_state(){
+	var parent_DHCPenable = parseInt(parent.document.QKform.wan_dhcpenable_x.value);
+	var parent_DNSenable = parseInt(parent.document.QKform.wan_dnsenable_x.value);
+	var wan_proto = document.form.wan_proto.value;
+
+	if(now_flag == "auto_way"){
+		if(from_page == "/qis/QIS_detect.htm"){
+			document.form.wan_dhcpenable_x[0].checked = 0;
+			document.form.wan_dhcpenable_x[1].checked = 1;
+			
+			document.form.wan_dnsenable_x[0].checked = 1;
+			document.form.wan_dnsenable_x[1].checked = 0;
+		}
+		else{
+			if(parent.document.QKform.wan_dhcpenable_x.value == 1){
+				document.form.wan_dhcpenable_x[0].checked = 0;
+				document.form.wan_dhcpenable_x[1].checked = 1;
+			}
+			else{
+				document.form.wan_dhcpenable_x[0].checked = 1;
+				document.form.wan_dhcpenable_x[1].checked = 0;
+			}
+			
+			if(parent.document.QKform.wan_dnsenable_x.value == 1){
+				document.form.wan_dnsenable_x[0].checked = 1;
+				document.form.wan_dnsenable_x[1].checked = 0;
+			}
+			else{
+				document.form.wan_dnsenable_x[0].checked = 0;
+				document.form.wan_dnsenable_x[1].checked = 1;
+			}
+		}
+	}
+	else if(wan_proto == "static" || (now_flag == "auto_way_static" && from_page.indexOf("QIS_detect.htm") >= 0)
+			){
+		document.form.wan_dhcpenable_x[0].checked = 1;
+		document.form.wan_dhcpenable_x[1].checked = 0;
+	}
+	else if(wan_proto == "pppoe"){
+		document.form.wan_dhcpenable_x[0].checked = 0;
+		document.form.wan_dhcpenable_x[1].checked = 1;
+		
+		document.form.wan_dnsenable_x[0].checked = 1;
+		document.form.wan_dnsenable_x[1].checked = 0;
+	}
+	else if(wan_proto == "pptp" ||
+			wan_proto == "l2tp"){
+		if(wan_proto != original_wan_proto){
+			document.form.wan_dhcpenable_x[0].checked = 1; //lock
+			document.form.wan_dhcpenable_x[1].checked = 0;
+		}
+		else{
+			document.form.wan_dhcpenable_x[0].checked = !parent_DHCPenable;
+			document.form.wan_dhcpenable_x[1].checked = parent_DHCPenable;			
+			document.form.wan_dnsenable_x[0].checked = parent_DNSenable;
+			document.form.wan_dnsenable_x[1].checked = !parent_DNSenable;
+		}
+	}
+	else{
+		document.form.wan_dhcpenable_x[0].checked = 0;
+		document.form.wan_dhcpenable_x[1].checked = 1;
+		
+		if(wan_proto != original_wan_proto){
+			document.form.wan_dnsenable_x[0].checked = 1;
+			document.form.wan_dnsenable_x[1].checked = 0;
+			show_dnsenable(document.form.wan_dnsenable_x[0].checked);
+		}
+		else{
+			document.form.wan_dnsenable_x[0].checked = parent_DNSenable;
+			document.form.wan_dnsenable_x[1].checked = !parent_DNSenable;
+			show_dnsenable(document.form.wan_dnsenable_x[0].checked);
+		}
+	}
+	
+	if(wan_proto != "dhcp" && wan_proto != "static"){
+			show_dhcpenable(!document.form.wan_dhcpenable_x[0].checked);
+			show_dnsenable(document.form.wan_dnsenable_x[0].checked);
+	}		
+}
+
+function confirm_vpn_enable(){
+	var str = "";
+	
+	if(now_flag != "auto_way")
+		return false;			
+if(document.form.vpn_enable[0].checked)
+		return true;
+if(document.form.vpn_enable[1].checked)
+		return false;
+	
+	if(DHCPClient == "1")
+		str += "<#QKSet_ISP_desc3#>";
+	else
+		str += "<#QKSet_ISP_desc2#>";
+	str += "\n\n<#QIS_internet_vpn_confirm#>";
+	
+	if(confirm(str))
+		return true;
+	else
+		return false;
+}
+
+function show_dhcpenable(flag){	
+	if(flag == "1" || flag == true){		
+		inputCtrl(document.form.wan_ipaddr_x, 0);
+		inputCtrl(document.form.wan_netmask_x, 0);
+		inputCtrl(document.form.wan_gateway_x, 0);
+		
+		inputCtrl(document.form.wan_dnsenable_x[0], 1);
+		inputCtrl(document.form.wan_dnsenable_x[1], 1);
+		document.form.wan_dhcpenable_x[1].focus();
+	}
+	else{
+		inputCtrl(document.form.wan_ipaddr_x, 1);
+		inputCtrl(document.form.wan_netmask_x, 1);
+		inputCtrl(document.form.wan_gateway_x, 1);
+		
+		document.form.wan_dnsenable_x[0].checked = 0;
+		document.form.wan_dnsenable_x[1].checked = 1;
+		inputCtrl(document.form.wan_dnsenable_x[0], 0);
+		inputCtrl(document.form.wan_dnsenable_x[1], 0);
+		document.form.wan_dhcpenable_x[0].focus();
+		show_dnsenable(0);		
+	}
+	
+	if(now_flag == "auto_way_static"
+			|| now_flag == "auto_way")
+		show_next_button();
+}
+
+function show_dnsenable(flag){
+	if(flag == "1" || flag == true){
+ 		document.form.wan_dnsenable_x[0].focus();
+		inputCtrl(document.form.wan_dns1_x, 0);
+		inputCtrl(document.form.wan_dns2_x, 0);
+	}
+	else{
+ 		document.form.wan_dnsenable_x[1].focus();		
+		inputCtrl(document.form.wan_dns1_x, 1);
+		inputCtrl(document.form.wan_dns2_x, 1);
+	}
+}
+
+function show_next_button(){
+	if(now_flag.length <= 0){	// manual setting.
+		$("nextButton").onclick = submitForm;
+	}
+	else if(document.form.vpn_enable[0].checked){
+		$("nextButton").onclick = gotoVPNtype;
+	}
+	else if(document.form.wan_dhcpenable_x[0].checked){
+		document.form.wan_proto.value = "static";
+		$("nextButton").onclick = submitForm;
+	}
+	else{
+		document.form.wan_proto.value = "dhcp";
+		$("nextButton").onclick = gotoMACclone;
+	}
+}
+
+function show_prev_button(){
+	if(now_flag == "auto_way_static"
+			|| now_flag == "auto_way")
+		$("prevButton").style.display = "none";
+	else
+		$("prevButton").style.display = "";
+}
+
+function gotoVPNtype(){
+	remove_red_field();
+	
+	if(!validate_ip())
+		return;
+	if(!validate_dns())
+		return;
+	
+	set_value_to_parent();
+	
+	parent.document.QKform.prev_page.value = "/qis/QIS_internet_ip.htm";
+	document.form.action = "/qis/QIS_internet_vpn.htm";
+	document.form.flag.value = "auto_way";
+	
+	document.form.submit();
+}
+
+function gotoMACclone(){
+	remove_red_field();
+	
+	if(!validate_dns())
+		return;
+	
+	set_value_to_parent();
+	
+	parent.document.QKform.prev_page.value = "/qis/QIS_internet_ip.htm";
+	document.form.action = "/qis/QIS_internet_isp.htm";
+	document.form.flag.value = "auto_way";
+	
+	document.form.submit();
+}
+
+// test if WAN IP & Gateway & DNS IP is a valid IP
+// DNS IP allows to input nothing
+function valid_IP(obj_name, obj_flag){
+		// A : 1.0.0.0~126.255.255.255
+		// B : 127.0.0.0~127.255.255.255 (forbidden)
+		// C : 128.0.0.0~255.255.255.254
+		var A_class_start = inet_network("1.0.0.0");
+		var A_class_end = inet_network("126.255.255.255");
+		var B_class_start = inet_network("127.0.0.0");
+		var B_class_end = inet_network("127.255.255.255");
+		var C_class_start = inet_network("128.0.0.0");
+		var C_class_end = inet_network("255.255.255.255");
+		
+		var ip_obj = obj_name;
+		var ip_num = inet_network(ip_obj.value);
+
+		if(obj_flag == "DNS" && ip_num == -1){ //DNS allows to input nothing
+			return true;
+		}
+		
+		if(obj_flag == "GW" && ip_num == -1){ //GW allows to input nothing
+			return true;
+		}
+		
+		if(ip_num > A_class_start && ip_num < A_class_end)
+			return true;
+		else if(ip_num > B_class_start && ip_num < B_class_end){
+			alert(ip_obj.value+" <#JS_validip#>");
+			ip_obj.focus();
+			ip_obj.select();
+			return false;
+		}
+		else if(ip_num > C_class_start && ip_num < C_class_end)
+			return true;
+		else{
+			alert(ip_obj.value+" <#JS_validip#>");
+			ip_obj.focus();
+			ip_obj.select();
+			return false;
+		}
+}
+
+// test if WAN IP & Gateway & DNS IP is a valid IP
+// DNS IP allows to input nothing
+function valid_IP(obj_name, obj_flag){
+		// A : 1.0.0.0~126.255.255.255
+		// B : 127.0.0.0~127.255.255.255 (forbidden)
+		// C : 128.0.0.0~255.255.255.254
+		var A_class_start = inet_network("1.0.0.0");
+		var A_class_end = inet_network("126.255.255.255");
+		var B_class_start = inet_network("127.0.0.0");
+		var B_class_end = inet_network("127.255.255.255");
+		var C_class_start = inet_network("128.0.0.0");
+		var C_class_end = inet_network("255.255.255.255");
+		
+		var ip_obj = obj_name;
+		var ip_num = inet_network(ip_obj.value);
+
+		if(obj_flag == "DNS" && ip_num == -1){ //DNS allows to input nothing
+			return true;
+		}
+		
+		if(obj_flag == "GW" && ip_num == -1){ //GW allows to input nothing
+			return true;
+		}
+		
+		if(ip_num > A_class_start && ip_num < A_class_end)
+			return true;
+		else if(ip_num > B_class_start && ip_num < B_class_end){
+			alert(ip_obj.value+" <#JS_validip#>");
+			ip_obj.focus();
+			ip_obj.select();
+			return false;
+		}
+		else if(ip_num > C_class_start && ip_num < C_class_end)
+			return true;
+		else{
+			alert(ip_obj.value+" <#JS_validip#>");
+			ip_obj.focus();
+			ip_obj.select();
+			return false;
+		}
+}
+
+function validate_ip(){
+	if(document.form.wan_dhcpenable_x != null && document.form.wan_dhcpenable_x[0].checked){
+		if(!valid_IP(document.form.wan_ipaddr_x, "")) return false;  //WAN IP
+		if(!valid_IP(document.form.wan_gateway_x, "GW"))return false;  //Gateway IP
+
+		if(document.form.wan_gateway_x.value == document.form.wan_ipaddr_x.value){
+			alert("<#IPConnection_warning_WANIPEQUALGatewayIP#>");
+			document.form.wan_ipaddr_x.focus();
+			document.form.wan_ipaddr_x.select();			
+			return false;
+		}
+var default_netmask = "";
+		var wrong_netmask = 0;
+		var netmask_obj = document.form.wan_netmask_x;
+		var netmask_num = inet_network(netmask_obj.value);
+		
+		if(netmask_num==0){
+			var netmask_reverse_num = 0;		//Viz 2011.07 : Let netmask 0.0.0.0 pass
+		}else{
+		var netmask_reverse_num = ~netmask_num;
+		}
+		
+		if(netmask_num < 0) wrong_netmask = 1;
+
+		var test_num = netmask_reverse_num;
+		while(test_num != 0){
+			if((test_num+1)%2 == 0)
+				test_num = (test_num+1)/2-1;
+			else{
+				wrong_netmask = 1;
+				break;
+			}
+		}
+		if(wrong_netmask == 1){
+			alert(netmask_obj.value+" <#JS_validip#>");
+			netmask_obj.value = default_netmask;
+			netmask_obj.focus();
+			netmask_obj.select();
+			return false;
+		}// end netmask check			
+	}
+	
+	
+	return true;
+}
+
+function validate_dns(){
+	if(document.form.wan_dnsenable_x != null && !document.form.wan_dnsenable_x[0].checked){
+		if(document.form.wan_dns1_x.value.length <= 0 && document.form.wan_dns2_x.value.length <= 0){
+			document.form.wan_dns1_x.focus();
+			document.form.wan_dns1_x.select();
+			alert("<#JS_fieldblank#>");
+			$("wan_dns1_x_div").style.border = "2px solid #CE1E1E";
+			return false;
+		}
+		else{
+			if(document.form.wan_dns1_x.value.length > 0 
+					&& !validator.ipAddrFinalQIS(document.form.wan_dns1_x, "wan_dns1_x")){
+					return false;
+				}
+			else if(document.form.wan_dns2_x.value.length > 0 
+					&& !validator.ipAddrFinalQIS(document.form.wan_dns2_x, "wan_dns2_x")){
+					return false;					
+				}
+			}
+		}
+	
+	return true;
+}
+
+function remove_red_field(){
+	$("wan_ipaddr_x_div").style.border = "2px inset #F4F4F4";
+	$("wan_netmask_x_div").style.border = "2px inset #F4F4F4";
+	$("wan_gateway_x_div").style.border = "2px inset #F4F4F4";
+	$("wan_dns1_x_div").style.border = "2px inset #F4F4F4";
+	$("wan_dns2_x_div").style.border = "2px inset #F4F4F4";
+}
+
+function showMAC(){
+	var tempMAC = "";	
+	document.form.wan_hwaddr_x.value = login_mac_str();
+	document.form.wan_hwaddr_x.focus();
+}
+
+function simplyMAC(fullMAC){
+	var ptr;
+	var tempMAC;
+	var pos1, pos2;
+	
+	ptr = fullMAC;
+	tempMAC = "";
+	pos1 = pos2 = 0;
+	
+	for(var i = 0; i < 5; ++i){
+		pos2 = pos1+ptr.indexOf(":");
+		
+		tempMAC += fullMAC.substring(pos1, pos2);
+		
+		pos1 = pos2+1;
+		ptr = fullMAC.substring(pos1);
+	}
+	
+	tempMAC += fullMAC.substring(pos1);
+	
+	return tempMAC;
+}
+
+function simple_showLoading(){
+	document.getElementById("loadingIcon").style.display = "";
+}function validForm(){
+	if(!validate_ip()){
+		changeiuiBackground(0);
+		return false;
+	}
+	if(!validate_dns()){
+		changeiuiBackground(0);
+		return false;
+	}
+	if(!check_macaddr(document.form.wan_hwaddr_x,check_hwaddr_flag(document.form.wan_hwaddr_x))){
+		document.form.wan_hwaddr_x.select();
+		document.form.wan_hwaddr_x.focus();
+		changeiuiBackground(0);
+		return false;
+	}	
+	
+	if((now_flag != "auto_way_static" && now_flag != "auto_way")
+			&& (document.form.wan_proto.value == "pptp" || document.form.wan_proto.value == "l2tp")){
+		if(document.form.wan_heartbeat_x.value.length <= 0){
+			alert("<#QIS_internet_vpn_alert#>");
+			document.form.wan_heartbeat_x.focus();
+			document.form.wan_heartbeat_x.select();
+			changeiuiBackground(0);
+			return false;
+		}
+		
+		if(!validator.string(document.form.wan_heartbeat_x)){
+			changeiuiBackground(0);
+			return false;
+		}
+	}
+	
+	return true;	
+}
+		
+function submitForm(){
+	if(parent.ISMOBILE){
+		document.form.wan_ipaddr_x.value = document.form.wan_ipaddr_x_m.value;
+		document.form.wan_netmask_x.value = document.form.wan_netmask_x_m.value;
+		document.form.wan_gateway_x.value = document.form.wan_gateway_x_m.value;
+		document.form.wan_dns1_x.value = document.form.wan_dns1_x_m.value;
+		document.form.wan_dns2_x.value = document.form.wan_dns2_x_m.value;
+		document.form.wan_heartbeat_x.value = document.form.wan_heartbeat_x_m.value;
+		document.form.wan_hwaddr_x.value = document.form.wan_hwaddr_x_m.value;
+
+		if(document.form.wan_proto.value == "static"){
+			document.form.wan_dns1_x.disabled = false;
+			document.form.wan_dns2_x.disabled = false;
+		}
+	}
+
+	remove_red_field();
+	if(validForm() == true){
+			simple_showLoading();
+			document.form.wan_dhcpenable_x[0].disabled = 0;
+			document.form.wan_dhcpenable_x[1].disabled = 0;
+			document.form.wan_ipaddr_x.disabled = 0;
+			document.form.wan_netmask_x.disabled = 0;
+			document.form.wan_gateway_x.disabled = 0;
+			document.form.wan_dhcpenable_x.disabled = 0;
+			document.form.wan_dhcpenable_x.disabled = 0;
+			document.form.wan_dnsenable_x[0].disabled = 0;
+			document.form.wan_dnsenable_x[1].disabled = 0;
+			if((now_flag != "auto_way_static" && now_flag != "auto_way")
+					&& (document.form.wan_proto.value == "pptp" || document.form.wan_proto.value == "l2tp")){
+					document.form.wan_heartbeat_x.disabled = 0;
+			}
+			else
+					document.form.wan_heartbeat_x.disabled = 1;
+
+			// uinfi
+			document.form.switch_wantag.value = parent.document.QKform.switch_wantag.value;
+			document.form.switch_wan0tagid.value = parent.document.QKform.switch_wan0tagid.value;
+			document.form.switch_wan0prio.value = parent.document.QKform.switch_wan0prio.value;
+			document.form.switch_wan1tagid.value = parent.document.QKform.switch_wan1tagid.value;
+			document.form.switch_wan1prio.value = parent.document.QKform.switch_wan1prio.value;
+			document.form.switch_wan2tagid.value = parent.document.QKform.switch_wan2tagid.value;
+			document.form.switch_wan2prio.value = parent.document.QKform.switch_wan2prio.value;
+			document.form.switch_stb_x.value = parent.document.QKform.switch_stb_x.value;
+			document.form.flag.value = "verify_detect";
+  		if(original_switch_wantag != document.form.switch_wantag.value){
+					document.form.action_script.value	= "reboot";
+					document.form.flag.value = "verify_detect_reboot";
+					document.form.action_wait.value	= "<% get_default_reboot_time(); %>";
+					$("loadHint").style.display = "";
+					$("nextButton").style.display = "none";
+					$("prevButton").style.display = "none";
+			}
+
+			$("x_Setting").disabled = false;
+			document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
+			document.form.sw_mode.value = 1;
+			document.form.action = "/start_apply.htm";
+			if(parent.isManual) document.form.flag.value = "manual";
+
+			document.form.submit();
+			return true;
+	}
+	else
+			return false;
+}
+
+function check_macaddr(obj,flag){ //control hint of input mac address
+	
+	if(flag == 1){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
+		$("check_mac").style.display = "";
+		return false;
+	}else if(flag == 2){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		$("check_mac").style.display = "";
+		return false;		
+	}else{
+		$("check_mac") ? $("check_mac").style.display="none" : true;
+		return true;
+	}	
+}
+
+function clean_input(obj){
+	if(obj.value == "0.0.0.0"){
+			obj.focus();
+			obj.select();
+	}		
+}
+
+function submitenter(myfield,e)
+{	
+	var keycode;
+	if (window.event) keycode = window.event.keyCode;
+	else if (e) keycode = e.which;
+	else return true;
+
+	if (keycode == 13){
+		submitForm();
+   	return false;
+  }
+	else
+   	return true;
+}
+
+// for mobile
+function displayLANIPCtrl(){
+	if(document.getElementById("toggleWANIP").getAttribute("toggled") == "true"){ // DHCP
+		document.getElementById("WANIPDiv").style.display = "none";
+	  document.form.wan_dhcpenable_x[0].checked = 0; // static
+	  document.form.wan_dhcpenable_x[1].checked = 1; // DHCP
+		document.getElementById("dns_info_radio_m").style.display = "";
+		document.getElementById("toggleDNS").setAttribute("toggled", true);
+		document.getElementById("DNSDiv").style.display = "none";
+		document.form.wan_ipaddr_x.disabled = true;
+		document.form.wan_netmask_x.disabled = true;
+		document.form.wan_gateway_x.disabled = true;
+	}
+	else{
+	  document.form.wan_dhcpenable_x[0].checked = 1; // static
+	  document.form.wan_dhcpenable_x[1].checked = 0; // DHCP
+	  document.form.wan_dnsenable_x[0].checked = 0; // Automatic 
+	  document.form.wan_dnsenable_x[1].checked = 1; // static
+		document.getElementById("WANIPDiv").style.display = "";
+		document.getElementById("dns_info_radio_m").style.display = "none";
+		document.getElementById("toggleDNS").setAttribute("toggled", false);
+		document.getElementById("DNSDiv").style.display = "";
+		document.form.wan_ipaddr_x.disabled = false;
+		document.form.wan_netmask_x.disabled = false;
+		document.form.wan_gateway_x.disabled = false;
+	}
+
+	displayDNSCtrl();
+}
+
+function displayDNSCtrl(){
+	if(document.getElementById("toggleDNS").getAttribute("toggled") == "true"){ // Automatic
+		document.getElementById("DNSDiv").style.display = "none";
+	  document.form.wan_dnsenable_x[0].checked = 1;
+	  document.form.wan_dnsenable_x[1].checked = 0;
+		document.form.wan_dns1_x.disabled = true;
+		document.form.wan_dns2_x.disabled = true;
+	}
+	else{
+		document.getElementById("DNSDiv").style.display = "";
+	  document.form.wan_dnsenable_x[0].checked = 0;
+	  document.form.wan_dnsenable_x[1].checked = 1;
+		document.form.wan_dns1_x.disabled = false;
+		document.form.wan_dns2_x.disabled = false;
+	}
+}
+</script>
+</head>
+
+<body onLoad="QKInternet_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<div id="navtxt" class="navtext" style="position:absolute; top:50px; left:-100px; visibility:hidden; font-family:Arial, Verdana"></div>
+<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
+<form method="post" name="form" target="hidden_frame" onsubmit="return submitForm();">
+<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+<input type="hidden" name="prev_page" value="QIS_internet_type.htm">
+<input type="hidden" name="current_page" value="/qis/QIS_internet_ip.htm">
+<input type="hidden" name="next_page" value="/QIS_wizard.htm">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="restart_wan_if">
+<input type="hidden" name="action_wait" value="3">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+
+<input type="hidden" name="wan_proto" value="">
+<input type="hidden" name="wan_pppoe_username" value="">
+<input type="hidden" name="wan_pppoe_passwd" value="">
+<input type="hidden" name="wan_hostname" value="">
+
+
+<input type="hidden" name="lan_ipaddr" value="">
+<input type="hidden" name="lan_netmask" value="">
+<input type="hidden" name="x_Setting" id="x_Setting" value="" disabled>
+<input type="hidden" name="wan_unit" value="0">
+<input type="hidden" name="sw_mode" value="">
+<!-- unifi -->
+<input type="hidden" name="switch_wantag" value="">
+<input type="hidden" name="switch_wan0tagid" value="">
+<input type="hidden" name="switch_wan0prio" value="">
+<input type="hidden" name="switch_wan1tagid" value="">
+<input type="hidden" name="switch_wan1prio" value="">
+<input type="hidden" name="switch_wan2tagid" value="">
+<input type="hidden" name="switch_wan2prio" value="">
+<input type="hidden" name="switch_stb_x" value="">
+<div class="QISmain" id="QISmain">
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<div class="description_down" id="page_title"></div>
+					</td>
+					<!--td align="right">
+						<img style="cursor:pointer;" onclick="parent.gotoIndex();" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+					</td-->
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		
+<div id="showserver" style="width:730px; display:none">
+  <fieldset id="ifVPNfield">
+	<table id="heartbeat_server" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="display:none;">
+		<tr>
+			<th width="190">
+				<span onmouseout="return nd();" onclick="overlib('<#BOP_isp_heart_desc2#>');" style="cursor:help;"><#BOP_isp_heart_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+			</th>
+			<td class="QISformtd">	<!-- ASUS 2009.12 for maxlen -->
+				<input type="text" name="wan_heartbeat_x" value="" tabindex="10" size="36" maxlength="64" title="<#BOP_isp_heart_item#>" class="input_32_table" disabled>
+			</td>
+		</tr>
+	</table>
+	<table id="vpn_enable_block" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="display:none;">
+		<tr>
+			<th width="190">
+				<span onmouseout="return nd();" onclick="overlib('<#BOP_isp_heart_desc2#>');" style="cursor:help;"><#QIS_if_vpn_existed#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+			</th>
+			<td class="QISformtd">
+				<!-- wan_heartbeat_x -->
+				<input type="radio" name="vpn_enable" value="1" tabindex="11" onclick="show_next_button();" class="input"><#checkbox_Yes#>
+				<input type="radio" name="vpn_enable" value="0" tabindex="12" onclick="show_next_button();" class="input"><#checkbox_No#>
+			</td>
+		</tr>
+	</table>
+	</fieldset>
+</div>		
+<div id="showip" style="display:none">
+<fieldset>
+<legend>
+	<#Layer3Forwarding_x_UseStaticIP_itemname#>
+	<span id="dhcp_info_radio">
+		<input type="radio" name="wan_dhcpenable_x" class="input" value="0" tabindex="1" onclick="show_dhcpenable(this.value);"><#checkbox_Yes#>
+		<input type="radio" name="wan_dhcpenable_x" class="input" value="1" tabindex="2" onclick="show_dhcpenable(this.value);"><#checkbox_No#>
+	</span>	
+</legend>
+	<table id="tblsetting_2" class="QISform" width="400" border="0" align="center" cellpadding="3" cellspacing="0">
+		<tr>
+			<th  width="190">
+				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_ExternalIPAddress_itemdesc#>');" style="cursor:help;"><#IPConnection_ExternalIPAddress_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+			</th>
+			<td class="QISformtd">
+	    	<input type="text" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>" tabindex="3" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+				<!--input type="hidden" id="wan_ipaddr_x" name="wan_ipaddr_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" title="WAN IP"-->
+				<div class="IPaddr_qis" id="wan_ipaddr_x_div" style="display:none;">
+					<input maxlength="3" name="wan_ipaddr_x1"; onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
+                    onpaste="return   !clipboardData.getData('text').match(/\D/)" ndragenter="return false" autocomplete="off" />.
+					<input maxlength="3" id="wan_ipaddr2" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
+                    onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
+                    onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+					<input maxlength="3" name="wan_ipaddr_x4"; onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
+                    onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
+				</div>
+			</td>
+		</tr>
+		
+		<tr>
+			<th width="190">
+				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalSubnetMask_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalSubnetMask_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+			</th>
+			<td class="QISformtd">
+	    	<input type="text" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>" tabindex="4" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+				<!--input type="hidden" id="wan_netmask_x" name="wan_netmask_x" value="" maxlength="15"  title="WAN Subnet Mask"-->
+				<div class="IPaddr_qis" id="wan_netmask_x_div" style="display:none;">
+					<input maxlength="3" name="wan_netmask_x1" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+					<input maxlength="3" name="wan_netmask_x4" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
+				</div>
+			</td>
+		</tr>
+		
+		<tr>
+			<th>
+				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalGateway_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalGateway_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+			</th>
+			<td class="QISformtd">
+	    	<input type="text" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>" tabindex="5" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+				<!--input type="hidden" id="wan_gateway_x" name="wan_gateway_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" class="input"-->
+				<div class="IPaddr_qis" id="wan_gateway_x_div" style="display:none;">
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);" 
+					onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                    onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                    onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+					<input maxlength="3" name="wan_gateway_x4" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                    onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
+				</div>
+			</td>
+		</tr>
+	</table>
+</fieldset>
+</div>
+
+	<div id="dns_sec" style="display:none">
+  <fieldset>
+  <legend>
+	  <span id="dns_info_title"><#IPConnection_x_DNSServerEnable_itemname#></span>
+	  <span id="dns_info_radio">
+  		<input type="radio" name="wan_dnsenable_x" value="1" onclick="show_dnsenable(this.value);" tabindex="6" class="input"><#checkbox_Yes#>
+			<input type="radio" name="wan_dnsenable_x" value="0" onclick="show_dnsenable(this.value);" tabindex="7" class="input"><#checkbox_No#>
+	  </span>
+  </legend>
+  <table id="tblsetting_4" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+  <tr>
+	  <th width="190">
+			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer1_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer1_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+	  </th>
+	  <td class="QISformtd">
+    	<input type="text" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>" tabindex="8" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+			<!--input type="hidden" id="wan_dns1_x" name="wan_dns1_x" value="" onkeypress="return validator.isIPAddr(this, event);" maxlength="15"-->
+			<div class="IPaddr_qis" id="wan_dns1_x_div" style="display:none;">
+				<input maxlength="3" name="wan_dns1_x1" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+				<input maxlength="3" name="wan_dns1_x4" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
+			</div>
+	  </td>
+	</tr>
+	
+	<tr>
+	  <th width="190">
+			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer2_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer2_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+	  </th>
+	  <td class="QISformtd">
+    	<input type="text" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>" tabindex="9" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+			<!--input type="hidden" id="wan_dns2_x" name="wan_dns2_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" -->
+			<div class="IPaddr_qis" id="wan_dns2_x_div" style="display:none;">
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />.
+				<input maxlength="3" name="wan_dns2_x4" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)" ondragenter="return false" autocomplete="off" />
+			</div>
+	  </td>
+	</tr>
+	
+  </table>
+  </fieldset>
+	</div><div id="showhwaddr" style="width:730px; display:none;">
+	<fieldset id="ifVPNfield">
+	<table id="heartbeat_server" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+		<tr>
+			<th width="190">
+			<div onmouseout="return nd();" onclick="overlib('<#PPPConnection_x_MacAddressForISP_itemdesc#>', FIXX, 285, FIXY,50);" style="white-space:normal;cursor:help;"><#BOP_isp_mac_item#><img align="right" style="cursor:pointer;margin-top:-14px \9;" src="/images/New_ui/helpicon.png"></div>
+			</th>
+			<td class="QISformtd">
+				<input type="text" name="wan_hwaddr_x" tabindex="13" onkeypress="return validator.isHWAddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="">
+				<input type="button" class="button_gen_long" tabindex="14" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
+			</td>
+		</tr>
+	</table>
+	</fieldset>
+</div>
+	<div class="apply_gen" style="margin-top:30px">
+  	<input type="button" id="prevButton" value="<#CTL_prev#>" tabindex="16" onclick="gotoprev(document.form);" class="button_gen">
+  	<input type="submit" id="nextButton" value="<#CTL_next#>" tabindex="15" class="button_gen">
+		<span id="loadHint" style="display:none"><#SAVE_note#></span>
+		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
+	</div>
+</div>
+
+<div style="display:none;" id="QISmain_m">
+	<div id="showip_m">
+		<span class="itemTitle"><#Layer3Forwarding_x_UseStaticIP_itemname#></span>
+		<fieldset>
+			<div id="dhcp_info_radio_m">
+				<div class="row">
+					<label>Automatic</label>
+					<div id="toggleWANIP" class="toggle" onclick="displayLANIPCtrl();" toggled="true">
+						<span class="thumb"></span>
+						<span class="toggleOn"><#checkbox_Yes#></span>
+						<span class="toggleOff"><#checkbox_No#></span>
+					</div>
+				</div>
+			</div>
+
+			<div id="WANIPDiv">
+				<div class="row">
+					<label><#IPConnection_ExternalIPAddress_itemname#></label>
+					<input type="text" name="wan_ipaddr_x_m" placeholder="" maxlength="15" value=""/>
+				</div>
+				<div class="row">
+					<label><#IPConnection_x_ExternalSubnetMask_itemname#></label>
+					<input type="text" name="wan_netmask_x_m" placeholder="" maxlength="15" value=""/>
+				</div>
+				<div class="row_end">
+					<label><#IPConnection_x_ExternalGateway_itemname#></label>
+					<input type="text" name="wan_gateway_x_m" placeholder="" maxlength="15" value=""/>
+				</div>
+			</div>
+		</fieldset>
+		<br />
+	</div>
+
+	<div id="dns_sec_m" style="display:none">
+		<span class="itemTitle" id="dns_info_title_m"><#IPConnection_x_DNSServerEnable_itemname#></span>
+		<fieldset>
+			<div class="row" id="dns_info_radio_m">
+				<label>Automatic</label>
+				<div id="toggleDNS" class="toggle" onclick="displayDNSCtrl();" toggled="true">
+					<span class="thumb"></span>
+					<span class="toggleOn"><#checkbox_Yes#></span>
+					<span class="toggleOff"><#checkbox_No#></span>
+				</div>
+			</div>
+
+			<div id="DNSDiv">
+				<div class="row">
+					<label><#IPConnection_x_DNSServer1_itemname#></label>
+					<input type="text" name="wan_dns1_x_m" placeholder="" maxlength="15" value=""/>
+				</div>
+				<div class="row_end">
+					<label><#IPConnection_x_DNSServer2_itemname#></label>
+					<input type="text" name="wan_dns2_x_m" placeholder="" maxlength="15" value=""/>
+				</div>
+			</div>
+		</fieldset>
+		<br />
+	</div>
+
+	<div id="showserver_m" style="display:none">
+		<fieldset>
+			<div class="row_end">
+				<label><#BOP_isp_heart_item#></label>
+				<input type="text" name="wan_heartbeat_x_m" onkeypress="" placeholder="" maxlength="64" value=""/>
+			</div>
+		</fieldset>
+		<br />
+	</div>
+
+	<div id="showhwaddr_m" style="display:none">
+		<fieldset>
+			<div class="row_end">
+				<label><#BOP_isp_mac_item#></label>
+				<input type="text" name="wan_hwaddr_x_m" onkeypress="return validator.isHWAddr(this,event);" placeholder="" maxlength="17" value=""/>
+			</div>
+		</fieldset>
+		<br />
+	</div>
+
+	<fieldset class="theFieldset" id="theFieldset">
+		<div class="row_end">
+			<a id="loadingIcon_iui" class="iuiA" onclick="changeiuiBackground(1);submitForm();"><#CTL_next#></a>
+		</div>
+	</fieldset>
+</div>
+
+</form>
+</body>

@@ -342,7 +342,7 @@ function initial(){
 		based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" ||
 		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 		based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
-		based_modelid == "RT-AC87U"){
+		based_modelid == "RT-AC87U" || based_modelid == "RT-AC3200"){
 		
 		inputCtrl(document.form.wl_atf, 1);
 		if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1')	

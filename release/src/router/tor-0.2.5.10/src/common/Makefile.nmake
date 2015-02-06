@@ -1,0 +1,28 @@
+all: libor.lib libor-crypto.lib libor-event.lib
+
+CFLAGS = /O2 /MT /I ..\win32 /I ..\..\..\build-alpha\include /I ..\common \
+    /I ..\ext
+
+LIBOR_OBJECTS = address.obj backtrace.obj compat.obj container.obj di_ops.obj \
+	log.obj memarea.obj mempool.obj procmon.obj sandbox.obj util.obj \
+	util_codedigest.obj
+
+LIBOR_CRYPTO_OBJECTS = aes.obj crypto.obj crypto_format.obj torgzip.obj tortls.obj \
+	crypto_curve25519.obj curve25519-donna.obj
+
+LIBOR_EVENT_OBJECTS = compat_libevent.obj
+
+curve25519-donna.obj: ..\ext\curve25519_donna\curve25519-donna.c
+	$(CC) $(CFLAGS) /D inline=_inline /c ..\ext\curve25519_donna\curve25519-donna.c
+
+libor.lib: $(LIBOR_OBJECTS)
+	lib $(LIBOR_OBJECTS) /out:libor.lib
+
+libor-crypto.lib: $(LIBOR_CRYPTO_OBJECTS)
+	lib $(LIBOR_CRYPTO_OBJECTS) /out:libor-crypto.lib
+
+libor-event.lib:  $(LIBOR_EVENT_OBJECTS)
+	lib $(LIBOR_EVENT_OBJECTS) /out:libor-event.lib
+
+clean:
+	del *.obj *.lib libor*.lib

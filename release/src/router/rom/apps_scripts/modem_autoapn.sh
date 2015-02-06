@@ -9,8 +9,9 @@ act_node2="usb_modem_act_bulk"
 modem_vid=`nvram get usb_modem_act_vid`
 modem_autoapn=`nvram get modem_autoapn`
 modem_imsi=
-dataf="/rom/apn_asus.dat"
-numf="/rom/apn_num.dat"
+apps_local_space=`nvram get apps_local_space`
+dataf="$apps_local_space/apn_asus.dat"
+numf="$apps_local_space/apn_num.dat"
 #modem_prefix="modem_"
 modem_prefix="test_modem_"
 

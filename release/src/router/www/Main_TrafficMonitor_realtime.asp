@@ -302,7 +302,7 @@ function switchPage(page){
 							
 							<div id="ctfLevelDesc" style="display:none" class="formfontcontent">
 								<p class="formfontcontent">
-									<b>NOTE:</b> The wired network traffic bypasses CPU when enabled NAT Acceleration and may affect Traffic Monitor accuracy.
+									<b><#ADSL_FW_note#></b> <#traffic_monitor_desc3#>
 									Click <a style="text-decoration:underline" href="Advanced_SwitchCtrl_Content.asp?af=ctf_disable_force">HERE</a> to disable NAT Acceleration.  
 								</p>
 							</div>

@@ -157,7 +157,7 @@ static int rctest_main(int argc, char *argv[])
 					system("echo 2 > /proc/sys/net/ipv4/conf/all/force_igmp_version");
 #endif
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 					if (!(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")))
 #endif
 					{
@@ -915,6 +915,12 @@ int main(int argc, char **argv)
 		return 0;
 	}
 #endif /* RTCONFIG_WIDEDHCP6 */
+#ifdef RTCONFIG_TOR
+	else if (!strcmp(base, "start_tor")) {
+                start_Tor_proxy();
+		return 0;
+        }
+#endif
 	printf("Unknown applet: %s\n", base);
 	return 0;
 }

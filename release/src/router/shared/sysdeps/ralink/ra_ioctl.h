@@ -16,7 +16,7 @@
 #define RAETH_ASUS_RESET		0x0
 #define RAETH_ASUS_STATS		0x1
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 
 #define REG_ESW_WT_MAC_MFC              0x10
 #define REG_ESW_WT_MAC_ATA1             0x74
@@ -33,9 +33,9 @@
 #define REG_ESW_VLAN_VAWD1		0x94
 #define REG_ESW_VLAN_VAWD2		0x98
 
-
+#if !defined(RTN56UB1) //MT7621 don't use it
 #define REG_ESW_VLAN_ID_BASE		0x100
-
+#endif
 //#define REG_ESW_VLAN_ID_BASE		0x50
 #define REG_ESW_VLAN_MEMB_BASE		0x70
 #define REG_ESW_TABLE_SEARCH		0x24
@@ -64,7 +64,7 @@
 #define REG_ESW_MAX			0x14C
 #elif defined (CONFIG_RALINK_RT5350)
 #define REG_ESW_MAX                     0x16C
-#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 #define REG_ESW_MAX			0x7FFFF
 #else //RT305x, RT3350
 #define REG_ESW_MAX			0xFC

@@ -201,6 +201,7 @@ int processReq(int sockfd)
     char		*hdr;
     char		pdubuf[INFO_PDU_LENGTH];
     struct sockaddr_in  from_addr;
+    unsigned short cli_port;
 
     memset(pdubuf,0,sizeof(pdubuf));
 
@@ -223,8 +224,9 @@ int processReq(int sockfd)
     }
 
     hdr = pdubuf;
-
-    processPacket(sockfd, hdr);
+    cli_port = ntohs(from_addr.sin_port);
+    //_dprintf("[InfoSvr] Client Port: %d\n", cli_port);
+    processPacket(sockfd, hdr, cli_port);
 /*						J++
     closesocket(sockfd);
 */
@@ -730,7 +732,7 @@ int set_pid(int pid)
 	return 1;
 }
 
-void sendInfo(int sockfd, char *pdubuf)
+void sendInfo(int sockfd, char *pdubuf, unsigned short cli_port)
 {
     struct sockaddr_in		  cli;
 //    IBOX_COMM_PKT_HDR		   hdr;
@@ -738,7 +740,8 @@ void sendInfo(int sockfd, char *pdubuf)
 
     cli.sin_family    = AF_INET;
     cli.sin_addr.s_addr = inet_addr("255.255.255.255");;
-    cli.sin_port = htons(SRV_PORT);
+    //cli.sin_port = htons(SRV_PORT);
+    cli.sin_port = htons(cli_port);
 
     while (count < g_intfCount)
     {

@@ -338,12 +338,13 @@ function submitForm(){
 			else{
 				if(document.form.wps_enable.value == 1){
 					if(document.form.wps_band.value == 0 
-					|| document.form.wps_dualband.value == 1){              //RT-AC87U, dual band WPS
+					|| document.form.wps_dualband.value == 1            //RT-AC87U, dual band WPS
+					|| (!Rawifi_support && !Qcawifi_support && based_modelid != "RT-AC87U")){		//Broadcom
 						if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))    
 							return false;
-					}                                       
+					}
 				}
-               
+				
 				wl_confirm++;                           
 			}	
 		}
@@ -414,7 +415,8 @@ function submitForm(){
 					if(document.form.wps_enable.value == 1){        //check 5GHz WPS enabled or multi band WPS enabled
 						if(document.form.wps_band.value == "1" 
 						|| document.form.wps_dualband.value == "1"              //RT-AC87U dual band WPS
-						|| document.form.wps_multiband.value == "1"){   //MTK, QCA platform dual band WPS
+						|| document.form.wps_multiband.value == "1"   //MTK, QCA platform dual band WPS
+						|| (!Rawifi_support && !Qcawifi_support && based_modelid != "RT-AC87U")){
 							if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))
 								return false;
 						}
@@ -487,7 +489,8 @@ function submitForm(){
 
 			if(document.form.wl1_wpa_psk.value == ""){
 				if((document.form.wps_enable.value == 1 && document.form.wps_band.value == 2)
-				|| (based_modelid == "RT-AC87U" && document.form.wps_dualband.value == 1)){
+				|| (based_modelid == "RT-AC87U" && document.form.wps_dualband.value == 1)
+				|| (!Rawifi_support && !Qcawifi_support && based_modelid != "RT-AC87U")){
 					if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))	
 						return false;	
 				}				
@@ -1440,7 +1443,7 @@ function detect_LANStatus(_flag){
 				</div>
 				<div class="row_end">
 					<label>Key</label>
-					<input id="wl0_wpa_psk_m" name="wl0_wpa_psk_m" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" placeholder="<#QIS_finish_wireless_item3#>" maxlength="64" autocapitalization="off" autocomplete="off">	
+					<input id="wl0_wpa_psk_m" name="wl0_wpa_psk_m" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" placeholder="<#Network_key#>" maxlength="64" autocapitalization="off" autocomplete="off">	
 				</div>
 	</fieldset>	
 	<br />
@@ -1455,7 +1458,7 @@ function detect_LANStatus(_flag){
 					</div>
 					<div class="row_end">
 						<label>Key</label>
-						<input id="wl1_wpa_psk_m" name="wl1_wpa_psk_m" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" placeholder="<#QIS_finish_wireless_item3#>" maxlength="64" autocapitalization="off" autocomplete="off">
+						<input id="wl1_wpa_psk_m" name="wl1_wpa_psk_m" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" placeholder="<#Network_key#>" maxlength="64" autocapitalization="off" autocomplete="off">
 					</div>
 		</fieldset>
 	</div>
@@ -1471,7 +1474,7 @@ function detect_LANStatus(_flag){
 					</div>
 					<div class="row_end">
 						<label>Key</label>
-						<input id="wl2_wpa_psk_m" name="wl2_wpa_psk_m" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" placeholder="<#QIS_finish_wireless_item3#>" maxlength="64" autocapitalization="off" autocomplete="off">
+						<input id="wl2_wpa_psk_m" name="wl2_wpa_psk_m" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" placeholder="<#Network_key#>" maxlength="64" autocapitalization="off" autocomplete="off">
 					</div>
 		</fieldset>
 	</div>
@@ -1483,7 +1486,7 @@ function detect_LANStatus(_flag){
 <fieldset id="smart_connect_desc" style="border:0; display:none">
 	<table class="QISSmartCon_table">
 		<tr><td>
-			<span id="desc_title"><span style="font-weight:bold; font-style:italic;">Tri-band Smart Connect</span> dynamically and seamlessly switches devices to different bands based on location, signal strength and wireless protocol, ensuring consistent throughput for each device on your network.</span>
+			<span id="desc_title"><span style="font-weight:bold; font-style:italic;"><#triband_smart_connect#></span> <#triband_smart_connect_desc#></span>
 		</td></tr>	
 		<tr>
         	<td>
@@ -1512,12 +1515,12 @@ function detect_LANStatus(_flag){
 			<td>			
 				<table>
 						<td style="font-style:normal;font-size:13px;font-weight:bold;" >
-							<input type="radio" value="1" id="smart_connect_t" name="smart_connect_t" class="input" onclick="return change_smart_con(this.value)" <% nvram_match("smart_connect_x", "1", "checked"); %>>Tri-band Smart Connect
+							<input type="radio" value="1" id="smart_connect_t" name="smart_connect_t" class="input" onclick="return change_smart_con(this.value)" <% nvram_match("smart_connect_x", "1", "checked"); %>><#triband_smart_connect#>
 						</td>
 					</tr>
 					<tr>
 						<td style="font-style:normal;font-size:13px;font-weight:bold;">
-							<input type="radio" value="0" name="smart_connect_t" class="input" onclick="return change_smart_con(this.value)" <% nvram_match("smart_connect_x", "0", "checked"); %>>Standard Setup
+							<input type="radio" value="0" name="smart_connect_t" class="input" onclick="return change_smart_con(this.value)" <% nvram_match("smart_connect_x", "0", "checked"); %>><#Standard_Setup#>
 						</td>
 					</tr>									
 				</table>
