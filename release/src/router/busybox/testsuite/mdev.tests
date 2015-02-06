@@ -11,7 +11,7 @@ FILTER_LS="grep -v '^total ' | sed -e 's/,  */,/g' -e 's/  */ /g' | cut -d' ' -f
 # cut: remove size+date
 FILTER_LS2="grep -v '^total ' | sed -e 's/,  */,/g' -e 's/  */ /g' | cut -d' ' -f 1-4,9-"
 
-# testing "test name" "options" "expected result" "file input" "stdin"
+# testing "test name" "commands" "expected result" "file input" "stdin"
 
 rm -rf mdev.testdir
 mkdir mdev.testdir
@@ -122,6 +122,26 @@ lrwxrwxrwx 1 0 0 sda -> disk/sda
 
 mdev.testdir/dev/disk:
 br--r--r-- 1 0 0 sda
+" \
+	"" ""
+SKIP=
+
+# continuing to use directory structure from prev test
+rm -rf mdev.testdir/dev/*
+echo "sda 0:0 444 =disk/sd/a" >mdev.testdir/etc/mdev.conf
+optional STATIC FEATURE_MDEV_CONF FEATURE_MDEV_RENAME FEATURE_LS_RECURSIVE FEATURE_LS_TIMESTAMPS FEATURE_LS_USERNAME
+testing "mdev move rule '=bar/baz/fname'" \
+	"env - PATH=$PATH ACTION=add DEVPATH=/block/sda chroot mdev.testdir /mdev 2>&1;
+	ls -lnR mdev.testdir/dev | $FILTER_LS2" \
+"\
+mdev.testdir/dev:
+drwxr-xr-x 3 0 0 disk
+
+mdev.testdir/dev/disk:
+drwxr-xr-x 2 0 0 sd
+
+mdev.testdir/dev/disk/sd:
+br--r--r-- 1 0 0 a
 " \
 	"" ""
 SKIP=

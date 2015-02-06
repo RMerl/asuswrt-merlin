@@ -205,7 +205,7 @@ function update_wan_info(flag){
 		},
 		success: function(response){
 			if(flag == null){
-				document.getElementById("ManualBtn").style.display = "none";
+				document.getElementById("ManualBtn").style.display = "";
 				document.getElementById("loadingIcon").style.display = "";
 				changeiuiBackground(1);
 				setTimeout("detect_if_wan_plug();", 1000);
@@ -325,7 +325,7 @@ function submitenter(myfield,e)
 
 					<tr>
 						<td colspan="3" align="center">
-							<input id="ManualBtn" class="button_gen_long" type="button" value="<#Manual_Setting_btn#>" style="display:none;white-space:normal;" onclick="submitForm(0)">
+							<input id="ManualBtn" class="button_gen_long" type="button" value="<#Manual_Setting_btn#>" style="white-space:normal;" onclick="submitForm(0)">
 							<input class="button_gen" id="btn_next_step" type="button" value="<#btn_go#>" onclick="update_wan_info();">
 							<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 						</td>

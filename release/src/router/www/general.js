@@ -1298,8 +1298,9 @@ function wl_auth_mode_change(isload){
 	}
 	
 	/*For Protected Management Frames, only enable for "(wpa)psk2" or "wpa2" on ARM platform (wl_mfp_support)*/
+	/* QTN_5G support PMF too*/
 	if(wl_mfp_support && (document.form.wl_mfp != null)){
-		if ((mode.search("psk2") >= 0 || mode.search("wpa2") >= 0) && !(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1')){
+		if ((mode.search("psk2") >= 0 || mode.search("wpa2") >= 0)){
 			inputCtrl(document.form.wl_mfp,  1);	
 		}
 		else{

@@ -114,6 +114,10 @@ var pagesVar = {
 var mapscanning = 0;
 
 var clientMacUploadIcon = new Array();
+var ipState = new Array();
+ipState["Static"] =  "<#BOP_ctype_title5#>";
+ipState["DHCP"] =  "<#BOP_ctype_title1#>";
+ipState["Manual"] =  "Manually assign IP";
 
 function initial(){
 	parent.hideEditBlock();
@@ -213,9 +217,9 @@ function drawClientList(tab){
 
 		if(parent.sw_mode == 1){
 			clientHtmlTd += ' <span class="ipMethod" onmouseover="return overlib(\''
-			clientHtmlTd += clientObj.isStaticIP ? "<#BOP_ctype_title5#>" : "<#BOP_ctype_title1#>";
+			clientHtmlTd += ipState[clientObj.ipMethod];
 			clientHtmlTd += '\')" onmouseout="nd();">'
-			clientHtmlTd += clientObj.isStaticIP ? "Static" : "DHCP" + '</span>';
+			clientHtmlTd += clientObj.ipMethod + '</span>';
 		}
 
 		clientHtmlTd += '</td></tr><tr><td><div style="margin-top:-15px;" class="link" onclick="oui_query(\'';

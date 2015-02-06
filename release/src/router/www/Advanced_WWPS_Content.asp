@@ -173,7 +173,7 @@ function SelectBand(wps_band){
 		}
 	}
 	else{
-		$("wps_band_hint").innerHTML = "* <#1821#>";
+		$("wps_band_hint").innerHTML = "* <#WLANConfig11b_x_WPSband_hint#>";
 	return false;
 	}
 	FormActions("apply.cgi", "change_wps_unit", "", "");

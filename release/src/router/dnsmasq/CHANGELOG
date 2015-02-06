@@ -9,7 +9,9 @@ version 2.73
 
 	    Use inotify for checking on updates to /etc/resolv.conf and
 	    friends under Linux. This fixes race conditions when the files are 
-	    updated rapidly and saves CPU by noy polling.
+	    updated rapidly and saves CPU by noy polling. To build
+	    a binary that runs on old Linux kernels without inotify,
+	    use make COPTS=-DNO_INOTIFY
 
 	    Fix breakage of --domain=<domain>,<subnet>,local - only reverse
 	    queries were intercepted. THis appears to have been broken 
@@ -22,8 +24,48 @@ version 2.73
 
 	    Fix crash in DNSSEC code with long RRs. Thanks to Marco Davids
 	    for the bug report.
+	    
+	    Add --ignore-address option. Ignore replies to A-record 
+	    queries which include the specified address. No error is
+	    generated, dnsmasq simply continues to listen for another 
+	    reply. This is useful to defeat blocking strategies which
+	    rely on quickly supplying a forged answer to a DNS 
+	    request for certain domains, before the correct answer can
+            arrive. Thanks to Glen Huang for the patch.
 	
+	    Revisit the part of DNSSEC validation which determines if an 
+	    unsigned answer is legit, or is in some part of the DNS 
+	    tree which should be signed. Dnsmasq now works from the 
+	    DNS root downward looking for the limit of signed 
+	    delegations, rather than working bottom up. This is 
+	    both more correct, and less likely to trip over broken 
+	    nameservers in the unsigned parts of the DNS tree 
+	    which don't respond well to DNSSEC queries.
 
+	    Add --log-queries=extra option, which makes logs easier
+	    to search automatically.
+
+	    Add --min-cache-ttl option. I've resisted this for a long 
+	    time, on the grounds that disbelieving TTLs is never a 
+	    good idea, but I've been persuaded that there are 
+	    sometimes reasons to do it. (Step forward, GFW).
+	    To avoid misuse, there's a hard limit on the TTL 
+	    floor of one hour. Thansk to RinSatsuki for the patch.
+
+	    Cope with multiple interfaces with the same link-local 
+	    address. (IPv6 addresses are scoped, so this is allowed.)
+	    Thanks to Cory Benfield for help with this.
+
+	    Add --dhcp-hostsdir. This allows addition of new host
+	    configurations to a running dnsmasq instance much more 
+	    cheaply than having dnsmasq re-read all its existing
+	    configuration each time. 
+	
+	    Don't reply to DHCPv6 SOLICIT messages if we're not 
+	    configured to do stateful DHCPv6. Thanks to Win King Wan 
+	    for the patch.
+
+	
 version 2.72
             Add ra-advrouter mode, for RFC-3775 mobile IPv6 support.
 

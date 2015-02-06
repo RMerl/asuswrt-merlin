@@ -64,6 +64,8 @@ nettle_libs =   `echo $(COPTS) | $(top)/bld/pkg-wrapper HAVE_DNSSEC $(PKG_CONFIG
 gmp_libs =      `echo $(COPTS) | $(top)/bld/pkg-wrapper HAVE_DNSSEC NO_GMP --copy -lgmp`
 sunos_libs =    `if uname | grep SunOS >/dev/null 2>&1; then echo -lsocket -lnsl -lposix4; fi`
 version =     -DVERSION='\"`$(top)/bld/get-version $(top)`\"'
+copts_conf = .copts_$(shell $(CC) -DDNSMASQ_COMPILE_OPTS $(COPTS) -E $(top)/$(SRC)/dnsmasq.h | \
+			( md5sum 2>/dev/null || md5 ) | cut -f 1 -d ' ')
 
 objs = cache.o rfc1035.o util.o option.o forward.o network.o \
        dnsmasq.o dhcp.o lease.o rfc2131.o netlink.o dbus.o bpf.o \
@@ -83,7 +85,7 @@ all : $(BUILDDIR)
 
 mostly_clean :
 	rm -f $(BUILDDIR)/*.mo $(BUILDDIR)/*.pot 
-	rm -f $(BUILDDIR)/.configured $(BUILDDIR)/*.o $(BUILDDIR)/dnsmasq.a $(BUILDDIR)/dnsmasq 
+	rm -f $(BUILDDIR)/.copts_* $(BUILDDIR)/*.o $(BUILDDIR)/dnsmasq.a $(BUILDDIR)/dnsmasq
 
 clean : mostly_clean
 	rm -f $(BUILDDIR)/dnsmasq_baseline
@@ -139,17 +141,19 @@ bloatcheck : $(BUILDDIR)/dnsmasq_baseline mostly_clean all
 
 # rules below are targets in recusive makes with cwd=$(BUILDDIR)
 
-.configured: $(hdrs)
-	@rm -f *.o
+$(copts_conf): $(hdrs)
+	@rm -f *.o .copts_*
 	@touch $@
 
 $(objs:.o=.c) $(hdrs):
 	ln -s $(top)/$(SRC)/$@ .
 
+$(objs): $(copts_conf) $(hdrs)
+
 .c.o:
 	$(CC) $(CFLAGS) $(COPTS) $(i18n) $(build_cflags) $(RPM_OPT_FLAGS) -c $<	
 
-dnsmasq : .configured $(hdrs) $(objs)
+dnsmasq : $(objs)
 	$(CC) $(LDFLAGS) -o $@ $(objs) $(build_libs) $(LIBS) 
 
 dnsmasq.pot : $(objs:.o=.c) $(hdrs)

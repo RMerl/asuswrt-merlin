@@ -1,0 +1,60 @@
+// Copyright (c) The Tor Project, Inc.
+// See LICENSE for licensing information
+// This is an asciidoc file used to generate the manpage/html reference.
+// Learn asciidoc on http://www.methods.co.nz/asciidoc/userguide.html
+:man source:   Tor
+:man manual:   Tor Manual
+tor-fw-helper(1)
+================
+Jacob Appelbaum
+
+NAME
+----
+tor-fw-helper - Manage upstream firewall/NAT devices
+
+SYNOPSIS
+--------
+**tor-fw-helper** [-h|--help] [-T|--test-commandline] [-v|--verbose] [-g|--fetch-public-ip]
+ [-p __external port__:__internal_port__]
+
+DESCRIPTION
+-----------
+**tor-fw-helper** currently supports Apple's NAT-PMP protocol and the UPnP
+standard for TCP port mapping. It is written as the reference implementation of
+tor-fw-helper-spec.txt and conforms to that loose plugin API.  If your network
+supports either NAT-PMP or UPnP, tor-fw-helper will attempt to automatically
+map the required TCP ports for Tor's Or and Dir ports. +
+
+OPTIONS
+-------
+**-h** or **--help**::
+    Display help text and exit.
+
+**-v** or **--verbose**::
+    Display verbose output.
+
+**-T** or **--test-commandline**::
+    Display test information and print the test information in
+    tor-fw-helper.log
+
+**-g** or **--fetch-public-ip**::
+    Fetch the the public ip address for each supported NAT helper method.
+
+**-p** or **--port** __external_port__:__internal_port__::
+    Forward external_port to internal_port.  This option can appear
+    more than once.
+
+BUGS
+----
+This probably doesn't run on Windows. That's not a big issue, since we don't
+really want to deal with Windows before October 2010 anyway.
+
+SEE ALSO
+--------
+**tor**(1) +
+
+See also the "tor-fw-helper-spec.txt" file, distributed with Tor.
+
+AUTHORS
+-------
+    Jacob Appelbaum <jacob@torproject.org>, Steven J. Murdoch <Steven.Murdoch@cl.cam.ac.uk>

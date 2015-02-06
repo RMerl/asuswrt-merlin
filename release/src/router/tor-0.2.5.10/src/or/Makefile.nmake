@@ -1,0 +1,77 @@
+all: tor.exe
+
+CFLAGS = /O2 /MT /I ..\win32 /I ..\..\..\build-alpha\include /I ..\common \
+    /I ..\ext
+
+LIBS = ..\..\..\build-alpha\lib\libevent.lib \
+ ..\..\..\build-alpha\lib\libcrypto.lib \
+ ..\..\..\build-alpha\lib\libssl.lib \
+ ..\..\..\build-alpha\lib\libz.lib \
+ ws2_32.lib advapi32.lib shell32.lib \
+ crypt32.lib gdi32.lib user32.lib
+
+LIBTOR_OBJECTS = \
+  addressmap.obj \
+  buffers.obj \
+  channel.obj \
+  channeltls.obj \
+  circpathbias.obj \
+  circuitbuild.obj \
+  circuitlist.obj \
+  circuitmux.obj \
+  circuitmux_ewma.obj \
+  circuitstats.obj \
+  circuituse.obj \
+  command.obj \
+  config.obj \
+  config_codedigest.obj \
+  confparse.obj \
+  connection.obj \
+  connection_edge.obj \
+  connection_or.obj \
+  control.obj \
+  cpuworker.obj \
+  directory.obj \
+  dirserv.obj \
+  dirvote.obj \
+  dns.obj \
+  dnsserv.obj \
+  ext_orport.obj \
+  fp_pair.obj \
+  entrynodes.obj \
+  geoip.obj \
+  hibernate.obj \
+  main.obj \
+  microdesc.obj \
+  networkstatus.obj \
+  nodelist.obj \
+  ntmain.obj \
+  onion.obj \
+  onion_fast.obj \
+  onion_ntor.obj \
+  onion_tap.obj \
+  policies.obj \
+  reasons.obj \
+  relay.obj \
+  rendclient.obj \
+  rendcommon.obj \
+  rendmid.obj \
+  rendservice.obj \
+  rephist.obj \
+  replaycache.obj \
+  router.obj \
+  routerlist.obj \
+  routerparse.obj \
+  routerset.obj \
+  statefile.obj \
+  status.obj \
+  transports.obj
+
+libtor.lib: $(LIBTOR_OBJECTS)
+	lib $(LIBTOR_OBJECTS) /out:$@
+
+tor.exe: libtor.lib tor_main.obj
+	$(CC) $(CFLAGS) $(LIBS) libtor.lib ..\common\*.lib ..\ext\*.lib tor_main.obj /Fe$@
+
+clean:
+	del $(LIBTOR_OBJECTS) tor_main.obj *.lib tor.exe

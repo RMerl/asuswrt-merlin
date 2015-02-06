@@ -239,8 +239,8 @@ var findasus_support = isSupport("findasus");
 var usericon_support = isSupport("usericon");
 var localAP_support = isSupport("localap");
 var ntfs_sparse_support = isSupport("sparse");
-
 var tr069_support = isSupport("tr069");
+var tor_support = isSupport("tor");
 var QISWIZARD = "QIS_wizard.htm";
 // Todo: Support repeater mode
 if(isMobile() && sw_mode != 2 && !dsl_support)
@@ -516,11 +516,11 @@ tabtitle[2] = new Array("", "<#menu5_2_1#>", "<#menu5_2_2#>", "<#menu5_2_3#>", "
 tabtitle[3] = new Array("", "<#menu5_3_1#>", "<#dualwan#>", "<#menu5_3_3#>", "<#menu5_3_4#>", "<#menu5_3_5#>", "<#menu5_3_6#>", "<#NAT_passthrough_itemname#>", "<#menu5_4_4#>");
 tabtitle[4] = new Array("", "<#UPnPMediaServer#>", "<#menu5_4_1#>", "NFS Exports" , "<#menu5_4_2#>");
 tabtitle[5] = new Array("", "IPv6");
-tabtitle[6] = new Array("", "VPN Status", "PPTP Server", "OpenVPN Servers", "PPTP/L2TP Client", "OpenVPN Clients");
+tabtitle[6] = new Array("", "VPN Status", "PPTP Server", "OpenVPN Servers", "PPTP/L2TP Client", "OpenVPN Clients", "TOR");
 tabtitle[7] = new Array("", "<#menu5_1_1#>", "<#menu5_5_2#>", "<#menu5_5_5#>", "<#menu5_5_3#>", "<#menu5_5_4#>", "<#menu5_5_6#>");
 tabtitle[8] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "<#menu5_6_4#>", "Performance tuning", "<#menu_dsl_setting#>", "<#menu_feedback#>", "SNMP", "TR-069");
 tabtitle[9] = new Array("", "<#menu5_7_2#>", "<#menu5_7_4#>", "<#menu5_7_3#>", "IPv6", "<#menu5_7_6#>", "<#menu5_7_5#>", "<#menu_dsl_log#>", "<#Connections#>");
-tabtitle[10] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>", "SMTP Client", "Smart Connect Rule");
+tabtitle[10] = new Array("", "<#Network_Analysis#>", "Netstat", "<#NetworkTools_WOL#>", "SMTP Client", "<#smart_connect_rule#>");
 if(bwdpi_support){
 	if(based_modelid == "RT-AC3200"){
 		tabtitle[11] = new Array("", "<#Bandwidth_monitor#>", "QoS", "<#Adaptive_History#>", "<table style='margin-top:-10px \\9;'><tr><td><img src='/images/ROG_Logo.png' style='border:0px;width:32px;'></td><td>ROG First</td></tr></table>");
@@ -549,7 +549,7 @@ tablink[2] = new Array("", "Advanced_LAN_Content.asp", "Advanced_DHCP_Content.as
 tablink[3] = new Array("", "Advanced_WAN_Content.asp", "Advanced_WANPort_Content.asp", "Advanced_PortTrigger_Content.asp", "Advanced_VirtualServer_Content.asp", "Advanced_Exposed_Content.asp", "Advanced_ASUSDDNS_Content.asp", "Advanced_NATPassThrough_Content.asp", "Advanced_Modem_Content.asp");
 tablink[4] = new Array("", "mediaserver.asp", "Advanced_AiDisk_samba.asp", "Advanced_AiDisk_NFS.asp", "Advanced_AiDisk_ftp.asp");
 tablink[5] = new Array("", "Advanced_IPv6_Content.asp");
-tablink[6] = new Array("", "Advanced_VPNStatus.asp", "Advanced_VPN_PPTP.asp", "Advanced_VPN_OpenVPN.asp", "Advanced_VPNClient_Content.asp", "Advanced_OpenVPNClient_Content.asp");
+tablink[6] = new Array("", "Advanced_VPNStatus.asp", "Advanced_VPN_PPTP.asp", "Advanced_VPN_OpenVPN.asp", "Advanced_VPNClient_Content.asp", "Advanced_OpenVPNClient_Content.asp", "Advanced_TOR_Content.asp");
 tablink[7] = new Array("", "Advanced_BasicFirewall_Content.asp", "Advanced_URLFilter_Content.asp", "Advanced_KeywordFilter_Content.asp","Advanced_MACFilter_Content.asp", "Advanced_Firewall_Content.asp", "Advanced_Firewall_IPv6_Content.asp");
 tablink[8] = new Array("", "Advanced_OperationMode_Content.asp", "Advanced_System_Content.asp", "Advanced_FirmwareUpgrade_Content.asp", "Advanced_SettingBackup_Content.asp", "Advanced_PerformanceTuning_Content.asp", "Advanced_ADSL_Content.asp", "Advanced_Feedback.asp", "Advanced_SNMP_Content.asp", "Advanced_TR069_Content.asp");
 tablink[9] = new Array("", "Main_LogStatus_Content.asp", "Main_WStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_IPV6Status_Content.asp", "Main_RouteStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_AdslStatus_Content.asp", "Main_ConnStatus_Content.asp");
@@ -914,6 +914,10 @@ function remove_url(){
 	
 	if(!adBlock_support){
 		remove_menu_item("AiProtection_AdBlock.asp");
+	}
+
+	if(!tor_support){
+		remove_menu_item("Advanced_TOR_Content.asp");
 	}
 }
 

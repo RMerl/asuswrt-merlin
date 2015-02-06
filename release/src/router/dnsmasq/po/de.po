@@ -9,10 +9,10 @@
 # Simon Kelley <simon@thekelleys.org.uk>, 2005.
 msgid ""
 msgstr ""
-"Project-Id-Version: dnsmasq 2.70\n"
+"Project-Id-Version: dnsmasq 2.73\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-06-18 12:24+0100\n"
-"PO-Revision-Date: 2014-05-01 22:51+0100\n"
+"PO-Revision-Date: 2015-01-19 15:43+0100\n"
 "Last-Translator: Conrad Kostecki <ck@conrad-kostecki.de>\n"
 "Language-Team: German <de@li.org>\n"
 "Language: de\n"
@@ -20,12 +20,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.6.5\n"
+"X-Generator: Poedit 1.7.3\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
 #: cache.c:505
 msgid "Internal error in cache."
-msgstr ""
+msgstr "Interner Fehler im Cache."
 
 #: cache.c:908
 #, c-format
@@ -126,7 +126,7 @@ msgstr "Lokale abzuhörende Adresse(n) angeben."
 
 #: option.c:319
 msgid "Return ipaddr for all hosts in specified domains."
-msgstr "IP-Adresse für alle Hosts in angebenen Domänen festlegen."
+msgstr "IP-Adresse für alle Hosts in angegebenen Domänen festlegen."
 
 # FIXME: the English test is not to the point. Just use a shortened description
 # from the manpage instead. -- MA
@@ -310,18 +310,16 @@ msgid "Specify path to resolv.conf (defaults to %s)."
 msgstr "Pfad zu resolv.conf festlegen (%s voreingestellt)."
 
 #: option.c:362
-#, fuzzy
 msgid "Specify path to file with server= options"
-msgstr "Dateipfad für Prozesskennung (PID) festlegen (Voreinstellung: %s)."
+msgstr " Dateipfad mit der Option server= angeben"
 
 #: option.c:363
 msgid "Specify address(es) of upstream servers with optional domains."
 msgstr "Adresse(n) vorgelagerter Server festlegen, optional mit Domänen."
 
 #: option.c:364
-#, fuzzy
 msgid "Specify address of upstream servers for reverse address queries"
-msgstr "Adresse(n) vorgelagerter Server festlegen, optional mit Domänen."
+msgstr "Adresse(n) vorgelagerter Server festlegen, für reverse Adressanfragen"
 
 #: option.c:365
 msgid "Never forward queries to specified domains."
@@ -657,23 +655,23 @@ msgstr "Spezifiziere eine Domain und Adressbereich für synthetisierte Namen"
 
 #: option.c:446
 msgid "Activate DNSSEC validation"
-msgstr ""
+msgstr "Aktiviere DNSSEC-Validierung"
 
 #: option.c:447
 msgid "Specify trust anchor key digest."
-msgstr ""
+msgstr "Spezifiziere Vertrauensursprung (Trust Anchor) der Schlüssel-Prüfdaten (Key Digest)."
 
 #: option.c:448
 msgid "Disable upstream checking for DNSSEC debugging."
-msgstr ""
+msgstr "Deaktiviere die Überprüfung vorgelagerter Server für DNSSEC-Debugging"
 
 #: option.c:449
 msgid "Ensure answers without DNSSEC are in unsigned zones."
-msgstr ""
+msgstr "Stellt sicher, dass Antworten ohne DNSSEC sich in einer unsignierten Zone befinden."
 
 #: option.c:450
 msgid "Don't check DNSSEC signature timestamps until first cache-reload"
-msgstr ""
+msgstr "DNSSEC Signatur-Zeitstempel nicht prüfen, bis erstmalig der Cache neugeladen wird"
 
 #: option.c:452
 msgid "Specify DHCPv6 prefix class"
@@ -697,11 +695,11 @@ msgstr "RA nicht protokollieren."
 
 #: option.c:458
 msgid "Accept queries only from directly-connected networks"
-msgstr ""
+msgstr "Akzeptiere nur Anfragen von direkt verbundenen Netzwerken"
 
 #: option.c:459
 msgid "Detect and remove DNS forwarding loops"
-msgstr ""
+msgstr "Erkennen und Entfernen von DNS-Weiterleitungsschleifen"
 
 #: option.c:661
 #, c-format
@@ -958,18 +956,16 @@ msgid "Bad name in host-record"
 msgstr "Unzulässiger Name in host-record"
 
 #: option.c:3826
-#, fuzzy
 msgid "bad trust anchor"
-msgstr "unzulässiger Portbereich"
+msgstr "unzulässiger Vertrauensursprung (Trust Anchor)"
 
 #: option.c:3840
 msgid "bad HEX in trust anchor"
-msgstr ""
+msgstr "unzulässiger Hexwert in Vertrauensursprung (Trust Anchor)"
 
 #: option.c:3850
-#, fuzzy
 msgid "unsupported option (check that dnsmasq was compiled with DHCP/TFTP/DNSSEC/DBus support)"
-msgstr "unzulässige Option (prüfen Sie, ob dnsmasq mit DHCP/TFTP/DBus-Unterstützt übersetzt wurde)"
+msgstr "Nicht unterstützte Option (prüfen Sie, ob DNSMasq mit DHCP/TFTP/DNSSEC/DBus-Unterstützung übersetzt wurde)"
 
 #: option.c:3909
 msgid "missing \""
@@ -988,7 +984,6 @@ msgid "missing parameter"
 msgstr "fehler Parameter"
 
 #: option.c:3972
-#, fuzzy
 msgid "illegal option"
 msgstr "unzulässige Option"
 
@@ -1110,7 +1105,7 @@ msgstr "möglichen DNS-Rebind-Angriff entdeckt: %s"
 
 #: forward.c:1132 forward.c:1663
 msgid "Ignoring query from non-local network"
-msgstr ""
+msgstr "Ignoriere Anfragen vom nicht lokalen Netzwerk"
 
 #: forward.c:2101
 #, c-format
@@ -1189,9 +1184,9 @@ msgid "using nameserver %s#%d for %s %s"
 msgstr "Benutze Namensserver %s#%d für %s %s"
 
 #: network.c:1483
-#, fuzzy, c-format
+#, c-format
 msgid "NOT using nameserver %s#%d - query loop detected"
-msgstr "Benutze Namensserver %s#%d für %s %s"
+msgstr "Benutze Namensserver %s#%d NICHT - Anfragenschleife festgetellt"
 
 #: network.c:1486
 #, c-format
@@ -1205,16 +1200,15 @@ msgstr "Benutze Namensserver %s#%d"
 
 #: dnsmasq.c:154
 msgid "No trust anchors provided for DNSSEC"
-msgstr ""
+msgstr "Keine Vertrauensursprünge (Trust Anchor) für DNSSEC verfügbar"
 
 #: dnsmasq.c:157
 msgid "Cannot reduce cache size from default when DNSSEC enabled"
-msgstr ""
+msgstr "Kann die Standard Cachegröße nicht verkleinern, wenn DNSSEC aktiviert ist"
 
 #: dnsmasq.c:159
-#, fuzzy
 msgid "DNSSEC not available: set HAVE_DNSSEC in src/config.h"
-msgstr "DBus nicht verfügbar: setzen Sie HAVE_DBUS in src/config.h"
+msgstr "DNSSEC nicht verfügbar: setzen Sie HAVE_DNSSEC in src/config.h"
 
 #: dnsmasq.c:165
 msgid "TFTP server not available: set HAVE_TFTP in src/config.h"
@@ -1241,9 +1235,8 @@ msgid "authoritative DNS not available: set HAVE_AUTH in src/config.h"
 msgstr "Authoritatives DNS nicht verfügbar: Es muss HAVE_AUTH in src/config.h gesetzt sein"
 
 #: dnsmasq.c:193
-#, fuzzy
 msgid "Loop detection not available: set HAVE_LOOP in src/config.h"
-msgstr "TFTP-Server nicht verfügbar, setzen Sie HAVE_TFTP in src/config.h"
+msgstr "Loop-Erkennung nicht verfügbar, setzen Sie HAVE_LOOP in src/config.h"
 
 #: dnsmasq.c:201
 msgid "zone serial must be configured in --auth-soa"
@@ -1317,15 +1310,15 @@ msgstr "DBus-Unterstützung eingeschaltet: warte auf Systembus-Verbindung"
 
 #: dnsmasq.c:672
 msgid "DNS service limited to local subnets"
-msgstr ""
+msgstr "DNS-Dienst auf lokale Subnetze eingeschränkt"
 
 #: dnsmasq.c:677
 msgid "DNSSEC validation enabled"
-msgstr ""
+msgstr "DNSSEC-Validierung aktiviert"
 
 #: dnsmasq.c:679
 msgid "DNSSEC signature timestamps not checked until first cache reload"
-msgstr ""
+msgstr "DNSSEC Signatur-Zeitstempel werden erst ab dem ersten Neuladen des Caches überprüft"
 
 #: dnsmasq.c:684
 #, c-format
@@ -1366,7 +1359,7 @@ msgstr "DHCP, Sockets exklusiv an das Interface %s gebunden"
 # FIXME: this and the next few must be full strings to be translatable - do not assemble in code"
 #: dnsmasq.c:753
 msgid "root is "
-msgstr "Wurzel ist"
+msgstr "Wurzel ist "
 
 #: dnsmasq.c:753
 msgid "enabled"
@@ -1432,7 +1425,7 @@ msgstr "Das TFTP-Verzeichnis %s ist nicht zugreifbar: %s"
 
 #: dnsmasq.c:1151
 msgid "now checking DNSSEC signature timestamps"
-msgstr ""
+msgstr "Prüfe jetzt DNSSEC Signatur-Zeitstempel"
 
 #: dnsmasq.c:1218
 #, c-format
@@ -1506,7 +1499,7 @@ msgstr "DHCP-Paket ohne Adresse an Schnittstelle %s empfangen"
 #: dhcp.c:408
 #, c-format
 msgid "ARP-cache injection failed: %s"
-msgstr ""
+msgstr "APR-Cache Injektion fehlgeschlagen: %s"
 
 #: dhcp.c:506
 #, c-format
@@ -1763,13 +1756,13 @@ msgid "DHCP request for unsupported hardware type (%d) received on %s"
 msgstr "DHCP-Anfrage für nicht unterstützen Hardwaretyp (%d) auf %s empfangen"
 
 #: bpf.c:376
-#, fuzzy, c-format
+#, c-format
 msgid "cannot create PF_ROUTE socket: %s"
-msgstr "kann DHCP-Socket nicht erzeugen: %s"
+msgstr "Kann PF_ROUTE socket nicht erzeugen: %s"
 
 #: bpf.c:397
 msgid "Unknown protocol version from route socket"
-msgstr ""
+msgstr "Unbekannte Protokollversion vom Route Socket"
 
 #: helper.c:153
 msgid "lease() function missing in Lua script"
@@ -2020,50 +2013,50 @@ msgstr "konnte IPset-Kontroll-Socket nicht erzeugen: %s"
 #: blockdata.c:58
 #, c-format
 msgid "DNSSEC memory in use %u, max %u, allocated %u"
-msgstr ""
+msgstr "DNSSEC Speicher in Benutzung %u, Max %u, zugewiesen %u"
 
 #: tables.c:76
 msgid "error: fill_addr missused"
-msgstr ""
+msgstr "Fehler: fill_addr falsch verwendet"
 
 #: tables.c:105
-#, fuzzy, c-format
+#, c-format
 msgid "failed to access pf devices: %s"
-msgstr "konnte auf %s nicht zugreifen: %s"
+msgstr "konnte auf pf Geräte nicht zugreifen: %s"
 
 #: tables.c:119
-#, fuzzy, c-format
+#, c-format
 msgid "warning: no opened pf devices %s"
-msgstr "Warnung: Keine Adresse für die Schnittstelle %s gefunden"
+msgstr "Warnung: Keine geöffneten pf Geräte %s"
 
 #: tables.c:127
-#, fuzzy, c-format
+#, c-format
 msgid "error: cannot use table name %s"
-msgstr "kann Hostnamen nicht ermitteln: %s"
+msgstr "Fehler: Kann Tabellenname %s nicht benutzen"
 
 #: tables.c:135
 #, c-format
 msgid "error: cannot strlcpy table name %s"
-msgstr ""
+msgstr "Fehler: Kann den Tabellennamen %s nicht strlcpy"
 
 #: tables.c:141
 #, c-format
 msgid "warning: pfr_add_tables: %s(%d)"
-msgstr ""
+msgstr "Warnung: pfr_add_tables: %s(%d)"
 
 #: tables.c:147
 msgid "info: table created"
-msgstr ""
+msgstr "Info: Tabelle erstellt"
 
 #: tables.c:158
 #, c-format
 msgid "warning: DIOCR%sADDRS: %s"
-msgstr ""
+msgstr "Warnung: DIOCR%sADDRS: %s"
 
 #: tables.c:162
-#, fuzzy, c-format
+#, c-format
 msgid "%d addresses %s"
-msgstr "Fehlerhafte Adresse"
+msgstr "%d Adressen %s"
 
 #~ msgid "no interface with address %s"
 #~ msgstr "keine Schnittstelle mit Adresse %s"

@@ -203,9 +203,9 @@ function initial(){
 		document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 		document.getElementById('guest_image').style.background = "url(images/New_ui/TimeLimits.png)";
 		$('content_title').innerHTML = "AiProtection - <#Time_Scheduling#>";
-		$('desc_title').innerHTML = "Time Scheduling allows you to set the time limit for a client's network usage. To use Time Scheduling:";		
-		//$('web_title').innerHTML = "<#Web_Title#> - Time Scheduling";
-		$('PC_enable').innerHTML = "Enable Time Scheduling";
+		$('desc_title').innerHTML = "<#ParentalCtrl_Desc_TS#>";
+		$('web_title').innerHTML = "<#Web_Title#> - <#Time_Scheduling#>";
+		$('PC_enable').innerHTML = "<#ParentalCtrl_Enable_TS#>";
 		$('switch_menu').style.display = "";
 	}
 

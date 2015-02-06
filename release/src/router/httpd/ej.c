@@ -155,7 +155,7 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 		desc = search_desc (pkw, name);
 		if (desc != NULL) {
 #ifdef RTCONFIG_ODMPID
-			static char pattern1[1024];
+			static char pattern1[2048];
 			char *p_PID_STR = NULL;
 			char *PID_STR = nvram_safe_get("productid");
 			char *ODM_PID_STR = nvram_safe_get("odmpid");

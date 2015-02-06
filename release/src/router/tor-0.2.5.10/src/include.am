@@ -1,0 +1,7 @@
+include src/ext/include.am
+include src/common/include.am
+include src/or/include.am
+include src/test/include.am
+include src/tools/include.am
+include src/win32/include.am
+include src/config/include.am

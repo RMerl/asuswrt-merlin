@@ -270,7 +270,9 @@ helpcontent[25] = new Array("",
 							"This item allows system to monitor the ADSL line, designed to maintain stability of the line. Based on current line condition necessary changes will be adopted.",
 							"This feature allows system to capture diagnostic DSL debug log in the background, duration depends on the \"Diagnostic debug log capture duration\" option, after capture completed debug log would be transmitted automatically to ASUS Support Team for analysis.",
 							"The G.INP stands for Impulse Noise Protection. It works on ADSL2, ADSL2+, and VDSL2 only. It is enabled to provide enhanced protection against impulse noise or to increase the efficiency of providing impulse noise protection. If your DSLAM does not support it, please disable it.",
-							"This item configures Rx AGC(Auto Gain Control) GAIN for ADSL, if tweak the Stability Adjustment (ADSL) setting still could not get desired downstream speed, then could try to set Rx AGC GAIN Adjustment to High Performance mode. However if your ADSL connection is unstable and has some CRC then could set to Stable mode."
+							"This item configures Rx AGC(Auto Gain Control) GAIN for ADSL, if tweak the Stability Adjustment (ADSL) setting still could not get desired downstream speed, then could try to set Rx AGC GAIN Adjustment to High Performance mode. However if your ADSL connection is unstable and has some CRC then could set to Stable mode.",
+							"This item supports G.vector. With G.vector crosstalk among the signals in the same cable could be canceled, such as far-end crosstalk (FEXT). Which would significantly improve Signal-to-Noise Ratio (SNR) that leads to higher achievable bit rates. However CO must deploy Vectored VDSL2 DSLAM in order for this feature to work. If you find it doesn't work well or you know the G.vector of your ISP is non-standard, please enable both of this option and Non-standard G.vector.",
+							"This item supports Non-standard G.vector for specific countries. Please note that if your G.vector is standard, please do not enable this option for optimized performance."
 							);
 							
 //DualWAN

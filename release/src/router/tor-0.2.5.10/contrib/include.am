@@ -1,0 +1,18 @@
+
+EXTRA_DIST+= \
+	contrib/README					\
+	contrib/client-tools/torify			\
+	contrib/dist/rc.subr				\
+	contrib/dist/suse/tor.sh.in			\
+	contrib/dist/tor.sh				\
+	contrib/dist/torctl				\
+	contrib/dist/tor.service.in			\
+	contrib/operator-tools/linux-tor-prio.sh	\
+	contrib/operator-tools/tor-exit-notice.html	\
+	contrib/or-tools/exitlist			\
+	contrib/win32build/package_nsis-mingw.sh	\
+	contrib/win32build/tor-mingw.nsi.in		\
+	contrib/win32build/tor.ico			\
+	contrib/win32build/tor.nsi.in
+
+bin_SCRIPTS+= contrib/client-tools/torify

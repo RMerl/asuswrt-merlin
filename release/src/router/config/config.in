@@ -479,6 +479,9 @@ config RTCONFIG_RALINK_MT7620
 	depends on RTCONFIG_RALINK
 	default n
 
+config RTCONFIG_RALINK_MT7621
+	bool "Ralink Chip - MT7621 Support"
+
 config RTCONFIG_SPI_FAST_CLOCK
 	bool "Ralink Chip - Double SPI clock"
 	depends on RTCONFIG_RALINK
@@ -841,6 +844,10 @@ config RTCONFIG_WIFILOGO
 
 config RTCONFIG_JFFS2USERICON
 	bool "Client list user upload icon"
+	default n
+
+config RTCONFIG_TOR
+	bool "The orion router function"
 	default n
 
 config RTCONFIG_TR069

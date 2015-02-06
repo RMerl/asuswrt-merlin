@@ -228,7 +228,8 @@ enum {
 	MODEL_RTAC52U,
 	MODEL_RTAC51U,
 	MODEL_RTN54U,
-	MODEL_RTN56UV2,
+	MODEL_RTAC54U,
+	MODEL_RTN56UB1,
 	MODEL_RTAC1200HP,
 	MODEL_RTAC55U,
 	MODEL_RT4GAC55U,
@@ -600,8 +601,11 @@ extern uint32_t set_gpio(uint32_t gpio, uint32_t value);
 extern uint32_t get_gpio(uint32_t gpio);
 extern int get_switch_model(void);
 extern uint32_t get_phy_speed(uint32_t portmask);
+#if defined(RTCONFIG_RALINK_MT7620)
 extern int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx);
-
+#elif defined(RTCONFIG_RALINK_MT7621)
+extern int get_mt7621_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx);
+#endif
 /* sysdeps/ralink/ *.c */
 #if defined(RTCONFIG_RALINK)
 extern int rtkswitch_ioctl(int val, int val2);
@@ -622,7 +626,12 @@ extern int ralink_gpio_init(unsigned int idx, int dir);
 extern int config_rtkswitch(int argc, char *argv[]);
 extern int get_channel_list_via_driver(int unit, char *buffer, int len);
 extern int get_channel_list_via_country(int unit, const char *country_code, char *buffer, int len);
+#if defined(RTCONFIG_RALINK_MT7620)
 extern int __mt7620_wan_bytecount(int unit, unsigned long *tx, unsigned long *rx);
+#elif defined(RTCONFIG_RALINK_MT7620)
+extern int __mt7621_wan_bytecount(int unit, unsigned long *tx, unsigned long *rx);
+#endif
+
 #elif defined(RTCONFIG_QCA)
 extern char *wif_to_vif(char *wif);
 extern int config_rtkswitch(int argc, char *argv[]);
@@ -723,7 +732,11 @@ extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *
 extern int check_bwdpi_nvram_setting();
 
 /* mt7620.c */
+#if defined(RTCONFIG_RALINK_MT7620)
 extern void ATE_mt7620_esw_port_status(void);
+#elif defined(RTCONFIG_RALINK_MT7621)
+extern void ATE_mt7621_esw_port_status(void);
+#endif
 
 /* notify_rc.c */
 extern int notify_rc(const char *event_name);

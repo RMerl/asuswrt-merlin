@@ -1,0 +1,14 @@
+@LOCALSTATEDIR@/log/tor/*log {
+	daily
+	rotate 5
+	compress
+	delaycompress
+	missingok
+	notifempty
+	# you may need to change the username/groupname below
+	create 0640 _tor _tor
+	sharedscripts
+	postrotate
+		/etc/init.d/tor reload > /dev/null
+	endscript
+}

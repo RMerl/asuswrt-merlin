@@ -1,0 +1,74 @@
+'\" t
+.\"     Title: tor-resolve
+.\"    Author: Peter Palfrader
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/11/2014
+.\"    Manual: Tor Manual
+.\"    Source: Tor
+.\"  Language: English
+.\"
+.TH "TOR\-RESOLVE" "1" "09/11/2014" "Tor" "Tor Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+tor-resolve \- resolve a hostname to an IP address via tor
+.SH "SYNOPSIS"
+.sp
+\fBtor\-resolve\fR [\-4|\-5] [\-v] [\-x] \fIhostname\fR [\fIsockshost\fR[:\fIsocksport\fR]]
+.SH "DESCRIPTION"
+.sp
+\fBtor\-resolve\fR is a simple script to connect to a SOCKS proxy that knows about the SOCKS RESOLVE command, hand it a hostname, and return an IP address\&.
+.sp
+By default, \fBtor\-resolve\fR uses the Tor server running on 127\&.0\&.0\&.1 on SOCKS port 9050\&. If this isn\(cqt what you want, you should specify an explicit \fIsockshost\fR and/or \fIsocksport\fR on the command line\&.
+.SH "OPTIONS"
+.PP
+\fB\-v\fR
+.RS 4
+Display verbose output\&.
+.RE
+.PP
+\fB\-x\fR
+.RS 4
+Perform a reverse lookup: get the PTR record for an IPv4 address\&.
+.RE
+.PP
+\fB\-5\fR
+.RS 4
+Use the SOCKS5 protocol\&. (Default)
+.RE
+.PP
+\fB\-4\fR
+.RS 4
+Use the SOCKS4a protocol rather than the default SOCKS5 protocol\&. Doesn\(cqt support reverse DNS\&.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBtor\fR(1), \fBtorify\fR(1)\&.
+.sp
+See doc/socks\-extensions\&.txt in the Tor package for protocol details\&.
+.SH "AUTHORS"
+.sp
+Roger Dingledine <arma@mit\&.edu>, Nick Mathewson <nickm@alum\&.mit\&.edu>\&.
+.SH "AUTHOR"
+.PP
+\fBPeter Palfrader\fR
+.RS 4
+Author.
+.RE

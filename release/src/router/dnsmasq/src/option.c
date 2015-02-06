@@ -147,6 +147,9 @@ struct myoption {
 #define LOPT_LOCAL_SERVICE 335
 #define LOPT_DNSSEC_TIME   336
 #define LOPT_LOOP_DETECT   337
+#define LOPT_IGNORE_ADDR   338
+#define LOPT_MINCTTL       339
+#define LOPT_DHCP_INOTIFY  340
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option opts[] =  
@@ -159,7 +162,7 @@ static const struct myoption opts[] =
     { "no-poll", 0, 0, 'n' },
     { "help", 0, 0, 'w' },
     { "no-daemon", 0, 0, 'd' },
-    { "log-queries", 0, 0, 'q' },
+    { "log-queries", 2, 0, 'q' },
     { "user", 2, 0, 'u' },
     { "group", 2, 0, 'g' },
     { "resolv-file", 2, 0, 'r' },
@@ -181,6 +184,7 @@ static const struct myoption opts[] =
     { "local-service", 0, 0, LOPT_LOCAL_SERVICE },
     { "bogus-priv", 0, 0, 'b' },
     { "bogus-nxdomain", 1, 0, 'B' },
+    { "ignore-address", 1, 0, LOPT_IGNORE_ADDR },
     { "selfmx", 0, 0, 'e' },
     { "filterwin2k", 0, 0, 'f' },
     { "pid-file", 2, 0, 'x' },
@@ -244,6 +248,7 @@ static const struct myoption opts[] =
     { "interface-name", 1, 0, LOPT_INTNAME },
     { "dhcp-hostsfile", 1, 0, LOPT_DHCP_HOST },
     { "dhcp-optsfile", 1, 0, LOPT_DHCP_OPTS },
+    { "dhcp-hostsdir", 1, 0, LOPT_DHCP_INOTIFY },
     { "dhcp-no-override", 0, 0, LOPT_OVERRIDE },
     { "tftp-port-range", 1, 0, LOPT_TFTPPORTS },
     { "stop-dns-rebind", 0, 0, LOPT_REBIND },
@@ -253,6 +258,7 @@ static const struct myoption opts[] =
     { "dhcp-broadcast", 2, 0, LOPT_BROADCAST },
     { "neg-ttl", 1, 0, LOPT_NEGTTL },
     { "max-ttl", 1, 0, LOPT_MAXTTL },
+    { "min-cache-ttl", 1, 0, LOPT_MINCTTL },
     { "max-cache-ttl", 1, 0, LOPT_MAXCTTL },
     { "dhcp-alternate-port", 2, 0, LOPT_ALTPORT },
     { "dhcp-scriptuser", 1, 0, LOPT_SCRIPTUSR },
@@ -331,6 +337,7 @@ static struct {
   { 'G', ARG_DUP, "<hostspec>", gettext_noop("Set address or hostname for a specified machine."), NULL },
   { LOPT_DHCP_HOST, ARG_DUP, "<path>", gettext_noop("Read DHCP host specs from file."), NULL },
   { LOPT_DHCP_OPTS, ARG_DUP, "<path>", gettext_noop("Read DHCP option specs from file."), NULL },
+  { LOPT_DHCP_INOTIFY, ARG_DUP, "<path>", gettext_noop("Read DHCP host specs from a directory."), NULL }, 
   { LOPT_TAG_IF, ARG_DUP, "tag-expression", gettext_noop("Evaluate conditional tag expression."), NULL },
   { 'h', OPT_NO_HOSTS, NULL, gettext_noop("Do NOT load %s file."), HOSTSFILE },
   { 'H', ARG_DUP, "<path>", gettext_noop("Specify a hosts file to be read in addition to %s."), HOSTSFILE },
@@ -355,7 +362,7 @@ static struct {
   { LOPT_FORCE, ARG_DUP, "<optspec>", gettext_noop("DHCP option sent even if the client does not request it."), NULL},
   { 'p', ARG_ONE, "<integer>", gettext_noop("Specify port to listen for DNS requests on (defaults to 53)."), NULL },
   { 'P', ARG_ONE, "<integer>", gettext_noop("Maximum supported UDP packet size for EDNS.0 (defaults to %s)."), "*" },
-  { 'q', OPT_LOG, NULL, gettext_noop("Log DNS queries."), NULL },
+  { 'q', ARG_DUP, NULL, gettext_noop("Log DNS queries."), NULL },
   { 'Q', ARG_ONE, "<integer>", gettext_noop("Force the originating port for upstream DNS queries."), NULL },
   { 'R', OPT_NO_RESOLV, NULL, gettext_noop("Do NOT read resolv.conf."), NULL },
   { 'r', ARG_DUP, "<path>", gettext_noop("Specify path to resolv.conf (defaults to %s)."), RESOLVFILE }, 
@@ -368,6 +375,8 @@ static struct {
   { 'T', ARG_ONE, "<integer>", gettext_noop("Specify time-to-live in seconds for replies from /etc/hosts."), NULL },
   { LOPT_NEGTTL, ARG_ONE, "<integer>", gettext_noop("Specify time-to-live in seconds for negative caching."), NULL },
   { LOPT_MAXTTL, ARG_ONE, "<integer>", gettext_noop("Specify time-to-live in seconds for maximum TTL to send to clients."), NULL },
+  { LOPT_MAXCTTL, ARG_ONE, "<integer>", gettext_noop("Specify time-to-live ceiling for cache."), NULL },
+  { LOPT_MINCTTL, ARG_ONE, "<integer>", gettext_noop("Specify time-to-live floor for cache."), NULL },
   { 'u', ARG_ONE, "<username>", gettext_noop("Change to this user after startup. (defaults to %s)."), CHUSER }, 
   { 'U', ARG_DUP, "set:<tag>,<class>", gettext_noop("Map DHCP vendor class to tag."), NULL },
   { 'v', 0, NULL, gettext_noop("Display dnsmasq version and copyright information."), NULL },
@@ -457,6 +466,7 @@ static struct {
   { LOPT_QUIET_RA, OPT_QUIET_RA, NULL, gettext_noop("Do not log RA."), NULL },
   { LOPT_LOCAL_SERVICE, OPT_LOCAL_SERVICE, NULL, gettext_noop("Accept queries only from directly-connected networks"), NULL },
   { LOPT_LOOP_DETECT, OPT_LOOP_DETECT, NULL, gettext_noop("Detect and remove DNS forwarding loops"), NULL },
+  { LOPT_IGNORE_ADDR, ARG_DUP, "<ipaddr>", gettext_noop("Ignore DNS responses containing ipaddr."), NULL }, 
   { 0, 0, NULL, NULL, NULL }
 }; 
 
@@ -1702,8 +1712,9 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
       break;
 #endif /* HAVE_DHCP */
 
-    case LOPT_DHCP_HOST: /* --dhcp-hostfile */
+    case LOPT_DHCP_HOST: /* --dhcp-hostsfile */
     case LOPT_DHCP_OPTS: /* --dhcp-optsfile */
+    case LOPT_DHCP_INOTIFY: /* dhcp-hostsdir */
     case 'H': /* --addn-hosts */
       {
 	struct hostsfile *new = opt_malloc(sizeof(struct hostsfile));
@@ -1726,6 +1737,12 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	    new->next = daemon->dhcp_opts_file;
 	    daemon->dhcp_opts_file = new;
 	  } 	  
+	else if (option == LOPT_DHCP_INOTIFY)
+	  {
+	    new->next = daemon->inotify_hosts;
+	    daemon->inotify_hosts = new;
+	  }
+	
 	break;
       }
       
@@ -2119,14 +2136,23 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
       break;
       
     case 'B':  /* --bogus-nxdomain */
-      {
+    case LOPT_IGNORE_ADDR: /* --ignore-address */
+     {
 	struct in_addr addr;
 	unhide_metas(arg);
 	if (arg && (inet_pton(AF_INET, arg, &addr) > 0))
 	  {
 	    struct bogus_addr *baddr = opt_malloc(sizeof(struct bogus_addr));
-	    baddr->next = daemon->bogus_addr;
-	    daemon->bogus_addr = baddr;
+	    if (option == 'B')
+	      {
+		baddr->next = daemon->bogus_addr;
+		daemon->bogus_addr = baddr;
+	      }
+	    else
+	      {
+		baddr->next = daemon->ignore_addr;
+		daemon->ignore_addr = baddr;
+	      }
 	    baddr->addr = addr;
 	  }
 	else
@@ -2409,6 +2435,12 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	ret_err(gen_err);
       break;  
     
+    case 'q': /* --log-queries */
+      set_option_bool(OPT_LOG);
+      if (arg && strcmp(arg, "extra") == 0)
+	set_option_bool(OPT_EXTRALOG);
+      break;
+
     case LOPT_MAX_LOGS:  /* --log-async */
       daemon->max_logs = LOG_MAX; /* default */
       if (arg && !atoi_check(arg, &daemon->max_logs))
@@ -2438,6 +2470,7 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
     case 'T':         /* --local-ttl */
     case LOPT_NEGTTL: /* --neg-ttl */
     case LOPT_MAXTTL: /* --max-ttl */
+    case LOPT_MINCTTL: /* --min-cache-ttl */
     case LOPT_MAXCTTL: /* --max-cache-ttl */
     case LOPT_AUTHTTL: /* --auth-ttl */
       {
@@ -2448,6 +2481,12 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	  daemon->neg_ttl = (unsigned long)ttl;
 	else if (option == LOPT_MAXTTL)
 	  daemon->max_ttl = (unsigned long)ttl;
+	else if (option == LOPT_MINCTTL)
+	  {
+	    if (ttl > TTL_FLOOR_LIMIT)
+	      ttl = TTL_FLOOR_LIMIT;
+	    daemon->min_cache_ttl = (unsigned long)ttl;
+	  }
 	else if (option == LOPT_MAXCTTL)
 	  daemon->max_cache_ttl = (unsigned long)ttl;
 	else if (option == LOPT_AUTHTTL)
@@ -4012,6 +4051,13 @@ static void read_file(char *file, FILE *f, int hard_opt)
   fclose(f);
 }
 
+#ifdef HAVE_DHCP
+int option_read_hostsfile(char *file)
+{
+  return one_file(file, LOPT_BANK);
+}
+#endif
+
 static int one_file(char *file, int hard_opt)
 {
   FILE *f;
@@ -4109,7 +4155,7 @@ struct hostsfile *expand_filelist(struct hostsfile *list)
 	    
 	    /* don't read this as a file */
 	    ah->flags |= AH_INACTIVE;
-
+	    
 	    if (!(dir_stream = opendir(ah->fname)))
 	      my_syslog(LOG_ERR, _("cannot access directory %s: %s"), 
 			ah->fname, strerror(errno));

@@ -1,0 +1,545 @@
+Hacking Tor: An Incomplete Guide
+================================
+
+Getting started
+---------------
+
+For full information on how Tor is supposed to work, look at the files in
+https://gitweb.torproject.org/torspec.git/tree
+
+For an explanation of how to change Tor's design to work differently, look at
+https://gitweb.torproject.org/torspec.git/blob_plain/HEAD:/proposals/001-process.txt
+
+For the latest version of the code, get a copy of git, and
+
+   git clone https://git.torproject.org/git/tor
+
+We talk about Tor on the tor-talk mailing list.  Design proposals and
+discussion belong on the tor-dev mailing list.  We hang around on
+irc.oftc.net, with general discussion happening on #tor and development
+happening on #tor-dev.
+
+How we use Git branches
+-----------------------
+
+Each main development series (like 0.2.1, 0.2.2, etc) has its main work
+applied to a single branch.  At most one series can be the development series
+at a time; all other series are maintenance series that get bug-fixes only.
+The development series is built in a git branch called "master"; the
+maintenance series are built in branches called "maint-0.2.0", "maint-0.2.1",
+and so on.  We regularly merge the active maint branches forward.
+
+For all series except the development series, we also have a "release" branch
+(as in "release-0.2.1").  The release series is based on the corresponding
+maintenance series, except that it deliberately lags the maint series for
+most of its patches, so that bugfix patches are not typically included in a
+maintenance release until they've been tested for a while in a development
+release.  Occasionally, we'll merge an urgent bugfix into the release branch
+before it gets merged into maint, but that's rare.
+
+If you're working on a bugfix for a bug that occurs in a particular version,
+base your bugfix branch on the "maint" branch for the first supported series
+that has that bug.  (As of June 2013, we're supporting 0.2.3 and later.) If
+you're working on a new feature, base it on the master branch.
+
+
+How we log changes
+------------------
+
+When you do a commit that needs a ChangeLog entry, add a new file to
+the "changes" toplevel subdirectory.  It should have the format of a
+one-entry changelog section from the current ChangeLog file, as in
+
+  o Major bugfixes:
+    - Fix a potential buffer overflow. Fixes bug 99999; bugfix on
+      0.3.1.4-beta.
+
+To write a changes file, first categorize the change.  Some common categories
+are: Minor bugfixes, Major bugfixes, Minor features, Major features, Code
+simplifications and refactoring.  Then say what the change does.  If
+it's a bugfix, mention what bug it fixes and when the bug was
+introduced.  To find out which Git tag the change was introduced in,
+you can use "git describe --contains <sha1 of commit>".
+
+If at all possible, try to create this file in the same commit where
+you are making the change.  Please give it a distinctive name that no
+other branch will use for the lifetime of your change.
+
+When we go to make a release, we will concatenate all the entries
+in changes to make a draft changelog, and clear the directory. We'll
+then edit the draft changelog into a nice readable format.
+
+What needs a changes file?::
+   A not-exhaustive list: Anything that might change user-visible
+   behavior. Anything that changes internals, documentation, or the build
+   system enough that somebody could notice.  Big or interesting code
+   rewrites.  Anything about which somebody might plausibly wonder "when
+   did that happen, and/or why did we do that" 6 months down the line.
+
+Why use changes files instead of Git commit messages?::
+   Git commit messages are written for developers, not users, and they
+   are nigh-impossible to revise after the fact.
+
+Why use changes files instead of entries in the ChangeLog?::
+   Having every single commit touch the ChangeLog file tended to create
+   zillions of merge conflicts.
+
+Useful tools
+------------
+
+These aren't strictly necessary for hacking on Tor, but they can help track
+down bugs.
+
+Jenkins
+~~~~~~~
+
+https://jenkins.torproject.org
+
+Dmalloc
+~~~~~~~
+
+The dmalloc library will keep track of memory allocation, so you can find out
+if we're leaking memory, doing any double-frees, or so on.
+
+  dmalloc -l ~/dmalloc.log
+  (run the commands it tells you)
+  ./configure --with-dmalloc
+
+Valgrind
+~~~~~~~~
+
+valgrind --leak-check=yes --error-limit=no --show-reachable=yes src/or/tor
+
+(Note that if you get a zillion openssl warnings, you will also need to
+pass --undef-value-errors=no to valgrind, or rebuild your openssl
+with -DPURIFY.)
+
+Running gcov for unit test coverage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-----
+   ./configure --enable-coverage
+   make
+   make check
+   mkdir coverage-output
+   ./scripts/test/coverage coverage-output
+-----
+
+(On OSX, you'll need to start with "--enable-coverage CC=clang".)
+
+Then, look at the .gcov files in coverage-output.  '-' before a line means
+that the compiler generated no code for that line.  '######' means that the
+line was never reached.  Lines with numbers were called that number of times.
+
+If that doesn't work:
+   * Try configuring Tor with --disable-gcc-hardening
+   * You might need to run 'make clean' after you run './configure'.
+
+If you make changes to Tor and want to get another set of coverage results,
+you can run "make reset-gcov" to clear the intermediary gcov output.
+
+If you have two different "coverage-output" directories, and you want to see
+a meaningful diff between them, you can run:
+
+-----
+   ./scripts/test/cov-diff coverage-output1 coverage-output2 | less
+-----
+
+In this diff, any lines that were visited at least once will have coverage
+"1".  This lets you inspect what you (probably) really want to know: which
+untested lines were changed?  Are there any new untested lines?
+
+Running integration tests
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We have the beginnings of a set of scripts to run integration tests using
+Chutney. To try them, set CHUTNEY_PATH to your chutney source directory, and
+run "make test-network".
+
+Profiling Tor with oprofile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The oprofile tool runs (on Linux only!) to tell you what functions Tor is
+spending its CPU time in, so we can identify berformance pottlenecks.
+
+Here are some basic instructions
+
+ - Build tor with debugging symbols (you probably already have, unless
+   you messed with CFLAGS during the build process).
+ - Build all the libraries you care about with debugging symbols
+   (probably you only care about libssl, maybe zlib and Libevent).
+ - Copy this tor to a new directory
+ - Copy all the libraries it uses to that dir too (ldd ./tor will
+   tell you)
+ - Set LD_LIBRARY_PATH to include that dir.  ldd ./tor should now
+   show you it's using the libs in that dir
+ - Run that tor
+ - Reset oprofiles counters/start it
+   * "opcontrol --reset; opcontrol --start", if Nick remembers right.
+ - After a while, have it dump the stats on tor and all the libs
+   in that dir you created.
+   * "opcontrol --dump;"
+   * "opreport -l that_dir/*"
+ - Profit
+
+
+Coding conventions
+------------------
+
+Patch checklist
+~~~~~~~~~~~~~~~
+
+If possible, send your patch as one of these (in descending order of
+preference)
+
+   - A git branch we can pull from
+   - Patches generated by git format-patch
+   - A unified diff
+
+Did you remember...
+
+   - To build your code while configured with --enable-gcc-warnings?
+   - To run "make check-spaces" on your code?
+   - To run "make check-docs" to see whether all new options are on
+     the manpage?
+   - To write unit tests, as possible?
+   - To base your code on the appropriate branch?
+   - To include a file in the "changes" directory as appropriate?
+
+Whitespace and C conformance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Invoke "make check-spaces" from time to time, so it can tell you about
+deviations from our C whitespace style.  Generally, we use:
+
+    - Unix-style line endings
+    - K&R-style indentation
+    - No space before newlines
+    - A blank line at the end of each file
+    - Never more than one blank line in a row
+    - Always spaces, never tabs
+    - No more than 79-columns per line.
+    - Two spaces per indent.
+    - A space between control keywords and their corresponding paren
+      "if (x)", "while (x)", and "switch (x)", never "if(x)", "while(x)", or
+      "switch(x)".
+    - A space between anything and an open brace.
+    - No space between a function name and an opening paren. "puts(x)", not
+      "puts (x)".
+    - Function declarations at the start of the line.
+
+We try hard to build without warnings everywhere.  In particular, if you're
+using gcc, you should invoke the configure script with the option
+"--enable-gcc-warnings".  This will give a bunch of extra warning flags to
+the compiler, and help us find divergences from our preferred C style.
+
+Getting emacs to edit Tor source properly
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Nick likes to put the following snippet in his .emacs file:
+
+-----
+    (add-hook 'c-mode-hook
+          (lambda ()
+            (font-lock-mode 1)
+            (set-variable 'show-trailing-whitespace t)
+
+            (let ((fname (expand-file-name (buffer-file-name))))
+              (cond
+               ((string-match "^/home/nickm/src/libevent" fname)
+                (set-variable 'indent-tabs-mode t)
+                (set-variable 'c-basic-offset 4)
+                (set-variable 'tab-width 4))
+               ((string-match "^/home/nickm/src/tor" fname)
+                (set-variable 'indent-tabs-mode nil)
+                (set-variable 'c-basic-offset 2))
+               ((string-match "^/home/nickm/src/openssl" fname)
+                (set-variable 'indent-tabs-mode t)
+                (set-variable 'c-basic-offset 8)
+                (set-variable 'tab-width 8))
+            ))))
+-----
+
+You'll note that it defaults to showing all trailing whitespace.  The "cond"
+test detects whether the file is one of a few C free software projects that I
+often edit, and sets up the indentation level and tab preferences to match
+what they want.
+
+If you want to try this out, you'll need to change the filename regex
+patterns to match where you keep your Tor files.
+
+If you use emacs for editing Tor and nothing else, you could always just say:
+
+-----
+   (add-hook 'c-mode-hook
+          (lambda ()
+            (font-lock-mode 1)
+            (set-variable 'show-trailing-whitespace t)
+            (set-variable 'indent-tabs-mode nil)
+            (set-variable 'c-basic-offset 2)))
+-----
+
+There is probably a better way to do this.  No, we are probably not going
+to clutter the files with emacs stuff.
+
+
+Functions to use
+~~~~~~~~~~~~~~~~
+
+We have some wrapper functions like tor_malloc, tor_free, tor_strdup, and
+tor_gettimeofday; use them instead of their generic equivalents.  (They
+always succeed or exit.)
+
+You can get a full list of the compatibility functions that Tor provides by
+looking through src/common/util.h and src/common/compat.h.  You can see the
+available containers in src/common/containers.h.  You should probably
+familiarize yourself with these modules before you write too much code, or
+else you'll wind up reinventing the wheel.
+
+Use 'INLINE' instead of 'inline', so that we work properly on Windows.
+
+Calling and naming conventions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Whenever possible, functions should return -1 on error and 0 on success.
+
+For multi-word identifiers, use lowercase words combined with
+underscores. (e.g., "multi_word_identifier").  Use ALL_CAPS for macros and
+constants.
+
+Typenames should end with "_t".
+
+Function names should be prefixed with a module name or object name.  (In
+general, code to manipulate an object should be a module with the same name
+as the object, so it's hard to tell which convention is used.)
+
+Functions that do things should have imperative-verb names
+(e.g. buffer_clear, buffer_resize); functions that return booleans should
+have predicate names (e.g. buffer_is_empty, buffer_needs_resizing).
+
+If you find that you have four or more possible return code values, it's
+probably time to create an enum.  If you find that you are passing three or
+more flags to a function, it's probably time to create a flags argument that
+takes a bitfield.
+
+What To Optimize
+~~~~~~~~~~~~~~~~
+
+Don't optimize anything if it's not in the critical path.  Right now, the
+critical path seems to be AES, logging, and the network itself.  Feel free to
+do your own profiling to determine otherwise.
+
+Log conventions
+~~~~~~~~~~~~~~~
+
+https://trac.torproject.org/projects/tor/wiki/doc/TorFAQ#loglevel
+
+No error or warning messages should be expected during normal OR or OP
+operation.
+
+If a library function is currently called such that failure always means ERR,
+then the library function should log WARN and let the caller log ERR.
+
+Every message of severity INFO or higher should either (A) be intelligible
+to end-users who don't know the Tor source; or (B) somehow inform the
+end-users that they aren't expected to understand the message (perhaps
+with a string like "internal error"). Option (A) is to be preferred to
+option (B).
+
+Doxygen
+~~~~~~~~
+
+We use the 'doxygen' utility to generate documentation from our
+source code. Here's how to use it:
+
+  1. Begin every file that should be documented with
+         /**
+          * \file filename.c
+          * \brief Short description of the file.
+          **/
+
+     (Doxygen will recognize any comment beginning with /** as special.)
+
+  2. Before any function, structure, #define, or variable you want to
+     document, add a comment of the form:
+
+        /** Describe the function's actions in imperative sentences.
+         *
+         * Use blank lines for paragraph breaks
+         *   - and
+         *   - hyphens
+         *   - for
+         *   - lists.
+         *
+         * Write <b>argument_names</b> in boldface.
+         *
+         * \code
+         *     place_example_code();
+         *     between_code_and_endcode_commands();
+         * \endcode
+         */
+
+  3. Make sure to escape the characters "<", ">", "\", "%" and "#" as "\<",
+     "\>", "\\", "\%", and "\#".
+
+  4. To document structure members, you can use two forms:
+
+       struct foo {
+         /** You can put the comment before an element; */
+         int a;
+         int b; /**< Or use the less-than symbol to put the comment
+                 * after the element. */
+       };
+
+  5. To generate documentation from the Tor source code, type:
+
+     $ doxygen -g
+
+     To generate a file called 'Doxyfile'.  Edit that file and run
+     'doxygen' to generate the API documentation.
+
+  6. See the Doxygen manual for more information; this summary just
+     scratches the surface.
+
+Doxygen comment conventions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Say what functions do as a series of one or more imperative sentences, as
+though you were telling somebody how to be the function.  In other words, DO
+NOT say:
+
+     /** The strtol function parses a number.
+      *
+      * nptr -- the string to parse.  It can include whitespace.
+      * endptr -- a string pointer to hold the first thing that is not part
+      *    of the number, if present.
+      * base -- the numeric base.
+      * returns: the resulting number.
+      */
+     long strtol(const char *nptr, char **nptr, int base);
+
+Instead, please DO say:
+
+     /** Parse a number in radix <b>base</b> from the string <b>nptr</b>,
+      * and return the result.  Skip all leading whitespace.  If
+      * <b>endptr</b> is not NULL, set *<b>endptr</b> to the first character
+      * after the number parsed.
+      **/
+     long strtol(const char *nptr, char **nptr, int base);
+
+Doxygen comments are the contract in our abstraction-by-contract world: if
+the functions that call your function rely on it doing something, then your
+function should mention that it does that something in the documentation.  If
+you rely on a function doing something beyond what is in its documentation,
+then you should watch out, or it might do something else later.
+
+Putting out a new release
+-------------------------
+
+Here are the steps Roger takes when putting out a new Tor release:
+
+1) Use it for a while, as a client, as a relay, as a hidden service,
+and as a directory authority. See if it has any obvious bugs, and
+resolve those.
+
+1.5) As applicable, merge the maint-X branch into the release-X branch.
+
+2) Gather the changes/* files into a changelog entry, rewriting many
+of them and reordering to focus on what users and funders would find
+interesting and understandable.
+
+   2.1) Make sure that everything that wants a bug number has one.
+        Make sure that everything which is a bugfix says what version
+        it was a bugfix on.
+   2.2) Concatenate them.
+   2.3) Sort them by section. Within each section, sort by "version it's
+        a bugfix on", else by numerical ticket order.
+
+   2.4) Clean them up:
+
+   Standard idioms:
+     "Fixes bug 9999; bugfix on 0.3.3.3-alpha."
+
+   One period after a space.
+
+   Make stuff very terse
+
+   Make sure each section name ends with a colon
+
+   Describe the user-visible problem right away
+
+   Mention relevant config options by name.  If they're rare or unusual,
+   remind people what they're for
+
+   Avoid starting lines with open-paren
+
+   Present and imperative tense: not past.
+
+   'Relays', not 'servers' or 'nodes' or 'Tor relays'.
+
+   "Stop FOOing", not "Fix a bug where we would FOO".
+
+   Try not to let any given section be longer than about a page. Break up
+   long sections into subsections by some sort of common subtopic. This
+   guideline is especially important when organizing Release Notes for
+   new stable releases.
+
+   If a given changes stanza showed up in a different release (e.g.
+   maint-0.2.1), be sure to make the stanzas identical (so people can
+   distinguish if these are the same change).
+
+   2.5) Merge them in.
+
+   2.6) Clean everything one last time.
+
+   2.7) Run it through fmt to make it pretty.
+
+3) Compose a short release blurb to highlight the user-facing
+changes. Insert said release blurb into the ChangeLog stanza. If it's
+a stable release, add it to the ReleaseNotes file too. If we're adding
+to a release-0.2.x branch, manually commit the changelogs to the later
+git branches too.
+
+4) Bump the version number in configure.ac and rebuild.
+
+5) Make dist, put the tarball up somewhere, and tell #tor about it. Wait
+a while to see if anybody has problems building it. Try to get Sebastian
+or somebody to try building it on Windows.
+
+6) Get at least two of weasel/arma/sebastian to put the new version number
+in their approved versions list.
+
+7) Sign the tarball, then sign and push the git tag:
+  gpg -ba <the_tarball>
+  git tag -u <keyid> tor-0.2.x.y-status
+  git push origin tag tor-0.2.x.y-status
+
+8) scp the tarball and its sig to the website in the dist/ directory
+(i.e. /srv/www-master.torproject.org/htdocs/dist/ on vescum). Edit
+"include/versions.wmi" and "Makefile" to note the new version. From your
+website checkout, run ./publish to build and publish the website.
+
+9) Email the packagers (cc'ing tor-assistants) that a new tarball is up.
+
+10) Add the version number to Trac.  To do this, go to Trac, log in,
+select "Admin" near the top of the screen, then select "Versions" from
+the menu on the left.  At the right, there will be an "Add version"
+box.  By convention, we enter the version in the form "Tor:
+0.2.2.23-alpha" (or whatever the version is), and we select the date as
+the date in the ChangeLog.
+
+11) Forward-port the ChangeLog.
+
+12) Wait up to a day or two (for a development release), or until most
+packages are up (for a stable release), and mail the release blurb and
+changelog to tor-talk or tor-announce.
+
+  (We might be moving to faster announcements, but don't announce until
+  the website is at least updated.)
+
+13) If it's a stable release, bump the version number in the maint-x.y.z
+    branch to "newversion-dev", and do a "merge -s ours" merge to avoid
+    taking that change into master.  Do a similar 'merge -s theirs'
+    merge to get the change (and only that change) into release.  (Some
+    of the build scripts require that maint merge cleanly into release.)
+

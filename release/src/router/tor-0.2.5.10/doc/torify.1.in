@@ -1,0 +1,52 @@
+'\" t
+.\"     Title: torify
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/11/2014
+.\"    Manual: Tor Manual
+.\"    Source: Tor
+.\"  Language: English
+.\"
+.TH "TORIFY" "1" "09/11/2014" "Tor" "Tor Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+torify \- wrapper for torsocks and tor
+.SH "SYNOPSIS"
+.sp
+\fBtorify\fR \fIapplication\fR [\fIapplication\(cqs\fR \fIarguments\fR]
+.SH "DESCRIPTION"
+.sp
+\fBtorify\fR is a simple wrapper that attempts to find the best underlying Tor wrapper available on a system\&. It calls torsocks with a tor specific configuration file\&.
+.sp
+torsocks is an improved wrapper that explicitly rejects UDP, safely resolves DNS lookups and properly socksifies your TCP connections\&.
+.sp
+Please note that since both method use LD_PRELOAD, torify cannot be applied to suid binaries\&.
+.SH "WARNING"
+.sp
+When used with torsocks, torify should not leak DNS requests or UDP data\&.
+.sp
+Both will leak ICMP data\&.
+.SH "SEE ALSO"
+.sp
+\fBtor\fR(1), \fBtor\-resolve\fR(1), \fBtorsocks\fR(1)
+.SH "AUTHORS"
+.sp
+Peter Palfrader and Jacob Appelbaum wrote this manual\&.

@@ -1744,7 +1744,7 @@ next_mrate:
 #ifdef RTCONFIG_WPS
 	fprintf(fp, "# Wi-Fi Protected Setup (WPS)\n");
 
-	if (!subnet) {
+	if (!subnet && nvram_get_int("wps_enable")) {
 		if (nvram_match("w_Setting", "0"))
 			fprintf(fp, "wps_state=1\n");
 		else

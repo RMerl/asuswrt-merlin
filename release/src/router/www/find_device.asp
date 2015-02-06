@@ -387,7 +387,7 @@ function showclient_list(list){
 					code += '<td width="30%" class="border2"><div class="findname">' + client_list_col[7] +'</div></td>';	
 			}
 			else if(j == 5){
-					code += '<td width="6%" class="border4"><div border="0px"><a title="<#LAN_IP_client#>" target="_blank" href="http://'+ client_list_col[2] +'"><img src="../images/arrow-right.png" width="32px" hight="20px" style="border:0px"></a></div></td>';	
+					code += '<td width="6%" class="border4"><div border="0px"><a title="<#select_IP#>" target="_blank" href="http://'+ client_list_col[2] +'"><img src="../images/arrow-right.png" width="32px" hight="20px" style="border:0px"></a></div></td>';	
 			}
 			else
 				code += '';
@@ -491,7 +491,7 @@ function networkmap_update(){
 				<div style="margin:-45px 0 0 75px;"><#QKSet_Internet_Setup_fail_method1#></div>
 			</div>   
 			<div class="drImg"><img src="images/alertImg.png"></div>
-			<div style="height:70px; "></div>
+			<div style="height:100px; "></div>
 		</td>
 		</tr>
 	</table>

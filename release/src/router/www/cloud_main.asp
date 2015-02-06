@@ -739,7 +739,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 									<div id="cloud_uninstall" style="display:none;">
    										<table>	
   										<tr>
-   												<td><div class="formfontdesc" id="usbHint">ASUS AiCloud 2.0 keeps you connected to your data whatever and whenever you have an Internet connection. It links your home network and online web storage service* and lets your access it through the AiCloud 2.0 mobile app on your iOS or Android smartphone or through a personalized URL in a web browser. Now all your data can go where you do.</div></td> 
+   												<td><div class="formfontdesc" id="usbHint"><#AiCloud_maintext_note#></div></td> 
   										</tr>
 											<tr>
    												<td><div class="formfontdesc" id="usbHint2"><#Learn_more#> : <a href="http://aicloud-faq.asuscomm.com/aicloud-faq/" target="_blank" style="color:#FC0;text-decoration: underline; font-family:Lucida Console;">http://aicloud-faq.asuscomm.com/aicloud-faq/</a></div></td> 

@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<title>This is a Tor Exit Router</title>
+
+<!--
+
+This notice is intended to be placed on a virtual host for a domain that
+your Tor exit node IP reverse resolves to so that people who may be about
+to file an abuse complaint would check it first before bothering you or
+your ISP. Ex:
+http://tor-exit.yourdomain.org or http://tor-readme.yourdomain.org.
+
+This type of setup has proven very effective at reducing abuse complaints
+for exit node operators.
+
+There are a few places in this document that you may want to customize.
+They are marked with FIXME.
+
+-->
+
+</head>
+<body>
+
+<p style="text-align:center; font-size:xx-large; font-weight:bold">This is a
+Tor Exit Router</p>
+
+<p>
+Most likely you are accessing this website because you had some issue with
+the traffic coming from this IP. This router is part of the <a
+href="https://www.torproject.org/">Tor Anonymity Network</a>, which is
+dedicated to <a href="https://www.torproject.org/about/overview">providing
+privacy</a> to people who need it most: average computer users. This
+router IP should be generating no other traffic, unless it has been
+compromised.</p>
+
+
+<!-- FIXME: you should probably grab your own copy of how_tor_works_thumb.png
+     and serve it locally -->
+
+<p style="text-align:center">
+<a href="https://www.torproject.org/about/overview">
+<img src="https://www.torproject.org/images/how_tor_works_thumb.png" alt="How Tor works" style="border-style:none"/>
+</a></p>
+
+<p>
+Tor sees use by <a href="https://www.torproject.org/about/torusers">many
+important segments of the population</a>, including whistle blowers,
+journalists, Chinese dissidents skirting the Great Firewall and oppressive
+censorship, abuse victims, stalker targets, the US military, and law
+enforcement, just to name a few.  While Tor is not designed for malicious
+computer users, it is true that they can use the network for malicious ends.
+In reality however, the actual amount of <a
+href="https://www.torproject.org/docs/faq-abuse">abuse</a> is quite low. This
+is largely because criminals and hackers have significantly better access to
+privacy and anonymity than do the regular users whom they prey upon. Criminals
+can and do <a
+href="http://voices.washingtonpost.com/securityfix/2008/08/web_fraud_20_tools.html">build,
+sell, and trade</a> far larger and <a
+href="http://voices.washingtonpost.com/securityfix/2008/08/web_fraud_20_distributing_your.html">more
+powerful networks</a> than Tor on a daily basis. Thus, in the mind of this
+operator, the social need for easily accessible censorship-resistant private,
+anonymous communication trumps the risk of unskilled bad actors, who are
+almost always more easily uncovered by traditional police work than by
+extensive monitoring and surveillance anyway.</p>
+
+<p>
+In terms of applicable law, the best way to understand Tor is to consider it a
+network of routers operating as common carriers, much like the Internet
+backbone. However, unlike the Internet backbone routers, Tor routers
+explicitly do not contain identifiable routing information about the source of
+a packet, and no single Tor node can determine both the origin and destination
+of a given transmission.</p>
+
+<p>
+As such, there is little the operator of this router can do to help you track
+the connection further. This router maintains no logs of any of the Tor
+traffic, so there is little that can be done to trace either legitimate or
+illegitimate traffic (or to filter one from the other).  Attempts to
+seize this router will accomplish nothing.</p>
+
+<!-- FIXME: US-Only section. Remove if you are a non-US operator -->
+
+<p>
+Furthermore, this machine also serves as a carrier of email, which means that
+its contents are further protected under the ECPA. <a
+href="http://www.law.cornell.edu/uscode/text/18/2707">18
+USC 2707</a> explicitly allows for civil remedies ($1000/account
+<i><b>plus</b></i>  legal fees)
+in the event of a seizure executed without good faith or probable cause (it
+should be clear at this point that traffic with an originating IP address of
+FIXME_DNS_NAME should not constitute probable cause to seize the
+machine). Similar considerations exist for 1st amendment content on this
+machine.</p>
+
+<!-- FIXME: May or may not be US-only. Some non-US tor nodes have in
+     fact reported DMCA harassment... -->
+
+<p>
+If you are a representative of a company who feels that this router is being
+used to violate the DMCA, please be aware that this machine does not host or
+contain any illegal content. Also be aware that network infrastructure
+maintainers are not liable for the type of content that passes over their
+equipment, in accordance with <a
+href="http://www.law.cornell.edu/uscode/text/17/512">DMCA
+"safe harbor" provisions</a>. In other words, you will have just as much luck
+sending a takedown notice to the Internet backbone providers. Please consult
+<a href="https://www.torproject.org/eff/tor-dmca-response">EFF's prepared
+response</a> for more information on this matter.</p>
+
+<p>For more information, please consult the following documentation:</p>
+
+<ol>
+<li><a href="https://www.torproject.org/about/overview">Tor Overview</a></li>
+<li><a href="https://www.torproject.org/docs/faq-abuse">Tor Abuse FAQ</a></li>
+<li><a href="https://www.torproject.org/eff/tor-legal-faq">Tor Legal FAQ</a></li>
+</ol>
+
+<p>
+That being said, if you still have a complaint about the router,  you may
+email the <a href="mailto:FIXME_YOUR_EMAIL_ADDRESS">maintainer</a>. If
+complaints are related to a particular service that is being abused, I will
+consider removing that service from my exit policy, which would prevent my
+router from allowing that traffic to exit through it. I can only do this on an
+IP+destination port basis, however. Common P2P ports are
+already blocked.</p>
+
+<p>
+You also have the option of blocking this IP address and others on
+the Tor network if you so desire. The Tor project provides a <a
+href="https://check.torproject.org/cgi-bin/TorBulkExitList.py">web service</a>
+to fetch a list of all IP addresses of Tor exit nodes that allow exiting to a
+specified IP:port combination, and an official <a
+href="https://www.torproject.org/tordnsel/dist/">DNSRBL</a> is also available to
+determine if a given IP address is actually a Tor exit server. Please
+be considerate
+when using these options. It would be unfortunate to deny all Tor users access
+to your site indefinitely simply because of a few bad apples.</p>
+
+</body>
+</html>

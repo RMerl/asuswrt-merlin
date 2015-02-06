@@ -286,7 +286,7 @@ char* GetBW(int BW)
 		case BW_40:
 			return "40M";
 
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTAC54U) 
 		case BW_80:
 			return "80M";
 #endif
@@ -311,7 +311,7 @@ char* GetPhyMode(int Mode)
 		case MODE_HTGREENFIELD:
 			return "GREEN";
 
-#if defined(RTAC52U) || defined(RTAC51U)  || defined(RTN54U) || defined(RTAC1200HP) 
+#if defined(RTAC52U) || defined(RTAC51U)  || defined(RTN54U) || defined(RTAC1200HP) || defined(RTAC54U) 
 		case MODE_VHT:
 			return "VHT";
 #endif
@@ -547,7 +547,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	else
 		ret+=websWrite(wp, "OP Mode		: AP\n");
 
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U)  || defined(RTAC1200HP)
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U)  || defined(RTAC1200HP) || defined(RTAC54U) 
 	if (unit == 1)
 	{
 		char *p = tmp;

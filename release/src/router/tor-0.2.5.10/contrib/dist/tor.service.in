@@ -1,0 +1,24 @@
+[Unit]
+Description = Anonymizing overlay network for TCP
+After = syslog.target network.target nss-lookup.target
+
+[Service]
+Type = simple
+ExecStartPre = @BINDIR@/tor -f @CONFDIR@/torrc --verify-config
+# A torrc that has "RunAsDaemon 1" won't work with the "simple" service type;
+# let's explicitly override it.
+ExecStart = @BINDIR@/tor -f @CONFDIR@/torrc --RunAsDaemon 0
+ExecReload = /bin/kill -HUP ${MAINPID}
+KillSignal = SIGINT
+TimeoutSec = 30
+Restart = on-failure
+LimitNOFILE = 32768
+
+# Hardening
+PrivateTmp = yes
+DeviceAllow = /dev/null rw
+DeviceAllow = /dev/urandom r
+InaccessibleDirectories = /home
+
+[Install]
+WantedBy = multi-user.target

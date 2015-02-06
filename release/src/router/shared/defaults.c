@@ -667,21 +667,21 @@ struct nvram_tuple router_defaults[] = {
 #endif
 #ifdef RTAC3200
 	{"bsd_ifnames", "eth2 eth1 eth3", 0 },
-	{"wl0_bsd_steering_policy", "0 5 3 0 0 0x50", 0 },
-	{"wl1_bsd_steering_policy", "80 5 3 0 300 0x60", 0 },
-	{"wl2_bsd_steering_policy", "0 5 3 0 300 0x40", 0 },
-	{"wl0_bsd_sta_select_policy", "0 0 0 0 0 1 0 0 0 0x240", 0 },
-	{"wl1_bsd_sta_select_policy", "4 0 300 0 0 1 0 0 0 0x60", 0 },
-	{"wl2_bsd_sta_select_policy", "4 0 300 0 0 -1 0 0 0 0x40", 0 },
+	{"wl0_bsd_steering_policy", "0 5 3 -58 0 110 0x22", 0 },
+	{"wl1_bsd_steering_policy", "80 5 3 0 54 433 0x20", 0 },
+	{"wl2_bsd_steering_policy", "0 5 3 0 433 0 0x20", 0 },
+	{"wl0_bsd_sta_select_policy", "4 -58 0 110 0 0 -1 0 0 0 0x322", 0 },
+	{"wl1_bsd_sta_select_policy", "4 -76 0 433 0 0 1 0 0 0 0x220", 0 },
+	{"wl2_bsd_sta_select_policy", "4 0 433 0 0 0 1 0 0 0 0x220", 0 },
 	{"wl0_bsd_if_select_policy", "eth3 eth1", 0 },
 	{"wl1_bsd_if_select_policy", "eth3 eth2", 0 },
 	{"wl2_bsd_if_select_policy", "eth1 eth2", 0 },
 	{"wl0_bsd_if_qualify_policy", "0 0x0", 0 },
 	{"wl1_bsd_if_qualify_policy", "60 0x0", 0 },
 	{"wl2_bsd_if_qualify_policy", "0 0x0", 0 },
+	{"bsd_bounce_detect", "180 4 1800", 0 },
 #endif
 	{"bsd_scheme", "2", 0 },
-	{"bsd_bounce_detect", "180 2 1800", 0 },
 #endif
 #ifdef BCM_SSD
 	{ "ssd_enable", "0", 0 },		/* Disable SSID Steer Daemon */
@@ -810,7 +810,7 @@ struct nvram_tuple router_defaults[] = {
 
 	{ "time_zone", "GMT0" },
 	{ "time_zone_dst", "0" },
-	{ "time_zone_dstoff", "" },
+	{ "time_zone_dstoff", "M3.2.0/2,M10.2.0/2" },
 	{ "ntp_server1", "time.nist.gov" },
 	{ "ntp_server0", "pool.ntp.org" },
 
@@ -889,7 +889,9 @@ struct nvram_tuple router_defaults[] = {
 	{ "wan_pppoe_ac", ""},		/* PPPoE access concentrator name */
 	{ "wan_pppoe_options_x", ""},	// oleg patch
 	{ "wan_pptp_options_x", "" },	// oleg patch
-
+#ifdef RTCONFIG_DSL
+	{ "wan_pppoe_auth", "" },
+#endif
 	/* Misc WAN parameters */
 
 	{ "wan_desc", ""},		/* WAN connection description */
@@ -966,6 +968,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_VDSL
 	{ "dslx_vdsl_bitswap", "1" },
 	{ "dslx_vdsl_vectoring", "0" },
+	{ "dslx_vdsl_nonstd_vectoring", "0" },
 	{ "dslx_vdsl_target_snrm", "32767" },
 	{ "dslx_vdsl_tx_gain_off", "32767" },
 	{ "dslx_vdsl_rx_agc", "65535" },
@@ -991,6 +994,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_dns1", ""},
 	{ "dslx_dns2", ""},
 // now use switch_stb_x
+	{ "dslx_pppoe_auth", "" },
 	{ "dslx_pppoe_username", ""},
 	{ "dslx_pppoe_passwd", ""},
 	// this one is no longer to use
@@ -2469,6 +2473,13 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "modem_idletime", "600"},
 	{ "nmp_client_list",		""},
 	{ "ttl_inc_enable",		"0"},		/* enable TTL increment */
+#ifdef RTCONFIG_TOR	
+	{ "Tor_enable",			"0"},		/* enable Tor Transparent Proxy	*/
+	{ "Tor_socksport",		"9050"},
+	{ "Tor_transport",		"9040"},
+	{ "Tor_dnsport",		"9053"},
+	{ "Tor_redir_list",		""},
+#endif
 #ifdef RTCONFIG_JFFS2USERICON
 	{ "custom_usericon",	""},
 	{ "custom_usericon_del",	""},

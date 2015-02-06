@@ -219,7 +219,7 @@ ifeq ($(CONFIG_RALINK),y)
 	PAD2=`expr $${ISIZE} - $${KSIZE} - $${RSIZE}` ; \
 	RFSOFFSET=`expr 64 + $${KSIZE} + $${PAD2}` ; \
 	echo "PAD2: $${PAD2}" ; \
-	if [ "$(BUILD_NAME)" = "RT-N56UV2" ]; then \
+	if [ "$(BUILD_NAME)" = "RT-N56UB1" ]; then \
 		asustools/mkimage -A mips -O linux -T kernel -C lzma -a 80001000 -e $${ENTRY} -r $${RFSOFFSET} \
 		-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "0" "0" "0" "0" "0" "0" "0" "0" \
 		-d $(PLATFORMDIR)/zImage.img image/$(IMGNAME).trx ; \
@@ -232,7 +232,7 @@ ifeq ($(CONFIG_RALINK),y)
 		echo -n "PA/LNA: " ; \
 		if [ "`grep -c \"^CONFIG_INTERNAL_PA_INTERNAL_LNA\>\" $(LINUXDIR)/.config`" -gt 0 ] ; then \
 			echo "Internal PA + Internal LNA" ; \
-			if [ "$(BUILD_NAME)" = "RT-N14U" ] || [ "$(BUILD_NAME)" = "RT-AC51U" ] || [ "$(BUILD_NAME)" = "RT-N11P" ]  || [ "$(BUILD_NAME)" = "RT-N54U" ] ; then \
+			if [ "$(BUILD_NAME)" = "RT-N14U" ] || [ "$(BUILD_NAME)" = "RT-AC51U" ] || [ "$(BUILD_NAME)" = "RT-N11P" ]  || [ "$(BUILD_NAME)" = "RT-N54U" ] || [ "$(BUILD_NAME)" = "RT-AC54U" ] ; then \
 				echo "Check PA/LNA: OK" ; \
 			else \
 				mv -f image/$(IMGNAME).trx image/$(IMGNAME)_int_PA_int_LNA.trx ; \
@@ -1114,6 +1114,8 @@ define RouterOptions
 		echo "# RTCONFIG_TIMEMACHINE is not set" >>$(1); \
 		sed -i "/RTCONFIG_MDNS/d" $(1); \
 		echo "# RTCONFIG_MDNS is not set" >>$(1); \
+		sed -i "/RTCONFIG_JFFS2USERICON/d" $(1); \
+		echo "RTCONFIG_JFFS2USERICON=y" >>$(1); \
 	fi; \
 	if [ "$(ROG)" = "y" ]; then \
 		sed -i "/RTCONFIG_ROG/d" $(1); \
@@ -1218,6 +1220,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_JFFS2USERICON/d" $(1); \
 		echo "# RTCONFIG_JFFS2USERICON is not set" >>$(1); \
 	fi; \
+	if [ "$(TOR)" = "y" ]; then \
+                sed -i "/RTCONFIG_TOR/d" $(1); \
+                echo "RTCONFIG_TOR=y" >>$(1); \
+        fi; \
 	if [ "$(TR069)" = "y" ]; then \
 		sed -i "/RTCONFIG_TR069/d" $(1); \
 		echo "RTCONFIG_TR069=y" >>$(1); \

@@ -141,6 +141,11 @@ elif [ "$1" == "ntfs" ] || [ "$1" == "tntfs" ]; then
 		else
 			_set_fsck_code $2 1
 		fi
+
+		# remove "x%", "\r\r", "\r".
+		sed -i 's/[0-9]*%//g' $log_file
+		tr -d '\r' < $log_file > $log_file.tmp
+		mv $log_file.tmp $log_file
 	elif [ "$ntfs_mod" == "tuxera" ]; then
 		# return value = 0: FS be ok.
 		eval ntfsck $autocheck_option $autofix_option $2 $log_option
@@ -178,6 +183,11 @@ elif [ "$1" == "hfs" ] || [ "$1" == "hfsplus" ] || [ "$1" == "thfsplus" ] || [ "
 		else
 			_set_fsck_code $2 1
 		fi
+
+		# remove "x%", "\r\r", "\r".
+		sed -i 's/[0-9]*%//g' $log_file
+		tr -d '\r' < $log_file > $log_file.tmp
+		mv $log_file.tmp $log_file
 	elif [ "$hfs_mod" == "tuxera" ]; then
 		# return value = 0: FS be ok.
 		eval fsck_hfs $autocheck_option $autofix_option $2 $log_option

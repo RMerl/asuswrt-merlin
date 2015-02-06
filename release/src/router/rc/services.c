@@ -3749,6 +3749,11 @@ stop_services(void)
 #ifdef RTCONFIG_PARENTALCTRL
 	stop_pc_block();
 #endif
+
+#ifdef RTCONFIG_TOR
+        stop_Tor_proxy(); 
+#endif
+
 }
 
 #ifdef RTCONFIG_QCA
@@ -4367,6 +4372,7 @@ again:
 			stop_wan();
 			stop_lan();
 			stop_vlan();
+
 
 			// TODO free memory here
 		}
@@ -5776,6 +5782,14 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 	}
 #endif
 #endif
+#ifdef RTCONFIG_TOR
+        else if (strcmp(script, "tor") == 0)
+        {
+                if(action & RC_SERVICE_STOP) stop_Tor_proxy();
+                if(action & RC_SERVICE_START) start_Tor_proxy();
+		start_firewall(wan_primary_ifunit(), 0);
+        }
+#endif
 	else
 	{
 		fprintf(stderr,
@@ -6231,7 +6245,12 @@ firmware_check_main(int argc, char *argv[])
 #ifdef RTCONFIG_PARENTALCTRL
 	start_pc_block();
 #endif
+
+#ifdef RTCONFIG_TOR
+	start_Tor_proxy();
+#endif	
 	return 0;
+
 }
 
 #ifdef RTCONFIG_HTTPS
@@ -6499,6 +6518,67 @@ void start_pc_block(void)
 
 	if(nvram_get_int("MULTIFILTER_ALL") !=0 && count_pc_rules() > 0)
 		_eval(pc_block_argv, NULL, 0, &pid);
+}
+#endif
+
+#ifdef RTCONFIG_TOR
+void stop_Tor_proxy(void)
+{
+	if (pids("Tor"))
+		killall("Tor", SIGTERM);
+	sleep(1);
+	remove("/tmp/torlog");
+}
+
+void start_Tor_proxy(void)
+{
+	FILE *fp;
+        pid_t pid;
+        char *Tor_argv[] = { "Tor",
+                "-f", "/tmp/torrc", "--quiet", NULL};
+	char *Socksport;
+	char *Transport;
+	char *Dnsport;
+	struct stat mdstat_jffs, mdstat_tmp;
+	int mdesc_stat_jffs, mdesc_stat_tmp;
+ 	
+	stop_Tor_proxy();
+
+	if(!nvram_get_int("Tor_enable"))
+		return;
+	
+	if ((fp = fopen("/tmp/torrc", "w")) == NULL)
+                return;
+
+#if (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
+	mdesc_stat_tmp = stat("/tmp/.tordb/cached-microdesc-consensus", &mdstat_tmp);
+	if(mdesc_stat_tmp == -1){	
+		mdesc_stat_jffs = stat("/jffs/.tordb/cached-microdesc-consensus", &mdstat_jffs);
+		if(mdesc_stat_jffs != -1){
+			_dprintf("Tor: restore microdescriptor directory\n");
+			eval("cp", "-rf", "/jffs/.tordb", "/tmp/.tordb");
+			sleep(1);
+		}
+	}
+#endif
+	if ((Socksport = nvram_get("Tor_socksport")) == NULL)	Socksport = "9050";
+	if ((Transport = nvram_get("Tor_transport")) == NULL)   Transport = "9040";
+	if ((Dnsport = nvram_get("Tor_dnsport")) == NULL)   	Dnsport = "9053";
+	
+	fprintf(fp, "SocksPort %s\n", Socksport);
+	fprintf(fp, "Log notice file /tmp/torlog\n");
+	fprintf(fp, "VirtualAddrNetwork 10.192.0.0/10\n");
+	fprintf(fp, "AutomapHostsOnResolve 1\n");
+	fprintf(fp, "TransPort %s\n", Transport);
+	fprintf(fp, "TransListenAddress 192.168.1.1\n");
+	fprintf(fp, "DNSPort %s\n", Dnsport);
+	fprintf(fp, "DNSListenAddress 192.168.1.1\n");
+	fprintf(fp, "RunAsDaemon 1\n");
+	fprintf(fp, "DataDirectory /tmp/.tordb\n");
+	fprintf(fp, "AvoidDiskWrites 1\n");
+	fclose(fp);
+	
+	_eval(Tor_argv, NULL, 0, &pid);
 }
 #endif
 

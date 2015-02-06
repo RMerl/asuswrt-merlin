@@ -1,0 +1,61 @@
+The contrib/ directory contains small tools that might be useful for using
+with Tor.  A few of them are included in the Tor source distribution; you can
+find the others in the main Tor repository.  We don't guarantee that they're
+particularly useful.
+
+dirauth-tools/ -- Tools useful for directory authority administrators
+---------------------------------------------------------------------
+
+add-tor is an old script to manipulate the approved-routers file.
+
+nagios-check-tor-authority-cert is a nagios script to check when Tor
+authority certificates are expired or nearly expired.
+
+client-tools/ -- Tools for use with Tor clients
+-----------------------------------------------
+
+torify is a small wrapper script around torsocks.
+
+tor-resolve.py uses Tor's SOCKS port extensions to perform DNS lookups.  You
+should probably use src/tools/tor-resolve instead.
+
+dist/ -- Scripts and files for use when packaging Tor
+-----------------------------------------------------
+
+torctl, rc.subr, and tor.sh are init scripts for use with SysV-style init
+tools.  Everybody likes to write init scripts differently, it seems.
+
+tor.service is a sample service file for use with systemd.
+
+The suse/ subdirectory contains files used by the suse distribution.
+
+operator-tools/ -- Tools for Tor relay operators
+------------------------------------------------
+
+tor-exit-notice.html is an HTML file for use with the DirPortFrontPage
+option.  It tells visitors that your relay is a Tor exit node, and that they
+shouldn't assume you're the origin for the traffic that you're delivering.
+
+tor.logrotate is a configuration file for use with the logrotate tool.  You
+may need to edit it to work for you.
+
+linux-tor-prio.sh uses Linux iptables tools to traffic-shape your Tor relay's
+traffic. If it breaks, you get to keep both pieces.
+
+or-tools/ -- Tools for interacting with relays
+----------------------------------------------
+
+checksocks.pl is a tool to scan relays to see if any of them have advertised
+public SOCKS ports, so we can tell them not to.
+
+check-tor is a quick shell script to try doing a TLS handshake with a router
+or to try fetching a directory from it.
+
+exitlist is a precursor of check.torproject.org: it parses a bunch of cached
+server descriptors to determine which can connect to a given address:port.
+
+win32build -- Old files for windows packaging
+---------------------------------------------
+
+You shouldn't need these unless you're building some of the older Windows
+packages.

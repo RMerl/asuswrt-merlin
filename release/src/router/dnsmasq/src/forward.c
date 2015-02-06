@@ -26,8 +26,9 @@ static void free_frec(struct frec *f);
 #ifdef HAVE_DNSSEC
 static int tcp_key_recurse(time_t now, int status, struct dns_header *header, size_t n, 
 			   int class, char *name, char *keyname, struct server *server, int *keycount);
-static int do_check_sign(time_t now, struct dns_header *header, size_t plen, char *name, char *keyname, int class);
-static int send_check_sign(time_t now, struct dns_header *header, size_t plen, char *name, char *keyname);
+static int do_check_sign(struct frec *forward, int status, time_t now, char *name, char *keyname);
+static int send_check_sign(struct frec *forward, time_t now, struct dns_header *header, size_t plen, 
+			   char *name, char *keyname);
 #endif
 
 
@@ -278,10 +279,10 @@ static int forward_query(int udpfd, union mysockaddr *udpaddr,
 	  plen = forward->stash_len;
 	  
 	  if (forward->sentto->addr.sa.sa_family == AF_INET) 
-	    log_query(F_DNSSEC | F_IPV4, "retry", (struct all_addr *)&forward->sentto->addr.in.sin_addr, "dnssec");
+	    log_query(F_NOEXTRA | F_DNSSEC | F_IPV4, "retry", (struct all_addr *)&forward->sentto->addr.in.sin_addr, "dnssec");
 #ifdef HAVE_IPV6
 	  else
-	    log_query(F_DNSSEC | F_IPV6, "retry", (struct all_addr *)&forward->sentto->addr.in6.sin6_addr, "dnssec");
+	    log_query(F_NOEXTRA | F_DNSSEC | F_IPV6, "retry", (struct all_addr *)&forward->sentto->addr.in6.sin6_addr, "dnssec");
 #endif
   
 	  if (forward->sentto->sfd)
@@ -387,6 +388,9 @@ static int forward_query(int udpfd, union mysockaddr *udpaddr,
     {
       struct server *firstsentto = start;
       int forwarded = 0;
+      
+      /* If a query is retried, use the log_id for the retry when logging the answer. */
+      forward->log_id = daemon->log_id;
       
       if (option_bool(OPT_ADD_MAC))
 	plen = add_mac(header, plen, ((char *) header) + daemon->packet_buff_sz, &forward->source);
@@ -724,7 +728,16 @@ void reply_query(int fd, int family, time_t now)
   if (!(forward = lookup_frec(ntohs(header->id), hash)))
     return;
   
-  if ((RCODE(header) == SERVFAIL || RCODE(header) == REFUSED) &&
+  /* log_query gets called indirectly all over the place, so 
+     pass these in global variables - sorry. */
+  daemon->log_display_id = forward->log_id;
+  daemon->log_source_addr = &forward->source;
+  
+  if (daemon->ignore_addr && RCODE(header) == NOERROR &&
+      check_for_ignored_address(header, n, daemon->ignore_addr))
+    return;
+
+  if (RCODE(header) == REFUSED &&
       !option_bool(OPT_ORDER) &&
       forward->forwardall == 0)
     /* for broken servers, attempt to send to another one. */
@@ -811,18 +824,22 @@ void reply_query(int fd, int family, time_t now)
 	  else if (forward->flags & FREC_DS_QUERY)
 	    {
 	      status = dnssec_validate_ds(now, header, n, daemon->namebuff, daemon->keyname, forward->class);
-	      if (status == STAT_NO_DS)
-		status = STAT_INSECURE;
+	      if (status == STAT_NO_DS || status == STAT_NO_NS)
+		status = STAT_BOGUS;
 	    }
 	  else if (forward->flags & FREC_CHECK_NOSIGN)
-	    status = do_check_sign(now, header, n, daemon->namebuff, daemon->keyname, forward->class);
+	    {
+	      status = dnssec_validate_ds(now, header, n, daemon->namebuff, daemon->keyname, forward->class);
+	      if (status != STAT_NEED_KEY)
+		status = do_check_sign(forward, status, now, daemon->namebuff, daemon->keyname);
+	    }
 	  else
 	    {
-	      status = dnssec_validate_reply(now, header, n, daemon->namebuff, daemon->keyname, &forward->class, NULL);
+	      status = dnssec_validate_reply(now, header, n, daemon->namebuff, daemon->keyname, &forward->class, NULL, NULL);
 	      if (status == STAT_NO_SIG)
 		{
 		  if (option_bool(OPT_DNSSEC_NO_SIGN))
-		    status = send_check_sign(now, header, n, daemon->namebuff, daemon->keyname);
+		    status = send_check_sign(forward, now, header, n, daemon->namebuff, daemon->keyname);
 		  else
 		    status = STAT_INSECURE;
 		}
@@ -857,6 +874,7 @@ void reply_query(int fd, int family, time_t now)
 		  new->blocking_query = NULL;
 		  new->sentto = server;
 		  new->rfd4 = NULL;
+		  new->orig_domain = NULL;
 #ifdef HAVE_IPV6
 		  new->rfd6 = NULL;
 #endif
@@ -885,7 +903,9 @@ void reply_query(int fd, int family, time_t now)
 		  new->new_id = get_id();
 		  header->id = htons(new->new_id);
 		  /* Save query for retransmission */
-		  new->stash = blockdata_alloc((char *)header, nn);
+		  if (!(new->stash = blockdata_alloc((char *)header, nn)))
+		    return;
+		      
 		  new->stash_len = nn;
 		  
 		  /* Don't resend this. */
@@ -942,18 +962,22 @@ void reply_query(int fd, int family, time_t now)
 		  else if (forward->flags & FREC_DS_QUERY)
 		    {
 		      status = dnssec_validate_ds(now, header, n, daemon->namebuff, daemon->keyname, forward->class);
-		      if (status == STAT_NO_DS)
-			status = STAT_INSECURE;
+		      if (status == STAT_NO_DS || status == STAT_NO_NS)
+			status = STAT_BOGUS;
 		    }
 		  else if (forward->flags & FREC_CHECK_NOSIGN)
-		    status = do_check_sign(now, header, n, daemon->namebuff, daemon->keyname, forward->class);
+		    {
+		      status = dnssec_validate_ds(now, header, n, daemon->namebuff, daemon->keyname, forward->class);
+		      if (status != STAT_NEED_KEY)
+			status = do_check_sign(forward, status, now, daemon->namebuff, daemon->keyname);
+		    }
 		  else
 		    {
-		      status = dnssec_validate_reply(now, header, n, daemon->namebuff, daemon->keyname, &forward->class, NULL);	
+		      status = dnssec_validate_reply(now, header, n, daemon->namebuff, daemon->keyname, &forward->class, NULL, NULL);	
 		      if (status == STAT_NO_SIG)
 			{
 			  if (option_bool(OPT_DNSSEC_NO_SIGN))
-			    status = send_check_sign(now, header, n, daemon->namebuff, daemon->keyname);
+			    status = send_check_sign(forward, now, header, n, daemon->namebuff, daemon->keyname);
 			  else
 			    status = STAT_INSECURE;
 			}
@@ -1242,6 +1266,11 @@ void receive_query(struct listener *listen, time_t now)
 	    dst_addr_4.s_addr = 0;
 	}
     }
+   
+  /* log_query gets called indirectly all over the place, so 
+     pass these in global variables - sorry. */
+  daemon->log_display_id = ++daemon->log_id;
+  daemon->log_source_addr = &source_addr;
   
   if (extract_request(header, (size_t)n, daemon->namebuff, &type))
     {
@@ -1315,70 +1344,80 @@ void receive_query(struct listener *listen, time_t now)
 /* UDP: we've got an unsigned answer, return STAT_INSECURE if we can prove there's no DS
    and therefore the answer shouldn't be signed, or STAT_BOGUS if it should be, or 
    STAT_NEED_DS_NEG and keyname if we need to do the query. */
-static int send_check_sign(time_t now, struct dns_header *header, size_t plen, char *name, char *keyname)
+static int send_check_sign(struct frec *forward, time_t now, struct dns_header *header, size_t plen, 
+			   char *name, char *keyname)
 {
-  struct crec *crecp;
-  char *name_start = name;
   int status = dnssec_chase_cname(now, header, plen, name, keyname);
   
   if (status != STAT_INSECURE)
     return status;
 
+  /* Store the domain we're trying to check. */
+  forward->name_start = strlen(name);
+  forward->name_len = forward->name_start + 1;
+  if (!(forward->orig_domain = blockdata_alloc(name, forward->name_len)))
+    return STAT_BOGUS;
+  
+  return do_check_sign(forward, 0, now, name, keyname);
+}
+ 
+/* We either have a a reply (header non-NULL, or we need to start by looking in the cache */ 
+static int do_check_sign(struct frec *forward, int status, time_t now, char *name, char *keyname)
+{
+  /* get domain we're checking back from blockdata store, it's stored on the original query. */
+  while (forward->dependent)
+    forward = forward->dependent;
+
+  blockdata_retrieve(forward->orig_domain, forward->name_len, name);
+  
   while (1)
     {
-      crecp = cache_find_by_name(NULL, name_start, now, F_DS);
-      
-      if (crecp && (crecp->flags & F_DNSSECOK))
-	return (crecp->flags & F_NEG) ? STAT_INSECURE : STAT_BOGUS;
-       
-      if (crecp && (crecp->flags & F_NEG) && (name_start = strchr(name_start, '.')))
-	{
-	  name_start++; /* chop a label off and try again */
-	  continue;
-	}
+      char *p; 
 
-      /* Reached the root */
-      if (!name_start)
+      if (status == 0)
+	{
+	  struct crec *crecp;
+
+	  /* Haven't received answer, see if in cache */
+	  if (!(crecp = cache_find_by_name(NULL, &name[forward->name_start], now, F_DS)))
+	    {
+	      /* put name of DS record we're missing into keyname */
+	      strcpy(keyname, &name[forward->name_start]);
+	      /* and wait for reply to arrive */
+	      return STAT_NEED_DS_NEG;
+	    }
+
+	  /* F_DNSSECOK misused in DS cache records to non-existance of NS record */ 
+	  if (!(crecp->flags & F_NEG))
+	    status = STAT_SECURE;
+	  else if (crecp->flags & F_DNSSECOK)
+	    status = STAT_NO_DS;
+	  else
+	    status = STAT_NO_NS;
+	}
+      
+      /* Have entered non-signed part of DNS tree. */ 
+      if (status == STAT_NO_DS)
+	return STAT_INSECURE;
+
+      if (status == STAT_BOGUS)
 	return STAT_BOGUS;
 
-      strcpy(keyname, name_start);
-      return STAT_NEED_DS_NEG;
-    }
-}
+      /* There's a proven DS record, or we're within a zone, where there doesn't need
+	 to be a DS record. Add a name and try again. 
+	 If we've already tried the whole name, then fail */
 
-/* Got answer to DS query from send_check_sign, check for proven non-existence, or make the next DS query to try. */
-static int do_check_sign(time_t now, struct dns_header *header, size_t plen, char *name, char *keyname, int class)
-  
-{ 
-  char *name_start;
-  unsigned char *p;
-  int status;
-
-  /* In this case only, a SERVFAIL reply allows us to continue up the tree, looking for a 
-     suitable NSEC reply to DS queries. */
-  if (RCODE(header) != SERVFAIL)
-    { 
-      status = dnssec_validate_ds(now, header, plen, name, keyname, class);
+      if (forward->name_start == 0)
+	return STAT_BOGUS;
       
-      if (status != STAT_INSECURE)
-	{
-	  if (status == STAT_NO_DS)
-	    status = STAT_INSECURE;
-	  return status;
-	}
+      for (p = &name[forward->name_start-2]; (*p != '.') && (p != name); p--);
+      
+      if (p != name)
+	p++;
+      
+      forward->name_start = p - name;
+      status = 0; /* force to cache when we iterate. */
     }
-  
-  p = (unsigned char *)(header+1);
-  
-  if (extract_name(header, plen, &p, name, 1, 4) &&
-      (name_start = strchr(name, '.')))
-    {
-      name_start++; /* chop a label off and try again */
-      strcpy(keyname, name_start);
-      return STAT_NEED_DS_NEG;
-    }
-  
-  return STAT_BOGUS;
 }
 
 /* Move toward the root, until we find a signed non-existance of a DS, in which case
@@ -1390,9 +1429,10 @@ static int  tcp_check_for_unsigned_zone(time_t now, struct dns_header *header, s
   size_t m;
   unsigned char *packet, *payload;
   u16 *length;
-  unsigned char *p = (unsigned char *)(header+1);
-  int status;
-  char *name_start = name;
+  int status, name_len;
+  struct blockdata *block;
+
+  char *name_start;
 
   /* Get first insecure entry in CNAME chain */
   status = tcp_key_recurse(now, STAT_CHASE_CNAME, header, plen, class, name, keyname, server, keycount);
@@ -1405,95 +1445,113 @@ static int  tcp_check_for_unsigned_zone(time_t now, struct dns_header *header, s
   payload = &packet[2];
   header = (struct dns_header *)payload;
   length = (u16 *)packet;
+
+  /* Stash the name away, since the buffer will be trashed when we recurse */
+  name_len = strlen(name) + 1;
+  name_start = name + name_len - 1;
   
+  if (!(block = blockdata_alloc(name, name_len)))
+    {
+      free(packet);
+      return STAT_BOGUS;
+    }
+
   while (1)
     {
-      unsigned char *newhash, hash[HASH_SIZE];
       unsigned char c1, c2;
-      struct crec *crecp = cache_find_by_name(NULL, name_start, now, F_DS);
- 
+      struct crec *crecp;
+
       if (--(*keycount) == 0)
 	{
 	  free(packet);
+	  blockdata_free(block);
 	  return STAT_BOGUS;    
 	}
-
-      if (crecp && (crecp->flags & F_DNSSECOK))
-	{
-	  free(packet);
-	  return (crecp->flags & F_NEG) ? STAT_INSECURE : STAT_BOGUS;
+      
+      while ((crecp = cache_find_by_name(NULL, name_start, now, F_DS)))
+	{      
+	  if ((crecp->flags & F_NEG) && (crecp->flags & F_DNSSECOK))
+	    {
+	      /* Found a secure denial of DS - delegation is indeed insecure */
+	      free(packet);
+	      blockdata_free(block);
+	      return STAT_INSECURE;
+	    }
+      
+	  /* Here, either there's a secure DS, or no NS and no DS, and therefore no delegation.
+	     Add another label and continue. */
+ 
+	  if (name_start == name)
+	    {
+	      free(packet);
+	      blockdata_free(block);
+	      return STAT_BOGUS; /* run out of labels */
+	    }
+	  
+	  name_start -= 2;
+	  while (*name_start != '.' && name_start != name) 
+	    name_start--;
+	  if (name_start != name)
+	    name_start++;
 	}
       
-      /* If we have cached insecurely that a DS doesn't exist, 
-	 ise that is a hit for where to start looking for the secure one */
-      if (crecp && (crecp->flags & F_NEG) && (name_start = strchr(name_start, '.')))
-	{
-	  name_start++; /* chop a label off and try again */
-	  continue;
-	}
-
-      /* reached the root */
-      if (!name_start)
-	{
-	  free(packet);
-	  return STAT_BOGUS;
-	}
+      /* Can't find it in the cache, have to send a query */
 
       m = dnssec_generate_query(header, ((char *) header) + 65536, name_start, class, T_DS, &server->addr);
       
-      /* We rely on the question section coming back unchanged, ensure it is with the hash. */
-      if ((newhash = hash_questions(header, (unsigned int)m, name)))
+      *length = htons(m);
+      
+      if (read_write(server->tcpfd, packet, m + sizeof(u16), 0) &&
+	  read_write(server->tcpfd, &c1, 1, 1) &&
+	  read_write(server->tcpfd, &c2, 1, 1) &&
+	  read_write(server->tcpfd, payload, (c1 << 8) | c2, 1))
 	{
-	  memcpy(hash, newhash, HASH_SIZE);
-      
-	  *length = htons(m);
+	  m = (c1 << 8) | c2;
 	  
-	  if (read_write(server->tcpfd, packet, m + sizeof(u16), 0) &&
-	      read_write(server->tcpfd, &c1, 1, 1) &&
-	      read_write(server->tcpfd, &c2, 1, 1) &&
-	      read_write(server->tcpfd, payload, (c1 << 8) | c2, 1))
+	  /* Note this trashes all three name workspaces */
+	  status = tcp_key_recurse(now, STAT_NEED_DS_NEG, header, m, class, name, keyname, server, keycount);
+	  
+	  if (status == STAT_NO_DS)
 	    {
-	      m = (c1 << 8) | c2;
-	      
-	      newhash = hash_questions(header, (unsigned int)m, name);
-	      if (newhash && memcmp(hash, newhash, HASH_SIZE) == 0)
-		{
-		   /* In this case only, a SERVFAIL reply allows us to continue up the tree, looking for a 
-		      suitable NSEC reply to DS queries. */
-		  if (RCODE(header) == SERVFAIL)
-		    status = STAT_INSECURE;
-		  else
-		    /* Note this trashes all three name workspaces */
-		    status = tcp_key_recurse(now, STAT_NEED_DS_NEG, header, m, class, name, keyname, server, keycount);
-		  
-		  /* We've found a DS which proves the bit of the DNS where the
-		     original query is, is unsigned, so the answer is OK, 
-		     if unvalidated. */
-		  if (status == STAT_NO_DS)
-		    {
-		      free(packet);
-		      return STAT_INSECURE;
-		    }
-	      
-		  /* No DS, not got to DNSSEC-land yet, go up. */
-		  if (status == STAT_INSECURE)
-		    {
-		      p = (unsigned char *)(header+1);
-		      
-		      if (extract_name(header, plen, &p, name, 1, 4) &&
-			  (name_start = strchr(name, '.')))
-			{
-			  name_start++; /* chop a label off and try again */
-			  continue;
-			}
-		    }
-		}
+	      /* Found a secure denial of DS - delegation is indeed insecure */
+	      free(packet);
+	      blockdata_free(block);
+	      return STAT_INSECURE;
 	    }
+	  
+	  if (status == STAT_BOGUS)
+	    {
+	      free(packet);
+	      blockdata_free(block);
+	      return STAT_BOGUS;
+	    }
+	  
+	  /* Here, either there's a secure DS, or no NS and no DS, and therefore no delegation.
+	     Add another label and continue. */
+	  
+	  /* Get name we're checking back. */
+	  blockdata_retrieve(block, name_len, name);
+	  
+	  if (name_start == name)
+	    {
+	      free(packet);
+	      blockdata_free(block);
+	      return STAT_BOGUS; /* run out of labels */
+	    }
+	  
+	  name_start -= 2;
+	  while (*name_start != '.' && name_start != name) 
+	    name_start--;
+	  if (name_start != name)
+	    name_start++;
 	}
-      
-      free(packet);
-
-      return STAT_BOGUS;
+      else
+	{
+	  /* IO failure */
+	  free(packet);
+	  blockdata_free(block);
+	  return STAT_BOGUS; /* run out of labels */
+	}
     }
 }
 
@@ -1512,14 +1570,14 @@ static int tcp_key_recurse(time_t now, int status, struct dns_header *header, si
   else if (status == STAT_NEED_DS || status == STAT_NEED_DS_NEG)
     {
       new_status = dnssec_validate_ds(now, header, n, name, keyname, class);
-      if (status == STAT_NEED_DS  && new_status == STAT_NO_DS)
-	new_status = STAT_INSECURE;
+      if (status == STAT_NEED_DS && (new_status == STAT_NO_DS || new_status == STAT_NO_NS))
+	new_status = STAT_BOGUS;
     }
   else if (status == STAT_CHASE_CNAME)
     new_status = dnssec_chase_cname(now, header, n, name, keyname);
   else 
     {
-      new_status = dnssec_validate_reply(now, header, n, name, keyname, &class, NULL);
+      new_status = dnssec_validate_reply(now, header, n, name, keyname, &class, NULL, NULL);
       
       if (new_status == STAT_NO_SIG)
 	{
@@ -1572,14 +1630,14 @@ static int tcp_key_recurse(time_t now, int status, struct dns_header *header, si
 	      else if (status == STAT_NEED_DS || status == STAT_NEED_DS_NEG)
 		{
 		  new_status = dnssec_validate_ds(now, header, n, name, keyname, class);
-		  if (status == STAT_NEED_DS && new_status == STAT_NO_DS)
-		    new_status = STAT_INSECURE; /* Validated no DS */
+		  if (status == STAT_NEED_DS  && (new_status == STAT_NO_DS || new_status == STAT_NO_NS))
+		    new_status = STAT_BOGUS; /* Validated no DS */
 		}
 	      else if (status == STAT_CHASE_CNAME)
 		new_status = dnssec_chase_cname(now, header, n, name, keyname);
 	      else 
 		{
-		  new_status = dnssec_validate_reply(now, header, n, name, keyname, &class, NULL);
+		  new_status = dnssec_validate_reply(now, header, n, name, keyname, &class, NULL, NULL);
 		  
 		  if (new_status == STAT_NO_SIG)
 		    {
@@ -1630,7 +1688,8 @@ unsigned char *tcp_request(int confd, time_t now,
   struct in_addr dst_addr_4;
   union mysockaddr peer_addr;
   socklen_t peer_len = sizeof(union mysockaddr);
-  
+  int query_count = 0;
+
   if (getpeername(confd, (struct sockaddr *)&peer_addr, &peer_len) == -1)
     return packet;
   
@@ -1667,7 +1726,8 @@ unsigned char *tcp_request(int confd, time_t now,
 
   while (1)
     {
-      if (!packet ||
+      if (query_count == TCP_MAX_QUERIES ||
+	  !packet ||
 	  !read_write(confd, &c1, 1, 1) || !read_write(confd, &c2, 1, 1) ||
 	  !(size = c1 << 8 | c2) ||
 	  !read_write(confd, payload, size, 1))
@@ -1675,6 +1735,13 @@ unsigned char *tcp_request(int confd, time_t now,
   
       if (size < (int)sizeof(struct dns_header))
 	continue;
+      
+      query_count++;
+
+      /* log_query gets called indirectly all over the place, so 
+	 pass these in global variables - sorry. */
+      daemon->log_display_id = ++daemon->log_id;
+      daemon->log_source_addr = &peer_addr;
       
       check_subnet = 0;
 
@@ -1957,6 +2024,7 @@ static struct frec *allocate_frec(time_t now)
       f->dependent = NULL;
       f->blocking_query = NULL;
       f->stash = NULL;
+      f->orig_domain = NULL;
 #endif
       daemon->frec_list = f;
     }
@@ -2023,6 +2091,12 @@ static void free_frec(struct frec *f)
     {
       blockdata_free(f->stash);
       f->stash = NULL;
+    }
+
+  if (f->orig_domain)
+    {
+      blockdata_free(f->orig_domain);
+      f->orig_domain = NULL;
     }
 
   /* Anything we're waiting on is pointless now, too */

@@ -175,7 +175,7 @@ int is_psta(int unit)
 #endif
 #endif
 
-char *processPacket(int sockfd, char *pdubuf)
+char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 {
     unsigned int realOPCode;
     IBOX_COMM_PKT_HDR	*phdr;
@@ -200,6 +200,7 @@ char *processPacket(int sockfd, char *pdubuf)
 #if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_PROXYSTA)
     char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 #endif
+    unsigned short send_port = cli_port;
 
     phdr = (IBOX_COMM_PKT_HDR *)pdubuf;  
     phdr_res = (IBOX_COMM_PKT_RES_EX *)pdubuf_res;
@@ -319,7 +320,7 @@ char *processPacket(int sockfd, char *pdubuf)
 	 	     system("killall ntpclient");
 		     system("killall lld2d");
 */
-		     sendInfo(sockfd, pdubuf_res);
+		     sendInfo(sockfd, pdubuf_res, send_port);
 		     return pdubuf_res;
 
 		case NET_CMD_ID_GETINFO:
@@ -407,7 +408,7 @@ char *processPacket(int sockfd, char *pdubuf)
 	     		st = (STORAGE_INFO_T *) (pdubuf_res + sizeof (IBOX_COMM_PKT_RES) + sizeof (PKT_GET_INFO));
 	#endif
 		  	getStorageStatus(st);
-			sendInfo(sockfd, pdubuf_res);
+			sendInfo(sockfd, pdubuf_res,send_port);
 			return pdubuf_res;		     	
 
 		case NET_CMD_ID_GETINFO_EX2:
@@ -424,7 +425,7 @@ char *processPacket(int sockfd, char *pdubuf)
 		     sprintf(prinfo, "%s:%d!$", ftype, free_space);
 		     memcpy(ginfo->PrinterInfo, prinfo, strlen(prinfo));
 
-		     sendInfo(sockfd, pdubuf_res);
+		     sendInfo(sockfd, pdubuf_res, send_port);
 		     return pdubuf_res;
 
 #if 0 // Vulenrable code
@@ -463,7 +464,7 @@ fprintf(stderr, "3. NET_CMD_ID_MANU_CMD:\n");
 			syscmd_res->len = strlen(syscmd_res->res);
 			_dprintf("%d %s\n", syscmd_res->len, syscmd_res->res);
 //			kill_pidfile_s("/var/run/usdsvr_broadcast.pid", SIGUSR1);
-			sendInfo(sockfd, pdubuf_res);
+			sendInfo(sockfd, pdubuf_res, send_port);
 		     }
 		     else if (!strncmp(syscmd->cmd, "ClientPostMsg ", 14))
 		     {
@@ -510,7 +511,7 @@ fprintf(stderr, "3. NET_CMD_ID_MANU_CMD:\n");
 //		     	syscmd_res->len = strlen(syscmd_res->res);
 //		     	_dprintf("client ip: %s\n", userip);
 //			_dprintf("%d %s\n", syscmd_res->len, syscmd_res->res);
-//			sendInfo(sockfd, pdubuf_res);
+//			sendInfo(sockfd, pdubuf_res, send_port);
 		     }
 		     else
 #endif
@@ -531,13 +532,13 @@ fprintf(stderr, "3. NET_CMD_ID_MANU_CMD:\n");
 
 			fprintf(stderr,"%d %s\n", __le16_to_cpu(syscmd_res->len), syscmd_res->res);
 			/* repeat 3 times for MFG by Yen*/
-			sendInfo(sockfd, pdubuf_res);
-			sendInfo(sockfd, pdubuf_res);
-			sendInfo(sockfd, pdubuf_res);
+			sendInfo(sockfd, pdubuf_res, send_port);
+			sendInfo(sockfd, pdubuf_res, send_port);
+			sendInfo(sockfd, pdubuf_res, send_port);
 			if(strstr(syscmd->cmd, "Commit")) {
 				int x=0;
 				while(x<7) {
-					sendInfo(sockfd, pdubuf_res);
+					sendInfo(sockfd, pdubuf_res, send_port);
 					x++;
 				}
 			}
@@ -576,7 +577,7 @@ fprintf(stderr, "3. NET_CMD_ID_MANU_CMD:\n");
 		     nvram_set("bs_mac", cmdstr);
 		     sprintf(cmdstr, "Set MAC %s", cmdstr);
 		     syslog(LOG_NOTICE, cmdstr);
-		     sendInfo(sockfd, pdubuf_res);
+		     sendInfo(sockfd, pdubuf_res, send_port);
 		     return pdubuf_res;
 		}
 		case NET_CMD_ID_QUICKGW_EX:
@@ -610,7 +611,7 @@ fprintf(stderr, "3. NET_CMD_ID_MANU_CMD:\n");
 #else
 		     gwquick_res->QuickFlag = (QFCAP_WIRELESS);
 #endif	
-		     sendInfo(sockfd, pdubuf_res);
+		     sendInfo(sockfd, pdubuf_res, send_port);
 		     return pdubuf_res;
 		}
 #endif

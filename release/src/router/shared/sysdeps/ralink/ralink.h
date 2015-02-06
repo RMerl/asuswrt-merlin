@@ -316,7 +316,7 @@ typedef enum _RT_802_11_PHY_MODE {
 #define OFFSET_MAC_ADDR_2G	0x40004 //only one MAC
 #define OFFSET_MAC_GMAC2	0x4018E
 #define OFFSET_MAC_GMAC0	0x40194
-#elif defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#elif defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) || defined(RTAC54U) || defined(RTAC1200HP) || defined(RTN56UB1)
 #define OFFSET_MAC_ADDR_2G	0x40004
 #define OFFSET_MAC_ADDR		0x48004
 #define OFFSET_MAC_GMAC0	0x40022
@@ -327,7 +327,7 @@ typedef enum _RT_802_11_PHY_MODE {
 #define OFFSET_MAC_GMAC2	0x40022
 #define OFFSET_MAC_GMAC0	0x40028
 #endif
-#if defined(RTAC1200HP)
+#if defined(RTAC1200HP) || defined(RTN56UB1)
 #define OFFSET_FIX_CHANNEL      0x40170
 #endif
 #define OFFSET_PIN_CODE		0x40180

@@ -78,6 +78,7 @@ void convert_dsl_wan()
 		nvram_set("wan_dns2_x",nvram_safe_get("dslx_dns2"));
 		nvram_set("wan_pppoe_username",nvram_safe_get("dslx_pppoe_username"));
 		nvram_set("wan_pppoe_passwd",nvram_safe_get("dslx_pppoe_passwd"));
+		nvram_set("wan_pppoe_auth",nvram_safe_get("dslx_pppoe_auth"));
 		nvram_set("wan_pppoe_idletime",nvram_safe_get("dslx_pppoe_idletime"));
 		nvram_set("wan_pppoe_mtu",nvram_safe_get("dslx_pppoe_mtu"));
 		nvram_set("wan_pppoe_mru",nvram_safe_get("dslx_pppoe_mtu"));
@@ -99,6 +100,7 @@ void convert_dsl_wan()
 		nvram_set("wan0_dns2_x",nvram_safe_get("dslx_dns2"));
 		nvram_set("wan0_pppoe_username",nvram_safe_get("dslx_pppoe_username"));
 		nvram_set("wan0_pppoe_passwd",nvram_safe_get("dslx_pppoe_passwd"));
+		nvram_set("wan0_pppoe_auth",nvram_safe_get("dslx_pppoe_auth"));
 		nvram_set("wan0_pppoe_idletime",nvram_safe_get("dslx_pppoe_idletime"));
 		nvram_set("wan0_pppoe_mtu",nvram_safe_get("dslx_pppoe_mtu"));
 		nvram_set("wan0_pppoe_mru",nvram_safe_get("dslx_pppoe_mtu"));

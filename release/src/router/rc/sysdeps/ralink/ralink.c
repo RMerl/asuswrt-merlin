@@ -52,7 +52,7 @@
 char *wlc_nvname(char *keyword);
 //#endif
 
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTAC1200HP) 
+#if defined(RTAC52U) || defined(RTAC51U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 #define VHT_SUPPORT /* 11AC */
 #endif
 
@@ -594,7 +594,7 @@ setCountryCode_2G(const char *cc)
 	else if (!strcasecmp(cc, "FR")) ;
 	else if (!strcasecmp(cc, "GB")) ;
 	else if (!strcasecmp(cc, "GE")) ;
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2) 
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 	else if (!strcasecmp(cc, "EU")) ;
 #endif
 	else if (!strcasecmp(cc, "GR")) ;
@@ -893,8 +893,11 @@ getPIN()
 int
 GetPhyStatus(void)
 {
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP)  || defined(RTN56UV2)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTAC54U)
 	ATE_mt7620_esw_port_status();
+	return 1;
+#elif defined(RTN56UB1)
+	ATE_mt7621_esw_port_status();
 	return 1;
 #else
 	int fd;
@@ -958,7 +961,7 @@ setAllLedOn(void)
 #if defined(RTN14U)
 	led_control(LED_2G  , LED_ON);
 #endif
-#if defined(RTAC1200HP)
+#if defined(RTAC1200HP) || defined(RTN56UB1)
 	led_control(LED_2G  , LED_ON);
 	led_control(LED_5G  , LED_ON);
 #endif
@@ -989,7 +992,7 @@ setAllLedOff(void)
 #if defined(RTN14U)
 	led_control(LED_2G  , LED_OFF);
 #endif
-#if defined(RTAC1200HP)
+#if defined(RTAC1200HP) || defined(RTN56UB1)
 	led_control(LED_2G  , LED_OFF);
 	led_control(LED_5G  , LED_OFF);
 #endif
@@ -1578,7 +1581,12 @@ int gen_ralink_config(int band, int is_iNIC)
 #endif	/* CE_ADAPTIVITY */
 	if (str && strlen(str))
 	{
-		fprintf(fp, "CountryCode=%s\n", str);
+#if defined(RTAC1200HP)
+		if(nvram_match("JP_CS","1"))
+			fprintf(fp, "CountryCode=JP\n");
+		else
+#endif	   
+			fprintf(fp, "CountryCode=%s\n", str);
 	}
 	else
 	{
@@ -2099,7 +2107,11 @@ int gen_ralink_config(int band, int is_iNIC)
 
 	fprintf(fp, "IEEE80211H=0\n");
 #ifdef RTCONFIG_AP_CARRIER_DETECTION
+#if defined(RTAC1200HP)
+	if(nvram_match("JP_CS","1"))
+#else	
 	if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP"))
+#endif	   
 	{
 		fprintf(fp, "RDRegion=%s\n", "JAP");
 		fprintf(fp, "CarrierDetect=%d\n", 1);
@@ -2157,7 +2169,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	{
 		fprintf(fp, "GreenAP=%d\n", 1);
 	}
-#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#elif defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 	/// MT7620 GreenAP will impact TSSI, force to disable GreenAP here..
 	//  MT7620 GreenAP cause bad site survey result on RTAC52 2G.
 	{
@@ -2866,7 +2878,7 @@ int gen_ralink_config(int band, int is_iNIC)
 	if (str && strlen(str))
 	{   
 		fprintf(fp, "HT_GI=%d\n", atoi(str));
-#if defined(RTN54U) || defined(RTAC1200HP)
+#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 #if defined(VHT_SUPPORT)
 		fprintf(fp, "VHT_SGI=%d\n", atoi(str));
 #endif		
@@ -2876,14 +2888,14 @@ int gen_ralink_config(int band, int is_iNIC)
 	{
 		warning = 39;
 		fprintf(fp, "HT_GI=%d\n", 1);
-#if defined(RTN54U) || defined(RTAC1200HP)
+#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 #if defined(VHT_SUPPORT)
 		fprintf(fp, "VHT_SGI=%d\n", 1);
 #endif		
 #endif		
 	}
 
-#if defined(RTN54U) || defined(RTAC1200HP)
+#if defined(RTN54U) || defined(RTAC1200HP) || defined(RTAC54U) || defined(RTN56UB1)
 #if defined(VHT_SUPPORT)
 		fprintf(fp, "VHT_LDPC=%d\n",1);
 #endif		
@@ -5648,7 +5660,7 @@ ate_run_in(void)
 }
 #endif // RTN65U
 
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UV2)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U)
 int Set_SwitchPort_LEDs(const char *group, const char *action)
 {
 	int groupNo;
@@ -5934,7 +5946,7 @@ int wlcconnect_core(void)
 			return ret;
 
 		band = nvram_get_int("wlc_band");
-#if defined(RTCONFIG_RALINK_MT7620)
+#if defined(RTCONFIG_RALINK_MT7620) || defined(RTCONFIG_RALINK_MT7621)
 		if(band == 0)
 #else
 		if(band == 1)

@@ -1,0 +1,274 @@
+;tor.nsi - A basic win32 installer for Tor
+; Originally written by J Doe.
+; Modified by Steve Topletz, Andrew Lewman
+; See the Tor LICENSE for licensing information
+;-----------------------------------------
+;
+!include "MUI.nsh"
+!include "LogicLib.nsh"
+!include "FileFunc.nsh"
+!insertmacro GetParameters
+!define VERSION "0.2.5.10"
+!define INSTALLER "tor-${VERSION}-win32.exe"
+!define WEBSITE "https://www.torproject.org/"
+!define LICENSE "LICENSE"
+!define BIN "..\bin" ;BIN is where it expects to find tor.exe, tor-resolve.exe
+  
+ 
+SetCompressor /SOLID LZMA ;Tighter compression
+RequestExecutionLevel user ;Updated for Vista compatibility
+OutFile ${INSTALLER}
+InstallDir $PROGRAMFILES\Tor
+SetOverWrite ifnewer
+Name "Tor"
+Caption "Tor ${VERSION} Setup"
+BrandingText "The Onion Router"
+CRCCheck on
+XPStyle on
+VIProductVersion "${VERSION}"
+VIAddVersionKey "ProductName" "The Onion Router: Tor"
+VIAddVersionKey "Comments" "${WEBSITE}"
+VIAddVersionKey "LegalTrademarks" "Three line BSD"
+VIAddVersionKey "LegalCopyright" "©2004-2008, Roger Dingledine, Nick Mathewson. ©2009 The Tor Project, Inc. "
+VIAddVersionKey "FileDescription" "Tor is an implementation of Onion Routing. You can read more at ${WEBSITE}"
+VIAddVersionKey "FileVersion" "${VERSION}"
+
+!define MUI_WELCOMEPAGE_TITLE "Welcome to the Tor Setup Wizard"
+!define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of Tor ${VERSION}.\r\n\r\nIf you have previously installed Tor and it is currently running, please exit Tor first before continuing this installation.\r\n\r\n$_CLICK"
+!define MUI_ABORTWARNING
+!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\win-install.ico"
+!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\win-uninstall.ico"
+!define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\win.bmp"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\tor.exe"
+!define MUI_FINISHPAGE_LINK "Visit the Tor website for the latest updates."
+!define MUI_FINISHPAGE_LINK_LOCATION ${WEBSITE}
+
+!insertmacro MUI_PAGE_WELCOME
+; There's no point in having a clickthrough license: Our license adds
+; certain rights, but doesn't remove them.
+; !insertmacro MUI_PAGE_LICENSE "${LICENSE}"
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+!insertmacro MUI_UNPAGE_WELCOME
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+!insertmacro MUI_LANGUAGE "English"
+
+Var CONFIGDIR
+Var CONFIGFILE
+
+Function .onInit
+	Call ParseCmdLine
+FunctionEnd
+
+;Sections
+;--------
+
+Section "Tor" Tor
+;Files that have to be installed for tor to run and that the user
+;cannot choose not to install
+	SectionIn RO
+	SetOutPath $INSTDIR
+	Call ExtractBinaries
+	Call ExtractIcon
+	WriteINIStr "$INSTDIR\Tor Website.url" "InternetShortcut" "URL" ${WEBSITE}
+
+	StrCpy $CONFIGFILE "torrc"
+	StrCpy $CONFIGDIR $APPDATA\Tor
+;   ;If $APPDATA isn't valid here (Early win95 releases with no updated
+;   ; shfolder.dll) then we put it in the program directory instead.
+;   StrCmp $APPDATA "" "" +2
+;      StrCpy $CONFIGDIR $INSTDIR
+	SetOutPath $CONFIGDIR
+	;If there's already a torrc config file, ask if they want to
+	;overwrite it with the new one.
+	${If} ${FileExists} "$CONFIGDIR\torrc"
+		MessageBox MB_ICONQUESTION|MB_YESNO "You already have a Tor config file.$\r$\nDo you want to overwrite it with the default sample config file?" IDYES Yes IDNO No
+		Yes:
+			Delete $CONFIGDIR\torrc
+			Goto Next
+		No:
+			StrCpy $CONFIGFILE "torrc.sample"
+		Next:
+	${EndIf}
+	File /oname=$CONFIGFILE "..\src\config\torrc.sample"
+
+; the geoip file needs to be included and stuffed into the right directory
+; otherwise tor is unhappy
+	SetOutPath $APPDATA\Tor
+	Call ExtractGEOIP
+SectionEnd
+
+Section "Documents" Docs
+	Call ExtractDocuments
+SectionEnd
+
+SubSection /e "Shortcuts" Shortcuts
+
+Section "Start Menu" StartMenu
+  SetOutPath $INSTDIR
+  ${If} ${FileExists} "$SMPROGRAMS\Tor\*.*"
+    RMDir /r "$SMPROGRAMS\Tor"
+  ${EndIf}
+  Call CreateTorLinks
+  ${If} ${FileExists} "$INSTDIR\Documents\*.*"
+    Call CreateDocLinks
+  ${EndIf}
+SectionEnd
+
+Section "Desktop" Desktop
+   SetOutPath $INSTDIR
+   CreateShortCut "$DESKTOP\Tor.lnk" "$INSTDIR\tor.exe" "" "$INSTDIR\tor.ico" 
+SectionEnd
+
+Section /o "Run at startup" Startup
+   SetOutPath $INSTDIR
+   CreateShortCut "$SMSTARTUP\Tor.lnk" "$INSTDIR\tor.exe" "" "$INSTDIR\tor.ico" "" SW_SHOWMINIMIZED
+SectionEnd
+
+SubSectionEnd
+
+Section "Uninstall"
+   Call un.InstallPackage
+SectionEnd
+
+Section -End
+    WriteUninstaller "$INSTDIR\Uninstall.exe"
+    ;The registry entries simply add the Tor uninstaller to the Windows
+    ;uninstall list.
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tor" "DisplayName" "Tor (remove only)"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tor" "UninstallString" '"$INSTDIR\Uninstall.exe"'
+SectionEnd
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+!insertmacro MUI_DESCRIPTION_TEXT ${Tor} "The core executable and config files needed for Tor to run."
+!insertmacro MUI_DESCRIPTION_TEXT ${Docs} "Documentation about Tor."
+!insertmacro MUI_DESCRIPTION_TEXT ${ShortCuts} "Shortcuts to easily start Tor"
+!insertmacro MUI_DESCRIPTION_TEXT ${StartMenu} "Shortcuts to access Tor and its documentation from the Start Menu"
+!insertmacro MUI_DESCRIPTION_TEXT ${Desktop} "A shortcut to start Tor from the desktop"
+!insertmacro MUI_DESCRIPTION_TEXT ${Startup} "Launches Tor automatically at startup in a minimized window"
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+;####################Functions#########################
+
+Function ExtractBinaries
+	File "${BIN}\tor.exe"
+	File "${BIN}\tor-resolve.exe"
+FunctionEnd
+
+Function ExtractGEOIP
+	File "${BIN}\geoip"
+FunctionEnd
+
+Function ExtractIcon
+	File "${BIN}\tor.ico"
+FunctionEnd
+
+Function ExtractSpecs
+	File "..\doc\HACKING"
+	File "..\doc\spec\address-spec.txt"
+	File "..\doc\spec\bridges-spec.txt"
+	File "..\doc\spec\control-spec.txt"
+	File "..\doc\spec\dir-spec.txt"
+	File "..\doc\spec\path-spec.txt"
+	File "..\doc\spec\rend-spec.txt"
+	File "..\doc\spec\socks-extensions.txt"
+	File "..\doc\spec\tor-spec.txt"
+	File "..\doc\spec\version-spec.txt"
+FunctionEnd
+
+Function ExtractHTML
+	File "..\doc\tor.html"
+	File "..\doc\torify.html"
+	File "..\doc\tor-resolve.html"
+	File "..\doc\tor-gencert.html"
+FunctionEnd
+
+Function ExtractReleaseDocs
+	File "..\README"
+	File "..\ChangeLog"
+	File "..\LICENSE"
+FunctionEnd
+
+Function ExtractDocuments
+	SetOutPath "$INSTDIR\Documents"
+	Call ExtractSpecs
+	Call ExtractHTML
+	Call ExtractReleaseDocs
+FunctionEnd
+
+Function un.InstallFiles
+	Delete "$DESKTOP\Tor.lnk"
+	Delete "$INSTDIR\tor.exe"
+	Delete "$INSTDIR\tor-resolve.exe"
+	Delete "$INSTDIR\Tor Website.url"
+	Delete "$INSTDIR\torrc"
+	Delete "$INSTDIR\torrc.sample"
+	Delete "$INSTDIR\tor.ico"
+	Delete "$SMSTARTUP\Tor.lnk"
+	Delete "$INSTDIR\Uninstall.exe"
+    Delete "$INSTDIR\geoip"
+FunctionEnd
+
+Function un.InstallDirectories
+	${If} $CONFIGDIR == $INSTDIR
+		RMDir /r $CONFIGDIR
+	${EndIf}
+	RMDir /r "$INSTDIR\Documents"
+	RMDir $INSTDIR
+	RMDir /r "$SMPROGRAMS\Tor"
+	RMDir /r "$APPDATA\Tor"
+FunctionEnd
+
+Function un.WriteRegistry
+	DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Tor"
+FunctionEnd
+
+Function un.InstallPackage
+	Call un.InstallFiles
+	Call un.InstallDirectories
+	Call un.WriteRegistry
+FunctionEnd
+
+Function CreateTorLinks
+	CreateDirectory "$SMPROGRAMS\Tor"
+	CreateShortCut "$SMPROGRAMS\Tor\Tor.lnk" "$INSTDIR\tor.exe" "" "$INSTDIR\tor.ico"
+	CreateShortCut "$SMPROGRAMS\Tor\Torrc.lnk" "Notepad.exe" "$CONFIGDIR\torrc"
+	CreateShortCut "$SMPROGRAMS\Tor\Tor Website.lnk" "$INSTDIR\Tor Website.url"
+	CreateShortCut "$SMPROGRAMS\Tor\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+FunctionEnd
+
+Function CreateDocLinks
+	CreateDirectory "$SMPROGRAMS\Tor\Documents"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Documentation.lnk" "$INSTDIR\Documents"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Specification.lnk" "$INSTDIR\Documents\tor-spec.txt"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Address Specification.lnk" "$INSTDIR\Documents\address-spec.txt"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Bridges Specification.lnk" "$INSTDIR\Documents\bridges-spec.txt"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Control Specification.lnk" "$INSTDIR\Documents\control-spec.txt"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Directory Specification.lnk" "$INSTDIR\Documents\dir-spec.txt"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Path Specification.lnk" "$INSTDIR\Documents\path-spec.txt"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Rend Specification.lnk" "$INSTDIR\Documents\rend-spec.txt"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor Version Specification.lnk" "$INSTDIR\Documents\version-spec.txt"
+	CreateShortCut "$SMPROGRAMS\Tor\Documents\Tor SOCKS Extensions.lnk" "$INSTDIR\Documents\socks-extensions.txt"
+FunctionEnd
+
+Function ParseCmdLine
+	${GetParameters} $1
+	${If} $1 == "-x" ;Extract All Files
+		StrCpy $INSTDIR $EXEDIR
+		Call ExtractBinaries
+		Call ExtractDocuments
+		Quit
+	${ElseIf} $1 == "-b" ;Extract Binaries Only
+		StrCpy $INSTDIR $EXEDIR
+		Call ExtractBinaries
+		Quit
+	${ElseIf} $1 != ""
+		MessageBox MB_OK|MB_TOPMOST `${Installer} [-x|-b]$\r$\n$\r$\n  -x    Extract all files$\r$\n  -b    Extract binary files only`
+		Quit
+	${EndIf}
+FunctionEnd
+

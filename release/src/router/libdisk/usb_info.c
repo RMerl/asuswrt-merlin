@@ -1173,8 +1173,8 @@ int is_usb_modem_ready(void)
 
 	if(nvram_match(prefix, "modem") && strlen(usb_act) != 0){
 		// for the router dongle: Huawei E353, E3131.
-		if(!strncmp(usb_act, "eth", 3) ||
-				(!strncmp(usb_act, "usb", 3) && !strcmp(modem_type, "ncm"))
+		if((!strncmp(usb_act, "eth", 3) && strcmp(modem_type, "rndis")) // LU-150: ethX with RNDIS
+				|| (!strncmp(usb_act, "usb", 3) && !strcmp(modem_type, "ncm"))
 				){
 			if(!strncmp(nvram_safe_get("lan_ipaddr"), "192.168.1.", 10))
 				return 2;

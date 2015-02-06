@@ -1,0 +1,195 @@
+#!/bin/sh
+#
+# TOR control script designed to allow an easy command line interface
+# to controlling The Onion Router
+#
+# The exit codes returned are:
+#       0 - operation completed successfully. For "status", tor running.
+#       1 - For "status", tor not running.
+#       2 - Command not supported
+#       3 - Could not be started or reloaded
+#       4 - Could not be stopped
+#       5 -
+#       6 -
+#       7 -
+#       8 -
+#
+# When multiple arguments are given, only the error from the _last_
+# one is reported.
+#
+#
+# |||||||||||||||||||| START CONFIGURATION SECTION  ||||||||||||||||||||
+# --------------------                              --------------------
+# Name of the executable
+EXEC=tor
+#
+# the path to your binary, including options if necessary
+TORBIN="@BINDIR@/$EXEC"
+#
+# the path to the configuration file
+TORCONF="@CONFDIR@/torrc"
+#
+# the path to your PID file
+PIDFILE="@LOCALSTATEDIR@/run/tor/tor.pid"
+#
+# The path to the log file
+LOGFILE="@LOCALSTATEDIR@/log/tor/tor.log"
+#
+# The path to the datadirectory
+TORDATA="@LOCALSTATEDIR@/lib/tor"
+#
+TORARGS="--pidfile $PIDFILE --log \"notice file $LOGFILE\" --runasdaemon 1"
+TORARGS="$TORARGS --datadirectory $TORDATA"
+
+# If user name is set in the environment, then use it;
+# otherwise run as the invoking user (or whatever user the config
+# file says)... unless the invoking user is root. The idea here is to
+# let an unprivileged user run tor for her own use using this script,
+# while still providing for it to be used as a system daemon.
+if [ "x`id -u`" = "x0" ]; then
+    TORUSER=@TORUSER@
+fi
+
+if [ "x$TORUSER" != "x" ]; then
+    TORARGS="$TORARGS --user $TORUSER"
+fi
+
+# We no longer wrap the Tor daemon startup in an su when running as
+# root, because it's too painful to make the use of su portable.
+# Just let the daemon set the UID and GID.
+START="$TORBIN -f $TORCONF $TORARGS"
+
+#
+# --------------------                              --------------------
+# ||||||||||||||||||||   END CONFIGURATION SECTION  ||||||||||||||||||||
+
+ERROR=0
+ARGV="$@"
+if [ "x$ARGV" = "x" ] ; then
+    ARGS="help"
+fi
+
+checkIfRunning ( ) {
+    # check for pidfile
+    PID=unknown
+    if [ -f $PIDFILE ] ; then
+        PID=`/bin/cat $PIDFILE`
+        if [ "x$PID" != "x" ] ; then
+            if kill -0 $PID 2>/dev/null ; then
+               STATUS="$EXEC (pid $PID) running"
+               RUNNING=1
+            else
+                STATUS="PID file ($PIDFILE) present, but $EXEC ($PID) not running"
+                RUNNING=0
+            fi
+        else
+            STATUS="$EXEC (pid $PID?) not running"
+            RUNNING=0
+        fi
+    else
+       STATUS="$EXEC apparently not running (no pid file)"
+       RUNNING=0
+    fi
+    return
+}
+
+for ARG in $@ $ARGS
+do
+    checkIfRunning
+
+    case $ARG in
+    start)
+        if [ $RUNNING -eq 1 ]; then
+            echo "$0 $ARG: $EXEC (pid $PID) already running"
+            continue
+        fi
+        if eval "$START" ; then
+            echo "$0 $ARG: $EXEC started"
+            # Make sure it stayed up!
+            /bin/sleep 1
+            checkIfRunning
+            if [ $RUNNING -eq 0 ]; then
+                echo "$0 $ARG: $EXEC (pid $PID) quit unexpectedly"
+            fi
+        else
+            echo "$0 $ARG: $EXEC could not be started"
+            ERROR=3
+        fi
+        ;;
+    stop)
+        if [ $RUNNING -eq 0 ]; then
+            echo "$0 $ARG: $STATUS"
+            continue
+        fi
+        if kill -15 $PID ; then
+            echo "$0 $ARG: $EXEC stopped"
+        else
+            /bin/sleep 1
+            if kill -9 $PID ; then
+                echo "$0 $ARG: $EXEC stopped"
+            else
+                echo "$0 $ARG: $EXEC could not be stopped"
+                ERROR=4
+            fi
+        fi
+        # Make sure it really died!
+        /bin/sleep 1
+        checkIfRunning
+        if [ $RUNNING -eq 1 ]; then
+            echo "$0 $ARG: $EXEC (pid $PID) unexpectedly still running"
+            ERROR=4
+        fi
+        ;;
+    restart)
+        $0 stop start
+        ;;
+    reload)
+        if [ $RUNNING -eq 0 ]; then
+            echo "$0 $ARG: $STATUS"
+            continue
+        fi
+        if kill -1 $PID; then
+            /bin/sleep 1
+            echo "$EXEC (PID $PID) reloaded"
+        else
+            echo "Can't reload $EXEC"
+            ERROR=3
+        fi
+        ;;
+    status)
+        echo $STATUS
+        if [ $RUNNING -eq 1 ]; then
+            ERROR=0
+        else
+            ERROR=1
+        fi
+        ;;
+    log)
+        cat $LOGFILE
+        ;;
+    help)
+        echo "usage: $0 (start|stop|restart|status|help)"
+        /bin/cat <<EOF
+
+start      - start $EXEC
+stop       - stop $EXEC
+restart    - stop and restart $EXEC if running or start if not running
+reload     - cause the running process to reinitialize itself
+status     - tell whether $EXEC is running or not
+log        - display the contents of the log file
+help       - this text
+
+EOF
+        ERROR=0
+        ;;
+    *)
+        $0 help
+        ERROR=2
+        ;;
+
+    esac
+
+done
+
+exit $ERROR
+

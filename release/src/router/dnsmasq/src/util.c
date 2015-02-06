@@ -280,6 +280,7 @@ int sockaddr_isequal(union mysockaddr *s1, union mysockaddr *s2)
 #ifdef HAVE_IPV6      
       if (s1->sa.sa_family == AF_INET6 &&
 	  s1->in6.sin6_port == s2->in6.sin6_port &&
+	  s1->in6.sin6_scope_id == s2->in6.sin6_scope_id &&
 	  IN6_ARE_ADDR_EQUAL(&s1->in6.sin6_addr, &s2->in6.sin6_addr))
 	return 1;
 #endif

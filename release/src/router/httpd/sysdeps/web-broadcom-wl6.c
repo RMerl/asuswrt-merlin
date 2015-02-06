@@ -1216,7 +1216,8 @@ print_rate_buf(int raw_rate, char *buf)
 {
 	if (!buf) return NULL;
 
-	if ((raw_rate % 1000) == 0)
+	if (raw_rate == -1) sprintf(buf, "        ");
+	else if ((raw_rate % 1000) == 0)
 		sprintf(buf, "%6dM ", raw_rate / 1000);
 	else
 		sprintf(buf, "%6.1fM ", (double) raw_rate / 1000);

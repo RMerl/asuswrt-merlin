@@ -81,6 +81,12 @@ the upstream DNS servers.
 .B --max-cache-ttl=<time>
 Set a maximum TTL value for entries in the cache.
 .TP
+.B --min-cache-ttl=<time>
+Extend short TTL values to the time given when caching them. Note that
+artificially extending TTL values is in general a bad idea, do not do it 
+unless you have a good reason, and understand what you are doing. 
+Dnsmasq limits the value of this option to one hour, unless recompiled.
+.TP
 .B --auth-ttl=<time>
 Set the TTL value returned in answers from the authoritative server.
 .TP
@@ -98,7 +104,10 @@ only, to stop dnsmasq daemonising in production, use
 .B -k.
 .TP
 .B \-q, --log-queries
-Log the results of DNS queries handled by dnsmasq. Enable a full cache dump on receipt of SIGUSR1.
+Log the results of DNS queries handled by dnsmasq. Enable a full cache dump on receipt of SIGUSR1. If the argument "extra" is supplied, ie
+.B --log-queries=extra
+then the log has extra information at the start of each line.
+This consists of a serial number which ties together the log lines associated with an individual query, and the IP address of the requestor.
 .TP
 .B \-8, --log-facility=<facility>
 Set the facility to which dnsmasq will send syslog entries, this
@@ -293,6 +302,12 @@ an advertising web page in response to queries for unregistered names,
 instead of the correct NXDOMAIN response. This option tells dnsmasq to
 fake the correct response when it sees this behaviour. As at Sept 2003
 the IP address being returned by Verisign is 64.94.110.11
+.TP 
+.B \-B, --ignore-address=<ipaddr>
+Ignore replies to A-record queries which include the specified address. 
+No error is generated, dnsmasq simply continues to listen for another reply. 
+This is useful to defeat blocking strategies which rely on quickly supplying a
+forged answer to a DNS request for certain domain, before the correct answer can arrive.
 .TP
 .B \-f, --filterwin2k
 Later versions of windows make periodic DNS requests which don't get sensible answers from
@@ -962,6 +977,15 @@ is given, then read all the files contained in that directory. The advantage of
 using this option is the same as for --dhcp-hostsfile: the
 dhcp-optsfile will be re-read when dnsmasq receives SIGHUP. Note that
 it is possible to encode the information in a
+.TP
+.B --dhcp-hostsdir=<path>
+This is exactly equivalent to dhcp-hostfile, except for the following. The path MUST be a
+directory, and not an individual file. Changed or new files within
+the directory are read automatically, without the need to send SIGHUP.
+If a file is deleted for changed after it has been read by dnsmasq, then the
+host record it contained will remain until dnsmasq recieves a SIGHUP, or 
+is restarted; ie host records are only added dynamically.
+.TP
 .B --dhcp-boot
 flag as DHCP options, using the options names bootfile-name,
 server-ip-address and tftp-server. This allows these to be included

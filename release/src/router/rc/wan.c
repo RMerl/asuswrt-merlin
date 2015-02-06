@@ -2473,7 +2473,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 #endif
 
-#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)|| defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UV2)
+#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)|| defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 	reinit_hwnat(wan_unit);
 #endif
 

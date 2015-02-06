@@ -1598,7 +1598,7 @@ void start_lan(void)
 
 #ifdef RTCONFIG_LED_ALL
 	led_control(LED_ALL, LED_ON);
-#ifdef RTAC1200HP
+#if defined(RTAC1200HP) || defined(RTN56UB1)
 	led_control(LED_5G, LED_ON);
 	led_control(LED_2G, LED_ON);
 #endif	
@@ -2641,7 +2641,7 @@ NEITHER_WDS_OR_PSTA:
 			kill_pidfile_s(dhcp_pid_file, SIGTERM);
 		}
 	}
-	// Beceem dongle, ASIX USB to RJ45 converter, ECM.
+	// Beceem dongle, ASIX USB to RJ45 converter, ECM, rndis(LU-150: ethX with RNDIS).
 	else if(!strncmp(interface, "eth", 3)) {
 		if(nvram_get_int("sw_mode") != SW_MODE_ROUTER)
 			return;
@@ -2781,15 +2781,11 @@ NEITHER_WDS_OR_PSTA:
 			_dprintf("hotplug net INTERFACE=%s ACTION=%s: wait 2 seconds...\n", interface, action);
 			sleep(2);
 
-#ifdef RTCONFIG_DUALWAN
-			// avoid the busy time of every start_wan when booting.
-			if(!strcmp(nvram_safe_get("success_start_service"), "0")
-					&& (unit == WAN_UNIT_FIRST || nvram_match("wans_mode", "lb"))
-					){
-				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
-				start_wan_if(unit);
-			}
-#endif
+			// This is the second step of start_wan_if().
+			// First start_wan_if(): call the WiMAX process up.
+			// Second start_wan_if(): call the udhcpc up.
+			_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
+			start_wan_if(unit);
 		}
 		else // remove: do nothing.
 			;

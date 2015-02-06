@@ -1,0 +1,24 @@
+bin_PROGRAMS+= src/tools/tor-resolve src/tools/tor-gencert
+noinst_PROGRAMS+=  src/tools/tor-checkkey
+
+src_tools_tor_resolve_SOURCES = src/tools/tor-resolve.c
+src_tools_tor_resolve_LDFLAGS =
+src_tools_tor_resolve_LDADD = src/common/libor.a @TOR_LIB_MATH@ @TOR_LIB_WS32@
+
+src_tools_tor_gencert_SOURCES = src/tools/tor-gencert.c
+src_tools_tor_gencert_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
+src_tools_tor_gencert_LDADD = src/common/libor.a src/common/libor-crypto.a \
+	$(LIBDONNA) \
+        @TOR_LIB_MATH@ @TOR_ZLIB_LIBS@ @TOR_OPENSSL_LIBS@ \
+        @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
+
+src_tools_tor_checkkey_SOURCES = src/tools/tor-checkkey.c
+src_tools_tor_checkkey_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
+src_tools_tor_checkkey_LDADD = src/common/libor.a src/common/libor-crypto.a \
+	$(LIBDONNA) \
+        @TOR_LIB_MATH@ @TOR_ZLIB_LIBS@ @TOR_OPENSSL_LIBS@ \
+        @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@
+
+include src/tools/tor-fw-helper/include.am
+
+

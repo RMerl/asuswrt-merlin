@@ -1211,6 +1211,26 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	if (strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
 		fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
 
+#ifdef RTCONFIG_TOR
+	 if(nvram_match("Tor_enable", "1")){
+		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+
+		nv = strdup(nvram_safe_get("Tor_redir_list"));
+                if (strlen(nv) == 0) {
+		fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
+		fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
+		}
+		else{
+			while ((b = strsep(&nv, "<")) != NULL) {
+				if (strlen(b)==0) continue;
+					fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, b, nvram_safe_get("Tor_dnsport"));
+					fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, b, nvram_safe_get("Tor_transport"));
+			}
+			free(nv);
+		}
+	}
+#endif
+
 #ifdef RTCONFIG_YANDEXDNS
 	if (nvram_get_int("yadns_enable_x"))
 		write_yandexdns_filter(fp, lan_if, lan_ip);
@@ -1442,8 +1462,27 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 		// wanx_if != wan_if means DHCP+PPP exist?
 		if (dualwan_unit__nonusbif(unit) && strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
 			fprintf(fp, "-A PREROUTING -d %s -j VSERVER\n", wanx_ip);
-	}
 
+#ifdef RTCONFIG_TOR
+         if(nvram_match("Tor_enable", "1")){
+                ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+
+                nv = strdup(nvram_safe_get("Tor_redir_list"));
+                if (strlen(nv) == 0) {
+                fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -j REDIRECT --to-ports %s\n", lan_if, nvram_safe_get("Tor_dnsport"));
+                fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, nvram_safe_get("Tor_transport"));
+                }
+                else{
+                        while ((b = strsep(&nv, "<")) != NULL) {
+                                if (strlen(b)==0) continue;
+                                        fprintf(fp, "-A PREROUTING -i %s -p udp --dport 53 -m mac --mac-source %s -j REDIRECT --to-ports %s\n", lan_if, b, nvram_safe_get("Tor_dnsport"));
+                                        fprintf(fp, "-A PREROUTING -i %s -p tcp --syn ! -d %s -m mac --mac-source %s --match multiport --dports 80,443 -j REDIRECT --to-ports %s\n", lan_if, lan_class, b, nvram_safe_get("Tor_transport"));
+                        }
+                        free(nv);
+                }
+        }
+#endif
+	}
 	if (!fp) {
 		sprintf(name, "%s___", NAT_RULES);
 		remove_slash(name + strlen(NAT_RULES));
@@ -1673,7 +1712,7 @@ void redirect_setting(void)
 {
 	FILE *nat_fp, *redirect_fp;
 	char tmp_buf[1024];
-	char *lan_ipaddr_t, *lan_netmask_t;
+	char *lan_ipaddr_t, *lan_netmask_t, lan_ifname_t;
 
 #ifdef RTCONFIG_WIRELESSREPEATER
 	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER){
@@ -1695,7 +1734,14 @@ void redirect_setting(void)
 	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER && (nat_fp = fopen(NAT_RULES, "r")) != NULL) {
 		while ((fgets(tmp_buf, sizeof(tmp_buf), nat_fp)) != NULL
 				&& strncmp(tmp_buf, "COMMIT", 6) != 0) {
-
+#ifdef RTCONFIG_TOR
+			if(nvram_match("Tor_enable", "1")){
+				if(strstr(tmp_buf, "PREROUTING") && strstr(tmp_buf, "--to-ports 9053"))	
+					continue;
+				if(strstr(tmp_buf, "PREROUTING") && strstr(tmp_buf, "--to-ports 9040"))
+					continue;
+			}
+#endif			
 			fprintf(redirect_fp, "%s", tmp_buf);
 		}
 		fclose(nat_fp);
@@ -1717,6 +1763,7 @@ void redirect_setting(void)
 #endif
 
 	}
+
 	fprintf(redirect_fp, "-A PREROUTING ! -d %s/%s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n", lan_ipaddr_t, lan_netmask_t, lan_ipaddr_t);
 	fprintf(redirect_fp, "COMMIT\n");
 

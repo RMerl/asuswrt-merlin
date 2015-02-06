@@ -1,0 +1,52 @@
+
+Most users who realize that INSTALL files still exist should simply
+follow the directions at
+https://www.torproject.org/docs/tor-doc-unix
+
+If you got the source from git, run "./autogen.sh", which will
+run the various auto* programs. Then you can run ./configure, and
+refer to the above instructions.
+
+If it doesn't build for you:
+
+  If you have problems finding libraries, try
+    CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" \
+    ./configure
+  or
+    ./configure --with-libevent-dir=/usr/local
+  rather than simply ./configure.
+
+  If you have mysterious autoconf failures while linking openssl,
+  consider setting your LD_LIBRARY_PATH to the openssl lib directory.
+  For example, "setenv LD_LIBRARY_PATH /usr/athena/lib".
+
+  Lastly, check out
+  https://www.torproject.org/docs/faq#DoesntWork
+
+How to do static builds of tor:
+
+Tor supports linking each of the libraries it needs statically. Use the
+--enable-static-X ./configure option in conjunction with the --with-X-dir
+option for libevent, zlib, and openssl. For this to work sanely, libevent
+should be built with --disable-shared --enable-static --with-pic, and
+OpenSSL should be built with no-shared no-dso.
+
+If you need to build tor so that system libraries are also statically linked,
+use the --enable-static-tor ./configure option. This won't work on OS X
+unless you build the required crt0.o yourself. It is also incompatible with
+the --enable-gcc-hardening option.
+
+An example of how to build a mostly static tor:
+./configure --enable-static-libevent \
+            --enable-static-openssl  \
+            --enable-static-zlib     \
+            --with-libevent-dir=/tmp/static-tor/libevent-1.4.14b-stable \
+            --with-openssl-dir=/tmp/static-tor/openssl-0.9.8r/ \
+            --with-zlib-dir=/tmp/static-tor/zlib-1.2.5
+
+An example of how to build an entirely static tor:
+./configure --enable-static-tor \
+            --with-libevent-dir=/tmp/static-tor/libevent-1.4.14b-stable \
+            --with-openssl-dir=/tmp/static-tor/openssl-0.9.8r/ \
+            --with-zlib-dir=/tmp/static-tor/zlib-1.2.5
+

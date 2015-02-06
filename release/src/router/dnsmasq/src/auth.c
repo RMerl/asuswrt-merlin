@@ -413,7 +413,10 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 		peer_addr->in.sin_port = 0;
 #ifdef HAVE_IPV6
 	      else
-		peer_addr->in6.sin6_port = 0; 
+		{
+		  peer_addr->in6.sin6_port = 0; 
+		  peer_addr->in6.sin6_scope_id = 0;
+		}
 #endif
 	      
 	      for (peers = daemon->auth_peers; peers; peers = peers->next)

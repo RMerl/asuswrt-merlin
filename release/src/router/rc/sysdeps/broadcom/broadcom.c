@@ -3325,3 +3325,28 @@ reset_countryrev_5g(void)
 #endif
 	return 0;
 }
+
+#ifdef RTAC3200
+extern struct nvram_tuple router_defaults[];
+
+void
+bsd_defaults(void)
+{
+	char extendno_org[14];
+	int ext_num;
+	char ext_commit_str[8];
+	struct nvram_tuple *t;
+
+	strcpy(extendno_org, nvram_safe_get("extendno_org"));
+	if (!strlen(extendno_org) ||
+		sscanf(extendno_org, "%d-g%s", &ext_num, ext_commit_str) != 2)
+		return;
+
+	if (strcmp(rt_serialno, "378") || (ext_num >= 4120))
+		return;
+
+	for (t = router_defaults; t->name; t++)
+		if (strstr(t->name, "bsd"))
+			nvram_set(t->name, t->value);
+}
+#endif

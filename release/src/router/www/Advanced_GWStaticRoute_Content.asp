@@ -405,7 +405,7 @@ function Ctrl_LANIPList(obj){
 						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" onKeyPress="return validator.isIPAddr(this, event)">
 					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return validator.isIPAddr(this, event)" ></td>
 					<td width="34%"><input type="text" class="input_20_table" maxlength="15" name="sr_gateway_x_0" style="margin-left:-22px;width:180px;" onKeyPress="return validator.isIPAddr(this, event)"  onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
-					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#1335#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
+					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_IP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 					</td>
 					<td width="8%"><input type="text" maxlength="3" class="input_3_table" name="sr_matric_x_0"  onKeyPress="return validator.isNumber(this, event);"></td>
