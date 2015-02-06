@@ -824,19 +824,6 @@ static int dhcp6_no_relay(struct state *state, int msg_type, void *inbuff, size_
 	  }
 	else
 	  { 
-	    int all_stateless = 1;
-	    for (c = state->context; c; c = c->current)
-		if (!(c->flags & CONTEXT_RA_STATELESS))
-		  {
-		    all_stateless = 0;
-		    break;
-		 }
-	    if (all_stateless)
-		/* Windows 8 always requests an address even if the Managed bit
-		   in RA is 0 and it keeps retrying if it receives a reply
-		   stating that no addresses are available */
-		return 0;
-
 	    /* no address, return error */
 	    o1 = new_opt6(OPTION6_STATUS_CODE);
 	    put_opt6_short(DHCP6NOADDRS);
