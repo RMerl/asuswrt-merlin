@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -1724,13 +1724,16 @@ function previewImage(imageObj) {
 								<div class="type5" onclick="select_image(this.className);"></div>
 							</td>
 							<td>
-								<div class="type7" onclick="select_image(this.className);"></div>
+								<div class="type6" onclick="select_image(this.className);"></div>
 							</td>
 							<td>
-								<div class="type8" onclick="select_image(this.className);"></div>
+								<div class="type7" onclick="select_image(this.className);"></div>
 							</td>
 						</tr>
 						<tr>
+							<td>
+								<div class="type8" onclick="select_image(this.className);"></div>
+							</td>
 							<td>
 								<div class="type9" onclick="select_image(this.className);"></div>
 							</td>
@@ -1746,11 +1749,11 @@ function previewImage(imageObj) {
 							<td>
 								<div class="type13" onclick="select_image(this.className);"></div>
 							</td>
+						</tr>
+						<tr>
 							<td>
 								<div class="type14" onclick="select_image(this.className);"></div>
 							</td>
-						</tr>
-						<tr>
 							<td>
 								<div class="type15" onclick="select_image(this.className);"></div>
 							</td>
@@ -1767,8 +1770,6 @@ function previewImage(imageObj) {
 								<div id="divUserIcon">Upload
 									<input type="file" name="uploadIcon" id="uploadIcon" onchange="previewImage(this);" />
 								</div>
-							</td>
-							<td>
 							</td>
 						</tr>	
 					</table>
