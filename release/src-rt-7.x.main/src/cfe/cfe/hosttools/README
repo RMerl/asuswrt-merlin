@@ -1,0 +1,49 @@
+
+This directory contains some "host tools" that may be useful for
+porting CFE.
+
+MKBOOTIMAGE
+-----------
+
+The 'mkbootimage' program is used to attach a CFE boot block to
+an image file.  Boot blocks are used on block-structured devices
+such as disks and CD-ROM.
+
+The boot block contains information to help CFE locate the boot
+loader program and verify its validity.  To create boot file,
+link your boot loader to be executable within CFE's boot
+environment (it should be a binary file, not an ELF file).
+
+Convert the file to a boot block using:
+
+	mkbootimage [-EB] [-EL] myfile.elf myfile.boot
+
+Supply the -EB or -EL switch to configure the target endianness,
+since the values in the boot block are endian-specific.
+
+
+INSTALLBOOT
+-----------
+
+Once you have a boot file, the 'installboot' program can 
+insert the boot file into a simulated disk file (such as the
+file that you can use with the IDE emulation in the 
+BCM12500's functional simulator).  The 'installboot' program
+installs your boot file into a disk image file starting at 
+the first sector, preserving the beginning part of the boot
+sector where the the boot block lives.
+
+Install the boot block using:
+
+	installboot myfile.boot my_disk_image.dsk
+
+Where the "my_disk_image.dsk" is the simulated disk file for
+the functional simulator.
+
+installboot could probably be ported to the target OS to
+install boot blocks on raw disk devices.
+
+
+
+
+

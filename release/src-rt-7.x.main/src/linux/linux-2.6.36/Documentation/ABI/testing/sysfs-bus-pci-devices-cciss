@@ -1,0 +1,61 @@
+Where:		/sys/bus/pci/devices/<dev>/ccissX/cXdY/model
+Date:		March 2009
+Kernel Version: 2.6.30
+Contact:	iss_storagedev@hp.com
+Description:	Displays the SCSI INQUIRY page 0 model for logical drive
+		Y of controller X.
+
+Where:		/sys/bus/pci/devices/<dev>/ccissX/cXdY/rev
+Date:		March 2009
+Kernel Version: 2.6.30
+Contact:	iss_storagedev@hp.com
+Description:	Displays the SCSI INQUIRY page 0 revision for logical
+		drive Y of controller X.
+
+Where:		/sys/bus/pci/devices/<dev>/ccissX/cXdY/unique_id
+Date:		March 2009
+Kernel Version: 2.6.30
+Contact:	iss_storagedev@hp.com
+Description:	Displays the SCSI INQUIRY page 83 serial number for logical
+		drive Y of controller X.
+
+Where:		/sys/bus/pci/devices/<dev>/ccissX/cXdY/vendor
+Date:		March 2009
+Kernel Version: 2.6.30
+Contact:	iss_storagedev@hp.com
+Description:	Displays the SCSI INQUIRY page 0 vendor for logical drive
+		Y of controller X.
+
+Where:		/sys/bus/pci/devices/<dev>/ccissX/cXdY/block:cciss!cXdY
+Date:		March 2009
+Kernel Version: 2.6.30
+Contact:	iss_storagedev@hp.com
+Description:	A symbolic link to /sys/block/cciss!cXdY
+
+Where:		/sys/bus/pci/devices/<dev>/ccissX/rescan
+Date:		August 2009
+Kernel Version:	2.6.31
+Contact:	iss_storagedev@hp.com
+Description:	Kicks of a rescan of the controller to discover logical
+		drive topology changes.
+
+Where:		/sys/bus/pci/devices/<dev>/ccissX/cXdY/lunid
+Date:		August 2009
+Kernel Version: 2.6.31
+Contact:	iss_storagedev@hp.com
+Description:	Displays the 8-byte LUN ID used to address logical
+		drive Y of controller X.
+
+Where:		/sys/bus/pci/devices/<dev>/ccissX/cXdY/raid_level
+Date:		August 2009
+Kernel Version: 2.6.31
+Contact:	iss_storagedev@hp.com
+Description:	Displays the RAID level of logical drive Y of
+		controller X.
+
+Where:		/sys/bus/pci/devices/<dev>/ccissX/cXdY/usage_count
+Date:		August 2009
+Kernel Version: 2.6.31
+Contact:	iss_storagedev@hp.com
+Description:	Displays the usage count (number of opens) of logical drive Y
+		of controller X.

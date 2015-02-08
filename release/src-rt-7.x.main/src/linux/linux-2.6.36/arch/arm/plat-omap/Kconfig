@@ -1,0 +1,191 @@
+if ARCH_OMAP
+
+menu "TI OMAP Common Features"
+
+config ARCH_OMAP_OTG
+	bool
+
+choice
+	prompt "OMAP System Type"
+	default ARCH_OMAP2PLUS
+
+config ARCH_OMAP1
+	bool "TI OMAP1"
+	select COMMON_CLKDEV
+	help
+	  "Systems based on omap7xx, omap15xx or omap16xx"
+
+config ARCH_OMAP2PLUS
+	bool "TI OMAP2/3/4"
+	select COMMON_CLKDEV
+	help
+	  "Systems based on omap24xx, omap34xx or omap44xx"
+
+endchoice
+
+comment "OMAP Feature Selections"
+
+config OMAP_DEBUG_DEVICES
+	bool
+	help
+	  For debug cards on TI reference boards.
+
+config OMAP_DEBUG_LEDS
+	bool
+	depends on OMAP_DEBUG_DEVICES
+	default y if LEDS_CLASS
+
+config OMAP_RESET_CLOCKS
+	bool "Reset unused clocks during boot"
+	depends on ARCH_OMAP
+	help
+	  Say Y if you want to reset unused clocks during boot.
+	  This option saves power, but assumes all drivers are
+	  using the clock framework. Broken drivers that do not
+	  yet use clock framework may not work with this option.
+	  If you are booting from another operating system, you
+	  probably do not want this option enabled until your
+	  device drivers work properly.
+
+config OMAP_MUX
+	bool "OMAP multiplexing support"
+	depends on ARCH_OMAP
+	default y
+	help
+	  Pin multiplexing support for OMAP boards. If your bootloader
+	  sets the multiplexing correctly, say N. Otherwise, or if unsure,
+	  say Y.
+
+config OMAP_MUX_DEBUG
+	bool "Multiplexing debug output"
+	depends on OMAP_MUX
+	help
+	  Makes the multiplexing functions print out a lot of debug info.
+	  This is useful if you want to find out the correct values of the
+	  multiplexing registers.
+
+config OMAP_MUX_WARNINGS
+	bool "Warn about pins the bootloader didn't set up"
+	depends on OMAP_MUX
+	default y
+	help
+	  Choose Y here to warn whenever driver initialization logic needs
+	  to change the pin multiplexing setup.	 When there are no warnings
+	  printed, it's safe to deselect OMAP_MUX for your product.
+
+config OMAP_MCBSP
+	bool "McBSP support"
+	depends on ARCH_OMAP
+	default y
+	help
+	  Say Y here if you want support for the OMAP Multichannel
+	  Buffered Serial Port.
+
+config OMAP_MBOX_FWK
+	tristate "Mailbox framework support"
+	depends on ARCH_OMAP
+	help
+	  Say Y here if you want to use OMAP Mailbox framework support for
+	  DSP, IVA1.0 and IVA2 in OMAP1/2/3.
+
+config OMAP_MBOX_KFIFO_SIZE
+	int "Mailbox kfifo default buffer size (bytes)"
+	depends on OMAP_MBOX_FWK
+	default 256
+	help
+	  Specify the default size of mailbox's kfifo buffers (bytes).
+	  This can also be changed at runtime (via the mbox_kfifo_size
+	  module parameter).
+
+config OMAP_IOMMU
+	tristate
+
+config OMAP_IOMMU_DEBUG
+       tristate "Export OMAP IOMMU internals in DebugFS"
+       depends on OMAP_IOMMU && DEBUG_FS
+       help
+         Select this to see extensive information about
+         the internal state of OMAP IOMMU in debugfs.
+
+         Say N unless you know you need this.
+
+choice
+	prompt "System timer"
+	default OMAP_32K_TIMER if !ARCH_OMAP15XX
+
+config OMAP_MPU_TIMER
+	bool "Use mpu timer"
+	help
+	  Select this option if you want to use the OMAP mpu timer. This
+	  timer provides more intra-tick resolution than the 32KHz timer,
+	  but consumes more power.
+
+config OMAP_32K_TIMER
+	bool "Use 32KHz timer"
+	depends on ARCH_OMAP16XX || ARCH_OMAP2PLUS
+	help
+	  Select this option if you want to enable the OMAP 32KHz timer.
+	  This timer saves power compared to the OMAP_MPU_TIMER, and has
+	  support for no tick during idle. The 32KHz timer provides less
+	  intra-tick resolution than OMAP_MPU_TIMER. The 32KHz timer is
+	  currently only available for OMAP16XX, 24XX, 34XX and OMAP4.
+
+endchoice
+
+config OMAP3_L2_AUX_SECURE_SAVE_RESTORE
+	bool "OMAP3 HS/EMU save and restore for L2 AUX control register"
+	depends on ARCH_OMAP3 && PM
+	default n
+	help
+	  Without this option, L2 Auxiliary control register contents are
+	  lost during off-mode entry on HS/EMU devices. This feature
+	  requires support from PPA / boot-loader in HS/EMU devices, which
+	  currently does not exist by default.
+
+config OMAP3_L2_AUX_SECURE_SERVICE_SET_ID
+	int "Service ID for the support routine to set L2 AUX control"
+	depends on OMAP3_L2_AUX_SECURE_SAVE_RESTORE
+	default 43
+	help
+	  PPA routine service ID for setting L2 auxiliary control register.
+
+config OMAP_32K_TIMER_HZ
+	int "Kernel internal timer frequency for 32KHz timer"
+	range 32 1024
+	depends on OMAP_32K_TIMER
+	default "128"
+	help
+	  Kernel internal timer frequency should be a divisor of 32768,
+	  such as 64 or 128.
+
+config OMAP_DM_TIMER
+	bool "Use dual-mode timer"
+	depends on ARCH_OMAP16XX || ARCH_OMAP2PLUS
+	help
+	 Select this option if you want to use OMAP Dual-Mode timers.
+
+config OMAP_SERIAL_WAKE
+	bool "Enable wake-up events for serial ports"
+	depends on ARCH_OMAP1 && OMAP_MUX
+	default y
+	help
+	  Select this option if you want to have your system wake up
+	  to data on the serial RX line. This allows you to wake the
+	  system from serial console.
+
+choice
+	prompt "OMAP PM layer selection"
+	depends on ARCH_OMAP
+	default OMAP_PM_NOOP
+
+config OMAP_PM_NONE
+	bool "No PM layer"
+
+config OMAP_PM_NOOP
+	bool "No-op/debug PM layer"
+
+endchoice
+
+endmenu
+
+endif

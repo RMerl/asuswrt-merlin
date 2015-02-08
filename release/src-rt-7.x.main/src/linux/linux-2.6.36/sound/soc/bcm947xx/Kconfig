@@ -1,0 +1,7 @@
+config SND_BCM947XX_SOC
+        tristate "SoC Audio for the BCM947xx System-on-Chip"
+        depends on BCM947XX && SND_SOC
+        help
+          Say Y or M if you want to add support for I2S bus interface in the SOC as
+	  well as any codecs on the board.
+	  You will also need to select the audio interfaces to support below.

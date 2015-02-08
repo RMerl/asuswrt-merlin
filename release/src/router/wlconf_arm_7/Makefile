@@ -14,7 +14,7 @@
 
 include $(SRCBASE)/router/.config
 
-CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(SRCBASE)/common/include -Wall
+CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include ${WLAN_StdIncPathA} -I$(SRCBASE)/common/include -Wall
 CFLAGS	+= $(WLAN_ComponentIncPath)
 #CFLAGS	+= -g -DDEBUG
 CFLAGS	+= -s
@@ -34,7 +34,12 @@ vpath %.c $(SRCBASE)/shared $(WLAN_ComponentSrcDirs)
 
 OBJS := wlconf.o bcmwifi_channels.o
 
+ifeq ($(wildcard $(SRCBASE)/router/wlconf$(BCMEX)$(EX7)/*.c),)
+all:
+	-cp -f $(SRCBASE)/router/wlconf$(BCMEX)$(EX7)/prebuilt/wlconf wlconf
+else
 all: wlconf
+endif
 
 clean:
 	rm -f *.o wlconf

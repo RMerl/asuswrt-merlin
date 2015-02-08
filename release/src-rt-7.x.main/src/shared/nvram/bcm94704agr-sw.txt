@@ -1,0 +1,47 @@
+# BCM94704agr board as l2 switch
+# $Copyright (C) 2003 Broadcom Corporation$
+# $Id: bcm94704agr-sw.txt,v 1.2 2004-12-15 21:09:33 rtrask Exp $
+boardtype=0x042f
+boardnum=${serno}
+# Board revision 1.0
+boardrev=0x10
+# BCM5325 RoboSwitch requires reverse MII initialization
+boardflags=0x10
+
+# MIPS clock frequency in MHz
+clkfreq=264
+
+# 64 MB DDR SDRAM (4 Meg x 16 x 2)
+sdram_init=0x0009
+sdram_config=0x0062
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# BCM5325 
+et0macaddr=00:90:4c:4e:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# AC101L
+et1macaddr=00:90:4c:4f:${maclo}
+et1phyaddr=5
+et1mdcport=1
+
+# PMON variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Reset 
+reset_gpio=7
+
+# glue between bootloader and firmware
+landevs=et0 et1 wl0 wl1
+wandevs=

@@ -1,0 +1,23 @@
+#
+# linux/drivers/mtd/bcm947xx/nand/Kconfig
+#
+
+config MTD_BRCMNAND
+	tristate "Broadcom NAND Device Support"
+	default n
+	depends on MTD
+	depends on MTD_NAND
+	help
+	  This enables support for accessing selected types of NAND flash
+	  devices through the Broadcom NAND controller.
+
+config MTD_NFLASH
+	bool "Broadcom Flash support for legacy MTD partition"
+	help
+	  This enables support for Broadcom legacy MTD partition.
+
+config LINUX_MTD
+	int "Linux MTD size (MB)"
+	default "32"
+	help
+	  This can change MTD SIZE (MB), ASUS support!

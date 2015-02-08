@@ -1,0 +1,18 @@
+
+This is a board-level BSP directory.
+
+The code here needs to cover these aspects:
+
++ Type and mapping for Flash memories, and how they are partitioned.
++ Tie-up with the boot-loader, e.g. u-Boot vs. CFE loader interface.
++ The means to access and share NVRAM or environment settings with th eloader.
++ The frequency of the oscilator or crystal, unless the SoC has
+  straps allowing automatic detection of that frequency.
++ The assignments of multi-function I/O pins on the SoC.
++ Any ICs that are external to the main SoC that are not handler
+  by auto-detecting (such as PCI/PCIe connected peripherals),
+  including those connected with I2C.
++ Any other aspect of the SoC that can differ in board-level implementation.
+
+All other aspects of the BSP are handled in the Platform directory.
+

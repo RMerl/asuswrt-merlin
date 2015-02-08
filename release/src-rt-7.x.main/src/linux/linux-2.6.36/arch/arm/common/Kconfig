@@ -1,0 +1,43 @@
+config ARM_GIC
+	bool
+
+config ARM_VIC
+	bool
+
+config ARM_VIC_NR
+	int
+	default 2
+	depends on ARM_VIC
+	help
+	  The maximum number of VICs available in the system, for
+	  power management.
+
+config ICST
+	bool
+
+config PL330
+	bool
+
+config SA1111
+	bool
+	select DMABOUNCE if !ARCH_PXA
+
+config DMABOUNCE
+	bool
+	select ZONE_DMA
+
+config TIMER_ACORN
+	bool
+
+config SHARP_LOCOMO
+	bool
+
+config SHARP_PARAM
+	bool
+
+config SHARP_SCOOP
+	bool
+
+config COMMON_CLKDEV
+	bool
+	select HAVE_CLK

@@ -1,0 +1,14 @@
+menu "Broadcom Flash Devices Support"
+
+if MTD
+
+config MTD_BCMCONF_PARTS
+	bool "Broadcom confmtd partition"
+	depends on !MTD_BRCMNAND && MTD_BCMSFLASH
+
+source "drivers/mtd/bcm947xx/devices/Kconfig"
+
+source "drivers/mtd/bcm947xx/nand/Kconfig"
+
+endif # MTD
+endmenu

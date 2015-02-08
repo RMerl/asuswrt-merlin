@@ -1,0 +1,183 @@
+
+------------------------------------------------------------------------
+This directory contains a basic description of the CFE USB stack,
+its current status and features, and what might be done in the 
+future to improve it.
+------------------------------------------------------------------------
+
+Question: A USB stack in CFE?  But why?
+
+Answer: Why not?  It's not terribly useful on the BCM1250, since we 
+        don't expect many of you to use USB in your boards, but there IS
+        a USB host controller on the SWARM (BCM1250 reference design).
+	Besides, CFE is actually being used for other non-SiByte 
+ 	Broadcom chips, and some of those _do_ have USB on them.
+
+------------------------------------------------------------------------
+
+Source Files
+------------
+
+ohci.c		OHCI USB Host Controller Driver, tested on a BCM1250
+		with an Opti FireLink PCI USB controller
+
+ohci.h		Register definitions for ohci.c
+
+usbchap9.h	USB "Chapter 9" definitions (Descriptors, etc.)
+
+usbd.c		USB Basic Request and pipe management routines, to
+		manage usb devices, do simple requests on the
+		control pipe, open and manage pipes, etc.
+
+usbd.h		Prototypes and data structures for usbd.c
+
+usbdevs.c	USB Device Driver list - devices we recognize
+		are listed here - if you add a new USB device,
+		you can add its class or vendor ID entries
+		into the table here.
+
+usbdebug.c	Some descriptor dump routines live here.
+
+usbhub.c	Class driver for USB hubs.  Because hubs are also
+		a major player in device discovery, much of the
+		USB device tree management also lives here.
+
+usbhid.c	Class driver for keyboards and mice.  Right now
+		not much is done with them except echo characters.
+
+usbmass.c       Class driver for USB mass-storage devices.  We only
+		support the "bulk-only-no-interrupt" protocol.
+		This driver also includes a top half so that
+		it can be accessed as a CFE mass-storage device.
+
+usbmain.c	Top-level interface into CFE.  The "usb start"
+		command is instantiated here, as well as a 
+		"usb show" command to display attached USB devices.
+
+usbhack.c	Main program for the test harness, which lets you
+		develop OHCI code under Linux without hacking on
+		either CFE or the kernel.  See the comments in this
+		file for more information.
+
+usbhack.h	A dumping ground for CFE definitions not otherwise
+		provided by the standard include files.
+
+usbhack.mk	GNU makefile for the test harness
+
+------------------------------------------------------------------------
+
+Overview
+--------
+
+The host controller driver is abstracted through a small set of
+primitives defined in usbd.h - at present only the OHCI driver
+is implemented, but there will eventually be support for the
+ScanLogic SL11H part on the BCM1250CPCI board - this is a simple
+"generic-bus" (non-pci) host controller.   I doubt we'll ever 
+need EHCI/UHCI, since they are present mostly in Intel chipsets.
+
+All events are polled by this driver.  There are two polling functions
+that should be called periodically:
+
+     usb_poll(usbbus_t *bus);
+     usb_daemon(usbbus_t *bus);
+
+The "poll" routine handles interrupts from the devices themselves.
+The "daemon" routine monitors the bus for topology changes and
+instantiates an exploration if something changes.  Sometimes "daemon"
+needs to do USB I/O, requiring calls to usb_poll() to get the data
+to go in/out via the controller, hence the two routines.  You should
+be careful not to all usb_poll() during polling.
+
+
+Device Drivers
+--------------
+
+USB Device drivers are currently extremely simple:  There are 
+only two methods that need be exported to the device driver table:
+
+attach()	 Called when the device is "discovered"
+detach()	 Called when the device is "removed"
+
+When a device is removed, pending transfer requests will be 
+canceled with a "canceled" status.
+
+There is no standard for the top side (user API side) of the
+device driver, that is up to the device class.  The bottom half
+should make use of the calls in usbd.c
+
+When a device driver is attached via its attach() method,
+it will be in the "addressed" state according to the USB spec.
+The exploration code takes care of assigning the USB address
+to the device.  Devices not otherwise recognized by this code will
+be left in the addressed state without any active configurations.
+
+The descriptors are read by the exploration code and are made
+available to the usb_find_cfg_descr() call - you can use this
+function to obtain the endpoint and interface descriptors for
+your device and then call usb_set_configuration() to activate
+the configuration.
+
+When your detach() method is called, the device should be considered 
+already gone, so do not attempt to do any I/O to it.  Just clean
+up the mess and return.
+
+
+------------------------------------------------------------------------
+
+What works?
+-----------
+
+* OHCI on a BCM1250 via the Opti Firelink USB controller
+
+* The OHCI root hub emulation
+
+* External hubs, and hubs integrated into other devices like
+  keyboards.
+
+* Interrupt transfers
+
+* Transfers (basic requests) on endpoint 0
+
+* Basic device discovery and removal
+
+* Bulk endpoints and transfers
+
+* Some endpoint stalls are handled.
+
+
+------------------------------------------------------------------------
+
+What doesn't work?  What is not implemented?
+--------------------------------------------
+
+* The root hub implementation is really shaky, especially in 
+  matters of plug-and-play (device insertion/removal events,
+  etc.)  Don't be surprised if removing a device from the 
+  root hub causes CFE to freeze.
+
+* There is no error recovery code whatsoever.  This kind of goes
+  with the above root hub issue.
+
+* Noncoherent DMA is relatively untested.
+
+* Isochronous endpoints are completely unimplemented (and will probably
+  remain that way)
+
+* Power management (for example, power budget in hubs) is unimplemented.
+  (this should be easy)
+
+* Interrupt endpoints are all on the 10ms endpoint in the interrupt
+  tree (endpoints should be placed at the location to guarantee 
+  bandwidth at 'bInterval' ms)  - no bandwidth management is being
+  done at the moment, but this is pretty simple.
+
+* The OHCI driver cannot be stopped/unloaded.
+
+
+
+
+
+
+
+

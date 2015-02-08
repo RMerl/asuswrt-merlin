@@ -1,0 +1,32 @@
+# BCM94320Retail board
+# $Copyright (C) 2003 Broadcom Corporation$
+# $Id: bcm94320r.txt,v 1.6 2004-12-08 01:00:40 srees Exp $
+boardtype=0x0461
+boardnum=${serno}
+# Board revision 3.1
+boardrev=0x31
+# Flags: FEM, NOPCI, CCKHIPWR & ADCDIV, Afterburner ON.
+boardflags=0xe48
+sromrev=2
+
+# Make the d11 i/f single band
+wl0id=0x4318
+
+# 4320 802.11g parameters
+il0macaddr=00:90:4c:8a:${maclo}
+aa0=1
+ag0=2
+pa0maxpwr=76
+pa0itssit=62
+pa0b0=5516
+pa0b1=-1417
+pa0b2=-368
+opo=16
+
+# Commons wireless parameters
+cctl=0
+ccode=0
+
+# PID and VID
+product_id=0xD11B
+vendor_id=0x0A5C

@@ -1,0 +1,100 @@
+OUTPUT_ARCH(TARGET_ARCH)
+ENTRY(startup)
+SECTIONS {
+	. = TEXT_START;
+	.text : {
+		_ftext = . ;
+		text_start = .;
+		*(.text.startup)
+		*(.text.debugptr)
+		*(.init)
+		*(.text)
+		*(.text.*)
+		*(.fini)
+		*(.glue_7t)
+		*(.glue_7)
+		_etext = .;
+		text_end = .;
+	}
+
+	.rodata : {
+		rodata_start = .;
+		*(.rdata)
+		*(.rdata.*)
+		*(.rodata)
+		*(.rodata.*)
+		rodata_end = .;
+	}
+
+	.data : {
+		data_start = .;
+		_fdata = .;
+		*(.data)
+		*(.data.*)
+		*(.sdata)
+		data_end = .;
+		_edata = .;
+	}
+
+	.bss : {
+		_fbss = .;
+		bss_start = .;
+		*(.sbss)
+		*(.scommon)
+		*(.bss)
+		*(.bss.*)
+		*(COMMON)
+		bss_end = .;
+	}
+
+	/* Reclaim region 1 for BCMINITFN/BCMINITDATA */
+	.textrc1 : {
+		_rstart1 = .;
+		*(.textini1.*)
+		. = ALIGN(16);
+		_retext1 = .;
+	}
+	.datarc1 : {
+		*(.rodataini1.*)
+		*(.dataini1.*)
+		. = ALIGN(4);
+		_rend1 = .;
+	}
+
+	/* Reclaim region 2 for BCMATTACHFN/BCMATTACHDATA */
+	.textrc2 : {
+		_rstart2 = .;
+		*(.textini2.*)
+		. = ALIGN(16);
+		_retext2 = .;
+	}
+	.datarc2 : {
+		*(.rodataini2.*)
+		*(.dataini2.*)
+		. = ALIGN(4);
+		_clmincstart = .;
+		*(.clmdataini2.*)
+		_clmincend = .;
+		. = ALIGN(4);
+		_rend2 = .;
+	}
+
+	/* Reclaim region 3 for BCMPREATTACHDATA/BCMPREATTACHFN */
+	.textrc3 : {
+		_rstart3 = .;
+		*(.textini3.*)
+	}
+	.datarc3 : {
+		*(.rodataini3.*)
+		*(.dataini3.*)
+		_rend3 = .;
+	}
+
+	_end = .;
+
+	.logstrs 0 (OVERLAY) : {
+		 KEEP(*(.lognums))
+		 KEEP(*(.logstrs))
+		 logstrs_size = .;
+	}
+}
