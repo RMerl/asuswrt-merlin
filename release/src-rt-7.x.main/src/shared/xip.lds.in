@@ -1,0 +1,68 @@
+OUTPUT_ARCH(TARGET_ARCH)
+ENTRY(startup)
+SECTIONS {
+	. = TEXT_START;
+	.text : {
+		_ftext = .;
+		text_start = .;
+		*(.text.startup)
+		*(.text.debugptr)
+		*(.init)
+		*(.textini2.*)
+		*(.textini3.*)
+		*(.text)
+		*(.text.*)
+		*(.fini)
+		*(.glue_7)
+		*(.glue_7t)
+		. = ALIGN(8);
+		_etext = .;
+		text_end = .;
+	}
+
+	.rodata : {
+		rodata_start = .;
+		*(.rdata)
+		*(.rdata.*)
+		*(.rodata)
+		*(.rodata.*)
+		. = ALIGN(8);
+		rodata_end = .;
+	}
+
+	. = DATA_START;
+	.data : AT(ADDR(.text)+SIZEOF(.text)+SIZEOF(.rodata)) {
+		_fdata = .;
+		data_start = .;
+		*(.data)
+		*(.rodataini1.*)
+		*(.rodataini2.*)
+		*(.dataini2.*)
+		*(.rodataini3.*)
+		*(.dataini3.*)
+		*(.data.*)
+		*(.sdata)
+		. = ALIGN(8);
+		_edata = .;
+		data_end = .;
+	}
+
+	.bss : {
+		_fbss = .;
+		bss_start = .;
+		*(.bss)
+		*(.bss.*)
+		*(.sbss)
+		*(.scommon)
+		*(COMMON)
+		bss_end = .;
+	}
+
+	_end = .;
+
+	.logstrs 0 (OVERLAY) : {
+		 KEEP(*(.lognums))
+		 KEEP(*(.logstrs))
+		 logstrs_size = .;
+	}
+}

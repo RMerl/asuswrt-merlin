@@ -1,0 +1,122 @@
+/*  *********************************************************************
+    *  Broadcom Common Firmware Environment (CFE)
+    *  
+    *  TODO
+    *  
+    *  Author:  Mitch Lichtenberg (mpl@broadcom.com)
+    *  
+    *********************************************************************  
+    *
+    *  Copyright 2000,2001,2002,2003
+    *  Broadcom Corporation. All rights reserved.
+    *  
+    *  This software is furnished under license and may be used and 
+    *  copied only in accordance with the following terms and 
+    *  conditions.  Subject to these conditions, you may download, 
+    *  copy, install, use, modify and distribute modified or unmodified 
+    *  copies of this software in source and/or binary form.  No title 
+    *  or ownership is transferred hereby.
+    *  
+    *  1) Any source code used, modified or distributed must reproduce 
+    *     and retain this copyright notice and list of conditions 
+    *     as they appear in the source file.
+    *  
+    *  2) No right is granted to use any trade name, trademark, or 
+    *     logo of Broadcom Corporation.  The "Broadcom Corporation" 
+    *     name may not be used to endorse or promote products derived 
+    *     from this software without the prior written permission of 
+    *     Broadcom Corporation.
+    *  
+    *  3) THIS SOFTWARE IS PROVIDED "AS-IS" AND ANY EXPRESS OR
+    *     IMPLIED WARRANTIES, INCLUDING BUT NOT LIMITED TO, ANY IMPLIED
+    *     WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+    *     PURPOSE, OR NON-INFRINGEMENT ARE DISCLAIMED. IN NO EVENT 
+    *     SHALL BROADCOM BE LIABLE FOR ANY DAMAGES WHATSOEVER, AND IN 
+    *     PARTICULAR, BROADCOM SHALL NOT BE LIABLE FOR DIRECT, INDIRECT,
+    *     INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+    *     (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+    *     GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+    *     BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
+    *     OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
+    *     TORT (INCLUDING NEGLIGENCE OR OTHERWISE), EVEN IF ADVISED OF 
+    *     THE POSSIBILITY OF SUCH DAMAGE.
+    ********************************************************************* */
+
+
+This file is a quick list of the things that are being considered
+for future development in CFE as it matures.
+
+Customers:  I welcome your comments (good and bad).  
+
+
+------------------------------------------------------------------------------
+FEATURES YET TO BE IMPLEMENTED
+------------------------------------------------------------------------------
+
+* No user interface
+
+   One way we envision CFE being used is with no user interface whatsoever;
+   it will be used to initialize the BCM12500 and launch a program,
+   and that's all.  This configuration might be popular in systems
+   with many BCM12500s, where the slave BCM12500s do not need 
+   console interfaces of their own.
+   
+* Simple scripts
+
+   CFE needs some simple script mechanism (it could be as simple as a set
+   of commands stored in an environment variable), and a way to invoke
+   the script on startup.  For example, such a script could configure
+   the network interface and start a netboot from that interface.
+
+* Power-on Diagnostics
+
+   Once we have a reasonable set of power-on diagnostics, they
+   will be incorporated into the firmware.
+
+* Set/configure serial port baud rate, store rate in flash
+
+* Better "test" commands for tinkering with SOC peripherals
+
+
+------------------------------------------------------------------------------
+FEATURES IN PROGRESS, NOT COMPLETED
+------------------------------------------------------------------------------
+
+* User's Manual improvements
+
+   The user's manual needs to be improved to fill in the missing
+   sections, add additional sections, and convert the style to
+   Broadcom's documentation standards.  You'll be able to get
+   the latest manuals from DocSafe when this happens.
+
+* USB Host Stack
+
+   The ATX SWARM evaluation board will include a USB interface for
+   attaching a USB keyboard.  A simple USB host stack (sufficient for
+   operating a keyboard) will be included.
+
+* Some API functions not implemented
+
+   Several of the API functions available via CFE's external API are not
+   implemented, or are missing features.
+
+
+------------------------------------------------------------------------------
+IDEAS THAT WON'T NECESSARILY BE DONE
+------------------------------------------------------------------------------
+
+* Write access to file systems
+ 
+   Write access to file systems is specifically *not* included in CFE for
+   simplicity.  
+
+* Direct support for reading boot files via NFS
+
+   This is outside the design goals for CFE, but given enough requests
+   it can be done easily.
+
+
+------------------------------------------------------------------------------
+
+
+  

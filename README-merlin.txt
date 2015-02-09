@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.50 beta 3 (xx-Feb-2015)
-==================================================
+Asuswrt-Merlin - build 378.50 (7-Feb-2015)
+==========================================
 
 About
 -----
@@ -645,7 +645,18 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-378.50 (xx-xxx-2015)
+378.50 (7-Feb-2015)
+   - IMPORTANT: You must do a factory default reset, and manually
+                reconfigure your setting if coming from a version
+                older than 378.50.  Failure to do so can
+                lead to various issues with wifi, OpenVPN,
+                and the new AC68U bootloader.
+
+   - IMPORTANT: Please read this changelog, especially the changes
+                related to jffs, user scripts/config and OpenVPN in
+                the previous 378.50 betas.
+
+   - NEW: Merged with Asus GPL 378_4129 code.
    - CHANGED: Reverted back to vsftpd 2.x, as 3.0.2 doesn't work properly
               on MIPS architectures (and possibly other particular
               scenarios as well).
@@ -657,7 +668,7 @@ History
             entries on the MAC filter list
    - FIXED: AC68U CFE update wasn't written to flash due to permission
             issues
-   - FIXED: Static Key field wasn't visible when using HMAC
+   - FIXED: Static Key field wasn't visible when using HMAC authentication
    - FIXED: syslogd was always enforcing the -S switch
    - FIXED: When setting a static DHCP from the networkmap, the user-entered
             name wouldn't be used.  Now it gets used, and we rely on the rc

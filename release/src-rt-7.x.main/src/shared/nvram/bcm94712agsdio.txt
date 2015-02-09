@@ -1,0 +1,68 @@
+# bcm94712agsdio board
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm94712agsdio.txt,v 1.2 2005-12-05 21:35:11 mtanner Exp $
+boardtype=0x047b
+boardnum=${serno}
+# Board revision 1.2
+boardrev=0x12
+boardflags=0x0a08
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 64 MB DDR SDRAM (4 Meg x 16 x 2)
+sdram_init=0x0009
+sdram_config=0x0062
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# Ethernet Phy
+et0macaddr=00:90:4c:a7:${maclo}
+et0phyaddr=01
+et0mdcport=0
+
+# No eth1
+et1phyaddr=0x1f
+
+# Make the d11 i/f dual band
+wl0id=0x4319
+
+# 4712 802.11g parameters
+il0macaddr=00:90:4c:a8:${maclo}
+aa0=3
+ag0=2
+pa0maxpwr=74
+pa0itssit=62
+pa0b0=0x1691
+pa0b1=0xfa77
+pa0b2=0xfe8a
+
+# 4320 802.11a parameters
+et1macaddr=00:90:4c:a9:${maclo}
+aa1=2
+ag1=2
+pa1itssit=120
+pa1lomaxpwr=60
+pa1lob0=0x1825
+pa1lob1=0xfcf2
+pa1lob2=0xff65
+pa1maxpwr=60
+pa1b0=0x1b49
+pa1b1=0xfcb1
+pa1b2=0xff9e
+pa1himaxpwr=60
+pa1hib0=0x1a8f
+pa1hib1=0xfcb7
+pa1hib2=0xff89
+
+# Commons wireless parameters
+cctl=0
+ccode=0
+
+# Bootlaoder variables
+boot_wait=on
+reset_gpio=7
+
+# Watchdog timer in ms
+watchdog=3000

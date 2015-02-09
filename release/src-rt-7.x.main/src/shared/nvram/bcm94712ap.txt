@@ -1,0 +1,60 @@
+# BCM4712ap board
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm94712ap.txt,v 1.11 2004-12-15 21:09:44 rtrask Exp $
+boardtype=0x0445
+boardnum=${serno}
+# Board revision 2.6
+boardrev=0x26
+boardflags=0x0208
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 32 MB DDR SDRAM (16 Meg x 16)
+sdram_init=0x000b
+sdram_config=0x0062
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# Ethernet w/ac100 single phy
+et0macaddr=00:90:4c:68:${maclo}
+et0phyaddr=5
+et0mdcport=0
+
+# No eth1
+et1phyaddr=0x1f
+
+# 4712 802.11g parameters
+il0macaddr=00:90:4c:67:${maclo}
+aa0=3
+ag0=2
+pa0maxpwr=60
+pa0itssit=62
+pa0b0=0x152d
+pa0b1=0xfac8
+pa0b2=0xfe9d
+
+# Commons wireless parameters
+wl0gpio0=0xff
+wl0gpio1=0xff
+wl0gpio2=0xff
+wl0gpio3=0xff
+cctl=0
+ccode=0
+
+# glue between bootloader and OS
+landevs=et0 wl0
+wandevs=
+
+# Bootlaoder variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+
+# Watchdog timer in ms
+watchdog=3000

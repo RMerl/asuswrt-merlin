@@ -1,0 +1,67 @@
+      
+
+            RELEASE NOTES FOR TUXERA NETWORK STORAGE ACCELARATOR
+
+
+--- Introduction ---
+
+This file contains information regarding the latest Tuxera Network Storage
+Accelarator delivery. Tuxera recommends to read the entire file.
+
+Table of content
+
+ * Package Contents
+ * Installation
+ * Usage
+ * Contact & Support Information
+
+--- Package Contents ---
+
+The Tuxera Network Storage Accelarator contains the following files:
+	- 'smbd', a samba user space binary
+	- TNSA, integrated into the the filesystem driver
+
+--- Installation ---
+
+Insert the TNSA (integrated into Tuxera filesystem) kernel module,
+
+    insmod tfat.ko 		(or)
+	insmod texfat.ko 	(or)
+	insmod tntfs.ko		
+
+Place the samba user space binary in the standard root filesystem directory.
+
+	cp -af smbd /usr/sbin/smbd
+
+Now the network storage accelarator is ready to use.
+
+--- Usage ---
+
+Mount the volumes the following way:
+
+    mount -t [tfat|texfat|tntfs] device mountpoint
+
+Example:
+
+    mount -t tfat /dev/block/mmcblk1p1 /mnt/sdcard
+
+Following mounting the volumes, run the samba binary the following way:
+
+	smbd -D								(or)
+	smbd -D -s /path/to/smbd/conf/file
+
+
+--- Contact & Support Information ---
+
+Please send feedback and support queries to support@tuxera.com.
+
+Besides describing your issue please provide the following information
+to help Tuxera's engineers address the issue:
+
+  - detailed console error messages
+  - kernel log by using the 'dmesg' command, or 'cat /proc/kmsg'
+  - steps to reproduce the issue
+
+Thank you.
+
+Copyright (c) 2008-2014 Tuxera Inc. All Rights Reserved.

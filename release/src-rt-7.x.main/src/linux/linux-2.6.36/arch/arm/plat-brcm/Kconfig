@@ -1,0 +1,98 @@
+# Broadcom platforms selection
+
+config PLAT_MPCORE
+	bool "ARM A9 MPCORE architecture support"
+	select CPU_V7
+	select ARM_GIC
+	select HAVE_ARM_TWD
+	select HAVE_ARM_SCU
+	select EARLY_PRINTK
+	select GENERIC_CLOCKEVENTS_BUILD
+	select GENERIC_CLOCKEVENTS
+	select LOCAL_TIMERS
+	help
+	  Support for ARM A9 MPCORE subsystem
+
+config CACHE_L310
+	bool "PL310 Level-2 Cache Controller"
+        select OUTER_CACHE
+        select OUTER_CACHE_SYNC
+
+config PLAT_IPROC
+	bool "Broadcom iProc common SoC platform"
+	depends on PLAT_MPCORE
+
+config PLAT_IHOST
+	bool "Broadcom iHost common SoC peripherals"
+	depends on PLAT_IPROC
+
+config PLAT_BCM5301X
+	bool "Broadcom BCM5301X SoC support"
+	select FPE_FASTFPE
+	select COMMON_CLKDEV
+	select CACHE_L310 
+	select PCI
+	select PCI_DOMAINS if PCI
+	select ARCH_SPARSEMEM_ENABLE
+	select ZONE_DMA if SPARSEMEM
+	depends on PLAT_MPCORE
+	depends on PLAT_IPROC
+	depends on PLAT_IHOST
+
+config ARCH_HAS_HEAD_FIXUP
+	bool "Machine needs fixup after the boot monitor"
+	help
+	Inserts a platform-specific assembly fix-up function
+	after boot rom monitor to work around a non-compliant
+	boot monitor or certain hardware issues that are not taken
+	care of by the boot monitor.
+
+config PLAT_NAND_JFFS2
+	bool "BCM5301X NAND Flash driver for JFFS file system"
+	depends on PLAT_BCM5301X
+	depends on JFFS2_FS
+	depends on MTD_NAND
+	depends on MTD
+	depends on !MTD_BRCMNAND
+        depends on !MTD_NFLASH
+	help
+	Support for JFFS2 on NAND Flash memory connected to the SoC
+	NAND controller.
+
+config PLAT_MUX_CONSOLE
+	bool "Support UART1(CCA) console"
+	depends on PLAT_BCM5301X
+	default n
+	help
+	Using Top-level Muxing to support UART1 on ChipCommonA (CCA) console.  Otherwise default is GPIO pins.
+
+config PLAT_MUX_CONSOLE_CCB
+	bool "Support UART0(CCB) console"
+	depends on PLAT_BCM5301X
+	default n
+	help
+	Using Top-level Muxing to support UART0 on ChipCommonB (CCB) console.  Otherwise default is GPIO pins.
+
+config PLAT_CCA_GPIO_IRQ
+	bool "Support CCA GPIO interrupts"
+	depends on PLAT_BCM5301X
+	depends on GENERIC_GPIO
+	default n
+	help
+	This should be enabled to support CCA GPIO interrupts.
+
+config PLAT_GPIOLIB
+	bool "Support GPIO exporting to user-space"
+	depends on PLAT_BCM5301X
+	select GENERIC_GPIO
+	select GPIOLIB
+	select GPIO_SYSFS
+	default n
+	help
+	This should be enabled to support exporting of GPIO to userspace.
+
+config PLAT_GPIOLIB_NAME
+	string
+	depends on PLAT_GPIOLIB
+	default "gpiolib"
+

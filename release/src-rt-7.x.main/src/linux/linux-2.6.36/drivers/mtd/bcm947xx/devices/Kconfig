@@ -1,0 +1,6 @@
+#
+# linux/drivers/mtd/bcm947xx/devices/Kconfig
+#
+
+config MTD_BCMSFLASH
+	bool "Broadcom Serial Flash support"

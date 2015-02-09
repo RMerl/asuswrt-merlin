@@ -1,0 +1,1988 @@
+# NVRAM board text file template for the ASUS RT-AC56U router.
+#
+# Copyright 2012, Broadcom Corporation
+# All Rights Reserved.
+#
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NON-INFRINGEMENT CONCERNING THIS SOFTWARE.
+
+# boardtype describes what type of Broadcom reference board that the design resembles
+#   Reference Board  boardtype    Reference Board  boardtype
+#   ---------------  ---------    ---------------  ---------
+#     BCM94704agr     0x042F        BCM95356ssnr    0x0505
+#     BCM94712ap      0x0445        BCM94718nrl     0x050D
+#     BCM94712p       0x0446        BCM94718nrx     0x050E
+#     BCM94712agr     0x0451        BCM947186nrh    0x052A
+#     BCM95350gr      0x0456        BCM947186nr2    0x052B
+#     BCM94712lgr     0x0460        BCM94718nrlfmc  0x052C
+#     BCM95352gr      0x0467        BCM95357nr      0x053A
+#     BCM95351agr     0x0470        BCM95357nrepa   0x053B
+#     BCM94704mpcb    0x0472        BCM95358nr2     0x053D
+#     BCM94712agsdio  0x047B        BCM95357nr2epa  0x054C
+#     BCM95352elgr    0x047F        BCM95357nr2     0x054D
+#     BCM94705lmp     0x0489        BCM95357cbtnr2epa 0x056A
+#     BCM94705gmp     0x0489        BCM94706nr      0x05B2
+#     BCM94705gmp115  0x0489        BCM94706nrh     0x05D8
+#     BCM94312mcg     0x048B        BCM94706Lmiih5  0x0603
+#     BCM94312mcag    0x048C        BCM94706nr2hmc  0x0617
+#     BCM95354gr      0x048E        BCM94708r       0x0646
+#     BCM94705nogig   0x0496        BCM94709r       0x0665
+#     BCM94703nr      0x04C0
+#     BCM94716nr2     0x04CD
+#     BCM94717ap      0x04CE
+#     BCM94718nr      0x04CF
+#     BCM94717mii     0x04ED
+#     BCM94717cbtnr   0x04EF
+#     BCM94716nr2ipa  0x04FB
+#
+# set a boardtype of BCM94708r but customized for ASUS RT-AC56U
+boardtype=0x0646
+
+# boardnum is set by the nvserial program. Don't edit it here.
+boardnum=${serno}
+
+# Board revision.
+# With sromrev 4 and above, the boardrev is a 16 bit number as follows:
+# Bits [15:12] - Board Revision Type (brt), a 4 bit number with values:
+#                0: Legacy (old boardrev numbering scheme)
+#                1: Prototype "P" board.
+#                2: Production "A" board.
+#                3-15: Reserved.
+# Bits [11:0] - Board revision, 12 bits which use BCD encoding to represent a decimal number between 0 and 999.
+#
+# Ex: A legacy board rev of 4.5 is 0x0045
+# Ex: A P304 board rev is 0x1304
+#
+# Board revision is P100
+boardrev=0x1100
+
+# boardflags: 32-bits (LSB on top, MSB on bottom)
+#   0 = no Bluetooth coexistence                                 1 = board supports Bluetooth coexistence
+#   0 = set the PA VREF LDO to 2.85V                             1 = set the PA VREF LDO to 3.00V
+#         (4360 ONLY!)
+#   0 = does not implement GPIO 13 radio disable (Airline mode)  1 = board implements Airline mode on GPIO 13
+#   0 = enable 256QAM support                                    1 = disable 256QAM support
+#         (11ac chips only!)
+#  ---
+#   0 = board does not have RoboSwitch or Ethernet switch core   1 = has RoboSwitch chip or Ethernet switch core
+#   0 = OK to power down PLL and chip                            (deprecated)
+#   0 = no high power CCK (disables opo parameter)               1 = can do high power CCK transmission (enables opo)
+#   0 = board does not have ADMtek switch                        1 = board has ADMtek Ethernet switch
+#  ---
+#   0 = Ethernet switch does not have VLAN capability            1 = Ethernet switch has VLAN capability
+#   0 = no Afterburner support                                   (depricated)
+#   0 = chip has it's PCI/PCIe interface connected               1 = PCI/PCIe is floating or there is no PCI/PCIe interface on the chip
+#   0 = board does not have a FEM                                1 = board uses a FEM
+#       (legacy SISO chips only, not used for MIMO chips)
+#  ---
+#   0 = board does not have an external 2.4GHz LNA               1 = board has an external 2.4GHz LNA
+#   0 = board does not have a high gain PA                       1 = board has a high gain PA
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = no alternate Bluetooth coexistence                       1 = 2-wire BT coex on GPIOs 4 & 5
+#   0 = do not use alternate IQ imbalance settings               1 = use alt IQ settings
+#       (only applies to 4318)
+#  ---
+#   0 = board has external PA(s)                                 1 = board does not have external PA(s)
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = board's TSSI is negative slope                           1 = board's TSSI is positive slope
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = board does not use the PA voltage reference LDO          1 = board uses the PA voltage reference LDO
+#       (only applies to the 4326, 4328, and 5354)
+#   0 = no triple-throw switch shared with Bluetooth             1 = has triple-throw switch shared with BT
+#  ---
+#   0 = chip does not support the phase shifter for MRC          1 = chip supports the phase shifter for MRC
+#       (applies to 4325, 4326, 4328, and 5354 only)
+#   0 = board power topology does not use the Buck/Boost reg     1 = board power topology uses the Buck/Boost regulator
+#       (4325 only)
+#   0 = board does not share antenna with Bluetooth              1 = board has FEM and switch to share antenna with BT
+#   0 = board power topology uses CBUCK (core buck)              1 = board power topology does not use CBUCK (core buck)
+#       (applies to 4325 only)
+#  ---
+#   0 = normal CCK EVM and spectral mask                         1 = favor CCK EVM over spectral mask
+#   0 = board power topology does not use PALDO                  1 = board power topology use PALDO
+#   0 = normal LNLDO2 (low noise LDO2)                           1 = select 2.5V as LNLDO2 (low noise LDO2) output voltage
+#       (4325 only)
+#   0 = non 4325: no minimum power index                         1 = non 4325: enforce minimum power index to avoid FEM damage
+#       (set to "1" only for SiGe SE2559L FEMs)
+#       4325: no power-on-reset workaround                           4325: Apply power-on-reset workaround
+#  ---
+#   0 = board does not have an external 5GHz LNA                 1 = board has an external 5GHz LNA
+#   0 = for a 1x2 design, board does not have two T/R switches   1 = for a 1x2 design, board has two T/R switches
+#   0 = normal operation of 5GHz T/R switch for high RF          1 = hold T/R switch in the "R" position for high RF input powers.
+#       input power.
+#   0 = use normal "InitGain"                                    1 = backoff "InitGain" based on the elna2g/5g parameters, for external LNAs only.
+#
+boardflags=0x00000110
+
+# boardflags2: 32-bits (LSB on top, MSB on bottom)
+#   0 = board uses the 2055's built-in LDOs to power the 2055    1 = board uses external rxbb regulator to power the 2055
+#   0 = use normal 5GHz band PLL settings                        1 = use alternate 5GHz band PLL settings
+#       (4322x and 4716/17/18 only)
+#   0 = do not use H/W TX power control on 4321                  1 = use H/W TX power control on 4321
+#       (4321 only)
+#   0 = board does not support the 2x4 diversity switch          1 = board supports the 2x4 diversity switch
+#  ---
+#   0 = board does not support the 5GHz band TX power gain       1 = board supports the 5GHz band TX power gain
+#   0 = board does not override the ASPM and CLKREQ settings     1 = board overrides the ASPM and CLKREQ settings
+#   0 = board is not a BCM94321mc123 board                       1 = board is a BCM94321mc123 board (unused by S/W)
+#   0 = board uses SECI Bluetooth coexistence                    1 = board uses 3-wire Bluetooth coexistence
+#  ---
+#   0 = BCM94321mcm93 uses SiGe FEM                              1 = BCM94321mcm93 uses Skyworks FEM
+#       (for BCM94321mcm93 and BCM94321coex boards only)
+#   0 = no workaround for clock harmonic spurs                   1 = use the workaround for clock-harmonic spurs
+#   0 = use normal 2.4GHz band PLL settings                      1 = use alternate 2.4GHz band PLL settings
+#       (4322x and 4716/17/18 only)
+#   0 = Normal LED drive (full push-pull)                        1 = Drive the LED outputs as open-drain
+#       (43224 only)
+#  ---
+#   0 = enable TX diversity for 11b frames                       1 = Transmit 11b frames only on antenna 0
+#   0 = no WAR to reduce/avoid clock harmonic spurs in 2G band   1 = enable WAR to reduce/avoid clock harmonic spurs in 2G band
+#   0 = do not transmit 11b frames using all TX cores            1 = transmit 11b frames using all TX cores
+#       (TX diversity enabled or not by bit 12)                      (no TX diversity)
+#   0 = use normal filter settings for 2.4GHz bandedge channels  1 = use alternate filter settings for 2.4GHz bandedge channels
+#       (4716, 4717, 4718, 5357, 5358, and 47186 internal PAs only)
+#  ---
+#   0 = do not use 200kHz PLL bandwidth for 2G band              1 = use 200kHz PLL bandwidth for 2G band
+#   0 = GPAIO pin is not connected to 3.3V                       1 = GPAIO pin is connected to 3.3V
+#       (43226 only)
+#   0 = for external PAs, use external TSSI for TX IQCAL         1 = use internal envelope detector for TX IQCAL even with external PAs
+#       (4322x and 4716/17/18 only)
+#   0 = can turn off the buffered crystal output from the radio  1 = keep the buffered crystal output from radio ON
+#  ---
+#   0 = control 2GHz PAs with the digital PA control signals     1 = control 2GHz PAs with the analog PA VERF LDO outputs
+#   0 = control 5GHz PAs with the digital PA control signals     1 = control 5GHz PAs with the analog PA VERF LDO outputs
+#   0 = normal external LNA and TR switch controls               1 = For AZW designs, 2GHz gmode_elna_gain conrols the TR switch
+#       (4329 only)
+#   0 = no antenna sharing with Bluetooth                        1 = share the chain 0 antenna with Bluetooth
+#  ---
+#   0 = no adjustment to the temperature threshold, "tempthresh" 1 = chip can sustain a higher tempsense threshold
+#                                                                    add the value of parameter "tempoffset" to "tempthresh"
+#   0 = use standard 4-wire Bluetooth coexistance                1 = use standard 3-wire Bluetooth coexistance only. 4-wire not supported
+#   0 = 4331 power savings mode enabled (use for STAs)           1 = 4331 power savings mode disabled (use for routers)
+#       (4331 only)
+#   0 = no ucode powersave WAR                                   1 = enable ucade powersave WAR
+#       (4331 only)
+#  ---
+#   0 = enable dynamic Vmid in idle TSSI calibration             1 = disable dynamic Vmid in idle TSSI calibration
+#
+#   (bits 29-31 are unused)
+#
+boardflags2=0x00000000
+
+# sromrev tells the software what "version" of NVRAM is used. This is just for the CPU chip. The wireless chips will
+# their own sromrev settings.
+sromrev=8
+
+# For 4707/8/9: Specify ARM clock frequency (in MHz) ONLY. All other dividers are fixed ratios of this (div2, dvi4). DDR clock is set separately.
+clkfreq=800,533
+
+# frequency of the crystal driving the PLL, in kHz
+# Even if the chip does not support any other crystal frequency, this parameter must still be specified.
+xtalfreq=25000
+
+# for 4707/8/9
+# Only sdram_config is used. It is a 16-bit number.
+# Bits   Definition
+# -----  -----------------------------------------------------------------------------------------------------------
+# 15:11  Reserved
+#  10:8  Column Size: 000 = 2048 columns; 001 = 1024 columns; 010 = 512 columns
+#   7    0 = 16 bit wide data bus; 1 = 8 bit wide data bus
+#   6    0 = 4 banks; 1 = 8 banks
+#            NOTE: For 4 banks, columns can be 512, 1024, or 2048. For 8 banks, columns can only be 1024 or 2048.
+#  5:3   Reserved
+#  2:0   CAS latency: 011 = CL is 3; 100 = CL is 4; 101 = CL is 5; 110 = CL is 6; 111 = CL is 7; all others reserved
+#
+# Set 64MB (1Gbit) of DDR3 (DDR64X16), x16, 8 banks, CL=7
+sdram_config=0x0147
+
+# For 4707/8/9 - Required to set the DDR PHY clock correctly *before* the boot code is copied to DDR. Since the NVRAM
+# parsing is done after the execution is passed to DDR, the DDR PHY clock must be reconfigured from its default of
+# 333MHz. The "sdram_ncdl" parameter is stored in a fixed location in the CFE space, so the bootloader can read it while
+# still executing from flash. This is a limitation of the way the DDR PHY clock reconfiguration occurs on 4707/8/9 parts.
+#
+# Set DDR3 clock of 533MHz (800MT/s) for RT-AC56U
+#sdram_ncdl=533
+
+# Configure the internal GMAC port to talk to the internal Ethernet switch
+# et0phyaddr is the PHY address of the PHY chip or the address of the MII/RvMII/GMII/RGMII port of the switch chip.
+et0phyaddr=30
+# et0mcdport is which MDC/MDIO port is used to connect to the PHY/Switch chip. Only 4703/4704 has two MIIs, so this
+# parameter is nearly always "0".
+et0mdcport=0
+
+# Set the MAC address of the Ethernet ports
+# From 9/2009 onward MAC addresses have changed from that 8/16 split to a 12/12 split, so the new macmid will be
+# based on MAC addresses with the following format:
+#   47   40 39   32 31   24 23   16 15    8 7     0
+#  |  00   |  90   |  4C   |  XX   |  XY   |  YY   |
+# where the low 24 bits are evenly split into 4096 interface/ boardtypes and 4096 serial numbers. The low nibble of
+# XXX cannot be 0, since that corresponds to an old style MAC address, and macmid will correspond to bits 23:12, so
+# its easy to differentiate them from the old ones.
+#
+# The new "macmid" values will start at 1 and go up to 0xFFF, skipping those that have the low nibble as 0 and the
+# ones with the patterns 0x04Ex and 0x04Fx (These restrictions are enforced in the code). To form the mac address,
+# the whole OUI (00:90:4C) will be prepended to those values and 12 bits of serial number will be appended.
+#
+# A new-style macmid:
+#   BCM947186nrh  0x008
+#
+# For router boards, nvserial now defines a new variable: "maclo12"
+# so nvram text files for new boards will have to define the MAC address like this (for a macmid 0x008):
+#   et0macaddr=00:90:4C:00:8${maclo12}
+# instead of the previous way:
+#   et0macaddr=00:90:4C:FC:${maclo}
+#
+# Set the MAC address of the Ethernet ports
+#   Reference Board   macmid
+#   ---------------  ---------
+#     BCM94704agr      4C:4E (1st MII)
+#     BCM94704agr      4C:4F (2nd MII)
+#     BCM94712ap       4C:68
+#     BCM94712agr      4C:76
+#     BCM95350gr       4C:7D
+#     BCM94712lgr      4C:88
+#     BCM95352gr       4C:91
+#     BCM95352grl      4C:91
+#     BCM95351agr      4C:9C
+#     BCM94704mpcb     4C:A0 (1st MII)
+#     BCM94704mpcb     4C:A1 (2nd MII)
+#     BCM94704nr       4C:A0 (1st MII)
+#     BCM94704nr       4C:A1 (2nd MII)
+#     BCM95352elgr     4C:AD
+#     BCM94705gmp      4C:B9
+#     BCM95354gr       4C:C0
+#     BCM94703nr       4C:F0 (1st MII)
+#     BCM94703nr       4C:F1 (2nd MII)
+#     BCM94716nr2      4C:04
+#     BCM94717ap       4C:06
+#     BCM94718nr       4C:08
+#     BCM94717mii      4C:2D
+#     BCM94717cbtnr    4C:2F
+#     BCM95356ssnr     4C:36
+#     BCM94718nrl      4C:56
+#     BCM94718nrx      4C:57
+#     BCM947186nrh     00:8
+#     BCM95357nr       01:2
+#     BCM95357nrepa    01:4
+#     BCM95358nr2      01:6
+#     BCM947186nr2     01:E
+#     BCM95357nr2epa   01:4
+#     BCM95357cbtnr2epa 02:8
+#     BCM94718nrlfmc   05:6
+#     BCM94706nr       08:A
+#     BCM94706nrh      0B:4
+#     BCM94706Lmiih5   0C:8
+#     BCM94706nr2hmc   0D:B
+#     BCM94708r        0F:F
+#     BCM94709r        11:2
+#
+# New style:
+# The value of 00:90:4C:0F:F is for a BCM94708r reference design.
+# The "maclo12" part is filled in by the nvserial program.
+et0macaddr=00:90:4C:0F:F${maclo12}
+
+# Ethernet switch config (vlan0:LAN, vlan1:WAN)
+# WAN is on port 0, LAN is on ports 1-4. Port 5 is the MAC interface to the external switch or switch core.
+# It MUST be present on all VLANs. The "*" means to enable this group for CFE use. Only one VLAN can have this,
+# typically the LAN. 5325E/F and all internal switch cores use "5" for the MII port. 5395, 5397, and 53115 all use
+# "8" for the MII/GMII/RGMII port number.
+# NOTE: All packets on vlan1 (LAN) are tagged as such.
+# vlan1 is the LAN.
+vlan1ports=0 1 2 3 5*
+vlan1hwname=et0
+
+# vlan2 is the WAN. The "u" configures the switch to not add vlan tags for packets to/from the
+# WAN port. A "t" (or nothing) in place of the "u" will configure the switch to add vlan tags for packets
+# to/from the WAN port. Also see note under "wandevs".
+vlan2ports=4 5u
+vlan2hwname=et0
+
+# If the board is a dual band design the second wireless interface (usually the "a" band)
+# will come up as a second device. But we have to tell the software to hook to this
+# second wireless interface named  "wl1". So set "landevs=vlan1 wl0 wl1".
+# Else, just use the standard configuration of "landevs=vlan1 wl0".
+landevs=vlan1 wl0 wl1
+
+# The WAN port is almost always on an Ethernet port so use the normal config. If the WAN
+# port is not an Ethernet port, then this parameter must be changed accordingly.
+# NOTE: If WAN packets are vlan tagged, then must use "vlan2" in place of "et0".
+#       For the default case of no WAN vlan tags, then must use "et0".
+# NOTE: If the board does not have a WAN port then must use "wandevs=".
+# WAN port is on eth0.
+wandevs=et0
+
+# Set default IP address and net mask for the router.
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+
+# If the board supports WPS, then these parameters tell the software
+# which GPIO is used for the WPS pushbutton and which is used for the WPS LED indicator.
+#gpio6=wps_led
+gpio15=wps_button
+
+# Set a short delay on boot so the CFE delays a bit before loading Linux. Allows easier S/W updates.
+boot_wait=on
+# If boot_wait is on, then "wait_time" sets the wait time from 3 to 20 seconds.
+wait_time=1
+
+# The reset button is on GPIO 11. It MUST be active low, or the software will have to be modified.
+reset_gpio=11
+
+# If the board has a USB power control chip, then the parameter "gpioX=usbportY" is used to tell
+# the USB driver code that it needs to set that GPIO HIGH to turn on power to that USB port.
+# "X" is the GPIO number, 0-31. "Y" is the USB port number, starting at "1".
+gpio9=usbport1
+gpio10=usbport2
+gpio12=43217enable
+gpio13=4352enable
+
+# Watchdog timer in ms (0 will disable), 3000ms is minimum. 5592ms is maximum.
+watchdog=0
+
+
+# The following sections are to configure on-board (WOMBO) 43217 chip, 2.4GHz side, as it does not have an SROM.
+# These parameters take the place of the SROM contents. These parameters are for sromrev=9.
+# These parameters must have a special prefix. The format is:
+#   'pci/<bus_#>/<slot_#>/<param>'
+#
+#   where: <bus_#> is the PCI/PCIe bus number – always "1" for PCI. For PCIe it is the RC (root complex) number + 1.
+#             (Ex: bus_# = 1 for the first RC/PCIe port. bus_# = 2 for the second RC/PCIe port.)
+#          <slot_#> slot number of the WOMBO chip (old PCI only. Is always "1" for PCIe.)
+#             slot 0 is the RC in the CPU chip (i.e. the 4708)
+#             slot = 1 PCI:  if PCI_AD17 connected to IDSEL pin of the WOMBO chip
+#             slot = 2 PCI:  if PCI_AD18 connected to IDSEL pin of the WOMBO chip
+#             slot = 3 PCI:  if PCI_AD19 connected to IDSEL pin of the WOMBO chip
+#          <param> is the parameter assignment. i.e. "boardflags=0x0000A248"
+
+# Due to the increasing number of NVRAM parameters being added with new wireless chips, sometimes the NVRAM will grow too
+# large and not fit in the 4K allocated to it in the CFE image. In order to compress the NVRAM somewhat, the
+# "devpathX=<prefix>" notation can be used.
+#
+# In this notation the "<prefix>" value is the usual prefix as decribed above, like "pci/1/1/".
+# The "X" in "devpathX" is a unique number from 0-9. Multiple "devpaths" are supported per NVRAM file. This will be
+# needed when a board has multiple wireless chips/interfaces. Suggest to start "X" from 0, and count up.
+#
+# Then for each prefixed NVRAM parameter, the "X:" part is replaced by <prefix> in the NVRAM parser. This saves space by
+# reducing the prefix length from about eight characters ("pci/1/1/") down to two ("1:").
+#
+# Example:
+#   Instead of
+#     0:boardflags=0x80001200
+#     0:boardflags2=0x00100000
+#
+#   Use the "devpath" notation:
+#     devpath0=0:
+#     0:boardflags=0x80001200
+#     0:boardflags2=0x00100000
+#
+devpath0=pci/1/1
+
+# PCIe port #0 (bus_#=1, slot_#=1) is for a 4331 2.4GHz high power RF section like on the 4706nr2hmc, using sromrev=9
+
+# venid is the "vendor ID" of the wireless chip. 0x14E4 is Broadcom (Epigram)
+0:venid=0x14E4
+
+# NOTE: When PCI/PCIe SROM parameters are used in NVRAM, the "0:boardtype", "0:boardrev", and "0:boardnum"
+#       parameters should NOT be placed in NVRAM.
+
+# sromrev tells the software what "version" of SROM is used.
+0:sromrev=8
+
+# This is the 'boardflags' parameter for the WOMBO chip only
+# boardflags: 32-bits (LSB on top, MSB on bottom)
+#   0 = no Bluetooth coexistence                                 1 = board supports Bluetooth coexistence
+#   0 = set the PA VREF LDO to 2.85V                             1 = set the PA VREF LDO to 3.00V
+#         (4360 ONLY!)
+#   0 = does not implement GPIO 13 radio disable (Airline mode)  1 = board implements Airline mode on GPIO 13
+#   0 = enable 256QAM support                                    1 = disable 256QAM support
+#         (11ac chips only!)
+#  ---
+#   0 = board does not have RoboSwitch or Ethernet switch core   1 = has RoboSwitch chip or Ethernet switch core
+#   0 = OK to power down PLL and chip                            (deprecated)
+#   0 = no high power CCK (disables opo parameter)               1 = can do high power CCK transmission (enables opo)
+#   0 = board does not have ADMtek switch                        1 = board has ADMtek Ethernet switch
+#  ---
+#   0 = Ethernet switch does not have VLAN capability            1 = Ethernet switch has VLAN capability
+#   0 = no Afterburner support                                   (depricated)
+#   0 = chip has it's PCI/PCIe interface connected               1 = PCI/PCIe is floating or there is no PCI/PCIe interface on the chip
+#   0 = board does not have a FEM                                1 = board uses a FEM
+#       (legacy SISO chips only, not used for MIMO chips)
+#  ---
+#   0 = board does not have an external 2.4GHz LNA               1 = board has an external 2.4GHz LNA
+#   0 = board does not have a high gain PA                       1 = board has a high gain PA
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = no alternate Bluetooth coexistence                       1 = 2-wire BT coex on GPIOs 4 & 5
+#   0 = do not use alternate IQ imbalance settings               1 = use alt IQ settings
+#       (only applies to 4318)
+#  ---
+#   0 = board has external PA(s)                                 1 = board does not have external PA(s)
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = board's TSSI is negative slope                           1 = board's TSSI is positive slope
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = board does not use the PA voltage reference LDO          1 = board uses the PA voltage reference LDO
+#       (only applies to the 4326, 4328, and 5354)
+#   0 = no triple-throw switch shared with Bluetooth             1 = has triple-throw switch shared with BT
+#  ---
+#   0 = chip does not support the phase shifter for MRC          1 = chip supports the phase shifter for MRC
+#       (applies to 4325, 4326, 4328, and 5354 only)
+#   0 = board power topology does not use the Buck/Boost reg     1 = board power topology uses the Buck/Boost regulator
+#       (4325 only)
+#   0 = board does not share antenna with Bluetooth              1 = board has FEM and switch to share antenna with BT
+#   0 = board power topology uses CBUCK (core buck)              1 = board power topology does not use CBUCK (core buck)
+#       (applies to 4325 only)
+#  ---
+#   0 = normal CCK EVM and spectral mask                         1 = favor CCK EVM over spectral mask
+#   0 = board power topology does not use PALDO                  1 = board power topology use PALDO
+#   0 = normal LNLDO2 (low noise LDO2)                           1 = select 2.5V as LNLDO2 (low noise LDO2) output voltage
+#       (4325 only)
+#   0 = non 4325: no minimum power index                         1 = non 4325: enforce minimum power index to avoid FEM damage
+#       (set to "1" only for SiGe SE2559L FEMs)
+#       4325: no power-on-reset workaround                           4325: Apply power-on-reset workaround
+#  ---
+#   0 = board does not have an external 5GHz LNA                 1 = board has an external 5GHz LNA
+#   0 = for a 1x2 design, board does not have two T/R switches   1 = for a 1x2 design, board has two T/R switches
+#   0 = normal operation of 5GHz T/R switch for high RF          1 = hold T/R switch in the "R" position for high RF input powers.
+#       input power.
+#   0 = use normal "InitGain"                                    1 = backoff "InitGain" based on the elna2g/5g parameters, for external LNAs only.
+#
+0:boardflags=0x80001200
+
+# This is the 'boardflags2' parameter for the WOMBO chip only
+# boardflags2: 32-bits (LSB on top, MSB on bottom)
+#   0 = board uses the 2055's built-in LDOs to power the 2055    1 = board uses external rxbb regulator to power the 2055
+#   0 = use normal 5GHz band PLL settings                        1 = use alternate 5GHz band PLL settings
+#       (4322x and 4716/17/18 only)
+#   0 = do not use H/W TX power control on 4321                  1 = use H/W TX power control on 4321
+#       (4321 only)
+#   0 = board does not support the 2x4 diversity switch          1 = board supports the 2x4 diversity switch
+#  ---
+#   0 = board does not support the 5GHz band TX power gain       1 = board supports the 5GHz band TX power gain
+#   0 = board does not override the ASPM and CLKREQ settings     1 = board overrides the ASPM and CLKREQ settings
+#   0 = board is not a BCM94321mc123 board                       1 = board is a BCM94321mc123 board (unused by S/W)
+#   0 = board usex SECI Bluetooth coexistence                    1 = board uses 3-wire Bluetooth coexistence
+#  ---
+#   0 = BCM94321mcm93 uses SiGe FEM                              1 = BCM94321mcm93 uses Skyworks FEM
+#       (for BCM94321mcm93 and BCM94321coex boards only)
+#   0 = no workaround for clock harmonic spurs                   1 = use the workaround for clock-harmonic spurs
+#   0 = use normal 2.4GHz band PLL settings                      1 = use alternate 2.4GHz band PLL settings
+#       (4322x and 4716/17/18 only)
+#   0 = Normal LED drive (full push-pull)                        1 = Drive the LED outputs as open-drain
+#       (43224 only)
+#  ---
+#   0 = enable TX diversity for 11b frames                       1 = Transmit 11b frames only on antenna 0
+#   0 = no WAR to reduce/avoid clock harmonic spurs in 2G band   1 = enable WAR to reduce/avoid clock harmonic spurs in 2G band
+#   0 = do not transmit 11b frames using all TX cores            1 = transmit 11b frames using all TX cores
+#       (TX diversity enabled or not by bit 12)                      (no TX diversity)
+#   0 = use normal filter settings for 2.4GHz bandedge channels  1 = use alternate filter settings for 2.4GHz bandedge channels
+#       (4716, 4717, 4718, 5357, 5358, and 47186 internal PAs only)
+#  ---
+#   0 = do not use 200kHz PLL bandwidth for 2G band              1 = use 200kHz PLL bandwidth for 2G band
+#   0 = GPAIO pin is not connected to 3.3V                       1 = GPAIO pin is connected to 3.3V
+#       (43226 only)
+#   0 = for external PAs, use external TSSI for TX IQCAL         1 = use internal envelope detector for TX IQCAL even with external PAs
+#       (4322x and 4716/17/18 only)
+#   0 = can turn off the buffered crystal output from the radio  1 = keep the buffered crystal output from radio ON
+#  ---
+#   0 = control 2GHz PAs with the digital PA control signals     1 = control 2GHz PAs with the analog PA VERF LDO outputs
+#   0 = control 5GHz PAs with the digital PA control signals     1 = control 5GHz PAs with the analog PA VERF LDO outputs
+#   0 = normal external LNA and TR switch controls               1 = For AZW designs, 2GHz gmode_elna_gain conrols the TR switch
+#       (4329 only)
+#   0 = no antenna sharing with Bluetooth                        1 = share the chain 0 antenna with Bluetooth
+#  ---
+#   0 = no adjustment to the temperature threshold, "tempthresh" 1 = chip can sustain a higher tempsense threshold
+#                                                                    add the value of parameter "tempoffset" to "tempthresh"
+#   0 = use standard 4-wire Bluetooth coexistance                1 = use standard 3-wire Bluetooth coexistance only. 4-wire not supported
+#   0 = 4331 power savings mode enabled (use for STAs)           1 = 4331 power savings mode disabled (use for routers)
+#       (4331 only)
+#   0 = no ucode powersave WAR                                   1 = enable ucade powersave WAR
+#       (4331 only)
+#  ---
+#   0 = enable dynamic Vmid in idle TSSI calibration             1 = disable dynamic Vmid in idle TSSI calibration
+#
+#   (bits 29-31 are unused)
+#
+0:boardflags2=0x00001800
+
+# frequency of the crystal driving the PLL, in kHz
+# Even if the chip does not support any other crystal frequency, this parameter must still be specified.
+0:xtalfreq=20000
+
+# This parameter will tell the software to hook to the external wireless chip's d11 wireless core
+# and tell it what type of wireless interface this is.
+#
+#   wireless interface type  chips                         device ID
+#   -----------------------  ----------------------------  ---------
+#   Single band 11g          4306, 4309, 4712, 5350, 5351    0x4320
+#   Dual band 11a/g          4306, 4309, 4712                0x4324
+#   Single band 11a          4306, 4309                      0x4321
+#   Single band 11g          4318, 4320, 5352, 5354          0x4318
+#   Dual band 11a/g          4318, 4320                      0x4319
+#   Single band 11a          4318                            0x431A
+#   Single band 11g          4311                            0x4311
+#   Dual band 11a/g          4311                            0x4312
+#   Single band 11a          4311                            0x4313
+#   Dual band 11a/g          4312, 4326, 4328                0x4314
+#   Single band 11g          4312, 4326, 4328                0x4315
+#   Single band 11a          4312, 4328                      0x4316
+#   Dual band 11a/g          4315                            0x4334
+#   Single band 11g          4315                            0x4335
+#   Single band 11a          4315                            0x4336
+#   Dual band 11n            4321                            0x4328
+#   2.4GHz only 11n          4321                            0x4329
+#   5GHz only 11n            4321                            0x432A
+#   Dual band 11n            4322, 4717*, 4718*              0x432B
+#   2.4GHz only 11n          4322, 4716*, 4717*, 4718*       0x432C
+#   5GHz only 11n            4322, 4717*, 4718*              0x432D
+#   Dual band 11n            4331                            0x4331
+#   2.4GHz only 11n          4331                            0x4332
+#   5GHz only 11n            4331                            0x4333
+#   2.4GHz only 11n          43221                           0x4341
+#   2.4GHz only 11n          43231                           0x4340
+#   Dual band 11n            43236                           0x4346
+#   2.4GHz only 11n          43236/5357/5358/47186           0x4347
+#   5GHz only 11n            43236                           0x4348
+#   Dual band 11n            43222                           0x4350
+#   2.4GHz only 11n          43222                           0x4351
+#   5GHz only 11n            43222                           0x4352
+#   Dual band 11n            43224                           0x4353
+#   2.4GHz only 11n          43225                           0x4357
+#   Dual band 11n            43237                           0x4355
+#   5GHz only 11n            43237                           0x4356
+#   2.4GHz only 11n          43237                           0x4358
+#   Dual band 11n            43228                           0x4359
+#   5GHz only 11n            43228                           0x435A
+#   2.4GHz only 11n          43362                           0x4363
+#   2.4GHz only 11n          4314                            0x4364
+#   2.4GHz only 11n          43142                           0x4365
+#   2.4GHz only 11n          43143                           0x4366
+#   Dual band 11n            43242                           0x4367
+#   2.4GHz only 11n          43242                           0x4368
+#   5GHz only 11n            43242                           0x4369
+#   Dual band 11n            43239                           0x4370
+#   Dual band 11n            4324                            0x4374
+#   Dual band 11n            4334                            0x4380
+#   2.4GHz only 11n          4334                            0x4381
+#   5GHz only 11n            4334                            0x4382
+#   Dual band 11n            43342                           0x4383
+#   2.4GHz only 11n          43342                           0x4384
+#   5GHz only 11n            43342                           0x4385
+#   Dual band 11n            43341                           0x4386
+#   2.4GHz only 11n          43341                           0x4387
+#   5GHz only 11n            43341                           0x4388
+#   Dual band 11ac           4360                            0x43A0
+#   2.4GHz only 11n          4360                            0x43A1
+#   5GHz only 11ac           4360                            0x43A2
+#   2.4GHz only 11n          43217                           0x43A9
+#   2.4GHz only 11n          43131                           0x43AA
+#   Dual band 11ac           4335                            0x43AE
+#   2.4GHz only 11n          4335                            0x43AF
+#   5GHz only 11ac           4335                            0x43B0
+#   Dual band 11ac           4352                            0x43B1
+#   2.4GHz only 11n          4352                            0x43B2
+#   5GHz only 11ac           4352                            0x43B3
+#
+# *NOTE: For 4716/17/18 router chips use a 4321 type ID to avoid a problem if a 4322 type ID is used.
+#
+# Set the WOMBO chip to be a 2.4GHz only, 43217, 11n, device. It will come up as device eth1, a.k.a wl1
+0:devid=0x43A9
+
+# 802.11n parameters
+# 0:macaddr sets the MAC address of the WOMBO 11n wireless interface.  See notes above for et0macaddr for the new macmid definition.
+#   Reference Board   macmid        Reference Board   macmid         Reference Board     macmid
+#   ---------------  ---------      ---------------  ---------       -----------------  ---------
+#    BCM94331mc          00:3        BCM943217hmiTR2l    0B:3
+#    BCM94331mci         00:4        BCM94706nhr(2.4GHz) 0B:5
+#    BCM94331pcibt4      00:5        BCM94706nhr(5GHz)   0B:6
+#    BCM95357nr(5GHz)    02:1        BCM943217hm4l       0B:F
+#    BCM95357nrepa(5GHz) 02:2        BCM943217hmb        0C:1
+#    BCM947186nrh(5GHz)  02:4        BCM943217hmbiTR     0C:2
+#    BCM94331pciebt12    03:1        BCM943142hmnfc      0C:A
+#    BCM943236usb        03:2        BCM943142hmlga      0C:D
+#    BCM94331hm          03:4        BCM94314hmitr       0C:F
+#    BCM94331pciebt3     03:5        BCM943142hmbpf      0D:3
+#    BCM943227hm4l       04:1        BCM94706nr2hmc(2.4GHz) 0D:C
+#    BCM943227hmb        04:2        BCM94360mc          0D:D
+#    BCM943228hm4l       04:3        BCM94360mci         0D:E
+#    BCM943236usbepa     04:8        BCM94360cs          0D:F
+#    BCM943236ue         04:9        BCM943228lgab       0E:2
+#    BCM943224pciebt2    05:1        BCM94360mch5        0E:5
+#    BCM943238ucg        05:2        BCM943142hmbpfx     0E:7
+#    BCM943235u          05:3        BCM94331csd         0E:B
+#    BCM943227hm2l       05:B        BCM943217mcepa      0E:C
+#    BCM943227hmepa2l    05:C        BCM94352hmb         0F:1
+#    BCM943227hm4l       05:D        BCM94352mch5        0F:2
+#    BCM943228hmb        05:E        BCM94360mc5         0F:5
+#    BCM943228hmb3c      05:F        BCM94360cd          0F:E
+#    BCM94331mch5        09:3        BCM943142hmelna     10:8
+#    BCM94314hmepa       0A:1        BCM94360mch2        10:E
+#    BCM94314hm          0A:2
+#    BCM943234ug         0A:8
+#    BCM94314suhmepa     0A:D
+#    BCM94314suhm        0A:E
+#    BCM943217hm2l       0B:2
+#
+# The value of 00:90:4C:D4:0 is for a BCM943217hm4l reference design.
+0:macaddr==00:90:4C:0E:C${maclo12}
+
+# 0:aa2g sets which antennas are available for 2.4GHz. Value is a bit field:
+# Bit 0 = 1 for antenna 0 is available, 0 for not.
+# Bit 1 = 1 for antenna 1 is available, 0 for not.
+# Bit 2 = 1 for antenna 2 is available, 0 for not.
+# Bit 3 = 1 for antenna 3 is available, 0 for not.
+# the "RT-AC56U" board has two 2.4GHz antennas available
+0:aa2g=3
+
+# agX sets the antenna gain for antenna X. Lower 6 bits are interpreted as a signed number representing
+# whole dB. Hi 2 bits represent number of quarter dBs. qdB's are ALWAYS POSITIVE and are
+# added to whole dBs, so -1 whole dB and 1 qdB = 0x7F = -1dB + 0.25dB = -0.75dB. Range is
+# -32dB to +31.75 dB.
+# set 0dB gain for all available antennas
+0:ag0=0
+0:ag1=0
+
+
+# txchain is a bit field that sets how many TX chains are implemented.
+# Bit 0 = 1 for TX chain 0 is implemented, 0 for not.
+# Bit 1 = 1 for TX chain 1 is implemented, 0 for not.
+# Bit 2 = 1 for TX chain 2 is implemented, 0 for not.
+# Bit 3 = 1 for TX chain 3 is implemented, 0 for not.
+# 43217 chip has TX chains 0 and 1
+0:txchain=3
+
+# rxchain is a bit field that sets how many RX chains are implemented.
+# Bit 0 = 1 for RX chain 0 is implemented, 0 for not.
+# Bit 1 = 1 for RX chain 1 is implemented, 0 for not.
+# Bit 2 = 1 for RX chain 2 is implemented, 0 for not.
+# Bit 3 = 1 for RX chain 3 is implemented, 0 for not.
+# 43217 chip has RX chains 0 and 1
+0:rxchain=3
+
+# antswitch sets the type of antenna diversity switch used on the board
+# 0 = no antenna diversity switch, not 2-of-3
+# 1 = antenna diversity switch config as on BCM94321cb2 2of3
+# 2 = antenna diversity switch config as on BCM94321mp 2of3
+# 3 = antenna diversity switch config as on any 2of3 design newer than 4321
+0:antswitch=0
+
+# tssipos2g sets the slope for the 2.4GHz TSSI to be either 0=negative or 1=positive
+# set positive slope
+0:tssipos2g=1
+
+# extpagain2g sets what type of external 2.4GHz PA is used: 0 = full gain PA,  1 = PA "lite",  2 = no external PA, 3 = high power external PA
+0:extpagain2g=3
+
+# pdetrange2g is an index into a table that selects one of 32 possible voltage ranges for the TSSI power detector
+# inputs from the PA/FEM for the 2.4GHz band. Defined ranges are:
+#
+# For: 4331
+#               TSSI voltage
+# pdetrange2g    min     max   Notes
+# -----------  ------  ------  -------------------------------------
+#      3       0.252V  1.092V  for SiGe SE2598L, SE2604L, SE2605L
+#      4       0.252V  1.092V  for Eiffel dual-band FEM (SiGe SE5503A)
+#      5       0.193V  0.793V  for descrete PA on Ant1
+#              0.252V  1.092V  and Eiffel dual-band FEM (SiGe SE5503A) on Ant0 & Ant2
+#      6                       not defined for the 2.4GHz band
+#      7                       not defined for the 2.4GHz band
+#
+# Consult H/W Apps for creation of any new ranges.
+#
+# set the standard range for most PAs and FEMs
+0:pdetrange2g=3
+
+# triso2g is a number, 0-7, that sets the T/R switch isolation for the 2.4GHz band according to the following table:
+#
+#                           T/R switch isolation for given triso2g value
+# Chip                       0     1     2     3     4     5     6     7
+# -----------------------  ----  ----  ----  ----  ----  ----  ----  ----
+# 4322/4716/4717/4718       3dB   7dB  12dB  15dB  20dB  24dB  28dB  32dB
+# 43221/43222/43224/43225  12dB  16dB  20dB  24dB  28dB  32dB  36dB  40dB
+#
+# For most designs this is set to the mid-point of "3". If the T/R switch isolation on a given design is not
+# "typical" then this number might have to be adjusted up or down.
+0:triso2g=4
+
+
+# antswctl2g is a number that selects what RF switch architecture (1 of 32) is used on the board for the 2.4GHz band
+# 4321 through 43224 and 4716/17/18: 0 = 2-of-3 design. 2 = 2x2 design. All other values reserved.
+# 5357/5358/47186: 0 = invalid. 1 = 2x2 design with SPDT switches or 2-of-3 design with diamond switches. 3 = 2-of-3 with five SPDT switches
+# 43236: 0 = 2x2 design with SPDT switches or a 2-of-3 design with two diamond switches and one SPDT switch
+# 4331: 0 = default, all others reserved
+#
+# set the default antenna switch controls
+0:antswctl2g=0
+
+# elan2g is used to backoff the "InitGain" of the 2.4GHz receivers to compensate for the gain provided by the external LNA.
+# This backoff will only be applied if bit 31 of "0:boardflags" is set to "1".
+# For the 4322, 4716, 4717, 4718, 43222, 43224, and 42225:
+#   The amount of backoff is equal to elna2g * 3dB + 6dB. So elna2g=0 sets 6dB of backoff, elna2g=1 sets 9dB of backoff, etc...
+# For the 43236, 5357, 5358U, 5358, and 47186:
+#   The amount of backoff is equal to elna2g * 3dB + 9dB. So elna2g=0 sets 9dB of backoff, elna2g=1 sets 12dB of backoff, etc...
+# For the 4331:
+#   The amount of backoff is equal to elna2g * 2dB + 8dB. So elna2g=0 sets 8dB of backoff, elna2g=1 sets 10dB of backoff, etc...
+# Set 12dB of backoff for the 2.4GHz LNA
+0:elna2g=2
+
+# maxp2ga0 is the TX chain 0 maximum TX output power for 2.4GHz
+# units of 0.25dB
+# max TX power is 0x68=104qdBm=26dBm
+0:maxp2ga0=0x64
+
+# itt2ga0 is the TX chain 0 idle target TSSI value for 2.4GHz
+0:itt2ga0=0x20
+
+# The following three parameters are the PA parameters for the TX chain 0, 2.4GHz, PA
+# These will have to be replaced with values computed from real boards.
+0:pa2gw0a0=0xFEBE
+0:pa2gw1a0=0x1B18
+0:pa2gw2a0=0xFA47
+
+# maxp2ga1 is the TX chain 1 maximum TX output power for 2.4GHz
+# units of 0.25dB
+# max TX power is 0x68=104qdBm=26dBm
+0:maxp2ga1=0x64
+
+# itt2ga1 is the TX chain 1 idle target TSSI value for 2.4GHz
+0:itt2ga1=0x20
+
+# The following three parameters are the PA parameters for the TX chain 1, 2.4GHz, PA
+# These will have to be replaced with values computed from real boards.
+0:pa2gw0a1=0xFE85
+0:pa2gw1a1=0x1A34
+0:pa2gw2a1=0xFA24
+
+# Power per rate settings from BCM943217 P108 reference design.
+
+# cck2gpo is the 2.4GHz band 11b CCK power offsets
+#          Nibble:  3   2   1   0
+#                  --- --- --- ---
+# Offset for rate: 11  5.5  2   1
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:cck2gpo=0x1111
+
+# ofdm2gpo is the 2.4GHz band, legacy 11g and 11n mcs0-7 SISO, 20MHz BW, OFDM power offsets
+#              Nibble:  7   6   5   4   3   2   1   0
+#                      --- --- --- --- --- --- --- ---
+# Offset for 11g rate: 54  48  36  24  18  12   9   6
+# Offset for mcs rate: 7,6  5   4   3   2   1   -   0
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:ofdm2gpo=0x54222222
+
+# mcs2gpo0 is the 2.4GHz band, legacy 11g and 11n mcs0-3, CDD, 20MHz BW, power offsets
+# For the 5356, this is the 2.4GHz, 11n mcs0-3, SSN, 20MHz BW, power offsets.
+#              Nibble:  3   2   1   0
+#                      --- --- --- ---
+# Offset for 11g rate:  24  18  12 9,6
+# Offset for mcs rate:   3   2   1   0
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:mcs2gpo0=0x3333
+
+# mcs2gpo1 is the 2.4GHz band, legacy 11g and 11n mcs4-7 CDD, 20MHz BW, power offsets
+# For the 5356, this is the 2.4GHz, 11n mcs4-7, SSN, 20MHz BW, power offsets.
+#              Nibble:  3   2   1   0
+#                      --- --- --- ---
+# Offset for 11g rate:   -  54  48  36
+# Offset for mcs rate:   7   6   5   4
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:mcs2gpo1=0xD954
+
+# mcs2gpo2 is the 2.4GHz band, 11n mcs8-11 SDM, 20MHz BW, power offsets
+# For the 5356, this is the 2.4GHz, 11n mcs0-3, SSN, 40MHz BW, power offsets.
+#              Nibble:  3   2   1   0
+#                      --- --- --- ---
+# Offset for mcs rate: 11  10   9   8
+# Offset for 5356, mcs: 3   2   1   0
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:mcs2gpo2=0x3333
+
+# mcs2gpo3 is the 2.4GHz band, 11n mcs12-15 SDM, 20MHz BW, power offsets
+# For the 5356, this is the 2.4GHz, 11n mcs4-7, SSN, 40MHz BW, power offsets.
+#              Nibble:  3   2   1   0
+#                      --- --- --- ---
+# Offset for mcs rate: 15  14  13  12
+# Offset for 5356, mcs: 7   6   5   4
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:mcs2gpo3=0xD954
+
+# mcs2gpo4 is the 2.4GHz band, legacy 11g and 11n mcs0-3, CDD, 40MHz BW, power offsets
+#              Nibble:  3   2   1   0
+#                      --- --- --- ---
+# Offset for 11g rate:  24  18  12 9,6
+# Offset for mcs rate:   3   2   1   0
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:mcs2gpo4=0x5555
+
+# mcs2gpo5 is the 2.4GHz band, legacy 11g and 11n mcs4-7 CDD, 40MHz BW, power offsets
+#              Nibble:  3   2   1   0
+#                      --- --- --- ---
+# Offset for 11g rate:   -  54  48  36
+# Offset for mcs rate:   7   6   5   4
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:mcs2gpo5=0xF955
+
+# mcs2gpo6 is the 2.4GHz band, 11n mcs8-11 SDM, 40MHz BW, power offsets
+#              Nibble:  3   2   1   0
+#                      --- --- --- ---
+# Offset for mcs rate: 11  10   9   8
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:mcs2gpo6=0x5555
+
+# mcs2gpo7 is the 2.4GHz band, 11n mcs12-15 SDM, 40MHz BW, power offsets
+#              Nibble:  3   2   1   0
+#                      --- --- --- ---
+# Offset for mcs rate: 15  14  13  12
+#
+# each offset is in half-dB steps of reduction from maxp2ga0/maxp2ga1
+0:mcs2gpo7=0xF955
+
+# cddpo is the CDD power offset (will be added to the offset from mcs[2g,5g,5gl,5gh]po[0,1,4,5] to obtain the net CDD power offset)
+#          Nibble:  3   2   1   0
+#                  --- --- --- ---
+# Offset for band: 5gh 5gl 5gm  2g
+#
+# each offset is in half-dB steps of reduction
+0:cdd2gpo=0x0
+
+# stbcpo is the STBC power offset (will be added to the offset from mcs[2g,5g,5gl,5gh]po[0,1,4,5] to obtain the net STBC power offset)
+#          Nibble:  3   2   1   0
+#                  --- --- --- ---
+# Offset for band: 5gh 5gl 5gm  2g
+#
+# each offset is in half-dB steps of reduction
+0:stbc2gpo=0x0
+
+# bw40po is the Additional 40 MHz OFDM power-offset across legacy 11g and mcs0-15 11n rates
+# It will be added to either the ofdm[2g,5g,5gl,5gh]po or mcs[2g,5g,5gl,5gh]po[4-7] offsets in addition to the CDD or STBC power-offsets (if applicable)
+# to get the total offset.
+#          Nibble:  3   2   1   0
+#                  --- --- --- ---
+# Offset for band: 5gh 5gl 5gm  2g
+#
+# each offset is in half-dB steps of reduction from the 20MHz OFDM power (not board max power)
+0:bw402gpo=0x0
+
+# bwduppo is the "duplicate 20MHz in 40MHz BW" power offsets, with regard to 20MHz offsets
+#          Nibble:  3   2   1   0
+#                  --- --- --- ---
+# Offset for band: 5gh 5gl 5gm  2g
+#
+# each offset is in half-dB steps of reduction
+# NOTE: This parameter is not yet supported and should be set to zero.
+0:bwdup2gpo=0x0
+
+# Some PAs (Anadigics, Skyworks, others) need a switched reference voltage instead of a digital control signal
+# to turn the PA on. (SiGe PAs typically use a plain digital control signal). The "parefledvoltage" parameter
+# is needed to set this PA reference voltage. Equation: Vout = 2.5 + param*.01  Range is 2.5V (0) to 3.1V (60).
+# NOTE: Must set either bit 20 or 21 (or both) of boardflags2 to enable this parameter.
+# Set the PA reference LDO voltage for 3.1V.
+#0:parefldovoltage=60
+
+# Regulatory parameters
+# ccode is the "Country Code". This will be changed depending upon where the board is shipped.
+0:ccode=0
+
+# regrev is only available in sromrev>=3. It sets a sub-revision of the regulatory locale table for each country code
+0:regrev=0
+
+# ledbhX sets the LED behavior of LEDs connected to the GPIO[3:0] pins of the 4331 chip
+# See app note "80211-AN503-R.pdf" for more details.
+#  wireless activity - 2 = WL_LED_ACTIVITY
+#  2.4GHz radio status - 5 = WL_LED_BRADIO
+#  5GHz radio status - 4 = WL_LED_ARADIO
+#  not used - 11 = WL_LED_INACTIVE
+#
+# GPIO 0 is not used - 11 = WL_LED_INACTIVE
+0:ledbh0=11
+# GPIO 1 is not used - 11 = WL_LED_INACTIVE
+0:ledbh1=11
+# GPIO 2 is not used - 11 = WL_LED_INACTIVE
+0:ledbh2=11
+# GPIO 3 is wireless activity - 2 = WL_LED_ACTIVITY
+0:ledbh3=7
+# GPIO 12 is wireless activity - 2 = WL_LED_ACTIVITY
+# 0:ledbh12=2
+
+# leddc is the duty cycle for PWM control of the LEDs.
+# 0xFFFF sets 100% duty cycle
+0:leddc=0xFFFF
+
+# Chip temperature polling period, range 1-14, in units of seconds, 0 means driver decides the value, 15 is reserved
+0:temps_period=5
+# Temperature threshold above which the chip switches to a single TX chain to prevent damage from overheating
+0:tempthresh=120
+# Temperature hysteresis, when the chip temperature falls below (tempthresh – temps_hysteresis), 2-chain TX is re-enabled
+# range 1-14, in units of degrees C. 0 means driver decides the value, 15 is reserved
+0:temps_hysteresis=5
+
+# Temperature delta, in degrees C, when exceeded will initiate an I/Q calibration. Range 0-63.
+0:phycal_tempdelta=0
+
+# Offset to add to tempthresh when boardflag2 bit 24 is set to "1".
+0:tempoffset=0
+
+
+# The following sections are to configure the on-board (WOMBO) 4352, 5GHz side, when it does not have an SROM.
+# These parameters take the place of the SROM contents. These parameters are for sromrev=9.
+# These parameters must have a special prefix. The format is:
+#   'pci/<bus_#>/<slot_#>/<param>'
+#
+#   where: <bus_#> is the PCI/PCIe bus number – always "1" for PCI. For PCIe it is the RC (root complex) number + 1.
+#             (Ex: bus_# = 1 for the first RC/PCIe port. bus_# = 2 for the second RC/PCIe port.)
+#          <slot_#> slot number of the WOMBO chip (old PCI only. Is always "1" for PCIe.)
+#             slot 0 is the RC in the CPU chip (i.e. the 4708)
+#             slot = 1 PCI:  if PCI_AD17 connected to IDSEL pin of the WOMBO chip
+#             slot = 2 PCI:  if PCI_AD18 connected to IDSEL pin of the WOMBO chip
+#             slot = 3 PCI:  if PCI_AD19 connected to IDSEL pin of the WOMBO chip
+#          <param> is the parameter assignment. i.e. "boardflags=0x0000A248"
+
+# Due to the increasing number of NVRAM parameters being added with new wireless chips, sometimes the NVRAM will grow too
+# large and not fit in the 4K allocated to it in the CFE image. In order to compress the NVRAM somewhat, the
+# "devpathX=<prefix>" notation can be used.
+#
+# In this notation the "<prefix>" value is the usual prefix as decribed above, like "pci/1/1/".
+# The "X" in "devpathX" is a unique number from 0-9. Multiple "devpaths" are supported per NVRAM file. This will be
+# needed when a board has multiple wireless chips/interfaces. Suggest to start "X" from 0, and count up.
+#
+# Then for each prefixed NVRAM parameter, the "X:" part is replaced by <prefix> in the NVRAM parser. This saves space by
+# reducing the prefix length from about eight characters ("pci/1/1/") down to two ("1:").
+#
+# Example:
+#   Instead of
+#     pci/2/1/boardflags=0x80001200
+#     pci/2/1/boardflags2=0x00100000
+#
+#   Use the "devpath" notation:
+#     devpath1=pci/2/1/
+#     1:boardflags=0x80001200
+#     1:boardflags2=0x00100000
+#
+devpath1=pci/2/1
+
+# PCIe port #1 (bus_#=2, slot_#=1) is for a 4352 5GHz high power RF section like on the 4352mch5, using sromrev=11
+
+# venid is the "vendor ID" of the wireless chip. 0x14E4 is Broadcom (Epigram)
+1:venid=0x14E4
+
+# NOTE: When PCI/PCIe SROM parameters are used in NVRAM, the "1:boardtype", "1:boardrev", and "1:boardnum"
+#       parameters should NOT be placed in NVRAM.
+
+# sromrev tells the software what "version" of SROM is used.
+1:sromrev=11
+
+# This is the 'boardflags' parameter for the WOMBO chip only
+# boardflags: 32-bits (LSB on top, MSB on bottom)
+#   0 = no Bluetooth coexistence                                 1 = board supports Bluetooth coexistence
+#   0 = set the PA VREF LDO to 2.85V                             1 = set the PA VREF LDO to 3.00V
+#         (4360 ONLY!)
+#   0 = does not implement GPIO 13 radio disable (Airline mode)  1 = board implements Airline mode on GPIO 13
+#   0 = enable 256QAM support                                    1 = disable 256QAM support
+#         (11ac chips only!)
+#  ---
+#   0 = board does not have RoboSwitch or Ethernet switch core   1 = has RoboSwitch chip or Ethernet switch core
+#   0 = OK to power down PLL and chip                            (deprecated)
+#   0 = no high power CCK (disables opo parameter)               1 = can do high power CCK transmission (enables opo)
+#   0 = board does not have ADMtek switch                        1 = board has ADMtek Ethernet switch
+#  ---
+#   0 = Ethernet switch does not have VLAN capability            1 = Ethernet switch has VLAN capability
+#   0 = no Afterburner support                                   (depricated)
+#   0 = chip has it's PCI/PCIe interface connected               1 = PCI/PCIe is floating or there is no PCI/PCIe interface on the chip
+#   0 = board does not have a FEM                                1 = board uses a FEM
+#       (legacy SISO chips only, not used for MIMO chips)
+#  ---
+#   0 = board does not have an external 2.4GHz LNA               1 = board has an external 2.4GHz LNA
+#   0 = board does not have a high gain PA                       1 = board has a high gain PA
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = no alternate Bluetooth coexistence                       1 = 2-wire BT coex on GPIOs 4 & 5
+#   0 = do not use alternate IQ imbalance settings               1 = use alt IQ settings
+#       (only applies to 4318)
+#  ---
+#   0 = board has external PA(s)                                 1 = board does not have external PA(s)
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = board's TSSI is negative slope                           1 = board's TSSI is positive slope
+#       (legacy SISO chips only, not used for MIMO chips)
+#   0 = board does not use the PA voltage reference LDO          1 = board uses the PA voltage reference LDO
+#       (only applies to the 4326, 4328, and 5354)
+#   0 = no triple-throw switch shared with Bluetooth             1 = has triple-throw switch shared with BT
+#  ---
+#   0 = chip does not support the phase shifter for MRC          1 = chip supports the phase shifter for MRC
+#       (applies to 4325, 4326, 4328, and 5354 only)
+#   0 = board power topology does not use the Buck/Boost reg     1 = board power topology uses the Buck/Boost regulator
+#       (4325 only)
+#   0 = board does not share antenna with Bluetooth              1 = board has FEM and switch to share antenna with BT
+#   0 = board power topology uses CBUCK (core buck)              1 = board power topology does not use CBUCK (core buck)
+#       (applies to 4325 only)
+#  ---
+#   0 = normal CCK EVM and spectral mask                         1 = favor CCK EVM over spectral mask
+#   0 = board power topology does not use PALDO                  1 = board power topology use PALDO
+#   0 = normal LNLDO2 (low noise LDO2)                           1 = select 2.5V as LNLDO2 (low noise LDO2) output voltage
+#       (4325 only)
+#   0 = non 4325: no minimum power index                         1 = non 4325: enforce minimum power index to avoid FEM damage
+#       (set to "1" only for SiGe SE2559L FEMs)
+#       4325: no power-on-reset workaround                           4325: Apply power-on-reset workaround
+#  ---
+#   0 = board does not have an external 5GHz LNA                 1 = board has an external 5GHz LNA
+#   0 = for a 1x2 design, board does not have two T/R switches   1 = for a 1x2 design, board has two T/R switches
+#   0 = normal operation of 5GHz T/R switch for high RF          1 = hold T/R switch in the "R" position for high RF input powers.
+#       input power.
+#   0 = use normal "InitGain"                                    1 = backoff "InitGain" based on the elna2g/5g parameters, for external LNAs only.
+#
+1:boardflags=0x30000000
+
+# This is the 'boardflags2' parameter for the WOMBO chip only
+# boardflags2: 32-bits (LSB on top, MSB on bottom)
+#   0 = board uses the 2055's built-in LDOs to power the 2055    1 = board uses external rxbb regulator to power the 2055
+#   0 = use normal 5GHz band PLL settings                        1 = use alternate 5GHz band PLL settings
+#       (4322x, 4716/17/18, and 4360 only)
+#   0 = do not use H/W TX power control on 4321                  1 = use H/W TX power control on 4321
+#       (4321 only)
+#   0 = board does not support the 2x4 diversity switch          1 = board supports the 2x4 diversity switch
+#  ---
+#   0 = board does not support the 5GHz band TX power gain       1 = board supports the 5GHz band TX power gain
+#   0 = board does not override the ASPM and CLKREQ settings     1 = board overrides the ASPM and CLKREQ settings
+#   0 = board is not a BCM94321mc123 board                       1 = board is a BCM94321mc123 board (unused by S/W)
+#   0 = board usex SECI Bluetooth coexistence                    1 = board uses 3-wire Bluetooth coexistence
+#  ---
+#   0 = BCM94321mcm93 uses SiGe FEM                              1 = BCM94321mcm93 uses Skyworks FEM
+#       (for BCM94321mcm93 and BCM94321coex boards only)
+#   0 = no workaround for clock harmonic spurs                   1 = use the workaround for clock-harmonic spurs
+#   0 = use normal 2.4GHz band PLL settings                      1 = use alternate 2.4GHz band PLL settings
+#       (4322x and 4716/17/18 only)
+#   0 = Normal LED drive (full push-pull)                        1 = Drive the LED outputs as open-drain
+#       (43224 only)
+#  ---
+#   0 = enable TX diversity for 11b frames                       1 = Transmit 11b frames only on antenna 0
+#   0 = no WAR to reduce/avoid clock harmonic spurs in 2G band   1 = enable WAR to reduce/avoid clock harmonic spurs in 2G band
+#   0 = do not transmit 11b frames using all TX cores            1 = transmit 11b frames using all TX cores
+#       (TX diversity enabled or not by bit 12)                      (no TX diversity)
+#   0 = use normal filter settings for 2.4GHz bandedge channels  1 = use alternate filter settings for 2.4GHz bandedge channels
+#       (4716, 4717, 4718, 5357, 5358, and 47186 internal PAs only)
+#  ---
+#   0 = do not use 200kHz PLL bandwidth for 2G band              1 = use 200kHz PLL bandwidth for 2G band
+#   0 = GPAIO pin is not connected to 3.3V                       1 = GPAIO pin is connected to 3.3V
+#       (43226 only)
+#   0 = for external PAs, use external TSSI for TX IQCAL         1 = use internal envelope detector for TX IQCAL even with external PAs
+#       (4322x and 4716/17/18 only)
+#   0 = can turn off the buffered crystal output from the radio  1 = keep the buffered crystal output from radio ON
+#  ---
+#   0 = control 2GHz PAs with the digital PA control signals     1 = control 2GHz PAs with the analog PA VERF LDO outputs
+#   0 = control 5GHz PAs with the digital PA control signals     1 = control 5GHz PAs with the analog PA VERF LDO outputs
+#   0 = normal external LNA and TR switch controls               1 = For AZW designs, 2GHz gmode_elna_gain conrols the TR switch
+#       (4329 only)
+#   0 = no antenna sharing with Bluetooth                        1 = share the chain 0 antenna with Bluetooth
+#  ---
+#   0 = no adjustment to the temperature threshold, "tempthresh" 1 = chip can sustain a higher tempsense threshold
+#                                                                    add the value of parameter "tempoffset" to "tempthresh"
+#   0 = use standard 4-wire Bluetooth coexistance                1 = use standard 3-wire Bluetooth coexistance only. 4-wire not supported
+#   0 = 4331 power savings mode enabled (use for STAs)           1 = 4331 power savings mode disabled (use for routers)
+#       (4331 only)
+#   0 = no ucode powersave WAR                                   1 = enable ucade powersave WAR
+#       (4331 only)
+#  ---
+#   0 = enable dynamic Vmid in idle TSSI calibration             1 = disable dynamic Vmid in idle TSSI calibration
+#
+#   (bits 29-31 are unused)
+#
+1:boardflags2=0x00300002
+
+# boardflags3: 32-bits (LSB on top, MSB on bottom)
+#   bits 0-2: (AC PHY only) subrevisions on femctrl on top of normal femctrl
+#   0 = no acphy rcal WAR needed for this board                  1 = use acphy rcal WAR
+#  ---
+#
+#   (bits 4-31 are unused)
+#
+#boardflags3=0x00000000
+1:boardflags3=0x0
+
+# frequency of the crystal driving the PLL, in kHz
+# Even if the chip does not support any other crystal frequency, this parameter must still be specified.
+# 4360 uses a 40MHz crystal
+1:xtalfreq=40000
+
+# This parameter will tell the software to hook to the external wireless chip's d11 wireless core
+# and tell it what type of wireless interface this is.
+#
+#   wireless interface type  chips                         device ID
+#   -----------------------  ----------------------------  ---------
+#   Single band 11g          4306, 4309, 4712, 5350, 5351    0x4320
+#   Dual band 11a/g          4306, 4309, 4712                0x4324
+#   Single band 11a          4306, 4309                      0x4321
+#   Single band 11g          4318, 4320, 5352, 5354          0x4318
+#   Dual band 11a/g          4318, 4320                      0x4319
+#   Single band 11a          4318                            0x431A
+#   Single band 11g          4311                            0x4311
+#   Dual band 11a/g          4311                            0x4312
+#   Single band 11a          4311                            0x4313
+#   Dual band 11a/g          4312, 4326, 4328                0x4314
+#   Single band 11g          4312, 4326, 4328                0x4315
+#   Single band 11a          4312, 4328                      0x4316
+#   Dual band 11a/g          4315                            0x4334
+#   Single band 11g          4315                            0x4335
+#   Single band 11a          4315                            0x4336
+#   Dual band 11n            4321                            0x4328
+#   2.4GHz only 11n          4321                            0x4329
+#   5GHz only 11n            4321                            0x432A
+#   Dual band 11n            4322, 4717*, 4718*              0x432B
+#   2.4GHz only 11n          4322, 4716*, 4717*, 4718*       0x432C
+#   5GHz only 11n            4322, 4717*, 4718*              0x432D
+#   Dual band 11n            4331                            0x4331
+#   2.4GHz only 11n          4331                            0x4332
+#   5GHz only 11n            4331                            0x4333
+#   2.4GHz only 11n          43221                           0x4341
+#   2.4GHz only 11n          43231                           0x4340
+#   Dual band 11n            43236                           0x4346
+#   2.4GHz only 11n          43236/5357/5358/47186           0x4347
+#   5GHz only 11n            43236                           0x4348
+#   Dual band 11n            43222                           0x4350
+#   2.4GHz only 11n          43222                           0x4351
+#   5GHz only 11n            43222                           0x4352
+#   Dual band 11n            43224                           0x4353
+#   2.4GHz only 11n          43225                           0x4357
+#   Dual band 11n            43237                           0x4355
+#   5GHz only 11n            43237                           0x4356
+#   2.4GHz only 11n          43237                           0x4358
+#   Dual band 11n            43228                           0x4359
+#   5GHz only 11n            43228                           0x435A
+#   2.4GHz only 11n          43362                           0x4363
+#   2.4GHz only 11n          4314                            0x4364
+#   2.4GHz only 11n          43142                           0x4365
+#   2.4GHz only 11n          43143                           0x4366
+#   Dual band 11n            43242                           0x4367
+#   2.4GHz only 11n          43242                           0x4368
+#   5GHz only 11n            43242                           0x4369
+#   Dual band 11n            43239                           0x4370
+#   Dual band 11n            4324                            0x4374
+#   Dual band 11n            4334                            0x4380
+#   2.4GHz only 11n          4334                            0x4381
+#   5GHz only 11n            4334                            0x4382
+#   Dual band 11n            43342                           0x4383
+#   2.4GHz only 11n          43342                           0x4384
+#   5GHz only 11n            43342                           0x4385
+#   Dual band 11n            43341                           0x4386
+#   2.4GHz only 11n          43341                           0x4387
+#   5GHz only 11n            43341                           0x4388
+#   Dual band 11ac           4360                            0x43A0
+#   2.4GHz only 11n          4360                            0x43A1
+#   5GHz only 11ac           4360                            0x43A2
+#   2.4GHz only 11n          43217                           0x43A9
+#   2.4GHz only 11n          43131                           0x43AA
+#   Dual band 11ac           4335                            0x43AE
+#   2.4GHz only 11n          4335                            0x43AF
+#   5GHz only 11ac           4335                            0x43B0
+#   Dual band 11ac           4352                            0x43B1
+#   2.4GHz only 11n          4352                            0x43B2
+#   5GHz only 11ac           4352                            0x43B3
+#
+# *NOTE: For 4716/17/18 router chips use a 4321 type ID to avoid a problem if a 4322 type ID is used.
+#
+# Set the WOMBO chip to be a 5GHz only, 4360, 11ac, device. It will come up as device eth2, a.k.a wl1
+1:devid=0x43B3
+
+# 802.11ac parameters
+# 1:macaddr sets the MAC address of the WOMBO 11n wireless interface.  See notes above for et0macaddr for the new macmid definition.
+#   Reference Board   macmid        Reference Board   macmid         Reference Board     macmid
+#   ---------------  ---------      ---------------  ---------       -----------------  ---------
+#    BCM94331mc          00:3        BCM943217hmiTR2l    0B:3
+#    BCM94331mci         00:4        BCM94706nhr(2.4GHz) 0B:5
+#    BCM94331pcibt4      00:5        BCM94706nhr(5GHz)   0B:6
+#    BCM95357nr(5GHz)    02:1        BCM943217hm4l       0B:F
+#    BCM95357nrepa(5GHz) 02:2        BCM943217hmb        0C:1
+#    BCM947186nrh(5GHz)  02:4        BCM943217hmbiTR     0C:2
+#    BCM94331pciebt12    03:1        BCM943142hmnfc      0C:A
+#    BCM943236usb        03:2        BCM943142hmlga      0C:D
+#    BCM94331hm          03:4        BCM94314hmitr       0C:F
+#    BCM94331pciebt3     03:5        BCM943142hmbpf      0D:3
+#    BCM943227hm4l       04:1        BCM94706nr2hmc(2.4GHz) 0D:C
+#    BCM943227hmb        04:2        BCM94360mc          0D:D
+#    BCM943228hm4l       04:3        BCM94360mci         0D:E
+#    BCM943236usbepa     04:8        BCM94360cs          0D:F
+#    BCM943236ue         04:9        BCM943228lgab       0E:2
+#    BCM943224pciebt2    05:1        BCM94360mch5        0E:5
+#    BCM943238ucg        05:2        BCM943142hmbpfx     0E:7
+#    BCM943235u          05:3        BCM94331csd         0E:B
+#    BCM943227hm2l       05:B        BCM943217mcepa      0E:C
+#    BCM943227hmepa2l    05:C        BCM94352hmb         0F:1
+#    BCM943227hm4l       05:D        BCM94352mch5        0F:2
+#    BCM943228hmb        05:E        BCM94360mc5         0F:5
+#    BCM943228hmb3c      05:F        BCM94360cd          0F:E
+#    BCM94331mch5        09:3        BCM943142hmelna     10:8
+#    BCM94314hmepa       0A:1        BCM94360mch2        10:E
+#    BCM94314hm          0A:2
+#    BCM943234ug         0A:8
+#    BCM94314suhmepa     0A:D
+#    BCM94314suhm        0A:E
+#    BCM943217hm2l       0B:2
+#
+# The value of 00:90:4C:0E:5 is for a BCM94360mch5 reference design (5GHz only).
+1:macaddr=00:90:4C:11:4${maclo12}
+
+# 1:aa2g sets which antennas are available for 2.4GHz. Value is a bit field:
+# Bit 0 = 1 for antenna 0 is available, 0 for not.
+# Bit 1 = 1 for antenna 1 is available, 0 for not.
+# Bit 2 = 1 for antenna 2 is available, 0 for not.
+# Bit 3 = 1 for antenna 3 is available, 0 for not.
+# 1:aa2g=7
+
+# 1:aa5g sets which antennas are available for 5GHz. Value is a bit field:
+# Bit 0 = 1 for antenna 0 is available, 0 for not.
+# Bit 1 = 1 for antenna 1 is available, 0 for not.
+# Bit 2 = 1 for antenna 2 is available, 0 for not.
+# Bit 3 = 1 for antenna 3 is available, 0 for not.
+# the  RT-AC56U board has two 5GHz antennas available
+1:aa5g=3
+
+# agaX sets the antenna gain for the 5GHz antennas. Where X is 0-2, represeting antennas 0-2.
+# Lower 6 bits are interpreted as a signed number representing whole dB.
+# High 2 bits represent number of quarter dBs. qdB's are ALWAYS POSITIVE and are
+# added to whole dBs, so -1 whole dB and 1 qdB = 0x7F = -1dB + 0.25dB = -0.75dB. Range is
+# -32dB to +31.75 dB.
+# set 0dB gain for all available 5GHz antennas
+1:aga0=0
+1:aga1=0
+
+
+# txchain is a bit field that sets how many TX chains are implemented.
+# Bit 0 = 1 for TX chain 0 is implemented, 0 for not.
+# Bit 1 = 1 for TX chain 1 is implemented, 0 for not.
+# Bit 2 = 1 for TX chain 2 is implemented, 0 for not.
+# Bit 3 = 1 for TX chain 3 is implemented, 0 for not.
+# 4352 chip has TX chains 0 and 1
+1:txchain=3
+
+# rxchain is a bit field that sets how many RX chains are implemented.
+# Bit 0 = 1 for RX chain 0 is implemented, 0 for not.
+# Bit 1 = 1 for RX chain 1 is implemented, 0 for not.
+# Bit 2 = 1 for RX chain 2 is implemented, 0 for not.
+# Bit 3 = 1 for RX chain 3 is implemented, 0 for not.
+# 4352 chip has RX chains 0 and 1
+1:rxchain=3
+
+# antswitch sets the type of antenna diversity switch used on the board
+# 0 = no antenna diversity switch, not 2-of-3
+# 1 = antenna diversity switch config as on BCM94321cb2 2of3
+# 2 = antenna diversity switch config as on BCM94321mp 2of3
+# 3 = antenna diversity switch config as on any 2of3 design newer than 4321
+1:antswitch=0
+
+# femctrl is ??? (which FEM control LUT to use? index? 5-bits)
+1:femctrl=3
+
+# subband5gver sets how the 5GHz band is divided up for purposes of max RF power settings
+# and the PA parameter settings. There are currently only four valid different sub-band
+# definitions: (all others reserved)
+#
+# 0: Three sub-bands for normal power PAs:
+#
+#    Subband   Frequency range  Channel Range
+#    --------  ---------------  -------------
+#    Low        5180 to 5320       36-64
+#    Mid        5500 to 5700      100-140
+#    High       5745 to 5825      149-165
+#
+# 1: Three sub-bands for high power PAs:
+#
+#    Subband   Frequency range  Channel Range
+#    --------  ---------------  -------------
+#    Low        5180 to 5240       36-48
+#    Mid        5260 to 5700       52-140
+#    High       5745 to 5825      149-165
+#
+# 4: Four sub-bands for high power PAs: (only available in sromrev=9 or above)
+#
+#    Subband   Frequency range  Channel Range
+#    --------  ---------------  -------------
+#    Low        5180 to 5240       36-48
+#    Mid        5260 to 5320       52-64
+#    High       5500 to 5700      100-140
+#    X1         5745 to 5825      149-165
+#
+# 7: Normal three sub-bands: (default)
+#
+#    Subband   Frequency range  Channel Range
+#    --------  ---------------  -------------
+#    Low        4905 to 5080      184-216
+#    Mid        5180 to 5320       36-64
+#    High       5500 to 5825      100-165
+#
+# Set the 4 sub-band definition.
+1:subband5gver=4
+
+# For normal operation, init gain & clip gains & clip thresholds are derived from the elna & trloss parameters. If for
+# some reason, any special gainctrl handling is needed, use these spare bits.
+# Current not used for any board. Do NOT change the value of this parameter unless directed to by Broadcom!
+# gainctrlsph is a 5 bit number.
+1:gainctrlsph=0
+
+# papdcap5g indicates if the 5GHz RF front end has PAPD capability, 0=no, 1=yes
+1:papdcap5g=0
+
+# tworangetssi5g is ??? (Enable two range TSSI for 5GHz? 1-bit)
+1:tworangetssi5g=0
+
+# pdgain5g is ??? (power detector gain 5GHz? 3-bits)
+1:pdgain5g=4
+
+# epagain5g is ??? (3-bits) (old def: sets what type of external 5GHz PA is used: 0 = full gain PA,  1 = PA "lite",  2 = no external PA, 3 = high power external PA)
+1:epagain5g=0
+
+# tssiposslope5g sets the slope for the 5GHz TSSI to be either 0=negative or 1=positive
+# set positive slope
+1:tssiposslope5g=1
+
+
+# 5GHz RX Gain Parameteters
+
+# rxgains5gelnagaina0 defines the external LNA gain for 5GHz, low sub-band, chain 0. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina0 * 2) + 6, dB
+# LNA gain is 8dB
+1:rxgains5gelnagaina0=1
+
+# rxgains5gtrelnabypa0 is a boolean which states if an LNA bypass switch is used for 5GHz, low sub-band, chain 0.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5gtrelnabypa0=1
+
+# rxgains5gtrisoa0 defines the external isolation between Rx and Tx, for 5GHz, low sub-band, chain 0. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa0 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa0 = external LNA gain + LNA bypass loss
+# isolation from R to T is 8dB + -1dB
+1:rxgains5gtrisoa0=7
+
+# rxgains5gmelnagaina0 defines the external LNA gain for 5GHz, mid sub-band, chain 0. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina0 * 2) + 6, dB
+# LNA gain is 10dB
+1:rxgains5gmelnagaina0=2
+
+# rxgains5gmtrelnabypa0 is a boolean which states if an LNA bypass switch is used for 5GHz, mid sub-band, chain 0.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5gmtrelnabypa0=1
+
+# rxgains5gmtrisoa0 defines the external isolation between Rx and Tx, for 5GHz, mid sub-band, chain 0. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa0 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa0 = external LNA gain + LNA bypass loss
+# isolation from R to T is 10dB + -5dB
+1:rxgains5gmtrisoa0=5
+
+# rxgains5ghelnagaina0 defines the external LNA gain for 5GHz, high and X1 sub-bands, chain 0. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina0 * 2) + 6, dB
+# LNA gain is 10dB
+1:rxgains5ghelnagaina0=2
+
+# rxgains5ghtrelnabypa0 is a boolean which states if an LNA bypass switch is used for 5GHz, high and X1 sub-bands, chain 0.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5ghtrelnabypa0=1
+
+# rxgains5ghtrisoa0 defines the external isolation between Rx and Tx, for 5GHz, high and X1 sub-bands, chain 0. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa0 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa0 = external LNA gain + LNA bypass loss
+# isolation from R to T is 10dB + -5dB
+1:rxgains5ghtrisoa0=5
+
+# rxgains5gelnagaina1 defines the external LNA gain for 5GHz, low sub-band, chain 1. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina1 * 2) + 6, dB
+# LNA gain is 8dB
+1:rxgains5gelnagaina1=1
+
+# rxgains5gtrelnabypa1 is a boolean which states if an LNA bypass switch is used for 5GHz, low sub-band, chain 1.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5gtrelnabypa1=1
+
+# rxgains5gtrisoa1 defines the external isolation between Rx and Tx, for 5GHz, low sub-band, chain 1. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa1 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa1 = external LNA gain + LNA bypass loss
+# isolation from R to T is 8dB + -2dB
+1:rxgains5gtrisoa1=6
+
+# rxgains5gmelnagaina1 defines the external LNA gain for 5GHz, mid sub-band, chain 1. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina1 * 2) + 6, dB
+# LNA gain is 10dB
+1:rxgains5gmelnagaina1=2
+
+# rxgains5gmtrelnabypa1 is a boolean which states if an LNA bypass switch is used for 5GHz, mid sub-band, chain 1.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5gmtrelnabypa1=1
+
+# rxgains5gmtrisoa1 defines the external isolation between Rx and Tx, for 5GHz, mid sub-band, chain 1. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa1 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa1 = external LNA gain + LNA bypass loss
+# isolation from R to T is 10dB + -4dB
+1:rxgains5gmtrisoa1=4
+
+# rxgains5ghelnagaina1 defines the external LNA gain for 5GHz, high and X1 sub-bands, chain 1. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina1 * 2) + 6, dB
+# LNA gain is 10dB
+1:rxgains5ghelnagaina1=2
+
+# rxgains5ghtrelnabypa1 is a boolean which states if an LNA bypass switch is used for 5GHz, high and X1 sub-bands, chain 1.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5ghtrelnabypa1=1
+
+# rxgains5ghtrisoa1 defines the external isolation between Rx and Tx, for 5GHz, high and X1 sub-bands, chain 1. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa1 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa1 = external LNA gain + LNA bypass loss
+# isolation from R to T is 10dB + -4dB
+1:rxgains5ghtrisoa1=4
+
+# rxgains5gelnagaina2 defines the external LNA gain for 5GHz, low sub-band, chain 2. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina2 * 2) + 6, dB
+# LNA gain is 8dB
+1:rxgains5gelnagaina2=1
+
+# rxgains5gtrelnabypa2 is a boolean which states if an LNA bypass switch is used for 5GHz, low sub-band, chain 2.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5gtrelnabypa2=1
+
+# rxgains5gtrisoa2 defines the external isolation between Rx and Tx, for 5GHz, low sub-band, chain 2. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa2 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa2 = external LNA gain + LNA bypass loss
+# isolation from R to T is 8dB + -3dB
+1:rxgains5gtrisoa2=5
+
+# rxgains5gmelnagaina2 defines the external LNA gain for 5GHz, mid sub-band, chain 2. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina2 * 2) + 6, dB
+# LNA gain is 12dB
+1:rxgains5gmelnagaina2=3
+
+# rxgains5gmtrelnabypa2 is a boolean which states if an LNA bypass switch is used for 5GHz, mid sub-band, chain 2.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5gmtrelnabypa2=1
+
+# rxgains5gmtrisoa2 defines the external isolation between Rx and Tx, for 5GHz, mid sub-band, chain 2. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa2 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa2 = external LNA gain + LNA bypass loss
+# isolation from R to T is 12dB + -4dB
+1:rxgains5gmtrisoa2=4
+
+# rxgains5ghelnagaina2 defines the external LNA gain for 5GHz, high and X1 sub-bands, chain 2. Range: 0 - 7
+# actual ext LNA gain = (rxgains5gelnagaina2 * 2) + 6, dB
+# LNA gain is 12dB
+1:rxgains5ghelnagaina2=3
+
+# rxgains5ghtrelnabypa2 is a boolean which states if an LNA bypass switch is used for 5GHz, high and X1 sub-bands, chain 2.
+# 0 = no LNA bypass swtich (LNA does not have a bypass path)
+# 1 = LNA bypass switch is used (LNA has a bypass path)
+1:rxgains5ghtrelnabypa2=1
+
+# rxgains5ghtrisoa2 defines the external isolation between Rx and Tx, for 5GHz, high and X1 sub-bands, chain 2. Range: 0 - 15
+# It is set according to two different equations, depending upon whether the LNA has a bypass path or not:
+#   LNA does not have a bypass path: change in RX gain bettwen R and T = (rxgains5gtrisoa2 * 2) + 8, dB
+#   LNA does have a bypass path: rxgains5gtrisoa2 = external LNA gain + LNA bypass loss
+# isolation from R to T is 12dB + -4dB
+1:rxgains5ghtrisoa2=4
+
+# 5GHz TX Parameters
+
+# PA parameters for sromrev=11 are defined in a "list" type format to conserve NVRAM space. See below for the list definitions.
+
+# The maxp5gbXa0 parameters are the TX chain 0 maximum TX output power for 5GHz, sub-band X (0-3)
+# units of 0.25dB
+# max TX power for chain 0, sub-band 0 (low), is 64qdBm=16dBm
+# max TX power for chain 0, sub-band 1 (mid), is 96qdBm=24dBm
+# max TX power for chain 0, sub-band 2 (high), is 96qdBm=24dBm
+# max TX power for chain 0, sub-band 3 (X1), is 96qdBm=24dBm
+1:maxp5ga0=100,100,100,100
+
+# The pa5ga0 parameters are the PA parameters for TX chain 0, 5Hz PAs
+# The parameter list is in the format of: sub-band0word0, sub-band0word1, sub-band0word2, sub-band1word0, sub-band1word1, sub-band1word2, sub-band2word0, sub-band2word1, sub-band2word2, sub-band3word0, sub-band3word1, sub-band3word2
+# These will have to be replaced with values computed from real boards.
+# PA parameters for chain 0:
+1:pa5ga0=0xff3f,0x1b5d,0xfcb8,0xff3a,0x1ae8,0xfcbf,0xff38,0x1ac2,0xfcbe,0xff46,0x1ac3,0xfcd3
+
+# The maxp5gbXa1 parameters are the TX chain 1 maximum TX output power for 5GHz, sub-band X (0-3)
+# units of 0.25dB
+# max TX power for chain 1, sub-band 0 (low), is 64qdBm=16dBm
+# max TX power for chain 1, sub-band 1 (mid), is 96qdBm=24dBm
+# max TX power for chain 1, sub-band 2 (high), is 96qdBm=24dBm
+# max TX power for chain 1, sub-band 3 (X1), is 96qdBm=24dBm
+1:maxp5ga1=100,100,100,100
+
+# The pa5ga1 parameters are the PA parameters for TX chain 1, 5Hz PAs
+# The parameter list is in the format of: sub-band0word0, sub-band0word1, sub-band0word2, sub-band1word0, sub-band1word1, sub-band1word2, sub-band2word0, sub-band2word1, sub-band2word2, sub-band3word0, sub-band3word1, sub-band3word2
+# These will have to be replaced with values computed from real boards.
+# PA parameters for chain 1:
+1:pa5ga1=0xff3c,0x1b0f,0xfcbd,0xff3e,0x1c0e,0xfca1,0xff41,0x1c00,0xfca6,0xff48,0x1bb5,0xfcb8
+
+# The maxp5gbXa2 parameters are the TX chain 2 maximum TX output power for 5GHz, sub-band X (0-3)
+# units of 0.25dB
+# max TX power for chain 2, sub-band 0 (low), is 0x4C=76qdBm=19dBm
+# max TX power for chain 2, sub-band 1 (mid), is 0x4C=76qdBm=19dBm
+# max TX power for chain 2, sub-band 2 (high), is 0x4C=76qdBm=19dBm
+# max TX power for chain 2, sub-band 3 (X1), is 0x4C=76qdBm=19dBm
+#1:maxp5ga2=0x4C,0x4C,0x4C,0x4C
+
+# The pa5ga2 parameters are the PA parameters for TX chain 2, 5Hz PAs
+# The parameter list is in the format of: sub-band0word0, sub-band0word1, sub-band0word2, sub-band1word0, sub-band1word1, sub-band1word2, sub-band2word0, sub-band2word1, sub-band2word2, sub-band3word0, sub-band3word1, sub-band3word2
+# These will have to be replaced with values computed from real boards.
+# PA parameters for chain 2:
+#1:pa5ga2=0xFF5A,0x1729,0xFD25,0xFF62,0x175C,0xFD30,0xFF48,0x1720,0xFD15,0xFF54,0x1741,0xFD21
+
+# Power detector offsets. These parameters are used to offset the measured RF power in 40MHz and 80MHz channels.
+# This is needed for some RF front end designs that have a shift in measured power for wider bandwidth channels.
+# 20MHz channels are assumed to have zero offset as the PA parameters are usually computed using 20MHz channels.
+
+# pdoffset40ma0, pdoffset40ma1, and pdoffset40ma2 are the offsets for 5GHz, 40MHz channels, for chains 0-2.
+# Each number is a 16-bit wide field that is broken up into four 4-bit offsets, one for each sub-band of 0-3.
+# Sub-band 3 (X1) is in bits [15:12], sub-band 2 (high) in bits [11:8], sub-band 1 (mid) in bits [7:4], and sub-band 0 (low) in bits [3:0]
+# Each offset is stored in twos compliment format. Units are 1/4 dB.
+# Ex: 0x0500 = +1.25dB offset for sub-band 2, that is 1.25dB is added to the measured power to get the correct measured power.
+1:pdoffset40ma0=0x3222
+1:pdoffset40ma1=0x3222
+#1:pdoffset40ma2=0x3222
+
+# pdoffset80ma0, pdoffset80ma1, and pdoffset80ma2 are the offsets for 5GHz, 80MHz channels, for chains 0-2.
+# Each number is a 16-bit wide field that is broken up into four 4-bit offsets, one for each sub-band of 0-3.
+# Sub-band 3 (X1) is in bits [15:12], sub-band 2 (high) in bits [11:8], sub-band 1 (mid) in bits [7:4], and sub-band 0 (low) in bits [3:0]
+# Each offset is stored in twos compliment format. Units are 1/4 dB.
+# Ex: 0x00A0 = -1.5dB offset for sub-band 1, that is 1.5dB is subtraced from the measured power to get the correct measured power.
+1:pdoffset80ma0=0x0100
+1:pdoffset80ma1=0x0100
+#1:pdoffset80ma2=0x0100
+
+
+
+# Power-Per-Rate settings:
+#
+# General notes on these settings:
+#   - real_max_power[chain, rate] = max_power[chain] - power_offset[rate]
+#
+#   - The power offset is in units of 0.5dB.
+#       Note: Some offsets are signed offsets. Others are unsigned. Unless explicitly mentioned, offsets should be treated as unsigned.
+#
+#   - 11n rates mcs8-mcs15, mcs16-mcs23, and mcs24-mcs31 will have the same power-per-rate offsets corresponding to mcs0-mcs7.
+#       In other words, the power-per-rate offsets on each chain are irrepsective of the number of streams
+#
+#   - 11ac rates mcs0-mcs9 will have the same power-per-rate offsets on each chain irrespective of the number of streams
+#
+#   - mcs32 uses the same power offsets as legacy 40Dup 6 Mbps
+
+# mcsbw205glpo is the 5GHz band, low sub-band, 11a 6-54, 11n mcs0-23, 11ac mcs0-9, 20MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1      0
+#                            --- --- --- --- --- --- --- ---------
+# Offset for 11a      rates:  -   -   -  54  48  36  24  18,12,9,6
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb0a0/maxp5gb0a1/maxp5b0ga2
+1:mcsbw205glpo=0x99753333
+
+# mcsbw405glpo is the 5GHz band, low sub-band, 11n mcs0-23, 11ac mcs0-9, 40MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb0a0/maxp5gb0a1/maxp5b0ga2
+1:mcsbw405glpo=0x99753333
+
+# mcsbw805glpo is the 5GHz band, low sub-band, 11n mcs0-23, 11ac mcs0-9, 80MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb0a0/maxp5gb0a1/maxp5b0ga2
+1:mcsbw805glpo=0x99753333
+
+# mcsbw1605glpo is the 5GHz band, low sub-band, 11n mcs0-23, 11ac mcs0-9, 160MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb0a0/maxp5gb0a1/maxp5b0ga2
+#1:mcsbw1605glpo=0x00000000
+1:mcsbw1605glpo=0
+
+# mcsbw205gmpo is the 5GHz band, mid sub-band, 11a 6-54, 11n mcs0-23, 11ac mcs0-9, 20MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1      0
+#                            --- --- --- --- --- --- --- ---------
+# Offset for 11a      rates:  -   -   -  54  48  36  24  18,12,9,6
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb1a0/maxp5gb1a1/maxp5b1ga2
+#1:mcsbw205gmpo=0xCC888000
+1:mcsbw205gmpo=0x99753333
+
+# mcsbw405gmpo is the 5GHz band, mid sub-band, 11n mcs0-23, 11ac mcs0-9, 40MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb1a0/maxp5gb1a1/maxp5b1ga2
+#1:mcsbw405gmpo=0xCC888000
+1:mcsbw405gmpo=0x99753333
+
+# mcsbw805gmpo is the 5GHz band, mid sub-band, 11n mcs0-23, 11ac mcs0-9, 80MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb1a0/maxp5gb1a1/maxp5b1ga2
+#1:mcsbw805gmpo=0xCC888000
+1:mcsbw805gmpo=0x99753333
+
+# mcsbw1605gmpo is the 5GHz band, mid sub-band, 11n mcs0-23, 11ac mcs0-9, 160MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb1a0/maxp5gb1a1/maxp5b1ga2
+#1:mcsbw1605gmpo=0x00000000
+1:mcsbw1605gmpo=0
+
+# mcsbw205ghpo is the 5GHz band, high and X1 sub-bands, 11a 6-54, 11n mcs0-23, 11ac mcs0-9, 20MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1      0
+#                            --- --- --- --- --- --- --- ---------
+# Offset for 11a      rates:  -   -   -  54  48  36  24  18,12,9,6
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb2a0/maxp5gb2a1/maxp5b2ga2 for high sub-band
+# each offset is in half-dB steps of reduction from maxp5gb3a0/maxp5gb3a1/maxp5b3ga2 for X1 sub-band
+#1:mcsbw205ghpo=0xCC888000
+1:mcsbw205ghpo=0x99753333
+
+# mcsbw405ghpo is the 5GHz band, high and X1 sub-bands, 11n mcs0-23, 11ac mcs0-9, 40MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb2a0/maxp5gb2a1/maxp5b2ga2 for high sub-band
+# each offset is in half-dB steps of reduction from maxp5gb3a0/maxp5gb3a1/maxp5b3ga2 for X1 sub-band
+#1:mcsbw405ghpo=0xCC888000
+1:mcsbw405ghpo=0x99753333
+
+# mcsbw805ghpo is the 5GHz band, high and X1 sub-bands, 11n mcs0-23, 11ac mcs0-9, 80MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb2a0/maxp5gb2a1/maxp5b2ga2 for high sub-band
+# each offset is in half-dB steps of reduction from maxp5gb3a0/maxp5gb3a1/maxp5b3ga2 for X1 sub-band
+#1:mcsbw805ghpo=0xCC888000
+1:mcsbw805ghpo=0x99753333
+
+# mcsbw1605ghpo is the 5GHz band, high and X1 sub-bands, 11n mcs0-23, 11ac mcs0-9, 160MHz BW, power offsets
+#                    Nibble:  7   6   5   4   3   2   1    0
+#                            --- --- --- --- --- --- --- -----
+# Offset for 11n  mcs rates:  -   -   7   6   5   4   3  2,1,0
+# Offset for 11ac mcs rates:  9   8   7   6   5   4   3  2,1,0
+#
+# each offset is in half-dB steps of reduction from maxp5gb2a0/maxp5gb2a1/maxp5b2ga2 for high sub-band
+# each offset is in half-dB steps of reduction from maxp5gb3a0/maxp5gb3a1/maxp5b3ga2 for X1 sub-band
+#1:mcsbw1605ghpo=0x00000000
+1:mcsbw1605ghpo=0
+
+# mcslr5glpo is the 5GHz band, low sub-band, QPSK relative to BPSK rates power offsets
+#                    Nibble:  3   2   1    0   rel to
+#                            --- --- --- ----- ------
+# Offset for 11a      rates:  -   -   -  18,12   9,6
+# Offset for 11n  mcs rates:  -   -  2,1  2,1     0
+# Offset for 11ac mcs rates: 2,1 2,1 2,1  2,1     0
+#                bandwidith: 160 80  40   20
+#
+# each offset is in half-dB steps of reduction from maxp5gb0a0/maxp5gb0a1/maxp5b0ga2
+#1:mcslr5glpo=0x0000
+1:mcslr5glpo=0
+
+# mcslr5gmpo is the 5GHz band, mid sub-band, QPSK relative to BPSK rates power offsets
+#                    Nibble:  3   2   1    0   rel to
+#                            --- --- --- ----- ------
+# Offset for 11a      rates:  -   -   -  18,12   9,6
+# Offset for 11n  mcs rates:  -   -  2,1  2,1     0
+# Offset for 11ac mcs rates: 2,1 2,1 2,1  2,1     0
+#                bandwidith: 160 80  40   20
+#
+# each offset is in half-dB steps of reduction from maxp5gb1a0/maxp5gb1a1/maxp5b1ga2
+#1:mcslr5gmpo=0x0000
+1:mcslr5gmpo=0
+
+# mcslr5ghpo is the 5GHz band, high and X1 sub-bands, QPSK relative to BPSK rates power offsets
+#                    Nibble:  3   2   1    0   rel to
+#                            --- --- --- ----- ------
+# Offset for 11a      rates:  -   -   -  18,12   9,6
+# Offset for 11n  mcs rates:  -   -  2,1  2,1     0
+# Offset for 11ac mcs rates: 2,1 2,1 2,1  2,1     0
+#                bandwidith: 160 80  40   20
+#
+# each offset is in half-dB steps of reduction from maxp5gb2a0/maxp5gb2a1/maxp5b2ga2 for high sub-band
+# each offset is in half-dB steps of reduction from maxp5gb3a0/maxp5gb3a1/maxp5b3ga2 for X1 sub-band
+#1:mcslr5ghpo=0x0000
+1:mcslr5ghpo=0
+
+# sb20in40hrpo is the 20in40 OFDM signed power offsets relative to 20in20 for 64 QAM and above
+#                 Nibble:    3    2   1   0
+#                         ------ --- --- ---
+# Signed offset for band: 5gh/X1 5gl 5gm 2g
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb20in40hrpo=0x0000
+1:sb20in40hrpo=0
+
+# sb20in80and160hr5glpo is the 5GHz band, low sub-band, 20in80 and 20in160 OFDM signed power offsets for 64 QAM and above
+#            Nibble:           3                  2           1      0
+#                    -------------------- ---------------- ------- ------
+# Signed offset for: 20in80 - 20LLLL/UUUU 20in80 - 20LL/UU 20in160 20in80
+#       Relative to:  all other 20in160       20LU/UL      20in20  20in20
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb20in80and160hr5glpo=0x0000
+1:sb20in80and160hr5glpo=0
+
+# sb40and80hr5glpo is the 5GHz band, low sub-band, 40in80 and 40in160 OFDM signed power offsets for 64 QAM and above
+#            Nibble:         3            2       1      0
+#                    ----------------- ------- ------- ------
+# Signed offset for: 40in160 - 40LL/UU 80in160 40in160 40in80
+#       Relative to:      40LU/UL      80in80  40in40  40in40
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb40and80hr5glpo=0x0000
+1:sb40and80hr5glpo=0
+
+# sb20in80and160hr5gmpo is the 5GHz band, mid sub-band, 20in80 and 20in160 OFDM signed power offsets for 64 QAM and above
+#            Nibble:           3                  2           1      0
+#                    -------------------- ---------------- ------- ------
+# Signed offset for: 20in80 - 20LLLL/UUUU 20in80 - 20LL/UU 20in160 20in80
+#       Relative to:  all other 20in160       20LU/UL      20in20  20in20
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb20in80and160hr5gmpo=0x0000
+1:sb20in80and160hr5gmpo=0
+
+# sb40and80hr5gmpo is the 5GHz band, mid sub-band, 40in80 and 40in160 OFDM signed power offsets for 64 QAM and above
+#            Nibble:         3            2       1      0
+#                    ----------------- ------- ------- ------
+# Signed offset for: 40in160 - 40LL/UU 80in160 40in160 40in80
+#       Relative to:      40LU/UL      80in80  40in40  40in40
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb40and80hr5gmpo=0x0000
+1:sb40and80hr5gmpo=0
+
+# sb20in80and160hr5ghpo is the 5GHz band, high and X1 sub-bands, 20in80 and 20in160 OFDM signed power offsets for 64 QAM and above
+#            Nibble:           3                  2           1      0
+#                    -------------------- ---------------- ------- ------
+# Signed offset for: 20in80 - 20LLLL/UUUU 20in80 - 20LL/UU 20in160 20in80
+#       Relative to:  all other 20in160       20LU/UL      20in20  20in20
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb20in80and160hr5ghpo=0x0000
+1:sb20in80and160hr5ghpo=0
+
+# sb40and80hr5ghpo is the 5GHz band, high and X1 sub-bands, 40in80 and 40in160 OFDM signed power offsets for 64 QAM and above
+#            Nibble:         3            2       1      0
+#                    ----------------- ------- ------- ------
+# Signed offset for: 40in160 - 40LL/UU 80in160 40in160 40in80
+#       Relative to:      40LU/UL      80in80  40in40  40in40
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb40and80hr5ghpo=0x0000
+1:sb40and80hr5ghpo=0
+
+# sb20in40lrpo is the 20in40 OFDM signed power offsets relative to 20in20 for 16 QAM and below
+#                 Nibble:    3    2   1   0
+#                         ------ --- --- ---
+# Signed offset for band: 5gh/X1 5gl 5gm 2g
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb20in40lrpo=0x0000
+1:sb20in40lrpo=0
+
+# sb20in80and160lr5glpo is the 5GHz band, low sub-band, 20in80 and 20in160 OFDM signed power offsets for 16 QAM and below
+#            Nibble:           3                  2           1      0
+#                    -------------------- ---------------- ------- ------
+# Signed offset for: 20in80 - 20LLLL/UUUU 20in80 - 20LL/UU 20in160 20in80
+#       Relative to:  all other 20in160       20LU/UL      20in20  20in20
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb20in80and160lr5glpo=0x0000
+1:sb20in80and160lr5glpo=0
+
+# sb40and80lr5glpo is the 5GHz band, low sub-band, 40in80 and 40in160 OFDM signed power offsets for 16 QAM and below
+#            Nibble:         3            2       1      0
+#                    ----------------- ------- ------- ------
+# Signed offset for: 40in160 - 40LL/UU 80in160 40in160 40in80
+#       Relative to:      40LU/UL      80in80  40in40  40in40
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb40and80lr5glpo=0x0000
+1:sb40and80lr5glpo=0
+
+# sb20in80and160lr5gmpo is the 5GHz band, mid sub-band, 20in80 and 20in160 OFDM signed power offsets for 16 QAM and below
+#            Nibble:           3                  2           1      0
+#                    -------------------- ---------------- ------- ------
+# Signed offset for: 20in80 - 20LLLL/UUUU 20in80 - 20LL/UU 20in160 20in80
+#       Relative to:  all other 20in160       20LU/UL      20in20  20in20
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb20in80and160lr5gmpo=0x0000
+1:sb20in80and160lr5gmpo=0
+
+# sb40and80lr5gmpo is the 5GHz band, mid sub-band, 40in80 and 40in160 OFDM signed power offsets for 16 QAM and below
+#            Nibble:         3            2       1      0
+#                    ----------------- ------- ------- ------
+# Signed offset for: 40in160 - 40LL/UU 80in160 40in160 40in80
+#       Relative to:      40LU/UL      80in80  40in40  40in40
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb40and80lr5gmpo=0x0000
+1:sb40and80lr5gmpo=0
+
+# sb20in80and160lr5ghpo is the 5GHz band, high and X1 sub-bands, 20in80 and 20in160 OFDM signed power offsets for 16 QAM and below
+#            Nibble:           3                  2           1      0
+#                    -------------------- ---------------- ------- ------
+# Signed offset for: 20in80 - 20LLLL/UUUU 20in80 - 20LL/UU 20in160 20in80
+#       Relative to:  all other 20in160       20LU/UL      20in20  20in20
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb20in80and160lr5ghpo=0x0000
+1:sb20in80and160lr5ghpo=0
+
+# sb40and80lr5ghpo is the 5GHz band, high and X1 sub-bands, 40in80 and 40in160 OFDM signed power offsets for 16 QAM and below
+#            Nibble:         3            2       1      0
+#                    ----------------- ------- ------- ------
+# Signed offset for: 40in160 - 40LL/UU 80in160 40in160 40in80
+#       Relative to:      40LU/UL      80in80  40in40  40in40
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:sb40and80lr5ghpo=0x0000
+1:sb40and80lr5ghpo=0
+
+# dot11agduphrpo is the 11g/11a duplicate mode signed power offsets for 64 QAM and above for all of the following:
+#   11n/11ac: Dup40, Dup40in80, and Dup40in160 relative to 40in40
+#       11ac: Quad80 and Quad80in160 relative to 80in80
+#       11ac: Oct160 relative to 160in160
+#
+#                 Nibble:    3    2   1   0
+#                         ------ --- --- ---
+# Signed offset for band: 5gh/X1 5gl 5gm 2g
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:dot11agduphrpo=0x0000
+1:dot11agduphrpo=0
+
+# dot11agduplrpo is the 11g/11a duplicate mode signed power offsets for 16 QAM and below for all of the following:
+#   11n/11ac: Dup40, Dup40in80, and Dup40in160 relative to 40in40
+#       11ac: Quad80 and Quad80in160 relative to 80in80
+#       11ac: Oct160 relative to 160in160
+#
+#                 Nibble:    3    2   1   0
+#                         ------ --- --- ---
+# Signed offset for band: 5gh/X1 5gl 5gm 2g
+#
+# each offset is in half-dB steps of signed reduction (i.e. real pwr = maxpwr - signed_offset)
+#1:dot11agduplrpo=0x0000
+1:dot11agduplrpo=0
+
+# Regulatory parameters
+# ccode is the "Country Code". This will be changed depending upon where the board is shipped.
+# A value of "ALL" turns off the driver regulatory limits for (Broadcom internal code builds only!)
+# and should only be used for testing purposes.
+1:ccode=ALL
+
+# regrev is only available in sromrev>=3. It sets a sub-revision of the regulatory locale table for each country code
+1:regrev=0
+
+# sar2g is the SAR limit for the 2.4GHz band
+# value in in dBm
+# Set 18dBm for 2.4GHz
+1:sar2g=18
+
+# sar5g is the SAR limit for the 5GHz band
+# value is in dBm
+# Set 15dBm for 5GHz
+1:sar5g=15
+
+# ledbhX sets the LED behavior of LEDs connected to the GPIO[3:0] pins of the 4321
+# See app note "80211-AN503-R.pdf" for more details.
+#  wireless activity - 2 = WL_LED_ACTIVITY
+#  2.4GHz radio status - 5 = WL_LED_BRADIO
+#  5GHz radio status - 4 = WL_LED_ARADIO
+#  not used - 11 = WL_LED_INACTIVE
+#
+# GPIO 0 is not used - 11 = WL_LED_INACTIVE
+1:ledbh0=11
+# GPIO 1 is not used - 11 = WL_LED_INACTIVE
+1:ledbh1=11
+# GPIO 2 is not used - 11 = WL_LED_INACTIVE
+1:ledbh2=11
+# GPIO 3 is not used - 11 = WL_LED_INACTIVE
+1:ledbh3=11
+# Driver can actually control more LEDs.
+# GPIO 10 is wireless activity - 2 = WL_LED_ACTIVITY
+1:ledbh10=7
+
+# leddc is the duty cycle for PWM control of the LEDs.
+# 0xFFFF sets 100% duty cycle
+1:leddc=0xFFFF
+
+# Chip temperature polling period, range 1-14, in units of seconds, 0 means driver decides the value, 15 is reserved
+1:temps_period=5
+# Temperature threshold above which the chip switches to a single TX chain to prevent damage from overheating
+1:tempthresh=120
+# Temperature hysteresis, when the chip temperature falls below (tempthresh – temps_hysteresis), 2-chain TX is re-enabled
+# range 1-14, in units of degrees C. 0 means driver decides the value, 15 is reserved
+1:temps_hysteresis=5
+
+# Temperature delta, in degrees C, when exceeded will initiate an I/Q calibration. Range 0-63.
+1:phycal_tempdelta=0
+
+# Offset to add to tempthresh when boardflag2 bit 24 is set to "1".
+1:tempoffset=0
+
+#5G TX BF calibration
+1:rpcal5gb0=0xffff
+1:rpcal5gb1=0xffff
+1:rpcal5gb2=0xffff
+1:rpcal5gb3=0xffff
+
+# Bootloader version
+bl_version=1.0.2.8
+
+# for NAND flash
+bootflags=1
+
+# WPS AP PIN code
+secret_code=12345670
+
+# ODM Product ID
+odmpid=ASUS
+
+# Model Name
+model=RT-AC56U
+
+# others
+HW_ver=230
+ATEMODE=1

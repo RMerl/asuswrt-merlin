@@ -1,0 +1,6 @@
+dir /tmp 777 0 0
+dir /dev 755 0 0
+nod /dev/console 644 0 0 c 5 1
+nod /dev/tty 644 0 0 c 5 0
+dir /bin 755 0 0
+file /init testrootfs/init 755 0 0

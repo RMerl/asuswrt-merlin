@@ -1,0 +1,119 @@
+		A quick cfe cheat sheet for HNBU pmon users.
+
+cfe is the new bootloader from the Broadband Processor Business Unit, which
+we intend to ship in new HNBU designs. All of our builds are creating a
+cfe.bin binary image in the same place as the pmon_le.bin image. The
+nvserial command applies to cfe in exactly the same way as to pmon (see
+below).
+
+After boot, cfe behaves like pmon: It waits 5 seconds for a tftp command to
+be issued to it to replace the trx file, if there is no tftp attempt, then
+it checks to see if it has a valid Operating System in flash and boots it if
+so. If there is no valid OS, or if you use ^C to break the boot process while
+it is waiting for tftp; then cfe goes to its command line prompt: "CFE> ".
+
+Here are a few tasks that you may be familiar with in pmon end their
+equivalents in cfe:
+
+ o To give pmon/cfe an initial set of nvram variables (on Windows or Linux)
+	pmon:
+		nvserial -i pmon_le.bin -o pmon_leSN.bin -s SN NVRAMFILE
+	cfe:
+		nvserial -i cfe.bin -o cfeSN.bin -s SN NVRAMFILE
+
+ o To get a list of the available commands
+	pmon:
+		h
+	cfe:
+		help
+
+ o To show the contents of nvram
+	pmon:
+		set
+	cfe:
+		nvram show
+
+ o To show a single nvram variable
+	pmon:
+		set NAME
+	cfe:
+		nvram get NAME
+
+ o To change an nvram variable
+	pmon:
+		set name VALUE
+	cfe:
+		nvram set NAME=VALUE
+
+ o To remove a variable from nvram
+	pmon:
+		unset NAME
+	cfe:
+		nvram unset NAME
+
+ o To commit nvram changes to flash
+	pmon:
+		set nvram
+	cfe:
+		nvram commit
+
+ o To erase all nvram
+	pmon:
+		nvErase 0xbfff8000 0x8000
+	cfe:
+		nvram erase
+
+ o To reboot the system:
+	pmon:
+		reboot
+	cfe:
+		reboot
+
+ o To replace linux.trx using a tftp client
+	pmon:
+		load -B
+				(tftp ADDRESS FILE)
+		cp2fl 0xa0001000 0xbfc40000 SIZE
+	cfe:
+		flash -noheader : flash1.trx
+				(tftp ADDRESS FILE)
+
+ o To replace pmon/cfe using a tftp client
+	pmon:
+		load -B
+				(tftp ADDRESS FILE)
+		cp2fl 0xa0001000 0xbfc00000 SIZE
+	cfe:
+		flash -noheader : flash1.boot
+				(tftp ADDRESS FILE)
+
+ o To dump memory
+	pmon:
+		d ADDRESS SIZE
+	cfe:
+		d ADDRESS SIZE
+
+Here are a few new commands you might use in cfe:
+
+ o To get help for a particular command
+		help COMMAND
+
+ o To find out the current network devices and their configuration
+		ifconfig
+
+ o To change the ip address temporarily
+		ifconfig eth0 -addr=NEWIPADDRESS
+
+ o To change the ip address using a dhcp server
+		ifconfig eth0 -auto
+
+ o To replace linux.trx using a tftp server (assumes you have a tftp
+	server running on MACHINE which has the file linux.trx in its
+	tftp root)
+		flash -noheader MACHINE:linux.trx flash1.trx
+
+ o To run a linux kernel without writing it to flash (assume the tftp
+	server as above)
+		boot -elf MACHINE:vmlinux
+
+# $Id: pmon.readme,v 1.3 2003-07-02 23:46:37 gmo Exp $

@@ -1,0 +1,9 @@
+
+This directory provides support to select ARM-based SoC from Broadcom.
+
+The code in this directory is pertinent to the contents of each SoC, 
+who all have the i-proc and i-host cores in common.
+This directory also provides the binding information 
+(i.e. base address and IRQ#) for all the peripherals contained in the SoC.
+
+All board-level support is in "mach-brcm-*'.

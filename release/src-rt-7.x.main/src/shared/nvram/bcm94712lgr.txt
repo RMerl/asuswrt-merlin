@@ -1,0 +1,67 @@
+# BCM94712LGR DDR board
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm94712lgr.txt,v 1.13 2004-09-13 21:16:44 pguda Exp $
+boardtype=0x0460
+boardnum=${serno}
+# Board revision 1.7
+boardrev=0x17
+boardflags=0x0758
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 32 MB DDR SDRAM (16 Meg x 16)
+sdram_init=0x000b
+sdram_config=0x0062
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# Ethernet w/BCM5325E switch
+et0macaddr=00:90:4c:88:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# BCM5325E switch reset
+gpio6=robo_reset
+
+# Make the d11 i/f single band
+wl0id=0x4320
+
+# 4712 802.11g parameters
+il0macaddr=00:90:4c:89:${maclo}
+aa0=3
+ag0=2
+pa0maxpwr=76
+pa0itssit=62
+pa0b0=0x153d
+pa0b1=0xfb91
+pa0b2=0xfeb7
+opo=8
+
+# Commons wireless parameters
+cctl=0
+ccode=0
+
+# Bootlaoder variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+reset_gpio=7
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Robo switch config (vlan0:LAN, vlan1:WAN)
+vlan0ports=1 2 3 4 5*
+vlan0hwname=et0
+vlan1ports=0 5u
+vlan1hwname=et0
+
+#Bootloader and OS glue
+landevs=vlan0 wl0
+wandevs=et0

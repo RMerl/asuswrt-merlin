@@ -1,0 +1,66 @@
+# bcm94712agr board with sdram as l2 switch.
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm94712agr-sd-sw.txt,v 1.5 2004-12-15 21:09:40 rtrask Exp $
+boardtype=0x0451
+boardnum=${serno}
+# Board revision 3.3
+boardrev=0x33
+boardflags=0x0288
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 16 MB SDR SDRAM (4 Meg x 16 x 2)
+sdram_init=0
+sdram_config=0x0022
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# Ethernet w/Admtek switch
+et0macaddr=00:90:4c:76:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# ADMTek switch mgmt i/f GPIO mapping
+gpio5=adm_rc
+
+# No eth1
+et1phyaddr=0x1f
+
+# Make the d11 i/f single band
+wl0id=0x4320
+
+# 4712 802.11g parameters
+il0macaddr=00:90:4c:75:${maclo}
+aa0=3
+ag0=2
+pa0maxpwr=60
+pa0itssit=62
+pa0b0=0x1486
+pa0b1=0xfaa8
+pa0b2=0xfe47
+
+# Wireless LED GPIO mapping/behavior
+wl0gpio2=0
+
+# Commons wireless parameters
+cctl=0
+ccode=0
+
+# Bootlaoder variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+reset_gpio=7
+
+# Watchdog timer in ms
+watchdog=3000
+
+# glue between bootloader and firmware
+landevs=et0 wl0 wl1
+wandevs=

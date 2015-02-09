@@ -1,7 +1,7 @@
 #
 # 802.1x Authenticator (Network Access Server) Embedded Linux Build Makefile
 #
-# Copyright (C) 2013, Broadcom Corporation
+# Copyright (C) 2014, Broadcom Corporation
 # All Rights Reserved.
 # 
 # This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 382679 2013-02-03 04:43:50Z $
+# $Id: Makefile 403251 2013-05-20 05:15:55Z $
 #
 
 CFLAGS	+= -I.. -I$(SRCBASE)/include ${WLAN_StdIncPathA} -I$(SRCBASE)/common/include -I$(SRCBASE)/router/shared -Wall -Werror
@@ -34,7 +34,7 @@ LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
 LDFLAGS += -L$(TOP)/libbcmcrypto -L$(INSTALLDIR)/libbcmcrypto/usr/lib -lbcmcrypto
 LDFLAGS += -lgcc_s
 
-include ../../common.mak
+include ../../.config
 ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
