@@ -1667,7 +1667,7 @@ wl_extent_channel(int unit)
         snprintf(prefix, sizeof(prefix), "wl%d_", unit);
         name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
-	if (unit == 1) {
+	if ((unit == 1) || (unit == 2)) {
 #ifdef RTCONFIG_QTN
 		if (rpc_qcsapi_get_bw(&bw) >= 0) {
 			return bw;
@@ -1719,7 +1719,12 @@ wl_extent_channel(int unit)
 int
 ej_wl_extent_channel(int eid, webs_t wp, int argc, char_t **argv)
 {
+
+#ifdef RTAC3200
+	return websWrite(wp, "[\"%d\", \"%d\", \"%d\"]", wl_extent_channel(0), wl_extent_channel(1), wl_extent_channel(2));
+#else
 	return websWrite(wp, "[\"%d\", \"%d\"]", wl_extent_channel(0), wl_extent_channel(1));
+#endif
 }
 
 int
