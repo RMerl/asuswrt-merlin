@@ -339,7 +339,7 @@ ifneq ($(RTCONFIG_ROG),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/indicator.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/speedmeter.png
 endif
-ifneq ($(BUILD_NAME),RT-AC3200)
+ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/TrafficAnalyzer_Statistic.asp.asp
 	rm -rf $(INSTALLDIR)/www/statistic_default.js
 	rm -rf $(INSTALLDIR)/www/chart.js
