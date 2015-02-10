@@ -45,7 +45,7 @@ endif
 export SIZE := $(CROSS_COMPILE)size
 
 # Use a pkg-config wrapper to avoid pulling in host libs during cross-compilation.
-export PKG_CONFIG := $(SRCBASE)/../../tools/asuswrt-pkg-config
+export PKG_CONFIG := $(SRCBASE)/btools/asuswrt-pkg-config
 
 # Determine kernel version
 SCMD=sed -e 's,[^=]*=[        ]*\([^  ]*\).*,\1,'
