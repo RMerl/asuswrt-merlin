@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.50 (7-Feb-2015)
-==========================================
+Asuswrt-Merlin - build 378.51 (xx-xxx-2015)
+===========================================
 
 About
 -----
@@ -36,6 +36,7 @@ Supported devices are:
  * RT-AC68U
  * RT-AC68P
  * RT-AC87U
+ * RT-AC3200
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
 "U" counterparts, they are just different packages aimed at large 
@@ -645,6 +646,10 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+378.51 (xx-xxx-2015)
+   - NEW: Added support for the RT-AC3200.
+
+
 378.50 (7-Feb-2015)
    - IMPORTANT: You must do a factory default reset, and manually
                 reconfigure your setting if coming from a version
