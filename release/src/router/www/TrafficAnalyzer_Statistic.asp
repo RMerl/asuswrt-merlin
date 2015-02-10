@@ -1503,7 +1503,7 @@ function setHover_css(){
 									<div style="margin-left:10px;">
 										<label style="font-size:16px;">Last date:</label>
 										<input class="input_12_table" id="datepicker" value="">	
-										<div id="statistic_hint" style="text-align:right;margin-top:-21px;padding-right:15px;color:#FC0;font-size:14px;">*You should turn on the Traffic Statistic to record the traffic information</div>
+										<div id="statistic_hint" style="text-align:right;margin-top:-21px;padding-right:15px;color:#FC0;font-size:14px;">*Sample data - turn on the Traffic Statistic to record the traffic information</div>
 									</div>
 									<div style="margin:10px 0 10px 4px;">
 										<table>

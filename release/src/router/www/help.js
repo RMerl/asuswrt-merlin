@@ -298,27 +298,42 @@ function overHint(itemNum){
 	// wifi hw switch
 	if(itemNum == 8){
 		statusmenu = "<div class='StatusHint'>Wi-Fi:</div>";
-
+		wifiDesc = "<b>&nbsp;2.4G:</b> ";
 		if ( wlan0_radio_flag == 1) {
-			wifiDesc = "<b>2.4G:</b> ";
 			if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined) || (extent_chan_arr[0] == control_chan_arr[0]))
 				wifiDesc += "Channel " + control_chan_arr[0];
 			else
 				wifiDesc += "Channel "+ low_channel(control_chan_arr[0],extent_chan_arr[0]) + "+" + high_channel(control_chan_arr[0],extent_chan_arr[0]);
 		} else {
-			wifiDesc = "<b>2.4G:</b> <#btn_Disabled#>";
+			wifiDesc += "<#btn_Disabled#>";
 		}
 
-		if(band5g_support){
+		if (band5g_support){
+			if (wl_info.band5g_2_support)
+				wifiDesc += "<br><b>5G-1:</b> ";
+			else
+				wifiDesc += "<br><b>&nbsp;&nbsp;&nbsp;5G:</b> ";
 			if (wlan1_radio_flag == 1) {
-				wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> ";
 				if ((extent_chan_arr[1] == 0) || (extent_chan_arr[1] == undefined) || (extent_chan_arr[1] == control_chan_arr[1]))
-					wifiDesc += "Channel " + control_chan_arr[1]
+					wifiDesc += "Channel " + control_chan_arr[1];
 				else
-					wifiDesc += "Channels "+ control_chan_arr[1] + "/" + extent_chan_arr[1] + " MHz";
+					wifiDesc += "Channel "+ control_chan_arr[1] + "/" + extent_chan_arr[1] + " MHz";
 			} else {
-				wifiDesc += "<br><b>&nbsp;&nbsp;5G:</b> <#btn_Disabled#>"
+				wifiDesc += "<#btn_Disabled#>";
 			}
+
+			if (wl_info.band5g_2_support) {
+				wifiDesc += "<br><b>5G-2:</b> ";
+				if  ("<% nvram_get("wl2_radio"); %>" == 1) {
+					if ((extent_chan_arr[2] == 0) || (extent_chan_arr[2] == undefined) || (extent_chan_arr[2] == control_chan_arr[2]))
+						wifiDesc += "Channel " + control_chan_arr[2];
+					else
+						wifiDesc += "Channel "+ control_chan_arr[2] + "/" + extent_chan_arr[2] + " MHz";
+	                        } else {
+					wifiDesc += "<#btn_Disabled#>";
+				}
+                        }
+
 		}
 		statusmenu += "<span>" + wifiDesc + "</span>";
 	}	

@@ -442,16 +442,20 @@ unsigned int get_wifi_clients(int radio, int querytype)
 	qcsapi_unsigned_int association_count = 0;
 #endif
 
-	if (radio == 2) {
+	if (radio == 0) {
 		name = "eth1";
-	} else if (radio == 5) {
+	} else if (radio == 1) {
 		name = "eth2";
+#ifdef RTAC3200
+	} else if (radio == 2) {
+		name = "eth3";
+#endif
 	} else {
 		return 0;
 	}
 
 #ifdef RTCONFIG_QTN
-	if (radio == 5) {
+	if (radio == 1) {
 
 		if (nvram_match("wl1_radio", "0"))
 			return -1;	// Best way I can find to check if it's disabled

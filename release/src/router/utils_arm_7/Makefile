@@ -53,6 +53,10 @@ CFLAGS += -DPPR_API
 CFLAGS += -DWLCNT
 #endif
 
+ifeq ($(RTCONFIG_5301X),y)
+CFLAGS += -DBCM5301X
+endif
+
 ifeq ($(CONFIG_TRAFFIC_MGMT),y)
 CFLAGS += -DTRAFFIC_MGMT
 endif
@@ -63,6 +67,8 @@ CFLAGS += -DET_INGRESS_QOS
 endif
 
 vpath %.c $(SRCBASE)/tools/misc $(WLAN_StdSrcDirsA) $(WLAN_ComponentSrcDirs)
+
+UTILS += robocfg
 
 ifneq ($(wildcard $(SRCBASE)/et/linux/et.c),)
 UTILS += et
@@ -130,6 +136,8 @@ wifi/%.o: %.c
 	@mkdir -p wifi
 	$(CC) -c $(CFLAGS) -DRWL_WIFI -o $@ $^
 endif
+
+robocfg: robocfg.c etc53xx.h
 
 clean:
 	rm -f *.o *~ $(UTILS)
