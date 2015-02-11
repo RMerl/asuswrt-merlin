@@ -66,7 +66,7 @@ export BRANCH := $(shell git branch)
 #ifneq ($(BRANCH),) 
 #include ./router/extendno.conf
 #else
-#export EXTENDNO := $(shell git log --pretty=oneline asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)..HEAD | wc -l)-g$(shell git log --pretty=format:'%h' -n 1)
+export EXTENDNO := phantom-$(shell git log --pretty=format:'%h' -n 1)
 #endif
 
 #ifeq ($(EXTENDNO),)

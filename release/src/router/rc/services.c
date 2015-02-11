@@ -6698,13 +6698,13 @@ int get_dns_filter(int proto, int mode, char **server)
 	int count = 0;
 	static const char *server_table[13][2] = {
 		{"", ""},				/* 0: Unfiltered (handled separately below) */
-		{"208.67.222.222", ""},	/* 1: OpenDNS */
+		{"208.67.222.222", "208.67.220.220"},	/* 1: OpenDNS */
 		{"199.85.126.10", ""},	/* 2: Norton Connect Safe A (Security) */
 		{"199.85.126.20", ""},	/* 3: Norton Connect Safe B (Security + Adult) */
 		{"199.85.126.30", ""},	/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
 		{"77.88.8.88", ""},		/* 5: Secure Mode safe.dns.yandex.ru */
 		{"77.88.8.7", ""},		/* 6: Family Mode family.dns.yandex.ru */
-		{"208.67.222.123", ""},	/* 7: OpenDNS Family Shield */
+		{"208.67.222.123", "208.67.220.220"},	/* 7: OpenDNS Family Shield */
 		{"", ""},				/* 8: Custom1 */
 		{"", ""},				/* 9: Custom2 */
 		{"", ""},				/* 10: Custom3 */
@@ -6714,13 +6714,13 @@ int get_dns_filter(int proto, int mode, char **server)
 #ifdef RTCONFIG_IPV6
 	static const char *server6_table[][2] = {
 		{"", ""},		/* 0: Unfiltered (handled separately below) */
-		{"", ""},		/* 1: OpenDNS */
+		{"2620:0:ccc::2", "2620:0:ccd::2"},		/* 1: OpenDNS */
 		{"", ""},		/* 2: Norton Connect Safe A (Security) */
 		{"", ""},		/* 3: Norton Connect Safe B (Security + Adult) */
 		{"", ""},		/* 4: Norton Connect Safe C (Sec. + Adult + Violence */
-		{"2a02:6b8::feed:bad","2a02:6b8:0:1::feed:bad"},		/* 5: Secure Mode safe.dns.yandex.ru */
-		{"2a02:6b8::feed:a11","2a02:6b8:0:1::feed:a11"},		/* 6: Family Mode family.dns.yandex.ru */
-		{"", ""},			/* 7: OpenDNS Family Shield */
+		{"2a02:6b8::feed:bad", "2a02:6b8::feed:bad"},		/* 5: Secure Mode safe.dns.yandex.ru */
+		{"2a02:6b8::feed:a11", "2a02:6b8::feed:a11"},		/* 6: Family Mode family.dns.yandex.ru */
+		{"2620:0:ccc::2", "2620:0:ccd::2"},			/* 7: OpenDNS Family Shield */
 		{"", ""},			/* 8: Custom1 - not supported yet */
 		{"", ""},			/* 9: Custom2 - not supported yet */
 		{"", ""},			/* 10: Custom3 - not supported yet */

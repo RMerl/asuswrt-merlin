@@ -52,6 +52,38 @@ const int proto_overhead[] = { /* indexed by PROTO_x */
   IPv6_TCP_HEADER_SIZE,
 };
 
+int buffer_mask (struct buffer *buf, const char *mask, int xormasklen) {
+	int i;
+	uint8_t *b;
+	for (i = 0, b = BPTR (buf); i < BLEN(buf); i++, b++) {
+		*b = *b ^ mask[i % xormasklen];
+	}
+	return BLEN (buf);
+}
+
+int buffer_xorptrpos (struct buffer *buf) {
+	int i;
+	uint8_t *b;
+	for (i = 0, b = BPTR (buf); i < BLEN(buf); i++, b++) {
+		*b = *b ^ i+1;
+	}
+	return BLEN (buf);
+}
+
+int buffer_reverse (struct buffer *buf) {
+	int i;
+	int len=BLEN(buf);
+	uint8_t *b;
+	unsigned char cpy[len];
+	for (i = 0, b = BPTR (buf); i < len; i++, b++) {
+		cpy[i]=*b ;
+	}
+	for (i = 0, b = BPTR (buf)+len; i < len; i++, b--) {
+		*b=cpy[i] ;
+	}
+	return BLEN (buf);
+}
+
 /*
  * Convert sockflags/getaddr_flags into getaddr_flags
  */
