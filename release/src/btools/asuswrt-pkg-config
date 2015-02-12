@@ -1,7 +1,0 @@
-#!/bin/sh
-
-export PKG_CONFIG_DIR=
-export PKG_CONFIG_LIBDIR=$STAGEDIR/usr/lib/pkgconfig:$STAGEDIR/usr/share/pkgconfig
-export PKG_CONFIG_SYSROOT_DIR=$STAGEDIR
-
-exec pkg-config "$@"
