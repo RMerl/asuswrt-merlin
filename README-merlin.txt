@@ -60,7 +60,7 @@ System:
    - LED control - put your router in "Stealth Mode" by turning off 
      all LEDs
    - Entware easy setup script (alternative to Optware - the two are 
-     mutually exclusive) (not available on RT-AC56/RT-AC68/RT-AC87)
+     mutually exclusive)
    - SNMP support (based on experimental code from Asus)
 
 
@@ -536,10 +536,10 @@ Access your router through SSH/Telnet, and run
 "entware-setup.sh".
 
 Note that Entware requires the JFFS partition to be enabled, and an 
-ext2/ext3 formatted USB disk (NTFS, HFS+ and FAT32 are not supported).
+ext2/ext3/ext4 formatted USB disk (NTFS, HFS+ and FAT32 are not supported).
 
-Also note that Entware is not available for the RT-AC56U, RT-AC68U 
-or RT-AC87 due to the different CPU architecture.
+Since 378.51 Entware also has a ARM-based repository, for 
+AC56/AC68/AC87/AC3200 routers, provided by Zyxmon.
 
 
 
@@ -648,6 +648,10 @@ History
 -------
 378.51 (xx-xxx-2015)
    - NEW: Added support for the RT-AC3200.
+   - NEW: ARM support for Entware, using Zyxmon's Qnapware repository.
+   - FIXED: When enabling WAN access to webui, the router would always
+            forward both http and https ports regardless of if either of
+            these were disabled.
 
 
 378.50 (7-Feb-2015)
