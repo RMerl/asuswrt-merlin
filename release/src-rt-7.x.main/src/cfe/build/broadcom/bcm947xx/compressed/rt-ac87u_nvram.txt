@@ -1,0 +1,484 @@
+# NVRAM board text file for the BCM94709r rev P103 router reference design.
+#
+# Copyright 2013, Broadcom Corporation
+# All Rights Reserved.
+#
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NON-INFRINGEMENT CONCERNING THIS SOFTWARE.
+
+
+# sromrev tells the software what "version" of NVRAM is used. This entry is just for the CPU chip. The wireless chips
+# will have their own sromrev settings.
+sromrev=8
+
+
+# Board Configuration Parameters
+
+# boardnum is set by the nvserial program to the number passed in the "-s <num>" option. Don't edit it here.
+boardnum=${serno}
+
+# boardtype describes what type of Broadcom reference board that the design resembles
+# Customer boards should not use the exact same boardtype numbers as Broadcom reference designs.
+# A different number is needed to keep the TCL test data from customer boards separate from reference boards.
+#
+#   Reference Board  boardtype    Reference Board  boardtype
+#   ---------------  ---------    ---------------  ---------
+#     BCM94716nr2     0x04CD
+#     BCM94717ap      0x04CE
+#     BCM94718nr      0x04CF
+#     BCM94717mii     0x04ED
+#     BCM94717cbtnr   0x04EF
+#     BCM94716nr2ipa  0x04FB
+#     BCM95356ssnr    0x0505
+#     BCM94718nrl     0x050D
+#     BCM94718nrx     0x050E
+#     BCM947186nrh    0x052A
+#     BCM947186nr2    0x052B
+#     BCM94718nrlfmc  0x052C
+#     BCM95357nr      0x053A
+#     BCM95357nrepa   0x053B
+#     BCM95358nr2     0x053D
+#     BCM95357nr2epa  0x054C
+#     BCM95357nr2     0x054D
+#     BCM95357cbtnr2epa 0x056A
+#     BCM94706nr      0x05B2
+#     BCM94706nrh     0x05D8
+#     BCM94706Lmiih5  0x0603
+#     BCM94706nr2hmc  0x0617
+#     BCM94708r       0x0646
+#     BCM94709r       0x0665
+#
+# set a boardtype of BCM94709r
+boardtype=0x0665
+
+# Board revision.
+# boardrev is a 16 bit number as follows:
+# Bits [15:12] - Board Revision Type (brt), a 4 bit number with values:
+#                0: Legacy (old boardrev numbering scheme - do not use)
+#                1: Prototype "P" board.
+#                2: Production "A" board.
+#                3-15: Reserved.
+# Bits [11:0] - Board revision, 12 bits which use BCD encoding to represent a decimal number between 0 and 999.
+#
+# Ex: A P304 board rev is 0x1304
+#
+# Board revision is P103
+boardrev=0x1103
+
+# boardflags: 32-bits (LSB on top, MSB on bottom)
+#   0 = no Bluetooth coexistence                                 1 = board supports Bluetooth coexistence
+#   0 = set the PA VREF LDO to 2.85V                             1 = set the PA VREF LDO to 3.00V
+#         (BCM4360 & BCM4352 only)
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = enable 256QAM support                                    1 = disable 256QAM support
+#         (11ac chips only)
+#  ---
+#   0 = board does not have RoboSwitch or Ethernet switch core   1 = has RoboSwitch chip or Ethernet switch core
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#  ---
+#   0 = Ethernet switch does not have VLAN capability            1 = Ethernet switch has VLAN capability
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = chip's PCI/PCIe interface is connected on the board      1 = chip's PCI/PCIe is not connected or there is no PCI/PCIe interface on the chip
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#  ---
+#   0 = board does not have an external 2.4GHz LNA               1 = board has an external 2.4GHz LNA
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = no alternate Bluetooth coexistence                       1 = 2-wire BT coex on GPIOs 4 & 5
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#  ---
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = no triple-throw switch shared with Bluetooth             1 = board has triple-throw switch shared with Bluetooth
+#  ---
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = board does not share an antenna with Bluetooth           1 = board has a FEM or switch to share an antenna with Bluetooth
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#  ---
+#   0 = normal CCK EVM and spectral mask                         1 = favor CCK EVM over spectral mask (2.4GHz only)
+#   0 = board power topology does not use PALDO                  1 = board power topology use PALDO
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#  ---
+#   0 = board does not have an external 5GHz LNA                 1 = board has an external 5GHz LNA
+#   0 = for sromrev=8 & 9: for a 1x2 design, board does not      1 = for sromrev=8 & 9: for a 1x2 design, board has two T/R switches
+#         have two T/R switches
+#       for sromrev=11: no 5GHz gain boost for chains 0 & 1      1 = for sromrev=11: 5GHz gain boost for chains 0 & 1
+#   0 = normal operation of 5GHz T/R switch for high RF          1 = hold T/R switch in the "R" position for high RF input powers.
+#       input power.
+#   0 = use normal RF receiver gain                              1 = backoff RF receiver gain based on the elna2g/5g parameters, for external LNAs only.
+#
+boardflags=0x00000110
+
+# boardflags2: 32-bits (LSB on top, MSB on bottom)
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = use normal 5GHz band PLL settings                        1 = use alternate 5GHz band PLL settings
+#       (BCM4322x, BCM4716/17/18, and BCM4360/4352/43526 only)
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = board does not have a 2x4 diversity switch               1 = board has a 2x4 diversity switch
+#  ---
+#   0 = board does not support the 5GHz band TX power gain       1 = board supports the 5GHz band TX power gain
+#   0 = do not override the ASPM and CLKREQ settings             1 = override the ASPM and CLKREQ settings
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = board uses SECI Bluetooth coexistence                    1 = board uses 3-wire Bluetooth coexistence
+#  ---
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = do not use the workaround for clock harmonic spurs       1 = use the workaround for clock-harmonic spurs
+#   0 = use normal 2.4GHz band PLL settings                      1 = use alternate 2.4GHz band PLL settings
+#       (BCM4322x and BCM4716/17/18 only)
+#   0 = Normal LED drive (full push-pull)                        1 = Drive the LED outputs as open-drain
+#       (BCM43224 only)
+#  ---
+#   0 = enable TX diversity for 11b frames                       1 = Transmit 11b frames only on antenna 0 (2.4GHz only)
+#   0 = no WAR to reduce/avoid clock harmonic spurs in 2G band   1 = enable WAR to reduce/avoid clock harmonic spurs in 2G band
+#   0 = do not transmit 11b frames using all TX cores            1 = transmit 11b frames using all TX cores (2.4GHz only)
+#       (TX diversity enabled or not by bit 12)                      (TX diversity is overridden)
+#   0 = use normal filter settings for 2.4GHz bandedge channels  1 = use alternate filter settings for 2.4GHz bandedge channels
+#       (BCM4716/17/18, BCM5357, BCM5358/58U, and BCM47186 internal PAs only)
+#  ---
+#   0 = do not use 200kHz PLL bandwidth for 2.4GHz band          1 = use 200kHz PLL bandwidth for 2.4GHz band
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = for external PAs, use external TSSI for TX IQCAL         1 = use internal envelope detector for TX IQCAL even with external PAs
+#       (BCM4322x and BCM4716/17/18 only)
+#   0 = turn off the buffered crystal output from the chip       1 = keep the buffered crystal output from the chip turned on
+#  ---
+#   0 = control 2GHz PAs with the digital PA control signals     1 = control 2GHz PAs with the analog PA VREF LDO outputs
+#   0 = control 5GHz PAs with the digital PA control signals     1 = control 5GHz PAs with the analog PA VREF LDO outputs
+#   0 = deprecated                                               1 = deprecated (set to "0")
+#   0 = no antenna sharing with Bluetooth                        1 = share the chain 0 antenna with Bluetooth
+#  ---
+#   0 = no adjustment to the temperature threshold, "tempthresh" 1 = chip can sustain a higher tempsense threshold
+#                                                                    add the value of parameter "tempoffset" to "tempthresh"
+#   0 = use standard 4-wire Bluetooth coexistence                1 = use standard 3-wire Bluetooth coexistence only. 4-wire not supported
+#   0 = 4331 power savings mode enabled                          1 = 4331 power savings mode disabled
+#       (BCM4331 client designs only)
+#   0 = no ucode powersave WAR                                   1 = enable ucode powersave WAR
+#       (BCM4331 only)
+#  ---
+#   0 = enable dynamic Vmid in idle TSSI calibration             1 = disable dynamic Vmid in idle TSSI calibration
+#       (BCM4331 only)
+#   0 = not used (set to "0")                                    1 = not used (set to "0")
+#   0 = do not bypass the internal 2.4GHz LNA1 for high RF input 1 = bypass the internal 2.4GHz LNA1 for high RF input power
+#         (11ac chips only)
+#   0 = do not bypass the internal 5GHz LNA1 for high RF input   1 = bypass the internal 5GHz LNA1 for high RF input power
+#         (11ac chips only)
+#
+boardflags2=0x00000000
+
+# frequency of the crystal driving the PLL, in kHz
+# Even if the chip does not support any other crystal frequency, this parameter must still be specified.
+xtalfreq=25000
+
+# For BCM4707/8/9/81: ARM clock frequency in MHz, DDR clock freq in MHz.
+# See table in source code file /src/shared/hndmips.c or /src/shared/hndarm.c for the valid clkfreq settings for a given chip.
+#
+clkfreq=1000,800
+
+# The "restore to factory defaults" button is on GPIO 17. It MUST be active low, or the software will have to be modified.
+reset_gpio=11
+
+# If the board has a USB power control chip, then the parameter "gpioX=usbportY" is used to tell
+# the USB driver code that it needs to set that GPIO HIGH to turn on power to that USB port.
+# "X" is the GPIO number, 0-31. "Y" is the USB port number, starting at "1".
+# More than one parameter can be used, but each GPIO number and USB port number must be unique.
+gpio19=usbport1
+#gpio12=usbport2
+
+
+# SDRAM Memory Configuration Parameters
+
+# sdram_config configures the SDRAM interface specifically for the actual memory part used
+# It is VERY critical to set this parameter correctly or the board will not boot.
+
+# For the BCM4707/8/9/81:
+#
+# Bits   Definition
+# -----  -----------------------------------------------------------------------------------------------------------
+# 15:11  Reserved
+#  10:8  Column Size: 000 = 2048 columns; 001 = 1024 columns; 010 = 512 columns
+#   7    Reserved
+#   6    0 = 4 banks; 1 = 8 banks
+#            NOTE: For 4 banks, columns can be 512, 1024, or 2048. For 8 banks, columns can only be 1024 or 2048.
+#   5    Reserved
+#  4:0   CAS latency: valid range is 3-14, all others reserved
+#
+# Set 128MB (1Gbit) of DDR3 (DDR3M64X16), x16, 8 banks, CL=11
+sdram_config=0x014B
+
+# Normally the 4708/9/81 do not use the sdram_refresh parameter, however for the 4708/9/81, the sdram_refresh parameter can
+# be used to speed up the refresh interval of the DDR3. This is only needed for DDR3 and only if the junction temperature
+# of the DDR3 part is expected to get hotter than 85 degC. If this adjustment is needed, set the sdram_refresh parameter
+# according to the following equation:
+#   sdram_refresh = 6232 * DDR3 clock (in MHz) / 800
+
+# Network Configuration Parameters
+
+# et0mcdport is which MDC/MDIO port is used to connect to the internal or external Ethernet switch or PHY.
+# Nearly all wireless chips have only one external Ethernet MAC so this parameter should be set to "0".
+et1mdcport=0
+
+# et0phyaddr is the MDIO address of the internal or external Ethernet switch or PHY.
+# For all Broadcom Ethernet switches, internal to the wireless chip or external to it, will have an address of "30".
+# External PHY chips will have strapping options to set their address and that address can range from 0-31.
+et1phyaddr=30
+
+# Set the MAC address of the Ethernet ports
+# From 9/2009 onward MAC addresses have changed from an 8/16 split between macmid and the serial number, to a 12/12 split,
+# so the new macmid will be based on MAC addresses with the following format:
+#   47   40 39   32 31   24 23   16 15    8 7     0
+#  |  00   |  90   |  4C   |  XX   |  XY   |  YY   |
+# where the low 24 bits are evenly split into 4096 interface/ boardtypes and 4096 serial numbers. The low nibble of
+# XXX cannot be 0, since that corresponds to an old style MAC address, and macmid will correspond to bits 23:12, so
+# its easy to differentiate them from the old ones.
+#
+# The new "macmid" values will start at 1 and go up to 0xFFF, skipping those that have the low nibble as 0 and the
+# ones with the patterns 0x04Ex and 0x04Fx (These restrictions are enforced in the code). To form the mac address,
+# the whole OUI (00:90:4C) will be prepended to those values and 12 bits of serial number will be appended.
+#
+# A new-style macmid:
+#   BCM947186nrh  0x008
+#
+# For router boards, nvserial now defines a new variable: "maclo12"
+# so NVRAM text files for new boards will have to define the MAC address like this (for a macmid 0x008):
+#   et0macaddr=00:90:4C:00:8${maclo12}
+# instead of the previous way:
+#   et0macaddr=00:90:4C:FC:${maclo}
+#
+# Set the MAC address of the Ethernet ports
+#   Reference Board   macmid
+#   ---------------  ---------
+#     BCM94716nr2      4C:04
+#     BCM94717ap       4C:06
+#     BCM94718nr       4C:08
+#     BCM94717mii      4C:2D
+#     BCM94717cbtnr    4C:2F
+#     BCM95356ssnr     4C:36
+#     BCM94718nrl      4C:56
+#     BCM94718nrx      4C:57
+#     BCM947186nrh     00:8
+#     BCM95357nr       01:2
+#     BCM95357nrepa    01:4
+#     BCM95358nr2      01:6
+#     BCM947186nr2     01:E
+#     BCM95357nr2epa   01:4
+#     BCM95357cbtnr2epa 02:8
+#     BCM94718nrlfmc   05:6
+#     BCM94706nr       08:A
+#     BCM94706nrh      0B:4
+#     BCM94706Lmiih5   0C:8
+#     BCM94706nr2hmc   0D:B
+#     BCM94708r        0F:F
+#     BCM94709r        11:2
+#
+# New style:
+# The value of 00:90:4C:11:2 is for a BCM94709r reference design.
+# The "maclo12" part is filled in by the nvserial program.
+et1macaddr=00:90:4C:11:2${maclo12}
+
+# Ethernet switch VLAN configuration.
+# These parameters configure VLANs (Virtual LANs) for the internal or external Ethernet switch. This is done mainly
+# to separate the WAN port of a router from the LAN ports.
+# All Broadcom switches that have MAC ports with built-in PHYs will number the ports with PHYs starting at 0 and
+# incrementing upwards. For the MAC ports without PHYs, the numbering of that port(s) can vary. The table below shows
+# the numbering of the MAC only ports in various Broadcom chips.
+#
+#  Broadcom Chip   MAC only ports
+#  --------------  --------------
+#  BCM5356               5
+#  BCM5357/5358U         5
+#  BCM5358               5
+#  BCM47186              8
+#  BCM53115             5,8
+#  BCM53125             5,8
+#  BCM4707/8/9/81      5,7,8
+#
+# One of these ports will connect the Ethernet switch to the CPU of the wireless chip. For chips will built-in Ethernet
+# switches and PHYs, this port will be internal to the chip. This port number must be included in every VLAN definition
+# for the wireless chip to be able to route/bridge network traffic between the Ethernet ports, the wireless network(s),
+# and any other network device in the design (such as DSL, PLC, cellular data, etc…).
+#
+# A special symbol - an "*" - must be added to the end one, and only one, vlanXports parameter. This indicates which
+# VLAN is to be used by the bootloader for Ethernet network connections. Typically this the VLAN for the LAN ports.
+#
+# There are two other special tags that can be added after the MAC port number that connects to the CPU:
+#   "u" - configures the switch to not add VLAN tags for packets to/from the CPU and the other port(s) in the VLAN port list.
+#   "t" - configures the switch to add VLAN tags for packets to/from the CPU and the other port(s) in the VLAN port list.
+#         This is the normal behavior so the "t" is usually omitted.
+#
+# Also see the note under "wandevs" parameter when the WAN VLAN is tagged.
+# Typically vlan1 is the LAN, and vlan2 is the WAN)
+# NOTE: Bit 8 of boardflags must be set to "1" for these parameters to work.
+#
+# WAN is on port 0, LAN is on ports 1-4. Port 5 is the MAC interface to the external switch or switch core.
+#
+# vlan1 is the LAN.
+vlan1ports=1 2 3 5 7*
+vlan1hwname=et1
+
+# vlan2 is the WAN.
+vlan2ports=0 7u
+vlan2hwname=et1
+
+# The landevs parameter is used to connect (or "bridge") a number of different network interfaces together to form the
+# LAN of the wireless router/AP design. Typically the two main network interfaces that are part of the LAN are the
+# Ethernet port(s), and the wireless network interface(s).
+#   Example: landevs=vlan1 wl0
+# This would bridge the Ethernet VLAN named "vlan1" with the one wireless interface named "wl0", together to form the LAN.
+#
+#   Example: landevs=vlan1 wl0 wl1
+# This would bridge the Ethernet VLAN named "vlan1" with the two wireless interfaces named "wl0" and "wl1", together to
+# form the LAN. Two wireless interfaces are used for simultaneous dual-band (2.4GHz and 5GHz) router/AP designs.
+#
+# If VLAN names are not used, then device names such as "et0" must be used for Ethernet instead.
+#
+landevs=vlan1 wl0
+
+# The wandevs parameter is used to tell the software which network interface to use as the WAN. Typically the WAN is an Ethernet port.
+# If Ethernet WAN packets are VLAN tagged, then wandevs should be set to "vlanX", where "X" is the VLAN number that
+# corresponds to the WAN VLAN number as set by a "vlanXports" and "vlanXhwname" parameter pair.
+# For when Ethernet WAN packets are not VLAN tagged, then wandevs should be set to "etX", where "X" is the number of the
+# Ethernet interface that contains the WAN port, typically "0". So typically wandevs is set to "et0".
+#
+# NOTE: If the board does not have a WAN port then must use "wandevs=", without any device name assignment. This is
+# critical for the proper functioning of the network software when there is no WAN port.
+#
+# The WAN port is almost always on an Ethernet port so use the normal config. If the WAN port is not an Ethernet port,
+# then this parameter must be changed accordingly.
+#
+# WAN port is on eth0.
+wandevs=et1
+
+# Set the factory default IP address and subnet mask for the router.
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+
+
+# WPS Configuration Parameters
+
+# If the board supports WPS, then these parameters tell the software
+# which GPIO is used for the WPS pushbutton and which is used for the WPS LED indicator.
+#gpio2=wps_led
+gpio2=wps_button
+
+
+# Other Parameters
+
+# Enable a short delay on boot so the CFE delays before loading and executing Linux. Durring this time the CFE listens
+# for a TFTP transfer to come in from an external source via the Ethernet LAN. The purpose of this process is to
+# enable easy firmware upgrades and support manufacturing testing.
+boot_wait=on
+# If boot_wait is on, then "wait_time" sets the wait time from 1 to 99 seconds. Three seconds is long enough time to
+# allow a TFTP transfer to start, while not slowing down the overall boot time.
+wait_time=1
+
+# Watchdog timer in ms.
+# For all CPU chips other than the 4707/8/9/81, the valid range is 3000ms to 5500ms.
+# For the 4707/8/9/81 the valid range is 1000ms to 2100ms.
+# A setting of 0 will disable the watchdog.
+watchdog=2100
+
+#4360_2G nvram
+devpath0=pci/1/1
+0:venid=0x14E4
+0:sromrev=11
+0:boardflags=0x00001000
+0:boardflags2=0x00100002
+0:boardflags3=0x00000003
+0:xtalfreq=40000
+0:devid=0x43A1
+0:macaddr=00:90:4C:0E:C${maclo12}
+0:aa2g=7
+0:agbg0=0
+0:agbg1=0
+0:agbg2=0
+0:txchain=7
+0:rxchain=7
+0:antswitch=0
+0:femctrl=3
+0:gainctrlsph=0
+0:papdcap2g=0
+0:tworangetssi2g=0
+0:pdgain2g=4
+0:epagain2g=0
+0:tssiposslope2g=1
+
+# 2GHz RX Gain Parameteters
+0:rxgains2gelnagaina0=4
+0:rxgains2gelnagaina1=4
+0:rxgains2gelnagaina2=4
+0:rxgains2gtrelnabypa0=1
+0:rxgains2gtrelnabypa1=1
+0:rxgains2gtrelnabypa2=1
+0:rxgains2gtrisoa0=7
+0:rxgains2gtrisoa1=7
+0:rxgains2gtrisoa2=7
+
+# 2GHz TX Parameters
+0:maxp2ga0=106
+0:maxp2ga1=106
+0:maxp2ga2=106
+0:pa2ga0=0xff4a,0x1afc,0xfcc4
+0:pa2ga1=0xff49,0x1b1a,0xfcbe
+0:pa2ga2=0xff4e,0x1a8d,0xfcd6
+
+# Power-Per-Rate settings:
+0:cckbw202gpo=0
+0:cckbw20ul2gpo=0
+0:mcsbw202gpo=0xea642000
+0:mcsbw402gpo=0xea642000
+0:dot11agofdmhrbw202gpo=0x6533
+0:ofdmlrbw202gpo=0
+0:sb20in40hrpo=0
+0:sb20in40lrpo=0
+0:dot11agduphrpo=0
+0:dot11agduplrpo=0
+
+#2G TX beamforming parameters
+0:rpcal2g=0xffff
+
+# Regulatory parameters
+0:ccode=US
+0:regrev=0
+0:sar2g=18
+
+#LED behavior settings
+0:ledbh10=7
+#0:leddc=0xFFFF
+
+#temperature setting
+0:temps_period=5
+0:tempthresh=120
+0:temps_hysteresis=5
+0:phycal_tempdelta=0
+0:tempoffset=0
+
+# LED behavior
+#1:leddc=0xFFFF
+
+# Bootloader version
+bl_version=1.0.3.2
+
+# for NAND flash
+bootflags=1
+
+# WPS AP PIN code
+secret_code=12345670
+
+# ODM Product ID
+odmpid=ASUS
+
+# Model Name
+model=RT-AC87U
+
+# others
+# PAtype. 0: RT-AC68U, 5023: RT-AC68U V2 with original PA 5023, 85402: RT-AC68U V2 with new PA 85402
+#	  1: RT-AC87U
+ATEMODE=1
+HW_ver=1.10
+PA=1
+nospare=1

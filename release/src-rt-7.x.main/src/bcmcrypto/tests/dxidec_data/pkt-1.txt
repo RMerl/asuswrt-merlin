@@ -1,0 +1,6 @@
+88 42 2c 00 00 10 18 a9 17 65 00 10 18 a9 03 a3
+08 00 27 c8 80 e7 30 27 00 00 06 8d 80 00 b8 b5 
+58 df da 2b a2 24 a4 4b d6 af 45 23 ec c1 df df 
+9c 56 d8 95 a0 37 c6 29 6c d5 7b ba 1f f2 62 e3 
+1e 5a 41 ef 11 6e b2 8c df e9 e6 eb bc 76 41 99 
+9f f1 fb 53 71 8b d8 54 fc 68 17 8d

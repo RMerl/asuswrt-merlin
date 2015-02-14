@@ -1,0 +1,65 @@
+/*
+ * This is the "template" linker script.  It gets run through the C preprocessor
+ * (via cpp) to construct the real linker script.
+ */
+
+OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(startup)
+SECTIONS
+{
+	. = CFE_TEXT_START;
+	. = ALIGN(4);
+	.text : {
+		_ftext = . ;
+		text_start = .;
+		*(.text.startup)
+		*(.init)
+		*(.text)
+		*(.text.*)
+		*(.fini)
+		_etext = .;
+		text_end = .;
+	}
+
+	. = ALIGN(4);
+	.rodata : {
+		rodata_start = .;
+		*(.rdata)
+		*(.rdata.*)
+		*(.rodata)
+		*(.rodata.*)
+		rodata_end = .;
+	}
+
+	. = ALIGN(4);
+	.data : {
+		data_start = .;
+		_fdata = .;
+		*(.data)
+		*(.data.*)
+		*(.sdata)
+		data_end = .;
+		_edata = .;
+	}
+
+	. = ALIGN(4);
+	.bss : {
+		_fbss = .;
+		bss_start = .;
+		*(.sbss)
+		*(.scommon)
+		*(.bss)
+		*(.bss.*)
+		*(COMMON)
+		bss_end = .;
+	}
+
+	/DISCARD/ : { *(.dynstr*) }
+	/DISCARD/ : { *(.dynamic*) }
+	/DISCARD/ : { *(.plt*) }
+	/DISCARD/ : { *(.interp*) }
+	/DISCARD/ : { *(.gnu*) }
+
+	_end = .;
+}

@@ -1,0 +1,17 @@
+
+This directory contains the network modules for CFE.  The
+following standards are implemented here:
+
+* Ethernet datalink
+* ARP
+* IP
+* UDP
+* ICMP
+* TFTP
+* BOOTP/DHCP
+* DNS (for queries only)
+* TCP
+
+If anyone really screams for it, I've considered putting a simple
+(very simple) TCP stack in here as well, but it doesn't seem worth it.
+

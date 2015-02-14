@@ -44,9 +44,6 @@ export STRIP := $(CROSS_COMPILE)strip -R .note -R .comment
 endif
 export SIZE := $(CROSS_COMPILE)size
 
-# Use a pkg-config wrapper to avoid pulling in host libs during cross-compilation.
-export PKG_CONFIG := $(shell which asuswrt-pkg-config)
-
 # Determine kernel version
 SCMD=sed -e 's,[^=]*=[        ]*\([^  ]*\).*,\1,'
 KVERSION:=	$(shell grep '^VERSION[ 	]*=' $(LINUXDIR)/Makefile|$(SCMD))
@@ -72,6 +69,7 @@ export TARGETDIR := $(PLATFORMDIR)/target
 export STAGEDIR := $(PLATFORMDIR)/stage
 export PKG_CONFIG_SYSROOT_DIR := $(STAGEDIR)
 export PKG_CONFIG_PATH := $(STAGEDIR)/usr/lib/pkgconfig:$(STAGEDIR)/etc/lib/pkgconfig
+export PKG_CONFIG_LIBDIR := $(STAGEDIR)/usr/lib/pkgconfig:$(STAGEDIR)/usr/share/pkgconfig
 
 export EXTRACFLAGS += -DLINUX_KERNEL_VERSION=$(LINUX_KERNEL_VERSION) $(if $(STAGING_DIR),--sysroot=$(STAGING_DIR))
 

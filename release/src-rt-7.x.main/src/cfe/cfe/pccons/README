@@ -1,0 +1,19 @@
+
+This directory contains "PC Console" routines, to enable the
+SWARM board to use PC-style devices for its console.  In
+particular, it contains the code to use the X86 emulator
+to initialize the VGA, and code to map scan codes to
+ASCII characters for a PC keyboard.
+
+What is this good for, you ask?  Just for fun, mostly.  Many of
+us have had this screwy notion that a SWARM could be used as
+a Linux "workstation" if we could get VGA support and USB
+keyboards implemented (oh, yeah, and there's this whole
+matter of PC console support in Linux, and X, and ...).
+
+Like the USB host stack, this is among the least-supported
+portions of CFE.  If you find it useful, great!  If it doesn't
+work or build properly, let us know, but we may not get to fixing
+it right away.
+
+

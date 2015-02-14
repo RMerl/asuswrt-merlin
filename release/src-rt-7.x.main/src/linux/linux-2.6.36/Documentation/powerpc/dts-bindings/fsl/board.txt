@@ -1,0 +1,63 @@
+* Board Control and Status (BCSR)
+
+Required properties:
+
+ - compatible : Should be "fsl,<board>-bcsr"
+ - reg : Offset and length of the register set for the device
+
+Example:
+
+	bcsr@f8000000 {
+		compatible = "fsl,mpc8360mds-bcsr";
+		reg = <f8000000 8000>;
+	};
+
+* Freescale on board FPGA
+
+This is the memory-mapped registers for on board FPGA.
+
+Required properities:
+- compatible : should be "fsl,fpga-pixis".
+- reg : should contain the address and the length of the FPPGA register
+  set.
+- interrupt-parent: should specify phandle for the interrupt controller.
+- interrupts : should specify event (wakeup) IRQ.
+
+Example (MPC8610HPCD):
+
+	board-control@e8000000 {
+		compatible = "fsl,fpga-pixis";
+		reg = <0xe8000000 32>;
+		interrupt-parent = <&mpic>;
+		interrupts = <8 8>;
+	};
+
+* Freescale BCSR GPIO banks
+
+Some BCSR registers act as simple GPIO controllers, each such
+register can be represented by the gpio-controller node.
+
+Required properities:
+- compatible : Should be "fsl,<board>-bcsr-gpio".
+- reg : Should contain the address and the length of the GPIO bank
+  register.
+- #gpio-cells : Should be two. The first cell is the pin number and the
+  second cell is used to specify optional parameters (currently unused).
+- gpio-controller : Marks the port as GPIO controller.
+
+Example:
+
+	bcsr@1,0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "fsl,mpc8360mds-bcsr";
+		reg = <1 0 0x8000>;
+		ranges = <0 1 0 0x8000>;
+
+		bcsr13: gpio-controller@d {
+			#gpio-cells = <2>;
+			compatible = "fsl,mpc8360mds-bcsr-gpio";
+			reg = <0xd 1>;
+			gpio-controller;
+		};
+	};

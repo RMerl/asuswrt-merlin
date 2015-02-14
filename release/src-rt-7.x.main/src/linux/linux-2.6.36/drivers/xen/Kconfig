@@ -1,0 +1,79 @@
+menu "Xen driver support"
+	depends on XEN
+
+config XEN_BALLOON
+	bool "Xen memory balloon driver"
+	default y
+	help
+	  The balloon driver allows the Xen domain to request more memory from
+	  the system to expand the domain's memory allocation, or alternatively
+	  return unneeded memory to the system.
+
+config XEN_SCRUB_PAGES
+	bool "Scrub pages before returning them to system"
+	depends on XEN_BALLOON
+	default y
+	help
+	  Scrub pages before returning them to the system for reuse by
+	  other domains.  This makes sure that any confidential data
+	  is not accidentally visible to other domains.  Is it more
+	  secure, but slightly less efficient.
+	  If in doubt, say yes.
+
+config XEN_DEV_EVTCHN
+	tristate "Xen /dev/xen/evtchn device"
+	default y
+	help
+	  The evtchn driver allows a userspace process to triger event
+	  channels and to receive notification of an event channel
+	  firing.
+	  If in doubt, say yes.
+
+config XENFS
+	tristate "Xen filesystem"
+	default y
+	help
+	  The xen filesystem provides a way for domains to share
+	  information with each other and with the hypervisor.
+	  For example, by reading and writing the "xenbus" file, guests
+	  may pass arbitrary information to the initial domain.
+	  If in doubt, say yes.
+
+config XEN_COMPAT_XENFS
+       bool "Create compatibility mount point /proc/xen"
+       depends on XENFS
+       default y
+       help
+         The old xenstore userspace tools expect to find "xenbus"
+         under /proc/xen, but "xenbus" is now found at the root of the
+         xenfs filesystem.  Selecting this causes the kernel to create
+         the compatibility mount point /proc/xen if it is running on
+         a xen platform.
+         If in doubt, say yes.
+
+config XEN_SYS_HYPERVISOR
+       bool "Create xen entries under /sys/hypervisor"
+       depends on SYSFS
+       select SYS_HYPERVISOR
+       default y
+       help
+         Create entries under /sys/hypervisor describing the Xen
+	 hypervisor environment.  When running native or in another
+	 virtual environment, /sys/hypervisor will still be present,
+	 but will have no xen contents.
+
+config XEN_PLATFORM_PCI
+	tristate "xen platform pci device driver"
+	depends on XEN_PVHVM
+	default m
+	help
+	  Driver for the Xen PCI Platform device: it is responsible for
+	  initializing xenbus and grant_table when running in a Xen HVM
+	  domain. As a consequence this driver is required to run any Xen PV
+	  frontend on Xen HVM.
+
+config SWIOTLB_XEN
+	def_bool y
+	depends on SWIOTLB
+
+endmenu

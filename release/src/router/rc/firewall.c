@@ -1251,15 +1251,21 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	// need multiple instance for tis?
 	if (nvram_match("misc_http_x", "1"))
 	{
-		if ((wan_port = nvram_get_int("misc_httpport_x")) == 0)
-			wan_port = 8080;
-		fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
-			wan_port, lan_ip, nvram_safe_get("lan_port"));
+		if (nvram_match("http_enable", "0") || nvram_match("http_enable", "2"))
+		{
+			if ((wan_port = nvram_get_int("misc_httpport_x")) == 0)
+				wan_port = 8080;
+			fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
+				wan_port, lan_ip, nvram_safe_get("lan_port"));
+		}
 #ifdef RTCONFIG_HTTPS
-		if ((wan_port = nvram_get_int("misc_httpsport_x")) == 0)
-			wan_port = 8443;
-		fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
-			wan_port, lan_ip, nvram_safe_get("https_lanport"));
+		if (nvram_match("http_enable", "1") || nvram_match("http_enable", "2"))
+		{
+			if ((wan_port = nvram_get_int("misc_httpsport_x")) == 0)
+				wan_port = 8443;
+			fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
+				wan_port, lan_ip, nvram_safe_get("https_lanport"));
+		}
 #endif
 	}
 
@@ -1528,15 +1534,21 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	// need multiple instance for tis?
 	if (nvram_match("misc_http_x", "1"))
 	{
-		if ((wan_port = nvram_get_int("misc_httpport_x")) == 0)
-			wan_port = 8080;
-		fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
-			wan_port, lan_ip, nvram_safe_get("lan_port"));
+		if (nvram_match("http_enable", "0") || nvram_match("http_enable", "2"))
+		{
+			if ((wan_port = nvram_get_int("misc_httpport_x")) == 0)
+				wan_port = 8080;
+			fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
+				wan_port, lan_ip, nvram_safe_get("lan_port"));
+		}
 #ifdef RTCONFIG_HTTPS
-		if ((wan_port = nvram_get_int("misc_httpsport_x")) == 0)
-			wan_port = 8443;
-		fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
-			wan_port, lan_ip, nvram_safe_get("https_lanport"));
+		if (nvram_match("http_enable", "1") || nvram_match("http_enable", "2"))
+		{
+			if ((wan_port = nvram_get_int("misc_httpsport_x")) == 0)
+				wan_port = 8443;
+			fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%s\n",
+				wan_port, lan_ip, nvram_safe_get("https_lanport"));
+		}
 #endif
 	}
 

@@ -1,0 +1,66 @@
+PM Quality Of Service Interface.
+
+This interface provides a kernel and user mode interface for registering
+performance expectations by drivers, subsystems and user space applications on
+one of the parameters.
+
+Currently we have {cpu_dma_latency, network_latency, network_throughput} as the
+initial set of pm_qos parameters.
+
+Each parameters have defined units:
+ * latency: usec
+ * timeout: usec
+ * throughput: kbs (kilo bit / sec)
+
+The infrastructure exposes multiple misc device nodes one per implemented
+parameter.  The set of parameters implement is defined by pm_qos_power_init()
+and pm_qos_params.h.  This is done because having the available parameters
+being runtime configurable or changeable from a driver was seen as too easy to
+abuse.
+
+For each parameter a list of performance requests is maintained along with
+an aggregated target value.  The aggregated target value is updated with
+changes to the request list or elements of the list.  Typically the
+aggregated target value is simply the max or min of the request values held
+in the parameter list elements.
+
+From kernel mode the use of this interface is simple:
+
+handle = pm_qos_add_request(param_class, target_value):
+Will insert an element into the list for that identified PM_QOS class with the
+target value.  Upon change to this list the new target is recomputed and any
+registered notifiers are called only if the target value is now different.
+Clients of pm_qos need to save the returned handle.
+
+void pm_qos_update_request(handle, new_target_value):
+Will update the list element pointed to by the handle with the new target value
+and recompute the new aggregated target, calling the notification tree if the
+target is changed.
+
+void pm_qos_remove_request(handle):
+Will remove the element.  After removal it will update the aggregate target and
+call the notification tree if the target was changed as a result of removing
+the request.
+
+
+From user mode:
+Only processes can register a pm_qos request.  To provide for automatic
+cleanup of a process, the interface requires the process to register its
+parameter requests in the following way:
+
+To register the default pm_qos target for the specific parameter, the process
+must open one of /dev/[cpu_dma_latency, network_latency, network_throughput]
+
+As long as the device node is held open that process has a registered
+request on the parameter.
+
+To change the requested target value the process needs to write an s32 value to
+the open device node.  Alternatively the user mode program could write a hex
+string for the value using 10 char long format e.g. "0x12345678".  This
+translates to a pm_qos_update_request call.
+
+To remove the user mode request for a target value simply close the device
+node.
+
+
+

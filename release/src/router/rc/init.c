@@ -1102,7 +1102,7 @@ restore_defaults(void)
 
 			break;
 		case MODEL_RTAC3200:
-			nvram_set("reboot_time", "80");
+			nvram_set("reboot_time", "90");
 
 			break;
 		case MODEL_RPAC68U:

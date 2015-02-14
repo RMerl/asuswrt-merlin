@@ -1,0 +1,53 @@
+#!/bin/sh
+# ----------------------------------------------------------------------
+# extract-ikconfig - Extract the .config file from a kernel image
+#
+# This will only work when the kernel was compiled with CONFIG_IKCONFIG.
+#
+# The obscure use of the "tr" filter is to work around older versions of
+# "grep" that report the byte offset of the line instead of the pattern.
+#
+# (c) 2009, Dick Streefland <dick@streefland.net>
+# Licensed under the terms of the GNU General Public License.
+# ----------------------------------------------------------------------
+
+gz1='\037\213\010'
+gz2='01'
+cf1='IKCFG_ST\037\213\010'
+cf2='0123456789'
+
+dump_config()
+{
+	if	pos=`tr "$cf1\n$cf2" "\n$cf2=" < "$1" | grep -abo "^$cf2"`
+	then
+		pos=${pos%%:*}
+		tail -c+$(($pos+8)) "$1" | zcat -q
+		exit 0
+	fi
+}
+
+# Check invocation:
+me=${0##*/}
+img=$1
+if	[ $# -ne 1 -o ! -s "$img" ]
+then
+	echo "Usage: $me <kernel-image>" >&2
+	exit 2
+fi
+
+# Initial attempt for uncompressed images or objects:
+dump_config "$img"
+
+# That didn't work, so decompress and try again:
+tmp=/tmp/ikconfig$$
+trap "rm -f $tmp" 0
+for	pos in `tr "$gz1\n$gz2" "\n$gz2=" < "$img" | grep -abo "^$gz2"`
+do
+	pos=${pos%%:*}
+	tail -c+$pos "$img" | zcat 2> /dev/null > $tmp
+	dump_config $tmp
+done
+
+# Bail out:
+echo "$me: Cannot find kernel config." >&2
+exit 1

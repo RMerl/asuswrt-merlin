@@ -2,13 +2,23 @@ include ../common.mak
 include $(SRCBASE)/.config
 
 ifeq ($(RTCONFIG_RALINK),y)
+# Ralink/MTK platform
+
 ifeq ($(CONFIG_LINUX30),y)
 SRCFILE = ralink_3.0.0
 else
 SRCFILE = ralink_2.6.2219
 endif
 DSTDIR = $(INSTALLDIR)/lib/modules/$(LINUX_KERNEL)/kernel/fs
+
+else ifeq ($(RTCONFIG_QCA),y)
+# QCA platform
+SRCFILE = qca
+DSTDIR = $(INSTALLDIR)/lib/modules/3.3.8/kernel/fs
+
 else
+# Broadcom platform
+
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_BCM7),y)
 SRCFILE = broadcom_arm_7
@@ -20,6 +30,7 @@ else
 SRCFILE = broadcom
 DSTDIR = $(INSTALLDIR)/lib/modules/2.6.22.19/kernel/fs
 endif
+
 endif
 
 
@@ -39,13 +50,25 @@ install:
 	@install -d $(INSTALLDIR)/usr/sbin
 ifeq ($(RTCONFIG_TFAT),y)
 	@cp -f $(SRCFILE)/fat/kernel-module/tfat.ko $(DSTDIR)
+ifeq ($(RTCONFIG_BCM7),y)
+	install -D $(SRCFILE)/fat/tools/fatfsck $(INSTALLDIR)/usr/sbin/fatfsck
+else
 	install -D $(SRCFILE)/fat/tools/fsck_msdos $(INSTALLDIR)/usr/sbin/fsck_msdos
+endif
 ifneq ($(NO_MKTOOLS),y)
+ifeq ($(RTCONFIG_BCM7),y)
+	install -D $(SRCFILE)/fat/tools/mkfatfs $(INSTALLDIR)/usr/sbin/mkfatfs
+	#install -D $(SRCFILE)/fat/tools/fatdebug $(INSTALLDIR)/usr/sbin/fatdebug
+	#install -D $(SRCFILE)/fat/tools/fatinfo $(INSTALLDIR)/usr/sbin/fatinfo
+	#install -D $(SRCFILE)/fat/tools/fatlabel $(INSTALLDIR)/usr/sbin/fatlabel
+	#install -D $(SRCFILE)/fat/tools/fatdump $(INSTALLDIR)/usr/sbin/fatdump
+else
 	install -D $(SRCFILE)/fat/tools/newfs_msdos $(INSTALLDIR)/usr/sbin/newfs_msdos
 	#install -D $(SRCFILE)/fat/tools/fatdebug $(INSTALLDIR)/usr/sbin/fatdebug
 	#install -D $(SRCFILE)/fat/tools/fatinfo $(INSTALLDIR)/usr/sbin/fatinfo
 	#install -D $(SRCFILE)/fat/tools/dosfslabel $(INSTALLDIR)/usr/sbin/dosfslabel
 	#install -D $(SRCFILE)/fat/tools/fatdump $(INSTALLDIR)/usr/sbin/fatdump
+endif
 endif
 endif
 ifeq ($(RTCONFIG_TUXERA_NTFS),y)
@@ -65,13 +88,13 @@ ifneq ($(NO_MKTOOLS),y)
 	install -D $(SRCFILE)/hfsplus/tools/newfs_hfs $(INSTALLDIR)/usr/sbin/newfs_hfs
 endif
 endif
-ifeq ($(or $(RTCONFIG_TFAT),$(RTCONFIG_TUXERA_NTFS),$(RTCONFIG_TUXERA_HFS)),y)
+#ifeq ($(or $(RTCONFIG_TFAT),$(RTCONFIG_TUXERA_NTFS),$(RTCONFIG_TUXERA_HFS)),y)
 #ifeq ($(and $(RTCONFIG_BCMARM),$(RTCONFIG_SAMBA3)),y)
 #	install -D $(SRCFILE)/samba/lib/libstdc++.so.6.0.14 $(INSTALLDIR)/usr/lib/libstdc++.so.6.0.14
 #	cd $(INSTALLDIR)/usr/lib && ln -sf libstdc++.so.6.0.14 libstdc++.so.6 && ln -sf libstdc++.so.6.0.14 libstdc++.so
-#	install -D $(SRCFILE)/samba/bin/smbd $(INSTALLDIR)/usr/bin/smbd
+#	install -D $(SRCFILE)/samba/smbd $(INSTALLDIR)/usr/bin/smbd
 #endif
-endif
+#endif
 
 .phony: all clean install
 
