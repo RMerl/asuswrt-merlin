@@ -1522,7 +1522,7 @@ finish:
 		stop_dnsmasq(); /* stop_dhcpd(); */
 		//convert_asus_values(1);
 		//nvram_commit_safe();
-		start_dnsmasq(0); /* start_dhcpd(); */
+		start_dnsmasq(); /* start_dhcpd(); */
 		start_wan();
 #else
 		

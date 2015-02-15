@@ -2150,7 +2150,7 @@ int update_resolvconf(void)
 
 #ifdef RTCONFIG_OPENVPN
 	if (dnsstrict == 2)
-		start_dnsmasq(0);	// add strict-order
+		start_dnsmasq();	// add strict-order
 	else
 #endif
 		reload_dnsmasq();

@@ -1,4 +1,4 @@
-/*
+d/*
  * Router rc control script
  *
  * Copyright 2005, Broadcom Corporation
@@ -813,8 +813,8 @@ extern void write_static_leases(char *file);
 #ifdef RTCONFIG_DNSFILTER
 extern int get_dns_filter(int proto, int mode, char **server);
 #endif
-extern void start_dnsmasq(int force);
-extern void stop_dnsmasq(int force);
+extern void start_dnsmasq(void);
+extern void stop_dnsmasq(void);
 extern void reload_dnsmasq(void);
 extern int ddns_updated_main(int argc, char *argv[]);
 #ifdef RTCONFIG_IPV6

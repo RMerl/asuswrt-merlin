@@ -3288,7 +3288,7 @@ lan_up(char *lan_ifname)
 
 	_dprintf("%s(%s)\n", __FUNCTION__, lan_ifname);
 
-	start_dnsmasq(0);
+	start_dnsmasq();
 
 	update_lan_resolvconf();
 

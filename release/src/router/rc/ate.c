@@ -363,7 +363,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			stop_wanduck();
 			stop_logger();
 			stop_wanduck();
-			stop_dnsmasq(0);
+			stop_dnsmasq();
 			stop_ots();
 			stop_networkmap();
 #ifdef RTCONFIG_USB

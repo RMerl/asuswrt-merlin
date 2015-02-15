@@ -605,7 +605,7 @@ int get_dhcpd_lmax()
 	return dhlease_size;
 }
 
-void start_dnsmasq(int force)
+void start_dnsmasq()
 {
 	FILE *fp;
 	char *lan_ifname, *lan_ipaddr;
@@ -616,12 +616,12 @@ void start_dnsmasq(int force)
 
 	TRACE_PT("begin\n");
 
-	if(!force && getpid() != 1){
+	if(getpid() != 1){
 		notify_rc("start_dnsmasq");
 		return;
 	}
 
-	stop_dnsmasq(force);
+	stop_dnsmasq();
 
 	lan_ifname = nvram_safe_get("lan_ifname");
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -1004,12 +1004,6 @@ void start_dnsmasq(int force)
 	write_vpn_dnsmasq_config(fp);
 #endif
 
-#ifdef WEB_REDIRECT
-	/* Web redirection - all unresolvable will return the router's IP */
-	if(nvram_get_int("nat_state") == NAT_STATE_REDIRECT)
-		fprintf(fp, "address=/#/10.0.0.1\n");
-#endif
-
 	append_custom_config("dnsmasq.conf",fp);
 
 	fclose(fp);
@@ -1060,11 +1054,11 @@ void start_dnsmasq(int force)
 	TRACE_PT("end\n");
 }
 
-void stop_dnsmasq(int force)
+void stop_dnsmasq(void)
 {
 	TRACE_PT("begin\n");
 
-	if(!force && getpid() != 1){
+	if(getpid() != 1){
 		notify_rc("stop_dnsmasq");
 		return;
 	}
@@ -3521,7 +3515,7 @@ start_services(void)
 	start_acsd();
 #endif
 #endif
-	start_dnsmasq(0);
+	start_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 	start_mdns();
 #endif
@@ -3692,7 +3686,7 @@ stop_services(void)
 	stop_httpd();
 	stop_cifs();
 
-	stop_dnsmasq(0);
+	stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 	stop_mdns();
 #endif
@@ -4263,7 +4257,7 @@ again:
 #endif
 #elif defined(RTCONFIG_TEMPROOTFS)
 				stop_lan_wl();
-				stop_dnsmasq(0);
+				stop_dnsmasq();
 				stop_networkmap();
 				stop_wpsaide();
 #ifdef RTCONFIG_QCA	
@@ -4328,7 +4322,7 @@ again:
 		stop_wanduck();
 		stop_logger();
 		stop_wanduck();
-		stop_dnsmasq(0);
+		stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 		stop_mdns();
 #endif
@@ -4345,7 +4339,7 @@ again:
 			sleep(2); // wait for all httpd event done
 			stop_httpd();
 
-			stop_dnsmasq(0);
+			stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			stop_mdns();
 #endif
@@ -4382,7 +4376,7 @@ again:
 			start_vlan();
 			start_lan();
 
-			start_dnsmasq(0);
+			start_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			start_mdns();
 #endif
@@ -4429,7 +4423,7 @@ again:
 #endif
 			stop_networkmap();
 			stop_httpd();
-			stop_dnsmasq(0);
+			stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			stop_mdns();
 #endif
@@ -4462,7 +4456,7 @@ again:
 		if(action & RC_SERVICE_START) {
 			//start_vlan();
 			start_lan();
-			start_dnsmasq(0);
+			start_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			start_mdns();
 #endif
@@ -4524,7 +4518,7 @@ again:
 #endif
 			stop_networkmap();
 			stop_httpd();
-			stop_dnsmasq(0);
+			stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			stop_mdns();
 #endif
@@ -4561,7 +4555,7 @@ again:
 		if(action & RC_SERVICE_START) {
 			//start_vlan();
 			start_lan();
-			start_dnsmasq(0);
+			start_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			start_mdns();
 #endif
@@ -5220,8 +5214,8 @@ check_ddr_done:
 	}
 	else if (strcmp(script, "dnsmasq") == 0)
 	{
-		if(action & RC_SERVICE_STOP) stop_dnsmasq(0);
-		if(action & RC_SERVICE_START) start_dnsmasq(0);
+		if(action & RC_SERVICE_STOP) stop_dnsmasq();
+		if(action & RC_SERVICE_START) start_dnsmasq();
 	}
 	else if (strcmp(script, "upnp") == 0)
 	{
@@ -5422,14 +5416,14 @@ check_ddr_done:
 #endif
 			stop_networkmap();
 			stop_httpd();
-			stop_dnsmasq(0);
+			stop_dnsmasq();
 			stop_lan_wlc();
 			stop_lan_port();
 			stop_lan_wlport();
 			start_lan_wlport();
 			start_lan_port(8);
 			start_lan_wlc();
-			start_dnsmasq(0);
+			start_dnsmasq();
 			start_httpd();
 			start_networkmap(0);
 #ifdef RTCONFIG_USB_PRINTER
@@ -5536,10 +5530,10 @@ check_ddr_done:
 	else if (strcmp(script, "yadns") == 0)
 	{
 		if (action & RC_SERVICE_STOP)
-			stop_dnsmasq(0);
+			stop_dnsmasq();
 		if (action & RC_SERVICE_START) {
 			update_resolvconf();
- 			start_dnsmasq(0);
+ 			start_dnsmasq();
  		}
 		start_firewall(wan_primary_ifunit(), 0);
 	}
@@ -5548,7 +5542,7 @@ check_ddr_done:
 	else if (strcmp(script, "dnsfilter") == 0)
 	{
 		if(action & RC_SERVICE_START) {
-			start_dnsmasq(0);
+			start_dnsmasq();
 			start_firewall(wan_primary_ifunit(), 0);
 		}
 	}
@@ -5969,12 +5963,9 @@ void start_nat_rules(void)
 
 	eval("iptables-restore", NAT_RULES);
 
-#ifdef WEB_REDIRECT
-	// Remove wildcard resolution
-	start_dnsmasq(1);
-#endif
-
 	run_custom_script("nat-start", NULL);
+
+	return;
 }
 
 void stop_nat_rules(void)
@@ -5993,10 +5984,7 @@ void stop_nat_rules(void)
 
 	eval("iptables-restore", "/tmp/redirect_rules");
 
-#ifdef WEB_REDIRECT
-	// dnsmasq will handle wildcard resolution
-	start_dnsmasq(1);
-#endif
+	return;
 }
 
 #ifdef RTCONFIG_BCMWL6
