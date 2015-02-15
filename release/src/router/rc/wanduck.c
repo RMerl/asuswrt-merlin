@@ -1056,15 +1056,7 @@ void handle_wan_line(int wan_unit, int action){
 
 	// Redirect rules.
 	if(action){
-		memset(prefix_wan, 0, 8);
-		sprintf(prefix_wan, "wan%d_", wan_unit);
-
-		memset(wan_proto, 0, 16);
-		strcpy(wan_proto, nvram_safe_get(strcat_r(prefix_wan, "proto", nvram_name)));
-
-		if((strcmp(wan_proto, "pptp")) && (strcmp(wan_proto, "l2tp"))){
-			stop_nat_rules();
-		}
+		stop_nat_rules();
 	}
 	/*
 	 * When C2C and remove the redirect rules,
@@ -2039,9 +2031,11 @@ _dprintf("wanduck(%d): detect the modem to be reset...\n", wan_unit);
 							notify_rc_and_period_wait(cmd, 30);
 						}
 
-						memset(cmd, 0, 32);
-						sprintf(cmd, "restart_wan_line %d", !wan_unit);
-						notify_rc(cmd);
+						if(get_wan_state(!wan_unit) == WAN_STATE_CONNECTED){
+							memset(cmd, 0, 32);
+							sprintf(cmd, "restart_wan_line %d", !wan_unit);
+							notify_rc(cmd);
+						}
 					}
 					else
 						set_disconn_count(wan_unit, get_disconn_count(wan_unit)+1);
@@ -2580,7 +2574,7 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 						){
 #ifdef RTCONFIG_USB_MODEM
 					// the current line is USB and be plugged off.
-					if (!link_wan[current_wan_unit] && dualwan_unit__usbif(current_wan_unit)) {
+					if(!link_wan[current_wan_unit] && dualwan_unit__usbif(current_wan_unit)){
 						if(get_dualwan_by_unit(other_wan_unit) != WANS_DUALWAN_IF_NONE){
 							csprintf("\n# wanduck(C2D): Modem was plugged off and try to Switch the other line.\n");
 							switch_wan_line(other_wan_unit, 0);
@@ -2593,7 +2587,7 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 
 #ifdef RTCONFIG_DSL /* Paul add 2013/7/29, for Non-DualWAN 3G/4G WAN -> DSL WAN, auto Fail-Back feature */
 #ifndef RTCONFIG_DUALWAN
-						if (nvram_match("dsltmp_adslsyncsts","up") && usb_switched_back_dsl == 1){
+						if(nvram_match("dsltmp_adslsyncsts","up") && usb_switched_back_dsl == 1){
 							csprintf("\n# wanduck: usb_switched_back_dsl: 1.\n");
 							link_wan[WAN_UNIT_SECOND] = CONNED; 
 							max_disconn_count = max_wait_time/scan_interval;
@@ -2625,8 +2619,8 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 						eval("et", "robowr", "0", "0x18", "0x01ff");
 						eval("et", "robowr", "0", "0x1a", "0x01ff");
 					}
-				}
 #endif
+				}
 				csprintf("\n# Disable direct rule(D2C)\n");
 				rule_setup = 0;
 				handle_wan_line(current_wan_unit, rule_setup);
