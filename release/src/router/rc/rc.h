@@ -1,4 +1,4 @@
-d/*
+/*
  * Router rc control script
  *
  * Copyright 2005, Broadcom Corporation
