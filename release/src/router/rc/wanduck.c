@@ -2564,8 +2564,9 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 							eval("et", "robowr", "0", "0x1a", "0x01fe");
 						}
 #endif
+<<<<<<< HEAD
 					}
-					csprintf("\n# Enable direct rule if not tunnelled (C2D)\n");
+					csprintf("\n# Enable direct rule(C2D)\n");
 				}
 				else
 					csprintf("\n# Enable direct rule(isFirstUse)\n");
@@ -2615,7 +2616,7 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 			}
 		}
 		else if(conn_changed_state[current_wan_unit] == D2C || conn_changed_state[current_wan_unit] == CONNED){
-			if(rule_setup == 1 && !isFirstUse){
+                        if(rule_setup == 1 && !isFirstUse){
 				if (nvram_match("led_disable", "0")) {
 #ifdef RTCONFIG_DSL /* Paul add 2013/7/30 */
 					led_control(LED_WAN, LED_ON);
@@ -2625,9 +2626,9 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 						eval("et", "robowr", "0", "0x18", "0x01ff");
 						eval("et", "robowr", "0", "0x1a", "0x01ff");
 					}
-#endif
 				}
-				csprintf("\n# Disable direct rule if not tunnelled (D2C)\n");
+#endif
+				csprintf("\n# Disable direct rule(D2C)\n");
 				rule_setup = 0;
 				handle_wan_line(current_wan_unit, rule_setup);
 			}
