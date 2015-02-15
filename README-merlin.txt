@@ -649,6 +649,9 @@ History
 378.51 (xx-xxx-2015)
    - NEW: Added support for the RT-AC3200.
    - NEW: ARM support for Entware, using Zyxmon's Qnapware repository.
+   - CHANGED: Reverted our handling of WAN down situations back to
+              Asus's code in an attempt to resolve the random issues
+              experienced by Beeline customers.
    - FIXED: When enabling WAN access to webui, the router would always
             forward both http and https ports regardless of if either of
             these were disabled.
