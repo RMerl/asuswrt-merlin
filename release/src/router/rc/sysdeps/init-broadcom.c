@@ -4827,16 +4827,16 @@ void generate_wl_para(int unit, int subunit)
 
 		if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
 			if (	((get_model() == MODEL_RTAC68U || get_model() == MODEL_RPAC68U || get_model() == MODEL_DSLAC68U) &&
-				nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") &&
+				(nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") || nvram_match(strcat_r(prefix, "reg_mode", tmp), "d")) &&
                                 nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
                                 nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
                                 ((get_model() == MODEL_RTAC66U) &&
-				nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") &&
+				(nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") || nvram_match(strcat_r(prefix, "reg_mode", tmp), "d")) &&
                                 nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
                                 nvram_match(strcat_r(prefix, "country_rev", tmp), "31") &&
                                 nvram_match(strcat_r(prefix, "dfs", tmp), "1")) ||
                                 ((get_model() == MODEL_RTN66U) &&
-				nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") &&
+				(nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") || nvram_match(strcat_r(prefix, "reg_mode", tmp), "d")) &&
                                 nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
                                 nvram_match(strcat_r(prefix, "country_rev", tmp), "0"))
                         )
