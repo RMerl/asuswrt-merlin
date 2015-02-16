@@ -578,12 +578,15 @@ var calculate_height = menuL1_link.length + menuL2_link.length - 1;
 
 if(bwdpi_support){
 	var traffic_L1_dx = 4;
+	var tools_L1 = 8;
 }
 else{
 	var traffic_L1_dx = 3;
+	var tools_L1 = 7;
 }
 
 var traffic_L2_dx = 12;
+
 function remove_url(){
 	remove_menu_item("Advanced_Modem_Content.asp");
 	remove_menu_item("AiProtection_Group.asp");		//hide temporary for phrase 1 ASUSWRT 1.5, Jieming added at 2014/05/07
@@ -1002,7 +1005,7 @@ function show_menu(){
 	}
 
 	// special case for Traffic Manager and Tools menu
-	if(L1 == traffic_L1_dx || L2 == traffic_L2_dx || L1 == 8){
+	if(L1 == traffic_L1_dx || L2 == traffic_L2_dx || L1 == tools_L1){
 		if(current_url.indexOf("QoS_EZQoS") == 0 || current_url.indexOf("Advanced_QOSUserRules_Content") == 0 || current_url.indexOf("Advanced_QOSUserPrio_Content") == 0){
 			L1 = traffic_L1_dx; 
 			L2 = traffic_L2_dx; 
@@ -1056,7 +1059,6 @@ function show_menu(){
 			L3 = 1;
 		}
 		else if(current_url.indexOf("Tools_") == 0){
-			L2 = 16;
 			L3 = 1;
 		}
 
@@ -1071,8 +1073,8 @@ function show_menu(){
 	// tools
 	if(current_url.indexOf("Tools_") == 0) {
 		traffic_L2_dx = 16;
-		L2 = 16;
-		L1 = 8;
+		L1 = tools_L1;
+		L2 = traffic_L2_dx;
 	}
 
 	// cloud
