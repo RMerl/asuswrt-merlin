@@ -288,12 +288,20 @@ function initial(){
 			(mcast_rate == mcast_rates[i][1]) ? 1 : 0);
 	}
 
-	if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
-		var reg_mode = '<% nvram_get("wl_reg_mode"); %>';
-	        add_option(document.form.wl_reg_mode, "802.11h", "strict_h",
-	                (reg_mode == "strict_h") ? 1 : 0);
-	        add_option(document.form.wl_reg_mode, "802.11d+h", "h",
-	                (reg_mode == "h") ? 1 : 0);
+	var reg_mode = '<% nvram_get("wl_reg_mode"); %>';
+	if ('<% nvram_get("wl_unit"); %>' == '0') { // 2.4GHz
+		add_option(document.form.wl_reg_mode, "Off", "off", (reg_mode == "off") ? 1 : 0);
+		add_option(document.form.wl_reg_mode, "802.11d", "d", (reg_mode == "d") ? 1 : 0);
+	} else {	// 5GHz
+		// EU region enforces 802.11h due to DFS
+		if ("<% nvram_get("wl1_country_code"); %>" != "EU"){
+			add_option(document.form.wl_reg_mode, "Off", "off", (reg_mode == "off") ? 1 : 0);
+			add_option(document.form.wl_reg_mode, "802.11d", "d", (reg_mode == "d") ? 1 : 0);
+		} else {
+			if ((reg_mode == "off") || (reg_mode == "d")) reg_mode = "h";
+		}
+	        add_option(document.form.wl_reg_mode, "802.11h", "strict_h", (reg_mode == "strict_h") ? 1 : 0);
+	        add_option(document.form.wl_reg_mode, "802.11d+h", "h", (reg_mode == "h") ? 1 : 0);
 	}
 
 
@@ -1098,9 +1106,7 @@ function set_power(power_value){
 						<th>Regulation mode</th>
 						<td>
 							<select name="wl_reg_mode" class="input_option">
-									<option value="off" <% nvram_match("wl_reg_mode", "off","selected"); %> >Off (default)</option>
-									<option value="d" <% nvram_match("wl_reg_mode", "d","selected"); %> >802.11d</option>
-								</select>
+							</select>
 						</td>
 					</tr>					
 
