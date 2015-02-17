@@ -196,3 +196,6 @@ echo_with_logging "=== Done setting up stateless slave"
 echo_with_logging "=== Enable telnet for ATE"
 # telnet_ate
 
+brctl stp br0 on
+qdrvcmd set br_isolate 0
+
