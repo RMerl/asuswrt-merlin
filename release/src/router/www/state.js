@@ -2966,12 +2966,17 @@ function refreshStatus(xmldoc){
 		if (!band5g_support)
 			radio_5 = radio_2;
 
-		if (radio_2 && radio_5)
+		if (wl_info.band5g_2_support)
+			radio_5b = '<% nvram_get("wl2_radio"); %>';
+		else
+			radio_5b = radio_5;
+
+		if (radio_2 && radio_5 && parseInt(radio_5b))
 		{
 			$("wifi_hw_sw_status").className = "wifihwswstatuson";
 			$("wifi_hw_sw_status").onclick = function(){}
 		}
-		else if (radio_2 || radio_5)
+		else if (radio_2 || radio_5 || parseInt(radio_5b))
 		{
 			$("wifi_hw_sw_status").className = "wifihwswstatuspartial";  
 			$("wifi_hw_sw_status").onclick = function(){}
