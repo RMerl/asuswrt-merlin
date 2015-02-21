@@ -10887,7 +10887,9 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "get_default_reboot_time", ej_get_default_reboot_time},
 	{ "sysinfo",  ej_show_sysinfo},
+#ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
+#endif
 #ifdef RTCONFIG_OPENVPN
 	{ "vpn_server_get_parameter", ej_vpn_server_get_parameter},
 	{ "vpn_client_get_parameter", ej_vpn_client_get_parameter},
