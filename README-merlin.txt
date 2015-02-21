@@ -29,7 +29,6 @@ performance, and performance over features.
 Supported Devices
 -----------------
 Supported devices are:
- * RT-N16
  * RT-N66U
  * RT-AC66U
  * RT-AC56U
@@ -37,6 +36,11 @@ Supported devices are:
  * RT-AC68P
  * RT-AC87U
  * RT-AC3200
+
+Devices that are no longer officially supported (but forked builds might
+exist from other developers):
+ * RT-N16
+
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
 "U" counterparts, they are just different packages aimed at large 
@@ -50,7 +54,7 @@ Here is a list of features that Asuswrt-merlin adds over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.378_3913 source code from Asus
+   - Based on 3.0.0.4.378_4129 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -93,11 +97,10 @@ Web interface:
      monitoring
    - Name field on the DHCP reservation list and Wireless ACL list
    - System info summary page
-   - Wireless client IP and hostname on the Wireless Log page
    - Wifi icon reports the state of both radios
    - Display the Ethernet port states
    - Wireless site survey
-
+   - Advanced Wireless client list display, including automated refresh
 
 A few features that first appeared in Asuswrt-Merlin have since been 
 integrated/enabled/re-implemented in the official firmware:
@@ -647,11 +650,27 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 378.51 (xx-xxx-2015)
+   - IMPORTANT: The RT-N16 is no longer officially supported.  The increased
+                number of separate router platforms is becoming too much of
+                a burden for one single developer, as some features must be 
+                implemented 2-3 separate times for different architectures.  
+                The RT-N16 support will remain in the source code, so other
+                developers can still compile their own builds, and possibly
+                take over for supporting this older platform.  However, no new
+                features will be implemented, and it will no longer get 
+                tested.  I still welcome external contributions if 
+                someone else wants to take care of testing and providing 
+                fixes to new issues.
    - NEW: Added support for the RT-AC3200.
    - NEW: ARM support for Entware, using Zyxmon's Qnapware repository.
-   - CHANGED: Reverted our handling of WAN down situations back to
-              Asus's code in an attempt to resolve the random issues
-              experienced by Beeline customers.
+   - NEW: Re-designed Wireless Log page displaying connected wireless
+          clients.  The new page uses Ajax to automatically update
+          itself at a user-selected frequency, for near realtime
+          monitoring of your connected wifi clients.
+   - CHANGED: Reverted RT-AC66U driver to previous version as some users
+              were experiencing stability issues with the 3754 version.
+   - FIXED: Issues when connecting with Russian ISPs relying on DHCP+VPN 
+            (such as Beeline)
    - FIXED: When enabling WAN access to webui, the router would always
             forward both http and https ports regardless of if either of
             these were disabled.
