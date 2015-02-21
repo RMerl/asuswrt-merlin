@@ -1934,11 +1934,6 @@ ej_wl_status_qtn(int eid, webs_t wp, int argc, char_t **argv, const char *ifname
 	qcsapi_unsigned_int association_count = 0, tx_phy_rate, rx_phy_rate, time_associated;
 	qcsapi_mac_addr sta_address;
 	int hr, min, sec;
-	char *arplist = NULL, *arplistptr;
-	char *leaselist = NULL, *leaselistptr;
-	int found;
-	char ipentry[40], macentry[18];
-	char hostnameentry[16];
 
 	if (!rpc_qtn_ready())
 		return retval;
@@ -1974,58 +1969,20 @@ ej_wl_status_qtn(int eid, webs_t wp, int argc, char_t **argv, const char *ifname
 
 			retval += websWrite(wp, "%s ", wl_ether_etoa((struct ether_addr *) &sta_address));
 
-			/* Obtain mac + IP list */
-			arplist = read_whole_file("/proc/net/arp");
-
-			/* Obtain lease list - we still need the arp list for
-			   cases where a device uses a static IP rather than DHCP */
-			leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
-
-			found = 0;
-			if (arplist) {
-				arplistptr = arplist;
-
-				while ((arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%15s %*s %*s %17s",ipentry,macentry) == 2)) {
-					if (upper_strcmp(macentry, wl_ether_etoa((struct ether_addr *) &sta_address)) == 0) {
-						found = 1;
-						break;
-					} else {
-						arplistptr = strstr(arplistptr,"\n")+1;
-					}
-				}
-			}
-			retval += websWrite(wp, "%-16s", (found ? ipentry : ""));
-
-			// Retrieve hostname from dnsmasq leases
-			found = 0;
-			if (leaselist) {
-				leaselistptr = leaselist;
-
-				while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %*s %15s %*s", macentry, hostnameentry) == 2)) {
-					if (upper_strcmp(macentry,  wl_ether_etoa((struct ether_addr *) &sta_address)) == 0) {
-						found = 1;
-						break;
-					} else {
-						leaselistptr = strstr(leaselistptr,"\n")+1;
-					}
-				}
-			}
-			retval += websWrite(wp, "%-15s ", (found ? hostnameentry : ""));
+			retval += websWrite(wp, "%-11s%-11s", "Yes", !nvram_match("wl1_auth_mode_x", "open") ? "Yes" : "No");
 
 			retval += websWrite(wp, "%4ddBm ", rssi);
 
-			retval += websWrite(wp, "%4d/%-4d%-6s", tx_phy_rate, rx_phy_rate, "Mbps");
+			retval += websWrite(wp, "%6dM ", tx_phy_rate);
 
-			retval += websWrite(wp, "%02d:%02d:%02d  ", hr, min, sec);
+			retval += websWrite(wp, "%6dM ", rx_phy_rate);
 
-			retval += websWrite(wp, "A%s", !nvram_match("wl1_auth_mode_x", "open") ? "U" : "");
+			retval += websWrite(wp, "%02d:%02d:%02d", hr, min, sec);
 
 			retval += websWrite(wp, "\n");
 		}
 	}
 
-        if (arplist) free(arplist);
-        if (leaselist) free(leaselist);
 	return retval;
 }
 
@@ -2228,3 +2185,223 @@ ej_wl_auth_psta_qtn(int eid, webs_t wp, int argc, char_t **argv)
 ERROR:
 	return retval;
 }
+
+int
+wl_status_5g_array(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int ret, retval = 0;
+	qcsapi_SSID ssid;
+	qcsapi_unsigned_int channel;
+	qcsapi_unsigned_int bw;
+	char chspec_str[8];
+	int is_nctrlsb_lower;
+
+	if (!rpc_qtn_ready())
+		return 0;
+
+	memset(&ssid, 0, sizeof(qcsapi_SSID));
+	ret = rpc_qcsapi_get_SSID(WIFINAME, &ssid);
+	if (ret < 0) {
+		ret += websWrite(wp, "'','','','','','',");
+		dbG("rpc_qcsapi_get_SSID %s error, return: %d\n", WIFINAME, ret);
+	}
+	retval += websWrite(wp, "'%s',", ssid);
+
+	int rssi_by_chain[4], rssi;
+	qcsapi_wifi_get_rssi_by_chain(WIFINAME, 0, &rssi_by_chain[0]);
+	qcsapi_wifi_get_rssi_by_chain(WIFINAME, 1, &rssi_by_chain[1]);
+	qcsapi_wifi_get_rssi_by_chain(WIFINAME, 2, &rssi_by_chain[2]);
+	qcsapi_wifi_get_rssi_by_chain(WIFINAME, 3, &rssi_by_chain[3]);
+	rssi = (rssi_by_chain[0] + rssi_by_chain[1] + rssi_by_chain[2] + rssi_by_chain[3]) / 4;
+
+	retval += websWrite(wp, "'%d',", 0);
+
+	retval += websWrite(wp, "'%d',", rpc_qcsapi_get_snr());
+
+	retval += websWrite(wp, "'%d',", rssi);
+
+	ret = rpc_qcsapi_get_channel(&channel);
+	if (ret < 0) {
+		ret += websWrite(wp, "'','',");
+		dbG("rpc_qcsapi_get_channel error, return: %d\n", ret);
+	}
+	ret = rpc_qcsapi_get_bw(&bw);
+	if (ret < 0) {
+		ret += websWrite(wp, "'','',");
+		dbG("rpc_qcsapi_get_bw error, return: %d\n", ret);
+	}
+
+	if (bw == 80)
+		sprintf(chspec_str, "%d/%d", channel, bw);
+	else if (bw == 40)
+	{
+		is_nctrlsb_lower = ((channel == 36) || (channel == 44) || (channel == 52) || (channel == 60) || (channel == 100) || (channel == 108) || (channel == 116) || (channel == 124) || (channel == 132) || (channel == 149) || (channel == 157));
+		sprintf(chspec_str, "%d%c", channel, is_nctrlsb_lower ? 'l': 'u');
+	}
+	else
+		sprintf(chspec_str, "%d", channel);
+
+	retval += websWrite(wp, "'%s',", chspec_str);
+
+	qcsapi_mac_addr wl_mac_addr;
+	ret = rpc_qcsapi_interface_get_mac_addr(WIFINAME, &wl_mac_addr);
+	if (ret < 0) {
+		ret += websWrite(wp, "'',");
+		dbG("rpc_qcsapi_interface_get_mac_addr %s error, return: %d\n", WIFINAME, ret);
+	}
+	retval += websWrite(wp, "'%s',", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
+	return retval;
+}
+
+static int
+ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *ifname, int guest)
+{
+	int ret, retval = 0, i, rssi;
+	qcsapi_unsigned_int association_count = 0, tx_phy_rate, rx_phy_rate, time_associated;
+	qcsapi_mac_addr sta_address;
+	int hr, min, sec;
+	char *arplist = NULL, *arplistptr;
+	char *leaselist = NULL, *leaselistptr;
+	int found;
+	char ipentry[40], macentry[18];
+	char hostnameentry[16];
+
+	if (!rpc_qtn_ready())
+		return retval;
+
+	ret = qcsapi_wifi_get_count_associations(ifname, &association_count);
+	if (ret >= 0) {
+		for (i = 0; i < association_count; ++i) {
+			rssi = tx_phy_rate = rx_phy_rate = time_associated = 0;
+
+			ret = qcsapi_wifi_get_associated_device_mac_addr(ifname, i, (uint8_t *) &sta_address);
+			if (ret < 0) {
+				ret += websWrite(wp, "-1];");
+				dbG("Qcsapi qcsapi_wifi_get_associated_device_mac_addr %s error, return: %d\n", ifname, ret);
+			}
+
+			ret= qcsapi_wifi_get_rssi_in_dbm_per_association(ifname, i, &rssi);
+			if (ret < 0) {
+				ret += websWrite(wp, "-1];");
+				dbG("Qcsapi qcsapi_wifi_get_rssi_in_dbm_per_association %s error, return: %d\n", ifname, ret);
+			}
+
+			ret = qcsapi_wifi_get_tx_phy_rate_per_association(ifname, i, &tx_phy_rate);
+			if (ret < 0) {
+				ret += websWrite(wp, "-1];");
+				dbG("Qcsapi qcsapi_wifi_get_tx_phy_rate_per_association %s error, return: %d\n", ifname, ret);
+			}
+
+			ret = qcsapi_wifi_get_rx_phy_rate_per_association(ifname, i, &rx_phy_rate);
+			if (ret < 0) {
+				ret += websWrite(wp, "-1];");
+				dbG("Qcsapi qcsapi_wifi_get_rx_phy_rate_per_association %s error, return: %d\n", ifname, ret);
+			}
+
+			ret = qcsapi_wifi_get_time_associated_per_association(ifname, i, &time_associated);
+			if (ret < 0) {
+				ret += websWrite(wp, "-1];");
+				dbG("Qcsapi qcsapi_wifi_get_time_associated_per_association %s error, return: %d\n", ifname, ret);
+			}
+
+			hr = time_associated / 3600;
+			min = (time_associated % 3600) / 60;
+			sec = time_associated - hr * 3600 - min * 60;
+
+			retval += websWrite(wp, "['%s',", wl_ether_etoa((struct ether_addr *) &sta_address));
+
+			/* Obtain mac + IP list */
+			arplist = read_whole_file("/proc/net/arp");
+
+			/* Obtain lease list - we still need the arp list for
+			   cases where a device uses a static IP rather than DHCP */
+			leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
+
+			found = 0;
+			if (arplist) {
+				arplistptr = arplist;
+
+				while ((arplistptr < arplist+strlen(arplist)-2) && (sscanf(arplistptr,"%15s %*s %*s %17s",ipentry,macentry) == 2)) {
+					if (upper_strcmp(macentry, wl_ether_etoa((struct ether_addr *) &sta_address)) == 0) {
+						found = 1;
+						break;
+					} else {
+						arplistptr = strstr(arplistptr,"\n")+1;
+					}
+				}
+
+				if (found || !leaselist) {
+					ret += websWrite(wp, "'%s',", (found ? ipentry : ""));
+				}
+			} else {
+				ret += websWrite(wp, "'<unknown>',");
+			}
+
+			// Retrieve hostname from dnsmasq leases
+			if (leaselist) {
+				leaselistptr = leaselist;
+
+				while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, hostnameentry) == 3)) {
+					if (upper_strcmp(macentry,  wl_ether_etoa((struct ether_addr *) &sta_address)) == 0) {
+						found += 2;
+						break;
+					} else {
+						leaselistptr = strstr(leaselistptr,"\n")+1;
+					}
+				}
+				if (found == 0) {
+					// Not in arplist nor in leaselist
+					ret += websWrite(wp, "'<not found>','<not found>',");
+				} else if (found == 1) {
+					// Only in arplist (static IP)
+					ret += websWrite(wp, "'<not found>',");
+				} else if (found == 2) {
+					// Only in leaselist (dynamic IP that has not communicated with router for a while)
+					ret += websWrite(wp, "'%s', '%s',", ipentry, hostnameentry);
+				} else if (found == 3) {
+					// In both arplist and leaselist (dynamic IP)
+					ret += websWrite(wp, "'%s',", hostnameentry);
+				}
+			} else {
+				ret += websWrite(wp, "'<unknown>',");
+			}
+
+			retval += websWrite(wp, "'%d',", rssi);
+			retval += websWrite(wp, "'%d','%d',", tx_phy_rate, rx_phy_rate);
+			retval += websWrite(wp, "'%3d:%02d:%02d',", hr, min, sec);
+			retval += websWrite(wp, "'A%s%s',", !nvram_match("wl1_auth_mode_x", "open") ? "U" : "", (guest ? "G" : ""));
+			retval += websWrite(wp, "],");
+		}
+	}
+
+	if (arplist) free(arplist);
+	if (leaselist) free(leaselist);
+	return retval;
+}
+
+int
+ej_wl_status_5g_array(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int ret = 0;
+	int i, unit = 1;
+	char prefix[] = "wlXXXXXXXXXX_", tmp[128];
+
+	if (!rpc_qtn_ready()) {
+		ret += websWrite(wp, "-1");
+		return ret;
+	}
+	ret += ej_wl_status_qtn_array(eid, wp, argc, argv, WIFINAME, 0);
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_band")) {
+		ret += websWrite(wp, "-1");
+		return ret;
+	}
+
+	for (i = 1; i < 4; i++) {
+		sprintf(prefix, "wl%d.%d_", unit, i);
+		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
+			ret += ej_wl_status_qtn_array(eid, wp, argc, argv, wl_vifname_qtn(unit, i), 1);
+	}
+
+	return ret;
+}
+
