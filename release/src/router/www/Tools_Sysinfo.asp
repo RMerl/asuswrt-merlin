@@ -444,7 +444,7 @@ function updateClientList(e){
 					<tr id="wifi5_clients_tr_qtn" style="display:none;">
 						<th>Wireless clients (5 GHz)</th>
 						<td>
-                                                        Associated: <span><% sysinfo("conn.wifi.5.assoc"); %></span>
+                                                        Associated: <span><% sysinfo("conn.wifi.1.assoc"); %></span>
 						</td>
 					</tr>
 				</table>
