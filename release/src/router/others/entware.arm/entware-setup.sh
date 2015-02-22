@@ -49,10 +49,10 @@ then
   exit 0
 fi
 
-if [ "$partitionNumber" -gt `expr $i - 1` ]                                                           
-then                                                                                       
-  echo -e "$ERROR Invalid partition number!  Exiting..."                                                                 
-  exit 1                                                                                   
+if [ "$partitionNumber" -gt `expr $i - 1` ]
+then
+  echo -e "$ERROR Invalid partition number!  Exiting..."
+  exit 1
 fi
 
 eval entPartition=\$mounts$partitionNumber
@@ -61,8 +61,8 @@ entFolder=$entPartition/entware.arm
 
 if [ -d $entFolder ]
 then
-  echo -e "$WARNING Found previous installation, deleting..."
-  rm -fr $entFolder
+  echo -e "$WARNING Found previous installation, saving..."
+  mv $entFolder $entFolder-old_`date +\%F_\%H-\%M`
 fi
 echo -e $INFO Creating $entFolder folder...
 mkdir $entFolder
