@@ -3900,7 +3900,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char *leaselist = NULL, *leaselistptr;
 	char hostnameentry[16];
 	char ipentry[40], macentry[18];
-	int found;
+	int found, noclients = 0;
 	char rxrate[12], txrate[12];
 	char ea[ETHER_ADDR_STR_LEN];
 	scb_val_t scb_val;
@@ -3988,18 +3988,12 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	else if (nvram_match(strcat_r(prefix, "mode", tmp), "wds"))
 	{
 		ret += websWrite(wp, "'WDS Only'");
-		return ret;
+		noclients = 1;
 	}
 	else if (nvram_match(strcat_r(prefix, "mode", tmp), "sta"))
 	{
-		ret += websWrite(wp, "'Stations'];");
-		if (unit == 1)
-			ret += websWrite(wp, "wificlients5 = [];");
-		else if (unit == 2)
-			ret += websWrite(wp, "wificlients52 = [];");
-		else
-			ret += websWrite(wp, "wificlients24 = [];");
-		return ret;
+		ret += websWrite(wp, "'Stations'");
+		noclients = 1;
 	}
 	else if (nvram_match(strcat_r(prefix, "mode", tmp), "wet"))
 	{
@@ -4021,8 +4015,17 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 #endif
 
 // Close dataarray
-		ret += websWrite(wp, "];\n");
+	ret += websWrite(wp, "];\n");
 
+	if (noclients) {
+		if (unit == 1)
+			ret += websWrite(wp, "wificlients5 = [];");
+		else if (unit == 2)
+			ret += websWrite(wp, "wificlients52 = [];");
+		else
+			ret += websWrite(wp, "wificlients24 = [];");
+		return ret;
+	}
 // Open client array
 	if (unit == 1)
 		ret += websWrite(wp, "wificlients5 = [");
