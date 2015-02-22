@@ -119,7 +119,7 @@ var code;
 
 	code = '<table width="100%" style="border: none;">';
 	code += '<thead><tr><span class="wifiheader" style="font-size: 125%;">' + title +'</span></tr></thead>';
-	code += '<tr><td><span class="wifiheader">SSID: </span>' + dataarray[0] + '</td><td>&nbsp;</td><td><span class="wifiheader">Mode: </span>' + dataarray[6] + '</td></tr>';
+	code += '<tr><td colspan="3"><span class="wifiheader">SSID: </span>' + dataarray[0] + '</td><td colspan="2"><span class="wifiheader">Mode: </span>' + dataarray[6] + '</td></tr>';
 	code += '<tr><td><span class="wifiheader">RSSI: </span>' + dataarray[1] + ' dBm</td> <td><span class="wifiheader">SNR: </span>' + dataarray[2] +' dB</td> <td>';
 	code += '<span class="wifiheader">Noise: </span>' + dataarray[3] + ' dBm</td><td><span class="wifiheader">Channel: </span>'+ dataarray[4] + '</td>';
 	code += '<td><span class="wifiheader">BSSID: </span>' + dataarray[5] +'</td></tr></table>';
