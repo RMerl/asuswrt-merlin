@@ -1,11 +1,11 @@
-.TH P910ND 8 "1 January 2008"
+.TH P910ND 8 "16 January 2014"
 .SH NAME
 p910nd \- port 9100+n printer daemon
 .SH SYNOPSIS
 .B p910nd
 [\fB-f device\fR]
 [\fB-i bindaddr\fR]
-[\fB-bv\fR]
+[\fB-bvd\fR]
 [\fB0|1|2\fR]
 .SH DESCRIPTION
 .I p910nd
@@ -25,6 +25,9 @@ of all interfaces which is the default.
 The \fB-b\fR option turns on bidirectional copying.
 .LP
 The \fB-v\fR option shows the version number.
+.LP
+The \fB-d\fR option causes the daemon to run in the foreground in
+standalone mode and prints log messages to stdout for debugging.
 .SH INSTALLATION
 .I p910nd
 can be run as a standalone daemon or from (x)inetd.
@@ -74,8 +77,8 @@ at any one time. This can be done by designating one host as the
 spooler and sending all jobs to this host. You will probably
 need to set up an intermediate queue anyway to provide print job filtering.
 .LP
-If compiled with USE_LIBWRAP and linked with -lwrap, it uses the libwrap
-library (tcpwrappers). Access control can be done with /etc/hosts.allow
+If built with USE_WRAP, it uses the libwrap library (tcpwrappers).
+Access control can be done with /etc/hosts.allow
 and /etc/hosts.deny. The service name is p910nd.
 .SH DIAGNOSTICS
 .I p910nd
@@ -90,4 +93,4 @@ is under the GNU Public License Version 2
 .SH AUTHOR
 Ken Yap (greenpossum ATSIGN users PERIOD sourceforge PERIOD net)
 .SH DATE
-Version 0.93 October 2008
+Version 0.97 January 2014
