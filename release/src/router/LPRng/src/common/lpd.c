@@ -748,6 +748,18 @@ int processReq(int sockfd)
                         //PRINT("Reset Printer\n");
                         reset_printer(10);
                     }
+		    else
+		    {
+		      fflush(fdPRN); // (STS)
+		      // (STS) wait 30 seconds for completion
+		      fd_set rfds;
+		      struct timeval tv;
+		      FD_ZERO(&rfds);
+		      FD_SET(fdPRN, &rfds);
+		      tv.tv_sec = 30;
+		      tv.tv_usec = 0;
+		      select(1, NULL, &rfds, NULL, &tv);
+		    }
 
                     close(fdPRN); 
 
@@ -1345,7 +1357,16 @@ int copy_stream(int fd,int f)
 			}
 		}			                
 	}
-	//(void)fflush(f);
+	(void)fflush(f);// (STS)
+	{ // (STS) wait 30 seconds for completion
+	  fd_set rfds;
+	  struct timeval tv;
+	  FD_ZERO(&rfds);
+	  FD_SET(f, &rfds);
+	  tv.tv_sec = 30;
+	  tv.tv_usec = 0;
+	  select(1, NULL, &rfds, NULL, &tv);
+	}
         check_prn_status(ONLINE,""); //Add by Lisa
 	return (nread);
 }
