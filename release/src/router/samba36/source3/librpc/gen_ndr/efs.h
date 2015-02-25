@@ -20,7 +20,7 @@ struct ENCRYPTION_CERTIFICATE_HASH {
 	uint32_t cbTotalLength;
 	struct dom_sid *pUserSid;/* [unique] */
 	struct EFS_HASH_BLOB *pHash;/* [unique] */
-	const char *lpDisplayInformation;/* [unique,charset(UTF16)] */
+	const char *lpDisplayInformation;/* [charset(UTF16),unique] */
 };
 
 struct ENCRYPTION_CERTIFICATE_HASH_LIST {
@@ -31,7 +31,7 @@ struct ENCRYPTION_CERTIFICATE_HASH_LIST {
 struct EFS_CERTIFICATE_BLOB {
 	uint32_t dwCertEncodingType;
 	uint32_t cbData;
-	uint8_t *pbData;/* [size_is(cbData),unique] */
+	uint8_t *pbData;/* [unique,size_is(cbData)] */
 };
 
 struct ENCRYPTION_CERTIFICATE {
@@ -122,7 +122,7 @@ struct EfsRpcQueryUsersOnFile {
 	} in;
 
 	struct {
-		struct ENCRYPTION_CERTIFICATE_HASH_LIST **pUsers;/* [ref,unique] */
+		struct ENCRYPTION_CERTIFICATE_HASH_LIST **pUsers;/* [unique,ref] */
 		WERROR result;
 	} out;
 

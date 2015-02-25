@@ -110,15 +110,15 @@ union ntlmssp_Version {
 }/* [noprint,nodiscriminant] */;
 
 struct NEGOTIATE_MESSAGE {
-	const char *Signature;/* [charset(DOS),value("NTLMSSP")] */
+	const char *Signature;/* [value("NTLMSSP"),charset(DOS)] */
 	enum ntlmssp_MessageType MessageType;/* [value(NtLmNegotiate)] */
 	uint32_t NegotiateFlags;
 	uint16_t DomainNameLen;/* [value(DomainName?strlen(DomainName):0)] */
 	uint16_t DomainNameMaxLen;/* [value(DomainNameLen)] */
-	const char * DomainName;/* [subcontext_size(DomainNameLen),relative,subcontext(0),flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_OEM))] */
+	const char * DomainName;/* [flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_OEM)),subcontext(0),subcontext_size(DomainNameLen),relative] */
 	uint16_t WorkstationLen;/* [value(Workstation?strlen(Workstation):0)] */
 	uint16_t WorkstationMaxLen;/* [value(WorkstationLen)] */
-	const char * Workstation;/* [flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_OEM)),subcontext(0),subcontext_size(WorkstationLen),relative] */
+	const char * Workstation;/* [flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_OEM)),subcontext_size(WorkstationLen),relative,subcontext(0)] */
 	union ntlmssp_Version Version;/* [switch_is(NegotiateFlags&NTLMSSP_NEGOTIATE_VERSION)] */
 }/* [public] */;
 
@@ -167,17 +167,17 @@ struct Restriction_Encoding {
 
 union ntlmssp_AvValue {
 	const char * AvNbComputerName;/* [flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE)),case(MsvAvNbComputerName)] */
-	const char * AvNbDomainName;/* [case(MsvAvNbDomainName),flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE))] */
-	const char * AvDnsComputerName;/* [flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE)),case(MsvAvDnsComputerName)] */
+	const char * AvNbDomainName;/* [flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE)),case(MsvAvNbDomainName)] */
+	const char * AvDnsComputerName;/* [case(MsvAvDnsComputerName),flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE))] */
 	const char * AvDnsDomainName;/* [flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE)),case(MsvAvDnsDomainName)] */
-	const char * AvDnsTreeName;/* [case(MsvAvDnsTreeName),flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE))] */
+	const char * AvDnsTreeName;/* [flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE)),case(MsvAvDnsTreeName)] */
 	uint32_t AvFlags;/* [case(MsvAvFlags)] */
 	NTTIME AvTimestamp;/* [case(MsvAvTimestamp)] */
 	struct Restriction_Encoding AvRestrictions;/* [case(MsAvRestrictions)] */
 	const char * AvTargetName;/* [case(MsvAvTargetName),flag(ndr_ntlmssp_negotiated_string_flags(NTLMSSP_NEGOTIATE_UNICODE))] */
 	uint8_t ChannelBindings[16];/* [case(MsvChannelBindings)] */
 	DATA_BLOB blob;/* [default,flag(LIBNDR_FLAG_REMAINING)] */
-}/* [gensize,flag(LIBNDR_FLAG_NOALIGN),nodiscriminant] */;
+}/* [nodiscriminant,gensize,flag(LIBNDR_FLAG_NOALIGN)] */;
 
 struct AV_PAIR {
 	enum ntlmssp_AvId AvId;
@@ -188,26 +188,26 @@ struct AV_PAIR {
 struct AV_PAIR_LIST {
 	uint32_t count;
 	struct AV_PAIR *pair;
-}/* [nopull,flag(LIBNDR_FLAG_NOALIGN),gensize,nopush] */;
+}/* [gensize,nopush,flag(LIBNDR_FLAG_NOALIGN),nopull] */;
 
 struct CHALLENGE_MESSAGE {
-	const char *Signature;/* [value("NTLMSSP"),charset(DOS)] */
+	const char *Signature;/* [charset(DOS),value("NTLMSSP")] */
 	enum ntlmssp_MessageType MessageType;/* [value(NtLmChallenge)] */
 	uint16_t TargetNameLen;/* [value(ndr_ntlmssp_string_length(NegotiateFlags,TargetName))] */
 	uint16_t TargetNameMaxLen;/* [value(TargetNameLen)] */
-	const char * TargetName;/* [relative,subcontext_size(TargetNameLen),subcontext(0),flag(ndr_ntlmssp_negotiated_string_flags(r->NegotiateFlags))] */
+	const char * TargetName;/* [flag(ndr_ntlmssp_negotiated_string_flags(r->NegotiateFlags)),subcontext(0),subcontext_size(TargetNameLen),relative] */
 	uint32_t NegotiateFlags;
 	uint8_t ServerChallenge[8];
 	uint8_t Reserved[8];
 	uint16_t TargetInfoLen;/* [value(ndr_size_AV_PAIR_LIST(TargetInfo,ndr->flags))] */
 	uint16_t TargetNameInfoMaxLen;/* [value(TargetInfoLen)] */
-	struct AV_PAIR_LIST *TargetInfo;/* [subcontext(0),relative,subcontext_size(TargetInfoLen)] */
+	struct AV_PAIR_LIST *TargetInfo;/* [subcontext(0),subcontext_size(TargetInfoLen),relative] */
 	union ntlmssp_Version Version;/* [switch_is(NegotiateFlags&NTLMSSP_NEGOTIATE_VERSION)] */
-}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 struct LM_RESPONSE {
 	uint8_t Response[24];
-}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
+}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
 
 struct LMv2_RESPONSE {
 	uint8_t Response[16];
@@ -220,7 +220,7 @@ union ntlmssp_LM_RESPONSE {
 
 struct NTLM_RESPONSE {
 	uint8_t Response[24];
-}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 struct NTLMv2_CLIENT_CHALLENGE {
 	uint8_t RespType;/* [value] */
@@ -230,13 +230,13 @@ struct NTLMv2_CLIENT_CHALLENGE {
 	NTTIME TimeStamp;
 	uint8_t ChallengeFromClient[8];
 	uint32_t Reserved3;
-	struct AV_PAIR_LIST AvPairs;/* [subcontext(0),flag(LIBNDR_FLAG_REMAINING)] */
+	struct AV_PAIR_LIST AvPairs;/* [flag(LIBNDR_FLAG_REMAINING),subcontext(0)] */
 }/* [flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 struct NTLMv2_RESPONSE {
 	uint8_t Response[16];
 	struct NTLMv2_CLIENT_CHALLENGE Challenge;
-}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
+}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
 
 union ntlmssp_NTLM_RESPONSE {
 	struct NTLM_RESPONSE v1;/* [case(0x18)] */
@@ -252,25 +252,25 @@ struct AUTHENTICATE_MESSAGE {
 	enum ntlmssp_MessageType MessageType;/* [value(NtLmAuthenticate)] */
 	uint16_t LmChallengeResponseLen;
 	uint16_t LmChallengeResponseMaxLen;/* [value(LmChallengeResponseLen)] */
-	union ntlmssp_LM_RESPONSE *LmChallengeResponse;/* [switch_is(LmChallengeResponseLen),subcontext_size(LmChallengeResponseLen),relative,subcontext(0)] */
+	union ntlmssp_LM_RESPONSE *LmChallengeResponse;/* [subcontext(0),switch_is(LmChallengeResponseLen),subcontext_size(LmChallengeResponseLen),relative] */
 	uint16_t NtChallengeResponseLen;
 	uint16_t NtChallengeResponseMaxLen;/* [value(NtChallengeResponseLen)] */
-	union ntlmssp_NTLM_RESPONSE *NtChallengeResponse;/* [subcontext_size(NtChallengeResponseMaxLen),switch_is(NtChallengeResponseLen),relative,subcontext(0)] */
+	union ntlmssp_NTLM_RESPONSE *NtChallengeResponse;/* [subcontext_size(NtChallengeResponseMaxLen),relative,subcontext(0),switch_is(NtChallengeResponseLen)] */
 	uint16_t DomainNameLen;/* [value(ndr_ntlmssp_string_length(NegotiateFlags,DomainName))] */
 	uint16_t DomainNameMaxLen;/* [value(DomainNameLen)] */
-	const char * DomainName;/* [flag(ndr_ntlmssp_negotiated_string_flags(r->NegotiateFlags)),subcontext(0),relative,subcontext_size(DomainNameLen)] */
+	const char * DomainName;/* [flag(ndr_ntlmssp_negotiated_string_flags(r->NegotiateFlags)),subcontext_size(DomainNameLen),relative,subcontext(0)] */
 	uint16_t UserNameLen;/* [value(ndr_ntlmssp_string_length(NegotiateFlags,UserName))] */
 	uint16_t UserNameMaxLen;/* [value(UserNameLen)] */
-	const char * UserName;/* [subcontext(0),flag(ndr_ntlmssp_negotiated_string_flags(r->NegotiateFlags)),relative,subcontext_size(UserNameLen)] */
+	const char * UserName;/* [flag(ndr_ntlmssp_negotiated_string_flags(r->NegotiateFlags)),subcontext_size(UserNameLen),relative,subcontext(0)] */
 	uint16_t WorkstationLen;/* [value(ndr_ntlmssp_string_length(NegotiateFlags,Workstation))] */
 	uint16_t WorkstationMaxLen;/* [value(WorkstationLen)] */
-	const char * Workstation;/* [subcontext(0),flag(ndr_ntlmssp_negotiated_string_flags(r->NegotiateFlags)),subcontext_size(WorkstationLen),relative] */
+	const char * Workstation;/* [flag(ndr_ntlmssp_negotiated_string_flags(r->NegotiateFlags)),subcontext_size(WorkstationLen),relative,subcontext(0)] */
 	uint16_t EncryptedRandomSessionKeyLen;/* [value(EncryptedRandomSessionKey->length)] */
 	uint16_t EncryptedRandomSessionKeyMaxLen;/* [value(EncryptedRandomSessionKeyLen)] */
-	DATA_BLOB *EncryptedRandomSessionKey;/* [subcontext(0),relative,subcontext_size(EncryptedRandomSessionKeyLen)] */
+	DATA_BLOB *EncryptedRandomSessionKey;/* [subcontext(0),subcontext_size(EncryptedRandomSessionKeyLen),relative] */
 	uint32_t NegotiateFlags;
 	union ntlmssp_Version Version;/* [switch_is(NegotiateFlags&NTLMSSP_NEGOTIATE_VERSION)] */
-}/* [flag(LIBNDR_FLAG_REMAINING),public] */;
+}/* [public,flag(LIBNDR_FLAG_REMAINING)] */;
 
 struct NTLMSSP_MESSAGE_SIGNATURE {
 	uint32_t Version;/* [value(NTLMSSP_SIGN_VERSION)] */
@@ -283,7 +283,7 @@ struct NTLMSSP_MESSAGE_SIGNATURE_NTLMv2 {
 	uint32_t Version;/* [value(NTLMSSP_SIGN_VERSION)] */
 	uint8_t Checksum[8];
 	uint32_t SeqNum;
-}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 
 struct decode_NEGOTIATE_MESSAGE {

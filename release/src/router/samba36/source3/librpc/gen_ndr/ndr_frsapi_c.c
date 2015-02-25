@@ -755,7 +755,7 @@ static void dcerpc_frsapi_IsPathReplicated_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_frsapi_IsPathReplicated_send(TALLOC_CTX *mem_ctx,
 						       struct tevent_context *ev,
 						       struct dcerpc_binding_handle *h,
-						       const char *_path /* [in] [charset(UTF16),unique] */,
+						       const char *_path /* [in] [unique,charset(UTF16)] */,
 						       enum frsapi_ReplicaSetType _replica_set_type /* [in]  */,
 						       uint32_t *_replicated /* [out] [ref] */,
 						       uint32_t *_primary /* [out] [ref] */,
@@ -865,7 +865,7 @@ NTSTATUS dcerpc_frsapi_IsPathReplicated_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_frsapi_IsPathReplicated(struct dcerpc_binding_handle *h,
 					TALLOC_CTX *mem_ctx,
-					const char *_path /* [in] [charset(UTF16),unique] */,
+					const char *_path /* [in] [unique,charset(UTF16)] */,
 					enum frsapi_ReplicaSetType _replica_set_type /* [in]  */,
 					uint32_t *_replicated /* [out] [ref] */,
 					uint32_t *_primary /* [out] [ref] */,
@@ -1192,7 +1192,7 @@ struct tevent_req *dcerpc_frsapi_ForceReplication_send(TALLOC_CTX *mem_ctx,
 						       struct GUID *_replica_set_guid /* [in] [unique] */,
 						       struct GUID *_connection_guid /* [in] [unique] */,
 						       const char *_replica_set_name /* [in] [unique,charset(UTF16)] */,
-						       const char *_partner_dns_name /* [in] [unique,charset(UTF16)] */)
+						       const char *_partner_dns_name /* [in] [charset(UTF16),unique] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_frsapi_ForceReplication_state *state;
@@ -1288,7 +1288,7 @@ NTSTATUS dcerpc_frsapi_ForceReplication(struct dcerpc_binding_handle *h,
 					struct GUID *_replica_set_guid /* [in] [unique] */,
 					struct GUID *_connection_guid /* [in] [unique] */,
 					const char *_replica_set_name /* [in] [unique,charset(UTF16)] */,
-					const char *_partner_dns_name /* [in] [unique,charset(UTF16)] */,
+					const char *_partner_dns_name /* [in] [charset(UTF16),unique] */,
 					WERROR *result)
 {
 	struct frsapi_ForceReplication r;

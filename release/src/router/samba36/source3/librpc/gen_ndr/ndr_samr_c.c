@@ -2062,7 +2062,7 @@ struct tevent_req *dcerpc_samr_SetDomainInfo_send(TALLOC_CTX *mem_ctx,
 						  struct dcerpc_binding_handle *h,
 						  struct policy_handle *_domain_handle /* [in] [ref] */,
 						  enum samr_DomainInfoClass _level /* [in]  */,
-						  union samr_DomainInfo *_info /* [in] [ref,switch_is(level)] */)
+						  union samr_DomainInfo *_info /* [in] [switch_is(level),ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_samr_SetDomainInfo_state *state;
@@ -2156,7 +2156,7 @@ NTSTATUS dcerpc_samr_SetDomainInfo(struct dcerpc_binding_handle *h,
 				   TALLOC_CTX *mem_ctx,
 				   struct policy_handle *_domain_handle /* [in] [ref] */,
 				   enum samr_DomainInfoClass _level /* [in]  */,
-				   union samr_DomainInfo *_info /* [in] [ref,switch_is(level)] */,
+				   union samr_DomainInfo *_info /* [in] [switch_is(level),ref] */,
 				   NTSTATUS *result)
 {
 	struct samr_SetDomainInfo r;
@@ -3882,7 +3882,7 @@ struct tevent_req *dcerpc_samr_LookupNames_send(TALLOC_CTX *mem_ctx,
 						struct dcerpc_binding_handle *h,
 						struct policy_handle *_domain_handle /* [in] [ref] */,
 						uint32_t _num_names /* [in] [range(0,1000)] */,
-						struct lsa_String *_names /* [in] [size_is(1000),length_is(num_names)] */,
+						struct lsa_String *_names /* [in] [length_is(num_names),size_is(1000)] */,
 						struct samr_Ids *_rids /* [out] [ref] */,
 						struct samr_Ids *_types /* [out] [ref] */)
 {
@@ -3988,7 +3988,7 @@ NTSTATUS dcerpc_samr_LookupNames(struct dcerpc_binding_handle *h,
 				 TALLOC_CTX *mem_ctx,
 				 struct policy_handle *_domain_handle /* [in] [ref] */,
 				 uint32_t _num_names /* [in] [range(0,1000)] */,
-				 struct lsa_String *_names /* [in] [size_is(1000),length_is(num_names)] */,
+				 struct lsa_String *_names /* [in] [length_is(num_names),size_is(1000)] */,
 				 struct samr_Ids *_rids /* [out] [ref] */,
 				 struct samr_Ids *_types /* [out] [ref] */,
 				 NTSTATUS *result)
@@ -4111,7 +4111,7 @@ struct tevent_req *dcerpc_samr_LookupRids_send(TALLOC_CTX *mem_ctx,
 					       struct dcerpc_binding_handle *h,
 					       struct policy_handle *_domain_handle /* [in] [ref] */,
 					       uint32_t _num_rids /* [in] [range(0,1000)] */,
-					       uint32_t *_rids /* [in] [size_is(1000),length_is(num_rids)] */,
+					       uint32_t *_rids /* [in] [length_is(num_rids),size_is(1000)] */,
 					       struct lsa_Strings *_names /* [out] [ref] */,
 					       struct samr_Ids *_types /* [out] [ref] */)
 {
@@ -4217,7 +4217,7 @@ NTSTATUS dcerpc_samr_LookupRids(struct dcerpc_binding_handle *h,
 				TALLOC_CTX *mem_ctx,
 				struct policy_handle *_domain_handle /* [in] [ref] */,
 				uint32_t _num_rids /* [in] [range(0,1000)] */,
-				uint32_t *_rids /* [in] [size_is(1000),length_is(num_rids)] */,
+				uint32_t *_rids /* [in] [length_is(num_rids),size_is(1000)] */,
 				struct lsa_Strings *_names /* [out] [ref] */,
 				struct samr_Ids *_types /* [out] [ref] */,
 				NTSTATUS *result)
@@ -4781,7 +4781,7 @@ struct tevent_req *dcerpc_samr_SetGroupInfo_send(TALLOC_CTX *mem_ctx,
 						 struct dcerpc_binding_handle *h,
 						 struct policy_handle *_group_handle /* [in] [ref] */,
 						 enum samr_GroupInfoEnum _level /* [in]  */,
-						 union samr_GroupInfo *_info /* [in] [ref,switch_is(level)] */)
+						 union samr_GroupInfo *_info /* [in] [switch_is(level),ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_samr_SetGroupInfo_state *state;
@@ -4875,7 +4875,7 @@ NTSTATUS dcerpc_samr_SetGroupInfo(struct dcerpc_binding_handle *h,
 				  TALLOC_CTX *mem_ctx,
 				  struct policy_handle *_group_handle /* [in] [ref] */,
 				  enum samr_GroupInfoEnum _level /* [in]  */,
-				  union samr_GroupInfo *_info /* [in] [ref,switch_is(level)] */,
+				  union samr_GroupInfo *_info /* [in] [switch_is(level),ref] */,
 				  NTSTATUS *result)
 {
 	struct samr_SetGroupInfo r;
@@ -6491,7 +6491,7 @@ struct tevent_req *dcerpc_samr_SetAliasInfo_send(TALLOC_CTX *mem_ctx,
 						 struct dcerpc_binding_handle *h,
 						 struct policy_handle *_alias_handle /* [in] [ref] */,
 						 enum samr_AliasInfoEnum _level /* [in]  */,
-						 union samr_AliasInfo *_info /* [in] [ref,switch_is(level)] */)
+						 union samr_AliasInfo *_info /* [in] [switch_is(level),ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_samr_SetAliasInfo_state *state;
@@ -6585,7 +6585,7 @@ NTSTATUS dcerpc_samr_SetAliasInfo(struct dcerpc_binding_handle *h,
 				  TALLOC_CTX *mem_ctx,
 				  struct policy_handle *_alias_handle /* [in] [ref] */,
 				  enum samr_AliasInfoEnum _level /* [in]  */,
-				  union samr_AliasInfo *_info /* [in] [ref,switch_is(level)] */,
+				  union samr_AliasInfo *_info /* [in] [switch_is(level),ref] */,
 				  NTSTATUS *result)
 {
 	struct samr_SetAliasInfo r;
@@ -10164,7 +10164,7 @@ struct tevent_req *dcerpc_samr_QueryDomainInfo2_send(TALLOC_CTX *mem_ctx,
 						     struct dcerpc_binding_handle *h,
 						     struct policy_handle *_domain_handle /* [in] [ref] */,
 						     enum samr_DomainInfoClass _level /* [in]  */,
-						     union samr_DomainInfo **_info /* [out] [ref,switch_is(level)] */)
+						     union samr_DomainInfo **_info /* [out] [switch_is(level),ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_samr_QueryDomainInfo2_state *state;
@@ -10265,7 +10265,7 @@ NTSTATUS dcerpc_samr_QueryDomainInfo2(struct dcerpc_binding_handle *h,
 				      TALLOC_CTX *mem_ctx,
 				      struct policy_handle *_domain_handle /* [in] [ref] */,
 				      enum samr_DomainInfoClass _level /* [in]  */,
-				      union samr_DomainInfo **_info /* [out] [ref,switch_is(level)] */,
+				      union samr_DomainInfo **_info /* [out] [switch_is(level),ref] */,
 				      NTSTATUS *result)
 {
 	struct samr_QueryDomainInfo2 r;
@@ -10384,7 +10384,7 @@ struct tevent_req *dcerpc_samr_QueryUserInfo2_send(TALLOC_CTX *mem_ctx,
 						   struct dcerpc_binding_handle *h,
 						   struct policy_handle *_user_handle /* [in] [ref] */,
 						   enum samr_UserInfoLevel _level /* [in]  */,
-						   union samr_UserInfo **_info /* [out] [switch_is(level),ref] */)
+						   union samr_UserInfo **_info /* [out] [ref,switch_is(level)] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_samr_QueryUserInfo2_state *state;
@@ -10485,7 +10485,7 @@ NTSTATUS dcerpc_samr_QueryUserInfo2(struct dcerpc_binding_handle *h,
 				    TALLOC_CTX *mem_ctx,
 				    struct policy_handle *_user_handle /* [in] [ref] */,
 				    enum samr_UserInfoLevel _level /* [in]  */,
-				    union samr_UserInfo **_info /* [out] [switch_is(level),ref] */,
+				    union samr_UserInfo **_info /* [out] [ref,switch_is(level)] */,
 				    NTSTATUS *result)
 {
 	struct samr_QueryUserInfo2 r;
@@ -11313,7 +11313,7 @@ struct tevent_req *dcerpc_samr_QueryDisplayInfo3_send(TALLOC_CTX *mem_ctx,
 						      uint32_t _buf_size /* [in]  */,
 						      uint32_t *_total_size /* [out] [ref] */,
 						      uint32_t *_returned_size /* [out] [ref] */,
-						      union samr_DispInfo *_info /* [out] [ref,switch_is(level)] */)
+						      union samr_DispInfo *_info /* [out] [switch_is(level),ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_samr_QueryDisplayInfo3_state *state;
@@ -11426,7 +11426,7 @@ NTSTATUS dcerpc_samr_QueryDisplayInfo3(struct dcerpc_binding_handle *h,
 				       uint32_t _buf_size /* [in]  */,
 				       uint32_t *_total_size /* [out] [ref] */,
 				       uint32_t *_returned_size /* [out] [ref] */,
-				       union samr_DispInfo *_info /* [out] [ref,switch_is(level)] */,
+				       union samr_DispInfo *_info /* [out] [switch_is(level),ref] */,
 				       NTSTATUS *result)
 {
 	struct samr_QueryDisplayInfo3 r;
@@ -12616,7 +12616,7 @@ static void dcerpc_samr_Connect2_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_samr_Connect2_send(TALLOC_CTX *mem_ctx,
 					     struct tevent_context *ev,
 					     struct dcerpc_binding_handle *h,
-					     const char *_system_name /* [in] [unique,charset(UTF16)] */,
+					     const char *_system_name /* [in] [charset(UTF16),unique] */,
 					     uint32_t _access_mask /* [in]  */,
 					     struct policy_handle *_connect_handle /* [out] [ref] */)
 {
@@ -12717,7 +12717,7 @@ NTSTATUS dcerpc_samr_Connect2_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_samr_Connect2(struct dcerpc_binding_handle *h,
 			      TALLOC_CTX *mem_ctx,
-			      const char *_system_name /* [in] [unique,charset(UTF16)] */,
+			      const char *_system_name /* [in] [charset(UTF16),unique] */,
 			      uint32_t _access_mask /* [in]  */,
 			      struct policy_handle *_connect_handle /* [out] [ref] */,
 			      NTSTATUS *result)
@@ -12835,7 +12835,7 @@ struct tevent_req *dcerpc_samr_SetUserInfo2_send(TALLOC_CTX *mem_ctx,
 						 struct dcerpc_binding_handle *h,
 						 struct policy_handle *_user_handle /* [in] [ref] */,
 						 enum samr_UserInfoLevel _level /* [in]  */,
-						 union samr_UserInfo *_info /* [in] [switch_is(level),ref] */)
+						 union samr_UserInfo *_info /* [in] [ref,switch_is(level)] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_samr_SetUserInfo2_state *state;
@@ -12929,7 +12929,7 @@ NTSTATUS dcerpc_samr_SetUserInfo2(struct dcerpc_binding_handle *h,
 				  TALLOC_CTX *mem_ctx,
 				  struct policy_handle *_user_handle /* [in] [ref] */,
 				  enum samr_UserInfoLevel _level /* [in]  */,
-				  union samr_UserInfo *_info /* [in] [switch_is(level),ref] */,
+				  union samr_UserInfo *_info /* [in] [ref,switch_is(level)] */,
 				  NTSTATUS *result)
 {
 	struct samr_SetUserInfo2 r;
@@ -13476,7 +13476,7 @@ static void dcerpc_samr_Connect3_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_samr_Connect3_send(TALLOC_CTX *mem_ctx,
 					     struct tevent_context *ev,
 					     struct dcerpc_binding_handle *h,
-					     const char *_system_name /* [in] [unique,charset(UTF16)] */,
+					     const char *_system_name /* [in] [charset(UTF16),unique] */,
 					     uint32_t _unknown /* [in]  */,
 					     uint32_t _access_mask /* [in]  */,
 					     struct policy_handle *_connect_handle /* [out] [ref] */)
@@ -13579,7 +13579,7 @@ NTSTATUS dcerpc_samr_Connect3_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_samr_Connect3(struct dcerpc_binding_handle *h,
 			      TALLOC_CTX *mem_ctx,
-			      const char *_system_name /* [in] [unique,charset(UTF16)] */,
+			      const char *_system_name /* [in] [charset(UTF16),unique] */,
 			      uint32_t _unknown /* [in]  */,
 			      uint32_t _access_mask /* [in]  */,
 			      struct policy_handle *_connect_handle /* [out] [ref] */,
@@ -14843,7 +14843,7 @@ struct tevent_req *dcerpc_samr_ValidatePassword_send(TALLOC_CTX *mem_ctx,
 						     struct dcerpc_binding_handle *h,
 						     enum samr_ValidatePasswordLevel _level /* [in]  */,
 						     union samr_ValidatePasswordReq *_req /* [in] [switch_is(level),ref] */,
-						     union samr_ValidatePasswordRep **_rep /* [out] [switch_is(level),ref] */)
+						     union samr_ValidatePasswordRep **_rep /* [out] [ref,switch_is(level)] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_samr_ValidatePassword_state *state;
@@ -14944,7 +14944,7 @@ NTSTATUS dcerpc_samr_ValidatePassword(struct dcerpc_binding_handle *h,
 				      TALLOC_CTX *mem_ctx,
 				      enum samr_ValidatePasswordLevel _level /* [in]  */,
 				      union samr_ValidatePasswordReq *_req /* [in] [switch_is(level),ref] */,
-				      union samr_ValidatePasswordRep **_rep /* [out] [switch_is(level),ref] */,
+				      union samr_ValidatePasswordRep **_rep /* [out] [ref,switch_is(level)] */,
 				      NTSTATUS *result)
 {
 	struct samr_ValidatePassword r;

@@ -932,7 +932,7 @@ struct tevent_req *dcerpc_EfsRpcQueryUsersOnFile_send(TALLOC_CTX *mem_ctx,
 						      struct tevent_context *ev,
 						      struct dcerpc_binding_handle *h,
 						      const char *_FileName /* [in] [charset(UTF16)] */,
-						      struct ENCRYPTION_CERTIFICATE_HASH_LIST **_pUsers /* [out] [ref,unique] */)
+						      struct ENCRYPTION_CERTIFICATE_HASH_LIST **_pUsers /* [out] [unique,ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_EfsRpcQueryUsersOnFile_state *state;
@@ -1031,7 +1031,7 @@ NTSTATUS dcerpc_EfsRpcQueryUsersOnFile_recv(struct tevent_req *req,
 NTSTATUS dcerpc_EfsRpcQueryUsersOnFile(struct dcerpc_binding_handle *h,
 				       TALLOC_CTX *mem_ctx,
 				       const char *_FileName /* [in] [charset(UTF16)] */,
-				       struct ENCRYPTION_CERTIFICATE_HASH_LIST **_pUsers /* [out] [ref,unique] */,
+				       struct ENCRYPTION_CERTIFICATE_HASH_LIST **_pUsers /* [out] [unique,ref] */,
 				       WERROR *result)
 {
 	struct EfsRpcQueryUsersOnFile r;

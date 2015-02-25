@@ -13,7 +13,7 @@
 
 struct BrowserrSrvInfo100Ctr {
 	uint32_t entries_read;
-	struct srvsvc_NetSrvInfo100 *entries;/* [unique,size_is(entries_read)] */
+	struct srvsvc_NetSrvInfo100 *entries;/* [size_is(entries_read),unique] */
 };
 
 struct BrowserrSrvInfo101Ctr {
@@ -44,7 +44,7 @@ struct BrowserrDebugCall {
 
 struct BrowserrQueryOtherDomains {
 	struct {
-		const char *server_unc;/* [unique,charset(UTF16)] */
+		const char *server_unc;/* [charset(UTF16),unique] */
 		struct BrowserrSrvInfo *info;/* [ref] */
 	} in;
 

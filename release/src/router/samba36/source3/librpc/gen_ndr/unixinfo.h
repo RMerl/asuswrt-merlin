@@ -73,12 +73,12 @@ struct unixinfo_GidToSid {
 struct unixinfo_GetPWUid {
 	struct {
 		uint64_t *uids;/* [size_is(*count)] */
-		uint32_t *count;/* [ref,range(0,1023)] */
+		uint32_t *count;/* [range(0,1023),ref] */
 	} in;
 
 	struct {
 		struct unixinfo_GetPWUidInfo *infos;/* [size_is(*count)] */
-		uint32_t *count;/* [ref,range(0,1023)] */
+		uint32_t *count;/* [range(0,1023),ref] */
 		NTSTATUS result;
 	} out;
 

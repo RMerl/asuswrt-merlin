@@ -20,10 +20,10 @@ staticforward PyTypeObject bkrp_access_check_v2_Type;
 staticforward PyTypeObject bkrp_access_check_v3_Type;
 staticforward PyTypeObject backupkey_InterfaceType;
 
-void initbackupkey(void);static PyTypeObject *Object_Type;
-static PyTypeObject *dom_sid_Type;
-static PyTypeObject *GUID_Type;
+void initbackupkey(void);static PyTypeObject *GUID_Type;
 static PyTypeObject *ClientConnection_Type;
+static PyTypeObject *dom_sid_Type;
+static PyTypeObject *Object_Type;
 
 static PyObject *py_bkrp_exported_RSA_key_pair_get_header1(PyObject *obj, void *closure)
 {
@@ -1335,33 +1335,25 @@ static PyMethodDef backupkey_methods[] = {
 void initbackupkey(void)
 {
 	PyObject *m;
-	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_samba_dcerpc_misc;
+	PyObject *dep_samba_dcerpc_base;
+	PyObject *dep_talloc;
 	PyObject *dep_samba_dcerpc_security;
 
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
+	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
+	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
 		return;
 
-	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
-	if (dep_samba_dcerpc_misc == NULL)
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
 		return;
 
 	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
 	if (dep_samba_dcerpc_security == NULL)
-		return;
-
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
-		return;
-
-	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
-	if (dom_sid_Type == NULL)
 		return;
 
 	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
@@ -1370,6 +1362,14 @@ void initbackupkey(void)
 
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
 	if (ClientConnection_Type == NULL)
+		return;
+
+	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
+	if (dom_sid_Type == NULL)
+		return;
+
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	bkrp_exported_RSA_key_pair_Type.tp_base = Object_Type;
@@ -1443,13 +1443,13 @@ void initbackupkey(void)
 	if (m == NULL)
 		return;
 
+	PyModule_AddObject(m, "BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID", PyString_FromString("018FF48A-EABA-40C6-8F6D-72370240E967"));
+	PyModule_AddObject(m, "BACKUPKEY_RESTORE_GUID_WIN2K", PyString_FromString("7FE94D50-178E-11D1-AB8F-00805F14DB40"));
 	PyModule_AddObject(m, "BACKUPKEY_BACKUP_GUID", PyString_FromString("7F752B10-178E-11D1-AB8F-00805F14DB40"));
 	PyModule_AddObject(m, "BACKUPKEY_RESTORE_GUID_INTEGER", PyInt_FromLong(BACKUPKEY_RESTORE_GUID_INTEGER));
-	PyModule_AddObject(m, "BACKUPKEY_INVALID_GUID_INTEGER", PyInt_FromLong(BACKUPKEY_INVALID_GUID_INTEGER));
-	PyModule_AddObject(m, "BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID", PyString_FromString("018FF48A-EABA-40C6-8F6D-72370240E967"));
-	PyModule_AddObject(m, "BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID_INTEGER", PyInt_FromLong(BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID_INTEGER));
-	PyModule_AddObject(m, "BACKUPKEY_RESTORE_GUID_WIN2K", PyString_FromString("7FE94D50-178E-11D1-AB8F-00805F14DB40"));
 	PyModule_AddObject(m, "BACKUPKEY_RESTORE_GUID", PyString_FromString("47270C64-2FC7-499B-AC5B-0E37CDCE899A"));
+	PyModule_AddObject(m, "BACKUPKEY_INVALID_GUID_INTEGER", PyInt_FromLong(BACKUPKEY_INVALID_GUID_INTEGER));
+	PyModule_AddObject(m, "BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID_INTEGER", PyInt_FromLong(BACKUPKEY_RETRIEVE_BACKUP_KEY_GUID_INTEGER));
 	Py_INCREF((PyObject *)(void *)&bkrp_exported_RSA_key_pair_Type);
 	PyModule_AddObject(m, "bkrp_exported_RSA_key_pair", (PyObject *)(void *)&bkrp_exported_RSA_key_pair_Type);
 	Py_INCREF((PyObject *)(void *)&bkrp_dc_serverwrap_key_Type);

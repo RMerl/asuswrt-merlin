@@ -206,7 +206,7 @@ struct dom_sid {
 	int8_t num_auths;/* [range(0,15)] */
 	uint8_t id_auth[6];
 	uint32_t sub_auths[15];
-}/* [noprint,nopush,public,gensize,nopull,nosize] */;
+}/* [nopush,nopull,public,noprint,nosize,gensize] */;
 
 enum sec_privilege
 #ifndef USE_UINT_ENUMS
@@ -368,7 +368,7 @@ struct security_ace_object {
 
 union security_ace_object_ctr {
 	struct security_ace_object object;/* [case(SEC_ACE_TYPE_ACCESS_ALLOWED_OBJECT)] */
-}/* [public,nodiscriminant] */;
+}/* [nodiscriminant,public] */;
 
 struct security_ace {
 	enum security_ace_type type;
@@ -377,7 +377,7 @@ struct security_ace {
 	uint32_t access_mask;
 	union security_ace_object_ctr object;/* [switch_is(type)] */
 	struct dom_sid trustee;
-}/* [public,nosize,nopull,gensize] */;
+}/* [nopull,public,gensize,nosize] */;
 
 enum security_acl_revision
 #ifndef USE_UINT_ENUMS
@@ -397,7 +397,7 @@ struct security_acl {
 	uint16_t size;/* [value(ndr_size_security_acl(r,ndr->flags))] */
 	uint32_t num_aces;/* [range(0,1000)] */
 	struct security_ace *aces;
-}/* [public,nosize,gensize] */;
+}/* [gensize,nosize,public] */;
 
 enum security_descriptor_revision
 #ifndef USE_UINT_ENUMS
@@ -435,10 +435,10 @@ struct security_descriptor {
 	struct dom_sid *group_sid;/* [relative] */
 	struct security_acl *sacl;/* [relative] */
 	struct security_acl *dacl;/* [relative] */
-}/* [public,gensize,flag(LIBNDR_FLAG_LITTLE_ENDIAN),nosize] */;
+}/* [public,flag(LIBNDR_FLAG_LITTLE_ENDIAN),gensize,nosize] */;
 
 struct sec_desc_buf {
-	uint32_t sd_size;/* [range(0,0x40000),value(ndr_size_security_descriptor(sd,ndr->flags))] */
+	uint32_t sd_size;/* [value(ndr_size_security_descriptor(sd,ndr->flags)),range(0,0x40000)] */
 	struct security_descriptor *sd;/* [unique,subcontext(4)] */
 }/* [public] */;
 
@@ -447,14 +447,14 @@ struct security_token {
 	struct dom_sid *sids;/* [size_is(num_sids)] */
 	uint64_t privilege_mask;
 	uint32_t rights_mask;
-}/* [gensize,public] */;
+}/* [public,gensize] */;
 
 struct security_unix_token {
 	uid_t uid;
 	uid_t gid;
 	uint32_t ngroups;
 	gid_t *groups;/* [size_is(ngroups)] */
-}/* [gensize,public] */;
+}/* [public,gensize] */;
 
 /* bitmap security_secinfo */
 #define SECINFO_OWNER ( 0x00000001 )

@@ -548,7 +548,7 @@ struct tevent_req *dcerpc_NetQueryDisplayInformation_send(TALLOC_CTX *mem_ctx,
 							  uint32_t _entries_requested /* [in]  */,
 							  uint32_t _prefmaxlen /* [in]  */,
 							  uint32_t *_entries_read /* [out] [ref] */,
-							  void **_buffer /* [out] [noprint,ref] */);
+							  void **_buffer /* [out] [ref,noprint] */);
 NTSTATUS dcerpc_NetQueryDisplayInformation_recv(struct tevent_req *req,
 						TALLOC_CTX *mem_ctx,
 						enum NET_API_STATUS *result);
@@ -560,7 +560,7 @@ NTSTATUS dcerpc_NetQueryDisplayInformation(struct dcerpc_binding_handle *h,
 					   uint32_t _entries_requested /* [in]  */,
 					   uint32_t _prefmaxlen /* [in]  */,
 					   uint32_t *_entries_read /* [out] [ref] */,
-					   void **_buffer /* [out] [noprint,ref] */,
+					   void **_buffer /* [out] [ref,noprint] */,
 					   enum NET_API_STATUS *result);
 
 struct tevent_req *dcerpc_NetGroupAdd_r_send(TALLOC_CTX *mem_ctx,

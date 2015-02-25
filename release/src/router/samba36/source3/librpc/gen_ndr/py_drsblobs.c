@@ -69,15 +69,15 @@ staticforward PyTypeObject ForestTrustInfoRecordArmor_Type;
 staticforward PyTypeObject ForestTrustInfo_Type;
 staticforward PyTypeObject drsblobs_InterfaceType;
 
-void initdrsblobs(void);static PyTypeObject *drsuapi_DsReplicaOIDMapping_Ctr_Type;
-static PyTypeObject *drsuapi_DsReplicaCursor_Type;
+void initdrsblobs(void);static PyTypeObject *samr_Password_Type;
+static PyTypeObject *drsuapi_DsReplicaOIDMapping_Ctr_Type;
+static PyTypeObject *GUID_Type;
+static PyTypeObject *dom_sid_Type;
+static PyTypeObject *drsuapi_DsReplicaCursor2_Type;
 static PyTypeObject *drsuapi_DsReplicaHighWaterMark_Type;
 static PyTypeObject *ClientConnection_Type;
+static PyTypeObject *drsuapi_DsReplicaCursor_Type;
 static PyTypeObject *Object_Type;
-static PyTypeObject *samr_Password_Type;
-static PyTypeObject *drsuapi_DsReplicaCursor2_Type;
-static PyTypeObject *dom_sid_Type;
-static PyTypeObject *GUID_Type;
 
 static PyObject *py_replPropertyMetaData1_get_attid(PyObject *obj, void *closure)
 {
@@ -8156,21 +8156,13 @@ static PyMethodDef drsblobs_methods[] = {
 void initdrsblobs(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_security;
-	PyObject *dep_samba_dcerpc_drsuapi;
 	PyObject *dep_samba_dcerpc_misc;
 	PyObject *dep_samba_dcerpc_base;
+	PyObject *dep_samba_dcerpc_lsa;
 	PyObject *dep_samba_dcerpc_samr;
 	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_lsa;
-
-	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
-	if (dep_samba_dcerpc_security == NULL)
-		return;
-
-	dep_samba_dcerpc_drsuapi = PyImport_ImportModule("samba.dcerpc.drsuapi");
-	if (dep_samba_dcerpc_drsuapi == NULL)
-		return;
+	PyObject *dep_samba_dcerpc_drsuapi;
+	PyObject *dep_samba_dcerpc_security;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
@@ -8178,6 +8170,10 @@ void initdrsblobs(void)
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
+		return;
+
+	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
+	if (dep_samba_dcerpc_lsa == NULL)
 		return;
 
 	dep_samba_dcerpc_samr = PyImport_ImportModule("samba.dcerpc.samr");
@@ -8188,16 +8184,32 @@ void initdrsblobs(void)
 	if (dep_talloc == NULL)
 		return;
 
-	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
-	if (dep_samba_dcerpc_lsa == NULL)
+	dep_samba_dcerpc_drsuapi = PyImport_ImportModule("samba.dcerpc.drsuapi");
+	if (dep_samba_dcerpc_drsuapi == NULL)
+		return;
+
+	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
+	if (dep_samba_dcerpc_security == NULL)
+		return;
+
+	samr_Password_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_samr, "Password");
+	if (samr_Password_Type == NULL)
 		return;
 
 	drsuapi_DsReplicaOIDMapping_Ctr_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_drsuapi, "DsReplicaOIDMapping_Ctr");
 	if (drsuapi_DsReplicaOIDMapping_Ctr_Type == NULL)
 		return;
 
-	drsuapi_DsReplicaCursor_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_drsuapi, "DsReplicaCursor");
-	if (drsuapi_DsReplicaCursor_Type == NULL)
+	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
+	if (GUID_Type == NULL)
+		return;
+
+	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
+	if (dom_sid_Type == NULL)
+		return;
+
+	drsuapi_DsReplicaCursor2_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_drsuapi, "DsReplicaCursor2");
+	if (drsuapi_DsReplicaCursor2_Type == NULL)
 		return;
 
 	drsuapi_DsReplicaHighWaterMark_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_drsuapi, "DsReplicaHighWaterMark");
@@ -8208,24 +8220,12 @@ void initdrsblobs(void)
 	if (ClientConnection_Type == NULL)
 		return;
 
+	drsuapi_DsReplicaCursor_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_drsuapi, "DsReplicaCursor");
+	if (drsuapi_DsReplicaCursor_Type == NULL)
+		return;
+
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
 	if (Object_Type == NULL)
-		return;
-
-	samr_Password_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_samr, "Password");
-	if (samr_Password_Type == NULL)
-		return;
-
-	drsuapi_DsReplicaCursor2_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_drsuapi, "DsReplicaCursor2");
-	if (drsuapi_DsReplicaCursor2_Type == NULL)
-		return;
-
-	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
-	if (dom_sid_Type == NULL)
-		return;
-
-	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
-	if (GUID_Type == NULL)
 		return;
 
 	replPropertyMetaData1_Type.tp_base = Object_Type;
@@ -8621,21 +8621,21 @@ void initdrsblobs(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_UINT64", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_UINT64));
-	PyModule_AddObject(m, "EXTENDED_ERROR_COMPUTER_NAME_PRESENT", PyInt_FromLong(EXTENDED_ERROR_COMPUTER_NAME_PRESENT));
-	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_UINT16", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_UINT16));
-	PyModule_AddObject(m, "FOREST_TRUST_DOMAIN_INFO", PyInt_FromLong(FOREST_TRUST_DOMAIN_INFO));
-	PyModule_AddObject(m, "FOREST_TRUST_TOP_LEVEL_NAME", PyInt_FromLong(FOREST_TRUST_TOP_LEVEL_NAME));
-	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_ASCII_STRING", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_ASCII_STRING));
-	PyModule_AddObject(m, "PREFIX_MAP_VERSION_DSDB", PyInt_FromLong(PREFIX_MAP_VERSION_DSDB));
-	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_BLOB", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_BLOB));
+	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_NONE", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_NONE));
 	PyModule_AddObject(m, "EXTENDED_ERROR_COMPUTER_NAME_NOT_PRESENT", PyInt_FromLong(EXTENDED_ERROR_COMPUTER_NAME_NOT_PRESENT));
+	PyModule_AddObject(m, "PREFIX_MAP_VERSION_DSDB", PyInt_FromLong(PREFIX_MAP_VERSION_DSDB));
+	PyModule_AddObject(m, "FOREST_TRUST_DOMAIN_INFO", PyInt_FromLong(FOREST_TRUST_DOMAIN_INFO));
+	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_ASCII_STRING", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_ASCII_STRING));
 	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_UNICODE_STRING", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_UNICODE_STRING));
+	PyModule_AddObject(m, "SUPPLEMENTAL_CREDENTIALS_PREFIX", PyString_FromString("                                                "));
+	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_UINT64", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_UINT64));
+	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_UINT16", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_UINT16));
 	PyModule_AddObject(m, "FOREST_TRUST_TOP_LEVEL_NAME_EX", PyInt_FromLong(FOREST_TRUST_TOP_LEVEL_NAME_EX));
 	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_UINT32", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_UINT32));
+	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_BLOB", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_BLOB));
 	PyModule_AddObject(m, "SUPPLEMENTAL_CREDENTIALS_SIGNATURE", PyInt_FromLong(SUPPLEMENTAL_CREDENTIALS_SIGNATURE));
-	PyModule_AddObject(m, "EXTENDED_ERROR_PARAM_TYPE_NONE", PyInt_FromLong(EXTENDED_ERROR_PARAM_TYPE_NONE));
-	PyModule_AddObject(m, "SUPPLEMENTAL_CREDENTIALS_PREFIX", PyString_FromString("                                                "));
+	PyModule_AddObject(m, "FOREST_TRUST_TOP_LEVEL_NAME", PyInt_FromLong(FOREST_TRUST_TOP_LEVEL_NAME));
+	PyModule_AddObject(m, "EXTENDED_ERROR_COMPUTER_NAME_PRESENT", PyInt_FromLong(EXTENDED_ERROR_COMPUTER_NAME_PRESENT));
 	Py_INCREF((PyObject *)(void *)&replPropertyMetaData1_Type);
 	PyModule_AddObject(m, "replPropertyMetaData1", (PyObject *)(void *)&replPropertyMetaData1_Type);
 	Py_INCREF((PyObject *)(void *)&replPropertyMetaDataCtr1_Type);

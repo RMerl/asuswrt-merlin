@@ -56,7 +56,7 @@ struct tevent_req *dcerpc_drsuapi_DsReplicaSync_send(TALLOC_CTX *mem_ctx,
 						     struct dcerpc_binding_handle *h,
 						     struct policy_handle *_bind_handle /* [in] [ref] */,
 						     uint32_t _level /* [in]  */,
-						     union drsuapi_DsReplicaSyncRequest *_req /* [in] [switch_is(level),ref] */);
+						     union drsuapi_DsReplicaSyncRequest *_req /* [in] [ref,switch_is(level)] */);
 NTSTATUS dcerpc_drsuapi_DsReplicaSync_recv(struct tevent_req *req,
 					   TALLOC_CTX *mem_ctx,
 					   WERROR *result);
@@ -64,7 +64,7 @@ NTSTATUS dcerpc_drsuapi_DsReplicaSync(struct dcerpc_binding_handle *h,
 				      TALLOC_CTX *mem_ctx,
 				      struct policy_handle *_bind_handle /* [in] [ref] */,
 				      uint32_t _level /* [in]  */,
-				      union drsuapi_DsReplicaSyncRequest *_req /* [in] [switch_is(level),ref] */,
+				      union drsuapi_DsReplicaSyncRequest *_req /* [in] [ref,switch_is(level)] */,
 				      WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsGetNCChanges_r_send(TALLOC_CTX *mem_ctx,
@@ -78,9 +78,9 @@ struct tevent_req *dcerpc_drsuapi_DsGetNCChanges_send(TALLOC_CTX *mem_ctx,
 						      struct dcerpc_binding_handle *h,
 						      struct policy_handle *_bind_handle /* [in] [ref] */,
 						      uint32_t _level /* [in]  */,
-						      union drsuapi_DsGetNCChangesRequest *_req /* [in] [ref,switch_is(level)] */,
+						      union drsuapi_DsGetNCChangesRequest *_req /* [in] [switch_is(level),ref] */,
 						      uint32_t *_level_out /* [out] [ref] */,
-						      union drsuapi_DsGetNCChangesCtr *_ctr /* [out] [ref,switch_is(*level_out)] */);
+						      union drsuapi_DsGetNCChangesCtr *_ctr /* [out] [switch_is(*level_out),ref] */);
 NTSTATUS dcerpc_drsuapi_DsGetNCChanges_recv(struct tevent_req *req,
 					    TALLOC_CTX *mem_ctx,
 					    WERROR *result);
@@ -88,9 +88,9 @@ NTSTATUS dcerpc_drsuapi_DsGetNCChanges(struct dcerpc_binding_handle *h,
 				       TALLOC_CTX *mem_ctx,
 				       struct policy_handle *_bind_handle /* [in] [ref] */,
 				       uint32_t _level /* [in]  */,
-				       union drsuapi_DsGetNCChangesRequest *_req /* [in] [ref,switch_is(level)] */,
+				       union drsuapi_DsGetNCChangesRequest *_req /* [in] [switch_is(level),ref] */,
 				       uint32_t *_level_out /* [out] [ref] */,
-				       union drsuapi_DsGetNCChangesCtr *_ctr /* [out] [ref,switch_is(*level_out)] */,
+				       union drsuapi_DsGetNCChangesCtr *_ctr /* [out] [switch_is(*level_out),ref] */,
 				       WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsReplicaUpdateRefs_r_send(TALLOC_CTX *mem_ctx,
@@ -192,9 +192,9 @@ struct tevent_req *dcerpc_drsuapi_DsGetMemberships_send(TALLOC_CTX *mem_ctx,
 							struct dcerpc_binding_handle *h,
 							struct policy_handle *_bind_handle /* [in] [ref] */,
 							uint32_t _level /* [in]  */,
-							union drsuapi_DsGetMembershipsRequest *_req /* [in] [switch_is(level),ref] */,
+							union drsuapi_DsGetMembershipsRequest *_req /* [in] [ref,switch_is(level)] */,
 							uint32_t *_level_out /* [out] [ref] */,
-							union drsuapi_DsGetMembershipsCtr *_ctr /* [out] [ref,switch_is(*level_out)] */);
+							union drsuapi_DsGetMembershipsCtr *_ctr /* [out] [switch_is(*level_out),ref] */);
 NTSTATUS dcerpc_drsuapi_DsGetMemberships_recv(struct tevent_req *req,
 					      TALLOC_CTX *mem_ctx,
 					      WERROR *result);
@@ -202,9 +202,9 @@ NTSTATUS dcerpc_drsuapi_DsGetMemberships(struct dcerpc_binding_handle *h,
 					 TALLOC_CTX *mem_ctx,
 					 struct policy_handle *_bind_handle /* [in] [ref] */,
 					 uint32_t _level /* [in]  */,
-					 union drsuapi_DsGetMembershipsRequest *_req /* [in] [switch_is(level),ref] */,
+					 union drsuapi_DsGetMembershipsRequest *_req /* [in] [ref,switch_is(level)] */,
 					 uint32_t *_level_out /* [out] [ref] */,
-					 union drsuapi_DsGetMembershipsCtr *_ctr /* [out] [ref,switch_is(*level_out)] */,
+					 union drsuapi_DsGetMembershipsCtr *_ctr /* [out] [switch_is(*level_out),ref] */,
 					 WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsGetNT4ChangeLog_r_send(TALLOC_CTX *mem_ctx,
@@ -220,7 +220,7 @@ struct tevent_req *dcerpc_drsuapi_DsGetNT4ChangeLog_send(TALLOC_CTX *mem_ctx,
 							 uint32_t _level /* [in]  */,
 							 union drsuapi_DsGetNT4ChangeLogRequest *_req /* [in] [switch_is(level),ref] */,
 							 uint32_t *_level_out /* [out] [ref] */,
-							 union drsuapi_DsGetNT4ChangeLogInfo *_info /* [out] [switch_is(*level_out),ref] */);
+							 union drsuapi_DsGetNT4ChangeLogInfo *_info /* [out] [ref,switch_is(*level_out)] */);
 NTSTATUS dcerpc_drsuapi_DsGetNT4ChangeLog_recv(struct tevent_req *req,
 					       TALLOC_CTX *mem_ctx,
 					       WERROR *result);
@@ -230,7 +230,7 @@ NTSTATUS dcerpc_drsuapi_DsGetNT4ChangeLog(struct dcerpc_binding_handle *h,
 					  uint32_t _level /* [in]  */,
 					  union drsuapi_DsGetNT4ChangeLogRequest *_req /* [in] [switch_is(level),ref] */,
 					  uint32_t *_level_out /* [out] [ref] */,
-					  union drsuapi_DsGetNT4ChangeLogInfo *_info /* [out] [switch_is(*level_out),ref] */,
+					  union drsuapi_DsGetNT4ChangeLogInfo *_info /* [out] [ref,switch_is(*level_out)] */,
 					  WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsCrackNames_r_send(TALLOC_CTX *mem_ctx,
@@ -246,7 +246,7 @@ struct tevent_req *dcerpc_drsuapi_DsCrackNames_send(TALLOC_CTX *mem_ctx,
 						    uint32_t _level /* [in]  */,
 						    union drsuapi_DsNameRequest *_req /* [in] [ref,switch_is(level)] */,
 						    uint32_t *_level_out /* [out] [ref] */,
-						    union drsuapi_DsNameCtr *_ctr /* [out] [ref,switch_is(*level_out)] */);
+						    union drsuapi_DsNameCtr *_ctr /* [out] [switch_is(*level_out),ref] */);
 NTSTATUS dcerpc_drsuapi_DsCrackNames_recv(struct tevent_req *req,
 					  TALLOC_CTX *mem_ctx,
 					  WERROR *result);
@@ -256,7 +256,7 @@ NTSTATUS dcerpc_drsuapi_DsCrackNames(struct dcerpc_binding_handle *h,
 				     uint32_t _level /* [in]  */,
 				     union drsuapi_DsNameRequest *_req /* [in] [ref,switch_is(level)] */,
 				     uint32_t *_level_out /* [out] [ref] */,
-				     union drsuapi_DsNameCtr *_ctr /* [out] [ref,switch_is(*level_out)] */,
+				     union drsuapi_DsNameCtr *_ctr /* [out] [switch_is(*level_out),ref] */,
 				     WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsWriteAccountSpn_r_send(TALLOC_CTX *mem_ctx,
@@ -270,9 +270,9 @@ struct tevent_req *dcerpc_drsuapi_DsWriteAccountSpn_send(TALLOC_CTX *mem_ctx,
 							 struct dcerpc_binding_handle *h,
 							 struct policy_handle *_bind_handle /* [in] [ref] */,
 							 uint32_t _level /* [in]  */,
-							 union drsuapi_DsWriteAccountSpnRequest *_req /* [in] [switch_is(level),ref] */,
+							 union drsuapi_DsWriteAccountSpnRequest *_req /* [in] [ref,switch_is(level)] */,
 							 uint32_t *_level_out /* [out] [ref] */,
-							 union drsuapi_DsWriteAccountSpnResult *_res /* [out] [ref,switch_is(*level_out)] */);
+							 union drsuapi_DsWriteAccountSpnResult *_res /* [out] [switch_is(*level_out),ref] */);
 NTSTATUS dcerpc_drsuapi_DsWriteAccountSpn_recv(struct tevent_req *req,
 					       TALLOC_CTX *mem_ctx,
 					       WERROR *result);
@@ -280,9 +280,9 @@ NTSTATUS dcerpc_drsuapi_DsWriteAccountSpn(struct dcerpc_binding_handle *h,
 					  TALLOC_CTX *mem_ctx,
 					  struct policy_handle *_bind_handle /* [in] [ref] */,
 					  uint32_t _level /* [in]  */,
-					  union drsuapi_DsWriteAccountSpnRequest *_req /* [in] [switch_is(level),ref] */,
+					  union drsuapi_DsWriteAccountSpnRequest *_req /* [in] [ref,switch_is(level)] */,
 					  uint32_t *_level_out /* [out] [ref] */,
-					  union drsuapi_DsWriteAccountSpnResult *_res /* [out] [ref,switch_is(*level_out)] */,
+					  union drsuapi_DsWriteAccountSpnResult *_res /* [out] [switch_is(*level_out),ref] */,
 					  WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsRemoveDSServer_r_send(TALLOC_CTX *mem_ctx,
@@ -296,9 +296,9 @@ struct tevent_req *dcerpc_drsuapi_DsRemoveDSServer_send(TALLOC_CTX *mem_ctx,
 							struct dcerpc_binding_handle *h,
 							struct policy_handle *_bind_handle /* [in] [ref] */,
 							uint32_t _level /* [in]  */,
-							union drsuapi_DsRemoveDSServerRequest *_req /* [in] [switch_is(level),ref] */,
+							union drsuapi_DsRemoveDSServerRequest *_req /* [in] [ref,switch_is(level)] */,
 							uint32_t *_level_out /* [out] [ref] */,
-							union drsuapi_DsRemoveDSServerResult *_res /* [out] [switch_is(*level_out),ref] */);
+							union drsuapi_DsRemoveDSServerResult *_res /* [out] [ref,switch_is(*level_out)] */);
 NTSTATUS dcerpc_drsuapi_DsRemoveDSServer_recv(struct tevent_req *req,
 					      TALLOC_CTX *mem_ctx,
 					      WERROR *result);
@@ -306,9 +306,9 @@ NTSTATUS dcerpc_drsuapi_DsRemoveDSServer(struct dcerpc_binding_handle *h,
 					 TALLOC_CTX *mem_ctx,
 					 struct policy_handle *_bind_handle /* [in] [ref] */,
 					 uint32_t _level /* [in]  */,
-					 union drsuapi_DsRemoveDSServerRequest *_req /* [in] [switch_is(level),ref] */,
+					 union drsuapi_DsRemoveDSServerRequest *_req /* [in] [ref,switch_is(level)] */,
 					 uint32_t *_level_out /* [out] [ref] */,
-					 union drsuapi_DsRemoveDSServerResult *_res /* [out] [switch_is(*level_out),ref] */,
+					 union drsuapi_DsRemoveDSServerResult *_res /* [out] [ref,switch_is(*level_out)] */,
 					 WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsGetDomainControllerInfo_r_send(TALLOC_CTX *mem_ctx,
@@ -350,7 +350,7 @@ struct tevent_req *dcerpc_drsuapi_DsAddEntry_send(TALLOC_CTX *mem_ctx,
 						  uint32_t _level /* [in]  */,
 						  union drsuapi_DsAddEntryRequest *_req /* [in] [switch_is(level),ref] */,
 						  uint32_t *_level_out /* [out] [ref] */,
-						  union drsuapi_DsAddEntryCtr *_ctr /* [out] [switch_is(*level_out),ref] */);
+						  union drsuapi_DsAddEntryCtr *_ctr /* [out] [ref,switch_is(*level_out)] */);
 NTSTATUS dcerpc_drsuapi_DsAddEntry_recv(struct tevent_req *req,
 					TALLOC_CTX *mem_ctx,
 					WERROR *result);
@@ -360,7 +360,7 @@ NTSTATUS dcerpc_drsuapi_DsAddEntry(struct dcerpc_binding_handle *h,
 				   uint32_t _level /* [in]  */,
 				   union drsuapi_DsAddEntryRequest *_req /* [in] [switch_is(level),ref] */,
 				   uint32_t *_level_out /* [out] [ref] */,
-				   union drsuapi_DsAddEntryCtr *_ctr /* [out] [switch_is(*level_out),ref] */,
+				   union drsuapi_DsAddEntryCtr *_ctr /* [out] [ref,switch_is(*level_out)] */,
 				   WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsExecuteKCC_r_send(TALLOC_CTX *mem_ctx,
@@ -398,7 +398,7 @@ struct tevent_req *dcerpc_drsuapi_DsReplicaGetInfo_send(TALLOC_CTX *mem_ctx,
 							enum drsuapi_DsReplicaGetInfoLevel _level /* [in]  */,
 							union drsuapi_DsReplicaGetInfoRequest *_req /* [in] [switch_is(level),ref] */,
 							enum drsuapi_DsReplicaInfoType *_info_type /* [out] [ref] */,
-							union drsuapi_DsReplicaInfo *_info /* [out] [ref,switch_is(*info_type)] */);
+							union drsuapi_DsReplicaInfo *_info /* [out] [switch_is(*info_type),ref] */);
 NTSTATUS dcerpc_drsuapi_DsReplicaGetInfo_recv(struct tevent_req *req,
 					      TALLOC_CTX *mem_ctx,
 					      WERROR *result);
@@ -408,7 +408,7 @@ NTSTATUS dcerpc_drsuapi_DsReplicaGetInfo(struct dcerpc_binding_handle *h,
 					 enum drsuapi_DsReplicaGetInfoLevel _level /* [in]  */,
 					 union drsuapi_DsReplicaGetInfoRequest *_req /* [in] [switch_is(level),ref] */,
 					 enum drsuapi_DsReplicaInfoType *_info_type /* [out] [ref] */,
-					 union drsuapi_DsReplicaInfo *_info /* [out] [ref,switch_is(*info_type)] */,
+					 union drsuapi_DsReplicaInfo *_info /* [out] [switch_is(*info_type),ref] */,
 					 WERROR *result);
 
 struct tevent_req *dcerpc_drsuapi_DsGetMemberships2_r_send(TALLOC_CTX *mem_ctx,
@@ -422,7 +422,7 @@ struct tevent_req *dcerpc_drsuapi_DsGetMemberships2_send(TALLOC_CTX *mem_ctx,
 							 struct dcerpc_binding_handle *h,
 							 struct policy_handle *_bind_handle /* [in] [ref] */,
 							 uint32_t _level /* [in]  */,
-							 union drsuapi_DsGetMemberships2Request *_req /* [in] [switch_is(level),ref] */,
+							 union drsuapi_DsGetMemberships2Request *_req /* [in] [ref,switch_is(level)] */,
 							 uint32_t *_level_out /* [out] [ref] */,
 							 union drsuapi_DsGetMemberships2Ctr *_ctr /* [out] [ref,switch_is(*level_out)] */);
 NTSTATUS dcerpc_drsuapi_DsGetMemberships2_recv(struct tevent_req *req,
@@ -432,7 +432,7 @@ NTSTATUS dcerpc_drsuapi_DsGetMemberships2(struct dcerpc_binding_handle *h,
 					  TALLOC_CTX *mem_ctx,
 					  struct policy_handle *_bind_handle /* [in] [ref] */,
 					  uint32_t _level /* [in]  */,
-					  union drsuapi_DsGetMemberships2Request *_req /* [in] [switch_is(level),ref] */,
+					  union drsuapi_DsGetMemberships2Request *_req /* [in] [ref,switch_is(level)] */,
 					  uint32_t *_level_out /* [out] [ref] */,
 					  union drsuapi_DsGetMemberships2Ctr *_ctr /* [out] [ref,switch_is(*level_out)] */,
 					  WERROR *result);
@@ -448,9 +448,9 @@ struct tevent_req *dcerpc_drsuapi_QuerySitesByCost_send(TALLOC_CTX *mem_ctx,
 							struct dcerpc_binding_handle *h,
 							struct policy_handle *_bind_handle /* [in] [ref] */,
 							uint32_t _level /* [in]  */,
-							union drsuapi_QuerySitesByCostRequest *_req /* [in] [switch_is(level),ref] */,
+							union drsuapi_QuerySitesByCostRequest *_req /* [in] [ref,switch_is(level)] */,
 							uint32_t *_level_out /* [out] [ref] */,
-							union drsuapi_QuerySitesByCostCtr *_ctr /* [out] [ref,switch_is(*level_out)] */);
+							union drsuapi_QuerySitesByCostCtr *_ctr /* [out] [switch_is(*level_out),ref] */);
 NTSTATUS dcerpc_drsuapi_QuerySitesByCost_recv(struct tevent_req *req,
 					      TALLOC_CTX *mem_ctx,
 					      WERROR *result);
@@ -458,9 +458,9 @@ NTSTATUS dcerpc_drsuapi_QuerySitesByCost(struct dcerpc_binding_handle *h,
 					 TALLOC_CTX *mem_ctx,
 					 struct policy_handle *_bind_handle /* [in] [ref] */,
 					 uint32_t _level /* [in]  */,
-					 union drsuapi_QuerySitesByCostRequest *_req /* [in] [switch_is(level),ref] */,
+					 union drsuapi_QuerySitesByCostRequest *_req /* [in] [ref,switch_is(level)] */,
 					 uint32_t *_level_out /* [out] [ref] */,
-					 union drsuapi_QuerySitesByCostCtr *_ctr /* [out] [ref,switch_is(*level_out)] */,
+					 union drsuapi_QuerySitesByCostCtr *_ctr /* [out] [switch_is(*level_out),ref] */,
 					 WERROR *result);
 
 #endif /* _HEADER_RPC_drsuapi */

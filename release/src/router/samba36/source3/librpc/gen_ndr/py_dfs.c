@@ -41,9 +41,9 @@ staticforward PyTypeObject dfs_EnumStruct_Type;
 staticforward PyTypeObject dfs_UnknownStruct_Type;
 staticforward PyTypeObject netdfs_InterfaceType;
 
-void initdfs(void);static PyTypeObject *GUID_Type;
+void initdfs(void);static PyTypeObject *Object_Type;
 static PyTypeObject *ClientConnection_Type;
-static PyTypeObject *Object_Type;
+static PyTypeObject *GUID_Type;
 
 static PyObject *py_dfs_Info0_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -4553,32 +4553,32 @@ static PyMethodDef dfs_methods[] = {
 void initdfs(void)
 {
 	PyObject *m;
-	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_samba_dcerpc_misc;
+	PyObject *dep_samba_dcerpc_base;
+	PyObject *dep_talloc;
 
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
+	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
+	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
 		return;
 
-	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
-	if (dep_samba_dcerpc_misc == NULL)
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
 		return;
 
-	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
-	if (GUID_Type == NULL)
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
 	if (ClientConnection_Type == NULL)
 		return;
 
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
+	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
+	if (GUID_Type == NULL)
 		return;
 
 	dfs_Info0_Type.tp_base = Object_Type;
@@ -4806,33 +4806,33 @@ void initdfs(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "DFS_VOLUME_STATE_AD_BLOB", PyInt_FromLong(DFS_VOLUME_STATE_AD_BLOB));
+	PyModule_AddObject(m, "DFS_INVALID_PRIORITY_CLASS", PyInt_FromLong(DFS_INVALID_PRIORITY_CLASS));
+	PyModule_AddObject(m, "DFS_VOLUME_STATE_OFFLINE", PyInt_FromLong(DFS_VOLUME_STATE_OFFLINE));
+	PyModule_AddObject(m, "DFS_VOLUME_FLAVOR_AD_BLOB", PyInt_FromLong(DFS_VOLUME_FLAVOR_AD_BLOB));
+	PyModule_AddObject(m, "DFS_STORAGE_STATE_OFFLINE", PyInt_FromLong(DFS_STORAGE_STATE_OFFLINE));
+	PyModule_AddObject(m, "DFS_GLOBAL_LOW_PRIORITY_CLASS", PyInt_FromLong(DFS_GLOBAL_LOW_PRIORITY_CLASS));
+	PyModule_AddObject(m, "DFS_VOLUME_STATE_INCONSISTENT", PyInt_FromLong(DFS_VOLUME_STATE_INCONSISTENT));
+	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_TARGET_FAILBACK", PyInt_FromLong(DFS_PROPERTY_FLAG_TARGET_FAILBACK));
+	PyModule_AddObject(m, "DFS_VOLUME_STATE_STANDALONE", PyInt_FromLong(DFS_VOLUME_STATE_STANDALONE));
 	PyModule_AddObject(m, "DFS_MANAGER_VERSION_W2K", PyInt_FromLong(DFS_MANAGER_VERSION_W2K));
 	PyModule_AddObject(m, "DFS_SITE_COST_NORMAL_PRIORITY_CLASS", PyInt_FromLong(DFS_SITE_COST_NORMAL_PRIORITY_CLASS));
-	PyModule_AddObject(m, "DFS_STORAGE_STATE_ACTIVE", PyInt_FromLong(DFS_STORAGE_STATE_ACTIVE));
-	PyModule_AddObject(m, "DFS_SITE_COST_LOW_PRIORITY_CLASS", PyInt_FromLong(DFS_SITE_COST_LOW_PRIORITY_CLASS));
-	PyModule_AddObject(m, "DFS_VOLUME_STATE_OFFLINE", PyInt_FromLong(DFS_VOLUME_STATE_OFFLINE));
-	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_TARGET_FAILBACK", PyInt_FromLong(DFS_PROPERTY_FLAG_TARGET_FAILBACK));
-	PyModule_AddObject(m, "DFS_GLOBAL_HIGH_PRIORITY_CLASS", PyInt_FromLong(DFS_GLOBAL_HIGH_PRIORITY_CLASS));
-	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_ROOT_SCALABILITY", PyInt_FromLong(DFS_PROPERTY_FLAG_ROOT_SCALABILITY));
-	PyModule_AddObject(m, "DFS_INVALID_PRIORITY_CLASS", PyInt_FromLong(DFS_INVALID_PRIORITY_CLASS));
-	PyModule_AddObject(m, "DFS_MANAGER_VERSION_W2K3", PyInt_FromLong(DFS_MANAGER_VERSION_W2K3));
-	PyModule_AddObject(m, "DFS_STORAGE_STATE_OFFLINE", PyInt_FromLong(DFS_STORAGE_STATE_OFFLINE));
-	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_SITE_COSTING", PyInt_FromLong(DFS_PROPERTY_FLAG_SITE_COSTING));
-	PyModule_AddObject(m, "DFS_VOLUME_STATE_ONLINE", PyInt_FromLong(DFS_VOLUME_STATE_ONLINE));
-	PyModule_AddObject(m, "DFS_SITE_COST_HIGH_PRIORITY_CLASS", PyInt_FromLong(DFS_SITE_COST_HIGH_PRIORITY_CLASS));
-	PyModule_AddObject(m, "DFS_VOLUME_STATE_OK", PyInt_FromLong(DFS_VOLUME_STATE_OK));
-	PyModule_AddObject(m, "DFS_VOLUME_FLAVOR_AD_BLOB", PyInt_FromLong(DFS_VOLUME_FLAVOR_AD_BLOB));
-	PyModule_AddObject(m, "DFS_VOLUME_STATE_STANDALONE", PyInt_FromLong(DFS_VOLUME_STATE_STANDALONE));
-	PyModule_AddObject(m, "DFS_MANAGER_VERSION_NT4", PyInt_FromLong(DFS_MANAGER_VERSION_NT4));
-	PyModule_AddObject(m, "DFS_GLOBAL_LOW_PRIORITY_CLASS", PyInt_FromLong(DFS_GLOBAL_LOW_PRIORITY_CLASS));
-	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_CLUSTER_ENABLED", PyInt_FromLong(DFS_PROPERTY_FLAG_CLUSTER_ENABLED));
-	PyModule_AddObject(m, "DFS_STORAGE_STATES", PyInt_FromLong(0xf));
 	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_INSITE_REFERRALS", PyInt_FromLong(DFS_PROPERTY_FLAG_INSITE_REFERRALS));
+	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_SITE_COSTING", PyInt_FromLong(DFS_PROPERTY_FLAG_SITE_COSTING));
 	PyModule_AddObject(m, "DFS_STORAGE_STATE_ONLINE", PyInt_FromLong(DFS_STORAGE_STATE_ONLINE));
-	PyModule_AddObject(m, "DFS_VOLUME_FLAVOR_STANDALONE", PyInt_FromLong(DFS_VOLUME_FLAVOR_STANDALONE));
 	PyModule_AddObject(m, "DFS_MANAGER_VERSION_W2K8", PyInt_FromLong(DFS_MANAGER_VERSION_W2K8));
-	PyModule_AddObject(m, "DFS_VOLUME_STATE_INCONSISTENT", PyInt_FromLong(DFS_VOLUME_STATE_INCONSISTENT));
+	PyModule_AddObject(m, "DFS_GLOBAL_HIGH_PRIORITY_CLASS", PyInt_FromLong(DFS_GLOBAL_HIGH_PRIORITY_CLASS));
+	PyModule_AddObject(m, "DFS_STORAGE_STATES", PyInt_FromLong(0xf));
+	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_CLUSTER_ENABLED", PyInt_FromLong(DFS_PROPERTY_FLAG_CLUSTER_ENABLED));
+	PyModule_AddObject(m, "DFS_SITE_COST_LOW_PRIORITY_CLASS", PyInt_FromLong(DFS_SITE_COST_LOW_PRIORITY_CLASS));
+	PyModule_AddObject(m, "DFS_PROPERTY_FLAG_ROOT_SCALABILITY", PyInt_FromLong(DFS_PROPERTY_FLAG_ROOT_SCALABILITY));
+	PyModule_AddObject(m, "DFS_SITE_COST_HIGH_PRIORITY_CLASS", PyInt_FromLong(DFS_SITE_COST_HIGH_PRIORITY_CLASS));
+	PyModule_AddObject(m, "DFS_VOLUME_STATE_ONLINE", PyInt_FromLong(DFS_VOLUME_STATE_ONLINE));
+	PyModule_AddObject(m, "DFS_STORAGE_STATE_ACTIVE", PyInt_FromLong(DFS_STORAGE_STATE_ACTIVE));
+	PyModule_AddObject(m, "DFS_MANAGER_VERSION_NT4", PyInt_FromLong(DFS_MANAGER_VERSION_NT4));
+	PyModule_AddObject(m, "DFS_MANAGER_VERSION_W2K3", PyInt_FromLong(DFS_MANAGER_VERSION_W2K3));
+	PyModule_AddObject(m, "DFS_VOLUME_FLAVOR_STANDALONE", PyInt_FromLong(DFS_VOLUME_FLAVOR_STANDALONE));
+	PyModule_AddObject(m, "DFS_VOLUME_STATE_AD_BLOB", PyInt_FromLong(DFS_VOLUME_STATE_AD_BLOB));
+	PyModule_AddObject(m, "DFS_VOLUME_STATE_OK", PyInt_FromLong(DFS_VOLUME_STATE_OK));
 	Py_INCREF((PyObject *)(void *)&dfs_Info0_Type);
 	PyModule_AddObject(m, "Info0", (PyObject *)(void *)&dfs_Info0_Type);
 	Py_INCREF((PyObject *)(void *)&dfs_Info1_Type);

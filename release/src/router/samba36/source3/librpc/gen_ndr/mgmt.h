@@ -78,7 +78,7 @@ struct mgmt_inq_princ_name {
 	} in;
 
 	struct {
-		const char *princ_name;/* [charset(DOS),size_is(princ_name_size)] */
+		const char *princ_name;/* [size_is(princ_name_size),charset(DOS)] */
 		WERROR result;
 	} out;
 

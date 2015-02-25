@@ -46,7 +46,7 @@ struct dfs_referral_v1 {
 	uint16_t size;
 	uint16_t server_type;
 	uint16_t entry_flags;
-	const char * share_name;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),unique] */
+	const char * share_name;/* [unique,flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
 };
 
 struct dfs_referral_v2 {
@@ -55,9 +55,9 @@ struct dfs_referral_v2 {
 	enum DFS_FLAGS_REFERRAL entry_flags;
 	uint32_t proximity;
 	uint32_t ttl;
-	const char * DFS_path;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),relative_short] */
-	const char * DFS_alt_path;/* [relative_short,flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
-	const char * netw_address;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),relative_short] */
+	const char * DFS_path;/* [relative_short,flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
+	const char * DFS_alt_path;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),relative_short] */
+	const char * netw_address;/* [relative_short,flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
 };
 
 struct dfs_normal_referral {
@@ -67,9 +67,9 @@ struct dfs_normal_referral {
 };
 
 struct dfs_domain_referral {
-	const char * special_name;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),relative_short] */
+	const char * special_name;/* [relative_short,flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
 	uint16_t nb_expanded_names;
-	const char ** expanded_names;/* [relative_short,subcontext(0),flag(LIBNDR_FLAG_REMAINING|LIBNDR_FLAG_STR_NULLTERM)] */
+	const char ** expanded_names;/* [flag(LIBNDR_FLAG_REMAINING|LIBNDR_FLAG_STR_NULLTERM),relative_short,subcontext(0)] */
 };
 
 union dfs_referral {

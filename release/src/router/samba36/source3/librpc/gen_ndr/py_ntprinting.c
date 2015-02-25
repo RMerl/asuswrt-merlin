@@ -16,8 +16,8 @@ staticforward PyTypeObject ntprinting_printer_info_Type;
 staticforward PyTypeObject ntprinting_printer_Type;
 staticforward PyTypeObject ntprinting_InterfaceType;
 
-void initntprinting(void);static PyTypeObject *ClientConnection_Type;
-static PyTypeObject *Object_Type;
+void initntprinting(void);static PyTypeObject *Object_Type;
+static PyTypeObject *ClientConnection_Type;
 
 static PyObject *py_ntprinting_form_get_position(PyObject *obj, void *closure)
 {
@@ -2076,23 +2076,23 @@ static PyMethodDef ntprinting_methods[] = {
 void initntprinting(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_talloc;
-
-	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
-	if (dep_samba_dcerpc_base == NULL)
-		return;
+	PyObject *dep_samba_dcerpc_base;
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
 		return;
 
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
+	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
+	if (dep_samba_dcerpc_base == NULL)
 		return;
 
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
 	if (Object_Type == NULL)
+		return;
+
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
 	ntprinting_form_Type.tp_base = Object_Type;

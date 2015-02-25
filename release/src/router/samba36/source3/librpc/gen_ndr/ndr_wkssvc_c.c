@@ -103,7 +103,7 @@ struct tevent_req *dcerpc_wkssvc_NetWkstaGetInfo_send(TALLOC_CTX *mem_ctx,
 						      struct dcerpc_binding_handle *h,
 						      const char *_server_name /* [in] [unique,charset(UTF16)] */,
 						      uint32_t _level /* [in]  */,
-						      union wkssvc_NetWkstaInfo *_info /* [out] [switch_is(level),ref] */)
+						      union wkssvc_NetWkstaInfo *_info /* [out] [ref,switch_is(level)] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_wkssvc_NetWkstaGetInfo_state *state;
@@ -204,7 +204,7 @@ NTSTATUS dcerpc_wkssvc_NetWkstaGetInfo(struct dcerpc_binding_handle *h,
 				       TALLOC_CTX *mem_ctx,
 				       const char *_server_name /* [in] [unique,charset(UTF16)] */,
 				       uint32_t _level /* [in]  */,
-				       union wkssvc_NetWkstaInfo *_info /* [out] [switch_is(level),ref] */,
+				       union wkssvc_NetWkstaInfo *_info /* [out] [ref,switch_is(level)] */,
 				       WERROR *result)
 {
 	struct wkssvc_NetWkstaGetInfo r;
@@ -321,7 +321,7 @@ static void dcerpc_wkssvc_NetWkstaSetInfo_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_wkssvc_NetWkstaSetInfo_send(TALLOC_CTX *mem_ctx,
 						      struct tevent_context *ev,
 						      struct dcerpc_binding_handle *h,
-						      const char *_server_name /* [in] [unique,charset(UTF16)] */,
+						      const char *_server_name /* [in] [charset(UTF16),unique] */,
 						      uint32_t _level /* [in]  */,
 						      union wkssvc_NetWkstaInfo *_info /* [in] [ref,switch_is(level)] */,
 						      uint32_t *_parm_error /* [in,out] [ref] */)
@@ -425,7 +425,7 @@ NTSTATUS dcerpc_wkssvc_NetWkstaSetInfo_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetWkstaSetInfo(struct dcerpc_binding_handle *h,
 				       TALLOC_CTX *mem_ctx,
-				       const char *_server_name /* [in] [unique,charset(UTF16)] */,
+				       const char *_server_name /* [in] [charset(UTF16),unique] */,
 				       uint32_t _level /* [in]  */,
 				       union wkssvc_NetWkstaInfo *_info /* [in] [ref,switch_is(level)] */,
 				       uint32_t *_parm_error /* [in,out] [ref] */,
@@ -785,9 +785,9 @@ static void dcerpc_wkssvc_NetrWkstaUserGetInfo_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_wkssvc_NetrWkstaUserGetInfo_send(TALLOC_CTX *mem_ctx,
 							   struct tevent_context *ev,
 							   struct dcerpc_binding_handle *h,
-							   const char *_unknown /* [in] [unique,charset(UTF16)] */,
+							   const char *_unknown /* [in] [charset(UTF16),unique] */,
 							   uint32_t _level /* [in]  */,
-							   union wkssvc_NetrWkstaUserInfo *_info /* [out] [switch_is(level),ref] */)
+							   union wkssvc_NetrWkstaUserInfo *_info /* [out] [ref,switch_is(level)] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_wkssvc_NetrWkstaUserGetInfo_state *state;
@@ -886,9 +886,9 @@ NTSTATUS dcerpc_wkssvc_NetrWkstaUserGetInfo_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetrWkstaUserGetInfo(struct dcerpc_binding_handle *h,
 					    TALLOC_CTX *mem_ctx,
-					    const char *_unknown /* [in] [unique,charset(UTF16)] */,
+					    const char *_unknown /* [in] [charset(UTF16),unique] */,
 					    uint32_t _level /* [in]  */,
-					    union wkssvc_NetrWkstaUserInfo *_info /* [out] [switch_is(level),ref] */,
+					    union wkssvc_NetrWkstaUserInfo *_info /* [out] [ref,switch_is(level)] */,
 					    WERROR *result)
 {
 	struct wkssvc_NetrWkstaUserGetInfo r;
@@ -1005,7 +1005,7 @@ static void dcerpc_wkssvc_NetrWkstaUserSetInfo_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_wkssvc_NetrWkstaUserSetInfo_send(TALLOC_CTX *mem_ctx,
 							   struct tevent_context *ev,
 							   struct dcerpc_binding_handle *h,
-							   const char *_unknown /* [in] [unique,charset(UTF16)] */,
+							   const char *_unknown /* [in] [charset(UTF16),unique] */,
 							   uint32_t _level /* [in]  */,
 							   union wkssvc_NetrWkstaUserInfo *_info /* [in] [ref,switch_is(level)] */,
 							   uint32_t *_parm_err /* [in,out] [unique] */)
@@ -1111,7 +1111,7 @@ NTSTATUS dcerpc_wkssvc_NetrWkstaUserSetInfo_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetrWkstaUserSetInfo(struct dcerpc_binding_handle *h,
 					    TALLOC_CTX *mem_ctx,
-					    const char *_unknown /* [in] [unique,charset(UTF16)] */,
+					    const char *_unknown /* [in] [charset(UTF16),unique] */,
 					    uint32_t _level /* [in]  */,
 					    union wkssvc_NetrWkstaUserInfo *_info /* [in] [ref,switch_is(level)] */,
 					    uint32_t *_parm_err /* [in,out] [unique] */,
@@ -1700,7 +1700,7 @@ static void dcerpc_wkssvc_NetrWkstaTransportDel_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_wkssvc_NetrWkstaTransportDel_send(TALLOC_CTX *mem_ctx,
 							    struct tevent_context *ev,
 							    struct dcerpc_binding_handle *h,
-							    const char *_server_name /* [in] [charset(UTF16),unique] */,
+							    const char *_server_name /* [in] [unique,charset(UTF16)] */,
 							    const char *_transport_name /* [in] [unique,charset(UTF16)] */,
 							    uint32_t _unknown3 /* [in]  */)
 {
@@ -1794,7 +1794,7 @@ NTSTATUS dcerpc_wkssvc_NetrWkstaTransportDel_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetrWkstaTransportDel(struct dcerpc_binding_handle *h,
 					     TALLOC_CTX *mem_ctx,
-					     const char *_server_name /* [in] [charset(UTF16),unique] */,
+					     const char *_server_name /* [in] [unique,charset(UTF16)] */,
 					     const char *_transport_name /* [in] [unique,charset(UTF16)] */,
 					     uint32_t _unknown3 /* [in]  */,
 					     WERROR *result)
@@ -2144,9 +2144,9 @@ struct tevent_req *dcerpc_wkssvc_NetrUseGetInfo_send(TALLOC_CTX *mem_ctx,
 						     struct tevent_context *ev,
 						     struct dcerpc_binding_handle *h,
 						     const char *_server_name /* [in] [unique,charset(UTF16)] */,
-						     const char *_use_name /* [in] [charset(UTF16),ref] */,
+						     const char *_use_name /* [in] [ref,charset(UTF16)] */,
 						     uint32_t _level /* [in]  */,
-						     union wkssvc_NetrUseGetInfoCtr *_ctr /* [out] [ref,switch_is(level)] */)
+						     union wkssvc_NetrUseGetInfoCtr *_ctr /* [out] [switch_is(level),ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_wkssvc_NetrUseGetInfo_state *state;
@@ -2247,9 +2247,9 @@ NTSTATUS dcerpc_wkssvc_NetrUseGetInfo_recv(struct tevent_req *req,
 NTSTATUS dcerpc_wkssvc_NetrUseGetInfo(struct dcerpc_binding_handle *h,
 				      TALLOC_CTX *mem_ctx,
 				      const char *_server_name /* [in] [unique,charset(UTF16)] */,
-				      const char *_use_name /* [in] [charset(UTF16),ref] */,
+				      const char *_use_name /* [in] [ref,charset(UTF16)] */,
 				      uint32_t _level /* [in]  */,
-				      union wkssvc_NetrUseGetInfoCtr *_ctr /* [out] [ref,switch_is(level)] */,
+				      union wkssvc_NetrUseGetInfoCtr *_ctr /* [out] [switch_is(level),ref] */,
 				      WERROR *result)
 {
 	struct wkssvc_NetrUseGetInfo r;
@@ -2364,8 +2364,8 @@ static void dcerpc_wkssvc_NetrUseDel_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_wkssvc_NetrUseDel_send(TALLOC_CTX *mem_ctx,
 						 struct tevent_context *ev,
 						 struct dcerpc_binding_handle *h,
-						 const char *_server_name /* [in] [charset(UTF16),unique] */,
-						 const char *_use_name /* [in] [ref,charset(UTF16)] */,
+						 const char *_server_name /* [in] [unique,charset(UTF16)] */,
+						 const char *_use_name /* [in] [charset(UTF16),ref] */,
 						 uint32_t _force_cond /* [in]  */)
 {
 	struct tevent_req *req;
@@ -2458,8 +2458,8 @@ NTSTATUS dcerpc_wkssvc_NetrUseDel_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetrUseDel(struct dcerpc_binding_handle *h,
 				  TALLOC_CTX *mem_ctx,
-				  const char *_server_name /* [in] [charset(UTF16),unique] */,
-				  const char *_use_name /* [in] [ref,charset(UTF16)] */,
+				  const char *_server_name /* [in] [unique,charset(UTF16)] */,
+				  const char *_use_name /* [in] [charset(UTF16),ref] */,
 				  uint32_t _force_cond /* [in]  */,
 				  WERROR *result)
 {
@@ -3034,7 +3034,7 @@ struct tevent_req *dcerpc_wkssvc_NetrWorkstationStatisticsGet_send(TALLOC_CTX *m
 								   struct tevent_context *ev,
 								   struct dcerpc_binding_handle *h,
 								   const char *_server_name /* [in] [charset(UTF16),unique] */,
-								   const char *_unknown2 /* [in] [unique,charset(UTF16)] */,
+								   const char *_unknown2 /* [in] [charset(UTF16),unique] */,
 								   uint32_t _unknown3 /* [in]  */,
 								   uint32_t _unknown4 /* [in]  */,
 								   struct wkssvc_NetrWorkstationStatistics **_info /* [out] [ref] */)
@@ -3139,7 +3139,7 @@ NTSTATUS dcerpc_wkssvc_NetrWorkstationStatisticsGet_recv(struct tevent_req *req,
 NTSTATUS dcerpc_wkssvc_NetrWorkstationStatisticsGet(struct dcerpc_binding_handle *h,
 						    TALLOC_CTX *mem_ctx,
 						    const char *_server_name /* [in] [charset(UTF16),unique] */,
-						    const char *_unknown2 /* [in] [unique,charset(UTF16)] */,
+						    const char *_unknown2 /* [in] [charset(UTF16),unique] */,
 						    uint32_t _unknown3 /* [in]  */,
 						    uint32_t _unknown4 /* [in]  */,
 						    struct wkssvc_NetrWorkstationStatistics **_info /* [out] [ref] */,
@@ -3666,7 +3666,7 @@ struct tevent_req *dcerpc_wkssvc_NetrJoinDomain_send(TALLOC_CTX *mem_ctx,
 						     const char *_domain_name /* [in] [ref,charset(UTF16)] */,
 						     const char *_account_ou /* [in] [unique,charset(UTF16)] */,
 						     const char *_Account /* [in] [charset(UTF16),unique] */,
-						     const char *_password /* [in] [unique,charset(UTF16)] */,
+						     const char *_password /* [in] [charset(UTF16),unique] */,
 						     uint32_t _join_flags /* [in]  */)
 {
 	struct tevent_req *req;
@@ -3766,7 +3766,7 @@ NTSTATUS dcerpc_wkssvc_NetrJoinDomain(struct dcerpc_binding_handle *h,
 				      const char *_domain_name /* [in] [ref,charset(UTF16)] */,
 				      const char *_account_ou /* [in] [unique,charset(UTF16)] */,
 				      const char *_Account /* [in] [charset(UTF16),unique] */,
-				      const char *_password /* [in] [unique,charset(UTF16)] */,
+				      const char *_password /* [in] [charset(UTF16),unique] */,
 				      uint32_t _join_flags /* [in]  */,
 				      WERROR *result)
 {
@@ -3884,9 +3884,9 @@ static void dcerpc_wkssvc_NetrUnjoinDomain_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_wkssvc_NetrUnjoinDomain_send(TALLOC_CTX *mem_ctx,
 						       struct tevent_context *ev,
 						       struct dcerpc_binding_handle *h,
-						       const char *_server_name /* [in] [charset(UTF16),unique] */,
-						       const char *_Account /* [in] [charset(UTF16),unique] */,
-						       const char *_password /* [in] [unique,charset(UTF16)] */,
+						       const char *_server_name /* [in] [unique,charset(UTF16)] */,
+						       const char *_Account /* [in] [unique,charset(UTF16)] */,
+						       const char *_password /* [in] [charset(UTF16),unique] */,
 						       uint32_t _unjoin_flags /* [in]  */)
 {
 	struct tevent_req *req;
@@ -3980,9 +3980,9 @@ NTSTATUS dcerpc_wkssvc_NetrUnjoinDomain_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetrUnjoinDomain(struct dcerpc_binding_handle *h,
 					TALLOC_CTX *mem_ctx,
-					const char *_server_name /* [in] [charset(UTF16),unique] */,
-					const char *_Account /* [in] [charset(UTF16),unique] */,
-					const char *_password /* [in] [unique,charset(UTF16)] */,
+					const char *_server_name /* [in] [unique,charset(UTF16)] */,
+					const char *_Account /* [in] [unique,charset(UTF16)] */,
+					const char *_password /* [in] [charset(UTF16),unique] */,
 					uint32_t _unjoin_flags /* [in]  */,
 					WERROR *result)
 {
@@ -4099,9 +4099,9 @@ struct tevent_req *dcerpc_wkssvc_NetrRenameMachineInDomain_send(TALLOC_CTX *mem_
 								struct tevent_context *ev,
 								struct dcerpc_binding_handle *h,
 								const char *_server_name /* [in] [unique,charset(UTF16)] */,
-								const char *_NewMachineName /* [in] [unique,charset(UTF16)] */,
-								const char *_Account /* [in] [unique,charset(UTF16)] */,
-								const char *_password /* [in] [unique,charset(UTF16)] */,
+								const char *_NewMachineName /* [in] [charset(UTF16),unique] */,
+								const char *_Account /* [in] [charset(UTF16),unique] */,
+								const char *_password /* [in] [charset(UTF16),unique] */,
 								uint32_t _RenameOptions /* [in]  */)
 {
 	struct tevent_req *req;
@@ -4197,9 +4197,9 @@ NTSTATUS dcerpc_wkssvc_NetrRenameMachineInDomain_recv(struct tevent_req *req,
 NTSTATUS dcerpc_wkssvc_NetrRenameMachineInDomain(struct dcerpc_binding_handle *h,
 						 TALLOC_CTX *mem_ctx,
 						 const char *_server_name /* [in] [unique,charset(UTF16)] */,
-						 const char *_NewMachineName /* [in] [unique,charset(UTF16)] */,
-						 const char *_Account /* [in] [unique,charset(UTF16)] */,
-						 const char *_password /* [in] [unique,charset(UTF16)] */,
+						 const char *_NewMachineName /* [in] [charset(UTF16),unique] */,
+						 const char *_Account /* [in] [charset(UTF16),unique] */,
+						 const char *_password /* [in] [charset(UTF16),unique] */,
 						 uint32_t _RenameOptions /* [in]  */,
 						 WERROR *result)
 {
@@ -4316,10 +4316,10 @@ static void dcerpc_wkssvc_NetrValidateName_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_wkssvc_NetrValidateName_send(TALLOC_CTX *mem_ctx,
 						       struct tevent_context *ev,
 						       struct dcerpc_binding_handle *h,
-						       const char *_server_name /* [in] [charset(UTF16),unique] */,
-						       const char *_name /* [in] [ref,charset(UTF16)] */,
+						       const char *_server_name /* [in] [unique,charset(UTF16)] */,
+						       const char *_name /* [in] [charset(UTF16),ref] */,
 						       const char *_Account /* [in] [charset(UTF16),unique] */,
-						       const char *_Password /* [in] [unique,charset(UTF16)] */,
+						       const char *_Password /* [in] [charset(UTF16),unique] */,
 						       enum wkssvc_NetValidateNameType _name_type /* [in]  */)
 {
 	struct tevent_req *req;
@@ -4414,10 +4414,10 @@ NTSTATUS dcerpc_wkssvc_NetrValidateName_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetrValidateName(struct dcerpc_binding_handle *h,
 					TALLOC_CTX *mem_ctx,
-					const char *_server_name /* [in] [charset(UTF16),unique] */,
-					const char *_name /* [in] [ref,charset(UTF16)] */,
+					const char *_server_name /* [in] [unique,charset(UTF16)] */,
+					const char *_name /* [in] [charset(UTF16),ref] */,
 					const char *_Account /* [in] [charset(UTF16),unique] */,
-					const char *_Password /* [in] [unique,charset(UTF16)] */,
+					const char *_Password /* [in] [charset(UTF16),unique] */,
 					enum wkssvc_NetValidateNameType _name_type /* [in]  */,
 					WERROR *result)
 {
@@ -4763,9 +4763,9 @@ struct tevent_req *dcerpc_wkssvc_NetrGetJoinableOus_send(TALLOC_CTX *mem_ctx,
 							 const char *_server_name /* [in] [charset(UTF16),unique] */,
 							 const char *_domain_name /* [in] [charset(UTF16),ref] */,
 							 const char *_Account /* [in] [charset(UTF16),unique] */,
-							 const char *_unknown /* [in] [charset(UTF16),unique] */,
+							 const char *_unknown /* [in] [unique,charset(UTF16)] */,
 							 uint32_t *_num_ous /* [in,out] [ref] */,
-							 const char ***_ous /* [out] [charset(UTF16),size_is(,*num_ous),ref] */)
+							 const char ***_ous /* [out] [ref,size_is(,*num_ous),charset(UTF16)] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_wkssvc_NetrGetJoinableOus_state *state;
@@ -4872,9 +4872,9 @@ NTSTATUS dcerpc_wkssvc_NetrGetJoinableOus(struct dcerpc_binding_handle *h,
 					  const char *_server_name /* [in] [charset(UTF16),unique] */,
 					  const char *_domain_name /* [in] [charset(UTF16),ref] */,
 					  const char *_Account /* [in] [charset(UTF16),unique] */,
-					  const char *_unknown /* [in] [charset(UTF16),unique] */,
+					  const char *_unknown /* [in] [unique,charset(UTF16)] */,
 					  uint32_t *_num_ous /* [in,out] [ref] */,
-					  const char ***_ous /* [out] [charset(UTF16),size_is(,*num_ous),ref] */,
+					  const char ***_ous /* [out] [ref,size_is(,*num_ous),charset(UTF16)] */,
 					  WERROR *result)
 {
 	struct wkssvc_NetrGetJoinableOus r;
@@ -4995,7 +4995,7 @@ struct tevent_req *dcerpc_wkssvc_NetrJoinDomain2_send(TALLOC_CTX *mem_ctx,
 						      const char *_server_name /* [in] [charset(UTF16),unique] */,
 						      const char *_domain_name /* [in] [ref,charset(UTF16)] */,
 						      const char *_account_ou /* [in] [charset(UTF16),unique] */,
-						      const char *_admin_account /* [in] [unique,charset(UTF16)] */,
+						      const char *_admin_account /* [in] [charset(UTF16),unique] */,
 						      struct wkssvc_PasswordBuffer *_encrypted_password /* [in] [unique] */,
 						      uint32_t _join_flags /* [in]  */)
 {
@@ -5095,7 +5095,7 @@ NTSTATUS dcerpc_wkssvc_NetrJoinDomain2(struct dcerpc_binding_handle *h,
 				       const char *_server_name /* [in] [charset(UTF16),unique] */,
 				       const char *_domain_name /* [in] [ref,charset(UTF16)] */,
 				       const char *_account_ou /* [in] [charset(UTF16),unique] */,
-				       const char *_admin_account /* [in] [unique,charset(UTF16)] */,
+				       const char *_admin_account /* [in] [charset(UTF16),unique] */,
 				       struct wkssvc_PasswordBuffer *_encrypted_password /* [in] [unique] */,
 				       uint32_t _join_flags /* [in]  */,
 				       WERROR *result)
@@ -5646,8 +5646,8 @@ static void dcerpc_wkssvc_NetrValidateName2_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_wkssvc_NetrValidateName2_send(TALLOC_CTX *mem_ctx,
 							struct tevent_context *ev,
 							struct dcerpc_binding_handle *h,
-							const char *_server_name /* [in] [charset(UTF16),unique] */,
-							const char *_name /* [in] [ref,charset(UTF16)] */,
+							const char *_server_name /* [in] [unique,charset(UTF16)] */,
+							const char *_name /* [in] [charset(UTF16),ref] */,
 							const char *_Account /* [in] [charset(UTF16),unique] */,
 							struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 							enum wkssvc_NetValidateNameType _name_type /* [in]  */)
@@ -5744,8 +5744,8 @@ NTSTATUS dcerpc_wkssvc_NetrValidateName2_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetrValidateName2(struct dcerpc_binding_handle *h,
 					 TALLOC_CTX *mem_ctx,
-					 const char *_server_name /* [in] [charset(UTF16),unique] */,
-					 const char *_name /* [in] [ref,charset(UTF16)] */,
+					 const char *_server_name /* [in] [unique,charset(UTF16)] */,
+					 const char *_name /* [in] [charset(UTF16),ref] */,
 					 const char *_Account /* [in] [charset(UTF16),unique] */,
 					 struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 					 enum wkssvc_NetValidateNameType _name_type /* [in]  */,
@@ -5869,10 +5869,10 @@ struct tevent_req *dcerpc_wkssvc_NetrGetJoinableOus2_send(TALLOC_CTX *mem_ctx,
 							  struct dcerpc_binding_handle *h,
 							  const char *_server_name /* [in] [charset(UTF16),unique] */,
 							  const char *_domain_name /* [in] [charset(UTF16),ref] */,
-							  const char *_Account /* [in] [charset(UTF16),unique] */,
+							  const char *_Account /* [in] [unique,charset(UTF16)] */,
 							  struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 							  uint32_t *_num_ous /* [in,out] [ref] */,
-							  const char ***_ous /* [out] [ref,size_is(,*num_ous),charset(UTF16)] */)
+							  const char ***_ous /* [out] [charset(UTF16),size_is(,*num_ous),ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_wkssvc_NetrGetJoinableOus2_state *state;
@@ -5978,10 +5978,10 @@ NTSTATUS dcerpc_wkssvc_NetrGetJoinableOus2(struct dcerpc_binding_handle *h,
 					   TALLOC_CTX *mem_ctx,
 					   const char *_server_name /* [in] [charset(UTF16),unique] */,
 					   const char *_domain_name /* [in] [charset(UTF16),ref] */,
-					   const char *_Account /* [in] [charset(UTF16),unique] */,
+					   const char *_Account /* [in] [unique,charset(UTF16)] */,
 					   struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 					   uint32_t *_num_ous /* [in,out] [ref] */,
-					   const char ***_ous /* [out] [ref,size_is(,*num_ous),charset(UTF16)] */,
+					   const char ***_ous /* [out] [charset(UTF16),size_is(,*num_ous),ref] */,
 					   WERROR *result)
 {
 	struct wkssvc_NetrGetJoinableOus2 r;
@@ -6100,7 +6100,7 @@ struct tevent_req *dcerpc_wkssvc_NetrAddAlternateComputerName_send(TALLOC_CTX *m
 								   struct tevent_context *ev,
 								   struct dcerpc_binding_handle *h,
 								   const char *_server_name /* [in] [charset(UTF16),unique] */,
-								   const char *_NewAlternateMachineName /* [in] [unique,charset(UTF16)] */,
+								   const char *_NewAlternateMachineName /* [in] [charset(UTF16),unique] */,
 								   const char *_Account /* [in] [charset(UTF16),unique] */,
 								   struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 								   uint32_t _Reserved /* [in]  */)
@@ -6198,7 +6198,7 @@ NTSTATUS dcerpc_wkssvc_NetrAddAlternateComputerName_recv(struct tevent_req *req,
 NTSTATUS dcerpc_wkssvc_NetrAddAlternateComputerName(struct dcerpc_binding_handle *h,
 						    TALLOC_CTX *mem_ctx,
 						    const char *_server_name /* [in] [charset(UTF16),unique] */,
-						    const char *_NewAlternateMachineName /* [in] [unique,charset(UTF16)] */,
+						    const char *_NewAlternateMachineName /* [in] [charset(UTF16),unique] */,
 						    const char *_Account /* [in] [charset(UTF16),unique] */,
 						    struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 						    uint32_t _Reserved /* [in]  */,
@@ -6317,9 +6317,9 @@ static void dcerpc_wkssvc_NetrRemoveAlternateComputerName_done(struct tevent_req
 struct tevent_req *dcerpc_wkssvc_NetrRemoveAlternateComputerName_send(TALLOC_CTX *mem_ctx,
 								      struct tevent_context *ev,
 								      struct dcerpc_binding_handle *h,
-								      const char *_server_name /* [in] [unique,charset(UTF16)] */,
+								      const char *_server_name /* [in] [charset(UTF16),unique] */,
 								      const char *_AlternateMachineNameToRemove /* [in] [unique,charset(UTF16)] */,
-								      const char *_Account /* [in] [unique,charset(UTF16)] */,
+								      const char *_Account /* [in] [charset(UTF16),unique] */,
 								      struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 								      uint32_t _Reserved /* [in]  */)
 {
@@ -6415,9 +6415,9 @@ NTSTATUS dcerpc_wkssvc_NetrRemoveAlternateComputerName_recv(struct tevent_req *r
 
 NTSTATUS dcerpc_wkssvc_NetrRemoveAlternateComputerName(struct dcerpc_binding_handle *h,
 						       TALLOC_CTX *mem_ctx,
-						       const char *_server_name /* [in] [unique,charset(UTF16)] */,
+						       const char *_server_name /* [in] [charset(UTF16),unique] */,
 						       const char *_AlternateMachineNameToRemove /* [in] [unique,charset(UTF16)] */,
-						       const char *_Account /* [in] [unique,charset(UTF16)] */,
+						       const char *_Account /* [in] [charset(UTF16),unique] */,
 						       struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 						       uint32_t _Reserved /* [in]  */,
 						       WERROR *result)
@@ -6537,7 +6537,7 @@ struct tevent_req *dcerpc_wkssvc_NetrSetPrimaryComputername_send(TALLOC_CTX *mem
 								 struct dcerpc_binding_handle *h,
 								 const char *_server_name /* [in] [unique,charset(UTF16)] */,
 								 const char *_primary_name /* [in] [charset(UTF16),unique] */,
-								 const char *_Account /* [in] [unique,charset(UTF16)] */,
+								 const char *_Account /* [in] [charset(UTF16),unique] */,
 								 struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 								 uint32_t _Reserved /* [in]  */)
 {
@@ -6635,7 +6635,7 @@ NTSTATUS dcerpc_wkssvc_NetrSetPrimaryComputername(struct dcerpc_binding_handle *
 						  TALLOC_CTX *mem_ctx,
 						  const char *_server_name /* [in] [unique,charset(UTF16)] */,
 						  const char *_primary_name /* [in] [charset(UTF16),unique] */,
-						  const char *_Account /* [in] [unique,charset(UTF16)] */,
+						  const char *_Account /* [in] [charset(UTF16),unique] */,
 						  struct wkssvc_PasswordBuffer *_EncryptedPassword /* [in] [unique] */,
 						  uint32_t _Reserved /* [in]  */,
 						  WERROR *result)
@@ -6756,7 +6756,7 @@ static void dcerpc_wkssvc_NetrEnumerateComputerNames_done(struct tevent_req *sub
 struct tevent_req *dcerpc_wkssvc_NetrEnumerateComputerNames_send(TALLOC_CTX *mem_ctx,
 								 struct tevent_context *ev,
 								 struct dcerpc_binding_handle *h,
-								 const char *_server_name /* [in] [unique,charset(UTF16)] */,
+								 const char *_server_name /* [in] [charset(UTF16),unique] */,
 								 enum wkssvc_ComputerNameType _name_type /* [in]  */,
 								 uint32_t _Reserved /* [in]  */,
 								 struct wkssvc_ComputerNamesCtr **_ctr /* [out] [ref] */)
@@ -6859,7 +6859,7 @@ NTSTATUS dcerpc_wkssvc_NetrEnumerateComputerNames_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_wkssvc_NetrEnumerateComputerNames(struct dcerpc_binding_handle *h,
 						  TALLOC_CTX *mem_ctx,
-						  const char *_server_name /* [in] [unique,charset(UTF16)] */,
+						  const char *_server_name /* [in] [charset(UTF16),unique] */,
 						  enum wkssvc_ComputerNameType _name_type /* [in]  */,
 						  uint32_t _Reserved /* [in]  */,
 						  struct wkssvc_ComputerNamesCtr **_ctr /* [out] [ref] */,

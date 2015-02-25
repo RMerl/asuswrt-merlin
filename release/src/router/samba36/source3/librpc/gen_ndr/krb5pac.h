@@ -78,15 +78,15 @@ union PAC_INFO {
 	struct PAC_SIGNATURE_DATA srv_cksum;/* [case(PAC_TYPE_SRV_CHECKSUM)] */
 	struct PAC_SIGNATURE_DATA kdc_cksum;/* [case(PAC_TYPE_KDC_CHECKSUM)] */
 	struct PAC_LOGON_NAME logon_name;/* [case(PAC_TYPE_LOGON_NAME)] */
-	struct DATA_BLOB_REM unknown;/* [default,subcontext(0)] */
-}/* [nodiscriminant,public,gensize] */;
+	struct DATA_BLOB_REM unknown;/* [subcontext(0),default] */
+}/* [nodiscriminant,gensize,public] */;
 
 struct PAC_BUFFER {
 	enum PAC_TYPE type;
 	uint32_t _ndr_size;/* [value(_ndr_size_PAC_INFO(info,type,0))] */
-	union PAC_INFO *info;/* [subcontext(0),flag(LIBNDR_FLAG_ALIGN8),switch_is(type),subcontext_size(_subcontext_size_PAC_INFO(r,ndr->flags)),relative] */
+	union PAC_INFO *info;/* [flag(LIBNDR_FLAG_ALIGN8),switch_is(type),subcontext(0),relative,subcontext_size(_subcontext_size_PAC_INFO(r,ndr->flags))] */
 	uint32_t _pad;/* [value(0)] */
-}/* [public,nopull,noprint,nopush] */;
+}/* [nopush,nopull,public,noprint] */;
 
 struct PAC_DATA {
 	uint32_t num_buffers;
@@ -97,7 +97,7 @@ struct PAC_DATA {
 struct PAC_BUFFER_RAW {
 	enum PAC_TYPE type;
 	uint32_t ndr_size;
-	struct DATA_BLOB_REM *info;/* [subcontext_size(NDR_ROUND(ndr_size,8)),relative,flag(LIBNDR_FLAG_ALIGN8),subcontext(0)] */
+	struct DATA_BLOB_REM *info;/* [relative,subcontext_size(NDR_ROUND(ndr_size,8)),subcontext(0),flag(LIBNDR_FLAG_ALIGN8)] */
 	uint32_t _pad;/* [value(0)] */
 }/* [public] */;
 

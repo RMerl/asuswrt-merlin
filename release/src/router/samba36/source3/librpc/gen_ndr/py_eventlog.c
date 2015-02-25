@@ -19,11 +19,11 @@ staticforward PyTypeObject EVENTLOG_EVT_FILE_Type;
 staticforward PyTypeObject EVENTLOG_FULL_INFORMATION_Type;
 staticforward PyTypeObject eventlog_InterfaceType;
 
-void initeventlog(void);static PyTypeObject *policy_handle_Type;
+void initeventlog(void);static PyTypeObject *dom_sid_Type;
 static PyTypeObject *Object_Type;
-static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *lsa_String_Type;
-static PyTypeObject *dom_sid_Type;
+static PyTypeObject *policy_handle_Type;
+static PyTypeObject *ClientConnection_Type;
 
 static PyObject *py_eventlog_OpenUnknown0_get_unknown0(PyObject *obj, void *closure)
 {
@@ -2845,50 +2845,50 @@ static PyMethodDef eventlog_methods[] = {
 void initeventlog(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_misc;
-	PyObject *dep_samba_dcerpc_security;
-	PyObject *dep_samba_dcerpc_lsa;
 	PyObject *dep_talloc;
+	PyObject *dep_samba_dcerpc_security;
+	PyObject *dep_samba_dcerpc_misc;
+	PyObject *dep_samba_dcerpc_lsa;
 	PyObject *dep_samba_dcerpc_base;
 
-	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
-	if (dep_samba_dcerpc_misc == NULL)
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
 		return;
 
 	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
 	if (dep_samba_dcerpc_security == NULL)
 		return;
 
-	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
-	if (dep_samba_dcerpc_lsa == NULL)
+	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
+	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
+	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
+	if (dep_samba_dcerpc_lsa == NULL)
 		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
 		return;
 
-	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
-	if (policy_handle_Type == NULL)
+	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
+	if (dom_sid_Type == NULL)
 		return;
 
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
 	if (Object_Type == NULL)
 		return;
 
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
-		return;
-
 	lsa_String_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "String");
 	if (lsa_String_Type == NULL)
 		return;
 
-	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
-	if (dom_sid_Type == NULL)
+	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
+	if (policy_handle_Type == NULL)
+		return;
+
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
 	eventlog_OpenUnknown0_Type.tp_base = Object_Type;
@@ -2955,19 +2955,19 @@ void initeventlog(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "EVENTLOG_WARNING_TYPE", PyInt_FromLong(EVENTLOG_WARNING_TYPE));
-	PyModule_AddObject(m, "ELF_LOGFILE_LOGFULL_WRITTEN", PyInt_FromLong(ELF_LOGFILE_LOGFULL_WRITTEN));
-	PyModule_AddObject(m, "ELF_LOGFILE_HEADER_WRAP", PyInt_FromLong(ELF_LOGFILE_HEADER_WRAP));
 	PyModule_AddObject(m, "EVENTLOG_SUCCESS", PyInt_FromLong(EVENTLOG_SUCCESS));
-	PyModule_AddObject(m, "EVENTLOG_FORWARDS_READ", PyInt_FromLong(EVENTLOG_FORWARDS_READ));
-	PyModule_AddObject(m, "EVENTLOG_SEQUENTIAL_READ", PyInt_FromLong(EVENTLOG_SEQUENTIAL_READ));
+	PyModule_AddObject(m, "EVENTLOG_WARNING_TYPE", PyInt_FromLong(EVENTLOG_WARNING_TYPE));
 	PyModule_AddObject(m, "ELF_LOGFILE_ARCHIVE_SET", PyInt_FromLong(ELF_LOGFILE_ARCHIVE_SET));
 	PyModule_AddObject(m, "EVENTLOG_INFORMATION_TYPE", PyInt_FromLong(EVENTLOG_INFORMATION_TYPE));
 	PyModule_AddObject(m, "ELF_LOGFILE_HEADER_DIRTY", PyInt_FromLong(ELF_LOGFILE_HEADER_DIRTY));
-	PyModule_AddObject(m, "EVENTLOG_BACKWARDS_READ", PyInt_FromLong(EVENTLOG_BACKWARDS_READ));
-	PyModule_AddObject(m, "EVENTLOG_AUDIT_FAILURE", PyInt_FromLong(EVENTLOG_AUDIT_FAILURE));
+	PyModule_AddObject(m, "EVENTLOG_FORWARDS_READ", PyInt_FromLong(EVENTLOG_FORWARDS_READ));
+	PyModule_AddObject(m, "ELF_LOGFILE_HEADER_WRAP", PyInt_FromLong(ELF_LOGFILE_HEADER_WRAP));
 	PyModule_AddObject(m, "EVENTLOG_SEEK_READ", PyInt_FromLong(EVENTLOG_SEEK_READ));
 	PyModule_AddObject(m, "EVENTLOG_AUDIT_SUCCESS", PyInt_FromLong(EVENTLOG_AUDIT_SUCCESS));
+	PyModule_AddObject(m, "EVENTLOG_SEQUENTIAL_READ", PyInt_FromLong(EVENTLOG_SEQUENTIAL_READ));
+	PyModule_AddObject(m, "EVENTLOG_BACKWARDS_READ", PyInt_FromLong(EVENTLOG_BACKWARDS_READ));
+	PyModule_AddObject(m, "EVENTLOG_AUDIT_FAILURE", PyInt_FromLong(EVENTLOG_AUDIT_FAILURE));
+	PyModule_AddObject(m, "ELF_LOGFILE_LOGFULL_WRITTEN", PyInt_FromLong(ELF_LOGFILE_LOGFULL_WRITTEN));
 	PyModule_AddObject(m, "EVENTLOG_ERROR_TYPE", PyInt_FromLong(EVENTLOG_ERROR_TYPE));
 	Py_INCREF((PyObject *)(void *)&eventlog_OpenUnknown0_Type);
 	PyModule_AddObject(m, "OpenUnknown0", (PyObject *)(void *)&eventlog_OpenUnknown0_Type);

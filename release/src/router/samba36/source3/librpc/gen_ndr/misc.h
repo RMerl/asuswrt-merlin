@@ -16,7 +16,7 @@ struct GUID {
 	uint16_t time_hi_and_version;
 	uint8_t clock_seq[2];
 	uint8_t node[6];
-}/* [noprint,gensize,public] */;
+}/* [public,noprint,gensize] */;
 
 struct ndr_syntax_id {
 	struct GUID uuid;
@@ -94,11 +94,11 @@ enum winreg_Type
 
 union winreg_Data {
 	const char * string;/* [case(REG_SZ),flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
-	DATA_BLOB binary;/* [case(REG_BINARY),flag(LIBNDR_FLAG_REMAINING)] */
+	DATA_BLOB binary;/* [flag(LIBNDR_FLAG_REMAINING),case(REG_BINARY)] */
 	uint32_t value;/* [case(REG_DWORD)] */
-	const char ** string_array;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),case(REG_MULTI_SZ)] */
+	const char ** string_array;/* [case(REG_MULTI_SZ),flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
 	DATA_BLOB data;/* [flag(LIBNDR_FLAG_REMAINING),default] */
-}/* [public,flag(LIBNDR_FLAG_LITTLE_ENDIAN),nodiscriminant] */;
+}/* [nodiscriminant,flag(LIBNDR_FLAG_LITTLE_ENDIAN),public] */;
 
 #endif /* _HEADER_misc */
 #endif /* _PIDL_HEADER_misc */

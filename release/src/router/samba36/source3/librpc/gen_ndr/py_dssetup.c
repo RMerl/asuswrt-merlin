@@ -474,9 +474,13 @@ static PyMethodDef dssetup_methods[] = {
 void initdssetup(void)
 {
 	PyObject *m;
+	PyObject *dep_samba_dcerpc_misc;
 	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_misc;
+
+	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
+	if (dep_samba_dcerpc_misc == NULL)
+		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
@@ -484,10 +488,6 @@ void initdssetup(void)
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
-		return;
-
-	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
-	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
@@ -538,27 +538,27 @@ void initdssetup(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "DS_ROLE_UPGRADE_STATUS", PyInt_FromLong(DS_ROLE_UPGRADE_STATUS));
-	PyModule_AddObject(m, "DS_ROLE_UPGRADE_IN_PROGRESS", PyInt_FromLong(DS_ROLE_UPGRADE_IN_PROGRESS));
-	PyModule_AddObject(m, "DS_ROLE_PRIMARY_DS_RUNNING", PyInt_FromLong(DS_ROLE_PRIMARY_DS_RUNNING));
 	PyModule_AddObject(m, "DS_ROLE_MEMBER_SERVER", PyInt_FromLong(DS_ROLE_MEMBER_SERVER));
-	PyModule_AddObject(m, "DS_ROLE_BASIC_INFORMATION", PyInt_FromLong(DS_ROLE_BASIC_INFORMATION));
-	PyModule_AddObject(m, "DS_ROLE_UPGRADING", PyInt_FromLong(DS_ROLE_UPGRADING));
-	PyModule_AddObject(m, "DS_ROLE_OP_NEEDS_REBOOT", PyInt_FromLong(DS_ROLE_OP_NEEDS_REBOOT));
-	PyModule_AddObject(m, "DS_ROLE_PRIMARY_DOMAIN_GUID_PRESENT", PyInt_FromLong(DS_ROLE_PRIMARY_DOMAIN_GUID_PRESENT));
-	PyModule_AddObject(m, "DS_ROLE_MEMBER_WORKSTATION", PyInt_FromLong(DS_ROLE_MEMBER_WORKSTATION));
-	PyModule_AddObject(m, "DS_ROLE_PREVIOUS_UNKNOWN", PyInt_FromLong(DS_ROLE_PREVIOUS_UNKNOWN));
-	PyModule_AddObject(m, "DS_ROLE_PRIMARY_DC", PyInt_FromLong(DS_ROLE_PRIMARY_DC));
-	PyModule_AddObject(m, "DS_ROLE_OP_STATUS", PyInt_FromLong(DS_ROLE_OP_STATUS));
-	PyModule_AddObject(m, "DS_ROLE_OP_IDLE", PyInt_FromLong(DS_ROLE_OP_IDLE));
+	PyModule_AddObject(m, "DS_ROLE_UPGRADE_STATUS", PyInt_FromLong(DS_ROLE_UPGRADE_STATUS));
 	PyModule_AddObject(m, "DS_ROLE_OP_ACTIVE", PyInt_FromLong(DS_ROLE_OP_ACTIVE));
-	PyModule_AddObject(m, "DS_ROLE_STANDALONE_WORKSTATION", PyInt_FromLong(DS_ROLE_STANDALONE_WORKSTATION));
-	PyModule_AddObject(m, "DS_ROLE_PREVIOUS_BACKUP", PyInt_FromLong(DS_ROLE_PREVIOUS_BACKUP));
-	PyModule_AddObject(m, "DS_ROLE_PRIMARY_DS_MIXED_MODE", PyInt_FromLong(DS_ROLE_PRIMARY_DS_MIXED_MODE));
+	PyModule_AddObject(m, "DS_ROLE_PRIMARY_DC", PyInt_FromLong(DS_ROLE_PRIMARY_DC));
+	PyModule_AddObject(m, "DS_ROLE_PRIMARY_DOMAIN_GUID_PRESENT", PyInt_FromLong(DS_ROLE_PRIMARY_DOMAIN_GUID_PRESENT));
+	PyModule_AddObject(m, "DS_ROLE_PRIMARY_DS_RUNNING", PyInt_FromLong(DS_ROLE_PRIMARY_DS_RUNNING));
+	PyModule_AddObject(m, "DS_ROLE_OP_STATUS", PyInt_FromLong(DS_ROLE_OP_STATUS));
 	PyModule_AddObject(m, "DS_ROLE_PREVIOUS_PRIMARY", PyInt_FromLong(DS_ROLE_PREVIOUS_PRIMARY));
-	PyModule_AddObject(m, "DS_ROLE_BACKUP_DC", PyInt_FromLong(DS_ROLE_BACKUP_DC));
-	PyModule_AddObject(m, "DS_ROLE_STANDALONE_SERVER", PyInt_FromLong(DS_ROLE_STANDALONE_SERVER));
+	PyModule_AddObject(m, "DS_ROLE_OP_IDLE", PyInt_FromLong(DS_ROLE_OP_IDLE));
+	PyModule_AddObject(m, "DS_ROLE_MEMBER_WORKSTATION", PyInt_FromLong(DS_ROLE_MEMBER_WORKSTATION));
 	PyModule_AddObject(m, "DS_ROLE_NOT_UPGRADING", PyInt_FromLong(DS_ROLE_NOT_UPGRADING));
+	PyModule_AddObject(m, "DS_ROLE_STANDALONE_SERVER", PyInt_FromLong(DS_ROLE_STANDALONE_SERVER));
+	PyModule_AddObject(m, "DS_ROLE_OP_NEEDS_REBOOT", PyInt_FromLong(DS_ROLE_OP_NEEDS_REBOOT));
+	PyModule_AddObject(m, "DS_ROLE_STANDALONE_WORKSTATION", PyInt_FromLong(DS_ROLE_STANDALONE_WORKSTATION));
+	PyModule_AddObject(m, "DS_ROLE_PRIMARY_DS_MIXED_MODE", PyInt_FromLong(DS_ROLE_PRIMARY_DS_MIXED_MODE));
+	PyModule_AddObject(m, "DS_ROLE_PREVIOUS_BACKUP", PyInt_FromLong(DS_ROLE_PREVIOUS_BACKUP));
+	PyModule_AddObject(m, "DS_ROLE_UPGRADING", PyInt_FromLong(DS_ROLE_UPGRADING));
+	PyModule_AddObject(m, "DS_ROLE_BASIC_INFORMATION", PyInt_FromLong(DS_ROLE_BASIC_INFORMATION));
+	PyModule_AddObject(m, "DS_ROLE_UPGRADE_IN_PROGRESS", PyInt_FromLong(DS_ROLE_UPGRADE_IN_PROGRESS));
+	PyModule_AddObject(m, "DS_ROLE_PREVIOUS_UNKNOWN", PyInt_FromLong(DS_ROLE_PREVIOUS_UNKNOWN));
+	PyModule_AddObject(m, "DS_ROLE_BACKUP_DC", PyInt_FromLong(DS_ROLE_BACKUP_DC));
 	Py_INCREF((PyObject *)(void *)&dssetup_DsRolePrimaryDomInfoBasic_Type);
 	PyModule_AddObject(m, "DsRolePrimaryDomInfoBasic", (PyObject *)(void *)&dssetup_DsRolePrimaryDomInfoBasic_Type);
 	Py_INCREF((PyObject *)(void *)&dssetup_DsRoleUpgradeStatus_Type);

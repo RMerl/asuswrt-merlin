@@ -22,7 +22,7 @@
 #define NETLOGON_PASSWORD_VERSION_NUMBER_PRESENT	( 0x02231968 )
 #define DS_GFTI_UPDATE_TDO	( 0x1 )
 struct netr_UasInfo {
-	const char *account_name;/* [unique,charset(UTF16)] */
+	const char *account_name;/* [charset(UTF16),unique] */
 	uint32_t priv;
 	uint32_t auth_flags;
 	uint32_t logon_count;
@@ -36,7 +36,7 @@ struct netr_UasInfo {
 	time_t pw_must_change;
 	const char *computer;/* [charset(UTF16),unique] */
 	const char *domain;/* [unique,charset(UTF16)] */
-	const char *script_path;/* [unique,charset(UTF16)] */
+	const char *script_path;/* [charset(UTF16),unique] */
 	uint32_t unknown;
 };
 
@@ -105,7 +105,7 @@ struct netr_GenericInfo {
 	struct netr_IdentityInfo identity_info;
 	struct lsa_String package_name;
 	uint32_t length;
-	uint8_t *data;/* [size_is(length),unique] */
+	uint8_t *data;/* [unique,size_is(length)] */
 }/* [flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 enum netr_LogonInfoClass
@@ -133,17 +133,17 @@ enum netr_LogonInfoClass
 
 union netr_LogonLevel {
 	struct netr_PasswordInfo *password;/* [case(NetlogonInteractiveInformation),unique] */
-	struct netr_NetworkInfo *network;/* [case(NetlogonNetworkInformation),unique] */
+	struct netr_NetworkInfo *network;/* [unique,case(NetlogonNetworkInformation)] */
 	struct netr_GenericInfo *generic;/* [unique,case(NetlogonGenericInformation)] */
 }/* [switch_type(netr_LogonInfoClass),public] */;
 
 struct netr_UserSessionKey {
 	uint8_t key[16];
-}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 struct netr_LMSessionKey {
 	uint8_t key[8];
-}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 /* bitmap netr_UserFlags */
 #define NETLOGON_GUEST ( 0x00000001 )
@@ -217,7 +217,7 @@ struct netr_PacInfo {
 	struct lsa_String logon_server;
 	struct lsa_String principal_name;
 	uint32_t auth_size;
-	uint8_t *auth;/* [size_is(auth_size),unique] */
+	uint8_t *auth;/* [unique,size_is(auth_size)] */
 	struct netr_UserSessionKey user_session_key;
 	uint32_t expansionroom[10];
 	struct lsa_String unknown1;
@@ -253,14 +253,14 @@ enum netr_ValidationInfoClass
 union netr_Validation {
 	struct netr_SamInfo2 *sam2;/* [case(NetlogonValidationSamInfo),unique] */
 	struct netr_SamInfo3 *sam3;/* [unique,case(NetlogonValidationSamInfo2)] */
-	struct netr_PacInfo *pac;/* [case(4),unique] */
-	struct netr_GenericInfo2 *generic;/* [unique,case(NetlogonValidationGenericInfo2)] */
-	struct netr_SamInfo6 *sam6;/* [unique,case(NetlogonValidationSamInfo4)] */
+	struct netr_PacInfo *pac;/* [unique,case(4)] */
+	struct netr_GenericInfo2 *generic;/* [case(NetlogonValidationGenericInfo2),unique] */
+	struct netr_SamInfo6 *sam6;/* [case(NetlogonValidationSamInfo4),unique] */
 }/* [switch_type(uint16),public] */;
 
 struct netr_Credential {
 	uint8_t data[8];
-}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 struct netr_Authenticator {
 	struct netr_Credential cred;
@@ -268,7 +268,7 @@ struct netr_Authenticator {
 }/* [public] */;
 
 struct netr_DELTA_DELETE_USER {
-	const char *account_name;/* [unique,charset(UTF16)] */
+	const char *account_name;/* [charset(UTF16),unique] */
 	struct lsa_String unknown1;
 	struct lsa_String unknown2;
 	struct lsa_String unknown3;
@@ -457,7 +457,7 @@ struct netr_DELTA_POLICY {
 	NTTIME auditretentionperiod;
 	uint8_t auditingmode;
 	uint32_t maxauditeventcount;
-	uint32_t *eventauditoptions;/* [size_is(maxauditeventcount+1),unique] */
+	uint32_t *eventauditoptions;/* [unique,size_is(maxauditeventcount+1)] */
 	struct lsa_String primary_domain_name;
 	struct dom_sid2 *sid;/* [unique] */
 	struct netr_QUOTA_LIMITS quota_limits;
@@ -513,7 +513,7 @@ struct netr_DELTA_ACCOUNT {
 struct netr_CIPHER_VALUE {
 	uint32_t len;
 	uint32_t maxlen;
-	uint8_t *cipher_data;/* [length_is(len),size_is(maxlen),unique] */
+	uint8_t *cipher_data;/* [unique,length_is(len),size_is(maxlen)] */
 };
 
 struct netr_DELTA_SECRET {
@@ -587,28 +587,28 @@ enum netr_DeltaEnum
 ;
 
 union netr_DELTA_UNION {
-	struct netr_DELTA_DOMAIN *domain;/* [case(NETR_DELTA_DOMAIN),unique] */
-	struct netr_DELTA_GROUP *group;/* [unique,case(NETR_DELTA_GROUP)] */
+	struct netr_DELTA_DOMAIN *domain;/* [unique,case(NETR_DELTA_DOMAIN)] */
+	struct netr_DELTA_GROUP *group;/* [case(NETR_DELTA_GROUP),unique] */
 	struct netr_DELTA_RENAME *rename_group;/* [case(NETR_DELTA_RENAME_GROUP),unique] */
 	struct netr_DELTA_USER *user;/* [case(NETR_DELTA_USER),unique] */
-	struct netr_DELTA_RENAME *rename_user;/* [case(NETR_DELTA_RENAME_USER),unique] */
+	struct netr_DELTA_RENAME *rename_user;/* [unique,case(NETR_DELTA_RENAME_USER)] */
 	struct netr_DELTA_GROUP_MEMBER *group_member;/* [case(NETR_DELTA_GROUP_MEMBER),unique] */
 	struct netr_DELTA_ALIAS *alias;/* [unique,case(NETR_DELTA_ALIAS)] */
-	struct netr_DELTA_RENAME *rename_alias;/* [unique,case(NETR_DELTA_RENAME_ALIAS)] */
+	struct netr_DELTA_RENAME *rename_alias;/* [case(NETR_DELTA_RENAME_ALIAS),unique] */
 	struct netr_DELTA_ALIAS_MEMBER *alias_member;/* [unique,case(NETR_DELTA_ALIAS_MEMBER)] */
 	struct netr_DELTA_POLICY *policy;/* [case(NETR_DELTA_POLICY),unique] */
 	struct netr_DELTA_TRUSTED_DOMAIN *trusted_domain;/* [case(NETR_DELTA_TRUSTED_DOMAIN),unique] */
 	struct netr_DELTA_ACCOUNT *account;/* [case(NETR_DELTA_ACCOUNT),unique] */
 	struct netr_DELTA_SECRET *secret;/* [case(NETR_DELTA_SECRET),unique] */
 	struct netr_DELTA_DELETE_USER *delete_group;/* [unique,case(NETR_DELTA_DELETE_GROUP2)] */
-	struct netr_DELTA_DELETE_USER *delete_user;/* [case(NETR_DELTA_DELETE_USER2),unique] */
-	uint64_t *modified_count;/* [unique,case(NETR_DELTA_MODIFY_COUNT)] */
+	struct netr_DELTA_DELETE_USER *delete_user;/* [unique,case(NETR_DELTA_DELETE_USER2)] */
+	uint64_t *modified_count;/* [case(NETR_DELTA_MODIFY_COUNT),unique] */
 }/* [switch_type(netr_DeltaEnum)] */;
 
 union netr_DELTA_ID_UNION {
 	uint32_t rid;/* [case(NETR_DELTA_DOMAIN)] */
 	struct dom_sid2 *sid;/* [unique,case(NETR_DELTA_POLICY)] */
-	const char *name;/* [charset(UTF16),unique,case(NETR_DELTA_SECRET)] */
+	const char *name;/* [case(NETR_DELTA_SECRET),charset(UTF16),unique] */
 }/* [switch_type(netr_DeltaEnum)] */;
 
 struct netr_DELTA_ENUM {
@@ -619,7 +619,7 @@ struct netr_DELTA_ENUM {
 
 struct netr_DELTA_ENUM_ARRAY {
 	uint32_t num_deltas;
-	struct netr_DELTA_ENUM *delta_enum;/* [size_is(num_deltas),unique] */
+	struct netr_DELTA_ENUM *delta_enum;/* [unique,size_is(num_deltas)] */
 };
 
 struct netr_UAS_INFO_0 {
@@ -650,7 +650,7 @@ struct netr_NETLOGON_INFO_1 {
 struct netr_NETLOGON_INFO_2 {
 	uint32_t flags;
 	WERROR pdc_connection_status;
-	const char *trusted_dc_name;/* [unique,charset(UTF16)] */
+	const char *trusted_dc_name;/* [charset(UTF16),unique] */
 	WERROR tc_connection_status;
 };
 
@@ -670,10 +670,10 @@ struct netr_NETLOGON_INFO_4 {
 };
 
 union netr_CONTROL_QUERY_INFORMATION {
-	struct netr_NETLOGON_INFO_1 *info1;/* [case,unique] */
+	struct netr_NETLOGON_INFO_1 *info1;/* [unique,case] */
 	struct netr_NETLOGON_INFO_2 *info2;/* [case(2),unique] */
 	struct netr_NETLOGON_INFO_3 *info3;/* [case(3),unique] */
-	struct netr_NETLOGON_INFO_4 *info4;/* [unique,case(4)] */
+	struct netr_NETLOGON_INFO_4 *info4;/* [case(4),unique] */
 };
 
 enum netr_LogonControlCode
@@ -718,8 +718,8 @@ enum netr_LogonControlCode
 ;
 
 union netr_CONTROL_DATA_INFORMATION {
-	const char *domain;/* [case(NETLOGON_CONTROL_REDISCOVER),unique,charset(UTF16)] */
-	const char *user;/* [case(NETLOGON_CONTROL_FIND_USER),unique,charset(UTF16)] */
+	const char *domain;/* [unique,charset(UTF16),case(NETLOGON_CONTROL_REDISCOVER)] */
+	const char *user;/* [unique,case(NETLOGON_CONTROL_FIND_USER),charset(UTF16)] */
 	uint32_t debug_level;/* [case(NETLOGON_CONTROL_SET_DBFLAG)] */
 };
 
@@ -798,11 +798,11 @@ struct netr_ChangeLogEntry {
 	enum netr_SamDatabaseID8Bit db_index;
 	enum netr_DeltaEnum8Bit delta_type;
 	union netr_ChangeLogObject object;/* [switch_is(flags&(NETR_CHANGELOG_SID_INCLUDED|NETR_CHANGELOG_NAME_INCLUDED))] */
-}/* [gensize,public] */;
+}/* [public,gensize] */;
 
 struct netr_Blob {
 	uint32_t length;
-	uint8_t *data;/* [unique,size_is(length)] */
+	uint8_t *data;/* [size_is(length),unique] */
 };
 
 /* bitmap netr_DsRGetDCName_flags */
@@ -858,11 +858,11 @@ enum netr_DsRGetDCNameInfo_AddressType
 #define DS_DNS_FOREST_ROOT ( 0x80000000 )
 
 struct netr_DsRGetDCNameInfo {
-	const char *dc_unc;/* [charset(UTF16),unique] */
-	const char *dc_address;/* [unique,charset(UTF16)] */
+	const char *dc_unc;/* [unique,charset(UTF16)] */
+	const char *dc_address;/* [charset(UTF16),unique] */
 	enum netr_DsRGetDCNameInfo_AddressType dc_address_type;
 	struct GUID domain_guid;
-	const char *domain_name;/* [charset(UTF16),unique] */
+	const char *domain_name;/* [unique,charset(UTF16)] */
 	const char *forest_name;/* [charset(UTF16),unique] */
 	uint32_t dc_flags;
 	const char *dc_site_name;/* [unique,charset(UTF16)] */
@@ -909,7 +909,7 @@ union netr_Capabilities {
 
 struct netr_LsaPolicyInformation {
 	uint32_t policy_size;
-	uint8_t *policy;/* [size_is(policy_size),unique] */
+	uint8_t *policy;/* [unique,size_is(policy_size)] */
 };
 
 struct netr_OsVersionInfoEx {
@@ -918,7 +918,7 @@ struct netr_OsVersionInfoEx {
 	uint32_t MinorVersion;
 	uint32_t BuildNumber;
 	uint32_t PlatformId;
-	const char * CSDVersion;/* [subcontext(0),flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),subcontext_size(256)] */
+	const char * CSDVersion;/* [subcontext_size(256),subcontext(0),flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
 	uint16_t ServicePackMajor;
 	uint16_t ServicePackMinor;
 	uint16_t SuiteMask;
@@ -943,9 +943,9 @@ struct netr_WorkstationInformation {
 	struct netr_LsaPolicyInformation lsa_policy;
 	const char *dns_hostname;/* [unique,charset(UTF16)] */
 	const char *sitename;/* [charset(UTF16),unique] */
-	const char *dummy1;/* [unique,charset(UTF16)] */
+	const char *dummy1;/* [charset(UTF16),unique] */
 	const char *dummy2;/* [charset(UTF16),unique] */
-	const char *dummy3;/* [charset(UTF16),unique] */
+	const char *dummy3;/* [unique,charset(UTF16)] */
 	const char *dummy4;/* [unique,charset(UTF16)] */
 	struct netr_OsVersionContainer os_version;
 	struct lsa_String os_name;
@@ -959,7 +959,7 @@ struct netr_WorkstationInformation {
 
 union netr_WorkstationInfo {
 	struct netr_WorkstationInformation *workstation_info;/* [case,unique] */
-	struct netr_WorkstationInformation *lsa_policy_info;/* [case(2),unique] */
+	struct netr_WorkstationInformation *lsa_policy_info;/* [unique,case(2)] */
 };
 
 struct netr_trust_extension {
@@ -1004,7 +1004,7 @@ struct netr_OneDomainInfo {
 struct netr_DomainInformation {
 	struct netr_OneDomainInfo primary_domain;
 	uint32_t trusted_domain_count;
-	struct netr_OneDomainInfo *trusted_domains;/* [unique,size_is(trusted_domain_count)] */
+	struct netr_OneDomainInfo *trusted_domains;/* [size_is(trusted_domain_count),unique] */
 	struct netr_LsaPolicyInformation lsa_policy;
 	struct lsa_StringLarge dns_hostname;
 	struct lsa_StringLarge dummy_string2;
@@ -1018,7 +1018,7 @@ struct netr_DomainInformation {
 
 union netr_DomainInfo {
 	struct netr_DomainInformation *domain_info;/* [unique,case] */
-	struct netr_LsaPolicyInformation *lsa_policy_info;/* [case(2),unique] */
+	struct netr_LsaPolicyInformation *lsa_policy_info;/* [unique,case(2)] */
 };
 
 struct NL_PASSWORD_VERSION {
@@ -1069,8 +1069,8 @@ enum netr_TrustType
 #define NETR_TRUST_ATTRIBUTE_TREAT_AS_EXTERNAL ( 0x00000040 )
 
 struct netr_DomainTrust {
-	const char *netbios_name;/* [unique,charset(UTF16)] */
-	const char *dns_name;/* [charset(UTF16),unique] */
+	const char *netbios_name;/* [charset(UTF16),unique] */
+	const char *dns_name;/* [unique,charset(UTF16)] */
 	uint32_t trust_flags;
 	uint32_t parent_index;
 	enum netr_TrustType trust_type;
@@ -1081,7 +1081,7 @@ struct netr_DomainTrust {
 
 struct netr_DomainTrustList {
 	uint32_t count;
-	struct netr_DomainTrust *array;/* [size_is(count),unique] */
+	struct netr_DomainTrust *array;/* [unique,size_is(count)] */
 };
 
 struct netr_DsRAddressToSitenamesExWCtr {
@@ -1097,7 +1097,7 @@ struct DcSitesCtr {
 
 struct netr_TrustInfo {
 	uint32_t count;
-	uint32_t *data;/* [unique,size_is(count)] */
+	uint32_t *data;/* [size_is(count),unique] */
 	uint32_t entry_count;
 	struct lsa_String *entries;/* [size_is(count),unique] */
 };
@@ -1168,8 +1168,8 @@ struct NL_DNS_NAME_INFO_ARRAY {
 struct netr_LogonUasLogon {
 	struct {
 		const char *server_name;/* [charset(UTF16),unique] */
-		const char *account_name;/* [ref,charset(UTF16)] */
-		const char *workstation;/* [ref,charset(UTF16)] */
+		const char *account_name;/* [charset(UTF16),ref] */
+		const char *workstation;/* [charset(UTF16),ref] */
 	} in;
 
 	struct {
@@ -1183,7 +1183,7 @@ struct netr_LogonUasLogon {
 struct netr_LogonUasLogoff {
 	struct {
 		const char *server_name;/* [unique,charset(UTF16)] */
-		const char *account_name;/* [charset(UTF16),ref] */
+		const char *account_name;/* [ref,charset(UTF16)] */
 		const char *workstation;/* [charset(UTF16),ref] */
 	} in;
 
@@ -1197,17 +1197,17 @@ struct netr_LogonUasLogoff {
 
 struct netr_LogonSamLogon {
 	struct {
-		const char *server_name;/* [unique,charset(UTF16)] */
-		const char *computer_name;/* [unique,charset(UTF16)] */
+		const char *server_name;/* [charset(UTF16),unique] */
+		const char *computer_name;/* [charset(UTF16),unique] */
 		struct netr_Authenticator *credential;/* [unique] */
 		enum netr_LogonInfoClass logon_level;
-		union netr_LogonLevel *logon;/* [ref,switch_is(logon_level)] */
+		union netr_LogonLevel *logon;/* [switch_is(logon_level),ref] */
 		uint16_t validation_level;
 		struct netr_Authenticator *return_authenticator;/* [unique] */
 	} in;
 
 	struct {
-		union netr_Validation *validation;/* [switch_is(validation_level),ref] */
+		union netr_Validation *validation;/* [ref,switch_is(validation_level)] */
 		uint8_t *authoritative;/* [ref] */
 		struct netr_Authenticator *return_authenticator;/* [unique] */
 		NTSTATUS result;
@@ -1218,7 +1218,7 @@ struct netr_LogonSamLogon {
 
 struct netr_LogonSamLogoff {
 	struct {
-		const char *server_name;/* [unique,charset(UTF16)] */
+		const char *server_name;/* [charset(UTF16),unique] */
 		const char *computer_name;/* [charset(UTF16),unique] */
 		struct netr_Authenticator *credential;/* [unique] */
 		enum netr_LogonInfoClass logon_level;
@@ -1251,7 +1251,7 @@ struct netr_ServerReqChallenge {
 
 struct netr_ServerAuthenticate {
 	struct {
-		const char *server_name;/* [charset(UTF16),unique] */
+		const char *server_name;/* [unique,charset(UTF16)] */
 		const char *account_name;/* [ref,charset(UTF16)] */
 		enum netr_SchannelType secure_channel_type;
 		const char *computer_name;/* [charset(UTF16),ref] */
@@ -1268,8 +1268,8 @@ struct netr_ServerAuthenticate {
 
 struct netr_ServerPasswordSet {
 	struct {
-		const char *server_name;/* [unique,charset(UTF16)] */
-		const char *account_name;/* [ref,charset(UTF16)] */
+		const char *server_name;/* [charset(UTF16),unique] */
+		const char *account_name;/* [charset(UTF16),ref] */
 		enum netr_SchannelType secure_channel_type;
 		const char *computer_name;/* [ref,charset(UTF16)] */
 		struct netr_Authenticator *credential;/* [ref] */
@@ -1287,7 +1287,7 @@ struct netr_ServerPasswordSet {
 struct netr_DatabaseDeltas {
 	struct {
 		const char *logon_server;/* [charset(UTF16),ref] */
-		const char *computername;/* [charset(UTF16),ref] */
+		const char *computername;/* [ref,charset(UTF16)] */
 		struct netr_Authenticator *credential;/* [ref] */
 		enum netr_SamDatabaseID database_id;
 		uint32_t preferredmaximumlength;
@@ -1328,7 +1328,7 @@ struct netr_DatabaseSync {
 
 struct netr_AccountDeltas {
 	struct {
-		const char *logon_server;/* [unique,charset(UTF16)] */
+		const char *logon_server;/* [charset(UTF16),unique] */
 		const char *computername;/* [charset(UTF16),ref] */
 		struct netr_Authenticator credential;
 		struct netr_UAS_INFO_0 uas;
@@ -1339,7 +1339,7 @@ struct netr_AccountDeltas {
 	} in;
 
 	struct {
-		struct netr_AccountBuffer *buffer;/* [ref,subcontext(4)] */
+		struct netr_AccountBuffer *buffer;/* [subcontext(4),ref] */
 		uint32_t *count_returned;/* [ref] */
 		uint32_t *total_entries;/* [ref] */
 		struct netr_UAS_INFO_0 *recordid;/* [ref] */
@@ -1353,7 +1353,7 @@ struct netr_AccountDeltas {
 struct netr_AccountSync {
 	struct {
 		const char *logon_server;/* [charset(UTF16),unique] */
-		const char *computername;/* [charset(UTF16),ref] */
+		const char *computername;/* [ref,charset(UTF16)] */
 		struct netr_Authenticator credential;
 		uint32_t reference;
 		uint32_t level;
@@ -1382,7 +1382,7 @@ struct netr_GetDcName {
 	} in;
 
 	struct {
-		const char **dcname;/* [charset(UTF16),ref] */
+		const char **dcname;/* [ref,charset(UTF16)] */
 		WERROR result;
 	} out;
 
@@ -1406,8 +1406,8 @@ struct netr_LogonControl {
 
 struct netr_GetAnyDCName {
 	struct {
-		const char *logon_server;/* [unique,charset(UTF16)] */
-		const char *domainname;/* [unique,charset(UTF16)] */
+		const char *logon_server;/* [charset(UTF16),unique] */
+		const char *domainname;/* [charset(UTF16),unique] */
 	} in;
 
 	struct {
@@ -1420,10 +1420,10 @@ struct netr_GetAnyDCName {
 
 struct netr_LogonControl2 {
 	struct {
-		const char *logon_server;/* [charset(UTF16),unique] */
+		const char *logon_server;/* [unique,charset(UTF16)] */
 		enum netr_LogonControlCode function_code;
 		uint32_t level;
-		union netr_CONTROL_DATA_INFORMATION *data;/* [ref,switch_is(function_code)] */
+		union netr_CONTROL_DATA_INFORMATION *data;/* [switch_is(function_code),ref] */
 	} in;
 
 	struct {
@@ -1478,7 +1478,7 @@ struct netr_DatabaseSync2 {
 struct netr_DatabaseRedo {
 	struct {
 		const char *logon_server;/* [charset(UTF16),ref] */
-		const char *computername;/* [charset(UTF16),ref] */
+		const char *computername;/* [ref,charset(UTF16)] */
 		struct netr_Authenticator *credential;/* [ref] */
 		struct netr_ChangeLogEntry change_log_entry;/* [subcontext(4)] */
 		uint32_t change_log_entry_size;/* [value(ndr_size_netr_ChangeLogEntry(&change_log_entry,ndr->flags))] */
@@ -1496,14 +1496,14 @@ struct netr_DatabaseRedo {
 
 struct netr_LogonControl2Ex {
 	struct {
-		const char *logon_server;/* [charset(UTF16),unique] */
+		const char *logon_server;/* [unique,charset(UTF16)] */
 		enum netr_LogonControlCode function_code;
 		uint32_t level;
-		union netr_CONTROL_DATA_INFORMATION *data;/* [ref,switch_is(function_code)] */
+		union netr_CONTROL_DATA_INFORMATION *data;/* [switch_is(function_code),ref] */
 	} in;
 
 	struct {
-		union netr_CONTROL_QUERY_INFORMATION *query;/* [ref,switch_is(level)] */
+		union netr_CONTROL_QUERY_INFORMATION *query;/* [switch_is(level),ref] */
 		WERROR result;
 	} out;
 
@@ -1512,7 +1512,7 @@ struct netr_LogonControl2Ex {
 
 struct netr_NetrEnumerateTrustedDomains {
 	struct {
-		const char *server_name;/* [unique,charset(UTF16)] */
+		const char *server_name;/* [charset(UTF16),unique] */
 	} in;
 
 	struct {
@@ -1543,14 +1543,14 @@ struct netr_DsRGetDCName {
 struct netr_LogonGetCapabilities {
 	struct {
 		const char *server_name;/* [ref,charset(UTF16)] */
-		const char *computer_name;/* [unique,charset(UTF16)] */
+		const char *computer_name;/* [charset(UTF16),unique] */
 		struct netr_Authenticator *credential;/* [ref] */
 		uint32_t query_level;
 		struct netr_Authenticator *return_authenticator;/* [ref] */
 	} in;
 
 	struct {
-		union netr_Capabilities *capabilities;/* [ref,switch_is(query_level)] */
+		union netr_Capabilities *capabilities;/* [switch_is(query_level),ref] */
 		struct netr_Authenticator *return_authenticator;/* [ref] */
 		NTSTATUS result;
 	} out;
@@ -1601,7 +1601,7 @@ struct netr_ServerAuthenticate3 {
 		const char *server_name;/* [charset(UTF16),unique] */
 		const char *account_name;/* [charset(UTF16),ref] */
 		enum netr_SchannelType secure_channel_type;
-		const char *computer_name;/* [charset(UTF16),ref] */
+		const char *computer_name;/* [ref,charset(UTF16)] */
 		struct netr_Credential *credentials;/* [ref] */
 		uint32_t *negotiate_flags;/* [ref] */
 	} in;
@@ -1618,10 +1618,10 @@ struct netr_ServerAuthenticate3 {
 
 struct netr_DsRGetDCNameEx {
 	struct {
-		const char *server_unc;/* [charset(UTF16),unique] */
-		const char *domain_name;/* [unique,charset(UTF16)] */
+		const char *server_unc;/* [unique,charset(UTF16)] */
+		const char *domain_name;/* [charset(UTF16),unique] */
 		struct GUID *domain_guid;/* [unique] */
-		const char *site_name;/* [charset(UTF16),unique] */
+		const char *site_name;/* [unique,charset(UTF16)] */
 		uint32_t flags;
 	} in;
 
@@ -1635,7 +1635,7 @@ struct netr_DsRGetDCNameEx {
 
 struct netr_DsRGetSiteName {
 	struct {
-		const char *computer_name;/* [charset(UTF16),unique] */
+		const char *computer_name;/* [unique,charset(UTF16)] */
 	} in;
 
 	struct {
@@ -1648,11 +1648,11 @@ struct netr_DsRGetSiteName {
 
 struct netr_LogonGetDomainInfo {
 	struct {
-		const char *server_name;/* [charset(UTF16),ref] */
+		const char *server_name;/* [ref,charset(UTF16)] */
 		const char *computer_name;/* [unique,charset(UTF16)] */
 		struct netr_Authenticator *credential;/* [ref] */
 		uint32_t level;
-		union netr_WorkstationInfo *query;/* [ref,switch_is(level)] */
+		union netr_WorkstationInfo *query;/* [switch_is(level),ref] */
 		struct netr_Authenticator *return_authenticator;/* [ref] */
 	} in;
 
@@ -1727,11 +1727,11 @@ struct netr_DsRAddressToSitenamesW {
 struct netr_DsRGetDCNameEx2 {
 	struct {
 		const char *server_unc;/* [unique,charset(UTF16)] */
-		const char *client_account;/* [unique,charset(UTF16)] */
+		const char *client_account;/* [charset(UTF16),unique] */
 		uint32_t mask;
-		const char *domain_name;/* [charset(UTF16),unique] */
+		const char *domain_name;/* [unique,charset(UTF16)] */
 		struct GUID *domain_guid;/* [unique] */
-		const char *site_name;/* [unique,charset(UTF16)] */
+		const char *site_name;/* [charset(UTF16),unique] */
 		uint32_t flags;
 	} in;
 
@@ -1781,7 +1781,7 @@ struct netr_DsRAddressToSitenamesExW {
 
 struct netr_DsrGetDcSiteCoverageW {
 	struct {
-		const char *server_name;/* [charset(UTF16),unique] */
+		const char *server_name;/* [unique,charset(UTF16)] */
 	} in;
 
 	struct {
@@ -1794,7 +1794,7 @@ struct netr_DsrGetDcSiteCoverageW {
 
 struct netr_LogonSamLogonEx {
 	struct {
-		const char *server_name;/* [unique,charset(UTF16)] */
+		const char *server_name;/* [charset(UTF16),unique] */
 		const char *computer_name;/* [unique,charset(UTF16)] */
 		enum netr_LogonInfoClass logon_level;
 		union netr_LogonLevel *logon;/* [ref,switch_is(logon_level)] */
@@ -1829,10 +1829,10 @@ struct netr_DsrEnumerateDomainTrusts {
 struct netr_DsrDeregisterDNSHostRecords {
 	struct {
 		const char *server_name;/* [charset(UTF16),unique] */
-		const char *domain;/* [unique,charset(UTF16)] */
+		const char *domain;/* [charset(UTF16),unique] */
 		struct GUID *domain_guid;/* [unique] */
 		struct GUID *dsa_guid;/* [unique] */
-		const char *dns_host;/* [ref,charset(UTF16)] */
+		const char *dns_host;/* [charset(UTF16),ref] */
 	} in;
 
 	struct {
@@ -1845,7 +1845,7 @@ struct netr_DsrDeregisterDNSHostRecords {
 struct netr_ServerTrustPasswordsGet {
 	struct {
 		const char *server_name;/* [unique,charset(UTF16)] */
-		const char *account_name;/* [charset(UTF16),ref] */
+		const char *account_name;/* [ref,charset(UTF16)] */
 		enum netr_SchannelType secure_channel_type;
 		const char *computer_name;/* [charset(UTF16),ref] */
 		struct netr_Authenticator *credential;/* [ref] */
@@ -1864,7 +1864,7 @@ struct netr_ServerTrustPasswordsGet {
 struct netr_DsRGetForestTrustInformation {
 	struct {
 		const char *server_name;/* [unique,charset(UTF16)] */
-		const char *trusted_domain_name;/* [unique,charset(UTF16)] */
+		const char *trusted_domain_name;/* [charset(UTF16),unique] */
 		uint32_t flags;
 	} in;
 
@@ -1879,7 +1879,7 @@ struct netr_DsRGetForestTrustInformation {
 struct netr_GetForestTrustInformation {
 	struct {
 		const char *server_name;/* [unique,charset(UTF16)] */
-		const char *computer_name;/* [ref,charset(UTF16)] */
+		const char *computer_name;/* [charset(UTF16),ref] */
 		struct netr_Authenticator *credential;/* [ref] */
 		uint32_t flags;
 	} in;
@@ -1896,17 +1896,17 @@ struct netr_GetForestTrustInformation {
 struct netr_LogonSamLogonWithFlags {
 	struct {
 		const char *server_name;/* [unique,charset(UTF16)] */
-		const char *computer_name;/* [charset(UTF16),unique] */
+		const char *computer_name;/* [unique,charset(UTF16)] */
 		struct netr_Authenticator *credential;/* [unique] */
 		enum netr_LogonInfoClass logon_level;
-		union netr_LogonLevel *logon;/* [ref,switch_is(logon_level)] */
+		union netr_LogonLevel *logon;/* [switch_is(logon_level),ref] */
 		uint16_t validation_level;
 		struct netr_Authenticator *return_authenticator;/* [unique] */
 		uint32_t *flags;/* [ref] */
 	} in;
 
 	struct {
-		union netr_Validation *validation;/* [ref,switch_is(validation_level)] */
+		union netr_Validation *validation;/* [switch_is(validation_level),ref] */
 		uint8_t *authoritative;/* [ref] */
 		struct netr_Authenticator *return_authenticator;/* [unique] */
 		uint32_t *flags;/* [ref] */
@@ -1918,10 +1918,10 @@ struct netr_LogonSamLogonWithFlags {
 
 struct netr_ServerGetTrustInfo {
 	struct {
-		const char *server_name;/* [charset(UTF16),unique] */
-		const char *account_name;/* [ref,charset(UTF16)] */
+		const char *server_name;/* [unique,charset(UTF16)] */
+		const char *account_name;/* [charset(UTF16),ref] */
 		enum netr_SchannelType secure_channel_type;
-		const char *computer_name;/* [ref,charset(UTF16)] */
+		const char *computer_name;/* [charset(UTF16),ref] */
 		struct netr_Authenticator *credential;/* [ref] */
 	} in;
 
@@ -1946,7 +1946,7 @@ struct netr_Unused47 {
 
 struct netr_DsrUpdateReadOnlyServerDnsRecords {
 	struct {
-		const char *server_name;/* [unique,charset(UTF16)] */
+		const char *server_name;/* [charset(UTF16),unique] */
 		const char *computer_name;/* [ref,charset(UTF16)] */
 		struct netr_Authenticator *credential;/* [ref] */
 		const char *site_name;/* [unique,charset(UTF16)] */

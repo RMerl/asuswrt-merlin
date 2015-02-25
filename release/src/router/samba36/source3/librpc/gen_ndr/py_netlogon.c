@@ -84,19 +84,19 @@ staticforward PyTypeObject NL_DNS_NAME_INFO_Type;
 staticforward PyTypeObject NL_DNS_NAME_INFO_ARRAY_Type;
 staticforward PyTypeObject netlogon_InterfaceType;
 
-void initnetlogon(void);static PyTypeObject *samr_LogonHours_Type;
-static PyTypeObject *lsa_StringLarge_Type;
-static PyTypeObject *lsa_String_Type;
-static PyTypeObject *lsa_ForestTrustInformation_Type;
-static PyTypeObject *ClientConnection_Type;
-static PyTypeObject *lsa_BinaryString_Type;
-static PyTypeObject *Object_Type;
-static PyTypeObject *lsa_SidArray_Type;
+void initnetlogon(void);static PyTypeObject *lsa_ForestTrustInformation_Type;
+static PyTypeObject *GUID_Type;
 static PyTypeObject *samr_Password_Type;
 static PyTypeObject *dom_sid_Type;
+static PyTypeObject *lsa_String_Type;
 static PyTypeObject *sec_desc_buf_Type;
+static PyTypeObject *lsa_StringLarge_Type;
+static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *samr_RidWithAttributeArray_Type;
-static PyTypeObject *GUID_Type;
+static PyTypeObject *Object_Type;
+static PyTypeObject *lsa_SidArray_Type;
+static PyTypeObject *samr_LogonHours_Type;
+static PyTypeObject *lsa_BinaryString_Type;
 
 static PyObject *py_netr_UasInfo_get_account_name(PyObject *obj, void *closure)
 {
@@ -17613,67 +17613,43 @@ static PyMethodDef netlogon_methods[] = {
 void initnetlogon(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_base;
-	PyObject *dep_samba_dcerpc_samr;
-	PyObject *dep_samba_dcerpc_lsa;
-	PyObject *dep_talloc;
 	PyObject *dep_samba_dcerpc_security;
+	PyObject *dep_samba_dcerpc_samr;
+	PyObject *dep_talloc;
+	PyObject *dep_samba_dcerpc_base;
+	PyObject *dep_samba_dcerpc_lsa;
 	PyObject *dep_samba_dcerpc_misc;
 
-	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
-	if (dep_samba_dcerpc_base == NULL)
+	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
+	if (dep_samba_dcerpc_security == NULL)
 		return;
 
 	dep_samba_dcerpc_samr = PyImport_ImportModule("samba.dcerpc.samr");
 	if (dep_samba_dcerpc_samr == NULL)
 		return;
 
-	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
-	if (dep_samba_dcerpc_lsa == NULL)
-		return;
-
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
 		return;
 
-	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
-	if (dep_samba_dcerpc_security == NULL)
+	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
+	if (dep_samba_dcerpc_base == NULL)
+		return;
+
+	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
+	if (dep_samba_dcerpc_lsa == NULL)
 		return;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
-	samr_LogonHours_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_samr, "LogonHours");
-	if (samr_LogonHours_Type == NULL)
-		return;
-
-	lsa_StringLarge_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "StringLarge");
-	if (lsa_StringLarge_Type == NULL)
-		return;
-
-	lsa_String_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "String");
-	if (lsa_String_Type == NULL)
-		return;
-
 	lsa_ForestTrustInformation_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "ForestTrustInformation");
 	if (lsa_ForestTrustInformation_Type == NULL)
 		return;
 
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
-		return;
-
-	lsa_BinaryString_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "BinaryString");
-	if (lsa_BinaryString_Type == NULL)
-		return;
-
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
-		return;
-
-	lsa_SidArray_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "SidArray");
-	if (lsa_SidArray_Type == NULL)
+	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
+	if (GUID_Type == NULL)
 		return;
 
 	samr_Password_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_samr, "Password");
@@ -17684,16 +17660,40 @@ void initnetlogon(void)
 	if (dom_sid_Type == NULL)
 		return;
 
+	lsa_String_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "String");
+	if (lsa_String_Type == NULL)
+		return;
+
 	sec_desc_buf_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "sec_desc_buf");
 	if (sec_desc_buf_Type == NULL)
+		return;
+
+	lsa_StringLarge_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "StringLarge");
+	if (lsa_StringLarge_Type == NULL)
+		return;
+
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
 	samr_RidWithAttributeArray_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_samr, "RidWithAttributeArray");
 	if (samr_RidWithAttributeArray_Type == NULL)
 		return;
 
-	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
-	if (GUID_Type == NULL)
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
+		return;
+
+	lsa_SidArray_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "SidArray");
+	if (lsa_SidArray_Type == NULL)
+		return;
+
+	samr_LogonHours_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_samr, "LogonHours");
+	if (samr_LogonHours_Type == NULL)
+		return;
+
+	lsa_BinaryString_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "BinaryString");
+	if (lsa_BinaryString_Type == NULL)
 		return;
 
 	netr_UasInfo_Type.tp_base = Object_Type;
@@ -18201,232 +18201,232 @@ void initnetlogon(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "NETR_VER_SUITE_SMALLBUSINESS_RESTRICTED", PyInt_FromLong(NETR_VER_SUITE_SMALLBUSINESS_RESTRICTED));
-	PyModule_AddObject(m, "NETLOGON_NEG_AVOID_SECURITYAUTH_DB_REPL", PyInt_FromLong(NETLOGON_NEG_AVOID_SECURITYAUTH_DB_REPL));
-	PyModule_AddObject(m, "NETR_TRUST_FLAG_TREEROOT", PyInt_FromLong(NETR_TRUST_FLAG_TREEROOT));
-	PyModule_AddObject(m, "NETLOGON_NEG_CONCURRENT_RPC", PyInt_FromLong(NETLOGON_NEG_CONCURRENT_RPC));
-	PyModule_AddObject(m, "NETR_VER_SUITE_EMBEDDEDNT", PyInt_FromLong(NETR_VER_SUITE_EMBEDDEDNT));
-	PyModule_AddObject(m, "SYNCSTATE_ALIAS_STATE", PyInt_FromLong(SYNCSTATE_ALIAS_STATE));
-	PyModule_AddObject(m, "NetlogonValidationGenericInfo2", PyInt_FromLong(NetlogonValidationGenericInfo2));
-	PyModule_AddObject(m, "MSV1_0_CHECK_LOGONHOURS_FOR_S4U", PyInt_FromLong(MSV1_0_CHECK_LOGONHOURS_FOR_S4U));
-	PyModule_AddObject(m, "MSV1_0_CLEARTEXT_PASSWORD_SUPPLIED", PyInt_FromLong(MSV1_0_CLEARTEXT_PASSWORD_SUPPLIED));
-	PyModule_AddObject(m, "NETLOGON_NEG_SUPPORTS_AES", PyInt_FromLong(NETLOGON_NEG_SUPPORTS_AES));
-	PyModule_AddObject(m, "DS_SERVER_GOOD_TIMESERV", PyInt_FromLong(DS_SERVER_GOOD_TIMESERV));
-	PyModule_AddObject(m, "NETR_VER_NT_SERVER", PyInt_FromLong(NETR_VER_NT_SERVER));
-	PyModule_AddObject(m, "NETLOGON_NEG_RODC_PASSTHROUGH", PyInt_FromLong(NETLOGON_NEG_RODC_PASSTHROUGH));
-	PyModule_AddObject(m, "DS_SERVER_LDAP", PyInt_FromLong(DS_SERVER_LDAP));
-	PyModule_AddObject(m, "NETLOGON_NEG_NEUTRALIZE_NT4_EMULATION", PyInt_FromLong(NETLOGON_NEG_NEUTRALIZE_NT4_EMULATION));
-	PyModule_AddObject(m, "MSV1_0_DISABLE_PERSONAL_FALLBACK", PyInt_FromLong(MSV1_0_DISABLE_PERSONAL_FALLBACK));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_TC_QUERY", PyInt_FromLong(NETLOGON_CONTROL_TC_QUERY));
-	PyModule_AddObject(m, "NETLOGON_PASSWORD_VERSION_NUMBER_PRESENT", PyInt_FromLong(0x02231968));
-	PyModule_AddObject(m, "NETR_DELTA_DELETE_GROUP2", PyInt_FromLong(NETR_DELTA_DELETE_GROUP2));
-	PyModule_AddObject(m, "NetlogonValidationSamInfo2", PyInt_FromLong(NetlogonValidationSamInfo2));
-	PyModule_AddObject(m, "NETR_DELTA_TRUSTED_DOMAIN", PyInt_FromLong(NETR_DELTA_TRUSTED_DOMAIN));
-	PyModule_AddObject(m, "DS_SERVER_FULL_SECRET_DOMAIN_6", PyInt_FromLong(DS_SERVER_FULL_SECRET_DOMAIN_6));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_PDC_REPLICATE", PyInt_FromLong(NETLOGON_CONTROL_PDC_REPLICATE));
-	PyModule_AddObject(m, "DSGETDC_VALID_FLAGS", PyInt_FromLong((DS_FORCE_REDISCOVERY|DS_DIRECTORY_SERVICE_REQUIRED|DS_DIRECTORY_SERVICE_PREFERRED|DS_GC_SERVER_REQUIRED|DS_PDC_REQUIRED|DS_BACKGROUND_ONLY|DS_IP_REQUIRED|DS_KDC_REQUIRED|DS_TIMESERV_REQUIRED|DS_WRITABLE_REQUIRED|DS_GOOD_TIMESERV_PREFERRED|DS_AVOID_SELF|DS_ONLY_LDAP_NEEDED|DS_IS_FLAT_NAME|DS_IS_DNS_NAME|DS_TRY_NEXTCLOSEST_SITE|DS_DIRECTORY_SERVICE_6_REQUIRED|DS_WEB_SERVICE_REQUIRED|DS_RETURN_FLAT_NAME|DS_RETURN_DNS_NAME)));
-	PyModule_AddObject(m, "NetlogonNetworkTransitiveInformation", PyInt_FromLong(NetlogonNetworkTransitiveInformation));
-	PyModule_AddObject(m, "NETR_VER_SUITE_SMALLBUSINESS", PyInt_FromLong(NETR_VER_SUITE_SMALLBUSINESS));
-	PyModule_AddObject(m, "DS_GOOD_TIMESERV_PREFERRED", PyInt_FromLong(DS_GOOD_TIMESERV_PREFERRED));
-	PyModule_AddObject(m, "NlDnsLdapAtSite", PyInt_FromLong(NlDnsLdapAtSite));
-	PyModule_AddObject(m, "NETR_TRUST_FLAG_IN_FOREST", PyInt_FromLong(NETR_TRUST_FLAG_IN_FOREST));
-	PyModule_AddObject(m, "NETLOGON_DNS_UPDATE_FAILURE", PyInt_FromLong(NETLOGON_DNS_UPDATE_FAILURE));
-	PyModule_AddObject(m, "SYNCSTATE_DOMAIN_STATE", PyInt_FromLong(SYNCSTATE_DOMAIN_STATE));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_TC_VERIFY", PyInt_FromLong(NETLOGON_CONTROL_TC_VERIFY));
-	PyModule_AddObject(m, "SYNCSTATE_SAM_DONE_STATE", PyInt_FromLong(SYNCSTATE_SAM_DONE_STATE));
 	PyModule_AddObject(m, "NETLOGON_CONTROL_FORCE_DNS_REG", PyInt_FromLong(NETLOGON_CONTROL_FORCE_DNS_REG));
-	PyModule_AddObject(m, "NETLOGON_NEG_ACCOUNT_LOCKOUT", PyInt_FromLong(NETLOGON_NEG_ACCOUNT_LOCKOUT));
-	PyModule_AddObject(m, "NETLOGON_NEG_PASSWORD_CHANGE_REFUSAL", PyInt_FromLong(NETLOGON_NEG_PASSWORD_CHANGE_REFUSAL));
+	PyModule_AddObject(m, "NETLOGON_NEG_CROSS_FOREST_TRUSTS", PyInt_FromLong(NETLOGON_NEG_CROSS_FOREST_TRUSTS));
+	PyModule_AddObject(m, "DS_GFTI_UPDATE_TDO", PyInt_FromLong(0x1));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_BACKUP_CHANGE_LOG", PyInt_FromLong(NETLOGON_CONTROL_BACKUP_CHANGE_LOG));
 	PyModule_AddObject(m, "DS_SERVER_WRITABLE", PyInt_FromLong(DS_SERVER_WRITABLE));
-	PyModule_AddObject(m, "NETR_CHANGELOG_SID_INCLUDED", PyInt_FromLong(NETR_CHANGELOG_SID_INCLUDED));
-	PyModule_AddObject(m, "MSV1_0_CLEARTEXT_PASSWORD_ALLOWED", PyInt_FromLong(MSV1_0_CLEARTEXT_PASSWORD_ALLOWED));
-	PyModule_AddObject(m, "DS_RETURN_DNS_NAME", PyInt_FromLong(DS_RETURN_DNS_NAME));
-	PyModule_AddObject(m, "NlDnsRfc1510KdcAtSite", PyInt_FromLong(NlDnsRfc1510KdcAtSite));
-	PyModule_AddObject(m, "NETLOGON_NEG_ARCFOUR", PyInt_FromLong(NETLOGON_NEG_ARCFOUR));
-	PyModule_AddObject(m, "NETLOGON_NEG_GETDOMAININFO", PyInt_FromLong(NETLOGON_NEG_GETDOMAININFO));
-	PyModule_AddObject(m, "NETR_VER_SUITE_WH_SERVER", PyInt_FromLong(NETR_VER_SUITE_WH_SERVER));
-	PyModule_AddObject(m, "NETR_CHANGELOG_NAME_INCLUDED", PyInt_FromLong(NETR_CHANGELOG_NAME_INCLUDED));
-	PyModule_AddObject(m, "MSV1_0_TRY_SPECIFIED_DOMAIN_ONLY", PyInt_FromLong(MSV1_0_TRY_SPECIFIED_DOMAIN_ONLY));
-	PyModule_AddObject(m, "NETLOGON_NEG_TRANSITIVE_TRUSTS", PyInt_FromLong(NETLOGON_NEG_TRANSITIVE_TRUSTS));
-	PyModule_AddObject(m, "NETR_VER_SUITE_SINGLEUSERTS", PyInt_FromLong(NETR_VER_SUITE_SINGLEUSERTS));
-	PyModule_AddObject(m, "NETR_VER_SUITE_DATACENTER", PyInt_FromLong(NETR_VER_SUITE_DATACENTER));
-	PyModule_AddObject(m, "MSV1_0_DONT_TRY_GUEST_ACCOUNT", PyInt_FromLong(MSV1_0_DONT_TRY_GUEST_ACCOUNT));
-	PyModule_AddObject(m, "ENC_CRC32", PyInt_FromLong(ENC_CRC32));
-	PyModule_AddObject(m, "NETLOGON_REPLICATION_IN_PROGRESS", PyInt_FromLong(NETLOGON_REPLICATION_IN_PROGRESS));
-	PyModule_AddObject(m, "NlDnsDomainName", PyInt_FromLong(NlDnsDomainName));
-	PyModule_AddObject(m, "DS_SERVER_TIMESERV", PyInt_FromLong(DS_SERVER_TIMESERV));
-	PyModule_AddObject(m, "SYNCSTATE_GROUP_STATE", PyInt_FromLong(SYNCSTATE_GROUP_STATE));
-	PyModule_AddObject(m, "DS_SERVER_GC", PyInt_FromLong(DS_SERVER_GC));
-	PyModule_AddObject(m, "MSV1_0_ALLOW_MSVCHAPV2", PyInt_FromLong(MSV1_0_ALLOW_MSVCHAPV2));
-	PyModule_AddObject(m, "NETLOGON_NEG_128BIT", PyInt_FromLong(NETLOGON_NEG_STRONG_KEYS));
-	PyModule_AddObject(m, "DS_ONLY_LDAP_NEEDED", PyInt_FromLong(DS_ONLY_LDAP_NEEDED));
-	PyModule_AddObject(m, "DS_TRY_NEXTCLOSEST_SITE", PyInt_FromLong(DS_TRY_NEXTCLOSEST_SITE));
-	PyModule_AddObject(m, "NetlogonValidationUasInfo", PyInt_FromLong(NetlogonValidationUasInfo));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_SYNCHRONIZE", PyInt_FromLong(NETLOGON_CONTROL_SYNCHRONIZE));
-	PyModule_AddObject(m, "NETR_DELTA_DELETE_TRUST", PyInt_FromLong(NETR_DELTA_DELETE_TRUST));
-	PyModule_AddObject(m, "NETLOGON_NEG_SCHANNEL", PyInt_FromLong(NETLOGON_NEG_AUTHENTICATED_RPC));
-	PyModule_AddObject(m, "DS_PDC_REQUIRED", PyInt_FromLong(DS_PDC_REQUIRED));
-	PyModule_AddObject(m, "NETR_TRUST_TYPE_UPLEVEL", PyInt_FromLong(NETR_TRUST_TYPE_UPLEVEL));
-	PyModule_AddObject(m, "NETLOGON_NOENCRYPTION", PyInt_FromLong(NETLOGON_NOENCRYPTION));
-	PyModule_AddObject(m, "NETLOGON_NEG_SUPPORTS_AES_SHA2", PyInt_FromLong(NETLOGON_NEG_SUPPORTS_AES_SHA2));
-	PyModule_AddObject(m, "NETR_DELTA_USER", PyInt_FromLong(NETR_DELTA_USER));
-	PyModule_AddObject(m, "NETR_DELTA_ALIAS", PyInt_FromLong(NETR_DELTA_ALIAS));
-	PyModule_AddObject(m, "NETLOGON_NEG_GENERIC_PASSTHROUGH", PyInt_FromLong(NETLOGON_NEG_GENERIC_PASSTHROUGH));
-	PyModule_AddObject(m, "NetlogonInteractiveInformation", PyInt_FromLong(NetlogonInteractiveInformation));
-	PyModule_AddObject(m, "NETR_TRUST_FLAG_PRIMARY", PyInt_FromLong(NETR_TRUST_FLAG_PRIMARY));
-	PyModule_AddObject(m, "MSV1_0_SUBAUTHENTICATION_DLL_EX", PyInt_FromLong(MSV1_0_SUBAUTHENTICATION_DLL_EX));
-	PyModule_AddObject(m, "DS_SERVER_KDC", PyInt_FromLong(DS_SERVER_KDC));
-	PyModule_AddObject(m, "NETR_DELTA_DELETE_USER2", PyInt_FromLong(NETR_DELTA_DELETE_USER2));
-	PyModule_AddObject(m, "MSV1_0_ALLOW_FORCE_GUEST", PyInt_FromLong(MSV1_0_ALLOW_FORCE_GUEST));
-	PyModule_AddObject(m, "NETR_DELTA_POLICY", PyInt_FromLong(NETR_DELTA_POLICY));
-	PyModule_AddObject(m, "NETLOGON_NEG_SEND_PASSWORD_INFO_PDC", PyInt_FromLong(NETLOGON_NEG_SEND_PASSWORD_INFO_PDC));
-	PyModule_AddObject(m, "DS_BACKGROUND_ONLY", PyInt_FromLong(DS_BACKGROUND_ONLY));
-	PyModule_AddObject(m, "NETLOGON_USED_LM_PASSWORD", PyInt_FromLong(NETLOGON_USED_LM_PASSWORD));
-	PyModule_AddObject(m, "NETR_TRUST_TYPE_DCE", PyInt_FromLong(NETR_TRUST_TYPE_DCE));
 	PyModule_AddObject(m, "DS_RETURN_FLAT_NAME", PyInt_FromLong(DS_RETURN_FLAT_NAME));
-	PyModule_AddObject(m, "NETR_DELTA_ALIAS_MEMBER", PyInt_FromLong(NETR_DELTA_ALIAS_MEMBER));
-	PyModule_AddObject(m, "NETR_VER_NT_DOMAIN_CONTROLLER", PyInt_FromLong(NETR_VER_NT_DOMAIN_CONTROLLER));
-	PyModule_AddObject(m, "NETLOGON_NEG_REDO", PyInt_FromLong(NETLOGON_NEG_REDO));
-	PyModule_AddObject(m, "MSV1_0_ALLOW_WORKSTATION_TRUST_ACCOUNT", PyInt_FromLong(MSV1_0_ALLOW_WORKSTATION_TRUST_ACCOUNT));
-	PyModule_AddObject(m, "SYNCSTATE_GROUP_MEMBER_STATE", PyInt_FromLong(SYNCSTATE_GROUP_MEMBER_STATE));
-	PyModule_AddObject(m, "ENC_RSA_MD5", PyInt_FromLong(ENC_RSA_MD5));
-	PyModule_AddObject(m, "NETR_DELTA_GROUP_MEMBER", PyInt_FromLong(NETR_DELTA_GROUP_MEMBER));
-	PyModule_AddObject(m, "NlDnsForestNameAlias", PyInt_FromLong(NlDnsForestNameAlias));
-	PyModule_AddObject(m, "NETLOGON_SUBAUTH_SESSION_KEY", PyInt_FromLong(NETLOGON_SUBAUTH_SESSION_KEY));
-	PyModule_AddObject(m, "MSV1_0_UPDATE_LOGON_STATISTICS", PyInt_FromLong(MSV1_0_UPDATE_LOGON_STATISTICS));
-	PyModule_AddObject(m, "MSV1_0_TRY_GUEST_ACCOUNT_ONLY", PyInt_FromLong(MSV1_0_TRY_GUEST_ACCOUNT_ONLY));
-	PyModule_AddObject(m, "DS_FORCE_REDISCOVERY", PyInt_FromLong(DS_FORCE_REDISCOVERY));
-	PyModule_AddObject(m, "NETR_VER_SUITE_PERSONAL", PyInt_FromLong(NETR_VER_SUITE_PERSONAL));
-	PyModule_AddObject(m, "NETLOGON_REPLICATION_NEEDED", PyInt_FromLong(NETLOGON_REPLICATION_NEEDED));
-	PyModule_AddObject(m, "NETR_DELTA_SECRET", PyInt_FromLong(NETR_DELTA_SECRET));
-	PyModule_AddObject(m, "DS_IP_REQUIRED", PyInt_FromLong(DS_IP_REQUIRED));
+	PyModule_AddObject(m, "NETR_TRUST_TYPE_DCE", PyInt_FromLong(NETR_TRUST_TYPE_DCE));
+	PyModule_AddObject(m, "NetlogonValidationSamInfo", PyInt_FromLong(NetlogonValidationSamInfo));
+	PyModule_AddObject(m, "NETR_DELTA_DELETE_SECRET", PyInt_FromLong(NETR_DELTA_DELETE_SECRET));
+	PyModule_AddObject(m, "NETLOGON_REPLICATION_IN_PROGRESS", PyInt_FromLong(NETLOGON_REPLICATION_IN_PROGRESS));
 	PyModule_AddObject(m, "NETR_VER_SUITE_COMPUTE_SERVER", PyInt_FromLong(NETR_VER_SUITE_COMPUTE_SERVER));
-	PyModule_AddObject(m, "NETR_DELTA_DELETE_ALIAS", PyInt_FromLong(NETR_DELTA_DELETE_ALIAS));
-	PyModule_AddObject(m, "NETLOGON_NEG_AUTHENTICATED_RPC", PyInt_FromLong(NETLOGON_NEG_AUTHENTICATED_RPC));
-	PyModule_AddObject(m, "MSV1_0_S4U2SELF", PyInt_FromLong(MSV1_0_S4U2SELF));
+	PyModule_AddObject(m, "DS_SERVER_NDNC", PyInt_FromLong(DS_SERVER_NDNC));
+	PyModule_AddObject(m, "NlDnsForestNameAlias", PyInt_FromLong(NlDnsForestNameAlias));
 	PyModule_AddObject(m, "DS_DIRECTORY_SERVICE_PREFERRED", PyInt_FromLong(DS_DIRECTORY_SERVICE_PREFERRED));
 	PyModule_AddObject(m, "NETR_CHANGELOG_FIRST_PROMOTION_OBJ", PyInt_FromLong(NETR_CHANGELOG_FIRST_PROMOTION_OBJ));
-	PyModule_AddObject(m, "DS_WRITABLE_REQUIRED", PyInt_FromLong(DS_WRITABLE_REQUIRED));
-	PyModule_AddObject(m, "DS_DIRECTORY_SERVICE_REQUIRED", PyInt_FromLong(DS_DIRECTORY_SERVICE_REQUIRED));
-	PyModule_AddObject(m, "DS_SERVER_SELECT_SECRET_DOMAIN_6", PyInt_FromLong(DS_SERVER_SELECT_SECRET_DOMAIN_6));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_REPLICATE", PyInt_FromLong(NETLOGON_CONTROL_REPLICATE));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_SET_DBFLAG", PyInt_FromLong(NETLOGON_CONTROL_SET_DBFLAG));
-	PyModule_AddObject(m, "DS_ADDRESS_TYPE_INET", PyInt_FromLong(DS_ADDRESS_TYPE_INET));
-	PyModule_AddObject(m, "NETR_TRUST_FLAG_AES", PyInt_FromLong(NETR_TRUST_FLAG_AES));
-	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_WITHIN_FOREST", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_WITHIN_FOREST));
-	PyModule_AddObject(m, "NETLOGON_HAS_IP", PyInt_FromLong(NETLOGON_HAS_IP));
-	PyModule_AddObject(m, "ENC_HMAC_SHA1_96_AES128", PyInt_FromLong(ENC_HMAC_SHA1_96_AES128));
-	PyModule_AddObject(m, "NETLOGON_NEG_MULTIPLE_SIDS", PyInt_FromLong(NETLOGON_NEG_MULTIPLE_SIDS));
-	PyModule_AddObject(m, "NETLOGON_NEG_AUTHENTICATED_RPC_LSASS", PyInt_FromLong(NETLOGON_NEG_AUTHENTICATED_RPC_LSASS));
-	PyModule_AddObject(m, "NETR_DELTA_RENAME_ALIAS", PyInt_FromLong(NETR_DELTA_RENAME_ALIAS));
-	PyModule_AddObject(m, "SYNCSTATE_ALIAS_MEMBER_STATE", PyInt_FromLong(SYNCSTATE_ALIAS_MEMBER_STATE));
-	PyModule_AddObject(m, "MSV1_0_USE_DOMAIN_FOR_ROUTING_ONLY", PyInt_FromLong(MSV1_0_USE_DOMAIN_FOR_ROUTING_ONLY));
-	PyModule_AddObject(m, "NetlogonInteractiveTransitiveInformation", PyInt_FromLong(NetlogonInteractiveTransitiveInformation));
-	PyModule_AddObject(m, "DS_DNS_CONTROLLER", PyInt_FromLong(DS_DNS_CONTROLLER));
-	PyModule_AddObject(m, "NETR_WS_FLAG_HANDLES_INBOUND_TRUSTS", PyInt_FromLong(NETR_WS_FLAG_HANDLES_INBOUND_TRUSTS));
-	PyModule_AddObject(m, "NETLOGON_VERIFY_STATUS_RETURNED", PyInt_FromLong(NETLOGON_VERIFY_STATUS_RETURNED));
-	PyModule_AddObject(m, "MSV1_0_ALLOW_SERVER_TRUST_ACCOUNT", PyInt_FromLong(MSV1_0_ALLOW_SERVER_TRUST_ACCOUNT));
-	PyModule_AddObject(m, "NETLOGON_GUEST", PyInt_FromLong(NETLOGON_GUEST));
-	PyModule_AddObject(m, "NETR_DELTA_DELETE_USER", PyInt_FromLong(NETR_DELTA_DELETE_USER));
-	PyModule_AddObject(m, "NETLOGON_NEG_DNS_DOMAIN_TRUSTS", PyInt_FromLong(NETLOGON_NEG_DNS_DOMAIN_TRUSTS));
-	PyModule_AddObject(m, "NETLOGON_FULL_SYNC_REPLICATION", PyInt_FromLong(NETLOGON_FULL_SYNC_REPLICATION));
 	PyModule_AddObject(m, "NetlogonServiceTransitiveInformation", PyInt_FromLong(NetlogonServiceTransitiveInformation));
-	PyModule_AddObject(m, "NlDnsDcAtSite", PyInt_FromLong(NlDnsDcAtSite));
-	PyModule_AddObject(m, "NETR_VER_SUITE_BLADE", PyInt_FromLong(NETR_VER_SUITE_BLADE));
-	PyModule_AddObject(m, "NETR_VER_SUITE_ENTERPRISE", PyInt_FromLong(NETR_VER_SUITE_ENTERPRISE));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_BREAKPOINT", PyInt_FromLong(NETLOGON_CONTROL_BREAKPOINT));
-	PyModule_AddObject(m, "NETR_DELTA_ACCOUNT", PyInt_FromLong(NETR_DELTA_ACCOUNT));
-	PyModule_AddObject(m, "DS_IS_FLAT_NAME", PyInt_FromLong(DS_IS_FLAT_NAME));
-	PyModule_AddObject(m, "NETLOGON_NEG_CROSS_FOREST_TRUSTS", PyInt_FromLong(NETLOGON_NEG_CROSS_FOREST_TRUSTS));
-	PyModule_AddObject(m, "NETLOGON_SERVER_TRUST_ACCOUNT", PyInt_FromLong(NETLOGON_SERVER_TRUST_ACCOUNT));
-	PyModule_AddObject(m, "MSV1_0_RETURN_USER_PARAMETERS", PyInt_FromLong(MSV1_0_RETURN_USER_PARAMETERS));
-	PyModule_AddObject(m, "NETR_CHANGELOG_IMMEDIATE_REPL_REQUIRED", PyInt_FromLong(NETR_CHANGELOG_IMMEDIATE_REPL_REQUIRED));
+	PyModule_AddObject(m, "MSV1_0_ALLOW_WORKSTATION_TRUST_ACCOUNT", PyInt_FromLong(MSV1_0_ALLOW_WORKSTATION_TRUST_ACCOUNT));
 	PyModule_AddObject(m, "NlDnsKdcAtSite", PyInt_FromLong(NlDnsKdcAtSite));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_TRANSPORT_NOTIFY", PyInt_FromLong(NETLOGON_CONTROL_TRANSPORT_NOTIFY));
-	PyModule_AddObject(m, "NETLOGON_NEG_AVOID_ACCOUNT_DB_REPL", PyInt_FromLong(NETLOGON_NEG_AVOID_ACCOUNT_DB_REPL));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_FIND_USER", PyInt_FromLong(NETLOGON_CONTROL_FIND_USER));
-	PyModule_AddObject(m, "NetlogonNetworkInformation", PyInt_FromLong(NetlogonNetworkInformation));
-	PyModule_AddObject(m, "DS_WEB_SERVICE_REQUIRED", PyInt_FromLong(DS_WEB_SERVICE_REQUIRED));
-	PyModule_AddObject(m, "NETR_WS_FLAG_HANDLES_SPN_UPDATE", PyInt_FromLong(NETR_WS_FLAG_HANDLES_SPN_UPDATE));
-	PyModule_AddObject(m, "NETLOGON_NTLMV2_ENABLED", PyInt_FromLong(NETLOGON_NTLMV2_ENABLED));
-	PyModule_AddObject(m, "NETLOGON_REDO_NEEDED", PyInt_FromLong(NETLOGON_REDO_NEEDED));
-	PyModule_AddObject(m, "NETR_TRUST_FLAG_INBOUND", PyInt_FromLong(NETR_TRUST_FLAG_INBOUND));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_QUERY", PyInt_FromLong(NETLOGON_CONTROL_QUERY));
-	PyModule_AddObject(m, "NETR_DELTA_RENAME_USER", PyInt_FromLong(NETR_DELTA_RENAME_USER));
-	PyModule_AddObject(m, "NETR_TRUST_TYPE_MIT", PyInt_FromLong(NETR_TRUST_TYPE_MIT));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_QUERY_DNS_REG", PyInt_FromLong(NETLOGON_CONTROL_QUERY_DNS_REG));
-	PyModule_AddObject(m, "DS_KDC_REQUIRED", PyInt_FromLong(DS_KDC_REQUIRED));
-	PyModule_AddObject(m, "DS_SERVER_PDC", PyInt_FromLong(DS_SERVER_PDC));
-	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_NON_TRANSITIVE", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_NON_TRANSITIVE));
-	PyModule_AddObject(m, "NETR_DELTA_GROUP", PyInt_FromLong(NETR_DELTA_GROUP));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_BACKUP_CHANGE_LOG", PyInt_FromLong(NETLOGON_CONTROL_BACKUP_CHANGE_LOG));
-	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_FOREST_TRANSITIVE", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_FOREST_TRANSITIVE));
-	PyModule_AddObject(m, "NlDnsForestName", PyInt_FromLong(NlDnsForestName));
-	PyModule_AddObject(m, "NETR_CHANGELOG_CHANGED_PASSWORD", PyInt_FromLong(NETR_CHANGELOG_CHANGED_PASSWORD));
-	PyModule_AddObject(m, "NETR_TRUST_FLAG_MIT_KRB5", PyInt_FromLong(NETR_TRUST_FLAG_MIT_KRB5));
-	PyModule_AddObject(m, "NETR_DELTA_MODIFY_COUNT", PyInt_FromLong(NETR_DELTA_MODIFY_COUNT));
-	PyModule_AddObject(m, "NETLOGON_HAS_TIMESERV", PyInt_FromLong(NETLOGON_HAS_TIMESERV));
-	PyModule_AddObject(m, "NlDnsNdncDomainName", PyInt_FromLong(NlDnsNdncDomainName));
-	PyModule_AddObject(m, "NETR_VER_NT_WORKSTATION", PyInt_FromLong(NETR_VER_NT_WORKSTATION));
-	PyModule_AddObject(m, "NETR_DELTA_DELETE_GROUP", PyInt_FromLong(NETR_DELTA_DELETE_GROUP));
-	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_TREAT_AS_EXTERNAL", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_TREAT_AS_EXTERNAL));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_TRUNCATE_LOG", PyInt_FromLong(NETLOGON_CONTROL_TRUNCATE_LOG));
-	PyModule_AddObject(m, "NETLOGON_NEG_CHANGELOG_BDC", PyInt_FromLong(NETLOGON_NEG_CHANGELOG_BDC));
-	PyModule_AddObject(m, "DS_SERVER_CLOSEST", PyInt_FromLong(DS_SERVER_CLOSEST));
-	PyModule_AddObject(m, "NETLOGON_NEG_PASSWORD_SET2", PyInt_FromLong(NETLOGON_NEG_PASSWORD_SET2));
-	PyModule_AddObject(m, "NetlogonValidationSamInfo", PyInt_FromLong(NetlogonValidationSamInfo));
-	PyModule_AddObject(m, "NlDnsRecordName", PyInt_FromLong(NlDnsRecordName));
-	PyModule_AddObject(m, "NETR_DELTA_DOMAIN", PyInt_FromLong(NETR_DELTA_DOMAIN));
-	PyModule_AddObject(m, "NlDnsDsaCname", PyInt_FromLong(NlDnsDsaCname));
+	PyModule_AddObject(m, "NETR_VER_SUITE_WH_SERVER", PyInt_FromLong(NETR_VER_SUITE_WH_SERVER));
+	PyModule_AddObject(m, "NetlogonInteractiveInformation", PyInt_FromLong(NetlogonInteractiveInformation));
 	PyModule_AddObject(m, "SYNCSTATE_NORMAL_STATE", PyInt_FromLong(SYNCSTATE_NORMAL_STATE));
-	PyModule_AddObject(m, "NETLOGON_NEG_PERSISTENT_SAMREPL", PyInt_FromLong(NETLOGON_NEG_PERSISTENT_SAMREPL));
-	PyModule_AddObject(m, "DS_AVOID_SELF", PyInt_FromLong(DS_AVOID_SELF));
-	PyModule_AddObject(m, "NETLOGON_NEG_FULL_SYNC_REPL", PyInt_FromLong(NETLOGON_NEG_FULL_SYNC_REPL));
-	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_CROSS_ORGANIZATION", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_CROSS_ORGANIZATION));
-	PyModule_AddObject(m, "ENC_HMAC_SHA1_96_AES256", PyInt_FromLong(ENC_HMAC_SHA1_96_AES256));
-	PyModule_AddObject(m, "NETR_DELTA_DELETE_SECRET", PyInt_FromLong(NETR_DELTA_DELETE_SECRET));
-	PyModule_AddObject(m, "MSV1_0_RETURN_PASSWORD_EXPIRY", PyInt_FromLong(MSV1_0_RETURN_PASSWORD_EXPIRY));
-	PyModule_AddObject(m, "NETLOGON_CACHED_ACCOUNT", PyInt_FromLong(NETLOGON_CACHED_ACCOUNT));
-	PyModule_AddObject(m, "DS_TIMESERV_REQUIRED", PyInt_FromLong(DS_TIMESERV_REQUIRED));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_CHANGE_PASSWORD", PyInt_FromLong(NETLOGON_CONTROL_CHANGE_PASSWORD));
-	PyModule_AddObject(m, "SYNCSTATE_USER_STATE", PyInt_FromLong(SYNCSTATE_USER_STATE));
-	PyModule_AddObject(m, "NETR_DELTA_DELETE_ACCOUNT", PyInt_FromLong(NETR_DELTA_DELETE_ACCOUNT));
-	PyModule_AddObject(m, "SYNCSTATE_UAS_BUILT_IN_GROUP_STATE", PyInt_FromLong(SYNCSTATE_UAS_BUILT_IN_GROUP_STATE));
-	PyModule_AddObject(m, "NETR_TRUST_FLAG_NATIVE", PyInt_FromLong(NETR_TRUST_FLAG_NATIVE));
-	PyModule_AddObject(m, "NetlogonValidationSamInfo4", PyInt_FromLong(NetlogonValidationSamInfo4));
-	PyModule_AddObject(m, "NlDnsDomainNameAlias", PyInt_FromLong(NlDnsDomainNameAlias));
-	PyModule_AddObject(m, "NlDnsGcAtSite", PyInt_FromLong(NlDnsGcAtSite));
-	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_QUARANTINED_DOMAIN", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_QUARANTINED_DOMAIN));
-	PyModule_AddObject(m, "DS_DNS_DOMAIN", PyInt_FromLong(DS_DNS_DOMAIN));
-	PyModule_AddObject(m, "MSV1_0_RETURN_PROFILE_PATH", PyInt_FromLong(MSV1_0_RETURN_PROFILE_PATH));
-	PyModule_AddObject(m, "NetlogonServiceInformation", PyInt_FromLong(NetlogonServiceInformation));
-	PyModule_AddObject(m, "NETR_VER_SUITE_TERMINAL", PyInt_FromLong(NETR_VER_SUITE_TERMINAL));
-	PyModule_AddObject(m, "DS_SERVER_DS", PyInt_FromLong(DS_SERVER_DS));
-	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_UPLEVEL_ONLY", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_UPLEVEL_ONLY));
-	PyModule_AddObject(m, "NETLOGON_RESOURCE_GROUPS", PyInt_FromLong(NETLOGON_RESOURCE_GROUPS));
-	PyModule_AddObject(m, "NlDnsGenericGcAtSite", PyInt_FromLong(NlDnsGenericGcAtSite));
-	PyModule_AddObject(m, "MSV1_0_USE_CLIENT_CHALLENGE", PyInt_FromLong(MSV1_0_USE_CLIENT_CHALLENGE));
-	PyModule_AddObject(m, "NETLOGON_EXTRA_SIDS", PyInt_FromLong(NETLOGON_EXTRA_SIDS));
-	PyModule_AddObject(m, "NETR_TRUST_FLAG_OUTBOUND", PyInt_FromLong(NETR_TRUST_FLAG_OUTBOUND));
-	PyModule_AddObject(m, "NlDnsInfoTypeNone", PyInt_FromLong(NlDnsInfoTypeNone));
-	PyModule_AddObject(m, "DS_GFTI_UPDATE_TDO", PyInt_FromLong(0x1));
-	PyModule_AddObject(m, "DS_DIRECTORY_SERVICE_6_REQUIRED", PyInt_FromLong(DS_DIRECTORY_SERVICE_6_REQUIRED));
-	PyModule_AddObject(m, "ENC_RC4_HMAC_MD5", PyInt_FromLong(ENC_RC4_HMAC_MD5));
-	PyModule_AddObject(m, "NETLOGON_GRACE_LOGON", PyInt_FromLong(NETLOGON_GRACE_LOGON));
-	PyModule_AddObject(m, "DS_ADDRESS_TYPE_NETBIOS", PyInt_FromLong(DS_ADDRESS_TYPE_NETBIOS));
-	PyModule_AddObject(m, "NETR_VER_SUITE_BACKOFFICE", PyInt_FromLong(NETR_VER_SUITE_BACKOFFICE));
-	PyModule_AddObject(m, "NETR_TRUST_TYPE_DOWNLEVEL", PyInt_FromLong(NETR_TRUST_TYPE_DOWNLEVEL));
-	PyModule_AddObject(m, "DS_IS_DNS_NAME", PyInt_FromLong(DS_IS_DNS_NAME));
-	PyModule_AddObject(m, "NETLOGON_PROFILE_PATH_RETURNED", PyInt_FromLong(NETLOGON_PROFILE_PATH_RETURNED));
-	PyModule_AddObject(m, "NETLOGON_CONTROL_REDISCOVER", PyInt_FromLong(NETLOGON_CONTROL_REDISCOVER));
-	PyModule_AddObject(m, "NETLOGON_NEG_PROMOTION_COUNT", PyInt_FromLong(NETLOGON_NEG_PROMOTION_COUNT));
-	PyModule_AddObject(m, "NETR_VER_SUITE_STORAGE_SERVER", PyInt_FromLong(NETR_VER_SUITE_STORAGE_SERVER));
+	PyModule_AddObject(m, "SYNCSTATE_ALIAS_STATE", PyInt_FromLong(SYNCSTATE_ALIAS_STATE));
+	PyModule_AddObject(m, "NETLOGON_NEG_MULTIPLE_SIDS", PyInt_FromLong(NETLOGON_NEG_MULTIPLE_SIDS));
+	PyModule_AddObject(m, "DS_GOOD_TIMESERV_PREFERRED", PyInt_FromLong(DS_GOOD_TIMESERV_PREFERRED));
+	PyModule_AddObject(m, "NETR_DELTA_DOMAIN", PyInt_FromLong(NETR_DELTA_DOMAIN));
+	PyModule_AddObject(m, "NETLOGON_NEG_PASSWORD_CHANGE_REFUSAL", PyInt_FromLong(NETLOGON_NEG_PASSWORD_CHANGE_REFUSAL));
+	PyModule_AddObject(m, "NETLOGON_NEG_CONCURRENT_RPC", PyInt_FromLong(NETLOGON_NEG_CONCURRENT_RPC));
+	PyModule_AddObject(m, "NETR_DELTA_ALIAS_MEMBER", PyInt_FromLong(NETR_DELTA_ALIAS_MEMBER));
+	PyModule_AddObject(m, "MSV1_0_CLEARTEXT_PASSWORD_ALLOWED", PyInt_FromLong(MSV1_0_CLEARTEXT_PASSWORD_ALLOWED));
+	PyModule_AddObject(m, "NETR_DELTA_GROUP", PyInt_FromLong(NETR_DELTA_GROUP));
+	PyModule_AddObject(m, "NETR_VER_SUITE_SINGLEUSERTS", PyInt_FromLong(NETR_VER_SUITE_SINGLEUSERTS));
 	PyModule_AddObject(m, "NETLOGON_NEG_STRONG_KEYS", PyInt_FromLong(NETLOGON_NEG_STRONG_KEYS));
+	PyModule_AddObject(m, "NETR_VER_NT_WORKSTATION", PyInt_FromLong(NETR_VER_NT_WORKSTATION));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_TC_QUERY", PyInt_FromLong(NETLOGON_CONTROL_TC_QUERY));
+	PyModule_AddObject(m, "SYNCSTATE_UAS_BUILT_IN_GROUP_STATE", PyInt_FromLong(SYNCSTATE_UAS_BUILT_IN_GROUP_STATE));
+	PyModule_AddObject(m, "DS_RETURN_DNS_NAME", PyInt_FromLong(DS_RETURN_DNS_NAME));
+	PyModule_AddObject(m, "MSV1_0_TRY_SPECIFIED_DOMAIN_ONLY", PyInt_FromLong(MSV1_0_TRY_SPECIFIED_DOMAIN_ONLY));
+	PyModule_AddObject(m, "NETLOGON_NEG_CHANGELOG_BDC", PyInt_FromLong(NETLOGON_NEG_CHANGELOG_BDC));
+	PyModule_AddObject(m, "MSV1_0_USE_CLIENT_CHALLENGE", PyInt_FromLong(MSV1_0_USE_CLIENT_CHALLENGE));
+	PyModule_AddObject(m, "NETLOGON_GUEST", PyInt_FromLong(NETLOGON_GUEST));
 	PyModule_AddObject(m, "NETR_DELTA_RENAME_GROUP", PyInt_FromLong(NETR_DELTA_RENAME_GROUP));
-	PyModule_AddObject(m, "DS_GC_SERVER_REQUIRED", PyInt_FromLong(DS_GC_SERVER_REQUIRED));
+	PyModule_AddObject(m, "NetlogonInteractiveTransitiveInformation", PyInt_FromLong(NetlogonInteractiveTransitiveInformation));
+	PyModule_AddObject(m, "NETLOGON_NEG_RODC_PASSTHROUGH", PyInt_FromLong(NETLOGON_NEG_RODC_PASSTHROUGH));
+	PyModule_AddObject(m, "NlDnsGcAtSite", PyInt_FromLong(NlDnsGcAtSite));
+	PyModule_AddObject(m, "SYNCSTATE_GROUP_STATE", PyInt_FromLong(SYNCSTATE_GROUP_STATE));
+	PyModule_AddObject(m, "SYNCSTATE_SAM_DONE_STATE", PyInt_FromLong(SYNCSTATE_SAM_DONE_STATE));
+	PyModule_AddObject(m, "NETR_TRUST_FLAG_MIT_KRB5", PyInt_FromLong(NETR_TRUST_FLAG_MIT_KRB5));
+	PyModule_AddObject(m, "SYNCSTATE_ALIAS_MEMBER_STATE", PyInt_FromLong(SYNCSTATE_ALIAS_MEMBER_STATE));
+	PyModule_AddObject(m, "DS_IP_REQUIRED", PyInt_FromLong(DS_IP_REQUIRED));
+	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_FOREST_TRANSITIVE", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_FOREST_TRANSITIVE));
+	PyModule_AddObject(m, "NETLOGON_NEG_GETDOMAININFO", PyInt_FromLong(NETLOGON_NEG_GETDOMAININFO));
+	PyModule_AddObject(m, "NETLOGON_NEG_PERSISTENT_SAMREPL", PyInt_FromLong(NETLOGON_NEG_PERSISTENT_SAMREPL));
+	PyModule_AddObject(m, "NETR_DELTA_DELETE_USER2", PyInt_FromLong(NETR_DELTA_DELETE_USER2));
+	PyModule_AddObject(m, "DS_DNS_DOMAIN", PyInt_FromLong(DS_DNS_DOMAIN));
+	PyModule_AddObject(m, "NETR_DELTA_USER", PyInt_FromLong(NETR_DELTA_USER));
+	PyModule_AddObject(m, "NETR_WS_FLAG_HANDLES_SPN_UPDATE", PyInt_FromLong(NETR_WS_FLAG_HANDLES_SPN_UPDATE));
+	PyModule_AddObject(m, "NETLOGON_NEG_DNS_DOMAIN_TRUSTS", PyInt_FromLong(NETLOGON_NEG_DNS_DOMAIN_TRUSTS));
+	PyModule_AddObject(m, "NETLOGON_NEG_AUTHENTICATED_RPC_LSASS", PyInt_FromLong(NETLOGON_NEG_AUTHENTICATED_RPC_LSASS));
+	PyModule_AddObject(m, "NlDnsRecordName", PyInt_FromLong(NlDnsRecordName));
 	PyModule_AddObject(m, "DS_DNS_FOREST_ROOT", PyInt_FromLong(DS_DNS_FOREST_ROOT));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_SYNCHRONIZE", PyInt_FromLong(NETLOGON_CONTROL_SYNCHRONIZE));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_FIND_USER", PyInt_FromLong(NETLOGON_CONTROL_FIND_USER));
+	PyModule_AddObject(m, "DS_IS_DNS_NAME", PyInt_FromLong(DS_IS_DNS_NAME));
+	PyModule_AddObject(m, "NETR_VER_SUITE_DATACENTER", PyInt_FromLong(NETR_VER_SUITE_DATACENTER));
+	PyModule_AddObject(m, "NETLOGON_NEG_FULL_SYNC_REPL", PyInt_FromLong(NETLOGON_NEG_FULL_SYNC_REPL));
+	PyModule_AddObject(m, "DS_PDC_REQUIRED", PyInt_FromLong(DS_PDC_REQUIRED));
+	PyModule_AddObject(m, "NETR_DELTA_DELETE_USER", PyInt_FromLong(NETR_DELTA_DELETE_USER));
+	PyModule_AddObject(m, "ENC_RC4_HMAC_MD5", PyInt_FromLong(ENC_RC4_HMAC_MD5));
+	PyModule_AddObject(m, "NlDnsRfc1510KdcAtSite", PyInt_FromLong(NlDnsRfc1510KdcAtSite));
+	PyModule_AddObject(m, "NetlogonValidationGenericInfo2", PyInt_FromLong(NetlogonValidationGenericInfo2));
+	PyModule_AddObject(m, "NETLOGON_NOENCRYPTION", PyInt_FromLong(NETLOGON_NOENCRYPTION));
+	PyModule_AddObject(m, "NETR_TRUST_TYPE_DOWNLEVEL", PyInt_FromLong(NETR_TRUST_TYPE_DOWNLEVEL));
+	PyModule_AddObject(m, "NETLOGON_FULL_SYNC_REPLICATION", PyInt_FromLong(NETLOGON_FULL_SYNC_REPLICATION));
+	PyModule_AddObject(m, "DS_WEB_SERVICE_REQUIRED", PyInt_FromLong(DS_WEB_SERVICE_REQUIRED));
+	PyModule_AddObject(m, "NETR_DELTA_ACCOUNT", PyInt_FromLong(NETR_DELTA_ACCOUNT));
+	PyModule_AddObject(m, "NETR_TRUST_FLAG_NATIVE", PyInt_FromLong(NETR_TRUST_FLAG_NATIVE));
+	PyModule_AddObject(m, "NETR_DELTA_POLICY", PyInt_FromLong(NETR_DELTA_POLICY));
+	PyModule_AddObject(m, "NETLOGON_USED_LM_PASSWORD", PyInt_FromLong(NETLOGON_USED_LM_PASSWORD));
+	PyModule_AddObject(m, "NlDnsGenericGcAtSite", PyInt_FromLong(NlDnsGenericGcAtSite));
+	PyModule_AddObject(m, "NETLOGON_DNS_UPDATE_FAILURE", PyInt_FromLong(NETLOGON_DNS_UPDATE_FAILURE));
+	PyModule_AddObject(m, "NETLOGON_REDO_NEEDED", PyInt_FromLong(NETLOGON_REDO_NEEDED));
+	PyModule_AddObject(m, "NETR_VER_SUITE_SMALLBUSINESS", PyInt_FromLong(NETR_VER_SUITE_SMALLBUSINESS));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_QUERY_DNS_REG", PyInt_FromLong(NETLOGON_CONTROL_QUERY_DNS_REG));
+	PyModule_AddObject(m, "NETLOGON_NEG_SUPPORTS_AES_SHA2", PyInt_FromLong(NETLOGON_NEG_SUPPORTS_AES_SHA2));
+	PyModule_AddObject(m, "NETLOGON_SUBAUTH_SESSION_KEY", PyInt_FromLong(NETLOGON_SUBAUTH_SESSION_KEY));
+	PyModule_AddObject(m, "DS_SERVER_GC", PyInt_FromLong(DS_SERVER_GC));
+	PyModule_AddObject(m, "DS_SERVER_CLOSEST", PyInt_FromLong(DS_SERVER_CLOSEST));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_TRUNCATE_LOG", PyInt_FromLong(NETLOGON_CONTROL_TRUNCATE_LOG));
+	PyModule_AddObject(m, "ENC_HMAC_SHA1_96_AES256", PyInt_FromLong(ENC_HMAC_SHA1_96_AES256));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_BREAKPOINT", PyInt_FromLong(NETLOGON_CONTROL_BREAKPOINT));
+	PyModule_AddObject(m, "NETLOGON_REPLICATION_NEEDED", PyInt_FromLong(NETLOGON_REPLICATION_NEEDED));
+	PyModule_AddObject(m, "NETR_DELTA_MODIFY_COUNT", PyInt_FromLong(NETR_DELTA_MODIFY_COUNT));
+	PyModule_AddObject(m, "NETLOGON_NEG_ARCFOUR", PyInt_FromLong(NETLOGON_NEG_ARCFOUR));
+	PyModule_AddObject(m, "NetlogonValidationSamInfo4", PyInt_FromLong(NetlogonValidationSamInfo4));
+	PyModule_AddObject(m, "MSV1_0_USE_DOMAIN_FOR_ROUTING_ONLY", PyInt_FromLong(MSV1_0_USE_DOMAIN_FOR_ROUTING_ONLY));
+	PyModule_AddObject(m, "NETR_TRUST_FLAG_AES", PyInt_FromLong(NETR_TRUST_FLAG_AES));
+	PyModule_AddObject(m, "NlDnsLdapAtSite", PyInt_FromLong(NlDnsLdapAtSite));
+	PyModule_AddObject(m, "NlDnsInfoTypeNone", PyInt_FromLong(NlDnsInfoTypeNone));
+	PyModule_AddObject(m, "NETLOGON_HAS_IP", PyInt_FromLong(NETLOGON_HAS_IP));
+	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_NON_TRANSITIVE", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_NON_TRANSITIVE));
+	PyModule_AddObject(m, "MSV1_0_SUBAUTHENTICATION_DLL_EX", PyInt_FromLong(MSV1_0_SUBAUTHENTICATION_DLL_EX));
 	PyModule_AddObject(m, "NetlogonGenericInformation", PyInt_FromLong(NetlogonGenericInformation));
-	PyModule_AddObject(m, "DS_SERVER_NDNC", PyInt_FromLong(DS_SERVER_NDNC));
+	PyModule_AddObject(m, "NETLOGON_NEG_AUTHENTICATED_RPC", PyInt_FromLong(NETLOGON_NEG_AUTHENTICATED_RPC));
+	PyModule_AddObject(m, "NETLOGON_EXTRA_SIDS", PyInt_FromLong(NETLOGON_EXTRA_SIDS));
+	PyModule_AddObject(m, "NETR_DELTA_DELETE_GROUP", PyInt_FromLong(NETR_DELTA_DELETE_GROUP));
+	PyModule_AddObject(m, "DS_TIMESERV_REQUIRED", PyInt_FromLong(DS_TIMESERV_REQUIRED));
+	PyModule_AddObject(m, "MSV1_0_S4U2SELF", PyInt_FromLong(MSV1_0_S4U2SELF));
+	PyModule_AddObject(m, "NETR_CHANGELOG_IMMEDIATE_REPL_REQUIRED", PyInt_FromLong(NETR_CHANGELOG_IMMEDIATE_REPL_REQUIRED));
+	PyModule_AddObject(m, "NETR_DELTA_ALIAS", PyInt_FromLong(NETR_DELTA_ALIAS));
+	PyModule_AddObject(m, "MSV1_0_RETURN_USER_PARAMETERS", PyInt_FromLong(MSV1_0_RETURN_USER_PARAMETERS));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_TRANSPORT_NOTIFY", PyInt_FromLong(NETLOGON_CONTROL_TRANSPORT_NOTIFY));
+	PyModule_AddObject(m, "NETR_VER_SUITE_SMALLBUSINESS_RESTRICTED", PyInt_FromLong(NETR_VER_SUITE_SMALLBUSINESS_RESTRICTED));
+	PyModule_AddObject(m, "DS_ONLY_LDAP_NEEDED", PyInt_FromLong(DS_ONLY_LDAP_NEEDED));
+	PyModule_AddObject(m, "NETLOGON_NTLMV2_ENABLED", PyInt_FromLong(NETLOGON_NTLMV2_ENABLED));
+	PyModule_AddObject(m, "DS_SERVER_FULL_SECRET_DOMAIN_6", PyInt_FromLong(DS_SERVER_FULL_SECRET_DOMAIN_6));
+	PyModule_AddObject(m, "NlDnsDomainName", PyInt_FromLong(NlDnsDomainName));
+	PyModule_AddObject(m, "DS_SERVER_GOOD_TIMESERV", PyInt_FromLong(DS_SERVER_GOOD_TIMESERV));
+	PyModule_AddObject(m, "NlDnsForestName", PyInt_FromLong(NlDnsForestName));
+	PyModule_AddObject(m, "DS_SERVER_PDC", PyInt_FromLong(DS_SERVER_PDC));
+	PyModule_AddObject(m, "NETLOGON_NEG_PASSWORD_SET2", PyInt_FromLong(NETLOGON_NEG_PASSWORD_SET2));
+	PyModule_AddObject(m, "NETLOGON_CACHED_ACCOUNT", PyInt_FromLong(NETLOGON_CACHED_ACCOUNT));
+	PyModule_AddObject(m, "NETLOGON_NEG_SUPPORTS_AES", PyInt_FromLong(NETLOGON_NEG_SUPPORTS_AES));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_TC_VERIFY", PyInt_FromLong(NETLOGON_CONTROL_TC_VERIFY));
+	PyModule_AddObject(m, "NETR_WS_FLAG_HANDLES_INBOUND_TRUSTS", PyInt_FromLong(NETR_WS_FLAG_HANDLES_INBOUND_TRUSTS));
+	PyModule_AddObject(m, "SYNCSTATE_GROUP_MEMBER_STATE", PyInt_FromLong(SYNCSTATE_GROUP_MEMBER_STATE));
+	PyModule_AddObject(m, "NETLOGON_NEG_REDO", PyInt_FromLong(NETLOGON_NEG_REDO));
+	PyModule_AddObject(m, "NETR_TRUST_FLAG_PRIMARY", PyInt_FromLong(NETR_TRUST_FLAG_PRIMARY));
+	PyModule_AddObject(m, "DS_BACKGROUND_ONLY", PyInt_FromLong(DS_BACKGROUND_ONLY));
+	PyModule_AddObject(m, "NETR_CHANGELOG_NAME_INCLUDED", PyInt_FromLong(NETR_CHANGELOG_NAME_INCLUDED));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_REPLICATE", PyInt_FromLong(NETLOGON_CONTROL_REPLICATE));
+	PyModule_AddObject(m, "NETR_TRUST_FLAG_IN_FOREST", PyInt_FromLong(NETR_TRUST_FLAG_IN_FOREST));
+	PyModule_AddObject(m, "NETR_DELTA_RENAME_ALIAS", PyInt_FromLong(NETR_DELTA_RENAME_ALIAS));
+	PyModule_AddObject(m, "NETLOGON_NEG_TRANSITIVE_TRUSTS", PyInt_FromLong(NETLOGON_NEG_TRANSITIVE_TRUSTS));
+	PyModule_AddObject(m, "NETR_CHANGELOG_CHANGED_PASSWORD", PyInt_FromLong(NETR_CHANGELOG_CHANGED_PASSWORD));
+	PyModule_AddObject(m, "NETR_DELTA_DELETE_ACCOUNT", PyInt_FromLong(NETR_DELTA_DELETE_ACCOUNT));
+	PyModule_AddObject(m, "NETLOGON_HAS_TIMESERV", PyInt_FromLong(NETLOGON_HAS_TIMESERV));
+	PyModule_AddObject(m, "NETLOGON_PROFILE_PATH_RETURNED", PyInt_FromLong(NETLOGON_PROFILE_PATH_RETURNED));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_PDC_REPLICATE", PyInt_FromLong(NETLOGON_CONTROL_PDC_REPLICATE));
+	PyModule_AddObject(m, "NETR_TRUST_TYPE_UPLEVEL", PyInt_FromLong(NETR_TRUST_TYPE_UPLEVEL));
+	PyModule_AddObject(m, "NETR_VER_NT_DOMAIN_CONTROLLER", PyInt_FromLong(NETR_VER_NT_DOMAIN_CONTROLLER));
+	PyModule_AddObject(m, "DS_SERVER_SELECT_SECRET_DOMAIN_6", PyInt_FromLong(DS_SERVER_SELECT_SECRET_DOMAIN_6));
+	PyModule_AddObject(m, "DS_DNS_CONTROLLER", PyInt_FromLong(DS_DNS_CONTROLLER));
+	PyModule_AddObject(m, "NETR_DELTA_DELETE_ALIAS", PyInt_FromLong(NETR_DELTA_DELETE_ALIAS));
+	PyModule_AddObject(m, "NetlogonServiceInformation", PyInt_FromLong(NetlogonServiceInformation));
+	PyModule_AddObject(m, "DS_SERVER_TIMESERV", PyInt_FromLong(DS_SERVER_TIMESERV));
+	PyModule_AddObject(m, "NETR_VER_SUITE_BLADE", PyInt_FromLong(NETR_VER_SUITE_BLADE));
+	PyModule_AddObject(m, "NetlogonNetworkInformation", PyInt_FromLong(NetlogonNetworkInformation));
+	PyModule_AddObject(m, "NETLOGON_NEG_PROMOTION_COUNT", PyInt_FromLong(NETLOGON_NEG_PROMOTION_COUNT));
+	PyModule_AddObject(m, "NETLOGON_NEG_AVOID_ACCOUNT_DB_REPL", PyInt_FromLong(NETLOGON_NEG_AVOID_ACCOUNT_DB_REPL));
+	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_WITHIN_FOREST", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_WITHIN_FOREST));
+	PyModule_AddObject(m, "NlDnsDcAtSite", PyInt_FromLong(NlDnsDcAtSite));
+	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_TREAT_AS_EXTERNAL", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_TREAT_AS_EXTERNAL));
+	PyModule_AddObject(m, "MSV1_0_ALLOW_SERVER_TRUST_ACCOUNT", PyInt_FromLong(MSV1_0_ALLOW_SERVER_TRUST_ACCOUNT));
+	PyModule_AddObject(m, "MSV1_0_ALLOW_MSVCHAPV2", PyInt_FromLong(MSV1_0_ALLOW_MSVCHAPV2));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_REDISCOVER", PyInt_FromLong(NETLOGON_CONTROL_REDISCOVER));
+	PyModule_AddObject(m, "DS_IS_FLAT_NAME", PyInt_FromLong(DS_IS_FLAT_NAME));
+	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_QUARANTINED_DOMAIN", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_QUARANTINED_DOMAIN));
+	PyModule_AddObject(m, "DS_ADDRESS_TYPE_NETBIOS", PyInt_FromLong(DS_ADDRESS_TYPE_NETBIOS));
+	PyModule_AddObject(m, "NetlogonValidationUasInfo", PyInt_FromLong(NetlogonValidationUasInfo));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_SET_DBFLAG", PyInt_FromLong(NETLOGON_CONTROL_SET_DBFLAG));
+	PyModule_AddObject(m, "NETLOGON_NEG_ACCOUNT_LOCKOUT", PyInt_FromLong(NETLOGON_NEG_ACCOUNT_LOCKOUT));
+	PyModule_AddObject(m, "NETR_DELTA_DELETE_GROUP2", PyInt_FromLong(NETR_DELTA_DELETE_GROUP2));
+	PyModule_AddObject(m, "SYNCSTATE_DOMAIN_STATE", PyInt_FromLong(SYNCSTATE_DOMAIN_STATE));
+	PyModule_AddObject(m, "NETR_VER_SUITE_PERSONAL", PyInt_FromLong(NETR_VER_SUITE_PERSONAL));
+	PyModule_AddObject(m, "NETR_TRUST_FLAG_TREEROOT", PyInt_FromLong(NETR_TRUST_FLAG_TREEROOT));
+	PyModule_AddObject(m, "NETLOGON_RESOURCE_GROUPS", PyInt_FromLong(NETLOGON_RESOURCE_GROUPS));
+	PyModule_AddObject(m, "DS_TRY_NEXTCLOSEST_SITE", PyInt_FromLong(DS_TRY_NEXTCLOSEST_SITE));
+	PyModule_AddObject(m, "MSV1_0_RETURN_PROFILE_PATH", PyInt_FromLong(MSV1_0_RETURN_PROFILE_PATH));
+	PyModule_AddObject(m, "DS_GC_SERVER_REQUIRED", PyInt_FromLong(DS_GC_SERVER_REQUIRED));
+	PyModule_AddObject(m, "DS_DIRECTORY_SERVICE_6_REQUIRED", PyInt_FromLong(DS_DIRECTORY_SERVICE_6_REQUIRED));
+	PyModule_AddObject(m, "DS_AVOID_SELF", PyInt_FromLong(DS_AVOID_SELF));
+	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_CROSS_ORGANIZATION", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_CROSS_ORGANIZATION));
+	PyModule_AddObject(m, "NETR_TRUST_TYPE_MIT", PyInt_FromLong(NETR_TRUST_TYPE_MIT));
+	PyModule_AddObject(m, "NETR_VER_SUITE_ENTERPRISE", PyInt_FromLong(NETR_VER_SUITE_ENTERPRISE));
+	PyModule_AddObject(m, "DS_FORCE_REDISCOVERY", PyInt_FromLong(DS_FORCE_REDISCOVERY));
+	PyModule_AddObject(m, "NETLOGON_NEG_AVOID_SECURITYAUTH_DB_REPL", PyInt_FromLong(NETLOGON_NEG_AVOID_SECURITYAUTH_DB_REPL));
+	PyModule_AddObject(m, "MSV1_0_TRY_GUEST_ACCOUNT_ONLY", PyInt_FromLong(MSV1_0_TRY_GUEST_ACCOUNT_ONLY));
+	PyModule_AddObject(m, "DS_SERVER_KDC", PyInt_FromLong(DS_SERVER_KDC));
+	PyModule_AddObject(m, "MSV1_0_DISABLE_PERSONAL_FALLBACK", PyInt_FromLong(MSV1_0_DISABLE_PERSONAL_FALLBACK));
+	PyModule_AddObject(m, "NETR_TRUST_FLAG_OUTBOUND", PyInt_FromLong(NETR_TRUST_FLAG_OUTBOUND));
+	PyModule_AddObject(m, "NETR_VER_SUITE_STORAGE_SERVER", PyInt_FromLong(NETR_VER_SUITE_STORAGE_SERVER));
+	PyModule_AddObject(m, "MSV1_0_DONT_TRY_GUEST_ACCOUNT", PyInt_FromLong(MSV1_0_DONT_TRY_GUEST_ACCOUNT));
+	PyModule_AddObject(m, "NETLOGON_NEG_SCHANNEL", PyInt_FromLong(NETLOGON_NEG_AUTHENTICATED_RPC));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_CHANGE_PASSWORD", PyInt_FromLong(NETLOGON_CONTROL_CHANGE_PASSWORD));
+	PyModule_AddObject(m, "NETLOGON_GRACE_LOGON", PyInt_FromLong(NETLOGON_GRACE_LOGON));
+	PyModule_AddObject(m, "DS_WRITABLE_REQUIRED", PyInt_FromLong(DS_WRITABLE_REQUIRED));
+	PyModule_AddObject(m, "NlDnsDomainNameAlias", PyInt_FromLong(NlDnsDomainNameAlias));
+	PyModule_AddObject(m, "NETR_DELTA_GROUP_MEMBER", PyInt_FromLong(NETR_DELTA_GROUP_MEMBER));
+	PyModule_AddObject(m, "NETLOGON_CONTROL_QUERY", PyInt_FromLong(NETLOGON_CONTROL_QUERY));
+	PyModule_AddObject(m, "ENC_CRC32", PyInt_FromLong(ENC_CRC32));
+	PyModule_AddObject(m, "NetlogonValidationSamInfo2", PyInt_FromLong(NetlogonValidationSamInfo2));
+	PyModule_AddObject(m, "MSV1_0_CHECK_LOGONHOURS_FOR_S4U", PyInt_FromLong(MSV1_0_CHECK_LOGONHOURS_FOR_S4U));
+	PyModule_AddObject(m, "MSV1_0_ALLOW_FORCE_GUEST", PyInt_FromLong(MSV1_0_ALLOW_FORCE_GUEST));
+	PyModule_AddObject(m, "MSV1_0_CLEARTEXT_PASSWORD_SUPPLIED", PyInt_FromLong(MSV1_0_CLEARTEXT_PASSWORD_SUPPLIED));
+	PyModule_AddObject(m, "NETR_VER_SUITE_BACKOFFICE", PyInt_FromLong(NETR_VER_SUITE_BACKOFFICE));
+	PyModule_AddObject(m, "NlDnsNdncDomainName", PyInt_FromLong(NlDnsNdncDomainName));
+	PyModule_AddObject(m, "DSGETDC_VALID_FLAGS", PyInt_FromLong((DS_FORCE_REDISCOVERY|DS_DIRECTORY_SERVICE_REQUIRED|DS_DIRECTORY_SERVICE_PREFERRED|DS_GC_SERVER_REQUIRED|DS_PDC_REQUIRED|DS_BACKGROUND_ONLY|DS_IP_REQUIRED|DS_KDC_REQUIRED|DS_TIMESERV_REQUIRED|DS_WRITABLE_REQUIRED|DS_GOOD_TIMESERV_PREFERRED|DS_AVOID_SELF|DS_ONLY_LDAP_NEEDED|DS_IS_FLAT_NAME|DS_IS_DNS_NAME|DS_TRY_NEXTCLOSEST_SITE|DS_DIRECTORY_SERVICE_6_REQUIRED|DS_WEB_SERVICE_REQUIRED|DS_RETURN_FLAT_NAME|DS_RETURN_DNS_NAME)));
+	PyModule_AddObject(m, "NETR_DELTA_DELETE_TRUST", PyInt_FromLong(NETR_DELTA_DELETE_TRUST));
+	PyModule_AddObject(m, "NETLOGON_NEG_SEND_PASSWORD_INFO_PDC", PyInt_FromLong(NETLOGON_NEG_SEND_PASSWORD_INFO_PDC));
+	PyModule_AddObject(m, "MSV1_0_RETURN_PASSWORD_EXPIRY", PyInt_FromLong(MSV1_0_RETURN_PASSWORD_EXPIRY));
+	PyModule_AddObject(m, "DS_ADDRESS_TYPE_INET", PyInt_FromLong(DS_ADDRESS_TYPE_INET));
+	PyModule_AddObject(m, "NETR_DELTA_TRUSTED_DOMAIN", PyInt_FromLong(NETR_DELTA_TRUSTED_DOMAIN));
+	PyModule_AddObject(m, "DS_KDC_REQUIRED", PyInt_FromLong(DS_KDC_REQUIRED));
+	PyModule_AddObject(m, "NETR_CHANGELOG_SID_INCLUDED", PyInt_FromLong(NETR_CHANGELOG_SID_INCLUDED));
+	PyModule_AddObject(m, "NETR_DELTA_RENAME_USER", PyInt_FromLong(NETR_DELTA_RENAME_USER));
+	PyModule_AddObject(m, "SYNCSTATE_USER_STATE", PyInt_FromLong(SYNCSTATE_USER_STATE));
+	PyModule_AddObject(m, "NETLOGON_NEG_GENERIC_PASSTHROUGH", PyInt_FromLong(NETLOGON_NEG_GENERIC_PASSTHROUGH));
+	PyModule_AddObject(m, "MSV1_0_UPDATE_LOGON_STATISTICS", PyInt_FromLong(MSV1_0_UPDATE_LOGON_STATISTICS));
+	PyModule_AddObject(m, "NETLOGON_NEG_NEUTRALIZE_NT4_EMULATION", PyInt_FromLong(NETLOGON_NEG_NEUTRALIZE_NT4_EMULATION));
+	PyModule_AddObject(m, "NETR_TRUST_FLAG_INBOUND", PyInt_FromLong(NETR_TRUST_FLAG_INBOUND));
+	PyModule_AddObject(m, "NetlogonNetworkTransitiveInformation", PyInt_FromLong(NetlogonNetworkTransitiveInformation));
+	PyModule_AddObject(m, "NETR_VER_SUITE_EMBEDDEDNT", PyInt_FromLong(NETR_VER_SUITE_EMBEDDEDNT));
+	PyModule_AddObject(m, "NETLOGON_NEG_128BIT", PyInt_FromLong(NETLOGON_NEG_STRONG_KEYS));
+	PyModule_AddObject(m, "NETR_TRUST_ATTRIBUTE_UPLEVEL_ONLY", PyInt_FromLong(NETR_TRUST_ATTRIBUTE_UPLEVEL_ONLY));
+	PyModule_AddObject(m, "NETLOGON_VERIFY_STATUS_RETURNED", PyInt_FromLong(NETLOGON_VERIFY_STATUS_RETURNED));
+	PyModule_AddObject(m, "DS_SERVER_DS", PyInt_FromLong(DS_SERVER_DS));
+	PyModule_AddObject(m, "ENC_HMAC_SHA1_96_AES128", PyInt_FromLong(ENC_HMAC_SHA1_96_AES128));
+	PyModule_AddObject(m, "NETR_VER_NT_SERVER", PyInt_FromLong(NETR_VER_NT_SERVER));
+	PyModule_AddObject(m, "DS_SERVER_LDAP", PyInt_FromLong(DS_SERVER_LDAP));
+	PyModule_AddObject(m, "NETLOGON_PASSWORD_VERSION_NUMBER_PRESENT", PyInt_FromLong(0x02231968));
+	PyModule_AddObject(m, "NlDnsDsaCname", PyInt_FromLong(NlDnsDsaCname));
+	PyModule_AddObject(m, "NETR_VER_SUITE_TERMINAL", PyInt_FromLong(NETR_VER_SUITE_TERMINAL));
+	PyModule_AddObject(m, "ENC_RSA_MD5", PyInt_FromLong(ENC_RSA_MD5));
+	PyModule_AddObject(m, "NETR_DELTA_SECRET", PyInt_FromLong(NETR_DELTA_SECRET));
+	PyModule_AddObject(m, "DS_DIRECTORY_SERVICE_REQUIRED", PyInt_FromLong(DS_DIRECTORY_SERVICE_REQUIRED));
+	PyModule_AddObject(m, "NETLOGON_SERVER_TRUST_ACCOUNT", PyInt_FromLong(NETLOGON_SERVER_TRUST_ACCOUNT));
 	Py_INCREF((PyObject *)(void *)&netr_UasInfo_Type);
 	PyModule_AddObject(m, "netr_UasInfo", (PyObject *)(void *)&netr_UasInfo_Type);
 	Py_INCREF((PyObject *)(void *)&netr_UasLogoffInfo_Type);

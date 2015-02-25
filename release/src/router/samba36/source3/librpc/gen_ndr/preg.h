@@ -12,17 +12,17 @@
 #define _HEADER_preg
 
 struct preg_entry {
-	const char *_opening_bracket;/* [value("["),noprint,charset(DOS)] */
+	const char *_opening_bracket;/* [noprint,charset(DOS),value("[")] */
 	const char * keyname;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
-	const char *_sep1;/* [noprint,charset(DOS),value(";")] */
+	const char *_sep1;/* [value(";"),noprint,charset(DOS)] */
 	const char * valuename;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
-	const char *_sep2;/* [value(";"),noprint,charset(DOS)] */
+	const char *_sep2;/* [charset(DOS),noprint,value(";")] */
 	enum winreg_Type type;
-	const char *_sep3;/* [charset(DOS),noprint,value(";")] */
+	const char *_sep3;/* [value(";"),charset(DOS),noprint] */
 	uint32_t size;
-	const char *_sep4;/* [value(";"),charset(DOS),noprint] */
+	const char *_sep4;/* [value(";"),noprint,charset(DOS)] */
 	uint8_t *data;
-	const char *_closing_bracket;/* [noprint,charset(DOS),value("]")] */
+	const char *_closing_bracket;/* [value("]"),noprint,charset(DOS)] */
 }/* [public] */;
 
 struct preg_header {
@@ -34,7 +34,7 @@ struct preg_file {
 	struct preg_header header;
 	uint32_t num_entries;
 	struct preg_entry *entries;
-}/* [nopush,nopull,flag(LIBNDR_FLAG_NOALIGN),public] */;
+}/* [public,nopush,flag(LIBNDR_FLAG_NOALIGN),nopull] */;
 
 
 struct decode_preg_file {

@@ -141,7 +141,7 @@ struct echo_SourceData {
 
 struct echo_TestCall {
 	struct {
-		const char *s1;/* [ref,charset(UTF16)] */
+		const char *s1;/* [charset(UTF16),ref] */
 	} in;
 
 	struct {

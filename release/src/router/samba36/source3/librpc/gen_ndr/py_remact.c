@@ -12,13 +12,13 @@
 #include "librpc/gen_ndr/orpc.h"
 staticforward PyTypeObject IRemoteActivation_InterfaceType;
 
-void initremact(void);static PyTypeObject *GUID_Type;
-static PyTypeObject *ClientConnection_Type;
-static PyTypeObject *ORPCTHAT_Type;
+void initremact(void);static PyTypeObject *ORPCTHAT_Type;
 static PyTypeObject *MInterfacePointer_Type;
+static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *ORPCTHIS_Type;
-static PyTypeObject *DUALSTRINGARRAY_Type;
+static PyTypeObject *GUID_Type;
 static PyTypeObject *COMVERSION_Type;
+static PyTypeObject *DUALSTRINGARRAY_Type;
 
 static bool pack_py_RemoteActivation_args_in(PyObject *args, PyObject *kwargs, struct RemoteActivation *r)
 {
@@ -211,14 +211,6 @@ void initremact(void)
 	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
-	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
-	if (GUID_Type == NULL)
-		return;
-
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
-		return;
-
 	ORPCTHAT_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_orpc, "ORPCTHAT");
 	if (ORPCTHAT_Type == NULL)
 		return;
@@ -227,16 +219,24 @@ void initremact(void)
 	if (MInterfacePointer_Type == NULL)
 		return;
 
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
+		return;
+
 	ORPCTHIS_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_orpc, "ORPCTHIS");
 	if (ORPCTHIS_Type == NULL)
 		return;
 
-	DUALSTRINGARRAY_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_orpc, "DUALSTRINGARRAY");
-	if (DUALSTRINGARRAY_Type == NULL)
+	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
+	if (GUID_Type == NULL)
 		return;
 
 	COMVERSION_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_orpc, "COMVERSION");
 	if (COMVERSION_Type == NULL)
+		return;
+
+	DUALSTRINGARRAY_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_orpc, "DUALSTRINGARRAY");
+	if (DUALSTRINGARRAY_Type == NULL)
 		return;
 
 	IRemoteActivation_InterfaceType.tp_base = ClientConnection_Type;
@@ -255,11 +255,11 @@ void initremact(void)
 		return;
 
 	PyModule_AddObject(m, "RPC_C_IMP_LEVEL_DELEGATE", PyInt_FromLong(RPC_C_IMP_LEVEL_DELEGATE));
-	PyModule_AddObject(m, "RPC_C_IMP_LEVEL_DEFAULT", PyInt_FromLong(RPC_C_IMP_LEVEL_DEFAULT));
-	PyModule_AddObject(m, "RPC_C_IMP_LEVEL_ANONYMOUS", PyInt_FromLong(RPC_C_IMP_LEVEL_ANONYMOUS));
 	PyModule_AddObject(m, "RPC_C_IMP_LEVEL_IMPERSONATE", PyInt_FromLong(RPC_C_IMP_LEVEL_IMPERSONATE));
-	PyModule_AddObject(m, "RPC_C_IMP_LEVEL_IDENTIFY", PyInt_FromLong(RPC_C_IMP_LEVEL_IDENTIFY));
 	PyModule_AddObject(m, "MODE_GET_CLASS_OBJECT", PyInt_FromLong(0xffffffff));
+	PyModule_AddObject(m, "RPC_C_IMP_LEVEL_DEFAULT", PyInt_FromLong(RPC_C_IMP_LEVEL_DEFAULT));
+	PyModule_AddObject(m, "RPC_C_IMP_LEVEL_IDENTIFY", PyInt_FromLong(RPC_C_IMP_LEVEL_IDENTIFY));
+	PyModule_AddObject(m, "RPC_C_IMP_LEVEL_ANONYMOUS", PyInt_FromLong(RPC_C_IMP_LEVEL_ANONYMOUS));
 	Py_INCREF((PyObject *)(void *)&IRemoteActivation_InterfaceType);
 	PyModule_AddObject(m, "IRemoteActivation", (PyObject *)(void *)&IRemoteActivation_InterfaceType);
 #ifdef PY_MOD_REMACT_PATCH

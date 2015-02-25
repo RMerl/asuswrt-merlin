@@ -1525,13 +1525,13 @@ void initdfsblobs(void)
 	if (m == NULL)
 		return;
 
+	PyModule_AddObject(m, "DFS_HEADER_FLAG_STORAGE_SVR", PyInt_FromLong(DFS_HEADER_FLAG_STORAGE_SVR));
 	PyModule_AddObject(m, "DFS_FLAG_REFERRAL_DOMAIN_RESP", PyInt_FromLong(DFS_FLAG_REFERRAL_DOMAIN_RESP));
 	PyModule_AddObject(m, "DFS_HEADER_FLAG_REFERAL_SVR", PyInt_FromLong(DFS_HEADER_FLAG_REFERAL_SVR));
-	PyModule_AddObject(m, "DFS_FLAG_REFERRAL_FIRST_TARGET_SET", PyInt_FromLong(DFS_FLAG_REFERRAL_FIRST_TARGET_SET));
-	PyModule_AddObject(m, "DFS_SERVER_ROOT", PyInt_FromLong(DFS_SERVER_ROOT));
-	PyModule_AddObject(m, "DFS_HEADER_FLAG_STORAGE_SVR", PyInt_FromLong(DFS_HEADER_FLAG_STORAGE_SVR));
-	PyModule_AddObject(m, "DFS_SERVER_NON_ROOT", PyInt_FromLong(DFS_SERVER_NON_ROOT));
 	PyModule_AddObject(m, "DFS_HEADER_FLAG_TARGET_BCK", PyInt_FromLong(DFS_HEADER_FLAG_TARGET_BCK));
+	PyModule_AddObject(m, "DFS_SERVER_ROOT", PyInt_FromLong(DFS_SERVER_ROOT));
+	PyModule_AddObject(m, "DFS_SERVER_NON_ROOT", PyInt_FromLong(DFS_SERVER_NON_ROOT));
+	PyModule_AddObject(m, "DFS_FLAG_REFERRAL_FIRST_TARGET_SET", PyInt_FromLong(DFS_FLAG_REFERRAL_FIRST_TARGET_SET));
 	Py_INCREF((PyObject *)(void *)&dfs_referral_v1_Type);
 	PyModule_AddObject(m, "dfs_referral_v1", (PyObject *)(void *)&dfs_referral_v1_Type);
 	Py_INCREF((PyObject *)(void *)&dfs_referral_v2_Type);

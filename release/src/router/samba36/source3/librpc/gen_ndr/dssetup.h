@@ -41,9 +41,9 @@ enum dssetup_DsRole
 struct dssetup_DsRolePrimaryDomInfoBasic {
 	enum dssetup_DsRole role;
 	uint32_t flags;
-	const char *domain;/* [charset(UTF16),unique] */
+	const char *domain;/* [unique,charset(UTF16)] */
 	const char *dns_domain;/* [charset(UTF16),unique] */
-	const char *forest;/* [charset(UTF16),unique] */
+	const char *forest;/* [unique,charset(UTF16)] */
 	struct GUID domain_guid;
 };
 
@@ -127,7 +127,7 @@ struct dssetup_DsRoleGetPrimaryDomainInformation {
 	} in;
 
 	struct {
-		union dssetup_DsRoleInfo *info;/* [switch_is(level),unique] */
+		union dssetup_DsRoleInfo *info;/* [unique,switch_is(level)] */
 		WERROR result;
 	} out;
 

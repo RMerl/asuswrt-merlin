@@ -18,8 +18,8 @@ staticforward PyTypeObject dns_res_rec_Type;
 staticforward PyTypeObject dns_name_packet_Type;
 staticforward PyTypeObject dns_InterfaceType;
 
-void initdns(void);static PyTypeObject *ClientConnection_Type;
-static PyTypeObject *Object_Type;
+void initdns(void);static PyTypeObject *Object_Type;
+static PyTypeObject *ClientConnection_Type;
 
 static PyObject *py_dns_name_question_get_name(PyObject *obj, void *closure)
 {
@@ -1337,27 +1337,27 @@ void initdns(void)
 {
 	PyObject *m;
 	PyObject *dep_samba_dcerpc_misc;
-	PyObject *dep_talloc;
 	PyObject *dep_samba_dcerpc_base;
+	PyObject *dep_talloc;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
-		return;
-
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
 		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
 		return;
 
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
 		return;
 
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
 	if (Object_Type == NULL)
+		return;
+
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
 	dns_name_question_Type.tp_base = Object_Type;
@@ -1424,78 +1424,78 @@ void initdns(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "DNS_QTYPE_X25", PyInt_FromLong(DNS_QTYPE_X25));
-	PyModule_AddObject(m, "DNS_QTYPE_MF", PyInt_FromLong(DNS_QTYPE_MF));
-	PyModule_AddObject(m, "DNS_QTYPE_ISDN", PyInt_FromLong(DNS_QTYPE_ISDN));
-	PyModule_AddObject(m, "DNS_QTYPE_ALL", PyInt_FromLong(DNS_QTYPE_ALL));
-	PyModule_AddObject(m, "DNS_QTYPE_DNAME", PyInt_FromLong(DNS_QTYPE_DNAME));
-	PyModule_AddObject(m, "DNS_OPCODE_RELEASE", PyInt_FromLong(DNS_OPCODE_RELEASE));
-	PyModule_AddObject(m, "DNS_OPCODE_WACK", PyInt_FromLong(DNS_OPCODE_WACK));
-	PyModule_AddObject(m, "DNS_OPCODE_QUERY", PyInt_FromLong(DNS_OPCODE_QUERY));
-	PyModule_AddObject(m, "DNS_QTYPE_CNAME", PyInt_FromLong(DNS_QTYPE_CNAME));
-	PyModule_AddObject(m, "DNS_FLAG_TRUNCATION", PyInt_FromLong(DNS_FLAG_TRUNCATION));
-	PyModule_AddObject(m, "DNS_QTYPE_SIG", PyInt_FromLong(DNS_QTYPE_SIG));
-	PyModule_AddObject(m, "DNS_QTYPE_DS", PyInt_FromLong(DNS_QTYPE_DS));
-	PyModule_AddObject(m, "DNS_QTYPE_HINFO", PyInt_FromLong(DNS_QTYPE_HINFO));
-	PyModule_AddObject(m, "DNS_RCODE", PyInt_FromLong(DNS_RCODE));
-	PyModule_AddObject(m, "DNS_QTYPE_RP", PyInt_FromLong(DNS_QTYPE_RP));
-	PyModule_AddObject(m, "DNS_RCODE_SERVFAIL", PyInt_FromLong(DNS_RCODE_SERVFAIL));
-	PyModule_AddObject(m, "DNS_RCODE_OK", PyInt_FromLong(DNS_RCODE_OK));
-	PyModule_AddObject(m, "DNS_QTYPE_NAPTR", PyInt_FromLong(DNS_QTYPE_NAPTR));
-	PyModule_AddObject(m, "DNS_RCODE_NXDOMAIN", PyInt_FromLong(DNS_RCODE_NXDOMAIN));
-	PyModule_AddObject(m, "DNS_QTYPE_TXT", PyInt_FromLong(DNS_QTYPE_TXT));
-	PyModule_AddObject(m, "DNS_QTYPE_ATMA", PyInt_FromLong(DNS_QTYPE_ATMA));
-	PyModule_AddObject(m, "DNS_QTYPE_A", PyInt_FromLong(DNS_QTYPE_A));
-	PyModule_AddObject(m, "DNS_QCLASS_IP", PyInt_FromLong(DNS_QCLASS_IP));
-	PyModule_AddObject(m, "DNS_RCODE_REFUSED", PyInt_FromLong(DNS_RCODE_REFUSED));
-	PyModule_AddObject(m, "DNS_QTYPE_MB", PyInt_FromLong(DNS_QTYPE_MB));
-	PyModule_AddObject(m, "DNS_QTYPE_NULL", PyInt_FromLong(DNS_QTYPE_NULL));
-	PyModule_AddObject(m, "DNS_QTYPE_ZERO", PyInt_FromLong(DNS_QTYPE_ZERO));
-	PyModule_AddObject(m, "DNS_QTYPE_PTR", PyInt_FromLong(DNS_QTYPE_PTR));
-	PyModule_AddObject(m, "DNS_RCODE_NOTZONE", PyInt_FromLong(DNS_RCODE_NOTZONE));
-	PyModule_AddObject(m, "DNS_QTYPE_MINFO", PyInt_FromLong(DNS_QTYPE_MINFO));
-	PyModule_AddObject(m, "DNS_RCODE_NXRRSET", PyInt_FromLong(DNS_RCODE_NXRRSET));
-	PyModule_AddObject(m, "DNS_SERVICE_PORT", PyInt_FromLong(53));
-	PyModule_AddObject(m, "DNS_QTYPE_NXT", PyInt_FromLong(DNS_QTYPE_NXT));
-	PyModule_AddObject(m, "DNS_QTYPE_KEY", PyInt_FromLong(DNS_QTYPE_KEY));
-	PyModule_AddObject(m, "DNS_QTYPE_AFSDB", PyInt_FromLong(DNS_QTYPE_AFSDB));
-	PyModule_AddObject(m, "DNS_QTYPE_WKS", PyInt_FromLong(DNS_QTYPE_WKS));
-	PyModule_AddObject(m, "DNS_FLAG_RECURSION_DESIRED", PyInt_FromLong(DNS_FLAG_RECURSION_DESIRED));
-	PyModule_AddObject(m, "DNS_OPCODE_REGISTER", PyInt_FromLong(DNS_OPCODE_REGISTER));
-	PyModule_AddObject(m, "DNS_QTYPE_NS", PyInt_FromLong(DNS_QTYPE_NS));
-	PyModule_AddObject(m, "DNS_OPCODE", PyInt_FromLong(DNS_OPCODE));
-	PyModule_AddObject(m, "DNS_QTYPE_MR", PyInt_FromLong(DNS_QTYPE_MR));
-	PyModule_AddObject(m, "DNS_RCODE_YXRRSET", PyInt_FromLong(DNS_RCODE_YXRRSET));
-	PyModule_AddObject(m, "DNS_QCLASS_ANY", PyInt_FromLong(DNS_QCLASS_ANY));
-	PyModule_AddObject(m, "DNS_OPCODE_MULTI_HOME_REG", PyInt_FromLong(DNS_OPCODE_MULTI_HOME_REG));
-	PyModule_AddObject(m, "DNS_QTYPE_RT", PyInt_FromLong(DNS_QTYPE_RT));
-	PyModule_AddObject(m, "DNS_QTYPE_MD", PyInt_FromLong(DNS_QTYPE_MD));
-	PyModule_AddObject(m, "DNS_RCODE_FORMERR", PyInt_FromLong(DNS_RCODE_FORMERR));
-	PyModule_AddObject(m, "DNS_OPCODE_REFRESH2", PyInt_FromLong(DNS_OPCODE_REFRESH2));
-	PyModule_AddObject(m, "DNS_QTYPE_SRV", PyInt_FromLong(DNS_QTYPE_SRV));
-	PyModule_AddObject(m, "DNS_OPCODE_STATUS", PyInt_FromLong(DNS_OPCODE_STATUS));
-	PyModule_AddObject(m, "DNS_QTYPE_NSEC", PyInt_FromLong(DNS_QTYPE_NSEC));
-	PyModule_AddObject(m, "DNS_QTYPE_MG", PyInt_FromLong(DNS_QTYPE_MG));
-	PyModule_AddObject(m, "DNS_QTYPE_AAAA", PyInt_FromLong(DNS_QTYPE_AAAA));
-	PyModule_AddObject(m, "DNS_FLAG_AUTHORITATIVE", PyInt_FromLong(DNS_FLAG_AUTHORITATIVE));
-	PyModule_AddObject(m, "DNS_QTYPE_WINS", PyInt_FromLong(DNS_QTYPE_WINS));
 	PyModule_AddObject(m, "DNS_FLAG_RECURSION_AVAIL", PyInt_FromLong(DNS_FLAG_RECURSION_AVAIL));
-	PyModule_AddObject(m, "DNS_QTYPE_MX", PyInt_FromLong(DNS_QTYPE_MX));
-	PyModule_AddObject(m, "DNS_QTYPE_LOC", PyInt_FromLong(DNS_QTYPE_LOC));
+	PyModule_AddObject(m, "DNS_OPCODE_IQUERY", PyInt_FromLong(DNS_OPCODE_IQUERY));
+	PyModule_AddObject(m, "DNS_QTYPE_SRV", PyInt_FromLong(DNS_QTYPE_SRV));
+	PyModule_AddObject(m, "DNS_QTYPE_NULL", PyInt_FromLong(DNS_QTYPE_NULL));
+	PyModule_AddObject(m, "DNS_QCLASS_IP", PyInt_FromLong(DNS_QCLASS_IP));
+	PyModule_AddObject(m, "DNS_QTYPE_NETBIOS", PyInt_FromLong(DNS_QTYPE_NETBIOS));
+	PyModule_AddObject(m, "DNS_RCODE_NOTIMP", PyInt_FromLong(DNS_RCODE_NOTIMP));
+	PyModule_AddObject(m, "DNS_QTYPE_ZERO", PyInt_FromLong(DNS_QTYPE_ZERO));
+	PyModule_AddObject(m, "DNS_QCLASS_ANY", PyInt_FromLong(DNS_QCLASS_ANY));
+	PyModule_AddObject(m, "DNS_OPCODE_REFRESH2", PyInt_FromLong(DNS_OPCODE_REFRESH2));
+	PyModule_AddObject(m, "DNS_OPCODE_WACK", PyInt_FromLong(DNS_OPCODE_WACK));
+	PyModule_AddObject(m, "DNS_QCLASS_NONE", PyInt_FromLong(DNS_QCLASS_NONE));
+	PyModule_AddObject(m, "DNS_RCODE_NXRRSET", PyInt_FromLong(DNS_RCODE_NXRRSET));
+	PyModule_AddObject(m, "DNS_OPCODE_QUERY", PyInt_FromLong(DNS_OPCODE_QUERY));
+	PyModule_AddObject(m, "DNS_QTYPE_SOA", PyInt_FromLong(DNS_QTYPE_SOA));
+	PyModule_AddObject(m, "DNS_RCODE_YXRRSET", PyInt_FromLong(DNS_RCODE_YXRRSET));
+	PyModule_AddObject(m, "DNS_RCODE_REFUSED", PyInt_FromLong(DNS_RCODE_REFUSED));
+	PyModule_AddObject(m, "DNS_QTYPE_NXT", PyInt_FromLong(DNS_QTYPE_NXT));
+	PyModule_AddObject(m, "DNS_QTYPE_A", PyInt_FromLong(DNS_QTYPE_A));
+	PyModule_AddObject(m, "DNS_OPCODE_REGISTER", PyInt_FromLong(DNS_OPCODE_REGISTER));
+	PyModule_AddObject(m, "DNS_QTYPE_CNAME", PyInt_FromLong(DNS_QTYPE_CNAME));
+	PyModule_AddObject(m, "DNS_OPCODE", PyInt_FromLong(DNS_OPCODE));
+	PyModule_AddObject(m, "DNS_RCODE", PyInt_FromLong(DNS_RCODE));
+	PyModule_AddObject(m, "DNS_OPCODE_STATUS", PyInt_FromLong(DNS_OPCODE_STATUS));
+	PyModule_AddObject(m, "DNS_QTYPE_HINFO", PyInt_FromLong(DNS_QTYPE_HINFO));
 	PyModule_AddObject(m, "DNS_RCODE_NOTAUTH", PyInt_FromLong(DNS_RCODE_NOTAUTH));
+	PyModule_AddObject(m, "DNS_QTYPE_X25", PyInt_FromLong(DNS_QTYPE_X25));
+	PyModule_AddObject(m, "DNS_QTYPE_NSEC", PyInt_FromLong(DNS_QTYPE_NSEC));
+	PyModule_AddObject(m, "DNS_QTYPE_DNSKEY", PyInt_FromLong(DNS_QTYPE_DNSKEY));
+	PyModule_AddObject(m, "DNS_QTYPE_TXT", PyInt_FromLong(DNS_QTYPE_TXT));
+	PyModule_AddObject(m, "DNS_QTYPE_ALL", PyInt_FromLong(DNS_QTYPE_ALL));
+	PyModule_AddObject(m, "DNS_QTYPE_AAAA", PyInt_FromLong(DNS_QTYPE_AAAA));
+	PyModule_AddObject(m, "DNS_QTYPE_RT", PyInt_FromLong(DNS_QTYPE_RT));
+	PyModule_AddObject(m, "DNS_FLAG_RECURSION_DESIRED", PyInt_FromLong(DNS_FLAG_RECURSION_DESIRED));
+	PyModule_AddObject(m, "DNS_OPCODE_REFRESH", PyInt_FromLong(DNS_OPCODE_REFRESH));
+	PyModule_AddObject(m, "DNS_QTYPE_NAPTR", PyInt_FromLong(DNS_QTYPE_NAPTR));
+	PyModule_AddObject(m, "DNS_RCODE_FORMERR", PyInt_FromLong(DNS_RCODE_FORMERR));
+	PyModule_AddObject(m, "DNS_QTYPE_MINFO", PyInt_FromLong(DNS_QTYPE_MINFO));
+	PyModule_AddObject(m, "DNS_QTYPE_ATMA", PyInt_FromLong(DNS_QTYPE_ATMA));
+	PyModule_AddObject(m, "DNS_QTYPE_MG", PyInt_FromLong(DNS_QTYPE_MG));
+	PyModule_AddObject(m, "DNS_QTYPE_ISDN", PyInt_FromLong(DNS_QTYPE_ISDN));
+	PyModule_AddObject(m, "DNS_QTYPE_SIG", PyInt_FromLong(DNS_QTYPE_SIG));
+	PyModule_AddObject(m, "DNS_QTYPE_MB", PyInt_FromLong(DNS_QTYPE_MB));
+	PyModule_AddObject(m, "DNS_RCODE_OK", PyInt_FromLong(DNS_RCODE_OK));
+	PyModule_AddObject(m, "DNS_QTYPE_KEY", PyInt_FromLong(DNS_QTYPE_KEY));
 	PyModule_AddObject(m, "DNS_RCODE_YXDOMAIN", PyInt_FromLong(DNS_RCODE_YXDOMAIN));
 	PyModule_AddObject(m, "DNS_FLAG_BROADCAST", PyInt_FromLong(DNS_FLAG_BROADCAST));
-	PyModule_AddObject(m, "DNS_QTYPE_NETBIOS", PyInt_FromLong(DNS_QTYPE_NETBIOS));
-	PyModule_AddObject(m, "DNS_QTYPE_DNSKEY", PyInt_FromLong(DNS_QTYPE_DNSKEY));
-	PyModule_AddObject(m, "DNS_QTYPE_WINSR", PyInt_FromLong(DNS_QTYPE_WINSR));
-	PyModule_AddObject(m, "DNS_QCLASS_NONE", PyInt_FromLong(DNS_QCLASS_NONE));
-	PyModule_AddObject(m, "DNS_QTYPE_SOA", PyInt_FromLong(DNS_QTYPE_SOA));
-	PyModule_AddObject(m, "DNS_RCODE_NOTIMP", PyInt_FromLong(DNS_RCODE_NOTIMP));
-	PyModule_AddObject(m, "DNS_QTYPE_RRSIG", PyInt_FromLong(DNS_QTYPE_RRSIG));
-	PyModule_AddObject(m, "DNS_OPCODE_REFRESH", PyInt_FromLong(DNS_OPCODE_REFRESH));
-	PyModule_AddObject(m, "DNS_QTYPE_DHCID", PyInt_FromLong(DNS_QTYPE_DHCID));
-	PyModule_AddObject(m, "DNS_OPCODE_IQUERY", PyInt_FromLong(DNS_OPCODE_IQUERY));
+	PyModule_AddObject(m, "DNS_QTYPE_NS", PyInt_FromLong(DNS_QTYPE_NS));
+	PyModule_AddObject(m, "DNS_QTYPE_MX", PyInt_FromLong(DNS_QTYPE_MX));
+	PyModule_AddObject(m, "DNS_FLAG_TRUNCATION", PyInt_FromLong(DNS_FLAG_TRUNCATION));
+	PyModule_AddObject(m, "DNS_OPCODE_MULTI_HOME_REG", PyInt_FromLong(DNS_OPCODE_MULTI_HOME_REG));
+	PyModule_AddObject(m, "DNS_QTYPE_MF", PyInt_FromLong(DNS_QTYPE_MF));
+	PyModule_AddObject(m, "DNS_RCODE_NOTZONE", PyInt_FromLong(DNS_RCODE_NOTZONE));
+	PyModule_AddObject(m, "DNS_QTYPE_RP", PyInt_FromLong(DNS_QTYPE_RP));
+	PyModule_AddObject(m, "DNS_RCODE_SERVFAIL", PyInt_FromLong(DNS_RCODE_SERVFAIL));
+	PyModule_AddObject(m, "DNS_QTYPE_WKS", PyInt_FromLong(DNS_QTYPE_WKS));
+	PyModule_AddObject(m, "DNS_OPCODE_RELEASE", PyInt_FromLong(DNS_OPCODE_RELEASE));
+	PyModule_AddObject(m, "DNS_QTYPE_PTR", PyInt_FromLong(DNS_QTYPE_PTR));
+	PyModule_AddObject(m, "DNS_QTYPE_DS", PyInt_FromLong(DNS_QTYPE_DS));
+	PyModule_AddObject(m, "DNS_SERVICE_PORT", PyInt_FromLong(53));
 	PyModule_AddObject(m, "DNS_FLAG_REPLY", PyInt_FromLong(DNS_FLAG_REPLY));
+	PyModule_AddObject(m, "DNS_QTYPE_WINS", PyInt_FromLong(DNS_QTYPE_WINS));
+	PyModule_AddObject(m, "DNS_QTYPE_RRSIG", PyInt_FromLong(DNS_QTYPE_RRSIG));
+	PyModule_AddObject(m, "DNS_QTYPE_AFSDB", PyInt_FromLong(DNS_QTYPE_AFSDB));
+	PyModule_AddObject(m, "DNS_QTYPE_MD", PyInt_FromLong(DNS_QTYPE_MD));
+	PyModule_AddObject(m, "DNS_QTYPE_WINSR", PyInt_FromLong(DNS_QTYPE_WINSR));
+	PyModule_AddObject(m, "DNS_QTYPE_MR", PyInt_FromLong(DNS_QTYPE_MR));
+	PyModule_AddObject(m, "DNS_QTYPE_LOC", PyInt_FromLong(DNS_QTYPE_LOC));
+	PyModule_AddObject(m, "DNS_FLAG_AUTHORITATIVE", PyInt_FromLong(DNS_FLAG_AUTHORITATIVE));
+	PyModule_AddObject(m, "DNS_QTYPE_DHCID", PyInt_FromLong(DNS_QTYPE_DHCID));
+	PyModule_AddObject(m, "DNS_QTYPE_DNAME", PyInt_FromLong(DNS_QTYPE_DNAME));
+	PyModule_AddObject(m, "DNS_RCODE_NXDOMAIN", PyInt_FromLong(DNS_RCODE_NXDOMAIN));
 	Py_INCREF((PyObject *)(void *)&dns_name_question_Type);
 	PyModule_AddObject(m, "name_question", (PyObject *)(void *)&dns_name_question_Type);
 	Py_INCREF((PyObject *)(void *)&dns_rdata_data_Type);

@@ -44,10 +44,10 @@ staticforward PyTypeObject rpc_if_id_t_Type;
 staticforward PyTypeObject epm_twr_p_t_Type;
 staticforward PyTypeObject epmapper_InterfaceType;
 
-void initepmapper(void);static PyTypeObject *policy_handle_Type;
-static PyTypeObject *Object_Type;
-static PyTypeObject *ClientConnection_Type;
+void initepmapper(void);static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *GUID_Type;
+static PyTypeObject *policy_handle_Type;
+static PyTypeObject *Object_Type;
 
 static PyObject *py_epm_rhs_dnet_nsp_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -2085,28 +2085,20 @@ static PyMethodDef epmapper_methods[] = {
 void initepmapper(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_misc;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_talloc;
+	PyObject *dep_samba_dcerpc_base;
+	PyObject *dep_samba_dcerpc_misc;
 
-	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
-	if (dep_samba_dcerpc_misc == NULL)
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
 		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
 		return;
 
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
-		return;
-
-	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
-	if (policy_handle_Type == NULL)
-		return;
-
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
+	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
+	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
@@ -2115,6 +2107,14 @@ void initepmapper(void)
 
 	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
 	if (GUID_Type == NULL)
+		return;
+
+	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
+	if (policy_handle_Type == NULL)
+		return;
+
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	epm_rhs_dnet_nsp_Type.tp_base = Object_Type;
@@ -2363,45 +2363,45 @@ void initepmapper(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "EPM_PROTOCOL_OSI_CLNS", PyInt_FromLong(EPM_PROTOCOL_OSI_CLNS));
+	PyModule_AddObject(m, "EPM_PROTOCOL_VINES_SPP", PyInt_FromLong(EPM_PROTOCOL_VINES_SPP));
 	PyModule_AddObject(m, "EPM_PROTOCOL_NCACN", PyInt_FromLong(EPM_PROTOCOL_NCACN));
-	PyModule_AddObject(m, "RPC_C_VERS_UPTO", PyInt_FromLong(RPC_C_VERS_UPTO));
+	PyModule_AddObject(m, "EPM_PROTOCOL_HTTP", PyInt_FromLong(EPM_PROTOCOL_HTTP));
+	PyModule_AddObject(m, "RPC_C_EP_ALL_ELTS", PyInt_FromLong(RPC_C_EP_ALL_ELTS));
 	PyModule_AddObject(m, "EPM_PROTOCOL_DSP", PyInt_FromLong(EPM_PROTOCOL_DSP));
+	PyModule_AddObject(m, "EPM_PROTOCOL_STREETTALK", PyInt_FromLong(EPM_PROTOCOL_STREETTALK));
+	PyModule_AddObject(m, "EPM_PROTOCOL_UDP", PyInt_FromLong(EPM_PROTOCOL_UDP));
 	PyModule_AddObject(m, "EPM_PROTOCOL_NB_IPX", PyInt_FromLong(EPM_PROTOCOL_NB_IPX));
-	PyModule_AddObject(m, "RPC_C_VERS_COMPATIBLE", PyInt_FromLong(RPC_C_VERS_COMPATIBLE));
-	PyModule_AddObject(m, "EPM_PROTOCOL_OSI_TP4", PyInt_FromLong(EPM_PROTOCOL_OSI_TP4));
-	PyModule_AddObject(m, "EPM_PROTOCOL_APPLETALK", PyInt_FromLong(EPM_PROTOCOL_APPLETALK));
-	PyModule_AddObject(m, "EPMAPPER_STATUS_OK", PyInt_FromLong(0));
-	PyModule_AddObject(m, "EPMAPPER_STATUS_CANT_PERFORM_OP", PyInt_FromLong(0x6d8));
 	PyModule_AddObject(m, "EPM_PROTOCOL_IP", PyInt_FromLong(EPM_PROTOCOL_IP));
+	PyModule_AddObject(m, "EPM_PROTOCOL_SMB", PyInt_FromLong(EPM_PROTOCOL_SMB));
+	PyModule_AddObject(m, "EPM_PROTOCOL_IPX", PyInt_FromLong(EPM_PROTOCOL_IPX));
+	PyModule_AddObject(m, "EPM_PROTOCOL_NAMED_PIPE", PyInt_FromLong(EPM_PROTOCOL_NAMED_PIPE));
+	PyModule_AddObject(m, "EPM_PROTOCOL_DDP", PyInt_FromLong(EPM_PROTOCOL_DDP));
+	PyModule_AddObject(m, "RPC_C_VERS_ALL", PyInt_FromLong(RPC_C_VERS_ALL));
+	PyModule_AddObject(m, "RPC_C_VERS_COMPATIBLE", PyInt_FromLong(RPC_C_VERS_COMPATIBLE));
+	PyModule_AddObject(m, "RPC_C_EP_MATCH_BY_OBJ", PyInt_FromLong(RPC_C_EP_MATCH_BY_OBJ));
+	PyModule_AddObject(m, "EPM_PROTOCOL_NULL", PyInt_FromLong(EPM_PROTOCOL_NULL));
+	PyModule_AddObject(m, "EPM_PROTOCOL_NETBEUI", PyInt_FromLong(EPM_PROTOCOL_NETBEUI));
+	PyModule_AddObject(m, "EPM_PROTOCOL_VINES_IPC", PyInt_FromLong(EPM_PROTOCOL_VINES_IPC));
 	PyModule_AddObject(m, "RPC_C_EP_MATCH_BY_IF", PyInt_FromLong(RPC_C_EP_MATCH_BY_IF));
 	PyModule_AddObject(m, "EPMAPPER_STATUS_NO_MEMORY", PyInt_FromLong(0x16C9A012));
-	PyModule_AddObject(m, "EPM_PROTOCOL_SMB", PyInt_FromLong(EPM_PROTOCOL_SMB));
-	PyModule_AddObject(m, "EPM_PROTOCOL_DDP", PyInt_FromLong(EPM_PROTOCOL_DDP));
-	PyModule_AddObject(m, "EPM_PROTOCOL_IPX", PyInt_FromLong(EPM_PROTOCOL_IPX));
-	PyModule_AddObject(m, "RPC_C_EP_MATCH_BY_OBJ", PyInt_FromLong(RPC_C_EP_MATCH_BY_OBJ));
-	PyModule_AddObject(m, "RPC_C_VERS_EXACT", PyInt_FromLong(RPC_C_VERS_EXACT));
-	PyModule_AddObject(m, "EPM_PROTOCOL_VINES_IPC", PyInt_FromLong(EPM_PROTOCOL_VINES_IPC));
-	PyModule_AddObject(m, "EPM_PROTOCOL_NCALRPC", PyInt_FromLong(EPM_PROTOCOL_NCALRPC));
-	PyModule_AddObject(m, "EPM_PROTOCOL_NULL", PyInt_FromLong(EPM_PROTOCOL_NULL));
-	PyModule_AddObject(m, "EPM_PROTOCOL_NETBIOS", PyInt_FromLong(EPM_PROTOCOL_NETBIOS));
-	PyModule_AddObject(m, "EPM_PROTOCOL_UUID", PyInt_FromLong(EPM_PROTOCOL_UUID));
-	PyModule_AddObject(m, "RPC_C_EP_MATCH_BY_BOTH", PyInt_FromLong(RPC_C_EP_MATCH_BY_BOTH));
-	PyModule_AddObject(m, "EPM_PROTOCOL_HTTP", PyInt_FromLong(EPM_PROTOCOL_HTTP));
-	PyModule_AddObject(m, "EPM_PROTOCOL_DNET_NSP", PyInt_FromLong(EPM_PROTOCOL_DNET_NSP));
-	PyModule_AddObject(m, "EPM_PROTOCOL_VINES_SPP", PyInt_FromLong(EPM_PROTOCOL_VINES_SPP));
-	PyModule_AddObject(m, "RPC_C_EP_ALL_ELTS", PyInt_FromLong(RPC_C_EP_ALL_ELTS));
-	PyModule_AddObject(m, "EPM_PROTOCOL_NCADG", PyInt_FromLong(EPM_PROTOCOL_NCADG));
 	PyModule_AddObject(m, "EPM_PROTOCOL_TCP", PyInt_FromLong(EPM_PROTOCOL_TCP));
-	PyModule_AddObject(m, "RPC_C_VERS_ALL", PyInt_FromLong(RPC_C_VERS_ALL));
-	PyModule_AddObject(m, "RPC_C_VERS_MAJOR_ONLY", PyInt_FromLong(RPC_C_VERS_MAJOR_ONLY));
-	PyModule_AddObject(m, "EPM_PROTOCOL_UDP", PyInt_FromLong(EPM_PROTOCOL_UDP));
-	PyModule_AddObject(m, "EPM_PROTOCOL_NAMED_PIPE", PyInt_FromLong(EPM_PROTOCOL_NAMED_PIPE));
-	PyModule_AddObject(m, "EPM_PROTOCOL_SPX", PyInt_FromLong(EPM_PROTOCOL_SPX));
-	PyModule_AddObject(m, "EPM_PROTOCOL_NETBEUI", PyInt_FromLong(EPM_PROTOCOL_NETBEUI));
-	PyModule_AddObject(m, "EPM_PROTOCOL_STREETTALK", PyInt_FromLong(EPM_PROTOCOL_STREETTALK));
+	PyModule_AddObject(m, "EPM_PROTOCOL_UUID", PyInt_FromLong(EPM_PROTOCOL_UUID));
+	PyModule_AddObject(m, "EPMAPPER_STATUS_OK", PyInt_FromLong(0));
+	PyModule_AddObject(m, "RPC_C_VERS_EXACT", PyInt_FromLong(RPC_C_VERS_EXACT));
+	PyModule_AddObject(m, "EPM_PROTOCOL_OSI_CLNS", PyInt_FromLong(EPM_PROTOCOL_OSI_CLNS));
+	PyModule_AddObject(m, "EPM_PROTOCOL_DNET_NSP", PyInt_FromLong(EPM_PROTOCOL_DNET_NSP));
 	PyModule_AddObject(m, "EPM_PROTOCOL_UNIX_DS", PyInt_FromLong(EPM_PROTOCOL_UNIX_DS));
+	PyModule_AddObject(m, "RPC_C_EP_MATCH_BY_BOTH", PyInt_FromLong(RPC_C_EP_MATCH_BY_BOTH));
+	PyModule_AddObject(m, "EPMAPPER_STATUS_CANT_PERFORM_OP", PyInt_FromLong(0x6d8));
+	PyModule_AddObject(m, "RPC_C_VERS_UPTO", PyInt_FromLong(RPC_C_VERS_UPTO));
+	PyModule_AddObject(m, "EPM_PROTOCOL_NCADG", PyInt_FromLong(EPM_PROTOCOL_NCADG));
+	PyModule_AddObject(m, "EPM_PROTOCOL_APPLETALK", PyInt_FromLong(EPM_PROTOCOL_APPLETALK));
+	PyModule_AddObject(m, "EPM_PROTOCOL_OSI_TP4", PyInt_FromLong(EPM_PROTOCOL_OSI_TP4));
 	PyModule_AddObject(m, "EPMAPPER_STATUS_NO_MORE_ENTRIES", PyInt_FromLong(0x16c9a0d6));
+	PyModule_AddObject(m, "EPM_PROTOCOL_NETBIOS", PyInt_FromLong(EPM_PROTOCOL_NETBIOS));
+	PyModule_AddObject(m, "EPM_PROTOCOL_NCALRPC", PyInt_FromLong(EPM_PROTOCOL_NCALRPC));
+	PyModule_AddObject(m, "EPM_PROTOCOL_SPX", PyInt_FromLong(EPM_PROTOCOL_SPX));
+	PyModule_AddObject(m, "RPC_C_VERS_MAJOR_ONLY", PyInt_FromLong(RPC_C_VERS_MAJOR_ONLY));
 	Py_INCREF((PyObject *)(void *)&epm_rhs_dnet_nsp_Type);
 	PyModule_AddObject(m, "epm_rhs_dnet_nsp", (PyObject *)(void *)&epm_rhs_dnet_nsp_Type);
 	Py_INCREF((PyObject *)(void *)&epm_rhs_osi_tp4_Type);

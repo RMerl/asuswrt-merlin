@@ -162,17 +162,17 @@ struct dnsp_srv {
 
 union dnsRecordData {
 	NTTIME timestamp;/* [case(DNS_TYPE_TOMBSTONE)] */
-	const char * ipv4;/* [flag(LIBNDR_FLAG_BIGENDIAN),case(DNS_TYPE_A)] */
+	const char * ipv4;/* [case(DNS_TYPE_A),flag(LIBNDR_FLAG_BIGENDIAN)] */
 	const char * ns;/* [case(DNS_TYPE_NS)] */
 	const char * cname;/* [case(DNS_TYPE_CNAME)] */
 	struct dnsp_soa soa;/* [flag(LIBNDR_FLAG_BIGENDIAN),case(DNS_TYPE_SOA)] */
-	struct dnsp_mx mx;/* [flag(LIBNDR_FLAG_BIGENDIAN),case(DNS_TYPE_MX)] */
+	struct dnsp_mx mx;/* [case(DNS_TYPE_MX),flag(LIBNDR_FLAG_BIGENDIAN)] */
 	const char * txt;/* [case(DNS_TYPE_TXT)] */
 	const char * ptr;/* [case(DNS_TYPE_PTR)] */
 	struct dnsp_hinfo hinfo;/* [case(DNS_TYPE_HINFO)] */
 	const char * ipv6;/* [case(DNS_TYPE_AAAA)] */
 	struct dnsp_srv srv;/* [case(DNS_TYPE_SRV),flag(LIBNDR_FLAG_BIGENDIAN)] */
-	DATA_BLOB data;/* [default,flag(LIBNDR_FLAG_REMAINING)] */
+	DATA_BLOB data;/* [flag(LIBNDR_FLAG_REMAINING),default] */
 }/* [nodiscriminant,gensize] */;
 
 struct dnsp_DnssrvRpcRecord {

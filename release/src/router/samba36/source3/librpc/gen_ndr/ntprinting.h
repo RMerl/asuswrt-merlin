@@ -19,7 +19,7 @@ struct ntprinting_form {
 	uint32_t top;
 	uint32_t right;
 	uint32_t bottom;
-}/* [public,flag(LIBNDR_FLAG_NOALIGN)] */;
+}/* [flag(LIBNDR_FLAG_NOALIGN),public] */;
 
 struct ntprinting_driver {
 	uint32_t string_flags;/* [skip] */
@@ -33,7 +33,7 @@ struct ntprinting_driver {
 	const char * monitorname;/* [flag(ndr_ntprinting_string_flags(r->string_flags))] */
 	const char * defaultdatatype;/* [flag(ndr_ntprinting_string_flags(r->string_flags))] */
 	const char ** dependent_files;/* [flag((ndr_ntprinting_string_flags(r->string_flags)&~LIBNDR_FLAG_STR_NULLTERM)|LIBNDR_FLAG_STR_NOTERM|LIBNDR_FLAG_REMAINING)] */
-}/* [flag(LIBNDR_FLAG_NOALIGN),public] */;
+}/* [public,flag(LIBNDR_FLAG_NOALIGN)] */;
 
 struct ntprinting_devicemode {
 	uint32_t string_flags;/* [skip] */
@@ -72,7 +72,7 @@ struct ntprinting_devicemode {
 	uint32_t panningwidth;
 	uint32_t panningheight;
 	DATA_BLOB *nt_dev_private;/* [unique] */
-}/* [flag(LIBNDR_FLAG_NOALIGN),public] */;
+}/* [public,flag(LIBNDR_FLAG_NOALIGN)] */;
 
 struct ntprinting_printer_data {
 	uint32_t string_flags;/* [skip] */

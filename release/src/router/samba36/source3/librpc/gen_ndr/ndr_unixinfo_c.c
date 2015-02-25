@@ -965,7 +965,7 @@ static void dcerpc_unixinfo_GetPWUid_done(struct tevent_req *subreq);
 struct tevent_req *dcerpc_unixinfo_GetPWUid_send(TALLOC_CTX *mem_ctx,
 						 struct tevent_context *ev,
 						 struct dcerpc_binding_handle *h,
-						 uint32_t *_count /* [in,out] [ref,range(0,1023)] */,
+						 uint32_t *_count /* [in,out] [range(0,1023),ref] */,
 						 uint64_t *_uids /* [in] [size_is(*count)] */,
 						 struct unixinfo_GetPWUidInfo *_infos /* [out] [size_is(*count)] */)
 {
@@ -1076,7 +1076,7 @@ NTSTATUS dcerpc_unixinfo_GetPWUid_recv(struct tevent_req *req,
 
 NTSTATUS dcerpc_unixinfo_GetPWUid(struct dcerpc_binding_handle *h,
 				  TALLOC_CTX *mem_ctx,
-				  uint32_t *_count /* [in,out] [ref,range(0,1023)] */,
+				  uint32_t *_count /* [in,out] [range(0,1023),ref] */,
 				  uint64_t *_uids /* [in] [size_is(*count)] */,
 				  struct unixinfo_GetPWUidInfo *_infos /* [out] [size_is(*count)] */,
 				  NTSTATUS *result)

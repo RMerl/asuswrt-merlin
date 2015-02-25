@@ -47,13 +47,13 @@ enum NL_AUTH_MESSAGE_TYPE
 #define NL_FLAG_UTF8_NETBIOS_COMPUTER_NAME ( 0x00000010 )
 
 union NL_AUTH_MESSAGE_BUFFER {
-	const char * a;/* [flag(LIBNDR_FLAG_STR_ASCII|LIBNDR_FLAG_STR_NULLTERM),case(NL_FLAG_OEM_NETBIOS_DOMAIN_NAME)] */
+	const char * a;/* [case(NL_FLAG_OEM_NETBIOS_DOMAIN_NAME),flag(LIBNDR_FLAG_STR_ASCII|LIBNDR_FLAG_STR_NULLTERM)] */
 	const char * u;/* [case(NL_FLAG_UTF8_DNS_DOMAIN_NAME)] */
-}/* [nodiscriminant,noprint,public] */;
+}/* [public,noprint,nodiscriminant] */;
 
 union NL_AUTH_MESSAGE_BUFFER_REPLY {
 	uint32_t dummy;/* [case(NL_NEGOTIATE_RESPONSE)] */
-}/* [noprint,nodiscriminant,public] */;
+}/* [public,noprint,nodiscriminant] */;
 
 struct NL_AUTH_MESSAGE {
 	enum NL_AUTH_MESSAGE_TYPE MessageType;
@@ -102,7 +102,7 @@ struct NL_AUTH_SIGNATURE {
 	uint8_t SequenceNumber[8];
 	uint8_t Checksum[8];
 	uint8_t Confounder[8];
-}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
 
 struct NL_AUTH_SHA2_SIGNATURE {
 	enum NL_SIGNATURE_ALGORITHM SignatureAlgorithm;/* [value(NL_SIGN_HMAC_SHA256)] */
@@ -112,7 +112,7 @@ struct NL_AUTH_SHA2_SIGNATURE {
 	uint8_t SequenceNumber[8];
 	uint8_t Checksum[32];
 	uint8_t Confounder[8];
-}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
+}/* [flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
 
 #endif /* _HEADER_schannel */
 #endif /* _PIDL_HEADER_schannel */

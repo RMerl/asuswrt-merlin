@@ -12,8 +12,8 @@
 staticforward PyTypeObject unixid_Type;
 staticforward PyTypeObject id_map_Type;
 
-void initidmap(void);static PyTypeObject *Object_Type;
-static PyTypeObject *dom_sid_Type;
+void initidmap(void);static PyTypeObject *dom_sid_Type;
+static PyTypeObject *Object_Type;
 
 static PyObject *py_unixid_get_id(PyObject *obj, void *closure)
 {
@@ -294,12 +294,12 @@ void initidmap(void)
 	if (dep_samba_dcerpc_security == NULL)
 		return;
 
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
-		return;
-
 	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
 	if (dom_sid_Type == NULL)
+		return;
+
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	unixid_Type.tp_base = Object_Type;
@@ -321,14 +321,14 @@ void initidmap(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "ID_MAPPED", PyInt_FromLong(ID_MAPPED));
 	PyModule_AddObject(m, "ID_UNKNOWN", PyInt_FromLong(ID_UNKNOWN));
-	PyModule_AddObject(m, "ID_EXPIRED", PyInt_FromLong(ID_EXPIRED));
+	PyModule_AddObject(m, "ID_MAPPED", PyInt_FromLong(ID_MAPPED));
 	PyModule_AddObject(m, "ID_TYPE_UID", PyInt_FromLong(ID_TYPE_UID));
 	PyModule_AddObject(m, "ID_TYPE_BOTH", PyInt_FromLong(ID_TYPE_BOTH));
-	PyModule_AddObject(m, "ID_TYPE_NOT_SPECIFIED", PyInt_FromLong(ID_TYPE_NOT_SPECIFIED));
+	PyModule_AddObject(m, "ID_EXPIRED", PyInt_FromLong(ID_EXPIRED));
 	PyModule_AddObject(m, "ID_TYPE_GID", PyInt_FromLong(ID_TYPE_GID));
 	PyModule_AddObject(m, "ID_UNMAPPED", PyInt_FromLong(ID_UNMAPPED));
+	PyModule_AddObject(m, "ID_TYPE_NOT_SPECIFIED", PyInt_FromLong(ID_TYPE_NOT_SPECIFIED));
 	Py_INCREF((PyObject *)(void *)&unixid_Type);
 	PyModule_AddObject(m, "unixid", (PyObject *)(void *)&unixid_Type);
 	Py_INCREF((PyObject *)(void *)&id_map_Type);

@@ -14,8 +14,8 @@ staticforward PyTypeObject preg_header_Type;
 staticforward PyTypeObject preg_file_Type;
 staticforward PyTypeObject preg_InterfaceType;
 
-void initpreg(void);static PyTypeObject *Object_Type;
-static PyTypeObject *ClientConnection_Type;
+void initpreg(void);static PyTypeObject *ClientConnection_Type;
+static PyTypeObject *Object_Type;
 
 static PyObject *py_preg_entry_get__opening_bracket(PyObject *obj, void *closure)
 {
@@ -694,28 +694,28 @@ static PyMethodDef preg_methods[] = {
 void initpreg(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_talloc;
+	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_samba_dcerpc_misc;
-
-	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
-	if (dep_samba_dcerpc_base == NULL)
-		return;
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
+		return;
+
+	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
+	if (dep_samba_dcerpc_base == NULL)
 		return;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
-		return;
-
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
 	if (ClientConnection_Type == NULL)
+		return;
+
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	preg_entry_Type.tp_base = Object_Type;

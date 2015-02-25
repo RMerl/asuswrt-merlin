@@ -207,8 +207,8 @@ union epm_rhs {
 	struct epm_rhs_http http;/* [case(EPM_PROTOCOL_HTTP)] */
 	struct epm_rhs_unix_ds unix_ds;/* [case(EPM_PROTOCOL_UNIX_DS)] */
 	struct epm_rhs_null null;/* [case(EPM_PROTOCOL_NULL)] */
-	DATA_BLOB unknown;/* [flag(LIBNDR_FLAG_REMAINING),default] */
-}/* [flag(LIBNDR_FLAG_BIGENDIAN),nodiscriminant] */;
+	DATA_BLOB unknown;/* [default,flag(LIBNDR_FLAG_REMAINING)] */
+}/* [nodiscriminant,flag(LIBNDR_FLAG_BIGENDIAN)] */;
 
 struct epm_lhs {
 	enum epm_protocol protocol;
@@ -324,7 +324,7 @@ struct epm_Lookup {
 
 	struct {
 		uint32_t *num_ents;/* [ref] */
-		struct epm_entry_t *entries;/* [size_is(max_ents),length_is(*num_ents)] */
+		struct epm_entry_t *entries;/* [length_is(*num_ents),size_is(max_ents)] */
 		struct policy_handle *entry_handle;/* [ref] */
 		uint32_t result;
 	} out;

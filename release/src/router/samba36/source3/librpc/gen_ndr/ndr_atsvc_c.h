@@ -36,7 +36,7 @@ NTSTATUS dcerpc_atsvc_JobDel_r(struct dcerpc_binding_handle *h, TALLOC_CTX *mem_
 struct tevent_req *dcerpc_atsvc_JobDel_send(TALLOC_CTX *mem_ctx,
 					    struct tevent_context *ev,
 					    struct dcerpc_binding_handle *h,
-					    const char *_servername /* [in] [charset(UTF16),unique] */,
+					    const char *_servername /* [in] [unique,charset(UTF16)] */,
 					    uint32_t _min_job_id /* [in]  */,
 					    uint32_t _max_job_id /* [in]  */);
 NTSTATUS dcerpc_atsvc_JobDel_recv(struct tevent_req *req,
@@ -44,7 +44,7 @@ NTSTATUS dcerpc_atsvc_JobDel_recv(struct tevent_req *req,
 				  NTSTATUS *result);
 NTSTATUS dcerpc_atsvc_JobDel(struct dcerpc_binding_handle *h,
 			     TALLOC_CTX *mem_ctx,
-			     const char *_servername /* [in] [charset(UTF16),unique] */,
+			     const char *_servername /* [in] [unique,charset(UTF16)] */,
 			     uint32_t _min_job_id /* [in]  */,
 			     uint32_t _max_job_id /* [in]  */,
 			     NTSTATUS *result);

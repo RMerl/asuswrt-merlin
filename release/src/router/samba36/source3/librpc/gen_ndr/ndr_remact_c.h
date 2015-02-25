@@ -31,7 +31,7 @@ struct tevent_req *dcerpc_RemoteActivation_send(TALLOC_CTX *mem_ctx,
 						uint32_t *_AuthnHint /* [out] [ref] */,
 						struct COMVERSION *_ServerVersion /* [out] [ref] */,
 						WERROR *_hr /* [out] [ref] */,
-						struct MInterfacePointer **_ifaces /* [out] [ref,size_is(Interfaces)] */,
+						struct MInterfacePointer **_ifaces /* [out] [size_is(Interfaces),ref] */,
 						WERROR *_results /* [out] [size_is(Interfaces)] */);
 NTSTATUS dcerpc_RemoteActivation_recv(struct tevent_req *req,
 				      TALLOC_CTX *mem_ctx,
@@ -55,7 +55,7 @@ NTSTATUS dcerpc_RemoteActivation(struct dcerpc_binding_handle *h,
 				 uint32_t *_AuthnHint /* [out] [ref] */,
 				 struct COMVERSION *_ServerVersion /* [out] [ref] */,
 				 WERROR *_hr /* [out] [ref] */,
-				 struct MInterfacePointer **_ifaces /* [out] [ref,size_is(Interfaces)] */,
+				 struct MInterfacePointer **_ifaces /* [out] [size_is(Interfaces),ref] */,
 				 WERROR *_results /* [out] [size_is(Interfaces)] */,
 				 WERROR *result);
 

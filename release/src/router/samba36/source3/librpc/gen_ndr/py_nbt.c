@@ -51,8 +51,8 @@ staticforward PyTypeObject nbt_browse_local_master_announcement_Type;
 staticforward PyTypeObject nbt_browse_packet_Type;
 staticforward PyTypeObject nbt_InterfaceType;
 
-void initnbt(void);static PyTypeObject *ClientConnection_Type;
-static PyTypeObject *GUID_Type;
+void initnbt(void);static PyTypeObject *GUID_Type;
+static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *Object_Type;
 
 static PyObject *py_nbt_name_get_name(PyObject *obj, void *closure)
@@ -6703,43 +6703,43 @@ static PyMethodDef nbt_methods[] = {
 void initnbt(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_samr;
-	PyObject *dep_samba_dcerpc_svcctl;
 	PyObject *dep_samba_dcerpc_base;
-	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_security;
 	PyObject *dep_samba_dcerpc_misc;
-
-	dep_samba_dcerpc_samr = PyImport_ImportModule("samba.dcerpc.samr");
-	if (dep_samba_dcerpc_samr == NULL)
-		return;
-
-	dep_samba_dcerpc_svcctl = PyImport_ImportModule("samba.dcerpc.svcctl");
-	if (dep_samba_dcerpc_svcctl == NULL)
-		return;
+	PyObject *dep_samba_dcerpc_svcctl;
+	PyObject *dep_samba_dcerpc_security;
+	PyObject *dep_samba_dcerpc_samr;
+	PyObject *dep_talloc;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
-		return;
-
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
-		return;
-
-	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
-	if (dep_samba_dcerpc_security == NULL)
 		return;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
+	dep_samba_dcerpc_svcctl = PyImport_ImportModule("samba.dcerpc.svcctl");
+	if (dep_samba_dcerpc_svcctl == NULL)
+		return;
+
+	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
+	if (dep_samba_dcerpc_security == NULL)
+		return;
+
+	dep_samba_dcerpc_samr = PyImport_ImportModule("samba.dcerpc.samr");
+	if (dep_samba_dcerpc_samr == NULL)
+		return;
+
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
 		return;
 
 	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
 	if (GUID_Type == NULL)
+		return;
+
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
@@ -7020,126 +7020,126 @@ void initnbt(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "DomainAnnouncement", PyInt_FromLong(DomainAnnouncement));
-	PyModule_AddObject(m, "NBT_MAILSLOT_GETDC", PyString_FromString("\\MAILSLOT\\NET\\GETDC"));
-	PyModule_AddObject(m, "NBT_NM_CONFLICT", PyInt_FromLong(NBT_NM_CONFLICT));
-	PyModule_AddObject(m, "NBT_RCODE_RFS", PyInt_FromLong(NBT_RCODE_RFS));
-	PyModule_AddObject(m, "NETLOGON_ANNOUNCE_UAS", PyInt_FromLong(NETLOGON_ANNOUNCE_UAS));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_AVOID_NT4EMUL", PyInt_FromLong(NETLOGON_NT_VERSION_AVOID_NT4EMUL));
-	PyModule_AddObject(m, "NBT_SERVER_PDC", PyInt_FromLong(NBT_SERVER_PDC));
-	PyModule_AddObject(m, "NBT_NAME_SERVER", PyInt_FromLong(NBT_NAME_SERVER));
-	PyModule_AddObject(m, "NBT_NAME_PDC", PyInt_FromLong(NBT_NAME_PDC));
-	PyModule_AddObject(m, "SMB_TRANSACTION", PyInt_FromLong(SMB_TRANSACTION));
-	PyModule_AddObject(m, "NBT_RCODE_OK", PyInt_FromLong(NBT_RCODE_OK));
-	PyModule_AddObject(m, "MasterAnnouncement", PyInt_FromLong(MasterAnnouncement));
-	PyModule_AddObject(m, "DGRAM_BCAST", PyInt_FromLong(DGRAM_BCAST));
-	PyModule_AddObject(m, "NBT_SERVER_KDC", PyInt_FromLong(NBT_SERVER_KDC));
-	PyModule_AddObject(m, "DGRAM_NODE_P", PyInt_FromLong(DGRAM_NODE_P));
-	PyModule_AddObject(m, "GetBackupListResp", PyInt_FromLong(GetBackupListResp));
-	PyModule_AddObject(m, "LOGON_SAM_LOGON_RESPONSE", PyInt_FromLong(LOGON_SAM_LOGON_RESPONSE));
-	PyModule_AddObject(m, "DGRAM_ERROR", PyInt_FromLong(DGRAM_ERROR));
-	PyModule_AddObject(m, "NBT_NM_DEREGISTER", PyInt_FromLong(NBT_NM_DEREGISTER));
-	PyModule_AddObject(m, "NBT_RCODE_NAM", PyInt_FromLong(NBT_RCODE_NAM));
-	PyModule_AddObject(m, "NBT_RCODE", PyInt_FromLong(NBT_RCODE));
-	PyModule_AddObject(m, "NBT_OPCODE_REFRESH2", PyInt_FromLong(NBT_OPCODE_REFRESH2));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_5EX", PyInt_FromLong(NETLOGON_NT_VERSION_5EX));
-	PyModule_AddObject(m, "NBT_QTYPE_NAMESERVICE", PyInt_FromLong(NBT_QTYPE_NAMESERVICE));
-	PyModule_AddObject(m, "NBT_SERVER_DS", PyInt_FromLong(NBT_SERVER_DS));
-	PyModule_AddObject(m, "HostAnnouncement", PyInt_FromLong(HostAnnouncement));
-	PyModule_AddObject(m, "NBT_SERVER_SELECT_SECRET_DOMAIN_6", PyInt_FromLong(NBT_SERVER_SELECT_SECRET_DOMAIN_6));
-	PyModule_AddObject(m, "NBT_NAME_MASTER", PyInt_FromLong(NBT_NAME_MASTER));
-	PyModule_AddObject(m, "ResetBrowserState", PyInt_FromLong(ResetBrowserState));
-	PyModule_AddObject(m, "NBT_QCLASS_IP", PyInt_FromLong(NBT_QCLASS_IP));
-	PyModule_AddObject(m, "NBT_OPCODE_QUERY", PyInt_FromLong(NBT_OPCODE_QUERY));
-	PyModule_AddObject(m, "NBT_OPCODE_MULTI_HOME_REG", PyInt_FromLong(NBT_OPCODE_MULTI_HOME_REG));
-	PyModule_AddObject(m, "LOGON_SAM_LOGON_PAUSE_RESPONSE_EX", PyInt_FromLong(LOGON_SAM_LOGON_PAUSE_RESPONSE_EX));
-	PyModule_AddObject(m, "NBT_FLAG_BROADCAST", PyInt_FromLong(NBT_FLAG_BROADCAST));
-	PyModule_AddObject(m, "DGRAM_SMB", PyInt_FromLong(0xff534d42));
-	PyModule_AddObject(m, "BecomeBackup", PyInt_FromLong(BecomeBackup));
-	PyModule_AddObject(m, "NBT_NM_PERMANENT", PyInt_FromLong(NBT_NM_PERMANENT));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_GC", PyInt_FromLong(NETLOGON_NT_VERSION_GC));
-	PyModule_AddObject(m, "NBT_RCODE_CFT", PyInt_FromLong(NBT_RCODE_CFT));
-	PyModule_AddObject(m, "AnnouncementRequest", PyInt_FromLong(AnnouncementRequest));
-	PyModule_AddObject(m, "NBT_NAME_MS", PyInt_FromLong(NBT_NAME_MS));
-	PyModule_AddObject(m, "NBT_QTYPE_STATUS", PyInt_FromLong(NBT_QTYPE_STATUS));
-	PyModule_AddObject(m, "NBT_NODE_H", PyInt_FromLong(NBT_NODE_H));
-	PyModule_AddObject(m, "NBT_SERVER_GC", PyInt_FromLong(NBT_SERVER_GC));
-	PyModule_AddObject(m, "NBT_SERVER_TIMESERV", PyInt_FromLong(NBT_SERVER_TIMESERV));
-	PyModule_AddObject(m, "LocalMasterAnnouncement", PyInt_FromLong(LocalMasterAnnouncement));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_5", PyInt_FromLong(NETLOGON_NT_VERSION_5));
-	PyModule_AddObject(m, "DGRAM_ERROR_INVALID_DEST", PyInt_FromLong(DGRAM_ERROR_INVALID_DEST));
-	PyModule_AddObject(m, "NBT_NM_ACTIVE", PyInt_FromLong(NBT_NM_ACTIVE));
-	PyModule_AddObject(m, "DGRAM_ERROR_NAME_NOT_PRESENT", PyInt_FromLong(DGRAM_ERROR_NAME_NOT_PRESENT));
-	PyModule_AddObject(m, "DGRAM_NODE_NBDD", PyInt_FromLong(DGRAM_NODE_NBDD));
-	PyModule_AddObject(m, "DGRAM_DIRECT_UNIQUE", PyInt_FromLong(DGRAM_DIRECT_UNIQUE));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_1", PyInt_FromLong(NETLOGON_NT_VERSION_1));
-	PyModule_AddObject(m, "NBT_NODE_M", PyInt_FromLong(NBT_NODE_M));
-	PyModule_AddObject(m, "NBT_MAILSLOT_NETLOGON", PyString_FromString("\\MAILSLOT\\NET\\NETLOGON"));
-	PyModule_AddObject(m, "NBT_QTYPE_NETBIOS", PyInt_FromLong(NBT_QTYPE_NETBIOS));
-	PyModule_AddObject(m, "NBT_NODE_B", PyInt_FromLong(NBT_NODE_B));
-	PyModule_AddObject(m, "NBT_RCODE_ACT", PyInt_FromLong(NBT_RCODE_ACT));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_IP", PyInt_FromLong(NETLOGON_NT_VERSION_IP));
-	PyModule_AddObject(m, "NBT_OPCODE_RELEASE", PyInt_FromLong(NBT_OPCODE_RELEASE));
-	PyModule_AddObject(m, "NBT_OPCODE_WACK", PyInt_FromLong(NBT_OPCODE_WACK));
-	PyModule_AddObject(m, "NBT_SERVER_HAS_DNS_NAME", PyInt_FromLong(NBT_SERVER_HAS_DNS_NAME));
-	PyModule_AddObject(m, "NBT_SERVER_ADS_WEB_SERVICE", PyInt_FromLong(NBT_SERVER_ADS_WEB_SERVICE));
-	PyModule_AddObject(m, "NBT_SERVER_WRITABLE", PyInt_FromLong(NBT_SERVER_WRITABLE));
-	PyModule_AddObject(m, "DGRAM_QUERY", PyInt_FromLong(DGRAM_QUERY));
-	PyModule_AddObject(m, "NBT_NAME_LOGON", PyInt_FromLong(NBT_NAME_LOGON));
-	PyModule_AddObject(m, "NBT_SERVER_NDNC", PyInt_FromLong(NBT_SERVER_NDNC));
-	PyModule_AddObject(m, "NBT_OPCODE", PyInt_FromLong(NBT_OPCODE));
-	PyModule_AddObject(m, "Election", PyInt_FromLong(Election));
-	PyModule_AddObject(m, "LOGON_SAM_LOGON_USER_UNKNOWN", PyInt_FromLong(LOGON_SAM_LOGON_USER_UNKNOWN));
-	PyModule_AddObject(m, "NBT_SERVER_FOREST_ROOT", PyInt_FromLong(NBT_SERVER_FOREST_ROOT));
-	PyModule_AddObject(m, "NBT_FLAG_RECURSION_DESIRED", PyInt_FromLong(NBT_FLAG_RECURSION_DESIRED));
-	PyModule_AddObject(m, "NBT_DGRAM_SERVICE_PORT", PyInt_FromLong(138));
-	PyModule_AddObject(m, "NBT_SERVER_LDAP", PyInt_FromLong(NBT_SERVER_LDAP));
-	PyModule_AddObject(m, "NBT_MAILSLOT_NTLOGON", PyString_FromString("\\MAILSLOT\\NET\\NTLOGON"));
-	PyModule_AddObject(m, "DGRAM_DIRECT_GROUP", PyInt_FromLong(DGRAM_DIRECT_GROUP));
-	PyModule_AddObject(m, "NBT_NAME_USER", PyInt_FromLong(NBT_NAME_USER));
-	PyModule_AddObject(m, "NBT_RCODE_IMP", PyInt_FromLong(NBT_RCODE_IMP));
-	PyModule_AddObject(m, "NBT_NM_OWNER_TYPE", PyInt_FromLong(NBT_NM_OWNER_TYPE));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_LOCAL", PyInt_FromLong(NETLOGON_NT_VERSION_LOCAL));
-	PyModule_AddObject(m, "DGRAM_FLAG_MORE", PyInt_FromLong(DGRAM_FLAG_MORE));
-	PyModule_AddObject(m, "NBT_NAME_SERVICE_PORT", PyInt_FromLong(137));
-	PyModule_AddObject(m, "DGRAM_FLAG_FIRST", PyInt_FromLong(DGRAM_FLAG_FIRST));
-	PyModule_AddObject(m, "LOGON_RESPONSE2", PyInt_FromLong(LOGON_RESPONSE2));
-	PyModule_AddObject(m, "NBT_SERVER_FULL_SECRET_DOMAIN_6", PyInt_FromLong(NBT_SERVER_FULL_SECRET_DOMAIN_6));
-	PyModule_AddObject(m, "NBT_FLAG_RECURSION_AVAIL", PyInt_FromLong(NBT_FLAG_RECURSION_AVAIL));
-	PyModule_AddObject(m, "GetBackupListReq", PyInt_FromLong(GetBackupListReq));
-	PyModule_AddObject(m, "LOGON_SAM_LOGON_PAUSE_RESPONSE", PyInt_FromLong(LOGON_SAM_LOGON_PAUSE_RESPONSE));
-	PyModule_AddObject(m, "DGRAM_NODE_M", PyInt_FromLong(DGRAM_NODE_M));
 	PyModule_AddObject(m, "NBT_MAILSLOT_BROWSE", PyString_FromString("\\MAILSLOT\\BROWSE"));
-	PyModule_AddObject(m, "NBT_NAME_BROWSER", PyInt_FromLong(NBT_NAME_BROWSER));
-	PyModule_AddObject(m, "NBT_RCODE_SVR", PyInt_FromLong(NBT_RCODE_SVR));
-	PyModule_AddObject(m, "DGRAM_NODE_B", PyInt_FromLong(DGRAM_NODE_B));
-	PyModule_AddObject(m, "DGRAM_ERROR_INVALID_SOURCE", PyInt_FromLong(DGRAM_ERROR_INVALID_SOURCE));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_WITH_CLOSEST_SITE", PyInt_FromLong(NETLOGON_NT_VERSION_WITH_CLOSEST_SITE));
-	PyModule_AddObject(m, "NBT_QTYPE_ADDRESS", PyInt_FromLong(NBT_QTYPE_ADDRESS));
-	PyModule_AddObject(m, "LOGON_SAM_LOGON_RESPONSE_EX", PyInt_FromLong(LOGON_SAM_LOGON_RESPONSE_EX));
-	PyModule_AddObject(m, "DGRAM_FLAG_NODE_TYPE", PyInt_FromLong(DGRAM_FLAG_NODE_TYPE));
-	PyModule_AddObject(m, "NETLOGON_RESPONSE_FROM_PDC", PyInt_FromLong(NETLOGON_RESPONSE_FROM_PDC));
-	PyModule_AddObject(m, "LOGON_SAM_LOGON_REQUEST", PyInt_FromLong(LOGON_SAM_LOGON_REQUEST));
-	PyModule_AddObject(m, "NBT_NODE_P", PyInt_FromLong(NBT_NODE_P));
-	PyModule_AddObject(m, "NBT_FLAG_REPLY", PyInt_FromLong(NBT_FLAG_REPLY));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_PDC", PyInt_FromLong(NETLOGON_NT_VERSION_PDC));
-	PyModule_AddObject(m, "DGRAM_QUERY_POSITIVE", PyInt_FromLong(DGRAM_QUERY_POSITIVE));
-	PyModule_AddObject(m, "LOGON_PRIMARY_QUERY", PyInt_FromLong(LOGON_PRIMARY_QUERY));
-	PyModule_AddObject(m, "NBT_OPCODE_REFRESH", PyInt_FromLong(NBT_OPCODE_REFRESH));
-	PyModule_AddObject(m, "NBT_RCODE_FMT", PyInt_FromLong(NBT_RCODE_FMT));
-	PyModule_AddObject(m, "NBT_OPCODE_REGISTER", PyInt_FromLong(NBT_OPCODE_REGISTER));
-	PyModule_AddObject(m, "LOGON_SAM_LOGON_USER_UNKNOWN_EX", PyInt_FromLong(LOGON_SAM_LOGON_USER_UNKNOWN_EX));
-	PyModule_AddObject(m, "NBT_SERVER_CLOSEST", PyInt_FromLong(NBT_SERVER_CLOSEST));
-	PyModule_AddObject(m, "NBT_NAME_CLIENT", PyInt_FromLong(NBT_NAME_CLIENT));
-	PyModule_AddObject(m, "LOGON_REQUEST", PyInt_FromLong(LOGON_REQUEST));
-	PyModule_AddObject(m, "NETLOGON_NT_VERSION_5EX_WITH_IP", PyInt_FromLong(NETLOGON_NT_VERSION_5EX_WITH_IP));
 	PyModule_AddObject(m, "NBT_SERVER_IS_DEFAULT_NC", PyInt_FromLong(NBT_SERVER_IS_DEFAULT_NC));
-	PyModule_AddObject(m, "DGRAM_QUERY_NEGATIVE", PyInt_FromLong(DGRAM_QUERY_NEGATIVE));
-	PyModule_AddObject(m, "NBT_NM_GROUP", PyInt_FromLong(NBT_NM_GROUP));
-	PyModule_AddObject(m, "NBT_SERVER_GOOD_TIMESERV", PyInt_FromLong(NBT_SERVER_GOOD_TIMESERV));
-	PyModule_AddObject(m, "NBT_FLAG_AUTHORITATIVE", PyInt_FromLong(NBT_FLAG_AUTHORITATIVE));
+	PyModule_AddObject(m, "NBT_NODE_P", PyInt_FromLong(NBT_NODE_P));
+	PyModule_AddObject(m, "NBT_SERVER_HAS_DNS_NAME", PyInt_FromLong(NBT_SERVER_HAS_DNS_NAME));
+	PyModule_AddObject(m, "NBT_OPCODE_REGISTER", PyInt_FromLong(NBT_OPCODE_REGISTER));
+	PyModule_AddObject(m, "LOGON_RESPONSE2", PyInt_FromLong(LOGON_RESPONSE2));
+	PyModule_AddObject(m, "NBT_MAILSLOT_NTLOGON", PyString_FromString("\\MAILSLOT\\NET\\NTLOGON"));
+	PyModule_AddObject(m, "ResetBrowserState", PyInt_FromLong(ResetBrowserState));
+	PyModule_AddObject(m, "AnnouncementRequest", PyInt_FromLong(AnnouncementRequest));
+	PyModule_AddObject(m, "NBT_RCODE_FMT", PyInt_FromLong(NBT_RCODE_FMT));
+	PyModule_AddObject(m, "NBT_NM_PERMANENT", PyInt_FromLong(NBT_NM_PERMANENT));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_IP", PyInt_FromLong(NETLOGON_NT_VERSION_IP));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_PDC", PyInt_FromLong(NETLOGON_NT_VERSION_PDC));
+	PyModule_AddObject(m, "NBT_SERVER_GC", PyInt_FromLong(NBT_SERVER_GC));
+	PyModule_AddObject(m, "NBT_RCODE", PyInt_FromLong(NBT_RCODE));
+	PyModule_AddObject(m, "NBT_NM_DEREGISTER", PyInt_FromLong(NBT_NM_DEREGISTER));
+	PyModule_AddObject(m, "DGRAM_FLAG_MORE", PyInt_FromLong(DGRAM_FLAG_MORE));
+	PyModule_AddObject(m, "DomainAnnouncement", PyInt_FromLong(DomainAnnouncement));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_WITH_CLOSEST_SITE", PyInt_FromLong(NETLOGON_NT_VERSION_WITH_CLOSEST_SITE));
+	PyModule_AddObject(m, "NBT_FLAG_RECURSION_AVAIL", PyInt_FromLong(NBT_FLAG_RECURSION_AVAIL));
+	PyModule_AddObject(m, "LOGON_SAM_LOGON_RESPONSE", PyInt_FromLong(LOGON_SAM_LOGON_RESPONSE));
+	PyModule_AddObject(m, "NBT_NAME_SERVER", PyInt_FromLong(NBT_NAME_SERVER));
+	PyModule_AddObject(m, "NBT_SERVER_FOREST_ROOT", PyInt_FromLong(NBT_SERVER_FOREST_ROOT));
+	PyModule_AddObject(m, "NBT_QTYPE_STATUS", PyInt_FromLong(NBT_QTYPE_STATUS));
+	PyModule_AddObject(m, "NBT_FLAG_REPLY", PyInt_FromLong(NBT_FLAG_REPLY));
+	PyModule_AddObject(m, "NBT_SERVER_NDNC", PyInt_FromLong(NBT_SERVER_NDNC));
+	PyModule_AddObject(m, "NETLOGON_RESPONSE_FROM_PDC", PyInt_FromLong(NETLOGON_RESPONSE_FROM_PDC));
+	PyModule_AddObject(m, "NBT_NAME_SERVICE_PORT", PyInt_FromLong(137));
+	PyModule_AddObject(m, "DGRAM_NODE_B", PyInt_FromLong(DGRAM_NODE_B));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_1", PyInt_FromLong(NETLOGON_NT_VERSION_1));
+	PyModule_AddObject(m, "DGRAM_ERROR_INVALID_DEST", PyInt_FromLong(DGRAM_ERROR_INVALID_DEST));
+	PyModule_AddObject(m, "NBT_OPCODE_QUERY", PyInt_FromLong(NBT_OPCODE_QUERY));
+	PyModule_AddObject(m, "NBT_NODE_B", PyInt_FromLong(NBT_NODE_B));
+	PyModule_AddObject(m, "NBT_NODE_H", PyInt_FromLong(NBT_NODE_H));
 	PyModule_AddObject(m, "NBT_FLAG_TRUNCATION", PyInt_FromLong(NBT_FLAG_TRUNCATION));
+	PyModule_AddObject(m, "NBT_NODE_M", PyInt_FromLong(NBT_NODE_M));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_LOCAL", PyInt_FromLong(NETLOGON_NT_VERSION_LOCAL));
+	PyModule_AddObject(m, "NBT_SERVER_GOOD_TIMESERV", PyInt_FromLong(NBT_SERVER_GOOD_TIMESERV));
+	PyModule_AddObject(m, "NBT_OPCODE", PyInt_FromLong(NBT_OPCODE));
+	PyModule_AddObject(m, "DGRAM_QUERY_NEGATIVE", PyInt_FromLong(DGRAM_QUERY_NEGATIVE));
+	PyModule_AddObject(m, "MasterAnnouncement", PyInt_FromLong(MasterAnnouncement));
+	PyModule_AddObject(m, "LOGON_REQUEST", PyInt_FromLong(LOGON_REQUEST));
+	PyModule_AddObject(m, "DGRAM_BCAST", PyInt_FromLong(DGRAM_BCAST));
+	PyModule_AddObject(m, "NBT_MAILSLOT_GETDC", PyString_FromString("\\MAILSLOT\\NET\\GETDC"));
+	PyModule_AddObject(m, "SMB_TRANSACTION", PyInt_FromLong(SMB_TRANSACTION));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_5", PyInt_FromLong(NETLOGON_NT_VERSION_5));
+	PyModule_AddObject(m, "DGRAM_ERROR_INVALID_SOURCE", PyInt_FromLong(DGRAM_ERROR_INVALID_SOURCE));
+	PyModule_AddObject(m, "DGRAM_ERROR", PyInt_FromLong(DGRAM_ERROR));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_5EX_WITH_IP", PyInt_FromLong(NETLOGON_NT_VERSION_5EX_WITH_IP));
+	PyModule_AddObject(m, "NBT_NM_GROUP", PyInt_FromLong(NBT_NM_GROUP));
+	PyModule_AddObject(m, "NBT_NM_ACTIVE", PyInt_FromLong(NBT_NM_ACTIVE));
+	PyModule_AddObject(m, "DGRAM_QUERY_POSITIVE", PyInt_FromLong(DGRAM_QUERY_POSITIVE));
+	PyModule_AddObject(m, "NBT_NAME_MS", PyInt_FromLong(NBT_NAME_MS));
+	PyModule_AddObject(m, "NBT_RCODE_RFS", PyInt_FromLong(NBT_RCODE_RFS));
+	PyModule_AddObject(m, "NBT_FLAG_RECURSION_DESIRED", PyInt_FromLong(NBT_FLAG_RECURSION_DESIRED));
+	PyModule_AddObject(m, "NBT_SERVER_LDAP", PyInt_FromLong(NBT_SERVER_LDAP));
+	PyModule_AddObject(m, "DGRAM_ERROR_NAME_NOT_PRESENT", PyInt_FromLong(DGRAM_ERROR_NAME_NOT_PRESENT));
+	PyModule_AddObject(m, "NBT_RCODE_SVR", PyInt_FromLong(NBT_RCODE_SVR));
+	PyModule_AddObject(m, "NBT_OPCODE_RELEASE", PyInt_FromLong(NBT_OPCODE_RELEASE));
+	PyModule_AddObject(m, "LOGON_SAM_LOGON_USER_UNKNOWN", PyInt_FromLong(LOGON_SAM_LOGON_USER_UNKNOWN));
+	PyModule_AddObject(m, "NBT_FLAG_BROADCAST", PyInt_FromLong(NBT_FLAG_BROADCAST));
+	PyModule_AddObject(m, "NBT_OPCODE_REFRESH", PyInt_FromLong(NBT_OPCODE_REFRESH));
+	PyModule_AddObject(m, "NBT_OPCODE_WACK", PyInt_FromLong(NBT_OPCODE_WACK));
+	PyModule_AddObject(m, "NBT_QTYPE_NETBIOS", PyInt_FromLong(NBT_QTYPE_NETBIOS));
 	PyModule_AddObject(m, "NBT_QTYPE_NULL", PyInt_FromLong(NBT_QTYPE_NULL));
+	PyModule_AddObject(m, "NBT_NAME_BROWSER", PyInt_FromLong(NBT_NAME_BROWSER));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_5EX", PyInt_FromLong(NETLOGON_NT_VERSION_5EX));
+	PyModule_AddObject(m, "DGRAM_DIRECT_UNIQUE", PyInt_FromLong(DGRAM_DIRECT_UNIQUE));
+	PyModule_AddObject(m, "LOGON_SAM_LOGON_REQUEST", PyInt_FromLong(LOGON_SAM_LOGON_REQUEST));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_GC", PyInt_FromLong(NETLOGON_NT_VERSION_GC));
+	PyModule_AddObject(m, "NBT_DGRAM_SERVICE_PORT", PyInt_FromLong(138));
+	PyModule_AddObject(m, "DGRAM_NODE_NBDD", PyInt_FromLong(DGRAM_NODE_NBDD));
+	PyModule_AddObject(m, "Election", PyInt_FromLong(Election));
+	PyModule_AddObject(m, "NBT_SERVER_WRITABLE", PyInt_FromLong(NBT_SERVER_WRITABLE));
+	PyModule_AddObject(m, "LOGON_SAM_LOGON_PAUSE_RESPONSE_EX", PyInt_FromLong(LOGON_SAM_LOGON_PAUSE_RESPONSE_EX));
+	PyModule_AddObject(m, "LOGON_PRIMARY_QUERY", PyInt_FromLong(LOGON_PRIMARY_QUERY));
+	PyModule_AddObject(m, "GetBackupListReq", PyInt_FromLong(GetBackupListReq));
+	PyModule_AddObject(m, "NBT_SERVER_PDC", PyInt_FromLong(NBT_SERVER_PDC));
+	PyModule_AddObject(m, "NBT_SERVER_CLOSEST", PyInt_FromLong(NBT_SERVER_CLOSEST));
+	PyModule_AddObject(m, "NBT_MAILSLOT_NETLOGON", PyString_FromString("\\MAILSLOT\\NET\\NETLOGON"));
+	PyModule_AddObject(m, "NETLOGON_ANNOUNCE_UAS", PyInt_FromLong(NETLOGON_ANNOUNCE_UAS));
+	PyModule_AddObject(m, "LOGON_SAM_LOGON_USER_UNKNOWN_EX", PyInt_FromLong(LOGON_SAM_LOGON_USER_UNKNOWN_EX));
+	PyModule_AddObject(m, "LOGON_SAM_LOGON_PAUSE_RESPONSE", PyInt_FromLong(LOGON_SAM_LOGON_PAUSE_RESPONSE));
+	PyModule_AddObject(m, "NBT_NM_CONFLICT", PyInt_FromLong(NBT_NM_CONFLICT));
+	PyModule_AddObject(m, "DGRAM_SMB", PyInt_FromLong(0xff534d42));
+	PyModule_AddObject(m, "LOGON_SAM_LOGON_RESPONSE_EX", PyInt_FromLong(LOGON_SAM_LOGON_RESPONSE_EX));
+	PyModule_AddObject(m, "NBT_SERVER_TIMESERV", PyInt_FromLong(NBT_SERVER_TIMESERV));
+	PyModule_AddObject(m, "NBT_SERVER_SELECT_SECRET_DOMAIN_6", PyInt_FromLong(NBT_SERVER_SELECT_SECRET_DOMAIN_6));
+	PyModule_AddObject(m, "DGRAM_NODE_P", PyInt_FromLong(DGRAM_NODE_P));
+	PyModule_AddObject(m, "NBT_QCLASS_IP", PyInt_FromLong(NBT_QCLASS_IP));
+	PyModule_AddObject(m, "DGRAM_DIRECT_GROUP", PyInt_FromLong(DGRAM_DIRECT_GROUP));
+	PyModule_AddObject(m, "NBT_RCODE_OK", PyInt_FromLong(NBT_RCODE_OK));
+	PyModule_AddObject(m, "NBT_NAME_USER", PyInt_FromLong(NBT_NAME_USER));
+	PyModule_AddObject(m, "NBT_NM_OWNER_TYPE", PyInt_FromLong(NBT_NM_OWNER_TYPE));
+	PyModule_AddObject(m, "NBT_OPCODE_MULTI_HOME_REG", PyInt_FromLong(NBT_OPCODE_MULTI_HOME_REG));
+	PyModule_AddObject(m, "DGRAM_QUERY", PyInt_FromLong(DGRAM_QUERY));
+	PyModule_AddObject(m, "NBT_QTYPE_NAMESERVICE", PyInt_FromLong(NBT_QTYPE_NAMESERVICE));
+	PyModule_AddObject(m, "DGRAM_FLAG_FIRST", PyInt_FromLong(DGRAM_FLAG_FIRST));
+	PyModule_AddObject(m, "LocalMasterAnnouncement", PyInt_FromLong(LocalMasterAnnouncement));
+	PyModule_AddObject(m, "NBT_QTYPE_ADDRESS", PyInt_FromLong(NBT_QTYPE_ADDRESS));
+	PyModule_AddObject(m, "NBT_SERVER_ADS_WEB_SERVICE", PyInt_FromLong(NBT_SERVER_ADS_WEB_SERVICE));
+	PyModule_AddObject(m, "NETLOGON_NT_VERSION_AVOID_NT4EMUL", PyInt_FromLong(NETLOGON_NT_VERSION_AVOID_NT4EMUL));
+	PyModule_AddObject(m, "NBT_SERVER_DS", PyInt_FromLong(NBT_SERVER_DS));
+	PyModule_AddObject(m, "BecomeBackup", PyInt_FromLong(BecomeBackup));
+	PyModule_AddObject(m, "NBT_NAME_MASTER", PyInt_FromLong(NBT_NAME_MASTER));
+	PyModule_AddObject(m, "NBT_SERVER_FULL_SECRET_DOMAIN_6", PyInt_FromLong(NBT_SERVER_FULL_SECRET_DOMAIN_6));
+	PyModule_AddObject(m, "NBT_OPCODE_REFRESH2", PyInt_FromLong(NBT_OPCODE_REFRESH2));
+	PyModule_AddObject(m, "GetBackupListResp", PyInt_FromLong(GetBackupListResp));
+	PyModule_AddObject(m, "NBT_FLAG_AUTHORITATIVE", PyInt_FromLong(NBT_FLAG_AUTHORITATIVE));
+	PyModule_AddObject(m, "NBT_RCODE_IMP", PyInt_FromLong(NBT_RCODE_IMP));
+	PyModule_AddObject(m, "NBT_RCODE_ACT", PyInt_FromLong(NBT_RCODE_ACT));
+	PyModule_AddObject(m, "NBT_RCODE_CFT", PyInt_FromLong(NBT_RCODE_CFT));
+	PyModule_AddObject(m, "NBT_NAME_PDC", PyInt_FromLong(NBT_NAME_PDC));
+	PyModule_AddObject(m, "DGRAM_FLAG_NODE_TYPE", PyInt_FromLong(DGRAM_FLAG_NODE_TYPE));
+	PyModule_AddObject(m, "HostAnnouncement", PyInt_FromLong(HostAnnouncement));
+	PyModule_AddObject(m, "DGRAM_NODE_M", PyInt_FromLong(DGRAM_NODE_M));
+	PyModule_AddObject(m, "NBT_NAME_CLIENT", PyInt_FromLong(NBT_NAME_CLIENT));
+	PyModule_AddObject(m, "NBT_NAME_LOGON", PyInt_FromLong(NBT_NAME_LOGON));
+	PyModule_AddObject(m, "NBT_SERVER_KDC", PyInt_FromLong(NBT_SERVER_KDC));
+	PyModule_AddObject(m, "NBT_RCODE_NAM", PyInt_FromLong(NBT_RCODE_NAM));
 	Py_INCREF((PyObject *)(void *)&nbt_name_Type);
 	PyModule_AddObject(m, "name", (PyObject *)(void *)&nbt_name_Type);
 	Py_INCREF((PyObject *)(void *)&nbt_name_question_Type);

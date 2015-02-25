@@ -108,7 +108,7 @@ struct nbt_name {
 	const char * name;
 	const char * scope;
 	enum nbt_name_type type;
-}/* [public,nopull,nopush] */;
+}/* [nopull,nopush,public] */;
 
 enum nbt_qclass
 #ifndef USE_UINT_ENUMS
@@ -226,7 +226,7 @@ union nbt_rdata {
 	struct nbt_rdata_netbios netbios;/* [case(NBT_QTYPE_NETBIOS)] */
 	struct nbt_rdata_status status;/* [case(NBT_QTYPE_STATUS)] */
 	struct nbt_rdata_data data;/* [default] */
-}/* [nodiscriminant,public] */;
+}/* [public,nodiscriminant] */;
 
 struct nbt_res_rec {
 	struct nbt_name name;
@@ -399,7 +399,7 @@ struct nbt_sockaddr {
 	uint32_t sockaddr_family;
 	const char * pdc_ip;/* [flag(LIBNDR_FLAG_BIGENDIAN)] */
 	DATA_BLOB remaining;/* [flag(LIBNDR_FLAG_REMAINING)] */
-}/* [public,gensize] */;
+}/* [gensize,public] */;
 
 /* bitmap nbt_server_type */
 #define NBT_SERVER_PDC ( 0x00000001 )
@@ -476,7 +476,7 @@ struct NETLOGON_SAM_LOGON_REQUEST {
 	uint32_t nt_version;
 	uint16_t lmnt_token;
 	uint16_t lm20_token;
-}/* [nopush,nopull] */;
+}/* [nopull,nopush] */;
 
 struct NETLOGON_LOGON_REQUEST {
 	const char * computer_name;/* [flag(LIBNDR_FLAG_STR_ASCII|LIBNDR_FLAG_STR_NULLTERM)] */
@@ -495,7 +495,7 @@ struct NETLOGON_SAM_LOGON_RESPONSE_NT40 {
 	uint32_t nt_version;
 	uint16_t lmnt_token;
 	uint16_t lm20_token;
-}/* [public,flag(LIBNDR_FLAG_NOALIGN)] */;
+}/* [flag(LIBNDR_FLAG_NOALIGN),public] */;
 
 struct NETLOGON_SAM_LOGON_RESPONSE {
 	enum netlogon_command command;
@@ -528,7 +528,7 @@ struct NETLOGON_SAM_LOGON_RESPONSE_EX {
 	const char * server_site;
 	const char * client_site;
 	uint8_t sockaddr_size;/* [value(ndr_size_nbt_sockaddr(&sockaddr,ndr->flags))] */
-	struct nbt_sockaddr sockaddr;/* [subcontext(0),subcontext_size(sockaddr_size)] */
+	struct nbt_sockaddr sockaddr;/* [subcontext_size(sockaddr_size),subcontext(0)] */
 	const char * next_closest_site;
 	uint32_t nt_version;
 	uint16_t lmnt_token;
@@ -581,7 +581,7 @@ struct NETLOGON_DB_CHANGE {
 	uint32_t db_count;
 	struct nbt_db_change_info *dbchange;
 	uint32_t sid_size;/* [value(ndr_size_dom_sid0(&sid,ndr->flags))] */
-	struct dom_sid0 sid;/* [subcontext_size(sid_size),subcontext(0)] */
+	struct dom_sid0 sid;/* [subcontext(0),subcontext_size(sid_size)] */
 	uint32_t message_format_version;
 	uint32_t message_token;
 };
@@ -596,7 +596,7 @@ union nbt_netlogon_request {
 struct nbt_netlogon_packet {
 	enum netlogon_command command;
 	union nbt_netlogon_request req;/* [switch_is(command)] */
-}/* [flag(LIBNDR_FLAG_NOALIGN),public] */;
+}/* [public,flag(LIBNDR_FLAG_NOALIGN)] */;
 
 enum nbt_browse_opcode
 #ifndef USE_UINT_ENUMS

@@ -33,7 +33,7 @@ struct libnet_JoinCtx {
 		uint8_t debug;
 		uint8_t use_kerberos;
 		enum netr_SchannelType secure_channel_type;
-		struct messaging_context *msg_ctx;/* [ref,noprint] */
+		struct messaging_context *msg_ctx;/* [noprint,ref] */
 	} in;
 
 	struct {

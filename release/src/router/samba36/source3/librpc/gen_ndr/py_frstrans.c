@@ -21,10 +21,10 @@ staticforward PyTypeObject frstrans_RdcParameters_Type;
 staticforward PyTypeObject frstrans_RdcFileInfo_Type;
 staticforward PyTypeObject frstrans_InterfaceType;
 
-void initfrstrans(void);static PyTypeObject *ClientConnection_Type;
+void initfrstrans(void);static PyTypeObject *Object_Type;
 static PyTypeObject *GUID_Type;
+static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *policy_handle_Type;
-static PyTypeObject *Object_Type;
 
 static PyObject *py_frstrans_VersionVector_get_db_guid(PyObject *obj, void *closure)
 {
@@ -1964,35 +1964,35 @@ void initfrstrans(void)
 {
 	PyObject *m;
 	PyObject *dep_samba_dcerpc_misc;
-	PyObject *dep_talloc;
 	PyObject *dep_samba_dcerpc_base;
+	PyObject *dep_talloc;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
-		return;
-
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
 		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
 		return;
 
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
+		return;
+
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
 	if (GUID_Type == NULL)
 		return;
 
-	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
-	if (policy_handle_Type == NULL)
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
+	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
+	if (policy_handle_Type == NULL)
 		return;
 
 	frstrans_VersionVector_Type.tp_base = Object_Type;
@@ -2080,30 +2080,30 @@ void initfrstrans(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "FRSTRANS_RDC_VERSION_COMPATIBLE", PyInt_FromLong(FRSTRANS_RDC_VERSION_COMPATIBLE));
-	PyModule_AddObject(m, "FRSTRANS_RDC_FILTER_POINT", PyInt_FromLong(FRSTRANS_RDC_FILTER_POINT));
-	PyModule_AddObject(m, "FRSTRANS_STAGING_POLICY_SERVER_DEFAULTY", PyInt_FromLong(FRSTRANS_STAGING_POLICY_SERVER_DEFAULTY));
-	PyModule_AddObject(m, "FRSTRANS_UPDATE_REQUEST_TOMBSTONES", PyInt_FromLong(FRSTRANS_UPDATE_REQUEST_TOMBSTONES));
-	PyModule_AddObject(m, "FRSTRANS_RDC_XPRESS", PyInt_FromLong(FRSTRANS_RDC_XPRESS));
-	PyModule_AddObject(m, "FRSTRANS_TRANSPORT_SUPPORTS_RDC_SIMILARITY", PyInt_FromLong(FRSTRANS_TRANSPORT_SUPPORTS_RDC_SIMILARITY));
-	PyModule_AddObject(m, "FRSTRANS_RDC_FILTER_MAX", PyInt_FromLong(FRSTRANS_RDC_FILTER_MAX));
-	PyModule_AddObject(m, "FRSTRANS_UPDATE_REQUEST_ALL", PyInt_FromLong(FRSTRANS_UPDATE_REQUEST_ALL));
-	PyModule_AddObject(m, "FRSTRANS_RDC_MAX_ALGORITHM", PyInt_FromLong(FRSTRANS_RDC_MAX_ALGORITHM));
-	PyModule_AddObject(m, "FRSTRANS_STAGING_POLICY_STATGING_REQUIRED", PyInt_FromLong(FRSTRANS_STAGING_POLICY_STATGING_REQUIRED));
-	PyModule_AddObject(m, "FRSTRANS_PROTOCOL_VERSION_W2K3R2", PyInt_FromLong(FRSTRANS_PROTOCOL_VERSION_W2K3R2));
-	PyModule_AddObject(m, "FRSTRANS_UPDATE_STATUS_DONE", PyInt_FromLong(FRSTRANS_UPDATE_STATUS_DONE));
-	PyModule_AddObject(m, "FRSTRANS_VERSION_REQUEST_NORNAL_SYNC", PyInt_FromLong(FRSTRANS_VERSION_REQUEST_NORNAL_SYNC));
-	PyModule_AddObject(m, "FRSTRANS_VERSION_CHANGE_NOTIFY", PyInt_FromLong(FRSTRANS_VERSION_CHANGE_NOTIFY));
-	PyModule_AddObject(m, "FRSTRANS_UPDATE_STATUS_MORE", PyInt_FromLong(FRSTRANS_UPDATE_STATUS_MORE));
-	PyModule_AddObject(m, "FRSTRANS_STAGING_POLICY_RESTATGING_REQUIRED", PyInt_FromLong(FRSTRANS_STAGING_POLICY_RESTATGING_REQUIRED));
-	PyModule_AddObject(m, "FRSTRANS_RDC_UNCOMPRESSED", PyInt_FromLong(FRSTRANS_RDC_UNCOMPRESSED));
-	PyModule_AddObject(m, "FRSTRANS_VERSION_CHANGE_ALL", PyInt_FromLong(FRSTRANS_VERSION_CHANGE_ALL));
-	PyModule_AddObject(m, "FRSTRANS_UPDATE_REQUEST_LIVE", PyInt_FromLong(FRSTRANS_UPDATE_REQUEST_LIVE));
-	PyModule_AddObject(m, "FRSTRANS_RDC_VERSION", PyInt_FromLong(FRSTRANS_RDC_VERSION));
-	PyModule_AddObject(m, "FRSTRANS_PROTOCOL_VERSION_LONGHORN_SERVER", PyInt_FromLong(FRSTRANS_PROTOCOL_VERSION_LONGHORN_SERVER));
-	PyModule_AddObject(m, "FRSTRANS_VERSION_REQUEST_SLAVE_SYNC", PyInt_FromLong(FRSTRANS_VERSION_REQUEST_SLAVE_SYNC));
-	PyModule_AddObject(m, "FRSTRANS_VERSION_REQUEST_SLOW_SYNC", PyInt_FromLong(FRSTRANS_VERSION_REQUEST_SLOW_SYNC));
 	PyModule_AddObject(m, "FRSTRANS_RDC_FILTER_GENERIC", PyInt_FromLong(FRSTRANS_RDC_FILTER_GENERIC));
+	PyModule_AddObject(m, "FRSTRANS_RDC_FILTER_POINT", PyInt_FromLong(FRSTRANS_RDC_FILTER_POINT));
+	PyModule_AddObject(m, "FRSTRANS_TRANSPORT_SUPPORTS_RDC_SIMILARITY", PyInt_FromLong(FRSTRANS_TRANSPORT_SUPPORTS_RDC_SIMILARITY));
+	PyModule_AddObject(m, "FRSTRANS_STAGING_POLICY_STATGING_REQUIRED", PyInt_FromLong(FRSTRANS_STAGING_POLICY_STATGING_REQUIRED));
+	PyModule_AddObject(m, "FRSTRANS_STAGING_POLICY_RESTATGING_REQUIRED", PyInt_FromLong(FRSTRANS_STAGING_POLICY_RESTATGING_REQUIRED));
+	PyModule_AddObject(m, "FRSTRANS_RDC_VERSION", PyInt_FromLong(FRSTRANS_RDC_VERSION));
+	PyModule_AddObject(m, "FRSTRANS_VERSION_REQUEST_SLAVE_SYNC", PyInt_FromLong(FRSTRANS_VERSION_REQUEST_SLAVE_SYNC));
+	PyModule_AddObject(m, "FRSTRANS_RDC_FILTER_MAX", PyInt_FromLong(FRSTRANS_RDC_FILTER_MAX));
+	PyModule_AddObject(m, "FRSTRANS_RDC_UNCOMPRESSED", PyInt_FromLong(FRSTRANS_RDC_UNCOMPRESSED));
+	PyModule_AddObject(m, "FRSTRANS_VERSION_REQUEST_SLOW_SYNC", PyInt_FromLong(FRSTRANS_VERSION_REQUEST_SLOW_SYNC));
+	PyModule_AddObject(m, "FRSTRANS_UPDATE_STATUS_MORE", PyInt_FromLong(FRSTRANS_UPDATE_STATUS_MORE));
+	PyModule_AddObject(m, "FRSTRANS_UPDATE_REQUEST_LIVE", PyInt_FromLong(FRSTRANS_UPDATE_REQUEST_LIVE));
+	PyModule_AddObject(m, "FRSTRANS_PROTOCOL_VERSION_LONGHORN_SERVER", PyInt_FromLong(FRSTRANS_PROTOCOL_VERSION_LONGHORN_SERVER));
+	PyModule_AddObject(m, "FRSTRANS_RDC_VERSION_COMPATIBLE", PyInt_FromLong(FRSTRANS_RDC_VERSION_COMPATIBLE));
+	PyModule_AddObject(m, "FRSTRANS_VERSION_CHANGE_ALL", PyInt_FromLong(FRSTRANS_VERSION_CHANGE_ALL));
+	PyModule_AddObject(m, "FRSTRANS_RDC_MAX_ALGORITHM", PyInt_FromLong(FRSTRANS_RDC_MAX_ALGORITHM));
+	PyModule_AddObject(m, "FRSTRANS_VERSION_CHANGE_NOTIFY", PyInt_FromLong(FRSTRANS_VERSION_CHANGE_NOTIFY));
+	PyModule_AddObject(m, "FRSTRANS_STAGING_POLICY_SERVER_DEFAULTY", PyInt_FromLong(FRSTRANS_STAGING_POLICY_SERVER_DEFAULTY));
+	PyModule_AddObject(m, "FRSTRANS_VERSION_REQUEST_NORNAL_SYNC", PyInt_FromLong(FRSTRANS_VERSION_REQUEST_NORNAL_SYNC));
+	PyModule_AddObject(m, "FRSTRANS_UPDATE_REQUEST_TOMBSTONES", PyInt_FromLong(FRSTRANS_UPDATE_REQUEST_TOMBSTONES));
+	PyModule_AddObject(m, "FRSTRANS_UPDATE_STATUS_DONE", PyInt_FromLong(FRSTRANS_UPDATE_STATUS_DONE));
+	PyModule_AddObject(m, "FRSTRANS_RDC_XPRESS", PyInt_FromLong(FRSTRANS_RDC_XPRESS));
+	PyModule_AddObject(m, "FRSTRANS_UPDATE_REQUEST_ALL", PyInt_FromLong(FRSTRANS_UPDATE_REQUEST_ALL));
+	PyModule_AddObject(m, "FRSTRANS_PROTOCOL_VERSION_W2K3R2", PyInt_FromLong(FRSTRANS_PROTOCOL_VERSION_W2K3R2));
 	Py_INCREF((PyObject *)(void *)&frstrans_VersionVector_Type);
 	PyModule_AddObject(m, "VersionVector", (PyObject *)(void *)&frstrans_VersionVector_Type);
 	Py_INCREF((PyObject *)(void *)&frstrans_Update_Type);

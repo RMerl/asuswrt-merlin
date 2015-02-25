@@ -71,7 +71,7 @@ struct eventlog_Record_tdb {
 	const char * *strings;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
 	DATA_BLOB data;
 	uint32_t padding;
-}/* [public,flag(LIBNDR_FLAG_NOALIGN|LIBNDR_PRINT_ARRAY_HEX)] */;
+}/* [flag(LIBNDR_FLAG_NOALIGN|LIBNDR_PRINT_ARRAY_HEX),public] */;
 
 enum EVENTLOG_HEADER_FLAGS
 #ifndef USE_UINT_ENUMS
@@ -107,7 +107,7 @@ struct EVENTLOGHEADER {
 
 struct EVENTLOGRECORD {
 	uint32_t Length;
-	const char *Reserved;/* [charset(DOS),value("LfLe")] */
+	const char *Reserved;/* [value("LfLe"),charset(DOS)] */
 	uint32_t RecordNumber;
 	time_t TimeGenerated;
 	time_t TimeWritten;
@@ -129,7 +129,7 @@ struct EVENTLOGRECORD {
 	uint8_t *Data;/* [flag(LIBNDR_PRINT_ARRAY_HEX)] */
 	const char * Pad;/* [flag(LIBNDR_FLAG_STR_ASCII|LIBNDR_FLAG_STR_NULLTERM)] */
 	uint32_t Length2;/* [value(Length)] */
-}/* [gensize,public] */;
+}/* [public,gensize] */;
 
 struct EVENTLOGEOF {
 	uint32_t RecordSizeBeginning;/* [value(0x28)] */
@@ -300,7 +300,7 @@ struct eventlog_ReadEventLogW {
 	} in;
 
 	struct {
-		uint8_t *data;/* [size_is(number_of_bytes),ref] */
+		uint8_t *data;/* [ref,size_is(number_of_bytes)] */
 		uint32_t *sent_size;/* [ref] */
 		uint32_t *real_size;/* [ref] */
 		NTSTATUS result;
@@ -424,7 +424,7 @@ struct eventlog_GetLogInformation {
 	} in;
 
 	struct {
-		uint8_t *buffer;/* [ref,size_is(buf_size)] */
+		uint8_t *buffer;/* [size_is(buf_size),ref] */
 		uint32_t *bytes_needed;/* [ref] */
 		NTSTATUS result;
 	} out;
@@ -457,7 +457,7 @@ struct eventlog_ReportEventAndSourceW {
 		struct lsa_String *servername;/* [ref] */
 		struct dom_sid *user_sid;/* [unique] */
 		struct lsa_String **strings;/* [size_is(num_of_strings),unique] */
-		uint8_t *data;/* [size_is(data_size),unique] */
+		uint8_t *data;/* [unique,size_is(data_size)] */
 		uint16_t flags;
 		uint32_t *record_number;/* [unique] */
 		time_t *time_written;/* [unique] */

@@ -68,9 +68,9 @@ staticforward PyTypeObject wkssvc_PasswordBuffer_Type;
 staticforward PyTypeObject wkssvc_ComputerNamesCtr_Type;
 staticforward PyTypeObject wkssvc_InterfaceType;
 
-void initwkssvc(void);static PyTypeObject *ClientConnection_Type;
+void initwkssvc(void);static PyTypeObject *Object_Type;
 static PyTypeObject *lsa_String_Type;
-static PyTypeObject *Object_Type;
+static PyTypeObject *ClientConnection_Type;
 
 static PyObject *py_wkssvc_NetWkstaInfo100_get_platform_id(PyObject *obj, void *closure)
 {
@@ -8841,37 +8841,37 @@ static PyMethodDef wkssvc_methods[] = {
 void initwkssvc(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_srvsvc;
-	PyObject *dep_samba_dcerpc_lsa;
 	PyObject *dep_talloc;
+	PyObject *dep_samba_dcerpc_srvsvc;
 	PyObject *dep_samba_dcerpc_base;
-
-	dep_samba_dcerpc_srvsvc = PyImport_ImportModule("samba.dcerpc.srvsvc");
-	if (dep_samba_dcerpc_srvsvc == NULL)
-		return;
-
-	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
-	if (dep_samba_dcerpc_lsa == NULL)
-		return;
+	PyObject *dep_samba_dcerpc_lsa;
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
+		return;
+
+	dep_samba_dcerpc_srvsvc = PyImport_ImportModule("samba.dcerpc.srvsvc");
+	if (dep_samba_dcerpc_srvsvc == NULL)
 		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
 		return;
 
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
+	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
+	if (dep_samba_dcerpc_lsa == NULL)
+		return;
+
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	lsa_String_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "String");
 	if (lsa_String_Type == NULL)
 		return;
 
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
 	wkssvc_NetWkstaInfo100_Type.tp_base = Object_Type;
@@ -9281,31 +9281,31 @@ void initwkssvc(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "NET_SETUP_DOMAIN_NAME", PyInt_FromLong(NET_SETUP_DOMAIN_NAME));
-	PyModule_AddObject(m, "NetPrimaryComputerName", PyInt_FromLong(NetPrimaryComputerName));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_IGNORE_UNSUPPORTED_FLAGS", PyInt_FromLong(WKSSVC_JOIN_FLAGS_IGNORE_UNSUPPORTED_FLAGS));
-	PyModule_AddObject(m, "NetSetupDomain", PyInt_FromLong(NetSetupDomain));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_DEFER_SPN", PyInt_FromLong(WKSSVC_JOIN_FLAGS_DEFER_SPN));
-	PyModule_AddObject(m, "NetSetupWorkgroup", PyInt_FromLong(NetSetupWorkgroup));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_MACHINE_PWD_PASSED", PyInt_FromLong(WKSSVC_JOIN_FLAGS_MACHINE_PWD_PASSED));
-	PyModule_AddObject(m, "NET_SETUP_UNKNOWN_STATUS", PyInt_FromLong(NET_SETUP_UNKNOWN_STATUS));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_JOIN_UNSECURE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_JOIN_UNSECURE));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_JOIN_WITH_NEW_NAME", PyInt_FromLong(WKSSVC_JOIN_FLAGS_JOIN_WITH_NEW_NAME));
-	PyModule_AddObject(m, "NetSetupDnsMachine", PyInt_FromLong(NetSetupDnsMachine));
-	PyModule_AddObject(m, "NetComputerNameTypeMax", PyInt_FromLong(NetComputerNameTypeMax));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_ACCOUNT_DELETE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_ACCOUNT_DELETE));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_WIN9X_UPGRADE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_WIN9X_UPGRADE));
-	PyModule_AddObject(m, "NetAllComputerNames", PyInt_FromLong(NetAllComputerNames));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_JOIN_DC_ACCOUNT", PyInt_FromLong(WKSSVC_JOIN_FLAGS_JOIN_DC_ACCOUNT));
-	PyModule_AddObject(m, "NET_SETUP_WORKGROUP_NAME", PyInt_FromLong(NET_SETUP_WORKGROUP_NAME));
 	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_DOMAIN_JOIN_IF_JOINED", PyInt_FromLong(WKSSVC_JOIN_FLAGS_DOMAIN_JOIN_IF_JOINED));
-	PyModule_AddObject(m, "NetSetupUnknown", PyInt_FromLong(NetSetupUnknown));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_ACCOUNT_CREATE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_ACCOUNT_CREATE));
-	PyModule_AddObject(m, "NetSetupMachine", PyInt_FromLong(NetSetupMachine));
-	PyModule_AddObject(m, "NetAlternateComputerNames", PyInt_FromLong(NetAlternateComputerNames));
-	PyModule_AddObject(m, "NET_SETUP_UNJOINED", PyInt_FromLong(NET_SETUP_UNJOINED));
-	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_JOIN_TYPE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_JOIN_TYPE));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_DEFER_SPN", PyInt_FromLong(WKSSVC_JOIN_FLAGS_DEFER_SPN));
 	PyModule_AddObject(m, "NetSetupNonExistentDomain", PyInt_FromLong(NetSetupNonExistentDomain));
+	PyModule_AddObject(m, "NetSetupDomain", PyInt_FromLong(NetSetupDomain));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_JOIN_WITH_NEW_NAME", PyInt_FromLong(WKSSVC_JOIN_FLAGS_JOIN_WITH_NEW_NAME));
+	PyModule_AddObject(m, "NetSetupUnknown", PyInt_FromLong(NetSetupUnknown));
+	PyModule_AddObject(m, "NET_SETUP_UNJOINED", PyInt_FromLong(NET_SETUP_UNJOINED));
+	PyModule_AddObject(m, "NetAlternateComputerNames", PyInt_FromLong(NetAlternateComputerNames));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_IGNORE_UNSUPPORTED_FLAGS", PyInt_FromLong(WKSSVC_JOIN_FLAGS_IGNORE_UNSUPPORTED_FLAGS));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_JOIN_TYPE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_JOIN_TYPE));
+	PyModule_AddObject(m, "NET_SETUP_WORKGROUP_NAME", PyInt_FromLong(NET_SETUP_WORKGROUP_NAME));
+	PyModule_AddObject(m, "NetSetupWorkgroup", PyInt_FromLong(NetSetupWorkgroup));
+	PyModule_AddObject(m, "NetSetupDnsMachine", PyInt_FromLong(NetSetupDnsMachine));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_JOIN_DC_ACCOUNT", PyInt_FromLong(WKSSVC_JOIN_FLAGS_JOIN_DC_ACCOUNT));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_WIN9X_UPGRADE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_WIN9X_UPGRADE));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_MACHINE_PWD_PASSED", PyInt_FromLong(WKSSVC_JOIN_FLAGS_MACHINE_PWD_PASSED));
+	PyModule_AddObject(m, "NetComputerNameTypeMax", PyInt_FromLong(NetComputerNameTypeMax));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_ACCOUNT_CREATE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_ACCOUNT_CREATE));
+	PyModule_AddObject(m, "NetAllComputerNames", PyInt_FromLong(NetAllComputerNames));
+	PyModule_AddObject(m, "NetPrimaryComputerName", PyInt_FromLong(NetPrimaryComputerName));
+	PyModule_AddObject(m, "NET_SETUP_UNKNOWN_STATUS", PyInt_FromLong(NET_SETUP_UNKNOWN_STATUS));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_ACCOUNT_DELETE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_ACCOUNT_DELETE));
+	PyModule_AddObject(m, "NetSetupMachine", PyInt_FromLong(NetSetupMachine));
+	PyModule_AddObject(m, "WKSSVC_JOIN_FLAGS_JOIN_UNSECURE", PyInt_FromLong(WKSSVC_JOIN_FLAGS_JOIN_UNSECURE));
+	PyModule_AddObject(m, "NET_SETUP_DOMAIN_NAME", PyInt_FromLong(NET_SETUP_DOMAIN_NAME));
 	Py_INCREF((PyObject *)(void *)&wkssvc_NetWkstaInfo100_Type);
 	PyModule_AddObject(m, "NetWkstaInfo100", (PyObject *)(void *)&wkssvc_NetWkstaInfo100_Type);
 	Py_INCREF((PyObject *)(void *)&wkssvc_NetWkstaInfo101_Type);

@@ -21,9 +21,9 @@ staticforward PyTypeObject eventlog6_EvtRpcQueryChannelInfo_Type;
 staticforward PyTypeObject eventlog6_InterfaceType;
 
 void initeventlog6(void);static PyTypeObject *Object_Type;
-static PyTypeObject *policy_handle_Type;
-static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *GUID_Type;
+static PyTypeObject *ClientConnection_Type;
+static PyTypeObject *policy_handle_Type;
 
 static PyObject *py_eventlog6_RpcInfo_get_error(PyObject *obj, void *closure)
 {
@@ -2805,35 +2805,35 @@ void initeventlog6(void)
 {
 	PyObject *m;
 	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_samba_dcerpc_misc;
+	PyObject *dep_samba_dcerpc_base;
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
-		return;
-
-	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
-	if (dep_samba_dcerpc_base == NULL)
 		return;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
+	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
+	if (dep_samba_dcerpc_base == NULL)
+		return;
+
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
 	if (Object_Type == NULL)
 		return;
 
-	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
-	if (policy_handle_Type == NULL)
+	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
+	if (GUID_Type == NULL)
 		return;
 
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
 	if (ClientConnection_Type == NULL)
 		return;
 
-	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
-	if (GUID_Type == NULL)
+	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
+	if (policy_handle_Type == NULL)
 		return;
 
 	eventlog6_RpcInfo_Type.tp_base = Object_Type;
@@ -2914,43 +2914,43 @@ void initeventlog6(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "MAX_PAYLOAD", PyInt_FromLong(2*1024*1024));
-	PyModule_AddObject(m, "MAX_RPC_QUERY_LENGTH", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint16_t)));
-	PyModule_AddObject(m, "EvtRpcVarTypeGuid", PyInt_FromLong(EvtRpcVarTypeGuid));
-	PyModule_AddObject(m, "MAX_RPC_PROPERTY_BUFFER_SIZE", PyInt_FromLong(MAX_PAYLOAD));
-	PyModule_AddObject(m, "MAX_RPC_BATCH_SIZE", PyInt_FromLong(MAX_PAYLOAD));
-	PyModule_AddObject(m, "MAX_RPC_EVENT_METADATA_COUNT", PyInt_FromLong(256));
-	PyModule_AddObject(m, "MAX_RPC_QUERY_CHANNEL_SIZE", PyInt_FromLong(512));
-	PyModule_AddObject(m, "MAX_RPC_BOOKMARK_LENGTH", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint16_t)));
-	PyModule_AddObject(m, "EvtRpcChannelPath", PyInt_FromLong(EvtRpcChannelPath));
-	PyModule_AddObject(m, "MAX_RPC_CHANNEL_NAME_LENGTH", PyInt_FromLong(512));
 	PyModule_AddObject(m, "EvtRpcVarTypeStringArray", PyInt_FromLong(EvtRpcVarTypeStringArray));
-	PyModule_AddObject(m, "MAX_RPC_RECORD_COUNT", PyInt_FromLong(1024));
-	PyModule_AddObject(m, "MAX_RPC_EVENT_ID_SIZE", PyInt_FromLong(256));
-	PyModule_AddObject(m, "MAX_RPC_EVENT_SIZE", PyInt_FromLong(MAX_PAYLOAD));
+	PyModule_AddObject(m, "MAX_RPC_PROPERTY_BUFFER_SIZE", PyInt_FromLong(MAX_PAYLOAD));
 	PyModule_AddObject(m, "EvtRpcVarTypeboolean8Array", PyInt_FromLong(EvtRpcVarTypeboolean8Array));
+	PyModule_AddObject(m, "MAX_RPC_FILE_PATH_LENGTH", PyInt_FromLong(32768));
+	PyModule_AddObject(m, "MAX_RPC_CHANNEL_NAME_LENGTH", PyInt_FromLong(512));
 	PyModule_AddObject(m, "EvtRpcVarTypeUInt64", PyInt_FromLong(EvtRpcVarTypeUInt64));
-	PyModule_AddObject(m, "EvtRpcVarTypeUInt32", PyInt_FromLong(EvtRpcVarTypeUInt32));
-	PyModule_AddObject(m, "EvtRpcVarTypeUInt64Array", PyInt_FromLong(EvtRpcVarTypeUInt64Array));
-	PyModule_AddObject(m, "MAX_RPC_FILTER_LENGTH", PyInt_FromLong(MAX_RPC_QUERY_LENGTH));
-	PyModule_AddObject(m, "EvtRpcVarTypeString", PyInt_FromLong(EvtRpcVarTypeString));
-	PyModule_AddObject(m, "MAX_RPC_VARIANT_LIST_COUNT", PyInt_FromLong(256));
-	PyModule_AddObject(m, "EvtRpcVarTypeUInt32Array", PyInt_FromLong(EvtRpcVarTypeUInt32Array));
-	PyModule_AddObject(m, "MAX_RPC_STRING_ARRAY_COUNT", PyInt_FromLong(MAX_PAYLOAD/512));
-	PyModule_AddObject(m, "MAX_RPC_PUBLISHER_ID_LENGTH", PyInt_FromLong(2048));
-	PyModule_AddObject(m, "EvtRpcPublisherName", PyInt_FromLong(EvtRpcPublisherName));
-	PyModule_AddObject(m, "MAX_RPC_UINT64_ARRAY_COUNT", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint64_t)));
-	PyModule_AddObject(m, "MAX_RPC_UINT32_ARRAY_COUNT", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint32_t)));
-	PyModule_AddObject(m, "EvtRpcVarTypeboolean8", PyInt_FromLong(EvtRpcVarTypeboolean8));
 	PyModule_AddObject(m, "EvtRpcVarTypeNull", PyInt_FromLong(EvtRpcVarTypeNull));
-	PyModule_AddObject(m, "MAX_RPC_CHANNEL_COUNT", PyInt_FromLong(8192));
-	PyModule_AddObject(m, "MAX_RPC_STRING_LENGTH", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint16_t)));
-	PyModule_AddObject(m, "EvtRpcVarTypeGuidArray", PyInt_FromLong(EvtRpcVarTypeGuidArray));
+	PyModule_AddObject(m, "EvtRpcVarTypeboolean8", PyInt_FromLong(EvtRpcVarTypeboolean8));
+	PyModule_AddObject(m, "MAX_RPC_FILTER_LENGTH", PyInt_FromLong(MAX_RPC_QUERY_LENGTH));
 	PyModule_AddObject(m, "MAX_RPC_RENDERED_STRING_SIZE", PyInt_FromLong(MAX_PAYLOAD));
 	PyModule_AddObject(m, "MAX_RPC_PUBLISHER_COUNT", PyInt_FromLong(8192));
+	PyModule_AddObject(m, "MAX_RPC_QUERY_LENGTH", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint16_t)));
+	PyModule_AddObject(m, "MAX_RPC_VARIANT_LIST_COUNT", PyInt_FromLong(256));
+	PyModule_AddObject(m, "MAX_RPC_STRING_LENGTH", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint16_t)));
+	PyModule_AddObject(m, "MAX_PAYLOAD", PyInt_FromLong(2*1024*1024));
+	PyModule_AddObject(m, "EvtRpcVarTypeGuidArray", PyInt_FromLong(EvtRpcVarTypeGuidArray));
+	PyModule_AddObject(m, "MAX_RPC_CHANNEL_COUNT", PyInt_FromLong(8192));
 	PyModule_AddObject(m, "MAX_RPC_BOOLEAN8_ARRAY_COUNT", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint8_t)));
+	PyModule_AddObject(m, "MAX_RPC_EVENT_ID_SIZE", PyInt_FromLong(256));
+	PyModule_AddObject(m, "MAX_RPC_UINT32_ARRAY_COUNT", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint32_t)));
+	PyModule_AddObject(m, "MAX_RPC_BOOKMARK_LENGTH", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint16_t)));
+	PyModule_AddObject(m, "MAX_RPC_EVENT_SIZE", PyInt_FromLong(MAX_PAYLOAD));
 	PyModule_AddObject(m, "MAX_RPC_CHANNEL_PATH_LENGTH", PyInt_FromLong(32768));
-	PyModule_AddObject(m, "MAX_RPC_FILE_PATH_LENGTH", PyInt_FromLong(32768));
+	PyModule_AddObject(m, "MAX_RPC_UINT64_ARRAY_COUNT", PyInt_FromLong(MAX_PAYLOAD/sizeof(uint64_t)));
+	PyModule_AddObject(m, "EvtRpcVarTypeUInt64Array", PyInt_FromLong(EvtRpcVarTypeUInt64Array));
+	PyModule_AddObject(m, "EvtRpcChannelPath", PyInt_FromLong(EvtRpcChannelPath));
+	PyModule_AddObject(m, "EvtRpcVarTypeUInt32Array", PyInt_FromLong(EvtRpcVarTypeUInt32Array));
+	PyModule_AddObject(m, "MAX_RPC_BATCH_SIZE", PyInt_FromLong(MAX_PAYLOAD));
+	PyModule_AddObject(m, "MAX_RPC_QUERY_CHANNEL_SIZE", PyInt_FromLong(512));
+	PyModule_AddObject(m, "EvtRpcVarTypeString", PyInt_FromLong(EvtRpcVarTypeString));
+	PyModule_AddObject(m, "EvtRpcVarTypeGuid", PyInt_FromLong(EvtRpcVarTypeGuid));
+	PyModule_AddObject(m, "MAX_RPC_PUBLISHER_ID_LENGTH", PyInt_FromLong(2048));
+	PyModule_AddObject(m, "EvtRpcVarTypeUInt32", PyInt_FromLong(EvtRpcVarTypeUInt32));
+	PyModule_AddObject(m, "MAX_RPC_RECORD_COUNT", PyInt_FromLong(1024));
+	PyModule_AddObject(m, "MAX_RPC_EVENT_METADATA_COUNT", PyInt_FromLong(256));
+	PyModule_AddObject(m, "EvtRpcPublisherName", PyInt_FromLong(EvtRpcPublisherName));
+	PyModule_AddObject(m, "MAX_RPC_STRING_ARRAY_COUNT", PyInt_FromLong(MAX_PAYLOAD/512));
 	Py_INCREF((PyObject *)(void *)&eventlog6_RpcInfo_Type);
 	PyModule_AddObject(m, "RpcInfo", (PyObject *)(void *)&eventlog6_RpcInfo_Type);
 	Py_INCREF((PyObject *)(void *)&eventlog6_boolean8Array_Type);

@@ -1,4 +1,76 @@
                    ==============================
+                   Release Notes for Samba 3.6.25
+                          February 23, 2015
+                   ==============================
+
+
+This is a security release in order to address CVE-2015-0240 (Unexpected
+code execution in smbd).
+
+o  CVE-2015-0240:
+   All versions of Samba from 3.5.0 to 4.2.0rc4 are vulnerable to an
+   unexpected code execution vulnerability in the smbd file server
+   daemon.
+
+   A malicious client could send packets that may set up the stack in
+   such a way that the freeing of memory in a subsequent anonymous
+   netlogon packet could allow execution of arbitrary code. This code
+   would execute with root privileges.
+
+o  CVE-2014-0178:
+   In preparing a response to an authenticated FSCTL_GET_SHADOW_COPY_DATA
+   or FSCTL_SRV_ENUMERATE_SNAPSHOTS client request, affected versions of
+   Samba do not initialize 8 bytes of the 16 byte SRV_SNAPSHOT_ARRAY
+   response field. The uninitialized buffer is sent back to the client.
+
+   A non-default VFS module providing the get_shadow_copy_data_fn() hook
+   must be explicitly enabled for Samba to process the aforementioned
+   client requests. Therefore, only configurations with "shadow_copy" or
+   "shadow_copy2" specified for the "vfs objects" parameter are vulnerable.
+
+
+Changes since 3.6.24:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 11077: CVE-2015-0240: talloc free on uninitialized stack pointer
+      in netlogon server could lead to security vulnerability.
+
+
+o   Jiří Šašek <jiri.sasek@oracle.com>
+    * BUG 10549: CVE-2014-0178: Fix malformed FSCTL_SRV_ENUMERATE_SNAPSHOTS
+      response.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 11077: CVE-2015-0240: s3-netlogon: Make sure we do not deference
+      a NULL pointer./auth: Make sure that creds_out is initialized with NULL.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+Release notes for older releases follow:
+----------------------------------------
+
+                   ==============================
                    Release Notes for Samba 3.6.24
                            June 23, 2014
                    ==============================
@@ -52,8 +124,8 @@ database (https://bugzilla.samba.org/).
 ======================================================================
 
 
-Release notes for older releases follow:
-----------------------------------------
+----------------------------------------------------------------------
+
 
                    ==============================
                    Release Notes for Samba 3.6.23

@@ -18,11 +18,11 @@ staticforward PyTypeObject auth_user_info_unix_Type;
 staticforward PyTypeObject auth_user_info_dc_Type;
 staticforward PyTypeObject auth_session_info_transport_Type;
 
-void initauth(void);static PyTypeObject *security_unix_token_Type;
+void initauth(void);static PyTypeObject *dom_sid_Type;
 static PyTypeObject *Object_Type;
+static PyTypeObject *security_unix_token_Type;
 static PyTypeObject *security_token_Type;
 static PyTypeObject *PAC_SIGNATURE_DATA_Type;
-static PyTypeObject *dom_sid_Type;
 
 static PyObject *py_auth_user_info_get_account_name(PyObject *obj, void *closure)
 {
@@ -1166,38 +1166,42 @@ static PyMethodDef auth_methods[] = {
 void initauth(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_lsa;
 	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_krb5pac;
-	PyObject *dep_samba_dcerpc_misc;
 	PyObject *dep_samba_dcerpc_security;
-
-	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
-	if (dep_samba_dcerpc_lsa == NULL)
-		return;
+	PyObject *dep_samba_dcerpc_misc;
+	PyObject *dep_samba_dcerpc_krb5pac;
+	PyObject *dep_samba_dcerpc_lsa;
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
-		return;
-
-	dep_samba_dcerpc_krb5pac = PyImport_ImportModule("samba.dcerpc.krb5pac");
-	if (dep_samba_dcerpc_krb5pac == NULL)
-		return;
-
-	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
-	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
 	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
 	if (dep_samba_dcerpc_security == NULL)
 		return;
 
-	security_unix_token_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "unix_token");
-	if (security_unix_token_Type == NULL)
+	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
+	if (dep_samba_dcerpc_misc == NULL)
+		return;
+
+	dep_samba_dcerpc_krb5pac = PyImport_ImportModule("samba.dcerpc.krb5pac");
+	if (dep_samba_dcerpc_krb5pac == NULL)
+		return;
+
+	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
+	if (dep_samba_dcerpc_lsa == NULL)
+		return;
+
+	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
+	if (dom_sid_Type == NULL)
 		return;
 
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
 	if (Object_Type == NULL)
+		return;
+
+	security_unix_token_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "unix_token");
+	if (security_unix_token_Type == NULL)
 		return;
 
 	security_token_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "token");
@@ -1206,10 +1210,6 @@ void initauth(void)
 
 	PAC_SIGNATURE_DATA_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_krb5pac, "PAC_SIGNATURE_DATA");
 	if (PAC_SIGNATURE_DATA_Type == NULL)
-		return;
-
-	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
-	if (dom_sid_Type == NULL)
 		return;
 
 	auth_user_info_Type.tp_base = Object_Type;
@@ -1252,9 +1252,9 @@ void initauth(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "SEC_AUTH_METHOD_NTLM", PyInt_FromLong(SEC_AUTH_METHOD_NTLM));
 	PyModule_AddObject(m, "SEC_AUTH_METHOD_KERBEROS", PyInt_FromLong(SEC_AUTH_METHOD_KERBEROS));
 	PyModule_AddObject(m, "SEC_AUTH_METHOD_UNAUTHENTICATED", PyInt_FromLong(SEC_AUTH_METHOD_UNAUTHENTICATED));
+	PyModule_AddObject(m, "SEC_AUTH_METHOD_NTLM", PyInt_FromLong(SEC_AUTH_METHOD_NTLM));
 	Py_INCREF((PyObject *)(void *)&auth_user_info_Type);
 	PyModule_AddObject(m, "user_info", (PyObject *)(void *)&auth_user_info_Type);
 	Py_INCREF((PyObject *)(void *)&auth_user_info_torture_Type);

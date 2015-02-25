@@ -11,9 +11,9 @@
 #define _HEADER_printcap
 
 struct pcap_printer {
-	const char *name;/* [unique,charset(UTF8)] */
-	const char *info;/* [charset(UTF8),unique] */
-	const char *location;/* [charset(UTF8),unique] */
+	const char *name;/* [charset(UTF8),unique] */
+	const char *info;/* [unique,charset(UTF8)] */
+	const char *location;/* [unique,charset(UTF8)] */
 };
 
 struct pcap_data {

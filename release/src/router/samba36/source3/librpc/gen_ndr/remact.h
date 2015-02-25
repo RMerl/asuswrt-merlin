@@ -55,7 +55,7 @@ struct RemoteActivation {
 		uint32_t *AuthnHint;/* [ref] */
 		struct COMVERSION *ServerVersion;/* [ref] */
 		WERROR *hr;/* [ref] */
-		struct MInterfacePointer **ifaces;/* [ref,size_is(Interfaces)] */
+		struct MInterfacePointer **ifaces;/* [size_is(Interfaces),ref] */
 		WERROR *results;/* [size_is(Interfaces)] */
 		WERROR result;
 	} out;

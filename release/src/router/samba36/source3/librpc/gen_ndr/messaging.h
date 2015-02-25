@@ -155,7 +155,7 @@ struct messaging_array {
 }/* [public] */;
 
 struct dbwrap_tdb2_changes {
-	const char *magic_string;/* [charset(DOS),value("TDB2")] */
+	const char *magic_string;/* [value("TDB2"),charset(DOS)] */
 	uint32_t magic_version;/* [value] */
 	const char *name;/* [charset(UTF8)] */
 	uint32_t old_seqnum;

@@ -84,15 +84,15 @@ struct repsFromTo1 {
 	struct GUID source_dsa_obj_guid;
 	struct GUID source_dsa_invocation_id;
 	struct GUID transport_guid;
-}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX),gensize] */;
+}/* [gensize,flag(LIBNDR_PRINT_ARRAY_HEX),public] */;
 
 struct repsFromTo2OtherInfo {
 	uint32_t __ndr_size;/* [value(ndr_size_repsFromTo2OtherInfo(this,ndr->flags))] */
-	const char * dns_name1;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),relative] */
+	const char * dns_name1;/* [relative,flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
 	uint32_t unknown1;
-	const char * dns_name2;/* [flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2),relative] */
+	const char * dns_name2;/* [relative,flag(LIBNDR_FLAG_STR_NULLTERM|LIBNDR_FLAG_ALIGN2)] */
 	uint64_t unknown2;
-}/* [relative_base,gensize,public] */;
+}/* [gensize,public,relative_base] */;
 
 struct repsFromTo2 {
 	uint32_t blobsize;/* [value(ndr_size_repsFromTo2(this,ndr->flags)+8)] */
@@ -110,7 +110,7 @@ struct repsFromTo2 {
 	struct GUID source_dsa_invocation_id;
 	struct GUID transport_guid;
 	uint64_t unknown1;
-}/* [public,gensize,flag(LIBNDR_PRINT_ARRAY_HEX)] */;
+}/* [public,flag(LIBNDR_PRINT_ARRAY_HEX),gensize] */;
 
 union repsFromTo {
 	struct repsFromTo1 ctr1;/* [case] */
@@ -154,7 +154,7 @@ struct drsuapi_MSPrefixMap_Ctr {
 	uint32_t num_entries;
 	uint32_t __ndr_size;/* [value(ndr_size_drsuapi_MSPrefixMap_Ctr(r,ndr->flags))] */
 	struct drsuapi_MSPrefixMap_Entry *entries;
-}/* [gensize,public] */;
+}/* [public,gensize] */;
 
 enum prefixMapVersion
 #ifndef USE_UINT_ENUMS
@@ -217,7 +217,7 @@ enum supplementalCredentialsSignature
 ;
 
 struct supplementalCredentialsSubBlob {
-	const char *prefix;/* [charset(UTF16),value(SUPPLEMENTAL_CREDENTIALS_PREFIX)] */
+	const char *prefix;/* [value(SUPPLEMENTAL_CREDENTIALS_PREFIX),charset(UTF16)] */
 	enum supplementalCredentialsSignature signature;/* [value(SUPPLEMENTAL_CREDENTIALS_SIGNATURE)] */
 	uint16_t num_packages;
 	struct supplementalCredentialsPackage *packages;
@@ -238,7 +238,7 @@ struct package_PackagesBlob {
 struct package_PrimaryKerberosString {
 	uint16_t length;/* [value(2*strlen_m(string))] */
 	uint16_t size;/* [value(2*strlen_m(string))] */
-	const char * string;/* [subcontext(0),flag(LIBNDR_FLAG_STR_NOTERM|LIBNDR_FLAG_REMAINING),relative,subcontext_size(size)] */
+	const char * string;/* [flag(LIBNDR_FLAG_STR_NOTERM|LIBNDR_FLAG_REMAINING),subcontext(0),relative,subcontext_size(size)] */
 };
 
 struct package_PrimaryKerberosKey3 {
@@ -247,7 +247,7 @@ struct package_PrimaryKerberosKey3 {
 	uint32_t reserved3;/* [value(0)] */
 	uint32_t keytype;
 	uint32_t value_len;/* [value((value?value->length:0))] */
-	DATA_BLOB *value;/* [relative,subcontext_size(value_len),flag(LIBNDR_FLAG_REMAINING),subcontext(0)] */
+	DATA_BLOB *value;/* [subcontext(0),subcontext_size(value_len),relative,flag(LIBNDR_FLAG_REMAINING)] */
 };
 
 struct package_PrimaryKerberosCtr3 {
@@ -270,7 +270,7 @@ struct package_PrimaryKerberosKey4 {
 	uint32_t iteration_count;
 	uint32_t keytype;
 	uint32_t value_len;/* [value((value?value->length:0))] */
-	DATA_BLOB *value;/* [subcontext_size(value_len),relative,flag(LIBNDR_FLAG_REMAINING),subcontext(0)] */
+	DATA_BLOB *value;/* [subcontext_size(value_len),relative,subcontext(0),flag(LIBNDR_FLAG_REMAINING)] */
 };
 
 struct package_PrimaryKerberosCtr4 {
@@ -350,23 +350,23 @@ struct AuthenticationInformation {
 struct AuthenticationInformationArray {
 	uint32_t count;
 	struct AuthenticationInformation *array;
-}/* [nopush,nopull,gensize,public] */;
+}/* [nopull,nopush,public,gensize] */;
 
 struct trustAuthInOutBlob {
 	uint32_t count;
 	uint32_t current_offset;/* [value((count>0)?12:0)] */
 	uint32_t previous_offset;/* [value((count>0)?12+ndr_size_AuthenticationInformationArray(&current,ndr->flags):0)] */
-	struct AuthenticationInformationArray current;/* [subcontext_size((previous_offset)-(current_offset)),subcontext(0)] */
-	struct AuthenticationInformationArray previous;/* [flag(LIBNDR_FLAG_REMAINING),subcontext(0)] */
-}/* [public,gensize,nopush] */;
+	struct AuthenticationInformationArray current;/* [subcontext(0),subcontext_size((previous_offset)-(current_offset))] */
+	struct AuthenticationInformationArray previous;/* [subcontext(0),flag(LIBNDR_FLAG_REMAINING)] */
+}/* [nopush,public,gensize] */;
 
 struct trustDomainPasswords {
 	uint8_t confounder[512];
-	struct trustAuthInOutBlob outgoing;/* [subcontext_size(outgoing_size),subcontext(0)] */
+	struct trustAuthInOutBlob outgoing;/* [subcontext(0),subcontext_size(outgoing_size)] */
 	struct trustAuthInOutBlob incoming;/* [subcontext_size(incoming_size),subcontext(0)] */
 	uint32_t outgoing_size;/* [value(ndr_size_trustAuthInOutBlob(&outgoing,ndr->flags))] */
 	uint32_t incoming_size;/* [value(ndr_size_trustAuthInOutBlob(&incoming,ndr->flags))] */
-}/* [public,nopull] */;
+}/* [nopull,public] */;
 
 struct DsCompressedChunk {
 	uint32_t marker;
@@ -375,17 +375,17 @@ struct DsCompressedChunk {
 
 struct ExtendedErrorAString {
 	uint16_t __size;
-	const char *string;/* [unique,size_is(__size),charset(DOS)] */
+	const char *string;/* [charset(DOS),unique,size_is(__size)] */
 };
 
 struct ExtendedErrorUString {
 	uint16_t __size;
-	const char *string;/* [unique,size_is(__size),charset(UTF16)] */
+	const char *string;/* [charset(UTF16),unique,size_is(__size)] */
 };
 
 struct ExtendedErrorBlob {
 	uint16_t length;
-	uint8_t *data;/* [unique,size_is(length)] */
+	uint8_t *data;/* [size_is(length),unique] */
 };
 
 enum ExtendedErrorComputerNamePresent

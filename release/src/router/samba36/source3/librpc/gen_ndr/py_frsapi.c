@@ -12,8 +12,8 @@
 staticforward PyTypeObject frsapi_Info_Type;
 staticforward PyTypeObject frsapi_InterfaceType;
 
-void initfrsapi(void);static PyTypeObject *ClientConnection_Type;
-static PyTypeObject *GUID_Type;
+void initfrsapi(void);static PyTypeObject *GUID_Type;
+static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *Object_Type;
 
 static PyObject *py_frsapi_Info_get_length(PyObject *obj, void *closure)
@@ -544,9 +544,13 @@ static PyMethodDef frsapi_methods[] = {
 void initfrsapi(void)
 {
 	PyObject *m;
+	PyObject *dep_samba_dcerpc_misc;
 	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_misc;
+
+	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
+	if (dep_samba_dcerpc_misc == NULL)
+		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
@@ -556,16 +560,12 @@ void initfrsapi(void)
 	if (dep_talloc == NULL)
 		return;
 
-	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
-	if (dep_samba_dcerpc_misc == NULL)
+	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
+	if (GUID_Type == NULL)
 		return;
 
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
 	if (ClientConnection_Type == NULL)
-		return;
-
-	GUID_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "GUID");
-	if (GUID_Type == NULL)
 		return;
 
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
@@ -594,21 +594,21 @@ void initfrsapi(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "FRSAPI_INFO_CONFIGTABLE", PyInt_FromLong(FRSAPI_INFO_CONFIGTABLE));
 	PyModule_AddObject(m, "FRSAPI_REPLICA_SET_TYPE_DFS", PyInt_FromLong(FRSAPI_REPLICA_SET_TYPE_DFS));
-	PyModule_AddObject(m, "FRSAPI_INFO_OUTLOG", PyInt_FromLong(FRSAPI_INFO_OUTLOG));
-	PyModule_AddObject(m, "FRSAPI_WRITER_COMMAND_THAW", PyInt_FromLong(FRSAPI_WRITER_COMMAND_THAW));
-	PyModule_AddObject(m, "FRSAPI_INFO_STAGE", PyInt_FromLong(FRSAPI_INFO_STAGE));
-	PyModule_AddObject(m, "FRSAPI_INFO_SETS", PyInt_FromLong(FRSAPI_INFO_SETS));
-	PyModule_AddObject(m, "FRSAPI_REPLICA_SET_TYPE_DOMAIN", PyInt_FromLong(FRSAPI_REPLICA_SET_TYPE_DOMAIN));
-	PyModule_AddObject(m, "FRSAPI_INFO_INLOG", PyInt_FromLong(FRSAPI_INFO_INLOG));
 	PyModule_AddObject(m, "FRSAPI_REPLICA_SET_TYPE_0", PyInt_FromLong(FRSAPI_REPLICA_SET_TYPE_0));
-	PyModule_AddObject(m, "FRSAPI_INFO_IDTABLE", PyInt_FromLong(FRSAPI_INFO_IDTABLE));
-	PyModule_AddObject(m, "FRSAPI_INFO_VERSION", PyInt_FromLong(FRSAPI_INFO_VERSION));
-	PyModule_AddObject(m, "FRSAPI_INFO_DS", PyInt_FromLong(FRSAPI_INFO_DS));
+	PyModule_AddObject(m, "FRSAPI_REPLICA_SET_TYPE_DOMAIN", PyInt_FromLong(FRSAPI_REPLICA_SET_TYPE_DOMAIN));
 	PyModule_AddObject(m, "FRSAPI_WRITER_COMMAND_FREEZE", PyInt_FromLong(FRSAPI_WRITER_COMMAND_FREEZE));
-	PyModule_AddObject(m, "FRSAPI_INFO_MEMORY", PyInt_FromLong(FRSAPI_INFO_MEMORY));
+	PyModule_AddObject(m, "FRSAPI_INFO_CONFIGTABLE", PyInt_FromLong(FRSAPI_INFO_CONFIGTABLE));
+	PyModule_AddObject(m, "FRSAPI_INFO_DS", PyInt_FromLong(FRSAPI_INFO_DS));
+	PyModule_AddObject(m, "FRSAPI_INFO_IDTABLE", PyInt_FromLong(FRSAPI_INFO_IDTABLE));
+	PyModule_AddObject(m, "FRSAPI_INFO_STAGE", PyInt_FromLong(FRSAPI_INFO_STAGE));
 	PyModule_AddObject(m, "FRSAPI_INFO_THREADS", PyInt_FromLong(FRSAPI_INFO_THREADS));
+	PyModule_AddObject(m, "FRSAPI_INFO_OUTLOG", PyInt_FromLong(FRSAPI_INFO_OUTLOG));
+	PyModule_AddObject(m, "FRSAPI_INFO_INLOG", PyInt_FromLong(FRSAPI_INFO_INLOG));
+	PyModule_AddObject(m, "FRSAPI_INFO_VERSION", PyInt_FromLong(FRSAPI_INFO_VERSION));
+	PyModule_AddObject(m, "FRSAPI_WRITER_COMMAND_THAW", PyInt_FromLong(FRSAPI_WRITER_COMMAND_THAW));
+	PyModule_AddObject(m, "FRSAPI_INFO_SETS", PyInt_FromLong(FRSAPI_INFO_SETS));
+	PyModule_AddObject(m, "FRSAPI_INFO_MEMORY", PyInt_FromLong(FRSAPI_INFO_MEMORY));
 	Py_INCREF((PyObject *)(void *)&frsapi_Info_Type);
 	PyModule_AddObject(m, "Info", (PyObject *)(void *)&frsapi_Info_Type);
 	Py_INCREF((PyObject *)(void *)&frsapi_InterfaceType);

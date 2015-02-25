@@ -62,12 +62,12 @@ struct STRINGBINDING {
 
 struct STRINGARRAY {
 	struct STRINGBINDING **stringbindings;/* [unique] */
-}/* [nopush,noprint,nopull,public] */;
+}/* [noprint,public,nopush,nopull] */;
 
 struct DUALSTRINGARRAY {
 	struct STRINGBINDING **stringbindings;/* [unique] */
 	struct SECURITYBINDING **securitybindings;/* [unique] */
-}/* [nopush,noprint,nopull,public] */;
+}/* [noprint,nopush,nopull,public] */;
 
 struct SECURITYBINDING {
 	uint16_t wAuthnSvc;

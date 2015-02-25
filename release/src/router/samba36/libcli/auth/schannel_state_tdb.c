@@ -285,6 +285,10 @@ NTSTATUS schannel_check_creds_state(TALLOC_CTX *mem_ctx,
 	NTSTATUS status;
 	int ret;
 
+	if (creds_out != NULL) {
+		*creds_out = NULL;
+	}
+
 	tmpctx = talloc_named(mem_ctx, 0, "schannel_check_creds_state");
 	if (!tmpctx) {
 		return NT_STATUS_NO_MEMORY;

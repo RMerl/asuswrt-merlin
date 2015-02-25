@@ -51,7 +51,7 @@ struct eventlog6_boolean8Array {
 
 struct eventlog6_UInt32Array {
 	uint32_t count;/* [range(0,MAX_RPC_UINT32_ARRAY_COUNT)] */
-	uint32_t *ptr;/* [size_is(count),unique] */
+	uint32_t *ptr;/* [unique,size_is(count)] */
 };
 
 struct eventlog6_UInt64Array {
@@ -61,7 +61,7 @@ struct eventlog6_UInt64Array {
 
 struct eventlog6_StringArray {
 	uint32_t count;/* [range(0,MAX_RPC_STRING_ARRAY_COUNT)] */
-	const char *ptr;/* [unique,size_is(count),charset(UTF16)] */
+	const char *ptr;/* [charset(UTF16),unique,size_is(count)] */
 };
 
 struct eventlog6_GuidArray {
@@ -118,8 +118,8 @@ union eventlog6_EvtRpcVariantUnion {
 	uint8_t boolean8Val;/* [case(EvtRpcVarTypeboolean8)] */
 	uint32_t uint32Val;/* [case(EvtRpcVarTypeUInt32)] */
 	uint64_t uint64Val;/* [case(EvtRpcVarTypeUInt64)] */
-	const char *stringVal;/* [unique,charset(UTF16),case(EvtRpcVarTypeString)] */
-	struct GUID *guidVal;/* [case(EvtRpcVarTypeGuid),unique] */
+	const char *stringVal;/* [unique,case(EvtRpcVarTypeString),charset(UTF16)] */
+	struct GUID *guidVal;/* [unique,case(EvtRpcVarTypeGuid)] */
 	struct eventlog6_boolean8Array boolean8Array;/* [case(EvtRpcVarTypeboolean8Array)] */
 	struct eventlog6_UInt32Array uint32Array;/* [case(EvtRpcVarTypeUInt32Array)] */
 	struct eventlog6_UInt64Array uint64Array;/* [case(EvtRpcVarTypeUInt64Array)] */
@@ -130,12 +130,12 @@ union eventlog6_EvtRpcVariantUnion {
 struct eventlog6_EvtRpcVariant {
 	enum eventlog6_EvtRpcVariantType type;
 	uint32_t flags;
-	union eventlog6_EvtRpcVariantUnion *var;/* [ref,switch_is(type)] */
+	union eventlog6_EvtRpcVariantUnion *var;/* [switch_is(type),ref] */
 };
 
 struct eventlog6_EvtRpcVariantList {
 	uint32_t count;/* [range(0,MAX_RPC_VARIANT_LIST_COUNT)] */
-	struct eventlog6_EvtRpcVariant *props;/* [unique,size_is(count)] */
+	struct eventlog6_EvtRpcVariant *props;/* [size_is(count),unique] */
 };
 
 struct eventlog6_EvtRpcQueryChannelInfo {
@@ -146,9 +146,9 @@ struct eventlog6_EvtRpcQueryChannelInfo {
 
 struct eventlog6_EvtRpcRegisterRemoteSubscription {
 	struct {
-		const char *channelPath;/* [range(0,MAX_RPC_CHANNEL_NAME_LENGTH),unique,charset(UTF16)] */
-		const char *query;/* [range(1,MAX_RPC_QUERY_LENGTH),ref,charset(UTF16)] */
-		const char *bookmarkXml;/* [unique,charset(UTF16),range(0,MAX_RPC_BOOKMARK_LENGTH)] */
+		const char *channelPath;/* [unique,range(0,MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16)] */
+		const char *query;/* [charset(UTF16),range(1,MAX_RPC_QUERY_LENGTH),ref] */
+		const char *bookmarkXml;/* [unique,range(0,MAX_RPC_BOOKMARK_LENGTH),charset(UTF16)] */
 		uint32_t flags;
 	} in;
 
@@ -156,7 +156,7 @@ struct eventlog6_EvtRpcRegisterRemoteSubscription {
 		struct policy_handle *handle;/* [ref] */
 		struct policy_handle *control;/* [ref] */
 		uint32_t *queryChannelInfoSize;/* [ref] */
-		struct eventlog6_EvtRpcQueryChannelInfo **queryChannelInfo;/* [range(0,MAX_RPC_QUERY_CHANNEL_SIZE),ref,size_is(,*queryChannelInfoSize)] */
+		struct eventlog6_EvtRpcQueryChannelInfo **queryChannelInfo;/* [size_is(,*queryChannelInfoSize),range(0,MAX_RPC_QUERY_CHANNEL_SIZE),ref] */
 		struct eventlog6_RpcInfo *error;/* [ref] */
 		WERROR result;
 	} out;
@@ -173,8 +173,8 @@ struct eventlog6_EvtRpcRemoteSubscriptionNextAsync {
 
 	struct {
 		uint32_t *numActualRecords;/* [ref] */
-		uint32_t **eventDataIndices;/* [ref,range(0,MAX_RPC_RECORD_COUNT),size_is(,*numActualRecords)] */
-		uint32_t **eventDataSizes;/* [size_is(,*numActualRecords),ref,range(0,MAX_RPC_RECORD_COUNT)] */
+		uint32_t **eventDataIndices;/* [size_is(,*numActualRecords),range(0,MAX_RPC_RECORD_COUNT),ref] */
+		uint32_t **eventDataSizes;/* [size_is(,*numActualRecords),range(0,MAX_RPC_RECORD_COUNT),ref] */
 		uint32_t *resultBufferSize;/* [ref] */
 		uint8_t **resultBuffer;/* [size_is(,*resultBufferSize),ref,range(0,MAX_RPC_BATCH_SIZE)] */
 		WERROR result;
@@ -193,10 +193,10 @@ struct eventlog6_EvtRpcRemoteSubscriptionNext {
 
 	struct {
 		uint32_t *numActualRecords;/* [ref] */
-		uint32_t **eventDataIndices;/* [size_is(,*numActualRecords),ref,range(0,MAX_RPC_RECORD_COUNT)] */
-		uint32_t **eventDataSizes;/* [ref,range(0,MAX_RPC_RECORD_COUNT),size_is(,*numActualRecords)] */
+		uint32_t **eventDataIndices;/* [ref,range(0,MAX_RPC_RECORD_COUNT),size_is(,*numActualRecords)] */
+		uint32_t **eventDataSizes;/* [range(0,MAX_RPC_RECORD_COUNT),ref,size_is(,*numActualRecords)] */
 		uint32_t *resultBufferSize;/* [ref] */
-		uint8_t **resultBuffer;/* [ref,range(0,MAX_RPC_BATCH_SIZE),size_is(,*resultBufferSize)] */
+		uint8_t **resultBuffer;/* [size_is(,*resultBufferSize),range(0,MAX_RPC_BATCH_SIZE),ref] */
 		WERROR result;
 	} out;
 
@@ -226,8 +226,8 @@ struct eventlog6_EvtRpcRegisterControllableOperation {
 
 struct eventlog6_EvtRpcRegisterLogQuery {
 	struct {
-		const char *path;/* [unique,charset(UTF16),range(0,MAX_RPC_CHANNEL_PATH_LENGTH)] */
-		const char *query;/* [range(1,MAX_RPC_QUERY_LENGTH),ref,charset(UTF16)] */
+		const char *path;/* [charset(UTF16),range(0,MAX_RPC_CHANNEL_PATH_LENGTH),unique] */
+		const char *query;/* [charset(UTF16),range(1,MAX_RPC_QUERY_LENGTH),ref] */
 		uint32_t flags;
 	} in;
 
@@ -246,8 +246,8 @@ struct eventlog6_EvtRpcRegisterLogQuery {
 struct eventlog6_EvtRpcClearLog {
 	struct {
 		struct policy_handle *control;/* [ref] */
-		const char *channelPath;/* [ref,range(0,MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16)] */
-		const char *backupPath;/* [range(0,MAX_RPC_FILE_PATH_LENGTH),charset(UTF16),unique] */
+		const char *channelPath;/* [charset(UTF16),ref,range(0,MAX_RPC_CHANNEL_NAME_LENGTH)] */
+		const char *backupPath;/* [unique,range(0,MAX_RPC_FILE_PATH_LENGTH),charset(UTF16)] */
 		uint32_t flags;
 	} in;
 
@@ -262,8 +262,8 @@ struct eventlog6_EvtRpcClearLog {
 struct eventlog6_EvtRpcExportLog {
 	struct {
 		struct policy_handle *control;/* [ref] */
-		const char *channelPath;/* [unique,charset(UTF16),range(0,MAX_RPC_CHANNEL_NAME_LENGTH)] */
-		const char *query;/* [range(1,MAX_RPC_QUERY_LENGTH),ref,charset(UTF16)] */
+		const char *channelPath;/* [unique,range(0,MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16)] */
+		const char *query;/* [charset(UTF16),range(1,MAX_RPC_QUERY_LENGTH),ref] */
 		const char *backupPath;/* [ref,range(1,MAX_RPC_FILE_PATH_LENGTH),charset(UTF16)] */
 		uint32_t flags;
 	} in;
@@ -317,7 +317,7 @@ struct eventlog6_EvtRpcMessageRender {
 struct eventlog6_EvtRpcMessageRenderDefault {
 	struct {
 		uint32_t sizeEventId;/* [range(1,MAX_RPC_EVENT_ID_SIZE)] */
-		uint8_t *eventId;/* [size_is(sizeEventId),ref] */
+		uint8_t *eventId;/* [ref,size_is(sizeEventId)] */
 		uint32_t messageId;
 		struct eventlog6_EvtRpcVariantList *values;/* [ref] */
 		uint32_t flags;
@@ -327,7 +327,7 @@ struct eventlog6_EvtRpcMessageRenderDefault {
 	struct {
 		uint32_t *actualSizeString;/* [ref] */
 		uint32_t *neededSizeString;/* [ref] */
-		uint8_t **string;/* [size_is(,*actualSizeString),range(0,MAX_RPC_RENDERED_STRING_SIZE),ref] */
+		uint8_t **string;/* [ref,range(0,MAX_RPC_RENDERED_STRING_SIZE),size_is(,*actualSizeString)] */
 		struct eventlog6_RpcInfo *error;/* [ref] */
 		WERROR result;
 	} out;
@@ -345,8 +345,8 @@ struct eventlog6_EvtRpcQueryNext {
 
 	struct {
 		uint32_t *numActualRecords;/* [ref] */
-		uint32_t **eventDataIndices;/* [size_is(,*numActualRecords),ref,range(0,MAX_RPC_RECORD_COUNT)] */
-		uint32_t **eventDataSizes;/* [size_is(,*numActualRecords),range(0,MAX_RPC_RECORD_COUNT),ref] */
+		uint32_t **eventDataIndices;/* [ref,range(0,MAX_RPC_RECORD_COUNT),size_is(,*numActualRecords)] */
+		uint32_t **eventDataSizes;/* [range(0,MAX_RPC_RECORD_COUNT),ref,size_is(,*numActualRecords)] */
 		uint32_t *resultBufferSize;/* [ref] */
 		uint8_t **resultBuffer;/* [size_is(,*resultBufferSize),ref,range(0,MAX_RPC_BATCH_SIZE)] */
 		WERROR result;
@@ -359,7 +359,7 @@ struct eventlog6_EvtRpcQuerySeek {
 	struct {
 		struct policy_handle *logQuery;/* [ref] */
 		uint64_t pos;
-		const char *bookmarkXml;/* [range(0,MAX_RPC_BOOKMARK_LENGTH),unique,charset(UTF16)] */
+		const char *bookmarkXml;/* [charset(UTF16),range(0,MAX_RPC_BOOKMARK_LENGTH),unique] */
 		uint32_t timeOut;
 		uint32_t flags;
 	} in;
@@ -399,7 +399,7 @@ struct eventlog6_EvtRpcCancel {
 
 struct eventlog6_EvtRpcAssertConfig {
 	struct {
-		const char *path;/* [charset(UTF16),ref,range(1,MAX_RPC_CHANNEL_NAME_LENGTH)] */
+		const char *path;/* [range(1,MAX_RPC_CHANNEL_NAME_LENGTH),ref,charset(UTF16)] */
 		uint32_t flags;
 	} in;
 
@@ -425,7 +425,7 @@ struct eventlog6_EvtRpcRetractConfig {
 
 struct eventlog6_EvtRpcOpenLogHandle {
 	struct {
-		const char *channel;/* [ref,range(1,MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16)] */
+		const char *channel;/* [charset(UTF16),range(1,MAX_RPC_CHANNEL_NAME_LENGTH),ref] */
 		uint32_t flags;
 	} in;
 
@@ -446,7 +446,7 @@ struct eventlog6_EvtRpcGetLogFileInfo {
 	} in;
 
 	struct {
-		uint8_t *propertyValueBuffer;/* [size_is(propertyValueBufferSize),ref] */
+		uint8_t *propertyValueBuffer;/* [ref,size_is(propertyValueBufferSize)] */
 		uint32_t *propertyValueBufferLength;/* [ref] */
 		WERROR result;
 	} out;
@@ -461,7 +461,7 @@ struct eventlog6_EvtRpcGetChannelList {
 
 	struct {
 		uint32_t *numChannelPaths;/* [ref] */
-		const char ***channelPaths;/* [size_is(,*numChannelPaths),charset(UTF16),ref,range(0,MAX_RPC_CHANNEL_COUNT)] */
+		const char ***channelPaths;/* [size_is(,*numChannelPaths),ref,range(0,MAX_RPC_CHANNEL_COUNT),charset(UTF16)] */
 		WERROR result;
 	} out;
 
@@ -470,7 +470,7 @@ struct eventlog6_EvtRpcGetChannelList {
 
 struct eventlog6_EvtRpcGetChannelConfig {
 	struct {
-		const char *channelPath;/* [charset(UTF16),range(1,MAX_RPC_CHANNEL_NAME_LENGTH),ref] */
+		const char *channelPath;/* [charset(UTF16),ref,range(1,MAX_RPC_CHANNEL_NAME_LENGTH)] */
 		uint32_t flags;
 	} in;
 
@@ -504,7 +504,7 @@ struct eventlog6_EvtRpcGetPublisherList {
 
 	struct {
 		uint32_t *numPublisherIds;/* [ref] */
-		const char ***publisherIds;/* [size_is(,*numPublisherIds),charset(UTF16),ref,range(0,MAX_RPC_PUBLISHER_COUNT)] */
+		const char ***publisherIds;/* [charset(UTF16),size_is(,*numPublisherIds),range(0,MAX_RPC_PUBLISHER_COUNT),ref] */
 		WERROR result;
 	} out;
 
@@ -519,7 +519,7 @@ struct eventlog6_EvtRpcGetPublisherListForChannel {
 
 	struct {
 		uint32_t *numPublisherIds;/* [ref] */
-		const char ***publisherIds;/* [range(0,MAX_RPC_PUBLISHER_COUNT),ref,size_is(,*numPublisherIds),charset(UTF16)] */
+		const char ***publisherIds;/* [charset(UTF16),range(0,MAX_RPC_PUBLISHER_COUNT),ref,size_is(,*numPublisherIds)] */
 		WERROR result;
 	} out;
 
@@ -528,8 +528,8 @@ struct eventlog6_EvtRpcGetPublisherListForChannel {
 
 struct eventlog6_EvtRpcGetPublisherMetadata {
 	struct {
-		const char *publisherId;/* [unique,charset(UTF16),range(0,MAX_RPC_PUBLISHER_ID_LENGTH)] */
-		const char *logFilePath;/* [unique,charset(UTF16),range(0,MAX_RPC_FILE_PATH_LENGTH)] */
+		const char *publisherId;/* [range(0,MAX_RPC_PUBLISHER_ID_LENGTH),unique,charset(UTF16)] */
+		const char *logFilePath;/* [unique,range(0,MAX_RPC_FILE_PATH_LENGTH),charset(UTF16)] */
 		uint32_t locale;
 		uint32_t flags;
 	} in;
@@ -562,7 +562,7 @@ struct eventlog6_EvtRpcGetEventMetadataEnum {
 	struct {
 		struct policy_handle *pubMetadata;/* [ref] */
 		uint32_t flags;
-		const char *reservedForFilter;/* [unique,charset(UTF16),range(0,MAX_RPC_FILTER_LENGTH)] */
+		const char *reservedForFilter;/* [charset(UTF16),unique,range(0,MAX_RPC_FILTER_LENGTH)] */
 	} in;
 
 	struct {
@@ -582,7 +582,7 @@ struct eventlog6_EvtRpcGetNextEventMetadata {
 
 	struct {
 		uint32_t *numReturned;/* [ref] */
-		struct eventlog6_EvtRpcVariantList **eventMetadataInstances;/* [size_is(,*numReturned),range(0,MAX_RPC_EVENT_METADATA_COUNT),ref] */
+		struct eventlog6_EvtRpcVariantList **eventMetadataInstances;/* [ref,range(0,MAX_RPC_EVENT_METADATA_COUNT),size_is(,*numReturned)] */
 		WERROR result;
 	} out;
 

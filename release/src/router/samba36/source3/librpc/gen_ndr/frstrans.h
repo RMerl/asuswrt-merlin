@@ -126,7 +126,7 @@ struct frstrans_AsyncVersionVectorResponse {
 	uint32_t version_vector_count;
 	struct frstrans_VersionVector *version_vector;/* [size_is(version_vector_count),unique] */
 	uint32_t epoque_vector_count;
-	struct frstrans_EpoqueVector *epoque_vector;/* [size_is(epoque_vector_count),unique] */
+	struct frstrans_EpoqueVector *epoque_vector;/* [unique,size_is(epoque_vector_count)] */
 };
 
 struct frstrans_AsyncResponseContext {
@@ -300,7 +300,7 @@ struct frstrans_RequestUpdates {
 	} in;
 
 	struct {
-		struct frstrans_Update *frs_update;/* [length_is(*update_count),ref,size_is(credits_available)] */
+		struct frstrans_Update *frs_update;/* [size_is(credits_available),length_is(*update_count),ref] */
 		uint32_t *update_count;/* [ref] */
 		enum frstrans_UpdateStatus *update_status;/* [ref] */
 		struct GUID *gvsn_db_guid;/* [ref] */
@@ -388,7 +388,7 @@ struct frstrans_InitializeFileTransferAsync {
 	struct {
 		struct policy_handle *server_context;/* [ref] */
 		struct frstrans_RdcFileInfo **rdc_file_info;/* [ref] */
-		uint8_t *data_buffer;/* [length_is(*size_read),ref,size_is(buffer_size)] */
+		uint8_t *data_buffer;/* [ref,length_is(*size_read),size_is(buffer_size)] */
 		uint32_t *size_read;/* [ref] */
 		uint32_t *is_end_of_file;/* [ref] */
 		struct frstrans_Update *frs_update;/* [ref] */

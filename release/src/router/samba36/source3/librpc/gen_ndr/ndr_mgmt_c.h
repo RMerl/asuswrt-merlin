@@ -90,7 +90,7 @@ struct tevent_req *dcerpc_mgmt_inq_princ_name_send(TALLOC_CTX *mem_ctx,
 						   struct dcerpc_binding_handle *h,
 						   uint32_t _authn_proto /* [in]  */,
 						   uint32_t _princ_name_size /* [in]  */,
-						   const char *_princ_name /* [out] [charset(DOS),size_is(princ_name_size)] */);
+						   const char *_princ_name /* [out] [size_is(princ_name_size),charset(DOS)] */);
 NTSTATUS dcerpc_mgmt_inq_princ_name_recv(struct tevent_req *req,
 					 TALLOC_CTX *mem_ctx,
 					 WERROR *result);
@@ -98,7 +98,7 @@ NTSTATUS dcerpc_mgmt_inq_princ_name(struct dcerpc_binding_handle *h,
 				    TALLOC_CTX *mem_ctx,
 				    uint32_t _authn_proto /* [in]  */,
 				    uint32_t _princ_name_size /* [in]  */,
-				    const char *_princ_name /* [out] [charset(DOS),size_is(princ_name_size)] */,
+				    const char *_princ_name /* [out] [size_is(princ_name_size),charset(DOS)] */,
 				    WERROR *result);
 
 #endif /* _HEADER_RPC_mgmt */

@@ -20,10 +20,10 @@ staticforward PyTypeObject KeySecurityAttribute_Type;
 staticforward PyTypeObject QueryMultipleValue_Type;
 staticforward PyTypeObject winreg_InterfaceType;
 
-void initwinreg(void);static PyTypeObject *ClientConnection_Type;
+void initwinreg(void);static PyTypeObject *Object_Type;
 static PyTypeObject *lsa_StringLarge_Type;
 static PyTypeObject *policy_handle_Type;
-static PyTypeObject *Object_Type;
+static PyTypeObject *ClientConnection_Type;
 
 static PyObject *py_winreg_String_get_name_len(PyObject *obj, void *closure)
 {
@@ -2947,11 +2947,19 @@ static PyMethodDef winreg_methods[] = {
 void initwinreg(void)
 {
 	PyObject *m;
+	PyObject *dep_samba_dcerpc_lsa;
+	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_samba_dcerpc_misc;
 	PyObject *dep_samba_dcerpc_security;
-	PyObject *dep_samba_dcerpc_lsa;
 	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_base;
+
+	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
+	if (dep_samba_dcerpc_lsa == NULL)
+		return;
+
+	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
+	if (dep_samba_dcerpc_base == NULL)
+		return;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
@@ -2961,20 +2969,12 @@ void initwinreg(void)
 	if (dep_samba_dcerpc_security == NULL)
 		return;
 
-	dep_samba_dcerpc_lsa = PyImport_ImportModule("samba.dcerpc.lsa");
-	if (dep_samba_dcerpc_lsa == NULL)
-		return;
-
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
 		return;
 
-	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
-	if (dep_samba_dcerpc_base == NULL)
-		return;
-
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	lsa_StringLarge_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_lsa, "StringLarge");
@@ -2985,8 +2985,8 @@ void initwinreg(void)
 	if (policy_handle_Type == NULL)
 		return;
 
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
 	winreg_String_Type.tp_base = Object_Type;
@@ -3053,34 +3053,34 @@ void initwinreg(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "KEY_NOTIFY", PyInt_FromLong(KEY_NOTIFY));
-	PyModule_AddObject(m, "REG_NO_LAZY_FLUSH", PyInt_FromLong(REG_NO_LAZY_FLUSH));
-	PyModule_AddObject(m, "REG_KEY_READ", PyInt_FromLong((STANDARD_RIGHTS_READ_ACCESS|KEY_QUERY_VALUE|KEY_ENUMERATE_SUB_KEYS|KEY_NOTIFY)));
-	PyModule_AddObject(m, "KEY_WOW64_32KEY", PyInt_FromLong(KEY_WOW64_32KEY));
+	PyModule_AddObject(m, "REG_NOTIFY_CHANGE_SECURITY", PyInt_FromLong(REG_NOTIFY_CHANGE_SECURITY));
+	PyModule_AddObject(m, "KEY_CREATE_SUB_KEY", PyInt_FromLong(KEY_CREATE_SUB_KEY));
+	PyModule_AddObject(m, "KEY_WOW64_64KEY", PyInt_FromLong(KEY_WOW64_64KEY));
+	PyModule_AddObject(m, "REG_NOTIFY_CHANGE_NAME", PyInt_FromLong(REG_NOTIFY_CHANGE_NAME));
+	PyModule_AddObject(m, "KEY_QUERY_VALUE", PyInt_FromLong(KEY_QUERY_VALUE));
 	PyModule_AddObject(m, "REG_REFRESH_HIVE", PyInt_FromLong(REG_REFRESH_HIVE));
+	PyModule_AddObject(m, "REG_ACTION_NONE", PyInt_FromLong(REG_ACTION_NONE));
+	PyModule_AddObject(m, "REG_NO_LAZY_FLUSH", PyInt_FromLong(REG_NO_LAZY_FLUSH));
+	PyModule_AddObject(m, "REG_NOTIFY_CHANGE_ATTRIBUTES", PyInt_FromLong(REG_NOTIFY_CHANGE_ATTRIBUTES));
+	PyModule_AddObject(m, "REG_OPENED_EXISTING_KEY", PyInt_FromLong(REG_OPENED_EXISTING_KEY));
+	PyModule_AddObject(m, "REG_KEY_EXECUTE", PyInt_FromLong(REG_KEY_READ));
+	PyModule_AddObject(m, "KEY_ENUMERATE_SUB_KEYS", PyInt_FromLong(KEY_ENUMERATE_SUB_KEYS));
+	PyModule_AddObject(m, "REG_NOTIFY_CHANGE_LAST_SET", PyInt_FromLong(REG_NOTIFY_CHANGE_LAST_SET));
+	PyModule_AddObject(m, "KEY_NOTIFY", PyInt_FromLong(KEY_NOTIFY));
+	PyModule_AddObject(m, "REG_FORCE_RESTORE", PyInt_FromLong(REG_FORCE_RESTORE));
 	PyModule_AddObject(m, "REG_OPTION_BACKUP_RESTORE", PyInt_FromLong(REG_OPTION_BACKUP_RESTORE));
 	PyModule_AddObject(m, "KEY_SET_VALUE", PyInt_FromLong(KEY_SET_VALUE));
-	PyModule_AddObject(m, "REG_KEY_EXECUTE", PyInt_FromLong(REG_KEY_READ));
-	PyModule_AddObject(m, "KEY_CREATE_LINK", PyInt_FromLong(KEY_CREATE_LINK));
-	PyModule_AddObject(m, "REG_OPENED_EXISTING_KEY", PyInt_FromLong(REG_OPENED_EXISTING_KEY));
-	PyModule_AddObject(m, "REG_OPTION_CREATE_LINK", PyInt_FromLong(REG_OPTION_CREATE_LINK));
-	PyModule_AddObject(m, "REG_OPTION_OPEN_LINK", PyInt_FromLong(REG_OPTION_OPEN_LINK));
-	PyModule_AddObject(m, "REG_ACTION_NONE", PyInt_FromLong(REG_ACTION_NONE));
-	PyModule_AddObject(m, "REG_NOTIFY_CHANGE_LAST_SET", PyInt_FromLong(REG_NOTIFY_CHANGE_LAST_SET));
-	PyModule_AddObject(m, "KEY_QUERY_VALUE", PyInt_FromLong(KEY_QUERY_VALUE));
-	PyModule_AddObject(m, "REG_KEY_ALL", PyInt_FromLong((STANDARD_RIGHTS_REQUIRED_ACCESS|REG_KEY_READ|REG_KEY_WRITE|KEY_CREATE_LINK)));
-	PyModule_AddObject(m, "KEY_ENUMERATE_SUB_KEYS", PyInt_FromLong(KEY_ENUMERATE_SUB_KEYS));
-	PyModule_AddObject(m, "REG_FORCE_RESTORE", PyInt_FromLong(REG_FORCE_RESTORE));
+	PyModule_AddObject(m, "REG_KEY_READ", PyInt_FromLong((STANDARD_RIGHTS_READ_ACCESS|KEY_QUERY_VALUE|KEY_ENUMERATE_SUB_KEYS|KEY_NOTIFY)));
+	PyModule_AddObject(m, "REG_WHOLE_HIVE_VOLATILE", PyInt_FromLong(REG_WHOLE_HIVE_VOLATILE));
+	PyModule_AddObject(m, "REG_CREATED_NEW_KEY", PyInt_FromLong(REG_CREATED_NEW_KEY));
 	PyModule_AddObject(m, "REG_OPTION_NON_VOLATILE", PyInt_FromLong(0x00000000));
 	PyModule_AddObject(m, "REG_KEY_WRITE", PyInt_FromLong((STANDARD_RIGHTS_WRITE_ACCESS|KEY_SET_VALUE|KEY_CREATE_SUB_KEY)));
+	PyModule_AddObject(m, "KEY_CREATE_LINK", PyInt_FromLong(KEY_CREATE_LINK));
+	PyModule_AddObject(m, "REG_OPTION_OPEN_LINK", PyInt_FromLong(REG_OPTION_OPEN_LINK));
+	PyModule_AddObject(m, "REG_OPTION_CREATE_LINK", PyInt_FromLong(REG_OPTION_CREATE_LINK));
+	PyModule_AddObject(m, "REG_KEY_ALL", PyInt_FromLong((STANDARD_RIGHTS_REQUIRED_ACCESS|REG_KEY_READ|REG_KEY_WRITE|KEY_CREATE_LINK)));
+	PyModule_AddObject(m, "KEY_WOW64_32KEY", PyInt_FromLong(KEY_WOW64_32KEY));
 	PyModule_AddObject(m, "REG_OPTION_VOLATILE", PyInt_FromLong(REG_OPTION_VOLATILE));
-	PyModule_AddObject(m, "REG_NOTIFY_CHANGE_SECURITY", PyInt_FromLong(REG_NOTIFY_CHANGE_SECURITY));
-	PyModule_AddObject(m, "REG_NOTIFY_CHANGE_NAME", PyInt_FromLong(REG_NOTIFY_CHANGE_NAME));
-	PyModule_AddObject(m, "REG_NOTIFY_CHANGE_ATTRIBUTES", PyInt_FromLong(REG_NOTIFY_CHANGE_ATTRIBUTES));
-	PyModule_AddObject(m, "REG_CREATED_NEW_KEY", PyInt_FromLong(REG_CREATED_NEW_KEY));
-	PyModule_AddObject(m, "KEY_CREATE_SUB_KEY", PyInt_FromLong(KEY_CREATE_SUB_KEY));
-	PyModule_AddObject(m, "REG_WHOLE_HIVE_VOLATILE", PyInt_FromLong(REG_WHOLE_HIVE_VOLATILE));
-	PyModule_AddObject(m, "KEY_WOW64_64KEY", PyInt_FromLong(KEY_WOW64_64KEY));
 	Py_INCREF((PyObject *)(void *)&winreg_String_Type);
 	PyModule_AddObject(m, "String", (PyObject *)(void *)&winreg_String_Type);
 	Py_INCREF((PyObject *)(void *)&KeySecurityData_Type);

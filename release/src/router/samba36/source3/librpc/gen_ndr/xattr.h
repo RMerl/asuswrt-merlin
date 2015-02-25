@@ -71,7 +71,7 @@ union xattr_DosInfo {
 	struct xattr_DosInfo1 info1;/* [case] */
 	struct xattr_DosInfo2Old oldinfo2;/* [case(2)] */
 	struct xattr_DosInfo3 info3;/* [case(3)] */
-}/* [public,switch_type(uint16)] */;
+}/* [switch_type(uint16),public] */;
 
 struct xattr_DosAttrib {
 	uint16_t version;
@@ -82,7 +82,7 @@ struct xattr_DOSATTRIB {
 	const char * attrib_hex;/* [flag(LIBNDR_FLAG_STR_ASCII|LIBNDR_FLAG_STR_NULLTERM)] */
 	uint16_t version;
 	union xattr_DosInfo info;/* [switch_is(version)] */
-}/* [nopull,public,noprint,nopush] */;
+}/* [public,nopull,nopush,noprint] */;
 
 struct xattr_EA {
 	const char * name;/* [flag(LIBNDR_FLAG_STR_UTF8|LIBNDR_FLAG_STR_NULLTERM)] */
@@ -91,7 +91,7 @@ struct xattr_EA {
 
 struct xattr_DosEAs {
 	uint16_t num_eas;
-	struct xattr_EA *eas;/* [unique,size_is(num_eas)] */
+	struct xattr_EA *eas;/* [size_is(num_eas),unique] */
 }/* [public] */;
 
 struct tdb_xattrs {
@@ -108,7 +108,7 @@ struct xattr_DosStream {
 
 struct xattr_DosStreams {
 	uint32_t num_streams;
-	struct xattr_DosStream *streams;/* [size_is(num_streams),unique] */
+	struct xattr_DosStream *streams;/* [unique,size_is(num_streams)] */
 }/* [public] */;
 
 struct security_descriptor_hash_v2 {

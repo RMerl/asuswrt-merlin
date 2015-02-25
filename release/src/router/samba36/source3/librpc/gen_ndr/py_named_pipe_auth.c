@@ -752,24 +752,24 @@ void initnamed_pipe_auth(void)
 {
 	PyObject *m;
 	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_netlogon;
-	PyObject *dep_samba_dcerpc_auth;
 	PyObject *dep_samba_dcerpc_security;
+	PyObject *dep_samba_dcerpc_auth;
+	PyObject *dep_samba_dcerpc_netlogon;
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
 		return;
 
-	dep_samba_dcerpc_netlogon = PyImport_ImportModule("samba.dcerpc.netlogon");
-	if (dep_samba_dcerpc_netlogon == NULL)
+	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
+	if (dep_samba_dcerpc_security == NULL)
 		return;
 
 	dep_samba_dcerpc_auth = PyImport_ImportModule("samba.dcerpc.auth");
 	if (dep_samba_dcerpc_auth == NULL)
 		return;
 
-	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
-	if (dep_samba_dcerpc_security == NULL)
+	dep_samba_dcerpc_netlogon = PyImport_ImportModule("samba.dcerpc.netlogon");
+	if (dep_samba_dcerpc_netlogon == NULL)
 		return;
 
 	auth_session_info_transport_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_auth, "session_info_transport");

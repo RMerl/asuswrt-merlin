@@ -23,8 +23,8 @@ staticforward PyTypeObject SERVICE_FAILURE_ACTIONS_Type;
 staticforward PyTypeObject svcctl_InterfaceType;
 
 void initsvcctl(void);static PyTypeObject *Object_Type;
-static PyTypeObject *policy_handle_Type;
 static PyTypeObject *ClientConnection_Type;
+static PyTypeObject *policy_handle_Type;
 
 static PyObject *py_SERVICE_LOCK_STATUS_get_is_locked(PyObject *obj, void *closure)
 {
@@ -4180,36 +4180,36 @@ void initsvcctl(void)
 {
 	PyObject *m;
 	PyObject *dep_samba_dcerpc_security;
-	PyObject *dep_samba_dcerpc_misc;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_talloc;
+	PyObject *dep_samba_dcerpc_base;
+	PyObject *dep_samba_dcerpc_misc;
 
 	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
 	if (dep_samba_dcerpc_security == NULL)
-		return;
-
-	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
-	if (dep_samba_dcerpc_misc == NULL)
-		return;
-
-	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
-	if (dep_samba_dcerpc_base == NULL)
 		return;
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
 		return;
 
+	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
+	if (dep_samba_dcerpc_base == NULL)
+		return;
+
+	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
+	if (dep_samba_dcerpc_misc == NULL)
+		return;
+
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
 	if (Object_Type == NULL)
 		return;
 
-	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
-	if (policy_handle_Type == NULL)
-		return;
-
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
 	if (ClientConnection_Type == NULL)
+		return;
+
+	policy_handle_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "policy_handle");
+	if (policy_handle_Type == NULL)
 		return;
 
 	SERVICE_LOCK_STATUS_Type.tp_base = Object_Type;
@@ -4297,108 +4297,108 @@ void initsvcctl(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "SVCCTL_SVC_ERROR_SEVERE", PyInt_FromLong(SVCCTL_SVC_ERROR_SEVERE));
-	PyModule_AddObject(m, "SV_TYPE_DOMAIN_ENUM", PyInt_FromLong(SV_TYPE_DOMAIN_ENUM));
-	PyModule_AddObject(m, "SV_TYPE_WFW", PyInt_FromLong(SV_TYPE_WFW));
-	PyModule_AddObject(m, "SVCCTL_STATE_UNKNOWN", PyInt_FromLong(SVCCTL_STATE_UNKNOWN));
-	PyModule_AddObject(m, "SV_TYPE_WIN95_PLUS", PyInt_FromLong(SV_TYPE_WIN95_PLUS));
-	PyModule_AddObject(m, "SVCCTL_ACCEPT_NONE", PyInt_FromLong(0x00000000));
-	PyModule_AddObject(m, "SVCCTL_STOP_PENDING", PyInt_FromLong(SVCCTL_STOP_PENDING));
-	PyModule_AddObject(m, "SERVICE_ALL_ACCESS", PyInt_FromLong(SERVICE_WRITE_ACCESS));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_STOP", PyInt_FromLong(SC_RIGHT_SVC_STOP));
-	PyModule_AddObject(m, "SVCCTL_CONTROL_SHUTDOWN", PyInt_FromLong(SVCCTL_CONTROL_SHUTDOWN));
-	PyModule_AddObject(m, "SV_TYPE_NT", PyInt_FromLong(SV_TYPE_NT));
-	PyModule_AddObject(m, "SV_TYPE_POTENTIAL_BROWSER", PyInt_FromLong(SV_TYPE_POTENTIAL_BROWSER));
-	PyModule_AddObject(m, "SERVICE_READ_ACCESS", PyInt_FromLong((SEC_STD_READ_CONTROL|SC_RIGHT_SVC_ENUMERATE_DEPENDENTS|SC_RIGHT_SVC_INTERROGATE|SC_RIGHT_SVC_QUERY_CONFIG|SC_RIGHT_SVC_QUERY_STATUS|SC_RIGHT_SVC_USER_DEFINED_CONTROL)));
-	PyModule_AddObject(m, "SC_MANAGER_EXECUTE_ACCESS", PyInt_FromLong(SC_MANAGER_READ_ACCESS));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_QUERY_CONFIG", PyInt_FromLong(SC_RIGHT_SVC_QUERY_CONFIG));
-	PyModule_AddObject(m, "SVCCTL_AUTO_START", PyInt_FromLong(SVCCTL_AUTO_START));
-	PyModule_AddObject(m, "SC_MAX_ARGUMENT_LENGTH", PyInt_FromLong(1024));
-	PyModule_AddObject(m, "SC_ACTION_NONE", PyInt_FromLong(SC_ACTION_NONE));
-	PyModule_AddObject(m, "SVCCTL_ACCEPT_NETBINDCHANGE", PyInt_FromLong(SVCCTL_ACCEPT_NETBINDCHANGE));
-	PyModule_AddObject(m, "SC_MAX_ARGUMENTS", PyInt_FromLong(1024));
-	PyModule_AddObject(m, "SV_TYPE_ALTERNATE_XPORT", PyInt_FromLong(SV_TYPE_ALTERNATE_XPORT));
-	PyModule_AddObject(m, "SVCCTL_SVC_ERROR_CRITICAL", PyInt_FromLong(SVCCTL_SVC_ERROR_CRITICAL));
-	PyModule_AddObject(m, "SC_ACTION_RESTART", PyInt_FromLong(SC_ACTION_RESTART));
-	PyModule_AddObject(m, "SC_RIGHT_MGR_LOCK", PyInt_FromLong(SC_RIGHT_MGR_LOCK));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_INTERROGATE", PyInt_FromLong(SC_RIGHT_SVC_INTERROGATE));
-	PyModule_AddObject(m, "SV_TYPE_SERVER_NT", PyInt_FromLong(SV_TYPE_SERVER_NT));
-	PyModule_AddObject(m, "SV_TYPE_BACKUP_BROWSER", PyInt_FromLong(SV_TYPE_BACKUP_BROWSER));
-	PyModule_AddObject(m, "SVCCTL_CONTROL_CONTINUE", PyInt_FromLong(SVCCTL_CONTROL_CONTINUE));
-	PyModule_AddObject(m, "SVCCTL_ACCEPT_SHUTDOWN", PyInt_FromLong(SVCCTL_ACCEPT_SHUTDOWN));
-	PyModule_AddObject(m, "SV_TYPE_DOMAIN_CTRL", PyInt_FromLong(SV_TYPE_DOMAIN_CTRL));
-	PyModule_AddObject(m, "SV_TYPE_DIALIN_SERVER", PyInt_FromLong(SV_TYPE_DIALIN_SERVER));
-	PyModule_AddObject(m, "SERVICE_TYPE_DRIVER", PyInt_FromLong(SERVICE_TYPE_KERNEL_DRIVER|SERVICE_TYPE_FS_DRIVER|SERVICE_TYPE_RECOGNIZER_DRIVER));
-	PyModule_AddObject(m, "SV_TYPE_PRINTQ_SERVER", PyInt_FromLong(SV_TYPE_PRINTQ_SERVER));
+	PyModule_AddObject(m, "SV_TYPE_DOMAIN_MASTER", PyInt_FromLong(SV_TYPE_DOMAIN_MASTER));
 	PyModule_AddObject(m, "SV_TYPE_SERVER_UNIX", PyInt_FromLong(SV_TYPE_SERVER_UNIX));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_USER_DEFINED_CONTROL", PyInt_FromLong(SC_RIGHT_SVC_USER_DEFINED_CONTROL));
+	PyModule_AddObject(m, "SV_TYPE_DOMAIN_MEMBER", PyInt_FromLong(SV_TYPE_DOMAIN_MEMBER));
+	PyModule_AddObject(m, "SVCCTL_SVC_ERROR_CRITICAL", PyInt_FromLong(SVCCTL_SVC_ERROR_CRITICAL));
+	PyModule_AddObject(m, "SVCCTL_CONTINUE_PENDING", PyInt_FromLong(SVCCTL_CONTINUE_PENDING));
+	PyModule_AddObject(m, "SC_ACTION_RUN_COMMAND", PyInt_FromLong(SC_ACTION_RUN_COMMAND));
+	PyModule_AddObject(m, "SERVICE_TYPE_KERNEL_DRIVER", PyInt_FromLong(0x01));
+	PyModule_AddObject(m, "SVCCTL_SYSTEM_START", PyInt_FromLong(SVCCTL_SYSTEM_START));
+	PyModule_AddObject(m, "SC_ACTION_NONE", PyInt_FromLong(SC_ACTION_NONE));
+	PyModule_AddObject(m, "SVCCTL_CONTROL_PAUSE", PyInt_FromLong(SVCCTL_CONTROL_PAUSE));
+	PyModule_AddObject(m, "SV_TYPE_TIME_SOURCE", PyInt_FromLong(SV_TYPE_TIME_SOURCE));
+	PyModule_AddObject(m, "SERVICE_READ_ACCESS", PyInt_FromLong((SEC_STD_READ_CONTROL|SC_RIGHT_SVC_ENUMERATE_DEPENDENTS|SC_RIGHT_SVC_INTERROGATE|SC_RIGHT_SVC_QUERY_CONFIG|SC_RIGHT_SVC_QUERY_STATUS|SC_RIGHT_SVC_USER_DEFINED_CONTROL)));
+	PyModule_AddObject(m, "SERVICE_TYPE_RECOGNIZER_DRIVER", PyInt_FromLong(0x08));
+	PyModule_AddObject(m, "SC_ACTION_RESTART", PyInt_FromLong(SC_ACTION_RESTART));
+	PyModule_AddObject(m, "SV_TYPE_DOMAIN_ENUM", PyInt_FromLong(SV_TYPE_DOMAIN_ENUM));
+	PyModule_AddObject(m, "SERVICE_STATE_ACTIVE", PyInt_FromLong(SERVICE_STATE_ACTIVE));
+	PyModule_AddObject(m, "SERVICE_TYPE_FS_DRIVER", PyInt_FromLong(0x02));
+	PyModule_AddObject(m, "SV_TYPE_SERVER_MFPN", PyInt_FromLong(SV_TYPE_SERVER_MFPN));
+	PyModule_AddObject(m, "SVCCTL_ACCEPT_NETBINDCHANGE", PyInt_FromLong(SVCCTL_ACCEPT_NETBINDCHANGE));
+	PyModule_AddObject(m, "SV_TYPE_SERVER_NT", PyInt_FromLong(SV_TYPE_SERVER_NT));
 	PyModule_AddObject(m, "SVCCTL_PAUSE_PENDING", PyInt_FromLong(SVCCTL_PAUSE_PENDING));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_QUERY_STATUS", PyInt_FromLong(SC_RIGHT_SVC_QUERY_STATUS));
+	PyModule_AddObject(m, "SV_TYPE_PRINTQ_SERVER", PyInt_FromLong(SV_TYPE_PRINTQ_SERVER));
+	PyModule_AddObject(m, "SVCCTL_CONTROL_INTERROGATE", PyInt_FromLong(SVCCTL_CONTROL_INTERROGATE));
+	PyModule_AddObject(m, "SV_TYPE_DOMAIN_CTRL", PyInt_FromLong(SV_TYPE_DOMAIN_CTRL));
+	PyModule_AddObject(m, "SVCCTL_CONTROL_SHUTDOWN", PyInt_FromLong(SVCCTL_CONTROL_SHUTDOWN));
+	PyModule_AddObject(m, "SC_MAX_ARGUMENT_LENGTH", PyInt_FromLong(1024));
+	PyModule_AddObject(m, "SV_TYPE_SERVER_VMS", PyInt_FromLong(SV_TYPE_SERVER_VMS));
+	PyModule_AddObject(m, "SV_TYPE_DIALIN_SERVER", PyInt_FromLong(SV_TYPE_DIALIN_SERVER));
+	PyModule_AddObject(m, "SVCCTL_DISABLED", PyInt_FromLong(SVCCTL_DISABLED));
+	PyModule_AddObject(m, "SVCCTL_STOP_PENDING", PyInt_FromLong(SVCCTL_STOP_PENDING));
+	PyModule_AddObject(m, "SVCCTL_ACCEPT_STOP", PyInt_FromLong(SVCCTL_ACCEPT_STOP));
+	PyModule_AddObject(m, "SC_RIGHT_MGR_QUERY_LOCK_STATUS", PyInt_FromLong(SC_RIGHT_MGR_QUERY_LOCK_STATUS));
+	PyModule_AddObject(m, "SV_TYPE_BACKUP_BROWSER", PyInt_FromLong(SV_TYPE_BACKUP_BROWSER));
+	PyModule_AddObject(m, "SC_MAX_ARGUMENTS", PyInt_FromLong(1024));
+	PyModule_AddObject(m, "SVCCTL_AUTO_START", PyInt_FromLong(SVCCTL_AUTO_START));
+	PyModule_AddObject(m, "SVCCTL_CONTROL_STOP", PyInt_FromLong(SVCCTL_CONTROL_STOP));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_START", PyInt_FromLong(SC_RIGHT_SVC_START));
+	PyModule_AddObject(m, "SC_RIGHT_MGR_CONNECT", PyInt_FromLong(SC_RIGHT_MGR_CONNECT));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_STOP", PyInt_FromLong(SC_RIGHT_SVC_STOP));
+	PyModule_AddObject(m, "SVC_STATUS_PROCESS_INFO", PyInt_FromLong(SVC_STATUS_PROCESS_INFO));
+	PyModule_AddObject(m, "SERVICE_WRITE_ACCESS", PyInt_FromLong((SEC_STD_REQUIRED|SERVICE_READ_ACCESS|SERVICE_EXECUTE_ACCESS|SC_RIGHT_SVC_CHANGE_CONFIG)));
+	PyModule_AddObject(m, "SVCCTL_DEMAND_START", PyInt_FromLong(SVCCTL_DEMAND_START));
+	PyModule_AddObject(m, "SV_TYPE_DOMAIN_BAKCTRL", PyInt_FromLong(SV_TYPE_DOMAIN_BAKCTRL));
+	PyModule_AddObject(m, "SV_TYPE_WFW", PyInt_FromLong(SV_TYPE_WFW));
+	PyModule_AddObject(m, "SC_MANAGER_READ_ACCESS", PyInt_FromLong((SEC_STD_READ_CONTROL|SC_RIGHT_MGR_CONNECT|SC_RIGHT_MGR_ENUMERATE_SERVICE|SC_RIGHT_MGR_QUERY_LOCK_STATUS)));
+	PyModule_AddObject(m, "SV_TYPE_WORKSTATION", PyInt_FromLong(SV_TYPE_WORKSTATION));
+	PyModule_AddObject(m, "SV_TYPE_LOCAL_LIST_ONLY", PyInt_FromLong(SV_TYPE_LOCAL_LIST_ONLY));
+	PyModule_AddObject(m, "SERVICE_TYPE_ADAPTER", PyInt_FromLong(0x04));
+	PyModule_AddObject(m, "SVCCTL_ACCEPT_POWEREVENT", PyInt_FromLong(SVCCTL_ACCEPT_POWEREVENT));
+	PyModule_AddObject(m, "SERVICE_ALL_ACCESS", PyInt_FromLong(SERVICE_WRITE_ACCESS));
+	PyModule_AddObject(m, "SV_TYPE_WIN95_PLUS", PyInt_FromLong(SV_TYPE_WIN95_PLUS));
+	PyModule_AddObject(m, "SVCCTL_ACCEPT_HARDWAREPROFILECHANGE", PyInt_FromLong(SVCCTL_ACCEPT_HARDWAREPROFILECHANGE));
+	PyModule_AddObject(m, "SC_MANAGER_WRITE_ACCESS", PyInt_FromLong((SEC_STD_REQUIRED|SC_MANAGER_READ_ACCESS|SC_RIGHT_MGR_CREATE_SERVICE|SC_RIGHT_MGR_LOCK|SC_RIGHT_MGR_MODIFY_BOOT_CONFIG)));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_CHANGE_CONFIG", PyInt_FromLong(SC_RIGHT_SVC_CHANGE_CONFIG));
+	PyModule_AddObject(m, "SC_RIGHT_MGR_MODIFY_BOOT_CONFIG", PyInt_FromLong(SC_RIGHT_MGR_MODIFY_BOOT_CONFIG));
+	PyModule_AddObject(m, "SV_TYPE_SQLSERVER", PyInt_FromLong(SV_TYPE_SQLSERVER));
+	PyModule_AddObject(m, "SC_ACTION_REBOOT", PyInt_FromLong(SC_ACTION_REBOOT));
+	PyModule_AddObject(m, "SC_RIGHT_MGR_LOCK", PyInt_FromLong(SC_RIGHT_MGR_LOCK));
+	PyModule_AddObject(m, "SERVICE_TYPE_INTERACTIVE_PROCESS", PyInt_FromLong(0x100));
+	PyModule_AddObject(m, "SV_TYPE_ALL", PyInt_FromLong(0xFFFFFFFF));
+	PyModule_AddObject(m, "SV_TYPE_ALTERNATE_XPORT", PyInt_FromLong(SV_TYPE_ALTERNATE_XPORT));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_QUERY_CONFIG", PyInt_FromLong(SC_RIGHT_SVC_QUERY_CONFIG));
+	PyModule_AddObject(m, "SERVICE_STATE_ALL", PyInt_FromLong(SERVICE_STATE_ALL));
+	PyModule_AddObject(m, "SC_MANAGER_ALL_ACCESS", PyInt_FromLong(SC_MANAGER_WRITE_ACCESS));
+	PyModule_AddObject(m, "SERVICE_STATE_INACTIVE", PyInt_FromLong(SERVICE_STATE_INACTIVE));
 	PyModule_AddObject(m, "SV_TYPE_AFP", PyInt_FromLong(SV_TYPE_AFP));
+	PyModule_AddObject(m, "SVCCTL_ACCEPT_PAUSE_CONTINUE", PyInt_FromLong(SVCCTL_ACCEPT_PAUSE_CONTINUE));
+	PyModule_AddObject(m, "SERVICE_TYPE_WIN32_SHARE_PROCESS", PyInt_FromLong(0x20));
+	PyModule_AddObject(m, "SVCCTL_CONTROL_CONTINUE", PyInt_FromLong(SVCCTL_CONTROL_CONTINUE));
+	PyModule_AddObject(m, "SV_TYPE_POTENTIAL_BROWSER", PyInt_FromLong(SV_TYPE_POTENTIAL_BROWSER));
+	PyModule_AddObject(m, "SVCCTL_RUNNING", PyInt_FromLong(SVCCTL_RUNNING));
+	PyModule_AddObject(m, "SV_TYPE_SERVER_OSF", PyInt_FromLong(SV_TYPE_SERVER_OSF));
+	PyModule_AddObject(m, "SV_TYPE_SERVER", PyInt_FromLong(SV_TYPE_SERVER));
+	PyModule_AddObject(m, "SC_RIGHT_MGR_CREATE_SERVICE", PyInt_FromLong(SC_RIGHT_MGR_CREATE_SERVICE));
+	PyModule_AddObject(m, "SVCCTL_PAUSED", PyInt_FromLong(SVCCTL_PAUSED));
+	PyModule_AddObject(m, "SVCCTL_ACCEPT_PARAMCHANGE", PyInt_FromLong(SVCCTL_ACCEPT_PARAMCHANGE));
+	PyModule_AddObject(m, "SV_TYPE_NOVELL", PyInt_FromLong(SV_TYPE_NOVELL));
+	PyModule_AddObject(m, "SV_TYPE_NT", PyInt_FromLong(SV_TYPE_NT));
+	PyModule_AddObject(m, "SVCCTL_ACCEPT_NONE", PyInt_FromLong(0x00000000));
+	PyModule_AddObject(m, "SVCCTL_ACCEPT_SHUTDOWN", PyInt_FromLong(SVCCTL_ACCEPT_SHUTDOWN));
+	PyModule_AddObject(m, "SVCCTL_SVC_ERROR_SEVERE", PyInt_FromLong(SVCCTL_SVC_ERROR_SEVERE));
+	PyModule_AddObject(m, "SERVICE_TYPE_WIN32_OWN_PROCESS", PyInt_FromLong(0x10));
+	PyModule_AddObject(m, "SV_TYPE_MASTER_BROWSER", PyInt_FromLong(SV_TYPE_MASTER_BROWSER));
+	PyModule_AddObject(m, "SERVICE_TYPE_WIN32", PyInt_FromLong(SERVICE_TYPE_WIN32_OWN_PROCESS|SERVICE_TYPE_WIN32_SHARE_PROCESS));
+	PyModule_AddObject(m, "SERVICE_CONFIG_FAILURE_ACTIONS", PyInt_FromLong(SERVICE_CONFIG_FAILURE_ACTIONS));
+	PyModule_AddObject(m, "SVCCTL_SVC_ERROR_IGNORE", PyInt_FromLong(SVCCTL_SVC_ERROR_IGNORE));
+	PyModule_AddObject(m, "SVCCTL_START_PENDING", PyInt_FromLong(SVCCTL_START_PENDING));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_PAUSE_CONTINUE", PyInt_FromLong(SC_RIGHT_SVC_PAUSE_CONTINUE));
+	PyModule_AddObject(m, "SVCCTL_BOOT_START", PyInt_FromLong(SVCCTL_BOOT_START));
+	PyModule_AddObject(m, "SERVICE_CONFIG_DESCRIPTION", PyInt_FromLong(SERVICE_CONFIG_DESCRIPTION));
+	PyModule_AddObject(m, "SERVICE_TYPE_DRIVER", PyInt_FromLong(SERVICE_TYPE_KERNEL_DRIVER|SERVICE_TYPE_FS_DRIVER|SERVICE_TYPE_RECOGNIZER_DRIVER));
+	PyModule_AddObject(m, "SVCCTL_STATE_UNKNOWN", PyInt_FromLong(SVCCTL_STATE_UNKNOWN));
+	PyModule_AddObject(m, "SV_TYPE_DFS_SERVER", PyInt_FromLong(SV_TYPE_DFS_SERVER));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_USER_DEFINED_CONTROL", PyInt_FromLong(SC_RIGHT_SVC_USER_DEFINED_CONTROL));
 	PyModule_AddObject(m, "SERVICE_EXECUTE_ACCESS", PyInt_FromLong((SERVICE_READ_ACCESS|SC_RIGHT_SVC_START|SC_RIGHT_SVC_STOP|SC_RIGHT_SVC_PAUSE_CONTINUE)));
 	PyModule_AddObject(m, "SC_RIGHT_MGR_ENUMERATE_SERVICE", PyInt_FromLong(SC_RIGHT_MGR_ENUMERATE_SERVICE));
-	PyModule_AddObject(m, "SERVICE_TYPE_KERNEL_DRIVER", PyInt_FromLong(0x01));
-	PyModule_AddObject(m, "SERVICE_TYPE_INTERACTIVE_PROCESS", PyInt_FromLong(0x100));
-	PyModule_AddObject(m, "SVCCTL_CONTROL_INTERROGATE", PyInt_FromLong(SVCCTL_CONTROL_INTERROGATE));
-	PyModule_AddObject(m, "SC_ACTION_REBOOT", PyInt_FromLong(SC_ACTION_REBOOT));
-	PyModule_AddObject(m, "SC_RIGHT_MGR_MODIFY_BOOT_CONFIG", PyInt_FromLong(SC_RIGHT_MGR_MODIFY_BOOT_CONFIG));
-	PyModule_AddObject(m, "SC_MANAGER_WRITE_ACCESS", PyInt_FromLong((SEC_STD_REQUIRED|SC_MANAGER_READ_ACCESS|SC_RIGHT_MGR_CREATE_SERVICE|SC_RIGHT_MGR_LOCK|SC_RIGHT_MGR_MODIFY_BOOT_CONFIG)));
-	PyModule_AddObject(m, "SVCCTL_CONTROL_STOP", PyInt_FromLong(SVCCTL_CONTROL_STOP));
-	PyModule_AddObject(m, "SERVICE_TYPE_WIN32_SHARE_PROCESS", PyInt_FromLong(0x20));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_PAUSE_CONTINUE", PyInt_FromLong(SC_RIGHT_SVC_PAUSE_CONTINUE));
-	PyModule_AddObject(m, "SVCCTL_SVC_ERROR_IGNORE", PyInt_FromLong(SVCCTL_SVC_ERROR_IGNORE));
-	PyModule_AddObject(m, "SVCCTL_BOOT_START", PyInt_FromLong(SVCCTL_BOOT_START));
-	PyModule_AddObject(m, "SVCCTL_CONTROL_PAUSE", PyInt_FromLong(SVCCTL_CONTROL_PAUSE));
-	PyModule_AddObject(m, "SERVICE_TYPE_RECOGNIZER_DRIVER", PyInt_FromLong(0x08));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_QUERY_STATUS", PyInt_FromLong(SC_RIGHT_SVC_QUERY_STATUS));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_ENUMERATE_DEPENDENTS", PyInt_FromLong(SC_RIGHT_SVC_ENUMERATE_DEPENDENTS));
-	PyModule_AddObject(m, "SV_TYPE_SERVER_VMS", PyInt_FromLong(SV_TYPE_SERVER_VMS));
-	PyModule_AddObject(m, "SV_TYPE_MASTER_BROWSER", PyInt_FromLong(SV_TYPE_MASTER_BROWSER));
-	PyModule_AddObject(m, "SVCCTL_PAUSED", PyInt_FromLong(SVCCTL_PAUSED));
-	PyModule_AddObject(m, "SERVICE_CONFIG_DESCRIPTION", PyInt_FromLong(SERVICE_CONFIG_DESCRIPTION));
-	PyModule_AddObject(m, "SVCCTL_ACCEPT_STOP", PyInt_FromLong(SVCCTL_ACCEPT_STOP));
-	PyModule_AddObject(m, "SV_TYPE_ALL", PyInt_FromLong(0xFFFFFFFF));
 	PyModule_AddObject(m, "SVCCTL_STOPPED", PyInt_FromLong(SVCCTL_STOPPED));
-	PyModule_AddObject(m, "SVCCTL_ACCEPT_PARAMCHANGE", PyInt_FromLong(SVCCTL_ACCEPT_PARAMCHANGE));
-	PyModule_AddObject(m, "SC_MANAGER_READ_ACCESS", PyInt_FromLong((SEC_STD_READ_CONTROL|SC_RIGHT_MGR_CONNECT|SC_RIGHT_MGR_ENUMERATE_SERVICE|SC_RIGHT_MGR_QUERY_LOCK_STATUS)));
-	PyModule_AddObject(m, "SC_MANAGER_ALL_ACCESS", PyInt_FromLong(SC_MANAGER_WRITE_ACCESS));
-	PyModule_AddObject(m, "SERVICE_STATE_ACTIVE", PyInt_FromLong(SERVICE_STATE_ACTIVE));
-	PyModule_AddObject(m, "SV_TYPE_LOCAL_LIST_ONLY", PyInt_FromLong(SV_TYPE_LOCAL_LIST_ONLY));
-	PyModule_AddObject(m, "SVCCTL_ACCEPT_PAUSE_CONTINUE", PyInt_FromLong(SVCCTL_ACCEPT_PAUSE_CONTINUE));
-	PyModule_AddObject(m, "SV_TYPE_DOMAIN_MASTER", PyInt_FromLong(SV_TYPE_DOMAIN_MASTER));
-	PyModule_AddObject(m, "SERVICE_TYPE_WIN32", PyInt_FromLong(SERVICE_TYPE_WIN32_OWN_PROCESS|SERVICE_TYPE_WIN32_SHARE_PROCESS));
-	PyModule_AddObject(m, "SV_TYPE_DOMAIN_MEMBER", PyInt_FromLong(SV_TYPE_DOMAIN_MEMBER));
-	PyModule_AddObject(m, "SVCCTL_ACCEPT_HARDWAREPROFILECHANGE", PyInt_FromLong(SVCCTL_ACCEPT_HARDWAREPROFILECHANGE));
-	PyModule_AddObject(m, "SVCCTL_CONTINUE_PENDING", PyInt_FromLong(SVCCTL_CONTINUE_PENDING));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_START", PyInt_FromLong(SC_RIGHT_SVC_START));
-	PyModule_AddObject(m, "SERVICE_STATE_ALL", PyInt_FromLong(SERVICE_STATE_ALL));
-	PyModule_AddObject(m, "SERVICE_TYPE_FS_DRIVER", PyInt_FromLong(0x02));
-	PyModule_AddObject(m, "SERVICE_TYPE_WIN32_OWN_PROCESS", PyInt_FromLong(0x10));
-	PyModule_AddObject(m, "SVCCTL_DISABLED", PyInt_FromLong(SVCCTL_DISABLED));
-	PyModule_AddObject(m, "SVCCTL_START_PENDING", PyInt_FromLong(SVCCTL_START_PENDING));
-	PyModule_AddObject(m, "SC_ACTION_RUN_COMMAND", PyInt_FromLong(SC_ACTION_RUN_COMMAND));
-	PyModule_AddObject(m, "SC_RIGHT_MGR_CONNECT", PyInt_FromLong(SC_RIGHT_MGR_CONNECT));
-	PyModule_AddObject(m, "SV_TYPE_SERVER_OSF", PyInt_FromLong(SV_TYPE_SERVER_OSF));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_INTERROGATE", PyInt_FromLong(SC_RIGHT_SVC_INTERROGATE));
 	PyModule_AddObject(m, "SVCCTL_SVC_ERROR_NORMAL", PyInt_FromLong(SVCCTL_SVC_ERROR_NORMAL));
-	PyModule_AddObject(m, "SVCCTL_ACCEPT_POWEREVENT", PyInt_FromLong(SVCCTL_ACCEPT_POWEREVENT));
-	PyModule_AddObject(m, "SV_TYPE_SERVER_MFPN", PyInt_FromLong(SV_TYPE_SERVER_MFPN));
-	PyModule_AddObject(m, "SC_RIGHT_MGR_CREATE_SERVICE", PyInt_FromLong(SC_RIGHT_MGR_CREATE_SERVICE));
-	PyModule_AddObject(m, "SERVICE_WRITE_ACCESS", PyInt_FromLong((SEC_STD_REQUIRED|SERVICE_READ_ACCESS|SERVICE_EXECUTE_ACCESS|SC_RIGHT_SVC_CHANGE_CONFIG)));
-	PyModule_AddObject(m, "SC_RIGHT_MGR_QUERY_LOCK_STATUS", PyInt_FromLong(SC_RIGHT_MGR_QUERY_LOCK_STATUS));
-	PyModule_AddObject(m, "SV_TYPE_SERVER", PyInt_FromLong(SV_TYPE_SERVER));
-	PyModule_AddObject(m, "SV_TYPE_WORKSTATION", PyInt_FromLong(SV_TYPE_WORKSTATION));
-	PyModule_AddObject(m, "SV_TYPE_NOVELL", PyInt_FromLong(SV_TYPE_NOVELL));
-	PyModule_AddObject(m, "SV_TYPE_DOMAIN_BAKCTRL", PyInt_FromLong(SV_TYPE_DOMAIN_BAKCTRL));
-	PyModule_AddObject(m, "SC_RIGHT_SVC_CHANGE_CONFIG", PyInt_FromLong(SC_RIGHT_SVC_CHANGE_CONFIG));
-	PyModule_AddObject(m, "SV_TYPE_TIME_SOURCE", PyInt_FromLong(SV_TYPE_TIME_SOURCE));
-	PyModule_AddObject(m, "SERVICE_STATE_INACTIVE", PyInt_FromLong(SERVICE_STATE_INACTIVE));
-	PyModule_AddObject(m, "SVCCTL_RUNNING", PyInt_FromLong(SVCCTL_RUNNING));
-	PyModule_AddObject(m, "SERVICE_CONFIG_FAILURE_ACTIONS", PyInt_FromLong(SERVICE_CONFIG_FAILURE_ACTIONS));
-	PyModule_AddObject(m, "SERVICE_TYPE_ADAPTER", PyInt_FromLong(0x04));
-	PyModule_AddObject(m, "SVC_STATUS_PROCESS_INFO", PyInt_FromLong(SVC_STATUS_PROCESS_INFO));
-	PyModule_AddObject(m, "SV_TYPE_SQLSERVER", PyInt_FromLong(SV_TYPE_SQLSERVER));
-	PyModule_AddObject(m, "SV_TYPE_DFS_SERVER", PyInt_FromLong(SV_TYPE_DFS_SERVER));
-	PyModule_AddObject(m, "SVCCTL_SYSTEM_START", PyInt_FromLong(SVCCTL_SYSTEM_START));
-	PyModule_AddObject(m, "SVCCTL_DEMAND_START", PyInt_FromLong(SVCCTL_DEMAND_START));
+	PyModule_AddObject(m, "SC_MANAGER_EXECUTE_ACCESS", PyInt_FromLong(SC_MANAGER_READ_ACCESS));
+	PyModule_AddObject(m, "SC_RIGHT_SVC_ENUMERATE_DEPENDENTS", PyInt_FromLong(SC_RIGHT_SVC_ENUMERATE_DEPENDENTS));
 	Py_INCREF((PyObject *)(void *)&SERVICE_LOCK_STATUS_Type);
 	PyModule_AddObject(m, "SERVICE_LOCK_STATUS", (PyObject *)(void *)&SERVICE_LOCK_STATUS_Type);
 	Py_INCREF((PyObject *)(void *)&SERVICE_STATUS_Type);

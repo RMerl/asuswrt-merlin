@@ -25,10 +25,10 @@ staticforward PyTypeObject PAC_Validate_Type;
 staticforward PyTypeObject netsamlogoncache_entry_Type;
 staticforward PyTypeObject krb5pac_InterfaceType;
 
-void initkrb5pac(void);static PyTypeObject *dom_sid_Type;
-static PyTypeObject *ClientConnection_Type;
+void initkrb5pac(void);static PyTypeObject *Object_Type;
+static PyTypeObject *dom_sid_Type;
 static PyTypeObject *samr_RidWithAttributeArray_Type;
-static PyTypeObject *Object_Type;
+static PyTypeObject *ClientConnection_Type;
 static PyTypeObject *netr_SamInfo3_Type;
 
 static PyObject *py_PAC_LOGON_NAME_get_logon_time(PyObject *obj, void *closure)
@@ -1823,46 +1823,46 @@ static PyMethodDef krb5pac_methods[] = {
 void initkrb5pac(void)
 {
 	PyObject *m;
-	PyObject *dep_talloc;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_samba_dcerpc_netlogon;
-	PyObject *dep_samba_dcerpc_samr;
+	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_samba_dcerpc_security;
+	PyObject *dep_samba_dcerpc_samr;
+	PyObject *dep_talloc;
 
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
+	dep_samba_dcerpc_netlogon = PyImport_ImportModule("samba.dcerpc.netlogon");
+	if (dep_samba_dcerpc_netlogon == NULL)
 		return;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
 		return;
 
-	dep_samba_dcerpc_netlogon = PyImport_ImportModule("samba.dcerpc.netlogon");
-	if (dep_samba_dcerpc_netlogon == NULL)
+	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
+	if (dep_samba_dcerpc_security == NULL)
 		return;
 
 	dep_samba_dcerpc_samr = PyImport_ImportModule("samba.dcerpc.samr");
 	if (dep_samba_dcerpc_samr == NULL)
 		return;
 
-	dep_samba_dcerpc_security = PyImport_ImportModule("samba.dcerpc.security");
-	if (dep_samba_dcerpc_security == NULL)
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
+		return;
+
+	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
+	if (Object_Type == NULL)
 		return;
 
 	dom_sid_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_security, "dom_sid");
 	if (dom_sid_Type == NULL)
 		return;
 
-	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
-	if (ClientConnection_Type == NULL)
-		return;
-
 	samr_RidWithAttributeArray_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_samr, "RidWithAttributeArray");
 	if (samr_RidWithAttributeArray_Type == NULL)
 		return;
 
-	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
-	if (Object_Type == NULL)
+	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
+	if (ClientConnection_Type == NULL)
 		return;
 
 	netr_SamInfo3_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_netlogon, "netr_SamInfo3");
@@ -1969,12 +1969,12 @@ void initkrb5pac(void)
 		return;
 
 	PyModule_AddObject(m, "PAC_TYPE_KDC_CHECKSUM", PyInt_FromLong(PAC_TYPE_KDC_CHECKSUM));
-	PyModule_AddObject(m, "PAC_TYPE_UNKNOWN_12", PyInt_FromLong(PAC_TYPE_UNKNOWN_12));
-	PyModule_AddObject(m, "PAC_TYPE_SRV_CHECKSUM", PyInt_FromLong(PAC_TYPE_SRV_CHECKSUM));
 	PyModule_AddObject(m, "PAC_TYPE_CONSTRAINED_DELEGATION", PyInt_FromLong(PAC_TYPE_CONSTRAINED_DELEGATION));
-	PyModule_AddObject(m, "NETLOGON_GENERIC_KRB5_PAC_VALIDATE", PyInt_FromLong(3));
 	PyModule_AddObject(m, "PAC_TYPE_LOGON_NAME", PyInt_FromLong(PAC_TYPE_LOGON_NAME));
+	PyModule_AddObject(m, "NETLOGON_GENERIC_KRB5_PAC_VALIDATE", PyInt_FromLong(3));
 	PyModule_AddObject(m, "PAC_TYPE_LOGON_INFO", PyInt_FromLong(PAC_TYPE_LOGON_INFO));
+	PyModule_AddObject(m, "PAC_TYPE_SRV_CHECKSUM", PyInt_FromLong(PAC_TYPE_SRV_CHECKSUM));
+	PyModule_AddObject(m, "PAC_TYPE_UNKNOWN_12", PyInt_FromLong(PAC_TYPE_UNKNOWN_12));
 	Py_INCREF((PyObject *)(void *)&PAC_LOGON_NAME_Type);
 	PyModule_AddObject(m, "PAC_LOGON_NAME", (PyObject *)(void *)&PAC_LOGON_NAME_Type);
 	Py_INCREF((PyObject *)(void *)&PAC_SIGNATURE_DATA_Type);

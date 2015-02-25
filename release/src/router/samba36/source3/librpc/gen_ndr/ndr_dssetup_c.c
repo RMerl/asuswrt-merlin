@@ -102,7 +102,7 @@ struct tevent_req *dcerpc_dssetup_DsRoleGetPrimaryDomainInformation_send(TALLOC_
 									 struct tevent_context *ev,
 									 struct dcerpc_binding_handle *h,
 									 enum dssetup_DsRoleInfoLevel _level /* [in]  */,
-									 union dssetup_DsRoleInfo *_info /* [out] [switch_is(level),unique] */)
+									 union dssetup_DsRoleInfo *_info /* [out] [unique,switch_is(level)] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_dssetup_DsRoleGetPrimaryDomainInformation_state *state;
@@ -203,7 +203,7 @@ NTSTATUS dcerpc_dssetup_DsRoleGetPrimaryDomainInformation_recv(struct tevent_req
 NTSTATUS dcerpc_dssetup_DsRoleGetPrimaryDomainInformation(struct dcerpc_binding_handle *h,
 							  TALLOC_CTX *mem_ctx,
 							  enum dssetup_DsRoleInfoLevel _level /* [in]  */,
-							  union dssetup_DsRoleInfo *_info /* [out] [switch_is(level),unique] */,
+							  union dssetup_DsRoleInfo *_info /* [out] [unique,switch_is(level)] */,
 							  WERROR *result)
 {
 	struct dssetup_DsRoleGetPrimaryDomainInformation r;

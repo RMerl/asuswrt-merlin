@@ -14,8 +14,8 @@ staticforward PyTypeObject rpc_if_id_vector_t_Type;
 staticforward PyTypeObject mgmt_statistics_Type;
 staticforward PyTypeObject mgmt_InterfaceType;
 
-void initmgmt(void);static PyTypeObject *ndr_syntax_id_Type;
-static PyTypeObject *ClientConnection_Type;
+void initmgmt(void);static PyTypeObject *ClientConnection_Type;
+static PyTypeObject *ndr_syntax_id_Type;
 static PyTypeObject *Object_Type;
 
 static PyObject *py_ndr_syntax_id_p_get_id(PyObject *obj, void *closure)
@@ -414,27 +414,27 @@ void initmgmt(void)
 {
 	PyObject *m;
 	PyObject *dep_samba_dcerpc_base;
-	PyObject *dep_talloc;
 	PyObject *dep_samba_dcerpc_misc;
+	PyObject *dep_talloc;
 
 	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
 	if (dep_samba_dcerpc_base == NULL)
-		return;
-
-	dep_talloc = PyImport_ImportModule("talloc");
-	if (dep_talloc == NULL)
 		return;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
 	if (dep_samba_dcerpc_misc == NULL)
 		return;
 
-	ndr_syntax_id_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "ndr_syntax_id");
-	if (ndr_syntax_id_Type == NULL)
+	dep_talloc = PyImport_ImportModule("talloc");
+	if (dep_talloc == NULL)
 		return;
 
 	ClientConnection_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_base, "ClientConnection");
 	if (ClientConnection_Type == NULL)
+		return;
+
+	ndr_syntax_id_Type = (PyTypeObject *)PyObject_GetAttrString(dep_samba_dcerpc_misc, "ndr_syntax_id");
+	if (ndr_syntax_id_Type == NULL)
 		return;
 
 	Object_Type = (PyTypeObject *)PyObject_GetAttrString(dep_talloc, "Object");
@@ -477,10 +477,10 @@ void initmgmt(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "MGMT_STATS_ARRAY_MAX_SIZE", PyInt_FromLong(4));
-	PyModule_AddObject(m, "MGMT_STATS_PKTS_IN", PyInt_FromLong(2));
 	PyModule_AddObject(m, "MGMT_STATS_CALLS_IN", PyInt_FromLong(0));
 	PyModule_AddObject(m, "MGMT_STATS_CALLS_OUT", PyInt_FromLong(1));
+	PyModule_AddObject(m, "MGMT_STATS_PKTS_IN", PyInt_FromLong(2));
+	PyModule_AddObject(m, "MGMT_STATS_ARRAY_MAX_SIZE", PyInt_FromLong(4));
 	PyModule_AddObject(m, "MGMT_STATS_PKTS_OUT", PyInt_FromLong(3));
 	Py_INCREF((PyObject *)(void *)&ndr_syntax_id_p_Type);
 	PyModule_AddObject(m, "ndr_syntax_id_p", (PyObject *)(void *)&ndr_syntax_id_p_Type);

@@ -548,16 +548,16 @@ static PyMethodDef ntsvcs_methods[] = {
 void initntsvcs(void)
 {
 	PyObject *m;
-	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_talloc;
+	PyObject *dep_samba_dcerpc_base;
 	PyObject *dep_samba_dcerpc_misc;
-
-	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
-	if (dep_samba_dcerpc_base == NULL)
-		return;
 
 	dep_talloc = PyImport_ImportModule("talloc");
 	if (dep_talloc == NULL)
+		return;
+
+	dep_samba_dcerpc_base = PyImport_ImportModule("samba.dcerpc.base");
+	if (dep_samba_dcerpc_base == NULL)
 		return;
 
 	dep_samba_dcerpc_misc = PyImport_ImportModule("samba.dcerpc.misc");
@@ -594,18 +594,18 @@ void initntsvcs(void)
 	if (m == NULL)
 		return;
 
-	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_BUSRELATIONS", PyInt_FromLong(CM_GETIDLIST_FILTER_BUSRELATIONS));
 	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_NONE", PyInt_FromLong(0x00000000));
+	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_BUSRELATIONS", PyInt_FromLong(CM_GETIDLIST_FILTER_BUSRELATIONS));
 	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_ENUMERATOR", PyInt_FromLong(CM_GETIDLIST_FILTER_ENUMERATOR));
-	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_SERVICE", PyInt_FromLong(CM_GETIDLIST_FILTER_SERVICE));
-	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_TRANSPORTRELATIONS", PyInt_FromLong(CM_GETIDLIST_FILTER_TRANSPORTRELATIONS));
 	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_PRESENT", PyInt_FromLong(CM_GETIDLIST_FILTER_PRESENT));
-	PyModule_AddObject(m, "CM_GETIDLIST_DONOTGENERATE", PyInt_FromLong(CM_GETIDLIST_DONOTGENERATE));
+	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_POWERRELATIONS", PyInt_FromLong(CM_GETIDLIST_FILTER_POWERRELATIONS));
 	PyModule_AddObject(m, "DEV_REGPROP_DESC", PyInt_FromLong(1));
 	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_REMOVALRELATIONS", PyInt_FromLong(CM_GETIDLIST_FILTER_REMOVALRELATIONS));
-	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_POWERRELATIONS", PyInt_FromLong(CM_GETIDLIST_FILTER_POWERRELATIONS));
-	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_CLASS", PyInt_FromLong(CM_GETIDLIST_FILTER_CLASS));
 	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_EJECTRELATIONS", PyInt_FromLong(CM_GETIDLIST_FILTER_EJECTRELATIONS));
+	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_TRANSPORTRELATIONS", PyInt_FromLong(CM_GETIDLIST_FILTER_TRANSPORTRELATIONS));
+	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_CLASS", PyInt_FromLong(CM_GETIDLIST_FILTER_CLASS));
+	PyModule_AddObject(m, "CM_GETIDLIST_FILTER_SERVICE", PyInt_FromLong(CM_GETIDLIST_FILTER_SERVICE));
+	PyModule_AddObject(m, "CM_GETIDLIST_DONOTGENERATE", PyInt_FromLong(CM_GETIDLIST_DONOTGENERATE));
 	Py_INCREF((PyObject *)(void *)&PNP_HwProfInfo_Type);
 	PyModule_AddObject(m, "PNP_HwProfInfo", (PyObject *)(void *)&PNP_HwProfInfo_Type);
 	Py_INCREF((PyObject *)(void *)&ntsvcs_InterfaceType);
