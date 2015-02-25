@@ -669,11 +669,15 @@ History
           monitoring of your connected wifi clients.
    - CHANGED: Reverted RT-AC66U driver to previous version as some users
               were experiencing stability issues with the 3754 version.
+   - CHANGED: Updated p910nd to 0.97 to resolve incomplete print jobs
+              (patch by stsichler)
    - FIXED: Issues when connecting with Russian ISPs relying on DHCP+VPN 
             (such as Beeline)
    - FIXED: When enabling WAN access to webui, the router would always
             forward both http and https ports regardless of if either of
             these were disabled.
+   - FIXED: Shared printers over LPRng would sometime fail to 
+            completely print the last page (patch by stsichler)
 
 
 378.50 (7-Feb-2015)
