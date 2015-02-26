@@ -193,7 +193,7 @@ int add_iQosRules(char *pcWANIF)
 		":PREROUTING ACCEPT [0:0]\n"
 		":OUTPUT ACCEPT [0:0]\n"
 		":QOSO - [0:0]\n"
-//		"-A QOSO -m mark --mark 0xd001 -j RETURN\n"
+		"-A QOSO -m mark --mark 0xd001 -j RETURN\n"
 		"-A QOSO -j CONNMARK --restore-mark --mask 0x7\n"
 		"-A QOSO -m connmark ! --mark 0/0xff00 -j RETURN\n"
 		);
