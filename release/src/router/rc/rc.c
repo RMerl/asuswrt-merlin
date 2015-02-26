@@ -134,8 +134,11 @@ static int rctest_main(int argc, char *argv[])
 #endif
 			add_iQosRules(get_wan_ifname(0));
 #ifdef RTCONFIG_BWDPI
-				if(nvram_get_int("qos_type") == 1)
+				if(nvram_get_int("qos_type") == 1) {
 					start_dpi_engine_service();
+					// force to rebuild firewall to avoid some loopback issue
+					start_firewall(wan_primary_ifunit(), 0);
+				}
 				else
 #endif
 				start_iQos();

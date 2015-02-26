@@ -5237,6 +5237,8 @@ check_ddr_done:
 			add_iQosRules(get_wan_ifname(wan_primary_ifunit()));
 #ifdef RTCONFIG_BWDPI
 			start_dpi_engine_service();
+			// force to rebuild firewall to avoid some loopback issue
+			start_firewall(wan_primary_ifunit(), 0);
 #endif
 			start_iQos();
 		}
@@ -5245,7 +5247,11 @@ check_ddr_done:
 	else if (strcmp(script, "wrs") == 0)
 	{
 		if(action & RC_SERVICE_STOP) stop_dpi_engine_service(0);
-		if(action & RC_SERVICE_START) start_dpi_engine_service();
+		if(action & RC_SERVICE_START) {
+			start_dpi_engine_service();
+			// force to rebuild firewall to avoid some loopback issue
+			start_firewall(wan_primary_ifunit(), 0);
+		}
 	}
 	else if (strcmp(script, "bwdpi_monitor") == 0)
 	{
