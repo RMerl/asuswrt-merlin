@@ -1350,8 +1350,8 @@ function show_menu(){
 			notification.desc[5] = '<#ASUSGATE_note5#>';
 			notification.action_desc[5] = '<#ASUSGATE_act_change#>';
 			notification.clickCallBack[5] = "showLoading();setTimeout('document.noti_samba.submit();', 1);setTimeout('notification.redirectsamba()', 2000);";
-*/
 	}else
+*/
 		notification.samba = 0;
 
 	//Higher priority: DLA intervened case dsltmp_dla_modified 0: default / 1:need to feedback / 2:Feedback submitted 
