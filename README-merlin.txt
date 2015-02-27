@@ -667,10 +667,24 @@ History
           clients.  The new page uses Ajax to automatically update
           itself at a user-selected frequency, for near realtime
           monitoring of your connected wifi clients.
+   - NEW: NAT loopback can now be chosen between Disable, Asus's original,
+          and Merlin's own (based on Phuzi0n's original DD-WRT design).  The
+          option can be found on the Firewall page.
    - CHANGED: Reverted RT-AC66U driver to previous version as some users
               were experiencing stability issues with the 3754 version.
    - CHANGED: Updated p910nd to 0.97 to resolve incomplete print jobs
               (patch by stsichler)
+   - CHANGED: Updated Samba to 3.6.25
+   - CHANGED: The Entware setup scripts will now backup any existing
+              installation rather than remove it (patch by TeHashX)
+   - CHANGED: Re-implemented our original NAT loopback code, with attempts 
+              at reconfiguring it whenever the DPI engine is restarted.
+              This is still experimental, as most of the DPI engine is 
+              closed source, so unsure if the loopback gets re-enabled 
+              in every regular DPI restart scenarios.
+   - CHANGED: Re-added our original NAT loopback implementation, and attempt
+              to reapply it whenever the DPI engine is restarted (which was
+              breaking it).
    - FIXED: Issues when connecting with Russian ISPs relying on DHCP+VPN 
             (such as Beeline)
    - FIXED: When enabling WAN access to webui, the router would always
@@ -678,6 +692,9 @@ History
             these were disabled.
    - FIXED: Shared printers over LPRng would sometime fail to 
             completely print the last page (patch by stsichler)
+   - FIXED: CVE-2015-0240 security issue in Samba 3.5.8 (used by
+            AiCloud).  The main Samba daemon was patched by the
+            update to 3.6.25.
 
 
 378.50 (7-Feb-2015)
