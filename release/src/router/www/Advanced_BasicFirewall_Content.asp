@@ -169,6 +169,16 @@ function done_validating(action){
 												<input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_https_port"); %>" onKeyPress="return validator.isNumber(this, event);">
 											</td>
 										</tr>		  
+       										<tr>
+          										<th width="40%">NAT Loopback</th>
+											<td>
+												<select name="fw_nat_loopback" class="input_option">
+													<option value="0" <% nvram_match("fw_nat_loopback", "0","selected"); %>><#btn_disable#></option>
+													<option value="1" <% nvram_match("fw_nat_loopback", "1","selected"); %>>Asus</option>
+													<option value="2" <% nvram_match("fw_nat_loopback", "2","selected"); %>>Merlin</option>
+												</select>
+											</td>
+										</tr>
 									</table>
 									<div class="apply_gen">
 										<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>

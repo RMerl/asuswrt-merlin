@@ -5238,7 +5238,8 @@ check_ddr_done:
 #ifdef RTCONFIG_BWDPI
 			start_dpi_engine_service();
 			// force to rebuild firewall to avoid some loopback issue
-			start_firewall(wan_primary_ifunit(), 0);
+			if (nvram_match("fw_nat_loopback", "2"))
+				start_firewall(wan_primary_ifunit(), 0);
 #endif
 			start_iQos();
 		}
@@ -5250,7 +5251,8 @@ check_ddr_done:
 		if(action & RC_SERVICE_START) {
 			start_dpi_engine_service();
 			// force to rebuild firewall to avoid some loopback issue
-			start_firewall(wan_primary_ifunit(), 0);
+			if (nvram_match("fw_nat_loopback", "2"))
+				start_firewall(wan_primary_ifunit(), 0);
 		}
 	}
 	else if (strcmp(script, "bwdpi_monitor") == 0)
