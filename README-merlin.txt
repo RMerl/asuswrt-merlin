@@ -90,6 +90,8 @@ Networking:
    - IPSec kernel support (N16/N66/AC66 only)
    - DNS-based Filtering, can be applied globally or per client
    - Custom DDNS (through a user script)
+   - Advanced NAT loopback (as an alternative to the default one)
+
 
 Web interface:
    - Optionally save traffic stats to disk (USB or JFFS partition)
@@ -682,9 +684,10 @@ History
               This is still experimental, as most of the DPI engine is 
               closed source, so unsure if the loopback gets re-enabled 
               in every regular DPI restart scenarios.
-   - CHANGED: Re-added our original NAT loopback implementation, and attempt
-              to reapply it whenever the DPI engine is restarted (which was
-              breaking it).
+   - CHANGED: Disabled the offline default error page.  Clear your offline
+              content in your browser to fully get rid of it.
+   - CHANGED: Removed security warnings if FTP/Samba are configured to
+              allow unauthenticated users.
    - FIXED: Issues when connecting with Russian ISPs relying on DHCP+VPN 
             (such as Beeline)
    - FIXED: When enabling WAN access to webui, the router would always
