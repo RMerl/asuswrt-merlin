@@ -1319,7 +1319,8 @@ function show_menu(){
 			notification.clickCallBack[3] = "change_wl_unit_status(1);";
 	}else
 		notification.wifi_5g = 0;
-	
+
+/*
 	if(usb_support && enable_ftp == 1 && st_ftp_mode == 1 && st_ftp_force_mode == '' ){ //case4_1
 			notification.array[4] = 'noti_ftp';
 			notification.ftp = 1;
@@ -1333,9 +1334,10 @@ function show_menu(){
 			notification.action_desc[4] = '<#ASUSGATE_act_change#>';
 			notification.clickCallBack[4] = "showLoading();setTimeout('document.noti_ftp.submit();', 1);setTimeout('notification.redirectftp()', 2000);";
 	}else
+*/
 		notification.ftp = 0;
 	
-
+/*
 	if(usb_support && enable_samba == 1 && st_samba_mode == 1 && st_samba_force_mode == '' ){ //case5_1
 			notification.array[5] = 'noti_samba';
 			notification.samba = 1;
@@ -1348,6 +1350,7 @@ function show_menu(){
 			notification.desc[5] = '<#ASUSGATE_note5#>';
 			notification.action_desc[5] = '<#ASUSGATE_act_change#>';
 			notification.clickCallBack[5] = "showLoading();setTimeout('document.noti_samba.submit();', 1);setTimeout('notification.redirectsamba()', 2000);";
+*/
 	}else
 		notification.samba = 0;
 
