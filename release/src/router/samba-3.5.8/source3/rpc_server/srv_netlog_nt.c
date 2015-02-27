@@ -782,6 +782,10 @@ static NTSTATUS netr_creds_server_step_check(pipes_struct *p,
 		(p->auth.auth_level == DCERPC_AUTH_LEVEL_INTEGRITY ||
 		 p->auth.auth_level == DCERPC_AUTH_LEVEL_PRIVACY); */
 
+	if (creds_out != NULL) {
+		*creds_out = NULL;
+	}
+
 	tdb = open_schannel_session_store(mem_ctx);
 	if (!tdb) {
 		return NT_STATUS_ACCESS_DENIED;
@@ -923,7 +927,7 @@ NTSTATUS _netr_ServerPasswordSet(pipes_struct *p,
 	NTSTATUS status = NT_STATUS_OK;
 	struct samu *sampass=NULL;
 	int i;
-	struct netlogon_creds_CredentialState *creds;
+	struct netlogon_creds_CredentialState *creds = NULL;
 
 	DEBUG(5,("_netr_ServerPasswordSet: %d\n", __LINE__));
 
@@ -936,9 +940,15 @@ NTSTATUS _netr_ServerPasswordSet(pipes_struct *p,
 	unbecome_root();
 
 	if (!NT_STATUS_IS_OK(status)) {
+		const char *computer_name = "<unknown>";
+
+		if (creds != NULL && creds->computer_name != NULL) {
+			computer_name = creds->computer_name;
+		}
+
 		DEBUG(2,("_netr_ServerPasswordSet: netlogon_creds_server_step failed. Rejecting auth "
 			"request from client %s machine account %s\n",
-			r->in.computer_name, creds->computer_name));
+			r->in.computer_name, computer_name));
 		TALLOC_FREE(creds);
 		return status;
 	}
