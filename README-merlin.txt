@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.51 (xx-xxx-2015)
-===========================================
+Asuswrt-Merlin - build 378.51 Beta 1 (28-Feb-2015)
+==================================================
 
 About
 -----
@@ -651,7 +651,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-378.51 (xx-xxx-2015)
+378.51 Beta 1 (28-Feb-2015)
    - IMPORTANT: The RT-N16 is no longer officially supported.  The increased
                 number of separate router platforms is becoming too much of
                 a burden for one single developer, as some features must be 
