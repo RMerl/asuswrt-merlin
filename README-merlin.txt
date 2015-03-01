@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 378.51 Beta 1 (28-Feb-2015)
+Asuswrt-Merlin - build 378.51 Beta 2 (xx-xxx-2015)
 ==================================================
 
 About
@@ -2484,7 +2484,7 @@ good amount of the limited available nvram. ***
    
 Contact information
 -------------------
-SmallNetBuilder forums (preferred method: http://forums.smallnetbuilder.com/showthread.php?t=7047 as RMerlin)
+SmallNetBuilder forums (preferred method: http://www.snbforums.com/forums/asuswrt-merlin.42/ as RMerlin)
 Website: http://asuswrt.lostrealm.ca/
 Github: https://github.com/RMerl/asuswrt-merlin
 Email: rmerl@lostrealm.ca
