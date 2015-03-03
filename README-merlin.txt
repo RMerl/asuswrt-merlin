@@ -651,6 +651,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+378.51 Beta 2 (xx-xxx-2015)
+   - FIXED: RSSI not reported for guest clients (beta 1 regression)
+   - FIXED: DM failing to install on RT-AC66U (beta 1 regression)
+
+
 378.51 Beta 1 (28-Feb-2015)
    - IMPORTANT: The RT-N16 is no longer officially supported.  The increased
                 number of separate router platforms is becoming too much of
