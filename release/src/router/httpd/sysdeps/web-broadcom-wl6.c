@@ -4248,7 +4248,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 // RSSI
 				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
-				if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
+				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
 					ret += websWrite(wp, "'?',");
 				else
 					ret += websWrite(wp, "'%d',", scb_val.val);
