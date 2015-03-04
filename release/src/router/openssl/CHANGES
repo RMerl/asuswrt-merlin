@@ -2,6 +2,11 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0p and 1.0.0q [15 Jan 2015]
+
+  *) Build fixes for the Windows and OpenVMS platforms
+     [Matt Caswell and Richard Levitte]
+
  Changes between 1.0.0o and 1.0.0p [8 Jan 2015]
 
   *) Fix DTLS segmentation fault in dtls1_get_record. A carefully crafted DTLS
