@@ -992,7 +992,7 @@ function toggle_jffs_visibility(state){
 				<tr>
 					<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 					<td>
-						<input type="password" autocapitalization="off" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return validator.isString(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
+						<input type="password" autocapitalization="off" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return validator.isString(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" class="input_15_table" maxlength="16" onBlur="clean_scorebar(this);" />
 						&nbsp;&nbsp;
 						<div id="scorebarBorder" style="margin-left:140px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 							<div id="score"></div>
@@ -1004,7 +1004,7 @@ function toggle_jffs_visibility(state){
 				<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
 					<td>
-						<input type="password" autocapitalization="off" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return validator.isString(this, event);" onpaste="return false;" class="input_15_table" maxlength="16" />
+						<input type="password" autocapitalization="off" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return validator.isString(this, event);" class="input_15_table" maxlength="16" />
 						<div style="margin:-25px 0px 5px 135px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 						<span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
 					
