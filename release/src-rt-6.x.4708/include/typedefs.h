@@ -12,7 +12,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: typedefs.h 419467 2013-08-21 09:19:48Z $
+ * $Id: typedefs.h 452599 2014-01-31 07:25:38Z $
  */
 
 #ifndef _TYPEDEFS_H_
@@ -108,17 +108,24 @@ typedef unsigned __int64 uint64;
 
 #if defined(MACOSX)
 #define TYPEDEF_BOOL
-#endif /* MACOSX */
+#endif
 
 #if defined(__NetBSD__)
+#define TYPEDEF_BOOL
 #ifndef _KERNEL
 #include <stdbool.h>
 #endif
-#define TYPEDEF_BOOL
 #define TYPEDEF_UINT
 #define TYPEDEF_USHORT
 #define TYPEDEF_ULONG
-#endif  /* NetBSD */
+#endif /* defined(__NetBSD__) */
+
+#if defined(__FreeBSD__)
+#include <sys/param.h>
+#if (__FreeBSD_version == 901000)
+#define TYPEDEF_BOOL
+#endif /* (__FreeBSD_version == 901000) */
+#endif /* (defined(__FreeBSD__)) */
 
 #if defined(__sparc__)
 #define TYPEDEF_ULONG
@@ -173,9 +180,11 @@ typedef unsigned __int64 uint64;
 
 /* Do not support the (u)int64 types with strict ansi for GNU C */
 #if defined(__GNUC__) && defined(__STRICT_ANSI__)
+#if !defined(__FreeBSD__)
 #define TYPEDEF_INT64
 #define TYPEDEF_UINT64
-#endif
+#endif /* !defined(__FreeBSD__) */
+#endif /* defined(__GNUC__) && defined(__STRICT_ANSI__) */
 
 /* ICL accepts unsigned 64 bit type only, and complains in ANSI mode
  * for signed or unsigned
@@ -339,6 +348,13 @@ typedef double		float64;
  * single or double precision arithmetic.  Compiling with -DFLOAT32
  * selects single precision; the default is double precision.
  */
+
+#ifdef MACOSX
+/* float_t types conflict with the same typedefs from the standard ANSI-C
+** math.h header file. Don't re-typedef them here.
+*/
+#define TYPEDEF_FLOAT_T
+#endif /* MACOSX */
 
 #ifndef TYPEDEF_FLOAT_T
 
