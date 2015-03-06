@@ -1,9 +1,14 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.51 Beta 2 (xx-xxx-2015)
+378.51 (xx-xxx-2015)
    - CHANGED: Updated OpenSSL to 1.0.0q (no real code change)
    - CHANGED: Split the changelog into a separate file
+   - CHANGED: Added logging on custom config/script execution.
+              An error message will also be logged if those
+              are disabled while such a file is found.
+   - CHANGED: Allow pasting the password in some fields that would
+              disable it (patch by gfairchild)
    - FIXED: RSSI not reported for guest clients (beta 1 regression)
    - FIXED: DM failing to install on RT-AC66U (beta 1 regression)
 
