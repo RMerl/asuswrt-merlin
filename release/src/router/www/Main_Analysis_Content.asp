@@ -63,7 +63,7 @@ function initial(){
 
 function validForm(){
 	if(document.form.cmdMethod.value == "ping"){
-		if(!validator.range(document.form.pingCNT, 1, 9))
+		if(!validator.range(document.form.pingCNT, 1, 99))
 			return false;
 	}
 
@@ -263,7 +263,7 @@ function pullLANIPList(obj){
 										<tr id="pingCNT_tr">
 											<th width="20%"><#NetworkTools_Count#></th>
 											<td>
-		              			<input type="text" name="pingCNT" class="input_3_table" maxlength="1" value="" onblur="" onKeyPress="return validator.isNumber(this, event);" placeholder="5">
+		              			<input type="text" name="pingCNT" class="input_3_table" maxlength="2" value="" onKeyPress="return validator.isNumber(this, event);" placeholder="5">
 											</td>
 										</tr>
 									</table>
