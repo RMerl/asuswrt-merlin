@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.51 (xx-xxx-2015)
+378.51 (6-Mar-2015)
    - CHANGED: Updated OpenSSL to 1.0.0q (no real code change)
    - CHANGED: Split the changelog into a separate file
    - CHANGED: Added logging on custom config/script execution.
