@@ -24,7 +24,7 @@ retailers.  The firmware is 100% compatible with both U and R versions
 of the routers.  Same with the "W" variants that are simply white.
 
 
-No longer officiallu supported:
+No longer officially supported:
 - RT-N16
 
 
