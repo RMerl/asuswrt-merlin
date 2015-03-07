@@ -10,18 +10,23 @@ for people who prefer the original firmware featureset.
 
 At this time, the supported devices are:
 
-- RT-N16
 - RT-AC56U
 - RT-N66U
 - RT-AC66U
 - RT-AC68U
 - RT-AC68P
 - RT-AC87U
+- RT-AC3200
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
 "U" counterparts, they are just different packages aimed at large 
 retailers.  The firmware is 100% compatible with both U and R versions 
 of the routers.  Same with the "W" variants that are simply white.
+
+
+No longer officiallu supported:
+- RT-N16
+
 
 Firmware builds can be downloaded from the official download site:
 
