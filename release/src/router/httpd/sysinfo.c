@@ -456,7 +456,7 @@ unsigned int get_wifi_clients(int radio, int querytype)
 			return -1;
 
 		if (querytype == SI_WL_QUERY_ASSOC) {
-			if (qcsapi_wifi_get_count_associations(ifname, &association_count) >= 0)
+			if (qcsapi_wifi_get_count_associations(name, &association_count) >= 0)
 				return association_count;
 		}
 		return -1;	// All other queries aren't supported by QTN
