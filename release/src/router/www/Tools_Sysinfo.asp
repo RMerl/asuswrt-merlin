@@ -46,11 +46,14 @@ function initial(){
 	if (based_modelid == "RT-AC87U") {
 		document.getElementById("wifi5_clients_tr_qtn").style.display = "";
 		document.getElementById("qtn_version").style.display = "";
-	} else if (band5g_support)  {
-		document.getElementById("wifi5_clients_tr").style.display = "";
 	}
-	if (wl_info.band5g_2_support)
+
+	if (wl_info.band5g_2_support) {
+		document.getElementById("wifi5_1_clients_tr").style.display = "";
 		document.getElementById("wifi5_2_clients_tr").style.display = "";
+        } else if (band5g_support) {
+                document.getElementById("wifi5_clients_tr").style.display = "";
+        }
 
 	showbootTime();
 
@@ -427,6 +430,14 @@ function updateClientList(e){
 					</tr>
 					<tr id="wifi5_clients_tr" style="display:none;">
 						<th>Wireless clients (5 GHz)</th>
+						<td>
+							Associated: <span><% sysinfo("conn.wifi.1.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
+							Authorized: <span><% sysinfo("conn.wifi.1.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
+							Authenticated: <span><% sysinfo("conn.wifi.1.authe"); %></span>
+						</td>
+					</tr>
+					<tr id="wifi5_1_clients_tr" style="display:none;">
+						<th>Wireless clients (5 GHz-1)</th>
 						<td>
 							Associated: <span><% sysinfo("conn.wifi.1.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
 							Authorized: <span><% sysinfo("conn.wifi.1.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
