@@ -434,7 +434,7 @@ unsigned int get_phy_temperature(int radio)
 
 unsigned int get_wifi_clients(int radio, int querytype)
 {
-	char *name;
+	char *name, ifname[]="wlXXXXXXXXXX";
 	struct maclist *clientlist;
 	int max_sta_count, maclist_size;
 	int val, count = 0;
@@ -442,17 +442,9 @@ unsigned int get_wifi_clients(int radio, int querytype)
 	qcsapi_unsigned_int association_count = 0;
 #endif
 
-	if (radio == 0) {
-		name = "eth1";
-	} else if (radio == 1) {
-		name = "eth2";
-#ifdef RTAC3200
-	} else if (radio == 2) {
-		name = "eth3";
-#endif
-	} else {
-		return 0;
-	}
+	snprintf(ifname, sizeof(ifname), "wl%d_ifname", radio);
+	name = nvram_get(ifname);
+	if (!strlen(name)) return 0;
 
 #ifdef RTCONFIG_QTN
 	if (radio == 1) {
@@ -464,7 +456,7 @@ unsigned int get_wifi_clients(int radio, int querytype)
 			return -1;
 
 		if (querytype == SI_WL_QUERY_ASSOC) {
-			if (qcsapi_wifi_get_count_associations("wifi0", &association_count) >= 0)
+			if (qcsapi_wifi_get_count_associations(ifname, &association_count) >= 0)
 				return association_count;
 		}
 		return -1;	// All other queries aren't supported by QTN
