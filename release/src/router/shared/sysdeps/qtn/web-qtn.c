@@ -2202,10 +2202,10 @@ wl_status_5g_array(int eid, webs_t wp, int argc, char_t **argv)
 	memset(&ssid, 0, sizeof(qcsapi_SSID));
 	ret = rpc_qcsapi_get_SSID(WIFINAME, &ssid);
 	if (ret < 0) {
-		ret += websWrite(wp, "'','','','','','',");
+		ret += websWrite(wp, "\"\",\"\",\"\",\"\",\"\",\"\",");
 		dbG("rpc_qcsapi_get_SSID %s error, return: %d\n", WIFINAME, ret);
 	}
-	retval += websWrite(wp, "'%s',", ssid);
+	retval += websWrite(wp, "\"%s\",", ssid);
 
 	int rssi_by_chain[4], rssi;
 	qcsapi_wifi_get_rssi_by_chain(WIFINAME, 0, &rssi_by_chain[0]);
@@ -2214,20 +2214,20 @@ wl_status_5g_array(int eid, webs_t wp, int argc, char_t **argv)
 	qcsapi_wifi_get_rssi_by_chain(WIFINAME, 3, &rssi_by_chain[3]);
 	rssi = (rssi_by_chain[0] + rssi_by_chain[1] + rssi_by_chain[2] + rssi_by_chain[3]) / 4;
 
-	retval += websWrite(wp, "'%d',", 0);
+	retval += websWrite(wp, "\"%d\",", 0);
 
-	retval += websWrite(wp, "'%d',", rpc_qcsapi_get_snr());
+	retval += websWrite(wp, "\"%d\",", rpc_qcsapi_get_snr());
 
-	retval += websWrite(wp, "'%d',", rssi);
+	retval += websWrite(wp, "\"%d\",", rssi);
 
 	ret = rpc_qcsapi_get_channel(&channel);
 	if (ret < 0) {
-		ret += websWrite(wp, "'','',");
+		ret += websWrite(wp, "\"\",\"\",");
 		dbG("rpc_qcsapi_get_channel error, return: %d\n", ret);
 	}
 	ret = rpc_qcsapi_get_bw(&bw);
 	if (ret < 0) {
-		ret += websWrite(wp, "'','',");
+		ret += websWrite(wp, "\"\",\"\",");
 		dbG("rpc_qcsapi_get_bw error, return: %d\n", ret);
 	}
 
@@ -2241,15 +2241,15 @@ wl_status_5g_array(int eid, webs_t wp, int argc, char_t **argv)
 	else
 		sprintf(chspec_str, "%d", channel);
 
-	retval += websWrite(wp, "'%s',", chspec_str);
+	retval += websWrite(wp, "\"%s\",", chspec_str);
 
 	qcsapi_mac_addr wl_mac_addr;
 	ret = rpc_qcsapi_interface_get_mac_addr(WIFINAME, &wl_mac_addr);
 	if (ret < 0) {
-		ret += websWrite(wp, "'',");
+		ret += websWrite(wp, "\"\",");
 		dbG("rpc_qcsapi_interface_get_mac_addr %s error, return: %d\n", WIFINAME, ret);
 	}
-	retval += websWrite(wp, "'%s',", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
+	retval += websWrite(wp, "\"%s\",", wl_ether_etoa((struct ether_addr *) &wl_mac_addr));
 	return retval;
 }
 
@@ -2308,7 +2308,7 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 			min = (time_associated % 3600) / 60;
 			sec = time_associated - hr * 3600 - min * 60;
 
-			retval += websWrite(wp, "['%s',", wl_ether_etoa((struct ether_addr *) &sta_address));
+			retval += websWrite(wp, "[\"%s\",", wl_ether_etoa((struct ether_addr *) &sta_address));
 
 			/* Obtain mac + IP list */
 			arplist = read_whole_file("/proc/net/arp");
@@ -2331,10 +2331,10 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 				}
 
 				if (found || !leaselist) {
-					ret += websWrite(wp, "'%s',", (found ? ipentry : ""));
+					ret += websWrite(wp, "\"%s\",", (found ? ipentry : ""));
 				}
 			} else {
-				ret += websWrite(wp, "'<unknown>',");
+				ret += websWrite(wp, "\"<unknown>\",");
 			}
 
 			// Retrieve hostname from dnsmasq leases
@@ -2351,25 +2351,25 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 				}
 				if (found == 0) {
 					// Not in arplist nor in leaselist
-					ret += websWrite(wp, "'<not found>','<not found>',");
+					ret += websWrite(wp, "\"<not found>\",\"<not found>\",");
 				} else if (found == 1) {
 					// Only in arplist (static IP)
-					ret += websWrite(wp, "'<not found>',");
+					ret += websWrite(wp, "\"<not found>\",");
 				} else if (found == 2) {
 					// Only in leaselist (dynamic IP that has not communicated with router for a while)
-					ret += websWrite(wp, "'%s', '%s',", ipentry, hostnameentry);
+					ret += websWrite(wp, "\"%s\", \"%s\",", ipentry, hostnameentry);
 				} else if (found == 3) {
 					// In both arplist and leaselist (dynamic IP)
-					ret += websWrite(wp, "'%s',", hostnameentry);
+					ret += websWrite(wp, "\"%s\",", hostnameentry);
 				}
 			} else {
-				ret += websWrite(wp, "'<unknown>',");
+				ret += websWrite(wp, "\"<unknown>\",");
 			}
 
-			retval += websWrite(wp, "'%d',", rssi);
-			retval += websWrite(wp, "'%d','%d',", tx_phy_rate, rx_phy_rate);
-			retval += websWrite(wp, "'%3d:%02d:%02d',", hr, min, sec);
-			retval += websWrite(wp, "'A%s%s',", !nvram_match("wl1_auth_mode_x", "open") ? "U" : "", (guest ? "G" : ""));
+			retval += websWrite(wp, "\"%d\",", rssi);
+			retval += websWrite(wp, "\"%d\",\"%d\",", tx_phy_rate, rx_phy_rate);
+			retval += websWrite(wp, "\"%3d:%02d:%02d\",", hr, min, sec);
+			retval += websWrite(wp, "\"A%s%s\",", !nvram_match("wl1_auth_mode_x", "open") ? "U" : "", (guest ? "G" : ""));
 			retval += websWrite(wp, "],");
 		}
 	}
