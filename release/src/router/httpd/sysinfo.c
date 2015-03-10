@@ -444,7 +444,7 @@ unsigned int get_wifi_clients(int radio, int querytype)
 
 	snprintf(ifname, sizeof(ifname), "wl%d_ifname", radio);
 	name = nvram_get(ifname);
-	if (!strlen(name)) return 0;
+	if ((!name) || (!strlen(name))) return 0;
 
 #ifdef RTCONFIG_QTN
 	if (radio == 1) {
