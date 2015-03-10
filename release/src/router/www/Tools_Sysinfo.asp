@@ -43,14 +43,12 @@ overlib.isOut = true;
 function initial(){
 	show_menu();
 
-	if (based_modelid == "RT-AC87U") {
-		document.getElementById("wifi5_clients_tr_qtn").style.display = "";
-		document.getElementById("qtn_version").style.display = "";
-	}
-
 	if (wl_info.band5g_2_support) {
 		document.getElementById("wifi5_1_clients_tr").style.display = "";
 		document.getElementById("wifi5_2_clients_tr").style.display = "";
+        } else if (based_modelid == "RT-AC87U") {
+                document.getElementById("wifi5_clients_tr_qtn").style.display = "";
+                document.getElementById("qtn_version").style.display = "";
         } else if (band5g_support) {
                 document.getElementById("wifi5_clients_tr").style.display = "";
         }
