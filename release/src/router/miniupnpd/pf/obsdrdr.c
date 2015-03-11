@@ -1,7 +1,7 @@
-/* $Id: obsdrdr.c,v 1.82 2014/04/15 23:15:25 nanard Exp $ */
+/* $Id: obsdrdr.c,v 1.84 2015/02/08 08:55:55 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -959,14 +959,17 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 			if(*number >= capacity)
 			{
 				/* need to increase the capacity of the array */
+				unsigned short * tmp;
 				capacity += 128;
-				array = realloc(array, sizeof(unsigned short)*capacity);
-				if(!array)
+				tmp = realloc(array, sizeof(unsigned short)*capacity);
+				if(!tmp)
 				{
 					syslog(LOG_ERR, "get_portmappings_in_range() : realloc(%lu) error", sizeof(unsigned short)*capacity);
 					*number = 0;
+					free(array);
 					return NULL;
 				}
+				array = tmp;
 			}
 			array[*number] = eport;
 			(*number)++;

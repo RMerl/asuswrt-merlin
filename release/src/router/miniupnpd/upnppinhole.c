@@ -1,4 +1,4 @@
-/* $Id: upnppinhole.c,v 1.4 2012/05/08 20:41:45 nanard Exp $ */
+/* $Id: upnppinhole.c,v 1.7 2014/12/09 09:13:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2012 Thomas Bernard
@@ -88,10 +88,10 @@ upnp_check_outbound_pinhole(int proto, int * timeout)
 #endif
 
 /* upnp_add_inboundpinhole()
- * returns: 0 on success
- *          -1 failed to add pinhole
- *          -2 already created
- *          -3 inbound pinhole disabled
+ * returns:  1 on success
+ *          -1 Pinhole space exhausted
+ *          -4 invalid arguments
+ *         -42 not implemented
  * TODO : return uid on success (positive) or error value (negative)
  */
 int
@@ -109,10 +109,11 @@ upnp_add_inboundpinhole(const char * raddr,
 	unsigned int timestamp;
 	struct in6_addr address;
 
-	if(inet_pton(AF_INET6, iaddr, &address) < 0)
-	{
-		syslog(LOG_ERR, "inet_pton(%s) : %m", iaddr);
-		return 0;
+	r = inet_pton(AF_INET6, iaddr, &address);
+	if(r <= 0) {
+		syslog(LOG_ERR, "inet_pton(%d, %s, %p) FAILED",
+		       AF_INET6, iaddr, &address);
+		return -4;
 	}
 	current = time(NULL);
 	timestamp = current + leasetime;

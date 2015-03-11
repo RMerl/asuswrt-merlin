@@ -1,7 +1,7 @@
-/* $Id: upnpreplyparse.c,v 1.16 2014/10/27 16:33:19 nanard Exp $ */
+/* $Id: upnpreplyparse.c,v 1.18 2014/11/05 05:36:08 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2013 Thomas Bernard
+ * (c) 2006-2014 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -172,9 +172,9 @@ DisplayNameValueList(char * buffer, int bufsize)
     struct NameValueParserData pdata;
     struct NameValue * nv;
     ParseNameValue(buffer, bufsize, &pdata);
-    for(nv = pdata.head.lh_first;
+    for(nv = pdata.l_head;
         nv != NULL;
-        nv = nv->entries.le_next)
+        nv = nv->l_next)
     {
         printf("%s = %s\n", nv->name, nv->value);
     }

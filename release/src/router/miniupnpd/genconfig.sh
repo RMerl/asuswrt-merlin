@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Id: genconfig.sh,v 1.74 2014/04/09 07:21:00 nanard Exp $
+# $Id: genconfig.sh,v 1.78 2014/12/10 09:34:42 nanard Exp $
 # miniupnp daemon
 # http://miniupnp.free.fr or http://miniupnp.tuxfamily.org/
 # (c) 2006-2014 Thomas Bernard
@@ -255,6 +255,7 @@ case $OS_NAME in
 		fi
 		echo "#define USE_IFACEWATCHER 1" >> ${CONFIGFILE}
 		FW=netfilter
+		V6SOCKETS_ARE_V6ONLY=`/sbin/sysctl -n net.ipv6.bindv6only`
 		;;
 	OpenWRT)
 		OS_URL=http://www.openwrt.org/
@@ -536,6 +537,12 @@ cat >> ${CONFIGFILE} <<EOF
 #define ENABLE_UPNPPINHOLE
 #endif
 
+EOF
+
+cat >> ${CONFIGFILE} <<EOF
+/* Uncomment the following line if your device does not have a proper clock
+ * BOOTID.UPNP.ORG can be set with command line */
+#define USE_TIME_AS_BOOTID
 EOF
 
 echo "#endif /* ${CONFIGMACRO} */" >> ${CONFIGFILE}

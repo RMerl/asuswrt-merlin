@@ -1,4 +1,34 @@
-$Id: Changelog.txt,v 1.382 2014/10/27 16:35:42 nanard Exp $
+$Id: Changelog.txt,v 1.396 2015/03/07 15:53:50 nanard Exp $
+
+2015/03/07:
+  don't die when IPv6 is enabled and interface has no IPv4 address
+
+2015/02/10:
+  IP wildcard for AddPinhole() is empty string
+
+2014/12/10:
+  Checking Host: HTTP request header to prevent DNS rebinding attack
+  configurable BOOTID.UPNP.ORG SSDP header
+  use time for BOOTID.UPNP.ORG value
+
+2014/12/09:
+  fix upnp_add_inboundpinhole() : check inet_pton() return
+  fix upnp_redirect() : check inet_aton() return
+  fix potential memory corruption in upnpsoap.c/GetListOfPortMappings()
+  fix buffer overrun in ParseHttpHeaders() if Content-Length doesn't contain any digit !
+  check if BuildHeader_upnphttp() failed to allocate memory
+    Credits goes to Stephen Röttger of the Google Security Team for identifying
+    the vulnerabilities
+
+2014/12/04:
+  check "sysctl -n net.ipv6.bindv6only" for linux
+
+2014/11/28:
+  fixes ExecuteSoapAction if SoapAction value is not enclosed into
+    double quotes
+
+2014/11/07:
+  sockaddr_to_string() includes scope in IPv6 addresses
 
 VERSION 1.9 : released on 2014/10/27
 

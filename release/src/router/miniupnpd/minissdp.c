@@ -1,7 +1,7 @@
-/* $Id: minissdp.c,v 1.72 2014/10/22 11:54:45 nanard Exp $ */
+/* $Id: minissdp.c,v 1.73 2015/01/17 11:26:05 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 

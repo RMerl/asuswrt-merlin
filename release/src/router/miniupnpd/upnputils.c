@@ -1,4 +1,4 @@
-/* $Id: upnputils.c,v 1.8 2014/02/05 17:00:26 nanard Exp $ */
+/* $Id: upnputils.c,v 1.10 2014/11/07 11:53:39 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -44,7 +44,14 @@ sockaddr_to_string(const struct sockaddr * addr, char * str, size_t size)
 			snprintf(buffer, sizeof(buffer), "inet_ntop: %s", strerror(errno));
 		}
 		port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
-		n = snprintf(str, size, "[%s]:%hu", buffer, port);
+		if(((struct sockaddr_in6 *)addr)->sin6_scope_id > 0) {
+			char ifname[IF_NAMESIZE];
+			if(if_indextoname(((struct sockaddr_in6 *)addr)->sin6_scope_id, ifname) == NULL)
+				strncpy(ifname, "ERROR", sizeof(ifname));
+			n = snprintf(str, size, "[%s%%%s]:%hu", buffer, ifname, port);
+		} else {
+			n = snprintf(str, size, "[%s]:%hu", buffer, port);
+		}
 		break;
 #endif /* AF_INET6 */
 	case AF_INET:

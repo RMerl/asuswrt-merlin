@@ -165,6 +165,7 @@ clean:
 	$(RM) testupnpdescgen.o testgetifstats.o
 	$(RM) testupnppermissions.o testgetifaddr.o
 	$(RM) testgetroute.o testasyncsendto.o
+	$(RM) testportinuse.o
 	$(RM) miniupnpdctl.o
 
 install:	miniupnpd miniupnpd.8 miniupnpd.conf genuuid \

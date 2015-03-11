@@ -1,4 +1,4 @@
-/* $Id: upnphttp.c,v 1.91 2014/04/09 14:08:12 nanard Exp $ */
+/* $Id: upnphttp.c,v 1.99 2014/12/09 17:25:30 nanard Exp $ */
 /* Project :  miniupnp
  * Website :  http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * Author :   Thomas Bernard
@@ -221,10 +221,10 @@ ParseHttpHeaders(struct upnphttp * h)
 		}
 		if(colon)
 		{
-			if(strncasecmp(line, "Content-Length", 14)==0)
+			if(strncasecmp(line, "Content-Length:", 15)==0)
 			{
 				p = colon;
-				while(*p < '0' || *p > '9')
+				while((*p < '0' || *p > '9') && (*p != '\r') && (*p != '\n'))
 					p++;
 				h->req_contentlen = atoi(p);
 				if(h->req_contentlen < 0) {
@@ -235,7 +235,18 @@ ParseHttpHeaders(struct upnphttp * h)
 				printf("    readbufflen=%d contentoff = %d\n",
 					h->req_buflen, h->req_contentoff);*/
 			}
-			else if(strncasecmp(line, "SOAPAction", 10)==0)
+			else if(strncasecmp(line, "Host:", 5)==0)
+			{
+				p = colon;
+				n = 0;
+				while(*p == ':' || *p == ' ' || *p == '\t')
+					p++;
+				while(p[n]>' ')
+					n++;
+				h->req_HostOff = p - h->req_buf;
+				h->req_HostLen = n;
+			}
+			else if(strncasecmp(line, "SOAPAction:", 11)==0)
 			{
 				p = colon;
 				n = 0;
@@ -251,7 +262,7 @@ ParseHttpHeaders(struct upnphttp * h)
 				h->req_soapActionOff = p - h->req_buf;
 				h->req_soapActionLen = n;
 			}
-			else if(strncasecmp(line, "accept-language", 15) == 0)
+			else if(strncasecmp(line, "accept-language:", 16) == 0)
 			{
 				p = colon;
 				n = 0;
@@ -269,7 +280,7 @@ ParseHttpHeaders(struct upnphttp * h)
 				memcpy(h->accept_language, p, n);
 				h->accept_language[n] = '\0';
 			}
-			else if(strncasecmp(line, "expect", 6) == 0)
+			else if(strncasecmp(line, "expect:", 7) == 0)
 			{
 				p = colon;
 				n = 0;
@@ -283,7 +294,7 @@ ParseHttpHeaders(struct upnphttp * h)
 				}
 			}
 #ifdef ENABLE_EVENTS
-			else if(strncasecmp(line, "Callback", 8)==0)
+			else if(strncasecmp(line, "Callback:", 9)==0)
 			{
 				/* The Callback can contain several urls :
 				 * If there is more than one URL, when the service sends
@@ -302,10 +313,10 @@ ParseHttpHeaders(struct upnphttp * h)
 				h->req_CallbackOff = p - h->req_buf;
 				h->req_CallbackLen = MAX(0, n + 1);
 			}
-			else if(strncasecmp(line, "SID", 3)==0)
+			else if(strncasecmp(line, "SID:", 4)==0)
 			{
 				p = colon + 1;
-				while(isspace(*p))
+				while((*p == ' ') || (*p == '\t'))
 					p++;
 				n = 0;
 				while(!isspace(p[n]))
@@ -320,20 +331,20 @@ either number of seconds or infinite. Recommendation
 by a UPnP Forum working committee. Defined by UPnP vendor.
  Consists of the keyword "Second-" followed (without an
 intervening space) by either an integer or the keyword "infinite". */
-			else if(strncasecmp(line, "Timeout", 7)==0)
+			else if(strncasecmp(line, "Timeout:", 8)==0)
 			{
 				p = colon + 1;
-				while(isspace(*p))
+				while((*p == ' ') || (*p == '\t'))
 					p++;
 				if(strncasecmp(p, "Second-", 7)==0) {
 					h->req_Timeout = atoi(p+7);
 				}
 			}
 #ifdef UPNP_STRICT
-			else if(strncasecmp(line, "nt", 2)==0)
+			else if(strncasecmp(line, "nt:", 3)==0)
 			{
 				p = colon + 1;
-				while(isspace(*p))
+				while((*p == ' ') || (*p == '\t'))
 					p++;
 				n = 0;
 				while(!isspace(p[n]))
@@ -341,8 +352,8 @@ intervening space) by either an integer or the keyword "infinite". */
 				h->req_NTOff = p - h->req_buf;
 				h->req_NTLen = n;
 			}
-#endif
-#endif
+#endif /* UPNP_STRICT */
+#endif /* ENABLE_EVENTS */
 		}
 		/* the loop below won't run off the end of the buffer
 		 * because the buffer is guaranteed to contain the \r\n\r\n
@@ -747,6 +758,35 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 	syslog(LOG_INFO, "HTTP REQUEST : %s %s (%s)",
 	       HttpCommand, HttpUrl, HttpVer);
 	ParseHttpHeaders(h);
+	if(h->req_HostOff > 0 && h->req_HostLen > 0) {
+		syslog(LOG_DEBUG, "Host: %.*s", h->req_HostLen, h->req_buf + h->req_HostOff);
+		p = h->req_buf + h->req_HostOff;
+		if(*p == '[') {
+			/* IPv6 */
+			p++;
+			while(p < h->req_buf + h->req_HostOff + h->req_HostLen) {
+				if(*p == ']') break;
+				/* TODO check *p in [0-9a-f:.] */
+				p++;
+			}
+			if(*p != ']') {
+				syslog(LOG_NOTICE, "DNS rebinding attack suspected (Host: %.*s)", h->req_HostLen, h->req_buf + h->req_HostOff);
+				Send404(h);/* 403 */
+				return;
+			}
+			p++;
+			/* TODO : Check port */
+		} else {
+			for(i = 0; i < h->req_HostLen; i++) {
+				if(*p != ':' && *p != '.' && (*p > '9' || *p < '0')) {
+					syslog(LOG_NOTICE, "DNS rebinding attack suspected (Host: %.*s)", h->req_HostLen, h->req_buf + h->req_HostOff);
+					Send404(h);/* 403 */
+					return;
+				}
+				p++;
+			}
+		}
+	}
 	if(strcmp("POST", HttpCommand) == 0)
 	{
 		h->req_command = EPost;
@@ -989,7 +1029,7 @@ static const char httpresphead[] =
 /* with response code and response message
  * also allocate enough memory */
 
-void
+int
 BuildHeader_upnphttp(struct upnphttp * h, int respcode,
                      const char * respmsg,
                      int bodylen)
@@ -1003,7 +1043,7 @@ BuildHeader_upnphttp(struct upnphttp * h, int respcode,
 		h->res_buf = (char *)malloc(templen);
 		if(!h->res_buf) {
 			syslog(LOG_ERR, "malloc error in BuildHeader_upnphttp()");
-			return;
+			return -1;
 		}
 		h->res_buf_alloclen = templen;
 	}
@@ -1082,8 +1122,10 @@ BuildHeader_upnphttp(struct upnphttp * h, int respcode,
 		else
 		{
 			syslog(LOG_ERR, "realloc error in BuildHeader_upnphttp()");
+			return -1;
 		}
 	}
+	return 0;
 }
 
 void
@@ -1091,16 +1133,17 @@ BuildResp2_upnphttp(struct upnphttp * h, int respcode,
                     const char * respmsg,
                     const char * body, int bodylen)
 {
-	BuildHeader_upnphttp(h, respcode, respmsg, bodylen);
-	if(body)
+	int r = BuildHeader_upnphttp(h, respcode, respmsg, bodylen);
+	if(body && (r >= 0)) {
 		memcpy(h->res_buf + h->res_buflen, body, bodylen);
-	h->res_buflen += bodylen;
+		h->res_buflen += bodylen;
+	}
 }
 
 /* responding 200 OK ! */
 void
 BuildResp_upnphttp(struct upnphttp * h,
-                        const char * body, int bodylen)
+                   const char * body, int bodylen)
 {
 	BuildResp2_upnphttp(h, 200, "OK", body, bodylen);
 }

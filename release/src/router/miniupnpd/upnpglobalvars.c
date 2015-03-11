@@ -1,4 +1,4 @@
-/* $Id: upnpglobalvars.c,v 1.35 2014/03/10 11:04:53 nanard Exp $ */
+/* $Id: upnpglobalvars.c,v 1.39 2014/12/10 09:49:22 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -119,6 +119,28 @@ struct in6_addr ipv6_bind_addr;
 const char * minissdpdsocketpath = "/var/run/minissdpd.sock";
 
 /* BOOTID.UPNP.ORG and CONFIGID.UPNP.ORG */
-unsigned int upnp_bootid = 1;
-unsigned int upnp_configid = 1337;
+/* See UPnP Device Architecture v1.1 section 1.2 Advertisement :
+ * The field value of the BOOTID.UPNP.ORG header field MUST be increased
+ * each time a device (re)joins the network and sends an initial announce
+ * (a "reboot" in UPnP terms), or adds a UPnP-enabled interface.
+ * Unless the device explicitly announces a change in the BOOTID.UPNP.ORG
+ * field value using an SSDP message, as long as the device remains
+ * continuously available in the network, the same BOOTID.UPNP.ORG field
+ * value MUST be used in all repeat announcements, search responses,
+ * update messages and eventually bye-bye messages. */
+unsigned int upnp_bootid = 1;      /* BOOTID.UPNP.ORG */
+/* The field value of the CONFIGID.UPNP.ORG header field identifies the
+ * current set of device and service descriptions; control points can
+ * parse this header field to detect whether they need to send new
+ * description query messages. */
+/* UPnP 1.1 devices MAY freely assign configid numbers from 0 to
+ * 16777215 (2^24-1). Higher numbers are reserved for future use, and
+ * can be assigned by the Technical Committee. The configuration of a
+ * root device consists of the following information: the DDD of the
+ * root device and all its embedded devices, and the SCPDs of all the
+ * contained services. If any part of the configuration changes, the
+ * CONFIGID.UPNP.ORG field value MUST be changed.
+ * DDD = Device Description Document
+ * SCPD = Service Control Protocol Description */
+unsigned int upnp_configid = 1337; /* CONFIGID.UPNP.ORG */
 

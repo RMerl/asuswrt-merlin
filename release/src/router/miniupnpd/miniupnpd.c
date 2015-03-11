@@ -1,7 +1,7 @@
-/* $Id: miniupnpd.c,v 1.199 2014/05/19 23:14:25 nanard Exp $ */
+/* $Id: miniupnpd.c,v 1.206 2015/01/17 11:26:04 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -599,6 +599,16 @@ static void
 set_startup_time(int sysuptime)
 {
 	startup_time = time(NULL);
+#ifdef USE_TIME_AS_BOOTID
+	if(startup_time > 60*60*24 && upnp_bootid == 1) {
+		/* We know we are not January the 1st 1970 */
+		upnp_bootid = (unsigned int)startup_time;
+		/* from UDA v1.1 :
+		 * A convenient mechanism is to set this field value to the time
+		 * that the device sends its initial announcement, expressed as
+		 * seconds elapsed since midnight January 1, 1970; */
+	}
+#endif /* USE_TIME_AS_BOOTID */
 	if(sysuptime)
 	{
 		/* use system uptime instead of daemon uptime */
@@ -705,8 +715,16 @@ parselanaddr(struct lan_addr_s * lan_addr, const char * str)
 		memcpy(lan_addr->ifname, str, n);
 		lan_addr->ifname[n] = '\0';
 		if(getifaddr(lan_addr->ifname, lan_addr->str, sizeof(lan_addr->str),
-		             &lan_addr->addr, &lan_addr->mask) < 0)
+		             &lan_addr->addr, &lan_addr->mask) < 0) {
+#ifdef ENABLE_IPV6
+			fprintf(stderr, "interface \"%s\" has no IPv4 address\n", str);
+			lan_addr->str[0] = '\0';
+			lan_addr->addr.s_addr = htonl(0x00000000u);
+			lan_addr->mask.s_addr = htonl(0xffffffffu);
+#else /* ENABLE_IPV6 */
 			goto parselan_error;
+#endif /* ENABLE_IPV6 */
+		}
 		/*printf("%s => %s\n", lan_addr->ifname, lan_addr->str);*/
 	}
 	else
@@ -1100,6 +1118,12 @@ init(int argc, char * * argv, struct runtime_vars * v)
 		}
 		else switch(argv[i][1])
 		{
+		case 'b':
+			if(i+1 < argc) {
+				upnp_bootid = (unsigned int)strtoul(argv[++i], NULL, 10);
+			} else
+				fprintf(stderr, "Option -%c takes one argument.\n", argv[i][1]);
+			break;
 		case 'o':
 			if(i+1 < argc)
 				use_ext_ip_addr = argv[++i];
@@ -1483,16 +1507,16 @@ print_usage:
 			"\t\t[-u uuid] [-s serial] [-m model_number] \n"
 			"\t\t[-t notify_interval] [-P pid_filename] "
 #ifdef ENABLE_MANUFACTURER_INFO_CONFIGURATION
-			"[-z fiendly_name]\n"
+			"[-z fiendly_name]"
 #endif
-			"\t\t[-B down up] [-w url] [-r clean_ruleset_interval]\n"
+			"\n\t\t[-B down up] [-w url] [-r clean_ruleset_interval]\n"
 #ifdef USE_PF
                         "\t\t[-q queue] [-T tag]\n"
 #endif
 #ifdef ENABLE_NFQUEUE
                         "\t\t[-Q queue] [-n name]\n"
 #endif
-			"\t\t[-A \"permission rule\"]\n"
+			"\t\t[-A \"permission rule\"] [-b BOOTID]\n"
 	        "\nNotes:\n\tThere can be one or several listening_ips.\n"
 	        "\tNotify interval is in seconds. Default is 30 seconds.\n"
 			"\tDefault pid file is '%s'.\n"
@@ -1505,7 +1529,7 @@ print_usage:
 			"\t-U causes miniupnpd to report system uptime instead "
 			"of daemon uptime.\n"
 #ifdef ENABLE_NATPMP
-			"\t-N enable NAT-PMP functionality.\n"
+			"\t-N enables NAT-PMP functionality.\n"
 #endif
 			"\t-B sets bitrates reported by daemon in bits per second.\n"
 			"\t-w sets the presentation url. Default is http address on port 80\n"
@@ -1522,6 +1546,7 @@ print_usage:
 			"\texamples :\n"
 			"\t  \"allow 1024-65535 192.168.1.0/24 1024-65535\"\n"
 			"\t  \"deny 0-65535 0.0.0.0/0 0-65535\"\n"
+			"\t-b sets the value of BOOTID.UPNP.ORG SSDP header\n"
 			"\t-h prints this help and quits.\n"
 	        "", argv[0], pidfilename, DEFAULT_CONFIG);
 	return 1;
@@ -1624,7 +1649,7 @@ main(int argc, char * * argv)
 		return 0;
 	}
 
-	syslog(LOG_INFO, "Starting%s%swith external interface %s",
+	syslog(LOG_INFO, "version " MINIUPNPD_VERSION " starting%s%sext if %s BOOTID=%u",
 #ifdef ENABLE_NATPMP
 #ifdef ENABLE_PCP
 	       GETFLAG(ENABLENATPMPMASK) ? " NAT-PMP/PCP " : " ",
@@ -1635,7 +1660,7 @@ main(int argc, char * * argv)
 	       " ",
 #endif
 	       GETFLAG(ENABLEUPNPMASK) ? "UPnP-IGD " : "",
-	       ext_if_name);
+	       ext_if_name, upnp_bootid);
 
 	if(GETFLAG(ENABLEUPNPMASK))
 	{

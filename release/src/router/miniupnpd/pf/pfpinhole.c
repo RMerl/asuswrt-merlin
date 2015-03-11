@@ -1,4 +1,4 @@
-/* $Id: pfpinhole.c,v 1.22 2014/05/15 21:23:43 nanard Exp $ */
+/* $Id: pfpinhole.c,v 1.24 2014/12/05 09:54:55 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2012 Thomas Bernard
@@ -31,6 +31,7 @@
 #include "../config.h"
 #include "pfpinhole.h"
 #include "../upnpglobalvars.h"
+#include "../macros.h"
 
 /* the pass rules created by add_pinhole() are as follow :
  *
@@ -294,6 +295,7 @@ int update_pinhole(unsigned short uid, unsigned int timestamp)
 	 * 1 - delete
 	 * 2 - Add new
 	 * the stats of the rule will then be reset :( */
+	UNUSED(uid); UNUSED(timestamp);
 	return -42; /* not implemented */
 }
 
@@ -331,7 +333,7 @@ int clean_pinhole_list(unsigned int * next_timestamp)
 			return -1;
 		}
 		if(sscanf(pr.rule.label, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
-			syslog(LOG_INFO, "rule with label '%s' is not a IGD pinhole", pr.rule.label);
+			syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", pr.rule.label);
 			continue;
 		}
 		if(ts <= (unsigned int)current_time) {

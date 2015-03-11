@@ -1,7 +1,7 @@
-/* $Id: iptcrdr.c,v 1.50 2012/10/03 14:49:08 nanard Exp $ */
+/* $Id: iptcrdr.c,v 1.53 2015/02/08 09:10:00 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2011 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 #include <stdio.h>
@@ -1083,25 +1083,37 @@ addnatrule(int proto, unsigned short eport,
 {
 	int r = 0;
 	struct ipt_entry * e;
+	struct ipt_entry * tmp;
 	struct ipt_entry_match *match = NULL;
 	struct ipt_entry_target *target = NULL;
 
 	e = calloc(1, sizeof(struct ipt_entry));
-	e->ip.proto = proto;
-	if(proto == IPPROTO_TCP)
-	{
-		match = get_tcp_match(eport, 0);
+	if(!e) {
+		syslog(LOG_ERR, "%s: calloc(%d) error", "addnatrule",
+		       (int)sizeof(struct ipt_entry));
+		return -1;
 	}
-	else
-	{
+	e->ip.proto = proto;
+	if(proto == IPPROTO_TCP) {
+		match = get_tcp_match(eport, 0);
+	} else {
 		match = get_udp_match(eport, 0);
 	}
 	e->nfcache = NFC_IP_DST_PT;
 	target = get_dnat_target(iaddr, iport);
 	e->nfcache |= NFC_UNKNOWN;
-	e = realloc(e, sizeof(struct ipt_entry)
+	tmp = realloc(e, sizeof(struct ipt_entry)
 	               + match->u.match_size
 				   + target->u.target_size);
+	if(!tmp) {
+		syslog(LOG_ERR, "%s: realloc(%d) error", "addnatrule",
+		       (int)(sizeof(struct ipt_entry) + match->u.match_size + target->u.target_size));
+		free(e);
+		free(match);
+		free(target);
+		return -1;
+	}
+	e = tmp;
 	memcpy(e->elems, match, match->u.match_size);
 	memcpy(e->elems + match->u.match_size, target, target->u.target_size);
 	e->target_offset = sizeof(struct ipt_entry)
@@ -1110,8 +1122,7 @@ addnatrule(int proto, unsigned short eport,
 	                 + match->u.match_size
 					 + target->u.target_size;
 	/* remote host */
-	if(rhost && (rhost[0] != '\0') && (0 != strcmp(rhost, "*")))
-	{
+	if(rhost && (rhost[0] != '\0') && (0 != strcmp(rhost, "*"))) {
 		e->ip.src.s_addr = inet_addr(rhost);
 		e->ip.smsk.s_addr = INADDR_NONE;
 	}
@@ -1134,26 +1145,38 @@ addpeernatrule(int proto,
 {
 	int r = 0;
 	struct ipt_entry * e;
+	struct ipt_entry * tmp;
 	struct ipt_entry_match *match = NULL;
 	struct ipt_entry_target *target = NULL;
 
 	e = calloc(1, sizeof(struct ipt_entry));
+	if(!e) {
+		syslog(LOG_ERR, "%s: calloc(%d) error", "addpeernatrule",
+		       (int)sizeof(struct ipt_entry));
+		return -1;
+	}
 	e->ip.proto = proto;
 	/* TODO: Fill port matches and SNAT */
-	if(proto == IPPROTO_TCP)
-	{
+	if(proto == IPPROTO_TCP) {
 		match = get_tcp_match(rport, iport);
-	}
-	else
-	{
+	} else {
 		match = get_udp_match(rport, iport);
 	}
 	e->nfcache = NFC_IP_DST_PT | NFC_IP_SRC_PT;
 	target = get_snat_target(eaddr, eport);
 	e->nfcache |= NFC_UNKNOWN;
-	e = realloc(e, sizeof(struct ipt_entry)
+	tmp = realloc(e, sizeof(struct ipt_entry)
 	               + match->u.match_size
 				   + target->u.target_size);
+	if(!tmp) {
+		syslog(LOG_ERR, "%s: realloc(%d) error", "addpeernatrule",
+		       (int)(sizeof(struct ipt_entry) + match->u.match_size + target->u.target_size));
+		free(e);
+		free(match);
+		free(target);
+		return -1;
+	}
+	e = tmp;
 	memcpy(e->elems, match, match->u.match_size);
 	memcpy(e->elems + match->u.match_size, target, target->u.target_size);
 	e->target_offset = sizeof(struct ipt_entry)
@@ -1192,26 +1215,38 @@ addpeerdscprule(int proto, unsigned char dscp,
 {
 	int r = 0;
 	struct ipt_entry * e;
+	struct ipt_entry * tmp;
 	struct ipt_entry_match *match = NULL;
 	struct ipt_entry_target *target = NULL;
 
 	e = calloc(1, sizeof(struct ipt_entry));
+	if(!e) {
+		syslog(LOG_ERR, "%s: calloc(%d) error", "addpeerdscprule",
+		       (int)sizeof(struct ipt_entry));
+		return -1;
+	}
 	e->ip.proto = proto;
 	/* TODO: Fill port matches and SNAT */
-	if(proto == IPPROTO_TCP)
-	{
+	if(proto == IPPROTO_TCP) {
 		match = get_tcp_match(rport, iport);
-	}
-	else
-	{
+	} else {
 		match = get_udp_match(rport, iport);
 	}
 	e->nfcache = NFC_IP_DST_PT | NFC_IP_SRC_PT;
 	target = get_dscp_target(dscp);
 	e->nfcache |= NFC_UNKNOWN;
-	e = realloc(e, sizeof(struct ipt_entry)
+	tmp = realloc(e, sizeof(struct ipt_entry)
 	               + match->u.match_size
 				   + target->u.target_size);
+	if(!tmp) {
+		syslog(LOG_ERR, "%s: realloc(%d) error", "addpeerdscprule",
+		       (int)(sizeof(struct ipt_entry) + match->u.match_size + target->u.target_size));
+		free(e);
+		free(match);
+		free(target);
+		return -1;
+	}
+	e = tmp;
 	memcpy(e->elems, match, match->u.match_size);
 	memcpy(e->elems + match->u.match_size, target, target->u.target_size);
 	e->target_offset = sizeof(struct ipt_entry)
@@ -1264,17 +1299,20 @@ add_filter_rule(int proto, const char * rhost,
 {
 	int r = 0;
 	struct ipt_entry * e;
+	struct ipt_entry * tmp;
 	struct ipt_entry_match *match = NULL;
 	struct ipt_entry_target *target = NULL;
 
 	e = calloc(1, sizeof(struct ipt_entry));
-	e->ip.proto = proto;
-	if(proto == IPPROTO_TCP)
-	{
-		match = get_tcp_match(iport,0);
+	if(!e) {
+		syslog(LOG_ERR, "%s: calloc(%d) error", "add_filter_rule",
+		       (int)sizeof(struct ipt_entry));
+		return -1;
 	}
-	else
-	{
+	e->ip.proto = proto;
+	if(proto == IPPROTO_TCP) {
+		match = get_tcp_match(iport,0);
+	} else {
 		match = get_udp_match(iport,0);
 	}
 	e->nfcache = NFC_IP_DST_PT;
@@ -1282,9 +1320,18 @@ add_filter_rule(int proto, const char * rhost,
 	e->ip.dmsk.s_addr = INADDR_NONE;
 	target = get_accept_target();
 	e->nfcache |= NFC_UNKNOWN;
-	e = realloc(e, sizeof(struct ipt_entry)
+	tmp = realloc(e, sizeof(struct ipt_entry)
 	               + match->u.match_size
 				   + target->u.target_size);
+	if(!tmp) {
+		syslog(LOG_ERR, "%s: realloc(%d) error", "add_filter_rule",
+		       (int)(sizeof(struct ipt_entry) + match->u.match_size + target->u.target_size));
+		free(e);
+		free(match);
+		free(target);
+		return -1;
+	}
+	e = tmp;
 	memcpy(e->elems, match, match->u.match_size);
 	memcpy(e->elems + match->u.match_size, target, target->u.target_size);
 	e->target_offset = sizeof(struct ipt_entry)
@@ -1374,18 +1421,22 @@ get_portmappings_in_range(unsigned short startport, unsigned short endport,
 				{
 					if(*number >= capacity)
 					{
+						unsigned short * tmp;
 						/* need to increase the capacity of the array */
-						array = realloc(array, sizeof(unsigned short)*capacity);
-						if(!array)
+						tmp = realloc(array, sizeof(unsigned short)*capacity);
+						if(!tmp)
 						{
 							syslog(LOG_ERR, "get_portmappings_in_range() : realloc(%u) error",
 							       (unsigned)sizeof(unsigned short)*capacity);
 							*number = 0;
+							free(array);
+							array = NULL;
 							break;
 						}
-						array[*number] = eport;
-						(*number)++;
+						array = tmp;
 					}
+					array[*number] = eport;
+					(*number)++;
 				}
 			}
 		}

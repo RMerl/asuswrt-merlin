@@ -1,4 +1,4 @@
-/* $Id: upnpredirect.c,v 1.82 2014/02/28 20:18:35 nanard Exp $ */
+/* $Id: upnpredirect.c,v 1.85 2014/12/09 09:17:54 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -268,8 +268,8 @@ upnp_redirect(const char * rhost, unsigned short eport,
 	unsigned int timestamp;
 
 	proto = proto_atoi(protocol);
-	if(inet_aton(iaddr, &address) < 0) {
-		syslog(LOG_ERR, "inet_aton(%s) : %m", iaddr);
+	if(inet_aton(iaddr, &address) <= 0) {
+		syslog(LOG_ERR, "inet_aton(%s) FAILED", iaddr);
 		return -1;
 	}
 

@@ -1,7 +1,7 @@
 /* $Id: ifacewatcher.c,v 1.7 2012/05/27 22:16:10 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2012 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  *
  * ifacewatcher.c
  *
@@ -236,7 +236,10 @@ ProcessInterfaceWatchNotify(int s)
 	struct iovec iov;
 	struct msghdr hdr;
 	struct nlmsghdr *nlhdr;
+#if 0
+/* disabled at the moment */
 	struct ifinfomsg *ifi;
+#endif
 	struct ifaddrmsg *ifa;
 	int len;
 
@@ -278,8 +281,9 @@ ProcessInterfaceWatchNotify(int s)
 		case RTM_DELLINK:
 			is_del = 1;
 		case RTM_NEWLINK:
-			ifi = (struct ifinfomsg *) NLMSG_DATA(nlhdr);
 #if 0
+/* disabled at the moment */
+			ifi = (struct ifinfomsg *) NLMSG_DATA(nlhdr);
 			if(is_del) {
 				if(ProcessInterfaceDown(ifi) < 0)
 					syslog(LOG_ERR, "ProcessInterfaceDown(ifi) failed");

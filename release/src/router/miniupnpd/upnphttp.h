@@ -1,4 +1,4 @@
-/* $Id: upnphttp.h,v 1.38 2014/04/09 14:08:13 nanard Exp $ */
+/* $Id: upnphttp.h,v 1.40 2014/12/09 16:41:21 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -72,6 +72,8 @@ struct upnphttp {
 	enum httpCommands req_command;
 	int req_soapActionOff;
 	int req_soapActionLen;
+	int req_HostOff;	/* Host: header */
+	int req_HostLen;
 #ifdef ENABLE_EVENTS
 	int req_CallbackOff;	/* For SUBSCRIBE */
 	int req_CallbackLen;
@@ -136,8 +138,9 @@ Process_upnphttp(struct upnphttp *);
 
 /* BuildHeader_upnphttp()
  * build the header for the HTTP Response
- * also allocate the buffer for body data */
-void
+ * also allocate the buffer for body data
+ * return -1 on error */
+int
 BuildHeader_upnphttp(struct upnphttp * h, int respcode,
                      const char * respmsg,
                      int bodylen);

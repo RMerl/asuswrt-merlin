@@ -147,7 +147,7 @@ get_src_for_route_to(const struct sockaddr * dst,
 						if(src_len && src) {
 							if(*src_len < RTA_PAYLOAD(rta)) {
 								syslog(LOG_WARNING, "cannot copy src: %u<%lu",
-								       (unsigned)*src_len, RTA_PAYLOAD(rta));
+								       (unsigned)*src_len, (unsigned long)RTA_PAYLOAD(rta));
 								goto error;
 							}
 							*src_len = RTA_PAYLOAD(rta);
