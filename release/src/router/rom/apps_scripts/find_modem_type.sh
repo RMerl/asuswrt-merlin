@@ -4,7 +4,7 @@
 
 modem_act_path=`nvram get usb_modem_act_path`
 node_home=/sys/devices
-modem_enable_type=`nvram get modem_enable`
+modem_enable=`nvram get modem_enable`
 
 
 _find_act_type(){
@@ -59,10 +59,12 @@ _find_act_type(){
 	fi
 }
 
-if [ "$modem_enable_type" == "4" ]; then
+type=`_find_act_type "$modem_act_path"`
+if [ "$modem_enable" == "4" ]; then
 	type="wimax"
-else
-	type=`_find_act_type "$modem_act_path"`
+# Some dongles are worked strange with QMI. e.q. Huawei EC306.
+elif [ "$modem_enable" == "2" -a "$type" == "qmi" ]; then
+	type="tty"
 fi
 echo "type=$type."
 

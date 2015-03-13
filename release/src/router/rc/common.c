@@ -979,10 +979,6 @@ void remove_conntrack(void)
 #ifdef LINUX26
 	ct_modprobe_r("sip");
 #endif
-#if defined(RTCONFIG_QCA)
-	modprobe_r("fast_classifier");
-	modprobe_r("shortcut_fe");
-#endif
 }
 
 void inc_mac(char *mac, int plus)
@@ -1309,7 +1305,7 @@ void
 setup_timezone(void)
 {
 #ifndef RC_BUILDTIME
-#define RC_BUILDTIME	1417392000	// Dec 1 00:00:00 GMT 2014
+#define RC_BUILDTIME	1420070400	// Jan 1 00:00:00 GMT 2015
 #endif
 	time_t now;
 	struct tm gm, local;

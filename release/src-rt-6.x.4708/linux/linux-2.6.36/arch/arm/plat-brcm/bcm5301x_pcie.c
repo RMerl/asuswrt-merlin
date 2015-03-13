@@ -287,7 +287,8 @@ si_bus_irq_map_t si_bus_irq_map[] = {
 	{BCM47XX_GMAC_ID, 0, 4, 179}	/* 179, 180, 181, 182 */,
 	{BCM47XX_USB20H_ID, 0, 1, 111}	/* 111 EHCI. */,
 	{BCM47XX_USB20H_ID, 0, 1, 111}	/* 111 OHCI. */,
-	{BCM47XX_USB30H_ID, 0, 5, 112}	/* 112, 113, 114, 115, 116. XHCI */
+	{BCM47XX_USB30H_ID, 0, 5, 112}  /* 112, 113, 114, 115, 116. XHCI */,
+	{BCM47XX_SDIO3H_ID, 0, 1, 177}  /* 177 SDIO3 */
 };
 #define SI_BUS_IRQ_MAP_SIZE (sizeof(si_bus_irq_map) / sizeof(si_bus_irq_map_t))
 
@@ -1104,6 +1105,40 @@ bcm5301x_usb_hc_init(struct pci_dev *dev, int coreid)
 	}
 }
 
+static void
+bcm5301x_sdio_init(void)
+{
+	uint32 sdio3_idm_idm_base;
+	uint32 *sdio3_idm_idm_reset_ctrl_addr;
+	uint32 dmu_base;
+	uint32 *cru_gpio_control0_addr;
+	uint32 val32;
+	uint32 mask;
+
+	/* Check Chip ID */
+	if (!BCM4707_CHIP(CHIPID(sih->chip)) ||
+		(sih->chippkg != BCM4709_PKG_ID))
+		return;
+
+	dmu_base = (uint32)REG_MAP(0x1800c000, 4096);
+	cru_gpio_control0_addr = (uint32 *)(dmu_base + 0x1c0);
+	mask = ((1 << 19) |     /* SDIO_CARD_PWR_CTL */
+		(1 << 20));     /* SDIO_EN_1P8 */
+	val32 = readl(cru_gpio_control0_addr);
+	val32 &= ~mask;
+	writel(val32, cru_gpio_control0_addr);
+	REG_UNMAP((void *)dmu_base);
+
+	sdio3_idm_idm_base = (uint32)REG_MAP(0x18116000, 4096);
+	sdio3_idm_idm_reset_ctrl_addr = (uint32 *)(sdio3_idm_idm_base + 0x800);
+	/* Perform SDIO3 system soft reset */
+	writel(0x00000001, sdio3_idm_idm_reset_ctrl_addr);
+	OSL_DELAY(1);
+	/* Deasserting SDIO3 system reset */
+	writel(0x00000000, sdio3_idm_idm_reset_ctrl_addr);
+	REG_UNMAP((void *)sdio3_idm_idm_base);
+}
+
 int
 pcibios_enable_device(struct pci_dev *dev, int mask)
 {
@@ -1150,6 +1185,9 @@ pcibios_enable_device(struct pci_dev *dev, int mask)
 		/* USB HC init */
 		bcm5301x_usb_hc_init(dev, coreid);
 	}
+	else if (coreid == NS_SDIO3_CORE_ID){
+		bcm5301x_sdio_init();
+	}
 
 	rc = 0;
 out:
@@ -1166,7 +1204,7 @@ plat_fixup_bus(struct pci_bus *b)
 	struct pci_dev *d;
 	u8 irq;
 
-	printk("PCI: Fixing up bus %d\n", b->number);
+	printk("\nPCI: Fixing up bus %d\n", b->number);
 
 	/* Fix up SB */
 	if (((struct pci_sys_data *)b->sysdata)->domain == 0) {

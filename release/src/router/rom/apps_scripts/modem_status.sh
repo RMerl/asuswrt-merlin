@@ -3,6 +3,7 @@
 # echo "This is a script to get the modem status."
 
 
+modem_enable=`nvram get modem_enable`
 modem_type=`nvram get usb_modem_act_type`
 act_node1="usb_modem_act_int"
 act_node2="usb_modem_act_bulk"
@@ -82,18 +83,18 @@ if [ "$1" == "bytes" -o "$1" == "bytes+" ]; then
 	rx_new=`echo "$ret" |awk '{FS="RX bytes:"; print $2}' |awk '{FS=" "; print $1}' 2>/dev/null`
 	tx_new=`echo "$ret" |awk '{FS="TX bytes:"; print $2}' |awk '{FS=" "; print $1}' 2>/dev/null`
 
-	echo $rx_new > ${jffs_dir}/modem_bytes_rx
-	echo $tx_new > ${jffs_dir}/modem_bytes_tx
+	echo -n $rx_new > $jffs_dir/modem_bytes_rx
+	echo -n $tx_new > $jffs_dir/modem_bytes_tx
 
 	nvram set modem_bytes_rx=$rx_new
 	nvram set modem_bytes_tx=$tx_new
 
 	echo "done."
 elif [ "$1" == "bytes-" ]; then
-	echo 0 > ${jffs_dir}/modem_bytes_rx
-	echo 0 > ${jffs_dir}/modem_bytes_tx
-	echo 0 > ${jffs_dir}/modem_bytes_rx_old
-	echo 0 > ${jffs_dir}/modem_bytes_tx_old
+	echo -n 0 > $jffs_dir/modem_bytes_rx
+	echo -n 0 > $jffs_dir/modem_bytes_tx
+	echo -n 0 > $jffs_dir/modem_bytes_rx_old
+	echo -n 0 > $jffs_dir/modem_bytes_tx_old
 
 	nvram set modem_bytes_rx=0
 	nvram set modem_bytes_tx=0
@@ -131,8 +132,13 @@ elif [ "$1" == "sim" ]; then
 			echo "SIM not inserted."
 			act_sim=-1
 		else
-			echo "CME ERROR: $sim_inserted3"
-			act_sim=-2
+			if [ "$modem_enable" == "2" -a "$sim_inserted3" == "SIM busy" ]; then
+				echo "Detected CDMA2000's SIM"
+				act_sim=1
+			else
+				echo "CME ERROR: $sim_inserted3"
+				act_sim=-2
+			fi
 		fi
 	else
 		echo "No or unknown response."
@@ -288,7 +294,7 @@ elif [ "$1" == "getmode" ]; then
 elif [ "$1" == "imsi" ]; then
 	echo -n "Getting IMSI..."
 	at_ret=`$at_lock modem_at.sh '+CIMI' 2>/dev/null`
-	ret=`echo "$at_ret" |grep "^[0-9][0-9]*$" 2>/dev/null`
+	ret=`echo "$at_ret" |grep "^[0-9].*$" 2>/dev/null`
 	if [ "$ret" == "" ]; then
 		echo "Fail to get the IMEI from $modem_act_node."
 		exit 11
@@ -300,7 +306,7 @@ elif [ "$1" == "imsi" ]; then
 elif [ "$1" == "imei" ]; then
 	echo -n "Getting IMEI..."
 	at_ret=`$at_lock modem_at.sh '+CGSN' 2>/dev/null`
-	ret=`echo "$at_ret" |grep "^[0-9][0-9]*$" 2>/dev/null`
+	ret=`echo "$at_ret" |grep "^[0-9].*$" 2>/dev/null`
 	if [ "$ret" == "" ]; then
 		echo "Fail to get the IMEI from $modem_act_node."
 		exit 12
@@ -344,9 +350,9 @@ elif [ "$1" == "hwver" ]; then
 	if [ "$modem_vid" == "1478" -a "$modem_pid" == "36902" ]; then
 		echo -n "Getting HWVER..."
 		at_ret=`$at_lock modem_at.sh '$HWVER' 2>/dev/null`
-		ret=`echo "$at_ret" |grep "^[0-9][0-9]*$" 2>/dev/null`
+		ret=`echo "$at_ret" |grep "^[0-9].*$" 2>/dev/null`
 		if [ "$ret" == "" ]; then
-			nvram set usb_modem_act_imei=
+			nvram set usb_modem_act_hwver=
 			echo "Fail to get the hardware version from $modem_act_node."
 			exit 15
 		fi
@@ -380,14 +386,14 @@ elif [ "$1" == "scan" ]; then
 	echo "Finish the scan."
 	nvram set usb_modem_act_scanning=1
 	if [ "$ret" == "" ]; then
-		echo "Fail to scan the stations."
+		echo "17:Fail to scan the stations."
 		exit 17
 	fi
 
 	echo "Count the stations."
 	num=`echo "$ret" |awk '{FS=")"; print NF}' 2>/dev/null`
 	if [ "$num" == "" ]; then
-		echo "Fail to count the stations."
+		echo "18:Fail to count the stations."
 		exit 18
 	fi
 
@@ -434,7 +440,7 @@ elif [ "$1" == "scan" ]; then
 elif [ "$1" == "station" ]; then
 	$at_lock modem_at.sh "+COPS=1,0,\"$2\"" 1,2>/dev/null
 	if [ $? -ne 0 ]; then
-		echo "Fail to set the station: $2."
+		echo "19:Fail to set the station: $2."
 		exit 19
 	fi
 
@@ -492,7 +498,7 @@ elif [ "$1" == "simpin" ]; then
 	if [ "$2" == "" ]; then
 		nvram set g3state_pin=2
 
-		echo "Need to input the PIN code."
+		echo "24:Need to input the PIN code."
 		exit 24
 	fi
 
@@ -501,7 +507,7 @@ elif [ "$1" == "simpin" ]; then
 	if [ "$at_ret" == "" ]; then
 		nvram set g3err_pin=1
 
-		echo "Fail to unlock the SIM: $2."
+		echo "25:Fail to unlock the SIM: $2."
 		exit 25
 	fi
 
@@ -509,16 +515,16 @@ elif [ "$1" == "simpin" ]; then
 	echo "done."
 elif [ "$1" == "simpuk" ]; then
 	if [ "$2" == "" ]; then
-		echo "Need to input the PUK code."
+		echo "26:Need to input the PUK code."
 		exit 26
 	elif [ "$3" == "" ]; then
-		echo "Need to input the new PIN code."
+		echo "27:Need to input the new PIN code."
 		exit 27
 	fi
 
 	at_ret=`$at_lock modem_at.sh '+CPIN='\"$2\"','\"$3\" |grep "OK" 2>/dev/null`
 	if [ "$at_ret" == "" ]; then
-		echo "Fail to unlock the SIM PIN: $2."
+		echo "28:Fail to unlock the SIM PIN: $2."
 		exit 28
 	fi
 
@@ -526,23 +532,23 @@ elif [ "$1" == "simpuk" ]; then
 elif [ "$1" == "lockpin" ]; then
 	simauth=`nvram get usb_modem_act_auth`
 	if [ "$simauth" == "1" ]; then
-		echo "SIM need to input the PIN code first."
+		echo "29:SIM need to input the PIN code first."
 		exit 29
 	elif [ "$simauth" == "4" -o "$simauth" == "5" ]; then # lock
-		echo "SIM had been blocked."
+		echo "30:SIM had been blocked."
 		exit 30
 	elif [ "$simauth" == "0" ]; then # lock
-		echo "Can't get the SIM auth state."
+		echo "31:Can't get the SIM auth state."
 		exit 31
 	fi
 
 	if [ "$2" == "" ]; then
-		echo "decide to lock/unlock PIN."
+		echo "32:Decide to lock/unlock PIN."
 		exit 32
 	fi
 
 	if [ "$3" == "" ]; then
-		echo "need the PIN code."
+		echo "33:Need the PIN code."
 		exit 33
 	fi
 
@@ -555,7 +561,7 @@ elif [ "$1" == "lockpin" ]; then
 
 		at_ret=`$at_lock modem_at.sh '+CLCK="SC",1,"'$3'"' |grep "OK" 2>/dev/null`
 		if [ "$at_ret" == "2" ]; then
-			echo "fail to lock PIN."
+			echo "34:Fail to lock PIN."
 			exit 34
 		fi
 	else
@@ -567,7 +573,7 @@ elif [ "$1" == "lockpin" ]; then
 
 		at_ret=`$at_lock modem_at.sh '+CLCK="SC",0,"'$3'"' |grep "OK" 2>/dev/null`
 		if [ "$at_ret" == "2" ]; then
-			echo "fail to unlock PIN."
+			echo "35:Fail to unlock PIN."
 			exit 35
 		fi
 	fi
@@ -575,16 +581,16 @@ elif [ "$1" == "lockpin" ]; then
 	echo "done."
 elif [ "$1" == "pwdpin" ]; then
 	if [ "$2" == "" ]; then
-		echo "Need to input the original PIN code."
+		echo "36:Need to input the original PIN code."
 		exit 36
 	elif [ "$3" == "" ]; then
-		echo "Need to input the new PIN code."
+		echo "37:Need to input the new PIN code."
 		exit 37
 	fi
 
 	at_ret=`$at_lock modem_at.sh '+CPWD="SC",'$2','$3 |grep "OK" 2>/dev/null`
 	if [ "$at_ret" == "" ]; then
-		echo "Fail to change the PIN."
+		echo "38:Fail to change the PIN."
 		exit 38
 	fi
 

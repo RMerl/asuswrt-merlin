@@ -427,7 +427,15 @@ int start_vlan(void)
 		set_wan_tag(&ifr.ifr_name);
 #endif
 #ifdef RTCONFIG_RGMII_BRCM5301X
-	eval("et", "robowr", "0x0", "0x5d", "0xfb", "1");
+	switch (get_model()) {
+		case MODEL_RTAC88U:
+			break;
+		default:
+			// port 5 ??
+			eval("et", "robowr", "0x0", "0x5d", "0xfb", "1");
+			// port 4 link down
+			eval("et", "robowr", "0x0", "0x5c", "0x4a", "1");
+	}
 #endif
 
 	return 0;

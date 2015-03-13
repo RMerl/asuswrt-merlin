@@ -11,6 +11,9 @@ extern int switch_exist(void);
 extern void init_wl(void);
 #if defined(RTCONFIG_QCA)
 extern void load_wifi_driver(void);
+extern char *__get_wlifname(int band, int subunit, char *buf);
+extern char *get_staifname(int band);
+extern char *get_vapifname(int band);
 #endif
 extern void fini_wl(void);
 extern void init_syspara(void);
@@ -18,12 +21,14 @@ extern void post_syspara(void);
 extern void generate_wl_para(int unit, int subunit);
 #if defined(RTCONFIG_RALINK)
 extern void reinit_hwnat(int unit);
+#elif defined(RTCONFIG_QCA)
+#define reinit_hwnat(unit) reinit_sfe(unit)
+extern void reinit_sfe(int unit);
 #else
 static inline void reinit_hwnat(int unit) { }
 #endif
 extern char *get_wlifname(int unit, int subunit, int subunit_x, char *buf);
 extern int wl_exist(char *ifname, int band);
-#endif
 extern void set_wan_tag(char *interface);
 
 extern int wlcconnect_core(void);
@@ -41,3 +46,4 @@ extern int getWscStatus(int unit);
 extern char *getWscStatus(int unit);
 #endif
 
+#endif

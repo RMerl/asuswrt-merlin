@@ -24,6 +24,10 @@
 extern const char WIF_2G[];
 extern const char WIF_5G[];
 extern const char WDSIF_5G[];
+extern const char STA_2G[];
+extern const char STA_5G[];
+extern const char VAP_2G[];
+extern const char VAP_5G[];
 #define URE	"apcli0"
 
 #ifndef ETHER_ADDR_LEN
@@ -319,23 +323,11 @@ enum ASUS_IOCTL_SUBCMD {
 
 unsigned long task_mask;
 
-int switch_init(void);
-
-void switch_fini(void);
-
-int check_all_tasks();
-
-int qca_gpio_set_dir(int dir);
-
-int qca_gpio_write_int(int value);
-
-int qca_gpio_read_int(int *value);
-
-int qca_gpio_write_bit(int idx, int value);
-
+extern int switch_init(void);
+extern void switch_fini(void);
 extern int wl_ioctl(const char *ifname, int cmd, struct iwreq *pwrq);
-
-int qc98xx_verify_checksum(void *eeprom);
+extern int qc98xx_verify_checksum(void *eeprom);
+extern int calc_qca_eeprom_csum(void *ptr, unsigned int eeprom_size);
 /* for ATE Get_WanLanStatus command */
 typedef struct {
 	unsigned int link[5];

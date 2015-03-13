@@ -32,6 +32,8 @@
 #include <wlutils.h>
 #include <bcmdevs.h>
 
+#include <linux/major.h>
+
 int wan_phyid = -1;
 
 struct txpower_s {
@@ -1166,6 +1168,113 @@ void generate_switch_para(void)
 			break;
 		}
 
+
+		case MODEL_RTAC88U:
+		{				/* WAN L1 L2 L3 L4 CPU */	/*vision: WAN L1 L2 L3 L4 */
+			const int ports[SWPORT_COUNT] = { 4, 0, 1, 2, 3, 7 };
+			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) ? SWCFG_DEFAULT : cfg;
+
+			wan_phyid = ports[0];	// record the phy num of the wan port on the case
+//#ifdef RTCONFIG_DUALWAN
+#if 0
+			if(cfg != SWCFG_BRIDGE){
+				int wan1cfg = nvram_get_int("wans_lanport");
+
+				nvram_unset("vlan2ports");
+				nvram_unset("vlan2hwname");
+				nvram_unset("vlan3ports");
+				nvram_unset("vlan3hwname");
+
+				// The first WAN port.
+				if (get_wans_dualwan()&WANSCAP_WAN) {
+					switch_gen_config(wan, ports, wancfg, 1, (get_wans_dualwan()&WANSCAP_LAN && wan1cfg >= 1 && wan1cfg <= 4)?"":"u");
+					nvram_set("vlan2ports", wan);
+					nvram_set("vlan2hwname", "et1");
+				}
+
+				// The second WAN port.
+				if (get_wans_dualwan()&WANSCAP_LAN && wan1cfg >= 1 && wan1cfg <= 4) {
+					wan1cfg += WAN1PORT1-1;
+					if (wancfg != SWCFG_DEFAULT) {
+						gen_lan_ports(lan, ports, wancfg, wan1cfg, "*");
+						nvram_set("vlan1ports", lan);
+						gen_lan_ports(lan, ports, wancfg, wan1cfg, NULL);
+						nvram_set("lanports", lan);
+					}
+					else{
+						switch_gen_config(lan, ports, wan1cfg, 0, "*");
+						nvram_set("vlan1ports", lan);
+						switch_gen_config(lan, ports, wan1cfg, 0, NULL);
+						nvram_set("lanports", lan);
+					}
+
+					switch_gen_config(wan, ports, wan1cfg, 1, (get_wans_dualwan()&WANSCAP_WAN)?"":"u");
+					if(get_wans_dualwan()&WANSCAP_WAN){
+						nvram_set("vlan3ports", wan);
+						nvram_set("vlan3hwname", "et1");
+					}
+					else{
+						nvram_set("vlan2ports", wan);
+						nvram_set("vlan2hwname", "et1");
+					}
+				}
+				else{
+					switch_gen_config(lan, ports, cfg, 0, "*");
+					nvram_set("vlan1ports", lan);
+					switch_gen_config(lan, ports, cfg, 0, NULL);
+					nvram_set("lanports", lan);
+				}
+
+				int unit;
+				char prefix[8], nvram_ports[16];
+
+				for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
+					memset(prefix, 0, 8);
+					sprintf(prefix, "%d", unit);
+
+					memset(nvram_ports, 0, 16);
+					sprintf(nvram_ports, "wan%sports", (unit == WAN_UNIT_FIRST)?"":prefix);
+
+					if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN) {
+						switch_gen_config(wan, ports, wancfg, 1, NULL);
+						nvram_set(nvram_ports, wan);
+					}
+					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN) {
+						switch_gen_config(wan, ports, wan1cfg, 1, NULL);
+						nvram_set(nvram_ports, wan);
+					}
+					else
+						nvram_unset(nvram_ports);
+				}
+			}
+			else{
+				switch_gen_config(lan, ports, cfg, 0, "*");
+				switch_gen_config(wan, ports, wancfg, 1, "");
+				nvram_set("vlan1ports", lan);
+				nvram_set("vlan2ports", wan);
+				switch_gen_config(lan, ports, cfg, 0, NULL);
+				switch_gen_config(wan, ports, wancfg, 1, NULL);
+				nvram_set("lanports", lan);
+				nvram_set("wanports", wan);
+				nvram_unset("wan1ports");
+			}
+#else
+			if(cfg != SWCFG_BRIDGE)
+			{
+				nvram_set("vlan1ports", "0 1 2 3 5 7*");
+				nvram_set("vlan2ports", "4 7");
+				nvram_set("lanports", "0 1 2 3 5");
+				nvram_set("wanports", "4");
+			} else {
+				nvram_set("vlan1ports", "0 1 2 3 4 5 7*");
+				nvram_set("vlan2ports", "7");
+				nvram_set("lanports", "0 1 2 3 4 5");
+				nvram_set("wanports", "");
+			}
+#endif
+			break;
+		}
+
 		case MODEL_RTN66U:
 		case MODEL_RTAC66U:
 		{				/* WAN L1 L2 L3 L4 CPU */
@@ -1366,12 +1475,18 @@ void init_switch()
 #endif
 	modprobe("et");
 	modprobe("bcm57xx");
+#ifdef RTCONFIG_RTL8365MB
+	modprobe("rtl8365mb");
+#endif
 	enable_jumbo_frame();
 	ether_led();
 
 #ifdef RTCONFIG_DSL
 	init_switch_dsl();
 	config_switch_dsl();
+#endif
+#ifdef RTCONFIG_RTL8365MB
+	eval("mknod", "/dev/rtkswitch", "c", "233", "0");
 #endif
 }
 
@@ -1469,6 +1584,7 @@ reset_mssid_hwaddr(int unit)
 			case MODEL_RTAC87U:
 			case MODEL_RTAC56S:
 			case MODEL_RTAC56U:
+			case MODEL_RTAC88U:
 				snprintf(macaddr_str, sizeof(macaddr_str), "%d:macaddr", unit);
 				break;
 			default:
@@ -1616,6 +1732,7 @@ void init_wl(void)
 		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC66U:
+		case MODEL_RTAC88U:
 			set_bcm4360ac_vars();
 			break;
 	}
@@ -1719,7 +1836,8 @@ void fini_wl(void)
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U) ||
-		(get_model() == MODEL_RTN18U))
+		(get_model() == MODEL_RTN18U) ||
+		(get_model() == MODEL_RTAC88U))
 	eval("rmmod","wl");
 #endif
 #ifdef RTCONFIG_BCM7
@@ -1839,6 +1957,7 @@ void init_syspara(void)
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
+		case MODEL_RTAC88U:
 			if (!nvram_get("et0macaddr"))	//eth0, eth1
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");
 			if (!nvram_get("1:macaddr"))	//eth2(5G)
@@ -1888,11 +2007,24 @@ void init_syspara(void)
 }
 #ifdef RTCONFIG_BCMARM
 #define ASUS_TWEAK
+void tweak_smp_affinity(int enable_samba)
+{
+	if (enable_samba)  // not set txworkq
+	{
+		system("echo 3 > /proc/irq/163/smp_affinity");
+		system("echo 3 > /proc/irq/169/smp_affinity");
+	}
+	else
+	{
+		system("echo 2 > /proc/irq/163/smp_affinity");
+		system("echo 2 > /proc/irq/169/smp_affinity");
+	}
+}
 void init_others(void)
 {
 	int model = get_model();
 
-	if (model == MODEL_RTAC56U || model == MODEL_RTAC56S || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_RPAC68U || model == MODEL_RTAC87U || model == MODEL_RTN18U) {
+	if (model == MODEL_RTAC56U || model == MODEL_RTAC56S || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_RPAC68U || model == MODEL_RTAC87U || model == MODEL_RTAC88U || model == MODEL_RTN18U) {
 #ifdef SMP
 		int fd;
 
@@ -1953,16 +2085,10 @@ void init_others(void)
 					system("echo 1 > /proc/irq/179/smp_affinity");	// eth0
 					system("echo 2 > /proc/irq/163/smp_affinity");	// eth1 or eth1/eth2
 					system("echo 2 > /proc/irq/169/smp_affinity");	// eth2 or eth3
-				}
+				} else
 #endif	// RTCONFIG_BCM7
-//				if (nvram_match("enable_samba", "0"))  // not set txworkq
-#else
-				if (!nvram_match("txworkq", "1"))
+				tweak_smp_affinity(0);
 #endif	// ASUS_TWEAK
-				{
-					system("echo 2 > /proc/irq/163/smp_affinity");
-					system("echo 2 > /proc/irq/169/smp_affinity");
-				}
 			}
 #ifdef ASUS_TWEAK
 			system("echo 2 > /proc/irq/111/smp_affinity");		// ehci, ohci
@@ -1971,10 +2097,7 @@ void init_others(void)
 		}
 #endif // SMP
 #ifdef ASUS_TWEAK
-		if (nvram_match("usb_usb3", "1"))
-			nvram_set("txworkq", "1");
-		else
-			nvram_unset("txworkq");
+		nvram_set("txworkq", "1");
 #endif
 	}
 #ifdef RTAC68U
@@ -2246,7 +2369,8 @@ int set_wltxpower()
 		&& (model != MODEL_RPAC68U)
 		&& (model != MODEL_RTAC68U)
 		&& (model != MODEL_RTAC3200)
-		&& (model != MODEL_RTN18U))
+		&& (model != MODEL_RTN18U)
+		&& (model != MODEL_RTAC88U))
 	{
 		dbG("\n\tDon't do this!\n\n");
 		return -1;
@@ -2312,6 +2436,7 @@ int set_wltxpower()
 			case MODEL_RTAC87U:
 			case MODEL_RTAC56S:
 			case MODEL_RTAC56U:
+			case MODEL_RTAC88U:
 				snprintf(prefix2, sizeof(prefix2), "%d:", unit);
 				break;
 
@@ -3563,6 +3688,351 @@ int set_wltxpower()
 				}
 				break;
 
+			case MODEL_RTAC88U:
+				if (set_wltxpower_once) {
+					if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))	// 2.4G
+					{
+						if (txpower < TXPWR_THRESHOLD_1)
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "58"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2),			"58");
+								nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2),			"58");
+								nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2),			"58");
+								nvram_set(strcat_r(prefix2, "cckbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "cckbw20ul2gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2),		"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2),		"0x66653320");
+								nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2),	"0x6533");
+								nvram_set(strcat_r(prefix2, "ofdmlrbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40hrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40lrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduphrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduplrpo", tmp2),		"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_2)
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "70"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2),			"70");
+								nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2),			"70");
+								nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2),			"70");
+								nvram_set(strcat_r(prefix2, "cckbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "cckbw20ul2gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2),		"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2),		"0x88653320");
+								nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2),	"0x6533");
+								nvram_set(strcat_r(prefix2, "ofdmlrbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40hrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40lrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduphrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduplrpo", tmp2),		"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_3)
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "82"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2),			"82");
+								nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2),			"82");
+								nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2),			"82");
+								nvram_set(strcat_r(prefix2, "cckbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "cckbw20ul2gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2),		"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2),		"0x88653320");
+								nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2),	"0x6533");
+								nvram_set(strcat_r(prefix2, "ofdmlrbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40hrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40lrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduphrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduplrpo", tmp2),		"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_4)
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "94"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2),			"94");
+								nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2),			"94");
+								nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2),			"94");
+								nvram_set(strcat_r(prefix2, "cckbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "cckbw20ul2gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2),		"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2),		"0x88653320");
+								nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2),	"0x6533");
+								nvram_set(strcat_r(prefix2, "ofdmlrbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40hrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40lrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduphrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduplrpo", tmp2),		"0");
+								commit_needed++;
+							}
+						}
+						else	// txpower == 80 mw
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "106"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2),			"106");
+								nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2),			"106");
+								nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2),			"106");
+								nvram_set(strcat_r(prefix2, "cckbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "cckbw20ul2gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2),		"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2),		"0x88653320");
+								nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2),	"0x6533");
+								nvram_set(strcat_r(prefix2, "ofdmlrbw202gpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40hrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "sb20in40lrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduphrpo", tmp2),		"0");
+								nvram_set(strcat_r(prefix2, "dot11agduplrpo", tmp2),		"0");
+								commit_needed++;
+							}
+						}
+					}
+					else if (nvram_match(strcat_r(prefix, "nband", tmp), "1"))	// 5G
+					{
+						if (!(nvram_match(strcat_r(prefix, "country_code", tmp), "Q2") &&
+						     nvram_match(strcat_r(prefix, "country_rev", tmp), "40"))) {
+
+						if (txpower < TXPWR_THRESHOLD_1)
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "58,58,58,58"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"58,58,58,58");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"58,58,58,58");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"58,58,58,58");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0x66653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_2)
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "70,70,70,70"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"70,70,70,70");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"70,70,70,70");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"70,70,70,70");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_3)
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "82,82,82,82"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"82,82,82,82");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"82,82,82,82");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"82,82,82,82");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_4)
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "94,94,94,94"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"94,94,94,94");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"94,94,94,94");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"94,94,94,94");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+						else	// txpower == 80 mw
+						{
+							if (!nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "106,106,106,106"))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"106,106,106,106");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"106,106,106,106");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"106,106,106,106");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0x88653320");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+
+						} else {
+
+						if (txpower < TXPWR_THRESHOLD_1)
+						{
+							if (!(nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "58,58,58,58") &&
+							      nvram_match(strcat_r(prefix2, "mcsbw205glpo", tmp2), "0x33333311")))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"58,58,58,58");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"58,58,58,58");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"58,58,58,58");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0x33333311");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_2)
+						{
+							if (!(nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "70,70,70,70") &&
+							      nvram_match(strcat_r(prefix2, "mcsbw205glpo", tmp2), "0x99986422")))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"70,70,70,70");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"70,70,70,70");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"70,70,70,70");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0x99986422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_3)
+						{
+							if (!(nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "82,82,82,82") &&
+							      nvram_match(strcat_r(prefix2, "mcsbw205glpo", tmp2), "0xCAA86422")))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"82,82,82,82");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"82,82,82,82");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"82,82,82,82");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+						else if (txpower < TXPWR_THRESHOLD_4)
+						{
+							if (!(nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "94,94,94,94") &&
+							      nvram_match(strcat_r(prefix2, "mcsbw205glpo", tmp2), "0xCAA86422")))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"94,94,94,94");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"94,94,94,94");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"94,94,94,94");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+						else	// txpower == 80 mw
+						{
+							if (!(nvram_match(strcat_r(prefix2, "maxp5ga0", tmp2), "106,106,106,106") &&
+							      nvram_match(strcat_r(prefix2, "mcsbw205glpo", tmp2), "0xCAA86422")))
+							{
+								nvram_set(strcat_r(prefix2, "maxp5ga0", tmp2),		"106,106,106,106");
+								nvram_set(strcat_r(prefix2, "maxp5ga1", tmp2),		"106,106,106,106");
+								nvram_set(strcat_r(prefix2, "maxp5ga2", tmp2),		"106,106,106,106");
+								nvram_set(strcat_r(prefix2, "mcsbw205glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805glpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605glpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805gmpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605gmpo", tmp2),	"0");
+								nvram_set(strcat_r(prefix2, "mcsbw205ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw405ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw805ghpo", tmp2),	"0xCAA86422");
+								nvram_set(strcat_r(prefix2, "mcsbw1605ghpo", tmp2),	"0");
+								commit_needed++;
+							}
+						}
+
+						}
+					}
+				}
+				break;
+
+
 			case MODEL_RTAC56S:
 			case MODEL_RTAC56U:
 				if (set_wltxpower_once) {
@@ -4686,7 +5156,8 @@ void generate_wl_para(int unit, int subunit)
 					get_model() == MODEL_RPAC68U ||
 					get_model() == MODEL_RTAC68U ||
 					get_model() == MODEL_DSLAC68U ||
-					get_model() == MODEL_RTAC87U) &&
+					get_model() == MODEL_RTAC87U ||
+					get_model() == MODEL_RTAC88U) &&
 					nvram_match(strcat_r(prefix, "vreqd", tmp), "1"))
 					nvram_set(strcat_r(prefix, "bw_cap", tmp), "7");// 80M
 				else if (nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
@@ -4828,8 +5299,10 @@ void generate_wl_para(int unit, int subunit)
 		if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
 			if (	((get_model() == MODEL_RTAC68U || get_model() == MODEL_RPAC68U || get_model() == MODEL_DSLAC68U) &&
 				(nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") || nvram_match(strcat_r(prefix, "reg_mode", tmp), "d")) &&
-                                nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-                                nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
+			      ((nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+				nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) /*||
+			       (nvram_match(strcat_r(prefix, "country_code", tmp), "JP") &&
+                                nvram_match(strcat_r(prefix, "country_rev", tmp), "47"))*/)) ||
                                 ((get_model() == MODEL_RTAC66U) &&
 				(nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") || nvram_match(strcat_r(prefix, "reg_mode", tmp), "d")) &&
                                 nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
@@ -5372,6 +5845,7 @@ set_wan_tag(char *interface) {
 	case MODEL_RTAC68U:	/* WAN L1 L2 L3 L4 CPU */
 	case MODEL_RTAC3200:
 	case MODEL_RTN18U:	/* WAN L1 L2 L3 L4 CPU */
+	case MODEL_RTAC88U:
 		if (wan_vid) { /* config wan port */
 			eval("vconfig", "rem", "vlan2");
 			sprintf(port_id, "%d", wan_vid);

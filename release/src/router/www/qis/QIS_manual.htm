@@ -15,7 +15,6 @@ var $j = jQuery.noConflict();
 
 function QKInternet_load_body(){
 	parent.isManual = true;
-	
 	if(parent.ISMOBILE){
 		parent.set_step("admin_pass");
 		hideObjs();
@@ -76,7 +75,7 @@ function setScenerion(mode){
 		parent.document.QKform.sw_mode.value = 2;
 		parent.localAP_support = true;
 		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
-		$j("#Senario").attr("style", "height:");
+		$j("#Senario").attr("style", "height:auto");
 		$j("#mode_desc").html(pstaDesc);	
 		document.form.sw_mode_radio[1].focus();
 		document.form.sw_mode_radio[1].checked = true;
@@ -84,7 +83,7 @@ function setScenerion(mode){
 	else if(mode == '3'){
 		parent.document.QKform.sw_mode.value = 3;
 		$j("#Senario").attr("src", "/images/New_ui/ap.jpg");
-		$j("#Senario").attr("style", "height:");
+		$j("#Senario").attr("style", "height:auto");
 		$j("#mode_desc").html("<#OP_AP_desc#><br><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");		
 		document.form.sw_mode_radio[2].focus();
 		document.form.sw_mode_radio[2].checked = true;
@@ -110,10 +109,14 @@ function setScenerion(mode){
 	else{
 		parent.document.QKform.sw_mode.value = 1;
 		$j("#Senario").attr("src", "/images/New_ui/rt.jpg");
-		$j("#Senario").attr("style", "height:");
+		$j("#Senario").attr("style", "height:auto");
 		$j("#mode_desc").html("<#OP_GW_desc#>");
 		document.form.sw_mode_radio[0].focus();
 		document.form.sw_mode_radio[0].checked = true;
+	}
+	
+	if(downsize_8m_support){
+		document.getElementById("Senario").style.height = "0";
 	}
 }
 

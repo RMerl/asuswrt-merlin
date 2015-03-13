@@ -75,11 +75,21 @@ while [ $i -lt $row_num ]; do
 
 	if [ "$list_name" == "optware.asus" ]; then
 		if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
-			if [ "$SQ_TEST" == "1" ]; then
-				server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ
+			IS_SUPPORT_SSL=`nvram get rc_support|grep -i HTTPS`
+			if [ -n "$IS_SUPPORT_SSL" ]; then
+				if [ "$SQ_TEST" == "1" ]; then
+					server_name=https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ
+				else
+					server_name=https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+				fi
+				wget_options="$wget_options --no-check-certificate"
 			else
-				server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
-			fi
+				if [ "$SQ_TEST" == "1" ]; then
+					server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ
+				else
+					server_name=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+				fi
+			fi		
 		else
 			if [ "$SQ_TEST" == "1" ]; then
 				server_name=`echo "$ASUS_SERVER" |sed 's/stable/unstable/g'`

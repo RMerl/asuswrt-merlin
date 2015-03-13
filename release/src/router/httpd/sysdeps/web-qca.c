@@ -132,7 +132,9 @@ static void getWPSConfig(int unit, WPS_CONFIGURED_VALUE *result)
 			//Configured
 			else if ((pt1 = strstr(buf, "wps_state="))) {
 				pt2 = pt1 + strlen("wps_state=");
-				if (!strcmp(pt2, "configured"))
+				if (!strcmp(pt2, "configured") ||
+				    (!strcmp(pt2, "disabled") && nvram_get_int("w_Setting"))
+				   )
 					result->Configured = 2;
 				else
 					result->Configured = 1;
@@ -517,7 +519,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
 	int ret = 0;
 	WIFI_STA_TABLE *sta_info;
-	WPS_CONFIGURED_VALUE wps_config;
+	unsigned char mac_addr[ETHER_ADDR_LEN];
 	char tmpstr[128];
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_", *ifname;
 	int wl_mode_x;
@@ -537,9 +539,12 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		return ret;
 	}
 
-	getWPSConfig(unit, &wps_config);
+	memset(&mac_addr, 0, sizeof(mac_addr));
+	get_iface_hwaddr(ifname, mac_addr);
 	ret += websWrite(wp, "=======================================================================================\n"); // separator
-	ret += websWrite(wp, "MAC address	: %s\n", wps_config.BSSID);
+	ret += websWrite(wp, "MAC address	: %02X:%02X:%02X:%02X:%02X:%02X\n",
+		mac_addr[0], mac_addr[1], mac_addr[2],
+		mac_addr[3], mac_addr[4], mac_addr[5]);
 
 	wl_mode_x = nvram_get_int(strcat_r(prefix, "mode_x", tmp));
 	if      (wl_mode_x == 1)
@@ -676,7 +681,7 @@ char *getAPPIN(int unit)
 		len = fread(buffer, 1, sizeof(buffer), fp);
 		pclose(fp);
 		if (len > 1) {
-			buffer[len-1] = '\0';
+			buffer[len] = '\0';
 			//dbg("%s: AP PIN[%s]\n", __FUNCTION__, buffer);
 			return buffer;
 		}
@@ -719,6 +724,7 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			continue;
 #endif
 
+		memset(&result, 0, sizeof(result));
 		getWPSConfig(u, &result);
 
 		if (j == -1)

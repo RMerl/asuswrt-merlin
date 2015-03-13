@@ -153,12 +153,12 @@ function initial(){
 			}
 			else{
 				$("goDualWANSetting").style.display = "";
-				$("dualwan_enable_button").style.display = "none";		
+				$("dualwan_enable_button").style.display = "none";	
 			}
 		}
 		else{
 			$("goDualWANSetting").style.display = "none";
-			$("dualwan_enable_button").style.display = "none";		
+			$("dualwan_enable_button").style.display = "none";	
 		}
 		
 	}
@@ -776,14 +776,14 @@ function manualSetup(){
 <tr id="goDualWANSetting">
 	<td height="50" style="padding:10px 15px 0px 15px;">
 		<p class="formfonttitle_nwm" style="float:left;width:116px;">Dual WAN setting</p>
-		<input type="button" class="button_gen_long" onclick="goToDualWAN();" value="<#btn_go#>" style="margin-top:-35px;margin-left:115px;">
+		<input type="button" class="button_gen_long" onclick="goToDualWAN();" value="<#btn_go#>" style="position:absolute;right:25px;margin-top:-10px;margin-left:115px;">
 		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
 	</td>
 </tr>
 <tr id="goSetting" style="display:none">
 	<td height="30" style="padding:10px 15px 0px 15px;">
 		<p class="formfonttitle_nwm" style="float:left;width:116px;"><#btn_to_WAN#></p>
-		<input type="button" class="button_gen_long" onclick="goToWAN();" value="<#btn_go#>" style="margin-top:-33px;margin-left:115px;">
+		<input type="button" class="button_gen_long" onclick="goToWAN();" value="<#btn_go#>" style="position:absolute;right:25px;margin-top:-10px;margin-left:115px;">
 	</td>
 </tr>
 

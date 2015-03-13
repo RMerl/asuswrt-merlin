@@ -216,6 +216,40 @@ int main(void)
 	return 0;
 }
 #else	// !TEST_HMAC_MD5
+
+#define MULTICAST_BIT  0x0001
+#define UNIQUE_OUI_BIT 0x0002
+int TransferMacAddr(const char* mac, char* transfer_mac)
+{
+        int sec_byte;
+        int i = 0, s = 0;
+	char *p_mac;
+	p_mac = transfer_mac;
+
+        if( strlen(mac)!=17 || !strcmp("00:00:00:00:00:00", mac) )
+                return 0;
+
+        while( *mac && i<12 ) {
+                if( isxdigit(*mac) ) {
+                        if(i==1) {
+                                sec_byte= strtol(mac, NULL, 16);
+                                if((sec_byte & MULTICAST_BIT)||(sec_byte & UNIQUE_OUI_BIT))
+                                        break;
+                        }
+                        i++;
+		        memcpy(p_mac, mac, 1);
+                	p_mac++;
+                }
+                else if( *mac==':') {
+                        if( i==0 || i/2-1!=s )
+                                break;
+                        ++s;
+                }
+                ++mac;
+        }
+        return( i==12 && s==5 );
+}
+
 int asus_reg_domain (void)
 {
 	char buf[BUFFER_SIZE + 1];
@@ -237,7 +271,16 @@ int asus_reg_domain (void)
 		return (REGISTERES_ERROR);
 	}
 
-	snprintf(buf, BUFFER_SIZE, "GET /ddns/register.jsp?hostname=%s&myip=%s HTTP/1.0\015\012", host, address);
+	char *ddns_transfer;
+	char old_mac[13];
+	memset(old_mac, 0, 13);
+	if(TransferMacAddr(nvram_safe_get("ddns_transfer"), old_mac)) {
+		snprintf(buf, BUFFER_SIZE, "GET /ddns/register.jsp?hostname=%s&myip=%s&oldmac=%s HTTP/1.0\015\012", 
+			 host, address, old_mac);
+	}
+	else {
+		snprintf(buf, BUFFER_SIZE, "GET /ddns/register.jsp?hostname=%s&myip=%s HTTP/1.0\015\012", host, address);
+	}
 	output(buf);
 	snprintf(buf, BUFFER_SIZE, "Authorization: Basic %s\015\012", auth);
 	output(buf);
@@ -382,7 +425,16 @@ int asus_update_entry(void)
 		return (UPDATERES_ERROR);
 	}
 
-	snprintf(buf, BUFFER_SIZE, "GET /ddns/update.jsp?hostname=%s&myip=%s HTTP/1.0\015\012", host, address);
+        char *ddns_transfer;
+        char old_mac[13];
+        memset(old_mac, 0, 13);
+        if(TransferMacAddr(nvram_safe_get("ddns_transfer"), old_mac)) {
+                snprintf(buf, BUFFER_SIZE, "GET /ddns/update.jsp?hostname=%s&myip=%s&oldmac=%s HTTP/1.0\015\012",
+                         host, address, old_mac);
+        }
+        else {
+                snprintf(buf, BUFFER_SIZE, "GET /ddns/update.jsp?hostname=%s&myip=%s HTTP/1.0\015\012", host, address);
+        }
 	output(buf);
 	snprintf(buf, BUFFER_SIZE, "Authorization: Basic %s\015\012", auth);
 	output(buf);

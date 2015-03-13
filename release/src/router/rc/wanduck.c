@@ -871,12 +871,12 @@ int if_wan_phyconnected(int wan_unit){
 if(test_log)
 _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state=%d.\n", !isFirstUse, link_wan[wan_unit], sim_state);
 
+#if defined(RTCONFIG_WANRED_LED)
+		update_wan_leds(wan_unit);
+#endif
+
 		if(link_wan[wan_unit] != nvram_get_int(wired_link_nvram)){
 			nvram_set_int(wired_link_nvram, link_wan[wan_unit]);
-
-#if defined(RTCONFIG_WANRED_LED)
-			update_wan_leds(wan_unit);
-#endif
 
 			if(link_wan[wan_unit] == 2)
 				logmessage("wanduck", "The local subnet is the same with the USB ethernet.");
@@ -1478,9 +1478,9 @@ void record_conn_status(int wan_unit){
 			logmessage(log_title, "The router's ip was the same as gateway's ip. It led to your packages couldn't dispatch to internet correctly.");
 		}
 		else if(disconn_case[wan_unit] == CASE_THESAMESUBNET){
-			if(disconn_case_old[wan_unit] == CASE_MISROUTE)
+			if(disconn_case_old[wan_unit] == CASE_THESAMESUBNET)
 				return;
-			disconn_case_old[wan_unit] = CASE_MISROUTE;
+			disconn_case_old[wan_unit] = CASE_THESAMESUBNET;
 
 			logmessage(log_title, "The LAN's subnet may be the same with the WAN's subnet.");
 		}
@@ -1567,9 +1567,8 @@ int switch_wan_line(const int wan_unit, const int restart_other){
 			if(unit == wan_unit)
 				continue;
 
-			memset(cmd, 0, 32);
-			sprintf(cmd, "restart_wan_if %d", unit);
-TRACE_PT("%s.\n", cmd);
+			csprintf("wanduck1: restart_wan_if %d.\n", unit);
+			snprintf(cmd, 32, "restart_wan_if %d", unit);
 			notify_rc_and_wait(cmd);
 			sleep(1);
 		}
@@ -1583,9 +1582,8 @@ TRACE_PT("%s.\n", cmd);
 			if(dualwan_unit__nonusbif(unit))
 				continue;
 
-			memset(cmd, 0, 32);
-			sprintf(cmd, "stop_wan_if %d", unit);
-TRACE_PT("%s.\n", cmd);
+			csprintf("wanduck1: stop_wan_if %d.\n", unit);
+			snprintf(cmd, 32, "stop_wan_if %d", unit);
 			notify_rc_and_wait(cmd);
 			sleep(1);
 		}
@@ -1593,12 +1591,11 @@ TRACE_PT("%s.\n", cmd);
 #endif
 
 	// restart the primary line.
-	memset(cmd, 0, 32);
 	if(get_wan_state(wan_unit) == WAN_STATE_CONNECTED)
-		sprintf(cmd, "restart_wan_line %d", wan_unit);
+		snprintf(cmd, 32, "restart_wan_line %d", wan_unit);
 	else
-		sprintf(cmd, "restart_wan_if %d", wan_unit);
-TRACE_PT("%s.\n", cmd);
+		snprintf(cmd, 32, "restart_wan_if %d", wan_unit);
+	csprintf("wanduck2: %s.\n", cmd);
 	notify_rc_and_wait(cmd);
 
 #ifdef RTCONFIG_DUALWAN
@@ -1963,7 +1960,7 @@ _dprintf("wanduck(%d): detect the modem to be reset...\n", wan_unit);
 						continue;
 					}
 					else if(!link_wan[wan_unit] && current_state[wan_unit] != WAN_STATE_INITIALIZING){
-						csprintf("wanduck: stop_wan_if %d.\n", wan_unit);
+						csprintf("wanduck2: stop_wan_if %d.\n", wan_unit);
 						snprintf(cmd, 32, "stop_wan_if %d", wan_unit);
 						notify_rc(cmd);
 						continue;
@@ -2580,7 +2577,8 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 							switch_wan_line(other_wan_unit, 0);
 						}
 						else if(current_state[current_wan_unit] != WAN_STATE_INITIALIZING){
-							csprintf("wanduck: stop_wan_if %d.\n", current_wan_unit);
+							csprintf("wanduck3: stop_wan_if %d.\n", current_wan_unit);
+							clean_modem_state(2);
 							snprintf(cmd, 32, "stop_wan_if %d", current_wan_unit);
 							notify_rc(cmd);
 						}

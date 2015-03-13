@@ -718,7 +718,10 @@ int enable_qtn_telnetsrv(int enable_flag)
 
 int getstatus_qtn_telnetsrv(void)
 {
-	puts(nvram_safe_get("QTNTELNETSRV"));
+	if(nvram_get_int("QTNTELNETSRV") == 1)
+		puts("1");
+	else
+		puts("0");
 
 	return 0;
 }
@@ -765,6 +768,24 @@ typedef uint16 chanspec_t;
 extern uint8 wf_chspec_ctlchan(chanspec_t chspec);
 extern chanspec_t wf_chspec_aton(const char *a);
 
+void fix_script_err(char *orig_str, char *new_str)
+{
+	unsigned i = 0, j = 0;
+	unsigned int str_len = 0;
+	str_len = strlen(orig_str);
+
+	for ( i = 0; i < str_len; i++ ){
+		if(orig_str[i] == '$'){
+			new_str[j] = '\\';
+			new_str[j+1] = '$';
+			j = j + 2;
+		}else{
+			new_str[j] = orig_str[i];
+			j++;
+		}
+	}
+}
+
 int gen_stateless_conf(void)
 {
 	int ret;
@@ -776,7 +797,8 @@ int gen_stateless_conf(void)
 	char crypto[16];
 	char beacon[] = "WPAand11i";
 	char encryption[] = "TKIPandAESEncryption";
-	char key[65];
+	char key[130];
+	char real_key_str[130];
 	char ssid[65];
 	char region[5];
 	int channel = wf_chspec_ctlchan(wf_chspec_aton(nvram_safe_get("wl1_chanspec")));
@@ -799,6 +821,10 @@ int gen_stateless_conf(void)
 		strncpy(auth, nvram_safe_get("wlc_auth_mode"), sizeof(auth));
 		strncpy(crypto, nvram_safe_get("wlc_crypto"), sizeof(crypto));
 		strncpy(key, nvram_safe_get("wlc_wpa_psk"), sizeof(key));
+		if(strchr(key, '$') != NULL){
+			fix_script_err(key, real_key_str);
+			strncpy(key, real_key_str, sizeof(key));
+		}
 
 		strncpy(ssid, nvram_safe_get("wlc_ssid"), sizeof(ssid));
 		fprintf(fp, "wifi0_SSID=\"%s\"\n", ssid);
@@ -810,19 +836,19 @@ int gen_stateless_conf(void)
 			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
 			fprintf(fp, "wifi0_beacon=11i\n");
 			fprintf(fp, "wifi0_encryption=AESEncryption\n");
-			fprintf(fp, "wifi0_passphrase=%s\n", key);
+			fprintf(fp, "wifi0_passphrase=\"%s\"\n", key);
 		}
 		else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "aes") ){
 			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
 			fprintf(fp, "wifi0_beacon=WPAand11i\n");
 			fprintf(fp, "wifi0_encryption=AESEncryption\n");
-			fprintf(fp, "wifi0_passphrase=%s\n", key);
+			fprintf(fp, "wifi0_passphrase=\"%s\"\n", key);
 		}
 		else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "tkip+aes") ){
 			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
 			fprintf(fp, "wifi0_beacon=WPAand11i\n");
 			fprintf(fp, "wifi0_encryption=TKIPandAESEncryption\n");
-			fprintf(fp, "wifi0_passphrase=%s\n", key);
+			fprintf(fp, "wifi0_passphrase=\"%s\"\n", key);
 		}
 		else{
 			logmessage("start_psta", "No security in use\n");
@@ -839,6 +865,11 @@ int gen_stateless_conf(void)
 		strncpy(auth, nvram_safe_get("wl1_auth_mode_x"), sizeof(auth));
 		strncpy(crypto, nvram_safe_get("wl1_crypto"), sizeof(crypto));
 		strncpy(key, nvram_safe_get("wl1_wpa_psk"), sizeof(key));
+		if(strchr(key, '$') != NULL){
+			fix_script_err(key, real_key_str);
+			strncpy(key, real_key_str, sizeof(key));
+		}
+
 
 		strncpy(ssid, nvram_safe_get("wl1_ssid"), sizeof(ssid));
 		fprintf(fp, "wifi0_SSID=\"%s\"\n", ssid);
@@ -847,19 +878,19 @@ int gen_stateless_conf(void)
 			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
 			fprintf(fp, "wifi0_beacon=11i\n");
 			fprintf(fp, "wifi0_encryption=AESEncryption\n");
-			fprintf(fp, "wifi0_passphrase=%s\n", key);
+			fprintf(fp, "wifi0_passphrase=\"%s\"\n", key);
 		}
 		else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "aes") ){
 			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
 			fprintf(fp, "wifi0_beacon=WPAand11i\n");
 			fprintf(fp, "wifi0_encryption=AESEncryption\n");
-			fprintf(fp, "wifi0_passphrase=%s\n", key);
+			fprintf(fp, "wifi0_passphrase=\"%s\"\n", key);
 		}
 		else if(!strcmp(auth, "pskpsk2") && !strcmp(crypto, "tkip+aes") ){
 			fprintf(fp, "wifi0_auth_mode=PSKAuthentication\n");
 			fprintf(fp, "wifi0_beacon=WPAand11i\n");
 			fprintf(fp, "wifi0_encryption=TKIPandAESEncryption\n");
-			fprintf(fp, "wifi0_passphrase=%s\n", key);
+			fprintf(fp, "wifi0_passphrase=\"%s\"\n", key);
 		}
 		else{
 			logmessage("start_ap", "No security in use\n");

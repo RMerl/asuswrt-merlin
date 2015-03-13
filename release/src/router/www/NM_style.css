@@ -63,14 +63,14 @@
 
 #iconRemote{ background:url(images/map-iconRemote.gif) no-repeat;	width:87px;	height:77px; cursor:pointer; display:none}
 
-#iconInternet{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 0%;	width:107px;	height:95px; cursor:pointer;}
+#iconInternet{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 0%;	width:107px;	height:95px; cursor:pointer; margin:0px 17px 0px 0px;}
 #iconInternet a:link{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer;}
 #iconInternet_primary{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 0%;	width:107px;	height:95px; cursor:pointer; margin-left:12px;}
 #iconInternet_primary a:link{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer;}
 #iconInternet_secondary{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 0%;	width:107px;	height:95px; cursor:pointer;margin-left:12px;}
 #iconInternet_secondary a:link{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer;}
 
-#iconRouter{ background:url(images/New_ui/networkmap/map-iconRouter.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer; margin:0px 0px 0px 0px;}
+#iconRouter{ background:url(images/New_ui/networkmap/map-iconRouter.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer; margin:0px 17px 0px 0px;}
 
 #iflock{ 
 }

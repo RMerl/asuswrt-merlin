@@ -7,7 +7,7 @@ bled-objs := common.o check-netdev.o
 bled-objs += $(if $(RTCONFIG_USB),check-usbbus.o)
 bled-objs += $(if $(QCA),gpio-qca955x.o)
 
-QCA8337_MODEL_LIST = "RT-AC55U" "4G-AC55U"
+QCA8337_MODEL_LIST = "RT-AC55U RT-AC55UHP 4G-AC55U"
 MT7620ESW_MODEL_LIST = "RT-N11P RT-N14U RT-AC51U RT-AC52U RT-AC1200HP"
 MT7621ESW_MODEL_LIST = "RT-N56UB1"
 # QCA platform

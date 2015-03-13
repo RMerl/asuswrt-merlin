@@ -42,6 +42,8 @@
 #include "initdata.h"
 #include "bsp_priv.h"
 
+#include <rtk_types.h>
+
 #ifdef RESCUE_MODE
 unsigned char DETECT(void);
 bool mmode_set(void);
@@ -77,11 +79,6 @@ extern void FANON(void);
 #endif
 #ifdef RTAC68U
 #define	TURBO_LED_GPIO	(1 << 4)	// GPIO 4
-#if 0
-#define	USB_LED_GPIO	(1 << 0)	// GPIO 0
-#define	WL5G_LED_GPIO	(1 << 6)	// GPIO 6
-#define	USB3_LED_GPIO	(1 << 14)	// GPIO 14
-#endif
 #define WPS_BTN_GPIO	(1 << 7)	// GPIO 7
 #else
 #ifdef RTN18U
@@ -95,6 +92,11 @@ extern void FANON(void);
 #endif	/* end of RTAC87U */
 
 #endif	//end of DSLAC68U
+
+#ifdef RTAC88B
+#define SMI_SCK_GPIO	(1 << 6)	// GPIO 6
+#define SMI_SDA_GPIO	(1 << 7)	// GPIO 7
+#endif	/*~RTAC88B*/
 
 static int
 ui_cmd_reboot(ui_cmdline_t *cmd, int argc, char *argv[])
@@ -273,6 +275,29 @@ done:
 	return ret;
 }
 
+#ifdef RTAC88B
+void set_gpio_dir(rtk_uint32 gpioid, rtk_uint32 dir)
+{
+	sih = si_kattach(SI_OSH);
+	ASSERT(sih);
+	si_gpioouten(sih, 1<<gpioid, !dir?1<<gpioid:0, GPIO_DRV_PRIORITY);
+}
+
+void set_gpio_data(rtk_uint32 gpioid, rtk_uint32 data)
+{
+	sih = si_kattach(SI_OSH);
+	ASSERT(sih);
+	si_gpioout(sih, 1<<gpioid, data?1<<gpioid:0, GPIO_DRV_PRIORITY);
+}
+
+void get_gpio_data(rtk_uint32 gpioid, rtk_uint32 *pdata)
+{
+	sih = si_kattach(SI_OSH);
+	ASSERT(sih);
+	*pdata = (si_gpioin(sih) & 1<<gpioid) == 0 ? 0 : 1;
+}
+#endif
+
 #ifdef RESCUE_MODE
 bool mmode_set(void)
 {
@@ -318,12 +343,23 @@ extern void GPIO_INIT(void)
 	sih = si_kattach(SI_OSH);
 	ASSERT(sih);
 	si_gpiocontrol(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
+#ifdef RTAC88B
+	si_gpiocontrol(sih, SMI_SCK_GPIO, 0, GPIO_DRV_PRIORITY);
+	si_gpiocontrol(sih, SMI_SDA_GPIO, 0, GPIO_DRV_PRIORITY);
+#else
 #if defined(RTAC68U) || defined(RTAC87U)
 	si_gpiocontrol(sih, TURBO_LED_GPIO, 0, GPIO_DRV_PRIORITY);
 #endif
+#endif
+
 	si_gpioouten(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
+#ifdef RTAC88B
+	si_gpioouten(sih, SMI_SCK_GPIO, 0, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, SMI_SDA_GPIO, 0, GPIO_DRV_PRIORITY);
+#else
 #if defined(RTAC68U) || defined(RTAC87U)
 	si_gpioouten(sih, TURBO_LED_GPIO, 0, GPIO_DRV_PRIORITY);
+#endif
 #endif
 }
 
@@ -340,21 +376,7 @@ extern void LEDOFF(void)
 	si_gpioout(sih, TURBO_LED_GPIO, TURBO_LED_GPIO, GPIO_DRV_PRIORITY);
 #endif
 }
-#if 0
-#if defined(RTAC68U) || defined(RTAC87U)
-extern void OTHERLEDOFF(void)
-{
-        sih = si_kattach(SI_OSH);
-        ASSERT(sih);
-        si_gpioouten(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioout(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioouten(sih, USB_LED_GPIO, USB_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioout(sih, USB_LED_GPIO, USB_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioouten(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioout(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
-}
-#endif
-#endif
+
 unsigned char DETECT(void)
 {
         unsigned char d = 0;

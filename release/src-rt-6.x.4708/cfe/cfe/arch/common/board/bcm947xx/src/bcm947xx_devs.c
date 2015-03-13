@@ -59,6 +59,14 @@
 #include <cfe_devfuncs.h>
 #include <cfe_ioctl.h>
 
+#ifdef RTAC88B
+#include <rtk_switch.h>
+#include <smi.h>
+#include <vlan.h>
+#include <port.h>
+#include <rtk_types.h>
+#include <rtl8367c_asicdrv_port.h>
+#endif
 #define MAX_WAIT_TIME 20	/* seconds to wait for boot image */
 #define MIN_WAIT_TIME 1 	/* seconds to wait for boot image */
 
@@ -797,11 +805,14 @@ board_device_init(void)
 	for (unit = 0; unit < SI_MAXCORES; unit++) {
 #if CFG_ET
 		if ((regs = si_setcore(sih, ENET_CORE_ID, unit)))
+		{
 			cfe_add_device(&bcmet, BCM47XX_ENET_ID, unit, regs);
-
+		}
 #if CFG_GMAC
 		if ((regs = si_setcore(sih, GMAC_CORE_ID, unit)))
+		{
 			cfe_add_device(&bcmet, BCM47XX_GMAC_ID, unit, regs);
+		}
 #endif
 #endif /* CFG_ET */
 #if CFG_WL
@@ -834,6 +845,8 @@ void
 board_device_reset(void)
 {
 }
+
+extern void GPIO_INIT(void);
 
 /*
  *  board_final_init()
@@ -894,6 +907,69 @@ board_final_init(void)
 		nvram_set("nvram_space", buf);
 		commit = 1;
 	}
+
+#ifdef RTAC88B
+	int ret = -1, retry = 0;
+	rtk_port_mac_ability_t pa;
+
+	GPIO_INIT();
+	for(retry = 0; ret && retry < 10; ++retry)
+	{
+		ret = rtk_switch_init();
+		if(ret) cfe_usleep(10000);
+		else break;
+	}
+	printf("rtl8354mb initialized(%d)(retry %d) %s\n", ret, retry, ret?"failed":"");
+
+        ret = rtk_port_phyEnableAll_set(1);
+        if(ret)	printf("rtk port_phyEnableAll Failed!(%d)\n", ret);
+	else printf("rtk port_phyEnableAll ok\n");
+
+        /* configure & set GMAC ports */
+        pa.forcemode       = MAC_FORCE;
+        pa.speed           = SPD_1000M;
+        pa.duplex          = FULL_DUPLEX;
+        pa.link            = 1;
+        pa.nway            = 0;
+        pa.rxpause         = 0;
+        pa.txpause         = 0;
+
+        ret = rtk_port_macForceLinkExt_set(EXT_PORT0, MODE_EXT_RGMII, &pa);
+        if(ret)	printf("rtk port_macForceLink_set ext_Port0 Failed!(%d)\n", ret);
+	else printf("rtk port_macForceLink_set ext_Port0 ok\n");	
+
+	/* asic chk */
+	rtk_uint32 retVal, retVal2;
+	rtk_uint32 data, data2;
+
+    	if((retVal = rtl8367c_getAsicReg(0x1311, &data)) != RT_ERR_OK || (retVal2 = rtl8367c_getAsicReg(0x1305, &data2)) != RT_ERR_OK) {
+        	printf("get failed(%d)(%d). (%x)(supposed to be 0x1016)\n", retVal, retVal2, data);
+    	}
+    	else {      /* get ok, then chk val*/
+        	printf("get ok, chk 0x1311:%x(0x1016), 0x1305:%x(b4~b7:0x1)\n", data, data2);
+		if(data != 0x1016){
+        		if((retVal = rtl8367c_setAsicReg(0x1311, 0x1016)) != RT_ERR_OK)
+                		printf("set 0x1311(0x1016) failed(%d)\n", retVal);
+			else
+                		printf("reset 0x1311 (0x1016)\n");
+		}
+        	if((data2 & 0xf0) != 0x10) {
+			data2 &= ~0xf0;
+			data2 |= 0x10;
+        		if((retVal2 = rtl8367c_setAsicReg(0x1305, data2)) != RT_ERR_OK)
+                		printf("set 0x1305(%x) failed(%d)\n", data2, retVal2);
+			else
+                		printf("reset 0x1305 (%x)\n", data2);
+        	}
+    	}
+	/* chk again */
+    	if((retVal = rtl8367c_getAsicReg(0x1311, &data)) != RT_ERR_OK || (retVal2 = rtl8367c_getAsicReg(0x1305, &data2)) != RT_ERR_OK) {
+        	printf("get failed(%d)(%d). (%x)(supposed to be 0x1016)\n", retVal, retVal2, data);
+    	}
+    	else	/* get ok, then chk val*/
+        	printf("(2) get again ok, chk again 0x1311:%x(0x1016), 0x1305:%x(b4~b7:1)\n", data, data2);
+    	/*~asic chk*/
+#endif
 
 #if CFG_FLASH || CFG_SFLASH || CFG_NFLASH
 #if !CFG_SIM

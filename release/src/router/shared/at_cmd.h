@@ -17,7 +17,9 @@ extern int Gobi_SignalQuality_Percent(int value);	//convert quality value (0~31)
 
 extern int Gobi_SignalLevel_Int(void);			//get signal quality (level) in dBm
 
-char * Gobi_Version(char *line, int size);		//get version string
+char * Gobi_FwVersion(char *line, int size);		//get FW version string
+char * Gobi_QcnVersion(char *line, int size);		//get Qcn version string
 
+char * Gobi_SelectBand(const char *band, char *line, int size);	//set LTE band. could be B3/B7/B20/B38 .
 
 #endif	/* ! __AT_CMD_H__ */

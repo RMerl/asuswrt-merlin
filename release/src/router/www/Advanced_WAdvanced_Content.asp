@@ -217,8 +217,7 @@ function initial(){
 	inputCtrl(document.form.traffic_5g, 0);
 
 	if('<% nvram_get("wl_unit"); %>' == '1' || '<% nvram_get("wl_unit"); %>' == '2'){ // 5GHz up
-		if(	based_modelid == "RT-AC3200" ||
-			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
+		if(	based_modelid == "RT-AC3200" || based_modelid == "RT-AC69U" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
@@ -227,8 +226,7 @@ function initial(){
 			inputCtrl(document.form.wl_txbf, 1);
 		}	
 
-		if(	based_modelid == "RT-AC3200" ||
-			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
+		if(	based_modelid == "RT-AC3200" || based_modelid == "RT-AC69U" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
@@ -236,16 +234,16 @@ function initial(){
 			inputCtrl(document.form.wl_itxbf, 1);
 		}
 				
-		if( based_modelid == "RT-AC55U")
+		if( based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP")
 			inputCtrl(document.form.traffic_5g, 1);
 	}
 	else{ // 2.4GHz
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-N18U" ||
 			based_modelid == "RT-N65U" ||
-			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
+			based_modelid == "RT-AC69U" ||
 			based_modelid == "RT-AC87U" ||
-			based_modelid == "RT-AC55U" || based_modelid == "4G-AC55U" ||
+			based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "4G-AC55U" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
 		{
@@ -254,7 +252,7 @@ function initial(){
 
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-N18U" ||
-			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
+			based_modelid == "RT-AC69U" ||
 			based_modelid == "RT-AC87U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
 		{
@@ -349,8 +347,7 @@ function initial(){
 	if(	based_modelid == "RT-N18U" ||
 		based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" ||
 		based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
-		based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
-		based_modelid == "RT-AC87U" || based_modelid == "RT-AC3200"){
+		based_modelid == "RT-AC69U" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC3200"){
 		
 		inputCtrl(document.form.wl_atf, 1);
 		if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1')	
@@ -1010,7 +1007,7 @@ function set_power(power_value){
 						</td>
 					</tr>
 
-					<tr> <!-- MODELDEP: RT-AC3200 / RT-AC68U / RT-AC68U_V2 / RT-AC69U / TM-AC1900 / DSL-AC68U Only  -->
+					<tr> <!-- MODELDEP: RT-AC3200 / RT-AC68U / RT-AC68U_V2 / RT-AC69U / DSL-AC68U Only  -->
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,29);"><#WLANConfig11b_x_ReduceUSB3#></a></th>
 						<td>
 							<select name="usb_usb3" class="input_option">

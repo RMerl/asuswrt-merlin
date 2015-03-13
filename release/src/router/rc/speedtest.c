@@ -500,6 +500,13 @@ download_thread(void *ptr)
 	finished += (double)file_stat.st_size;
 	pthread_mutex_unlock(&finished_mutex);
 
+	if (get_uptime(&time_thread)) {
+		fprintf(stderr, "Error on getting /proc/uptime\n");
+		return NULL;
+	}
+	time_diff = (time_thread - time_dl_start);
+	printf("download = %.2f\n", ((finished / 1024 / 1024 / time_diff) * 8));
+
 	eval("rm", file);
 
 	return NULL;
@@ -525,6 +532,8 @@ test_download_speed(server_config_t *best_server)
 	double time_dl_end;
 	FILE *fp_result;
 	char result[32];
+
+	nvram_set("speedtest_running", "0");
 
 	url_len = strlen(best_server->url) - strlen("upload.php");
 
@@ -591,6 +600,10 @@ test_download_speed(server_config_t *best_server)
 	fprintf(fp_result, "%s", result);
 	fclose(fp_result);
 
+	memset(result, 0, sizeof(result));
+	sprintf(result, "%.2f", ((finished / 1024 / duration) * 8));
+	nvram_set("speedtest_ibw", result);
+
 	return 0;
 }
 
@@ -622,6 +635,13 @@ upload_thread(void *ptr)
 	}
 	pthread_mutex_unlock(&finished_mutex);
 
+	if (get_uptime(&time_thread)) {
+		fprintf(stderr, "Error on getting /proc/uptime\n");
+		return NULL;
+	}
+	time_diff = (time_thread - time_ul_start);
+	printf("upload = %.2f\n", ((finished / 1024 / 1024 / time_diff) * 8));
+
 	eval("rm", in->file_result);
 
 	return NULL;
@@ -648,6 +668,8 @@ test_upload_speed(server_config_t *best_server)
 	FILE *fp[UL_SIZE_NUM];
 	FILE *fp_result;
 	char result[32];
+
+	nvram_set("speedtest_running", "0");
 
 	for (i = 0; i < UL_SIZE_NUM; i++) {
 		data_len = (int)round(size[i] / strlen(data));
@@ -722,6 +744,10 @@ test_upload_speed(server_config_t *best_server)
 	fprintf(fp_result, "%s", result);
 	fclose(fp_result);
 
+	memset(result, 0, sizeof(result));
+	sprintf(result, "%.2f", ((finished / 1024 / duration) * 8));
+	nvram_set("speedtest_obw", result);
+
 	for (i = 0; i < UL_SIZE_NUM; i++) {
 		eval("rm", &file_tmp[i][0]);
 	}
@@ -751,11 +777,13 @@ speedtest(int dl_enable, int ul_enable)
 
 	if (get_speedtest_config(&client)) {
 		fprintf(stderr, "get_speedtest_config error!\n");
+		nvram_set("speedtest_running", "2");
 		return -1;
 	}
 
 	if (get_nearest_servers(&client, servers)) {
 		fprintf(stderr, "get_nearest_servers error!\n");
+		nvram_set("speedtest_running", "2");
 		return -1;
 	}
 
@@ -763,12 +791,14 @@ speedtest(int dl_enable, int ul_enable)
 
 	if (get_lowest_latency_server(servers, &best_server)) {
 		fprintf(stderr, "get_lowest_latency_server error!\n");
+		nvram_set("speedtest_running", "2");
 		return -1;
 	}
 
 	if (dl_enable == 1) {
 		if (test_download_speed(&best_server)) {
 			fprintf(stderr, "test_download_speed error!\n");
+			nvram_set("speedtest_running", "2");
 			return -1;
 		}
 	}
@@ -777,6 +807,7 @@ speedtest(int dl_enable, int ul_enable)
 		finished = (double)0;
 		if (test_upload_speed(&best_server)) {
 			fprintf(stderr, "test_upload_speed error!\n");
+			nvram_set("speedtest_running", "2");
 			return -1;
 		}
 	}
@@ -785,6 +816,8 @@ speedtest(int dl_enable, int ul_enable)
 		server_free(&servers[i]);
 	}
 
+	nvram_set("speedtest_running", "1");
+	nvram_commit();
 	return 0;
 }
 
@@ -794,7 +827,7 @@ usage(void)
 	printf("usage:\n");
 	printf("speedtest_cli [1|0](download test enable|disable) [download thread number] ");
 	printf("[1|0](upload test enable|disable) [upload thread number]\n");
-	printf("Range of thread number: 1 - 7\n");
+	printf("Range of thread number: 1 - 20\n");
 }
 
 int
@@ -826,7 +859,7 @@ speedtest_main(int argc, char **argv)
 		}
 
 		num = atoi(argv[2]);
-		if ((num < 1) || (num > 7)) {
+		if ((num < 1) || (num > 20)) {
 			usage();
 			return 0;
 		} else {
@@ -834,7 +867,7 @@ speedtest_main(int argc, char **argv)
 		}
 
 		num = atoi(argv[4]);
-		if ((num < 1) || (num > 7)) {
+		if ((num < 1) || (num > 20)) {
 			usage();
 			return 0;
 		} else {
@@ -857,8 +890,10 @@ speedtest_main(int argc, char **argv)
 void wan_bandwidth_detect(void)
 {
 	/* Execute WAN port bandwidth detection */
-	if (nvram_match("qos_wan_bw_auto", "1")) 
-	{
+#ifndef RTCONFIG_SPRINT
+//	if (nvram_match("qos_wan_bw_auto", "1")) 
+//	{
+#endif
 
 		struct stat file_stat;
 		int retry = 0;
@@ -891,6 +926,8 @@ void wan_bandwidth_detect(void)
 			argv[3] : upload_enable
 			argv[4] : upload_thread_num
 		*/
-		eval("speedtest", "1", "3", "1", "2");
-	}
+		eval("speedtest", "1", "10", "1", "10");
+#ifndef RTCONFIG_SPRINT
+//	}
+#endif
 }

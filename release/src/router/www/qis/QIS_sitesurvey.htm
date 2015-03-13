@@ -19,8 +19,9 @@ var nvramVars = new Array();
 var wlc_state = '<% nvram_get("wlc_state"); %>';
 var wlc_sbstate = '<% nvram_get("wlc_sbstate"); %>';
 var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
-var wlc_state_auth = 0;
 var based_modelid = '<% nvram_get("productid"); %>';
+var wlc_state_ajax = 0;
+var wlc_sbstate_ajax = 0;
 var profile = function(_profile){
 	if(_profile == null)
 		_profile = ["", "", "", "", "", "", "", "", ""];
@@ -107,31 +108,20 @@ var wlcKey = function(obj){
 
 var saveToForm = {
 	"wlClient" : function(obj){
+		parent.document.QKform.wlc_band.value = obj.band;
+		parent.document.QKform.wlc_ssid.value = obj.ssid;
+		parent.document.QKform.wlc_wep.value = obj.wep;
+		parent.document.QKform.wlc_key.value = obj.key;
+		parent.document.QKform.wlc_wep_key.value = obj.wep_key;
+		parent.document.QKform.wlc_auth_mode.value = obj.auth_mode;
+		parent.document.QKform.wlc_crypto.value = obj.crypt;
+		parent.document.QKform.wlc_wpa_psk.value = obj.wpa_psk;
+		parent.document.QKform.wlc_nbw_cap.value = 2;
 		if(parent.isRepeater){
 			parent.document.QKform.sw_mode.value = 2;
-			parent.document.QKform.wlc_band.value = obj.band;
-			parent.document.QKform.wlc_ssid.value = obj.ssid;
-			parent.document.QKform.wlc_wep.value = obj.wep;
-			parent.document.QKform.wlc_key.value = obj.key;
-			parent.document.QKform.wlc_wep_key.value = obj.wep_key;
-			parent.document.QKform.wlc_auth_mode.value = obj.auth_mode;
-			parent.document.QKform.wlc_crypto.value = obj.crypt;
-			parent.document.QKform.wlc_wpa_psk.value = obj.wpa_psk;
-			parent.document.QKform.wlc_nbw_cap.value = 2;
 		}
-		else{
-			with(document.form){
-				wlc_band.value = obj.band;
-				wlc_ssid.value = obj.ssid;
-				wlc_wep.value = obj.wep;
-				wlc_key.value = obj.key;
-				wlc_wep_key.value = obj.wep_key;
-				wlc_auth_mode.value = obj.auth_mode;
-				wlc_crypto.value = obj.crypt;
-				wlc_wpa_psk.value = obj.wpa_psk;
-			}
-			if(parent.based_modelid == "RT-N14U" || parent.based_modelid == "RT-AC52U" || parent.based_modelid == "RT-AC55U" || parent.based_modelid == "RT-AC1200HP" )
-				document.form.sw_mode.value = 2;
+		else{		
+			parent.document.QKform.sw_mode.value = 4;
 		}
 	},
 
@@ -313,12 +303,12 @@ var btnAction = {
 			}else{
 				parent.document.QKform.sw_mode.value = 4;
 				sw_mode_submit = 4;
-				btnAction.submitForm();
+				location.href = '/qis/QIS_lanip.htm';
 			}
 		}
 		else{
 			parent.document.QKform.sw_mode.value = 2;
-			location.href = '/qis/QIS_wireless.htm';
+			location.href = '/qis/QIS_lanip.htm';
 		}
 	},
 
@@ -758,6 +748,76 @@ function update_site_info(){
 	});	
 }
 
+function updateRepeaterState() {
+	$.ajax({
+		url: '/apscan.asp',
+		dataType: 'script',
+		error: function(){
+			updateRepeaterState();
+		},
+		success: function(){
+			wlc_state_ajax = wlc_state;
+			wlc_sbstate_ajax = wlc_sbstate;
+			/*	wlc_state = 2, wlc_state_auth = 1, connected
+				wlc_state = 3, wlc_state_auth = 2, auth failure
+				wlc_state = 3, wlc_state_auth = 1, p-ap does not exist
+			*/
+			var htmlCode = "";
+			htmlCode +='<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey" id="aplist_table">';
+			htmlCode += '<tbody><tr>';
+			htmlCode += '<td style="text-align:center;font-size:12px; border-collapse: collapse;border:1;height:45px;" colspan="5">';
+			htmlCode += '<span style="color:#FFCC00;line-height:25px;">';
+			if(wlc_state_ajax == 2 && wlc_sbstate_ajax == 1){ //connected
+				htmlCode += '<#APSurvey_action_ConnectingStatus24#>';
+				setTimeout('parent.location.href = "/index.asp";', 2000);
+			}
+			else if(wlc_state_ajax == 3 && wlc_sbstate_ajax == 2){  //auth failure
+				htmlCode += '<span style="font-weight:bolder;">' + parent.document.getElementById("stassid").innerHTML + '</span> <#APSurvey_action_ConnectingStatus1#>';
+			}
+			else if(wlc_state_ajax == 3 && wlc_sbstate_ajax == 1){ // p-ap does not exist
+				htmlCode += "<#APSurvey_action_ConnectingStatus0#>";
+			}
+			htmlCode += '</span></td></tr></tbody></table>';
+			document.getElementById("wlscan_table").innerHTML = htmlCode;
+		}
+	});	
+}
+
+function updateMediaBridgeState() {
+	$.ajax({
+		url: '/ajax_wlc_state.asp',
+		dataType: 'script',
+		error: function(){
+			updateMediaBridgeState();
+		},
+		success: function(){
+			wlc_state_ajax = wlc_state;
+			wlc_sbstate_ajax = wlc_state_auth;
+			/*	wlc_state = 1, wlc_state_auth = 0, connected
+				wlc_state = 2, wlc_state_auth = 1, auth failure
+				wlc_state = 0, wlc_state_auth = 0, p-ap does not exist
+			*/
+			var htmlCode = "";
+			htmlCode +='<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey" id="aplist_table">';
+			htmlCode += '<tbody><tr>';
+			htmlCode += '<td style="text-align:center;font-size:12px; border-collapse: collapse;border:1;height:45px;" colspan="5">';
+			htmlCode += '<span style="color:#FFCC00;line-height:25px;">';
+			if(wlc_state_ajax == 1 && wlc_sbstate_ajax == 0){ //connected
+				htmlCode += '<#APSurvey_action_ConnectingStatus24#>';
+				setTimeout('parent.location.href = "/index.asp";', 2000);
+			}
+			else if(wlc_state_ajax == 2 && wlc_sbstate_ajax == 1){  //auth failure
+				htmlCode += '<span style="font-weight:bolder;">' + parent.document.getElementById("stassid").innerHTML + '</span> <#APSurvey_action_ConnectingStatus1#>';
+			}
+			else if(wlc_state_ajax == 0 && wlc_sbstate_ajax == 0){ // p-ap does not exist
+				htmlCode += "<#APSurvey_action_ConnectingStatus0#>";
+			}
+			htmlCode += '</span></td></tr></tbody></table>';
+			document.getElementById("wlscan_table").innerHTML = htmlCode;
+		}
+	});	
+}
+
 function showSiteTable(){
 	var htmlCode = "";
 	var overlib_str = "";
@@ -770,29 +830,13 @@ function showSiteTable(){
 
 	htmlCode +='<table width="670px" border="0" cellspacing="0" cellpadding="4" align="center" class="QIS_survey" id="aplist_table">';
 	if(btnAction.curState == "showResult"){ // handle connecting result
-		htmlCode += '<tr><td style="text-align:center;font-size:12px; border-collapse: collapse;border:1;height:45px;" colspan="4"><span style="color:#FFCC00;line-height:25px;">';
-		
 		if(parent.isRepeater){
-			if(wlc_state == 3 && wlc_sbstate == 2){  //auth failure
-				htmlCode += '<span style="font-weight:bolder;">' + parent.document.getElementById("stassid").innerHTML + '</span> <#APSurvey_action_ConnectingStatus1#>';
-			}
-			else{ // p-ap does not exist
-				htmlCode += "<#APSurvey_action_ConnectingStatus0#>";
-			}
+			updateRepeaterState();
 		}
 		else{
-			if(wlc_state == 1 && wlc_state_auth == 0){ //connected
-				htmlCode += '<#APSurvey_action_ConnectingStatus24#>';
-				setTimeout('parent.location.href = "/index.asp";', 2000);
-			}
-			else if(wlc_state == 2 && wlc_state_auth == 1){  //auth failure
-				htmlCode += '<span style="font-weight:bolder;">' + parent.document.getElementById("stassid").innerHTML + '</span> <#APSurvey_action_ConnectingStatus1#>';
-			}
-			else{ // p-ap does not exist
-				htmlCode += "<#APSurvey_action_ConnectingStatus0#>";
-			}
-		}
-		htmlCode += '</span></td></tr>';
+			updateMediaBridgeState();
+		}	
+		
 	}
 	else if(wlc_scan_state != 3){ // scanning
 		htmlCode +='<tbody><tr><td style="text-align:center;font-size:12px; border-collapse: collapse;border:1;" colspan="4"><span style="color:#FFCC00;line-height:25px;"><#APSurvey_action_searching_AP#></span>&nbsp;<img style="margin-top:10px;" src="/images/InternetScan.gif"></td></tr></tbody>';
@@ -848,7 +892,7 @@ function showSiteTable(){
 	}
 	htmlCode +='</table>';
 
-	if(htmlCode != document.getElementById("wlscan_table").innerHTML){
+	if(htmlCode != document.getElementById("wlscan_table").innerHTML && btnAction.curState != "showResult"){
 		document.getElementById("wlscan_table").innerHTML = htmlCode;
 	}
 
@@ -870,7 +914,7 @@ function QKInternet_load_body(){
 	parent.set_step("t2");
 	viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRecan"]);
 
-	if(viewHandler.curState == "showResult"){
+	if(btnAction.curState == "showResult"){
 		showSiteTable();
 	}
 	else{

@@ -14,6 +14,9 @@
 #include <linux/delay.h>
 
 #define MMC_CMD_RETRIES        3
+#ifdef CONFIG_BCM47XX
+#define MMC_DATA_RETRIES	100
+#endif /* CONFIG_BCM47XX */
 
 struct mmc_bus_ops {
 	int (*awake)(struct mmc_host *);

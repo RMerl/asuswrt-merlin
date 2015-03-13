@@ -172,6 +172,7 @@ extern void start_dpi_engine_service();
 extern void save_version_of_bwdpi();
 extern void stop_bwdpi_monitor_service();
 extern void start_bwdpi_monitor_service();
+extern void setup_dev_wan();
 
 //web_history.c
 extern int web_history_main(char *MAC, char *page);

@@ -38,6 +38,10 @@ SUBSYSTEM == block, DEVICENAME ~~ ^(sd[a-z][0-9]*+)$, ACTION ~~ ^(add|remove)$ {
 	exec /sbin/asus_sd %DEVICENAME% %ACTION% ;
 }
 
+SUBSYSTEM == block, DEVICENAME ~~ ^(mmcblk[0-9]p[0-9]*+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_mmc %DEVICENAME% %ACTION% ;
+}
+
 SUBSYSTEM == usb, DEVICENAME == usbbcm, ACTION ~~ ^(add|remove)$ {
 	exec /sbin/asus_usbbcm %DEVICENAME% %ACTION% ;
 }

@@ -65,7 +65,7 @@ helpcontent[3] = new Array("",
 							"<#WLANConfig11b_x_ImpBeam_desc#> (It's also called [Implicit Beamforming].)",
 							"<#WLANConfig11b_x_AMPDU_desc#>",
 							"<#WLANConfig11b_x_ACK_desc#>",
-							"<#WLANConfig11b_x_TurboQAM_desc#> Wireless Mode must be Auto.",
+							"<#WLANConfig11b_x_TurboQAM_desc#> <#WLANConfig11b_x_Auto#>",
 							"<#WLANConfig11b_x_ReduceUSB3_desc#>",
 							"<#RTS_for_AMPDU#>",
 							"<#WLANConfig11b_x_roamingassit_desc#>",	//31
@@ -76,6 +76,7 @@ helpcontent[4] = new Array("",
 						   "<#LANHostConfig_IPRouters_itemdesc#>",
 						   "<#LANHostConfig_SubnetMask_itemdesc#>",
 						   "<#LANHostConfig_x_Gateway_itemdesc#>");
+
 helpcontent[5] = new Array("",
 							 "<#LANHostConfig_DHCPServerConfigurable_itemdesc#>",
 							 "<#LANHostConfig_DomainName_itemdesc#><#LANHostConfig_DomainName_itemdesc2#>",
@@ -256,6 +257,7 @@ helpcontent[24] = new Array("",
 							"<#qis_pppoe_help1#>",												//7,27
 							"<#qis_wireless_help1#>",											//0,22	
 							"<#qis_wireless_help2#>");										//0,23
+
 //DSL
 helpcontent[25] = new Array("",
 							"<#DSL_Stab_Adjustment#>",
@@ -288,3 +290,8 @@ helpcontent[27] = new Array("",
 							"<#YandexDNS_mode0#>: <#YandexDNS_mode0desc#><br>" +
 							"<#YandexDNS_mode1#>: <#YandexDNS_mode1desc#><br>" +
 							"<#YandexDNS_mode2#>: <#YandexDNS_mode2desc#>");
+
+if('<% nvram_default_get("lan_ipaddr"); %>' != "192.168.1.1"){
+	helpcontent[4][1] = "<#LANHostConfig_IPRouters_itemdesc#>".replace("192.168.1.1", '<% nvram_default_get("lan_ipaddr"); %>');
+	helpcontent[24][5] = "<#LANHostConfig_IPRouters_itemdesc#>".replace("192.168.1.1", '<% nvram_default_get("lan_ipaddr"); %>');
+}

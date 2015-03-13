@@ -129,6 +129,7 @@ int is_wps_stopped(void)
  */
 int get_wps_er_main(int argc, char *argv[])
 {
+	int i;
 	char word[32], *next, ifnames[64];
 	char wps_ifname[32], _ssid[33], _auth[8], _encr[8], _key[65];
 
@@ -230,9 +231,13 @@ int get_wps_er_main(int argc, char *argv[])
 		sleep(1);
 	}
 
+	i = 0;
 	foreach (word, ifnames, next) {
-		if (strcmp(word, wps_ifname))
-			doSystem("hostapd_cli -i%s wps_config %s %s %s %s", word, _ssid, _auth, _encr, _key);
+		if (i >= MAX_NR_WL_IF)
+			break;
+		if (!strcmp(word, wps_ifname))
+			continue;
+		eval("hostapd_cli", "-i", word, "wps_config", _ssid, _auth, _encr, _key);
 	}
 
 	return 0;

@@ -11,7 +11,8 @@
 	ASUSGATE_DSL_setting : "Go setting DSL",
 	ISP_not_support : 'We currently do not support this location, please use "Manual".',
 	period_time_validation : 'The value of check period can\'t be less than',
-	filter_lw_date_valid : 'Please select at least one day or disable this feature.'
+	filter_lw_date_valid : 'Please select at least one day or disable this feature.',
+	ctf_fa_hint : 'System will reboot automatically after enable AiProtection for function working fine. Please click apply to enable this function or click cancel to back to page.'
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 
@@ -205,7 +206,7 @@ function overHint(itemNum){
 			statusmenu += "<div class='StatusHint'><#Mobile_no_signal#></div>";
 		}
 		else if(usb_state == 2 && usb_sbstate == 0 && usb_auxstate == 0){
-			statusmenu += "<div class='StatusHint'><#Connected#> ISP: </div><span>" + sim_spn + "</span>";
+			statusmenu += "<div class='StatusHint'><#Connected#> <#HSDPAConfig_ISP_itemname#>: </div><span>" + sim_spn + "</span>";
 		}
 		else{
 			statusmenu += "<div class='StatusHint'><#Disconnected#></div>";
@@ -577,7 +578,7 @@ function overHint(itemNum){
 		}
 		else{	
 			if(link_status == "1")
-				statusmenu += "<span><#web_redirect_reason2_2#></span>";			
+				statusmenu += "<span><#web_redirect_reason2_2#></span>";
 			else if((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
 				statusmenu += "<span><#Connected#></span>";
 			}

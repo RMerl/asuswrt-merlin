@@ -2442,6 +2442,12 @@ BCMATTACHFN(si_corepciid)(si_t *sih, uint func, uint16 *pcivendor, uint16 *pcide
 		progif = 0x30; /* XHCI */
 		device = BCM47XX_USB30H_ID;
 		break;
+	case NS_SDIO3_CORE_ID:
+		class = PCI_CLASS_BASE;
+		subclass = PCI_BASE_SDHCI;
+		progif = 0x1; /* PCI_SDHCI_IFDMA */
+		device = BCM47XX_SDIO3H_ID;
+		break;
 	case ROBO_CORE_ID:
 		/* Don't use class NETWORK, so wl/et won't attempt to recognize it */
 		class = PCI_CLASS_COMM;

@@ -227,6 +227,7 @@
 #define	BCM4716_DEVICE_ID	0x4722		/* 4716 base devid */
 #define	BCM47XX_USB30H_ID	0x472a		/* 47xx usb 3.0 host */
 #define	BCM47XX_USB30D_ID	0x472b		/* 47xx usb 3.0 device */
+#define	BCM47XX_SDIO3H_ID	0x472c		/* 47xx sdio 3 host */
 #define BCM47XX_SMBUS_EMU_ID	0x47fe		/* 47xx emulated SMBus device */
 #define	BCM47XX_XOR_EMU_ID	0x47ff		/* 47xx emulated XOR engine */
 #define	EPI41210_DEVICE_ID	0xa0fa		/* bcm4210 */
@@ -472,6 +473,10 @@
 #define BFL_SROM11_BTCOEX  0x00000001  /* Board supports BTCOEX */
 #define BFL_SROM11_WLAN_BT_SH_XTL  0x00000002  /* bluetooth and wlan share same crystal */
 #define BFL_SROM11_EXTLNA	0x00001000  /* Board has an external LNA in 2.4GHz band */
+#ifdef SKY85710_FEM_PATCH
+#define BFL_SROM11_EPA_TURNON_TIME     0x00018000  /* 2 bits for different PA turn on times */
+#define BFL_SROM11_EPA_TURNON_TIME_SHIFT  15
+#endif
 #define BFL_SROM11_EXTLNA_5GHz	0x10000000  /* Board has an external LNA in 5GHz band */
 #define BFL_SROM11_GAINBOOSTA01	0x20000000  /* 5g Gainboost for core0 and core1 */
 #define BFL2_SROM11_APLL_WAR	0x00000002  /* Flag to implement alternative A-band PLL settings */

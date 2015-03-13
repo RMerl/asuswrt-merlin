@@ -1,0 +1,89 @@
+#
+# GNU Makefile for wget / djgpp / MSDOS.
+# By Gisle Vanem <gvanem@broadpark.no> 2009.
+#
+# `cd' to `./src' and issue the command:
+#    make -f ../msdos/Makefile.dj depend
+#  followed by:
+#    make -f ../msdos/Makefile.dj
+#
+VERSION = 1.12 (djgpp/DOS)
+
+.SUFFIXES: .exe
+
+VPATH = ../lib ../md5 ../msdos
+
+USE_OPENSSL = 0
+USE_IPV6    = 1
+
+#
+# Change to suite.
+#
+OPENSSL_ROOT = e:/net/OpenSSL.099
+ZLIB_ROOT    = e:/djgpp/contrib/zlib
+
+OBJ_DIR = djgpp.obj
+CC      = gcc
+CFLAGS  = -O2 -g -Wall -Wcast-align -I. -I../msdos -I../lib -I../md5 \
+          -I/dev/env/WATT_ROOT/inc -DHAVE_CONFIG_H -DENABLE_DEBUG \
+          -DUSE_WATT32
+
+# LDFLAGS = -s
+
+ifeq ($(USE_OPENSSL),1)
+  CFLAGS  += -DHAVE_OPENSSL -DHAVE_SSL -DOPENSSL_NO_KRB5 -I$(OPENSSL_ROOT)
+  EX_LIBS += $(OPENSSL_ROOT)/lib/libssl.a $(OPENSSL_ROOT)/lib/libcrypt.a \
+             $(ZLIB_ROOT)/libz.a
+  SOURCES += openssl.c http-ntlm.c
+endif
+
+ifeq ($(USE_IPV6),1)
+  CFLAGS += -DENABLE_IPV6
+endif
+
+EX_LIBS += /dev/env/WATT_ROOT/lib/libwatt.a
+
+SOURCES += cmpt.c connect.c cookies.c exits.c ftp.c ftp-basic.c ftp-ls.c \
+           ftp-opie.c hash.c host.c html-parse.c html-url.c http.c \
+           init.c log.c main.c gen-md5.c netrc.c progress.c recur.c \
+           res.c retr.c snprintf.c url.c utils.c version.c convert.c \
+           ptimer.c spider.c css.c css-url.c build_info.c ../md5/md5.c \
+           ../msdos/msdos.c \
+           $(addprefix ../lib/, error.c exitfail.c quote.c \
+             quotearg.c getopt.c getopt1.c xalloc-die.c xmalloc.c)
+
+OBJECTS = $(addprefix $(OBJ_DIR)/, $(notdir $(SOURCES:.c=.o)))
+
+all: $(OBJ_DIR) wget.exe
+	@echo 'Welcome to Wget'
+
+$(OBJ_DIR):
+	mkdir $(OBJ_DIR)
+
+wget.exe: $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $@ $^ $(EX_LIBS)
+
+css.c: css.l
+	flex -8 -o$@ $^
+
+clean:
+	rm -f $(OBJ_DIR)/*.o $(MAPFILE)
+
+vclean realclean: clean
+	rm -f wget.exe depend.dj version.c
+	- rmdir $(OBJ_DIR)
+
+$(OBJ_DIR)/%.o: %.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+	@echo
+
+version.c: ../msdos/Makefile.DJ
+	@echo 'char *version_string     = "$(VERSION)";' > $@
+	@echo 'char *compilation_string = "$(CC) $(CFLAGS)";' >> $@
+	@echo 'char *link_string        = "$(CC) $(LDFLAGS) -o wget.exe $$(OBJECTS) $(EX_LIBS)";' >> $@
+
+depend: version.c
+	$(CC) -MM $(CFLAGS) $(SOURCES) | \
+        sed -e 's/^\([a-zA-Z0-9_-]*\.o:\)/$$(OBJ_DIR)\/\1/' > depend.dj
+
+-include depend.dj

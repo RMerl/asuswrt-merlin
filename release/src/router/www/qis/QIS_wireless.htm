@@ -580,6 +580,28 @@ function submitForm(){
 		if(wl_info.band5g_2_support)
 			set_variable("wl2_nmode_x", "0");		
 
+		document.form.lan_ipaddr.disabled = false;
+		document.form.lan_proto.disabled = false;
+		document.form.lan_netmask.disabled = false;
+		document.form.lan_gateway.disabled = false;
+		document.form.lan_dnsenable_x.disabled = false;
+		document.form.lan_dns1_x.disabled = false;
+		document.form.lan_dns2_x.disabled = false;
+		document.form.lan_ipaddr.value = parent.document.QKform.lan_ipaddr.value;
+		document.form.lan_proto.value = parent.document.QKform.lan_proto.value;
+		document.form.lan_netmask.value = parent.document.QKform.lan_netmask.value;
+		document.form.lan_gateway.value = parent.document.QKform.lan_gateway.value;
+		document.form.lan_dnsenable_x.value = parent.document.QKform.lan_dnsenable_x.value;		
+		document.form.lan_dns1_x.value = parent.document.QKform.lan_dns1_x.value;
+		document.form.lan_dns2_x.value = parent.document.QKform.lan_dns2_x.value;
+
+		if('<% nvram_get("sw_mode"); %>' == '1'){
+			document.form.lan_ipaddr_rt.disabled = false;
+			document.form.lan_netmask_rt.disabled = false;
+			document.form.lan_ipaddr_rt.value = parent.document.QKform.lan_ipaddr_rt.value;
+			document.form.lan_netmask_rt.value = parent.document.QKform.lan_netmask_rt.value;
+		}
+		
 		document.form.wlc_band.value = parent.document.QKform.wlc_band.value;
 		document.form.wlc_ssid.value = decodeURIComponent(show_str_ssid(parent.document.QKform.wlc_ssid.value)); // ascii to char
 		document.form.wlc_wep.value = parent.document.QKform.wlc_wep.value;
@@ -589,11 +611,6 @@ function submitForm(){
 		document.form.wlc_crypto.value = parent.document.QKform.wlc_crypto.value;
 		document.form.wlc_wpa_psk.value = parent.document.QKform.wlc_wpa_psk.value;
 		document.form.wlc_nbw_cap.value = parent.document.QKform.wlc_nbw_cap.value;
-		document.form.lan_proto.disabled = false;
-		document.form.lan_proto.value = "dhcp";
-		document.form.lan_dnsenable_x.disabled = false;
-		document.form.lan_dnsenable_x.value = "1";
-		
 		
 		if($('RP_parentSetting').checked == false){		// if doesn't use parent AP setting, it will use WPA2 to be default Authentication method
 			if(document.form.wl0_wpa_psk.value.length > 0){
@@ -1538,7 +1555,7 @@ function detect_LANStatus(_flag){
 	<tr>
 		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 22);" style="cursor:help;"><#QIS_finish_wireless_item1#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input type="text" id="wl0_ssid" name="wl0_ssid" tabindex="3" onkeypress="return validator.isString(this, event);" onkeyup="Sync_2ghz(2);" style="height:25px;" class="input_32_table" maxlength="32" value="default" autocapitalization="off" autocomplete="off"/>
+			<input type="text" id="wl0_ssid" name="wl0_ssid" tabindex="3" onkeypress="return validator.isString(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="default" autocapitalization="off" autocomplete="off"/>
 		</td>
 	</tr>
 	<tr id="wl_unit_field_0">
@@ -1556,7 +1573,7 @@ function detect_LANStatus(_flag){
 	<tr id="wl_unit_field_2">
 		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 22);" style="cursor:help;"><#QIS_finish_wireless_item1#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input type="text" id="wl1_ssid" name="wl1_ssid" tabindex="6" onkeypress="return validator.isString(this, event);" onkeyup="Sync_2ghz(5);" style="height:25px;" class="input_32_table" maxlength="32" value="default" autocapitalization="off" autocomplete="off"/>
+			<input type="text" id="wl1_ssid" name="wl1_ssid" tabindex="6" onkeypress="return validator.isString(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="default" autocapitalization="off" autocomplete="off"/>
 		</td>
 	</tr>
 	<tr id="wl_unit_field_3">
@@ -1574,7 +1591,7 @@ function detect_LANStatus(_flag){
 	<tr id="wl_unit_field_5" style="display:none;">
 		<th width="160"><span onmouseout="return nd();" onclick="openHint(0, 22);" style="cursor:help;"><#QIS_finish_wireless_item1#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 		<td class="QISformtd">
-			<input type="text" id="wl2_ssid" name="wl2_ssid" tabindex="9" onkeypress="return validator.isString(this, event);" onkeyup="Sync_5ghz(5);" style="height:25px;" class="input_32_table" maxlength="32" value="default" autocapitalization="off" autocomplete="off"/>
+			<input type="text" id="wl2_ssid" name="wl2_ssid" tabindex="9" onkeypress="return validator.isString(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="default" autocapitalization="off" autocomplete="off"/>
 		</td>
 	</tr>
 	<tr id="wl_unit_field_6" style="display:none;">

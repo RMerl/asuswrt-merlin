@@ -1,0 +1,67 @@
+#
+# Makefile for Wget / DOS32A / OpenWatcom
+# by G. Vanem <gvanem@broadpark.no> 2009
+#
+
+VERSION = 1.12 (Watcom/DOS)
+
+COMPILE = *wcc386 -mf -3r -w3 -d2 -zq -zm -of -I. -I$(%watt_root)\inc &
+            -I..\msdos -I..\lib -I..\md5 -fr=nul -bt=dos -s -dHAVE_CONFIG_H &
+            -dENABLE_DEBUG -dSIZEOF_INT=4 -dUSE_WATT32
+
+LINK = *wlink option quiet, map, verbose, eliminate, caseexact, stack=100k &
+        debug all system dos32a
+
+.c: ..\lib
+.c: ..\md5
+.c: ..\msdos
+
+
+OBJ_DIR = WC_DOS.obj
+
+OBJECTS = $(OBJ_DIR)\cmpt.obj       $(OBJ_DIR)\build_info.obj &
+          $(OBJ_DIR)\c-ctype.obj    $(OBJ_DIR)\cookies.obj    &
+          $(OBJ_DIR)\connect.obj    $(OBJ_DIR)\convert.obj    &
+          $(OBJ_DIR)\css.obj        $(OBJ_DIR)\css-url.obj    &
+          $(OBJ_DIR)\error.obj      $(OBJ_DIR)\exits.obj      &
+          $(OBJ_DIR)\exitfail.obj   $(OBJ_DIR)\ftp-basic.obj  &
+          $(OBJ_DIR)\ftp-ls.obj     $(OBJ_DIR)\ftp-opie.obj   &
+          $(OBJ_DIR)\ftp.obj        $(OBJ_DIR)\gen-md5.obj    &
+          $(OBJ_DIR)\getopt.obj     $(OBJ_DIR)\getopt1.obj    &
+          $(OBJ_DIR)\hash.obj       $(OBJ_DIR)\msdos.obj      &
+          $(OBJ_DIR)\host.obj       $(OBJ_DIR)\html-parse.obj &
+          $(OBJ_DIR)\html-url.obj   $(OBJ_DIR)\http.obj       &
+          $(OBJ_DIR)\init.obj       $(OBJ_DIR)\log.obj        &
+          $(OBJ_DIR)\main.obj       $(OBJ_DIR)\md5.obj        &
+          $(OBJ_DIR)\netrc.obj      $(OBJ_DIR)\progress.obj   &
+          $(OBJ_DIR)\ptimer.obj     $(OBJ_DIR)\recur.obj      &
+          $(OBJ_DIR)\res.obj        $(OBJ_DIR)\retr.obj       &
+          $(OBJ_DIR)\spider.obj     $(OBJ_DIR)\url.obj        &
+          $(OBJ_DIR)\utils.obj      $(OBJ_DIR)\version.obj    &
+          $(OBJ_DIR)\xalloc-die.obj $(OBJ_DIR)\xmalloc.obj    &
+          $(OBJ_DIR)\quote.obj      $(OBJ_DIR)\quotearg.obj
+
+all: $(OBJ_DIR) wget.exe .SYMBOLIC
+	@echo 'Welcome to Wget / Watcom'
+
+$(OBJ_DIR):
+	- mkdir $^@
+
+.ERASE
+.c{$(OBJ_DIR)}.obj: .AUTODEPEND
+	*$(COMPILE) -fo=$@ $[@
+
+css.c: css.l
+	flex -8 -o$@ $[@
+
+wget.exe: $(OBJECTS)
+	$(LINK) name $@ file { $(OBJECTS) } library $(%watt_root)\lib\wattcpwf.lib
+
+version.c: ..\msdos\Makefile.WC
+	@echo char *version_string = "$(VERSION)"; > $@
+	@echo char *compilation_string = "$(COMPILE)"; >> $@
+	@echo char *link_string = "$(LINK) name wget.exe file { $$(OBJECTS) }"; >> $@
+
+clean: .SYMBOLIC
+	- rm $(OBJ_DIR)\*.obj wget.exe wget.map version.c css.c
+	- rmdir $(OBJ_DIR)

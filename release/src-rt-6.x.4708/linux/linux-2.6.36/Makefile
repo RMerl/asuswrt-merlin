@@ -373,6 +373,10 @@ KBUILD_CFLAGS += -DBCMDRIVER -Dlinux
 # Bcm dbg flag
 #KBUILD_CFLAGS += -DBCMDBG
 
+ifeq ($(FEM_PATCH),y)
+KBUILD_CFLAGS += -DSKY85710_FEM_PATCH
+endif
+
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)

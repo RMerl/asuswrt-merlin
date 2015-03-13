@@ -79,14 +79,6 @@ int g_isEnrollee[MAX_NR_WL_IF] = { 0, };
 
 int getCountryRegion5G(const char *countryCode, int *warning);
 
-static void iwprivSet(const char *ifname, const char *name, const char *value)
-{
-	char tmpBuf[256];
-	sprintf(tmpBuf, "%s=%s", name, value);
-	_dprintf("[%s] %s (%s)\n", __func__, ifname, tmpBuf);
-	eval("iwpriv", (char *)ifname, "set", tmpBuf);
-}
-
 char *get_wscd_pidfile(void)
 {
 	static char tmpstr[32] = "/var/run/wscd.pid.";
@@ -510,6 +502,7 @@ int setAllLedOn(void)
 
 	switch (model) {
 	case MODEL_RTAC55U:
+	case MODEL_RTAC55UHP:
 	case MODEL_RT4GAC55U:
 		wan_red_led_control(LED_OFF);					/* Turn off WAN RED LED */
 		led_control(LED_2G, LED_ON);
@@ -544,6 +537,7 @@ int setAllLedOn2(void)
 	setAllLedOn();
 	switch (model) {
 	case MODEL_RTAC55U:
+	case MODEL_RTAC55UHP:
 	case MODEL_RT4GAC55U:
 		wan_red_led_control(LED_ON);
 		led_control(LED_WAN, LED_OFF);
@@ -576,6 +570,7 @@ int setAllLedOff(void)
 
 	switch (model) {
 	case MODEL_RTAC55U:
+	case MODEL_RTAC55UHP:
 	case MODEL_RT4GAC55U:
 		wan_red_led_control(LED_OFF);
 		led_control(LED_2G, LED_OFF);
@@ -1157,6 +1152,8 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	   
 	//fprintf(fp2,"ifconfig %s up\n",wif);
 	fprintf(fp2,"iwpriv %s hide_ssid %d\n",wif,nvram_get_int(strcat_r(prefix, "closed", tmp)));
+	if (!nvram_get_int(strcat_r(prefix, "closed", tmp)))
+		fprintf(fp2, "iwconfig %s essid \"%s\"\n", wif, nvram_get(strcat_r(prefix, "ssid", tmp)));
 	
 	if(subnet==0 && rep_mode==0 )
 	{   
@@ -2534,8 +2531,9 @@ void platform_start_ate_mode(void)
 	int model = get_model();
 
 	switch (model) {
-#ifdef RTAC55U
+#if defined(RTAC55U) || defined(RTAC55UHP)
 	case MODEL_RTAC55U:
+	case MODEL_RTAC55UHP:
 		gpio_dir(13, GPIO_DIR_OUT);	/* Configure 2G LED as GPIO */
 #ifndef RTCONFIG_ATEUSB3_FORCE
 		// this way is unstable
@@ -2557,7 +2555,7 @@ void platform_start_ate_mode(void)
 		}
 #endif
 		break;
-#endif	/* RTAC55U */
+#endif	/* RTAC55U | RTAC55UHP */
 
 #ifdef RT4GAC55U
 	case MODEL_RT4GAC55U:

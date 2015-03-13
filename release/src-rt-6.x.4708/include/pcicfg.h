@@ -275,6 +275,7 @@ typedef enum {
 	PCI_BASE_TIMER,
 	PCI_BASE_RTC,
 	PCI_BASE_PCI_HOTPLUG,
+	PCI_BASE_SDHCI,
 	PCI_BASE_OTHER = 0x80
 } pci_base_subclasses;
 

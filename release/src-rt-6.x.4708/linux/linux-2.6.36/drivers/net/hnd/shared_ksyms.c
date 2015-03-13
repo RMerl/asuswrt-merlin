@@ -473,6 +473,7 @@ extern void bcm_robo_enable_switch; EXPORT_SYMBOL(bcm_robo_enable_switch);
 extern void bcm_robo_flow_control; EXPORT_SYMBOL(bcm_robo_flow_control);
 extern void pdesc25; EXPORT_SYMBOL(pdesc25);
 extern void pdesc97; EXPORT_SYMBOL(pdesc97);
+extern void robo_chk_regs; EXPORT_SYMBOL(robo_chk_regs);
 extern void robo_eee_advertise_init; EXPORT_SYMBOL(robo_eee_advertise_init);
 extern void robo_fa_aux_enable; EXPORT_SYMBOL(robo_fa_aux_enable);
 extern void robo_fa_aux_init; EXPORT_SYMBOL(robo_fa_aux_init);

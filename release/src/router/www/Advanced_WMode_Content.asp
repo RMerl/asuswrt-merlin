@@ -105,7 +105,7 @@ function initial(){
 	}
 
 	wl_bwch_hint();
-	if(based_modelid == "RT-AC55U" || based_modelid == "4G-AC55U")
+	if(based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "4G-AC55U")
 		wl_vht_hint();
 	setTimeout("wds_scan();", 500);
 }
@@ -200,7 +200,7 @@ function applyRule(){
 	if(document.form.wl_mode_x.value == "0"){
 		inputRCtrl1(document.form.wl_wdsapply_x, 1);
 		inputRCtrl2(document.form.wl_wdsapply_x, 1);
-		if(based_modelid == "RT-AC55U" || based_modelid == "4G-AC55U")
+		if(based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "4G-AC55U")
 		{
 			inputRCtrl1(document.form.wl_wds_vht, 1);
 			inputRCtrl2(document.form.wl_wds_vht, 1);

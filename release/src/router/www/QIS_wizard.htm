@@ -387,6 +387,33 @@ function check_DUT(){
 		}
 	});
 }
+
+function detect_httpd(){
+	$j.ajax({
+    	url: '/httpd_check.xml',
+    	dataType: 'xml',
+		timeout: 1500,
+    	error: function(xhr){
+    		dead++;
+    		if(dead < 6){
+    			setTimeout("detect_httpd();", 1000);
+    		}else{
+    			$('loading_block1').style.display = "none";
+    			$('loading_block2').style.display = "none";
+    			$('loading_block3').style.display = "";
+				if(findasus_support){
+    				$('loading_block3').innerHTML = "<div>You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</div>";
+				}else{
+					$('loading_block3').innerHTML = "<div><#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#></div>";
+				}						
+    		}
+    	},
+    	success: function(){
+    		setTimeout("hideLoadingBar();",1000);
+      		location.href = "index.asp";
+  		}
+  	});
+}
 </script>
 </head>
 

@@ -216,10 +216,13 @@ function configCommand(){
 }
 
 function resetWPS(){
-	showLoading(5);
-	FormActions("apply.cgi", "wps_reset", "", "5");
+	var sec = 5;
+	if (Qcawifi_support)
+		sec += 7;
+	showLoading(sec);
+	FormActions("apply.cgi", "wps_reset", "", sec.toString());
 	document.form.submit();
-	setTimeout('location.href=location.href;', 5000);
+	setTimeout('location.href=location.href;', sec * 1000);
 }
 
 function resetTimer()
@@ -431,7 +434,7 @@ function show_wsc_status(wps_infos){
 	else{
 		$("wps_state_tr").style.display = "";
 		$("wps_state_td").innerHTML = wps_infos[0].firstChild.nodeValue;
-		if(productid=="RT-AC55U")
+		if(productid=="RT-AC55U" || productid=="RT-AC55UHP")
 		{   
 		   	if(document.form.wps_band.value =="0" && wlan0_radio_flag == "0")
 	   			$("wps_state_td").innerHTML += " (2.4G is disabled)";
@@ -568,12 +571,12 @@ function show_wsc_status2(wps_infos0, wps_infos1){
 	else{
 		$("wps_state_tr").style.display = "";
 		$("wps_state_td").innerHTML = wps_infos0[0].firstChild.nodeValue ;
-		if(productid=="RT-AC55U")
+		if(productid=="RT-AC55U" || productid=="RT-AC55UHP")
 		   	if(wlan0_radio_flag == "0")
 		   		$("wps_state_td").innerHTML += " (2.4G is disabled)";
 
 		$("wps_state_td").innerHTML += " / " + wps_infos1[0].firstChild.nodeValue ;
-		if(productid=="RT-AC55U")
+		if(productid=="RT-AC55U" || productid=="RT-AC55UHP")
 		   	if( wlan1_radio_flag == "0")
 	   			$("wps_state_td").innerHTML += " (5G is disabled)";
 		$("WPSConnTble").style.display = "";

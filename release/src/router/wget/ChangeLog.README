@@ -1,0 +1,16 @@
+Please note that Wget has more than one ChangeLog file:
+
+    ./ChangeLog: documents changes to files in the top-level directory
+                 and to files in subdirectories like po/ that don't have
+                 their own ChangeLogs
+
+    src/ChangeLog: documents only changes to files in the src directory
+
+    doc/ChangeLog: documents only changes to files in the doc directory
+
+    windows/ChangeLog: documents only changes to files in the windows directory
+
+    msdos/ChangeLog: documents only changes to files in the msdos directory
+
+When checking to see if a patch you sent in has been applied, please
+look in the appropriate ChangeLog(s).

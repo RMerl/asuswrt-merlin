@@ -22,22 +22,23 @@
 var $j = jQuery.noConflict();
 var varload = 0;
 var lan_ipaddr = '<% nvram_get("lan_ipaddr"); %>';
+var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';	//0: disable, 1: enable
+var ddns_server = '<% nvram_get("ddns_server_x"); %>';	//WWW.ASUS.COM
 
 
 function initial(){
 	show_menu();
+	if(ddns_enable == 1 && ddns_server == "WWW.ASUS.COM")
+		document.getElementById("transfer_ddns_field").style.display = "";
+		
 }
 
 function restoreRule(){
 	var alert_string = "<#Setting_factorydefault_hint1#>";
-	if(tmo_support){
-               if(lan_ipaddr != "192.168.29.1")
-                        alert_string += "The default LAN IP of ZVMODELVZ is 192.168.29.1.\nIf you can't back setting page later, please renew IP configuration of your computer.\n\n";
-	}
-	else{
-		if(lan_ipaddr != "192.168.1.1")
-			alert_string += "<#Setting_factorydefault_iphint#>\n\n";	
-	}		
+
+	if(lan_ipaddr != '<% nvram_default_get("lan_ipaddr"); %>')
+		alert_string += "<#Setting_factorydefault_iphint#>\n\n".replace("192.168.1.1", '<% nvram_default_get("lan_ipaddr"); %>');
+
 	alert_string += "<#Setting_factorydefault_hint2#>";
 	if(confirm(alert_string)){
 		document.form.action1.blur();
@@ -51,7 +52,9 @@ function restoreRule(){
 }
 
 function saveSetting(){
-	location.href='Settings_'+productid+'.CFG';
+	var flag = 0;
+	flag = document.getElementById("transfer_ddns").checked ? 1 : 0;
+	location.href='Settings_'+productid+'.CFG?path=' + flag;
 }
 
 function uploadSetting(){
@@ -196,6 +199,7 @@ function detect_httpd(){
 												</th>
 												<td>
 													<input class="button_gen" onclick="saveSetting();" type="button" value="<#CTL_onlysave#>" name="action2" />
+													<span id="transfer_ddns_field" style="display:none"><input id="transfer_ddns" type="checkbox">Transfer ASUS DDNS name</span>
 												</td>
 											</tr>
 											<tr>

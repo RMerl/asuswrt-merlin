@@ -994,6 +994,10 @@ static int dhcpv6_handle_reply(enum dhcpv6_msg orig, _unused const int rc,
 				&& olen > -4 + sizeof(struct dhcpv6_ia_hdr)) {
 			struct dhcpv6_ia_hdr *ia_hdr = (void*)(&odata[-4]);
 
+			if ((na_mode == IA_MODE_NONE && otype == DHCPV6_OPT_IA_NA) ||
+			    (pd_mode == IA_MODE_NONE && otype == DHCPV6_OPT_IA_PD))
+				continue;
+
 			// Test ID
 			if (ia_hdr->iaid != htonl(1) && otype == DHCPV6_OPT_IA_NA)
 				continue;

@@ -40,6 +40,7 @@ config MMC_SDHCI
 config MMC_SDHCI_IO_ACCESSORS
 	bool
 	depends on MMC_SDHCI
+	default y if BCM47XX
 	help
 	  This is silent Kconfig symbol that is selected by the drivers that
 	  need to overwrite SDHCI IO memory accessors.

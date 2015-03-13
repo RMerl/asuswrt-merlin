@@ -10,6 +10,7 @@
 <script type="text/JavaScript" src="/general.js"></script>
 <script type="text/JavaScript" src="/help.js"></script>
 <script type="text/JavaScript" src="/validator.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <style type="text/css">
 .hintstyle:link{
 	cursor:help;
@@ -19,6 +20,9 @@
 </style>
 <script type="text/JavaScript">
 function QKInternet_load_body(){
+	if(parent.document.QKform.sw_mode.value == 4) {
+		document.getElementById("nextButton").value = "<#CTL_apply#>";
+	}
 	parent.document.title = "<#Web_Title#> - <#QKSet_ISP_head#>";
 	
 	if(parent.ISMOBILE){
@@ -115,14 +119,55 @@ function submitForm(){
 		parent.document.QKform.lan_dnsenable_x.value = document.form.lan_dnsenable_x.value;		
 		parent.document.QKform.lan_dns1_x.value = document.form.lan_dns1_x.value;
 		parent.document.QKform.lan_dns2_x.value = document.form.lan_dns2_x.value;
-		parent.document.QKform.sw_mode.value = 3;
+		if(parent.document.QKform.sw_mode.value != 2 && parent.document.QKform.sw_mode.value != 4)
+			parent.document.QKform.sw_mode.value = 3;
 
 		if('<% nvram_get("sw_mode"); %>' == '1'){
 			parent.document.QKform.lan_ipaddr_rt.value = '<% nvram_get("lan_ipaddr"); %>';
 			parent.document.QKform.lan_netmask_rt.value = '<% nvram_get("lan_netmask"); %>';
 		}
 
-		location.href = document.form.next_page.value;
+		if(parent.document.QKform.sw_mode.value == 4) {
+			document.mbform.lan_ipaddr.value = document.form.lan_ipaddr.value;
+			document.mbform.lan_proto.value = document.form.lan_proto.value;
+			document.mbform.lan_netmask.value = document.form.lan_netmask.value;
+			document.mbform.lan_gateway.value = document.form.lan_gateway.value;
+			document.mbform.lan_dnsenable_x.value =  document.form.lan_dnsenable_x.value;			
+			document.mbform.lan_dns1_x.value = document.form.lan_dns1_x.value;
+			document.mbform.lan_dns2_x.value = document.form.lan_dns2_x.value;
+
+			if('<% nvram_get("sw_mode"); %>' == '1') {
+				document.mbform.lan_ipaddr_rt.disabled = false;
+				document.mbform.lan_netmask_rt.disabled = false;
+				document.mbform.lan_ipaddr_rt.value = parent.document.QKform.lan_ipaddr_rt.value;
+				document.mbform.lan_netmask_rt.value = parent.document.QKform.lan_netmask_rt.value;
+			}
+
+			document.mbform.wlc_band.value = parent.document.QKform.wlc_band.value;
+			document.mbform.wlc_ssid.value = parent.document.QKform.wlc_ssid.value;
+			document.mbform.wlc_wep.value = parent.document.QKform.wlc_wep.value;
+			document.mbform.wlc_key.value = parent.document.QKform.wlc_key.value;
+			document.mbform.wlc_wep_key.value = parent.document.QKform.wlc_wep_key.value;
+			document.mbform.wlc_auth_mode.value = parent.document.QKform.wlc_auth_mode.value;
+			document.mbform.wlc_crypto.value = parent.document.QKform.wlc_crypto.value;
+			document.mbform.wlc_wpa_psk.value = parent.document.QKform.wlc_wpa_psk.value;
+
+			document.mbform.http_username.value = parent.document.QKform.http_username.value;
+			if(parent.document.QKform.http_passwd.value != ""){
+				document.mbform.http_passwd.value = parent.document.QKform.http_passwd.value;
+				document.mbform.http_passwd.disabled = false;
+			}
+
+			document.mbform.sw_mode.value = 3;
+
+			if(parent.based_modelid == "RT-N14U" || parent.based_modelid == "RT-AC52U" || parent.based_modelid == "RT-AC55U") {
+				document.mbform.sw_mode.value = 2;
+			}
+			document.mbform.submit();
+		}
+		else {
+			location.href = document.form.next_page.value;
+		}
 	}
 }
 
@@ -277,10 +322,122 @@ function displayDNSCtrl(){
 	  document.form.lan_dnsenable_x_radio[1].checked = 1;
 	}
 }
+
+var retValHandler = {
+	"errCounter" : 0,
+
+	"forceHideLoading" : function(){
+		parent.hideLoading();
+		if(parent.document.getElementById("LoadingBar")){
+			parent.document.getElementById("LoadingBar").style.visibility = "hidden";
+			parent.document.getElementById("LoadingBar").style.display = "none";
+		}
+	},
+
+	"doQuery" : function(){
+		child_macaddr = '';
+	
+		$.ajax({
+			url: '/httpd_check.xml',
+			dataType: 'xml',
+			timeout: 2000,
+			error: function(xhr){
+				setTimeout("retValHandler.doQuery();", 1000);
+				retValHandler.errCounter++;
+				if(retValHandler.errCounter > 5){ // assume it in in connected and the IP of DUT has been changed
+					genErrorHint();
+					retValHandler.forceHideLoading();
+				}
+			},
+			success: function(response){
+				retValHandler.wlc_isConnected();
+			}
+		});	
+	},
+
+	"wlc_isConnected" : function(){
+		$.ajax({
+			url: '/ajax_wlc_state.asp',
+			dataType: 'script',
+			timeout: 2000,
+			error: function(xhr){
+				setTimeout("retValHandler.wlc_isConnected();", 1000);
+			},
+			success: function(response){
+				retValHandler.forceHideLoading();
+				if(parent.parent_macaddr && child_macaddr){
+					if(child_macaddr != parent.parent_macaddr){
+						genErrorHint();
+						return false;
+					}
+				}
+				else{
+					genErrorHint();
+					return false;
+				}
+
+				if(retValHandler.isConnected(wlc_state)){ // connected
+					location.href = '/qis/QIS_finish.htm';
+				}
+				else{
+					parent.isSubmit = true;
+					parent.isrescan = 120;
+					location.href = '/qis/QIS_sitesurvey.htm';
+				}
+			}
+		});	
+	},
+
+	"isConnected" : function(retVal){
+		if(retVal == 1)	
+			return true;
+		else
+			return false;
+	}
+}
 </script>
 </head>
 
 <body onLoad="QKInternet_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
+<form method="post" name="mbform" action="/start_apply2.htm" target="hidden_frame">
+<!-- submit needed -->
+<input type="hidden" name="current_page" value="/QIS_wizard.htm">
+<input type="hidden" name="next_page" value="/QIS_wizard.htm">   
+<input type="hidden" name="prev_page" value="/QIS_wizard.htm">
+<input type="hidden" name="flag" value="wlcconnect">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_wait" value="50">
+<input type="hidden" name="action_script" value="reboot">
+<!-- ap lan -->
+<input type="hidden" name="lan_proto" value="<% nvram_get("lan_proto"); %>">
+<input type="hidden" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>">
+<input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>">
+<input type="hidden" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>">
+<input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">
+<input type="hidden" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>">
+<input type="hidden" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>">
+<input type="hidden" name="lan_ipaddr_rt" value="<% nvram_get("lan_ipaddr_rt"); %>" disabled>
+<input type="hidden" name="lan_netmask_rt" value="<% nvram_get("lan_netmask_rt"); %>" disabled>
+<!-- wireless client -->
+<input type="hidden" name="wlc_psta" value="1">
+<input type="hidden" name="wlc_band" value="<% nvram_get("wlc_band"); %>">
+<input type="hidden" name="wlc_ssid" value="<% nvram_char_to_ascii("", "wlc_ssid"); %>">
+<input type="hidden" name="wlc_wep" value="<% nvram_get("wlc_wep"); %>">
+<input type="hidden" name="wlc_key" value="<% nvram_get("wlc_key"); %>">
+<input type="hidden" name="wlc_wep_key" value="<% nvram_get("wlc_wep_key"); %>">
+<input type="hidden" name="wlc_auth_mode" value="<% nvram_get("wlc_auth_mode"); %>">
+<input type="hidden" name="wlc_crypto" value="<% nvram_get("wlc_crypto"); %>">
+<input type="hidden" name="wlc_wpa_psk" value="<% nvram_get("wlc_wpa_psk"); %>">
+<input type="hidden" name="wlc_nbw_cap" value="2">
+<!-- system end -->
+<input type="hidden" name="sw_mode" value="<% nvram_get("sw_mode"); %>">
+<input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
+<input type="hidden" name="http_passwd" value="" disabled> 
+<input type="hidden" name="x_Setting" value="1">
+<input type="hidden" name="w_Setting" value="1">
+</form>
+
 <form method="post" name="form" action="/start_apply.htm" onsubmit="return submitForm();">
 <input type="hidden" name="current_page" value="QIS_lanip.htm">
 <input type="hidden" name="next_page" value="QIS_wireless.htm">   

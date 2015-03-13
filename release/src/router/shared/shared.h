@@ -232,6 +232,7 @@ enum {
 	MODEL_RTN56UB1,
 	MODEL_RTAC1200HP,
 	MODEL_RTAC55U,
+	MODEL_RTAC55UHP,
 	MODEL_RT4GAC55U,
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
@@ -259,6 +260,7 @@ enum {
 	MODEL_RTAC56U,
 	MODEL_RTAC53U,
 	MODEL_RTAC3200,
+	MODEL_RTAC88U,
 	MODEL_RTN14UHP,
 	MODEL_RTN10U,
 	MODEL_RTN10P,
@@ -428,9 +430,11 @@ static inline int have_usb3_led(int model)
 		case MODEL_RTAC68U:
 #ifndef RTCONFIG_ETRON_XHCI_USB3_LED
 		case MODEL_RTAC55U:
+		case MODEL_RTAC55UHP:
 #endif
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC3200:
+		case MODEL_RTAC88U:
 			return 1;
 	}
 	return 0;
@@ -641,6 +645,8 @@ extern unsigned int rtkswitch_WanPort_phySpeed(void);
 extern void ATE_qca8337_port_status(void);
 #else
 #define wif_to_vif(wif) (wif)
+extern int config_rtkswitch(int argc, char *argv[]);
+extern unsigned int rtkswitch_lanPorts_phyStatus(void);
 #endif
 
 #if defined(RTCONFIG_QCA)
@@ -730,6 +736,7 @@ extern int psta_exist_except(int unit);
 extern int psr_exist_except(int unit);
 extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
 extern int check_bwdpi_nvram_setting();
+extern int get_iface_hwaddr(char *name, unsigned char *hwaddr);
 
 /* mt7620.c */
 #if defined(RTCONFIG_RALINK_MT7620)
@@ -937,7 +944,7 @@ static inline int is_usb3_port(char *usb_node)
 	if (strstr(usb_node, get_usb_xhci_port(0)) || strstr(usb_node, get_usb_xhci_port(1)))
 		return 1;
 
-#if defined(RTAC55U)
+#if defined(RTAC55U) || defined(RTAC55UHP)
 	/* RT-AC55U equips external Etron XHCI host and enables QCA9557 internal EHCI host.
 	 * To make sure port1 maps to physical USB3 port and port2 maps to physical USB2 port respectively,
 	 * one of xhci usb bus is put to first item of ehci_ports whether USB2-only mode is enabled or not.

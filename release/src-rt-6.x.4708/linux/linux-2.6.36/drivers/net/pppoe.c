@@ -503,6 +503,10 @@ static int pppoe_disc_rcv(struct sk_buff *skb, struct net_device *dev,
 	if (ph->code != PADT_CODE)
 		goto abort;
 
+	/* Ignore PADT packets whose destination address isn't ours */
+	if (memcmp(eth_hdr(skb)->h_dest, dev->dev_addr, ETH_ALEN))
+		goto abort;
+
 	pn = pppoe_pernet(dev_net(dev));
 	po = get_item(pn, ph->sid, eth_hdr(skb)->h_source, dev->ifindex);
 	if (po) {

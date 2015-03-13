@@ -77,9 +77,13 @@ function QKInternet_load_body(){
 	parent.document.title = "<#Web_Title#> - <#menu5_4_4#>";
 
 	if(parent.ISMOBILE){
+		parent.set_step("internet_type");
 		hideObjs();
 		document.getElementById("theFieldset_apply").style.display = "";
 		document.getElementById("tblsetting_1").style.marginTop = "-15px";
+	}
+	else{
+		parent.set_step("t2");
 	}
 
 	switch_modem_mode('<% nvram_get("modem_enable"); %>');
@@ -108,8 +112,10 @@ function QKInternet_load_body(){
 	if(dualwan_set)
 		document.form.action_script.disabled = true;
 			
-	if(based_modelid == "4G-AC55U")
+	if(gobi_support){
+		document.getElementById("page_desc").innerHTML = "<#Mobile_apn_profile#>"
     	document.getElementById("adapter_type").style.display = "none";	
+	}	
 }
 
 function check_dongle_status(){
@@ -407,7 +413,7 @@ function switch_modem_mode(mode){
 	show_modem_list(mode);
 
 	if(mode == "1"){ // WCDMA
-		inputCtrl(document.form.Dev3G, 1);
+		//inputCtrl(document.form.Dev3G, 1);
 		inputCtrl(document.form.modem_country, 1);
 		inputCtrl(document.form.modem_isp, 1);
 		inputCtrl(document.form.modem_apn, 1);
@@ -419,7 +425,7 @@ function switch_modem_mode(mode){
 		//$("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "2"){ // CDMA2000
-		inputCtrl(document.form.Dev3G, 1);
+		//inputCtrl(document.form.Dev3G, 1);
 		inputCtrl(document.form.modem_country, 1);
 		inputCtrl(document.form.modem_isp, 1);
 		inputCtrl(document.form.modem_apn, 1);
@@ -431,7 +437,7 @@ function switch_modem_mode(mode){
 		//$("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "3"){ // TD-SCDMA
-		inputCtrl(document.form.Dev3G, 1);
+		//inputCtrl(document.form.Dev3G, 1);
 		inputCtrl(document.form.modem_country, 1);
 		inputCtrl(document.form.modem_isp, 1);
 		inputCtrl(document.form.modem_apn, 1);
@@ -443,7 +449,7 @@ function switch_modem_mode(mode){
 		//$("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "4"){	// WiMAX
-		inputCtrl(document.form.Dev3G, 1);
+		//inputCtrl(document.form.Dev3G, 1);
 		inputCtrl(document.form.modem_country, 1);
 		inputCtrl(document.form.modem_isp, 1);
 		inputCtrl(document.form.modem_apn, 0);
@@ -455,7 +461,7 @@ function switch_modem_mode(mode){
 		//$("hsdpa_hint").style.display = "";
 	}
 	else{	// Disable (mode == 0)
-		inputCtrl(document.form.Dev3G, 0);
+		//inputCtrl(document.form.Dev3G, 0);
 		inputCtrl(document.form.modem_enable_option, 0);
 		inputCtrl(document.form.modem_country, 0);
 		inputCtrl(document.form.modem_isp, 0);
@@ -725,7 +731,7 @@ function inet_ntoa(ip_num){
 			<table width="100%">
 				<tr>
 					<td align="left">
-						<div class="description_down"><#menu5_4_4#></div>
+						<div class="description_down" id="page_desc"><#menu5_4_4#></div>
 					</td>
 					<!--td align="right">
 						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">

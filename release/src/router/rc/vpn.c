@@ -114,12 +114,13 @@ void start_pptpd(void)
 	if (!nvram_match("pptpd_enable", "1")) {
 		return;
 	}
+
 	// cprintf("stop vpn modules\n");
 	// stop_vpn_modules ();
 
 	// Create directory for use by pptpd daemon and its supporting files
 	mkdir("/tmp/pptpd", 0744);
-	cprintf("open options file\n");
+	//cprintf("open options file\n");
 	// Create options file that will be unique to pptpd to avoid interference 
 	// with pppoe and pptp
 	fp = fopen("/tmp/pptpd/options.pptpd", "w");
@@ -288,7 +289,6 @@ void start_pptpd(void)
                 while ((b = strsep(&nvp, "<")) != NULL) {
                         if((vstrsep(b, ">", &pptpd_client, &vpn_network, &vpn_netmask)!=3)) continue;
                         if(strlen(pptpd_client)==0||strlen(vpn_network)==0||strlen(vpn_netmask)==0) continue;
-printf("write: %s %s %s\n", pptpd_client, vpn_network, vpn_netmask);
                         fprintf(fp, "if[ \"$PEERNAME\" == \"%s\" ] then;\n", pptpd_client);
                         fprintf(fp, "route del -net %s netmask %s\n", vpn_network, vpn_netmask);
                         fprintf(fp, "route add -net %s netmask %s dev $1\n", vpn_network, vpn_netmask);
@@ -340,3 +340,4 @@ void stop_pptpd(void)
 	killall_tk("bcrelay");
 	return;
 }
+

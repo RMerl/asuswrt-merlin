@@ -132,7 +132,7 @@ var setClientAttr = function(){
 	this.isASUS = false;
 	this.isLogin = false;
 	this.isOnline = false;
-	this.ipMethod = "Static";
+	this.ipMethod = "DHCP";
 }
 
 var clientList = new Array(0);

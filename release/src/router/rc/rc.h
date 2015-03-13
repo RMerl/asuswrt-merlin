@@ -313,7 +313,8 @@ extern int __need_to_start_wps_band(char *prefix);
 extern int need_to_start_wps_band(int wps_band);
 extern int getEEPROM(unsigned char *outbuf, unsigned short *lenpt, char *area);
 extern void hexdump(unsigned char *pt, unsigned short len);
-extern void setCTL(char *);
+extern void setCTL(const char *);
+extern int verify_ctl_table(void);
 #ifdef RTCONFIG_ATEUSB3_FORCE
 extern int getForceU3(void);
 extern int setForceU3(const char *val);

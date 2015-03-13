@@ -58,6 +58,10 @@ function QKDetect_load_body(){
 		document.getElementById("tblsetting_1").style.marginTop = "-30px";
 		parent.set_step("");
 	}
+
+	if(pin_remaining_count == ""){
+		getSimAuth();
+	}
 }
 
 function getDualWANState(){
@@ -140,12 +144,12 @@ function getWANStatus(){
 					}	
 					else if(wan_wanstate == 2 && wan_wansbstate == 0 && wan_wanauxstate == 0){
 						if(sim_state == 1){
-							if(modem_autoapn == "1" && usb_modem_auto_running != "" && usb_modem_auto_running != "1")
-								setTimeout('getWANStatus();', 5000);
+							if(modem_autoapn == "1" && usb_modem_auto_running != " " && usb_modem_auto_running != "1")
+								setTimeout('getWANStatus();', 3000);
 							else if(modem_autoapn == "1" && usb_modem_auto_running == "1" && usb_modem_auto_isp != "")
 								setTimeout('getWANStatus();', 1000);							
-							else	
-								redirect_page("modem");	
+							else
+								redirect_page("modem");
 						}
 						else if(sim_state == 2){
 							document.getElementById("sim_desc").innerHTML = "<strong>Please Input SIM PIN!</strong>";
@@ -347,6 +351,12 @@ function unblock_pin(){
 		setTimeout("getWANStatus();", 5000);	
 	}
 }
+
+function getSimAuth(){
+		document.simact_form.action_mode.value = "restart_simauth";
+		document.simact_form.submit();
+}
+
 </script>
 </head>
 

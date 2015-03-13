@@ -5381,6 +5381,30 @@ static int ej_get_simact_result(int eid, webs_t wp, int argc, char_t **argv){
 	return 0;
 }
 
+static int ej_modemuptime(int eid, webs_t wp, int argc, char_t **argv){
+	int ret = 0;
+	unsigned int now, start = atoi(nvram_safe_get("usb_modem_act_startsec"));
+	char *str;
+
+	if(start <= 0){
+		ret = websWrite(wp, "0");
+		return ret;
+	}
+
+	str = file2str("/proc/uptime");
+	if(!str){
+		ret = websWrite(wp, "0");
+		return ret;
+	}
+
+	now = atoi(str);
+	free(str);
+
+	ret = websWrite(wp, "%u", (now-start));
+
+	return ret;
+}
+
 #else
 static int ej_show_usb_path(int eid, webs_t wp, int argc, char_t **argv){
 	websWrite(wp, "[]");
@@ -5608,7 +5632,8 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	char *action_para;
 	char *current_url;
 	char command[32];
-
+	int i=0, j=0, len=0;
+	
 	action_mode = websGetVar(wp, "action_mode","");
 	current_url = websGetVar(wp, "current_page", "");
 	_dprintf("apply: %s %s\n", action_mode, current_url);
@@ -5632,12 +5657,19 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	{
 		char *system_cmd;
 		system_cmd = websGetVar(wp, "SystemCmd","");
+		len = strlen(system_cmd);
 
-		if(strchr(system_cmd, '&') || strchr(system_cmd, ';') || strchr(system_cmd, '%') || strchr(system_cmd, '|') || strchr(system_cmd, '\n') || strchr(system_cmd, '\r')){
-			_dprintf("[httpd] Invalid SystemCmd!\n");
-			strcpy(SystemCmd, "");
+		for(i=0;i<len;i++){
+			if (isalnum(system_cmd[i]) != 0 || system_cmd[i] == ':' || system_cmd[i] == '-' || system_cmd[i] == '_' || system_cmd[i] == '.' || isspace(system_cmd[i]) != 0)
+				j++;
+			else{
+				_dprintf("[httpd] Invalid SystemCmd!\n");
+				strcpy(SystemCmd, "");	
+				websRedirect(wp, current_url);
+				return 0;
+			}				
 		}
-		else if(!strcmp(current_url, "Main_Netstat_Content.asp") && (
+		if(!strcmp(current_url, "Main_Netstat_Content.asp") && (
 			strncasecmp(system_cmd, "netstat", 7) == 0
 		)){
 			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
@@ -6434,7 +6466,7 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 #endif
 	upgrade_err = 0;
 
-#if defined(RTN65U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTAC55U) || defined(RTN11P)
+#if defined(RTCONFIG_QCA) || defined(RTN65U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
 	if (!stop_upgrade_once) {
 		notify_rc_and_wait_1min("stop_upgrade");
 		stop_upgrade_once = 1;
@@ -7176,12 +7208,49 @@ void ctvbuf(FILE *f) {
 	}
 }
 
+static int
+prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, char_t *path, char_t *query)
+{
+	char *ddns_flag;
+	char *ddns_mac;
+	char *ddns_hostname_tmp;
+	char model_name;
+	
+	model_name = get_model();
+	
+	if(model_name == MODEL_RTN56U || model_name == MODEL_RTAC87U){
+		ddns_mac = nvram_get("et1macaddr");
+	}
+	else{
+		ddns_mac = nvram_get("et0macaddr");	
+	}
+	
+	ddns_flag = websGetVar(wp, "path", "");
+
+	if(strcmp(ddns_flag, "0") == 0){
+		ddns_hostname_tmp = nvram_get("ddns_hostname_x");
+		nvram_set("ddns_transfer", "");
+		nvram_set("ddns_hostname_x", "");
+	}
+	else{
+		nvram_set("ddns_transfer", ddns_mac);
+	}
+
+	nvram_commit();
+	sys_download("/tmp/settings");
+
+	if(strcmp(ddns_flag, "0") == 0){
+		nvram_set("ddns_hostname_x", ddns_hostname_tmp);
+		nvram_commit();
+	}
+
+	do_file("/tmp/settings", wp);
+}
+
 static void
 do_prf_file(char *url, FILE *stream)
 {
-	nvram_commit();
-	sys_download("/tmp/settings");
-	do_file("/tmp/settings", stream);
+    prf_file(stream, NULL, NULL, 0, url, NULL, NULL);
 }
 
 static void
@@ -7327,7 +7396,7 @@ struct mime_handler mime_handlers[] = {
 
 	{ "**.js",  "text/javascript", no_cache_IE7, NULL, do_ej, do_auth },
 	{ "**.cab", "text/txt", NULL, NULL, do_file, do_auth },
-	{ "**.CFG", "application/force-download", NULL, NULL, do_prf_file, do_auth },
+	{ "**.CFG", "application/force-download", NULL, do_html_post_and_get, do_prf_file, do_auth },
 	{ "ftpServerTree.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_ftpServerTree_cgi, do_auth },//andi
 	{ "**.ovpn", "application/force-download", NULL, NULL, do_prf_ovpn_file, do_auth },
 	{ "apply.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
@@ -7369,6 +7438,9 @@ struct except_mime_handler except_mime_handlers[] = {
 	{ "popup.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "general.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "help.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
+	{ "help_content.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
+	{ "validator.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
+	{ "form.js", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "start_autodet.asp", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "start_dsl_autodet.asp", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "start_apply.htm", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
@@ -8547,7 +8619,7 @@ int ej_initial_account(int eid, webs_t wp, int argc, char **argv){
 	disk_info_t *disks_info, *follow_disk;
 	partition_info_t *follow_partition;
 	char *command;
-	int len, result;
+	int len;
 	char *fn = "initial_account_error";
 
 	nvram_set("acc_num", "0");
@@ -8572,7 +8644,7 @@ int ej_initial_account(int eid, webs_t wp, int argc, char **argv){
 				sprintf(command, "rm -f %s/.__*", follow_partition->mount_point);
 				command[len] = 0;
 
-				result = system(command);
+				system(command);
 				free(command);
 
 				initial_folder_list(follow_partition->mount_point);
@@ -9666,7 +9738,7 @@ int ej_webdavInfo(int eid, webs_t wp, int argc, char **argv) {
 
 // 2010.09 James. {
 int start_autodet(int eid, webs_t wp, int argc, char **argv) {
-	notify_rc("start_autodet");
+	notify_rc_after_period_wait("start_autodet", 0);
 	return 0;
 }
 #if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)) || defined(RTCONFIG_QCA)
@@ -10796,6 +10868,7 @@ struct ej_handler ej_handlers[] = {
 	{ "get_modem_info", ej_get_modem_info},
 	{ "get_isp_scan_results", ej_get_isp_scan_results},
 	{ "get_simact_result", ej_get_simact_result},
+	{ "get_modemuptime", ej_modemuptime},
 	{ "get_AiDisk_status", ej_get_AiDisk_status},
 	{ "set_AiDisk_status", ej_set_AiDisk_status},
 	{ "get_all_accounts", ej_get_all_accounts},

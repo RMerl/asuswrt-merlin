@@ -282,6 +282,24 @@ function initial(){
 			if(typeof usbPorts[usbDevicesList[i].usbPath-1].deviceType == "undefined" || usbPorts[usbDevicesList[i].usbPath-1].deviceType == "")
 				show_USBDevice(usbDevicesList[i]);
 		}
+
+		for(var usbIndex = 1; usbIndex <= usbPortMax; usbIndex += 1) {
+			var usb_mount_count = document.getElementById("deviceOption_" + usbIndex).length;
+			if( usb_mount_count >= 2) {
+				var divUsbMountCount = document.createElement("div");
+				divUsbMountCount.className = "usb_count_circle";
+				divUsbMountCount.innerHTML = usb_mount_count;
+				document.getElementById("deviceText_" + usbIndex).appendChild(divUsbMountCount);
+
+				$j(".usb_count_circle").mouseover(function(){
+					return overlib(this.innerHTML + " usb devices are plugged in <% nvram_get("productid"); %> through this port.");
+				});
+
+				$j(".usb_count_circle").mouseout(function(){
+					nd();
+				});
+			}
+		}
 	});
 
 	showMapWANStatus(sw_mode);
@@ -1340,7 +1358,7 @@ function cal_panel_block(obj){
 }
 
 function check_usb3(){
-	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-N18U" || based_modelid == "TM-AC1900"){
+	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "RT-N18U"){
 		document.getElementById('usb1_image').src = "images/New_ui/networkmap/USB3.png";
 	}
 	else if(based_modelid == "RT-N65U"){

@@ -36,13 +36,7 @@ for(var i=0; i<accounts.length; i++){
 
 function QKinternettype_load_body(){
 
-	if(tmo_support){	//MODELDEP : T-Mobile (TM-AC1900)
-			document.getElementById("skip_btn").style.display = "";
-			document.getElementById("prev_btn").style.display = "none";
-			document.getElementById("pass_Desc1").innerHTML = "For security purposes, you MUST change your login username/password before continuing.";
-			document.getElementById("tmo_desc4").style.display = "";
-	}
-	else if(parent.based_modelid == "RT-N11P"){	//MODELDEP : RT-N11P (RT-N12+, RT-N12E_B)
+	if(parent.based_modelid == "RT-N11P"){	//MODELDEP : RT-N11P (RT-N12+, RT-N12E_B)
 			document.getElementById("point4").style.display = "none";
 	}
 	else{
@@ -85,7 +79,10 @@ function QKinternettype_load_body(){
 				document.form.next_page.value = "/qis/QIS_manual_setting.htm";				
 			}
 			else {
-				document.form.next_page.value = "/qis/QIS_manual_setting.htm";				
+				if(parent.based_modelid == "DSL-AC68U")
+					document.form.next_page.value = "/qis/QIS_detect.htm";
+				else
+					document.form.next_page.value = "/qis/QIS_manual_setting.htm";				
 			}
 		}
 	}

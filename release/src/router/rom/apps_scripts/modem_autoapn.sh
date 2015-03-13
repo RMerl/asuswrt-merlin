@@ -68,7 +68,6 @@ else
 		target=`echo $modem_imsi |cut -c '1-'$len 2>/dev/null`
 
 		if [ "$compare" == "$target" ]; then
-			nvram set modem_autoapn_imsi=$compare
 			break
 		fi
 
@@ -190,6 +189,7 @@ if [ "$1" == "console" ]; then
 	echo "   user: $modem_user."
 	echo "   pass: $modem_pass."
 elif [ "$1" == "set" ]; then
+	nvram set usb_modem_auto_imsi="$modem_imsi"
 	nvram set modem_country="$modem_country"
 	modem_isp=`nvram get modem_roaming_isp`
 	nvram set modem_isp="$modem_isp"
@@ -199,6 +199,7 @@ elif [ "$1" == "set" ]; then
 	nvram set modem_user="$modem_user"
 	nvram set modem_pass="$modem_pass"
 else
+	nvram set usb_modem_auto_imsi="$compare"
 	nvram set usb_modem_auto_country="$modem_country"
 	nvram set usb_modem_auto_isp="$modem_isp"
 	nvram set usb_modem_auto_apn="$modem_apn"

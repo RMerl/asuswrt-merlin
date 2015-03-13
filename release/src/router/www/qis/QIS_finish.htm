@@ -54,11 +54,6 @@ var JS_timeObj = new Date();
 var uptimeStr = "<% uptime(); %>";
 var newformat_systime = uptimeStr.substring(8,11) + " " + uptimeStr.substring(5,7) + " " + uptimeStr.substring(17,25) + " " + uptimeStr.substring(12,16);  //Ex format: Jun 23 10:33:31 2008
 var systime_millsec = Date.parse(newformat_systime); // millsec from system
-wlc_state = '<% nvram_get("wlc_state"); %>';
-wlc_sbstate = '<% nvram_get("wlc_sbstate"); %>';
-wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
-_wlc_ssid = '<% nvram_char_to_ascii("", "wlc_ssid"); %>';
-_sw_mode = '<% nvram_get("sw_mode"); %>';
 var webs_state_update = '<% nvram_get("webs_state_update"); %>';
 var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
 var webs_state_error = '<% nvram_get("webs_state_error"); %>';
@@ -168,6 +163,8 @@ if(parent.yadns_support){
 	var yadns_enable = '<% nvram_get("yadns_enable_x"); %>';
 	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
 }
+
+var wans_mode = '<% nvram_get("wans_mode"); %>';
 
 function yadns_apply(){
 	var enable = document.getElementById("yadns_enable").checked;
@@ -301,6 +298,7 @@ function QKfinish_load_body(){
 		document.getElementById("liveUpdate_div").style.display = "none";
 		return false;
 	}
+		
 	document.getElementById("QISmain").style.display = "";
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
 
@@ -310,7 +308,7 @@ function QKfinish_load_body(){
 	$("#ssid_5_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
 	$("#ssid_5")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'));
 	$("#key2_item")[0].innerHTML = "<#Network_key#>";
-	$("#key5_item")[0].innerHTML = "<#Network_key#>";	
+	$("#key5_item")[0].innerHTML = "<#Network_key#>";
 	$("#security_item2")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
 	$("#security_item5")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
 
@@ -440,7 +438,7 @@ function QKfinish_load_body(){
 			}
 			else if(auth_mode_5_2 == "open" && wep_x_5_2 != "0"){
 				$("#security5_2")[0].innerHTML = "Open System";
-				$("#key5_2_item")[0].innerHTML = "<#WLANConfig11b_WEPKey_itemname#>";
+				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
 				if(key_x_5_2 ==1)
 					shown_str = '<% nvram_get("wl2_key1"); %>';
 				else if(key_x_5_2 ==2)	
@@ -452,7 +450,7 @@ function QKfinish_load_body(){
 			}
 			else if(auth_mode_5_2 == "shared"){
 				$("#security5_2")[0].innerHTML = "Shared Key";
-				$("#key5_2_item")[0].innerHTML = "<#WLANConfig11b_WEPKey_itemname#>";
+				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
 				if(key_x_5_2 ==1)
 					shown_str = '<% nvram_get("wl2_key1"); %>';
 				else if(key_x_5_2 ==2)	
@@ -640,11 +638,23 @@ function QKfinish_load_body(){
 		var secondary_wanlink_type_conv = secondary_wanlink_type();	
 	
 	if(parent.dualWAN_support){
-		if(wan_primary == "wan0")
+		if(gobi_support){
+			document.getElementById("wan_hd1").innerHTML = "<#dualwan_primary#>";
 			$("#wantype")[0].innerHTML = wanlink_type_conv;
-		else if(wan_primary == "wan1")	 
-			$("#wantype")[0].innerHTML = secondary_wanlink_type_conv;
-	
+			document.getElementById("wanstatus_tr1").style.display = "";
+			document.getElementById("wan_tr2").style.display="";
+			document.getElementById("wantype_tr2").style.display="";
+			document.getElementById("wanstatus_tr2").style.display="";
+			document.getElementById("wanip_tr2").style.display="";
+			document.getElementById("wantype_item2").innerHTML = "<#Layer3Forwarding_x_ConnectionType_itemname#>";
+			document.getElementById("wantype2").innerHTML = secondary_wanlink_type_conv;
+		}
+		else{
+			if(wan_primary == "wan0")
+				$("#wantype")[0].innerHTML = wanlink_type_conv;
+			else if(wan_primary == "wan1")
+				$("#wantype")[0].innerHTML = secondary_wanlink_type_conv;
+		}	
 	}
 	else
 		$("#wantype")[0].innerHTML = wanlink_type_conv;
@@ -653,31 +663,64 @@ function QKfinish_load_body(){
 	//if('<% nvram_get("autodet_auxstate"); %>' == '6')
 		//$("#wantype")[0].innerHTML += '<input type="button" id="changeType" value="<#CTL_modify#>" onclick="redirect_page(\'internet_type\');" class="button_gen" style="margin-left:20px;">';
 		
-	
 	$("#wanip_item")[0].innerHTML = "<#WAN_IP#>";
 	
 		//Repeater mode P-AP
 	if('<% nvram_get("sw_mode"); %>' == "2"){
 		$("#wlcssid")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wlc_ssid"); %>');
-
-		if(wlc_state == 2){
-			$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
-		}
-		else{
-			$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
-		}
-
 		$("#wlcip")[0].innerHTML = reIP;
-
+		chkRepeaterConState();
 		$(".reItem").css("display", "none");
 		$(".wlcItem").css("display", "");
+		document.getElementById("tdWlcItem").innerHTML = "<#OP_RE_item#>";
+	}
+	else if('<% nvram_get("sw_mode"); %>' == "3" && '<% nvram_get("wlc_psta"); %>' == "1") {
+		$("#wlcssid")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wlc_ssid"); %>');
+		$("#wlcip")[0].innerHTML = reIP;
+		chkMBConState();
+		$(".reItem").css("display", "none");
+		$(".wlcItem").css("display", "");
+		$(".wlItem").css("display", "none");
+		document.getElementById("tdWlcItem").innerHTML = "Media bridge";
 	}
 	else{
 		if(parent.dualWAN_support){
-			if(wan_primary == "wan0")
+			if(gobi_support){
 				$("#wanip")[0].innerHTML = wanlink_ipaddr();
-			else if(wan_primary == "wan1")	 
-				$("#wanip")[0].innerHTML = secondary_wanlink_ipaddr();
+				document.getElementById("wanip_item2").innerHTML = "<#WAN_IP#>";
+				document.getElementById("wanip2").innerHTML = secondary_wanlink_ipaddr();	
+				if(wanlink_ipaddr() != "0.0.0.0"){
+					if(wans_mode == "fb" || wans_mode == "fo"){
+						if( wan_primary == "wan0" )
+							document.getElementById("wanstatus1").innerHTML = "Active";
+						else
+							document.getElementById("wanstatus1").innerHTML = "Standby";
+					}
+					else //Load-balance
+						document.getElementById("wanstatus1").innerHTML = "Active";
+				}
+				else
+					document.getElementById("wanstatus1").innerHTML = "Inactive";
+				
+				if(secondary_wanlink_ipaddr() != "0.0.0.0"){
+					if(wans_mode == "fb" || wans_mode == "fo"){
+						if( wan_primary == "wan1" )
+							document.getElementById("wanstatus2").innerHTML = "Active";
+						else
+							document.getElementById("wanstatus2").innerHTML = "Standby";
+					}
+					else //Load-balance
+						document.getElementById("wanstatus2").innerHTML = "Active";
+				}
+				else
+					document.getElementById("wanstatus2").innerHTML = "Inactive";			
+			}
+			else{
+				if(wan_primary == "wan0")
+					$("#wanip")[0].innerHTML = wanlink_ipaddr();
+				else if(wan_primary == "wan1")	 
+					$("#wanip")[0].innerHTML = secondary_wanlink_ipaddr();
+			}
 		}
 		else{
 			$("#wanip")[0].innerHTML = wanlink_ipaddr();
@@ -690,7 +733,8 @@ function QKfinish_load_body(){
 		if(parent.yadns_support){
 			$("#yadns_enable").checked = (yadns_enable != 0) ? true : false;
 			$("#yadns_defmode").checked = (yadns_mode == 1) ? true : false;
-			$(".yadnsItem").css("display", "");
+			if(!parent.yadns_hideqis || yadns_enable != 0)
+				$(".yadnsItem").css("display", "");
 			yadns_change(false);
 		}
 	}
@@ -879,6 +923,43 @@ function showclock(){
 	$("#system_time")[0].innerHTML = JS_timeObj2;
 	setTimeout("showclock()", 1000);
 }
+
+function chkRepeaterConState(){
+	$.ajax({
+		url: '/apscan.asp',
+		dataType: 'script',
+		timeout: 2000,
+		error: function(xhr){
+			setTimeout("chkRepeaterConState();", 1000);
+		},
+		success: function(response){
+			if(wlc_state == 2) {
+				$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
+			}
+			else{
+				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
+			}
+		}
+	});
+}
+function chkMBConState(){
+	$.ajax({
+		url: '/ajax_wlc_state.asp',
+		dataType: 'script',
+		timeout: 2000,
+		error: function(xhr){
+			setTimeout("chkMBConState();", 1000);
+		},
+		success: function(response){
+			if(wlc_state == 1) {
+				$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
+			}
+			else{
+				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
+			}
+		}
+	});
+}
 </script>
 </head>
 
@@ -923,22 +1004,22 @@ function showclock(){
 
 <table id="tblsetting_1" class="QISform_finish" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="margin-top:-10px;">
 	<!-- WL 2.4GHz -->
-	<tr id="freqtitle2">
+	<tr id="freqtitle2" class="wlItem">
 		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;" id="desc2g">(2.4GHz)</span></td>	
 	</tr>
-	<tr id="ssid2_block">
+	<tr id="ssid2_block" class="wlItem">
 	  <th width="180"><span id="ssid_2_item"></span></th>
 	  <td class="QISformtd" width="300px">
 			<span id="ssid_2" style="white-space: pre;"></span>
 	  </td>
 	</tr>
-	<tr id="key2_block">
+	<tr id="key2_block" class="wlItem">
 	  <th width="180"><span id="key2_item"></span></th>
 	  <td class="QISformtd">
 			<span id="key2"></span>
 	  </td>
 	</tr>
-	<tr id="security2_block">
+	<tr id="security2_block" class="wlItem">
 	  <th width="180"><span id="security_item2"></span></th>
 	  <td class="QISformtd">
 			<span id="security2"></span>
@@ -947,22 +1028,22 @@ function showclock(){
 
 
 	<!-- WL 5GHz -->
-	<tr id="freqtitle5">
+	<tr id="freqtitle5" class="wlItem">
 		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span id="band5g_desc" style="color:#5AD;">(5GHz)</span></td>	
 	</tr>
-	<tr id="ssid5_block">
+	<tr id="ssid5_block" class="wlItem">
 	  <th width="180"><span id="ssid_5_item"></span></th>
 	  <td class="QISformtd">
 			<span id="ssid_5" style="white-space: pre;"></span>
 	  </td>
 	</tr>
-	<tr id="key5_block">
+	<tr id="key5_block" class="wlItem">
 	  <th width="180"><span id="key5_item"></span></th>
 	  <td class="QISformtd">
 			<span id="key5"></span>
 	  </td>
 	</tr>
-	<tr id="security5_block">
+	<tr id="security5_block" class="wlItem">
 	  <th width="180"><span id="security_item5"></span></th>
 	  <td class="QISformtd">
 			<span id="security5"></span>
@@ -970,22 +1051,22 @@ function showclock(){
 	</tr>
 
 		<!-- WL 5GHz-2 -->
-	<tr id="freqtitle5_2">
+	<tr id="freqtitle5_2" class="wlItem">
 		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;">(5GHz-2)</span></td>	
 	</tr>
-	<tr id="ssid5_2_block">
+	<tr id="ssid5_2_block" class="wlItem">
 	  <th width="180"><span id="ssid_5_2_item"></span></th>
 	  <td class="QISformtd">
 			<span id="ssid_5_2" style="white-space: pre;"></span>
 	  </td>
 	</tr>
-	<tr id="key5_2_block">
+	<tr id="key5_2_block" class="wlItem">
 	  <th width="180"><span id="key5_2_item"></span></th>
 	  <td class="QISformtd">
 			<span id="key5_2"></span>
 	  </td>
 	</tr>
-	<tr id="security5_2_block">
+	<tr id="security5_2_block" class="wlItem">
 	  <th width="180"><span id="security_item5_2"></span></th>
 	  <td class="QISformtd">
 			<span id="security5_2"></span>
@@ -994,7 +1075,7 @@ function showclock(){
 
 	<!-- WAN -->
 	<tr class="reItem">
-		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_3#></td>	
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><div id="wan_hd1"><#menu5_3#></div></td>	
 	</tr>
 	<tr class="reItem">
 	  <th width="180"><span id="wantype_item"></span></th>
@@ -1002,12 +1083,41 @@ function showclock(){
 			<span id="wantype"></span>
 	  </td>
 	</tr>
+	<tr class="reItem" id="wanstatus_tr1" style="display:none;">
+	  <th width="180">Status </th>
+	  <td class="QISformtd">
+			<span id="wanstatus1"></span>
+	  </td>
+	</tr>  
 	<tr class="reItem">
 	  <th width="180"><span id="wanip_item"></span></th>
 	  <td class="QISformtd">
 			<span id="wanip"></span>
 	  </td>
+	</tr>  
+
+	<!-- Secondary WAN -->
+	<tr class="reItem" id="wan_tr2" style="display: none;">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><div id="wan_hd2"><#dualwan_secondary#></div></td>	
 	</tr>
+	<tr class="reItem" id="wantype_tr2" style="display: none;">
+	  <th width="180"><span id="wantype_item2"></span></th>
+	  <td class="QISformtd">
+			<span id="wantype2"></span>
+	  </td>
+	</tr>
+	<tr class="reItem" id="wanstatus_tr2" style="display: none;">
+	  <th width="180">Status </th>
+	  <td class="QISformtd">
+			<span id="wanstatus2"></span>
+	  </td>
+	</tr>  
+	<tr class="reItem" id="wanip_tr2" style="display: none;">
+	  <th width="180"><span id="wanip_item2"></span></th>
+	  <td class="QISformtd">
+			<span id="wanip2"></span>
+	  </td>
+	</tr>  
 
 	<!-- LAN -->
 	<tr class="reItem">
@@ -1054,7 +1164,7 @@ function showclock(){
 
 	<!-- WLC -->
 	<tr class="wlcItem">
-		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#OP_RE_item#></td>	
+		<td id="tdWlcItem" align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"></td>	
 	</tr>
 	<tr class="wlcItem">
 	  <th width="180"><span id="wlcssid_item"><#Wireless_name#>(Remote)</span></th>
@@ -1094,7 +1204,7 @@ function showclock(){
 	<div class="itemTitle"><#menu5_2#></div>
 	<fieldset>
 		<div class="row">
-			<label><#LAN_IP#></label>
+			<label><#LAN IP#></label>
 			<div id="lanip_m"></div>
 		</div>
 		<div class="row_end">

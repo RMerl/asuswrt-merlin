@@ -41,6 +41,10 @@ config RTCONFIG_BCM7
 	bool "Bcm sdk 7"
 	default n
 
+config RTCONFIG_BCM794
+	bool "Bcm sdk 7_14_94"
+	default n
+
 config RTCONFIG_BUILDBCM7
 	bool "build Bcm sdk 7 on 6 platforms"
 	default n
@@ -838,6 +842,10 @@ config RTCONFIG_NOWL
 	bool "no load wl module (only dhd test)"
 	default n
 
+config RTCONFIG_ALLNOWL
+	bool "no load all wl module "
+	default n
+
 config RTCONFIG_WIFILOGO
 	bool "building for Wi-Fi certification"
 	default n
@@ -845,6 +853,9 @@ config RTCONFIG_WIFILOGO
 config RTCONFIG_JFFS2USERICON
 	bool "Client list user upload icon"
 	default n
+
+config RTCONFIG_RTL8365MB
+	bool "rtl8365mb driver flag"
 
 config RTCONFIG_TOR
 	bool "The orion router function"

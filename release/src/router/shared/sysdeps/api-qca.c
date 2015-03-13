@@ -76,6 +76,10 @@ ieee80211_mhz2ieee(u_int freq)
 
 const char WIF_5G[] = "ath1";
 const char WIF_2G[] = "ath0";
+const char STA_5G[] = "sta1";
+const char STA_2G[] = "sta0";
+const char VAP_5G[] = "wifi1";
+const char VAP_2G[] = "wifi0";
 
 #define GPIOLIB_DIR	"/sys/class/gpio"
 
@@ -456,6 +460,27 @@ int qc98xx_verify_checksum(void *eeprom)
         return -1;
     }
     return 0;
+}
+
+int calc_qca_eeprom_csum(void *ptr, unsigned int eeprom_size)
+{
+	int i;
+	uint16_t *p = ptr, sum = 0;
+
+	if (!ptr || (eeprom_size & 1)) {
+		_dprintf("%s: invalid param. (ptr %p, eeprom_size %u)\n",
+			__func__, ptr, eeprom_size);
+		return -1;
+	}
+
+	*(p + 1) = 0;
+	for (i = 0; i < (eeprom_size / 2); ++i, ++p)
+		sum ^= __le16_to_cpu(*p);
+
+	p = ptr;
+	*(p + 1) = __cpu_to_le16(sum ^ 0xFFFF);
+
+	return 0;
 }
 
 /* get channel list via value of countryCode */

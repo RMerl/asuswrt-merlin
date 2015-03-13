@@ -185,6 +185,14 @@ echo "file_ver4=$file_ver4, list_ver4=$list_ver4."
 	if [ "$need_download" == "1" ]; then
 		# Geting the app's file name...
 		server_names=`grep -n '^src.*' $CONF_FILE |sort -r |awk '{print $3}'`
+
+		if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+			IS_SUPPORT_SSL=`nvram get rc_support|grep -i HTTPS`
+			if [ -n "$IS_SUPPORT_SSL" ]; then
+				wget_options="$wget_options --no-check-certificate"
+			fi
+		fi
+
 		for s in $server_names; do
 			if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
 				pkg_file=`_get_pkg_file_name_old $1 $s 0`
@@ -212,6 +220,7 @@ echo "file_ver4=$file_ver4, list_ver4=$list_ver4."
 		target=$2/$ipk_file_name
 		nvram set apps_download_file=$ipk_file_name
 		nvram set apps_download_percent=0
+		echo "wget -c $wget_options $pkg_server/$pkg_file -O $target"
 		wget -c $wget_options $pkg_server/$pkg_file -O $target &
 		wget_pid=`pidof wget`
 		if [ -z "$wget_pid" ] || [ $wget_pid -lt 1 ]; then

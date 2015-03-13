@@ -798,6 +798,33 @@ static void sdhci_prepare_data(struct sdhci_host *host, struct mmc_data *data)
 	sdhci_writew(host, data->blocks, SDHCI_BLOCK_COUNT);
 }
 
+#ifdef CONFIG_BCM47XX
+/* can't write SDHCI_TRANSFER_MODE now since the value for SDHCI_COMMAND is not ready */
+static u16 sdhci_set_transfer_mode(struct sdhci_host *host,
+	struct mmc_data *data)
+{
+	u16 mode;
+
+	if (data == NULL)
+		return 0;
+
+	WARN_ON(!host->data);
+
+	mode = SDHCI_TRNS_BLK_CNT_EN;
+	if (data->blocks > 1) {
+		if (host->quirks & SDHCI_QUIRK_MULTIBLOCK_READ_ACMD12)
+			mode |= SDHCI_TRNS_MULTI | SDHCI_TRNS_ACMD12;
+		else
+			mode |= SDHCI_TRNS_MULTI;
+	}
+	if (data->flags & MMC_DATA_READ)
+		mode |= SDHCI_TRNS_READ;
+	if (host->flags & SDHCI_REQ_USE_DMA)
+		mode |= SDHCI_TRNS_DMA;
+
+	return mode;
+}
+#else
 static void sdhci_set_transfer_mode(struct sdhci_host *host,
 	struct mmc_data *data)
 {
@@ -822,6 +849,7 @@ static void sdhci_set_transfer_mode(struct sdhci_host *host,
 
 	sdhci_writew(host, mode, SDHCI_TRANSFER_MODE);
 }
+#endif /* CONFIG_BCM47XX */
 
 static void sdhci_finish_data(struct sdhci_host *host)
 {
@@ -874,6 +902,9 @@ static void sdhci_send_command(struct sdhci_host *host, struct mmc_command *cmd)
 	int flags;
 	u32 mask;
 	unsigned long timeout;
+#ifdef CONFIG_BCM47XX
+	u16 mode;
+#endif /* CONFIG_BCM47XX */
 
 	WARN_ON(host->cmd);
 
@@ -910,7 +941,11 @@ static void sdhci_send_command(struct sdhci_host *host, struct mmc_command *cmd)
 
 	sdhci_writel(host, cmd->arg, SDHCI_ARGUMENT);
 
+#ifdef CONFIG_BCM47XX
+	mode = sdhci_set_transfer_mode(host, cmd->data);
+#else
 	sdhci_set_transfer_mode(host, cmd->data);
+#endif /* CONFIG_BCM47XX */
 
 	if ((cmd->flags & MMC_RSP_136) && (cmd->flags & MMC_RSP_BUSY)) {
 		printk(KERN_ERR "%s: Unsupported response type!\n",
@@ -936,7 +971,12 @@ static void sdhci_send_command(struct sdhci_host *host, struct mmc_command *cmd)
 	if (cmd->data)
 		flags |= SDHCI_CMD_DATA;
 
+#ifdef CONFIG_BCM47XX
+	/* write SDHCI_TRANSFER_MODE and SDHCI_COMMAND concurrently to avoid unwanted operation */
+	sdhci_writel(host, ((SDHCI_MAKE_CMD(cmd->opcode, flags) << 16) | mode), SDHCI_TRANSFER_MODE);
+#else
 	sdhci_writew(host, SDHCI_MAKE_CMD(cmd->opcode, flags), SDHCI_COMMAND);
+#endif /* CONFIG_BCM47XX */
 }
 
 static void sdhci_finish_command(struct sdhci_host *host)
@@ -992,14 +1032,31 @@ static void sdhci_set_clock(struct sdhci_host *host, unsigned int clock)
 	if (clock == 0)
 		goto out;
 
-	for (div = 1;div < 256;div *= 2) {
-		if ((host->max_clk / div) <= clock)
-			break;
+	/* merge from 2.6.37 */
+	if (host->version >= SDHCI_SPEC_300) {
+		/* Version 3.00 divisors must be a multiple of 2. */
+		if (host->max_clk <= clock)
+			div = 1;
+		else {
+			for (div = 2; div < SDHCI_MAX_DIV_SPEC_300; div += 2) {
+				if ((host->max_clk / div) <= clock)
+					break;
+			}
+		}
+	} else {
+		/* Version 2.00 divisors must be a power of 2. */
+		for (div = 1; div < SDHCI_MAX_DIV_SPEC_200; div *= 2) {
+			if ((host->max_clk / div) <= clock)
+				break;
+		}
 	}
 	div >>= 1;
 
-	clk = div << SDHCI_DIVIDER_SHIFT;
+	clk = (div & SDHCI_DIV_MASK) << SDHCI_DIVIDER_SHIFT;
+	clk |= ((div & SDHCI_DIV_HI_MASK) >> SDHCI_DIV_MASK_LEN)
+		<< SDHCI_DIVIDER_HI_SHIFT;
 	clk |= SDHCI_CLOCK_INT_EN;
+
 	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 
 	/* Wait max 20 ms */
@@ -1699,7 +1756,8 @@ int sdhci_add_host(struct sdhci_host *host)
 	host->version = sdhci_readw(host, SDHCI_HOST_VERSION);
 	host->version = (host->version & SDHCI_SPEC_VER_MASK)
 				>> SDHCI_SPEC_VER_SHIFT;
-	if (host->version > SDHCI_SPEC_200) {
+	/* merge from 2.6.37 */
+	if (host->version > SDHCI_SPEC_300) {
 		printk(KERN_ERR "%s: Unknown controller version (%d). "
 			"You may experience problems.\n", mmc_hostname(mmc),
 			host->version);
@@ -1770,8 +1828,14 @@ int sdhci_add_host(struct sdhci_host *host)
 		mmc_dev(host->mmc)->dma_mask = &host->dma_mask;
 	}
 
-	host->max_clk =
-		(caps & SDHCI_CLOCK_BASE_MASK) >> SDHCI_CLOCK_BASE_SHIFT;
+	/* merge from 2.6.37 */
+	if (host->version >= SDHCI_SPEC_300)
+		host->max_clk = (caps & SDHCI_CLOCK_V3_BASE_MASK)
+			>> SDHCI_CLOCK_BASE_SHIFT;
+	else
+		host->max_clk = (caps & SDHCI_CLOCK_BASE_MASK)
+			>> SDHCI_CLOCK_BASE_SHIFT;
+
 	host->max_clk *= 1000000;
 	if (host->max_clk == 0 || host->quirks &
 			SDHCI_QUIRK_CAP_CLOCK_BASE_BROKEN) {
@@ -1806,8 +1870,12 @@ int sdhci_add_host(struct sdhci_host *host)
 	mmc->ops = &sdhci_ops;
 	if (host->ops->get_min_clock)
 		mmc->f_min = host->ops->get_min_clock(host);
+	/* merge from 2.6.37 */
+	else if (host->version >= SDHCI_SPEC_300)
+		mmc->f_min = host->max_clk / SDHCI_MAX_DIV_SPEC_300;
 	else
-		mmc->f_min = host->max_clk / 256;
+		mmc->f_min = host->max_clk / SDHCI_MAX_DIV_SPEC_200;
+
 	mmc->f_max = host->max_clk;
 	mmc->caps |= MMC_CAP_SDIO_IRQ;
 
@@ -2024,7 +2092,7 @@ EXPORT_SYMBOL_GPL(sdhci_free_host);
 static int __init sdhci_drv_init(void)
 {
 	printk(KERN_INFO DRIVER_NAME
-		": Secure Digital Host Controller Interface driver\n");
+		": Secure Digital Host Controller Interface Driver\n");
 	printk(KERN_INFO DRIVER_NAME ": Copyright(c) Pierre Ossman\n");
 
 	return 0;

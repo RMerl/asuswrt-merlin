@@ -66,7 +66,7 @@ function initial(){
 		var wan0_ipaddr = wanlink_ipaddr();
 		var wan1_ipaddr = secondary_wanlink_ipaddr();		document.getElementById("wan_ctrl").style.display = "none";
 		document.getElementById("dualwan_ctrl").style.display = "";	
-		document.getElementById("dualwan_ctrl").innerHTML = '<#PPTP_desc2#> <span class="formfontdesc">Primary WAN IP : ' + wan0_ipaddr + ' </sapn><span class="formfontdesc">Secondary WAN IP : ' + wan1_ipaddr + '</sapn>';
+		document.getElementById("dualwan_ctrl").innerHTML = "<#PPTP_desc2#> <span class='formfontdesc'>Primary WAN IP : ' + wan0_ipaddr + ' </sapn><span class='formfontdesc'>Secondary WAN IP : ' + wan1_ipaddr + '</sapn>";
 		//check DUT is belong to private IP.
 		if(validator.isPrivateIP(wan0_ipaddr) && validator.isPrivateIP(wan1_ipaddr)){
 			document.getElementById("privateIP_notes").style.display = "";
@@ -81,7 +81,7 @@ function initial(){
 		else {	//secondary
 			wan_ipaddr = secondary_wanlink_ipaddr();
 		}
-		document.getElementById("wan_ctrl").innerHTML = '<#PPTP_desc2#>' +  wan_ipaddr;
+		document.getElementById("wan_ctrl").innerHTML = "<#PPTP_desc2#>" +  wan_ipaddr;
 		//check DUT is belong to private IP.
 		if(validator.isPrivateIP(wan_ipaddr)){
 			document.getElementById("privateIP_notes").style.display = "";
@@ -187,11 +187,11 @@ function pptpd_connected_status(){
 			}
 			
 			if(document.getElementById(username_status).innerHTML == "") {
-				document.getElementById(username_status).innerHTML = '<#Disconnected#>';
+				document.getElementById(username_status).innerHTML = "<#Disconnected#>";
 			}
 		}
 		else if(document.getElementById(username_status)) {
-			document.getElementById(username_status).innerHTML = '<#Disconnected#>';
+			document.getElementById(username_status).innerHTML = "<#Disconnected#>";
 		}	
 	}
 }
@@ -1002,13 +1002,13 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 			</tr>
 		</thead>
 		<tr>
-			<th width="30%"><#RouterConfig_GWStaticIP_itemname#></th>
+			<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(6,1);"><#RouterConfig_GWStaticIP_itemname#></a></th>
 			<td>
 				<input type="text" class="input_20_table" maxlength="15" name="pptpd_sr_ipaddr" onKeyPress="return validator.isIPAddr(this, event)">
 			</td>
 		</tr>
 		<tr>
-			<th width="30%"><#RouterConfig_GWStaticMask_itemname#></th>
+			<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(6,2);"><#RouterConfig_GWStaticMask_itemname#></a></th>
 			<td>
 				<input type="text" class="input_20_table" maxlength="15" name="pptpd_sr_netmask" onKeyPress="return validator.isIPAddr(this, event)" >
 			</td>

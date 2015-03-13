@@ -361,7 +361,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_akm", "", 0 },			/* WPA akm list */
 #ifdef RTCONFIG_BCMWL6
 #ifdef MFP
-	{ "wl_mfp", "0", 0 },			/* Protected Management Frame */
+	{ "wl_mfp", "-1", 0 },			/* Protected Management Frame */
 #endif
 	{ "wl_psr_mrpt", "0", 0 },		/* Default to one level repeating mode */
 #endif
@@ -670,16 +670,16 @@ struct nvram_tuple router_defaults[] = {
 	{"wl0_bsd_steering_policy", "0 5 3 -58 0 110 0x22", 0 },
 	{"wl1_bsd_steering_policy", "80 5 3 0 54 433 0x20", 0 },
 	{"wl2_bsd_steering_policy", "0 5 3 0 433 0 0x20", 0 },
-	{"wl0_bsd_sta_select_policy", "4 -58 0 110 0 0 -1 0 0 0 0x322", 0 },
-	{"wl1_bsd_sta_select_policy", "4 -76 0 433 0 0 1 0 0 0 0x220", 0 },
-	{"wl2_bsd_sta_select_policy", "4 0 433 0 0 0 1 0 0 0 0x220", 0 },
+	{"wl0_bsd_sta_select_policy", "4 -58 0 110 0 0 -1 0 0 0 0x122", 0 },
+	{"wl1_bsd_sta_select_policy", "4 -76 0 433 0 0 1 0 0 0 0x020", 0 },
+	{"wl2_bsd_sta_select_policy", "4 0 433 0 0 0 1 0 0 0 0x020", 0 },
 	{"wl0_bsd_if_select_policy", "eth3 eth1", 0 },
 	{"wl1_bsd_if_select_policy", "eth3 eth2", 0 },
 	{"wl2_bsd_if_select_policy", "eth1 eth2", 0 },
 	{"wl0_bsd_if_qualify_policy", "0 0x0", 0 },
 	{"wl1_bsd_if_qualify_policy", "60 0x0", 0 },
 	{"wl2_bsd_if_qualify_policy", "0 0x0", 0 },
-	{"bsd_bounce_detect", "180 4 1800", 0 },
+	{"bsd_bounce_detect", "180 1 3600", 0 },
 #endif
 	{"bsd_scheme", "2", 0 },
 #endif
@@ -1205,6 +1205,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ddns_wildcard_x", "0"},
 	{ "ddns_regular_check", "0"},
 	{ "ddns_regular_period", "60"},
+	{ "ddns_transfer", ""},
 	{ "ddns_refresh_x", "21"},	// Forced refresh period (in days)
 
 	// NVRAM for start_firewall
@@ -1518,6 +1519,8 @@ struct nvram_tuple router_defaults[] = {
 
 #if !defined(RTCONFIG_BCMARM) && !defined(RTCONFIG_QCA)
 	{ "apps_ipkg_old", "1" },
+#else
+	{ "apps_ipkg_old", "0" },
 #endif
 	{ "apps_ipkg_server", "" },
 	{ "apps_wget_timeout", "30" },
@@ -1602,7 +1605,6 @@ struct nvram_tuple router_defaults[] = {
 #else
 	{ "modem_autoapn", "0"}, // 0: disabled, 1: enabled, 2: don't change modem nvrams.
 #endif
-	{ "modem_autoapn_imsi", ""},
 	{ "modem_roaming", "0"}, // 0: disabled, 1: enabled.
 	{ "modem_roaming_mode", "1"}, // 0: automatically, 1: manually.
 	{ "modem_roaming_isp", ""}, // operator at the long format.

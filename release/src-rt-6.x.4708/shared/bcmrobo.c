@@ -49,6 +49,7 @@
 		        ((len) == 2) ? *((uint16 *)(var)) : \
 		        *((uint32 *)(var)))
 
+void robo_chk_regs(robo_info_t *robo);
 /*
  * Switch can be programmed through SPI interface, which
  * has a rreg and a wreg functions to read from and write to
@@ -941,10 +942,11 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 {
 	robo_info_t *robo;
 	uint32 reset, idx;
-#ifndef	_CFE_
+//#ifndef	_CFE_
 	const char *et1port, *et1phyaddr;
 	int mdcport = 0, phyaddr = 0;
-#endif /* _CFE_ */
+	uint8 val8;
+//#endif /* _CFE_ */
 	int lan_portenable = 0;
 	int rc;
 
@@ -1174,6 +1176,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	if (robo->pwrsave_wake_time == 0)
 		robo->pwrsave_wake_time = PWRSAVE_WAKE_TIME;
 	robo->pwrsave_mode_auto = getintvar(robo->vars, "switch_mode_auto");
+#endif /* _CFE_ */
 
 	/* Determining what all phys need to be included in
 	 * power save operation
@@ -1186,6 +1189,7 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	if (et1phyaddr)
 		phyaddr = bcm_atoi(et1phyaddr);
 
+#ifndef	_CFE_
 	if ((mdcport == 0) && (phyaddr == 4))
 		/* For 5325F switch we need to do only phys 0-3 */
 		robo->pwrsave_phys = 0xf;
@@ -1198,6 +1202,14 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 	/* See if one of the ports is connected to plc chipset */
 	robo->plc_hw = (getvar(vars, "plc_vifs") != NULL);
 #endif /* PLC */
+
+	/* reset p5 reg when needs to link up it in ac87u, ac88u */
+	if (ROBO_IS_BCM5301X(robo->devid) && mdcport == 0 && phyaddr == 30) {
+		val8 = 0xfb;
+		robo->ops->write_reg(robo, PAGE_CTRL, 0x5d, &val8, sizeof(val8));
+
+		robo_chk_regs(robo);
+	}
 
 #ifdef RGMII_BCM_FA
 #ifdef BCMFA
@@ -2345,6 +2357,41 @@ bcm_robo_enable_switch(robo_info_t *robo)
 	return ret;
 }
 
+void
+robo_chk_regs(robo_info_t *robo)
+{
+	uint8 val8;
+
+	printf("\n=================\nrobo chk regs:\n===================\n");
+        if (SRAB_ENAB() && ROBO_IS_BCM5301X(robo->devid)) {
+                robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_PORT5_GMIIPO, &val8, sizeof(val8));
+                printf("(0x%02x,0x%02x)Port 5 States Override: 0x%02x\n",
+                        PAGE_CTRL, REG_CTRL_PORT5_GMIIPO, val8);
+                robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_PORT7_GMIIPO, &val8, sizeof(val8));
+                printf("(0x%02x,0x%02x)Port 7 States Override: 0x%02x\n",
+                        PAGE_CTRL, REG_CTRL_PORT7_GMIIPO, val8);
+                robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MIIPO, &val8, sizeof(val8));
+                printf("(0x%02x,0x%02x)Port 8 States Override: 0x%02x\n",
+                        PAGE_CTRL, REG_CTRL_MIIPO, val8);
+                robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_IMP, &val8, sizeof(val8));
+                printf("(0x%02x,0x%02x)Port 8 IMP Control Register: 0x%02x\n",
+                        PAGE_CTRL, REG_CTRL_IMP, val8);
+                robo->ops->read_reg(robo, PAGE_MMR, REG_MGMT_CFG, &val8, sizeof(val8));
+                printf("(0x%02x,0x%02x) Global Management Config: 0x%02x\n",
+                        PAGE_MMR, REG_MGMT_CFG, val8);
+                robo->ops->read_reg(robo, PAGE_MMR, REG_MGMT_CFG, &val8, sizeof(val8));
+                printf("(0x%02x,0x%02x) 802.1Q VLAN Control 5: 0x%02x\n",
+                        PAGE_MMR, REG_MGMT_CFG, val8);
+                robo->ops->read_reg(robo, PAGE_MMR, REG_BRCM_HDR, &val8, sizeof(val8));
+                printf("(0x%02x,0x%02x) BRCM HDR Control Register: 0x%02x\n",
+                        PAGE_MMR, REG_BRCM_HDR, val8);
+                robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
+                printf("(0x%02x,0x%02x) Switch Mode Register: 0x%02x\n",
+                        PAGE_CTRL, REG_CTRL_MODE, val8);
+	}
+
+}
+
 #ifdef BCMDBG
 void
 robo_dump_regs(robo_info_t *robo, struct bcmstrbuf *b)
@@ -2933,6 +2980,8 @@ void
 robo_plc_hw_init(robo_info_t *robo)
 {
 	uint8 val8;
+	//const char *et1port, *et1phyaddr;
+	int mdcport = 0, phyaddr = 0;
 
 	ASSERT(robo);
 
@@ -2942,11 +2991,23 @@ robo_plc_hw_init(robo_info_t *robo)
 	/* Enable management interface access */
 	if (robo->ops->enable_mgmtif)
 		robo->ops->enable_mgmtif(robo);
+/*
+	et1port = getvar(vars, "et1mdcport");
+	if (et1port)
+		mdcport = bcm_atoi(et1port);
 
+	et1phyaddr = getvar(vars, "et1phyaddr");
+
+	if (et1phyaddr)
+		phyaddr = bcm_atoi(et1phyaddr);
+*/
 	if (robo->devid == DEVID53115) {
 		/* Fix the duplex mode and speed for Port 5 */
 		val8 = ((1 << 6) | (1 << 2) | 3);
 		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIP5O, &val8, sizeof(val8));
+	//} else if (ROBO_IS_BCM5301X(robo->devid) && mdcport == 0 && phyaddr == 30) {
+	//	val8 = 0xfb;
+	//	robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIP5O, &val8, sizeof(val8));
 	} else if ((robo->sih->chip == BCM5357_CHIP_ID) &&
 	           (robo->sih->chippkg == BCM5358_PKG_ID)) {
 		/* Fix the duplex mode and speed for Port 4 (MII port). Force

@@ -29,7 +29,7 @@ if [ "$2" == "stop" ]; then
 		PIDS=`echo $PIDS1 $PIDS2 $PIDS3 $PIDS4 $PIDS5 | tr  '\n' ' '`
 
 		if [ -z "`echo $PIDS | tr -d ' \n\t\f\r'`" ] ; then
-			break;
+			break
 		fi
 
 		kill -TERM $PIDS

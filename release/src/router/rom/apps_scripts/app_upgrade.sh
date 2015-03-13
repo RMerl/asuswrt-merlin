@@ -152,6 +152,14 @@ _download_package(){
 
 	# Geting the app's file name...
 	server_names=`grep -n '^src.*' $CONF_FILE |sort -r |awk '{print $3}'`
+
+	if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+			IS_SUPPORT_SSL=`nvram get rc_support|grep -i HTTPS`
+			if [ -n "$IS_SUPPORT_SSL" ]; then
+				wget_options="$wget_options --no-check-certificate"
+			fi
+	fi
+
 	for s in $server_names; do
 		if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
 			pkg_file=`_get_pkg_file_name_old $1 $s 0`

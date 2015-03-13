@@ -571,24 +571,74 @@ void create_passwd(void)
 	run_postconf("group.postconf","/etc/group");
 }
 
+void get_dhcp_pool(char **dhcp_start, char **dhcp_end, char *buffer)
+{
+	if (dhcp_start == NULL || dhcp_end == NULL || buffer == NULL)
+		return;
+
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED){
+		if(nvram_match("lan_proto", "static")) {
+			in_addr_t lan_ipaddr, lan_netmask;
+			char *p = buffer;
+			unsigned char lan1[4], lan2[4];
+			unsigned offset;
+
+			inet_aton(nvram_safe_get("lan_ipaddr") , (struct in_addr*) &lan_ipaddr);
+			inet_aton(nvram_safe_get("lan_netmask"), (struct in_addr*) &lan_netmask);
+//			cprintf("#### lan_ipaddr(%08x) lan_netmask(%08x)\n", lan_ipaddr, lan_netmask);
+
+			//start
+			if ((ntohl(lan_ipaddr & lan_netmask) | 1 ) == ntohl(lan_ipaddr))
+				offset = 2;
+			else
+				offset = 1;
+			*(in_addr_t *) &lan1 = (lan_ipaddr & lan_netmask) | htonl(offset);
+			*dhcp_start = p;
+			p += sprintf(p, "%u.%u.%u.%u", lan1[0], lan1[1], lan1[2], lan1[3]);
+			p += 1;
+
+			//end
+			if ((ntohl(lan_ipaddr & lan_netmask) | 254) == ntohl(lan_ipaddr))
+				offset = 253;
+			else
+				offset = 254;
+			*((in_addr_t *) &lan2) = (lan_ipaddr & lan_netmask) | htonl(offset);
+			*dhcp_end = p;
+			p += sprintf(p, "%u.%u.%u.%u", lan2[0], lan2[1], lan2[2], lan2[3]);
+			p += 1;
+
+//			cprintf("#### dhcp_start(%s) dhcp_end(%s)\n", *dhcp_start, *dhcp_end);
+		} else {
+			*dhcp_start = nvram_default_get("dhcp_start");
+			*dhcp_end = nvram_default_get("dhcp_end");
+		}
+	}
+	else
+#endif
+	{
+		*dhcp_start = nvram_safe_get("dhcp_start");
+		*dhcp_end = nvram_safe_get("dhcp_end");
+	}
+}
+
+#if 0
 int get_dhcpd_lmax()
 {
 	unsigned int lstart, lend, lip;
 	int dhlease_size, invalid_ipnum, except_lanip;
 	char *dhcp_start, *dhcp_end, *lan_netmask, *lan_ipaddr;
+	char buffer[64];
 
+	get_dhcp_pool(&dhcp_start, &dhcp_end, buffer);
 #ifdef RTCONFIG_WIRELESSREPEATER
 	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED){
-		dhcp_start = nvram_default_get("dhcp_start");
-		dhcp_end = nvram_default_get("dhcp_end");
 		lan_netmask = nvram_default_get("lan_netmask");
 		lan_ipaddr = nvram_default_get("lan_ipaddr");
 	}
 	else
 #endif
 	{
-		dhcp_start = nvram_safe_get("dhcp_start");
-		dhcp_end = nvram_safe_get("dhcp_end");
 		lan_netmask = nvram_safe_get("lan_netmask");
 		lan_ipaddr = nvram_safe_get("lan_ipaddr");
 	}
@@ -604,6 +654,7 @@ int get_dhcpd_lmax()
 
 	return dhlease_size;
 }
+#endif
 
 void start_dnsmasq()
 {
@@ -625,7 +676,7 @@ void start_dnsmasq()
 
 	lan_ifname = nvram_safe_get("lan_ifname");
 #ifdef RTCONFIG_WIRELESSREPEATER
-	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED) {
+	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED && !nvram_match("lan_proto", "static")) {
 		lan_ipaddr = nvram_default_get("lan_ipaddr");
 	} else
 #endif
@@ -735,20 +786,18 @@ void start_dnsmasq()
 	) {
 		char *dhcp_start, *dhcp_end;
 		int dhcp_lease;
+		char buffer[64];
 
 		have_dhcp |= 1; /* DHCPv4 */
 
+		get_dhcp_pool(&dhcp_start, &dhcp_end, buffer);
 #ifdef RTCONFIG_WIRELESSREPEATER
 		if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED){
-			dhcp_start = nvram_default_get("dhcp_start");
-			dhcp_end = nvram_default_get("dhcp_end");
 			dhcp_lease = atoi(nvram_default_get("dhcp_lease"));
 		}
 		else
 #endif
 		{
-			dhcp_start = nvram_safe_get("dhcp_start");
-			dhcp_end = nvram_safe_get("dhcp_end");
 			dhcp_lease = nvram_get_int("dhcp_lease");
 		}
 
@@ -962,11 +1011,11 @@ void start_dnsmasq()
 #endif
 
 	if (have_dhcp) {
+#if 0	//this would limit the total count of dhcp client (including dhcp pool and manually assigned static IP).
 		/* Maximum leases */
-		if ((i = get_dhcpd_lmax()) > 0) {
-			if (i < 253) i = 253;
+		if ((i = get_dhcpd_lmax()) > 0)
 			fprintf(fp, "dhcp-lease-max=%d\n", i);
-		}
+#endif
 
 		/* Faster for moving clients, if authoritative */
 		if (nvram_get_int("dhcpd_auth") >= 0)
@@ -2907,7 +2956,7 @@ void start_upnp(void)
 	int min_lifetime, max_lifetime;
 
 	if (getpid() != 1) {
-		notify_rc("start_upnp");
+		notify_rc_and_period_wait("start_upnp", 25);
 		return;
 	}
 
@@ -3041,7 +3090,7 @@ void start_upnp(void)
 void stop_upnp(void)
 {
 	if (getpid() != 1) {
-		notify_rc("stop_upnp");
+		notify_rc_and_period_wait("stop_upnp", 25);
 		return;
 	}
 
@@ -3553,10 +3602,6 @@ start_services(void)
 #endif
 //	start_upnp();
 
-#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-	start_pptpd();
-#endif
-
 #ifdef RTCONFIG_USB
 //	_dprintf("restart_nas_services(%d): test 8.\n", getpid());
 	//restart_nas_services(0, 1);
@@ -3754,13 +3799,28 @@ stop_services(void)
 int stop_wifi_service(void)
 {
    	int is_unload;
-	kill_pidfile_tk("/var/run/hostapd_2g.pid");
-	kill_pidfile_tk("/var/run/hostapd_5g.pid");
-	kill_pidfile_tk("/var/run/hostapd_2g_others.pid");
-	kill_pidfile_tk("/var/run/hostapd_5g_others.pid");
-	doSystem("ifconfig wifi0 down");
-	doSystem("ifconfig wifi1 down");
+	int i, unit = -1, sunit = 0;
+	unsigned int m;	/* bit0~3: 2G, bit4~7: 5G */
+	char wif[256];
+	char pid_path[] = "/var/run/hostapd_athXXX.pidYYYYYY";
+	char path[] = "/sys/class/net/ath001XXXXXX";
 	
+	for (i = 0, unit = 0, sunit = 0, m = 0xFF; m > 0; ++i, ++sunit, m >>= 1) {
+		if (i == 4) {
+			unit = 1;
+			sunit -= 4;
+		}
+		__get_wlifname(unit, sunit, wif);
+		sprintf(path, "/sys/class/net/%s", wif);
+		if (d_exists(path))
+			eval("ifconfig", wif, "down");
+		sprintf(pid_path, "/var/run/hostapd_%s.pid", wif);
+		if (!f_exists(pid_path))
+			continue;
+
+		kill_pidfile_tk(pid_path);
+	}
+
 #if defined(QCA_WIFI_INS_RM) 	
 	if(nvram_get_int("sw_mode")==2)
 		is_unload=0;
@@ -3771,9 +3831,10 @@ int stop_wifi_service(void)
 #endif	
 	if(is_unload)
 	{   
-		if (module_loaded("umac"))
+		if (module_loaded("umac")) {
 			modprobe_r("umac");
-		sleep(2);
+			sleep(2);
+		}
 		if (module_loaded("ath_dev"))
 			modprobe_r("ath_dev");
 
@@ -4198,6 +4259,7 @@ again:
 			stop_tr();
 #endif
 			stop_jffs2(1);
+			stop_networkmap();
 			// TODO free necessary memory here
 		}
 		if(action & RC_SERVICE_START) {
@@ -4543,7 +4605,7 @@ again:
 			stop_8021x();
 #endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-			stop_pptpd();
+			//stop_pptpd();
 #endif
 			stop_wan();
 			stop_lan();
@@ -4571,7 +4633,7 @@ again:
 			start_8021x();
 #endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-			start_pptpd();
+			//start_pptpd();
 #endif
 			start_wps();
 #ifdef RTCONFIG_BCMWL6
@@ -4697,7 +4759,8 @@ check_ddr_done:
 		(get_model() == MODEL_RTN12HP_B1) ||
 		(get_model() == MODEL_APN12HP) ||
 		(get_model() == MODEL_RTN66U) ||
-		(get_model() == MODEL_RTN18U))
+		(get_model() == MODEL_RTN18U) ||
+		(get_model() == MODEL_RTAC88U))
 			set_wltxpower();
 		else
 			dbG("\n\tDon't do this!\n\n");
@@ -6080,6 +6143,8 @@ int
 start_acsd()
 {
 	int ret = 0;
+
+	if(nvram_match("nowl", "1")) return 0;
 
 #ifdef RTCONFIG_PROXYSTA
 	if (psta_exist())

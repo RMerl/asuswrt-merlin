@@ -199,7 +199,7 @@ int main(int argc, char **argv)
 
 		}
 	}
-#if defined(RTAC55U)
+#if defined(RTAC55U) || defined(RTAC55UHP)
 	if (argc - optind == 1)
 		mtd_dev = argv[optind];
 #else
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 	}
 
 	if (length == -1) {
-#if defined(RTAC55U)
+#if defined(RTAC55U) || defined(RTAC55UHP)
 		if (!strcmp(mtd_dev, "/dev/mtd10") && !offset) {
 			/* skip first block of /dev/mtd10 for RT-AC55U. */
 			offset = meminfo.erasesize;

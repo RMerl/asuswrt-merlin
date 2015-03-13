@@ -326,7 +326,7 @@ int Gobi_SignalLevel_Int(void)
 	return value;
 }
 
-char * Gobi_Version(char *line, int size)
+char * Gobi_FwVersion(char *line, int size)
 {
 	const char *atCmd   = "I";
 	const char *tmpFile = "/tmp/ati";
@@ -334,6 +334,58 @@ char * Gobi_Version(char *line, int size)
 
 	if (Gobi_AtCommand(atCmd, tmpFile) >= 0
 	    && (p = get_line_by_str(line, size, tmpFile, "WWLC")) != NULL)
+	{
+		skip_space(p);
+		cut_space(p);
+	}
+	return p;
+}
+
+char * Gobi_QcnVersion(char *line, int size)
+{
+	const char *atCmd   = "$QCNVER";
+	const char *tmpFile = "/tmp/at_qcnver";
+	char *p = NULL;
+
+	if (Gobi_AtCommand(atCmd, tmpFile) >= 0
+	    && (p = get_line_by_num(line, size, tmpFile, 3)) != NULL)
+	{
+		skip_space(p);
+		cut_space(p);
+	}
+	return p;
+}
+
+char * Gobi_SelectBand(const char *band, char *line, int size)
+{
+	const char *atCmd1;
+	const char *atCmd2 = "+CSETPREFNET=11";
+	const char *atCmd3 = "+CFUN=1,1";
+	const char *tmpFile1 = "/tmp/at_nv65633";
+	const char *tmpFile2 = "/tmp/at_csetprefnet";
+	const char *tmpFile3 = "/tmp/at_cfun";
+	char *p = NULL;
+
+	if (band == NULL)
+	{
+		atCmd1 = "$NV65633=0000002000080044";
+		atCmd2 = "+CSETPREFNET=10";
+	}
+	else if (strcmp(band, "B3") == 0)
+		atCmd1 = "$NV65633=0000000000000004";
+	else if (strcmp(band, "B7") == 0)
+		atCmd1 = "$NV65633=0000000000000040";
+	else if (strcmp(band, "B20") == 0)
+		atCmd1 = "$NV65633=0000000000080000";
+	else if (strcmp(band, "B38") == 0)
+		atCmd1 = "$NV65633=0000002000000000";
+	else
+		return NULL;
+
+	if (Gobi_AtCommand(atCmd1, tmpFile1) >= 0
+		&& Gobi_AtCommand(atCmd2, tmpFile2) >= 0
+		&& Gobi_AtCommand(atCmd3, tmpFile3) >= 0
+		&& (p = get_line_by_num(line, size, tmpFile2, 1)) != NULL)
 	{
 		skip_space(p);
 		cut_space(p);

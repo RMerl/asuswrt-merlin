@@ -270,6 +270,9 @@ void get_gpio_values_once(void)
 #endif
 	led_gpio_table[LED_TURBO] = __get_gpio("led_turbo_gpio");
 	led_gpio_table[LED_WAN_RED] = __get_gpio("led_wan_red_gpio");
+#ifdef RTCONFIG_QTN
+	led_gpio_table[BTN_QTN_RESET] = __get_gpio("reset_qtn_gpio");
+#endif
 #ifdef RT4GAC55U
 	led_gpio_table[LED_LTE] = __get_gpio("led_lte_gpio");
 	led_gpio_table[LED_SIG1] = __get_gpio("led_sig1_gpio");

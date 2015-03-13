@@ -693,7 +693,7 @@ function change_smart_con(v){
 										&nbsp;&nbsp;
 										<input type="radio" id="sw_mode3_radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><label for="sw_mode3_radio"><#OP_AP_item#></label>
 										&nbsp;&nbsp;
-										<span id="mbMode"><input id="sw_mode4_radio" type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>><label for="sw_mode4_radio">Media bridge</label></span>
+										<span id="mbMode"><input id="sw_mode4_radio" type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>><label for="sw_mode4_radio">Media Bridge</label></span>
 									</span>
 									<br/><br/>
 									<span style="word-wrap:break-word;word-break:break-all"><label id="mode_desc"></label></span>

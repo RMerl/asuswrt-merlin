@@ -1272,12 +1272,30 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 	else if(!strcmp(command, "Get_GobiVersion")) {
 		char line[128];
-		if (Gobi_Version(line, sizeof(line)) == NULL)
+		if (Gobi_FwVersion(line, sizeof(line)) == NULL)
 		{
 			puts("FAIL");
 			return EINVAL;
 		}
 		printf("%s\n", line);
+	}
+	else if(!strcmp(command, "Get_GobiQcnVersion")) {
+		char line[128];
+		if (Gobi_QcnVersion(line, sizeof(line)) == NULL)
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		printf("%s\n", line);
+	}
+	else if(!strcmp(command, "Set_GobiBand")) {
+		char line[128];
+		if (Gobi_SelectBand(value, line, sizeof(line)) == NULL)
+		{
+			puts("FAIL");
+			return EINVAL;
+		}
+		printf("FINISH\n");
 	}
 #endif	/* RT4GAC55U */
 	else

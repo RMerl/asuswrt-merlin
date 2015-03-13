@@ -198,7 +198,8 @@ var media_support = isSupport(" media");
 var nomedia_support = isSupport("nomedia");
 var cloudsync_support = isSupport("cloudsync");
 var aicloudipk_support = isSupport("aicloudipk");
-var yadns_support = isSupport("yadns");
+var yadns_hideqis = isSupport("yadns_hideqis");
+var yadns_support = yadns_hideqis || isSupport("yadns");
 var dnsfilter_support = isSupport("dnsfilter");
 var manualstb_support = isSupport("manual_stb");
 var wps_multiband_support = isSupport("wps_multiband");
@@ -603,11 +604,6 @@ function remove_url(){
 		menuL2_title[2]="";
 		menuL2_link[2]="";
 		remove_menu_item("SMTP_Client.asp");	
-	}
-
-	if(isSupport("nopp") /*&& (odmpid == "TM-AC1900")*/) {	//MODELDEP: TM-AC1900
-		menuL2_title[2]="";
-		menuL2_link[2]="";
 	}
 
 	if(downsize_4m_support) {
@@ -3059,19 +3055,47 @@ function refreshStatus(xmldoc){
 
 	// guest network
 	if(multissid_support != -1 && (gn_array_5g.length > 0 || (wl_info.band5g_2_support && gn_array_5g_2.length > 0))){
-		for(var i=0; i<gn_array_2g.length; i++){
-			if(gn_array_2g[i][0] == 1 || gn_array_5g[i][0] == 1 || (wl_info.band5g_2_support && gn_array_5g_2[i][0] == 1)){
-				$("guestnetwork_status").className = "guestnetworkstatuson";
-				$("guestnetwork_status").onclick = function(){openHint(24,4);}
-				break;
+		if(based_modelid == "RT-AC87U"){	//workaround for RT-AC87U
+			for(var i=0; i<gn_array_2g.length; i++){
+				if(gn_array_2g[i][0] == 1){
+					$("guestnetwork_status").className = "guestnetworkstatuson";
+					$("guestnetwork_status").onclick = function(){openHint(24,4);}
+					break;
+				}
+				else{
+					$("guestnetwork_status").className = "guestnetworkstatusoff";
+					$("guestnetwork_status").onclick = function(){overHint(4);}
+				}
 			}
-			else{
-				$("guestnetwork_status").className = "guestnetworkstatusoff";
-				$("guestnetwork_status").onclick = function(){overHint(4);}
+			
+			for(var i=0; i<gn_array_5g.length; i++){
+				if(gn_array_2g[i][0] == 1 || gn_array_5g[i][0] == 1){
+					$("guestnetwork_status").className = "guestnetworkstatuson";
+					$("guestnetwork_status").onclick = function(){openHint(24,4);}
+					break;
+				}
+				else{
+					$("guestnetwork_status").className = "guestnetworkstatusoff";
+					$("guestnetwork_status").onclick = function(){overHint(4);}
+				}
+			}
+		}else{
+			for(var i=0; i<gn_array_2g.length; i++){
+				if(gn_array_2g[i][0] == 1 || gn_array_5g[i][0] == 1 || (wl_info.band5g_2_support && gn_array_5g_2[i][0] == 1)){
+					$("guestnetwork_status").className = "guestnetworkstatuson";
+					$("guestnetwork_status").onclick = function(){openHint(24,4);}
+					break;
+				}
+				else{
+					$("guestnetwork_status").className = "guestnetworkstatusoff";
+					$("guestnetwork_status").onclick = function(){overHint(4);}
+				}
 			}
 		}
+		
 		$("guestnetwork_status").onmouseover = function(){overHint(4);}
 		$("guestnetwork_status").onmouseout = function(){nd();}
+		
 	}
 	else if(multissid_support != -1 && gn_array_5g.length == 0){
 		for(var i=0; i<gn_array_2g.length; i++){
@@ -3549,7 +3573,7 @@ function decodeURIComponentSafe(_ascii){
 var isNewFW = function(FWVer){
 	var Latest_firmver = FWVer.split("_");
 
-	if (odmpid == "TM-AC1900" && bl_version == "2.1.2.2")
+	if (odmpid == "TM-AC1900" && (bl_version == "2.1.2.2" || bl_version == "2.1.2.3"))
 		return true;
 
 	if(typeof Latest_firmver[0] !== "undefined" && typeof Latest_firmver[1] !== "undefined" && typeof Latest_firmver[2] !== "undefined"){

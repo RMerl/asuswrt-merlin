@@ -900,7 +900,11 @@ extern void build_options(BOOL screen);
 #endif
 
 #if 0 /* AVM */
+#if defined(CONFIG_RALINK) || defined(CONFIG_QCA)
+	setpriority(PRIO_PROCESS, 0, 19); /* be nice */
+#else
 	setpriority(PRIO_PROCESS, 0, -20); /* be nice */
+#endif
 #endif
 
 	sec_init();

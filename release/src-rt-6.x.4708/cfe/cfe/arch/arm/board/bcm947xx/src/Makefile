@@ -18,6 +18,12 @@
 # $Id: $
 #
 
+LINUX_PATH := $(SRCBASE)/linux/linux-2.6
+
+ifneq ($(wildcard $(LINUX_PATH)/drivers/char/rtl8365mb/*.c),)
+RTKSRC := 1
+endif
+
 # Max sizes for vanilla external
 CFEZ_MAXSIZE = 131072
 CFE_MAXSIZE = 262144
@@ -37,6 +43,10 @@ endif
 
 BSPOBJS		+= bcm947xx_devs.o ui_bcm947xx.o bcm947xx_machdep.o
 
+ifeq ($(RTKSRC),1)
+BSPOBJS += smi.o rtk_switch.o rtl8367c_asicdrv.o rtl8367c_asicdrv_phy.o rate.o rtl8367c_asicdrv_rma.o rtl8367c_asicdrv_lut.o rtl8367c_asicdrv_inbwctrl.o rtl8367c_asicdrv_scheduling.o vlan.o rtl8367c_asicdrv_vlan.o port.o rtl8367c_asicdrv_port.o
+CFLAGS += -I$(LINUX_PATH)/drivers/char/rtl8365mb
+endif
 ALLOBJS         += siutils.o hndarm_ca9.o hndchipc.o sromstubs.o \
 		   bcmutils.o cfe_osl.o nvram.o nvram_rw.o bcmotp.o \
 		   bcmstdlib.o aisdram_ca9.o pcieinit_ca9.o aiutils.o hndsoc.o
@@ -122,7 +132,7 @@ HNDDMA := 1
 
 # Search for sources under src/et/sys or objects under src/et/cfe
 ifneq ($(wildcard $(SRCBASE)/et/sys),)
-vpath %.c $(SRCBASE)/et/sys
+vpath %.c $(SRCBASE)/et/sys $(SRCBASE)/linux/linux-2.6/drivers/char/rtl8365mb
 ALLOBJS += $(ETOBJS)
 else
 ALLOBJS += $(foreach obj,$(ETOBJS),$(SRCBASE)/et/cfe/$(obj))

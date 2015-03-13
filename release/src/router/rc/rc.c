@@ -18,6 +18,7 @@
 #endif
 
 #ifdef DEBUG_RCTEST
+int test_mknode(int id);
 // used for various testing
 static int rctest_main(int argc, char *argv[])
 {
@@ -328,7 +329,7 @@ static const applets_t applets[] = {
 	{ "halt",			reboothalt_main			},
 	{ "reboot",			reboothalt_main			},
 	{ "ntp", 			ntp_main			},
-#ifdef RTCONFIG_RALINK
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_RTL8365MB)
 	{ "rtkswitch",			config_rtkswitch		},
 #elif defined(RTCONFIG_QCA)
 	{ "rtkswitch",			config_rtkswitch		},
@@ -485,6 +486,16 @@ int main(int argc, char **argv)
 
 		return asus_sd(argv[1], argv[2]);
 	}
+#ifdef RTCONFIG_BCMARM
+	else if(!strcmp(base, "asus_mmc")){
+		if(argc != 3){
+			printf("Usage: asus_mmc [device_name] [action]\n");
+			return 0;
+		}
+
+		return asus_mmc(argv[1], argv[2]);
+	}
+#endif	
 	else if(!strcmp(base, "asus_lp")){
 		if(argc != 3){
 			printf("Usage: asus_lp [device_name] [action]\n");
@@ -734,7 +745,7 @@ int main(int argc, char **argv)
 		return gen_stateless_conf();
 	}
 	else if (!strcmp(base, "restart_qtn")){
-		return reset_qtn(1);
+		return reset_qtn(0);
 	}
 #endif
 #endif

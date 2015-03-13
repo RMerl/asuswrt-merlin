@@ -50,6 +50,15 @@ static struct load_wifi_kmod_seq_s {
 	{ "umac", 0, 2 },
 };
 
+static struct load_sfe_kmod_seq_s {
+	char *kmod_name;
+	unsigned int load_sleep;
+	unsigned int remove_sleep;
+} load_sfe_kmod_seq[] = {
+	{ "shortcut_fe", 0, 0 },
+	{ "fast_classifier", 0, 0 },
+};
+
 static void __mknod(char *name, mode_t mode, dev_t dev)
 {
 	if (mknod(name, mode, dev)) {
@@ -84,6 +93,7 @@ void generate_switch_para(void)
 
 	switch (model) {
 	case MODEL_RTAC55U:
+	case MODEL_RTAC55UHP:
 	case MODEL_RT4GAC55U:
 		nvram_unset("vlan3hwname");
 		if ((wans_cap && wanslan_cap)
@@ -217,6 +227,7 @@ void config_switch(void)
 
 	switch (model) {
 	case MODEL_RTAC55U:	/* fall through */
+	case MODEL_RTAC55UHP:	/* fall through */
 	case MODEL_RT4GAC55U:	/* fall through */
 		merge_wan_port_into_lan_ports = 1;
 		break;
@@ -631,35 +642,31 @@ void init_wl(void)
 
 void fini_wl(void)
 {
-	char *p, *ifname;
-	char *wl_ifnames;
 	int wlc_band;
-	dbG("fini_wl:destroy wi node\n");
-	char wl[10];
+	char wif[256];
+	int unit = -1, sunit = 0;
+	unsigned int m;	/* bit0~3: 2G, bit4~7: 5G */
+	char pid_path[] = "/var/run/hostapd_athXXX.pidYYYYYY";
+	char path[] = "/sys/class/net/ath001XXXXXX";
 #if defined(QCA_WIFI_INS_RM)
 	int i;
 	struct load_wifi_kmod_seq_s *wp;
 #endif
 
-	memset(wl,0,sizeof(wl));
-	strncpy(wl,WIF_2G,strlen(WIF_2G)-1);
-	if ((wl_ifnames = strdup(nvram_safe_get("lan_ifnames"))) != NULL) 
-	{
-		p = wl_ifnames;
-		while ((ifname = strsep(&p, " ")) != NULL) {
-			while (*ifname == ' ') ++ifname;
-			if (*ifname == 0) break;
-
-			if (strncmp(ifname,wl,strlen(wl))==0)
-			{
-				dbG("\n destroy a wifi node: %s \n",ifname);
-				//ifconfig(ifname, 0, NULL, NULL); no use for "beacon buffer av_wbuf is NULL - Ignoring SWBA event"
-				doSystem("wlanconfig %s destroy",ifname);
-   				sleep(1);
-			}
-			else
-				continue;
-
+	dbG("fini_wl:destroy wi node\n");
+	for (i = 0, unit = 0, sunit = 0, m = 0xFF; m > 0; ++i, ++sunit, m >>= 1) {
+		if (i == 4) {
+			unit = 1;
+			sunit -= 4;
+		}
+		__get_wlifname(unit, sunit, wif);
+		sprintf(pid_path, "/var/run/hostapd_%s.pid", wif);
+		if (f_exists(pid_path))
+			kill_pidfile_tk(pid_path);
+		sprintf(path, "/sys/class/net/%s", wif);
+		if (d_exists(path)) {
+			eval("ifconfig", wif, "down");
+			eval("wlanconfig", wif, "destroy");
 		}
 	}
 
@@ -824,6 +831,8 @@ void init_syspara(void)
 
 	nvram_set("firmver", rt_version);
 	nvram_set("productid", rt_buildname);
+
+	verify_ctl_table();
 }
 
 #ifdef RTCONFIG_ATEUSB3_FORCE
@@ -843,6 +852,168 @@ void generate_wl_para(int unit, int subunit)
 {
 }
 
+char *get_staifname(int band)
+{
+	return (char*) ((!band)? STA_2G:STA_5G);
+}
+
+char *get_vapifname(int band)
+{
+	return (char*) ((!band)? VAP_2G:VAP_5G);
+}
+
+char *__get_wlifname(int band, int subunit, char *buf)
+{
+	if (!buf)
+		return buf;
+
+	if (!subunit)
+		strcpy(buf, (!band)? WIF_2G:WIF_5G);
+	else
+		sprintf(buf, "%s0%d", (!band)? WIF_2G:WIF_5G, subunit);
+
+	return buf;
+}
+
+// only qca solution can reload it dynamically
+// only happened when qca_sfe=1
+// only loaded when unloaded, and unloaded when loaded
+// in restart_firewall for fw_pt_l2tp/fw_pt_ipsec
+// in restart_qos for qos_enable
+// in restart_wireless for wlx_mrate_x, etc
+void reinit_sfe(int unit)
+{
+	int prim_unit = wan_primary_ifunit();
+	int act = 1;	/* -1/0/otherwise: ignore/remove sfe/load sfe */
+	struct load_sfe_kmod_seq_s *p = &load_sfe_kmod_seq[0];
+#if defined(RTCONFIG_DUALWAN)
+	int nat_x = -1, i, l, t, link_wan = 1, link_wans_lan = 1;
+	int wans_cap = get_wans_dualwan() & WANSCAP_WAN;
+	int wanslan_cap = get_wans_dualwan() & WANSCAP_LAN;
+	char nat_x_str[] = "wanX_nat_xXXXXXX";
+#endif
+	if (!nvram_get_int("qca_sfe"))
+		return;
+
+	/* If QoS is enabled, disable sfe. */
+	if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)
+		act = 0;
+
+	if (act > 0 && !nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", ""))
+		act = 0;
+
+	if (act > 0) {
+#if defined(RTCONFIG_DUALWAN)
+		if (unit < 0 || unit > WAN_UNIT_SECOND) {
+			if ((wans_cap && wanslan_cap) ||
+			    (wanslan_cap && (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")))
+			   )
+				act = 0;
+		} else {
+			sprintf(nat_x_str, "wan%d_nat_x", unit);
+			nat_x = nvram_get_int(nat_x_str);
+			if (unit == prim_unit && !nat_x)
+				act = 0;
+			else if ((wans_cap && wanslan_cap) ||
+				 (wanslan_cap && (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", "")))
+				)
+				act = 0;
+			else if (unit != prim_unit)
+				act = -1;
+		}
+#else
+		if (!is_nat_enabled())
+			act = 0;
+#endif
+	}
+
+	if (act > 0) {
+#if defined(RTCONFIG_DUALWAN)
+		if (unit < 0 || unit > WAN_UNIT_SECOND || nvram_match("wans_mode", "lb")) {
+			if (get_wans_dualwan() & WANSCAP_USB)
+				act = 0;
+		} else {
+			if (unit == prim_unit && get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
+				act = 0;
+		}
+#else
+		if (dualwan_unit__usbif(prim_unit))
+			act = 0;
+#endif
+	}
+
+#if defined(RTCONFIG_DUALWAN)
+	if (act != 0 &&
+	    ((wans_cap && wanslan_cap) || (wanslan_cap && (!nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", ""))))
+	   )
+	{
+		/* If WANS_LAN and WAN is enabled, WANS_LAN is link-up and WAN is not link-up, hw_nat MUST be removed.
+		 * If hw_nat exists in such scenario, LAN PC can't connect to Internet through WANS_LAN correctly.
+		 *
+		 * FIXME:
+		 * If generic IPTV feature is enabled, STB port and VoIP port are recognized as WAN port(s).
+		 * In such case, we don't know whether real WAN port is link-up/down.
+		 * Thus, if WAN is link-up and primary unit is not WAN, assume WAN is link-down.
+		 */
+		for (i = WAN_UNIT_FIRST; i < WAN_UNIT_MAX; ++i) {
+			if ((t = get_dualwan_by_unit(i)) == WANS_DUALWAN_IF_USB)
+				continue;
+
+			l = wanport_status(i);
+			switch (t) {
+			case WANS_DUALWAN_IF_WAN:
+				link_wan = l && (i == prim_unit);
+				break;
+			case WANS_DUALWAN_IF_DSL:
+				link_wan = l;
+				break;
+			case WANS_DUALWAN_IF_LAN:
+				link_wans_lan = l;
+				break;
+			default:
+				_dprintf("%s: Unknown WAN type %d\n", __func__, t);
+			}
+		}
+
+		if (!link_wan && link_wans_lan)
+			act = 0;
+	}
+
+	_dprintf("%s:DUALWAN: unit %d,%d type %d iptv [%s] nat_x %d qos %d wans_mode %s link %d,%d: action %d.\n",
+		__func__, unit, prim_unit, get_dualwan_by_unit(unit), nvram_safe_get("switch_wantag"), nat_x,
+		nvram_get_int("qos_enable"), nvram_safe_get("wans_mode"),
+		link_wan, link_wans_lan, act);
+#else
+	_dprintf("%s:WAN: unit %d,%d type %d nat_x %d qos %d: action %d.\n",
+		__func__, unit, prim_unit, get_dualwan_by_unit(unit),
+		nvram_get_int("wan0_nat_x"), nvram_get_int("qos_enable"), act);
+#endif
+
+	if (act < 0)
+		return;
+
+	for (i = 0, p = &load_sfe_kmod_seq[i]; i < ARRAY_SIZE(load_sfe_kmod_seq); ++i, ++p) {
+		if (!act) {
+			/* remove sfe */
+			if (!module_loaded(p->kmod_name))
+				continue;
+
+			modprobe_r(p->kmod_name);
+			if (p->remove_sleep)
+				sleep(p->load_sleep);
+
+		} else {
+			/* load sfe */
+			if (module_loaded(p->kmod_name))
+				continue;
+
+			modprobe(p->kmod_name);
+			if (p->load_sleep)
+				sleep(p->load_sleep);
+		}			
+	}
+}
+
 char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 {
 #if 1 //eric++
@@ -851,31 +1022,20 @@ char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 #if defined(RTCONFIG_WIRELESSREPEATER)
 	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER
 	    && nvram_get_int("wlc_band") == unit && subunit == 1) {
-		if (unit == 0)
-			sprintf(buf, "%s", "sta0");
-		else
-			sprintf(buf, "%s", "sta1");
+		strcpy(buf, get_staifname(unit));
 	} else
 #endif /* RTCONFIG_WIRELESSREPEATER */
 	{
-		memset(wifbuf, 0, sizeof(wifbuf));
-
-		if (unit == 0)
-			strncpy(wifbuf, WIF_2G, strlen(WIF_2G) - 1);
-		else
-			strncpy(wifbuf, WIF_5G, strlen(WIF_5G) - 1);
-
+		__get_wlifname(unit, 0, wifbuf);
 		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
 		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
-			sprintf(buf, "%s%d0%d", wifbuf, unit,subunit_x);
+			sprintf(buf, "%s0%d", wifbuf, subunit_x);
 		else
 			sprintf(buf, "%s", "");
 	}
 	return buf;
 #else
-	/* FIXME */
-	sprintf(buf, "ath%d", unit? 1:0);
-	return buf;
+	return __get_wlifname(unit, subunit, buf);
 #endif //eric++
 }
 
@@ -904,6 +1064,7 @@ set_wan_tag(char *interface) {
 
 	switch(model) {
 	case MODEL_RTAC55U:
+	case MODEL_RTAC55UHP:
 	case MODEL_RT4GAC55U:
 		ifconfig(interface, IFUP, 0, 0);
 		if(wan_vid) { /* config wan port */

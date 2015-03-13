@@ -137,7 +137,7 @@ function change_wan_unit(obj){
 			return false;
 		}			
 	}
-	else if(obj.options[obj.selectedIndex].text == "Mobile Broadband"){
+	else if(obj.options[obj.selectedIndex].text == "<#Mobile_title#>"){
 		document.form.current_page.value = "Advanced_MobileBroadband_Content.asp";
 	}
 
@@ -156,7 +156,7 @@ function genWANSoption(){
 		else if(wans_dualwan_NAME == "LAN")
         	wans_dualwan_NAME = "Ethernet LAN";		
 		else if(wans_dualwan_NAME == "USB" && based_modelid == "4G-AC55U")
-			wans_dualwan_NAME = "Mobile Broadband";                       
+			wans_dualwan_NAME = "<#Mobile_title#>";                       
 		document.form.wan_unit.options[i] = new Option(wans_dualwan_NAME, i);
 	}	
 	
@@ -953,7 +953,7 @@ function pass_checked(obj){
                 <td><input type="text" maxlength="5" name="wan_mtu" class="input_6_table" value="<% nvram_get("wan_mtu"); %>" onKeyPress="return validator.isNumber(this,event);"/></td>
                 </tr>
             	<tr>
-							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,30);"><#PPPConnection_Authentication_itemname#></a></th>
+							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,29);"><#PPPConnection_Authentication_itemname#></a></th>
 							<td align="left">
 							    <select class="input_option" name="wan_auth_x" onChange="change_wan_type(document.form.wan_proto.value);">
 							    <option value="" <% nvram_match("wan_auth_x", "", "selected"); %>><#wl_securitylevel_0#></option>

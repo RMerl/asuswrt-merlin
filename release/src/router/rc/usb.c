@@ -91,6 +91,9 @@ void tune_bdflush(void)
 void
 start_lpd()
 {
+	pid_t pid;
+	char *lpd_argv[] = { "lpd", NULL };
+
 	if(getpid()!=1) {
 		notify_rc("start_lpd");
 		return;
@@ -100,7 +103,7 @@ start_lpd()
 	{
 		unlink("/var/run/lpdparent.pid");
 		//return xstart("lpd");
-		system("lpd &");
+		_eval(lpd_argv, NULL, 0, &pid);
 	}
 }
 
@@ -122,6 +125,9 @@ stop_lpd()
 void
 start_u2ec()
 {
+	pid_t pid;
+	char *u2ec_argv[] = { "u2ec", NULL };
+
 	if(getpid()!=1) {
 		notify_rc("start_u2ec");
 		return;
@@ -130,7 +136,7 @@ start_u2ec()
 	if (!pids("u2ec"))
 	{
 		unlink("/var/run/u2ec.pid");
-		system("u2ec &");
+		_eval(u2ec_argv, NULL, 0, &pid);
 
 		nvram_set("apps_u2ec_ex", "1");
 	}
@@ -645,6 +651,7 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 	int dir_made;
 	char type[16];
 
+	_dprintf("[%s] chk mnt_dev:[%s], mnt_dir:[%s], type:[%s]\n", __func__, mnt_dev, mnt_dir, _type);	// tmp test
 	memset(type, 0, 16);
 	if(_type != NULL)
 		strncpy(type, _type, 16);
@@ -662,6 +669,7 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 
 	options[0] = 0;
 
+	_dprintf("[%s] chk 2\n", __func__);	// tmp test
 	if(strlen(type) > 0){
 #ifndef RTCONFIG_BCMARM
 		unsigned long flags = MS_NOATIME | MS_NODEV;
@@ -707,9 +715,7 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 
 			sprintf(options + strlen(options), ",shortname=winnt" + (options[0] ? 0 : 1));
 #ifdef RTCONFIG_TFAT
-#if defined(RTCONFIG_QCA)
-			sprintf(options + strlen(options), ",nodev" + (options[0] ? 0 : 1));
-#elif defined(RTCONFIG_BCMARM)
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_QCA)
 			sprintf(options + strlen(options), ",nodev,iostreaming" + (options[0] ? 0 : 1));
 #else
 			sprintf(options + strlen(options), ",noatime" + (options[0] ? 0 : 1));
@@ -766,30 +772,40 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 				sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_hfs_opt"));
 		}
 
+		_dprintf("[%s] chk 3\n", __func__);	// tmp test
+
 		if (flags) {
+			_dprintf("[%s] chk 4\n", __func__);	// tmp test
 			if ((dir_made = mkdir_if_none(mnt_dir))) {
 				/* Create the flag file for remove the directory on dismount. */
 				sprintf(flagfn, "%s/.autocreated-dir", mnt_dir);
 				f_write(flagfn, NULL, 0, 0, 0);
 			}
+			_dprintf("[%s] chk 5:dir_make=%d, type:[%s]\n", __func__, dir_made, type);	// tmp test
 
 #ifdef RTCONFIG_TFAT
 			if(!strncmp(type, "vfat", 4)){
+				_dprintf("[%s] chk 6\n", __func__);	// tmp test
 				ret = eval("mount", "-t", "tfat", "-o", options, mnt_dev, mnt_dir);
 				if(ret != 0){
 					syslog(LOG_INFO, "USB %s(%s) failed to mount at the first try!" , mnt_dev, type);
 					TRACE_PT("USB %s(%s) failed to mount at the first try!\n", mnt_dev, type);
 				}
+				_dprintf("[%s] chk 7:ret=%d\n", __func__, ret);	// tmp test
 			}
 
 			else
 #endif
 			{
+				_dprintf("[%s] chk 8: (%d/%d)\n", __func__, MS_NODEV, MS_NOATIME | MS_NODEV);	// tmp test
+				_dprintf("[%s] chk 9:[%s][%s]\n", __func__, mnt_dev, mnt_dir);	// tmp test
+				_dprintf("[%s] chk 10:[%s][%d][%s]\n", __func__, type, flags, options[0] ? options : "");	// tmp test
 				ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
+				_dprintf("[%s] chk 11: ret = %d\n", __func__, ret);	// tmp test
 				if(ret != 0){
 					if(strncmp(type, "ext", 3)){
 						syslog(LOG_INFO, "USB %s(%s) failed to mount at the first try!", mnt_dev, type);
-						TRACE_PT("USB %s(%s) failed to mount at the first try!\n", mnt_dev, type);
+						TRACE_PT("USB %s(%s) failed to mount At the first try!\n", mnt_dev, type);
 					}
 					else{
 						if(!strcmp(type, "ext4")){
@@ -1322,11 +1338,6 @@ done:
 		}
 #endif
 
-#ifdef RTCONFIG_DSL_TCLINUX
-		if(nvram_match("dslx_diag_enable", "1") && nvram_match("dslx_diag_state", "1"))
-			start_dsl_diag();
-#endif
-
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 		if(!strcmp(nvram_safe_get("apps_mounted_path"), "")){
 			char apps_folder[32], buff1[64], buff2[64];
@@ -1365,7 +1376,7 @@ done:
 					cprintf("asusware: re-mount partition %s...\n", dev_name);
 					diskmon_status(DISKMON_REMOUNT);
 
-					mount_r(dev_name, mountpoint, type);
+					ret = mount_r(dev_name, mountpoint, type);
 
 					cprintf("asusware: done.\n");
 					diskmon_status(DISKMON_FINISH);
@@ -1397,6 +1408,17 @@ done:
 		}
 
 		usb_notify();
+#endif
+
+#ifdef RTCONFIG_DSL_TCLINUX
+		if(ret == MOUNT_VAL_RW) {
+			nvram_set("dslx_diag_log_path", mountpoint);
+			if(nvram_match("dslx_diag_enable", "1") && nvram_match("dslx_diag_state", "1"))
+				start_dsl_diag();
+		}
+		else {
+			logmessage("DSL Diagnostic", "start failed");
+		}
 #endif
 
 		// check the permission files.
@@ -1919,6 +1941,9 @@ void write_ftpd_conf()
 void
 start_ftpd(void)
 {
+	pid_t pid;
+	char *vsftpd_argv[] = { "vsftpd", "/etc/vsftpd.conf", NULL };
+
 	if(getpid()!=1) {
 		notify_rc_after_wait("start_ftpd");
 		return;
@@ -1931,7 +1956,7 @@ start_ftpd(void)
 	killall("vsftpd", SIGHUP);
 
 	if (!pids("vsftpd"))
-		system("vsftpd /etc/vsftpd.conf &");
+		_eval(vsftpd_argv, NULL, 0, &pid);
 
 	if (pids("vsftpd"))
 		logmessage("FTP server", "daemon is started");
@@ -2085,6 +2110,10 @@ start_samba(void)
 	add_samba_rules();
 #endif
 #endif
+#ifdef RTCONFIG_BCMARM
+	tweak_smp_affinity(1);
+#endif
+
 	mkdir_if_none("/var/run/samba");
 	mkdir_if_none("/etc/samba");
 
@@ -2180,6 +2209,10 @@ void stop_samba(void)
 	eval("rm", "-rf", "/var/run/samba");
 
 	logmessage("Samba Server", "smb daemon is stopped");
+
+#ifdef RTCONFIG_BCMARM
+	tweak_smp_affinity(0);
+#endif
 #if 0
 #ifdef RTCONFIG_BCMARM
 	del_samba_rules();
@@ -2727,6 +2760,10 @@ void write_webdav_server_pem()
 
 void start_webdav(void)	// added by Vanic
 {
+	pid_t pid, pid1;
+	char *lighttpd_argv[] = { "/usr/sbin/lighttpd", "-f", "/tmp/lighttpd.conf", "-D", NULL };
+	char *lighttpd_monitor_argv[] = { "/usr/sbin/lighttpd-monitor", NULL };
+
 	if(getpid()!=1) {
 		notify_rc("start_webdav");
 		return;
@@ -2736,7 +2773,6 @@ void start_webdav(void)	// added by Vanic
 	system("sh /opt/etc/init.d/S50aicloud scan");
 #else
 */
-	//static char *lighttpd_monitor_argv[] = { "lighttpd-monitor", NULL, NULL };
 	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER) return;
 
 	if (nvram_get_int("webdav_aidisk") || nvram_get_int("webdav_proxy"))
@@ -2773,11 +2809,10 @@ void start_webdav(void)	// added by Vanic
 	if (!f_exists("/tmp/lighttpd.conf")) return;
 
 	if (!pids("lighttpd")){
-		system("/usr/sbin/lighttpd -f /tmp/lighttpd.conf -D &");
+		_eval(lighttpd_argv, NULL, 0, &pid);
 	}
 	if (!pids("lighttpd-monitor")){
-		system("/usr/sbin/lighttpd-monitor &");
-	   //_eval(lighttpd_monitor_argv, NULL, 0, NULL);
+		_eval(lighttpd_monitor_argv, NULL, 0, &pid1);
 	}
 
 	if (pids("lighttpd"))

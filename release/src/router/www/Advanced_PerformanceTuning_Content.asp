@@ -47,7 +47,7 @@ function initial(){
 
 	$("legend").innerHTML = code1 + code2;
 
-	if(based_modelid == "RT-AC68U" || based_modelid == "TM-AC1900" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"){
+	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"){
 		if ('<% sysinfo("cfe_version"); %>' >= "1.0.1.6") {
 			$("turbocompat").style.display = "";
 		}

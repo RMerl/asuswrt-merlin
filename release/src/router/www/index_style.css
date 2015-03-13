@@ -837,3 +837,16 @@ width:122px;
 	border-style:inset;
 }
 
+.usb_count_circle {
+	position: absolute;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	background: #333;
+	margin-top: -130px;
+	margin-left: 100px;
+	line-height: 33px;
+	text-align: center;
+	box-shadow: 1px 2px 2px #000;
+}
+

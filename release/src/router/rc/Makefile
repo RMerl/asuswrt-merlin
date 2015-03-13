@@ -130,7 +130,7 @@ ifeq ($(RTCONFIG_DSL),y)
 OBJS += init-ralink-dsl.o 
 endif
 else ifeq ($(RTCONFIG_QCA),y)
-OBJS += init-qca.o wps-qca.o qca.o ctl.o
+OBJS += init-qca.o wps-qca.o qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.o,prebuild/ctl.o)
 else
 OBJS += init-broadcom.o wps-broadcom.o broadcom.o
 ifeq ($(RTCONFIG_DSL),y)
@@ -379,6 +379,10 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
 endif
 
+ifeq ($(RTCONFIG_RTL8365MB),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
+endif
+
 ifeq ($(RTCONFIG_QCA),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
 	@cd $(INSTALLDIR)/sbin && ln -sf rc delay_exec
@@ -390,6 +394,7 @@ endif
 ifeq ($(RTCONFIG_USB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_apps_name
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_sd
+	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_mmc
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_lp
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_sg
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_sr

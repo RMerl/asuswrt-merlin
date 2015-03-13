@@ -1,0 +1,881 @@
+GNU Wget NEWS -- history of user-visible changes.
+
+Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+2006, 2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+See the end for copying conditions.
+
+Please send GNU Wget bug reports to <bug-wget@gnu.org>.
+
+* Changes in Wget 1.16
+
+** No longer create local symbolic links by default.  Closes CVE-2014-4877.
+
+** Use libpsl for verifying cookie domains.
+
+** Default progress bar output changed.
+
+** Introduce --show-progress to force display the progress bar.
+
+** Introduce --no-config.  The wgetrc files will not be read.
+
+** Introduce --start-pos to allow starting downloads from a specified position.
+
+** Fix a problem with ISA Server Proxy and keep-alive connections.
+
+* Changes in Wget 1.15
+
+** Add support for --method.
+
+** Add support for file names longer than MAX_FILE.
+
+** Support FTP listing for the FTP Server on Windows Server 2008 R2.
+
+** Fix a regression when -c and --content-disposition are used together.
+
+** Support shorthand URLs in an input file.
+
+** Fix -c with servers that don't specify a content-length.
+
+** Add support for MD5-SESS
+
+** Do not fail on non fatal GNU TLS alerts during handshake.
+
+** Add support for --https-only.  When used wget will follow only
+   HTTPS links in recursive mode.
+
+** Support Perfect-Forward Secrecy in --secure-protocol.
+
+** Fix a problem with some IRI links that are not followed when contained in a
+   HTML document.
+
+** Support some FTP servers that return an empty list with "LIST -a".
+
+** Specify Host with the HTTP CONNECT method.
+
+** Use the correct HTTP method on a redirection.
+
+* Changes in Wget 1.14
+
+** Add support for content-on-error.  It allows to store the HTTP
+   payload on 4xx or 5xx errors.
+
+** Add support for WARC files.
+
+** Fix a memory leak problem in the GNU TLS backend.
+
+** Autoreconf works again for distributed tarballs.
+
+** Print some diagnostic messages to stderr not to stdout.
+
+** Report stdout close errors.
+
+** Accept the --report-speed option.
+
+** Enable client certificates when GNU TLS is used.
+
+** Add support for TLS Server Name Indication.
+
+** Accept the arguments --accept-reject and --reject-regex.
+
+** The GNU TLS backend honors correctly the timeout value.
+
+** Add support for RFC 2617 Digest Access Authentication.
+
+* Changes in Wget 1.13.4
+
+** Now --version and --help work again.
+
+** Fix a build error on solaris 10 sparc.
+
+** Now --timestamping and --continue work well together.
+
+** Return a network failure when FTP downloads fail and --timestamping
+   is specified.
+
+** Fix a segfault on an incomplete STYLE tag.
+
+* Changes in Wget 1.13.3
+
+** Support HTTP/1.1
+
+** Now by default the GNU TLS library for secure connections, instead of
+   OpenSSL.
+
+** Fix some portability issues.
+
+** Handle properly malformed status line in a HTTP response.
+
+** Ignore zero length domains in $no_proxy.
+
+** Set new cookies after an authorization failure.
+
+** Exit with failure if -k is specified and -O is not a regular file.
+
+** Cope better with unclosed html tags.
+
+** Print diagnostic messages to stderr, not stdout.
+
+** Do not use an additional HEAD request when --content-disposition is used,
+   but use directly GET.
+
+** Report the average transfer speed correctly when multiple URL's are specified
+   and -c influences the transferred data amount.
+
+** GNU TLS backend works again.
+
+** Now --timestamping and --continue works well together.
+
+** By default, on server redirects, use the original URL to get the
+   local file name. Close CVE-2010-2252.  This introduces a
+   backward-incompatibility; any script that relies on the old
+   behaviour must use --trust-server-names.
+
+** Fix a problem when -k is used and some URLs are specified trough
+   CSS.
+
+** Convert correctly URLs that need to be encoded to local files when following
+   links.
+
+** Use persistent connections with proxies supporting them.
+
+** Print the total download time as part of the summary for recursive downloads.
+
+** Now it is possible to specify a different startup configuration file trough
+   the --config option.
+
+** Fix an infinite loop with the error '<filename> has sprung into existence'
+   on a network error and -nc is used.
+
+** Now --adjust-extension does not modify the file extension if the file ends
+   in .htm.
+
+** Support HTTP/1.1 307 redirects keep request method.
+
+** Now --no-parent doesn't fetch undesired files if HTTP and HTTPS are used
+   by the same host on different pages.
+
+** Do not attempt to remove the file if it is not in the accept rules but
+   it is the output destination file.
+
+** Introduce `show_all_dns_entries' to print all IP addresses corresponding to
+   a DNS name when it is resolved.
+
+* Changes in Wget 1.12
+
+** Mailing list MOVED to bug-wget@gnu.org
+
+** SECURITY FIX: It had been possible to trick Wget into accepting
+SSL certificates that don't match the host name, through the trick of
+embedding NUL characters into the certs' common name. Fixed by Joao
+Ferreira <joao@joaoff.com>.
+
+** Added support for CSS. This includes:
+     - Parsing links from CSS files, and from CSS content found in HTML
+       style tags and attributes.
+     - Supporting conversion of links found within CSS content, when
+       --convert-links is specified.
+     - Ensuring that CSS files end in the ".css" filename extension,
+       when --convert-links is specified.
+
+   CSS support in Wget is thanks to Ted Mielczarek
+   <ted.mielczarek@gmail.com>.
+
+** Added support for Internationalized Resource Identifiers (IRIs, RFC
+3987). When support is enabled (requires libidn and libiconv), links
+with non-ASCII bytes are translated from their source encoding to UTF-8
+before percent-encoding.  IRI support was added by Saint Xavier
+<wget@sxav.eu>, as his project for the Google Summer of Code.
+
+** Wget now provides more sensible exit status codes when downloads
+don't proceed as expected (see the manual).
+
+** --default-page option (and associated wgetrc command) added to
+support alternative default names for index.html.
+
+** --ask-password option (and associated wgetrc command) added to
+support password prompts at the console.
+
+** The --input-file option now also handles retrieving links from
+an external file.
+
+** The output generated by the --version option now includes
+information on how it was built, and the set of configure-time options
+that were selected.
+
+** --html-extension has been renamed to --adjust-extension, to reflect
+the fact that it now also applies to CSS content. --html-extension is
+still acceptable, but is now deprecated.
+
+** An "ascii" specifier is now accepted by --restrict-file-names, which
+forces the percent-encoding of all non-ASCII bytes
+
+** Several previously existing, but undocumented .wgetrc options are
+now documented: save_headers, spider, and user_agent,
+auth_no_challenge, and keep_session_cookies. Also added documentation
+for the "lowercase" and "uppercase" values for --restrict-file-names, which had been present since Wget 1.11.
+
+* Changes in Wget 1.11.4
+
+** Fixed an issue (apparently a regression) where -O would refuse to
+download when -nc was given, even though the file didn't exist.
+
+** Fixed a situation where Wget could abort with --continue if the
+remote server gives a content-length of zero when the file exists
+locally with content.
+
+** Fixed a crash on some systems, due to Wget casting a pointer-to-long
+to a pointer-to-time_t.
+
+** Translation updates for Catalan.
+
+* Changes in Wget 1.11.3
+
+** Downgraded -N with -O to a warning, rather than an error.
+
+** Translation updates
+
+* Changes in Wget 1.11.2
+
+** Fixed a problem in authenticating over HTTPS through a proxy.
+(Regression in 1.11 over 1.10.2.)
+
+** The combination of -r or -p with -O, which was disallowed in 1.11,
+has been downgraded to a warning in 1.11.2. (-O and -N, which was never
+meaningful, is still an error.)
+
+** Further improvements to progress bar displays in non-English locales
+(too many spaces could be inserted, causing the display to scroll).
+
+** Successive invocations of Wget on FTP URLS, with --no-remove-listing
+and --continue, was causing Wget to append, rather than replace,
+information in the .listing file, and thereby download the same files
+multiple times. This has been fixed in 1.11.2.
+
+** Wget 1.11 no longer allowed ".." to persist at the beginning of URLs,
+for improved conformance with RFC 3986. However, this behavior presents
+problems for some FTP setups, and so they are now preserved again, for
+FTP URLs only.
+
+* Changes in Wget 1.11.1.
+
+** Interrupted downloads no longer result in renaming the file
+(regression in 1.11 over 1.10.2).
+
+** Progress bar now displays correctly in non-English locales (and a
+related assertion failure was fixed).
+
+** Wget no longer issues a GET request over HTTP for files it should
+know it's not going to download (regression in 1.11 over 1.10.2).
+
+** Added option --auth-no-challenge, to support broken pre-1.11
+authentication-before-server-challenge, which turns out to still be
+useful for some limited cases.
+
+** Documentation of accept/reject lists in the manual's "Types of
+Files" section now explains various aspects of their behavior that may
+be surprising, and notes that they may change in the future.
+
+** Documentation of --no-parents now explains how a trailing slash, or
+lack thereof, in the specified URL, will affect behavior.
+
+* Changes in Wget 1.11.
+
+** Timestamping now uses the value from the most recent HTTP response,
+rather than the first one it got.
+
+** Authentication information is no longer sent as part of the Referer
+header in recursive fetches.
+
+** No authentication credentials are sent until a challenge is issued,
+for improved security. Authentication handling is still not
+RFC-compliant, as once a Basic challenge has been received, it will
+assume it can send credentials to any URL at that same host, and not
+just the ones at or below the original authenticated location.
+Credentials for Digest authentication are still never saved or issued
+automatically, and continue to require a challenge for each resource.
+
+** Added --max-redirect option, allowing the user to specify what should
+be the maximum number of HTTP redirects to follow.
+
+** Wget now supports saving HTTP downloads using file names specified by
+the `Content-Disposition' header.  This is a standard way of specifying
+the file name used by many web dynamically generated pages. However, the
+current implementation is inefficient, and known to have bugs. It is
+EXPERIMENTAL only, and not enabled by default. Use --content-disposition
+to enable it.
+
+** The new option `--ignore-case' makes Wget ignore case when
+matching files, directories, and wildcards.  This affects the -X, -I,
+-A, and -R options, as well as globbing in FTP URLs.
+
+** ETA projection is now displayed in "dot" progress output as well as
+in the default progress bar.  (The dot progress is used by default when
+logging Wget's output to file using the `-o' option.)
+
+** The "lockable boolean" argument type is no longer supported.  It
+was only used by the passive_ftp .wgetrc setting.  If you're running
+broken scripts or Perl modules that unconditionally specify
+`--passive-ftp' and your firewall disallows it, you can override them
+by replacing wget with a script that execs wget "$@" --no-passive-ftp.
+
+** The source code has been migrated to Mercurial. The repositories are
+available at http://hg.addictivecode.org/. Prior to this, the source
+code was hosted on Subversion (migrated from the original CVS); you can
+still get access to older tags and branches for Wget in the Subversion
+repository at http://addictivecode.org/svn/wget/.
+
+* Changes in Wget 1.10.
+
+** Downloading files larger than 2GB, sometimes referred to as "large
+files", now works on systems that support them.  This includes the
+majority of modern Unixes, as well as MS Windows.
+
+** IPv6 is now supported by Wget.  Unlike the experimental code in
+1.9, this version supports dual-family systems.  The new flags
+`--inet4' and `--inet6' (or `-4' and `-6' for short) force the use of
+IPv4 and IPv6 respectively.  Note that IPv6 support has not yet been
+tested on Windows.
+
+** Microsoft's proprietary "NTLM" method of HTTP authentication is now
+supported.  This authentication method is undocumented and only used
+by IIS.  Note that *proxy* authentication is not supported in this
+release; you can only authenticate to the target web site.
+
+** Wget no longer truncates partially downloaded files when download
+has to start over because the server doesn't support Range.  Instead,
+with such servers Wget now simply ignores the data up to the byte
+where the last attempt left off, and only then continues appending to
+the file.  That way the downloaded file never shrinks, and download
+retries from servers without support for partial downloads work even
+when downloading to stdout.
+
+** SSL/TLS changes:
+
+*** SSL/TLS downloads now attempt to verify the server's certificate
+against the recognized certificate authorities.  This requires CA
+certificates to have been installed in a location visible to the
+OpenSSL library.  If this is not the case, you can get the bundle
+yourself from a source you trust (for example, the bundle extracted
+from Mozilla available at http://curl.haxx.se/docs/caextract.html),
+and point Wget to the PEM file using the `--ca-certificate'
+command-line option or the corresponding `.wgetrc' command.
+
+*** Secure downloads now verify that the host name in the URL matches
+the "common name" in the certificate presented by the server.
+
+*** Although the above checks provide more secure downloads, they
+unavoidably break interoperability with some sites that worked with
+previous versions, particularly those using self-signed, expired, or
+otherwise invalid certificates.  If you encounter "certificate
+verification" errors or complaints that "common name doesn't match
+requested host name" and are convinced of the site's authenticity, you
+can use `--no-check-certificate' to bypass both checks.
+
+*** Talking to SSL/TLS servers over proxies now actually works.
+Previous versions of Wget erroneously sent GET requests for https
+URLs.  Wget 1.10 utilizes the CONNECT method designed for this
+purpose.
+
+*** The SSL/TLS-related options have been redesigned and, for the
+first time, documented in the manual.  The old, undocumented, options
+are no longer supported.
+
+** Passive FTP is now the default FTP transfer mode.  Use
+`--no-passive-ftp' or specify `passive_ftp = off' in your init file to
+revert to the old behavior.
+
+** The `--header' option can now be used to override generated
+headers.  For example, `wget --header="Host: foo.bar"
+http://127.0.0.1' tells Wget to connect to localhost, but to specify
+"foo.bar" in the `Host' header.  In previous versions such use of
+`--header' lead to duplicate headers in HTTP requests.
+
+** The responses without headers, aka "HTTP 0.9" responses, are
+detected and handled.  Although HTTP 0.9 has long been obsolete, it is
+still occasionally used, sometimes by accident.
+
+** The progress bar is now updated regularly even when the data does
+not arrive from the network.
+
+** Wget no longer preserves permissions of files retrieved by FTP by
+default.  Anonymous FTP servers frequently use permissions like "664",
+which might not be what the user wants.  The new option
+`--preserve-permissions' and the corresponding `.wgetrc' variable can
+be used to revert to the old behavior.
+
+** The new option `--protocol-directories' instructs Wget to also use
+the protocol name as a directory component of local file names.
+
+** Options that previously unconditionally set or unset various flags
+are now boolean options that can be invoked as either `--OPTION' or
+`--no-OPTION'.  Options that required an argument "on" or "off" have
+also been changed this way, but they still accept the old syntax for
+backward compatibility.  For example, instead of `--glob=off' you can
+write `--no-glob'.
+
+Allowing `--no-OPTION' for every `--OPTION' and the other way around
+is useful because it allows the user to override non-default behavior
+specified via `.wgetrc'.
+
+** The new option `--keep-session-cookies' causes `--save-cookies' to
+save session cookies (normally only kept in memory) along with the
+permanent ones.  This is useful because many sites track important
+information, such as whether the user has authenticated, in session
+cookies.  With this option multiple Wget runs are treated as a single
+browser session.
+
+** Wget now supports the --ftp-user and --ftp-password command
+switches to set username and password for FTP, and the --user and
+--password command switches to set username and password for both FTP
+and HTTP.  The --http-passwd and --proxy-passwd command switches have
+been renamed to --http-password and --proxy-password respectively, and
+the related http_passwd and proxy_passwd .wgetrc commands to
+http_password and proxy_password respectively.  The login and passwd
+.wgetrc commands have been deprecated.
+
+* `wget -b' now works correctly under Windows.
+
+* Wget 1.9.1 is a bugfix release with no user-visible changes.
+
+* Changes in Wget 1.9.
+
+** It is now possible to specify that POST method be used for HTTP
+requests.  For example, `wget --post-data="id=foo&data=bar" URL' will
+send a POST request with the specified contents.
+
+** IPv6 support is available, although it's still experimental.
+
+** The `--timeout' option now also affects DNS lookup and establishing
+the TCP connection.  Previously it only affected reading and writing
+data.  Those three timeouts can be set separately using
+`--dns-timeout', `--connection-timeout', and `--read-timeout',
+respectively.
+
+** Download speed shown by the progress bar is based on the data
+recently read, rather than the average speed of the entire download.
+The ETA projection is still based on the overall average.
+
+** It is now possible to connect to FTP servers through FWTK
+firewalls.  Set ftp_proxy to an FTP URL, and Wget will automatically
+log on to the proxy as "username@host".
+
+** The new option `--retry-connrefused' makes Wget retry downloads
+even in the face of refused connections, which are otherwise
+considered a fatal error.
+
+** The new option `--no-dns-cache' may be used to prevent Wget from
+caching DNS lookups.
+
+** Wget no longer escapes characters in local file names based on
+whether they're appropriate in URLs.  Escaping can still occur for
+nonprintable characters or for '/', but no longer for frequent
+characters such as space.  You can use the new option
+--restrict-file-names to relax or strengthen these rules, which can be
+useful if you dislike the default or if you're downloading to
+non-native partitions.
+
+** Handling of HTML comments has been dumbed down to conform to what
+users expect and other browsers do: instead of being treated as SGML
+declaration, a comment is terminated at the first occurrence of "-->".
+Use `--strict-comments' to revert to the old behavior.
+
+** Wget now correctly handles relative URIs that begin with "//", such
+as "//img.foo.com/foo.jpg".
+
+** Boolean options in `.wgetrc' and on the command line now accept
+values "yes" and "no" along with the traditional "on" and "off".
+
+** It is now possible to specify decimal values for timeouts, waiting
+periods, and download rate.  For instance, `--wait=0.5' now works as
+expected, as does `--dns-timeout=0.5' and even `--limit-rate=2.5k'.
+
+* Wget 1.8.2 is a bugfix release with no user-visible changes.
+
+* Wget 1.8.1 is a bugfix release with no user-visible changes.
+
+* Changes in Wget 1.8.
+
+** A new progress indicator is now available and used by default.
+You can choose the progress bar type with `--progress=TYPE'.  Two
+types are available, "bar" (the new default), and "dot" (the old
+dotted indicator).  You can permanently revert to the old progress
+indicator by putting `progress = dot' in your `.wgetrc'.
+
+** You can limit the download rate of the retrieval using the
+`--limit-rate' option.  For example, `wget --limit-rate=15k URL' will
+tell Wget not to download the body of the URL faster than 15 kilobytes
+per second.
+
+** Recursive retrieval and link conversion have been revamped:
+
+*** Wget now traverses links breadth-first.  This makes the
+calculation of depth much more reliable than before.  Also, recursive
+downloads are faster and consume *significantly* less memory than
+before.
+
+*** Links are converted only when the entire retrieval is complete.
+This is the only safe thing to do, as only then is it known what URLs
+have been downloaded.
+
+*** BASE tags are handled correctly when converting links.  Since Wget
+already resolves <base href="..."> when resolving handling URLs, link
+conversion now makes the BASE tags point to an empty string.
+
+*** HTML anchors are now handled correctly.  Links to an anchor in the
+same document (<a href="#anchorname">), which used to confuse Wget,
+are now converted correctly.
+
+*** When in page-requisites (-p) mode, no-parent (-np) is ignored when
+retrieving for inline images, stylesheets, and other documents needed
+to display the page.
+
+*** Page-requisites (-p) mode now works with frames.  In other words,
+`wget -p URL-THAT-USES-FRAMES' will now download the frame HTML files,
+and all the files that they need to be displayed properly.
+
+** `--base' now works conjunction with `--input-file', providing a
+base for each URL and thereby allowing the URLs in the file to be
+relative.
+
+** If a host has more than one IP address, Wget uses the other
+addresses when accessing the first one fails.
+
+** Host directories now contain port information if the URL is at a
+non-standard port.
+
+** Wget now supports the robots.txt directives specified in
+<http://www.robotstxt.org/wc/norobots-rfc.txt>.
+
+** URL parser has been fixed, especially the infamous overzealous
+quoting.  Wget no longer dequotes reserved characters, e.g. `%3F' is
+no longer translated to `?', nor `%2B' to `+'.  Unsafe characters
+which are not reserved are still escaped, of course.
+
+** No more than 20 successive redirections are allowed.
+
+* Wget 1.7.1 is a bugfix release with no user-visible changes.
+
+* Changes in Wget 1.7.
+
+** SSL (`https') pages now work if you compile Wget with SSL support;
+use the `--with-ssl' configure flag.  You need to have OpenSSL
+installed.
+
+** Cookies are now supported.  Wget will accept cookies sent by the
+server and return them in later requests.  Additionally, it can load
+and save cookies to disk, in the same format that Netscape uses.
+
+** "Keep-alive" (persistent) HTTP connections are now supported.
+Using keep-alive allows Wget to share one TCP/IP connection for
+many retrievals, making multiple-file downloads faster and less
+stressing for the server and the network.
+
+** Wget now recognizes FTP directory listings generated by NT and VMS
+servers.
+
+** It is now possible to recurse through FTP sites where logging in
+puts you in some directory other than '/'.
+
+** You may now use `~' to mean home directory in `.wgetrc'.  For
+example, `load_cookies = ~/.netscape/cookies.txt' works as you would
+expect.
+
+** The HTML parser has been rewritten.  The new one works more
+reliably, allows finer-grained control over which tags and attributes
+are detected, and has better support for some features like correctly
+skipping comments and declarations, decoding entities, etc.  It is
+also more general.
+
+** <meta name="robots"> tags are now respected.
+
+** Wget's internal tables now use hash tables instead of linked lists
+where appropriate.  This results in huge speedups when retrieving
+large sites (thousands of documents).
+
+** Wget now has a man page, automatically generated from the Texinfo
+documentation.  (The last version that shipped with a man page was
+1.4.5).  To get this, you need to have pod2man from the Perl
+distribution installed on your system.
+
+* Changes in Wget 1.6
+
+** Administrative changes.
+
+*** Maintainership.  Due to Hrvoje being plagued with a "real job",
+Dan Harkless is the most active maintainer (not that he doesn't have a
+real job as well).  Hrvoje still participates occasionally, and both
+are being helped by many other people.
+
+*** Web page.  Thanks to Jan Prikryl, Wget has an "official" web page.
+Take a look at:
+
+    http://sunsite.dk/wget/
+
+*** Anonymous CVS.  Thanks to ever-helpful Karsten Thygesen, Wget
+sources are now available at an anonymous CVS server.  Take a look at
+the web page for downloading instructions.
+
+** New -K / --backup-converted / backup_converted = on option causes files
+modified due to -k to be saved with a .orig prefix before being changed.  When
+using -N as well, it is these .orig files that are compared against the server.
+
+** New --follow-tags / follow_tags = ... option allows you to restrict
+Wget to following only certain HTML tags when doing a recursive
+retrieval.  -G / --ignore-tags / ignore_tags = ... is just the
+opposite -- all tags but the ones you specify will be followed.
+
+** New --waitretry / waitretry = SECONDS option allows waiting between retries
+of failed downloads.  Wget will use "linear" backoff, waiting 1 second after the
+first failure, 2 after the second, up to SECONDS.  waitretry is set to 10 by
+default in the system wgetrc.
+
+** New -p / --page-requisites / page_requisites = on option causes
+Wget to download all ancillary files necessary to display a given HTML
+page properly (e.g. inlined images).
+
+** New -E / --html-extension / html_extension = on option causes Wget
+to append ".html" to text/html filenames not ending in regexp
+"\.[Hh][Tt][Mm][Ll]?".
+
+** New type of .wgetrc command -- "lockable Boolean".  Can be set to on, off,
+always, or never.  This allows the .wgetrc to override the commandline.  So far,
+passive_ftp is the only .wgetrc command which takes a lockable Boolean.
+
+** A number of new translation files have been added.
+
+** New --bind-address / bind_address = <address> option for people on hosts
+bound to multiple IP addresses.
+
+** wget now accepts (illegal per HTTP spec) relative URLs in HTTP redirects.
+
+* Wget 1.5.3 is a bugfix release with no user-visible changes.
+
+* Wget 1.5.2 is a bugfix release with no user-visible changes.
+
+* Wget 1.5.1 is a bugfix release with no user-visible changes.
+
+* Changes in Wget 1.5.0
+
+** Wget speaks many languages!
+
+On systems with gettext(), Wget will output messages in the language
+set by the current locale, if available.  At this time we support
+Czech, German, Croatian, Italian, Norwegian and Portuguese.
+
+** Opie (Skey) is now supported with FTP.
+
+** HTTP Digest Access Authentication (RFC2069) is now supported.
+
+** The new `-b' option makes Wget go to background automatically.
+
+** The `-I' and `-X' options now accept wildcard arguments.
+
+** The `-w' option now accepts suffixes `s' for seconds, `m' for
+minutes, `h' for hours, `d' for days and `w' for weeks.
+
+** Upon getting SIGHUP, the whole previous log is now copied to
+`wget-log'.
+
+** Wget now understands proxy settings with explicit usernames and
+passwords, e.g. `http://user:password@proxy.foo.com/'.
+
+** You can use the new `--cut-dirs' option to make Wget create less
+directories.
+
+** The `;type=a' appendix to FTP URLs is now recognized.  For
+instance, the following command will retrieve the welcoming message in
+ASCII type transfer:
+
+    wget "ftp://ftp.somewhere.com/welcome.msg;type=a"
+
+** `--help' and `--version' options have been redone to conform to
+standards set by other GNU utilities.
+
+** Wget should now be compilable under MS Windows environment.  MS
+Visual C++ and Watcom C have been used successfully.
+
+** If the file length is known, percentages are displayed during
+download.
+
+** The manual page, now hopelessly out of date, is no longer
+distributed with Wget.
+
+* Wget 1.4.5 is a bugfix release with no user-visible changes.
+
+* Wget 1.4.4 is a bugfix release with no user-visible changes.
+
+* Changes in Wget 1.4.3
+
+** Wget is now a GNU utility.
+
+** Can do passive FTP.
+
+** Reads .netrc.
+
+** Info documentation expanded.
+
+** Compiles on pre-ANSI compilers.
+
+** Global wgetrc now goes to /usr/local/etc (i.e. $sysconfdir).
+
+** Lots of bugfixes.
+
+* Changes in Wget 1.4.2
+
+** New mirror site at ftp://sunsite.auc.dk/pub/infosystems/wget/,
+thanks to Karsten Thygesen.
+
+** Mailing list!  Mail to wget-request@sunsite.auc.dk to subscribe.
+
+** New option --delete-after for proxy prefetching.
+
+** New option --retr-symlinks to retrieve symbolic links like plain
+files.
+
+** rmold.pl -- script to remove files deleted on the remote server
+
+** --convert-links should work now.
+
+** Minor bugfixes.
+
+* Changes in Wget 1.4.1
+
+** Minor bugfixes.
+
+** Added -I (the opposite of -X).
+
+** Dot tracing is now customizable; try wget --dot-style=binary
+
+* Changes in Wget 1.4.0
+
+** Wget 1.4.0 [formerly known as Geturl] is an extensive rewrite of
+Geturl.  Although many things look suspiciously similar, most of the
+stuff was rewritten, like recursive retrieval, HTTP, FTP and mostly
+everything else.  Wget should be now easier to debug, maintain and,
+most importantly, use.
+
+** Recursive HTTP should now work without glitches, even with Location
+changes, server-generated directory listings and other naughty stuff.
+
+** HTTP regetting is supported on servers that support Range
+specification. WWW authorization is supported -- try
+wget http://user:password@hostname/
+
+** FTP support was rewritten and widely enhanced. Globbing should now
+work flawlessly. Symbolic links are created locally. All the
+information the Unix-style ls listing can give is now recognized.
+
+** Recursive FTP is supported, e.g.
+    wget -r ftp://gnjilux.cc.fer.hr/pub/unix/util/
+
+** You can specify "rejected" directories, to which you do not want to
+enter, e.g. with wget -X /pub
+
+** Time-stamping is supported, with both HTTP and FTP. Try wget -N URL.
+
+** A new texinfo reference manual is provided.  It can be read with
+Emacs, standalone info, or converted to HTML, dvi or postscript.
+
+** Fixed a long-standing bug, so that Wget now works over SLIP
+connections.
+
+** You can have a system-wide wgetrc (/usr/local/lib/wgetrc by
+default). Settings in $HOME/.wgetrc override the global ones, of
+course :-)
+
+** You can set up quota in .wgetrc to prevent sucking too much
+data. Try `quota = 5M' in .wgetrc (or quota = 100K if you want your
+sysadmin to like you).
+
+** Download rate is printed after retrieval.
+
+** Wget now sends the `Referer' header when retrieving
+recursively.
+
+** With the new --no-parent option Wget can retrieve FTP recursively
+through a proxy server.
+
+** HTML parser, as well as the whole of Wget was rewritten to be much
+faster and less memory-consuming (yes, both).
+
+** Absolute links can be converted to relative links locally. Check
+wget -k.
+
+** Wget catches hangup, filtering the output to a log file and
+resuming work. Try kill -HUP %?wget.
+
+** User-defined headers can be sent.  Try
+
+    wget http://fly.cc.her.hr/ --header='Accept-Charset: iso-8859-2'
+
+** Acceptance/Rejection lists may contain wildcards.
+
+** Wget can display HTTP headers and/or FTP server response with the
+new `-S' option.  It can save the original HTTP headers with `-s'.
+
+** socks library is now supported (thanks to Antonio Rosella
+<Antonio.Rosella@agip.it>). Configure with --with-socks.
+
+** There is a nicer display of REST-ed output.
+
+** Many new options (like -x to force directory hierarchy, or -m to
+turn on mirroring options).
+
+** Wget is now distributed under GNU General Public License (GPL).
+
+** Lots of small features I can't remember. :-)
+
+** A host of bugfixes.
+
+* Changes in Geturl 1.3
+
+** Added FTP globbing support (ftp://fly.cc.fer.hr/*)
+
+** Added support for no_proxy
+
+** Added support for ftp://user:password@host/
+
+** Added support for %xx in URL syntax
+
+** More natural command-line options
+
+** Added -e switch to execute .geturlrc commands from the command-line
+
+** Added support for robots.txt
+
+** Fixed some minor bugs
+
+* Geturl 1.2 is a bugfix release with no user-visible changes.
+
+* Changes in Geturl 1.1
+
+** REST supported in FTP
+
+** Proxy servers supported
+
+** GNU getopt used, which enables command-line arguments to be ordered
+as you wish, e.g.  geturl http://fly.cc.fer.hr/ -vo log is the same as
+geturl -vo log http://fly.cc.fer.hr/
+
+** Netscape-compatible URL syntax for HTTP supported: host[:port]/dir/file
+
+** NcFTP-compatible colon URL syntax for FTP supported: host:/dir/file
+
+** <base href="xxx"> supported
+
+** autoconf supported
+
+----------------------------------------------------------------------
+Copyright information:
+
+Copyright (C) 1997-2005 Free Software Foundation, Inc.
+
+   Permission is granted to anyone to make or distribute verbatim
+   copies of this document as received, in any medium, provided that
+   the copyright notice and this permission notice are preserved, thus
+   giving the recipient permission to redistribute in turn.
+
+   Permission is granted to distribute modified versions of this
+   document, or of portions of it, under the above conditions,
+   provided also that they carry prominent notices stating who last
+   changed them.

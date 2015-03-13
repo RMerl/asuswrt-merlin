@@ -1849,7 +1849,7 @@ stop_wan_if(int unit)
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_proto, active_proto[32];
 	char pid_file[256];
-#if defined(RTCONFIG_USB_BECEEM) || defined(RT4GAC55U)
+#if defined(RTCONFIG_USB_BECEEM)
 	int i;
 #endif
 #ifdef RTCONFIG_USB_BECEEM
@@ -2005,20 +2005,9 @@ stop_wan_if(int unit)
 #endif	/* RTCONFIG_USB_BECEEM */
 
 #if defined(RT4GAC55U)
-#if 0
-#define SLEEP(s) {int sec = s; while((sec = sleep(sec)) > 0) /* cprintf(" intr(%d)\n", sec)*/ ; }
-		for(i = 0; i < 3 && pidof("gobi") > 0; i++)
-		{
-#define GOBI_PIPE_PATH "/tmp/pipe"
-			cprintf("stop gobi %d\n", i);
-			f_write(GOBI_PIPE_PATH,  "1\n4\n2\n99\n", 9, FW_APPEND, 0);	//disconnect and terminal gobi process.
-			SLEEP(2);
-		}
-#else
 		char *const modem_argv[] = {"modem_stop.sh", NULL};
 
 		_eval(modem_argv, ">>/tmp/usb.log", 0, NULL);
-#endif
 #endif
 	}
 
@@ -2473,7 +2462,8 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	}
 #endif
 
-#if defined(RTN65U) || defined(RTN56U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)|| defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTCONFIG_QCA) || \
+    (defined(RTCONFIG_RALINK) && !defined(RTCONFIG_DSL) && !defined(RTN13U))
 	reinit_hwnat(wan_unit);
 #endif
 
@@ -2515,6 +2505,13 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	if(dualwan_unit__usbif(wan_unit)){
 		eval("modem_status.sh", "operation");
 		eval("modem_status.sh", "bytes+");
+
+		char start_sec[32], *str = file2str("/proc/uptime");
+		unsigned int up = atoi(str);
+
+		free(str);
+		snprintf(start_sec, 32, "%u", up);
+		nvram_set("usb_modem_act_startsec", start_sec);
 	}
 #endif
 #endif
@@ -2542,6 +2539,12 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #ifdef RTCONFIG_VPNC
 	if((nvram_match("vpnc_proto", "pptp") || nvram_match("vpnc_proto", "l2tp")) && nvram_match("vpnc_auto_conn", "1"))
 		start_vpnc();
+#endif
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+        if (nvram_match("pptpd_enable", "1")) {
+		stop_pptpd();
+		start_pptpd();
+	}
 #endif
 
 #if defined(RTCONFIG_BLINK_LED)
@@ -2627,6 +2630,11 @@ wan_down(char *wan_ifname)
 		return;
 
 	_dprintf("%s(%s): %s.\n", __FUNCTION__, wan_ifname, nvram_safe_get(strcat_r(prefix, "dns", tmp)));
+
+#ifdef RT4GAC55U
+	if(dualwan_unit__usbif(wan_unit))
+		nvram_unset("usb_modem_act_startsec");
+#endif
 
 #if defined(RTCONFIG_BLINK_LED)
 	if(dualwan_unit__usbif(wan_unit)
@@ -2987,6 +2995,10 @@ stop_wan(void)
 
 #ifdef RTCONFIG_OPENVPN
 	stop_vpn_eas();
+#endif
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+        if (nvram_match("pptpd_enable", "1")) 
+                stop_pptpd();
 #endif
 
 	/* Remove dynamically created links */

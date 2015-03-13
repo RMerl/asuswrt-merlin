@@ -36,4 +36,6 @@ struct gpio_ioctl {
 #define  GPIO_IOC_IN		_IOWR(GPIO_IOC_MAGIC, 4, struct gpio_ioctl)
 #define  GPIO_IOC_OUTEN		_IOWR(GPIO_IOC_MAGIC, 5, struct gpio_ioctl)
 
+uint32 _gpio_ctrl(unsigned int cmd, uint32 mask, uint32 val);
+
 #endif	/* _linux_gpio_h_ */

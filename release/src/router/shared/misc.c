@@ -32,6 +32,9 @@
 #include "shutils.h"
 #include "shared.h"
 
+#ifndef ETHER_ADDR_LEN
+#define	ETHER_ADDR_LEN		6
+#endif
 
 extern char *read_whole_file(const char *target){
 	FILE *fp;
@@ -543,7 +546,7 @@ void set_action(int a)
 	}
 	if (!s)
 		snprintf(act.comm, sizeof(act.comm), "%d <UNKNOWN>", act.pid);
-	_dprintf("set_action %d\n", act.action);
+	_dprintf("%d: set_action %d\n", getpid(), act.action);
 	while (f_write_excl(ACTION_LOCK, &act, sizeof(act), 0, 0600) != sizeof(act)) {
 		sleep(1);
 		if (--r == 0) return;
@@ -562,7 +565,7 @@ static int __check_action(struct action_s *pa)
 	}
 	if (pa)
 		*pa = act;
-	_dprintf("check_action %d\n", act.action);
+	_dprintf("%d: check_action %d\n", getpid(), act.action);
 
 	return act.action;
 }
@@ -1034,6 +1037,7 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTN15U:
 	case MODEL_RTAC53U:
 	case MODEL_RTAC3200:
+	case MODEL_RTAC88U:
 		strcpy(vlan, "vlan1");
 		break;
 	case MODEL_RTN53:
@@ -1682,4 +1686,27 @@ int check_bwdpi_nvram_setting()
 	return enabled;
 }
 #endif
+
+int get_iface_hwaddr(char *name, unsigned char *hwaddr)
+{
+	struct ifreq ifr;
+	int ret = 0;
+	int s;
+
+	/* open socket to kernel */
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("socket");
+		return errno;
+	}
+
+	/* do it */
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)-1);
+	ifr.ifr_name[sizeof(ifr.ifr_name)-1] = '\0';
+	if ((ret = ioctl(s, SIOCGIFHWADDR, &ifr)) == 0)
+		memcpy(hwaddr, ifr.ifr_hwaddr.sa_data, ETHER_ADDR_LEN);
+
+	/* cleanup */
+	close(s);
+	return ret;
+}
 

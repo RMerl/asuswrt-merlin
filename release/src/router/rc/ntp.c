@@ -57,7 +57,7 @@ static void ntp_service()
 		setup_timezone();
 
 		if (is_routing_enabled())
-			notify_rc("restart_upnp");
+			notify_rc_and_period_wait("restart_upnp", 25);
 #ifdef RTCONFIG_IPV6
 #ifdef RTCONFIG_WIDEDHCP6
 /* switch to monotonic clock usage *//*

@@ -33,6 +33,7 @@ ifeq ($(RTCONFIG_BCMARM),y)
 export CFLAGS += -DMFP
 export CFLAGS += -D__CONFIG_MFP__
 export CLFAGS += -DWLWNM
+export MFP_TEST=1
 endif
 endif
 export CFLAGS += $(EXTRACFLAGS)
@@ -47,9 +48,6 @@ else
 MODEL = $(subst -,,$(subst +,P,$(BUILD_NAME)))
 endif
 export CFLAGS += -D$(MODEL)
-ifeq ($(BUILD_NAME),TM-AC1900)
-export CFLAGS += -DRTAC68U
-endif
 
 export OLD_SRC=$(SRCBASE)/../src
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -62,9 +60,13 @@ export PLATFORM LIBDIR USRLIBDIR LINUX_VERSION
 ifeq ($(RTCONFIG_BCM7),y)
 export BCMSRC=src-rt-7.x.main/src
 export OLD_SRC=$(SRCBASE)/../../src
-export  KBUILD_VERBOSE := 1
 export  BUILD_MFG := 0
 export  EX7 := _7
+else ifeq ($(RTCONFIG_BCM794),y)
+export BCMSRC=src-rt-7.14.94.x/src
+export OLD_SRC=$(SRCBASE)/../../src
+export  BUILD_MFG := 0
+export  EX7 := _794
 else
 WLAN_ComponentsInUse := bcmwifi clm ppr olpc
 export BCMSRC=src-rt-6.x.4708
@@ -79,7 +81,6 @@ export EXTRALDFLAGS2 = -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared
 
 export LD_LIBRARY_PATH := $(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib
 ifeq (2_6_36,$(LINUX_VERSION))
-export  KBUILD_VERBOSE := 0
 export  BUILD_MFG := 0
 endif
 SUBMAKE_SETTINGS = SRCBASE=$(SRCBASE) BASEDIR=$(BASEDIR)
@@ -119,11 +120,11 @@ export DHDAP_USE_SEPARATE_CHECKOUTS := 1
 export SRCBASE_DHD := $(SRCBASE)/../../dhd/src
 export SRCBASE_FW  := $(SRCBASE)/../../43602/src
 
-PCIEFD_TARGETS_LIST	:= 43602a0-roml 43602a1-roml
+PCIEFD_TARGETS_LIST	:= 43602a1-roml
 ifeq ($(WLTEST),1)
-PCIEFD_TARGET_NAME	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-txbf-pktctx-amsdutx-ampduretry
+PCIEFD_TARGET_NAME	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-txbf-pktctx-amsdutx-ampduretry-chkd2hdma
 else
-PCIEFD_TARGET_NAME	:= pcie-ag-splitrx-fdap-mbss-mfp-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-proptxstatus
+PCIEFD_TARGET_NAME	:= pcie-ag-splitrx-fdap-mbss-mfp-wl11k-wl11u-txbf-pktctx-amsdutx-ampduretry-chkd2hdma-proptxstatus
 endif
 
 PCIEFD_EMBED_HEADER_TEMPLATE := $(SRCBASE_DHD)/shared/rtecdc_router.h.in
@@ -191,7 +192,7 @@ obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
 obj-$(RTCONFIG_DHDAP) += pciefd dhd
-#obj-$(RTCONFIG_DHDAP) += dhd
+obj-$(RTCONFIG_DHDAP) += dhd
 obj-y += busybox
 obj-y += shared
 obj-y += nvram$(BCMEX)
@@ -212,7 +213,7 @@ obj-y += rt2880_app
 else	#!ifneq ($(findstring linux-3.x,$(LINUXDIR)),)
 obj-y += ated
 obj-y += flash
-ifeq (($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN54U),$(RTAC1200HP)),$(RTN56UB1),$(RTAC54U)),y)
+ifeq ($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN54U),$(RTAC1200HP),$(RTN56UB1),$(RTAC54U)),y)
 else
 obj-y += hw_nat
 endif
@@ -262,12 +263,6 @@ obj-$(RTCONFIG_BWDPI) += bwdpi_sqlite
 #obj-$(RTCONFIG_SPEEDTEST) += curl-7.21.7
 obj-y += curl-7.21.7
 
-# Temporary workaround to separate different emf builds
-ifeq ($(RTCONFIG_BWDPI),y)
-export DPI := _dpi
-endif
-
-
 obj-y += rc
 obj-y += rom
 obj-y += others
@@ -300,16 +295,18 @@ ifeq ($(RTCONFIG_RALINK),y)
 else ifeq ($(RTCONFIG_QCA),y)
 else
 #obj-y += et
-obj-y += wlconf$(BCMEX)$(EX7)
 obj-y += utils$(BCMEX)$(EX7)
+obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(EX7)
+obj-$(RTCONFIG_EMF) += igs
+ifneq ($(RTCONFIG_BCM794),y)	# do not build wl/dhd since not ready
+obj-y += wlconf$(BCMEX)$(EX7)
 obj-y += nas$(BCMEX)$(EX7)
 obj-$(RTCONFIG_HSPOT) += hspot_ap$(BCMEX)$(EX7)
 obj-y += eapd$(BCMEX)$(EX7)/linux
+obj-$(RTCONFIG_WPS) += wps$(BCMEX)$(EX7)
+endif
 obj-$(CONFIG_LIBBCM) += libbcm
 obj-$(CONFIG_LIBUPNP) += libupnp
-obj-$(RTCONFIG_WPS) += wps$(BCMEX)$(EX7)
-obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(EX7)$(DPI)
-obj-$(RTCONFIG_EMF) += igs
 endif
 
 obj-y += libbcmcrypto
@@ -339,7 +336,7 @@ obj-$(RTCONFIG_USB_MODEM) += comgt-0.32
 obj-$(RTCONFIG_USB_MODEM) += uqmi
 
 ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
-ifeq ($(RTN65U),y)
+ifeq ($(or $(RTN65U),$(RTAC55U),$RTAC55UHP)),y)
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
 else
 obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.2.0
@@ -476,7 +473,7 @@ endif
 
 #add for snmpd
 SNMPD_CFLAGS += -D$(BUILD_NAME)
-ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-N66U RT-AC66U RT-AC68U TM-AC1900))
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-N66U RT-AC66U RT-AC68U))
 SNMPD_CFLAGS += -DDUAL_BAND
 endif
 obj-$(RTCONFIG_SNMPD) += openssl
@@ -485,11 +482,7 @@ obj-$(RTCONFIG_BCMWL6) += libnmp
 endif
 obj-$(RTCONFIG_SNMPD) += net-snmp-5.7.2
 ifeq ($(RTCONFIG_SNMPD),y)
-ifeq ($(BUILD_NAME),TM-AC1900)
-export MIB_MODULE_PASSPOINT = asus-mib/passpoint
-else
 export MIB_MODULE_PASSPOINT =
-endif
 endif
 
 #
@@ -501,6 +494,7 @@ obj-$(RTCONFIG_L2TP) += rp-l2tp
 obj-$(RTCONFIG_PPTP) += accel-pptp
 obj-$(RTCONFIG_EAPOL) += wpa_supplicant
 obj-$(RTCONFIG_HTTPS) += openssl
+obj-$(RTCONFIG_HTTPS) += wget
 obj-$(RTCONFIG_SSH) += dropbear
 #obj-$(RTCONFIG_ZEBRA) += zebra
 #	obj-$(RTCONFIG_IPP2P) += ipp2p
@@ -582,6 +576,8 @@ ifeq ($(RTCONFIG_RALINK),y)
 obj-$(RA_SKU) += ra_SingleSKU
 endif
 obj-$(RTCONFIG_BCMARM) += wl$(BCMEX)$(EX7)
+
+obj-$(RTCONFIG_RTL8365MB) += rtl_bin
 
 #obj-y += bonnie
 
@@ -753,6 +749,9 @@ else	# RTCONFIG_BCMARM
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/lib/libcrc32c.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/net/sched/sch_tbf.ko)
 	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/net/sched/sch_hfsc.ko)
+ifeq ($(RTCONFIG_RTL8365MB),y)
+	$(call STRIP_DEBUG_SYMBOLS,$(LINUXDIR)/drivers/char/rtl8365mb/rtl8365mb.ko)
+endif
 endif   # RTCONFIG_BCMARM
 
 ifeq ($(RTCONFIG_RALINK),y)
@@ -864,6 +863,9 @@ ifeq ($(RTAC53U),y)
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv ctf_5358/* . && rm -rf ctf_5358 || true
 else
 	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv ctf/* . && rm -rf ctf || true
+endif
+ifeq ($(RTCONFIG_RTL8365MB),y)
+	cd $(TARGETDIR)/lib/modules/*/kernel/drivers/char && mv rtl8365mb/* . && rm -rf rtl8365mb || true
 endif
 	cd $(TARGETDIR)/lib/modules && rm -f */source || true
 
@@ -1334,7 +1336,7 @@ endif
 
 #OPENSSL_CIPHERS:=enable-aes enable-tls1 enable-tlsext
 
-openssl/stamp-h1:
+openssl/Makefile:
 	cd openssl && \
 	./Configure $(HOSTCONFIG) --openssldir=/etc --cross-compile-prefix=' ' \
 	-ffunction-sections -fdata-sections -Wl,--gc-sections \
@@ -1348,12 +1350,12 @@ openssl/stamp-h1:
 	-@$(MAKE) -C openssl clean
 	@touch $@
 
-openssl: openssl/stamp-h1
+openssl: openssl/Makefile
 	$(MAKE) -C openssl && $(MAKE) $@-stage
 
 openssl-clean:
-	-@$(MAKE) -C openssl clean
-	@rm -f openssl/stamp-h1
+	-@[ ! -f openssl/Makefile ] || $(MAKE) -C openssl clean
+	-@rm -f openssl/Makefile
 
 openssl-install: openssl
 	install -D openssl/libcrypto.so.1.0.0 $(INSTALLDIR)/openssl/usr/lib/libcrypto.so.1.0.0
@@ -1464,14 +1466,18 @@ $(obj-pciefd) :
 # Build PCIEFD firmware only if it is not prebuilt
 ifeq ($(RTCONFIG_DHDAP),y)
 ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
-	+$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(SRCBASE_FW)/dongle/rte/wl $(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME) -j 8
+	+$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(SRCBASE_FW)/dongle/rte/wl $(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)
 	if [ -f $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-roml-obj,%,$@).h ]; then \
-		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-roml-obj,%,$@).h $(SRCBASE_DHD)/shared/rtecdc_$(patsubst %-roml-obj,%,$@).h; \
+		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-roml-obj,%,$@).h $(SRCBASE_DHD)/shared/rtecdc_$(patsubst %-roml-obj,%,$@).h && \
 		echo "#include <rtecdc_$(patsubst %-roml-obj,%,$@).h>" >> $(PCIEFD_EMBED_HEADER); \
 	fi;
 	if [ -f $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-ram-obj,%,$@).h ]; then \
-		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-ram-obj,%,$@).h $(SRCBASE_DHD)/shared/rtecdc_$(patsubst %-ram-obj,%,$@).h; \
+		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-ram-obj,%,$@).h $(SRCBASE_DHD)/shared/rtecdc_$(patsubst %-ram-obj,%,$@).h && \
 		echo "#include <rtecdc_$(patsubst %-ram-obj,%,$@).h>" >> $(PCIEFD_EMBED_HEADER); \
+	fi;
+	if [ -f $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/wlc_clm_data.c ]; then \
+		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/wlc_clm_data.c $(SRCBASE_FW)/wl/clm/src/wlc_clm_data.c.GEN && \
+		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/wlc_clm_data_inc.c $(SRCBASE_FW)/wl/clm/src/wlc_clm_data_inc.c.GEN; \
 	fi;
 endif
 endif
@@ -1480,8 +1486,8 @@ pciefd-cleangen: pciefd-clean
 # Clean PCIEFD firmware only if it is not prebuilt
 ifeq ($(RTCONFIG_DHDAP),y)
 ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
-	rm -f  $(PCIEFD_EMBED_HEADER);
-	cp -f $(PCIEFD_EMBED_HEADER_TEMPLATE) $(PCIEFD_EMBED_HEADER);
+	rm -f  $(PCIEFD_EMBED_HEADER)
+	cp -f $(PCIEFD_EMBED_HEADER_TEMPLATE) $(PCIEFD_EMBED_HEADER)
 endif
 endif
 
@@ -1490,7 +1496,7 @@ pciefd: pciefd-cleangen $(obj-pciefd)
 pciefd-clean :
 ifeq ($(RTCONFIG_DHDAP),y)
 ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
-	+$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(SRCBASE_FW)/dongle/rte/wl clean -j 8
+	+$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(SRCBASE_FW)/dongle/rte/wl clean
 	rm -f $(SRCBASE_DHD)/shared/rtecdc*.h
 endif
 endif
@@ -2900,29 +2906,29 @@ hotplug2-install: hotplug2
 	$(MAKE) -C hotplug2 install PREFIX=$(INSTALLDIR)/hotplug2 SUBDIRS=""
 	$(MAKE) -C hotplug2/examples install PREFIX=$(INSTALLDIR)/hotplug2/rom KERNELVER=$(LINUX_KERNEL)
 
-emf$(BCMEX)$(EX7)$(DPI):
-	$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/emfconf CROSS=$(CROSS_COMPILE)
+emf$(BCMEX)$(EX7):
+	$(MAKE) -C emf$(BCMEX)$(EX7)/emfconf CROSS=$(CROSS_COMPILE)
 
-emf$(BCMEX)$(EX7)$(DPI)-install:
+emf$(BCMEX)$(EX7)-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
-	$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/emfconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+	$(MAKE) -C emf$(BCMEX)$(EX7)/emfconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
-emf$(BCMEX)$(EX7)$(DPI)-clean:
-	-@$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/emfconf clean
+emf$(BCMEX)$(EX7)-clean:
+	-@$(MAKE) -C emf$(BCMEX)$(EX7)/emfconf clean
 
 igs:
-	$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/igsconf CROSS=$(CROSS_COMPILE)
+	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE)
 
 igs-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
-	$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
 igs-clean:
-	-@$(MAKE) -C emf$(BCMEX)$(EX7)$(DPI)/igsconf clean
+	-@$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf clean
 
 ebtables: kernel_header dummy
 	$(MAKE) -C ebtables CC=$(CC) LD=$(LD) \
@@ -3446,6 +3452,12 @@ wl$(BCMEX)$(EX7):
 wl$(BCMEX)$(EX7)-install:
 	@$(SEP)
 
+rtl_bin:
+	-@$(MAKE) -C rtl_bin
+
+rtl_bin-install:
+	@$(SEP)
+
 #libgpg-error-1.10
 libgpg-error-1.10/stamp-h1:
 	cd $(TOP)/libgpg-error-1.10 && \
@@ -3593,7 +3605,7 @@ netatalk-3.0.5-install: netatalk-3.0.5
 	cd $(INSTALLDIR)/netatalk-3.0.5/usr/lib/netatalk && ln -sf uams_dhx2_passwd.so uams_dhx2.so
 
 netatalk-3.0.5-clean:
-	-@$(MAKE) -C netatalk-3.0.5 clean
+	-@$(MAKE) -C netatalk-3.0.5 distclean
 	@rm -f netatalk-3.0.5/stamp-h1
 
 #expat-2.0.1
@@ -3865,6 +3877,19 @@ GeoIP-1.6.2-install: GeoIP-1.6.2
 GeoIP-1.6.2-clean:
 	-@[ ! -f GeoIP-1.6.2/Makefile ] || $(MAKE) -C GeoIP-1.6.2 distclean
 	@rm -f GeoIP-1.6.2/stamp-h1
+
+wget/Makefile: openssl zlib
+	cd wget && autoreconf -i -f && $(CONFIGURE) --with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl --disable-opie --disable-ntlm --disable-debug --disable-nls --disable-iri --disable-dependency-tracking CFLAGS="-I$(TOP)/openssl/include -I$(TOP)/zlib" LDFLAGS="-L$(TOP)/openssl -lssl -lcrypto -L$(TOP)/zlib -lz"
+
+wget: wget/Makefile
+	$(MAKE) -C wget CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -I$(TOP)/openssl/include -I$(TOP)/zlib"
+
+wget-clean:
+	-@[ ! -f wget/Makefile ] || $(MAKE) -C wget distclean
+
+wget-install:
+	install -D wget/src/wget $(INSTALLDIR)/wget/usr/sbin/wget
+	$(STRIP) $(INSTALLDIR)/wget/usr/sbin/wget
 
 qca-wifi:
 	$(MAKE) -C $@ TARGET_CROSS=$(CROSS_COMPILE) LINUX_KARCH=$(ARCH) LINUX_VERSION=$(LINUX_KERNEL) LINUX_DIR=$(LINUXDIR) && $(MAKE) $@-stage

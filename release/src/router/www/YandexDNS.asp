@@ -201,7 +201,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 }
 
 function addRow_main(upper){
-	var rule_num = $('mainTable_table').rows.length;
+	var rule_num = $('mainTable_table').rows.length - 3; //ingore tbody occupied row
 	var item_num = $('mainTable_table').rows[0].cells.length;
 
 	if(rule_num >= upper){

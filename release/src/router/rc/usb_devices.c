@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <dirent.h>
 #include <errno.h>
+#include <sys/mount.h>
 
 #include "rc.h"
 #include "dongles.h"
@@ -2996,6 +2997,39 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 	return 0;
 }
 
+#ifdef RTCONFIG_BCMARM
+int asus_mmc(const char *device_name, const char *action){
+	
+	int ret = 0;
+	char *type, mnt_dev[128], mountpoint[128];
+
+	_dprintf("\n[%s][mmc hotplug:%s dev:[%s]\n", __FUNCTION__, action, device_name);
+
+	memset(mountpoint, 0, sizeof(mountpoint));
+	sprintf(mountpoint, "%s/%s", "/mnt", device_name);
+
+	if(strcmp(action, "add") == 0)
+	{
+		memset(mnt_dev, 0, sizeof(mnt_dev));
+		sprintf(mnt_dev, "/dev/%s", device_name);
+		if ((type = detect_fs_type(mnt_dev)) == NULL)
+			return 0;
+
+		_dprintf("[%s] get mmc [%s]\n", __FUNCTION__, type);	// tmp test
+
+		ret = mount_r(mnt_dev, mountpoint, type);
+
+		_dprintf("[%s] chk mount:%d\n", __FUNCTION__, ret);	// tmp test
+	} else {
+		ret = umount2(mountpoint, MNT_DETACH);
+
+		_dprintf("[%s] chk unmount:%d\n", __FUNCTION__, ret);	// tmp test
+	}
+
+	return ret;
+}
+#endif
+
 int asus_sd(const char *device_name, const char *action){
 #ifdef RTCONFIG_USB
 	char usb_node[32], usb_port[32];
@@ -3076,8 +3110,16 @@ int asus_sd(const char *device_name, const char *action){
 		}
 #endif
 
+		snprintf(buf1, 32, "%s.%s", USB_MODESWITCH_CONF, port_path);
+		unlink(buf1);
+
 		if(strlen(usb_node) > 0){
-			if(!strcmp(nvram_safe_get(prefix), "storage") && !isdigit(*ptr))
+			// for the storage interface of the second modem.
+			if(!strcmp(nvram_safe_get(prefix), "modem") && strcmp(usb_node, nvram_safe_get("usb_modem_act_path"))){
+				usb_dbg("(%s): Reset the usb path nvram.\n", device_name);
+				set_usb_common_nvram(action, device_name, usb_node, NULL);
+			}
+			else if(!strcmp(nvram_safe_get(prefix), "storage") && !isdigit(*ptr))
 				set_usb_common_nvram(action, device_name, usb_node, "storage");
 			usb_dbg("(%s): Remove Storage on USB node %s.\n", device_name, usb_node);
 		}
@@ -3382,7 +3424,9 @@ int asus_sg(const char *device_name, const char *action){
 		return 0;
 	}
 
-	if(hadSerialModule() || hadACMModule()){
+	// Don't support the second modem device on a DUT.
+	snprintf(nvram_value, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+	if(strlen(nvram_value) > 0 && strcmp(nvram_value, usb_node)){
 		usb_dbg("(%s): Already had a running modem.\n", device_name);
 		return 0;
 	}
@@ -3506,6 +3550,13 @@ int asus_sr(const char *device_name, const char *action){
 
 	if(get_device_type_by_device(device_name) != DEVICE_TYPE_CD){
 		usb_dbg("(%s): The device is not a CD one.\n", device_name);
+		return 0;
+	}
+
+	// Don't support the second modem device on a DUT.
+	snprintf(nvram_value, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+	if(strlen(nvram_value) > 0 && strcmp(nvram_value, usb_node)){
+		usb_dbg("(%s): Already had a running modem.\n", device_name);
 		return 0;
 	}
 
@@ -3746,9 +3797,8 @@ int asus_tty(const char *device_name, const char *action){
 
 	// Don't support the second modem device on a DUT.
 	// Only see the other usb port, because in the same port there are more modem interfaces and they need to compare.
-	memset(buf1, 0, 32);
-	strncpy(buf1, nvram_safe_get("usb_modem_act_path"), 32);
-	if(strlen(buf1) > 0 && strcmp(usb_node, buf1)){
+	snprintf(buf1, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+	if(strlen(buf1) > 0 && strcmp(buf1, usb_node)){
 		// We would show the second modem device but didn't let it work.
 		// Because it didn't set the nvram: usb_path%d_act.
 		usb_dbg("(%s): Already had the modem device in the other USB port!\n", device_name);
@@ -4019,9 +4069,8 @@ int asus_usbbcm(const char *device_name, const char *action){
 
 	// Don't support the second modem device on a DUT.
 	// Only see the other usb port, because in the same port there are more modem interfaces and they need to compare.
-	memset(buf1, 0, 32);
-	strncpy(buf1, nvram_safe_get("usb_modem_act_path"), 32);
-	if(strlen(buf1) > 0 && strcmp(usb_node, buf1)){
+	snprintf(buf1, 32, "%s", nvram_safe_get("usb_modem_act_path"));
+	if(strlen(buf1) > 0 && strcmp(buf1, usb_node)){
 		// We would show the second modem device but didn't let it work.
 		// Because it didn't set the nvram: usb_path%d_act.
 		usb_dbg("(%s): Already had the modem device in the other USB port!\n", device_name);
@@ -4110,8 +4159,11 @@ int asus_usb_interface(const char *device_name, const char *action){
 
 		strcpy(device_type, nvram_safe_get(prefix));
 
+		snprintf(conf_file, 32, "%s.%s", USB_MODESWITCH_CONF, port_path);
+		unlink(conf_file);
+
 #ifdef RTCONFIG_USB_MODEM
-		if(!strcmp(device_type, "modem")){
+		if(!strcmp(device_type, "modem") && !strcmp(usb_node, nvram_safe_get("usb_modem_act_path"))){
 			snprintf(buf, 128, "%s", nvram_safe_get(strcat_r(prefix, "_act", tmp)));
 
 			// remove the device between adding interface and adding tty.
@@ -4133,9 +4185,6 @@ int asus_usb_interface(const char *device_name, const char *action){
 				nvram_unset(tmp);
 			}
 #endif
-
-			snprintf(conf_file, 32, "%s.%s", USB_MODESWITCH_CONF, port_path);
-			unlink(conf_file);
 
 #ifndef RT4GAC55U
 			// When ACM dongles are removed, there are no removed hotplugs of ttyACM nodes.
@@ -4231,21 +4280,24 @@ int asus_usb_interface(const char *device_name, const char *action){
 	set_usb_common_nvram(action, device_name, usb_node, "modem");
 
 	// Don't support the second modem device on a DUT.
-#if 0
-	if(hadSerialModule() || hadACMModule() || hadRNDISModule()
-#ifdef RTCONFIG_USB_BECEEM
-			|| hadBeceemModule()
-			|| hadGCTModule()
-#endif
-			)
-#else
-	if(strcmp(nvram_safe_get("usb_modem_act_path"), "") && strcmp(nvram_safe_get("usb_modem_act_path"), usb_node))
-#endif
-	{
-		usb_dbg("(%s): Had inserted the modem module.\n", device_name);
+	snprintf(tmp, 100, "%s", nvram_safe_get("usb_modem_act_path"));
+	if(strlen(tmp) > 0 && strcmp(tmp, usb_node)){
+		usb_dbg("(%s): Already had the modem device in the other USB port!\n", device_name);
 		file_unlock(isLock);
 		return 0;
 	}
+#ifdef RT4GAC55U
+	else if((nvram_get_int("usb_gobi") == 1 && strcmp(port_path, "2"))
+			|| (nvram_get_int("usb_gobi") != 1 && !strcmp(port_path, "2"))
+			){
+		if(nvram_get_int("usb_gobi") == 1)
+			usb_dbg("(%s): Just use the built-in Gobi and disable the USB modem.\n", device_name);
+		else
+			usb_dbg("(%s): Just use the USB modem and disable the built-in Gobi.\n", device_name);
+		file_unlock(isLock);
+		return 0;
+	}
+#endif
 
 	// Modem add action.
 	// WiMAX
@@ -4338,7 +4390,6 @@ int asus_usb_interface(const char *device_name, const char *action){
 			){
 		usb_dbg("(%s): Android phone: Runing RNDIS...\n", device_name);
 	}
-#if !defined(RT4GAC55U)	//skip other 3G and 4G dongle
 	else if(isSerialInterface(device_name, 1, vid, pid)){
 		usb_dbg("(%s): Runing USB serial with (0x%04x/0x%04x)...\n", device_name, vid, pid);
 		sleep(1);
@@ -4351,18 +4402,10 @@ int asus_usb_interface(const char *device_name, const char *action){
 		eval("insmod", "option", modem_cmd, buf);
 		sleep(1);
 	}
-#endif	/* RT4GAC55U */
 	else if(isACMInterface(device_name, 1, vid, pid)){
-#ifdef RT4GAC55U
-		if(vid == 0x05c6 && pid == 0x9026 && !strcmp(port_path, "2") && nvram_get_int("usb_gobi") != 1)
-			;
-		else
-#endif
-		{
-			usb_dbg("(%s): Runing USB ACM...\n", device_name);
-			modprobe("cdc-acm");
-			sleep(1);
-		}
+		usb_dbg("(%s): Runing USB ACM...\n", device_name);
+		modprobe("cdc-acm");
+		sleep(1);
 	}
 #endif // RTCONFIG_USB_MODEM
 

@@ -99,7 +99,13 @@ if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 		local=`nvram get lan_ipaddr`
 		dl_path="http://$local"
 	elif [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
-		dl_path=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+		IS_SUPPORT_SSL=`nvram get rc_support|grep -i HTTPS`
+		if [ -n "$IS_SUPPORT_SSL" ]; then
+			dl_path=https://dlcdnets.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+			wget_options="$wget_options --no-check-certificate"
+		else
+			dl_path=http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless
+		fi
 	else
 		dl_path=$ASUS_SERVER
 	fi
@@ -185,10 +191,11 @@ if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 
 	if [ -n "$apps_local_test" ] && [ "$apps_local_test" -eq "1" ]; then
 		sed -i '3c src/gz optware.asus '"$dl_path" $APPS_INSTALL_PATH/etc/ipkg.conf
-	elif [ "$pkg_type" != "arm" ] && [ -z "$apps_from_internet" ]; then
-		if [ -z "$apps_ipkg_old" ] || [ "$apps_ipkg_old" != "1" ]; then
+#	elif [ "$pkg_type" != "arm" ] && [ -z "$apps_from_internet" ]; then
+	elif [ "$pkg_type" != "arm" ]; then
+#		if [ -z "$apps_ipkg_old" ] || [ "$apps_ipkg_old" != "1" ]; then
 			sed -i '3c src/gz optware.asus '"$ASUS_SERVER" $APPS_INSTALL_PATH/etc/ipkg.conf
-		fi
+#		fi
 	fi
 fi
 

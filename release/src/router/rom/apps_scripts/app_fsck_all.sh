@@ -64,7 +64,7 @@ if [ "$1" == "ntfs" ]; then
 		eval chkntfs -a -f --verbose $2 $log_option
 		RET=$?
 		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
-			break;
+			break
 		fi
 	done
 elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
@@ -75,7 +75,7 @@ elif [ "$1" == "hfs" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
 		eval chkhfs -a -f --verbose $2 $log_option
 		RET=$?
 		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
-			break;
+			break
 		fi
 	done
 else

@@ -324,7 +324,8 @@ function show_LAN_info(v){
 			var modedesc = visible ? get_yadns_modedesc(i) + ": <#Full_Clients#> " + yadns_clients[i] : "";
 			showtext2($("yadns_mode" + i), modedesc, visible);
 		}
-		$("yadns_status").style.display = "";
+		if (!yadns_hideqis || yadns_enable != 0)
+			$("yadns_status").style.display = "";
 	}
 
 	showtext($("PINCode"), '<% nvram_get("secret_code"); %>');

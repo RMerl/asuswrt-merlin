@@ -526,6 +526,60 @@ static struct sdhci_ops sdhci_pci_ops = {
 	.enable_dma	= sdhci_pci_enable_dma,
 };
 
+#ifdef CONFIG_BCM47XX
+#ifndef CONFIG_MMC_SDHCI_IO_ACCESSORS
+#error  CONFIG_MMC_SDHCI_IO_ACCESSORS is required
+#endif /* !CONFIG_MMC_SDHCI_IO_ACCESSORS */
+
+static inline u16
+bcm47xx_sdhci_readw(struct sdhci_host *host, int reg)
+{
+	int shift = (reg % 4) * 8;
+
+	return ((readl(host->ioaddr + (reg & 0xffc)) >> shift) & 0xffff);
+}
+
+static inline u8
+bcm47xx_sdhci_readb(struct sdhci_host *host, int reg)
+{
+	int shift = (reg % 4) * 8;
+
+	return ((readl(host->ioaddr + (reg & 0xffc)) >> shift) & 0xff);
+}
+
+static inline void
+bcm47xx_sdhci_writew(struct sdhci_host *host, u16 val, int reg)
+{
+	int shift = (reg % 4) * 8;
+	u32 val32 = readl(host->ioaddr + (reg & 0xffc));
+
+	val32 &= ~(0xffff << shift);
+	val32 |= (val & 0xffff) << shift;
+	writel(val32, host->ioaddr + (reg & 0xffc));
+}
+
+static inline void
+bcm47xx_sdhci_writeb(struct sdhci_host *host, u16 val, int reg)
+{
+	int shift = (reg % 4) * 8;
+	u32 val32 = readl(host->ioaddr + (reg & 0xffc));
+
+	val32 &= ~(0xff << shift);
+	val32 |= (val & 0xff) << shift;
+	writel(val32, host->ioaddr + (reg & 0xffc));
+}
+
+static struct sdhci_ops bcm47xx_sdhci_pci_ops = {
+#ifdef CONFIG_MMC_SDHCI_IO_ACCESSORS
+	.read_w = bcm47xx_sdhci_readw,
+	.read_b = bcm47xx_sdhci_readb,
+	.write_w = bcm47xx_sdhci_writew,
+	.write_b = bcm47xx_sdhci_writeb,
+#endif /* CONFIG_MMC_SDHCI_IO_ACCESSORS */
+	.enable_dma     = sdhci_pci_enable_dma,
+};
+#endif /* CONFIG_BCM47XX */
+
 /*****************************************************************************\
  *                                                                           *
  * Suspend/resume                                                            *
@@ -675,7 +729,11 @@ static struct sdhci_pci_slot * __devinit sdhci_pci_probe_slot(
 	slot->pci_bar = bar;
 
 	host->hw_name = "PCI";
+#ifdef CONFIG_BCM47XX
+	host->ops = &bcm47xx_sdhci_pci_ops;
+#else
 	host->ops = &sdhci_pci_ops;
+#endif /* CONFIG_BCM47XX */
 	host->quirks = chip->quirks;
 
 	host->irq = pdev->irq;

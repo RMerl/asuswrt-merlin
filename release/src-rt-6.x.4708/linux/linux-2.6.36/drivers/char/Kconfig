@@ -1129,5 +1129,11 @@ config RAMOOPS
 	  This enables panic and oops messages to be logged to a circular
 	  buffer in RAM where it can be read back at some later point.
 
+config RTL8365MB
+	tristate "rtl8365mb driver"
+	default n
+	help
+	  rtl8365mb driver
+
 endmenu
 

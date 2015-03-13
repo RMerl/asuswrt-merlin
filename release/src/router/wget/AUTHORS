@@ -1,0 +1,58 @@
+Authors of GNU Wget.
+
+[ Note that this file does not attempt to list all the contributors to
+  Wget; look at the ChangeLogs for that.  This is a list of people who
+  contributed sizeable amounts of code and assigned the copyright to
+  the FSF. ]
+
+Hrvoje Niksic.  Designed and implemented Wget.
+
+Gordon Matzigkeit.  Wrote netrc.c and netrc.h.
+
+Darko Budor.  Wrote initial support for Windows, wrote wsstartup.c,
+wsstartup.h and windecl.h.  (The files were later renamed, but his
+code and ideas remained present.)
+
+Junio Hamano.  Added support for FTP Opie and HTTP digest
+authentication.
+
+Dan Harkless.  Added --backup-converted, --follow-tags, --html-extension,
+--ignore-tags, and --page-requisites; improved documentation; etc. Was
+the principle maintainer of GNU Wget for some time.
+
+Christian Fraenkel.  Initially implemented SSL support.
+
+Thomas Lussnig.  Initially implemented IPv6 support.
+
+Ian Abbott.  Contributed bugfixes, Windows-related fixes, provided a
+prototype implementation of the new recursive code, and more.
+Co-maintained Wget during the 1.8 release cycle.
+
+Gisle Vanem.  Contributed Windows and MS-DOS improvements, including a
+port of run_with_timeout to Windows, additions to Makefiles, and many
+bug reports and fixes.
+
+Mauro Tortonesi.  Improved IPv6 support, adding support for dual
+family systems.  Refactored and enhanced FTP IPv6 code. Maintained GNU
+Wget from 2004-2007.
+
+Nicolas Schodet.  Contributed to cookie code and documentation.
+
+Daniel Stenberg.  NTLM authentication in http-ntlm.c and http-ntlm.h
+originally written for curl donated for use in GNU Wget.
+
+Micah Cowan.  Maintained Wget from mid-2007 to mid-2010.
+
+Ralf Wildenhues.  Contributed patches to convert Wget to use Automake as
+part of its build process, and various bugfixes.
+
+Steven Schubiger.  Many helpful patches, bugfixes and improvements.
+Notably, conversion of Wget to use the Gnulib quotes and quoteargs
+modules, and the addition of password prompts at the console, via the
+Gnulib getpasswd-gnu module.
+
+Ted Mielczarek.  Support for parsing links from CSS.
+
+Saint Xavier.  Support for IRIs (RFC 3987).
+
+Giuseppe Scrivano.  Added support for HTTP/1.1.  Current Wget maintainer.

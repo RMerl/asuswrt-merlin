@@ -80,6 +80,8 @@ var AM_to_cifs = get_share_management_status("cifs");  // Account Management for
 var AM_to_ftp = get_share_management_status("ftp");  // Account Management for FTP
 var $j = jQuery.noConflict();
 var button_flag = 0;
+var ctf_disable = '<% nvram_get("ctf_disable"); %>';
+var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 
 function initial(){
 	show_menu();
@@ -88,6 +90,16 @@ function initial(){
 }
 
 function applyRule(){
+	if(ctf_disable == 0 && ctf_fa_mode == 2){
+		if(!confirm(Untranslated.ctf_fa_hint)){
+			return false;
+		}	
+		else{
+			document.form.action_script.value = "reboot";
+			document.form.action_wait.value = "<% nvram_get("reboot_time"); %>";
+		}	
+	}
+
 	showLoading();	
 	document.form.submit();
 }

@@ -219,6 +219,7 @@ void erase_nvram(void)
 		case MODEL_RTAC68U:
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RTAC88U:
 			eval("mtd-erase2", "nvram");
 			break;
 		default:
@@ -236,6 +237,7 @@ int init_toggle(void)
 		case MODEL_RTAC68U:
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RTAC88U:
 			nvram_set("btn_ez_radiotoggle", "1");
 			return BTN_WIFI_TOG;
 		default:
@@ -1791,7 +1793,7 @@ static void auto_firmware_check()
 		}
 	}
 #ifdef RTAC68U
-	else if (nvram_match("bl_version", "2.1.2.2")) {
+	else if (nvram_match("bl_version", "2.1.2.4")) {
 		periodic_check = 1;
 		nvram_set_int("fw_check_period", 10);
 	}

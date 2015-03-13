@@ -1215,6 +1215,7 @@ CONFIG_DEVPORT=y
 # CONFIG_RAMOOPS is not set
 # CONFIG_I2C is not set
 # CONFIG_SPI is not set
+# CONFIG_RTL8365MB is not set
 
 #
 # PPS support
