@@ -1,6 +1,16 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.52 (xx-xxx-2015)
+   - NEW: Merged with Asus GPL 378_4585
+   - CHANGED: Updated Quantenna firmware to 378_4608 build
+   - CHANGED: Updated miniupnpd to 1.9.20150309
+   - FIXED: 2.4 GHz and 5 GHz-1 clients were swapped on the
+            Sysinfo page (RT-AC3200 only)
+   - FIXED: Wifi PSK wasn't blurred until activated (regression
+            in 378.51)
+
+
 378.51 (6-Mar-2015)
    - CHANGED: Updated OpenSSL to 1.0.0q (no real code change)
    - CHANGED: Split the changelog into a separate file
