@@ -1,0 +1,108 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $mainpage = <<EOF;
+<html>
+<head>
+  <title>Main Page</title>
+</head>
+<body>
+  <p>
+    Some text and a link to a <a href="http://localhost:{{port}}/secondpage.html">second page</a>.
+    Also, a <a href="http://localhost:{{port}}/nonexistent">broken link</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $secondpage = <<EOF;
+<html>
+<head>
+  <title>Second Page</title>
+</head>
+<body>
+  <p>
+    Some text and a link to a <a href="http://localhost:{{port}}/thirdpage.html">third page</a>.
+    Also, a <a href="http://localhost:{{port}}/nonexistent">broken link</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $thirdpage = <<EOF;
+<html>
+<head>
+  <title>Third Page</title>
+</head>
+<body>
+  <p>
+    Some text and a link to a <a href="http://localhost:{{port}}/dummy.txt">text file</a>.
+    Also, another <a href="http://localhost:{{port}}/againnonexistent">broken link</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $dummyfile = <<EOF;
+Don't care.
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/index.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $mainpage,
+    },
+    '/secondpage.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $secondpage,
+    },
+    '/thirdpage.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $thirdpage,
+    },
+    '/dummy.txt' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => $dummyfile
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --spider -r --no-content-disposition http://localhost:{{port}}/";
+
+my $expected_error_code = 8;
+
+my %expected_downloaded_files = (
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

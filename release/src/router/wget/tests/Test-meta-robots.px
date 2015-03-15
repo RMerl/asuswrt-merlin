@@ -1,0 +1,113 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+# This test checks that Wget parses "nofollow" when it appears in <meta
+# name="robots"> tags, regardless of where in a list of comma-separated
+# values it appears, and regardless of spelling.
+#
+# Three different files contain links to the file "bombshell.html", each
+# with "nofollow" set, at various positions in a list of values for a
+# <meta name="robots"> tag, and with various degrees of separating
+# whitesspace. If bombshell.html is downloaded, the test
+# has failed.
+
+###############################################################################
+
+my $nofollow_start = <<EOF;
+<meta name="roBoTS" content="noFolLow ,  foo, bar ">
+<a href="/bombshell.html">Don't follow me!</a>
+EOF
+
+my $nofollow_mid = <<EOF;
+<meta name="rObOts" content=" foo  ,  NOfOllow ,  bar ">
+<a href="/bombshell.html">Don't follow me!</a>
+EOF
+
+my $nofollow_end = <<EOF;
+<meta name="RoBotS" content="foo,BAr,   nofOLLOw    ">
+<a href="/bombshell.html">Don't follow me!</a>
+EOF
+
+my $nofollow_solo = <<EOF;
+<meta name="robots" content="nofollow">
+<a href="/bombshell.html">Don't follow me!</a>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/start.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $nofollow_start,
+    },
+    '/mid.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $nofollow_mid,
+    },
+    '/end.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $nofollow_end,
+    },
+    '/solo.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $nofollow_solo,
+    },
+    '/bombshell.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => 'Hello',
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -r -nd "
+    . join(' ',(map "http://localhost:{{port}}/$_.html",
+                qw(start mid end solo)));
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'start.html' => {
+        content => $nofollow_start,
+    },
+    'mid.html' => {
+        content => $nofollow_mid,
+    },
+    'end.html' => {
+        content => $nofollow_end,
+    },
+    'solo.html' => {
+        content => $nofollow_solo,
+    }
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

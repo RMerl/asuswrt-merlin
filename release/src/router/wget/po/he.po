@@ -1,0 +1,3048 @@
+# Hebrew messages for GNU Wget          -*- coding: hebrew-iso-8bit -*-
+# Copyright (C) 2002 Free Software Foundation, Inc.
+# Eli Zaretskii <eliz@is.elta.co.il>, 2001, 2002.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: wget 1.8.1\n"
+"Report-Msgid-Bugs-To: bug-wget@gnu.org\n"
+"POT-Creation-Date: 2014-10-27 09:59+0100\n"
+"PO-Revision-Date: 2002-02-03 20:08+0200\n"
+"Last-Translator: Eli Zaretskii <eliz@gnu.org>\n"
+"Language-Team: Hebrew <eliz@gnu.org>\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-8\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: lib/error.c:188
+#, fuzzy
+msgid "Unknown system error"
+msgstr "ההוזמ-יתלב הלקת"
+
+#: lib/gai_strerror.c:57
+msgid "Address family for hostname not supported"
+msgstr ""
+
+#: lib/gai_strerror.c:58 src/host.c:365
+msgid "Temporary failure in name resolution"
+msgstr ""
+
+#: lib/gai_strerror.c:59
+msgid "Bad value for ai_flags"
+msgstr ""
+
+#: lib/gai_strerror.c:60
+msgid "Non-recoverable failure in name resolution"
+msgstr ""
+
+#: lib/gai_strerror.c:61
+msgid "ai_family not supported"
+msgstr ""
+
+#: lib/gai_strerror.c:62
+msgid "Memory allocation failure"
+msgstr ""
+
+#: lib/gai_strerror.c:63
+msgid "No address associated with hostname"
+msgstr ""
+
+#: lib/gai_strerror.c:64
+msgid "Name or service not known"
+msgstr ""
+
+#: lib/gai_strerror.c:65
+msgid "Servname not supported for ai_socktype"
+msgstr ""
+
+#: lib/gai_strerror.c:66
+msgid "ai_socktype not supported"
+msgstr ""
+
+#: lib/gai_strerror.c:67
+msgid "System error"
+msgstr ""
+
+#: lib/gai_strerror.c:68
+msgid "Argument buffer too small"
+msgstr ""
+
+#: lib/gai_strerror.c:70
+msgid "Processing request in progress"
+msgstr ""
+
+#: lib/gai_strerror.c:71
+msgid "Request canceled"
+msgstr ""
+
+#: lib/gai_strerror.c:72
+msgid "Request not canceled"
+msgstr ""
+
+#: lib/gai_strerror.c:73
+msgid "All requests done"
+msgstr ""
+
+#: lib/gai_strerror.c:74
+msgid "Interrupted by a signal"
+msgstr ""
+
+#: lib/gai_strerror.c:75
+msgid "Parameter string not correctly encoded"
+msgstr ""
+
+#: lib/gai_strerror.c:87 src/host.c:367
+msgid "Unknown error"
+msgstr "ההוזמ-יתלב הלקת"
+
+#: lib/getopt.c:547 lib/getopt.c:576
+#, fuzzy, c-format
+msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s תינכת רובע יעמשמ-דח וניא `%s' ןייפאמ\n"
+
+#: lib/getopt.c:624 lib/getopt.c:628
+#, fuzzy, c-format
+msgid "%s: option '--%s' doesn't allow an argument\n"
+msgstr "%s תינכת רובע טנמוגרא לבקמ וניא `--%s' ןייפאמ\n"
+
+#: lib/getopt.c:637 lib/getopt.c:642
+#, fuzzy, c-format
+msgid "%s: option '%c%s' doesn't allow an argument\n"
+msgstr "%s תינכת רובע טנמוגרא לבקמ וניא `%c%s' ןייפאמ\n"
+
+#: lib/getopt.c:685 lib/getopt.c:704
+#, fuzzy, c-format
+msgid "%s: option '--%s' requires an argument\n"
+msgstr "%s תינכת רובע טנמוגרא בייחמ `%s' ןייפאמ\n"
+
+#: lib/getopt.c:742 lib/getopt.c:745
+#, fuzzy, c-format
+msgid "%s: unrecognized option '--%s'\n"
+msgstr "%s תינכת י\"ע רכומ וניא `--%s' ןייפאמ\n"
+
+#: lib/getopt.c:753 lib/getopt.c:756
+#, fuzzy, c-format
+msgid "%s: unrecognized option '%c%s'\n"
+msgstr "%s תינכת י\"ע רכומ וניא `%c%s' ןייפאמ\n"
+
+#: lib/getopt.c:805 lib/getopt.c:808
+#, fuzzy, c-format
+msgid "%s: invalid option -- '%c'\n"
+msgstr "%s: יקוח-יתלב ןייפאמ -- %c\n"
+
+#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#, fuzzy, c-format
+msgid "%s: option requires an argument -- '%c'\n"
+msgstr "%s: טנמוגרא בייחמ ןייפאמ -- %c\n"
+
+#: lib/getopt.c:934 lib/getopt.c:950
+#, fuzzy, c-format
+msgid "%s: option '-W %s' is ambiguous\n"
+msgstr "%s תינכת רובע יעמשמ-דח וניא `%s' ןייפאמ\n"
+
+#: lib/getopt.c:974 lib/getopt.c:992
+#, fuzzy, c-format
+msgid "%s: option '-W %s' doesn't allow an argument\n"
+msgstr "%s תינכת רובע טנמוגרא לבקמ וניא `--%s' ןייפאמ\n"
+
+#: lib/getopt.c:1013 lib/getopt.c:1031
+#, fuzzy, c-format
+msgid "%s: option '-W %s' requires an argument\n"
+msgstr "%s תינכת רובע טנמוגרא בייחמ `%s' ןייפאמ\n"
+
+#. TRANSLATORS:
+#. Get translations for open and closing quotation marks.
+#. The message catalog should translate "`" to a left
+#. quotation mark suitable for the locale, and similarly for
+#. "'".  For example, a French Unicode local should translate
+#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
+#. QUOTATION MARK), respectively.
+#.
+#. If the catalog has no translation, we will try to
+#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
+#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
+#. current locale is not Unicode, locale_quoting_style
+#. will quote 'like this', and clocale_quoting_style will
+#. quote "like this".  You should always include translations
+#. for "`" and "'" even if U+2018 and U+2019 are appropriate
+#. for your locale.
+#.
+#. If you don't know what to put here, please see
+#. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
+#. and use glyphs suitable for your language.
+#: lib/quotearg.c:312
+msgid "`"
+msgstr ""
+
+#: lib/quotearg.c:313
+msgid "'"
+msgstr ""
+
+#: lib/regcomp.c:131
+msgid "Success"
+msgstr ""
+
+#: lib/regcomp.c:134
+msgid "No match"
+msgstr ""
+
+#: lib/regcomp.c:137
+msgid "Invalid regular expression"
+msgstr ""
+
+#: lib/regcomp.c:140
+msgid "Invalid collation character"
+msgstr ""
+
+#: lib/regcomp.c:143
+#, fuzzy
+msgid "Invalid character class name"
+msgstr "חראמ-בשחמ לש יוגש םש"
+
+#: lib/regcomp.c:146
+msgid "Trailing backslash"
+msgstr ""
+
+#: lib/regcomp.c:149
+msgid "Invalid back reference"
+msgstr ""
+
+#: lib/regcomp.c:152
+msgid "Unmatched [ or [^"
+msgstr ""
+
+#: lib/regcomp.c:155
+msgid "Unmatched ( or \\("
+msgstr ""
+
+#: lib/regcomp.c:158
+msgid "Unmatched \\{"
+msgstr ""
+
+#: lib/regcomp.c:161
+msgid "Invalid content of \\{\\}"
+msgstr ""
+
+#: lib/regcomp.c:164
+msgid "Invalid range end"
+msgstr ""
+
+#: lib/regcomp.c:167
+msgid "Memory exhausted"
+msgstr ""
+
+#: lib/regcomp.c:170
+msgid "Invalid preceding regular expression"
+msgstr ""
+
+#: lib/regcomp.c:173
+msgid "Premature end of regular expression"
+msgstr ""
+
+#: lib/regcomp.c:176
+msgid "Regular expression too big"
+msgstr ""
+
+#: lib/regcomp.c:179
+msgid "Unmatched ) or \\)"
+msgstr ""
+
+#: lib/regcomp.c:707
+msgid "No previous regular expression"
+msgstr ""
+
+#: lib/spawn-pipe.c:135 lib/spawn-pipe.c:138 lib/spawn-pipe.c:259
+#: lib/spawn-pipe.c:262
+#, c-format
+msgid "cannot create pipe"
+msgstr ""
+
+#: lib/spawn-pipe.c:229 lib/spawn-pipe.c:343 lib/wait-process.c:282
+#: lib/wait-process.c:356
+#, c-format
+msgid "%s subprocess failed"
+msgstr ""
+
+#: lib/w32spawn.h:43
+#, c-format
+msgid "_open_osfhandle failed"
+msgstr ""
+
+#: lib/w32spawn.h:84
+#, c-format
+msgid "cannot restore fd %d: dup2 failed"
+msgstr ""
+
+#: lib/wait-process.c:223 lib/wait-process.c:255 lib/wait-process.c:317
+#, c-format
+msgid "%s subprocess"
+msgstr ""
+
+#: lib/wait-process.c:274 lib/wait-process.c:346
+#, c-format
+msgid "%s subprocess got fatal signal %d"
+msgstr ""
+
+#: lib/xalloc-die.c:34
+msgid "memory exhausted"
+msgstr ""
+
+#: src/connect.c:200
+#, c-format
+msgid "%s: unable to resolve bind address %s; disabling bind.\n"
+msgstr ""
+
+# FIXME: this is lame!  The method of printing "Frobbing...done" etc.
+# does not lend itself to good translations into languages where
+# such sentences have a different structure, and should be rethought.
+#: src/connect.c:284
+#, fuzzy, c-format
+msgid "Connecting to %s|%s|:%d... "
+msgstr "%s:%hu-ל תורשקתה ןויסנ"
+
+# FIXME: this is lame!  The method of printing "Frobbing...done" etc.
+# does not lend itself to good translations into languages where
+# such sentences have a different structure, and should be rethought.
+#: src/connect.c:293
+#, fuzzy, c-format
+msgid "Connecting to %s:%d... "
+msgstr "%s:%hu-ל תורשקתה ןויסנ"
+
+# FIXME: this is lame!  The method of printing "Frobbing...done" etc.
+# does not lend itself to good translations into languages where
+# such sentences have a different structure, and should be rethought.
+#: src/connect.c:296
+#, fuzzy, c-format
+msgid "Connecting to [%s]:%d... "
+msgstr "%s:%hu-ל תורשקתה ןויסנ"
+
+# Pay attention: this is written to the RIGHT of "Connecting.." !!
+#: src/connect.c:358
+#, fuzzy
+msgid "connected.\n"
+msgstr "ב החלצה\n"
+
+#: src/connect.c:370 src/host.c:783 src/host.c:812
+#, c-format
+msgid "failed: %s.\n"
+msgstr ""
+
+#: src/connect.c:394 src/http.c:1990
+#, c-format
+msgid "%s: unable to resolve host address %s\n"
+msgstr ""
+
+#: src/convert.c:196
+#, c-format
+msgid "Converted %d files in %s seconds.\n"
+msgstr ""
+
+# Note: the following 5 messages are all written on the same line!
+#: src/convert.c:224
+#, c-format
+msgid "Converting %s... "
+msgstr "%s תרמה"
+
+#: src/convert.c:237
+msgid "nothing to do.\n"
+msgstr "ב ךרוצ ןיא\n"
+
+#: src/convert.c:245 src/convert.c:269
+#, c-format
+msgid "Cannot convert links in %s: %s\n"
+msgstr "ב (%s: %s) םירושיק תרמה תלקת\n"
+
+#: src/convert.c:260
+#, fuzzy, c-format
+msgid "Unable to delete %s: %s\n"
+msgstr "`%s' קוחמל ןויסנב (%s) הלקת\n"
+
+#: src/convert.c:476
+#, c-format
+msgid "Cannot back up %s as %s: %s\n"
+msgstr "%s-ל יוביגכ %s תביתכב (%s) הלקת\n"
+
+#: src/cookies.c:450
+#, fuzzy, c-format
+msgid "Syntax error in Set-Cookie: %s at position %d.\n"
+msgstr ".ידמ םדקומ תמייתסמ תזורחמה :Set-Cookie תרתוכ לש יוגש ריבחת\n"
+
+#: src/cookies.c:732
+#, c-format
+msgid "Cookie coming from %s attempted to set domain to "
+msgstr ""
+
+#: src/cookies.c:735 src/spider.c:92
+#, c-format
+msgid "%s\n"
+msgstr ""
+
+#: src/cookies.c:1183 src/cookies.c:1304
+#, fuzzy, c-format
+msgid "Cannot open cookies file %s: %s\n"
+msgstr "`%s' תויגוע ץבוק תחיתפ תעב (%s) הלקת העריא\n"
+
+#: src/cookies.c:1341
+#, fuzzy, c-format
+msgid "Error writing to %s: %s\n"
+msgstr "`%s'-ל הביתכב (%s) הלקת\n"
+
+#: src/cookies.c:1344
+#, fuzzy, c-format
+msgid "Error closing %s: %s\n"
+msgstr "`%s' תריגסב (%s) הלקת\n"
+
+#: src/ftp-ls.c:1049
+msgid "Unsupported listing type, trying Unix listing parser.\n"
+msgstr ".Unix טמרופ ומכ שרפל הסנמ ,רכומ-יתלב גוסמ םיצבק תמישר\n"
+
+#: src/ftp-ls.c:1100 src/ftp-ls.c:1102
+#, c-format
+msgid "Index of /%s on %s:%d"
+msgstr "/%s היקיתב %s:%d-ב םיצבק תמישר"
+
+#: src/ftp-ls.c:1127
+#, c-format
+msgid "time unknown       "
+msgstr "  עודי אל ןוכדע ןמז"
+
+#: src/ftp-ls.c:1131
+#, c-format
+msgid "File        "
+msgstr "        ץבוק"
+
+#: src/ftp-ls.c:1134
+#, c-format
+msgid "Directory   "
+msgstr "       היקית"
+
+#: src/ftp-ls.c:1137
+#, c-format
+msgid "Link        "
+msgstr "       רושיק"
+
+#: src/ftp-ls.c:1140
+#, c-format
+msgid "Not sure    "
+msgstr " עודי אל גוס"
+
+#: src/ftp-ls.c:1163
+#, c-format
+msgid " (%s bytes)"
+msgstr "  (םיתב %s)"
+
+# FIXME: This 3-part message will look totally messed up in a
+# right-to-left language such as Hebrew!  The maintainers
+# should _really_ fix the code!
+#: src/ftp.c:222
+#, c-format
+msgid "Length: %s"
+msgstr "%s :ךרוא"
+
+#: src/ftp.c:228 src/http.c:2810
+#, c-format
+msgid ", %s (%s) remaining"
+msgstr ""
+
+#: src/ftp.c:232 src/http.c:2814
+#, c-format
+msgid ", %s remaining"
+msgstr ""
+
+#: src/ftp.c:235
+msgid " (unauthoritative)\n"
+msgstr " (הכרעה)\n"
+
+#: src/ftp.c:313
+#, c-format
+msgid "Logging in as %s ... "
+msgstr "%s-כ הסינכ ןויסנ"
+
+#: src/ftp.c:332 src/ftp.c:378 src/ftp.c:445 src/ftp.c:510 src/ftp.c:740
+#: src/ftp.c:793 src/ftp.c:840 src/ftp.c:897 src/ftp.c:958 src/ftp.c:1049
+#: src/ftp.c:1099
+msgid "Error in server response, closing control connection.\n"
+msgstr ".רגסנ הרקבה קיפא ,תרש לש יוגש הנעמ\n"
+
+#: src/ftp.c:339
+msgid "Error in server greeting.\n"
+msgstr ".יוגש תרשה לש החיתפ רסמ\n"
+
+#: src/ftp.c:346 src/ftp.c:518 src/ftp.c:748 src/ftp.c:848 src/ftp.c:907
+#: src/ftp.c:968 src/ftp.c:1059 src/ftp.c:1109
+msgid "Write failed, closing control connection.\n"
+msgstr ".רגסנ הרקבה קיפא ,הביתכב הלקת\n"
+
+#: src/ftp.c:352
+msgid "The server refuses login.\n"
+msgstr ".הסינכ השרמ וניא תרשה\n"
+
+#: src/ftp.c:358
+msgid "Login incorrect.\n"
+msgstr ".היוגש הסינכ\n"
+
+# Note: this is written to the right of "Logging in as", with no newline!
+#: src/ftp.c:364
+msgid "Logged in!\n"
+msgstr "ב החלצה\n"
+
+#: src/ftp.c:386
+msgid "Server error, can't determine system type.\n"
+msgstr ".תכרעמ גוס עובקל תורשפא ןיא ,תרש לש יוגש הנעמ\n"
+
+#: src/ftp.c:395 src/ftp.c:884 src/ftp.c:941 src/ftp.c:984
+msgid "done.    "
+msgstr " <== החלצהב עצוב"
+
+#: src/ftp.c:498 src/ftp.c:765 src/ftp.c:810 src/ftp.c:1079 src/ftp.c:1128
+msgid "done.\n"
+msgstr " <== החלצהב עצוב\n"
+
+#: src/ftp.c:525
+#, c-format
+msgid "Unknown type `%c', closing control connection.\n"
+msgstr ".רגסנ הרקבה קיפא ,רכומ וניא `%c' הרבעה גוס\n"
+
+#: src/ftp.c:537
+msgid "done.  "
+msgstr " <== החלצהב עצוב"
+
+#: src/ftp.c:543
+msgid "==> CWD not needed.\n"
+msgstr "==> .תשרדנ הניא CWD תדוקפ\n"
+
+#: src/ftp.c:754
+#, fuzzy, c-format
+msgid ""
+"No such directory %s.\n"
+"\n"
+msgstr ""
+".תמייק הניא `%s' היקית\n"
+"\n"
+
+#: src/ftp.c:775
+msgid "==> CWD not required.\n"
+msgstr "==> .CWD תדוקפב ךרוצ ןיא\n"
+
+#: src/ftp.c:818
+#, fuzzy
+msgid "File has already been retrieved.\n"
+msgstr ".ותוא ךושמל ךרוצ ןיא ,ןאכ רבכ `%s' ץבוק\n"
+
+#: src/ftp.c:854
+msgid "Cannot initiate PASV transfer.\n"
+msgstr ".PASV תטישב הרבעה עינתהל ןתינ אל\n"
+
+#: src/ftp.c:858
+msgid "Cannot parse PASV response.\n"
+msgstr ".PASV תדוקפל הנעמ שרפל ןתינ אל\n"
+
+#: src/ftp.c:875
+#, c-format
+msgid "couldn't connect to %s port %d: %s\n"
+msgstr ""
+
+#: src/ftp.c:923
+#, c-format
+msgid "Bind error (%s).\n"
+msgstr ".(%s) תורשקתה תלקת\n"
+
+#: src/ftp.c:929
+msgid "Invalid PORT.\n"
+msgstr ".PORT תלקת\n"
+
+#: src/ftp.c:975
+msgid ""
+"\n"
+"REST failed, starting from scratch.\n"
+msgstr ""
+"\n"
+".הלחתהמ ליחתמ ;הלשכנ REST תדוקפ\n"
+
+#: src/ftp.c:1015
+#, c-format
+msgid "File %s exists.\n"
+msgstr ""
+
+#: src/ftp.c:1021
+#, fuzzy, c-format
+msgid "No such file %s.\n"
+msgstr ""
+".םייק וניא `%s' ץבוק\n"
+"\n"
+
+#: src/ftp.c:1067
+#, fuzzy, c-format
+msgid ""
+"No such file %s.\n"
+"\n"
+msgstr ""
+".םייק וניא `%s' ץבוק\n"
+"\n"
+
+#: src/ftp.c:1117
+#, fuzzy, c-format
+msgid ""
+"No such file or directory %s.\n"
+"\n"
+msgstr ""
+".םימייק היקית וא ץבוק וניא `%s'\n"
+"\n"
+
+#: src/ftp.c:1276 src/http.c:2940
+#, c-format
+msgid "%s has sprung into existence.\n"
+msgstr ""
+
+#: src/ftp.c:1328
+#, c-format
+msgid "%s: %s, closing control connection.\n"
+msgstr ".רגסנ הרקבה קיפא ,%s-ב (%s) הלקת\n"
+
+# Note: the rightmost colon is for the message that will be printed
+# later.
+#: src/ftp.c:1340
+#, c-format
+msgid "%s (%s) - Data connection: %s; "
+msgstr "(%s :העש  %s :בצק) םינותנה קיפאב (%s) הלקת :"
+
+# Note: this and the next one don't have the period because they get
+# printed to the right of the previous message.
+#: src/ftp.c:1356
+msgid "Control connection closed.\n"
+msgstr "רגסנ הרקבה קיפא\n"
+
+#: src/ftp.c:1374
+msgid "Data transfer aborted.\n"
+msgstr "הקספוה םינותנ תרבעה\n"
+
+#: src/ftp.c:1580
+#, fuzzy, c-format
+msgid "File %s already there; not retrieving.\n"
+msgstr ".ותוא ךושמל ךרוצ ןיא ,ןאכ רבכ `%s' ץבוק\n"
+
+#: src/ftp.c:1663 src/http.c:3107
+#, c-format
+msgid "(try:%2d)"
+msgstr "(%2d 'סמ ןויסנ)"
+
+#: src/ftp.c:1745 src/http.c:3493
+#, c-format
+msgid ""
+"%s (%s) - written to stdout %s[%s]\n"
+"\n"
+msgstr ""
+
+# I give up!
+#: src/ftp.c:1746 src/http.c:3494
+#, fuzzy, c-format
+msgid ""
+"%s (%s) - %s saved [%s]\n"
+"\n"
+msgstr ""
+"%s (%s) - `%s' saved [%ld]\n"
+"\n"
+
+#: src/ftp.c:1804 src/main.c:1670 src/recur.c:433 src/recur.c:650
+#: src/retr.c:1102
+#, c-format
+msgid "Removing %s.\n"
+msgstr ".%s קחומ\n"
+
+#: src/ftp.c:1850
+#, fuzzy, c-format
+msgid "Using %s as listing tmp file.\n"
+msgstr ".םיצבק תמישר תלבקל ינמז ץבוקכ `%s'-ב שמתשמ\n"
+
+#: src/ftp.c:1867
+#, fuzzy, c-format
+msgid "Removed %s.\n"
+msgstr ".קחמנ `%s' ץבוק\n"
+
+#: src/ftp.c:1904
+#, c-format
+msgid "Recursion depth %d exceeded max. depth %d.\n"
+msgstr ".וילע הלוע %d לעופב קמוע ךא ,%d אוה יברימ היסרוקר קמוע\n"
+
+#: src/ftp.c:1974
+#, fuzzy, c-format
+msgid "Remote file no newer than local file %s -- not retrieving.\n"
+msgstr ".ךשמיי אל ץבוקה -- `%s' ימוקמ ץבוקמ רתוי ינכדע וניא קחורמ ץבוק\n"
+
+#: src/ftp.c:1981
+#, fuzzy, c-format
+msgid ""
+"Remote file is newer than local file %s -- retrieving.\n"
+"\n"
+msgstr ".ךשמיי ץבוקה -- `%s' ימוקמ ץבוקמ רתוי ינכדע קחורמ ץבוק\n"
+
+#: src/ftp.c:1988
+#, fuzzy, c-format
+msgid ""
+"The sizes do not match (local %s) -- retrieving.\n"
+"\n"
+msgstr ".ךשמיי ץבוקה -- (%ld :ימוקמ ץבוק) ההז וניא לדוג\n"
+
+#: src/ftp.c:2006
+msgid "Invalid name of the symlink, skipping.\n"
+msgstr ".טמשוי ץבוקה ,רכומ וניא ילובמיס רושיק ץבוק לש ומש\n"
+
+#: src/ftp.c:2023
+#, c-format
+msgid ""
+"Already have correct symlink %s -> %s\n"
+"\n"
+msgstr ".םייק רבכ %s -> %s ילובמיס רושיק\n"
+
+#: src/ftp.c:2032
+#, c-format
+msgid "Creating symlink %s -> %s\n"
+msgstr ".%s -> %s ילובמיס רושיק רצוי\n"
+
+#: src/ftp.c:2042
+#, fuzzy, c-format
+msgid "Symlinks not supported, skipping symlink %s.\n"
+msgstr ".`%s' ץבוק טימשמ ,םיכמתנ םניא ילובמיס רושיק יצבק\n"
+
+#: src/ftp.c:2054
+#, fuzzy, c-format
+msgid "Skipping directory %s.\n"
+msgstr ".`%s' היקית טימשמ\n"
+
+#: src/ftp.c:2063
+#, c-format
+msgid "%s: unknown/unsupported file type.\n"
+msgstr ".ךמתנ וניא וא רכומ-יתלב גוסמ וניה `%s' ץבוק\n"
+
+#: src/ftp.c:2103
+#, c-format
+msgid "%s: corrupt time-stamp.\n"
+msgstr ".היוגש ןמז תמיתח לעב אוה `%s' ץבוק\n"
+
+#: src/ftp.c:2127
+#, c-format
+msgid "Will not retrieve dirs since depth is %d (max %d).\n"
+msgstr ".רתוי בר %d ןקמוע ןכש וכשמיי אל תויקית ;%d יברימ קמוע\n"
+
+#: src/ftp.c:2177
+#, fuzzy, c-format
+msgid "Not descending to %s as it is excluded/not-included.\n"
+msgstr ".המישרהמ האצוה וא הללכנ אלש םושמ `%s'-ל סנכיהלמ ענמנ\n"
+
+#: src/ftp.c:2266 src/ftp.c:2280
+#, fuzzy, c-format
+msgid "Rejecting %s.\n"
+msgstr ".החדנ `%s'\n"
+
+#: src/ftp.c:2303
+#, fuzzy, c-format
+msgid "Error matching %s against %s: %s\n"
+msgstr "`%s'-ל הביתכב (%s) הלקת\n"
+
+#: src/ftp.c:2359
+#, fuzzy, c-format
+msgid "No matches on pattern %s.\n"
+msgstr ".`%s' תינבתל תומאתה ןיא\n"
+
+#: src/ftp.c:2430
+#, fuzzy, c-format
+msgid "Wrote HTML-ized index to %s [%s].\n"
+msgstr "`%s'-ל הבתכנ םיתב %ld לדוגבו HTML טמרופב םיצבק תמישר\n"
+
+#: src/ftp.c:2435
+#, fuzzy, c-format
+msgid "Wrote HTML-ized index to %s.\n"
+msgstr "`%s'-ל הבתכנ HTML טמרופב םיצבק תמישר\n"
+
+#: src/gnutls.c:110
+#, c-format
+msgid "ERROR: Cannot open directory %s.\n"
+msgstr ""
+
+#: src/gnutls.c:141
+#, c-format
+msgid "ERROR: Failed to open cert %s: (%d).\n"
+msgstr ""
+
+#: src/gnutls.c:173
+msgid "ERROR: GnuTLS requires the key and the cert to be of the same type.\n"
+msgstr ""
+
+#: src/gnutls.c:589 src/openssl.c:599
+msgid "ERROR"
+msgstr ""
+
+#: src/gnutls.c:589 src/openssl.c:599
+msgid "WARNING"
+msgstr ""
+
+#: src/gnutls.c:595 src/openssl.c:608
+#, c-format
+msgid "%s: No certificate presented by %s.\n"
+msgstr ""
+
+#: src/gnutls.c:601
+#, c-format
+msgid "%s: The certificate of %s is not trusted.\n"
+msgstr ""
+
+#: src/gnutls.c:602
+#, c-format
+msgid "%s: The certificate of %s hasn't got a known issuer.\n"
+msgstr ""
+
+#: src/gnutls.c:603
+#, c-format
+msgid "%s: The certificate of %s has been revoked.\n"
+msgstr ""
+
+#: src/gnutls.c:604
+#, c-format
+msgid "%s: The certificate signer of %s was not a CA.\n"
+msgstr ""
+
+#: src/gnutls.c:605
+#, c-format
+msgid "%s: The certificate of %s was signed using an insecure algorithm.\n"
+msgstr ""
+
+#: src/gnutls.c:606
+#, c-format
+msgid "%s: The certificate of %s is not yet activated.\n"
+msgstr ""
+
+#: src/gnutls.c:607
+#, c-format
+msgid "%s: The certificate of %s has expired.\n"
+msgstr ""
+
+#: src/gnutls.c:618
+#, c-format
+msgid "Error initializing X509 certificate: %s\n"
+msgstr ""
+
+#: src/gnutls.c:627
+msgid "No certificate found\n"
+msgstr ""
+
+#: src/gnutls.c:634
+#, fuzzy, c-format
+msgid "Error parsing certificate: %s\n"
+msgstr "`%s'-ל הביתכב (%s) הלקת\n"
+
+#: src/gnutls.c:641
+msgid "The certificate has not yet been activated\n"
+msgstr ""
+
+#: src/gnutls.c:646
+msgid "The certificate has expired\n"
+msgstr ""
+
+#: src/gnutls.c:652
+#, c-format
+msgid "The certificate's owner does not match hostname %s\n"
+msgstr ""
+
+#: src/gnutls.c:661
+msgid "Certificate must be X.509\n"
+msgstr ""
+
+#: src/host.c:361
+#, fuzzy
+msgid "Unknown host"
+msgstr "ההוזמ-יתלב הלקת"
+
+#: src/host.c:740
+#, fuzzy, c-format
+msgid "Resolving %s... "
+msgstr ".%s קחומ\n"
+
+#: src/host.c:792
+msgid "failed: No IPv4/IPv6 addresses for host.\n"
+msgstr ""
+
+#: src/host.c:815
+msgid "failed: timed out.\n"
+msgstr ""
+
+#: src/html-url.c:303
+#, c-format
+msgid "%s: Cannot resolve incomplete link %s.\n"
+msgstr ""
+
+#: src/html-url.c:836
+#, fuzzy, c-format
+msgid "%s: Invalid URL %s: %s\n"
+msgstr ".%s הארוהב `%s' יוגש ךרע\n"
+
+#: src/http.c:371
+#, c-format
+msgid "Failed writing HTTP request: %s.\n"
+msgstr ".HTTP תיינפ לש החילשב (%s) הלקת\n"
+
+#: src/http.c:767
+msgid "No headers, assuming HTTP/0.9"
+msgstr ""
+
+#: src/http.c:1495
+#, fuzzy, c-format
+msgid ""
+"File %s already there; not retrieving.\n"
+"\n"
+msgstr ".ותוא ךושמל ךרוצ ןיא ,ןאכ רבכ `%s' ץבוק\n"
+
+#: src/http.c:1747
+msgid "Disabling SSL due to encountered errors.\n"
+msgstr ""
+
+#: src/http.c:1869
+#, c-format
+msgid "BODY data file %s missing: %s\n"
+msgstr ""
+
+#: src/http.c:1971
+#, fuzzy, c-format
+msgid "Reusing existing connection to [%s]:%d.\n"
+msgstr ".%s:%hu-ל רוביחב שמתשהל ךישממ\n"
+
+#: src/http.c:1976
+#, fuzzy, c-format
+msgid "Reusing existing connection to %s:%d.\n"
+msgstr ".%s:%hu-ל רוביחב שמתשהל ךישממ\n"
+
+#: src/http.c:2048
+#, fuzzy, c-format
+msgid "Failed reading proxy response: %s\n"
+msgstr ".HTTP תיינפ לש החילשב (%s) הלקת\n"
+
+#: src/http.c:2068 src/http.c:2235 src/http.c:3287
+#, c-format
+msgid "%s ERROR %d: %s.\n"
+msgstr "%s ERROR %d: %s.\n"
+
+#: src/http.c:2070 src/http.c:2237 src/http.c:2572
+msgid "Malformed status line"
+msgstr "בצמה תרוש לש יוגש הנבמ"
+
+#: src/http.c:2081
+#, c-format
+msgid "Proxy tunneling failed: %s"
+msgstr ""
+
+# FIXME: This message can be followed by "%d %s", which prints
+# the operation status code and error message.  I don't see how
+# can I make this look right in Hebrew...
+#: src/http.c:2175
+#, c-format
+msgid "%s request sent, awaiting response... "
+msgstr "...הבושת תלבקל ןיתממ ,החלשנ %s תיינפ "
+
+#: src/http.c:2210
+#, fuzzy
+msgid "No data received.\n"
+msgstr "טלק ינותנ ולבקתה אל"
+
+#: src/http.c:2217
+#, c-format
+msgid "Read error (%s) in headers.\n"
+msgstr ".תורתוכ תאירק תעב (%s) תלקת\n"
+
+#: src/http.c:2389
+msgid "Unknown authentication scheme.\n"
+msgstr ".תרכומ-יתלב תומיא תטיש\n"
+
+#: src/http.c:2574
+msgid "(no description)"
+msgstr "(העודי-יתלב הביס)"
+
+# Pay attention: the translation of "unspecified" goes to the
+# left of this, the translation of "[following]" goes to the right.
+#: src/http.c:2650
+#, c-format
+msgid "Location: %s%s\n"
+msgstr "%s :רתאל בותינ יוניש%s\n"
+
+#: src/http.c:2651 src/http.c:2820
+msgid "unspecified"
+msgstr "unspecified"
+
+#: src/http.c:2652
+msgid " [following]"
+msgstr " רחא בקוע"
+
+#: src/http.c:2765
+msgid ""
+"\n"
+"    The file is already fully retrieved; nothing to do.\n"
+"\n"
+msgstr ""
+"\n"
+"  .יהשלכ הלועפב ךרצ ןיא ;ךשמנ זאמ הנתשה אל ץבוקה לש ולדוג\n"
+"\n"
+
+# The next 3 messages are printed in order on the same line, and
+# this one is followed by a number!  I give up!!
+#: src/http.c:2800
+msgid "Length: "
+msgstr "Length: "
+
+#: src/http.c:2820
+msgid "ignored"
+msgstr "ignored"
+
+#: src/http.c:2961
+#, c-format
+msgid "Saving to: %s\n"
+msgstr ""
+
+#: src/http.c:3031
+msgid "Warning: wildcards not supported in HTTP.\n"
+msgstr ".HTTP-ב םיכמתנ םניא (wildcards) הללכה יות :הרהזא\n"
+
+#: src/http.c:3096
+msgid "Spider mode enabled. Check if remote file exists.\n"
+msgstr ""
+
+#: src/http.c:3185
+#, fuzzy, c-format
+msgid "Cannot write to %s (%s).\n"
+msgstr ".`%s' תביתכב (%s) הלקת\n"
+
+#: src/http.c:3196
+msgid "Required attribute missing from Header received.\n"
+msgstr ""
+
+#: src/http.c:3201
+msgid "Username/Password Authentication Failed.\n"
+msgstr ""
+
+#: src/http.c:3207
+#, fuzzy
+msgid "Cannot write to WARC file.\n"
+msgstr ".`%s' תביתכב (%s) הלקת\n"
+
+#: src/http.c:3213
+msgid "Cannot write to temporary WARC file.\n"
+msgstr ""
+
+#: src/http.c:3218
+msgid "Unable to establish SSL connection.\n"
+msgstr ".(SSL) חטבואמ רשק ץורע םיקהל ןתינ אל\n"
+
+#: src/http.c:3224
+#, fuzzy, c-format
+msgid "Cannot unlink %s (%s).\n"
+msgstr ".`%s' תביתכב (%s) הלקת\n"
+
+#: src/http.c:3234
+#, c-format
+msgid "ERROR: Redirection (%d) without location.\n"
+msgstr ".רתא םש אלל בותינ (%d) יוניש :הלקת\n"
+
+#: src/http.c:3282
+msgid "Remote file does not exist -- broken link!!!\n"
+msgstr ""
+
+#: src/http.c:3304
+msgid "Last-modified header missing -- time-stamps turned off.\n"
+msgstr ".תונימז ויהי אל ןמז תומיתח -- האצמנ אל ןורחא יוניש ןמז תרתוכ\n"
+
+#: src/http.c:3312
+msgid "Last-modified header invalid -- time-stamp ignored.\n"
+msgstr ".ןמזה תמיתחמ םלעתמ -- היוגש ןורחא יוניש ןמז תרתוכ\n"
+
+#: src/http.c:3342
+#, fuzzy, c-format
+msgid ""
+"Server file no newer than local file %s -- not retrieving.\n"
+"\n"
+msgstr ""
+".ךשמיי אל ץבוקה -- `%s' ימוקמ ץבוקמ רתוי ינכדע וניא תרשב ץבוק\n"
+"\n"
+
+#: src/http.c:3350
+#, fuzzy, c-format
+msgid "The sizes do not match (local %s) -- retrieving.\n"
+msgstr ".ךשמיי ץבוקה -- (%ld :ימוקמ ץבוק) ההז וניא לדוג\n"
+
+#: src/http.c:3359
+msgid "Remote file is newer, retrieving.\n"
+msgstr ".ךשמיי ץבוקה ,רתוי ינכדע קחורמ ץבוק\n"
+
+#: src/http.c:3377
+#, fuzzy
+msgid ""
+"Remote file exists and could contain links to other resources -- "
+"retrieving.\n"
+"\n"
+msgstr ".ךשמיי ץבוקה -- `%s' ימוקמ ץבוקמ רתוי ינכדע קחורמ ץבוק\n"
+
+#: src/http.c:3383
+#, fuzzy
+msgid ""
+"Remote file exists but does not contain any link -- not retrieving.\n"
+"\n"
+msgstr ".ךשמיי אל ץבוקה -- `%s' ימוקמ ץבוקמ רתוי ינכדע וניא קחורמ ץבוק\n"
+
+#: src/http.c:3392
+msgid ""
+"Remote file exists and could contain further links,\n"
+"but recursion is disabled -- not retrieving.\n"
+"\n"
+msgstr ""
+
+#: src/http.c:3398
+#, fuzzy
+msgid ""
+"Remote file exists.\n"
+"\n"
+msgstr ".ךשמיי ץבוקה ,רתוי ינכדע קחורמ ץבוק\n"
+
+#: src/http.c:3407
+#, fuzzy, c-format
+msgid "%s URL: %s %2d %s\n"
+msgstr "%s ERROR %d: %s.\n"
+
+#: src/http.c:3457
+#, c-format
+msgid ""
+"%s (%s) - written to stdout %s[%s/%s]\n"
+"\n"
+msgstr ""
+
+# Come on, are they serious??
+#: src/http.c:3458
+#, fuzzy, c-format
+msgid ""
+"%s (%s) - %s saved [%s/%s]\n"
+"\n"
+msgstr ""
+"%s (%s) - `%s' saved [%ld/%ld]\n"
+"\n"
+
+#: src/http.c:3519
+#, fuzzy, c-format
+msgid "%s (%s) - Connection closed at byte %s. "
+msgstr ".רגסנ רוביחה ,%s-ב (%s) םיתב %ld ירחא הלקת "
+
+#: src/http.c:3542
+#, fuzzy, c-format
+msgid "%s (%s) - Read error at byte %s (%s)."
+msgstr ".%s-ב %s בצקב ולבקתנש םיתב %ld ירחא (%s) האירק תלקת"
+
+#: src/http.c:3551
+#, fuzzy, c-format
+msgid "%s (%s) - Read error at byte %s/%s (%s). "
+msgstr ".%s-ב %s בצקב ולבקתנש םיתב %ld/%ld ירחא (%s) האירק תלקת "
+
+#: src/http.c:3786
+#, c-format
+msgid "Unsupported quality of protection '%s'.\n"
+msgstr ""
+
+#: src/http.c:3792
+#, c-format
+msgid "Unsupported algorithm '%s'.\n"
+msgstr ""
+
+#: src/init.c:500
+#, c-format
+msgid "%s: WGETRC points to %s, which doesn't exist.\n"
+msgstr ""
+
+#: src/init.c:605 src/netrc.c:246
+#, c-format
+msgid "%s: Cannot read %s (%s).\n"
+msgstr ".%s תינכת י\"ע %s ץבוק תחיתפב (%s) הלקת\n"
+
+#: src/init.c:622
+#, c-format
+msgid "%s: Error in %s at line %d.\n"
+msgstr ".%s תינכת רובע היוגש %s ץבוקב %d הרוש\n"
+
+#: src/init.c:628
+#, fuzzy, c-format
+msgid "%s: Syntax error in %s at line %d.\n"
+msgstr ".%s תינכת רובע היוגש %s ץבוקב %d הרוש\n"
+
+# This message is under "ifdef DEBUG", so no need to translate it.
+#: src/init.c:633
+#, fuzzy, c-format
+msgid "%s: Unknown command %s in %s at line %d.\n"
+msgstr "%s: BUG: unknown command `%s', value `%s'.\n"
+
+#: src/init.c:670
+#, c-format
+msgid ""
+"Parsing system wgetrc file (env SYSTEM_WGETRC) failed.  Please check\n"
+"'%s',\n"
+"or specify a different file using --config.\n"
+msgstr ""
+
+#: src/init.c:685
+#, c-format
+msgid ""
+"Parsing system wgetrc file failed.  Please check\n"
+"'%s',\n"
+"or specify a different file using --config.\n"
+msgstr ""
+
+#: src/init.c:701
+#, fuzzy, c-format
+msgid "%s: Warning: Both system and user wgetrc point to %s.\n"
+msgstr "%s: שמתשמה לש ןהו תכרעמה לש ןה wgetrc ץבוקכ שמשמ `%s' :הרהזא\n"
+
+#: src/init.c:891
+#, fuzzy, c-format
+msgid "%s: Invalid --execute command %s\n"
+msgstr "%s: %s היוגש הדוקפ\n"
+
+#: src/init.c:936
+#, fuzzy, c-format
+msgid "%s: %s: Invalid boolean %s; use `on' or `off'.\n"
+msgstr "%s: דבלב off וא on םיכרע תלבקמ %s הארוה\n"
+
+#: src/init.c:953
+#, fuzzy, c-format
+msgid "%s: %s: Invalid number %s.\n"
+msgstr "%s: %s הארוהב `%s' יוגש ךרע\n"
+
+#: src/init.c:1175 src/init.c:1194
+#, fuzzy, c-format
+msgid "%s: %s: Invalid byte value %s\n"
+msgstr "%s: %s הארוהב `%s' יוגש ךרע\n"
+
+#: src/init.c:1219
+#, fuzzy, c-format
+msgid "%s: %s: Invalid time period %s\n"
+msgstr "%s: %s הארוהב `%s' יוגש ךרע\n"
+
+#: src/init.c:1273 src/init.c:1384 src/init.c:1440 src/init.c:1504
+#: src/init.c:1523 src/init.c:1548
+#, fuzzy, c-format
+msgid "%s: %s: Invalid value %s.\n"
+msgstr "%s: %s הארוהב `%s' יוגש ךרע\n"
+
+#: src/init.c:1310
+#, fuzzy, c-format
+msgid "%s: %s: Invalid header %s.\n"
+msgstr "%s: %s הארוהב `%s' יוגש ךרע\n"
+
+#: src/init.c:1331
+#, fuzzy, c-format
+msgid "%s: %s: Invalid WARC header %s.\n"
+msgstr "%s: %s הארוהב `%s' יוגש ךרע\n"
+
+#: src/init.c:1397
+#, fuzzy, c-format
+msgid "%s: %s: Invalid progress type %s.\n"
+msgstr "%s: %s הארוהב `%s' יוגש ךרע\n"
+
+#: src/init.c:1477
+#, c-format
+msgid ""
+"%s: %s: Invalid restriction %s,\n"
+"    use [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+msgstr ""
+
+#: src/iri.c:101
+#, c-format
+msgid "Encoding %s isn't valid\n"
+msgstr ""
+
+#: src/iri.c:126
+#, c-format
+msgid "Conversion from %s to %s isn't supported\n"
+msgstr ""
+
+#: src/iri.c:149 src/iri.c:190
+#, c-format
+msgid "converted '%s' (%s) -> '%s' (%s)\n"
+msgstr ""
+
+#: src/iri.c:158
+msgid "Incomplete or invalid multibyte sequence encountered\n"
+msgstr ""
+
+#: src/iri.c:183
+#, c-format
+msgid "Unhandled errno %d\n"
+msgstr ""
+
+#: src/iri.c:204
+msgid "locale_to_utf8: locale is unset\n"
+msgstr ""
+
+#: src/iri.c:238
+#, c-format
+msgid "idn_encode failed (%d): %s\n"
+msgstr ""
+
+#: src/iri.c:257
+#, c-format
+msgid "idn_decode failed (%d): %s\n"
+msgstr ""
+
+#: src/log.c:867
+#, fuzzy, c-format
+msgid ""
+"\n"
+"%s received, redirecting output to %s.\n"
+msgstr "%s ולבקתה ,`%%s'-ל טלפ תיינפה\n"
+
+#: src/log.c:877
+#, fuzzy, c-format
+msgid ""
+"\n"
+"%s received.\n"
+msgstr "טלק ינותנ ולבקתה אל"
+
+#: src/log.c:878
+#, c-format
+msgid "%s: %s; disabling logging.\n"
+msgstr ""
+
+#: src/main.c:414
+#, c-format
+msgid "Usage: %s [OPTION]... [URL]...\n"
+msgstr "%s [ןייפאמ]... [URL]... :שומיש ןפוא\n"
+
+#: src/main.c:426
+#, fuzzy
+msgid ""
+"Mandatory arguments to long options are mandatory for short options too.\n"
+"\n"
+msgstr ""
+"\n"
+".םירצק םינייפאמל םג םייחרכה ,םיכורא םינייפאמל םייחרכהה םיטנמוגרא\n"
+"\n"
+
+#: src/main.c:428
+msgid "Startup:\n"
+msgstr ""
+
+#: src/main.c:430
+msgid ""
+"  -V,  --version                   display the version of Wget and exit.\n"
+msgstr ""
+
+#: src/main.c:432
+msgid "  -h,  --help                      print this help.\n"
+msgstr ""
+
+#: src/main.c:434
+msgid "  -b,  --background                go to background after startup.\n"
+msgstr ""
+
+#: src/main.c:436
+msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command.\n"
+msgstr ""
+
+#: src/main.c:440
+msgid "Logging and input file:\n"
+msgstr ""
+
+#: src/main.c:442
+msgid "  -o,  --output-file=FILE          log messages to FILE.\n"
+msgstr ""
+
+#: src/main.c:444
+msgid "  -a,  --append-output=FILE        append messages to FILE.\n"
+msgstr ""
+
+#: src/main.c:447
+msgid ""
+"  -d,  --debug                     print lots of debugging information.\n"
+msgstr ""
+
+#: src/main.c:451
+msgid "       --wdebug                    print Watt-32 debug output.\n"
+msgstr ""
+
+#: src/main.c:454
+msgid "  -q,  --quiet                     quiet (no output).\n"
+msgstr ""
+
+#: src/main.c:456
+msgid "  -v,  --verbose                   be verbose (this is the default).\n"
+msgstr ""
+
+#: src/main.c:458
+msgid ""
+"  -nv, --no-verbose                turn off verboseness, without being "
+"quiet.\n"
+msgstr ""
+
+#: src/main.c:460
+msgid ""
+"       --report-speed=TYPE         Output bandwidth as TYPE.  TYPE can be "
+"bits.\n"
+msgstr ""
+
+#: src/main.c:462
+msgid ""
+"  -i,  --input-file=FILE           download URLs found in local or external "
+"FILE.\n"
+msgstr ""
+
+#: src/main.c:464
+msgid "  -F,  --force-html                treat input file as HTML.\n"
+msgstr ""
+
+#: src/main.c:466
+msgid ""
+"  -B,  --base=URL                  resolves HTML input-file links (-i -F)\n"
+"                                   relative to URL.\n"
+msgstr ""
+
+#: src/main.c:469
+msgid "       --config=FILE               Specify config file to use.\n"
+msgstr ""
+
+#: src/main.c:471
+msgid "       --no-config                 Do not read any config file.\n"
+msgstr ""
+
+#: src/main.c:475
+msgid "Download:\n"
+msgstr ""
+
+#: src/main.c:477
+msgid ""
+"  -t,  --tries=NUMBER              set number of retries to NUMBER (0 "
+"unlimits).\n"
+msgstr ""
+
+#: src/main.c:479
+msgid ""
+"       --retry-connrefused         retry even if connection is refused.\n"
+msgstr ""
+
+#: src/main.c:481
+msgid "  -O,  --output-document=FILE      write documents to FILE.\n"
+msgstr ""
+
+#: src/main.c:483
+msgid ""
+"  -nc, --no-clobber                skip downloads that would download to\n"
+"                                   existing files (overwriting them).\n"
+msgstr ""
+
+#: src/main.c:486
+msgid ""
+"  -c,  --continue                  resume getting a partially-downloaded "
+"file.\n"
+msgstr ""
+
+#: src/main.c:488
+msgid ""
+"       --start-pos=OFFSET          start downloading from zero-based "
+"position OFFSET.\n"
+msgstr ""
+
+#: src/main.c:490
+msgid "       --progress=TYPE             select progress gauge type.\n"
+msgstr ""
+
+#: src/main.c:492
+msgid ""
+"       --show-progress             display the progress bar in any verbosity "
+"mode.\n"
+msgstr ""
+
+#: src/main.c:494
+msgid ""
+"  -N,  --timestamping              don't re-retrieve files unless newer "
+"than\n"
+"                                   local.\n"
+msgstr ""
+
+#: src/main.c:497
+msgid ""
+"  --no-use-server-timestamps       don't set the local file's timestamp by\n"
+"                                   the one on the server.\n"
+msgstr ""
+
+#: src/main.c:500
+msgid "  -S,  --server-response           print server response.\n"
+msgstr ""
+
+#: src/main.c:502
+msgid "       --spider                    don't download anything.\n"
+msgstr ""
+
+#: src/main.c:504
+msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS.\n"
+msgstr ""
+
+#: src/main.c:506
+msgid ""
+"       --dns-timeout=SECS          set the DNS lookup timeout to SECS.\n"
+msgstr ""
+
+#: src/main.c:508
+msgid "       --connect-timeout=SECS      set the connect timeout to SECS.\n"
+msgstr ""
+
+#: src/main.c:510
+msgid "       --read-timeout=SECS         set the read timeout to SECS.\n"
+msgstr ""
+
+#: src/main.c:512
+msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals.\n"
+msgstr ""
+
+#: src/main.c:514
+msgid ""
+"       --waitretry=SECONDS         wait 1..SECONDS between retries of a "
+"retrieval.\n"
+msgstr ""
+
+#: src/main.c:516
+msgid ""
+"       --random-wait               wait from 0.5*WAIT...1.5*WAIT secs "
+"between retrievals.\n"
+msgstr ""
+
+#: src/main.c:518
+msgid "       --no-proxy                  explicitly turn off proxy.\n"
+msgstr ""
+
+#: src/main.c:520
+msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER.\n"
+msgstr ""
+
+#: src/main.c:522
+msgid ""
+"       --bind-address=ADDRESS      bind to ADDRESS (hostname or IP) on local "
+"host.\n"
+msgstr ""
+
+#: src/main.c:524
+msgid "       --limit-rate=RATE           limit download rate to RATE.\n"
+msgstr ""
+
+#: src/main.c:526
+msgid "       --no-dns-cache              disable caching DNS lookups.\n"
+msgstr ""
+
+#: src/main.c:528
+msgid ""
+"       --restrict-file-names=OS    restrict chars in file names to ones OS "
+"allows.\n"
+msgstr ""
+
+#: src/main.c:530
+msgid ""
+"       --ignore-case               ignore case when matching files/"
+"directories.\n"
+msgstr ""
+
+#: src/main.c:533
+msgid "  -4,  --inet4-only                connect only to IPv4 addresses.\n"
+msgstr ""
+
+#: src/main.c:535
+msgid "  -6,  --inet6-only                connect only to IPv6 addresses.\n"
+msgstr ""
+
+#: src/main.c:537
+msgid ""
+"       --prefer-family=FAMILY      connect first to addresses of specified "
+"family,\n"
+"                                   one of IPv6, IPv4, or none.\n"
+msgstr ""
+
+#: src/main.c:541
+msgid ""
+"       --user=USER                 set both ftp and http user to USER.\n"
+msgstr ""
+
+#: src/main.c:543
+msgid ""
+"       --password=PASS             set both ftp and http password to PASS.\n"
+msgstr ""
+
+#: src/main.c:545
+msgid "       --ask-password              prompt for passwords.\n"
+msgstr ""
+
+#: src/main.c:547
+msgid "       --no-iri                    turn off IRI support.\n"
+msgstr ""
+
+#: src/main.c:549
+msgid ""
+"       --local-encoding=ENC        use ENC as the local encoding for IRIs.\n"
+msgstr ""
+
+#: src/main.c:551
+msgid ""
+"       --remote-encoding=ENC       use ENC as the default remote encoding.\n"
+msgstr ""
+
+#: src/main.c:553
+msgid "       --unlink                    remove file before clobber.\n"
+msgstr ""
+
+#: src/main.c:557
+#, fuzzy
+msgid "Directories:\n"
+msgstr "       היקית"
+
+#: src/main.c:559
+msgid "  -nd, --no-directories            don't create directories.\n"
+msgstr ""
+
+#: src/main.c:561
+msgid "  -x,  --force-directories         force creation of directories.\n"
+msgstr ""
+
+#: src/main.c:563
+msgid "  -nH, --no-host-directories       don't create host directories.\n"
+msgstr ""
+
+#: src/main.c:565
+msgid "       --protocol-directories      use protocol name in directories.\n"
+msgstr ""
+
+#: src/main.c:567
+msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/...\n"
+msgstr ""
+
+#: src/main.c:569
+msgid ""
+"       --cut-dirs=NUMBER           ignore NUMBER remote directory "
+"components.\n"
+msgstr ""
+
+#: src/main.c:573
+msgid "HTTP options:\n"
+msgstr ""
+
+#: src/main.c:575
+msgid "       --http-user=USER            set http user to USER.\n"
+msgstr ""
+
+#: src/main.c:577
+msgid "       --http-password=PASS        set http password to PASS.\n"
+msgstr ""
+
+#: src/main.c:579
+msgid "       --no-cache                  disallow server-cached data.\n"
+msgstr ""
+
+#: src/main.c:581
+msgid ""
+"       --default-page=NAME         Change the default page name (normally\n"
+"                                   this is `index.html'.).\n"
+msgstr ""
+
+#: src/main.c:584
+msgid ""
+"  -E,  --adjust-extension          save HTML/CSS documents with proper "
+"extensions.\n"
+msgstr ""
+
+#: src/main.c:586
+msgid ""
+"       --ignore-length             ignore `Content-Length' header field.\n"
+msgstr ""
+
+#: src/main.c:588
+msgid "       --header=STRING             insert STRING among the headers.\n"
+msgstr ""
+
+#: src/main.c:590
+msgid ""
+"       --max-redirect              maximum redirections allowed per page.\n"
+msgstr ""
+
+#: src/main.c:592
+msgid "       --proxy-user=USER           set USER as proxy username.\n"
+msgstr ""
+
+#: src/main.c:594
+msgid "       --proxy-password=PASS       set PASS as proxy password.\n"
+msgstr ""
+
+#: src/main.c:596
+msgid ""
+"       --referer=URL               include `Referer: URL' header in HTTP "
+"request.\n"
+msgstr ""
+
+#: src/main.c:598
+msgid "       --save-headers              save the HTTP headers to file.\n"
+msgstr ""
+
+#: src/main.c:600
+msgid ""
+"  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
+"VERSION.\n"
+msgstr ""
+
+#: src/main.c:602
+msgid ""
+"       --no-http-keep-alive        disable HTTP keep-alive (persistent "
+"connections).\n"
+msgstr ""
+
+#: src/main.c:604
+msgid "       --no-cookies                don't use cookies.\n"
+msgstr ""
+
+#: src/main.c:606
+msgid ""
+"       --load-cookies=FILE         load cookies from FILE before session.\n"
+msgstr ""
+
+#: src/main.c:608
+msgid ""
+"       --save-cookies=FILE         save cookies to FILE after session.\n"
+msgstr ""
+
+#: src/main.c:610
+msgid ""
+"       --keep-session-cookies      load and save session (non-permanent) "
+"cookies.\n"
+msgstr ""
+
+#: src/main.c:612
+msgid ""
+"       --post-data=STRING          use the POST method; send STRING as the "
+"data.\n"
+msgstr ""
+
+#: src/main.c:614
+msgid ""
+"       --post-file=FILE            use the POST method; send contents of "
+"FILE.\n"
+msgstr ""
+
+#: src/main.c:616
+msgid ""
+"       --method=HTTPMethod         use method \"HTTPMethod\" in the "
+"request.\n"
+msgstr ""
+
+#: src/main.c:618
+msgid ""
+"       --body-data=STRING          Send STRING as data. --method MUST be "
+"set.\n"
+msgstr ""
+
+#: src/main.c:620
+msgid ""
+"       --body-file=FILE            Send contents of FILE. --method MUST be "
+"set.\n"
+msgstr ""
+
+#: src/main.c:622
+msgid ""
+"       --content-disposition       honor the Content-Disposition header "
+"when\n"
+"                                   choosing local file names "
+"(EXPERIMENTAL).\n"
+msgstr ""
+
+#: src/main.c:625
+msgid ""
+"       --content-on-error          output the received content on server "
+"errors.\n"
+msgstr ""
+
+#: src/main.c:627
+msgid ""
+"       --auth-no-challenge         send Basic HTTP authentication "
+"information\n"
+"                                   without first waiting for the server's\n"
+"                                   challenge.\n"
+msgstr ""
+
+#: src/main.c:634
+msgid "HTTPS (SSL/TLS) options:\n"
+msgstr ""
+
+#: src/main.c:636
+msgid ""
+"       --secure-protocol=PR        choose secure protocol, one of auto, "
+"SSLv2,\n"
+"                                   SSLv3, TLSv1 and PFS.\n"
+msgstr ""
+
+#: src/main.c:639
+msgid "       --https-only                only follow secure HTTPS links\n"
+msgstr ""
+
+#: src/main.c:641
+msgid ""
+"       --no-check-certificate      don't validate the server's certificate.\n"
+msgstr ""
+
+#: src/main.c:643
+msgid "       --certificate=FILE          client certificate file.\n"
+msgstr ""
+
+#: src/main.c:645
+msgid ""
+"       --certificate-type=TYPE     client certificate type, PEM or DER.\n"
+msgstr ""
+
+#: src/main.c:647
+msgid "       --private-key=FILE          private key file.\n"
+msgstr ""
+
+#: src/main.c:649
+msgid "       --private-key-type=TYPE     private key type, PEM or DER.\n"
+msgstr ""
+
+#: src/main.c:651
+msgid "       --ca-certificate=FILE       file with the bundle of CA's.\n"
+msgstr ""
+
+#: src/main.c:653
+msgid ""
+"       --ca-directory=DIR          directory where hash list of CA's is "
+"stored.\n"
+msgstr ""
+
+#: src/main.c:655
+msgid ""
+"       --random-file=FILE          file with random data for seeding the SSL "
+"PRNG.\n"
+msgstr ""
+
+#: src/main.c:657
+msgid ""
+"       --egd-file=FILE             file naming the EGD socket with random "
+"data.\n"
+msgstr ""
+
+#: src/main.c:662
+msgid "FTP options:\n"
+msgstr ""
+
+#: src/main.c:665
+msgid ""
+"       --ftp-stmlf                 Use Stream_LF format for all binary FTP "
+"files.\n"
+msgstr ""
+
+#: src/main.c:668
+msgid "       --ftp-user=USER             set ftp user to USER.\n"
+msgstr ""
+
+#: src/main.c:670
+msgid "       --ftp-password=PASS         set ftp password to PASS.\n"
+msgstr ""
+
+#: src/main.c:672
+msgid "       --no-remove-listing         don't remove `.listing' files.\n"
+msgstr ""
+
+#: src/main.c:674
+msgid "       --no-glob                   turn off FTP file name globbing.\n"
+msgstr ""
+
+#: src/main.c:676
+msgid ""
+"       --no-passive-ftp            disable the \"passive\" transfer mode.\n"
+msgstr ""
+
+#: src/main.c:678
+msgid "       --preserve-permissions      preserve remote file permissions.\n"
+msgstr ""
+
+#: src/main.c:680
+msgid ""
+"       --retr-symlinks             when recursing, get linked-to files (not "
+"dir).\n"
+msgstr ""
+
+#: src/main.c:684
+msgid "WARC options:\n"
+msgstr ""
+
+#: src/main.c:686
+msgid ""
+"       --warc-file=FILENAME        save request/response data to a .warc.gz "
+"file.\n"
+msgstr ""
+
+#: src/main.c:688
+msgid ""
+"       --warc-header=STRING        insert STRING into the warcinfo record.\n"
+msgstr ""
+
+#: src/main.c:690
+msgid ""
+"       --warc-max-size=NUMBER      set maximum size of WARC files to "
+"NUMBER.\n"
+msgstr ""
+
+#: src/main.c:692
+msgid "       --warc-cdx                  write CDX index files.\n"
+msgstr ""
+
+#: src/main.c:694
+msgid ""
+"       --warc-dedup=FILENAME       do not store records listed in this CDX "
+"file.\n"
+msgstr ""
+
+#: src/main.c:697
+msgid ""
+"       --no-warc-compression       do not compress WARC files with GZIP.\n"
+msgstr ""
+
+#: src/main.c:700
+msgid "       --no-warc-digests           do not calculate SHA1 digests.\n"
+msgstr ""
+
+#: src/main.c:702
+msgid ""
+"       --no-warc-keep-log          do not store the log file in a WARC "
+"record.\n"
+msgstr ""
+
+#: src/main.c:704
+msgid ""
+"       --warc-tempdir=DIRECTORY    location for temporary files created by "
+"the\n"
+"                                   WARC writer.\n"
+msgstr ""
+
+#: src/main.c:709
+msgid "Recursive download:\n"
+msgstr ""
+
+#: src/main.c:711
+msgid "  -r,  --recursive                 specify recursive download.\n"
+msgstr ""
+
+#: src/main.c:713
+msgid ""
+"  -l,  --level=NUMBER              maximum recursion depth (inf or 0 for "
+"infinite).\n"
+msgstr ""
+
+#: src/main.c:715
+msgid ""
+"       --delete-after              delete files locally after downloading "
+"them.\n"
+msgstr ""
+
+#: src/main.c:717
+msgid ""
+"  -k,  --convert-links             make links in downloaded HTML or CSS "
+"point to\n"
+"                                   local files.\n"
+msgstr ""
+
+#: src/main.c:720
+msgid ""
+"       --backups=N                 before writing file X, rotate up to N "
+"backup files.\n"
+msgstr ""
+
+#: src/main.c:724
+msgid ""
+"  -K,  --backup-converted          before converting file X, back up as "
+"X_orig.\n"
+msgstr ""
+
+#: src/main.c:727
+msgid ""
+"  -K,  --backup-converted          before converting file X, back up as X."
+"orig.\n"
+msgstr ""
+
+#: src/main.c:730
+msgid ""
+"  -m,  --mirror                    shortcut for -N -r -l inf --no-remove-"
+"listing.\n"
+msgstr ""
+
+#: src/main.c:732
+msgid ""
+"  -p,  --page-requisites           get all images, etc. needed to display "
+"HTML page.\n"
+msgstr ""
+
+#: src/main.c:734
+msgid ""
+"       --strict-comments           turn on strict (SGML) handling of HTML "
+"comments.\n"
+msgstr ""
+
+#: src/main.c:738
+msgid "Recursive accept/reject:\n"
+msgstr ""
+
+#: src/main.c:740
+msgid ""
+"  -A,  --accept=LIST               comma-separated list of accepted "
+"extensions.\n"
+msgstr ""
+
+#: src/main.c:742
+msgid ""
+"  -R,  --reject=LIST               comma-separated list of rejected "
+"extensions.\n"
+msgstr ""
+
+#: src/main.c:744
+msgid "       --accept-regex=REGEX        regex matching accepted URLs.\n"
+msgstr ""
+
+#: src/main.c:746
+msgid "       --reject-regex=REGEX        regex matching rejected URLs.\n"
+msgstr ""
+
+#: src/main.c:749
+msgid "       --regex-type=TYPE           regex type (posix|pcre).\n"
+msgstr ""
+
+#: src/main.c:752
+msgid "       --regex-type=TYPE           regex type (posix).\n"
+msgstr ""
+
+#: src/main.c:755
+msgid ""
+"  -D,  --domains=LIST              comma-separated list of accepted "
+"domains.\n"
+msgstr ""
+
+#: src/main.c:757
+msgid ""
+"       --exclude-domains=LIST      comma-separated list of rejected "
+"domains.\n"
+msgstr ""
+
+#: src/main.c:759
+msgid ""
+"       --follow-ftp                follow FTP links from HTML documents.\n"
+msgstr ""
+
+#: src/main.c:761
+msgid ""
+"       --follow-tags=LIST          comma-separated list of followed HTML "
+"tags.\n"
+msgstr ""
+
+#: src/main.c:763
+msgid ""
+"       --ignore-tags=LIST          comma-separated list of ignored HTML "
+"tags.\n"
+msgstr ""
+
+#: src/main.c:765
+msgid ""
+"  -H,  --span-hosts                go to foreign hosts when recursive.\n"
+msgstr ""
+
+#: src/main.c:767
+msgid "  -L,  --relative                  follow relative links only.\n"
+msgstr ""
+
+#: src/main.c:769
+msgid "  -I,  --include-directories=LIST  list of allowed directories.\n"
+msgstr ""
+
+#: src/main.c:771
+msgid ""
+"       --trust-server-names        use the name specified by the "
+"redirection\n"
+"                                   url last component.\n"
+msgstr ""
+
+#: src/main.c:774
+msgid "  -X,  --exclude-directories=LIST  list of excluded directories.\n"
+msgstr ""
+
+#: src/main.c:776
+msgid ""
+"  -np, --no-parent                 don't ascend to the parent directory.\n"
+msgstr ""
+
+#: src/main.c:779
+msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>.\n"
+msgstr "    .<bug-wget@gnu.org> תבותכל רופישל תועצהו (bugs) הלקת יחוויד וחלש\n"
+
+#: src/main.c:784
+#, c-format
+msgid "GNU Wget %s, a non-interactive network retriever.\n"
+msgstr ".ליעפמ תופתתשה אלל תשרהמ םיצבק תכישמ ,%s אסריג GNU Wget תינכת\n"
+
+#: src/main.c:827
+#, c-format
+msgid "Password for user %s: "
+msgstr ""
+
+#: src/main.c:829
+#, c-format
+msgid "Password: "
+msgstr ""
+
+#: src/main.c:885
+msgid "Wgetrc: "
+msgstr ""
+
+#: src/main.c:886
+msgid "Locale: "
+msgstr ""
+
+#: src/main.c:887
+msgid "Compile: "
+msgstr ""
+
+#: src/main.c:888
+msgid "Link: "
+msgstr ""
+
+#: src/main.c:892
+#, c-format
+msgid ""
+"GNU Wget %s built on %s.\n"
+"\n"
+msgstr ""
+
+#: src/main.c:919
+#, c-format
+msgid "    %s (env)\n"
+msgstr ""
+
+#: src/main.c:926
+#, c-format
+msgid "    %s (user)\n"
+msgstr ""
+
+#: src/main.c:931
+#, c-format
+msgid "    %s (system)\n"
+msgstr ""
+
+#. TRANSLATORS: When available, an actual copyright character
+#. (circle-c) should be used in preference to "(C)".
+#: src/main.c:959
+#, c-format
+msgid "Copyright (C) %s Free Software Foundation, Inc.\n"
+msgstr ""
+
+#: src/main.c:962
+msgid ""
+"License GPLv3+: GNU GPL version 3 or later\n"
+"<http://www.gnu.org/licenses/gpl.html>.\n"
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+
+#. TRANSLATORS: When available, please use the proper diacritics for
+#. names such as this one. See en_US.po for reference.
+#: src/main.c:970
+#, fuzzy
+msgid ""
+"\n"
+"Originally written by Hrvoje Niksic <hniksic@xemacs.org>.\n"
+msgstr ""
+"\n"
+".Hrvoje Niksic <hniksic@arsdigita.com> י\"ע רוקמב הבתכנ וז תינכת\n"
+
+#: src/main.c:973
+#, fuzzy
+msgid "Please send bug reports and questions to <bug-wget@gnu.org>.\n"
+msgstr "    .<bug-wget@gnu.org> תבותכל רופישל תועצהו (bugs) הלקת יחוויד וחלש\n"
+
+#: src/main.c:1024 src/main.c:1515
+#, c-format
+msgid "Memory allocation problem\n"
+msgstr ""
+
+#: src/main.c:1075
+#, c-format
+msgid "Exiting due to error in %s\n"
+msgstr ""
+
+#: src/main.c:1104 src/main.c:1174 src/main.c:1376
+#, c-format
+msgid "Try `%s --help' for more options.\n"
+msgstr ".רתוי בר עדימ תגצהל `%s --help' שיקהל הסנ\n"
+
+#: src/main.c:1170
+#, c-format
+msgid "%s: illegal option -- `-n%c'\n"
+msgstr "%s: `-n%c' יוגש ןייפאמ\n"
+
+#: src/main.c:1213
+#, fuzzy, c-format
+msgid "Debugging support not compiled in. Ignoring --debug flag.\n"
+msgstr ".`--debug' ןייפאמב הכימת םע התנבנ אל %s תינכתה\n"
+
+#: src/main.c:1225
+#, c-format
+msgid ""
+"Both --no-clobber and --convert-links were specified, only --convert-links "
+"will be used.\n"
+msgstr ""
+
+#: src/main.c:1255
+#, c-format
+msgid "Can't be verbose and quiet at the same time.\n"
+msgstr ".הז תא הז םירתוס quiet-ו verbose\n"
+
+#: src/main.c:1261
+#, c-format
+msgid "Can't timestamp and not clobber old files at the same time.\n"
+msgstr ".הז תא הז םירתוס ןורחא ןוכדע ןמז םושירו םימייק םיצבק לע הרימש\n"
+
+#: src/main.c:1270
+#, c-format
+msgid "Cannot specify both --inet4-only and --inet6-only.\n"
+msgstr ""
+
+#: src/main.c:1280
+msgid ""
+"Cannot specify both -k and -O if multiple URLs are given, or in combination\n"
+"with -p or -r. See the manual for details.\n"
+"\n"
+msgstr ""
+
+#: src/main.c:1289
+msgid ""
+"WARNING: combining -O with -r or -p will mean that all downloaded content\n"
+"will be placed in the single file you specified.\n"
+"\n"
+msgstr ""
+
+#: src/main.c:1295
+msgid ""
+"WARNING: timestamping does nothing in combination with -O. See the manual\n"
+"for details.\n"
+"\n"
+msgstr ""
+
+#: src/main.c:1304
+#, fuzzy, c-format
+msgid "File `%s' already there; not retrieving.\n"
+msgstr ".ותוא ךושמל ךרוצ ןיא ,ןאכ רבכ `%s' ץבוק\n"
+
+#: src/main.c:1315
+#, c-format
+msgid ""
+"WARC output does not work with --no-clobber, --no-clobber will be disabled.\n"
+msgstr ""
+
+#: src/main.c:1322
+#, c-format
+msgid ""
+"WARC output does not work with timestamping, timestamping will be disabled.\n"
+msgstr ""
+
+#: src/main.c:1329
+#, c-format
+msgid "WARC output does not work with --spider.\n"
+msgstr ""
+
+#: src/main.c:1335
+#, c-format
+msgid ""
+"WARC output does not work with --continue or --start-pos, they will be "
+"disabled.\n"
+msgstr ""
+
+#: src/main.c:1343
+#, c-format
+msgid ""
+"Digests are disabled; WARC deduplication will not find duplicate records.\n"
+msgstr ""
+
+#: src/main.c:1355
+#, c-format
+msgid "Cannot specify both --ask-password and --password.\n"
+msgstr ""
+
+#: src/main.c:1363
+#, c-format
+msgid ""
+"Specifying both --start-pos and --continue is not recommended; --continue "
+"will be disabled.\n"
+msgstr ""
+
+#: src/main.c:1371
+#, c-format
+msgid "%s: missing URL\n"
+msgstr "%s: רסח URL\n"
+
+#: src/main.c:1412
+#, c-format
+msgid "You cannot specify both --post-data and --post-file.\n"
+msgstr ""
+
+#: src/main.c:1417
+#, c-format
+msgid ""
+"You cannot use --post-data or --post-file along with --method. --method "
+"expects data through --body-data and --body-file options"
+msgstr ""
+
+#: src/main.c:1426
+#, c-format
+msgid ""
+"You must specify a method through --method=HTTPMethod to use with --body-"
+"data or --body-file.\n"
+msgstr ""
+
+#: src/main.c:1432
+#, c-format
+msgid "You cannot specify both --body-data and --body-file.\n"
+msgstr ""
+
+#: src/main.c:1484
+#, c-format
+msgid "This version does not have support for IRIs\n"
+msgstr ""
+
+#: src/main.c:1584
+#, c-format
+msgid "-k can be used together with -O only if outputting to a regular file.\n"
+msgstr ""
+
+#: src/main.c:1689
+#, c-format
+msgid "No URLs found in %s.\n"
+msgstr ".%s-ב URL ףא אצמנ אל\n"
+
+#: src/main.c:1710
+#, fuzzy, c-format
+msgid ""
+"FINISHED --%s--\n"
+"Total wall clock time: %s\n"
+"Downloaded: %d files, %s in %s (%s)\n"
+msgstr ""
+"\n"
+"--%s-- העשב םייתסה\n"
+"םיתב %s ,םיצבק %d וכשמנ\n"
+
+#: src/main.c:1724
+#, fuzzy, c-format
+msgid "Download quota of %s EXCEEDED!\n"
+msgstr "!(םיתב %s) הכישמ תלבגממ הגירח\n"
+
+#: src/mswindows.c:100
+#, c-format
+msgid "Continuing in background.\n"
+msgstr ".עקרב ךישממ\n"
+
+#: src/mswindows.c:293
+#, fuzzy, c-format
+msgid "Continuing in background, pid %lu.\n"
+msgstr ".עקרב ךישממ\n"
+
+#: src/mswindows.c:295 src/utils.c:481
+#, fuzzy, c-format
+msgid "Output will be written to %s.\n"
+msgstr ".`%s'-ל בתכיי טלפ\n"
+
+#: src/mswindows.c:327
+#, c-format
+msgid "fake_fork_child() failed\n"
+msgstr ""
+
+#: src/mswindows.c:335
+#, c-format
+msgid "fake_fork() failed\n"
+msgstr ""
+
+#: src/mswindows.c:463 src/mswindows.c:470
+#, c-format
+msgid "%s: Couldn't find usable socket driver.\n"
+msgstr "%s: Couldn't find usable socket driver.\n"
+
+#: src/mswindows.c:650
+#, c-format
+msgid "ioctl() failed.  The socket could not be set as blocking.\n"
+msgstr ""
+
+#: src/netrc.c:354
+#, fuzzy, c-format
+msgid "%s: %s:%d: warning: %s token appears before any machine name\n"
+msgstr "%s: %s:%d: בשחמה םש רדגוהש ינפל העיפומ \"%s\" חתפמ תלימ :הרהזא\n"
+
+#: src/netrc.c:385
+#, c-format
+msgid "%s: %s:%d: unknown token \"%s\"\n"
+msgstr "%s: %s:%d: \"%s\" תרכומ-יתלב חתפמ תלימ\n"
+
+#: src/netrc.c:448
+#, c-format
+msgid "Usage: %s NETRC [HOSTNAME]\n"
+msgstr "%s NETRC [חראמ-בשחמ םש]  :שומישה ןפוא\n"
+
+#: src/netrc.c:466
+#, c-format
+msgid "%s: cannot stat %s: %s\n"
+msgstr "%s תינכתב %s ץבוקל השיגב (%s) הלקת\n"
+
+#: src/openssl.c:118
+msgid "WARNING: using a weak random seed.\n"
+msgstr ""
+
+#: src/openssl.c:189
+msgid "Could not seed PRNG; consider using --random-file.\n"
+msgstr ""
+
+#: src/openssl.c:630
+#, c-format
+msgid "%s: cannot verify %s's certificate, issued by %s:\n"
+msgstr ""
+
+#: src/openssl.c:639
+msgid "  Unable to locally verify the issuer's authority.\n"
+msgstr ""
+
+#: src/openssl.c:644
+msgid "  Self-signed certificate encountered.\n"
+msgstr ""
+
+#: src/openssl.c:647
+msgid "  Issued certificate not yet valid.\n"
+msgstr ""
+
+#: src/openssl.c:650
+msgid "  Issued certificate has expired.\n"
+msgstr ""
+
+#: src/openssl.c:735
+#, c-format
+msgid ""
+"%s: no certificate subject alternative name matches\n"
+"\trequested host name %s.\n"
+msgstr ""
+
+#: src/openssl.c:752
+#, c-format
+msgid ""
+"    %s: certificate common name %s doesn't match requested host name %s.\n"
+msgstr ""
+
+#: src/openssl.c:784
+#, c-format
+msgid ""
+"    %s: certificate common name is invalid (contains a NUL character).\n"
+"    This may be an indication that the host is not who it claims to be\n"
+"    (that is, it is not the real %s).\n"
+msgstr ""
+
+#: src/openssl.c:802
+#, c-format
+msgid "To connect to %s insecurely, use `--no-check-certificate'.\n"
+msgstr ""
+
+#: src/progress.c:244
+#, fuzzy, c-format
+msgid ""
+"\n"
+"%*s[ skipping %sK ]"
+msgstr ""
+"\n"
+"          [ %dK לע גלדמ ]"
+
+#: src/progress.c:465
+#, c-format
+msgid "Invalid dot style specification %s; leaving unchanged.\n"
+msgstr ""
+
+#. TRANSLATORS: "ETA" is English-centric, but this must
+#. be short, ideally 3 chars.  Abbreviate if necessary.
+#: src/progress.c:854
+#, c-format
+msgid "   eta %s"
+msgstr ""
+
+#: src/progress.c:1150
+msgid "   in "
+msgstr ""
+
+#: src/ptimer.c:158
+#, c-format
+msgid "Cannot get REALTIME clock frequency: %s\n"
+msgstr ""
+
+#: src/recur.c:434
+#, c-format
+msgid "Removing %s since it should be rejected.\n"
+msgstr ".קחמיי ןכ-לעו החדנ %s\n"
+
+#: src/res.c:391
+#, fuzzy, c-format
+msgid "Cannot open %s: %s"
+msgstr "ב (%s: %s) םירושיק תרמה תלקת\n"
+
+#: src/res.c:550
+msgid "Loading robots.txt; please ignore errors.\n"
+msgstr ".האיגש תועדוהמ םלעתהל אנ ;robots.txt ץבוק ןעוט\n"
+
+#: src/retr.c:768
+#, fuzzy, c-format
+msgid "Error parsing proxy URL %s: %s.\n"
+msgstr "`%s'-ל הביתכב (%s) הלקת\n"
+
+#: src/retr.c:778
+#, fuzzy, c-format
+msgid "Error in proxy URL %s: Must be HTTP.\n"
+msgstr ".HTTP תויהל בייח :%s השרומ תרש\n"
+
+#: src/retr.c:879
+#, fuzzy, c-format
+msgid "%d redirections exceeded.\n"
+msgstr ".%s תינכתב תילגעמ היינפה התלגתה\n"
+
+#: src/retr.c:1126
+msgid ""
+"Giving up.\n"
+"\n"
+msgstr ""
+"!ענכנ ינא\n"
+"\n"
+
+#: src/retr.c:1126
+msgid ""
+"Retrying.\n"
+"\n"
+msgstr ""
+".ףסונ ןויסנ\n"
+"\n"
+
+#: src/spider.c:75
+msgid ""
+"Found no broken links.\n"
+"\n"
+msgstr ""
+
+#: src/spider.c:82
+#, c-format
+msgid ""
+"Found %d broken link.\n"
+"\n"
+msgid_plural ""
+"Found %d broken links.\n"
+"\n"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/url.c:639
+#, fuzzy
+msgid "No error"
+msgstr "ההוזמ-יתלב הלקת"
+
+#: src/url.c:641
+#, c-format
+msgid "Unsupported scheme %s"
+msgstr ""
+
+#: src/url.c:643
+msgid "Scheme missing"
+msgstr ""
+
+#: src/url.c:645
+msgid "Invalid host name"
+msgstr "חראמ-בשחמ לש יוגש םש"
+
+#: src/url.c:647
+msgid "Bad port number"
+msgstr ""
+
+#: src/url.c:649
+#, fuzzy
+msgid "Invalid user name"
+msgstr "חראמ-בשחמ לש יוגש םש"
+
+#: src/url.c:651
+msgid "Unterminated IPv6 numeric address"
+msgstr ""
+
+#: src/url.c:653
+msgid "IPv6 addresses not supported"
+msgstr ""
+
+#: src/url.c:655
+msgid "Invalid IPv6 numeric address"
+msgstr ""
+
+#: src/url.c:959
+#, fuzzy
+msgid "HTTPS support not compiled in"
+msgstr ".`--debug' ןייפאמב הכימת םע התנבנ אל %s תינכתה\n"
+
+#: src/utils.c:116
+#, c-format
+msgid "%s: %s: Failed to allocate enough memory; memory exhausted.\n"
+msgstr ""
+
+#: src/utils.c:122
+#, c-format
+msgid "%s: %s: Failed to allocate %ld bytes; memory exhausted.\n"
+msgstr ""
+
+#: src/utils.c:336
+#, c-format
+msgid "%s: aprintf: text buffer is too big (%ld bytes), aborting.\n"
+msgstr ""
+
+#: src/utils.c:479
+#, fuzzy, c-format
+msgid "Continuing in background, pid %d.\n"
+msgstr ".עקרב ךישממ\n"
+
+#: src/utils.c:555
+#, fuzzy, c-format
+msgid "Failed to unlink symlink %s: %s\n"
+msgstr "`%s' ילובמיס רושיק תקיחמב (%s) הלקת\n"
+
+#: src/utils.c:2273 src/utils.c:2292
+#, c-format
+msgid "Invalid regular expression %s, %s\n"
+msgstr ""
+
+#: src/utils.c:2315 src/utils.c:2339
+#, fuzzy, c-format
+msgid "Error while matching %s: %d\n"
+msgstr "`%s'-ל הביתכב (%s) הלקת\n"
+
+#: src/warc.c:222
+msgid "Error opening GZIP stream to WARC file.\n"
+msgstr ""
+
+#: src/warc.c:710
+msgid "Error writing warcinfo record to WARC file.\n"
+msgstr ""
+
+#: src/warc.c:771
+#, c-format
+msgid ""
+"Opening WARC file %s.\n"
+"\n"
+msgstr ""
+
+#: src/warc.c:777
+#, c-format
+msgid "Error opening WARC file %s.\n"
+msgstr ""
+
+#: src/warc.c:974
+msgid "CDX file does not list original urls. (Missing column 'a'.)\n"
+msgstr ""
+
+#: src/warc.c:977
+msgid "CDX file does not list checksums. (Missing column 'k'.)\n"
+msgstr ""
+
+#: src/warc.c:980
+msgid "CDX file does not list record ids. (Missing column 'u'.)\n"
+msgstr ""
+
+#: src/warc.c:1002
+#, c-format
+msgid ""
+"Loaded %d record from CDX.\n"
+"\n"
+msgid_plural ""
+"Loaded %d records from CDX.\n"
+"\n"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/warc.c:1047
+#, c-format
+msgid "Could not read CDX file %s for deduplication.\n"
+msgstr ""
+
+#: src/warc.c:1057
+msgid "Could not open temporary WARC manifest file.\n"
+msgstr ""
+
+#: src/warc.c:1067
+msgid "Could not open temporary WARC log file.\n"
+msgstr ""
+
+#: src/warc.c:1076
+msgid "Could not open WARC file.\n"
+msgstr ""
+
+#: src/warc.c:1085
+#, fuzzy
+msgid "Could not open CDX file for output.\n"
+msgstr ".השרומ תרש אצמנ אל\n"
+
+#: src/warc.c:1113
+msgid "Could not open temporary WARC file.\n"
+msgstr ""
+
+#: src/warc.c:1370
+msgid "Found exact match in CDX file. Saving revisit record to WARC.\n"
+msgstr ""
+
+#~ msgid "Error in Set-Cookie, field `%s'"
+#~ msgstr "יוגש Set-Cookie תרתוכ לש `%s' הדש"
+
+#~ msgid "Syntax error in Set-Cookie at character `%c'.\n"
+#~ msgstr ".`%c' ות תברקב Set-Cookie תרתוכ לש יוגש ריבחת\n"
+
+#~ msgid "Connection to %s:%hu refused.\n"
+#~ msgstr ".החדנ %s:%hu-ל תורשקתה ןויסנ\n"
+
+#~ msgid "Will try connecting to %s:%hu.\n"
+#~ msgstr ".%s:%hu-ל רשקתהל הסנמ\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "REST failed; will not truncate `%s'.\n"
+#~ msgstr ""
+#~ "\n"
+#~ ".`%s' לש םדוק ןכות קוחמל יאשר ינניא ;הלשכנ REST תדוקפ\n"
+
+#~ msgid " [%s to go]"
+#~ msgstr " [%s דוע ראשנ]"
+
+#~ msgid "Host not found"
+#~ msgstr "אצמנ אל חראמ בשחמ"
+
+#~ msgid "Failed to set up an SSL context\n"
+#~ msgstr "(SSL) חטבואמ רודיש תביבס תריציב הלקת\n"
+
+#~ msgid "Failed to load certificates from %s\n"
+#~ msgstr "%s-מ (certificates) רושיא תויות תניעטב הלקת\n"
+
+#~ msgid "Trying without the specified certificate\n"
+#~ msgstr "תשרדנ רושיא תיות אלל ךישמהל ןויסנ\n"
+
+#~ msgid "Failed to get certificate key from %s\n"
+#~ msgstr "%s-מ רושיא חתפמ תלבקב הלקת\n"
+
+#~ msgid "End of file while parsing headers.\n"
+#~ msgstr ".תורתוכה חותינ ידכ ךות טלק רמג\n"
+
+#~ msgid "Authorization failed.\n"
+#~ msgstr ".תומיאה בלשב ןולשכ\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Continued download failed on this file, which conflicts with `-c'.\n"
+#~ "Refusing to truncate existing file `%s'.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "\n"
+#~ ",ףקותב `-c' ןייפאמו תויה .הלשכנ הז ץבוק לש ךשמה-תכישמ\n"
+#~ ".`%s' םייק ץבוק בתכשל יתורשפאב ןיא\n"
+#~ "\n"
+
+#~ msgid " (%s to go)"
+#~ msgstr " (%s to go)"
+
+#~ msgid "File `%s' already there, will not retrieve.\n"
+#~ msgstr ".ךשמיי אל ןכ-לעו ,םייק רבכ `%s' ץבוק\n"
+
+#~ msgid ""
+#~ "%s (%s) - `%s' saved [%ld/%ld])\n"
+#~ "\n"
+#~ msgstr ""
+#~ "%s (%s) - `%s' saved [%ld/%ld]\n"
+#~ "\n"
+
+#~ msgid "%s (%s) - Connection closed at byte %ld/%ld. "
+#~ msgstr ".רגסנ רוביחה ,%s-ב (%s) םיתב %ld/%ld ירחא הלקת "
+
+#~ msgid "%s: %s: Cannot convert `%s' to an IP address.\n"
+#~ msgstr "%s: IP תבותכל הרמהל תנתינ הנניא %s תארוהב `%s'\n"
+
+#~ msgid "%s: %s: Please specify always, on, off, or never.\n"
+#~ msgstr "%s: never וא off ,on ,always םיכרע קר תלבקמ %s הארוה\n"
+
+#~ msgid ""
+#~ "Startup:\n"
+#~ "  -V,  --version           display the version of Wget and exit.\n"
+#~ "  -h,  --help              print this help.\n"
+#~ "  -b,  --background        go to background after startup.\n"
+#~ "  -e,  --execute=COMMAND   execute a `.wgetrc'-style command.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                                                                     :"
+#~ "לוחית\n"
+#~ "                           תינכתה תסריג תא גצה  -V,  --version\n"
+#~ "                               הז הרזע ךסמ גצה       --help\n"
+#~ "                   לוחית רמגב עקרב הדובעל רובע  -b,  --background\n"
+#~ "                       wgetrc ןונגסב הדוקפ עצב  -e,  --execute=COMMAND\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "Logging and input file:\n"
+#~ "  -o,  --output-file=FILE     log messages to FILE.\n"
+#~ "  -a,  --append-output=FILE   append messages to FILE.\n"
+#~ "  -d,  --debug                print debug output.\n"
+#~ "  -q,  --quiet                quiet (no output).\n"
+#~ "  -v,  --verbose              be verbose (this is the default).\n"
+#~ "  -nv, --non-verbose          turn off verboseness, without being quiet.\n"
+#~ "  -i,  --input-file=FILE      download URLs found in FILE.\n"
+#~ "  -F,  --force-html           treat input file as HTML.\n"
+#~ "  -B,  --base=URL             prepends URL to relative links in -F -i "
+#~ "file.\n"
+#~ "       --sslcertfile=FILE     optional client certificate.\n"
+#~ "       --sslcertkey=KEYFILE   optional keyfile for this certificate.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                                                            :ןמויו טלק "
+#~ "יצבק\n"
+#~ "                         FILE ץבוקל תועדוה חלש  -o,  --output-file=FILE\n"
+#~ "                        FILE ץבוקל תועדוה ףסוה  -a,  --append-"
+#~ "output=FILE\n"
+#~ "               תואיגש יופינב הרזעל תועדוה ספדה  -d,  --debug\n"
+#~ "                       (תועדוה אלל) הטקש הלועפ  -q,  --quiet\n"
+#~ "        (לדחמה תרירב יהוז)  ריבכמל תועדוה ספדה  -v,  --verbose\n"
+#~ "     הטקש הלועפל רובעת לא ךא ,תועדוה יוביר לטב  -nv, --non-verbose\n"
+#~ "               FILE ץבוק ךותמ הכישמל םי-URL חק  -i,  --input-file=FILE\n"
+#~ "         HTML טמרופב וניה -i-ב טלק ץבוק יכ חנה  -F,  --force-html\n"
+#~ " URL-ל םייסחי םניה -i-ל טנמוגראב םימושרה םיצבק  -B,  --base=URL\n"
+#~ "             חוקל בשחמל רושיא ץבוק ןויצ תורשפא       --sslcertfile=FILE\n"
+#~ "           הז רושיא רובע חתפמ ץבוק ןויצ תורשפא       --"
+#~ "sslcertkey=KEYFILE\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "Download:\n"
+#~ "       --bind-address=ADDRESS   bind to ADDRESS (hostname or IP) on local "
+#~ "host.\n"
+#~ "  -t,  --tries=NUMBER           set number of retries to NUMBER (0 "
+#~ "unlimits).\n"
+#~ "  -O   --output-document=FILE   write documents to FILE.\n"
+#~ "  -nc, --no-clobber             don't clobber existing files or use .# "
+#~ "suffixes.\n"
+#~ "  -c,  --continue               resume getting a partially-downloaded "
+#~ "file.\n"
+#~ "       --dot-style=STYLE        set retrieval display style.\n"
+#~ "  -N,  --timestamping           don't re-retrieve files unless newer than "
+#~ "local.\n"
+#~ "  -S,  --server-response        print server response.\n"
+#~ "       --spider                 don't download anything.\n"
+#~ "  -T,  --timeout=SECONDS        set the read timeout to SECONDS.\n"
+#~ "  -w,  --wait=SECONDS           wait SECONDS between retrievals.\n"
+#~ "       --waitretry=SECONDS      wait 1...SECONDS between retries of a "
+#~ "retrieval.\n"
+#~ "  -Y,  --proxy=on/off           turn proxy on or off.\n"
+#~ "  -Q,  --quota=NUMBER           set retrieval quota to NUMBER.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                                                               :םיצבק "
+#~ "תכישמ\n"
+#~ " ימוקמ בשחמב (IP וא בשחמ םש) ADDR תבותכל רשקתה       --bind-address=ADDR\n"
+#~ "  (הלבגמ ןיא ועמשמ 0) תורשקתה תונויסנ רפסמ עבק  -t,  --tries=NUMBER\n"
+#~ "                                FILE-ל טלפ חלש  -O   --output-"
+#~ "document=FILE\n"
+#~ "םהמ תואסרג המכ רומשת לאו םימייק םיצבק סורהת לא  -nc, --no-clobber\n"
+#~ "             תקספה הב הדוקנהמ ץבוק דירוהל ךשמה  -c,  --continue\n"
+#~ "                הכישמה תומדקתה תגוצת ןונגס עבק       --dot-style=STYLE\n"
+#~ "  םיימוקמ םיצבקמ םינכדועמ םניאש םיצבק ךושמת לא  -N,  --timestamping\n"
+#~ "                       תרשהמ םיעיגמה םירסמ גצה  -S,  --server-response\n"
+#~ "                                  רבד ךושמת לא       --spider\n"
+#~ "                     טלקל הנתמהל יברימ ןמז עבק  -T,  --timeout=SECONDS\n"
+#~ "                         תוכישמ ןיב הייהשה עבק  -w,  --wait=SECONDS\n"
+#~ "                   תונויסנ ןיב תוינש N דע ןתמה       --waitretry=N\n"
+#~ "                     השרומ תרשב שמתשת לא\\שמתשה  -Y,  --proxy=on/off\n"
+#~ "(הלבגמ ןיא ועמשמ 0) הכישמל םיתב תומכ תלבגמ עבק  -Q,  --quota=NUMBER\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "Directories:\n"
+#~ "  -nd  --no-directories            don't create directories.\n"
+#~ "  -x,  --force-directories         force creation of directories.\n"
+#~ "  -nH, --no-host-directories       don't create host directories.\n"
+#~ "  -P,  --directory-prefix=PREFIX   save files to PREFIX/...\n"
+#~ "       --cut-dirs=NUMBER           ignore NUMBER remote directory "
+#~ "components.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                                                                    :"
+#~ "תיקיות\n"
+#~ "                         תושדח תויקית רוצית לא  -nd  --no-directories\n"
+#~ "                       תושדח תויקית רוצית דימת  -x,  --force-directories\n"
+#~ "    םיצבקה ודרוה ונממ רתאה םשב תויקית רוצית לא  -nH, --no-host-"
+#~ "directories\n"
+#~ "           PFX/... היקית תחת םיצבקה לכ תא רומש  -P,  --directory-"
+#~ "prefix=PFX\n"
+#~ "            תויקיתה תומשמ םינושאר םיקלח N טמשה       --cut-dirs=N\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "HTTP options:\n"
+#~ "       --http-user=USER      set http user to USER.\n"
+#~ "       --http-passwd=PASS    set http password to PASS.\n"
+#~ "  -C,  --cache=on/off        (dis)allow server-cached data (normally "
+#~ "allowed).\n"
+#~ "  -E,  --html-extension      save all text/html documents with .html "
+#~ "extension.\n"
+#~ "       --ignore-length       ignore `Content-Length' header field.\n"
+#~ "       --header=STRING       insert STRING among the headers.\n"
+#~ "       --proxy-user=USER     set USER as proxy username.\n"
+#~ "       --proxy-passwd=PASS   set PASS as proxy password.\n"
+#~ "       --referer=URL         include `Referer: URL' header in HTTP "
+#~ "request.\n"
+#~ "  -s,  --save-headers        save the HTTP headers to file.\n"
+#~ "  -U,  --user-agent=AGENT    identify as AGENT instead of Wget/VERSION.\n"
+#~ "       --no-http-keep-alive  disable HTTP keep-alive (persistent "
+#~ "connections).\n"
+#~ "       --cookies=off         don't use cookies.\n"
+#~ "       --load-cookies=FILE   load cookies from FILE before session.\n"
+#~ "       --save-cookies=FILE   save cookies to FILE after session.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                                                              :HTTP "
+#~ "ינייפאמ\n"
+#~ "                    HTTP שמתשמ לש ומש USER יהי       --http-user=USER\n"
+#~ "                 HTTP שמתשמ לש ותמסיס PASS יהי       --http-passwd=PASS\n"
+#~ "        תרשב ןומטמב ורמשנש םינותנ השרת לא\\השרה  -C,  --cache=on/off\n"
+#~ "                     .html תמויס םיצבקה לכל ןת  -E,  --html-extension\n"
+#~ "                 `Content-Length' תרתוכמ םלעתה       --ignore-length\n"
+#~ "               תורתוכה ךותב STRING תזורחמ לותש       --header=STRING\n"
+#~ "             השרומ תרשב שמתשמה לש ומש USER יהי       --proxy-user=USER\n"
+#~ "          השרומ תרשב שמתשמה לש ותמסיס PASS יהי       --proxy-passwd=PASS\n"
+#~ "         HTTP תיינפל `Referer: URL' תרתוכ ףסוה       --referer=URL\n"
+#~ "                    טלפ יצבקב HTTP תורתוכ רומש  -s,  --save-headers\n"
+#~ "   ליגרכ Wget/VERSION םוקמב AGENT תינכתכ ההדזה  -U,  --user-agent=AGENT\n"
+#~ "     (דימתמ HTTP רוביח) keep-alive-ב שומיש לטב       --no-http-keep-"
+#~ "alive\n"
+#~ "                    (cookies) תויגועב שמתשת לא       --cookies=off\n"
+#~ "       הדובעה תליחת ינפל FILE ץבוקמ תויגוע ןעט       --load-cookies=FILE\n"
+#~ "            הדובעה רמגב FILE ץבוקב תויגוע רומש       --save-cookies=FILE\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "FTP options:\n"
+#~ "  -nr, --dont-remove-listing   don't remove `.listing' files.\n"
+#~ "  -g,  --glob=on/off           turn file name globbing on or off.\n"
+#~ "       --passive-ftp           use the \"passive\" transfer mode.\n"
+#~ "       --retr-symlinks         when recursing, get linked-to files (not "
+#~ "dirs).\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                                                               :FTP "
+#~ "ינייפאמ\n"
+#~ "                          listing יצבק קחמת לא  -nr, --dont-remove-"
+#~ "listing\n"
+#~ "    םיצבק תומשב הבחרה יותב הכימת ליעפת לא\\לעפה  -g,  --glob=on/off\n"
+#~ "             (\"PASV\") תיביספ הרבעה תטישב שמתשה       --passive-ftp\n"
+#~ "   םירושיק לש הרטמ יצבק ךושמ ,תיביסרוקר הכישמב       --retr-symlinks\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "Recursive retrieval:\n"
+#~ "  -r,  --recursive          recursive web-suck -- use with care!\n"
+#~ "  -l,  --level=NUMBER       maximum recursion depth (inf or 0 for "
+#~ "infinite).\n"
+#~ "       --delete-after       delete files locally after downloading them.\n"
+#~ "  -k,  --convert-links      convert non-relative links to relative.\n"
+#~ "  -K,  --backup-converted   before converting file X, back up as X.orig.\n"
+#~ "  -m,  --mirror             shortcut option equivalent to -r -N -l inf -"
+#~ "nr.\n"
+#~ "  -p,  --page-requisites    get all images, etc. needed to display HTML "
+#~ "page.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                                                           :תיביסרוקר "
+#~ "הכישמ\n"
+#~ "  (!תרהזוה האר !ןכוסמ) -- תיביסרוקר הכישמ רשפא  -r,  --recursive\n"
+#~ "לבגומ-יתלב קמועל וא 0 ,היסרוקרל יברימ קמוע עבק  -l,  --level=NUMBER\n"
+#~ "            הכישמ רמגב תימוקמ םיצבקה לכ תא קחמ       --delete-after\n"
+#~ "                          םייסחיל םירושיק ךופה  -k,  --convert-links\n"
+#~ "                הכיפה ינפל יוביגכ ץבוק לכ רומש  -K,  --backup-converted\n"
+#~ "       -r -N -l inf -nr םינייפאמה ףוריצל רוציק  -m,  --mirror\n"
+#~ "         HTML תגוצתל םישרדנה םיצבקה לכ תא ךושמ  -p,  --page-requisites\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "Recursive accept/reject:\n"
+#~ "  -A,  --accept=LIST                comma-separated list of accepted "
+#~ "extensions.\n"
+#~ "  -R,  --reject=LIST                comma-separated list of rejected "
+#~ "extensions.\n"
+#~ "  -D,  --domains=LIST               comma-separated list of accepted "
+#~ "domains.\n"
+#~ "       --exclude-domains=LIST       comma-separated list of rejected "
+#~ "domains.\n"
+#~ "       --follow-ftp                 follow FTP links from HTML "
+#~ "documents.\n"
+#~ "       --follow-tags=LIST           comma-separated list of followed HTML "
+#~ "tags.\n"
+#~ "  -G,  --ignore-tags=LIST           comma-separated list of ignored HTML "
+#~ "tags.\n"
+#~ "  -H,  --span-hosts                 go to foreign hosts when recursive.\n"
+#~ "  -L,  --relative                   follow relative links only.\n"
+#~ "  -I,  --include-directories=LIST   list of allowed directories.\n"
+#~ "  -X,  --exclude-directories=LIST   list of excluded directories.\n"
+#~ "  -nh, --no-host-lookup             don't DNS-lookup hosts.\n"
+#~ "  -np, --no-parent                  don't ascend to the parent "
+#~ "directory.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                                         :תיביסרוקר הכישמ תעב הייחד וא "
+#~ "הלבק\n"
+#~ "        םיקיספ י\"ע תודרפומ תורתומ תומויס תמישר  -A,  --accept=LIST\n"
+#~ "        םיקיספ י\"ע תודרפומ תורוסא תומויס תמישר  -R,  --reject=LIST\n"
+#~ "   םיקיספ י\"ע םידרפומ םירתומ םימוחת תומש תמישר  -D,  --domains=LIST\n"
+#~ "   םיקיספ י\"ע םידרפומ םירוסא םימוחת תומש תמישר       --exclude-"
+#~ "domains=LIS\n"
+#~ "                 HTML יפדב FTP ירושיק רחא בוקע       --follow-ftp\n"
+#~ " םיקיספ י\"ע םידרפומ בוקעל שי םהירחא HTML תמישר       --follow-tags=LIST\n"
+#~ "                      םלעתהל שי םהמ HTML תמישר  -G,  --ignore-tags=LIST\n"
+#~ "   םירחא םיבשחמל תשגל ןתינ תיביסרוקר הכישמ תעב  -H,  --span-hosts\n"
+#~ "             יסחי םש ילעב םירושיק ירחא קר בוקע  -L,  --relative\n"
+#~ "                           תורתומ תויקית תמישר  -I,  --include-"
+#~ "directories=L\n"
+#~ "                           תורוסא תויקית תמישר  -X,  --exclude-"
+#~ "directories=L\n"
+#~ "             תשרב םיבשחמ שופיחל DNS-ב שמתשת לא  -nh, --no-host-lookup\n"
+#~ "                            בא תייקיתל הלעת לא  -np, --no-parent\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "Copyright (C) 1995, 1996, 1997, 1998, 2000, 2001 Free Software "
+#~ "Foundation, Inc.\n"
+#~ "This program is distributed in the hope that it will be useful,\n"
+#~ "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+#~ "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+#~ "GNU General Public License for more details.\n"
+#~ msgstr ""
+#~ "Copyright (C) 1995, 1996, 1997, 1998, 2000, 2001 Free Software "
+#~ "Foundation, Inc.\n"
+#~ "                                 ,תלעות איבת איהש הווקת ךותמ תצפומ וז "
+#~ "תינכת\n"
+#~ "                             עמתשמב-תוירחא אל וליפא ;תוירחא בתכ לכ אלל "
+#~ "םלוא\n"
+#~ "                             ,םיטרפל .תמיוסמ תילכת וזיאל המאתה וא תוריחס "
+#~ "לש\n"
+#~ "                                    .GNU General Public License-ב ונייע "
+#~ "אנא\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "CTRL+Break received, redirecting output to `%s'.\n"
+#~ "Execution continued in background.\n"
+#~ "You may stop Wget by pressing CTRL+ALT+DELETE.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "       .`%s'-ל טלפ תיינפה ,CTRL+Break ץחלנ\n"
+#~ "                        .עקרב ךשמיי עוציבה\n"
+#~ ".CTRL+ALT+DELETE תשקה י\"ע Wget רוצעל ןתינ\n"
+
+#~ msgid "Starting WinHelp %s\n"
+#~ msgstr ".\"WinHelp %s\" ליעפמ\n"
+
+#~ msgid "%s: %s: Not enough memory.\n"
+#~ msgstr ".%s תינכת לש %s הרגשב ןורכז קיפסמ ןיא\n"
+
+#~ msgid "Unknown/unsupported protocol"
+#~ msgstr "ךמתנ וניא וא רכומ-יתלב לוקוטורפ"
+
+#~ msgid "Invalid port specification"
+#~ msgstr "יוגש האיצי ןויצ"

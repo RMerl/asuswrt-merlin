@@ -1,0 +1,90 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $urls = <<EOF;
+http://localhost:{{port}}/site1.html
+http://localhost:{{port}}/site2.html
+EOF
+
+my $site1 = <<EOF;
+<html>
+  <head>
+    <title>Site 1</title>
+  </head>
+  <body>
+    <p>In orci diam, iaculis a hendrerit accumsan, mollis a nibh.</p>
+  </body>
+</html>
+EOF
+
+my $site2 = <<EOF;
+<html>
+  <head>
+    <title>Site 2</title>
+  </head>
+  <body>
+    <p>Sed vehicula ultrices orci a congue. Sed convallis semper urna.</p>
+  </body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/urls.txt' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => $urls,
+    },
+    '/site1.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $site1,
+    },
+    '/site2.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $site2,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -i http://localhost:{{port}}/urls.txt";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'urls.txt' => {
+        content => $urls,
+    },
+    'site1.html' => {
+        content => $site1,
+    },
+    'site2.html' => {
+        content => $site2,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use WgetFeature qw(iri);
+use FTPTest;
+
+
+###############################################################################
+
+my $ccedilla_l1 = "\xE7";
+my $ccedilla_u8 = "\xC3\xA7";
+
+my $francais = <<EOF;
+Some text.
+EOF
+
+$francais =~ s/\n/\r\n/;
+
+# code, msg, headers, content
+my %urls = (
+    "/fran${ccedilla_l1}ais.txt" => {
+        content => $francais,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --local-encoding=iso-8859-1 -S ftp://localhost:{{port}}/fran${ccedilla_l1}ais.txt";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    "fran${ccedilla_l1}ais.txt" => {
+        content => $francais,
+    },
+);
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

@@ -1,0 +1,88 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $mainpage = <<EOF;
+<html>
+<head>
+  <title>Main Page Title</title>
+</head>
+<body>
+  <a href="http://localhost:{{port}}/subpage.php">Secondary Page</a>
+</body>
+</html>
+EOF
+
+my $mainpagemangled = <<EOF;
+<html>
+<head>
+  <title>Main Page Title</title>
+</head>
+<body>
+  <a href="subpage.php.html">Secondary Page</a>
+</body>
+</html>
+EOF
+
+my $subpage = <<EOF;
+<html>
+<head>
+  <title>Secondary Page Title</title>
+</head>
+<body>
+  <p>Some text</p>
+</body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/index.php' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $mainpage,
+    },
+    '/subpage.php' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $subpage,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -r -nd -E -k -K http://localhost:{{port}}/index.php";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'index.php.orig' => {
+        content => $mainpage,
+    },
+    'index.php.html' => {
+        content => $mainpagemangled,
+    },
+    'subpage.php.html' => {
+        content => $subpage,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

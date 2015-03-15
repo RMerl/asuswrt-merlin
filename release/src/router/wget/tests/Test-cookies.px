@@ -1,0 +1,112 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $page1 = "Hello, world!\n";
+my $page2 = "Goodbye, Sam.\n";
+my $page3 = "Page three.\n";
+my $page4 = "Page four.\n";
+my $page5 = "Page five.\n";
+my $page6 = "Page six.\n";
+
+# code, msg, headers, content
+my %urls = (
+    '/one.txt' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/plain",
+            "Set-Cookie" => "foo=bar",
+        },
+        content => $page1,
+    },
+    '/two.txt' => {
+        code => "200",
+        msg => "Ok",
+        content => $page2,
+        request_headers => {
+            "Cookie" => qr|foo=bar|,
+        },
+    },
+# remove the cookie 'foo'
+    '/three.txt' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/plain",
+            "Set-Cookie" => "foo=; Expires=Sun, 06 Nov 1994 08:49:37 GMT",
+        },
+        content => $page3,
+    },
+    '/four.txt' => {
+        code => "200",
+        msg => "Ok",
+        content => $page4,
+        request_headers => {
+            "!Cookie" => qr|foo=|,
+        },
+    },
+# try to set a cookie 'foo' with mismatching domain
+# see RFC 6265 5.3.6: ignore the cookie if it doesn't domain-match
+    '/five.txt' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/plain",
+            "Set-Cookie" => "foo=bar; domain=.example.com",
+        },
+        content => $page5,
+    },
+    '/six.txt' => {
+        code => "200",
+        msg => "Ok",
+        content => $page6,
+        request_headers => {
+            "!Cookie" => qr|foo=bar|,
+        },
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " http://localhost:{{port}}/one.txt"
+    . " http://localhost:{{port}}/two.txt" . " http://localhost:{{port}}/three.txt"
+    . " http://localhost:{{port}}/four.txt" . " http://localhost:{{port}}/five.txt"
+	 . " http://localhost:{{port}}/six.txt";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'one.txt' => {
+        content => $page1,
+    },
+    'two.txt' => {
+        content => $page2,
+    },
+    'three.txt' => {
+        content => $page3,
+    },
+    'four.txt' => {
+        content => $page4,
+    },
+    'five.txt' => {
+        content => $page5,
+    },
+    'six.txt' => {
+        content => $page6,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

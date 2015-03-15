@@ -1,0 +1,64 @@
+#!/usr/bin/env perl
+
+# 2013-10-17 Andrea Urbani (matfanjol)
+# In this ftp test:
+# - the response of "LIST -a" command contains
+#   all the files
+# - the response of "LIST" command contains
+#   the normal files (hidden files are not present)
+# wget should use only "LIST -a" because it recognise
+# the system as "UNIX Type: L8" and so it should see
+# and download the hidden file too.
+
+use strict;
+use warnings;
+
+use FTPTest;
+
+
+###############################################################################
+
+my $normalfile = <<EOF;
+I'm a normal file
+EOF
+
+my $hiddenfile = <<EOF;
+I'm an hidden file
+EOF
+
+$normalfile =~ s/\n/\r\n/g;
+$hiddenfile =~ s/\n/\r\n/g;
+
+# code, msg, headers, content
+my %urls = (
+    '/normalfile.txt' => {
+        content => $normalfile,
+    },
+    '/hiddenfile.txt' => {
+        content => $hiddenfile,
+        attr => "H",
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --no-directories --recursive --level=1 ftp://localhost:{{port}}/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'normalfile.txt' => {
+        content => $normalfile,
+    },
+    'hiddenfile.txt' => {
+        content => $hiddenfile,
+    },
+);
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files,
+                             server_behavior => {list_no_hidden_if_list => 1});
+exit $the_test->run();

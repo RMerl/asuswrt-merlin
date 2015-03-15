@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use FTPTest;
+
+
+###############################################################################
+
+my $afile = <<EOF;
+Some text.
+EOF
+
+my $bfile = <<EOF;
+Some more text.
+EOF
+
+$afile =~ s/\n/\r\n/;
+$bfile =~ s/\n/\r\n/;
+
+# code, msg, headers, content
+my %urls = (
+    '/foo/afile.txt' => {
+        content => $afile,
+    },
+    '/bar/baz/bfile.txt' => {
+        content => $bfile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -S -nH -r ftp://localhost:{{port}}/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'foo/afile.txt' => {
+        content => $afile,
+    },
+    'bar/baz/bfile.txt' => {
+        content => $bfile,
+    },
+);
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

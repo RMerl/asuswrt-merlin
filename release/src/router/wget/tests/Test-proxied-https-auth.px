@@ -1,0 +1,139 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use WgetFeature qw(https);
+use WgetTests;  # For $WGETPATH.
+
+my $cert_path;
+my $key_path;
+my $srcdir;
+
+if (@ARGV) {
+    $srcdir = shift @ARGV;
+} elsif (defined $ENV{srcdir}) {
+    $srcdir = $ENV{srcdir};
+}
+
+if (defined $srcdir) {
+    $key_path = "$srcdir/certs/server-key.pem";
+    $cert_path = "$srcdir/certs/server-cert.pem";
+} else {
+    $key_path = "certs/server-key.pem";
+    $cert_path = "certs/server-cert.pem";
+}
+
+
+use HTTP::Daemon;
+use HTTP::Request;
+use IO::Socket::SSL;
+
+my $SOCKET = HTTP::Daemon->new (LocalAddr => 'localhost',
+    ReuseAddr => 1) or die "Cannot create server!!!";
+
+sub get_request {
+    my $conn = shift;
+    my $content = '';
+    my $line;
+
+    while (defined ($line = <$conn>)) {
+        $content .= $line;
+        last if $line eq "\r\n";
+    }
+
+    my $rqst = HTTP::Request->parse($content)
+        or die "Couldn't parse request:\n$content\n";
+
+    return $rqst;
+}
+
+sub do_server {
+    my $alrm = alarm 10;
+
+    my $s = $SOCKET;
+    my $conn;
+    my $rqst;
+    my $rspn;
+    for my $expect_inner_auth (0, 1) {
+        $conn = $s->accept;
+        $rqst = $conn->get_request;
+
+        # TODO: expect no auth the first time, request it, expect it the second
+        #   time.
+
+        die "Method not CONNECT\n" if ($rqst->method ne 'CONNECT');
+        $rspn = HTTP::Response->new(200, 'OK');
+        $conn->send_response($rspn);
+
+        my %options = (
+            SSL_server => 1,
+            SSL_passwd_cb => sub { return "Hello"; });
+
+        $options{SSL_cert_file} = $cert_path if ($cert_path);
+        $options{SSL_key_file} = $key_path if ($key_path);
+
+        my @options = %options;
+
+        $conn = IO::Socket::SSL->new_from_fd($conn->fileno, @options)
+            or die "Couldn't initiate SSL";
+
+        $rqst = &get_request($conn)
+            or die "Didn't get proxied request\n";
+
+        unless ($expect_inner_auth) {
+            die "Early proxied auth\n" if $rqst->header('Authorization');
+
+            # TODO: handle non-persistent connection here.
+            $rspn = HTTP::Response->new(401, 'Unauthorized', [
+                'WWW-Authenticate' => 'Basic realm="gondor"',
+                Connection => 'close'
+                ]);
+            $rspn->protocol('HTTP/1.0');
+            print $rspn->as_string;
+            print $conn $rspn->as_string;
+        } else {
+            die "No proxied auth\n" unless $rqst->header('Authorization');
+
+            $rspn = HTTP::Response->new(200, 'OK', [
+                'Content-Type' => 'text/plain',
+                'Connection' => 'close',
+                ], "foobarbaz\n");
+            $rspn->protocol('HTTP/1.0');
+            print "=====\n";
+            print $rspn->as_string;
+            print "\n=====\n";
+            print $conn $rspn->as_string;
+        }
+        $conn->close;
+    }
+    undef $conn;
+    undef $s;
+    alarm $alrm;
+}
+
+sub fork_server {
+    my $pid = fork;
+    die "Couldn't fork" if ($pid < 0);
+    return $pid if $pid;
+
+    &do_server;
+    exit;
+}
+
+system ('rm -f needs-auth.txt');
+my $pid = &fork_server;
+
+sleep 1;
+my $cmdline = $WgetTest::WGETPATH . " --user=fiddle-dee-dee"
+    . " --password=Dodgson -e https_proxy=localhost:{{port}}"
+    . " --no-check-certificate"
+    . " https://no.such.domain/needs-auth.txt";
+$cmdline =~ s/{{port}}/$SOCKET->sockport()/e;
+
+my $code = system($cmdline);
+system ('rm -f needs-auth.txt');
+
+warn "Got code: $code\n" if $code;
+kill ('TERM', $pid);
+exit ($code >> 8);

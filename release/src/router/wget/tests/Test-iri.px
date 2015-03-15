@@ -1,0 +1,208 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use WgetFeature qw(iri);
+use HTTPTest;
+
+# cf. http://en.wikipedia.org/wiki/Latin1
+#     http://en.wikipedia.org/wiki/ISO-8859-15
+
+###############################################################################
+#
+# mime : charset found in Content-Type HTTP MIME header
+# meta : charset found in Content-Type meta tag
+#
+# index.html                  mime + file = iso-8859-15
+# p1_français.html            meta + file = iso-8859-1, mime = utf-8
+# p2_één.html                 meta + file = utf-8, mime =iso-8859-1
+# p3_€€€.html                 meta + file = utf-8, mime = iso-8859-1
+# p4_méér.html                mime + file = utf-8
+#
+
+my $ccedilla_l15 = "\xE7";
+my $ccedilla_u8 = "\xC3\xA7";
+my $eacute_l1 = "\xE9";
+my $eacute_u8 = "\xC3\xA9";
+my $eurosign_l15 = "\xA4";
+my $eurosign_u8 = "\xE2\x82\xAC";
+
+my $pageindex = <<EOF;
+<html>
+<head>
+  <title>Main Page</title>
+</head>
+<body>
+  <p>
+    Link to page 1 <a href="http://localhost:{{port}}/p1_fran${ccedilla_l15}ais.html">La seule page en fran&ccedil;ais</a>.
+    Link to page 3 <a href="http://localhost:{{port}}/p3_${eurosign_l15}${eurosign_l15}${eurosign_l15}.html">My tailor is rich</a>.
+  </p>
+</body>
+</html>
+EOF
+
+# specifying a wrong charset in http-equiv - it will be overridden by Content-Type HTTP header
+my $pagefrancais = <<EOF;
+<html>
+<head>
+  <title>La seule page en français</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+  <p>
+    Link to page 2 <a href="http://localhost:{{port}}/p2_${eacute_l1}${eacute_l1}n.html">Die enkele nerderlangstalige pagina</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $pageeen = <<EOF;
+<html>
+<head>
+  <title>Die enkele nederlandstalige pagina</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+  <p>
+    &Eacute;&eacute;n is niet veel maar toch meer dan nul.<br/>
+    Nerdelands is een mooie taal... dit zin stuckje spreekt vanzelf, of niet :)<br/>
+    <a href="http://localhost:{{port}}/p4_m${eacute_u8}${eacute_u8}r.html">M&eacute&eacute;r</a>
+  </p>
+</body>
+</html>
+EOF
+
+my $pageeuro = <<EOF;
+<html>
+<head>
+  <title>Euro page</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+  <p>
+    My tailor isn't rich anymore.
+  </p>
+</body>
+</html>
+EOF
+
+my $pagemeer = <<EOF;
+<html>
+<head>
+  <title>Bekende supermarkt</title>
+</head>
+<body>
+  <p>
+    Ik ben toch niet gek !
+  </p>
+</body>
+</html>
+EOF
+
+my $page404 = <<EOF;
+<html>
+<head>
+  <title>404</title>
+</head>
+<body>
+  <p>
+    Nop nop nop...
+  </p>
+</body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/index.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html; charset=ISO-8859-15",
+        },
+        content => $pageindex,
+    },
+    '/robots.txt' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => "",
+    },
+    '/p1_fran%C3%A7ais.html' => {	# UTF-8 encoded
+        code => "200",
+        msg => "Ok",
+        headers => {
+            # Content-Type header overrides http-equiv Content-Type
+            "Content-type" => "text/html; charset=ISO-8859-15",
+        },
+        content => $pagefrancais,
+    },
+    '/p2_%C3%A9%C3%A9n.html' => {	# UTF-8 encoded
+        code => "200",
+        msg => "Ok",
+        request_headers => {
+            "Referer" => qr|http://localhost:[0-9]+/p1_fran%C3%A7ais.html|,
+        },
+        headers => {
+            "Content-type" => "text/html; charset=UTF-8",
+        },
+        content => $pageeen,
+    },
+    '/p3_%E2%82%AC%E2%82%AC%E2%82%AC.html' => {	# UTF-8 encoded
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/plain; charset=ISO-8859-1",
+        },
+        content => $pageeuro,
+    },
+    '/p4_m%C3%A9%C3%A9r.html' => {
+        code => "200",
+        msg => "Ok",
+        request_headers => {
+            "Referer" => qr|http://localhost:[0-9]+/p2_%C3%A9%C3%A9n.html|,
+        },
+        headers => {
+            "Content-type" => "text/plain; charset=UTF-8",
+        },
+        content => $pagemeer,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --iri --trust-server-names --restrict-file-names=nocontrol -nH -r http://localhost:{{port}}/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'index.html' => {
+        content => $pageindex,
+    },
+    'robots.txt' => {
+        content => "",
+    },
+    "p1_fran${ccedilla_u8}ais.html" => {
+        content => $pagefrancais,
+    },
+    "p2_${eacute_u8}${eacute_u8}n.html" => {
+        content => $pageeen,
+    },
+    "p3_${eurosign_u8}${eurosign_u8}${eurosign_u8}.html" => {
+        content => $pageeuro,
+    },
+    "p4_m${eacute_u8}${eacute_u8}r.html" => {
+        content => $pagemeer,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

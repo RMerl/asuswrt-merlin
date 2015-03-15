@@ -1,0 +1,75 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $dontcare = <<EOF;
+Don't care.
+EOF
+
+my $dummyfile = <<EOF;
+<html>
+<head>
+  <title>Page Title</title>
+</head>
+<body>
+  <p>
+    Some text.
+  </p>
+</body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/dummy.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+            "Content-Disposition" => "attachment; filename=\"filename.html\"",
+        },
+        content => $dummyfile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -e contentdisposition=on http://localhost:{{port}}/dummy.html";
+
+my $expected_error_code = 0;
+
+my %existing_files = (
+    'filename.html' => {
+        content => $dontcare,
+    },
+    'filename.html.1' => {
+        content => $dontcare,
+    },
+);
+
+my %expected_downloaded_files = (
+    'filename.html' => {
+        content => $dontcare,
+    },
+    'filename.html.1' => {
+        content => $dontcare,
+    },
+    'filename.html.2' => {
+        content => $dummyfile,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              existing => \%existing_files,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

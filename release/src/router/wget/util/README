@@ -1,0 +1,15 @@
+                                                           -*- text -*-
+
+This directory contains various optional utilities to help you use
+Wget.
+
+rmold.pl
+========
+This Perl script is used to check which local files are no longer on
+the remote server.  You can use it to get the list of files, or
+$ rmold.pl [dir] | xargs rm
+
+trunc
+=====
+This small program may be used to create files of arbitrary size; useful
+for testing certain scenarios using wget's --continue option.

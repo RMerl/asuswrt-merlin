@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use WgetFeature qw(https);
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $mainpage = <<EOF;
+<html>
+<head>
+  <title>Main Page</title>
+</head>
+<body>
+  <p>
+    Some text and a link to a <a href="http://localhost:{{port}}/secondpage.html">second page</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $secondpage = <<EOF;
+<html>
+<head>
+  <title>Second Page</title>
+</head>
+<body>
+  <p>
+    Anything.
+  </p>
+</body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/index.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $mainpage,
+    },
+    '/secondpage.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $secondpage,
+    }
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --https-only -r -nH http://localhost:{{port}}/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'index.html' => {
+        content => $mainpage,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

@@ -1,0 +1,65 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use WgetFeature qw(iri);
+use HTTPTest;
+
+# " Kon'nichiwa <dot> Japan
+my $euc_jp_hostname = "\272\243\306\374\244\317.\306\374\313\334";
+my $punycoded_hostname = 'xn--v9ju72g90p.xn--wgv71a';
+
+###############################################################################
+
+my $starter_file = <<EOF;
+<a href="http://$euc_jp_hostname/">The link</a>
+EOF
+
+my $result_file = <<EOF;
+Found me!
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    'http://start-here.com/start.html' => {
+        code => "200",
+        msg => "You want fries with that?",
+        headers => {
+            'Content-Type' => 'text/html; charset=EUC-JP',
+        },
+        content => $starter_file,
+    },
+    "http://$punycoded_hostname/index.html" => {
+        code => "200",
+        msg => "Yes, please",
+        headers => {
+            'Content-Type' => 'text/plain',
+        },
+        content => $result_file,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --iri -rH"
+    . " -e http_proxy=localhost:{{port}} http://start-here.com/start.html";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'start-here.com/start.html' => {
+        content => $starter_file,
+    },
+    "$punycoded_hostname/index.html" => {
+        content => $result_file,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

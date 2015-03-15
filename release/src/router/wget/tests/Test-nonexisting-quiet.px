@@ -1,0 +1,42 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $dummyfile = <<EOF;
+Don't care.
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/dummy.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => $dummyfile
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --quiet http://localhost:{{port}}/nonexistent";
+
+my $expected_error_code = 8;
+
+my %expected_downloaded_files = (
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

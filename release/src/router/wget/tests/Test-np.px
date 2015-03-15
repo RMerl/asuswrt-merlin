@@ -1,0 +1,147 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $mainpage = <<EOF;
+<html>
+<head>
+  <title>Main Page</title>
+</head>
+<body>
+  <p>
+    Some text and a link to a <a href="http://localhost:{{port}}/firstlevel/secondpage.html">second page</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $secondpage = <<EOF;
+<html>
+<head>
+  <title>Second Page</title>
+</head>
+<body>
+  <p>
+    Some text and a link to a <a href="http://localhost:{{port}}/firstlevel/lowerlevel/thirdpage.html">third page</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $thirdpage = <<EOF;
+<html>
+<head>
+  <title>Third Page</title>
+</head>
+<body>
+  <p>
+    Some text and a link to a <a href="http://localhost:{{port}}/higherlevelpage.html">higher level page</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $fourthpage = <<EOF;
+<html>
+<head>
+  <title>Fourth Page</title>
+</head>
+<body>
+  <p>
+    This page is only linked by the higher level page. Therefore, it should not
+    be downloaded.
+  </p>
+</body>
+</html>
+EOF
+
+my $higherlevelpage = <<EOF;
+<html>
+<head>
+  <title>Higher Level Page</title>
+</head>
+<body>
+  <p>
+    This page is on a higher level in the URL path hierarchy. Therefore, it
+    should not be downloaded. Wget should not visit the following link to a
+    <a href="http://localhost:{{port}}/firstlevel/fourthpage.html">fourth page</a>.
+  </p>
+</body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/firstlevel/index.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $mainpage,
+    },
+    '/firstlevel/secondpage.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $secondpage,
+    },
+    '/firstlevel/lowerlevel/thirdpage.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $thirdpage,
+    },
+    '/firstlevel/fourthpage.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => $fourthpage,
+    },
+    '/higherlevelpage.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => $higherlevelpage,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -np -nH -r http://localhost:{{port}}/firstlevel/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'firstlevel/index.html' => {
+        content => $mainpage,
+    },
+    'firstlevel/secondpage.html' => {
+        content => $secondpage,
+    },
+    'firstlevel/lowerlevel/thirdpage.html' => {
+        content => $thirdpage,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

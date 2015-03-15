@@ -1,0 +1,79 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use FTPTest;
+
+
+###############################################################################
+
+my $urls = <<EOF;
+ftp://localhost:{{port}}/site1.html
+ftp://localhost:{{port}}/site2.html
+EOF
+
+my $site1 = <<EOF;
+<html>
+  <head>
+    <title>Site 1</title>
+  </head>
+  <body>
+    <p>Nunc eu ligula sed mauris sollicitudin scelerisque. Suspendisse viverra, dolor.</p>
+  </body>
+</html>
+EOF
+
+my $site2 = <<EOF;
+<html>
+  <head>
+    <title>Site 2</title>
+  </head>
+  <body>
+    <p>Suspendisse potenti. Phasellus et magna est, quis consectetur ligula. Integer.</p>
+  </body>
+</html>
+EOF
+
+foreach ($urls, $site1, $site2) {
+    s/\n/\r\n/g;
+}
+
+my %urls = (
+    '/urls.txt' => {
+        content => $urls,
+    },
+    '/site1.html' => {
+        content => $site1,
+    },
+    '/site2.html' => {
+        content => $site2,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -i ftp://localhost:{{port}}/urls.txt";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'urls.txt' => {
+        content => $urls,
+    },
+    'site1.html' => {
+        content => $site1,
+    },
+    'site2.html' => {
+        content => $site2,
+    },
+);
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

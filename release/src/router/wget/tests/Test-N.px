@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $dummyfile = <<EOF;
+Content
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/dummy.txt' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+            "Last-Modified" => "Sat, 09 Oct 2004 08:30:00 GMT",
+        },
+        content => $dummyfile
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -N http://localhost:{{port}}/dummy.txt";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'dummy.txt' => {
+        content => $dummyfile,
+        timestamp => 1097310600, # "Sat, 09 Oct 2004 08:30:00 GMT"
+    }
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

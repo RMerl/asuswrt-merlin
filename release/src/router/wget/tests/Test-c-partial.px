@@ -1,0 +1,66 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $partiallydownloaded = <<EOF;
+11111111111111111111111111111111111111111111111111
+22222222x222222222222222222222222222222222222222222222222222
+EOF
+
+my $rest = <<EOF;
+3333333333333333333333333333333333333333333333333333333333333333333333
+444444444444444444444444444444444444444444444444444444444444
+55555555555555555555555555555555555555555555555555
+EOF
+
+my $wholefile = <<EOF . $rest;
+11111111111111111111111111111111111111111111111111
+222222222222222222222222222222222222222222222222222222222222
+EOF
+
+my $downloadedfile = $partiallydownloaded . $rest;
+
+# code, msg, headers, content
+my %urls = (
+    '/somefile.txt' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => $wholefile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -c http://localhost:{{port}}/somefile.txt";
+
+my $expected_error_code = 0;
+
+my %existing_files = (
+    'somefile.txt' => {
+        content => $partiallydownloaded,
+    },
+);
+
+my %expected_downloaded_files = (
+    'somefile.txt' => {
+        content => $downloadedfile,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              existing => \%existing_files,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

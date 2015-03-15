@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $mainpage = <<EOF;
+<html>
+<head>
+  <title>Some Page Title</title>
+</head>
+<body>
+  <p>
+    Some text...
+  </p>
+</body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/SomePage.html' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $mainpage,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --restrict-file-names=lowercase http://localhost:{{port}}/SomePage.html";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'somepage.html' => {
+        content => $mainpage,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

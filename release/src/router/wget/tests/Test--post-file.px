@@ -1,0 +1,22 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $cmdline = $WgetTest::WGETPATH . " --post-file=nofile http://localhost:{{port}}/";
+
+my $expected_error_code = 3;
+
+
+###############################################################################
+
+my $the_test = HTTPTest->new (cmdline => $cmdline,
+                              errcode => $expected_error_code);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

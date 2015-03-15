@@ -1,0 +1,66 @@
+#!/usr/bin/env perl
+
+
+# 2013-10-17 Andrea Urbani (matfanjol)
+# In this ftp test:
+# - the response of SYST command is
+#   215 UNIX MultiNet Unix Emulation V5.3(93)
+# - the response of "LIST -a" command is an empty
+#   directory.
+# wget should use directly the "LIST" command to get
+# the right content, but it will be ok also "LIST -a"
+# if followed by "LIST" (in the case of future changes).
+
+
+use strict;
+use warnings;
+
+use FTPTest;
+
+
+###############################################################################
+
+my $afile = <<EOF;
+Some text.
+EOF
+
+my $bfile = <<EOF;
+Some more text.
+EOF
+
+$afile =~ s/\n/\r\n/g;
+$bfile =~ s/\n/\r\n/g;
+
+# code, msg, headers, content
+my %urls = (
+    '/afile.txt' => {
+        content => $afile,
+    },
+    '/bfile.txt' => {
+        content => $bfile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --no-directories --recursive --level=1 --accept \"?file.txt\" ftp://localhost:{{port}}/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'afile.txt' => {
+        content => $afile,
+    },
+    'bfile.txt' => {
+        content => $bfile,
+    },
+);
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files,
+                             server_behavior => {list_empty_if_list_a => 1,
+                                                 syst_response => "215 UNIX MultiNet Unix Emulation V5.3(93)"});
+exit $the_test->run();

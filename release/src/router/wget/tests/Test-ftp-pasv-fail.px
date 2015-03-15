@@ -1,0 +1,57 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use FTPTest;
+
+# This file exercises a problem in Wget, where if an error was
+# encountered in ftp.c:getftp before the actual file download
+# had started, Wget would believe that it had already downloaded the
+# full contents of the file, and would send a corresponding (erroneous)
+# REST value.
+
+###############################################################################
+
+# From bug report. :)
+my $afile = <<EOF;
+I've included log output (using the -d switch) from when this happens
+below. You'll see that for the retry wget sends a REST command to
+reset the start position before starting the RETR command. I'm
+confused about the argument to REST: 51132. It's the full length in
+bytes of the file to be retrieved. The RETR then shows the entire
+contents of the file being skipped, and wget announces that it
+successfully retrieved and saved 0 bytes.
+EOF
+
+$afile =~ s/\n/\r\n/g;
+
+
+# code, msg, headers, content
+my %urls = (
+    '/afile.txt' => {
+        content => $afile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -S ftp://localhost:{{port}}/afile.txt";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'afile.txt' => {
+        content => $afile,
+    },
+);
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             server_behavior => {fail_on_pasv => 1},
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

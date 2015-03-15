@@ -1,0 +1,76 @@
+#!/usr/bin/env perl
+
+# 2013-10-17 Andrea Urbani (matfanjol)
+# In this ftp test:
+# - the response of SYST command is
+#   215 Unknown ftp service
+# - the response of "LIST -a" command is a file
+#   called "-a".
+# wget should use "LIST -a", but also "LIST".
+# After "LIST", wget will see more data is available.
+# (See also Test-ftp-list-Unknown-b.px)
+
+use strict;
+use warnings;
+
+use FTPTest;
+
+
+###############################################################################
+
+my $afile = <<EOF;
+Some text.
+EOF
+
+my $bfile = <<EOF;
+Some more text.
+EOF
+
+
+my $minusafile = <<EOF;
+The strange situation.
+EOF
+
+$afile =~ s/\n/\r\n/g;
+$bfile =~ s/\n/\r\n/g;
+$minusafile =~ s/\n/\r\n/g;
+
+# code, msg, headers, content
+my %urls = (
+    '/afile.txt' => {
+        content => $afile,
+    },
+    '/bfile.txt' => {
+        content => $bfile,
+    },
+    '/-a' => {
+        content => $minusafile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --no-directories --recursive --level=1 ftp://localhost:{{port}}/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'afile.txt' => {
+        content => $afile,
+    },
+    'bfile.txt' => {
+        content => $bfile,
+    },
+    '-a' => {
+        content => $minusafile,
+    },
+);
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files,
+                             server_behavior => {list_dont_clean_path => 1,
+                                                 syst_response => "215 Unknown ftp service"});
+exit $the_test->run();

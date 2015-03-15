@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $existingfile = <<EOF;
+content should be preserved.
+EOF
+
+my $wholefile = "1234";
+
+# code, msg, headers, content
+my %urls = (
+    '/somefile.txt' => {
+        code => "206",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => $wholefile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --start-pos=1 --continue --debug http://localhost:{{port}}/somefile.txt";
+
+my $expected_error_code = 0;
+
+my %existing_files = (
+    'somefile.txt' => {
+        content => $existingfile,
+    },
+);
+
+my %expected_downloaded_files = (
+    'somefile.txt.1' => {
+        content => substr($wholefile, 1),
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              existing => \%existing_files,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

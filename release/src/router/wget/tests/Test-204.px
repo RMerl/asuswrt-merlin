@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+# code, msg, headers, content
+my %urls = (
+    '/dummy' => {
+        code => "204",
+        msg => "Dontcare",
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " http://localhost:{{port}}/dummy";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+
+###############################################################################
+
+my $wholefile = "You're all authenticated.\n";
+
+# code, msg, headers, content
+my %urls = (
+    'http://no.such.domain/needs-auth.txt' => {
+        auth_method => 'Basic',
+        user => 'fiddle-dee-dee',
+        passwd => 'Dodgson',
+        code => "200",
+        msg => "You want fries with that?",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => $wholefile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --user=fiddle-dee-dee --password=Dodgson"
+    . " -e http_proxy=localhost:{{port}} http://no.such.domain/needs-auth.txt";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'needs-auth.txt' => {
+        content => $wholefile,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

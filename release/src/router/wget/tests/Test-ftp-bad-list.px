@@ -1,0 +1,68 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use FTPTest;
+
+
+###############################################################################
+
+my $afile = <<EOF;
+Some text.
+EOF
+
+my $bfile = <<EOF;
+Some more text.
+EOF
+
+$afile =~ s/\n/\r\n/g;
+$bfile =~ s/\n/\r\n/g;
+
+# code, msg, headers, content
+my %urls = (
+    '/afile.txt' => {
+        content => $afile,
+    },
+    '/bfile.txt' => {
+        content => $bfile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -nH -Nc -r ftp://localhost:{{port}}/";
+
+my $expected_error_code = 0;
+
+# Don't need to worry about timestamps, the "bad_list" setting will
+# ensure the sizes don't match expectations, and so they'll always be
+# re-downloaded.
+my %expected_downloaded_files = (
+    'afile.txt' => {
+        content => $afile,
+    },
+    'bfile.txt' => {
+        content => $bfile,
+    },
+);
+
+my %preexisting_files = (
+    'afile.txt' => {
+        content => $afile,
+    },
+    'bfile.txt' => {
+        content => $bfile,
+    },
+);
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files,
+                             existing => \%preexisting_files,
+                             server_behavior => {bad_list => 1});
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

@@ -1,0 +1,67 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use HTTPTest;
+
+# This program tests that --restrict-file-names=ascii can be used to
+# ensure that all high-valued bytes are escaped. The sample filename was
+# chosen because in former versions of Wget, one could either choose not
+# to escape any portion of the UTF-8 filename via
+# --restrict-file-names=nocontrol (which would only be helpful if one
+# was _on_ a UTF-8 system), or else Wget would escape _portions_ of
+# characters, leaving irrelevant "latin1"-looking characters combined
+# with percent-encoded "control" characters, instead of encoding all the
+# bytes of an entire non-ASCII UTF-8 character.
+
+###############################################################################
+
+# "gnosis" in UTF-8 greek.
+my $gnosis = '%CE%B3%CE%BD%CF%89%CF%83%CE%B9%CF%82';
+
+my $mainpage = <<EOF;
+<html>
+<head>
+  <title>Some Page Title</title>
+</head>
+<body>
+  <p>
+    Some text...
+  </p>
+</body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    "/$gnosis.html" => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/html",
+        },
+        content => $mainpage,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --restrict-file-names=ascii "
+    . "http://localhost:{{port}}/${gnosis}.html";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    "${gnosis}.html" => {
+        content => $mainpage,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

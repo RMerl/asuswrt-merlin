@@ -1,0 +1,88 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use WgetFeature qw(iri);
+use HTTPTest;
+
+# Just a sanity check to verify that %-encoded values are always left
+# untouched.
+
+my $ccedilla_l15 = "\xE7";
+my $ccedilla_l15_pct = "%E7";
+my $ccedilla_u8 = "\xC3\xA7";
+my $ccedilla_u8_pct = "%C3%A7";
+my $eacute_l1 = "\xE9";
+my $eacute_u8 = "\xC3\xA9";
+my $eacute_u8_pct = "%C3%A9";
+
+my $pageindex = <<EOF;
+<html>
+<head>
+  <title>Main Page</title>
+</head>
+<body>
+  <p>
+    Link to page 1 <a
+    href="http://localhost:{{port}}/hello_${ccedilla_l15_pct}${eacute_l1}.html">La seule page en fran&ccedil;ais</a>.
+  </p>
+</body>
+</html>
+EOF
+
+my $pagefrancais = <<EOF;
+<html>
+<head>
+  <title>La seule page en français</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/>
+</head>
+<body>
+  <p>
+  </p>
+</body>
+</html>
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    '/index.html' => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html; charset=ISO-8859-15",
+        },
+        content => $pageindex,
+    },
+    "/hello_${ccedilla_u8_pct}${eacute_u8_pct}.html" => {
+        code => "200",
+        msg => "Ok",
+        headers => {
+            "Content-type" => "text/html; charset=UTF-8",
+        },
+        content => $pagefrancais,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --iri -e robots=off --restrict-file-names=nocontrol -nH -r http://localhost:{{port}}/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    'index.html' => {
+        content => $pageindex,
+    },
+    "hello_${ccedilla_u8}${eacute_u8}.html" => {
+        content => $pagefrancais,
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4

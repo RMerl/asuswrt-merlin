@@ -1,0 +1,77 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use WgetFeature qw(iri);
+use HTTPTest;
+
+# " Kon'nichiwa <dot> Japan
+my $utf8_hostname = "\344\273\212\346\227\245\343\201\257.\346\227\245\346\234\254";
+my $punycoded_hostname = 'xn--v9ju72g90p.xn--wgv71a';
+
+###############################################################################
+
+my $starter_file = <<EOF;
+<a href="http://$utf8_hostname/foo.txt">The link</a>
+EOF
+
+my $result_file = <<EOF;
+Found me!
+EOF
+
+# code, msg, headers, content
+my %urls = (
+    "http://$punycoded_hostname/index.html" => {
+        code => "200",
+        msg => "Yes, please",
+        headers => {
+            'Content-Type' => 'text/html; charset=UTF-8',
+        },
+        content => $starter_file,
+    },
+    "http://$punycoded_hostname/foo.txt" => {
+        code => "200",
+        msg => "Uh-huh",
+        headers => {
+            'Content-Type' => 'text/plain',
+        },
+        content => $result_file,
+    },
+    "http://$punycoded_hostname/robots.txt" => {
+        code => "200",
+        msg => "Uh-huh",
+        headers => {
+            'Content-Type' => 'text/plain',
+        },
+        content => '',
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " --iri -r"
+    . " -e http_proxy=localhost:{{port}} --local-encoding=UTF-8"
+    . " http://$utf8_hostname/";
+
+my $expected_error_code = 0;
+
+my %expected_downloaded_files = (
+    "$punycoded_hostname/index.html" => {
+        content => $starter_file,
+    },
+    "$punycoded_hostname/foo.txt" => {
+        content => $result_file,
+    },
+    "$punycoded_hostname/robots.txt" => {
+        content => '',
+    },
+);
+
+###############################################################################
+
+my $the_test = HTTPTest->new (input => \%urls,
+                              cmdline => $cmdline,
+                              errcode => $expected_error_code,
+                              output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4
