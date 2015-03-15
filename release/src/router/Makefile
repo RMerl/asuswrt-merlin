@@ -263,6 +263,10 @@ obj-$(RTCONFIG_BWDPI) += bwdpi_sqlite
 #obj-$(RTCONFIG_SPEEDTEST) += curl-7.21.7
 obj-y += curl-7.21.7
 
+ifeq ($(RTCONFIG_BWDPI),y)
+export DPI := _dpi
+endif
+
 obj-y += rc
 obj-y += rom
 obj-y += others
