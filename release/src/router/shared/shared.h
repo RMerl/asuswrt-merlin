@@ -737,6 +737,11 @@ extern int psr_exist_except(int unit);
 extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
 extern int check_bwdpi_nvram_setting();
 extern int get_iface_hwaddr(char *name, unsigned char *hwaddr);
+#define xstart(args...)	_xstart(args, NULL)
+extern int _xstart(const char *cmd, ...);
+extern void run_custom_script(char *name, char *args);
+extern void run_custom_script_blocking(char *name, char *args);
+extern void run_postconf(char *name, char *config);
 
 /* mt7620.c */
 #if defined(RTCONFIG_RALINK_MT7620)
