@@ -641,8 +641,6 @@ extern void setup_pt_conntrack(void);
 extern void remove_conntrack(void);
 extern int pppstatus(void);
 extern void time_zone_x_mapping(void);
-extern void use_custom_config(char *config, char *target);
-extern void append_custom_config(char *config, FILE *fp);
 extern char *get_parsed_crt(const char *name, char *buf);
 extern void stop_if_misc(void);
 extern int mssid_mac_validate(const char *macaddr);

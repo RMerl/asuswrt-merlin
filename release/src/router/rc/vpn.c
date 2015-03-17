@@ -247,7 +247,7 @@ void start_pptpd(void)
 	fclose(fp);
 
 	use_custom_config("pptpd.conf", "/tmp/pptpd/pptpd.conf");
-	run_postconf("pptpd.postconf", "/tmp/pptpd/pptpd.conf");
+	run_postconf("pptpd", "/tmp/pptpd/pptpd.conf");
 
 	// Create ip-up and ip-down scripts that are unique to pptpd to avoid
 	// interference with pppoe and pptp

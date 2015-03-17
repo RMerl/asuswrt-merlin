@@ -112,7 +112,7 @@ void start_snmpd(void)
 	append_custom_config("snmpd.conf", fp);
 	fclose(fp);
 	use_custom_config("snmpd.conf", "/tmp/snmpd.conf");
-	run_postconf("snmpd.postconf","/tmp/snmpd.conf");
+	run_postconf("snmpd","/tmp/snmpd.conf");
 
 	// Execute snmp daemon
 	ret = eval("snmpd", "-c", "/tmp/snmpd.conf");

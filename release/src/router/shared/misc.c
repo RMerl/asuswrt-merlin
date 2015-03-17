@@ -1791,7 +1791,10 @@ void run_custom_script_blocking(char *name, char *args)
 
 void run_postconf(char *name, char *config)
 {
-	run_custom_script_blocking(name, config);
+	char filename[64];
+
+	snprintf(filename, sizeof (filename), "%s.postconf", name);
+	run_custom_script_blocking(filename, config);
 }
 
 

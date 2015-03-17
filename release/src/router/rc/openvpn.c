@@ -397,7 +397,7 @@ void start_vpnclient(int clientNum)
 	vpnlog(VPN_LOG_EXTRA,"Done writing certs/keys");
 
 	// Run postconf custom script on it if it exists
-	sprintf(&buffer[0], "openvpnclient%d.postconf", clientNum);
+	sprintf(&buffer[0], "openvpnclient%d", clientNum);
 	sprintf(&buffer2[0], "/etc/openvpn/client%d/config.ovpn", clientNum);
 	run_postconf(&buffer[0], &buffer2[0]);
 
@@ -1264,7 +1264,7 @@ void start_vpnserver(int serverNum)
 	vpnlog(VPN_LOG_EXTRA,"Done writing client config file");
 
 	// Run postconf custom script on it if it exists
-	sprintf(&buffer[0], "openvpnserver%d.postconf", serverNum);
+	sprintf(&buffer[0], "openvpnserver%d", serverNum);
 	sprintf(&buffer2[0], "/etc/openvpn/server%d/config.ovpn", serverNum);
 	run_postconf(&buffer[0], &buffer2[0]);
 

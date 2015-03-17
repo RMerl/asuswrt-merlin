@@ -742,6 +742,8 @@ extern int _xstart(const char *cmd, ...);
 extern void run_custom_script(char *name, char *args);
 extern void run_custom_script_blocking(char *name, char *args);
 extern void run_postconf(char *name, char *config);
+extern void use_custom_config(char *config, char *target);
+extern void append_custom_config(char *config, FILE *fp);
 
 /* mt7620.c */
 #if defined(RTCONFIG_RALINK_MT7620)

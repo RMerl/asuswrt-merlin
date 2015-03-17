@@ -516,7 +516,7 @@ void create_passwd(void)
 		fappend(f, "/etc/shadow.openvpn");
 #endif
 		fclose(f);
-		run_postconf("shadow.postconf", "/etc/shadow");
+		run_postconf("shadow", "/etc/shadow");
 	}
 	umask(m);
 	chmod("/etc/shadow", 0600);
@@ -542,7 +542,7 @@ void create_passwd(void)
 	fappend_file("/etc/passwd", "/etc/passwd.openvpn");
 #endif
 	fappend_file("/etc/passwd", "/jffs/configs/passwd.add");
-	run_postconf("passwd.postconf","/etc/passwd");
+	run_postconf("passwd","/etc/passwd");
 
 	sprintf(s,
 		"%s:*:0:\n"
@@ -554,7 +554,7 @@ void create_passwd(void)
 	f_write_string("/etc/gshadow", s, 0, 0644);
 	fappend_file("/etc/gshadow", "/etc/gshadow.custom");
         fappend_file("/etc/gshadow", "/jffs/configs/gshadow.add");
-	run_postconf("gshadow.postconf","/etc/gshadow");
+	run_postconf("gshadow","/etc/gshadow");
 
 	f_write_string("/etc/group",
 		"root:x:0:\n"
@@ -568,7 +568,7 @@ void create_passwd(void)
 	fappend_file("/etc/group", "/etc/group.openvpn");
 #endif
 	fappend_file("/etc/group", "/jffs/configs/group.add");
-	run_postconf("group.postconf","/etc/group");
+	run_postconf("group","/etc/group");
 }
 
 void get_dhcp_pool(char **dhcp_start, char **dhcp_end, char *buffer)
@@ -720,7 +720,7 @@ void start_dnsmasq()
 		append_custom_config("hosts", fp);
 		fclose(fp);
 		use_custom_config("hosts", "/etc/hosts");
-		run_postconf("hosts.postconf","/etc/hosts");
+		run_postconf("hosts","/etc/hosts");
 	} else
 		perror("/etc/hosts");
 
@@ -1058,7 +1058,7 @@ void start_dnsmasq()
 	fclose(fp);
 
 	use_custom_config("dnsmasq.conf","/etc/dnsmasq.conf");
-	run_postconf("dnsmasq.postconf","/etc/dnsmasq.conf");
+	run_postconf("dnsmasq","/etc/dnsmasq.conf");
 
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
@@ -1334,7 +1334,7 @@ void start_dhcp6s(void)
 	fclose(fp);
 
 	use_custom_config("dhcp6s.conf", "/etc/dhcp6s.conf");
-	run_postconf("dhcp6s.postconf", "/etc/dhcp6s.conf");
+	run_postconf("dhcp6s", "/etc/dhcp6s.conf");
 
 	if (nvram_get_int("ipv6_debug"))
 		dhcp6s_argv[index++] = "-D";
@@ -1448,7 +1448,7 @@ void start_radvd(void)
 	fclose(fp);
 
 	use_custom_config("radvd.conf", "/etc/radvd.conf");
-	run_postconf("radvd.postconf", "/etc/radvd.conf");
+	run_postconf("radvd", "/etc/radvd.conf");
 
 	chmod("/etc/radvd.conf", 0400);
 
@@ -3080,7 +3080,7 @@ void start_upnp(void)
 				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
 				fclose(f);
 				use_custom_config("upnp", "/etc/upnp/config");
-				run_postconf("upnp.postconf", "/etc/upnp/config");
+				run_postconf("upnp", "/etc/upnp/config");
 				xstart("miniupnpd", "-f", "/etc/upnp/config");
 			}
 		}
@@ -3283,7 +3283,7 @@ int generate_mdns_config(void)
 	append_custom_config(AVAHI_CONFIG_FN, fp);
 	fclose(fp);
 	use_custom_config(AVAHI_CONFIG_FN, avahi_config);
-	run_postconf("avahi-daemon.postconf", avahi_config);
+	run_postconf("avahi-daemon", avahi_config);
 
 	return ret;
 }
@@ -3318,7 +3318,7 @@ int generate_afpd_service_config(void)
 	append_custom_config(AVAHI_AFPD_SERVICE_FN, fp);
 	fclose(fp);
 	use_custom_config(AVAHI_AFPD_SERVICE_FN, afpd_service_config);
-	run_postconf("afpd.postconf", afpd_service_config);
+	run_postconf("afpd", afpd_service_config);
 
 	return ret;
 }
@@ -3349,7 +3349,7 @@ int generate_adisk_service_config(void)
 	append_custom_config(AVAHI_ADISK_SERVICE_FN, fp);
 	fclose(fp);
 	use_custom_config(AVAHI_ADISK_SERVICE_FN, adisk_service_config);
-	run_postconf("adisk.postconf", adisk_service_config);
+	run_postconf("adisk", adisk_service_config);
 
 	return ret;
 }
@@ -3388,7 +3388,7 @@ int generate_itune_service_config(void)
 	append_custom_config(AVAHI_ITUNE_SERVICE_FN, fp);
 	fclose(fp);
 	use_custom_config(AVAHI_ITUNE_SERVICE_FN, itune_service_config);
-	run_postconf("mt-daap.postconf", itune_service_config);
+	run_postconf("mt-daap", itune_service_config);
 
 	return ret;
 }
