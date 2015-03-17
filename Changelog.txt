@@ -9,6 +9,11 @@ Asuswrt-Merlin Changelog
             Sysinfo page (RT-AC3200 only)
    - FIXED: Wifi PSK wasn't blurred until activated (regression
             in 378.51)
+   - FIXED: Samba's custom config/postconf were ignoring the
+            state of the global option to enable them (they
+            would always be used)
+  - FIXED: Samba's custom config/postconf usage wasn't
+           logged
 
 
 378.51 (6-Mar-2015)
