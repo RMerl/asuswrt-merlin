@@ -42,7 +42,11 @@ config RTCONFIG_BCM7
 	default n
 
 config RTCONFIG_BCM794
-	bool "Bcm sdk 7_14_94"
+	bool "Bcm sdk 7_14_94_x"
+	default n
+
+config RTCONFIG_BCM10
+	bool "Bcm sdk 10_10_18_x"
 	default n
 
 config RTCONFIG_BUILDBCM7

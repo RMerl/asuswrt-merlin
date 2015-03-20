@@ -94,6 +94,12 @@ define platformKernelConfig
 			else \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 			fi; \
+		elif [ "$(BCM10)" = "y" ]; then \
+			if [ "$(ARMCPUSMP)" = "up" ]; then \
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+			else \
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+			fi; \
 		else \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm6_up/linux/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\

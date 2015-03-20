@@ -1634,6 +1634,19 @@ void networkmap_check()
 	if (!pids("networkmap"))
 		start_networkmap(0);
 }
+
+#ifdef RTAC87U
+void qtn_module_check(void)
+{
+	if (!nvram_get_int("qtn_ready"))
+		return;
+
+	/* Todo */
+	return;
+}
+
+#endif
+
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
 void syslog_commit_check(void)
@@ -2546,6 +2559,9 @@ void watchdog(int sig)
 
 	ddns_check();
 	networkmap_check();
+#ifdef RTAC87U
+	qtn_module_check();
+#endif
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
 	syslog_commit_check();

@@ -35,9 +35,9 @@
 			"apps_fsck_ret" : '<% apps_fsck_ret(); %>'.toArray(),
 			"allUsbStatusArray" : '<% show_usb_path(); %>'.toArray()
 		};
-
-		/* Add the internal SD card reader to the existing USB ports */
-		if (based_modelid == "RT-N66U") initialValue.usbPortMax++;			
+			
+                /* Add the internal SD card reader to the existing USB ports */
+                if (based_modelid == "RT-N66U") initialValue.usbPortMax++;
 
 		/*usbDeviceList constructor*/
 		var newDisk = function(){
@@ -89,8 +89,39 @@
 			tmpDisk.mountNumber = foreign_disk_total_mounted_number()[i];
 			tmpDisk.partNumber = foreign_disk_pool_number()[i];
 
-			var _part = 0;
-			while (_part < tmpDisk.partNumber && allPartIndex < pool_name.length){
+			var _part = 0;	
+			if (tmpDisk.partNumber > 0){
+				while (_part < tmpDisk.partNumber && allPartIndex < pool_name.length){
+					var tmpParts = new newPartition();
+					tmpParts.partName = pool_names()[allPartIndex];
+					tmpParts.mountPoint = pool_devices()[allPartIndex];
+					if(tmpParts.mountPoint == initialValue.apps_dev){
+						tmpParts.isAppDev = true;
+						tmpDisk.hasAppDev = true;
+					}
+					if(tmpParts.mountPoint == initialValue.tm_device_name){
+						tmpParts.isTM = true;
+						tmpDisk.hasTM = true;
+					}
+					tmpParts.size = parseInt(pool_kilobytes()[allPartIndex]);
+					tmpParts.used = parseInt(pool_kilobytes_in_use()[allPartIndex]);
+					tmpParts.format = pool_types()[allPartIndex];
+					tmpParts.status = pool_status()[allPartIndex];
+					if(initialValue.apps_fsck_ret.length > 0) {
+						tmpParts.fsck = initialValue.apps_fsck_ret[allPartIndex][1];
+						if(initialValue.apps_fsck_ret[allPartIndex][1] == 1){
+							tmpDisk.hasErrPart = true;
+						}
+					}
+
+					tmpDisk.partition.push(tmpParts);
+					tmpDisk.totalSize = parseInt(tmpDisk.totalSize + tmpParts.size);
+					tmpDisk.totalUsed = parseInt(tmpDisk.totalUsed + tmpParts.used);
+
+					_part++;
+					allPartIndex++;
+				}
+			}else{
 				var tmpParts = new newPartition();
 				tmpParts.partName = pool_names()[allPartIndex];
 				tmpParts.mountPoint = pool_devices()[allPartIndex];
@@ -114,8 +145,9 @@
 				}
 
 				tmpDisk.partition.push(tmpParts);
-				tmpDisk.totalSize = parseInt(tmpDisk.totalSize + tmpParts.size);
-				tmpDisk.totalUsed = parseInt(tmpDisk.totalUsed + tmpParts.used);
+				tmpDisk.totalSize = parseInt(tmpParts.size);
+				tmpDisk.totalUsed = parseInt(tmpParts.used);
+
 				_part++;
 				allPartIndex++;
 			}

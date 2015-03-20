@@ -143,27 +143,56 @@ Printer			18
 	background-repeat:no-repeat;
 }
 .radioIcon{
-  background: url(/images/survey/radio_status.png) no-repeat;
-}
-.radio_0{
-  background-position: 99% -0px;
+	background-image:url('/images/survey/radio_status.png');
+	height: 21px;
+	width: 28px;
+	position: relative;
+	margin-left: -2px;
 }
 .radio_1{
-  background-position: 99% -30px;
+  background-position: 0% 2px;
 }	
 .radio_2{
-  background-position: 99% -60px;
+  background-position: 0% -20px;
 }	
 .radio_3{
-  background-position: 99% -90px;
+  background-position: 0% -42px;
 }	
 .radio_4{
-  background-position: 99% -120px;
-}	
-.radio_5{
-  background-position: 99% -150px;
+  background-position: 0% -64px;
+}
+.band_chrome{
+	font-size: 9px;
+	transform:scale(0.75);
+	font-family: Arial;
+	background-color: #06CCDE;
+	color: #000000;
+	font-weight: bolder;
+	text-align: center;
+	line-height: 16px;
+	letter-spacing: 1px;
+	margin-left: -7px;
+	margin-bottom: -20px;
+	margin-top: -2px;
+	height: 15px;
+	width: 38px;
+}
+.band{
+	font-size: 9px;
+	font-family: Arial;
+	background-color: #06CCDE;
+	color: #000000;
+	font-weight: bolder;
+	text-align: center;
+	line-height: 12px;
+	letter-spacing: 1px;
+	margin-left: -2px;
+	margin-bottom: -18px;
+	height: 11px;
+	width: 28px;
 }
 .radio_wired{
-  background: url(/images/New_ui/networkmap/wiredIcon.png) no-repeat !important;
-  background-position: 97% 1px !important;
+	height: 28px;
+	margin-bottom: -20px;
+	background-image:url('/images/New_ui/networkmap/wiredIcon.png') !important;
 }

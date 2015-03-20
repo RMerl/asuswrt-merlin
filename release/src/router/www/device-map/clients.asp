@@ -117,7 +117,7 @@ var clientMacUploadIcon = new Array();
 var ipState = new Array();
 ipState["Static"] =  "<#BOP_ctype_title5#>";
 ipState["DHCP"] =  "<#BOP_ctype_title1#>";
-ipState["Manual"] =  "Manually assign IP";
+ipState["Manual"] =  "Manually Assigned IP";
 
 function initial(){
 	parent.hideEditBlock();
@@ -128,10 +128,10 @@ function convRSSI(val){
 	if(val == "") return "wired";
 
 	val = parseInt(val);
-	if(val >= -50) return 5;
-	else if(val >= -80)	return Math.ceil((24 + ((val + 80) * 26)/10)/20);
-	else if(val >= -90)	return Math.ceil((((val + 90) * 26)/10)/20);
-	else return 0;
+	if(val >= -50) return 4;
+	else if(val >= -80)	return Math.ceil((24 + ((val + 80) * 26)/10)/25);
+	else if(val >= -90)	return Math.ceil((((val + 90) * 26)/10)/25);
+	else return 1;
 }
 
 function drawClientList(tab){
@@ -188,31 +188,10 @@ function drawClientList(tab){
 			clientHtmlTd += '"></div>';
 		}
 
-		var rssi_t = 0;
-		rssi_t = convRSSI(clientObj.rssi);
-		clientHtmlTd += '</td><td style="height:30px;" title="'; 
-		if(isNaN(rssi_t))
-			clientHtmlTd += clientObj.name;
-		else if(rssi_t == 1)
-			clientHtmlTd += '<#PASS_score0#>';
-		else if(rssi_t == 2)
-			clientHtmlTd += '<#PASS_score1#>';
-		else if(rssi_t == 3)
-			clientHtmlTd += '<#PASS_score2#>';
-		else if(rssi_t == 4)
-			clientHtmlTd += '<#PASS_score3#>';
-		else if(rssi_t == 5)
-			clientHtmlTd += '<#PASS_score4#>';
-
-		if(parent.sw_mode != 4){
-			clientHtmlTd += '" class="radioIcon radio_';
-			clientHtmlTd += convRSSI(clientObj.rssi);
-		}else{
-			clientHtmlTd += '" class="';
-		}
-		clientHtmlTd += '">';
+		clientHtmlTd += '</td><td colspan="2" style="height:30px;font-size:11px;word-break:break-all;"><div style="width:96%;">';
 		clientHtmlTd += clientObj.name;
-		clientHtmlTd += '</td></tr><tr><td style="height:20px;">';
+		// clientHtmlTd += (clientObj.name.length > 22) ? (clientObj.name.substr(0,20) + "...") : clientObj.name;
+		clientHtmlTd += '</div></td></tr><tr><td style="height:20px;">';
 		clientHtmlTd += (clientObj.isWebServer) ? '<a class="link" href="http://' + clientObj.ip + '" target="_blank">' + clientObj.ip + '</a>' : clientObj.ip;
 
 		if(parent.sw_mode == 1){
@@ -222,7 +201,36 @@ function drawClientList(tab){
 			clientHtmlTd += clientObj.ipMethod + '</span>';
 		}
 
-		clientHtmlTd += '</td></tr><tr><td><div style="margin-top:-15px;" class="link" onclick="oui_query(\'';
+		clientHtmlTd += '</td><td style="width:30px;">';
+		var rssi_t = 0;
+		var connectModeTip = "";
+		rssi_t = convRSSI(clientObj.rssi);
+		if(isNaN(rssi_t))
+			connectModeTip = '<#tm_wired#>';
+		else if(rssi_t == 1)
+			connectModeTip = '<#PASS_score1#>';
+		else if(rssi_t == 2)
+			connectModeTip = '<#PASS_score2#>';
+		else if(rssi_t == 3)
+			clientHtmlTd += '<#PASS_score2#>';
+		else if(rssi_t == 4)
+			connectModeTip = '<#PASS_score4#>';
+
+		if(parent.sw_mode != 4) {
+			clientHtmlTd += '<div class="radioIcon radio_' + rssi_t +'" title="' + connectModeTip + '"></div>';
+			if(clientObj.isWL != 0) {
+				var bandClass = "band";
+				if(navigator.userAgent.toUpperCase().match(/CHROME\/([\d.]+)/)){
+					bandClass = "band_chrome";
+				}
+				var bandName = [["Wired", "2.4G", "5G"], ["Wired", "2.4G", "5G-1", "5G-2"]];
+				var bandNameIndex = wl_info.band5g_2_support ? 1 : 0;
+				clientHtmlTd += '<div class="' + bandClass + '">' + bandName[bandNameIndex][clientObj.isWL] + '</div>';
+			}
+		}
+
+		clientHtmlTd += '</td></tr>';
+		clientHtmlTd += '<tr><td colspan="2"><div style="margin-top:-15px;width:140px;" class="link" onclick="oui_query(\'';
 		clientHtmlTd += clientObj.mac;
 		clientHtmlTd += '\');return overlib(\'';
 		clientHtmlTd += retOverLibStr(clientObj);
@@ -326,7 +334,7 @@ function retOverLibStr(client){
 	if(client.ssid)
 		overlibStr += "<p>SSID:</p>" + client.ssid.replace(/"/g, '&quot;');
 	if(client.isLogin)
-		overlibStr += "<p><#CTL_localdevice#>:</p>YES";
+		overlibStr += "<p>Logged In User:</p>YES";
 	if(client.isPrinter)
 		overlibStr += "<p><#Device_service_Printer#></p>YES";
 	if(client.isITunes)

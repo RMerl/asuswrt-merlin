@@ -1742,10 +1742,12 @@ next_mrate:
 	fprintf(fp, "# Wi-Fi Protected Setup (WPS)\n");
 
 	if (!subnet && nvram_get_int("wps_enable")) {
-		if (nvram_match("w_Setting", "0"))
+		if (nvram_match("w_Setting", "0")) {
 			fprintf(fp, "wps_state=1\n");
-		else
+		} else {
 			fprintf(fp, "wps_state=2\n");
+			fprintf(fp, "ap_setup_locked=1\n");
+		}
 	} else {
 		/* Turn off WPS on guest network. */
 		fprintf(fp, "wps_state=0\n");
@@ -1964,7 +1966,8 @@ static int __wps_pbc(const int multiband)
 		}
 //              dbg("WPS: PBC\n");
 		g_isEnrollee[i] = 1;
-		doSystem("hostapd_cli -i%s wps_pbc", get_wifname(i));
+		eval("hostapd_cli", "-i", get_wifname(i), "wps_pbc");
+		eval("hostapd_cli", "-i", get_wifname(i), "wps_ap_pin", "disable");
 
 		++i;
 	}
@@ -2067,7 +2070,8 @@ void start_wsc(void)
 		} else {
 			dbg("WPS: PBC\n");	// PBC method
 			g_isEnrollee[i] = 1;
-			doSystem("hostapd_cli -i%s wps_pbc", get_wifname(i));
+			eval("hostapd_cli", "-i", get_wifname(i), "wps_pbc");
+			eval("hostapd_cli", "-i", get_wifname(i), "wps_ap_pin", "disable");
 		}
 
 		++i;

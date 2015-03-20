@@ -135,6 +135,9 @@ var setClientAttr = function(){
 	this.ipMethod = "DHCP";
 }
 
+var wirelessList = cookie.get("wireless_list");
+var wirelessListArray = new Array();
+
 var clientList = new Array(0);
 function genClientList(){
 	clientList = [];
@@ -142,6 +145,15 @@ function genClientList(){
 	totalClientNum.wireless_1 = 0;
 	totalClientNum.wireless_2 = 0;
 	totalClientNum.wireless_3 = 0;
+
+	//initial wirelessListArray
+	if(wirelessList != null && wirelessList != "") {
+		var wirelessList_row = wirelessList.split("<");
+		for(var i = 0; i < wirelessList_row.length; i += 1) {
+			var wirelessList_col = wirelessList_row[i].split(">");
+			wirelessListArray[wirelessList_col[0]] = "No";
+		}
+	}
 
 	if(fromNetworkmapdCache.length > 1 && networkmap_fullscan == 1)
 		originData.fromNetworkmapd = fromNetworkmapdCache;
@@ -267,10 +279,14 @@ function genClientList(){
 			continue;
 		}
 
-		clientList[thisClientMacAddr].rssi = originData.wlList_2g[i][3];
-		clientList[thisClientMacAddr].isWL = 1;
-		totalClientNum.wireless++;
-		totalClientNum.wireless_1++;
+		if(originData.wlList_2g[i][1] == "Yes") {
+			clientList[thisClientMacAddr].rssi = originData.wlList_2g[i][3];
+			clientList[thisClientMacAddr].isWL = 1;
+
+			totalClientNum.wireless++;
+			totalClientNum.wireless_1++;
+			wirelessListArray[thisClientMacAddr] = originData.wlList_2g[i][1];
+		} 
 	}
 
 	for(var i=0; i<originData.wlList_5g.length; i++){
@@ -280,10 +296,14 @@ function genClientList(){
 			continue;
 		}
 
-		clientList[thisClientMacAddr].rssi = originData.wlList_5g[i][3];
-		clientList[thisClientMacAddr].isWL = 2;
-		totalClientNum.wireless++;
-		totalClientNum.wireless_2++;
+		if(originData.wlList_5g[i][1] == "Yes") {
+			clientList[thisClientMacAddr].rssi = originData.wlList_5g[i][3];
+			clientList[thisClientMacAddr].isWL = 2;
+		
+			totalClientNum.wireless++;
+			totalClientNum.wireless_2++;
+			wirelessListArray[thisClientMacAddr] = originData.wlList_5g[i][1];
+		}
 	}
 
 	for(var i=0; i<originData.wlList_5g_2.length; i++){
@@ -293,10 +313,14 @@ function genClientList(){
 			continue;
 		}
 
-		clientList[thisClientMacAddr].rssi = originData.wlList_5g_2[i][3];
-		clientList[thisClientMacAddr].isWL = 3;
-		totalClientNum.wireless++;
-		totalClientNum.wireless_3++;
+		if(originData.wlList_5g_2[i][1] == "Yes") {
+			clientList[thisClientMacAddr].rssi = originData.wlList_5g_2[i][3];
+			clientList[thisClientMacAddr].isWL = 3;
+
+			totalClientNum.wireless++;
+			totalClientNum.wireless_3++;
+			wirelessListArray[thisClientMacAddr] = originData.wlList_5g_2[i][1];
+		}
 	}	
 
 
@@ -338,11 +362,30 @@ function genClientList(){
 		}
 
 		if(typeof clientList[thisClientMacAddr] != "undefined"){
-			if(clientList[thisClientMacAddr].ip == thisClient[1] && clientList[thisClientMacAddr].ipMethod == "DHCP") {
-				clientList[thisClientMacAddr].ipMethod = "Manual";
+			if(clientList[thisClientMacAddr].ipMethod == "DHCP") {
+				if(clientList[thisClientMacAddr].ip == thisClient[1] || clientList[thisClientMacAddr].ip == "offline")
+					clientList[thisClientMacAddr].ipMethod = "Manual";
 			}
 		}
 	}
+
+	wirelessList = "";
+	Object.keys(wirelessListArray).forEach(function(key) {
+		if(key != "") {
+			var clientMac = key
+			var clientMacState = wirelessListArray[key];
+			wirelessList +=  "<" + clientMac + ">" + clientMacState;
+			if(typeof clientList[clientMac] != "undefined") {
+				var wirelessOnline = (clientMacState.split(">")[0] == "Yes") ? true : false;
+				//if wireless device offline, but the device value not delete in fromNetworkmapd in real time, so need update the totalClientNum
+				if(clientList[clientMac].isOnline && !wirelessOnline) { 
+					totalClientNum.online--;
+				}
+				clientList[clientMac].isOnline = wirelessOnline;
+			}
+		}
+	});
+	cookie.set("wireless_list", wirelessList, 30);
 
 	totalClientNum.wired = parseInt(totalClientNum.online - totalClientNum.wireless);
 }

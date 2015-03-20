@@ -425,27 +425,19 @@ legend {
 	line-height: 20px;
 	width:320px;
 }
-#radio_0{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -0px; width: 30px; height: 30px;
-}
 #radio_1{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -30px; width: 30px; height: 30px;
-}	
+	background: url(../images/survey/radio_status.png);
+	background-position: -0px -83px; width: 28px; height: 20px;
+}
 #radio_2{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -60px; width: 30px; height: 30px;
+	background: url(../images/survey/radio_status.png);
+	background-position: -0px -103px; width: 28px; height: 20px;
 }	
 #radio_3{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -90px; width: 30px; height: 30px;
+	background: url(../images/survey/radio_status.png);
+	background-position: -0px -125px; width: 28px; height: 20px;
 }	
 #radio_4{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -120px; width: 30px; height: 30px;
-}	
-#radio_5{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -150px; width: 30px; height: 30px;
+	background: url(../images/survey/radio_status.png);
+	background-position: -0px -147px; width: 28px; height: 20px;
 }

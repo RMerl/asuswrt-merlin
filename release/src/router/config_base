@@ -10,6 +10,7 @@ RTCONFIG_EAPOL=y
 # RTCONFIG_BCMARM is not set
 # RTCONFIG_BCM7 is not set
 # RTCONFIG_BCM794 is not set
+# RTCONFIG_BCM10 is not set
 # RTCONFIG_BUILDBCM7 is not set
 # RTCONFIG_NV128 is not set
 # RTCONFIG_DHDAP is not set

@@ -31,7 +31,7 @@ var profile = function(_profile){
 	this.channel = _profile[2],
 	this.auth = _profile[3],
 	this.alg = _profile[4],
-	this.signal = Math.ceil(_profile[5]/20),
+	this.signal = (Math.ceil(_profile[5]/25) == 0) ? 1 : Math.ceil(_profile[5]/25),
 	this.macaddr = _profile[6],
 	this.wlmode = _profile[7],
 	this.state = _profile[8],

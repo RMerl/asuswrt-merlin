@@ -1510,8 +1510,6 @@ function addOnlineHelp(obj, keywordArray){
 		faqLang.ES = "/es/";
 	
 	}else	if(keywordArray[0] == "ASUSWRT" && keywordArray[1] == "IPv6"){
-		faqLang.TW = "/tw/";
-		faqLang.CN = ".cn/";
 		faqLang.MS = "/my/";
 	
 	}else	if(keywordArray[0] == "ASUSWRT" && keywordArray[1] == "VPN"){

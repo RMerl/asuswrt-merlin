@@ -779,7 +779,7 @@ function validForm(){
 						<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,2);"><#ShareNode_DeviceName_itemname#></a>
 					</th>
 					<td>
-						<div><input type="text" name="computer_name" id="computer_name" class="input_20_table" maxlength="20" value="<% nvram_get("computer_name"); %>"><br/><span id="alert_msg1" style="color:#FC0;"></span></div>
+						<div><input type="text" name="computer_name" id="computer_name" class="input_20_table" maxlength="15" value="<% nvram_get("computer_name"); %>"><br/><span id="alert_msg1" style="color:#FC0;"></span></div>
 					</td>
 				</tr>
 				<tr>

@@ -67,6 +67,11 @@ export BCMSRC=src-rt-7.14.94.x/src
 export OLD_SRC=$(SRCBASE)/../../src
 export  BUILD_MFG := 0
 export  EX7 := _794
+else ifeq ($(RTCONFIG_BCM10),y)
+export BCMSRC=src-rt-10.10.18.x/src
+export OLD_SRC=$(SRCBASE)/../../src
+export  BUILD_MFG := 0
+export  EX7 := _10
 else
 WLAN_ComponentsInUse := bcmwifi clm ppr olpc
 export BCMSRC=src-rt-6.x.4708
@@ -96,11 +101,16 @@ export MKSYM := $(shell which $(TOP)/misc/mksym.pl)
 endif
 
 ifeq ($(or $(RTCONFIG_BCMWL6),$(RTAC53U)),y)
-ifeq ($(RTCONFIG_BCMWL6), y)
+
 WLAN_ComponentsInUse := bcmwifi clm ppr
-else ifeq ($(RTAC53U),y)
-WLAN_ComponentsInUse := bcmwifi clm ppr olpc
+
+ifeq ($(or $(RTCONFIG_BCMWL6A),$(RTAC53U)),y)
+WLAN_ComponentsInUse += olpc
 endif
+ifeq ($(RTCONFIG_BCM10),y)
+WLAN_ComponentsInUse += keymgmt iocv dump phymods/cmn phymods/n phymods/lcn phymods/ac phymods/lcn40 phymods/ht
+endif
+
 include ../../$(SRCBASE)/makefiles/WLAN_Common.mk
 endif
 
@@ -540,7 +550,9 @@ else
 obj-y += lltd
 endif
 ifeq ($(RTCONFIG_BCMWL6),y)
+ifneq ($(RTCONFIG_BCM10),y)
 obj-y += acsd$(BCMEX)$(EX7)
+endif
 endif
 else
 obj-y += lldt
@@ -700,7 +712,7 @@ kernel_header: $(LINUXDIR)/.config
 endif
 
 kernel: $(LINUXDIR)/.config
-	@$(SEP)
+	$(SEP)
 
 ifneq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_RALINK),y)
@@ -3943,7 +3955,7 @@ sysstat-10.0.3-install:
 	$(MAKE) $*-clean $*
 
 %/Makefile:
-	@[ ! -d $* ] || $(MAKE) $*-configure
+	[ ! -d $* ] || $(MAKE) $*-configure
 
 %-configure:
 	@[ ! -d $* ] || ( cd $* ; \

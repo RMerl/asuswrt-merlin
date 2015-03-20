@@ -1676,9 +1676,6 @@ static int validate_apply(webs_t wp) {
 	char tmp[3500], prefix[32];
 	int unit=-1, subunit=-1;
 	int nvram_modified = 0;
-#ifdef RTCONFIG_QTN
-	int nvram_modified_qtn = 0;
-#endif
 	int nvram_modified_wl = 0;
 	int acc_modified = 0;
 	int ret;
@@ -1701,9 +1698,6 @@ static int validate_apply(webs_t wp) {
 			if((ret=validate_instance(wp, name))) {
 				if(ret&NVRAM_MODIFIED_BIT) nvram_modified = 1;
 				if(ret&NVRAM_MODIFIED_WL_BIT) nvram_modified_wl = 1;
-#ifdef RTCONFIG_QTN
-				if(ret&NVRAM_MODIFIED_WL_QTN_BIT) nvram_modified_qtn = 1;
-#endif
 			}
 		}
 		else {
@@ -1761,7 +1755,6 @@ static int validate_apply(webs_t wp) {
 						if (rpc_qtn_ready())
 						{
 							rpc_parse_nvram(tmp, value);
-							nvram_modified_qtn = 1;
 						}
 					}
 #endif
@@ -1961,14 +1954,6 @@ static int validate_apply(webs_t wp) {
 			nvram_set("w_Setting", "1");
 		nvram_commit();
 	}
-
-#ifdef RTCONFIG_QTN
-	if (nvram_modified_qtn)
-	{
-		if (rpc_qtn_ready())
-		rpc_qcsapi_bootcfg_commit();
-	}
-#endif
 
 	return nvram_modified;
 }

@@ -1487,6 +1487,9 @@ void init_switch()
 #endif
 #ifdef RTCONFIG_RTL8365MB
 	eval("mknod", "/dev/rtkswitch", "c", "233", "0");
+	sleep(1);
+	eval("rtkswitch", "12", "1");
+	eval("rtkswitch", "13", "4");
 #endif
 }
 

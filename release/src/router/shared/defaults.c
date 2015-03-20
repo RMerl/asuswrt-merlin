@@ -468,7 +468,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_txpower",		"100"		},
 
 #if defined (RTCONFIG_RALINK) || defined (RTCONFIG_BCMWL6)
-#if defined(RTAC53U)
+#if defined(RTAC53U) || defined(RTCONFIG_QTN)
 	/* RT-AC53U disable txbf by default */
 	{ "wl_txbf", "0" },
 #else
@@ -480,7 +480,11 @@ struct nvram_tuple router_defaults[] = {
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_BCMARM
+#ifdef RTCONFIG_QTN
+	{ "wl_itxbf", "0" },
+#else
 	{ "wl_itxbf", "1" },
+#endif
 #endif
 #endif
 

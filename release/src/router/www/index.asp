@@ -1162,7 +1162,7 @@ function edit_delete(){
 function show_custom_image(flag){
 	editClientImageFlag = true;
 	if(flag == "cancel"){	
-		$('edit_client_block').style.height = "250px";
+		$('edit_client_block').style.height = "220px";
 		$j('#custom_image').fadeOut(100);	
 	}	
 	else if($('custom_image').style.display == "none"){
@@ -1170,13 +1170,13 @@ function show_custom_image(flag){
 		$j('#custom_image').fadeIn(200);		
 	}
 	else{
-		$('edit_client_block').style.height = "250px";
+		$('edit_client_block').style.height = "220px";
 		$j('#custom_image').fadeOut(100);	
 	}	
 }
 
 function hide_custom_image(){
-	$('edit_client_block').style.height = "250px";
+	$('edit_client_block').style.height = "220px";
 	$j('#custom_image').fadeOut(100);	
 }
 
@@ -1185,7 +1185,7 @@ function select_image(type){
 	document.getElementById("client_image").style.display = "none";
 	document.getElementById("canvasUserIcon").style.display = "none";
 	$j('#custom_image').fadeOut(100);
-	$('edit_client_block').style.height = "250px";
+	$('edit_client_block').style.height = "220px";
 	document.getElementById('client_image').className = type;
 
 	var userImageFlag = false;
@@ -1295,6 +1295,55 @@ function popupEditBlock(clientObj){
 		$j("#edit_client_block").fadeOut(300);
 	}
 	else{
+		var convRSSI = function(val) {
+			if(val == "") return "wired";
+
+			val = parseInt(val);
+			if(val >= -50) return 4;
+			else if(val >= -80)	return Math.ceil((24 + ((val + 80) * 26)/10)/25);
+			else if(val >= -90)	return Math.ceil((((val + 90) * 26)/10)/25);
+			else return 1;
+		};
+
+		var rssi_t = 0;
+		var connectModeTip = "";
+		var clientIconHtml = "";
+		rssi_t = convRSSI(clientObj.rssi);
+		if(isNaN(rssi_t)) {
+			connectModeTip = '<#tm_wired#>';
+		}
+		else {
+			switch(rssi_t) {
+				case 1 :
+					connectModeTip = '<#PASS_score1#>';
+					break;
+				case 2 :
+					connectModeTip = '<#PASS_score2#>';
+					break;
+				case 3 :
+					connectModeTip = '<#PASS_score3#>';
+					break;
+				case 4 :
+					connectModeTip = '<#PASS_score4#>';
+					break;
+			}
+		}
+
+		if(sw_mode != 4){
+			clientIconHtml += '<div class="radioIcon radio_' + rssi_t +'" title="' + connectModeTip + '"></div>';
+			if(clientObj.isWL != 0) {
+				var bandClass = "band";
+				if(navigator.userAgent.toUpperCase().match(/CHROME\/([\d.]+)/)){
+					bandClass = "band_chrome";
+				}
+				var bandName = [["Wired", "2.4G", "5G"], ["Wired", "2.4G", "5G-1", "5G-2"]];
+				var bandNameIndex = wl_info.band5g_2_support ? 1 : 0;
+				clientIconHtml += '<div class="' + bandClass + '">' + bandName[bandNameIndex][clientObj.isWL] + '</div>';
+			}
+			document.getElementById('client_icon').innerHTML = clientIconHtml;
+			document.getElementById('client_icon').title = connectModeTip;
+		}
+
 		document.getElementById('client_name').value = clientObj.name;
 		document.getElementById('ipaddr_field_orig').value = clientObj.ip;
 		document.getElementById('ipaddr_field').value = clientObj.ip;
@@ -1517,7 +1566,7 @@ function previewImage(imageObj) {
 			fileReader.readAsDataURL(imageObj.files[0]);
 			$j('#custom_image').fadeOut(100);
 			userIconHideFlag = true;
-			document.getElementById('edit_client_block').style.height = "250px";
+			document.getElementById('edit_client_block').style.height = "220px";
 		}
 	}
 	else {	//over 100 then let usee select delete icon or nothing
@@ -1638,7 +1687,7 @@ function previewImage(imageObj) {
 	</div>	
 </div>
 <div id="edit_client_block" class="contentM_qis">
-	<div style="text-align:right"><img src="/images/button-close.gif" style="width:30px;cursor:pointer" onclick="edit_cancel();"></div>
+	<div id="client_icon" style="width:30px;margin-top:5px;margin-bottom:-35px;margin-left:375px;"></div>
 	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0" style="margin-top: -30px;width: 99%;padding:5px 10px 0px 10px;">
 		<tr>
 			<td colspan="2">

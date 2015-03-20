@@ -362,7 +362,7 @@ cleankernel:
 	cp -p save-config .config || true
 
 kernel:
-	@$(MAKE) -C router kernel $(PARALLEL_BUILD)
+	$(MAKE) -C router kernel $(PARALLEL_BUILD)
 	@[ ! -e $(KERNEL_BINARY) ] || ls -l $(KERNEL_BINARY)
 
 distclean: clean cleanimage cleankernel cleantools cleanlibc
@@ -1171,6 +1171,12 @@ define RouterOptions
 		sed -i "/RTCONFIG_BCM794/d" $(1); \
 		echo "RTCONFIG_BCM794=y" >>$(1); \
 	fi; \
+	if [ "$(BCM10)" = "y" ]; then \
+		sed -i "/RTCONFIG_BCM10/d" $(1); \
+		echo "RTCONFIG_BCM10=y" >>$(1); \
+		sed -i "/RTCONFIG_BCMDCS/d" $(1); \
+		echo "RTCONFIG_BCMDCS=y" >>$(1); \
+	fi; \
 	if [ "$(BCM7)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCM7/d" $(1); \
 		echo "RTCONFIG_BCM7=y" >>$(1); \
@@ -1966,6 +1972,16 @@ define KernelConfig
 		sed -i "/CONFIG_DPSTA/d" $(1); \
 		echo "# CONFIG_DPSTA is not set" >>$(1); \
 	fi; \
+	if [ "$(NODHD)" = "y" ]; then \
+		sed -i "/CONFIG_BCM_GMAC3=y/d" $(1); \
+		echo "# CONFIG_BCM_GMAC3 is not set" >>$(1); \
+		sed -i "/CONFIG_BCM_FA/d" $(1); \
+		echo "CONFIG_BCM_FA=y" >>$(1); \
+		sed -i "/CONFIG_DHDAP/d" $(1); \
+		echo "# CONFIG_DHDAP is not set" >>$(1); \
+		sed -i "/CONFIG_DPSTA/d" $(1); \
+		echo "# CONFIG_DPSTA is not set" >>$(1); \
+	fi; \
 	if [ "$(NOWL)" = "y" ]; then \
 		sed -i "/CONFIG_WL=m/d" $(1); \
 		echo "# CONFIG_WL is not set" >>$(1); \
@@ -2053,6 +2069,20 @@ define KernelConfig
 		sed -i "/CONFIG_DHDAP/d" $(1); \
 		echo "CONFIG_DHDAP=m" >>$(1); \
 	fi; \
+	if [ "$(BCM10)" = "y" ]; then \
+		sed -i "/CONFIG_CR4_OFFLOAD/d" $(1); \
+		echo "# CONFIG_CR4_OFFLOAD is not set" >>$(1); \
+		sed -i "/CONFIG_PLAT_UART_CLOCKS/d" $(1); \
+		echo "# CONFIG_PLAT_UART_CLOCKS is not set" >>$(1); \
+		sed -i "/CONFIG_NF_CONNTRACK_EVENTS/d" $(1); \
+		echo "CONFIG_NF_CONNTRACK_EVENTS=y" >>$(1); \
+		sed -i "/CONFIG_BCM_FA/d" $(1); \
+		echo "CONFIG_BCM_FA=y" >>$(1); \
+		sed -i "/CONFIG_BCM_GMAC3/d" $(1); \
+		echo "# CONFIG_BCM_GMAC3 is not set" >>$(1); \
+		sed -i "/CONFIG_DHDAP/d" $(1); \
+		echo "# CONFIG_DHDAP is not set" >>$(1); \
+	fi; \
 	if [ "$(RGMII_BCM_FA)" = "y" ]; then \
 		sed -i "/CONFIG_RGMII_BCM_FA/d" $(1); \
 		echo "CONFIG_RGMII_BCM_FA=y" >>$(1); \
@@ -2125,7 +2155,7 @@ endif
 	$(call BusyboxOptions, router/busybox/config_$(lowercase_B))
 
 	@$(MAKE) setprofile
-	@$(MAKE) all
+	$(MAKE) all
 
 define save_src_config
 	@if [ -f .config ] ; then \
@@ -2217,7 +2247,7 @@ setprofile:
 		echo "RTCONFIG_WLMODULE_MT7603E_AP=y" >> router/.config; \
 	fi
 
-	@$(MAKE) -C router oldconfig
+	$(MAKE) -C router oldconfig
 
 cleanlibc:
 #	@$(MAKE) -C ../../tools-src/uClibc clean
