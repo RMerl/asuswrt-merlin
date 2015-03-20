@@ -73,9 +73,14 @@ function initial(){
 	register_event();
 	load_time();
 	
-	if(document.form.bwdpi_db_enable.value == 1)
+	if(document.form.bwdpi_db_enable.value == 1) {
 		document.getElementById('statistic_hint').style.display = "none";
-	
+	} else {
+		if ('<% nvram_get("jffs2_on"); %>' == '0') {
+			document.getElementById('traffic_analysis_enable').style.display = "none"
+			document.getElementById('jffs_hint').style.display = "";
+		}
+	}
 	get_every_client_data("all", "detail", "24", date_second, date_string);		//get clients and find top 5 clients' traffic last 24 hours
 	setTimeout(function(){
 		get_wan_data("all", "hour", "24", date_second, date_string);	
@@ -1480,7 +1485,6 @@ function setHover_css(){
 																					$j("#agreement_panel").fadeIn(300);
 																					return false;
 																				}
-																					
 																					document.form.bwdpi_db_enable.value = 1;
 																					applyRule();
 																			},
@@ -1504,6 +1508,7 @@ function setHover_css(){
 										<label style="font-size:16px;">Last date:</label>
 										<input class="input_12_table" id="datepicker" value="">	
 										<div id="statistic_hint" style="text-align:right;margin-top:-21px;padding-right:15px;color:#FC0;font-size:14px;">*Sample data - turn on the Traffic Statistic to record the traffic information</div>
+										<div id="jffs_hint" style="text-align:right;padding-right:15px;color:#FC0;font-size:14px; display:none;">* The JFFS partition must first be enabled before you can enable the Traffic Analyzer!</div>
 									</div>
 									<div style="margin:10px 0 10px 4px;">
 										<table>

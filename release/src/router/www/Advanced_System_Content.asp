@@ -18,6 +18,7 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
+<script language-"JavaScript" type="text/javascript" src="/merlin.js"></script>
 <style>
 #ClientList_Block_PC{
 	border:1px outset #999;
@@ -919,6 +920,11 @@ function display_spec_IP(flag){
 function toggle_jffs_visibility(state){
 	var visibility = ( state == 1 ? "" : "none");
 
+	if ((!state) && (bwdpi_support) && ('<% nvram_get("bwdpi_db_enable"); %>' == '1')) {
+		alert("You cannot disable the JFFS partition while you have Traffic Analysis enabled!");
+		setRadioValue(document.form.jffs2_on, 1);
+		return false;
+	}
 	document.getElementById('jffs2_format_tr').style.display = visibility;
 	document.getElementById('jffs2_scripts_tr').style.display = visibility;
 }
