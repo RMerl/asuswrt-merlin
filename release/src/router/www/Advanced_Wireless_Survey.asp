@@ -9,36 +9,10 @@
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <link rel="stylesheet" type="text/css" href="qis/qis_style.css">
 <link rel="stylesheet" type="text/css" href="index_style.css">
-
 <style>
-#radio_0{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -0px; width: 30px; height: 30px;
-}
-#radio_1{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -30px; width: 30px; height: 30px;
-}
-#radio_2{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -60px; width: 30px; height: 30px;
-}
-#radio_3{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -90px; width: 30px; height: 30px;
-}
-#radio_4{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -120px; width: 30px; height: 30px;
-}
-#radio_5{
-  background: url(../images/survey/radio_status.png);
-  background-position: -0px -150px; width: 30px; height: 30px;
-}
 p{
 	font-weight: bolder;
 }
-
 </style>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -48,8 +22,6 @@ p{
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
-
-
 
 <script type="text/JavaScript">
 var aplist = new Array();
@@ -223,7 +195,7 @@ function showSiteTable(){
 					htmlCode += '<td width="10%" style="text-align:center;">5GHz</td>';
 
 				// signal
-				htmlCode += '<td width="10%" style="text-align:center;"><span title="' + aplist[i][5] + '%"><div style="margin-left:13px;" id="radio_'+ Math.ceil(aplist[i][5]/20) +'"></div></span></td></tr>';
+				htmlCode += '<td width="10%" style="text-align:center;"><span title="' + aplist[i][5] + '%"><div style="margin-left:13px;" id="radio_'+ Math.ceil(aplist[i][5]/25) +'"></div></span></td></tr>';
 
 			}
 			document.form.rescanButton.disabled = false;
