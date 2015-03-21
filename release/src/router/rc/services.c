@@ -5369,7 +5369,16 @@ check_ddr_done:
 		// center control for iptable restore, called by process out side of rc
 		_dprintf("%s: restart_iptrestore: %s.\n", __FUNCTION__, cmd[1]);
 		if(cmd[1]) {
-			if(action & RC_SERVICE_START) eval("iptables-restore", cmd[1]);
+			if(action&RC_SERVICE_START){
+				for ( i = 1; i < 4; i++ ) {
+					if (eval("iptables-restore", cmd[1])) {
+						_dprintf("iptables-restore failed - retrying in %d secs...\n", i);
+						sleep(i);
+					} else {
+						i = 4;
+					}
+				}
+			}
 		}
 	}
 	else if (strcmp(script, "pppoe_relay") == 0)
@@ -6009,6 +6018,7 @@ void start_nat_rules(void)
 	int len;
 	char *fn = NAT_RULES, ln[PATH_MAX];
 	struct stat s;
+	int i;
 
 	// all rules applied directly according to currently status, wanduck help to triger those not cover by normal flow
  	if(nvram_match("x_Setting", "0")){
@@ -6032,7 +6042,16 @@ void start_nat_rules(void)
 	setup_ct_timeout(TRUE);
 	setup_udp_timeout(TRUE);
 
-	eval("iptables-restore", NAT_RULES);
+	// Quite a few functions will blindly attempt to manipulate iptables, colliding with us.
+	// Retry a few times with increasing wait time to resolve collision. 
+	for ( i = 1; i < 4; i++ ) {
+		if (eval("iptables-restore", NAT_RULES)) {
+			_dprintf("iptables-restore failed - retrying in %d secs...\n", i);
+			sleep(i);
+		} else {
+			i = 4;
+		}
+	}
 
 	run_custom_script("nat-start", NULL);
 
@@ -6041,6 +6060,8 @@ void start_nat_rules(void)
 
 void stop_nat_rules(void)
 {
+	int i;
+
 	if(nvram_match("nat_redirect_enable", "0")) return;
 
 	if (nvram_get_int("nat_state")==NAT_STATE_REDIRECT) return ;
@@ -6053,7 +6074,14 @@ void stop_nat_rules(void)
 	setup_ct_timeout(FALSE);
 	setup_udp_timeout(FALSE);
 
-	eval("iptables-restore", "/tmp/redirect_rules");
+	for ( i = 1; i < 4; i++ ) {
+		if (eval("iptables-restore", "/tmp/redirect_rules")) {
+			_dprintf("iptables-restore failed - retrying in %d secs...\n", i);
+			sleep(i);
+		} else {
+			i = 4;
+		}
+	}
 
 	return;
 }
