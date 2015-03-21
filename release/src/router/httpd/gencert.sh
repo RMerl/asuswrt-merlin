@@ -29,7 +29,7 @@ OPENSSL_CONF=/etc/openssl.config openssl req -new -out /tmp/cert.csr -keyout /tm
 # remove the passphrase from the key
 OPENSSL_CONF=/etc/openssl.cnf openssl rsa -in /tmp/privkey.pem -out key.pem -passin pass:password
 # convert the certificate request into a signed certificate
-OPENSSL_CONF=/etc/openssl.cnf RANDFILE=/dev/urandom openssl x509 -in /tmp/cert.csr -out cert.pem -req -signkey key.pem -days 3653
+OPENSSL_CONF=/etc/openssl.cnf RANDFILE=/dev/urandom openssl x509 -in /tmp/cert.csr -out cert.pem -req -signkey key.pem -days 3653 -sha256
 
 #	openssl x509 -in /etc/cert.pem -text -noout
 
