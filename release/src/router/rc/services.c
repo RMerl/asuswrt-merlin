@@ -5370,12 +5370,12 @@ check_ddr_done:
 		_dprintf("%s: restart_iptrestore: %s.\n", __FUNCTION__, cmd[1]);
 		if(cmd[1]) {
 			if(action&RC_SERVICE_START){
-				for ( i = 1; i < 4; i++ ) {
+				for ( i = 1; i <= 5; i++ ) {
 					if (eval("iptables-restore", cmd[1])) {
-						_dprintf("iptables-restore failed - retrying in %d secs...\n", i);
-						sleep(i);
+						_dprintf("iptables-restore failed - attempt: %d ...\n", i);
+						sleep(1);
 					} else {
-						i = 4;
+						i = 6;
 					}
 				}
 			}
@@ -6044,12 +6044,12 @@ void start_nat_rules(void)
 
 	// Quite a few functions will blindly attempt to manipulate iptables, colliding with us.
 	// Retry a few times with increasing wait time to resolve collision. 
-	for ( i = 1; i < 4; i++ ) {
+	for ( i = 1; i <= 5; i++ ) {
 		if (eval("iptables-restore", NAT_RULES)) {
-			_dprintf("iptables-restore failed - retrying in %d secs...\n", i);
-			sleep(i);
+			_dprintf("iptables-restore failed - attempt: %d ...\n", i);
+			sleep(1);
 		} else {
-			i = 4;
+			i = 6;
 		}
 	}
 
@@ -6074,12 +6074,12 @@ void stop_nat_rules(void)
 	setup_ct_timeout(FALSE);
 	setup_udp_timeout(FALSE);
 
-	for ( i = 1; i < 4; i++ ) {
+	for ( i = 1; i <= 5; i++ ) {
 		if (eval("iptables-restore", "/tmp/redirect_rules")) {
-			_dprintf("iptables-restore failed - retrying in %d secs...\n", i);
-			sleep(i);
+			_dprintf("iptables-restore failed - attempt: %d ...\n", i);
+			sleep(1);
 		} else {
-			i = 4;
+			i = 6;
 		}
 	}
 
