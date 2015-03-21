@@ -2,18 +2,33 @@ Asuswrt-Merlin Changelog
 ========================
 
 378.52 (xx-xxx-2015)
-   - NEW: Merged with Asus GPL 378_4585
-   - CHANGED: Updated Quantenna firmware to 378_4608 build
+   - NEW: Merged with Asus GPL 378_4608
    - CHANGED: Updated miniupnpd to 1.9.20150309
+   - CHANGED: You can no longer disable the JFFS partition if
+              Traffic Analyzer is enabled.  Likewise, you can
+              no longer enable Traffic Analyzer if the JFFS
+              partition is disabled.
+   - CHANGED: The selected refresh rate of the Wireless Clients
+              page will be saved to a cookie
    - FIXED: 2.4 GHz and 5 GHz-1 clients were swapped on the
             Sysinfo page (RT-AC3200 only)
    - FIXED: Wifi PSK wasn't blurred until activated (regression
-            in 378.51)
+            from 378.51)
    - FIXED: Samba's custom config/postconf were ignoring the
             state of the global option to enable them (they
             would always be used)
-  - FIXED: Samba's custom config/postconf usage wasn't
-           logged
+   - FIXED: Samba's custom config/postconf usage wasn't
+            logged
+   - FIXED: Some services would fail on their first attempt
+            to start at boot time due to the QTN subsystem
+            taking too long.  The service notification system
+            is now extra patient if the QTN subsystem isn't
+            completely started yet.  (RT-AC87U)
+   - FIXED: NAT rules could occasionally fail to be applied
+            (patch by john9527)
+   - FIXED: The Apply button on the Adaptive Bandwidth page
+            had a clickable area so wide that it even covered
+            part of the left side menu.  (Asus bug)
 
 
 378.51 (6-Mar-2015)

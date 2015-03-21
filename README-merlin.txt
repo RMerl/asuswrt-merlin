@@ -54,7 +54,7 @@ Here is a list of features that Asuswrt-merlin adds over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.378_4585 source code from Asus
+   - Based on 3.0.0.4.378_4608 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
