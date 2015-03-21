@@ -34,11 +34,14 @@ overlib_str_tmp = "";
 overlib.isOut = true;
 
 var refreshRate = 3;
+var timedEvent = 0;
 
 <% get_wl_status(); %>;
 
+
 function initial(){
 	show_menu();
+	refreshRate = getRefresh();
 	get_wlclient_list();
 }
 
@@ -115,7 +118,7 @@ function display_clients(clientsarray, obj) {
 
 
 function display_header(dataarray, title, obj) {
-var code;
+	var code;
 
 	code = '<table width="100%" style="border: none;">';
 	code += '<thead><tr><span class="wifiheader" style="font-size: 125%;">' + title +'</span></tr></thead>';
@@ -128,23 +131,47 @@ var code;
 }
 
 
-function get_wlclient_list(){
-	if (refreshRate == 0) {
-		setTimeout("get_wlclient_list();", 2000);
-	} else {
-		$j.ajax({
-			url: '/ajax_wificlients.asp',
-			dataType: 'script', 
-			error: function(xhr){
-					get_wlclient_list();
-				},
-			success: function(response){
-				redraw();
-				setTimeout("get_wlclient_list();", refreshRate * 1000);
-			}
-		});
+function get_wlclient_list() {
+
+	if (timedEvent) {
+		clearTimeout(timedEvent);
+		timedEvent = 0;
 	}
+
+	$j.ajax({
+		url: '/ajax_wificlients.asp',
+		dataType: 'script', 
+		error: function(xhr){
+				get_wlclient_list();
+				},
+		success: function(response){
+			redraw();
+			if (refreshRate > 0)
+				timedEvent = setTimeout("get_wlclient_list();", refreshRate * 1000);
+		}
+	});
+
 }
+
+
+function getRefresh() {
+	val  = parseInt(cookie.get('awrtm_wlrefresh'));
+
+	if ((val != 0) && (val != 1) && (val != 3) && (val != 5) && (val != 10))
+		val = 3;
+
+	document.getElementById('refreshrate').value = val;
+
+	return val;
+}
+
+
+function setRefresh(obj) {
+	refreshRate = obj.value;
+	cookie.set('awrtm_wlrefresh', refreshRate, 300);
+	get_wlclient_list();
+}
+
 
 </script>
 </head>
@@ -188,7 +215,7 @@ function get_wlclient_list(){
 										<tr>
 											<th>Automatically refresh list every</th>
 											<td>
-												<select name="refreshrate" class="input_option" onclick="refreshRate = this.value;">
+												<select name="refreshrate" class="input_option" onchange="setRefresh(this);" id="refreshrate">
 													<option value="0">No refresh</option>
 													<option value="1">1 second</option>
 													<option value="3" selected>3 seconds</option>
