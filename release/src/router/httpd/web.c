@@ -7193,12 +7193,12 @@ void ctvbuf(FILE *f) {
 	}
 }
 
-static int
+static void
 prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, char_t *path, char_t *query)
 {
 	char *ddns_flag;
 	char *ddns_mac;
-	char *ddns_hostname_tmp;
+	char *ddns_hostname_tmp = NULL;
 	char model_name;
 	
 	model_name = get_model();
@@ -10491,7 +10491,7 @@ int ej_cpu_usage(int eid, webs_t wp, int argc, char_t **argv){
 
 int ej_cpu_core_num(int eid, webs_t wp, int argc, char_t **argv){
 	char buf[MAX_LINE_SIZE];
-	FILE *fp; 
+	FILE *fp;
 	int count = 0;
 	fp = fopen("/proc/cpuinfo", "r");
 
@@ -10503,13 +10503,13 @@ int ej_cpu_core_num(int eid, webs_t wp, int argc, char_t **argv){
 			count++;
 		}
 	}
-	
+
 	fclose(fp);
 	if(count == 0){		//for Braomcom ARM single core
 		count = 1;
 	}
 
-	websWrite(wp, "%d", count);	
+	return websWrite(wp, "%d", count);
 }
 
 static int
