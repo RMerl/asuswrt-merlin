@@ -6920,6 +6920,7 @@ void wo_bwmbackup(char *url, webs_t wp)
 }
 // end Viz ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+#if 0
 void wo_iptbackup(char *url, webs_t wp)
 {
 	static const char *ifn = "/var/lib/misc/cstats-history.gz";
@@ -6946,6 +6947,7 @@ void wo_iptbackup(char *url, webs_t wp)
 //	send_header(200, NULL, mime_binary, 0);
 	do_f((char *)ifn, wp);
 }
+#endif
 
 static int ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
 
@@ -7399,7 +7401,6 @@ struct mime_handler mime_handlers[] = {
 	{ "update.cgi*", "text/javascript", no_cache_IE7, do_html_post_and_get, do_update_cgi, do_auth }, // jerry5
 	{ "bwm/*.gz", NULL, no_cache, do_html_post_and_get, wo_bwmbackup, do_auth }, // jerry5
 	// end Viz  ^^^^^^^^
-	{ "ipt/*.gz", NULL, no_cache, do_html_post_and_get, wo_iptbackup, do_auth },
 	{ "**.pac", "application/x-ns-proxy-autoconfig", NULL, NULL, do_file, NULL },
 	{ "wpad.dat", "application/x-ns-proxy-autoconfig", NULL, NULL, do_file, NULL },
 #ifdef TRANSLATE_ON_FLY
