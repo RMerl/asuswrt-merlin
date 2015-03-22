@@ -3,6 +3,7 @@ Asuswrt-Merlin Changelog
 
 378.52 (xx-xxx-2015)
    - NEW: Merged with Asus GPL 378_4608
+   - NEW: Added ECDHE support to the webui (when accessed over HTTPS)
    - CHANGED: Updated miniupnpd to 1.9.20150309
    - CHANGED: You can no longer disable the JFFS partition if
               Traffic Analyzer is enabled.  Likewise, you can
@@ -10,6 +11,8 @@ Asuswrt-Merlin Changelog
               partition is disabled.
    - CHANGED: The selected refresh rate of the Wireless Clients
               page will be saved to a cookie
+   - CHANGED: Removed obsolete (non-safe) ciphers such as RC4
+              from the router's https webui
    - FIXED: 2.4 GHz and 5 GHz-1 clients were swapped on the
             Sysinfo page (RT-AC3200 only)
    - FIXED: Wifi PSK wasn't blurred until activated (regression
