@@ -189,13 +189,13 @@ static FILE *_ssl_fopen(int sd, int client)
 	}
 #endif
 
-	// Setup available ciphers, and enforce their order
+	// Setup available ciphers
 	if (SSL_CTX_set_cipher_list(ctx, allowedCiphers) != 1) {
 		goto ERROR;
 	}
 
-	SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
-
+	// Enforce our desired cipher order, and enable workaround for broken Safari versions
+	SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE |  SSL_OP_SAFARI_ECDHE_ECDSA_BUG);
 
 	r = SSL_set_fd(kuki->ssl, kuki->sd);
 	//fprintf(stderr,"[ssl_fopen] set_fd=%d\n", r); // tmp test
