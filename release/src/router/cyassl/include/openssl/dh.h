@@ -1,2 +1,0 @@
-/* dh.h for openssl */
-

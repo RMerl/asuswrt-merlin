@@ -324,7 +324,6 @@ obj-$(CONFIG_LIBUPNP) += libupnp
 endif
 
 obj-y += libbcmcrypto
-#obj-y += cyassl
 obj-$(RTCONFIG_HTTPS) += mssl
 #obj-y += mdu
 obj-$(RTCONFIG_TFTP) += tftp
@@ -386,11 +385,7 @@ endif
 endif
 
 ifeq ($(RTCONFIG_SAMBASRV),y)
-ifeq ($(RTCONFIG_SAMBA3),y)
 NEED_SAMBA3 = y
-else
-NEED_SAMBA2 = y
-endif
 endif
 endif
 
@@ -406,7 +401,6 @@ endif
 obj-$(RTCONFIG_WEBDAV) += samba-3.5.8
 
 ifneq ($(RTCONFIG_SAMBA_MODERN),y)
-obj-$(NEED_SAMBA2) += samba
 ifeq ($(RTCONFIG_BCMARM),y)
 obj-$(NEED_SAMBA3) += samba-3.0.25b
 else
@@ -451,7 +445,6 @@ obj-$(RTCONFIG_MEDIA_SERVER) += libvorbis
 obj-$(RTCONFIG_MEDIA_SERVER) += minidlna
 obj-$(RTCONFIG_MEDIA_SERVER) += libgdbm
 obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd
-#obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd-svn-1696
 
 #MEDIA_SERVER_STATIC=y
 
@@ -1312,36 +1305,6 @@ bonnie-clean:
 
 www-install:
 	@$(MAKE) -C www install INSTALLDIR=$(INSTALLDIR)/www TOMATO_EXPERIMENTAL=$(TOMATO_EXPERIMENTAL)
-
-matrixssl:
-	@$(SEP)
-	@$(MAKE) -C matrixssl/src
-
-matrixssl-install:
-	@true
-
-matrixssl-clean:
-	-@$(MAKE) -C matrixssl/src clean
-
-cyassl/stamp-h1:
-	@cd cyassl && CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) \
-	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections \
-	-DNO_MD4 -DNO_AES -DNO_ERROR_STRINGS -DNO_HC128 -DNO_RABBIT -DNO_PSK -DNO_DSA -DNO_DH -DNO_PWDBASED" \
-	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" \
-	PTHREAD_CFLAGS="-lpthread" PTHREAD_LIBS="-lpthread" \
-	$(CONFIGURE) --with-libz=no
-	@touch $@
-
-cyassl: cyassl/stamp-h1
-	@$(SEP)
-	@$(MAKE) -C cyassl
-
-cyassl-clean:
-	-@$(MAKE) -C cyassl clean
-	@rm -f cyassl/stamp-h1
-
-cyassl-install:
-	@true
 
 ifeq ($(RTCONFIG_OPENVPN),y)
 OPENSSL_CIPHERS:=enable-rc5
@@ -2788,35 +2751,6 @@ endif
 mt-daapd: zlib libid3tag libgdbm
 	@$(SEP)
 	@$(MAKE) -C mt-daapd CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1) all $(PARALLEL_BUILD)
-
-mt-daapd-svn-1696/stamp-h1: zlib libid3tag sqlite
-	cd mt-daapd-svn-1696 && $(CONFIGURE) --prefix=/usr \
-	CC=$(CC) \
-	LDFLAGS="-L$(TOP)/sqlite -L$(TOP)/libid3tag -L$(TOP)/zlib -ldl" \
-	CFLAGS="-I$(TOP)/zlib" \
-	--with-id3tag=$(TOP)/libid3tag \
-	--enable-sqlite3 --with-sqlite3-includes=$(TOP)/sqlite \
-	--disable-rpath --disable-dependency-tracking \
-	ac_cv_func_setpgrp_void=yes ac_cv_lib_id3tag_id3_file_open=yes ac_cv_lib_sqlite3_sqlite3_open=yes
-	touch $@
-
-mt-daapd-svn-1696: mt-daapd-svn-1696/stamp-h1
-	@$(SEP)
-	@$(MAKE) -C mt-daapd-svn-1696 all $(PARALLEL_BUILD)
-
-mt-daapd-svn-1696-clean:
-	-@$(MAKE) -C mt-daapd-svn-1696 distclean
-	@rm -f mt-daapd-svn-1696/stamp-h1
-
-mt-daapd-svn-1696-install:
-	rm -rf $(INSTALLDIR)/rom/mt-daapd/admin-root
-	rm -rf $(INSTALLDIR)/rom/mt-daapd/plugins
-	install -d $(INSTALLDIR)/mt-daapd-svn-1696/rom/mt-daapd/plugins
-	cp -rf mt-daapd-svn-1696/admin-root $(INSTALLDIR)/mt-daapd-svn-1696/rom/mt-daapd
-	cd $(INSTALLDIR)/mt-daapd-svn-1696/rom/mt-daapd/admin-root && rm -rf `find -name Makefile` && rm -rf `find -name Makefile.in` && rm -rf `find -name Makefile.am`
-	cp -rf mt-daapd-svn-1696/src/plugins/.libs/*.so $(INSTALLDIR)/mt-daapd-svn-1696/rom/mt-daapd/plugins
-	install -D mt-daapd-svn-1696/src/.libs/mt-daapd $(INSTALLDIR)/mt-daapd-svn-1696/usr/sbin/mt-daapd
-	$(STRIP) $(INSTALLDIR)/mt-daapd-svn-1696/usr/sbin/mt-daapd
 
 mDNSResponder:
 	@$(SEP)

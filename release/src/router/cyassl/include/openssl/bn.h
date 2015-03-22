@@ -1,2 +1,0 @@
-/* bn.h for openssl */
-

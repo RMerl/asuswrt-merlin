@@ -1,3 +1,0 @@
-#!/bin/sh
-export CFLAGS="-g -Wall -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Wcast-align"
-./configure $*
