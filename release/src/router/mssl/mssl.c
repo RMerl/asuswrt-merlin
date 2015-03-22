@@ -30,6 +30,8 @@
 
 #define _dprintf(args...)	while (0) {}
 
+const char *allowedCiphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA";
+
 typedef struct {
 	SSL* ssl;
 	int sd;
@@ -177,6 +179,23 @@ static FILE *_ssl_fopen(int sd, int client)
 	// Bind the socket to SSL structure
 	// kuki->ssl : SSL structure
 	// kuki->sd  : socket_fd
+
+	// Setup EC support
+#ifdef NID_X9_62_prime256v1
+	EC_KEY *ecdh = NULL;
+	if (ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1)) {
+		SSL_CTX_set_tmp_ecdh(ctx, ecdh);
+		EC_KEY_free(ecdh);
+	}
+#endif
+
+	// Setup available ciphers, and enforce their order
+	if (SSL_CTX_set_cipher_list(ctx, allowedCiphers) != 1) {
+		goto ERROR;
+	}
+
+	SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+
 
 	r = SSL_set_fd(kuki->ssl, kuki->sd);
 	//fprintf(stderr,"[ssl_fopen] set_fd=%d\n", r); // tmp test
