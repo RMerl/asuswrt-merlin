@@ -635,7 +635,7 @@ function applyRule(){
 		}	
 	}
 
-	document.form.action_script.value = "restart_wrs;restart_firewall";
+	document.form.action_script.value = "restart_wrs";
 	document.form.wrs_rulelist.value = wrs_rulelist;
 	document.form.wrs_app_rulelist.value = apps_rulelist;
 	if(ctf_disable == 0 && ctf_fa_mode == 2){

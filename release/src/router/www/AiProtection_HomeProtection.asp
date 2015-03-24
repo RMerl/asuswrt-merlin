@@ -202,19 +202,19 @@ function enable_whole_security(){
 
 	if(wrs_cc_enable == 0){
 		document.form.wrs_cc_enable.value = 1;
-		restart_firewall = 1;
+//		restart_firewall = 1;
 		restart_wrs = 1;
 	}
 	
 	if(wrs_vp_enable == 0){
 		document.form.wrs_vp_enable.value = 1;
-		restart_firewall = 1;
+//		restart_firewall = 1;
 		restart_wrs = 1;
 	}
 
 	if(wrs_mals_enable == 0){
 		document.form.wrs_mals_enable.value = 1;
-		restart_firewall = 1;
+//		restart_firewall = 1;
 		restart_wrs = 1;
 	}
 	
@@ -820,7 +820,7 @@ function apply_alert_preference(){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_wrs;restart_firewall">
+<input type="hidden" name="action_script" value="restart_wrs">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wrs_mals_enable" value="<% nvram_get("wrs_mals_enable"); %>">
