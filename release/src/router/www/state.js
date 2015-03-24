@@ -659,6 +659,8 @@ function remove_url(){
 		if(bwdpi_support){
 			menuL1_title[3] ="";            //Parental Control
 			menuL1_link[3] ="";
+			menuL1_title[4] ="";            //QoS
+			menuL1_link[4] ="";
 			menuL1_title[5] ="";            //Traffic Analyzer
 			menuL1_link[5] ="";
 			menuL1_title[7] ="";            //AiCloud 2.0
@@ -722,6 +724,8 @@ function remove_url(){
 		if(bwdpi_support){
 			menuL1_title[3] ="";		//Parental Control
 			menuL1_link[3] ="";
+			menuL1_title[4] ="";		//QoS
+			menuL1_link[4] ="";
 			menuL1_title[5] ="";		//Traffic Analyzer
 			menuL1_link[5] ="";
 			menuL1_title[7] ="";		//AiCloud 2.0
