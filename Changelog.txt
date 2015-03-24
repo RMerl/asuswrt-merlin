@@ -32,6 +32,10 @@ Asuswrt-Merlin Changelog
    - FIXED: The Apply button on the Adaptive Bandwidth page
             had a clickable area so wide that it even covered
             part of the left side menu.  (Asus bug)
+   - FIXED: USB menu was removed instead of Parental Control on
+            DPI-enabled models
+   - FIXED: QoS page was still available on the AP/RP modes on
+            DPI-enabled models
 
 
 378.51 (6-Mar-2015)

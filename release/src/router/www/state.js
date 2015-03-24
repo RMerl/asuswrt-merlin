@@ -655,21 +655,23 @@ function remove_url(){
 		// Guest Network
 		menuL1_title[2] ="";
 		menuL1_link[2] ="";
-		// Traffic Manager
-		menuL1_title[3] ="";
-		menuL1_link[3] ="";
-		// Parental Ctrl
-		menuL1_title[4] ="";
-		menuL1_link[4] ="";				
-		// AiCloud 2.0
+
 		if(bwdpi_support){
-			menuL1_title[5] ="";		//Traffic Analyzer
+			menuL1_title[3] ="";            //Parental Control
+			menuL1_link[3] ="";
+			menuL1_title[4] ="";            //QoS
+			menuL1_link[4] ="";
+			menuL1_title[5] ="";            //Traffic Analyzer
 			menuL1_link[5] ="";
-			menuL1_title[7] ="";		//AiCloud 2.0
+			menuL1_title[7] ="";            //AiCloud 2.0
 			menuL1_link[7] ="";
 		}
 		else{
-			menuL1_title[6] ="";
+			menuL1_title[3] ="";            // Traffic Monitor
+			menuL1_link[3] ="";
+			menuL1_title[4] ="";            // Parental Control
+			menuL1_link[4] ="";
+			menuL1_title[6] ="";            // AiCloud 2.0
 			menuL1_link[6] ="";
 		}
 		
@@ -719,24 +721,24 @@ function remove_url(){
 		remove_menu_item("Main_ConnStatus_Content.asp");
 	}
 	else if(sw_mode == 3){
-		// Traffic Manager
-		menuL1_title[3] ="";
-		menuL1_link[3] ="";		
-		// Parental Ctrl
-		menuL1_title[4] ="";
-		menuL1_link[4] ="";
-		// AiCloud 2.0
-		if(based_modelid == "RT-AC3200"){
+		if(bwdpi_support){
+			menuL1_title[3] ="";		//Parental Control
+			menuL1_link[3] ="";
+			menuL1_title[4] ="";		//QoS
+			menuL1_link[4] ="";
 			menuL1_title[5] ="";		//Traffic Analyzer
 			menuL1_link[5] ="";
 			menuL1_title[7] ="";		//AiCloud 2.0
 			menuL1_link[7] ="";
 		}
 		else{
-			menuL1_title[6] ="";
+			menuL1_title[3] ="";		// Traffic Monitor
+			menuL1_link[3] ="";
+			menuL1_title[4] ="";		// Parental Control
+			menuL1_link[4] ="";
+			menuL1_title[6] ="";		// AiCloud 2.0
 			menuL1_link[6] ="";
 		}
-
 		// WAN
 		menuL2_title[4]="";
 		menuL2_link[4]="";
