@@ -793,6 +793,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dhcp_lease", "86400" },
 	{ "dhcp_gateway_x", "" },
 	{ "dhcp_dns1_x", "" },
+	{ "dhcp_dns2_x", "" },
 	{ "dhcp_wins_x", "" },
 	{ "dhcp_static_x", "0"},
 	{ "dhcp_staticlist", ""},

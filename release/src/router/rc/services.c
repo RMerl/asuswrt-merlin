@@ -828,8 +828,15 @@ void start_dnsmasq()
 
 		/* DNS server and additional router address */
 		value = nvram_safe_get("dhcp_dns1_x");
-		if (*value && inet_addr(value))
-			fprintf(fp, "dhcp-option=lan,6,%s,0.0.0.0\n", value);
+		if (*value && inet_addr(value)) {
+			char *value2;
+
+			value2 = nvram_safe_get("dhcp_dns2_x");
+			fprintf(fp, "dhcp-option=lan,6,%s%s%s\n",
+				     value,
+				     (*value2 && inet_addr(value2) ? "," : ""),
+				     (*value2 && inet_addr(value2) ? value2 : ""));
+		}
 
 		/* LAN Domain */
 		value = nvram_safe_get("lan_domain");

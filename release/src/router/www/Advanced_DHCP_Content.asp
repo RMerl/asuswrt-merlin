@@ -85,6 +85,7 @@ var staticclist_row = dhcp_staticlists.split('&#60');
 var lan_domain_curr = '<% nvram_get("lan_domain"); %>';
 var dhcp_gateway_curr = '<% nvram_get("dhcp_gateway_x"); %>';
 var dhcp_dns1_curr = '<% nvram_get("dhcp_dns1_x"); %>';
+var dhcp_dns2_curr = '<% nvram_get("dhcp_dns2_x"); %>';
 var dhcp_wins_curr = '<% nvram_get("dhcp_wins_x"); %>';
 
 if(yadns_support){
@@ -274,6 +275,7 @@ function applyRule(){
 		// Only restart the whole network if needed
 		if ((document.form.dhcp_wins_x.value != dhcp_wins_curr) ||
 		    (document.form.dhcp_dns1_x.value != dhcp_dns1_curr) ||
+		    (document.form.dhcp_dns2_x.value != dhcp_dns2_curr) ||
 		    (document.form.dhcp_gateway_x.value != dhcp_gateway_curr) ||
 		    (document.form.lan_domain.value != lan_domain_curr)) {
 
@@ -326,6 +328,7 @@ function validForm(){
 
 	if(!validator.ipAddrFinal(document.form.dhcp_gateway_x, 'dhcp_gateway_x') ||
 			!validator.ipAddrFinal(document.form.dhcp_dns1_x, 'dhcp_dns1_x') ||
+			!validator.ipAddrFinal(document.form.dhcp_dns2_x, 'dhcp_dns2_x') ||
 			!validator.ipAddrFinal(document.form.dhcp_wins_x, 'dhcp_wins_x'))
 		return false;
 
@@ -656,9 +659,17 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			  </thead>
 
 			  <tr>
-				<th width="200"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,7);"><#LANHostConfig_x_LDNSServer1_itemname#></a></th>
+				<th width="200"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,7);">DNS Server 1</a></th>
 				<td>
 				  <input type="text" maxlength="15" class="input_15_table" name="dhcp_dns1_x" value="<% nvram_get("dhcp_dns1_x"); %>" onKeyPress="return validator.isIPAddr(this,event)">
+				  <div id="yadns_hint" style="display:none;"></div>
+				</td>
+			  </tr>
+                          
+			  <tr>
+				<th width="200"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,7);">DNS Server 2</a></th>
+				<td>
+				  <input type="text" maxlength="15" class="input_15_table" name="dhcp_dns2_x" value="<% nvram_get("dhcp_dns2_x"); %>" onKeyPress="return validator.isIPAddr(this,event)">
 				  <div id="yadns_hint" style="display:none;"></div>
 				</td>
 			  </tr>
