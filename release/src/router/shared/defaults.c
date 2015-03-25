@@ -2140,6 +2140,13 @@ struct nvram_tuple router_defaults[] = {
 	{ "webui_resolve_conn", "0"},
 	{ "led_disable", "0"},
 
+#ifdef RTCONFIG_TOR
+	{ "Tor_enable",                 "0"},           /* enable Tor Transparent Proxy */
+	{ "Tor_socksport",              "9050"},
+	{ "Tor_transport",              "9040"},
+	{ "Tor_dnsport",                "9053"},
+	{ "Tor_redir_list",             ""},
+#endif
 	{ NULL, NULL }
 };
 
@@ -2481,13 +2488,6 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "modem_idletime", "600"},
 	{ "nmp_client_list",		""},
 	{ "ttl_inc_enable",		"0"},		/* enable TTL increment */
-#ifdef RTCONFIG_TOR	
-	{ "Tor_enable",			"0"},		/* enable Tor Transparent Proxy	*/
-	{ "Tor_socksport",		"9050"},
-	{ "Tor_transport",		"9040"},
-	{ "Tor_dnsport",		"9053"},
-	{ "Tor_redir_list",		""},
-#endif
 #ifdef RTCONFIG_JFFS2USERICON
 	{ "custom_usericon",	""},
 	{ "custom_usericon_del",	""},
