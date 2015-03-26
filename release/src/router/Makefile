@@ -2406,12 +2406,13 @@ libevent-2.0.21-clean:
 
 tor-0.2.5.10: openssl zlib libevent-2.0.21 tor-0.2.5.10/Makefile
 	@$(SEP)
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 tor-0.2.5.10/Makefile:
 	(cd tor-0.2.5.10 ; $(CONFIGURE) --enable-static-libevent --with-libevent-dir=$(TOP)/libevent \
 					--enable-static-openssl --with-openssl-dir=$(TOP)/openssl \
-					--enable-static-zlib --with-zlib-dir=$(TOP)/zlib)
+					--enable-static-zlib --with-zlib-dir=$(TOP)/zlib \
+					--disable-asciidoc)
 
 tor-0.2.5.10-install: tor-0.2.5.10
 	install -D tor-0.2.5.10/src/or/tor $(INSTALLDIR)/tor-0.2.5.10/usr/sbin/Tor
