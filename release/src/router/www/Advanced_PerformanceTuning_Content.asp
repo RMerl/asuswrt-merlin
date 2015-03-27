@@ -46,37 +46,6 @@ function initial(){
 	}
 
 	$("legend").innerHTML = code1 + code2;
-
-	if(based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || based_modelid == "DSL-AC68U"){
-		if ('<% sysinfo("cfe_version"); %>' >= "1.0.1.6") {
-			$("turbocompat").style.display = "";
-		}
-		document.form.selLED.onchange = function(){
-			document.form.btn_led_mode.value = 0;
-			document.form.selCLK.checked = false;
-			$j("#btnDescTr").fadeOut(100);
-		}
-
-		document.form.selCLK.onchange = function(){
-			document.form.btn_led_mode.value = 1;
-			document.form.selLED.checked = false;
-			$j("#btnDescTr").fadeIn(300);
-			scrollTo(1000, 1000);
-			setTimeout('$("alertHint").style.visibility="hidden"', 500);
-			setTimeout('$("alertHint").style.visibility=""', 1000);
-			setTimeout('$("alertHint").style.visibility="hidden"', 1500);
-			setTimeout('$("alertHint").style.visibility=""', 2000);
-			setTimeout('$("alertHint").style.visibility="hidden"', 2500);
-			setTimeout('$("alertHint").style.visibility=""', 3000);
-		}
-
-		$("btnCtrlTr").style.display = "";
-		$("btnDescTr").style.display = "";
-		if(document.form.btn_led_mode.value == 1)
-			document.form.selCLK.click();
-		else
-			document.form.selLED.click();
-	}
 }
 
 function update_coretmp(e){
@@ -214,88 +183,6 @@ function changeTempUnit(num){
 													</select>
 												</td>
 											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr valign="top" style="height:10px;display:none;" id="btnCtrlTr">
-									<td bgcolor="#4D595D" valign="top">
-										<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-											<thead>
-											<tr>
-												<td colspan="2">LED button Behavior</td>
-											</tr>
-											</thead>
-											<tr style="display:none;" id="turbocompat">
-												<td colspan="2"><span>Note: Your router bootloader version is incompatible with Turbo (overclock) mode.</span></td>
-											</tr>
-											<tr>
-												<th style="height:120px"><div align="center"><img src="/images/position.png"></div></th>
-												<td>
-													<div style="cursor:pointer;" onclick="document.form.selLED.click();"><input type="radio" name="selLED" class="input" <% nvram_match("wl_ap_isolate", "1", "checked"); %>>
-														LED: <span style="color:#FC0">Press to turn on and off the LED.</span>
-													</div>
-													<br>
-													<div style="cursor:pointer;" onclick="document.form.selCLK.click();"><input type="radio" name="selCLK" class="input" <% nvram_match("wl_ap_isolate", "0", "checked"); %>>
-														OverClock: <span style="color:#FC0">Press the button to turn on overclock, release the button to turn off.</span>
-													</div>
-												</td>
-											</tr>
-										</table>
-
-									</td>
-								</tr>
-
-								<tr valign="top" style="height:1px;display:none;" id="btnDescTr">
-									<td bgcolor="#4D595D" valign="top" align="center">
-										<br/>
-										<table style="width:90%">
-											<tr height="10px">
-												<td width="20%" valign="center" align="right">
-													<img src="/images/btnReleased.png">
-												</td>
-												<td width="5%"></td>
-												<td align="left" width="75%" valign="center">
-													<table>
-														<tr height="30px">
-															<td valign="middle">
-																<div class="btnTitle">Released</div>
-															</td>
-														</tr>
-														<tr height="50px">
-															<td valign="top">
-																<div id="btnReleased" class="btnDesc">Release the button to turn off overclock, <#Web_Title2#> will reboot automatically.</div>
-															</td>
-														</tr>	
-													</table>
-												</td>
-											</tr>
-
-											<tr height="10px"></tr>
-
-											<tr height="10px">
-												<td width="20%" valign="center" align="right">
-													<img src="/images/btnPressed.png">
-												</td>
-												<td width="5%"></td>
-												<td align="left" width="75%" valign="center">
-													<table>
-														<tr height="30px">
-															<td valign="middle">
-																<div class="btnTitle">Pressed</div>		
-															</td>
-														</tr>	
-														<tr height="90px">
-															<td valign="top">
-																<div id="btnPressed" class="btnDesc">
-																	Press the button to turn on overclock, this process will increase the clock frequency of your <#Web_Title2#> to 1000Mhz and reboot automatically.
-																	<div id='alertHint' style='color: #FF1F00;'>If <#Web_Title2#> does not respond when you turn on overclock, please turn off overclock, power off and on to reboot <#Web_Title2#>.</div>
-																</div>		
-															</td>
-														</tr>	
-													</table>
-												</td>
-											</tr>
-
 										</table>
 									</td>
 								</tr>
