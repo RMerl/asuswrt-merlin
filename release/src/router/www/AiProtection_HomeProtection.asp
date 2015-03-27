@@ -133,7 +133,12 @@ function enable_whole_security(){
 	
 	var action_script_temp = "";
 	var wan0_upnp_enable = document.form.wan0_upnp_enable.value; 
-	var wan1_upnp_enable = document.form.wan1_upnp_enable.value; 
+        var wans_dualwan_orig = document.form.wans_dualwan.value;
+	if(wans_dualwan_orig.search(" ") == -1)
+		var wans_flag = 0;
+	else
+		var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+	var wan1_upnp_enable = (document.form.wan1_upnp_enable.value && wans_flag);
 	var wan_access_enable = document.form.misc_http_x.value;
 	var wan_ping_enable = document.form.misc_ping_x.value;
 	var port_trigger_enable = document.form.autofw_enable_x.value;
@@ -317,8 +322,13 @@ function check_WPS(){
 
 function check_upnp(){
 	var wan0_unpn_enable = document.form.wan0_upnp_enable.value;
-	var wan1_unpn_enable = document.form.wan1_upnp_enable.value;
-	
+        var wans_dualwan_orig = document.form.wans_dualwan.value;
+	if(wans_dualwan_orig.search(" ") == -1)
+		var wans_flag = 0;
+	else
+		var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+	var wan1_unpn_enable = (document.form.wan1_upnp_enable.value && wans_flag);
+
 	if(wan0_unpn_enable == 0 && wan1_unpn_enable == 0){
 		$('upnp_service').innerHTML = "<#checkbox_Yes#>";
 		$('upnp_service').className = "status_yes";
@@ -832,6 +842,7 @@ function apply_alert_preference(){
 <input type="hidden" name="wl_auth_mode_x" value="<% nvram_get("wl_auth_mode_x"); %>" disabled>
 <input type="hidden" name="wan0_upnp_enable" value="<% nvram_get("wan0_upnp_enable"); %>" disabled>
 <input type="hidden" name="wan1_upnp_enable" value="<% nvram_get("wan1_upnp_enable"); %>" disabled>
+<input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>" disabled>
 <input type="hidden" name="misc_http_x" value="<% nvram_get("misc_http_x"); %>" disabled>
 <input type="hidden" name="misc_ping_x" value="<% nvram_get("misc_ping_x"); %>" disabled>
 <input type="hidden" name="dmz_ip" value="<% nvram_get("dmz_ip"); %>" disabled>
