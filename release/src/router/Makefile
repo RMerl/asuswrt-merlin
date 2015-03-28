@@ -2396,20 +2396,20 @@ libevent-2.0.21: libevent-2.0.21/stamp-h1
 
 libevent-2.0.21/stamp-h1:
 	cd libevent-2.0.21 && CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
-	$(CONFIGURE) --prefix=$(TOP)/libevent --enable-static
+	$(CONFIGURE) --prefix=$(TOP)/libevent-2.0.21/staged --enable-static
 	touch $@
 
 libevent-2.0.21-clean:
 	[ ! -f libevent-2.0.21/Makefile ] || $(MAKE) -C libevent-2.0.21 clean
 	@rm -f libevent-2.0.21/stamp-h1
-
+	@rm -f libevent-2.0.21/staged
 
 tor-0.2.5.10: openssl zlib libevent-2.0.21 tor-0.2.5.10/Makefile
 	@$(SEP)
 	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 tor-0.2.5.10/Makefile:
-	(cd tor-0.2.5.10 ; $(CONFIGURE) --enable-static-libevent --with-libevent-dir=$(TOP)/libevent \
+	(cd tor-0.2.5.10 ; $(CONFIGURE) --enable-static-libevent --with-libevent-dir=$(TOP)/libevent-2.0.21/staged \
 					--enable-static-openssl --with-openssl-dir=$(TOP)/openssl \
 					--enable-static-zlib --with-zlib-dir=$(TOP)/zlib \
 					--disable-asciidoc)
@@ -2420,6 +2420,7 @@ tor-0.2.5.10-install: tor-0.2.5.10
 
 tor-0.2.5.10-clean:
 	[ ! -f tor-0.2.5.10/Makefile ] || $(MAKE) -C tor-0.2.5.10 clean
+	@rm -f tor-0.2.5.10/Makefile
 
 iproute2:
 	@$(SEP)
