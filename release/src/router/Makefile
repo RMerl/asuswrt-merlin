@@ -2392,6 +2392,7 @@ iperf-clean:
 
 libevent-2.0.21: libevent-2.0.21/stamp-h1
 	$(MAKE) -C $@
+	@mkdir -p libevent-2.0.21/staged
 	$(MAKE) -C $@ install
 
 libevent-2.0.21/stamp-h1:
@@ -2402,7 +2403,7 @@ libevent-2.0.21/stamp-h1:
 libevent-2.0.21-clean:
 	[ ! -f libevent-2.0.21/Makefile ] || $(MAKE) -C libevent-2.0.21 clean
 	@rm -f libevent-2.0.21/stamp-h1
-	@rm -f libevent-2.0.21/staged
+	@rm -rf libevent-2.0.21/staged
 
 tor-0.2.5.10: openssl zlib libevent-2.0.21 tor-0.2.5.10/Makefile
 	@$(SEP)
