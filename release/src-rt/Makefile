@@ -92,6 +92,10 @@ export EXTENDNO := 0-g$(shell git log --pretty=format:'%h' -n 1)
 endif
 endif
 
+ifneq ($(BUILDREV),)
+export BUILDREV := -g$(shell git log --pretty=format:'%h' -n 1)
+endif
+
 include ./platform.mak
 -include .config
 -include ./dsl.mak
@@ -133,7 +137,7 @@ mips_rev =
 KERN_SIZE_OPT ?= y
 endif
 
-export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)
+export IMGNAME := $(BUILD_NAME)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(BUILDREV)
 export PBDIR   := ../../../asuswrt.prebuilt/$(BUILD_NAME).$(KERNEL_VER).$(FS_VER).$(SERIALNO).$(EXTENDNO)
 
 
