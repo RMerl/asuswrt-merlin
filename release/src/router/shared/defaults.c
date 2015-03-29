@@ -800,7 +800,7 @@ struct nvram_tuple router_defaults[] = {
 	//{ "dhcpd_lmax", "253"},
 	{ "dhcpc_mode", "1"},
 	{ "dhcpd_querylog", "1"},
-
+	{ "dhcpd_dns_router", "1"},
 	// NVRAM for start_dhcpd
 	// Guest DHCP server parameters
 	{ "dhcp1_enable_x", "0" },

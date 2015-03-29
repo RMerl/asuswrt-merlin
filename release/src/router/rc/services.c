@@ -832,10 +832,11 @@ void start_dnsmasq()
 			char *value2;
 
 			value2 = nvram_safe_get("dhcp_dns2_x");
-			fprintf(fp, "dhcp-option=lan,6,%s%s%s\n",
+			fprintf(fp, "dhcp-option=lan,6,%s%s%s%s\n",
 				     value,
 				     (*value2 && inet_addr(value2) ? "," : ""),
-				     (*value2 && inet_addr(value2) ? value2 : ""));
+				     (*value2 && inet_addr(value2) ? value2 : ""),
+				     (nvram_match("dhcpd_dns_router","1") ? ",0.0.0.0" : ""));
 		}
 
 		/* LAN Domain */
