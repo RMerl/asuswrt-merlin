@@ -4,6 +4,11 @@ Asuswrt-Merlin Changelog
 378.52 (xx-xxx-2015)
    - NEW: Merged with Asus GPL 378_4608
    - NEW: Added ECDHE support to the webui (when accessed over HTTPS)
+   - NEW: The DHCP server can now provide a second DNS to its clients
+   - NEW: You can tell the router not to advertise the router as
+          a DNS
+   - NEW: Experimental Tor support (feature originally developed by
+          Asus, but they haven't finalized/enabled it yet)
    - CHANGED: Updated miniupnpd to 1.9.20150309
    - CHANGED: You can no longer disable the JFFS partition if
               Traffic Analyzer is enabled.  Likewise, you can
@@ -13,6 +18,12 @@ Asuswrt-Merlin Changelog
               page will be saved to a cookie
    - CHANGED: Removed obsolete (non-safe) ciphers such as RC4
               from the router's https webui
+   - CHANGED: Updated OpenSSL to 1.0.0r
+   - CHANGED: Removed Turbo button support from webui, as that feature
+              doesn't work with the current bootloader everyone is
+              using now (RT-AC68)
+   - CHANGED: Performance optimization to the httpd, dropbear 
+              and rc services
    - FIXED: 2.4 GHz and 5 GHz-1 clients were swapped on the
             Sysinfo page (RT-AC3200 only)
    - FIXED: Wifi PSK wasn't blurred until activated (regression
@@ -20,13 +31,14 @@ Asuswrt-Merlin Changelog
    - FIXED: Samba's custom config/postconf were ignoring the
             state of the global option to enable them (they
             would always be used)
-   - FIXED: Samba's custom config/postconf usage wasn't
-            logged
+   - FIXED: Samba's custom config/postconf usage wasn't logged
    - FIXED: Some services would fail on their first attempt
             to start at boot time due to the QTN subsystem
             taking too long.  The service notification system
             is now extra patient if the QTN subsystem isn't
-            completely started yet.  (RT-AC87U)
+            completely started yet.  This resolves the issue 
+            where some users had trouble connecting their WAN
+            at boot time (RT-AC87U)
    - FIXED: NAT rules could occasionally fail to be applied
             (patch by john9527)
    - FIXED: The Apply button on the Adaptive Bandwidth page
@@ -36,6 +48,13 @@ Asuswrt-Merlin Changelog
             DPI-enabled models
    - FIXED: QoS page was still available on the AP/RP modes on
             DPI-enabled models
+   - FIXED: Error on OpenVPN Server page if using a DHCP pool for
+            connected clients.
+   - FIXED: UPNP would be reported as enabled on the security report
+            if it was enabled on the secondary WAN even if Dual WAN
+            itself wasn't enabled.  Now we check that Dual WAN itself 
+            is also enabled before reporting so.  (Asus bug)
+   - FIXED: JFFS2 partition couldn't be erased (patch by benoitm974)
 
 
 378.51 (6-Mar-2015)
