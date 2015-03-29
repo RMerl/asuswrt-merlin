@@ -2,7 +2,7 @@ include ../common.mak
 
 #BUILD_READMEM=y
 
-CFLAGS += -Wall -Os $(EXTRACFLAGS)
+CFLAGS += -Wall -O2 $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -idirafter$(LINUXDIR)/include
 CFLAGS += -I$(TOP)/openssl/include
 CFLAGS += -I$(TOP)/push_log
