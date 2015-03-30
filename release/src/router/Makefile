@@ -619,7 +619,7 @@ ifeq ($(RTCONFIG_TOR),y)
 obj-y += openssl
 obj-y += zlib
 obj-y += libevent-2.0.21
-obj-y += tor-0.2.5.10
+obj-y += tor
 endif
 
 #For TR-069 agent
@@ -2405,23 +2405,23 @@ libevent-2.0.21-clean:
 	@rm -f libevent-2.0.21/stamp-h1
 	@rm -rf libevent-2.0.21/staged
 
-tor-0.2.5.10: openssl zlib libevent-2.0.21 tor-0.2.5.10/Makefile
+tor: openssl zlib libevent-2.0.21 tor/Makefile
 	@$(SEP)
 	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
-tor-0.2.5.10/Makefile:
-	(cd tor-0.2.5.10 ; $(CONFIGURE) --enable-static-libevent --with-libevent-dir=$(TOP)/libevent-2.0.21/staged \
+tor/Makefile:
+	(cd tor ; $(CONFIGURE) --enable-static-libevent --with-libevent-dir=$(TOP)/libevent-2.0.21/staged \
 					--enable-static-openssl --with-openssl-dir=$(TOP)/openssl \
 					--enable-static-zlib --with-zlib-dir=$(TOP)/zlib \
 					--disable-asciidoc)
 
-tor-0.2.5.10-install: tor-0.2.5.10
-	install -D tor-0.2.5.10/src/or/tor $(INSTALLDIR)/tor-0.2.5.10/usr/sbin/Tor
-	$(STRIP) $(INSTALLDIR)/tor-0.2.5.10/usr/sbin/Tor
+tor-install: tor
+	install -D tor/src/or/tor $(INSTALLDIR)/tor/usr/sbin/Tor
+	$(STRIP) $(INSTALLDIR)/tor/usr/sbin/Tor
 
-tor-0.2.5.10-clean:
-	[ ! -f tor-0.2.5.10/Makefile ] || $(MAKE) -C tor-0.2.5.10 clean
-	@rm -f tor-0.2.5.10/Makefile
+tor-clean:
+	[ ! -f tor/Makefile ] || $(MAKE) -C tor clean
+	@rm -f tor/Makefile
 
 iproute2:
 	@$(SEP)
