@@ -8,7 +8,8 @@ Asuswrt-Merlin Changelog
    - NEW: You can tell the router not to advertise the router as
           a DNS
    - NEW: Experimental Tor support (feature originally developed by
-          Asus, but they haven't finalized/enabled it yet)
+          Asus, but they haven't finalized/enabled it yet).  You can
+          enable it in the VPN section of the webui.
    - CHANGED: Updated miniupnpd to 1.9.20150309
    - CHANGED: You can no longer disable the JFFS partition if
               Traffic Analyzer is enabled.  Likewise, you can
