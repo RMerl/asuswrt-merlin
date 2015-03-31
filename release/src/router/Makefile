@@ -2410,9 +2410,8 @@ tor: openssl zlib libevent-2.0.21 tor/Makefile
 	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 tor/Makefile:
-	(cd tor ; $(CONFIGURE) --enable-static-libevent --with-libevent-dir=$(TOP)/libevent-2.0.21/staged \
-					--enable-static-openssl --with-openssl-dir=$(TOP)/openssl \
-					--enable-static-zlib --with-zlib-dir=$(TOP)/zlib \
+	(cd tor ; CFLAGS="-O2 $(EXTRACFLAGS)" $(CONFIGURE) \
+					--enable-static-libevent --with-libevent-dir=$(TOP)/libevent-2.0.21/staged \
 					--disable-asciidoc)
 
 tor-install: tor
