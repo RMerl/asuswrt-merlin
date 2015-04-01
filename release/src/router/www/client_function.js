@@ -20,14 +20,14 @@ function convType(str){
 	if(str.length == 0)
 		return 0;
 
-	var siganature = [[], ["win", "pc"], [], [], ["nas", "storage"], ["cam"], [], 
+	var signature = [[], ["win", "pc"], [], [], ["nas", "storage"], ["cam"], [], 
 					  ["ps", "play station", "playstation"], ["xbox"], ["android", "htc"], 
 					  ["iphone", "ipad", "ipod", "ios"], ["appletv", "apple tv"], [], 
 					  ["nb"], ["mac", "mbp", "mba", "apple"]];
 
-	for(var i=0; i<siganature.length; i++){
-		for(var j=0; j<siganature[i].length; j++){
-			if(str.toString().toLowerCase().search(siganature[i][j].toString().toLowerCase()) != -1){
+	for(var i=0; i<signature.length; i++){
+		for(var j=0; j<signature[i].length; j++){
+			if(str.toString().toLowerCase().search(signature[i][j].toString().toLowerCase()) != -1){
 				return i;
 				break;
 			}
