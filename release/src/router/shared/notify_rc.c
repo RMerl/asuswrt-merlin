@@ -44,18 +44,7 @@ static int notify_rc_internal(const char *event_name, bool do_wait, int wait);
 
 int notify_rc(const char *event_name)
 {
-	int wait;
-
-#ifdef RTCONFIG_QTN
-	// Be extra patient while we wait for QTN to be ready, as it's
-        // stalling multiple services from starting
-	if(!nvram_match("qtn_ready", "1"))
-		wait = 90;
-	else
-#endif
-		wait = 20;
-
-	return notify_rc_internal(event_name, FALSE, wait);
+	return notify_rc_internal(event_name, FALSE, 30);
 }
 
 int notify_rc_after_wait(const char *event_name)
