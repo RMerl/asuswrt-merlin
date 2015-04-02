@@ -6562,14 +6562,10 @@ wl_exist(char *ifname, int band)
 	char buf[128], *line;
 	int ret = 1;
 #ifdef RTCONFIG_QTN
-	if (!strcmp(ifname, "wifi0")){
-		ret = rpc_qcsapi_init();
-		if (ret == 0) {
-			return 1;
-		}else{
-			return -1;
-		}
-	}
+	if(nvram_get_int("qtn_ready") == 1)
+		return 1;
+	else
+		return -1;
 #endif
 	sprintf(buf, "wl -i %s bands", ifname);
 	fp = popen(buf, "r");
