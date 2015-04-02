@@ -35,11 +35,10 @@ Asuswrt-Merlin Changelog
    - FIXED: Samba's custom config/postconf usage wasn't logged
    - FIXED: Some services would fail on their first attempt
             to start at boot time due to the QTN subsystem
-            taking too long.  The service notification system
-            is now extra patient if the QTN subsystem isn't
-            completely started yet.  This resolves the issue 
-            where some users had trouble connecting their WAN
-            at boot time (RT-AC87U)
+            taking too long.  Implemented patch from Asus 
+            which eliminates the long QTN stall at boot  
+            time.  This resolves the issue where some users 
+            had trouble connecting their WAN at boot time (RT-AC87U)
    - FIXED: NAT rules could occasionally fail to be applied
             (patch by john9527)
    - FIXED: The Apply button on the Adaptive Bandwidth page
