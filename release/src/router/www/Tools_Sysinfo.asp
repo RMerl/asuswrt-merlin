@@ -205,7 +205,7 @@ function show_etherstate(){
 			if (tmpPort == "0") {
 				port = "WAN";
 			} else {
-				if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U"))  tmpPort = 5 - tmpPort;
+				if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC3200"))  tmpPort = 5 - tmpPort;
 				port = "LAN "+tmpPort;
 			}
 			entry = '<tr><td>' + port + '</td><td>' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td>';
