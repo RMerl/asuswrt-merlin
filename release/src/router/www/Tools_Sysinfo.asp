@@ -64,9 +64,9 @@ function initial(){
 	var firmver = '<% nvram_get("firmver"); %>'
 	var extendno = '<% nvram_get("extendno"); %>';
 	if ((extendno == "") || (extendno == "0"))
-		document.getElementById("fwver").innerHTML = firmver + "." + buildno;
+		document.getElementById("fwver").innerHTML = buildno;
 	else
-		document.getElementById("fwver").innerHTML =  firmver + "." + buildno + '_' + extendno.split("-g")[0];
+		document.getElementById("fwver").innerHTML = buildno + '_' + extendno.split("-g")[0];
 
 	update_temperatures();
 	hwaccel_state();
