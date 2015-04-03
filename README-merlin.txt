@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.52 (xx-xxx-2015)
-===========================================
+Asuswrt-Merlin - build 378.52 (3-Apr-2015)
+==========================================
 
 About
 -----
@@ -91,6 +91,7 @@ Networking:
    - DNS-based Filtering, can be applied globally or per client
    - Custom DDNS (through a user script)
    - Advanced NAT loopback (as an alternative to the default one)
+   - TOR support, individual client control
 
 
 Web interface:
@@ -164,8 +165,10 @@ to have a USB disk plugged in.  This space will survive reboots (but it
 flashing!).  It will also be available fairly early at boot (before 
 USB disks).
 
-The option is enabled by default.  You can however disable it, or 
-reformat it from the Administration -> System page.
+The option is enabled by default.  You can however disable it (not
+recommended, as various features such as the Traffic Analyzer 
+will depend on it), or, reformat it from the 
+Administration -> System page.
 
 On that page you will also find an option called "Enable custom 
 scripts and configs".  If you intend to use custom scripts or 
@@ -405,6 +408,7 @@ The list of available config overrides:
  * radvd.conf
  * smb.conf
  * snmpd.conf
+ * torrc (for the Tor config file)
  * vsftpd.conf
  * upnp (for miniupnpd)
 
@@ -458,6 +462,7 @@ The list of available postconf scripts is:
  * shadow.postconf
  * smb.postconf
  * snmpd.postconf
+ * torrc.postconf
  * upnp.postconf
  * vsftpd.postconf
 

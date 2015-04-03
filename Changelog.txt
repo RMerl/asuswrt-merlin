@@ -1,19 +1,18 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.52 (xx-xxx-2015)
+378.52 (3-Apr-2015)
    - NEW: Merged with Asus GPL 378_4608
    - NEW: Added ECDHE support to the webui (when accessed over HTTPS)
    - NEW: The DHCP server can now provide a second DNS to its clients
-   - NEW: You can tell the router not to advertise the router as
-          a DNS
+   - NEW: You can tell the router not to advertise itself as a DNS
    - NEW: Experimental Tor support (feature originally developed by
-          Asus, but they haven't finalized/enabled it yet).  You can
+          Asus, but not available yet on stock firmware).  You can
           enable it in the VPN section of the webui.
    - CHANGED: Updated miniupnpd to 1.9.20150309
-   - CHANGED: You can no longer disable the JFFS partition if
+   - CHANGED: You can no longer disable the JFFS2 partition if
               Traffic Analyzer is enabled.  Likewise, you can
-              no longer enable Traffic Analyzer if the JFFS
+              no longer enable Traffic Analyzer if the JFFS2
               partition is disabled.
    - CHANGED: The selected refresh rate of the Wireless Clients
               page will be saved to a cookie
@@ -54,7 +53,13 @@ Asuswrt-Merlin Changelog
             if it was enabled on the secondary WAN even if Dual WAN
             itself wasn't enabled.  Now we check that Dual WAN itself 
             is also enabled before reporting so.  (Asus bug)
-   - FIXED: JFFS2 partition couldn't be erased (patch by benoitm974)
+   - FIXED: mtd-erase was unable to erase the brcmnand partition, which
+            is used as the JFFS2 partition starting with the RT-AC66U
+             (patch by benoitm974)
+   - FIXED: JFFS2 partition couldn't be formatted for all routers but
+            the RT-N66U (wrong partition name).  Also resolved the case
+            where a second reboot was required to mount it.
+   - FIXED: RT-AC3200 port numbering was reversed on the Sysinfo page.
 
 
 378.51 (6-Mar-2015)
