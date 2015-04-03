@@ -194,7 +194,7 @@ int mtd_erase_old(const char *mtdname)
 int mtd_erase(const char *mtdname)
 #endif
 {
-	return _unlock_erase(mtdname, 1);
+	return !_unlock_erase(mtdname, 1);
 }
 
 #ifdef RTCONFIG_BCMARM
