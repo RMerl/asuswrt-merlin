@@ -6673,7 +6673,12 @@ void start_Tor_proxy(void)
 	fprintf(fp, "RunAsDaemon 1\n");
 	fprintf(fp, "DataDirectory /tmp/.tordb\n");
 	fprintf(fp, "AvoidDiskWrites 1\n");
+
+	append_custom_config("torrc", fp);
 	fclose(fp);
+	use_custom_config("torrc", "/tmp/torrc");
+	run_postconf("torrc", "/tmp/torrc");
+
 	
 	_eval(Tor_argv, NULL, 0, &pid);
 }
