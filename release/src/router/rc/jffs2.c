@@ -179,7 +179,7 @@ void format_mount_2nd_jffs2(void)
         modprobe(JFFS_NAME);
         sprintf(s, MTD_BLKDEV(%d), part);
         if (mount(s, SECOND_JFFS2_PATH, JFFS_NAME, MS_NOATIME, "") != 0) {
-		if( (get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC56S || get_model()==MODEL_RTAC3200 || get_model()==MODEL_RTAC68U || get_model()==MODEL_RPAC68U || get_model()==MODEL_DSLAC68U || get_model()==MODEL_RTAC87U || get_model()==MODEL_RTAC88U || get_model()==MODEL_RTN18U) ^ (!mtd_erase(JFFS_NAME)) ){
+		if( (get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC56S || get_model()==MODEL_RTAC3200 || get_model()==MODEL_RTAC68U || get_model()==MODEL_RPAC68U || get_model()==MODEL_DSLAC68U || get_model()==MODEL_RTAC87U || get_model()==MODEL_RTAC88U || get_model()==MODEL_RTN18U) ^ (!mtd_erase(SECOND_JFFS2_PARTITION)) ){
                         error("formatting");
                         return;
                 }
@@ -241,7 +241,7 @@ void start_jffs2(void)
 	if (nvram_match("jffs2_format", "1")) {
 		nvram_set("jffs2_format", "0");
 		nvram_commit_x();
-		if (!mtd_erase(JFFS_NAME)) {
+		if (!mtd_erase(JFFS2_PARTITION)) {
 			error("formatting");
 			return;
 		}
@@ -304,7 +304,7 @@ void start_jffs2(void)
 	sprintf(s, MTD_BLKDEV(%d), part);
 
 	if (mount(s, "/jffs", JFFS_NAME, MS_NOATIME, "") != 0) {
-		if (!mtd_erase(JFFS_NAME)) {
+		if (!mtd_erase(JFFS2_PARTITION)) {
                         error("formatting");
                         return;
                 }
