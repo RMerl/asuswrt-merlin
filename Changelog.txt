@@ -1,6 +1,14 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.52_2 (xx-Apr-2015)
+   - CHANGED: Updated AiCloud prebuilt binaries for MIPS models
+   - CHANGED: Applied kernel patch for MIPS kernel ported from 376_3861,
+              related to CTF support
+   - FIXED: AiCloud would fail to start unless you had HTTPS enabled for 
+            the webui (causing the key/cert to be missing)
+
+
 378.52 (3-Apr-2015)
    - NEW: Merged with Asus GPL 378_4608
    - NEW: Added ECDHE support to the webui (when accessed over HTTPS)
