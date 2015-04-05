@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.52_2 (xx-Apr-2015)
+378.52_2 (5-Apr-2015)
    - CHANGED: Updated AiCloud prebuilt binaries for MIPS models
    - CHANGED: Applied kernel patch for MIPS kernel ported from 376_3861,
               related to CTF support
