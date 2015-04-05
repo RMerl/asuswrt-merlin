@@ -7,6 +7,8 @@ Asuswrt-Merlin Changelog
               related to CTF support
    - FIXED: AiCloud would fail to start unless you had HTTPS enabled for 
             the webui (causing the key/cert to be missing)
+   - FIXED: DDNS hostname would become corrupted after backing up
+            your router configuration (Asus bug)
 
 
 378.52 (3-Apr-2015)
