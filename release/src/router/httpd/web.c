@@ -7200,7 +7200,7 @@ prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, cha
 {
 	char *ddns_flag;
 	char *ddns_mac;
-	char *ddns_hostname_tmp = NULL;
+	char ddns_hostname_tmp[33];
 	char model_name;
 	
 	model_name = get_model();
@@ -7213,9 +7213,8 @@ prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, cha
 	}
 	
 	ddns_flag = websGetVar(wp, "path", "");
-
 	if(strcmp(ddns_flag, "0") == 0){
-		ddns_hostname_tmp = nvram_get("ddns_hostname_x");
+		strncpy(ddns_hostname_tmp, nvram_get("ddns_hostname_x"), sizeof(ddns_hostname_tmp));
 		nvram_set("ddns_transfer", "");
 		nvram_set("ddns_hostname_x", "");
 	}
