@@ -6867,8 +6867,8 @@ int get_dns_filter(int proto, int mode, char **server)
 		}
 	}
 
-// Ensure that custom DNS do contain something
-	if (((mode == 8) || (mode == 9) || (mode == 10)) && (!strlen(server[0])) && (proto == AF_INET)) {
+// Ensure that custom and DHCP-provided DNS do contain something
+	if (((mode == 8) || (mode == 9) || (mode == 10) || (mode == 11)) && (!strlen(server[0])) && (proto == AF_INET)) {
 		server[0] = nvram_safe_get("lan_ipaddr");
 	}
 
