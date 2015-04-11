@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.52_2 (5-Apr-2015)
-=============================================
+Asuswrt-Merlin - build 378.53 (xx-xxx-2015)
+===========================================
 
 About
 -----
@@ -92,6 +92,7 @@ Networking:
    - Custom DDNS (through a user script)
    - Advanced NAT loopback (as an alternative to the default one)
    - TOR support, individual client control
+   - Selective client routing (aka split tunnel) for the OpenVPN client
 
 
 Web interface:
@@ -215,7 +216,7 @@ Available scripts:
                   started/stopped, or an OpenVPN client connects to a
                   remote server.  Uses the same syntax/parameters as
                   the "up" and "down" scripts in OpenVPN.
- * post-mount:  Just after a partition is mounted
+ * post-mount: Just after a partition is mounted
  * pre-mount: Just before a partition is mounted.  Be careful with 
               this script.  This is run in a blocking call and will 
               block the mounting of the partition  for which it is 

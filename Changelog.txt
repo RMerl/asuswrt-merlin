@@ -1,6 +1,18 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.53 (xx-xxx-2015)
+   - NEW: OpenVPN selective routing.  You can now select which client IPs
+          you want to route through your OpenVPN client connection.
+          You can optionally block WAN access to these as well when the
+          tunnel goes down.
+   - NEW: Ad blocker based on Trend Micro's Web Reputation System (WRS).
+          This is an EXPERIMENTAL feature implemented by Asus but that
+          isn't enabled in the stock firmware.
+   - FIXED: DNSFilter would fail if you had it set to "Router", and didn't
+            have a DNS IP entered on the WAN page.
+
+
 378.52_2 (5-Apr-2015)
    - CHANGED: Updated AiCloud prebuilt binaries for MIPS models
    - CHANGED: Applied kernel patch for MIPS kernel ported from 376_3861,
