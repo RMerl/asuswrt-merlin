@@ -1087,7 +1087,7 @@ rend_cache_store_v2_desc_as_client(const char *desc,
     goto err;
   }
   /* Decode/decrypt introduction points. */
-  if (intro_content) {
+  if (intro_content && intro_size > 0) {
     int n_intro_points;
     if (rend_query->auth_type != REND_NO_AUTH &&
         !tor_mem_is_zero(rend_query->descriptor_cookie,

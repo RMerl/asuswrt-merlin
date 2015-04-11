@@ -1,3 +1,27 @@
+Changes in version 0.2.5.12 - 2015-04-06
+  Tor 0.2.5.12 backports two fixes from 0.2.6.7 for security issues that
+  could be used by an attacker to crash hidden services, or crash clients
+  visiting hidden services. Hidden services should upgrade as soon as
+  possible; clients should upgrade whenever packages become available.
+
+  This release also backports a simple improvement to make hidden
+  services a bit less vulnerable to denial-of-service attacks.
+
+  o Major bugfixes (security, hidden service):
+    - Fix an issue that would allow a malicious client to trigger an
+      assertion failure and halt a hidden service. Fixes bug 15600;
+      bugfix on 0.2.1.6-alpha. Reported by "disgleirio".
+    - Fix a bug that could cause a client to crash with an assertion
+      failure when parsing a malformed hidden service descriptor. Fixes
+      bug 15601; bugfix on 0.2.1.5-alpha. Found by "DonnchaC".
+
+  o Minor features (DoS-resistance, hidden service):
+    - Introduction points no longer allow multiple INTRODUCE1 cells to
+      arrive on the same circuit. This should make it more expensive for
+      attackers to overwhelm hidden services with introductions.
+      Resolves ticket 15515.
+
+
 Changes in version 0.2.5.11 - 2015-03-17
   Tor 0.2.5.11 is the second stable release in the 0.2.5 series.
 

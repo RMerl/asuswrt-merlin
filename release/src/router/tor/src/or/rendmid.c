@@ -149,6 +149,20 @@ rend_mid_introduce(or_circuit_t *circ, const uint8_t *request,
     goto err;
   }
 
+  /* We have already done an introduction on this circuit but we just
+     received a request for another one. We block it since this might
+     be an attempt to DoS a hidden service (#15515). */
+  if (circ->already_received_introduce1) {
+    log_fn(LOG_PROTOCOL_WARN, LD_REND,
+           "Blocking multiple introductions on the same circuit. "
+           "Someone might be trying to attack a hidden service through "
+           "this relay.");
+    circuit_mark_for_close(TO_CIRCUIT(circ), END_CIRC_REASON_TORPROTOCOL);
+    return -1;
+  }
+
+  circ->already_received_introduce1 = 1;
+
   /* We could change this to MAX_HEX_NICKNAME_LEN now that 0.0.9.x is
    * obsolete; however, there isn't much reason to do so, and we're going
    * to revise this protocol anyway.

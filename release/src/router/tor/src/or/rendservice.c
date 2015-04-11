@@ -1819,6 +1819,16 @@ rend_service_parse_intro_for_v2(
 
     goto err;
   }
+  if (128 != crypto_pk_keysize(extend_info->onion_key)) {
+    if (err_msg_out) {
+      tor_asprintf(err_msg_out,
+                   "invalid onion key size in version %d INTRODUCE%d cell",
+                   intro->version,
+                   (intro->type));
+    }
+
+    goto err;
+  }
 
   ver_specific_len = 7+DIGEST_LEN+2+klen;
 

@@ -4684,7 +4684,7 @@ rend_parse_introduction_points(rend_service_descriptor_t *parsed,
                                size_t intro_points_encoded_size)
 {
   const char *current_ipo, *end_of_intro_points;
-  smartlist_t *tokens;
+  smartlist_t *tokens = NULL;
   directory_token_t *tok;
   rend_intro_point_t *intro;
   extend_info_t *info;
@@ -4693,8 +4693,10 @@ rend_parse_introduction_points(rend_service_descriptor_t *parsed,
   tor_assert(parsed);
   /** Function may only be invoked once. */
   tor_assert(!parsed->intro_nodes);
-  tor_assert(intro_points_encoded);
-  tor_assert(intro_points_encoded_size > 0);
+  if (!intro_points_encoded || intro_points_encoded_size == 0) {
+    log_warn(LD_REND, "Empty or zero size introduction point list");
+    goto err;
+  }
   /* Consider one intro point after the other. */
   current_ipo = intro_points_encoded;
   end_of_intro_points = intro_points_encoded + intro_points_encoded_size;
@@ -4798,8 +4800,10 @@ rend_parse_introduction_points(rend_service_descriptor_t *parsed,
 
  done:
   /* Free tokens and clear token list. */
-  SMARTLIST_FOREACH(tokens, directory_token_t *, t, token_clear(t));
-  smartlist_free(tokens);
+  if (tokens) {
+    SMARTLIST_FOREACH(tokens, directory_token_t *, t, token_clear(t));
+    smartlist_free(tokens);
+  }
   if (area)
     memarea_drop_all(area);
 
