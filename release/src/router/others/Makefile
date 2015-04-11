@@ -33,6 +33,7 @@ endif
 ifeq ($(RTCONFIG_OPENVPN),y)
 	install -m 0700 setuprsa.sh $(INSTALLDIR)/usr/sbin
 	install -m 0700 -D updown.sh $(INSTALLDIR)/usr/sbin
+	install -m 0700 -D vpnrouting.sh $(INSTALLDIR)/usr/sbin
 endif
 
 # Entware setup script

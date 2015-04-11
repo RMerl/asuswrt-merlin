@@ -5586,6 +5586,9 @@ check_ddr_done:
 		if (action & RC_SERVICE_STOP) stop_vpnserver(atoi(&script[9]));
 		if (action & RC_SERVICE_START) start_vpnserver(atoi(&script[9]));
 	}
+	else if (strncmp(script, "vpnrouting" ,10) == 0) {
+		if (action & RC_SERVICE_START) update_vpnrouting(atoi(&script[10]));
+	}
 #endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
 	else if (strcmp(script, "vpnd") == 0)

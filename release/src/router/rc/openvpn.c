@@ -228,17 +228,29 @@ void start_vpnclient(int clientNum)
 	if ( !nvram_contains_word(&buffer[0], "default") )
 		fprintf(fp, "cipher %s\n", nvram_safe_get(&buffer[0]));
 	sprintf(&buffer[0], "vpn_client%d_rgw", clientNum);
-	if ( nvram_get_int(&buffer[0]) )
+	nvi = nvram_get_int(&buffer[0]);
+	if (nvi == 1)
 	{
 		sprintf(&buffer[0], "vpn_client%d_gw", clientNum);
 		if ( ifType == TAP && nvram_safe_get(&buffer[0])[0] != '\0' )
 			fprintf(fp, "route-gateway %s\n", nvram_safe_get(&buffer[0]));
 		fprintf(fp, "redirect-gateway def1\n");
 	}
-	if ( (nvi = nvram_get_int("vpn_loglevel")) >= 0 )
-                fprintf(fp, "verb %d\n", nvi);
-        else
-                fprintf(fp, "verb 3\n");
+
+	// For selective routing
+	sprintf(&buffer[0], "/etc/openvpn/client%d/vpnrouting.sh", clientNum);
+	symlink("/usr/sbin/vpnrouting.sh", &buffer[0]);
+	fprintf(fp, "script-security 2\n");	// also for up/down scripts
+	fprintf(fp, "route-delay 2\n");
+	fprintf(fp, "route-up vpnrouting.sh\n");
+	fprintf(fp, "route-pre-down vpnrouting.sh\n");
+
+	nvi = nvram_get_int("vpn_loglevel");
+	if (nvi >= 0)
+		fprintf(fp, "verb %d\n", nvi);
+	else
+		fprintf(fp, "verb 3\n");
+
 	if ( cryptMode == TLS )
 	{
 		sprintf(&buffer[0], "vpn_client%d_reneg", clientNum);
@@ -250,7 +262,6 @@ void start_vpnclient(int clientNum)
 		{
 			sprintf(&buffer[0], "/etc/openvpn/client%d/updown.sh", clientNum);
 			symlink("/usr/sbin/updown.sh", &buffer[0]);
-			fprintf(fp, "script-security 2\n");
 			fprintf(fp, "up updown.sh\n");
 			fprintf(fp, "down updown.sh\n");
 		}
@@ -304,7 +315,6 @@ void start_vpnclient(int clientNum)
 	{
 		sprintf(&buffer[0], "/etc/openvpn/client%d/updown.sh", clientNum);
 		symlink("/jffs/scripts/openvpn-event", &buffer[0]);
-		fprintf(fp, "script-security 2\n");
 		fprintf(fp, "up updown.sh\n");
 		fprintf(fp, "down updown.sh\n");
 	}
@@ -1735,5 +1745,11 @@ int check_ovpn_server_enabled(int unit){
 
 int check_ovpn_client_enabled(int unit){
 	return _check_ovpn_enabled(unit, "vpn_clientx_eas");
+}
+
+void update_vpnrouting(int unit){
+	char tmp[64];
+	snprintf(tmp, sizeof (tmp), "dev=tun1%d script_type=rmupdate /usr/sbin/vpnrouting.sh", unit);
+	system(tmp);
 }
 

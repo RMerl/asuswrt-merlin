@@ -1884,6 +1884,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client1_useronly",	"0"		},
 	{ "vpn_client1_state",		"0"		},
 	{ "vpn_client1_errno",		"0"		},
+	{ "vpn_client1_clientlist",	""		},
+	{ "vpn_client1_enforce",	"0"		},
 	{ "vpn_client2_poll",		"0"		},
 	{ "vpn_client2_if",		"tun"		},
 	{ "vpn_client2_bridge",		"1"		},
@@ -1919,6 +1921,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client2_password",	""		},
 	{ "vpn_client2_state",		"0"		},
 	{ "vpn_client2_errno",		"0"		},
+	{ "vpn_client2_clientlist",	""		},
+	{ "vpn_client2_enforce",	"0"		},
 	{ "vpn_client_poll",		"0"		},
 	{ "vpn_client_if",		"tun"		},
 	{ "vpn_client_bridge",		"1"		},
@@ -1947,6 +1951,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client_username",	""		},
 	{ "vpn_client_password",	""		},
 	{ "vpn_client_useronly",	"0"		},
+	{ "vpn_client_clientlist",	""		},
+	{ "vpn_client_enforce",		"0"		},
 #endif
 
 #ifdef RTCONFIG_PUSH_EMAIL
