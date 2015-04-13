@@ -2,6 +2,7 @@ Asuswrt-Merlin Changelog
 ========================
 
 378.53 (xx-xxx-2015)
+   - NEW: Merged with Asus GPL 378_4950 (with pieces from 378_4850 for AC56/AC68)
    - NEW: OpenVPN selective routing.  You can now select which client IPs
           you want to route through your OpenVPN client connection.
           You can optionally block WAN access to these as well when the
@@ -9,6 +10,7 @@ Asuswrt-Merlin Changelog
    - NEW: Ad blocker based on Trend Micro's Web Reputation System (WRS).
           This is an EXPERIMENTAL feature implemented by Asus but that
           isn't enabled in the stock firmware.
+   - CHANGED: Updated Tor to 0.2.5.12
    - FIXED: DNSFilter would fail if you had it set to "Router", and didn't
             have a DNS IP entered on the WAN page.
 
