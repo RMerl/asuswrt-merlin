@@ -165,13 +165,10 @@ extern int get_anomaly_main(char *cmd);
 extern int get_app_patrol_main();
 
 //dpi.c
-extern int check_bwdpi_nvram_setting();
 extern void stop_dpi_engine_service(int forced);
 extern void run_dpi_engine_service();
 extern void start_dpi_engine_service();
 extern void save_version_of_bwdpi();
-extern void stop_bwdpi_monitor_service();
-extern void start_bwdpi_monitor_service();
 extern void setup_dev_wan();
 
 //web_history.c
@@ -198,3 +195,9 @@ extern void get_hostname_from_NMP(char *mac, char *hostname);
 extern void erase_symbol(char *old, char *sym);
 extern void extract_data(char *path, FILE *fp);
 
+//watchdog_check.c
+extern void auto_sig_check();
+extern void sqlite_db_check();
+extern void stop_bwdpi_monitor_service();
+extern void start_bwdpi_monitor_service();
+extern void check_bwdpi_monitor();
