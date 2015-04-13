@@ -329,7 +329,7 @@ static const applets_t applets[] = {
 	{ "halt",			reboothalt_main			},
 	{ "reboot",			reboothalt_main			},
 	{ "ntp", 			ntp_main			},
-#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_RTL8365MB)
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_EXT_RTL8365MB)
 	{ "rtkswitch",			config_rtkswitch		},
 #elif defined(RTCONFIG_QCA)
 	{ "rtkswitch",			config_rtkswitch		},
@@ -478,15 +478,7 @@ int main(int argc, char **argv)
 
 		return get_apps_name(argv[1]);
 	}
-	else if(!strcmp(base, "asus_sd")){
-		if(argc != 3){
-			printf("Usage: asus_sd [device_name] [action]\n");
-			return 0;
-		}
-
-		return asus_sd(argv[1], argv[2]);
-	}
-#ifdef RTCONFIG_BCMARM
+#ifdef BCM_MMC
 	else if(!strcmp(base, "asus_mmc")){
 		if(argc != 3){
 			printf("Usage: asus_mmc [device_name] [action]\n");
@@ -496,6 +488,14 @@ int main(int argc, char **argv)
 		return asus_mmc(argv[1], argv[2]);
 	}
 #endif	
+	else if(!strcmp(base, "asus_sd")){
+		if(argc != 3){
+			printf("Usage: asus_sd [device_name] [action]\n");
+			return 0;
+		}
+
+		return asus_sd(argv[1], argv[2]);
+	}
 	else if(!strcmp(base, "asus_lp")){
 		if(argc != 3){
 			printf("Usage: asus_lp [device_name] [action]\n");
@@ -876,46 +876,32 @@ int main(int argc, char **argv)
 
 		return 0;
 	}
-#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
-	else if(!strcmp(base, "modem_bytes_plus")){
-		char buf[32];
-		unsigned long long rx_old, tx_old;
-		unsigned long long rx, tx;
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
+	else if(!strcmp(base, "lplus")){
+		if(argc != 3){
+			printf("Usage: %s <integer1> <integer2>.\n", argv[0]);
+			return 0;
+		}
 
-		if(f_exists("/jffs/modem_bytes_rx_old")){
-			f_read_excl("/jffs/modem_bytes_rx_old", buf, 32);
-			rx_old = strtoull(buf, NULL, 10);
-		}
-		else
-			rx_old = 0;
-		if(f_exists("/jffs/modem_bytes_tx_old")){
-			f_read_excl("/jffs/modem_bytes_tx_old", buf, 32);
-			tx_old = strtoull(buf, NULL, 10);
-		}
-		else
-			tx_old = 0;
-		if(f_exists("/jffs/modem_bytes_rx")){
-			f_read_excl("/jffs/modem_bytes_rx", buf, 32);
-			rx = strtoull(buf, NULL, 10);
-		}
-		else
-			rx = 0;
-		if(f_exists("/jffs/modem_bytes_tx")){
-			f_read_excl("/jffs/modem_bytes_tx", buf, 32);
-			tx = strtoull(buf, NULL, 10);
-		}
-		else
-			tx = 0;
+		unsigned long long int1 = strtoull(argv[1], NULL, 10);
+		unsigned long long int2 = strtoull(argv[2], NULL, 10);
+		unsigned long long total = int1+int2;
 
-		rx += rx_old;
-		tx += tx_old;
+		printf("%llu", total);
 
-		snprintf(buf, 32, "%llu", rx);
-		f_write_excl("/jffs/modem_bytes_rx_old", buf, strlen(buf), 0, 0);
-		nvram_set("modem_bytes_rx_old", buf);
-		snprintf(buf, 32, "%llu", tx);
-		f_write_excl("/jffs/modem_bytes_tx_old", buf, strlen(buf), 0, 0);
-		nvram_set("modem_bytes_tx_old", buf);
+		return 0;
+	}
+	else if(!strcmp(base, "lminus")){
+		if(argc != 3){
+			printf("Usage: %s <integer1> <integer2>.\n", argv[0]);
+			return 0;
+		}
+
+		unsigned long long int1 = strtoull(argv[1], NULL, 10);
+		unsigned long long int2 = strtoull(argv[2], NULL, 10);
+		unsigned long long total = int1-int2;
+
+		printf("%llu", total);
 
 		return 0;
 	}

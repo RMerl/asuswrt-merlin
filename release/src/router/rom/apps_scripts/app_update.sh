@@ -65,7 +65,7 @@ nvram set apps_state_update=1 # UPDATING
 SQ_TEST=`nvram get apps_sq`
 i=0
 while [ $i -lt $row_num ]; do
-	i=$(($i+1))
+	i=$((i+1))
 	list_name=`sed -n $i'p' $TEMP_FILE |awk '{print $1}'`
 	server_name=`sed -n $i'p' $TEMP_FILE |awk '{print $2}'`
 

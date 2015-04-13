@@ -1298,6 +1298,21 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		printf("FINISH\n");
 	}
 #endif	/* RT4GAC55U */
+#if defined(RTCONFIG_TCODE)
+	else if (!strcmp(command, "Set_TerritoryCode")) {
+		if (setTerritoryCode(value) < 0)
+		{
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
+			return EINVAL;
+		}
+		getTerritoryCode();
+		return 0;
+	}
+	else if (!strcmp(command, "Get_TerritoryCode")) {
+		getTerritoryCode();
+		return 0;
+	}
+#endif
 	else
 	{
 		puts("ATE_UNSUPPORT");

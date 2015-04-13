@@ -202,9 +202,9 @@ function submitForm(){
 		return;
 	}
 
-	if(document.form.http_passwd.value == 'admin' && (parent.based_modelid == "RT-AC87U" || parent.based_modelid == "RT-AC3200")){	//MODELDEP : RT-AC87U
+	if(document.form.http_passwd.value == 'admin'){
 		if(http_passwd_flag == 0){
-			alert('The new password is the same as system default password. We strongly recommend that you set a more complex password.');
+			alert("<#QIS_adminpass_confirm0#>");
 			document.form.http_passwd.focus();
 			document.form.http_passwd.select();
 			http_passwd_flag = 1;
@@ -212,7 +212,7 @@ function submitForm(){
 			return false;
 		}
 		else{
-			if(!confirm('If you do not change the default password (admin), your router is vulnerable to security threats and others can easily guess the login password. Are you sure to keep this unsafe password?')){
+			if(!confirm("<#QIS_adminpass_confirm1#>")){
 				document.form.http_passwd.focus();
 				document.form.http_passwd.select();
 				changeiuiBackground(0);

@@ -93,10 +93,10 @@ extern void FANON(void);
 
 #endif	//end of DSLAC68U
 
-#ifdef RTAC88B
+#ifdef RTL8365MB
 #define SMI_SCK_GPIO	(1 << 6)	// GPIO 6
 #define SMI_SDA_GPIO	(1 << 7)	// GPIO 7
-#endif	/*~RTAC88B*/
+#endif	/*~RTL8365MB*/
 
 static int
 ui_cmd_reboot(ui_cmdline_t *cmd, int argc, char *argv[])
@@ -275,7 +275,7 @@ done:
 	return ret;
 }
 
-#ifdef RTAC88B
+#ifdef RTL8365MB
 void set_gpio_dir(rtk_uint32 gpioid, rtk_uint32 dir)
 {
 	sih = si_kattach(SI_OSH);
@@ -343,7 +343,7 @@ extern void GPIO_INIT(void)
 	sih = si_kattach(SI_OSH);
 	ASSERT(sih);
 	si_gpiocontrol(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
-#ifdef RTAC88B
+#ifdef RTL8365MB
 	si_gpiocontrol(sih, SMI_SCK_GPIO, 0, GPIO_DRV_PRIORITY);
 	si_gpiocontrol(sih, SMI_SDA_GPIO, 0, GPIO_DRV_PRIORITY);
 #else
@@ -353,7 +353,7 @@ extern void GPIO_INIT(void)
 #endif
 
 	si_gpioouten(sih, PWR_LED_GPIO, 0, GPIO_DRV_PRIORITY);
-#ifdef RTAC88B
+#ifdef RTL8365MB
 	si_gpioouten(sih, SMI_SCK_GPIO, 0, GPIO_DRV_PRIORITY);
 	si_gpioouten(sih, SMI_SDA_GPIO, 0, GPIO_DRV_PRIORITY);
 #else

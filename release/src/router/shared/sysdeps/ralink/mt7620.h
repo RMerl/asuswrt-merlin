@@ -319,8 +319,15 @@ typedef struct {
 #define REG_ESW_PORT_BSR_P0		0x201c
 #define REG_ESW_MAC_PMSR_P0		0x3008
 #define REG_ESW_MAC_PMCR_P6		0x3600
+#if defined(RTCONFIG_RALINK_MT7620)
 #define REG_ESW_PORT_TGOCN_P0		0x4018
 #define REG_ESW_PORT_RGOCN_P0		0x4028
+#elif defined(RTCONFIG_RALINK_MT7621)
+#define REG_ESW_PORT_TGOCN_P0		0x4048
+#define REG_ESW_PORT_RGOCN_P0		0x40a8
+#else
+#error
+#endif
 
 /* for ATE Get_WanLanStatus command */
 

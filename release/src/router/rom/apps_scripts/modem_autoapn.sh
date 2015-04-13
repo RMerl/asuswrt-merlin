@@ -71,7 +71,7 @@ else
 			break
 		fi
 
-		line=$(($line+1))
+		line=$((line+1))
 		content=`sed -n ${line}p $dataf 2>/dev/null`
 	done
 	nvram set usb_modem_auto_running=1

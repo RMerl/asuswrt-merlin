@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <shared.h>
 #include "usb_info.h"
+#include "disk_initial.h"
 #include <shutils.h>
 
 //#ifdef RTN56U
@@ -87,15 +88,13 @@ int get_device_type_by_device(const char *device_name)
 		return DEVICE_TYPE_UNKNOWN;
 	}
 
-#ifdef RTCONFIG_USB
-	if(!strncmp(device_name, "sd", 2)
-#ifdef SUPPORT_IDE_SATA_DISK
-			|| !strncmp(device_name, "hd", 2)
+	if(isStorageDevice(device_name)
+#ifdef BCM_MMC
+			|| isMMCDevice(device_name) // SD card.
 #endif
 			){
 		return DEVICE_TYPE_DISK;
 	}
-#endif
 #ifdef RTCONFIG_USB_PRINTER
 	if(!strncmp(device_name, "lp", 2)){
 		return DEVICE_TYPE_PRINTER;
@@ -131,9 +130,7 @@ char *get_device_type_by_node(const char *usb_node, char *buf, const int buf_siz
 #ifdef RTCONFIG_USB_MODEM
 	int got_modem = 0;
 #endif
-#ifdef RTCONFIG_USB
 	int got_disk = 0;
-#endif
 	int got_others = 0;
 
 	interface_num = get_usb_interface_number(usb_node);
@@ -154,11 +151,9 @@ char *get_device_type_by_node(const char *usb_node, char *buf, const int buf_siz
 			++got_modem;
 		else
 #endif
-#ifdef RTCONFIG_USB
 		if(isStorageInterface(interface_name))
 			++got_disk;
 		else
-#endif
 			++got_others;
 	}
 
@@ -174,12 +169,7 @@ char *get_device_type_by_node(const char *usb_node, char *buf, const int buf_siz
 #else
 			1
 #endif
-			&&
-#ifdef RTCONFIG_USB
-			!got_disk
-#else
-			1
-#endif
+			&& !got_disk
 			)
 		return NULL;
 
@@ -194,11 +184,9 @@ char *get_device_type_by_node(const char *usb_node, char *buf, const int buf_siz
 		strcpy(buf, "modem");
 	else
 #endif
-#ifdef RTCONFIG_USB
 	if(got_disk > 0)
 		strcpy(buf, "storage");
 	else
-#endif
 		return NULL;
 
 	return buf;
@@ -251,7 +239,7 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 {
 	int device_type = get_device_type_by_device(device_name);
 	char device_path[128], usb_path[PATH_MAX];
-	char disk_name[4];
+	char disk_name[16];
 
 	if(device_type == DEVICE_TYPE_UNKNOWN)
 		return NULL;
@@ -259,10 +247,8 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 	memset(device_path, 0, 128);
 	memset(usb_path, 0, PATH_MAX);
 
-#ifdef RTCONFIG_USB
 	if(device_type == DEVICE_TYPE_DISK){
-		memset(disk_name, 0, 4);
-		strncpy(disk_name, device_name, 3);
+		get_disk_name(device_name, disk_name, 16);
 		sprintf(device_path, "%s/%s/device", SYS_BLOCK, disk_name);
 		if(realpath(device_path, usb_path) == NULL){
 			usb_dbg("(%s): Fail to get link: %s.\n", device_name, device_path);
@@ -270,7 +256,6 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 		}
 	}
 	else
-#endif
 #ifdef RTCONFIG_USB_PRINTER
 	if(device_type == DEVICE_TYPE_PRINTER){
 		sprintf(device_path, "%s/%s/device", SYS_USB, device_name);
@@ -325,8 +310,14 @@ char *get_usb_node_by_device(const char *device_name, char *buf, const int buf_s
 #endif
 		return NULL;
 
+#ifdef BCM_MMC
+	if(isMMCDevice(device_name)){ // SD card.
+		snprintf(buf, buf_size, "%s", SDCARD_PORT);
+	}
+	else
+#endif
 	if(get_usb_node_by_string(usb_path, buf, buf_size) == NULL){
-		usb_dbg("(%s): Fail to get usb port: %s.\n", device_name, usb_path);
+		usb_dbg("(%s): Fail to get usb node: %s.\n", device_name, usb_path);
 		return NULL;
 	}
 
@@ -349,6 +340,10 @@ char *get_usb_port_by_string(const char *target_string, char *buf, const int buf
 		strcpy(buf, USB_OHCI_PORT_1);
 	else if(strstr(target_string, USB_OHCI_PORT_2))
 		strcpy(buf, USB_OHCI_PORT_2);
+#ifdef BCM_MMC
+	else if(strstr(target_string, SDCARD_PORT))
+		strcpy(buf, SDCARD_PORT);
+#endif
 	else if(strstr(target_string, USB_EHCI_PORT_3))
 		strcpy(buf, USB_EHCI_PORT_3);
 	else if(strstr(target_string, USB_OHCI_PORT_3))
@@ -363,7 +358,7 @@ char *get_usb_port_by_device(const char *device_name, char *buf, const int buf_s
 {
 	int device_type = get_device_type_by_device(device_name);
 	char device_path[128], usb_path[PATH_MAX];
-	char disk_name[4];
+	char disk_name[16];
 
 	if(device_type == DEVICE_TYPE_UNKNOWN)
 		return NULL;
@@ -371,10 +366,8 @@ char *get_usb_port_by_device(const char *device_name, char *buf, const int buf_s
 	memset(device_path, 0, 128);
 	memset(usb_path, 0, PATH_MAX);
 
-#ifdef RTCONFIG_USB
 	if(device_type == DEVICE_TYPE_DISK){
-		memset(disk_name, 0, 4);
-		strncpy(disk_name, device_name, 3);
+		get_disk_name(device_name, disk_name, 16);
 		sprintf(device_path, "%s/%s/device", SYS_BLOCK, disk_name);
 		if(realpath(device_path, usb_path) == NULL){
 			usb_dbg("(%s): Fail to get link: %s.\n", device_name, device_path);
@@ -382,7 +375,6 @@ char *get_usb_port_by_device(const char *device_name, char *buf, const int buf_s
 		}
 	}
 	else
-#endif
 #ifdef RTCONFIG_USB_PRINTER
 	if(device_type == DEVICE_TYPE_PRINTER){
 		sprintf(device_path, "%s/%s/device", SYS_USB, device_name);
@@ -437,6 +429,12 @@ char *get_usb_port_by_device(const char *device_name, char *buf, const int buf_s
 #endif
 		return NULL;
 
+#ifdef BCM_MMC
+	if(isMMCDevice(device_name)){ // SD card.
+		snprintf(buf, buf_size, "%s", SDCARD_PORT);
+	}
+	else
+#endif
 	if(get_usb_port_by_string(usb_path, buf, buf_size) == NULL){
 		usb_dbg("(%s): Fail to get usb port: %s.\n", device_name, usb_path);
 		return NULL;
@@ -500,7 +498,7 @@ char *get_interface_by_device(const char *device_name, char *buf, const int buf_
 {
 	int device_type = get_device_type_by_device(device_name);
 	char device_path[128], usb_path[PATH_MAX];
-	char disk_name[4];
+	char disk_name[16];
 
 	if(device_type == DEVICE_TYPE_UNKNOWN)
 		return NULL;
@@ -508,10 +506,8 @@ char *get_interface_by_device(const char *device_name, char *buf, const int buf_
 	memset(device_path, 0, 128);
 	memset(usb_path, 0, PATH_MAX);
 
-#ifdef RTCONFIG_USB
 	if(device_type == DEVICE_TYPE_DISK){
-		memset(disk_name, 0, 4);
-		strncpy(disk_name, device_name, 3);
+		get_disk_name(device_name, disk_name, 16);
 		sprintf(device_path, "%s/%s/device", SYS_BLOCK, disk_name);
 		if(realpath(device_path, usb_path) == NULL){
 			usb_dbg("(%s): Fail to get link: %s.\n", device_name, device_path);
@@ -519,7 +515,6 @@ char *get_interface_by_device(const char *device_name, char *buf, const int buf_
 		}
 	}
 	else
-#endif
 #ifdef RTCONFIG_USB_PRINTER
 	if(device_type == DEVICE_TYPE_PRINTER){
 		sprintf(device_path, "%s/%s/device", SYS_USB, device_name);
@@ -1239,7 +1234,6 @@ int isPrinterInterface(const char *interface_name)
 }
 #endif // RTCONFIG_USB_PRINTER
 
-#ifdef RTCONFIG_USB
 int isStorageInterface(const char *interface_name)
 {
 	char interface_class[4];
@@ -1252,7 +1246,22 @@ int isStorageInterface(const char *interface_name)
 
 	return 1;
 }
-#endif // RTCONFIG_USB
+
+int isStorageDevice(const char *device_name){
+	if(!strncmp(device_name, "sd", 2))
+		return 1;
+
+	return 0;
+}
+
+#ifdef BCM_MMC
+int isMMCDevice(const char *device_name){
+	if(!strncmp(device_name, "mmcblk", 6))
+		return 1;
+
+	return 0;
+}
+#endif
 
 char *find_sg_of_device(const char *device_name, char *buf, const int buf_size)
 {

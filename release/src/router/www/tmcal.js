@@ -246,6 +246,10 @@ function loadData()
 						t = "<#Ethernet_wan#> (WAN)";
 					else if(wans_dualwan_array[0] == "lan")
 						t = "<#Ethernet_wan#> (LAN)";
+					else if(wans_dualwan_array[0] == "dsl")
+						t = "DSL WAN";
+					else
+						t = "<#dualwan_primary#>";
 				}				
 				else
 					t = "<#Internet#>";
@@ -259,7 +263,9 @@ function loadData()
 				else if(wans_dualwan_array[1] == "wan")
 					t = "<#Ethernet_wan#> (WAN)";
 				else if(wans_dualwan_array[1] == "lan")
-					t = "<#Ethernet_wan#> (LAN)";			
+					t = "<#Ethernet_wan#> (LAN)";
+				else
+					t = "<#dualwan_secondary#>";
 			}
 			else if (i.search("WIRELESS") > -1 && i.search(".") > -1)
 				t = "NotUsed";
@@ -287,7 +293,7 @@ function loadData()
 		}
 		
 		//Sort tab by Viz 2014.06
-		var tabsort = ["speed-tab-INTERNET,<#Internet#>", "speed-tab-INTERNET,<#dualwan_primary#>","speed-tab-INTERNET1,<#dualwan_secondary#>","speed-tab-INTERNET,<#Ethernet_wan#> (WAN)","speed-tab-INTERNET,<#Ethernet_wan#> (LAN)","speed-tab-INTERNET,USB Modem","speed-tab-INTERNET,<#Mobile_title#>","speed-tab-INTERNET1,<#Ethernet_wan#> (WAN)","speed-tab-INTERNET1,<#Ethernet_wan#> (LAN)","speed-tab-INTERNET1,<#Mobile_title#>","speed-tab-INTERNET1,USB Modem","speed-tab-WIRED,<#tm_wired#>","speed-tab-WIRELESS0,<#tm_wireless#> (2.4GHz)","speed-tab-WIRELESS1,<#tm_wireless#> (5GHz)","speed-tab-BRIDGE,LAN"];
+		var tabsort = ["speed-tab-INTERNET,<#Internet#>", "speed-tab-INTERNET,<#dualwan_primary#>","speed-tab-INTERNET1,<#dualwan_secondary#>","speed-tab-INTERNET,DSL WAN","speed-tab-INTERNET,<#Ethernet_wan#> (WAN)","speed-tab-INTERNET,<#Ethernet_wan#> (LAN)","speed-tab-INTERNET,USB Modem","speed-tab-INTERNET,<#Mobile_title#>","speed-tab-INTERNET1,<#Ethernet_wan#> (WAN)","speed-tab-INTERNET1,<#Ethernet_wan#> (LAN)","speed-tab-INTERNET1,<#Mobile_title#>","speed-tab-INTERNET1,USB Modem","speed-tab-WIRED,<#tm_wired#>","speed-tab-WIRELESS0,<#tm_wireless#> (2.4GHz)","speed-tab-WIRELESS1,<#tm_wireless#> (5GHz)","speed-tab-BRIDGE,LAN"];
 		var sortabs = [];		
 		for(var i=0;i<tabsort.length;i++){
 			for(var j=0;j<tabs.length;j++){	

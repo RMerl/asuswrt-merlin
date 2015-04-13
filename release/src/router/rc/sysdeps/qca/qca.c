@@ -2530,6 +2530,49 @@ int setForceU3(const char *val)
 }
 #endif
 
+#if defined(RTCONFIG_TCODE)
+int getTerritoryCode(void)
+{
+	char buf[6];
+
+	memset(buf, 0, sizeof(buf));
+	FRead(&buf, OFFSET_TERRITORY_CODE, 5);
+	if ((unsigned char)buf[0] != 0xFF)
+		puts(buf);
+
+	return 0;
+}
+
+int setTerritoryCode(const char *tcode)
+{
+	unsigned char buf[5];
+
+	/* special case
+	 * if tcode == "FFFFF", Write FF, FF, FF, FF, FF to OFFSET_TERRITORY_CODE
+	 */
+	if (!strcmp(tcode, "FFFFF")) {
+		memset(buf, 0xFF, sizeof(buf));
+		FWrite(buf, OFFSET_TERRITORY_CODE, 5);
+		nvram_unset("territory_code");
+
+		return 0;
+	}
+
+	/* [A-Z][A-Z]/[0-9][0-9] */
+	if (tcode[2] != '/' ||
+	    !isupper(tcode[0]) || !isupper(tcode[1]) ||
+	    !isdigit(tcode[3]) || !isdigit(tcode[4]))
+	{
+		return -1;
+	}
+
+	FWrite(tcode, OFFSET_TERRITORY_CODE, 5);
+	nvram_set("territory_code", tcode);
+
+	return 0;
+}
+#endif
+
 void platform_start_ate_mode(void)
 {
 	int model = get_model();
@@ -2597,10 +2640,11 @@ getSiteSurvey(int band,char* ofile)
 	char prefix_header[]="Cell xx - Address:";
 /////
 	dbG("site survey...\n");
-	lock = file_lock("nvramcommit");
+	lock = file_lock("sitesurvey");
 	system("rm -f /tmp/apscan_wlist");
 	snprintf(prefix, sizeof(prefix), "wl%d_", band);
 	sprintf(cmd,"iwlist %s scanning >> /tmp/apscan_wlist",nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+	ifconfig(nvram_safe_get(strcat_r(prefix, "ifname", tmp)), IFUP, NULL, NULL);
 	system(cmd);
 	file_unlock(lock);
 	

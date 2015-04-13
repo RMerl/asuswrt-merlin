@@ -11,6 +11,9 @@ ifeq ($(RTCONFIG_WEBDAV),y)
 PROGS += write_webdav_conf
 endif
 
+ifeq ($(BCM_MMC),y)
+CFLAGS += -DBCM_MMC
+endif
 CFLAGS += -fPIC $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(KERNEL_HEADER_DIR) -Wall
 LDFLAGS_SO = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared

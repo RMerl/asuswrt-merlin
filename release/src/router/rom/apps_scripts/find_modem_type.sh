@@ -4,14 +4,23 @@
 
 modem_act_path=`nvram get usb_modem_act_path`
 node_home=/sys/devices
+home="$node_home/"`cd $node_home && find -name "$modem_act_path" 2>/dev/null`
 modem_enable=`nvram get modem_enable`
+modem_vid=`cat $home/idVendor 2>/dev/null`
+modem_pid=`cat $home/idProduct 2>/dev/null`
+
+if [ "$modem_vid" == "" -o "$modem_pid" == "" ]; then
+	echo "type=unknown"
+	nvram set usb_modem_act_type=
+	exit 0
+fi
 
 
 _find_act_type(){
-	home="$node_home/"`cd $node_home && find -name "$1" 2>/dev/null`
-	nodes=`cd $home && ls -d $1:* 2>/dev/null`
+	nodes=`cd $home && ls -d $modem_act_path:* 2>/dev/null`
 
 	got_tty=0
+	got_ecm=0
 	got_other=0
 	for node in $nodes; do
 		path=`readlink -f $home/$node/driver 2>/dev/null`
@@ -24,9 +33,8 @@ _find_act_type(){
 			got_tty=1
 			continue
 		elif [ "$t" == "cdc_ether" ]; then
-			got_other=1
-			echo "ecm"
-			break
+			got_ecm=1
+			continue
 		elif [ "$t" == "rndis_host" ]; then
 			got_other=1
 			echo "rndis"
@@ -54,16 +62,24 @@ _find_act_type(){
 		fi
 	done
 
-	if [ $got_tty -eq 1 -a $got_other -ne 1 ]; then
-		echo "tty"
+	if [ $got_other -ne 1 ]; then
+		if [ $got_tty -eq 1 ]; then
+			echo "tty"
+		elif [ $got_ecm -eq 1 ]; then
+			echo "ecm"
+		else
+			echo "tty"
+		fi
 	fi
 }
 
-type=`_find_act_type "$modem_act_path"`
+type=`_find_act_type`
 if [ "$modem_enable" == "4" ]; then
 	type="wimax"
 # Some dongles are worked strange with QMI. e.q. Huawei EC306.
 elif [ "$modem_enable" == "2" -a "$type" == "qmi" ]; then
+	type="tty"
+elif [ "$modem_vid" == "19d2" -a "$modem_pid" == "1589" ]; then # ZTE MF193A
 	type="tty"
 fi
 echo "type=$type."

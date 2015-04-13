@@ -27,7 +27,7 @@ include .depend
 endif
 
 all:	$(PLUGINS)
-	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d all; done
+	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d all || exit $$?; done
 
 %.so: %.c
 	$(CC) -o $@ $(LDFLAGS) $(CFLAGS) $^
@@ -37,7 +37,7 @@ VERSION = $(shell awk -F '"' '/VERSION/ { print $$2; }' ../patchlevel.h)
 install: $(PLUGINS)
 	$(INSTALL) -d $(LIBDIR)
 	$(INSTALL) $? $(LIBDIR)
-	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d install; done
+	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d install || exit $$?; done
 
 clean:
 	rm -f *.o *.so *.a

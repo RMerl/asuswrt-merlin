@@ -263,6 +263,16 @@ function QIS_load_body(){
 				action = "/qis/QIS_sitesurvey.htm";
 				submit();
 				break;
+			case "sitesurvey_rep":
+				document.QKform.sw_mode.value = "2";
+				action = "/qis/QIS_sitesurvey.htm";
+				submit();
+				break;
+			case "lanip":
+				document.QKform.sw_mode.value = "3";
+				action = "/qis/QIS_lanip.htm";
+				submit();
+				break;
 			default:
 				if(showCase.split("?").length == 1)
 					action = "/qis/QIS_" + showCase + ".htm";

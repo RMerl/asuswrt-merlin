@@ -302,7 +302,7 @@ function addRow_main(obj, length){
 function genMain_table(){
 	var category_name = ["<#AiProtection_filter_Adult#>", "<#AiProtection_filter_message#>", "<#AiProtection_filter_p2p#>", "<#AiProtection_filter_stream#>"];
 	var sub_category_name = [["<#AiProtection_filter_Adult1#>", "<#AiProtection_filter_Adult2#>", "<#AiProtection_filter_Adult3#>"],
-							 ["<#AiProtection_filter_Adult3#>", "<#AiProtection_filter_Adult5#>", "<#AiProtection_filter_Adult6#>", "<#AiProtection_filter_Adult7#>", "<#AiProtection_filter_Adult8#>"],
+							 ["<#AiProtection_filter_Adult4#>", "<#AiProtection_filter_Adult5#>", "<#AiProtection_filter_Adult6#>", "<#AiProtection_filter_Adult7#>", "<#AiProtection_filter_Adult8#>"],
 							 ["<#AiProtection_filter_p2p1#>", "<#AiProtection_filter_p2p2#>"],
 							 ["<#AiProtection_filter_stream1#>", "<#AiProtection_filter_stream2#>", "<#AiProtection_filter_stream3#>"]];
 	var category_desc = ["<#AiProtection_filter_Adult_desc#>", 
@@ -311,6 +311,7 @@ function genMain_table(){
 						 "<#AiProtection_filter_stream_desc#>"];
 		
 	var match_flag = 0;
+
 	var apps_filter_row = apps_filter.split("<");
 	var code = "";	
 	code += '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
@@ -361,7 +362,7 @@ function genMain_table(){
 			var apps_filter_col = apps_filter_row[k].split('>');
 			var cat_flag = new Array(apps_filter_col[2]);
 			var apps_client_name = "";
-			
+
 			for(i=0;i<custom_name_row.length;i++){
 				var custom_name_col = custom_name_row[i].split(">");
 				if(custom_name_col[1] == apps_filter_col[1]){
@@ -400,7 +401,7 @@ function genMain_table(){
 				}	
 			}
 			
-			code += '<td style="text-align:left;">';		
+			code += '<td style="text-align:left;">';	
 			for(i=0;i<category_name.length;i++){
 				var cate_flag_array = new Array(apps_filter_col[i+2]);
 				var cate_flag_array_col = cate_flag_array[0].split(",");
@@ -652,7 +653,6 @@ function applyRule(){
 }
 
 function translate_category_id(){
-	//var mapping_array_init = [[0],[0,0,0], [0,0,0,0,0], [0,0], [0,0,0]];
 	var mapping_array_init = [[0,0,0], [0,0,0,0,0], [0,0], [0,0,0]];
 	var apps_filter_row = "";
 	var wrs_filter_row = "";
@@ -684,48 +684,45 @@ function translate_category_id(){
 				apps_filter_temp += wrs_filter_col[j] + ">";	
 			}
 			else{
-					for(k=0;k<mapping_array_init[j-2].length;k++){	
-						if(wrs_filter_col[j] != "" && wrs_app_filter_col[j] != ""){
-	
-							if(wrs_id_array[j-2][k] != ""){
-								if(wrs_filter_col[j].indexOf(wrs_id_array[j-2][k]) != -1){
-									mapping_array_init[j-2][k] = 1;
-								}
+				for(k=0;k<mapping_array_init[j-2].length;k++){		
+					if(wrs_filter_col[j] != "" && wrs_app_filter_col[j] != ""){
+						if(wrs_id_array[j-2][k] != ""){
+							if(wrs_id_array[j-2][k] != "" && (wrs_filter_col[j].indexOf(wrs_id_array[j-2][k]) != -1)){
+								mapping_array_init[j-2][k] = 1;
 							}
+						}
 							
-							if(apps_id_array[j-2][k] != ""){
-								if(wrs_app_filter_col[j].indexOf(apps_id_array[j-2][k]) != -1){
-									mapping_array_init[j-2][k] = 1;	
-								}	
-							}						
+						if(apps_id_array[j-2][k] != ""){
+							if(apps_id_array[j-2][k] != "" && (wrs_app_filter_col[j].indexOf(apps_id_array[j-2][k]) != -1)){
+								mapping_array_init[j-2][k] = 1;	
+							}	
+						}						
+					}
+					else if(wrs_filter_col[j] != ""){
+						if(wrs_id_array[j-2][k] != ""  && (wrs_filter_col[j].indexOf(wrs_id_array[j-2][k]) != -1)){
+							mapping_array_init[j-2][k] = 1;
 						}
-						else if(wrs_filter_col[j] != ""){
-							if(wrs_filter_col[j].indexOf(wrs_id_array[j-2][k]) != -1){
-								mapping_array_init[j-2][k] = 1;
-							}
+					}
+					else if(wrs_app_filter_col[j] != ""){
+						if(apps_id_array[j-2][k]!= "" && (wrs_app_filter_col[j].indexOf(apps_id_array[j-2][k]) != -1)){
+							mapping_array_init[j-2][k] = 1;
 						}
-						else if(wrs_app_filter_col[j] != ""){
-							if(wrs_app_filter_col[j].indexOf(apps_id_array[j-2][k]) != -1){
-								mapping_array_init[j-2][k] = 1;
-							}
-						}
-						else{
-							mapping_array_init[j-2][k] = 0;
-						}
+					}
+					else{
+						mapping_array_init[j-2][k] = 0;
+					}
 						
-						if(k == 0)
-							apps_filter_temp += mapping_array_init[j-2][k];	
-						else
-							apps_filter_temp += "," + mapping_array_init[j-2][k];
-						
-					}	
+					if(k == 0)
+						apps_filter_temp += mapping_array_init[j-2][k];	
+					else
+						apps_filter_temp += "," + mapping_array_init[j-2][k];						
+				}	
 	
 				if(j != apps_filter_col.length-1 )
 					apps_filter_temp += ">";
 			}
 		}
 
-		//mapping_array_init = [[0], [0,0,0], [0,0,0,0,0], [0,0], [0,0,0]];
 		mapping_array_init = [[0,0,0], [0,0,0,0,0], [0,0], [0,0,0]];
 	}
 

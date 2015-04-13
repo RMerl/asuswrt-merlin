@@ -337,18 +337,6 @@ unsigned int get_radio_status(char *ifname)
 			return !!(ifr.ifr_flags & IFF_UP);
 	}
 	return 0;
-#if 0 //eric++
-	struct iwreq wrq;
-	unsigned int data = 0;
-
-	wrq.u.data.length = sizeof(data);
-	wrq.u.data.pointer = (caddr_t) & data;
-	wrq.u.data.flags = ASUS_SUBCMD_RADIO_STATUS;
-	if (wl_ioctl(ifname, RTPRIV_IOCTL_ASUSCMD, &wrq) < 0)
-		printf("ioctl error\n");
-
-	return data;
-#endif //eric++
 }
 
 int get_radio(int unit, int subunit)

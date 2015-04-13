@@ -44,6 +44,68 @@ cleanup(void)
 	exit(0);
 }
 
+/* #565: Access Intranet off */
+void create_mbssid_vlan(void)
+{
+	if(nvram_get_int("wl1.1_bss_enabled") == 1){
+		if(nvram_match("wl1.1_lanaccess", "off") &&
+			!nvram_match("wl1.1_lanaccess", "")){
+			/* VID 4000 */
+			eval("vconfig", "add", "eth0", "4000");
+			eval("ifconfig", "vlan4000", "up");
+			eval("brctl", "addif", "br0", "vlan4000");
+			eval("et", "robowr", "0x05", "0x81", "0x0fa0");
+			eval("et", "robowr", "0x05", "0x83", "0x00a0");
+			eval("et", "robowr", "0x05", "0x80", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0080");
+		}else{
+			eval("brctl", "delif", "br0", "vlan4000");
+			eval("et", "robowr", "0x05", "0x81", "0x0fa0");
+			eval("et", "robowr", "0x05", "0x83", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0080");
+		}
+	}
+	if(nvram_get_int("wl1.2_bss_enabled") == 1){
+		if(nvram_match("wl1.2_lanaccess", "off") &&
+			!nvram_match("wl1.2_lanaccess", "")){
+			/* VID 4001 */
+			eval("vconfig", "add", "eth0", "4001");
+			eval("ifconfig", "vlan4001", "up");
+			eval("brctl", "addif", "br0", "vlan4001");
+			eval("et", "robowr", "0x05", "0x81", "0x0fa1");
+			eval("et", "robowr", "0x05", "0x83", "0x00a0");
+			eval("et", "robowr", "0x05", "0x80", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0080");
+		}else{
+			eval("brctl", "delif", "br0", "vlan4001");
+			eval("et", "robowr", "0x05", "0x81", "0x0fa1");
+			eval("et", "robowr", "0x05", "0x83", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0080");
+		}
+	}
+	if(nvram_get_int("wl1.3_bss_enabled") == 1){
+		if(nvram_match("wl1.3_lanaccess", "off") &&
+			!nvram_match("wl1.3_lanaccess", "")){
+			/* VID 4002 */
+			eval("vconfig", "add", "eth0", "4002");
+			eval("ifconfig", "vlan4002", "up");
+			eval("brctl", "addif", "br0", "vlan4002");
+			eval("et", "robowr", "0x05", "0x81", "0x0fa2");
+			eval("et", "robowr", "0x05", "0x83", "0x00a0");
+			eval("et", "robowr", "0x05", "0x80", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0080");
+		}else{
+			eval("brctl", "delif", "br0", "vlan4002");
+			eval("et", "robowr", "0x05", "0x81", "0x0fa2");
+			eval("et", "robowr", "0x05", "0x83", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0000");
+			eval("et", "robowr", "0x05", "0x80", "0x0080");
+		}
+	}
+}
+
 static void
 qtn_monitor_exit(int sig)
 {
@@ -106,6 +168,17 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 			rpc_update_mbss("wl1.1_wpa_gtk_rekey", nvram_safe_get("wl1.1_wpa_gtk_rekey"));
 			rpc_update_mbss("wl1.1_auth_mode_x", nvram_safe_get("wl1.1_auth_mode_x"));
 			rpc_update_mbss("wl1.1_mbss", nvram_safe_get("wl1.1_mbss"));
+			if(nvram_get_int("sw_mode") == SW_MODE_ROUTER){
+				if(nvram_match("wl1.1_lanaccess", "off") && !nvram_match("wl1.1_lanaccess", "")){
+					dbG("[lanaccess] wifi1 lanaccess off\n");
+					// libqcsapi_client/qtn/qtn_vlan.h
+					// QVLAN_VID_ALL: 0xffff
+					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */, 0);
+					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_bind, 4000 /* vid */, 0);
+				}else{
+					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_unbind, 4000 /* vid */, 0);
+				}
+			}
 		}
 		else{
 			qcsapi_wifi_remove_bss(wl_vifname_qtn(unit, subunit));
@@ -118,6 +191,17 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 			rpc_update_mbss("wl1.2_wpa_gtk_rekey", nvram_safe_get("wl1.2_wpa_gtk_rekey"));
 			rpc_update_mbss("wl1.2_auth_mode_x", nvram_safe_get("wl1.2_auth_mode_x"));
 			rpc_update_mbss("wl1.2_mbss", nvram_safe_get("wl1.2_mbss"));
+			if(nvram_get_int("sw_mode") == SW_MODE_ROUTER){
+				if(nvram_match("wl1.2_lanaccess", "off") && !nvram_match("wl1.2_lanaccess", "")){
+					dbG("[lanaccess] wifi2 lanaccess off\n");
+					// libqcsapi_client/qtn/qtn_vlan.h
+					// QVLAN_VID_ALL: 0xffff
+					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */, 0);
+					qcsapi_wifi_vlan_config("wifi2", e_qcsapi_vlan_bind, 4001 /* vid */, 0);
+				}else{
+					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_unbind, 4001 /* vid */, 0);
+				}
+			}
 		}
 		else{
 			qcsapi_wifi_remove_bss(wl_vifname_qtn(unit, subunit));
@@ -130,10 +214,24 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 			rpc_update_mbss("wl1.3_wpa_gtk_rekey", nvram_safe_get("wl1.3_wpa_gtk_rekey"));
 			rpc_update_mbss("wl1.3_auth_mode_x", nvram_safe_get("wl1.3_auth_mode_x"));
 			rpc_update_mbss("wl1.3_mbss", nvram_safe_get("wl1.3_mbss"));
+			if(nvram_get_int("sw_mode") == SW_MODE_ROUTER){
+				if(nvram_match("wl1.3_lanaccess", "off") && !nvram_match("wl1.3_lanaccess", "")){
+					dbG("[lanaccess] wifi3 lanaccess off\n");
+					// libqcsapi_client/qtn/qtn_vlan.h
+					// QVLAN_VID_ALL: 0xffff
+					qcsapi_wifi_vlan_config("wifi0", e_qcsapi_vlan_enable, 0xffff /* QVLAN_VID_ALL */, 0);
+					qcsapi_wifi_vlan_config("wifi3", e_qcsapi_vlan_bind, 4002 /* vid */, 0);
+				}else{
+					qcsapi_wifi_vlan_config("wifi1", e_qcsapi_vlan_unbind, 4002 /* vid */, 0);
+				}
+			}
 		}
 		else{
 			qcsapi_wifi_remove_bss(wl_vifname_qtn(unit, subunit));
 		}
+	}
+	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER){
+		create_mbssid_vlan();
 	}
 
 //	rpc_show_config();

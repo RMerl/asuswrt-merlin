@@ -1,5 +1,5 @@
 /* dnssec.c is Copyright (c) 2012 Giovanni Bajo <rasky@develer.com>
-           and Copyright (c) 2012-2014 Simon Kelley
+           and Copyright (c) 2012-2015 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include <nettle/dsa-compat.h>
 #endif
 
+#include <utime.h>
 
 #define SERIAL_UNDEF  -100
 #define SERIAL_EQ        0
@@ -275,7 +276,7 @@ static int dnsmasq_ecdsa_verify(struct blockdata *key_data, unsigned int key_len
     }
   
   if (sig_len != 2*t || key_len != 2*t ||
-      (p = blockdata_retrieve(key_data, key_len, NULL)))
+      !(p = blockdata_retrieve(key_data, key_len, NULL)))
     return 0;
   
   mpz_import(x, t , 1, 1, 0, 0, p);
@@ -394,16 +395,89 @@ static int serial_compare_32(unsigned long s1, unsigned long s2)
   return SERIAL_UNDEF;
 }
 
+/* Called at startup. If the timestamp file is configured and exists, put its mtime on
+   timestamp_time. If it doesn't exist, create it, and set the mtime to 1-1-2015.
+   return -1 -> Cannot create file.
+           0 -> not using timestamp, or timestamp exists and is in past.
+           1 -> timestamp exists and is in future.
+*/
+
+static time_t timestamp_time;
+static int back_to_the_future;
+
+int setup_timestamp(void)
+{
+  struct stat statbuf;
+  
+  back_to_the_future = 0;
+  
+  if (!daemon->timestamp_file)
+    return 0;
+  
+  if (stat(daemon->timestamp_file, &statbuf) != -1)
+    {
+      timestamp_time = statbuf.st_mtime;
+    check_and_exit:
+      if (difftime(timestamp_time, time(0)) <=  0)
+	{
+	  /* time already OK, update timestamp, and do key checking from the start. */
+	  if (utime(daemon->timestamp_file, NULL) == -1)
+	    my_syslog(LOG_ERR, _("failed to update mtime on %s: %s"), daemon->timestamp_file, strerror(errno));
+	  back_to_the_future = 1;
+	  return 0;
+	}
+      return 1;
+    }
+  
+  if (errno == ENOENT)
+    {
+      /* NB. for explanation of O_EXCL flag, see comment on pidfile in dnsmasq.c */ 
+      int fd = open(daemon->timestamp_file, O_WRONLY | O_CREAT | O_NONBLOCK | O_EXCL, 0666);
+      if (fd != -1)
+	{
+	  struct utimbuf timbuf;
+
+	  close(fd);
+	  
+	  timestamp_time = timbuf.actime = timbuf.modtime = 1420070400; /* 1-1-2015 */
+	  if (utime(daemon->timestamp_file, &timbuf) == 0)
+	    goto check_and_exit;
+	}
+    }
+
+  return -1;
+}
+
 /* Check whether today/now is between date_start and date_end */
 static int check_date_range(unsigned long date_start, unsigned long date_end)
 {
-  unsigned long curtime;
-
+  unsigned long curtime = time(0);
+ 
   /* Checking timestamps may be temporarily disabled */
-  if (option_bool(OPT_DNSSEC_TIME))
+    
+  /* If the current time if _before_ the timestamp
+     on our persistent timestamp file, then assume the
+     time if not yet correct, and don't check the
+     key timestamps. As soon as the current time is
+     later then the timestamp, update the timestamp
+     and start checking keys */
+  if (daemon->timestamp_file)
+    {
+      if (back_to_the_future == 0 && difftime(timestamp_time, curtime) <= 0)
+	{
+	  if (utime(daemon->timestamp_file, NULL) != 0)
+	    my_syslog(LOG_ERR, _("failed to update mtime on %s: %s"), daemon->timestamp_file, strerror(errno));
+	  
+	  back_to_the_future = 1;	
+	  set_option_bool(OPT_DNSSEC_TIME);
+	  queue_event(EVENT_RELOAD); /* purge cache */
+	} 
+
+      if (back_to_the_future == 0)
+	return 1;
+    }
+  else if (option_bool(OPT_DNSSEC_TIME))
     return 1;
-  
-  curtime = time(0);
   
   /* We must explicitly check against wanted values, because of SERIAL_UNDEF */
   return serial_compare_32(curtime, date_start) == SERIAL_GT

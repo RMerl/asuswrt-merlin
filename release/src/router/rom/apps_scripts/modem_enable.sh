@@ -97,7 +97,7 @@ _find_usb3_path(){
 			return
 		fi
 
-		count=$(($count+1))
+		count=$((count+1))
 	done
 
 	echo "-1"
@@ -115,7 +115,7 @@ _find_usb2_path(){
 			return
 		fi
 
-		count=$(($count+1))
+		count=$((count+1))
 	done
 
 	echo "-1"
@@ -133,7 +133,7 @@ _find_usb1_path(){
 			return
 		fi
 
-		count=$(($count+1))
+		count=$((count+1))
 	done
 
 	echo "-1"
@@ -209,7 +209,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				sleep 1
 
 				modem_act_node=`nvram get $act_node`
-				tries=$((tries + 1))
+				tries=$((tries+1))
 			done
 			if [ "$modem_act_node" != "" ]; then
 				echo "Reset modem: Fail to reset modem."
@@ -226,7 +226,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				sleep 1
 
 				reset_flag=`nvram get usb_modem_act_reset`
-				tries=$((tries + 1))
+				tries=$((tries+1))
 			done
 
 			nvram set usb_modem_act_reset=0
@@ -273,7 +273,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				sleep 1
 
 				at_ret=`$at_lock modem_at.sh '+CFUN?' |grep "+CFUN: 1" 2>/dev/null`
-				tries=$((tries + 1))
+				tries=$((tries+1))
 			done
 
 			if [ "$at_ret" == "" ]; then
@@ -387,7 +387,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			sleep 1
 
 			at_ret=`$at_lock modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
-			tries=$((tries + 1))
+			tries=$((tries+1))
 		done
 
 		if [ "$at_ret" == "" ]; then
@@ -442,7 +442,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				sleep 1
 
 				at_ret=`$at_lock modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
-				tries=$((tries + 1))
+				tries=$((tries+1))
 			done
 
 			if [ "$ret" == "" ]; then
@@ -462,7 +462,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		#	sleep 1
 
 		#	at_ret=`uqmi -d $wdm --get-data-status |grep "=connected" 2>/dev/null`
-		#	tries=$((tries + 1))
+		#	tries=$((tries+1))
 		#done
 
 		#if [ "$at_ret" == "" ]; then
@@ -580,7 +580,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				sleep 1
 
 				at_ret=`$at_lock modem_at.sh '+CGATT?' |grep "+CGATT: 1" 2>/dev/null`
-				tries=$((tries + 1))
+				tries=$((tries+1))
 			done
 
 			if [ "$at_ret" == "" ]; then

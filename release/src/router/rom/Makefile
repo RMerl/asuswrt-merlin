@@ -45,6 +45,9 @@ install:
 	mkdir -p $(INSTALLDIR)
 	( tar --exclude=.svn --exclude=*.bak -cpf - rom ) | ( cd $(INSTALLDIR) && tar -xpf - )
 
+ifeq ($(RTAC88U),y)
+	install -m 0644 smb.conf $(INSTALLDIR)/rom/smb.conf
+endif
 ifeq ($(RTCONFIG_APP_PREINSTALLED),y)
 	install -m 0644 optware.asus.$(pkg_type) $(INSTALLDIR)/rom/optware.asus
 ifeq ($(RTCONFIG_BCMARM),y)

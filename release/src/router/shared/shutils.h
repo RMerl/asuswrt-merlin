@@ -340,4 +340,18 @@ int ure_any_enabled(void);
 #define vstrsep(buf, sep, args...) _vstrsep(buf, sep, args, NULL)
 extern int _vstrsep(char *buf, const char *sep, ...);
 
+/* Buffer structure for collecting string-formatted data
+ * using str_bprintf() API.
+ * Use str_binit() to initialize before use
+ */
+struct strbuf {
+        char *buf;              /* pointer to current position in origbuf */
+        unsigned int size;      /* current (residual) size in bytes */
+        char *origbuf;          /* unmodified pointer to orignal buffer */
+        unsigned int origsize;  /* unmodified orignal buffer size in bytes */
+};
+
+extern void str_binit(struct strbuf *b, char *buf, uint size);
+extern int str_bprintf(struct strbuf *b, const char *fmt, ...);
+
 #endif /* _shutils_h_ */

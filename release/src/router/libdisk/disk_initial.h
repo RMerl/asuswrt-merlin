@@ -23,8 +23,12 @@
 #define MOUNT_FILE "/proc/mounts"
 
 #define USB_DISK_MAJOR 8
-
 #define DEFAULT_USB_TAG "USB disk"
+
+#ifdef BCM_MMC
+#define MMC_DISK_MAJOR 179
+#define DEFAULT_MMC_TAG "SD card"
+#endif
 
 #define PARTITION_TYPE_UNKNOWN "unknown"
 

@@ -92,7 +92,7 @@ _check_log_message(){
 _loop_delay(){
 	i=0
 	while [ $i -lt $1 ]; do
-		i=$(($i+1))
+		i=$((i+1))
 		echo "."
 	done
 }

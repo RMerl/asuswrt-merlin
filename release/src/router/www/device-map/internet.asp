@@ -21,17 +21,20 @@ var $j = jQuery.noConflict();
 <% secondary_wanlink(); %>
 
 var wanip = wanlink_ipaddr();
-var wan_subnet_mask = wanlink_netmask();
+var wannetmask = wanlink_netmask();
 var wandns = wanlink_dns();
 var wangateway = wanlink_gateway();
 var wanxip = wanlink_xipaddr();
+var wanxnetmask = wanlink_xnetmask();
 var wanxdns = wanlink_xdns();
 var wanxgateway = wanlink_xgateway();
 
 var secondary_wanip = secondary_wanlink_ipaddr();
+var secondary_wannetmask = secondary_wanlink_netmask();
 var secondary_wandns = secondary_wanlink_dns();
 var secondary_wangateway = secondary_wanlink_gateway();
 var secondary_wanxip = secondary_wanlink_xipaddr();
+var secondary_wanxnetmask = secondary_wanlink_xnetmask();
 var secondary_wanxdns = secondary_wanlink_xdns();
 var secondary_wanxgateway = secondary_wanlink_xgateway();
 
@@ -193,8 +196,8 @@ function initial(){
 			$('yadns_ctrl').style.display = "";
 		}
 	}
-	update_all_ip(wanip, wan_subnet_mask, wandns, wangateway , unit);
-	update_all_xip(wanxip, wanxdns, wanxgateway, unit);
+	update_all_ip(wanip, wannetmask, wandns, wangateway , unit);
+	update_all_xip(wanxip, wanxnetmask, wanxdns, wanxgateway, unit);
 }
 
 function update_connection_type(dualwan_unit){
@@ -248,9 +251,9 @@ function loadBalance_form(lb_unit){
 		$("dualwan_row_secondary").style.display = "none";	
 		update_connection_type(0);
 		$('primary_WANIP_ctrl').style.display = "";
-		$('primary_subnet_mask_ctrl').style.display = "";
+		$('primary_netmask_ctrl').style.display = "";
 		$('secondary_WANIP_ctrl').style.display = "none";
-		$('secondary_subnet_mask_ctrl').style.display = "none";
+		$('secondary_netmask_ctrl').style.display = "none";
 		$('primary_DNS_ctrl').style.display = "";
 		$('secondary_DNS_ctrl').style.display = "none";
 		$('primary_gateway_ctrl').style.display = "";
@@ -266,9 +269,9 @@ function loadBalance_form(lb_unit){
 		showtext($j("#dualwan_secondary_if")[0], sec_if);
 		update_connection_type(1);
 		$('primary_WANIP_ctrl').style.display = "none";
-		$('primary_subnet_mask_ctrl').style.display = "none";
+		$('primary_netmask_ctrl').style.display = "none";
 		$('secondary_WANIP_ctrl').style.display = "";
-		$('secondary_subnet_mask_ctrl').style.display = "";
+		$('secondary_netmask_ctrl').style.display = "";
 		$('primary_DNS_ctrl').style.display = "none";
 		$('secondary_DNS_ctrl').style.display = "";
 		$('primary_gateway_ctrl').style.display = "none";
@@ -286,9 +289,9 @@ function failover_form(fo_unit, primary_if, secondary_if){
 		showtext($j("#dualwan_current")[0], primary_if);
 		update_connection_type(0);
 		$('primary_WANIP_ctrl').style.display = "";
-		$('primary_subnet_mask_ctrl').style.display = "";
+		$('primary_netmask_ctrl').style.display = "";
 		$('secondary_WANIP_ctrl').style.display = "none";
-		$('secondary_subnet_mask_ctrl').style.display = "none";
+		$('secondary_netmask_ctrl').style.display = "none";
 		$('primary_DNS_ctrl').style.display = "";
 		$('secondary_DNS_ctrl').style.display = "none";
 		$('primary_gateway_ctrl').style.display = "";
@@ -303,9 +306,9 @@ function failover_form(fo_unit, primary_if, secondary_if){
 		showtext($j("#dualwan_current")[0], secondary_if);
 		update_connection_type(1);
 		$('primary_WANIP_ctrl').style.display = "none";
-		$('primary_subnet_mask_ctrl').style.display = "none";
+		$('primary_netmask_ctrl').style.display = "none";
 		$('secondary_WANIP_ctrl').style.display = "";
-		$('secondary_subnet_mask_ctrl').style.display = "";
+		$('secondary_netmask_ctrl').style.display = "";
 		$('primary_DNS_ctrl').style.display = "none";
 		$('secondary_DNS_ctrl').style.display = "";
 		$('primary_gateway_ctrl').style.display = "none";
@@ -317,11 +320,11 @@ function failover_form(fo_unit, primary_if, secondary_if){
 	}
 }
 
-function update_all_ip(wanip, subnet_mask, wandns, wangateway, unit){
+function update_all_ip(wanip, wannetmask, wandns, wangateway, unit){
 	var dnsArray = wandns.split(" ");
 	if(unit == 0){		
 		showtext($j("#WANIP")[0], wanip);
-		showtext($j("#primary_subnet_mask")[0], subnet_mask);
+		showtext($j("#netmask")[0], wannetmask);
 		showtext2($j("#DNS1")[0], dnsArray[0], dnsArray[0]);
 		showtext2($j("#DNS2")[0], dnsArray[1], dnsArray[1]);
 		showtext($j("#gateway")[0], wangateway);
@@ -334,7 +337,7 @@ function update_all_ip(wanip, subnet_mask, wandns, wangateway, unit){
 	}
 	else{
 		showtext($j("#secondary_WANIP")[0], wanip);
-		showtext($j("#secondary_subnet_mask")[0], subnet_mask);
+		showtext($j("#secondary_netmask")[0], wannetmask);
 		showtext2($j("#secondary_DNS1")[0], dnsArray[0], dnsArray[0]);
 		showtext2($j("#secondary_DNS2")[0], dnsArray[1], dnsArray[1]);
 		showtext($j("#secondary_gateway")[0], wangateway);
@@ -346,7 +349,7 @@ function update_all_ip(wanip, subnet_mask, wandns, wangateway, unit){
 		}
 	}
 }
-function update_all_xip(wanxip, wanxdns, wanxgateway, unit) {
+function update_all_xip(wanxip, wanxnetmask, wanxdns, wanxgateway, unit) {
 	var dnsArray = wandns.split(" ");
 	var have_dns = !(dnsArray[0] || dnsArray[1]);
 	var dnsArray = wanxdns.split(" ");
@@ -369,6 +372,7 @@ function update_all_xip(wanxip, wanxdns, wanxgateway, unit) {
 
 	if (unit == 0) {
 		showtext2($j("#xWANIP")[0], wanxip, have_ip);
+		showtext2($j("#xnetmask")[0], wanxnetmask, have_ip);
 		showtext2($j("#xDNS1")[0], dnsArray[0], have_dns && dnsArray[0]);
 		showtext2($j("#xDNS2")[0], dnsArray[1], have_dns && dnsArray[1]);
 		showtext2($j("#xgateway")[0], wanxgateway, have_gateway);
@@ -377,6 +381,7 @@ function update_all_xip(wanxip, wanxdns, wanxgateway, unit) {
 	}
 	else {
 		showtext2($j("#secondary_xWANIP")[0], wanxip, have_ip);
+		showtext2($j("#secondary_xnetmask")[0], wanxnetmask, have_ip);
 		showtext2($j("#secondary_xDNS1")[0], dnsArray[0], have_dns && dnsArray[0]);
 		showtext2($j("#secondary_xDNS2")[0], dnsArray[1], have_dns && dnsArray[1]);
 		showtext2($j("#secondary_xgateway")[0], wanxgateway, have_gateway);
@@ -404,18 +409,20 @@ function update_wanip(e) {
     },
     success: function(response) {
 		wanip = wanlink_ipaddr();
-		wan_subnet_mask = wanlink_netmask();
+		wannetmask = wanlink_netmask();
 		wandns = wanlink_dns();
 		wangateway = wanlink_gateway();
 		wanxip = wanlink_xipaddr();
+		wanxnetmask = wanlink_xnetmask();
 		wanxdns = wanlink_xdns();
 		wanxgateway = wanlink_xgateway();
 		if(parent.wans_flag){
 			secondary_wanip = secondary_wanlink_ipaddr();
-			secondary_wan_subnet_mask = secondary_wanlink_netmask();
+			secondary_wannetmask = secondary_wanlink_netmask();
 			secondary_wandns = secondary_wanlink_dns();
 			secondary_wangateway = secondary_wanlink_gateway();
 			secondary_wanxip = secondary_wanlink_xipaddr();
+			secondary_wanxnetmask = secondary_wanlink_xnetmask();
 			secondary_wanxdns = secondary_wanlink_xdns();
 			secondary_wanxgateway = secondary_wanlink_xgateway();
 		}
@@ -426,11 +433,11 @@ function update_wanip(e) {
 			refreshpage();
 		}
 		else{
-			update_all_ip(wanip, wan_subnet_mask, wandns, wangateway, 0);
-			update_all_xip(wanxip, wanxdns, wanxgateway, 0);
+			update_all_ip(wanip, wannetmask, wandns, wangateway, 0);
+			update_all_xip(wanxip, wanxnetmask, wanxdns, wanxgateway, 0);
 			if(parent.wans_flag){
-				update_all_ip(secondary_wanip, secondary_wan_subnet_mask, secondary_wandns, secondary_wangateway, 1);
-				update_all_xip(secondary_wanxip, secondary_wanxdns, secondary_wanxgateway, 1);
+				update_all_ip(secondary_wanip, secondary_wannetmask, secondary_wandns, secondary_wangateway, 1);
+				update_all_xip(secondary_wanxip, secondary_wanxnetmask, secondary_wanxdns, secondary_wanxgateway, 1);
 			}
 			setTimeout("update_wanip();", 3000);
 		}
@@ -668,10 +675,11 @@ function manualSetup(){
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>
-<tr id="primary_subnet_mask_ctrl">
+<tr id="primary_netmask_ctrl">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalSubnetMask_itemname#></p>
-    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="primary_subnet_mask"></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="netmask"></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xnetmask"></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>
@@ -684,10 +692,11 @@ function manualSetup(){
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>
-<tr style="display:none;" id="secondary_subnet_mask_ctrl">
+<tr style="display:none;" id="secondary_netmask_ctrl">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalSubnetMask_itemname#></p>
-    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_subnet_mask"></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_netmask"></p>
+    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xnetmask"></p>
       	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
 </tr>

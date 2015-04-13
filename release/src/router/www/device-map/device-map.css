@@ -144,6 +144,7 @@ Printer			18
 }
 .radioIcon{
 	background-image:url('/images/survey/radio_status.png');
+	background-repeat: no-repeat;
 	height: 21px;
 	width: 28px;
 	position: relative;

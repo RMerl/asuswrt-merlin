@@ -96,7 +96,7 @@ OBJS += broadcom.o api-broadcom.o
 ifeq ($(RTCONFIG_DSL_TCLINUX),y)
 OBJS += api-tclinux.o
 endif
-ifeq ($(RTCONFIG_RTL8365MB),y)
+ifeq ($(RTCONFIG_EXT_RTL8365MB),y)
 CFLAGS += -I$(LINUXDIR)/drivers/char/rtl8365mb
 OBJS += rtl_8365mb.o
 endif

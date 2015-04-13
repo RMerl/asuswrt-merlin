@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -150,6 +150,9 @@ struct myoption {
 #define LOPT_IGNORE_ADDR   338
 #define LOPT_MINCTTL       339
 #define LOPT_DHCP_INOTIFY  340
+#define LOPT_DHOPT_INOTIFY 341
+#define LOPT_HOST_INOTIFY  342
+#define LOPT_DNSSEC_STAMP  343
 
 #ifdef HAVE_GETOPT_LONG
 static const struct option opts[] =  
@@ -200,6 +203,7 @@ static const struct myoption opts[] =
     { "local-ttl", 1, 0, 'T' },
     { "no-negcache", 0, 0, 'N' },
     { "addn-hosts", 1, 0, 'H' },
+    { "hostsdir", 1, 0, LOPT_HOST_INOTIFY },
     { "query-port", 1, 0, 'Q' },
     { "except-interface", 1, 0, 'I' },
     { "no-dhcp-interface", 1, 0, '2' },
@@ -249,6 +253,7 @@ static const struct myoption opts[] =
     { "dhcp-hostsfile", 1, 0, LOPT_DHCP_HOST },
     { "dhcp-optsfile", 1, 0, LOPT_DHCP_OPTS },
     { "dhcp-hostsdir", 1, 0, LOPT_DHCP_INOTIFY },
+    { "dhcp-optsdir", 1, 0, LOPT_DHOPT_INOTIFY },
     { "dhcp-no-override", 0, 0, LOPT_OVERRIDE },
     { "tftp-port-range", 1, 0, LOPT_TFTPPORTS },
     { "stop-dns-rebind", 0, 0, LOPT_REBIND },
@@ -296,6 +301,7 @@ static const struct myoption opts[] =
     { "dnssec-debug", 0, 0, LOPT_DNSSEC_DEBUG },
     { "dnssec-check-unsigned", 0, 0, LOPT_DNSSEC_CHECK },
     { "dnssec-no-timecheck", 0, 0, LOPT_DNSSEC_TIME },
+    { "dnssec-timestamp", 1, 0, LOPT_DNSSEC_STAMP },
 #ifdef OPTION6_PREFIX_CLASS 
     { "dhcp-prefix-class", 1, 0, LOPT_PREF_CLSS },
 #endif
@@ -338,9 +344,11 @@ static struct {
   { LOPT_DHCP_HOST, ARG_DUP, "<path>", gettext_noop("Read DHCP host specs from file."), NULL },
   { LOPT_DHCP_OPTS, ARG_DUP, "<path>", gettext_noop("Read DHCP option specs from file."), NULL },
   { LOPT_DHCP_INOTIFY, ARG_DUP, "<path>", gettext_noop("Read DHCP host specs from a directory."), NULL }, 
+  { LOPT_DHOPT_INOTIFY, ARG_DUP, "<path>", gettext_noop("Read DHCP options from a directory."), NULL }, 
   { LOPT_TAG_IF, ARG_DUP, "tag-expression", gettext_noop("Evaluate conditional tag expression."), NULL },
   { 'h', OPT_NO_HOSTS, NULL, gettext_noop("Do NOT load %s file."), HOSTSFILE },
   { 'H', ARG_DUP, "<path>", gettext_noop("Specify a hosts file to be read in addition to %s."), HOSTSFILE },
+  { LOPT_HOST_INOTIFY, ARG_DUP, "<path>", gettext_noop("Read hosts files from a directory."), NULL },
   { 'i', ARG_DUP, "<interface>", gettext_noop("Specify interface(s) to listen on."), NULL },
   { 'I', ARG_DUP, "<interface>", gettext_noop("Specify interface(s) NOT to listen on.") , NULL },
   { 'j', ARG_DUP, "set:<tag>,<class>", gettext_noop("Map DHCP user class to tag."), NULL },
@@ -457,6 +465,7 @@ static struct {
   { LOPT_DNSSEC_DEBUG, OPT_DNSSEC_DEBUG, NULL, gettext_noop("Disable upstream checking for DNSSEC debugging."), NULL },
   { LOPT_DNSSEC_CHECK, OPT_DNSSEC_NO_SIGN, NULL, gettext_noop("Ensure answers without DNSSEC are in unsigned zones."), NULL },
   { LOPT_DNSSEC_TIME, OPT_DNSSEC_TIME, NULL, gettext_noop("Don't check DNSSEC signature timestamps until first cache-reload"), NULL },
+  { LOPT_DNSSEC_STAMP, ARG_ONE, "<path>", gettext_noop("Timestamp file to verify system clock for DNSSEC"), NULL },
 #ifdef OPTION6_PREFIX_CLASS 
   { LOPT_PREF_CLSS, ARG_DUP, "set:tag,<class>", gettext_noop("Specify DHCPv6 prefix class"), NULL },
 #endif
@@ -1712,10 +1721,12 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
       break;
 #endif /* HAVE_DHCP */
 
-    case LOPT_DHCP_HOST: /* --dhcp-hostsfile */
-    case LOPT_DHCP_OPTS: /* --dhcp-optsfile */
-    case LOPT_DHCP_INOTIFY: /* dhcp-hostsdir */
-    case 'H': /* --addn-hosts */
+    case LOPT_DHCP_HOST:     /* --dhcp-hostsfile */
+    case LOPT_DHCP_OPTS:     /* --dhcp-optsfile */
+    case LOPT_DHCP_INOTIFY:  /* --dhcp-hostsdir */
+    case LOPT_DHOPT_INOTIFY: /* --dhcp-optsdir */
+    case LOPT_HOST_INOTIFY:  /* --hostsdir */
+    case 'H':                /* --addn-hosts */
       {
 	struct hostsfile *new = opt_malloc(sizeof(struct hostsfile));
 	static unsigned int hosts_index = SRC_AH;
@@ -1737,10 +1748,16 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	    new->next = daemon->dhcp_opts_file;
 	    daemon->dhcp_opts_file = new;
 	  } 	  
-	else if (option == LOPT_DHCP_INOTIFY)
+	else 
 	  {
-	    new->next = daemon->inotify_hosts;
-	    daemon->inotify_hosts = new;
+	    new->next = daemon->dynamic_dirs;
+	    daemon->dynamic_dirs = new; 
+	    if (option == LOPT_DHCP_INOTIFY)
+	      new->flags |= AH_DHCP_HST;
+	    else if (option == LOPT_DHOPT_INOTIFY)
+	      new->flags |= AH_DHCP_OPT;
+	    else if (option == LOPT_HOST_INOTIFY)
+	      new->flags |= AH_HOSTS;
 	  }
 	
 	break;
@@ -2267,8 +2284,6 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	  {
 	    if (!(newlist->flags & SERV_NO_REBIND))
 	      newlist->flags |= SERV_NO_ADDR; /* no server */
-	    if (newlist->flags & SERV_LITERAL_ADDRESS)
-	      ret_err(gen_err);
 	  }
 
 	else if (strcmp(arg, "#") == 0)
@@ -3853,6 +3868,10 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
       }
 
 #ifdef HAVE_DNSSEC
+    case LOPT_DNSSEC_STAMP:
+      daemon->timestamp_file = opt_string_alloc(arg); 
+      break;
+
     case LOPT_TRUST_ANCHOR:
       {
 	struct ds_config *new = opt_malloc(sizeof(struct ds_config));
@@ -4052,9 +4071,16 @@ static void read_file(char *file, FILE *f, int hard_opt)
 }
 
 #ifdef HAVE_DHCP
-int option_read_hostsfile(char *file)
+int option_read_dynfile(char *file, int flags)
 {
-  return one_file(file, LOPT_BANK);
+  my_syslog(MS_DHCP | LOG_INFO, _("read %s"), file);
+  
+  if (flags & AH_DHCP_HST)
+    return one_file(file, LOPT_BANK);
+  else if (flags & AH_DHCP_OPT)
+    return one_file(file, LOPT_OPTS);
+  
+  return 0;
 }
 #endif
 
@@ -4340,7 +4366,7 @@ void read_opts(int argc, char **argv, char *compile_opts)
 {
   char *buff = opt_malloc(MAXDNAME);
   int option, conffile_opt = '7', testmode = 0;
-  char *arg, *conffile = CONFFILE;
+  char *arg, *conffile = NULL;
       
   opterr = 0;
 
@@ -4455,7 +4481,14 @@ void read_opts(int argc, char **argv, char *compile_opts)
     }
 
   if (conffile)
-    one_file(conffile, conffile_opt);
+    {
+      one_file(conffile, conffile_opt);
+      free(conffile);
+    }
+  else
+    {
+      one_file(CONFFILE, conffile_opt);
+    }
 
   /* port might not be known when the address is parsed - fill in here */
   if (daemon->servers)

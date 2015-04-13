@@ -36,4 +36,12 @@ static inline int setAllLedOn2(void)
 }
 #endif
 
+#if defined(RTCONFIG_TCODE)
+extern int getTerritoryCode(void);
+extern int setTerritoryCode(const char *tcode);
+#else
+static inline int getTerritoryCode(void) { return -1; }
+static inline int setTerritoryCode(const char *tcode) { return -1; }
+#endif
+
 #endif

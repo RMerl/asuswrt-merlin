@@ -82,8 +82,9 @@ function QKinternettype_load_body(){
 	if(parent.ISMOBILE){
 		document.getElementById("QISmain").style.display = "none";
 		document.getElementById("QISmain_m").style.display = "";
-		if(based_modelid == "4G-AC55U")
+		if(based_modelid == "4G-AC55U"){
 			document.getElementById("Productdesc_0_m").style.display = "";
+		}
 		return true;
 	}
 
@@ -134,6 +135,8 @@ function QKinternettype_load_body(){
 		var check_desc0 = "<#QIS_welcome_feature0#>";	
 		document.getElementById("Productdesc_0").style.display = "";	
 		document.getElementById("Productdesc_0").innerHTML = check_desc0;
+		document.getElementById("desc_td").width = "60%";
+		document.getElementById("product_td").width = "40%";
 	}
 	
 	document.getElementById("btn_next_step").focus();
@@ -169,9 +172,9 @@ function detect_if_wan_plug(flag){
 			detect_if_wan_plug();		
 		},
 		success: function(response){
-			if(autodet_state == 4){ // ethernet did not plug
+			if(autodet_state == "4"){ // ethernet did not plug
 				if(based_modelid == "4G-AC55U"){
-					if( sim_state == -1)
+					if( sim_state == "-1")
 						redirect_page("unplug_ethsim");
 					else
 						submitForm(1);
@@ -205,9 +208,8 @@ function detect_if_wan_plug(flag){
 				}
 				setTimeout("update_wan_info(1);", 1000);
 			}
-			else if(autodet_state == 0){
+			else if(autodet_state == "0"){
 				detect_if_wan_plug();
-				document.getElementById("loadingIcon").style.display = "";
 				changeiuiBackground(1);
 			}
 			else
@@ -335,7 +337,7 @@ function uploadSetting(){
 			<td>
 				<table style="margin-left:20px;" width="98%" border=0 align="center" cellpadding="5" cellspacing="0">
 					<tr>
-						<td width="55%" colspan="2">
+						<td id="desc_td" width="55%" colspan="2" >
 							<div id="productDesc" style="font-style:italic;">				
 								<p style="font-size:20px;font-weight:bolder;margin-bottom:15px;"><#statusTitle_System#></p>
 								<ul>		
@@ -348,9 +350,9 @@ function uploadSetting(){
 							</div>
 						</td>
 
-						<td width="45%" style="height:300px">
+						<td id="product_td" width="45%" style="height:300px">
 							<div id="producticon"><img id="ModelPid_img" src=""></div>
-							<div id="wan_unplug" style="display:none;text-align:center;margin-top:-90px;*margin-top:25px;">
+							<div id="wan_unplug" style="display:none;text-align:center;margin-top:-30px;*margin-top:25px;">
 								<img src="/images/qis/border.png">
 								<div style="margin-top:-330px">
 									<div id="noti_wan_uplus" class="QISGeneralFont" style="color:#FC0;font-weight:bolder;text-align:left;margin-left:25px;">
@@ -366,7 +368,7 @@ function uploadSetting(){
 					</tr>
 					<tr>
 						<td colspan="3" align="center">
-							<input class="button_gen" id="btn_next_step" type="button" value="<#btn_go#>" onclick="update_wan_info();">
+							<input class="button_gen" id="btn_next_step" type="button" value="<#btn_go#>" onclick="update_wan_info();" style="margin-left:-80px;">
 							<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 						</td>
 					</tr>
@@ -375,7 +377,7 @@ function uploadSetting(){
 		</tr>	
 		<tr>
 			<td>
-				<div id="AreaHint" style="margin-top:50px;">
+				<div id="AreaHint" style="margin-top:25px;">
 					<div><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 					<div style="padding-left:20px;margin-top:10px">
 						<span>You are a network expert and want to skip internet setup wizard? Click</span>

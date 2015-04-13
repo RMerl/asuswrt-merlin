@@ -1058,6 +1058,44 @@ remove_dups(char *inlist, int inlist_size)
 
 }
 
+/* Initialization of strbuf structure */
+void
+str_binit(struct strbuf *b, char *buf, unsigned int size)
+{
+        b->origsize = b->size = size;
+        b->origbuf = b->buf = buf;
+}
+
+/* Buffer sprintf wrapper to guard against buffer overflow */
+int
+str_bprintf(struct strbuf *b, const char *fmt, ...) 
+{
+        va_list ap; 
+        int r;
+
+        va_start(ap, fmt);
+
+        r = vsnprintf(b->buf, b->size, fmt, ap);
+
+	/* Non Ansi C99 compliant returns -1,
+	 * Ansi compliant return r >= b->size,
+	 * bcmstdlib returns 0, handle all
+	 */
+	/* r == 0 is also the case when strlen(fmt) is zero.
+	 * typically the case when "" is passed as argument.
+	 */
+        if ((r == -1) || (r >= (int)b->size)) {
+                b->size = 0;
+        } else {
+                b->size -= r;
+                b->buf += r;
+        }
+
+        va_end(ap);
+
+        return r;
+}
+
 /*
 	 return true/false if any wireless interface has URE enabled.
 */

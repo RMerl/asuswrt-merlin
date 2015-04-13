@@ -295,6 +295,7 @@ enum ASUS_IOCTL_SUBCMD {
 
 #define OFFSET_PIN_CODE			(MTD_FACTORY_BASE_ADDRESS + 0x0D180)	/* 0x40180 -> 0x4D180 */
 
+#define OFFSET_TERRITORY_CODE		(MTD_FACTORY_BASE_ADDRESS + 0x0ff90)	/* 5 bytes, e.g., US/01, US/02, TW/01, etc. */
 #define OFFSET_DEV_FLAGS		(MTD_FACTORY_BASE_ADDRESS + 0x0ffa0)	//device dependent flags
 #define OFFSET_ODMPID			(MTD_FACTORY_BASE_ADDRESS + 0x0ffb0)	//the shown model name (for Bestbuy and others)
 #define OFFSET_FAIL_RET			(MTD_FACTORY_BASE_ADDRESS + 0x0ffc0)

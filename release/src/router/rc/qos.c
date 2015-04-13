@@ -176,7 +176,7 @@ int add_iQosRules(char *pcWANIF)
 
 	if(get_model()==MODEL_RTAC56U || get_model()==MODEL_RTAC56S || get_model()==MODEL_RTAC68U ||
 		get_model()==MODEL_DSLAC68U || get_model()==MODEL_RTAC87U || get_model()==MODEL_RTAC3200 || 
-		get_model()==MODEL_RTAC88U)
+		get_model()==MODEL_RTAC88U || get_model()==MODEL_RTAC3100 || get_model()==MODEL_RTAC5300)
 		manual_return = 1;
 
 	if(nvram_match("qos_sticky", "0"))

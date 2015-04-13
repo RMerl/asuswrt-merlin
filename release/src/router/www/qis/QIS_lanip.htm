@@ -119,8 +119,6 @@ function submitForm(){
 		parent.document.QKform.lan_dnsenable_x.value = document.form.lan_dnsenable_x.value;		
 		parent.document.QKform.lan_dns1_x.value = document.form.lan_dns1_x.value;
 		parent.document.QKform.lan_dns2_x.value = document.form.lan_dns2_x.value;
-		if(parent.document.QKform.sw_mode.value != 2 && parent.document.QKform.sw_mode.value != 4)
-			parent.document.QKform.sw_mode.value = 3;
 
 		if('<% nvram_get("sw_mode"); %>' == '1'){
 			parent.document.QKform.lan_ipaddr_rt.value = '<% nvram_get("lan_ipaddr"); %>';
@@ -158,10 +156,11 @@ function submitForm(){
 				document.mbform.http_passwd.disabled = false;
 			}
 
-			document.mbform.sw_mode.value = 3;
-
 			if(parent.based_modelid == "RT-N14U" || parent.based_modelid == "RT-AC52U" || parent.based_modelid == "RT-AC55U") {
 				document.mbform.sw_mode.value = 2;
+			}
+			else {
+				document.mbform.sw_mode.value = 3;
 			}
 			document.mbform.submit();
 		}

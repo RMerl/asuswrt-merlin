@@ -450,248 +450,6 @@ static int __LANWANPartition(int wan_stb_x)
 	return 0;
 }
 
-int rt_gpio_ioctl(unsigned int req, int idx, unsigned long arg)
-{
-	req &= RALINK_GPIO_DATA_MASK;
-
-	switch(req) {
-	case RALINK_GPIO_READ_BIT:
-		return ralink_gpio_read_bit(idx, NULL);
-
-	case RALINK_GPIO_WRITE_BIT:
-		return ralink_gpio_write_bit(idx, arg);
-
-	default:
-		return -1;
-	}
-	return 0;
-}
-
-int
-ralink_gpio_write_bit(int idx, int value)
-{
-	unsigned long tmp;
-
-	if (idx < 0 || RALINK_GPIO_NUMBER <= idx)
-		return -1;
-
-	if (idx <= 23) {
-		tmp =le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
-		if (value & 1L)
-			tmp |= (1L << idx);
-		else
-			tmp &= ~(1L << idx);
-		*(volatile u32 *)(RALINK_REG_PIODATA)= cpu_to_le32(tmp);
-	}
-	else if (idx <= 39) {
-		tmp =le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924DATA));
-		if (value & 1L)
-			tmp |= (1L << (idx-24));
-		else
-			tmp &= ~(1L << (idx-24));
-		*(volatile u32 *)(RALINK_REG_PIO3924DATA)= cpu_to_le32(tmp);
-	}
-	else {
-		tmp =le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO5140DATA));
-		if (value & 1L)
-			tmp |= (1L << (idx-40));
-		else
-			tmp &= ~(1L << (idx-40));
-		*(volatile u32 *)(RALINK_REG_PIO5140DATA)= cpu_to_le32(tmp);
-	}
-
-	return 0;
-}
-EXPORT_SYMBOL(ralink_gpio_write_bit);
-
-int
-ralink_gpio_read_bit(int idx, int *value)
-{
-	unsigned long tmp;
-
-	if (idx < 0 || RALINK_GPIO_NUMBER <= idx)
-		return -1;
-
-	if (idx <= 23) {
-		tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
-		tmp = (tmp >> idx) & 1L;
-	}
-	else if (idx <= 39) {
-		tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924DATA));
-		tmp = (tmp >> (idx-24)) & 1L;
-	}
-	else {
-		tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO5140DATA));
-		tmp = (tmp >> (idx-40)) & 1L;
-	}
-
-	if(value != NULL)
-		*value = tmp;
-	return tmp;
-}
-EXPORT_SYMBOL(ralink_gpio_read_bit);
-
-int
-ralink_initGpioPin(unsigned int idx, int dir)
-{
-	unsigned long tmp;
-	unsigned int regAddr, regData;
-
-	if (idx < 0 || RALINK_GPIO_NUMBER <= idx)
-		return -1;
-
-	if (dir == GPIO_DIR_OUT)
-	{
-		if (idx <= 23) {
-			tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
-			tmp |= (1L << idx);
-		}
-		else if (idx <= 39) {
-			tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924DIR));
-			tmp |= (1L << (idx-24));
-		}
-		else {
-			tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO5140DIR));
-			tmp |= (1L << (idx-40));
-		}
-	}
-	else if (dir == GPIO_DIR_IN)
-	{
-		if (idx <= 23) {
-			tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
-			tmp &= ~(1L << idx);
-		}
-		else if (idx <= 39) {
-			tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924DIR));
-			tmp &= ~(1L << (idx-24));
-		}
-		else {
-			tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO5140DIR));
-			tmp &= ~(1L << (idx-40));
-		}
-	}
-	else
-		return -1;
-
-	if (idx <= 23) {
-		*(volatile u32 *)(RALINK_REG_PIODIR) = cpu_to_le32(tmp);
-	}
-	else if (idx <= 39) {
-		*(volatile u32 *)(RALINK_REG_PIO3924DIR) = cpu_to_le32(tmp);
-	}
-	else {
-		*(volatile u32 *)(RALINK_REG_PIO5140DIR) = cpu_to_le32(tmp);
-	}
-
-	/* config multi-function pin to GPIO mode */
-	if(idx >= 1 && idx <= 2)
-	{ // I2C_GPIO_MODE
-		regAddr = RALINK_REG_GPIOMODE;
-		regData = le32_to_cpu(*(volatile u32 *)regAddr);
-		regData |=  RALINK_GPIOMODE_I2C;
-		*(volatile u32 *)regAddr = cpu_to_le32(regData);
-	}
-	else if(idx >= 3 && idx <= 6)
-	{ // SPI_GPIO_MODE
-		regAddr = RALINK_REG_GPIOMODE;
-		regData = le32_to_cpu(*(volatile u32 *)regAddr);
-		regData |=  RALINK_GPIOMODE_SPI;
-		*(volatile u32 *)regAddr = cpu_to_le32(regData);
-	}
-	else if(idx >= 7 && idx <= 14)
-	{ // UARTF_SHARED_MODE
-		regAddr = RALINK_REG_GPIOMODE;
-		regData = le32_to_cpu(*(volatile u32 *)regAddr);
-		regData &=  ~RALINK_GPIOMODE_UARTF;
-		regData |=  RALINK_GPIOMODE_UARTF;
-		*(volatile u32 *)regAddr = cpu_to_le32(regData);
-	}
-	else if(idx >= 15 && idx <= 16)
-	{ // UARTL_GPIO_MODE
-		regAddr = RALINK_REG_GPIOMODE;
-		regData = le32_to_cpu(*(volatile u32 *)regAddr);
-		regData |=  RALINK_GPIOMODE_UARTL;
-		*(volatile u32 *)regAddr = cpu_to_le32(regData);
-	}
-	else if(idx >= 17 && idx <= 21)
-	{ // JTAG_GPIO_MODE
-		if (!forced_jtag_mode) {
-			regAddr = RALINK_REG_GPIOMODE;
-			regData = le32_to_cpu(*(volatile u32 *)regAddr);
-			regData |=  RALINK_GPIOMODE_JTAG;
-			*(volatile u32 *)regAddr = cpu_to_le32(regData);
-		} else {
-			printk("%s(): Forced JTAG mode is enabled. Leave GPIO#%d as JTAG pin\n", __func__, idx);
-		}
-	}
-	else if(idx >= 22 && idx <= 23)
-	{ // MDIO_GPIO_MODE
-		regAddr = RALINK_REG_GPIOMODE;
-		regData = le32_to_cpu(*(volatile u32 *)regAddr);
-		regData |=  RALINK_GPIOMODE_MDIO;
-		*(volatile u32 *)regAddr = cpu_to_le32(regData);
-	}
-	else if(idx == 24)
-	{ // REGCLK0_IS_OUT
-		regAddr = RALINK_SYSCTL_ADDR + 0x002C; //CLKCFG0
-		regData = le32_to_cpu(*(volatile u32 *)regAddr);
-		regData &= ~(1 << 8);
-		*(volatile u32 *)regAddr = cpu_to_le32(regData);
-	}
-	else if(idx == 25)
-	{ // GPIO_AS_WD_TOUT_MODE
-		regAddr = RALINK_SYSCTL_ADDR + 0x0014; //SYSCFG1
-		regData = le32_to_cpu(*(volatile u32 *)regAddr);
-		regData &= ~(1 << 2);
-		*(volatile u32 *)regAddr = cpu_to_le32(regData);
-	}
-	else if(idx >= 26 && idx <= 30)
-	{ // GPIO_AS_BT_MODE
-		regAddr = RALINK_SYSCTL_ADDR + 0x0014; //SYSCFG1
-		regData = le32_to_cpu(*(volatile u32 *)regAddr);
-		regData &= ~(1 << 1);
-		*(volatile u32 *)regAddr = cpu_to_le32(regData);
-	}
-
-	return 0;
-}
-EXPORT_SYMBOL(ralink_initGpioPin);
-
-void vlan_accept_none(void)
-{
-	unsigned int port_nr, mask;
-
-	ENUM_PORT_BEGIN(port_nr, mask, LAN_PORTS_MASK | WAN_PORT_MASK, 1)
-		rtk_vlan_portAcceptFrameType_set(port_nr, ACCEPT_FRAME_TYPE_UNTAG_ONLY);
-	ENUM_PORT_END
-}
-
-unsigned int is_singtel_mio = 0;
-
-int vlan_accept_adv(int wan_stb_x)
-{
-	unsigned int port_nr, mask, lan_port_mask, wan_port_mask, stb_port_mask;
-
-	if (is_singtel_mio) {
-		ENUM_PORT_BEGIN(port_nr, mask, LAN_PORTS_MASK | WAN_PORT_MASK, 1)
-			rtk_vlan_portAcceptFrameType_set(port_nr, ACCEPT_FRAME_TYPE_ALL);
-		ENUM_PORT_END
-	} else {
-		if (get_wan_stb_lan_port_mask(wan_stb_x, &wan_port_mask, &stb_port_mask, &lan_port_mask, 0))
-			return -EINVAL;
-
-		ENUM_PORT_BEGIN(port_nr, mask, wan_port_mask, 1)
-			rtk_vlan_portAcceptFrameType_set(port_nr, ACCEPT_FRAME_TYPE_ALL);
-		ENUM_PORT_END
-	}
-
-	return 0;
-}
-
-void LANWANPartition(void)
-{
-	__LANWANPartition(0);
-}
 #endif
 
 static int wan_stb_g = NO_WAN_PORT;
@@ -941,8 +699,8 @@ typedef struct {
 } asus_gpio_info;
 
 typedef struct {
-	unsigned int link[5];
-	unsigned int speed[5];
+	unsigned int link[4];
+	unsigned int speed[4];
 } phyState;
 
 static unsigned int txDelay_user = 1;
@@ -1337,13 +1095,13 @@ long rtl8367rb_do_ioctl(struct file *file, unsigned int req, unsigned long arg)
 
 		break;
 
-	case GET_ATE_PHYSTATES:
+	case GET_RTK_PHYSTATES:
 		{
 			phyState pS;
 
 			copy_from_user(&pS, (phyState __user *)arg, sizeof(pS));
 			for (port = 0; port < 4; port++) {
-				retVal = rtk_port_phyStatus_get(3 - port, &pLinkStatus, &pSpeed, &pDuplex);	//always tread [4] as WAN, [3] as the closest LAN port (may not be the LAN1 in housing), etc... for "ATE Get_WanLanStatus"
+				retVal = rtk_port_phyStatus_get(port, &pLinkStatus, &pSpeed, &pDuplex);
 				pS.link[port] = pLinkStatus;
 				pS.speed[port] = pSpeed;
 			}

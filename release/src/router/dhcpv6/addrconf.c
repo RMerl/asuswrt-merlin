@@ -174,7 +174,7 @@ update_address(ia, addr, dhcpifp, ctlp, callback)
 	    in6addr2str(&addr->addr, 0), addr->pltime, addr->vltime);
 
 	if ((sa->addr.vltime != 0) && sacreate)
-		if (na_ifaddrconf(IFADDRCONF_ADD, sa) < 0)
+		if (na_ifaddrconf(IFADDRCONF_ADD, sa) < 0 && errno != EEXIST)
 			return (-1);
 
 	/*

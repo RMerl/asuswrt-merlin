@@ -70,9 +70,16 @@ var wans_flag;
 var switch_stb_x = '<% nvram_get("switch_stb_x"); %>';
 var wans_caps_primary;
 var wans_caps_secondary;
-var wandog_fb_count_orig = "<% nvram_get("wandog_fb_count"); %>";
-var wandog_maxfail_orig = "<% nvram_get("wandog_maxfail"); %>";
-var modem_enable_orig = '<% nvram_get("modem_enable"); %>';
+var wandog_fb_count_orig = '<% nvram_get("wandog_fb_count"); %>';
+var wandog_maxfail_orig = '<% nvram_get("wandog_maxfail"); %>';
+var mobile_enable_orig = '';
+if(gobi_support){
+	if(usb_index == 0)
+		mobile_enable_orig = '<% nvram_get("wan0_enable"); %>';
+	else if(usb_index == 1)
+		mobile_enable_orig = '<% nvram_get("wan1_enable"); %>';
+}	
+var wans_mode_orig = '<% nvram_get("wans_mode"); %>';
 
 var $j = jQuery.noConflict();
 
@@ -93,6 +100,9 @@ function initial(){
     if(based_modelid == "4G-AC55U"){
     	document.getElementById("wans_mode_option").style.display = "none";
     	document.getElementById("wans_mode_fo").style.display = "";
+
+    	if( wans_mode_orig == "lb")
+    		document.form.wans_mode.value = "fo";
     }
 
 	form_show(wans_flag);		
@@ -803,9 +813,12 @@ function add_option_count(obj, obj_t, selected_flag){
 function hotstandby_act(enable){
 	var confirm_str_on = "Enabling Hot-Standby will make Mobile Broadband be enabled if Mobile Braodband is disabled. Are you sure you want to enable it?";
 	if(enable){
-		if(modem_enable_orig == "0"){
+		if(mobile_enable_orig == "0"){
 			if(confirm(confirm_str_on)){
-				document.form.modem_enable.value = "1";
+				if(usb_index == 0)
+					document.form.wan0_enable.value = "1";
+				else if(usb_index == 1)					
+					document.form.wan1_enable.value = "1"
 			}
 		}
 	}
@@ -837,7 +850,8 @@ function hotstandby_act(enable){
 <input type="hidden" name="wan1_routing_isp_enable" value="<% nvram_get("wan0_routing_isp_enable"); %>">
 <input type="hidden" name="wan1_routing_isp" value="<% nvram_get("wan1_routing_isp"); %>">
 <input type="hidden" name="wans_routing_rulelist" value=''>
-<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">
+<input type="hidden" name="wan0_enable" value="<% nvram_get("wan0_enable"); %>">
+<input type="hidden" name="wan1_enable" value="<% nvram_get("wan1_enable"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>

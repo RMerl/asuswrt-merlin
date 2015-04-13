@@ -123,6 +123,13 @@ extern int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv);
 #ifdef RTAC3200
 extern int ej_wl_sta_list_5g_2(int eid, webs_t wp, int argc, char_t **argv);
 #endif
+#ifdef RTCONFIG_STAINFO
+extern int ej_wl_stainfo_list_2g(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_wl_stainfo_list_5g(int eid, webs_t wp, int argc, char_t **argv);
+#ifdef RTAC3200
+extern int ej_wl_stainfo_list_5g_2(int eid, webs_t wp, int argc, char_t **argv);
+#endif
+#endif
 extern int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv);
 #ifdef CONFIG_BCMWL5
 extern int ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv);
@@ -1680,6 +1687,9 @@ static int validate_apply(webs_t wp) {
 	int acc_modified = 0;
 	int ret;
 #ifdef RTCONFIG_USB
+#if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
+	int got_modem_data = 0;
+#endif
 	char orig_acc[128], modified_acc[128], modified_pass[128];
 
 	memset(orig_acc, 0, 128);
@@ -1760,14 +1770,14 @@ static int validate_apply(webs_t wp) {
 #endif
 				}
 			}
-			else if(!strncmp(name, "wan_", 4) && unit != -1) {//////
+			else if(!strncmp(name, "wan_", 4) && unit != -1) {
 				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 				(void)strcat_r(prefix, name+4, tmp);
 
 				if(strcmp(nvram_safe_get(tmp), value)) {
 					nvram_set(tmp, value);
 					nvram_modified = 1;
-					_dprintf("set %s=%s\n", tmp, value);				
+					_dprintf("set %s=%s\n", tmp, value);
 				}					
 			}
 			else if(!strncmp(name, "lan_", 4) && unit != -1) {
@@ -1885,14 +1895,26 @@ static int validate_apply(webs_t wp) {
 
 #ifdef RTCONFIG_DUALWAN//Cherry Cho added for exchanging settings of dualwan in 2014/10/20.
 				if(!strcmp(name, "wans_dualwan")){
-					save_index_to_interface();		
-					save_interface_to_index(value);			
+					save_index_to_interface();
+					save_interface_to_index(value);
 				}
 #endif
-				
+
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+				if(!strcmp(name, "modem_bytes_data_cycle") || !strcmp(name, "modem_bytes_data_limit") || !strcmp(name, "modem_bytes_data_warning")){
+					notify_rc("restart_set_dataset");
+				}
+#endif				
+
 				nvram_set(name, value);
 				nvram_modified = 1;
 				_dprintf("set %s=%s\n", name, value);
+
+#if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
+				if(!strncmp(name, "modem_bytes_data", 16)){
+					got_modem_data = 1;
+				}
+#endif
 			}
 		}
 	}
@@ -1915,6 +1937,12 @@ static int validate_apply(webs_t wp) {
 		notify_rc_and_wait("restart_ftpsamba");
 #endif
 	}
+
+#if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
+	if(got_modem_data){
+		eval("modem_status.sh", "set_dataset");
+	}
+#endif
 
 	/* go through each temp nvram value */
 	/* but not support instance now */
@@ -3515,6 +3543,70 @@ ej_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
 			    "<hostname>value=%s</hostname>\n"
 			"</client>\n", hwaddr, name);
 	}
+	fclose(fp);
+
+	return ret;
+}
+
+int
+ej_dhcpLeaseMacList(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *fp;
+	struct in_addr addr4;
+	struct in6_addr addr6;
+	char line[256];
+	char *hwaddr, *ipaddr, *name, *next;
+	unsigned int expires;
+	int ret = 0;
+	int name_len;
+	char tmp[MAX_LINE_SIZE];
+	char *buf = tmp;
+
+	if (!nvram_get_int("dhcp_enable_x") || !nvram_match("sw_mode", "1")){
+		ret += websWrite(wp, "[['', '']]");
+		return ret;
+	}
+
+	/* Read leases file */
+	if (!(fp = fopen("/var/lib/misc/dnsmasq.leases", "r"))){
+		ret += websWrite(wp, "[['', '']]");
+		return ret;
+	}
+
+	ret += websWrite(wp, "[");
+	while ((next = fgets(line, sizeof(line), fp)) != NULL) {
+		/* line should start from numeric value */
+		if (sscanf(next, "%u ", &expires) != 1)
+			continue;
+
+		strsep(&next, " ");
+		hwaddr = strsep(&next, " ") ? : "";
+		ipaddr = strsep(&next, " ") ? : "";
+		name = strsep(&next, " ") ? : "";
+
+		if (inet_pton(AF_INET6, ipaddr, &addr6) != 0) {
+			/* skip ipv6 leases, thay have no hwaddr, but client id */
+			// hwaddr = next ? : "";
+			continue;
+		} else if (inet_pton(AF_INET, ipaddr, &addr4) == 0)
+			continue;
+
+		/* each char expands to %XX at max */
+		name_len = strlen(name) * sizeof(char)*3 + sizeof(char);
+
+		if (name_len > sizeof(tmp)) {
+			buf = (char *)malloc(name_len);
+			if (buf == NULL) {
+				csprintf("No memory.\n");
+				return 0;
+			}
+		}
+
+		char_to_ascii_safe(buf, name, name_len);
+
+		ret += websWrite(wp,"['%s', '%s'],", hwaddr, buf);
+	}
+	ret += websWrite(wp, "['','']]");
 	fclose(fp);
 
 	return ret;
@@ -5447,8 +5539,7 @@ int ej_shown_language_css(int eid, webs_t wp, int argc, char **argv){
 				len = follow_info_end-follow_info;
 				memset(target, 0, sizeof(target));
 				strncpy(target, follow_info, len);
-
-				if(strcmp(key,lang))
+				if (check_lang_support(key) && strcmp(key,lang))
 					websWrite(wp, "<dd><a onclick=\"submit_language(this)\" id=\"%s\">%s</a></dd>\\n", key, target);
 				break;
 			}
@@ -5458,68 +5549,6 @@ int ej_shown_language_css(int eid, webs_t wp, int argc, char **argv){
 
 	}
 	websWrite(wp, "</dl></li>\\n");
-	fclose(fp);
-
-	return 0;
-}
-
-int ej_shown_language_option(int eid, webs_t wp, int argc, char **argv){
-	struct language_table *pLang = NULL;
-	char lang[4];
-	int len;
-#ifdef RTCONFIG_AUTODICT
-	FILE *fp = fopen("Lang_Hdr.txt", "r");
-#else
-	FILE *fp = fopen("Lang_Hdr", "r");
-#endif
-	char buffer[1024], key[16], target[16];
-	char *follow_info, *follow_info_end;
-
-	if (fp == NULL){
-		fprintf(stderr, "No English dictionary!\n");
-		return 0;
-	}
-
-#ifdef RTCONFIG_AUTODICT
-	// skip <feff>
-	fread(key, 1, 3, fp);
-#endif
-
-	memset(lang, 0, 4);
-	strcpy(lang, nvram_safe_get("preferred_lang"));
-
-	while (1) {
-		memset(buffer, 0, sizeof(buffer));
-		if ((follow_info = fgets(buffer, sizeof(buffer), fp)) != NULL){
-			if (strncmp(follow_info, "LANG_", 5))    // 5 = strlen("LANG_")
-				continue;
-
-			follow_info += 5;
-			follow_info_end = strstr(follow_info, "=");
-			len = follow_info_end-follow_info;
-			memset(key, 0, sizeof(key));
-			strncpy(key, follow_info, len);
-
-			for (pLang = language_tables; pLang->Lang != NULL; ++pLang){
-				if (strcmp(key, pLang->Target_Lang))
-					continue;
-				follow_info = follow_info_end+1;
-				follow_info_end = strstr(follow_info, "\n");
-				len = follow_info_end-follow_info;
-				memset(target, 0, sizeof(target));
-				strncpy(target, follow_info, len);
-
-				if (!strcmp(key, lang))
-					websWrite(wp, "<option value=\"%s\" selected>%s</option>\\n", key, target);
-				else
-					websWrite(wp, "<option value=\"%s\">%s</option>\\n", key, target);
-
-				break;
-			}
-		}
-		else
-			break;
-	}
 	fclose(fp);
 
 	return 0;
@@ -6103,7 +6132,11 @@ wps_finish:
 	else if (!strcmp(action_mode, "restart_simauth"))
 	{
 		notify_rc(action_mode);
-	}	
+	}
+	else if (!strcmp(action_mode, "restart_resetcount"))
+	{
+		notify_rc(action_mode);
+	}
 #endif
 	return 1;
 }
@@ -10659,7 +10692,7 @@ ej_wl_nband_info(int eid, webs_t wp, int argc, char_t **argv)
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 		band = nvram_safe_get(strcat_r(prefix, "nband", tmp));
 
-			ret += websWrite(wp, "%s", band);
+			ret += websWrite(wp, "'%s'", band);
 
 		unit++;
 	}
@@ -10761,6 +10794,7 @@ struct ej_handler ej_handlers[] = {
 	{ "load_script", ej_load},
 	{ "select_list", ej_select_list},
 	{ "dhcpLeaseInfo", ej_dhcpLeaseInfo},
+	{ "dhcpLeaseMacList", ej_dhcpLeaseMacList},
 	{ "IP_dhcpLeaseInfo", ej_IP_dhcpLeaseInfo},
 //tomato qosvvvvvvvvvvv 2010.08 Viz
 	{ "qrate", ej_qos_packet},
@@ -10903,6 +10937,13 @@ struct ej_handler ej_handlers[] = {
 	{ "wl_sta_list_5g", ej_wl_sta_list_5g},
 #ifdef RTAC3200
 	{ "wl_sta_list_5g_2", ej_wl_sta_list_5g_2},
+#endif
+#ifdef RTCONFIG_STAINFO
+	{ "wl_stainfo_list_2g", ej_wl_stainfo_list_2g},
+	{ "wl_stainfo_list_5g", ej_wl_stainfo_list_5g},
+#ifdef RTAC3200
+	{ "wl_stainfo_list_5g_2", ej_wl_stainfo_list_5g_2},
+#endif
 #endif
 	{ "wl_auth_list", ej_wl_auth_list},
 #ifdef CONFIG_BCMWL5

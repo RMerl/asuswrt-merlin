@@ -1262,9 +1262,6 @@ int mount_partition(char *dev_name, int host_num, char *dsc_name, char *pt_name,
 
 	find_label_or_uuid(dev_name, the_label, uuid);
 
-	if(!is_valid_volname(the_label))
-		memset(the_label, 0, 128);
-
 	run_custom_script_blocking("pre-mount", dev_name);
 
 	if (f_exists("/etc/fstab")) {
@@ -1283,7 +1280,7 @@ int mount_partition(char *dev_name, int host_num, char *dsc_name, char *pt_name,
 
 	if (*the_label != 0) {
 		for (ptr = the_label; *ptr; ptr++) {
-			if (!isalnum(*ptr) && !strchr("+-&.@", *ptr))
+			if (!isalnum(*ptr) && !strchr("+-&.@()", *ptr))
 				*ptr = '_';
 		}
 		sprintf(mountpoint, "%s/%s", POOL_MOUNT_ROOT, the_label);
@@ -1778,7 +1775,8 @@ void hotplug_usb(void)
 			host == -2 ? 0 : EFH_USER);
 	}
 #ifdef LINUX26
-	else if (is_block && strcmp(getenv("MAJOR") ? : "", "8") == 0
+	//else if (is_block && strcmp(getenv("MAJOR") ? : "", "8") == 0
+	else if (is_block && atoi(getenv("MAJOR") ? : "0") == USB_DISK_MAJOR
 #if (!defined(LINUX30) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36))
 		&& strcmp(getenv("PHYSDEVBUS") ? : "", "scsi") == 0
 #endif

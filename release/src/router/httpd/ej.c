@@ -228,7 +228,11 @@ do_ej(char *path, FILE *stream)
 	if (is_firsttime () && Accept_Language[0] != '\0') {
 		lang = Accept_Language;
 	} else {
-		lang = nvram_safe_get ("preferred_lang");
+		lang = nvram_safe_get("preferred_lang");
+		if (!check_lang_support(lang)) {
+			nvram_set("preferred_lang", "EN");
+			lang = "EN";
+		}
 	}
 
 	if (load_dictionary (lang, &kw))	{

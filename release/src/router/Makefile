@@ -62,13 +62,13 @@ export BCMSRC=src-rt-7.x.main/src
 export OLD_SRC=$(SRCBASE)/../../src
 export  BUILD_MFG := 0
 export  EX7 := _7
-else ifeq ($(RTCONFIG_BCM794),y)
+else ifeq ($(RTCONFIG_BCM_794),y)
 export BCMSRC=src-rt-7.14.94.x/src
 export OLD_SRC=$(SRCBASE)/../../src
 export  BUILD_MFG := 0
 export  EX7 := _794
 else ifeq ($(RTCONFIG_BCM10),y)
-export BCMSRC=src-rt-10.10.18.x/src
+export BCMSRC=src-rt-10.10.22.x/src
 export OLD_SRC=$(SRCBASE)/../../src
 export  BUILD_MFG := 0
 export  EX7 := _10
@@ -312,7 +312,7 @@ else
 obj-y += utils$(BCMEX)$(EX7)
 obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(DPI)$(EX7)
 obj-$(RTCONFIG_EMF) += igs
-ifneq ($(RTCONFIG_BCM794),y)	# do not build wl/dhd since not ready
+ifneq ($(RTCONFIG_BCM_794),y)	# do not build wl/dhd since not ready
 obj-y += wlconf$(BCMEX)$(EX7)
 obj-y += nas$(BCMEX)$(EX7)
 obj-$(RTCONFIG_HSPOT) += hspot_ap$(BCMEX)$(EX7)
@@ -320,7 +320,7 @@ obj-y += eapd$(BCMEX)$(EX7)/linux
 obj-$(RTCONFIG_WPS) += wps$(BCMEX)$(EX7)
 endif
 obj-$(CONFIG_LIBBCM) += libbcm
-obj-$(CONFIG_LIBUPNP) += libupnp
+obj-$(CONFIG_LIBUPNP) += libupnp$(BCMEX)$(EX7)
 endif
 
 obj-y += libbcmcrypto
@@ -595,7 +595,7 @@ obj-y += asm1042
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
-obj-prelibs =$(filter nvram$(BCMEX) libbcmcrypto shared netconf libupnp libz libbcm pciefd, $(obj-y))
+obj-prelibs =$(filter nvram$(BCMEX) libbcmcrypto shared netconf libupnp$(BCMEX)$(EX7) libz libbcm pciefd, $(obj-y))
 obj-postlibs := $(filter-out $(obj-prelibs), $(obj-y))
 endif
 
@@ -625,6 +625,9 @@ endif
 #For TR-069 agent
 obj-$(RTCONFIG_TR069) += openssl
 obj-$(RTCONFIG_TR069) += tr069
+
+obj-$(RTCONFIG_CLOUDCHECK) += cloudcheck
+
 
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
@@ -799,9 +802,8 @@ gen_target:
 		rm -rf $(TARGETDIR)/iNIC_RT3352/ ; \
 	fi
 ##!!TB	find $(TARGETDIR)/lib/modules -name *.o -exec mipsel-linux-strip --strip-unneeded {} \;
-	find $(TARGETDIR)/lib/modules -name *.o -exec $(STRIP) --strip-debug {} \;
-	find $(TARGETDIR)/lib/modules -name *.ko -exec $(STRIP) --strip-debug {} \;
-
+	find $(TARGETDIR)/lib/modules -name *.o -exec $(STRIP) --strip-debug -x -R .comment -R .pdr -R .mdebug.abi32 -R .note.gnu.build-id -R .gnu.attributes -R .reginfo {} \;
+	find $(TARGETDIR)/lib/modules -name *.ko -exec $(STRIP) --strip-debug -x -R .comment -R .pdr -R .mdebug.abi32 -R .note.gnu.build-id -R .gnu.attributes -R .reginfo {} \;
 #	-cd $(TARGETDIR)/lib/modules/*/kernel/drivers/net && mv diag/* . && rm -rf diag
 
 # nice and clean
@@ -1064,6 +1066,9 @@ else
 	mv $(TARGETDIR)/lib/modules/*/modules.dep $(TARGETDIR)/lib/modules/
 endif
 
+ifeq ($(RTCONFIG_ROMCFE),y)
+	-cp $(SRCBASE)/cfe/cfe_`echo $(BUILD_NAME)|tr A-Z a-z`.bin $(TARGETDIR)/rom/cfe
+endif
 ifeq ($(RTCONFIG_QTN),y)
 	# install qtn boot-code and firmware
 	install -D qtnimage/topaz-linux.lzma.img $(TARGETDIR)/rom/qtn/topaz-linux.lzma.img
@@ -2818,7 +2823,7 @@ igmp-install: netconf
 igmp-clean:
 	$(MAKE) -C igmp clean
 
-wps$(BCMEX)$(EX7): nvram$(BCMEX) shared
+wps$(BCMEX)$(EX7): nvram$(BCMEX) shared libupnp$(BCMEX)$(EX7)
 ifeq ($(RTCONFIG_WPS),y)
 	-rm -rf $(OLD_SRC)/wps
 	-ln -s $(SRCBASE)/wps $(OLD_SRC)/wps
@@ -3833,7 +3838,7 @@ GeoIP-1.6.2-clean:
 	@rm -f GeoIP-1.6.2/stamp-h1
 
 wget/Makefile: openssl zlib
-	cd wget && autoreconf -i -f && $(CONFIGURE) --with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl --disable-opie --disable-ntlm --disable-debug --disable-nls --disable-iri --disable-dependency-tracking CFLAGS="-I$(TOP)/openssl/include -I$(TOP)/zlib" LDFLAGS="-L$(TOP)/openssl -lssl -lcrypto -L$(TOP)/zlib -lz"
+	cd wget && autoreconf -i -f && $(CONFIGURE) --with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl --disable-opie --disable-ntlm --disable-debug --disable-nls --disable-iri --disable-dependency-tracking CFLAGS="$(EXTRACFLAGS) -I$(TOP)/openssl/include -I$(TOP)/zlib" LDFLAGS="-L$(TOP)/openssl -lssl -lcrypto -L$(TOP)/zlib -lz"
 
 wget: wget/Makefile
 	$(MAKE) -C wget CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -I$(TOP)/openssl/include -I$(TOP)/zlib"

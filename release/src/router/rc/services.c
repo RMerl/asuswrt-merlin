@@ -571,6 +571,20 @@ void create_passwd(void)
 	run_postconf("group","/etc/group");
 }
 
+int ate_cond()
+{
+	switch(get_model()){
+		case MODEL_RPAC68U:
+			if(!strcmp(nvram_safe_get("ATEMODE"), "1"))
+				return 0;
+			break;
+		default:
+			break;
+	}
+
+	return 1;
+}
+
 void get_dhcp_pool(char **dhcp_start, char **dhcp_end, char *buffer)
 {
 	if (dhcp_start == NULL || dhcp_end == NULL || buffer == NULL)
@@ -2046,6 +2060,9 @@ int start_networkmap(int bootwait)
 	//if (!is_routing_enabled())
 	//	return 0;
 
+	if(ate_cond() == 0)
+		return 0;
+
 	stop_networkmap();
 
 	if (bootwait)
@@ -2426,7 +2443,7 @@ start_ddns(void)
 	if (asus_ddns) {
 		char *nserver = nvram_invmatch("ddns_serverhost_x", "") ?
 			nvram_safe_get("ddns_serverhost_x") :
-			"ns1.asuscomm.com";
+			"nwsrv-ns1.asus.com";
 		eval("ez-ipupdate",
 		     "-S", service, "-i", wan_ifname, "-h", host,
 		     "-A", "2", "-s", nserver,
@@ -2521,7 +2538,7 @@ asusddns_reg_domain(int reg)
 
 	nserver = nvram_invmatch("ddns_serverhost_x", "") ?
 		    nvram_safe_get("ddns_serverhost_x") :
-		    "ns1.asuscomm.com";
+		    "nwsrv-ns1.asus.com";
 
 	eval("ez-ipupdate",
 	     "-S", "dyndns", "-i", wan_ifname, "-h", nvram_safe_get("ddns_hostname_x"),
@@ -3798,9 +3815,12 @@ stop_services(void)
 #endif
 
 #ifdef RTCONFIG_TOR
-        stop_Tor_proxy(); 
+	stop_Tor_proxy();
 #endif
 
+#ifdef RTCONFIG_CLOUDCHECK
+	stop_cloudcheck();
+#endif
 }
 
 #ifdef RTCONFIG_QCA
@@ -3865,6 +3885,9 @@ int start_wanduck(void)
 	if(sw_mode != SW_MODE_ROUTER && sw_mode != SW_MODE_REPEATER)
 		return -1;
 #endif
+
+	if(ate_cond() == 0)
+		return 0;
 
 	if(!strcmp(nvram_safe_get("wanduck_down"), "1"))
 		return 0;
@@ -4172,6 +4195,12 @@ again:
 
 		stop_wan();
 #ifdef RTCONFIG_USB
+#ifdef RTCONFIG_USB_MODEM
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+		eval("rm", "-rf", "/jffs/sim");
+#endif
+#endif
+
 		if (get_model() == MODEL_RTN53){
 			eval("wlconf", "eth2", "down");
 			modprobe_r("wl_high");
@@ -4407,6 +4436,7 @@ again:
 			// including switch setting
 			// used for system mode change and vlan setting change
 			sleep(2); // wait for all httpd event done
+			stop_networkmap();
 			stop_httpd();
 
 			stop_dnsmasq();
@@ -4476,6 +4506,7 @@ again:
 			start_lan_port(0);
 
 			start_httpd();
+			start_networkmap(0);
 			start_wl();
 			lanaccess_wl();
 #ifdef RTCONFIG_BCMWL6
@@ -4755,23 +4786,29 @@ check_ddr_done:
 	}
 #endif
 	else if (strcmp(script, "set_wltxpower") == 0) {
-	if ((get_model() == MODEL_RTAC66U) ||
-		(get_model() == MODEL_RTAC56S) ||
-		(get_model() == MODEL_RTAC56U) ||
-		(get_model() == MODEL_RTAC3200) ||
-		(get_model() == MODEL_RPAC68U) ||
-		(get_model() == MODEL_RTAC68U) ||
-		(get_model() == MODEL_DSLAC68U) ||
-		(get_model() == MODEL_RTAC87U) ||
-		(get_model() == MODEL_RTN12HP) ||
-		(get_model() == MODEL_RTN12HP_B1) ||
-		(get_model() == MODEL_APN12HP) ||
-		(get_model() == MODEL_RTN66U) ||
-		(get_model() == MODEL_RTN18U) ||
-		(get_model() == MODEL_RTAC88U))
+		switch (get_model()) {
+		case MODEL_RTAC66U:
+		case MODEL_RTAC56S:
+		case MODEL_RTAC56U:
+		case MODEL_RTAC3200:
+		case MODEL_RPAC68U:
+		case MODEL_RTAC68U:
+		case MODEL_DSLAC68U:
+		case MODEL_RTAC87U:
+		case MODEL_RTN12HP:
+		case MODEL_RTN12HP_B1:
+		case MODEL_APN12HP:
+		case MODEL_RTN66U:
+		case MODEL_RTN18U:
+		//case MODEL_RTAC5300:
+		//case MODEL_RTAC3100:
+		//case MODEL_RTAC88U:
 			set_wltxpower();
-		else
+			break;
+		default:
 			dbG("\n\tDon't do this!\n\n");
+			break;
+		}
 	}
 #endif
 #ifdef RTCONFIG_FANCTRL
@@ -4813,7 +4850,7 @@ check_ddr_done:
 			if(action & RC_SERVICE_START)
 			{
 				remove_dsl_autodet();
-				convert_dsl_wan_settings(2);
+				dsl_configure(2);
 				start_wan_if(atoi(cmd[1]));
 			}
 		}
@@ -4829,7 +4866,7 @@ check_ddr_done:
 // qis
 			remove_dsl_autodet();
 			stop_wan_if(atoi(cmd[1]));
-			convert_dsl_wan_settings(2);
+			dsl_configure(2);
 			start_wan_if(atoi(cmd[1]));
 			restart_wireless();
 		}
@@ -5175,11 +5212,33 @@ check_ddr_done:
 		if(strlen(isp) > 0)
 			_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
-	else if(!strncmp(script, "resetcount", 10)){
-		char *at_cmd[] = {"modem_status.sh", "bytes-", NULL};
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+	else if(!strncmp(script, "datacount", 10)){
+		char *at_cmd[] = {"modem_status.sh", "bytes", NULL};
 
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
+	else if(!strncmp(script, "resetcount", 10)){
+		time_t now;
+		char timebuf[32];
+		char *at_cmd[] = {"modem_status.sh", "bytes-", NULL};
+
+		time(&now);
+		snprintf(timebuf, 32, "%d", (int)now);
+		nvram_set("modem_bytes_data_start", timebuf);
+
+		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
+	}
+	else if(!strncmp(script, "sim_del", 10)){
+		char sim_order[32];
+		char *at_cmd[] = {"modem_status.sh", "imsi_del", sim_order, NULL};
+		_dprintf("sim_del: %s.\n", cmd[1]);
+
+		snprintf(sim_order, 32, "modem_sim_imsi%s", cmd[1]);
+
+		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
+	}
+#endif
 #endif // RTCONFIG_USB_MODEM
 #endif // RTCONFIG_USB
 	else if(!strncmp(script, "webs_", 5))
@@ -5868,11 +5927,17 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 #endif
 #endif
 #ifdef RTCONFIG_TOR
-        else if (strcmp(script, "tor") == 0)
-        {
-                if(action & RC_SERVICE_STOP) stop_Tor_proxy();
-                if(action & RC_SERVICE_START) start_Tor_proxy();
+	else if (strcmp(script, "tor") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_Tor_proxy();
+		if(action & RC_SERVICE_START) start_Tor_proxy();
 		start_firewall(wan_primary_ifunit(), 0);
+	}
+#endif
+#ifdef RTCONFIG_CLOUDCHECK
+        else if(!strcmp(script, "cloudcheck")){
+                if(action & RC_SERVICE_STOP) stop_cloudcheck();
+                if(action & RC_SERVICE_START) start_cloudcheck();
         }
 #endif
 	else
@@ -5891,6 +5956,7 @@ _dprintf("goto again(%d)...\n", getpid());
 	nvram_set("rc_service_pid", "");
 _dprintf("handle_notifications() end\n");
 }
+
 #if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)) || defined(RTCONFIG_QCA)
 void
 start_wlcscan(void)
@@ -6137,12 +6203,21 @@ void set_acs_ifnames()
 
 #ifdef RTAC3200
 	nvram_set("wl0_acs_excl_chans", "");
-	/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
-	nvram_set("wl1_acs_excl_chans",
-		  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
-	/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
-	nvram_set("wl2_acs_excl_chans",
-		  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a");
+	if (!nvram_match("wl1_country_code", "EU")) {
+		/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
+		nvram_set("wl1_acs_excl_chans",
+			  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
+		nvram_set("wl2_acs_excl_chans",
+			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a");
+	} else {
+		/* exclude acsd from selecting chanspec 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
+		nvram_set("wl0_acs_excl_chans",
+			  "0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
+		nvram_set("wl0_acs_excl_chans",
+			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
+	}
 #else
 	if (nvram_match("wl1_country_code", "EU"))
 	{
@@ -6348,7 +6423,12 @@ firmware_check_main(int argc, char *argv[])
 
 #ifdef RTCONFIG_TOR
 	start_Tor_proxy();
-#endif	
+#endif
+
+#ifdef RTCONFIG_CLOUDCHECK
+	start_cloudcheck();
+#endif
+
 	return 0;
 
 }
@@ -6684,6 +6764,32 @@ void start_Tor_proxy(void)
 
 	
 	_eval(Tor_argv, NULL, 0, &pid);
+}
+#endif
+
+#ifdef RTCONFIG_CLOUDCHECK
+void stop_cloudcheck(void){
+	if(getpid() != 1){
+		notify_rc("stop_cloudcheck");
+		return;
+	}
+
+	killall("booster_watchdo", SIGTERM); // only 15 characters can be identified.
+}
+
+void start_cloudcheck(void){
+	char *cmd[] = {"/bin/booster_watchdog", NULL};
+	pid_t pid;
+
+	if(getpid() != 1){
+		notify_rc("start_cloudcheck");
+		return;
+	}
+
+	if(nvram_get_int("enable_cloudcheck") != 1)
+		return;
+
+	_eval(cmd, NULL, 0, &pid);
 }
 #endif
 

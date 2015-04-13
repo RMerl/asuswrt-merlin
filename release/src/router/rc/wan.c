@@ -1202,6 +1202,8 @@ start_wan_if(int unit)
 
 #ifdef RTCONFIG_USB_MODEM
 	if (dualwan_unit__usbif(unit)) {
+		FILE *fp;
+
 		if(is_usb_modem_ready() != 1){ // find_modem_type.sh would be run by is_usb_modem_ready().
 			TRACE_PT("No USB Modem!\n");
 			return;
@@ -1245,30 +1247,25 @@ start_wan_if(int unit)
 		/* Stop pppd */
 		stop_pppd(unit);
 
-		char dhcp_pid_file[1024];
-		FILE *fp;
+		/* Stop dhcp client */
+		stop_udhcpc(unit);
+		stop_zcip(unit);
 
-		snprintf(dhcp_pid_file, 1024, "/var/run/udhcpc%d.pid", unit);
-
-		kill_pidfile_s(dhcp_pid_file, SIGUSR2);
-		kill_pidfile_s(dhcp_pid_file, SIGTERM);
-
-		unsigned long long rx_old, tx_old;
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 		unsigned long long rx, tx;
 		unsigned long long total, limit;
 
-		rx_old = strtoull(nvram_safe_get("modem_bytes_rx_old"), NULL, 10);
-		tx_old = strtoull(nvram_safe_get("modem_bytes_tx_old"), NULL, 10);
 		rx = strtoull(nvram_safe_get("modem_bytes_rx"), NULL, 10);
 		tx = strtoull(nvram_safe_get("modem_bytes_tx"), NULL, 10);
 		limit = strtoull(nvram_safe_get("modem_bytes_data_limit"), NULL, 10);
 
-		total = rx_old+tx_old+rx+tx;
+		total = rx+tx;
 
 		if(limit > 0 && total >= limit){
 			TRACE_PT("3g end: Data limit was set: limit %llu, now %llu.\n", limit, total);
 			return;
 		}
+#endif
 
 		if(nvram_get_int("stop_conn_3g") == 1){
 			write_3g_ppp_conf();
@@ -1653,7 +1650,7 @@ start_wan_if(int unit)
 			if (dhcpenable) {
 				/* Skip DHCP, but ZCIP for PPPOE, if desired */
 				if (strcmp(wan_proto, "pppoe") == 0 && dhcpenable == 2)
-					start_zcip(wan_ifname);
+					start_zcip(wan_ifname, unit);
 				else
 					start_udhcpc(wan_ifname, unit, NULL);
 			} else {
@@ -1848,7 +1845,6 @@ stop_wan_if(int unit)
 	char *wan_ifname;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_proto, active_proto[32];
-	char pid_file[256];
 #if defined(RTCONFIG_USB_BECEEM)
 	int i;
 #endif
@@ -1897,8 +1893,6 @@ stop_wan_if(int unit)
 #endif
 
 		stop_igmpproxy();
-
-		killall("zcip", SIGTERM);
 	}
 
 #ifdef RTCONFIG_VPNC
@@ -1915,9 +1909,9 @@ stop_wan_if(int unit)
 	/* Stop pppd */
 	stop_pppd(unit);
 
-	snprintf(pid_file, sizeof(pid_file), "/var/run/udhcpc%d.pid", unit);
-	kill_pidfile_s(pid_file, SIGUSR2);
-	kill_pidfile_s(pid_file, SIGTERM);
+	/* Stop dhcp client */
+	stop_udhcpc(unit);
+	stop_zcip(unit);
 
 	/* Stop pre-authenticator */
 	stop_auth(unit, 0);
@@ -2504,7 +2498,10 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 #ifdef RT4GAC55U
 	if(dualwan_unit__usbif(wan_unit)){
 		eval("modem_status.sh", "operation");
-		eval("modem_status.sh", "bytes+");
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+		eval("modem_status.sh", "bytes");
+		eval("modem_status.sh", "get_dataset");
+#endif
 
 		char start_sec[32], *str = file2str("/proc/uptime");
 		unsigned int up = atoi(str);
@@ -2903,7 +2900,7 @@ start_wan(void)
 #endif
 
 #ifdef RTCONFIG_DSL
-	convert_dsl_wan_settings(1);
+	dsl_configure(1);
 #endif
 
 	if (!is_routing_enabled())

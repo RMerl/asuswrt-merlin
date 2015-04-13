@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -376,10 +376,9 @@ void dhcp_packet(time_t now, int pxe_fd)
 	}
     } 
 #if defined(HAVE_LINUX_NETWORK)
-  else if ((ntohs(mess->flags) & 0x8000) || mess->hlen == 0 ||
-	   mess->hlen > sizeof(ifr.ifr_addr.sa_data) || mess->htype == 0)
+  else
     {
-      /* broadcast to 255.255.255.255 (or mac address invalid) */
+      /* fill cmsg for outbound interface (both broadcast & unicast) */
       struct in_pktinfo *pkt;
       msg.msg_control = control_u.control;
       msg.msg_controllen = sizeof(control_u);
@@ -389,23 +388,29 @@ void dhcp_packet(time_t now, int pxe_fd)
       pkt->ipi_spec_dst.s_addr = 0;
       msg.msg_controllen = cmptr->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
       cmptr->cmsg_level = IPPROTO_IP;
-      cmptr->cmsg_type = IP_PKTINFO;  
-      dest.sin_addr.s_addr = INADDR_BROADCAST;
-      dest.sin_port = htons(daemon->dhcp_client_port);
-    }
-  else
-    {
-      /* unicast to unconfigured client. Inject mac address direct into ARP cache. 
-	 struct sockaddr limits size to 14 bytes. */
-      dest.sin_addr = mess->yiaddr;
-      dest.sin_port = htons(daemon->dhcp_client_port);
-      memcpy(&arp_req.arp_pa, &dest, sizeof(struct sockaddr_in));
-      arp_req.arp_ha.sa_family = mess->htype;
-      memcpy(arp_req.arp_ha.sa_data, mess->chaddr, mess->hlen);
-      /* interface name already copied in */
-      arp_req.arp_flags = ATF_COM;
-      if (ioctl(daemon->dhcpfd, SIOCSARP, &arp_req) == -1)
-	my_syslog(MS_DHCP | LOG_ERR, _("ARP-cache injection failed: %s"), strerror(errno));
+      cmptr->cmsg_type = IP_PKTINFO;
+
+      if ((ntohs(mess->flags) & 0x8000) || mess->hlen == 0 ||
+         mess->hlen > sizeof(ifr.ifr_addr.sa_data) || mess->htype == 0)
+        {
+          /* broadcast to 255.255.255.255 (or mac address invalid) */
+          dest.sin_addr.s_addr = INADDR_BROADCAST;
+          dest.sin_port = htons(daemon->dhcp_client_port);
+        }
+      else
+        {
+          /* unicast to unconfigured client. Inject mac address direct into ARP cache.
+          struct sockaddr limits size to 14 bytes. */
+          dest.sin_addr = mess->yiaddr;
+          dest.sin_port = htons(daemon->dhcp_client_port);
+          memcpy(&arp_req.arp_pa, &dest, sizeof(struct sockaddr_in));
+          arp_req.arp_ha.sa_family = mess->htype;
+          memcpy(arp_req.arp_ha.sa_data, mess->chaddr, mess->hlen);
+          /* interface name already copied in */
+          arp_req.arp_flags = ATF_COM;
+          if (ioctl(daemon->dhcpfd, SIOCSARP, &arp_req) == -1)
+            my_syslog(MS_DHCP | LOG_ERR, _("ARP-cache injection failed: %s"), strerror(errno));
+        }
     }
 #elif defined(HAVE_SOLARIS_NETWORK)
   else if ((ntohs(mess->flags) & 0x8000) || mess->hlen != ETHER_ADDR_LEN || mess->htype != ARPHRD_ETHER)
@@ -443,7 +448,7 @@ void dhcp_packet(time_t now, int pxe_fd)
   setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &iface_index, sizeof(iface_index));
 #endif
   
-  while(sendmsg(fd, &msg, 0) == -1 && retry_send());
+  while(retry_send(sendmsg(fd, &msg, 0)));
 }
  
 /* check against secondary interface addresses */

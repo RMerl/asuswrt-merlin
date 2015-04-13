@@ -20,7 +20,7 @@ else
      vers=`cat $1/VERSION | sed 's/[(), ]/,/ g' | tr ',' '\n' | grep ^v[0-9]`
 
      if [ $? -eq 0 ]; then
-         echo "${vers}" | sort | head -n 1 | sed 's/^v//'
+         echo "${vers}" | sort -r | head -n 1 | sed 's/^v//'
      else
          cat $1/VERSION
      fi

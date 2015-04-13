@@ -11,6 +11,7 @@
 */
 
 #include <rc.h>
+#include <bwdpi.h>
 
 static void show_help(char *base)
 {

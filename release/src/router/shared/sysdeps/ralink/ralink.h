@@ -358,6 +358,7 @@ typedef enum _RT_802_11_PHY_MODE {
 #define REGSPEC_ADDR		0x40248 // 4 bytes
 #endif /* RTCONFIG_NEW_REGULATION_DOMAIN */
 
+#define OFFSET_TERRITORY_CODE	0x4ff90	/* 5 bytes, e.g., US/01, US/02, TW/01, etc. */
 #define OFFSET_DEV_FLAGS	0x4ffa0 //device dependent flags
 #define OFFSET_ODMPID		0x4ffb0 //the shown model name (for Bestbuy and others)
 #define OFFSET_FAIL_RET		0x4ffc0

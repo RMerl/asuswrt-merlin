@@ -100,7 +100,7 @@ typedef enum rtk_switch_maxPktLen_linkSpeed_e {
      CASEID(SET_EXT_MODE),			\
      CASEID(GET_CPU),				\
      CASEID(SET_CPU),				\
-     CASEID(GET_ATE_PHYSTATES),			\
+     CASEID(GET_RTK_PHYSTATES),			\
      CASEID(MAX_REQ),				\
 }
 

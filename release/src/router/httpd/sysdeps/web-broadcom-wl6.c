@@ -1223,6 +1223,20 @@ print_rate_buf(int raw_rate, char *buf)
 
 	return buf;
 }
+char *
+print_rate_buf_compact(int raw_rate, char *buf)
+{
+	if (!buf) return NULL;
+
+	if (raw_rate == -1) sprintf(buf, "        ");
+	else if ((raw_rate % 1000) == 0)
+		sprintf(buf, "%d", raw_rate / 1000);
+	else
+		sprintf(buf, "%.1f", (double) raw_rate / 1000);
+
+	return buf;
+}
+
 
 int wl_control_channel(int unit);
 
@@ -3276,6 +3290,117 @@ exit:
 	return ret;
 }
 
+#ifdef RTCONFIG_STAINFO
+static int wl_stainfo_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+	char *name;
+	struct maclist *auth;
+	int mac_list_size;
+	int i, firstRow = 1;
+	char ea[ETHER_ADDR_STR_LEN];
+	scb_val_t scb_val;
+	char *value;
+	char name_vif[] = "wlX.Y_XXXXXXXXXX";
+	int ii;
+	int ret = 0;
+	sta_info_t *sta;
+	char rate_buf[8];
+	int hr, min, sec;
+
+	/* buffers and length */
+	mac_list_size = sizeof(auth->count) + MAX_STA_COUNT * sizeof(struct ether_addr);
+	auth = malloc(mac_list_size);
+
+	if(!auth)
+		goto exit;
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	memset(auth, 0, mac_list_size);
+
+	/* query wl for authenticated sta list */
+	strcpy((char*)auth, "authe_sta_list");
+	if (wl_ioctl(name, WLC_GET_VAR, auth, mac_list_size))
+		goto exit;
+
+	/* build authenticated sta list */
+	for(i = 0; i < auth->count; ++i) {
+		sta = wl_sta_info(name, &auth->ea[i]);
+		if (!sta) continue;
+
+		if (firstRow == 1)
+			firstRow = 0;
+		else
+			ret += websWrite(wp, ", ");
+
+		ret += websWrite(wp, "[");
+
+		ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[i], ea));
+
+		ret += websWrite(wp, ", \"%s\"", print_rate_buf_compact(sta->tx_rate, rate_buf));
+		ret += websWrite(wp, ", \"%s\"", print_rate_buf_compact(sta->rx_rate, rate_buf));
+
+		hr = sta->in / 3600;
+		min = (sta->in % 3600) / 60;
+		sec = sta->in - hr * 3600 - min * 60;
+		ret += websWrite(wp, ", \"%02d:%02d:%02d\"", hr, min, sec);
+
+		ret += websWrite(wp, "]");
+	}
+
+	for (i = 1; i < 4; i++) {
+#ifdef RTCONFIG_WIRELESSREPEATER
+		if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
+			&& (unit == nvram_get_int("wlc_band")) && (i == 1))
+			break;
+#endif
+		sprintf(prefix, "wl%d.%d_", unit, i);
+		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
+		{
+			sprintf(name_vif, "wl%d.%d", unit, i);
+
+			memset(auth, 0, mac_list_size);
+
+			/* query wl for authenticated sta list */
+			strcpy((char*)auth, "authe_sta_list");
+			if (wl_ioctl(name_vif, WLC_GET_VAR, auth, mac_list_size))
+				goto exit;
+
+			for(ii = 0; ii < auth->count; ii++) {
+				sta = wl_sta_info(name_vif, &auth->ea[ii]);
+				if (!sta) continue;
+
+				if (firstRow == 1)
+					firstRow = 0;
+				else
+					ret += websWrite(wp, ", ");
+
+				ret += websWrite(wp, "[");
+
+				ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[ii], ea));
+
+				ret += websWrite(wp, ", \"%s\"", print_rate_buf_compact(sta->tx_rate, rate_buf));
+				ret += websWrite(wp, ", \"%s\"", print_rate_buf_compact(sta->rx_rate, rate_buf));
+
+				hr = sta->in / 3600;
+				min = (sta->in % 3600) / 60;
+				sec = sta->in - hr * 3600 - min * 60;
+				ret += websWrite(wp, ", \"%02d:%02d:%02d\"", hr, min, sec);
+
+				ret += websWrite(wp, "]");
+			}
+		}
+	}
+
+	/* error/exit */
+exit:
+	if(auth) free(auth);
+
+	return ret;
+}
+#endif
+
 int
 ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -3307,6 +3432,41 @@ ej_wl_sta_list_5g_2(int eid, webs_t wp, int argc, char_t **argv)
 
 #else
 extern int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv);
+#endif
+
+#ifdef RTCONFIG_STAINFO
+int
+ej_wl_stainfo_list_2g(int eid, webs_t wp, int argc, char_t **argv)
+{
+#ifndef RTAC3200_INTF_ORDER
+	return wl_stainfo_list(eid, wp, argc, argv, 0);
+#else
+	return wl_stainfo_list(eid, wp, argc, argv, 1);
+#endif
+}
+
+#ifndef RTCONFIG_QTN
+int
+ej_wl_stainfo_list_5g(int eid, webs_t wp, int argc, char_t **argv)
+{
+#ifndef RTAC3200_INTF_ORDER
+	return wl_stainfo_list(eid, wp, argc, argv, 1);
+#else
+	return wl_stainfo_list(eid, wp, argc, argv, 0);
+#endif
+}
+
+#ifdef RTAC3200
+int
+ej_wl_stainfo_list_5g_2(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return wl_stainfo_list(eid, wp, argc, argv, 2);
+}
+#endif
+
+#else
+extern int ej_wl_stainfo_list_5g(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 #endif
 
 // no WME in WL500gP V2

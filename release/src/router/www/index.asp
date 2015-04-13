@@ -1310,7 +1310,7 @@ function popupEditBlock(clientObj){
 		var clientIconHtml = "";
 		rssi_t = convRSSI(clientObj.rssi);
 		if(isNaN(rssi_t)) {
-			connectModeTip = '<#tm_wired#>';
+			connectModeTip = "<#tm_wired#>";
 		}
 		else {
 			switch(rssi_t) {
@@ -2086,9 +2086,12 @@ function previewImage(imageObj) {
 	}
 
 	var manualUpdate = false;
-	setTimeout(function(){
-		document.networkmapdRefresh.submit();
-	}, 3500);
+	if(parseInt((JS_timeObj.getTime()-cookie.get("nwmapRefreshTime"))/60000) > 1){
+		setTimeout(function(){
+			document.networkmapdRefresh.submit();
+		}, 3500);
+	}
+	cookie.set("nwmapRefreshTime", JS_timeObj.getTime(), 1);
 </script>
 </body>
 </html>

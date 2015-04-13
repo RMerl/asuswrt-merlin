@@ -12,6 +12,7 @@ modem_pid=`nvram get usb_modem_act_pid`
 modem_dev=`nvram get usb_modem_act_dev`
 modem_roaming_scantime=`nvram get modem_roaming_scantime`
 modem_roaming_scanlist=`nvram get modem_roaming_scanlist`
+sim_order=`nvram get modem_sim_order`
 
 at_lock="flock -x /tmp/at_cmd_lock"
 
@@ -69,37 +70,149 @@ if [ "$modem_act_node" == "" ]; then
 	fi
 fi
 
-if [ "$1" == "bytes" -o "$1" == "bytes+" ]; then
-	if [ "$1" == "bytes+" ]; then
-		modem_bytes_plus
-	fi
-
+if [ "$1" == "bytes" -o "$1" == "bytes-" ]; then
 	if [ "$modem_dev" == "" ]; then
 		echo "Can't get the active network device of USB."
 		exit 2
 	fi
 
-	ret=`ifconfig "$modem_dev" |grep 'bytes:' 2>/dev/null`
-	rx_new=`echo "$ret" |awk '{FS="RX bytes:"; print $2}' |awk '{FS=" "; print $1}' 2>/dev/null`
-	tx_new=`echo "$ret" |awk '{FS="TX bytes:"; print $2}' |awk '{FS=" "; print $1}' 2>/dev/null`
+	if [ -z "$sim_order" ]; then
+		echo "Fail to get the SIM order."
+		exit 12
+	fi
 
-	echo -n $rx_new > $jffs_dir/modem_bytes_rx
-	echo -n $tx_new > $jffs_dir/modem_bytes_tx
+	if [ ! -d "$jffs_dir/sim/$sim_order" ]; then
+		mkdir -p "$jffs_dir/sim/$sim_order"
+	fi
 
-	nvram set modem_bytes_rx=$rx_new
-	nvram set modem_bytes_tx=$tx_new
+	rx_new=`cat "/sys/class/net/$modem_dev/statistics/rx_bytes" 2>/dev/null`
+	tx_new=`cat "/sys/class/net/$modem_dev/statistics/tx_bytes" 2>/dev/null`
+	echo "  rx_new=$rx_new."
+	echo "  tx_new=$tx_new."
+
+	if [ "$1" == "bytes" ]; then
+		rx_old=`cat "$jffs_dir/sim/$sim_order/modem_bytes_rx" 2>/dev/null`
+		if [ -z "$rx_old" ]; then
+			rx_old=0
+		fi
+		tx_old=`cat "$jffs_dir/sim/$sim_order/modem_bytes_tx" 2>/dev/null`
+		if [ -z "$tx_old" ]; then
+			tx_old=0
+		fi
+		echo "  rx_old=$rx_old."
+		echo "  tx_old=$tx_old."
+
+		rx_reset=`nvram get modem_bytes_rx_reset`
+		if [ -z "$rx_reset" ]; then
+			rx_reset=0
+		fi
+		tx_reset=`nvram get modem_bytes_tx_reset`
+		if [ -z "$tx_reset" ]; then
+			tx_reset=0
+		fi
+		echo "rx_reset=$rx_reset."
+		echo "tx_reset=$tx_reset."
+
+		rx_now=`lplus $rx_old $rx_new`
+		tx_now=`lplus $tx_old $tx_new`
+		rx_now=`lminus $rx_now $rx_reset`
+		tx_now=`lminus $tx_now $tx_reset`
+		echo "  rx_now=$rx_now."
+		echo "  tx_now=$tx_now."
+
+		echo -n "$rx_now" > "$jffs_dir/sim/$sim_order/modem_bytes_rx"
+		nvram set modem_bytes_rx=$rx_now
+		echo -n "$tx_now" > "$jffs_dir/sim/$sim_order/modem_bytes_tx"
+		nvram set modem_bytes_tx=$tx_now
+	else
+		echo -n 0 > "$jffs_dir/sim/$sim_order/modem_bytes_rx"
+		nvram set modem_bytes_rx=0
+		echo -n 0 > "$jffs_dir/sim/$sim_order/modem_bytes_tx"
+		nvram set modem_bytes_tx=0
+		data_start=`nvram get modem_bytes_data_start 2>/dev/null`
+		if [ -n "$data_start" ]; then
+			echo -n "$data_start" > "$jffs_dir/sim/$sim_order/modem_bytes_data_start"
+		fi
+	fi
+
+	nvram set modem_bytes_rx_reset=$rx_new
+	nvram set modem_bytes_tx_reset=$tx_new
+	echo "set rx_reset=$rx_new."
+	echo "set tx_reset=$tx_new."
 
 	echo "done."
-elif [ "$1" == "bytes-" ]; then
-	echo -n 0 > $jffs_dir/modem_bytes_rx
-	echo -n 0 > $jffs_dir/modem_bytes_tx
-	echo -n 0 > $jffs_dir/modem_bytes_rx_old
-	echo -n 0 > $jffs_dir/modem_bytes_tx_old
+elif [ "$1" == "get_dataset" ]; then
+	if [ -z "$sim_order" ]; then
+		echo "Fail to get the SIM order."
+		exit 12
+	fi
 
-	nvram set modem_bytes_rx=0
-	nvram set modem_bytes_tx=0
-	nvram set modem_bytes_rx_old=0
-	nvram set modem_bytes_tx_old=0
+	echo "Getting data setting..."
+
+	if [ ! -d "$jffs_dir/sim/$sim_order" ]; then
+		mkdir -p "$jffs_dir/sim/$sim_order"
+	fi
+
+	data_start=`cat "$jffs_dir/sim/$sim_order/modem_bytes_data_start" 2>/dev/null`
+	data_cycle=`cat "$jffs_dir/sim/$sim_order/modem_bytes_data_cycle" 2>/dev/null`
+	data_limit=`cat "$jffs_dir/sim/$sim_order/modem_bytes_data_limit" 2>/dev/null`
+	data_warning=`cat "$jffs_dir/sim/$sim_order/modem_bytes_data_warning" 2>/dev/null`
+
+	if [ -n "$data_start" ]; then
+		nvram set modem_bytes_data_start=$data_start
+	fi
+	if [ -z "$data_cycle" ] || [ "$data_cycle" -lt 1 -o "$data_cycle" -gt 31 ]; then
+		data_cycle=1
+		echo -n "$data_cycle" > "$jffs_dir/sim/$sim_order/modem_bytes_data_cycle"
+	fi
+	nvram set modem_bytes_data_cycle=$data_cycle
+	if [ -z "$data_limit" ]; then
+		data_limit=0
+		echo -n "$data_limit" > "$jffs_dir/sim/$sim_order/modem_bytes_data_limit"
+	fi
+	nvram set modem_bytes_data_limit=$data_limit
+	if [ -z "$data_warning" ]; then
+		data_warning=0
+		echo -n "$data_warning" > "$jffs_dir/sim/$sim_order/modem_bytes_data_warning"
+	fi
+	nvram set modem_bytes_data_warning=$data_warning
+
+	echo "done."
+elif [ "$1" == "set_dataset" ]; then
+	if [ -z "$sim_order" ]; then
+		echo "Fail to get the SIM order."
+		exit 12
+	fi
+
+	echo "Setting data setting..."
+
+	if [ ! -d "$jffs_dir/sim/$sim_order" ]; then
+		mkdir -p "$jffs_dir/sim/$sim_order"
+	fi
+
+	data_start=`nvram get modem_bytes_data_start 2>/dev/null`
+	data_cycle=`nvram get modem_bytes_data_cycle 2>/dev/null`
+	data_limit=`nvram get modem_bytes_data_limit 2>/dev/null`
+	data_warning=`nvram get modem_bytes_data_warning 2>/dev/null`
+
+	if [ -n "$data_start" ]; then
+		echo -n "$data_start" > "$jffs_dir/sim/$sim_order/modem_bytes_data_start"
+	fi
+	if [ -z "$data_cycle" ] || [ "$data_cycle" -lt 1 -o "$data_cycle" -gt 31 ]; then
+		data_cycle=1
+		nvram set modem_bytes_data_cycle=$data_cycle
+	fi
+	echo -n "$data_cycle" > "$jffs_dir/sim/$sim_order/modem_bytes_data_cycle"
+	if [ -z "$data_limit" ]; then
+		data_limit=0
+		nvram set modem_bytes_data_limit=$data_limit
+	fi
+	echo -n "$data_limit" > "$jffs_dir/sim/$sim_order/modem_bytes_data_limit"
+	if [ -z "$data_warning" ]; then
+		data_warning=0
+		nvram set modem_bytes_data_warning=$data_warning
+	fi
+	echo -n "$data_warning" > "$jffs_dir/sim/$sim_order/modem_bytes_data_warning"
 
 	echo "done."
 elif [ "$1" == "sim" ]; then
@@ -292,7 +405,7 @@ elif [ "$1" == "getmode" ]; then
 		echo "done."
 	fi
 elif [ "$1" == "imsi" ]; then
-	echo -n "Getting IMSI..."
+	echo "Getting IMSI..."
 	at_ret=`$at_lock modem_at.sh '+CIMI' 2>/dev/null`
 	ret=`echo "$at_ret" |grep "^[0-9].*$" 2>/dev/null`
 	if [ "$ret" == "" ]; then
@@ -301,6 +414,73 @@ elif [ "$1" == "imsi" ]; then
 	fi
 
 	nvram set usb_modem_act_imsi=$ret
+
+	sim_num=`nvram get modem_sim_num`
+	if [ -z "$sim_num" ]; then
+		sim_num=10
+	fi
+
+	nvram set modem_sim_order=-1
+	i=1
+	while [ $i -le $sim_num ]; do
+		echo -n "check SIM($i)..."
+		got_imsi=`nvram get modem_sim_imsi$i`
+
+		if [ "$got_imsi" == "" ]; then
+			echo "Set SIM($i)."
+			nvram set modem_sim_order=$i
+			nvram set modem_sim_imsi${i}=$ret
+			break
+		elif [ "$got_imsi" == "$ret" ]; then
+			echo "Get SIM($i)."
+			nvram set modem_sim_order=$i
+			break
+		fi
+
+		i=$((i+1))
+	done
+
+	echo "done."
+elif [ "$1" == "imsi_del" ]; then
+	if [ -z "$2" ]; then
+		echo "Usage: $0 $1 <SIM's order>"
+		exit 11;
+	fi
+
+	echo "Delete SIM..."
+
+	sim_num=`nvram get modem_sim_num`
+	if [ -z "$sim_num" ]; then
+		sim_num=10
+	fi
+
+	i=$2
+	while [ $i -le $sim_num ]; do
+		echo -n "check SIM($i)..."
+		got_imsi=`nvram get modem_sim_imsi$i`
+
+		if [ $i -eq $2 ]; then
+			echo -n "Delete SIM($i)."
+			got_imsi=""
+			nvram set modem_sim_imsi$i=$got_imsi
+			rm -rf "$jffs_dir/sim/$i"
+		fi
+
+		if [ -z "$got_imsi" ]; then
+			j=$((i+1))
+			next_imsi=`nvram get modem_sim_imsi$j`
+			if [ -n "$next_imsi" ]; then
+				echo -n "Move SIM($j) to SIM($i)."
+				nvram set modem_sim_imsi$i=$next_imsi
+				mv "$jffs_dir/sim/$j" "$jffs_dir/sim/$i"
+				nvram set modem_sim_imsi$j=
+			fi
+		fi
+
+		echo ""
+
+		i=$((i+1))
+	done
 
 	echo "done."
 elif [ "$1" == "imei" ]; then

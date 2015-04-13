@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -103,15 +103,11 @@ int send_from(int fd, int nowild, char *packet, size_t len,
 #endif
     }
   
-  while (sendmsg(fd, &msg, 0) == -1)
+  while (retry_send(sendmsg(fd, &msg, 0)));
+
+  /* If interface is still in DAD, EINVAL results - ignore that. */
+  if (errno != 0 && errno != EINVAL)
     {
-      if (retry_send())
-	continue;
-      
-      /* If interface is still in DAD, EINVAL results - ignore that. */
-      if (errno == EINVAL)
-	break;
-      
       my_syslog(LOG_ERR, _("failed to send packet: %s"), strerror(errno));
       return 0;
     }
@@ -297,9 +293,9 @@ static int forward_query(int udpfd, union mysockaddr *udpaddr,
 		fd = forward->rfd4->fd;
 	    }
 	  
-	  while (sendto(fd, (char *)header, plen, 0,
-			&forward->sentto->addr.sa,
-			sa_len(&forward->sentto->addr)) == -1 && retry_send());
+	  while (retry_send( sendto(fd, (char *)header, plen, 0,
+				    &forward->sentto->addr.sa,
+				    sa_len(&forward->sentto->addr))));
 	  
 	  return 1;
 	}
@@ -469,14 +465,12 @@ static int forward_query(int udpfd, union mysockaddr *udpaddr,
 #endif
 		}
 	      
-	      if (sendto(fd, (char *)header, plen, 0,
-			 &start->addr.sa,
-			 sa_len(&start->addr)) == -1)
-		{
-		  if (retry_send())
-		    continue;
-		}
-	      else
+	      if (retry_send(sendto(fd, (char *)header, plen, 0,
+				    &start->addr.sa,
+				    sa_len(&start->addr))))
+		continue;
+	    
+	      if (errno == 0)
 		{
 		  /* Keep info in case we want to re-send this packet */
 		  daemon->srv_save = start;
@@ -932,7 +926,9 @@ void reply_query(int fd, int family, time_t now)
 		  
 		  if (fd != -1)
 		    {
-		      while (sendto(fd, (char *)header, nn, 0, &server->addr.sa, sa_len(&server->addr)) == -1 && retry_send()); 
+		      while (retry_send(sendto(fd, (char *)header, nn, 0, 
+					       &server->addr.sa, 
+					       sa_len(&server->addr)))); 
 		      server->queries++;
 		    }
 		  
@@ -2228,8 +2224,9 @@ void resend_query()
       else
 	return;
       
-      while(sendto(fd, daemon->packet, daemon->packet_len, 0,
-		   &daemon->srv_save->addr.sa, sa_len(&daemon->srv_save->addr)) == -1 && retry_send()); 
+      while(retry_send(sendto(fd, daemon->packet, daemon->packet_len, 0,
+			      &daemon->srv_save->addr.sa, 
+			      sa_len(&daemon->srv_save->addr)))); 
     }
 }
 

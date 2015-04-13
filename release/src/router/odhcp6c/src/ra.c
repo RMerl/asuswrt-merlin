@@ -13,7 +13,6 @@
  */
 
 #include <fcntl.h>
-#include <ifaddrs.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
@@ -46,9 +45,6 @@
 #include "odhcp6c.h"
 #include "ra.h"
 
-#ifdef BCMARM
-#include "ifaddrs.c"
-#endif
 
 static bool nocarrier = false;
 
@@ -180,8 +176,8 @@ static void ra_send_rs(int signal __attribute__((unused)))
 static int16_t pref_to_priority(uint8_t flags)
 {
 	flags = (flags >> 3) & 0x03;
-	return (flags == 0x0) ? 1024 : (flags == 0x1) ? 512 :
-			(flags == 0x3) ? 2048 : -1;
+	return (flags == 0x0) ? 512 : (flags == 0x1) ? 384 :
+			(flags == 0x3) ? 640 : -1;
 }
 
 
@@ -271,37 +267,21 @@ bool ra_process(void)
 {
 	bool found = false;
 	bool changed = false;
-	bool has_lladdr = !IN6_IS_ADDR_UNSPECIFIED(&lladdr);
 	uint8_t buf[1500], cmsg_buf[128];
 	struct nd_router_advert *adv = (struct nd_router_advert*)buf;
 	struct odhcp6c_entry entry = {IN6ADDR_ANY_INIT, 0, 0, IN6ADDR_ANY_INIT, 0, 0, 0, 0, 0, 0};
 	const struct in6_addr any = IN6ADDR_ANY_INIT;
 
-	if (!has_lladdr) {
-		// Autodetect interface-id if not specified
-		struct ifaddrs *ifaddr, *ifa;
+	if (IN6_IS_ADDR_UNSPECIFIED(&lladdr)) {
+		struct sockaddr_in6 addr = {AF_INET6, 0, 0, ALL_IPV6_ROUTERS, if_index};
+		socklen_t alen = sizeof(addr);
+		int sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
 
-		if (getifaddrs(&ifaddr) == 0) {
-			for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-				struct sockaddr_in6 *addr;
+		if (!connect(sock, (struct sockaddr*)&addr, sizeof(addr)) &&
+				!getsockname(sock, (struct sockaddr*)&addr, &alen))
+			lladdr = addr.sin6_addr;
 
-				if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET6)
-					continue;
-
-				addr = (struct sockaddr_in6*)ifa->ifa_addr;
-
-				if (!IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr))
-					continue;
-
-				if (!strcmp(ifa->ifa_name, if_name)) {
-					lladdr = addr->sin6_addr;
-					has_lladdr = true;
-					break;
-				}
-			}
-
-			freeifaddrs(ifaddr);
-		}
+		close(sock);
 	}
 
 	while (true) {
@@ -314,7 +294,7 @@ bool ra_process(void)
 		if (len <= 0)
 			break;
 
-		if (!has_lladdr)
+		if (IN6_IS_ADDR_UNSPECIFIED(&lladdr))
 			continue;
 
 		int hlim = 0;

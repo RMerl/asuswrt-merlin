@@ -93,11 +93,13 @@ var helpcontent = new Array();
 })();
 
 function suspendconn(wan_index, wanenable){
-	if(wan_index == usb_index)
-		document.internetForm_title.modem_enable.value = wanenable;
-	else
+	if(gobi_support && (wan_index == usb_index)){
 		document.internetForm_title.wan_enable.value = wanenable;
-	document.internetForm_title.wan_unit.value = wan_index;
+		document.internetForm_title.wan_unit.value = wan_index;
+	}	
+	else{
+		document.internetForm_title.modem_enable.value = wanenable;
+	}
 	showLoading();
 	document.internetForm_title.submit();	
 }

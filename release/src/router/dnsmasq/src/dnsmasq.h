@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
  
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define COPYRIGHT "Copyright (c) 2000-2014 Simon Kelley" 
+#define COPYRIGHT "Copyright (c) 2000-2015 Simon Kelley" 
 
 #ifndef NO_LARGEFILE
 /* Ensure we can use files >2GB (log files may grow this big) */
@@ -167,6 +167,7 @@ struct event_desc {
 #define EVENT_INIT      21
 #define EVENT_NEWADDR   22
 #define EVENT_NEWROUTE  23
+#define EVENT_TIME_ERR  24
 
 /* Exit codes. */
 #define EC_GOOD        0
@@ -554,6 +555,9 @@ struct resolvc {
 #define AH_DIR      1
 #define AH_INACTIVE 2
 #define AH_WD_DONE  4
+#define AH_HOSTS    8
+#define AH_DHCP_HST 16
+#define AH_DHCP_OPT 32
 struct hostsfile {
   struct hostsfile *next;
   int flags;
@@ -965,7 +969,7 @@ extern struct daemon {
   int doing_ra, doing_dhcp6;
   struct dhcp_netid_list *dhcp_ignore, *dhcp_ignore_names, *dhcp_gen_names; 
   struct dhcp_netid_list *force_broadcast, *bootp_dynamic;
-  struct hostsfile *dhcp_hosts_file, *dhcp_opts_file, *inotify_hosts;
+  struct hostsfile *dhcp_hosts_file, *dhcp_opts_file, *dynamic_dirs;
   int dhcp_max, tftp_max;
   int dhcp_server_port, dhcp_client_port;
   int start_tftp_port, end_tftp_port; 
@@ -983,6 +987,7 @@ extern struct daemon {
 #endif
 #ifdef HAVE_DNSSEC
   struct ds_config *ds;
+  char *timestamp_file;
 #endif
 
   /* globally used stuff for DNS */
@@ -1071,6 +1076,8 @@ int cache_make_stat(struct txt_record *t);
 char *cache_get_name(struct crec *crecp);
 char *cache_get_cname_target(struct crec *crecp);
 struct crec *cache_enumerate(int init);
+int read_hostsfile(char *filename, unsigned int index, int cache_size, 
+		   struct crec **rhash, int hashsz);
 
 /* blockdata.c */
 #ifdef HAVE_DNSSEC
@@ -1146,6 +1153,7 @@ int dnssec_chase_cname(time_t now, struct dns_header *header, size_t plen, char 
 int dnskey_keytag(int alg, int flags, unsigned char *rdata, int rdlen);
 size_t filter_rrsigs(struct dns_header *header, size_t plen);
 unsigned char* hash_questions(struct dns_header *header, size_t plen, char *name);
+int setup_timestamp(void);
 
 /* util.c */
 void rand_init(void);
@@ -1169,7 +1177,7 @@ int is_same_net6(struct in6_addr *a, struct in6_addr *b, int prefixlen);
 u64 addr6part(struct in6_addr *addr);
 void setaddr6part(struct in6_addr *addr, u64 host);
 #endif
-int retry_send(void);
+int retry_send(ssize_t rc);
 void prettyprint_time(char *buf, unsigned int t);
 int prettyprint_addr(union mysockaddr *addr, char *buf);
 int parse_hex(char *in, unsigned char *out, int maxlen, 
@@ -1204,7 +1212,8 @@ void reset_option_bool(unsigned int opt);
 struct hostsfile *expand_filelist(struct hostsfile *list);
 char *parse_server(char *arg, union mysockaddr *addr, 
 		   union mysockaddr *source_addr, char *interface, int *flags);
-int option_read_hostsfile(char *file);
+int option_read_dynfile(char *file, int flags);
+
 /* forward.c */
 void reply_query(int fd, int family, time_t now);
 void receive_query(struct listener *listen, time_t now);
@@ -1497,7 +1506,5 @@ int detect_loop(char *query, int type);
 #ifdef HAVE_INOTIFY
 void inotify_dnsmasq_init();
 int inotify_check(time_t now);
-#  ifdef HAVE_DHCP
-void set_dhcp_inotify(void);
-#  endif
+void set_dynamic_inotify(int flag, int total_size, struct crec **rhash, int revhashsz);
 #endif

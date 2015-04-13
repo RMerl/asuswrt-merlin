@@ -41,7 +41,7 @@ while [ $i -le 20 ]; do
 		break
 	fi
 
-	i=$(($i+1))
+	i=$((i+1))
 	echo "autorun APP: wait $i seconds..."
 	sleep 1
 done

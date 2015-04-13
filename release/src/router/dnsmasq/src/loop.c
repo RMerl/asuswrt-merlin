@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,8 +45,9 @@ void loop_send_probes()
 	     fd = rfd->fd;
 	   }
 
-	 while (sendto(fd, daemon->packet, len, 0, &serv->addr.sa, sa_len(&serv->addr)) == -1 && retry_send());
-
+	 while (retry_send(sendto(fd, daemon->packet, len, 0, 
+				  &serv->addr.sa, sa_len(&serv->addr))));
+	 
 	 free_rfd(rfd);
        }
 }

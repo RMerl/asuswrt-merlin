@@ -360,6 +360,11 @@ function initial(){
 	if(based_modelid != "RT-AC87U"){
 		check_ampdu_rts();
 	}
+
+	if(Rawifi_support || Qcawifi_support)	//brcm : 3 ; else : 1
+		document.getElementById("wl_dtim_th").onClick = openHint(3, 4);
+	else
+		document.getElementById("wl_dtim_th").onClick = openHint(3, 11);
 }
 
 function adjust_tx_power(){
@@ -926,7 +931,7 @@ function set_power(power_value){
 			  			</td>
 					</tr>
 					<tr id="wl_dtim_field">
-			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 11);"><#WLANConfig11b_x_DTIM_itemname#></a></th>
+			  			<th><a class="hintstyle" id="wl_dtim_th" href="javascript:void(0);" onClick=""><#WLANConfig11b_x_DTIM_itemname#></a></th>
 						<td>
 			  				<input type="text" maxlength="3" name="wl_dtim" class="input_6_table" value="<% nvram_get("wl_dtim"); %>" onKeyPress="return validator.isNumber(this,event)">
 						</td>			  

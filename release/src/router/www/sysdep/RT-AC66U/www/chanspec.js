@@ -24,7 +24,7 @@ function wl_chanspec_list_change(){
 	else if (phytype == "n") { // n mode
 		if (band == "1") { // ---- 5 GHz
 				if(wl_channel_list_5g instanceof Array && wl_channel_list_5g != ["0"]){	//With wireless channel 5g hook or return not ["0"]
-						if(based_modelid == "RT-AC3200")
+						if(based_modelid == "RT-AC3200" && country != "EU")
 							wl_channel_list_5g = [36,40,44,48];
 						else if(based_modelid == "RT-AC87U"){
 							if(document.form.wl_bw.value==1){
@@ -302,7 +302,7 @@ function wl_chanspec_list_change(){
 				}		
 		}
 		else if(band == "2"){	// 5GHz - high band
-						if(based_modelid == "RT-AC3200")
+						if(based_modelid == "RT-AC3200" && country != "EU")
 							wl_channel_list_5g_2 = [149,153,157,161,165];
 						else
 							wl_channel_list_5g_2 = eval('<% channel_list_5g_2(); %>');

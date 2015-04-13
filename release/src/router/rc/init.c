@@ -758,6 +758,11 @@ void clean_modem_state(int flag){
 	nvram_unset("usb_modem_act_auth");
 	nvram_unset("usb_modem_act_auth_pin");
 	nvram_unset("usb_modem_act_auth_puk");
+	nvram_unset("modem_sim_order");
+	nvram_unset("modem_bytes_rx");
+	nvram_unset("modem_bytes_tx");
+	nvram_unset("modem_bytes_rx_reset");
+	nvram_unset("modem_bytes_tx_reset");
 
 	if(flag == 2)
 		return;
@@ -1087,6 +1092,14 @@ restore_defaults(void)
 		snprintf(prefix, sizeof(prefix), "usb_path_ttyACM%d", i);
 		nvram_unset(prefix);
 	}
+
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+	int sim_num = atoi(nvram_safe_get("modem_sim_num"));
+	for(i = 1; i <= sim_num; ++i){
+		snprintf(prefix, sizeof(prefix), "modem_sim_imsi%d", i);
+		nvram_unset(prefix);
+	}
+#endif
 #endif
 
 	// Beceem modem.
@@ -1126,9 +1139,9 @@ restore_defaults(void)
 #endif
 			break;
 
+		case MODEL_RTAC5300:
 		case MODEL_RTAC88U:
-			nvram_set("reboot_time", "140");
-
+		case MODEL_RTAC3100:
 		case MODEL_RTAC87U:
 			nvram_set("reboot_time", "160");
 			break;
@@ -1712,10 +1725,6 @@ int init_nvram(void)
 				nvram_set("clkfreq", "800,666");
 				break;
 #endif
-			case MODEL_RTAC88U:
-				if (!nvram_match("bl_version", "1.0.1.1") && !nvram_get_int("PA"))
-                                nvram_set("clkfreq", "800,666");
-                                break;
 		}
 	}
 
@@ -1726,14 +1735,6 @@ int init_nvram(void)
 				nvram_set("sdram_config", "0x0149");
 		}
 	}
-
-	if (model == MODEL_RTAC88U) {
-                if (After(get_blver(nvram_safe_get("bl_version")), get_blver("1.0.1.6")) &&     // since 1.0.1.7
-                   !nvram_get_int("PA")) {
-                        if (!nvram_match("sdram_config", "0x0149"))
-                                nvram_set("sdram_config", "0x0149");
-                }
-        }
 
 	if (strcmp(clkfreq, nvram_safe_get("clkfreq")) ||
 	    strcmp(sdram_config, nvram_safe_get("sdram_config")))
@@ -3442,138 +3443,181 @@ int init_nvram(void)
 
 		break;
 
-        case MODEL_RTAC88U:
+	case MODEL_RTAC5300:
+	case MODEL_RTAC88U:
+	case MODEL_RTAC3100:
+#ifdef RTCONFIG_RGMII_BRCM5301X
 		nvram_unset("et0macaddr");
 		nvram_unset("et0mdcport");
 		nvram_unset("et0phyaddr");
-                nvram_set("vlan1hwname", "et1");
-                nvram_set("vlan2hwname", "et1");
-                nvram_set("lan_ifname", "br0");
-                nvram_set("landevs", "vlan1 wl0 wl1");
+		nvram_set("vlan1hwname", "et1");
+		nvram_set("vlan2hwname", "et1");
 		nvram_set("et1mdcport", "0");
 		nvram_set("et1phyaddr", "30");
 		nvram_set("rgmii_port", "5");
-
-#if 0
-                set_basic_ifname_vars("eth0", "vlan1", "eth1", "eth2", "usb", NULL, "vlan2", "vlan3", 0);
 #else
+		nvram_unset("et1macaddr");
+		nvram_unset("et1mdcport");
+		nvram_unset("et1phyaddr");
+		nvram_unset("rgmii_port");
+		nvram_set("vlan1hwname", "et0");
+		nvram_set("vlan2hwname", "et0");
+		nvram_set("et0mdcport", "0");
+		nvram_set("et0phyaddr", "30");
+#endif
+		nvram_set("lan_ifname", "br0");
+		if(model == MODEL_RTAC5300)
+			nvram_set("landevs", "vlan1 wl0 wl1 wl2");
+		else
+			nvram_set("landevs", "vlan1 wl0 wl1");
+
 #ifdef RTCONFIG_DUALWAN
-                if (nvram_get_int("sw_mode") == SW_MODE_ROUTER) {
-                        if (get_wans_dualwan()&WANSCAP_WAN && get_wans_dualwan()&WANSCAP_LAN)
-                                nvram_set("wandevs", "vlan2 vlan3");
-                        else
-                                nvram_set("wandevs", "et0");
+		if (nvram_get_int("sw_mode") == SW_MODE_ROUTER) {
+			if (get_wans_dualwan()&WANSCAP_WAN && get_wans_dualwan()&WANSCAP_LAN)
+				nvram_set("wandevs", "vlan2 vlan3");
+			else
+				nvram_set("wandevs", nvram_safe_get("vlan2hwname"));
 
-                        set_lan_phy("vlan1");
+			set_lan_phy("vlan1");
 
-                        if (!(get_wans_dualwan()&WANSCAP_2G))
-                                add_lan_phy("eth1");
-                        if (!(get_wans_dualwan()&WANSCAP_5G))
-                                add_lan_phy("eth2");
+			if (!(get_wans_dualwan()&WANSCAP_2G))
+				add_lan_phy("eth1");
+			if (!(get_wans_dualwan()&WANSCAP_5G)) {
+				add_lan_phy("eth2");
+				add_lan_phy("eth3");
+			}
 
-                        if (nvram_get("wans_dualwan")) {
-                                set_wan_phy("");
-                                for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
-                                        if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN) {
-                                                if (get_wans_dualwan()&WANSCAP_WAN)
-                                                        add_wan_phy("vlan3");
-                                                else
-                                                        add_wan_phy(the_wan_phy());
-                                        }
-                                        else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_2G)
-                                                add_wan_phy("eth1");
-                                        else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_5G)
-                                                add_wan_phy("eth2");
-                                        else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN) {
-                                                if (nvram_get("switch_wantag") && !nvram_match("switch_wantag", "") && !nvram_match("switch_wantag", "none")) {
-                                                        if (!nvram_match("switch_wan0tagid", "")) {
-                                                                sprintf(wan_if, "vlan%s", nvram_safe_get("switch_wan0tagid"));
-                                                                add_wan_phy(wan_if);
-                                                        }
-                                                        else
-                                                                add_wan_phy(the_wan_phy());
-                                                }
-                                                else if (get_wans_dualwan()&WANSCAP_LAN)
-                                                        add_wan_phy("vlan2");
-                                                else
-                                                        add_wan_phy(the_wan_phy());
-                                        }
-                                        else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
-                                                add_wan_phy("usb");
-                                }
-                        }
-                        else
-                                nvram_set("wan_ifnames", "eth0 usb");
-                }
-                else{
-                        nvram_set("wandevs", "et0");
-                        nvram_set("lan_ifnames", "vlan1 eth1 eth2");
-                        nvram_set("wan_ifnames", the_wan_phy());
-                        nvram_unset("wan1_ifname");
-                }
+			if (nvram_get("wans_dualwan")) {
+				set_wan_phy("");
+				for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
+					if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_LAN) {
+						if (get_wans_dualwan()&WANSCAP_WAN)
+							add_wan_phy("vlan3");
+						else
+							add_wan_phy(the_wan_phy());
+					}
+					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_2G)
+						add_wan_phy("eth1");
+					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_5G)
+						add_wan_phy("eth2");
+					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_WAN) {
+						if (nvram_get("switch_wantag") && !nvram_match("switch_wantag", "") && !nvram_match("switch_wantag", "none")) {
+							if (!nvram_match("switch_wan0tagid", "")) {
+								sprintf(wan_if, "vlan%s", nvram_safe_get("switch_wan0tagid"));
+								add_wan_phy(wan_if);
+							}
+							else
+								add_wan_phy(the_wan_phy());
+						}
+						else if (get_wans_dualwan()&WANSCAP_LAN)
+							add_wan_phy("vlan2");
+						else
+							add_wan_phy(the_wan_phy());
+					}
+					else if (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB)
+						add_wan_phy("usb");
+				}
+			}
+			else
+				nvram_set("wan_ifnames", "eth0 usb");
+		}
+		else{
+			nvram_set("wandevs", nvram_safe_get("vlan2hwname"));
+			if(model == MODEL_RTAC5300)
+				nvram_set("lan_ifnames", "vlan1 eth1 eth2 eth3");
+			else
+				nvram_set("lan_ifnames", "vlan1 eth1 eth2");
+			nvram_set("wan_ifnames", the_wan_phy());
+			nvram_unset("wan1_ifname");
+		}
 #else
-                nvram_set("lan_ifnames", "vlan1 eth1 eth2");
-                nvram_set("wan_ifnames", "eth0");
+		if(model == MODEL_RTAC5300)
+			nvram_set("lan_ifnames", "vlan1 eth1 eth2 eth3");
+		else
+			nvram_set("lan_ifnames", "vlan1 eth1 eth2");
+		nvram_set("wan_ifnames", "eth0");
 #endif
-                nvram_set("wl_ifnames", "eth1 eth2");
-                nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
-                nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
-#endif
-#ifdef RTCONFIG_USBRESET
-                nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
-#else
-                nvram_set_int("pwr_usb_gpio", 9);
-#endif
-                nvram_set_int("led_usb_gpio", 16|GPIO_ACTIVE_LOW);
-                nvram_set_int("led_usb3_gpio", 17|GPIO_ACTIVE_LOW);
-                nvram_set_int("led_pwr_gpio", 3|GPIO_ACTIVE_LOW);
-                nvram_set_int("led_wps_gpio", 19|GPIO_ACTIVE_LOW);
-                nvram_set_int("led_lan_gpio", 21|GPIO_ACTIVE_LOW);
-                nvram_set_int("btn_wps_gpio", 20|GPIO_ACTIVE_LOW);
-                nvram_set_int("btn_rst_gpio", 11|GPIO_ACTIVE_LOW);
-#ifdef RTCONFIG_WIFI_TOG_BTN
-                nvram_set_int("btn_wltog_gpio", 18|GPIO_ACTIVE_LOW);
-#endif
+		if(model == MODEL_RTAC5300)
+			nvram_set("wl_ifnames", "eth1 eth2 eth3");
+		else
+			nvram_set("wl_ifnames", "eth1 eth2");
+		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
+		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
+
+		/* gpio */
+		/* HW reset, 2 | LOW */
+		nvram_set_int("led_pwr_gpio", 3|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_led_gpio", 4);       // active high(on)
+		nvram_set_int("led_wan_gpio", 5);
+		/* MDC_4709 RGMII, 6 */
+		/* MDIO_4709 RGMII, 7 */
+		nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
+		/* RTL9365MB reset, 10 | LOW */
+		nvram_set_int("btn_rst_gpio", 11|GPIO_ACTIVE_LOW);
+		/* UART1_RX,  12 */
+		/* UART1_TX,  13 */
+		/* UART1_CTS, 14*/
+		/* UART1_RTS, 15 */
+		nvram_set_int("led_usb_gpio", 16|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_usb3_gpio",  16|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_mmc_gpio",  17|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wps_gpio", 19|GPIO_ACTIVE_LOW);
+		if(model == MODEL_RTAC5300) {
+			nvram_set_int("btn_wltog_gpio", 20|GPIO_ACTIVE_LOW);
+			nvram_set_int("btn_wps_gpio", 18|GPIO_ACTIVE_LOW);
+		} else {
+			nvram_set_int("btn_wltog_gpio", 18|GPIO_ACTIVE_LOW);
+			nvram_set_int("btn_wps_gpio", 20|GPIO_ACTIVE_LOW);
+		}
+		nvram_set_int("led_lan_gpio", 21|GPIO_ACTIVE_LOW);	/* FAN CTRL: reserved */
+		/* PA 5V/3.3V switch, 22 */
+		/* SDIO_EN_1P8, 23 | HIGH */
 #ifdef RTCONFIG_TURBO
-#endif
-#ifdef RTCONFIG_LED_BTN
-                nvram_set_int("btn_led_gpio", 4);       // active high
 #endif
 
 #ifdef RTCONFIG_XHCIMODE
-                nvram_set("xhci_ports", "1-1");
-                nvram_set("ehci_ports", "2-1 2-2");
-                nvram_set("ohci_ports", "3-1 3-2");
+		nvram_set("xhci_ports", "1-1");
+		nvram_set("ehci_ports", "2-1 2-2 2-3");
+		nvram_set("ohci_ports", "3-1 3-2");
 #else
-                if (nvram_get_int("usb_usb3") == 1) {
-                        nvram_set("xhci_ports", "1-1");
-                        nvram_set("ehci_ports", "2-1 2-2");
-                        nvram_set("ohci_ports", "3-1 3-2");
-                }
-                else{
-                        nvram_unset("xhci_ports");
-                        nvram_set("ehci_ports", "1-1 1-2");
-                        nvram_set("ohci_ports", "2-1 2-2");
-                }
+		if (nvram_get_int("usb_usb3") == 1) {
+			nvram_set("xhci_ports", "1-1");
+			nvram_set("ehci_ports", "2-1 2-2 2-3");
+			nvram_set("ohci_ports", "3-1 3-2");
+		}
+		else{
+			nvram_unset("xhci_ports");
+			nvram_set("ehci_ports", "1-1 1-2 1-3");
+			nvram_set("ohci_ports", "2-1 2-2");
+		}
 #endif
 
-                if (!nvram_get("ct_max"))
-                        nvram_set("ct_max", "300000");
-                add_rc_support("mssid 2.4G 5G update usbX2");
-                add_rc_support("switchctrl"); // broadcom: for jumbo frame only
-                add_rc_support("manual_stb");
-                add_rc_support("pwrctrl");
-                add_rc_support("WIFI_LOGO");
-                add_rc_support("nandflash");
+		if (!nvram_get("ct_max"))
+			nvram_set("ct_max", "300000");
+		add_rc_support("mssid 2.4G 5G update usbX2");
+		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
+		add_rc_support("manual_stb");
+		add_rc_support("pwrctrl");
+		add_rc_support("WIFI_LOGO");
+		add_rc_support("nandflash");
 #ifdef RTCONFIG_LED_BTN
-                nvram_set_int("AllLED", 1);
+		nvram_set_int("AllLED", 1);
+#endif
+		nvram_set("ehci_irq", "111");
+		nvram_set("xhci_irq", "112");
+#ifdef RTCONFIG_MMC_LED
+		nvram_set("mmc_irq", "177");
 #endif
 
-                break;
+		break;
 
         case MODEL_RPAC68U:
-                if (nvram_get("sw_mode")==NULL||nvram_get_int("sw_mode")==SW_MODE_ROUTER)
+		/*
+                if (nvram_get("sw_mode")==NULL||nvram_get_int("sw_mode")==SW_MODE_ROUTER) {
+			printf("\n[rc] reset sw_mode as RP mode\n");
                         nvram_set_int("sw_mode", SW_MODE_REPEATER);
+		}
+		*/
 
                 nvram_set("vlan1hwname", "et0");
                 nvram_set("lan_ifname", "br0");
@@ -3647,13 +3691,6 @@ int init_nvram(void)
 		nvram_set("1:ledbh0", "0x7");
 		nvram_set("1:ledbh9", "0x7");
 		nvram_set("1:ledbh10", "0x7");
-		/* rx gain err test*/
-		nvram_set("0:rxgainerr2ga0", "63");
-		nvram_set("0:rxgainerr2ga1", "31");
-		nvram_set("0:rxgainerr2ga2", "31");
-		nvram_set("1:rxgainerr5ga0", "63,63,63,63");
-		nvram_set("1:rxgainerr5ga1", "31,31,31,31");
-		nvram_set("1:rxgainerr5ga2", "31,31,31,31");
 
 #ifdef RTCONFIG_USBRESET
                 nvram_set_int("pwr_usb_gpio", 9|GPIO_ACTIVE_LOW);
@@ -4669,6 +4706,10 @@ int init_nvram(void)
 	add_rc_support("rog");
 #endif
 
+#ifdef RTCONFIG_TCODE
+	add_rc_support("tcode");
+#endif
+
 #ifdef RTCONFIG_JFFS2USERICON
 	add_rc_support("usericon");
 #endif
@@ -4679,6 +4720,19 @@ int init_nvram(void)
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2)
 	add_rc_support("jffs2");
 #endif
+#endif
+
+#ifdef RTCONFIG_WPS_ALLLED_BTN
+	nvram_set_int("AllLED", 1);
+	add_rc_support("cfg_wps_btn");
+#endif
+
+#ifdef RTCONFIG_STAINFO
+	add_rc_support("stainfo");
+#endif
+
+#ifdef RTCONFIG_CLOUDCHECK
+	add_rc_support("cloudcheck");
 #endif
 
 	return 0;
@@ -5814,22 +5868,7 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				dbG("*** Start rc: %d\n",rc_check);
 			}
 #ifdef RTCONFIG_USB
-			int fd = -1;
-			fd = file_lock("usb");	// hold off automount processing
-			start_usb();
-			start_usbled();
-#ifdef LINUX26
 			start_sd_idle();
-#endif
-			file_unlock(fd);	// allow to process usb hotplug events
-			/*
-			 * On RESTART some partitions can stay mounted if they are busy at the moment.
-			 * In that case USB drivers won't unload, and hotplug won't kick off again to
-			 * remount those drives that actually got unmounted. Make sure to remount ALL
-			 * partitions here by simulating hotplug event.
-			 */
-			if (state == SIGHUP /* RESTART */)
-				add_remove_usbhost("-1", 1);
 #endif
 #ifdef RTCONFIG_IPV6
 			if ( !(ipv6_enabled() && is_routing_enabled()) )
@@ -5852,20 +5891,26 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			{
 				restore_defaults_g = 0;
 
-				if ((get_model() == MODEL_RTAC66U) ||
-					(get_model() == MODEL_RTAC56S) ||
-					(get_model() == MODEL_RTAC56U) ||
-					(get_model() == MODEL_RTAC68U) ||
-					(get_model() == MODEL_DSLAC68U) ||
-					(get_model() == MODEL_RTAC87U) ||
-					(get_model() == MODEL_RTN12HP) ||
-					(get_model() == MODEL_RTN12HP_B1) ||
-					(get_model() == MODEL_RTN66U) ||
-					(get_model() == MODEL_RTN18U) ||
-					(get_model() == MODEL_RTAC88U)) {
+				switch (get_model()) {
+				case MODEL_RTAC66U:
+				case MODEL_RTAC56S:
+				case MODEL_RTAC56U:
+				case MODEL_RTAC68U:
+				case MODEL_DSLAC68U:
+				case MODEL_RTAC87U:
+				case MODEL_RTN12HP:
+				case MODEL_RTN12HP_B1:
+				case MODEL_RTN66U:
+				case MODEL_RTN18U:
+				//case MODEL_RTAC5300:
+				//case MODEL_RTAC3100:
+				//case MODEL_RTAC88U:
 					set_wltxpower();
-				} else if (nvram_contains_word("rc_support", "pwrctrl")) {
-					set_wltxpower();
+					break;
+				default:
+					if (nvram_contains_word("rc_support", "pwrctrl"))
+						set_wltxpower();
+					break;
 				}
 
 				restart_wireless();
@@ -5893,9 +5938,6 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				else
 					eval("ifconfig", "br0:0", "169.254.39.1", "netmask", "255.255.255.0");
 			}
-#endif
-#ifdef RTCONFIG_USB_PRINTER
-			start_usblpsrv();
 #endif
 
 #ifdef REMOVE
@@ -5932,12 +5974,11 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				}
 			}
 
-			ate_dev_status();
-/*
 			//For 66U normal boot & check device
 			if (((get_model()==MODEL_RTN66U) || (get_model()==MODEL_RTAC66U))
 			&& nvram_match("Ate_power_on_off_enable", "0")) {
 			    if (nvram_get_int("dev_fail_reboot")!=0) {
+				ate_dev_status();
 				if (strchr(nvram_get("Ate_dev_status"), 'X')) {
 					dev_fail_count = nvram_get_int("dev_fail_count");
 					dev_fail_count++;
@@ -5961,10 +6002,11 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				}
 			    }
 			}
-*/
+
 			if (nvram_match("Ate_power_on_off_enable", "1")) {
 				dev_check = nvram_get_int("Ate_dev_check");
 				dev_fail = nvram_get_int("Ate_dev_fail");
+				ate_dev_status();
 
 				if (strchr(nvram_get("Ate_dev_status"), 'X')) {
 					nvram_set_int("Ate_dev_fail", ++dev_fail);
@@ -6062,6 +6104,24 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 #endif
 			}
 #endif
+#endif
+#ifdef RTCONFIG_USB
+                        int fd = -1;
+                        fd = file_lock("usb");  // hold off automount processing
+                        start_usb();
+                        start_usbled();
+                        file_unlock(fd);        // allow to process usb hotplug events
+                        /*
+                         * On RESTART some partitions can stay mounted if they are busy at the moment.
+                         * In that case USB drivers won't unload, and hotplug won't kick off again to
+                         * remount those drives that actually got unmounted. Make sure to remount ALL
+                         * partitions here by simulating hotplug event.
+                         */
+                        if (state == SIGHUP /* RESTART */)
+                                add_remove_usbhost("-1", 1);
+#endif
+#ifdef RTCONFIG_USB_PRINTER
+                        start_usblpsrv();
 #endif
 
 			nvram_set("success_start_service", "1");

@@ -922,6 +922,21 @@ int gen_stateless_conf(void)
 	fprintf(fp, "server_ipaddr=\"%s\"\n", nvram_safe_get("QTN_RPC_SERVER"));
 	fprintf(fp, "client_ipaddr=\"%s\"\n", nvram_safe_get("QTN_RPC_CLIENT"));
 
+	if(nvram_match("wl1.1_lanaccess", "off") && !nvram_match("wl1.1_lanaccess", ""))
+		fprintf(fp, "wifi1_lanaccess=off\n");
+	else
+		fprintf(fp, "wifi1_lanaccess=on\n");
+
+	if(nvram_match("wl1.2_lanaccess", "off") && !nvram_match("wl1.2_lanaccess", ""))
+		fprintf(fp, "wifi2_lanaccess=off\n");
+	else
+		fprintf(fp, "wifi2_lanaccess=on\n");
+
+	if(nvram_match("wl1.3_lanaccess", "off") && !nvram_match("wl1.3_lanaccess", ""))
+		fprintf(fp, "wifi3_lanaccess=off\n");
+	else
+		fprintf(fp, "wifi3_lanaccess=on\n");
+
 	fclose(fp);
 
 	return 1;

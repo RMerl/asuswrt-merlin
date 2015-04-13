@@ -1038,6 +1038,8 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTAC53U:
 	case MODEL_RTAC3200:
 	case MODEL_RTAC88U:
+	case MODEL_RTAC3100:
+	case MODEL_RTAC5300:
 		strcpy(vlan, "vlan1");
 		break;
 	case MODEL_RTN53:
@@ -1163,17 +1165,18 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 				*tx2 = backup_tx;				
 				/* Cherry Cho modified for RT-AC3200 Bug#202 in 2014/11/4. */	
 				unit = get_wan_unit("eth0");
-#ifdef RTCONFIG_DUALWAN
-				if (((nvram_match("wans_mode", "fo") || nvram_match("wans_mode", "fb")) && (unit == wan_primary_ifunit())) || 
-					nvram_match("wans_mode", "lb"))
-#endif	/* RTCONFIG_DUALWAN */
+#ifdef RTCONFIG_DUALWAN			
+				if ( (unit == wan_primary_ifunit()) || ( !strstr(nvram_safe_get("wans_dualwan"), "none") && nvram_match("wans_mode", "lb")) )
 				{
 					if (unit == WAN_UNIT_FIRST)
 						strcpy(ifname_desc2, "INTERNET");
 					else
 						sprintf(ifname_desc2,"INTERNET%d", unit);
-				}	
-
+				}									
+#else
+				if(unit == wan_primary_ifunit())
+					strcpy(ifname_desc2, "INTERNET");					
+#endif	/* RTCONFIG_DUALWAN */
 			}
 		}//End of switch_wantag
 
@@ -1202,26 +1205,28 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 			}
 			else{
 #ifdef RTCONFIG_DUALWAN
-				if (((nvram_match("wans_mode", "fo") || nvram_match("wans_mode", "fb")) && (unit == wan_primary_ifunit())) || 
-					nvram_match("wans_mode", "lb"))
-#endif	/* RTCONFIG_DUALWAN */
+				if ( (unit == wan_primary_ifunit()) || ( !strstr(nvram_safe_get("wans_dualwan"), "none") && nvram_match("wans_mode", "lb")) )
 				{
 					if (unit == WAN_UNIT_FIRST) {	
 						strcpy(ifname_desc, "INTERNET");
 						return 1;
 					}
-					else { 
+					else {
 						sprintf(ifname_desc,"INTERNET%d", unit);
 						return 1;
 					}
 				}
+#else
+				if(unit == wan_primary_ifunit()){
+					strcpy(ifname_desc, "INTERNET");
+					return 1;
+				}			
+#endif	/* RTCONFIG_DUALWAN */
 			}
 		}
 		else if (dualwan_unit__usbif(unit)) {
 #ifdef RTCONFIG_DUALWAN
-			if (((nvram_match("wans_mode", "fo") || nvram_match("wans_mode", "fb")) && (unit == wan_primary_ifunit())) || 
-					nvram_match("wans_mode", "lb"))
-#endif	/* RTCONFIG_DUALWAN */
+			if ( (unit == wan_primary_ifunit()) || ( !strstr(nvram_safe_get("wans_dualwan"), "none") && nvram_match("wans_mode", "lb")) )
 			{
 				if(unit == WAN_UNIT_FIRST){//Cherry Cho modified in 2014/11/4.
 					strcpy(ifname_desc, "INTERNET");
@@ -1231,7 +1236,13 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 					sprintf(ifname_desc,"INTERNET%d", unit);
 					return 1;
 				}
-			}
+			}					
+#else
+			if(unit == wan_primary_ifunit()){
+				strcpy(ifname_desc, "INTERNET");
+				return 1;
+			}	
+#endif	/* RTCONFIG_DUALWAN */
 		}
 		else {
 			_dprintf("%s: unknown ifname %s\n", __func__, ifname);

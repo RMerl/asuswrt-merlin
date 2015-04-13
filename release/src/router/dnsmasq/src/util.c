@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -575,17 +575,27 @@ void bump_maxfd(int fd, int *max)
     *max = fd;
 }
 
-int retry_send(void)
+/* rc is return from sendto and friends.
+   Return 1 if we should retry.
+   Set errno to zero if we succeeded. */
+int retry_send(ssize_t rc)
 {
+  static int retries = 0;
+  struct timespec waiter;
+  
+  if (rc != -1)
+    {
+      retries = 0;
+      errno = 0;
+      return 0;
+    }
+  
   /* Linux kernels can return EAGAIN in perpetuity when calling
      sendmsg() and the relevant interface has gone. Here we loop
      retrying in EAGAIN for 1 second max, to avoid this hanging 
      dnsmasq. */
 
-  static int retries = 0;
-  struct timespec waiter;
-
-   if (errno == EAGAIN || errno == EWOULDBLOCK)
+  if (errno == EAGAIN || errno == EWOULDBLOCK)
      {
        waiter.tv_sec = 0;
        waiter.tv_nsec = 10000;
@@ -593,13 +603,13 @@ int retry_send(void)
        if (retries++ < 1000)
 	 return 1;
      }
-
-   retries = 0;
-   
-   if (errno == EINTR)
-     return 1;
-   
-   return 0;
+  
+  retries = 0;
+  
+  if (errno == EINTR)
+    return 1;
+  
+  return 0;
 }
 
 int read_write(int fd, unsigned char *packet, int size, int rw)
@@ -608,22 +618,21 @@ int read_write(int fd, unsigned char *packet, int size, int rw)
   
   for (done = 0; done < size; done += n)
     {
-    retry:
-      if (rw)
-        n = read(fd, &packet[done], (size_t)(size - done));
-      else
-        n = write(fd, &packet[done], (size_t)(size - done));
+      do { 
+	if (rw)
+	  n = read(fd, &packet[done], (size_t)(size - done));
+	else
+	  n = write(fd, &packet[done], (size_t)(size - done));
+	
+	if (n == 0)
+	  return 0;
+	
+      } while (retry_send(n) || errno == ENOMEM || errno == ENOBUFS);
 
-      if (n == 0)
-        return 0;
-      else if (n == -1)
-        {
-          if (retry_send() || errno == ENOMEM || errno == ENOBUFS)
-            goto retry;
-          else
-            return 0;
-        }
+      if (errno != 0)
+	return 0;
     }
+     
   return 1;
 }
 

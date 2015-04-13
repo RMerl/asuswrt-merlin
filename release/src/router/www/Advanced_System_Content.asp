@@ -120,7 +120,12 @@ function initial(){
 	}else{
 			document.getElementById('btn_ez_radiotoggle_tr').style.display = "";
 	}	
-	
+	if(cfg_wps_btn_support){
+		document.getElementById('btn_ez_mode_tr').style.display = "";
+	}else{
+		document.form.btn_ez_mode.disabled = true;
+		document.getElementById('btn_ez_mode_tr').style.display = "none";
+	}
 	if(sw_mode != 1){
 		$('misc_http_x_tr').style.display ="none";
 		hideport(0);
@@ -827,7 +832,8 @@ function pullLANIPList(obj){
 //Viz add 2012.02 LAN client ip } end 
 
 function hideport(flag){
-	$("accessfromwan_port").style.display = (flag == 1) ? "" : "none";
+	document.getElementById("accessfromwan_port").style.display = (flag == 1) ? "" : "none";
+	document.getElementById("NSlookup_help_for_WAN_access").style.display = (flag == 1) ? "" : "none";
 }
 
 //Viz add 2012.12 show url for https [start]
@@ -1118,6 +1124,15 @@ function toggle_jffs_visibility(state){
 						<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>><#WPS_btn_actWPS#>
 					</td>
 				</tr>
+				<tr id="btn_ez_mode_tr">
+					<th><#WPS_btn_behavior#></th>
+					<td>
+						<select name="btn_ez_mode" class="input_option">
+							<option value="0" <% nvram_match("btn_ez_mode", "0", "selected"); %>><#WPS_btn_actWPS#></option>
+							<option value="1" <% nvram_match("btn_ez_mode", "1", "selected"); %>>Turn LED On/Off</option>
+						</select>
+					</td>
+				</tr>
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
 					<td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" ></td>
@@ -1195,7 +1210,8 @@ function toggle_jffs_visibility(state){
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
 					<td>
 						<input type="radio" value="1" name="misc_http_x" class="input" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" value="0" name="misc_http_x" class="input" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" value="0" name="misc_http_x" class="input" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#><br>
+						<div class="formfontdesc" id="NSlookup_help_for_WAN_access" style="color:#FFCC00;display:none;"><#NSlookup_help#></div>		
 					</td>
 				</tr>   					
 

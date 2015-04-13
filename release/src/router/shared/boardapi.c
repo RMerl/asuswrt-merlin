@@ -113,6 +113,9 @@ int init_gpio(void)
 #ifdef RT4GAC55U
 		, "led_lte_gpio", "led_sig1_gpio", "led_sig2_gpio", "led_sig3_gpio"
 #endif
+#ifdef RTCONFIG_MMC_LED
+		, "led_mmc_gpio"
+#endif
 			   };
 	int use_gpio, gpio_pin;
 	int enable, disable;
@@ -265,6 +268,9 @@ void get_gpio_values_once(void)
 	led_gpio_table[LED_WAN] = __get_gpio("led_wan_gpio");
 	led_gpio_table[LED_USB] = __get_gpio("led_usb_gpio");
 	led_gpio_table[LED_USB3] = __get_gpio("led_usb3_gpio");
+#ifdef RTCONFIG_MMC_LED
+	led_gpio_table[LED_MMC] = __get_gpio("led_mmc_gpio");
+#endif
 #ifdef RTCONFIG_LED_ALL
 	led_gpio_table[LED_ALL] = __get_gpio("led_all_gpio");
 #endif

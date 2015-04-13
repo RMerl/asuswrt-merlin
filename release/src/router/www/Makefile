@@ -252,13 +252,13 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/device-map/disk.asp
 	# disk utility
 	rm -rf $(INSTALLDIR)/www/device-map/disk_utility.asp
-	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/backgroud_move_3_02.gif
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/backgroud_move_8P_2.0.gif
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/white_04.gif
-	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/yellow_04.gif
-	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/red_04.gif
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/normal.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/orange.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/blue.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/red.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/normal.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/USB2.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/USB_2.png
 	rm -rf $(INSTALLDIR)/www/disk_msg.js
 	rm -rf $(INSTALLDIR)/www/disk_fsck.xml
@@ -390,4 +390,8 @@ endif
 
 ifneq ($(RTCONFIG_TR069), y)
 	rm -rf $(INSTALLDIR)/www/Advanced_TR069_Content.asp
+endif
+
+ifneq ($(RTCONFIG_TOR), y)
+	rm -rf $(INSTALLDIR)/www/Advanced_TOR_Content.asp
 endif

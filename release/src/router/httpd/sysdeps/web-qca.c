@@ -520,69 +520,117 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int ret = 0;
 	WIFI_STA_TABLE *sta_info;
 	unsigned char mac_addr[ETHER_ADDR_LEN];
-	char tmpstr[128];
+	char tmpstr[1024], cmd[] = "iwconfig staXYYYYYY";
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_", *ifname;
 	int wl_mode_x;
 	int i;
+	FILE *fp;
+	char *p, ap_bssid[] = "00:00:00:00:00:00XXX";
 
-	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-	ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-
-	if (!get_radio_status(ifname))
-	{
-#if defined(BAND_2G_ONLY)
-		ret+=websWrite(wp, "2.4 GHz radio is disabled\n");
-#else
-		ret+=websWrite(wp, "%s radio is disabled\n",
-			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+	switch (nvram_get_int("sw_mode")) {
+#if defined(RTCONFIG_WIRELESSREPEATER)
+	case SW_MODE_REPEATER:
+#if defined(RTCONFIG_PROXYSTA)
+		snprintf(prefix, sizeof(prefix), "wl%d.1_", unit);
+		ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+		if (nvram_get_int("wlc_psta") == 1) {
+			/* Media bridge mode */
+			if (unit != nvram_get_int("wlc_band")) {
+				snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+				ret += websWrite(wp, "%s radio is disabled\n",
+					nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+				return ret;
+			}
+			memset(&mac_addr, 0, sizeof(mac_addr));
+			get_iface_hwaddr(ifname, mac_addr);
+			ret += websWrite(wp, "=======================================================================================\n"); // separator
+			ret += websWrite(wp, "OP Mode		: Media Bridge\n");
+			ret += websWrite(wp, "SSID		: %s\n", nvram_safe_get("wlc_ssid"));
+			sprintf(cmd, "iwconfig %s", ifname);
+			if ((fp = popen(cmd, "r")) != NULL && fread(tmpstr, 1, sizeof(tmpstr), fp) > 1) {
+				pclose(fp);
+				*(tmpstr + sizeof(tmpstr) - 1) = '\0';
+				*ap_bssid = '\0';
+				if ((p = strstr(tmpstr, "Access Point: ")) != NULL) {
+					strncpy(ap_bssid, p + 14, 17);
+					ap_bssid[17] = '\0';
+				}
+				ret += websWrite(wp, "BSSID		: %s\n", ap_bssid);
+			}
+			ret += websWrite(wp, "MAC address	: %02X:%02X:%02X:%02X:%02X:%02X\n",
+				mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+			*tmpstr = '\0';
+			strcpy(tmpstr, getAPPhyMode(unit));
+			ret += websWrite(wp, "Phy Mode	: %s\n", tmpstr);
+			ret += websWrite(wp, "Channel		: %u\n", getAPChannel(unit));
+		} else
 #endif
-		return ret;
-	}
-
-	memset(&mac_addr, 0, sizeof(mac_addr));
-	get_iface_hwaddr(ifname, mac_addr);
-	ret += websWrite(wp, "=======================================================================================\n"); // separator
-	ret += websWrite(wp, "MAC address	: %02X:%02X:%02X:%02X:%02X:%02X\n",
-		mac_addr[0], mac_addr[1], mac_addr[2],
-		mac_addr[3], mac_addr[4], mac_addr[5]);
-
-	wl_mode_x = nvram_get_int(strcat_r(prefix, "mode_x", tmp));
-	if      (wl_mode_x == 1)
-		ret+=websWrite(wp, "OP Mode		: WDS Only\n");
-	else if (wl_mode_x == 2)
-		ret+=websWrite(wp, "OP Mode		: Hybrid\n");
-	else
-		ret+=websWrite(wp, "OP Mode		: AP\n");
-
-	memset(tmpstr, 0, sizeof(tmpstr));
-	strcpy(tmpstr, getAPPhyMode(unit));
-	ret += websWrite(wp, "Phy Mode	: %s\n", tmpstr);
-
-	ret += websWrite(wp, "Channel		: %u\n", getAPChannel(unit));
-
-	ret += websWrite(wp, "\nStations List			   \n");
-	ret += websWrite(wp, "----------------------------------------\n");
-#if 0 //barton++
-	ret += websWrite(wp, "%-18s%-4s%-8s%-4s%-4s%-4s%-5s%-5s%-12s\n",
-			   "MAC", "PSM", "PhyMode", "BW", "MCS", "SGI", "STBC", "Rate", "Connect Time");
-#else
-	ret += websWrite(wp, "%-18s%-7s%-7s%-12s\n",
-			   "MAC", "TXRATE", "RXRATE", "Connect Time");
-#endif
-
-	if ((sta_info = malloc(sizeof(*sta_info))) != NULL)
-	{
-		getSTAInfo(unit, sta_info);
-		for(i = 0; i < sta_info->Num; i++)
 		{
-			ret += websWrite(wp, "%s %6s %6s %8s\n",
-				sta_info->Entry[i].addr,
-				sta_info->Entry[i].txrate,
-				sta_info->Entry[i].rxrate,
-				sta_info->Entry[i].conn_time
-				);
+			/* Repeater mode */
+			/* FIXME */
 		}
-		free(sta_info);
+		break;
+#endif
+	default:
+		/* Router mode, AP mode */
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+		ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+		if (!get_radio_status(ifname))
+		{
+#if defined(BAND_2G_ONLY)
+			ret += websWrite(wp, "2.4 GHz radio is disabled\n");
+#else
+			ret += websWrite(wp, "%s radio is disabled\n",
+				nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+#endif
+			return ret;
+		}
+
+		memset(&mac_addr, 0, sizeof(mac_addr));
+		get_iface_hwaddr(ifname, mac_addr);
+		ret += websWrite(wp, "=======================================================================================\n"); // separator
+		wl_mode_x = nvram_get_int(strcat_r(prefix, "mode_x", tmp));
+		if      (wl_mode_x == 1)
+			ret += websWrite(wp, "OP Mode		: WDS Only\n");
+		else if (wl_mode_x == 2)
+			ret += websWrite(wp, "OP Mode		: Hybrid\n");
+		else
+			ret += websWrite(wp, "OP Mode		: AP\n");
+
+		ret += websWrite(wp, "MAC address	: %02X:%02X:%02X:%02X:%02X:%02X\n",
+			mac_addr[0], mac_addr[1], mac_addr[2],
+			mac_addr[3], mac_addr[4], mac_addr[5]);
+
+		memset(tmpstr, 0, sizeof(tmpstr));
+		strcpy(tmpstr, getAPPhyMode(unit));
+		ret += websWrite(wp, "Phy Mode	: %s\n", tmpstr);
+
+		ret += websWrite(wp, "Channel		: %u\n", getAPChannel(unit));
+
+		ret += websWrite(wp, "\nStations List			   \n");
+		ret += websWrite(wp, "----------------------------------------\n");
+#if 0 //barton++
+		ret += websWrite(wp, "%-18s%-4s%-8s%-4s%-4s%-4s%-5s%-5s%-12s\n",
+				   "MAC", "PSM", "PhyMode", "BW", "MCS", "SGI", "STBC", "Rate", "Connect Time");
+#else
+		ret += websWrite(wp, "%-18s%-7s%-7s%-12s\n",
+				   "MAC", "TXRATE", "RXRATE", "Connect Time");
+#endif
+
+		if ((sta_info = malloc(sizeof(*sta_info))) != NULL) {
+			getSTAInfo(unit, sta_info);
+			for(i = 0; i < sta_info->Num; i++) {
+				ret += websWrite(wp, "%s %6s %6s %8s\n",
+					sta_info->Entry[i].addr,
+					sta_info->Entry[i].txrate,
+					sta_info->Entry[i].rxrate,
+					sta_info->Entry[i].conn_time
+					);
+			}
+			free(sta_info);
+		}
+		break;
 	}
 
 	return ret;

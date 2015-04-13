@@ -53,6 +53,10 @@
 #define USB_EHCI_PORT_3 get_usb_ehci_port(2)
 #define USB_OHCI_PORT_3 get_usb_ohci_port(2)
 
+#ifdef BCM_MMC
+#define SDCARD_PORT USB_EHCI_PORT_3
+#endif
+
 enum {
 	DEVICE_TYPE_UNKNOWN=0,
 	DEVICE_TYPE_DISK,
@@ -118,9 +122,10 @@ extern int hadPrinterModule();
 extern int hadPrinterInterface(const char *usb_node);
 extern int isPrinterInterface(const char *interface_name);
 #endif
-
-#ifdef RTCONFIG_USB
 extern int isStorageInterface(const char *interface_name);
+extern int isStorageDevice(const char *device_name);
+#ifdef BCM_MMC
+extern int isMMCDevice(const char *device_name);
 #endif
 
 extern char *find_sg_of_device(const char *device_name, char *buf, const int buf_size);

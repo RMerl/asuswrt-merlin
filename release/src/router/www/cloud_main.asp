@@ -780,6 +780,9 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 																	<li style="margin-top:-5px;">
 																	 <#FAQ_Find#> <a style="font-weight: bolder;text-decoration: underline;" href="http://aicloud-faq.asuscomm.com/aicloud-faq/" target="_blank">GO</a>
 																	</li>
+																	<li style="margin-top:-5px;">
+																		<#NSlookup_help#>
+																	</li>
 																</ul>
 															</td>
 															<td align="right" valign="top"  nowrap="nowrap">

@@ -262,8 +262,10 @@ extern struct notifier *exitnotify;  /* for notification that we're exiting */
 extern struct notifier *sigreceived; /* notification of received signal */
 extern struct notifier *ip_up_notifier;     /* IPCP has come up */
 extern struct notifier *ip_down_notifier;   /* IPCP has gone down */
+#ifdef INET6
 extern struct notifier *ipv6_up_notifier;   /* IPV6CP has come up */
 extern struct notifier *ipv6_down_notifier; /* IPV6CP has gone down */
+#endif
 extern struct notifier *auth_up_notifier; /* peer has authenticated */
 extern struct notifier *link_down_notifier; /* link has gone down */
 extern struct notifier *fork_notifier;	/* we are a new child process */
@@ -737,8 +739,10 @@ extern int (*allowed_address_hook) __P((u_int32_t addr));
 extern void (*ip_up_hook) __P((void));
 extern void (*ip_down_hook) __P((void));
 extern void (*ip_choose_hook) __P((u_int32_t *));
+#ifdef INET6
 extern void (*ipv6_up_hook) __P((void));
 extern void (*ipv6_down_hook) __P((void));
+#endif
 
 extern int (*chap_check_hook) __P((void));
 extern int (*chap_passwd_hook) __P((char *user, char *passwd));

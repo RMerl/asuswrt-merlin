@@ -518,8 +518,10 @@ extern void add_rc_support(char *feature);
 extern int udhcpc_wan(int argc, char **argv);
 extern int udhcpc_lan(int argc, char **argv);
 extern int start_udhcpc(char *wan_ifname, int unit, pid_t *ppid);
+extern void stop_udhcpc(int unit);
 extern int zcip_wan(int argc, char **argv);
-extern int start_zcip(char *wan_ifname);
+extern int start_zcip(char *wan_ifname, int unit);
+extern void stop_zcip(int unit);
 
 #ifdef RTCONFIG_IPV6
 extern int dhcp6c_wan(int argc, char **argv);
@@ -804,6 +806,14 @@ extern int init_3g_param(const char *port_path, const unsigned int vid, const un
 extern int write_3g_ppp_conf(void);
 #endif
 
+#ifdef RTCONFIG_DSL
+//dsl.c
+extern void dsl_configure(int req);
+extern void start_dsl(void);
+extern void remove_dsl_autodet(void);
+extern void dsl_defaults(void);
+#endif
+
 //services.c
 extern void setup_leds();
 extern void write_static_leases(char *file);
@@ -914,6 +924,10 @@ extern int stop_lteled(void);
 #endif
 #ifdef RTCONFIG_TOR
 extern void start_Tor_proxy(void);
+#endif
+#ifdef RTCONFIG_CLOUDCHECK
+void stop_cloudcheck(void);
+void start_cloudcheck(void);
 #endif
 
 #ifdef RTCONFIG_IPERF

@@ -32,7 +32,6 @@ install:
 	@cp $(SRCFILE)/chkntfs $(INSTALLDIR)/usr/sbin
 	@cp $(SRCFILE)/ufsd.ko $(DSTDIR)
 ifeq ($(RTCONFIG_HFS),y)
-	@cp $(SRCFILE)/jnl.ko $(DSTDIR)
 	@cp $(SRCFILE)/chkhfs $(INSTALLDIR)/usr/sbin/
 	@cp $(SRCFILE)/mkhfs $(INSTALLDIR)/usr/sbin
 endif
@@ -44,7 +43,8 @@ ifeq ($(RTCONFIG_HFS),y)
 	@chmod 775 $(INSTALLDIR)/usr/sbin/mkhfs
 endif
 	@chmod 664 $(DSTDIR)/ufsd.ko
-ifeq ($(RTCONFIG_HFS),y)
+ifeq ($(RTCONFIG_BCMARM),y)
+	@cp $(SRCFILE)/jnl.ko $(DSTDIR)
 	@chmod 664 $(DSTDIR)/jnl.ko
 endif
 

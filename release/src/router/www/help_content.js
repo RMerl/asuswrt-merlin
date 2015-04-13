@@ -41,14 +41,14 @@ helpcontent[3] = new Array("",
 							"<#WLANConfig11b_x_RadioEnable_itemdesc#>",
 							"<#WLANConfig11b_x_RadioEnableDate_itemdesc#><p><a href='/Main_LogStatus_Content.asp' target='_blank'><#General_x_SystemTime_itemname#><#btn_go#></a></p>",
 							"<#WLANConfig11b_x_RadioEnableTime_itemdesc#><p><a href='/Main_LogStatus_Content.asp' target='_blank'><#General_x_SystemTime_itemname#><#btn_go#></a></p>",						   
-							"",
+							"<#WLANConfig11b_x_DTIM_else_itemdesc#>",
 							"<#WLANConfig11b_x_IsolateAP_itemdesc#>",
 							"<#WLANConfig11b_DataRateAll_itemdesc#>",
 							"<#WLANConfig11b_MultiRateAll_itemdesc#>",
 							"<#WLANConfig11b_DataRate_itemdesc#>",
 							"<#WLANConfig11b_x_Frag_itemdesc#>",
 							"<#WLANConfig11b_x_RTS_itemdesc#>",
-							"<#WLANConfig11b_x_DTIM_itemdesc#>",
+							"<#WLANConfig11b_x_DTIM_brcm_itemdesc#>",
 							"<#WLANConfig11b_x_Beacon_itemdesc#>",
 							"<#WLANConfig11b_x_TxBurst_itemdesc#>",
 							"<#WLANConfig11b_x_WMM_itemdesc#>",
@@ -274,7 +274,8 @@ helpcontent[25] = new Array("",
 							"The G.INP stands for Impulse Noise Protection. It works on ADSL2, ADSL2+, and VDSL2 only. It is enabled to provide enhanced protection against impulse noise or to increase the efficiency of providing impulse noise protection. If your DSLAM does not support it, please disable it.",
 							"This item configures Rx AGC(Auto Gain Control) GAIN for ADSL, if tweak the Stability Adjustment (ADSL) setting still could not get desired downstream speed, then could try to set Rx AGC GAIN Adjustment to High Performance mode. However if your ADSL connection is unstable and has some CRC then could set to Stable mode.",
 							"This item supports G.vector. With G.vector crosstalk among the signals in the same cable could be canceled, such as far-end crosstalk (FEXT). Which would significantly improve Signal-to-Noise Ratio (SNR) that leads to higher achievable bit rates. However CO must deploy Vectored VDSL2 DSLAM in order for this feature to work. If you find it doesn't work well or you know the G.vector of your ISP is non-standard, please enable both of this option and Non-standard G.vector.",
-							"This item supports Non-standard G.vector for specific countries. Please note that if your G.vector is standard, please do not enable this option for optimized performance."
+							"This item supports Non-standard G.vector for specific countries. Please note that if your G.vector is standard, please do not enable this option for optimized performance.",
+							"This command is  helpful for some impulse noise environment to enhance line stability."
 							);
 							
 //DualWAN

@@ -953,6 +953,25 @@ void init_syspara(void)
 		nvram_set("firmver", trim_r(fwver));
 	}
 
+#if defined(RTCONFIG_TCODE)
+	/* Territory code */
+	memset(buffer, 0, sizeof(buffer));
+	if (FRead(buffer, OFFSET_TERRITORY_CODE, 5) < 0) {
+		_dprintf("READ ASUS territory code: Out of scope\n");
+		nvram_unset("territory_code");
+	} else {
+		/* [A-Z][A-Z]/[0-9][0-9] */
+		if (buffer[2] != '/' ||
+		    !isupper(buffer[0]) || !isupper(buffer[1]) ||
+		    !isdigit(buffer[3]) || !isdigit(buffer[4]))
+		{
+			nvram_unset("territory_code");
+		} else {
+			nvram_set("territory_code", buffer);
+		}
+	}
+#endif
+
 	memset(buffer, 0, sizeof(buffer));
 	FRead(buffer, OFFSET_BOOT_VER, 4);
 //	sprintf(blver, "%c.%c.%c.%c", buffer[0], buffer[1], buffer[2], buffer[3]);

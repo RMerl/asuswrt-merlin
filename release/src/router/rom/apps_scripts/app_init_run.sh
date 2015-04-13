@@ -102,7 +102,7 @@ for f in $APPS_RUN_DIR/S*; do
 		ms_pid=`pidof minidlna`
 		i=0
 		while [ ! -z "$ms_pid" ] && [ $i -lt 10 ] ; do
-			i=$(($i+1))
+			i=$((i+1))
 			echo "$i: $nice_cmd sh $s $2" | logger -c
 			$nice_cmd sh $s $2
 			sleep 1

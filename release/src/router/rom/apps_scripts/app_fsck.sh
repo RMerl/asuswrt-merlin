@@ -128,7 +128,7 @@ elif [ "$1" == "ntfs" ] || [ "$1" == "tntfs" ]; then
 		c=0
 		RET=0
 		while [ ${c} -lt 4 -a ${RET} -ne 1 ] ; do
-			c=$((${c} + 1))
+			c=$((c+1))
 			eval chkntfs $autocheck_option $autofix_option --verbose $2 $log_option
 			RET=$?
 			if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then

@@ -198,6 +198,7 @@ function go_next_page(){
 			  		<li><#AiDiskWelcome_desp1#></li>
 			  		<li><#AiDiskWelcome_desp2#></li>
 						<li><#AiDisk_moreconfig#></li>
+						<li><#NSlookup_help#></li>
 						<li>
 							<a id="tosLink" style="cursor:pointer;font-family:Lucida Console;text-decoration:underline;" target="_blank" href="">
 								<#DDNS_termofservice_Title#>
@@ -223,6 +224,7 @@ function go_next_page(){
 		  				</li>
 							<li><#AiDisk_moreconfig#></li>
 							<li><#Aidisk_authority_hint#></li>
+							<li><#NSlookup_help#></li>	
 							<li>
 								<a id="tosLink2" style="cursor:pointer;font-family:Lucida Console;text-decoration:underline;" target="_blank" href="">
 									<#DDNS_termofservice_Title#>

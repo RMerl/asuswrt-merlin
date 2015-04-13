@@ -316,9 +316,8 @@ void set_radio(int on, int unit, int subunit)
 		doSystem("iwpriv %s set RadioOn=%d", WIF_2G, on);
 	else doSystem("iwpriv %s set RadioOn=%d", WIF_5G, on);
 
-#if defined(RTAC1200HP) //5G
-	if(unit)
-		led_5g_onoff();
+#if defined(RTAC1200HP) || defined(RTN56UB1) //5G:7612E 2G:7603E
+	led_onoff(unit);
 #endif	
 }
 
@@ -791,12 +790,15 @@ int get_channel_list_via_country(int unit, const char *country_code, char *buffe
 }
 
 
-#if defined(RTAC1200HP)
-void led_5g_onoff(void)
+#if defined(RTAC1200HP) || defined(RTN56UB1)
+void led_onoff(int unit)
 {   
-	if(get_radio(1, 0))
-		led_control(LED_5G, LED_ON);	
-	else
-		led_control(LED_5G, LED_OFF);	
+#if defined(RTAC1200HP)
+	if(unit==1)
+#endif		
+		if(get_radio(unit, 0))
+			led_control(unit?LED_5G:LED_2G, LED_ON);	
+		else
+			led_control(unit?LED_5G:LED_2G, LED_OFF);	
 }
 #endif

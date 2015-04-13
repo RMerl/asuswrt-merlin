@@ -36,6 +36,9 @@ enum {
 	SWPORT_LAN2,
 	SWPORT_LAN3,
 	SWPORT_LAN4,
+#ifdef RTCONFIG_EXT_RTL8365MB
+	SWPORT_LAN5,
+#endif
 	SWPORT_CPU,
 	SWPORT_COUNT,
 };
@@ -65,6 +68,9 @@ enum {
 	SW_L2  = (1U << SWPORT_LAN2),
 	SW_L3  = (1U << SWPORT_LAN3),
 	SW_L4  = (1U << SWPORT_LAN4),
+#ifdef RTCONFIG_EXT_RTL8365MB
+	SW_L5  = (1U << SWPORT_LAN5),
+#endif
 	SW_CPU = (1U << SWPORT_CPU),
 };
 

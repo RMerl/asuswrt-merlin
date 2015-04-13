@@ -1,0 +1,18 @@
+The script reads stdin and replaces all IP addresses with names before
+outputting it again. IPs from private networks are reverse looked  up
+via dns. Other IP adresses are searched for in the dnsmasq query log.
+This gives names (CNAMEs if I understand DNS correctly) that are closer
+to the name the client originally asked for then the names obtained by
+reverse lookup. Just run
+
+netstat -n -4 | ./reverse_replace.sh 
+
+to see what it does. It needs 
+
+log-queries
+log-facility=/var/log/dnsmasq.log
+
+in the dnsmasq configuration.
+
+The script runs on debian (with ash installed) and on busybox.
+

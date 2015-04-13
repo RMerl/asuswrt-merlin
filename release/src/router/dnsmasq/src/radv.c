@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -479,8 +479,9 @@ static void send_ra(time_t now, int iface, char *iface_name, struct in6_addr *de
       setsockopt(daemon->icmp6fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &iface, sizeof(iface));
     }
   
-  while (sendto(daemon->icmp6fd, daemon->outpacket.iov_base, save_counter(0), 0, 
-		(struct sockaddr *)&addr, sizeof(addr)) == -1 && retry_send());
+  while (retry_send(sendto(daemon->icmp6fd, daemon->outpacket.iov_base, 
+			   save_counter(0), 0, (struct sockaddr *)&addr, 
+			   sizeof(addr))));
   
 }
 

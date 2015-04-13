@@ -88,6 +88,7 @@
 #define CASE_THESAMESUBNET 6
 #define CASE_PPPNOIP       7
 #define CASE_AP_DISCONN    8
+#define CASE_DATALIMIT     9
 
 #pragma pack(1) // let struct be neat by byte.
 

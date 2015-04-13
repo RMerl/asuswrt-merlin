@@ -115,9 +115,9 @@ export LIBPATH += -L$(SRCBASE)/router/wps/lib
 export LIBPATH += -L$(SRCBASE)/router/wps/prebuilt
 ifeq ($(WPS_UPNP_DEVICE),1)
 # Always use LIBUPNP
-export LIBPATH += -L$(TOP)/libupnp -L$(INSTALLDIR)/libupnp/usr/lib
+export LIBPATH += -L$(TOP)/libupnp${BCMEX}$(EX7) -L$(INSTALLDIR)/libupnp/usr/lib
 WPSM_LIBS += -lupnp
-CFLAGS += -I$(SRCBASE)/router/libupnp/include -I$(SRCBASE)/wps/brcm_apps/upnp/WFADevice
+CFLAGS += -I$(SRCBASE)/router/libupnp${BCMEX}$(EX7)/include -I$(SRCBASE)/wps/brcm_apps/upnp/WFADevice
 endif
 
 WPS_OSL := $(WPS_ROUTERHALFILES)

@@ -384,7 +384,7 @@ GEN_CONF:
 					eval("wl", "-i", ifname, "radarthrs",
 					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
 #endif
-#if defined(RTAC68U) || defined(RTAC88U)
+#if defined(RTAC68U)
 				if ((	nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
 					nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) /*||
 				       (nvram_match(strcat_r(prefix, "country_code", tmp), "JP") &&
@@ -401,6 +401,12 @@ GEN_CONF:
 					nvram_match(strcat_r(prefix, "country_rev", tmp), "0")))
 					eval("wl", "-i", ifname, "radarthrs",
 					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
+#endif
+#ifdef RTAC3200
+				if (   nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+				       nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
+				       eval("wl", "-i", ifname, "radarthrs",
+				       "0x698", "0x30", "0x698", "0x30", "0x68c", "0x30", "0x6d0", "0x30", "0x6d0", "0x30", "0x6c6", "0x30");
 #endif
 			}
 #endif
@@ -758,7 +764,7 @@ void wlconf_pre()
 #ifdef RTCONFIG_BCMARM
 		if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))
 		{
-			if (model == MODEL_RTN18U || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_RPAC68U || model == MODEL_DSLAC68U || model == MODEL_RTAC88U || model == MODEL_RTAC87U) {
+			if (model == MODEL_RTN18U || model == MODEL_RTAC3200 || model == MODEL_RTAC68U || model == MODEL_RPAC68U || model == MODEL_DSLAC68U || model == MODEL_RTAC88U || model == MODEL_RTAC3100 || model == MODEL_RTAC5300 || model == MODEL_RTAC87U) {
 				if (nvram_match(strcat_r(prefix, "turbo_qam", tmp), "1"))
 					eval("wl", "-i", word, "vht_features", "3");
 				else
@@ -1598,6 +1604,8 @@ void start_lan(void)
 		(get_model() == MODEL_RTAC53U) ||
 		(get_model() == MODEL_RTN66U) ||
 		(get_model() == MODEL_RTN18U) ||
+		(get_model() == MODEL_RTAC5300) ||
+		(get_model() == MODEL_RTAC3100) ||
 		(get_model() == MODEL_RTAC88U)) {
 #ifdef RTCONFIG_BCM7
 		load_wl();
@@ -1628,20 +1636,25 @@ void start_lan(void)
 #endif
 
 #ifdef CONFIG_BCMWL5
-	if ((get_model() == MODEL_RTAC66U) ||
-		(get_model() == MODEL_RTAC56S) ||
-		(get_model() == MODEL_RTAC56U) ||
-		(get_model() == MODEL_RTAC3200) ||
-		(get_model() == MODEL_RPAC68U) ||
-		(get_model() == MODEL_RTAC68U) ||
-		(get_model() == MODEL_DSLAC68U) ||
-		(get_model() == MODEL_RTAC87U) ||
-		(get_model() == MODEL_RTN12HP) ||
-		(get_model() == MODEL_APN12HP) ||
-		(get_model() == MODEL_RTN66U) ||
-		(get_model() == MODEL_RTN18U) ||
-		(get_model() == MODEL_RTAC88U))
-	set_wltxpower();
+	switch (get_model()) {
+	case MODEL_RTAC66U:
+	case MODEL_RTAC56S:
+	case MODEL_RTAC56U:
+	case MODEL_RTAC3200:
+	case MODEL_RPAC68U:
+	case MODEL_RTAC68U:
+	case MODEL_DSLAC68U:
+	case MODEL_RTAC87U:
+	case MODEL_RTN12HP:
+	case MODEL_APN12HP:
+	case MODEL_RTN66U:
+	case MODEL_RTN18U:
+	//case MODEL_RTAC5300:
+	//case MODEL_RTAC3100:
+	//case MODEL_RTAC88U:
+		set_wltxpower();
+		break;
+	}
 
 	reset_countrycode_2g();
 	reset_countrycode_5g();
@@ -2660,12 +2673,9 @@ NEITHER_WDS_OR_PSTA:
 
 			nvram_set(strcat_r(prefix, "ifname", tmp), "");
 
-			char dhcp_pid_file[1024];
-
-			snprintf(dhcp_pid_file, 1024, "/var/run/udhcpc%d.pid", unit);
-
-			kill_pidfile_s(dhcp_pid_file, SIGUSR2);
-			kill_pidfile_s(dhcp_pid_file, SIGTERM);
+			/* Stop dhcp client */
+			stop_udhcpc(unit);
+			stop_zcip(unit);
 		}
 	}
 	// Beceem dongle, ASIX USB to RJ45 converter, ECM, rndis(LU-150: ethX with RNDIS).
@@ -2767,12 +2777,9 @@ NEITHER_WDS_OR_PSTA:
 				clean_modem_state(1);
 			}
 
-			char dhcp_pid_file[1024];
-
-			snprintf(dhcp_pid_file, 1024, "/var/run/udhcpc%d.pid", unit);
-
-			kill_pidfile_s(dhcp_pid_file, SIGUSR2);
-			kill_pidfile_s(dhcp_pid_file, SIGTERM);
+			/* Stop dhcp client */
+			stop_udhcpc(unit);
+			stop_zcip(unit);
 
 #ifdef RTCONFIG_USB_BECEEM
 			if(strlen(port_path) <= 0)
@@ -3017,7 +3024,9 @@ static void led_bh_prep(int post)
 		case MODEL_RPAC68U:
 		case MODEL_RTAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RTAC5300:
 		case MODEL_RTAC88U:
+		case MODEL_RTAC3100:
 			if(post)
 			{
 				eval("wl", "ledbh", "10", "7");
@@ -3537,6 +3546,8 @@ void start_lan_wl(void)
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTN66U) ||
 		(get_model() == MODEL_RTN18U) ||
+		(get_model() == MODEL_RTAC5300) ||
+		(get_model() == MODEL_RTAC3100) ||
 		(get_model() == MODEL_RTAC88U)) {
 #ifdef RTCONFIG_EMF
 		modprobe("emf");
@@ -3562,20 +3573,25 @@ void start_lan_wl(void)
 #endif
 
 #ifdef CONFIG_BCMWL5
-	if ((get_model() == MODEL_RTAC3200) ||
-		(get_model() == MODEL_RTAC66U) ||
-		(get_model() == MODEL_RTAC56S) ||
-		(get_model() == MODEL_RTAC56U) ||
-		(get_model() == MODEL_RPAC68U) ||
-		(get_model() == MODEL_RTAC68U) ||
-		(get_model() == MODEL_DSLAC68U) ||
-		(get_model() == MODEL_RTAC87U) ||
-		(get_model() == MODEL_RTN12HP) ||
-		(get_model() == MODEL_APN12HP) ||
-		(get_model() == MODEL_RTN66U) ||
-		(get_model() == MODEL_RTN18U) ||
-		(get_model() == MODEL_RTAC88U))
-	set_wltxpower();
+	switch (get_model()) {
+	case MODEL_RTAC3200:
+	case MODEL_RTAC66U:
+	case MODEL_RTAC56S:
+	case MODEL_RTAC56U:
+	case MODEL_RPAC68U:
+	case MODEL_RTAC68U:
+	case MODEL_DSLAC68U:
+	case MODEL_RTAC87U:
+	case MODEL_RTN12HP:
+	case MODEL_APN12HP:
+	case MODEL_RTN66U:
+	case MODEL_RTN18U:
+	//case MODEL_RTAC5300:
+	//case MODEL_RTAC3100:
+	//case MODEL_RTAC88U:
+		set_wltxpower();
+		break;
+	}
 
 	reset_countrycode_2g();
 	reset_countrycode_5g();
@@ -3900,16 +3916,39 @@ void restart_wl(void)
 void lanaccess_mssid_ban(const char *limited_ifname)
 {
 	char lan_subnet[32];
+#ifdef RTAC87U
+	char limited_ifname_real[32] = {0};
+#endif
 
 	if (limited_ifname == NULL) return;
 
 	if (nvram_get_int("sw_mode") != SW_MODE_ROUTER) return;
 
+#ifdef RTAC87U
+	/* #565: Access Intranet off */
+	/* workaround: use vlan4000, 4001, 4002 as QTN guest network VID */
+
+	if(strcmp(limited_ifname, "wl1.1") == 0)
+		snprintf(limited_ifname_real, sizeof(limited_ifname_real), "vlan4000");
+	else if(strcmp(limited_ifname, "wl1.2") == 0)
+		snprintf(limited_ifname_real, sizeof(limited_ifname_real), "vlan4001");
+	else if(strcmp(limited_ifname, "wl1.3") == 0)
+		snprintf(limited_ifname_real, sizeof(limited_ifname_real), "vlan4002");
+	else
+		snprintf(limited_ifname_real, "%s", limited_ifname);
+
+	eval("ebtables", "-A", "FORWARD", "-i", (char*)limited_ifname_real, "-j", "DROP"); //ebtables FORWARD: "for frames being forwarded by the bridge"
+	eval("ebtables", "-A", "FORWARD", "-o", (char*)limited_ifname_real, "-j", "DROP"); // so that traffic via host and nat is passed
+
+	snprintf(lan_subnet, sizeof(lan_subnet), "%s/%s", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+	eval("ebtables", "-t", "broute", "-A", "BROUTING", "-i", (char*)limited_ifname_real, "-p", "ipv4", "--ip-dst", lan_subnet, "--ip-proto", "tcp", "-j", "DROP");
+#else
 	eval("ebtables", "-A", "FORWARD", "-i", (char*)limited_ifname, "-j", "DROP"); //ebtables FORWARD: "for frames being forwarded by the bridge"
 	eval("ebtables", "-A", "FORWARD", "-o", (char*)limited_ifname, "-j", "DROP"); // so that traffic via host and nat is passed
 
 	snprintf(lan_subnet, sizeof(lan_subnet), "%s/%s", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
 	eval("ebtables", "-t", "broute", "-A", "BROUTING", "-i", (char*)limited_ifname, "-p", "ipv4", "--ip-dst", lan_subnet, "--ip-proto", "tcp", "-j", "DROP");
+#endif
 }
 
 void lanaccess_wl(void)
@@ -4460,7 +4499,7 @@ int reset_qtn(int restart)
 				unlink("/tmp/udhcpc_lan");
 			}
 
-			wait_loop = 8;
+			wait_loop = 3;
 			while(wait_loop > 0) {
 				dbG("[reset_qtn] *** kill udhcpc to waiting tftp loading ***\n");
 				sleep(15);	/* waiting tftp loading */

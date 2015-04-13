@@ -6115,3 +6115,47 @@ void rssi_check_unit(int unit)
 	}
 }
 #endif	/* RTCONFIG_USER_LOW_RSSI */
+
+#if defined(RTCONFIG_TCODE)
+int getTerritoryCode(void)
+{
+	char buf[6];
+
+	memset(buf, 0, sizeof(buf));
+	FRead(&buf, OFFSET_TERRITORY_CODE, 5);
+	if ((unsigned char)buf[0] != 0xFF)
+		puts(buf);
+
+	return 0;
+}
+
+int setTerritoryCode(const char *tcode)
+{
+	unsigned char buf[5];
+
+	/* special case
+	 * if tcode == "FFFFF", Write FF, FF, FF, FF, FF to OFFSET_TERRITORY_CODE
+	 */
+	if (!strcmp(tcode, "FFFFF")) {
+		memset(buf, 0xFF, sizeof(buf));
+		FWrite(buf, OFFSET_TERRITORY_CODE, 5);
+		nvram_unset("territory_code");
+
+		return 0;
+	}
+
+	/* [A-Z][A-Z]/[0-9][0-9] */
+	if (tcode[2] != '/' ||
+	    !isupper(tcode[0]) || !isupper(tcode[1]) ||
+	    !isdigit(tcode[3]) || !isdigit(tcode[4]))
+	{
+		return -1;
+	}
+
+	FWrite(tcode, OFFSET_TERRITORY_CODE, 5);
+	nvram_set("territory_code", tcode);
+
+	return 0;
+}
+#endif
+

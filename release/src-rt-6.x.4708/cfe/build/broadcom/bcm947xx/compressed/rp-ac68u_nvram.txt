@@ -1,6 +1,6 @@
-# NVRAM board text file template for the ASUS RT-AC68U router.
+# NVRAM board text file for the BCM947081_ DC112A_P100 May. 14th 2014 reference design
 #
-# Copyright 2012, Broadcom Corporation
+# Copyright 2014, Broadcom Corporation
 # All Rights Reserved.
 #
 # THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
@@ -28,7 +28,7 @@
 #     BCM94312mcg     0x048B        BCM94706Lmiih5  0x0603
 #     BCM94312mcag    0x048C        BCM94706nr2hmc  0x0617
 #     BCM95354gr      0x048E        BCM94708r       0x0646
-#     BCM94705nogig   0x0496        BCM94709r       0x0665
+#     BCM94705nogig   0x0496
 #     BCM94703nr      0x04C0
 #     BCM94716nr2     0x04CD
 #     BCM94717ap      0x04CE
@@ -37,7 +37,7 @@
 #     BCM94717cbtnr   0x04EF
 #     BCM94716nr2ipa  0x04FB
 #
-# set a boardtype of BCM94708r but customized for ASUS RT-AC68U
+# set a boardtype of BCM94708r
 boardtype=0x0646
 
 # boardnum is set by the nvserial program. Don't edit it here.
@@ -53,18 +53,16 @@ boardnum=${serno}
 # Bits [11:0] - Board revision, 12 bits which use BCD encoding to represent a decimal number between 0 and 999.
 #
 # Ex: A legacy board rev of 4.5 is 0x0045
-# Ex: A P304 board rev is 0x1304
+# Ex: A P100 board rev is 0x1100
 #
-# Board revision is P100
 boardrev=0x1100
 
 # boardflags: 32-bits (LSB on top, MSB on bottom)
-#   0 = no Bluetooth coexistence                                 1 = board supports Bluetooth coexistence
-#   0 = set the PA VREF LDO to 2.85V                             1 = set the PA VREF LDO to 3.00V
-#         (4360 ONLY!)
+#   0 = no Bluetooth coexistence                                 1 = 2-wire Bluetooth coex on GPIO 7 & 8
+#   0 = GPIO 9 does not control the PA                           (deprecated)
 #   0 = does not implement GPIO 13 radio disable (Airline mode)  1 = board implements Airline mode on GPIO 13
-#   0 = enable 256QAM support                                    1 = disable 256QAM support
-#         (11ac chips only!)
+#   0 = no RSSI divider                                          1 = has RSSI divider
+#         (only applies to older chips like 4712 with an external radio)
 #  ---
 #   0 = board does not have RoboSwitch or Ethernet switch core   1 = has RoboSwitch chip or Ethernet switch core
 #   0 = OK to power down PLL and chip                            (deprecated)
@@ -114,7 +112,7 @@ boardrev=0x1100
 #       input power.
 #   0 = use normal "InitGain"                                    1 = backoff "InitGain" based on the elna2g/5g parameters, for external LNAs only.
 #
-boardflags=0x00000110
+boardflags=0x110
 
 # boardflags2: 32-bits (LSB on top, MSB on bottom)
 #   0 = board uses the 2055's built-in LDOs to power the 2055    1 = board uses external rxbb regulator to power the 2055
@@ -127,7 +125,7 @@ boardflags=0x00000110
 #   0 = board does not support the 5GHz band TX power gain       1 = board supports the 5GHz band TX power gain
 #   0 = board does not override the ASPM and CLKREQ settings     1 = board overrides the ASPM and CLKREQ settings
 #   0 = board is not a BCM94321mc123 board                       1 = board is a BCM94321mc123 board (unused by S/W)
-#   0 = board uses SECI Bluetooth coexistence                    1 = board uses 3-wire Bluetooth coexistence
+#   0 = board does not use 3-wire Bluetooth coexistence          1 = board uses 3-wire Bluetooth coexistence
 #  ---
 #   0 = BCM94321mcm93 uses SiGe FEM                              1 = BCM94321mcm93 uses Skyworks FEM
 #       (for BCM94321mcm93 and BCM94321coex boards only)
@@ -160,52 +158,69 @@ boardflags=0x00000110
 #   0 = no adjustment to the temperature threshold, "tempthresh" 1 = chip can sustain a higher tempsense threshold
 #                                                                    add the value of parameter "tempoffset" to "tempthresh"
 #   0 = use standard 4-wire Bluetooth coexistance                1 = use standard 3-wire Bluetooth coexistance only. 4-wire not supported
-#   0 = 4331 power savings mode enabled (use for STAs)           1 = 4331 power savings mode disabled (use for routers)
-#       (4331 only)
-#   0 = no ucode powersave WAR                                   1 = enable ucade powersave WAR
-#       (4331 only)
-#  ---
-#   0 = enable dynamic Vmid in idle TSSI calibration             1 = disable dynamic Vmid in idle TSSI calibration
 #
-#   (bits 29-31 are unused)
+#   (bits 26-31 are unused)
 #
-boardflags2=0x00000000
+boardflags2=0x0
 
-# sromrev tells the software what "version" of NVRAM is used. This is just for the CPU chip. The wireless chips will
-# their own sromrev settings.
+
+
+# sromrev tells the software what "version" of NVRAM is used.
 sromrev=8
 
-# For 4707/8/9: Specify ARM clock frequency (in MHz) ONLY. All other dividers are fixed ratios of this (div2, dvi4). DDR clock is set separately.
-clkfreq=800,666
+# For pre-4716 chips: MIPS clock frequency in MHz, backplane/DDR clock freq in MHz (optional), PCI bus clock freq in MHz (optional)
+# Ex for 4705: clkfreq=300,150,37
+# For 4716 and 5357/58 and 47186: MIPS clock frequency in MHz, high speed backplane/DDR clock freq in MHz (optional), low speed backplane clock freq in MHz (optional)
+# Ex for 4716: clkfreq=300,150,75
+# For 4707/8/9: Specify ARM clock frequency (in MHz) ONLY. All other dividers are fixed ratios of this (div2, dvi4)
+clkfreq=800,533
 
-# frequency of the crystal driving the PLL, in kHz
-# Even if the chip does not support any other crystal frequency, this parameter must still be specified.
+# For the 4716/17/18, 5357/5358/47186 the clock rate to the serial flash can be adjusted via clkdivsf.
+# The serial flash clock speed is set by: ser_flsh_clk = backplane_clk / clkdivsf
+# Where backplane_clk is the third number in the "clkfreq" parameter, in MHz.
+# NOTE: For 4716A1, 4717A1, and 4718A1, 2 is the minimum value for clkdivsf.
+#       For 4716B0 4 is the minimum value for clkdivsf.
+#
+# use the default setting
+#clkdivsf=4
+
+# frequency of the RF crystal, in kHz
+#xtalfreq=25000 #Tjis is the default.
+
+#matthewt: from 4708 setting in Taiwan
+# Oscillator clock (Khz): actually its 25MHz
 xtalfreq=25000
 
-# for 4707/8/9
-# Only sdram_config is used. It is a 16-bit number.
+# For the BCM4708/9/81:
+#
 # Bits   Definition
 # -----  -----------------------------------------------------------------------------------------------------------
 # 15:11  Reserved
 #  10:8  Column Size: 000 = 2048 columns; 001 = 1024 columns; 010 = 512 columns
-#   7    0 = 16 bit wide data bus; 1 = 8 bit wide data bus
+#   7    Reserved
 #   6    0 = 4 banks; 1 = 8 banks
 #            NOTE: For 4 banks, columns can be 512, 1024, or 2048. For 8 banks, columns can only be 1024 or 2048.
-#  5:3   Reserved
-#  2:0   CAS latency: 011 = CL is 3; 100 = CL is 4; 101 = CL is 5; 110 = CL is 6; 111 = CL is 7; all others reserved
+#   5    Reserved
+#  4:0   CAS latency: valid range is 3-14, all others reserved
 #
-# Set 64MB (1Gbit) of DDR3 (DDR64X16), x16, 8 banks, CL=7
+# Set 128MB (1Gbit) of DDR3 (DDR3M64X16), x16, 8 banks, CL=7
+
 sdram_config=0x0149
 
-# For 4707/8/9 - Required to set the DDR PHY clock correctly *before* the boot code is copied to DDR. Since the NVRAM
-# parsing is done after the execution is passed to DDR, the DDR PHY clock must be reconfigured from its default of
-# 333MHz. The "sdram_ncdl" parameter is stored in a fixed location in the CFE space, so the bootloader can read it while
-# still executing from flash. This is a limitation of the way the DDR PHY clock reconfiguration occurs on 4707/8/9 parts.
-#
-# Set DDR3 clock of 533MHz (800MT/s) for RT-AC68U
-#sdram_ncdl=533
+#  For 4707/8/9 - Required to set the DDR PHY clock correctly *before*
+#  the boot code is copied to DDR. Since the NVRAM parsing is done
+#  after the execution is passed to DDR, the DDR PHY clock must be
+#  reconfigured from its default of 333MHz. This parameter is stored
+#  in a fixed location in the CFE space, the bootloader can read it
+#  while XIP processing is still active. This is a limitation of the
+#  way the DDR PHY clock reconfiguration occurs on 4708x parts.
 
-# Configure the internal GMAC port to talk to the internal Ethernet switch
+
+#NOR boot + kernel on NAND
+bootflags=1
+
+
+# Configure the internal Ethernet switch (RoboSwitch)
 # et0phyaddr is the PHY address of the PHY chip or the address of the MII/RvMII/GMII/RGMII port of the switch chip.
 et0phyaddr=30
 # et0mcdport is which MDC/MDIO port is used to connect to the PHY/Switch chip. Only 4703/4704 has two MIIs, so this
@@ -213,6 +228,13 @@ et0phyaddr=30
 et0mdcport=0
 
 # Set the MAC address of the Ethernet ports
+# Up until 9/2009 MAC addresses had the format:
+#   47   40 39   32 31   24 23   16 15    8 7     0
+#  |  00   |  90   |  4C   |  XX   |  YY   |  YY   |
+# where YYYY is the serial number and XX was assigned per interface and per boardtype. The macmid covered bits 31:16
+# which includes the 0x4C octet from the OUI and the XX value. That allowed 65536 serial numbers for each board type
+# but only 256 distinct interface/ boardtype combos.
+#
 # From 9/2009 onward MAC addresses have changed from that 8/16 split to a 12/12 split, so the new macmid will be
 # based on MAC addresses with the following format:
 #   47   40 39   32 31   24 23   16 15    8 7     0
@@ -225,7 +247,9 @@ et0mdcport=0
 # ones with the patterns 0x04Ex and 0x04Fx (These restrictions are enforced in the code). To form the mac address,
 # the whole OUI (00:90:4C) will be prepended to those values and 12 bits of serial number will be appended.
 #
-# A new-style macmid:
+# An old-style macmid:
+#   BCM94716nr2   0x4C04
+# a new-style macmid:
 #   BCM947186nrh  0x008
 #
 # For router boards, nvserial now defines a new variable: "maclo12"
@@ -276,33 +300,31 @@ et0mdcport=0
 #     BCM94706Lmiih5   0C:8
 #     BCM94706nr2hmc   0D:B
 #     BCM94708r        0F:F
-#     BCM94709r        11:2
 #
-# New style:
 # The value of 00:90:4C:0F:F is for a BCM94708r reference design.
 # The "maclo12" part is filled in by the nvserial program.
 et0macaddr=00:90:4C:0F:F${maclo12}
 
 # Ethernet switch config (vlan0:LAN, vlan1:WAN)
-# WAN is on port 0, LAN is on ports 1-4. Port 5 is the MAC interface to the external switch or switch core.
+# WAN is on port 0, LAN is on ports 1-4. Port 5 is the MII interface to the external switch or switch core.
 # It MUST be present on all VLANs. The "*" means to enable this group for CFE use. Only one VLAN can have this,
 # typically the LAN. 5325E/F and all internal switch cores use "5" for the MII port. 5395, 5397, and 53115 all use
 # "8" for the MII/GMII/RGMII port number.
 # NOTE: All packets on vlan1 (LAN) are tagged as such.
 # vlan1 is the LAN.
-vlan1ports=1 2 3 4 5*
+vlan1ports=0 1 2 3 4 5*
 vlan1hwname=et0
 
 # vlan2 is the WAN. The "u" configures the switch to not add vlan tags for packets to/from the
 # WAN port. A "t" (or nothing) in place of the "u" will configure the switch to add vlan tags for packets
 # to/from the WAN port. Also see note under "wandevs".
-vlan2ports=0 5u
+vlan2ports=5u
 vlan2hwname=et0
 
 # If the board is a dual band design the second wireless interface (usually the "a" band)
 # will come up as a second device. But we have to tell the software to hook to this
 # second wireless interface named  "wl1". So set "landevs=vlan1 wl0 wl1".
-# Else, just use the standard configuration of "landevs=vlan1 wl0".
+# Else, just use the standard configuration:
 landevs=vlan1 wl0 wl1
 
 # The WAN port is almost always on an Ethernet port so use the normal config. If the WAN
@@ -319,237 +341,277 @@ lan_netmask=255.255.255.0
 
 # If the board supports WPS, then these parameters tell the software
 # which GPIO is used for the WPS pushbutton and which is used for the WPS LED indicator.
-#gpio6=wps_led
+
 gpio7=wps_button
 
 # Set a short delay on boot so the CFE delays a bit before loading Linux. Allows easier S/W updates.
 boot_wait=on
 # If boot_wait is on, then "wait_time" sets the wait time from 3 to 20 seconds.
-wait_time=1
+wait_time=3
 
-# The reset button is on GPIO 11. It MUST be active low, or the software will have to be modified.
+# The reset button is on GPIO 6. It MUST be active low, or the software will have to be modified.
 reset_gpio=11
 
 # If the board has a USB power control chip, then the parameter "gpioX=usbportY" is used to tell
 # the USB driver code that it needs to set that GPIO HIGH to turn on power to that USB port.
 # "X" is the GPIO number, 0-31. "Y" is the USB port number, starting at "1".
-gpio9=usbport1
-#gpio10=usbport2
-#gpio12=43217enable
-#gpio13=4352enable
+#gpio9=usbport1
 
-# Watchdog timer in ms (0 will disable), 3000ms is minimum. 5592ms is maximum.
-watchdog=0
+# Watchdog timer in ms.
+# For all CPU chips other than the 4707/8/9/81, the valid range is 3000ms to 5500ms.
+# For the 4707/8/9/81 the valid range is 1000ms to 2100ms.
+# A setting of 0 will disable the watchdog.
 
-#4360_2G nvram
+watchdog=2100
+
+##2G 4360
+
 devpath0=pci/1/1
-0:venid=0x14E4
+
+0:boardrev=0x1421
+
+0:boardvendor=0x14e4
+0:devid=0x43a1
 0:sromrev=11
-0:boardflags=0x00001000
-0:boardflags2=0x00100002
-0:boardflags3=0x00000003
-0:xtalfreq=40000
-0:devid=0x43A1
-0:macaddr=00:90:4C:0E:C${maclo12}
+0:boardflags=0x1000
+0:boardflags2=0x2
+0:venvid=0x14e4
+0:boardflags3=0x4000001
+0:macaddr=00:90:4c:10:e${maclo12}
+0:ccode=Q2
+0:regrev=12
 0:aa2g=7
-0:agbg0=0
-0:agbg1=0
-0:agbg2=0
+0:agbg0=0x0
+0:agbg1=0x0
+0:agbg2=0x0
 0:txchain=7
 0:rxchain=7
 0:antswitch=0
 0:femctrl=6
-0:gainctrlsph=0
-0:papdcap2g=0
-0:tworangetssi2g=0
-0:pdgain2g=4
-0:epagain2g=0
 0:tssiposslope2g=1
-
-# 2GHz RX Gain Parameteters
-0:rxgains2gelnagaina0=6
-0:rxgains2gelnagaina1=6
-0:rxgains2gelnagaina2=6
-0:rxgains2gtrelnabypa0=1
-0:rxgains2gtrelnabypa1=1
-0:rxgains2gtrelnabypa2=1
-0:rxgains2gtrisoa0=11
-0:rxgains2gtrisoa1=11
-0:rxgains2gtrisoa2=11
-#0:rxgainerr2ga0=63
-#0:rxgainerr2ga1=31
-#0:rxgainerr2ga2=31
-
-# 2GHz TX Parameters
-0:maxp2ga0=106
-0:maxp2ga1=106
-0:maxp2ga2=106
-0:pa2ga0=0xff4a,0x1c3c,0xfca8
-0:pa2ga1=0xff49,0x1b5a,0xfcb9
-0:pa2ga2=0xff4e,0x1c8d,0xfcaa
-
-# Power-Per-Rate settings:
+0:epagain2g=0
+0:pdgain2g=21
+0:tworangetssi2g=0
+0:papdcap2g=0
+0:gainctrlsph=0
+0:tempthresh=120
+0:tempoffset=255
+0:rawtempsense=0x1ff
+#0:measpower=0x7f
+0:tempsense_slope=0xff
+0:tempcorrx=0x3f
+0:tempsense_option=0x3
+0:xtalfreq=40000
+0:phycal_tempdelta=15
+0:temps_period=5
+0:temps_hysteresis=5
+#0:measpower1=0x7f
+#0:measpower2=0x7f
+#0:tssifloor2g=0x3ff
+0:pdoffset2g40ma0=15
+0:pdoffset2g40ma1=15
+0:pdoffset2g40ma2=15
+0:pdoffset2g40mvalid=1
+0:pdoffset40ma0=0
+0:pdoffset40ma1=0
+0:pdoffset40ma2=0
+0:pdoffset80ma0=0
+0:pdoffset80ma1=0
+0:pdoffset80ma2=0
+#0:subband5gver=0x4
 0:cckbw202gpo=0
 0:cckbw20ul2gpo=0
-0:mcsbw202gpo=0x88653320
-0:mcsbw402gpo=0x88653320
-0:dot11agofdmhrbw202gpo=0x6533
-0:ofdmlrbw202gpo=0
-0:sb20in40hrpo=0
-0:sb20in40lrpo=0
+0:mcsbw202gpo=0xECB98753
+0:mcsbw402gpo=0xECB98753
+0:dot11agofdmhrbw202gpo=0xA987
+0:ofdmlrbw202gpo=0x5552
+#0:sb20in40hrpo=0
+#0:sb20in80and160hr5glpo=0
+#0:sb40and80hr5glpo=0
+#0:sb20in80and160hr5gmpo=0
+#0:sb40and80hr5gmpo=0
+#0:sb20in80and160hr5ghpo=0
+#0:sb40and80hr5ghpo=0
+#0:sb20in40lrpo=0
+#0:sb20in80and160lr5glpo=0
+#0:sb40and80lr5glpo=0
+#0:sb20in80and160lr5gmpo=0
+#0:sb40and80lr5gmpo=0
+#0:sb20in80and160lr5ghpo=0
+#0:sb40and80lr5ghpo=0
 0:dot11agduphrpo=0
 0:dot11agduplrpo=0
+#0:sar2g=18
+#0:noiselvl2ga0=31
+#0:noiselvl2ga1=31
+#0:noiselvl2ga2=31
+0:rxgainerr2ga0=63
+0:rxgainerr2ga1=31
+0:rxgainerr2ga2=31
+0:rpcal2g=0
 
-#2G TX beamforming parameters
-0:rpcal2g=0xffff
+0:maxp2ga0=108
+#0:pa2ga0=0xFF40,0x19AA,0xFCF4
+0:pa2ga0=0xFF20,0x1DB9,0xFC61
+0:rxgains2gelnagaina0=3
+0:rxgains2gtrisoa0=3
+0:rxgains2gtrelnabypa0=1
+0:maxp2ga1=108
+#0:pa2ga1=0xFF45,0x1A03,0xFCF6
+0:pa2ga1=0xFF1B,0x1D46,0xFC69
+0:rxgains2gelnagaina1=3
+0:rxgains2gtrisoa1=3
+0:rxgains2gtrelnabypa1=1
+0:maxp2ga2=108
+#0:pa2ga2=0xFF3A,0x19B5,0xFCE8
+0:pa2ga2=0xFF1B,0x1C7D,0xFC81
+0:rxgains2gelnagaina2=3
+0:rxgains2gtrisoa2=3
+0:rxgains2gtrelnabypa2=1
+#0:ledbh0=11
+#0:ledbh1=11
+#0:ledbh2=11
+#0:ledbh3=11
 
-# Regulatory parameters
-0:ccode=US
-0:regrev=0
-0:sar2g=18
-
-#LED behavior settings
-0:ledbh10=7
-#0:leddc=0xFFFF
-
-#temperature setting
-0:temps_period=5
-0:tempthresh=120
-0:temps_hysteresis=5
-0:phycal_tempdelta=0
-0:tempoffset=0
-
-#4360_5G nvram
+###4360 5G
 devpath1=pci/2/1
-1:venid=0x14E4
+
+1:boardrev=0x1421
+
+1:boardvendor=0x14e4
+1:devid=0x43a2
 1:sromrev=11
-1:boardflags=0x30000000
-1:boardflags2=0x00300002
-1:boardflags3=0x0
-1:xtalfreq=40000
-1:devid=0x43A2
-1:macaddr=00:90:4C:11:4${maclo12}
+#1:boardflags=0x30000000
+##(SROM_BFL_EPA_TURNON_TIME),Bit [16, 15] control the delays. 0 --> chip default, 1 --> R8000
+1:boardflags=0x30008000
+1:boardflags2=0x2
+1:venid=0x14e4
+1:boardflags3=0x1
+1:macaddr=00:90:4C:0E:5${maclo12}
+1:ccode=Q2
+1:regrev=12
 1:aa5g=7
-1:aga0=0
-1:aga1=0
-1:aga2=0
+#1:agbg0=0x0
+#1:agbg1=0x0
+#1:agbg2=0x0
+1:aga0=0x0
+1:aga1=0x0
+1:aga2=0x0
 1:txchain=7
 1:rxchain=7
 1:antswitch=0
 1:femctrl=6
-1:subband5gver=4
-1:gainctrlsph=0
-1:papdcap5g=0
-1:tworangetssi5g=0
-1:pdgain5g=4
-1:epagain5g=0
 1:tssiposslope5g=1
-
-# 5GHz RX Gain Parameteters
-1:rxgains5gelnagaina0=2
-1:rxgains5gtrelnabypa0=1
-1:rxgains5gtrisoa0=7
-1:rxgains5gmelnagaina0=2
-1:rxgains5gmtrelnabypa0=1
-1:rxgains5gmtrisoa0=7
-1:rxgains5ghelnagaina0=3
-1:rxgains5ghtrelnabypa0=1
-1:rxgains5ghtrisoa0=8
-1:rxgains5gelnagaina1=2
-1:rxgains5gtrelnabypa1=1
-1:rxgains5gtrisoa1=9
-1:rxgains5gmelnagaina1=2
-1:rxgains5gmtrelnabypa1=1
-1:rxgains5gmtrisoa1=7
-1:rxgains5ghelnagaina1=3
-1:rxgains5ghtrelnabypa1=1
-1:rxgains5ghtrisoa1=7
-1:rxgains5gelnagaina2=2
-1:rxgains5gtrelnabypa2=1
-1:rxgains5gtrisoa2=8
-1:rxgains5gmelnagaina2=2
-1:rxgains5gmtrelnabypa2=1
-1:rxgains5gmtrisoa2=7
-1:rxgains5ghelnagaina2=3
-1:rxgains5ghtrelnabypa2=1
-1:rxgains5ghtrisoa2=8
-#1:rxgainerr5ga0=63,63,63,63
-#1:rxgainerr5ga1=31,31,31,31
-#1:rxgainerr5ga2=31,31,31,31
-
-# 5GHz TX Parameters
-1:maxp5ga0=106,106,106,106
-1:pa5ga0=0xff38,0x1d35,0xfc7f,0xff33,0x1d3c,0xfc75,0xff39,0x1cf4,0xfc82,0xff39,0x1ca2,0xfc89
-1:maxp5ga1=106,106,106,106
-1:pa5ga1=0xff3e,0x1d3e,0xfc84,0xff3d,0x1d8b,0xfc76,0xff44,0x1d9d,0xfc7c,0xff3e,0x1c72,0xfc96
-1:maxp5ga2=106,106,106,106
-1:pa5ga2=0xff3b,0x1dd6,0xfc6d,0xff36,0x1d95,0xfc76,0xff38,0x1d82,0xfc73,0xff41,0x1d1b,0xfc90
-1:pdoffset40ma0=0x0
-1:pdoffset40ma1=0x0
-1:pdoffset40ma2=0x0
-1:pdoffset80ma0=0x0000
-1:pdoffset80ma1=0x0000
-1:pdoffset80ma2=0x0000
-
-# Power-Per-Rate settings:
-1:mcsbw205glpo=0x88653320
-1:mcsbw405glpo=0x88653320
-1:mcsbw805glpo=0x88653320
+1:epagain5g=0
+1:pdgain5g=4
+1:tworangetssi5g=0
+1:papdcap5g=0
+1:gainctrlsph=0
+1:tempthresh=120
+1:tempoffset=255
+1:rawtempsense=0x1ff
+#1:measpower=0x7f
+1:tempsense_slope=0xff
+1:tempcorrx=0x3f
+1:tempsense_option=0x3
+1:xtalfreq=40000
+1:phycal_tempdelta=15
+1:temps_period=5
+1:temps_hysteresis=5
+#1:measpower1=0x7f
+#1:measpower2=0x7f
+1:pdoffset40ma0=0
+1:pdoffset40ma1=0
+1:pdoffset40ma2=0
+1:pdoffset80ma0=0
+1:pdoffset80ma1=0
+1:pdoffset80ma2=0
+1:subband5gver=0x4
+1:mcsbw205glpo=0
+1:mcsbw405glpo=0
+1:mcsbw805glpo=0
 1:mcsbw1605glpo=0
-1:mcsbw205gmpo=0x88653320
-1:mcsbw405gmpo=0x88653320
-1:mcsbw805gmpo=0x88653320
+1:mcsbw205gmpo=0xBA987420
+1:mcsbw405gmpo=0xBA987420
+1:mcsbw805gmpo=0xBA987420
 1:mcsbw1605gmpo=0
-1:mcsbw205ghpo=0x88653320
-1:mcsbw405ghpo=0x88653320
-1:mcsbw805ghpo=0x88653320
+1:mcsbw205ghpo=0xBA987420
+1:mcsbw405ghpo=0xBA987420
+1:mcsbw805ghpo=0xBA987420
 1:mcsbw1605ghpo=0
 1:mcslr5glpo=0
 1:mcslr5gmpo=0
 1:mcslr5ghpo=0
-1:sb20in40hrpo=0
-1:sb20in80and160hr5glpo=0
-1:sb40and80hr5glpo=0
-1:sb20in80and160hr5gmpo=0
-1:sb40and80hr5gmpo=0
-1:sb20in80and160hr5ghpo=0
-1:sb40and80hr5ghpo=0
-1:sb20in40lrpo=0
-1:sb20in80and160lr5glpo=0
-1:sb40and80lr5glpo=0
-1:sb20in80and160lr5gmpo=0
-1:sb40and80lr5gmpo=0
-1:sb20in80and160lr5ghpo=0
-1:sb40and80lr5ghpo=0
+#1:sb20in40hrpo=0
+#1:sb20in80and160hr5glpo=0
+#1:sb40and80hr5glpo=0
+#1:sb20in80and160hr5gmpo=0
+#1:sb40and80hr5gmpo=0
+#1:sb20in80and160hr5ghpo=0
+#1:sb40and80hr5ghpo=0
+#1:sb20in40lrpo=0
+#1:sb20in80and160lr5glpo=0
+#1:sb40and80lr5glpo=0
+#1:sb20in80and160lr5gmpo=0
+#1:sb40and80lr5gmpo=0
+#1:sb20in80and160lr5ghpo=0
+#1:sb40and80lr5ghpo=0
 1:dot11agduphrpo=0
 1:dot11agduplrpo=0
+#1:pcieingress_war=15
+#1:sar5g=15
+#1:noiselvl5ga0=31,31,31,31
+#1:noiselvl5ga1=31,31,31,31
+#1:noiselvl5ga2=31,31,31,31
+1:rxgainerr5ga0=63,63,63,63
+1:rxgainerr5ga1=31,31,31,31
+1:rxgainerr5ga2=31,31,31,31
+1:rxgains5gmelnagaina0=3
+1:rxgains5gmtrisoa0=5
+1:rxgains5gmtrelnabypa0=1
+1:rxgains5ghelnagaina0=3
+1:rxgains5ghtrisoa0=3
+1:rxgains5ghtrelnabypa0=1
+1:rxgains5gelnagaina0=3
+1:rxgains5gtrisoa0=3
+1:rxgains5gtrelnabypa0=1
 
-#5G TX beamforming parameters
-1:rpcal5gb0=0xffff
-1:rpcal5gb1=0xffff
-1:rpcal5gb2=0xffff
-1:rpcal5gb3=0xffff
-
-# Regulatory parameters
-1:ccode=US
-1:regrev=0
-1:sar5g=15
-
-# LED behavior
-1:ledbh10=7
-#1:leddc=0xFFFF
-
-# Temperature parameters
-1:temps_period=5
-1:tempthresh=120
-1:temps_hysteresis=5
-1:phycal_tempdelta=0
-1:tempoffset=0
+1:maxp5ga0=54,90,90,102
+#1:pa5ga0=0xff4c,0x18df,0xfd12,0xff52,0x195d,0xfd11,0xff49,0x1a47,0xfcdc,0xff4e,0x19e0,0xfcf4
+1:pa5ga0=0xff1d,0x1DA4,0xfc5e,0xff1d,0x1d39,0xfc6b,0xff15,0x1c47,0xfc7d,0xff1c,0x1c89,0xfc86
+1:rxgains5gmelnagaina1=3
+1:rxgains5gmtrisoa1=3
+1:rxgains5gmtrelnabypa1=1
+1:rxgains5ghelnagaina1=3
+1:rxgains5ghtrisoa1=3
+1:rxgains5ghtrelnabypa1=1
+1:rxgains5gelnagaina1=3
+1:rxgains5gtrisoa1=3
+1:rxgains5gtrelnabypa1=1
+1:maxp5ga1=54,90,90,102
+#1:pa5ga1=0xff5c,0x19ba,0xfd12,0xff3e,0x1932,0xfcf5,0xff4d,0x1a9f,0xfcdd,0xff24,0x1774,0xfd09
+1:pa5ga1=0xff18,0x1d71,0xfc53,0xff0e,0x1bb5,0xfc84,0xff14,0x1d57,0xfc5c,0xff12,0x1bbf,0xfc96
+1:rxgains5gmelnagaina2=3
+1:rxgains5gmtrisoa2=3
+1:rxgains5gmtrelnabypa2=1
+1:rxgains5ghelnagaina2=3
+1:rxgains5ghtrisoa2=3
+1:rxgains5ghtrelnabypa2=1
+1:rxgains5gelnagaina2=3
+1:rxgains5gtrisoa2=3
+1:rxgains5gtrelnabypa2=1
+1:maxp5ga2=54,90,90,102
+#1:pa5ga2=0xff38,0x18f3,0xfcef,0xff4f,0x1a3d,0xfcef,0xff4a,0x1ade,0xfcd1,0xff40,0x1a41,0xfcd1
+1:pa5ga2=0xff0f,0x1c1b,0xfc73,0xff21,0x1d23,0xfc77,0xff12,0x1ba0,0xfc8a,0xff18,0x1baf,0xfc9b
+#1:ledbh0=11
+#1:ledbh1=11
+#1:ledbh2=11
+#1:ledbh3=11
 
 # Bootloader version
-bl_version=1.0.2.1
+bl_version=1.0.2.2
 
-# for NAND flash
+# # for NAND flash
 bootflags=1
 
 # WPS AP PIN code
@@ -561,7 +623,7 @@ odmpid=ASUS
 # Model Name
 model=RP-AC68U
 
-# others
+# # others
 ATEMODE=1
-HW_ver=170
 nospare=1
+

@@ -6,7 +6,7 @@ update_resolv() {
 	local dns="$2"
 	
 	(
-		flock -n 9
+		flock 9
 		grep -v "#odhcp6c:$device:" /etc/resolv.conf > /tmp/resolv.conf.tmp
 		for c in $dns; do
 			echo "nameserver $c #odhcp6c:$device:" >> /tmp/resolv.conf.tmp
@@ -131,23 +131,25 @@ teardown_interface() {
 	update_resolv "$device" ""
 }
 
-case "$2" in
-	bound)
-		teardown_interface "$1"
-		setup_interface "$1"
-	;;
-	informed|updated|rebound|ra-updated)
-		setup_interface "$1"
-	;;
-	stopped|unbound)
-		teardown_interface "$1"
-	;;
-	started)
-		teardown_interface "$1"
-	;;
-esac
+(
+	flock 9
+	case "$2" in
+		bound)
+			teardown_interface "$1"
+			setup_interface "$1"
+		;;
+		informed|updated|rebound|ra-updated)
+			setup_interface "$1"
+		;;
+		stopped|unbound)
+			teardown_interface "$1"
+		;;
+		started)
+			teardown_interface "$1"
+		;;
+	esac
 
-# user rules
-[ -f /etc/odhcp6c.user ] && . /etc/odhcp6c.user
-
-exit 0
+	# user rules
+	[ -f /etc/odhcp6c.user ] && . /etc/odhcp6c.user
+) 9>/tmp/odhcp6c.lock.$1
+rm -f /tmp/odhcp6c.lock.$1

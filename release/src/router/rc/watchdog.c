@@ -92,6 +92,10 @@
 #define WPS_RST_DO_RESTORE_COUNT	(10*10)	/* 10 seconds */
 #endif	/* RTCONFIG_WPS_RST_BTN */
 
+#ifdef RTCONFIG_WPS_ALLLED_BTN
+#define WPS_LED_WAIT_COUNT		1
+#endif
+
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
 #define LOG_COMMIT_PERIOD	2		/* 2 x 30 seconds */
@@ -148,12 +152,19 @@ static int LED_switch_count = 0;
 static int BTN_pressed_count = 0;
 #endif
 #endif
+
+#if defined(RTCONFIG_WPS_ALLLED_BTN)
+static int LED_status_old = -1;
+static int LED_status = -1;
+static int LED_status_changed = 0;
+static int LED_status_on = -1;
+static int BTN_pressed_count = 0;
+#endif
+
 static int wlonunit = -1;
 
 extern int g_wsc_configured;
 extern int g_isEnrollee[MAX_NR_WL_IF];
-int g_wl0_led_status=0xFF;
-int g_wl1_led_status=0xFF;
 
 #define REGULAR_DDNS_CHECK	10 //10x30 sec
 static int ddns_check_count = 0;
@@ -219,7 +230,9 @@ void erase_nvram(void)
 		case MODEL_RTAC68U:
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RTAC5300:
 		case MODEL_RTAC88U:
+		case MODEL_RTAC3100:
 			eval("mtd-erase2", "nvram");
 			break;
 		default:
@@ -237,7 +250,9 @@ int init_toggle(void)
 		case MODEL_RTAC68U:
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC87U:
+		case MODEL_RTAC5300:
 		case MODEL_RTAC88U:
+		case MODEL_RTAC3100:
 			nvram_set("btn_ez_radiotoggle", "1");
 			return BTN_WIFI_TOG;
 		default:
@@ -288,7 +303,7 @@ void btn_check(void)
 		}
 #endif
 #ifdef RTCONFIG_LED_BTN /* currently for RT-AC68U only */
-#if defined(RTAC3200)
+#if defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 		if (!button_pressed(BTN_LED))
 #else
 		if (button_pressed(BTN_LED))
@@ -297,7 +312,7 @@ void btn_check(void)
 			TRACE_PT("button LED pressed\n");
 			nvram_set("btn_led", "1");
 		}
-#ifdef RTAC68U
+#if defined(RTAC68U) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 		else
 		{
 			TRACE_PT("button LED released\n");
@@ -579,6 +594,66 @@ void btn_check(void)
 	}
 #endif	/* RTCONFIG_WPS_RST_BTN */
 
+#if defined(RTCONFIG_WPS_ALLLED_BTN)
+	//use wps button to control all led on/off
+	if(nvram_match("btn_ez_mode", "1"))
+	{
+		LED_status_old = LED_status;
+		LED_status = button_pressed(BTN_WPS);
+
+		if(LED_status) {
+			TRACE_PT("button LED pressed\n");
+			++BTN_pressed_count;
+		}
+		else{
+			BTN_pressed_count = 0;
+			LED_status_changed = 0;
+		}
+
+		if(BTN_pressed_count > WPS_LED_WAIT_COUNT && LED_status_changed == 0){
+			LED_status_changed = 1;
+			LED_status_on = nvram_get_int("AllLED");
+
+			if(LED_status_on)
+				nvram_set_int("AllLED", 0);
+			else
+				nvram_set_int("AllLED", 1);
+			LED_status_on = !LED_status_on;
+
+			if(LED_status_on){
+				TRACE_PT("LED turn to normal\n");
+				led_control(LED_POWER, LED_ON);
+#if DSL_AC68U
+				char *dslledcmd_argv[] = {"adslate", "led", "normal", NULL};
+				_eval(dslledcmd_argv, NULL, 5, NULL);
+
+				eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
+				eval("et", "robowr", "0", "0x1a", "0x01ff");
+				if (wlonunit == -1 || wlonunit == 0) {
+					eval("wl", "ledbh", "10", "7");
+				}
+				if (wlonunit == -1 || wlonunit == 1) {
+					eval("wl", "-i", "eth2", "ledbh", "10", "7");
+					if (nvram_match("wl1_radio", "1")) {
+						nvram_set("led_5g", "1");
+						led_control(LED_5G, LED_ON);
+					}
+				}
+
+				kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
+#endif
+			}
+			else {
+				TRACE_PT("LED turn off\n");
+				setAllLedOff();
+			}
+
+			/* check LED_WAN status */
+			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
+			return;
+		}
+	}
+#endif
 
 #ifdef RTCONFIG_TURBO
 	if (button_pressed(BTN_TURBO))
@@ -590,7 +665,7 @@ void btn_check(void)
 	LED_status_old = LED_status;
 	LED_status = button_pressed(BTN_LED);
 
-#if defined(RTAC68U) || defined(RTAC3200)
+#if defined(RTAC68U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 #if defined(RTAC68U)
 	LED_status_changed = 0;
 	if (LED_status != LED_status_old)
@@ -603,7 +678,7 @@ void btn_check(void)
 		else
 			LED_status_changed = 1;
 	}
-#elif defined(RTAC3200)
+#elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 	if (!LED_status &&
 	    (LED_status != LED_status_old))
 	{
@@ -632,7 +707,7 @@ void btn_check(void)
 
 #if defined(RTAC68U)
 		if (LED_status == LED_status_on)
-#elif defined(RTAC3200)
+#elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 		if (LED_status_on)
 #endif
 			nvram_set_int("AllLED", 1);
@@ -640,13 +715,13 @@ void btn_check(void)
 			nvram_set_int("AllLED", 0);
 #if defined(RTAC68U)
 		if (LED_status == LED_status_on)
-#elif defined(RTAC3200)
+#elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 		if (LED_status_on)
 #endif
 		{
 			led_control(LED_POWER, LED_ON);
 
-#ifdef RTAC3200
+#if defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 			kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 #else
 			eval("et", "robowr", "0", "0x18", "0x01ff");
@@ -660,7 +735,7 @@ void btn_check(void)
 				eval("wl", "ledbh", "9", "7");
 #endif
 				eval("wl", "ledbh", "10", "7");
-#elif RTAC3200
+#elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
 #endif
 			}
@@ -671,11 +746,11 @@ void btn_check(void)
 				eval("wl", "-i", "eth2", "ledbh", "9", "7");
 #endif
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
-#elif RTAC3200
+#elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 				eval("wl", "ledbh", "10", "7");
 #endif
 			}
-#ifdef RTAC3200
+#if defined(RTAC3200) || defined(RTAC5300) 
 			if (wlonunit == -1 || wlonunit == 2) {
 				eval("wl", "-i", "eth3", "ledbh", "10", "7");
 			}
@@ -748,7 +823,7 @@ void btn_check(void)
 		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR2);
 	}
 #endif
-#endif
+#endif	/* RTCONFIG_LED_BTN */
 
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
@@ -767,6 +842,9 @@ void btn_check(void)
 		    !wps_band_ssid_broadcast_off(get_radio_band(0)) &&
 #ifndef RTCONFIG_WIFI_TOG_BTN
 		    nvram_match("btn_ez_radiotoggle", "0") &&
+#endif
+#ifdef RTCONFIG_WPS_ALLLED_BTN
+			nvram_match("btn_ez_mode", "0") &&
 #endif
 		    !nvram_match("wps_ign_btn", "1"))
 #endif	/* ! RTCONFIG_WPS_RST_BTN */
@@ -1188,6 +1266,169 @@ static void catch_sig(int sig)
 #endif
 }
 
+/* simple traffic-led hints */
+unsigned long get_devirq_count(char *irqs)
+{
+	FILE *f;
+	char buf[256];
+	char *irqname, *p;
+	unsigned long counter1, counter2;
+
+	if((f = fopen("/proc/interrupts", "r"))==NULL) return -1;
+
+	fgets(buf, sizeof(buf), f);
+
+	counter1=counter2=0;
+
+	while (fgets(buf, sizeof(buf), f)) {
+		if((p=strchr(buf, ':'))==NULL) continue;
+		*p = 0;
+		if((irqname = strrchr(buf, ' '))==NULL) irqname = buf;
+		else ++irqname;
+
+		if(strcmp(irqname, irqs)) continue;
+
+#ifdef RTCONFIG_BCMSMP
+		if(sscanf(p+1, "%lu%lu", &counter1, &counter2)!=2) continue;
+#else
+		if(sscanf(p+1, "%lu", &counter1)!=1) continue;
+#endif
+
+	}
+	fclose(f);
+
+	return counter1+counter2 > 2 ? counter1+counter2 : 0;
+}
+
+void fake_dev_led(char *irqs, unsigned int LED_WHICH)
+{
+	static unsigned int blink_dev_check = 0;
+	static unsigned int blink_dev = 0;
+	static unsigned int data_dev = 0;
+	unsigned long count_dev;
+	int i;
+	static int j;
+	static int status = -1;
+	static int status_old;
+
+	if(!*irqs || !LED_WHICH)
+		return;
+
+	// check data per 10 count
+	if((blink_dev_check%10)==0) {
+		count_dev = get_devirq_count(irqs);
+		if(count_dev && data_dev!=count_dev) {
+			blink_dev = 1;
+			data_dev = count_dev;
+		}
+		else blink_dev = 0;
+		led_control(LED_WHICH, LED_ON);
+	}
+
+	if(blink_dev) {
+		j = rand_seed_by_time() % 3;
+		for(i=0;i<10;i++) {
+			usleep(33*1000);
+
+			status_old = status;
+			if (((i%2)==0) && (i > (3 + 2*j)))
+				status = 0;
+			else
+				status = 1;
+
+			if (status != status_old)
+			{
+				if (status)
+					led_control(LED_WHICH, LED_ON);
+				else
+					led_control(LED_WHICH, LED_OFF);
+			}
+		}
+		led_control(LED_WHICH, LED_ON);
+	}
+
+	blink_dev_check++;
+}
+
+#if defined(RTCONFIG_FAKE_ETLAN_LED)
+unsigned long get_etlan_count()
+{
+	FILE *f;
+	char buf[256];
+	char *ifname, *p;
+	unsigned long counter1, counter2;
+
+	if((f = fopen("/proc/net/dev", "r"))==NULL) return -1;
+
+	fgets(buf, sizeof(buf), f);
+	fgets(buf, sizeof(buf), f);
+
+	counter1=counter2=0;
+
+	while (fgets(buf, sizeof(buf), f)) {
+		if((p=strchr(buf, ':'))==NULL) continue;
+		*p = 0;
+		if((ifname = strrchr(buf, ' '))==NULL) ifname = buf;
+		else ++ifname;
+
+		if(strcmp(ifname, "vlan1")) continue;
+
+		if(sscanf(p+1, "%lu%*u%*u%*u%*u%*u%*u%*u%*u%lu", &counter1, &counter2)!=2) continue;
+
+	}
+	fclose(f);
+
+	return counter1;
+}
+
+void fake_etlan_led(void)
+{
+	static unsigned int blink_etlan_check = 0;
+	static unsigned int blink_etlan = 0;
+	static unsigned int data_etlan = 0;
+	unsigned long count_etlan;
+	int i;
+	static int j;
+	static int status = -1;
+	static int status_old;
+
+	// check data per 10 count
+	if((blink_etlan_check%10)==0) {
+		count_etlan = get_etlan_count();
+		if(count_etlan && data_etlan!=count_etlan) {
+			blink_etlan = 1;
+			data_etlan = count_etlan;
+		}
+		else blink_etlan = 0;
+		led_control(LED_LAN, LED_ON);
+	}
+
+	if(blink_etlan) {
+		j = rand_seed_by_time() % 3;
+		for(i=0;i<10;i++) {
+			usleep(33*1000);
+
+			status_old = status;
+			if (((i%2)==0) && (i > (3 + 2*j)))
+				status = 0;
+			else
+				status = 1;
+
+			if (status != status_old)
+			{
+				if (status)
+					led_control(LED_LAN, LED_ON);
+				else
+					led_control(LED_LAN, LED_OFF);
+			}
+		}
+		led_control(LED_LAN, LED_ON);
+	}
+
+	blink_etlan_check++;
+}
+#endif
+
 #if defined(RTCONFIG_WLAN_LED) || defined(RTN18U)
 unsigned long get_2g_count()
 {
@@ -1377,6 +1618,31 @@ void led_check(void)
 		fake_wl_led_2g();
 #endif
 
+#if defined(RTCONFIG_FAKE_ETLAN_LED)
+	fake_etlan_led();
+#endif
+
+#ifdef RTCONFIG_USB
+	char *p1_node, *p2_node, *ehci_ports, *xhci_ports;
+
+	p1_node = nvram_safe_get("usb_path1_node");
+	p2_node = nvram_safe_get("usb_path2_node");
+	ehci_ports = nvram_safe_get("ehci_ports");
+	xhci_ports = nvram_safe_get("xhci_ports");
+
+	if((*p1_node && strstr(ehci_ports, p1_node)) || (*p2_node && strstr(ehci_ports, p2_node)))
+		fake_dev_led(nvram_safe_get("ehci_irq"), LED_USB);
+#ifdef RTCONFIG_XHCI_MODE
+	if((*p1_node && strstr(xhci_ports, p1_node)) || (*p2_node && strstr(xhci_ports, p2_node)))
+		fake_dev_led(nvram_safe_get("xhci_irq"), LED_USB3);
+#endif
+#endif
+
+#ifdef RTCONFIG_MMC_LED
+	if(*nvram_safe_get("usb_path3"))
+		fake_dev_led(nvram_safe_get("mmc_irq"), LED_MMC);
+#endif
+
 #if defined(RTCONFIG_BRCM_USBAP) || defined(RTAC66U) || defined(BCM4352)
 #if defined(RTAC66U) || defined(BCM4352)
 	if (nvram_match("led_5g", "1") &&
@@ -1392,20 +1658,6 @@ void led_check(void)
 	}
 #endif
 	
-
-#if defined(RTN56UB1)
-                if(nvram_get_int("wl1_ledon") == 1 && g_wl1_led_status!=1)
-                        led_control(LED_5G, LED_ON);
-		else if(nvram_get_int("wl1_ledon") == 0 && g_wl1_led_status!=0)
-                        led_control(LED_5G, LED_OFF);
-		g_wl1_led_status=nvram_get_int("wl1_ledon");
-
-                if(nvram_get_int("wl0_ledon") == 1 && g_wl0_led_status!=1)
-                        led_control(LED_2G, LED_ON);
-		else if(nvram_get_int("wl0_ledon") == 0 && g_wl0_led_status!=0)
-                        led_control(LED_2G, LED_OFF);
-		g_wl0_led_status=nvram_get_int("wl0_ledon");
-#endif		
 // it is not really necessary, but if required, add internet led check here
 // using wan_primary_ifunit() to get current working wan unit wan0 or wan1
 // using wan0_state_t or wan1_state_t to get status of working wan,
@@ -1635,13 +1887,35 @@ void networkmap_check()
 		start_networkmap(0);
 }
 
+void httpd_check()
+{
+	if (!pids("httpd")){
+		logmessage("watchdog", "restart httpd");
+		start_httpd();
+	}
+}
+
 #ifdef RTAC87U
 void qtn_module_check(void)
 {
+	int ret;
+	uint32_t p_channel;
+	static int waiting = 0;
+
+	if(waiting < 2){
+		waiting++;
+		return;
+	}
+
 	if (!nvram_get_int("qtn_ready"))
 		return;
 
-	/* Todo */
+	if (rpc_qcsapi_get_channel(&p_channel) != 0 ){
+		logmessage("QTN", "QTN connection lost");
+		system("reboot &");
+	}
+	waiting = 0;
+
 	return;
 }
 
@@ -1683,6 +1957,7 @@ void modem_flow_check(void){
 	int day_cycle;
 	int reset;
 	int unit;
+	int debug = nvram_get_int("modem_bytes_data_cycle_debug");
 
 	unit = get_wan_unit(nvram_safe_get("usb_modem_act_dev"));
 	if(unit == -1)
@@ -1694,16 +1969,22 @@ void modem_flow_check(void){
 	if(++modem_flow_count >= MODEM_FLOW_PERIOD){
 		time(&now);
 		memcpy(&tm_now, localtime(&now), sizeof(struct tm));
-		if(nvram_get_int("modem_bytes_data_cycle_debug") == 1)
+		if(debug == 1)
 			_dprintf("modem_flow_check:   now. year %4d, month %2d, day %2d, hour, %2d, minute %2d.\n", tm_now.tm_year+1900, tm_now.tm_mon+1, tm_now.tm_mday, tm_now.tm_hour, tm_now.tm_min);
 
+		snprintf(timebuf, 32, "%s", nvram_safe_get("modem_bytes_data_start"));
+		if(strlen(timebuf) <= 0 || !strcmp(timebuf, "0")){
+			snprintf(timebuf, 32, "%d", (int)now);
+			nvram_set("modem_bytes_data_start", timebuf);
+			eval("modem_status.sh", "bytes-");
+		}
 		start = strtol(nvram_safe_get("modem_bytes_data_start"), NULL, 10);
 		memcpy(&tm_start, localtime(&start), sizeof(struct tm));
-		if(nvram_get_int("modem_bytes_data_cycle_debug") == 1)
+		if(debug == 1)
 			_dprintf("modem_flow_check: start. year %4d, month %2d, day %2d, hour, %2d, minute %2d.\n", tm_start.tm_year+1900, tm_start.tm_mon+1, tm_start.tm_mday, tm_start.tm_hour, tm_start.tm_min);
 
 		day_cycle = strtol(nvram_safe_get("modem_bytes_data_cycle"), NULL, 10);
-		if(nvram_get_int("modem_bytes_data_cycle_debug") == 1)
+		if(debug == 1)
 			_dprintf("modem_flow_check: cycle=%d.\n", day_cycle);
 
 		reset = 0;
@@ -1767,13 +2048,10 @@ void modem_flow_check(void){
 		}
 
 		if(reset){
-			eval("modem_status.sh", "bytes-");
 			snprintf(timebuf, 32, "%d", (int)now);
 			nvram_set("modem_bytes_data_start", timebuf);
-			nvram_commit();
+			eval("modem_status.sh", "bytes-");
 		}
-		else
-			eval("modem_status.sh", "bytes");
 
 		modem_flow_count = 0;
 	}
@@ -2324,78 +2602,6 @@ static void capture_bwdpi_log()
 	//printf("[capture log] flag = %d, path = %s\n", flag, path);
 	if(flag) send_wrslog_email(path);
 }
-
-static void check_bwdpi_monitor()
-{
-	if(!pids("bwdpi_monitor"))
-		start_bwdpi_monitor_service();
-}
-
-static void auto_sig_check()
-{
-	static int period = 5757;
-	static int bootup_check = 1;
-	static int periodic_check = 0;
-	int cycle_manual = nvram_get_int("sig_check_period");
-	int cycle = (cycle_manual > 1) ? cycle_manual : 5760;
-	time_t now;
-	struct tm *tm;
-
-	if (!nvram_get_int("ntp_ready"))
-		return;
-
-	if (!bootup_check && !periodic_check)
-	{
-		time(&now);
-		tm = localtime(&now);
-
-		if ((tm->tm_hour == 2))	// every 48 hours at 2 am
-		{
-			periodic_check = 1;
-			period = -1;
-		}
-	}
-
-	if (bootup_check || periodic_check)
-		period = (period + 1) % cycle;
-	else
-		return;
-
-	if (!period)
-	{
-		if (bootup_check)
-			bootup_check = 0;
-
-		eval("/usr/sbin/sig_update.sh");
-
-		if (nvram_get_int("sig_state_update") &&
-		    !nvram_get_int("sig_state_error") &&
-		    strlen(nvram_safe_get("sig_state_info")))
-		{
-			dbg("retrieve sig information\n");
-
-			if (!nvram_get_int("sig_state_flag"))
-			{
-				dbg("no need to upgrade signature\n");
-				return;
-			}
-
-			nvram_set_int("auto_sig_upgrade", 1);
-
-			eval("/usr/sbin/sig_upgrade.sh");
-
-			if (nvram_get_int("sig_state_error"))
-			{
-				dbg("error execute sig upgrade script\n");
-				goto ERROR;
-			}
-		}
-		else
-			dbg("could not retrieve signature information!\n");
-ERROR:
-		nvram_set_int("auto_sig_upgrade", 0);
-	}
-}
 #endif
 
 #ifdef RTCONFIG_TOR
@@ -2485,7 +2691,7 @@ void watchdog(int sig)
 	/* handle button */
 	btn_check();
 	if(nvram_match("asus_mfg", "0")
-#ifdef RTCONFIG_LED_BTN
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 		&& nvram_get_int("AllLED")
 #endif
 	)
@@ -2559,6 +2765,7 @@ void watchdog(int sig)
 
 	ddns_check();
 	networkmap_check();
+	httpd_check();
 #ifdef RTAC87U
 	qtn_module_check();
 #endif
@@ -2575,6 +2782,7 @@ void watchdog(int sig)
 	auto_sig_check();
 	capture_bwdpi_log();
 	check_bwdpi_monitor();
+	sqlite_db_check();
 #endif
 
 #if defined(RTCONFIG_TOR) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))

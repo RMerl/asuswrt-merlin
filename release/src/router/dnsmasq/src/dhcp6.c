@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2014 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2015 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -225,9 +225,9 @@ void dhcp6_packet(time_t now)
   if (port != 0)
     {
       from.sin6_port = htons(port);
-      while (sendto(daemon->dhcp6fd, daemon->outpacket.iov_base, save_counter(0), 
-		    0, (struct sockaddr *)&from, sizeof(from)) == -1 &&
-	   retry_send());
+      while (retry_send(sendto(daemon->dhcp6fd, daemon->outpacket.iov_base, 
+			       save_counter(0), 0, (struct sockaddr *)&from, 
+			       sizeof(from))));
     }
 }
 
@@ -246,7 +246,9 @@ void get_client_mac(struct in6_addr *client, int iface, unsigned char *mac, unsi
   neigh.code = 0;
   neigh.reserved = 0;
   neigh.target = *client;
-  
+  /* RFC4443 section-2.3: checksum has to be zero to be calculated */
+  neigh.checksum = 0;
+   
   memset(&addr, 0, sizeof(addr));
 #ifdef HAVE_SOCKADDR_SA_LEN
   addr.sin6_len = sizeof(struct sockaddr_in6);

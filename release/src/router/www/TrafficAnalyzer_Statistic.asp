@@ -1394,7 +1394,7 @@ function cancel(){
 }
 
 function applyRule(){
-	document.form.action_script.value = "restart_bwdpi_monitor";
+	document.form.action_script.value = "restart_bwdpi_monitor;restart_wrs;restart_firewall";
 	document.form.submit();
 }
 

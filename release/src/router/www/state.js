@@ -82,15 +82,22 @@ var isFromWAN = false;
 var svc_ready = '<% nvram_get("svc_ready"); %>';
 
 //wireless
-var wl_nband_array = '<% wl_nband_info(); %>'.toArray();
+var wl_nband_title = [];
+var wl_nband_array = "<% wl_nband_info(); %>".toArray();
 var band2g_count = 0;
 var band5g_count = 0;
 for (var j=0; j<wl_nband_array.length; j++) {
-	if(wl_nband_array[j] == '2')
+	if(wl_nband_array[j] == '2'){
 		band2g_count++;
-	else if(wl_nband_array[j] == '1')
+		wl_nband_title.push("2.4GHz" + ((band2g_count > 1) ? ("-" + band2g_count) : ""));
+	}
+	else if(wl_nband_array[j] == '1'){
 		band5g_count++;
+		wl_nband_title.push("5GHz" + ((band5g_count > 1) ? ("-" + band5g_count) : ""));
+	}
 }
+if(wl_nband_title.indexOf("2.4GHz-2") > 0) wl_nband_title[wl_nband_title.indexOf("2.4GHz")] = "2.4GHz-1";
+if(wl_nband_title.indexOf("5GHz-2") > 0) wl_nband_title[wl_nband_title.indexOf("5GHz")] = "5GHz-1";
 
 var wl_info = {
 	band2g_support:(function(){
@@ -189,6 +196,7 @@ var no5gmssid_support = rc_support.search("no5gmssid");
 var no5gmssid_support = isSupport("no5gmssid");
 var wifi_hw_sw_support = isSupport("wifi_hw_sw");
 var wifi_tog_btn_support = isSupport("wifi_tog_btn");
+var cfg_wps_btn_support = isSupport("cfg_wps_btn");
 var usb_support = isSupport("usbX");
 var usbPortMax = rc_support.charAt(rc_support.indexOf("usbX")+4);
 var printer_support = isSupport("printer"); 
@@ -243,6 +251,7 @@ var ntfs_sparse_support = isSupport("sparse");
 var tr069_support = isSupport("tr069");
 var tor_support = isSupport("tor");
 var QISWIZARD = "QIS_wizard.htm";
+
 // Todo: Support repeater mode
 if(isMobile() && sw_mode != 2 && !dsl_support)
 	QISWIZARD = "MobileQIS_Login.asp";
@@ -456,9 +465,9 @@ function show_banner(L3){// L3 = The third Level of Menu
 	banner_code +='<span style="font-family:Verdana, Arial, Helvetica, sans-serif;">Firmware:</span><a href="/Advanced_FirmwareUpgrade_Content.asp" style="color:white;"><span id="firmver" class="title_link"></span></a>\n';
 	banner_code +='<span style="font-family:Verdana, Arial, Helvetica, sans-serif;" id="ssidTitle">SSID:</span>';
 	banner_code +='<span onclick="change_wl_unit_status(0)" id="elliptic_ssid_2g" class="title_link"></span>';
-	banner_code +='<span onclick="change_wl_unit_status(1)" id="elliptic_ssid_5g" style="margin-left:-5px;" class="title_link"></span>\n';
+	banner_code +='<span onclick="change_wl_unit_status(1)" id="elliptic_ssid_5g" class="title_link"></span>\n';
 	if(wl_info.band5g_2_support)
-		banner_code +='<span onclick="change_wl_unit_status(2)" id="elliptic_ssid_5g_2" style="margin-left:-5px;" class="title_link"></span>\n';
+		banner_code +='<span onclick="change_wl_unit_status(2)" id="elliptic_ssid_5g_2" class="title_link"></span>\n';
 	banner_code +='</td>\n';
 
 	banner_code +='<td width="30"><div id="notification_desc" class=""></div></td>\n';
@@ -1648,7 +1657,7 @@ function Block_chars(obj, keywordArray){
 	if(obj.value){
 		for(var i=0; i<keywordArray.length; i++){
 			if( obj.value.indexOf(keywordArray[i]) >= 0){						
-				alert(keywordArray+ " are invalid characters.");
+				alert(keywordArray+ " <#JS_invalid_chars#>");
 				obj.focus();
 				return false;
 			}	
@@ -3573,7 +3582,7 @@ function decodeURIComponentSafe(_ascii){
 var isNewFW = function(FWVer){
 	var Latest_firmver = FWVer.split("_");
 
-	if (odmpid == "TM-AC1900" && (bl_version == "2.1.2.2" || bl_version == "2.1.2.3"))
+	if (odmpid == "TM-AC1900" && (bl_version == "2.1.2.2" || bl_version == "2.1.2.4"))
 		return true;
 
 	if(typeof Latest_firmver[0] !== "undefined" && typeof Latest_firmver[1] !== "undefined" && typeof Latest_firmver[2] !== "undefined"){

@@ -329,6 +329,7 @@ function onSubmitApply(s){
 		  		<div class="formfonttitle"><#menu5_3#> - <#menu5_3_6#></div>
 		  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		 		  <div class="formfontdesc"><#LANHostConfig_x_DDNSEnable_sectiondesc#></div>
+		 		  <div class="formfontdesc" style="margin-top:-8px;"><#NSlookup_help#></div>	
 				  <div class="formfontdesc" id="wan_ip_hide2" style="color:#FFCC00;"><#LANHostConfig_x_DDNSEnable_sectiondesc2#></div>
 					<div class="formfontdesc" id="wan_ip_hide3" style="color:#FFCC00;"><#LANHostConfig_x_DDNSEnable_sectiondesc3#></div>
 

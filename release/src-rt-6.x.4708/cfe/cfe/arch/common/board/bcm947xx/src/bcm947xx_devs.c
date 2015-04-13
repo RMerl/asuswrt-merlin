@@ -59,7 +59,7 @@
 #include <cfe_devfuncs.h>
 #include <cfe_ioctl.h>
 
-#ifdef RTAC88B
+#ifdef RTL8365MB
 #include <rtk_switch.h>
 #include <smi.h>
 #include <vlan.h>
@@ -908,7 +908,7 @@ board_final_init(void)
 		commit = 1;
 	}
 
-#ifdef RTAC88B
+#ifdef RTL8365MB
 	int ret = -1, retry = 0;
 	rtk_port_mac_ability_t pa;
 
@@ -938,37 +938,26 @@ board_final_init(void)
         if(ret)	printf("rtk port_macForceLink_set ext_Port0 Failed!(%d)\n", ret);
 	else printf("rtk port_macForceLink_set ext_Port0 ok\n");	
 
-	/* asic chk */
-	rtk_uint32 retVal, retVal2;
-	rtk_uint32 data, data2;
+        /* asic chk */
+        rtk_uint32 retVal, retVal2;
+        rtk_uint32 data, data2;
+        if((retVal = rtl8367c_getAsicReg(0x1311, &data)) != RT_ERR_OK || (retVal2 = rtl8367c_getAsicReg(0x1305, &data2)) != RT_ERR_OK) {
+                printf("get failed(%d)(%d). (%x)(supposed to be 0x1016)\n", retVal, retVal2, data);
+        }
+        else {      /* get ok, then chk reg*/
+                printf("get ok, chk 0x1311:%x(0x1016), 0x1305:%x(b4~b7:0x1)\n", data, data2);
+                if(data != 0x1016){
+                        printf("\n!! rtl reg 0x1311 error: (%d)(get %x)\n", retVal, data);
+                }
+                if((data2 & 0xf0) != 0x10) {
+                        printf("\n!! rtl reg 0x1305 error: (%d)(get %x)\n", retVal, data2);
+                }
+        }
 
-    	if((retVal = rtl8367c_getAsicReg(0x1311, &data)) != RT_ERR_OK || (retVal2 = rtl8367c_getAsicReg(0x1305, &data2)) != RT_ERR_OK) {
-        	printf("get failed(%d)(%d). (%x)(supposed to be 0x1016)\n", retVal, retVal2, data);
-    	}
-    	else {      /* get ok, then chk val*/
-        	printf("get ok, chk 0x1311:%x(0x1016), 0x1305:%x(b4~b7:0x1)\n", data, data2);
-		if(data != 0x1016){
-        		if((retVal = rtl8367c_setAsicReg(0x1311, 0x1016)) != RT_ERR_OK)
-                		printf("set 0x1311(0x1016) failed(%d)\n", retVal);
-			else
-                		printf("reset 0x1311 (0x1016)\n");
-		}
-        	if((data2 & 0xf0) != 0x10) {
-			data2 &= ~0xf0;
-			data2 |= 0x10;
-        		if((retVal2 = rtl8367c_setAsicReg(0x1305, data2)) != RT_ERR_OK)
-                		printf("set 0x1305(%x) failed(%d)\n", data2, retVal2);
-			else
-                		printf("reset 0x1305 (%x)\n", data2);
-        	}
-    	}
-	/* chk again */
-    	if((retVal = rtl8367c_getAsicReg(0x1311, &data)) != RT_ERR_OK || (retVal2 = rtl8367c_getAsicReg(0x1305, &data2)) != RT_ERR_OK) {
-        	printf("get failed(%d)(%d). (%x)(supposed to be 0x1016)\n", retVal, retVal2, data);
-    	}
-    	else	/* get ok, then chk val*/
-        	printf("(2) get again ok, chk again 0x1311:%x(0x1016), 0x1305:%x(b4~b7:1)\n", data, data2);
-    	/*~asic chk*/
+        /* reset tx/rx delay */
+        retVal = rtk_port_rgmiiDelayExt_set(EXT_PORT0, 1, 4);
+        if (retVal != RT_ERR_OK)
+                printf("\n!! rtl set delay failed (%d)\n", retVal);
 #endif
 
 #if CFG_FLASH || CFG_SFLASH || CFG_NFLASH

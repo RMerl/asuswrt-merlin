@@ -107,7 +107,7 @@ _check_log_message(){
 _loop_delay(){
 	i=0
 	while [ $i -lt $1 ]; do
-		i=$(($i+1))
+		i=$((i+1))
 		echo "."
 	done
 }
@@ -198,26 +198,26 @@ _download_package(){
 	fi
 	i=0
 	while [ $i -lt $wget_timeout ] && [ ! -f "$target" ]; do
-		i=$(($i+1))
+		i=$((i+1))
 		sleep 1
 	done
 
 	wget_pid=`pidof wget`
 	size=`app_get_field.sh $1 Size 2`
 	target_size=`ls -l $target |awk '{printf $5}'`
-	percent=$(($target_size*100/$size))
+	percent=$((target_size*100/size))
 	nvram set apps_download_percent=$percent
 	while [ -n "$wget_pid" ] && [ -n "$target_size" ] && [ $target_size -lt $size ]; do
 		sleep 1
 
 		wget_pid=`pidof wget`
 		target_size=`ls -l $target |awk '{printf $5}'`
-		percent=$(($target_size*100/$size))
+		percent=$((target_size*100/size))
 		nvram set apps_download_percent=$percent
 	done
 
 	target_size=`ls -l $target |awk '{printf $5}'`
-	percent=$(($target_size*100/$size))
+	percent=$((target_size*100/size))
 	nvram set apps_download_percent=$percent
 	if [ -z "$percent" ] || [ $percent -ne 100 ]; then
 		rm -rf $target

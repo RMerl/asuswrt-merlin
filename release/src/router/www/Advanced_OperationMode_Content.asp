@@ -173,7 +173,7 @@ function saveMode(){
 	}
 
   if(document.form.sw_mode.value == 2){
-		parent.location.href = '/QIS_wizard.htm?flag=sitesurvey';
+		parent.location.href = '/QIS_wizard.htm?flag=sitesurvey_rep';
 		return false;
 	}
 	else if(document.form.sw_mode.value == 3){

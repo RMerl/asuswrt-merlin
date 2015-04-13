@@ -16,6 +16,7 @@ endif
 
 # ASUSWRT
 OBJS += iqos.o wrs.o stat.o dpi.o web_history.o wrs_app.o data_collect.o tools.o
+OBJS += watchdog_check.o
 
 # TrendMicro
 OBJS += usr_ioctl.o conf_app.o

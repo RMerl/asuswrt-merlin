@@ -755,6 +755,9 @@ handle_request(void)
 					if (strcasecmp(p, pLang->Lang)==0)
 					{
 						char dictname[32];
+
+						if (!check_lang_support(pLang->Target_Lang))
+							continue;
 						snprintf(dictname,sizeof(dictname),"%s.dict", pLang->Target_Lang);
 						if(!check_if_file_exist(dictname))
 						{
@@ -1229,6 +1232,44 @@ char *config_model_name(char *source, char *find,  char *rep){
 }
 
 #ifdef TRANSLATE_ON_FLY
+/* Whether a language support should be enabled or not.
+ * @lang:
+ * @return:
+ * 	0:	lang should not be supported.
+ *     <0:	invalid parameter.
+ *     >0:	lang can be supported.
+ */
+int check_lang_support(char *lang)
+{
+	int r = 1, model = get_model();
+
+	if (!lang)
+		return -1;
+
+	switch (model) {
+#if defined(RTAC55U)
+	case MODEL_RTAC55U:
+		if (!find_word(nvram_safe_get("rc_support"), "tcode") || !nvram_get("territory_code"))
+			return 1;
+		if (nvram_match("territory_code", "UK/01")) {
+			if (!strcmp(lang, "DA") || !strcmp(lang, "EN") ||
+			    !strcmp(lang, "FI") || !strcmp(lang, "NO") ||
+			    !strcmp(lang, "SV")) {
+				r = 1;
+			} else {
+				r = 0;
+			}
+		} else {
+			return 1;
+		}
+
+		break;
+#endif
+	}
+
+	return r;
+}
+
 #ifdef RTCONFIG_AUTODICT
 int
 load_dictionary (char *lang, pkw_t pkw)

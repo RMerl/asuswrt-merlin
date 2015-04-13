@@ -256,7 +256,11 @@ int ej_get_DSL_WAN_list(int eid, webs_t wp, int argc, char_t **argv){
 
 	if(nvram_match("dsltmp_transmode", "atm")) {
 		char *display_items[] = {"dsl_enable", "dsl_vpi", "dsl_vci","dsl_proto", "dsl_encap", 
-			"dsl_svc_cat", "dsl_pcr","dsl_scr","dsl_mbs",NULL};
+			"dsl_svc_cat", "dsl_pcr","dsl_scr","dsl_mbs",
+#ifdef RTCONFIG_DSL_TCLINUX
+			"dsl_dot1q", "dsl_vid", "dsl_dot1p",
+#endif
+			NULL};
 
 		for ( unit = 0; unit<8; unit++ ) {
 			snprintf(prefix, sizeof(prefix), "dsl%d_", unit);
@@ -288,7 +292,7 @@ int ej_get_DSL_WAN_list(int eid, webs_t wp, int argc, char_t **argv){
 		}
 	}
 	else {	//ptm
-		char *display_items[] = {"dsl_enable", "dsl_proto", "dsl_dot1q", "dsl_vid", NULL};
+		char *display_items[] = {"dsl_enable", "dsl_proto", "dsl_dot1q", "dsl_vid", "dsl_dot1p", NULL};
 
 		for ( unit = 0; unit<8; unit++ ) {
 			if(unit)

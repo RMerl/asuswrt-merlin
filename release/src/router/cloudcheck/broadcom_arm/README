@@ -1,0 +1,4 @@
+1. Copy booster and booster_watchdog to /bin.
+2. Copy librt.so.0 and libpolarssl.so.0 to /lib.
+3. Start booster_watchdog from init script after all main processes.
+   By default it will run in foreground; to run as a daemon, set environment variable BOOSTER_WATCHDOG_DAEMON=1 upon invocation.

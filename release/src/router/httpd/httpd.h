@@ -174,10 +174,13 @@ extern int tar_fgetc(FILE *fp);
 #endif
 #ifdef TRANSLATE_ON_FLY
 
+extern int check_lang_support(char *lang);
 extern int load_dictionary (char *lang, pkw_t pkw);
 extern void release_dictionary (pkw_t pkw);
 extern char* search_desc (pkw_t pkw, char *name);
 //extern char Accept_Language[16];
+#else
+static inline int check_lang_support(char *lang) { return 1; }
 #endif //defined TRANSLATE_ON_FLY
 
 extern int http_port;

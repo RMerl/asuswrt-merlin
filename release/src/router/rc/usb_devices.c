@@ -17,6 +17,7 @@
 #endif
 #include <notify_rc.h>
 #include <usb_info.h>
+#include <disk_initial.h>
 
 #define MAX_RETRY_LOCK 1
 
@@ -2894,10 +2895,25 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 		else{
 			if(!strcmp(known_type, "storage")){
 				ptr = (char *)device_name+strlen(device_name)-1;
-				if(!isdigit(*ptr)){
+				if(!isdigit(*ptr)){ // disk
 					snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
 					if(strlen(nvram_safe_get(strcat_r(prefix, "_vid", tmp))) <= 0)
 						nvram_unset(prefix);
+					// for ATE. {
+					// Jerry5Chang added for unmount case. 2012.12.03
+					nvram_unset(strcat_r(prefix, "_removed", tmp));
+					nvram_unset(strcat_r(prefix, "_act", tmp)); // for DM.
+					nvram_unset(strcat_r(prefix, "_fs_path0", tmp));
+#ifdef RTCONFIG_DISK_MONITOR
+					nvram_unset(strcat_r(prefix, "_pool_error", tmp));
+#endif
+					nvram_unset(strcat_r(prefix, "_speed", tmp));
+					// for ATE. }
+				}
+				else if(!strncmp(device_name, "mmcblk", 6)){ // SD card.
+					snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+					nvram_unset(prefix);
+					nvram_unset(strcat_r(prefix, "_node", tmp));
 					// for ATE. {
 					// Jerry5Chang added for unmount case. 2012.12.03
 					nvram_unset(strcat_r(prefix, "_removed", tmp));
@@ -2997,36 +3013,132 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 	return 0;
 }
 
-#ifdef RTCONFIG_BCMARM
+#ifdef BCM_MMC
 int asus_mmc(const char *device_name, const char *action){
-	
-	int ret = 0;
-	char *type, mnt_dev[128], mountpoint[128];
+#ifdef RTCONFIG_USB
+	char usb_port[32];
+	int isLock;
+	char env_dev[64], env_major[64], env_port[64];
+	char port_path[8];
+	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
+	char *ptr;
 
-	_dprintf("\n[%s][mmc hotplug:%s dev:[%s]\n", __FUNCTION__, action, device_name);
+	usb_dbg("(%s): action=%s.\n", device_name, action);
 
-	memset(mountpoint, 0, sizeof(mountpoint));
-	sprintf(mountpoint, "%s/%s", "/mnt", device_name);
-
-	if(strcmp(action, "add") == 0)
-	{
-		memset(mnt_dev, 0, sizeof(mnt_dev));
-		sprintf(mnt_dev, "/dev/%s", device_name);
-		if ((type = detect_fs_type(mnt_dev)) == NULL)
-			return 0;
-
-		_dprintf("[%s] get mmc [%s]\n", __FUNCTION__, type);	// tmp test
-
-		ret = mount_r(mnt_dev, mountpoint, type);
-
-		_dprintf("[%s] chk mount:%d\n", __FUNCTION__, ret);	// tmp test
-	} else {
-		ret = umount2(mountpoint, MNT_DETACH);
-
-		_dprintf("[%s] chk unmount:%d\n", __FUNCTION__, ret);	// tmp test
+	if(!strcmp(nvram_safe_get("stop_mmc"), "1")){
+		usb_dbg("(%s): stop_mmc be set.\n", device_name);
+		return 0;
 	}
 
-	return ret;
+	if(get_device_type_by_device(device_name) != DEVICE_TYPE_DISK){
+		usb_dbg("(%s): The device is not a mmc device.\n", device_name);
+		return 0;
+	}
+
+	// Check Lock.
+	if((isLock = file_lock((char *)device_name)) == -1){
+		usb_dbg("(%s): Can't set the file lock!\n", device_name);
+		return 0;
+	}
+
+	ptr = (char *)device_name+strlen(device_name)-1;
+
+	snprintf(usb_port, 32, "%s", SDCARD_PORT);
+
+	if(!check_hotplug_action(action)){
+		snprintf(prefix, sizeof(prefix), "usb_path_%s", device_name);
+		nvram_unset(strcat_r(prefix, "_label", tmp));
+
+		if(get_path_by_node(usb_port, port_path, 8) == NULL){
+			usb_dbg("(%s): Fail to get usb path.\n", usb_port);
+			file_unlock(isLock);
+			return 0;
+		}
+
+		set_usb_common_nvram(action, device_name, usb_port, "storage");
+
+		usb_dbg("(%s): Remove MMC.\n", device_name);
+
+		putenv("INTERFACE=8/0/0");
+		putenv("ACTION=remove");
+		putenv("PRODUCT=asus_mmc");
+		snprintf(env_dev, 64, "DEVICENAME=%s", device_name);
+		putenv(env_dev);
+		putenv("SUBSYSTEM=block");
+		snprintf(env_major, 64, "MAJOR=%d", USB_DISK_MAJOR);
+		putenv(env_major);
+		putenv("PHYSDEVBUS=scsi");
+
+		eval("hotplug", "block");
+
+		unsetenv("INTERFACE");
+		unsetenv("ACTION");
+		unsetenv("PRODUCT");
+		unsetenv("DEVICENAME");
+		unsetenv("SUBSYSTEM");
+		unsetenv("MAJOR");
+		unsetenv("PHYSDEVBUS");
+
+#ifdef RTCONFIG_MMC_LED
+		led_control(LED_MMC, LED_OFF);
+#endif
+
+		file_unlock(isLock);
+		return 0;
+	}
+
+	// there is a static usb node with the SD card, so don't need to set the usb_node record.
+	if(get_path_by_node(usb_port, port_path, 8) == NULL){
+		usb_dbg("(%s): Fail to get usb path.\n", usb_port);
+		file_unlock(isLock);
+		return 0;
+	}
+
+	snprintf(prefix, sizeof(prefix), "usb_path%s", port_path);
+
+	// There is only a hotplug with the partition of the SD card.
+	//if(!isdigit(*ptr)){ // disk
+		// set USB common nvram.
+		set_usb_common_nvram(action, device_name, usb_port, "storage");
+
+		// for DM.
+		if(!strcmp(nvram_safe_get(prefix), "storage")){
+			nvram_set(strcat_r(prefix, "_act", tmp), device_name);
+		}
+	//}
+
+	putenv("INTERFACE=8/0/0");
+	putenv("ACTION=add");
+	putenv("PRODUCT=asus_mmc");
+	snprintf(env_dev, 64, "DEVICENAME=%s", device_name);
+	putenv(env_dev);
+	putenv("SUBSYSTEM=block");
+	snprintf(env_port, 64, "USBPORT=%s", usb_port);
+	putenv(env_port);
+	snprintf(env_major, 64, "MAJOR=%d", USB_DISK_MAJOR);
+	putenv(env_major);
+	putenv("PHYSDEVBUS=scsi");
+
+	eval("hotplug", "block");
+
+	unsetenv("INTERFACE");
+	unsetenv("ACTION");
+	unsetenv("PRODUCT");
+	unsetenv("DEVICENAME");
+	unsetenv("SUBSYSTEM");
+	unsetenv("USBPORT");
+	unsetenv("MAJOR");
+	unsetenv("PHYSDEVBUS");
+
+#ifdef RTCONFIG_MMC_LED
+	led_control(LED_MMC, LED_ON);
+#endif
+
+	usb_dbg("(%s): Success!\n", device_name);
+	file_unlock(isLock);
+
+#endif
+	return 1;
 }
 #endif
 
@@ -3035,7 +3147,7 @@ int asus_sd(const char *device_name, const char *action){
 	char usb_node[32], usb_port[32];
 	int isLock;
 	char nvram_value[32];
-	char env_dev[64], env_port[64];
+	char env_dev[64], env_major[64], env_port[64];
 	char port_path[8];
 	char buf1[32];
 	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
@@ -3110,8 +3222,10 @@ int asus_sd(const char *device_name, const char *action){
 		}
 #endif
 
+#ifdef RTCONFIG_USB_MODEM
 		snprintf(buf1, 32, "%s.%s", USB_MODESWITCH_CONF, port_path);
 		unlink(buf1);
+#endif
 
 		if(strlen(usb_node) > 0){
 			// for the storage interface of the second modem.
@@ -3129,11 +3243,11 @@ int asus_sd(const char *device_name, const char *action){
 		putenv("INTERFACE=8/0/0");
 		putenv("ACTION=remove");
 		putenv("PRODUCT=asus_sd");
-		memset(env_dev, 0, 64);
-		sprintf(env_dev, "DEVICENAME=%s", device_name);
+		snprintf(env_dev, 64, "DEVICENAME=%s", device_name);
 		putenv(env_dev);
 		putenv("SUBSYSTEM=block");
-		putenv("MAJOR=8");
+		snprintf(env_major, 64, "MAJOR=%d", USB_DISK_MAJOR);
+		putenv(env_major);
 		putenv("PHYSDEVBUS=scsi");
 
 		eval("hotplug", "block");
@@ -3156,6 +3270,8 @@ int asus_sd(const char *device_name, const char *action){
 		file_unlock(isLock);
 		return 0;
 	}
+	else
+		usb_dbg("(%s): Got usb node: %s.\n", device_name, usb_node);
 
 	if(get_path_by_node(usb_node, port_path, 8) == NULL){
 		usb_dbg("(%s): Fail to get usb path.\n", usb_node);
@@ -3169,6 +3285,8 @@ int asus_sd(const char *device_name, const char *action){
 		file_unlock(isLock);
 		return 0;
 	}
+	else
+		usb_dbg("(%s): Got usb port: %s.\n", device_name, usb_port);
 
 	memset(buf1, 0, 32);
 	sprintf(buf1, "usb_path_%s", device_name);
@@ -3255,7 +3373,7 @@ after_change_xhcimode:
 		return 0;
 	}
 
-	if(!isdigit(*ptr)){
+	if(!isdigit(*ptr)){ // disk
 		// set USB common nvram.
 		set_usb_common_nvram(action, device_name, usb_node, "storage");
 
@@ -3277,12 +3395,10 @@ after_change_xhcimode:
 	putenv("INTERFACE=8/0/0");
 	putenv("ACTION=add");
 	putenv("PRODUCT=asus_sd");
-	memset(env_dev, 0, 64);
-	sprintf(env_dev, "DEVICENAME=%s", device_name);
+	snprintf(env_dev, 64, "DEVICENAME=%s", device_name);
 	putenv(env_dev);
 	putenv("SUBSYSTEM=block");
-	memset(env_port, 0, 64);
-	sprintf(env_port, "USBPORT=%s", usb_port);
+	snprintf(env_port, 64, "USBPORT=%s", usb_port);
 	putenv(env_port);
 
 	eval("hotplug", "block");
@@ -3305,10 +3421,9 @@ after_change_xhcimode:
 
 	usb_dbg("(%s): Success!\n", device_name);
 	file_unlock(isLock);
-	return 1;
 
 #endif // RTCONFIG_USB
-	return 0;
+	return 1;
 }
 
 int asus_lp(const char *device_name, const char *action){
@@ -4159,10 +4274,10 @@ int asus_usb_interface(const char *device_name, const char *action){
 
 		strcpy(device_type, nvram_safe_get(prefix));
 
+#ifdef RTCONFIG_USB_MODEM
 		snprintf(conf_file, 32, "%s.%s", USB_MODESWITCH_CONF, port_path);
 		unlink(conf_file);
 
-#ifdef RTCONFIG_USB_MODEM
 		if(!strcmp(device_type, "modem") && !strcmp(usb_node, nvram_safe_get("usb_modem_act_path"))){
 			snprintf(buf, 128, "%s", nvram_safe_get(strcat_r(prefix, "_act", tmp)));
 

@@ -522,7 +522,7 @@ int switch_exist(void)
 	return 0;
 }
 
-static char * country_to_code(char *ctry, int band)
+static const char * country_to_code(char *ctry, int band)
 {
 	if (strcmp(ctry, "US") == 0)
 		return "841";
@@ -548,7 +548,8 @@ static char * country_to_code(char *ctry, int band)
 
 void load_wifi_driver(void)
 {
-	char country[FACTORY_COUNTRY_CODE_LEN+1], *code;
+	char country[FACTORY_COUNTRY_CODE_LEN+1];
+	const char *code;
 	int i;
 	struct load_wifi_kmod_seq_s *p = &load_wifi_kmod_seq[0];
 
@@ -566,10 +567,12 @@ void load_wifi_driver(void)
 	eval("iwpriv", "wifi1", "enable_ol_stats", "0");
 	///////////
 	strncpy(country, nvram_safe_get("wl0_country_code"), FACTORY_COUNTRY_CODE_LEN);
+	country[FACTORY_COUNTRY_CODE_LEN] = '\0';
 	code=country_to_code(country, 2);
 	eval("iwpriv", "wifi0", "setCountryID", code);
 	///////////
 	strncpy(country, nvram_safe_get("wl1_country_code"), FACTORY_COUNTRY_CODE_LEN);
+	country[FACTORY_COUNTRY_CODE_LEN] = '\0';
 	code=country_to_code(country, 5);
 	eval("iwpriv", "wifi1", "setCountryID", code);
 }
@@ -806,6 +809,25 @@ void init_syspara(void)
 		nvram_set("productid", trim_r(productid));
 		nvram_set("firmver", trim_r(fwver));
 	}
+
+#if defined(RTCONFIG_TCODE)
+	/* Territory code */
+	memset(buffer, 0, sizeof(buffer));
+	if (FRead(buffer, OFFSET_TERRITORY_CODE, 5) < 0) {
+		_dprintf("READ ASUS territory code: Out of scope\n");
+		nvram_unset("territory_code");
+	} else {
+		/* [A-Z][A-Z]/[0-9][0-9] */
+		if (buffer[2] != '/' ||
+		    !isupper(buffer[0]) || !isupper(buffer[1]) ||
+		    !isdigit(buffer[3]) || !isdigit(buffer[4]))
+		{
+			nvram_unset("territory_code");
+		} else {
+			nvram_set("territory_code", buffer);
+		}
+	}
+#endif
 
 	memset(buffer, 0, sizeof(buffer));
 	FRead(buffer, OFFSET_BOOT_VER, 4);

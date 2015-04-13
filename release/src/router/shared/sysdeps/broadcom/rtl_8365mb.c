@@ -62,7 +62,7 @@ int rtkswitch_ioctl(int val, int val2, int val3)
 	case BAD_ADDR_X:
 	case POWERUP_LANPORTS:
 	case POWERDOWN_LANPORTS:
-	case GET_ATE_PHYSTATES:
+	case GET_RTK_PHYSTATES:
 	case SOFT_RESET:
 	case GET_CPU:
 		p = NULL;
@@ -136,24 +136,19 @@ int config_rtkswitch(int argc, char *argv[])
 	return rtkswitch_ioctl(val, val2, val3);
 }
 
-#if 0
 typedef struct {
-	unsigned int link[5];
-	unsigned int speed[5];
+	unsigned int link[4];
+	unsigned int speed[4];
 } phyState;
 
-int rtkswitch_AllPort_phyState(void)
+int ext_rtk_phyState(void)
 {
-	int fd;
+	int model;
 	char buf[32];
-	int porder_56u[5] = {4,3,2,1,0};
-	int *o = porder_56u;
-	const char *portMark = "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;";
+	int *o;
+	const char *portMark = "L5=%C;L6=%C;L7=%C;L8=%C;";
+	int fd = open(RTKSWITCH_DEV, O_RDONLY);
 
-	if (get_model() == MODEL_RTN65U)
-		portMark = "W0=%C;L4=%C;L3=%C;L2=%C;L1=%C;";
-
-	fd = open(RTKSWITCH_DEV, O_RDONLY);
 	if (fd < 0) {
 		perror(RTKSWITCH_DEV);
 		return -1;
@@ -161,10 +156,42 @@ int rtkswitch_AllPort_phyState(void)
 
 	phyState pS;
 
-	pS.link[0] = pS.link[1] = pS.link[2] = pS.link[3] = pS.link[4] = 0;
-	pS.speed[0] = pS.speed[1] = pS.speed[2] = pS.speed[3] = pS.speed[4] = 0;
+	pS.link[0] = pS.link[1] = pS.link[2] = pS.link[3] = 0;
+	pS.speed[0] = pS.speed[1] = pS.speed[2] = pS.speed[3] = 0;
 
-	if (ioctl(fd, 18, &pS) < 0) {
+        switch(model = get_model()) {
+        case MODEL_RTAC5300:
+		{
+		/* RTK_LAN  BRCM_LAN  WAN  POWER */
+		/* R0 R1 R2 R3 B4 B0 B1 B2 B3 */
+		/* L8 L7 L6 L5 L4 L3 L2 L1 W0 */
+		
+		const int porder[4] = {3,2,1,0};
+		o = porder;
+
+		break;
+		}
+        case MODEL_RTAC88U:
+		{
+		/* RTK_LAN  BRCM_LAN  WAN  POWER */
+		/* R3 R2 R1 R0 B3 B2 B1 B0 B4 */
+		/* L8 L7 L6 L5 L4 L3 L2 L1 W0 */
+		
+		const int porder[4] = {0,1,2,3};
+		o = porder;
+
+		break;
+		}
+	default:
+		{	
+		const int porder[4] = {0,1,2,3};
+		o = porder;
+
+		break;
+		}
+	}
+
+	if (ioctl(fd, GET_RTK_PHYSTATES, &pS) < 0) {
 		perror("rtkswitch ioctl");
 		close(fd);
 		return -1;
@@ -176,14 +203,12 @@ int rtkswitch_AllPort_phyState(void)
 		(pS.link[o[0]] == 1) ? (pS.speed[o[0]] == 2) ? 'G' : 'M': 'X',
 		(pS.link[o[1]] == 1) ? (pS.speed[o[1]] == 2) ? 'G' : 'M': 'X',
 		(pS.link[o[2]] == 1) ? (pS.speed[o[2]] == 2) ? 'G' : 'M': 'X',
-		(pS.link[o[3]] == 1) ? (pS.speed[o[3]] == 2) ? 'G' : 'M': 'X',
-		(pS.link[o[4]] == 1) ? (pS.speed[o[4]] == 2) ? 'G' : 'M': 'X');
+		(pS.link[o[3]] == 1) ? (pS.speed[o[3]] == 2) ? 'G' : 'M': 'X');
 
 	puts(buf);
 
 	return 0;
 }
-#endif
 
 void usage(char *cmd)
 {
