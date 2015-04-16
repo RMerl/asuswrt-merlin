@@ -115,6 +115,18 @@ ENTRY(stext)
 	cmp	r4, #0				@ The revision number of NS-Ax is 0.
 	bne	bx_acp
 ax_acp:
+	/* A0 and A1 don't support ACP */
+	ldr	r3, =0x1800702c			@ CCB_SRAB_CMDSTAT
+	ldr	r4, =0x02400001			@ SPI page 0x02, SPI offset 0x40
+	str	r4, [r3]
+	ldr	r3, =0x1800703c			@ CCB_SRAB_RDL
+	ldr	r4, [r3]
+	ldr	r3, =0xff			@ 8-bits CHIP_REVID mask
+	and	r4, r4, r3
+	cmp	r4, #1				@ REVID: A0 = 0, A1 = 1
+	ble	no_acp
+
+	/* A2 and later are able to support ACP */
 	ldr	r3, =tgt_phys
 	ldr	r4, =0xc0000000			@ Clear the upper two bits
 	bic	r3, r3, r4

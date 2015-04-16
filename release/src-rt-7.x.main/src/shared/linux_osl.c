@@ -627,13 +627,9 @@ osl_pktfastget(osl_t *osh, uint len)
 
 	/* Init skb struct */
 	skb->next = skb->prev = NULL;
-#if defined(__ARM_ARCH_7A__)
 	skb->data = skb->head + NET_SKB_PAD;
-	skb->tail = skb->head + NET_SKB_PAD;
-#else
-	skb->data = skb->head + 16;
-	skb->tail = skb->head + 16;
-#endif /* __ARM_ARCH_7A__ */
+	skb->tail = skb->data;
+
 	skb->len = 0;
 	skb->cloned = 0;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 14)

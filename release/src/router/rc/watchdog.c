@@ -1300,6 +1300,7 @@ unsigned long get_devirq_count(char *irqs)
 	return counter1+counter2 > 2 ? counter1+counter2 : 0;
 }
 
+#if !defined(RTCONFIG_BLINK_LED)
 void fake_dev_led(char *irqs, unsigned int LED_WHICH)
 {
 	static unsigned int blink_dev_check = 0;
@@ -1349,6 +1350,7 @@ void fake_dev_led(char *irqs, unsigned int LED_WHICH)
 
 	blink_dev_check++;
 }
+#endif
 
 #if defined(RTCONFIG_FAKE_ETLAN_LED)
 unsigned long get_etlan_count()
@@ -1622,7 +1624,7 @@ void led_check(void)
 	fake_etlan_led();
 #endif
 
-#ifdef RTCONFIG_USB
+#if defined(RTCONFIG_USB) && !defined(RTCONFIG_BLINK_LED)
 	char *p1_node, *p2_node, *ehci_ports, *xhci_ports;
 
 	p1_node = nvram_safe_get("usb_path1_node");
@@ -1899,7 +1901,7 @@ void httpd_check()
 void qtn_module_check(void)
 {
 	int ret;
-	uint32_t p_channel;
+	uint32_t p_bw;
 	static int waiting = 0;
 
 	if(waiting < 2){
@@ -1910,7 +1912,7 @@ void qtn_module_check(void)
 	if (!nvram_get_int("qtn_ready"))
 		return;
 
-	if (rpc_qcsapi_get_channel(&p_channel) != 0 ){
+	if (rpc_qcsapi_get_bw(&p_bw) != 0 ){
 		logmessage("QTN", "QTN connection lost");
 		system("reboot &");
 	}
@@ -2781,8 +2783,11 @@ void watchdog(int sig)
 #ifdef RTCONFIG_BWDPI
 	auto_sig_check();
 	capture_bwdpi_log();
-	check_bwdpi_monitor();
 	sqlite_db_check();
+#endif
+
+#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
+	check_hour_monitor_service();
 #endif
 
 #if defined(RTCONFIG_TOR) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))

@@ -554,7 +554,7 @@ function overHint(itemNum){
 						else{
 							if(first_link_auxstatus == "1"){
 								if( wans_dualwan_array[0] == "lan"){
-									statusmenu += "<span>Please check that the ethernet cable is connected properly to the <#menu5_2#>"+wans_lanport+" port.</span>";
+									statusmenu += "<span><#Check_cable#> <#Port_Mapping_item1#> : "+wans_lanport+"</span>";
 								}
 								else	
 									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";
@@ -627,7 +627,7 @@ function overHint(itemNum){
 						else{
 							if(link_auxstatus == "1"){
 								if( wans_dualwan_array[0] == "lan"){
-									statusmenu += "<span>Please check that the ethernet cable is connected properly to the <#menu5_2#>"+wans_lanport+" port.</span>";
+									statusmenu += "<span><#Check_cable#> <#Port_Mapping_item1#> : "+wans_lanport+"</span>";
 								}
 								else	
 									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";
@@ -733,7 +733,7 @@ function overHint(itemNum){
 						else{
 							if(secondary_link_auxstatus == "1"){
 								if( wans_dualwan_array[1] == "lan"){
-									statusmenu += "<span>Please check that the ethernet cable is connected properly to the <#menu5_2#>"+wans_lanport+" port.</span>";
+									statusmenu += "<span><#Check_cable#> <#Port_Mapping_item1#> : "+wans_lanport+"</span>";
 								}
 								else	
 									statusmenu += "<span><#QKSet_detect_wanconnfault#></span>";

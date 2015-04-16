@@ -88,6 +88,9 @@ extern int _memsize;
 #define PCI_MAX_BUS		4
 #define PLX_PRIM_SEC_BUS_NUM		(0x00000201 | (PCI_MAX_BUS << 16))
 
+#define PLX_SWITCH_ID		0x8603
+#define ASMEDIA_SWITCH_ID	0x1182
+
 static uint pcie_coreid, pcie_corerev;
 
 #ifdef	CONFIG_PCI
@@ -201,6 +204,7 @@ static struct soc_pcie_port {
 	bool isswitch;
 	bool port1active;
 	bool port2active;
+	uint16 switch_id;
 } soc_pcie_ports[4] = {
 	{
 	.irqs = {0, 0, 0, 0, 0, 0},
@@ -484,6 +488,84 @@ static void plx_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 	}
 }
 
+static void
+asmedia_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
+{
+	struct soc_pcie_port *port = soc_pcie_bus2port(bus);
+	u32 dRead = 0;
+	u16 bm = 0;
+	int bus_inc = 0;
+
+	soc_pci_read_config(bus, devfn, 0x100, 4, &dRead);
+	printk("PCIE: Doing ASMedia switch Init...Test Read = %08x\n", (unsigned int)dRead);
+
+	soc_pci_read_config(bus, devfn, 0x4, 2, &bm);
+#if NS_PCI_DEBUG
+	printk("bus master: %08x\n", bm);
+#endif
+	bm |= 0x06;
+	soc_pci_write_config(bus, devfn, 0x4, 2, bm);
+	bm = 0;
+#if NS_PCI_DEBUG
+	soc_pci_read_config(bus, devfn, 0x4, 2, &bm);
+	printk("bus master after: %08x\n", bm);
+	bm = 0;
+#endif
+
+	/* Bus 1 is the upstream port of the switch.
+	 * Bus 2 has the two downstream ports, one on each device number.
+	 */
+	if (bus->number == (bus_inc + 1)) {
+		/* Upstream port */
+		soc_pci_write_config(bus, devfn, 0x18, 4, (0x00000201 | (PCI_MAX_BUS << 16)));
+
+		/* MEM_BASE, MEM_LIM require 1MB alignment */
+		BUG_ON((port->owin_res->start >> 16) & 0xf);
+		soc_pci_write_config(bus, devfn, PCI_MEMORY_BASE, 2,
+			port->owin_res->start >> 16);
+		BUG_ON(((port->owin_res->start + SZ_32M) >> 16) & 0xf);
+		soc_pci_write_config(bus, devfn, PCI_MEMORY_LIMIT, 2,
+			(port->owin_res->start + SZ_32M) >> 16);
+
+		printk("bm = %04x\n devfn = = %08x, bus = %08x\n", bm, devfn, bus->number);
+	} else if (bus->number == (bus_inc + 2)) {
+		/* Downstream ports */
+		if (devfn == 0x18) {
+			soc_pci_write_config(bus, devfn, 0x18, 4,
+				(0x00000000 | ((bus->number + 1) << 16) |
+				((bus->number + 1) << 8) | bus->number));
+			BUG_ON((port->owin_res->start + SZ_48M >> 16) & 0xf);
+			soc_pci_write_config(bus, devfn, PCI_MEMORY_BASE, 2,
+				port->owin_res->start + SZ_48M >> 16);
+			BUG_ON(((port->owin_res->start + SZ_48M + SZ_32M) >> 16) & 0xf);
+			soc_pci_write_config(bus, devfn, PCI_MEMORY_LIMIT, 2,
+				(port->owin_res->start + SZ_48M + SZ_32M) >> 16);
+
+			soc_pci_read_config(bus, devfn, 0x92, 2, &bm);
+			if (bm & PCI_EXP_LNKSTA_DLLLA)
+				port->port1active = 1;
+
+			printk("bm = %04x\n devfn = = %08x, bus = %08x\n", bm, devfn, bus->number);
+		} else if (devfn == 0x38) {
+			soc_pci_write_config(bus, devfn, 0x18, 4,
+				(0x00000000 | ((bus->number + 2) << 16) |
+				((bus->number + 2) << 8) | bus->number));
+			BUG_ON((port->owin_res->start + (SZ_48M * 2) >> 16) & 0xf);
+			soc_pci_write_config(bus, devfn, PCI_MEMORY_BASE, 2,
+				port->owin_res->start  + (SZ_48M * 2) >> 16);
+			BUG_ON(((port->owin_res->start + (SZ_48M * 2) + SZ_32M) >> 16) & 0xf);
+			soc_pci_write_config(bus, devfn, PCI_MEMORY_LIMIT, 2,
+				(port->owin_res->start + (SZ_48M * 2) + SZ_32M) >> 16);
+
+			soc_pci_read_config(bus, devfn, 0x92, 2, &bm);
+			if (bm & PCI_EXP_LNKSTA_DLLLA)
+				port->port2active = 1;
+
+			printk("bm = %04x\n devfn = = %08x, bus = %08x\n", bm, devfn, bus->number);
+		}
+	}
+}
+
 static int soc_pci_read_config(struct pci_bus *bus, unsigned int devfn,
 	int where, int size, u32 *val)
 {
@@ -499,7 +581,12 @@ static int soc_pci_read_config(struct pci_bus *bus, unsigned int devfn,
 
 	if (port->isswitch == 1) {
 		if (bus->number == (bus_inc + 2)) {
-			if (!((devfn == 0x8) || (devfn == 0x10))) {
+			if (port->switch_id == PLX_SWITCH_ID &&
+			    !((devfn == 0x8) || (devfn == 0x10))) {
+				*val = ~0UL;
+				return PCIBIOS_SUCCESSFUL;
+			} else if (port->switch_id == ASMEDIA_SWITCH_ID &&
+				!((devfn == 0x18) || (devfn == 0x38))) {
 				*val = ~0UL;
 				return PCIBIOS_SUCCESSFUL;
 			}
@@ -539,13 +626,23 @@ static int soc_pci_read_config(struct pci_bus *bus, unsigned int devfn,
 	}
 
 	if ((bus->number == (bus_inc + 1)) && (port->isswitch == 0) &&
-		(where == 0) && (((data_reg >> 16) & 0x0000FFFF) == 0x00008603)) {
+		(where == 0) && (((data_reg >> 16) & 0xFFFF) == PLX_SWITCH_ID)) {
 		plx_pcie_switch_init(bus, devfn);
+		port->switch_id = PLX_SWITCH_ID;
+		port->isswitch = 1;
+	} else if ((bus->number == (bus_inc + 1)) && (port->isswitch == 0) &&
+		(where == 0) && (((data_reg >> 16) & 0xFFFF) == ASMEDIA_SWITCH_ID)) {
+		asmedia_pcie_switch_init(bus, devfn);
+		port->switch_id = ASMEDIA_SWITCH_ID;
 		port->isswitch = 1;
 	}
 	if ((bus->number == (bus_inc + 2)) && (port->isswitch == 1) &&
-		(where == 0) && (((data_reg >> 16) & 0x0000FFFF) == 0x00008603))
+		(where == 0) && (((data_reg >> 16) & 0xFFFF) == PLX_SWITCH_ID)) {
 		plx_pcie_switch_init(bus, devfn);
+	} else if ((bus->number == (bus_inc + 2)) && (port->isswitch == 1) &&
+		(where == 0) && (((data_reg >> 16) & 0xFFFF) == ASMEDIA_SWITCH_ID)) {
+		asmedia_pcie_switch_init(bus, devfn);
+	}
 
 	/* HEADER_TYPE=00 indicates the port in EP mode */
 
@@ -572,8 +669,12 @@ static int soc_pci_write_config(struct pci_bus *bus, unsigned int devfn,
 		return PCIBIOS_SUCCESSFUL;
 
 	if ((bus->number == (bus_inc + 2)) && (port->isswitch == 1)) {
-		if (!((devfn == 0x8) || (devfn == 0x10)))
+		if (port->switch_id == PLX_SWITCH_ID && !((devfn == 0x8) || (devfn == 0x10))) {
 			return PCIBIOS_SUCCESSFUL;
+		} else if (port->switch_id == ASMEDIA_SWITCH_ID &&
+			!((devfn == 0x18) || (devfn == 0x38))) {
+			return PCIBIOS_SUCCESSFUL;
+		}
 	}
 	else if ((bus->number == (bus_inc + 3)) && (port->isswitch == 1)) {
 		if (devfn != 0)

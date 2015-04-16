@@ -113,6 +113,10 @@ typedef unsigned long long u64;
 #include "bwdpi_sqlite.h"
 #endif
 
+#ifdef RTCONFIG_TRAFFIC_CONTROL
+#include "traffic_control.h"
+#endif
+
 #ifdef RTCONFIG_HTTPS
 extern int do_ssl;
 extern int ssl_stream_fd;
@@ -9756,6 +9760,7 @@ int ej_webdavInfo(int eid, webs_t wp, int argc, char **argv) {
 
 // 2010.09 James. {
 int start_autodet(int eid, webs_t wp, int argc, char **argv) {
+	nvram_set("autodet_state", "");
 	notify_rc_after_period_wait("start_autodet", 0);
 	return 0;
 }
@@ -10676,6 +10681,23 @@ ej_bwdpi_wanStat(int eid, webs_t wp, int argc, char_t **argv)
 }
 #endif
 
+#ifdef RTCONFIG_TRAFFIC_CONTROL
+static int
+ej_traffic_control_wanStat(int eid, webs_t wp, int argc, char_t **argv)
+{
+	char *ifname, *start, *end;
+	int retval = 0;
+	
+	ifname = websGetVar(wp, "ifname", "");
+	start = websGetVar(wp, "start", "");
+	end = websGetVar(wp, "end", "");
+
+	traffic_control_hook(ifname, start, end, &retval, wp);
+	
+	return retval;
+}
+#endif
+
 static int
 ej_wl_nband_info(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -11003,6 +11025,9 @@ struct ej_handler ej_handlers[] = {
 	{ "bwdpi_redirect_info", ej_bwdpi_redirect_page_status},
 	{ "bwdpi_appStat", ej_bwdpi_appStat},
 	{ "bwdpi_wanStat", ej_bwdpi_wanStat},
+#endif
+#ifdef RTCONFIG_TRAFFIC_CONTROL
+	{ "traffic_control_wanStat", ej_traffic_control_wanStat},
 #endif
 	{ "wl_nband_info", ej_wl_nband_info},
 #ifdef RTCONFIG_GEOIP

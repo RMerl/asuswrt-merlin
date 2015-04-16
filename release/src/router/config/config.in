@@ -57,6 +57,10 @@ config RTCONFIG_ROMCFE
 	bool "fw include cfe"
 	default n
 
+config RTCONFIG_ROMATECCODEFIX
+	bool "fix ccode error"
+	default n
+
 config RTCONFIG_NV128
 	bool "nvram size 128k"
 	default n
@@ -836,7 +840,11 @@ config RTCONFIG_BWDPI
 
 config RTCONFIG_ADBLOCK
 	bool "Streaming and Pop-Up window Ad Blocking "
-	default n		
+	default n
+
+config RTCONFIG_TRAFFIC_CONTROL
+	bool "Traffic control for alert limited traffic"
+	default n
 	
 config RTCONFIG_SPEEDTEST
 	bool "BRCM Speedtest for detect upload / downlad bandwidth "

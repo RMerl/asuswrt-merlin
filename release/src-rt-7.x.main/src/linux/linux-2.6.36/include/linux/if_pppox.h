@@ -158,34 +158,25 @@ static inline struct pppoe_hdr *pppoe_hdr(const struct sk_buff *skb)
 }
 
 struct pppoe_opt {
-	struct net_device      *dev;	  /* device associated with socket*/
+	struct net_device	*dev;	  /* device associated with socket*/
 	int			ifindex;  /* ifindex of device associated with socket */
 	struct pppoe_addr	pa;	  /* what this socket is bound to*/
 	struct sockaddr_pppox	relay;	  /* what socket data will be
 					     relayed to (PPPoE relaying) */
 };
 
-#include <net/sock.h>
-
 struct pptp_opt {
-       struct pptp_addr        src_addr;
-       struct pptp_addr        dst_addr;
-       int timeout;
-       int window;
-       __u32 ack_sent, ack_recv;
-       __u32 seq_sent, seq_recv;
-       int ppp_flags;
-       int flags;
-       int pause:1;
-       int proc:1;
-       spinlock_t skb_buf_lock;
-       struct sk_buff_head skb_buf;
-       struct delayed_work buf_work; //check bufferd packets work
-       struct gre_statistics *stat;
-	wait_queue_head_t	wait;
-	spinlock_t xmit_lock;
-	spinlock_t rcv_lock;
+	struct pptp_addr	src_addr;
+	struct pptp_addr	dst_addr;
+	__u32 ack_sent, ack_recv;
+	__u32 seq_sent, seq_recv;
+	int ppp_flags;
 };
+
+#define PPTP_FLAG_PAUSE 0
+#define PPTP_FLAG_PROC 1
+
+#include <net/sock.h>
 
 struct pppox_sock {
 	/* struct sock must be the first member of pppox_sock */

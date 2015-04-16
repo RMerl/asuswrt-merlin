@@ -19,7 +19,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlioctl.h 479485 2014-05-21 08:56:48Z $
+ * $Id: wlioctl.h 499158 2014-08-27 21:20:39Z $
  */
 
 #ifndef _wlioctl_h_
@@ -5736,10 +5736,11 @@ typedef struct statreq {
 } statreq_t;
 
 #define WL_RRM_RPT_VER		0
-#define WL_RRM_RPT_MAX_PAYLOAD	64
+#define WL_RRM_RPT_MAX_PAYLOAD	256
 #define WL_RRM_RPT_MIN_PAYLOAD	7
 #define WL_RRM_RPT_FALG_ERR	0
-#define WL_RRM_RPT_FALG_OK	1
+#define WL_RRM_RPT_FALG_GRP_ID_PROPR	(1 << 0)
+#define WL_RRM_RPT_FALG_GRP_ID_0	(1 << 1)
 typedef struct {
 	uint16 ver;		/* version */
 	struct ether_addr addr;	/* STA MAC addr */

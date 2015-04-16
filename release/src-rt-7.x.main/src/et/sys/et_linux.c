@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et_linux.c 488475 2014-07-01 05:47:28Z $
+ * $Id: et_linux.c 499431 2014-08-28 19:05:17Z $
  */
 
 #include <et_cfg.h>
@@ -435,10 +435,11 @@ is_pkt_chainable(et_info_t *et, void * pkt, void *pkthdr, uint8 prio,
 {
 	struct ether_header *eh = (struct ether_header *)pkthdr;
 
-	if (!eacmp(eh->ether_dhost, cd->h_da) &&
+	/* RXHFLAGS is tested in the etcgmac during chip rx quota, already */
+	if ((!ETHER_ISNULLDEST(eh->ether_dhost)) &&
+	    !eacmp(eh->ether_dhost, cd->h_da) &&
 	    !eacmp(eh->ether_shost, cd->h_sa) &&
-	    (prio == cd->h_prio) &&
-	    (!ETHER_ISNULLDEST(eh->ether_dhost))) {
+	    (prio == cd->h_prio)) {
 
 		if (dev_ntkif) { /* NTKIF: Lookup hot bridge cache */
 
@@ -477,7 +478,8 @@ is_pkt_chainable(et_info_t *et, void * pkt, void * pkthdr, uint8 prio,
 {
 	struct ethervlan_header *evh = (struct ethervlan_header *)pkthdr;
 
-	if (!eacmp(evh->ether_dhost, cd->h_da) &&
+	if ((!ETHER_ISNULLDEST(evh->ether_dhost)) &&
+	    !eacmp(evh->ether_dhost, cd->h_da) &&
 	    !eacmp(evh->ether_shost, cd->h_sa) &&
 	    et->brc_hot &&
 	    CTF_HOTBRC_CMP(et->brc_hot, evh, (void *)et->dev) &&
@@ -485,10 +487,7 @@ is_pkt_chainable(et_info_t *et, void * pkt, void * pkthdr, uint8 prio,
 	    (evh->vlan_type == HTON16(ETHER_TYPE_8021Q)) &&
 	    ((evh->ether_type == HTON16(ETHER_TYPE_IP)) ||
 	     (evh->ether_type == HTON16(ETHER_TYPE_IPV6))) &&
-#if !defined(BCM_GMAC3)
-	    (!RXH_FLAGS(et->etc, PKTDATA(et->osh, pkt))) &&
-#endif /* BCM_GMAC3 */
-	    (!ETHER_ISNULLDEST(evh->ether_dhost))) {
+	    (!RXH_FLAGS(et->etc, PKTDATA(et->osh, pkt)))) {
 
 		return TRUE;
 	}
@@ -3007,8 +3006,8 @@ et_ctf_forward(et_info_t *et, struct sk_buff *skb)
 #endif /* HNDCTF */
 
 #ifdef CONFIG_IP_NF_DNSMQ
-        if(dnsmq_hit_hook&&dnsmq_hit_hook(skb))
-                return (BCME_ERROR);
+	if(dnsmq_hit_hook&&dnsmq_hit_hook(skb))
+		return (BCME_ERROR);
 #endif
 
 #ifdef HNDCTF

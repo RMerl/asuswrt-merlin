@@ -2256,7 +2256,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "lan_sbstate_t", "0" },	// record substate for each wan state
 	{ "lan_auxstate_t", "0" },	// whcih is mtainted by wanduck
 
-	{ "autodet_state", "0"},
+	{ "autodet_state", ""},
 	{ "autodet_auxstate", "0"},
 	{ "invoke_later", "0"},
 
@@ -2794,7 +2794,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:rxgains5gelnagaina0", "2", 0 },
 	{ "0:rxgains5gtrisoa0", "5", 0 },
 	{ "0:rxgains5gtrelnabypa0", "1", 0 },
-	{ "0:maxp5ga0", "94,90,90,106", 0 },
+	{ "0:maxp5ga0", "94,94,90,90", 0 },
 	{ "0:rxgains5gmelnagaina1", "2", 0 },
 	{ "0:rxgains5gmtrisoa1", "5", 0 },
 	{ "0:rxgains5gmtrelnabypa1", "1", 0 },
@@ -2804,7 +2804,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:rxgains5gelnagaina1", "2", 0 },
 	{ "0:rxgains5gtrisoa1", "5", 0 },
 	{ "0:rxgains5gtrelnabypa1", "1", 0 },
-	{ "0:maxp5ga1", "94,90,90,106", 0 },
+	{ "0:maxp5ga1", "94,94,90,90", 0 },
 	{ "0:rxgains5gmelnagaina2", "2", 0 },
 	{ "0:rxgains5gmtrisoa2", "5", 0 },
 	{ "0:rxgains5gmtrelnabypa2", "1", 0 },
@@ -2814,7 +2814,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:rxgains5gelnagaina2", "2", 0 },
 	{ "0:rxgains5gtrisoa2", "5", 0 },
 	{ "0:rxgains5gtrelnabypa2", "1", 0 },
-	{ "0:maxp5ga2", "94,90,90,106", 0 },
+	{ "0:maxp5ga2", "94,94,90,90", 0 },
 	{ "0:ledbh10", "7", 0 },
 	{ "devpath2", "pcie/2/1", 0 },
 	{ "2:devpath2", "sb/1/", 0 },
@@ -2874,7 +2874,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "2:rxgains5gelnagaina0", "2", 0 },
 	{ "2:rxgains5gtrisoa0", "5", 0 },
 	{ "2:rxgains5gtrelnabypa0", "1", 0 },
-	{ "2:maxp5ga0", "90,90,90,106", 0 },
+	{ "2:maxp5ga0", "90,90,106,106", 0 },
 	{ "2:rxgains5gmelnagaina1", "2", 0 },
 	{ "2:rxgains5gmtrisoa1", "5", 0 },
 	{ "2:rxgains5gmtrelnabypa1", "1", 0 },
@@ -2884,7 +2884,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "2:rxgains5gelnagaina1", "2", 0 },
 	{ "2:rxgains5gtrisoa1", "5", 0 },
 	{ "2:rxgains5gtrelnabypa1", "1", 0 },
-	{ "2:maxp5ga1", "90,90,90,106", 0 },
+	{ "2:maxp5ga1", "90,90,106,106", 0 },
 	{ "2:rxgains5gmelnagaina2", "2", 0 },
 	{ "2:rxgains5gmtrisoa2", "5", 0 },
 	{ "2:rxgains5gmtrelnabypa2", "1", 0 },
@@ -2894,7 +2894,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "2:rxgains5gelnagaina2", "2", 0 },
 	{ "2:rxgains5gtrisoa2", "5", 0 },
 	{ "2:rxgains5gtrelnabypa2", "1", 0 },
-	{ "2:maxp5ga2", "90,90,90,106", 0 },
+	{ "2:maxp5ga2", "90,90,106,106", 0 },
 	{ "2:ledbh10", "7", 0 },
 	{ 0, 0, 0 }
 };

@@ -201,8 +201,8 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
-obj-$(RTCONFIG_DHDAP) += pciefd dhd
-obj-$(RTCONFIG_DHDAP) += dhd
+#obj-$(RTCONFIG_DHDAP) += pciefd dhd
+#obj-$(RTCONFIG_DHDAP) += dhd
 obj-y += busybox
 obj-y += shared
 obj-y += nvram$(BCMEX)
@@ -272,6 +272,7 @@ obj-$(RTCONFIG_BWDPI) += sqlite
 obj-$(RTCONFIG_BWDPI) += bwdpi_sqlite
 #obj-$(RTCONFIG_SPEEDTEST) += curl-7.21.7
 obj-y += curl-7.21.7
+obj-$(RTCONFIG_TRAFFIC_CONTROL) += traffic_control
 
 ifeq ($(RTCONFIG_BWDPI),y)
 export DPI := _dpi
@@ -1068,6 +1069,9 @@ endif
 
 ifeq ($(RTCONFIG_ROMCFE),y)
 	-cp $(SRCBASE)/cfe/cfe_`echo $(BUILD_NAME)|tr A-Z a-z`.bin $(TARGETDIR)/rom/cfe
+endif
+ifeq ($(RTCONFIG_ROMATECCODEFIX),y)
+	-cp $(SRCBASE)/router/rom/cfe/`echo $(BUILD_NAME)|tr A-Z a-z`_fixlist.txt $(TARGETDIR)/rom/mac_chklist.txt
 endif
 ifeq ($(RTCONFIG_QTN),y)
 	# install qtn boot-code and firmware
@@ -3750,6 +3754,14 @@ bwdpi_sqlite-clean:
 	cd bwdpi_sqlite && $(MAKE) clean
 
 bwdpi_sqlite-install: bwdpi_sqlite
+
+traffic_control:
+	cd traffic_control && CC=$(CC) && $(MAKE)
+
+traffic_control-clean:
+	cd traffic_control && $(MAKE) clean
+
+traffic_control-install: traffic_control
 
 NORTON_DIR := $(SRCBASE)/router/norton${BCMEX}
 

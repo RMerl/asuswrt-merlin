@@ -254,9 +254,12 @@ endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
 OBJS += bwdpi.o
-OBJS += bwdpi_monitor.o
 OBJS += bwdpi_check.o
 OBJS += bwdpi_wred_alive.o
+endif
+
+ifeq ($(or $(RTCONFIG_BWDPI),$(RTCONFIG_TRAFFIC_CONTROL)),y)
+OBJS += hour_monitor.o
 endif
 
 ifeq ($(RTCONFIG_IPERF),y)
@@ -469,9 +472,11 @@ endif
 ifeq ($(RTCONFIG_BWDPI),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rsasign_sig_check
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi
-	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_monitor
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_check
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_wred_alive
+endif
+ifeq ($(or $(RTCONFIG_BWDPI),$(RTCONFIG_TRAFFIC_CONTROL)),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc hour_monitor
 endif
 ifeq ($(RTCONFIG_SPEEDTEST),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc speedtest

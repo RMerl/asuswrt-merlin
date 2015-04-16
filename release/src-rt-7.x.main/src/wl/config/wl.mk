@@ -891,15 +891,6 @@ ifneq ($(LCNCONF),)
 	WLFLAGS += -DLCNCONF=$(LCNCONF)
 endif
 
-#ifdef WLAWDL
-ifeq ($(WLAWDL),1)
-	WLMCNX := 1
-	WLAMPDU := 1
-	AP := 1
-	WLFLAGS += -DWLAWDL -DWIFI_ACT_FRAME -DIBSS_PEER_GROUP_KEY
-	WLFILES_SRC += src/wl/sys/wlc_awdl.c
-endif
-#endif /* WLAWDL */
 
 #ifdef SOFTAP
 ifeq ($(SOFTAP),1)

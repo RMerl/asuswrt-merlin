@@ -317,12 +317,6 @@ extern const char *bcmevent_get_name(uint event_type);
  * WLC_E_P2P_PROBREQ_MSG
  * WLC_E_ACTION_FRAME_RX
  */
-#ifdef WLAWDL
-#define WLC_E_AWDL_SCAN_START		1	/* Scan start indication to host */
-#define WLC_E_AWDL_SCAN_DONE		0	/* Scan Done indication to host */
-
-
-#endif
 typedef BWL_PRE_PACKED_STRUCT struct wl_event_rx_frame_data {
 	uint16	version;
 	uint16	channel;	/* Matches chanspec_t format from bcmwifi_channels.h */
@@ -380,22 +374,6 @@ typedef struct wl_event_data_rssi {
 #define WLC_E_TDLS_PEER_CONNECTED		1
 #define WLC_E_TDLS_PEER_DISCONNECTED	2
 
-#ifdef WLAWDL
-/* WLC_E_AWDL_EVENT subtypes */
-#define WLC_E_AWDL_SCAN_STATUS	0
-#define WLC_E_AWDL_RX_ACT_FRAME	1
-#define WLC_E_AWDL_RX_PRB_RESP	2
-#define WLC_E_AWDL_PHYCAL_STATUS	3
-#define WLC_E_AWDL_WOWL_NULLPKT	4
-#define WLC_E_AWDL_OOB_AF_STATUS	5
-#define WLC_E_AWDL_RANGING_RESULTS	6
-
-/* WLC_E_AWDL_SCAN_STATUS status values */
-#define WLC_E_AWDL_SCAN_START		1	/* Scan start indication to host */
-#define WLC_E_AWDL_SCAN_DONE		0	/* Scan Done indication to host */
-#define WLC_E_AWDL_PHYCAL_START		1	/* Phy calibration start indication to host */
-#define WLC_E_AWDL_PHYCAL_DONE		0	/* Phy calibration done indication to host */
-#endif
 
 /* GAS event data */
 typedef BWL_PRE_PACKED_STRUCT struct wl_event_gas {

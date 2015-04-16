@@ -1175,6 +1175,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_ADBLOCK/d" $(1); \
 		echo "RTCONFIG_ADBLOCK=y" >>$(1); \
 	fi; \
+	if [ "$(TRAFFIC_CONTROL)" = "y" ]; then \
+		sed -i "/RTCONFIG_TRAFFIC_CONTROL/d" $(1); \
+		echo "RTCONFIG_TRAFFIC_CONTROL=y" >>$(1); \
+	fi; \
 	if [ "$(SPEEDTEST)" = "y" ]; then \
 		sed -i "/RTCONFIG_SPEEDTEST/d" $(1); \
 		echo "RTCONFIG_SPEEDTEST=y" >>$(1); \

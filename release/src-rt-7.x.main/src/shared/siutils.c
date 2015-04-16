@@ -7143,26 +7143,6 @@ si_pmu_res_req_timer_clr(si_t *sih)
 	return pmu_corereg(sih, SI_CC_IDX, res_req_timer, 0, 0);
 }
 
-#if defined(WLAWDL) && defined(MACOSX)
-/* get pmutimer */
-uint32
-si_pmu_pmutimer(si_t *sih)
-{
-	switch (CHIPID(sih->chip)) {
-		case BCM4331_CHIP_ID:
-		case BCM4352_CHIP_ID:
-		case BCM4360_CHIP_ID:
-		case BCM43224_CHIP_ID:
-		case BCM43602_CHIP_ID:
-		case BCM43462_CHIP_ID:
-			return pmu_corereg(sih, SI_CC_IDX, pmutimer, 0, 0);
-		default:
-			ASSERT(0);
-			return 0;
-			break;
-	}
-}
-#endif /* defined(WLAWDL) && defined(MACOSX) */
 
 /** turn on/off rfldo */
 void

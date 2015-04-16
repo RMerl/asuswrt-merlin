@@ -1,7 +1,7 @@
 /*
  * BCM43XX Sonics SiliconBackplane ARM core routines
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,42 @@
 #include <armca9_core.h>
 #include <ddr_core.h>
 
-#define	NO_DDRCLK_LIMIT	1
+#define PLL_SUP_4708 0x00000001
+#define PLL_SUP_4709 0x00000002
+#define PLL_SUP_DDR2 0x00000001
+#define PLL_SUP_DDR3 0x00000002
+
+struct arm_pll {
+	uint32 clk;
+	uint32 reg_val;
+	uint32 flag;
+};
+
+struct ddr_clk {
+	uint32 clk;
+	uint32 pll_ctrl_1;
+	uint32 pll_ctrl_2;
+	uint32 type_flag;
+	uint32 flag;
+};
+
+static struct arm_pll arm_pll_table[] = {
+	{ 600,	0x1003001, PLL_SUP_4708 | PLL_SUP_4709},
+	{ 800,	0x1004001, PLL_SUP_4708 | PLL_SUP_4709},
+	{ 1000, 0x1005001, PLL_SUP_4709},
+	{0}
+};
+
+static struct ddr_clk ddr_clock_pll_table[] = {
+	{ 333, 0x17800000, 0x1e0f1219, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_4708 | PLL_SUP_4709},
+	{ 389, 0x18c00000, 0x23121219, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_4708 | PLL_SUP_4709},
+	{ 400, 0x18000000, 0x20101019, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_4708 | PLL_SUP_4709},
+	{ 533, 0x18000000, 0x20100c19, PLL_SUP_DDR3, PLL_SUP_4708 | PLL_SUP_4709},
+	{ 666, 0x17800000, 0x1e0f0919, PLL_SUP_DDR3, PLL_SUP_4709},
+	{ 775, 0x17c00000, 0x20100819, PLL_SUP_DDR3, PLL_SUP_4709},
+	{ 800, 0x18000000, 0x20100819, PLL_SUP_DDR3, PLL_SUP_4709},
+	{0}
+};
 
 uint
 BCMINITFN(si_irq)(si_t *sih)
@@ -77,17 +112,6 @@ BCMINITFN(si_mem_clock)(si_t *sih)
 	uint idx;
 	chipcommonbregs_t *chipcb;
 	uint32 control1, control2, val;
-	static uint32 BCMINITDATA(pll_table)[][3] = {
-		/* DDR clock, PLLCONTROL1, PLLCONTROL2 */
-		{ 333,  0x17800000,     0x1e0f1219 },
-		{ 389,  0x18c00000,     0x23121219 },
-		{ 400,  0x18000000,     0x20101019 },
-		{ 533,  0x18000000,     0x20100c19 },
-		{ 666,  0x17800000,     0x1e0f0919 },
-		{ 775,  0x17c00000,     0x20100819 },
-		{ 800,  0x18000000,     0x20100819 },
-		{0}
-	};
 
 	osh = si_osh(sih);
 
@@ -96,10 +120,10 @@ BCMINITFN(si_mem_clock)(si_t *sih)
 		if (chipcb) {
 			control1 = R_REG(osh, &chipcb->cru_lcpll_control1);
 			control2 = R_REG(osh, &chipcb->cru_lcpll_control2);
-			for (idx = 0; pll_table[idx][0] != 0; idx++) {
-				if ((control1 == pll_table[idx][1]) &&
-				    (control2 == pll_table[idx][2])) {
-					val = pll_table[idx][0];
+			for (idx = 0; ddr_clock_pll_table[idx].clk != 0; idx++) {
+				if ((control1 == ddr_clock_pll_table[idx].pll_ctrl_1) &&
+				    (control2 == ddr_clock_pll_table[idx].pll_ctrl_2)) {
+					val = ddr_clock_pll_table[idx].clk;
 					return (val * 1000000);
 				}
 			}
@@ -118,53 +142,48 @@ BCMINITFN(si_arm_setclock)(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 a
 	bool ret = TRUE;
 	int idx;
 	int bootdev;
-#ifdef NO_DDRCLK_LIMIT
 	uint32 *ddrclk;
-#else
-	uint32 *ddrclk, ddrclk_limit = 0;
-#endif
-	static uint32 BCMINITDATA(arm_pll_table)[][2] = {
-		{ 600,	0x1003001 },
-		{ 800,	0x1004001 },
-		{ 1000,	0x1005001 },
-		{ 1200,	0x1006001 },
-		{ 1400,	0x1007001 },
-		{ 1600,	0x1008001 },
-		{0}
-	};
-	static uint32 BCMINITDATA(ddr_clock_table)[] = {
-		333, 389, 400, 533, 666, 775, 800, 0
-	};
-
 	osh = si_osh(sih);
 
 	if (BCM4707_CHIP(CHIPID(sih->chip))) {
+		uint32 platform_flag = 0, ddr_flag = 0;
+		void *regs = (void *)si_setcore(sih, NS_DDR23_CORE_ID, 0);
+		if (regs) {
+			ddr_flag = ((si_core_sflags(sih, 0, 0) & DDR_TYPE_MASK)
+				== DDR_STAT_DDR3)? PLL_SUP_DDR3 : PLL_SUP_DDR2;
+		}
+		switch (sih->chippkg) {
+			case BCM4708_PKG_ID:
+				platform_flag = PLL_SUP_4708;
+				break;
+			case BCM4709_PKG_ID:
+				platform_flag = PLL_SUP_4709;
+				break;
+		}
+
+		/* Check CPU CLK table */
+		for (idx = 0; arm_pll_table[idx].clk != 0; idx++) {
+			if ((arm_pll_table[idx].flag & platform_flag) == 0)
+				arm_pll_table[idx].clk = 0;
+		}
+
+		/* Check DDR CLK table */
+		for (idx = 0; ddr_clock_pll_table[idx].clk != 0; idx++) {
+			if ((ddr_clock_pll_table[idx].type_flag & ddr_flag) == 0 ||
+			    (ddr_clock_pll_table[idx].flag & platform_flag) == 0) {
+				ddr_clock_pll_table[idx].clk = 0;
+				break;
+			}
+		}
+
 		/* Check DDR clock */
 		if (ddrclock && si_mem_clock(sih) != ddrclock) {
 			ddrclock /= 1000000;
-			for (idx = 0; ddr_clock_table[idx] != 0; idx ++) {
-				if (ddrclock == ddr_clock_table[idx])
+			for (idx = 0; ddr_clock_pll_table[idx].clk != 0; idx ++) {
+				if (ddrclock == ddr_clock_pll_table[idx].clk)
 					break;
 			}
-#ifdef NO_DDRCLK_LIMIT
-			if (ddr_clock_table[idx] != 0) {
-#else
-			if (CHIPID(sih->chip) == BCM4707_CHIP_ID &&
-				sih->chippkg != BCM4709_PKG_ID) {
-				void *regs = (void *)si_setcore(sih, NS_DDR23_CORE_ID, 0);
-				int ddrtype_ddr3 = 0;
-				if (regs) {
-					ddrtype_ddr3 = ((si_core_sflags(sih, 0, 0) & DDR_TYPE_MASK)
-						== DDR_STAT_DDR3);
-				}
-				if (ddrtype_ddr3)
-					ddrclk_limit = 533;
-				else
-					ddrclk_limit = 400;
-			}
-			if (ddr_clock_table[idx] != 0 &&
-				(ddrclk_limit == 0 || ddrclock <= ddrclk_limit)) {
-#endif
+			if (ddr_clock_pll_table[idx].clk != 0) {
 				ddrclk = (uint32 *)(0x1000 + BISZ_OFFSET - 4);
 				*ddrclk = ddrclock;
 				bootdev = soc_boot_dev((void *)sih);
@@ -183,15 +202,15 @@ BCMINITFN(si_arm_setclock)(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 a
 		W_REG(osh, (uint32 *)IHOST_PROC_CLK_WR_ACCESS, 0xa5a501);
 
 		/* ndiv_int */
-		for (idx = 0; arm_pll_table[idx][0] != 0; idx++) {
-			if (armclock <= arm_pll_table[idx][0])
+		for (idx = 0; arm_pll_table[idx].clk != 0; idx++) {
+			if (armclock <= arm_pll_table[idx].clk)
 				break;
 		}
-		if (arm_pll_table[idx][0] == 0) {
+		if (arm_pll_table[idx].clk == 0) {
 			ret = FALSE;
 			goto done;
 		}
-		val = arm_pll_table[idx][1];
+		val = arm_pll_table[idx].reg_val;
 		W_REG(osh, (uint32 *)IHOST_PROC_CLK_PLLARMA, val);
 
 		do {
@@ -231,23 +250,12 @@ void si_mem_setclock(si_t *sih, uint32 ddrclock)
 	chipcommonbregs_t *chipcb;
 	uint32 val;
 	int idx;
-	static uint32 BCMINITDATA(pll_table)[][3] = {
-		/* DDR clock, PLLCONTROL1, PLLCONTROL2 */
-		{ 333,  0x17800000,     0x1e0f1219 },
-		{ 389,  0x18c00000,     0x23121219 },
-		{ 400,  0x18000000,     0x20101019 },
-		{ 533,  0x18000000,     0x20100c19 },
-		{ 666,  0x17800000,     0x1e0f0919 },
-		{ 775,  0x17c00000,     0x20100819 },
-		{ 800,  0x18000000,     0x20100819 },
-		{0}
-	};
 
-	for (idx = 0; pll_table[idx][0] != 0; idx++) {
-		if (pll_table[idx][0] == ddrclock)
+	for (idx = 0; ddr_clock_pll_table[idx].clk != 0; idx++) {
+		if (ddr_clock_pll_table[idx].clk == ddrclock)
 			break;
 	}
-	if (pll_table[idx][0] == 0)
+	if (ddr_clock_pll_table[idx].clk == 0)
 		return;
 
 	osh = si_osh(sih);
@@ -257,12 +265,12 @@ void si_mem_setclock(si_t *sih, uint32 ddrclock)
 		W_REG(osh, &chipcb->cru_clkset_key, val);
 		val = R_REG(osh, &chipcb->cru_lcpll_control1);
 		val &= ~0x0ff00000;
-		val |= (pll_table[idx][1] & 0x0ff00000);
+		val |= (ddr_clock_pll_table[idx].pll_ctrl_1 & 0x0ff00000);
 		W_REG(osh, &chipcb->cru_lcpll_control1, val);
 
 		val = R_REG(osh, &chipcb->cru_lcpll_control2);
 		val &= ~0xffffff00;
-		val |= (pll_table[idx][2] & 0xffffff00);
+		val |= (ddr_clock_pll_table[idx].pll_ctrl_2 & 0xffffff00);
 		W_REG(osh, &chipcb->cru_lcpll_control2, val);
 		/* Enable change */
 		val = R_REG(osh, &chipcb->cru_lcpll_control0);

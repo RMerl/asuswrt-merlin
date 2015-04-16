@@ -526,9 +526,6 @@ extern void si_pciedev_crwlpciegen2(si_t *sih);
 extern void si_pcie_prep_D3(si_t *sih, bool enter_D3);
 extern void si_pciedev_reg_pm_clk_period(si_t *sih);
 
-#if defined(WLAWDL) && defined(MACOSX)
-extern uint32 si_pmu_pmutimer(si_t *sih);
-#endif
 
 /* Macro to enable clock gating changes in different cores */
 #define MEM_CLK_GATE_BIT 	5

@@ -859,6 +859,59 @@ misc_defaults(int restore_defaults)
 	nvram_unset("ateCommand_flag");
 }
 
+static int 
+chk_ate_ccode()
+{
+        FILE *f;
+        char dbuf[18], dutmac[18];
+        char *p;
+
+	if(nvram_match("odmpid", "RT-AC56U") && nvram_match("0:ccode", "TW") && nvram_match("1:ccode", "TW") && nvram_match("0:regrev", "0") && nvram_match("1:regrev", "0")) {
+		_dprintf("chk ate ccode correct ! \n");
+		return 0;
+	}
+
+	p = nvram_safe_get("et0macaddr");
+	memcpy(dutmac, p, strlen(p));
+
+        while(p = strstr(dutmac, ":")) {
+               	memcpy(p, p+1, strlen(p+1));
+               	dutmac[strlen(dutmac)-1] = 0;
+        }
+
+        if((f = fopen("/rom/mac_chklist.txt", "r"))==NULL) return 0;
+
+        while (fgets(dbuf, sizeof(dbuf), f)) {
+		if(!strncmp(dbuf, dutmac, strlen(dutmac))) {
+			fclose(f);
+			return 1;
+		}
+	}
+
+        fclose(f);
+
+	return 0;
+}
+
+static void
+fix_ate_ccode()
+{
+	_dprintf("[%s]\n", __func__);
+
+	nvram_set("asuscfeodmpid", "RT-AC56U");
+	nvram_set("asuscfe0:ccode", "TW");
+	nvram_set("asuscfe1:ccode", "TW");
+	nvram_set("asuscfe0:regrev", "0");
+	nvram_set("asuscfe1:regrev", "0");
+	nvram_set("asuscfecommit", "1");
+
+	sleep(1);
+	eval("mtd-erase2", "nvram");
+	_dprintf("[%s] done, reset to default, then reboot...\n", __func__);
+
+	reboot(RB_AUTOBOOT);
+}
+
 /* ASUS use erase nvram to reset default only */
 static void
 restore_defaults(void)
@@ -1111,8 +1164,10 @@ restore_defaults(void)
 	/* some default state values is model deps, so handled here*/
 	switch(get_model()) {
 #ifdef RTCONFIG_BCMARM
-		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
+			if(chk_ate_ccode()) 
+				fix_ate_ccode();
+		case MODEL_RTAC56S:
 			if (After(get_blver(nvram_safe_get("bl_version")), get_blver("1.0.2.4")))	// since 1.0.2.5
 				nvram_set("reboot_time", "140");// default is 70 sec
 
@@ -4605,6 +4660,12 @@ int init_nvram(void)
 		nvram_set("wrs_mals_enable", "0");
 	if(nvram_get_int("bwdpi_coll_intl") == 0)
 		nvram_set("bwdpi_coll_intl", "1800");
+#endif
+
+#ifdef RTCONFIG_TRAFFIC_CONTROL
+	add_rc_support("traffic_control");
+	nvram_unset("traffic_control_old_tx");
+	nvram_unset("traffic_control_old_rx");
 #endif
 
 #ifdef RTCONFIG_ADBLOCK

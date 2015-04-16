@@ -83,6 +83,7 @@ MTDSIZE ?= $(LINUX_MTD)
 MTDSIZE ?= 32
 DUAL_TRX := 0
 TMO := 0
+EU := 0
 
 # HND source base
 SRCBASE := $(shell cd ../../../.. && pwd)

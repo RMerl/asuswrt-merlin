@@ -15,7 +15,7 @@
  *
  * Fundamental types and constants relating to 802.11
  *
- * $Id: 802.11.h 464633 2014-03-25 13:56:10Z $
+ * $Id: 802.11.h 499158 2014-08-27 21:20:39Z $
  */
 
 #ifndef _802_11_H_
@@ -2476,6 +2476,12 @@ typedef struct dot11_rmrep_bcn dot11_rmrep_bcn_t;
 
 /* Sub-element IDs for Frame Report */
 #define DOT11_RMREP_FRAME_COUNT_REPORT 1
+
+/* Statistics Group Report: Group IDs */
+#define DOT11_RRM_STATS_GRP_ID_0	0
+
+/* Statistics Group Report: Group Data length  */
+#define DOT11_RRM_STATS_RPT_LEN_GRP_ID_0	28
 
 /* Channel load request */
 BWL_PRE_PACKED_STRUCT struct dot11_rmreq_chanload {

@@ -3731,8 +3731,8 @@ stop_services(void)
 	stop_upnp();
 	stop_lltd();
 	stop_watchdog();
-#ifdef RTCONFIG_BWDPI
-	stop_bwdpi_monitor_service();
+#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
+	stop_hour_monitor_service();
 #endif
 #ifdef RTCONFIG_FANCTRL
 	stop_phy_tempsense();
@@ -5385,14 +5385,16 @@ check_ddr_done:
 				start_firewall(wan_primary_ifunit(), 0);
 		}
 	}
-	else if (strcmp(script, "bwdpi_monitor") == 0)
-	{
-		if(action & RC_SERVICE_STOP) stop_bwdpi_monitor_service();
-		if(action & RC_SERVICE_START) start_bwdpi_monitor_service();
-	}
 	else if (strcmp(script, "wrs_force") == 0)
 	{
 		if(action & RC_SERVICE_STOP) stop_dpi_engine_service(1);
+	}
+#endif
+#if defined(RTCONFIG_TRAFFIC_CONTROL) || defined(RTCONFIG_BWDPI)
+	else if (strcmp(script, "hour_monitor") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_hour_monitor_service();
+		if(action & RC_SERVICE_START) start_hour_monitor_service();
 	}
 #endif
 	else if (strcmp(script, "logger") == 0)
@@ -6541,6 +6543,30 @@ void start_sendmail(void)
 	);
 
 	system(tmp);
+}
+#endif
+
+#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
+void stop_hour_monitor_service()
+{
+	eval("killall", "-9", "hour_monitor");
+}
+
+void start_hour_monitor_service()
+{
+	char *cmd[] = {"hour_monitor", NULL};
+	int pid;
+
+	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER){
+		return;
+	}
+	
+	if(!pids("hour_monitor")) _eval(cmd, NULL, 0, &pid);
+}
+
+void check_hour_monitor_service()
+{
+	if(hour_monitor_function_check()) start_hour_monitor_service();
 }
 #endif
 

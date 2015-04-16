@@ -264,6 +264,9 @@ early_printk("board_init\n");
 
 	board_init_spi();
 
+	printk(KERN_NOTICE "ACP (Accelerator Coherence Port) %s\n",
+		(ACP_WAR_ENAB() || arch_is_coherent()) ? "enabled" : "disabled");
+
 	return;
 }
 

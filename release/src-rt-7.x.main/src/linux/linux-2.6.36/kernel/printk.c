@@ -170,11 +170,6 @@ void log_buf_kexec_setup(void)
 }
 #endif
 
-/*
-#define CONFIG_DUMP_PREV_OOPS_MSG 1
-#define CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR 0xC0000000
-#define	CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN 0x2000
-*/
 #ifdef CONFIG_DUMP_PREV_OOPS_MSG 
 struct oopsbuf_s {
          char sig[8];

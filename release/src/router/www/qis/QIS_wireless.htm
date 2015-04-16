@@ -17,6 +17,8 @@ if('<% nvram_get("x_Setting"); %>' == '0')
 else
 	var smart_connect_tmp = '<% nvram_get("smart_connect_x"); %>';
 
+var smart_connect_qis_support = false;
+
 var contentM_height_orig = parent.document.getElementById("contentM").height;
 var smart_connect_desc_flag = '0';
 var $j = jQuery.noConflict();
@@ -237,6 +239,9 @@ function QKWireless_load_body(){
 		if(smart_connect_support){
 			if('<% nvram_get("x_Setting"); %>' == '0')
 					document.form.smart_connect_t[0].checked = true;
+
+			if(!smart_connect_qis_support)
+					document.form.smart_connect_t[1].checked = true;
 
 			smartcon_desc_show();
 		}else
@@ -1053,7 +1058,7 @@ function smartcon_skip(){
 
 function smartcon_desc_show(){
 
-	if(smart_connect_desc_flag == '0'){
+	if(smart_connect_desc_flag == '0' && smart_connect_qis_support){
 		document.getElementById("field_general").style.display = "none";
 		document.getElementById("smart_connect_desc").style.display = "";
 		document.getElementById("btn_next_step").style.display = "none";
@@ -1068,12 +1073,15 @@ function smartcon_desc_show(){
 		document.getElementById("Continued_PrevSetting").style.display = "none";
 		document.getElementById("radio_Continued_PrevSetting").style.display = "none";
 		document.getElementById("smart_connect_table").style.display="";
+		if(!smart_connect_qis_support){
+			document.getElementById("smart_connect_select_table").style.display = "none";
+		}
 		document.getElementById("btn_next_step").style.display = "";
 		document.getElementById("smartcon_desc_button").value = "<#CTL_prev#>";	
 		document.getElementById("field_general").style.border = "0px";
 		smart_connect_desc_flag = '0';
 
-		if(document.form.smart_connect_t[0].checked)
+		if(document.form.smart_connect_t[0].checked && smart_connect_qis_support)
 			change_smart_con('1');
 		else
 			change_smart_con('0');
@@ -1530,7 +1538,7 @@ function detect_LANStatus(_flag){
 			<div id="smart_connect_image" style="background: url(/images/New_ui/smart_connect.png); width: 130px; height: 87px; margin-left:20px;"></div>
 			</td>
 			<td>			
-				<table>
+				<table id="smart_connect_select_table">
 						<td style="font-style:normal;font-size:13px;font-weight:bold;" >
 							<input type="radio" value="1" id="smart_connect_t" name="smart_connect_t" class="input" onclick="return change_smart_con(this.value)" <% nvram_match("smart_connect_x", "1", "checked"); %>><#triband_smart_connect#>
 						</td>

@@ -364,7 +364,7 @@ rescan:
 				ret, DB_VERSION);
 		sqlite3_close(db);
 
-		snprintf(cmd, sizeof(cmd), "rm -rf %s/files.db %s/art_cache", db_path, db_path);
+		snprintf(cmd, sizeof(cmd), "rm -rf %s/files.db %s/art_cache", db_path_spec, db_path_spec);
 		if (system(cmd) != 0)
 			DPRINTF(E_FATAL, L_GENERAL, "Failed to clean old file cache!  Exiting...\n");
 
@@ -528,6 +528,7 @@ init(int argc, char **argv)
 	int ifaces = 0;
 	media_types types;
 	uid_t uid = 0;
+	char *ptr, *shift;
 
 	/* first check if "-f" option is used */
 	for (i=2; i<argc; i++)
@@ -859,7 +860,14 @@ init(int argc, char **argv)
 			runtime_vars.port = -1; // triggers help display
 			break;
 		case 'R':
-			snprintf(buf, sizeof(buf), "rm -rf %s/files.db %s/art_cache", db_path, db_path);
+			memset(db_path_spec, 0, 256);
+			for(ptr = db_path, shift = db_path_spec; *ptr; ++ptr, ++shift){
+				if(strchr("()", *ptr))
+					*shift++ = '\\';
+				*shift = *ptr;
+			}
+
+			snprintf(buf, sizeof(buf), "rm -rf %s/files.db %s/art_cache", db_path_spec, db_path_spec);
 			if (system(buf) != 0)
 				DPRINTF(E_FATAL, L_GENERAL, "Failed to clean old file cache. EXITING\n");
 			break;

@@ -41,6 +41,10 @@ ifeq ($(RTCONFIG_BWDPI),y)
 CFLAGS += -I$(TOP)/bwdpi/ -I$(TOP)/sqlite -I$(TOP)/bwdpi_sqlite
 endif
 
+ifeq ($(RTCONFIG_TRAFFIC_CONTROL),y)
+CFLAGS += -I$(TOP)/traffic_control
+endif
+
 OBJS = httpd.o cgi.o ej.o 
 OBJS += web.o common.o nvram_f.o 
 OBJS += aspbw.o initial_web_hook.o
@@ -118,6 +122,10 @@ LIBS += -L$(TOP)/bwdpi -lbwdpi
 LIBS += -L$(TOP)/bwdpi_sqlite -lbwdpi_sql
 LIBS += -L$(TOP)/sqlite/.libs -lsqlite3
 LIBS += -lpthread
+endif
+
+ifeq ($(RTCONFIG_TRAFFIC_CONTROL),y)
+LIBS += -L$(TOP)/traffic_control -ltraffic_control
 endif
 
 ifeq ($(RTCONFIG_GEOIP),y)

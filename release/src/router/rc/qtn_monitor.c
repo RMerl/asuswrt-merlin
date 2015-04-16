@@ -136,30 +136,6 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 		rpc_update_wdslist();
 		rpc_update_wds_psk(nvram_safe_get("wl1_wds_psk"));
 		rpc_update_ap_isolate(WIFINAME, atoi(nvram_safe_get("wl1_ap_isolate")));
-
-		if(nvram_get_int("wl1_80211h") == 1){
-			dbG("[80211h] set_80211h_on\n");
-			qcsapi_wifi_run_script("router_command.sh", "80211h_on");
-		}else{
-			dbG("[80211h] set_80211h_off\n");
-			qcsapi_wifi_run_script("router_command.sh", "80211h_off");
-		}
-		if(nvram_get_int("sw_mode") == SW_MODE_ROUTER ||
-			(nvram_get_int("sw_mode") == SW_MODE_AP &&
-				nvram_get_int("wlc_psta") == 0)){
-			if(nvram_get_int("wl1_chanspec") == 0){
-				if (nvram_match("1:ccode", "EU")){
-					if(nvram_get_int("acs_dfs") != 1){
-						dbG("[dfs] start nodfs scanning and selection\n");
-						start_nodfs_scan_qtn();
-					}
-				}else{
-					/* all country except EU */
-					dbG("[dfs] start nodfs scanning and selection\n");
-					start_nodfs_scan_qtn();
-				}
-			}
-		}
 	}else if (unit == 1 && subunit == 1){
 		if(nvram_get_int("wl1.1_bss_enabled") == 1){
 			rpc_update_mbss("wl1.1_ssid", nvram_safe_get("wl1.1_ssid"));
@@ -244,6 +220,7 @@ qtn_monitor_main(int argc, char *argv[])
 	sigset_t sigs_to_catch;
 	int ret, retval = 0;
 	time_t start_time = uptime();
+	uint32_t p_channel;
 
 	/* write pid */
 	if ((fp = fopen("/var/run/qtn_monitor.pid", "w")) != NULL)
@@ -302,6 +279,10 @@ QTN_RESET:
 #if defined(RTCONFIG_JFFS2ND_BACKUP)
 	check_2nd_jffs();
 #endif
+
+	while (rpc_qcsapi_get_channel(&p_channel) != 0 ){
+		sleep(1);
+	}
 	nvram_set("qtn_ready", "1");
 
 	if(nvram_get_int("AllLED") == 0) setAllLedOff();
@@ -351,6 +332,14 @@ QTN_RESET:
 
 	}
 #endif
+
+	if(nvram_get_int("wl1_80211h") == 1){
+		dbG("[80211h] set_80211h_on\n");
+		qcsapi_wifi_run_script("router_command.sh", "80211h_on");
+	}else{
+		dbG("[80211h] set_80211h_off\n");
+		qcsapi_wifi_run_script("router_command.sh", "80211h_off");
+	}
 
 	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER ||
 		(nvram_get_int("sw_mode") == SW_MODE_AP &&

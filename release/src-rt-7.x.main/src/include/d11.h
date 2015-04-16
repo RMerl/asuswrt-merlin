@@ -1347,9 +1347,6 @@ BWL_PRE_PACKED_STRUCT struct d11txh {
 #define ABI_MAS_FBR_ANT_PTN_MASK	0x00f0
 #define ABI_MAS_FBR_ANT_PTN_SHIFT	4
 #define ABI_MAS_MRT_ANT_PTN_MASK	0x000f
-#ifdef WLAWDL
-#define ABI_MAS_AWDL_TS_INSERT		0x1000	/* bit 12 */
-#endif
 #define ABI_MAS_TIMBC_TSF		0x2000  /* Enable TIMBC tsf field present */
 
 /* MinMBytes */

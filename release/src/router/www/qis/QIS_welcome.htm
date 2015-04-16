@@ -172,7 +172,7 @@ function detect_if_wan_plug(flag){
 			detect_if_wan_plug();		
 		},
 		success: function(response){
-			if(autodet_state == "4"){ // ethernet did not plug
+			if(autodet_state == "4"){// ethernet did not plug
 				if(based_modelid == "4G-AC55U"){
 					if( sim_state == "-1")
 						redirect_page("unplug_ethsim");
@@ -210,6 +210,10 @@ function detect_if_wan_plug(flag){
 			}
 			else if(autodet_state == "0"){
 				detect_if_wan_plug();
+				changeiuiBackground(1);
+			}
+			else if(autodet_state == ""){
+				update_wan_info();
 				changeiuiBackground(1);
 			}
 			else

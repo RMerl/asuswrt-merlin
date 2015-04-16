@@ -911,12 +911,18 @@ extern int speedtest();
 
 #ifdef RTCONFIG_BWDPI
 extern int bwdpi_main(int argc, char **argv);
-extern int bwdpi_monitor_main(int argc, char **argv);
 extern int bwdpi_check_main(int argc, char **argv);
 extern int bwdpi_wred_alive_main(int argc, char **argv);
 extern int show_wrs_main(int argc, char **argv);
 extern int rsasign_sig_check_main(int argc, char *argv[]);
 #endif
+
+// hour_monitor.c
+#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
+extern int hour_monitor_main(int argc, char **argv);
+extern int hour_monitor_function_check();
+#endif
+
 #ifdef RT4GAC55U
 extern int lteled_main(int argc, char **argv);
 extern int start_lteled(void);

@@ -311,7 +311,7 @@ function change_qos_type(value){
 															 }
 														);
 													</script>			
-												<div id="qos_enable_hint" style="color:#FC0;margin:5px 0px 0px 100px;display:none">Enabling Adaptive QoS may take several minutes.</div>
+												<div id="qos_enable_hint" style="color:#FC0;margin:5px 0px 0px 100px;display:none"><#Adaptive_note#></div>
 											</td>
 										</tr>										
 										<tr id="upload_tr">

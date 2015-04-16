@@ -361,10 +361,12 @@ static const applets_t applets[] = {
 #endif
 #ifdef RTCONFIG_BWDPI
 	{ "bwdpi",			bwdpi_main			},
-	{ "bwdpi_monitor",		bwdpi_monitor_main		},
 	{ "bwdpi_check",		bwdpi_check_main		},
 	{ "bwdpi_wred_alive",		bwdpi_wred_alive_main		},
 	{ "rsasign_sig_check",		rsasign_sig_check_main		},
+#endif
+#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
+	{ "hour_monitor",		hour_monitor_main		},
 #endif
 #ifdef RT4GAC55U
 	{ "lteled",			lteled_main			},

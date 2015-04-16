@@ -118,7 +118,11 @@ endif
 endif
 
 ifeq ($(RTAC3200), 1)
+ifeq ($(EU), 1)
+	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac3200.bin -s 00 rt-ac3200_nvram_eu.txt
+else
 	../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-ac3200.bin -s 00 rt-ac3200_nvram.txt
+endif
 	cp cfe_rt-ac3200.bin ../../../..
 endif
 
