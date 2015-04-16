@@ -275,9 +275,9 @@ int mssl_init(char *cert, char *priv)
 
 	if (server) {
 		// Set the certificate to be used
-		_dprintf("SSL_CTX_use_certificate_file(%s)\n", cert);
-		if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0) {
-			_dprintf("SSL_CTX_use_certificate_file() failed\n");
+		_dprintf("SSL_CTX_use_certificate_chain_file(%s)\n", cert);
+		if (SSL_CTX_use_certificate_chain_file(ctx, cert) <= 0) {
+			_dprintf("SSL_CTX_use_certificate_chain_file() failed\n");
 			mssl_cleanup(1);
 			return 0;
 		}
