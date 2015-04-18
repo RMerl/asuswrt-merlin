@@ -485,9 +485,9 @@ function showclientlist(){
 			code +='<tr id="row'+i+'">';
 			var clientlist_col = clientlist_row[i].split('&#62');
 				for(var j = 0; j < clientlist_col.length; j++){
-					code +='<td width="40%">'+ clientlist_col[j] +'</td>';
+					code +='<td width="29%">'+ clientlist_col[j] +'</td>';
 				}
-				code +='<td width="20%">';
+				code +='<td width="13%">';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
@@ -514,20 +514,28 @@ function addRow_Group(upper){
 		return false;
 	}
 
-	if(document.form.clientlist_ipAddr.value==""){
-		alert("<#JS_fieldblank#>");
-		document.form.clientlist_ipAddr.focus();
-		document.form.clientlist_ipAddr.select();
-		return false;
-	}else if(document.form.clientlist_ipAddr.value==""){
+	if(document.form.clientlist_ipAddr.value=="")
+		document.form.clientlist_ipAddr.value="0.0.0.0";
+
+	if(document.form.clientlist_dstipAddr.value=="")
+		document.form.clientlist_dstipAddr.value="0.0.0.0";
+
+	if (!validate_ipcidr(document.form.clientlist_ipAddr)) {
 		document.form.clientlist_ipAddr.focus();
 		document.form.clientlist_ipAddr.select();
 		return false;
 	}
 
+	if (!validate_ipcidr(document.form.clientlist_dstipAddr)) {
+		document.form.clientlist_dstipAddr.focus();
+		document.form.clientlist_dstipAddr.select();
+		return false;
+	}
+
 	if(item_num >=2){
 		for(i=0; i<rule_num; i++){
-				if(document.form.clientlist_ipAddr.value.toLowerCase() == $('clientlist_table').rows[i].cells[1].innerHTML.toLowerCase()){
+				if(document.form.clientlist_ipAddr.value.toLowerCase() == $('clientlist_table').rows[i].cells[1].innerHTML.toLowerCase() &&
+				   document.form.clientlist_dstipAddr.value.toLowerCase() == $('clientlist_table').rows[i].cells[2].innerHTML.toLowerCase()){
 					alert("<#JS_duplicate#>");
 					document.form.clientlist_ipAddr.focus();
 					document.form.clientlist_ipAddr.select();
@@ -538,6 +546,8 @@ function addRow_Group(upper){
 
 	addRow(document.form.clientlist_deviceName ,1);
 	addRow(document.form.clientlist_ipAddr, 0);
+	addRow(document.form.clientlist_dstipAddr, 0);
+
 	showclientlist();
 }
 
@@ -616,6 +626,20 @@ function pullLANIPList(obj){
 	}
 	else
 		hideClients_Block();
+}
+
+function validate_ipcidr(obj){
+	var rangere_cidr=new RegExp("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$", "gi");
+
+	if(rangere_cidr.test(obj.value) || validator.ipAddr4(obj)) {;
+		return true;
+	}else{
+		alert(obj.value+" <#JS_validip#>");
+		obj.focus();
+		obj.select();
+		return false;
+	}
+
 }
 
 </script>
@@ -1017,8 +1041,8 @@ function pullLANIPList(obj){
 						<td colspan="2">
 							<select name="vpn_client_rgw" class="input_option" onChange="update_visibility();">
 								<option value="0" <% nvram_match("vpn_client_rgw","0","selected"); %>>No</option>
-								<option value="1" <% nvram_match("vpn_client_rgw","1","selected"); %>>All clients</option>
-								<option value="2" <% nvram_match("vpn_client_rgw","2","selected"); %>>Selective clients</option>
+								<option value="1" <% nvram_match("vpn_client_rgw","1","selected"); %>>All traffic</option>
+								<option value="2" <% nvram_match("vpn_client_rgw","2","selected"); %>>Policy rules</option>
 							</select>
 							<label style="padding-left:3em;" id="client_gateway_label">Gateway:</label><input type="text" maxlength="15" class="input_15_table" id="vpn_client_gw" name="vpn_client_gw" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_client_gw"); %>">
 						</td>
@@ -1035,24 +1059,28 @@ function pullLANIPList(obj){
 				<table id="selectiveTable" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 					<thead>
 						<tr>
-							<td colspan="3">Clients to route through the tunnel&nbsp;(<#List_limit#>&nbsp;64)</td>
+							<td colspan="4">Rules for routing client traffic through the tunnel (<#List_limit#>&nbsp;64)</td>
 						</tr>
 					</thead>
 					<tr>
-						<th><#ShareNode_DeviceName_itemname#></th>
-						<th><#IPConnection_ExternalIPAddress_itemname#></th>
+						<th><#IPConnection_autofwDesc_itemname#></th>
+						<th>Source IP</th>
+						<th>Destination IP</th>
 						<th><#list_add_delete#></th>
 					</tr>
 					<tr>
-						<td width="40%">
-							<input type="text" class="input_20_table" maxlength="15" name="clientlist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);">
+						<td width="29%">
+							<input type="text" class="input_18_table" maxlength="15" name="clientlist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);">
+						</td>
+						<td width="29%">
+							<input type="text" class="input_18_table" maxlength="18" name="clientlist_ipAddr" onKeyPressdisab="return validate_ipcidr(this,event)">
 							<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 						</td>
-						<td width="40%">
-							<input type="text" class="input_20_table" maxlength="15" name="clientlist_ipAddr" onKeyPress="return validator.isIPAddr(this,event)">
+						<td width="29%">
+							<input type="text" class="input_18_table" maxlength="18" name="clientlist_dstipAddr" onKeyPressdisab="return validator.isIPAddr(this,event)">
 						</td>
-						<td width="20%">
+						<td width="13%">
 							<div>
 								<input type="button" class="add_btn" onClick="addRow_Group(64);" value="">
 							</div>
