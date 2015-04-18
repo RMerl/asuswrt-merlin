@@ -54,7 +54,7 @@ Here is a list of features that Asuswrt-merlin adds over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.378_4950 source code from Asus
+   - Based on 3.0.0.4.378_4980 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -92,7 +92,8 @@ Networking:
    - Custom DDNS (through a user script)
    - Advanced NAT loopback (as an alternative to the default one)
    - TOR support, individual client control
-   - Selective client routing (aka split tunnel) for the OpenVPN client
+   - Policy routing for the OpenVPN client (based on source or
+     destination IPs), also referred to as split-tunneling.
 
 
 Web interface:
