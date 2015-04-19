@@ -362,9 +362,9 @@ function initial(){
 	}
 
 	if(Rawifi_support || Qcawifi_support)	//brcm : 3 ; else : 1
-		document.getElementById("wl_dtim_th").onClick = openHint(3, 4);
+		document.getElementById("wl_dtim_th").onClick = function(){openHint(3, 4)};
 	else
-		document.getElementById("wl_dtim_th").onClick = openHint(3, 11);
+		document.getElementById("wl_dtim_th").onClick = function(){openHint(3, 11)};
 }
 
 function adjust_tx_power(){
