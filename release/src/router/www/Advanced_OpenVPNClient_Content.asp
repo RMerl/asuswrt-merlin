@@ -564,6 +564,8 @@ function del_Row(r){
 			clientlist_value += $('clientlist_table').rows[k].cells[0].innerHTML;
 			clientlist_value += "&#62";
 			clientlist_value += $('clientlist_table').rows[k].cells[1].innerHTML;
+			clientlist_value += "&#62";
+			clientlist_value += $('clientlist_table').rows[k].cells[2].innerHTML;
 			}
 		}
 	}
@@ -1073,12 +1075,12 @@ function validate_ipcidr(obj){
 							<input type="text" class="input_18_table" maxlength="15" name="clientlist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);">
 						</td>
 						<td width="29%">
-							<input type="text" class="input_18_table" maxlength="18" name="clientlist_ipAddr" onKeyPressdisab="return validate_ipcidr(this,event)">
+							<input type="text" class="input_18_table" maxlength="18" name="clientlist_ipAddr">
 							<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 						</td>
 						<td width="29%">
-							<input type="text" class="input_18_table" maxlength="18" name="clientlist_dstipAddr" onKeyPressdisab="return validator.isIPAddr(this,event)">
+							<input type="text" class="input_18_table" maxlength="18" name="clientlist_dstipAddr">
 						</td>
 						<td width="13%">
 							<div>
