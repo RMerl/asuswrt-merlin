@@ -335,9 +335,9 @@ function applyRule(){
 			//DHCP static IP
 			if(dhcp_staticlists != "") {
 				for(var i = 1; i < staticclist_row.length; i +=1 ) {
+					var static_ip = staticclist_row[i].split('&#62')[1];
 					var static_subnet = static_ip.split(".")[0]+"."+static_ip.split(".")[1]+"."+static_ip.split(".")[2]+".";
 					var static_end = parseInt(static_ip.split(".")[3]);					
-					var static_ip = staticclist_row[i].split('&#62')[1];
 					if(static_subnet != openvpn_clients_start_subnet) {
 						alert(document.form.vpn_server_r1.value + " <#JS_validip#>");
 						document.form.vpn_server_r1.focus();
