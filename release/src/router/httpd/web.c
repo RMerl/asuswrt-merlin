@@ -7237,7 +7237,7 @@ prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, cha
 {
 	char *ddns_flag;
 	char *ddns_mac;
-	char ddns_hostname_tmp[33];
+	char ddns_hostname_tmp[65];
 	char model_name;
 	
 	model_name = get_model();
