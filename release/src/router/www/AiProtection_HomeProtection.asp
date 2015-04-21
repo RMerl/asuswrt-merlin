@@ -138,7 +138,10 @@ function enable_whole_security(){
 		var wans_flag = 0;
 	else
 		var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
-	var wan1_upnp_enable = (document.form.wan1_upnp_enable.value && wans_flag);
+	if (wans_flag == 1)
+		var wan1_upnp_enable = document.form.wan1_upnp_enable.value;
+	else
+		var wan1_upnp_enable = 0;
 	var wan_access_enable = document.form.misc_http_x.value;
 	var wan_ping_enable = document.form.misc_ping_x.value;
 	var port_trigger_enable = document.form.autofw_enable_x.value;
@@ -327,7 +330,10 @@ function check_upnp(){
 		var wans_flag = 0;
 	else
 		var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
-	var wan1_unpn_enable = (document.form.wan1_upnp_enable.value && wans_flag);
+        if (wans_flag == 1)
+                var wan1_upnp_enable = document.form.wan1_upnp_enable.value;
+        else
+                var wan1_upnp_enable = 0;
 
 	if(wan0_unpn_enable == 0 && wan1_unpn_enable == 0){
 		$('upnp_service').innerHTML = "<#checkbox_Yes#>";
