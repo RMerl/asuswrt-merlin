@@ -17,10 +17,19 @@ Asuswrt-Merlin Changelog
    - CHANGED: Those providing a signed SSL certificate for httpd can now 
               provide chain certificate.  The three PEMs must be in
               that order: client, intermediate, CA.  (Patch by sasoiliev)
+   - CHANGED: The setting to enable the neighbour solication filter rule
+              for Comcast's request flooding was changed to "ipv6_ns_drop",
+              and now defaults to "0" as this hack causes issues with
+              other ISPs.
+   - CHANGED: Backported dnsmasq patch that reverts a fix for Windows 8
+              clients as it could cause issues with other clients.
    - FIXED: DNSFilter would fail if you had it set to "Router", and didn't
             have a DNS IP entered on the WAN page.
    - FIXED: MSS clamping wasn't applied to traffic in both direction, moved
             it to the mangle table.
+   - FIXED: OpenVPN client firewall "external" mode does not exist - removed
+            from the webui.
+
 
 
 378.52_2 (5-Apr-2015)
