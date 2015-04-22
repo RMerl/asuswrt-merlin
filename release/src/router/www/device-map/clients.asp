@@ -232,7 +232,7 @@ function drawClientList(tab){
 		else if(rssi_t == 2)
 			connectModeTip = '<#PASS_score2#>';
 		else if(rssi_t == 3)
-			clientHtmlTd += '<#PASS_score2#>';
+			connectModeTip = '<#PASS_score3#>';
 		else if(rssi_t == 4)
 			connectModeTip = '<#PASS_score4#>';
 
