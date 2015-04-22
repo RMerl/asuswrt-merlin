@@ -872,7 +872,6 @@ function validate_ipcidr(obj){
 			        	<td>
 			        		<select name="vpn_client_firewall" class="input_option" onclick="update_visibility();" >
 								<option value="auto" <% nvram_match("vpn_client_firewall","auto","selected"); %> >Automatic</option>
-								<option value="external" <% nvram_match("vpn_client_firewall","external","selected"); %> >External only</option>
 								<option value="custom" <% nvram_match("vpn_client_firewall","custom","selected"); %> >Custom</option>
 							</select>
 			   			</td>
