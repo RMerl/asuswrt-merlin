@@ -2122,7 +2122,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ipv6_prefix_length_s", "64"		},	// for ipv6 6in4/other
 	{ "ipv6_rtr_addr_s",	""		},	// for ipv6 other
 	{ "ipv6_dhcp6s_enable",	"1"		},	// DHCP6 Server for LAN
-	{ "ipv6_neighsol_drop", "1" 		}, 	// Filter out neighbour solicitation flood on Comcast network
+	{ "ipv6_ns_drop", "0" 		},	 	// Filter out neighbour solicitation flood on Comcast network
 #endif
 	{ "web_redirect", 	"1"		},	// Only NOLINK is redirected in default, it is overwrited in init_nvram
 	{ "disiosdet",		"1"		},

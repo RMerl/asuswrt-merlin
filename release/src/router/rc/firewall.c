@@ -4386,7 +4386,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 
 /* Workaround for neighbour solicitation flood from Comcast */
 #ifdef RTCONFIG_IPV6
-	if (nvram_get_int("ipv6_neighsol_drop")) {
+	if (nvram_get_int("ipv6_ns_drop")) {
 		eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "icmpv6", "--icmpv6-type", "neighbor-solicitation",
 		     "-i", wan_if, "-d", "ff02::1:ff00:0/104", "-j", "DROP");
 	}
