@@ -824,25 +824,21 @@ static int dhcp6_no_relay(struct state *state, int msg_type, void *inbuff, size_
 	  }
 	else
 	  { 
-	    /* Windows 8 always requests an address even if the Managed bit
-	       in RA is 0 and it keeps retrying if it receives a reply
-	       stating that no addresses are available. We solve this 
-	       by not replying at all if we're not configured to give any 
-	       addresses by DHCPv6. RFC 3315 17.2.1. appears to allow this. */
-	    
-	    for (c = state->context; c; c = c->current)
-	      if (!(c->flags & CONTEXT_RA_STATELESS))
-		break;
-	    
-	    if (!c)
-	      return 0;
-	    
 	    /* no address, return error */
 	    o1 = new_opt6(OPTION6_STATUS_CODE);
 	    put_opt6_short(DHCP6NOADDRS);
 	    put_opt6_string(_("no addresses available"));
 	    end_opt6(o1);
-	    log6_packet(state, state->lease_allocate ? "DHCPREPLY" : "DHCPADVERTISE", NULL, _("no addresses available"));
+
+	    /* Some clients will ask repeatedly when we're not giving
+	       out addresses because we're in stateless mode. Avoid spamming
+	       the log in that case. */
+	    for (c = state->context; c; c = c->current)
+	      if (!(c->flags & CONTEXT_RA_STATELESS))
+		{
+		  log6_packet(state, state->lease_allocate ? "DHCPREPLY" : "DHCPADVERTISE", NULL, _("no addresses available"));
+		  break;
+		}
 	  }
 
 	break;
