@@ -463,15 +463,10 @@ function del_Row(rowdata){
 	var pptpd_clientlist_value = "";
 	var rowLength = document.getElementById("pptpd_clientlist_table").rows.length;
 	for(var k = 0; k < rowLength; k += 1) {
-		for(var j = 1; j < document.getElementById("pptpd_clientlist_table").rows[k].cells.length - 1; j += 1) {
-			if(j == 1)
-				pptpd_clientlist_value += "<";
-			else {
-				pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[1].innerHTML;
-				pptpd_clientlist_value += ">";
-				pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[2].innerHTML;
-			}
-		}
+		pptpd_clientlist_value += "<";
+		pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[1].innerHTML;
+		pptpd_clientlist_value += ">";
+		pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[2].innerHTML;
 	}
 
 	pptpd_clientlist_array = pptpd_clientlist_value;

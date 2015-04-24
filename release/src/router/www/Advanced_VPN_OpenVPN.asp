@@ -524,15 +524,10 @@ function del_Row(rowdata){
   	var vpn_server_clientlist_value = "";
   	var rowLength = document.getElementById("openvpnd_clientlist_table").rows.length;
 	for(var k = 1; k < rowLength; k += 1){
-		for(var j=1; j < document.getElementById("openvpnd_clientlist_table").rows[k].cells.length - 1; j += 1) {
-			if(j == 1)
-				vpn_server_clientlist_value += "<";
-			else {
-				vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[1].innerHTML;
-				vpn_server_clientlist_value += ">";
-				vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].innerHTML;
-			}
-		}
+		vpn_server_clientlist_value += "<";
+		vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[1].innerHTML;
+		vpn_server_clientlist_value += ">";
+		vpn_server_clientlist_value += document.getElementById("openvpnd_clientlist_table").rows[k].cells[2].innerHTML;
 	}
 
 	vpn_server_clientlist_array = vpn_server_clientlist_value;
