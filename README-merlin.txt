@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 378.53 (xx-xxx-2015)
+Asuswrt-Merlin - build 378.53 (26-Apr-2015)
 ===========================================
 
 About

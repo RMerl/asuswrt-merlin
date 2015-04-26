@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.53 (xx-xxx-2015)
+378.53 (26-Apr-2015)
    - NEW: Merged with Asus GPL 378_4980 (with pieces from 378_4850 for AC56/AC68
           and 378_5183 beta for AC87)
    - NEW: OpenVPN policy routing.  You can select client IPs or destination
@@ -29,6 +29,8 @@ Asuswrt-Merlin Changelog
             it to the mangle table.
    - FIXED: OpenVPN client firewall "external" mode does not exist - removed
             from the webui.
+   - FIXED: PPTP account list could become corrupted after removing an entry
+            on the PPTP server page.
 
 
 
