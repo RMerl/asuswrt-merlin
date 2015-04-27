@@ -871,6 +871,8 @@ chk_ate_ccode()
 		return 0;
 	}
 
+	memset(dutmac, 0, sizeof(dutmac));
+
 	p = nvram_safe_get("et0macaddr");
 	memcpy(dutmac, p, strlen(p));
 
