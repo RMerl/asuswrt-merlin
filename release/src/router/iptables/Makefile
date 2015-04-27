@@ -132,7 +132,6 @@ LDLIBS       += -lselinux
 endif
 endif
 
-STATIC6_LIBS += libiptc/libip6tc.a
 LDLIBS       += -L. -liptc
 
 .PHONY: default
@@ -146,7 +145,7 @@ iptables.o: iptables.c
 	$(CC) $(CFLAGS) -DIPT_LIB_DIR=\"$(IPT_LIBDIR)\" -c -o $@ $<
 
 libiptc.so: libiptc/libiptc.a
-	$(LD) -shared -o $@ --whole-archive -Llibiptc -liptc
+	$(LD) -shared -o $@ --whole-archive --allow-multiple-definition -Llibiptc -liptc
 
 
 ifeq ($(DO_MULTI), 1)

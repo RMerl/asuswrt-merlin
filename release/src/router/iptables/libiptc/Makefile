@@ -1,9 +1,6 @@
 #! /usr/bin/make
 
 EXTRAS+=libiptc/libiptc.a
-ifeq ($(DO_IPV6), 1)
-EXTRAS+=libiptc/libip6tc.a
-endif
 
 CFLAGS+=-fPIC
 
@@ -21,11 +18,9 @@ libiptc/libiptc.a: libiptc/libiptc.a(libiptc/libip4tc.o)
 
 ifeq ($(DO_IPV6), 1)
 EXTRA_DEPENDS+= libiptc/libip6tc.d
-libiptc/libip6tc.a: libiptc/libip6tc.a(libiptc/libip6tc.o)
+libiptc/libiptc.a: libiptc/libiptc.a(libiptc/libip6tc.o)
 endif
 
-libiptc/libip4tc.d: %.d: %.c
+libiptc/libip4tc.d libiptc/libip6tc.d: %.d: %.c
 	@-$(CC) -M -MG $(CFLAGS) $< | sed -e 's@^.*\.o:@$*.d libiptc/libiptc.a($*.o):@' > $@
-libiptc/libip6tc.d: %.d: %.c
-	@-$(CC) -M -MG $(CFLAGS) $< | sed -e 's@^.*\.o:@$*.d libiptc/libip6tc.a($*.o):@' > $@
 endif
