@@ -1085,6 +1085,7 @@ skip:
 			bound ? "bound" : "informed",
 			*address ? "address " : "", address, *address ? ", " : "",
 			*prefix ? "prefix " : "", prefix);
+		notify_rc("restart_upnp");
 	}
 
 	return 0;
