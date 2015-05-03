@@ -1046,26 +1046,6 @@ config NETFILTER_XT_MATCH_U32
 
 	  Details and examples are in the kernel module source.
 
-config NETFILTER_XT_MATCH_LAYER7
-        tristate '"layer7" match support'
-        depends on NETFILTER_XTABLES
-        depends on IP_NF_CONNTRACK || NF_CONNTRACK
-        depends on NF_CT_ACCT
-        help
-          Say Y if you want to be able to classify connections (and their
-          packets) based on regular expression matching of their application
-          layer data.   This is one way to classify applications such as
-          peer-to-peer filesharing systems that do not always use the same
-          port.
-
-          To compile it as a module, choose M here.  If unsure, say N.
-
-config NETFILTER_XT_MATCH_LAYER7_DEBUG
-        bool 'layer7 debugging output'
-        depends on NETFILTER_XT_MATCH_LAYER7
-        help
-          Say Y to get lots of debugging output.
-
 config NETFILTER_XT_MATCH_WEBSTR
         tristate  '"webstr" match support'
         depends on NETFILTER_XTABLES
