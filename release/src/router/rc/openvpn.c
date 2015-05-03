@@ -550,13 +550,14 @@ void stop_vpnclient(int clientNum)
 	{
 		vpnlog(VPN_LOG_EXTRA,"Removing generated files.");
 		// Delete all files for this client
-		sprintf(&buffer[0], "rm -rf /etc/openvpn/client%d /etc/openvpn/fw/client%d-fw.sh /etc/openvpn/vpnclient%d",clientNum,clientNum,clientNum);
+		sprintf(&buffer[0], "rm -rf /etc/openvpn/client%d /etc/openvpn/fw/client%d-fw.sh /etc/openvpn/vpnclient%d /etc/openvpn/dns/client%d.resolv",clientNum,clientNum,clientNum,clientNum);
 		for (argv[argc=0] = strtok(&buffer[0], " "); argv[argc] != NULL; argv[++argc] = strtok(NULL, " "));
 		_eval(argv, NULL, 0, NULL);
 
 		// Attempt to remove directories.  Will fail if not empty
 		rmdir("/etc/openvpn/fw");
 		rmdir("/etc/openvpn");
+		rmdir("/etc/openvpn/dns");
 		vpnlog(VPN_LOG_EXTRA,"Done removing generated files.");
 	}
 
@@ -570,6 +571,9 @@ void stop_vpnclient(int clientNum)
 	nvram_set(&buffer[0], "0");
 	sprintf(&buffer[0], "vpn_client%d_errno", clientNum);
 	nvram_set(&buffer[0], "0");
+
+	update_resolvconf();
+	start_dnsmasq();
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI client backend stopped.");
 }
