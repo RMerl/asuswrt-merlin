@@ -1530,6 +1530,7 @@ client6_recvadvert(ifp, dh6, len, optinfo)
 	struct dhcp6_event *ev;
 	struct dhcp6_eventdata *evd;
 	struct authparam *authparam = NULL, authparam0;
+	int have_ia = -1;
 
 	/* find the corresponding event based on the received xid */
 	ev = find_event_withid(ifp, ntohl(dh6->dh6_xid) & DH6_XIDMASK);
@@ -1573,12 +1574,11 @@ client6_recvadvert(ifp, dh6, len, optinfo)
 	 * We only apply this when we are going to request an address or
 	 * a prefix.
 	 */
-	int have_ia = -1;
 	for (evd = TAILQ_FIRST(&ev->data_list); evd;
 	    evd = TAILQ_NEXT(evd, link)) {
 		struct dhcp6_list *ial;
 		struct dhcp6_listval *lv, *slv;
-		dhcp6_listval_type_t iatype;
+		dhcp6_listval_type_t iatype, lvtype;
 		u_int16_t stcode;
 		char *stcodestr;
 
@@ -1587,13 +1587,15 @@ client6_recvadvert(ifp, dh6, len, optinfo)
 			stcode = DH6OPT_STCODE_NOPREFIXAVAIL;
 			stcodestr = "NoPrefixAvail";
 			ial = &optinfo->iapd_list;
-			iatype = DHCP6_LISTVAL_PREFIX6;
+			iatype = DHCP6_LISTVAL_IAPD;
+			lvtype = DHCP6_LISTVAL_PREFIX6;
 			break;
 		case DHCP6_EVDATA_IANA:
 			stcode = DH6OPT_STCODE_NOADDRSAVAIL;
 			stcodestr = "NoAddrsAvail";
 			ial = &optinfo->iana_list;
-			iatype = DHCP6_LISTVAL_STATEFULADDR6;
+			iatype = DHCP6_LISTVAL_IANA;
+			lvtype = DHCP6_LISTVAL_STATEFULADDR6;
 			break;
 		default:
 			continue;
@@ -1605,16 +1607,15 @@ client6_recvadvert(ifp, dh6, len, optinfo)
 			return (-1);
 		}
 
-		for (lv = TAILQ_FIRST((struct dhcp6_list *)&evd->data);
-		    lv && have_ia <= 0; lv = TAILQ_NEXT(lv, link)) {
-			if (have_ia < 0)
-				have_ia = 0;
-			if ((slv = dhcp6_find_listval(ial,
-			    lv->type, &lv->val_ia, 0)) == NULL)
+		if (have_ia > 0 || TAILQ_EMPTY((struct dhcp6_list *)&evd->data))
+			continue;
+		have_ia = 0;
+		TAILQ_FOREACH(lv, (struct dhcp6_list *)&evd->data, link) {
+			slv = dhcp6_find_listval(ial, iatype, &lv->val_ia, 0);
+			if (slv == NULL)
 				continue;
-			for (slv = TAILQ_FIRST(&slv->sublist); slv;
-			    slv = TAILQ_NEXT(slv, link)) {
-				if (slv->type == iatype) {
+			TAILQ_FOREACH(slv, &slv->sublist, link) {
+				if (slv->type == lvtype) {
 					have_ia = 1;
 					break;
 				}

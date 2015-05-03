@@ -692,28 +692,28 @@ function QKfinish_load_body(){
 				if(wanlink_ipaddr() != "0.0.0.0"){
 					if(wans_mode == "fb" || wans_mode == "fo"){
 						if( wan_primary == "wan0" )
-							document.getElementById("wanstatus1").innerHTML = "Active";
+							document.getElementById("wanstatus1").innerHTML = "<#Status_Active#>";
 						else
-							document.getElementById("wanstatus1").innerHTML = "Standby";
+							document.getElementById("wanstatus1").innerHTML = "<#Status_Standby#>";
 					}
 					else //Load-balance
-						document.getElementById("wanstatus1").innerHTML = "Active";
+						document.getElementById("wanstatus1").innerHTML = "<#Status_Active#>";
 				}
 				else
-					document.getElementById("wanstatus1").innerHTML = "Inactive";
+					document.getElementById("wanstatus1").innerHTML = "<#Status_Inactive#>";
 				
 				if(secondary_wanlink_ipaddr() != "0.0.0.0"){
 					if(wans_mode == "fb" || wans_mode == "fo"){
 						if( wan_primary == "wan1" )
-							document.getElementById("wanstatus2").innerHTML = "Active";
+							document.getElementById("wanstatus2").innerHTML = "<#Status_Active#>";
 						else
-							document.getElementById("wanstatus2").innerHTML = "Standby";
+							document.getElementById("wanstatus2").innerHTML = "<#Status_Standby#>";
 					}
 					else //Load-balance
-						document.getElementById("wanstatus2").innerHTML = "Active";
+						document.getElementById("wanstatus2").innerHTML = "<#Status_Active#>";
 				}
 				else
-					document.getElementById("wanstatus2").innerHTML = "Inactive";			
+					document.getElementById("wanstatus2").innerHTML = "<#Status_Inactive#>";			
 			}
 			else{
 				if(wan_primary == "wan0")
@@ -1084,7 +1084,7 @@ function chkMBConState(){
 	  </td>
 	</tr>
 	<tr class="reItem" id="wanstatus_tr1" style="display:none;">
-	  <th width="180">Status </th>
+	  <th width="180"><#Status_Str#> </th>
 	  <td class="QISformtd">
 			<span id="wanstatus1"></span>
 	  </td>

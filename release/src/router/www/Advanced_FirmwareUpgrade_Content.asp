@@ -163,12 +163,17 @@ function detect_firmware(flag){
 				setTimeout("detect_firmware();", 1000);
   			}
   			else{	// got wlan_update.zip
-				if(webs_state_error==1){
+				if(webs_state_error == "1"){	//1:wget fail 
 					document.getElementById('update_scan').style.display="none";
 					if(flag == "initial")
 						document.getElementById('update_states').style.display="none";
 					else
 						document.getElementById('update_states').innerHTML="<#connect_failed#>";
+				}
+				else if(webs_state_error == "3"){	//3: FW check/RSA check fail
+					document.getElementById('update_scan').style.display="none";
+					document.getElementById('update_states').innerHTML="<#FIRM_fail_desc#><br><#FW_desc1#>";
+
 				}
 				else{
 					if(isNewFW(webs_state_info)){

@@ -1219,6 +1219,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_ROMCFE/d" $(1); \
 		echo "RTCONFIG_ROMCFE=y" >>$(1); \
 	fi; \
+	if [ "$(ROMCCODE)" = "y" ]; then \
+		sed -i "/RTCONFIG_ROMATECCODEFIX/d" $(1); \
+		echo "RTCONFIG_ROMATECCODEFIX=y" >>$(1); \
+	fi; \
 	if [ "$(SSD)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCMSSD/d" $(1); \
 		echo "RTCONFIG_BCMSSD=y" >>$(1); \

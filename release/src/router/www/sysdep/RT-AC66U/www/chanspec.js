@@ -24,9 +24,9 @@ function wl_chanspec_list_change(){
 	else if (phytype == "n") { // n mode
 		if (band == "1") { // ---- 5 GHz
 				if(wl_channel_list_5g instanceof Array && wl_channel_list_5g != ["0"]){	//With wireless channel 5g hook or return not ["0"]
-						if(based_modelid == "RT-AC3200" && (country != "EU" && country != "JP"))
-							wl_channel_list_5g = [36,40,44,48];
-						else if(based_modelid == "RT-AC87U"){
+						if(based_modelid == "RT-AC3200"){
+							wl_channel_list_5g = new Array("36","40","44","48");
+						}else if(based_modelid == "RT-AC87U"){
 							if(document.form.wl_bw.value==1){
 								wl_channel_list_5g = eval('<% channel_list_5g_20m(); %>');
 							}else if(document.form.wl_bw.value==2){
@@ -302,8 +302,14 @@ function wl_chanspec_list_change(){
 				}		
 		}
 		else if(band == "2"){	// 5GHz - high band
-						if(based_modelid == "RT-AC3200" && (country != "EU" && country != "JP"))
-							wl_channel_list_5g_2 = [149,153,157,161,165];
+						if(based_modelid == "RT-AC3200"){
+							if(country == "EU")
+								wl_channel_list_5g_2 = new Array("100","104","108","112","116","132","136","140");
+							else if(country == "JP")
+								wl_channel_list_5g_2 = new Array("100","104","108","112","116","120","124","128","132","136","140");
+							else	//US
+								wl_channel_list_5g_2 = new Array("149","153","157","161","165");
+						}
 						else
 							wl_channel_list_5g_2 = eval('<% channel_list_5g_2(); %>');
 					
@@ -346,6 +352,8 @@ function wl_chanspec_list_change(){
 														wl_channel_list_5g_2.splice(wl_channel_list_5g_2.getIndexByValue(wl_channel_list_5g_2[i]),1);
 												}else if(country == "TW" && parseInt(wl_channel_list_5g_2[i]) >= 56 && parseInt(wl_channel_list_5g_2[i]) <= 64){	// rm 80MHz invalid channel														
 														wl_channel_list_5g_2.splice(wl_channel_list_5g_2.getIndexByValue(wl_channel_list_5g_2[i]),1);
+												}else if(based_modelid == "RT-AC3200" && country == "JP" && parseInt(wl_channel_list_5g_2[i]) >= 132 && parseInt(wl_channel_list_5g_2[i]) <= 140){	// rm 80MHz invalid channel														
+														wl_channel_list_5g_2.splice(wl_channel_list_5g_2.getIndexByValue(wl_channel_list_5g_2[i]),1);
 												}else{																																																										
 														wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i]+"/80";
 												}
@@ -359,7 +367,7 @@ function wl_chanspec_list_change(){
 									wl_channel_list_5g_2.splice(index, 1);
 								}
 
-								if(wl_channel_list_5g_2.indexOf("116") != -1){			// remove channel 116, 
+								if(wl_channel_list_5g_2.indexOf("116") != -1 && !(based_modelid == "RT-AC3200" && country == "JP")){			// remove channel 116, 
 									var index = wl_channel_list_5g_2.indexOf("116");
 									wl_channel_list_5g_2.splice(index, 1);
 								}

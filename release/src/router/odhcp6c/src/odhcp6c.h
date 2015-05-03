@@ -325,7 +325,7 @@ void script_call(const char *status);
 
 bool odhcp6c_signal_process(void);
 uint64_t odhcp6c_get_milli_time(void);
-void odhcp6c_random(void *buf, size_t len);
+int odhcp6c_random(void *buf, size_t len);
 bool odhcp6c_is_bound(void);
 
 // State manipulation

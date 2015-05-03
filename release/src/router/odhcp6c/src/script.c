@@ -115,30 +115,6 @@ static void fqdn_to_env(const char *name, const uint8_t *fqdn, size_t len)
 	putenv(buf);
 }
 
-
-static void fqdn_to_ip_env(const char *name, const uint8_t *fqdn, size_t len)
-{
-	size_t buf_len = strlen(name);
-	char *buf = realloc(NULL, INET6_ADDRSTRLEN + buf_len + 3);
-	memcpy(buf, name, buf_len);
-	buf[buf_len++] = '=';
-
-	char namebuf[256];
-	if (dn_expand(fqdn, fqdn + len, fqdn, namebuf, sizeof(namebuf)) <= 0)
-		return;
-
-	struct addrinfo hints = {.ai_family = AF_INET6}, *r;
-	if (getaddrinfo(namebuf, NULL, &hints, &r))
-		return;
-
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6*)r->ai_addr;
-	inet_ntop(AF_INET6, &sin6->sin6_addr, &buf[buf_len], INET6_ADDRSTRLEN);
-
-	freeaddrinfo(r);
-	putenv(buf);
-}
-
-
 static void bin_to_env(uint8_t *opts, size_t len)
 {
 	uint8_t *oend = opts + len, *odata;
@@ -375,7 +351,6 @@ void script_call(const char *status)
 		fqdn_to_env("DOMAINS", search, search_len);
 		fqdn_to_env("SIP_DOMAIN", sip_fqdn, sip_fqdn_len);
 		fqdn_to_env("AFTR", aftr_name, aftr_name_len);
-		fqdn_to_ip_env("AFTR_IP", aftr_name, aftr_name_len);
 		ipv6_to_env("CER", cer, cer_len / sizeof(*cer));
 		s46_to_env(STATE_S46_MAPE, s46_mape, s46_mape_len);
 		s46_to_env(STATE_S46_MAPT, s46_mapt, s46_mapt_len);

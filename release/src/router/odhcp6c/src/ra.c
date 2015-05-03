@@ -181,14 +181,16 @@ static int16_t pref_to_priority(uint8_t flags)
 }
 
 
-static void update_proc(const char *sect, const char *opt, uint32_t value)
+static int update_proc(const char *sect, const char *opt, uint32_t value)
 {
 	char buf[64];
 	snprintf(buf, sizeof(buf), "/proc/sys/net/ipv6/%s/%s/%s", sect, if_name, opt);
 
 	int fd = open(buf, O_WRONLY);
-	write(fd, buf, snprintf(buf, sizeof(buf), "%u", value));
+	int ret = write(fd, buf, snprintf(buf, sizeof(buf), "%u", value));
 	close(fd);
+
+	return ret;
 }
 
 
@@ -287,8 +289,15 @@ bool ra_process(void)
 	while (true) {
 		struct sockaddr_in6 from;
 		struct iovec iov = {buf, sizeof(buf)};
-		struct msghdr msg = {&from, sizeof(from), &iov, 1,
-				cmsg_buf, sizeof(cmsg_buf), 0};
+		struct msghdr msg = {
+			.msg_name = (void *) &from,
+			.msg_namelen = sizeof(from),
+			.msg_iov = &iov,
+			.msg_iovlen = 1,
+			.msg_control = cmsg_buf,
+			.msg_controllen = sizeof(cmsg_buf),
+			.msg_flags = 0
+		};
 
 		ssize_t len = recvmsg(sock, &msg, MSG_DONTWAIT);
 		if (len <= 0)

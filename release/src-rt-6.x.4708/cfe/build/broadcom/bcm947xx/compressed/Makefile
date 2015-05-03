@@ -148,6 +148,10 @@ ifeq ($(RTN18U), 1)
 		../../../../../ctools/nvserial -i cfez.bin -o cfe_rt-n18u.bin -s 00 rt-n18u_nvram.txt
 		cp cfe_rt-n18u.bin ../../../..
 endif
+ifeq ($(BUILD_NAME), RP-AC68U)
+		../../../../../ctools/nvserial -i cfez.bin -o cfe_rp-ac68u.bin -s 00 rp-ac68u_nvram.txt
+		cp cfe_rp-ac68u.bin ../../../..
+endif
 endif
 endif
 
@@ -169,6 +173,13 @@ ifeq ($(RTN18U), 1)
 	@if [ "$(CFEZ_MAXSIZE)" != "" ]; then \
 		if [ "`wc -c < cfe_rt-n18u.bin`" -gt "$(CFEZ_MAXSIZE)" ]; then \
 			echo "*** ERROR *** : cfe_rt-n18u.bin bootrom image size: `wc -c < cfe_rt-n18u.bin` exceeds limit: $(CFEZ_MAXSIZE)"; \
+		fi ; \
+	fi
+endif
+ifeq ($(BUILD_NAME), RP-AC68U)
+	@if [ "$(CFEZ_MAXSIZE)" != "" ]; then \
+		if [ "`wc -c < cfe_rp-ac68u.bin`" -gt "$(CFEZ_MAXSIZE)" ]; then \
+			echo "*** ERROR *** : cfe_rp-ac68u.bin bootrom image size: `wc -c < cfe_rp-ac68u.bin` exceeds limit: $(CFEZ_MAXSIZE)"; \
 		fi ; \
 	fi
 endif

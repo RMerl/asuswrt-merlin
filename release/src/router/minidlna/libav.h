@@ -124,7 +124,11 @@ lav_open(AVFormatContext **ctx, const char *filename)
 	if (ret == 0)
 		avformat_find_stream_info(*ctx, NULL);
 #else
+#ifndef NO_ASUS /* For Media Server full scan. */
+	ret = ms_av_open_input_file(ctx, filename, NULL, 0, NULL);
+#else
 	ret = av_open_input_file(ctx, filename, NULL, 0, NULL);
+#endif
 	if (ret == 0)
 		av_find_stream_info(*ctx);
 #endif

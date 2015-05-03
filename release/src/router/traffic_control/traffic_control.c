@@ -32,6 +32,7 @@ int traffic_control_main(char *type, char *q_if, char *q_te, char *q_ts)
 	sqlite3 *db;
 
 	int debug = nvram_get_int("traffic_control_debug");
+	long int date_start = nvram_get_int("traffic_control_date_start");
 
 	memset(buf, 0, sizeof(buf));
 	memset(ifname_desc1, 0, sizeof(ifname_desc1));
@@ -58,42 +59,42 @@ int traffic_control_main(char *type, char *q_if, char *q_te, char *q_ts)
 		// get timestamp
 		time(&now);
 
-		if(!f_exists(path))
+		if(f_exists(path))
 		{
-			ret = sqlite3_exec(db,
-				"CREATE TABLE traffic("
-				"timestamp UNSIGNED BIG INT NOT NULL,"
-				"ifname TEXT NOT NULL,"
-				"tx UNSIGNED BIG INT NOT NULL,"
-				"rx UNSIGNED BIG INT NOT NULL)",
-				NULL, NULL, &zErr);
+			// delete database out of last 2 months (DATA_PERIOD)
+			// we allow 30 secs delay because of save data will be delay some secs
+			memset(sql, 0, sizeof(sql));
+			sprintf(sql, "DELETE FROM traffic WHERE timestamp NOT BETWEEN %ld AND %ld",
+				(date_start - DATA_PERIOD - 30), (now + 30));
 
-			if(ret != SQLITE_OK)
-			{
-				if(zErr != NULL)
-				{
-					printf("SQL error: %s\n", zErr);
+			if(sqlite3_exec(db, sql, NULL, NULL, &zErr) != SQLITE_OK){
+				if(zErr != NULL){
+					printf("%s - delete : SQL error: %s\n", __FUNCTION__, zErr);
 					sqlite3_free(zErr);
 				}
 			}
+
+			// add index for timestamp
+			sqlite3_exec(db, "CREATE INDEX timestamp ON traffic(timestamp ASC)", NULL, NULL, &zErr);
+			if(zErr != NULL) sqlite3_free(zErr);
 		}
 
-		// delete database out of last 2 months (DATA_PERIOD)
-		// we allow 30 secs delay because of save data will be delay some secs
-		memset(sql, 0, sizeof(sql));
-		sprintf(sql, "DELETE FROM traffic WHERE timestamp NOT BETWEEN %ld AND %ld",
-			(now - DATA_PERIOD - 30), (now + 30));
+		ret = sqlite3_exec(db,
+			"CREATE TABLE traffic("
+			"timestamp UNSIGNED BIG INT NOT NULL,"
+			"ifname TEXT NOT NULL,"
+			"tx UNSIGNED BIG INT NOT NULL,"
+			"rx UNSIGNED BIG INT NOT NULL)",
+			NULL, NULL, &zErr);
 
-		if(sqlite3_exec(db, sql, NULL, NULL, &zErr) != SQLITE_OK){
-			if(zErr != NULL){
-				printf("%s - delete : SQL error: %s\n", __FUNCTION__, zErr);
+		if(ret != SQLITE_OK)
+		{
+			if(zErr != NULL)
+			{
+				printf("SQL error: %s\n", zErr);
 				sqlite3_free(zErr);
 			}
 		}
-
-		// add index for timestamp
-		sqlite3_exec(db, "CREATE INDEX timestamp ON traffic(timestamp ASC)", NULL, NULL, &zErr);
-		if(zErr != NULL) sqlite3_free(zErr);
 
 		// record database
  		if ((fp = fopen("/proc/net/dev", "r")) != NULL)
@@ -144,10 +145,18 @@ int traffic_control_main(char *type, char *q_if, char *q_te, char *q_ts)
 				tx_t = strtoull(nvram_safe_get("traffic_control_old_tx"), NULL, 10);
 				rx_t = strtoull(nvram_safe_get("traffic_control_old_rx"), NULL, 10);
 
+				// proc/net/dev max bytes is unsigned long (2^32)
 				// diff traffic
-				tx_n = tx - tx_t;
-				rx_n = rx - rx_t;
-
+				if(tx < tx_t)
+					tx_n = (tx + LONGSIZE) - tx_t;
+				else
+					tx_n = tx - tx_t;
+					
+				if(rx < rx_t)
+					rx_n = (rx + LONGSIZE) - rx_t;
+				else
+					rx_n = rx - rx_t;
+				
 				// save old tx / rx
 				nvram_set_int("traffic_control_old_tx", tx);
 				nvram_set_int("traffic_control_old_rx", rx);
@@ -165,7 +174,6 @@ int traffic_control_main(char *type, char *q_if, char *q_te, char *q_ts)
 			}
 			fclose(fp);
 		}
-finish:
 		sqlite3_close(db);
 		file_unlock(lock);
 	}

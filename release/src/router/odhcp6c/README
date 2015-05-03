@@ -79,5 +79,4 @@ Environment:
 				Format: <address>/<length>,gateway,valid,metric
 * RA_DNS		A space-separated list of recursive DNS servers from the RA
 * AFTR			The DS-Lite AFTR domain name
-* AFTR_IP		The DS-Lite AFTR resolved IPv6 address
 * MAPE / MAPT / LW4O6	Softwire rules for MAPE, MAPT and LW4O6

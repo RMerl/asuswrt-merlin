@@ -2417,6 +2417,8 @@ start_ddns(void)
 		service = "namecheap";
         else if (strcmp(server, "CUSTOM")==0)
                 service = "";
+	else if (strcmp(server, "WWW.SELFHOST.DE") == 0)
+		service = "selfhost";
 	else if (strcmp(server, "WWW.ASUS.COM")==0) {
 		service = "dyndns", asus_ddns = 1;
 	} else {
@@ -4206,8 +4208,10 @@ again:
 			modprobe_r("wl_high");
 		}
 
+#if !defined(RTN56UB1)
 		stop_usb();
 		stop_usbled();
+#endif		
 #endif
 //#if defined(RTCONFIG_JFFS2LOG) && defined(RTCONFIG_JFFS2)
 #if defined(RTCONFIG_JFFS2LOG) && (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
@@ -4465,6 +4469,9 @@ again:
 #endif
 			stop_wan();
 			stop_lan();
+#ifdef RTCONFIG_DSL_TCLINUX
+			stop_dsl();
+#endif
 			stop_vlan();
 
 
@@ -4474,6 +4481,9 @@ again:
 			config_switch();
 
 			start_vlan();
+#ifdef RTCONFIG_DSL_TCLINUX
+			start_dsl();
+#endif
 			start_lan();
 
 			start_dnsmasq();
@@ -6203,22 +6213,29 @@ void set_acs_ifnames()
 
 	nvram_set("acs_ifnames", acs_ifnames);
 
-#ifdef RTAC3200
+#if defined(RTAC3200) || defined(RTAC5300)
 	nvram_set("wl0_acs_excl_chans", "");
-	if (!nvram_match("wl1_country_code", "EU")) {
+	if (nvram_match("wl1_country_code", "EU")) {
+		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
+		nvram_set("wl1_acs_excl_chans",
+			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
+		nvram_set("wl2_acs_excl_chans",
+			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
+	} else if (nvram_match("wl1_country_code", "JP")) {
+		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 116l, 116/80, 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80, 132, 132l, 136, 136u, 140 */
+		nvram_set("wl1_acs_excl_chans",
+			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd876,0xe07a,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a,0xd084,0xd886,0xd088,0xd986,0xd08c");
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
+		nvram_set("wl2_acs_excl_chans",
+			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
+	} else {
 		/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
 		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
 		nvram_set("wl2_acs_excl_chans",
 			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a");
-	} else {
-		/* exclude acsd from selecting chanspec 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
-		nvram_set("wl0_acs_excl_chans",
-			  "0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
-		nvram_set("wl0_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
 	}
 #else
 	if (nvram_match("wl1_country_code", "EU"))

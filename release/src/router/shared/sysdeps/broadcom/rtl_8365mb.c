@@ -207,7 +207,7 @@ int ext_rtk_phyState(void)
 
 	puts(buf);
 
-	return 0;
+	return (pS.link[o[0]] == 1)|(pS.link[o[1]] == 1)|(pS.link[o[2]] == 1)|(pS.link[o[3]] == 1);
 }
 
 void usage(char *cmd)

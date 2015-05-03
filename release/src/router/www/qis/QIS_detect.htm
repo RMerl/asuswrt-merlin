@@ -21,6 +21,7 @@ var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
 var RetryCountDown_fail = 10;
+var qtn_ready_fail_count = 15;
 var autodet_state = "";
 var first_wanstate = -1;
 var first_wansbstate = -1;
@@ -35,6 +36,7 @@ var usb_wanstate = -1;
 var usb_wansbstate = -1;
 var usb_wanauxstate = -1;
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
+var apps_sq = '<% nvram_get("apps_sq"); %>';
 var ewan_index = wans_dualwan.indexOf("wan");
 var usb_index = wans_dualwan.indexOf("usb");
 var none_index = wans_dualwan.indexOf("none");
@@ -124,7 +126,16 @@ function getWANStatus(){
 				setTimeout('getWANStatus();', 1000);
 			}
 			else if( qtn_ready_t != "1" && '<% nvram_get("productid"); %>' == "RT-AC87U"){
-				setTimeout('getWANStatus();', 1000);
+				if(apps_sq == '1'){
+					if(qtn_ready_fail_count < 1)
+						alert("QTN not ready");
+					else{
+						--qtn_ready_fail_count;
+						setTimeout('getWANStatus();', 1000);
+					}
+				}else{
+					setTimeout('getWANStatus();', 1000);
+				}
 			}
 			else if(autodet_state == "2" && autodet_auxstate == "6"){
 				redirect_page("internet_type");
@@ -152,7 +163,7 @@ function getWANStatus(){
 								redirect_page("modem");
 						}
 						else if(sim_state == 2){
-							document.getElementById("sim_desc").innerHTML = "<strong>Please Input SIM PIN!</strong>";
+							document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_pin_hint#></strong>";
 							document.getElementById("sim_pin_tr").style.display = "";
 							document.getElementById("sim_pin_hd").innerHTML = "<#PIN_code#>";
 							document.getElementById("save_pin_ckb_span").style.display = "";			
@@ -168,7 +179,7 @@ function getWANStatus(){
 						}
 						else if(sim_state == 3 || sim_state == 5){
 							document.form.pincode.value="";		
-							document.getElementById("sim_desc").innerHTML = "<strong>Please input the SIM PUK!</strong>";						
+							document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_puk_hint#></strong>";						
 							document.getElementById("sim_pin_tr").style.display="";
 							document.getElementById("sim_pin_hd").innerHTML = "<#Mobile_new_pin#>";							
 							document.getElementById("save_pin_ckb_span").style.display = "none";
@@ -212,7 +223,7 @@ function getWANStatus(){
 							redirect_page("modem");
 					}
 					else if(sim_state == 2){
-						document.getElementById("sim_desc").innerHTML = "<strong>Please Input SIM PIN!</strong>";
+						document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_pin_hint#></strong>";
 						document.getElementById("sim_pin_tr").style.display = "";
 						document.getElementById("sim_pin_hd").innerHTML = "<#PIN_code#>";
 						document.getElementById("save_pin_ckb_span").style.display = "";			
@@ -228,7 +239,7 @@ function getWANStatus(){
 					}	
 					else if(sim_state == 3 || sim_state == 5){
 						document.form.pincode.value="";		
-						document.getElementById("sim_desc").innerHTML = "<strong>Please input the SIM PUK!</strong>";						
+						document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_puk_hint#></strong>";						
 						document.getElementById("sim_pin_tr").style.display="";
 						document.getElementById("sim_pin_hd").innerHTML = "<#Mobile_new_pin#>";							
 						document.getElementById("save_pin_ckb_span").style.display = "none";
@@ -307,7 +318,7 @@ function setPin(){
 		}
 	}
 	else{
-		document.getElementById("pincode_status").innerHTML='Please input the SIM PIN!';
+		document.getElementById("pincode_status").innerHTML="<#Mobile_pin_hint#>";
 		document.getElementById("pincode_status").style.display="";
 	}	
 }
@@ -322,7 +333,7 @@ function unblock_pin(){
 		puk_check = 1;
 	}	
 	else{
-		document.getElementById("puk_status").innerHTML='&nbsp;&nbsp;Please input the SIM PUK!';
+		document.getElementById("puk_status").innerHTML="&nbsp;&nbsp;<#Mobile_puk_hint#>";
 		document.getElementById("puk_status").style.display="";
 	}	
 
@@ -337,7 +348,7 @@ function unblock_pin(){
 		}
 	}	
 	else{
-		document.getElementById("pincode_status").innerHTML='Please input the new SIM PIN! ';
+		document.getElementById("pincode_status").innerHTML="<#Mobile_pin_hint#>";
 		document.getElementById("pincode_status").style.display="";
 	}
 

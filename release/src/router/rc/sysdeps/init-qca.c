@@ -881,7 +881,7 @@ char *get_staifname(int band)
 
 char *get_vapifname(int band)
 {
-	return (char*) ((!band)? VAP_2G:VAP_5G);
+	return (char*) ((!band)? VPHY_2G:VPHY_5G);
 }
 
 char *__get_wlifname(int band, int subunit, char *buf)

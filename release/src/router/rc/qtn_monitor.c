@@ -280,9 +280,6 @@ QTN_RESET:
 	check_2nd_jffs();
 #endif
 
-//	while (rpc_qcsapi_get_channel(&p_channel) != 0 ){
-//		sleep(1);
-//	}
 	nvram_set("qtn_ready", "1");
 
 	if(nvram_get_int("AllLED") == 0) setAllLedOff();

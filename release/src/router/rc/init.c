@@ -306,7 +306,7 @@ virtual_radio_restore_defaults(void)
 void
 misc_ioctrl(void)
 {
-#if defined(RTAC87U) || defined(RTAC3200)
+#if defined(RTAC87U) || defined(RTAC3200) || defined(RTAC5300) || defined(RTAC88U) || defined(RTAC3100)
 	/* default WAN_RED on  */
 	if (nvram_get_int("sw_mode") == SW_MODE_ROUTER) {
 		led_control(LED_WAN, LED_ON);
@@ -314,20 +314,6 @@ misc_ioctrl(void)
 		eval("et", "robowr", "0", "0x1a", "0x01fe");
 	}
 #endif
-	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER ||
-		((nvram_get_int("sw_mode") == SW_MODE_AP) && (nvram_get_int("wlc_psta") == 1)))
-	{
-#if 0		/* don't do this to save ports */
-		/* disable WAN-port phy */
-#ifdef RTCONFIG_BCMARM
-		int mask = 0;
-		if(wan_phyid >= 0){
-			mask |= (0x0001<<wan_phyid);
-			set_phy_ctrl(mask, 0);
-		}
-#endif
-#endif
-	}
 }
 
 /* assign none-exist value */
@@ -2277,8 +2263,6 @@ int init_nvram(void)
 		nvram_set("wl1_HT_TxStream", "2");
 		nvram_set("wl1_HT_RxStream", "2");
 
-		if (nvram_get_int("sw_mode")==SW_MODE_AP) 
-				add_lan_phy("eth3");
 		break;	
 		
 #endif	/* RTN56UB1 */
@@ -3501,8 +3485,11 @@ int init_nvram(void)
 		break;
 
 	case MODEL_RTAC5300:
+		nvram_set("2:ledbh9", "0x7");
 	case MODEL_RTAC88U:
 	case MODEL_RTAC3100:
+		nvram_set("0:ledbh9", "0x7");
+		nvram_set("1:ledbh9", "0x7");
 #ifdef RTCONFIG_RGMII_BRCM5301X
 		nvram_unset("et0macaddr");
 		nvram_unset("et0mdcport");
@@ -3615,9 +3602,9 @@ int init_nvram(void)
 		/* UART1_TX,  13 */
 		/* UART1_CTS, 14*/
 		/* UART1_RTS, 15 */
-		nvram_set_int("led_usb_gpio", 16|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_usb_gpio", 17|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_usb3_gpio",  16|GPIO_ACTIVE_LOW);
-		nvram_set_int("led_mmc_gpio",  17|GPIO_ACTIVE_LOW);
+		//nvram_set_int("led_mmc_gpio",  17|GPIO_ACTIVE_LOW);	/* abort */
 		nvram_set_int("led_wps_gpio", 19|GPIO_ACTIVE_LOW);
 		if(model == MODEL_RTAC5300) {
 			nvram_set_int("btn_wltog_gpio", 20|GPIO_ACTIVE_LOW);
@@ -4697,7 +4684,7 @@ int init_nvram(void)
 #endif
 
 #ifdef RTCONFIG_WIRELESSREPEATER
-#ifndef RTCONFIG_DISABLE_REPEATER_UI
+#if !defined(RTCONFIG_DISABLE_REPEATER_UI) && !defined(RTCONFIG_QCA)
 	add_rc_support("repeater");
 #endif
 #endif

@@ -516,7 +516,7 @@ flash_init(void)
 
 	bootdev = soc_boot_dev((void *)sih);
 
-        if(nvram_match("nospare", "1"))
+        if(!nvram_match("nospare", "0"))
                 nospare = 1;
         else
                 nospare = 0;

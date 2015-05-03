@@ -445,7 +445,7 @@ static int usage(void)
 	"	-e		Write logmessages to stderr\n"
 	"	-v		Increase logging verbosity\n"
 	"	-h		Show this help\n\n";
-	write(STDERR_FILENO, buf, sizeof(buf));
+	fputs(buf, stderr);
 	return 1;
 }
 
@@ -654,9 +654,9 @@ uint32_t odhcp6c_elapsed(void)
 }
 
 
-void odhcp6c_random(void *buf, size_t len)
+int odhcp6c_random(void *buf, size_t len)
 {
-	read(urandom_fd, buf, len);
+	return read(urandom_fd, buf, len);
 }
 
 bool odhcp6c_is_bound(void)

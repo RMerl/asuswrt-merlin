@@ -600,9 +600,9 @@ function regen_auto_option(obj){
 				<div id="disconnect_hint" style="display:none;"><#Main_alert_proceeding_desc2#></div>
 				<br/>
 		    </div>
-			<div id="wireless_client_detect" style="margin-left:10px;position:absolute;display:none">
+			<div id="wireless_client_detect" style="margin-left:10px;position:absolute;display:none;width:400px;">
 				<img src="images/loading.gif">
-				<div style="margin:-45px 0 0 75px;"><#QKSet_Internet_Setup_fail_method1#></div>
+				<div style="margin:-55px 0 0 75px;"><#QKSet_Internet_Setup_fail_method1#></div>
 			</div> 
 			<div class="drImg"><img src="images/alertImg.png"></div>
 			<div style="height:100px; "></div>

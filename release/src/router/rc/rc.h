@@ -810,6 +810,7 @@ extern int write_3g_ppp_conf(void);
 //dsl.c
 extern void dsl_configure(int req);
 extern void start_dsl(void);
+extern void stop_dsl(void);
 extern void remove_dsl_autodet(void);
 extern void dsl_defaults(void);
 #endif

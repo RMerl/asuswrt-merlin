@@ -811,7 +811,7 @@ function add_option_count(obj, obj_t, selected_flag){
 }
 
 function hotstandby_act(enable){
-	var confirm_str_on = "Enabling Hot-Standby will make Mobile Broadband be enabled if Mobile Braodband is disabled. Are you sure you want to enable it?";
+	var confirm_str_on = "<#Wans_standby_hint#>";
 	if(enable){
 		if(mobile_enable_orig == "0"){
 			if(confirm(confirm_str_on)){
@@ -891,19 +891,20 @@ function hotstandby_act(enable){
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
 													$j('#radio_dualwan_enable').iphoneSwitch(wans_dualwan_orig.split(' ')[1] != 'none',
-														 function() {												 													 	
+														 function() {
 															wans_flag = 1;
-															inputCtrl(document.form.wans_second, 1);												
-															form_show(wans_flag);														
+															inputCtrl(document.form.wans_second, 1);
+															form_show(wans_flag);
 														 },
 														 function() {
 															wans_flag = 0;
 															document.form.wans_dualwan.value = document.form.wans_primary.value + ' none';
-															form_show(wans_flag);													
+															form_show(wans_flag);
+															document.form.wans_mode.value = "fo";
 														 }
 													);
-												</script>			
-												</div>	
+												</script>
+												</div>
 											</td>
 										</tr>
 
@@ -955,7 +956,7 @@ function hotstandby_act(enable){
 									  	</tr>
 
 							<tr id="wans_standby_tr" style="display:none;">
-								<th>Enable Hot-Standby</th>
+								<th><#Standby_str#></th>
 						        <td>
 									<select name="wans_standby" id="wans_standby" class="input_option" onchange="hotstandby_act(this.value);">
 										<option value="1" <% nvram_match("wans_standby", "1", "selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>

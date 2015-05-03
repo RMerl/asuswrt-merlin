@@ -681,10 +681,14 @@ static void build_wan_lan_mask(int stb)
 		stb = 0;
 	}
 
-	wan_mask = lan_wan_partition[stb];
-	 //for MT7621, port 5 is the part of wan-ports
-	lan_mask = ((1<<(NR_WANLAN_PORT+1)) -1) & ~lan_wan_partition[stb];
-
+	wan_mask = lan_wan_partition[stb];	
+#if defined(RTCONFIG_RALINK_MT7621)
+		//discard port 5
+	if (sw_mode == SW_MODE_AP || sw_mode == SW_MODE_REPEATER)
+		lan_mask = ((1<<(NR_WANLAN_PORT)) -1) & ~lan_wan_partition[stb];
+	else
+#endif		//for MT7621, port 5 is the part of wan-ports
+		lan_mask = ((1<<(NR_WANLAN_PORT+1)) -1) & ~lan_wan_partition[stb];
 	//DUALWAN
 	if (wanscap_lan) {
 		wans_lan_mask = 1U << lan_id_to_port_nr(wans_lanport);

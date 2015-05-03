@@ -312,7 +312,7 @@ void btn_check(void)
 			TRACE_PT("button LED pressed\n");
 			nvram_set("btn_led", "1");
 		}
-#if defined(RTAC68U) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
+#if defined(RTAC68U)
 		else
 		{
 			TRACE_PT("button LED released\n");
@@ -735,8 +735,10 @@ void btn_check(void)
 				eval("wl", "ledbh", "9", "7");
 #endif
 				eval("wl", "ledbh", "10", "7");
-#elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
+#elif defined(RTAC3200)
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+#elif defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
+				eval("wl", "-i", "eth2", "ledbh", "9", "7");
 #endif
 			}
 			if (wlonunit == -1 || wlonunit == 1) {
@@ -746,13 +748,19 @@ void btn_check(void)
 				eval("wl", "-i", "eth2", "ledbh", "9", "7");
 #endif
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
-#elif defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
+#elif defined(RTAC3200)
 				eval("wl", "ledbh", "10", "7");
+#elif defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
+				eval("wl", "ledbh", "9", "7");
 #endif
 			}
-#if defined(RTAC3200) || defined(RTAC5300) 
+#if defined(RTAC3200)
 			if (wlonunit == -1 || wlonunit == 2) {
 				eval("wl", "-i", "eth3", "ledbh", "10", "7");
+			}
+#elif defined(RTAC5300) 
+			if (wlonunit == -1 || wlonunit == 2) {
+				eval("wl", "-i", "eth3", "ledbh", "9", "7");
 			}
 #endif
 #ifdef RTAC68U
@@ -1383,6 +1391,7 @@ unsigned long get_etlan_count()
 	return counter1;
 }
 
+static int lstatus = 0;
 void fake_etlan_led(void)
 {
 	static unsigned int blink_etlan_check = 0;
@@ -1393,6 +1402,17 @@ void fake_etlan_led(void)
 	static int j;
 	static int status = -1;
 	static int status_old;
+
+	if(nvram_match("AllLED", "0"))
+		return;
+	
+	if(!GetPhyStatus()) {
+		if(lstatus)
+			led_control(LED_LAN, LED_OFF);
+		lstatus = 0;
+		return;
+	}
+	lstatus = 1;
 
 	// check data per 10 count
 	if((blink_etlan_check%10)==0) {
@@ -2086,7 +2106,7 @@ static void auto_firmware_check()
 		}
 	}
 #ifdef RTAC68U
-	else if (nvram_match("bl_version", "2.1.2.4")) {
+	else if (After(get_blver(nvram_safe_get("bl_version")), get_blver("2.1.2.1"))) {
 		periodic_check = 1;
 		nvram_set_int("fw_check_period", 10);
 	}
@@ -2113,7 +2133,7 @@ static void auto_firmware_check()
 		{
 			dbg("retrieve firmware information\n");
 #ifdef RTAC68U
-			if (!nvram_match("bl_version", "2.1.2.2"))
+			if (!After(get_blver(nvram_safe_get("bl_version")), get_blver("2.1.2.1")))
 				return;
 
 			if (!nvram_match("login_ip", ""))
@@ -2813,7 +2833,7 @@ watchdog_main(int argc, char *argv[])
 	pre_sw_mode=nvram_get_int("sw_mode");
 #endif
 
-	if ((nvram_get_int("sw_mode") == SW_MODE_AP) && (nvram_get_int("wlc_psta") == 1))
+	if ((nvram_get_int("sw_mode") == SW_MODE_AP) && nvram_get_int("wlc_psta"))
 		wlonunit = nvram_get_int("wlc_band");
 
 #ifdef RTCONFIG_RALINK

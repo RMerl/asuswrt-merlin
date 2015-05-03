@@ -201,8 +201,8 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
-#obj-$(RTCONFIG_DHDAP) += pciefd dhd
-#obj-$(RTCONFIG_DHDAP) += dhd
+obj-$(RTCONFIG_DHDAP) += pciefd dhd
+obj-$(RTCONFIG_DHDAP) += dhd
 obj-y += busybox
 obj-y += shared
 obj-y += nvram$(BCMEX)
@@ -350,7 +350,7 @@ obj-$(RTCONFIG_USB_MODEM) += comgt-0.32
 obj-$(RTCONFIG_USB_MODEM) += uqmi
 
 ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
-ifeq ($(or $(RTN65U),$(RTAC55U),$RTAC55UHP)),y)
+ifeq ($(or $(RTN65U),$(RTAC55U),$(RTAC55UHP)),y)
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
 else
 obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.2.0
@@ -1495,6 +1495,7 @@ pciefd-install :
 
 ifeq ($(RTCONFIG_DHDAP),y)
 dhd:
+	@true
 ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
 	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe
 endif

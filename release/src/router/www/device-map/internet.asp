@@ -528,9 +528,10 @@ function manualSetup(){
 <input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>">
 <input type="hidden" name="wan_unit" value="<% get_wan_unit(); %>">
 <input type="hidden" name="dslx_link_enable" value="" disabled>
+<input type="hidden" name="wans_mode" value='<% nvram_get("wans_mode"); %>'>
 <table border="0" cellpadding="0" cellspacing="0">
 	<tr>
-		<td>		
+		<td>
 			<table width="100px" border="0" align="left" style="margin-left:8px;" cellpadding="0" cellspacing="0">
 				<td>
 					<div id="t0" class="tabclick_NW" align="center" style="font-weight: bolder;display:none; margin-right:2px; width:90px;" onclick="loadBalance_form(0);">
@@ -595,16 +596,17 @@ function manualSetup(){
 								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
 								document.internetForm.action_script.value = "reboot";
 								parent.showLoading();
-								document.internetForm.submit();	
+								document.internetForm.submit();
 								return true;
 							 },
 							 function() {
 								document.internetForm.wans_dualwan.value = wans_dualwan.split(" ")[0]+" none";
 								document.internetForm.wan_unit.value = 0;
 								document.internetForm.action_wait.value = '<% get_default_reboot_time(); %>';
-								document.internetForm.action_script.value = "reboot";								
+								document.internetForm.action_script.value = "reboot";
+								document.internetForm.wans_mode.value = "fo";
 								parent.showLoading();
-								document.internetForm.submit();	
+								document.internetForm.submit();
 								return true;
 							 }
 						);

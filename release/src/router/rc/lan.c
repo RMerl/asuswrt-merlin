@@ -403,10 +403,14 @@ GEN_CONF:
 					"0x6ac", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a8", "0x30", "0x6a4", "0x30", "0x6a0", "0x30");
 #endif
 #ifdef RTAC3200
-				if (   nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
-				       nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
-				       eval("wl", "-i", ifname, "radarthrs",
-				       "0x698", "0x30", "0x698", "0x30", "0x68c", "0x30", "0x6d0", "0x30", "0x6d0", "0x30", "0x6c6", "0x30");
+				if (	nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))
+					eval("wl", "-i", ifname, "radarthrs",
+					"0x698", "0x30", "0x698", "0x30", "0x68c", "0x30", "0x6d0", "0x30", "0x6d0", "0x30", "0x6c6", "0x30");
+				else if (nvram_match(strcat_r(prefix, "country_code", tmp), "JP") &&
+					nvram_match(strcat_r(prefix, "country_rev", tmp), "999"))
+					eval("wl", "-i", ifname, "radarthrs",
+					"0x690", "0x30", "0x68a", "0x30", "0x68e", "0x30", "0x694", "0x30", "0x693", "0x30", "0x6a8", "0x30");
 #endif
 			}
 #endif
@@ -943,7 +947,7 @@ void start_wl(void)
 	if (nvram_match("wl1_radio", "1"))
 	{
 #ifndef RTCONFIG_LED_BTN
-		if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta")==1 && nvram_get_int("wlc_band")==0)) {
+		if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta") && nvram_get_int("wlc_band")==0)) {
 			nvram_set("led_5g", "1");
 			led_control(LED_5G, LED_ON);
 		}
@@ -3029,30 +3033,46 @@ static void led_bh_prep(int post)
 		case MODEL_RTAC3100:
 			if(post)
 			{
+#if defined(RTAC88U) || defined(RTAC3100)
+				eval("wl", "ledbh", "9", "7");
+				eval("wl", "-i", "eth2", "ledbh", "9", "7");
+#else
 				eval("wl", "ledbh", "10", "7");
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+#endif
+
 #ifdef RTCONFIG_LEDARRAY
 				eval("wl", "ledbh", "9", "7");
 				eval("wl", "ledbh", "0", "7");
 				eval("wl", "-i", "eth2", "ledbh", "9", "7");
 				eval("wl", "-i", "eth2", "ledbh", "0", "7");
 #endif
-#ifdef RTAC3200
+#if defined(RTAC3200)
 				eval("wl", "-i", "eth3", "ledbh", "10", "7");
+#elif defined(RTAC5300)
+				eval("wl", "-i", "eth3", "ledbh", "9", "7");
 #endif
 			}
 			else
 			{
+#if defined(RTAC88U) || defined(RTAC3100)
+				eval("wl", "ledbh", "9", "1");
+				eval("wl", "-i", "eth2", "ledbh", "9", "1");
+#else
 				eval("wl", "ledbh", "10", "1");
 				eval("wl", "-i", "eth2", "ledbh", "10", "1");
+#endif
+
 #ifdef RTCONFIG_LEDARRAY
 				eval("wl", "ledbh", "9", "1");
 				eval("wl", "ledbh", "0", "1");
 				eval("wl", "-i", "eth2", "ledbh", "9", "1");
 				eval("wl", "-i", "eth2", "ledbh", "0", "1");
 #endif
-#ifdef RTAC3200
+#if defined(RTAC3200)
 				eval("wl", "-i", "eth3", "ledbh", "10", "1");
+#elif defined(RTAC5300)
+				eval("wl", "-i", "eth3", "ledbh", "9", "1");
 #endif
 #ifdef BCM4352
 				led_control(LED_5G, LED_ON);
@@ -3064,7 +3084,7 @@ static void led_bh_prep(int post)
 				eval("wl", "maxassoc", "0");
 				eval("wlconf", "eth2", "up");
 				eval("wl", "-i", "eth2", "maxassoc", "0");
-#if defined(RTAC3200)
+#if defined(RTAC3200) || defined(RTAC5300)
 				eval("wlconf", "eth3", "up");
 				eval("wl", "-i", "eth3", "maxassoc", "0");
 #endif
@@ -3876,7 +3896,7 @@ void restart_wl(void)
 	if (nvram_match("wl1_radio", "1"))
 	{
 #ifndef RTCONFIG_LED_BTN
-		if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta")==1 && nvram_get_int("wlc_band")==0)) {
+		if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta") && nvram_get_int("wlc_band")==0)) {
 			nvram_set("led_5g", "1");
 			led_control(LED_5G, LED_ON);
 		}

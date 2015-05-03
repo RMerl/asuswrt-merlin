@@ -533,6 +533,8 @@ function openLink(s){
 			tourl = "https://account.dyn.com/services/zones/svc/add.html?_add_dns=c&trial=standarddns";
 		else if (document.form.ddns_server_x.value == 'WWW.ZONEEDIT.COM')
 			tourl = "http://www.zoneedit.com/";
+		else if (document.form.ddns_server_x.value == 'WWW.SELFHOST.DE')
+			tourl = "http://WWW.SELFHOST.DE";
 		else if (document.form.ddns_server_x.value == 'WWW.DNSOMATIC.COM')
 			tourl = "http://dnsomatic.com/create/";
 		else if (document.form.ddns_server_x.value == 'WWW.TUNNELBROKER.NET')

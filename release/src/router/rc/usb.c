@@ -806,6 +806,7 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 					if(strncmp(type, "ext", 3)){
 						syslog(LOG_INFO, "USB %s(%s) failed to mount at the first try!", mnt_dev, type);
 						TRACE_PT("USB %s(%s) failed to mount At the first try!\n", mnt_dev, type);
+						logmessage("usb", "USB %s(%s) failed to mount At the first try!\n", mnt_dev, type);
 					}
 					else{
 						if(!strcmp(type, "ext4")){
@@ -826,6 +827,7 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 						if(ret != 0){
 							syslog(LOG_INFO, "USB %s(ext) failed to mount at the first try!", mnt_dev);
 							TRACE_PT("USB %s(ext) failed to mount at the first try!\n", mnt_dev);
+							logmessage("usb", "USB %s(ext) failed to mount at the first try!\n", mnt_dev);
 						}
 					}
 				}
@@ -881,6 +883,8 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 				syslog(LOG_INFO, "USB %s%s fs at %s mounted on %s",
 						type, (flags & MS_RDONLY) ? " (ro)" : "", mnt_dev, mnt_dir);
 				TRACE_PT("USB %s%s fs at %s mounted on %s.\n",
+						type, (flags & MS_RDONLY) ? " (ro)" : "", mnt_dev, mnt_dir);
+				logmessage("usb", "USB %s%s fs at %s mounted on %s.\n",
 						type, (flags & MS_RDONLY) ? " (ro)" : "", mnt_dev, mnt_dir);
 				return (flags & MS_RDONLY) ? MOUNT_VAL_RONLY : MOUNT_VAL_RW;
 			}
@@ -1359,11 +1363,13 @@ done:
 						&& strcmp(type, "ext4")
 						){
 					cprintf("asusware: umount partition %s...\n", dev_name);
+					logmessage("asusware", "umount partition %s...\n", dev_name);
 					diskmon_status(DISKMON_UMOUNT);
 
 					findmntents(dev_name, 0, umount_mountpoint, EFH_HP_REMOVE);
 
 					cprintf("asusware: Automatically scan partition %s...\n", dev_name);
+					logmessage("asusware", "Automatically scan partition %s...\n", dev_name);
 					diskmon_status(DISKMON_SCAN);
 
 					memset(command, 0, PATH_MAX);
@@ -1371,11 +1377,13 @@ done:
 					system(command);
 
 					cprintf("asusware: re-mount partition %s...\n", dev_name);
+					logmessage("asusware", "re-mount partition %s...\n", dev_name);
 					diskmon_status(DISKMON_REMOUNT);
 
 					ret = mount_r(dev_name, mountpoint, type);
 
 					cprintf("asusware: done.\n");
+					logmessage("asusware", "done.\n");
 					diskmon_status(DISKMON_FINISH);
 				}
 
@@ -3472,14 +3480,17 @@ static void diskmon_sighandler(int sig)
 	switch(sig) {
 		case SIGTERM:
 			cprintf("disk_monitor: Finish!\n");
+			logmessage("disk_monitor", "Finish");
 			unlink("/var/run/disk_monitor.pid");
 			diskmon_signal = sig;
 			exit(0);
 		case SIGUSR1:
+			logmessage("disk_monitor", "Check status: %d.", diskmon_status(-1));
 			cprintf("disk_monitor: Check status: %d.\n", diskmon_status(-1));
 			diskmon_signal = sig;
 			break;
 		case SIGUSR2:
+			logmessage("disk_monitor", "Scan manually...");
 			cprintf("disk_monitor: Scan manually...\n");
 			diskmon_status(DISKMON_START);
 			start_diskscan(-1);
@@ -3488,6 +3499,7 @@ static void diskmon_sighandler(int sig)
 			diskmon_signal = sig;
 			break;
 		case SIGALRM:
+			logmessage("disk_monitor", "Got SIGALRM...");
 			cprintf("disk_monitor: Got SIGALRM...\n");
 			diskmon_signal = sig;
 			break;

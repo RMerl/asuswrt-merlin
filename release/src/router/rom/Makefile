@@ -184,8 +184,8 @@ else
 ifeq ($(and $(LJPG),$(SJPG),$(LPNG),$(SPNG)),)
 	$(warning Add media server icon for $(BUILD_NAME) !!!!!!!!!!!!)
 else
-	$(foreach f, icon_sm icon_lrg, cp -rf dlna/$(f).$(LCMODELNAME).jpg $(INSTALLDIR)/rom/dlna/$(f).jpg; \
-		cp -rf dlna/$(f).$(LCMODELNAME).png $(INSTALLDIR)/rom/dlna/$(f).png;)
+	$(foreach f, icon_sm icon_lrg, install -D dlna/$(f).$(LCMODELNAME).jpg $(INSTALLDIR)/rom/dlna/$(f).jpg; \
+		install -D dlna/$(f).$(LCMODELNAME).png $(INSTALLDIR)/rom/dlna/$(f).png;)
 endif
 endif
 endif

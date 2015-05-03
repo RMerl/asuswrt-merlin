@@ -742,6 +742,13 @@ typedef struct AVFormatContext {
      * - decoding: Unused.
      */
     int64_t start_time_realtime;
+
+    #ifndef NO_ASUS
+        /**
+         * The value is for MediaServer full scan flag.
+         */
+        short int ms_flag;
+    #endif
 } AVFormatContext;
 
 typedef struct AVPacketList {
@@ -925,6 +932,20 @@ int av_open_input_file(AVFormatContext **ic_ptr, const char *filename,
                        AVInputFormat *fmt,
                        int buf_size,
                        AVFormatParameters *ap);
+
+#ifndef NO_ASUS
+/**
+ * These functions is for MediaServer.
+ */
+int ms_av_open_input_file(AVFormatContext **ic_ptr, const char *filename,
+     	                  AVInputFormat *fmt,
+        	          int buf_size,
+                	  AVFormatParameters *ap);
+
+int ms_av_open_input_stream(AVFormatContext **ic_ptr,
+                         ByteIOContext *pb, const char *filename,
+                         AVInputFormat *fmt, AVFormatParameters *ap);
+#endif
 
 #if LIBAVFORMAT_VERSION_MAJOR < 53
 /**

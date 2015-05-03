@@ -268,13 +268,11 @@ void dsl_configure(int req)
 
 	if (req == 1)
 	{
-		check_and_set_comm_if();
 		convert_dsl_wan();
 	}
 
 	if (req == 2)
 	{
-		check_and_set_comm_if();
 #ifdef RTCONFIG_DSL_TCLINUX
 		eval("req_dsl_drv", "rmvlan", nvram_safe_get("dslx_rmvlan"));
 
@@ -444,11 +442,20 @@ void start_dsl()
 		_eval(argv_auto_det, NULL, 0, &pid);
 	}
 #endif	//nRTCONFIG_DSL_TCLINUX
+
+#ifdef RTCONFIG_DSL_TCLINUX
+	if(nvram_match("dslx_diag_enable", "1") && nvram_match("dslx_diag_state", "1"))
+		start_dsl_diag();
+#endif
 }
 
 void stop_dsl()
 {
-	// dsl service need not to stop
+#ifdef RTCONFIG_DSL_TCLINUX
+	eval("req_dsl_drv", "runtcc");
+	eval("req_dsl_drv", "dumptcc");
+#endif
+	eval("adslate", "quitdrv");
 }
 
 // a workaround handler, can be removed after bug found

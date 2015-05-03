@@ -1285,7 +1285,8 @@ void generate_switch_para(void)
 			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) ? SWCFG_DEFAULT : cfg;
 			wan_phyid = ports[0];	// record the phy num of the wan port on the case
 
-#ifdef RTCONFIG_DUALWAN
+#if 0
+//#ifdef RTCONFIG_DUALWAN
                         if(cfg != SWCFG_BRIDGE){
                                 int wan1cfg = nvram_get_int("wans_lanport");
 
@@ -1357,7 +1358,7 @@ void generate_switch_para(void)
                         }
                         else{
                                 switch_gen_config(lan, ports, cfg, 0, "*");
-                                switch_gen_config(wan, ports, wancfg, 1, "");
+                                switch_gen_config(wan, ports, wancfg, 1, "u");
                                 nvram_set("vlan1ports", lan);
                                 nvram_set("vlan2ports", wan);
                                 switch_gen_config(lan, ports, cfg, 0, NULL);
@@ -1368,7 +1369,7 @@ void generate_switch_para(void)
                         }
 #else
                         switch_gen_config(lan, ports, cfg, 0, "*");
-                        switch_gen_config(wan, ports, wancfg, 1, "");
+                        switch_gen_config(wan, ports, wancfg, 1, "u");
                         nvram_set("vlan1ports", lan);
                         nvram_set("vlan2ports", wan);
                         switch_gen_config(lan, ports, cfg, 0, NULL);
@@ -1393,7 +1394,8 @@ void generate_switch_para(void)
 			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) ? SWCFG_DEFAULT : cfg;
 			wan_phyid = ports[0];	// record the phy num of the wan port on the case
 
-#ifdef RTCONFIG_DUALWAN
+#if 0
+//#ifdef RTCONFIG_DUALWAN
                         if(cfg != SWCFG_BRIDGE){
                                 int wan1cfg = nvram_get_int("wans_lanport");
 
@@ -1465,7 +1467,7 @@ void generate_switch_para(void)
                         }
                         else{
                                 switch_gen_config(lan, ports, cfg, 0, "*");
-                                switch_gen_config(wan, ports, wancfg, 1, "");
+                                switch_gen_config(wan, ports, wancfg, 1, "u");
                                 nvram_set("vlan1ports", lan);
                                 nvram_set("vlan2ports", wan);
                                 switch_gen_config(lan, ports, cfg, 0, NULL);
@@ -1476,7 +1478,7 @@ void generate_switch_para(void)
                         }
 #else
                         switch_gen_config(lan, ports, cfg, 0, "*");
-                        switch_gen_config(wan, ports, wancfg, 1, "");
+                        switch_gen_config(wan, ports, wancfg, 1, "u");
                         nvram_set("vlan1ports", lan);
                         nvram_set("vlan2ports", wan);
                         switch_gen_config(lan, ports, cfg, 0, NULL);
@@ -2179,14 +2181,14 @@ void init_syspara(void)
 		case MODEL_RTAC68U:
 		case MODEL_RTAC56S:
 		case MODEL_RTAC56U:
-		case MODEL_RTAC5300:
-		case MODEL_RTAC88U:
-		case MODEL_RTAC3100:
+		//case MODEL_RTAC5300:
+		//case MODEL_RTAC88U:
+		//case MODEL_RTAC3100:
 			if (!nvram_get("et0macaddr"))	//eth0, eth1
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");
-			//if (!nvram_get("1:macaddr"))	//eth2(5G)
-			//	nvram_set("1:macaddr", "00:22:15:A5:03:04");
-			//nvram_set("0:macaddr", nvram_safe_get("et0macaddr"));
+			if (!nvram_get("1:macaddr"))	//eth2(5G)
+				nvram_set("1:macaddr", "00:22:15:A5:03:04");
+			nvram_set("0:macaddr", nvram_safe_get("et0macaddr"));
 			break;
 
 		case MODEL_RTAC3200:
@@ -2594,9 +2596,10 @@ int set_wltxpower()
 		&& (model != MODEL_RTAC68U)
 		&& (model != MODEL_RTAC3200)
 		&& (model != MODEL_RTN18U)
-		&& (model != MODEL_RTAC5300)
-		&& (model != MODEL_RTAC3100)
-		&& (model != MODEL_RTAC88U))
+		//&& (model != MODEL_RTAC5300)
+		//&& (model != MODEL_RTAC3100)
+		//&& (model != MODEL_RTAC88U)
+		)
 	{
 		dbG("\n\tDon't do this!\n\n");
 		return -1;
@@ -2662,9 +2665,9 @@ int set_wltxpower()
 			case MODEL_RTAC87U:
 			case MODEL_RTAC56S:
 			case MODEL_RTAC56U:
-			case MODEL_RTAC5300:
-			case MODEL_RTAC3100:
-			case MODEL_RTAC88U:
+			//case MODEL_RTAC5300:
+			//case MODEL_RTAC3100:
+			//case MODEL_RTAC88U:
 				snprintf(prefix2, sizeof(prefix2), "%d:", unit);
 				break;
 
@@ -4806,6 +4809,42 @@ int wl_max_no_vifs(int unit)
 	return max_no_vifs;
 }
 
+#if defined(RTCONFIG_BCM7) && defined(BCM_BSD)
+
+#define BSD_STA_SELECT_POLICY_NVRAM		"bsd_sta_select_policy"
+#define BSD_STA_SELECT_POLICY_FLAG_NON_VHT	0x00000008	/* NON VHT STA */
+#define BSD_IF_QUALIFY_POLICY_NVRAM		"bsd_if_qualify_policy"
+#define BSD_QUALIFY_POLICY_FLAG_NON_VHT		0x00000004	/* NON VHT STA */
+
+int get_bsd_nonvht_status(int unit)
+{
+	char tmp[100], prefix[]="wlXXXXXXX_";
+	char *str;
+	int num;
+	unsigned int i1,i2,i3,i4,i5,i6,i7,i8,i9,ia;
+	unsigned int flags;
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	str = nvram_get(strcat_r(prefix, BSD_STA_SELECT_POLICY_NVRAM, tmp));
+	if (str) {
+		num = sscanf(str, "%d %d %d %d %d %d %d %d %d %d %x",
+			&i1, &i2, &i3, &i4, &i5, &i6, &i7, &i8, &i9, &ia, &flags);
+		if ((num == 11) && (flags & BSD_STA_SELECT_POLICY_FLAG_NON_VHT))
+			return 1;
+	}
+
+	str = nvram_get(strcat_r(prefix, BSD_IF_QUALIFY_POLICY_NVRAM, tmp));
+	if (str) {
+		num = sscanf(str, "%d %x", &i1, &flags);
+		if ((num == 2) && (flags & BSD_QUALIFY_POLICY_FLAG_NON_VHT))
+			return 1;
+	}
+
+	return 0;
+}
+#endif
+
 void generate_wl_para(int unit, int subunit)
 {
 	dbG("unit %d subunit %d\n", unit, subunit);
@@ -4981,8 +5020,12 @@ void generate_wl_para(int unit, int subunit)
 #ifdef RTCONFIG_PROXYSTA
 		if (is_psta(unit))
 			nvram_set(strcat_r(prefix, "bss_enabled", tmp), "0");
-		else if (is_psr(unit))
-			nvram_set(strcat_r(prefix, "bss_enabled", tmp), "1");
+		else if (is_psr(unit)) {
+			if (subunit == 1)
+				nvram_set(strcat_r(prefix, "bss_enabled", tmp), "1");
+			else
+				nvram_set(strcat_r(prefix, "bss_enabled", tmp), "0");
+		}
 #endif
 #endif
 	}
@@ -5035,10 +5078,8 @@ void generate_wl_para(int unit, int subunit)
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-	if (is_psta(unit) || is_psr(unit))
-	{
-		if (subunit == -1)
-		{
+	if (is_psta(unit) || is_psr(unit)) {
+		if (subunit == -1) {
 			nvram_set(strcat_r(prefix, "ssid", tmp), nvram_safe_get("wlc_ssid"));
 			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), nvram_safe_get("wlc_auth_mode"));
 			nvram_set(strcat_r(prefix, "wep_x", tmp), nvram_safe_get("wlc_wep"));
@@ -5053,6 +5094,10 @@ void generate_wl_para(int unit, int subunit)
 				nvram_set(strcat_r(prefix, "bw", tmp), "3");
 			else
 				nvram_set(strcat_r(prefix, "bw", tmp), "2");
+		}
+
+		if (is_psr(unit) && (subunit == 1)) {
+			/* TODO: local AP profile */
 		}
 	}
 #endif
@@ -5249,6 +5294,11 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "gmode", tmp), nvram_match(strcat_r(prefix, "nband", tmp2), "2") ? "1" : "-1");	// 1: 54g Auto, 4: 4g Performance, 5: 54g LRS, 0: 802.11b Only
 			nvram_set(strcat_r(prefix, "rate", tmp), "0");
 #ifdef RTCONFIG_BCMWL6
+#if defined(RTCONFIG_BCM7) && defined(BCM_BSD)
+			if (nvram_get_int("smart_connect_x") && get_bsd_nonvht_status(unit))
+				nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "3");	// devices must advertise VHT (11ac) capabilities to be allowed to associate
+			else
+#endif
 			nvram_set(strcat_r(prefix, "bss_opmode_cap_reqd", tmp), "0");	// no requirements on joining devices
 #endif
 		}
@@ -5535,8 +5585,10 @@ void generate_wl_para(int unit, int subunit)
 			       (nvram_match(strcat_r(prefix, "country_code", tmp), "JP") &&
                                 nvram_match(strcat_r(prefix, "country_rev", tmp), "47"))*/)) ||
 				((get_model() == MODEL_RTAC3200) &&
-				nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
+				((nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
 				nvram_match(strcat_r(prefix, "country_rev", tmp), "13")) ||
+			       (nvram_match(strcat_r(prefix, "country_code", tmp), "JP") &&
+				nvram_match(strcat_r(prefix, "country_rev", tmp), "999")))) ||
                                 ((get_model() == MODEL_RTAC66U) &&
 				(nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") || nvram_match(strcat_r(prefix, "reg_mode", tmp), "d")) &&
                                 nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&

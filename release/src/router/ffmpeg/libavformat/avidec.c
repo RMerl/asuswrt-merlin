@@ -590,9 +590,17 @@ static int avi_read_header(AVFormatContext *s, AVFormatParameters *ap)
             break;
         case MKTAG('i', 'n', 'd', 'x'):
             i= url_ftell(pb);
+#ifndef NO_ASUS
+            if (s->ms_flag != 1) { // Process indx.
+#endif
             if(!url_is_streamed(pb) && !(s->flags & AVFMT_FLAG_IGNIDX)){
                 read_braindead_odml_indx(s, 0);
             }
+#ifndef NO_ASUS
+	    }
+	    else
+	    	; // Skip process indx and reduce memory usage.
+#endif
             url_fseek(pb, i+size, SEEK_SET);
             break;
         case MKTAG('v', 'p', 'r', 'p'):

@@ -2648,7 +2648,7 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 						led_control(LED_WAN, LED_OFF);
 #elif defined(RTCONFIG_DSL)
 						led_control(LED_WAN, LED_OFF);
-#elif defined(RTAC87U) || defined(RTAC3200)
+#elif defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
 						if(nvram_match("AllLED", "1")){
 							led_control(LED_WAN, LED_ON);
 							eval("et", "robowr", "0", "0x18", "0x01fe");
@@ -2716,7 +2716,7 @@ _dprintf("wanduck(%d) 6: conn_state %d, conn_state_old %d, conn_changed_state %d
 						led_control(LED_WAN, LED_OFF);
 #elif defined(DSL_N55U) || defined(DSL_N55U_B)
 					led_control(LED_WAN, LED_ON);
-#elif defined(RTAC87U) || defined(RTAC3200)
+#elif defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
 					if(nvram_match("AllLED", "1")){
 						led_control(LED_WAN, LED_OFF);
 						eval("et", "robowr", "0", "0x18", "0x01ff");

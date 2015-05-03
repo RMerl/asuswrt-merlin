@@ -441,6 +441,10 @@ int av_open_input_stream(AVFormatContext **ic_ptr,
     ic->start_time = AV_NOPTS_VALUE;
     av_strlcpy(ic->filename, filename, sizeof(ic->filename));
 
+#ifndef NO_ASUS
+    ic->ms_flag = 0; // The function is not be called by Media Server full scan, so set 0.
+#endif
+
     /* allocate private data */
     if (fmt->priv_data_size > 0) {
         ic->priv_data = av_mallocz(fmt->priv_data_size);

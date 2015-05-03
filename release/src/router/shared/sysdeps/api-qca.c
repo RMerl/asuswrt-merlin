@@ -78,8 +78,8 @@ const char WIF_5G[] = "ath1";
 const char WIF_2G[] = "ath0";
 const char STA_5G[] = "sta1";
 const char STA_2G[] = "sta0";
-const char VAP_5G[] = "wifi1";
-const char VAP_2G[] = "wifi0";
+const char VPHY_5G[] = "wifi1";
+const char VPHY_2G[] = "wifi0";
 
 #define GPIOLIB_DIR	"/sys/class/gpio"
 

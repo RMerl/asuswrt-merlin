@@ -11,10 +11,12 @@
 #include "httpd.h"
 #include "sqlite3.h"
 
-//#define DATA_PERIOD		5184000	// 2 months = 2*30*24*60*60
-#define DATA_PERIOD		86400*3	// 3 day = 24*60*60 * 3
+#define LONGSIZE		4194304 // 2^22 (KB)
+
+#define DATA_PERIOD		2592000	// 1 months = 30*24*60*60
 #define TRAFFIC_CONTROL_FOLDER	"/jffs/traffic_control/"
 #define TRAFFIC_CONTROL_DATA	"/jffs/traffic_control/traffic_control.db"
+#define DAY			3600*24
 
 // traffic_control.c
 extern int traffic_control_main(char *type, char *q_if, char *q_te, char *q_ts);

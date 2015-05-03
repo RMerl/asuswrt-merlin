@@ -30,7 +30,7 @@ PF_EXT_SLIB+=account webmon
 
 ifeq ($(DO_IPV6), 1)
 PF6_EXT_SLIB:=connmark icmp6 length limit mac mark multiport standard state rt hl
-PF6_EXT_SLIB+=tcp udp u32 CONNMARK LOG MARK REJECT IMQ TCPMSS webstr
+PF6_EXT_SLIB+=tcp udp time u32 CONNMARK LOG MARK REJECT IMQ TCPMSS webstr
 ifeq ($(CONFIG_BCMWL5),y)
 PF6_EXT_SLIB+=SKIPLOG
 endif

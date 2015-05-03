@@ -622,7 +622,7 @@ void fini_wl(void)
 #if defined(RTAC1200HP)
 		//remove wifi driver, 5G wifi gpio led turn off 
 		sleep(1);	
-		led_5g_onoff();
+		led_onoff(1); 
 #endif
 	}
 #endif

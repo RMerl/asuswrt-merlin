@@ -516,11 +516,11 @@ function overHint(itemNum){
 					if( wans_dualwan_array[0] == "usb"){
 						if(modem_enable == "0"){
 							if(gobi_support)
-								statusmenu += "<div>Mobile Broadband is disabled.</div>";
+								statusmenu += "<div><#Mobile_disabled#></div>";
 							else
-								statusmenu += "<div>USB Modem is disabled.</div>";
+								statusmenu += "<div><#USB_disabled#></div>";
 						}
-						else{	
+						else{
 							if(sim_state != ""){
 								if(sim_state == "2"){
 									if( g3err_pin == "1" && pin_remaining_count < 3)
@@ -549,7 +549,7 @@ function overHint(itemNum){
 					}
 					else{
 						if(wan0_enable == 0){
-							statusmenu += "<span>WAN is disabled.</span>";
+							statusmenu += "<span><#WAN_disabled#></span>";
 						}
 						else{
 							if(first_link_auxstatus == "1"){
@@ -589,15 +589,15 @@ function overHint(itemNum){
 					if( wans_dualwan_array[0] == "usb"){
 						if(modem_enable == "0"){
 							if(gobi_support)
-								statusmenu += "<div>Mobile Broadband is disabled.</div>";
+								statusmenu += "<div><#Mobile_disabled#></div>";
 							else
-								statusmenu += "<div>USB Modem is disabled.</div>";							
+								statusmenu += "<div><#USB_disabled#></div>";							
 						}
 						else{	
 							if(sim_state != ""){
 								if(sim_state == "2"){
 									if( g3err_pin == "1" && pin_remaining_count < 3)
-										statusmenu += "<div>Wrong PIN code. Please input the correct PIN code.</div>";
+										statusmenu += "<div><#Mobile_wrong_pin#></div>";
 									else
 										statusmenu += "<div><#Mobile_need_pin#></div>";
 								}
@@ -622,7 +622,7 @@ function overHint(itemNum){
 					}
 					else{
 						if(wan0_enable == 0){
-							statusmenu += "<span>WAN is disabled.</span>";
+							statusmenu += "<span><#WAN_disabled#></span>";
 						}
 						else{
 							if(link_auxstatus == "1"){
@@ -695,9 +695,9 @@ function overHint(itemNum){
 					if( wans_dualwan_array[1] == "usb"){
 						if(modem_enable == "0"){
 							if(gobi_support)
-								statusmenu += "<div>Mobile Broadband is disabled.</div>";
+								statusmenu += "<div><#Mobile_disabled#></div>";
 							else
-								statusmenu += "<div>USB Modem is disabled.</div>";							
+								statusmenu += "<div><#USB_disabled#></div>";							
 						}
 						else{
 							if(sim_state != ""){
@@ -728,7 +728,7 @@ function overHint(itemNum){
 					}
 					else{
 						if(wan1_enable == 0){
-							statusmenu += "<span>WAN is disabled.</span>";
+							statusmenu += "<span><#WAN_disabled#></span>";
 						}
 						else{
 							if(secondary_link_auxstatus == "1"){
@@ -749,7 +749,7 @@ function overHint(itemNum){
 							else if(secondary_link_sbstatus == "5")
 								statusmenu += "<span><#web_redirect_reason5_1#></span>";
 							else if(secondary_link_sbstatus == "6")
-								statusmenu += "<span>System error. <#Reboot_manually#></span>";
+								statusmenu += "<span><#ALERT_OF_ERROR_System4#> <#Reboot_manually#></span>";
 							else
 								statusmenu += "<span><#Disconnected#></span>";
 						}		
@@ -823,12 +823,12 @@ function openHint(hint_array_id, hint_show_id, flag){
 		if(hint_show_id == 7){
 			statusmenu = "<span class='StatusClickHint' onclick='gotoModem();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
 			if(usb_index == -1){
-				statusmenu += "Go to Dual WAN Setting, and activate USB modem.</span>"
+				statusmenu += "<#Activate_usb#></span>"
 				_caption = "<#dualwan#>";
 			}
 			else{
 				if(gobi_support){
-					statusmenu += "Go to Mobile Broadband Setting.</span>"
+					statusmenu += "<#Mobile_setting_page#></span>"
 					_caption = "<#Mobile_title#>";
 				}
 				else{		
@@ -858,12 +858,12 @@ function openHint(hint_array_id, hint_show_id, flag){
 						statusmenu = "<span class='StatusClickHint' onclick='goToWAN(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
 						if(usb_index == 0){
 							if(gobi_support)
-								statusmenu += "Go to Mobile Broadband Setting.</span>";
+								statusmenu += "<#Mobile_setting_page#></span>";
 							else
 								statusmenu += "<#GO_HSDPA_SETTING#></span>";
 						}	
 						else
-							statusmenu += "Go to WAN Setting.</span>";	
+							statusmenu += "<#WAN_setting_page#></span>";	
 					}
 				}	
 				else{
@@ -874,12 +874,12 @@ function openHint(hint_array_id, hint_show_id, flag){
 						statusmenu += "<span class='StatusClickHint' onclick='goToWAN(0);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
 						if(usb_index == 0){
 							if(gobi_support)
-								statusmenu += "Go to Mobile Broadband Setting.</span>";
+								statusmenu += "<#Mobile_setting_page#></span>";
 							else
 								statusmenu += "<#GO_HSDPA_SETTING#></span>";
 						}	
 						else
-							statusmenu += "Go to WAN Setting.</span>";							
+							statusmenu += "<#WAN_setting_page#></span>";							
 					}
 
 					statusmenu += "<div class='StatusHint'><br><#dualwan_secondary#>:</div>";
@@ -889,12 +889,12 @@ function openHint(hint_array_id, hint_show_id, flag){
 						statusmenu += "<span class='StatusClickHint' onclick='goToWAN(1);' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
 						if(usb_index == 1){
 							if(gobi_support)
-								statusmenu += "Go to Mobile Broadband Setting.</span>";
+								statusmenu += "<#Mobile_setting_page#></span>";
 							else
 								statusmenu += "<#GO_HSDPA_SETTING#></span>";
 						}	
 						else
-							statusmenu += "Go to WAN Setting.</span>";							
+							statusmenu += "<#WAN_setting_page#></span>";							
 					}				
 				}
 			}

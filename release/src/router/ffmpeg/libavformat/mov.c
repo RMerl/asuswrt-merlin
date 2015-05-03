@@ -880,6 +880,14 @@ static int mov_read_stco(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
     st = c->fc->streams[c->fc->nb_streams-1];
     sc = st->priv_data;
 
+#ifndef NO_ASUS
+    if (c->fc->ms_flag == 1) {
+    	sc->chunk_count = 0;
+	url_fskip(pb, atom.size);
+	return 0;
+    }
+#endif
+
     get_byte(pb); /* version */
     get_be24(pb); /* flags */
 

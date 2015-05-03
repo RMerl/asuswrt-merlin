@@ -1,0 +1,224 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="stylesheet" type="text/css" href="/form_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/JavaScript" src="/general.js"></script>
+<script type="text/JavaScript" src="/form.js"></script>
+<script type="text/JavaScript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script type="text/JavaScript">
+var $j = jQuery.noConflict();
+
+function QKInternet_load_body(){
+	if(parent.ISMOBILE){
+		parent.set_step("admin_pass");
+		hideObjs();
+		document.getElementById("field_general").style.display = "none";
+		document.getElementById("field_mobile").style.display = "";		
+	}
+	else{
+		parent.set_step("t2");
+		setScenerion(parent.sw_mode);
+		//mask repeater
+		//if(!repeater_support)
+			$("repeaterMode").style.display = "none";
+
+		if(!psta_support)
+			$("MBMode").style.display = "none";
+		
+		if(parent.hwmodeSwitch_support){
+			$("routerMode").style.display = "none";
+			$("repeaterMode").style.display = "none";
+			$("APMode").style.display = "none";
+			$("MBMode").style.display = "none";
+
+			if(parent.sw_mode == 2)
+				$("repeaterMode").style.display = "";
+			else if(parent.sw_mode == 3)
+				$("APMode").style.display = "";
+			else if(parent.sw_mode == 4)
+				$("MBMode").style.display = "";
+			else
+				$("routerMode").style.display = "";
+		}
+
+		document.getElementById("nextButton").focus();	
+	}
+}
+
+function setScenerion(mode){
+	if(mode == '2'){
+		var pstaDesc = "<#OP_RE_desc#>";
+		pstaDesc += "<br/><span style=\"color:#FC0\"><#deviceDiscorvy2#></span>";
+		
+		parent.document.QKform.sw_mode.value = 2;
+		parent.localAP_support = true;
+		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
+		$j("#Senario").attr("style", "height:");
+		$j("#mode_desc").html(pstaDesc);	
+		document.form.sw_mode_radio[1].focus();
+		document.form.sw_mode_radio[1].checked = true;
+	}
+	else if(mode == '3'){
+		parent.document.QKform.sw_mode.value = 3;
+		$j("#Senario").attr("src", "/images/New_ui/ap.jpg");
+		$j("#Senario").attr("style", "height:");
+		$j("#mode_desc").html("<#OP_AP_desc#><br><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");		
+		document.form.sw_mode_radio[2].focus();
+		document.form.sw_mode_radio[2].checked = true;
+	}
+	else if(mode == '4'){
+		var pstaDesc = "";
+		pstaDesc += "<#OP_MB_desc1#>";
+		pstaDesc += "<#OP_MB_desc2#>";
+		pstaDesc += "<#OP_MB_desc3#>";
+		pstaDesc += "<#OP_MB_desc4#>";
+		pstaDesc += "<#OP_MB_desc5#>";
+		pstaDesc += "<br><#OP_MB_desc6#>";
+		pstaDesc += "<br/><span style=\"color:#FC0\"><#deviceDiscorvy4#></span>";
+
+		parent.document.QKform.sw_mode.value = 4;
+		parent.localAP_support = false;		
+		$j("#Senario").attr("src", "/images/New_ui/mb.jpg");
+		$j("#Senario").attr("style", "height:170px");
+		$j("#mode_desc").html(pstaDesc);
+		document.form.sw_mode_radio[3].focus();
+		document.form.sw_mode_radio[3].checked = true;
+	}
+	else{
+		parent.document.QKform.sw_mode.value = 1;
+		$j("#Senario").attr("src", "/images/New_ui/rt.jpg");
+		$j("#Senario").attr("style", "height:");
+		$j("#mode_desc").html("<#OP_GW_desc#>");
+		document.form.sw_mode_radio[0].focus();
+		document.form.sw_mode_radio[0].checked = true;
+	}
+}
+
+function submitForm(){
+	if(parent.document.QKform.sw_mode.value == "3"){
+		document.form.action = "/qis/QIS_lanip.htm";
+		document.form.submit();
+	}
+	else if(parent.document.QKform.sw_mode.value == "2"){
+		document.form.action = "/qis/QIS_sitesurvey.htm";
+		document.form.submit();
+	}
+	else if(parent.document.QKform.sw_mode.value == "4"){
+		parent.isRepeater = false;
+		document.form.action = "/qis/QIS_sitesurvey.htm";
+		document.form.submit();
+	}
+	else{
+		document.form.action = "/qis/QIS_detect.htm";
+		document.form.submit();
+	}
+}
+
+function submitenter(myfield,e){	
+	var keycode;
+	if (window.event) keycode = window.event.keyCode;
+	else if (e) keycode = e.which;
+	else return true;
+
+	if (keycode == 13){
+		submitForm();
+		return false;
+	}
+	else
+		return true;
+}
+</script>
+</head>
+<body onLoad="QKInternet_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<form method="post" name="form" action="/start_apply.htm" onsubmit="return submitForm();">
+<input type="hidden" name="current_page" value="QIS_lanip.htm">
+<input type="hidden" name="next_page" value="QIS_wireless.htm">   
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="flag" value="adv_ap_mode">
+<div class="QISmain">
+<div class="formfonttitle" style="padding:6 0 0 10;">
+		<div id="descTltle">
+			<table width="100%">
+				<tr>
+					<td align="left">
+						<div class="description_down"><#OP_desc1#></div>
+					</td>
+					<!--td align="right">
+						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+					</td-->
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+</div>
+
+<div style="width:95%; margin:0 auto; padding-bottom:3px;" id="field_general">
+	<span style="font-size:16px; font-weight:bold;color:white;text-shadow: 1px 1px 0px black">
+		<span id="routerMode">
+			<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
+		</span>
+			&nbsp;&nbsp;
+		<span id="repeaterMode">
+			<input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>>
+			<span id="repeaterMode_desc"><#OP_RE_item#></span>
+		</span>
+		&nbsp;&nbsp;
+		<span id="APMode">
+			<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
+		</span>
+		&nbsp;&nbsp;
+		<span id="MBMode">
+			<input type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge
+		</span>
+	</span>
+
+	<table height="350px">
+		<tr valign="top">
+			<td>
+				<div id="mode_desc" style="line-height: 18px;font-size:12px;font-family:Segoe UI, Arial, sans-serif;position:relative;display:block;margin-top:10px;margin-left:5px;z-index:90;">
+					<#OP_GW_desc#>
+				</div>
+			</td>
+		</tr>
+	
+		<tr>
+			<td>
+				<img style="margin-top: 10px;margin-bottom: 10px;" id="Senario" width="100%" src="/images/New_ui/rt.jpg">
+			</td>
+		</tr>
+	
+		<tr>
+			<td>
+				<div id="applyBtn" class="apply_gen">
+					<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" >
+				</div>
+			</td>
+		</tr>
+	</table>
+		
+</div>
+
+<div style="display:none;margin-top:-20px;" id="field_mobile">
+	<span class="QISGeneralFont" style="margin-left:0px;"><#OP_desc1#></span><br><br>
+	<fieldset class="theFieldset">
+		<div class="row">
+			<a class="iuiA" onclick="parent.document.QKform.sw_mode.value=1;submitForm();"><#OP_GW_item#></a>
+		</div>
+		<!-- Todo: repeater support -->
+		<!--div class="row" id="siteSurvey">
+			<a class="iuiA" onclick="parent.document.QKform.sw_mode.value=3;submitForm();"><#OP_RE_item#></a>
+		</div-->
+		<div class="row_end">
+			<a class="iuiA" onclick="parent.document.QKform.sw_mode.value=3;submitForm();"><#OP_AP_item#></a>
+		</div>
+	</fieldset>
+<div>
+
+</form>
+</body>

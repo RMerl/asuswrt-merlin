@@ -19,9 +19,11 @@ var hw_ver = '<% nvram_get("hardware_version"); %>';
 var usb_flag = '<% nvram_get("ehci_ports"); %>';
 
 var odmpid = '<% nvram_get("odmpid"); %>';
+var ttc = '<% nvram_get("territory_code"); %>';
 var color = '<% nvram_get("color"); %>';
 color = color.toUpperCase();
-var MP_png_path = "/images/Model_product_"+ color +".png";
+var update_color = '';
+var MP_png_path = '';
 var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
@@ -46,6 +48,21 @@ function gotoPage(dst_url, flag, isParent){
 	document.redirectForm.submit();
 }
 
+
+/* MODELDEP by Territory Code */
+function assign_color(){		
+	if(based_modelid == "RT-AC87U"){		//MODELDEP: RT-AC87U
+		if(ttc == "JP/02" || ttc == "AP/02" || ttc == "SG/02")						
+			return "R";
+		else if(ttc == "JP/02")
+			return "W";
+		else
+			return color;
+	}
+	else
+		return color;
+}
+
 function QKinternettype_load_body(){
 	if(wanstate == 4 && wansbstate == 4){
 		gotoPage("/error_page.htm", "6", 1);
@@ -63,8 +80,11 @@ function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - Welcome!";
 	parent.set_step("t0");		
 
+	update_color = assign_color();
+	MP_png_path = "/images/Model_product_"+ update_color +".png";	
+
 	//load Product img
-	if(color.length > 0){
+	if(update_color.length > 0){
 		if(LinkCheck(MP_png_path))	//if file exist
 			document.getElementById("ModelPid_img").src=MP_png_path;
 		else
@@ -213,7 +233,11 @@ function detect_if_wan_plug(flag){
 				changeiuiBackground(1);
 			}
 			else if(autodet_state == ""){
-				update_wan_info();
+				if(flag == null)
+					update_wan_info();
+				else
+					update_wan_info(1);
+
 				changeiuiBackground(1);
 			}
 			else

@@ -2079,7 +2079,8 @@ int update_resolvconf(void)
 		foreach(tmp, wan_xdns, next) {
 			if (*wan_xdomain && strcmp(wan_xdomain, wan_domain) != 0)
 				fprintf(fp_servers, "server=/%s/%s\n", wan_xdomain, tmp);
-			fprintf(fp_servers, "server=/%s/%s\n", "local", tmp);
+			if (strstr(wan_dns, tmp) == NULL)
+				fprintf(fp_servers, "server=/%s/%s\n", "local", tmp);
 		}
 	}
 #ifdef RTCONFIG_OPENVPN
