@@ -556,8 +556,8 @@ void stop_vpnclient(int clientNum)
 
 		// Attempt to remove directories.  Will fail if not empty
 		rmdir("/etc/openvpn/fw");
-		rmdir("/etc/openvpn");
 		rmdir("/etc/openvpn/dns");
+		rmdir("/etc/openvpn");
 		vpnlog(VPN_LOG_EXTRA,"Done removing generated files.");
 	}
 
