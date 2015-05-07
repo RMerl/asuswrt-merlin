@@ -3138,25 +3138,6 @@ lighttpd-1.4.29-clean:
 	-@$(MAKE) -C lighttpd-1.4.29 clean
 	@rm -f lighttpd-1.4.29/stamp-h1
 
-pcre-8.12/stamp-h1:
-	cd pcre-8.12 && \
-	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
-	./$(CONFIGURE) --prefix=/usr --disable-dependency-tracking
-	touch $@
-	[ -d pcre-8.12/m4 ] || mkdir pcre-8.12/m4
-
-pcre-8.12: pcre-8.12/stamp-h1
-	@$(MAKE) -C pcre-8.12 $(PARALLEL_BUILD)
-
-pcre-8.12-install: pcre-8.12
-	@$(SEP)
-	install -D pcre-8.12/.libs/libpcre.so.0.0.1 $(INSTALLDIR)/pcre-8.12/usr/lib/libpcre.so.0
-	$(STRIP) -s $(INSTALLDIR)/pcre-8.12/usr/lib/libpcre.so.0
-
-pcre-8.12-clean:
-	-@$(MAKE) -C pcre-8.12 clean
-	@rm -f pcre-8.12/stamp-h1
-
 pcre-8.31/stamp-h1:
 	cd pcre-8.31 && \
 	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" LIBS="$(EXTRALDFLAGS)" \
