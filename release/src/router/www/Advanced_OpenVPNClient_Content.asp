@@ -476,6 +476,7 @@ function update_local_ip(object){
 function showclientlist(){
 	var clientlist_row = clientlist_array.split('&#60');
 	var code = "";
+	var width = ["24%", "29%", "25%", "10%", "12%"];
 
 	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="clientlist_table">';
 	if(clientlist_row.length == 1)
@@ -485,9 +486,12 @@ function showclientlist(){
 			code +='<tr id="row'+i+'">';
 			var clientlist_col = clientlist_row[i].split('&#62');
 				for(var j = 0; j < clientlist_col.length; j++){
-					code +='<td width="29%">'+ clientlist_col[j] +'</td>';
+					code +='<td width="' + width[j] +'">'+ clientlist_col[j] +'</td>';
 				}
-				code +='<td width="13%">';
+				if (j < 4) {
+					code +='<td width="' + width[j++] +'">VPN</td>';
+				}
+				code +='<td width="' + width[j] +'">';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
@@ -547,7 +551,8 @@ function addRow_Group(upper){
 	addRow(document.form.clientlist_deviceName ,1);
 	addRow(document.form.clientlist_ipAddr, 0);
 	addRow(document.form.clientlist_dstipAddr, 0);
-
+	addRow(document.form.clientlist_iface, 0);
+	document.form.clientlist_iface.value = "VPN";
 	showclientlist();
 }
 
@@ -557,17 +562,14 @@ function del_Row(r){
 
 	var clientlist_value = "";
 	for(k=0; k<$('clientlist_table').rows.length; k++){
-		for(j=0; j<$('clientlist_table').rows[k].cells.length-1; j++){
-			if(j == 0)
-				clientlist_value += "&#60";
-			else{
-			clientlist_value += $('clientlist_table').rows[k].cells[0].innerHTML;
-			clientlist_value += "&#62";
-			clientlist_value += $('clientlist_table').rows[k].cells[1].innerHTML;
-			clientlist_value += "&#62";
-			clientlist_value += $('clientlist_table').rows[k].cells[2].innerHTML;
-			}
-		}
+		clientlist_value += "&#60";
+		clientlist_value += $('clientlist_table').rows[k].cells[0].innerHTML;
+		clientlist_value += "&#62";
+		clientlist_value += $('clientlist_table').rows[k].cells[1].innerHTML;
+		clientlist_value += "&#62";
+		clientlist_value += $('clientlist_table').rows[k].cells[2].innerHTML;
+		clientlist_value += "&#62";
+		clientlist_value += $('clientlist_table').rows[k].cells[3].innerHTML;
 	}
 
 	clientlist_array = clientlist_value;
@@ -1060,28 +1062,35 @@ function validate_ipcidr(obj){
 				<table id="selectiveTable" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 					<thead>
 						<tr>
-							<td colspan="4">Rules for routing client traffic through the tunnel (<#List_limit#>&nbsp;64)</td>
+							<td colspan="5">Rules for routing client traffic through the tunnel (<#List_limit#>&nbsp;64)</td>
 						</tr>
 					</thead>
 					<tr>
 						<th><#IPConnection_autofwDesc_itemname#></th>
 						<th>Source IP</th>
 						<th>Destination IP</th>
+						<th>Iface</th>
 						<th><#list_add_delete#></th>
 					</tr>
 					<tr>
-						<td width="29%">
-							<input type="text" class="input_18_table" maxlength="15" name="clientlist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);">
+						<td width="24%">
+							<input type="text" class="input_15_table" maxlength="15" name="clientlist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);">
 						</td>
 						<td width="29%">
 							<input type="text" class="input_18_table" maxlength="18" name="clientlist_ipAddr">
 							<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 						</td>
-						<td width="29%">
+						<td width="25%">
 							<input type="text" class="input_18_table" maxlength="18" name="clientlist_dstipAddr">
 						</td>
-						<td width="13%">
+						<td width="10%">
+							<select name="clientlist_iface" class="input_option">
+								<option value="WAN">WAN</option>
+								<option value="VPN" selected>VPN</option>
+							</select>
+						</td>
+						<td width="12%">
 							<div>
 								<input type="button" class="add_btn" onClick="addRow_Group(64);" value="">
 							</div>
