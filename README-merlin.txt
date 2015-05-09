@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 378.53 (26-Apr-2015)
+Asuswrt-Merlin - build 378.54 (xx-xxx-2015)
 ===========================================
 
 About
@@ -54,7 +54,7 @@ Here is a list of features that Asuswrt-merlin adds over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.378_4980 source code from Asus
+   - Based on 3.0.0.4.378_5134 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -663,10 +663,24 @@ add routing rules.  The "Source IP" is your local client, while
 left empty (or set to 0.0.0.0) to signify "any IP".  You can also 
 specify a whole subnet, in CIDR notation (for example, 74.125.226.112/30).
 
-For example, to have all your clients use the VPN tunnel when trying to 
+The Iface field lets you determine if matching traffic should be sent 
+through the VPN tunnel or through your regular Internet access (WAN).
+This allows you to define exceptions (WAN rules being processed 
+before the VPN rules).
+
+Here are a few examples.
+
+To have all your clients use the VPN tunnel when trying to 
 access an IP from this block that belongs to Google:
 
-	RouteGoogle	0.0.0.0		74.125.0.0/16
+	RouteGoogle	0.0.0.0		74.125.0.0/16	VPN
+
+Or, to have a computer routed through the tunnel except for requests sent
+to your ISP's SMTP server (assuming a fictious IP of 10.10.10.10 for your 
+ISP's SMTP server):
+
+	PC1		192.168.1.100	0.0.0.0		VPN
+	PC1-bypass	192.168.1.100	10.10.10.10	WAN
 
 Another setting exposed when enabling Policy routing is to prevent your 
 routed clients from accessing the Internet if the VPN tunnel goes down.  

@@ -1,6 +1,20 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.54 (xx-xxx-2015)
+   - NEW: Merged with Asus GPL 378_5134 (from AC87).
+   - NEW: OpenVPN policy rules can now be set to route matching traffic
+          through either the tunnel, or to your ISP (allowing you to create
+          exceptions to your tunnelling rules)
+   - FIXED: Router DNS weren't reverted to their original values
+            when shutting down an OpenVPN client with "explicit-
+            exit-notify" enabled.  Now we manually clean it up
+            after the user manually terminates the client - it might
+            still not be cleaned up after an unexpected shutdown however.
+            Ideally, users should try avoiding using this setting when 
+            possible.
+
+
 378.53 (26-Apr-2015)
    - NEW: Merged with Asus GPL 378_4980 (with pieces from 378_4850 for AC56/AC68
           and 378_5183 beta for AC87)
