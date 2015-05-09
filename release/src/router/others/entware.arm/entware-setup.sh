@@ -81,9 +81,20 @@ tar -czf $entPartition/jffs_scripts_backup_`date +\%F_\%H-\%M`.tgz /jffs/scripts
 echo -e "$INFO Modifying start scripts..."
 cat > /jffs/scripts/services-start << EOF
 #!/bin/sh
+script="/opt/etc/init.d/rc.unslung"
 
-sleep 10
-/opt/etc/init.d/rc.unslung start
+i=60
+until [ -x "${script}" ]
+do
+        i=$(($i-1))
+        if [ "$i" -lt 1 ]
+        then
+                logger "Could not start Entware"
+                exit
+        fi
+        sleep 1
+done
+${script} start
 EOF
 chmod +x /jffs/scripts/services-start
 
@@ -99,7 +110,7 @@ cat > /jffs/scripts/post-mount << EOF
 
 if [ \$1 = "__Partition__" ]
 then
-  ln -sf \$1/entware.arm /tmp/opt
+  ln -nsf \$1/entware.arm /tmp/opt
 fi
 EOF
 eval sed -i 's,__Partition__,$entPartition,g' /jffs/scripts/post-mount
