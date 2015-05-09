@@ -35,6 +35,7 @@ rmdir /etc/openvpn
 
 if [ -f /jffs/scripts/openvpn-event ]
 then
+	logger -t "custom script" "Running /jffs/scripts/openvpn-event (args: $*)"
 	sh /jffs/scripts/openvpn-event $*
 fi
 exit 0

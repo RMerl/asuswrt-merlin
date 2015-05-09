@@ -1,5 +1,7 @@
 #!/bin/sh
 
+PARAM=$*
+
 create_client_list(){
 	WAN_PRIO=1000
 	VPN_PRIO=1200
@@ -7,12 +9,12 @@ create_client_list(){
 
 	for ENTRY in $VPN_IP_LIST
 	do
-		if [ $ENTRY = "" ]
+		if [ "$ENTRY" = "" ]
 		then
 			continue
 		fi
 		TARGET_ROUTE=$(echo $ENTRY | cut -d ">" -f 4)
-		if [ $TARGET_ROUTE = "WAN" ]
+		if [ "$TARGET_ROUTE" = "WAN" ]
 		then
 			TARGET_LOOKUP="main"
 			WAN_PRIO=$((WAN_PRIO+1))
@@ -25,7 +27,7 @@ create_client_list(){
 			TARGET_NAME="VPN"
 		fi
 		VPN_IP=$(echo $ENTRY | cut -d ">" -f 2)
-		if [ $VPN_IP != "0.0.0.0" ]
+		if [ "$VPN_IP" != "0.0.0.0" ]
 		then
 			SRCC="from"
 			SRCA="$VPN_IP"
@@ -34,7 +36,7 @@ create_client_list(){
 			SRCA=""
 		fi
 		DST_IP=$(echo $ENTRY | cut -d ">" -f 3)
-		if [ $DST_IP != "0.0.0.0" ]
+		if [ "$DST_IP" != "0.0.0.0" ]
 		then
 			DSTC="to"
 			DSTA="$DST_IP"
@@ -66,10 +68,10 @@ purge_client_list(){
 run_custom_script(){
 	if [ -f /jffs/scripts/openvpn-event ]
 	then
-		sh /jffs/scripts/openvpn-event $*
+		logger -t "custom script" "Running /jffs/scripts/openvpn-event (args: $PARAM)"
+		sh /jffs/scripts/openvpn-event $PARAM
 	fi
 }
-
 
 
 if [ "$dev" == "tun11" ]
