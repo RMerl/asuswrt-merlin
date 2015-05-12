@@ -5,21 +5,38 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.0q and OpenSSL 1.0.0r [19 Mar 2015]
+  Major changes between OpenSSL 1.0.2 and OpenSSL 1.0.2a [19 Mar 2015]
 
+      o OpenSSL 1.0.2 ClientHello sigalgs DoS fix (CVE-2015-0291)
+      o Multiblock corrupted pointer fix (CVE-2015-0290)
+      o Segmentation fault in DTLSv1_listen fix (CVE-2015-0207)
       o Segmentation fault in ASN1_TYPE_cmp fix (CVE-2015-0286)
+      o Segmentation fault for invalid PSS parameters fix (CVE-2015-0208)
       o ASN.1 structure reuse memory corruption fix (CVE-2015-0287)
       o PKCS7 NULL pointer dereferences fix (CVE-2015-0289)
       o DoS via reachable assert in SSLv2 servers fix (CVE-2015-0293)
+      o Empty CKE with client auth and DHE fix (CVE-2015-1787)
+      o Handshake with unseeded PRNG fix (CVE-2015-0285)
       o Use After Free following d2i_ECPrivatekey error fix (CVE-2015-0209)
       o X509_to_X509_REQ NULL pointer deref fix (CVE-2015-0288)
       o Removed the export ciphers from the DEFAULT ciphers
 
-  Major changes between OpenSSL 1.0.0p and OpenSSL 1.0.0q [15 Jan 2015]
+  Major changes between OpenSSL 1.0.1l and OpenSSL 1.0.2 [22 Jan 2015]:
+
+      o Suite B support for TLS 1.2 and DTLS 1.2
+      o Support for DTLS 1.2
+      o TLS automatic EC curve selection.
+      o API to set TLS supported signature algorithms and curves
+      o SSL_CONF configuration API.
+      o TLS Brainpool support.
+      o ALPN support.
+      o CMS support for RSA-PSS, RSA-OAEP, ECDH and X9.42 DH.
+
+  Major changes between OpenSSL 1.0.1k and OpenSSL 1.0.1l [15 Jan 2015]
 
       o Build fixes for the Windows and OpenVMS platforms
 
-  Major changes between OpenSSL 1.0.0o and OpenSSL 1.0.0p [8 Jan 2015]
+  Major changes between OpenSSL 1.0.1j and OpenSSL 1.0.1k [8 Jan 2015]
 
       o Fix for CVE-2014-3571
       o Fix for CVE-2015-0206
@@ -30,55 +47,88 @@
       o Fix for CVE-2014-8275
       o Fix for CVE-2014-3570
 
-  Major changes between OpenSSL 1.0.0n and OpenSSL 1.0.0o [15 Oct 2014]
+  Major changes between OpenSSL 1.0.1i and OpenSSL 1.0.1j [15 Oct 2014]
 
       o Fix for CVE-2014-3513
       o Fix for CVE-2014-3567
       o Mitigation for CVE-2014-3566 (SSL protocol vulnerability)
       o Fix for CVE-2014-3568
 
-  Major changes between OpenSSL 1.0.0m and OpenSSL 1.0.0n [6 Aug 2014]
+  Major changes between OpenSSL 1.0.1h and OpenSSL 1.0.1i [6 Aug 2014]
 
+      o Fix for CVE-2014-3512
+      o Fix for CVE-2014-3511
       o Fix for CVE-2014-3510
       o Fix for CVE-2014-3507
       o Fix for CVE-2014-3506
       o Fix for CVE-2014-3505
       o Fix for CVE-2014-3509
+      o Fix for CVE-2014-5139
       o Fix for CVE-2014-3508
 
-  Known issues in OpenSSL 1.0.0m:
-
-      o EAP-FAST and other applications using tls_session_secret_cb
-        wont resume sessions. Fixed in 1.0.0n-dev
-      o Compilation failure of s3_pkt.c on some platforms due to missing
-        <limits.h> include. Fixed in 1.0.0n-dev
-
-  Major changes between OpenSSL 1.0.0l and OpenSSL 1.0.0m [5 Jun 2014]
+  Major changes between OpenSSL 1.0.1g and OpenSSL 1.0.1h [5 Jun 2014]
 
       o Fix for CVE-2014-0224
       o Fix for CVE-2014-0221
       o Fix for CVE-2014-0198
       o Fix for CVE-2014-0195
       o Fix for CVE-2014-3470
-      o Fix for CVE-2014-0076
       o Fix for CVE-2010-5298
 
-  Major changes between OpenSSL 1.0.0k and OpenSSL 1.0.0l [6 Jan 2014]
+  Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.1g [7 Apr 2014]
 
+      o Fix for CVE-2014-0160
+      o Add TLS padding extension workaround for broken servers.
+      o Fix for CVE-2014-0076
+
+  Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.1f [6 Jan 2014]
+
+      o Don't include gmt_unix_time in TLS server and client random values
+      o Fix for TLS record tampering bug CVE-2013-4353
+      o Fix for TLS version checking bug CVE-2013-6449
       o Fix for DTLS retransmission bug CVE-2013-6450
 
-  Major changes between OpenSSL 1.0.0j and OpenSSL 1.0.0k [5 Feb 2013]:
+  Major changes between OpenSSL 1.0.1d and OpenSSL 1.0.1e [11 Feb 2013]:
 
-      o Fix for SSL/TLS/DTLS CBC plaintext recovery attack CVE-2013-0169
+      o Corrected fix for CVE-2013-0169
+
+  Major changes between OpenSSL 1.0.1c and OpenSSL 1.0.1d [4 Feb 2013]:
+
+      o Fix renegotiation in TLS 1.1, 1.2 by using the correct TLS version.
+      o Include the fips configuration module.
       o Fix OCSP bad key DoS attack CVE-2013-0166
+      o Fix for SSL/TLS/DTLS CBC plaintext recovery attack CVE-2013-0169
+      o Fix for TLS AESNI record handling flaw CVE-2012-2686
 
-  Major changes between OpenSSL 1.0.0i and OpenSSL 1.0.0j [10 May 2012]:
+  Major changes between OpenSSL 1.0.1b and OpenSSL 1.0.1c [10 May 2012]:
 
-      o Fix DTLS record length checking bug CVE-2012-2333
+      o Fix TLS/DTLS record length checking bug CVE-2012-2333
+      o Don't attempt to use non-FIPS composite ciphers in FIPS mode.
 
-  Major changes between OpenSSL 1.0.0h and OpenSSL 1.0.0i [19 Apr 2012]:
+  Major changes between OpenSSL 1.0.1a and OpenSSL 1.0.1b [26 Apr 2012]:
+
+      o Fix compilation error on non-x86 platforms.
+      o Make FIPS capable OpenSSL ciphers work in non-FIPS mode.
+      o Fix SSL_OP_NO_TLSv1_1 clash with SSL_OP_ALL in OpenSSL 1.0.0
+
+  Major changes between OpenSSL 1.0.1 and OpenSSL 1.0.1a [19 Apr 2012]:
 
       o Fix for ASN1 overflow bug CVE-2012-2110
+      o Workarounds for some servers that hang on long client hellos.
+      o Fix SEGV in AES code.
+
+  Major changes between OpenSSL 1.0.0h and OpenSSL 1.0.1 [14 Mar 2012]:
+
+      o TLS/DTLS heartbeat support.
+      o SCTP support.
+      o RFC 5705 TLS key material exporter.
+      o RFC 5764 DTLS-SRTP negotiation.
+      o Next Protocol Negotiation.
+      o PSS signatures in certificates, requests and CRLs.
+      o Support for password based recipient info for CMS.
+      o Support TLS v1.2 and TLS v1.1.
+      o Preliminary FIPS capability for unvalidated 2.0 FIPS module.
+      o SRP support.
 
   Major changes between OpenSSL 1.0.0g and OpenSSL 1.0.0h [12 Mar 2012]:
 

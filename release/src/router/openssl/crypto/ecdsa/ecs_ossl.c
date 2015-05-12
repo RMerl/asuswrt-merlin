@@ -159,7 +159,9 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                 ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
                 goto err;
             }
-        } else {                /* NID_X9_62_characteristic_two_field */
+        }
+#ifndef OPENSSL_NO_EC2M
+        else {                  /* NID_X9_62_characteristic_two_field */
 
             if (!EC_POINT_get_affine_coordinates_GF2m(group,
                                                       tmp_point, X, NULL,
@@ -168,6 +170,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                 goto err;
             }
         }
+#endif
         if (!BN_nnmod(r, X, order, ctx)) {
             ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
             goto err;
@@ -176,10 +179,32 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
     while (BN_is_zero(r));
 
     /* compute the inverse of k */
-    if (!BN_mod_inverse(k, k, order, ctx)) {
-        ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
-        goto err;
+    if (EC_GROUP_get_mont_data(group) != NULL) {
+        /*
+         * We want inverse in constant time, therefore we utilize the fact
+         * order must be prime and use Fermats Little Theorem instead.
+         */
+        if (!BN_set_word(X, 2)) {
+            ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
+            goto err;
+        }
+        if (!BN_mod_sub(X, order, X, order, ctx)) {
+            ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
+            goto err;
+        }
+        BN_set_flags(X, BN_FLG_CONSTTIME);
+        if (!BN_mod_exp_mont_consttime
+            (k, k, X, order, ctx, EC_GROUP_get_mont_data(group))) {
+            ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
+            goto err;
+        }
+    } else {
+        if (!BN_mod_inverse(k, k, order, ctx)) {
+            ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
+            goto err;
+        }
     }
+
     /* clear old values if necessary */
     if (*rp != NULL)
         BN_clear_free(*rp);
@@ -414,14 +439,16 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
             ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_EC_LIB);
             goto err;
         }
-    } else {                    /* NID_X9_62_characteristic_two_field */
+    }
+#ifndef OPENSSL_NO_EC2M
+    else {                      /* NID_X9_62_characteristic_two_field */
 
         if (!EC_POINT_get_affine_coordinates_GF2m(group, point, X, NULL, ctx)) {
             ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_EC_LIB);
             goto err;
         }
     }
-
+#endif
     if (!BN_nnmod(u1, X, order, ctx)) {
         ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_BN_LIB);
         goto err;

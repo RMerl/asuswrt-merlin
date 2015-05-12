@@ -108,8 +108,16 @@
 #  include <signal.h>
 # endif
 
-# ifdef _WIN32
+# if defined(_WIN32) || defined(__CYGWIN__)
 #  include <windows.h>
+#  if defined(__CYGWIN__) && !defined(_WIN32)
+  /*
+   * <windows.h> should define _WIN32, which normally is mutually exclusive
+   * with __CYGWIN__, but if it didn't...
+   */
+#   define _WIN32
+  /* this is done because Cygwin alarm() fails sometimes. */
+#  endif
 # endif
 
 # include <openssl/bn.h>
@@ -183,6 +191,25 @@
 # ifndef OPENSSL_NO_ECDH
 #  include <openssl/ecdh.h>
 # endif
+# include <openssl/modes.h>
+
+# ifdef OPENSSL_FIPS
+#  ifdef OPENSSL_DOING_MAKEDEPEND
+#   undef AES_set_encrypt_key
+#   undef AES_set_decrypt_key
+#   undef DES_set_key_unchecked
+#  endif
+#  define BF_set_key      private_BF_set_key
+#  define CAST_set_key    private_CAST_set_key
+#  define idea_set_encrypt_key    private_idea_set_encrypt_key
+#  define SEED_set_key    private_SEED_set_key
+#  define RC2_set_key     private_RC2_set_key
+#  define RC4_set_key     private_RC4_set_key
+#  define DES_set_key_unchecked   private_DES_set_key_unchecked
+#  define AES_set_encrypt_key     private_AES_set_encrypt_key
+#  define AES_set_decrypt_key     private_AES_set_decrypt_key
+#  define Camellia_set_key        private_Camellia_set_key
+# endif
 
 # ifndef HAVE_FORK
 #  if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
@@ -200,7 +227,7 @@
 
 # undef BUFSIZE
 # define BUFSIZE ((long)1024*8+1)
-int run = 0;
+static volatile int run = 0;
 
 static int mr = 0;
 static int usertime = 1;
@@ -214,7 +241,7 @@ static void print_result(int alg, int run_no, int count, double time_used);
 static int do_multi(int multi);
 # endif
 
-# define ALGOR_NUM       29
+# define ALGOR_NUM       30
 # define SIZE_NUM        5
 # define RSA_NUM         4
 # define DSA_NUM         3
@@ -229,7 +256,7 @@ static const char *names[ALGOR_NUM] = {
     "aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
     "camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
     "evp", "sha256", "sha512", "whirlpool",
-    "aes-128 ige", "aes-192 ige", "aes-256 ige"
+    "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash"
 };
 
 static double results[ALGOR_NUM][SIZE_NUM];
@@ -277,12 +304,16 @@ static SIGRETTYPE sig_done(int sig)
 
 # if defined(_WIN32)
 
-#  define SIGALRM
+#  if !defined(SIGALRM)
+#   define SIGALRM
+#  endif
 static unsigned int lapse, schlock;
-static void alarm(unsigned int secs)
+static void alarm_win32(unsigned int secs)
 {
     lapse = secs * 1000;
 }
+
+#  define alarm alarm_win32
 
 static DWORD WINAPI sleepy(VOID * arg)
 {
@@ -334,6 +365,8 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
 #  endif                        /* OPENSSL_NO_SHA */
 }
 # endif                         /* OPENSSL_NO_ECDH */
+
+static void multiblock_speed(const EVP_CIPHER *evp_cipher);
 
 int MAIN(int, char **);
 
@@ -482,6 +515,7 @@ int MAIN(int argc, char **argv)
 # define D_IGE_128_AES   26
 # define D_IGE_192_AES   27
 # define D_IGE_256_AES   28
+# define D_GHASH         29
     double d = 0.0;
     long c[ALGOR_NUM][SIZE_NUM];
 # define R_DSA_512       0
@@ -614,6 +648,7 @@ int MAIN(int argc, char **argv)
 # ifndef NO_FORK
     int multi = 0;
 # endif
+    int multiblock = 0;
 
 # ifndef TIMES
     usertime = -1;
@@ -744,6 +779,9 @@ int MAIN(int argc, char **argv)
             mr = 1;
             j--;                /* Otherwise, -mr gets confused with an
                                  * algorithm. */
+        } else if (argc > 0 && !strcmp(*argv, "-mb")) {
+            multiblock = 1;
+            j--;
         } else
 # ifndef OPENSSL_NO_MD2
         if (strcmp(*argv, "md2") == 0)
@@ -923,6 +961,8 @@ int MAIN(int argc, char **argv)
             doit[D_CBC_128_AES] = 1;
             doit[D_CBC_192_AES] = 1;
             doit[D_CBC_256_AES] = 1;
+        } else if (strcmp(*argv, "ghash") == 0) {
+            doit[D_GHASH] = 1;
         } else
 # endif
 # ifndef OPENSSL_NO_CAMELLIA
@@ -1329,6 +1369,7 @@ int MAIN(int argc, char **argv)
     c[D_IGE_128_AES][0] = count;
     c[D_IGE_192_AES][0] = count;
     c[D_IGE_256_AES][0] = count;
+    c[D_GHASH][0] = count;
 
     for (i = 1; i < SIZE_NUM; i++) {
         c[D_MD2][i] = c[D_MD2][0] * 4 * lengths[0] / lengths[i];
@@ -1497,7 +1538,7 @@ int MAIN(int argc, char **argv)
 #   error "You cannot disable DES on systems without SIGALRM."
 #  endif                        /* OPENSSL_NO_DES */
 # else
-#  define COND(c) (run)
+#  define COND(c) (run && count<0x7fffffff)
 #  define COUNT(d) (count)
 #  ifndef _WIN32
     signal(SIGALRM, sig_done);
@@ -1764,6 +1805,21 @@ int MAIN(int argc, char **argv)
             print_result(D_IGE_256_AES, j, count, d);
         }
     }
+    if (doit[D_GHASH]) {
+        GCM128_CONTEXT *ctx =
+            CRYPTO_gcm128_new(&aes_ks1, (block128_f) AES_encrypt);
+        CRYPTO_gcm128_setiv(ctx, (unsigned char *)"0123456789ab", 12);
+
+        for (j = 0; j < SIZE_NUM; j++) {
+            print_message(names[D_GHASH], c[D_GHASH][j], lengths[j]);
+            Time_F(START);
+            for (count = 0, run = 1; COND(c[D_GHASH][j]); count++)
+                CRYPTO_gcm128_aad(ctx, buf, lengths[j]);
+            d = Time_F(STOP);
+            print_result(D_GHASH, j, count, d);
+        }
+        CRYPTO_gcm128_release(ctx);
+    }
 # endif
 # ifndef OPENSSL_NO_CAMELLIA
     if (doit[D_CBC_128_CML]) {
@@ -1891,6 +1947,20 @@ int MAIN(int argc, char **argv)
 # endif
 
     if (doit[D_EVP]) {
+# ifdef EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+        if (multiblock && evp_cipher) {
+            if (!
+                (EVP_CIPHER_flags(evp_cipher) &
+                 EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
+                fprintf(stderr, "%s is not multi-block capable\n",
+                        OBJ_nid2ln(evp_cipher->nid));
+                goto end;
+            }
+            multiblock_speed(evp_cipher);
+            mret = 0;
+            goto end;
+        }
+# endif
         for (j = 0; j < SIZE_NUM; j++) {
             if (evp_cipher) {
                 EVP_CIPHER_CTX ctx;
@@ -2487,7 +2557,7 @@ static void pkey_print_message(const char *str, const char *str2, long num,
                mr ? "+DTP:%d:%s:%s:%d\n"
                : "Doing %d bit %s %s's for %ds: ", bits, str, str2, tm);
     (void)BIO_flush(bio_err);
-    alarm(RSA_SECONDS);
+    alarm(tm);
 # else
     BIO_printf(bio_err,
                mr ? "+DNP:%ld:%d:%s:%s\n"
@@ -2692,4 +2762,112 @@ static int do_multi(int multi)
     return 1;
 }
 # endif
+
+static void multiblock_speed(const EVP_CIPHER *evp_cipher)
+{
+    static int mblengths[] =
+        { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
+    int j, count, num = sizeof(lengths) / sizeof(lengths[0]);
+    const char *alg_name;
+    unsigned char *inp, *out, no_key[32], no_iv[16];
+    EVP_CIPHER_CTX ctx;
+    double d = 0.0;
+
+    inp = OPENSSL_malloc(mblengths[num - 1]);
+    out = OPENSSL_malloc(mblengths[num - 1] + 1024);
+    if(!inp || !out) {
+        BIO_printf(bio_err,"Out of memory\n");
+        goto end;
+    }
+
+
+    EVP_CIPHER_CTX_init(&ctx);
+    EVP_EncryptInit_ex(&ctx, evp_cipher, NULL, no_key, no_iv);
+    EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_AEAD_SET_MAC_KEY, sizeof(no_key),
+                        no_key);
+    alg_name = OBJ_nid2ln(evp_cipher->nid);
+
+    for (j = 0; j < num; j++) {
+        print_message(alg_name, 0, mblengths[j]);
+        Time_F(START);
+        for (count = 0, run = 1; run && count < 0x7fffffff; count++) {
+            unsigned char aad[13];
+            EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
+            size_t len = mblengths[j];
+            int packlen;
+
+            memset(aad, 0, 8);  /* avoid uninitialized values */
+            aad[8] = 23;        /* SSL3_RT_APPLICATION_DATA */
+            aad[9] = 3;         /* version */
+            aad[10] = 2;
+            aad[11] = 0;        /* length */
+            aad[12] = 0;
+            mb_param.out = NULL;
+            mb_param.inp = aad;
+            mb_param.len = len;
+            mb_param.interleave = 8;
+
+            packlen = EVP_CIPHER_CTX_ctrl(&ctx,
+                                          EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
+                                          sizeof(mb_param), &mb_param);
+
+            if (packlen > 0) {
+                mb_param.out = out;
+                mb_param.inp = inp;
+                mb_param.len = len;
+                EVP_CIPHER_CTX_ctrl(&ctx,
+                                    EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
+                                    sizeof(mb_param), &mb_param);
+            } else {
+                int pad;
+
+                RAND_bytes(out, 16);
+                len += 16;
+                aad[11] = len >> 8;
+                aad[12] = len;
+                pad = EVP_CIPHER_CTX_ctrl(&ctx,
+                                          EVP_CTRL_AEAD_TLS1_AAD, 13, aad);
+                EVP_Cipher(&ctx, out, inp, len + pad);
+            }
+        }
+        d = Time_F(STOP);
+        BIO_printf(bio_err,
+                   mr ? "+R:%d:%s:%f\n"
+                   : "%d %s's in %.2fs\n", count, "evp", d);
+        results[D_EVP][j] = ((double)count) / d * mblengths[j];
+    }
+
+    if (mr) {
+        fprintf(stdout, "+H");
+        for (j = 0; j < num; j++)
+            fprintf(stdout, ":%d", mblengths[j]);
+        fprintf(stdout, "\n");
+        fprintf(stdout, "+F:%d:%s", D_EVP, alg_name);
+        for (j = 0; j < num; j++)
+            fprintf(stdout, ":%.2f", results[D_EVP][j]);
+        fprintf(stdout, "\n");
+    } else {
+        fprintf(stdout,
+                "The 'numbers' are in 1000s of bytes per second processed.\n");
+        fprintf(stdout, "type                    ");
+        for (j = 0; j < num; j++)
+            fprintf(stdout, "%7d bytes", mblengths[j]);
+        fprintf(stdout, "\n");
+        fprintf(stdout, "%-24s", alg_name);
+
+        for (j = 0; j < num; j++) {
+            if (results[D_EVP][j] > 10000)
+                fprintf(stdout, " %11.2fk", results[D_EVP][j] / 1e3);
+            else
+                fprintf(stdout, " %11.2f ", results[D_EVP][j]);
+        }
+        fprintf(stdout, "\n");
+    }
+
+end:
+    if(inp)
+        OPENSSL_free(inp);
+    if(out)
+        OPENSSL_free(out);
+}
 #endif

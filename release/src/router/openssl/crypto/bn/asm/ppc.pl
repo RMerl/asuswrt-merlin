@@ -389,7 +389,10 @@ $data=<<EOF;
 	$ST		r9,`6*$BNSZ`(r3)	#r[6]=c1
 	$ST		r10,`7*$BNSZ`(r3)	#r[7]=c2
 	blr
-	.long	0x00000000
+	.long	0
+	.byte	0,12,0x14,0,0,0,2,0
+	.long	0
+.size	.bn_sqr_comba4,.-.bn_sqr_comba4
 
 #
 #	NOTE:	The following label name should be changed to
@@ -814,8 +817,10 @@ $data=<<EOF;
 
 
 	blr
-
-	.long	0x00000000
+	.long	0
+	.byte	0,12,0x14,0,0,0,2,0
+	.long	0
+.size	.bn_sqr_comba8,.-.bn_sqr_comba8
 
 #
 #	NOTE:	The following label name should be changed to
@@ -966,7 +971,10 @@ $data=<<EOF;
 	$ST	r10,`6*$BNSZ`(r3)	#r[6]=c1
 	$ST	r11,`7*$BNSZ`(r3)	#r[7]=c2
 	blr
-	.long	0x00000000
+	.long	0
+	.byte	0,12,0x14,0,0,0,3,0
+	.long	0
+.size	.bn_mul_comba4,.-.bn_mul_comba4
 
 #
 #	NOTE:	The following label name should be changed to
@@ -1502,7 +1510,10 @@ $data=<<EOF;
 	$ST	r12,`14*$BNSZ`(r3)	#r[14]=c3;
 	$ST	r10,`15*$BNSZ`(r3)	#r[15]=c1;
 	blr
-	.long	0x00000000
+	.long	0
+	.byte	0,12,0x14,0,0,0,3,0
+	.long	0
+.size	.bn_mul_comba8,.-.bn_mul_comba8
 
 #
 #	NOTE:	The following label name should be changed to
@@ -1550,8 +1561,10 @@ Lppcasm_sub_adios:
 	subfze	r3,r0		# if carry bit is set then r3 = 0 else -1
 	andi.	r3,r3,1         # keep only last bit.
 	blr
-	.long	0x00000000
-
+	.long	0
+	.byte	0,12,0x14,0,0,0,4,0
+	.long	0
+.size	.bn_sub_words,.-.bn_sub_words
 
 #
 #	NOTE:	The following label name should be changed to
@@ -1594,7 +1607,10 @@ Lppcasm_add_mainloop:
 Lppcasm_add_adios:	
 	addze	r3,r0			#return carry bit.
 	blr
-	.long	0x00000000
+	.long	0
+	.byte	0,12,0x14,0,0,0,4,0
+	.long	0
+.size	.bn_add_words,.-.bn_add_words
 
 #
 #	NOTE:	The following label name should be changed to
@@ -1707,7 +1723,10 @@ Lppcasm_div8:
 Lppcasm_div9:
 	or	r3,r8,r0
 	blr
-	.long	0x00000000
+	.long	0
+	.byte	0,12,0x14,0,0,0,3,0
+	.long	0
+.size	.bn_div_words,.-.bn_div_words
 
 #
 #	NOTE:	The following label name should be changed to
@@ -1746,8 +1765,10 @@ Lppcasm_sqr_mainloop:
 	bdnz-	Lppcasm_sqr_mainloop
 Lppcasm_sqr_adios:	
 	blr
-	.long	0x00000000
-
+	.long	0
+	.byte	0,12,0x14,0,0,0,3,0
+	.long	0
+.size	.bn_sqr_words,.-.bn_sqr_words
 
 #
 #	NOTE:	The following label name should be changed to
@@ -1850,7 +1871,10 @@ Lppcasm_mw_REM:
 Lppcasm_mw_OVER:	
 	addi	r3,r12,0
 	blr
-	.long	0x00000000
+	.long	0
+	.byte	0,12,0x14,0,0,0,4,0
+	.long	0
+.size	bn_mul_words,.-bn_mul_words
 
 #
 #	NOTE:	The following label name should be changed to
@@ -1973,7 +1997,10 @@ Lppcasm_maw_leftover:
 Lppcasm_maw_adios:	
 	addi	r3,r12,0
 	blr
-	.long	0x00000000
+	.long	0
+	.byte	0,12,0x14,0,0,0,4,0
+	.long	0
+.size	.bn_mul_add_words,.-.bn_mul_add_words
 	.align	4
 EOF
 $data =~ s/\`([^\`]*)\`/eval $1/gem;

@@ -60,6 +60,9 @@
 #endif
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#ifdef OPENSSL_FIPS
+# include <openssl/fips.h>
+#endif
 
 const char ECDSA_version[] = "ECDSA" OPENSSL_VERSION_PTEXT;
 
@@ -76,8 +79,16 @@ void ECDSA_set_default_method(const ECDSA_METHOD *meth)
 
 const ECDSA_METHOD *ECDSA_get_default_method(void)
 {
-    if (!default_ECDSA_method)
+    if (!default_ECDSA_method) {
+#ifdef OPENSSL_FIPS
+        if (FIPS_mode())
+            return FIPS_ecdsa_openssl();
+        else
+            return ECDSA_OpenSSL();
+#else
         default_ECDSA_method = ECDSA_OpenSSL();
+#endif
+    }
     return default_ECDSA_method;
 }
 
@@ -195,6 +206,13 @@ ECDSA_DATA *ecdsa_check(EC_KEY *key)
         }
     } else
         ecdsa_data = (ECDSA_DATA *)data;
+#ifdef OPENSSL_FIPS
+    if (FIPS_mode() && !(ecdsa_data->flags & ECDSA_FLAG_FIPS_METHOD)
+        && !(EC_KEY_get_flags(key) & EC_FLAG_NON_FIPS_ALLOW)) {
+        ECDSAerr(ECDSA_F_ECDSA_CHECK, ECDSA_R_NON_FIPS_METHOD);
+        return NULL;
+    }
+#endif
 
     return ecdsa_data;
 }
@@ -256,4 +274,81 @@ void *ECDSA_get_ex_data(EC_KEY *d, int idx)
     if (ecdsa == NULL)
         return NULL;
     return (CRYPTO_get_ex_data(&ecdsa->ex_data, idx));
+}
+
+ECDSA_METHOD *ECDSA_METHOD_new(ECDSA_METHOD *ecdsa_meth)
+{
+    ECDSA_METHOD *ret;
+
+    ret = OPENSSL_malloc(sizeof(ECDSA_METHOD));
+    if (ret == NULL) {
+        ECDSAerr(ECDSA_F_ECDSA_METHOD_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    if (ecdsa_meth)
+        *ret = *ecdsa_meth;
+    else {
+        ret->ecdsa_sign_setup = 0;
+        ret->ecdsa_do_sign = 0;
+        ret->ecdsa_do_verify = 0;
+        ret->name = NULL;
+        ret->flags = 0;
+    }
+    ret->flags |= ECDSA_METHOD_FLAG_ALLOCATED;
+    return ret;
+}
+
+void ECDSA_METHOD_set_sign(ECDSA_METHOD *ecdsa_method,
+                           ECDSA_SIG *(*ecdsa_do_sign) (const unsigned char
+                                                        *dgst, int dgst_len,
+                                                        const BIGNUM *inv,
+                                                        const BIGNUM *rp,
+                                                        EC_KEY *eckey))
+{
+    ecdsa_method->ecdsa_do_sign = ecdsa_do_sign;
+}
+
+void ECDSA_METHOD_set_sign_setup(ECDSA_METHOD *ecdsa_method,
+                                 int (*ecdsa_sign_setup) (EC_KEY *eckey,
+                                                          BN_CTX *ctx,
+                                                          BIGNUM **kinv,
+                                                          BIGNUM **r))
+{
+    ecdsa_method->ecdsa_sign_setup = ecdsa_sign_setup;
+}
+
+void ECDSA_METHOD_set_verify(ECDSA_METHOD *ecdsa_method,
+                             int (*ecdsa_do_verify) (const unsigned char
+                                                     *dgst, int dgst_len,
+                                                     const ECDSA_SIG *sig,
+                                                     EC_KEY *eckey))
+{
+    ecdsa_method->ecdsa_do_verify = ecdsa_do_verify;
+}
+
+void ECDSA_METHOD_set_flags(ECDSA_METHOD *ecdsa_method, int flags)
+{
+    ecdsa_method->flags = flags | ECDSA_METHOD_FLAG_ALLOCATED;
+}
+
+void ECDSA_METHOD_set_name(ECDSA_METHOD *ecdsa_method, char *name)
+{
+    ecdsa_method->name = name;
+}
+
+void ECDSA_METHOD_free(ECDSA_METHOD *ecdsa_method)
+{
+    if (ecdsa_method->flags & ECDSA_METHOD_FLAG_ALLOCATED)
+        OPENSSL_free(ecdsa_method);
+}
+
+void ECDSA_METHOD_set_app_data(ECDSA_METHOD *ecdsa_method, void *app)
+{
+    ecdsa_method->app_data = app;
+}
+
+void *ECDSA_METHOD_get_app_data(ECDSA_METHOD *ecdsa_method)
+{
+    return ecdsa_method->app_data;
 }

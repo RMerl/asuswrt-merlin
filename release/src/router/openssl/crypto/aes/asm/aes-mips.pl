@@ -79,7 +79,7 @@ $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
 ######################################################################
 
-$big_endian=(`echo MIPSEL | $ENV{CC} -E -P -`=~/MIPSEL/)?1:0;
+$big_endian=(`echo MIPSEL | $ENV{CC} -E -`=~/MIPSEL/)?1:0 if ($ENV{CC});
 
 for (@ARGV) {	$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
 open STDOUT,">$output";
@@ -107,6 +107,7 @@ $code.=<<___;
 #endif
 .set	noat
 ___
+
 {{{
 my $FRAMESIZE=16*$SZREG;
 my $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0xc0fff008 : 0xc0ff0000;
@@ -691,6 +692,7 @@ $code.=<<___;
 	$PTR_ADD $sp,$FRAMESIZE
 .end	AES_encrypt
 ___
+
 $code.=<<___;
 .align	5
 .ent	_mips_AES_decrypt
@@ -1262,6 +1264,7 @@ $code.=<<___;
 .end	AES_decrypt
 ___
 }}}
+
 {{{
 my $FRAMESIZE=8*$SZREG;
 my $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0xc000f008 : 0xc0000000;
@@ -1574,6 +1577,7 @@ $code.=<<___;
 	$PTR_ADD $sp,$FRAMESIZE
 .end	private_AES_set_encrypt_key
 ___
+
 my ($head,$tail)=($inp,$bits);
 my ($tp1,$tp2,$tp4,$tp8,$tp9,$tpb,$tpd,$tpe)=($a4,$a5,$a6,$a7,$s0,$s1,$s2,$s3);
 my ($m,$x80808080,$x7f7f7f7f,$x1b1b1b1b)=($at,$t0,$t1,$t2);
@@ -2067,6 +2071,7 @@ AES_Te4:
 .byte	0x40,0x00,0x00,0x00,	0x80,0x00,0x00,0x00
 .byte	0x1B,0x00,0x00,0x00,	0x36,0x00,0x00,0x00
 ___
+
 foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
 

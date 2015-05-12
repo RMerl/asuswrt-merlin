@@ -130,6 +130,7 @@ int MAIN(int argc, char **argv)
     char *engine = NULL;
 #endif
     const EVP_MD *dgst = NULL;
+    int non_fips_allow = 0;
 
     apps_startup();
 
@@ -265,8 +266,10 @@ int MAIN(int argc, char **argv)
             if (--argc < 1)
                 goto bad;
             md = *(++argv);
-        } else if ((argv[0][0] == '-') &&
-                   ((c = EVP_get_cipherbyname(&(argv[0][1]))) != NULL)) {
+        } else if (strcmp(*argv, "-non-fips-allow") == 0)
+            non_fips_allow = 1;
+        else if ((argv[0][0] == '-') &&
+                 ((c = EVP_get_cipherbyname(&(argv[0][1]))) != NULL)) {
             cipher = c;
         } else if (strcmp(*argv, "-none") == 0)
             cipher = NULL;
@@ -322,6 +325,18 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
     setup_engine(bio_err, engine, 0);
 #endif
+
+    if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+        BIO_printf(bio_err,
+                   "AEAD ciphers not supported by the enc utility\n");
+        goto end;
+    }
+
+    if (cipher && (EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)) {
+        BIO_printf(bio_err,
+                   "Ciphers in XTS mode are not supported by the enc utility\n");
+        goto end;
+    }
 
     if (md && (dgst = EVP_get_digestbyname(md)) == NULL) {
         BIO_printf(bio_err, "%s is an unsupported message digest type\n", md);
@@ -561,6 +576,10 @@ int MAIN(int argc, char **argv)
          */
 
         BIO_get_cipher_ctx(benc, &ctx);
+
+        if (non_fips_allow)
+            EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
+
         if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",
                        EVP_CIPHER_name(cipher));

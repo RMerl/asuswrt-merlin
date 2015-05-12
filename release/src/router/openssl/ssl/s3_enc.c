@@ -173,6 +173,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 #endif
     k = 0;
     EVP_MD_CTX_init(&m5);
+    EVP_MD_CTX_set_flags(&m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     EVP_MD_CTX_init(&s1);
     for (i = 0; (int)i < num; i += MD5_DIGEST_LENGTH) {
         k++;
@@ -373,6 +374,23 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
     EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE));
 
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    if (s->msg_callback) {
+
+        int wh = which & SSL3_CC_WRITE ?
+            TLS1_RT_CRYPTO_WRITE : TLS1_RT_CRYPTO_READ;
+        s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_MAC,
+                        mac_secret, EVP_MD_size(m), s, s->msg_callback_arg);
+        if (c->key_len)
+            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
+                            key, c->key_len, s, s->msg_callback_arg);
+        if (k) {
+            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_IV,
+                            iv, k, s, s->msg_callback_arg);
+        }
+    }
+#endif
+
     OPENSSL_cleanse(&(exp_key[0]), sizeof(exp_key));
     OPENSSL_cleanse(&(exp_iv[0]), sizeof(exp_iv));
     EVP_MD_CTX_cleanup(&md);
@@ -559,7 +577,8 @@ void ssl3_free_digest_list(SSL *s)
 
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
-    if (s->s3->handshake_buffer) {
+    if (s->s3->handshake_buffer
+        && !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
         BIO_write(s->s3->handshake_buffer, (void *)buf, len);
     } else {
         int i;
@@ -591,17 +610,25 @@ int ssl3_digest_cached_records(SSL *s)
 
     /* Loop through bitso of algorithm2 field and create MD_CTX-es */
     for (i = 0; ssl_get_handshake_digest(i, &mask, &md); i++) {
-        if ((mask & s->s3->tmp.new_cipher->algorithm2) && md) {
+        if ((mask & ssl_get_algorithm2(s)) && md) {
             s->s3->handshake_dgst[i] = EVP_MD_CTX_create();
+#ifdef OPENSSL_FIPS
+            if (EVP_MD_nid(md) == NID_md5) {
+                EVP_MD_CTX_set_flags(s->s3->handshake_dgst[i],
+                                     EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+            }
+#endif
             EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL);
             EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata, hdatalen);
         } else {
             s->s3->handshake_dgst[i] = NULL;
         }
     }
-    /* Free handshake_buffer BIO */
-    BIO_free(s->s3->handshake_buffer);
-    s->s3->handshake_buffer = NULL;
+    if (!(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
+        /* Free handshake_buffer BIO */
+        BIO_free(s->s3->handshake_buffer);
+        s->s3->handshake_buffer = NULL;
+    }
 
     return 1;
 }
@@ -657,6 +684,7 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
         return 0;
     }
     EVP_MD_CTX_init(&ctx);
+    EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     EVP_MD_CTX_copy_ex(&ctx, d);
     n = EVP_MD_CTX_size(&ctx);
     if (n < 0)
@@ -812,6 +840,9 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     EVP_MD_CTX ctx;
     int i, ret = 0;
     unsigned int n;
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    unsigned char *tmpout = out;
+#endif
 
     EVP_MD_CTX_init(&ctx);
     for (i = 0; i < 3; i++) {
@@ -830,6 +861,22 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         ret += n;
     }
     EVP_MD_CTX_cleanup(&ctx);
+
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    if (s->msg_callback) {
+        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_PREMASTER,
+                        p, len, s, s->msg_callback_arg);
+        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_CLIENT_RANDOM,
+                        s->s3->client_random, SSL3_RANDOM_SIZE,
+                        s, s->msg_callback_arg);
+        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_SERVER_RANDOM,
+                        s->s3->server_random, SSL3_RANDOM_SIZE,
+                        s, s->msg_callback_arg);
+        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_MASTER,
+                        tmpout, SSL3_MASTER_SECRET_SIZE,
+                        s, s->msg_callback_arg);
+    }
+#endif
     OPENSSL_cleanse(buf, sizeof buf);
     return (ret);
 }

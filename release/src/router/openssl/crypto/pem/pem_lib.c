@@ -229,6 +229,10 @@ static int check_pem(const char *nm, const char *name)
         }
         return 0;
     }
+    /* If reading DH parameters handle X9.42 DH format too */
+    if (!strcmp(nm, PEM_STRING_DHXPARAMS) &&
+        !strcmp(name, PEM_STRING_DHPARAMS))
+        return 1;
 
     /* Permit older strings */
 
@@ -389,7 +393,8 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
          * The 'iv' is used as the iv and as a salt.  It is NOT taken from
          * the BytesToKey function
          */
-        EVP_BytesToKey(enc, EVP_md5(), iv, kstr, klen, 1, key, NULL);
+        if (!EVP_BytesToKey(enc, EVP_md5(), iv, kstr, klen, 1, key, NULL))
+            goto err;
 
         if (kstr == (unsigned char *)buf)
             OPENSSL_cleanse(buf, PEM_BUFSIZE);
@@ -403,12 +408,15 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
         /* k=strlen(buf); */
 
         EVP_CIPHER_CTX_init(&ctx);
-        EVP_EncryptInit_ex(&ctx, enc, NULL, key, iv);
-        EVP_EncryptUpdate(&ctx, data, &j, data, i);
-        EVP_EncryptFinal_ex(&ctx, &(data[j]), &i);
-        EVP_CIPHER_CTX_cleanup(&ctx);
-        i += j;
         ret = 1;
+        if (!EVP_EncryptInit_ex(&ctx, enc, NULL, key, iv)
+            || !EVP_EncryptUpdate(&ctx, data, &j, data, i)
+            || !EVP_EncryptFinal_ex(&ctx, &(data[j]), &i))
+            ret = 0;
+        EVP_CIPHER_CTX_cleanup(&ctx);
+        if (ret == 0)
+            goto err;
+        i += j;
     } else {
         ret = 1;
         buf[0] = '\0';
@@ -431,7 +439,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
                   pem_password_cb *callback, void *u)
 {
-    int i, j, o, klen;
+    int i = 0, j, o, klen;
     long len;
     EVP_CIPHER_CTX ctx;
     unsigned char key[EVP_MAX_KEY_LENGTH];
@@ -454,19 +462,23 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
     ebcdic2ascii(buf, buf, klen);
 #endif
 
-    EVP_BytesToKey(cipher->cipher, EVP_md5(), &(cipher->iv[0]),
-                   (unsigned char *)buf, klen, 1, key, NULL);
+    if (!EVP_BytesToKey(cipher->cipher, EVP_md5(), &(cipher->iv[0]),
+                        (unsigned char *)buf, klen, 1, key, NULL))
+        return 0;
 
     j = (int)len;
     EVP_CIPHER_CTX_init(&ctx);
-    EVP_DecryptInit_ex(&ctx, cipher->cipher, NULL, key, &(cipher->iv[0]));
-    EVP_DecryptUpdate(&ctx, data, &i, data, j);
-    o = EVP_DecryptFinal_ex(&ctx, &(data[i]), &j);
+    o = EVP_DecryptInit_ex(&ctx, cipher->cipher, NULL, key, &(cipher->iv[0]));
+    if (o)
+        o = EVP_DecryptUpdate(&ctx, data, &i, data, j);
+    if (o)
+        o = EVP_DecryptFinal_ex(&ctx, &(data[i]), &j);
     EVP_CIPHER_CTX_cleanup(&ctx);
     OPENSSL_cleanse((char *)buf, sizeof(buf));
     OPENSSL_cleanse((char *)key, sizeof(key));
-    j += i;
-    if (!o) {
+    if (o)
+        j += i;
+    else {
         PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_DECRYPT);
         return (0);
     }
@@ -567,8 +579,8 @@ static int load_iv(char **fromp, unsigned char *to, int num)
 }
 
 #ifndef OPENSSL_NO_FP_API
-int PEM_write(FILE *fp, char *name, char *header, unsigned char *data,
-              long len)
+int PEM_write(FILE *fp, const char *name, const char *header,
+              const unsigned char *data, long len)
 {
     BIO *b;
     int ret;
@@ -584,8 +596,8 @@ int PEM_write(FILE *fp, char *name, char *header, unsigned char *data,
 }
 #endif
 
-int PEM_write_bio(BIO *bp, const char *name, char *header,
-                  unsigned char *data, long len)
+int PEM_write_bio(BIO *bp, const char *name, const char *header,
+                  const unsigned char *data, long len)
 {
     int nlen, n, i, j, outl;
     unsigned char *buf = NULL;

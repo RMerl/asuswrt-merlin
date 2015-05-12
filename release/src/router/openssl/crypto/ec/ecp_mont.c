@@ -63,11 +63,16 @@
 
 #include <openssl/err.h>
 
+#ifdef OPENSSL_FIPS
+# include <openssl/fips.h>
+#endif
+
 #include "ec_lcl.h"
 
 const EC_METHOD *EC_GFp_mont_method(void)
 {
     static const EC_METHOD ret = {
+        EC_FLAGS_DEFAULT_OCT,
         NID_X9_62_prime_field,
         ec_GFp_mont_group_init,
         ec_GFp_mont_group_finish,
@@ -86,9 +91,7 @@ const EC_METHOD *EC_GFp_mont_method(void)
         ec_GFp_simple_get_Jprojective_coordinates_GFp,
         ec_GFp_simple_point_set_affine_coordinates,
         ec_GFp_simple_point_get_affine_coordinates,
-        ec_GFp_simple_set_compressed_coordinates,
-        ec_GFp_simple_point2oct,
-        ec_GFp_simple_oct2point,
+        0, 0, 0,
         ec_GFp_simple_add,
         ec_GFp_simple_dbl,
         ec_GFp_simple_invert,
@@ -107,6 +110,11 @@ const EC_METHOD *EC_GFp_mont_method(void)
         ec_GFp_mont_field_decode,
         ec_GFp_mont_field_set_to_one
     };
+
+#ifdef OPENSSL_FIPS
+    if (FIPS_mode())
+        return fips_ec_gfp_mont_method();
+#endif
 
     return &ret;
 }

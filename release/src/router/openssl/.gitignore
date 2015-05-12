@@ -1,10 +1,11 @@
 *.a
 *.o
 *.so
+Makefile
 Makefile.bak
 apps/openssl
 lib
-c_rehash.bak
+c_rehash
 crypto/aes/lib
 crypto/asn1/lib
 crypto/bf/lib
@@ -60,11 +61,7 @@ libcrypto.so.1.0.0
 libssl.pc
 libssl.so.1.0.0
 openssl.pc
-ssl/lib
-stamp-h1
-apps/progs.h
 crypto/*/*.S
-crypto/*/*.s
-Makefile
-crypto/opensslconf.h
-
+certs/demo/.0
+include/openssl/rc5.h
+rehash.time

@@ -115,6 +115,10 @@ typedef struct seed_key_st {
 # endif
 } SEED_KEY_SCHEDULE;
 
+# ifdef OPENSSL_FIPS
+void private_SEED_set_key(const unsigned char rawkey[SEED_KEY_LENGTH],
+                          SEED_KEY_SCHEDULE *ks);
+# endif
 void SEED_set_key(const unsigned char rawkey[SEED_KEY_LENGTH],
                   SEED_KEY_SCHEDULE *ks);
 

@@ -138,6 +138,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     BN_CTX *ctx = NULL;
     int reason = ERR_R_BN_LIB;
     DSA_SIG *ret = NULL;
+    int noredo = 0;
 
     BN_init(&m);
     BN_init(&xr);
@@ -153,7 +154,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     ctx = BN_CTX_new();
     if (ctx == NULL)
         goto err;
-
+ redo:
     if ((dsa->kinv == NULL) || (dsa->r == NULL)) {
         if (!DSA_sign_setup(dsa, ctx, &kinv, &r))
             goto err;
@@ -162,6 +163,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
         dsa->kinv = NULL;
         r = dsa->r;
         dsa->r = NULL;
+        noredo = 1;
     }
 
     if (dlen > BN_num_bytes(dsa->q))
@@ -188,6 +190,17 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     ret = DSA_SIG_new();
     if (ret == NULL)
         goto err;
+    /*
+     * Redo if r or s is zero as required by FIPS 186-3: this is very
+     * unlikely.
+     */
+    if (BN_is_zero(r) || BN_is_zero(s)) {
+        if (noredo) {
+            reason = DSA_R_NEED_NEW_SETUP_VALUES;
+            goto err;
+        }
+        goto redo;
+    }
     ret->r = r;
     ret->s = s;
 
@@ -385,11 +398,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     ret = (BN_ucmp(&u1, sig->r) == 0);
 
  err:
-    /*
-     * XXX: surely this is wrong - if ret is 0, it just didn't verify; there
-     * is no error in BN. Test should be ret == -1 (Ben)
-     */
-    if (ret != 1)
+    if (ret < 0)
         DSAerr(DSA_F_DSA_DO_VERIFY, ERR_R_BN_LIB);
     if (ctx != NULL)
         BN_CTX_free(ctx);

@@ -405,6 +405,11 @@ int (*CRYPTO_get_add_lock_callback(void)) (int *num, int mount, int type,
 void CRYPTO_set_locking_callback(void (*func) (int mode, int type,
                                                const char *file, int line))
 {
+    /*
+     * Calling this here ensures initialisation before any threads are
+     * started.
+     */
+    OPENSSL_init();
     locking_callback = func;
 }
 
@@ -648,34 +653,78 @@ const char *CRYPTO_get_lock_name(int type)
         defined(__x86_64) || defined(__x86_64__) || \
         defined(_M_AMD64) || defined(_M_X64)
 
-unsigned long OPENSSL_ia32cap_P = 0;
+extern unsigned int OPENSSL_ia32cap_P[4];
 unsigned long *OPENSSL_ia32cap_loc(void)
 {
-    return &OPENSSL_ia32cap_P;
+    if (sizeof(long) == 4)
+        /*
+         * If 32-bit application pulls address of OPENSSL_ia32cap_P[0]
+         * clear second element to maintain the illusion that vector
+         * is 32-bit.
+         */
+        OPENSSL_ia32cap_P[1] = 0;
+
+    OPENSSL_ia32cap_P[2] = 0;
+
+    return (unsigned long *)OPENSSL_ia32cap_P;
 }
 
 # if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #  define OPENSSL_CPUID_SETUP
+#  if defined(_WIN32)
+typedef unsigned __int64 IA32CAP;
+#  else
+typedef unsigned long long IA32CAP;
+#  endif
 void OPENSSL_cpuid_setup(void)
 {
     static int trigger = 0;
-    unsigned long OPENSSL_ia32_cpuid(void);
+    IA32CAP OPENSSL_ia32_cpuid(unsigned int *);
+    IA32CAP vec;
     char *env;
 
     if (trigger)
         return;
 
     trigger = 1;
-    if ((env = getenv("OPENSSL_ia32cap")))
-        OPENSSL_ia32cap_P = strtoul(env, NULL, 0) | (1 << 10);
-    else
-        OPENSSL_ia32cap_P = OPENSSL_ia32_cpuid() | (1 << 10);
+    if ((env = getenv("OPENSSL_ia32cap"))) {
+        int off = (env[0] == '~') ? 1 : 0;
+#  if defined(_WIN32)
+        if (!sscanf(env + off, "%I64i", &vec))
+            vec = strtoul(env + off, NULL, 0);
+#  else
+        if (!sscanf(env + off, "%lli", (long long *)&vec))
+            vec = strtoul(env + off, NULL, 0);
+#  endif
+        if (off)
+            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & ~vec;
+        else if (env[0] == ':')
+            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+
+        OPENSSL_ia32cap_P[2] = 0;
+        if ((env = strchr(env, ':'))) {
+            unsigned int vecx;
+            env++;
+            off = (env[0] == '~') ? 1 : 0;
+            vecx = strtoul(env + off, NULL, 0);
+            if (off)
+                OPENSSL_ia32cap_P[2] &= ~vecx;
+            else
+                OPENSSL_ia32cap_P[2] = vecx;
+        }
+    } else
+        vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+
     /*
      * |(1<<10) sets a reserved bit to signal that variable
      * was initialized already... This is to avoid interference
      * with cpuid snippets in ELF .init segment.
      */
+    OPENSSL_ia32cap_P[0] = (unsigned int)vec | (1 << 10);
+    OPENSSL_ia32cap_P[1] = (unsigned int)(vec >> 32);
 }
+# else
+unsigned int OPENSSL_ia32cap_P[4];
 # endif
 
 #else
@@ -829,8 +878,12 @@ void OPENSSL_showfatal(const char *fmta, ...)
     if ((h = GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
         GetFileType(h) != FILE_TYPE_UNKNOWN) {
         /* must be console application */
+        int len;
+        DWORD out;
+
         va_start(ap, fmta);
-        vfprintf(stderr, fmta, ap);
+        len = _vsnprintf((char *)buf, sizeof(buf), fmta, ap);
+        WriteFile(h, buf, len < 0 ? sizeof(buf) : (DWORD) len, &out, NULL);
         va_end(ap);
         return;
     }
@@ -937,7 +990,9 @@ void OpenSSLDie(const char *file, int line, const char *assertion)
     /*
      * Win32 abort() customarily shows a dialog, but we just did that...
      */
+# if !defined(_WIN32_WCE)
     raise(SIGABRT);
+# endif
     _exit(3);
 #endif
 }

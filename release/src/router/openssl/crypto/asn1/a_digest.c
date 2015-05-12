@@ -86,7 +86,8 @@ int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
     p = str;
     i2d(data, &p);
 
-    EVP_Digest(str, i, md, len, type, NULL);
+    if (!EVP_Digest(str, i, md, len, type, NULL))
+        return 0;
     OPENSSL_free(str);
     return (1);
 }
@@ -103,7 +104,8 @@ int ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
     if (!str)
         return (0);
 
-    EVP_Digest(str, i, md, len, type, NULL);
+    if (!EVP_Digest(str, i, md, len, type, NULL))
+        return 0;
     OPENSSL_free(str);
     return (1);
 }

@@ -150,6 +150,9 @@ static const char *x509_usage[] = {
     " -engine e       - use engine e, possibly a hardware device.\n",
 #endif
     " -certopt arg    - various certificate text options\n",
+    " -checkhost host - check certificate matches \"host\"\n",
+    " -checkemail email - check certificate matches \"email\"\n",
+    " -checkip ipaddr - check certificate matches \"ipaddr\"\n",
     NULL
 };
 
@@ -157,12 +160,15 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx);
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, char *section);
 static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
-                        X509 *x, X509 *xca, EVP_PKEY *pkey, char *serial,
+                        X509 *x, X509 *xca, EVP_PKEY *pkey,
+                        STACK_OF(OPENSSL_STRING) *sigopts, char *serial,
                         int create, int days, int clrext, CONF *conf,
                         char *section, ASN1_INTEGER *sno);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile = 0;
-static time_t setstartsecs=0;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+static int force_version = 2;
+#endif
 
 int MAIN(int, char **);
 
@@ -173,15 +179,17 @@ int MAIN(int argc, char **argv)
     X509_REQ *req = NULL;
     X509 *x = NULL, *xca = NULL;
     ASN1_OBJECT *objtmp;
-    EVP_PKEY *Upkey = NULL, *CApkey = NULL;
+    STACK_OF(OPENSSL_STRING) *sigopts = NULL;
+    EVP_PKEY *Upkey = NULL, *CApkey = NULL, *fkey = NULL;
     ASN1_INTEGER *sno = NULL;
-    int i, num, badops = 0;
+    int i, num, badops = 0, badsig = 0;
     BIO *out = NULL;
     BIO *STDout = NULL;
     STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
     int informat, outformat, keyformat, CAformat, CAkeyformat;
     char *infile = NULL, *outfile = NULL, *keyfile = NULL, *CAfile = NULL;
     char *CAkeyfile = NULL, *CAserial = NULL;
+    char *fkeyfile = NULL;
     char *alias = NULL;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate =
         0, enddate = 0;
@@ -207,6 +215,9 @@ int MAIN(int argc, char **argv)
     int need_rand = 0;
     int checkend = 0, checkoffset = 0;
     unsigned long nmflag = 0, certflag = 0;
+    char *checkhost = NULL;
+    char *checkemail = NULL;
+    char *checkip = NULL;
 #ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
 #endif
@@ -266,12 +277,27 @@ int MAIN(int argc, char **argv)
             if (--argc < 1)
                 goto bad;
             CAkeyformat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-days") == 0) {
+        } else if (strcmp(*argv, "-sigopt") == 0) {
+            if (--argc < 1)
+                goto bad;
+            if (!sigopts)
+                sigopts = sk_OPENSSL_STRING_new_null();
+            if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, *(++argv)))
+                goto bad;
+        }
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+        else if (strcmp(*argv, "-force_version") == 0) {
+            if (--argc < 1)
+                goto bad;
+            force_version = atoi(*(++argv)) - 1;
+        }
+#endif
+        else if (strcmp(*argv, "-days") == 0) {
             if (--argc < 1)
                 goto bad;
             days = atoi(*(++argv));
             if (days == 0) {
-                BIO_printf(STDout, "bad number of days\n");
+                BIO_printf(bio_err, "bad number of days\n");
                 goto bad;
             }
         } else if (strcmp(*argv, "-passin") == 0) {
@@ -319,6 +345,10 @@ int MAIN(int argc, char **argv)
                 goto bad;
             if (!(sno = s2i_ASN1_INTEGER(NULL, *(++argv))))
                 goto bad;
+        } else if (strcmp(*argv, "-force_pubkey") == 0) {
+            if (--argc < 1)
+                goto bad;
+            fkeyfile = *(++argv);
         } else if (strcmp(*argv, "-addtrust") == 0) {
             if (--argc < 1)
                 goto bad;
@@ -347,9 +377,6 @@ int MAIN(int argc, char **argv)
                 goto bad;
             alias = *(++argv);
             trustout = 1;
-	} else if (strcmp(*argv,"-setstartsecs") == 0) {
-		if (--argc < 1) goto bad;
-		setstartsecs = atol(*(++argv));
         } else if (strcmp(*argv, "-certopt") == 0) {
             if (--argc < 1)
                 goto bad;
@@ -419,6 +446,18 @@ int MAIN(int argc, char **argv)
                 goto bad;
             checkoffset = atoi(*(++argv));
             checkend = 1;
+        } else if (strcmp(*argv, "-checkhost") == 0) {
+            if (--argc < 1)
+                goto bad;
+            checkhost = *(++argv);
+        } else if (strcmp(*argv, "-checkemail") == 0) {
+            if (--argc < 1)
+                goto bad;
+            checkemail = *(++argv);
+        } else if (strcmp(*argv, "-checkip") == 0) {
+            if (--argc < 1)
+                goto bad;
+            checkip = *(++argv);
         } else if (strcmp(*argv, "-noout") == 0)
             noout = ++num;
         else if (strcmp(*argv, "-trustout") == 0)
@@ -442,6 +481,8 @@ int MAIN(int argc, char **argv)
 #endif
         else if (strcmp(*argv, "-ocspid") == 0)
             ocspid = ++num;
+        else if (strcmp(*argv, "-badsig") == 0)
+            badsig = 1;
         else if ((md_alg = EVP_get_digestbyname(*argv + 1))) {
             /* ok */
             digest = md_alg;
@@ -477,6 +518,13 @@ int MAIN(int argc, char **argv)
     if (!X509_STORE_set_default_paths(ctx)) {
         ERR_print_errors(bio_err);
         goto end;
+    }
+
+    if (fkeyfile) {
+        fkey = load_pubkey(bio_err, fkeyfile, keyformat, 0,
+                           NULL, e, "Forced key");
+        if (fkey == NULL)
+            goto end;
     }
 
     if ((CAkeyfile == NULL) && (CA_flag) && (CAformat == FORMAT_PEM)) {
@@ -600,10 +648,13 @@ int MAIN(int argc, char **argv)
 
         X509_gmtime_adj(X509_get_notBefore(x), 0);
         X509_time_adj_ex(X509_get_notAfter(x), days, 0, NULL);
-
-        pkey = X509_REQ_get_pubkey(req);
-        X509_set_pubkey(x, pkey);
-        EVP_PKEY_free(pkey);
+        if (fkey)
+            X509_set_pubkey(x, fkey);
+        else {
+            pkey = X509_REQ_get_pubkey(req);
+            X509_set_pubkey(x, pkey);
+            EVP_PKEY_free(pkey);
+        }
     } else
         x = load_cert(bio_err, infile, informat, NULL, e, "Certificate");
 
@@ -778,6 +829,11 @@ int MAIN(int argc, char **argv)
 
                 z = i2d_X509(x, NULL);
                 m = OPENSSL_malloc(z);
+                if (!m) {
+                    BIO_printf(bio_err, "Out of memory\n");
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
 
                 d = (unsigned char *)m;
                 z = i2d_X509_NAME(X509_get_subject_name(x), &d);
@@ -820,7 +876,7 @@ int MAIN(int argc, char **argv)
 
                 OPENSSL_free(m);
             } else if (text == i) {
-                X509_print_ex(out, x, nmflag, certflag);
+                X509_print_ex(STDout, x, nmflag, certflag);
             } else if (startdate == i) {
                 BIO_puts(STDout, "notBefore=");
                 ASN1_TIME_print(STDout, X509_get_notBefore(x));
@@ -876,8 +932,9 @@ int MAIN(int argc, char **argv)
 
                 assert(need_rand);
                 if (!x509_certify(ctx, CAfile, digest, x, xca,
-                                  CApkey, CAserial, CA_createserial, days,
-                                  clrext, extconf, extsect, sno))
+                                  CApkey, sigopts,
+                                  CAserial, CA_createserial, days, clrext,
+                                  extconf, extsect, sno))
                     goto end;
             } else if (x509req == i) {
                 EVP_PKEY *pk;
@@ -926,10 +983,15 @@ int MAIN(int argc, char **argv)
         goto end;
     }
 
+    print_cert_checks(STDout, x, checkhost, checkemail, checkip);
+
     if (noout) {
         ret = 0;
         goto end;
     }
+
+    if (badsig)
+        x->signature->data[x->signature->length - 1] ^= 0x1;
 
     if (outformat == FORMAT_ASN1)
         i = i2d_X509_bio(out, x);
@@ -971,6 +1033,9 @@ int MAIN(int argc, char **argv)
     X509_free(xca);
     EVP_PKEY_free(Upkey);
     EVP_PKEY_free(CApkey);
+    EVP_PKEY_free(fkey);
+    if (sigopts)
+        sk_OPENSSL_STRING_free(sigopts);
     X509_REQ_free(rq);
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
@@ -1028,9 +1093,11 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile,
 }
 
 static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
-                        X509 *x, X509 *xca, EVP_PKEY *pkey, char *serialfile,
-                        int create, int days, int clrext, CONF *conf,
-                        char *section, ASN1_INTEGER *sno)
+                        X509 *x, X509 *xca, EVP_PKEY *pkey,
+                        STACK_OF(OPENSSL_STRING) *sigopts,
+                        char *serialfile, int create,
+                        int days, int clrext, CONF *conf, char *section,
+                        ASN1_INTEGER *sno)
 {
     int ret = 0;
     ASN1_INTEGER *bs = NULL;
@@ -1086,14 +1153,18 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 
     if (conf) {
         X509V3_CTX ctx2;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+        X509_set_version(x, force_version);
+#else
         X509_set_version(x, 2); /* version 3 certificate */
+#endif
         X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx2, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x))
             goto end;
     }
 
-    if (!X509_sign(x, pkey, digest))
+    if (!do_X509_sign(bio_err, x, pkey, digest, sigopts))
         goto end;
     ret = 1;
  end:
@@ -1152,34 +1223,16 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
 
     if (!X509_set_issuer_name(x, X509_get_subject_name(x)))
         goto err;
+    if (X509_gmtime_adj(X509_get_notBefore(x), 0) == NULL)
+        goto err;
 
-    if(setstartsecs) {
-        struct tm *tmnow;
-        char buf[100];
+    /* Lets just make it 12:00am GMT, Jan 1 1970 */
+    /* memcpy(x->cert_info->validity->notBefore,"700101120000Z",13); */
+    /* 28 days to be certified */
 
-        tmnow = localtime(&setstartsecs);
-        snprintf(buf, sizeof(buf), "%02d%02d%02d%02d%02d%02dZ",
-                 tmnow->tm_year%100, tmnow->tm_mon+1, tmnow->tm_mday,
-                 tmnow->tm_hour, tmnow->tm_min, tmnow->tm_sec);
-
-        if (!ASN1_UTCTIME_set_string(X509_get_notBefore(x), buf))
-            goto err;
-
-        if (X509_time_adj(X509_get_notAfter(x), (long)60*60*24*days, &setstartsecs) == NULL)
-            goto err;
-    }
-    else {
-        if (X509_gmtime_adj(X509_get_notBefore(x),0) == NULL) 
-            goto err;
-
-        /* Lets just make it 12:00am GMT, Jan 1 1970 */
-        /* memcpy(x->cert_info->validity->notBefore,"700101120000Z",13); */
-        /* 28 days to be certified */
-
-        if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
-            goto err;
-
-    }
+    if (X509_gmtime_adj(X509_get_notAfter(x), (long)60 * 60 * 24 * days) ==
+        NULL)
+        goto err;
 
     if (!X509_set_pubkey(x, pkey))
         goto err;
@@ -1189,7 +1242,11 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
     }
     if (conf) {
         X509V3_CTX ctx;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+        X509_set_version(x, force_version);
+#else
         X509_set_version(x, 2); /* version 3 certificate */
+#endif
         X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx, section, x))

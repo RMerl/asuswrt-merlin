@@ -361,6 +361,7 @@ typedef struct x509_cert_pair_st {
 # define X509_FLAG_NO_SIGDUMP            (1L << 9)
 # define X509_FLAG_NO_AUX                (1L << 10)
 # define X509_FLAG_NO_ATTRIBUTES         (1L << 11)
+# define X509_FLAG_NO_IDS                (1L << 12)
 
 /* Flags specific to X509_NAME_print_ex() */
 
@@ -640,11 +641,17 @@ int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
 
 int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki);
 
+int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent);
 int X509_signature_print(BIO *bp, X509_ALGOR *alg, ASN1_STRING *sig);
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
+int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
+int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert);
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
+int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
+int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
+int X509_CRL_http_nbio(OCSP_REQ_CTX *rctx, X509_CRL **pcrl);
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
 int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
@@ -741,12 +748,14 @@ X509 *X509_dup(X509 *x509);
 X509_ATTRIBUTE *X509_ATTRIBUTE_dup(X509_ATTRIBUTE *xa);
 X509_EXTENSION *X509_EXTENSION_dup(X509_EXTENSION *ex);
 X509_CRL *X509_CRL_dup(X509_CRL *crl);
+X509_REVOKED *X509_REVOKED_dup(X509_REVOKED *rev);
 X509_REQ *X509_REQ_dup(X509_REQ *req);
 X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype,
                     void *pval);
 void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
                      X509_ALGOR *algor);
+void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
@@ -823,6 +832,12 @@ void *X509_get_ex_data(X509 *r, int idx);
 int i2d_X509_AUX(X509 *a, unsigned char **pp);
 X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length);
 
+int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
+
+void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
+                         const X509 *x);
+int X509_get_signature_nid(const X509 *x);
+
 int X509_alias_set1(X509 *x, unsigned char *name, int len);
 int X509_keyid_set1(X509 *x, unsigned char *id, int len);
 unsigned char *X509_alias_get0(X509 *x, int *len);
@@ -878,6 +893,9 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *algor1,
 int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1,
                    X509_ALGOR *algor2, ASN1_BIT_STRING *signature, void *data,
                    EVP_PKEY *pkey, const EVP_MD *type);
+int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+                       X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+                       void *asn, EVP_MD_CTX *ctx);
 # endif
 
 int X509_set_version(X509 *x, long version);
@@ -931,9 +949,17 @@ int X509_CRL_sort(X509_CRL *crl);
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
 
+X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
+                        EVP_PKEY *skey, const EVP_MD *md, unsigned int flags);
+
 int X509_REQ_check_private_key(X509_REQ *x509, EVP_PKEY *pkey);
 
 int X509_check_private_key(X509 *x509, EVP_PKEY *pkey);
+int X509_chain_check_suiteb(int *perror_depth,
+                            X509 *x, STACK_OF(X509) *chain,
+                            unsigned long flags);
+int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags);
+STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain);
 
 int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b);
 unsigned long X509_issuer_and_serial_hash(X509 *a);
@@ -1166,6 +1192,9 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
                               unsigned char *salt, int saltlen,
                               unsigned char *aiv, int prf_nid);
 
+X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
+                             int prf_nid, int keylen);
+
 /* PKCS#8 utilities */
 
 DECLARE_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
@@ -1225,6 +1254,7 @@ void ERR_load_X509_strings(void);
 # define X509_F_X509_ATTRIBUTE_GET0_DATA                  139
 # define X509_F_X509_ATTRIBUTE_SET1_DATA                  138
 # define X509_F_X509_CHECK_PRIVATE_KEY                    128
+# define X509_F_X509_CRL_DIFF                             105
 # define X509_F_X509_CRL_PRINT_FP                         147
 # define X509_F_X509_EXTENSION_CREATE_BY_NID              108
 # define X509_F_X509_EXTENSION_CREATE_BY_OBJ              109
@@ -1257,20 +1287,27 @@ void ERR_load_X509_strings(void);
 # define X509_F_X509_VERIFY_CERT                          127
 
 /* Reason codes. */
+# define X509_R_AKID_MISMATCH                             110
 # define X509_R_BAD_X509_FILETYPE                         100
 # define X509_R_BASE64_DECODE_ERROR                       118
 # define X509_R_CANT_CHECK_DH_KEY                         114
 # define X509_R_CERT_ALREADY_IN_HASH_TABLE                101
+# define X509_R_CRL_ALREADY_DELTA                         127
+# define X509_R_CRL_VERIFY_FAILURE                        131
 # define X509_R_ERR_ASN1_LIB                              102
+# define X509_R_IDP_MISMATCH                              128
 # define X509_R_INVALID_DIRECTORY                         113
 # define X509_R_INVALID_FIELD_NAME                        119
 # define X509_R_INVALID_TRUST                             123
+# define X509_R_ISSUER_MISMATCH                           129
 # define X509_R_KEY_TYPE_MISMATCH                         115
 # define X509_R_KEY_VALUES_MISMATCH                       116
 # define X509_R_LOADING_CERT_DIR                          103
 # define X509_R_LOADING_DEFAULTS                          104
 # define X509_R_METHOD_NOT_SUPPORTED                      124
+# define X509_R_NEWER_CRL_NOT_NEWER                       132
 # define X509_R_NO_CERT_SET_FOR_US_TO_VERIFY              105
+# define X509_R_NO_CRL_NUMBER                             130
 # define X509_R_PUBLIC_KEY_DECODE_ERROR                   125
 # define X509_R_PUBLIC_KEY_ENCODE_ERROR                   126
 # define X509_R_SHOULD_RETRY                              106

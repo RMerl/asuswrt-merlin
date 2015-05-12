@@ -103,7 +103,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 {
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *impl = NULL;
     unsigned char *buf = NULL;
     int i, err = 1;
     const EVP_MD *md = NULL, *m;
@@ -124,9 +124,11 @@ int MAIN(int argc, char **argv)
     char *passargin = NULL, *passin = NULL;
 #ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
+    int engine_impl = 0;
 #endif
     char *hmac_key = NULL;
     char *mac_name = NULL;
+    int non_fips_allow = 0;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
 
     apps_startup();
@@ -198,7 +200,8 @@ int MAIN(int argc, char **argv)
                 break;
             engine = *(++argv);
             e = setup_engine(bio_err, engine, 0);
-        }
+        } else if (strcmp(*argv, "-engine_impl") == 0)
+            engine_impl = 1;
 #endif
         else if (strcmp(*argv, "-hex") == 0)
             out_bin = 0;
@@ -206,6 +209,10 @@ int MAIN(int argc, char **argv)
             out_bin = 1;
         else if (strcmp(*argv, "-d") == 0)
             debug = 1;
+        else if (!strcmp(*argv, "-fips-fingerprint"))
+            hmac_key = "etaonrishdlcupfm";
+        else if (strcmp(*argv, "-non-fips-allow") == 0)
+            non_fips_allow = 1;
         else if (!strcmp(*argv, "-hmac")) {
             if (--argc < 1)
                 break;
@@ -252,6 +259,8 @@ int MAIN(int argc, char **argv)
         BIO_printf(bio_err, "-d              to output debug info\n");
         BIO_printf(bio_err, "-hex            output as hex dump\n");
         BIO_printf(bio_err, "-binary         output in binary form\n");
+        BIO_printf(bio_err, "-hmac arg       set the HMAC key to arg\n");
+        BIO_printf(bio_err, "-non-fips-allow allow use of non FIPS digest\n");
         BIO_printf(bio_err,
                    "-sign   file    sign digest using private key in file\n");
         BIO_printf(bio_err,
@@ -277,9 +286,18 @@ int MAIN(int argc, char **argv)
         EVP_MD_do_all_sorted(list_md_fn, bio_err);
         goto end;
     }
+#ifndef OPENSSL_NO_ENGINE
+    if (engine_impl)
+        impl = e;
+#endif
 
     in = BIO_new(BIO_s_file());
     bmd = BIO_new(BIO_f_md());
+    if ((in == NULL) || (bmd == NULL)) {
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+
     if (debug) {
         BIO_set_callback(in, BIO_debug_callback);
         /* needed for windows 3.1 */
@@ -288,11 +306,6 @@ int MAIN(int argc, char **argv)
 
     if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
-        goto end;
-    }
-
-    if ((in == NULL) || (bmd == NULL)) {
-        ERR_print_errors(bio_err);
         goto end;
     }
 
@@ -350,7 +363,7 @@ int MAIN(int argc, char **argv)
     if (mac_name) {
         EVP_PKEY_CTX *mac_ctx = NULL;
         int r = 0;
-        if (!init_gen_str(bio_err, &mac_ctx, mac_name, e, 0))
+        if (!init_gen_str(bio_err, &mac_ctx, mac_name, impl, 0))
             goto mac_end;
         if (macopts) {
             char *macopt;
@@ -377,8 +390,14 @@ int MAIN(int argc, char **argv)
             goto end;
     }
 
+    if (non_fips_allow) {
+        EVP_MD_CTX *md_ctx;
+        BIO_get_md_ctx(bmd, &md_ctx);
+        EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+    }
+
     if (hmac_key) {
-        sigkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, e,
+        sigkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, impl,
                                       (unsigned char *)hmac_key, -1);
         if (!sigkey)
             goto end;
@@ -394,9 +413,9 @@ int MAIN(int argc, char **argv)
             goto end;
         }
         if (do_verify)
-            r = EVP_DigestVerifyInit(mctx, &pctx, md, NULL, sigkey);
+            r = EVP_DigestVerifyInit(mctx, &pctx, md, impl, sigkey);
         else
-            r = EVP_DigestSignInit(mctx, &pctx, md, NULL, sigkey);
+            r = EVP_DigestSignInit(mctx, &pctx, md, impl, sigkey);
         if (!r) {
             BIO_printf(bio_err, "Error setting context\n");
             ERR_print_errors(bio_err);
@@ -416,9 +435,15 @@ int MAIN(int argc, char **argv)
     }
     /* we use md as a filter, reading from 'in' */
     else {
+        EVP_MD_CTX *mctx = NULL;
+        if (!BIO_get_md_ctx(bmd, &mctx)) {
+            BIO_printf(bio_err, "Error getting context\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
         if (md == NULL)
             md = EVP_md5();
-        if (!BIO_set_md(bmd, md)) {
+        if (!EVP_DigestInit_ex(mctx, md, impl)) {
             BIO_printf(bio_err, "Error setting digest %s\n", pname);
             ERR_print_errors(bio_err);
             goto end;
@@ -432,6 +457,11 @@ int MAIN(int argc, char **argv)
         sigbuf = OPENSSL_malloc(siglen);
         if (!sigbio) {
             BIO_printf(bio_err, "Error opening signature file %s\n", sigfile);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        if (!sigbuf) {
+            BIO_printf(bio_err, "Out of memory\n");
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -465,7 +495,8 @@ int MAIN(int argc, char **argv)
                     EVP_PKEY_asn1_get0_info(NULL, NULL,
                                             NULL, NULL, &sig_name, ameth);
             }
-            md_name = EVP_MD_name(md);
+            if (md)
+                md_name = EVP_MD_name(md);
         }
         err = 0;
         for (i = 0; i < argc; i++) {
@@ -563,9 +594,12 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
             BIO_printf(out, "%02x", buf[i]);
         BIO_printf(out, " *%s\n", file);
     } else {
-        if (sig_name)
-            BIO_printf(out, "%s-%s(%s)= ", sig_name, md_name, file);
-        else if (md_name)
+        if (sig_name) {
+            BIO_puts(out, sig_name);
+            if (md_name)
+                BIO_printf(out, "-%s", md_name);
+            BIO_printf(out, "(%s)= ", file);
+        } else if (md_name)
             BIO_printf(out, "%s(%s)= ", md_name, file);
         else
             BIO_printf(out, "(%s)= ", file);

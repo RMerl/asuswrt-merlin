@@ -104,11 +104,13 @@
 #   if (defined(__GNUC__) && (defined(__i386__) || defined(__i386))) || \
      (defined(_MSC_VER) && defined(_M_IX86))
 #    define COMPILE_HW_PADLOCK
-static ENGINE *ENGINE_padlock(void);
 #   endif
 #  endif
 
 #  ifdef OPENSSL_NO_DYNAMIC_ENGINE
+#   ifdef COMPILE_HW_PADLOCK
+static ENGINE *ENGINE_padlock(void);
+#   endif
 
 void ENGINE_load_padlock(void)
 {
@@ -200,6 +202,8 @@ static int padlock_bind_helper(ENGINE *e)
     return 1;
 }
 
+#   ifdef OPENSSL_NO_DYNAMIC_ENGINE
+
 /* Constructor */
 static ENGINE *ENGINE_padlock(void)
 {
@@ -216,6 +220,8 @@ static ENGINE *ENGINE_padlock(void)
 
     return eng;
 }
+
+#   endif
 
 /* Check availability of the engine */
 static int padlock_init(ENGINE *e)
@@ -374,6 +380,7 @@ static int padlock_available(void)
 }
 
 #    ifndef OPENSSL_NO_AES
+#     ifndef AES_ASM
 /* Our own htonl()/ntohl() */
 static inline void padlock_bswapl(AES_KEY *ks)
 {
@@ -385,6 +392,7 @@ static inline void padlock_bswapl(AES_KEY *ks)
         key++;
     }
 }
+#     endif
 #    endif
 
 /*

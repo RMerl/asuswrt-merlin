@@ -530,10 +530,10 @@ void CRYPTO_get_mem_debug_functions(void (**m)
                                     void (**so) (long), long (**go) (void));
 
 void *CRYPTO_malloc_locked(int num, const char *file, int line);
-void CRYPTO_free_locked(void *);
+void CRYPTO_free_locked(void *ptr);
 void *CRYPTO_malloc(int num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
-void CRYPTO_free(void *);
+void CRYPTO_free(void *ptr);
 void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
 void *CRYPTO_realloc_clean(void *addr, int old_num, int num, const char *file,
                            int line);
@@ -594,6 +594,33 @@ unsigned long *OPENSSL_ia32cap_loc(void);
 # define OPENSSL_ia32cap (*(OPENSSL_ia32cap_loc()))
 int OPENSSL_isservice(void);
 
+int FIPS_mode(void);
+int FIPS_mode_set(int r);
+
+void OPENSSL_init(void);
+
+# define fips_md_init(alg) fips_md_init_ctx(alg, alg)
+
+# ifdef OPENSSL_FIPS
+#  define fips_md_init_ctx(alg, cx) \
+        int alg##_Init(cx##_CTX *c) \
+        { \
+        if (FIPS_mode()) OpenSSLDie(__FILE__, __LINE__, \
+                "Low level API call to digest " #alg " forbidden in FIPS mode!"); \
+        return private_##alg##_Init(c); \
+        } \
+        int private_##alg##_Init(cx##_CTX *c)
+
+#  define fips_cipher_abort(alg) \
+        if (FIPS_mode()) OpenSSLDie(__FILE__, __LINE__, \
+                "Low level API call to cipher " #alg " forbidden in FIPS mode!")
+
+# else
+#  define fips_md_init_ctx(alg, cx) \
+        int alg##_Init(cx##_CTX *c)
+#  define fips_cipher_abort(alg) while(0)
+# endif
+
 /*
  * CRYPTO_memcmp returns zero iff the |len| bytes at |a| and |b| are equal.
  * It takes an amount of time dependent on |len|, but independent of the
@@ -619,11 +646,13 @@ void ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
 # define CRYPTO_F_DEF_ADD_INDEX                           104
 # define CRYPTO_F_DEF_GET_CLASS                           105
+# define CRYPTO_F_FIPS_MODE_SET                           109
 # define CRYPTO_F_INT_DUP_EX_DATA                         106
 # define CRYPTO_F_INT_FREE_EX_DATA                        107
 # define CRYPTO_F_INT_NEW_EX_DATA                         108
 
 /* Reason codes. */
+# define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
 # define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK              100
 
 #ifdef  __cplusplus

@@ -115,6 +115,9 @@
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#ifdef OPENSSL_FIPS
+# include <openssl/fips.h>
+#endif
 
 static const SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
@@ -130,6 +133,10 @@ static const SSL_METHOD *ssl23_get_server_method(int ver)
 #endif
     if (ver == TLS1_VERSION)
         return (TLSv1_server_method());
+    else if (ver == TLS1_1_VERSION)
+        return (TLSv1_1_server_method());
+    else if (ver == TLS1_2_VERSION)
+        return (TLSv1_2_server_method());
     else
         return (NULL);
 }
@@ -281,7 +288,20 @@ int ssl23_get_client_hello(SSL *s)
                 v[1] = p[4];
                 /* SSLv3/TLSv1 */
                 if (p[4] >= TLS1_VERSION_MINOR) {
-                    if (!(s->options & SSL_OP_NO_TLSv1)) {
+                    if (p[4] >= TLS1_2_VERSION_MINOR &&
+                        !(s->options & SSL_OP_NO_TLSv1_2)) {
+                        s->version = TLS1_2_VERSION;
+                        s->state = SSL23_ST_SR_CLNT_HELLO_B;
+                    } else if (p[4] >= TLS1_1_VERSION_MINOR &&
+                               !(s->options & SSL_OP_NO_TLSv1_1)) {
+                        s->version = TLS1_1_VERSION;
+                        /*
+                         * type=2;
+                         *//*
+                         * done later to survive restarts
+                         */
+                        s->state = SSL23_ST_SR_CLNT_HELLO_B;
+                    } else if (!(s->options & SSL_OP_NO_TLSv1)) {
                         s->version = TLS1_VERSION;
                         /*
                          * type=2;
@@ -338,7 +358,15 @@ int ssl23_get_client_hello(SSL *s)
             else
                 v[1] = p[10];   /* minor version according to client_version */
             if (v[1] >= TLS1_VERSION_MINOR) {
-                if (!(s->options & SSL_OP_NO_TLSv1)) {
+                if (v[1] >= TLS1_2_VERSION_MINOR &&
+                    !(s->options & SSL_OP_NO_TLSv1_2)) {
+                    s->version = TLS1_2_VERSION;
+                    type = 3;
+                } else if (v[1] >= TLS1_1_VERSION_MINOR &&
+                           !(s->options & SSL_OP_NO_TLSv1_1)) {
+                    s->version = TLS1_1_VERSION;
+                    type = 3;
+                } else if (!(s->options & SSL_OP_NO_TLSv1)) {
                     s->version = TLS1_VERSION;
                     type = 3;
                 } else if (!(s->options & SSL_OP_NO_SSLv3)) {
@@ -373,6 +401,19 @@ int ssl23_get_client_hello(SSL *s)
 
     /* ensure that TLS_MAX_VERSION is up-to-date */
     OPENSSL_assert(s->version <= TLS_MAX_VERSION);
+
+    if (s->version < TLS1_2_VERSION && tls1_suiteb(s)) {
+        SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
+               SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
+        goto err;
+    }
+#ifdef OPENSSL_FIPS
+    if (FIPS_mode() && (s->version < TLS1_VERSION)) {
+        SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
+               SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+        goto err;
+    }
+#endif
 
     if (s->state == SSL23_ST_SR_CLNT_HELLO_B) {
         /*

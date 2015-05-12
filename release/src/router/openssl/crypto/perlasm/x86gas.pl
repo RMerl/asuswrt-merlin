@@ -45,9 +45,8 @@ sub ::generic
     undef $suffix if ($dst =~ m/^%[xm]/o || $src =~ m/^%[xm]/o);
 
     if ($#_==0)				{ &::emit($opcode);		}
-    elsif ($opcode =~ m/^j/o && $#_==1)	{ &::emit($opcode,@arg);	}
-    elsif ($opcode eq "call" && $#_==1)	{ &::emit($opcode,@arg);	}
-    elsif ($opcode =~ m/^set/&& $#_==1)	{ &::emit($opcode,@arg);	}
+    elsif ($#_==1 && $opcode =~ m/^(call|clflush|j|loop|set)/o)
+					{ &::emit($opcode,@arg);	}
     else				{ &::emit($opcode.$suffix,@arg);}
 
   1;
@@ -71,6 +70,8 @@ sub ::DWP
 { my($addr,$reg1,$reg2,$idx)=@_;
   my $ret="";
 
+    if (!defined($idx) && 1*$reg2) { $idx=$reg2; $reg2=$reg1; undef $reg1; }
+
     $addr =~ s/^\s+//;
     # prepend global references with optional underscore
     $addr =~ s/^([^\+\-0-9][^\+\-]*)/&::islabel($1) or "$nmdecor$1"/ige;
@@ -91,6 +92,7 @@ sub ::DWP
 }
 sub ::QWP	{ &::DWP(@_);	}
 sub ::BP	{ &::DWP(@_);	}
+sub ::WP	{ &::DWP(@_);	}
 sub ::BC	{ @_;		}
 sub ::DWC	{ @_;		}
 
@@ -149,29 +151,30 @@ sub ::public_label
 {   push(@out,".globl\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");   }
 
 sub ::file_end
-{   if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
-	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,4";
-	if ($::elf)	{ push (@out,"$tmp,4\n"); }
-	else		{ push (@out,"$tmp\n"); }
-    }
-    if ($::macosx)
+{   if ($::macosx)
     {	if (%non_lazy_ptr)
     	{   push(@out,".section __IMPORT,__pointers,non_lazy_symbol_pointers\n");
 	    foreach $i (keys %non_lazy_ptr)
 	    {	push(@out,"$non_lazy_ptr{$i}:\n.indirect_symbol\t$i\n.long\t0\n");   }
 	}
     }
+    if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
+	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,16";
+	if ($::macosx)	{ push (@out,"$tmp,2\n"); }
+	elsif ($::elf)	{ push (@out,"$tmp,4\n"); }
+	else		{ push (@out,"$tmp\n"); }
+    }
     push(@out,$initseg) if ($initseg);
 }
 
 sub ::data_byte	{   push(@out,".byte\t".join(',',@_)."\n");   }
+sub ::data_short{   push(@out,".value\t".join(',',@_)."\n");  }
 sub ::data_word {   push(@out,".long\t".join(',',@_)."\n");   }
 
 sub ::align
-{ my $val=$_[0],$p2,$i;
+{ my $val=$_[0];
     if ($::aout)
-    {	for ($p2=0;$val!=0;$val>>=1) { $p2++; }
-	$val=$p2-1;
+    {	$val=int(log($val)/log(2));
 	$val.=",0x90";
     }
     push(@out,".align\t$val\n");
@@ -180,7 +183,7 @@ sub ::align
 sub ::picmeup
 { my($dst,$sym,$base,$reflabel)=@_;
 
-    if ($::pic && ($::elf || $::aout))
+    if (($::pic && ($::elf || $::aout)) || $::macosx)
     {	if (!defined($base))
 	{   &::call(&::label("PIC_me_up"));
 	    &::set_label("PIC_me_up");
@@ -193,6 +196,8 @@ sub ::picmeup
 	    &::mov($dst,&::DWP("$indirect-$reflabel",$base));
 	    $non_lazy_ptr{"$nmdecor$sym"}=$indirect;
 	}
+	elsif ($sym eq "OPENSSL_ia32cap_P" && $::elf>0)
+	{   &::lea($dst,&::DWP("$sym-$reflabel",$base));   }
 	else
 	{   &::lea($dst,&::DWP("_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",
 			    $base));
@@ -206,13 +211,17 @@ sub ::picmeup
 sub ::initseg
 { my $f=$nmdecor.shift;
 
-    if ($::elf)
+    if ($::android)
+    {	$initseg.=<<___;
+.section	.init_array
+.align	4
+.long	$f
+___
+    }
+    elsif ($::elf)
     {	$initseg.=<<___;
 .section	.init
 	call	$f
-	jmp	.Linitalign
-.align	$align
-.Linitalign:
 ___
     }
     elsif ($::coff)
@@ -243,5 +252,7 @@ ___
 
 sub ::dataseg
 {   push(@out,".data\n");   }
+
+*::hidden = sub { push(@out,".hidden\t$nmdecor$_[0]\n"); } if ($::elf);
 
 1;

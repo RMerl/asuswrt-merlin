@@ -33,3 +33,8 @@ shatest
 ssltest
 wp_test
 
+srptest
+v3nametest
+heartbeat_test
+evp_extra_test
+constant_time_test

@@ -125,7 +125,7 @@ int tls1_cbc_remove_padding(const SSL *s,
     unsigned padding_length, good, to_check, i;
     const unsigned overhead = 1 /* padding length byte */  + mac_size;
     /* Check if version requires explicit IV */
-    if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER) {
+    if (SSL_USE_EXPLICIT_IV(s)) {
         /*
          * These lengths are all public so we can test them in non-constant
          * time.
@@ -156,6 +156,12 @@ int tls1_cbc_remove_padding(const SSL *s,
         if ((s->s3->flags & TLS1_FLAGS_TLS_PADDING_BUG) && padding_length > 0) {
             padding_length--;
         }
+    }
+
+    if (EVP_CIPHER_flags(s->enc_read_ctx->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+        /* padding is already verified */
+        rec->length -= padding_length + 1;
+        return 1;
     }
 
     good = constant_time_ge(rec->length, overhead + padding_length);
@@ -364,7 +370,11 @@ static void tls1_sha512_final_raw(void *ctx, unsigned char *md_out)
  */
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 {
-    switch (ctx->digest->type) {
+#ifdef OPENSSL_FIPS
+    if (FIPS_mode())
+        return 0;
+#endif
+    switch (EVP_MD_CTX_type(ctx)) {
     case NID_md5:
     case NID_sha1:
 #ifndef OPENSSL_NO_SHA256
@@ -443,7 +453,7 @@ void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
      */
     OPENSSL_assert(data_plus_mac_plus_padding_size < 1024 * 1024);
 
-    switch (ctx->digest->type) {
+    switch (EVP_MD_CTX_type(ctx)) {
     case NID_md5:
         MD5_Init((MD5_CTX *)md_state.c);
         md_final_raw = tls1_md5_final_raw;
@@ -734,3 +744,52 @@ void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
         *md_out_size = md_out_size_u;
     EVP_MD_CTX_cleanup(&md_ctx);
 }
+
+#ifdef OPENSSL_FIPS
+
+/*
+ * Due to the need to use EVP in FIPS mode we can't reimplement digests but
+ * we can ensure the number of blocks processed is equal for all cases by
+ * digesting additional data.
+ */
+
+void tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
+                           EVP_MD_CTX *mac_ctx, const unsigned char *data,
+                           size_t data_len, size_t orig_len)
+{
+    size_t block_size, digest_pad, blocks_data, blocks_orig;
+    if (EVP_CIPHER_CTX_mode(cipher_ctx) != EVP_CIPH_CBC_MODE)
+        return;
+    block_size = EVP_MD_CTX_block_size(mac_ctx);
+    /*-
+     * We are in FIPS mode if we get this far so we know we have only SHA*
+     * digests and TLS to deal with.
+     * Minimum digest padding length is 17 for SHA384/SHA512 and 9
+     * otherwise.
+     * Additional header is 13 bytes. To get the number of digest blocks
+     * processed round up the amount of data plus padding to the nearest
+     * block length. Block length is 128 for SHA384/SHA512 and 64 otherwise.
+     * So we have:
+     * blocks = (payload_len + digest_pad + 13 + block_size - 1)/block_size
+     * equivalently:
+     * blocks = (payload_len + digest_pad + 12)/block_size + 1
+     * HMAC adds a constant overhead.
+     * We're ultimately only interested in differences so this becomes
+     * blocks = (payload_len + 29)/128
+     * for SHA384/SHA512 and
+     * blocks = (payload_len + 21)/64
+     * otherwise.
+     */
+    digest_pad = block_size == 64 ? 21 : 29;
+    blocks_orig = (orig_len + digest_pad) / block_size;
+    blocks_data = (data_len + digest_pad) / block_size;
+    /*
+     * MAC enough blocks to make up the difference between the original and
+     * actual lengths plus one extra block to ensure this is never a no op.
+     * The "data" pointer should always have enough space to perform this
+     * operation as it is large enough for a maximum length TLS buffer.
+     */
+    EVP_DigestSignUpdate(mac_ctx, data,
+                         (blocks_orig - blocks_data + 1) * block_size);
+}
+#endif

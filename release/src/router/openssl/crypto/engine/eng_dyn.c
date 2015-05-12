@@ -119,10 +119,6 @@ static const ENGINE_CMD_DEFN dynamic_cmd_defns[] = {
     {0, NULL, NULL, 0}
 };
 
-static const ENGINE_CMD_DEFN dynamic_cmd_defns_empty[] = {
-    {0, NULL, NULL, 0}
-};
-
 /*
  * Loading code stores state inside the ENGINE structure via the "ex_data"
  * element. We load all our state into a single structure and use that as a

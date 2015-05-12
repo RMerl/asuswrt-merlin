@@ -56,7 +56,8 @@ $	    tests := -
 	test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
 	test_ss,test_ca,test_engine,test_evp,test_ssl,test_tsa,test_ige,-
-	test_jpake,test_cms,test_constant_time
+	test_jpake,test_srp,test_cms,test_ocsp,test_v3name,test_heartbeat,-
+	test_constant_time
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -68,6 +69,8 @@ $	EXPTEST :=	exptest
 $	IDEATEST :=	ideatest
 $	SHATEST :=	shatest
 $	SHA1TEST :=	sha1test
+$	SHA256TEST :=	sha256t
+$	SHA512TEST :=	sha512t
 $	MDC2TEST :=	mdc2test
 $	RMDTEST :=	rmdtest
 $	MD2TEST :=	md2test
@@ -91,8 +94,11 @@ $	ENGINETEST :=	enginetest
 $	EVPTEST :=	evp_test
 $	IGETEST :=	igetest
 $	JPAKETEST :=	jpaketest
+$	SRPTEST :=	srptest
+$	V3NAMETEST :=	v3nametest
 $	ASN1TEST :=	asn1test
-$	CONSTTIMETEST := constant_time_test
+$	HEARTBEATTEST :=	heartbeat_test
+$	CONSTTIMETEST :=	constant_time_test
 $!
 $	tests_i = 0
 $ loop_tests:
@@ -115,6 +121,8 @@ $	return
 $ test_sha:
 $	mcr 'texe_dir''shatest'
 $	mcr 'texe_dir''sha1test'
+$	mcr 'texe_dir''sha256test'
+$	mcr 'texe_dir''sha512test'
 $	return
 $ test_mdc2:
 $	mcr 'texe_dir''mdc2test'
@@ -358,6 +366,22 @@ $	! Define the logical name used to find openssl.exe in the perl script.
 $	define /user_mode osslx 'exe_dir'
 $	perl CMS-TEST.PL
 $	return
+$ test_srp: 
+$	write sys$output "Test SRP"
+$	mcr 'texe_dir''srptest'
+$	return
+$ test_ocsp:
+$	write sys$output "Test OCSP"
+$	@tocsp.com
+$	return
+$ test_v3name:
+$       write sys$output "Test V3NAME"
+$       mcr 'texe_dir''v3nametest'
+$       return
+$ test_heartbeat:
+$       write sys$output "Test HEARTBEAT"
+$       mcr 'texe_dir''heartbeattest'
+$       return
 $ test_constant_time:
 $       write sys$output "Test constant time utilities"
 $       mcr 'texe_dir''consttimetest'

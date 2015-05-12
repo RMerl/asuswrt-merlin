@@ -72,6 +72,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "asn1_locl.h"
 
 #ifndef OPENSSL_NO_FP_API
 int X509_print_fp(FILE *fp, X509 *x)
@@ -139,7 +140,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
             goto err;
 
         bs = X509_get_serialNumber(x);
-        if (bs->length <= 4) {
+        if (bs->length <= (int)sizeof(long)) {
             l = ASN1_INTEGER_get(bs);
             if (bs->type == V_ASN1_NEG_INTEGER) {
                 l = -l;
@@ -163,12 +164,16 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
+        if (X509_signature_print(bp, ci->signature, NULL) <= 0)
+            goto err;
+#if 0
         if (BIO_printf(bp, "%8sSignature Algorithm: ", "") <= 0)
             goto err;
         if (i2a_ASN1_OBJECT(bp, ci->signature->algorithm) <= 0)
             goto err;
         if (BIO_puts(bp, "\n") <= 0)
             goto err;
+#endif
     }
 
     if (!(cflag & X509_FLAG_NO_ISSUER)) {
@@ -223,6 +228,21 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         }
     }
 
+    if (!(cflag & X509_FLAG_NO_IDS)) {
+        if (ci->issuerUID) {
+            if (BIO_printf(bp, "%8sIssuer Unique ID: ", "") <= 0)
+                goto err;
+            if (!X509_signature_dump(bp, ci->issuerUID, 12))
+                goto err;
+        }
+        if (ci->subjectUID) {
+            if (BIO_printf(bp, "%8sSubject Unique ID: ", "") <= 0)
+                goto err;
+            if (!X509_signature_dump(bp, ci->subjectUID, 12))
+                goto err;
+        }
+    }
+
     if (!(cflag & X509_FLAG_NO_EXTENSIONS))
         X509V3_extensions_print(bp, "X509v3 extensions",
                                 ci->extensions, cflag, 8);
@@ -260,7 +280,8 @@ int X509_ocspid_print(BIO *bp, X509 *x)
         goto err;
     i2d_X509_NAME(x->cert_info->subject, &dertmp);
 
-    EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1(), NULL);
+    if (!EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1(), NULL))
+        goto err;
     for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
         if (BIO_printf(bp, "%02X", SHA1md[i]) <= 0)
             goto err;
@@ -274,9 +295,10 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     if (BIO_printf(bp, "\n        Public key OCSP hash: ") <= 0)
         goto err;
 
-    EVP_Digest(x->cert_info->key->public_key->data,
-               x->cert_info->key->public_key->length, SHA1md, NULL,
-               EVP_sha1(), NULL);
+    if (!EVP_Digest(x->cert_info->key->public_key->data,
+                    x->cert_info->key->public_key->length,
+                    SHA1md, NULL, EVP_sha1(), NULL))
+        goto err;
     for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
         if (BIO_printf(bp, "%02X", SHA1md[i]) <= 0)
             goto err;
@@ -290,25 +312,50 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     return (0);
 }
 
+int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
+{
+    const unsigned char *s;
+    int i, n;
+
+    n = sig->length;
+    s = sig->data;
+    for (i = 0; i < n; i++) {
+        if ((i % 18) == 0) {
+            if (BIO_write(bp, "\n", 1) <= 0)
+                return 0;
+            if (BIO_indent(bp, indent, indent) <= 0)
+                return 0;
+        }
+        if (BIO_printf(bp, "%02x%s", s[i], ((i + 1) == n) ? "" : ":") <= 0)
+            return 0;
+    }
+    if (BIO_write(bp, "\n", 1) != 1)
+        return 0;
+
+    return 1;
+}
+
 int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
 {
-    unsigned char *s;
-    int i, n;
+    int sig_nid;
     if (BIO_puts(bp, "    Signature Algorithm: ") <= 0)
         return 0;
     if (i2a_ASN1_OBJECT(bp, sigalg->algorithm) <= 0)
         return 0;
 
-    n = sig->length;
-    s = sig->data;
-    for (i = 0; i < n; i++) {
-        if ((i % 18) == 0)
-            if (BIO_write(bp, "\n        ", 9) <= 0)
-                return 0;
-        if (BIO_printf(bp, "%02x%s", s[i], ((i + 1) == n) ? "" : ":") <= 0)
-            return 0;
+    sig_nid = OBJ_obj2nid(sigalg->algorithm);
+    if (sig_nid != NID_undef) {
+        int pkey_nid, dig_nid;
+        const EVP_PKEY_ASN1_METHOD *ameth;
+        if (OBJ_find_sigid_algs(sig_nid, &dig_nid, &pkey_nid)) {
+            ameth = EVP_PKEY_asn1_find(NULL, pkey_nid);
+            if (ameth && ameth->sig_print)
+                return ameth->sig_print(bp, sigalg, sig, 9, 0);
+        }
     }
-    if (BIO_write(bp, "\n", 1) != 1)
+    if (sig)
+        return X509_signature_dump(bp, sig, 9);
+    else if (BIO_puts(bp, "\n") <= 0)
         return 0;
     return 1;
 }

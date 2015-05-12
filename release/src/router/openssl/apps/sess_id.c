@@ -90,6 +90,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 {
     SSL_SESSION *x = NULL;
+    X509 *peer = NULL;
     int ret = 1, i, num, badops = 0;
     BIO *out = NULL;
     int informat, outformat;
@@ -157,14 +158,15 @@ int MAIN(int argc, char **argv)
     if (x == NULL) {
         goto end;
     }
+    peer = SSL_SESSION_get0_peer(x);
 
     if (context) {
-        x->sid_ctx_length = strlen(context);
-        if (x->sid_ctx_length > SSL_MAX_SID_CTX_LENGTH) {
+        size_t ctx_len = strlen(context);
+        if (ctx_len > SSL_MAX_SID_CTX_LENGTH) {
             BIO_printf(bio_err, "Context too long\n");
             goto end;
         }
-        memcpy(x->sid_ctx, context, x->sid_ctx_length);
+        SSL_SESSION_set1_id_context(x, (unsigned char *)context, ctx_len);
     }
 #ifdef undef
     /* just testing for memory leaks :-) */
@@ -214,10 +216,10 @@ int MAIN(int argc, char **argv)
         SSL_SESSION_print(out, x);
 
         if (cert) {
-            if (x->peer == NULL)
+            if (peer == NULL)
                 BIO_puts(out, "No certificate present\n");
             else
-                X509_print(out, x->peer);
+                X509_print(out, peer);
         }
     }
 
@@ -234,11 +236,11 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "unable to write SSL_SESSION\n");
             goto end;
         }
-    } else if (!noout && (x->peer != NULL)) { /* just print the certificate */
+    } else if (!noout && (peer != NULL)) { /* just print the certificate */
         if (outformat == FORMAT_ASN1)
-            i = (int)i2d_X509_bio(out, x->peer);
+            i = (int)i2d_X509_bio(out, peer);
         else if (outformat == FORMAT_PEM)
-            i = PEM_write_bio_X509(out, x->peer);
+            i = PEM_write_bio_X509(out, peer);
         else {
             BIO_printf(bio_err, "bad output format specified for outfile\n");
             goto end;

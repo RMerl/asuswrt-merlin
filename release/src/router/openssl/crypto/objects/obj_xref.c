@@ -108,8 +108,10 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 #endif
     if (rv == NULL)
         return 0;
-    *pdig_nid = rv->hash_id;
-    *ppkey_nid = rv->pkey_id;
+    if (pdig_nid)
+        *pdig_nid = rv->hash_id;
+    if (ppkey_nid)
+        *ppkey_nid = rv->pkey_id;
     return 1;
 }
 
@@ -138,7 +140,8 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 #endif
     if (rv == NULL)
         return 0;
-    *psignid = (*rv)->sign_id;
+    if (psignid)
+        *psignid = (*rv)->sign_id;
     return 1;
 }
 

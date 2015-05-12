@@ -62,10 +62,8 @@
  * handle _GNU_SOURCE and other similar macros.  Defining it later is simply
  * too late, because those headers are protected from re- inclusion.
  */
-#ifdef __linux
-# ifndef _GNU_SOURCE
-#  define _GNU_SOURCE           /* make sure dladdr is declared */
-# endif
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE            /* make sure dladdr is declared */
 #endif
 
 #include <stdio.h>
@@ -88,7 +86,8 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #  if defined(_AIX) || defined(__CYGWIN__) || \
      defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
      (defined(__osf__) && !defined(RTLD_NEXT))     || \
-     (defined(__OpenBSD__) && !defined(RTLD_SELF))
+     (defined(__OpenBSD__) && !defined(RTLD_SELF)) || \
+        defined(__ANDROID__)
 #   undef HAVE_DLINFO
 #  endif
 # endif
@@ -315,7 +314,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
             return (NULL);
         }
         strcpy(merged, filespec2);
-    } else
+    } else {
         /*
          * This part isn't as trivial as it looks.  It assumes that the
          * second file specification really is a directory, and makes no
@@ -323,13 +322,12 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
          * concatenation of filespec2 followed by a slash followed by
          * filespec1.
          */
-    {
         int spec2len, len;
 
         spec2len = strlen(filespec2);
-        len = spec2len + (filespec1 ? strlen(filespec1) : 0);
+        len = spec2len + strlen(filespec1);
 
-        if (filespec2 && filespec2[spec2len - 1] == '/') {
+        if (spec2len && filespec2[spec2len - 1] == '/') {
             spec2len--;
             len--;
         }

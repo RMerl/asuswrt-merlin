@@ -33,7 +33,7 @@ static int rle_compress_block(COMP_CTX *ctx, unsigned char *out,
 {
     /* int i; */
 
-    if (olen < (ilen + 1)) {
+    if (ilen == 0 || olen < (ilen - 1)) {
         /* ZZZZZZZZZZZZZZZZZZZZZZ */
         return (-1);
     }
@@ -49,7 +49,7 @@ static int rle_expand_block(COMP_CTX *ctx, unsigned char *out,
 {
     int i;
 
-    if (ilen == 0 || olen < (ilen - 1)) {
+    if (olen < (ilen - 1)) {
         /* ZZZZZZZZZZZZZZZZZZZZZZ */
         return (-1);
     }

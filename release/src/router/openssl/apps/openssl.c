@@ -117,6 +117,7 @@
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/rand.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 #include <openssl/x509.h>
@@ -130,6 +131,9 @@
 #include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
+# include <openssl/fips.h>
+#endif
 
 /*
  * The LHASH callbacks ("hash" & "cmp") have been replaced by functions with
@@ -304,6 +308,19 @@ int main(int Argc, char *ARGV[])
         CRYPTO_set_locking_callback(lock_dbg_cb);
     }
 
+    if (getenv("OPENSSL_FIPS")) {
+#ifdef OPENSSL_FIPS
+        if (!FIPS_mode_set(1)) {
+            ERR_load_crypto_strings();
+            ERR_print_errors(BIO_new_fp(stderr, BIO_NOCLOSE));
+            EXIT(1);
+        }
+#else
+        fprintf(stderr, "FIPS mode not supported.\n");
+        EXIT(1);
+#endif
+    }
+
     apps_startup();
 
     /* Lets load up our environment a little */
@@ -411,19 +428,19 @@ int main(int Argc, char *ARGV[])
     if (arg.data != NULL)
         OPENSSL_free(arg.data);
 
-    apps_shutdown();
-
-    CRYPTO_mem_leaks(bio_err);
-    if (bio_err != NULL) {
-        BIO_free(bio_err);
-        bio_err = NULL;
-    }
 #if defined( OPENSSL_SYS_VMS) && (__INITIAL_POINTER_SIZE == 64)
     /* Free any duplicate Argv[] storage. */
     if (free_Argv) {
         OPENSSL_free(Argv);
     }
 #endif
+    apps_shutdown();
+    CRYPTO_mem_leaks(bio_err);
+    if (bio_err != NULL) {
+        BIO_free(bio_err);
+        bio_err = NULL;
+    }
+
     OPENSSL_EXIT(ret);
 }
 
@@ -446,14 +463,11 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
     f.name = argv[0];
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
-#if 0
         if (EVP_get_digestbyname(argv[0])) {
             f.type = FUNC_TYPE_MD;
             f.func = dgst_main;
             fp = &f;
-        } else
-#endif // 0
-        if (EVP_get_cipherbyname(argv[0])) {
+        } else if (EVP_get_cipherbyname(argv[0])) {
             f.type = FUNC_TYPE_CIPHER;
             f.func = enc_main;
             fp = &f;

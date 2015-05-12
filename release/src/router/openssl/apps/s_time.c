@@ -302,6 +302,10 @@ static int parseArgs(int argc, char **argv)
             if (--argc < 1)
                 goto bad;
             maxTime = atoi(*(++argv));
+            if(maxTime <= 0) {
+                BIO_printf(bio_err, "time must be > 0\n");
+                badop = 1;
+            }
         } else {
             BIO_printf(bio_err, "unknown option %s\n", *argv);
             badop = 1;
@@ -357,13 +361,7 @@ int MAIN(int argc, char **argv)
     if (bio_err == NULL)
         bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
     s_time_meth = SSLv23_client_method();
-#elif !defined(OPENSSL_NO_SSL3)
-    s_time_meth = SSLv3_client_method();
-#elif !defined(OPENSSL_NO_SSL2)
-    s_time_meth = SSLv2_client_method();
-#endif
 
     /* parse the command line arguments */
     if (parseArgs(argc, argv) < 0)
@@ -556,7 +554,8 @@ int MAIN(int argc, char **argv)
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
     printf
         ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxTime, bytes_read / nConn);
+         nConn, (long)time(NULL) - finishtime + maxTime,
+         bytes_read / (nConn?nConn:1));
 
     ret = 0;
  end:

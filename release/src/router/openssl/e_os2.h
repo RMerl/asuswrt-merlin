@@ -101,7 +101,7 @@ extern "C" {
 #  undef OPENSSL_SYS_UNIX
 #  define OPENSSL_SYS_WIN32_UWIN
 # else
-#  if defined(__CYGWIN32__) || defined(OPENSSL_SYSNAME_CYGWIN32)
+#  if defined(__CYGWIN__) || defined(OPENSSL_SYSNAME_CYGWIN)
 #   undef OPENSSL_SYS_UNIX
 #   define OPENSSL_SYS_WIN32_CYGWIN
 #  else
@@ -294,6 +294,26 @@ extern "C" {
 #  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) OPENSSL_GLOBAL type _shadow_##name=value;
 #  define OPENSSL_DECLARE_GLOBAL(type,name) OPENSSL_EXPORT type _shadow_##name
 #  define OPENSSL_GLOBAL_REF(name) _shadow_##name
+# endif
+
+# if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && macintosh==1 && !defined(MAC_OS_GUSI_SOURCE)
+#  define ossl_ssize_t long
+# endif
+
+# ifdef OPENSSL_SYS_MSDOS
+#  define ossl_ssize_t long
+# endif
+
+# if defined(NeXT) || defined(OPENSSL_SYS_NEWS4) || defined(OPENSSL_SYS_SUNOS)
+#  define ssize_t int
+# endif
+
+# if defined(__ultrix) && !defined(ssize_t)
+#  define ossl_ssize_t int
+# endif
+
+# ifndef ossl_ssize_t
+#  define ossl_ssize_t ssize_t
 # endif
 
 #ifdef  __cplusplus

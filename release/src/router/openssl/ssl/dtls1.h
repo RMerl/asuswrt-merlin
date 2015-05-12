@@ -72,7 +72,11 @@
 # elif defined(OPENSSL_SYS_NETWARE) && !defined(_WINSOCK2API_)
 #  include <sys/timeval.h>
 # else
-#  include <sys/time.h>
+#  if defined(OPENSSL_SYS_VXWORKS)
+#   include <sys/times.h>
+#  else
+#   include <sys/time.h>
+#  endif
 # endif
 
 #ifdef  __cplusplus
@@ -80,9 +84,14 @@ extern "C" {
 #endif
 
 # define DTLS1_VERSION                   0xFEFF
-# define DTLS_MAX_VERSION                DTLS1_VERSION
+# define DTLS1_2_VERSION                 0xFEFD
+# define DTLS_MAX_VERSION                DTLS1_2_VERSION
+# define DTLS1_VERSION_MAJOR             0xFE
 
 # define DTLS1_BAD_VER                   0x0100
+
+/* Special value for method supporting multiple versions */
+# define DTLS_ANY_VERSION                0x1FFFF
 
 # if 0
 /* this alert description is not specified anywhere... */
@@ -107,8 +116,14 @@ extern "C" {
 #  define DTLS1_AL_HEADER_LENGTH                   2
 # endif
 
+# ifndef OPENSSL_NO_SSL_INTERN
+
+#  ifndef OPENSSL_NO_SCTP
+#   define DTLS1_SCTP_AUTH_LABEL   "EXPORTER_DTLS_OVER_SCTP"
+#  endif
+
 /* Max MTU overhead we know about so far is 40 for IPv6 + 8 for UDP */
-# define DTLS1_MAX_MTU_OVERHEAD                   48
+#  define DTLS1_MAX_MTU_OVERHEAD                   48
 
 typedef struct dtls1_bitmap_st {
     unsigned long map;          /* track 32 packets on 32-bit systems and 64
@@ -120,11 +135,11 @@ typedef struct dtls1_bitmap_st {
 struct dtls1_retransmit_state {
     EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
     EVP_MD_CTX *write_hash;     /* used for mac generation */
-# ifndef OPENSSL_NO_COMP
+#  ifndef OPENSSL_NO_COMP
     COMP_CTX *compress;         /* compression */
-# else
+#  else
     char *compress;
-# endif
+#  endif
     SSL_SESSION *session;
     unsigned short epoch;
 };
@@ -206,7 +221,9 @@ typedef struct dtls1_state_st {
     struct hm_header_st w_msg_hdr;
     struct hm_header_st r_msg_hdr;
     struct dtls1_timeout_st timeout;
-    /* Indicates when the last handshake msg sent will timeout */
+    /*
+     * Indicates when the last handshake msg or heartbeat sent will timeout
+     */
     struct timeval next_timeout;
     /* Timeout duration */
     unsigned short timeout_duration;
@@ -219,7 +236,16 @@ typedef struct dtls1_state_st {
     unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
     unsigned int handshake_fragment_len;
     unsigned int retransmitting;
+    /*
+     * Set when the handshake is ready to process peer's ChangeCipherSpec message.
+     * Cleared after the message has been processed.
+     */
     unsigned int change_cipher_spec_ok;
+#  ifndef OPENSSL_NO_SCTP
+    /* used when SSL_ST_XX_FLUSH is entered */
+    int next_state;
+    int shutdown_received;
+#  endif
 } DTLS1_STATE;
 
 typedef struct dtls1_record_data_st {
@@ -227,7 +253,12 @@ typedef struct dtls1_record_data_st {
     unsigned int packet_length;
     SSL3_BUFFER rbuf;
     SSL3_RECORD rrec;
+#  ifndef OPENSSL_NO_SCTP
+    struct bio_dgram_sctp_rcvinfo recordinfo;
+#  endif
 } DTLS1_RECORD_DATA;
+
+# endif
 
 /* Timeout multipliers (timeout slice is defined in apps/timeouts.h */
 # define DTLS1_TMO_READ_COUNT                      2

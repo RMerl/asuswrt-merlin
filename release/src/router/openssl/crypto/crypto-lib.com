@@ -117,7 +117,7 @@ $ ENCRYPT_TYPES = "Basic,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
 		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "CMS,PQUEUE,TS,JPAKE,STORE"
+		  "CMS,PQUEUE,TS,JPAKE,SRP,STORE,CMAC"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -214,7 +214,7 @@ $! The contents of these variables are copied from the LIBOBJ variable in the
 $! corresponding Makefile from each corresponding subdirectory, with .o stripped
 $! and spaces replaced with commas.
 $ LIB_ = "cryptlib,mem,mem_dbg,cversion,ex_data,cpt_err,ebcdic,"+ -
-	"uid,o_time,o_str,o_dir,mem_clr"
+	"uid,o_time,o_str,o_dir,o_fips,o_init,fips_ers,mem_clr"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err,obj_xref"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
@@ -231,16 +231,19 @@ $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"des_enc,fcrypt_b,"+ -
 	"fcrypt,xcbc_enc,rpc_enc,cbc_cksm,"+ -
 	"ede_cbcm_enc,des_old,des_old2,read2pwd"
+$ LIB_AES = "aes_misc,aes_ecb,aes_cfb,aes_ofb,aes_ctr,aes_ige,aes_wrap,"+ -
+	"aes_core,aes_cbc"
 $ LIB_RC2 = "rc2_ecb,rc2_skey,rc2_cbc,rc2cfb64,rc2ofb64"
-$ LIB_RC4 = "rc4_enc,rc4_skey"
+$ LIB_RC4 = "rc4_enc,rc4_skey,rc4_utl"
 $ LIB_RC5 = "rc5_skey,rc5_ecb,rc5_enc,rc5cfb64,rc5ofb64"
 $ LIB_IDEA = "i_cbc,i_cfb64,i_ofb64,i_ecb,i_skey"
 $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
 $ LIB_CAMELLIA = "cmll_ecb,cmll_ofb,cmll_cfb,cmll_ctr,"+ -
-	"camellia,cmll_misc,cmll_cbc"
+	"cmll_utl,camellia,cmll_misc,cmll_cbc"
 $ LIB_SEED = "seed,seed_ecb,seed_cbc,seed_cfb,seed_ofb"
-$ LIB_MODES = "cbc128,ctr128,cts128,cfb128,ofb128"
+$ LIB_MODES = "cbc128,ctr128,cts128,cfb128,ofb128,gcm128,"+ -
+       "ccm128,xts128,wrap128"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM") .OR. ARCH .NES. "VAX" THEN -
      LIB_BN_ASM = "bn_asm"
@@ -248,30 +251,31 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
 	"bn_recp,bn_mont,bn_mpi,bn_exp2,bn_gf2m,bn_nist,"+ -
-	"bn_depr,bn_const"
+	"bn_depr,bn_const,bn_x931p"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
-	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn"
+	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn,"+ -
+	"ecp_nistp224,ecp_nistp256,ecp_nistp521,ecp_nistputil,"+ -
+	"ecp_oct,ec2_oct,ec_oct"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
 	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn,"+ -
-	"rsa_pmeth"
+	"rsa_pmeth,rsa_crpt"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
 	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_pmeth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr,"+ -
-	"dh_ameth,dh_pmeth,dh_prn"
-$ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
+	"dh_ameth,dh_pmeth,dh_prn,dh_rfc5114,dh_kdf"
+$ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err,ech_kdf"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms,dso_beos"
 $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
 	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
-	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev"
-$ LIB_AES = "aes_misc,aes_ecb,aes_cfb,aes_ofb,aes_ctr,aes_ige,aes_wrap,"+ -
-	"aes_core,aes_cbc"
-$ LIB_BUFFER = "buffer,buf_err"
+	"eng_openssl,eng_cnf,eng_dyn,eng_cryptodev,"+ -
+	"eng_rdrand"
+$ LIB_BUFFER = "buffer,buf_str,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
 	"bss_file,bss_sock,bss_conn,"+ -
@@ -284,7 +288,7 @@ $ LIB_LHASH = "lhash,lh_stats"
 $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
 	"rand_vms" ! The last one is VMS specific
 $ LIB_ERR = "err,err_all,err_prn"
-$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
+$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,evp_cnf,"+ -
 	"e_des,e_bf,e_idea,e_des3,e_camellia,"+ -
 	"e_rc4,e_aes,names,e_seed,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
@@ -294,7 +298,8 @@ $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
-$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver"
+$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver,"+ -
+	"e_aes_cbc_hmac_sha1,e_aes_cbc_hmac_sha256,e_rc4_hmac_md5"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
@@ -321,7 +326,7 @@ $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info,"+ -
 	"v3_ocsp,v3_akeya,v3_pmaps,v3_pcons,v3_ncons,v3_pcia,v3_pci,"+ -
 	"pcy_cache,pcy_node,pcy_data,pcy_map,pcy_tree,pcy_lib,"+ -
-	"v3_asid,v3_addr"
+	"v3_asid,v3_addr,v3_scts"
 $ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall,conf_sap"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -
@@ -336,15 +341,17 @@ $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 $ LIB_UI_COMPAT = ",ui_compat"
 $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
-$ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
 $ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
-	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess"
+	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess,"+ -
+       "cms_pwri,cms_kari"
 $ LIB_PQUEUE = "pqueue"
 $ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
 	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
 	"ts_asn1"
 $ LIB_JPAKE = "jpake,jpake_err"
+$ LIB_SRP = "srp_lib,srp_vfy"
 $ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
+$ LIB_CMAC = "cmac,cm_ameth,cm_pmeth"
 $!
 $! Setup exceptional compilations
 $!
@@ -1029,7 +1036,7 @@ $!
 $! Set basic C compiler /INCLUDE directories.
 $!
 $ CC_INCLUDES = "SYS$DISK:[.''ARCHD'],SYS$DISK:[],SYS$DISK:[-],"+ -
-   "SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.ASN1],SYS$DISK:[.EVP]"
+   "SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.MODES],SYS$DISK:[.ASN1],SYS$DISK:[.EVP]"
 $!
 $! Check To See If P3 Is Blank.
 $!
@@ -1134,7 +1141,7 @@ $ IF F$TYPE(USER_CCFLAGS) .NES. "" THEN CCEXTRAFLAGS = USER_CCFLAGS
 $ CCDISABLEWARNINGS = "" !!! "MAYLOSEDATA3" !!! "LONGLONGTYPE,LONGLONGSUFX,FOUNDCR"
 $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. ""
 $ THEN
-$     IF CCDISABLEWARNINGS .NES. "" THEN CCDISABLEWARNINGS = CCDISABLEWARNINGS + ","
+$     IF CCDISABLEWARNINGS .NES. THEN CCDISABLEWARNINGS = CCDISABLEWARNINGS + ","
 $     CCDISABLEWARNINGS = CCDISABLEWARNINGS + USER_CCDISABLEWARNINGS
 $ ENDIF
 $!

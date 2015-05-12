@@ -116,10 +116,16 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         s = "SSLv2";
     else if (x->ssl_version == SSL3_VERSION)
         s = "SSLv3";
+    else if (x->ssl_version == TLS1_2_VERSION)
+        s = "TLSv1.2";
+    else if (x->ssl_version == TLS1_1_VERSION)
+        s = "TLSv1.1";
     else if (x->ssl_version == TLS1_VERSION)
         s = "TLSv1";
     else if (x->ssl_version == DTLS1_VERSION)
         s = "DTLSv1";
+    else if (x->ssl_version == DTLS1_2_VERSION)
+        s = "DTLSv1.2";
     else if (x->ssl_version == DTLS1_BAD_VER)
         s = "DTLSv1-bad";
     else
@@ -192,6 +198,12 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         goto err;
     if (BIO_printf
         (bp, "%s", x->psk_identity_hint ? x->psk_identity_hint : "None") <= 0)
+        goto err;
+#endif
+#ifndef OPENSSL_NO_SRP
+    if (BIO_puts(bp, "\n    SRP username: ") <= 0)
+        goto err;
+    if (BIO_printf(bp, "%s", x->srp_username ? x->srp_username : "None") <= 0)
         goto err;
 #endif
 #ifndef OPENSSL_NO_TLSEXT

@@ -55,11 +55,12 @@ const char SHA512_version[] = "SHA-512" OPENSSL_VERSION_PTEXT;
 # if defined(__i386) || defined(__i386__) || defined(_M_IX86) || \
     defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64) || \
     defined(__s390__) || defined(__s390x__) || \
+    defined(__aarch64__) || \
     defined(SHA512_ASM)
 #  define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
 # endif
 
-int SHA384_Init(SHA512_CTX *c)
+fips_md_init_ctx(SHA384, SHA512)
 {
     c->h[0] = U64(0xcbbb9d5dc1059ed8);
     c->h[1] = U64(0x629a292a367cd507);
@@ -69,6 +70,7 @@ int SHA384_Init(SHA512_CTX *c)
     c->h[5] = U64(0x8eb44a8768581511);
     c->h[6] = U64(0xdb0c2e0d64f98fa7);
     c->h[7] = U64(0x47b5481dbefa4fa4);
+
     c->Nl = 0;
     c->Nh = 0;
     c->num = 0;
@@ -76,7 +78,7 @@ int SHA384_Init(SHA512_CTX *c)
     return 1;
 }
 
-int SHA512_Init(SHA512_CTX *c)
+fips_md_init(SHA512)
 {
     c->h[0] = U64(0x6a09e667f3bcc908);
     c->h[1] = U64(0xbb67ae8584caa73b);
@@ -86,6 +88,7 @@ int SHA512_Init(SHA512_CTX *c)
     c->h[5] = U64(0x9b05688c2b3e6c1f);
     c->h[6] = U64(0x1f83d9abfb41bd6b);
     c->h[7] = U64(0x5be0cd19137e2179);
+
     c->Nl = 0;
     c->Nh = 0;
     c->num = 0;
@@ -171,6 +174,7 @@ int SHA512_Final(unsigned char *md, SHA512_CTX *c)
     default:
         return 0;
     }
+
     return 1;
 }
 
@@ -234,6 +238,10 @@ int SHA384_Update(SHA512_CTX *c, const void *data, size_t len)
 
 void SHA512_Transform(SHA512_CTX *c, const unsigned char *data)
 {
+# ifndef SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+    if ((size_t)data % sizeof(c->u.d[0]) != 0)
+        memcpy(c->u.p, data, sizeof(c->u.p)), data = c->u.p;
+# endif
     sha512_block_data_order(c, data, 1);
 }
 
@@ -346,6 +354,18 @@ static const SHA_LONG64 K512[80] = {
                                 asm ("rotrdi %0,%1,%2"  \
                                 : "=r"(ret)             \
                                 : "r"(a),"K"(n)); ret;  })
+#    elif defined(__aarch64__)
+#     define ROTR(a,n)    ({ SHA_LONG64 ret;              \
+                                asm ("ror %0,%1,%2"     \
+                                : "=r"(ret)             \
+                                : "r"(a),"I"(n)); ret;  })
+#     if  defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
+        __BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__
+#      define PULL64(x)   ({ SHA_LONG64 ret;                      \
+                                asm ("rev       %0,%1"          \
+                                : "=r"(ret)                     \
+                                : "r"(*((const SHA_LONG64 *)(&(x))))); ret;             })
+#     endif
 #    endif
 #   elif defined(_MSC_VER)
 #    if defined(_WIN64)         /* applies to both IA-64 and AMD64 */

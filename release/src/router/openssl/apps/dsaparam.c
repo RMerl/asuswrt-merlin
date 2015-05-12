@@ -310,6 +310,7 @@ int MAIN(int argc, char **argv)
                 goto end;
             }
 # endif
+            ERR_print_errors(bio_err);
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
             goto end;
         }
@@ -405,8 +406,11 @@ int MAIN(int argc, char **argv)
         assert(need_rand);
         if ((dsakey = DSAparams_dup(dsa)) == NULL)
             goto end;
-        if (!DSA_generate_key(dsakey))
+        if (!DSA_generate_key(dsakey)) {
+            ERR_print_errors(bio_err);
+            DSA_free(dsakey);
             goto end;
+        }
         if (outformat == FORMAT_ASN1)
             i = i2d_DSAPrivateKey_bio(out, dsakey);
         else if (outformat == FORMAT_PEM)
@@ -414,6 +418,7 @@ int MAIN(int argc, char **argv)
                                             NULL);
         else {
             BIO_printf(bio_err, "bad output format specified for outfile\n");
+            DSA_free(dsakey);
             goto end;
         }
         DSA_free(dsakey);

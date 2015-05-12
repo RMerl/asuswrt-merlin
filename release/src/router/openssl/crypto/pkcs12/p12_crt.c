@@ -90,12 +90,18 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
     unsigned int keyidlen = 0;
 
     /* Set defaults */
-    if (!nid_cert)
-#ifdef OPENSSL_NO_RC2
-        nid_cert = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-#else
-        nid_cert = NID_pbe_WithSHA1And40BitRC2_CBC;
+    if (!nid_cert) {
+#ifdef OPENSSL_FIPS
+        if (FIPS_mode())
+            nid_cert = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+        else
 #endif
+#ifdef OPENSSL_NO_RC2
+            nid_cert = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+#else
+            nid_cert = NID_pbe_WithSHA1And40BitRC2_CBC;
+#endif
+    }
     if (!nid_key)
         nid_key = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
     if (!iter)

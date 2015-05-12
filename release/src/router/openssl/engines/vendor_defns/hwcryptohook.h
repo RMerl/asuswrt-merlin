@@ -180,32 +180,32 @@ typedef struct {
                                  * be power of 2 */
     int mslimbfirst;            /* 0 or 1 */
     int msbytefirst;            /* 0 or 1; -1 = native */
-   /*-
-    * All the callback functions should return 0 on success, or a
-    * nonzero integer (whose value will be visible in the error message
-    * put in the buffer passed to the call).
-    *
-    * If a callback is not available pass a null function pointer.
-    *
-    * The callbacks may not call down again into the crypto plugin.
-    */
-   /*-
-    * For thread-safety.  Set everything to 0 if you promise only to be
-    * singlethreaded.  maxsimultaneous is the number of calls to
-    * ModExp[Crt]/RSAImmed{Priv,Pub}/RSA.  If you don't know what to
-    * put there then say 0 and the hook library will use a default.
-    *
-    * maxmutexes is a small limit on the number of simultaneous mutexes
-    * which will be requested by the library.  If there is no small
-    * limit, set it to 0.  If the crypto plugin cannot create the
-    * advertised number of mutexes the calls to its functions may fail.
-    * If a low number of mutexes is advertised the plugin will try to
-    * do the best it can.  Making larger numbers of mutexes available
-    * may improve performance and parallelism by reducing contention
-    * over critical sections.  Unavailability of any mutexes, implying
-    * single-threaded operation, should be indicated by the setting
-    * mutex_init et al to 0.
-    */
+  /*-
+   * All the callback functions should return 0 on success, or a
+   * nonzero integer (whose value will be visible in the error message
+   * put in the buffer passed to the call).
+   *
+   * If a callback is not available pass a null function pointer.
+   *
+   * The callbacks may not call down again into the crypto plugin.
+   */
+  /*-
+   * For thread-safety.  Set everything to 0 if you promise only to be
+   * singlethreaded.  maxsimultaneous is the number of calls to
+   * ModExp[Crt]/RSAImmed{Priv,Pub}/RSA.  If you don't know what to
+   * put there then say 0 and the hook library will use a default.
+   *
+   * maxmutexes is a small limit on the number of simultaneous mutexes
+   * which will be requested by the library.  If there is no small
+   * limit, set it to 0.  If the crypto plugin cannot create the
+   * advertised number of mutexes the calls to its functions may fail.
+   * If a low number of mutexes is advertised the plugin will try to
+   * do the best it can.  Making larger numbers of mutexes available
+   * may improve performance and parallelism by reducing contention
+   * over critical sections.  Unavailability of any mutexes, implying
+   * single-threaded operation, should be indicated by the setting
+   * mutex_init et al to 0.
+   */
     int maxmutexes;
     int maxsimultaneous;
     size_t mutexsize;
@@ -214,12 +214,12 @@ typedef struct {
     int (*mutex_acquire) (HWCryptoHook_Mutex *);
     void (*mutex_release) (HWCryptoHook_Mutex *);
     void (*mutex_destroy) (HWCryptoHook_Mutex *);
-   /*-
-    * For greater efficiency, can use condition vars internally for
-    * synchronisation.  In this case maxsimultaneous is ignored, but
-    * the other mutex stuff must be available.  In singlethreaded
-    * programs, set everything to 0.
-    */
+    /*-
+     * For greater efficiency, can use condition vars internally for
+     * synchronisation.  In this case maxsimultaneous is ignored, but
+     * the other mutex stuff must be available.  In singlethreaded
+     * programs, set everything to 0.
+     */
     size_t condvarsize;
     int (*condvar_init) (HWCryptoHook_CondVar *,
                          HWCryptoHook_CallerContext * cactx);
@@ -227,17 +227,17 @@ typedef struct {
     void (*condvar_signal) (HWCryptoHook_CondVar *);
     void (*condvar_broadcast) (HWCryptoHook_CondVar *);
     void (*condvar_destroy) (HWCryptoHook_CondVar *);
-   /*-
-    * The semantics of acquiring and releasing mutexes and broadcasting
-    * and waiting on condition variables are expected to be those from
-    * POSIX threads (pthreads).  The mutexes may be (in pthread-speak)
-    * fast mutexes, recursive mutexes, or nonrecursive ones.
-    *
-    * The _release/_signal/_broadcast and _destroy functions must
-    * always succeed when given a valid argument; if they are given an
-    * invalid argument then the program (crypto plugin + application)
-    * has an internal error, and they should abort the program.
-    */
+    /*-
+     * The semantics of acquiring and releasing mutexes and broadcasting
+     * and waiting on condition variables are expected to be those from
+     * POSIX threads (pthreads).  The mutexes may be (in pthread-speak)
+     * fast mutexes, recursive mutexes, or nonrecursive ones.
+     *
+     * The _release/_signal/_broadcast and _destroy functions must
+     * always succeed when given a valid argument; if they are given an
+     * invalid argument then the program (crypto plugin + application)
+     * has an internal error, and they should abort the program.
+     */
     int (*getpassphrase) (const char *prompt_info,
                           int *len_io, char *buf,
                           HWCryptoHook_PassphraseContext * ppctx,

@@ -160,14 +160,16 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     for (i = 0; i < Plen; i++)
         *p++ = pass[i % passlen];
     for (;;) {
-        EVP_DigestInit_ex(&ctx, md_type, NULL);
-        EVP_DigestUpdate(&ctx, D, v);
-        EVP_DigestUpdate(&ctx, I, Ilen);
-        EVP_DigestFinal_ex(&ctx, Ai, NULL);
+        if (!EVP_DigestInit_ex(&ctx, md_type, NULL)
+            || !EVP_DigestUpdate(&ctx, D, v)
+            || !EVP_DigestUpdate(&ctx, I, Ilen)
+            || !EVP_DigestFinal_ex(&ctx, Ai, NULL))
+            goto err;
         for (j = 1; j < iter; j++) {
-            EVP_DigestInit_ex(&ctx, md_type, NULL);
-            EVP_DigestUpdate(&ctx, Ai, u);
-            EVP_DigestFinal_ex(&ctx, Ai, NULL);
+            if (!EVP_DigestInit_ex(&ctx, md_type, NULL)
+                || !EVP_DigestUpdate(&ctx, Ai, u)
+                || !EVP_DigestFinal_ex(&ctx, Ai, NULL))
+                goto err;
         }
         memcpy(out, Ai, min(n, u));
         if (u >= n) {
@@ -192,20 +194,23 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
                 goto err;
             if (!BN_add(Ij, Ij, Bpl1))
                 goto err;
-            BN_bn2bin(Ij, B);
+            if (!BN_bn2bin(Ij, B))
+                goto err;
             Ijlen = BN_num_bytes(Ij);
             /* If more than 2^(v*8) - 1 cut off MSB */
             if (Ijlen > v) {
-                BN_bn2bin(Ij, B);
+                if (!BN_bn2bin(Ij, B))
+                    goto err;
                 memcpy(I + j, B + 1, v);
 #ifndef PKCS12_BROKEN_KEYGEN
                 /* If less than v bytes pad with zeroes */
             } else if (Ijlen < v) {
                 memset(I + j, 0, v - Ijlen);
-                BN_bn2bin(Ij, I + j + v - Ijlen);
+                if (!BN_bn2bin(Ij, I + j + v - Ijlen))
+                    goto err;
 #endif
-            } else
-                BN_bn2bin(Ij, I + j);
+            } else if (!BN_bn2bin(Ij, I + j))
+                goto err;
         }
     }
 

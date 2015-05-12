@@ -72,9 +72,12 @@ typedef struct CMS_RevocationInfoChoice_st CMS_RevocationInfoChoice;
 typedef struct CMS_RecipientInfo_st CMS_RecipientInfo;
 typedef struct CMS_ReceiptRequest_st CMS_ReceiptRequest;
 typedef struct CMS_Receipt_st CMS_Receipt;
+typedef struct CMS_RecipientEncryptedKey_st CMS_RecipientEncryptedKey;
+typedef struct CMS_OtherKeyAttribute_st CMS_OtherKeyAttribute;
 
 DECLARE_STACK_OF(CMS_SignerInfo)
 DECLARE_STACK_OF(GENERAL_NAMES)
+DECLARE_STACK_OF(CMS_RecipientEncryptedKey)
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
@@ -82,6 +85,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 # define CMS_SIGNERINFO_ISSUER_SERIAL    0
 # define CMS_SIGNERINFO_KEYIDENTIFIER    1
 
+# define CMS_RECIPINFO_NONE              -1
 # define CMS_RECIPINFO_TRANS             0
 # define CMS_RECIPINFO_AGREE             1
 # define CMS_RECIPINFO_KEK               2
@@ -111,6 +115,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 # define CMS_REUSE_DIGEST                0x8000
 # define CMS_USE_KEYID                   0x10000
 # define CMS_DEBUG_DECRYPT               0x20000
+# define CMS_KEY_PARAM                   0x40000
 
 const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms);
 
@@ -184,9 +189,12 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert);
 int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
                          unsigned char *key, size_t keylen,
                          unsigned char *id, size_t idlen);
+int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
+                              unsigned char *pass, ossl_ssize_t passlen);
 
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
+EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri);
 CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
                                            X509 *recip, unsigned int flags);
@@ -220,7 +228,19 @@ int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri,
 int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
                                    const unsigned char *id, size_t idlen);
 
+int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
+                                    unsigned char *pass,
+                                    ossl_ssize_t passlen);
+
+CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
+                                               int iter, int wrap_nid,
+                                               int pbe_nid,
+                                               unsigned char *pass,
+                                               ossl_ssize_t passlen,
+                                               const EVP_CIPHER *kekciph);
+
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
+int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                    unsigned int flags);
@@ -243,6 +263,8 @@ int CMS_SignedData_init(CMS_ContentInfo *cms);
 CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                                 X509 *signer, EVP_PKEY *pk, const EVP_MD *md,
                                 unsigned int flags);
+EVP_PKEY_CTX *CMS_SignerInfo_get0_pkey_ctx(CMS_SignerInfo *si);
+EVP_MD_CTX *CMS_SignerInfo_get0_md_ctx(CMS_SignerInfo *si);
 STACK_OF(CMS_SignerInfo) *CMS_get0_SignerInfos(CMS_ContentInfo *cms);
 
 void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer);
@@ -255,6 +277,7 @@ int CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 void CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk,
                               X509 **signer, X509_ALGOR **pdig,
                               X509_ALGOR **psig);
+ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si);
 int CMS_SignerInfo_sign(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain);
@@ -318,8 +341,37 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
                                     int *pallorfirst,
                                     STACK_OF(GENERAL_NAMES) **plist,
                                     STACK_OF(GENERAL_NAMES) **prto);
-
 # endif
+int CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri,
+                                    X509_ALGOR **palg,
+                                    ASN1_OCTET_STRING **pukm);
+STACK_OF(CMS_RecipientEncryptedKey)
+*CMS_RecipientInfo_kari_get0_reks(CMS_RecipientInfo *ri);
+
+int CMS_RecipientInfo_kari_get0_orig_id(CMS_RecipientInfo *ri,
+                                        X509_ALGOR **pubalg,
+                                        ASN1_BIT_STRING **pubkey,
+                                        ASN1_OCTET_STRING **keyid,
+                                        X509_NAME **issuer,
+                                        ASN1_INTEGER **sno);
+
+int CMS_RecipientInfo_kari_orig_id_cmp(CMS_RecipientInfo *ri, X509 *cert);
+
+int CMS_RecipientEncryptedKey_get0_id(CMS_RecipientEncryptedKey *rek,
+                                      ASN1_OCTET_STRING **keyid,
+                                      ASN1_GENERALIZEDTIME **tm,
+                                      CMS_OtherKeyAttribute **other,
+                                      X509_NAME **issuer, ASN1_INTEGER **sno);
+int CMS_RecipientEncryptedKey_cert_cmp(CMS_RecipientEncryptedKey *rek,
+                                       X509 *cert);
+int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk);
+EVP_CIPHER_CTX *CMS_RecipientInfo_kari_get0_ctx(CMS_RecipientInfo *ri);
+int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
+                                   CMS_RecipientInfo *ri,
+                                   CMS_RecipientEncryptedKey *rek);
+
+int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
+                          ASN1_OCTET_STRING *ukm, int keylen);
 
 /* BEGIN ERROR CODES */
 /*
@@ -334,6 +386,7 @@ void ERR_load_CMS_strings(void);
 # define CMS_F_CHECK_CONTENT                              99
 # define CMS_F_CMS_ADD0_CERT                              164
 # define CMS_F_CMS_ADD0_RECIPIENT_KEY                     100
+# define CMS_F_CMS_ADD0_RECIPIENT_PASSWORD                165
 # define CMS_F_CMS_ADD1_RECEIPTREQUEST                    158
 # define CMS_F_CMS_ADD1_RECIPIENT_CERT                    101
 # define CMS_F_CMS_ADD1_SIGNER                            102
@@ -348,6 +401,7 @@ void ERR_load_CMS_strings(void);
 # define CMS_F_CMS_DATAINIT                               111
 # define CMS_F_CMS_DECRYPT                                112
 # define CMS_F_CMS_DECRYPT_SET1_KEY                       113
+# define CMS_F_CMS_DECRYPT_SET1_PASSWORD                  166
 # define CMS_F_CMS_DECRYPT_SET1_PKEY                      114
 # define CMS_F_CMS_DIGESTALGORITHM_FIND_CTX               115
 # define CMS_F_CMS_DIGESTALGORITHM_INIT_BIO               116
@@ -362,6 +416,7 @@ void ERR_load_CMS_strings(void);
 # define CMS_F_CMS_ENVELOPEDDATA_CREATE                   124
 # define CMS_F_CMS_ENVELOPEDDATA_INIT_BIO                 125
 # define CMS_F_CMS_ENVELOPED_DATA_INIT                    126
+# define CMS_F_CMS_ENV_ASN1_CTRL                          171
 # define CMS_F_CMS_FINAL                                  127
 # define CMS_F_CMS_GET0_CERTIFICATE_CHOICES               128
 # define CMS_F_CMS_GET0_CONTENT                           129
@@ -373,6 +428,12 @@ void ERR_load_CMS_strings(void);
 # define CMS_F_CMS_RECEIPTREQUEST_CREATE0                 159
 # define CMS_F_CMS_RECEIPT_VERIFY                         160
 # define CMS_F_CMS_RECIPIENTINFO_DECRYPT                  134
+# define CMS_F_CMS_RECIPIENTINFO_ENCRYPT                  169
+# define CMS_F_CMS_RECIPIENTINFO_KARI_ENCRYPT             178
+# define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ALG            175
+# define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ORIG_ID        173
+# define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_REKS           172
+# define CMS_F_CMS_RECIPIENTINFO_KARI_ORIG_ID_CMP         174
 # define CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT            135
 # define CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT            136
 # define CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID            137
@@ -382,8 +443,13 @@ void ERR_load_CMS_strings(void);
 # define CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT             141
 # define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_ALGS           142
 # define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_SIGNER_ID      143
+# define CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT               167
 # define CMS_F_CMS_RECIPIENTINFO_SET0_KEY                 144
+# define CMS_F_CMS_RECIPIENTINFO_SET0_PASSWORD            168
 # define CMS_F_CMS_RECIPIENTINFO_SET0_PKEY                145
+# define CMS_F_CMS_SD_ASN1_CTRL                           170
+# define CMS_F_CMS_SET1_IAS                               176
+# define CMS_F_CMS_SET1_KEYID                             177
 # define CMS_F_CMS_SET1_SIGNERIDENTIFIER                  146
 # define CMS_F_CMS_SET_DETACHED                           147
 # define CMS_F_CMS_SIGN                                   148
@@ -423,6 +489,7 @@ void ERR_load_CMS_strings(void);
 # define CMS_R_ERROR_SETTING_KEY                          115
 # define CMS_R_ERROR_SETTING_RECIPIENTINFO                116
 # define CMS_R_INVALID_ENCRYPTED_KEY_LENGTH               117
+# define CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER           176
 # define CMS_R_INVALID_KEY_LENGTH                         118
 # define CMS_R_MD_BIO_INIT_ERROR                          119
 # define CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH       120
@@ -434,7 +501,9 @@ void ERR_load_CMS_strings(void);
 # define CMS_R_NOT_A_SIGNED_RECEIPT                       165
 # define CMS_R_NOT_ENCRYPTED_DATA                         122
 # define CMS_R_NOT_KEK                                    123
+# define CMS_R_NOT_KEY_AGREEMENT                          181
 # define CMS_R_NOT_KEY_TRANSPORT                          124
+# define CMS_R_NOT_PWRI                                   177
 # define CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE            125
 # define CMS_R_NO_CIPHER                                  126
 # define CMS_R_NO_CONTENT                                 127
@@ -447,6 +516,7 @@ void ERR_load_CMS_strings(void);
 # define CMS_R_NO_MATCHING_RECIPIENT                      132
 # define CMS_R_NO_MATCHING_SIGNATURE                      166
 # define CMS_R_NO_MSGSIGDIGEST                            167
+# define CMS_R_NO_PASSWORD                                178
 # define CMS_R_NO_PRIVATE_KEY                             133
 # define CMS_R_NO_PUBLIC_KEY                              134
 # define CMS_R_NO_RECEIPT_REQUEST                         168
@@ -470,10 +540,12 @@ void ERR_load_CMS_strings(void);
 # define CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM          151
 # define CMS_R_UNSUPPORTED_CONTENT_TYPE                   152
 # define CMS_R_UNSUPPORTED_KEK_ALGORITHM                  153
+# define CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM       179
 # define CMS_R_UNSUPPORTED_RECIPIENT_TYPE                 154
 # define CMS_R_UNSUPPORTED_RECPIENTINFO_TYPE              155
 # define CMS_R_UNSUPPORTED_TYPE                           156
 # define CMS_R_UNWRAP_ERROR                               157
+# define CMS_R_UNWRAP_FAILURE                             180
 # define CMS_R_VERIFICATION_FAILURE                       158
 # define CMS_R_WRAP_ERROR                                 159
 

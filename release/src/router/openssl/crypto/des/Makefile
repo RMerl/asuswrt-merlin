@@ -61,6 +61,8 @@ des: des.o cbc3_enc.o lib
 
 des_enc-sparc.S:	asm/des_enc.m4
 	m4 -B 8192 asm/des_enc.m4 > des_enc-sparc.S
+dest4-sparcv9.s:	asm/dest4-sparcv9.pl
+	$(PERL) asm/dest4-sparcv9.pl $(CFLAGS) > $@
 
 des-586.s:	asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	$(PERL) asm/des-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
@@ -257,8 +259,9 @@ rpc_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 rpc_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rpc_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 rpc_enc.o: des_locl.h des_ver.h rpc_des.h rpc_enc.c
-set_key.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-set_key.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+set_key.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+set_key.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
+set_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 set_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 set_key.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 set_key.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h

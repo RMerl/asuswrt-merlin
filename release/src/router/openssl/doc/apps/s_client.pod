@@ -37,6 +37,8 @@ B<openssl> B<s_client>
 [B<-no_ssl2>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
+[B<-no_tls1_1>]
+[B<-no_tls1_2>]
 [B<-fallback_scsv>]
 [B<-bugs>]
 [B<-cipher cipherlist>]
@@ -48,7 +50,9 @@ B<openssl> B<s_client>
 [B<-sess_out filename>]
 [B<-sess_in filename>]
 [B<-rand file(s)>]
+[B<-serverinfo types>]
 [B<-status>]
+[B<-nextprotoneg protocols>]
 
 =head1 DESCRIPTION
 
@@ -196,7 +200,7 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>
+=item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
 these options disable the use of certain SSL or TLS protocols. By default
 the initial handshake uses a method which should be compatible with all
@@ -264,10 +268,28 @@ Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
+=item B<-serverinfo types>
+
+a list of comma-separated TLS Extension Types (numbers between 0 and 
+65535).  Each type will be sent as an empty ClientHello TLS Extension.
+The server's response (if any) will be encoded and displayed as a PEM
+file.
+
 =item B<-status>
 
 sends a certificate status request to the server (OCSP stapling). The server
 response (if any) is printed out.
+
+=item B<-nextprotoneg protocols>
+
+enable Next Protocol Negotiation TLS extension and provide a list of
+comma-separated protocol names that the client should advertise
+support for. The list should contain most wanted protocols first.
+Protocol names are printable ASCII strings, for example "http/1.1" or
+"spdy/3".
+Empty list of protocols is treated specially and will cause the client to
+advertise support for the TLS extension but disconnect just after
+reciving ServerHello with a list of server supported protocols.
 
 =back
 
