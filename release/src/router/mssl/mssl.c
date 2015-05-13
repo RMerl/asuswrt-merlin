@@ -194,8 +194,11 @@ static FILE *_ssl_fopen(int sd, int client)
 		goto ERROR;
 	}
 
-	// Enforce our desired cipher order, and enable workaround for broken Safari versions
-	SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE |  SSL_OP_SAFARI_ECDHE_ECDSA_BUG);
+	// Enforce our desired cipher order, disable obsolete protocols
+	SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 |
+		SSL_OP_NO_SSLv3 |
+		SSL_OP_CIPHER_SERVER_PREFERENCE |
+		SSL_OP_SAFARI_ECDHE_ECDSA_BUG);
 
 	r = SSL_set_fd(kuki->ssl, kuki->sd);
 	//fprintf(stderr,"[ssl_fopen] set_fd=%d\n", r); // tmp test
@@ -262,7 +265,7 @@ int mssl_init(char *cert, char *priv)
 	// Create the new CTX with the method 
 	// If server=1, use TLSv1_server_method() or SSLv23_server_method()
 	// else 	use TLSv1_client_method() or SSLv23_client_method()
-	ctx = SSL_CTX_new(server ? TLSv1_server_method() : TLSv1_client_method()); // TLS 1.0 min, SSL2 and 3 are unsafe
+	ctx = SSL_CTX_new(server ? SSLv23_server_method() : SSLv23_client_method());
 
 	if (!ctx) {
 		fprintf(stderr,"[ssl_init] SSL_CTX_new() failed\n"); // tmp test
