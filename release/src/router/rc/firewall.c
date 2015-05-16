@@ -2395,11 +2395,11 @@ TRACE_PT("writing Parental Control\n");
 		if (nvram_match("macfilter_enable_x", "1"))
 		{
 			/* Filter known SPI state */
-			fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n"
+			fprintf(fp, "-A INPUT -i %s -m state --state INVALID -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
-			,logdrop, logaccept, "ACCEPT", lan_if, logdrop);
+			,wan_if, logdrop, logaccept, "ACCEPT", lan_if, logdrop);
 #ifdef RTCONFIG_IPV6
 			if (ipv6_enabled())
 			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
@@ -2413,11 +2413,11 @@ TRACE_PT("writing Parental Control\n");
 #endif
 		{
 			/* Filter known SPI state */
-			fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n"
+			fprintf(fp, "-A INPUT -i %s -m state --state INVALID -j %s\n"
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
-			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
+			,wan_if, logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
 #ifdef RTCONFIG_IPV6
 			if (ipv6_enabled())
 			fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
@@ -2608,7 +2608,7 @@ TRACE_PT("writing Parental Control\n");
 
 // oleg patch ~
 	/* Drop the wrong state, INVALID, packets */
-	fprintf(fp, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
+	fprintf(fp, "-A FORWARD -i %s -m state --state INVALID -j %s\n", wanx_if, logdrop);
 //#if 0
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
