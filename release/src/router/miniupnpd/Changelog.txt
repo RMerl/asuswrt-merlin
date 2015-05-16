@@ -1,4 +1,14 @@
-$Id: Changelog.txt,v 1.396 2015/03/07 15:53:50 nanard Exp $
+$Id: Changelog.txt,v 1.398 2015/04/26 14:43:27 nanard Exp $
+
+2015/04/30:
+  Adding linux/nftables support
+
+2015/04/26:
+  Remove dependency to libnfnetlink
+  fix typos in miniupnpd.conf
+
+2015/03/09:
+  fix get_portmappings_in_range() for linux/netfilter
 
 2015/03/07:
   don't die when IPv6 is enabled and interface has no IPv4 address

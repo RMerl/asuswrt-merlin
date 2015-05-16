@@ -1,11 +1,9 @@
 /* $Id: getroute.c,v 1.4 2013/02/06 10:50:04 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2013 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
-
-#ifdef UPNP_STRICT
 
 #include <stdio.h>
 #include <string.h>
@@ -18,7 +16,12 @@
 /*#include <linux/in_route.h>*/
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#ifdef USE_LIBNFNETLINK
+/* define USE_LIBNFNETLINK in order to use libnfnetlink
+ * instead of custom code
+ * see https://github.com/miniupnp/miniupnp/issues/110 */
 #include <libnfnetlink/libnfnetlink.h>
+#endif /* USE_LIBNFNETLINK */
 
 #include "../getroute.h"
 #include "../upnputils.h"
@@ -48,6 +51,9 @@ get_src_for_route_to(const struct sockaddr * dst,
 	};
 	const struct sockaddr_in * dst4;
 	const struct sockaddr_in6 * dst6;
+#ifndef USE_LIBNFNETLINK
+	struct rtattr * rta;
+#endif /* USE_LIBNFNETLINK */
 
 	memset(&req, 0, sizeof(req));
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
@@ -68,15 +74,32 @@ get_src_for_route_to(const struct sockaddr * dst,
 		syslog(LOG_DEBUG, "get_src_for_route_to (%s)", dst_str);
 	}
 	/* add address */
+#ifndef USE_LIBNFNETLINK
+	rta = (struct rtattr *)(((char*)&req) + NLMSG_ALIGN(req.n.nlmsg_len));
+	rta->rta_type = RTA_DST;
+#endif /* USE_LIBNFNETLINK */
 	if(dst->sa_family == AF_INET) {
 		dst4 = (const struct sockaddr_in *)dst;
+#ifdef USE_LIBNFNETLINK
 		nfnl_addattr_l(&req.n, sizeof(req), RTA_DST, &dst4->sin_addr, 4);
+#else
+		rta->rta_len = RTA_SPACE(sizeof(dst4->sin_addr));
+		memcpy(RTA_DATA(rta), &dst4->sin_addr, sizeof(dst4->sin_addr));
+#endif /* USE_LIBNFNETLINK */
 		req.r.rtm_dst_len = 32;
 	} else {
 		dst6 = (const struct sockaddr_in6 *)dst;
+#ifdef USE_LIBNFNETLINK
 		nfnl_addattr_l(&req.n, sizeof(req), RTA_DST, &dst6->sin6_addr, 16);
+#else
+		rta->rta_len = RTA_SPACE(sizeof(dst6->sin6_addr));
+		memcpy(RTA_DATA(rta), &dst6->sin6_addr, sizeof(dst6->sin6_addr));
+#endif /* USE_LIBNFNETLINK */
 		req.r.rtm_dst_len = 128;
 	}
+#ifndef USE_LIBNFNETLINK
+	req.n.nlmsg_len += rta->rta_len;
+#endif /* USE_LIBNFNETLINK */
 
 	fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
 	if (fd < 0) {
@@ -172,4 +195,3 @@ error:
 	return -1;
 }
 
-#endif /* UPNP_STRICT */

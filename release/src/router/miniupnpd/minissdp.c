@@ -883,8 +883,9 @@ ProcessSSDPData(int s, const char *bufr, int n,
 			{
 				if (lan_addr == NULL)
 				{
-					syslog(LOG_ERR, "Can't find in which sub network the client %s is",
-						sender_str);
+					syslog(LOG_ERR,
+					       "Can't find in which sub network the client %s is",
+					       sender_str);
 					return;
 				}
 				announced_host = lan_addr->str;
@@ -1168,6 +1169,8 @@ SendSSDPGoodbye(int * sockets, int n_sockets)
 
 	for(j=0; j<n_sockets; j++)
 	{
+		if(sockets[j] < 0)
+			continue;
 #ifdef ENABLE_IPV6
 		ipv6 = j & 1;
 		if(ipv6) {

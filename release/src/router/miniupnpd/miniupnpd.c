@@ -1414,7 +1414,6 @@ init(int argc, char * * argv, struct runtime_vars * v)
 	}
 
 	set_startup_time(GETFLAG(SYSUPTIMEMASK));
-	syslog(LOG_INFO, "version " MINIUPNPD_VERSION " started");
 
 	/* presentation url */
 	if(presurl)
@@ -1834,9 +1833,6 @@ main(int argc, char * * argv)
 			}
 #endif
 			should_send_public_address_change_notif = 0;
-#ifdef ENABLE_LEASEFILE
-			reload_from_lease_file();
-#endif
 		}
 		/* Check if we need to send SSDP NOTIFY messages and do it if
 		 * needed */
