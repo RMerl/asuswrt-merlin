@@ -3017,7 +3017,7 @@ void start_upnp(void)
 
 				fprintf(f,
 					"ext_ifname=%s\n"
-					"listening_ip=%s/%s\n"
+					"listening_ip=%s\n"
 					"port=%d\n"
 					"enable_upnp=%s\n"
 					"enable_natpmp=%s\n"
@@ -3032,7 +3032,7 @@ void start_upnp(void)
 					"\n"
 					,
 					get_wan_ifname(wan_primary_ifunit()),
-					lanip, lanmask,
+					nvram_safe_get("lan_ifname"),
 					upnp_port,
 					upnp_enable ? "yes" : "no",	// upnp enable
 					upnp_mnp_enable ? "yes" : "no",	// natpmp enable
