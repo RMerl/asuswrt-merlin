@@ -47,7 +47,10 @@ function show_pinholes() {
 	code += '<td width=8%">Proto</td>';
 	code += '</tr></thead>';
 
-	if (pinholes.length > 1) {
+        if ("<% nvram_get("upnp_pinhole_enable"); %>" == "0") {
+                code += '<tr><td colspan="5">Pinhole support is currently disabled.</td></tr>';
+
+	} else if (pinholes.length > 1) {
 		for (i = 0; i < pinholes.length-1; ++i) {
 			rule = pinholes[i];
 			code += '<tr>';
@@ -59,7 +62,7 @@ function show_pinholes() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="7">No pinhole configured.</td></tr>';
+		code += '<tr><td colspan="5">No pinhole configured.</td></tr>';
 	}
 
 	code += '</tr></table>';

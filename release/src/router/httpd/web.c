@@ -11010,7 +11010,9 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "get_default_reboot_time", ej_get_default_reboot_time},
 	{ "sysinfo",  ej_show_sysinfo},
+#ifdef RTCONFIG_IPV6
 	{ "ipv6_pinholes",  ej_ipv6_pinhole_array},
+#endif
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif
@@ -11078,6 +11080,7 @@ write_ver:
 	nvram_set_f("general.log", "firmver", fwver);
 }
 
+#ifdef RTCONFIG_IPV6
 int
 ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -11091,6 +11094,12 @@ ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
 	int ret = 0;
 
 	ret += websWrite(wp, "var pinholes = ");
+
+        if (!(ipv6_enabled() && is_routing_enabled())) {
+                ret += websWrite(wp, "[];\n");
+                return ret;
+        }
+
 	_eval(ipt_argv, ">/tmp/pinhole.log", 10, NULL);
 
 	fp = fopen("/tmp/pinhole.log", "r");
@@ -11152,6 +11161,7 @@ ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 
 }
+#endif
 
 int
 get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
