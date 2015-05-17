@@ -852,6 +852,7 @@ void start_cstats(int new);
 void restart_cstats(void);
 void stop_cstats(void);
 int ddns_custom_updated_main(int argc, char *argv[]);
+int upnp_support_igd2(void);
 
 // lan.c
 #ifdef RTCONFIG_TIMEMACHINE

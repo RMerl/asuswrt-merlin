@@ -31,7 +31,12 @@
 
 function initial() {
 	show_menu();
-	show_pinholes();
+
+	if ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC3200"))
+	{
+		$("pinholespan").style.display="";
+		show_pinholes();
+	}
 }
 
 
@@ -115,10 +120,12 @@ function show_pinholes() {
 											<textarea cols="63" rows="25" readonly="readonly" wrap="off" style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("ipv6_network.log", "ipv6_network.sh"); %></textarea>
 										</div>
 										<br>
-										<div class="pinholeheader">IPv6 pinhole rules opened in the firewall through UPnP/IGD2:</div>
-										<br>
-										<div id="pinholesblock"></div>
-										<br>
+										<span id="pinholespan" style="display:none;">
+											<div class="pinholeheader">IPv6 pinhole rules opened in the firewall through UPnP/IGD2:</div>
+											<br>
+											<div id="pinholesblock"></div>
+											<br>
+										</span>
 										<div class="apply_gen">
 											<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
 										</div>
