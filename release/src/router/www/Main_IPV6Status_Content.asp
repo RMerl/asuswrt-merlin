@@ -16,9 +16,61 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+
+<style>
+.pinholeheader{
+        background-color:#475a5f;
+        color:#FFCC00;
+	font-size: 125%;
+}
+</style>
+
+<script>
+
+<% ipv6_pinholes(); %>
+
+function initial() {
+	show_menu();
+	show_pinholes();
+}
+
+
+function show_pinholes() {
+	var code, i, rule
+
+	code = '<table width="100%" id="24G" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+	code += '<thead><tr>';
+	code += '<td width=34%">Remote</td>';
+	code += '<td width=12%">Port</td>';
+	code += '<td width=34%">Local</td>';
+	code += '<td width=12%">Port</td>';
+	code += '<td width=8%">Proto</td>';
+	code += '</tr></thead>';
+
+	if (pinholes.length > 1) {
+		for (i = 0; i < pinholes.length-1; ++i) {
+			rule = pinholes[i];
+			code += '<tr>';
+			code += '<td>' + rule[0] + '</td>';	// Remote IP
+			code += '<td>' + rule[1] + '</td>';	// Remote port
+			code += '<td>' + rule[2] + '</td>';	// Local IP
+			code += '<td>' + rule[3] + '</td>';	// Local Port
+			code += '<td>' + rule[4] + '</td>';	// Protocol
+			code += '</tr>';
+		}
+	} else {
+		code += '<tr><td colspan="7">No pinhole configured.</td></tr>';
+	}
+
+	code += '</tr></table>';
+	$("pinholesblock").innerHTML = code;
+}
+
+
+</script>
 </head>
 
-<body onload="show_menu();">
+<body onload="initial();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 
@@ -59,6 +111,11 @@
 										<div style="margin-top:8px">   
 											<textarea cols="63" rows="25" readonly="readonly" wrap="off" style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("ipv6_network.log", "ipv6_network.sh"); %></textarea>
 										</div>
+										<br>
+										<div class="pinholeheader">IPv6 pinhole rules opened in the firewall through UPnP/IGD2:</div>
+										<br>
+										<div id="pinholesblock"></div>
+										<br>
 										<div class="apply_gen">
 											<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
 										</div>

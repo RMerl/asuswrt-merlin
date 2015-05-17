@@ -176,6 +176,8 @@ int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 
+extern int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
+
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
 
 #define wan_prefix(unit, prefix)	snprintf(prefix, sizeof(prefix), "wan%d_", unit)
@@ -11008,6 +11010,7 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "get_default_reboot_time", ej_get_default_reboot_time},
 	{ "sysinfo",  ej_show_sysinfo},
+	{ "ipv6_pinholes",  ej_ipv6_pinhole_array},
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif
@@ -11073,6 +11076,81 @@ void websSetVer(void)
 write_ver:
 	nvram_set_f("general.log", "productid", productid);
 	nvram_set_f("general.log", "firmver", fwver);
+}
+
+int
+ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *fp;
+	char *ipt_argv[] = {"ip6tables", "-nxL", "UPNP", NULL};
+	char line[256], tmp[256];
+	char target[16], proto[16];
+	char src[45];
+	char dst[45];
+	char *sport, *dport, *ptr, *val;
+	int ret = 0;
+
+	ret += websWrite(wp, "var pinholes = ");
+	_eval(ipt_argv, ">/tmp/pinhole.log", 10, NULL);
+
+	fp = fopen("/tmp/pinhole.log", "r");
+	if (fp == NULL) {
+		ret += websWrite(wp, "[];\n");
+		return ret;
+	}
+
+	ret += websWrite(wp, "[");
+
+	while (fgets(line, sizeof(line), fp) != NULL)
+	{
+		tmp[0] = '\0';
+		if (sscanf(line,
+		    "%15s%*[ \t]"		// target
+		    "%15s%*[ \t]"		// prot
+		    "%44[^/]/%*d%*[ \t]"	// source
+		    "%44[^/]/%*d%*[ \t]"	// destination
+		    "%255[^\n]",		// options
+		    target, proto, src, dst, tmp) < 5) continue;
+
+		if (strcmp(target, "ACCEPT")) continue;
+
+		/* uppercase proto */
+		for (ptr = proto; *ptr; ptr++)
+			*ptr = toupper(*ptr);
+
+		/* parse source */
+		if (strcmp(src, "::") == 0)
+			strcpy(src, "ALL");
+
+		/* parse destination */
+		if (strcmp(dst, "::") == 0)
+			strcpy(dst, "ALL");
+
+		/* parse options */
+		sport = dport = "";
+		ptr = tmp;
+		while ((val = strsep(&ptr, " ")) != NULL) {
+			if (strncmp(val, "dpt:", 4) == 0)
+				dport = val + 4;
+			if (strncmp(val, "spt:", 4) == 0)
+				sport = val + 4;
+			else if (strncmp(val, "dpts:", 5) == 0)
+				dport = val + 5;
+			else if (strncmp(val, "spts:", 5) == 0)
+				sport = val + 5;
+		}
+
+		ret += websWrite(wp,
+			"['%s', '%s', '%s', '%s', '%s'],\n",
+			src, sport, dst, dport, proto);
+	}
+	ret += websWrite(wp, "[]];\n");
+
+	fclose(fp);
+	unlink("/tmp/pinhole.log");
+
+	return ret;
+
 }
 
 int
