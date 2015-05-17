@@ -925,7 +925,7 @@ struct nvram_tuple router_defaults[] = {
 	// miniupnpd - PCP-related values
 	{ "upnp_min_lifetime", "120" },
 	{ "upnp_max_lifetime", "86400" },
-
+	{ "upnp_pinhole_enable", "0" },
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
 #if defined(RT4GAC55U)
 	{ "wans_mode", "lb" },

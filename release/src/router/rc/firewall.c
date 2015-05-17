@@ -2265,6 +2265,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 		    ":INPUT ACCEPT [0:0]\n"
 		    ":FORWARD %s [0:0]\n"
 		    ":OUTPUT ACCEPT [0:0]\n"
+		    ":UPNP - [0:0]\n"
 #ifdef RTCONFIG_PARENTALCTRL
 		    ":PControls - [0:0]\n"
 #else
@@ -2696,6 +2697,9 @@ TRACE_PT("writing Parental Control\n");
 
 
 		fprintf(fp_ipv6, "-A OUTPUT -m rt --rt-type 0 -j %s\n", logdrop);
+
+		if (nvram_match("upnp_enable", "1") && nvram_match("upnp_pinhole_enable", "1")) fprintf(fp_ipv6, "-A FORWARD -j UPNP\n");
+
 		// IPv6 firewall - allowed traffic
 		if (nvram_match("ipv6_fw_enable", "1")) {
 			nvp = nv = strdup(nvram_safe_get("ipv6_fw_rulelist"));
@@ -3258,6 +3262,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		    ":INPUT ACCEPT [0:0]\n"
 		    ":FORWARD %s [0:0]\n"
 		    ":OUTPUT ACCEPT [0:0]\n"
+		    ":UPNP - [0:0]\n"
 #ifdef RTCONFIG_PARENTALCTRL
 		    ":PControls - [0:0]\n"
 #else
@@ -3720,6 +3725,7 @@ TRACE_PT("writing Parental Control\n");
 		// if logging
 		fprintf(fp_ipv6, "-A INPUT -j %s\n", logdrop);
 
+		if (nvram_match("upnp_enable", "1") && nvram_match("upnp_pinhole_enable", "1")) fprintf(fp_ipv6, "-A FORWARD -j UPNP\n");
 
 		fprintf(fp_ipv6, "-A OUTPUT -m rt --rt-type 0 -j %s\n", logdrop);
 		// IPv6 firewall allowed traffic
