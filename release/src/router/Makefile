@@ -1618,7 +1618,11 @@ iptables-1.4.x-clean:
 upnp: nvram$(BCMEX) shared iptables
 
 miniupnpd/config.h:
+ifeq ($(RTCONFIG_BCMARM),y)
 	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg --ipv6 --igd2
+else
+	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg
+endif
 
 miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
 	@$(SEP)
