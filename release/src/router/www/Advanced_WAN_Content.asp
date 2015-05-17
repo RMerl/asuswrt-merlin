@@ -105,7 +105,7 @@ function initial(){
 function display_upnp_options(){
 	$("upnp_range_int").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 	$("upnp_range_ext").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
-	$("upnp_rpinhole").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	$("upnp_pinhole").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 }
 
 var dsltmp_transmode = "<% nvram_get("dsltmp_transmode"); %>";
@@ -870,7 +870,7 @@ function pass_checked(obj){
 								</td>
 							</tr>			
 							<tr id="upnp_pinhole">
-								<th>Enable UPnP IPv6 pinhole support</th
+								<th>Enable UPnP IPv6 pinhole support</th>
 								<td>
 									<input type="radio" name="upnp_pinhole_enable" class="input" value="1" onclick="display_upnp_options();" <% nvram_match("upnp_pinhole_enable", "1", "checked"); %>><#checkbox_Yes#>
 									<input type="radio" name="upnp_pinhole_enable" class="input" value="0" onclick="display_upnp_options();" <% nvram_match("upnp_pinhole_enable", "0", "checked"); %>><#checkbox_No#>
