@@ -311,7 +311,7 @@ else ifeq ($(RTCONFIG_QCA),y)
 else
 #obj-y += et
 obj-y += utils$(BCMEX)$(EX7)
-obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(DPI)$(EX7)
+obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(ARMCPUSMP)$(DPI)$(EX7)
 obj-$(RTCONFIG_EMF) += igs
 ifneq ($(RTCONFIG_BCM_794),y)	# do not build wl/dhd since not ready
 obj-y += wlconf$(BCMEX)$(EX7)
@@ -2874,29 +2874,29 @@ hotplug2-install: hotplug2
 	$(MAKE) -C hotplug2 install PREFIX=$(INSTALLDIR)/hotplug2 SUBDIRS=""
 	$(MAKE) -C hotplug2/examples install PREFIX=$(INSTALLDIR)/hotplug2/rom KERNELVER=$(LINUX_KERNEL)
 
-emf$(BCMEX)$(DPI)$(EX7):
-	$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/emfconf CROSS=$(CROSS_COMPILE)
+emf$(BCMEX)$(ARMCPUSMP)$(DPI)$(EX7):
+	$(MAKE) -C emf$(BCMEX)$(ARMCPUSMP)$(DPI)$(EX7)/emfconf CROSS=$(CROSS_COMPILE)
 
-emf$(BCMEX)$(DPI)$(EX7)-install:
+emf$(BCMEX)$(ARMCPUSMP)$(DPI)$(EX7)-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
-	$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/emfconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+	$(MAKE) -C emf$(BCMEX)$(ARMCPUSMP)$(DPI)$(EX7)/emfconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
-emf$(BCMEX)$(DPI)$(EX7)-clean:
-	-@$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/emfconf clean
+emf$(BCMEX)$(ARMCPUSMP)$(DPI)$(EX7)-clean:
+	-@$(MAKE) -C emf$(BCMEX)$(ARMCPUSMP)$(DPI)$(EX7)/emfconf clean
 
 igs:
-	$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/igsconf CROSS=$(CROSS_COMPILE)
+	$(MAKE) -C emf$(BCMEX)$(ARMCPUSMP)$(DPI)$(EX7)/igsconf CROSS=$(CROSS_COMPILE)
 
 igs-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
-	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+	$(MAKE) -C emf$(BCMEX)$(ARMCPUSMP)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
 igs-clean:
-	-@$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf clean
+	-@$(MAKE) -C emf$(BCMEX)$(ARMCPUSMP)$(EX7)/igsconf clean
 
 ebtables: kernel_header dummy
 	$(MAKE) -C ebtables CC=$(CC) LD=$(LD) \

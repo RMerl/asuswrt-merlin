@@ -23,16 +23,16 @@ ifeq ($(RTCONFIG_BWDPI),y)
 export DPI := _dpi
 endif
 
-IGSSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}/igs
+IGSSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}$(ARMCPUSMP)/igs
 IGSCSRCDIR := ../../../../../../src-rt-6.x.4708/emf/igs
-EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}${DPI}
+EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}$(ARMCPUSMP)${DPI}
 
 IGS_OBJS := $(IGSCSRCDIR)/igsc.o $(IGSCSRCDIR)/igsc_sdb.o $(IGSSRCDIR)/igs_linux.o \
 	    $(IGSCSRCDIR)/osl_linux.o
 
 # Search for sources under src/router/emf/igs
 ifneq ($(wildcard $(src)/$(IGSSRCDIR)),)
-	EXTRA_CFLAGS += -I$(SRCBASE)/router/emf${BCMEX}/igs -I$(SRCBASE)/router/emf${BCMEX}/emf
+	EXTRA_CFLAGS += -I$(SRCBASE)/router/emf${BCMEX}$(ARMCPUSMP)/igs -I$(SRCBASE)/router/emf${BCMEX}$(ARMCPUSMP)/emf
 	EXTRA_CFLAGS += -I$(SRCBASE)/include/emf/igs -I$(SRCBASE)/include/emf/emf
 	igs-objs := $(IGS_OBJS)
 else
