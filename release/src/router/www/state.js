@@ -172,6 +172,7 @@ function isSupport(_ptn){
 		return (rc_support.search(_ptn) == -1) ? false : true;
 }
 
+var igd2_support = isSupport("igd2");
 var nfsd_support = isSupport("nfsd");
 var wifilogo_support = isSupport("WIFI_LOGO"); 
 var band2g_support = isSupport("2.4G"); 

@@ -176,7 +176,9 @@ int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 
+#ifdef RTCONFIG_IGD2
 extern int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
 
@@ -11011,7 +11013,9 @@ struct ej_handler ej_handlers[] = {
 	{ "get_default_reboot_time", ej_get_default_reboot_time},
 	{ "sysinfo",  ej_show_sysinfo},
 #ifdef RTCONFIG_IPV6
+#ifdef RTCONFIG_IGD2
 	{ "ipv6_pinholes",  ej_ipv6_pinhole_array},
+#endif
 #endif
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
@@ -11081,6 +11085,7 @@ write_ver:
 }
 
 #ifdef RTCONFIG_IPV6
+#ifdef RTCONFIG_IGD2
 int
 ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -11161,6 +11166,7 @@ ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 
 }
+#endif
 #endif
 
 int

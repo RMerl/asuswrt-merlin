@@ -168,6 +168,7 @@ RTCONFIG_WPS=y
 # RTCONFIG_IPERF is not set
 # RTCONFIG_TCPDUMP is not set
 # RTCONFIG_NFS is not set
+# RTCONFIG_IGD2 is not set
 # RTCONFIG_EXT4FS is not set
 # RTCONFIG_DISKTEST is not set
 # RTCONFIG_DMALLOC is not set

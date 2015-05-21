@@ -106,8 +106,8 @@ function display_upnp_options(){
 	$("upnp_range_int").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 	$("upnp_range_ext").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 
-	if ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC3200")) {
-		$("upnp_pinhole").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	if ((igd2_support) && ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC3200"))) {
+			$("upnp_pinhole").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 	} else {
 		$("upnp_pinhole").style.display = "none";
 	}
@@ -873,7 +873,7 @@ function pass_checked(obj){
 									<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="display_upnp_options();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
 									<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="display_upnp_options();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
 								</td>
-							</tr>			
+							</tr>
 							<tr id="upnp_pinhole">
 								<th>Enable UPnP IPv6 pinhole support</th>
 								<td>
