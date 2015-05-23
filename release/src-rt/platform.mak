@@ -109,6 +109,13 @@ define platformKernelConfig
 				cp -f $(SRCBASE)/router/ctf_arm/bcm6_iqos/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
 			fi; \
 		fi; \
+		if [  "$(ARMCPUSMP)" = "up" ]; then \
+			rm -rf  $(SRCBASE)/router/emf_arm; \
+			cp -r  $(SRCBASE)/router/emf_arm_up $(SRCBASE)/router/emf_arm; \
+		else \
+			rm -rf  $(SRCBASE)/router/emf_arm; \
+			cp -r  $(SRCBASE)/router/emf_arm_smp $(SRCBASE)/router/emf_arm; \
+		fi; \
 	fi; \
 	if [ "$(SFPRAM16M)" = "y" ]; then \
 		sed -i "/CONFIG_WL_USE_AP/d" $(1); \
