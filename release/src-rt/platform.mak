@@ -112,9 +112,13 @@ define platformKernelConfig
 		if [  "$(ARMCPUSMP)" = "up" ]; then \
 			rm -rf  $(SRCBASE)/router/emf_arm; \
 			cp -r  $(SRCBASE)/router/emf_arm_up $(SRCBASE)/router/emf_arm; \
+			rm -rf $(SRCBASE)/router/tuxera/broadcom_arm; \
+			cp -r  $(SRCBASE)/router/tuxera/broadcom_arm_up  $(SRCBASE)/router/tuxera/broadcom_arm; \
 		else \
 			rm -rf  $(SRCBASE)/router/emf_arm; \
 			cp -r  $(SRCBASE)/router/emf_arm_smp $(SRCBASE)/router/emf_arm; \
+			rm -rf $(SRCBASE)/router/tuxera/broadcom_arm; \
+			cp -r  $(SRCBASE)/router/tuxera/broadcom_arm_smp  $(SRCBASE)/router/tuxera/broadcom_arm; \
 		fi; \
 	fi; \
 	if [ "$(SFPRAM16M)" = "y" ]; then \
