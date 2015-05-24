@@ -66,7 +66,7 @@ function initial(){
 	if ((extendno == "") || (extendno == "0"))
 		document.getElementById("fwver").innerHTML = buildno;
 	else
-		document.getElementById("fwver").innerHTML = buildno + '_' + extendno.split("-g")[0];
+		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
 
 	update_temperatures();
 	hwaccel_state();
