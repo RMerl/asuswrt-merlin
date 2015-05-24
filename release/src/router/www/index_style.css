@@ -700,7 +700,7 @@ width:122px;
   background: url(images/New_ui/icon_indexes.png);
   background-position: -0px -128px; width: 43px; height: 43px;
 }
-._TrafficAnalyzer_Statistic, ._QoS_EZQoS{
+._TrafficAnalyzer_Statistic, ._QoS_EZQoS, ._Main_TrafficMonitor_realtime{
   background: url(images/New_ui/icon_indexes.png);
   background-position: -0px -172px; width: 43px; height: 43px;
 }
