@@ -2,13 +2,30 @@ Asuswrt-Merlin Changelog
 ========================
 
 378.54 (xx-xxx-2015)
+   IMPORTANT: if you were previously using the AiProtection ad blocker, you
+              will need to manually disable it over SSH after flashing this
+              release, by running the following commands:
+
+                  nvram set wrs_adblock_popup=0
+                  nvram set wrs_adblock_stream=0
+                  nvram commit
+
    - NEW: Merged with Asus GPL 378_5134 (from AC87).
    - NEW: OpenVPN policy rules can now be set to route matching traffic
           through either the tunnel, or to your ISP (allowing you to 
           create exceptions to your tunnelling rules)
+   - NEW: Added OpenVPN server setting to let the OS manage
+          socket buffers (by inserting rcvbuf 0 and sndbuf 0 in
+          the server configuration)
    - CHANGED: Upgraded OpenSSL to 1.0.2a, adding new tls ciphers
               to OpenVPN and the https webui
    - CHANGED: Updated miniupnpd to 1.9.20150430
+   - CHANGED: Reverted kernel backport of the parallel printer support,
+              and reintroduced fix in lprng.  This should hopefully fix
+              the recent printing breakage issues.
+   - CHANGED: Removed AiProtection's ad blocker, as it's too buggy to
+              be usable, breaking numerous mobile applications,
+              and not being configurable in any way.
    - FIXED: Router DNS weren't reverted to their original values
             when shutting down an OpenVPN client with "explicit-
             exit-notify" enabled.  Now we manually clean it up
@@ -19,6 +36,10 @@ Asuswrt-Merlin Changelog
   - FIXED: Some legitimate VPN packets could get dropped due to their
            conntrack state.  Now, only INVALID packets coming from the
            WAN interface are dropped.
+  - FIXED: OpenVPN client would sometime try to connect before the clock had
+           been set by NTP at boot time, preventing it from connecting.
+  - FIXED: AiProtection security check would fail to load when Dual WAN is 
+           enabled
 
 
 378.53 (26-Apr-2015)
