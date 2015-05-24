@@ -61,6 +61,7 @@ void start_vpnclient(int clientNum)
 	int pid;
 	int userauth, useronly;
 	int taskset_ret;
+	int i;
 
 	sprintf(&buffer[0], "start_vpnclient%d", clientNum);
 	if (getpid() != 1) {
@@ -604,6 +605,7 @@ void start_vpnserver(int serverNum)
 	char nv1[32], nv2[32], nv3[32], fpath[128];
 	int valid = 0;
 	int userauth = 0, useronly = 0;
+	int i;
 
 	sprintf(&buffer[0], "start_vpnserver%d", serverNum);
 	if (getpid() != 1) {
