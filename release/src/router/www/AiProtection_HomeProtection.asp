@@ -335,7 +335,7 @@ function check_upnp(){
         else
                 var wan1_upnp_enable = 0;
 
-	if(wan0_unpn_enable == 0 && wan1_unpn_enable == 0){
+	if(wan0_unpn_enable == 0 && wan1_upnp_enable == 0){
 		$('upnp_service').innerHTML = "<#checkbox_Yes#>";
 		$('upnp_service').className = "status_yes";
 	}
