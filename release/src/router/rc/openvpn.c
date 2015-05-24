@@ -68,6 +68,14 @@ void start_vpnclient(int clientNum)
 		return;
 	}
 
+        for ( i = 1; i < 4; i++ ) {
+		if (!nvram_get_int("ntp_ready")) {
+			sleep(i*i);
+		} else {
+			i = 4;
+		}
+        }
+
 	vpnlog(VPN_LOG_INFO,"VPN GUI client backend starting...");
 
 	if ( (pid = pidof(&buffer[6])) >= 0 )
@@ -601,6 +609,14 @@ void start_vpnserver(int serverNum)
 	if (getpid() != 1) {
 		notify_rc(&buffer[0]);
 		return;
+	}
+
+	for ( i = 1; i < 4; i++ ) {
+		if (!nvram_get_int("ntp_ready")) {
+			sleep(i*i);
+		} else {
+			i = 4;
+		}
 	}
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI server backend starting...");
