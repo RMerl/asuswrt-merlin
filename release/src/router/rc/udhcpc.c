@@ -1085,7 +1085,9 @@ skip:
 			bound ? "bound" : "informed",
 			*address ? "address " : "", address, *address ? ", " : "",
 			*prefix ? "prefix " : "", prefix);
+#ifdef RTCONFIG_IGD2
 		notify_rc("restart_upnp");
+#endif
 	}
 
 	return 0;
