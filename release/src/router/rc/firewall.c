@@ -2698,7 +2698,7 @@ TRACE_PT("writing Parental Control\n");
 
 		fprintf(fp_ipv6, "-A OUTPUT -m rt --rt-type 0 -j %s\n", logdrop);
 #ifdef RTCONFIG_IGD2
-		if (upnp_support_igd2() && nvram_match("upnp_enable", "1") && nvram_match("upnp_pinhole_enable", "1")) fprintf(fp_ipv6, "-A FORWARD -j UPNP\n");
+		if (nvram_match("upnp_enable", "1") && nvram_match("upnp_pinhole_enable", "1")) fprintf(fp_ipv6, "-A FORWARD -j UPNP\n");
 #endif
 
 		// IPv6 firewall - allowed traffic
@@ -3727,7 +3727,7 @@ TRACE_PT("writing Parental Control\n");
 		fprintf(fp_ipv6, "-A INPUT -j %s\n", logdrop);
 
 #ifdef RTCONFIG_IGD2
-		if (upnp_support_igd2() && nvram_match("upnp_enable", "1") && nvram_match("upnp_pinhole_enable", "1")) fprintf(fp_ipv6, "-A FORWARD -j UPNP\n");
+		if (nvram_match("upnp_enable", "1") && nvram_match("upnp_pinhole_enable", "1")) fprintf(fp_ipv6, "-A FORWARD -j UPNP\n");
 #endif
 
 		fprintf(fp_ipv6, "-A OUTPUT -m rt --rt-type 0 -j %s\n", logdrop);

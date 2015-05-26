@@ -105,9 +105,8 @@ function initial(){
 function display_upnp_options(){
 	$("upnp_range_int").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 	$("upnp_range_ext").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
-
-	if ((igd2_support) && ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC3200"))) {
-			$("upnp_pinhole").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	if (igd2_support) {
+		$("upnp_pinhole").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
 	} else {
 		$("upnp_pinhole").style.display = "none";
 	}
