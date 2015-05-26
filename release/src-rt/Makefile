@@ -844,7 +844,7 @@ define RouterOptions
 		sed -i "/RTCONFIG_USB\b/d" $(1); \
 		echo "# RTCONFIG_USB is not set" >>$(1); \
 	fi; \
-	if [ "$(IGD2)" = "y" ]; then \
+	if [ "$(UPNPIGD2)" = "y" ]; then \
 		sed -i "/RTCONFIG_IGD2/d" $(1); \
 		echo "RTCONFIG_IGD2=y" >>$(1); \
 	fi; \
