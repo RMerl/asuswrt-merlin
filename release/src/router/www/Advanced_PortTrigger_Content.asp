@@ -329,7 +329,7 @@ function trigger_validate_duplicate(o, v, l, off){
           
 	          <tr>
           		<td width="22%">
-              		<input type="text" maxlength="18" class="input_15_table" name="autofw_desc_x_0" onKeyPress="return is_alphanum(this, event)">
+              		<input type="text" maxlength="18" class="input_15_table" name="autofw_desc_x_0" onKeyPress="return is_alphanum(this, event)" onblur="validator.safeName(this);">
             	</td>
             	<td width="21%">            		
               		<input type="text" maxlength="11" class="input_12_table"  name="autofw_outport_x_0" onKeyPress="return is_portrange(this,event)">

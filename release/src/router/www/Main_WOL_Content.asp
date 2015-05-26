@@ -390,7 +390,7 @@ function applyRule(){
 									  			<!-- client info -->
 																					  		
 				            			<td width="40%">
-				            				<input type="text" class="input_20_table" maxlength="15" name="wollist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);">
+				            				<input type="text" class="input_20_table" maxlength="15" name="wollist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);" onblur="validator.safeName(this);">
 											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 											<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				            			</td>

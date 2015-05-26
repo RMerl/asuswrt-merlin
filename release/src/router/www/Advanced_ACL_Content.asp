@@ -462,7 +462,7 @@ function enable_macMode(){
 									<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
 					              		</td>
 								<td width="50%">
-									<input type="text" class="input_25_table" maxlenght="25" onKeypress="return is_alphanum(this,event);" name="wl_macname_x_0">
+									<input type="text" class="input_25_table" maxlenght="25" onKeypress="return is_alphanum(this,event);" onblur="validator.safeName(this);" name="wl_macname_x_0">
 								</td>
 								<td width="20%">	
 									<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, document.form.wl_macname_x_0, 128);" value="">

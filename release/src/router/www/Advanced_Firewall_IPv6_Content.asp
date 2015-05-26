@@ -449,7 +449,7 @@ function changeBgColor(obj, num){
           		        
           		<tr>
   				<td width="15%">
-  					<input type="text" maxlength="30" class="input_12_table" name="ipv6_fw_desc_x_0" onKeyPress="return is_alphanum(this, event)"/>
+  					<input type="text" maxlength="30" class="input_12_table" name="ipv6_fw_desc_x_0" onKeyPress="return is_alphanum(this, event)" onblur="validator.safeName(this);"/>
   				</td>
 				<td width="24%">
 					<input type="text" maxlength="45" class="input_18_table" name="ipv6_fw_ripaddr_x_0" align="left" style="float:left;" autocomplete="off">
