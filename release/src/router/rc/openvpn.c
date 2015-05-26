@@ -196,6 +196,7 @@ void start_vpnclient(int clientNum)
 	chmod(&buffer[0], S_IRUSR|S_IWUSR);
 	fprintf(fp, "# Automatically generated configuration\n");
 	fprintf(fp, "daemon\n");
+	fprintf(fp, "topology subnet\n");
 	if ( cryptMode == TLS )
 		fprintf(fp, "client\n");
 	fprintf(fp, "dev %s\n", &iface[0]);
