@@ -3124,15 +3124,6 @@ void stop_upnp(void)
 	killall_tk("miniupnpd");
 }
 
-int upnp_support_igd2(void)
-{
-#ifdef RTCONFIG_BCMARM
-	return 1;
-#else
-	return 0;
-#endif
-}
-
 int
 start_ntpc(void)
 {
