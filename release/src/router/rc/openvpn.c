@@ -196,7 +196,6 @@ void start_vpnclient(int clientNum)
 	chmod(&buffer[0], S_IRUSR|S_IWUSR);
 	fprintf(fp, "# Automatically generated configuration\n");
 	fprintf(fp, "daemon\n");
-	fprintf(fp, "topology subnet\n");
 	if ( cryptMode == TLS )
 		fprintf(fp, "client\n");
 	fprintf(fp, "dev %s\n", &iface[0]);
@@ -730,6 +729,7 @@ void start_vpnserver(int serverNum)
 	chmod(&buffer[0], S_IRUSR|S_IWUSR);
 	fprintf(fp, "# Automatically generated configuration\n");
 	fprintf(fp, "daemon\n");
+	fprintf(fp, "topology subnet\n");
 
 	sprintf(&buffer[0], "/etc/openvpn/server%d/client.ovpn", serverNum);
 	fp_client = fopen(&buffer[0], "w");
