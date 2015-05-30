@@ -139,7 +139,7 @@ if [ $script_type == "route-pre-down" ]
 then
 	purge_client_list
 
-	if [ $VPN_FORCE == "1" ]
+	if [ $VPN_FORCE == "1" -a $VPN_REDIR == "2" ]
 	then
 		logger -t "openvpn-routing" "Tunnel down - VPN client access blocked"
 		ip route change prohibit default table $VPN_TBL
