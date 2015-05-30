@@ -143,6 +143,7 @@ else
 	service_state = false;
 
 enforce_ori = "<% nvram_get("vpn_client_enforce"); %>";
+policy_ori = "<% nvram_get("vpn_client_rgw"); %>";
 
 ciphersarray = [
 		["AES-128-CBC"],
@@ -405,7 +406,9 @@ function applyRule(){
 		tmp_value = "";
 	document.form.vpn_client_clientlist.value = tmp_value;
 
-	if (enforce_ori != getRadioValue(document.form.vpn_client_enforce) && (!service_state))
+	if (((enforce_ori != getRadioValue(document.form.vpn_client_enforce)) ||
+	     (policy_ori != document.form.vpn_client_rgw.value)) &&
+	    (!service_state))
 		document.form.action_script.value += "start_vpnrouting"+openvpn_unit;
 
 	document.form.submit();
