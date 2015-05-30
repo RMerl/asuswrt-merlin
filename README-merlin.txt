@@ -684,9 +684,7 @@ ISP's SMTP server):
 
 Another setting exposed when enabling Policy routing is to prevent your 
 routed clients from accessing the Internet if the VPN tunnel goes down.  
-To do so, enable "Block routed clients if tunnel goes down".  Note that 
-this setting only works if your OpenVPN client did establish a tunnel, 
-and that this tunnel went down for some reason.
+To do so, enable "Block routed clients if tunnel goes down".
 
 
 

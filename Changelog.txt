@@ -26,6 +26,10 @@ Asuswrt-Merlin Changelog
    - CHANGED: Removed AiProtection's ad blocker, as it's too buggy to
               be usable, breaking numerous mobile applications,
               and not being configurable in any way.
+   - CHANGED: OpenVPN policy routing rules are now applied at boot 
+              time (when WAN comes up), so clients who are blocked while 
+              a tunnel is down will immediately be blocked until 
+              the tunnel comes up.
    - FIXED: Router DNS weren't reverted to their original values
             when shutting down an OpenVPN client with "explicit-
             exit-notify" enabled.  Now we manually clean it up
@@ -40,6 +44,13 @@ Asuswrt-Merlin Changelog
            been set by NTP at boot time, preventing it from connecting.
   - FIXED: AiProtection security check would fail to load when Dual WAN is 
            enabled
+  - FIXED: Various fields would allow you to enter a single quote character,
+           which could break the webui.  Now these fields re-validate the
+           content after you deactivate the text field.
+  - FIXED: Switching between All Traffic and Policy Mode OpenVPN routing while
+           the option to block traffic when the tunnel goes down wasn't 
+           properly removing those rules, so a tunnel going down in 
+           All Traffic would still block policed clients.
 
 
 378.53 (26-Apr-2015)
