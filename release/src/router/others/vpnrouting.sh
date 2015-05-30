@@ -3,8 +3,6 @@
 PARAM=$*
 
 create_client_list(){
-	WAN_PRIO=1000
-	VPN_PRIO=1200
 	IFS="<"
 
 	for ENTRY in $VPN_IP_LIST
@@ -57,7 +55,7 @@ purge_client_list(){
 	IP_LIST=$(ip rule show | cut -d ":" -f 1)
 	for PRIO in $IP_LIST
 	do
-		if [ $PRIO -ge 1000 -a $PRIO -le 1399 ]
+		if [ $PRIO -ge $START_PRIO -a $PRIO -le $END_PRIO ]
 		then
 			ip rule del prio $PRIO
 			logger -t "openvpn-routing" "Removing rule $PRIO from routing policy"
@@ -91,12 +89,21 @@ then
 	VPN_TBL=111
 	VPN_REDIR=$(nvram get vpn_client1_rgw)
 	VPN_FORCE=$(nvram get vpn_client1_enforce)
+	WAN_PRIO=1000
+	VPN_PRIO=1200
+	START_PRIO=1000
+	END_PRIO=1399
+
 elif [ "$dev" == "tun12" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client2_clientlist)
 	VPN_TBL=112
 	VPN_REDIR=$(nvram get vpn_client2_rgw)
 	VPN_FORCE=$(nvram get vpn_client2_enforce)
+	WAN_PRIO=1400
+	VPN_PRIO=1600
+	START_PRIO=1400
+	END_PRIO=1799
 else
 	run_custom_script
 	exit 0
