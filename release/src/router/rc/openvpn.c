@@ -1515,6 +1515,10 @@ void start_vpn_eas()
 		start_vpnserver(nums[i]);
 	}
 
+	// Setup client routing in case some are set to be blocked when tunnel is down
+	update_vpnrouting(1);
+	update_vpnrouting(2);
+
 	// Parse and start clients
 	strlcpy(&buffer[0], nvram_safe_get("vpn_clientx_eas"), sizeof(buffer));
 	if ( strlen(&buffer[0]) != 0 ) vpnlog(VPN_LOG_INFO, "Starting clients (eas): %s", &buffer[0]);
@@ -1777,7 +1781,7 @@ int check_ovpn_client_enabled(int unit){
 }
 
 void update_vpnrouting(int unit){
-	char tmp[64];
+	char tmp[56];
 	snprintf(tmp, sizeof (tmp), "dev=tun1%d script_type=rmupdate /usr/sbin/vpnrouting.sh", unit);
 	system(tmp);
 }
