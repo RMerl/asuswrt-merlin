@@ -10273,29 +10273,29 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		}
 		else if(strstr(line, "MOUNT_PATH") != NULL){
 			memset(buf, 0, PATH_MAX);
-			substr(dest, line, 11, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX-11);
 			char_to_ascii(buf, dest);
 			strcpy(mounted_path, buf);
 		}
 		else if(strstr(line, "FILENAME") != NULL){
-			substr(dest, line, 9, PATH_MAX);
+			substr(dest, line, 9, PATH_MAX-9);
 			strcpy(target_obj, dest); // support Chinese
 			break;
 		}
 		else if(strstr(line, "ERR_MSG") != NULL){
-			substr(dest, line, 8, PATH_MAX);
+			substr(dest, line, 8, PATH_MAX-8);
 			strcpy(error_msg, dest);
 		}
 		else if(strstr(line, "TOTAL_SPACE") != NULL){
-			substr(dest, line, 12, PATH_MAX);
+			substr(dest, line, 12, PATH_MAX-12);
 			strcpy(full_capa, dest);
 		}
 		else if(strstr(line, "USED_SPACE") != NULL){
-			substr(dest, line, 11, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX-11);
 			strcpy(used_capa, dest);
 		}
 		else if(strstr(line, "CAPTCHA_URL") != NULL){
-			substr(dest, line, 12, PATH_MAX);
+			substr(dest, line, 12, PATH_MAX-12);
 			strcpy(captcha_url, dest);
 		}
 
@@ -10612,29 +10612,29 @@ int ej_UI_rs_status(int eid, webs_t wp, int argc, char **argv){
 			strncpy(status, convert_cloudsync_status(line), 16);
 		}
 		else if(strstr(line, "RULENUM") != NULL){
-			substr(dest, line, 8, PATH_MAX);
+			substr(dest, line, 8, PATH_MAX-8);
 			strcpy(rulenum, dest);
 		}
 		else if(strstr(line, "MOUNT_PATH") != NULL){
 			memset(buf, 0, PATH_MAX);
-			substr(dest, line, 11, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX-11);
 			char_to_ascii(buf, dest);
 			strcpy(mounted_path, buf);
 		}
 		else if(strstr(line, "FILENAME") != NULL){
-			substr(dest, line, 9, PATH_MAX);
+			substr(dest, line, 9, PATH_MAX-9);
 			strcpy(target_obj, dest); // support Chinese
 		}
 		else if(strstr(line, "ERR_MSG") != NULL){
-			substr(dest, line, 8, PATH_MAX);
+			substr(dest, line, 8, PATH_MAX-8);
 			strcpy(error_msg, dest);
 		}
 		else if(strstr(line, "TOTAL_SPACE") != NULL){
-			substr(dest, line, 12, PATH_MAX);
+			substr(dest, line, 12, PATH_MAX-12);
 			strcpy(full_capa, dest);
 		}
 		else if(strstr(line, "USED_SPACE") != NULL){
-			substr(dest, line, 11, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX-11);
 			strcpy(used_capa, dest);
 		}
 
