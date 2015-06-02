@@ -56,20 +56,6 @@ static struct timeval tm_max = {0x7fffffff, 0x7fffffff};
 static void timeval_add __P((struct timeval *, struct timeval *,
 			     struct timeval *));
 
-int gettimeofdaymonotonic(struct timeval *tv)
-{
-	struct timespec ts;
-	int retval = clock_gettime(CLOCK_MONOTONIC, &ts);
-	if (retval == 0) {
-		if (tv) {
-			tv->tv_sec = ts.tv_sec;
-			tv->tv_usec = ts.tv_nsec / 1000;
-		}
-		return retval;
-	}
-	return gettimeofday(tv, NULL);
-}
-
 void
 dhcp6_timer_init()
 {
@@ -121,7 +107,7 @@ dhcp6_set_timer(tm, timer)
 	struct timeval now;
 
 	/* reset the timer */
-	gettimeofdaymonotonic(&now);
+	gettimeofday(&now, NULL);
 
 	timeval_add(&now, tm, &timer->tm);
 
@@ -144,7 +130,7 @@ dhcp6_check_timer()
 	struct timeval now;
 	struct dhcp6_timer *tm, *tm_next;
 
-	gettimeofdaymonotonic(&now);
+	gettimeofday(&now, NULL);
 
 	tm_sentinel = tm_max;
 	for (tm = LIST_FIRST(&timer_head); tm; tm = tm_next) {
@@ -177,7 +163,7 @@ dhcp6_timer_rest(timer)
 	struct timeval now;
 	static struct timeval returnval; /* XXX */
 
-	gettimeofdaymonotonic(&now);
+	gettimeofday(&now, NULL);
 	if (TIMEVAL_LEQ(timer->tm, now)) {
 		dprintf(LOG_DEBUG, FNAME,
 		    "a timer must be expired, but not yet");

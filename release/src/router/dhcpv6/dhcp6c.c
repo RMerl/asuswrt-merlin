@@ -1281,13 +1281,13 @@ client6_send(ev)
 
 	/* elapsed time */
 	if (ev->timeouts == 0) {
-		gettimeofdaymonotonic(&ev->tv_start);
+		gettimeofday(&ev->tv_start, NULL);
 		optinfo.elapsed_time = 0;
 	} else {
 		struct timeval now, tv_diff;
 		long et;
 
-		gettimeofdaymonotonic(&now);
+		gettimeofday(&now, NULL);
 		tv_sub(&now, &ev->tv_start, &tv_diff);
 
 		/*
