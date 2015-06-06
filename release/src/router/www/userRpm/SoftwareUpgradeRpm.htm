@@ -41,7 +41,7 @@
 <script language="JavaScript" type="text/javascript" src="../jquery.js"></script>
 <script>
 
-var $j = jQuery.noConflict();
+
 var webs_state_update = '<% nvram_get("webs_state_update"); %>';
 var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
 var webs_state_error = '<% nvram_get("webs_state_error"); %>';
@@ -52,7 +52,7 @@ var varload = 0;
 function initial(){
 	show_menu();
 	if(live_update_support == -1)
-		$("update").style.display = "none";
+		document.getElementById("update").style.display = "none";
 	else if('<% nvram_get("webs_state_update"); %>' != '')
 		detect_firmware();	
 }
@@ -61,7 +61,7 @@ var exist_firmver="<% nvram_get("firmver"); %>";
 var dead = 0;
 function detect_firmware(){
 
-	$j.ajax({
+	$.ajax({
     		url: '../detect_firmware.asp',
     		dataType: 'script',
 
@@ -70,8 +70,8 @@ function detect_firmware(){
 						if(dead < 30)
     				setTimeout("detect_firmware();", 1000);
 						else{
-      					$('update_scan').style.display="none";
-      					$('update_states').innerHTML="<#connect_failed#>";
+      					document.getElementById('update_scan').style.display="none";
+      					document.getElementById('update_states').innerHTML="<#connect_failed#>";
 						}
     		},
 
@@ -80,8 +80,8 @@ function detect_firmware(){
       					setTimeout("detect_firmware();", 1000);
       			}else{	// got wlan_update.zip
       					if(webs_state_error==1){
-      								$('update_scan').style.display="none";
-      								$('update_states').innerHTML="<#connect_failed#>";
+      								document.getElementById('update_scan').style.display="none";
+      								document.getElementById('update_states').innerHTML="<#connect_failed#>";
       								return;
       					}
       					else{
@@ -99,8 +99,8 @@ function detect_firmware(){
       									 (current_firm < Latest_firm && current_buildno == Latest_buildno) ||
       									 (current_extendno != Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm))
       								{
-      										$('update_scan').style.display="none";
-      										$('update_states').style.display="none";
+      										document.getElementById('update_scan').style.display="none";
+      										document.getElementById('update_states').style.display="none";
       										if(confirm("<#exist_new#>\n\nDo not power off <#Web_Title2#> while upgrade in progress.")){
       												document.start_update.action_mode.value="apply";
       												document.start_update.action_script.value="start_webs_upgrade";
@@ -111,15 +111,15 @@ function detect_firmware(){
       								}else{
       										//var flag = getCookie("after_check");
       										//if(flag==1){
-      							  				$('update_states').innerHTML="<#is_latest#>";
-      												$('update_scan').style.display="none";
+      							  				document.getElementById('update_states').innerHTML="<#is_latest#>";
+      												document.getElementById('update_scan').style.display="none";
       												//setCookie("after_check", 0, 365);
       										//}
       								}
       						}
       						else{		//miss-match model FW
-      								$('update_scan').style.display="none";
-      								$('update_states').innerHTML="<#unavailable_update#>";
+      								document.getElementById('update_scan').style.display="none";
+      								document.getElementById('update_states').innerHTML="<#unavailable_update#>";
       								return;
       						}
 								}
@@ -133,8 +133,8 @@ function detect_update(){
   document.start_update.action_mode.value="apply";
   document.start_update.action_script.value="start_webs_update";
   //document.start_update.action_wait.value="60";
-  $('update_states').innerHTML="<#check_proceeding#>";
-  $('update_scan').style.display="";
+  document.getElementById('update_states').innerHTML="<#check_proceeding#>";
+  document.getElementById('update_scan').style.display="";
 	document.start_update.submit();
 }
 
@@ -181,7 +181,7 @@ return getCookie("after_check");
 var dead = 0;
 function detect_httpd(){
 
-	$j.ajax({
+	$.ajax({
     		url: '../httpd_check.xml',
     		dataType: 'xml',
 				timeout: 1500,
@@ -190,10 +190,10 @@ function detect_httpd(){
     				if(dead < 6)
     						setTimeout("detect_httpd();", 1000);
     				else{
-    						$('loading_block1').style.display = "none";
-    						$('loading_block2').style.display = "none";
-    						$('loading_block3').style.display = "";
-    						$('loading_block3').innerHTML = "<div><#Firm_reboot_manually#></div>";
+    						document.getElementById('loading_block1').style.display = "none";
+    						document.getElementById('loading_block2').style.display = "none";
+    						document.getElementById('loading_block3').style.display = "";
+    						document.getElementById('loading_block3').innerHTML = "<div><#Firm_reboot_manually#></div>";
     				}
     		},
 
@@ -206,7 +206,7 @@ function detect_httpd(){
 
 var rebooting = 0;
 function isDownloading(){
-	$j.ajax({
+	$.ajax({
     		url: '../detect_firmware.asp',
     		dataType: 'script',
 				timeout: 1500,
@@ -217,7 +217,7 @@ function isDownloading(){
 							setTimeout("isDownloading();", 1000);
 					}
 					else{							
-							$("drword").innerHTML = "<#connect_failed#>";
+							document.getElementById("drword").innerHTML = "<#connect_failed#>";
 							return false;
 					}
 						
@@ -229,19 +229,19 @@ function isDownloading(){
 					else{ 	// webs_upgrade.sh is done
 						
 						if(webs_state_error == 1){
-								$("drword").innerHTML = "<#connect_failed#>";
+								document.getElementById("drword").innerHTML = "<#connect_failed#>";
 								return false;
 						}
 						else if(webs_state_error == 2){
-								$("drword").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>"; //Untranslated.fw_size_higher_mem
+								document.getElementById("drword").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>"; //Untranslated.fw_size_higher_mem
 								return false;						
 						}
 						else if(webs_state_error == 3){
-								$("drword").innerHTML = "<#FIRM_fail_desc#><br><#FW_desc1#>";
+								document.getElementById("drword").innerHTML = "<#FIRM_fail_desc#><br><#FW_desc1#>";
 								return false;												
 						}
 						else{		// start upgrading
-								$("hiddenMask").style.visibility = "hidden";
+								document.getElementById("hiddenMask").style.visibility = "hidden";
 								showLoadingBar(270);
 								setTimeout("detect_httpd();", 272000);
 								return false;
@@ -255,7 +255,7 @@ function isDownloading(){
 function startDownloading(){
 	disableCheckChangedStatus();			
 	dr_advise();
-	$("drword").innerHTML = "&nbsp;&nbsp;&nbsp;<#fw_downloading#>...";
+	document.getElementById("drword").innerHTML = "&nbsp;&nbsp;&nbsp;<#fw_downloading#>...";
 	isDownloading();
 }
 
@@ -369,17 +369,17 @@ function submitForm(){
 {ADSL firmware version}
 			<tr>
 				<th><#adsl_fw_ver_itemname#></th>
-				<td><input type="text" class="input_15_table" value="<% nvram_dump("adsl/tc_fw_ver_short.txt",""); %>" readonly="1"></td>
+				<td><input type="text" class="input_15_table" value="<% nvram_dump("adsl/tc_fw_ver_short.txt",""); %>" readonly="1" autocorrect="off" autocapitalize="off"></td>
 			</tr>
 			<tr>
 				<th>RAS</th>
-				<td><input type="text" class="input_20_table" value="<% nvram_dump("adsl/tc_ras_ver.txt",""); %>" readonly="1"></td>
+				<td><input type="text" class="input_20_table" value="<% nvram_dump("adsl/tc_ras_ver.txt",""); %>" readonly="1" autocorrect="off" autocapitalize="off"></td>
 			</tr>
 -->
 <!--###HTML_PREP_END###-->
 			<tr>
 				<th><#FW_item2#></th>
-				<td><input type="text" name="firmver_table" class="input_20_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1"><!--/td-->
+				<td><input type="text" name="firmver_table" class="input_20_table" value="<% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>" readonly="1" autocorrect="off" autocapitalize="off"><!--/td-->
 						<input type="button" id="update" name="update" class="button_gen" onclick="detect_update();" value="<#liveupdate#>" />
 						<div id="check_states">
 								<span id="update_states"></span>

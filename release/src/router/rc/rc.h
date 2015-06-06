@@ -248,7 +248,7 @@ extern int ResetDefault(void);
 extern int getBootVer(void);
 extern int getMAC_2G(void);
 extern int getMAC_5G(void);
-extern int GetPhyStatus(void);
+extern int GetPhyStatus(int verbose);
 extern int Get_ChannelList_2G(void);
 extern int Get_ChannelList_5G(void);
 extern void Get_fail_ret(void);
@@ -265,6 +265,7 @@ static inline void platform_start_ate_mode(void) { };
 static inline int setWlOffLed(void) { return 0; }
 #elif defined(RTCONFIG_QCA)
 extern void platform_start_ate_mode(void);
+extern void set_uuid(void);
 static inline int setWlOffLed(void) { return 0; }
 #elif defined(CONFIG_BCMWL5)
 static inline void platform_start_ate_mode(void) { };
@@ -418,8 +419,8 @@ extern void stop_lan_wlport(void);
 extern int wl_dev_exist(void);
 #if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
 extern pid_t pid_from_file(char *pidfile);
-extern int delay_main(int argc, char *argv[]);
 #endif
+extern int delay_main(int argc, char *argv[]);
 #ifdef RTCONFIG_IPV6
 extern void set_default_accept_ra(int flag);
 extern void set_intf_ipv6_accept_ra(const char *ifname, int flag);
@@ -579,6 +580,9 @@ extern void erase_nvram(void);
 extern int init_toggle(void);
 extern void btn_check(void);
 extern int watchdog_main(int argc, char *argv[]);
+extern int watchdog02_main(int argc, char *argv[]);
+extern void init_wllc(void);
+extern void rssi_check_unit(int unit);
 
 // usbled.c
 extern int usbled_main(int argc, char *argv[]);
@@ -604,7 +608,7 @@ extern int ntp_main(int argc, char *argv[]);
 
 // btnsetup.c
 extern int ots_main(int argc, char *argv[]);
-extern int stop_ots(void);
+extern void stop_ots(void);
 extern int start_ots(void);
 
 // common.c
@@ -643,7 +647,6 @@ extern void setup_pt_conntrack(void);
 extern void remove_conntrack(void);
 extern int pppstatus(void);
 extern void time_zone_x_mapping(void);
-extern char *get_parsed_crt(const char *name, char *buf);
 extern void stop_if_misc(void);
 extern int mssid_mac_validate(const char *macaddr);
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -675,6 +678,10 @@ extern int start_usbled(void);
 extern int stop_usbled(void);
 extern void restart_nas_services(int stop, int start);
 extern void stop_nas_services(int force);
+#endif
+#ifdef RTCONFIG_CROND
+extern void start_cron(void);
+extern void stop_cron(void);
 #endif
 extern void start_webdav(void);
 #ifdef RTCONFIG_USB_PRINTER
@@ -846,6 +853,10 @@ extern int ipv6_getconf(const char *ifname, const char *name);
 #endif
 extern int wps_band_radio_off(int wps_band);
 #ifdef CONFIG_BCMWL5
+extern int start_eapd(void);
+extern void stop_eapd(void);
+extern int start_nas(void);
+extern void stop_nas(void);
 extern void set_acs_ifnames();
 #endif
 void start_cstats(int new);
@@ -901,6 +912,14 @@ int site_survey_for_channel(int n, const char *wif, int *HT_EXT);
 #endif
 #endif	/* RTCONFIG_WIRELESSREPEATER */
 
+#ifdef RTCONFIG_PARENTALCTRL
+extern void stop_pc_block(void);
+extern void start_pc_block(void);
+#endif
+#ifdef RTCONFIG_HTTPS
+extern int check_rsasign(char *fname);
+#endif
+
 //wireless.c
 extern int wlcscan_main(void);
 extern void repeater_pap_disable(void);
@@ -919,15 +938,16 @@ extern int rsasign_sig_check_main(int argc, char *argv[]);
 #endif
 
 // hour_monitor.c
-#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
 extern int hour_monitor_main(int argc, char **argv);
 extern int hour_monitor_function_check();
-#endif
+extern void check_hour_monitor_service();
+extern void hm_traffic_analyzer_save();
+extern void hm_traffic_control_save();
 
 #ifdef RT4GAC55U
 extern int lteled_main(int argc, char **argv);
 extern int start_lteled(void);
-extern int stop_lteled(void);
+extern void stop_lteled(void);
 #endif
 #ifdef RTCONFIG_TOR
 extern void start_Tor_proxy(void);
@@ -946,6 +966,12 @@ extern int monitor_main(int argc, char *argv[]);
 extern int start_tr(void);
 extern void stop_tr(void);
 extern int dhcpc_lease_main(int argc, char *argv[]);
+#endif
+
+#if defined(RTCONFIG_USER_LOW_RSSI) && defined(RTCONFIG_BCMARM)
+extern void stop_roamast(void);
+extern void start_roamast(void);
+extern int roam_assistant_main(int argc, char *argv[]);
 #endif
 
 #ifdef BTN_SETUP
@@ -968,7 +994,7 @@ extern int start_syslogd(void);
 extern int start_klogd(void);
 extern int start_logger(void);
 extern void handle_notifications(void);
-extern int stop_watchdog(void);
+extern void stop_watchdog(void);
 extern int start_watchdog(void);
 extern int get_apps_name(const char *string);
 extern int run_app_script(const char *pkg_name, const char *pkg_action);
@@ -982,6 +1008,7 @@ extern int run_sshd(void);
 extern void start_hotplug2(void);
 extern void stop_services(void);
 extern void stop_logger(void);
+extern void setup_passwd(void);
 extern void create_passwd(void);
 extern int start_services(void);
 extern void check_services(void);
@@ -1002,10 +1029,12 @@ extern int start_ddns(void);
 extern void refresh_ntpc(void);
 extern void start_hotplug2(void);
 extern void stop_hotplug2(void);
-extern int stop_lltd(void);
+extern void stop_lltd(void);
+extern void stop_httpd(void);
 extern void stop_rstats(void);
 extern void stop_autodet(void);
 extern void start_autodet(void);
+extern int wps_band_ssid_broadcast_off(int wps_band);
 extern void start_httpd(void);
 extern int wl_wpsPincheck(char *pin_string);
 extern int start_wps_pbc(int unit);

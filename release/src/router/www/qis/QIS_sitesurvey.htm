@@ -517,13 +517,13 @@ var retValHandler = {
 				}
 				else if(isIPChanged){
 					if(wlc_state == 2 && wlc_state_auth == 1){ // auth failure
-						parent.$('drword').innerHTML = "<#APSurvey_action_ConnectingStatus1#>";
-						parent.$('drword').innerHTML += "<input type=\"button\" class=\"button_gen_scan\" width=\"72\" onclick=\"javascript:location.href=\'" + retValHandler.dutIP + "/QIS_wizard.htm?flag=sitesurvey_mb\';\" value=\"Rescan\">";
+						parent.document.getElementById('drword').innerHTML = "<#APSurvey_action_ConnectingStatus1#>";
+						parent.document.getElementById('drword').innerHTML += "<input type=\"button\" class=\"button_gen_scan\" width=\"72\" onclick=\"javascript:location.href=\'" + retValHandler.dutIP + "/QIS_wizard.htm?flag=sitesurvey_mb\';\" value=\"Rescan\">";
 						parent.dr_advise();
 					}
 					else if(wlc_state == 0 && wlc_state_auth == 0){ // P-AP is gone
-						parent.$('drword').innerHTML = "<#APSurvey_action_ConnectingStatus0#>";
-						parent.$('drword').innerHTML += "<input type=\"button\" class=\"button_gen_scan\" width=\"72\" onclick=\"javascript:location.href=\'" + retValHandler.dutIP + "/QIS_wizard.htm?flag=sitesurvey_mb\';\" value=\"Rescan\">";
+						parent.document.getElementById('drword').innerHTML = "<#APSurvey_action_ConnectingStatus0#>";
+						parent.document.getElementById('drword').innerHTML += "<input type=\"button\" class=\"button_gen_scan\" width=\"72\" onclick=\"javascript:location.href=\'" + retValHandler.dutIP + "/QIS_wizard.htm?flag=sitesurvey_mb\';\" value=\"Rescan\">";
 						parent.dr_advise();
 					}
 					else{ // can't figure out what's wrong
@@ -540,14 +540,13 @@ var retValHandler = {
 	},
 
 	"isConnected" : function(retVal){
-		if(parent.isRepeater && '<% nvram_get("sw_mode"); %>' != 2 || !parent.isRepeater && '<% nvram_get("wlc_psta"); %>' != 1){
+		if(parent.sw_mode == "1" || parent.sw_mode == "3")
 			return false;
 
 		if(retVal == 2)	
 			return true;
 		else
 			return false;
-		}
 	}
 }
 
@@ -593,7 +592,7 @@ var bindEvent = {
 			var connectedHint = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connected#></span></td>';
 			var unEncrypt = '<td style="border:0px;"><span style="color:#FFCC00;"><#APSurvey_msg_connect_open_wlan#></span></td>';
 			var unSupport = '<td style="border:0px;"><span style="color:#FFCC00;">Non supported Authentication Method.</span></td>';
-			var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" id="thekey_tmp" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;" autocapitalization="off" autocomplete="off"><input type="checkbox" onclick="pass_checked(this, document.getElementById(\'thekey_tmp\'));"><span style="color:#FFF"><#QIS_show_pass#></span></td>';
+			var networkKey = '<td style="border:0px;"><span style="color:#FFFFFF;"><#Network_key#>:</span><input type="password" id="thekey_tmp" class="input_25_table" style="padding-left:3px;margin-left:5px;width:200px;" autocomplete="off" autocorrect="off" autocapitalize="off"><input type="checkbox" onclick="pass_checked(this, document.getElementById(\'thekey_tmp\'));"><span style="color:#FFF"><#QIS_show_pass#></span></td>';
 			var connectBtn = '<td style="border:0px;text-align:right"><input style="margin-left:10px;" id="connect_btn" type="button" value="<#CTL_Add_enrollee#>" onclick="btnAction.saveWlcVar('+ bindEvent.idx +', false)" class="button_gen"></td></tr>';
 			var wep_auth = "<tr><td style=\"border:0px;\"><span style=\"margin-left:5px;color:#FFFFFF;\"><#WLANConfig11b_AuthenticationMethod_itemname#></span><select id=\"thekey_wep_method_tmp\" class=\"input_option\" style=\"margin-left:5px;\"><option value=\"open\" selected>open</option><option value=\"shared\">shared</option></select>";
 			var wepkeyIndex = '<span style="margin-left:5px;color:#FFFFFF;"><#WLANConfig11b_WEPDefaultKey_itemname#></span><select id="thekey_index_tmp" class="input_option" style="margin-left:5px;"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td></tr>';
@@ -1042,7 +1041,7 @@ function QKInternet_load_body(){
 		  <tr>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#WLANConfig11b_SSID_itemname#></a></th>
 				<td>
-					<input type="text" maxlength="32" class="input_32_table" id="wlc_ssid_manual" value="" onkeypress="return validator_key.isString(this, event);">
+					<input type="text" maxlength="32" class="input_32_table" id="wlc_ssid_manual" value="" onkeypress="return validator_key.isString(this, event);" autocorrect="off" autocapitalize="off">
 				</td>
 		  </tr>
 
@@ -1094,7 +1093,7 @@ function QKInternet_load_body(){
 	  	<tr>
 				<th><#Network_key#></th>
 				<td>
-					<input type="password" id="thekey_manual" name="thekey_manual" class="input_32_table" style="height:25px;" autocapitalization="off" autocomplete="off">
+					<input type="password" id="thekey_manual" name="thekey_manual" class="input_32_table" style="height:25px;" autocomplete="off" autocorrect="off" autocapitalize="off">
 				</td>
 	  	</tr>
 
@@ -1117,13 +1116,13 @@ function QKInternet_load_body(){
 			<tr>
 				<th width="25%"><#QIS_finish_wireless_item1#></th>
 				<td>
-					<input type="text" id="wl_ssid" onkeypress="return validator_key.isString(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="">
+					<input type="text" id="wl_ssid" onkeypress="return validator_key.isString(this, event);" style="height:25px;" class="input_32_table" maxlength="32" value="" autocorrect="off" autocapitalize="off">
 				</td>
 	  	</tr>
 			<tr>
 				<th width="25%"><#Network_key#></th>
 				<td>
-					<input id="wl_wpa_psk" type="password" value="" style="height:25px;" class="input_32_table" maxlength="65" autocapitalization="off" autocomplete="off">
+					<input id="wl_wpa_psk" type="password" value="" style="height:25px;" class="input_32_table" maxlength="65" autocomplete="off" autocorrect="off" autocapitalize="off">
 				</td>
 	  	</tr>
 		<tr>

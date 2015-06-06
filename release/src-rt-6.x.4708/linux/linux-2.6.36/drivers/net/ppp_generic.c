@@ -57,6 +57,9 @@
 #ifdef HNDCTF
 #define TYPEDEF_INT32
 #include <ctf/hndctf.h>
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+#include <linux/if_pppox.h>
+#endif
 #endif
 
 #define PPP_VERSION	"2.4.2"
@@ -97,6 +100,10 @@ struct ppp_file {
 
 #define PF_TO_PPP(pf)		PF_TO_X(pf, struct ppp)
 #define PF_TO_CHANNEL(pf)	PF_TO_X(pf, struct channel)
+
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+typedef struct channel channel_t;
+#endif
 
 /*
  * Data structure describing one ppp unit.
@@ -141,6 +148,9 @@ struct ppp {
 	unsigned pass_len, active_len;
 #endif /* CONFIG_PPP_FILTER */
 	struct net	*ppp_net;	/* the net we belong to */
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+	channel_t		*ctfpch;
+#endif
 };
 
 /*
@@ -2795,6 +2805,9 @@ ppp_connect_channel(struct channel *pch, int unit)
 	list_add_tail(&pch->clist, &ppp->channels);
 	++ppp->n_channels;
 	pch->ppp = ppp;
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+	ppp->ctfpch = pch;
+#endif
 	atomic_inc(&ppp->file.refcnt);
 	ppp_unlock(ppp);
 	ret = 0;
@@ -2920,7 +2933,7 @@ static void *unit_find(struct idr *p, int n)
 	return idr_find(p, n);
 }
 
-#ifdef CTF_PPPOE
+#if defined(CTF_PPPOE) || defined(CTF_PPTP) || defined(CTF_L2TP)
 void
 ppp_rxstats_upd(void *pppif, struct sk_buff *skb)
 {
@@ -2942,6 +2955,85 @@ ppp_txstats_upd(void *pppif, struct sk_buff *skb)
 	ppp->dev->stats.tx_bytes += skb->len;
 	ppp->last_xmit = jiffies;
 }
+
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+int
+ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp){
+	struct pppox_sock *po = NULL;
+	struct sock *sk = NULL;
+	struct ppp *ppp = NULL;
+	struct channel *pch = NULL;
+	struct ppp_net *pn;
+	const char *vars;
+
+	ppp = (struct ppp *)netdev_priv((const struct net_device *)pppif);
+	if(ppp) pch = ppp->ctfpch;
+
+	if (pch == NULL){
+		printk("pch ==NULL/n");
+		return (BCME_ERROR);
+	}
+
+	po = pppox_sk((struct sock *)pch->chan->private);
+
+	if (po == NULL){
+		return (BCME_ERROR);
+	}
+	ctfppp->psk.po = po;
+
+	sk = po->chan.private;
+	if(sk){
+		ctfppp->psk.pppox_protocol = sk->sk_protocol;
+		switch (sk->sk_protocol){
+		case PX_PROTO_OE:
+			ctfppp->pppox_id = po->pppoe_pa.sid;
+			memcpy(ctfppp->psk.dhost.octet , po->pppoe_pa.remote, ETH_ALEN);
+
+#ifdef DEBUG
+		printk("%s: Adding pppoe connection:  session ID =%04x, Address=%02x:%02x:%02x:%02x:%02x:%02x\n",
+			__FUNCTION__,ntohs(ctfppp->pppox_id),
+				ctfppp->psk.dhost.octet[0], ctfppp->psk.dhost.octet[1],
+				ctfppp->psk.dhost.octet[2], ctfppp->psk.dhost.octet[3],
+				ctfppp->psk.dhost.octet[4], ctfppp->psk.dhost.octet[5]);
+#endif /*DEBUG*/
+			break;
+#ifdef CTF_PPTP
+		case PX_PROTO_PPTP:
+			ctfppp->pppox_id = 0xffff;
+#ifdef DEBUG
+
+		printk("%s: Adding pptp entry:  src call ID =%04x, src ip=%u.%u.%u.%u, dst call ID=%4x, dst ip=%u.%u.%u.%u\n ",
+			__FUNCTION__,po->proto.pptp.dst_addr.call_id,	NIPQUAD(po->proto.pptp.src_addr.sin_addr.s_addr),
+			po->proto.pptp.dst_addr.call_id,NIPQUAD(po->proto.pptp.dst_addr.sin_addr.s_addr));
+#endif
+			break;
+#endif /*CTF_PPTP*/
+#ifdef CTF_L2TP
+		case PX_PROTO_OL2TP:
+			ctfppp->pppox_id = 0xffff;
+#ifdef DEBUG
+		printk("%s: Adding l2tp entry:\n", __FUNCTION__);
+		printk("local tunnel ID =0x%04x,session ID =0x%04x, src ip=%u.%u.%u.%u\n",
+			po->proto.l2tp.ts.tunnel_id, po->proto.l2tp.ts.session_id,NIPQUAD(po->proto.l2tp.inet.saddr));
+		printk("peer  tunnel ID=0x%4x, session ID = 0x%04x, dst ip=%u.%u.%u.%u\n ",
+			po->proto.l2tp.ts.peer_tunnel_id, po->proto.l2tp.ts.peer_session_id,NIPQUAD(po->proto.l2tp.inet.daddr));
+		printk("header len =%d\n", po->proto.l2tp.ts.l2tph_len);
+
+#endif
+			break;
+#endif /* CTF_L2TP*/
+
+		default:
+			return (BCME_ERROR);
+		}
+	}
+	else{
+		return (BCME_ERROR);
+	}
+	return (BCME_OK);
+}
+EXPORT_SYMBOL(ppp_get_conn_pkt_info);
+#endif
 
 EXPORT_SYMBOL(ppp_rxstats_upd);
 EXPORT_SYMBOL(ppp_txstats_upd);

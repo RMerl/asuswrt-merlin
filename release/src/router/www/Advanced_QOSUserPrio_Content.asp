@@ -22,10 +22,10 @@ var qos_irates = '<% nvram_get("qos_irates"); %>';
 function initial(){
 	show_menu();
 	if(bwdpi_support){
-		$('content_title').innerHTML = "<#Adaptive_QoS#> - <#EzQoS_type_traditional#>";
+		document.getElementById('content_title').innerHTML = "<#Adaptive_QoS#> - <#EzQoS_type_traditional#>";
 	}
 	else{
-		$('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";
+		document.getElementById('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";
 	}
 	
 	init_changeScale("qos_obw");
@@ -33,35 +33,35 @@ function initial(){
 	//load_QoS_rule();		
 	
 	if('<% nvram_get("qos_enable"); %>' == "1")
-		$('is_qos_enable_desc').style.display = "none";	
+		document.getElementById('is_qos_enable_desc').style.display = "none";	
 }
 
 function init_changeScale(_obj_String){
-	if($(_obj_String).value > 999){
-		$(_obj_String+"_scale").value = "Mb/s";
-		$(_obj_String).value = Math.round(($(_obj_String).value/1024)*100)/100;
+	if(document.getElementById(_obj_String).value > 999){
+		document.getElementById(_obj_String+"_scale").value = "Mb/s";
+		document.getElementById(_obj_String).value = Math.round((document.getElementById(_obj_String).value/1024)*100)/100;
 	}
 
 	gen_options();
 }
 
 function changeScale(_obj_String){
-	if($(_obj_String+"_scale").value == "Mb/s")
-		$(_obj_String).value = Math.round(($(_obj_String).value/1024)*100)/100;
+	if(document.getElementById(_obj_String+"_scale").value == "Mb/s")
+		document.getElementById(_obj_String).value = Math.round((document.getElementById(_obj_String).value/1024)*100)/100;
 	else
-		$(_obj_String).value = Math.round($(_obj_String).value*1024);
+		document.getElementById(_obj_String).value = Math.round(document.getElementById(_obj_String).value*1024);
 		
 	gen_options();
 }
 
 function applyRule(){
 	if(save_options() != false){
-		if($("qos_obw_scale").value == "Mb/s"){
+		if(document.getElementById("qos_obw_scale").value == "Mb/s"){
 			//document.form.qos_obw.value = Math.round(document.form.qos_obw.value*1024);
 			document.form.qos_obw.value = document.form.qos_obw_orig.value;
 		}	
 
-		if($("qos_ibw_scale").value == "Mb/s"){
+		if(document.getElementById("qos_ibw_scale").value == "Mb/s"){
 			//document.form.qos_ibw.value = Math.round(document.form.qos_ibw.value*1024);
 			document.form.qos_ibw.value = document.form.qos_ibw_orig.value;
 		}
@@ -149,7 +149,7 @@ function conv_to_transf(){
 }
 
 function gen_options(){
-	if($("upload_bw_min_0").innerHTML == ""){
+	if(document.getElementById("upload_bw_min_0").innerHTML == ""){
 		var qos_orates_row = qos_orates.split(',');
 		var qos_irates_row = qos_irates.split(',');
 		for(var j=0; j<5; j++){
@@ -166,8 +166,8 @@ function gen_options(){
 			}
 			var upload_bw_desc = eval('document.getElementById("upload_bw_'+j+'_desc")');
 			var download_bw_desc = eval('document.getElementById("download_bw_'+j+'_desc")');	
-			//upload_bw_desc.innerHTML = Math.round(upload_bw_min.value*document.form.qos_obw.value)/100 + " ~ " + Math.round(upload_bw_max.value*document.form.qos_obw.value)/100 + " " + $("qos_obw_scale").value;
-			//download_bw_desc.innerHTML = "0 ~ " + Math.round(download_bw_max.value*document.form.qos_ibw.value)/100 + " " + $("qos_ibw_scale").value;
+			//upload_bw_desc.innerHTML = Math.round(upload_bw_min.value*document.form.qos_obw.value)/100 + " ~ " + Math.round(upload_bw_max.value*document.form.qos_obw.value)/100 + " " + document.getElementById("qos_obw_scale").value;
+			//download_bw_desc.innerHTML = "0 ~ " + Math.round(download_bw_max.value*document.form.qos_ibw.value)/100 + " " + document.getElementById("qos_ibw_scale").value;
 		}
 	}
 	else{
@@ -177,8 +177,8 @@ function gen_options(){
 			var download_bw_max = eval("document.form.download_bw_max_"+j);
 			var upload_bw_desc = eval('document.getElementById("upload_bw_'+j+'_desc")');
 			var download_bw_desc = eval('document.getElementById("download_bw_'+j+'_desc")');	
-			upload_bw_desc.innerHTML = Math.round(upload_bw_min.value*document.form.qos_obw_orig.value)/100 + " ~ " + Math.round(upload_bw_max.value*document.form.qos_obw_orig.value)/100 + " " + $("qos_obw_scale").value;
-			download_bw_desc.innerHTML = "0 ~ " + Math.round(download_bw_max.value*document.form.qos_ibw_orig.value)/100 + " " + $("qos_ibw_scale").value;
+			upload_bw_desc.innerHTML = Math.round(upload_bw_min.value*document.form.qos_obw_orig.value)/100 + " ~ " + Math.round(upload_bw_max.value*document.form.qos_obw_orig.value)/100 + " " + document.getElementById("qos_obw_scale").value;
+			download_bw_desc.innerHTML = "0 ~ " + Math.round(download_bw_max.value*document.form.qos_ibw_orig.value)/100 + " " + document.getElementById("qos_ibw_scale").value;
 		}
 	}
 }
@@ -504,7 +504,7 @@ function switchPage(page){
 							<tr>
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#upload_bandwidth#></a></th>
 								<td>
-									<input type="text" maxlength="10" id="qos_obw" name="qos_obw" onKeyPress="return validator.isNumber(this,event);" class="input_15_table" value="<% nvram_get("qos_obw"); %>" onblur="gen_options();">
+									<input type="text" maxlength="10" id="qos_obw" name="qos_obw" onKeyPress="return validator.isNumber(this,event);" class="input_15_table" value="<% nvram_get("qos_obw"); %>" onblur="gen_options();" autocorrect="off" autocapitalize="off">
 									<select id="qos_obw_scale" class="input_option" style="width:87px;" onChange="changeScale('qos_obw');">
 										<option value="Kb/s">Kb/s</option>
 										<option value="Mb/s">Mb/s</option>
@@ -515,7 +515,7 @@ function switchPage(page){
 							<tr>
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#download_bandwidth#></a></th>
 								<td>
-									<input type="text" maxlength="10" id="qos_ibw" name="qos_ibw" onKeyPress="return validator.isNumber(this,event);" class="input_15_table" value="<% nvram_get("qos_ibw"); %>" onblur="gen_options();">
+									<input type="text" maxlength="10" id="qos_ibw" name="qos_ibw" onKeyPress="return validator.isNumber(this,event);" class="input_15_table" value="<% nvram_get("qos_ibw"); %>" onblur="gen_options();" autocorrect="off" autocapitalize="off">
 									<select id="qos_ibw_scale" class="input_option" style="width:87px;" onChange="changeScale('qos_ibw');">
 										<option value="Kb/s">Kb/s</option>
 										<option value="Mb/s">Mb/s</option>

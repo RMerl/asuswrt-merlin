@@ -171,11 +171,11 @@ function popupWindow(w,u){
 	
 	winW_H();
 	
-	$(w).style.width = winW+"px";
-	$(w).style.height = winH+"px";
-	$(w).style.visibility = "visible";
+	document.getElementById(w).style.width = winW+"px";
+	document.getElementById(w).style.height = winH+"px";
+	document.getElementById(w).style.visibility = "visible";
 	
-	$('popupframe').src = u;
+	document.getElementById('popupframe').src = u;
 }
 
 function hidePop(flag){
@@ -186,7 +186,7 @@ function hidePop(flag){
 		document.getElementById("popupframe").src = "";
 	}, 100);
 
-	$('OverlayMask').style.visibility = "hidden";
+	document.getElementById('OverlayMask').style.visibility = "hidden";
 }
 
 function GetFolderItem(selectedObj, haveSubTree){
@@ -248,34 +248,34 @@ function showClickedObj(clickedObj){
 function GetTree(layer_order, v){
 	if(layer_order == "0"){
 		this.FromObject = layer_order;
-		$('d'+layer_order).innerHTML = '<span class="FdWait">. . . . . . . . . .</span>';
+		document.getElementById('d'+layer_order).innerHTML = '<span class="FdWait">. . . . . . . . . .</span>';
 		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
 		
 		return;
 	}
 	
-	if($('a'+layer_order).className == "FdRead"){
-		$('a'+layer_order).className = "FdOpen";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
+	if(document.getElementById('a'+layer_order).className == "FdRead"){
+		document.getElementById('a'+layer_order).className = "FdOpen";
+		document.getElementById('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
 		
 		this.FromObject = layer_order;
 		
-		$('e'+layer_order).innerHTML = '<img src="/images/Tree/folder_wait.gif">';
+		document.getElementById('e'+layer_order).innerHTML = '<img src="/images/Tree/folder_wait.gif">';
 		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
 	}
-	else if($('a'+layer_order).className == "FdOpen"){
-		$('a'+layer_order).className = "FdClose";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";
+	else if(document.getElementById('a'+layer_order).className == "FdOpen"){
+		document.getElementById('a'+layer_order).className = "FdClose";
+		document.getElementById('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";
 		
-		$('e'+layer_order).style.position = "absolute";
-		$('e'+layer_order).style.visibility = "hidden";
+		document.getElementById('e'+layer_order).style.position = "absolute";
+		document.getElementById('e'+layer_order).style.visibility = "hidden";
 	}
-	else if($('a'+layer_order).className == "FdClose"){
-		$('a'+layer_order).className = "FdOpen";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
+	else if(document.getElementById('a'+layer_order).className == "FdClose"){
+		document.getElementById('a'+layer_order).className = "FdOpen";
+		document.getElementById('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
 		
-		$('e'+layer_order).style.position = "";
-		$('e'+layer_order).style.visibility = "";
+		document.getElementById('e'+layer_order).style.position = "";
+		document.getElementById('e'+layer_order).style.visibility = "";
 	}
 	else
 		alert("Error when show the folder-tree!");
@@ -287,8 +287,8 @@ function get_layer_items(new_layer_order, motion){
 	else
 		document.aidiskForm.action = "/aidisk/getsharearray.asp";
 	
-	$("motion").value = motion;
-	$("layer_order").value = new_layer_order;
+	document.getElementById("motion").value = motion;
+	document.getElementById("layer_order").value = new_layer_order;
 	document.aidiskForm.submit();
 }
 
@@ -383,14 +383,14 @@ function BuildTree(){
 '<tr>\n'+
 	// the line in the front.
 	'<td class="vert_line">\n'+ 
-		'<img id="a'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' class="FdRead" src="/images/Tree/vert_line_'+isSubTree+'0.gif">\n'+
+		'<img id="a'+ItemBarCode+'" onclick=\'document.getElementById("d'+ItemBarCode+'").onclick();\' class="FdRead" src="/images/Tree/vert_line_'+isSubTree+'0.gif">\n'+
 	'</td>\n';
 	
 		if(layer == 3){
 			TempObject += 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
 	'<td>\n'+
 		'<div id="b'+ItemBarCode+'" class="FdText">\n'+		/* style="float:left; width:117px; overflow:hidden;"*/
-			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
+			'<img id="c'+ItemBarCode+'" onclick=\'document.getElementById("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
 			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+
 		'</div>\n'+
 	'</td>\n'+
@@ -407,7 +407,7 @@ function BuildTree(){
 			
 			TempObject += 
 	'<td class="vert_line">\n'+
-			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
+			'<img id="c'+ItemBarCode+'" onclick=\'document.getElementById("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
 	'</td>\n'+
 	'<td class="FdText">\n'+
 			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+
@@ -438,7 +438,7 @@ function BuildTree(){
 			TempObject += 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
 	'<td>\n'+
 		'<div id="b'+ItemBarCode+'" class="FdText">\n'+		/* style="float:left; width:117px; overflow:hidden;"*/
-			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
+			'<img id="c'+ItemBarCode+'" onclick=\'document.getElementById("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
 			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+
 		'</div>\n'+
 	'</td>\n'+
@@ -458,7 +458,7 @@ function BuildTree(){
 	TempObject += 
 '</table>\n';
 	
-	$("e"+this.FromObject).innerHTML = TempObject;
+	document.getElementById("e"+this.FromObject).innerHTML = TempObject;
 	
 	// additional object
 	if(layer == 3){
@@ -588,14 +588,14 @@ function showPermissionRadio(barCode, permission){
 		code += ' disabled';
 	
 	code += '>';
-	$("f"+barCode).innerHTML = code;
+	document.getElementById("f"+barCode).innerHTML = code;
 }
 
 function getChangedPermission(selectedObj){
 	var selectedBarCode = selectedObj.id.substring(1);
 	var selectedlayer = get_layer(selectedBarCode);
 	var selectedPoolDevice, selectedFolder;
-	var folderObj = $("d"+selectedBarCode);
+	var folderObj = document.getElementById("d"+selectedBarCode);
 	var radioName = "g"+selectedBarCode;
 	var permission, orig_permission;
 	

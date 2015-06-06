@@ -1,6 +1,7 @@
 ﻿/* combined all protocol into this database */
 function gen_country_list(){
 	countrylist = new Array();
+	countrylist.push(["Manual", ""]);	
 	countrylist.push(["Australia", "AU"]);
 	countrylist.push(["Austria", "AT"]);
 	countrylist.push(["Bosnia and Herzegovina", "BA"]);
@@ -41,7 +42,6 @@ function gen_country_list(){
 	countrylist.push(["United Kingdom", "UK"]);
 	countrylist.push(["USA", "US"]);
 	countrylist.push(["Vietnam", "VN"]);
-	countrylist.push(["Manual", ""]);
 
 	var got_country = 0;
 	free_options(document.form.modem_country);

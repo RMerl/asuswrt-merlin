@@ -81,7 +81,7 @@ var passlist = new Array();
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 <% wan_get_parameter(); %>
 
-var $j = jQuery.noConflict();
+
 if(dualWAN_support && wans_dualwan.search("usb") >= 0 ){
 	var wan_type_name = wans_dualwan.split(" ")[<% nvram_get("wan_unit"); %>];
 	wan_type_name = wan_type_name.toUpperCase();
@@ -122,7 +122,7 @@ function initial(){
 	}
 	else{
 		document.form.wan_unit.disabled = true;
-		$("WANscap").style.display = "none";	
+		document.getElementById("WANscap").style.display = "none";	
 	}
 
 	switch_modem_mode('<% nvram_get("modem_enable"); %>');
@@ -211,15 +211,15 @@ function show_3G_modem_list(){
 			, "ICON401"
 			);
 
-	free_options($("shown_modems"));
+	free_options(document.getElementById("shown_modems"));
 	for(var i = 0; i < modemlist.length; i++){
 		if(modemlist[i] == "AUTO")
-			$("shown_modems").options[i] = new Option("<#Auto#>", modemlist[i]);
+			document.getElementById("shown_modems").options[i] = new Option("<#Auto#>", modemlist[i]);
 		else	
-			$("shown_modems").options[i] = new Option(modemlist[i], modemlist[i]);
+			document.getElementById("shown_modems").options[i] = new Option(modemlist[i], modemlist[i]);
 			
 		if(modemlist[i] == modem)
-			$("shown_modems").options[i].selected = "1";
+			document.getElementById("shown_modems").options[i].selected = "1";
 	}
 }
 
@@ -230,14 +230,14 @@ function show_4G_modem_list(){
 			//, "Beceem BCMS250"
 			);
 
-	free_options($("shown_modems"));
+	free_options(document.getElementById("shown_modems"));
 	for(var i = 0; i < modemlist.length; i++){
 		if(modemlist[i] == "AUTO")
-			$("shown_modems").options[i] = new Option("<#Auto#>", modemlist[i]);
+			document.getElementById("shown_modems").options[i] = new Option("<#Auto#>", modemlist[i]);
 		else	
-			$("shown_modems").options[i] = new Option(modemlist[i], modemlist[i]);
+			document.getElementById("shown_modems").options[i] = new Option(modemlist[i], modemlist[i]);
 		if(modemlist[i] == modem)
-			$("shown_modems").options[i].selected = "1";
+			document.getElementById("shown_modems").options[i].selected = "1";
 	}
 }
 
@@ -255,7 +255,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
 		inputCtrl(document.form.modem_ttlsid, 0);
-		//$("hsdpa_hint").style.display = "";
+		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "2"){ // CDMA2000
 		inputCtrl(document.form.Dev3G, 1);
@@ -267,7 +267,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
 		inputCtrl(document.form.modem_ttlsid, 0);
-		//$("hsdpa_hint").style.display = "";
+		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "3"){ // TD-SCDMA
 		inputCtrl(document.form.Dev3G, 1);
@@ -279,7 +279,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
 		inputCtrl(document.form.modem_ttlsid, 0);
-		//$("hsdpa_hint").style.display = "";
+		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "4"){	// WiMAX
 		inputCtrl(document.form.Dev3G, 1);
@@ -291,7 +291,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
 		inputCtrl(document.form.modem_ttlsid, 1);
-		//$("hsdpa_hint").style.display = "";
+		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else{	// Disable (mode == 0)
 		inputCtrl(document.form.Dev3G, 0);
@@ -304,7 +304,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 0);
 		inputCtrl(document.form.modem_pass, 0);
 		inputCtrl(document.form.modem_ttlsid, 0);
-		//$("hsdpa_hint").style.display = "none";
+		//document.getElementById("hsdpa_hint").style.display = "none";
 		document.form.modem_enable.value = "0";
 	}
 }
@@ -367,62 +367,62 @@ function show_APN_list(){
 	}
 
 	if(Countrylist == ""){
-		if('<% nvram_get("modem_enable"); %>' == $('modem_enable_option').value){
-			$("modem_apn").value = apn;
-			$("modem_dialnum").value = dialnum;
-			$("modem_user").value = user;
-			$("modem_pass").value = pass;
+		if('<% nvram_get("modem_enable"); %>' == document.getElementById('modem_enable_option').value){
+			document.getElementById("modem_apn").value = apn;
+			document.getElementById("modem_dialnum").value = dialnum;
+			document.getElementById("modem_user").value = user;
+			document.getElementById("modem_pass").value = pass;
 		}
 		else{
-			$("modem_apn").value = apnlist[isp_order];
-			$("modem_dialnum").value = daillist[isp_order];
-			$("modem_user").value = userlist[isp_order];
-			$("modem_pass").value = passlist[isp_order];
+			document.getElementById("modem_apn").value = apnlist[isp_order];
+			document.getElementById("modem_dialnum").value = daillist[isp_order];
+			document.getElementById("modem_user").value = userlist[isp_order];
+			document.getElementById("modem_pass").value = passlist[isp_order];
 		}
 	}
 	else if(protolist[isp_order] != "4"){
 		if(ISPlist == isp && Countrylist == country && (apn != "" || dialnum != "" || user != "" || pass != "")){
 			if(typeof(apnlist[isp_order]) == 'object' && apnlist[isp_order].constructor == Array){
-				$("pull_arrow").style.display = '';
+				document.getElementById("pull_arrow").style.display = '';
 				showLANIPList(isp_order);
 			}
 			else{
-				$("pull_arrow").style.display = 'none';
-				$('ClientList_Block_PC').style.display = 'none';
+				document.getElementById("pull_arrow").style.display = 'none';
+				document.getElementById('ClientList_Block_PC').style.display = 'none';
 			}
 
-			$("modem_apn").value = apn;
-			$("modem_dialnum").value = dialnum;
-			$("modem_user").value = user;
-			$("modem_pass").value = pass;
+			document.getElementById("modem_apn").value = apn;
+			document.getElementById("modem_dialnum").value = dialnum;
+			document.getElementById("modem_user").value = user;
+			document.getElementById("modem_pass").value = pass;
 		}
 		else{
 			if(typeof(apnlist[isp_order]) == 'object' && apnlist[isp_order].constructor == Array){
-				$("pull_arrow").style.display = '';
+				document.getElementById("pull_arrow").style.display = '';
 				showLANIPList(isp_order);
 			}
 			else{
-				$("pull_arrow").style.display = 'none';
-				$('ClientList_Block_PC').style.display = 'none';
-				$("modem_apn").value = apnlist[isp_order];
+				document.getElementById("pull_arrow").style.display = 'none';
+				document.getElementById('ClientList_Block_PC').style.display = 'none';
+				document.getElementById("modem_apn").value = apnlist[isp_order];
 			}
 
-			$("modem_dialnum").value = daillist[isp_order];
-			$("modem_user").value = userlist[isp_order];
-			$("modem_pass").value = passlist[isp_order];
+			document.getElementById("modem_dialnum").value = daillist[isp_order];
+			document.getElementById("modem_user").value = userlist[isp_order];
+			document.getElementById("modem_pass").value = passlist[isp_order];
 		}
 	}
 	else{
-		$("modem_apn").value = "";
-		$("modem_dialnum").value = "";
+		document.getElementById("modem_apn").value = "";
+		document.getElementById("modem_dialnum").value = "";
 
 		if(ISPlist == isp	&& (user != "" || pass != "")){
-			$("modem_user").value = user;
-			$("modem_pass").value = pass;
+			document.getElementById("modem_user").value = user;
+			document.getElementById("modem_pass").value = pass;
 		}
 		else{
-			$("modem_user").value = userlist[isp_order];
-			$("modem_pass").value = passlist[isp_order];
+			document.getElementById("modem_user").value = userlist[isp_order];
+			document.getElementById("modem_pass").value = passlist[isp_order];
 		}
 	}
 
@@ -473,14 +473,14 @@ function showLANIPList(isp_order){
 			document.form.modem_apn.value = apnlist_col[1];
 	}
 	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	$("ClientList_Block_PC").innerHTML = code;
+	document.getElementById("ClientList_Block_PC").innerHTML = code;
 }
 
 function pullLANIPList(obj){
 	
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		document.form.modem_apn.focus();		
 		isMenuopen = 1;
 	}
@@ -491,8 +491,8 @@ function pullLANIPList(obj){
 var over_var = 0;
 var isMenuopen = 0;
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 }
 /*----------} Mouse event of fake LAN IP select menu-----------------*/
@@ -527,7 +527,7 @@ function done_validating(action){
 }
 
 function check_dongle_status(){
-	 $j.ajax({
+	 $.ajax({
     	url: '/ajax_ddnscode.asp',
     	dataType: 'script', 
 
@@ -536,9 +536,9 @@ function check_dongle_status(){
     	},
     	success: function(response){
 			if(pin_status != "" && pin_status != "0")
-				$("pincode_status").style.display = "";
+				document.getElementById("pincode_status").style.display = "";
 			else	
-				$("pincode_status").style.display = "none";
+				document.getElementById("pincode_status").style.display = "none";
 				
 			setTimeout("check_dongle_status();",5000);
        }
@@ -698,7 +698,7 @@ function check_dongle_status(){
           <tr>
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,3);"><#HSDPAConfig_private_apn_itemname#></a></th>
             <td>
-            	<input id="modem_apn" name="modem_apn" class="input_20_table" maxlength="32" type="text" value=""/>
+            	<input id="modem_apn" name="modem_apn" class="input_20_table" maxlength="32" type="text" value="" autocorrect="off" autocapitalize="off"/>
            		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_APN_service#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 						</td>
@@ -707,14 +707,14 @@ function check_dongle_status(){
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(21,10);"><#HSDPAConfig_DialNum_itemname#></a></th>
 						<td>
-							<input id="modem_dialnum" name="modem_dialnum" class="input_20_table" maxlength="32" type="text" value=""/>
+							<input id="modem_dialnum" name="modem_dialnum" class="input_20_table" maxlength="32" type="text" value="" autocorrect="off" autocapitalize="off"/>
 						</td>
 					</tr>
 					
 					<tr style="display:none;">
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,2);"><#PIN_code#></a></th>
 						<td>
-							<input id="modem_pincode" name="modem_pincode" class="input_20_table" type="password" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/>
+							<input id="modem_pincode" name="modem_pincode" class="input_20_table" type="password" maxLength="8" value="<% nvram_get("modem_pincode"); %>" autocorrect="off" autocapitalize="off"/>
 							<br><span id="pincode_status" style="display:none;"><#pincode_wrong#></span>
 						</td>
 					</tr>
@@ -722,14 +722,14 @@ function check_dongle_status(){
 					<tr>
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,11);"><#HSDPAConfig_Username_itemname#></a></th>
 						<td>
-						<input id="modem_user" name="modem_user" class="input_20_table" maxlength="32" type="text" value="<% nvram_get("modem_user"); %>"/>
+						<input id="modem_user" name="modem_user" class="input_20_table" maxlength="32" type="text" value="<% nvram_get("modem_user"); %>" autocorrect="off" autocapitalize="off"/>
 						</td>
 					</tr>
                                 
 					<tr>
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,12);"><#PPPConnection_Password_itemname#></a></th>
 						<td>
-							<input id="modem_pass" name="modem_pass" class="input_20_table" maxlength="32" type="password" value="<% nvram_get("modem_pass"); %>"/>
+							<input id="modem_pass" name="modem_pass" class="input_20_table" maxlength="32" type="password" value="<% nvram_get("modem_pass"); %>" autocorrect="off" autocapitalize="off"/>
 						</td>
 					</tr>
 

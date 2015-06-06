@@ -39,24 +39,24 @@ function initial(){
 
 	if (openvpnd_support){
 		if (server1pid > 0)
-			$("server1_Block_Running").innerHTML = state_r;
+			document.getElementById("server1_Block_Running").innerHTML = state_r;
 		else
-			$("server1_Block_Running").innerHTML = state_s;
+			document.getElementById("server1_Block_Running").innerHTML = state_s;
 
 		if (client1pid > 0)
-			$("client1_Block_Running").innerHTML = state_r;
+			document.getElementById("client1_Block_Running").innerHTML = state_r;
 		else
-			$("client1_Block_Running").innerHTML = state_s;
+			document.getElementById("client1_Block_Running").innerHTML = state_s;
 
 		if (server2pid > 0)
-			$("server2_Block_Running").innerHTML = state_r;
+			document.getElementById("server2_Block_Running").innerHTML = state_r;
 		else
-			$("server2_Block_Running").innerHTML = state_s;
+			document.getElementById("server2_Block_Running").innerHTML = state_s;
 
 		if (client2pid > 0)
-			$("client2_Block_Running").innerHTML = state_r;
+			document.getElementById("client2_Block_Running").innerHTML = state_r;
 		else
-			$("client2_Block_Running").innerHTML = state_s;
+			document.getElementById("client2_Block_Running").innerHTML = state_s;
 
         
 		parseStatus(document.form.status_server1.value, "server1_Block");
@@ -72,9 +72,9 @@ function initial(){
 
 	if (pptpd_support) {
 		if (pptpdpid > 0)
-			$("pptp_Block_Running").innerHTML = state_r;
+			document.getElementById("pptp_Block_Running").innerHTML = state_r;
 		else
-			$("pptp_Block_Running").innerHTML = state_s;
+			document.getElementById("pptp_Block_Running").innerHTML = state_s;
 		parsePPTPClients();
 
 	} else {
@@ -122,14 +122,14 @@ function parsePPTPClients() {
 	}
 	code +='</table>';
 
-	$('pptp_Block').innerHTML += code;
+	document.getElementById('pptp_Block').innerHTML += code;
 }
 
 
 function parseStatus(text, block){
 
 	// Clear it
-	$(block).innerHTML = "";
+	document.getElementById(block).innerHTML = "";
 	var code = "";
 
 	var lines = text.split('\n');
@@ -159,7 +159,7 @@ function parseStatus(text, block){
 			break;
 		case "TIME":
 		case "Updated":
-			$(block + "_UpdateTime").innerHTML = 'Last updated: ' + fields[1];
+			document.getElementById(block + "_UpdateTime").innerHTML = 'Last updated: ' + fields[1];
 			break;
 		case "HEADER":
 			switch ( fields[1] )
@@ -236,7 +236,7 @@ function parseStatus(text, block){
 		code += '</table><br>';
 	}
 
-	$(block).innerHTML += code;
+	document.getElementById(block).innerHTML += code;
 
 
 /*** Routes ***/
@@ -264,7 +264,7 @@ function parseStatus(text, block){
 		code += '</table><br>';
 	}
 
-	$(block).innerHTML += code;
+	document.getElementById(block).innerHTML += code;
 
 
 	// Reset it, since we don't know which block we'll show next
@@ -302,7 +302,7 @@ function parseStatus(text, block){
 		}
 		code += '</table>';
 	}
-	$(block).innerHTML += code;
+	document.getElementById(block).innerHTML += code;
 }
 
 
@@ -359,7 +359,7 @@ function show_vpnc_rulelist(){
 	}
 	code +='</table>';
 
-	$("vpnc_clientlist_Block").innerHTML = code;
+	document.getElementById("vpnc_clientlist_Block").innerHTML = code;
 }
 
 

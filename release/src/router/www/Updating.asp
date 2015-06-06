@@ -10,7 +10,7 @@
 <body>
 <script>
 	var reboot_needed_time = eval("<% get_default_reboot_time(); %>");
-	parent.$("hiddenMask").style.visibility = "hidden";
+	parent.document.getElementById("hiddenMask").style.visibility = "hidden";
 	if( parent.based_modelid == "4G-AC55U"
 			|| parent.based_modelid == "DSL-AC68U"
 			|| parent.based_modelid == "RT-AC52U"

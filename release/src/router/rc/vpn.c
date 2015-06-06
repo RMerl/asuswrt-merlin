@@ -282,7 +282,6 @@ void start_pptpd(void)
         //Add static router for vpn client
         char *nv, *nvp, *b;
         char *pptpd_client, *vpn_network, *vpn_netmask;
-        char buf[64];
 
         nv = nvp = strdup(nvram_safe_get("pptpd_sr_rulelist"));
         if(nv) {

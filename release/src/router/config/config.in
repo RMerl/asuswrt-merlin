@@ -45,6 +45,10 @@ config RTCONFIG_BCM_794
 	bool "Bcm sdk 7_14_94_x"
 	default n
 
+config RTCONFIG_BCM_7114
+	bool "Bcm sdk 7_14_114_x"
+	default n
+
 config RTCONFIG_BCM10
 	bool "Bcm sdk 10_10_18_x"
 	default n
@@ -67,6 +71,10 @@ config RTCONFIG_NV128
 
 config RTCONFIG_DHDAP
 	bool "Bcm7 dhdap"
+	default n
+
+config RTCONFIG_WLEXE
+	bool "dhd wl exe"
 	default n
 
 config RTCONFIG_DPSTA
@@ -761,6 +769,10 @@ config RTCONFIG_WPSMULTIBAND
 	bool "Multi-band WPS"
 	default n
 
+config RTCONFIG_RALINK_DFS
+	bool "Rlink DFS support"
+	default n
+
 config RTCONFIG_ENGINEERING_MODE
 	bool "Engineering Mode"
 	default n
@@ -849,7 +861,15 @@ config RTCONFIG_ADBLOCK
 config RTCONFIG_TRAFFIC_CONTROL
 	bool "Traffic control for alert limited traffic"
 	default n
+
+config RTCONFIG_CTF_PPTP_L2TP
+	bool "Speedup NAT for PPTP and L2TP"
+	default n
 	
+config RTCONFIG_BCM5301X_TRAFFIC_MONITOR
+	bool "read BCM5301x register for traffic monitor"
+	default n
+
 config RTCONFIG_SPEEDTEST
 	bool "BRCM Speedtest for detect upload / downlad bandwidth "
 	default n
@@ -876,7 +896,7 @@ config RTCONFIG_NOWL
 
 config RTCONFIG_TCODE
 	bool "Territory code"
-	default n
+	default y
 
 config RTCONFIG_ALLNOWL
 	bool "no load all wl module "
@@ -911,4 +931,8 @@ config RTCONFIG_STAINFO
 
 config RTCONFIG_CLOUDCHECK
 	bool "Cloudcheck support"
+	default n
+
+config RTCONFIG_GETREALIP
+	bool "Get external IP support"
 	default n

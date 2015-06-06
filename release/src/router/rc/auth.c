@@ -18,8 +18,7 @@ static int
 start_wpa_supplicant(int unit, int restart)
 {
 	FILE *fp;
-	char tmp[100];
-	char prefix[] = "wanXXXXXXXXXX_";
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char options[sizeof("/etc/wpa_supplicantXXXXXXXXXX.conf")];
 	char pidfile[sizeof("/var/run/wpa_supplicantXXXXXXXXXX.pid")];
 	char *wpa_argv[] = {"/usr/sbin/wpa_supplicant",
@@ -41,7 +40,7 @@ start_wpa_supplicant(int unit, int restart)
 	snprintf(options, sizeof(options), "/etc/wpa_supplicant%d.conf", unit);
 	snprintf(pidfile, sizeof(pidfile), "/var/run/wpa_supplicant%d.pid", unit);
 
-	if (restart && pids("wpa_supplicant"))
+	if (restart && kill_pidfile_s(pidfile, 0) == 0)
 		return kill_pidfile_s(pidfile, SIGUSR2);
 
 	/* Get interface */
@@ -102,8 +101,7 @@ stop_wpa_supplicant(int unit)
 int
 wpacli_main(int argc, char **argv)
 {
-	char tmp[100];
-	char prefix[] = "wanXXXXXXXXXX_";
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	int unit;
 
 	if (argc < 3 || (unit = wan_ifunit(argv[1])) < 0)
@@ -144,8 +142,7 @@ wpacli_main(int argc, char **argv)
 int
 start_auth(int unit, int wan_up)
 {
-	char tmp[100];
-	char prefix[] = "wanXXXXXXXXXX_";
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char *wan_proto, *wan_auth;
 	int ret = -1;
 
@@ -169,8 +166,7 @@ start_auth(int unit, int wan_up)
 int
 stop_auth(int unit, int wan_down)
 {
-	char tmp[100];
-	char prefix[] = "wanXXXXXXXXXX_";
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char *wan_proto;
 	int ret = -1;
 
@@ -193,8 +189,7 @@ stop_auth(int unit, int wan_down)
 int
 restart_auth(int unit)
 {
-	char tmp[100];
-	char prefix[] = "wanXXXXXXXXXX_";
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char *wan_proto, *wan_auth;
 	int ret = -1;
 

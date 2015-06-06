@@ -1281,13 +1281,13 @@ client6_send(ev)
 
 	/* elapsed time */
 	if (ev->timeouts == 0) {
-		gettimeofday(&ev->tv_start, NULL);
+		dhcp6_time(&ev->tv_start);
 		optinfo.elapsed_time = 0;
 	} else {
 		struct timeval now, tv_diff;
 		long et;
 
-		gettimeofday(&now, NULL);
+		dhcp6_time(&now);
 		tv_sub(&now, &ev->tv_start, &tv_diff);
 
 		/*

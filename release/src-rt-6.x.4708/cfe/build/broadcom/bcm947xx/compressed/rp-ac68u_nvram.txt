@@ -355,7 +355,7 @@ reset_gpio=11
 # If the board has a USB power control chip, then the parameter "gpioX=usbportY" is used to tell
 # the USB driver code that it needs to set that GPIO HIGH to turn on power to that USB port.
 # "X" is the GPIO number, 0-31. "Y" is the USB port number, starting at "1".
-gpio9=usbport1
+#gpio9=usbport1
 
 # Watchdog timer in ms.
 # For all CPU chips other than the 4707/8/9/81, the valid range is 3000ms to 5500ms.
@@ -625,4 +625,4 @@ model=RP-AC68U
 
 # others
 ATEMODE=1
-nospare=1
+#nospare=1

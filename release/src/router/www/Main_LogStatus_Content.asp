@@ -28,11 +28,11 @@ function showclock(){
 				  /*JS_timeObj.getFullYear() + " GMT" +
 				  timezone;*/ // Viz remove GMT timezone 2011.08
 				  JS_timeObj.getFullYear();
-	$("system_time").value = JS_timeObj2;
+	document.getElementById("system_time").value = JS_timeObj2;
 	setTimeout("showclock()", 1000);
 	if(navigator.appName.indexOf("Microsoft") >= 0)
 		document.getElementById("textarea").style.width = "99%";
-    //$("banner3").style.height = "13";
+    //document.getElementById("banner3").style.height = "13";
 }
 
 function showbootTime(){
@@ -41,10 +41,10 @@ function showbootTime(){
 	Minutes = Math.floor(boottime % 3600 / 60);
 	Seconds = Math.floor(boottime % 60);
 	
-	$("boot_days").innerHTML = Days;
-	$("boot_hours").innerHTML = Hours;
-	$("boot_minutes").innerHTML = Minutes;
-	$("boot_seconds").innerHTML = Seconds;
+	document.getElementById("boot_days").innerHTML = Days;
+	document.getElementById("boot_hours").innerHTML = Hours;
+	document.getElementById("boot_minutes").innerHTML = Minutes;
+	document.getElementById("boot_seconds").innerHTML = Seconds;
 	boottime += 1;
 	setTimeout("showbootTime()", 1000);
 }
@@ -115,7 +115,7 @@ function initial(){
 										<tr>
 											<th width="20%"><#General_x_SystemTime_itemname#></th>
 											<td>
-												<input type="text" id="system_time" name="system_time" size="40" class="devicepin" value="" readonly="1" style="font-size:12px;">
+												<input type="text" id="system_time" name="system_time" size="40" class="devicepin" value="" readonly="1" style="font-size:12px;" autocorrect="off" autocapitalize="off">
 												<br><span id="dstzone" style="display:none;margin-left:5px;color:#FFFFFF;"></span>
 											</td>										
 										</tr>

@@ -439,11 +439,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	/* convert serial number */
 	memset(buf_tmp, 0, sizeof(buf_tmp));
 	memset(serial_buf, 0, sizeof(serial_buf));
-#ifdef RTAC87U
-	ether_atoe(nvram_safe_get("et1macaddr"), hwaddr);
-#else
-	ether_atoe(nvram_safe_get("et0macaddr"), hwaddr);
-#endif
+	ether_atoe(get_lan_hwaddr(), hwaddr);
 	snprintf(buf_tmp, sizeof(buf_tmp), "%02X%02X%02X%02X%02X%02X", hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
 	len = strlen(buf_tmp);
 	for (i = 0; i < len; i ++) {
@@ -454,11 +450,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	/* convert oui */
 	memset(buf_tmp, 0, sizeof(buf_tmp));
 	memset(oui_buf, 0, sizeof(oui_buf));
-#ifdef RTAC87U
-	ether_atoe(nvram_safe_get("et1macaddr"), hwaddr);
-#else
-	ether_atoe(nvram_safe_get("et0macaddr"), hwaddr);
-#endif
+	ether_atoe(get_lan_hwaddr(), hwaddr);
 	snprintf(buf_tmp, sizeof(buf_tmp), "%02X%02X%02X", hwaddr[0], hwaddr[1], hwaddr[2]);
 	len = strlen(buf_tmp);
 	for (i = 0; i < len; i ++) {

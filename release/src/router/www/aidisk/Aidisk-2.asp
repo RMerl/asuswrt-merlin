@@ -22,10 +22,14 @@ function initial(){
 	parent.restore_help_td();	
 	
 	
-	parent.$("dummyShareway").value = "<% nvram_get("dummyShareway"); %>";
-	if(parent.$("dummyShareway").value == "")
-			parent.$("dummyShareway").value = 0;
+	parent.document.getElementById("dummyShareway").value = "<% nvram_get("dummyShareway"); %>";
+	if(parent.document.getElementById("dummyShareway").value == "")
+			parent.document.getElementById("dummyShareway").value = 0;
 
+	if(is_KR_sku){
+		document.getElementById("d1").style.display = "none";	
+		document.getElementById("d1_desc").style.display = "none";			
+	}
 	showTextinWizard(2);
 }
 
@@ -34,44 +38,44 @@ function showTextinWizard(flag){
 	dummyShareway = flag;
 	
 	if(dummyShareway == 0){
-		parent.$("dummyShareway").value = dummyShareway;
+		parent.document.getElementById("dummyShareway").value = dummyShareway;
 		
 		document.getElementsByName('dummyoption')[2].focus();
 		document.getElementsByName('dummyoption')[2].checked = true;
 		
-		$("share0_Hint").style.display = "";
-		$("share1").style.display = "none";				
-		$("target1").style.display = "none";
-		$("target2").style.display = "none";
+		document.getElementById("share0_Hint").style.display = "";
+		document.getElementById("share1").style.display = "none";				
+		document.getElementById("target1").style.display = "none";
+		document.getElementById("target2").style.display = "none";
 	}
 	else if(dummyShareway == 1){
-		parent.$("dummyShareway").value = dummyShareway;
+		parent.document.getElementById("dummyShareway").value = dummyShareway;
 		
 		document.getElementsByName('dummyoption')[1].focus();
 		document.getElementsByName('dummyoption')[1].checked = true;
 		
-		showtext($("user1"), '<% nvram_get("http_username"); %>');
+		showtext(document.getElementById("user1"), '<% nvram_get("http_username"); %>');
 		
-		showtext($("user2"), "Family");
-		$("userpasswd2").value =  "family" + lan_hwaddr_array[lan_hwaddr_array.length-2].toLowerCase() + lan_hwaddr_array[lan_hwaddr_array.length-1].toLowerCase();
+		showtext(document.getElementById("user2"), "Family");
+		document.getElementById("userpasswd2").value =  "family" + lan_hwaddr_array[lan_hwaddr_array.length-2].toLowerCase() + lan_hwaddr_array[lan_hwaddr_array.length-1].toLowerCase();
 
-		$("share0_Hint").style.display = "none";
-		$("share1").style.display = "block";		
-		$("target1").style.display = "";
-		$("target2").style.display = "";
+		document.getElementById("share0_Hint").style.display = "none";
+		document.getElementById("share1").style.display = "block";		
+		document.getElementById("target1").style.display = "";
+		document.getElementById("target2").style.display = "";
 	}
 	else if(dummyShareway == 2){
-		parent.$("dummyShareway").value = dummyShareway;
+		parent.document.getElementById("dummyShareway").value = dummyShareway;
 		
 		document.getElementsByName('dummyoption')[0].focus();
 		document.getElementsByName('dummyoption')[0].checked = true;
 		
-		showtext($("user1"), '<% nvram_get("http_username"); %>');
+		showtext(document.getElementById("user1"), '<% nvram_get("http_username"); %>');
 		
-		$("share0_Hint").style.display = "none";
-		$("share1").style.display = "";		
-		$("target1").style.display = "";
-		$("target2").style.display = "none";
+		document.getElementById("share0_Hint").style.display = "none";
+		document.getElementById("share1").style.display = "";		
+		document.getElementById("target1").style.display = "";
+		document.getElementById("target2").style.display = "none";
 	}
 	else
 		alert("System error: No this choice");	// no translate*/
@@ -79,33 +83,33 @@ function showTextinWizard(flag){
 
 function passTheResult(){
 	if(dummyShareway == 0){
-		parent.$("accountNum").value = 0;
+		parent.document.getElementById("accountNum").value = 0;
 		
-		/*parent.$("account0").value = "";
-		parent.$("passwd0").value = "";
-		parent.$("permission0").value = "";//*/
+		/*parent.document.getElementById("account0").value = "";
+		parent.document.getElementById("passwd0").value = "";
+		parent.document.getElementById("permission0").value = "";//*/
 		
-		parent.$("account1").value = "";
-		parent.$("passwd1").value = "";
-		parent.$("permission1").value = "";
+		parent.document.getElementById("account1").value = "";
+		parent.document.getElementById("passwd1").value = "";
+		parent.document.getElementById("permission1").value = "";
 	}
 	else if(dummyShareway == 1){
-		parent.$("accountNum").value = 2;
+		parent.document.getElementById("accountNum").value = 2;
 		
-		/*if(checkPasswdValid($("userpasswd1").value)){
-			parent.$("account0").value = $("user1").firstChild.nodeValue;
-			parent.$("passwd0").value = $("userpasswd1").value;
-			parent.$("permission0").value = "3";
+		/*if(checkPasswdValid(document.getElementById("userpasswd1").value)){
+			parent.document.getElementById("account0").value = document.getElementById("user1").firstChild.nodeValue;
+			parent.document.getElementById("passwd0").value = document.getElementById("userpasswd1").value;
+			parent.document.getElementById("permission0").value = "3";
 		}
 		else{
-			$("userpasswd1").focus();
+			document.getElementById("userpasswd1").focus();
 			return;
 		}//*/
 		
 		if(checkPasswdValid(document.smartForm.userpasswd2)){
-			parent.$("account1").value = $("user2").firstChild.nodeValue;
-			parent.$("passwd1").value = $("userpasswd2").value;
-			parent.$("permission1").value = "1";
+			parent.document.getElementById("account1").value = document.getElementById("user2").firstChild.nodeValue;
+			parent.document.getElementById("passwd1").value = document.getElementById("userpasswd2").value;
+			parent.document.getElementById("permission1").value = "1";
 		}
 		else{
 			document.smartForm.action = "/aidisk/Aidisk-2.asp";
@@ -114,21 +118,21 @@ function passTheResult(){
 		}
 	}
 	else if(dummyShareway == 2){
-		parent.$("accountNum").value = 1;
+		parent.document.getElementById("accountNum").value = 1;
 		
-		/*if(checkPasswdValid($("userpasswd1").value)){
-			parent.$("account0").value = $("user1").firstChild.nodeValue;
-			parent.$("passwd0").value = $("userpasswd1").value;
-			parent.$("permission0").value = "3";
+		/*if(checkPasswdValid(document.getElementById("userpasswd1").value)){
+			parent.document.getElementById("account0").value = document.getElementById("user1").firstChild.nodeValue;
+			parent.document.getElementById("passwd0").value = document.getElementById("userpasswd1").value;
+			parent.document.getElementById("permission0").value = "3";
 		}
 		else{
-			$("userpasswd1").focus();
+			document.getElementById("userpasswd1").focus();
 			return;
 		}//*/
 		
-		parent.$("account1").value = "";
-		parent.$("passwd1").value = "";
-		parent.$("permission1").value = "";
+		parent.document.getElementById("account1").value = "";
+		parent.document.getElementById("passwd1").value = "";
+		parent.document.getElementById("permission1").value = "";
 	}
 	
 	document.smartForm.action = "/aidisk/Aidisk-3.asp";
@@ -211,7 +215,7 @@ function checkPasswdValid(obj){
             				<label for="d2"><#Step2_method2#></label>
             		</p>
             <br/><p><input type="radio" id="d1" name="dummyoption" value="0" width="10" onclick="showTextinWizard(this.value);"/> 
-            				<label for="d1"><#Step2_method1#></label>
+            				<label for="d1" id="d1_desc"><#Step2_method1#></label>
             		</p>
 						</div>
 
@@ -237,7 +241,7 @@ function checkPasswdValid(obj){
                 
                 	<tr id="target2">
                   	<td height="35"><span id="user2" style="color:#FFFFFF;"></span></td>
-                  	<td><input type="text" name="userpasswd2" id="userpasswd2" value="" class="input_25_table" onKeyPress="return validator.isString(this, event);" maxlength="16"></td>
+                  	<td><input type="text" name="userpasswd2" id="userpasswd2" value="" class="input_25_table" onKeyPress="return validator.isString(this, event);" maxlength="16" autocorrect="off" autocapitalize="off"></td>
                   	<td align="center"><img src="/images/New_ui/checkbox.png"></td>
                   	<td align="center">&nbsp;</td>
                 	</tr>

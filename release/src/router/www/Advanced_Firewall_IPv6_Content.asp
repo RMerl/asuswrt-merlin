@@ -56,18 +56,18 @@ function isChange(){
 
 function applyRule(){
 
-	var rule_num = $('ipv6_fw_rulelist_table').rows.length;
-	var item_num = $('ipv6_fw_rulelist_table').rows[0].cells.length;
+	var rule_num = document.getElementById('ipv6_fw_rulelist_table').rows.length;
+	var item_num = document.getElementById('ipv6_fw_rulelist_table').rows[0].cells.length;
 	var tmp_value = "";
 
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"		
 		for(j=0; j<item_num-1; j++){			
 
-			if($('ipv6_fw_rulelist_table').rows[i].cells[j].innerHTML.lastIndexOf("...")<0){
-				tmp_value += $('ipv6_fw_rulelist_table').rows[i].cells[j].innerHTML;
+			if(document.getElementById('ipv6_fw_rulelist_table').rows[i].cells[j].innerHTML.lastIndexOf("...")<0){
+				tmp_value += document.getElementById('ipv6_fw_rulelist_table').rows[i].cells[j].innerHTML;
 			}else{
-				tmp_value += $('ipv6_fw_rulelist_table').rows[i].cells[j].title;
+				tmp_value += document.getElementById('ipv6_fw_rulelist_table').rows[i].cells[j].title;
 			}		
 
 			if(j != item_num-2)	
@@ -158,8 +158,8 @@ function addRow_Group(upper){
 		if('<% nvram_get("ipv6_fw_enable"); %>' != "1")
 			document.form.ipv6_fw_enable[0].checked = true;
 
-		var rule_num = $('ipv6_fw_rulelist_table').rows.length;
-		var item_num = $('ipv6_fw_rulelist_table').rows[0].cells.length;	
+		var rule_num = document.getElementById('ipv6_fw_rulelist_table').rows.length;
+		var item_num = document.getElementById('ipv6_fw_rulelist_table').rows[0].cells.length;	
 		if(rule_num >= upper){
 			alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 			return;
@@ -248,30 +248,30 @@ function check_multi_range(obj, mini, maxi, allow_range){
 
 function edit_Row(r){ 	
 	var i=r.parentNode.parentNode.rowIndex;
-	document.form.ipv6_fw_desc_x_0.value = $('ipv6_fw_rulelist_table').rows[i].cells[0].innerHTML;
-	document.form.ipv6_fw_ripaddr_x_0.value = $('ipv6_fw_rulelist_table').rows[i].cells[1].innerHTML; 
-	document.form.ipv6_fw_lipaddr_x_0.value = $('ipv6_fw_rulelist_table').rows[i].cells[2].innerHTML;
-	document.form.ipv6_fw_port_x_0.value = $('ipv6_fw_rulelist_table').rows[i].cells[3].innerHTML;
-	document.form.ipv6_fw_proto_x_0.value = $('ipv6_fw_rulelist_table').rows[i].cells[4].innerHTML;
+	document.form.ipv6_fw_desc_x_0.value = document.getElementById('ipv6_fw_rulelist_table').rows[i].cells[0].innerHTML;
+	document.form.ipv6_fw_ripaddr_x_0.value = document.getElementById('ipv6_fw_rulelist_table').rows[i].cells[1].innerHTML; 
+	document.form.ipv6_fw_lipaddr_x_0.value = document.getElementById('ipv6_fw_rulelist_table').rows[i].cells[2].innerHTML;
+	document.form.ipv6_fw_port_x_0.value = document.getElementById('ipv6_fw_rulelist_table').rows[i].cells[3].innerHTML;
+	document.form.ipv6_fw_proto_x_0.value = document.getElementById('ipv6_fw_rulelist_table').rows[i].cells[4].innerHTML;
 	del_Row(r);	
 }
 
 function del_Row(r){
   var i=r.parentNode.parentNode.rowIndex;
-  $('ipv6_fw_rulelist_table').deleteRow(i);
+  document.getElementById('ipv6_fw_rulelist_table').deleteRow(i);
 
   var ipv6_fw_rulelist_value = "";
-	for(k=0; k<$('ipv6_fw_rulelist_table').rows.length; k++){
-		for(j=0; j<$('ipv6_fw_rulelist_table').rows[k].cells.length-1; j++){
+	for(k=0; k<document.getElementById('ipv6_fw_rulelist_table').rows.length; k++){
+		for(j=0; j<document.getElementById('ipv6_fw_rulelist_table').rows[k].cells.length-1; j++){
 			if(j == 0)	
 				ipv6_fw_rulelist_value += "<";
 			else
 				ipv6_fw_rulelist_value += ">";
 
-			if($('ipv6_fw_rulelist_table').rows[k].cells[j].innerHTML.lastIndexOf("...")<0){
-				ipv6_fw_rulelist_value += $('ipv6_fw_rulelist_table').rows[k].cells[j].innerHTML;
+			if(document.getElementById('ipv6_fw_rulelist_table').rows[k].cells[j].innerHTML.lastIndexOf("...")<0){
+				ipv6_fw_rulelist_value += document.getElementById('ipv6_fw_rulelist_table').rows[k].cells[j].innerHTML;
 			}else{
-				ipv6_fw_rulelist_value += $('ipv6_fw_rulelist_table').rows[k].cells[j].title;
+				ipv6_fw_rulelist_value += document.getElementById('ipv6_fw_rulelist_table').rows[k].cells[j].title;
 			}			
 		}
 	}
@@ -336,7 +336,7 @@ function showipv6_fw_rulelist(){
 		}
 	}
 	code +='</table>';
-	$("ipv6_fw_rulelist_Block").innerHTML = code;	     
+	document.getElementById("ipv6_fw_rulelist_Block").innerHTML = code;	     
 }
 
 function ipv6_valid(obj, cidr){
@@ -355,9 +355,9 @@ function ipv6_valid(obj, cidr){
 
 function changeBgColor(obj, num){
 	if(obj.checked)
- 		$("row" + num).style.background='#FF9';
+ 		document.getElementById("row" + num).style.background='#FF9';
 	else
- 		$("row" + num).style.background='#FFF';
+ 		document.getElementById("row" + num).style.background='#FFF';
 }
 </script>
 </head>
@@ -449,16 +449,16 @@ function changeBgColor(obj, num){
           		        
           		<tr>
   				<td width="15%">
-  					<input type="text" maxlength="30" class="input_12_table" name="ipv6_fw_desc_x_0" onKeyPress="return is_alphanum(this, event)" onblur="validator.safeName(this);"/>
+  					<input type="text" maxlength="30" class="input_12_table" name="ipv6_fw_desc_x_0" onKeyPress="return is_alphanum(this, event)" onblur="validator.safeName(this);" autocorrect="off" autocapitalize="off"/>
   				</td>
 				<td width="24%">
-					<input type="text" maxlength="45" class="input_18_table" name="ipv6_fw_ripaddr_x_0" align="left" style="float:left;" autocomplete="off">
+					<input type="text" maxlength="45" class="input_18_table" name="ipv6_fw_ripaddr_x_0" align="left" style="float:left;" autocorrect="off" autocapitalize="off">
 				</td>
 				<td width="24%">
-					<input type="text" maxlength="45" class="input_18_table" name="ipv6_fw_lipaddr_x_0" align="left" style="float:left;" autocomplete="off">
+					<input type="text" maxlength="45" class="input_18_table" name="ipv6_fw_lipaddr_x_0" align="left" style="float:left;" autocorrect="off" autocapitalize="off">
                                 </td>
 				<td width="14%">
-					<input type="text" maxlength="" class="input_12_table" name="ipv6_fw_port_x_0" onkeypress="return validator.isPortRange(this, event)"/>
+					<input type="text" maxlength="" class="input_12_table" name="ipv6_fw_port_x_0" onkeypress="return validator.isPortRange(this, event)" autocorrect="off" autocapitalize="off"/>
 				</td>
 				<td width="11%">
 					<select name="ipv6_fw_proto_x_0" class="input_option">

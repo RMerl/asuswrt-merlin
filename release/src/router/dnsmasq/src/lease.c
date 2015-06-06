@@ -847,9 +847,9 @@ void lease_set_iaid(struct dhcp_lease *lease, int iaid)
 }
 #endif
 
-void lease_set_hwaddr(struct dhcp_lease *lease, unsigned char *hwaddr,
-		      unsigned char *clid, int hw_len, int hw_type, int clid_len, 
-		      time_t now, int force)
+void lease_set_hwaddr(struct dhcp_lease *lease, const unsigned char *hwaddr,
+		      const unsigned char *clid, int hw_len, int hw_type,
+		      int clid_len, time_t now, int force)
 {
 #ifdef HAVE_DHCP6
   int change = force;
@@ -931,7 +931,7 @@ static void kill_name(struct dhcp_lease *lease)
   lease->hostname = lease->fqdn = NULL;
 }
 
-void lease_set_hostname(struct dhcp_lease *lease, char *name, int auth, char *domain, char *config_domain)
+void lease_set_hostname(struct dhcp_lease *lease, const char *name, int auth, char *domain, char *config_domain)
 {
   struct dhcp_lease *lease_tmp;
   char *new_name = NULL, *new_fqdn = NULL;

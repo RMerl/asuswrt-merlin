@@ -27,7 +27,7 @@ function initial(){
 	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation""></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
 	document.getElementById("_APP_Installation").className = "menu_clicked";
 
-	$("statusframe").style.display = "block";
+	document.getElementById("statusframe").style.display = "block";
 	
 	if(page == 2)
 		show_iframe("aidisk/Aidisk-2.asp");
@@ -38,20 +38,20 @@ function initial(){
 	else
 		show_iframe("aidisk/Aidisk-1.asp");
 	
-	if($("dummyShareway").value == "")
-		$("dummyShareway").value = 0;
+	if(document.getElementById("dummyShareway").value == "")
+		document.getElementById("dummyShareway").value = 0;
 }
 
 function show_iframe(src){
-	$("sub_frame").src = "";
+	document.getElementById("sub_frame").src = "";
 	
-	setTimeout('$("sub_frame").src = \"'+src+'\";', 1);
+	setTimeout('document.getElementById("sub_frame").src = \"'+src+'\";', 1);
 }
 
 function show_iframe_page(iframe_id){
 	if(iframe_id)
-		if($(iframe_id))
-			return $(iframe_id).src;
+		if(document.getElementById(iframe_id))
+			return document.getElementById(iframe_id).src;
 	
 	return "";
 }
@@ -60,27 +60,27 @@ function show_help_iframe(page_num){
 }
 
 function big_help_td(){
-	$("help_td").style.width = "300px";
-	$("statusframe").style.width = "300px";
+	document.getElementById("help_td").style.width = "300px";
+	document.getElementById("statusframe").style.width = "300px";
 }
 
 function restore_help_td(){
-	$("hint_body").style.display = "block"; //avoid this block to be hide when open ASUS TOS in step2
-	$("help_td").style.width = "170px";
-	$("statusframe").style.width = "200px";
+	document.getElementById("hint_body").style.display = "block"; //avoid this block to be hide when open ASUS TOS in step2
+	document.getElementById("help_td").style.width = "170px";
+	document.getElementById("statusframe").style.width = "200px";
 }
 
 /*function get_account_parameter(){
-	account_num = $("accountNum").value;
+	account_num = document.getElementById("accountNum").value;
 	
 	accounts = new Array(account_num);
 	
 	for(var i = 0; i < account_num; ++i){
 		accounts[i] = new Array(3);
 		
-		accounts[i][0] = $("account"+i).value;
-		accounts[i][1] = $("passwd"+i).value;
-		accounts[i][2] = $("permission"+i).value;
+		accounts[i][0] = document.getElementById("account"+i).value;
+		accounts[i][1] = document.getElementById("passwd"+i).value;
+		accounts[i][2] = document.getElementById("permission"+i).value;
 	}
 }//*/
 
@@ -91,7 +91,7 @@ function initialAccount(){
 }
 
 function resultOfInitialAccount(){
-	if($("dummyShareway").value == "1")
+	if(document.getElementById("dummyShareway").value == "1")
 		createAccount();
 	else{
 		submitChangeAllFolderPermission('<% nvram_char_to_ascii("", "http_username"); %>', "3", "ftp");
@@ -106,14 +106,14 @@ function createAccount(){
 		document.applyForm.permission.value = "";
 		
 		document.applyForm.action = "/aidisk/create_account.asp";
-		document.applyForm.account.value = $("account1").value;
-		document.applyForm.password.value = $("passwd1").value;
+		document.applyForm.account.value = document.getElementById("account1").value;
+		document.applyForm.password.value = document.getElementById("passwd1").value;
 		
 		document.applyForm.submit();
 }
 
 function resultOfCreateAccount(){
-	submitChangeAllFolderPermission($("account1").value, $("permission1").value, "ftp");
+	submitChangeAllFolderPermission(document.getElementById("account1").value, document.getElementById("permission1").value, "ftp");
 }
 
 function submitChangePermission(account, permission, protocol){
@@ -151,8 +151,8 @@ function submitChangePermission(account, permission, protocol){
 		}
 	}
 	
-	if($("dummyShareway").value == "1"){
-		$("dummyShareway").value = "";
+	if(document.getElementById("dummyShareway").value == "1"){
+		document.getElementById("dummyShareway").value = "";
 
 	 	require(['/require/modules/diskList.js'], function(diskList){
 			pools = [];
@@ -173,8 +173,8 @@ function submitChangePermission(account, permission, protocol){
 
 function submitChangeAllFolderPermission(account, permission, protocol){
 	
-	if($("dummyShareway").value == "1"){
-		$("dummyShareway").value = "";
+	if(document.getElementById("dummyShareway").value == "1"){
+		document.getElementById("dummyShareway").value = "";
 		document.applyForm.password.value = "";
 		document.applyForm.action = "/aidisk/set_account_all_folder_permission.asp";
 		document.applyForm.account.value = account;

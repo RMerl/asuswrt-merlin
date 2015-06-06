@@ -126,7 +126,6 @@
 }
 </style>
 <script>
-var $j = jQuery.noConflict();
 
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -300,14 +299,14 @@ function update_visibility(){
 function set_Keys(auth){
 	cal_panel_block();
 	if((auth=='tls') || (auth=="secret")){
-		$j("#tlsKey_panel").fadeIn(300);
+		$("#tlsKey_panel").fadeIn(300);
 	}       
 }
  
 function cancel_Key_panel(auth){
 	if((auth == 'tls') || (auth == "secret")){
 		this.FromObject ="0";
-		$j("#tlsKey_panel").fadeOut(300);	
+		$("#tlsKey_panel").fadeOut(300);	
 
 		if (openvpn_unit == 1) {
 			setTimeout("document.getElementById('edit_vpn_crt_client1_static').value = '<% nvram_clean_get("vpn_crt_client1_static"); %>';", 300);
@@ -363,7 +362,7 @@ function cal_panel_block(){
 
 	}
 
-	$("tlsKey_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("tlsKey_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 
@@ -390,14 +389,14 @@ function applyRule(){
 
 	document.form.vpn_client_if.value = document.form.vpn_client_if_x.value;
 
-	var rule_num = $('clientlist_table').rows.length;
-	var item_num = $('clientlist_table').rows[0].cells.length;
+	var rule_num = document.getElementById('clientlist_table').rows.length;
+	var item_num = document.getElementById('clientlist_table').rows[0].cells.length;
 	var tmp_value = "";
 
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<";
 		for(j=0; j<item_num-1; j++){
-			tmp_value += $('clientlist_table').rows[i].cells[j].innerHTML;
+			tmp_value += document.getElementById('clientlist_table').rows[i].cells[j].innerHTML;
 			if(j != item_num-2)
 				tmp_value += ">";
 		}
@@ -444,7 +443,7 @@ var vpn_upload_state = "init";
 function ovpnFileChecker(){
 	document.getElementById("importOvpnFile").innerHTML = "<#Main_alert_proceeding_desc3#>";
 
-	$j.ajax({
+	$.ajax({
 			url: '/ajax_openvpn_server.asp',
 			dataType: 'script',
 			timeout: 1500,
@@ -500,7 +499,7 @@ function showclientlist(){
 	}
 
   code +='</table>';
-	$("clientlist_Block").innerHTML = code;
+	document.getElementById("clientlist_Block").innerHTML = code;
 }
 
 function addRow(obj, head){
@@ -514,8 +513,8 @@ function addRow(obj, head){
 }
 
 function addRow_Group(upper){
-	var rule_num = $('clientlist_table').rows.length;
-	var item_num = $('clientlist_table').rows[0].cells.length;
+	var rule_num = document.getElementById('clientlist_table').rows.length;
+	var item_num = document.getElementById('clientlist_table').rows[0].cells.length;
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;
@@ -541,8 +540,8 @@ function addRow_Group(upper){
 
 	if(item_num >=2){
 		for(i=0; i<rule_num; i++){
-				if(document.form.clientlist_ipAddr.value.toLowerCase() == $('clientlist_table').rows[i].cells[1].innerHTML.toLowerCase() &&
-				   document.form.clientlist_dstipAddr.value.toLowerCase() == $('clientlist_table').rows[i].cells[2].innerHTML.toLowerCase()){
+				if(document.form.clientlist_ipAddr.value.toLowerCase() == document.getElementById('clientlist_table').rows[i].cells[1].innerHTML.toLowerCase() &&
+				   document.form.clientlist_dstipAddr.value.toLowerCase() == document.getElementById('clientlist_table').rows[i].cells[2].innerHTML.toLowerCase()){
 					alert("<#JS_duplicate#>");
 					document.form.clientlist_ipAddr.focus();
 					document.form.clientlist_ipAddr.select();
@@ -561,18 +560,18 @@ function addRow_Group(upper){
 
 function del_Row(r){
 	var i=r.parentNode.parentNode.rowIndex;
-	$('clientlist_table').deleteRow(i);
+	document.getElementById('clientlist_table').deleteRow(i);
 
 	var clientlist_value = "";
-	for(k=0; k<$('clientlist_table').rows.length; k++){
+	for(k=0; k<document.getElementById('clientlist_table').rows.length; k++){
 		clientlist_value += "&#60";
-		clientlist_value += $('clientlist_table').rows[k].cells[0].innerHTML;
+		clientlist_value += document.getElementById('clientlist_table').rows[k].cells[0].innerHTML;
 		clientlist_value += "&#62";
-		clientlist_value += $('clientlist_table').rows[k].cells[1].innerHTML;
+		clientlist_value += document.getElementById('clientlist_table').rows[k].cells[1].innerHTML;
 		clientlist_value += "&#62";
-		clientlist_value += $('clientlist_table').rows[k].cells[2].innerHTML;
+		clientlist_value += document.getElementById('clientlist_table').rows[k].cells[2].innerHTML;
 		clientlist_value += "&#62";
-		clientlist_value += $('clientlist_table').rows[k].cells[3].innerHTML;
+		clientlist_value += document.getElementById('clientlist_table').rows[k].cells[3].innerHTML;
 	}
 
 	clientlist_array = clientlist_value;
@@ -606,7 +605,7 @@ function showLANIPList(){
 		}
 	}
 
-	$("ClientList_Block_PC").innerHTML = htmlCode;
+	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function setClientIP(_name, _ipaddr){
@@ -619,15 +618,15 @@ function setClientIP(_name, _ipaddr){
 var over_var = 0;
 var isMenuopen = 0;
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 }
 
 function pullLANIPList(obj){
 	if(isMenuopen == 0){
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';
+		document.getElementById("ClientList_Block_PC").style.display = 'block';
 		document.form.clientlist_deviceName.focus();
 		isMenuopen = 1;
 	}
@@ -798,7 +797,7 @@ function validate_ipcidr(obj){
 							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
 							<script type="text/javascript">
 
-								$j('#radio_service_enable').iphoneSwitch(service_state,
+								$('#radio_service_enable').iphoneSwitch(service_state,
 									 function() {
 										document.form.action_script.value = "start_vpnclient" + openvpn_unit;
 										parent.showLoading();

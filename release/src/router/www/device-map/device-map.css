@@ -34,6 +34,14 @@ body {
 .clientIcon:hover{
 	background-image:url('/images/New_ui/networkmap/client-listover.png') !important;
 }
+.clientIcon_no_hover{
+	width:80px;
+	height:60px;
+	background-image:url('/images/New_ui/networkmap/client-list.png');
+	background-repeat:no-repeat;
+	background-position:50% 61.10%;
+	cursor:pointer;
+}
 
 /*
 Unknown			0 
@@ -135,6 +143,11 @@ Printer			18
 	background-position:52% 68% !important;
 }
 
+.type0_viewMode{
+	background-image:url('/images/New_ui/networkmap/client.png') !important;
+	background-position:52% -3% !important;
+}
+
 .clientBg{
 	font-family:Courier New, Courier, mono;
 	width:293px;
@@ -196,4 +209,75 @@ Printer			18
 	height: 28px;
 	margin-bottom: -20px;
 	background-image:url('/images/New_ui/networkmap/wiredIcon.png') !important;
+}
+.clientlist_viewlist {
+	position: absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index: 200;
+	background-color:#444f53;
+	margin-left: 140px;
+	margin-top: -920px;
+	width:950px;
+	height:850px;
+	box-shadow: 3px 3px 10px #000;
+	display:block;
+	overflow: auto;
+}
+.imgUserIcon_viewlist {
+	width: 39px;
+	height: 39px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	position: relative;
+	margin-top: 4px;
+}
+.clientlist_expander {
+	cursor: pointer;
+	display: inline-block;
+	text-decoration: none;
+	float: right;
+}
+.clientlist_expander:hover {
+	text-decoration: underline;
+	float: right;
+}
+.clientlist_All{
+	width:100px;
+	height:30px;
+	border-top-left-radius:8px;
+	border-bottom-left-radius:8px;
+}
+.clientlist_ByInterface{
+	width:100px;
+	height:30px;
+	margin:-32px 0px 0px 99px;
+	border-top-right-radius:8px;
+	border-bottom-right-radius:8px;
+}
+.ipMethodTag{
+	background-color: #222;
+	font-size: 10px;
+	font-family: monospace;
+	padding: 2px 3px;
+	border-radius: 3px;
+}
+.clientlist_circle {
+	position: relative;
+	width: 15px;
+	height: 15px;
+	border-radius: 50%;
+	background: #333;
+	margin-top: -3px;
+	margin-left: 35px;
+	margin-bottom: -15px;
+	z-index: 200;
+}
+.clientlist_circle div{
+	height: 15px;
+	text-align: center;
+	margin-top: 3px;
+	line-height: 16px;
 }

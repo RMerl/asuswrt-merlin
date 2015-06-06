@@ -34,7 +34,7 @@
 </style>
 
 <script>
-var $j = jQuery.noConflict();
+
 
 window.onresize = cal_panel_block;
 tr_enable = '<% nvram_get("tr_enable"); %>';
@@ -64,12 +64,12 @@ function done_validating(action){
 
 function set_cert(){
 	cal_panel_block();
-	$j("#cert_panel").fadeIn(300);	
+	$("#cert_panel").fadeIn(300);	
 }
 
 function cancel_cert_panel(){
 	this.FromObject ="0";
-	$j("#cert_panel").fadeOut(300);	
+	$("#cert_panel").fadeOut(300);	
 	//setTimeout("document.getElementById('edit_tr_ca_cert').value = '<% nvram_clean_get("tr_ca_cert"); %>';", 300);
 	//setTimeout("document.getElementById('edit_tr_client_cert').value = '<% nvram_clean_get("tr_client_cert"); %>';", 300);
 	//setTimeout("document.getElementById('edit_tr_client_key').value = '<% nvram_clean_get("tr_client_key"); %>';", 300);
@@ -106,7 +106,7 @@ function cal_panel_block(){
 
 	}
 
-	$("cert_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("cert_panel").style.marginLeft = blockmarginLeft+"px";
 }
 </script>
 </head>
@@ -235,7 +235,7 @@ function cal_panel_block(){
 				<tr>
 					<th>URL</th>
 					<td>
-						<input type="text" maxlength="64" name="tr_acs_url" class="input_32_table" value="<% nvram_get("tr_acs_url"); %>" onKeyPress="return is_string(this,event);"/>
+						<input type="text" maxlength="64" name="tr_acs_url" class="input_32_table" value="<% nvram_get("tr_acs_url"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
 						<span id="cert_text" onclick="set_cert();" style="text-decoration:underline;cursor:pointer;">Import Certificate</span>
 					</td>
 				</tr>
@@ -243,14 +243,14 @@ function cal_panel_block(){
 				<tr>
 					<th>User Name</th>
 					<td>
-						<input type="text" maxlength="32" name="tr_username" class="input_15_table" value="<% nvram_get("tr_username"); %>" onKeyPress="return is_string(this,event);"/>
+						<input type="text" maxlength="32" name="tr_username" class="input_15_table" value="<% nvram_get("tr_username"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>
 
 				<tr>
 					<th>Password</th>
 					<td>
-						<input type="password" maxlength="32" name="tr_passwd" class="input_15_table" value="<% nvram_get("tr_passwd"); %>" onKeyPress="return is_string(this,event);"/>
+						<input type="password" maxlength="32" name="tr_passwd" class="input_15_table" value="<% nvram_get("tr_passwd"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>
 			</table>
@@ -265,14 +265,14 @@ function cal_panel_block(){
 				<tr>
 					<th>User Name</th>
 					<td>
-						<input type="text" maxlength="32" name="tr_conn_username" class="input_15_table" value="<% nvram_get("tr_conn_username"); %>" onKeyPress="return is_string(this,event);"/>
+						<input type="text" maxlength="32" name="tr_conn_username" class="input_15_table" value="<% nvram_get("tr_conn_username"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>
 
 				<tr>
 					<th>Password</th>
 					<td>
-						<input type="password" maxlength="32" name="tr_conn_passwd" class="input_15_table" value="<% nvram_get("tr_conn_passwd"); %>" onKeyPress="return is_string(this,event);"/>
+						<input type="password" maxlength="32" name="tr_conn_passwd" class="input_15_table" value="<% nvram_get("tr_conn_passwd"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>
 			</table>
@@ -295,7 +295,7 @@ function cal_panel_block(){
 				<tr>
 					<th>Interval</th>
 					<td>
-						<input type="text" maxlength="10" name="tr_inform_interval" class="input_15_table" value="<% nvram_get("tr_inform_interval"); %>" onKeyPress="return is_number(this,event);"/>
+						<input type="text" maxlength="10" name="tr_inform_interval" class="input_15_table" value="<% nvram_get("tr_inform_interval"); %>" onKeyPress="return is_number(this,event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>	
         	</table>

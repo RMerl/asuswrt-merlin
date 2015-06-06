@@ -340,14 +340,17 @@ function change_ddns_setting(v){
 					showhide("need_custom_scripts", 1);
 				else
 					showhide("need_custom_scripts", 0);
-		}else{
+		}
+		else{
 				document.form.ddns_hostname_x.parentNode.style.display = "";
 				document.form.DDNSName.parentNode.style.display = "none";
 				inputCtrl(document.form.ddns_username_x, 1);
 				inputCtrl(document.form.ddns_passwd_x, 1);
 				var disable_wild = 0;
-				if(v == "WWW.TUNNELBROKER.NET" || v == "WWW.NAMECHEAP.COM")
-					disable_wild = 1;
+				if(v == "WWW.TUNNELBROKER.NET" || v == "WWW.NAMECHEAP.COM" || v == "WWW.SELFHOST.DE")
+					var disable_wild = 1;
+				else
+					var disable_wild = 0;
 				document.form.ddns_wildcard_x[0].disabled= disable_wild;
 				document.form.ddns_wildcard_x[1].disabled= disable_wild;
 				if(v == "WWW.ZONEEDIT.COM" || v == "WWW.NAMECHEAP.COM"){	 // Jieming added at 2013/03/06, remove free trail of zoneedit and add a link to direct to zoneedit 
@@ -369,35 +372,13 @@ function change_ddns_setting(v){
 				showhide("need_custom_scripts", 0);
 		}
 		if(v == "WWW.NAMECHEAP.COM")
-			$("ddns_username_th").innerHTML = Untranslated.namecheap_username_title;
+			document.getElementById("ddns_username_th").innerHTML = Untranslated.namecheap_username_title;
 		else
-			$("ddns_username_th").innerHTML = "<#LANHostConfig_x_DDNSUserName_itemname#>";
+			document.getElementById("ddns_username_th").innerHTML = "<#LANHostConfig_x_DDNSUserName_itemname#>";
 }
 
 function change_common_radio(o, s, v, r){
-	if (v=='wl_radio'){
-		if(sw_mode != "3"){
-			if(document.form.wl_radio[0].checked==true){
-				if(document.form.wl_radio_date_x_Sun.checked == false
-					&& document.form.wl_radio_date_x_Mon.checked == false
-					&& document.form.wl_radio_date_x_Tue.checked == false
-					&& document.form.wl_radio_date_x_Wed.checked == false
-					&& document.form.wl_radio_date_x_Thu.checked == false
-					&& document.form.wl_radio_date_x_Fri.checked == false
-					&& document.form.wl_radio_date_x_Sat.checked == false){
-						document.form.wl_radio_date_x_Sun.focus();
-						$('blank_warn').style.display = "";
-						return false;
-				}
-				else{
-					$('blank_warn').style.display = "none";
-				}
-			}else{
-				$('blank_warn').style.display = "none";
-			}
-		}
-	}
-	else if(v == "ddns_enable_x"){
+	if(v == "ddns_enable_x"){
 		var hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
 		if(r == 1){
 			inputCtrl(document.form.ddns_server_x, 1);
@@ -1363,15 +1344,15 @@ function showhide(element, sh)
 }
 
 function check_port_input(obj, emp){	
-	if($("check_port_input"))
+	if(document.getElementById("check_port_input"))
 		obj.parentNode.removeChild(obj.parentNode.childNodes[2]);	
 	if(!Check_multi_range(obj, 1, 65535) || (emp == 1 && obj.value == "")){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_port_input");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_port_input").innerHTML="<#BM_alert_port1#> 1 <#BM_alert_to#> 65535";		
-		$("check_port_input").style.display = "";
+		document.getElementById("check_port_input").innerHTML="<#BM_alert_port1#> 1 <#BM_alert_to#> 65535";		
+		document.getElementById("check_port_input").style.display = "";
 		obj.value = obj.parentNode.childNodes[0].innerHTML;
 		obj.focus();
 		obj.select();
@@ -1382,7 +1363,7 @@ function check_port_input(obj, emp){
 
 //Viz add 2012.07 check Editable table macaddr field
 function check_macaddr_input(obj,flag,emp){ //control hint of input mac address
-	if($("check_mac_input"))
+	if(document.getElementById("check_mac_input"))
 		obj.parentNode.removeChild(obj.parentNode.childNodes[2]);
 	
 	if(flag == 1 || (emp == 1 && obj.value == "")){		
@@ -1390,8 +1371,8 @@ function check_macaddr_input(obj,flag,emp){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac_input");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac_input").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
-		$("check_mac_input").style.display = "";
+		document.getElementById("check_mac_input").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac_input").style.display = "";
 		obj.value = obj.parentNode.childNodes[0].innerHTML;
 		obj.focus();
 		obj.select();
@@ -1401,8 +1382,8 @@ function check_macaddr_input(obj,flag,emp){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac_input");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac_input").innerHTML=Untranslated.illegal_MAC;		
-		$("check_mac_input").style.display = "";
+		document.getElementById("check_mac_input").innerHTML=Untranslated.illegal_MAC;		
+		document.getElementById("check_mac_input").style.display = "";
 		obj.value = obj.parentNode.childNodes[0].innerHTML;
 		obj.focus();
 		obj.select();
@@ -1527,6 +1508,10 @@ function limit_auth_method(g_unit){
 			
 		}
 	}
+		
+	if(is_KR_sku){	// MODELDEP by Territory_code
+		auth_array.splice(0, 1); //remove Open System
+	}	
 	
 	free_options(document.form.wl_auth_mode_x);
 	for(i = 0; i < auth_array.length; i++){

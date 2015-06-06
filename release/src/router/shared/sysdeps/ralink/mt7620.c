@@ -666,7 +666,7 @@ static void build_wan_lan_mask(int stb)
 	if (sw_mode == SW_MODE_AP || sw_mode == SW_MODE_REPEATER)
 		wanscap_lan = 0;
 
-	if (stb == 100 && (sw_mode == SW_MODE_AP || __is_mediabridge_mode(sw_mode)))
+	if (stb == 100 && (sw_mode == SW_MODE_AP || __mediabridge_mode(sw_mode)))
 		stb = 7;	/* Don't create WAN port. */
 
 	if (wanscap_lan && (wans_lanport < 0 || wans_lanport > 4)) {

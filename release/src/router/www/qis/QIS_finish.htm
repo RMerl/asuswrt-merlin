@@ -29,9 +29,14 @@ span{
 
 <script>
 <% wanlink(); %>
+<% first_wanlink(); %>
 <% secondary_wanlink(); %>
 
-
+var sw_mode = '<% nvram_get("sw_mode"); %>';
+if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+	sw_mode = 4;
+if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+	sw_mode = 2;
 var wan_primary = "";
 var wan0_primary = '<% nvram_get("wan0_primary"); %>';
 var wan1_primary = '<% nvram_get("wan1_primary"); %>';
@@ -195,14 +200,7 @@ function doLiveUpdate(_do){
 		document.start_update.submit();
 	}
 	else{
-		if(parent.ISMOBILE){
-			document.getElementById("mainDiv_finish").style.display = "";
-			document.getElementById("liveUpdate_div").style.display = "none";
-		}
-		else{
-			document.getElementById("QISmain").style.display = "";
-			document.getElementById("liveUpdate_div").style.display = "none";
-		}
+		goto_index();
 	}
 }
 
@@ -286,39 +284,292 @@ function showLoadingUpdate(){
 	progressBar++;	
 }
 
+function checkIsNewFirmware(){
+	if(parent.new_FW){
+		$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno; 
+		$("#latestFW")[0].innerHTML = "" 
+		for(var i=0; i<parent.Latest_firm.length; i++){
+			$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
+			if(i == parent.Latest_firm.length - 1)
+				$("#latestFW")[0].innerHTML += "_";
+			else
+				$("#latestFW")[0].innerHTML += ".";
+		}
+		$("#latestFW")[0].innerHTML += parent.Latest_buildno;
+		$("#latestFW")[0].innerHTML += "_";
+		$("#latestFW")[0].innerHTML += parent.Latest_extendno;			
+
+		document.getElementById("QISmain").style.display = "none";
+		document.getElementById("liveUpdate_div").style.display = "";
+	}
+	else{
+		goto_index();
+	}
+}
+
+var timer;
 function QKfinish_load_body(){
+	parent.detect_firmware();
+
 	var shown_str;
 	if(parent.yadns_support && parent.yadns_done){
 		gotoNext();
-		return false;
-	}
-	if(parent.liveUpdateFinish && !parent.new_FW){
-		goto_index();
-		document.getElementById("QISmain").style.display = "none";
-		document.getElementById("liveUpdate_div").style.display = "none";
 		return false;
 	}
 		
 	document.getElementById("QISmain").style.display = "";
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
 
-	// Wireless Security
-	$("#ssid_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
-	$("#ssid_2")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'));
-	$("#ssid_5_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
-	$("#ssid_5")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'));
-	$("#key2_item")[0].innerHTML = "<#Network_key#>";
-	$("#key5_item")[0].innerHTML = "<#Network_key#>";
-	$("#security_item2")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
-	$("#security_item5")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
+	if(gobi_support){
+		$("#freqtitle2")[0].style.display = "none";
+		$("#ssid2_block")[0].style.display = "none";
+		$("#key2_block")[0].style.display = "none";
+		$("#security2_block")[0].style.display = "none";
+		$("#freqtitle5")[0].style.display = "none";
+		$("#ssid5_block")[0].style.display = "none";
+		$("#key5_block")[0].style.display = "none";
+		$("#security5_block")[0].style.display = "none";	
 
-	if(parent.wl_info.band5g_2_support){
-		parent.document.getElementById("contentM").style.height = "630px";
-		$("#band5g_desc")[0].innerHTML = "(5GHz-1)";
-		$("#ssid_5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
-		$("#ssid_5_2")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>'));
-		$("#security_item5_2")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
+		if(parent.wl_info.band5g_2_support){
+			parent.document.getElementById("contentM").style.height = "630px";
+			$("#band5g_desc")[0].innerHTML = "(5GHz-1)";
+			$("#ssid_5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
+			$("#ssid_5_2")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>'));
+			$("#security_item5_2")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
+		}
+
+		$("#ssid_2g")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'));
+		$("#ssid_5g")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'));
+
+		shown_str = "";
+		if(auth_mode2 == "open" && wep_x2 == "0"){
+			$("#security2g")[0].innerHTML = "Open System";
+		}
+		else if(auth_mode2 == "open" && wep_x2 != "0"){
+			$("#security2g")[0].innerHTML = "Open System";
+			if(key_x2 ==1)
+				shown_str = '<% nvram_get("wl0_key1"); %>';
+			else if(key_x2 ==2)	
+				shown_str = '<% nvram_get("wl0_key2"); %>';
+			else if(key_x2 ==3)
+				shown_str = '<% nvram_get("wl0_key3"); %>';
+			else if(key_x2 ==4)		
+				shown_str = '<% nvram_get("wl0_key4"); %>';
+		}
+		else if(auth_mode2 == "shared"){
+			$("#security2g")[0].innerHTML = "Shared Key";
+			if(key_x2 ==1)
+				shown_str = '<% nvram_get("wl0_key1"); %>';
+			else if(key_x2 ==2)	
+				shown_str = '<% nvram_get("wl0_key2"); %>';
+			else if(key_x2 ==3)
+				shown_str = '<% nvram_get("wl0_key3"); %>';
+			else if(key_x2 ==4)		
+				shown_str = '<% nvram_get("wl0_key4"); %>';
+		}
+		else if(auth_mode2 == "psk"){
+			$("#security2g")[0].innerHTML = "WPA-Personal - TKIP";
+			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
+		}
+		else if(auth_mode2 == "psk2"){
+			$("#security2g")[0].innerHTML = "WPA2-Personal - AES";
+			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
+		}	
+		else if(auth_mode2 == "pskpsk2"){
+			$("#security2g")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
+		}
+		else{
+			$("#ssid_2g")[0].style.display = "none";
+			$("#key2g")[0].style.display = "none";
+			$("#security2g")[0].style.display = "none";
+		}
+		$("#key2g")[0].innerHTML = handle_show_str(decodeURIComponent(shown_str));
+
+		if(!parent.band5g_support){
+			$("#ssid_5g")[0].style.display = "none";
+			$("#key5g")[0].style.display = "none";
+			$("#security5g")[0].style.display = "none";
+		}
+		else{
+			shown_str = "";
+			if(auth_mode == "open" && wep_x == "0"){
+				$("#security5g")[0].innerHTML = "Open System";
+			}
+			else if(auth_mode == "open" && wep_x != "0"){
+				$("#security5g")[0].innerHTML = "Open System";
+				if(key_x ==1)
+					shown_str = '<% nvram_get("wl1_key1"); %>';
+				else if(key_x ==2)	
+					shown_str = '<% nvram_get("wl1_key2"); %>';
+				else if(key_x ==3)
+					shown_str = '<% nvram_get("wl1_key3"); %>';
+				else if(key_x ==4)		
+					shown_str = '<% nvram_get("wl1_key4"); %>';
+			}
+			else if(auth_mode == "shared"){
+				$("#security5g")[0].innerHTML = "Shared Key";
+				if(key_x ==1)
+					shown_str = '<% nvram_get("wl1_key1"); %>';
+				else if(key_x ==2)	
+					shown_str = '<% nvram_get("wl1_key2"); %>';
+				else if(key_x ==3)
+					shown_str = '<% nvram_get("wl1_key3"); %>';
+				else if(key_x ==4)		
+					shown_str = '<% nvram_get("wl1_key4"); %>';
+			}
+			else if(auth_mode == "psk"){
+				$("#security5g")[0].innerHTML = "WPA-Personal - TKIP";
+				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
+			}
+			else if(auth_mode == "psk2"){
+				$("#security5g")[0].innerHTML = "WPA2-Personal - AES";
+				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
+			}
+			else if(auth_mode == "pskpsk2"){
+				$("#security5g")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
+			}
+			else{	
+				$("#ssid_5g")[0].style.display = "none";
+				$("#key5g")[0].style.display = "none";
+				$("#security5g")[0].style.display = "none";
+			}
+			$("#key5g")[0].innerHTML = handle_show_str(decodeURIComponent(shown_str));
+		}
+
+		//Repeater mode wireless LAN 2.4G/5G
+		if('<% nvram_get("sw_mode"); %>' == "2"){		
+			if('<% nvram_get("wlc_band"); %>' == 0){
+				auth_mode2 = '<% nvram_get("wl0.1_auth_mode_x"); %>';
+				wep_x2 = '<% nvram_get("wl0.1_wep_x"); %>';
+				key_x2 = '<% nvram_get("wl0.1_key"); %>';
+				document.form.wl0_ssid2.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl0.1_ssid"); %>');
+				document.form.wl0_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl0.1_wpa_psk"); %>');
+				$("#ssid_2g")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_ssid"); %>');
+				
+				if(auth_mode2 == "open" && wep_x2 == "0"){
+					$("#security2g")[0].innerHTML = "Open System";
+				}
+				else if(auth_mode2 == "open" && wep_x2 != "0"){
+					$("#security2g")[0].innerHTML = "Open System";
+					if(key_x2 ==1)
+						$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key1"); %>');
+					else if(key_x2 ==2)	
+						$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key2"); %>');
+					else if(key_x2 ==3)
+						$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key3"); %>');
+					else if(key_x2 ==4)		
+						$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key4"); %>');
+				}
+				else if(auth_mode2 == "shared"){
+					$("#security2g")[0].innerHTML = "Shared Key";
+					if(key_x2 ==1)
+						$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key1"); %>');
+					else if(key_x2 ==2)	
+						$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key2"); %>');
+					else if(key_x2 ==3)
+						$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key3"); %>');
+					else if(key_x2 ==4)		
+						$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key4"); %>');		
+	 			}
+				else if(auth_mode2 == "psk"){
+					$("#security2g")[0].innerHTML = "WPA-Personal - TKIP";
+					$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
+				}
+				else if(auth_mode2 == "psk2"){
+					$("#security2g")[0].innerHTML = "WPA2-Personal - AES";
+					$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
+				}	
+				else if(auth_mode2 == "pskpsk2"){
+					$("#security2g")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+					$("#key2g")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
+				}
+				else{
+					$("#ssid_2g")[0].style.display = "none";
+					$("#key2g")[0].style.display = "none";
+					$("#security2g")[0].style.display = "none";
+				}
+			}
+			
+			if(!parent.band5g_support){
+				$("#ssid_5g")[0].style.display = "none";
+				$("#key5g")[0].style.display = "none";
+				$("#security5g")[0].style.display = "none";
+			}
+			else{		
+				if('<% nvram_get("wlc_band"); %>' == 1){			
+					auth_mode = '<% nvram_get("wl1.1_auth_mode_x"); %>';
+					wep_x = '<% nvram_get("wl1.1_wep_x"); %>';
+					key_x = '<% nvram_get("wl1.1_key"); %>';			
+					document.form.wl1_ssid2.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl1.1_ssid"); %>');
+					document.form.wl1_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl1.1_wpa_psk"); %>');
+					$("#ssid_5g")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_ssid"); %>');
+				
+					if(auth_mode == "open" && wep_x == "0"){
+						$("#security5g")[0].innerHTML = "Open System";
+						$("#key5g")[0].style.display = "none";
+					}
+					else if(auth_mode == "open" && wep_x != "0"){
+						$("#security5g")[0].innerHTML = "Open System";
+						if(key_x ==1)
+							$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key1"); %>');
+						else if(key_x ==2)	
+							$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key2"); %>');
+						else if(key_x ==3)
+							$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key3"); %>');
+						else if(key_x ==4)		
+							$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key4"); %>');
+					}
+					else if(auth_mode == "shared"){
+						$("#security5g")[0].innerHTML = "Shared Key";
+						if(key_x ==1)
+							$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key1"); %>');
+						else if(key_x ==2)	
+							$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key2"); %>');
+						else if(key_x ==3)
+							$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key3"); %>');
+						else if(key_x ==4)		
+							$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key4"); %>');		
+					}
+					else if(auth_mode == "psk"){
+						$("#security5g")[0].innerHTML = "WPA-Personal - TKIP";
+						$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
+					}
+					else if(auth_mode == "psk2"){
+						$("#security5g")[0].innerHTML = "WPA2-Personal - AES";
+						$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
+					}
+					else if(auth_mode == "pskpsk2"){
+						$("#security5g")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+						$("#key5g")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
+					}
+					else{	
+						$("#ssid_5g")[0].style.display = "none";
+						$("#key5g")[0].style.display = "none";
+						$("#security5g")[0].style.display = "none";
+					}
+				}
+			}	
+		}
 	}
+	else{
+		// Wireless Security
+		$("#freqtitle")[0].style.display = "none";
+		$("#band_block")[0].style.display = "none";
+		$("#ssid_block")[0].style.display = "none";
+		$("#key_block")[0].style.display = "none";
+		$("#security_block")[0].style.display = "none";
+		$("#wanstatus_tr1")[0].style.display = "none";
+		
+		$("#ssid_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
+		$("#ssid_2")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'));
+		$("#ssid_5_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
+		$("#ssid_5")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'));
+		$("#key2_item")[0].innerHTML = "<#Network_key#>";
+		$("#key5_item")[0].innerHTML = "<#Network_key#>";
+		$("#security_item2")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
+		$("#security_item5")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
 
 		shown_str = "";
 		if(auth_mode2 == "open" && wep_x2 == "0"){
@@ -423,231 +674,256 @@ function QKfinish_load_body(){
 			$("#key5")[0].innerHTML = handle_show_str(decodeURIComponent(shown_str));
 		}
 
-		if(!parent.wl_info.band5g_2_support){
-			$("#desc2g")[0].style.display = "none";
-			$("#freqtitle5_2")[0].style.display = "none";
-			$("#ssid5_2_block")[0].style.display = "none";
-			$("#key5_2_block")[0].style.display = "none";
-			$("#security5_2_block")[0].style.display = "none";
-		}
-		else{
-			shown_str = "";
-			if(auth_mode_5_2 == "open" && wep_x_5_2 == "0"){
-				$("#security5_2")[0].innerHTML = "Open System";
-				$("#key5_2_block")[0].style.display = "none";
-			}
-			else if(auth_mode_5_2 == "open" && wep_x_5_2 != "0"){
-				$("#security5_2")[0].innerHTML = "Open System";
-				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
-				if(key_x_5_2 ==1)
-					shown_str = '<% nvram_get("wl2_key1"); %>';
-				else if(key_x_5_2 ==2)	
-					shown_str = '<% nvram_get("wl2_key2"); %>';
-				else if(key_x_5_2 ==3)
-					shown_str = '<% nvram_get("wl2_key3"); %>';
-				else if(key_x_5_2 ==4)		
-					shown_str = '<% nvram_get("wl2_key4"); %>';
-			}
-			else if(auth_mode_5_2 == "shared"){
-				$("#security5_2")[0].innerHTML = "Shared Key";
-				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
-				if(key_x_5_2 ==1)
-					shown_str = '<% nvram_get("wl2_key1"); %>';
-				else if(key_x_5_2 ==2)	
-					shown_str = '<% nvram_get("wl2_key2"); %>';
-				else if(key_x_5_2 ==3)
-					shown_str = '<% nvram_get("wl2_key3"); %>';
-				else if(key_x_5_2 ==4)		
-					shown_str = '<% nvram_get("wl2_key4"); %>';
-			}
-			else if(auth_mode_5_2 == "psk"){
-				$("#security5_2")[0].innerHTML = "WPA-Personal - TKIP";
-				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
-				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
-			}
-			else if(auth_mode_5_2 == "psk2"){
-				$("#security5_2")[0].innerHTML = "WPA2-Personal - AES";
-				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
-				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
-			}
-			else if(auth_mode_5_2 == "pskpsk2"){
-				$("#security5_2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
-				$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
-				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
-			}
-			else{	
-				$("#freqtitle5_2")[0].style.display = "none";
-				$("#ssid5_2_block")[0].style.display = "none";
-				$("#key5_2_block")[0].style.display = "none";
-				$("#security5_2_block")[0].style.display = "none";
-			}
-			$("#key5_2")[0].innerHTML = handle_show_str(decodeURIComponent(shown_str));
-		}		
-
-	//Repeater mode wireless LAN 2.4G/5G
-	if('<% nvram_get("sw_mode"); %>' == "2"){
-		
-		if('<% nvram_get("wlc_band"); %>' == 0){
-			auth_mode2 = '<% nvram_get("wl0.1_auth_mode_x"); %>';
-			wep_x2 = '<% nvram_get("wl0.1_wep_x"); %>';
-			key_x2 = '<% nvram_get("wl0.1_key"); %>';
-			document.form.wl0_ssid2.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl0.1_ssid"); %>');
-			document.form.wl0_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl0.1_wpa_psk"); %>');
-			$("#ssid_2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_ssid"); %>');
-			
-			if(auth_mode2 == "open" && wep_x2 == "0"){
+		//Repeater mode wireless LAN 2.4G/5G
+		if(sw_mode == "2"){
+			if('<% nvram_get("wlc_band"); %>' == 0){
+				auth_mode2 = '<% nvram_get("wl0.1_auth_mode_x"); %>';
+				wep_x2 = '<% nvram_get("wl0.1_wep_x"); %>';
+				key_x2 = '<% nvram_get("wl0.1_key"); %>';
+				document.form.wl0_ssid2.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl0.1_ssid"); %>');
+				document.form.wl0_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl0.1_wpa_psk"); %>');
+				$("#ssid_2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_ssid"); %>');
+				
+				if(auth_mode2 == "open" && wep_x2 == "0"){
 					$("#security2")[0].innerHTML = "Open System";
 					$("#key2_block")[0].style.display = "none";
-			}
-			else if(auth_mode2 == "open" && wep_x2 != "0"){
+				}
+				else if(auth_mode2 == "open" && wep_x2 != "0"){
 					$("#security2")[0].innerHTML = "Open System";
 					if(key_x2 ==1)
-							$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key1"); %>');
+						$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key1"); %>');
 					else if(key_x2 ==2)	
-							$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key2"); %>');
+						$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key2"); %>');
 					else if(key_x2 ==3)
-							$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key3"); %>');
+						$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key3"); %>');
 					else if(key_x2 ==4)		
-							$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key4"); %>');
-			}
-			else if(auth_mode2 == "shared"){
+						$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key4"); %>');
+				}
+				else if(auth_mode2 == "shared"){
 					$("#security2")[0].innerHTML = "Shared Key";
 					if(key_x2 ==1)
-							$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key1"); %>');
+						$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key1"); %>');
 					else if(key_x2 ==2)	
-							$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key2"); %>');
+						$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key2"); %>');
 					else if(key_x2 ==3)
-							$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key3"); %>');
+						$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key3"); %>');
 					else if(key_x2 ==4)		
-							$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key4"); %>');		
-			}
-			else if(auth_mode2 == "psk"){
+						$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_get("wl0.1_key4"); %>');		
+	 			}
+				else if(auth_mode2 == "psk"){
 					$("#security2")[0].innerHTML = "WPA-Personal - TKIP";
 					$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
-			}
-			else if(auth_mode2 == "psk2"){
+				}
+				else if(auth_mode2 == "psk2"){
 					$("#security2")[0].innerHTML = "WPA2-Personal - AES";
 					$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
-			}	
-			else if(auth_mode2 == "pskpsk2"){
+				}	
+				else if(auth_mode2 == "pskpsk2"){
 					$("#security2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
 					$("#key2")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>');
-			}
-			else{
+				}
+				else{
 					$("#freqtitle2")[0].style.display = "none";
 					$("#ssid2_block")[0].style.display = "none";
 					$("#key2_block")[0].style.display = "none";
 					$("#security2_block")[0].style.display = "none";
+				}
 			}
 			
-		}
-		
-		if(!parent.band5g_support){
+			if(!parent.band5g_support){
 				$("#desc2g")[0].style.display = "none";
 				$("#freqtitle5")[0].style.display = "none";
 				$("#ssid5_block")[0].style.display = "none";
 				$("#key5_block")[0].style.display = "none";
 				$("#security5_block")[0].style.display = "none";
-		}
-		else{		
+			}
+			else{		
 				if('<% nvram_get("wlc_band"); %>' == 1){			
-						auth_mode = '<% nvram_get("wl1.1_auth_mode_x"); %>';
-						wep_x = '<% nvram_get("wl1.1_wep_x"); %>';
-						key_x = '<% nvram_get("wl1.1_key"); %>';			
-						document.form.wl1_ssid2.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl1.1_ssid"); %>');
-						document.form.wl1_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl1.1_wpa_psk"); %>');
-						$("#ssid_5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_ssid"); %>');
-			
-						if(auth_mode == "open" && wep_x == "0"){
-								$("#security5")[0].innerHTML = "Open System";
-								$("#key5_block")[0].style.display = "none";
-						}
-						else if(auth_mode == "open" && wep_x != "0"){
-								$("#security5")[0].innerHTML = "Open System";
-								if(key_x ==1)
-										$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key1"); %>');
-								else if(key_x ==2)	
-										$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key2"); %>');
-								else if(key_x ==3)
-										$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key3"); %>');
-								else if(key_x ==4)		
-										$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key4"); %>');
-						}
-						else if(auth_mode == "shared"){
-								$("#security5")[0].innerHTML = "Shared Key";
-								if(key_x ==1)
-										$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key1"); %>');
-								else if(key_x ==2)	
-										$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key2"); %>');
-								else if(key_x ==3)
-										$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key3"); %>');
-								else if(key_x ==4)		
-										$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key4"); %>');		
-						}
-						else if(auth_mode == "psk"){
-								$("#security5")[0].innerHTML = "WPA-Personal - TKIP";
-								$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
-						}
-						else if(auth_mode == "psk2"){
-								$("#security5")[0].innerHTML = "WPA2-Personal - AES";
-								$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
-						}
-						else if(auth_mode == "pskpsk2"){
-								$("#security5")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
-								$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
-						}
-						else{	
-								$("#freqtitle5")[0].style.display = "none";
-								$("#ssid5_block")[0].style.display = "none";
-								$("#key5_block")[0].style.display = "none";
-								$("#security5_block")[0].style.display = "none";
-						}
+					auth_mode = '<% nvram_get("wl1.1_auth_mode_x"); %>';
+					wep_x = '<% nvram_get("wl1.1_wep_x"); %>';
+					key_x = '<% nvram_get("wl1.1_key"); %>';			
+					document.form.wl1_ssid2.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl1.1_ssid"); %>');
+					document.form.wl1_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wl1.1_wpa_psk"); %>');
+					$("#ssid_5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_ssid"); %>');
+				
+					if(auth_mode == "open" && wep_x == "0"){
+						$("#security5")[0].innerHTML = "Open System";
+						$("#key5_block")[0].style.display = "none";
+					}
+					else if(auth_mode == "open" && wep_x != "0"){
+						$("#security5")[0].innerHTML = "Open System";
+						if(key_x ==1)
+							$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key1"); %>');
+						else if(key_x ==2)	
+							$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key2"); %>');
+						else if(key_x ==3)
+							$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key3"); %>');
+						else if(key_x ==4)		
+							$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1_key4"); %>');
+					}
+					else if(auth_mode == "shared"){
+						$("#security5")[0].innerHTML = "Shared Key";
+						if(key_x ==1)
+							$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key1"); %>');
+						else if(key_x ==2)	
+							$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key2"); %>');
+						else if(key_x ==3)
+							$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key3"); %>');
+						else if(key_x ==4)		
+							$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_get("wl1.1_key4"); %>');		
+					}
+					else if(auth_mode == "psk"){
+						$("#security5")[0].innerHTML = "WPA-Personal - TKIP";
+						$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
+					}
+					else if(auth_mode == "psk2"){
+						$("#security5")[0].innerHTML = "WPA2-Personal - AES";
+						$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
+					}
+					else if(auth_mode == "pskpsk2"){
+						$("#security5")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+						$("#key5")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>');
+					}
+					else{	
+						$("#freqtitle5")[0].style.display = "none";
+						$("#ssid5_block")[0].style.display = "none";
+						$("#key5_block")[0].style.display = "none";
+						$("#security5_block")[0].style.display = "none";
+					}
 				}
-		}	
-	}		
+			}	
+		}			
+	}
+
+	if(!parent.wl_info.band5g_2_support){
+		$("#freqtitle5_2")[0].style.display = "none";
+		$("#ssid5_2_block")[0].style.display = "none";
+		$("#key5_2_block")[0].style.display = "none";
+		$("#security5_2_block")[0].style.display = "none";
+	}
+	else{
+		parent.document.getElementById("contentM").style.height = "630px";
+		$("#band5g_desc")[0].innerHTML = "(5GHz-1)";
+		$("#ssid_5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
+		$("#ssid_5_2")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>'));
+		$("#security_item5_2")[0].innerHTML = "<#QIS_finish_wireless_item2#>";	
+
+		shown_str = "";
+		if(auth_mode_5_2 == "open" && wep_x_5_2 == "0"){
+			$("#security5_2")[0].innerHTML = "Open System";
+			$("#key5_2_block")[0].style.display = "none";
+		}
+		else if(auth_mode_5_2 == "open" && wep_x_5_2 != "0"){
+			$("#security5_2")[0].innerHTML = "Open System";
+			$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
+			if(key_x_5_2 ==1)
+				shown_str = '<% nvram_get("wl2_key1"); %>';
+			else if(key_x_5_2 ==2)	
+				shown_str = '<% nvram_get("wl2_key2"); %>';
+			else if(key_x_5_2 ==3)
+				shown_str = '<% nvram_get("wl2_key3"); %>';
+			else if(key_x_5_2 ==4)		
+				shown_str = '<% nvram_get("wl2_key4"); %>';
+		}
+		else if(auth_mode_5_2 == "shared"){
+			$("#security5_2")[0].innerHTML = "Shared Key";
+			$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
+			if(key_x_5_2 ==1)
+				shown_str = '<% nvram_get("wl2_key1"); %>';
+			else if(key_x_5_2 ==2)	
+				shown_str = '<% nvram_get("wl2_key2"); %>';
+			else if(key_x_5_2 ==3)
+				shown_str = '<% nvram_get("wl2_key3"); %>';
+			else if(key_x_5_2 ==4)		
+				shown_str = '<% nvram_get("wl2_key4"); %>';
+		}
+		else if(auth_mode_5_2 == "psk"){
+			$("#security5_2")[0].innerHTML = "WPA-Personal - TKIP";
+			$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
+			shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
+		}
+		else if(auth_mode_5_2 == "psk2"){
+			$("#security5_2")[0].innerHTML = "WPA2-Personal - AES";
+			$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
+			shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
+		}
+		else if(auth_mode_5_2 == "pskpsk2"){
+			$("#security5_2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+			$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
+			shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
+		}
+		else{	
+			$("#freqtitle5_2")[0].style.display = "none";
+			$("#ssid5_2_block")[0].style.display = "none";
+			$("#key5_2_block")[0].style.display = "none";
+			$("#security5_2_block")[0].style.display = "none";
+		}
+		$("#key5_2")[0].innerHTML = handle_show_str(decodeURIComponent(shown_str));
+	}	
 
 	// Connection Status
 	$("#mac_item")[0].innerHTML = "<#MAC_Address#>";
 	$("#mac")[0].innerHTML = '<% nvram_get("lan_hwaddr"); %>';
 	$("#wantype_item")[0].innerHTML = "<#Layer3Forwarding_x_ConnectionType_itemname#>";
 	
-	if(wanlink_type() == "dhcp")
-		var wanlink_type_conv = "<#BOP_ctype_title1#>";
-	else 	if(wanlink_type() == "pppoe" || wanlink_type() == "PPPOE" )
-		var wanlink_type_conv = "PPPoE";
-	else 	if(wanlink_type() == "static")
-		var wanlink_type_conv = "<#BOP_ctype_title5#>";
-	else 	if(wanlink_type() == "pptp")
-		var wanlink_type_conv = "PPTP";
-	else 	if(wanlink_type() == "l2tp")
-		var wanlink_type_conv = "L2TP";
-	else
-		var wanlink_type_conv = wanlink_type();
 
-	if(secondary_wanlink_type() == "dhcp")
-		var secondary_wanlink_type_conv = "<#BOP_ctype_title1#>";
-	else 	if(secondary_wanlink_type() == "pppoe" || secondary_wanlink_type() == "PPPOE" )
-		var secondary_wanlink_type_conv = "PPPoE";
-	else 	if(secondary_wanlink_type() == "static")
-		var secondary_wanlink_type_conv = "<#BOP_ctype_title5#>";
-	else 	if(secondary_wanlink_type() == "pptp")
-		var secondary_wanlink_type_conv = "PPTP";
-	else 	if(secondary_wanlink_type() == "l2tp")
-		var secondary_wanlink_type_conv = "L2TP";
-	else
-		var secondary_wanlink_type_conv = secondary_wanlink_type();	
+	if(parent.dualWAN_support){
+		if(first_wanlink_type() == "dhcp")
+			var wanlink_type_conv = "<#BOP_ctype_title1#>";
+		else 	if(first_wanlink_type() == "pppoe" || first_wanlink_type() == "PPPOE" )
+			var wanlink_type_conv = "PPPoE";
+		else 	if(first_wanlink_type() == "static")
+			var wanlink_type_conv = "<#BOP_ctype_title5#>";
+		else 	if(first_wanlink_type() == "pptp")
+			var wanlink_type_conv = "PPTP";
+		else 	if(first_wanlink_type() == "l2tp")
+			var wanlink_type_conv = "L2TP";
+		else
+			var wanlink_type_conv = first_wanlink_type();
+		if(parent.wans_dualwan_array[1] != "none"){
+			if(secondary_wanlink_type() == "dhcp")
+				var secondary_wanlink_type_conv = "<#BOP_ctype_title1#>";
+			else 	if(secondary_wanlink_type() == "pppoe" || secondary_wanlink_type() == "PPPOE" )
+				var secondary_wanlink_type_conv = "PPPoE";
+			else 	if(secondary_wanlink_type() == "static")
+				var secondary_wanlink_type_conv = "<#BOP_ctype_title5#>";
+			else 	if(secondary_wanlink_type() == "pptp")
+				var secondary_wanlink_type_conv = "PPTP";
+			else 	if(secondary_wanlink_type() == "l2tp")
+				var secondary_wanlink_type_conv = "L2TP";
+			else
+				var secondary_wanlink_type_conv = secondary_wanlink_type();	
+		}
+	}
+	else{
+		if(wanlink_type() == "dhcp")
+			var wanlink_type_conv = "<#BOP_ctype_title1#>";
+		else 	if(wanlink_type() == "pppoe" || wanlink_type() == "PPPOE" )
+			var wanlink_type_conv = "PPPoE";
+		else 	if(wanlink_type() == "static")
+			var wanlink_type_conv = "<#BOP_ctype_title5#>";
+		else 	if(wanlink_type() == "pptp")
+			var wanlink_type_conv = "PPTP";
+		else 	if(wanlink_type() == "l2tp")
+			var wanlink_type_conv = "L2TP";
+		else
+			var wanlink_type_conv = wanlink_type();		
+	}
 	
 	if(parent.dualWAN_support){
 		if(gobi_support){
-			document.getElementById("wan_hd1").innerHTML = "<#dualwan_primary#>";
-			$("#wantype")[0].innerHTML = wanlink_type_conv;
-			document.getElementById("wanstatus_tr1").style.display = "";
-			document.getElementById("wan_tr2").style.display="";
-			document.getElementById("wantype_tr2").style.display="";
-			document.getElementById("wanstatus_tr2").style.display="";
-			document.getElementById("wanip_tr2").style.display="";
-			document.getElementById("wantype_item2").innerHTML = "<#Layer3Forwarding_x_ConnectionType_itemname#>";
-			document.getElementById("wantype2").innerHTML = secondary_wanlink_type_conv;
+			if(wanlink_type_conv == "USB Modem")
+				wanlink_type_conv = "<#Mobile_title#>";
+			document.getElementById("wantype").innerHTML = wanlink_type_conv;
+			
+			if(parent.wans_dualwan_array[1] != "none"){
+				document.getElementById("wantype2").style.display = "";
+				document.getElementById("wanstatus2").style.display = "";
+				document.getElementById("wanip2").style.display = "";				
+				if(secondary_wanlink_type_conv == "USB Modem")
+					secondary_wanlink_type_conv = "<#Mobile_title#>";
+				document.getElementById("wantype2").innerHTML = secondary_wanlink_type_conv;
+			}
 		}
 		else{
 			if(wan_primary == "wan0")
@@ -659,14 +935,10 @@ function QKfinish_load_body(){
 	else
 		$("#wantype")[0].innerHTML = wanlink_type_conv;
 
-	// 2013.09.24 Viz: Hide this button to make sure User click 'next step'
-	//if('<% nvram_get("autodet_auxstate"); %>' == '6')
-		//$("#wantype")[0].innerHTML += '<input type="button" id="changeType" value="<#CTL_modify#>" onclick="redirect_page(\'internet_type\');" class="button_gen" style="margin-left:20px;">';
-		
 	$("#wanip_item")[0].innerHTML = "<#WAN_IP#>";
 	
 		//Repeater mode P-AP
-	if('<% nvram_get("sw_mode"); %>' == "2"){
+	if(sw_mode == "2"){
 		$("#wlcssid")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wlc_ssid"); %>');
 		$("#wlcip")[0].innerHTML = reIP;
 		chkRepeaterConState();
@@ -674,7 +946,7 @@ function QKfinish_load_body(){
 		$(".wlcItem").css("display", "");
 		document.getElementById("tdWlcItem").innerHTML = "<#OP_RE_item#>";
 	}
-	else if('<% nvram_get("sw_mode"); %>' == "3" && '<% nvram_get("wlc_psta"); %>' == "1") {
+	else if(sw_mode == "4") {
 		$("#wlcssid")[0].innerHTML = decodeURIComponent('<% nvram_char_to_ascii("", "wlc_ssid"); %>');
 		$("#wlcip")[0].innerHTML = reIP;
 		chkMBConState();
@@ -686,9 +958,7 @@ function QKfinish_load_body(){
 	else{
 		if(parent.dualWAN_support){
 			if(gobi_support){
-				$("#wanip")[0].innerHTML = wanlink_ipaddr();
-				document.getElementById("wanip_item2").innerHTML = "<#WAN_IP#>";
-				document.getElementById("wanip2").innerHTML = secondary_wanlink_ipaddr();	
+				document.getElementById("wanip").innerHTML = first_wanlink_ipaddr();
 				if(wanlink_ipaddr() != "0.0.0.0"){
 					if(wans_mode == "fb" || wans_mode == "fo"){
 						if( wan_primary == "wan0" )
@@ -702,18 +972,21 @@ function QKfinish_load_body(){
 				else
 					document.getElementById("wanstatus1").innerHTML = "<#Status_Inactive#>";
 				
-				if(secondary_wanlink_ipaddr() != "0.0.0.0"){
-					if(wans_mode == "fb" || wans_mode == "fo"){
-						if( wan_primary == "wan1" )
+				if(parent.wans_dualwan_array[1] != "none"){
+					document.getElementById("wanip2").innerHTML = secondary_wanlink_ipaddr();	
+					if(secondary_wanlink_ipaddr() != "0.0.0.0"){
+						if(wans_mode == "fb" || wans_mode == "fo"){
+							if( wan_primary == "wan1" )
+								document.getElementById("wanstatus2").innerHTML = "<#Status_Active#>";
+							else
+								document.getElementById("wanstatus2").innerHTML = "<#Status_Standby#>";
+						}
+						else //Load-balance
 							document.getElementById("wanstatus2").innerHTML = "<#Status_Active#>";
-						else
-							document.getElementById("wanstatus2").innerHTML = "<#Status_Standby#>";
 					}
-					else //Load-balance
-						document.getElementById("wanstatus2").innerHTML = "<#Status_Active#>";
+					else
+						document.getElementById("wanstatus2").innerHTML = "<#Status_Inactive#>";
 				}
-				else
-					document.getElementById("wanstatus2").innerHTML = "<#Status_Inactive#>";			
 			}
 			else{
 				if(wan_primary == "wan0")
@@ -736,6 +1009,39 @@ function QKfinish_load_body(){
 			if(!parent.yadns_hideqis || yadns_enable != 0)
 				$(".yadnsItem").css("display", "");
 			yadns_change(false);
+		}
+
+		if(sw_mode == "3") {
+			$(".wanItem").css("display", "none");
+			$("#nextButton").css("display", "none");
+
+			if(parent.isStatic){
+				$("#lanip")[0].innerHTML = parent.staticIP;
+				document.getElementById("applyBtn").innerHTML = "<div style='text-align:left;margin-left:70px;'><br/><br/><#SAVE_restart_desc#><br><#LAN_IP_changed_suggedtion1#>&nbsp;" + parent.staticIP + "&nbsp;<#LAN_IP_changed_suggedtion2#></div>";
+				
+				var startQuery = function(){
+					$.ajax({ 
+						url: location.origin.replace(location.hostname, parent.staticIP) + "/httpd_check.json",
+						dataType: 'jsonp',
+						timeout: 2000,
+
+						error: function(){
+							setTimeout(function(){
+								startQuery();
+							}, 1000);
+						}
+					});
+
+				}
+
+				setTimeout(function(){
+					startQuery();
+				}, 80000);
+			}
+			else{
+				$("#lanip")[0].innerHTML = "<#BOP_ctype_title1#>";
+				document.getElementById("applyBtn").innerHTML = "<div style='text-align:left;margin-left:75px;'><br/><br/><#LANConfig_ChangedLANIP#></div>";
+			}
 		}
 	}
 
@@ -777,33 +1083,14 @@ function QKfinish_load_body(){
 			$("#latestFW")[0].innerHTML += parent.Latest_extendno;
 		}
 	}
-	else{
-		if(parent.liveUpdateFinish){
-			if(parent.new_FW){
-				$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno; 
-				$("#latestFW")[0].innerHTML = "" 
-				for(var i=0; i<parent.Latest_firm.length; i++){
-					$("#latestFW")[0].innerHTML += parent.Latest_firm.charAt(i);
-					if(i == parent.Latest_firm.length - 1)
-						$("#latestFW")[0].innerHTML += "_";
-					else
-						$("#latestFW")[0].innerHTML += ".";
-				}
-				$("#latestFW")[0].innerHTML += parent.Latest_buildno;
-				$("#latestFW")[0].innerHTML += "_";
-				$("#latestFW")[0].innerHTML += parent.Latest_extendno;
-			}
-			else{
-				goto_index();
-			}
-
-			document.getElementById("QISmain").style.display = "none";
-			document.getElementById("liveUpdate_div").style.display = "";
-		}
-		
+	else{		
 		parent.set_step("t3");
-		parent.$("LoadingBar").style.visibility = 'hidden';
+		parent.document.getElementById("LoadingBar").style.visibility = 'hidden';
 	}
+}
+
+function iAmAlive(){
+	top.location.href = "http://" + parent.staticIP;					
 }
 
 function gotoASUS(){
@@ -811,7 +1098,38 @@ function gotoASUS(){
 }
 
 function goto_index(){
-	parent.location.href = "/index.asp";
+	document.restartForm.force_change.value++;
+	document.restartForm.action_wait.value = 0;
+
+	if(parent.based_modelid == "4G-AC55U" && parent.wan_autodet_state == "4" && parent.usb_connected == 1){
+		document.restartForm.wans_dualwan.disabled = false;
+		document.restartForm.wans_dualwan.value = "usb wan";
+		parent.sysReboot = true;
+	}
+
+	if(parent.sysReboot){
+		document.restartForm.action_wait.value = eval("<% get_default_reboot_time(); %>");
+		document.restartForm.action_script.value = "reboot";
+	}
+	else if(top.restartWireless){
+		document.restartForm.action_wait.value = 2;
+		document.restartForm.action_script.value = "restart_wireless;";
+	}
+
+	if(document.restartForm.action_wait.value == 0){
+		document.getElementById('loadingIcon').style.display = '';
+	}
+	else{
+		document.getElementById("QISmain").style.display = "none";
+		document.getElementById("liveUpdate_div").style.display = "none";
+		document.getElementById('qisFinish_div').style.display = '';
+	}
+
+	if(parent.based_modelid == "4G-AC55U" && wans_mode == "lb"){
+		document.restartForm.wans_mode.disabled = false;
+	}
+
+	document.restartForm.submit();
 }
 
 function gotoAdvSetting(){
@@ -819,19 +1137,18 @@ function gotoAdvSetting(){
 }
 
 function startLiveDetect(){
-	document.getElementById('loadingIcon').style.display='';
+	document.getElementById('loadingIcon').style.display = '';
 	parent.detect_update();
 }
 
 function gotoNext(){
 	if(parent.yadns_support && !parent.yadns_done)
 		return yadns_apply();
-	if(!parent.ISMOBILE && !parent.liveUpdateFinish)
-		return startLiveDetect();
-	return goto_index();
+
+	return checkIsNewFirmware();
 }
 
-function addBookmarkForBrowser(sTitle) {
+function addBookmarkForBrowser(sTitle){
 	 sTitle = sTitle+" - "+reIP;
 	 
    if(document.all)
@@ -901,7 +1218,8 @@ function set_timezone(){
 			systime_millsec += (-client_timezone*60000);			
 	}
 	
-	document.getElementById('change_tz').innerHTML = timezones[system_timezone_dut];
+	if(typeof timezones[system_timezone_dut] != "undefined")
+		document.getElementById('change_tz').innerHTML = timezones[system_timezone_dut];
 
 	if(system_timezone_dut.search("DST") >= 0){
 		document.getElementById('dstzone').style.display = "";
@@ -937,7 +1255,7 @@ function chkRepeaterConState(){
 				$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
 			}
 			else{
-				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
+				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey_rep\';\"><#APSurvey_action_ConnectingStatus0#></span>";
 			}
 		}
 	});
@@ -955,7 +1273,7 @@ function chkMBConState(){
 				$("#wlcstate")[0].innerHTML = "<#APSurvey_action_ConnectingStatus24#>";
 			}
 			else{
-				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey\';\"><#APSurvey_action_ConnectingStatus0#></span>";
+				$("#wlcstate")[0].innerHTML = "<span style='color:#FC0;text-decoration:underline;cursor:pointer;' onclick=\"javascript:parent.location.href=\'http://'+ theUrl +'/QIS_wizard.htm?flag=sitesurvey_mb\';\"><#APSurvey_action_ConnectingStatus0#></span>";
 			}
 		}
 	});
@@ -1003,6 +1321,32 @@ function chkMBConState(){
 <br/>
 
 <table id="tblsetting_1" class="QISform_finish" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="margin-top:-10px;">
+	<tr id="freqtitle">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#></td>	
+	</tr>
+
+	<!--2.4G  5G-->
+	<tr id="band_block">
+	  <th width="250"><#Interface#></th>
+	  <td class="QISformtd" width="300px"><span style="white-space: pre;">2.4GHz</span></td>
+	  <td class="QISformtd" width="300px"><span style="white-space: pre;">5GHz</span></td>
+	</tr>
+	<tr id="ssid_block">
+	  <th><#QIS_finish_wireless_item1#></th>
+	  <td class="QISformtd"><span id="ssid_2g" style="white-space: pre-wrap; word-break: break-all;"></span></td>
+	  <td class="QISformtd"><span id="ssid_5g" style="white-space: pre-wrap; word-break: break-all;"></span></td>
+	</tr>
+	<tr id="key_block">
+	  <th><#Network_key#></th>
+	  <td class="QISformtd"><span id="key2g" style="word-break: break-all;"></span></td>
+	  <td class="QISformtd"><span id="key5g" style="word-break: break-all;"></span></td>
+	</tr>
+	<tr id="security_block">
+	  <th><#QIS_finish_wireless_item2#></th>
+	  <td class="QISformtd"><span id="security2g"></span></td>
+	  <td class="QISformtd"><span id="security5g"></span></td>
+	</tr>
+
 	<!-- WL 2.4GHz -->
 	<tr id="freqtitle2" class="wlItem">
 		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;" id="desc2g">(2.4GHz)</span></td>	
@@ -1010,13 +1354,13 @@ function chkMBConState(){
 	<tr id="ssid2_block" class="wlItem">
 	  <th width="180"><span id="ssid_2_item"></span></th>
 	  <td class="QISformtd" width="300px">
-			<span id="ssid_2" style="white-space: pre;"></span>
+			<span id="ssid_2" style="white-space: pre-wrap; word-break: break-all;"></span>
 	  </td>
 	</tr>
 	<tr id="key2_block" class="wlItem">
 	  <th width="180"><span id="key2_item"></span></th>
 	  <td class="QISformtd">
-			<span id="key2"></span>
+			<span id="key2" style="word-break: break-all;"></span>
 	  </td>
 	</tr>
 	<tr id="security2_block" class="wlItem">
@@ -1026,7 +1370,6 @@ function chkMBConState(){
 	  </td>
 	</tr>
 
-
 	<!-- WL 5GHz -->
 	<tr id="freqtitle5" class="wlItem">
 		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span id="band5g_desc" style="color:#5AD;">(5GHz)</span></td>	
@@ -1034,13 +1377,13 @@ function chkMBConState(){
 	<tr id="ssid5_block" class="wlItem">
 	  <th width="180"><span id="ssid_5_item"></span></th>
 	  <td class="QISformtd">
-			<span id="ssid_5" style="white-space: pre;"></span>
+			<span id="ssid_5" style="white-space: pre-wrap; word-break: break-all;"></span>
 	  </td>
 	</tr>
 	<tr id="key5_block" class="wlItem">
 	  <th width="180"><span id="key5_item"></span></th>
 	  <td class="QISformtd">
-			<span id="key5"></span>
+			<span id="key5" style="word-break: break-all;"></span>
 	  </td>
 	</tr>
 	<tr id="security5_block" class="wlItem">
@@ -1074,49 +1417,23 @@ function chkMBConState(){
 	</tr>
 
 	<!-- WAN -->
-	<tr class="reItem">
+	<tr class="reItem wanItem">
 		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><div id="wan_hd1"><#menu5_3#></div></td>	
 	</tr>
-	<tr class="reItem">
+	<tr class="reItem wanItem">
 	  <th width="180"><span id="wantype_item"></span></th>
-	  <td class="QISformtd">
-			<span id="wantype"></span>
-	  </td>
+	  <td class="QISformtd"><span id="wantype"></span></td>
+	  <td class="QISformtd"><span id="wantype2" style="display: none;"></span></td>
 	</tr>
-	<tr class="reItem" id="wanstatus_tr1" style="display:none;">
+	<tr class="reItem wanItem" id="wanstatus_tr1">
 	  <th width="180"><#Status_Str#> </th>
-	  <td class="QISformtd">
-			<span id="wanstatus1"></span>
-	  </td>
+	  <td class="QISformtd"><span id="wanstatus1"></span></td>
+	  <td class="QISformtd"><span id="wanstatus2" style="display: none;"></span></td>	  
 	</tr>  
-	<tr class="reItem">
+	<tr class="reItem wanItem">
 	  <th width="180"><span id="wanip_item"></span></th>
-	  <td class="QISformtd">
-			<span id="wanip"></span>
-	  </td>
-	</tr>  
-
-	<!-- Secondary WAN -->
-	<tr class="reItem" id="wan_tr2" style="display: none;">
-		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><div id="wan_hd2"><#dualwan_secondary#></div></td>	
-	</tr>
-	<tr class="reItem" id="wantype_tr2" style="display: none;">
-	  <th width="180"><span id="wantype_item2"></span></th>
-	  <td class="QISformtd">
-			<span id="wantype2"></span>
-	  </td>
-	</tr>
-	<tr class="reItem" id="wanstatus_tr2" style="display: none;">
-	  <th width="180">Status </th>
-	  <td class="QISformtd">
-			<span id="wanstatus2"></span>
-	  </td>
-	</tr>  
-	<tr class="reItem" id="wanip_tr2" style="display: none;">
-	  <th width="180"><span id="wanip_item2"></span></th>
-	  <td class="QISformtd">
-			<span id="wanip2"></span>
-	  </td>
+	  <td class="QISformtd"><span id="wanip"></span></td>
+	  <td class="QISformtd"><span id="wanip2" style="display: none;"></span></td>	  
 	</tr>  
 
 	<!-- LAN -->
@@ -1228,8 +1545,8 @@ function chkMBConState(){
 	</fieldset-->
 </div>
 
-<div id="applyBtn" class="apply_gen" style="margin-top:5px">
-	<input type="button" id="nextButton" value="<#CTL_next#>" onclick="gotoNext();" class="button_gen">
+<div id="applyBtn" class="apply_gen" style="margin-top:30px">
+	<input type="button" id="nextButton" value="<#CTL_finish#>" onclick="gotoNext();" class="button_gen">
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>
 </div>
@@ -1242,7 +1559,6 @@ function chkMBConState(){
 						<div class="description_down"><#menu5_6_3#></div>
 					</td>
 					<td align="right">
-						<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
 					</td>
 				</tr>
 			</table>
@@ -1253,15 +1569,15 @@ function chkMBConState(){
 	</div>
 
 	<div id="newFWDetected">
-		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;line-height:180%;font-size:18px;">
 			<div style="text-align:left;" id="showLiveUpdateResult_div">
 			<#exist_new#><br><br>Do not power off <#Web_Title2#> while upgrade in progress.
 			<br>
 			<br>
-			<div id="current_fw_div" style="display:none;">Your current firmware version is <span style="font-family:Segoe UI, Arial, sans-serif;font-size:18px;" id="currentFW"></span></div>
+			<div id="current_fw_div" style="display:none;">Your current firmware version is <span style="font-family:Segoe UI, Arial, sans-serif;" id="currentFW"></span></div>
 			<br>
 			<br>
-				<div id="Latest_fw_div" style="display:none;">Latest firmware version is <span style="font-family:Segoe UI, Arial, sans-serif;font-size:18px;" id="latestFW"></span></div>	
+				<div id="Latest_fw_div" style="display:none;">Latest firmware version is <span style="font-family:Segoe UI, Arial, sans-serif;" id="latestFW"></span></div>	
 			</div>
 		</div>
 		<br>
@@ -1272,20 +1588,21 @@ function chkMBConState(){
 		</div>
 	</div>
 		
-  <div id="newFWCancel" style="display:none;">
-      <div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
-          <div style="text-align:left;line-height: 25px;">
-              <#newFW_cancel#>
-          </div>
-      </div>
-      <br>
-      <br>
-      <div class="apply_gen" style="margin-top:5px">
-         <input type="button" value="OK" onclick="doLiveUpdate(false);" class="button_gen">
-      </div>
-  </div>
+	<div id="newFWCancel" style="display:none;">
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;line-height: 180%;font-size:18px;">
+			<div id="newFWCancelDesc" style="text-align:left;">
+				<#newFW_cancel#>
+			</div>
+		</div>
+		<br>
+		<br>
+		<div class="apply_gen" style="margin-top:5px">
+			<input type="button" value="OK" onclick="doLiveUpdate(false);" class="button_gen">
+			<img id="doRestartIcon" style="display:none" src="/images/InternetScan.gif">
+		</div>
+	</div>
 
-	<div id="progressBar" class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;display:none;*margin-left:70px;">
+	<div id="progressBar" class="QISGeneralFont" style="margin-top:5px;text-align:center;display:none;*margin-left:70px;line-height: 180%;font-size:18px;">
 		<div style="text-align:left;">
 		<#FIRM_ok_desc#><br>Do not power off <#Web_Title2#> while upgrade in progress.
 		</div>
@@ -1301,10 +1618,9 @@ function chkMBConState(){
 						background-repeat: repeat-x;
 					}
 				</style>
-				<span id="progress_bar_no" style="position:absolute;margin-left:285px;margin-top:7px;*margin-left:290px">0%</span>
+				<span id="progress_bar_no" style="display:none;position:absolute;margin-left:285px;margin-top:7px;*margin-left:290px">0%</span>
 				<img id="updateProgress" src="/images/quotabar.gif" style="width:0%" height="30px">
 			</div>
-			<!--progress max="100" value="60" style="height:30px;width:50%"></progress-->
 		</div>
 		<br>
 		<br>
@@ -1314,8 +1630,8 @@ function chkMBConState(){
 		</div>
 	</div>
 	<br>
-	<div id="newFWgraded" style="margin-top:5px;text-align:center;font-size:18px;display:none;">
-		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
+	<div id="newFWgraded" style="margin-top:5px;text-align:center;display:none;line-height: 180%;font-size:18px;">
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;">
 			<div id="liveUpdateResult" style="text-align:left;color:#FC0;line-height: 25px;">
 			<#is_latest#>
 			</div>
@@ -1326,17 +1642,47 @@ function chkMBConState(){
 		</div>
 	</div>
 
-	<div id="newFWgradedFail" style="margin-top:5px;text-align:center;font-size:18px;display:none;">
-		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
+	<div id="newFWgradedFail" style="margin-top:5px;text-align:center;display:none;line-height: 180%;font-size:18px;">
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;">
 			<div style="text-align:left;color:#FC0">
 			<#Firm_reboot_manually#>
 			</div>
 		</div>
 	</div>
 </div>
+
+<div id="qisFinish_div" style="display:none">
+	<div>
+		<div>
+			<table width="100%">
+				<tr>
+					<td align="left">
+						<div class="description_down"><#Main_alert_proceeding_desc1#></div>
+					</td>
+					<td align="right">
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<br>
+		<br>
+	</div>
+
+	<div>
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;font-size:18px;">
+			<div style="text-align:left;">
+				<#CTL_apply1#>... &nbsp
+				<img src="/images/InternetScan.gif">
+			</div>
+		</div>
+	</div>
+</div>
+
 </form>
 
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
+
 <form method="post" name="start_update" action="/start_apply2.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="flag" value="upgrading">
@@ -1346,6 +1692,7 @@ function chkMBConState(){
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
 </form>
+
 <form method="post" name="yadns_update" action="/start_apply2.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="flag" value="next">
@@ -1357,5 +1704,20 @@ function chkMBConState(){
 <input type="hidden" name="yadns_enable_x" value="<% nvram_get("yadns_enable_x"); %>">
 <input type="hidden" name="yadns_mode" value="<% nvram_get("yadns_mode"); %>">
 </form>
+
+<form method="post" name="restartForm" action="/start_apply2.htm" target="hidden_frame">
+	<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+	<input type="hidden" name="flag" value="finishQIS">
+	<input type="hidden" name="current_page" value="/index.asp">
+	<input type="hidden" name="next_page" value="/index.asp">
+	<input type="hidden" name="action_mode" value="apply">
+	<input type="hidden" name="action_script" value="">
+	<input type="hidden" name="action_wait" value="0">
+	<input type="hidden" name="x_Setting" value="1">
+	<input type="hidden" name="force_change" value="<% nvram_get("force_change"); %>">
+	<input type="hidden" name="wans_mode" value="fo" disabled>
+	<input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>" disabled>
+</form>
+
 </body>
 </html>

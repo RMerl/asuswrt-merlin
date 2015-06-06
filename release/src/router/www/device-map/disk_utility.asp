@@ -51,7 +51,7 @@ var set_diskmon_time = "";
 var progressBar;
 var timer;
 var diskmon_freq_row;
-var $j = jQuery.noConflict();
+
 var stopScan = 0;
 var scan_done = 0;
 
@@ -202,7 +202,7 @@ function show_loadingBar_field(){
 }
 
 function showLoadingUpdate(){
-	$j.ajax({
+	$.ajax({
     	url: '/disk_scan.asp',
     	dataType: 'script',
     	error: function(xhr){
@@ -297,8 +297,8 @@ function abort_scan(){
 function disk_scan_status(){
 	require(['/require/modules/diskList.js'], function(diskList){
 	 	diskList.update(function(){
-	 		$j.each(parent.usbPorts, function(i, curPort){
-		 		$j.each(diskList.list(), function(j, usbDevice){
+	 		$.each(parent.usbPorts, function(i, curPort){
+		 		$.each(diskList.list(), function(j, usbDevice){
 	 				if(curPort.node == usbDevice.node)
 	 					parent.usbPorts[i] = usbDevice;
 		 		});
@@ -310,22 +310,18 @@ function disk_scan_status(){
 }
 
 function get_disk_log(){
-	$j.ajax({
-		url: '/disk_fsck.xml',
+	$.ajax({
+		url: '/disk_fsck.xml?diskmon_usbport=' + parent.usbPorts[diskOrder-1].node,
 		dataType: 'xml',
 		error: function(xhr){
 			alert("Fail to get the log of fsck!");
 		},
 		success: function(xml){
-			$j('#textarea_disk0').html($j(xml).find('disk1').text());
-			$j('#textarea_disk1').html($j(xml).find('disk2').text());
+			$('#textarea_disk0').html($(xml).find('disk1').text());
 		}
 	});
 
-	if(diskOrder == "2")
-		document.getElementById("textarea_disk1").style.display = "";
-	else
-		document.getElementById("textarea_disk0").style.display = "";
+	document.getElementById("textarea_disk0").style.display = "";
 }
 
 function check_status(_device){
@@ -481,7 +477,6 @@ function reset_force_stop(){
 				<td style="vertical-align:top" height="100px;">
 					<span id="log_field" >
 						<textarea cols="15" rows="13" readonly="readonly" id="textarea_disk0" style="resize:none;display:none;width:98%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"></textarea>
-						<textarea cols="15" rows="13" readonly="readonly" id="textarea_disk1" style="resize:none;display:none;width:98%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"></textarea>
 					</span>
 				</td>
 			</tr></table>

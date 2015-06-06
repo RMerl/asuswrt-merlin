@@ -42,4 +42,7 @@
   <sim>g3err_pin=<% nvram_get("g3err_pin"); %></sim>
   <sim>pin_remaining_count=<% nvram_get("usb_modem_act_auth_pin"); %></sim>
   <sim>sim_spn=<% nvram_get("modem_spn"); %></sim>
+  <sim>rx_bytes=<% nvram_get("modem_bytes_rx"); %></sim>
+  <sim>tx_bytes=<% nvram_get("modem_bytes_tx"); %></sim>
+  <sim>modem_sim_order=<% nvram_get("modem_sim_order"); %></sim>
 </devicemap>

@@ -356,9 +356,7 @@ struct sk_buff {
 	__u32			pktc_flags;
 #endif
 #ifdef HNDCTF
-#ifdef RTCONFIG_BWDPI
 	void			*ctf_ipc_txif;
-#endif
 #endif
 #ifdef BCMFA
 #define BCM_FA_INVALID_IDX_VAL	0xFFF00000
@@ -1464,7 +1462,12 @@ static inline int pskb_network_may_pull(struct sk_buff *skb, unsigned int len)
  * NET_IP_ALIGN(2) + ethernet_header(14) + IP_header(20/40) + ports(8)
  */
 #ifndef NET_SKB_PAD
+#if defined(CONFIG_PPTP) || defined(CONFIG_PPTP_MODULE) || \
+    defined(CONFIG_L2TP) || defined(CONFIG_L2TP_MODULE)
+#define NET_SKB_PAD	max(64, L1_CACHE_BYTES)
+#else
 #define NET_SKB_PAD	max(32, L1_CACHE_BYTES)
+#endif
 #endif
 
 extern int ___pskb_trim(struct sk_buff *skb, unsigned int len);

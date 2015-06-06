@@ -500,15 +500,7 @@ int get_dualwan_by_unit(int unit)
 
 	if(wans_dualwan == NULL)	//default value
 	{
-		if(unit == 0)
-		{
-#ifdef RTCONFIG_DSL
-			return WANSCAP_DSL;
-#else
-			return WANS_DUALWAN_IF_WAN;
-#endif
-		}
-		wans_dualwan = DEF_SECOND_WANIF;
+		wans_dualwan = nvram_default_get("wans_dualwan");
 	}
 
 	i = 0;

@@ -86,7 +86,6 @@
 }
 </style>
 <script>
-var $j = jQuery.noConflict();
 
 window.onresize = cal_panel_block;
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
@@ -174,7 +173,7 @@ function initial(){
 	if (pptpd_clients != "") {
 		document.form._pptpd_clients_start.value = pptpd_clients.split("-")[0];
 		document.form._pptpd_clients_end.value = pptpd_clients.split("-")[1];
-		$('pptpd_subnet').innerHTML = pptpd_clients.split(".")[0] + "." +
+		document.getElementById('pptpd_subnet').innerHTML = pptpd_clients.split(".")[0] + "." +
 				      pptpd_clients.split(".")[1] + "." +
 				      pptpd_clients.split(".")[2] + ".";
 	}
@@ -282,7 +281,7 @@ function openvpn_clientlist(){
 		}
 	}
 	code +='</table>';
-	$("openvpn_clientlist_Block").innerHTML = code;
+	document.getElementById("openvpn_clientlist_Block").innerHTML = code;
 }
 
 
@@ -341,16 +340,16 @@ function update_visibility(){
 
 function del_openvpnRow(r){
 	var i=r.parentNode.parentNode.rowIndex;
-	$('openvpn_clientlist_table').deleteRow(i);
+	document.getElementById('openvpn_clientlist_table').deleteRow(i);
 
 	var openvpn_clientlist_value = "";
-	for(k=0; k<$('openvpn_clientlist_table').rows.length; k++){
-		for(j=0; j<$('openvpn_clientlist_table').rows[k].cells.length-1; j++){
+	for(k=0; k<document.getElementById('openvpn_clientlist_table').rows.length; k++){
+		for(j=0; j<document.getElementById('openvpn_clientlist_table').rows[k].cells.length-1; j++){
 			if(j == 0)
 				openvpn_clientlist_value += "<1>";
 			else
 				openvpn_clientlist_value += ">";
-			openvpn_clientlist_value += $('openvpn_clientlist_table').rows[k].cells[j].innerHTML;
+			openvpn_clientlist_value += document.getElementById('openvpn_clientlist_table').rows[k].cells[j].innerHTML;
 		}
 	}
 
@@ -360,8 +359,8 @@ function del_openvpnRow(r){
 }
 
 function addRow_Group(upper){
-	var client_num = $('openvpn_clientlist_table').rows.length;
-	var item_num = $('openvpn_clientlist_table').rows[0].cells.length;
+	var client_num = document.getElementById('openvpn_clientlist_table').rows.length;
+	var item_num = document.getElementById('openvpn_clientlist_table').rows[0].cells.length;
 
 	if(client_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
@@ -391,9 +390,9 @@ function addRow_Group(upper){
 
 	if(item_num >=2){
 		for(i=0; i<client_num; i++){
-			if(document.openvpn_form.vpn_clientlist_commonname_0.value.toLowerCase() == $('openvpn_clientlist_table').rows[i].cells[0].innerHTML.toLowerCase()
-					&& document.openvpn_form.vpn_clientlist_subnet_0.value == $('openvpn_clientlist_table').rows[i].cells[1].innerHTML
-					&& document.openvpn_form.vpn_clientlist_netmask_0.value == $('openvpn_clientlist_table').rows[i].cells[2].innerHTML){
+			if(document.openvpn_form.vpn_clientlist_commonname_0.value.toLowerCase() == document.getElementById('openvpn_clientlist_table').rows[i].cells[0].innerHTML.toLowerCase()
+					&& document.openvpn_form.vpn_clientlist_subnet_0.value == document.getElementById('openvpn_clientlist_table').rows[i].cells[1].innerHTML
+					&& document.openvpn_form.vpn_clientlist_netmask_0.value == document.getElementById('openvpn_clientlist_table').rows[i].cells[2].innerHTML){
 				alert('<#JS_duplicate#>');
 				document.openvpn_form.vpn_clientlist_commonname_0.focus();
 				document.openvpn_form.vpn_clientlist_commonname_0.select();
@@ -627,8 +626,8 @@ function openvpn_applyRule(){
 		document.openvpn_form.action_script.value = "restart_vpnserver" + openvpn_unit;
 	}
 
-	var client_num = $('openvpn_clientlist_table').rows.length;
-	var item_num = $('openvpn_clientlist_table').rows[0].cells.length;
+	var client_num = document.getElementById('openvpn_clientlist_table').rows.length;
+	var item_num = document.getElementById('openvpn_clientlist_table').rows[0].cells.length;
 	var tmp_value = "";
 	
 	//Viz add 2014.06
@@ -642,9 +641,9 @@ function openvpn_applyRule(){
 		for(j=0; j<item_num-1; j++){
 
 			if (j == 3)
-				tmp_value += ($('openvpn_clientlist_table').rows[i].cells[j].innerHTML == "Yes" ? 1 : 0);
+				tmp_value += (document.getElementById('openvpn_clientlist_table').rows[i].cells[j].innerHTML == "Yes" ? 1 : 0);
 			else
-				tmp_value += $('openvpn_clientlist_table').rows[i].cells[j].innerHTML;
+				tmp_value += document.getElementById('openvpn_clientlist_table').rows[i].cells[j].innerHTML;
 
 			if(j != item_num-2)
 				tmp_value += ">";
@@ -731,7 +730,7 @@ function setEnd(){
 								+".";
 	var pptpd_clients_start_ip = parseInt(document.form._pptpd_clients_start.value.split(".")[3]);	
 
-	$('pptpd_subnet').innerHTML = pptpd_clients_subnet;
+	document.getElementById('pptpd_subnet').innerHTML = pptpd_clients_subnet;
 
 	end = pptpd_clients_start_ip+9;
 	if(end >254)	end = 254;
@@ -754,7 +753,7 @@ function check_vpn_conflict(){		//if conflict with LAN ip & DHCP ip pool & stati
   if(lan_ip_subnet == pptpd_clients_subnet 
   		&& lan_ip_end >= pptpd_clients_start_ip 
   		&& lan_ip_end <= pptpd_clients_end_ip ){
-  		$('pptpd_conflict').innerHTML = "<#vpn_conflict_LANIP#> <b>"+origin_lan_ip+"</b>";
+  		document.getElementById('pptpd_conflict').innerHTML = "<#vpn_conflict_LANIP#> <b>"+origin_lan_ip+"</b>";
   		return;
   }
 	//DHCP pool
@@ -764,7 +763,7 @@ function check_vpn_conflict(){		//if conflict with LAN ip & DHCP ip pool & stati
 								|| (pptpd_clients_start_ip >= pool_start_end && pptpd_clients_start_ip <= pool_end_end)
 								|| (pptpd_clients_end_ip >= pool_start_end && pptpd_clients_end_ip <= pool_end_end))
 					){
-  		$('pptpd_conflict').innerHTML = "<#vpn_conflict_DHCPpool#> <b>"+pool_start+" ~ "+pool_end+"</b>";
+  		document.getElementById('pptpd_conflict').innerHTML = "<#vpn_conflict_DHCPpool#> <b>"+pool_start+" ~ "+pool_end+"</b>";
   		return;
 	}
 	//DHCP static IP
@@ -778,13 +777,13 @@ function check_vpn_conflict(){		//if conflict with LAN ip & DHCP ip pool & stati
 					if(static_subnet == pptpd_clients_subnet 
   						&& static_end >= pptpd_clients_start_ip 
   						&& static_end <= pptpd_clients_end_ip){
-  							$('pptpd_conflict').innerHTML = "<#vpn_conflict_DHCPstatic#> <b>"+static_ip+"</b>";
+  							document.getElementById('pptpd_conflict').innerHTML = "<#vpn_conflict_DHCPstatic#> <b>"+static_ip+"</b>";
   							return;
   				}				
   		}
 	}
 		
-	$('pptpd_conflict').innerHTML = "";	
+	document.getElementById('pptpd_conflict').innerHTML = "";	
 }
 
 function check_pptpd_clients_range(){
@@ -853,14 +852,14 @@ function check_dns_wins(){
 function set_Keys(auth){
 	cal_panel_block();
 	if((auth=='tls') || (auth=="secret")){
-		$j("#tlsKey_panel").fadeIn(300);
+		$("#tlsKey_panel").fadeIn(300);
 	}	
 }
 
 function cancel_Key_panel(auth){
 	if((auth == 'tls') || (auth == "secret")){
 			this.FromObject ="0";
-			$j("#tlsKey_panel").fadeOut(300);	
+			$("#tlsKey_panel").fadeOut(300);	
 			if (openvpn_unit == 1) {
 				setTimeout("document.getElementById('edit_vpn_crt_server1_static').value = '<% nvram_clean_get("vpn_crt_server1_static"); %>';", 300);
 				setTimeout("document.getElementById('edit_vpn_crt_server1_ca').value = '<% nvram_clean_get("vpn_crt_server1_ca"); %>';", 300);
@@ -895,7 +894,7 @@ function save_keys(auth){
 			document.openvpn_form.vpn_crt_server2_dh.value = document.getElementById('edit_vpn_crt_server2_dh').value;
 		}
 		this.FromObject ="0";
-		$j("#tlsKey_panel").fadeOut(300);	
+		$("#tlsKey_panel").fadeOut(300);	
 	}
 }
 
@@ -927,7 +926,7 @@ function cal_panel_block(){
 
 	}
 
-	$("tlsKey_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("tlsKey_panel").style.marginLeft = blockmarginLeft+"px";
 }
 </script>
 </head>

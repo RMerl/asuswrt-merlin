@@ -52,7 +52,9 @@ static void do_options(struct dhcp_context *context,
 		       int null_term, int pxearch,
 		       unsigned char *uuid,
 		       int vendor_class_len,
-		       time_t now);
+		       time_t now,
+		       unsigned int lease_time,
+		       unsigned short fuzz);
 
 
 static void match_vendor_opts(unsigned char *opt, struct dhcp_opt *dopt); 
@@ -610,7 +612,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	      
 	      clear_packet(mess, end);
 	      do_options(context, mess, end, NULL, hostname, get_domain(mess->yiaddr), 
-			 netid, subnet_addr, 0, 0, -1, NULL, vendor_class_len, now);
+			 netid, subnet_addr, 0, 0, -1, NULL, vendor_class_len, now, 0xffffffff, 0);
 	    }
 	}
       
@@ -886,10 +888,10 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 		  
 		  option_put(mess, end, OPTION_MESSAGE_TYPE, 1, 
 			     mess_type == DHCPDISCOVER ? DHCPOFFER : DHCPACK);
-		  option_put(mess, end, OPTION_SERVER_IDENTIFIER, INADDRSZ, htonl(context->local.s_addr));
+		  option_put(mess, end, OPTION_SERVER_IDENTIFIER, INADDRSZ, htonl(tmp->local.s_addr));
 		  pxe_misc(mess, end, uuid);
 		  prune_vendor_opts(tagif_netid);
-		  do_encap_opts(pxe_opts(pxearch, tagif_netid, context->local, now), OPTION_VENDOR_CLASS_OPT, DHOPT_VENDOR_MATCH, mess, end, 0);
+		  do_encap_opts(pxe_opts(pxearch, tagif_netid, tmp->local, now), OPTION_VENDOR_CLASS_OPT, DHOPT_VENDOR_MATCH, mess, end, 0);
 		  
 		  log_packet("PXE", NULL, emac, emac_len, iface_name, ignore ? "proxy-ignored" : "proxy", NULL, mess->xid);
 		  log_tags(tagif_netid, ntohl(mess->xid));
@@ -1042,13 +1044,8 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
       option_put(mess, end, OPTION_SERVER_IDENTIFIER, INADDRSZ, ntohl(server_id(context, override, fallback).s_addr));
       option_put(mess, end, OPTION_LEASE_TIME, 4, time);
       /* T1 and T2 are required in DHCPOFFER by HP's wacky Jetdirect client. */
-      if (time != 0xffffffff)
-	{
-	  option_put(mess, end, OPTION_T1, 4, (time/2));
-	  option_put(mess, end, OPTION_T2, 4, (time*7)/8);
-	}
       do_options(context, mess, end, req_options, offer_hostname, get_domain(mess->yiaddr), 
-		 netid, subnet_addr, fqdn_flags, borken_opt, pxearch, uuid, vendor_class_len, now);
+		 netid, subnet_addr, fqdn_flags, borken_opt, pxearch, uuid, vendor_class_len, now, time, fuzz);
       
       return dhcp_packet_size(mess, agent_id, real_end);
       
@@ -1367,15 +1364,8 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	  option_put(mess, end, OPTION_MESSAGE_TYPE, 1, DHCPACK);
 	  option_put(mess, end, OPTION_SERVER_IDENTIFIER, INADDRSZ, ntohl(server_id(context, override, fallback).s_addr));
 	  option_put(mess, end, OPTION_LEASE_TIME, 4, time);
-	  if (time != 0xffffffff)
-	    {
-	      while (fuzz > (time/16))
-		fuzz = fuzz/2; 
-	      option_put(mess, end, OPTION_T1, 4, (time/2) - fuzz);
-	      option_put(mess, end, OPTION_T2, 4, ((time/8)*7) - fuzz);
-	    }
 	  do_options(context, mess, end, req_options, hostname, get_domain(mess->yiaddr), 
-		     netid, subnet_addr, fqdn_flags, borken_opt, pxearch, uuid, vendor_class_len, now);
+		     netid, subnet_addr, fqdn_flags, borken_opt, pxearch, uuid, vendor_class_len, now, time, fuzz);
 	}
 
       return dhcp_packet_size(mess, agent_id, real_end); 
@@ -1440,7 +1430,7 @@ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
 	}
 
       do_options(context, mess, end, req_options, hostname, get_domain(mess->ciaddr),
-		 netid, subnet_addr, fqdn_flags, borken_opt, pxearch, uuid, vendor_class_len, now);
+		 netid, subnet_addr, fqdn_flags, borken_opt, pxearch, uuid, vendor_class_len, now, 0xffffffff, 0);
       
       *is_inform = 1; /* handle reply differently */
       return dhcp_packet_size(mess, agent_id, real_end); 
@@ -2137,7 +2127,9 @@ static void do_options(struct dhcp_context *context,
 		       int null_term, int pxe_arch,
 		       unsigned char *uuid,
 		       int vendor_class_len,
-		       time_t now)
+		       time_t now,
+		       unsigned int lease_time,
+		       unsigned short fuzz)
 {
   struct dhcp_opt *opt, *config_opts = daemon->dhcp_opts;
   struct dhcp_boot *boot;
@@ -2261,7 +2253,42 @@ static void do_options(struct dhcp_context *context,
   /* rfc3011 says this doesn't need to be in the requested options list. */
   if (subnet_addr.s_addr)
     option_put(mess, end, OPTION_SUBNET_SELECT, INADDRSZ, ntohl(subnet_addr.s_addr));
-  
+   
+  if (lease_time != 0xffffffff)
+    { 
+      unsigned int t1val = lease_time/2; 
+      unsigned int t2val = (lease_time*7)/8;
+      unsigned int hval;
+      
+      /* If set by user, sanity check, so not longer than lease. */
+      if ((opt = option_find2(OPTION_T1)))
+	{
+	  hval = ntohl(*((unsigned int *)opt->val));
+	  if (hval < lease_time && hval > 2)
+	    t1val = hval;
+	}
+
+       if ((opt = option_find2(OPTION_T2)))
+	{
+	  hval = ntohl(*((unsigned int *)opt->val));
+	  if (hval < lease_time && hval > 2)
+	    t2val = hval;
+	}
+       	  
+       /* ensure T1 is still < T2 */
+       if (t2val <= t1val)
+	 t1val = t2val - 1; 
+
+       while (fuzz > (t1val/8))
+	 fuzz = fuzz/2;
+	 
+       t1val -= fuzz;
+       t2val -= fuzz;
+       
+       option_put(mess, end, OPTION_T1, 4, t1val);
+       option_put(mess, end, OPTION_T2, 4, t2val);
+    }
+
   /* replies to DHCPINFORM may not have a valid context */
   if (context)
     {
@@ -2356,12 +2383,14 @@ static void do_options(struct dhcp_context *context,
       if (!(opt->flags & DHOPT_FORCE) && !in_list(req_options, optno))
 	continue;
       
-      /* prohibit some used-internally options */
+      /* prohibit some used-internally options. T1 and T2 already handled. */
       if (optno == OPTION_CLIENT_FQDN ||
 	  optno == OPTION_MAXMESSAGE ||
 	  optno == OPTION_OVERLOAD ||
 	  optno == OPTION_PAD ||
-	  optno == OPTION_END)
+	  optno == OPTION_END ||
+	  optno == OPTION_T1 ||
+	  optno == OPTION_T2)
 	continue;
 
       if (optno == OPTION_SNAME && done_server)

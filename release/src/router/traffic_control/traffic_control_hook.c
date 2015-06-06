@@ -26,16 +26,28 @@ long long int traffic_control_realtime_traffic(char *interface)
 {
 	long long int result = 0;
 	FILE *fp = NULL;
+	FILE *fn = NULL;
 	unsigned long long tx = 0, rx = 0;	// current
 	unsigned long long tx_t = 0, rx_t = 0;	// old
 	unsigned long long tx_n = 0, rx_n = 0;	// diff
+	char ifmap[12];	// ifname after mapping
 	char buf[256];
+	char tx_buf[64], rx_buf[64];
+	char tx_path[48], rx_path[48];
 	char *p = NULL;
  	char *ifname = NULL;
 
 	int debug = nvram_get_int("traffic_control_debug");
 
 	memset(buf, 0, sizeof(buf));
+
+	// word and ifmap mapping
+	memset(ifmap, 0, sizeof(ifmap));
+	ifname_mapping(interface, ifmap); // database interface mapping
+	if(debug) dbg("%s: interface=%s, ifmap=%s\n", __FUNCTION__, interface, ifmap);
+
+	snprintf(tx_path, sizeof(tx_path), "/jffs/traffic_control/%s/tx_t", ifmap);
+	snprintf(rx_path, sizeof(rx_path), "/jffs/traffic_control/%s/rx_t", ifmap);
 
  	if ((fp = fopen("/proc/net/dev", "r")) != NULL)
 	{
@@ -65,16 +77,24 @@ long long int traffic_control_realtime_traffic(char *interface)
 			tx = tx / 1024;
 			rx = rx / 1024;
 			
-			// check nvram
-			if(nvram_safe_get("traffic_control_old_tx") == NULL)
-				nvram_set("traffic_control_old_tx", "0");
-			if(nvram_safe_get("traffic_control_old_rx") == NULL)
-				nvram_set("traffic_control_old_rx", "0");
-				
-			// load old tx /rx
-			tx_t = strtoull(nvram_safe_get("traffic_control_old_tx"), NULL, 10);
-			rx_t = strtoull(nvram_safe_get("traffic_control_old_rx"), NULL, 10);
-						
+			memset(tx_buf, 0, sizeof(tx_buf));
+			if((fn = fopen(tx_path, "r")) != NULL){
+				fgets(tx_buf, sizeof(tx_buf), fn);
+				tx_t = strtoull(tx_buf, NULL, 10);
+				fclose(fn);
+			}
+			else
+				tx_t = 0;
+
+			memset(rx_buf, 0, sizeof(rx_buf));
+			if((fn = fopen(rx_path, "r")) != NULL){
+				fgets(rx_buf, sizeof(rx_buf), fn);
+				rx_t = strtoull(rx_buf, NULL, 10);
+				fclose(fn);
+			}
+			else
+				rx_t = 0;
+
 			// proc/net/dev max bytes is unsigned long (2^32)
 			// diff traffic
 			if(tx < tx_t)
@@ -91,7 +111,6 @@ long long int traffic_control_realtime_traffic(char *interface)
 
 			if(debug) dbg("%s : tx/tx_t/tx_n = %16llu/%16lld/%16lld\n", __FUNCTION__, tx, tx_t, tx_n);
 			if(debug) dbg("%s : rx/rx_t/rx_n = %16llu/%16lld/%16lld\n", __FUNCTION__, rx, rx_t, rx_n);
-			if(debug) dbg("%s : result = %16llu\n", __FUNCTION__, result);
 
 			if(match) break;
 		}
@@ -101,20 +120,19 @@ long long int traffic_control_realtime_traffic(char *interface)
 	return result;
 }
 
-static
-void traffic_cotrol_WanStat(char *buf, char *ifname, char *start, char *end)
+void traffic_cotrol_WanStat(char *buf, char *ifname, char *ifmap, char *start, char *end)
 {
 	if(ifname == NULL || start == NULL || end == NULL){
-		sprintf(buf, "[0, 0]");
+		sprintf(buf, "[0]");
 		return;
 	}
 
 	int lock;	// file lock
 	int ret;
-	char *path = TRAFFIC_CONTROL_DATA;
+	char path[48];
 	char sql[256];
+	char cmd[256];
 	sqlite3 *db;
-
 	int rows;
 	int cols;
 	char **result;
@@ -123,8 +141,10 @@ void traffic_cotrol_WanStat(char *buf, char *ifname, char *start, char *end)
 	time_t now;
 
 	int debug = nvram_get_int("traffic_control_debug");
-
 	lock = file_lock("traffic_control");
+
+	snprintf(path, sizeof(path), "/jffs/traffic_control/%s/traffic.db", ifmap);
+
 	ret = sqlite3_open(path, &db);
 	if(ret){
 		printf("%s : Can't open database %s\n", __FUNCTION__, sqlite3_errmsg(db));
@@ -137,7 +157,7 @@ void traffic_cotrol_WanStat(char *buf, char *ifname, char *start, char *end)
 	ts = atoll(start);
 	te = atoll(end);
 	sprintf(sql, "SELECT ifname, SUM(tx), SUM(rx) FROM (SELECT timestamp, ifname, tx, rx FROM traffic WHERE timestamp BETWEEN %ld AND %ld) WHERE ifname = \"%s\"",
-		(ts - 30), (te + 30), ifname);
+		(ts - 30), (te + 30), ifmap);
 
 	// get current timestamp
 	time(&now);
@@ -145,10 +165,12 @@ void traffic_cotrol_WanStat(char *buf, char *ifname, char *start, char *end)
 	// real-time traffic (not data in database)
 	if(debug) dbg("%s : te=%ld, now=%ld, diff=%ld, DAY=%ld\n", __FUNCTION__, te, now, (te - now), DAY);
 	if((te - now) < DAY && (te - now) > 0){
-		current = traffic_control_realtime_traffic(ifname);
+		current = traffic_control_realtime_traffic(ifname); // using original interface to query real-time traffic
+		memset(cmd, 0, sizeof(cmd));
+		sprintf(cmd, "echo -n %lld > /jffs/traffic_control/%s/tmp", current, ifmap);
+		system(cmd);
 	}
 
-	if(debug) dbg("%s : sql=%s, ifname=%s, start=%s, end=%s\n", __FUNCTION__, sql, ifname, start, end);
 	if(sql_get_table(db, sql, &result, &rows, &cols) == SQLITE_OK)
 	{
 		int i = 0;
@@ -158,10 +180,14 @@ void traffic_cotrol_WanStat(char *buf, char *ifname, char *start, char *end)
 			for(j = 0; j < cols; j++){
 				if(j == 1) tx = (result[index] == NULL) ? 0 : atoll(result[index]);
 				if(j == 2) rx = (result[index] == NULL) ? 0 : atoll(result[index]);
+#if defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
 				sprintf(buf, "[%llu]", (tx + rx + current));
+#else
+				sprintf(buf, "[%llu]", (tx + rx + current)/2);
+#endif
 				++index;
 			}
-			if(debug) dbg("%s : buf=%s\n", __FUNCTION__, buf);
+			if(debug) dbg("%s : ifname=%s, start=%s, end=%s, current=%lld, buf=%s\n", __FUNCTION__, ifname, start, end, current, buf);
 		}
 		sqlite3_free_table(result);
 	}
@@ -176,7 +202,54 @@ void traffic_control_hook(char *ifname, char *start, char *end, int *retval, web
 	int debug = nvram_get_int("traffic_control_debug");
 	if(debug) dbg("%s : ifname=%s, start=%s, end=%s\n", __FUNCTION__, ifname, start, end);
 
-	traffic_cotrol_WanStat(buf, ifname, start, end);
+	traffic_cotrol_WanStat(buf, ifname, ifname, start, end);
 	
 	*retval += websWrite(wp, buf);
+}
+
+/*
+	interface mapping rule
+	ex. 
+		WAN eth0 -> vlan1 or 2
+		LAN eth0 -> vlan2 or 3
+		vlanX -> vlanX
+		usbX -> usbX
+*/
+void ifname_mapping(char *word, char *ifname)
+{
+	int model = get_model();
+
+	/* special model using SIM card, ex. 4G-AC55U */
+	if(model == MODEL_RT4GAC55U)
+	{
+		sprintf(ifname, word);
+		return;
+	}
+
+	/* vlanX or usbX */
+	if(strstr(word, "vlan") || strstr(word, "usb"))
+	{
+		sprintf(ifname, word);
+		return;
+	}
+	
+	/*
+		not vlanX
+		change eth0/ppp0 into vlan1 or vlan2 when using WAN
+		change eth0/ppp0 into vlan2 or vlan3 when using LAN
+	*/
+	if(strstr(nvram_safe_get("wans_dualwan"), "wan"))
+	{
+		if (model == MODEL_RTN12D1 || model == MODEL_RTN12HP || model == MODEL_RTN12HP_B1)
+			sprintf(ifname, "vlan1");
+		else
+			sprintf(ifname, "vlan2");
+	}
+	else if(strstr(nvram_safe_get("wans_dualwan"), "lan"))
+	{
+		if (model == MODEL_RTN12D1 || model == MODEL_RTN12HP || model == MODEL_RTN12HP_B1)
+			sprintf(ifname, "vlan2");
+		else
+			sprintf(ifname, "vlan3");
+	}
 }

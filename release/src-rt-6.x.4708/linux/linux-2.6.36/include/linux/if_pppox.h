@@ -28,6 +28,10 @@
 #endif /* __KERNEL__ */
 #include <linux/if_pppol2tp.h>
 
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+#include <ctf/hndctf.h>
+#endif
+
 /* For user-space programs to pick up these definitions
  * which they wouldn't get otherwise without defining __KERNEL__
  */
@@ -176,6 +180,13 @@ struct pptp_opt {
 #define PPTP_FLAG_PAUSE 0
 #define PPTP_FLAG_PROC 1
 
+#ifdef CTF_L2TP
+struct l2tp_opt {
+	struct ctf_pppol2tp_session ts;//tunnel and session
+	struct ctf_pppol2tp_inet	inet;
+};
+#endif
+
 #include <net/sock.h>
 
 struct pppox_sock {
@@ -186,6 +197,9 @@ struct pppox_sock {
 	union {
 		struct pppoe_opt pppoe;
 		struct pptp_opt  pptp;
+#ifdef CTF_L2TP
+		struct l2tp_opt l2tp;
+#endif
 	} proto;
 	__be16			num;
 };
@@ -212,6 +226,10 @@ struct pppox_proto {
 				 unsigned long arg);
 	struct module	*owner;
 };
+
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+extern int ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp);
+#endif
 
 extern int register_pppox_proto(int proto_num, const struct pppox_proto *pp);
 extern void unregister_pppox_proto(int proto_num);

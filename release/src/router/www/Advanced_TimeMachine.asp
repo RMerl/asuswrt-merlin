@@ -23,7 +23,7 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 
-var $j = jQuery.noConflict();
+
 
 function initial(){
 	show_menu();
@@ -31,17 +31,17 @@ function initial(){
 	document.getElementById("_APP_Installation").className = "menu_clicked";
 
 	if('<% nvram_get("tm_device_name"); %>' != '')
-		$("tmPath").innerHTML = '/mnt/<% nvram_get("tm_device_name"); %>';
+		document.getElementById("tmPath").innerHTML = '/mnt/<% nvram_get("tm_device_name"); %>';
 	else
-		$("tmPath").innerHTML = '<div style="margin-left:5px;color:#FC0"><#DM_Install_partition#></div>';
+		document.getElementById("tmPath").innerHTML = '<div style="margin-left:5px;color:#FC0"><#DM_Install_partition#></div>';
 	
 	if(document.form.timemachine_enable.value == "0"){
-		$("backupPath_tr").style.display = "none";
-		$("volSize_tr").style.display = "none";
+		document.getElementById("backupPath_tr").style.display = "none";
+		document.getElementById("volSize_tr").style.display = "none";
 	}
 	else{
-		$("backupPath_tr").style.display = "";
-		$("volSize_tr").style.display = "";
+		document.getElementById("backupPath_tr").style.display = "";
+		document.getElementById("volSize_tr").style.display = "";
 	}
 
 	if(document.form.tm_vol_size.value != "")	
@@ -53,11 +53,11 @@ function initial(){
 function selPartition(){
 	show_partition();
 	cal_panel_block('folderTree_panel');
-	$j("#folderTree_panel").fadeIn(300);
+	$("#folderTree_panel").fadeIn(300);
 }
 
 function cancel_folderTree(){
-	$j("#folderTree_panel").fadeOut(300);
+	$("#folderTree_panel").fadeOut(300);
 }
 
 function show_partition(){
@@ -105,19 +105,19 @@ function show_partition(){
 		if(mounted_partition == 0)
 			htmlcode += '<tr height="300px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
 
-		$("partition_div").innerHTML = htmlcode;
+		document.getElementById("partition_div").innerHTML = htmlcode;
 	});	
 }
 
 var totalSpace;
 var availSpace;
 function setPart(_part, _avail, _total){
-	$("tmPath").innerHTML = "/mnt/" + _part;
+	document.getElementById("tmPath").innerHTML = "/mnt/" + _part;
 	document.form.tm_device_name.value = _part;
 	cancel_folderTree();
 	totalSpace = _total;
 	availSpace = _avail;
-	$("maxVolSize").innerHTML = "<#Availablespace#>: " + _avail + " GB";
+	document.getElementById("maxVolSize").innerHTML = "<#Availablespace#>: " + _avail + " GB";
 	document.form.tm_vol_size.value = "";
 }
 
@@ -164,7 +164,7 @@ function cal_panel_block(obj_id){
 	else if(winWidth <=1050){
 		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
 	}
-	$(obj_id).style.marginLeft = blockmarginLeft+"px";
+	document.getElementById(obj_id).style.marginLeft = blockmarginLeft+"px";
 }
 </script>
 </head>
@@ -292,16 +292,16 @@ function cal_panel_block(obj_id){
 							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_timemachine_enable"></div>
 							<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 							<script type="text/javascript">
-								$j('#radio_timemachine_enable').iphoneSwitch('<% nvram_get("timemachine_enable"); %>', 
+								$('#radio_timemachine_enable').iphoneSwitch('<% nvram_get("timemachine_enable"); %>', 
 									 function() {
 										document.form.timemachine_enable.value = "1";
-										$j("#backupPath_tr").fadeIn(500);
-										$j("#volSize_tr").fadeIn(500);
+										$("#backupPath_tr").fadeIn(500);
+										$("#volSize_tr").fadeIn(500);
 									 },
 									 function() {
 										document.form.timemachine_enable.value = "0";
-										$j("#backupPath_tr").fadeOut(300);
-										$j("#volSize_tr").fadeOut(300);
+										$("#backupPath_tr").fadeOut(300);
+										$("#volSize_tr").fadeOut(300);
 									 }
 								);
 							</script>			
@@ -320,7 +320,7 @@ function cal_panel_block(obj_id){
 					<tr id="volSize_tr">
 						<th><#TimeMach_vol_size#></a></th>
 						<td>
-							<input id="tm_vol_size" name="tm_vol_size" maxlength="5" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>" onKeyPress="return validator.isNumber(this,event);" placeholder="0" /> GB (0: <#Limitless#>)
+							<input id="tm_vol_size" name="tm_vol_size" maxlength="5" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>" onKeyPress="return validator.isNumber(this,event);" placeholder="0" autocorrect="off" autocapitalize="off"/> GB (0: <#Limitless#>)
 							&nbsp;<span id="maxVolSize"></span>
 						</td>
 					</tr>

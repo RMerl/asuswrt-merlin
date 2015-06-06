@@ -141,7 +141,7 @@ typedef struct {
 	unsigned int speed[4];
 } phyState;
 
-int ext_rtk_phyState(void)
+int ext_rtk_phyState(int verbose)
 {
 	int model;
 	char buf[32];
@@ -205,7 +205,8 @@ int ext_rtk_phyState(void)
 		(pS.link[o[2]] == 1) ? (pS.speed[o[2]] == 2) ? 'G' : 'M': 'X',
 		(pS.link[o[3]] == 1) ? (pS.speed[o[3]] == 2) ? 'G' : 'M': 'X');
 
-	puts(buf);
+	if(verbose)
+		printf("%s\n", buf);
 
 	return (pS.link[o[0]] == 1)|(pS.link[o[1]] == 1)|(pS.link[o[2]] == 1)|(pS.link[o[3]] == 1);
 }

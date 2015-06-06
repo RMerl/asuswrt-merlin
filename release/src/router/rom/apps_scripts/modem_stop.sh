@@ -50,18 +50,17 @@ if [ "$modem_type" == "gobi" ]; then
 	fi
 
 	# connect to GobiNet.
-	echo -n "1,$qcqmi," >> $cmd_pipe
+	echo -n "1,$qcqmi" >> $cmd_pipe
 	sleep 1
 
 	# WDS stop the data session
 	echo -n "4" >> $cmd_pipe
 	sleep 1
 
-	# disconnect to GobiNet.
-	echo -n "2" >> $cmd_pipe
+	echo -n "12" >> $cmd_pipe
 	sleep 1
 
-	killall gobi
+	echo -n "99" >> $cmd_pipe
 	sleep 1
 
 	echo "Gobi: Successfull to stop network."

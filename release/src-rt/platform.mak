@@ -79,34 +79,46 @@ define platformKernelConfig
 		echo "CONFIG_MTD_BRCMNAND=y" >>$(1); \
 	fi; \
 	if [ "$(ARM)" = "y" ]; then \
-		mkdir -p $(SRCBASE)/router/ctf_arm/linux;\
-		cp -f $(SRCBASE)/router/ctf_arm/bcm6x/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+		mkdir -p $(SRCBASE)/router/ctf_arm/linux; \
 		if [ "$(BCM7)" = "y" ]; then \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			else \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
-				cp -f $(SRCBASE)/router/dpsta/bcm7_3200/dpsta.o $(SRCBASE)/router/dpsta/linux;\
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
+				cp -f $(SRCBASE)/router/dpsta/bcm7_3200/dpsta.o $(SRCBASE)/router/dpsta/linux; \
 			fi; \
 		elif [ "$(BCM794)" = "y" ]; then \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			else \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
+			fi; \
+		elif [ "$(BCM7114)" = "y" ]; then \
+			if [ "$(ARMCPUSMP)" = "up" ]; then \
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
+			else \
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			fi; \
 		elif [ "$(BCM10)" = "y" ]; then \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			else \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			fi; \
 		else \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm6_up/linux/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+				if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
+					cp -f $(SRCBASE)/router/ctf_arm/bcm6_up_pptp_l2tp/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
+				else \
+					cp -f $(SRCBASE)/router/ctf_arm/bcm6_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
+				fi; \
 				cp -f $(SRCBASE)/router/ufsd/broadcom_arm_up/ufsd.ko.46_up router/ufsd/broadcom_arm/ufsd.ko; \
-			fi; \
-			if [ "$(BWDPI)" = "y" ]; then \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm6_iqos/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+			else \
+				if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
+					cp -f $(SRCBASE)/router/ctf_arm/bcm6_pptp_l2tp/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
+				else \
+					cp -f $(SRCBASE)/router/ctf_arm/bcm6/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
+				fi; \
 			fi; \
 		fi; \
 	fi; \
@@ -245,6 +257,16 @@ define platformKernelConfig
 				cp $(SRCBASE)/router/wl_arm_7/prebuilt/wl_apsta.o $(SRCBASE)/wl/linux ; \
 				mkdir -p $(SRCBASE)/../../dhd/src/dhd/linux ; \
 				cp $(SRCBASE)/router/wl_arm_7/prebuilt/dhd.o $(SRCBASE)/../../dhd/src/dhd/linux ; \
+			fi; \
+		elif [ "$(BCM_7114)" = "y" ]; then \
+			if [ -d $(SRCBASE)/router/wl_arm_7114/prebuilt ]; then \
+				mkdir -p $(SRCBASE)/../dhd/src/dhd/linux ; \
+				cp $(SRCBASE)/router/wl_arm_7114/prebuilt/dhd.o $(SRCBASE)/../dhd/src/dhd/linux ; \
+			fi; \
+		elif [ "$(BCM_10)" = "y" ]; then \
+			if [ -d $(SRCBASE)/router/wl_arm_10/prebuilt ]; then \
+				mkdir $(SRCBASE)/wl/linux ; \
+				cp $(SRCBASE)/router/wl_arm_10/prebuilt/wl_apsta.o $(SRCBASE)/wl/linux ; \
 			fi; \
 		else \
 			if [ "$(BWDPI)" = "y" ] && [ -d $(SRCBASE)/router/wl_arm/dpi/$(BUILD_NAME) ]; then \

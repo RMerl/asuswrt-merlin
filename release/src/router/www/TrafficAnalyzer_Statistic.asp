@@ -22,7 +22,6 @@
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" src="/statistic_default.js"></script>
 <style>
 #holder {
     height: 330px;
@@ -60,22 +59,40 @@
 	line-height:15px;
 
 }
+
+.icon_play{
+	background-image: url("data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22iso-8859-1%22%3F%3E%0A%3Csvg%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20x%3D%220px%22%20y%3D%220px%22%0A%09%20viewBox%3D%220%200%20402.5%20402.5%22%20enable-background%3D%22new%200%200%20402.5%20402.5%22%20xml%3Aspace%3D%22preserve%22%3E%0A%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M200.9%2C401C90.7%2C400.6%2C1.2%2C310.9%2C1.5%2C201C1.8%2C90.7%2C92.1%2C0.8%2C201.9%2C1.5C312.2%2C2.2%2C401.5%2C91.9%2C401%2C201.7%0A%09C400.5%2C311.9%2C310.7%2C401.4%2C200.9%2C401z%20M164.7%2C286.6l116.2-67.1c6.5-3.8%2C10.5-10.7%2C10.5-18.2s-4-14.5-10.5-18.2l-116.2-67.1%0A%09c-3.3-1.9-6.9-2.8-10.5-2.8c-3.6%2C0-7.3%2C0.9-10.5%2C2.8c-6.5%2C3.8-10.5%2C10.7-10.5%2C18.2v134.2c0%2C7.5%2C4%2C14.5%2C10.5%2C18.2%0A%09c3.3%2C1.9%2C6.9%2C2.8%2C10.5%2C2.8C157.8%2C289.4%2C161.4%2C288.5%2C164.7%2C286.6z%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+.icon_play_active{
+	background-image: url("data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22iso-8859-1%22%3F%3E%0A%3Csvg%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20x%3D%220px%22%20y%3D%220px%22%0A%09%20viewBox%3D%220%200%20402.5%20402.5%22%20enable-background%3D%22new%200%200%20402.5%20402.5%22%20xml%3Aspace%3D%22preserve%22%3E%0A%3Cpath%20fill%3D%22%2369DAFE%22%20d%3D%22M200.9%2C401C90.7%2C400.6%2C1.2%2C310.9%2C1.5%2C201C1.8%2C90.7%2C92.1%2C0.8%2C201.9%2C1.5C312.2%2C2.2%2C401.5%2C91.9%2C401%2C201.7%0A%09C400.5%2C311.9%2C310.7%2C401.4%2C200.9%2C401z%20M164.7%2C286.6l116.2-67.1c6.5-3.8%2C10.5-10.7%2C10.5-18.2s-4-14.5-10.5-18.2l-116.2-67.1%0A%09c-3.3-1.9-6.9-2.8-10.5-2.8c-3.6%2C0-7.3%2C0.9-10.5%2C2.8c-6.5%2C3.8-10.5%2C10.7-10.5%2C18.2v134.2c0%2C7.5%2C4%2C14.5%2C10.5%2C18.2%0A%09c3.3%2C1.9%2C6.9%2C2.8%2C10.5%2C2.8C157.8%2C289.4%2C161.4%2C288.5%2C164.7%2C286.6z%22%2F%3E%0A%3C%2Fsvg%3E%0A");	}
+}
 </style>
 <script>
-var $j = jQuery.noConflict();
+
 var flow_obj;
 var pie_obj;
 window.onresize = function(){
 	cal_panel_block("client_all_info_block");
+	cal_panel_block("demo_background");
 }
+
 function initial(){
 	show_menu();
 	register_event();
 	load_time();
 	
-	if(document.form.bwdpi_db_enable.value == 1) {
+	if(document.form.bwdpi_db_enable.value == 1){
+		document.getElementById('statistic_hint').innerHTML = "*Data will be refreshed on the hour";
 		document.getElementById('statistic_hint').style.display = "none";
-	} else {
+		document.getElementById("demo_background").style.zIndex = "0";
+	}
+	else{
+		if(document.cookie.search('demo=1') == "-1"){
+			introduce_demo();
+			document.cookie = "demo=1";
+		}
+		
+		document.getElementById('statistic_hint').innerHTML = "*You should turn on the Traffic Statistic to record the traffic information";	
 		if ('<% nvram_get("jffs2_on"); %>' == '0') {
 			document.getElementById('traffic_analysis_enable').style.display = "none"
 			document.getElementById('jffs_hint').style.display = "";
@@ -104,7 +121,13 @@ function load_time(){
 		date = "0" + date.toString();
 		
 	date_string = year + "/" + month + "/" + date + "/" + hour;
-	$j('#datepicker').val(month + "/" + date + "/" + year);
+	$('#datepicker').val(month + "/" + date + "/" + year);
+}
+
+function cancel_demo(){
+	clearTimeout(time_flag);
+	document.getElementById("demo_image").style.background = "";
+	document.getElementById("demo_background").style.display = "none";
 }
 
 var top5_client_array = new Array();
@@ -178,16 +201,10 @@ function get_client_used_apps_info(client_index, used_data_array, top5_info, typ
 			if(type == "router")
 				code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + used_data_array[i][0] + "</td>";
 			else{
-				if(document.form.bwdpi_db_enable.value == 0){
-					var device_array = ["Jieming-MBP", "Jieming-NB", "iPhone 6", "Jieming-PC", "Padfone"];
-					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + device_array[i] + "</td>";
-				}
-				else{			
-					if(clientList[used_data_array[i][0]] != undefined)
-						code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + clientList[used_data_array[i][0]].name + "</td>";
-					else
-						code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + used_data_array[i][0] + "</td>";
-				}
+				if(clientList[used_data_array[i][0]] != undefined)
+					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + clientList[used_data_array[i][0]].name + "</td>";
+				else
+					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + used_data_array[i][0] + "</td>";
 			}	
 			code += "<td style='width:100px;padding-top:5px;'>";
 			code += "<div style='width:" + percent + "%;height:15px;background-color:#FFFFFF;opacity:0.5;'></div>";
@@ -311,13 +328,6 @@ function get_client_info(list_info, type){
 
 		}
 	}
-
-	if(document.form.bwdpi_db_enable.value == 0){
-		var device_array = ["Jieming-PC", "iPhone 6", "Jieming-MBP", "Padfone", "Jieming-NB"];
-		for(i=0;i<top5_client_array.length;i++){
-			top5_client_array[top5_client_array[i]].name = device_array[i];	
-		}
-	}
 	
 	if(type == "router")
 		draw_pie_chart(list_info, top5_client_array, type);		//list_info : all_client_traffic
@@ -330,7 +340,7 @@ function get_client_info(list_info, type){
 
 var router_traffic_array = new Array();
 function get_wan_data(client, mode, dura, time, date_string){
-	$j.ajax({
+	$.ajax({
 		url: '/getWanTraffic.asp?client=' + client + '&mode=' + mode + '&dura=' + dura + '&date=' + time,
 		dataType: 'script',		
 		error: function(xhr){
@@ -345,24 +355,14 @@ function get_wan_data(client, mode, dura, time, date_string){
 
 var all_client_traffic = new Array();
 function get_every_client_data(client, mode, dura, time, date_string){
-	$j.ajax({
+	$.ajax({
 		url: '/getAppTraffic.asp?client=' + client + '&mode=' + mode + '&dura=' + dura + '&date=' + time,
 		dataType: 'script',		
 		error: function(xhr){
 			//setTimeout("get_app_data(time);", 1000);
 		},
 		success: function(response){
-			if(document.form.bwdpi_db_enable.value == 0){
-				if(dura == "24")
-					all_client_traffic = all_client_traffic_24;
-				else if(dura == "31")
-					all_client_traffic = all_client_traffic_31;
-				else if(dura == "7")
-					all_client_traffic = all_client_traffic_7;
-			}
-			else{
-				all_client_traffic = array_statistics;
-			}
+			all_client_traffic = array_statistics;
 			
 			if(document.getElementById('traffic_option').value == "both"){
 				all_client_traffic.sort(function(a,b){
@@ -388,26 +388,14 @@ function get_every_client_data(client, mode, dura, time, date_string){
 
 var all_app_traffic = new Array();
 function get_every_app_data(client, mode, dura, time, date_string){
-	$j.ajax({
+	$.ajax({
 		url: '/getWanTraffic.asp?client=' + client + '&mode=' + mode + '&dura=' + dura + '&date=' + time,
 		dataType: 'script',		
 		error: function(xhr){
 			//setTimeout("get_app_data(time);", 1000);
 		},
 		success: function(response){
-			if(document.form.bwdpi_db_enable.value == 0){
-				if(dura == "24")
-					all_app_traffic = all_app_traffic_24;
-				else if(dura == "31"){
-					all_app_traffic = all_app_traffic_31;
-				}
-				else if(dura == "7"){
-					all_app_traffic = all_app_traffic_7;
-				}
-			}
-			else{
-				all_app_traffic = array_statistics;
-			}
+			all_app_traffic = array_statistics;
 			
 			if(document.getElementById('traffic_option').value == "both"){
 				all_app_traffic.sort(function(a,b){
@@ -432,7 +420,7 @@ function get_every_app_data(client, mode, dura, time, date_string){
 }
 
 function get_app_data(client, mode, dura, time, date_string){
-	$j.ajax({
+	$.ajax({
 		url: '/getAppTraffic.asp?client=' + client + '&mode=' + mode + '&dura=' + dura + '&date=' + time,
 		dataType: 'script',		
 		error: function(xhr){
@@ -446,7 +434,7 @@ function get_app_data(client, mode, dura, time, date_string){
 
 var client_used_app_array = new Array();
 function get_client_used_app_data(client, mode, dura, time, date_string, type, info_type){
-	$j.ajax({
+	$.ajax({
 		url: '/getWanTraffic.asp?client=' + client + '&mode=' + mode + '&dura=' + dura + '&date=' + time,
 		dataType: 'script',		
 		error: function(xhr){
@@ -454,17 +442,7 @@ function get_client_used_app_data(client, mode, dura, time, date_string, type, i
 
 		},
 		success: function(response){
-			if(document.form.bwdpi_db_enable.value == 0){
-				if(dura == "24")
-					client_used_app_array = client_used_app_array_statistics_24[client];
-				else if(dura == "31")
-					client_used_app_array = client_used_app_array_statistics_31[client];
-				else if(dura == "7")
-					client_used_app_array = client_used_app_array_statistics_7[client];
-			}
-			else{
-				client_used_app_array = array_statistics;
-			}
+			client_used_app_array = array_statistics;
 			
 			if(document.getElementById('traffic_option').value == "both"){
 				client_used_app_array.sort(function(a,b){
@@ -599,7 +577,7 @@ function hide_show_all_info(){
 
 var app_used_by_client_array = new Array();
 function get_app_used_by_client_data(client, mode, dura, time, date_string){
-	$j.ajax({
+	$.ajax({
 		url: '/getAppTraffic.asp?client=' + client + '&mode=' + mode + '&dura=' + dura + '&date=' + time,
 		dataType: 'script',		
 		error: function(xhr){
@@ -607,17 +585,7 @@ function get_app_used_by_client_data(client, mode, dura, time, date_string){
 
 		},
 		success: function(response){
-			if(document.form.bwdpi_db_enable.value == 0){
-				if(dura == "24")
-					app_used_by_client_array = app_used_by_client_array_statistics_24[client];		
-				else if(dura == "31")
-					app_used_by_client_array = app_used_by_client_array_statistics_31[client];		
-				else if(dura == "7")
-					app_used_by_client_array = app_used_by_client_array_statistics_7[client];		
-			}
-			else{
-				app_used_by_client_array = array_statistics;
-			}
+			app_used_by_client_array = array_statistics;
 			if(document.getElementById('traffic_option').value == "both"){
 				app_used_by_client_array.sort(function(a,b){
 					return (b[1] + b[2]) - (a[1] + a[2]);		//decrease
@@ -640,7 +608,7 @@ function get_app_used_by_client_data(client, mode, dura, time, date_string){
 }
 
 function get_client_used_app_data_individual(client, mode, dura, time, date_string){
-	$j.ajax({
+	$.ajax({
 		url: '/getWanTraffic.asp?client=' + client + '&mode=' + mode + '&dura=' + dura + '&date=' + time,
 		dataType: 'script',		
 		error: function(xhr){
@@ -673,7 +641,7 @@ function get_client_used_app_data_individual(client, mode, dura, time, date_stri
 }
 
 function get_app_used_by_client_data_individual(client, mode, dura, time, date_string){
-	$j.ajax({
+	$.ajax({
 		url: '/getAppTraffic.asp?client=' + client + '&mode=' + mode + '&dura=' + dura + '&date=' + time,
 		dataType: 'script',		
 		error: function(xhr){
@@ -715,9 +683,9 @@ function register_event(){
     flow_obj = new Chart(traffic_chart);	
 	var pie= document.getElementById("pie_chart").getContext("2d");
 	pie_obj = new Chart(pie);
-	$j( "#datepicker" ).datepicker({
+	$( "#datepicker" ).datepicker({
 		onSelect: function(){		
-			time = $j( "#datepicker" ).datepicker('getDate');
+			time = $( "#datepicker" ).datepicker('getDate');
 			date_second = parseInt(time.getTime()/1000);
 			hour = time.getHours();
 			date = time.getDate();
@@ -753,6 +721,18 @@ function register_event(){
 			}, 3000);*/		
 		}
 	 });
+	 
+	 /*for play icon*/
+	$("#introduce_demo").hover(
+		function(){
+			$("#play_icon").removeClass("icon_play").addClass("icon_play_active");
+			$(this).css("color", "#69DAFE");
+		},
+		function(){
+			$("#play_icon").removeClass("icon_play_active").addClass("icon_play");
+			$(this).css("color", "#FFF");
+		}
+	);	 
 }
 
 function convertTime(t){
@@ -1113,30 +1093,7 @@ function draw_flow(date, traffic){
 	var traffic_value = new Array();
 	var traffic_value_displayed = new Array();
 	var traffic_unit = new Array();
-	var traffic_temp = new Array();
-	
-	if(document.form.bwdpi_db_enable.value == 0){
-		/*traffic = [ [100000000, 2000000],[1000000, 2000000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],
-					[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],[1000, 2000],
-					[1000, 2000],[1000, 2000],[1000, 2000],[1000000000, 2000]];*/
-		if(document.getElementById('duration_option').value == "daily"){	
-			for(i=0;i<24;i++){			
-				traffic[i] = [parseInt(Math.random()*1000000000), parseInt(Math.random()*1000000000)];
-			}
-		}
-		else if(document.getElementById('duration_option').value == "weekly"){
-			for(i=0;i<7;i++){			
-				traffic[i] = [parseInt(Math.random()*2000000000), parseInt(Math.random()*3000000000)];
-			}
-		}
-		else{
-			for(i=0;i<31;i++){			
-				traffic[i] = [parseInt(Math.random()*3000000000), parseInt(Math.random()*10000000000)];
-			}
-		}
-
-	}
-	
+	var traffic_temp = new Array();	
 	var hour_temp = date_array[3], date_temp = date_array[2], month_temp = date_array[1], year_temp = date_array[0];
 	if(document.getElementById('duration_option').value == "daily"){	
 		for(i=0;i<24;i++){
@@ -1353,7 +1310,10 @@ function cal_panel_block(obj){
 		blockmarginLeft= (winWidth)*0.2 + document.body.scrollLeft;	
 	}
 
-	$(obj).style.marginLeft = blockmarginLeft+"px";
+	if(obj == "demo_background")
+		document.getElementById(obj).style.marginLeft = (blockmarginLeft + 25)+"px";
+	else
+		document.getElementById(obj).style.marginLeft = blockmarginLeft+"px";
 }
 
 function cal_agreement_block(){
@@ -1377,7 +1337,7 @@ function cal_agreement_block(){
 
 	}
 
-	$("agreement_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("agreement_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function eula_confirm(){
@@ -1388,9 +1348,9 @@ function eula_confirm(){
 
 function cancel(){
 	curState = 0;
-	$j('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
-	$j("#agreement_panel").fadeOut(100);
-	$("hiddenMask").style.visibility = "hidden";
+	$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
+	$("#agreement_panel").fadeOut(100);
+	document.getElementById("hiddenMask").style.visibility = "hidden";
 }
 
 function applyRule(){
@@ -1399,7 +1359,7 @@ function applyRule(){
 }
 
 function setHover_css(){
-	$j('#top_client_table tr').hover(
+	$('#top_client_table tr').hover(
 		function(){		//onMouseOver
 			if(this.children[1].children[0])
 				this.children[1].children[0].style.backgroundColor = "#000";
@@ -1409,6 +1369,17 @@ function setHover_css(){
 				this.children[1].children[0].style.backgroundColor = "#FFF";
 		}
 	);
+}
+var time_flag;
+function introduce_demo(){
+	console.log("2");
+	cal_panel_block("demo_background");
+	document.getElementById("demo_background").style.display = "";
+	document.getElementById("demo_background").style.zIndex = "5";
+	document.getElementById("demo_image").style.background = "url('/images/New_ui/TrafficAnalyzer.gif') no-repeat"
+	document.getElementById("demo_background").style.display = "";
+	time_flag = setTimeout(function(){cancel_demo();}, "41000");
+
 }
 </script>
 </head>
@@ -1434,6 +1405,11 @@ function setHover_css(){
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
 <input type="hidden" name="bwdpi_db_enable" value="<% nvram_get("bwdpi_db_enable"); %>">
+<div id="demo_background" style="background-color:#3E464A; width:760px;height:900px;position:absolute;z-index:5;margin: -100px 0 0 210px;opacity:0.9;display:none;border-radius:7px;display:none">
+	<div style="background:url('images/New_ui/cancel.svg');width:40px;height:40px;z-index:12;position:absolute;top:10px;right:20px;cursor:pointer" onclick="cancel_demo();"></div>
+	<div id="demo_image" style="width:750px;height:990px;background-size:88%;margin:10px 0 0 10px"></div>
+</div>
+
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
@@ -1454,35 +1430,36 @@ function setHover_css(){
 										<table width="100%">
 											<tr>
 												<td class="formfonttitle" align="left">								
-													<div>Traffic Analyzer - Traffic Statistic</div>
+													<div>Traffic Analyzer - Statistic</div>
 												</td>
 												<td>
 													<div>
 														<table align="right">
 															<tr>
-																<td>
-																	<div class="formfonttitle" style="margin-bottom:0px;margin-left:50px;" title="<#traffic_analysis_desc#>">Traffic Statistic</div>
-																</td>
+																<td style="cursor:pointer;" onclick="introduce_demo();" id="introduce_demo"><div id="play_icon" class="icon_play" style="padding:1px;display:table-cell;width:22px;height:22px;"></div><div style="display:table-cell;font-size:16px;text-decoration:underline;padding-left:7px;" >Introduce demo</div></td>
+																<!--td>														
+																	<div class="formfonttitle" style="margin-bottom:0px;margin-left:20px;" title="<#traffic_analysis_desc#>">Traffic Statistic</div>
+																</td-->
 																<td >
 																	<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="traffic_analysis_enable"></div>
 																	<script type="text/javascript">
-																		$j('#traffic_analysis_enable').iphoneSwitch('<% nvram_get("bwdpi_db_enable"); %>',
+																		$('#traffic_analysis_enable').iphoneSwitch('<% nvram_get("bwdpi_db_enable"); %>',
 																			function(){
 																				if(document.form.TM_EULA.value == 0){
 																					if(document.form.preferred_lang.value == "JP"){
-																						$j.get("JP_tm_eula.htm", function(data){
-																							$('agreement_panel').innerHTML= data;
+																						$.get("JP_tm_eula.htm", function(data){
+																							document.getElementById('agreement_panel').innerHTML= data;
 																						});
 																					}
 																					else{
-																						$j.get("tm_eula.htm", function(data){
-																							$('agreement_panel').innerHTML= data;
+																						$.get("tm_eula.htm", function(data){
+																							document.getElementById('agreement_panel').innerHTML= data;
 																						});
 																					}	
 																					
 																					dr_advise();
 																					cal_agreement_block();
-																					$j("#agreement_panel").fadeIn(300);
+																					$("#agreement_panel").fadeIn(300);
 																					return false;
 																				}
 																					document.form.bwdpi_db_enable.value = 1;
@@ -1620,57 +1597,7 @@ function setHover_css(){
 										</table>
 									</div>	
 
-									<div id="detail_info_block" style="background-color:#2f3e44;border-radius:10px;width:100%;min-height:350px;margin-top:10px;overflow-y:auto;height:370px;display:none">
-										<!--table style="width:95%;margin-left:20px;">
-											<tr style="font-size:14px;">
-												<th colspan="4">Client's Name: Jieming-PC</th>
-											</tr>
-											<tr style="font-size:13px;">
-												<th style="width:55%;text-align:left;">
-													App's Name
-												</th>
-												<th style="width:15%;text-align:right;">
-													Upload
-												</th>
-												<th style="width:15%;text-align:right;">
-													Download
-												</th>
-												<th style="width:15%;text-align:right;">
-													Total
-												</th>
-											</tr>
-											
-											<tr>
-												<td style="text-align:left;">
-													Bit Torrent
-												</td>
-												<td style="text-align:right;">
-													1000.69 GB
-												</td>
-												<td style="text-align:right;">
-													1000.69 GB
-												</td>
-												<td style="text-align:right;">
-													3000.87 GB
-												</td>
-											</tr>
-										
-											<tr>
-												<td style="text-align:left;">
-													Youtube
-												</td>
-												<td style="text-align:right;">
-													30.35 MB
-												</td>
-												<td style="text-align:right;">
-													1.34 GB
-												</td>
-												<td style="text-align:right;">
-													3000.87 GB
-												</td>
-											</tr>
-										</table-->
-									</div>
+									<div id="detail_info_block" style="background-color:#2f3e44;border-radius:10px;width:100%;min-height:350px;margin-top:10px;overflow-y:auto;height:370px;display:none"></div>
 								</td>
 							</tr>
 						</table>

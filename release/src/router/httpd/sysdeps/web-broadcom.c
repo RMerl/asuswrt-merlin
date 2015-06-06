@@ -1109,7 +1109,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 // RSSI
 				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
-				if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
+				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
 					ret += websWrite(wp, "%-8s", "");
 				else
 					ret += websWrite(wp, " %3ddBm ", scb_val.val);
@@ -2555,6 +2555,13 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 	char name_vif[] = "wlX.Y_XXXXXXXXXX";
 	int ii;
 	int ret = 0;
+	int from_app = 0;
+	char *name_t = NULL;
+
+	if (ejArgs(argc, argv, "%s", &name_t) < 1) {
+		//_dprintf("name_t = NULL\n");
+	}else if(!strncmp(name_t, "appobj", 6))
+		from_app = 1;
 
 	/* buffers and length */
 	max_sta_count = 256;
@@ -2593,26 +2600,48 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 	for(i = 0; i < auth->count; ++i) {
 		if (firstRow == 1)
 			firstRow = 0;
-		else
+		else{
 			ret += websWrite(wp, ", ");
+		}
 
-		ret += websWrite(wp, "[");
+		if(from_app == 0)
+			ret += websWrite(wp, "[");
 
 		ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[i], ea));
-
+		if(from_app == 1){
+			ret += websWrite(wp, ":{");
+			ret += websWrite(wp, "\"isWL\":");
+		}
 		value = (find_ethaddr_in_list((void *)&auth->ea[i], assoc))?"Yes":"No";
-		ret += websWrite(wp, ", \"%s\"", value);
+		if(from_app == 0)
+			ret += websWrite(wp, ", \"%s\"", value);
+		else
+			ret += websWrite(wp, "\"%s\"", value);
 
 		value = (find_ethaddr_in_list((void *)&auth->ea[i], authorized))?"Yes":"No";
-		ret += websWrite(wp, ", \"%s\"", value);
+		if(from_app == 0)
+			ret += websWrite(wp, ", \"%s\"", value);
+
+		if(from_app == 1){
+			ret += websWrite(wp, ",\"rssi\":");
+		}
 
 		memcpy(&scb_val.ea, &auth->ea[i], ETHER_ADDR_LEN);
-		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
-			ret += websWrite(wp, ", \"%d\"", 0);
+		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t))){
+			if(from_app == 0)
+				ret += websWrite(wp, ", \"%d\"", 0);
+			else
+				ret += websWrite(wp, "\"%d\"", 0);
+		}else{
+			if(from_app == 0)
+				ret += websWrite(wp, ", \"%d\"", scb_val.val);
+			else
+				ret += websWrite(wp, "\"%d\"", scb_val.val);
+		}
+		if(from_app == 0)
+			ret += websWrite(wp, "]");
 		else
-			ret += websWrite(wp, ", \"%d\"", scb_val.val);
-
-		ret += websWrite(wp, "]");
+			ret += websWrite(wp, "}");
 	}
 
 	for (i = 1; i < 4; i++) {
@@ -2647,23 +2676,47 @@ static int wl_sta_list(int eid, webs_t wp, int argc, char_t **argv, int unit) {
 				else
 					ret += websWrite(wp, ", ");
 
-				ret += websWrite(wp, "[");
+				if(from_app == 0)
+					ret += websWrite(wp, "[");
 
 				ret += websWrite(wp, "\"%s\"", ether_etoa((void *)&auth->ea[ii], ea));
 
+				if(from_app == 1){
+					ret += websWrite(wp, ":{");
+					ret += websWrite(wp, "\"isWL\":");
+				}
+
 				value = (find_ethaddr_in_list((void *)&auth->ea[ii], assoc))?"Yes":"No";
-				ret += websWrite(wp, ", \"%s\"", value);
+				if(from_app == 0)
+					ret += websWrite(wp, ", \"%s\"", value);
+				else
+					ret += websWrite(wp, "\"%s\"", value);
 
 				value = (find_ethaddr_in_list((void *)&auth->ea[ii], authorized))?"Yes":"No";
-				ret += websWrite(wp, ", \"%s\"", value);
+				if(from_app == 0)
+					ret += websWrite(wp, ", \"%s\"", value);
+
+				if(from_app == 1){
+					ret += websWrite(wp, ",\"rssi\":");
+				}
 
 				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
-				if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
-					ret += websWrite(wp, ", \"%d\"", 0);
-				else
-					ret += websWrite(wp, ", \"%d\"", scb_val.val);
+				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t))){
+					if(from_app == 0)
+						ret += websWrite(wp, ", \"%d\"", 0);
+					else
+						ret += websWrite(wp, "\"%d\"", 0);
+				}else{
+					if(from_app == 0)
+						ret += websWrite(wp, ", \"%d\"", scb_val.val);
+					else
+						ret += websWrite(wp, "\"%d\"", scb_val.val);
+				}
 
-				ret += websWrite(wp, "]");
+				if(from_app == 0)
+					ret += websWrite(wp, "]");
+				else
+					ret += websWrite(wp, "}");
 			}
 		}
 	}

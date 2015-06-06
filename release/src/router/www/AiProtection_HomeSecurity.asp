@@ -18,7 +18,7 @@
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script>
-var $j = jQuery.noConflict();
+
 
 function initial(){
 	show_menu();
@@ -97,7 +97,7 @@ function initial(){
 													<div class="app_name">
 														<a style="text-decoration: underline;" href="AiProtection_HomeProtection.asp"><#AiProtection_Home#></a>
 													</div>
-													<div class="app_desc" style="height:60px;">
+													<div class="app_desc" style="height:60px;white-space:nowrap;">
 														<li><#AiProtection_scan#></li>
 														<li><#AiProtection_sites_blocking#></li>
 														<li><#AiProtection_Vulnerability#></li>

@@ -50,6 +50,7 @@ struct dhcp6_timer {
 	void *expire_data;
 };
 
+time_t dhcp6_time __P((struct timeval *));
 void dhcp6_timer_init __P((void));
 struct dhcp6_timer *dhcp6_add_timer __P((struct dhcp6_timer *(*) __P((void *)),
 					 void *));

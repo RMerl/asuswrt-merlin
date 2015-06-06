@@ -837,6 +837,24 @@ width:122px;
 	border-style:inset;
 }
 
+.block_filter_name_table{
+	text-align:center;
+	color:#CCCCCC;
+	font-size:14px;
+	width: 100%;
+	height: 100%;
+} 
+.block_filter_name_table:hover{
+	color:#FFFFFF;
+}
+.block_filter_name_table_pressed{
+	text-align:center;
+	color:#93A9B1;
+	font-size:14px;
+	width:100%;
+	height:100%;
+} 
+
 .usb_count_circle {
 	position: absolute;
 	width: 30px;

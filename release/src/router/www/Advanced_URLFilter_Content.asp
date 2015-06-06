@@ -193,7 +193,7 @@ function done_validating(action){
 										</tr>
 										<tr>
 											<td width="80%">
-												<input type="text" maxlength="32" class="input_32_table" name="url_keyword_x_0" onKeyPress="return validator.isString(this, event)">
+												<input type="text" maxlength="32" class="input_32_table" name="url_keyword_x_0" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 											</td>
 											<td width="20%">	
 												<input class="add_btn" type="button" onClick="addRow(document.form.url_keyword_x_0);" value="">

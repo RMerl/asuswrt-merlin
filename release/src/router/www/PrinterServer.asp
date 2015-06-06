@@ -71,9 +71,9 @@ function initial(){
 	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
 	document.getElementById("_APP_Installation").className = "menu_clicked";
 
-	addOnlineHelp($("faq1"), ["ASUSWRT", "ez","printer"]);
-	addOnlineHelp($("faq2"), ["ASUSWRT", "lpr"]);
-	addOnlineHelp($("faq3"), ["mac", "lpr"]);
+	addOnlineHelp(document.getElementById("faq1"), ["ASUSWRT", "ez","printer"]);
+	addOnlineHelp(document.getElementById("faq2"), ["ASUSWRT", "lpr"]);
+	addOnlineHelp(document.getElementById("faq3"), ["mac", "lpr"]);
 	//setTimeout("showMethod('','none');", 100);
 }
 
@@ -83,12 +83,12 @@ function showMethod(flag1, flag2){
 	document.getElementById("method2").style.display = flag2;
 	document.getElementById("method2Title").style.display = flag2;
 	if(flag1 == ""){
-		$("help1").style.color = "#FFF";
-		$("help2").style.color = "gray";
+		document.getElementById("help1").style.color = "#FFF";
+		document.getElementById("help2").style.color = "gray";
 	}
 	else{
-		$("help1").style.color = "gray";
-		$("help2").style.color = "#FFF";
+		document.getElementById("help1").style.color = "gray";
+		document.getElementById("help2").style.color = "#FFF";
 	}
 }
 </script>

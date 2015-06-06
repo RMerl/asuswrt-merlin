@@ -716,6 +716,12 @@ int chk_proto(int wan_unit, int wan_state){
 		if(limit > 0 && total >= limit){
 			csprintf("wanduck(%d): chk_proto() detect the data limit.\n", wan_unit);
 			update_wan_state(prefix_wan, WAN_STATE_STOPPED, WAN_STOPPED_REASON_DATALIMIT);
+
+			if(nvram_get_int("modem_sms_limit") == 1 && nvram_get_int("modem_sms_limit_send") == 0){
+				notify_rc("start_sendSMS");
+				nvram_set("modem_sms_limit_send", "1");
+			}
+
 			return DISCONN;
 		}
 		else
@@ -1330,6 +1336,23 @@ void handle_dns_req(int sfd, char *line, int maxlen, struct sockaddr *pcliaddr, 
 	dns_response_packet d_reply;
 	int reply_size;
 	char reply_content[MAXLINE];
+	void *data = &d_reply.answers;
+	size_t data_len = sizeof(d_reply.answers);
+	in_addr_t lan_ipaddr = inet_addr_(nvram_safe_get("lan_ipaddr"));	// router's LAN IP
+#if !defined(RTCONFIG_FINDASUS)
+	unsigned char auth_name_srv[] = {
+		0x00, 0x00, 0x06, 0x00, 0x01, 0x00,
+		0x00, 0x2a, 0x30, 0x00, 0x40, 0x01, 0x61, 0x0c,
+		0x72, 0x6f, 0x6f, 0x74, 0x2d, 0x73, 0x65, 0x72,
+		0x76, 0x65, 0x72, 0x73, 0x03, 0x6e, 0x65, 0x74,
+		0x00, 0x05, 0x6e, 0x73, 0x74, 0x6c, 0x64, 0x0c,
+		0x76, 0x65, 0x72, 0x69, 0x73, 0x69, 0x67, 0x6e,
+		0x2d, 0x67, 0x72, 0x73, 0x03, 0x63, 0x6f, 0x6d,
+		0x00, 0x78, 0x1b, 0x1a, 0xfd, 0x00, 0x00, 0x07,
+		0x08, 0x00, 0x00, 0x03, 0x84, 0x00, 0x09, 0x3a,
+		0x80, 0x00, 0x01, 0x51, 0x80
+	};
+#endif
 	
 	reply_size = 0;
 	memset(reply_content, 0, MAXLINE);
@@ -1368,25 +1391,33 @@ void handle_dns_req(int sfd, char *line, int maxlen, struct sockaddr *pcliaddr, 
 	for(i = 0; i < len; ++i)
 		if(query_name[i] < 32)
 			query_name[i] = '.';
+
+	if ((repeater_mode() || mediabridge_mode()) &&
+	    nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED)
+		lan_ipaddr = inet_addr_(nvram_default_get("lan_ipaddr"));
 	
 	if(!upper_strcmp(query_name, router_name)){
-#ifdef RTCONFIG_WIRELESSREPEATER
-		if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_match("lan_proto", "dhcp") && nvram_get_int("lan_state_t") != LAN_STATE_CONNECTED)
-			d_reply.answers.addr = inet_addr_(nvram_default_get("lan_ipaddr"));
-		else
-#endif
-			d_reply.answers.addr = inet_addr_(nvram_safe_get("lan_ipaddr"));	// router's ip
+		d_reply.answers.addr = lan_ipaddr;
 	}
-#ifdef RTCONFIG_FINDASUS
 	else if (!upper_strcmp(query_name, "findasus.local")) {
-		d_reply.answers.addr = inet_addr_(nvram_safe_get("lan_ipaddr"));	// router's ip
-	}
+#ifdef RTCONFIG_FINDASUS
+		d_reply.answers.addr = lan_ipaddr;
+#else
+		data = auth_name_srv;
+		data_len = sizeof(auth_name_srv);
+		d_reply.header.flag_set.flag_num = htons(0x8183);			/* No such name */
+		memcpy(reply_content, &d_reply.header, sizeof(d_reply.header));
+		reply_content[5] = 1;	// Questions
+		reply_content[7] = 0;	// Answer RRS
+		reply_content[9] = 1;	// Authority RRS
+		reply_content[11] = 0;	// Additional RRS
 #endif
+	}
 	else
 		d_reply.answers.addr = htonl(0x0a000001);	// 10.0.0.1
 	
-	memcpy(reply_content+reply_size, &d_reply.answers, sizeof(d_reply.answers));
-	reply_size += sizeof(d_reply.answers);
+	memcpy(reply_content+reply_size, data, data_len);
+	reply_size += data_len;
 	
 	sendto(sfd, reply_content, reply_size, 0, pcliaddr, clen);
 }

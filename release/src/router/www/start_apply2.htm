@@ -88,6 +88,203 @@ var makeRequest = {
 	}
 };
 
+function showWlHint(){
+	var wl_nband_title = (function(){
+		String.prototype.toArray = function(){
+			var ret = eval(this.toString());
+			if(Object.prototype.toString.apply(ret) === '[object Array]')
+				return ret;
+			return [];
+		}
+
+		var wl_nband_title = [];
+		var wl_nband_array = "<% wl_nband_info(); %>".toArray();
+		var band2g_count = 0;
+		var band5g_count = 0;
+		for (var j=0; j<wl_nband_array.length; j++) {
+			if(wl_nband_array[j] == '2'){
+				band2g_count++;
+				wl_nband_title.push("2.4GHz-" + band2g_count);
+			}
+			else if(wl_nband_array[j] == '1'){
+				band5g_count++;
+				wl_nband_title.push("5GHz-" + band5g_count);
+			}
+		}
+		if(wl_nband_title.indexOf("2.4GHz-2") == -1) wl_nband_title[wl_nband_title.indexOf("2.4GHz-1")] = "2.4GHz";
+		if(wl_nband_title.indexOf("5GHz-2") == -1) wl_nband_title[wl_nband_title.indexOf("5GHz-1")] = "5GHz";
+
+		return wl_nband_title;
+	})();
+
+	var doRedirect = function(){
+		var getXMLAndRedirect = function(){
+			if(makeRequest._notSupportXML){
+				if(current_page.length > 0){
+					top.location.href = current_page;
+				}
+			}
+
+			makeRequest.start('/httpd_check.xml', function(xmldoc){
+				var httpds = xmldoc.getElementsByTagName("httpd");
+				if (httpds !== null && httpds[0] !== null) {
+					if(top.document.getElementById("connectedHint")){
+						top.document.getElementById("connectedHint").innerHTML = "<#DrSurf_sweet_advise2#>";
+					}
+
+					setTimeout(function(){
+						top.location.href = current_page;
+						if(top.document.getElementById("wlHint")) top.document.getElementById("wlHint").style.display = "none";
+					}, 300);
+				}
+			}, getXMLAndRedirect);
+		};
+		
+		getXMLAndRedirect();
+	};
+
+	var getWlHint = function(wlObj){
+		if(wlObj.length == 0 || typeof wlObj == "undefined") return false;
+
+		var wlHintCss = document.createElement("style");
+		wlHintCss.type = "text/css";
+		wlHintCss.innerHTML += ".dr_sweet_advise_wl_hint{";
+		wlHintCss.innerHTML += "filter:alpha(opacity=90);";
+		wlHintCss.innerHTML += "opacity:.90;";
+		wlHintCss.innerHTML += "-webkit-border-radius: 10px;";
+		wlHintCss.innerHTML += "-moz-border-radius: 10px;";
+		wlHintCss.innerHTML += "border-radius: 10px;";
+		wlHintCss.innerHTML += "behavior: url(/PIE.htc);";
+		wlHintCss.innerHTML += "border-radius: 10px 10px 10px 10px;";
+		wlHintCss.innerHTML += "border: 0px;";
+		wlHintCss.innerHTML += "width:90%;";
+		wlHintCss.innerHTML += "max-width: 900px;";
+		wlHintCss.innerHTML += "margin-top: 100px;";
+		wlHintCss.innerHTML += "font-size:26px;";
+		wlHintCss.innerHTML += "color:#FFFFFF;";
+		wlHintCss.innerHTML += "background-color:#000000;";
+		wlHintCss.innerHTML += "font-family:Arial, Helvetica, sans-serif;";
+		wlHintCss.innerHTML += "}";
+		wlHintCss.innerHTML += ".wl_hint_content{";
+		wlHintCss.innerHTML += "-webkit-border-radius: 10px;";
+		wlHintCss.innerHTML += "-moz-border-radius: 10px;";
+		wlHintCss.innerHTML += "border-radius: 10px;";
+		wlHintCss.innerHTML += "background-color:#FFFFFF;";
+		wlHintCss.innerHTML += "color:#006699;";
+		wlHintCss.innerHTML += "border:1px solid #999;";
+		wlHintCss.innerHTML += "margin:10px;";
+		wlHintCss.innerHTML += "text-align:left;";
+		wlHintCss.innerHTML += "padding:10px;";
+		wlHintCss.innerHTML += "font-size:18px;";
+		wlHintCss.innerHTML += "font-family:Arial, Verdana, Helvetica, sans-serif;";
+		wlHintCss.innerHTML += "line-height:130%;";
+		wlHintCss.innerHTML += "}";
+		wlHintCss.innerHTML += ".wl_hint_content span{";
+		wlHintCss.innerHTML += "color:#FF6600;";
+		wlHintCss.innerHTML += "}";
+		top.document.body.appendChild(wlHintCss);
+
+		var wlHintDiv = document.createElement("div");
+		var htmlCode = '';
+		wlHintDiv.setAttribute("id", "wlHint");
+		htmlCode += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;text-align:center;z-index:99999;background-color:#444F53;overflow:hidden;">';
+		htmlCode += '<table cellpadding="5" cellspacing="0" class="dr_sweet_advise_wl_hint" align="center">';
+		htmlCode += '<tbody>';
+		htmlCode += '<tr>';
+		htmlCode += '<td>';
+		htmlCode += '<div class="wl_hint_content">';
+		htmlCode += "<#DrSurf_sweet_advise1#>";
+		htmlCode += '<div id="wireless_client_detect" style="margin-top:15px;">';
+		htmlCode += '<#qis_tutor_title1#>:';
+		htmlCode += '<ul>';
+
+		for(var i=0; i<wlObj.length; i++){
+			htmlCode += (wlObj.length == 1) ? "" : '<li style="font-family:Lucida Console; margin-top: 10px;"><b>' + wlObj[i].band + ':</b>';
+			htmlCode += '<ul>';
+			htmlCode += '<li>';
+			htmlCode += '<#Wireless_name#>: <span style="font-weight:bold;font-size:20px;font-family:Lucida Console;">'
+			htmlCode += wlObj[i].ssid;
+			htmlCode += '</span>';
+			htmlCode += '</li>';
+			htmlCode += '<li> ';
+			htmlCode += '<#Network_key#>: <span style="font-weight:bold;font-size:20px;font-family:Lucida Console;">'
+			htmlCode += (wlObj[i].key == "") ? "Open System" : wlObj[i].key;
+			htmlCode += '</span>';
+			htmlCode += '</li>';
+			htmlCode += '</ul>';
+			htmlCode += (wlObj.length == 1) ? "" : '</li>';
+		}		
+		
+		htmlCode += '</ul>';
+		htmlCode += '</div>';
+		htmlCode += '<div style="text-align: right;"><span style="font-size:28px;margin-right:5px;" id="connectedHint"></span>';
+		htmlCode += '<img width="32px" src="images/InternetScan.gif" />';
+		htmlCode += '</div>';
+		htmlCode += '</div>';
+		htmlCode += '</td>';
+		htmlCode += '</tr>';
+		htmlCode += '</tbody>';
+		htmlCode += '</table></div>';
+		wlHintDiv.innerHTML = htmlCode;
+		top.document.body.appendChild(wlHintDiv);
+	};
+
+	var genWlObj = function(){
+		var wlObj = [];
+		var wlUnit = function(_band, _ssid, _key){
+			this.band = _band;
+			this.ssid = _ssid;
+			this.key = _key;
+		}
+
+		var ssid_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>')];
+		var auth_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_auth_mode_x"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_auth_mode_x"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_auth_mode_x"); %>')];
+		var key_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>')];
+
+		var ssid_param = [decodeURIComponent('<% get_ascii_parameter("wl0_ssid"); %>'), decodeURIComponent('<% get_ascii_parameter("wl1_ssid"); %>'), decodeURIComponent('<% get_ascii_parameter("wl2_ssid"); %>')];
+		var auth_param = [decodeURIComponent('<% get_ascii_parameter("wl0_auth_mode_x"); %>'), decodeURIComponent('<% get_ascii_parameter("wl1_auth_mode_x"); %>'), decodeURIComponent('<% get_ascii_parameter("wl2_auth_mode_x"); %>')];
+		var key_param = [decodeURIComponent('<% get_ascii_parameter("wl0_wpa_psk"); %>'), decodeURIComponent('<% get_ascii_parameter("wl1_wpa_psk"); %>'), decodeURIComponent('<% get_ascii_parameter("wl2_wpa_psk"); %>')];
+
+		var applyParam = {
+			unit: decodeURIComponent('<% get_ascii_parameter("wl_unit"); %>'),
+			ssid: decodeURIComponent('<% get_ascii_parameter("wl_ssid"); %>'),
+			auth: decodeURIComponent('<% get_ascii_parameter("wl_auth_mode_x"); %>'),
+			key: decodeURIComponent('<% get_ascii_parameter("wl_wpa_psk"); %>'),
+			smartConnect: decodeURIComponent('<% get_ascii_parameter("smart_connect_x"); %>')
+		}
+
+		// original profile
+		for(var i=0; i<wl_nband_title.length; i++){
+			wlObj.push(new wlUnit(wl_nband_title[i], ssid_nvram[i], (auth_nvram[i] == "open") ? "" : key_nvram[i]));
+		}
+
+		if(applyParam.ssid != ""){
+			// handle wl
+			if(applyParam.smartConnect == 1){
+				applyParam.unit = 0;
+				wlObj.length = 1;
+			}
+
+			wlObj[applyParam.unit].ssid = applyParam.ssid;
+			wlObj[applyParam.unit].key = (applyParam.auth == "open") ? "" : applyParam.key;				
+		}
+		else{
+			// handle wlX
+			for(var i=0; i<wlObj.length; i++){
+				if(ssid_param[i] != ""){
+					wlObj[i].ssid = ssid_param[i];
+					wlObj[i].key = (auth_param[i] == "open") ? "" : key_param[i];
+				}
+			}			
+		}
+
+		return wlObj;
+	};
+
+	getWlHint(genWlObj());	
+	setTimeout(function(){doRedirect();}, 5000);
+}
+
 function showdr_advise(setting){
 	var getXMLAndRedirect = function(){
 		if(makeRequest._notSupportXML){
@@ -103,9 +300,6 @@ function showdr_advise(setting){
 		makeRequest.start('/httpd_check.xml', function(xmldoc){
 			var httpds = xmldoc.getElementsByTagName("httpd");
 			if (httpds !== null && httpds[0] !== null) {
-				if(parent.parent.document.getElementById("drword")) {
-					parent.parent.document.getElementById("drword").innerHTML = "<#DrSurf_sweet_advise2#><br/><br/>";
-				}
 				var redirectPage = current_page;
 				if(redirectPage.length > 0) {
 					if (getflag !== "") {
@@ -122,17 +316,18 @@ function showdr_advise(setting){
 
 	if(parent.parent.document.forms[0].current_page.value == "/QIS_wizard.htm"
 			&& parent.parent.document.forms[0].sw_mode.value == "3"){
-		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
-		setTimeout("parent.parent.$('drword').innerHTML = '<#DrSurf_sweet_advise3#><br/><br/>'", 10000);
+		parent.parent.document.getElementById('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
+		setTimeout("parent.parent.document.getElementById('drword').innerHTML = '<#DrSurf_sweet_advise3#><br/><br/>'", 10000);
 		setTimeout(getXMLAndRedirect, restart_time*1000);
 	}
 	else if(setting == "finish"){
-		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
+		parent.parent.document.getElementById('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
 		getXMLAndRedirect();
 	}
 	else{
-		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
-		parent.parent.$('wireless_client_detect').style.display = "";
+		parent.parent.document.getElementById('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
+		parent.parent.document.getElementById('wireless_client_detect').style.display = "";
+		parent.parent.document.getElementById('alertImg').style.display = "none";
 		if(typeof parent.detect_LANStatus == 'function')
 			setTimeout("parent.detect_LANStatus('finish');", restart_time*1000);
 		else{
@@ -149,20 +344,17 @@ function qis_delay_redirect(next_url){
 
 function afterLiveUpdate(){
 	if(parent.parent.liveUpdateFinish == true){
-		if(!parent.parent.new_FW)
-			parent.parent.location.href = "/index.asp";
-		else
-			parent.location.href='/qis/QIS_finish.htm';
+		parent.location.href = '/qis/QIS_finish.htm';
 	}
 	else{
-		setTimeout("afterLiveUpdate();", 1000);
+		setTimeout(function(){afterLiveUpdate();}, 500);
 	}	
 }
 
 function initial(){
-
 	var isWLclient = function () {  //detect login client is by wireless or wired
 		<% login_state_hook(); %>
+					return true;  //wireless
 		var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 						
 		if(wireless.length > 0) {
@@ -176,8 +368,23 @@ function initial(){
 		return false; //wired
 	};
 
-	if(current_page == "/qis/QIS_wireless.htm" && parent.parent.ISMOBILE){
-		setTimeout("parent.parent.detect_LANStatus('finish');", restart_time*1000);
+	if(getflag == "finishQIS"){
+		if(isWLclient()){
+			if(action_script.search("restart_wireless") != -1){
+				showWlHint();
+				return;
+			}
+		}
+
+		setTimeout(function(){
+			parent.parent.location.href = '/index.asp';
+		}, restart_time*1000);
+	}	
+	else if(getflag == "liveUpdate"){
+		setTimeout(function(){
+			parent.parent.detect_firmware();
+			afterLiveUpdate();
+		}, restart_time*1000);
 	}
 	else if(getflag == "upgrading"){
 		parent.progressBar = 0;
@@ -188,34 +395,29 @@ function initial(){
 	}
 	else if(getflag == "wlcconnect"){
 		parent.retValHandler.errCount = 0;
-		parent.parent.$("LoadingBar").style.visibility = "visible";
-		parent.parent.$("LoadingBar").style.display = "";
+		parent.parent.document.getElementById("LoadingBar").style.visibility = "visible";
+		parent.parent.document.getElementById("LoadingBar").style.display = "";
 		parent.parent.showLoadingBar(90);
 		setTimeout("parent.retValHandler.doQuery();", 75000);		
 	}
 	else if(getflag == "next"){
 		parent.gotoNext();
 	}
+	else if(action_script == "saveNvram"){
+		return;
+	}
+	else if(getflag == "background"){
+		return;
+	}
 	else if(page_modified == 1){
 		if(isWLclient()){
-			if(parent.parent.ISMOBILE){
-				alert("<#DrSurf_sweet_advise1#>");
-			}
-			else if(action_script == "saveNvram"){
+			if(action_script.search("restart_wireless") != -1 || action_script.search("restart_all") != -1  || action_script.search("reboot") != -1){
+				showWlHint();
 				return;
 			}
-			else{
-				parent.parent.dr_advise();
-				parent.parent.document.getElementById('disconnect_hint').style.display = "";
-				setTimeout("showdr_advise();", 10000);
-				return false;
-			}
-		}
-		else if(getflag == "background"){
-			return;
 		}
 		else if(getflag == "finish"){
-			if(parent.$("hidden_frame")){
+			if(parent.document.getElementById("hidden_frame")){
 				setTimeout("parent.location.href='/qis/QIS_finish.htm';", restart_time*1000);  // Get
 			}
 			else{
@@ -223,15 +425,11 @@ function initial(){
 				setTimeout("showdr_advise('finish');", (restart_time+1)*1000);
 			}
 		} 
-		else if(getflag == "liveUpdate"){
-			setTimeout("parent.parent.detect_firmware();", restart_time*1000);
-			setTimeout("afterLiveUpdate();", (restart_time+12)*1000);
-		}		
 		else if(getflag == "adv_ap_mode"){
 			if(parent.findasus_support){
-				parent.parent.$('drword').innerHTML = "You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.";
+				parent.parent.document.getElementById('drword').innerHTML = "You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.";
 			}else{
-				parent.parent.$('drword').innerHTML = "<#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#>";
+				parent.parent.document.getElementById('drword').innerHTML = "<#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#>";
 			}
 			setTimeout("parent.parent.hideLoading();	",15000);
 			setTimeout("parent.parent.dr_advise();",15000);
@@ -256,27 +454,11 @@ function initial(){
 	}
 	else{
 		if(next_page == "/qis/QIS_finish.htm"){
-			if(isWLclient()){		// for wireless client and without page modifying
-				if(parent.parent.ISMOBILE){
-					alert("<#DrSurf_sweet_advise1#>");
-				}
-				else{
-					parent.parent.dr_advise();
-					parent.parent.document.getElementById('disconnect_hint').style.display = "";
-					setTimeout("showdr_advise();", 10000);
-					return false;
-				}
-			}
-			
 			if(navigator.userAgent.indexOf("Opera")  >= 0)
 				setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
 			else	
 				setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 		}
-		else if(getflag == "liveUpdate"){
-			setTimeout("parent.parent.detect_firmware();", 1000);
-			setTimeout("afterLiveUpdate();", 1000);
-		}		
 		else if(next_page == "/QIS_wizard.htm"){
 			if(navigator.userAgent.indexOf("Opera")  >= 0)
 				setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);

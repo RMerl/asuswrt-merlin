@@ -9,7 +9,7 @@ static int count = 0; // real count
 
 void stop_bwdpi_check()
 {
-	eval("killall", "-9", "bwdpi_check");
+	killall_tk("bwdpi_check");
 }
 
 void start_bwdpi_check()

@@ -17,7 +17,7 @@ var PoolName = parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[pa
 var folderlist = get_sharedfolder_in_pool(PoolDevice);
 
 function initial(){
-	showtext($("poolName"), PoolName);
+	showtext(document.getElementById("poolName"), PoolName);
 	document.createFolderForm.folder.focus();
 	clickevent();
 }
@@ -28,7 +28,7 @@ function clickevent(){
 	else
 		document.getElementById('folder').attachEvent('onkeydown',keyDownHandler);
 	
-	$("Submit").onclick = submit;
+	document.getElementById("Submit").onclick = submit;
 }
 function submit(){
 	if(validForm()){
@@ -79,29 +79,29 @@ function keyDownHandler(event){
 }
 
 function validForm(){
-	$("folder").value = trim($("folder").value);
+	document.getElementById("folder").value = trim(document.getElementById("folder").value);
 
 	// share name
-	if($("folder").value.length == 0){
+	if(document.getElementById("folder").value.length == 0){
 		alert("<#File_content_alert_desc6#>");
-		$("folder").focus();
+		document.getElementById("folder").focus();
 		return false;
 	}
 	
 	var re = new RegExp("[^a-zA-Z0-9 _-]+", "gi");
-	if(re.test($("folder").value)){
+	if(re.test(document.getElementById("folder").value)){
 		alert("<#File_content_alert_desc7#>");
-		$("folder").focus();
+		document.getElementById("folder").focus();
 		return false;
 	}
 	
-	if(parent.checkDuplicateName($("folder").value, folderlist)){
+	if(parent.checkDuplicateName(document.getElementById("folder").value, folderlist)){
 		alert("<#File_content_alert_desc8#>");
-		$("folder").focus();
+		document.getElementById("folder").focus();
 		return false;
 	}
 	
-	if(trim($("folder").value).length > 12)
+	if(trim(document.getElementById("folder").value).length > 12)
 		if (!(confirm("<#File_content_alert_desc10#>")))
 			return false;
 	
@@ -135,7 +135,7 @@ function NoSubmit(e){
     </tr>
     <tr>
       <th width="100"><#FolderName#>: </th>
-      <td height="50"><input class="input_25_table" type="text" name="folder" id="folder" style="width:220px;" onkeypress="return NoSubmit(event)"></td>
+      <td height="50"><input class="input_25_table" type="text" name="folder" id="folder" style="width:220px;" onkeypress="return NoSubmit(event)" autocorrect="off" autocapitalize="off"></td>
     </tr>
     <tr bgcolor="#E6E6E6">
       <th colspan="2"><input id="Submit" type="button" class="button_gen" value="<#CTL_add#>"></th>

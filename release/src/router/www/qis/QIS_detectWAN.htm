@@ -27,8 +27,22 @@ var wantype = wanlink_type();
 var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
+var first_wanstate = -1;
+var first_wansbstate = -1;
+var first_wanauxstate = -1;
+var second_wanstate = -1;
+var second_wansbstate = -1;
+var second_wanauxstate = -1;
+var usb_wanstate = -1;
+var usb_wansbstate = -1;
+var usb_wanauxstate = -1;
 
 <% wanstate(); %>
+
+var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
+var ewan_index = wans_dualwan.indexOf("wan");
+var usb_index = wans_dualwan.indexOf("usb");
+var based_modelid = '<% nvram_get("productid"); %>';
 
 function initial(){
 	parent.set_step("t1");
@@ -80,10 +94,34 @@ function initial(){
 	setTimeout("ajax_detectWAN();", 2000);
 }
 
+function getDualWANState(){
+	if( ewan_index == 0 ){
+		wanstate = first_wanstate;
+		wansbstate = first_wansbstate;
+		wanauxstate = first_wanauxstate;
+	}
+	else if(ewan_index == 1){
+		wanstate = second_wanstate;
+		wansbstate = second_wansbstate;
+		wanauxstate = second_wanauxstate;
+	}
+
+	if( usb_index == 0 ){
+		usb_wanstate = first_wanstate;
+		usb_wansbstate = first_wansbstate;
+		usb_wanauxstate = first_wanauxstate;
+	}
+	else if(usb_index == 1){
+		usb_wanstate = second_wanstate;
+		usb_wansbstate = second_wansbstate;
+		usb_wanauxstate = second_wanauxstate;
+	}	
+}
+
 function ajax_detectWAN(){
 	++run_times;
 	$("#verify_time")[0].innerHTML = "( "+run_times+" / "+MAX_RUN_TIMES+" )";
-	
+
 	$.ajax({
 		url: '/WAN_info.asp',
 		dataType: 'script',
@@ -93,6 +131,10 @@ function ajax_detectWAN(){
 			setTimeout("ajax_detectWAN();", 1000);
 		},
 		success: function(response){
+			if(based_modelid == "4G-AC55U"){
+				getDualWANState();		
+			}
+
 			parent.set_detectWAN(wanauxstate);
 			
 			check_changed_status();
@@ -119,9 +161,15 @@ function check_changed_status(){
 function successstatus(){
 	var ssid_2g = '<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>';
 	var ssid_5g = '<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>';
-	
+
 	if(wanstate == 2 && wanauxstate != 1){
-		if(ssid_2g == "ASUS" && ssid_5g == "ASUS_5G")
+		if(based_modelid == "4G-AC55U"){
+			if(usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0))
+				gotoPage('/qis/QIS_wireless.htm', '', 0);
+			else
+				gotoPage('/qis/QIS_dualconnect_status.htm', '', 0);
+		}
+		else if(ssid_2g == "ASUS" && ssid_5g == "ASUS_5G")
 			gotoPage('/qis/QIS_wireless.htm', '', 0);
 		else
 			gotoPage('/qis/QIS_finish.htm', '', 0);

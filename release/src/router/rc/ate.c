@@ -142,7 +142,7 @@ isValidChannel(int is_2G, char *channel)
 int
 pincheck(const char *a)
 {
-	unsigned char *c = (char *) a;
+	unsigned char *c = (unsigned char *) a;
 	unsigned long int uiPINtemp = atoi(a);
 	unsigned long int uiAccum = 0;
 	int i = 0;
@@ -181,7 +181,7 @@ int isValidSN(const char *sn)
 	if(strlen(sn) != SERIAL_NUMBER_LENGTH)
 		return 0;
 
-	c = (char *)sn;
+	c = (unsigned char *)sn;
 	/* [1]year: C~Z (2012=C, 2013=D, ...) */
 	if(*c<0x43 || *c>0x5A)
 		return 0;
@@ -670,8 +670,8 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	   	set_wantolan();
 		modprobe_r("hw_nat");
 		modprobe("hw_nat");
-		system("killall -9 wanduck");
-		system("killall -9 udhcpc");
+		stop_wanduck();
+		killall_tk("udhcpc");
 		return 0;
 	}
 #if defined(RTAC1200HP) || defined(RTN56UB1)
@@ -841,8 +841,13 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Get_WanLanStatus")) {
-		if( !GetPhyStatus())
+#ifndef RTCONFIG_EXT_RTL8365MB
+		if( !GetPhyStatus(1))
 			puts("ATE_ERROR");
+#else
+		GetPhyStatus(1);
+#endif
+
 		return 0;
 	}
 	else if (!strcmp(command, "Get_FwReadyStatus")) {
@@ -1116,20 +1121,19 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 /*
 	else if (!strcmp(command, "Set_ART2")) {
 		// temp solution
-		system("killall rstats");
-		system("killall udhcpc");
-		system("killall wanduck");
-		system("killall networkmap");
-		system("killall -9 hostapd");
-		system("ifconfig ath0 down");
-		system("ifconfig ath1 down");
-		system("killall -9 hostapd");
-		system("brctl delif br0 ath0");
-		system("brctl delif br0 ath1");
-		system("wlanconfig ath0 destroy");
-		system("wlanconfig ath1 destroy");
-		system("ifconfig wifi0 down");
-		system("ifconfig wifi1 down");
+		killall_tk("rstats");
+		killall_tk("udhcpc");
+		stop_wanduck();
+		killall_tk("networkmap");
+		killall_tk("hostapd");
+		ifconfig("ath0", 0, NULL, NULL);
+		ifconfig("ath1", 0, NULL, NULL);
+		eval("brctl", "delif", "br0", "ath0");
+		eval("brctl", "delif", "br0", "ath1");
+		eval("wlanconfig", "ath0", "destroy");
+		eval("wlanconfig", "ath1", "destroy");
+		ifconfig("wifi0", 0, NULL, NULL);
+		ifconfig("wifi1", 0, NULL, NULL);
 		modprobe_r("umac");
 		modprobe_r("ath_dfs");
 		modprobe_r("ath_dev");
@@ -1312,6 +1316,21 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		getTerritoryCode();
 		return 0;
 	}
+#ifdef CONFIG_BCMWL5
+	else if (!strcmp(command, "Set_PSK")) {
+		if (setPSK(value) < 0)
+		{
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
+			return EINVAL;
+		}
+		getPSK();
+		return 0;
+	}
+	else if (!strcmp(command, "Get_PSK")) {
+		getPSK();
+		return 0;
+	}
+#endif
 #endif
 	else
 	{

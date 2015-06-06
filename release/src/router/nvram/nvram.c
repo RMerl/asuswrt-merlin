@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <unistd.h>	// for sleep()
 #include <typedefs.h>
@@ -268,8 +269,11 @@ int nvram_restore_new(char *file, char *buf)
 #endif
 		for (i = 0; i < count; i++)
 		{
-			if ((unsigned char) buf[i] > ( 0xfd - 0x1))
-				buf[i] = 0x0;
+			if ((unsigned char) buf[i] > ( 0xfd - 0x1)){
+				/* e.g.: to skip the case: 0x61 0x62 0x63 0x00 0x00 0x61 0x62 0x63 */
+				if(i > 0 && buf[i-1] != 0x0)
+					buf[i] = 0x0;
+			}
 			else
 				buf[i] = 0xff + rand - buf[i];
 		}
@@ -298,6 +302,13 @@ int nvram_restore_new(char *file, char *buf)
 
 	while (*p)
 	{
+#if 1
+		/* e.g.: to skip the case: 00 2e 30 2e 32 38 00 ff 77 61 6e */
+		if (!isprint(*p)) {
+			p = p + 1;
+			continue;
+		}
+#endif
 		v = strchr(p, '=');
 
 		if (v != NULL)

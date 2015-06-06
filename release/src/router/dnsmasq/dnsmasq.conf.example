@@ -345,6 +345,14 @@
 # Ask client to poll for option changes every six hours. (RFC4242)
 #dhcp-option=option6:information-refresh-time,6h
 
+# Set option 58 client renewal time (T1). Defaults to half of the
+# lease time if not specified. (RFC2132)
+#dhcp-option=option:T1:1m
+
+# Set option 59 rebinding time (T2). Defaults to 7/8 of the
+# lease time if not specified. (RFC2132)
+#dhcp-option=option:T2:2m
+
 # Set the NTP time server address to be the same machine as
 # is running dnsmasq
 #dhcp-option=42,0.0.0.0
@@ -485,6 +493,9 @@
 
 # Set the root directory for files available via FTP.
 #tftp-root=/var/ftpd
+
+# Do not abort if the tftp-root is unavailable
+#tftp-no-fail
 
 # Make the TFTP server more secure: with this set, only files owned by
 # the user dnsmasq is running as will be send over the net.

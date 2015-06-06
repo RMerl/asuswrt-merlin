@@ -87,7 +87,7 @@
 </style>
 <script>
 
-var $j = jQuery.noConflict();
+
 var MULTIFILTER_ENABLE = '<% nvram_get("MULTIFILTER_ENABLE"); %>'.replace(/&#62/g, ">");
 var MULTIFILTER_MAC = '<% nvram_get("MULTIFILTER_MAC"); %>'.replace(/&#62/g, ">");
 var MULTIFILTER_DEVICENAME = decodeURIComponent('<% nvram_char_to_ascii("","MULTIFILTER_DEVICENAME"); %>').replace(/&#62/g, ">");
@@ -129,8 +129,8 @@ function register_event(){
 	var unchecked = 0;
 	init_array(array_temp);
 
-  $j(function() {
-    $j( "#selectable" ).selectable({
+  $(function() {
+    $( "#selectable" ).selectable({
 		filter:'td',
 		selecting: function(event, ui){
 					
@@ -202,11 +202,11 @@ function initial(){
 		document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
 		document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 		document.getElementById('guest_image').style.background = "url(images/New_ui/TimeLimits.png)";
-		$('content_title').innerHTML = "AiProtection - <#Time_Scheduling#>";
-		$('desc_title').innerHTML = "<#ParentalCtrl_Desc_TS#>";
-		$('web_title').innerHTML = "<#Web_Title#> - <#Time_Scheduling#>";
-		$('PC_enable').innerHTML = "<#ParentalCtrl_Enable_TS#>";
-		$('switch_menu').style.display = "";
+		document.getElementById('content_title').innerHTML = "AiProtection - <#Time_Scheduling#>";
+		document.getElementById('desc_title').innerHTML = "<#ParentalCtrl_Desc_TS#>";
+		document.getElementById('web_title').innerHTML = "<#Web_Title#> - <#Time_Scheduling#>";
+		document.getElementById('PC_enable').innerHTML = "<#ParentalCtrl_Enable_TS#>";
+		document.getElementById('switch_menu').style.display = "";
 	}
 
 	show_footer();
@@ -217,9 +217,9 @@ function initial(){
 	}
 
 	if(!yadns_support){
-		$('FormTitle').style.webkitBorderRadius = "3px";
-		$('FormTitle').style.MozBorderRadius = "3px";
-		$('FormTitle').style.BorderRadius = "3px";	
+		document.getElementById('FormTitle').style.webkitBorderRadius = "3px";
+		document.getElementById('FormTitle').style.MozBorderRadius = "3px";
+		document.getElementById('FormTitle').style.BorderRadius = "3px";	
 	}
 
 	gen_mainTable();
@@ -257,13 +257,13 @@ function showLANIPList(){
 		htmlCode += "</strong></div></a><!--[if lte IE 6.5]><script>alert(\"<#ALERT_TO_CHANGE_BROWSER#>\");</script><![endif]-->";	
 	}
 
-	$("ClientList_Block_PC").innerHTML = htmlCode;
+	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function pullLANIPList(obj){	
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		document.form.PC_devicename.focus();		
 		isMenuopen = 1;
 	}
@@ -274,8 +274,8 @@ function pullLANIPList(obj){
 var over_var = 0;
 var isMenuopen = 0;
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 	//validator.validIPForm(document.form.PC_devicename, 0);
 }
@@ -292,10 +292,10 @@ function gen_mainTable(){
 	code +='<th width="10%"><#list_add_delete#></th></tr>';
 
 	code +='<tr><td style="border-bottom:2px solid #000;" title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>"><input type=\"checkbox\" id="newrule_Enable" checked></td>';
-	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();};validator.safeName(this);">';
+	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onKeyPress="" onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" autocorrect="off" autocapitalize="off">';
 	code +='<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code +='<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div></td>';
-	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="PC_mac" onKeyPress="return validator.isHWAddr(this,event)"></td>';
+	code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" class="input_macaddr_table" name="PC_mac" onKeyPress="return validator.isHWAddr(this,event)" autocorrect="off" autocapitalize="off"></td>';
 	code +='<td style="border-bottom:2px solid #000;">--</td>';
 	code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(16)" value=""></td></tr>';
 	if(MULTIFILTER_DEVICENAME == "" && MULTIFILTER_MAC == "")
@@ -312,10 +312,10 @@ function gen_mainTable(){
 	}
  	code +='</tr></table>';
 
-	$("mainTable").style.display = "";
-	$("mainTable").innerHTML = code;
-	$j("#mainTable").fadeIn();
-	$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(1);" value="<#CTL_apply#>">';
+	document.getElementById("mainTable").style.display = "";
+	document.getElementById("mainTable").innerHTML = code;
+	$("#mainTable").fadeIn();
+	document.getElementById("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="applyRule(1);" value="<#CTL_apply#>">';
 
 	showLANIPList();
 	showclock();
@@ -375,11 +375,11 @@ function showclock(){
 				  checkTime(JS_timeObj.getMinutes()) + ":" +
 				  checkTime(JS_timeObj.getSeconds()) + "  " +
 				  JS_timeObj.getFullYear();
-	$("system_time").value = JS_timeObj2;
+	document.getElementById("system_time").value = JS_timeObj2;
 	setTimeout("showclock()", 1000);
 	
 	if(svc_ready == "0")
-		$('svc_hint_div').style.display = "";
+		document.getElementById('svc_hint_div').style.display = "";
 	corrected_timezone();
 }
 
@@ -389,19 +389,19 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").style.display = "";
 		return false;
 	}else if(flag ==2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";		
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";		
+		document.getElementById("check_mac").style.display = "";
 		return false;		
 	}else{	
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}	
 }
@@ -451,7 +451,7 @@ function gen_lantowanTable(client){
 	}
 	
 	code +='</table></table></div>';
-	$("mainTable").innerHTML = code;
+	document.getElementById("mainTable").innerHTML = code;
 
 	register_event();
 	redraw_selected_time(MULTIFILTER_MACFILTER_DAYTIME_col);
@@ -470,15 +470,15 @@ function gen_lantowanTable(client){
 	code_temp += '<td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Deny</div></td>';
 	code_temp += '<td><div style="width:90px;height:20px;border:solid 1px #000"></div></td>';
 	code_temp += '</tr></table>';
-	$('hintBlock').innerHTML = code_temp;
-	$('hintBlock').style.marginTop = "10px";
-	$('hintBlock').style.display = "";
-	$("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="cancel_lantowan('+client+');" value="<#CTL_Cancel#>">';
-	$("ctrlBtn").innerHTML += '<input class="button_gen" type="button" onClick="saveto_lantowan('+client+');applyRule();" value="<#CTL_ok#>">';  
-	$('clock_type_select')[clock_type].selected = true;		// set clock type by cookie
+	document.getElementById('hintBlock').innerHTML = code_temp;
+	document.getElementById('hintBlock').style.marginTop = "10px";
+	document.getElementById('hintBlock').style.display = "";
+	document.getElementById("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="cancel_lantowan('+client+');" value="<#CTL_Cancel#>">';
+	document.getElementById("ctrlBtn").innerHTML += '<input class="button_gen" type="button" onClick="saveto_lantowan('+client+');applyRule();" value="<#CTL_ok#>">';  
+	document.getElementById('clock_type_select')[clock_type].selected = true;		// set clock type by cookie
 	
-	$("mainTable").style.display = "";
-	$j("#mainTable").fadeIn();
+	document.getElementById("mainTable").style.display = "";
+	$("#mainTable").fadeIn();
 }
 
 //draw time slot at first time
@@ -688,7 +688,7 @@ function addRow_main(upper){
 	if(<% nvram_get("MULTIFILTER_ALL"); %> != "1")
 		document.form.MULTIFILTER_ALL.value = 1;
 	
-	var rule_num = $('mainTable_table').rows.length - 3; // remove tbody
+	var rule_num = document.getElementById('mainTable_table').rows.length - 3; // remove tbody
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;	
@@ -736,7 +736,7 @@ function addRow_main(upper){
 		MULTIFILTER_MAC += ">";
 	}
 
-	if($("newrule_Enable").checked)
+	if(document.getElementById("newrule_Enable").checked)
 		MULTIFILTER_ENABLE += "1";
 	else
 		MULTIFILTER_ENABLE += "0";
@@ -761,17 +761,17 @@ function addRow_main(upper){
 
 function deleteRow_main(r){
   var j=r.parentNode.parentNode.rowIndex;
-	$(r.parentNode.parentNode.parentNode.parentNode.id).deleteRow(j);
+	document.getElementById(r.parentNode.parentNode.parentNode.parentNode.id).deleteRow(j);
 
   var MULTIFILTER_ENABLE_tmp = "";
   var MULTIFILTER_MAC_tmp = "";
   var MULTIFILTER_DEVICENAME_tmp = "";
-	for(i=3; i<$('mainTable_table').rows.length; i++){
-		MULTIFILTER_ENABLE_tmp += $('mainTable_table').rows[i].cells[0].title;
-		MULTIFILTER_DEVICENAME_tmp += $('mainTable_table').rows[i].cells[1].title;
-		MULTIFILTER_MAC_tmp += $('mainTable_table').rows[i].cells[2].title;
+	for(i=3; i<document.getElementById('mainTable_table').rows.length; i++){
+		MULTIFILTER_ENABLE_tmp += document.getElementById('mainTable_table').rows[i].cells[0].title;
+		MULTIFILTER_DEVICENAME_tmp += document.getElementById('mainTable_table').rows[i].cells[1].title;
+		MULTIFILTER_MAC_tmp += document.getElementById('mainTable_table').rows[i].cells[2].title;
 
-		if(i != $('mainTable_table').rows.length-1){
+		if(i != document.getElementById('mainTable_table').rows.length-1){
 			MULTIFILTER_ENABLE_tmp += ">";
 			MULTIFILTER_DEVICENAME_tmp += ">";
 			MULTIFILTER_MAC_tmp += ">";
@@ -846,7 +846,7 @@ function saveto_lantowan(client){
 function cancel_lantowan(client){
 	init_array(array);
 	gen_mainTable();
-	$('hintBlock').style.display = "none";
+	document.getElementById('hintBlock').style.display = "none";
 }
 
 function regen_lantowan(){
@@ -860,7 +860,7 @@ function regen_lantowan(){
 }
 
 function genEnableArray_main(j, obj){
-        $("selAll").checked = false;
+        document.getElementById("selAll").checked = false;
         MULTIFILTER_ENABLE_row = MULTIFILTER_ENABLE.split('>');
 
         if(obj.checked){
@@ -895,7 +895,7 @@ function show_inner_tab(){
 		code += "<span style=\"margin-left:10px\" class=\"clicked\"><#AiProtection_filter#></span>";	
 	}
 	
-	$('switch_menu').innerHTML = code;
+	document.getElementById('switch_menu').innerHTML = code;
 }
 </script></head>
 
@@ -951,11 +951,11 @@ function show_inner_tab(){
 						<div id="switch_menu" style="margin:-20px 0px 0px -20px;;display:none;">
 							<a href="AiProtection_WebProtector.asp">
 								<div style="width:173px;height:30px;border-top-left-radius:8px;border-bottom-left-radius:8px;" class="block_filter">
-									<div class="block_filter_name"><#AiProtection_filter#></div>
+									<table class="block_filter_name_table"><tr><td style="line-height:13px;"><#AiProtection_filter#></td></tr></table>
 								</div>
 							</a>
 							<div style="width:172px;height:30px;margin:-32px 0px 0px 173px;border-top-right-radius:8px;border-bottom-right-radius:8px;" class="block_filter_pressed">
-								<div style="text-align:center;padding-top:5px;color:#93A9B1;font-size:14px"><#Time_Scheduling#></div>
+								<table class="block_filter_name_table_pressed"><tr><td style="line-height:13px;"><#Time_Scheduling#></td></tr></table>
 							</div>
 						</div>
 					<td>
@@ -998,7 +998,7 @@ function show_inner_tab(){
 						<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_ParentControl_enable"></div>
 						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 							<script type="text/javascript">
-								$j('#radio_ParentControl_enable').iphoneSwitch('<% nvram_get("MULTIFILTER_ALL"); %>',
+								$('#radio_ParentControl_enable').iphoneSwitch('<% nvram_get("MULTIFILTER_ALL"); %>',
 									function(){
 											document.form.MULTIFILTER_ALL.value = 1;
 											showhide("list_table",1);	
@@ -1027,7 +1027,7 @@ function show_inner_tab(){
 							<table width="100%" border="1" cellspacing="0" cellpadding="4" class="FormTable">
 								<tr>
 									<th width="20%"><#General_x_SystemTime_itemname#></th>
-									<td align="left"><input type="text" id="system_time" name="system_time" class="devicepin" value="" readonly="1" style="font-size:12px;width:200px;">
+									<td align="left"><input type="text" id="system_time" name="system_time" class="devicepin" value="" readonly="1" style="font-size:12px;width:200px;" autocorrect="off" autocapitalize="off">
 										<div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"><#General_x_SystemTime_syncNTP#></span></div>
 		  								<div id="timezone_hint_div" style="display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>
 									</td>

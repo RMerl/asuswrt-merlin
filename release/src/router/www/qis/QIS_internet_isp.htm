@@ -67,9 +67,9 @@ function get_value_from_parent(){
 function show_next_button(){
 	if(now_flag == "auto_way_static"
 			|| now_flag == "auto_way")
-		$("nextButton").value = '<#CTL_apply1#>';
+		document.getElementById("nextButton").value = '<#CTL_apply1#>';
 	else
-		$("nextButton").value = '<#CTL_next#>';
+		document.getElementById("nextButton").value = '<#CTL_next#>';
 }
 
 function showMAC(){
@@ -152,17 +152,17 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
 		return false;
 	}else if(flag == 2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
 		return false;
 	}else{
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}
 }
@@ -227,7 +227,7 @@ function submitenter(myfield,e)
 			<span onmouseout="return nd();" onclick="overlib('<#PPPConnection_x_HostNameForISP_itemdesc#>');" style="cursor:help;"><#BOP_isp_host_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 		</th>
 	  <td class="QISformtd">
-		<input type="text" name="wan_hostname" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_32_table"  maxlength="32" value=""/>
+		<input type="text" name="wan_hostname" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_32_table"  maxlength="32" value="" autocorrect="off" autocapitalize="off"/>
 	  </td>
 	</tr>
 	
@@ -238,7 +238,7 @@ function submitenter(myfield,e)
 			</span>
 		</th>
 	  <td class="QISformtd">
-		<input type="text" name="wan_hwaddr_x" tabindex="2" onkeypress="return validator.isHWAddr(this,event);" class="input_20_table" maxlength="17" value=""/>
+		<input type="text" name="wan_hwaddr_x" tabindex="2" onkeypress="return validator.isHWAddr(this,event);" class="input_20_table" maxlength="17" value="" autocorrect="off" autocapitalize="off"/>
 		&nbsp&nbsp&nbsp
 		<input type="button" class="button_gen_long" tabindex="3" onclick="showMAC();" value="<#BOP_isp_MACclone#>">		
 	  </td>
@@ -261,7 +261,7 @@ function submitenter(myfield,e)
 		<div id="DNSDiv">
 			<div class="row">
 				<label><#BOP_isp_host_item#></label>
-				<input type="text" name="wan_hostname_m" placeholder="" maxlength="32" value=""/>
+				<input type="text" name="wan_hostname_m" placeholder="" maxlength="32" value="" autocorrect="off" autocapitalize="off"/>
 			</div>
 
 			<div class="row">
@@ -275,7 +275,7 @@ function submitenter(myfield,e)
 
 			<div class="row_end">
 				<label>MAC Address:</label>
-				<input name="wan_hwaddr_x_m" type="text" placeholder="" onkeypress="return validator.isHWAddr(this,event);" autocapitalization="off" maxlength="17">
+				<input name="wan_hwaddr_x_m" type="text" placeholder="" onkeypress="return validator.isHWAddr(this,event);" autocapitalization="off" maxlength="17" autocorrect="off" autocapitalize="off">
 			</div>
 		</div>
 	</fieldset>

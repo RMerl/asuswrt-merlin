@@ -61,19 +61,18 @@
 }
 </style>
 <script>
-var $j = jQuery.noConflict();
 var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");;
 var category_title = ["", "<#Adaptive_Game#>", "<#Adaptive_Stream#>","<#Adaptive_Message#>", "<#Adaptive_WebSurf#>","<#Adaptive_FileTransfer#>", "<#Adaptive_Others#>"];					 
 var cat_id_array = [[9,20], [8], [4], [0,5,6,15,17], [13,24], [1,3,14], [7,10,11,21,23]];
 
 function register_event(){
-	$j(function() {
-		$j("#category_list").sortable({
+	$(function() {
+		$("#category_list").sortable({
 			stop: function(event, ui){
 				regen_priority(this);		
 			}
 		});
-		$j("#category_list").disableSelection();
+		$("#category_list").disableSelection();
 	});
 }
 
@@ -124,7 +123,7 @@ function gen_category_block(){
 		
 	}
 	
-	$('category_list').innerHTML = code;
+	document.getElementById('category_list').innerHTML = code;
 	register_overHint();
 }
 

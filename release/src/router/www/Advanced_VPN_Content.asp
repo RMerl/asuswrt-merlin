@@ -21,7 +21,6 @@
 <script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
-var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 <% wanlink(); %>
@@ -72,8 +71,8 @@ function initial(){
 	check_pptpd_broadcast();
 
 	if(dualwan_mode == "lb"){
-		$('wan_ctrl').style.display = "none";
-		$('dualwan_ctrl').style.display = "";	
+		document.getElementById('wan_ctrl').style.display = "none";
+		document.getElementById('dualwan_ctrl').style.display = "";	
 	}
 
 	valid_wan_ip();
@@ -103,14 +102,14 @@ function pptpd_connected_status(){
 }
 
 function openvpnd_connected_status(){
-	var rule_num = $("openvpnd_clientlist_table").rows.length;
+	var rule_num = document.getElementById("openvpnd_clientlist_table").rows.length;
 	var username_status = "";
 		for(var x=0; x < rule_num; x++){
 			var ind = x;
 			username_status = "conn"+ind;
 			if(openvpnd_connected_clients.length >0){
 				for(var y=0; y<openvpnd_connected_clients.length; y++){
-					if($("openvpnd_clientlist_table").rows[x].cells[1].title == openvpnd_connected_clients[y].username){
+					if(document.getElementById("openvpnd_clientlist_table").rows[x].cells[1].title == openvpnd_connected_clients[y].username){
 							document.getElementById(username_status).innerHTML = '<a class="hintstyle2" href="javascript:void(0);" onClick="showOpenVPNClients(\''+openvpnd_connected_clients[y].username+'\');"><#Connected#></a>';
 							break;
 					}		
@@ -167,8 +166,8 @@ function match_vpn_mode(){
 
 function get_group_value(mode){
 			var mode_table = mode+"_clientlist_table";
-			var rule_num = $(mode_table).rows.length;
-			var item_num = $(mode_table).rows[0].cells.length;
+			var rule_num = document.getElementById(mode_table).rows.length;
+			var item_num = document.getElementById(mode_table).rows[0].cells.length;
 			var tmp_value = "";	
 			if(mode == 'pptpd')
 				var start_row=0;
@@ -179,10 +178,10 @@ function get_group_value(mode){
 				tmp_value += "<"
 				for(j=1; j<item_num-1; j++){
 
-						if($(mode_table).rows[i].cells[j].innerHTML.lastIndexOf("...")<0){
-							tmp_value += $(mode_table).rows[i].cells[j].innerHTML;
+						if(document.getElementById(mode_table).rows[i].cells[j].innerHTML.lastIndexOf("...")<0){
+							tmp_value += document.getElementById(mode_table).rows[i].cells[j].innerHTML;
 						}else{
-							tmp_value += $(mode_table).rows[i].cells[j].title;
+							tmp_value += document.getElementById(mode_table).rows[i].cells[j].title;
 						}
 
 						if(j != item_num-2)	
@@ -266,8 +265,8 @@ function addRow_Group(upper, flag){
 		var table_id = "pptpd_clientlist_table";
 		username_obj = document.form.pptpd_clientlist_username;
 		password_obj = document.form.pptpd_clientlist_password;
-		var rule_num = $(table_id).rows.length;
-		var item_num = $(table_id).rows[0].cells.length;		
+		var rule_num = document.getElementById(table_id).rows.length;
+		var item_num = document.getElementById(table_id).rows[0].cells.length;		
 		if(rule_num >= upper){
 			alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 			return false;	
@@ -277,8 +276,8 @@ function addRow_Group(upper, flag){
 		var table_id = "openvpnd_clientlist_table";
 		username_obj = document.form.vpn_server_clientlist_username;
 		password_obj = document.form.vpn_server_clientlist_password;
-		var rule_num = $(table_id).rows.length;
-		var item_num = $(table_id).rows[0].cells.length;		
+		var rule_num = document.getElementById(table_id).rows.length;
+		var item_num = document.getElementById(table_id).rows[0].cells.length;		
 		if(rule_num >= upper+1){
 			alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 			return false;	
@@ -289,7 +288,7 @@ function addRow_Group(upper, flag){
 		//Viz check same rule  //match(username) is not accepted
 		if(item_num >=2){
 			for(i=0; i<rule_num; i++){	
-				if(username_obj.value == $(table_id).rows[i].cells[1].title){
+				if(username_obj.value == document.getElementById(table_id).rows[i].cells[1].title){
 					alert("<#JS_duplicate#>");
 					username_obj.focus();
 					username_obj.select();
@@ -335,17 +334,17 @@ function del_Row(rowdata, flag){
 			showpptpd_clientlist();
 
 	}else{	//	 "openvpnd"
-		$('openvpnd_clientlist_table').deleteRow(i);
+		document.getElementById('openvpnd_clientlist_table').deleteRow(i);
   
 		var vpn_server_clientlist_value = "";
-		for(k=1; k<$('openvpnd_clientlist_table').rows.length; k++){
-			for(j=1; j<$('openvpnd_clientlist_table').rows[k].cells.length-1; j++){
+		for(k=1; k<document.getElementById('openvpnd_clientlist_table').rows.length; k++){
+			for(j=1; j<document.getElementById('openvpnd_clientlist_table').rows[k].cells.length-1; j++){
 				if(j==1)
 					vpn_server_clientlist_value += "<";
 				else{
-					vpn_server_clientlist_value += $('openvpnd_clientlist_table').rows[k].cells[1].innerHTML;
+					vpn_server_clientlist_value += document.getElementById('openvpnd_clientlist_table').rows[k].cells[1].innerHTML;
  					vpn_server_clientlist_value += ">";
-					vpn_server_clientlist_value += $('openvpnd_clientlist_table').rows[k].cells[2].innerHTML;
+					vpn_server_clientlist_value += document.getElementById('openvpnd_clientlist_table').rows[k].cells[2].innerHTML;
 				}
 			}
 		}
@@ -397,7 +396,7 @@ function showpptpd_clientlist(){
 		}
 	}
 	code +='</table>';
-	$("pptpd_clientlist_Block").innerHTML = code;
+	document.getElementById("pptpd_clientlist_Block").innerHTML = code;
 }
 
 
@@ -441,7 +440,7 @@ function showopenvpnd_clientlist(){
 		}
 	}
 	code +='</table>';
-	$("openvpnd_clientlist_Block").innerHTML = code;
+	document.getElementById("openvpnd_clientlist_Block").innerHTML = code;
 }
 
 // test if Private ip
@@ -634,7 +633,7 @@ var starting = 0;
 
 
 function update_vpn_server_state(){
-$j.ajax({
+$.ajax({
     		url: '/ajax_openvpn_server.asp',
     		dataType: 'script',
 
@@ -684,12 +683,12 @@ function showMailPanel(){
 	}
 
 	if(checker.server == "" || checker.mailPort == "" || checker.user == "" || checker.pass == ""){
-		$j("#mailConfigPanelContainer").fadeIn(300);
-		$j("#mailSendPanelContainer").fadeOut(300);
+		$("#mailConfigPanelContainer").fadeIn(300);
+		$("#mailSendPanelContainer").fadeOut(300);
 	}
 	else{
-		$j("#mailConfigPanelContainer").fadeOut(300);
-		$j("#mailSendPanelContainer").fadeIn(300);
+		$("#mailConfigPanelContainer").fadeOut(300);
+		$("#mailSendPanelContainer").fadeIn(300);
 	}
 }
 
@@ -779,7 +778,7 @@ function enable_openvpn(state){
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden;">
 												<script type="text/javascript">
 
-													$j('#pptp_service_enable').iphoneSwitch('<% nvram_get("pptpd_enable"); %>',
+													$('#pptp_service_enable').iphoneSwitch('<% nvram_get("pptpd_enable"); %>',
 														function() {
 															document.form.pptpd_enable.value = "1";
 															document.form.action_script.value = "start_pptpd";
@@ -806,7 +805,7 @@ function enable_openvpn(state){
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden;">
 												<script type="text/javascript">
 
-													$j('#openvpn_service_enable').iphoneSwitch(openvpn_enabled,
+													$('#openvpn_service_enable').iphoneSwitch(openvpn_enabled,
 														function() {
 															enable_openvpn(1);
 															document.form.action_script.value = "start_vpnserver"+openvpn_unit;
@@ -1007,18 +1006,18 @@ function enable_openvpn(state){
 				<input id="mailSendPannelSubmiter" class="button_gen" type="button" value="Send">
 				<img id="mailSendLoadingIcon" style="margin-left:5px;display:none;" src="/images/InternetScan.gif">
 				<script>
-					$("mailSendPannelCancel").onclick = function(){
-						$j("#mailSendPanelContainer").fadeOut(300);
+					document.getElementById("mailSendPannelCancel").onclick = function(){
+						$("#mailSendPanelContainer").fadeOut(300);
 					}
-					$("mailSendPannelSubmiter").onclick = function(){
+					document.getElementById("mailSendPannelSubmiter").onclick = function(){
 						// ToDo: validator.
 
-						$j("#mailSendLoadingIcon").fadeIn(200);
+						$("#mailSendLoadingIcon").fadeIn(200);
 						document.mailSendForm.submit();
 						setTimeout(function(){
 							document.mailSendForm.PM_MAIL_TARGET.value = "";
-							$j("#mailSendLoadingIcon").fadeOut(200);
-							$j("#mailSendPanelContainer").fadeOut(300);
+							$("#mailSendLoadingIcon").fadeOut(200);
+							$("#mailSendPanelContainer").fadeOut(300);
 						}, document.mailSendForm.action_wait.value*1000);
 					}
 				</script>
@@ -1107,10 +1106,10 @@ function enable_openvpn(state){
 				<input id="mailConfigPannelSubmiter" class="button_gen" type="button" value="<#CTL_onlysave#>">
 				<img id="mailConfigLoadingIcon" style="margin-left:5px;display:none;" src="/images/InternetScan.gif">
 				<script>
-					$("mailConfigPannelCancel").onclick = function(){
-						$j("#mailConfigPanelContainer").fadeOut(300);
+					document.getElementById("mailConfigPannelCancel").onclick = function(){
+						$("#mailConfigPanelContainer").fadeOut(300);
 					}
-					$("mailConfigPannelSubmiter").onclick = function(){
+					document.getElementById("mailConfigPannelSubmiter").onclick = function(){
 						// ToDo: validator.
 
 						document.mailConfigForm.PM_SMTP_SERVER.value = document.mailConfigForm.PM_SMTP_SERVER_TMP.value;
@@ -1123,10 +1122,10 @@ function enable_openvpn(state){
 						document.mailConfigForm.PM_MY_NAME.value = document.mailConfigForm.PM_MY_NAME_TMP.value;
 						document.mailConfigForm.PM_MY_EMAIL.value = document.mailConfigForm.PM_MY_EMAIL_TMP.value;
 
-						$j("#mailConfigLoadingIcon").fadeIn(200);
+						$("#mailConfigLoadingIcon").fadeIn(200);
 						document.mailConfigForm.submit();
 						setTimeout(function(){
-							$j("#mailConfigLoadingIcon").fadeOut(200);
+							$("#mailConfigLoadingIcon").fadeOut(200);
 							showMailPanel();
 						}, document.mailConfigForm.action_wait.value*1000);
 					}

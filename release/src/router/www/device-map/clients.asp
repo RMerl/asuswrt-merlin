@@ -73,7 +73,7 @@ p{
 	background-color: #222;
 	font-size: 10px;
 	font-family: monospace;
-	padding: 2px;
+	padding: 2px 3px;
 	border-radius: 3px;
 }
 .imgUserIcon{
@@ -94,8 +94,9 @@ p{
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/tmmenu.js"></script>
 <script>
+var wirelessOverFlag = false;
 overlib.isOut = true;
-var $j = jQuery.noConflict();
+
 var pagesVar = {
 	curTab: "online",
 	CLIENTSPERPAGE: 7,
@@ -116,10 +117,6 @@ var pagesVar = {
 var mapscanning = 0;
 
 var clientMacUploadIcon = new Array();
-var ipState = new Array();
-ipState["Static"] =  "<#BOP_ctype_title5#>";
-ipState["DHCP"] =  "<#BOP_ctype_title1#>";
-ipState["Manual"] =  "Manually Assigned IP";
 
 function generate_wireless_band_list(){
 	if(wl_nband_title.length == 1) return false;
@@ -227,14 +224,29 @@ function drawClientList(tab){
 		rssi_t = convRSSI(clientObj.rssi);
 		if(isNaN(rssi_t))
 			connectModeTip = "<#tm_wired#>";
-		else if(rssi_t == 1)
-			connectModeTip = '<#PASS_score1#>';
-		else if(rssi_t == 2)
-			connectModeTip = '<#PASS_score2#>';
-		else if(rssi_t == 3)
-			connectModeTip = '<#PASS_score3#>';
-		else if(rssi_t == 4)
-			connectModeTip = '<#PASS_score4#>';
+		else {
+			switch (rssi_t) {
+				case 1:
+					connectModeTip = "<#Radio#>: <#PASS_score1#>\n";
+					break;
+				case 2:
+					connectModeTip = "<#Radio#>: <#PASS_score2#>\n";
+					break;
+				case 3:
+					connectModeTip = "<#Radio#>: <#PASS_score3#>\n";
+					break;
+				case 4:
+					connectModeTip = "<#Radio#>: <#PASS_score4#>\n";
+					break;
+			}
+			if(stainfo_support) {
+				if(clientObj.curTx != "")
+					connectModeTip += "Tx Rate: " + clientObj.curTx + "\n";
+				if(clientObj.curRx != "")
+					connectModeTip += "Rx Rate: " + clientObj.curRx + "\n";
+				connectModeTip += "<#Access_Time#>: " + clientObj.wlConnectTime + "";
+			}
+		}
 
 		if(parent.sw_mode != 4) {
 			clientHtmlTd += '<div class="radioIcon radio_' + rssi_t +'" title="' + connectModeTip + '"></div>';
@@ -285,6 +297,8 @@ function drawClientList(tab){
 	// Wireless
 	document.getElementById("tabWireless").style.display = (totalClientNum.wireless == 0) ? "none" : "";
 	document.getElementById("tabWirelessNum").innerHTML = totalClientNum.wireless;
+	if(totalClientNum.wireless == 0) 
+		wirelessOverFlag = false;
 
 	if(wl_nband_title.length > 1){
 		for(var i=0; i<wl_nband_title.length; i++){
@@ -293,7 +307,8 @@ function drawClientList(tab){
 	}
 
 	if(typeof tab.split("wireless")[1] == 'undefined' || tab.split("wireless")[1] == '' || tab.split("wireless")[1] == 'NaN'){
-		document.getElementById("select_wlclient_band").style.display = "none";
+		if(!wirelessOverFlag)
+			document.getElementById("select_wlclient_band").style.display = "none";
 		document.getElementById("searchingBar").placeholder = 'Search';
 	}
 	else{
@@ -302,15 +317,15 @@ function drawClientList(tab){
 
 	if(pagesVar.curTab != tab){
 		document.getElementById("client_list_Block").style.display = 'none';
-		$j("#client_list_Block").fadeIn(300);
+		$("#client_list_Block").fadeIn(300);
 		pagesVar.curTab = tab;
 	}
 
-	$j(".circle").mouseover(function(){
+	$(".circle").mouseover(function(){
 		return overlib(this.firstChild.innerHTML + " clients are connecting to <% nvram_get("productid"); %> through this device.");
 	});
 
-	$j(".circle").mouseout(function(){
+	$(".circle").mouseout(function(){
 		nd();
 	});
 }
@@ -347,8 +362,13 @@ function retOverLibStr(client){
 		overlibStr += "<p><#Device_service_Printer#></p>YES";
 	if(client.isITunes)
 		overlibStr += "<p><#Device_service_iTune#></p>YES";
-	if(client.isWL > 0){ 
-		overlibStr += "<p><#Wireless_Radio#>:</p>" + wl_nband_title[client.isWL-1] + " (" + client.rssi + "db)";
+	if(client.isWL > 0){
+		overlibStr += "<p><#Wireless_Radio#>:</p>" + wl_nband_title[client.isWL-1] + " (" + client.rssi + " dBm)";
+		if(stainfo_support) {
+			overlibStr += "<p>Tx Rate:</p>" + ((client.curTx != "") ? client.curTx : "-");
+			overlibStr += "<p>Rx Rate:</p>" + ((client.curRx != "") ? client.curRx : "-");
+			overlibStr += "<p><#Access_Time#>:</p>" + client.wlConnectTime;
+		}
 	}
 	return overlibStr;
 }
@@ -371,7 +391,7 @@ function popupCustomTable(mac){
 }
 
 function updateClientList(e){
-	$j.ajax({
+	$.ajax({
 		url: '/update_clients.asp',
 		dataType: 'script', 
 		error: function(xhr) {
@@ -395,7 +415,7 @@ function updateClientList(e){
 
 <body class="statusbody" onload="initial();">
 <iframe name="applyFrame" id="applyFrame" src="" width="0" height="0" frameborder="0" scrolling="no"></iframe>
-<form method="post" name="form" id="refreshForm" action="/apply.cgi" target="">
+<form method="post" name="form" id="refreshForm" action="/apply.cgi" target="applyFrame">
 <input type="hidden" name="action_mode" value="refresh_networkmap">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="5">
@@ -458,18 +478,20 @@ function updateClientList(e){
 							document.getElementById('tabCustom').className = 'tab_NW';
 						}
 
-						$j('#tabWirelessSpan').click(function(){
+						$('#tabWirelessSpan').click(function(){
 							switchTab_drawClientList('');
 						});
 
-						$j('#tabWireless').mouseenter(function(){
+						$('#tabWireless').mouseenter(function(){
 							if(wl_nband_title.length > 0){
-								$j("#select_wlclient_band").slideDown("fast", function(){});
+								$("#select_wlclient_band").slideDown("fast", function(){});
+								wirelessOverFlag = true;
 							}
 						});
 
-						$j('#tabWireless').mouseleave(function(){
-							$j("#select_wlclient_band").css({"display": "none"});
+						$('#tabWireless').mouseleave(function(){
+							$("#select_wlclient_band").css({"display": "none"});
+							wirelessOverFlag = false;
 						});
 					</script>
 				</td>
@@ -501,7 +523,7 @@ function updateClientList(e){
 			<table width="95%" border="0" align="center" cellpadding="4" cellspacing="0" style="background-color:#4d595d;">
   				<tr>
     				<td style="padding:3px 3px 5px 5px;">
-						<input type="text" placeholder="Search" id="searchingBar" class="input_25_table" style="width:96%;margin-top:3px;margin-bottom:3px" maxlength="" value="">
+						<input type="text" placeholder="Search" id="searchingBar" class="input_25_table" style="width:96%;margin-top:3px;margin-bottom:3px" maxlength="" value="" autocorrect="off" autocapitalize="off">
 						<script>
 							document.getElementById('searchingBar').onkeyup = function(){
 								pagesVar.resetVar();

@@ -447,8 +447,6 @@ void find_backup_mac_date(char *mpname)
 
 void write_timemachine_tokeninfo(char *mpname)
 {
-	char test_log[100];
-
 	FILE *fp;
 	fp = fopen("/tmp/timemachine_info", "a");
 	char *tmp = " ";
@@ -464,7 +462,7 @@ void clear_timemachine_tokeninfo()
 	FILE *fp;
 
 	if (!(fp = fopen("/tmp/timemachine_info", "w"))) {
-		return -1;
+		return;
 	}
 	
 	fclose(fp);
@@ -475,7 +473,7 @@ int start_timemachine()
 	int ret = 0;
 	char cnid_path[80];
 	char backup_path[80];
-	char token_path[80];
+	//char token_path[80];
 	char test_log[100];
 	char *mount_point_name;
 

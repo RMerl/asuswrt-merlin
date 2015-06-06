@@ -55,11 +55,6 @@
 #include <sys/ioctl.h>
 #include <sys/reboot.h>
 #include <sys/sysinfo.h>
-#if 0
-#ifdef RTCONFIG_PUSH_EMAIL
-#include <push_log.h>
-#endif
-#endif
 #ifdef RTCONFIG_USER_LOW_RSSI
 #if defined(RTCONFIG_RALINK)
 #include <typedefs.h>
@@ -119,6 +114,8 @@ static int mem_timer = -1;
 static int u2ec_timer = 0;
 #endif
 static struct itimerval itv;
+/* to check watchdog alive */
+static struct itimerval itv02;
 static int watchdog_period = 0;
 #ifdef RTCONFIG_BCMARM
 static int chkusb3_period = 0;
@@ -185,6 +182,16 @@ alarmtimer(unsigned long sec, unsigned long usec)
 	itv.it_value.tv_usec = usec;
 	itv.it_interval = itv.it_value;
 	setitimer(ITIMER_REAL, &itv, NULL);
+}
+
+/* to check watchdog alive */
+static void
+alarmtimer02(unsigned long sec, unsigned long usec)
+{
+	itv02.it_value.tv_sec = sec;
+	itv02.it_value.tv_usec = usec;
+	itv02.it_interval = itv02.it_value;
+	setitimer(ITIMER_REAL, &itv02, NULL);
 }
 
 extern int no_need_to_start_wps();
@@ -835,7 +842,7 @@ void btn_check(void)
 
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-	if (psta_exist())
+	if (psta_exist() || psr_exist())
 		return;
 #endif
 #endif
@@ -968,119 +975,190 @@ void btn_check(void)
 
 #define DAYSTART (0)
 #define DAYEND (60*60*23 + 60*59 + 59) // 86399
-static int in_sched(int now_mins, int now_dow, int sched_begin, int sched_end, int sched_begin2, int sched_end2, int sched_dow)
+static int in_sched(int now_mins, int now_dow, int (*enableTime)[24])
 {
-	//cprintf("%s: now_mins=%d sched_begin=%d sched_end=%d sched_begin2=%d sched_end2=%d now_dow=%d sched_dow=%d\n", __FUNCTION__, now_mins, sched_begin, sched_end, sched_begin2, sched_end2, now_dow, sched_dow);
-	int restore_dow = now_dow; // orig now day of week
+        //cprintf("%s: now_mins=%d sched_begin=%d sched_end=%d sched_begin2=%d sched_end2=%d now_dow=%d sched_dow=%d\n", __FUNCTION__, now_mins, sched_begin, sched_end, sched_begin2, sched_end2, now_dow, sched_dow);
+        int currentTime;
+        int x=0,y=0;
+        int tableTimeStart, tableTimeEnd;
+        // 8*60*60 = AM0.00~AM8.00
+        currentTime = (now_mins*60+8*60*60) + now_dow*DAYEND;
 
-	// wday: 0
-	if((now_dow & 0x40) != 0){
-		// under Sunday's sched time
-		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin2) && (now_mins <= sched_end2) && (sched_begin2 < sched_end2))
-			return 1;
+        for(;x<7;x++)
+        {
+                y=0;
+                for(;y<24;y++)
+                {
+                        if(enableTime[x][y]==1)
+                        {
+                                tableTimeStart = x*DAYEND + y*60*60;
+                                tableTimeEnd = x*DAYEND + (y+1)*60*60;
+                                if(tableTimeStart<=currentTime && currentTime < tableTimeEnd)
+                                {
+                                        return 1;
+                                }
+                        }
+                }
+        }
+        return 0;
 
-		// under Sunday's sched time and cross-night
-		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin2) && (sched_begin2 >= sched_end2))
-			return 1;
-
-		 // under Saturday's sched time
-		now_dow >>= 6; // Saturday
-		if(((now_dow & sched_dow) != 0) && (now_mins <= sched_end2) && (sched_begin2 >= sched_end2))
-			return 1;
-
-		// reset now_dow, avoid to check now_day = 0000001 (Sat)
-		now_dow = restore_dow;
-	}
-
-	// wday: 1
-	if((now_dow & 0x20) != 0){
-		// under Monday's sched time
-		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin) && (now_mins <= sched_end) && (sched_begin < sched_end))
-			return 1;
-
-		// under Monday's sched time and cross-night
-		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin) && (sched_begin >= sched_end))
-			return 1;
-
-		// under Sunday's sched time
-		now_dow <<= 1; // Sunday
-		if(((now_dow & sched_dow) != 0) && (now_mins <= sched_end2) && (sched_begin2 >= sched_end2))
-			return 1;
-	}
-
-	// wday: 2-5
-	if((now_dow & 0x1e) != 0){
-		// under today's sched time
-		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin) && (now_mins <= sched_end) && (sched_begin < sched_end))
-			return 1;
-
-		// under today's sched time and cross-night
-		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin) && (sched_begin >= sched_end))
-			return 1;
-
-		// under yesterday's sched time
-		now_dow <<= 1; // yesterday
-		if(((now_dow & sched_dow) != 0) && (now_mins <= sched_end) && (sched_begin >= sched_end))
-			return 1;
-	}
-
-	// wday: 6
-	if((now_dow & 0x01) != 0){
-		// under Saturday's sched time
-		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin2) && (now_mins <= sched_end2) && (sched_begin2 < sched_end2))
-			return 1;
-
-		// under Saturday's sched time and cross-night
-		if(((now_dow & sched_dow) != 0) && (now_mins >= sched_begin2) && (sched_begin2 >= sched_end2))
-			return 1;
-
-		// under Friday's sched time
-		now_dow <<= 1; // Friday
-		if(((now_dow & sched_dow) != 0) && (now_mins <= sched_end) && (sched_begin >= sched_end))
-			return 1;
-	}
-
-	return 0;
 }
 
-int timecheck_item(char *activeDate, char *activeTime, char *activeTime2)
+int timecheck_item(char *activeTime)
 {
-	int current, active, activeTimeStart, activeTimeEnd;
-	int activeTimeStart2, activeTimeEnd2;
-	int now_dow, sched_dow=0;
-	time_t now;
-	struct tm *tm;
-	int i;
+	int current, active;
+        int now_dow;
+        time_t now;
+        struct tm *tm;
+        char Date[] = "XX";
+        char startTime[] = "XX";
+        char endTime[] = "XX";
+        int tableAllOn = 0;
+        int schedTable[7][24];
+        int x=0, y=0, z=0;   //for first, second, third loop
 
-	setenv("TZ", nvram_safe_get("time_zone_x"), 1);
+        /* current router time */
+        setenv("TZ", nvram_safe_get("time_zone_x"), 1);
+        time(&now);
+        tm = localtime(&now);
+        now_dow = tm->tm_wday;
+        current = tm->tm_hour * 60 + tm->tm_min; //minutes
+        //active = 0;
 
-	time(&now);
-	tm = localtime(&now);
-	current = tm->tm_hour * 60 + tm->tm_min;
-	active = 0;
+//if(current % 60 == 0)   //and apply setting
+//{     
+        /*initial time table*/
+        x=0;
+        for(;x<7;x++)
+        {
+                y=0;
+                for(;y<24;y++)
+                {
+                        schedTable[x][y]=0;
+                }
+	 }
 
-	// weekdays time
-	activeTimeStart = ((activeTime[0]-'0')*10 + (activeTime[1]-'0'))*60 + (activeTime[2]-'0')*10 + (activeTime[3]-'0');
-	activeTimeEnd = ((activeTime[4]-'0')*10 + (activeTime[5]-'0'))*60 + (activeTime[6]-'0')*10 + (activeTime[7]-'0');
 
-	// weekend time
-	activeTimeStart2 = ((activeTime2[0]-'0')*10 + (activeTime2[1]-'0'))*60 + (activeTime2[2]-'0')*10 + (activeTime2[3]-'0');
-	activeTimeEnd2 = ((activeTime2[4]-'0')*10 + (activeTime2[5]-'0'))*60 + (activeTime2[6]-'0')*10 + (activeTime2[7]-'0');
+        active = 0;
+        if(activeTime[0] != NULL)
+        {
 
-	// now day of week
-	now_dow = 1<< (6-tm->tm_wday);
+                /* Counting variables quantity*/
+                x=0;
+                int schedCount = 1;    //how many variables in activeTime    111014<222024<331214 count will be 3
+                for(;x<strlen(activeTime);x++)
+                {
+                        if(activeTime[x] == '<')
+                        schedCount++;
+                }
 
-	// schedule day of week
-	sched_dow = 0;
-	for(i=0;i<=6;i++){
-		sched_dow += (activeDate[i]-'0') << (6-i);
-	}
+                /* analyze for sched Date, startTime, endTime*/
+                x=0;
+                int loopCount=0;
+                for(;x<schedCount;x++)
+                {
+                        do
+                        {
+                                if(loopCount < (2 + (7*x)))
+                                {
+                                Date[loopCount-7*x] = activeTime[loopCount];
+                                }
+                                else if(loopCount < (4 + (7*x)))
+                                {
+                                  startTime[loopCount - (2+7*x)] = activeTime[loopCount];
+                                }
+                                else
+                                {
+                                  endTime[loopCount - (4+7*x)] = activeTime[loopCount];
+                                        if(atoi(endTime) == 0){
+                                                endTime[0] = '2';
+                                                endTime[1] = '4';
+                                                if(Date[1] == '0')
+                                                Date[1] = '6';
+                                                else
+                                                Date[1]=Date[1]-1;
+                                        }
+                                }
+                                loopCount++;
+                        }while(activeTime[loopCount]!='<' && loopCount < strlen(activeTime));
+                                loopCount++;
 
-	active = in_sched(current, now_dow, activeTimeStart, activeTimeEnd, activeTimeStart2, activeTimeEnd2, sched_dow);
 
-	//cprintf("[watchdoe] active: %d\n", active);
+                                /*Check which time will enable or disable wifi radio*/
+                                int offSet=0;
+                                if(Date[0] == Date[1])
+                                {
+                                        z=0;
+                                        for(;z<(atoi(endTime) - atoi(startTime));z++)
+                                                schedTable[Date[0]-'0'][atoi(startTime)+z] = 1;
+                                }
+                                else
+                                {
+                                        if(atoi(startTime) < atoi(endTime))
+                                        {
+                                                z=0;
+                                                for(;z<((atoi(endTime) - atoi(startTime))+24*((Date[1]-'0')-(Date[0]-'0')));z++)
+                                                {
+                                                        if((atoi(startTime)+z)%24==0)
+                                                        {
+                                                                offSet++;
+                                                        }
+                                                                schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
+                                                }
+                                        }
+                                        else if(startTime == endTime)
+                                        {
+                                                z=0;
+                                                for(;z<(24*((Date[1]-'0')-(Date[0]-'0')));z++)
+                                                {
+                                                        if((atoi(startTime)+z)%24==0)
+                                                        {
+                                                                offSet++;
+                                                        }
+                                                                schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
+                                                }
+                                        }
+                                        else if(startTime == endTime)
+                                        {
+                                                z=0;
+                                                for(;z<(24*((Date[1]-'0')-(Date[0]-'0')));z++)
+                                                {
+                                                        if((atoi(startTime)+z)%24==0)
+                                                        {
+                                                                offSet++;
+                                                        }
+                                                                schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
+                                                }
+                                        }
+                                        else
+                                        {
+                                                z=0;
+                                                for(;z<(24*((Date[1]-'0')-(Date[0]-'0'))-(atoi(startTime)-atoi(endTime)));z++)
+                                                {
+                                                        if((atoi(startTime)+z)%24==0)
+                                                        {
+                                                                offSet++;
+                                                        }
+                                                                schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
+                                                }
+                                        }
 
-	return active;
+                        }
+                }//end for loop (schedCount)
+        }
+	else
+        tableAllOn = 1;
+
+
+        if(tableAllOn!=1)
+        active = in_sched(current, now_dow, schedTable);
+        else
+        active = 1;
+        //cprintf("[watchdoe] active: %d\n", active);
+//}//60 sec
+
+        return active;
+
 }
 
 
@@ -1093,13 +1171,14 @@ int svcStatus[12] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 void timecheck(void)
 {
 	int activeNow;
-	char *svcDate, *svcTime, *svcTime2;
-	char prefix[]="wlXXXXXX_", tmp[100], tmp2[100];
-	char word[256], *next;
-	int unit, item;
-	char *lan_ifname;
-	char wl_vifs[256], nv[40];
-	int expire, need_commit = 0;
+        char *schedTime;
+        char prefix[]="wlXXXXXX_", tmp[100], tmp2[100];
+        char word[256], *next;
+        int unit, item;
+        char *lan_ifname;
+        char wl_vifs[256], nv[40];
+        int expire, need_commit = 0;
+	
 
 	item = 0;
 	unit = 0;
@@ -1131,20 +1210,21 @@ void timecheck(void)
 			continue;
 		}
 
-		svcDate = nvram_safe_get(strcat_r(prefix, "radio_date_x", tmp));
-		svcTime = nvram_safe_get(strcat_r(prefix, "radio_time_x", tmp));
-		svcTime2 = nvram_safe_get(strcat_r(prefix, "radio_time2_x", tmp));
+		schedTime = nvram_safe_get(strcat_r(prefix, "sched", tmp));
 
-		activeNow = timecheck_item(svcDate, svcTime, svcTime2);
-		snprintf(tmp, sizeof(tmp), "%d", unit);
 
-		if(svcStatus[item]!=activeNow) {
-			svcStatus[item] = activeNow;
-			if(activeNow) eval("radio", "on", tmp);
-			else eval("radio", "off", tmp);
-		}
-		item++;
-		unit++;
+                activeNow = timecheck_item(schedTime);
+                snprintf(tmp, sizeof(tmp), "%d", unit);
+
+
+                if(svcStatus[item]!=activeNow) {
+                        svcStatus[item] = activeNow;
+                        if(activeNow==1) eval("radio", "on", tmp);
+                        else eval("radio", "off", tmp);
+                }
+                item++;
+                unit++;
+
 	}
 
 	// guest ssid expire check
@@ -1406,7 +1486,7 @@ void fake_etlan_led(void)
 	if(nvram_match("AllLED", "0"))
 		return;
 	
-	if(!GetPhyStatus()) {
+	if(!GetPhyStatus(0)) {
 		if(lstatus)
 			led_control(LED_LAN, LED_OFF);
 		lstatus = 0;
@@ -1917,6 +1997,17 @@ void httpd_check()
 	}
 }
 
+void watchdog_check()
+{
+	if (!pids("watchdog")){
+		if(nvram_match("upgrade_fw_status", FW_INIT)){
+			logmessage("watchdog02", "no wathdog, restarting");
+			kill(1, SIGTERM);
+		}
+	}
+	return;
+}
+
 #ifdef RTAC87U
 void qtn_module_check(void)
 {
@@ -2340,6 +2431,7 @@ void push_mail(void)
 #endif
 #endif
 
+#if 0
 #ifdef RTCONFIG_USER_LOW_RSSI
 #define ETHER_ADDR_STR_LEN	18
 
@@ -2351,7 +2443,7 @@ typedef struct wl_low_rssi_count{
 #define		WLLC_SIZE	2
 static wl_lowr_count_t wllc[WLLC_SIZE];
 
-void init_wllc()
+void init_wllc(void)
 {
 	char wlif[128], *next;
 	int idx=0;
@@ -2368,7 +2460,9 @@ void init_wllc()
 }
 
 #if defined(RTCONFIG_RALINK)
+/* Defined in router/rc/sysdeps/ralink/ralink.c */
 #elif defined(RTCONFIG_QCA)
+/* Defined in router/rc/sysdeps/qca/qca.c */
 #else
 #define	MAX_STA_COUNT	128
 void rssi_check_unit(int unit)
@@ -2393,15 +2487,15 @@ void rssi_check_unit(int unit)
 		return;
 
 #ifdef RTCONFIG_PROXYSTA
-	if (psta_exist_except(unit))
+	if (psta_exist_except(unit) || psr_exist_except(unit))
 	{
 		dbg("%s radio is disabled\n",
 			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
 		return;
 	}
-	else if (is_psta(unit))
+	else if (is_psta(unit) || is_psr(unit))
 	{
-		dbg("skip interface %s under psta mode\n", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+		dbg("skip interface %s under psta or psr mode\n", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 		return;
 	}
 #endif
@@ -2534,96 +2628,6 @@ void rssi_check()
 	}
 }
 #endif
-
-#ifdef RTCONFIG_BWDPI
-#define CC_CONTENT "/tmp/push_mail"
-#define EMAIL_CONF "/etc/email/email.conf"
-static void send_wrslog_email(char *path)
-{
-	FILE *fp;
-	char tmp[1024], buf[1024], title[64], attach[64], smtp_auth_pass[256];
-	char date[30];
-	time_t now;
-
-	memset(tmp, 0, sizeof(tmp));
-	memset(buf, 0, sizeof(buf));
-	memset(title, 0, sizeof(title));
-	memset(attach, 0, sizeof(attach));
-	memset(date, 0, sizeof(date));
-	memset(smtp_auth_pass, 0, sizeof(smtp_auth_pass));
-
-	// get current date
-	time(&now);
-	StampToDate(now, date);
-
-	//printf("send_mail : path = %s\n", path);
-	// check path for protection
-	if(!strcmp(path, "")) return;
-
-	// email server conf setting
-	mkdir_if_none("/etc/email");
-	if((fp = fopen(EMAIL_CONF, "w")) == NULL){
-		printf("fail to open %s\n", EMAIL_CONF);
-		return;
-	}
-
-#ifdef RTCONFIG_HTTPS
-	strncpy(smtp_auth_pass,pwdec(nvram_get("PM_SMTP_AUTH_PASS")),256);
-#else
-	strncpy(smtp_auth_pass,nvram_get("PM_SMTP_AUTH_PASS"),256);
-#endif
-
-	fprintf(fp,"SMTP_SERVER = '%s'\n", nvram_safe_get("PM_SMTP_SERVER"));
-	fprintf(fp,"SMTP_PORT = '%s'\n", nvram_safe_get("PM_SMTP_PORT"));
-	fprintf(fp,"MY_NAME = 'Administrator'\n");
-	fprintf(fp,"MY_EMAIL = '%s'\n", nvram_safe_get("PM_MY_EMAIL"));
-	fprintf(fp,"USE_TLS = 'true'\n");
-	fprintf(fp,"SMTP_AUTH = 'LOGIN'\n");
-	fprintf(fp,"SMTP_AUTH_USER = '%s'\n", nvram_safe_get("PM_SMTP_AUTH_USER"));
-	fprintf(fp,"SMTP_AUTH_PASS = '%s'\n", smtp_auth_pass);
-	fclose(fp);
-
-	// email content
-	if((fp = fopen(CC_CONTENT, "w")) == NULL){
-		printf("fail to open %s\n", CC_CONTENT);
-		return;
-	}
-
-	// extract mail log into seperated event information
-	extract_data(path, fp);
-
-	fprintf(fp, "Suggest action: Your client devices has been detected suspicious networking behavior and blocked connection with destination server to protect your sensitive information.\nBased on our recommendation, you can\n");
-	fprintf(fp, "1. Remove app that access this site and don't visit this website to prevent any personal information leak.\n");
-	fprintf(fp, "2. Check your router security setting.\n");
-	fprintf(fp, "3. Update security patch for your client or new firmware for your router.\n");
-	fprintf(fp, "Please refer to attached log file for detail information. You also can link to trend micro website to download security trial software for your client device protection.\n");
-	fprintf(fp, "\n");
-	fprintf(fp, "http://www.trendmicro.com/\n");
-	fclose(fp);
-
-	//system("cat /tmp/push_mail"); // debug
-
-	// send email
-	sprintf(title, "AiProtection alert! %s", date);
-	sprintf(attach, path);
-	sprintf(tmp,"cat %s | email -V -s \"%s\" %s -a \"%s\"", CC_CONTENT, title, nvram_safe_get("PM_MY_EMAIL"), attach);
-	system(tmp);
-
-	unlink(path);
-}
-
-static void capture_bwdpi_log()
-{
-	if(nvram_get_int("wrs_enable") == 0 && nvram_get_int("wrs_cc_enable") == 0 && nvram_get_int("wrs_vp_enable") == 0)
-		return;
-
-	char path[30];
-	memset(path, 0, sizeof(path));
-
-	int flag = merge_log(path);
-	//printf("[capture log] flag = %d, path = %s\n", flag, path);
-	if(flag) send_wrslog_email(path);
-}
 #endif
 
 #ifdef RTCONFIG_TOR
@@ -2704,9 +2708,6 @@ period_chk_cnt()
 void watchdog(int sig)
 {
 	int period;
-#ifdef RTCONFIG_PUSH_EMAIL
-	//push_mail();
-#endif
 #if 0
 	period_chk_cnt();
 #endif
@@ -2739,6 +2740,7 @@ void watchdog(int sig)
 #ifdef WEB_REDIRECT
 	wanduck_check();
 #endif
+
 	/* if timer is set to less than 1 sec, then bypass the following */
 	if (itv.it_value.tv_sec == 0) return;
 
@@ -2764,10 +2766,12 @@ void watchdog(int sig)
 	}
 #endif
 	if (watchdog_period) return;
-
+#if 0
 #ifdef RTCONFIG_USER_LOW_RSSI
 	rssi_check();
 #endif
+#endif
+
 #ifdef BTN_SETUP
 	if (btn_pressed_setup >= BTNSETUP_START) return;
 #endif
@@ -2801,19 +2805,28 @@ void watchdog(int sig)
 //	auto_firmware_check();
 
 #ifdef RTCONFIG_BWDPI
-	auto_sig_check();
-	capture_bwdpi_log();
-	sqlite_db_check();
+	auto_sig_check();	// libbwdpi.so
+	sqlite_db_check();	// libbwdpi.so
 #endif
 
-#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
-	check_hour_monitor_service();
+#ifdef RTCONFIG_PUSH_EMAIL
+	alert_mail_service();
+#endif
+
+#ifdef RTCONFIG_TRAFFIC_CONTROL
+	traffic_control_limit_check();
 #endif
 
 #if defined(RTCONFIG_TOR) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))
 	if(nvram_get_int("Tor_enable"))
 		Tor_microdes_check();
 #endif
+	return;
+}
+
+void watchdog02(int sig)
+{
+	watchdog_check();
 	return;
 }
 
@@ -2833,7 +2846,7 @@ watchdog_main(int argc, char *argv[])
 	pre_sw_mode=nvram_get_int("sw_mode");
 #endif
 
-	if ((nvram_get_int("sw_mode") == SW_MODE_AP) && nvram_get_int("wlc_psta"))
+	if (mediabridge_mode())
 		wlonunit = nvram_get_int("wlc_band");
 
 #ifdef RTCONFIG_RALINK
@@ -2894,6 +2907,27 @@ watchdog_main(int argc, char *argv[])
 		pause();
 	}
 
+	return 0;
+}
+
+/* to check watchdog alive */
+int watchdog02_main(int argc, char *argv[])
+{
+	FILE *fp;
+	/* write pid */
+	if((fp = fopen("/var/run/watchdog02.pid", "w")) != NULL){
+		fprintf(fp, "%d", getpid());
+		fclose(fp);
+	}
+	/* set the signal handler */
+	signal(SIGALRM, watchdog02);
+
+	/* set timer */
+	alarmtimer02(10, 0);
+	/* Most of time it goes to sleep */
+	while(1){
+		pause();
+	}
 	return 0;
 }
 

@@ -974,7 +974,6 @@ string_to_number_ll(const char *s, unsigned long long min, unsigned long long ma
 	errno = 0;
 	number = strtoull(s, &end, 0);
 	if ((*end == '\0' || *end == '/') && end != s) {
-	//if (*end == '\0' && end != s) {
 		/* we parsed a number, let's see if we want this */
 		if (errno != ERANGE && min <= number && (!max || number <= max)) {
 			*ret = number;
@@ -1224,7 +1223,7 @@ register_target6(struct ip6tables_target *me)
 		exit(1);
 	}
 
-	if (me->size != IP6T_ALIGN(me->size) || me->size != XT_ALIGN(me->size)) {
+	if (me->size != IP6T_ALIGN(me->size)) {
 		fprintf(stderr, "%s: target `%s' has invalid size %u.\n",
 			program_name, me->name, (unsigned int)me->size);
 		exit(1);
@@ -2524,89 +2523,3 @@ int do_command6(int argc, char *argv[], char **table, ip6tc_handle_t *handle)
 
 	return ret;
 }
-
-int strtonuml6(const char *s, char **end, unsigned long *value,
-               unsigned long min, unsigned long max)
-{
-        unsigned long v;
-        char *my_end;
-
-        errno = 0;
-        v = strtoul(s, &my_end, 0);
-
-        if (my_end == s)
-                return 0;
-        if (end != NULL)
-                *end = my_end;
-
-        if (errno != ERANGE && min <= v && (max == 0 || v <= max)) {
-                if (value != NULL)
-                        *value = v;
-                if (end == NULL)
-                        return *my_end == '\0';
-                return 1;
-        }
-
-        return 0;
-}
-
-int strtonum6(const char *s, char **end, unsigned int *value,
-                  unsigned int min, unsigned int max)
-{
-        unsigned long v;
-        int ret;
-
-        ret = strtonuml6(s, end, &v, min, max);
-        if (value != NULL)
-                *value = v;
-        return ret;
-}
-
-void param_act6(unsigned int status, const char *p1, ...)
-{
-        const char *p2, *p3;
-        va_list args;
-        unsigned int b;
-
-        va_start(args, p1);
-
-        switch (status) {
-        case P_ONLY_ONCE:
-                p2 = va_arg(args, const char *);
-                b  = va_arg(args, unsigned int);
-                if (!b)
-                        return;
-                exit_error(PARAMETER_PROBLEM,
-                           "%s: \"%s\" option may only be specified once",
-                           p1, p2);
-                break;
-        case P_NO_INVERT:
-                p2 = va_arg(args, const char *);
-                b  = va_arg(args, unsigned int);
-                if (!b)
-                        return;
-                exit_error(PARAMETER_PROBLEM,
-                           "%s: \"%s\" option cannot be inverted", p1, p2);
-                break;
-        case P_BAD_VALUE:
-                p2 = va_arg(args, const char *);
-                p3 = va_arg(args, const char *);
-                exit_error(PARAMETER_PROBLEM,
-                           "%s: Bad value for \"%s\" option: \"%s\"",
-                           p1, p2, p3);
-                break;
-        case P_ONE_ACTION:
-                b = va_arg(args, unsigned int);
-                if (!b)
-                        return;
-                exit_error(PARAMETER_PROBLEM,
-                           "%s: At most one action is possible", p1);
-                break;
-        default:
-                exit_error(status, "%s:",  p1);
-                break;
-        }
-
-        va_end(args);
-}
-

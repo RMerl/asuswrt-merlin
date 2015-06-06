@@ -74,7 +74,7 @@ function QKInternet_load_body(){
 			blocking_m("showserver_m", false);
 			blocking_m("showhwaddr_m", true);
 
-			$("dns_info_title_m").innerHTML = "<#PPPConnection_x_WANDNSServer_itemname#>";		
+			document.getElementById("dns_info_title_m").innerHTML = "<#PPPConnection_x_WANDNSServer_itemname#>";		
 			document.form.wan_dnsenable_x[0].checked = 0;
 			document.form.wan_dnsenable_x[1].checked = 1;
 			document.form.prev_page.value = "QIS_internet_type.htm";
@@ -106,11 +106,11 @@ function QKInternet_load_body(){
 		flash_button();
 
 		if(now_flag.length <= 0)
-			showtext($("page_title"), "<#QKSet_ISP_desc#>");
+			showtext(document.getElementById("page_title"), "<#QKSet_ISP_desc#>");
 		else if(DHCPClient == "1")
-			showtext($("page_title"), "<#QKSet_ISP_desc3#>");
+			showtext(document.getElementById("page_title"), "<#QKSet_ISP_desc3#>");
 		else	// if(DHCPClient == "0")
-			showtext($("page_title"), "<#QKSet_ISP_desc2#>");
+			showtext(document.getElementById("page_title"), "<#QKSet_ISP_desc2#>");
 		
 		if(now_flag == "auto_way_vpn" && from_page == "start_apply.htm")
 			now_flag = "auto_way";
@@ -141,10 +141,10 @@ function QKInternet_load_body(){
 			document.form.prev_page.value = "QIS_internet_account.htm";
 		}
 		else if(document.form.wan_proto.value == "static"){
-			$("dhcp_info_radio").style.display = "none";
+			document.getElementById("dhcp_info_radio").style.display = "none";
 			blocking("showip", true);
-			$("dns_info_title").innerHTML = "<#PPPConnection_x_WANDNSServer_itemname#>";		
-			$("dns_info_radio").style.display = "none";
+			document.getElementById("dns_info_title").innerHTML = "<#PPPConnection_x_WANDNSServer_itemname#>";		
+			document.getElementById("dns_info_radio").style.display = "none";
 			blocking("dns_sec", true);
 			blocking("showserver", false);
 			blocking("showhwaddr", true);
@@ -411,27 +411,27 @@ function show_dnsenable(flag){
 
 function show_next_button(){
 	if(now_flag.length <= 0){	// manual setting.
-		$("nextButton").onclick = submitForm;
+		document.getElementById("nextButton").onclick = submitForm;
 	}
 	else if(document.form.vpn_enable[0].checked){
-		$("nextButton").onclick = gotoVPNtype;
+		document.getElementById("nextButton").onclick = gotoVPNtype;
 	}
 	else if(document.form.wan_dhcpenable_x[0].checked){
 		document.form.wan_proto.value = "static";
-		$("nextButton").onclick = submitForm;
+		document.getElementById("nextButton").onclick = submitForm;
 	}
 	else{
 		document.form.wan_proto.value = "dhcp";
-		$("nextButton").onclick = gotoMACclone;
+		document.getElementById("nextButton").onclick = gotoMACclone;
 	}
 }
 
 function show_prev_button(){
 	if(now_flag == "auto_way_static"
 			|| now_flag == "auto_way")
-		$("prevButton").style.display = "none";
+		document.getElementById("prevButton").style.display = "none";
 	else
-		$("prevButton").style.display = "";
+		document.getElementById("prevButton").style.display = "";
 }
 
 function gotoVPNtype(){
@@ -602,7 +602,7 @@ function validate_dns(){
 			document.form.wan_dns1_x.focus();
 			document.form.wan_dns1_x.select();
 			alert("<#JS_fieldblank#>");
-			$("wan_dns1_x_div").style.border = "2px solid #CE1E1E";
+			document.getElementById("wan_dns1_x_div").style.border = "2px solid #CE1E1E";
 			return false;
 		}
 		else{
@@ -621,11 +621,11 @@ function validate_dns(){
 }
 
 function remove_red_field(){
-	$("wan_ipaddr_x_div").style.border = "2px inset #F4F4F4";
-	$("wan_netmask_x_div").style.border = "2px inset #F4F4F4";
-	$("wan_gateway_x_div").style.border = "2px inset #F4F4F4";
-	$("wan_dns1_x_div").style.border = "2px inset #F4F4F4";
-	$("wan_dns2_x_div").style.border = "2px inset #F4F4F4";
+	document.getElementById("wan_ipaddr_x_div").style.border = "2px inset #F4F4F4";
+	document.getElementById("wan_netmask_x_div").style.border = "2px inset #F4F4F4";
+	document.getElementById("wan_gateway_x_div").style.border = "2px inset #F4F4F4";
+	document.getElementById("wan_dns1_x_div").style.border = "2px inset #F4F4F4";
+	document.getElementById("wan_dns2_x_div").style.border = "2px inset #F4F4F4";
 }
 
 function showMAC(){
@@ -743,12 +743,12 @@ function submitForm(){
 					document.form.action_script.value	= "reboot";
 					document.form.flag.value = "verify_detect_reboot";
 					document.form.action_wait.value	= "<% get_default_reboot_time(); %>";
-					$("loadHint").style.display = "";
-					$("nextButton").style.display = "none";
-					$("prevButton").style.display = "none";
+					document.getElementById("loadHint").style.display = "";
+					document.getElementById("nextButton").style.display = "none";
+					document.getElementById("prevButton").style.display = "none";
 			}
 
-			$("x_Setting").disabled = false;
+			document.getElementById("x_Setting").disabled = false;
 			document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
 			document.form.sw_mode.value = 1;
 			document.form.action = "/start_apply.htm";
@@ -768,19 +768,19 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
+		document.getElementById("check_mac").style.display = "";
 		return false;
 	}else if(flag == 2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").style.display = "";
 		return false;		
 	}else{
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}	
 }
@@ -919,7 +919,7 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_ExternalIPAddress_itemdesc#>');" style="cursor:help;"><#IPConnection_ExternalIPAddress_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>" tabindex="3" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+	    	<input type="text" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>" tabindex="3" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" autocorrect="off" autocapitalize="off"/>
 				<!--input type="hidden" id="wan_ipaddr_x" name="wan_ipaddr_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" title="WAN IP"-->
 				<div class="IPaddr_qis" id="wan_ipaddr_x_div" style="display:none;">
 					<input maxlength="3" name="wan_ipaddr_x1"; onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);"
@@ -939,7 +939,7 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalSubnetMask_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalSubnetMask_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>" tabindex="4" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+	    	<input type="text" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>" tabindex="4" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" autocorrect="off" autocapitalize="off"/>
 				<!--input type="hidden" id="wan_netmask_x" name="wan_netmask_x" value="" maxlength="15"  title="WAN Subnet Mask"-->
 				<div class="IPaddr_qis" id="wan_netmask_x_div" style="display:none;">
 					<input maxlength="3" name="wan_netmask_x1" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
@@ -959,7 +959,7 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalGateway_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalGateway_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>" tabindex="5" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+	    	<input type="text" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>" tabindex="5" onClick="clean_input(this)" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" autocorrect="off" autocapitalize="off"/>
 				<!--input type="hidden" id="wan_gateway_x" name="wan_gateway_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" class="input"-->
 				<div class="IPaddr_qis" id="wan_gateway_x_div" style="display:none;">
 					<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);" 
@@ -992,7 +992,7 @@ function displayDNSCtrl(){
 			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer1_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer1_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 	  </th>
 	  <td class="QISformtd">
-    	<input type="text" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>" tabindex="8" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+    	<input type="text" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>" tabindex="8" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" autocorrect="off" autocapitalize="off"/>
 			<!--input type="hidden" id="wan_dns1_x" name="wan_dns1_x" value="" onkeypress="return validator.isIPAddr(this, event);" maxlength="15"-->
 			<div class="IPaddr_qis" id="wan_dns1_x_div" style="display:none;">
 				<input maxlength="3" name="wan_dns1_x1" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
@@ -1012,7 +1012,7 @@ function displayDNSCtrl(){
 			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer2_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer2_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 	  </th>
 	  <td class="QISformtd">
-    	<input type="text" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>" tabindex="9" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+    	<input type="text" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>" tabindex="9" onkeypress="return validator.isIPAddr(this, event);" size="36" maxlength="15" class="input_20_table" autocorrect="off" autocapitalize="off"/>
 			<!--input type="hidden" id="wan_dns2_x" name="wan_dns2_x" value="" maxlength="15" onkeypress="return validator.isIPAddr(this, event);" -->
 			<div class="IPaddr_qis" id="wan_dns2_x_div" style="display:none;">
 				<input maxlength="3" onkeypress="return validator.checkIP(this,event);" onkeyup="return validator.checkWord(this,event);" onblur="validator.validateIP(this);"
@@ -1039,7 +1039,7 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#BOP_isp_heart_desc2#>');" style="cursor:help;"><#BOP_isp_heart_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">	<!-- ASUS 2009.12 for maxlen -->
-				<input type="text" name="wan_heartbeat_x" value="" tabindex="10" size="36" maxlength="64" title="<#BOP_isp_heart_item#>" class="input_32_table" disabled>
+				<input type="text" name="wan_heartbeat_x" value="" tabindex="10" size="36" maxlength="64" title="<#BOP_isp_heart_item#>" class="input_32_table" disabled autocorrect="off" autocapitalize="off">
 			</td>
 		</tr>
 	</table>
@@ -1066,7 +1066,7 @@ function displayDNSCtrl(){
 			<div onmouseout="return nd();" onclick="overlib('<#PPPConnection_x_MacAddressForISP_itemdesc#>', FIXX, 285, FIXY,50);" style="white-space:normal;cursor:help;"><#BOP_isp_mac_item#><img align="right" style="cursor:pointer;margin-top:-14px \9;" src="/images/New_ui/helpicon.png"></div>
 			</th>
 			<td class="QISformtd">
-				<input type="text" name="wan_hwaddr_x" tabindex="13" onkeypress="return validator.isHWAddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="">
+				<input type="text" name="wan_hwaddr_x" tabindex="13" onkeypress="return validator.isHWAddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="" autocorrect="off" autocapitalize="off">
 				<input type="button" class="button_gen_long" tabindex="14" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
 			</td>
 		</tr>
@@ -1099,15 +1099,15 @@ function displayDNSCtrl(){
 			<div id="WANIPDiv">
 				<div class="row">
 					<label><#IPConnection_ExternalIPAddress_itemname#></label>
-					<input type="text" name="wan_ipaddr_x_m" placeholder="" maxlength="15" value=""/>
+					<input type="text" name="wan_ipaddr_x_m" placeholder="" maxlength="15" value="" autocorrect="off" autocapitalize="off"/>
 				</div>
 				<div class="row">
 					<label><#IPConnection_x_ExternalSubnetMask_itemname#></label>
-					<input type="text" name="wan_netmask_x_m" placeholder="" maxlength="15" value=""/>
+					<input type="text" name="wan_netmask_x_m" placeholder="" maxlength="15" value="" autocorrect="off" autocapitalize="off"/>
 				</div>
 				<div class="row_end">
 					<label><#IPConnection_x_ExternalGateway_itemname#></label>
-					<input type="text" name="wan_gateway_x_m" placeholder="" maxlength="15" value=""/>
+					<input type="text" name="wan_gateway_x_m" placeholder="" maxlength="15" value="" autocorrect="off" autocapitalize="off"/>
 				</div>
 			</div>
 		</fieldset>
@@ -1129,11 +1129,11 @@ function displayDNSCtrl(){
 			<div id="DNSDiv">
 				<div class="row">
 					<label><#IPConnection_x_DNSServer1_itemname#></label>
-					<input type="text" name="wan_dns1_x_m" placeholder="" maxlength="15" value=""/>
+					<input type="text" name="wan_dns1_x_m" placeholder="" maxlength="15" value="" autocorrect="off" autocapitalize="off"/>
 				</div>
 				<div class="row_end">
 					<label><#IPConnection_x_DNSServer2_itemname#></label>
-					<input type="text" name="wan_dns2_x_m" placeholder="" maxlength="15" value=""/>
+					<input type="text" name="wan_dns2_x_m" placeholder="" maxlength="15" value="" autocorrect="off" autocapitalize="off"/>
 				</div>
 			</div>
 		</fieldset>
@@ -1144,7 +1144,7 @@ function displayDNSCtrl(){
 		<fieldset>
 			<div class="row_end">
 				<label><#BOP_isp_heart_item#></label>
-				<input type="text" name="wan_heartbeat_x_m" onkeypress="" placeholder="" maxlength="64" value=""/>
+				<input type="text" name="wan_heartbeat_x_m" onkeypress="" placeholder="" maxlength="64" value="" autocorrect="off" autocapitalize="off"/>
 			</div>
 		</fieldset>
 		<br />
@@ -1154,7 +1154,7 @@ function displayDNSCtrl(){
 		<fieldset>
 			<div class="row_end">
 				<label><#BOP_isp_mac_item#></label>
-				<input type="text" name="wan_hwaddr_x_m" onkeypress="return validator.isHWAddr(this,event);" placeholder="" maxlength="17" value=""/>
+				<input type="text" name="wan_hwaddr_x_m" onkeypress="return validator.isHWAddr(this,event);" placeholder="" maxlength="17" value="" autocorrect="off" autocapitalize="off"/>
 			</div>
 		</fieldset>
 		<br />

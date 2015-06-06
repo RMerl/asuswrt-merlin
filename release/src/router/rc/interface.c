@@ -382,7 +382,7 @@ int start_vlan(void)
 		if (!(hwaddr = nvram_get(nvvar_name)))
 			continue;
 
-		ether_atoe(hwaddr, ea);
+		ether_atoe(hwaddr, (unsigned char *) ea);
 		/* find the interface name to which the address is assigned */
 		for (j = 1; j <= DEV_NUMIFS; j ++) {
 			ifr.ifr_ifindex = j;
@@ -440,7 +440,7 @@ int start_vlan(void)
 #endif
 #ifdef CONFIG_BCMWL5
 	if(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", ""))
-		set_wan_tag(&ifr.ifr_name);
+		set_wan_tag((char *) &ifr.ifr_name);
 #endif
 #ifdef RTCONFIG_RGMII_BRCM5301X
 	switch (get_model()) {

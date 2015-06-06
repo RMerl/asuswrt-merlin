@@ -1165,6 +1165,7 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 				*tx2 = backup_tx;				
 				/* Cherry Cho modified for RT-AC3200 Bug#202 in 2014/11/4. */	
 				unit = get_wan_unit("eth0");
+
 #ifdef RTCONFIG_DUALWAN			
 				if ( (unit == wan_primary_ifunit()) || ( !strstr(nvram_safe_get("wans_dualwan"), "none") && nvram_match("wans_mode", "lb")) )
 				{
@@ -1470,6 +1471,19 @@ END:
 	return 0;
 }
 
+int psr_exist()
+{
+	char word[256], *next;
+	int idx = 0;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		if (is_psr(idx)) return 1;
+		idx++;
+	}
+
+	return 0;
+}
+
 int psr_exist_except(int unit)
 {
 	char word[256], *next;
@@ -1488,29 +1502,88 @@ END:
 #endif
 
 #ifdef RTCONFIG_OPENVPN
-char *get_parsed_crt(const char *name, char *buf)
+char *get_parsed_crt(const char *name, char *buf, size_t buf_len)
 {
 	char *value;
 	int len, i;
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+	FILE *fp;
+	char tmpBuf[256] = {0};
+	char *p = buf;
+#endif
 
 	value = nvram_safe_get(name);
-
 	len = strlen(value);
 
-	for (i=0; (i < len); i++) {
-		if (value[i] == '>')
-			buf[i] = '\n';
-		else
-			buf[i] = value[i];
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+	if(!check_if_dir_exist(OVPN_FS_PATH))
+		mkdir(OVPN_FS_PATH, S_IRWXU);
+	snprintf(tmpBuf, sizeof(tmpBuf) -1, "%s/%s", OVPN_FS_PATH, name);
+#endif
+
+	if(len) {
+		for (i=0; (i < len); i++) {
+			if (value[i] == '>')
+				buf[i] = '\n';
+			else
+				buf[i] = value[i];
+		}
+		buf[i] = '\0';
+
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+		//save to file and then clear nvram value
+		fp = fopen(tmpBuf, "w");
+		if(fp) {
+			fprintf(fp, "%s", buf);
+			fclose(fp);
+			nvram_set(name, "");
+		}
+#endif
 	}
-
-	buf[i] = '\0';
-
+	else {
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+		//nvram value cleard, get from file
+		fp = fopen(tmpBuf, "r");
+		if(fp) {
+			while(fgets(buf, buf_len, fp)) {
+				if(!strncmp(buf, "-----BEGIN", 10))
+					break;
+			}
+			if(feof(fp)) {
+				fclose(fp);
+				memset(buf, 0, buf_len);
+				return buf;
+			}
+			p += strlen(buf);
+			memset(tmpBuf, 0, sizeof(tmpBuf));
+			while(fgets(tmpBuf, sizeof(tmpBuf), fp)) {
+				strncpy(p, tmpBuf, strlen(tmpBuf));
+				p += strlen(tmpBuf);
+			}
+			*p = '\0';
+			fclose(fp);
+		}
+#endif
+	}
 	return buf;
 }
 
 int set_crt_parsed(const char *name, char *file_path)
 {
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+	char target_file_path[128] ={0};
+
+	if(!check_if_dir_exist(OVPN_FS_PATH))
+		mkdir(OVPN_FS_PATH, S_IRWXU);
+
+	if(check_if_file_exist(file_path)) {
+		snprintf(target_file_path, sizeof(target_file_path) -1, "%s/%s", OVPN_FS_PATH, name);
+		return eval("cp", file_path, target_file_path);
+	}
+	else {
+		return -1;
+	}
+#else
 	FILE *fp=fopen(file_path, "r");
 	char buffer[4000] = {0};
 	char buffer2[256] = {0};
@@ -1544,6 +1617,42 @@ int set_crt_parsed(const char *name, char *file_path)
 	}
 	else
 		return -ENOENT;
+#endif
+}
+
+int ovpn_crt_is_empty(const char *name)
+{
+	char file_path[128] ={0};
+	struct stat st;
+
+	if( nvram_is_empty(name) ) {
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+		//check file
+		if(d_exists(OVPN_FS_PATH)) {
+			snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, name);
+			if(stat(file_path, &st) == 0) {
+				if( !S_ISDIR(st.st_mode) && st.st_size ) {
+					return 0;
+				}
+				else {
+					return 1;
+				}
+			}
+			else {
+				return 1;
+			}
+		}
+		else {
+			mkdir(OVPN_FS_PATH, S_IRWXU);
+			return 1;
+		}
+#else
+		return 1;
+#endif
+	}
+	else {
+		return 0;
+	}
 }
 #endif
 
@@ -1697,6 +1806,20 @@ int check_bwdpi_nvram_setting()
 	return enabled;
 }
 #endif
+
+/*
+	transfer timestamp into date
+	ex. date = 2014-07-14 19:20:10
+*/
+void StampToDate(unsigned long timestamp, char *date)
+{
+	struct tm *local;
+	time_t now;
+	
+	now = timestamp;
+	local = localtime(&now);
+	strftime(date, 30, "%Y-%m-%d %H:%M:%S", local);
+}
 
 int get_iface_hwaddr(char *name, unsigned char *hwaddr)
 {

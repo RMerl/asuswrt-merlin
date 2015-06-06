@@ -206,7 +206,6 @@ restart_wps_monitor(void)
 	char tmp[100], prefix[]="wlXXXXXXX_";
 	char *wps_argv[] = {"/bin/wps_monitor", NULL};
 	pid_t pid;
-	int wait_time = 3;
 
 	unlink("/tmp/wps_monitor.pid");
 
@@ -221,17 +220,7 @@ restart_wps_monitor(void)
 			unit++;
 		}
 
-		eval("killall", "wps_monitor");
-
-		do {
-			if ((pid = get_pid_by_name("/bin/wps_monitor")) <= 0)
-				break;
-			wait_time--;
-			sleep(1);
-		} while (wait_time);
-
-		if (wait_time == 0)
-			dbG("Unable to kill wps_monitor!\n");
+		killall_tk("wps_monitor");
 
 		_eval(wps_argv, NULL, 0, &pid);
 	}

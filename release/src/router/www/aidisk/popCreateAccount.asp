@@ -14,7 +14,7 @@
 <script type="text/javascript" src="../validator.js"></script>
 <script type="text/javascript">
 function clickevent(){
-	$("Submit").onclick = function(){
+	document.getElementById("Submit").onclick = function(){
 			if(validForm()){
 				parent.showLoading();
 				document.createAccountForm.submit();
@@ -37,68 +37,68 @@ function checkDuplicateName(newname, teststr){
 }
 
 function validForm(){
-	showtext($("alert_msg2"), "");
+	showtext(document.getElementById("alert_msg2"), "");
 
-	if($("account").value.length == 0){
+	if(document.getElementById("account").value.length == 0){
 		alert("<#File_Pop_content_alert_desc1#>");
-		$("account").focus();
+		document.getElementById("account").focus();
 		return false;
 	}
 	else{
-		var alert_str = validator.hostName($("account"));
+		var alert_str = validator.hostName(document.getElementById("account"));
 
 		if(alert_str != ""){
 			alert(alert_str);			
-			$("account").focus();
+			document.getElementById("account").focus();
 			return false;
 		}			
 
-		$("account").value = trim($("account").value);
+		document.getElementById("account").value = trim(document.getElementById("account").value);
 
-		if($("account").value == "root"
-				|| $("account").value == "guest"
-				|| $("account").value == "anonymous"
+		if(document.getElementById("account").value == "root"
+				|| document.getElementById("account").value == "guest"
+				|| document.getElementById("account").value == "anonymous"
 		){
 				alert("<#USB_Application_account_alert#>");				
-				$("account").focus();
+				document.getElementById("account").focus();
 				return false;
 		}
-		else if(checkDuplicateName($("account").value, parent.get_accounts())){
+		else if(checkDuplicateName(document.getElementById("account").value, parent.get_accounts())){
 				alert("<#File_Pop_content_alert_desc5#>");				
-				$("account").focus();
+				document.getElementById("account").focus();
 				return false;
 		}
 	}	
 
 	// password
-	if($("password").value.length <= 0 || $("confirm_password").value.length <= 0){
-		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
-		if($("password").value.length <= 0){
-				$("password").focus();
-				$("password").select();
+	if(document.getElementById("password").value.length <= 0 || document.getElementById("confirm_password").value.length <= 0){
+		showtext(document.getElementById("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+		if(document.getElementById("password").value.length <= 0){
+				document.getElementById("password").focus();
+				document.getElementById("password").select();
 		}else{
-				$("confirm_password").focus();
-				$("confirm_password").select();
+				document.getElementById("confirm_password").focus();
+				document.getElementById("confirm_password").select();
 		}
 		return false;
 	}
 
-	if($("password").value != $("confirm_password").value){
-		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
-		$("confirm_password").focus();
+	if(document.getElementById("password").value != document.getElementById("confirm_password").value){
+		showtext(document.getElementById("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
+		document.getElementById("confirm_password").focus();
 		return false;
 	}
 
 	if(!validator.string(document.createAccountForm.password)){
-		$("password").focus();
-		$("password").select();
+		document.getElementById("password").focus();
+		document.getElementById("password").select();
 		return false;
 	}
 
-	if($("password").value.length > 16){
-		showtext($("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
-		$("password").focus();
-		$("password").select();
+	if(document.getElementById("password").value.length > 16){
+		showtext(document.getElementById("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
+		document.getElementById("password").focus();
+		document.getElementById("password").select();
 		return false;
 	}
 
@@ -122,16 +122,16 @@ function validForm(){
     <tr>
       <th><#AiDisk_Account#>: </th>
       <td>
-      	<input class="input_15_table" name="account" id="account" type="text" maxlength="20">      		
+      	<input class="input_15_table" name="account" id="account" type="text" maxlength="20" autocorrect="off" autocapitalize="off">      		
       </td>
     </tr>
     <tr>
       <th><#PPPConnection_Password_itemname#>: </th>
-      <td><input type="password" class="input_15_table" autocapitalization="off" name="password" id="password" onKeyPress="return validator.isString(this, event);" maxlength="17"></td>
+      <td><input type="password" class="input_15_table" name="password" id="password" onKeyPress="return validator.isString(this, event);" maxlength="17" autocorrect="off" autocapitalize="off"></td>
     </tr>
     <tr>
       <th><#Confirmpassword#>: </th>
-      <td><input type="password" class="input_15_table" autocapitalization="off" name="confirm_password" id="confirm_password" onKeyPress="return validator.isString(this, event);" maxlength="17">
+      <td><input type="password" class="input_15_table" name="confirm_password" id="confirm_password" onKeyPress="return validator.isString(this, event);" maxlength="17" autocorrect="off" autocapitalize="off">
       		<br/><span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>	
       </td>
     </tr>

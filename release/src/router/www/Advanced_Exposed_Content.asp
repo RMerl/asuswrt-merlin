@@ -51,7 +51,7 @@ function done_validating(action){
 
 function initial(){
 	show_menu(); 
-	addOnlineHelp($("faq"), ["ASUSWRT", "DMZ"]);
+	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "DMZ"]);
 	dmz_enable_check();
 }
 
@@ -125,7 +125,7 @@ function dmz_on_off(){
 										<tr id="dmz_ip_tr">
 											<th><#IPConnection_ExposedIP_itemname#></th>
 											<td>
-												<input type="text" maxlength="15" class="input_15_table" name="dmz_ip" value="<% nvram_get("dmz_ip"); %>" onkeypress="return validator.isIPAddr(this, event)"/>
+												<input type="text" maxlength="15" class="input_15_table" name="dmz_ip" value="<% nvram_get("dmz_ip"); %>" onkeypress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"/>
 											</td>
 										</tr>      		
 									</table>

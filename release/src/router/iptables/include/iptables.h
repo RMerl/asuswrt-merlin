@@ -68,7 +68,7 @@ struct iptables_match
 	/* Function which parses command options; returns true if it
            ate an option */
 	int (*parse)(int c, char **argv, int invert, unsigned int *flags,
-		     const void *entry,
+		     const struct ipt_entry *entry,
 		     unsigned int *nfcache,
 		     struct ipt_entry_match **match);
 
@@ -76,11 +76,11 @@ struct iptables_match
 	void (*final_check)(unsigned int flags);
 
 	/* Prints out the match iff non-NULL: put space at end */
-	void (*print)(const void *ip,
+	void (*print)(const struct ipt_ip *ip,
 		      const struct ipt_entry_match *match, int numeric);
 
 	/* Saves the match info in parsable form to stdout. */
-	void (*save)(const void *ip,
+	void (*save)(const struct ipt_ip *ip,
 		     const struct ipt_entry_match *match);
 
 	/* Pointer to list of extra command-line options */
@@ -121,18 +121,18 @@ struct iptables_target
 	/* Function which parses command options; returns true if it
            ate an option */
 	int (*parse)(int c, char **argv, int invert, unsigned int *flags,
-		     const void *entry,
+		     const struct ipt_entry *entry,
 		     struct ipt_entry_target **target);
 
 	/* Final check; exit if not ok. */
 	void (*final_check)(unsigned int flags);
 
 	/* Prints out the target iff non-NULL: put space at end */
-	void (*print)(const void *ip,
+	void (*print)(const struct ipt_ip *ip,
 		      const struct ipt_entry_target *target, int numeric);
 
 	/* Saves the targinfo in parsable form to stdout. */
-	void (*save)(const void *ip,
+	void (*save)(const struct ipt_ip *ip,
 		     const struct ipt_entry_target *target);
 
 	/* Pointer to list of extra command-line options */

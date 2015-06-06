@@ -18,7 +18,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type='text/javascript'>
-var $j = jQuery.noConflict();
+
 var bpc_us = new Array();
 var bpc_ds = new Array();
 var snr = new Array();
@@ -38,24 +38,24 @@ AUTOLOGOUT_MAX_MINUTE = 0;
 function initial(){
 	show_menu();
 	if(wan_line_state != "up"){
-			$('btn_refresh').style.display="none";
-			$('signals_update').style.display="none";		
+			document.getElementById('btn_refresh').style.display="none";
+			document.getElementById('signals_update').style.display="none";		
 	}else if(bpc_us.length == 0 && bpc_ds.length == 0 && snr.length == 0 && spec_running == 0){
-			$('btn_refresh').style.display="";
+			document.getElementById('btn_refresh').style.display="";
 	}else if(bpc_us.length == 0 && bpc_ds.length == 0 && snr.length == 0 && spec_running == 1){
 			refresh_signals();
 	}
 	else{
-			$('btn_refresh').style.display="none";
-			$('signals_update').innerHTML = "<#Spectrum_refresh#> ";
-			$('signals_update').innerHTML += delay_time;
-			$('signals_update').style.display="";
+			document.getElementById('btn_refresh').style.display="none";
+			document.getElementById('signals_update').innerHTML = "<#Spectrum_refresh#> ";
+			document.getElementById('signals_update').innerHTML += delay_time;
+			document.getElementById('signals_update').style.display="";
 			update_spectrum();
 	}
 }
 
 function update_spectrum(){
-  $j.ajax({
+  $.ajax({
     url: '/ajax_signals.asp',
     dataType: 'script', 
 	
@@ -63,20 +63,20 @@ function update_spectrum(){
       setTimeout("update_spectrum();", 3000);
     },
     success: function(response){
-    	setTimeout("$('signals_collect_scan').style.display=\"none\";", delay_time*1000);
-    	setTimeout("$('signals_collect').style.display=\"none\";", delay_time*1000);
-    	setTimeout("$('signals_update').style.display=\"\";", delay_time*1000);
+    	setTimeout("document.getElementById('signals_collect_scan').style.display=\"none\";", delay_time*1000);
+    	setTimeout("document.getElementById('signals_collect').style.display=\"none\";", delay_time*1000);
+    	setTimeout("document.getElementById('signals_update').style.display=\"\";", delay_time*1000);
 	setTimeout("update_spectrum();", 15000); //Keep refresh ajax shortly to avoid 2 times delay_time to update Spectrum image (especially for vdsl)
     }		
   });
 }
 
 function refresh_signals(){
-		$('btn_refresh').style.display="none";
-		$('signals_collect_scan').style.display="";
-		$('signals_collect').innerHTML = "<#Spectrum_gathering#> ";
-		$('signals_collect').innerHTML += delay_time;
-		$('signals_collect').style.display="";		
+		document.getElementById('btn_refresh').style.display="none";
+		document.getElementById('signals_collect_scan').style.display="";
+		document.getElementById('signals_collect').innerHTML = "<#Spectrum_gathering#> ";
+		document.getElementById('signals_collect').innerHTML += delay_time;
+		document.getElementById('signals_collect').style.display="";		
 		update_spectrum();
 }
 

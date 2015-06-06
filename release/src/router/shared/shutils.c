@@ -939,14 +939,14 @@ find_in_list(const char *haystack, const char *needle)
 int
 remove_from_list(const char *name, char *list, int listsize)
 {
-	int listlen = 0;
+//	int listlen = 0;
 	int namelen = 0;
 	char *occurrence = list;
 
 	if (!list || !name || (listsize <= 0))
 		return EINVAL;
 
-	listlen = strlen(list);
+//	listlen = strlen(list);
 	namelen = strlen(name);
 
 	occurrence = find_in_list(occurrence, name);
@@ -1706,7 +1706,7 @@ void
 shortstr_encrypt(unsigned char *src, unsigned char *dst, unsigned char *shift)
 {
     unsigned char carry, temp, bytes, bits;
-    char i;
+    int i;
 
     bytes = (*shift % (DATA_WORDS_LEN - 1)) + 1;
     for(i=0; i<DATA_WORDS_LEN; i++) {
@@ -1731,7 +1731,7 @@ void
 shortstr_decrypt(unsigned char *src, unsigned char *dst, unsigned char shift)
 {
     unsigned char carry, temp, bytes, bits;
-    char i;
+    int i;
 
     for(i=0; i<DATA_WORDS_LEN; i++) {
         src[i] ^= ENC_XOR + i * 5;

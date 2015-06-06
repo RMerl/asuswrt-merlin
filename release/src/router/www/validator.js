@@ -96,15 +96,15 @@ var validator = {
 	},
 
 	checkIPAddrInput: function(obj, emp){	
-		if($("check_ip_input"))
+		if(document.getElementById("check_ip_input"))
 			obj.parentNode.removeChild(obj.parentNode.childNodes[2]);	
 		if(!this.ipAddr4(obj) || (emp == 1 && obj.value == "")){
 			var childsel=document.createElement("div");
 			childsel.setAttribute("id","check_ip_input");
 			childsel.style.color="#FFCC00";
 			obj.parentNode.appendChild(childsel);
-			$("check_ip_input").innerHTML="<#JS_validip#>";		
-			$("check_ip_input").style.display = "";
+			document.getElementById("check_ip_input").innerHTML="<#JS_validip#>";		
+			document.getElementById("check_ip_input").style.display = "";
 			obj.value = obj.parentNode.childNodes[0].innerHTML;
 			obj.focus();
 			obj.select();
@@ -1373,6 +1373,35 @@ var validator = {
 		return true;
 	},
 
+	psk_KR: function(psk_obj, flag){
+		
+		var psk_length = psk_obj.value.length;
+		if(!/[A-Za-z]/.test(psk_obj.value) || !/[0-9]/.test(psk_obj.value) || psk_length < 8 || psk_length > 63 
+				|| !/[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]/.test(psk_obj.value)){
+			alert("<#JS_PSK64Hex_kr#> <#JS_validPWD#>");
+			psk_obj.value = "";
+			psk_obj.focus();
+			return false;
+		}
+
+		var invalid_char = "";
+		for(var i = 0; i < psk_length; ++i){
+			if(psk_obj.value.charAt(i) <= ' ' || psk_obj.value.charAt(i) > '~'){
+				invalid_char = invalid_char+psk_obj.value.charAt(i);
+			}
+		}
+
+		if(invalid_char != ""){
+			if(flag != "noalert")
+				alert("<#JS_validstr2#> '"+invalid_char+"' !");
+			psk_obj.value = "";
+			psk_obj.focus();	
+			return false;
+		}
+
+		return true;
+	},
+
 	range: function(o, _min, _max) {
 		var str2val = function(v){
 			for(i=0; i<v.length; i++){
@@ -1499,6 +1528,36 @@ var validator = {
 
 		return true;
 	},
+	
+	string_KR: function(string_obj, flag){		//Alphabets, numbers, specialcharacters mixed
+
+		var string_length = string_obj.value.length;
+		if(!/[A-Za-z]/.test(string_obj.value) || !/[0-9]/.test(string_obj.value) || string_length < 8
+				|| !/[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]/.test(string_obj.value)){
+				
+				alert("<#JS_validPWD#>");
+				string_obj.value = "";
+				string_obj.focus();
+				return false;	
+		}	
+		
+		var invalid_char = "";
+		for(var i = 0; i < string_obj.value.length; ++i){
+			if(string_obj.value.charAt(i) <= ' ' || string_obj.value.charAt(i) > '~'){
+				invalid_char = invalid_char+string_obj.value.charAt(i);
+			}
+		}
+
+		if(invalid_char != ""){
+			if(flag != "noalert")
+				alert("<#JS_validstr2#> '"+invalid_char+"' !");
+			string_obj.value = "";
+			string_obj.focus();
+			return false;
+		}
+
+		return true;
+	},	
 
 	//validate SSID string
 	stringGroup: function(o){

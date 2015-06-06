@@ -230,6 +230,11 @@
 </style>	
 <script type="text/JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
+var sw_mode = '<% nvram_get("sw_mode"); %>';
+if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+	sw_mode = 4;
+if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+	sw_mode = 2;
 var detect_dhcp_pppoe = "";
 var current_lanip = '<% nvram_get("lan_ipaddr"); %>';
 var current_mask = '<% nvram_get("lan_netmask"); %>';
@@ -378,7 +383,14 @@ function initial(){
 			html_code += "<ul>\n";
 			html_code += "<li><#APSurvey_action_search_again_hint2#>";
 			html_code += "<span style=\"text-align: right;\">\n";
-			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'http://"+ theUrl +"/QIS_wizard.htm?flag=sitesurvey\';\" value=\"<#QIS_rescan#>\">";
+			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'/QIS_wizard.htm?flag=";
+
+			if(sw_mode == "2")
+				html_code += "sitesurvey_rep";
+			else
+				html_code += "sitesurvey_mb";
+
+			html_code += "\';\" value=\"<#QIS_rescan#>\">";
 			html_code += "</span>\n";
 			html_code += "</li>\n";
 			html_code += "<li><#QKSet_finish_moveto8#>";

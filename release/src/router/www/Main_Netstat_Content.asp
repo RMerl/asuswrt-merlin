@@ -108,7 +108,7 @@ function updateOptions(){
 	setTimeout("checkCmdRet();", 500);
 }
 
-var $j = jQuery.noConflict();
+
 var _responseLen;
 var noChange = 0;
 function checkCmdRet(){
@@ -118,7 +118,7 @@ function checkCmdRet(){
 	else
 		waitLimit = 10;
 
-	$j.ajax({
+	$.ajax({
 		url: '/cmdRet_check.htm',
 		dataType: 'html',
 		
@@ -165,17 +165,17 @@ function checkCmdRet(){
 
 function hideCNT(obj){
 	if(obj.value == "netstat-nat"){		
-		$("cmdDesc").innerHTML = "Display NAT connections.";
+		document.getElementById("cmdDesc").innerHTML = "Display NAT connections.";
 		addNetOption(document.form.NetOption, option_netstat_nat, optval_netstat_nat);
 		append_value(document.form.NetOption);
-		$('ExtOption_tr').style.display = "";
-		$('resolvename').style.display = "none";
+		document.getElementById('ExtOption_tr').style.display = "";
+		document.getElementById('resolvename').style.display = "none";
 	}
 	else{
-		$("cmdDesc").innerHTML = "<#NetworkTools_Info#>";	
+		document.getElementById("cmdDesc").innerHTML = "<#NetworkTools_Info#>";	
 		addNetOption(document.form.NetOption, option_netstat, optval_netstat);
-		$('ExtOption_tr').style.display = "none";
-		$('resolvename').style.display = "";
+		document.getElementById('ExtOption_tr').style.display = "none";
+		document.getElementById('resolvename').style.display = "";
 	}
 }
 
@@ -191,10 +191,10 @@ function addNetOption(obj, opt, val){
 function append_value(obj){
 	if(document.form.cmdMethod.value == "netstat-nat"
 			&& obj.value == "-s"){
-				$('targetip_tr').style.display = "";		
-				$('targetip').style.display = "";
+				document.getElementById('targetip_tr').style.display = "";		
+				document.getElementById('targetip').style.display = "";
 	}else{
-				$('targetip_tr').style.display = "none";
+				document.getElementById('targetip_tr').style.display = "none";
 	}
 }
 
@@ -210,8 +210,8 @@ function hideClients_Block(evt){
 		}
 	}	
 	
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 }
 
@@ -219,7 +219,7 @@ function pullLANIPList(obj){
 	
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		isMenuopen = 1;
 	}
 	else
@@ -246,7 +246,7 @@ function showLANIPList(){
 		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
 	}
 
-	$("ClientList_Block_PC").innerHTML = htmlCode;
+	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function setClientIP(ipaddr){
@@ -332,7 +332,7 @@ function validForm(){
 										<tr id="targetip_tr" style="display:none;">
 											<th width="20%"><#NetworkTools_target#> IP</th>
 											<td>
-													<input type="text" id="targetip" class="input_15_table" maxlength="15" name="targetip" onKeyPress="return validator.isIPAddr(this,event)" onClick="hideClients_Block();">
+													<input type="text" id="targetip" class="input_15_table" maxlength="15" name="targetip" onKeyPress="return validator.isIPAddr(this,event)" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
 												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 											</td>										
@@ -385,7 +385,6 @@ function validForm(){
 </body>
 <script type="text/javascript">
 <!--[if !IE]>-->
-	jQuery.noConflict();
 	(function($){
 		var textArea = document.getElementById('textarea');
 		textArea.scrollTop = textArea.scrollHeight;

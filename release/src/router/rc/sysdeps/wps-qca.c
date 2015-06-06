@@ -150,7 +150,7 @@ int get_wps_er_main(int argc, char *argv[])
 			char buf[1024];
 			FILE *fp;
 			int len;
-			char *pt1,*pt2;
+			char *pt1,*pt2 = NULL;
 
 			sprintf(buf, "hostapd_cli -i%s get_config", word);
 			fp = popen(buf, "r");

@@ -18,14 +18,12 @@
 	line-height: 20px;
 }
 </style>
-<script type="text/javascript" language="JavaScript" src="../state.js"></script>
-<script type="text/javascript" language="JavaScript" src="../help.js"></script>
-<script type="text/JavaScript" language="JavaScript" src="../jquery.js"></script>
-<script type="text/JavaScript" language="JavaScript" src="../validator.js"></script>
+<script type="text/javascript" language="JavaScript" src="/state.js"></script>
+<script type="text/javascript" language="JavaScript" src="/help.js"></script>
+<script type="text/JavaScript" language="JavaScript" src="/jquery.js"></script>
+<script type="text/JavaScript" language="JavaScript" src="/validator.js"></script>
 <script type="text/javascript">
-var $j = jQuery.noConflict();
 var accounts = [<% get_all_accounts(); %>];
-var http_passwd_flag = 0;
 
 if(accounts.length == 0)
 	accounts = ['<% nvram_get("http_username"); %>'];
@@ -93,20 +91,22 @@ function QKinternettype_load_body(){
 		var RetryCountDown_fail = 5;
 		update_dsl_info();
 	}
+
+	parent.restartTime = true;
 }
 
 function submitForm(){
 	changeiuiBackground(1);
 
-	showtext($("alert_msg1"), "");
+	showtext(document.getElementById("alert_msg1"), "");
 	if(parent.ISMOBILE)
-		showtext($("_alert_msg2"), "");
+		showtext(document.getElementById("_alert_msg2"), "");
 	else
-		showtext($("alert_msg2"), "");
+		showtext(document.getElementById("alert_msg2"), "");
 
 	if(document.form.http_username.value.length == 0){
-		showtext($("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
-		$("alert_msg1").style.display = "";
+		showtext(document.getElementById("alert_msg1"), "<#File_Pop_content_alert_desc1#>");
+		document.getElementById("alert_msg1").style.display = "";
 		document.form.http_username.focus();
 		document.form.http_username.select();
 		changeiuiBackground(0);
@@ -116,14 +116,14 @@ function submitForm(){
 		
 		var alert_str = validator.hostName(document.form.http_username);
 		if(alert_str != ""){
-			showtext($("alert_msg1"), alert_str);
-			$("alert_msg1").style.display = "";
+			showtext(document.getElementById("alert_msg1"), alert_str);
+			document.getElementById("alert_msg1").style.display = "";
 			document.form.http_username.focus();
 			document.form.http_username.select();
 			changeiuiBackground(0);
 			return false;
 		}else{
-			$("alert_msg1").style.display = "none";
+			document.getElementById("alert_msg1").style.display = "none";
 		}
 
 		document.form.http_username.value = trim(document.form.http_username.value);
@@ -132,8 +132,8 @@ function submitForm(){
 				|| document.form.http_username.value == "guest"
 				|| document.form.http_username.value == "anonymous"
 		){
-				showtext($("alert_msg1"), "<#USB_Application_account_alert#>");
-				$("alert_msg1").style.display = "";
+				showtext(document.getElementById("alert_msg1"), "<#USB_Application_account_alert#>");
+				document.getElementById("alert_msg1").style.display = "";
 				document.form.http_username.focus();
 				document.form.http_username.select();
 				changeiuiBackground(0);
@@ -141,22 +141,22 @@ function submitForm(){
 		}
 		else if(accounts.getIndexByValue(document.form.http_username.value) > 0
 				&& document.form.http_username.value != accounts[0]){		
-				showtext($("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
-				$("alert_msg1").style.display = "";
+				showtext(document.getElementById("alert_msg1"), "<#File_Pop_content_alert_desc5#>");
+				document.getElementById("alert_msg1").style.display = "";
 				document.form.http_username.focus();
 				document.form.http_username.select();
 				changeiuiBackground(0);
 				return false;
 		}else{
-				$("alert_msg1").style.display = "none";
+				document.getElementById("alert_msg1").style.display = "none";
 		}
 	}	
 	
 	if(document.form.http_passwd.value.length <= 0 || document.form.v_password2.value.length <= 0){
 		if(parent.ISMOBILE)
-			showtext($("_alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+			showtext(document.getElementById("_alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
 		else
-			showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+			showtext(document.getElementById("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
 		if(document.form.http_passwd.value.length <= 0){
 			document.form.http_passwd.focus();
 			document.form.http_passwd.select();
@@ -171,20 +171,30 @@ function submitForm(){
 
 	if(document.form.http_passwd.value != document.form.v_password2.value){
 		if(parent.ISMOBILE)
-			showtext($("_alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
+			showtext(document.getElementById("_alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
 		else
-			showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
+			showtext(document.getElementById("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
 		document.form.http_passwd.focus();
 		document.form.http_passwd.select();
 		changeiuiBackground(0);
 		return false;
 	}
 
-	if(!validator.string(document.form.http_passwd)){
-		document.form.http_passwd.focus();
-		document.form.http_passwd.select();
-		changeiuiBackground(0);
-		return false;
+	if(is_KR_sku){		/* MODELDEP by Territory Code */
+		if(!validator.string_KR(document.form.http_passwd)){
+				document.form.http_passwd.focus();
+				document.form.http_passwd.select();
+				changeiuiBackground(0);
+				return false;
+		}
+	}
+	else{
+		if(!validator.string(document.form.http_passwd)){
+				document.form.http_passwd.focus();
+				document.form.http_passwd.select();
+				changeiuiBackground(0);
+				return false;
+		}
 	}
 
 	if(dsl_support) {
@@ -203,22 +213,11 @@ function submitForm(){
 	}
 
 	if(document.form.http_passwd.value == 'admin'){
-		if(http_passwd_flag == 0){
 			alert("<#QIS_adminpass_confirm0#>");
 			document.form.http_passwd.focus();
 			document.form.http_passwd.select();
-			http_passwd_flag = 1;
 			changeiuiBackground(0);
 			return false;
-		}
-		else{
-			if(!confirm("<#QIS_adminpass_confirm1#>")){
-				document.form.http_passwd.focus();
-				document.form.http_passwd.select();
-				changeiuiBackground(0);
-				return false;
-			}
-		}
 	}
 
 	parent.document.QKform.http_username.value = document.form.http_username.value;
@@ -244,11 +243,11 @@ function submitForm(){
 function skipsetting(){
 	changeiuiBackground2("loadingIcon_skip",1);
 
-	showtext($("alert_msg1"), "");
+	showtext(document.getElementById("alert_msg1"), "");
 	if(parent.ISMOBILE)
-		showtext($("_alert_msg2"), "");
+		showtext(document.getElementById("_alert_msg2"), "");
 	else
-		showtext($("alert_msg2"), "");
+		showtext(document.getElementById("alert_msg2"), "");
 
 	parent.document.QKform.http_username.value = "<% nvram_get("http_username"); %>";
 	parent.document.QKform.http_passwd.value = "<% nvram_get("http_passwd"); %>";
@@ -285,7 +284,7 @@ function pass_checked(obj){
 }
 
 function update_dsl_info(){
-	$j.ajax({
+	$.ajax({
 		url: '/start_dsl_autodet.asp',
 		dataType: 'script',
 		error: function(xhr){
@@ -339,7 +338,7 @@ function clean_scorebar(obj){
 		  <th width="240"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,5)"><#Router_Login_Name#></a></th>
 		  <td class="QISformtd">
 				<div>
-					<input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20" value="<% nvram_get("http_username"); %>" autocapitalization="off" autocomplete="off">
+					<input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20" value="<% nvram_get("http_username"); %>" autocomplete="off" autocorrect="off" autocapitalize="off">
 					<br /><span id="alert_msg1" style="color:#FC0;margin-left:8px;display:none;"></span>
 				</div>
 		  </td>
@@ -347,7 +346,7 @@ function clean_scorebar(obj){
 		<tr>
 			<th width="240"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 			<td class="QISformtd">
-				<input type="password" autocapitalization="off" autocomplete="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_15_table" maxlength="16" onkeyup="chkPass(this.value, 'http_passwd');" onBlur="clean_scorebar(this);">
+				<input type="password" autocomplete="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_15_table" maxlength="16" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;"/ onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off">
 			&nbsp;&nbsp;
 			<div id="scorebarBorder" style="margin-left:140px; margin-top:-26px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 				<div id="score" style="margin-top:3px;"></div>
@@ -358,7 +357,7 @@ function clean_scorebar(obj){
 		<tr>
 			<th width="240"><span class="hintstyle"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></span></th>
 			<td class="QISformtd">
-				<input type="password" autocapitalization="off" autocomplete="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_15_table" maxlength="16" />
+				<input type="password" autocomplete="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_15_table" maxlength="16" onpaste="return false;" autocorrect="off" autocapitalize="off"/>
 				<div style="margin:-25px 0px 0px 135px;"><input type="checkbox" name="show_pass_1" tabindex="4" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 			</td>
 		</tr>
@@ -373,12 +372,12 @@ function clean_scorebar(obj){
 	<fieldset id="theFieldset1" style="display:none;">
 		<div class="row">
 			<label>Username</label>
-			<input type="text" id="_http_username" name="_http_username" placeholder="Your login" onblur="document.form.http_username.value=this.value" value="<% nvram_get("http_username"); %>" autocapitalization="off" autocomplete="off">
+			<input type="text" id="_http_username" name="_http_username" placeholder="Your login" onblur="document.form.http_username.value=this.value" value="<% nvram_get("http_username"); %>" autocomplete="off" autocorrect="off" autocapitalize="off">
 			<br/><span id="alert_msg1" style="color:red"></span>
 		</div>
 		<div class="row_end">
 			<label>Password</label>
-			<input type="password" name="_http_passwd" placeholder="Your password" onblur="document.form.http_passwd.value=this.value;document.form.v_password2.value=this.value" autocapitalization="off" autocomplete="off">
+			<input type="password" name="_http_passwd" placeholder="Your password" onblur="document.form.http_passwd.value=this.value;document.form.v_password2.value=this.value" autocomplete="off" autocorrect="off" autocapitalize="off">
 		</div>
 	</fieldset>
 	<div class="mobileHint" id="_alert_msg2"></div>

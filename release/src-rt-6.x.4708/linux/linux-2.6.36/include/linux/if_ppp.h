@@ -37,6 +37,10 @@
 #include <linux/types.h>
 #include <linux/compiler.h>
 
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+#include <ctf/hndctf.h>
+#endif
+
 /*
  * Packet sizes
  */
@@ -171,7 +175,7 @@ struct pppol2tp_ioc_stats {
 #define ifr_mtu	ifr_ifru.ifru_metric
 #endif
 
-#ifdef CTF_PPPOE
+#if defined(CTF_PPPOE) || defined(CTF_PPTP) || defined(CTF_L2TP)
 extern void ppp_rxstats_upd(void *pppif, struct sk_buff *skb);
 extern void ppp_txstats_upd(void *pppif, struct sk_buff *skb);
 #endif

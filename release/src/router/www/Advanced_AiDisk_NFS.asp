@@ -65,7 +65,6 @@
 }
 </style>
 <script>
-var $j = jQuery.noConflict();
 <% get_AiDisk_status(); %>
 <% disk_pool_mapping_info(); %>
 var PROTOCOL = "cifs";
@@ -96,7 +95,7 @@ function initial_dir(){
 	var type = "General";
 
 	url += "?motion=gettree&layer_order=" + __layer_order + "&t=" + Math.random();
-	$j.get(url,function(data){initial_dir_status(data);});
+	$.get(url,function(data){initial_dir_status(data);});
 }
 
 function initial_dir_status(data){
@@ -105,8 +104,8 @@ function initial_dir_status(data){
 		eval("var default_dir=" + data);
 	}
 	else {
-		$("EditExports").style.display = "none";
-		$("NoUSB").style.display = "";
+		document.getElementById("EditExports").style.display = "none";
+		document.getElementById("NoUSB").style.display = "";
 		disk_flag=1;
 	}
 }
@@ -158,11 +157,11 @@ function get_disk_tree(){
 		return false;
 	}
 	cal_panel_block();
-	$j("#folderTree_panel").fadeIn(300);
+	$("#folderTree_panel").fadeIn(300);
 	get_layer_items("0");
 }
 function get_layer_items(layer_order){
-	$j.ajax({
+	$.ajax({
     		url: '/gettree.asp?layer_order='+layer_order,
     		dataType: 'script',
     		error: function(xhr){
@@ -263,13 +262,13 @@ function BuildTree(){
 		TempObject +='<tr>';
 		// the line in the front.
 		TempObject +='<td class="vert_line">';
-		TempObject +='<img id="a'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' class="FdRead" src="/images/Tree/vert_line_'+isSubTree+'0.gif">';
+		TempObject +='<img id="a'+ItemBarCode+'" onclick=\'document.getElementById("d'+ItemBarCode+'").onclick();\' class="FdRead" src="/images/Tree/vert_line_'+isSubTree+'0.gif">';
 		TempObject +='</td>';
 
 		if(layer == 3){
 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
 			TempObject +='<td>';
-			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
+			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'document.getElementById("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
 			TempObject +='</td>';
 			TempObject +='<td>';
 			TempObject +='<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n';
@@ -280,7 +279,7 @@ function BuildTree(){
 			TempObject +='<table class="tree_table">';
 			TempObject +='<tr>';
 			TempObject +='<td class="vert_line">';
-			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
+			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'document.getElementById("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
 			TempObject +='</td>';
 			TempObject +='<td class="FdText">';
 			TempObject +='<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>';
@@ -297,7 +296,7 @@ function BuildTree(){
 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
 			TempObject +='<td>';
 			TempObject +='<table><tr><td>';
-			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
+			TempObject +='<img id="c'+ItemBarCode+'" onclick=\'document.getElementById("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">';
 			TempObject +='</td><td>';
 			TempObject +='<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>';
 			TempObject +='</td></tr></table>';
@@ -310,7 +309,7 @@ function BuildTree(){
 		TempObject +='</tr>';
 	}
 	TempObject +='</table>';
-	$("e"+this.FromObject).innerHTML = TempObject;
+	document.getElementById("e"+this.FromObject).innerHTML = TempObject;
 }
 function get_layer(barcode){
 	var tmp, layer;
@@ -333,9 +332,9 @@ function build_array(obj,layer){
 				layer3_path = layer3_path.replace("&nbsp;"," ");
 
 			if(obj.id.length >8)
-				layer2_path = "/" + $(obj.id.substring(0,obj.id.length-3)).innerHTML;
+				layer2_path = "/" + document.getElementById(obj.id.substring(0,obj.id.length-3)).innerHTML;
 			else
-				layer2_path = "/" + $(obj.id.substring(0,obj.id.length-2)).innerHTML;
+				layer2_path = "/" + document.getElementById(obj.id.substring(0,obj.id.length-2)).innerHTML;
 
 			while(layer2_path.indexOf("&nbsp;") != -1)
 				layer2_path = layer2_path.replace("&nbsp;"," ");
@@ -363,25 +362,25 @@ function GetFolderItem(selectedObj, haveSubTree){
 		// chose Disk
 		setSelectedDiskOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').className = "createFolderBtn";
-		$('deleteFolderBtn').className = "deleteFolderBtn";
-		$('modifyFolderBtn').className = "modifyFolderBtn";
+		document.getElementById('createFolderBtn').className = "createFolderBtn";
+		document.getElementById('deleteFolderBtn').className = "deleteFolderBtn";
+		document.getElementById('modifyFolderBtn').className = "modifyFolderBtn";
 
-		$('createFolderBtn').onclick = function(){};
-		$('deleteFolderBtn').onclick = function(){};
-		$('modifyFolderBtn').onclick = function(){};
+		document.getElementById('createFolderBtn').onclick = function(){};
+		document.getElementById('deleteFolderBtn').onclick = function(){};
+		document.getElementById('modifyFolderBtn').onclick = function(){};
 	}
 	else if(layer == 2){
 		// chose Partition
 		setSelectedPoolOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').className = "createFolderBtn_add";
-		$('deleteFolderBtn').className = "deleteFolderBtn";
-		$('modifyFolderBtn').className = "modifyFolderBtn";
+		document.getElementById('createFolderBtn').className = "createFolderBtn_add";
+		document.getElementById('deleteFolderBtn').className = "deleteFolderBtn";
+		document.getElementById('modifyFolderBtn').className = "modifyFolderBtn";
 
-		$('createFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');};
-		$('deleteFolderBtn').onclick = function(){};
-		$('modifyFolderBtn').onclick = function(){};
+		document.getElementById('createFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');};
+		document.getElementById('deleteFolderBtn').onclick = function(){};
+		document.getElementById('modifyFolderBtn').onclick = function(){};
 		document.aidiskForm.layer_order.disabled = "disabled";
 		document.aidiskForm.layer_order.value = barcode;
 	}
@@ -389,13 +388,13 @@ function GetFolderItem(selectedObj, haveSubTree){
 		// chose Shared-Folder
 		setSelectedFolderOrder(selectedObj.id);
 		path_directory = build_array(selectedObj,layer);
-		$('createFolderBtn').className = "createFolderBtn";
-		$('deleteFolderBtn').className = "deleteFolderBtn_add";
-		$('modifyFolderBtn').className = "modifyFolderBtn_add";
+		document.getElementById('createFolderBtn').className = "createFolderBtn";
+		document.getElementById('deleteFolderBtn').className = "deleteFolderBtn_add";
+		document.getElementById('modifyFolderBtn').className = "modifyFolderBtn_add";
 
-		$('createFolderBtn').onclick = function(){};
-		$('deleteFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popDeleteFolder.asp');};
-		$('modifyFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popModifyFolder.asp');};
+		document.getElementById('createFolderBtn').onclick = function(){};
+		document.getElementById('deleteFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popDeleteFolder.asp');};
+		document.getElementById('modifyFolderBtn').onclick = function(){popupWindow('OverlayMask','/aidisk/popModifyFolder.asp');};
 		document.aidiskForm.layer_order.disabled = "disabled";
 		document.aidiskForm.layer_order.value = barcode;
 	}
@@ -413,41 +412,41 @@ function showClickedObj(clickedObj){
 function GetTree(layer_order, v){
 	if(layer_order == "0"){
 		this.FromObject = layer_order;
-		$('d'+layer_order).innerHTML = '<span class="FdWait">. . . . . . . . . .</span>';
+		document.getElementById('d'+layer_order).innerHTML = '<span class="FdWait">. . . . . . . . . .</span>';
 		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
 		return;
 	}
 
-	if($('a'+layer_order).className == "FdRead"){
-		$('a'+layer_order).className = "FdOpen";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
+	if(document.getElementById('a'+layer_order).className == "FdRead"){
+		document.getElementById('a'+layer_order).className = "FdOpen";
+		document.getElementById('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
 		this.FromObject = layer_order;
-		$('e'+layer_order).innerHTML = '<img src="/images/Tree/folder_wait.gif">';
+		document.getElementById('e'+layer_order).innerHTML = '<img src="/images/Tree/folder_wait.gif">';
 		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
 	}
-	else if($('a'+layer_order).className == "FdOpen"){
-		$('a'+layer_order).className = "FdClose";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";
-		$('e'+layer_order).style.position = "absolute";
-		$('e'+layer_order).style.visibility = "hidden";
+	else if(document.getElementById('a'+layer_order).className == "FdOpen"){
+		document.getElementById('a'+layer_order).className = "FdClose";
+		document.getElementById('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";
+		document.getElementById('e'+layer_order).style.position = "absolute";
+		document.getElementById('e'+layer_order).style.visibility = "hidden";
 	}
-	else if($('a'+layer_order).className == "FdClose"){
-		$('a'+layer_order).className = "FdOpen";
-		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
-		$('e'+layer_order).style.position = "";
-		$('e'+layer_order).style.visibility = "";
+	else if(document.getElementById('a'+layer_order).className == "FdClose"){
+		document.getElementById('a'+layer_order).className = "FdOpen";
+		document.getElementById('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
+		document.getElementById('e'+layer_order).style.position = "";
+		document.getElementById('e'+layer_order).style.visibility = "";
 	}
 	else
 		alert("Error when show the folder-tree!");
 }
 function cancel_folderTree(){
 	this.FromObject ="0";
-	$j("#folderTree_panel").fadeOut(300);
+	$("#folderTree_panel").fadeOut(300);
 }
 function confirm_folderTree(){
-	$('PATH').value = path_directory ;
+	document.getElementById('PATH').value = path_directory ;
 	this.FromObject ="0";
-	$j("#folderTree_panel").fadeOut(300);
+	$("#folderTree_panel").fadeOut(300);
 }
 
 function cal_panel_block(){
@@ -470,7 +469,7 @@ function cal_panel_block(){
 		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;
 	}
 
-	$("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function addRow(obj, head){
@@ -669,7 +668,7 @@ function check_dir_path(){
 					        				<div class="left" style="width:94px; position:relative; left:3%;" id="radio_nfsd_enable"></div>
 											<div class="clear"></div>
 											<script type="text/javascript">
-												$j('#radio_nfsd_enable').iphoneSwitch('<% nvram_get("nfsd_enable"); %>',
+												$('#radio_nfsd_enable').iphoneSwitch('<% nvram_get("nfsd_enable"); %>',
 													 function() {
 														submit_server(0);
 													 },

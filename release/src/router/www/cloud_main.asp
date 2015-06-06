@@ -22,7 +22,7 @@
 if('<% nvram_get("start_aicloud"); %>' == '0')
 	location.href = "cloud__main.asp";
 
-var $j = jQuery.noConflict();
+
 
 <% wanlink(); %>
 
@@ -67,16 +67,16 @@ else
 
 function initial(){
 	show_menu();
-	addOnlineHelp($("faq0"), ["samba"]);
-	addOnlineHelp($("faq1"), ["ASUSWRT", "port", "forwarding"]);
-	addOnlineHelp($("faq2"), ["ASUSWRT", "DMZ"]);
-	addOnlineHelp($("faq3"), ["WOL", "BIOS"]);
+	addOnlineHelp(document.getElementById("faq0"), ["samba"]);
+	addOnlineHelp(document.getElementById("faq1"), ["ASUSWRT", "port", "forwarding"]);
+	addOnlineHelp(document.getElementById("faq2"), ["ASUSWRT", "DMZ"]);
+	addOnlineHelp(document.getElementById("faq3"), ["WOL", "BIOS"]);
 
-	$("app_state").style.display = "";
+	document.getElementById("app_state").style.display = "";
 	
 	if(cloudsync_support){		//aicloud builded in
 			divdisplayctrl("none", "none", "none", "");
-			$('btn_cloud_uninstall').style.display = "none";
+			document.getElementById('btn_cloud_uninstall').style.display = "none";
 			
 	}else{		// aicloud ipk
 		
@@ -93,7 +93,7 @@ function initial(){
 			(apps_state_autorun == 4 || apps_state_autorun == "") && 
 			(apps_state_install == 5 || apps_state_install == "") &&
 			is_cloud_installed){	//setup install is done
-					$('cloudsetup_movie').style.display = "none";
+					document.getElementById('cloudsetup_movie').style.display = "none";
 					divdisplayctrl("none", "none", "none", "");
 		}
 		else{	//setup status else 
@@ -105,26 +105,32 @@ function initial(){
 		/* private */
 		case 0:
 			if(https_port == 443)
-				$("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
+				document.getElementById("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
 			else{
-				$("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
-				$('cloud_url').href = "https://"+ theUrl +":" + https_port;
-				$('cloud_url').innerHTML = "https://"+ theUrl +":" + https_port;
+				document.getElementById("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
+				document.getElementById('cloud_url').href = "https://"+ theUrl +":" + https_port;
+				document.getElementById('cloud_url').innerHTML = "https://"+ theUrl +":" + https_port;
 			}
 			break;
 		/* public */
 		case 1:
 			if('<% nvram_get("ddns_enable_x"); %>' == '1' && ddns_hostname != ''){
 				if(https_port == 443) // if the port number of https is 443, hide it
-					$("accessMethod").innerHTML = "<#AiCloud_enter#> <a style=\"font-weight: bolder;text-decoration: underline;word-break:break-all;\" href=\"https://"+ ddns_hostname + ":"+ https_port +"\" target=\"_blank\">https://"+ ddns_hostname +"</a><br />";
+					document.getElementById("accessMethod").innerHTML = "<#AiCloud_enter#> <a style=\"font-weight: bolder;text-decoration: underline;word-break:break-all;\" href=\"https://"+ ddns_hostname + ":"+ https_port +"\" target=\"_blank\">https://"+ ddns_hostname +"</a><br />";
 				else
-					$("accessMethod").innerHTML = "<#AiCloud_enter#> <a style=\"font-weight: bolder;text-decoration: underline;word-break:break-all;\" href=\"https://"+ ddns_hostname + ":"+ https_port +"\" target=\"_blank\">https://"+ ddns_hostname +":"+ https_port +"</a><br />";
+					document.getElementById("accessMethod").innerHTML = "<#AiCloud_enter#> <a style=\"font-weight: bolder;text-decoration: underline;word-break:break-all;\" href=\"https://"+ ddns_hostname + ":"+ https_port +"\" target=\"_blank\">https://"+ ddns_hostname +":"+ https_port +"</a><br />";
 				
-				$("accessMethod").innerHTML += "To modify the ddns name, please click <a style=\"font-weight: bolder;text-decoration: underline;\" href=\"/Advanced_ASUSDDNS_Content.asp?af=DDNSName\" target=\"_blank\">here</a>.";
+				document.getElementById("accessMethod").innerHTML += "To modify the ddns name, please click <a style=\"font-weight: bolder;text-decoration: underline;\" href=\"/Advanced_ASUSDDNS_Content.asp?af=DDNSName\" target=\"_blank\">here</a>.";
 			}
 			else{
-				$("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
-				$("accessMethod").innerHTML += "<br/>Register for an ASUS DDNS <a style=\"font-weight: bolder;text-decoration: underline;\" href=\"/Advanced_ASUSDDNS_Content.asp\" target=\"_blank\">here</a> to access the cloud disk online.";
+				if(https_port == 443) // if the port number of https is 443, hide it
+					document.getElementById("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
+				else{
+					document.getElementById("accessMethod").innerHTML = "<#AiCloud_enter#> <a id=\"cloud_url\" style=\"font-weight: bolder;text-decoration: underline;\" href=\"https://router.asus.com\" target=\"_blank\">https://router.asus.com</a>";
+                                	document.getElementById('cloud_url').href = "https://"+ theUrl +":" + https_port;
+	                                document.getElementById('cloud_url').innerHTML = "https://"+ theUrl +":" + https_port;
+				}	
+				document.getElementById("accessMethod").innerHTML += "<br/>Register for an ASUS DDNS <a style=\"font-weight: bolder;text-decoration: underline;\" href=\"/Advanced_ASUSDDNS_Content.asp\" target=\"_blank\">here</a> to access the cloud disk online.";
 			}
 			break;
 	}
@@ -132,7 +138,7 @@ function initial(){
 	cal_agreement_block();
 
 	if(!rrsut_support)
-		$("rrsLink").style.display = "none";
+		document.getElementById("rrsLink").style.display = "none";
 }
 
 function valid_is_wan_ip(ip_obj){
@@ -176,10 +182,10 @@ function inet_network(ip_str){
 
 function cancel(){
 	this.FromObject ="";
-	$j("#agreement_panel").fadeOut(300);
-	$j('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
+	$("#agreement_panel").fadeOut(300);
+	$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 	curState = 0;
-	$("hiddenMask").style.visibility = "hidden";
+	document.getElementById("hiddenMask").style.visibility = "hidden";
 }
 
 function _confirm(){
@@ -211,7 +217,7 @@ function cal_agreement_block(){
 
 	}
 
-	$("agreement_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("agreement_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function apps_form(_act, _name, _flag){
@@ -269,52 +275,52 @@ function show_partition(){
 		if(mounted_partition == 0)
 			htmlcode += '<tr height="360px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
 
-		$("partition_div").innerHTML = htmlcode;
+		document.getElementById("partition_div").innerHTML = htmlcode;
 	});
 }
 
 
 function divdisplayctrl(flag1, flag2, flag3, flag4){
-	$("cloud_uninstall").style.display = flag1;
-	$("partition_div").style.display = flag2;
-	$("app_state").style.display = flag3;
-	$("cloud_installed").style.display = flag4;
+	document.getElementById("cloud_uninstall").style.display = flag1;
+	document.getElementById("partition_div").style.display = flag2;
+	document.getElementById("app_state").style.display = flag3;
+	document.getElementById("cloud_installed").style.display = flag4;
 
 	if(flag1 != "none"){ // AiCloud 2.0 uninstall
-		$("return_btn").style.display = "none";
-		$("tab_smartsync").style.display="none";
-		$("tab_routersync").style.display="none";
-		$("tab_setting").style.display="none";
-		$("tab_syslog").style.display="none";
+		document.getElementById("return_btn").style.display = "none";
+		document.getElementById("tab_smartsync").style.display="none";
+		document.getElementById("tab_routersync").style.display="none";
+		document.getElementById("tab_setting").style.display="none";
+		document.getElementById("tab_syslog").style.display="none";
 	}
 	else if(flag2 != "none"){ // partition list
 		//detectUSBStatusApp();
 		show_partition();
-		$("return_btn").style.display = "";
+		document.getElementById("return_btn").style.display = "";
 		//calHeight(1);
-		$("tab_smartsync").style.display="none";
-		$("tab_routersync").style.display="none";
-		$("tab_setting").style.display="none";
-		$("tab_syslog").style.display="none";
+		document.getElementById("tab_smartsync").style.display="none";
+		document.getElementById("tab_routersync").style.display="none";
+		document.getElementById("tab_setting").style.display="none";
+		document.getElementById("tab_syslog").style.display="none";
 	}
 	else if(flag3 != "none"){ // AiCloud 2.0 installing
-		$("return_btn").style.display = "none";
+		document.getElementById("return_btn").style.display = "none";
 		//calHeight(1);
-		$("tab_smartsync").style.display="none";
-		$("tab_routersync").style.display="none";
-		$("tab_setting").style.display="none";
-		$("tab_syslog").style.display="none";
+		document.getElementById("tab_smartsync").style.display="none";
+		document.getElementById("tab_routersync").style.display="none";
+		document.getElementById("tab_setting").style.display="none";
+		document.getElementById("tab_syslog").style.display="none";
 	}	
 	else if(flag4 != "none"){ // Have AiCloud 2.0 installed
-		$("return_btn").style.display = "none";
+		document.getElementById("return_btn").style.display = "none";
 		//calHeight(1);
-		$("tab_smartsync").style.display="";
-		$("tab_routersync").style.display="";
-		$("tab_setting").style.display="";
-		$("tab_syslog").style.display="";
+		document.getElementById("tab_smartsync").style.display="";
+		document.getElementById("tab_routersync").style.display="";
+		document.getElementById("tab_setting").style.display="";
+		document.getElementById("tab_syslog").style.display="";
 	}
 	else{
-		$("return_btn").style.display = "none";		
+		document.getElementById("return_btn").style.display = "none";		
 		//calHeight(0);		
  	}
 
@@ -328,7 +334,7 @@ function check_wan(){		//Don't need check WAN
 }
 
 function update_appstate(e){
-  $j.ajax({
+  $.ajax({
     url: '/update_appstate.asp',
     dataType: 'script',
 	
@@ -368,7 +374,7 @@ function check_appstate(){
 			&& (apps_state_switch == 5 || apps_state_switch == "") 
 			&& (apps_state_autorun == 4 || apps_state_autorun == "") 
 			&& (apps_state_install == 5 || apps_state_install == "")){
-		$('cloudsetup_movie').style.display = "none";	
+		document.getElementById('cloudsetup_movie').style.display = "none";	
 		//divdisplayctrl("none", "none", "none", "");
 		return true;
 	}
@@ -377,51 +383,51 @@ function check_appstate(){
 	var proceed = 0.6;
 
 	divdisplayctrl("none", "none", "", "none");
-	$('cloudsetup_movie').style.display = "";
+	document.getElementById('cloudsetup_movie').style.display = "";
 
 	if(apps_state_upgrade != 4 && apps_state_upgrade != ""){ // upgrade error handler
 		errorcode = "apps_state_upgrade = " + apps_state_upgrade;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_inputerror#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_error == 4)
-			$("apps_state_desc").innerHTML = "<#usb_failed_install#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_install#>";
 		else if(apps_state_error == 6)
-			$("apps_state_desc").innerHTML = "<#usb_failed_remote_responding#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_remote_responding#>";
 		else if(apps_state_error == 7)
-			$("apps_state_desc").innerHTML = "<#usb_failed_upgrade#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_upgrade#>";
 		else if(apps_state_error == 9)
-			$("apps_state_desc").innerHTML = "<#usb_failed_unmount#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_unmount#>";
 		else if(apps_state_error == 10)
-			$("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
 		else if(apps_state_upgrade == 0)
-			$("apps_state_desc").innerHTML = "<#usb_initializing#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_initializing#>";
 		else if(apps_state_upgrade == 1){
 			if(apps_download_percent > 0 && apps_download_percent <= 100){
-				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
+				document.getElementById("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
 				apps_download_percent_done = 0;
 			}
 			else if(apps_download_percent_done > 5){
 				if(installPercent > 99)
 					installPercent = 99;
-				$("loadingicon").style.display = "none";
-				$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				document.getElementById("loadingicon").style.display = "none";
+				document.getElementById("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 				installPercent = installPercent + proceed;//*/
 			}
 			else{
-				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
+				document.getElementById("apps_state_desc").innerHTML = "<#usb_initializing#>...";
 				apps_download_percent_done++;
 			}
 		}
 		else if(apps_state_upgrade == 2)
-			$("apps_state_desc").innerHTML = "<#usb_uninstalling#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_uninstalling#>";
 		else{
 			if(apps_depend_action_target != "terminated" && apps_depend_action_target != "error"){
 				if(apps_depend_action_target == "")
-					$("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>";
+					document.getElementById("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>";
 				else
-					$("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>"
+					document.getElementById("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>"
 							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+apps_depend_do+"</span>"
 							+"<br> <span style='font-size: 16px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
 							;
@@ -429,8 +435,8 @@ function check_appstate(){
 			else{
 				if(installPercent > 99)
 					installPercent = 99;
-				$("loadingicon").style.display = "none";
-				$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				document.getElementById("loadingicon").style.display = "none";
+				document.getElementById("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 				installPercent = installPercent + proceed;
 			}
 		}
@@ -438,78 +444,78 @@ function check_appstate(){
 	else if(apps_state_enable != 2 && apps_state_enable != ""){
 		errorcode = "apps_state_enable = " + apps_state_enable;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_error == 3)
-			$("apps_state_desc").innerHTML = "<#usb_failed_create_swap#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_create_swap#>";
         else if(apps_state_error == 8)
-            $("apps_state_desc").innerHTML = "Enable error!";
+            document.getElementById("apps_state_desc").innerHTML = "Enable error!";
 		else{
-			$("loadingicon").style.display = "";
-			$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
+			document.getElementById("loadingicon").style.display = "";
+			document.getElementById("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
 		}
 	}
 	else if(apps_state_update != 2 && apps_state_update != ""){
 		errorcode = "apps_state_update = " + apps_state_update;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "<#USB_Application_Preparing#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_Preparing#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "<#USB_Application_No_Internet#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_No_Internet#>";
 		else
-			$("apps_state_desc").innerHTML = "Updating...";
+			document.getElementById("apps_state_desc").innerHTML = "Updating...";
 	}
 	else if(apps_state_remove != 2 && apps_state_remove != ""){
 		errorcode = "apps_state_remove = " + apps_state_remove;
-		$("apps_state_desc").innerHTML = "<#uninstall_processing#>";
+		document.getElementById("apps_state_desc").innerHTML = "<#uninstall_processing#>";
 	}
 	else if(apps_state_switch != 4 && apps_state_switch != 5 && apps_state_switch != ""){
 		errorcode = "apps_state_switch = " + apps_state_switch;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_switch == 1)
-			$("apps_state_desc").innerHTML = "<#USB_Application_Stopping#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_Stopping#>";
 		else if(apps_state_switch == 2)
-			$("apps_state_desc").innerHTML = "<#USB_Application_Stopwapping#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_Stopwapping#>";
 		else if(apps_state_switch == 3)
-			$("apps_state_desc").innerHTML = "<#USB_Application_Partition_Check#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_Partition_Check#>";
 		else
-			$("apps_state_desc").innerHTML = "<#Excute_processing#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#Excute_processing#>";
 	}
 	else if(apps_state_autorun != 4 && apps_state_autorun != ""){
 		errorcode = "apps_state_autorun = " + apps_state_autorun;
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_unknown#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_autorun == 1)
-			$("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
 		else if(apps_state_install == 2)
-			$("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
 		else
-			$("apps_state_desc").innerHTML = "<#Auto_Install_processing#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#Auto_Install_processing#>";
 	}
 	else if(apps_state_install != 5 && apps_state_error > 0){ // install error handler
 		if(apps_state_error == 1)
-			$("apps_state_desc").innerHTML = "<#usb_inputerror#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_inputerror#>";
 		else if(apps_state_error == 2)
-			$("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_mount#>";
 		else if(apps_state_error == 3)
-			$("apps_state_desc").innerHTML = "<#usb_failed_create_swap#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_create_swap#>";
 		else if(apps_state_error == 4)
-			$("apps_state_desc").innerHTML = "<#usb_failed_install#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_install#>";
 		else if(apps_state_error == 5)
-			$("apps_state_desc").innerHTML = "<#usb_failed_connect_internet#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_connect_internet#>";
 		else if(apps_state_error == 6)
-			$("apps_state_desc").innerHTML = "<#usb_failed_remote_responding#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_remote_responding#>";
 		else if(apps_state_error == 7)
-			$("apps_state_desc").innerHTML = "<#usb_failed_upgrade#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_upgrade#>";
 		else if(apps_state_error == 9)
-			$("apps_state_desc").innerHTML = "<#usb_failed_unmount#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_unmount#>";
 		else if(apps_state_error == 10)
-			$("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_failed_dev_responding#>";
 
 		isinstall = 0;
 	}
@@ -518,34 +524,34 @@ function check_appstate(){
 		errorcode = "_apps_state_install = " + apps_state_install;
 
 		if(apps_state_install == 0)
-			$("apps_state_desc").innerHTML = "<#usb_partitioning#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#usb_partitioning#>";
 		else if(apps_state_install == 1)
-			$("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_disk_checking#>";
 		else if(apps_state_install == 2)
-			$("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
+			document.getElementById("apps_state_desc").innerHTML = "<#USB_Application_Swap_creating#>";
 		else if(apps_state_install == 3){
 			if(apps_download_percent > 0 && apps_download_percent <= 100){
-				$("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
+				document.getElementById("apps_state_desc").innerHTML = apps_download_file + " is downloading.. " + " <b>" + apps_download_percent + "</b> <span style='font-size: 16px;'>%</span>";
 				apps_download_percent_done = 0;
 			}
 			else if(apps_download_percent_done > 5){
 				if(installPercent > 99)
 					installPercent = 99;
-				$("loadingicon").style.display = "none";
-				$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				document.getElementById("loadingicon").style.display = "none";
+				document.getElementById("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 				installPercent = installPercent + proceed;//*/
 			}
 			else{
-				$("apps_state_desc").innerHTML = "<#usb_initializing#>...";
+				document.getElementById("apps_state_desc").innerHTML = "<#usb_initializing#>...";
 				apps_download_percent_done++;
 			}
 		}
 		else{
 			if(apps_depend_action_target != "terminated" && apps_depend_action_target != "error"){
 				if(apps_depend_action_target == "")
-					$("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>";
+					document.getElementById("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>";
 				else
-					$("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>"
+					document.getElementById("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>"
 							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+apps_depend_do+"</span>"
 							+"<br> <span style='font-size: 16px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
 							;
@@ -553,32 +559,32 @@ function check_appstate(){
 			else{
 				if(installPercent > 99)
 					installPercent = 99;
-				$("loadingicon").style.display = "none";
-				$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				document.getElementById("loadingicon").style.display = "none";
+				document.getElementById("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 				installPercent = installPercent + proceed;
 			}
 		}
 	}
 	else{
-		$("loadingicon").style.display = "";
-		$("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
+		document.getElementById("loadingicon").style.display = "";
+		document.getElementById("apps_state_desc").innerHTML = "<#QIS_autoMAC_desc2#>";
 	}
 	
 	if(apps_state_error != 0){
-		$("return_btn").style.display = "";
-		$("loadingicon").style.display = "none";
+		document.getElementById("return_btn").style.display = "";
+		document.getElementById("loadingicon").style.display = "none";
 		stoppullstate = 1;
 	}
 	else
-		$("return_btn").style.display = "none";
+		document.getElementById("return_btn").style.display = "none";
 
-	$("apps_state_desc").innerHTML += '<span class="app_action" onclick="apps_form(\'cancel\',\'\',\'\');">(<#CTL_Cancel#>)</span>';
+	document.getElementById("apps_state_desc").innerHTML += '<span class="app_action" onclick="apps_form(\'cancel\',\'\',\'\');">(<#CTL_Cancel#>)</span>';
 	return false;
 }
 
 
 function update_applist(e){
-  $j.ajax({
+  $.ajax({
     url: '/update_applist.asp',
     dataType: 'script',
 	
@@ -587,11 +593,11 @@ function update_applist(e){
     },
     success: function(response){
 			if(isinstall > 0 && cookie.get("apps_last") == "aicloud"){
-				$('cloudsetup_movie').style.display = "none";
+				document.getElementById('cloudsetup_movie').style.display = "none";
 				setTimeout('divdisplayctrl("none", "none", "none", "");', 100);
 			}
 			else{
-				$('cloudsetup_movie').style.display = "none";
+				document.getElementById('cloudsetup_movie').style.display = "none";
 				setTimeout('show_partition();', 100);
 				setTimeout('divdisplayctrl("", "none", "none", "none");', 100);
 				//setTimeout('show_apps();', 100);
@@ -823,12 +829,12 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_clouddisk_enable"></div>
 												<div id="iphone_switch_container" class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
-													$j('#radio_clouddisk_enable').iphoneSwitch('<% nvram_get("webdav_aidisk"); %>', 
+													$('#radio_clouddisk_enable').iphoneSwitch('<% nvram_get("webdav_aidisk"); %>', 
 														 function(){
 															if(window.scrollTo)
 																window.scrollTo(0,0);
 															curState = 1;
-															$j("#agreement_panel").fadeIn(300);	
+															$("#agreement_panel").fadeIn(300);	
 															dr_advise();
 															htmlbodyforIE = document.getElementsByTagName("html");
 															htmlbodyforIE[0].style.overflow = "auto";
@@ -873,7 +879,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_smartAccess_enable"></div>
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
-													$j('#radio_smartAccess_enable').iphoneSwitch('<% nvram_get("webdav_proxy"); %>', 
+													$('#radio_smartAccess_enable').iphoneSwitch('<% nvram_get("webdav_proxy"); %>', 
 														 function() {
 															curState = '<% nvram_get("webdav_proxy"); %>';
 															document.form.webdav_proxy.value = 1;
@@ -924,7 +930,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 												<!--div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_smartSync_enable"></div>
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
-													$j('#radio_smartSync_enable').iphoneSwitch('<% nvram_get("enable_cloudsync"); %>',
+													$('#radio_smartSync_enable').iphoneSwitch('<% nvram_get("enable_cloudsync"); %>',
 														function() {
 															document.form.enable_cloudsync.value = 1;
 															FormActions("start_apply.htm", "apply", "restart_cloudsync", "3");

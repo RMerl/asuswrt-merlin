@@ -2,6 +2,8 @@
 # $Id: Makefile 382663 2013-02-03 04:40:03Z $
 #
 
+include ../../common.mak
+
 CROSS =
 CC = $(CROSS)gcc
 AR = $(CROSS)ar
@@ -28,8 +30,8 @@ $(ALL_OBJS): %.o: %.c
 	$(CC) $(CCFLAGS) -c $<
 
 install: all
-	install -d $(INSTALLDIR)/emf$(BCMEX)/usr/sbin
-	install -m 755 emf $(INSTALLDIR)/emf$(BCMEX)/usr/sbin
+	install -d $(INSTALLDIR)/emf$(BCMEX)$(DPI)/usr/sbin
+	install -m 755 emf $(INSTALLDIR)/emf$(BCMEX)$(DPI)/usr/sbin
 
 .PHONY:	clean
 clean:

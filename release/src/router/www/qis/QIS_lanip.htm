@@ -36,7 +36,7 @@ function QKInternet_load_body(){
 	}
 	else{
 		parent.set_step("t2");
-		if('<% nvram_get("sw_mode"); %>' == '3'){
+		if(parent.sw_mode == "3"){
 		// protocol checkbox
 		if('<% nvram_get("lan_proto"); %>' == 'static'){
 			change_ip_setting('static');
@@ -120,7 +120,7 @@ function submitForm(){
 		parent.document.QKform.lan_dns1_x.value = document.form.lan_dns1_x.value;
 		parent.document.QKform.lan_dns2_x.value = document.form.lan_dns2_x.value;
 
-		if('<% nvram_get("sw_mode"); %>' == '1'){
+		if(parent.sw_mode == "1"){
 			parent.document.QKform.lan_ipaddr_rt.value = '<% nvram_get("lan_ipaddr"); %>';
 			parent.document.QKform.lan_netmask_rt.value = '<% nvram_get("lan_netmask"); %>';
 		}
@@ -134,7 +134,7 @@ function submitForm(){
 			document.mbform.lan_dns1_x.value = document.form.lan_dns1_x.value;
 			document.mbform.lan_dns2_x.value = document.form.lan_dns2_x.value;
 
-			if('<% nvram_get("sw_mode"); %>' == '1') {
+			if(parent.sw_mode == "1") {
 				document.mbform.lan_ipaddr_rt.disabled = false;
 				document.mbform.lan_netmask_rt.disabled = false;
 				document.mbform.lan_ipaddr_rt.value = parent.document.QKform.lan_ipaddr_rt.value;
@@ -156,7 +156,7 @@ function submitForm(){
 				document.mbform.http_passwd.disabled = false;
 			}
 
-			if(parent.based_modelid == "RT-N14U" || parent.based_modelid == "RT-AC52U" || parent.based_modelid == "RT-AC55U") {
+			if(Rawifi_support || Qcawifi_support) {
 				document.mbform.sw_mode.value = 2;
 			}
 			else {
@@ -200,8 +200,11 @@ function validForm(){
 		document.form.lan_proto.value = "dhcp";
 		return true;
 	}
-	else
+	else{
+		parent.staticIP = document.form.lan_ipaddr.value;
+		parent.isStatic = true;
 		document.form.lan_proto.value = "static";
+	}
 	
 	if(ip_num > A_class_start && ip_num < A_class_end)
 		ip_class = 'A';
@@ -476,7 +479,7 @@ var retValHandler = {
 			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
 			</th>			
 			<td>
-			  <input type="text" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" tabindex="3" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table">
+			  <input type="text" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" tabindex="3" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table" autocorrect="off" autocapitalize="off">
 			</td>
 		  </tr>
 		  
@@ -485,7 +488,7 @@ var retValHandler = {
 			  <a class="hintstyle"  href="javascript:void(0);" onClick="openHint(4,2);"><#IPConnection_x_ExternalSubnetMask_itemname#></a>
 			</th>
 			<td>
-				<input type="text" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" tabindex="4" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table">
+				<input type="text" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" tabindex="4" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table" autocorrect="off" autocapitalize="off">
 				<input type="hidden" name="dhcp_start" value="<% nvram_get("dhcp_start"); %>">
 				<input type="hidden" name="dhcp_end" value="<% nvram_get("dhcp_end"); %>">
 			</td>
@@ -494,7 +497,7 @@ var retValHandler = {
 			<tr>
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
 			<td>
-				<input type="text" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>" tabindex="5" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table">
+				<input type="text" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>" tabindex="5" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table" autocorrect="off" autocapitalize="off">
 			</td>
 			</tr>
 
@@ -511,7 +514,7 @@ var retValHandler = {
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a>
 			</th>
       <td>
-				<input type="text" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" tabindex="8" onkeypress="return validator.isIPAddr(this, event)" maxlength="15" class="input_15_table">
+				<input type="text" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" tabindex="8" onkeypress="return validator.isIPAddr(this, event)" maxlength="15" class="input_15_table" autocorrect="off" autocapitalize="off">
 			</td>
       </tr>
 
@@ -520,7 +523,7 @@ var retValHandler = {
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a>
 			</th>
       <td>
-				<input type="text" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" tabindex="9" onkeypress="return validator.isIPAddr(this, event)" maxlength="15" class="input_15_table">
+				<input type="text" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" tabindex="9" onkeypress="return validator.isIPAddr(this, event)" maxlength="15" class="input_15_table" autocorrect="off" autocapitalize="off">
 			</td>
       </tr>  
 		</table>
@@ -546,15 +549,15 @@ var retValHandler = {
 		<div id="LANIPDiv" style="display:none">
 			<div class="row">
 				<label><#IPConnection_ExternalIPAddress_itemname#></label>
-				<input type="text" name="lan_ipaddr_m" placeholder="" maxlength="32" value=""/>
+				<input type="text" name="lan_ipaddr_m" placeholder="" maxlength="32" value="" autocorrect="off" autocapitalize="off"/>
 			</div>
 			<div class="row">
 				<label><#IPConnection_x_ExternalSubnetMask_itemname#></label>
-				<input name="lan_netmask_m" type="text" placeholder="" autocapitalization="off" maxlength="65">
+				<input name="lan_netmask_m" type="text" placeholder="" autocapitalization="off" maxlength="65" autocorrect="off" autocapitalize="off">
 			</div>
 			<div class="row_end">
 				<label><#IPConnection_x_ExternalGateway_itemname#></label>
-				<input name="lan_gateway_m" type="text" placeholder="" autocapitalization="off" maxlength="65">
+				<input name="lan_gateway_m" type="text" placeholder="" autocapitalization="off" maxlength="65" autocorrect="off" autocapitalize="off">
 			</div>
 		</div>
 	</fieldset>	
@@ -575,11 +578,11 @@ var retValHandler = {
 		<div id="DNSDiv" style="display:none">
 			<div class="row">
 				<label><#IPConnection_x_DNSServer1_itemname#></label>
-				<input type="text" name="lan_dns1_x_m" placeholder="" maxlength="32" value=""/>
+				<input type="text" name="lan_dns1_x_m" placeholder="" maxlength="32" value="" autocorrect="off" autocapitalize="off"/>
 			</div>
 			<div class="row_end">
 				<label><#IPConnection_x_DNSServer2_itemname#></label>
-				<input name="lan_dns2_x_m" type="text" placeholder="" autocapitalization="off" maxlength="65">
+				<input name="lan_dns2_x_m" type="text" placeholder="" autocapitalization="off" maxlength="65" autocorrect="off" autocapitalize="off">
 			</div>
 		</div>
 	</fieldset>

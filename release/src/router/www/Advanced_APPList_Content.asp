@@ -43,7 +43,7 @@ function show_apps(){
 	}
   code +='</table>';
 	
-	$("apps_table").innerHTML = code;		
+	document.getElementById("apps_table").innerHTML = code;		
 }
 </script>
 </head>

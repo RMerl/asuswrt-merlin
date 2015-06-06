@@ -34,7 +34,6 @@
 <script>
 // disable auto log out
 AUTOLOGOUT_MAX_MINUTE = 0;
-var $j = jQuery.noConflict();
 var rogClientList = [];
 var ajaxQueries = [];
 var Param = {
@@ -57,19 +56,19 @@ function converPercent(val){
 }
 
 function updateBarPercent(mac){
-	$j('#' + mac.replace(/:/g, "") + "_Traffic").html(
+	$('#' + mac.replace(/:/g, "") + "_Traffic").html(
 		retBarHTML(rogClientList[mac].devinfo.tx, "tx", "weight") +
 		retBarHTML(rogClientList[mac].devinfo.rx, "rx", "weight") 
 	);
 
 	if(isSelected(mac)){
-		$j('#' + mac.replace(/:/g, "") + "_Apps")
+		$('#' + mac.replace(/:/g, "") + "_Apps")
 		.html(retAppsDom(mac))
 		.slideDown("fast", function(){});
 	}
 
-	$j(".barContainer div").each(function(){
-		$j(this).css("width", converPercent($j(this).attr("title")) + "%");
+	$(".barContainer div").each(function(){
+		$(this).css("width", converPercent($(this).attr("title")) + "%");
 	});
 }
 
@@ -129,7 +128,7 @@ function retAppsDom(macAddr){
 	if(appCode == '')
 		appCode = '<div class="appTraffic erHint dots">No Traffic in the list</div>';
 
-	return $j(appCode);
+	return $(appCode);
 }
 
 function drawClient(){
@@ -181,40 +180,40 @@ function drawClient(){
 		clientCode += rogClientList[i].replace(/:/g, "");
 		clientCode += '_Apps"></div>';
 
-		clientCodeToObj = $j(clientCode).click(function(){
+		clientCodeToObj = $(clientCode).click(function(){
 			if(this.id.indexOf("Apps") != -1) return false;
 
 			// cookie.set("ROG_SEL_ID", this.id, 30);
 			if(!isSelected(this.id)){
 				Param.selectedClient = this.id;
-				$j(".appTraffic").remove();			
+				$(".appTraffic").remove();			
 				updateBarPercent(this.id);
-				$j(".trafficIcons").removeClass("clicked");
-				$j(".userIcons").removeClass("clicked");
-				$j("#" + this.id.replace(/:/g, "") + "_Icon").addClass("clicked");
-				$j("#" + cookie.get("ROG_SEL_ID").replace(/:/g, "") + "_Apps").css("display", "none");
+				$(".trafficIcons").removeClass("clicked");
+				$(".userIcons").removeClass("clicked");
+				$("#" + this.id.replace(/:/g, "") + "_Icon").addClass("clicked");
+				$("#" + cookie.get("ROG_SEL_ID").replace(/:/g, "") + "_Apps").css("display", "none");
 				cookie.set("ROG_SEL_ID", this.id, 30);
 			}
 			else{
-				$j("#" + this.id.replace(/:/g, "") + "_Apps").slideUp("fast", function(){
+				$("#" + this.id.replace(/:/g, "") + "_Apps").slideUp("fast", function(){
 					Param.selectedClient = '';
-					$j(".appTraffic").remove();
-					$j(".trafficIcons").removeClass("clicked");
-					$j(".userIcons").removeClass("clicked");
+					$(".appTraffic").remove();
+					$(".trafficIcons").removeClass("clicked");
+					$(".userIcons").removeClass("clicked");
 					cookie.set("ROG_SEL_ID", "", 30);
 				});
 			}
 		});
 
-		$j("#appTrafficDiv").append(clientCodeToObj);
-		$j("#appTrafficDiv").append('<div class="splitLine"></div>');
+		$("#appTrafficDiv").append(clientCodeToObj);
+		$("#appTrafficDiv").append('<div class="splitLine"></div>');
 
 		if(rogClientList[i] == cookie.get("ROG_SEL_ID")){
 			Param.selectedClient = rogClientList[i];
-			$j(".appTraffic").remove();
-			$j(".trafficIcons").removeClass("clicked");
-			$j(".userIcons").removeClass("clicked");
-			$j("#" + rogClientList[i].replace(/:/g, "") + "_Icon").addClass("clicked");
+			$(".appTraffic").remove();
+			$(".trafficIcons").removeClass("clicked");
+			$(".userIcons").removeClass("clicked");
+			$("#" + rogClientList[i].replace(/:/g, "") + "_Icon").addClass("clicked");
 		}
 
 		updateBarPercent(rogClientList[i]);
@@ -231,7 +230,7 @@ var ajaxQuery = function(){
 }
 
 function updateClientInfo(target, mac){
-	ajaxQueries[mac].query = $j.ajax({ 
+	ajaxQueries[mac].query = $.ajax({ 
 		url: target, 
 		dataType: 'json',
 		timeout: 2000,
@@ -333,7 +332,7 @@ function calOverallTraffic(){
 		}
 
 		rotate = "rotate(" + angle.toFixed(1) + "deg)";
-		$j('#indicator_' + narrow).css({
+		$('#indicator_' + narrow).css({
 			"-webkit-transform": rotate,
 			"-moz-transform": rotate,
 			"-o-transform": rotate,

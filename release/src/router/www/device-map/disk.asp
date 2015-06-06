@@ -31,7 +31,7 @@ a:active {
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
-var $j = jQuery.noConflict();
+
 var diskOrder = parent.getSelectedDiskOrder();
 
 <% get_AiDisk_status(); %>
@@ -39,22 +39,22 @@ var diskOrder = parent.getSelectedDiskOrder();
 var apps_array = <% apps_info("asus"); %>;
 
 function initial(){
-	$("t0").className = "tabclick_NW";
-	$("t1").className = "tab_NW";
+	document.getElementById("t0").className = "tabclick_NW";
+	document.getElementById("t1").className = "tab_NW";
 	flash_button();
 
 	if(!parent.media_support)
-		$("mediaserver_hyperlink").style.display = "none";
+		document.getElementById("mediaserver_hyperlink").style.display = "none";
 	
 	// Hide disk utility temporarily.
 	if(parent.diskUtility_support){
-		$("diskTab").style.display = "";
+		document.getElementById("diskTab").style.display = "";
 	}
 
 	showDiskUsage(parent.usbPorts[diskOrder-1]);
 
 	if(sw_mode == "2" || sw_mode == "3" || sw_mode == "4")
-		$("aidisk_hyperlink").style.display = "none";
+		document.getElementById("aidisk_hyperlink").style.display = "none";
 	
 	if(based_modelid == "RT-AC87U" && parent.currentUsbPort == 0){
 		document.getElementById('reduce_usb3_table').style.display = "";
@@ -66,20 +66,20 @@ function showDiskUsage(device){
 	document.getElementById("disk_model_name").innerHTML = device.deviceName;
 
 	if(device.mountNumber > 0){
-		showtext($("disk_total_size"), simpleNum(device.totalSize) + " GB");		
-		showtext($("disk_avail_size"), simpleNum(device.totalSize - device.totalUsed) +" GB");
-		$("mounted_item1").style.display = "";		
-		$("unmounted_refresh").style.display = "none";
+		showtext(document.getElementById("disk_total_size"), simpleNum(device.totalSize) + " GB");		
+		showtext(document.getElementById("disk_avail_size"), simpleNum(device.totalSize - device.totalUsed) +" GB");
+		document.getElementById("mounted_item1").style.display = "";		
+		document.getElementById("unmounted_refresh").style.display = "none";
 	}
 	else{
-		$("mounted_item1").style.display = "none";
-		$("unmounted_refresh").style.display = "";
+		document.getElementById("mounted_item1").style.display = "none";
+		document.getElementById("unmounted_refresh").style.display = "";
 	}
 
 	for(var i = 0; i < apps_array.length; i++){
 		if(apps_array[i][0] == "downloadmaster" && apps_array[i][4] == "yes" && apps_array[i][3] == "yes"){
 			if(device.hasAppDev){
-				$("dmLink").style.display = "";
+				document.getElementById("dmLink").style.display = "";
 			}
 			break;
 		}
@@ -222,7 +222,7 @@ function remove_disk(){
 			<div align="center" class="left" style="width:120px; float:left; cursor:pointer;margin-top:-7px;" id="reduce_usb3_enable"></div>
 			<script type="text/javascript">
 				var flag = document.form.usb_usb3.value == 1 ?  0: 1;
-				$j('#reduce_usb3_enable').iphoneSwitch( flag,
+				$('#reduce_usb3_enable').iphoneSwitch( flag,
 					function(){		//ON:0
 						document.form.usb_usb3.value = 0;
 						document.form.submit();

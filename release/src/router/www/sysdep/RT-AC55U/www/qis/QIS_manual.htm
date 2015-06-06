@@ -12,7 +12,7 @@
 <script type="text/JavaScript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/JavaScript">
-var $j = jQuery.noConflict();
+
 
 function QKInternet_load_body(){
 	if(parent.ISMOBILE){
@@ -24,27 +24,27 @@ function QKInternet_load_body(){
 	else{
 		parent.set_step("t2");
 		setScenerion(parent.sw_mode);
-		//mask repeater
-		//if(!repeater_support)
-			$("repeaterMode").style.display = "none";
+
+		if(!repeater_support)
+			document.getElementById("repeaterMode").style.display = "none";
 
 		if(!psta_support)
-			$("MBMode").style.display = "none";
+			document.getElementById("MBMode").style.display = "none";
 		
 		if(parent.hwmodeSwitch_support){
-			$("routerMode").style.display = "none";
-			$("repeaterMode").style.display = "none";
-			$("APMode").style.display = "none";
-			$("MBMode").style.display = "none";
+			document.getElementById("routerMode").style.display = "none";
+			document.getElementById("repeaterMode").style.display = "none";
+			document.getElementById("APMode").style.display = "none";
+			document.getElementById("MBMode").style.display = "none";
 
 			if(parent.sw_mode == 2)
-				$("repeaterMode").style.display = "";
+				document.getElementById("repeaterMode").style.display = "";
 			else if(parent.sw_mode == 3)
-				$("APMode").style.display = "";
+				document.getElementById("APMode").style.display = "";
 			else if(parent.sw_mode == 4)
-				$("MBMode").style.display = "";
+				document.getElementById("MBMode").style.display = "";
 			else
-				$("routerMode").style.display = "";
+				document.getElementById("routerMode").style.display = "";
 		}
 
 		document.getElementById("nextButton").focus();	
@@ -58,17 +58,17 @@ function setScenerion(mode){
 		
 		parent.document.QKform.sw_mode.value = 2;
 		parent.localAP_support = true;
-		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
-		$j("#Senario").attr("style", "height:");
-		$j("#mode_desc").html(pstaDesc);	
+		$("#Senario").attr("src", "/images/New_ui/re.jpg");
+		$("#Senario").attr("style", "height:");
+		$("#mode_desc").html(pstaDesc);	
 		document.form.sw_mode_radio[1].focus();
 		document.form.sw_mode_radio[1].checked = true;
 	}
 	else if(mode == '3'){
 		parent.document.QKform.sw_mode.value = 3;
-		$j("#Senario").attr("src", "/images/New_ui/ap.jpg");
-		$j("#Senario").attr("style", "height:");
-		$j("#mode_desc").html("<#OP_AP_desc#><br><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");		
+		$("#Senario").attr("src", "/images/New_ui/ap.jpg");
+		$("#Senario").attr("style", "height:");
+		$("#mode_desc").html("<#OP_AP_desc#><br><span style=\"color:#FC0\"><#deviceDiscorvy3#></span>");		
 		document.form.sw_mode_radio[2].focus();
 		document.form.sw_mode_radio[2].checked = true;
 	}
@@ -84,17 +84,17 @@ function setScenerion(mode){
 
 		parent.document.QKform.sw_mode.value = 4;
 		parent.localAP_support = false;		
-		$j("#Senario").attr("src", "/images/New_ui/mb.jpg");
-		$j("#Senario").attr("style", "height:170px");
-		$j("#mode_desc").html(pstaDesc);
+		$("#Senario").attr("src", "/images/New_ui/mb.jpg");
+		$("#Senario").attr("style", "height:170px");
+		$("#mode_desc").html(pstaDesc);
 		document.form.sw_mode_radio[3].focus();
 		document.form.sw_mode_radio[3].checked = true;
 	}
 	else{
 		parent.document.QKform.sw_mode.value = 1;
-		$j("#Senario").attr("src", "/images/New_ui/rt.jpg");
-		$j("#Senario").attr("style", "height:");
-		$j("#mode_desc").html("<#OP_GW_desc#>");
+		$("#Senario").attr("src", "/images/New_ui/rt.jpg");
+		$("#Senario").attr("style", "height:");
+		$("#mode_desc").html("<#OP_GW_desc#>");
 		document.form.sw_mode_radio[0].focus();
 		document.form.sw_mode_radio[0].checked = true;
 	}

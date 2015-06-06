@@ -68,7 +68,7 @@ SYSTEM		?= $(LINUXDIR)/vmlinux
 OBJS-mips = boot.o sisdram.o sbsdram.o aisdram.o sflash.o hndmips.o sbutils.o aiutils.o siutils.o nicpci.o
 # We should not compile sbutils.o but need add more compile directive in siutils.c
 OBJS-arm = bootarm.o  aisdram_ca9.o siutils.o hndarm_ca9.o pcieinit_ca9.o sbutils.o aiutils.o nicpci.o 
-ifeq ($(or $(RTCONFIG_BUILDBCM7),$(RTCONFIG_BCM7),$(RTCONFIG_BCM794),$(RTCONFIG_BCM10)),y)
+ifeq ($(or $(RTCONFIG_BUILDBCM7),$(RTCONFIG_BCM7),$(RTCONFIG_BCM_794),$(RTCONFIG_BCM_7114),$(RTCONFIG_BCM10)),y)
 OBJS-arm += pcie_core.o
 endif
 OBJECTS := $(OBJS-$(ARCH))

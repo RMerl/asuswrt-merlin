@@ -197,6 +197,12 @@ void init_switch()
 #endif	
 }
 
+char *get_lan_hwaddr(void)
+{
+	/* TODO: handle exceptional model */
+        return nvram_safe_get("et0macaddr");
+}
+
 /**
  * Setup a VLAN.
  * @vid:	VLAN ID
@@ -536,7 +542,7 @@ void config_switch()
 			eval("rtkswitch", "8", "100");
 	}
 #if defined(RTCONFIG_WIRELESSREPEATER) && defined(RTCONFIG_PROXYSTA)
-	else if (is_mediabridge_mode())
+	else if (mediabridge_mode())
 	{
 	}
 #endif
@@ -905,6 +911,8 @@ void init_syspara(void)
 			nvram_set("wl1_country_code", "TW");
 		else if (strcmp(dst, "5G_BAND4") == 0)
 			nvram_set("wl1_country_code", "CN");
+		else if (strcmp(dst, "5G_BAND124") == 0)
+			nvram_set("wl1_country_code", "IN");
 		else
 			nvram_set("wl1_country_code", "DB");
 	}

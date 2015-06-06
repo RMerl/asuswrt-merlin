@@ -24,8 +24,6 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 
-var $j = jQuery.noConflict();
-var jData;
 <% login_state_hook(); %>
 
 var dnsfilter_rule_list = '<% nvram_get("dnsfilter_rulelist"); %>'.replace(/&#60/g, "<");
@@ -37,9 +35,9 @@ function initial(){
 	show_footer();
 
 	if(!ParentalCtrl2_support){		
-		$('FormTitle').style.webkitBorderRadius = "3px";
-		$('FormTitle').style.MozBorderRadius = "3px";
-		$('FormTitle').style.BorderRadius = "3px";	
+		document.getElementById('FormTitle').style.webkitBorderRadius = "3px";
+		document.getElementById('FormTitle').style.MozBorderRadius = "3px";
+		document.getElementById('FormTitle').style.BorderRadius = "3px";	
 	}
 	
 	gen_mainTable();	
@@ -78,13 +76,13 @@ function showLANIPList(){
 		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';
 	}
 
-	$("ClientList_Block_PC").innerHTML = htmlCode;
+	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function pullLANIPList(obj){
 	if(isMenuopen == 0){
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';
+		document.getElementById("ClientList_Block_PC").style.display = 'block';
 		document.form.rule_devname.focus();
 		isMenuopen = 1;
 	}
@@ -96,8 +94,8 @@ var over_var = 0;
 var isMenuopen = 0;
 
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 	//valid_IP_form(document.form.rule_devname, 0);
 }
@@ -158,9 +156,9 @@ function gen_mainTable(){
 
 	code +='</tr></table>';
 
-	$("mainTable").style.display = "";
-	$("mainTable").innerHTML = code;
-	$j("#mainTable").fadeIn();
+	document.getElementById("mainTable").style.display = "";
+	document.getElementById("mainTable").innerHTML = code;
+	$("#mainTable").fadeIn();
 	showLANIPList();
 }
 
@@ -183,26 +181,26 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
+		document.getElementById("check_mac").style.display = "";
 		return false;
 	}else if(flag == 2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").style.display = "";
 		return false;
 	}else{
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}
 }
 
 function addRow_main(upper){
-	var rule_num = $('mainTable_table').rows.length;
-	var item_num = $('mainTable_table').rows[0].cells.length;
+	var rule_num = document.getElementById('mainTable_table').rows.length;
+	var item_num = document.getElementById('mainTable_table').rows[0].cells.length;
 
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
@@ -242,17 +240,17 @@ function addRow_main(upper){
 
 function deleteRow_main(r){
 	var j=r.parentNode.parentNode.rowIndex;
-	$(r.parentNode.parentNode.parentNode.parentNode.id).deleteRow(j);
+	document.getElementById(r.parentNode.parentNode.parentNode.parentNode.id).deleteRow(j);
 
 	var dnsfilter_devname = "";
 	var dnsfilter_mac = "";
 	var dnsfilter_mode = "";
 	var dnsfilter_rulelist_tmp = "";
 
-	for(i=3; i<$('mainTable_table').rows.length; i++){
-		dnsfilter_devname = $('mainTable_table').rows[i].cells[0].title;
-		dnsfilter_mac = $('mainTable_table').rows[i].cells[1].title;
-		dnsfilter_mode = $('mainTable_table').rows[i].cells[2].childNodes[0].value;
+	for(i=3; i<document.getElementById('mainTable_table').rows.length; i++){
+		dnsfilter_devname = document.getElementById('mainTable_table').rows[i].cells[0].title;
+		dnsfilter_mac = document.getElementById('mainTable_table').rows[i].cells[1].title;
+		dnsfilter_mode = document.getElementById('mainTable_table').rows[i].cells[2].childNodes[0].value;
 
 		dnsfilter_rulelist_tmp += "<";
 		dnsfilter_rulelist_tmp += dnsfilter_devname + "&#62";
@@ -272,10 +270,10 @@ function changeRow_main(r){
 	var dnsfilter_mode = "";
 	var dnsfilter_rulelist_tmp = "";
 
-	for(i=3; i<$('mainTable_table').rows.length; i++){
-		dnsfilter_devname = $('mainTable_table').rows[i].cells[0].title;
-		dnsfilter_mac = $('mainTable_table').rows[i].cells[1].title;
-		dnsfilter_mode = $('mainTable_table').rows[i].cells[2].childNodes[0].value;
+	for(i=3; i<document.getElementById('mainTable_table').rows.length; i++){
+		dnsfilter_devname = document.getElementById('mainTable_table').rows[i].cells[0].title;
+		dnsfilter_mac = document.getElementById('mainTable_table').rows[i].cells[1].title;
+		dnsfilter_mode = document.getElementById('mainTable_table').rows[i].cells[2].childNodes[0].value;
 
 		dnsfilter_rulelist_tmp += "<";
 		dnsfilter_rulelist_tmp += dnsfilter_devname + "&#62";
@@ -368,7 +366,7 @@ function changeRow_main(r){
 						<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_dnsfilter_enable"></div>
 						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 							<script type="text/javascript">
-								$j('#radio_dnsfilter_enable').iphoneSwitch(document.form.dnsfilter_enable_x.value,
+								$('#radio_dnsfilter_enable').iphoneSwitch(document.form.dnsfilter_enable_x.value,
 									function(){
 										document.form.dnsfilter_enable_x.value = 1;
 										showhide("dnsfilter_mode",1);

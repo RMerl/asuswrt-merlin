@@ -53,6 +53,10 @@
 #include <net/gre.h>
 #endif
 
+#ifdef CTF_PPTP
+#include <ctf/hndctf.h>
+#endif
+
 #define PPTP_DRIVER_VERSION "0.8.5"
 
 #ifdef DEBUG
@@ -339,6 +343,10 @@ static int add_chan(struct pppox_sock *sock)
 	set_bit(sock->proto.pptp.src_addr.call_id,callid_bitmap);
 	res=0;
 
+#if defined(CTFPOOL) && defined(CTF_PPTP) && /* disable */ 0
+	osl_ctfpool_direction(1);
+#endif
+
 exit:	
 	#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,0)
 	spin_unlock(&chan_lock);
@@ -357,6 +365,11 @@ static void del_chan(struct pppox_sock *sock)
 	write_lock_bh(&chan_lock);
 #endif
 	clear_bit(sock->proto.pptp.src_addr.call_id,callid_bitmap);
+
+#if defined(CTFPOOL) && defined(CTF_PPTP) && /* disable */ 0
+	osl_ctfpool_direction(0);
+#endif
+
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,0)
 	rcu_assign_pointer(callid_sock[sock->proto.pptp.src_addr.call_id],NULL);
 	spin_unlock(&chan_lock);
@@ -1163,7 +1176,6 @@ static int __init pptp_init_module(void)
 {
 	int err=0;
 	printk(KERN_INFO "PPTP driver version " PPTP_DRIVER_VERSION "\n");
-printk("=== PPTP init ===\n");
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,0)
 	callid_sock = __vmalloc((MAX_CALLID + 1) * sizeof(void *),
 	                        GFP_KERNEL | __GFP_ZERO, PAGE_KERNEL);

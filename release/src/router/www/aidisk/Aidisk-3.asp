@@ -19,7 +19,7 @@ var ddns_hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
 var ddns_old_name = '<% nvram_get("ddns_old_name"); %>';
 var ddns_return_code = '<% nvram_get_ddns("LANHostConfig", "ddns_return_code"); %>';
 var ddns_hostname_title;
-var $j = jQuery.noConflict();
+
 
 function initial(){
 	parent.hideLoading();
@@ -58,13 +58,13 @@ function switch_ddns(){
 function show_TOS_checkbox(){
 	if(document.form.check_asus_ddns[0].checked){
 		document.form.asusddns_tos_agreement.value = "1";
-		$("ddnsname_input").style.display = "block";
-		$("DDNSName").focus();
-		$("DDNSName").select();
+		document.getElementById("ddnsname_input").style.display = "block";
+		document.getElementById("DDNSName").focus();
+		document.getElementById("DDNSName").select();
 	}
 	else{
 		document.form.asusddns_tos_agreement.value = "0";		
-		$("ddnsname_input").style.display = "none";	
+		document.getElementById("ddnsname_input").style.display = "none";	
 	}
 
 	if(this.ddns_server_x == "WWW.ASUS.COM")
@@ -72,13 +72,13 @@ function show_TOS_checkbox(){
 	}
 
 function show_alert_block(alert_str){
-	$("alert_block").style.display = "block";
+	document.getElementById("alert_block").style.display = "block";
 	
-	showtext($("alert_str"), alert_str);
+	showtext(document.getElementById("alert_str"), alert_str);
 }
 
 function hide_alert_block(){
-	$("alert_block").style.display = "none";
+	document.getElementById("alert_block").style.display = "none";
 }
 
 function check_return_code(){
@@ -99,7 +99,7 @@ function check_return_code(){
 
 function verify_ddns_name(){
 	
-	if(!validate_ddns_hostname($("DDNSName"))){
+	if(!validate_ddns_hostname(document.getElementById("DDNSName"))){
 		document.form.DDNSName.focus();
 		document.form.DDNSName.select();
 		return false;		
@@ -108,7 +108,7 @@ function verify_ddns_name(){
 		document.getElementById("loadingIcon").style.display = "";
 		
 		document.form.current_page.value = "/aidisk/Aidisk-3.asp";
-		document.form.ddns_hostname_x.value = $("DDNSName").value+".asuscomm.com";
+		document.form.ddns_hostname_x.value = document.getElementById("DDNSName").value+".asuscomm.com";
 		
 		document.form.flag.value = "nodetect";
 		FormActions("", "apply", "aidisk_asusddns_register", "1");
@@ -189,7 +189,7 @@ function hideLoading(flag){
 }
 
 function checkDDNSReturnCode(){
-    $j.ajax({
+    $.ajax({
     	url: '/ajax_ddnscode.asp',
     	dataType: 'script', 
         
@@ -270,7 +270,7 @@ function cleandef(){
 				</p>			
 				<br/>
 						<div id="ddnsname_input" class="aidiskdesc" style="display:none;">
-							<input type="text" name="DDNSName" id="DDNSName" class="input_25_table" onClick="cleandef()">.asuscomm.com
+							<input type="text" name="DDNSName" id="DDNSName" class="input_25_table" onClick="cleandef()" autocorrect="off" autocapitalize="off">.asuscomm.com
 							<div id="alert_block" style="color:#FFCC00; margin-left:5px; font-size:11px;display:none;">
 								<span id="alert_str"></span>
 							</div>

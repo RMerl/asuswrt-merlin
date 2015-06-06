@@ -33,7 +33,6 @@ ifeq ($(RTCONFIG_BCMARM),y)
 export CFLAGS += -DMFP
 export CFLAGS += -D__CONFIG_MFP__
 export CLFAGS += -DWLWNM
-export MFP_TEST=1
 endif
 endif
 export CFLAGS += $(EXTRACFLAGS)
@@ -67,6 +66,11 @@ export BCMSRC=src-rt-7.14.94.x/src
 export OLD_SRC=$(SRCBASE)/../../src
 export  BUILD_MFG := 0
 export  EX7 := _794
+else ifeq ($(RTCONFIG_BCM_7114),y)
+export BCMSRC=src-rt-7.14.114.x/src
+export OLD_SRC=$(SRCBASE)/../../src
+export  BUILD_MFG := 0
+export  EX7 := _7114
 else ifeq ($(RTCONFIG_BCM10),y)
 export BCMSRC=src-rt-10.10.22.x/src
 export OLD_SRC=$(SRCBASE)/../../src
@@ -126,10 +130,14 @@ export KDIR KERNEL_HEADER_DIR
 ifeq ($(RTCONFIG_DHDAP),y)
 export CONFIG_DHDAP=y
 export CFLAGS += -D__CONFIG_DHDAP__
+ifeq ($(RTCONFIG_BCM_7114),y)
+export SRCBASE_DHD := $(SRCBASE)/../dhd/src
+export SRCBASE_SYS := $(SRCBASE_DHD)
+include Makefile.fw
+else	# 7114
 export DHDAP_USE_SEPARATE_CHECKOUTS := 1
 export SRCBASE_DHD := $(SRCBASE)/../../dhd/src
 export SRCBASE_FW  := $(SRCBASE)/../../43602/src
-
 PCIEFD_TARGETS_LIST	:= 43602a1-roml
 ifeq ($(WLTEST),1)
 PCIEFD_TARGET_NAME	:= pcie-ag-splitrx-fdap-mbss-mfgtest-seqcmds-phydbg-txbf-pktctx-amsdutx-ampduretry-chkd2hdma
@@ -141,6 +149,7 @@ PCIEFD_EMBED_HEADER_TEMPLATE := $(SRCBASE_DHD)/shared/rtecdc_router.h.in
 PCIEFD_EMBED_HEADER	:= $(SRCBASE_DHD)/shared/rtecdc_router.h
 obj-pciefd		:= $(patsubst %,%-obj,$(PCIEFD_TARGETS_LIST))
 install-pciefd		:= $(patsubst %,%-install,$(PCIEFD_TARGETS_LIST))
+endif	#  7114
 endif
 
 ifeq ($(RTCONFIG_GMAC3),y)
@@ -201,8 +210,8 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
-obj-$(RTCONFIG_DHDAP) += pciefd dhd
-obj-$(RTCONFIG_DHDAP) += dhd
+obj-$(RTCONFIG_DHDAP) += dhd pciefd
+obj-$(RTCONFIG_BCM_7114) += dhd_monitor
 obj-y += busybox
 obj-y += shared
 obj-y += nvram$(BCMEX)
@@ -312,13 +321,14 @@ else
 #obj-y += et
 obj-y += utils$(BCMEX)$(EX7)
 obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(DPI)$(EX7)
-obj-$(RTCONFIG_EMF) += igs
+obj-$(RTCONFIG_EMF) += igs$(BCMEX)$(DPI)$(EX7)
 ifneq ($(RTCONFIG_BCM_794),y)	# do not build wl/dhd since not ready
 obj-y += wlconf$(BCMEX)$(EX7)
 obj-y += nas$(BCMEX)$(EX7)
 obj-$(RTCONFIG_HSPOT) += hspot_ap$(BCMEX)$(EX7)
 obj-y += eapd$(BCMEX)$(EX7)/linux
 obj-$(RTCONFIG_WPS) += wps$(BCMEX)$(EX7)
+obj-$(RTCONFIG_WLEXE) += wlexe
 endif
 obj-$(CONFIG_LIBBCM) += libbcm
 obj-$(CONFIG_LIBUPNP) += libupnp$(BCMEX)$(EX7)
@@ -350,10 +360,12 @@ obj-$(RTCONFIG_USB_MODEM) += comgt-0.32
 obj-$(RTCONFIG_USB_MODEM) += uqmi
 
 ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
-ifeq ($(or $(RTN65U),$(RTAC55U),$(RTAC55UHP)),y)
+ifeq ($(or $(RTN65U),$(RTAC55U),$(RTAC55UHP),$(RTN56UB1)),y)
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch-1.2.3
 else
+ifneq ($(RT4GAC55U),y)
 obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.2.0
+endif
 endif
 else
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch
@@ -544,9 +556,9 @@ else
 obj-y += lltd
 endif
 ifeq ($(RTCONFIG_BCMWL6),y)
-ifneq ($(RTCONFIG_BCM10),y)
+#ifneq ($(RTCONFIG_BCM10),y)
 obj-y += acsd$(BCMEX)$(EX7)
-endif
+#endif
 endif
 else
 obj-y += lldt
@@ -628,6 +640,8 @@ obj-$(RTCONFIG_TR069) += openssl
 obj-$(RTCONFIG_TR069) += tr069
 
 obj-$(RTCONFIG_CLOUDCHECK) += cloudcheck
+
+obj-$(RTCONFIG_GETREALIP) += ministun
 
 
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
@@ -1087,11 +1101,28 @@ endif
 	install -D curl-7.21.7/src/.libs/curl $(TARGETDIR)/usr/sbin/curl
 	$(STRIP) $(TARGETDIR)/usr/sbin/curl
 #endif
+
 ifeq ($(RTCONFIG_BWDPI),y)
 ifeq ($(RTCONFIG_BCM7),y)
 	cp $(TOP)/bwdpi_bin/bwdpi_bcm7/* $(TOP)/bwdpi_bin/
 else
-	cp $(TOP)/bwdpi_bin/bwdpi_bcm6/* $(TOP)/bwdpi_bin/
+ifeq ($(RTCONFIG_BCMSMP),y)
+ifeq ($(RTCONFIG_CTF_PPTP_L2TP),y)
+	# SMP with PPTP_L2TP
+	cp $(TOP)/bwdpi_bin/bwdpi_bcm6_smp_pptp/* $(TOP)/bwdpi_bin/
+else
+	# SMP without PPTP_L2TP
+	cp $(TOP)/bwdpi_bin/bwdpi_bcm6_smp/* $(TOP)/bwdpi_bin/
+endif
+else
+ifeq ($(RTCONFIG_CTF_PPTP_L2TP),y)
+	# UP with PPTP_L2TP
+	cp $(TOP)/bwdpi_bin/bwdpi_bcm6_up_pptp/* $(TOP)/bwdpi_bin/
+else
+	# UP without PPTP_L2TP
+	cp $(TOP)/bwdpi_bin/bwdpi_bcm6_up/* $(TOP)/bwdpi_bin/
+endif
+endif
 endif
 	install -d $(TARGETDIR)/usr/bwdpi/
 	cp -f bwdpi_bin/*.so $(TARGETDIR)/usr/lib/
@@ -1185,12 +1216,22 @@ ifeq ($(RTCONFIG_BCMARM),y)
 	$(MAKE) compressed-clean
 endif
 ifeq ($(RTCONFIG_DHDAP),y)
+ifeq ($(RTCONFIG_BCM7),y)
 ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
 ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2011.09),)
 	# build 43602 src and to match its path
 	sudo mkdir /projects/hnd/tools/linux -p
 	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2011.09
 	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2011.09 /projects/hnd/tools/linux/hndtools-armeabi-2011.09
+endif
+endif
+else ifeq ($(RTCONFIG_BCM_7114),y)
+ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2013.11),)
+	# build pciefd
+	sudo mkdir /projects/hnd/tools/linux/bin -p
+	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2013.11
+	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2013.11 /projects/hnd/tools/linux/hndtools-armeabi-2013.11
+	sudo ln -sf $(SRCBASE)/toolchains/fwtag.ini /projects/hnd/tools/linux/bin/fwtag.ini
 endif
 endif
 endif
@@ -1450,6 +1491,7 @@ dmalloc-clean:
 	[ ! -f dmalloc/Makefile ] || $(MAKE) -C dmalloc clean
 	-rm -f dmalloc/{conf.h,dmalloc.h,dmalloc.h.2,settings.h,Makefile}
 
+ifeq ($(RTCONFIG_BCM7),y)
 $(obj-pciefd) :
 # Build PCIEFD firmware only if it is not prebuilt
 ifeq ($(RTCONFIG_DHDAP),y)
@@ -1492,6 +1534,7 @@ endif
 pciefd-install :
 	# Nothing to be done here
 	@true
+endif	# BCM7
 
 ifeq ($(RTCONFIG_DHDAP),y)
 dhd:
@@ -1514,6 +1557,24 @@ ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
 	$(STRIP) $(INSTALLDIR)/dhd/usr/sbin/dhd
 endif
 endif
+
+.PHONY: dhd_monitor
+
+dhd_monitor: shared nvram$(BCMEX)
+ifeq ($(RTCONFIG_DHDAP),y)
+	+$(MAKE) LINUXDIR=$(LINUXDIR) EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) -C dhd_monitor dhd_monitor
+endif
+
+dhd_monitor-install: dhd_monitor
+ifeq ($(RTCONFIG_DHDAP),y)
+	+$(MAKE) -C dhd_monitor INSTALLDIR=$(INSTALLDIR)/dhd_monitor install
+endif
+
+dhd_monitor-clean:
+ifeq ($(RTCONFIG_DHDAP),y)
+	+$(MAKE) -C dhd_monitor clean
+endif
+
 
 dnsmasq:
 	@$(SEP)
@@ -2858,6 +2919,44 @@ else
 	@true
 endif
 
+.PHONY: wlexe
+wlexe:
+ifeq ($(RTCONFIG_WLEXE),y)
+ifneq ($(wildcard $(SRCBASE_SYS)/wl/exe/GNUmakefile),)
+ifeq ($(ARCH),arm)
+	$(MAKE) TARGETARCH=arm_le ARCH_SFX="" TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_SYS)/wl/exe
+else
+	$(MAKE) TARGETARCH=mips ARCH_SFX="" TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_SYS)/wl/exe
+endif
+	[ -d wlexe ] || install -d wlexe
+	install $(SRCBASE_SYS)/wl/exe/wl wlexe
+ifeq ($(ARCH),arm)
+	install $(SRCBASE_SYS)/wl/exe/socket_noasd/arm_le/wl_server_socket wlexe
+else
+	install $(SRCBASE_SYS)/wl/exe/socket_noasd/mips/wl_server_socket wlexe
+endif
+endif
+endif
+
+.PHONY: wlexe-clean
+wlexe-clean:
+ifneq ($(wildcard $(SRCBASE_SYS)/wl/exe/GNUmakefile),)
+	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_SYS)/wl/exe clean
+	$(RM) wlexe/wl	
+	$(RM) wlexe/wl_server_socket
+endif
+
+.PHONY: wlexe-install
+wlexe-install:
+ifeq ($(RTCONFIG_WLEXE),y)
+ifneq ($(wildcard $(SRCBASE_SYS)/wl/exe/GNUmakefile),)
+	[ ! -d wlexe ] || install -D -m 755 wlexe/wl $(INSTALLDIR)/wlexe/usr/sbin/wl
+	[ ! -d wlexe ] || install -D -m 755 wlexe/wl_server_socket $(INSTALLDIR)/wlexe/usr/sbin/wl_server_socket
+	[ ! -d wlexe ] || $(STRIP) $(INSTALLDIR)/wlexe/usr/sbin/wl
+	[ ! -d wlexe ] || $(STRIP) $(INSTALLDIR)/wlexe/usr/sbin/wl_server_socket
+endif
+endif
+
 udev:
 	$(MAKE) -C $@ CROSS_COMPILE=$(CROSS_COMPILE) EXTRACFLAGS="$(EXTRACFLAGS)" \
 		PROGRAMS=udevtrigger
@@ -2886,16 +2985,16 @@ endif
 emf$(BCMEX)$(DPI)$(EX7)-clean:
 	-@$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/emfconf clean
 
-igs:
+igs$(BCMEX)$(DPI)$(EX7):
 	$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/igsconf CROSS=$(CROSS_COMPILE)
 
-igs-install:
+igs$(BCMEX)$(DPI)$(EX7)-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
-	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+	$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
-igs-clean:
+igs$(BCMEX)$(DPI)$(EX7)-clean:
 	-@$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf clean
 
 ebtables: kernel_header dummy
@@ -3396,7 +3495,7 @@ inotify-clean:
 	-@$(MAKE) -C inotify clean
 
 wl$(BCMEX)$(EX7):
-	-@$(MAKE) -C wl_arm
+	-@$(MAKE) -C wl$(BCMEX)$(EX7)
 
 wl$(BCMEX)$(EX7)-install:
 	@$(SEP)
@@ -3741,7 +3840,7 @@ bwdpi_sqlite-clean:
 
 bwdpi_sqlite-install: bwdpi_sqlite
 
-traffic_control:
+traffic_control: sqlite
 	cd traffic_control && CC=$(CC) && $(MAKE)
 
 traffic_control-clean:
@@ -3770,7 +3869,7 @@ email-3.1.3/stamp-h1: openssl
 	$(CONFIGURE) --with-ssl --sysconfdir=/etc \
 		CFLAGS=-I$(SRCBASE)/router/openssl/include \
 		LDFLAGS="-L$(SRCBASE)/router/openssl" \
-		LIBS="-lcrypto -lssl"
+		LIBS="-lcrypto -lssl $(if $(RTCONFIG_QCA), -ldl)"
 	touch $@
 
 email-3.1.3: email-3.1.3/stamp-h1

@@ -1,6 +1,13 @@
 #!/bin/sh
 # echo "This is a script to enable the modem."
+# $1: wan_unit.
 
+
+if [ "$1" == "1" ]; then
+	prefix="wan1_"
+else
+	prefix="wan0_"
+fi
 
 modem_enable=`nvram get modem_enable`
 modem_mode=`nvram get modem_mode`
@@ -21,10 +28,13 @@ modem_imsi=`nvram get usb_modem_act_imsi`
 modem_pin=`nvram get modem_pincode`
 modem_pdp=`nvram get modem_pdp`
 modem_isp=`nvram get modem_isp`
-modem_apn=`nvram get modem_apn`
 modem_spn=`nvram get modem_spn`
+modem_apn=`nvram get modem_apn`
 modem_user=`nvram get modem_user`
 modem_pass=`nvram get modem_pass`
+modem_apn_v6=`nvram get modem_apn_v6`
+modem_user_v6=`nvram get modem_user_v6`
+modem_pass_v6=`nvram get modem_pass_v6`
 
 at_lock="flock -x /tmp/at_cmd_lock"
 
@@ -303,6 +313,8 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 		if [ "$ret" != "1" ]; then
 			echo "Incorrect SIM card or can't input the correct PIN/PUK code."
+			nvram set ${prefix}state_t=4
+			nvram set ${prefix}sbstate_t=9
 			exit 3
 		fi
 	fi
@@ -313,6 +325,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	modem_status.sh imei
 	modem_status.sh iccid
 	modem_status.sh hwver
+	modem_status.sh swver
 
 	# Auto-APN
 	if [ "$modem_autoapn" != "" -a "$modem_autoapn" != "0" -a "$modem_auto_spn" == "" ]; then
@@ -354,8 +367,8 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		#modem_autoapn.sh set $modem_roaming_imsi
 
 		#modem_isp=`nvram get modem_isp`
-		#modem_apn=`nvram get modem_apn`
 		#modem_spn=`nvram get modem_spn`
+		#modem_apn=`nvram get modem_apn`
 		#modem_user=`nvram get modem_user`
 		#modem_pass=`nvram get modem_pass`
 	else
@@ -480,8 +493,8 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		gobi_pid=`pidof gobi`
 		if [ "$gobi_pid" != "" ]; then
 			# connect to GobiNet.
-			echo -n "1,$qcqmi," >> $cmd_pipe
-			sleep 1
+			echo -n "1,$qcqmi" >> $cmd_pipe
+			sleep 2
 
 			# WDS stop the data session
 			echo -n "4" >> $cmd_pipe
@@ -491,49 +504,65 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			echo -n "2" >> $cmd_pipe
 			sleep 1
 
-			killall gobi
-			sleep 1
+			#echo -n "99" >> $cmd_pipe
+			#sleep 1
 		fi
 
 		echo "Gobi($qcqmi): set the ISP profile."
-		gobi d &
-		sleep 1
+		if [ "$gobi_pid" == "" ]; then
+			gobi d &
+			sleep 1
+		fi
 
 		# connect to GobiNet.
-		echo -n "1,$qcqmi," >> $cmd_pipe
-		sleep 1
+		echo -n "1,$qcqmi" >> $cmd_pipe
+		sleep 2
 
 		# set the default profile to auto-connect.
-		echo -n "5,$modem_pdp,$modem_isp,$modem_apn,$modem_user,$modem_pass," >> $cmd_pipe
-		sleep 1
+		#echo -n "5,$modem_pdp,$modem_isp,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
+		#sleep 1
 
 		# WDS set the autoconnect & roaming
 		# autoconnect: 0, disable; 1, enable; 2, pause.
 		# roaming: 0, allow; 1, disable. Only be activated when autoconnect is enabled.
 		if [ "$modem_roaming" != "1" ]; then
-			echo -n "7,1,1," >> $cmd_pipe
+			echo "Disable roaming."
+			echo -n "7,0,1" >> $cmd_pipe
 		elif [ "$modem_roaming_mode" == "1" ]; then
 			echo "roaming manually..."
-			if [ -n "$modem_roaming_isp" ]; then
-				echo -n "7,1,0," >> $cmd_pipe
-			else
-				echo -n "7,0,0," >> $cmd_pipe
-			fi
+			echo -n "7,0,0" >> $cmd_pipe
 		else
 			echo "roaming automatically..."
-			echo -n "7,1,0," >> $cmd_pipe
+			echo -n "7,1,0" >> $cmd_pipe
 		fi
 		sleep 1
 
 		# WDS start the data session
-		#echo -n "3" >> $cmd_pipe
-		#sleep 3
+		if [ "$modem_pdp" -eq "1" ]; then
+			# PPP
+			echo -n "11,8,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
+			sleep 3
+		elif [ "$modem_pdp" -eq "2" ]; then
+			# IPv6
+			echo -n "11,6,$modem_apn_v6,$modem_user_v6,$modem_pass_v6" >> $cmd_pipe
+			sleep 3
+		elif [ "$modem_pdp" -eq "3" ]; then
+			# IPv4v6
+			echo -n "11,4,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
+			sleep 3
+			echo -n "11,6,$modem_apn_v6,$modem_user_v6,$modem_pass_v6" >> $cmd_pipe
+			sleep 3
+		else
+			# IPv4
+			echo -n "11,4,$modem_apn,$modem_user,$modem_pass" >> $cmd_pipe
+			sleep 3
+		fi
 
-		echo -n "2" >> $cmd_pipe
-		sleep 1
+		#echo -n "2" >> $cmd_pipe
+		#sleep 1
 
-		killall gobi
-		sleep 1
+		#echo -n "99" >> $cmd_pipe
+		#sleep 1
 
 		modem_status.sh rate
 		modem_status.sh band
@@ -593,5 +622,61 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			echo "CGATT: Don't support +CGATT."
 		fi
 	fi
+
+	# the tail of start_wan_if().
+	stop_conn_3g=`nvram get stop_conn_3g`
+	#if [ "$modem_type" == "tty" -o "$modem_type" == "mbim" ]; then
+	#	write_3g_ppp_conf
+	#	if [ "$?" == "0" ] || [ ! -f "/tmp/ppp/peers/3g" ]; then
+	#		echo "modem_enable: Can't write PPP conf!"
+	#		exit -1
+	#	fi
+
+	#	nvram set ${prefix}proto="pppoe"
+	#	nvram set ${prefix}vpndhcp=0
+	#	nvram set ${prefix}dhcpenable_x=1
+	#	nvram set ${prefix}dnsenable_x=1
+
+	#	if [ "$stop_conn_3g" == "1" ]; then
+	#		echo "modem_enable: stop_conn_3g was set."
+	#		exit 0
+	#	fi
+
+	#	pppd call 3g nochecktime
+	#elif [ "$modem_type" == "gobi" ]; then
+	if [ "$modem_type" == "gobi" ]; then
+		err_pin=`nvram get g3err_pin`
+		if [ "$err_pin" == "1" ]; then
+			echo "modem_enable: PIN error!"
+			nvram set ${prefix}state_t=4
+			nvram set ${prefix}sbstate_t=9
+			exit -1
+		fi
+
+		wan_ifname=`nvram get ${prefix}ifname`
+		if [ -z "$wan_ifname" ]; then
+			echo "modem_enable: Can't get the wan_ifname!"
+			exit -1
+		fi
+
+		ifconfig $wan_ifname up 2>/dev/null
+		if [ "$?" != "0" ]; then
+			echo "modem_enable: Interface $wan_ifname couldn't be up!"
+			exit -1
+		fi
+
+		nvram set ${prefix}proto="dhcp"
+		nvram set ${prefix}dhcpenable_x=1
+		nvram set ${prefix}dnsenable_x=1
+
+		if [ "$stop_conn_3g" == "1" ]; then
+			echo "modem_enable: stop_conn_3g was set."
+			exit 0
+		fi
+
+		start_udhcpc $wan_ifname $1
+	fi
+
+	echo "modem_enable: done."
 fi
 

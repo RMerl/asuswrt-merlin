@@ -477,7 +477,7 @@ wl_defaults(void)
 				nvram_set(strcat_r(prefix, "wfi_enable", tmp), "0");
 				nvram_set(strcat_r(prefix, "wfi_pinmode", tmp), "0");
 #endif
-				nvram_set(strcat_r(prefix, "wme", tmp), "on");
+				nvram_set(strcat_r(prefix, "wme", tmp), "auto");
 #ifdef RTCONFIG_RALINK
 #elif defined(RTCONFIG_QCA)
 #else
@@ -577,6 +577,59 @@ wl_default_wps(int unit)
 }
 
 void
+restore_defaults_wifi(int all)
+{
+	char *macp = NULL;
+	unsigned char mac_binary[6];
+	unsigned char ssidbase[16];
+	unsigned char ssid[32];
+	char word[256], *next;
+	int unit, subunit;
+	unsigned int max_mssid;
+	char prefix[]="wlXXXXXX_", tmp[100];
+
+	if (strncmp(nvram_safe_get("territory_code"), "KR", 2))
+		return;
+
+	if (!strlen(nvram_safe_get("wifi_psk")))
+		return;
+
+	macp = get_lan_hwaddr();
+	ether_atoe(macp, mac_binary);
+	sprintf((char *)ssidbase, "%s_%02X", get_productid(), mac_binary[5]);
+
+	unit = 0;
+	max_mssid = num_of_mssid_support(unit);
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+		sprintf((char *) ssid, "%s%s", ssidbase, unit ? (unit == 2 ? "_5G-2" : "_5G") : "_2G");
+		nvram_set(strcat_r(prefix, "ssid", tmp), (char *) ssid);
+		nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
+		nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
+		nvram_set(strcat_r(prefix, "wpa_psk", tmp), nvram_safe_get("wifi_psk"));
+
+		if (all)
+		for (subunit = 1; subunit < max_mssid+1; subunit++) {
+			snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+
+			sprintf((char *) ssid, "%s%s_Guest", ssidbase, unit ? (unit == 2 ? "_5G-2" : "_5G") : "_2G");
+			if (subunit > 1)
+				sprintf((char *) ssid, "%s%d", (char *) ssid, subunit);
+			nvram_set(strcat_r(prefix, "ssid", tmp), (char *) ssid);
+			nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
+			nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
+			nvram_set(strcat_r(prefix, "wpa_psk", tmp), nvram_safe_get("wifi_psk"));
+		}
+
+		unit++;
+	}
+
+	nvram_set("w_Setting", "1");
+}
+
+void
 wl_defaults_wps(void)
 {
 	char word[256], *next;
@@ -587,6 +640,10 @@ wl_defaults_wps(void)
 		wl_default_wps(unit);
 		unit++;
 	}
+
+#ifdef RTCONFIG_TCODE
+        restore_defaults_wifi(0);
+#endif
 }
 
 /* assign none-exist value or inconsist value */
@@ -606,32 +663,27 @@ wan_defaults(void)
 	char word[256], *next;
 	int unit;
 
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++)
-	{
-		snprintf(word, sizeof(word), "wan%d_ifname", unit);
-		nvram_unset(word);
-	}
-
-	unit = WAN_UNIT_FIRST;
-	foreach (word, nvram_safe_get("wan_ifnames"), next) {
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		nvram_set(strcat_r(prefix, "ifname", tmp), word);
 
-#ifdef RTCONFIG_USB_MODEM
-		if (dualwan_unit__usbif (unit)) {
-			nvram_set(strcat_r(prefix, "ifname", tmp), "");
-			//nvram_set(strcat_r(prefix, "pppoe_ifname", tmp), "");
-		}
-#endif
+		nvram_set(strcat_r(prefix, "ifname", tmp), "");
 
-		for (t = router_defaults; t->name; t++) {
-			if (strncmp(t->name, "wan_", 4)!=0) continue;
+		for(t = router_defaults; t->name; ++t){
+			if(strncmp(t->name, "wan_", 4)!=0) continue;
 
-			if (!nvram_get(strcat_r(prefix, &t->name[4], tmp))) {
+			if(!nvram_get(strcat_r(prefix, &t->name[4], tmp))){
 				//_dprintf("_set %s = %s\n", tmp, t->value);
 				nvram_set(tmp, t->value);
 			}
 		}
+	}
+
+	unit = WAN_UNIT_FIRST;
+	foreach(word, nvram_safe_get("wan_ifnames"), next){
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+		if(dualwan_unit__nonusbif(unit))
+			nvram_set(strcat_r(prefix, "ifname", tmp), word);
 
 		++unit;
 	}
@@ -668,7 +720,7 @@ void usbctrl_default()
 	char *acc_user, *acc_password;
 	char acc_nvram_username[32], acc_nvram_password[32];
 	char **account_list;
-	char usb_path[] = "usb_pathXYYYYYY";
+	FILE *fp;
 
 	usbctrlver = nvram_get_int("usbctrlver");
 	if (usbctrlver != USBCTRLVER || nvram_get("acc_username0") != NULL) {
@@ -712,9 +764,21 @@ void usbctrl_default()
 		nvram_set_int("acc_num", acc_num);
 	free_2_dimension_list(&acc_num, &account_list);
 
-	for (i = 1; i <= 3; ++i) {
-		sprintf(usb_path, "usb_path%d", i);
-		nvram_unset(usb_path);
+	/* Unset all usb_path related nvram variables, e.g., usb_path1, usb_path2.4.3, etc. */
+	if ((fp = popen("nvram show|grep \"^usb_path[0-9]\"", "r")) != NULL) {
+		char *p, var[256];
+
+		var[0] = '\0';
+		while (fgets(var, sizeof(var), fp)) {
+			if (strncmp(var, "usb_path", 8))
+				continue;
+
+			if ((p = strchr(var, '=')) != NULL)
+				*p = '\0';
+
+			nvram_unset(var);
+		}
+		fclose(fp);
 	}
 }
 #endif
@@ -727,6 +791,7 @@ void usbctrl_default()
 void clean_modem_state(int flag){
 	// Need to unset after the SIM is removed.
 	// auto APN
+	nvram_unset("usb_modem_auto_lines");
 	nvram_unset("usb_modem_auto_running");
 	nvram_unset("usb_modem_auto_imsi");
 	nvram_unset("usb_modem_auto_country");
@@ -750,6 +815,8 @@ void clean_modem_state(int flag){
 	nvram_unset("modem_bytes_rx_reset");
 	nvram_unset("modem_bytes_tx_reset");
 
+	nvram_unset("modem_sms_limit_send");
+
 	if(flag == 2)
 		return;
 
@@ -769,9 +836,11 @@ void clean_modem_state(int flag){
 	nvram_unset("usb_modem_act_tx");
 	nvram_unset("usb_modem_act_rx");
 	nvram_unset("usb_modem_act_hwver");
+	nvram_unset("usb_modem_act_swver");
 	nvram_unset("usb_modem_act_band");
 	nvram_unset("usb_modem_act_scanning");
 	nvram_unset("usb_modem_act_startsec");
+	nvram_unset("usb_modem_act_simdetect");
 
 	// modem state.
 	nvram_unset("g3state_pin");
@@ -845,8 +914,9 @@ misc_defaults(int restore_defaults)
 	nvram_unset("ateCommand_flag");
 }
 
+#ifdef RTCONFIG_BCMARM
 static int 
-chk_ate_ccode()
+chk_ate_ccode(void)
 {
         FILE *f;
         char dbuf[18], dutmac[18];
@@ -862,7 +932,7 @@ chk_ate_ccode()
 	p = nvram_safe_get("et0macaddr");
 	memcpy(dutmac, p, strlen(p));
 
-        while(p = strstr(dutmac, ":")) {
+        while ((p = strstr(dutmac, ":")) != NULL) {
                	memcpy(p, p+1, strlen(p+1));
                	dutmac[strlen(dutmac)-1] = 0;
         }
@@ -899,6 +969,7 @@ fix_ate_ccode()
 
 	reboot(RB_AUTOBOOT);
 }
+#endif
 
 /* ASUS use erase nvram to reset default only */
 static void
@@ -975,24 +1046,38 @@ restore_defaults(void)
 #ifdef RTAC3200
 	bsd_defaults();
 #endif
+#ifdef RTCONFIG_DHDAP
+	snprintf(tmp, sizeof(tmp), "wl%d_cfg_maxassoc", i);
+	nvram_unset(tmp);
+#endif
 
 	if (restore_defaults) {
 		uint memsize = 0;
 		char pktq_thresh[8] = {0};
+		char et_pktq_thresh[8] = {0};
 
 		memsize = get_meminfo_item("MemTotal");
 
 		if (memsize <= 32768) {
 			/* Set to 512 as long as onboard memory <= 32M */
 			sprintf(pktq_thresh, "512");
+			sprintf(et_pktq_thresh, "512");
 		}
-		else {
+		else if (memsize <= 65536) {
 			/* We still have to set the thresh to prevent oom killer */
 			sprintf(pktq_thresh, "1024");
+			sprintf(et_pktq_thresh, "1536");
+		}
+		else {
+			sprintf(pktq_thresh, "1024");
+			/* Adjust the et thresh to 3300 as long as memory > 64M.
+			 * The thresh value is based on benchmark test.
+			 */
+			sprintf(et_pktq_thresh, "3300");
 		}
 
 		nvram_set("wl_txq_thresh", pktq_thresh);
-		nvram_set("et_txq_thresh", pktq_thresh);
+		nvram_set("et_txq_thresh", et_pktq_thresh);
 #if defined(__CONFIG_USBAP__)
 		nvram_set("wl_rpcq_rxthresh", pktq_thresh);
 #endif
@@ -1003,6 +1088,9 @@ restore_defaults(void)
 #ifdef RTCONFIG_GMAC3
 		/* Delete dynamically generated variables */
 		gmac3_restore_defaults();
+#endif
+#ifdef RTCONFIG_TCODE
+		restore_defaults_wifi(1);
 #endif
 	}
 
@@ -1183,6 +1271,8 @@ restore_defaults(void)
 			break;
 
 		case MODEL_RTAC5300:
+			nvram_set("ctf_disable_force", "1");
+			nvram_set("reboot_time", "160");
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
 		case MODEL_RTAC87U:
@@ -1516,7 +1606,7 @@ char *the_wan_phy()
  * 	-1:	invalid parameter.
  *	0:	success
  */
-#if !defined(RTN56U)
+#if !defined(CONFIG_BCMWL5) && !defined(RTN56U)
 static int set_basic_ifname_vars(char *wan, char *lan, char *wl2g, char *wl5g, char *usb, char *ap_lan, char *dw_wan, char *dw_lan, int force_dwlan)
 {
 	int sw_mode = nvram_get_int("sw_mode");
@@ -1728,6 +1818,57 @@ static int set_basic_ifname_vars(char *wan, char *lan, char *wl2g, char *wl5g, c
 }
 #endif
 
+#ifdef RTCONFIG_TCODE
+extern struct tcode_nvram_s tcode_nvram_list[];
+extern struct tcode_rc_support_s tcode_rc_support_list[];
+
+int config_tcode(void)
+{
+	int model = get_model();
+	char tcode[7] = {0};
+	char *odmpid = nvram_safe_get("odmpid");
+
+	const struct tcode_nvram_s *p_nvram;
+	const struct tcode_rc_support_s *p_rc_support;
+
+	sprintf(tcode, "%s", nvram_safe_get("territory_code"));
+
+	dbG("tcode is [%s]\n", tcode);
+	if(strlen(tcode) == 0){
+		dbG("[tcode] no territory_code setting, using default region\n");
+		return 0;
+	}
+	p_nvram = &tcode_nvram_list[0];
+	p_rc_support = &tcode_rc_support_list[0];
+
+	/* config nvram value */
+	for (; p_nvram->model != 0; ++p_nvram) {
+		if(model == p_nvram->model){
+			/* odmpid not match */
+			if(strlen(odmpid) > 0 && strcmp(p_nvram->odmpid, odmpid) != 0) continue;
+
+			if(strcmp(p_nvram->tcode, tcode) == 0){
+				dbG("[tcode] add nvram: [%s]=[%s]\n", p_nvram->name, p_nvram->value);
+				nvram_set(p_nvram->name, p_nvram->value);
+			}
+		}
+	}
+
+	/* config rc support */
+	for (; p_rc_support->model != 0; ++p_rc_support) {
+		if(model == p_rc_support->model){
+			if(strcmp(p_rc_support->tcode, tcode) == 0){
+				dbG("[tcode] add rc_support:[%s]\n", p_rc_support->features);
+				add_rc_support(p_rc_support->features);
+			}
+		}
+	}
+
+
+	return 1;
+}
+#endif	/* RTCONFIG_TCODE */
+
 // intialized in this area
 //  lan_ifnames
 //  wan_ifnames
@@ -1745,12 +1886,14 @@ int init_nvram(void)
 	char wan_if[10];
 #endif
 
-#ifdef RTCONFIG_BCMARM
+#if defined(RTCONFIG_BCMARM) && !defined(RTCONFIG_BCM7) && !defined(RTCONFIG_BCM10)
 	char clkfreq[10];
 	char sdram_config[8];
+//	char watchdog[5];
 
 	strcpy(clkfreq, nvram_safe_get("clkfreq"));
 	strcpy(sdram_config, nvram_safe_get("sdram_config"));
+//	strcpy(watchdog, nvram_safe_get("watchdog"));
 
 	if (nvram_get_int("wlopmode") == 7) {
 		switch (model) {
@@ -1761,13 +1904,11 @@ int init_nvram(void)
 			case MODEL_DSLAC68U:
 				nvram_set("clkfreq", "800,666");
 				break;
-#ifndef RTCONFIG_BCM7
 			case MODEL_RPAC68U:
 			case MODEL_RTAC68U:
 				if (!nvram_match("bl_version", "1.0.1.1") && !nvram_get_int("PA"))
 				nvram_set("clkfreq", "800,666");
 				break;
-#endif
 		}
 	}
 
@@ -1777,10 +1918,17 @@ int init_nvram(void)
 			if (!nvram_match("sdram_config", "0x0149"))
 				nvram_set("sdram_config", "0x0149");
 		}
+
+		if (nvram_match("1:ccode", "JP") && nvram_match("1:regrev", "47") && !nvram_match("watchdog", "0"))
+			nvram_set("watchdog", "0");
+		else
+			nvram_set("watchdog", "3000");
 	}
+	else nvram_set("watchdog", "3000");
 
 	if (strcmp(clkfreq, nvram_safe_get("clkfreq")) ||
-	    strcmp(sdram_config, nvram_safe_get("sdram_config")))
+	    strcmp(sdram_config, nvram_safe_get("sdram_config")) /*||
+	    strcmp(watchdog, nvram_safe_get("watchdog"))*/)
 	{
 		nvram_commit();
 		reboot(RB_AUTOBOOT);
@@ -1851,10 +1999,16 @@ int init_nvram(void)
 	nvram_set("vpn_server2_state", "0");
 	nvram_set("vpn_client1_state", "0");
 	nvram_set("vpn_client2_state", "0");
+	nvram_set("vpn_client3_state", "0");
+	nvram_set("vpn_client4_state", "0");
+	nvram_set("vpn_client5_state", "0");
 	nvram_set("vpn_server1_errno", "0");
 	nvram_set("vpn_server2_errno", "0");
 	nvram_set("vpn_client1_errno", "0");
 	nvram_set("vpn_client2_errno", "0");
+	nvram_set("vpn_client3_errno", "0");
+	nvram_set("vpn_client4_errno", "0");
+	nvram_set("vpn_client5_errno", "0");
 	nvram_set("vpn_upload_state", "");
 #endif
 
@@ -1874,6 +2028,7 @@ int init_nvram(void)
 	nvram_set("dsllog_powerup", "0");
 	nvram_set("dsllog_crcdown", "0");
 	nvram_set("dsllog_crcup", "0");
+	nvram_set("dsllog_farendvendorid", "");//far end vendor
 #endif
 
 #ifdef RTCONFIG_PUSH_EMAIL
@@ -1889,9 +2044,13 @@ int init_nvram(void)
 #endif
 
 #ifdef RTCONFIG_WIRELESSREPEATER
-	if (nvram_get("sw_mode") != SW_MODE_REPEATER)
+	if (nvram_get_int("sw_mode") != SW_MODE_REPEATER)
 		nvram_unset("ure_disable");
 #endif
+
+	/* initialize this value to check fw upgrade status */
+	nvram_set_int("upgrade_fw_status", FW_INIT);
+
 	switch (model) {
 #ifdef RTCONFIG_RALINK
 	case MODEL_EAN66:
@@ -2650,7 +2809,7 @@ int init_nvram(void)
 		nvram_set_int("led_pwr_gpio", 18|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wps_gpio", 18|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wan_gpio", 4|GPIO_ACTIVE_LOW);	/* does HP have it */
-		nvram_set_int("sb/1/ledbh5", 2);			/* is active_high? set 7 then */
+		nvram_set_int("sb/1/ledbh5", 7);			/* is active_high? set 7 then */
 		add_rc_support("pwrctrl");
 #ifdef RTCONFIG_WL_AUTO_CHANNEL
 		if (nvram_match("AUTO_CHANNEL", "1")) {
@@ -3602,8 +3761,8 @@ int init_nvram(void)
 		/* UART1_TX,  13 */
 		/* UART1_CTS, 14*/
 		/* UART1_RTS, 15 */
-		nvram_set_int("led_usb_gpio", 17|GPIO_ACTIVE_LOW);
-		nvram_set_int("led_usb3_gpio",  16|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_usb_gpio", 16|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_usb3_gpio", 17|GPIO_ACTIVE_LOW);
 		//nvram_set_int("led_mmc_gpio",  17|GPIO_ACTIVE_LOW);	/* abort */
 		nvram_set_int("led_wps_gpio", 19|GPIO_ACTIVE_LOW);
 		if(model == MODEL_RTAC5300) {
@@ -3846,6 +4005,11 @@ int init_nvram(void)
 		nvram_set("wl_ifnames", "eth1 wifi0");
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
+		/* WAN2 MAC = 3rd 5G GuestNetwork */
+		if (get_wans_dualwan()&WANSCAP_WAN && get_wans_dualwan()&WANSCAP_LAN){
+			nvram_set("wl1_vifnames", "wl1.1 wl1.2");
+			nvram_set("wl1.3_bss_enabled", "0");
+		}
 		nvram_set("wl1_country_code", nvram_safe_get("1:ccode"));
 		nvram_set("wl1_country_rev", nvram_safe_get("1:regrev"));
 		nvram_set("wl1_ifname", "wifi0");
@@ -4512,6 +4676,7 @@ int init_nvram(void)
 #endif
 
 #ifdef RTCONFIG_YANDEXDNS
+	/* 0: disable, 1: full, -1: partial without qis */
 	int yadns_support = 1;
 	switch (model) {
 	case MODEL_RTN12HP:
@@ -4520,7 +4685,12 @@ int init_nvram(void)
 				(nvram_match("regulation_domain", "EU") && nvram_match("sb/1/regrev", "5"));
 		break;
 	}
-	add_rc_support(yadns_support ? "yadns" : "yadns_hideqis");
+	if (yadns_support == 0)
+		nvram_set_int("yadns_enable_x", 0);
+	else if (yadns_support < 0)
+		add_rc_support("yadns_hideqis");
+	else
+		add_rc_support("yadns");
 #endif
 
 #ifdef RTCONFIG_DNSFILTER
@@ -4653,8 +4823,9 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_TRAFFIC_CONTROL
 	add_rc_support("traffic_control");
-	nvram_unset("traffic_control_old_tx");
-	nvram_unset("traffic_control_old_rx");
+	nvram_unset("traffic_control_realtime_0");
+	nvram_unset("traffic_control_realtime_1");
+	nvram_unset("traffic_control_count");
 #endif
 
 #ifdef RTCONFIG_ADBLOCK
@@ -4684,7 +4855,7 @@ int init_nvram(void)
 #endif
 
 #ifdef RTCONFIG_WIRELESSREPEATER
-#if !defined(RTCONFIG_DISABLE_REPEATER_UI) && !defined(RTCONFIG_QCA)
+#ifndef RTCONFIG_DISABLE_REPEATER_UI
 	add_rc_support("repeater");
 #endif
 #endif
@@ -4788,6 +4959,13 @@ int init_nvram(void)
 	add_rc_support("cloudcheck");
 #endif
 
+#ifdef RTCONFIG_GETREALIP
+	add_rc_support("realip");
+#endif
+#ifdef RTCONFIG_TCODE
+	config_tcode();
+#endif
+
 	return 0;
 }
 
@@ -4797,11 +4975,7 @@ int init_nvram2(void)
 	unsigned char mac_binary[6];
 	char friendly_name[32];
 
-#ifdef RTCONFIG_RGMII_BRCM5301X
-	macp = nvram_safe_get("et1macaddr");
-#else
-	macp = nvram_safe_get("et0macaddr");
-#endif
+	macp = get_lan_hwaddr();
 	ether_atoe(macp, mac_binary);
 	sprintf(friendly_name, "%s-%02X%02X", get_productid(), mac_binary[4], mac_binary[5]);
 
@@ -5422,7 +5596,9 @@ static void sysinit(void)
 	char s[256];
 	char t[256];
 	int ratio = 30;
+#if !defined(RTCONFIG_QCA)
 	int model;
+#endif
 
 #define MKNOD(name,mode,dev)		if (mknod(name,mode,dev))		perror("## mknod " name)
 #define MOUNT(src,dest,type,flag,data)	if (mount(src,dest,type,flag,data))	perror("## mount " src)
@@ -5691,7 +5867,7 @@ static void sysinit(void)
 #endif
 	init_switch(); // for system dependent part
 #if defined(RTCONFIG_QCA) 
-	//set_uuid();
+	set_uuid();
 #if defined(QCA_WIFI_INS_RM)
 	if(nvram_get_int("sw_mode")!=2)	
 #endif	 
@@ -6010,8 +6186,8 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
             			set_wantolan();
 				modprobe_r("hw_nat");
 				modprobe("hw_nat");
-				system("killall -9 wanduck");
-				system("killall -9 udhcpc");
+				stop_wanduck();
+				killall_tk("udhcpc");
          		}
 #endif
 
@@ -6205,7 +6381,7 @@ if (nvram_match("commit_test", "1")) {
 		} while (ret);
 #ifdef RTCONFIG_BCMARM
 		/* free pagecache */
-		system("echo 1 > /proc/sys/vm/drop_caches");
+		f_write_string("/proc/sys/vm/drop_caches", "1", 0, 0);
 #endif
 	}
 

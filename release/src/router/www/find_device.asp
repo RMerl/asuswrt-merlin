@@ -143,7 +143,7 @@
 
 </style>
 <script>	
-function $(){
+function document.getElementById(){
 	var elements = new Array();
 	
 	for(var i = 0; i < arguments.length; ++i){
@@ -163,11 +163,10 @@ function $(){
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
 var rescan = 0;
-var $j = jQuery.noConflict();
+
 
 var DEVICE_TYPE = ["", "<#Device_type_01_PC#>", "<#Device_type_02_RT#>", "<#Device_type_03_AP#>", "<#Device_type_04_NS#>", "<#Device_type_05_IC#>", "<#Device_type_06_OD#>", "Printer", "TV Game Console"];
 
-var sw_mode = '<% nvram_get("sw_mode"); %>';
 var thisDevice;
 (function(){
 	var thisDeviceObj = {
@@ -175,11 +174,15 @@ var thisDevice;
 		name: '<% nvram_get("productid"); %>',
 		ipaddr: '<% nvram_get("lan_ipaddr"); %>',
 		mac: '<% nvram_get("et0macaddr"); %>',
-		other: "1>2>0",
-		ssid:'<% nvram_get("wl_ssid"); %>'
+		other: "1>2>0",		
+		ssid:'<% nvram_get("wl_ssid"); %>',
+		netmask:'<% nvram_get("lan_netmask"); %>'
+
 	}
 
-	thisDevice = [thisDeviceObj.type, thisDeviceObj.name, thisDeviceObj.ipaddr, thisDeviceObj.mac, thisDeviceObj.other,thisDeviceObj.ssid].join(">");
+	if (('<% nvram_get("sw_mode"); %>' == '2' || '<% nvram_get("sw_mode"); %>' == '3') && '<% nvram_get("lan_proto"); %>' == 'dhcp' && '<% nvram_get("lan_state_t"); %>' != '2')
+		thisDeviceObj.ipaddr = '<% nvram_default_get("lan_ipaddr"); %>';
+	thisDevice = [thisDeviceObj.type, thisDeviceObj.name, thisDeviceObj.ipaddr, thisDeviceObj.mac, thisDeviceObj.other,thisDeviceObj.ssid,thisDeviceObj.netmask].join(">");
 })()
 
 var direct_dut=0;
@@ -222,7 +225,7 @@ function FormActions(_Action, _ActionMode, _ActionScript, _ActionWait){
 }
 
 function update_clients(e) {
-  $j.ajax({
+  $.ajax({
     url: '/update_clients.asp',
     dataType: 'script', 
 	
@@ -264,7 +267,7 @@ function load_body(){
 		var HTMLCode = '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="client_list_table">';
 		HTMLCode += '<tr><td style="color:#FFCC00;font-size:12px; border-collapse: collapse;border:1;" colspan="4"><span style="line-height:25px;"><#Device_Searching#></span>&nbsp;<img style="margin-top:10px;" src="/images/InternetScan.gif"></td></tr>';
 		HTMLCode += '</table>';
-		$("client_list_Block").innerHTML = HTMLCode;
+		document.getElementById("client_list_Block").innerHTML = HTMLCode;
 	}
 	retry = 0;
 	setTimeout("update_clients();", 2000);
@@ -275,19 +278,19 @@ function load_body(){
 var listFlag = 0;
 var itemperpage = 14;
 function _showNextItem(num){
-	$("client_list_Block").style.display = "";
+	document.getElementById("client_list_Block").style.display = "";
 	return false;
 
 	var _client_list_row_length = client_list_row.length-1;
 
 	if(_client_list_row_length < parseInt(itemperpage)+1){
-		$("leftBtn").style.visibility = "hidden";
-		$("rightBtn").style.visibility = "hidden";
+		document.getElementById("leftBtn").style.visibility = "hidden";
+		document.getElementById("rightBtn").style.visibility = "hidden";
 		return false;
 	}
 
 	for(var i=1; i<client_list_row.length; i++){
-		$("row"+i).style.display = "none";
+		document.getElementById("row"+i).style.display = "none";
 	}
 
 	if(num == 0)
@@ -301,23 +304,23 @@ function _showNextItem(num){
 		var endNum = startNum + itemperpage;
 
 	for(i=startNum; i<endNum; i++){
-		$("row"+i).style.display = "";
+		document.getElementById("row"+i).style.display = "";
 	}
 
 	// start
 	if(startNum == 1){
-		$("leftBtn").style.visibility = "hidden";
+		document.getElementById("leftBtn").style.visibility = "hidden";
 	}else{
-		$("leftBtn").style.visibility = "";
-		$("leftBtn").title = "<#prev_page#>";
+		document.getElementById("leftBtn").style.visibility = "";
+		document.getElementById("leftBtn").title = "<#prev_page#>";
 	}	
 
 	// end
 	if(endNum == client_list_row.length){
-		$("rightBtn").style.visibility = "hidden";
+		document.getElementById("rightBtn").style.visibility = "hidden";
 	}else{
-		$("rightBtn").style.visibility = "";
-		$("rightBtn").title = "<#next_page#>";
+		document.getElementById("rightBtn").style.visibility = "";
+		document.getElementById("rightBtn").title = "<#next_page#>";
 	}	
 }
 
@@ -352,7 +355,7 @@ function showclient_list(list){
 	networkmap_scanning = 0;
 
 	if(list)
-		$("isblockdesc").innerHTML = "<#btn_remove#>";	
+		document.getElementById("isblockdesc").innerHTML = "<#btn_remove#>";	
 
 	code +='<table width="100%" align="center" id="client_list_table"><tr><td>';
 
@@ -396,36 +399,36 @@ function showclient_list(list){
 		code += '</tr></table>';
 	}
 	code +='</tr></td></table>';
-	$("client_list_Block").innerHTML = code;
-	$("client_list_Block").style.display = "none";
+	document.getElementById("client_list_Block").innerHTML = code;
+	document.getElementById("client_list_Block").style.display = "none";
 
 	if(direct_dut == 1)
   		location.href = "index.asp";
 
-	if($('client_list_table').innerHTML == "<tbody></tbody>"){
+	if(document.getElementById('client_list_table').innerHTML == "<tbody></tbody>"){
 		code ='<tr><td style="color:#FFCC00;" colspan="4"><#IPConnection_VSList_Norule#></td></tr>'
-		$("client_list_Block").innerHTML = code;
+		document.getElementById("client_list_Block").innerHTML = code;
 	}
 }
 
 function LoadingProgress1(seconds){
-	$("LoadingBar").style.visibility = "visible";
+	document.getElementById("LoadingBar").style.visibility = "visible";
 	
 	y = y + progress;
 	if(typeof(seconds) == "number" && seconds >= 0){
 		if(seconds != 0){
-			$("proceeding_img1").style.width = Math.round(y) + "%";
-			$("proceeding_img_text1").innerHTML = Math.round(y) + "%";
+			document.getElementById("proceeding_img1").style.width = Math.round(y) + "%";
+			document.getElementById("proceeding_img_text1").innerHTML = Math.round(y) + "%";
 	
-			if($("loading_block1")){
-				$("proceeding_img_text1").style.width = document.getElementById("loading_block1").clientWidth;
-				$("proceeding_img_text1").style.marginLeft = "100px";
+			if(document.getElementById("loading_block1")){
+				document.getElementById("proceeding_img_text1").style.width = document.getElementById("loading_block1").clientWidth;
+				document.getElementById("proceeding_img_text1").style.marginLeft = "100px";
 			}	
 			--seconds;
 			setTimeout("LoadingProgress1("+seconds+");", 1000);
 		}
 		else{
-			$("proceeding_img_text1").innerHTML = "<#Main_alert_proceeding_desc3#>";
+			document.getElementById("proceeding_img_text1").innerHTML = "<#Main_alert_proceeding_desc3#>";
 			y = 0;
 			location.href = "find_device.asp?flag=scan_finish";
 		}
@@ -441,9 +444,9 @@ function showLoadingBar1(seconds){
 
 function _showloadingbar(){
 	rescan = 1;
-	$("LoadingBar").style.display ="";
-	$("client_list_Block").style.display ="none";
-	$("refresh_list").className = "button_gen_dis"
+	document.getElementById("LoadingBar").style.display ="";
+	document.getElementById("client_list_Block").style.display ="none";
+	document.getElementById("refresh_list").className = "button_gen_dis"
 	showLoadingBar1(5);
 	
 }

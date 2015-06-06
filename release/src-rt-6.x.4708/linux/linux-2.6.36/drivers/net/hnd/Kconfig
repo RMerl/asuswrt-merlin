@@ -28,6 +28,9 @@ endchoice
 config BCM_CTF
 	tristate "BCMCTF support"
 	depends on HND
+config CTF_PPTP_L2TP
+	bool "CTF PPTP/L2TP support"
+	depends on BCM_CTF
 config BCM_FA
         bool "BCM HW Flow Accelerator support"
         depends on BCM_CTF

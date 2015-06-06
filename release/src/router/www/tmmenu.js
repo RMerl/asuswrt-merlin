@@ -1147,8 +1147,8 @@ TomatoGrid.prototype = {
 				switch (f.type) {
 				case 'text':
 					s += '<input type="text" maxlength=' + f.maxlen + common + attrib;
-					if (which == 'edit') s += ' value="' + escapeHTML('' + values[vi]) + '">';
-						else s += '>';
+					if (which == 'edit') s += ' value="' + escapeHTML('' + values[vi]) + '" autocorrect="off" autocapitalize="off">';
+						else s += 'autocorrect="off" autocapitalize="off">';
 					break;
 				case 'select':
 					s += '<select' + common + attrib + '>';
@@ -1301,16 +1301,16 @@ TomatoGrid.prototype = {
 		this.newControls = r;
 
 		this.disableNewEditor(false);
-		$('savebutton').disabled = false;
-		$('stopbutton').disabled = false;
+		document.getElementById('savebutton').disabled = false;
+		document.getElementById('stopbutton').disabled = false;
 	},
 
 	disableNewEditor: function(disable) {
 		if (this.getDataCount() >= this.maxAdd) disable = true;
 		if (this.newEditor) fields.disableAll(this.newEditor, disable);
 		if (this.newControls) fields.disableAll(this.newControls, disable);
-		if (this.newControls) $('savebutton').disabled = disable;
-		if (this.newControls) $('stopbutton').disabled = disable;
+		if (this.newControls) document.getElementById('savebutton').disabled = disable;
+		if (this.newControls) document.getElementById('stopbutton').disabled = disable;
 	},
 
 	resetNewEditor: function() {

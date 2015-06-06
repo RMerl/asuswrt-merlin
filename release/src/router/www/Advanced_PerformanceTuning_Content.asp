@@ -29,7 +29,6 @@ coreTmp_2 = [curr_coreTmp_2];
 coreTmp_5 = [curr_coreTmp_5];
 coreTmp_cpu = [curr_coreTmp_cpu];
 var wl_control_channel = <% wl_control_channel(); %>;
-var $j = jQuery.noConflict();
 
 function initial(){
 	var code1, code2;
@@ -45,11 +44,11 @@ function initial(){
 		code2 += ' - <span id="coreTemp_cpu" style="text-align:center; font-weight:bold;color:#00FF33"></span>';
 	}
 
-	$("legend").innerHTML = code1 + code2;
+	document.getElementById("legend").innerHTML = code1 + code2;
 }
 
 function update_coretmp(e){
-  $j.ajax({
+  $.ajax({
     url: '/ajax_coretmp.asp',
     dataType: 'script', 
 	
@@ -67,16 +66,16 @@ function update_coretmp(e){
 function updateNum(_coreTmp_2, _coreTmp_5, _cpuTemp){
 
 	if(document.form.fanctrl_fullspeed_temp_unit.value == 1){
-		$("coreTemp_2").innerHTML = (_coreTmp_2 == 0 ? "disabled" : Math.round(_coreTmp_2*9/5+32) + " °F");
-		$("coreTemp_5").innerHTML = (_coreTmp_5 == 0 ? "disabled" : Math.round(_coreTmp_5*9/5+32) + " °F");
+		document.getElementById("coreTemp_2").innerHTML = (_coreTmp_2 == 0 ? "disabled" : Math.round(_coreTmp_2*9/5+32) + " °F");
+		document.getElementById("coreTemp_5").innerHTML = (_coreTmp_5 == 0 ? "disabled" : Math.round(_coreTmp_5*9/5+32) + " °F");
 		if (_cpuTemp != "")
-			$("coreTemp_cpu").innerHTML = Math.round(_cpuTemp*9/5+32) + " °F";
+			document.getElementById("coreTemp_cpu").innerHTML = Math.round(_cpuTemp*9/5+32) + " °F";
 	}
 	else{
-		$("coreTemp_2").innerHTML = (_coreTmp_2 == 0 ? "disabled" : _coreTmp_2 + " °C");
-		$("coreTemp_5").innerHTML = (_coreTmp_5 == 0 ? "disabled" : _coreTmp_5 + " °C");
+		document.getElementById("coreTemp_2").innerHTML = (_coreTmp_2 == 0 ? "disabled" : _coreTmp_2 + " °C");
+		document.getElementById("coreTemp_5").innerHTML = (_coreTmp_5 == 0 ? "disabled" : _coreTmp_5 + " °C");
 		if (_cpuTemp != "")
-			$("coreTemp_cpu").innerHTML = _cpuTemp + " °C";
+			document.getElementById("coreTemp_cpu").innerHTML = _cpuTemp + " °C";
 	}
 }
 

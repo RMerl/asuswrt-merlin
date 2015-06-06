@@ -20,7 +20,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
-var $j = jQuery.noConflict();
+
 
 function initial(){
 	show_menu();
@@ -28,27 +28,27 @@ function initial(){
 			document.getElementById("guest_image").parentNode.style.display = "none";
 	
 	if(document.form.qos_enable.value==1){
-		$('upload_tr').style.display = "";
-		$('download_tr').style.display = "";		
+		document.getElementById('upload_tr').style.display = "";
+		document.getElementById('download_tr').style.display = "";		
 		if(bwdpi_support)
-			$('qos_type_tr').style.display = "";	
+			document.getElementById('qos_type_tr').style.display = "";	
 	}else{
-		$('upload_tr').style.display = "none";
-		$('download_tr').style.display = "none";		
+		document.getElementById('upload_tr').style.display = "none";
+		document.getElementById('download_tr').style.display = "none";		
 		if(bwdpi_support)
-			$('qos_type_tr').style.display = "none";
+			document.getElementById('qos_type_tr').style.display = "none";
 	}
 
 	if(bwdpi_support){
-		$('content_title').innerHTML = "<#Adaptive_QoS#> - <#Adaptive_QoS_Conf#>";
+		document.getElementById('content_title').innerHTML = "<#Adaptive_QoS#> - <#Adaptive_QoS_Conf#>";
 		if(document.form.qos_enable.value == 1){
 			if(document.form.qos_type.value == 0){		//Traditional Type
 				document.getElementById("settingSelection").length = 1;
-				add_option($("settingSelection"), '<#qos_user_rules#>', 3, 0);
-				add_option($("settingSelection"), '<#qos_user_prio#>', 4, 0);
+				add_option(document.getElementById("settingSelection"), '<#qos_user_rules#>', 3, 0);
+				add_option(document.getElementById("settingSelection"), '<#qos_user_prio#>', 4, 0);
 			}
 			else{		//Adaptive Type
-				add_option($("settingSelection"), "<#EzQoS_type_adaptive#>", 2, 0);		
+				add_option(document.getElementById("settingSelection"), "<#EzQoS_type_adaptive#>", 2, 0);		
 			}
 		}
 		else{		// hide select option if qos disable
@@ -56,15 +56,15 @@ function initial(){
 		}
 	}
 	else{
-		$('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";
+		document.getElementById('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";
 		document.getElementById('function_desc').innerHTML = "<#ezqosDesw#>";
 		document.getElementById("settingSelection").length = 1;
-		add_option($("settingSelection"), '<#qos_user_rules#>', 3, 0);
-		add_option($("settingSelection"), '<#qos_user_prio#>', 4, 0);
+		add_option(document.getElementById("settingSelection"), '<#qos_user_rules#>', 3, 0);
+		add_option(document.getElementById("settingSelection"), '<#qos_user_prio#>', 4, 0);
 	}
 	
 	init_changeScale();
-	//addOnlineHelp($("faq"), ["ASUSWRT", "QoS"]);
+	//addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "QoS"]);
 }
 
 function init_changeScale(){
@@ -161,8 +161,8 @@ function submitQoS(){
 
 function change_qos_type(value){
 	if(value == 0){		//Traditional
-		$('int_type').checked = false;
-		$('trad_type').checked = true;	
+		document.getElementById('int_type').checked = false;
+		document.getElementById('trad_type').checked = true;	
 		if(document.form.qos_type_orig.value == 0 && document.form.qos_enable_orig.value != 0){
 			document.form.action_script.value = "restart_qos;restart_firewall";
 		}	
@@ -172,8 +172,8 @@ function change_qos_type(value){
 		}		
 	}	
 	else{		//Adaptive
-		$('int_type').checked = true;
-		$('trad_type').checked = false;
+		document.getElementById('int_type').checked = true;
+		document.getElementById('trad_type').checked = false;
 		if(document.form.qos_type_orig.value == 1 && document.form.qos_enable_orig.value != 0)
 			document.form.action_script.value = "restart_qos;restart_firewall";
 		else{
@@ -281,32 +281,32 @@ function change_qos_type(value){
 											<td>
 												<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_qos_enable"></div>
 													<script type="text/javascript">
-														$j('#radio_qos_enable').iphoneSwitch('<% nvram_get("qos_enable"); %>', 
+														$('#radio_qos_enable').iphoneSwitch('<% nvram_get("qos_enable"); %>', 
 															 function() {
 																document.form.qos_enable.value = 1;
 																if(document.form.qos_enable_orig.value != 1){
-																	if($('int_type').checked == true && bwdpi_support)
+																	if(document.getElementById('int_type').checked == true && bwdpi_support)
 																		document.form.next_page.value = "AdaptiveQoS_Adaptive.asp";
 																	else
 																		document.form.next_page.value = "Advanced_QOSUserRules_Content.asp";
 																}																
 																
-																$('upload_tr').style.display = "";
-																$('download_tr').style.display = "";
+																document.getElementById('upload_tr').style.display = "";
+																document.getElementById('download_tr').style.display = "";
 
 																if(bwdpi_support){
-																	$('qos_type_tr').style.display = "";
-																	$('qos_enable_hint').style.display = "";
+																	document.getElementById('qos_type_tr').style.display = "";
+																	document.getElementById('qos_enable_hint').style.display = "";
 																}	
 															 },
 															 function() {
 																document.form.qos_enable.value = 0;																
-																$('upload_tr').style.display = "none";
-																$('download_tr').style.display = "none";
+																document.getElementById('upload_tr').style.display = "none";
+																document.getElementById('download_tr').style.display = "none";
 	
 																if(bwdpi_support){
-																	$('qos_type_tr').style.display = "none";
-																	$('qos_enable_hint').style.display = "none";
+																	document.getElementById('qos_type_tr').style.display = "none";
+																	document.getElementById('qos_enable_hint').style.display = "none";
 																}	
 															 }
 														);
@@ -317,14 +317,14 @@ function change_qos_type(value){
 										<tr id="upload_tr">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#upload_bandwidth#></a></th>
 											<td>
-												<input type="text" maxlength="10" id="obw" name="obw" onKeyPress="return validator.isNumberFloat(this,event);" class="input_15_table" value="">
+												<input type="text" maxlength="10" id="obw" name="obw" onKeyPress="return validator.isNumberFloat(this,event);" class="input_15_table" value="" autocorrect="off" autocapitalize="off">
 												<label style="margin-left:5px;">Mb/s</label>
 											</td>
 										</tr>											
 										<tr id="download_tr">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#download_bandwidth#></a></th>
 											<td>
-												<input type="text" maxlength="10" id="ibw" name="ibw" onKeyPress="return validator.isNumberFloat(this,event);" class="input_15_table" value="">
+												<input type="text" maxlength="10" id="ibw" name="ibw" onKeyPress="return validator.isNumberFloat(this,event);" class="input_15_table" value="" autocorrect="off" autocapitalize="off">
 												<label style="margin-left:5px;">Mb/s</label>
 											</td>
 										</tr>										

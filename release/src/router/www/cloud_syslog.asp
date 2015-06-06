@@ -21,7 +21,7 @@ function initial(){
 	show_menu();
 
 	if(!rrsut_support)
-		$("rrsLink").style.display = "none";
+		document.getElementById("rrsLink").style.display = "none";
 }
 </script>
 </head>

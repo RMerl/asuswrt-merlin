@@ -1729,7 +1729,7 @@ void redirect_setting(void)
 {
 	FILE *nat_fp, *redirect_fp;
 	char tmp_buf[1024];
-	char *lan_ipaddr_t, *lan_netmask_t, lan_ifname_t;
+	char *lan_ipaddr_t, *lan_netmask_t;
 
 #ifdef RTCONFIG_WIRELESSREPEATER
 	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && !nvram_match("lan_proto", "static")){
@@ -2195,7 +2195,7 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	char *nv, *nvp, *b;
 	char *setting = NULL;
 	char macaccept[32], chain[32];
-	char *ftype, *dtype;
+	char *ftype; //, *dtype;
 	char prefix[32], tmp[100], *wan_proto, *wan_ipaddr;
 	int i;
 #ifndef RTCONFIG_PARENTALCTRL
@@ -2298,7 +2298,7 @@ TRACE_PT("writing Parental Control\n");
 		if (ipv6_enabled())
 			config_daytime_string(fp_ipv6, logaccept, logdrop);
 #endif
-		dtype = logdrop;
+//		dtype = logdrop;
 		ftype = logaccept;
 
 		strcpy(macaccept, "PControls");
@@ -2311,13 +2311,13 @@ TRACE_PT("writing Parental Control\n");
 
 		if (nvram_match("macfilter_enable_x", "2"))
 		{
-			dtype = logaccept;
+//			dtype = logaccept;
 			ftype = logdrop;
 			fftype = logdrop;
 		}
 		else
 		{
-			dtype = logdrop;
+//			dtype = logdrop;
 			ftype = logaccept;
 
 			strcpy(macaccept, "MACS");
@@ -2379,19 +2379,19 @@ TRACE_PT("writing Parental Control\n");
 	}
 	else
 	{
-		if (!nvram_match("misc_ping_x", "0"))
-			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
+		/* Drop ICMP before ESTABLISHED state */
+		if (!nvram_get_int("misc_ping_x")) {
 #ifdef RTCONFIG_IPV6
-		else if (get_ipv6_service() == IPV6_6IN4)
-		{
 			/* accept ICMP requests from the remote tunnel endpoint */
-			ip = nvram_safe_get("ipv6_tun_v4end");
-			if (*ip && strcmp(ip, "0.0.0.0") != 0)
-				fprintf(fp, "-A INPUT -p icmp -s %s -j %s\n", ip, logaccept);
-		}
+			ip = (get_ipv6_service() == IPV6_6IN4) ?
+				nvram_safe_get("ipv6_tun_v4end") : NULL;
+			if (ip && *ip && inet_addr_(ip) != INADDR_ANY)
+				fprintf(fp, "-A INPUT -i %s ! -s %s -p icmp --icmp-type 8 -j %s\n", wan_if, ip, logdrop);
+			else
 #endif
-		else
 			fprintf(fp, "-A INPUT -i %s -p icmp --icmp-type 8 -j %s\n", wan_if, logdrop);
+		}
+
 #ifndef RTCONFIG_PARENTALCTRL
 		if (nvram_match("macfilter_enable_x", "1"))
 		{
@@ -2442,7 +2442,7 @@ TRACE_PT("writing Parental Control\n");
 		 */
 		if (!strcmp(wan_proto, "dhcp") || !strcmp(wan_proto, "bigpond") ||
 		    !strcmp(wan_ipaddr, "0.0.0.0") ||
-		    nvram_match(strcat_r(prefix, "dhcpenable_x", tmp), "1"))
+		    nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp)))
 		{
 			fprintf(fp, "-A INPUT -p udp --sport 67 --dport 68 -j %s\n", logaccept);
 		}
@@ -2500,6 +2500,19 @@ TRACE_PT("writing Parental Control\n");
 			}
 		}
 #endif
+
+		/* Pass ICMP */
+		if (!nvram_get_int("misc_ping_x")) {
+#ifdef RTCONFIG_IPV6
+			/* accept ICMP requests from the remote tunnel endpoint */
+			ip = (get_ipv6_service() == IPV6_6IN4) ?
+				nvram_safe_get("ipv6_tun_v4end") : NULL;
+			if (ip && *ip && inet_addr_(ip) != INADDR_ANY)
+				fprintf(fp, "-A INPUT -s %s -p icmp --icmp-type 8 -j %s\n", ip, logaccept);
+#endif
+			fprintf(fp, "-A INPUT -p icmp ! --icmp-type 8 -j %s\n", logaccept);
+		} else
+			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
 
 		if (!nvram_match("misc_lpr_x", "0"))
 		{
@@ -2911,19 +2924,19 @@ TRACE_PT("writing Parental Control\n");
 	{
 		char wanlan_timematch[128];
 		char ptr[32], *icmplist;
-		char *dtype, *ftype;
+		char /**dtype,*/ *ftype;
 		int apply;
 
 		apply = timematch_conv(wanlan_timematch, "filter_wl_date_x", "filter_wl_time_x");
 
 		if (nvram_match("filter_wl_default_x", "DROP"))
 		{
-			dtype = logdrop;
+//			dtype = logdrop;
 			ftype = logaccept;
 		}
 		else
 		{
-			dtype = logaccept;
+//			dtype = logaccept;
 			ftype = logdrop;
 		}
 
@@ -3202,7 +3215,7 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	char *nv, *nvp, *b;
 	char *setting;
 	char macaccept[32], chain[32];
-	char *ftype, *dtype;
+	char *ftype; //, *dtype;
 	char *wan_proto;
 	int i;
 #ifndef RTCONFIG_PARENTALCTRL
@@ -3297,7 +3310,7 @@ TRACE_PT("writing Parental Control\n");
 			config_daytime_string(fp_ipv6, logaccept, logdrop);
 #endif
 
-		dtype = logdrop;
+//		dtype = logdrop;
 		ftype = logaccept;
 
 		strcpy(macaccept, "PControls");
@@ -3310,13 +3323,13 @@ TRACE_PT("writing Parental Control\n");
 
 		if (nvram_match("macfilter_enable_x", "2"))
 		{
-			dtype = logaccept;
+//			dtype = logaccept;
 			ftype = logdrop;
 			fftype = logdrop;
 		}
 		else
 		{
-			dtype = logdrop;
+//			dtype = logdrop;
 			ftype = logaccept;
 
 			strcpy(macaccept, "MACS");
@@ -3378,26 +3391,27 @@ TRACE_PT("writing Parental Control\n");
 	}
 	else
 	{
-		if (!nvram_match("misc_ping_x", "0"))
-			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
+		/* Drop ICMP before ESTABLISHED state */
+		if (nvram_get_int("misc_ping_x") == 0) {
 #ifdef RTCONFIG_IPV6
-		else if (get_ipv6_service() == IPV6_6IN4)
-		{
 			/* accept ICMP requests from the remote tunnel endpoint */
-			ip = nvram_safe_get("ipv6_tun_v4end");
-			if (*ip && strcmp(ip, "0.0.0.0") != 0)
-				fprintf(fp, "-A INPUT -p icmp -s %s -j %s\n", ip, logaccept);
-		}
+			ip = (get_ipv6_service() == IPV6_6IN4) ?
+				nvram_safe_get("ipv6_tun_v4end") : NULL;
 #endif
-		else {
-			for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
+			for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 				if (nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 					continue;
-
-				fprintf(fp, "-A INPUT -i %s -p icmp --icmp-type 8 -j %s\n", get_wan_ifname(unit), logdrop);
+				wan_if = get_wan_ifname(unit);
+#ifdef RTCONFIG_IPV6
+				if (ip && *ip && inet_addr_(ip) != INADDR_ANY)
+					fprintf(fp, "-A INPUT -i %s ! -s %s -p icmp --icmp-type 8 -j %s\n", wan_if, ip, logdrop);
+				else
+#endif
+				fprintf(fp, "-A INPUT -i %s -p icmp --icmp-type 8 -j %s\n", wan_if, logdrop);
 			}
 		}
+
 #ifndef RTCONFIG_PARENTALCTRL
 		if (nvram_match("macfilter_enable_x", "1"))
 		{
@@ -3514,6 +3528,19 @@ TRACE_PT("writing Parental Control\n");
 			}
 		}
 #endif
+
+		/* Pass ICMP */
+		if (!nvram_get_int("misc_ping_x")) {
+#ifdef RTCONFIG_IPV6
+			/* accept ICMP requests from the remote tunnel endpoint */
+			ip = (get_ipv6_service() == IPV6_6IN4) ?
+				nvram_safe_get("ipv6_tun_v4end") : NULL;
+			if (ip && *ip && inet_addr_(ip) != INADDR_ANY)
+				fprintf(fp, "-A INPUT -s %s -p icmp --icmp-type 8 -j %s\n", ip, logaccept);
+#endif
+			fprintf(fp, "-A INPUT -p icmp ! --icmp-type 8 -j %s\n", logaccept);
+		} else
+			fprintf(fp, "-A INPUT -p icmp -j %s\n", logaccept);
 
 		if (!nvram_match("misc_lpr_x", "0"))
 		{
@@ -4009,19 +4036,19 @@ TRACE_PT("writing Parental Control\n");
 	{
 		char wanlan_timematch[128];
 		char ptr[32], *icmplist;
-		char *dtype, *ftype;
+		char /**dtype,*/ *ftype;
 		int apply;
 
 		apply = timematch_conv(wanlan_timematch, "filter_wl_date_x", "filter_wl_time_x");
 
 		if (nvram_match("filter_wl_default_x", "DROP"))
 		{
-			dtype = logdrop;
+//			dtype = logdrop;
 			ftype = logaccept;
 		}
 		else
 		{
-			dtype = logaccept;
+//			dtype = logaccept;
 			ftype = logdrop;
 		}
 
@@ -4505,7 +4532,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 				ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 				eval("iptables", "-t", "mangle", "-A", "FORWARD",
 				     "-o", lan_if, "-s", lan_class, "-d", lan_class,
-				     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
+				     "-j", "MARK", "--set-mark", "0x01/0x7");
 			}
 		}
 #ifdef RTCONFIG_BCMARM
@@ -4702,7 +4729,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 				ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 				eval("iptables", "-t", "mangle", "-A", "FORWARD",
 				     "-o", lan_if, "-s", lan_class, "-d", lan_class,
-				     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
+				     "-j", "MARK", "--set-mark", "0x01/0x7");
 			}
 		}
 #ifdef RTCONFIG_BCMARM

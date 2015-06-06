@@ -59,6 +59,10 @@
 
 #include "l2tp_core.h"
 
+#ifdef CTF_L2TP
+#include <ctf/hndctf.h>
+#endif
+
 #define L2TP_DRV_VERSION	"V2.0"
 
 /* L2TP header constants */
@@ -1216,6 +1220,10 @@ void l2tp_tunnel_free(struct l2tp_tunnel *tunnel)
 
 	atomic_dec(&l2tp_tunnel_count);
 	kfree(tunnel);
+
+#if defined(CTFPOOL) && defined(CTF_L2TP)
+	osl_ctfpool_direction(0);
+#endif
 }
 EXPORT_SYMBOL_GPL(l2tp_tunnel_free);
 
@@ -1407,6 +1415,10 @@ int l2tp_tunnel_create(struct net *net, int fd, int version, u32 tunnel_id, u32 
 	 * only when this drops to zero.
 	 */
 	l2tp_tunnel_inc_refcount(tunnel);
+
+#if defined(CTFPOOL) && defined(CTF_L2TP)
+	osl_ctfpool_direction(1);
+#endif
 
 	err = 0;
 err:

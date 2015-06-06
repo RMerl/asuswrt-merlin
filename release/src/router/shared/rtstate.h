@@ -5,8 +5,8 @@
 enum {
 	SW_MODE_NONE=0,
 	SW_MODE_ROUTER,
-	SW_MODE_REPEATER,
-	SW_MODE_AP,
+	SW_MODE_REPEATER,	/* Ralink/MTK/QCA: if wlc_psta = 1, Media bridge mode. */
+	SW_MODE_AP,		/* Broadcom:       if wlc_psta = 1, Media bridge mode. */
 	SW_MODE_HOTSPOT
 };
 
@@ -129,6 +129,15 @@ enum {
 
 // the following flag is used for noticing service that will be invoked after getting lan ip
 #define INVOKELATER_DMS	1
+
+enum {
+	FW_INIT=0,
+	FW_UPLOADING,
+	FW_UPLOADING_ERROR,
+	FW_WRITING,
+	FW_WRITING_ERROR,
+	FW_WRITE_SUCCESS
+};
 
 #ifdef RTCONFIG_USB
 enum {

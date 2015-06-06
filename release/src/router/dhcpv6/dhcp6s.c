@@ -3148,7 +3148,7 @@ update_binding_duration(binding)
 	struct dhcp6_listval *iav;
 	int duration = DHCP6_DURATION_INFINITE;
 	u_int32_t past, min_lifetime;
-	time_t now = time(NULL);
+	time_t now = dhcp6_time(NULL);
 
 	min_lifetime = 0;
 	past = (u_int32_t)(now >= binding->updatetime ?
@@ -3266,7 +3266,7 @@ add_binding(clientid, btype, iatype, iaid, val0)
 	}
 
 	/* calculate duration and start timer accordingly */
-	binding->updatetime = time(NULL);
+	binding->updatetime = dhcp6_time(NULL);
 	update_binding_duration(binding);
 	if (binding->duration != DHCP6_DURATION_INFINITE) {
 		struct timeval timo;
@@ -3327,7 +3327,7 @@ update_binding(binding)
 	    bindingstr(binding), duidstr(&binding->clientid));
 
 	/* update timestamp and calculate new duration */
-	binding->updatetime = time(NULL);
+	binding->updatetime = dhcp6_time(NULL);
 	update_binding_duration(binding);
 
 	/* if the lease duration is infinite, there's nothing to do. */
@@ -3396,7 +3396,7 @@ binding_timo(arg)
 	struct dhcp6_binding *binding = (struct dhcp6_binding *)arg;
 	struct dhcp6_list *ia_list = &binding->val_list;
 	struct dhcp6_listval *iav, *iav_next;
-	time_t now = time(NULL);
+	time_t now = dhcp6_time(NULL);
 	u_int32_t past, lifetime;
 	struct timeval timo;
 

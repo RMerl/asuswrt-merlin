@@ -5,14 +5,25 @@ CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/sqlite -I$(TOP)/rc -
 CFLAGS += -I$(TOP)/util-linux/include
 CFLAGS += -idirafter$(LINUXDIR)/arch/arm/include -idirafter$(LINUXDIR)/include
 
-LDFLAGS += $(EXTRALDFLAGS2)
+LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared
 LDFLAGS += -L$(TOP)/sqlite/.libs -lsqlite3
-LDFLAGS += -lpthread
 
 ifeq ($(RTCONFIG_QTN),y)
 CFLAGS += -I$(TOP)/libqcsapi_client
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
+
+# for QCA toolchain compile issue, xxxx-ld has no pthead and dl in openwrt-toolchain
+ifeq ($(RTCONFIG_QCA),y)
+EXTRACC += -lpthread -ldl
+EXTRALD =
+else
+EXTRACC += -lpthread
+EXTRALD += -lpthread
+endif
+
+LD1 += $(LDFLAGS) $(EXTRACC)
+LD2 += $(LDFLAGS) $(EXTRALD)
 
 # ASUSWRT
 OBJS += main.o traffic_control.o traffic_control_hook.o
@@ -31,12 +42,12 @@ endif
 
 traffic_control: $(OBJS)
 	@echo " [traffic_control] CC $@"
-	@$(CC) -o $@ $^ $(LDFLAGS)
+	@$(CC) -o $@ $^ $(LD1)
 	@$(STRIP) traffic_control
 
 libtraffic_control.so: traffic_control_hook.o
 	@echo " [traffic_control] LD $@"
-	@$(LD) $(LDFLAGS) -shared -o $@ $^
+	@$(LD) $(LD2) -shared -o $@ $^
 
 install: all
 	@echo "[traffic_control] Installing..."

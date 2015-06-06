@@ -44,7 +44,7 @@
 }
 </style>
 <script>
-var $j = jQuery.noConflict();
+
 window.onresize = cal_agreement_block;
 var client_list_array = '<% get_client_detail_info(); %>';	
 var client_list_row = client_list_array.split('<');
@@ -60,7 +60,7 @@ var wrs_id_array = [["1,2,3,4,5,6,8", "9,10,14,15,16,25,26", "11"],
 					["", "69", "23"]];
 				
 var apps_id_array = [["22", "", ""],
-					 ["", "0,6,15", "", "", "21"],
+					 ["24", "0,6,15", "", "", "21"],
 					 ["3", "1"],
 					 ["8", "4", ""]];					 
 
@@ -86,7 +86,7 @@ function initial(){
 function pullLANIPList(obj){
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		document.form.PC_devicename.focus();		
 		isMenuopen = 1;
 	}
@@ -95,8 +95,8 @@ function pullLANIPList(obj){
 }
 
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 
 }
@@ -111,8 +111,8 @@ function setClientIP(devname, macaddr){
 var previous_obj = "";
 function show_subCategory(obj){
 	var sub_category_state = obj.className
-	var sub_category = $j(obj).siblings()[1];
-	var category_desc = $j(obj).siblings()[2];
+	var sub_category = $(obj).siblings()[1];
+	var category_desc = $(obj).siblings()[2];
 	
 	if(sub_category_state == "closed"){	
 		sub_category.style.display = "";
@@ -121,9 +121,9 @@ function show_subCategory(obj){
 		
 		obj.setAttribute("class", "opened");
 		if(previous_obj != ""){		//Hide another category
-			$j(previous_obj).siblings()[1].style.display = "none";
-			if($j(previous_obj).siblings()[2])
-				$j(previous_obj).siblings()[2].style.display = "";
+			$(previous_obj).siblings()[1].style.display = "none";
+			if($(previous_obj).siblings()[2])
+				$(previous_obj).siblings()[2].style.display = "";
 			
 			previous_obj.setAttribute("class", "closed");	
 		}
@@ -132,12 +132,12 @@ function show_subCategory(obj){
 	}
 	else{		
 		sub_category.style.display = "none";
-		if($j(previous_obj).siblings()[2])
-			$j(previous_obj).siblings()[2].style.display = "";
+		if($(previous_obj).siblings()[2])
+			$(previous_obj).siblings()[2].style.display = "";
 		
 		obj.setAttribute("class", "closed");		
-		if($j(previous_obj).siblings()[1] = sub_category){			//To handle open, close the same category
-			$j(previous_obj).siblings()[1] = "";
+		if($(previous_obj).siblings()[1] = sub_category){			//To handle open, close the same category
+			$(previous_obj).siblings()[1] = "";
 			previous_obj = "";	
 		}
 	}
@@ -147,22 +147,22 @@ function set_category(obj, flag){
 	var checked_flag = 0;
 
 	if(flag == 0){
-		var children_length = $j(obj).siblings()[1].children.length;
+		var children_length = $(obj).siblings()[1].children.length;
 		if(obj.checked == true){
 			for(i=0; i<children_length; i++){
-				$j(obj).siblings()[1].children[i].children[1].checked = true;	
+				$(obj).siblings()[1].children[i].children[1].checked = true;	
 			}
 		}
 		else{
 			for(i=0; i<children_length; i++){
-				$j(obj).siblings()[1].children[i].children[1].checked = false;	
+				$(obj).siblings()[1].children[i].children[1].checked = false;	
 			}	
 		}
 	}
 	else{
-		var parent_category = $j(obj.parentNode.parentNode).siblings()[1];
-		var sibling = $j(obj.parentNode).siblings();
-		var sibling_length = $j(obj.parentNode).siblings().length;
+		var parent_category = $(obj.parentNode.parentNode).siblings()[1];
+		var sibling = $(obj.parentNode).siblings();
+		var sibling_length = $(obj.parentNode).siblings().length;
 		
 		if(obj.checked == true){
 			if(parent_category.checked != true)
@@ -184,7 +184,7 @@ function set_category(obj, flag){
 
 function deleteRow_main(obj){
 	 var item_index = obj.parentNode.parentNode.rowIndex;
-		$(obj.parentNode.parentNode.parentNode.parentNode.id).deleteRow(item_index);
+		document.getElementById(obj.parentNode.parentNode.parentNode.parentNode.id).deleteRow(item_index);
 	
 	var target_mac = obj.parentNode.parentNode.children[1].title;
 	var apps_filter_row = apps_filter.split("<");
@@ -206,10 +206,10 @@ function deleteRow_main(obj){
 }
 
 function addRow_main(obj, length){	
-	var category_array = $j(obj.parentNode).siblings()[2].children;
+	var category_array = $(obj.parentNode).siblings()[2].children;
 	var subCategory_array;
 	var category_checkbox;
-	var enable_checkbox = $j(obj.parentNode).siblings()[0].children[0];
+	var enable_checkbox = $(obj.parentNode).siblings()[0].children[0];
 	var first_catID = 0;
 	var invalid_char = "";
 	var blank_category = 0;
@@ -332,7 +332,7 @@ function genMain_table(){
 	code += '<input type="checkbox" checked="">';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
-	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>">';
+	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>" autocorrect="off" autocapitalize="off">';
 	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code += '<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>';	
 	code += '</td>';
@@ -440,7 +440,7 @@ function genMain_table(){
 	
 	code += '</tbody>';	
 	code += '</table>';
-	$('mainTable').innerHTML = code;
+	document.getElementById('mainTable').innerHTML = code;
 	showLANIPList();
 }
 
@@ -493,13 +493,13 @@ function showLANIPList(){
 	}
 	
 	code +="<!--[if lte IE 6.5]><script>alert(\"<#ALERT_TO_CHANGE_BROWSER#>\");</script><![endif]-->";	
-	$("ClientList_Block_PC").innerHTML = code;
+	document.getElementById("ClientList_Block_PC").innerHTML = code;
 }
 
 function pullLANIPList(obj){
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		document.form.PC_devicename.focus();		
 		isMenuopen = 1;
 	}
@@ -509,7 +509,7 @@ function pullLANIPList(obj){
 
 function edit_table(){
 	var apps_filter_temp = "";
-	var first_element = $j('#main_element').siblings();
+	var first_element = $('#main_element').siblings();
 	
 	for(k=1;k<first_element.length;k++){
 		var enable_checkbox = first_element[k].children[0].children[0].checked ? 1:0;
@@ -744,23 +744,23 @@ function show_inner_tab(){
 		code += "<span style=\"margin-left:10px\" class=\"clicked\"><#AiProtection_filter#></span>";	
 	}
 
-	$('switch_menu').innerHTML = code;
+	document.getElementById('switch_menu').innerHTML = code;
 }
 
 function show_tm_eula(){
 	if(document.form.preferred_lang.value == "JP"){
-		$j.get("JP_tm_eula.htm", function(data){
-			$('agreement_panel').innerHTML= data;
+		$.get("JP_tm_eula.htm", function(data){
+			document.getElementById('agreement_panel').innerHTML= data;
 		});
 	}
 	else{
-		$j.get("tm_eula.htm", function(data){
-			$('agreement_panel').innerHTML= data;
+		$.get("tm_eula.htm", function(data){
+			document.getElementById('agreement_panel').innerHTML= data;
 		});
 	}
 	dr_advise();
 	cal_agreement_block();
-	$j("#agreement_panel").fadeIn(300);
+	$("#agreement_panel").fadeIn(300);
 }
 
 function cal_agreement_block(){
@@ -783,14 +783,14 @@ function cal_agreement_block(){
 		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
 	}
 
-	$("agreement_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("agreement_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function cancel(){
-	$j("#agreement_panel").fadeOut(100);
-	$j('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
+	$("#agreement_panel").fadeOut(100);
+	$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 	curState = 0;
-	$("hiddenMask").style.visibility = "hidden";
+	document.getElementById("hiddenMask").style.visibility = "hidden";
 }
 
 function eula_confirm(){
@@ -857,11 +857,11 @@ function eula_confirm(){
 											<td>
 												<div id="switch_menu" style="margin:-20px 0px 0px -20px;">
 													<div style="width:173px;height:30px;border-top-left-radius:8px;border-bottom-left-radius:8px;" class="block_filter_pressed">
-														<div style="text-align:center;padding-top:5px;color:#93A9B1;font-size:14px"><#AiProtection_filter#></div>
+														<table class="block_filter_name_table_pressed"><tr><td style="line-height:13px;"><#AiProtection_filter#></td></tr></table>
 													</div>
 													<a href="ParentalControl.asp">
 														<div style="width:172px;height:30px;margin:-32px 0px 0px 173px;border-top-right-radius:8px;border-bottom-right-radius:8px;" class="block_filter">
-															<div class="block_filter_name"><#Time_Scheduling#></div>
+															<table class="block_filter_name_table"><tr><td style="line-height:13px;"><#Time_Scheduling#></td></tr></table>
 														</div>
 													</a>
 												</div>
@@ -899,7 +899,7 @@ function eula_confirm(){
 											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_web_restrict_enable"></div>
 											<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
-													$j('#radio_web_restrict_enable').iphoneSwitch('<% nvram_get("wrs_enable"); %>',
+													$('#radio_web_restrict_enable').iphoneSwitch('<% nvram_get("wrs_enable"); %>',
 														function(){
 															curState = 1;
 															if(document.form.TM_EULA.value == 0){
@@ -937,7 +937,7 @@ function eula_confirm(){
 											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="block_notification_enable"></div>
 											<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
-													$j('#block_notification_enable').iphoneSwitch('<% nvram_get(""); %>',
+													$('#block_notification_enable').iphoneSwitch('<% nvram_get(""); %>',
 														function(){
 									
 														},

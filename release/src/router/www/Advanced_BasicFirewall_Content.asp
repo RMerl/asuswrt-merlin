@@ -160,13 +160,13 @@ function done_validating(action){
 										<tr id="webdav_http_port_tr" style="display:none;">
 											<th width="40%">Cloud Disk Port (HTTP):</th>
 											<td>
-												<input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_http_port"); %>" onKeyPress="return validator.isNumber(this, event);">
+												<input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_http_port"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">
 											</td>
 										</tr>
 										<tr id="webdav_https_port_tr" style="display:none;">
 											<th width="40%">Cloud Disk Port (HTTPS):</th>
 											<td>
-												<input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_https_port"); %>" onKeyPress="return validator.isNumber(this, event);">
+												<input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_https_port"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">
 											</td>
 										</tr>		  
        										<tr>
