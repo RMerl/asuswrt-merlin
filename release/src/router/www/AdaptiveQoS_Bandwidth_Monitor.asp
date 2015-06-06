@@ -121,7 +121,7 @@ var curState = '<% nvram_get("apps_analysis"); %>';
 
 function register_event(){
 	var color_array = ["#F01F09", "#F08C09", "#F3DD09", "#59E920", "#58CCED", "inherit"];
-	$(function() {
+	$(function($) {
 		$("#sortable").sortable();
 		$("#sortable").disableSelection();
 		$("#0,#1,#2,#3,#4,#5").draggable({helper:"clone",revert:true,revertDuration:10}); 
