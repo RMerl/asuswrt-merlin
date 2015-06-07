@@ -28,8 +28,8 @@ $(ALL_OBJS): %.o: %.c
 	$(CC) $(CCFLAGS) -c $<
 
 install: all
-	install -d $(INSTALLDIR)/igs/usr/sbin
-	install -m 755 igs $(INSTALLDIR)/igs/usr/sbin
+	install -d $(INSTALLDIR)/igs$(BCMEX)$(DPI)$(EX7)/usr/sbin
+	install -m 755 igs $(INSTALLDIR)/igs$(BCMEX)$(DPI)$(EX7)/usr/sbin
 
 .PHONY:	clean
 clean:

@@ -312,7 +312,7 @@ else
 #obj-y += et
 obj-y += utils$(BCMEX)$(EX7)
 obj-$(RTCONFIG_EMF) += emf$(BCMEX)$(DPI)$(EX7)
-obj-$(RTCONFIG_EMF) += igs
+obj-$(RTCONFIG_EMF) += igs$(BCMEX)$(DPI)$(EX7)
 ifneq ($(RTCONFIG_BCM_794),y)	# do not build wl/dhd since not ready
 obj-y += wlconf$(BCMEX)$(EX7)
 obj-y += nas$(BCMEX)$(EX7)
@@ -2886,17 +2886,17 @@ endif
 emf$(BCMEX)$(DPI)$(EX7)-clean:
 	-@$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/emfconf clean
 
-igs:
+igs$(BCMEX)$(DPI)$(EX7):
 	$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/igsconf CROSS=$(CROSS_COMPILE)
 
-igs-install:
+igs$(BCMEX)$(DPI)$(EX7)-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
-	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
+	$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
-igs-clean:
-	-@$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf clean
+igs$(BCMEX)$(DPI)$(EX7)-clean:
+	-@$(MAKE) -C emf$(BCMEX)$(DPI)$(EX7)/igsconf clean
 
 ebtables: kernel_header dummy
 	$(MAKE) -C ebtables CC=$(CC) LD=$(LD) \
