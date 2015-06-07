@@ -328,8 +328,7 @@ GEN_CONF:
 #endif
 #endif /* RTCONFIG_BCMARM */
 #else
-// Disabled since we are still using 5.100
-///		eval("wl", "-i", ifname, "ampdu_density", "6");		// resolve IOT with Intel STA for BRCM SDK 5.110.27.20012
+		eval("wl", "-i", ifname, "ampdu_density", "6");		// resolve IOT with Intel STA for BRCM SDK 5.110.27.20012
 #endif /* RTCONFIG_BCMWL6 */
 	}
 
