@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.54 (xx-xxx-2015)
+378.54 (7-June-2015)
    IMPORTANT: if you were previously using the AiProtection ad blocker, you
               will need to manually disable it over SSH after flashing this
               release, by running the following commands:
