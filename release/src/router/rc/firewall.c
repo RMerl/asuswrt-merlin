@@ -4505,7 +4505,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 				ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 				eval("iptables", "-t", "mangle", "-A", "FORWARD",
 				     "-o", lan_if, "-s", lan_class, "-d", lan_class,
-				     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
+				     "-j", "MARK", "--set-mark", "0x01/0x7");
 			}
 		}
 #ifdef RTCONFIG_BCMARM
@@ -4702,7 +4702,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 				ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 				eval("iptables", "-t", "mangle", "-A", "FORWARD",
 				     "-o", lan_if, "-s", lan_class, "-d", lan_class,
-				     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
+				     "-j", "MARK", "--set-mark", "0x01/0x7");
 			}
 		}
 #ifdef RTCONFIG_BCMARM
