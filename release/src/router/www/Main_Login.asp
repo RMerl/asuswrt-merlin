@@ -12,7 +12,7 @@
 <style>
 .content{
 width:580px;
-height:526px;
+height:426px;
 margin: 20px auto 40px auto;
 background:rgba(40,52,55,0.1);
 }
@@ -26,17 +26,17 @@ height:100%;
 
 .title_name {
 font-family:Arial;
-font-size: 40pt;
+font-size: 30pt;
 color:#93d2d9;
 }
 .prod_madelName{
 font-family: Arial;
-font-size: 26pt;
+font-size: 20pt;
 color:#fff;
 }
 .p1{
 font-family: Arial;
-font-size: 16pt;
+font-size: 12pt;
 color:#fff;
 }
 
@@ -45,10 +45,10 @@ background:rgba(255,255,255,0.1);
 border: solid 1px #6e8385;
 border-radius: 4px ;
 transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
-height: 68px;
+height: 48px;
 width: 253px;
 font-family: Arial;
-font-size: 28pt;
+font-size: 22pt;
 color:#fff;
 color:#000\9; /* IE6 IE7 IE8 */
 text-align:center;
@@ -57,7 +57,7 @@ Vertical-align:center
 
 .button_text{
 font-family: Arial;
-font-size: 28pt;
+font-size: 22pt;
 color:#fff;
 text-align:center;
 Vertical-align:center
@@ -66,24 +66,24 @@ Vertical-align:center
 .form_input{
 background-color:rgba(255,255,255,0.2);
 border-radius: 4px;
-padding:26px 22px;
+padding:13px 11px;
 width: 480px;
 border: 0;
 height:25px;
 color:#fff;
 color:#000\9; /* IE6 IE7 IE8 */
-font-size:28px
+font-size:22px
 }
 
 .form_input_text{
 font-family: Arial;
-font-size: 28pt;
+font-size: 22pt;
 color:#a9a9a9;
 }
 
 .p2{
 font-family: Arial;
-font-size: 18pt;
+font-size: 12pt;
 color:#28fff7;
 }
 </style>
@@ -186,12 +186,12 @@ function login(){
 <input type="hidden" name="login_authorization" value="">
 <input name="foilautofill" style="display: none;" type="password">
 <table align="center" cellpadding="0" cellspacing="0">
-	<tr height="115px"></tr>
+	<tr height="35px"></tr>
 	<tr>
 		<td>
 			<div>
 				<table class="content">
-					<tr style="height:43px;">
+					<tr style="height:23px;">
 						<td style="width:73px" align="left">
 							<div><img src="/images/New_ui/icon_titleName.png"></div>
 						</td>
@@ -203,30 +203,30 @@ function login(){
 						<td colspan="2"><div class="prod_madelName" style="margin-left:78px;"><#Web_Title2#></div></td>
 					</tr>
 					<tr>
-						<td colspan="2"><div class="p1" style="margin:35px 0px 0px 78px;">Sign In with Your ASUS Router Account</div></td>
+						<td colspan="2"><div class="p1" style="margin:25px 0px 0px 78px;">Sign In with Your ASUS Router Account</div></td>
 					</tr>					
-					<tr style="height:72px;">
+					<tr style="height:42px;">
 						<td colspan="2">
 							<div style="margin:20px 0px 0px 78px;">
 								<input type="text" id="login_username" name="login_username" tabindex="1" class="form_input" maxlength="20" value="" autocapitalization="off" autocomplete="off" placeholder="Username">
 							</div>
 						</td>
 					</tr>
-					<tr style="height:72px;">
+					<tr style="height:42px;">
 						<td colspan="2">
-							<div style="margin:30px 0px 0px 78px;">
+							<div style="margin:20px 0px 0px 78px;">
 								<input type="password" autocapitalization="off" autocomplete="off" value="" name="login_passwd" tabindex="2" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="Password">
 							</div>
 						</td>
 					</tr>
-					<tr style="heigh:70px">
+					<tr style="heigh:60px">
 						<td colspan="2">
-							<div style="color: rgb(255, 204, 0); margin:10px 0px -10px 78px; display:none;" id="error_status_field" class="formfontdesc"></div>
+							<div style="color: rgb(255, 204, 0); margin:10px 0px 0px 78px; display:none;" id="error_status_field" class="formfontdesc"></div>
 						</td>
 					</tr>
-					<tr align="right" style="height:68px;">
+					<tr align="right" style="height:38px;">
 						<td colspan="2">
-							<div style="text-align: center;float:right; margin:50px 0px 0px 78px;">
+							<div style="text-align: center;float:right; margin:30px 0px 0px 78px;">
 								<input type="submit" class="button" onclick="login();" value="Sign In">
 							</div>	
 						</td>
