@@ -3239,9 +3239,10 @@ void start_upnp(void)
 					   (min_lifetime > 0 ? min_lifetime : 120),
 					   (max_lifetime > 0 ? max_lifetime : 86400));
 
+				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
 				fappend(f, "/etc/upnp/config.custom");
 				append_custom_config("upnp", f);
-				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
+
 				fclose(f);
 				use_custom_config("upnp", "/etc/upnp/config");
 				run_postconf("upnp", "/etc/upnp/config");
