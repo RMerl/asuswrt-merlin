@@ -51,6 +51,8 @@ Asuswrt-Merlin Changelog
            the option to block traffic when the tunnel goes down wasn't 
            properly removing those rules, so a tunnel going down in 
            All Traffic would still block policed clients.
+  - FIXED: EMF wasn't working on ARM models (missing userspace tool)
+
 
 
 378.53 (26-Apr-2015)
