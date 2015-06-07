@@ -10,7 +10,7 @@ Asuswrt-Merlin Changelog
                   nvram set wrs_adblock_stream=0
                   nvram commit
 
-   - NEW: Merged with Asus GPL 378_5134 (from AC87).
+   - NEW: Merged with Asus GPL 378_5134.
    - NEW: OpenVPN policy rules can now be set to route matching traffic
           through either the tunnel, or to your ISP (allowing you to 
           create exceptions to your tunnelling rules)
@@ -30,6 +30,7 @@ Asuswrt-Merlin Changelog
               time (when WAN comes up), so clients who are blocked while 
               a tunnel is down will immediately be blocked until 
               the tunnel comes up.
+   - CHANGED: Upgraded Quantenna firmware to 378_6065 release (AC87)
    - FIXED: Router DNS weren't reverted to their original values
             when shutting down an OpenVPN client with "explicit-
             exit-notify" enabled.  Now we manually clean it up
