@@ -91,7 +91,7 @@ function initial(){
 			document.getElementById("sig_ver_word").innerHTML = sig_ver;
 	}
 
-	if ("<% nvram_get("jffs2_on"); %>" == "1") document.getElementById("jffs_warning").style.display="";
+	if ("<% nvram_get("jffs2_enable"); %>" == "1") document.getElementById("jffs_warning").style.display="";
 	if(!live_update_support || !HTTPS_support){
 		document.getElementById("update").style.display = "none";
 		document.getElementById("linkpage").style.display = "";

@@ -161,7 +161,7 @@ function initial(){
 		document.form.telnetd_enable[1].disabled = false;
 	}	
 
-	toggle_jffs_visibility('<% nvram_get("jffs2_on"); %>');
+	toggle_jffs_visibility('<% nvram_get("jffs2_enable"); %>');
 }
 
 var time_zone_tmp="";
@@ -939,11 +939,6 @@ function display_spec_IP(flag){
 function toggle_jffs_visibility(state){
 	var visibility = ( state == 1 ? "" : "none");
 
-	if ((!state) && (bwdpi_support) && ('<% nvram_get("bwdpi_db_enable"); %>' == '1')) {
-		alert("You cannot disable the JFFS partition while you have Traffic Analysis enabled!");
-		setRadioValue(document.form.jffs2_on, 1);
-		return false;
-	}
 	document.getElementById('jffs2_format_tr').style.display = visibility;
 	document.getElementById('jffs2_scripts_tr').style.display = visibility;
 }
@@ -1042,13 +1037,13 @@ function toggle_jffs_visibility(state){
 						<td colspan="2">Persistent JFFS2 partition</td>
 					</tr>
 				</thead>
-				<tr>
+				<!-- tr>
 					<th>Enable JFFS partition</th>
 					<td>
-						<input type="radio" name="jffs2_on" class="input" value="1" onclick="toggle_jffs_visibility(1);" <% nvram_match("jffs2_on", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_on" class="input" value="0" onclick="toggle_jffs_visibility(0);" <% nvram_match("jffs2_on", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="jffs2_enable" class="input" value="1" onclick="toggle_jffs_visibility(1);" <% nvram_match("jffs2_enable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_enable" class="input" value="0" onclick="toggle_jffs_visibility(0);" <% nvram_match("jffs2_enable", "0", "checked"); %>><#checkbox_No#>
 					</td>
-				</tr>
+				</tr -->
 				<tr id="jffs2_format_tr">
 					<th>Format JFFS partition at next boot</th>
     				<td>

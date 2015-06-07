@@ -93,10 +93,6 @@ function initial(){
 		}
 		
 		document.getElementById('statistic_hint').innerHTML = "*You should turn on the Traffic Statistic to record the traffic information";	
-		if ('<% nvram_get("jffs2_on"); %>' == '0') {
-			document.getElementById('traffic_analysis_enable').style.display = "none"
-			document.getElementById('jffs_hint').style.display = "";
-		}
 	}
 	get_every_client_data("all", "detail", "24", date_second, date_string);		//get clients and find top 5 clients' traffic last 24 hours
 	setTimeout(function(){
@@ -1485,7 +1481,6 @@ function introduce_demo(){
 										<label style="font-size:16px;">Last date:</label>
 										<input class="input_12_table" id="datepicker" value="">	
 										<div id="statistic_hint" style="text-align:right;margin-top:-21px;padding-right:15px;color:#FC0;font-size:14px;">*Sample data - turn on the Traffic Statistic to record the traffic information</div>
-										<div id="jffs_hint" style="text-align:right;padding-right:15px;color:#FC0;font-size:14px; display:none;">* The JFFS partition must first be enabled before you can enable the Traffic Analyzer!</div>
 									</div>
 									<div style="margin:10px 0 10px 4px;">
 										<table>

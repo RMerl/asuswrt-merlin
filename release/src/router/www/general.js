@@ -336,7 +336,7 @@ function change_ddns_setting(v){
 				showhide("linkToHome", 0);
 				showhide("wildcard_field",0);
 				showhide("check_ddns_field", 0);
-				if (('<% nvram_get("jffs2_on"); %>' != '1') || ('<% nvram_get("jffs2_scripts"); %>' != '1'))
+				if (('<% nvram_get("jffs2_enable"); %>' != '1') || ('<% nvram_get("jffs2_scripts"); %>' != '1'))
 					showhide("need_custom_scripts", 1);
 				else
 					showhide("need_custom_scripts", 0);
