@@ -1603,13 +1603,13 @@ int set_crt_parsed(const char *name, char *file_path)
 			return -EINVAL;
 		}
 		p += strlen(buffer);
-		if( *(p-1) == '\n' )
-			*(p-1) = '>';
+		//if( *(p-1) == '\n' )
+			//*(p-1) = '>';
 		while(fgets(buffer2, sizeof(buffer2), fp)) {
 			strncpy(p, buffer2, strlen(buffer2));
 			p += strlen(buffer2);
-			if( *(p-1) == '\n' )
-				*(p-1) = '>';
+			//if( *(p-1) == '\n' )
+				//*(p-1) = '>';
 		}
 		*p = '\0';
 		nvram_set(name, buffer);
