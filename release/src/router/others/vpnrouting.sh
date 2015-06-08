@@ -93,6 +93,7 @@ then
 	VPN_PRIO=1200
 	START_PRIO=1000
 	END_PRIO=1399
+	VPN_INSTANCE=1
 
 elif [ "$dev" == "tun12" ]
 then
@@ -104,6 +105,7 @@ then
 	VPN_PRIO=1600
 	START_PRIO=1400
 	END_PRIO=1799
+	VPN_INSTANCE=2
 else
 	run_custom_script
 	exit 0
@@ -115,7 +117,7 @@ export VPN_GW VPN_IP VPN_TBL VPN_FORCE
 # webui reports that vpn_force changed while vpn client was down
 if [ $script_type = "rmupdate" ]
 then
-	logger -t "openvpn-routing" "Refreshing policy rules"
+	logger -t "openvpn-routing" "Refreshing policy rules for client $VPN_INSTANCE"
 	purge_client_list
 
 	if [ $VPN_FORCE == "1" -a $VPN_REDIR == "2" ]
@@ -135,12 +137,12 @@ fi
 
 if [ $script_type == "route-up" -a $VPN_REDIR != "2" ]
 then
-	logger -t "openvpn-routing" "Skipping, not in routing policy mode"
+	logger -t "openvpn-routing" "Skipping, client $VPN_INSTANCE not in routing policy mode"
 	run_custom_script
 	exit 0
 fi
 
-logger -t "openvpn-routing" "Configuring policy rules for $dev"
+logger -t "openvpn-routing" "Configuring policy rules for client $VPN_INSTANCE"
 
 if [ $script_type == "route-pre-down" ]
 then
