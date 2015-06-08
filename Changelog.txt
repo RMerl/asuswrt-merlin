@@ -1,6 +1,11 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.54_1 (8-June-2015)
+   - Some of the builds were unstable, did a complete recompile of all
+     releases.  There was no code change.
+
+
 378.54 (7-June-2015)
    IMPORTANT: if you were previously using the AiProtection ad blocker, you
               will need to manually disable it over SSH after flashing this
