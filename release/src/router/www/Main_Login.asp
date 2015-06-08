@@ -48,7 +48,7 @@ transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
 height: 48px;
 width: 253px;
 font-family: Arial;
-font-size: 22pt;
+font-size: 18pt;
 color:#fff;
 color:#000\9; /* IE6 IE7 IE8 */
 text-align:center;
@@ -57,7 +57,7 @@ Vertical-align:center
 
 .button_text{
 font-family: Arial;
-font-size: 22pt;
+font-size: 18pt;
 color:#fff;
 text-align:center;
 Vertical-align:center
@@ -221,7 +221,7 @@ function login(){
 					</tr>
 					<tr style="heigh:60px">
 						<td colspan="2">
-							<div style="color: rgb(255, 204, 0); margin:10px 0px 0px 78px; display:none;" id="error_status_field" class="formfontdesc"></div>
+							<div style="color: rgb(255, 204, 0); margin:10px 0px -30px 78px; display:none;" id="error_status_field" class="formfontdesc"></div>
 						</td>
 					</tr>
 					<tr align="right" style="height:38px;">
