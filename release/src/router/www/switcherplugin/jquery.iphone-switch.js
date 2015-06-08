@@ -40,7 +40,7 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 
 		// click handling
 		jQuery(this).click(function() {
-			if((this.id == "radio_clouddisk_enable" || this.id == "radio_web_restrict_enable" || this.id == "apps_analysis_enable" || this.id == "radio_wps_enable") && typeof(curState))
+			if((this.id == "radio_clouddisk_enable" || this.id == "radio_web_restrict_enable" || this.id == "apps_analysis_enable" || this.id == "radio_wps_enable" || this.id == "nm_radio_dualwan_enable" || this.id == "simdetect_switch") && typeof(curState))
 				state = curState;
 
 			if(state == '1') {
@@ -52,9 +52,9 @@ jQuery.fn.iphoneSwitch = function(start_state, switched_on_callback, switched_of
 			}
 			else {
 				jQuery(this).find('.iphone_switch').animate({backgroundPosition: 0}, "slow", function() {
+					jQuery(this).find('.iphone_switch').attr('src', settings.switch_container_path);
 					switched_on_callback();
 				});
-				jQuery(this).find('.iphone_switch').attr('src', settings.switch_container_path);
 				state = '1';
 			}
 		});		

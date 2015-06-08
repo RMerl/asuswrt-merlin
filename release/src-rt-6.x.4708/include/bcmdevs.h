@@ -1,7 +1,7 @@
 /*
  * Broadcom device-specific manifest constants.
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdevs.h 423796 2013-09-13 09:36:50Z $
+ * $Id: bcmdevs.h 473931 2014-04-30 04:10:44Z $
  */
 
 #ifndef	_BCMDEVS_H
@@ -473,10 +473,8 @@
 #define BFL_SROM11_BTCOEX  0x00000001  /* Board supports BTCOEX */
 #define BFL_SROM11_WLAN_BT_SH_XTL  0x00000002  /* bluetooth and wlan share same crystal */
 #define BFL_SROM11_EXTLNA	0x00001000  /* Board has an external LNA in 2.4GHz band */
-#ifdef SKY85710_FEM_PATCH
 #define BFL_SROM11_EPA_TURNON_TIME     0x00018000  /* 2 bits for different PA turn on times */
 #define BFL_SROM11_EPA_TURNON_TIME_SHIFT  15
-#endif
 #define BFL_SROM11_EXTLNA_5GHz	0x10000000  /* Board has an external LNA in 5GHz band */
 #define BFL_SROM11_GAINBOOSTA01	0x20000000  /* 5g Gainboost for core0 and core1 */
 #define BFL2_SROM11_APLL_WAR	0x00000002  /* Flag to implement alternative A-band PLL settings */

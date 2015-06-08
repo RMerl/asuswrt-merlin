@@ -68,7 +68,7 @@ struct ip6tables_match
 	/* Function which parses command options; returns true if it
 	   ate an option */
 	int (*parse)(int c, char **argv, int invert, unsigned int *flags,
-		     const void *entry,
+		     const struct ip6t_entry *entry,
 		     unsigned int *nfcache,
 		     struct ip6t_entry_match **match);
 
@@ -76,11 +76,11 @@ struct ip6tables_match
 	void (*final_check)(unsigned int flags);
 
 	/* Prints out the match iff non-NULL: put space at end */
-	void (*print)(const void *ip,
+	void (*print)(const struct ip6t_ip6 *ip,
 		      const struct ip6t_entry_match *match, int numeric);
 
 	/* Saves the union ipt_matchinfo in parsable form to stdout. */
-	void (*save)(const void *ip,
+	void (*save)(const struct ip6t_ip6 *ip,
 		     const struct ip6t_entry_match *match);
 
 	/* Pointer to list of extra command-line options */
@@ -101,9 +101,6 @@ struct ip6tables_target
 	
 	ip6t_chainlabel name;
 
-	/* Revision of match (0 by default). */
-	u_int8_t revision;
-
 	const char *version;
 
 	/* Size of target data. */
@@ -121,18 +118,18 @@ struct ip6tables_target
 	/* Function which parses command options; returns true if it
 	   ate an option */
 	int (*parse)(int c, char **argv, int invert, unsigned int *flags,
-		     const void *entry,
+		     const struct ip6t_entry *entry,
 		     struct ip6t_entry_target **target);
 	
 	/* Final check; exit if not ok. */
 	void (*final_check)(unsigned int flags);
 
 	/* Prints out the target iff non-NULL: put space at end */
-	void (*print)(const void *ip,
+	void (*print)(const struct ip6t_ip6 *ip,
 		      const struct ip6t_entry_target *target, int numeric);
 
 	/* Saves the targinfo in parsable form to stdout. */
-	void (*save)(const void *ip,
+	void (*save)(const struct ip6t_ip6 *ip,
 		     const struct ip6t_entry_target *target);
 
 	/* Pointer to list of extra command-line options */

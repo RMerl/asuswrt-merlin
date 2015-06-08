@@ -13,7 +13,7 @@ extern void init_wl(void);
 extern void load_wifi_driver(void);
 extern char *__get_wlifname(int band, int subunit, char *buf);
 extern char *get_staifname(int band);
-extern char *get_vapifname(int band);
+extern char *get_vphyifname(int band);
 #endif
 extern void fini_wl(void);
 extern void init_syspara(void);
@@ -45,5 +45,7 @@ extern int getWscStatus(int unit);
 #elif defined(RTCONFIG_QCA)
 extern char *getWscStatus(int unit);
 #endif
+
+extern char *get_lan_hwaddr(void);
 
 #endif

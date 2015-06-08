@@ -9,6 +9,8 @@ static void show_help()
 	printf("Usage :\n");
 	printf("    save : traffic_control -w\n");
 	printf("    read : traffic_control -r -i [interface] -t [time of end] -s [time of start]\n");
+	printf("    query : traffic_control -q\n");
+	printf("    save traffic when HW reboot : traffic_control -c\n");
 }
 
 int main(int argc, char **argv)
@@ -24,7 +26,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 	
-	while ((c = getopt(argc, argv, "wri:t:s:")) != -1)
+	while ((c = getopt(argc, argv, "wri:t:s:qc")) != -1)
 	{
 		switch(c){
 			case 'w':
@@ -32,6 +34,9 @@ int main(int argc, char **argv)
 				break;
 			case 'r':
 				type = "r";
+				break;
+			case 'q':
+				type = "q";
 				break;
 			case 'i':
 				ifname = optarg;
@@ -41,6 +46,9 @@ int main(int argc, char **argv)
 				break;
 			case 's':
 				time_start = optarg;
+				break;
+			case 'c':
+				type = "c";
 				break;
 			default:
 				show_help();

@@ -55,14 +55,43 @@
 	outline: none; /* for Firefox */
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
 }
+
+#apn_bar_container{
+	width:170px;
+	height:21px;
+	border:2px inset #999;
+	margin-left:9px;
+	background-color:#FFFFFF;
+	z-index:100;
+}
+
+#apn_proceeding_img_text {
+  position: absolute;
+  z-index: 101;
+  font-size: 11px;
+  color: #000000;
+  margin-left: 75px;
+  line-height: 21px;
+}
+
+#apn_proceeding_img{
+ 	height:21px;
+	background:#C0D1D3 url(/images/proceeding_img.gif);
+}
+
 </style>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
+var sw_mode = '<% nvram_get("sw_mode"); %>';
+if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+	sw_mode = 4;
+if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+	sw_mode = 2;
 var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
 
-if(isMobile() && tmo_support && sw_mode != 2 && qisFlag != "sitesurvey" && qisFlag != "sitesurvey_mb")
+if(isMobile() && tmo_support && sw_mode != 2 && qisFlag != "sitesurvey_rep" && qisFlag != "sitesurvey_mb")
 	location.href = "MobileQIS_Login.asp";
 
 var parent_macaddr = '<% nvram_get("lan_hwaddr"); %>';
@@ -86,7 +115,7 @@ if(yadns_support){
 }
 
 // live update
-var $j = jQuery.noConflict();
+
 var webs_state_update = '<% nvram_get("webs_state_update"); %>';
 var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
 var webs_state_error = '<% nvram_get("webs_state_error"); %>';
@@ -103,6 +132,15 @@ var liveUpdateFinish = false;
 var new_FW = false;
 var retry = 0;
 var isManual = false;
+var isStatic = false;
+var staticIP = false;
+
+var restartTime = false;
+var restartWireless = false;
+var sysReboot = false;
+
+var wan_autodet_state = "";
+var usb_connected = 0;
 
 function add_options_x2(o, arr, varr, orig){
 	free_options(o);
@@ -121,7 +159,7 @@ function detect_firmware(){
 	liveUpdateFinish = true;
 	return;
 
-	$j.ajax({
+	$.ajax({
 		url: '/detect_firmware.asp',
 		dataType: 'script',
 
@@ -167,37 +205,74 @@ function detect_firmware(){
 }
 
 function detect_update(){
-	if(isFirst)
-		var _action_wait = 7000;
-	else
-		var _action_wait = 4000;
-		
-	document.start_update.action_script.value="restart_time;start_webs_update";	//for detect time zone	
-	setTimeout("document.start_update.submit();", _action_wait);	//delay after restart_time
+	document.start_update.action_wait.value = "0";
+	document.start_update.action_script.value = "";
+	document.start_update.flag.value = "liveUpdate";
+	document.start_update.submit();
 }
 
 function set_step(focus_id){
-	$("t1").className = "lefttabmid";
-	$("t2").className = "lefttabmid";
-	$("t3").className = "lefttabmid";
+	document.getElementById("t1").className = "lefttabmid";
+	document.getElementById("t2").className = "lefttabmid";
+	document.getElementById("t3").className = "lefttabmid";
 
 	switch(focus_id){
 		case "t2":
-			$("t2").className = "lefttabmidfocus";
+			document.getElementById("t2").className = "lefttabmidfocus";
 			break;
 		case "t3":
-			$("t3").className = "lefttabmidfocus";
+			document.getElementById("t3").className = "lefttabmidfocus";
 			break;
 		default:	
-			$("t1").className = "lefttabmidfocus";
+			document.getElementById("t1").className = "lefttabmidfocus";
 			break;
 	}
 }
 
+var based_modelid = '<% nvram_get("productid"); %>';
+var progress = 0;
+var sim_state = '<% nvram_get("usb_modem_act_sim"); %>';
+var modem_autoapn = '<% nvram_get("modem_autoapn"); %>';
+var usb_modem_auto_lines = '<% nvram_get("usb_modem_auto_lines"); %>';
+var usb_modem_auto_running = '<% nvram_get("usb_modem_auto_running"); %>';
+var usb_modem_auto_spn = '<% nvram_get("usb_modem_auto_spn"); %>';
+function update_apn_progress(){
+$.ajax({
+		url: '/ajax_autoapn_progress.asp',
+		dataType: 'script',
+
+		error: function(xhr){
+				setTimeout("update_apn_progress();", 1000);
+		},
+		success: function(){
+ 			if(usb_modem_auto_running.length != 0){
+				document.getElementById("apn_div").style.display = "";
+				if(usb_modem_auto_running == usb_modem_auto_lines)
+				 	progress = 100;
+				 else
+				 	progress = Math.round(parseInt(usb_modem_auto_running)/parseInt(usb_modem_auto_lines)*100);
+
+				document.getElementById("apn_proceeding_img").style.width = progress+"%";
+				document.getElementById("apn_proceeding_img_text").innerHTML =  progress+"%";
+			}
+			else
+				document.getElementById("apn_div").style.display = "none"; 
+
+			if(progress != 100)
+				setTimeout("update_apn_progress();", 1000);
+		}
+	});	
+}
+
 function QIS_load_body(){
 	var showCase;
-	showCase = ($("flag").value == "") ? "welcome" : $("flag").value;
+	showCase = (document.getElementById("flag").value == "") ? "welcome" : document.getElementById("flag").value;
 	winW_H();
+
+	if(based_modelid == "4G-AC55U" && sim_state == "1" && modem_autoapn == "1" && usb_modem_auto_spn.length == 0)
+		update_apn_progress();
+	else
+		document.getElementById("apn_div").style.display = "none";	
 
 	if(psta_support){
 		if((document.QKform.sw_mode.value == 2 || document.QKform.sw_mode.value == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
@@ -385,7 +460,7 @@ function gotoIndex(){
 }
 
 function check_DUT(){
-	$j.ajax({
+	$.ajax({
 		url: '/httpd_check.xml',
 		dataType: 'xml',
 		
@@ -399,7 +474,7 @@ function check_DUT(){
 }
 
 function detect_httpd(){
-	$j.ajax({
+	$.ajax({
     	url: '/httpd_check.xml',
     	dataType: 'xml',
 		timeout: 1500,
@@ -408,13 +483,13 @@ function detect_httpd(){
     		if(dead < 6){
     			setTimeout("detect_httpd();", 1000);
     		}else{
-    			$('loading_block1').style.display = "none";
-    			$('loading_block2').style.display = "none";
-    			$('loading_block3').style.display = "";
+    			document.getElementById('loading_block1').style.display = "none";
+    			document.getElementById('loading_block2').style.display = "none";
+    			document.getElementById('loading_block3').style.display = "";
 				if(findasus_support){
-    				$('loading_block3').innerHTML = "<div>You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</div>";
+    				document.getElementById('loading_block3').innerHTML = "<div>You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</div>";
 				}else{
-					$('loading_block3').innerHTML = "<div><#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#></div>";
+					document.getElementById('loading_block3').innerHTML = "<div><#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#></div>";
 				}						
     		}
     	},
@@ -472,7 +547,7 @@ function detect_httpd(){
 				<img src="images/loading.gif">
 				<div style="margin:-55px 0 0 75px;"><#QKSet_Internet_Setup_fail_method1#></div>
 			</div>   
-			<div class="drImg"><img src="images/alertImg.png"></div>
+			<div id="alertImg" class="drImg"><img src="images/alertImg.png"></div>
 			<div style="height:100px; "></div>
 		</td>
 		</tr>
@@ -507,6 +582,13 @@ function detect_httpd(){
 			<div class="lefttabmid" id="t1" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep1.png"></td><td><div class="qismenu"><#QIS_step2#></div></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t2" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep2.png"></td><td><div class="qismenu"><#QIS_step3#></div></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t3" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep3.png"></td><td><div class="qismenu"><#QIS_step4#></div></td></tr></tbody></table></div>
+			<div id="apn_div" style="margin-left:15px; margin-top: 50px; display:none">
+				<div style="margin-left:31px; font-size:12px; font-weight:bold; text-shadow:1px 1px 0px black;">Auto APN Progressing</div>
+				<div id="apn_bar_container">
+					<div id="apn_proceeding_img_text"></div>
+					<div id="apn_proceeding_img"></div>
+				</div>
+			</div>			
 		</td>
 
 		<td>
@@ -596,14 +678,15 @@ function detect_httpd(){
 
 <form method="post" name="start_update" action="/start_apply2.htm" target="hidden_frame">
 	<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-	<input type="hidden" name="flag" value="liveUpdate">
+	<input type="hidden" name="flag" value="">
 	<input type="hidden" name="current_page" value="">
 	<input type="hidden" name="next_page" value="">
 	<input type="hidden" name="action_mode" value="apply">
-	<input type="hidden" name="action_script" value="start_webs_update">
-	<input type="hidden" name="action_wait" value="12">
+	<input type="hidden" name="action_script" value="">
+	<input type="hidden" name="action_wait" value="3">
 	<input type="hidden" name="x_Setting" value="1">
 </form>
+
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 </body>
 </html>

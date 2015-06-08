@@ -138,7 +138,13 @@ void convert_dsl_wan()
 		if (nvram_match("dslx_transmode","ptm")) {
 			if (nvram_match("dsl8_proto","pppoe")) {
 				nvram_set("wan0_proto", "pppoe");
-				nvram_set_int("wan0_dhcpenable_x", 2);
+				/* Turn off DHCP on MAN interface */
+#if 1 /* TODO: tmporary change! remove after WEB UI support */
+				nvram_set("wan0_dhcpenable_x", "1");
+				nvram_set("wan0_vpndhcp", "0");
+#else /* TODO: tmporary change! remove after WEB UI support */
+				nvram_set("wan0_dhcpenable_x", "2");
+#endif
 			}
 			else if (nvram_match("dsl8_proto","bridge")) {
 				nvram_set("wan0_nat_x","0");
@@ -152,7 +158,12 @@ void convert_dsl_wan()
 			if (nvram_match("dsl0_proto","pppoe") || nvram_match("dsl0_proto","pppoa")) {
 				nvram_set("wan0_proto","pppoe");
 				/* Turn off DHCP on MAN interface */
-				nvram_set_int("wan0_dhcpenable_x", 2);
+#if 1 /* TODO: tmporary change! remove after WEB UI support */
+				nvram_set("wan0_dhcpenable_x", "1");
+				nvram_set("wan0_vpndhcp", "0");
+#else /* TODO: tmporary change! remove after WEB UI support */
+				nvram_set("wan0_dhcpenable_x", "2");
+#endif
 			}
 			else if (nvram_match("dsl0_proto","ipoa")) {
 				nvram_set("wan0_proto","static");
@@ -353,7 +364,7 @@ void start_dsl()
 
 	/* Paul comment 2012/7/25, the "never overcommit" policy would cause Ralink WiFi driver kernel panic when configure DUT through external registrar. *
 	 * So let this value be the default which is 0, the kernel will estimate the amount of free memory left when userspace requests more memory. */
-	//system("echo 2 > /proc/sys/vm/overcommit_memory");
+	//f_write_string("/proc/sys/vm/overcommit_memory", "2", 0, 0);
 
 #ifdef RTCONFIG_DSL_TCLINUX
 	check_and_set_comm_if();

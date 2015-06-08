@@ -115,18 +115,17 @@
 // disable auto log out
 AUTOLOGOUT_MAX_MINUTE = 0;
 var detect_interval = 2;	// get information per second
-var $j = jQuery.noConflict();
 window.onresize = cal_agreement_block;
 var qos_rulelist = "<% nvram_get("qos_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var curState = '<% nvram_get("apps_analysis"); %>';
 
 function register_event(){
 	var color_array = ["#F01F09", "#F08C09", "#F3DD09", "#59E920", "#58CCED", "inherit"];
-	$j(function() {
-		$j("#sortable").sortable();
-		$j("#sortable").disableSelection();
-		$j("#0,#1,#2,#3,#4,#5").draggable({helper:"clone",revert:true,revertDuration:10}); 
-		$j("[id^='icon_tr_']").droppable({
+	$(function($) {
+		$("#sortable").sortable();
+		$("#sortable").disableSelection();
+		$("#0,#1,#2,#3,#4,#5").draggable({helper:"clone",revert:true,revertDuration:10}); 
+		$("[id^='icon_tr_']").droppable({
 			out: function(){
 				this.style.color = "";
 				this.style.backgroundColor = "";
@@ -159,12 +158,12 @@ function initial(){
 var download_maximum = 100 * 1024;
 var upload_maximum = 100 * 1024;
 function redraw_unit(){
-	var upload_node = $('upload_unit').children;
-	var download_node = $('download_unit').children;
+	var upload_node = document.getElementById('upload_unit').children;
+	var download_node = document.getElementById('download_unit').children;
 	var upload = upload_maximum/1024;
 	var download = download_maximum/1024;
 	
-	for(i=0;i<5;i++){   // length could be $('upload_unit').children.length -2
+	for(i=0;i<5;i++){   // length could be document.getElementById('upload_unit').children.length -2
 		if(i == 4){
 			if(upload < 5){
 				if(upload > parseInt(upload)){
@@ -262,7 +261,7 @@ function calculate_router_traffic(traffic){
 		}
 
 		rotate = "rotate("+angle.toFixed(1)+"deg)";
-		$j('#indicator_upload').css({
+		$('#indicator_upload').css({
 			"-webkit-transform": rotate,
 			"-moz-transform": rotate,
 			"-o-transform": rotate,
@@ -302,7 +301,7 @@ function calculate_router_traffic(traffic){
 		}
 
 		rotate = "rotate("+angle.toFixed(1)+"deg)";
-		$j('#indicator_download').css({
+		$('#indicator_download').css({
 		"-webkit-transform": rotate,
         "-moz-transform": rotate,
         "-o-transform": rotate,
@@ -430,7 +429,7 @@ function show_clients(priority_type){
 		code += '</div>';
 	}
 
-	$('sortable').innerHTML = code;
+	document.getElementById('sortable').innerHTML = code;
 	update_device_tarffic();
 	setTimeout("register_event();",500);
 }
@@ -463,7 +462,7 @@ function show_apps(obj){
 			last_element = parent_obj.lastChild;
 		}
 
-		$j(parent_obj_temp).empty();
+		$(parent_obj_temp).empty();
 		parent_obj_temp.appendChild(first_element);
 		parent_obj_temp.appendChild(last_element);
 		register_event();
@@ -526,7 +525,7 @@ function cancel_previous_device_apps(obj){
 		last_element = parent_obj.lastChild;
 	}
 	
-	$j(parent_obj_temp).empty();
+	$(parent_obj_temp).empty();
 	parent_obj_temp.appendChild(first_element);
 	parent_obj_temp.appendChild(last_element);
 	if(children_obj != undefined) {
@@ -599,8 +598,8 @@ function render_apps(apps_array, obj_icon, apps_field){
 		code = "<tr><td colspan='3' style='text-align:center;color:#FFCC00'><div style='padding:5px 0px;border-top:solid 1px #333;'>No Traffic in the list</div></td></tr>";
 	}
 
-	$j(apps_field).empty();
-	$j(apps_field).append(code);
+	$(apps_field).empty();
+	$(apps_field).append(code);
 	calculate_apps_traffic(apps_array);
 }
 
@@ -641,7 +640,7 @@ function calculate_traffic(array_traffic){
 			if((diff_tx/1024) < upload_maximum/5){
 				if(diff_tx == 0){
 					try{
-						$(client_traffic_new[i]+'_upload_bar').style.width = "0%";
+						document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = "0%";
 					}
 					catch(e){
 						console.log("[" + i + "] " + client_traffic_new[i]);
@@ -652,38 +651,38 @@ function calculate_traffic(array_traffic){
 					if(diff_tx_kb.toFixed(1) >= 0.1 && tx_width < 1)
 						tx_width = 1;
 					
-					$(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+					document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
 				}
 
 				if(diff_tx_kb < 1024){	
-					$(client_traffic_new[i]+'_upload').innerHTML = diff_tx_kb.toFixed(1);
-					$(client_traffic_new[i]+'_upload_unit').innerHTML = "Kb";	
+					document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_kb.toFixed(1);
+					document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Kb";	
 				}
 				else{
-					$(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) ; 
-					$(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";	
+					document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) ; 
+					document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";	
 				}
 			}
 			else if((diff_tx_kb >= upload_maximum/5) && (diff_tx_kb < upload_maximum*2/5)){
 				tx_width = parseInt((diff_tx_kb - (upload_maximum/5))/(upload_maximum/5)*25);
 				tx_width += 30;
-				$(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-				$(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				$(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";			
+				document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+				document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
+				document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";			
 			}
 			else if((diff_tx_kb >= upload_maximum*2/5) && (diff_tx_kb < upload_maximum*3/5)){
 				tx_width = parseInt((diff_tx_kb - (upload_maximum*2/5))/(upload_maximum/5)*20);
 				tx_width += 55;
-				$(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-				$(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				$(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";	
+				document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+				document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
+				document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";	
 			}
 			else if((diff_tx_kb >= upload_maximum*3/5) && (diff_tx_kb < upload_maximum*4/5)){
 				tx_width = parseInt((diff_tx_kb - (upload_maximum*3/5))/(upload_maximum/5)*15);
 				tx_width += 75;
-				$(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-				$(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				$(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";
+				document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+				document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
+				document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";
 			}
 			else{
 				tx_width = parseInt((diff_tx_kb - (upload_maximum*4/5))/(upload_maximum/5)*15);
@@ -691,16 +690,16 @@ function calculate_traffic(array_traffic){
 				if(tx_width > 100)
 					tx_width = 100;
 					
-				$(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-				$(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				$(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";				
+				document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+				document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
+				document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";				
 			}
 				
 			// download traffic
 			if(diff_rx_kb < download_maximum/5){		//30%
 				if(diff_rx == 0){					
 					try{
-						$(client_traffic_new[i]+'_download_bar').style.width = "0%";
+						document.getElementById(client_traffic_new[i]+'_download_bar').style.width = "0%";
 					}
 					catch(e){
 						console.log("[" + i + "] " + client_traffic_new[i]);
@@ -711,38 +710,38 @@ function calculate_traffic(array_traffic){
 					if( diff_rx_kb.toFixed(1) >= 0.1 &&  rx_width < 1)
 						rx_width = 1;
 						
-					$(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
+					document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
 				}	
 					
 				if(diff_rx_kb < 1024){
-					$(client_traffic_new[i]+'_download').innerHTML = diff_rx_kb.toFixed(1);
-					$(client_traffic_new[i]+'_download_unit').innerHTML = "Kb";			
+					document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_kb.toFixed(1);
+					document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Kb";			
 				}
 				else{
-					$(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-					$(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";				
+					document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";				
 				}									
 			}
 			else if((diff_rx_kb >= download_maximum/5) && (diff_rx_kb < download_maximum*2/5)){		//	25%
 				rx_width = parseInt((diff_rx_kb - (download_maximum/5))/(download_maximum/5)*25);
 				rx_width += 30;
-				$(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
-				$(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-				$(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
+				document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+				document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 			}
 			else if((diff_rx_kb >= download_maximum*2/5) && (diff_rx_kb < download_maximum*3/5)){		// 20%
 				rx_width = parseInt((diff_rx_kb - (download_maximum*2/5))/(download_maximum/5)*20);
 				rx_width += 55;
-				$(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";				
-				$(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-				$(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";				
+				document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+				document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 			}
 			else if((diff_rx_kb >= download_maximum*3/5) && (diff_rx_kb <download_maximum*4/5)){		//	15%
 				rx_width = parseInt((diff_rx_kb - (download_maximum*3/5))/(download_maximum/5)*15);
 				rx_width += 75;
-				$(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
-				$(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-				$(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
+				document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+				document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 			}
 			else{		//10%
 				rx_width = parseInt((diff_rx_kb - (download_maximum*4/5))/(download_maximum/5)*10);
@@ -750,9 +749,9 @@ function calculate_traffic(array_traffic){
 				if(rx_width > 100)
 					rx_width = 100;
 				
-				$(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
-				$(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-				$(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
+				document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+				document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 			}	
 		}	
 	}
@@ -800,7 +799,7 @@ function calculate_apps_traffic(apps_traffic){
 			if(diff_tx ==0 && diff_rx == 0){
 				apps_traffic_new[apps_traffic_new[i]].account = empty_count + 1;
 				if(apps_traffic_new[apps_traffic_new[i]].account >= 10){
-					$(apps_traffic_new[i]).parentNode.parentNode.style.display = "none";
+					document.getElementById(apps_traffic_new[i]).parentNode.parentNode.style.display = "none";
 				}
 			}
 			else{
@@ -809,7 +808,7 @@ function calculate_apps_traffic(apps_traffic){
 				if((diff_tx/1024) < upload_maximum/5){
 					if(diff_tx == 0){
 						try{
-							$(apps_traffic_new[i]+'_upload_bar').style.width = "0%";
+							document.getElementById(apps_traffic_new[i]+'_upload_bar').style.width = "0%";
 						}
 						catch(e){
 							console.log("[" + i + "] " + apps_traffic_new[i]);
@@ -820,38 +819,38 @@ function calculate_apps_traffic(apps_traffic){
 						if(diff_tx_kb.toFixed(1) >= 0.1 && tx_width < 1)
 							tx_width = 1;
 						
-						$(apps_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+						document.getElementById(apps_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
 					}
 
 					if(diff_tx_kb < 1024){	
-						$(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_kb.toFixed(1);
-						$(apps_traffic_new[i] + '_upload_unit').innerHTML = "Kb";	
+						document.getElementById(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_kb.toFixed(1);
+						document.getElementById(apps_traffic_new[i] + '_upload_unit').innerHTML = "Kb";	
 					}
 					else{
-						$(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) ; 
-						$(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";	
+						document.getElementById(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) ; 
+						document.getElementById(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";	
 					}
 				}
 				else if((diff_tx_kb >= upload_maximum/5) && (diff_tx_kb < upload_maximum*2/5)){
 					tx_width = parseInt((diff_tx_kb - (upload_maximum/5))/(upload_maximum/5)*25);
 					tx_width += 30;
-					$(apps_traffic_new[i] + '_upload_bar').style.width = tx_width + "%";
-					$(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) 
-					$(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";			
+					document.getElementById(apps_traffic_new[i] + '_upload_bar').style.width = tx_width + "%";
+					document.getElementById(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) 
+					document.getElementById(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";			
 				}
 				else if((diff_tx_kb >= upload_maximum*2/5) && (diff_tx_kb < upload_maximum*3/5)){
 					tx_width = parseInt((diff_tx_kb - (upload_maximum*2/5))/(upload_maximum/5)*20);
 					tx_width += 55;
-					$(apps_traffic_new[i] + '_upload_bar').style.width = tx_width + "%";
-					$(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) 
-					$(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";				
+					document.getElementById(apps_traffic_new[i] + '_upload_bar').style.width = tx_width + "%";
+					document.getElementById(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) 
+					document.getElementById(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";				
 				}
 				else if((diff_tx_kb >= upload_maximum*3/5) && (diff_tx_kb < upload_maximum*4/5)){
 					tx_width = parseInt((diff_tx_kb - (upload_maximum*3/5))/(upload_maximum/5)*15);
 					tx_width += 75;
-					$(apps_traffic_new[i] + '_upload_bar').style.width = tx_width + "%";
-					$(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) 
-					$(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";
+					document.getElementById(apps_traffic_new[i] + '_upload_bar').style.width = tx_width + "%";
+					document.getElementById(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) 
+					document.getElementById(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";
 				}
 				else{
 					tx_width = parseInt((diff_tx_kb - (upload_maximum*4/5))/(upload_maximum/5)*15);
@@ -859,15 +858,15 @@ function calculate_apps_traffic(apps_traffic){
 					if(tx_width > 100)
 						tx_width = 100;
 						
-					$(apps_traffic_new[i] + '_upload_bar').style.width = tx_width + "%";
-					$(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) 
-					$(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";				
+					document.getElementById(apps_traffic_new[i] + '_upload_bar').style.width = tx_width + "%";
+					document.getElementById(apps_traffic_new[i] + '_upload').innerHTML = diff_tx_mb.toFixed(1) 
+					document.getElementById(apps_traffic_new[i] + '_upload_unit').innerHTML = "Mb";				
 				}
 				
 				if(diff_rx_kb < download_maximum/5){		//30%
 					if(diff_rx == 0){					
 						try{
-							$(apps_traffic_new[i]+'_download_bar').style.width = "0%";
+							document.getElementById(apps_traffic_new[i]+'_download_bar').style.width = "0%";
 						}
 						catch(e){
 							console.log("[" + i + "] " + apps_traffic_new[i]);
@@ -878,39 +877,39 @@ function calculate_apps_traffic(apps_traffic){
 						if(diff_rx_kb.toFixed(1) >= 0.1 && rx_width < 1)
 							rx_width = 1;
 							
-						$(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
+						document.getElementById(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
 					}	
 						
 					if(diff_rx_kb < 1024){
-						$(apps_traffic_new[i]+'_download').innerHTML = diff_rx_kb.toFixed(1);
-						$(apps_traffic_new[i]+'_download_unit').innerHTML = "Kb";
+						document.getElementById(apps_traffic_new[i]+'_download').innerHTML = diff_rx_kb.toFixed(1);
+						document.getElementById(apps_traffic_new[i]+'_download_unit').innerHTML = "Kb";
 					
 					}
 					else{
-						$(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-						$(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";				
+						document.getElementById(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+						document.getElementById(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";				
 					}								
 				}
 				else if((diff_rx_kb >= download_maximum/5) && (diff_rx_kb < download_maximum*2/5)){		//	25%
 					rx_width = parseInt((diff_rx_kb - (download_maximum/5))/(download_maximum/5)*25);
 					rx_width += 30;
-					$(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
-					$(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-					$(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+					document.getElementById(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
+					document.getElementById(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 				}
 				else if((diff_rx_kb >= download_maximum*2/5) && (diff_rx_kb < download_maximum*3/5)){		// 20%
 					rx_width = parseInt((diff_rx_kb - (download_maximum*2/5))/(download_maximum/5)*20);
 					rx_width += 55;
-					$(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";				
-					$(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-					$(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+					document.getElementById(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";				
+					document.getElementById(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 				}
 				else if((diff_rx_kb >= download_maximum*3/5) && (diff_rx_kb <download_maximum*4/5)){		//	15%
 					rx_width = parseInt((diff_rx_kb - (download_maximum*3/5))/(download_maximum/5)*15);
 					rx_width += 75;
-					$(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
-					$(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-					$(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+					document.getElementById(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
+					document.getElementById(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 				}
 				else{		//10%
 					rx_width = parseInt((diff_rx_kb - (download_maximum*4/5))/(download_maximum/5)*10);
@@ -918,9 +917,9 @@ function calculate_apps_traffic(apps_traffic){
 					if(rx_width > 100)
 						rx_width = 100;
 					
-					$(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
-					$(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-					$(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+					document.getElementById(apps_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
+					document.getElementById(apps_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(apps_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
 				}
 			}		
 		}	
@@ -932,7 +931,7 @@ function calculate_apps_traffic(apps_traffic){
 
 var device_time_flag = "";
 function update_device_tarffic() {
-  $j.ajax({
+  $.ajax({
     url: '/getTraffic.asp',
     dataType: 'script',	
     error: function(xhr) {
@@ -948,7 +947,7 @@ function update_device_tarffic() {
 
 var apps_time_flag = "";
 function update_apps_tarffic(mac, obj, new_element) {
-  $j.ajax({
+  $.ajax({
     url: '/getTraffic.asp?client='+mac,
     dataType: 'script',	
     error: function(xhr) {
@@ -964,8 +963,8 @@ function update_apps_tarffic(mac, obj, new_element) {
 
 function regen_qos_rule(obj, priority){
 	var qos_rulelist_row =  qos_rulelist.split("<");
-	var target_name = $j(obj.parentNode).siblings()[0].children[0].innerHTML;
-	var target_mac = $j(obj.parentNode).siblings()[0].children[0].title;
+	var target_name = $(obj.parentNode).siblings()[0].children[0].innerHTML;
+	var target_mac = $(obj.parentNode).siblings()[0].children[0].title;
 	var rule_temp = "";
 	var match_flag = 0;
 
@@ -1037,7 +1036,7 @@ function cal_agreement_block(){
 
 	}
 
-	$("agreement_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("agreement_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function eula_confirm(){
@@ -1048,9 +1047,9 @@ function eula_confirm(){
 
 function cancel(){
 	curState = 0;
-	$j('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
-	$j("#agreement_panel").fadeOut(100);
-	$("hiddenMask").style.visibility = "hidden";
+	$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
+	$("#agreement_panel").fadeOut(100);
+	document.getElementById("hiddenMask").style.visibility = "hidden";
 }
 </script>
 </head>
@@ -1111,22 +1110,22 @@ function cancel(){
 														<td >
 															<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="apps_analysis_enable"></div>
 															<script type="text/javascript">
-																$j('#apps_analysis_enable').iphoneSwitch('<% nvram_get("apps_analysis"); %>',
+																$('#apps_analysis_enable').iphoneSwitch('<% nvram_get("apps_analysis"); %>',
 																	function(){
 																		if(document.form.TM_EULA.value == 0){
 																			if(document.form.preferred_lang.value == "JP"){
-																				$j.get("JP_tm_eula.htm", function(data){
-																					$('agreement_panel').innerHTML= data;
+																				$.get("JP_tm_eula.htm", function(data){
+																					document.getElementById('agreement_panel').innerHTML= data;
 																				});
 																			}
 																			else{
-																				$j.get("tm_eula.htm", function(data){
-																					$('agreement_panel').innerHTML= data;
+																				$.get("tm_eula.htm", function(data){
+																					document.getElementById('agreement_panel').innerHTML= data;
 																				});
 																			}	
 																			dr_advise();
 																			cal_agreement_block();
-																			$j("#agreement_panel").fadeIn(300);
+																			$("#agreement_panel").fadeIn(300);
 																			return false;
 																		}
 																			

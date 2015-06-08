@@ -600,6 +600,7 @@
 	cursor:pointer;
 	outline: none; /* for Firefox */
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
 }
 .button_gen_long:hover	/*, .button:active*/{
   background: transparent url(/images/New_ui/logout_btover.png) no-repeat scroll center top;
@@ -613,6 +614,7 @@
 	cursor:pointer;
 	outline: none; /* for Firefox */
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
 }
 .button_gen_long_dis{
 	font-weight: bolder;
@@ -628,6 +630,7 @@
 	/*cursor:pointer;*/
 	outline: none; /* for Firefox */
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
 }
 .button_gen_long_dis:hover	/*, .button:active*/{
   background: transparent url(/images/New_ui/logout_btover.png) no-repeat scroll center top;
@@ -641,6 +644,7 @@
 	/*cursor:pointer;*/
 	outline: none; /* for Firefox */
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+ 	white-space:normal;
 }
 .button_gen_long_touch{
   color: #FFFFFF;
@@ -1498,6 +1502,23 @@ padding-top:1px;
 	height:30px;
 	width:30px;
 	cursor: pointer;
+}
+
+.traffic_warning{
+	position:fixed;
+	right: 20px;
+    bottom: 20px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:20000;
+	background-color:#232629;
+	display:block;
+	width:360px;
+	text-align:left;
+	box-shadow: 3px 3px 10px #000;
+	font:13px Arial, Helvetica, sans-serif;
+	font-weight: bold;
 }
 
 /*Viz add 2013.03 for adsl sync status      start*/

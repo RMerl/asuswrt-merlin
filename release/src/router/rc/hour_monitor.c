@@ -7,15 +7,16 @@
 // debug mode
 #define DEBUG		0
 
-// define function bit
+// define function bit, you can define more functions as below
 #define TRAFFIC_CONTROL		0x01
 #define TRAFFIC_ANALYZER	0x02
+#define NETWORKMAP		0x04
 
 static int sig_cur = -1;
 static int debug = 0;
 static int value = 0;
 
-static void hm_traffic_analyzer_save()
+void hm_traffic_analyzer_save()
 {
 	char *db_type;
 	char buf[128]; // path buff = 128
@@ -27,7 +28,7 @@ static void hm_traffic_analyzer_save()
 		debug = 0;
 
 	if(!f_exists("/dev/detector") || !f_exists("/dev/idpfw")){
-		printf("%s : dpi engine doesn't exist, not to save any database\n", __FUNCTION__);
+		_dprintf("%s : dpi engine doesn't exist, not to save any database\n", __FUNCTION__);
 		return;
 	}
 
@@ -54,11 +55,11 @@ static void hm_traffic_analyzer_save()
 	else if(db_mode == 2)
 	{
 		// cloud server : not ready
-		printf("traffic statistics not support cloud server yet!!\n");
+		_dprintf("traffic statistics not support cloud server yet!!\n");
 	}
 	else
 	{
-		printf("Not such database type!!\n");
+		_dprintf("Not such database type!!\n");
 		return;
 	}
 
@@ -67,7 +68,7 @@ static void hm_traffic_analyzer_save()
 	system(buf);
 }
 
-static void hm_traffic_control_save()
+void hm_traffic_control_save()
 {
 	if(nvram_get_int("hour_monitor_debug") || nvram_get_int("traffic_control_debug"))
 		debug = 1;
@@ -76,12 +77,19 @@ static void hm_traffic_control_save()
 	
 	if(debug) dbg("%s : traffic_control is saving ... \n", __FUNCTION__);
 
-	system("traffic_control -w");
+	eval("traffic_control", "-w");
+}
+
+static void hm_networkmap_rescan()
+{
+	nvram_set("client_info_tmp", "");
+	nvram_set("refresh_networkmap", "1");
+	eval("killall", "-SIGUSR1", "networkmap");
 }
 
 int hour_monitor_function_check()
 {
-	int debug = nvram_get_int("hour_monitor_debug");
+	debug = nvram_get_int("hour_monitor_debug");
 
 	// intial global variable
 	value = 0;
@@ -93,14 +101,39 @@ int hour_monitor_function_check()
 	// traffic analyzer
 	if(nvram_get_int("bwdpi_db_enable"))
 		value |= TRAFFIC_ANALYZER;
+
+	// networkmap
+	if(pidof("networkmap") != -1)
+		value |= NETWORKMAP;
 	
-	if(debug) dbg("%s : value = %d(0x%x)\n", __FUNCTION__, value, value);
+	if(debug)
+	{
+		dbg("%s : value = %d(0x%x)\n", __FUNCTION__, value, value);
+		logmessage("hour monitor", "value = %d(0x%x)", value, value);
+	}
 
 	return value;
 }
 
 static void hour_monitor_call_fucntion()
 {
+	// check function enable or not
+	if(!hour_monitor_function_check()) exit(0);
+
+	if((value & TRAFFIC_CONTROL) != 0)
+		hm_traffic_control_save();
+
+	if((value & TRAFFIC_ANALYZER) != 0)
+		hm_traffic_analyzer_save();
+
+	if((value & NETWORKMAP) != 0)
+		hm_networkmap_rescan();
+}
+
+static void hour_monitor_save_database()
+{
+	/* use for save database only */
+
 	// check function enable or not
 	if(!hour_monitor_function_check()) exit(0);
 
@@ -121,6 +154,7 @@ static void catch_sig(int sig)
 	}
 	else if (sig == SIGTERM)
 	{
+		hour_monitor_save_database(); /* use for save database only */
 		remove("/var/run/hour_monitor.pid");
 		exit(0);
 	}
@@ -134,12 +168,12 @@ int hour_monitor_main(int argc, char **argv)
 	debug = nvram_get_int("hour_monitor_debug");
 
 	/* starting message */
-	if(debug) printf("%s: daemong is starting ... \n", __FUNCTION__);
+	if(debug) _dprintf("%s: daemong is starting ... \n", __FUNCTION__);
 	logmessage("hour monitor", "daemon is starting");
 
 	/* check need to enable monitor fucntion or not */
 	if(!hour_monitor_function_check()){
-		if(debug) printf("%s: terminate ... \n", __FUNCTION__);
+		if(debug) _dprintf("%s: terminate ... \n", __FUNCTION__);
 		logmessage("hour monitor", "daemon terminates");
 		exit(0);
 	}
@@ -194,7 +228,7 @@ int hour_monitor_main(int argc, char **argv)
 		}
 		else
 		{
-			if(debug) printf("%s: ntp is not syn ... \n", __FUNCTION__);
+			if(debug) _dprintf("%s: ntp is not syn ... \n", __FUNCTION__);
 			if(debug) logmessage("hour monitor", "ntp is not syn");
 			exit(0);
 		}

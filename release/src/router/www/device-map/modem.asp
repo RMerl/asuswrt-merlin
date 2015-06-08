@@ -12,7 +12,7 @@
 <script type="text/javascript" src="/state.js"></script>
 <script>
 function initial(){
-		showtext($("disk_model_name"), parent.usbPorts[parent.currentUsbPort].deviceName);
+		showtext(document.getElementById("disk_model_name"), parent.usbPorts[parent.currentUsbPort].deviceName);
 		if(sw_mode != "1")
 			inputHideCtrl(document.diskForm.btn_Hspda, 0);
 }

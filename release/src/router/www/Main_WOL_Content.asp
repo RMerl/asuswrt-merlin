@@ -89,11 +89,11 @@ function updateOptions(){
 	setTimeout("checkCmdRet();", 500);
 }
 
-var $j = jQuery.noConflict();
+
 var _responseLen;
 var noChange = 0;
 function checkCmdRet(){
-	$j.ajax({
+	$.ajax({
 		url: '/cmdRet_check.htm',
 		dataType: 'html',
 		
@@ -155,7 +155,7 @@ function showwollist(){
 	}
 
   code +='</table>';
-	$("wollist_Block").innerHTML = code;
+	document.getElementById("wollist_Block").innerHTML = code;
 }
 
 function addRow(obj, head){
@@ -171,8 +171,8 @@ function addRow(obj, head){
 }
 
 function addRow_Group(upper){
-	var rule_num = $('wollist_table').rows.length;
-	var item_num = $('wollist_table').rows[0].cells.length;		
+	var rule_num = document.getElementById('wollist_table').rows.length;
+	var item_num = document.getElementById('wollist_table').rows[0].cells.length;		
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;	
@@ -191,7 +191,7 @@ function addRow_Group(upper){
 	
 	if(item_num >=2){
 		for(i=0; i<rule_num; i++){	
-				if(document.form.wollist_macAddr.value.toLowerCase() == $('wollist_table').rows[i].cells[1].innerHTML.toLowerCase()){
+				if(document.form.wollist_macAddr.value.toLowerCase() == document.getElementById('wollist_table').rows[i].cells[1].innerHTML.toLowerCase()){
 					alert("<#JS_duplicate#>");
 					document.form.wollist_macAddr.focus();
 					document.form.wollist_macAddr.select();
@@ -211,36 +211,36 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").style.display = "";
 		return false;
 	}else if(flag ==2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").style.display = "";
 		return false;		
 	}else{	
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}	
 }
 
 function del_Row(r){
   var i=r.parentNode.parentNode.rowIndex;
-  $('wollist_table').deleteRow(i);
+  document.getElementById('wollist_table').deleteRow(i);
   
   var wollist_value = "";
-	for(k=0; k<$('wollist_table').rows.length; k++){
-		for(j=0; j<$('wollist_table').rows[k].cells.length-1; j++){
+	for(k=0; k<document.getElementById('wollist_table').rows.length; k++){
+		for(j=0; j<document.getElementById('wollist_table').rows[k].cells.length-1; j++){
 			if(j == 0)	
 				wollist_value += "&#60";
 			else{
-			wollist_value += $('wollist_table').rows[k].cells[0].innerHTML;
+			wollist_value += document.getElementById('wollist_table').rows[k].cells[0].innerHTML;
 			wollist_value += "&#62";
-			wollist_value += $('wollist_table').rows[k].cells[1].innerHTML;
+			wollist_value += document.getElementById('wollist_table').rows[k].cells[1].innerHTML;
 			}
 		}
 	}
@@ -275,7 +275,7 @@ function showLANIPList(){
 		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
 	}
 
-	$("ClientList_Block_PC").innerHTML = htmlCode;
+	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function setClientIP(_name, _macaddr){
@@ -288,15 +288,15 @@ function setClientIP(_name, _macaddr){
 var over_var = 0;
 var isMenuopen = 0;
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 }
 
 function pullLANIPList(obj){
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		document.form.wollist_deviceName.focus();		
 		isMenuopen = 1;
 	}
@@ -305,14 +305,14 @@ function pullLANIPList(obj){
 }
 
 function applyRule(){
-	var rule_num = $('wollist_table').rows.length;
-	var item_num = $('wollist_table').rows[0].cells.length;
+	var rule_num = document.getElementById('wollist_table').rows.length;
+	var item_num = document.getElementById('wollist_table').rows[0].cells.length;
 	var tmp_value = "";
 
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"		
 		for(j=0; j<item_num-1; j++){	
-			tmp_value += $('wollist_table').rows[i].cells[j].innerHTML;
+			tmp_value += document.getElementById('wollist_table').rows[i].cells[j].innerHTML;
 			if(j != item_num-2)	
 				tmp_value += ">";
 		}
@@ -367,7 +367,7 @@ function applyRule(){
 										<tr>
 											<th width="20%"><#NetworkTools_target#></th>
 											<td>
-												<input type="text" class="input_20_table" maxlength="17" name="destIP" value="" placeholder="ex: <% nvram_get("lan_hwaddr"); %>" onKeyPress="return validator.isHWAddr(this,event);">
+												<input type="text" class="input_20_table" maxlength="17" name="destIP" value="" placeholder="ex: <% nvram_get("lan_hwaddr"); %>" onKeyPress="return validator.isHWAddr(this,event);" autocorrect="off" autocapitalize="off">
 												<input class="button_gen" id="cmdBtn" onClick="onSubmitCtrl(this, ' Refresh ')" type="button" value="<#NetworkTools_WOL_btn#>">
 												<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 											</td>										
@@ -390,12 +390,12 @@ function applyRule(){
 									  			<!-- client info -->
 																					  		
 				            			<td width="40%">
-				            				<input type="text" class="input_20_table" maxlength="15" name="wollist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);" onblur="validator.safeName(this);">
+				            				<input type="text" class="input_20_table" maxlength="15" name="wollist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);" onblur="validator.safeName(this);" autocorrect="off" autocapitalize="off">
 											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 											<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>	
 				            			</td>
 				            			<td width="40%">
-				                		<input type="text" class="input_20_table" maxlength="17" name="wollist_macAddr" style="" onKeyPress="return validator.isHWAddr(this,event)">
+				                		<input type="text" class="input_20_table" maxlength="17" name="wollist_macAddr" style="" onKeyPress="return validator.isHWAddr(this,event)" autocorrect="off" autocapitalize="off">
 		                			</td>
 				            			<td width="20%">
 														<div> 

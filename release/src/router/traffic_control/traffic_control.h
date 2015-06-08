@@ -24,3 +24,5 @@ extern int traffic_control_main(char *type, char *q_if, char *q_te, char *q_ts);
 // traffic_control_hook.c
 extern int sql_get_table(sqlite3 *db, const char *sql, char ***pazResult, int *pnRow, int *pnColumn);
 extern void traffic_control_hook(char *ifname, char *start, char *end, int *retval, webs_t wp);
+extern void traffic_cotrol_WanStat(char *buf, char *ifname, char *ifmap, char *start, char *end);
+extern void ifname_mapping(char *word, char *ifname);

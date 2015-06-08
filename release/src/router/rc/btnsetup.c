@@ -120,7 +120,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include <limits.h>
 
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
@@ -171,9 +171,10 @@ int bs_encrypt;
 int rand_seed_by_time(void)
 {
 	time_t atime;
+	static unsigned long rand_base = 0;
 
 	time(&atime);
-	srand((unsigned long)atime);
+	srand(((unsigned long)atime + rand_base++) % ULONG_MAX);
 	
 	return rand();
 }
@@ -1409,12 +1410,10 @@ start_ots(void)
 	return 0;
 }
 
-int
+void
 stop_ots(void)
 {
-	int ret1 = eval("killall", "ots");
-	_dprintf("done\n");
-	return(ret1);
+	killall_tk("ots");
 }
 
 int 

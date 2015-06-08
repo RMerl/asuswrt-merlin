@@ -19,12 +19,20 @@
 <script type="text/javaScript" src="/jquery.js"></script>
 <script>
 <% wanlink(); %>
-
-var $j = jQuery.noConflict();
 var ddns_hostname_x_t = '<% nvram_get("ddns_hostname_x"); %>';
 function init(){
 	show_menu();
-    valid_wan_ip();
+	if(realip_support){
+		if(!external_ip)
+	    	showhide("wan_ip_hide2", 1);
+	    else
+	    	showhide("wan_ip_hide2", 0);
+
+	    showhide("wan_ip_hide3", 0);		
+	}
+	else
+    	valid_wan_ip();
+
     ddns_load_body();
 }
 
@@ -208,7 +216,7 @@ function validForm(){
 }
 
 function checkDDNSReturnCode(){
-    $j.ajax({
+    $.ajax({
     	url: '/ajax_ddnscode.asp',
     	dataType: 'script', 
     	error: function(xhr){
@@ -262,8 +270,8 @@ function validate_ddns_hostname(o){
 }
 
 function show_alert_block(alert_str){
-	$("alert_block").style.display = "block";
-	showtext($("alert_str"), alert_str);
+	document.getElementById("alert_block").style.display = "block";
+	showtext(document.getElementById("alert_str"), alert_str);
 }
 
 function cleandef(){
@@ -368,24 +376,24 @@ function onSubmitApply(s){
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,13);"><#LANHostConfig_x_DDNSHostNames_itemname#></a></th>
 				<td>
 					<div id="ddnsname_input" style="display:none;">
-						<input type="text" maxlength="64" class="input_25_table" name="ddns_hostname_x" id="ddns_hostname_x" value="<% nvram_get("ddns_hostname_x"); %>" onKeyPress="return validator.isString(this, event)">
+						<input type="text" maxlength="64" class="input_25_table" name="ddns_hostname_x" id="ddns_hostname_x" value="<% nvram_get("ddns_hostname_x"); %>" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 					</div>
 					<div id="asusddnsname_input" style="display:none;">
-						<input type="text" maxlength="32" class="input_32_table" name="DDNSName" id="DDNSName" class="inputtext" onKeyPress="return validator.isString(this, event)" OnClick="cleandef();">.asuscomm.com
+						<input type="text" maxlength="32" class="input_32_table" name="DDNSName" id="DDNSName" class="inputtext" onKeyPress="return validator.isString(this, event)" OnClick="cleandef();" autocorrect="off" autocapitalize="off">.asuscomm.com
 						<div id="alert_block" style="color:#FFCC00; margin-left:5px; font-size:11px;display:none;">
 								<span id="alert_str"></span>
-						</div>						
-					</div>							
+						</div>
+					</div>	
 							
 				</td>
 			</tr>			
 			<tr>
 				<th id="ddns_username_th"><#LANHostConfig_x_DDNSUserName_itemname#></th>
-				<td><input type="text" maxlength="32" class="input_25_table" name="ddns_username_x" value="<% nvram_get("ddns_username_x"); %>" onKeyPress="return validator.isString(this, event)" autocapitalization="off" autocomplete="off"></td>
+				<td><input type="text" maxlength="32" class="input_25_table" name="ddns_username_x" value="<% nvram_get("ddns_username_x"); %>" onKeyPress="return validator.isString(this, event)" autocomplete="off" autocorrect="off" autocapitalize="off"></td>
 			</tr>
 			<tr>
 				<th><#LANHostConfig_x_DDNSPassword_itemname#></th>
-				<td><input type="password" autocapitalization="off" maxlength="64" class="input_25_table" name="ddns_passwd_x" value="<% nvram_get("ddns_passwd_x"); %>" autocapitalization="off" autocomplete="off"></td>
+				<td><input type="password" autocapitalization="off" maxlength="64" class="input_25_table" name="ddns_passwd_x" value="<% nvram_get("ddns_passwd_x"); %>" autocomplete="off" autocorrect="off" autocapitalize="off"></td>
 			</tr>
 			<tr id="wildcard_field">
 				<th><#LANHostConfig_x_DDNSWildcard_itemname#></th>
@@ -410,7 +418,7 @@ function onSubmitApply(s){
 			<tr style="display:none;">
 				<th><#DDNS_verification_frequency#></th>
 				<td>
-					<input type="text"  class="input_3_table" name="ddns_regular_period" value="<% nvram_get("ddns_regular_period"); %>"> <#Minute#>
+					<input type="text"  class="input_3_table" name="ddns_regular_period" value="<% nvram_get("ddns_regular_period"); %>" autocorrect="off" autocapitalize="off"> <#Minute#>
 				</td>
 			</tr>
 			<tr style="display:none;">

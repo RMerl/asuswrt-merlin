@@ -19,7 +19,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
-var $j = jQuery.noConflict();
+
 var varload = 0;
 var lan_ipaddr = '<% nvram_get("lan_ipaddr"); %>';
 var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';	//0: disable, 1: enable
@@ -42,8 +42,8 @@ function restoreRule(){
 	alert_string += "<#Setting_factorydefault_hint2#>";
 	if(confirm(alert_string)){
 		document.form.action1.blur();
-		showtext($("loading_block2"), "<#SAVE_restart_desc#>");
-		$('loading_block3').style.display = "none";
+		showtext(document.getElementById("loading_block2"), "<#SAVE_restart_desc#>");
+		document.getElementById('loading_block3').style.display = "none";
 		showLoading();
 		document.restoreform.submit();
 	}
@@ -72,8 +72,8 @@ function uploadSetting(){
 	}
 	else{		
 		disableCheckChangedStatus();
-		showtext($("loading_block2"), "<#SET_ok_desc#>");
-		$('loading_block3').style.display = "none";
+		showtext(document.getElementById("loading_block2"), "<#SET_ok_desc#>");
+		document.getElementById('loading_block3').style.display = "none";
 		document.form.submit();
 	}	
 }
@@ -81,7 +81,7 @@ function uploadSetting(){
 var dead = 0;
 function detect_httpd(){
 
-	$j.ajax({
+	$.ajax({
     		url: '/httpd_check.xml',
     		dataType: 'xml',
 				timeout: 1500,
@@ -90,13 +90,13 @@ function detect_httpd(){
     				if(dead < 6){
     						setTimeout("detect_httpd();", 1000);
     				}else{
-    						$('loading_block1').style.display = "none";
-    						$('loading_block2').style.display = "none";
-    						$('loading_block3').style.display = "";
+    						document.getElementById('loading_block1').style.display = "none";
+    						document.getElementById('loading_block2').style.display = "none";
+    						document.getElementById('loading_block3').style.display = "";
 						if(findasus_support){
-    							$('loading_block3').innerHTML = "<div>You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</div>";
+    							document.getElementById('loading_block3').innerHTML = "<div>You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</div>";
 						}else{
-							$('loading_block3').innerHTML = "<div><#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#></div>";
+							document.getElementById('loading_block3').innerHTML = "<div><#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#></div>";
 						}
 							
     				}

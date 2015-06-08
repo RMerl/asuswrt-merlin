@@ -6,7 +6,6 @@ N="$F.new"
 L="/var/lock/cron.lock"
 
 if [ $# -gt 1 -a "$1" = "a" -o "$1" = "d" ]; then
-
 	if [ -f $L ];
 	then
 		I=$((($$ % 25) + 5))

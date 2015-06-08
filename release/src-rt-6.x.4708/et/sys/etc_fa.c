@@ -1,7 +1,7 @@
 /*
  *  Flow Accelerator setup functions
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -190,22 +190,14 @@
 #define FA_ON_MODE_VALID()	(getintvar(NULL, "ctf_fa_mode") == CTF_FA_BYPASS || \
 				 getintvar(NULL, "ctf_fa_mode") == CTF_FA_NORMAL)
 
-#ifdef RGMII_BCM_FA
 static int aux_unit = -1;
 #define FA_DEFAULT_AUX_UNIT	0
 
 #define FA_FA_ENET_UNIT		((aux_unit == -1) ? FA_DEFAULT_AUX_UNIT : aux_unit)
-#else
-#define FA_FA_ENET_UNIT		0
-#endif
 #define FA_AUX_ENET_UNIT	2
 
 #define FA_FA_CORE_UNIT		2
-#ifdef RGMII_BCM_FA
 #define FA_AUX_CORE_UNIT	((aux_unit == -1) ? FA_DEFAULT_AUX_UNIT : aux_unit)
-#else
-#define FA_AUX_CORE_UNIT	0
-#endif
 
 #define FA_FA_CORE(u)	(((u) == FA_FA_CORE_UNIT) ? TRUE : FALSE)
 #define FA_AUX_CORE(u)	(((u) == FA_AUX_CORE_UNIT) ? TRUE : FALSE)
@@ -1220,11 +1212,7 @@ fa_dump_entries(fa_info_t *fai, uint8 opt, print_buf_t prnt, void *b)
 	}
 }
 
-#ifdef RGMII_BCM_FA
 #ifdef BCMDBG
-#else
-//#ifdef BCMDBG
-#endif
 struct fareg_desc {
 	uint8 *fname;
 	uint8 *reg_name;
@@ -1262,11 +1250,7 @@ static struct fareg_desc fareg[] = {
 	{"m_accdata", "CTF_MEM_ACC_DATA", OFFSETOF(faregs_t, m_accdata)},
 	{"all", "ALL", 0xFFFF}
 };
-#ifdef RGMII_BCM_FA
 #endif /* BCMDBG */
-#else
-//#endif /* BCMDBG */
-#endif
 
 static uint32
 fa_chip_rev(si_t *sih)
@@ -1281,11 +1265,7 @@ fa_chip_rev(si_t *sih)
 		W_REG(si_osh(sih),
 			(uint32 *)((uint32)srab_base + CHIPCB_SRAB_CMDSTAT_OFFSET), 0x02400001);
 		rev = R_REG(si_osh(sih),
-#if 1
 			(uint32 *)((uint32)srab_base + CHIPCB_SRAB_RDL_OFFSET)) & 0xff;
-#else
-			(uint32 *)((uint32)srab_base + CHIPCB_SRAB_RDL_OFFSET)) & 0x3;
-#endif
 		REG_UNMAP(srab_base);
 	}
 
@@ -1349,10 +1329,8 @@ fa_attach(si_t *sih, void *et, char *vars, uint coreunit, void *robo)
 	fa_info_t *fai = NULL;
 	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih));
 
-#ifndef RGMII_BCM_FA
 	if(fa_rev < 0)	// get the first one
 		fa_rev = fa_chip_rev(sih);
-#endif
 
 	/* By pass fa attach if FA configuration is not enabled or invalid */
 	if (!FA_ON_MODE_VALID() || !fa_capable)
@@ -1557,11 +1535,9 @@ fa_napt_add(fa_t *fa, ctf_ipc_t *ipc, bool v6)
 	if (v6)
 		return BCME_ERROR;
 
-#ifdef RGMII_BCM_FA
 	/* currently not supported for PPP */
 	if (ipc->ppp_ifp)
 		return BCME_ERROR;
-#endif
 
 	sip = ipc->tuple.sip;
 	dip = ipc->tuple.dip;
@@ -1847,7 +1823,6 @@ fa_et_down(fa_t *fa)
 		robo_fa_aux_enable(fai->robo, FALSE);
 }
 
-#ifdef RGMII_BCM_FA
 void
 fa_set_aux_unit(si_t *sih, uint unit)
 {
@@ -1858,7 +1833,6 @@ fa_set_aux_unit(si_t *sih, uint unit)
 
 	aux_unit = unit;
 }
-#endif
 
 char *
 fa_get_macaddr(si_t *sih, char *vars, uint unit)
@@ -1935,26 +1909,18 @@ fa_dump(fa_t *fa, struct bcmstrbuf *b, bool all)
 void
 fa_regs_show(fa_t *fa, struct bcmstrbuf *b)
 {
-#ifdef RGMII_BCM_FA
 #ifdef BCMDBG
-#endif
 	osl_t *osh;
 	uint32 val, *reg;
 	int i, nregs = sizeof(fareg)/sizeof(fareg[0]);
 	fa_info_t *fai = (fa_info_t *)fa;
 
-#ifndef RGMII_BCM_FA
-	bcm_bprintf(b, "\nFA regs dump\n");
-
-#endif
 	if (!fai || !b || FA_IS_AUX_DEV(fa))
 		return;
 
 	osh = si_osh(fai->sih);
 
-#ifdef RGMII_BCM_FA
 	bcm_bprintf(b, "\nFA regs dump\n");
-#endif
 
 	bcm_bprintf(b, "Chip rev %d\n", fai->chiprev);
 	bcm_bprintf(b, "Accelerator mode: %s\n",
@@ -2001,7 +1967,5 @@ fa_regs_show(fa_t *fa, struct bcmstrbuf *b)
 	bcm_bprintf(b, "%s(0x%p):0x%08x\n", "MEM_ACC_DATA1", &reg[1], R_REG(osh, &reg[1]));
 	bcm_bprintf(b, "%s(0x%p):0x%08x\n", "MEM_ACC_DATA0", &reg[0], R_REG(osh, &reg[0]));
 	CTF_FA_WAR777_OFF(fai);
-#ifdef RGMII_BCM_FA
 #endif /* BCMDBG */
-#endif	/* RGMII_BCM_FA */
 }

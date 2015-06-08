@@ -1367,7 +1367,7 @@ int cache_make_stat(struct txt_record *t)
 		}
 	    port = prettyprint_addr(&serv->addr, daemon->addrbuff);
 	    lenp = p++; /* length */
-	    bytes_avail = (p - buff) + bufflen;
+	    bytes_avail = bufflen - (p - buff );
 	    bytes_needed = snprintf(p, bytes_avail, "%s#%d %u %u", daemon->addrbuff, port, queries, failed_queries);
 	    if (bytes_needed >= bytes_avail)
 	      {
@@ -1381,7 +1381,7 @@ int cache_make_stat(struct txt_record *t)
 		lenp = p - 1;
 		buff = new;
 		bufflen = newlen;
-		bytes_avail = (p - buff) + bufflen;
+		bytes_avail =  bufflen - (p - buff );
 		bytes_needed = snprintf(p, bytes_avail, "%s#%d %u %u", daemon->addrbuff, port, queries, failed_queries);
 	      }
 	    *lenp = bytes_needed;
@@ -1398,6 +1398,20 @@ int cache_make_stat(struct txt_record *t)
   *buff = len;
   return 1;
 }
+
+/* There can be names in the cache containing control chars, don't 
+   mess up logging or open security holes. */
+static char *sanitise(char *name)
+{
+  unsigned char *r;
+  if (name)
+    for (r = (unsigned char *)name; *r; r++)
+      if (!isprint((int)*r))
+	return "<name unprintable>";
+
+  return name;
+}
+
 
 void dump_cache(time_t now)
 {
@@ -1452,9 +1466,9 @@ void dump_cache(time_t now)
 	    *a = 0;
 	    if (strlen(n) == 0 && !(cache->flags & F_REVERSE))
 	      n = "<Root>";
-	    p += sprintf(p, "%-30.30s ", n);
+	    p += sprintf(p, "%-30.30s ", sanitise(n));
 	    if ((cache->flags & F_CNAME) && !is_outdated_cname_pointer(cache))
-	      a = cache_get_cname_target(cache);
+	      a = sanitise(cache_get_cname_target(cache));
 #ifdef HAVE_DNSSEC
 	    else if (cache->flags & F_DS)
 	      {
@@ -1586,6 +1600,8 @@ void log_query(unsigned int flags, char *name, struct all_addr *addr, char *arg)
   
   if (!option_bool(OPT_LOG))
     return;
+
+  name = sanitise(name);
 
   if (addr)
     {

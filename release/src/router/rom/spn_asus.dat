@@ -1,0 +1,1321 @@
+20201,Cosmote,*99#,,,internet,Cosmote Internet
+20205,Vodafone,*99#,,,internet.vodafone.gr,Vodafone Internet postpaid
+20205,Vodafone,*99#,user,pass,wap.vodafone.gr,Vodafone HTTP postpaid
+20205,Vodafone,*99#,,,wapkarta.vodafone.gr,Vodafone HTTP prepaid
+20205,Vodafone,*99#,,,webkarta.vodafone.gr,Vodafone Internet prepaid
+20210,WIND ADSM,*99#,,,gint.b-online.gr,WIND Internet
+20404,Vodafone,*99***1#,vodafone,vodafone,live.vodafone.com,Vodafone Internet
+20408,KPN,*99***1#,,,basic.internet.ben.data,Ben internet
+20408,KPN,*99***1#,,,portalmmm.nl,KPN/Hi Mobiel Internet
+20410,KPN,*99***1#,,,internet,KPN
+20412,Telfort,*99***1#,,,internet,Telfort Mobiel Internet
+20416,T-Mobile,*99***1#,,,basic.internet.ben.data,Ben Internet PrePaid
+20416,T-Mobile,*99***1#,,,internet.ben,Ben Internet Abonnee
+20416,T-Mobile,*99***1#,tmobile,tmobile,internet,T-Mobile Internet
+20420,NL Orange NL GPRS,,,,internet,Orange Internet
+20420,NL Orange NL GPRS,,,,rabo.plus,Rabo Mobiel
+20465,AGMS NL,*99#,,,agms.nl.gmm,AGMS NL
+20601,BE Belgacom INTERNET.PROXIMUS.BE GPRS,,,,internet.proximus.be,Proximus Internet
+20601,BE Belgacom INTERNET.PROXIMUS.BE GPRS,,wap,wap,wap.proximus.be,Proximus HTTP
+20610,BE Mobistar GPRS,,,,mworld.be,Mobistar HTTP
+20610,BE Mobistar GPRS,,,,mworld.be,Mobistar Internet
+20620,Base Pro Belgium GPRS,*99***1#,base,base,gprs.base.be,BASE HTTP
+20620,Base Pro Belgium GPRS,*99***1#,base,base,gprs.base.be,BASE Internet
+20801,FR  Orange F,,orange,orange,ofnew.fr,Carrefour WAP
+20801,FR  Orange F,,orange,orange,ofnew.fr,NRJWEB
+20801,FR  Orange F,,orange,orange,ofnew.fr,Tele2 WAP
+20801,FR  Orange F,,orange,orange,ofnew.fr,VM WAP
+20801,FR  Orange F,,orange,orange,orange-mib,Orange Entreprise
+20801,FR  Orange F,,orange,orange,orange,Orange World
+20810,SFR Entreprise France UMTS GPRS,,,,fnetnrj,NRJWEB
+20810,SFR Entreprise France UMTS GPRS,,,,internet68,Keyyo Mobile Internet
+20810,SFR Entreprise France UMTS GPRS,,,,sl2sfr,SFR webphone
+20810,SFR Entreprise France UMTS GPRS,,,,wap65,Auchan WAP
+20810,SFR Entreprise France UMTS GPRS,,,,wap66,WAP LeclercMobile
+20810,SFR Entreprise France UMTS GPRS,,,,wap68,Darty Surf;Mails
+20810,SFR Entreprise France UMTS GPRS,,,,wapcoriolis,Coriolis WAP
+20810,SFR Entreprise France UMTS GPRS,,,,wapdebitel,WAP Simplicime
+20810,SFR Entreprise France UMTS GPRS,,,,wapdebitel,WEB La Poste Mobile
+20810,SFR Entreprise France UMTS GPRS,,,,wapsfr,SFR NET
+20810,SFR Entreprise France UMTS GPRS,,,,websfr,SFR Internet
+20815,Free,*99#,,,free,Free
+20820,Bouygues Telecom Entreprise France GPRS,*99***1#,a2b,acces,a2bouygtel.com,Bouygues
+20826,NRJ WEB,*99#,,,fnetnrj,NRJ WEB
+21401,Vodafone,*99#,vodafone,vodafone,ac.vodafone.es,Vodafone ES-Internet
+21401,Vodafone,*99#,wap@wap,wap125,airtelwap.es,Vodafone Internet
+21403,MASmovil,*99***1#,,,CARREFOURINTERNET,Carrefour
+21403,MASmovil,*99***1#,EUSKALTEL,CLIENTE,internet.euskaltel.mobi,Internet Euskaltel
+21403,MASmovil,*99***1#,,,jazzinternet,Internet
+21403,MASmovil,*99***1#,orange,orange,orangeworld,Orange Internet Movil
+21404,Yoigo Internet,*99#,,,internet,Yoigo Internet
+21406,Vodafone,*99#,CLIENTE,EUSKALTEL,internet.euskaltel.mobi,Euskaltel Internet
+21406,Vodafone,*99#,EUSKALTEL,CLIENTE,internet.euskaltel.mobi,Internet Euskaltel
+21406,Vodafone,*99#,,,internet.mundo-r.com,Internet R
+21406,Vodafone,*99#,telecable,telecable,internet.telecable.es,TeleCable Internet
+21406,Vodafone,*99#,vodafone,vodafone,airtelnet.es,INTERNET GPRS
+21406,Vodafone,*99#,wap@wap,wap125,gprs.eroskimovil.es,Eroski Movil GPRS
+21407,movistar,*99#,,,jazzinternet,Jazztel Internet
+21408,EUSKALTEL1,*99#,CLIENTE,EUSKALTEL,internet.euskaltel.mobi,Euskaltel Internet
+21416,TeleCable Internet,*99#,telecable,telecable,internet.telecable.es,TeleCable Internet
+21418,ONO,*99#,,,internet.ono.com,ONO Internet
+21419,Simyo,*99#,,,gprs-service.com,Internet Simyo ES
+21421,Internet,*99#,,,jazzinternet,Internet
+21425,Layca Internet,*99#,lmes,plus,data.lycamobile.es,Layca Internet
+21432,Tuenti,*99#,tuenti,tuenti,tuenti.com,Tuenti
+21601,Pannon,*99#,,,net,Telenor DATA
+21601,Pannon,*99#,,,online,Telenor Online
+21630,HU T-Mobile GPRS,,,,internet.telekom,Telekom HU NET
+21630,HU T-Mobile GPRS,,,,wnw,Telekom Web
+21670,Vodafone Hungary UMTS GPRS,*99#,,,internet.vodafone.net,Vodafone Internet postpaid
+21670,Vodafone Hungary UMTS GPRS,*99#,,,vitamax.internet.vodafone.net,Vodafone Internet prepaid
+21670,Vodafone Hungary UMTS GPRS,*99#,vodawap,vodawap,vitamax.wap.vodafone.net,Vodafone HTTP prepaid
+21670,Vodafone Hungary UMTS GPRS,*99#,vodawap,vodawap,wap.vodafone.net,Vodafone HTTP postpaid
+21805,Mobi's Fun Bosnia and Herzegovina GPRS,,,,mobisfun,m:tel
+21901,T-Mobile Croatia GPRS,*99***1#,,,web.htgprs,T-Mobile Internet
+21901,T-Mobile Croatia GPRS,*99***1#,,,www.htgprs.hr,T-Mobile HTTP
+21902,TELE2 HTTP,*99#,,,wap.tele2.hr,TELE2 HTTP
+21902,TELE2 Internet,*99#,,,wap.tele2.hr,TELE2 Internet
+21910,VIPnet Croatia UMTS GPRS,,,,data.vip.hr,Broadband
+22001,Telenor NET,*99#,telenor,gprs,net,Telenor NET
+22002,Promonte Internet,*99#,gprs,gprs,gprs.promonte.com,Promonte Internet
+22003,mts internet,*99#,mts,064,3gnet,mts internet
+22003,mts wap,*99#,mts,064,gprswap,mts wap
+22005,Vip GPRS,*99#,vipmobile,vipmobile,vipmobile,Vip GPRS
+22201,TIM,*99#,,,ibox.tim.it,TIM Web
+22201,TIM,*99#,WAPTIM,WAPTIM,wap.tim.it,TIM WAP
+22210,Vodafone,*99#,,,mobile.vodafone.it,Acc. Internet da cell
+22210,Vodafone,*99#,,,web.omnitel.it,Vodafone Internet
+22233,PosteMobile,*99#,,,wap.postemobile.it,PosteMobile
+22288,Wind,*99#,,,internet.wind,WIND WEB
+22298,BLU Italy GPRS,*99***1#,,,,Blu
+22299,3,*99#,,,datacard.tre.it,3 Italia
+22601,Vodafone,*99#,internet.pre.vodafone.ro,vodafone,internet.pre.vodafone.ro,Vodafone Internet prepaid
+22601,Vodafone,*99#,internet.vodafone.ro,vodafone,internet.vodafone.ro,Vodafone Internet postpaid
+22601,Vodafone,*99#,live,vodafone,live.pre.vodafone.com,Vodafone HTTP prepaid
+22601,Vodafone,*99#,live,vodafone,live.vodafone.com,Vodafone HTTP postpaid
+22603,Cosmote,*99#,,,broadband,Cosmote Internet postpaid
+22603,Cosmote,*99#,,,broadband,Cosmote Internet prepaid
+22603,Cosmote,*99#,wnw,wnw,wnw,web'n'walk
+22604,Cosmote,*99#,,,broadband,Zapp
+22605,Digi.Mobil,*99#,,,internet,Digi.Mobil
+22605,RDS Internet postpaid,*99#,,,internet,RDS Internet postpaid
+22606,Cosmote,*99#,,,broadband,Cosmote Connect Mobile
+22606,Cosmote,*99#,wnw,wnw,wnw,web'n'walk
+22610,Orange,*99#,,,internet,Orange Internet postpaid
+22610,Orange,*99#,,,internet,Orange Internet prepaid
+22610,Orange,*99#,,,wap,Orange HTTP postpaid
+22610,Orange,*99#,,,wap,Orange HTTP prepaid
+22801,Swisscom Switzerland GPRS,*99***1#,,,gprs.swisscom.ch,Swisscom Services
+22802,Sunrise Switzerland GPRS,*99***1#,,,internet,Sunrise Internet
+22802,Sunrise Switzerland GPRS,*99***1#,wap,wap,wap.sunrise.ch,Sunrise HTTP
+22803,CH Orange CH GPRS,,,,Click,Orange HTTP prepaid
+22803,CH Orange CH GPRS,,,,Click,Orange Internet prepaid
+22803,CH Orange CH GPRS,,,,internet,Orange Internet postpaid
+22803,CH Orange CH GPRS,,,,wap,Orange HTTP postpaid
+23001,T-Mobile,*99#,,,internet.t-mobile.cz,T-Mobile Internet postpaid
+23001,T-Mobile,*99#,,,wap.t-mobile.cz,T-Mobile HTTP postpaid
+23002,O2,*99#,,,internet,O2 Internet postpaid
+23002,O2,*99#,,,Video,O2 Video postpaid
+23002,O2,*99#,,,wap,O2 HTTP postpaid
+23003,Vodafone,*99***1#,,,ointernet,Vodafone Internet postpaid
+23003,Vodafone,*99***1#,,,ointernet,Vodafone Internet prepaid
+23003,Vodafone,*99***1#,wap,wap,data.vodafone.cz,Vodafone HTTP prepaid
+23003,Vodafone,*99***1#,wap,wap,owap,Vodafone HTTP postpaid
+23004,Vodafone,*99***1#,,,internet,U:fon
+23099,Ufon,#777,ufon,ufon,,Vodafone Czech Republic a.s.
+23101,Orange,*99#,,,internet,Orange Internet
+23101,Orange,*99#,wap,wap,orangewap,Orange World
+23102,T-Mobile,*99***1#,,,internet,T-Mobile Internet
+23102,T-Mobile,*99***1#,wap,wap,wap,T-Mobile HTTP
+23104,T-Mobile HTTP,*99#,wap,wap,wap,T-Mobile HTTP
+23104,T-Mobile Internet,*99#,,,internet,T-Mobile Internet
+23106,O2,*99***1#,,,o2internet,O2 Internet
+23106,O2,*99***1#,,,o2wap,O2 HTTP
+23201,A1 TA,*99***1#,mobil@aon.at,ppp,aon.at,aonMobil
+23201,A1 TA,*99***1#,ppp@a1plus.at,ppp,a1.net,A1 Internet
+23203,T-Mobile AT,*99***1#,,,gprsinternet,T-Mobile Internet
+23204,T-Mobile AT,*99***1#,GPRS,,gprsinternet,T-Mobile AT
+23205,Orange AT,*99***1#,,,web.one.at,One Internet
+23205,Orange AT,*99***1#,web,web,orange.smartphone,Orange Smartphone
+23206,Orange AT,*99***1#,web,web,web.one.at,Orange AT
+23207,Tele.Ring Austria GPRS,*99***1#,web@telering.at,web,web,tele.ring web
+23210,3,*99***1#,,,drei.at,3 AT
+23211,data.bob,*99#,data@bob.at,ppp,bob.at,data.bob
+23212,yesss!,*99***1#,,,web.yesss.at,YESSS! GPRS
+23402,O2,*99#,o2bb,password,m-bb.o2.co.uk,O2 Pay and Go Mobile Broadband
+23402,O2,*99#,o2web,password,mobile.o2.co.uk,O2 Mobile Web
+23402,O2,*99#,payandgo,password,payandgo.o2.co.uk,O2 Pay and Go
+23410,O2,*99#,o2bb,password,m-bb.o2.co.uk,O2 Pay and Go Mobile Broadband
+23410,O2,*99#,o2web,password,mobile.o2.co.uk,O2 Mobile Web
+23410,O2,*99#,payandgo,password,payandgo.o2.co.uk,O2 Pay and Go
+23411,O2,*99#,O2web,O2web,mobile.o2.co.uk,O2 MOBILE WEB
+23415,Vodafone,*99#,,,mobile.talktalk.co.uk,TalkTalk Internet
+23415,Vodafone,*99#,,,mobile.talktalk.co.uk,TalkTalk WAP
+23420,3,*99#,,,orangenet,3 Hutchison
+23430,Internet,*99#,eesecure,secure,everywhere,Internet
+23431,Internet,*99#,eesecure,secure,everywhere,Internet
+23431,Virgin Media Mobile Internet,*99#,user,,goto.virginmobile.uk,Virgin Media Mobile Internet
+23431,Virgin MMS,*99#,user,,goto.virginmobile.uk,Virgin MMS
+23431,Virgin Mobile GPRS,*99#,user,,goto.virginmobile.uk,Virgin Mobile GPRS
+23432,Internet,*99#,eesecure,secure,everywhere,Internet
+23433,Orange,,eesecure,secure,everywhere,Internet
+23434,Orange,,eesecure,secure,everywhere,Internet
+23801,TDC,*99#,,,internet,Happii Internet
+23801,TDC,*99#,,,internet,TDC
+23802,Telenor,*99#,,,internet.bibob.dk,Bibob Internet
+23802,Telenor,*99#,,,internet.sp.dk,Onfone GPRS
+23802,Telenor,*99#,,,internet,Telenor Internet
+23806,3,*99#,,,data.dk,Oister DK
+23810,TDC,*99#,,,internet,TDC
+23820,Telia,*99#,,,websp,Call me Internet
+23820,Telia,*99#,,,websp,Call me Streaming
+23820,Telia,*99#,,,websp,DLG Tele Internet
+23820,Telia,*99#,,,websp,DLG Tele Streaming
+23820,Telia,*99#,,,www.internet.mtelia.dk,Telia Mobile Data
+23830,Orange,*99#,,,web.orange.dk,Telia
+23866,Telenor Internet,*99#,,,internet,Telenor Internet
+23877,Telenor,*99#,,,internet.bibob.dk,Bibob Internet
+23877,Telenor,*99#,,,internet.sp.dk,Onfone GPRS
+23877,Telenor,*99#,,,internet,Telenor Internet
+240017,Halebop Internet,*99#,,,halebop.telia.se,Halebop Internet
+24001,Telia,*99#,,,halebop.telia.se,Halebop Online
+24001,Telia,*99#,,,online.telia.se,Telia SE Internet
+24002,3,*99#,,,data.tre.se,3 HUTCHISON
+24006,Telenor,*99#,,,services.telenor.se,Telenor Mobilsurf
+24007,Tele2,*99#,,,internet.ventelo.se,Ventelo Internet
+24007,Tele2,*99#,wap,wap,internet.tele2.no,Tele2 Internet
+24007,Tele2,*99#,wap,wap,internet.tele2.se,Tele2 Internet
+24008,Telenor,*99#,,,internet.glocalnet.se,Glocalnet Data
+24008,Telenor,*99#,,,services.telenor.se,Telenor surf
+24009,TelenorMobilsurf,*99#,,,services.telenor.se,TelenorMobilsurf
+24010,Spring Mobile,*99#,,,data.springmobil.se,Spring data
+24201,Telenor,*99#,,,internet.ventelo.no,Ventelo Internett
+24201,Telenor,*99#,,,telenor,Telenor Internet
+24202,NetCom,*99#,,,internet.netcom.no,Chess Internet
+24202,NetCom,*99#,,,internet.netcom.no,NetCom Internet
+24204,Tele2,*99#,,,internet.tele2.no,Tele2
+24205,Network Norway,*99#,,,internet,NWN Internet
+24205,Network Norway,*99#,,,internet,One Call Internet
+24212,Telenor,*99#,,,telenor,Telenor
+24403,DNA,*99#,,,internet,DNA Internet
+24404,AINA,*99#,,,internet,DNA Internet
+24405,Elisa,*99#,,,internet,Elisa Internet
+24410,TDC Internet,*99#,song@internet,songnet,internet.song.fi,TDC Internet
+24412,DNA,*99#,,,dnapro.fi,DNA Pro Internet
+24412,DNA,*99#,,,inet.tdc.fi,TDC internet
+24412,DNA,*99#,,,internet.aina.fi,Aina internet
+24412,DNA,*99#,,,internet.dicame.fi,Dicame Internet
+24412,DNA,*99#,,,internet,DNA Internet
+24413,DNA,*99#,,,internet,DNA Internet
+24421,Saunalahti,*99#,,,internet,Saunalahti 3G Internet
+24421,Saunalahti,*99#,,,internet.saunalahti,Saunalahti 4G Internet
+24491,Sonera,*99#,,,internet,Sonera Internet
+24601,Omnitel Lituania GPRS,*99***1#,omni,omni,omnitel,Omnitel HTTP
+24601,Omnitel Lituania GPRS,*99***1#,,,omnitel,Omnitel Internet
+24602,Bite GSM Lituania GPRS,*99***1#,,,internet,Bite Internet
+24602,Bite GSM Lituania GPRS,*99***1#,,,wap,Bite HTTP
+24603,Tele2 Lituania GPRS,*99***1#,wap,wap,internet.tele2.lt,PILDYK Internet(Prepaid)
+24603,Tele2 Lituania GPRS,*99***1#,wap,wap,internet.tele2.lt,Tele 2 HTTP
+24701,LMT INTERNET,*99#,,,internet.lmt.lv,LMT INTERNET
+24702,LV TELE2 Internet,*99#,wap,wap,mobileinternet.tele2.lv,LV TELE2 Internet
+24702,LV TELE2 Internet(Prepaid),*99#,,,data.tele2.lv,LV TELE2 Internet(Prepaid)
+24703,Bite GPRS,*99#,,,internet,Bite GPRS
+24801,EMT Internet,*99#,,,internet.emt.ee,EMT Internet
+24801,EMT Internet,*99#,,,internet.emt.ee,EMT Internet
+24801,EMT WAP,*99#,,,wap.emt.ee,EMT WAP
+24802,Elisa Corporate Estonia UMTS GPRS,,,,internet,Elisa Internet
+24802,Elisa Corporate Estonia UMTS GPRS,,,,wap,Elisa WAP
+24803,Tele2 Internet,*99#,,,internet.tele2.ee,Tele2 Internet
+24803,Tele2 Internet,*99#,,,Internet.tele2.ee,Tele2 Internet
+24803,Tele2 Internet(Prepaid),*99#,,,wap.tele2.ee,Tele2 Internet(Prepaid)
+25001,MTS,*99***1#,mts,mts,internet.mts.ru,MTS Internet
+25001,MTS,*99***1#,mts,mts,wap.mts.ru,MTS HTTP
+25002,MegaFon,*99***1#,,,internet.nw,Megafon Internet
+25011,Yota Internet,*99#,,,yota.ru,Yota Internet
+25014,MegaFon,*99***1#,,,internet.nw,Megafon TDD Internet
+25020,Tele2,*99***1#,,,internet.tele2.ru,TELE2 Internet
+25028,Beeline,*99***1#,beeline,beeline,internet.beeline.ru,Beeline
+25035,Motiv Internet,*99#,,motiv,inet.ycc.ru,Motiv Internet
+25050,MTS,*99***1#,,,internet.mts.ru,MTS 2G Internet
+25099,Beeline,*99***1#,beeline,beeline,internet.beeline.ru,BeeLine Internet
+25099,Beeline,*99***1#,beeline,beeline,wap.beeline.ru,BeeLine HTTP
+25501,MTS,#777,,,internet,MTS Internet
+25501,MTS,#777,,,wap.jeans.ua,JEANS HTTP
+25501,MTS,#777,,,wap,MTS HTTP
+25501,MTS,#777,,,www.jeans.ua,JEANS Internet
+25501,MTS,#777,,,www.umc.ua,MTS Internet_old
+25502,Beeline,*99#,,,internet.beeline.ua,Beeline Internet
+25502,Beeline,*99#,,,wap.beeline.ua,Beeline HTTP
+25503,Kyivstar,*99#,igprs,internet,www.kyivstar.net,Kyivstar Post Paid Internet
+25503,Kyivstar,*99#,,,wap.ab.kyivstar.net,Ace_Base G HTTP
+25503,Kyivstar,*99#,,,wap.ab.kyivstar.net,Mobilych HTTP
+25503,Kyivstar,*99#,,,wap.djuice.com.ua,Djuice HTTP
+25503,Kyivstar,*99#,,,wap.kyivstar.net,Kyivstar HTTP
+25503,Kyivstar,*99#,,,www.ab.kyivstar.net,Ace_Base G Internet
+25503,Kyivstar,*99#,,,www.ab.kyivstar.net,Kyivstar Pre Paid Internet
+25503,Kyivstar,*99#,,,www.ab.kyivstar.net,Mobilych Internet
+25503,Kyivstar,*99#,,,www.djuice.com.ua,Djuice Internet
+25506,life,*99#,,,internet,life Internet
+25506,life,*99#,,,wap,life HTTP
+25507,Utel Internet,*99#,,,3g.utel.ua,Utel Internet
+25521,PEOPLEnet,#777,,000000,,PEOPLEnet
+25523,CDMA Ukraine,#777,,,,CDMA Ukraine
+26001,Plus,*99***1#,,,internet,Plus
+26002,T-Mobile,*99***1#,erainternet,erainternet,erainternet,Era Internet postpaid
+26002,T-Mobile,*99***1#,erainternet,erainternet,erainternettt,Era Internet prepaid
+26002,T-Mobile,*99***1#,,,erawap,Era HTTP postpaid
+26002,T-Mobile,*99***1#,,,erawaptt,Era HTTP prepaid
+26002,T-Mobile,*99***1#,,,heyah.pl,heyahinternet
+26002,T-Mobile,*99***1#,,,internet,T-mobile.pl
+26003,Orange,*99#,internet,internet,internet,Orange Internet
+26003,Orange,*99#,wap,wap,wap,Orange HTTP
+26006,Play,*99#,,,internet,P4 Internet
+26006,Play,*99#,,,wap,P4 Data HTTP
+26012,Cyfrowy Polsat,*99***1#,,,multi.internet,Cyfrowy Polsat
+26201,DE T-D1 GPRS,,t-mobile,tm,internet.telekom,T-Mobile Internet
+26202,Vodafone,*99***1#,vodafone,internet,web.vodafone.de,Vodafone Internet
+26202,Vodafone,*99***1#,vodafone,live,wap.vodafone.de,Vodafone HTTP
+26203,E-Plus,*99***1#,eplus,wap,internet.eplus.de,E-Plus Internet
+26204,Vodafone,*99***1#,vodafone,vodafone,web.vodafone.de,Vodafone
+26205,E-Plus,*99***1#,eplus,gprs,internet.eplus.de,E-Plus
+26206,T-Mobile,*99***1#,tm,tm,internet.t-mobile,T-Mobile
+26207,O2,*99***1#,,,internet.debitel.de,Debitel INET post-paid
+26207,O2,*99***1#,,,internet.debitel.de,Debitel INET post-paid
+26207,O2,*99***1#,,,internet.kabeld,Kabel Deutschland
+26207,O2,*99***1#,,,internet.kabeld,Kabel Deutschland
+26207,O2,*99***1#,,,internet.mobilcom,Mobilcom post-paid
+26207,O2,*99***1#,,,internet.mobilcom,Mobilcom post-paid
+26207,O2,*99***1#,,,internet,o2 (DE)
+26207,O2,*99***1#,,,internet,o2 post-paid
+26207,O2,*99***1#,,,internet,o2 post-paid
+26207,O2,*99***1#,,,internet.online1,M-Net Postpaid
+26207,O2,*99***1#,,,internet.online1,M-Net Postpaid
+26207,O2,*99***1#,,,internet.online,Freenet Postpaid
+26207,O2,*99***1#,,,internet.online,Freenet Postpaid
+26207,O2,*99***1#,,,internet.partner1,AOL
+26207,O2,*99***1#,,,internet.partner1,AOL
+26207,O2,*99***1#,,,internet.talkline,Talkline
+26207,O2,*99***1#,,,internet.talkline,Talkline
+26207,O2,*99***1#,,,internet.telco,Telco
+26207,O2,*99***1#,,,internet.telco,Telco
+26207,O2,*99***1#,,,internet.victorvox,Driliish post-paid
+26207,O2,*99***1#,,,internet.victorvox,Driliish post-paid
+26207,O2,*99***1#,,,pinternet.interkom.de,Fonic
+26207,O2,*99***1#,,,pinternet.interkom.de,Fonic
+26207,O2,*99***1#,,,pinternet.interkom.de,Freenet Prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,Freenet Prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,Mobilcom Prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,Mobilcom Prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,o2 prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,o2 prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,SCHLECKER Prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,SCHLECKER Prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,Talkline Prepaid
+26207,O2,*99***1#,,,pinternet.interkom.de,Talkline Prepaid
+26207,O2,*99***1#,,,wap.debitel.de,Debitel Internet post-paid
+26207,O2,*99***1#,,,wap.debitel.de,Debitel Internet post-paid
+26207,O2,*99***1#,,,wapmobil1,Tchibo pre-paid Internet
+26207,O2,*99***1#,,,wapmobil1,Tchibo pre-paid Internet
+26207,O2,*99***1#,,,wapmobil2,Tchibo post-paid
+26207,O2,*99***1#,,,wapmobil2,Tchibo post-paid
+26207,O2,*99***1#,,,webmobil1,Tchibo pre-paid INET
+26207,O2,*99***1#,,,webmobil1,Tchibo pre-paid INET
+26208,O2,*99***1#,,,internet,o2 (DE)
+26208,O2,*99***1#,,,pinternet.interkom.de,o2 (DE) Prepaid
+26209,Vodafone,*99***1#,vodafone,vodafone,web.vodafone.de,Vodafone
+26210,O2,*99***1#,,,internet,Arcor AG &amp; Co
+26214,DE Quam GPRS,,quam,quam,quam.de,Group 3G UMTS
+26216,Telogic ex. Vistream,*99***1#,WAP,Vistream,internet.vistream.net,vistream
+26277,E-Plus,*99***1#,eplus,gprs,internet.eplus.de,E-Plus
+26278,T-Mobile,*99***1#,tm,tm,internet.t-mobile,T-Mobile
+26801,Vodafone,*99#,vodafone,vodafone,net2.vodafone.pt,Vodafone
+26803,Optimus,*99#,,,umts,Optimus
+26806,TMN,*99#,,,internet,TMN Internet
+26806,TMN,*99#,tmn,tmnnet,wap.tmn.pt,TMN HTTP postpaid
+26806,TMN,*99#,tmn,tmnnet,wap.tmn.pt,TMN HTTP prepaid
+27001,LUXGSM Luxembourg GPRS,*99***1#,wap,wap,wap.pt.lu,LUXGSM HTTP postpaid
+27001,LUXGSM Luxembourg GPRS,*99***1#,web,web,web.pt.lu,LUXGSM Internet postpaid
+27077,Tango Luxembourg UMTS GPRS,,tango,tango,internet,Tango Internet postpaid
+27099,VOX HTTP postpaid,*99#,,,vox.lu,VOX HTTP postpaid
+27099,VOX Internet postpaid,*99#,,,vox.lu,VOX Internet postpaid
+27201,Vodafone Ireland UMTS GPRS,,,,live.vodafone.com,Vodafone IE
+27202,O2 Ireland GPRS,*99***1#,gprs,gprs,open.internet,O2
+27203,Meteor Data,*99#,,,data.mymeteor.ie,Meteor Data
+27401,Siminn Internet,*99#,,,internet,Siminn Internet
+27402,Vodafone Internet,*99#,,,gprs.is,Vodafone Internet
+27411,Net Nova,*99#,,,net.nova.is,Net Nova
+27801,Vodafone Malta GPRS,,internet,internet,internet,Vodafone
+2801,Swisscom Switzerland GPRS,*99***1#,,,Cytamobile,Cyta
+28401,M-Tel,359881000,,,inet-gprs.mtel.bg,Mtel Internet GPRS
+28403,Vivacom,359871000,,,internet.vivatel.bg,VivaTel Internet postpaid
+28403,Vivacom,359871000,wap,wap,wap.vivatel.bg,VivaTel HTTP postpaid
+28405,GLOBUL,359891000,,,globul,Globul HTTP postpaid
+28405,GLOBUL,359891000,,,globul,Globul Internet postpaid
+28601,Turkcell,*99#,gprs,gprs,internet,Turkcell Internet
+28601,Turkcell,*99#,gprs,gprs,wap,Turkcell HTTP
+28601,Turkcell,*99#,,,internet,Turkcell Internet
+28602,Vodafone,*99#,vodafone,vodafone,internet,Vodafone Internet
+28602,Vodafone,*99#,vodafone,vodafone,prepaidgprs,Vodafone Internet prepaid
+28602,Vodafone,*99#,vodafone,vodafone,vflive,Vodafone Live
+28603,Avea,*99#,wap,wap,internet,AVEA Internet
+28603,Avea,*99#,wap,wap,wap,AVEA HTTP
+28603,Avea,*99#,wap,wap,wap,AVEA HTTP
+28604,Avea,*99#,,,internet,Aycell
+29340,Simobil Corporate Slovenia GPRS,,simobil,internet,si.simobil.internet,Si.mobil internet
+29341,Planet,*99#,mobitel,internet,internet,Planet
+29370,Tusmobil HTTP,*99#,tusmobil,internet,internet.tusmobil.si,Tusmobil HTTP
+29370,Tusmobil Internet,*99#,tusmobil,internet,internet.tusmobil.si,Tusmobil Internet
+29401,TM MK Internet,*99#,internet,t-mobile,internet,TM MK Internet
+29403,Internet,*99#,VIPOPERATOR,VIPOPERATOR,Vipoperator,Internet
+29701,Promonte Internet1,*99#,gprs,gprs,gprs.promonte.com,Telenor Montenegro
+29702,T-Mobile Internet,*99#,38267,38267,tmcg-wnw,T-Mobile Internet
+302220,TELUS SP,*99#,,,sp.telus.com,TELUS SP
+30237,Microcell Canada GPRS,*99***1#,,,internet.fido.ca,Microcell Canada GPRS
+302490,Internet,*99#,,,Internet.windmobile.ca,Internet
+302500,Videotron media,*99#,,,media.videotron,Videotron media
+302510,Videotron media,*99#,,,media.videotron,Videotron media
+302720,Rogers Wireless,*99***1#,wapuser1,wap,internet.com,Rogers Wireless
+310004,Verizon,#777,,,,Verizon
+310005,Verizon,#777,,,,Verizon
+310012,Verizon,#777,,,,Verizon
+310026,T-Mobile,*99***1#,,,epc.tmobile.com,T-Mobile
+310030,AT&T,*99***1#,,,broadband,Centennial
+310070,ATT Activation,*99#,,,lwaactivate,ATT Activation
+310070,ATT Broadband,*99#,,,broadband,ATT Broadband
+310090,ATT Activation,*99#,,,lwaactivate,ATT Activation
+310090,ATT Broadband,*99#,,,broadband,ATT Broadband
+310120,Verizon,#777,,,,Sprint
+310150,AT&T,*99***1#,,,broadband,ATT Broadband
+310150,AT&T,*99***1#,,,lwaactivate,ATT Activation
+310160,T-Mobile VPN United States GPRS15,*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+310170,AT&T,*99***1#,,,broadband,ATT Broadband
+310170,AT&T,*99***1#,,,lwaactivate,ATT Activation
+31018,Cingular Accelerated United States UMTS EDGE GPRS2,,ISPDA@CINGULARGPRS.COM,CINGULAR1,isp.cingular,Cingular Accelerated United States UMTS EDGE GPRS2
+310200,T-Mobile (T-Zone),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+31020,T-Mobile (Internet),*99***1#,,,internet2.voicestream.com,T-Mobile (Internet)
+310210,T-Mobile (T-Zone),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+31021,T-Mobile (Internet),*99***1#,,,internet2.voicestream.com,T-Mobile (Internet)
+310220,T-Mobile (T-Zone),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+31022,T-Mobile (Internet),*99***1#,,,internet2.voicestream.com,T-Mobile (Internet)
+310230,T-Mobile (T-Zone),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+31023,T-Mobile (Internet),*99***1#,,,internet2.voicestream.com,T-Mobile (Internet)
+310240,T-Mobile (T-Zone),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+31024,T-Mobile (Internet),*99***1#,,,internet2.voicestream.com,T-Mobile (Internet)
+310250,T-Mobile (T-Zone),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+31025,T-Mobile (Internet),*99***1#,,,internet2.voicestream.com,T-Mobile (Internet)
+310260,T-Mobile (T-Zone),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+31026,T-Mobile (Internet),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+310270,T-Mobile (T-Zone),*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+31027,T-Mobile (Internet),*99***1#,,,internet2.voicestream.com,T-Mobile (Internet)
+310280,AT&T,*99***1#,,,broadband,T-Mobile
+31031,T-Mobile VPN United States GPRS12,*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+310320,Cellular One,*99***1#,,,cellular1wap,Cellular One
+310330,T-Mobile,*99***1#,,,epc.tmobile.com,T-Mobile
+310380,AT&T,*99***1#,,,agms.nl.gmm,AGMS Global
+310380,AT&T,*99***1#,,,broadband,ATT Broadband
+310380,AT&T,*99***1#,,,lwaactivate,ATT Activation
+310390,Cellular One,*99***1#,,,cellular1wap,Cellular One of East Texas
+310410,AT&T,*99***1#,,,broadband,ATT Broadband
+310410,AT&T,*99***1#,,,lwaactivate,ATT Activation
+310420,Cincinnati Bell,*99***1#,,,wap.gocbw.com,Cincinnati Bell
+310440,Cellular One,*99***1#,,,cellular1wap,Cellular One
+310490,T-Mobile,*99***1#,,,epc.tmobile.com,SunCom
+310560,AT&T,*99***1#,,,broadband,ATT Broadband
+310560,AT&T,*99***1#,,,lwaactivate,ATT Activation
+310570,Cellular One,*99***1#,,,cellular1wap,Chinook Wireless
+310580,T-Mobile,*99***1#,,,epc.tmobile.com,T-Mobile
+31064,Telecom Italia Mobile,*99***1#,,,proxy,Telecom Italia Mobile
+310660,T-Mobile,*99***1#,,,fast.t-mobile.com,T-Mobile US LTE
+310680,AT&T,*99***1#,,,broadband,ATT Broadband
+310680,AT&T,*99***1#,,,lwaactivate,ATT Activation
+310800,T-Mobile,*99***1#,,,epc.tmobile.com,T-Mobile
+310980,AT&T,*99***1#,,,broadband,AT&amp;T Mobility
+310990,AT&T,*99***1#,,,broadband,AT&amp;T Mobility
+311480,Verizon,#777,,,vzwinternet,Verizon Wireless
+311481,Verizon,#777,,,,Verizon
+311482,Verizon,#777,,,,Verizon
+311483,Verizon,#777,,,,Verizon
+311484,Verizon,#777,,,,Verizon
+311485,Verizon,#777,,,,Verizon
+311486,Verizon,#777,,,,Verizon
+311487,Verizon,#777,,,,Verizon
+311488,Verizon,#777,,,,Verizon
+311489,Verizon,#777,,,,Verizon
+311490,Verizon,#777,,,,Verizon
+330110,INTERNET CLARO,*99#,,,internet.claropr.com,Claro
+334020,Telcel 3G,*99***1#,webgprs,webgprs2002,internet.itelcel.com,Telcel
+33403,Movistar Mexico GPRS,,movistar,movistar,internet.movistar.mx,movistar
+33805,Digicel Jamaica GPRS,*99***1#,wapuser1,wap03jam,web.digiceljamaica.com,Digicel
+338070,INTERNET CLARO JM,*99#,,,internet.ideasclaro.com.jm,Claro
+34001,Orange GPRS,,orange,orange,orangewap,Orange
+34002,Onlywap Reunion,,only,only,onlywap,Outremer
+36301,Setar,*99#,,,internet.setar.aw,SETAR
+36611,Cable And Wireless Dominica GPRS,,,,internet,Cable And Wireless Dominica GPRS
+37001,Orange Dominicana GPRS,,,,orangenet.com.do,Orange
+37002,Claro,*99#,,,internet.ideasclaro.com.do,Claro
+37412,TSTT Trinidad And Tobago EDGE GPRS,,,,Internet,bmobile
+37413,Digicel Trinidad And Tobago EDGE GPRS,,,,web.digiceltt.com,Digicel
+40101,Beeline Internet,*99#,@internet.beeline,beeline,internet.beeline.kz,Beeline Internet
+40102,Kcell gprs,*99#,,,internet,Kcell gprs
+40177,Tele2 Internet,*99#,,,internet,Tele2 Internet
+40400,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+40401,Vodafone Haryana,*99***1#,,,www,Vodafone IN Internet
+40402,AirTel,*99#,,,airtelgprs.com,Airtel - Punjab
+404030,Vodafone IN Internet,*99#,,,www,Vodafone IN Internet
+40403,AirTel,*99#,,,airtelgprs.com,Airtel / Bharti Telenet
+40404,IDEA,*99#,,,internet,IDEA gprs
+40405,Vodafone Gujarat,*99***1#,,,www,Vodafone IN Internet
+40407,IDEA,*99#,,,internet,IDEA gprs
+40409,Reliance,#777,,,reliance,Reliance Telecom Private
+40410,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40411,Vodafone Delhi,*99***1#,,,www,Vodafone IN Internet
+40412,IDEA,*99#,,,internet,IDEA gprs
+40413,Vodafone Andhra Pradesh,*99***1#,,,www,Vodafone IN Internet
+40414,IDEA,*99#,,,internet,IDEA gprs
+40415,Vodafone Uttar Pradesh (East),*99***1#,,,www,Vodafone IN Internet
+40416,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40417,AIRCEL West Bengal,*99***1#,,,aircelgprs,Aircel GPRS
+40418,Reliance,#777,,,rcomnet,INTERNET
+40419,IDEA,*99#,,,internet,IDEA gprs
+40420,Vodafone Mumbai,*99***1#,,,www,Vodafone IN Internet
+40421,BPL India GPRS,*99***1#,,,WWW,LOOP_GPRS
+40422,IDEA,*99#,,,internet,IDEA gprs
+40424,IDEA,*99#,,,internet,IDEA gprs
+40425,AIRCEL Bihar,*99***1#,,,aircelgprs,Aircel GPRS
+40427,Vodafone Maharashtra,*99***1#,,,www,Vodafone IN Internet
+40428,AIRCEL Orissa,*99***1#,,,aircelgprs,Aircel GPRS
+40429,AIRCEL Assam,*99***1#,,,aircelgprs,Aircel GPRS
+4042,SoftBank,*99***1#,,,airtelgprs.com,Airtel Internet
+40430,Vodafone Kolkata,*99***1#,,,www,Vodafone IN Internet
+40431,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40433,AIRCEL North East,*99***1#,,,aircelgprs,AIRCEL North East
+40434,BSNL Haryana,*99***1#,,,bsnlnet,BSNL internet
+40435,AIRCEL Himachal Pradesh,*99***1#,,,aircelgprs,AIRCEL Himachal Pradesh
+40436,Reliance,#777,,,rcomnet,INTERNET
+40437,AIRCEL Jammu & Kashmir,*99***1#,,,aircelgprs,Aircel GPRS
+40438,BSNL Assam,*99***1#,,,bsnlnet,BSNL internet
+4043,SoftBank,*99***1#,,,airtelgprs.com,Airtel Internet
+40440,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40441,AIRCEL Chennai,*99***1#,,,aircelgprs,Aircel GPRS
+40442,AIRCEL Tamilnadu,*99***1#,,,aircelgprs,Aircel GPRS
+40443,Vodafone Tamilnadu,*99***1#,,,www,Vodafone IN Internet
+40444,IDEA,*99#,,,internet,IDEA gprs
+40445,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40446,Vodafone Kerala,*99***1#,,,www,Vodafone IN Internet
+40449,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40450,Reliance,#777,,,rcomnet,INTERNET
+40451,BSNL Himachal Pradesh,*99***1#,,,bsnlnet,BSNL internet
+40452,Reliance,#777,,,rcomnet,INTERNET
+40453,BSNL Punjab,*99***1#,,,bsnlnet,BSNL internet
+40454,BSNL Uttar Pradesh (West),*99***1#,,,bsnlnet,BSNL internet
+40455,BSNL Uttar Pradesh (East),*99***1#,,,bsnlnet,BSNL internet
+40456,IDEA,*99#,,,internet,IDEA gprs
+40457,BSNL Gujarat,*99***1#,,,bsnlnet,BSNL internet
+40458,BSNL Madhya Pradesh,*99***1#,,,bsnlnet,BSNL internet
+40459,BSNL Rajasthan,*99***1#,,,bsnlnet,BSNL internet
+40460,Vodafone Rajasthan,*99***1#,,,www,Vodafone IN Internet
+40462,BSNL Jammu & Kashmir,*99***1#,,,bsnlnet,BSNL J&amp;K
+40463,BSNL internet,*99#,,,bsnlnet,BSNL internet
+40464,BSNL Chennai,*99***1#,,,bsnlnet,BSNL internet
+40466,BSNL Maharashtra,*99***1#,,,bsnlnet,BSNL internet
+40467,Reliance,#777,,,rcomnet,INTERNET
+40468,MTNL DELHI(POST),*99#,mtnl,mtnl123,gprsmtnldel,MTNL HTTP postpaid
+40468,MTNL DELHI(POST),*99#,mtnl,mtnl123,gprsmtnldel,MTNL HTTP prepaid
+40468,MTNL DELHI(POST),*99#,mtnl,mtnl123,gprsmtnldel,MTNL Internet postpaid
+40468,MTNL DELHI(POST),*99#,mtnl,mtnl123,gprsmtnldel,MTNL Internet prepaid
+40468,MTNL DELHI(POST),*99#,,,mtnl.net,MTNL Internet
+40469,MTNL MUMBAI(POST),*99#,mtnl,mtnl123,gprsmtnldel,MTNL HTTP postpaid
+40469,MTNL MUMBAI(POST),*99#,mtnl,mtnl123,gprsmtnldel,MTNL HTTP prepaid
+40469,MTNL MUMBAI(POST),*99#,mtnl,mtnl123,gprsmtnldel,MTNL Internet postpaid
+40469,MTNL MUMBAI(POST),*99#,mtnl,mtnl123,gprsmtnldel,MTNL Internet prepaid
+40469,MTNL MUMBAI(POST),*99#,,,mtnl.net,MTNL Internet
+40470,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40471,BSNL Karnataka,*99***1#,,,bsnlnet,BSNL internet
+40472,BSNL Kerala,*99***1#,,,bsnlnet,BSNL internet
+40473,BSNL Andhra Pradesh,*99***1#,,,bsnlnet,BSNL internet
+40474,BSNL West Bengal,*99***1#,,,bsnlnet,BSNL internet
+40475,BSNL Bihar,*99***1#,,,bsnlnet,BSNL internet
+40476,BSNL Orissa,*99***1#,,,bsnlnet,BSNL internet
+40477,BSNL North East,*99***1#,,,bsnlnet,BSNL internet
+40478,IDEA,*99#,,,Internet,BTA Cellcom
+40479,BSNL Andaman Nicobar,*99***1#,,,bsnlnet,BSNL Andaman Nicobar
+40480,BSNL Tamilnadu,*99***1#,,,bsnlnet,BSNL internet
+40481,BSNL Kolkata,*99***1#,,,bsnlnet,BSNL internet
+40482,IDEA,*99#,,,internet,IDEA gprs
+40483,Reliance,#777,,,rcomnet,INTERNET
+40484,Vodafone Chennai,*99***1#,,,www,Vodafone IN Internet
+40485,Reliance,#777,,,rcomnet,INTERNET
+40486,Vodafone Karnataka,*99***1#,,,www,Vodafone IN Internet
+40487,IDEA,*99#,,,internet,IDEA gprs
+40488,Vodafone Punjab,*99***1#,,,www,Vodafone IN Internet
+40489,IDEA,*99#,,,internet,IDEA gprs
+40490,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40491,AIRCEL Kolkata,*99***1#,,,aircelgprs,Aircel GPRS
+40492,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40493,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40494,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40495,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40496,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40497,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+40498,AirTel,*99#,,,airtelgprs.com,Airtel Internet
+4049,INTERNET,*99#,,,rcomnet,INTERNET
+40501,Reliance,#777,,,rcomnet,INTERNET
+40501,Reliance,#777,,,rcomnet,Netconnect
+40501,Reliance,#777,,,rcomwap,RelianceMbWorld
+405025,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405025,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405025,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405025,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405026,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405026,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405026,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405026,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405027,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405027,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405027,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405027,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405028,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405028,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405028,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405028,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405029,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405029,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405029,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405029,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+40502,TATA docomo INTERNET,*99#,,,Tata.Docomo.Internet,TATA docomo INTERNET
+40502,TATA docomo STREAMING,*99#,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405030,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405030,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405030,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405030,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405031,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405031,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405031,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405031,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405032,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405032,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405032,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405032,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405033,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405033,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405033,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405033,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405034,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405034,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405034,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405034,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405034,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405034,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405035,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405035,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405035,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405035,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405036,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405036,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405036,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405036,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405037,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405037,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405037,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405037,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405038,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405038,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405038,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405038,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405039,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405039,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405039,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405039,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+40503,Reliance,#777,,,rcomnet,INTERNET
+40503,Reliance,#777,,,rcomnet,Netconnect
+40503,Reliance,#777,,,rcomwap,RelianceMbWorld
+40503,Reliance,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+40503,Reliance,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405040,TATA DOCOMO DIVE-IN,*99#,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405040,TATA DOCOMO INTERNET,*99#,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405041,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405041,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405041,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405041,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405042,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405042,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405042,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405042,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405043,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405043,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405043,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405043,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405044,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405044,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405044,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405044,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405045,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405045,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405045,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405045,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405046,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405046,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405046,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405046,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+405047,TATA DOCOMO,#777,,,TATA.DOCOMO.DIVE.IN,TATA DOCOMO DIVE-IN
+405047,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo INTERNET
+405047,TATA DOCOMO,#777,,,TATA.DOCOMO.INTERNET,TATA DOCOMO INTERNET
+405047,TATA DOCOMO,#777,,,Tata.Docomo.Internet,TATA docomo STREAMING
+40504,Reliance,#777,,,rcomnet,INTERNET
+40504,Reliance,#777,,,rcomnet,Netconnect
+40504,Reliance,#777,,,rcomwap,RelianceMbWorld
+40505,Reliance,#777,,,rcomnet,INTERNET
+40505,Reliance,#777,,,rcomnet,Netconnect
+40505,Reliance,#777,,,rcomwap,RelianceMbWorld
+40506,Reliance,#777,,,rcomnet,INTERNET
+40506,Reliance,#777,,,rcomnet,Netconnect
+40506,Reliance,#777,,,rcomwap,RelianceMbWorld
+40507,Reliance,#777,,,rcomnet,INTERNET
+40507,Reliance,#777,,,rcomnet,Netconnect
+40507,Reliance,#777,,,rcomwap,RelianceMbWorld
+40508,Reliance,#777,,,rcomnet,INTERNET
+40508,Reliance,#777,,,rcomnet,Netconnect
+40508,Reliance,#777,,,rcomwap,RelianceMbWorld
+40509,Reliance,#777,,,rcomnet,INTERNET
+40509,Reliance,#777,,,rcomnet,Netconnect
+40509,Reliance,#777,,,rcomwap,RelianceMbWorld
+40510,Reliance,#777,,,rcomnet,INTERNET
+40510,Reliance,#777,,,rcomnet,Netconnect
+40510,Reliance,#777,,,rcomwap,RelianceMbWorld
+40511,Reliance,#777,,,rcomnet,INTERNET
+40511,Reliance,#777,,,rcomnet,Netconnect
+40511,Reliance,#777,,,rcomwap,RelianceMbWorld
+40512,Reliance,#777,,,rcomnet,INTERNET
+40512,Reliance,#777,,,rcomnet,Netconnect
+40512,Reliance,#777,,,rcomwap,RelianceMbWorld
+40513,Reliance,#777,,,rcomnet,INTERNET
+40513,Reliance,#777,,,rcomnet,Netconnect
+40513,Reliance,#777,,,rcomwap,RelianceMbWorld
+40514,Reliance,#777,,,rcomnet,INTERNET
+40514,Reliance,#777,,,rcomnet,Netconnect
+40514,Reliance,#777,,,rcomwap,RelianceMbWorld
+40515,Reliance,#777,,,rcomnet,INTERNET
+40515,Reliance,#777,,,rcomnet,Netconnect
+40515,Reliance,#777,,,rcomwap,RelianceMbWorld
+40517,Reliance,#777,,,rcomnet,INTERNET
+40517,Reliance,#777,,,rcomnet,Netconnect
+40517,Reliance,#777,,,rcomwap,RelianceMbWorld
+40518,Reliance,#777,,,rcomnet,INTERNET
+40518,Reliance,#777,,,rcomnet,Netconnect
+40518,Reliance,#777,,,rcomwap,RelianceMbWorld
+40519,Reliance,#777,,,rcomnet,INTERNET
+40519,Reliance,#777,,,rcomnet,Netconnect
+40519,Reliance,#777,,,rcomwap,RelianceMbWorld
+40520,Reliance,#777,,,rcomnet,INTERNET
+40520,Reliance,#777,,,rcomnet,Netconnect
+40520,Reliance,#777,,,rcomwap,RelianceMbWorld
+40521,Reliance,#777,,,rcomnet,INTERNET
+40521,Reliance,#777,,,rcomnet,Netconnect
+40521,Reliance,#777,,,rcomwap,RelianceMbWorld
+40522,Reliance,#777,,,rcomnet,INTERNET
+40522,Reliance,#777,,,rcomnet,Netconnect
+40522,Reliance,#777,,,rcomwap,RelianceMbWorld
+40523,Reliance,#777,,,rcomnet,INTERNET
+40523,Reliance,#777,,,rcomnet,Netconnect
+40523,Reliance,#777,,,rcomwap,RelianceMbWorld
+40551,AirTel,*99#,,,airtelfun.com,AIRTEL LIVE
+40551,AirTel,*99#,,,airtelgprs.com,Mobile Office
+40552,AirTel,*99#,,,airtelfun.com,AIRTEL LIVE
+40552,AirTel,*99#,,,airtelgprs.com,Mobile Office
+40553,AirTel,*99#,,,airtelfun.com,AIRTEL LIVE
+40553,AirTel,*99#,,,airtelgprs.com,Mobile Office
+40554,AirTel,*99#,,,airtelfun.com,AIRTEL LIVE
+40554,AirTel,*99#,,,airtelgprs.com,Mobile Office
+40555,AirTel,*99#,,,airtelfun.com,AIRTEL LIVE
+40555,AirTel,*99#,,,airtelgprs.com,Mobile Office
+40556,AirTel,*99#,,,airtelfun.com,AIRTEL LIVE
+40556,AirTel,*99#,,,airtelgprs.com,Mobile Office
+40566,Vodafone Uttar Pradesh (West),*99***1#,,,www,Vodafone Connect
+40566,Vodafone Uttar Pradesh (West),*99***1#,,,WWW,Vodafone IN internet
+40567,Vodafone West Bengal,*99***1#,,,www,Vodafone Connect
+40570,IDEA,*99#,,,imis,IDEA GPRS
+40570,IDEA,*99#,,,internet,IDEA
+40570,IDEA,*99#,,,internet,IDEA gprs
+405750,Vodafone Jammu & Kashmir,*99***1#,,,www,Vodafone Connect
+405750,Vodafone Jammu & Kashmir,*99***1#,,,WWW,Vodafone IN internet
+405751,Vodafone Assam,*99***1#,,,www,Vodafone Connect
+405751,Vodafone Assam,*99***1#,,,WWW,Vodafone IN internet
+405752,Vodafone Bihar,*99***1#,,,www,Vodafone Connect
+405752,Vodafone Bihar,*99***1#,,,WWW,Vodafone IN internet
+405753,Vodafone Orissa,*99***1#,,,www,Vodafone Connect
+405753,Vodafone Orissa,*99***1#,,,WWW,Vodafone IN internet
+405754,Vodafone Himachal Pradesh,*99***1#,,,www,Vodafone Connect
+405754,Vodafone Himachal Pradesh,*99***1#,,,WWW,Vodafone IN internet
+405755,Vodafone North East,*99***1#,,,www,Vodafone Connect
+405755,Vodafone North East,*99***1#,,,WWW,Vodafone IN internet
+405756,Vodafone Madhya Pradesh,*99***1#,,,www,Vodafone Connect
+405756,Vodafone Madhya Pradesh,*99***1#,,,WWW,Vodafone IN internet
+405799,IDEA,*99#,,,imis,IDEA GPRS
+405799,IDEA,*99#,,,internet,IDEA
+405799,IDEA,*99#,,,internet,IDEA gprs
+405800,AIRCEL Delhi,*99***1#,,,aircelgprs,Aircel GPRS
+405800,AIRCEL Delhi,*99***1#,,,aircelgprs,AIRCEL ROI
+405800,AIRCEL Delhi,*99***1#,,,aircelwap,Pocket Internet
+405801,AIRCEL Andhra Pradesh,*99***1#,,,aircelgprs,Aircel GPRS
+405801,AIRCEL Andhra Pradesh,*99***1#,,,aircelgprs,Aircel-GPRS
+405801,AIRCEL Andhra Pradesh,*99***1#,,,aircelwap,Pocket Internet
+405802,AIRCEL Gujarat,*99***1#,,,aircelgprs,AIRCEL Central
+405802,AIRCEL Gujarat,*99***1#,,,aircelgprs,Aircel GPRS
+405802,AIRCEL Gujarat,*99***1#,,,aircelwap,Pocket Internet
+405803,AIRCEL Karnataka,*99***1#,,,aircelgprs,Aircel GPRS
+405803,AIRCEL Karnataka,*99***1#,,,aircelgprs,Aircel-GPRS
+405803,AIRCEL Karnataka,*99***1#,,,aircelwap,Pocket Internet
+405804,AIRCEL Maharashtra,*99***1#,,,aircelgprs,Aircel GPRS
+405804,AIRCEL Maharashtra,*99***1#,,,aircelgprs,AIRCEL ROI
+405804,AIRCEL Maharashtra,*99***1#,,,aircelwap,Pocket Internet
+405805,AIRCEL Mumbai,*99***1#,,,aircelgprs,Aircel GPRS
+405805,AIRCEL Mumbai,*99***1#,,,aircelgprs,AIRCEL ROI
+405805,AIRCEL Mumbai,*99***1#,,,aircelwap,Pocket Internet
+405806,AIRCEL Rajasthan,*99***1#,,,aircelgprs,AIRCEL Central
+405806,AIRCEL Rajasthan,*99***1#,,,aircelgprs,Aircel GPRS
+405806,AIRCEL Rajasthan,*99***1#,,,aircelwap,Pocket Internet
+405807,AIRCEL Haryana,*99***1#,,,aircelgprs,AIRCEL Central
+405807,AIRCEL Haryana,*99***1#,,,aircelgprs,Aircel GPRS
+405807,AIRCEL Haryana,*99***1#,,,aircelwap,Pocket Internet
+405808,AIRCEL Madhya Pradesh,*99***1#,,,aircelgprs,AIRCEL Central
+405808,AIRCEL Madhya Pradesh,*99***1#,,,aircelgprs,Aircel GPRS
+405808,AIRCEL Madhya Pradesh,*99***1#,,,aircelwap,Pocket Internet
+405809,AIRCEL Kerala,*99***1#,,,aircelgprs,Aircel GPRS
+405809,AIRCEL Kerala,*99***1#,,,aircelgprs,Aircel-GPRS
+405809,AIRCEL Kerala,*99***1#,,,aircelwap,Pocket Internet
+40580,Aircel GPRS,*99#,,,aircelgprs,Aircel GPRS
+405810,AIRCEL Uttar Pradesh (East),*99***1#,,,aircelgprs,Aircel GPRS
+405810,AIRCEL Uttar Pradesh (East),*99***1#,,,aircelgprs,AIRCEL ROI
+405810,AIRCEL Uttar Pradesh (East),*99***1#,,,aircelwap,Pocket Internet
+405811,AIRCEL Uttar Pradesh (West),*99***1#,,,aircelgprs,Aircel GPRS
+405811,AIRCEL Uttar Pradesh (West),*99***1#,,,aircelgprs,AIRCEL ROI
+405811,AIRCEL Uttar Pradesh (West),*99***1#,,,aircelwap,Pocket Internet
+405812,AIRCEL Punjab,*99***1#,,,aircelgprs,AIRCEL Central
+405812,AIRCEL Punjab,*99***1#,,,aircelgprs,Aircel GPRS
+405812,AIRCEL Punjab,*99***1#,,,aircelwap,Pocket Internet
+405813,UNINOR Haryana,*99***1#,,,uninor,Uninor GPRS
+405813,UNINOR Haryana,*99***1#,,,uninor,Uninor Wap
+405814,UNINOR Himachal Pradesh,*99***1#,,,uninor,Uninor GPRS
+405814,UNINOR Himachal Pradesh,*99***1#,,,uninor,Uninor Wap
+405815,UNINOR Jammu & Kashmir,*99***1#,,,uninor,Uninor GPRS
+405815,UNINOR Jammu & Kashmir,*99***1#,,,uninor,Uninor Wap
+405816,UNINOR Punjab,*99***1#,,,uninor,Uninor GPRS
+405816,UNINOR Punjab,*99***1#,,,uninor,Uninor Wap
+405817,UNINOR Rajasthan,*99***1#,,,uninor,Uninor GPRS
+405817,UNINOR Rajasthan,*99***1#,,,uninor,Uninor Wap
+405818,UNINOR Uttar Pradesh (West),*99***1#,,,uninor,Uninor GPRS
+405818,UNINOR Uttar Pradesh (West),*99***1#,,,uninor,Uninor Wap
+405819,UNINOR Andhra Pradesh,*99***1#,,,uninor,Uninor GPRS
+405819,UNINOR Andhra Pradesh,*99***1#,,,uninor,Uninor Wap
+405820,UNINOR Karnataka,*99***1#,,,uninor,Uninor GPRS
+405820,UNINOR Karnataka,*99***1#,,,uninor,Uninor Wap
+405821,UNINOR Kerala,*99***1#,,,uninor,Uninor GPRS
+405821,UNINOR Kerala,*99***1#,,,uninor,Uninor Wap
+405822,UNINOR Kolkata,*99***1#,,,uninor,Uninor GPRS
+405822,UNINOR Kolkata,*99***1#,,,uninor,Uninor Wap
+405823,VIDEOCON-DATACOM Andhra Pradesh,*99***1#,,,vinternet.com,Videocon
+405824,VIDEOCON-DATACOM Assam,*99***1#,,,vinternet.com,Videocon
+405824,VIDEOCON-DATACOM Assam,*99***1#,,,vinternet.com,Videocon internet
+405825,VIDEOCON-DATACOM Bihar,*99***1#,,,vinternet.com,Videocon
+405826,VIDEOCON-DATACOM Delhi,*99***1#,,,vinternet.com,Videocon
+405827,VIDEOCON-DATACOM Gujarat,*99***1#,,,vinternet.com,Videocon
+405827,VIDEOCON-DATACOM Gujarat,*99***1#,,,vinternet.com,Videocon internet
+405828,VIDEOCON-DATACOM Haryana,*99***1#,,,vinternet.com,Videocon
+405829,VIDEOCON-DATACOM Himachal Pradesh,*99***1#,,,vinternet.com,Videocon
+405830,VIDEOCON-DATACOM Jammu & Kashmir,*99***1#,,,vinternet.com,Videocon
+405831,VIDEOCON-DATACOM Karnataka,*99***1#,,,vinternet.com,Videocon
+405832,VIDEOCON-DATACOM Kerala,*99***1#,,,vinternet.com,Videocon
+405833,VIDEOCON-DATACOM Kolkata,*99***1#,,,vinternet.com,Videocon
+405834,VIDEOCON-DATACOM Madhya Pradesh,*99***1#,,,vinternet.com,Videocon
+405834,VIDEOCON-DATACOM Madhya Pradesh,*99***1#,,,vinternet.com,Videocon internet
+405835,VIDEOCON-DATACOM Maharashtra,*99***1#,,,vinternet.com,Videocon
+405836,VIDEOCON-DATACOM Mumbai,*99***1#,,,vinternet.com,Videocon
+405837,VIDEOCON-DATACOM North East,*99***1#,,,vinternet.com,Videocon
+405838,VIDEOCON-DATACOM Orissa,*99***1#,,,vinternet.com,Videocon
+405839,VIDEOCON-DATACOM Rajasthan,*99***1#,,,vinternet.com,Videocon
+405840,VIDEOCON-DATACOM Tamilnadu,*99***1#,,,vinternet.com,Videocon
+405841,VIDEOCON-DATACOM Uttar Pradesh (East),*99***1#,,,vinternet.com,Videocon
+405842,VIDEOCON-DATACOM Uttar Pradesh (West),*99***1#,,,vinternet.com,Videocon
+405843,VIDEOCON-DATACOM West Bengal,*99***1#,,,vinternet.com,Videocon
+405844,UNINOR Delhi,*99***1#,,,uninor,Uninor GPRS
+405844,UNINOR Delhi,*99***1#,,,uninor,Uninor Wap
+405845,IDEA,*99#,,,imis,IDEA GPRS
+405845,IDEA,*99#,,,internet,IDEA
+405845,IDEA,*99#,,,internet,IDEA gprs
+405846,IDEA,*99#,,,imis,IDEA GPRS
+405846,IDEA,*99#,,,internet,IDEA
+405846,IDEA,*99#,,,internet,IDEA gprs
+405847,IDEA,*99#,,,imis,IDEA GPRS
+405847,IDEA,*99#,,,internet,IDEA
+405847,IDEA,*99#,,,internet,IDEA gprs
+405848,IDEA,*99#,,,imis,IDEA GPRS
+405848,IDEA,*99#,,,internet,IDEA
+405848,IDEA,*99#,,,internet,IDEA gprs
+405849,IDEA,*99#,,,imis,IDEA GPRS
+405849,IDEA,*99#,,,internet,IDEA
+405849,IDEA,*99#,,,internet,IDEA gprs
+40584,IDEA gprs,*99#,,,internet,IDEA gprs
+405850,IDEA,*99#,,,imis,IDEA GPRS
+405850,IDEA,*99#,,,internet,IDEA
+405850,IDEA,*99#,,,internet,IDEA gprs
+405851,IDEA,*99#,,,imis,IDEA GPRS
+405851,IDEA,*99#,,,internet,IDEA
+405851,IDEA,*99#,,,internet,IDEA gprs
+405852,IDEA,*99#,,,imis,IDEA GPRS
+405852,IDEA,*99#,,,internet,IDEA
+405852,IDEA,*99#,,,internet,IDEA gprs
+405853,IDEA,*99#,,,imis,IDEA GPRS
+405853,IDEA,*99#,,,internet,IDEA
+405853,IDEA,*99#,,,internet,IDEA gprs
+405854,LOOP Andhra Pradesh,*99***1#,,,www,LOOP Andhra Pradesh
+405855,LOOP Assam,*99***1#,,,www,Loop Mobile
+405856,LOOP Bihar,*99***1#,,,www,LOOP Bihar
+405857,LOOP Delhi,*99***1#,,,www,LOOP Delhi
+405858,LOOP Gujarat,*99***1#,,,www,LOOP Gujarat
+405859,LOOP Haryana,*99***1#,,,www,LOOP Haryana
+405860,LOOP Himachal Pradesh,*99***1#,,,www,LOOP Himachal Pradesh
+405861,LOOP Jammu & Kashmir,*99***1#,,,www,LOOP Jammu & Kashmir
+405862,LOOP Karnataka,*99***1#,,,www,LOOP Karnataka
+405863,LOOP Kerala,*99***1#,,,www,LOOP Kerala
+405864,LOOP Kolkata,*99***1#,,,www,Loop Mobile
+405865,LOOP Madhya Pradesh,*99***1#,,,www,Loop Mobile
+405866,LOOP Maharashtra,*99***1#,,,www,LOOP Maharashtra
+405867,LOOP North East,*99***1#,,,www,LOOP North East
+405868,LOOP Orissa,*99***1#,,,www,LOOP Orissa
+405869,LOOP Punjab,*99***1#,,,www,LOOP Punjab
+405870,LOOP Rajasthan,*99***1#,,,www,LOOP Rajasthan
+405871,LOOP Tamilnadu,*99***1#,,,www,LOOP Tamilnadu
+405872,LOOP Uttar Pradesh (East),*99***1#,,,www,LOOP Uttar Pradesh (East)
+405873,LOOP Uttar Pradesh (West),*99***1#,,,www,LOOP Uttar Pradesh (West)
+405874,LOOP West Bengal,*99***1#,,,www,LOOP West Bengal
+405875,UNINOR Assam,*99***1#,,,uninor,Uninor GPRS
+405875,UNINOR Assam,*99***1#,,,uninor,Uninor Wap
+405876,UNINOR Bihar,*99***1#,,,uninor,Uninor GPRS
+405876,UNINOR Bihar,*99***1#,,,uninor,Uninor Wap
+405877,UNINOR North East,*99***1#,,,uninor,Uninor GPRS
+405877,UNINOR North East,*99***1#,,,uninor,Uninor Wap
+405878,UNINOR Orissa,*99***1#,,,uninor,Uninor GPRS
+405878,UNINOR Orissa,*99***1#,,,uninor,Uninor Wap
+405879,UNINOR Uttar Pradesh (East),*99***1#,,,uninor,Uninor GPRS
+405879,UNINOR Uttar Pradesh (East),*99***1#,,,uninor,Uninor Wap
+405880,UNINOR West Bengal,*99***1#,,,uninor,Uninor GPRS
+405880,UNINOR West Bengal,*99***1#,,,uninor,Uninor Wap
+405881,STEL,*99#,,,gprs.stel.in,STEL
+405882,STEL,*99#,,,gprs.stel.in,STEL
+405883,STEL,*99#,,,gprs.stel.in,STEL
+405884,STEL,*99#,,,gprs.stel.in,STEL
+405885,STEL,*99#,,,gprs.stel.in,STEL
+405886,STEL,*99#,,,gprs.stel.in,STEL
+405887,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405888,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405889,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405890,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405891,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405892,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405893,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405894,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405895,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405896,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405898,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405899,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405900,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405901,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405902,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405903,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405904,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405905,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405906,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405907,MTS internet,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405908,IDEA,*99#,,,internet,IDEA
+405908,IDEA,*99#,,,internet,IDEA gprs
+405908,IDEA,*99#,internet@internet.mtsindia.in,MTS,#777,MTS internet
+405909,IDEA,*99#,,,internet,IDEA
+405909,IDEA,*99#,,,internet,IDEA gprs
+405910,IDEA,*99#,,,internet,IDEA
+405910,IDEA,*99#,,,internet,IDEA gprs
+405911,IDEA,*99#,,,internet,IDEA
+405911,IDEA,*99#,,,internet,IDEA gprs
+405912,Cheers,*99#,,,internet,Cheers
+405913,Cheers,*99#,,,internet,Cheers
+405914,Cheers,*99#,,,internet,Cheers
+405915,Cheers,*99#,,,internet,Cheers
+405916,Cheers,*99#,,,internet,Cheers
+405917,Cheers,*99#,,,internet,Cheers
+405918,Cheers,*99#,,,internet,Cheers
+405919,Cheers,*99#,,,internet,Cheers
+405920,Cheers,*99#,,,internet,Cheers
+405921,Cheers,*99#,,,internet,Cheers
+405922,Cheers,*99#,,,internet,Cheers
+405923,Cheers,*99#,,,internet,Cheers
+405924,Cheers,*99#,,,internet,Cheers
+405925,UNINOR Tamilnadu,*99***1#,,,uninor,Uninor GPRS
+405925,UNINOR Tamilnadu,*99***1#,,,uninor,Uninor Wap
+405926,UNINOR Mumbai,*99***1#,,,uninor,Uninor GPRS
+405926,UNINOR Mumbai,*99***1#,,,uninor,Uninor Wap
+405927,UNINOR Gujarat,*99***1#,,,uninor,Uninor GPRS
+405927,UNINOR Gujarat,*99***1#,,,uninor,Uninor Wap
+405928,UNINOR Madhya Pradesh,*99***1#,,,uninor,Uninor GPRS
+405928,UNINOR Madhya Pradesh,*99***1#,,,uninor,Uninor Wap
+405929,UNINOR Maharashtra,*99***1#,,,uninor,Uninor GPRS
+405929,UNINOR Maharashtra,*99***1#,,,uninor,Uninor Wap
+405930,Cheers,*99#,,,internet,Cheers
+405931,Cheers,*99#,,,internet,Cheers
+405932,VIDEOCON (HFCL)-GSM Punjab,*99***1#,,,vinternet.com,Videocon
+41301,Mobitel Sri Lanka,*99***1#,,,mobitel3g,Mobitel
+41302,Dialog Sri Lanka,*99***1#,,,www.dialogsl.com,Dialog
+41501,Cellis FTML Lebannon GPRS,*99***1#,mic1,mic1,internet.mic1.com.lb,Alfa Internet
+41503,mtc touch Internet,*99#,,,gprs.mtctouch.com.lb,mtc touch Internet
+41601,Fastlink Jordan GPRS,*99***1#,,,,Zain
+41603,Umniah HTTP,*99#,,,wap,Umniah HTTP
+41603,Umniah Internet,*99#,,,net,Umniah Internet
+41701,Syriatel HTTP,*99#,,,wap.syriatel.com,Syriatel HTTP
+41701,Syriatel Internet,*99#,,,net.syriatel.com,Syriatel Internet
+41902,MTC Kuwait GPRS2,,pps,pps,pps,MI
+41902,MTC Kuwait GPRS2,,pps,pps,pps,Zain WAP
+41903,MTC KUWAIT GPRS,*99#,,,action.wataniya.com,Internet Action
+41903,MTC KUWAIT GPRS,*99#,,,wap.wataniya.com,WAPAction
+41904,Viva Internet,*99#,,,viva,Viva Internet
+41904,VIVA Internet,*99#,,,VIVA,VIVA Internet
+4192,Zain HTTP,*99#,annyway,online,pps,Zain HTTP
+4192,Zain Internet,*99#,annyway,online,pps,Zain Internet
+4193,wataniya HTTP,*99#,,,wap.wataniya.com,wataniya HTTP
+4193,wataniya Internet,*99#,,,action.wataniya.com,wataniya Internet
+42001,STC HTTP,*99#,,,jawalnet.com.sa,STC HTTP
+42001,STC Internet,*99#,,,jawalnet.com.sa,STC Internet
+42003,Mobily Saudi GPRS Web1,*99#,,,wap1,Mobily HTTP postpaid
+42003,Mobily Saudi GPRS Web1,*99#,,,wap2,Mobily HTTP prepaid
+42003,Mobily Saudi GPRS Web1,*99#,,,web1,Mobily Internet postpaid
+42003,Mobily Saudi GPRS Web1,*99#,,,web2,Mobily Internet prepaid
+42004,Zain HTTP,*99#,,,zain,Zain HTTP
+42004,Zain Internet,*99#,,,zain,Zain Internet
+42202,Oman Mobil HTTP,*99#,wap,wap,wap,Oman Mobil HTTP
+42402,Etisalat,*99***1#,,,etisalat.ae,Etisalat Internet
+42403,du 3g,*99#,,,du,du HTTP
+42403,du 3g,*99#,,,du,du Internet
+42501,3G Portal,*99#,,,uwap.orange.co.il,3G Portal
+42501,DUN,*99#,,,modem.orange.net.il,DUN
+42502,Cell-c,*99#,,,sphone,Cellcom Internet
+42503,Sphone Pelephone,*99#,pcl@3g,pcl,sphone.pelephone.net.il,Sphone Pelephone
+42505,Jawwal WAP,*99#,,,wap,Jawwal WAP
+42506,Internet,*99#,,,internet,Internet
+42507,Hot mobile 3G,*99#,,,net.hotm,Hot mobile 3G
+42508,Golan Telecom 3G,*99#,,,internet.golantelecom.net.il,Golan Telecom 3G
+42514,Youphone Data,*99#,,,data.youphone.co.il,Youphone Data
+42515,hcminternet,*99#,,,hcminternet,hcminternet
+42516,Rami Levi 3G,*99#,,,internet.rl,Rami Levi 3G
+42601,BATELCO HTTP,*99#,wap,wap,wap.batelco.com,BATELCO HTTP
+42601,BATELCO Internet,*99#,internet,internet,internet.batelco.com,BATELCO Internet
+42602,MTC Vodafone Bahrain UMTS GPRS,,Mobilink,Mobilink,connect.mobilinkworld.com,Zain Internet
+42602,MTC Vodafone Bahrain UMTS GPRS,,wap,wap,wap,MTC Vodafo HTTP
+42604,VIVAGPRS,*99#,,,viva.bh,VIVAGPRS
+42701,Q-tel HTTP,*99#,gprs,gprs,gprs.qtel,Q-tel HTTP
+42701,Q-tel pospaid Internet,*99#,,,web.qtel,Q-tel pospaid Internet
+42701,Q-tel prepaid Internet,*99#,gprs,gprs,gprs.qtel,Q-tel prepaid Internet
+42701,Virgin HTTP,*99#,,,data,Virgin HTTP
+42701,Virgin Internet,*99#,,,data,Virgin Internet
+42702,Vodafone HTTP,*99#,,,vodafone.com.qa,Vodafone HTTP
+42702,Vodafone Internet,*99#,,,web.vodafone.com.qa,Vodafone Internet
+43211,MCCI Internet,*99#,,,mcinet,MCCI Internet
+43214,MCI-GPRS,*99#,,,mcinet,MCI-GPRS
+43219,MCI-GPRS,*99#,,,mcinet,MCI-GPRS
+43220,Rightel,*99#,,,Rightel,Rightel
+43235,Irancell-GPRS,*99#,,,mtnirancell,Irancell-GPRS
+43270,MCI-GPRS,*99#,,,mcinet,MCI-GPRS
+43293,MCI-GPRS,*99#,,,mcinet,MCI-GPRS
+44000,EMOBILE,*99#,em,em,em.std,EMOBILE
+44004,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44006,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44010,ASAHI NET,*99#,d@w.asahinet.jp,0000,lte.mobac.net,ASAHI NET
+44010,BIGLOBE LTE・3G,*99#,user,0000,biglobe.jp,BIGLOBE LTE・3G
+44010,b-mobile イオン,*99#,bmobile@aeon,bmobile,bmobile.ne.jp,b-mobile イオン
+44010,b-mobile アマゾン,*99#,bmobile@am,bmobile,bmobile.ne.jp,b-mobile アマゾン
+44010,b-mobile ヨドバシ,*99#,bmobile@zsim,bmobile,bmobile.ne.jp,b-mobile ヨドバシ
+44010,b-mobile スマホ電話,*99#,bmobile@spd,bmobile,bmobile.ne.jp,b-mobile スマホ電話
+44010,hi-ho,*99#,lte@hi-ho,hi-ho,vmobile.jp,hi-ho
+44010,IIJmio,*99#,mio@iij,iij,iijmio.jp,IIJmio
+44010,Marubeni Wireless (LTE),*99#,mmt@mmt,mmt,mmtcom.jp,Marubeni Wireless (LTE)
+44010,moperaU,*99#,,,mopera.net,moperaU
+44010,nifty,*99#,mda@nifty,nifty,mda.nifty.com,nifty
+44010,OCN モバイル ONE (LTE),*99#,mobileid@ocn,mobile,lte-d.ocn.ne.jp,OCN モバイル ONE (LTE)
+44010,Oxymo,*99#,fjk@oxymo.net,oxymo,vmobile.jp,Oxymo
+44010,pointy,*99#,accelia@pointy.jp,AcceliaPointy,lte-mobile.jp,pointy
+44010,So-net LTE,*99#,nuro,nuro,so-net.jp,So-net LTE
+44010,U-mobile,*99#,umobile@umobile.jp,umobile,umobile.jp,U-mobile
+44010,楽天モバイル (LTE/3G),*99#,rakuten@vdm,vrkt,vdm.jp,楽天モバイル (LTE/3G)
+44020,SoftBank,*99***1#,ym,ym,plus.acs.jp,Y!mobile
+44040,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44041,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44042,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44043,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44044,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44045,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44046,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44047,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44048,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44070,au,*99**24#,au@au-win.ne.jp,au,au.NET,KDDI
+44090,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44092,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44093,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44094,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44095,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44096,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44097,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+44098,SoftBank,*99***1#,em,em,emb.ne.jp,Vodafone
+45006,LG U+,*99#,,,internet.lguplus.co.kr,LG U+
+45008,KT,*99#,,,lte.ktfwing.com,KT
+45200,Mobifone CSD,*99#,wap,wap,998,Mobifone CSD
+45201,MobiFone,*99#,wap,wap,998,Mobifone CSD
+45202,Vinaphone,*99#,vinaphone,vinaphone,999,Vinaphone CSD
+45204,Viettel Mobile,*99#,,,v-internet,Viettel Internet
+45204,Viettel Mobile,*99#,,,v-wap,Viettel HTTP
+45400,One2Free,*99***1#,,,internet,CSL
+45402,CSL,*99***1#,,,internet,CSL 3G
+45403,3,*99***1#,,,ipc.three.com.hk,3 (3G)
+45404,3,*99***1#,,,web-g.three.com.hk,3(2G) HTTP
+45404,3,*99***1#,,,web-g.three.com.hk,3(2G) Network
+45405,3,*99***1#,,,ipc.three.com.hk,3 CDMA
+45406,SmarTone,*99***1#,,,SmarTone,SmarTone
+45407,3gwap,*99#,,,3gwap,3gwap
+45410,New World Mobility,*99***1#,,,internet,New World
+45412,CMCC HK,*99***1#,,,cmhk,CMHK Data
+45412,CMCC HK,*99***1#,,,peoples.net,CMHK HTTP Setting
+45412,CMCC HK,*99***1#,,,peoples.net,CMHK Network
+45413,CMCC HK,*99***1#,,,cmhk,CMHK Data
+45413,CMCC HK,*99***1#,,,peoples.net,CMHK HTTP Setting
+45413,CMCC HK,*99***1#,,,peoples.net,CMHK Network
+45415,SmarTone,*99#,,,SmarTone,SmarTone
+45416,PCCW Mobile,*99#,,,pccw,PCCW
+45417,SmarTone,*99#,,,SmarTone,SmarTone
+45418,CSL,*99***1#,,,internet,Hong Kong CSL Limited
+45419,PCCW Mobile,*99#,,,pccw,PCCW
+45429,PCCW Mobile,*99#,,,pccw,PCCW
+45500,SmarTone Macau,*99#,,,smartgprs,SmarTone Macau
+45501,CTM Data,*99#,,,ctm-mobile,CTM Data
+45503,3 Macau,*99#,,,mobile.three.com.mo,3 Macau
+46000,China Mobile,*99#,,,cmnet,CMCC Internet
+46000,China Mobile,*99#,wap,wap,cmwap,CMCC HTTP
+46001,China Unicom,*99#,,,3gnet,沃3G连接互联网
+46001,China Unicom,*99#,,,3gwap,沃3G手机上网
+46002,China Mobile,*99#,,,cmnet,CMCC Internet
+46002,China Mobile,*99#,wap,wap,cmwap,CMCC HTTP
+46003,China Telecom,#777,card,card,ctnet,中国电信
+46005,China Telecom,#777,card,card,ctnet,中国电信
+46006,China Unicom,*99#,,,3gnet,中国联通
+46007,China Mobile,*99#,,,cmnet,CMCC Internet
+46007,China Mobile,*99#,wap,wap,cmwap,CMCC HTTP
+46009,沃3G手机上网,*99#,,,3gwap,沃3G手机上网
+46009,沃3G连接互联网,*99#,,,3gnet,沃3G连接互联网
+46020,CMCC HTTP,*99#,wap,wap,cmwap,CMCC HTTP
+46020,CMCC Internet,*99#,,,cmnet,CMCC Internet
+46601,Far EasTone,*99#,,,internet,遠傳網際網路
+46605,Far EasTone,*99#,,,gtnet,GT Internet
+46611,Chunghwa Telecom,*99***1#,,,internet,Chunghwa LDM
+46688,Far EasTone,*99#,,,internet,KGT Internet
+46689,VIBO,*99#,,,internet,T Star-internet
+46689,VIBO,*99#,,,viboone,VIBOONE
+46689,VIBO,*99#,,,vibo,VIBO-vibo
+46692,Chunghwa Telecom,*99***1#,,,internet,CHT Internet
+46693,TW Mobile,*99#,,,internet,台灣大哥大(TW Mobile)
+46697,TW Mobile,*99#,,,internet,台灣大哥大(TW Mobile)
+46699,TW Mobile,*99#,,,internet,台灣大哥大(TW Mobile)
+47001,Grameen Phone,,,,gpinternet,GrameenPho Interneet postpaid
+47001,Grameen Phone,,,,gpwap,GrameenPhone HTTP postpaid
+47002,Aktel,,,,internet,Aktel
+47003,Banglalink,,,,blweb,Banglalink
+47004,Teletalk prepaid,,,,wap,TeleTalk
+47006,CityCell,,,,waps,Citycell
+47007,Warid,,,,internet,Warid
+50210,DiGi Internet,*99#,,,diginet,DiGi Internet
+50212,Maxis,*99***1#,maxis,wap,net,Maxis HTTP
+50212,Maxis,*99***1#,maxis,wap,net,Maxis Internet
+50212,Maxis,*99***1#,maxis,wap,unet,Maxis(3G) HTTP
+50212,Maxis,*99***1#,maxis,wap,unet,Maxis(3G) Internet
+50213,Celcom,*99***1#,,,celcom3g,Celcom
+502143,DiGi Internet,*99#,,,diginet,DiGi Internet
+502146,DiGi Internet,*99#,,,diginet,DiGi Internet
+50216,DiGi,*99#,digi,digi,diginet,Digi Internet
+50216,DiGi,*99#,digi,digi,digiwap,Digi HTTP
+50218,U Mobile,*99#,,,my3g,U Mobile Internet
+50219,Celcom,*99***1#,,,celcom,Celcom HTTP prepaid
+50219,Celcom,*99***1#,,,celcom,Celcom Internet prepaid
+50219,Celcom,*99***1#,celcom,gsm,wap.celcom.net.my,Celcom HTTP postpaid
+50219,Celcom,*99***1#,,,celcom.net.my,Celcom Internet postpaid
+505002,Optus Internet,*99#,,,yesinternet,Optus Internet
+505002,Optus Streaming,*99#,,,wap.optus.net.au,Optus Streaming
+505002,Optus Zoo,*99#,,,wap.optus.net.au,Optus Zoo
+50501,Telstra,*99#,,,telstra.internet,Telstra Internet
+50501,Telstra,*99#,,,telstra.internet,Telstra Internet
+50501,Telstra,*99#,,,telstra.wap,Telstra Internet
+50502,Optus,*99#,,,wap.optus.net.au,Optus Streaming
+50502,Optus,*99#,,,wap.optus.net.au,Optus Zoo
+50502,Optus,*99#,,,yesinternet,Optus Internet
+50503,Vodafone,*99#,,,vfprepaymbb,Vodafone
+50506,3,*99***1#,,,3netaccess,Mobile Internet
+50506,3,*99***1#,,,3services,3 Services
+50506,3,*99***1#,,,3services,3 Streaming
+50507,Vodafone,*99#,,,vfinternet.au,VF Internet
+50511,Telstra,*99#,,,Telstra.wap,Telstra Internet
+50512,3,*99***1#,,,3netaccess,3Internet
+50571,Telstra,*99#,,,Telstra.wap,Telstra Internet
+50572,Telstra,*99#,,,Telstra.wap,Telstra Internet
+50588,VF Internet,*99#,,,vfinternet.au,VF Internet
+50590,Optus,*99#,,,internet,Optus Internet
+51001,INDOSAT,*99#,indosat,indosat,indosatgprs,Indosat 3G Internet
+51003,StarOne,#777,starone,indosat,,StarOne
+51007,TelkomFlexi,#777,telkomnet@flexi,telkom,,TelkomFlexi
+51008,AXIS,*99***1#,axis,123456,AXIS,AXIS HTTP
+51008,AXIS,*99***1#,axis,123456,AXIS,AXIS Internet
+51009,SMARTFREN,#777,smart,smart,,SMART
+51010,Telkomsel,*99#,wap,wap123,internet,TSEL-BROADBAND
+51010,Telkomsel,*99#,wap,wap123,telkomsel,TSEL-GPRS
+51011,XL,*99#,xlgprs,proxl,www.xlgprs.net,Excelcom HTTP
+51011,XL,*99#,xlgprs,proxl,www.xlgprs.net,Excelcom Internet
+51021,Indosat 2G HTTP,*99#,gprs,im3,www.indosat-m3.net,Indosat 2G HTTP
+51089,3,*99***1#,3gprs,3gprs,3gprs,3 HTTP
+51099,Esia,#777,esia,esia,,Esia
+51502,Globe,*99***1#,,,http.globe.com.ph,GLOBE(3G) HTTP prepaid
+51502,Globe,*99***1#,,,http.globe.com.ph,GLOBE HTTP postpaid
+51502,Globe,*99***1#,,,http.globe.com.ph,GLOBE Internet prepaid
+51502,Globe,*99***1#,,,http.globe.com.ph,myGlobe INET
+51502,Globe,*99***1#,,,internet.globe.com.ph,myGlobe Internet
+51502,Globe,*99***1#,,,real.globe.com.ph,GLOBE(3G) Streaming postpaid
+51502,Globe,*99***1#,,,real.globe.com.ph,GLOBE(3G) Streaming prepaid
+51502,Globe,*99***1#,,,www.globe.com.ph,GLOBE(3G) HTTP postpaid
+51503,Smart,*99#,,,internet,SMART(3G) Internet postpaid
+51503,Smart,*99#,,,internet,SMART(3G) Internet prepaid
+51503,Smart,*99#,,,internet,SMART Internet postpaid
+51503,Smart,*99#,,,smart1,SMART(3G) HTTP postpaid
+51503,Smart,*99#,smartwap,smartwap,smart1,SMART(3G) HTTP prepaid
+51503,Smart,*99#,smartwap,smartwap,smart1,SMART HTTP postpaid
+51505,Sun,*99#,,,minternet,SUN Internet
+51505,Sun,*99#,,,sunlte,SUN LTE
+51505,Sun,*99#,,,wap,SUN HTTP postpaid
+51509,Smart Bro,*99#,,,smartbro,Smart Bro
+52000,TRUE-H INTERNET,*99#,true,true,internet,TRUE-H INTERNET
+52000,TRUE HTTP,*99#,true,true,wap,TRUE HTTP
+52001,AIS,*99#,,,internet,Advanced Info Service
+52003,AIS,*99#,,,internet,AIS Internet
+52003,AIS,*99#,,,wap,AIS HTTP
+52004,truemove H,*99#,true,true,internet,TRUE-H INTERNET
+52004,truemove H,*99#,true,true,wap,TRUE HTTP
+52005,dtac,*99#,,,wap.djuice.co.th,DTAC HTTP
+52005,dtac,*99#,,,www.dtac.co.th,DTAC Internet
+52018,dtac,*99#,,,wap.djuice.co.th,DTAC HTTP
+52018,dtac,*99#,,,www.dtac.co.th,DTAC Internet
+52023,AIS,*99#,,,internet,Advanced Info Service
+52099,truemove H,*99#,true,true,hinternet,True Move
+52501,SingTel,*99#,,,internet,SingTel
+52502,SingTel HTTP,*99#,65IDEAS,IDEAS,e-ideas,SingTel HTTP
+52502,SingTel HTTP prepaid,*99#,65ideas,ideas,e-ideas,SingTel HTTP prepaid
+52502,SingTel Internet,*99#,,,internet,SingTel Internet
+52502,SingTel Internet prepaid,*99#,,,hicard,SingTel Internet prepaid
+52503,M1,*99#,+65,user123,miworldmcard,MiWorld GPRS prepaid
+52503,M1,*99#,MSISDN,user123,miworld,MiWorld GPRS
+52503,M1,*99#,MSISDN,user123,sunsurfmcard,MiWorld Internet prepaid
+52503,M1,*99#,MSISDN,user123,sunsurf,Sunsurf Internet
+52504,M1 WAP,*99#,65,user123,miworld,M1 WAP
+52504,Sunsurf Mobile,*99#,,,sunsurf,Sunsurf Mobile
+52505,StarHub,*99#,,,gtnet,GT Roaming 
+52505,StarHub,*99#,,,shppd,SH Data Prepaid
+52505,StarHub,*99#,,,shwap,SH Data Postpaid
+52506,StarHub,*99#,,,shinternet,StarHub
+52507,SingTel,*99#,,,internet,SingTel
+52512,Grid,*99***1#,,,internet,Digital Trunked Radio Network
+52802,B-Mobile,*99***1#,,,default,B-Mobile
+52811,DSTCom,*99#,,,Bmobilewap,DSTCom
+52811,DSTCom,*99#,,,default,DSTCom
+5282,B-Mobile,*99#,,,dst.internet,B-Mobile
+53001,Vodafone,*99#,,,live.vodafone.com,Vodafone HTTP
+53001,Vodafone,*99#,,,vodafone,VFNZ Internet
+53001,Vodafone,*99#,,,www.vodafone.net.nz,Vodafone Internet
+53005,TelecomContent,*99#,,,wap.telecom.co.nz,TelecomContent
+53005,TelecomData,*99#,,,internet.telecom.co.nz,TelecomData
+53005,TelecomDefault,*99#,,,wap.telecom.co.nz,TelecomDefault
+53024,2degrees,*99#,,,internet,2degrees Internet
+60201,Mobinil,*99***1#,,,Mobinilweb,Mobinil Web
+60202,Vodafone,*99***1#,,,internet.vodafone.net,Vodafone Internet
+60203,Etisalat,*99***1#,,,Etisalat,Etisalat Wep
+60400,Internet Meditel,*99#,MEDINET,MEDINET,internet1.meditel.ma,Meditel
+60401,3G IAM,*99#,,,www.iamgprs1.ma,IAM
+60503,TUNISIANA INTERNET,*99#,Internet,internet,Internet.tunisiana.com,Tunisiana
+61203,Omobile,*99#,buro,buro,orangecimobile,Orange
+61701,Orange World,,,,orangeworld,Orange
+62120,Airtel NG,*99#,,,Internet.ng.airtel.com,Airtel NG
+62130,MTN GPRS,*99#,,,Web.gprs.mtnnigeria.net,MTN GPRS
+62130,MTN WAP,*99#,,,Web.gprs.mtnnigeria.net,MTN WAP
+62150,Glo Internet,*99#,flat,flat,gloflat,Glo Internet
+62160,Etisalat Internet,*99#,,,etisalat,Etisalat Internet
+63513,Tigo Tanzania,,,,web.tigo.rw,Tigo
+63902,Safaricom Kenya,*99#,,,SAFARICOM,Safaricom
+63903,ZAIM Kenya,*99#,,,ke.celtel.co.ke,Zain
+63905,YU,*99#,,,internet,yu
+63907,Orange Kenya,*99#,,,bew.orange.co.ke,Orange Kenya
+64002,Tigo Tanzania,,,,tigoweb,Mobitel
+64003,Tigo Ghana,,,,web.tigo.com.gh,Zantel
+64604,TELMA NET,*99***1#,,,internet,Telma
+64700,FR Orange Re GPRS,,orange,orange,orangerun,Orange
+647010,SFR LA Reunion,*99***1#,wap,wap,wapsfr,SFR LA Reunion
+64702,Onlywap Antilles,,only,only,onlywap,Outremer
+64901,MTC Connect,*99#,,,internet,MTC
+65501,Vodacom,*99#,,,internet,Vodacom Internet
+65502,8ta internet,*99#,,,internet,8ta internet
+65507,Cell C,*99#,,,internet,Cell C internet
+65507,Cell C,*99#,,,vdata,virgin_internet
+65510,MTN,*99#,,,internet,MTN internet
+65510,MTN,*99#,mtn,,myMTN,MTN Data
+70401,Claro Guatemala GPRS,,,,internet.ideasalo,Claro
+70402,BROADBAND TIGO,*99#,,,broadband.tigo.gt,Comcel / Tigo
+70403,Movistar Guatemala GPRS,,movistargt,movistargt,internet.movistar.gt,movistar
+70601,Telmex,*99#,,,internet.ideasclaro,CTE Telecom Personal
+70603,TIGO El Salvador GPRS,,,,internet.tigo.sv,Telemovil EL Salvador
+70604,Movistar El Salvador GPRS,,movistarsv,movistarsv,internet.movistar.sv,movistar
+708001,Claro Honduras GPRS,,webmegatel,webmegatel,web.megatel.hn,Claro Honduras GPRS
+70802,Broadband TIGO HD,*99#,,,broadband.tigo.hn,Celtel / Tigo
+71021,Claro Nicaragua GPRS webemovil,,webemovil,webemovil,web.emovil,Claro
+71030,Movistar Nicaragua GPRS,,movistarni,movistarni,internet.movistar.ni,movistar
+71073,INTERNET ALO,*99*1#,Internet,Internet,Internet.ideasalo.ni,SERCOM
+714020,Internet PA2,*99#,movistarpa,movistarpa,internet.movistar.pa,Internet PA2
+71402,Internet PA,*99#,movistarpa,movistarpa,internet.movistar.pa,movistar
+71606,Movistar Peru GPRS,,movistar@datos,movistar,movistar.pe,Movistar INTERNET
+71610,DATA GPRS,*99#,claro,claro,Claro.pe,Claro
+722007,MOVISTAR HTTP,*99#,wap,wap,wap.gprs.unifon.com.ar,MOVISTAR HTTP
+72207,Movistar Argentina GPRS,,wap,wap,internet,Movistar Argentina GPRS
+722310,CLARO Argentina,*99#,ctigprs,ctigprs999,wap.ctimovil.com.ar,CTI HTTP prepaid
+72234,Personal,,gprs,adgj,gprs.personal.com,Personal
+72402,TIM,*99#,tim,tim,tim.br,TIM Dados
+72403,TIM,*99#,tim,tim,tim.br,TIM Dados
+72404,TIM,*99#,tim,tim,tim.br,TIM Dados
+72405,Claro BR,*99***1#,claro,claro,claro.com.br,Claro Dados
+72405,Claro BR,*99***1#,claro,claro,java.claro.com.br,Java Session
+72406,Vivo,*99#,vivo,vivo,zap.vivo.com.br,Vivo
+72408,TIM Dados,*99#,tim,tim,tim.br,TIM Dados
+72410,Vivo,*99#,vivo,vivo,zap.vivo.com.br,VIVO Internet
+72411,Vivo,*99#,vivo,vivo,zap.vivo.com.br,Vivo
+72416,BrT Modem,,brt,brt,brt.br,Brasil Telecom
+72423,Vivo,*99#,vivo,vivo,zap.vivo.com.br,Vivo
+72424,Amazonia Cel GPRS,,celular,celular,gprs.amazoniacelular.com.br,Amazonia Celular
+72430,Oi,*99***1#,oi,oi,gprs.oi.com.br,Oi
+72431,Oi,*99***1#,oi,oi,gprs.oi.com.br,Oi Dados
+72432,CTBC GPRS,,ctbc,1212,ctbc.br,CTBC Cellular
+72438,Claro BR,*99***1#,claro,claro,bandalarga.claro.com.br,Claro BR
+72439,Nextel WAP,*99#,,,wap.nextel3g.net.br,Nextel WAP
+73001,Entel PCS Chile GPRS,,entelpcs,entelpcs,bam.entelpcs.cl,Internet Movil
+73002,Banda Ancha Movil,*99#,wap,wap,wap.tmovil.cl,Movistar APLICACIONES
+73003,CLARO CHILE(Postpaid),*99#,clarochile,clarochile,bam.clarochile.cl,BAM CLARO
+73010,Entel PCS Chile GPRS1,,entelpcs,entelpcs,imovil.entelpcs.cl,Entel
+732101,COMCEL 3G,*99#,COMCELWAP,COMCELWAP,wap.comcel.com.co,COMCEL HTTP
+732102,Tigo Colombia GPRS,,,,web.colombiamovil.com.co,movistar
+732103,Tigo Colombia GPRS1,,,,web.colombiamovil.com.co,Tigo
+732111,Tigo Colombia GPRS2,,,,wap.colombiamovil.com.co,OLA HTTP
+732123,Movistar Colombia GPRS,,movistar,movistar,internet.movistar.com.co,movistar
+732142,UNE,*99#,,,une4glte.net.co,UNE
+73402,Digitel Venezuela GPRS,,,,gprsweb.digitel.ve,Digitel
+73404,Movistar Venezuela GPRS,,,,internet.movistar.ve,movistar
+73603,TIGO,*99#,tigo,tigo,Internet.tigo.bo,Tigo
+74000,Movistar Ecuador GPRS,,,,internet.movistar.com.ec,Movistar
+74001,Porta Ecuador GPRS,,,,internet.porta.com.ec,Porta
+74401,VOX Paraguay GPRS,,,,vox.internet,VOX
+74402,CLARO Paraguay,*99#,ctigprs,ctigprs999,wap.ctimovil.com.py,Claro
+74801,ANCEL,*99#,,,gprs.ancel,Ancel
+74807,movistar Banda Ancha,*99#,movistar,movistar,apnumt.movistar.com.uy,Movistar
+74810,CLARO Uruguay,*99#,ctigprs,ctigprs999,intenet.ctimovil.com.uy,Claro

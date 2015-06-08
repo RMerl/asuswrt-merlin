@@ -1,7 +1,7 @@
 /*
  * RoboSwitch setup functions
  *
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.h 427480 2013-10-03 19:09:47Z $
+ * $Id: bcmrobo.h 473904 2014-04-30 02:41:11Z $
  */
 
 #ifndef _bcm_robo_h_
@@ -148,10 +148,8 @@ struct robo_info_s {
 	/* PLC */
 	bool	plc_hw;			/* PLC chip */
 #endif /* PLC */
-#ifdef RGMII_BCM_FA
 #ifdef BCMFA
 	int		aux_pid;
-#endif
 #endif /* BCMFA */
 };
 

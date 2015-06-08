@@ -19,7 +19,6 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script>
-var $j = jQuery.noConflict();
 function initial(){
 	show_menu();
 	getWebHistory();
@@ -93,7 +92,7 @@ function getWebHistory(mac, page){
 	var page_count = page ? page : "1";
 	var client = mac ? ("?client=" + mac) : ("?page=" + page_count); 
 
-	$j.ajax({
+	$.ajax({
 		url: '/getWebHistory.asp' + client,
 		dataType: 'script',	
 		error: function(xhr){

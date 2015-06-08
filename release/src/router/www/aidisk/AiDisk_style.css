@@ -92,6 +92,7 @@
 	text-align:left;
 	background-repeat:no-repeat;
 	background-position: left;
+	word-break: break-all;
 	/*margin-left:2px;
 	padding-left:23px;	*/
 }

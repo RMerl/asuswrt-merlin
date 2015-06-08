@@ -37,6 +37,7 @@ var usb_index = -1;
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
 var based_modelid = '<% nvram_get("productid"); %>';
 
+
 function QKDetect_load_body(){
 	parent.set_step("t1");
 	parent.document.title = "<#Web_Title#> - <#QKSet_detect_sanglass#>";
@@ -83,6 +84,7 @@ function getDualWANState(){
 }
 
 function getWANStatus(){
+
 	$.ajax({
 		url: '/result_of_get_changed_status_QIS.asp',
 		dataType: 'script',
@@ -99,21 +101,9 @@ function getWANStatus(){
 		success: function(response){
 			RetryCountDown_fail = 5;
 			if(based_modelid == "4G-AC55U"){
-				getDualWANState();
-				if(wans_mode == 'lb'){
-					if(wan_wanstate == 2){
-						wanstate = wan_wanstate;
-						wansbstate = wan_wansbstate;
-						wanauxstate = wan_wanauxstate;
-					}
-					else if(usb_wanstate == 2){
-						wanstate = usb_wanstate;
-						wansbstate = usb_wansbstate;
-						wanauxstate = usb_wanauxstate;
-					}
-				}				
+				getDualWANState();			
 			}
-							
+
 			if(wanstate == 6){
 				setTimeout("getWANStatus();", 2000);
 				return true;
@@ -160,11 +150,11 @@ function getWANStatus(){
 					if(successcase > 1){
 						if(based_modelid == "4G-AC55U")
 						{
-							if(!(usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0) && sim_state == 1){
-								redirect_page("modem");
+							if(usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0){
+								redirect_page("wireless");
 							}
 							else{
-								redirect_page("wireless");
+								redirect_page("dualconnect_status");
 							}
 						}
 						else{	

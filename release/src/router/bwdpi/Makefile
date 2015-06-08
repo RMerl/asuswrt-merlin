@@ -5,7 +5,7 @@ CFLAGS += -I. -I$(TOP)/shared -I$(TOP)/nvram$(BCMEX) -I$(SRCBASE)/include -I$(TO
 CFLAGS += -I$(TOP)/util-linux/include
 CFLAGS += -idirafter$(LINUXDIR)/arch/arm/include -idirafter$(LINUXDIR)/include
 
-LDFLAGS += $(EXTRALDFLAGS2)
+LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared
 
 ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
@@ -39,7 +39,7 @@ libbwdpi.so: $(OBJS)
 	@$(LD) $(LDFLAGS) -shared -o $@ $^
 
 wrs: wrs_main.o libbwdpi.so
-	$(CC) $(CFLAGS) $(LDFLAGS) -L. -lbwdpi -lgcc_s -o $@ $^
+	@$(CC) $(CFLAGS) $(LDFLAGS) -L. -lbwdpi -lgcc_s -o $@ $^
 
 install: all
 	@echo "[bwdpi] Installing..."
@@ -52,7 +52,7 @@ install: all
 
 %.o: %.c
 	@echo " [bwdpi] CC $@"
-	$(CC) $(CFLAGS) -c $<
+	@$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm -f *.so *.o wrs

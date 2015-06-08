@@ -36,6 +36,14 @@
 #define IP_VER_4		4	/* version number for IPV4 */
 #define IP_VER_6		6	/* version number for IPV6 */
 
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+/* IP flags. */
+#define IP_CE		0x8000		/* Flag: "Congestion"		*/
+#define IP_DF		0x4000		/* Flag: "Don't Fragment"	*/
+#define IP_MF		0x2000		/* Flag: "More Fragments"	*/
+#define IP_OFFSET	0x1FFF		/* "Fragment Offset" part	*/
+#endif
+
 #define IP_VER(ip_body) \
 	((((uint8 *)(ip_body))[IP_VER_OFFSET] & IP_VER_MASK) >> IP_VER_SHIFT)
 
@@ -44,6 +52,9 @@
 #define IP_PROT_TCP		0x6	/* TCP protocol */
 #define IP_PROT_UDP		0x11	/* UDP protocol type */
 #define IP_PROT_ICMP6		0x3a	/* ICMPv6 protocol type */
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+#define IP_PROT_GRE		0x2f	/* GRE protocol type */
+#endif
 
 /* IPV4 field offsets */
 #define IPV4_VER_HL_OFFSET      0       /* version and ihl byte offset */

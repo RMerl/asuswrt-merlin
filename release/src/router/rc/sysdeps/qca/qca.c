@@ -472,7 +472,7 @@ int getBootVer(void)
  * think the LAN port next to WAN port as LAN1
  * even WebUI/case define another LAN port as LAN1.
  */
-int GetPhyStatus(void)
+int GetPhyStatus(int verbose)
 {
 	ATE_qca8337_port_status();
 	return 1;
@@ -810,6 +810,8 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	char wif[10];
 	char path1[50],path2[50],path3[50];
 	int rep_mode;
+	char *uuid = nvram_safe_get("uuid");
+
 	rep_mode=0;
 	bg_prot=0;
 	ban=0;
@@ -1009,7 +1011,6 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 
 	
 	fprintf(fp, "eapol_key_index_workaround=0\n");
-	//fprintf(fp, "uuid=%s",nvram_safe_get("uuid"));
 	flag_8021x=0;
 
 	str = nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp));
@@ -1152,8 +1153,10 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	   
 	//fprintf(fp2,"ifconfig %s up\n",wif);
 	fprintf(fp2,"iwpriv %s hide_ssid %d\n",wif,nvram_get_int(strcat_r(prefix, "closed", tmp)));
-	if (!nvram_get_int(strcat_r(prefix, "closed", tmp)))
+	if (!nvram_get_int(strcat_r(prefix, "closed", tmp))) {
 		fprintf(fp2, "iwconfig %s essid \"%s\"\n", wif, nvram_get(strcat_r(prefix, "ssid", tmp)));
+		fprintf(fp2, "ifconfig %s up\n", wif);
+	}
 	
 	if(subnet==0 && rep_mode==0 )
 	{   
@@ -1748,12 +1751,13 @@ next_mrate:
 			fprintf(fp, "wps_state=2\n");
 			fprintf(fp, "ap_setup_locked=1\n");
 		}
+		if (uuid && strlen(uuid) == 36)
+			fprintf(fp, "uuid=%s\n", uuid);
 	} else {
 		/* Turn off WPS on guest network. */
 		fprintf(fp, "wps_state=0\n");
 	}
 
-	//fprintf(fp, "uuid=%s\n", );		/* FIXME */
 	fprintf(fp, "wps_independent=1\n");
 	fprintf(fp, "device_name=ASUS Router\n");
 	fprintf(fp, "manufacturer=ASUSTek Computer Inc.\n");
@@ -1966,8 +1970,8 @@ static int __wps_pbc(const int multiband)
 		}
 //              dbg("WPS: PBC\n");
 		g_isEnrollee[i] = 1;
-		eval("hostapd_cli", "-i", get_wifname(i), "wps_pbc");
-		eval("hostapd_cli", "-i", get_wifname(i), "wps_ap_pin", "disable");
+		eval("hostapd_cli", "-i", (char*)get_wifname(i), "wps_pbc");
+		eval("hostapd_cli", "-i", (char*)get_wifname(i), "wps_ap_pin", "disable");
 
 		++i;
 	}
@@ -2070,8 +2074,8 @@ void start_wsc(void)
 		} else {
 			dbg("WPS: PBC\n");	// PBC method
 			g_isEnrollee[i] = 1;
-			eval("hostapd_cli", "-i", get_wifname(i), "wps_pbc");
-			eval("hostapd_cli", "-i", get_wifname(i), "wps_ap_pin", "disable");
+			eval("hostapd_cli", "-i", (char*)get_wifname(i), "wps_pbc");
+			eval("hostapd_cli", "-i", (char*)get_wifname(i), "wps_ap_pin", "disable");
 		}
 
 		++i;
@@ -2434,7 +2438,6 @@ void rssi_check_unit(int unit)
 	#define STA_LOW_RSSI_PATH "/tmp/low_rssi"
    	int rssi_th;
 	FILE *fp;
-	int ret = 0;
 	char line_buf[300],cmd[300],tmp[128]; // max 14x
 	char prefix[] = "wlXXXXXXXXXX_";
 	WLANCONFIG_LIST *result;
@@ -2536,7 +2539,7 @@ int getTerritoryCode(void)
 	char buf[6];
 
 	memset(buf, 0, sizeof(buf));
-	FRead(&buf, OFFSET_TERRITORY_CODE, 5);
+	FRead((unsigned char*)&buf, OFFSET_TERRITORY_CODE, 5);
 	if ((unsigned char)buf[0] != 0xFF)
 		puts(buf);
 

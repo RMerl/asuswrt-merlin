@@ -35,16 +35,16 @@ function initial(){
 	regen_band(document.form.wl_unit);
 
 	if(!band5g_support || based_modelid == "RT-AC87U")	
-		$("wl_unit_field").style.display = "none";
+		document.getElementById("wl_unit_field").style.display = "none";
 
 	if(smart_connect_support && '<% nvram_get("smart_connect_x"); %>' == '1')
-		$("wl_unit_field").style.display = "none";	
+		document.getElementById("wl_unit_field").style.display = "none";	
 
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=4; i>=2; i--)
-			$("MainTable1").deleteRow(i);
-		$("repeaterModeHint").style.display = "";
-		$("submitBtn").style.display = "none";
+			document.getElementById("MainTable1").deleteRow(i);
+		document.getElementById("repeaterModeHint").style.display = "";
+		document.getElementById("submitBtn").style.display = "none";
 	}
 }
 
@@ -140,7 +140,7 @@ function done_validating(action){
 			  	<#WLANAuthentication11a_ExAuthDBIPAddr_itemname#></a>			  
 			</th>
 			<td>
-				<input type="text" maxlength="15" class="input_15_table" name="wl_radius_ipaddr" value="<% nvram_get("wl_radius_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)">
+				<input type="text" maxlength="15" class="input_15_table" name="wl_radius_ipaddr" value="<% nvram_get("wl_radius_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
 			</td>
 		</tr>
 		<tr>
@@ -149,7 +149,7 @@ function done_validating(action){
 			  	<#WLANAuthentication11a_ExAuthDBPortNumber_itemname#></a>
 			</th>
 			<td>
-				<input type="text" maxlength="5" class="input_6_table" name="wl_radius_port" value="<% nvram_get("wl_radius_port"); %>" onkeypress="return validator.isNumber(this,event)"/>
+				<input type="text" maxlength="5" class="input_6_table" name="wl_radius_port" value="<% nvram_get("wl_radius_port"); %>" onkeypress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off"/>
 			</td>
 		</tr>
 		<tr>
@@ -158,7 +158,7 @@ function done_validating(action){
 				<#WLANAuthentication11a_ExAuthDBPassword_itemname#></a>
 			</th>
 			<td>
-				<input type="password" autocapitalization="off" maxlength="64" class="input_32_table" name="wl_radius_key" value="<% nvram_get("wl_radius_key"); %>">
+				<input type="password" maxlength="64" class="input_32_table" name="wl_radius_key" value="<% nvram_get("wl_radius_key"); %>" autocorrect="off" autocapitalize="off">
 			</td>
 		</tr>
 		</table>

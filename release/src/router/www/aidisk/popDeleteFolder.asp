@@ -13,7 +13,7 @@
 <script type="text/javascript">
 <% get_AiDisk_status(); %>
 
-var $j = jQuery.noConflict();
+
 
 var PoolDevice = parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[parent.getSelectedPoolOrder()].mountPoint;
 var folderlist = get_sharedfolder_in_pool(PoolDevice);
@@ -23,7 +23,7 @@ var delete_flag = 0;
 
 function initial(){
 	DisplayFolderName = check_folder_length(selectedFolder);
-	showtext($("selected_Folder"), showhtmlspace(showhtmland(DisplayFolderName)));
+	showtext(document.getElementById("selected_Folder"), showhtmlspace(showhtmland(DisplayFolderName)));
 	document.deleteFolderForm.Cancel.focus();
 	get_layer_items_test(parent.document.aidiskForm.layer_order.value.substring(0,5));
 	clickevent();	
@@ -35,11 +35,11 @@ function clickevent(){
 	else{	
 		//window.attachEvent('onkeydown',keyDownHandler);
 	}
-	$("Submit").onclick = submit;
+	document.getElementById("Submit").onclick = submit;
 }
 function submit(){
-	$("pool").value = PoolDevice;
-	$("folder").value = selectedFolder;
+	document.getElementById("pool").value = PoolDevice;
+	document.getElementById("folder").value = selectedFolder;
 	if(parent.document.form.current_page.value != "mediaserver.asp" 
 	&& parent.document.form.current_page.value != "Advanced_AiDisk_NFS.asp" 
 	&& parent.document.form.current_page.value != "Tools_OtherSettings.asp" 
@@ -81,7 +81,7 @@ function keyDownHandler(event){
 }
 
 function get_layer_items_test(layer_order_t){
-	$j.ajax({
+	$.ajax({
     		url: '/gettree.asp?layer_order='+layer_order_t,
     		dataType: 'script',
     		error: function(xhr){

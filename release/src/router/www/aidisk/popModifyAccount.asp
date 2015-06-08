@@ -16,15 +16,15 @@
 var selectedAccount = parent.getSelectedAccount();
 
 function initial(){
-	$("new_account").value = decodeURIComponent(selectedAccount);
-	showtext($("selected_account"), decodeURIComponent(selectedAccount));	
+	document.getElementById("new_account").value = decodeURIComponent(selectedAccount);
+	showtext(document.getElementById("selected_account"), decodeURIComponent(selectedAccount));	
 	clickevent();
 }
 
 function clickevent(){
-	$("Submit").onclick = function(){
+	document.getElementById("Submit").onclick = function(){
 		if(validForm()){
-			$("account").value = decodeURIComponent(selectedAccount);			
+			document.getElementById("account").value = decodeURIComponent(selectedAccount);			
 			parent.showLoading();
 			document.modifyAccountForm.submit();
 			parent.hidePop("apply");
@@ -46,69 +46,69 @@ function checkDuplicateName(newname, teststr){
 }
 
 function validForm(){
-	showtext($("alert_msg2"), "");
+	showtext(document.getElementById("alert_msg2"), "");
 
-	if($("new_account").value.length == 0){
+	if(document.getElementById("new_account").value.length == 0){
 			alert("<#File_Pop_content_alert_desc1#>");
-			$("new_account").focus();
+			document.getElementById("new_account").focus();
 			return false;
 	}
 	else{				
-			var alert_str = validator.hostName($("new_account"));
+			var alert_str = validator.hostName(document.getElementById("new_account"));
 			if(alert_str != ""){
 				alert(alert_str);
-				$("new_account").focus();
+				document.getElementById("new_account").focus();
 				return false;
 			}
 
-			$("new_account").value = trim($("new_account").value);
+			document.getElementById("new_account").value = trim(document.getElementById("new_account").value);
 				
-			if($("new_account").value == "root"
-					|| $("new_account").value == "guest"
-					|| $("new_account").value == "anonymous"
+			if(document.getElementById("new_account").value == "root"
+					|| document.getElementById("new_account").value == "guest"
+					|| document.getElementById("new_account").value == "anonymous"
 			){
 					alert("<#USB_Application_account_alert#>");
-					$("new_account").focus();
+					document.getElementById("new_account").focus();
 					return false;
 			}
-			else if(checkDuplicateName($("new_account").value, parent.get_accounts()) &&
-				$("new_account").value != decodeURIComponent(selectedAccount)){			
+			else if(checkDuplicateName(document.getElementById("new_account").value, parent.get_accounts()) &&
+				document.getElementById("new_account").value != decodeURIComponent(selectedAccount)){			
 					alert("<#File_Pop_content_alert_desc5#>");
-					$("new_account").focus();
+					document.getElementById("new_account").focus();
 					return false;
 			}
 	}
 
 	// password
-	if($("new_password").value.length <= 0 || $("confirm_password").value.length <= 0){
-		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
-		if($("new_password").value.length <= 0){
-			$("new_password").focus();
-			$("new_password").select();
+	if(document.getElementById("new_password").value.length <= 0 || document.getElementById("confirm_password").value.length <= 0){
+		showtext(document.getElementById("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+		if(document.getElementById("new_password").value.length <= 0){
+			document.getElementById("new_password").focus();
+			document.getElementById("new_password").select();
 		}else{
-			$("confirm_password").focus();
-			$("confirm_password").select();
+			document.getElementById("confirm_password").focus();
+			document.getElementById("confirm_password").select();
 		}
 		
 		return false;
 	}
 
-	if($("new_password").value != $("confirm_password").value){
-		showtext($("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
-		$("confirm_password").focus();
+	if(document.getElementById("new_password").value != document.getElementById("confirm_password").value){
+		showtext(document.getElementById("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
+		document.getElementById("confirm_password").focus();
 		return false;
 	}
 
 	if(!validator.string(document.modifyAccountForm.new_password)){
-		$("new_password").focus();
-		$("new_password").select();
+		document.getElementById("new_password").focus();
+		document.getElementById("new_password").select();
 		return false;
 	}
 
-	if($("new_password").value.length > 16){
-		showtext($("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
-		$("password").focus();
-		$("password").select();
+	if(document.getElementById("new_password").value.length > 16){
+		showtext(document.getElementById("alert_msg2"),"*<#LANHostConfig_x_Password_itemdesc#>");
+		document.getElementById("password").focus();
+		document.getElementById("password").select();
 		return false;
 	}
 
@@ -133,16 +133,16 @@ function validForm(){
     <tr>
       <th><#AiDisk_Account#>: </th>
       <td>
-      	<input class="input_15_table" name="new_account" id="new_account" type="text" maxlength="20">
+      	<input class="input_15_table" name="new_account" id="new_account" type="text" maxlength="20" autocorrect="off" autocapitalize="off">
       </td>
     </tr>
     <tr>
       <th><#ModAccountPassword#>: </th>
-      <td><input type="password" class="input_15_table" autocapitalization="off" name="new_password" id="new_password" onKeyPress="return validator.isString(this, event);" maxlength="17"></td>
+      <td><input type="password" class="input_15_table" name="new_password" id="new_password" onKeyPress="return validator.isString(this, event);" maxlength="17" autocorrect="off" autocapitalize="off"></td>
     </tr>
     <tr>
       <th><#Confirmpassword#>: </th>
-      <td><input type="password" class="input_15_table" autocapitalization="off" name="confirm_password" id="confirm_password" onKeyPress="return validator.isString(this, event);" maxlength="17">
+      <td><input type="password" class="input_15_table" name="confirm_password" id="confirm_password" onKeyPress="return validator.isString(this, event);" maxlength="17" autocorrect="off" autocapitalize="off">
       		<br/><span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>	
       </td>
     </tr>

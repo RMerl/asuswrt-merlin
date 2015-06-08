@@ -39,6 +39,7 @@
 #include <linux/skbuff.h>
 #include <linux/netfilter/x_tables.h>
 #include <linux/ip.h>
+#include <linux/ipv6.h>
 #include <linux/tcp.h>
 #include <net/sock.h>
 
@@ -277,6 +278,82 @@ static int get_http_info(const struct sk_buff *skb, int flags, httpinfo_t *info)
     return ret;
 }
 
+static int get_http_info6(const struct sk_buff *skb, int flags, httpinfo_t *info)
+{
+    struct ipv6hdr *ip6h = ipv6_hdr(skb);
+    struct tcphdr *tcph = tcp_hdr(skb);
+    unsigned char *data = (void *)tcph + tcph->doff*4;
+    unsigned int datalen = ntohs(ip6h->payload_len);
+
+    int found, offset;
+    int hostlen, pathlen;
+    int ret = 0;
+
+
+    SPARQ_LOG("%s: seq=%u\n", __FUNCTION__, ntohl(tcph->seq));
+
+    /* Basic checking, is it HTTP packet? */
+    if (datalen < 10) {
+	SPARQ_LOG("%s: Not enough length, ignore it!\n", __FUNCTION__);
+	return ret;	/* Not enough length, ignore it */
+	}
+    if (memcmp(data, "GET ", sizeof("GET ") - 1) != 0 &&
+        memcmp(data, "POST ", sizeof("POST ") - 1) != 0 &&
+        memcmp(data, "HEAD ", sizeof("HEAD ") - 1) != 0) { //zg add 2006.09.28 for cdrouter3.3 item 186(cdrouter_urlfilter_15)
+	SPARQ_LOG("%s: Pass it\n", __FUNCTION__);
+	return ret;	/* Pass it */
+	}
+
+    if (!(flags & (HTTP_HOST | HTTP_URL))) {
+	SPARQ_LOG("%s: Non-flag\n", __FUNCTION__);
+	return ret;
+	}
+
+    /* find the 'Host: ' value */
+    found = find_pattern2(data, datalen, "Host: ",
+	    sizeof("Host: ") - 1, '\r', &offset, &hostlen);
+    SPARQ_LOG("Host found=%d\n", found);
+
+    if (!found || !hostlen)
+	return ret;
+
+    ret++;	/* Host found, increase the return value */
+    hostlen = (hostlen < BUFSIZE) ? hostlen : BUFSIZE;
+    strncpy(info->host, data + offset, hostlen);
+    *(info->host + hostlen) = 0;		/* null-terminated */
+    info->hostlen = hostlen;
+    SPARQ_LOG("HOST=%s, hostlen=%d\n", info->host, info->hostlen);
+
+    if (!(flags & HTTP_URL))
+	return ret;
+
+    /* find the 'GET ' or 'POST ' or 'HEAD ' value */
+    found = find_pattern2(data, datalen, "GET ",
+	    sizeof("GET ") - 1, '\r', &offset, &pathlen);
+    if (!found)
+	found = find_pattern2(data, datalen, "POST ",
+		sizeof("POST ") - 1, '\r', &offset, &pathlen);
+    /******* zg add 2006.09.28 for cdrouter3.3 item 186(cdrouter_urlfilter_15) ******/
+    if (!found)
+        found = find_pattern2(data, datalen, "HEAD ",
+                sizeof("HEAD ") - 1, '\r', &offset, &pathlen);
+    /************************* zg end 2006.09.28 ****************************/
+    SPARQ_LOG("GET/POST found=%d\n", found);
+
+    if (!found || (pathlen -= (sizeof(" HTTP/x.x") - 1)) <= 0)/* ignor this field */
+	return ret;
+
+    ret++;	/* GET/POST/HEAD found, increase the return value */
+    pathlen = ((pathlen + hostlen) < BUFSIZE) ? pathlen : BUFSIZE - hostlen;
+    strncpy(info->url, info->host, hostlen);
+    strncpy(info->url + hostlen, data + offset, pathlen);
+    *(info->url + hostlen + pathlen) = 0;	/* null-terminated */
+    info->urllen = hostlen + pathlen;
+    SPARQ_LOG("URL=%s, urllen=%d\n", info->url, info->urllen);
+
+    return ret;
+}
+
 /* Linear string search based on memcmp() */
 static char *search_linear (char *needle, char *haystack, int needle_len, int haystack_len) 
 {
@@ -437,6 +514,142 @@ match_ret:
 }
 
 static int
+match6(const struct sk_buff *skb,
+      const struct net_device *in,
+      const struct net_device *out,
+      const struct xt_match *match,
+      const void *matchinfo,
+      int offset,
+      unsigned int protoff,
+      int *hotdrop)
+{
+	const struct ipt_webstr_info *info = matchinfo;
+	struct ipv6hdr *ip6 = ipv6_hdr(skb);
+	proc_ipt_search search=search_linear;
+
+	char token[] = "<&nbsp;>";
+	char *wordlist = (char *)&info->string;
+	httpinfo_t htinfo;
+	int flags = 0;
+	int found = 0;
+	long int opt = 0;
+
+
+	if (!ip6 || info->len < 1) {
+		if (!ip6)
+		    SPARQ_LOG("non-IP\n");
+		else
+		    SPARQ_LOG("info->len < 1\n");
+	    return 0;
+	}
+
+	SPARQ_LOG("\n************************************************\n"
+		"%s: type=%s\n", __FUNCTION__, (info->type == IPT_WEBSTR_URL)
+		? "IPT_WEBSTR_URL"  : (info->type == IPT_WEBSTR_HOST)
+		? "IPT_WEBSTR_HOST" : "IPT_WEBSTR_CONTENT" );
+
+	/* Determine the flags value for get_http_info(), and mangle packet
+	 * if needed. */
+	switch(info->type)
+	{
+	    case IPT_WEBSTR_URL:	/* fall through */
+		flags |= HTTP_URL;
+
+	    case IPT_WEBSTR_HOST:
+		flags |= HTTP_HOST;
+		break;
+
+	    case IPT_WEBSTR_CONTENT:
+		opt = simple_strtol(wordlist, (char **)NULL, 10);
+		SPARQ_LOG("%s: string=%s, opt=%#lx\n", __FUNCTION__, wordlist, opt);
+
+		if (opt & (BLK_JAVA | BLK_ACTIVE | BLK_PROXY))
+		    flags |= HTTP_URL;
+		if (opt & BLK_PROXY)
+		    flags |= HTTP_HOST;
+		break;
+
+	    default:
+		printk("%s: Sorry! Cannot find this match option.\n", __FILE__);
+		return 0;
+	}
+
+	/* Get the http header info */
+	if (get_http_info6(skb, flags, &htinfo) < 1)
+	    return 0;
+
+	/* Check if the http header content contains the forbidden keyword */
+	if (info->type == IPT_WEBSTR_HOST || info->type == IPT_WEBSTR_URL) {
+	    int nlen = 0, hlen = 0;
+	    char needle[BUFSIZE], *haystack = NULL;
+	    char *next;
+
+	    if (info->type == IPT_WEBSTR_HOST) {
+		haystack = htinfo.host;
+		hlen = htinfo.hostlen;
+	    }
+	    else {
+		haystack = htinfo.url;
+		hlen = htinfo.urllen;
+	    }
+	    split(needle, wordlist, next, token) {
+		nlen = strlen(needle);
+		SPARQ_LOG("keyword=%s, nlen=%d, hlen=%d\n", needle, nlen, hlen);
+		if (!nlen || !hlen || nlen > hlen) continue;
+		if (search(needle, haystack, nlen, hlen) != NULL) {
+		    found = 1;
+		    break;
+		}
+	    }
+	}
+	else {		/* IPT_WEBSTR_CONTENT */
+	    int vicelen;
+
+	    if (opt & BLK_JAVA) {
+		vicelen = sizeof(".js") - 1;
+		if (strnicmp(htinfo.url + htinfo.urllen - vicelen, ".js", vicelen) == 0) {
+		    SPARQ_LOG("%s: MATCH....java\n", __FUNCTION__);
+		    found = 1;
+		    goto match_ret;
+		}
+		vicelen = sizeof(".class") - 1;
+		if (strnicmp(htinfo.url + htinfo.urllen - vicelen, ".class", vicelen) == 0) {
+		    SPARQ_LOG("%s: MATCH....java\n", __FUNCTION__);
+		    found = 1;
+		    goto match_ret;
+		}
+	    }
+	    if (opt & BLK_ACTIVE){
+		vicelen = sizeof(".ocx") - 1;
+		if (strnicmp(htinfo.url + htinfo.urllen - vicelen, ".ocx", vicelen) == 0) {
+		    SPARQ_LOG("%s: MATCH....activex\n", __FUNCTION__);
+		    found = 1;
+		    goto match_ret;
+		}
+		vicelen = sizeof(".cab") - 1;
+		if (strnicmp(htinfo.url + htinfo.urllen - vicelen, ".cab", vicelen) == 0) {
+		    SPARQ_LOG("%s: MATCH....activex\n", __FUNCTION__);
+		    found = 1;
+		    goto match_ret;
+		}
+	    }
+	    if (opt & BLK_PROXY){
+		if (strnicmp(htinfo.url + htinfo.hostlen, "http://", sizeof("http://") - 1) == 0) {
+		    SPARQ_LOG("%s: MATCH....proxy\n", __FUNCTION__);
+		    found = 1;
+		    goto match_ret;
+		}
+	    }
+	}
+
+match_ret:
+	SPARQ_LOG("%s: Verdict =======> %s \n",__FUNCTION__
+		, found ? "DROP" : "ACCEPT");
+
+	return (found ^ info->invert);
+}
+
+static int
 checkentry(const char *tablename,
 	   const void *entry,
 	   const struct xt_match *match,
@@ -462,7 +675,7 @@ static struct xt_match xt_webstr_match[] = {
 	{
 	.name		= "webstr",
 	.family		= AF_INET6,
-	.match		= match,
+	.match		= match6,
 	.checkentry	= checkentry,
 	.matchsize	= sizeof(struct ipt_webstr_info),
 	.me		= THIS_MODULE

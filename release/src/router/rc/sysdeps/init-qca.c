@@ -154,6 +154,12 @@ void init_switch(void)
 	init_switch_qca();
 }
 
+char *get_lan_hwaddr(void)
+{
+	/* TODO: handle exceptional model */
+        return nvram_safe_get("et0macaddr");
+}
+
 /**
  * Setup a VLAN.
  * @vid:	VLAN ID
@@ -480,7 +486,7 @@ void config_switch(void)
 			eval("rtkswitch", "8", "100");
 	}
 #if defined(RTCONFIG_WIRELESSREPEATER) && defined(RTCONFIG_PROXYSTA)
-	else if (is_mediabridge_mode())
+	else if (mediabridge_mode())
 	{
 	}
 #endif
@@ -569,28 +575,34 @@ void load_wifi_driver(void)
 	strncpy(country, nvram_safe_get("wl0_country_code"), FACTORY_COUNTRY_CODE_LEN);
 	country[FACTORY_COUNTRY_CODE_LEN] = '\0';
 	code=country_to_code(country, 2);
-	eval("iwpriv", "wifi0", "setCountryID", code);
+	eval("iwpriv", "wifi0", "setCountryID", (char*)code);
 	///////////
 	strncpy(country, nvram_safe_get("wl1_country_code"), FACTORY_COUNTRY_CODE_LEN);
 	country[FACTORY_COUNTRY_CODE_LEN] = '\0';
 	code=country_to_code(country, 5);
-	eval("iwpriv", "wifi1", "setCountryID", code);
+	eval("iwpriv", "wifi1", "setCountryID", (char*)code);
 }
 
-#if 0
 void set_uuid(void)
 {
-	char uuid[60],buf[80];
+	int len;
+	char *p, uuid[60];
 	FILE *fp;
+
 	fp = popen("cat /proc/sys/kernel/random/uuid", "r");
 	 if (fp) {
 	    memset(uuid, 0, sizeof(uuid));
 	    fread(uuid, 1, sizeof(uuid), fp);
+	    for (len = strlen(uuid), p = uuid; len > 0; len--, p++) {
+		    if (isxdigit(*p) || *p == '-')
+			    continue;
+		    *p = '\0';
+		    break;
+	    }
 	    nvram_set("uuid",uuid);
 	    pclose(fp);
 	 }   
 }
-#endif
 
 static int create_node=0;
 void init_wl(void)
@@ -879,7 +891,7 @@ char *get_staifname(int band)
 	return (char*) ((!band)? STA_2G:STA_5G);
 }
 
-char *get_vapifname(int band)
+char *get_vphyifname(int band)
 {
 	return (char*) ((!band)? VPHY_2G:VPHY_5G);
 }

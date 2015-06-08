@@ -91,9 +91,9 @@ void pc_block_exit(int signo){
 	FD_ZERO(&allset);
 	close(serv_socket);                                       
 
-	int i, ret;
+	int i;
 	for(i = 0; i < max_fd; ++i){
-		ret = close(i);
+		close(i);
 	}
 	
 	remove(PC_BLOCK_PID_FILE);
@@ -132,7 +132,7 @@ char *arp_mac(struct in_addr sin_addr){
 	close(s_arp);
 
 	if(areq.arp_flags & ATF_COM){
-		ptr = areq.arp_ha.sa_data;
+		ptr = (unsigned char *) areq.arp_ha.sa_data;
 		sprintf(mac_address, "%02X:%02X:%02X:%02X:%02X:%02X", ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5]);
 	}
 	else{

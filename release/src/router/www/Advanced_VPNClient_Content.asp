@@ -79,7 +79,7 @@
 }
 </style>
 <script>
-var $j = jQuery.noConflict();
+
 
 var vpnc_clientlist = decodeURIComponent('<% nvram_char_to_ascii("","vpnc_clientlist"); %>');
 var vpnc_clientlist_array_ori = '<% nvram_char_to_ascii("","vpnc_clientlist"); %>';
@@ -101,25 +101,25 @@ function Add_profile(){
 	document.form.vpnc_pwd_edit.value = "";
 	document.form.selPPTPOption.value = "auto";
 	tabclickhandler(0);
-	$("cancelBtn").style.display = "";
+	document.getElementById("cancelBtn").style.display = "";
 	document.getElementById("pptpcTitle").style.display = "";
 	document.getElementById("l2tpcTitle").style.display = "";
 
-        $j("#vpnc_settings").fadeIn(300);
+        $("#vpnc_settings").fadeIn(300);
 }
 
 function cancel_add_rule(){
 	restart_vpncall_flag = 0;
 	idx_tmp = "";
-	$j("#vpnc_settings").fadeOut(300);
+	$("#vpnc_settings").fadeOut(300);
 }
 
 function addRow_Group(upper, flag, idx){
 	idx = parseInt(idx);
 	if(idx >= 0){		//idx: edit row		
 		var table_id = "vpnc_clientlist_table";
-		var rule_num = $(table_id).rows.length;
-		var item_num = $(table_id).rows[0].cells.length;
+		var rule_num = document.getElementById(table_id).rows.length;
+		var item_num = document.getElementById(table_id).rows[0].cells.length;
 		if(flag == 'PPTP' || flag == 'L2TP'){
 			description_obj = document.form.vpnc_des_edit;
 			type_obj = document.form.vpnc_type;
@@ -507,7 +507,7 @@ function show_vpnc_rulelist(){
 	}
 
  	code +='</table>';
-	$("vpnc_clientlist_Block").innerHTML = code;		
+	document.getElementById("vpnc_clientlist_Block").innerHTML = code;		
 }
 
 
@@ -586,7 +586,7 @@ function connect_Row(rowdata, flag){
 
 var idx_tmp = "";
 function Edit_Row(rowdata, flag){
-	$("cancelBtn").style.display = "";
+	document.getElementById("cancelBtn").style.display = "";
 	idx_tmp = rowdata.parentNode.parentNode.rowIndex; //update idx
 	var idx = rowdata.parentNode.parentNode.rowIndex;
 	if(document.getElementById("vpnc_clientlist_table").rows[idx].cells[0].innerHTML != "-")
@@ -639,7 +639,7 @@ function Edit_Row(rowdata, flag){
 		} 
 	}
 
-	$j("#vpnc_settings").fadeIn(300);
+	$("#vpnc_settings").fadeIn(300);
 	if(vpnc_clientlist_col[1] == "PPTP"){
 		document.getElementById("pptpcTitle").style.display = "";
 		document.getElementById("l2tpcTitle").style.display = "none";
@@ -653,7 +653,7 @@ function Edit_Row(rowdata, flag){
 
 function del_Row(rowdata, flag){
 	var idx = rowdata.parentNode.parentNode.rowIndex;
-	$("vpnc_clientlist_table").deleteRow(idx);
+	document.getElementById("vpnc_clientlist_table").deleteRow(idx);
 	var vpnc_clientlist_value = "";
 	var vpnc_clientlist_row = vpnc_clientlist_array.split('<');	
 	var vpnc_clientlist_col_delete = vpnc_clientlist_row[idx].split('>');
@@ -750,28 +750,28 @@ function del_Row(rowdata, flag){
 					<tr>
 						<th><#IPConnection_autofwDesc_itemname#></th>
 						<td>
-						  	<input type="text" maxlength="64" name="vpnc_des_edit" value="" class="input_32_table" style="float:left;"></input>
+						  	<input type="text" maxlength="64" name="vpnc_des_edit" value="" class="input_32_table" style="float:left;" autocorrect="off" autocapitalize="off"></input>
 						</td>
 					</tr>
 
 					<tr>
 						<th><#BOP_isp_heart_item#></th>
 						<td>
-							<input type="text" maxlength="64" name="vpnc_svr_edit" value="" class="input_32_table" style="float:left;"></input>
+							<input type="text" maxlength="64" name="vpnc_svr_edit" value="" class="input_32_table" style="float:left;" autocorrect="off" autocapitalize="off"></input>
 						</td>
 					</tr>
 
 					<tr>
 						<th><#PPPConnection_UserName_itemname#></th>
 						<td>
-							<input type="text" maxlength="64" name="vpnc_account_edit" value="" class="input_32_table" style="float:left;" autocapitalization="off" autocomplete="off"></input>
+							<input type="text" maxlength="64" name="vpnc_account_edit" value="" class="input_32_table" style="float:left;" autocomplete="off" autocorrect="off" autocapitalize="off"></input>
 						</td>
 					</tr>
 
 					<tr>
 						<th><#PPPConnection_Password_itemname#></th>
 						<td>
-							<input type="text" maxlength="64" name="vpnc_pwd_edit" value="" class="input_32_table" style="float:left;" autocapitalization="off" autocomplete="off"></input>
+							<input type="text" maxlength="64" name="vpnc_pwd_edit" value="" class="input_32_table" style="float:left;" autocomplete="off" autocorrect="off" autocapitalize="off"></input>
 						</td>
 					</tr>
 					<tr id="trPPTPOptions">

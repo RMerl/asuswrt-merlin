@@ -571,6 +571,7 @@ function enable_ISP_special(){
 	width:310px;
 	height:300px;
 	background:url('../images/New_ui/new_qis/WAN-connection-defaultPage.png') no-repeat;
+	background-position: center;
 }
 
 </style>                
@@ -598,8 +599,6 @@ function enable_ISP_special(){
 <div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 
 <div id="field_general">
-<!--p class="QISGeneralFont"><#QIS_type_desc1#></p-->
-<p id="wan_unplug" class="QISGeneralFont" style="color:#FC0;display:none;"><#web_redirect_suggestion1#></p>
 
 <div id='dhcppppoe_sec' style="margin-top:15px; margin-left:-40px;">
   <table id="tblsetting" class="QISform2" style="width:400px;margin-left:70px" border=0 align="left" cellpadding="2" cellspacing="0"> 
@@ -654,54 +653,6 @@ function enable_ISP_special(){
 					<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item5#></span></td>
 				</tr>
 				
-				<!--tr>
-					<td align="center">
-						<input type="radio" id="d1" name="x_WANType" value="0" tabindex="1" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">
-					</td>
-					<td class="wan_type_title">
-						<label for="d1"><#BOP_ctype_title1#> (DHCP)</label>
-					</td>
-				</tr>
-				<tr height="40px">
-					<td align="center"></td>
-					<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item1#></span></td>
-				</tr>			
-				<tr>
-					<td align="center"><input type="radio" id="d2" name="x_WANType" value="1" tabindex="2" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-					<td class="wan_type_title"><label for="d2">PPPoE </label></td>
-				</tr>
-				<tr height="40px">
-					<td align="center"></td>
-					<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item2#></span></td>
-				</tr>
-				<tr id="wd3" style="display:none;">
-					<td align="center">
-						<input type="radio" id="d3" name="x_WANType" value="4" tabindex="3" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">
-					</td>
-					<td class="wan_type_title"><label for="d3"><#BOP_ctype_title5#></label></td>
-				</tr>
-				<tr height="40px" id="wd3_1" style="display:none;">
-					<td align="center"></td>
-					<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item5#></span></td>
-				</tr>		
-				<tr id="wd4" style="display:none;">
-					<td align="center">
-						<input type="radio" id="d4" name="x_WANType" value="2" tabindex="4" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">
-					</td>
-					<td class="wan_type_title"><label for="d4">PPTP</label></td>
-				</tr>			
-				<tr height="40px" id="wd4_1" style="display:none;">
-					<td align="center"></td>
-					<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item3#></span></td>
-				</tr>				
-				<tr id="wd5" style="display:none;">
-					<td align="center"><input type="radio" id="d5" name="x_WANType" value="3" tabindex="5" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)"></td>
-					<td class="wan_type_title"><label for="d5">L2TP </label></td>
-				</tr>
-				<tr height="40px" id="wd5_1" style="display:none;">
-					<td align="center"></td>
-					<td valign="top"><span class="wan_type_dec"><#BOP_ctype_item4#></span></td>
-				</tr-->
 				<tr id="specialISP_tr" style="display:none">
 					<td align="center">
 						<input type="checkbox" id="specialisp" name="specialisp" onclick="enable_ISP_special()">
@@ -712,14 +663,7 @@ function enable_ISP_special(){
 						</label>
 					</td>
 				</tr>
-				<!--tr>
-					<td align="center" colspan="2">
-						<div id="apply_gen" class="apply_gen">
-							<input id="ruisp_btn" type="button" value="Russia ISP" tabindex="7" onclick="location.href='QIS_internet_ruisp.htm';" class="button_gen" width="70px" align="center" style="display:none;">
-							<input id="ff123" name="ff123" type="button" value="<#CTL_next#>" tabindex="6" onclick="submitForm();" class="button_gen" width="70px" align="center">
-						</div>
-					</td>
-				</tr-->
+
 				<tr>
 					<td align="center" colspan="2">
 						<div class="apply_gen">
@@ -734,8 +678,8 @@ function enable_ISP_special(){
 			<div id="image_field" class="image_field"></div>
 			<div id="isp_card_desc" style="padding:15px;display:none;line-height:15px;"><#QIS_SmartConn_ISPDesc#></div>
 			<div id="static_ip_desc" style="padding:15px;display:none;line-height:15px;"><#QIS_SmartConn_StaticDesc#></div>
-			<div id="dhcp_scenario_1" style="position:absolute;margin:-335px 0 0 20px;font-size:14px;display:none"><#QIS_SmartConn_Scen1#></div>
-			<div id="dhcp_scenario_2" style="position:absolute;margin:-165px 0 0 20px;font-size:14px;display:none"><#QIS_SmartConn_Scen2#></div>
+			<div id="dhcp_scenario_1" style="position:absolute;margin:-335px 0 0 20px;font-size:12px;display:none"><#QIS_SmartConn_Scen1#></div>
+			<div id="dhcp_scenario_2" style="position:absolute;margin:-165px 0 0 20px;font-size:12px;display:none"><#QIS_SmartConn_Scen2#></div>
 			<div id="sparcial_ISP_field" style="text-align:center;width:300px;display:none">
 			<!--p class="QISGeneralFont" style="font-style:normal;color:#66CCFF;font-size:12px;font-weight:bolder;"><#PPPConnection_x_HostNameForISP_sectionname#></p-->
 			<div style="line-height:25px;height:300px;">
@@ -765,24 +709,24 @@ function enable_ISP_special(){
 				<span id="wan_internet_x">
 			<p style="margin-top:5px;color:#66CCFF;">Internet:</p>
 				<p style="font-size:10px;">
-					VID:<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>">
-					PRIO:<input type="text" name="switch_wan0prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>">
+					VID:<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>" autocorrect="off" autocapitalize="off">
+					PRIO:<input type="text" name="switch_wan0prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>" autocorrect="off" autocapitalize="off">
 				</p>
 				</span>
 
 				<span id="wan_iptv_port4_x">
 			<p style="margin-top:5px;color:#66CCFF;">IPTV (LAN port 4):</p>
 				<p style="font-size:10px;">
-					VID:<input type="text" name="switch_wan1tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan1tagid"); %>">
-					PRIO:<input type="text" name="switch_wan1prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan1prio"); %>">
+					VID:<input type="text" name="switch_wan1tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan1tagid"); %>" autocorrect="off" autocapitalize="off">
+					PRIO:<input type="text" name="switch_wan1prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan1prio"); %>" autocorrect="off" autocapitalize="off">
 				</p>
 				</span>
 
 				<span id="wan_voip_port3_x">
 			<p style="margin-top:5px;color:#66CCFF;">VoIP (LAN port 3):</p>
 				<p style="font-size:10px;">
-					VID:<input type="text" name="switch_wan2tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan2tagid"); %>">
-					PRIO:<input type="text" name="switch_wan2prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan2prio"); %>">
+					VID:<input type="text" name="switch_wan2tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan2tagid"); %>" autocorrect="off" autocapitalize="off">
+					PRIO:<input type="text" name="switch_wan2prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan2prio"); %>" autocorrect="off" autocapitalize="off">
 				</p>
 				</span>
 
@@ -792,7 +736,8 @@ function enable_ISP_special(){
 	</tr>
 	<tr>
 		<td colspan="2">
-			<div style="color:#FC0;font-size:14px;margin-top:10px;" ><#QIS_SmartConn_TypeNote#></div>
+			<div style="color:#FC0;font-size:14px;margin-top:10px;"><#QIS_SmartConn_TypeNote#></div>
+			<div id="wan_unplug" style="color:#FC0;font-size:14px;margin-top:10px;">* <#web_redirect_suggestion1#></div>
 		</td>
 	</tr>
   </table> 
@@ -829,24 +774,24 @@ function enable_ISP_special(){
 		<span id="wan_internet_x">
   	<p style="margin-top:5px;color:#66CCFF;">Internet:</p>
 		<p style="font-size:10px;">
-			VID:<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>">
-			PRIO:<input type="text" name="switch_wan0prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>">
+			VID:<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>" autocorrect="off" autocapitalize="off">
+			PRIO:<input type="text" name="switch_wan0prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>" autocorrect="off" autocapitalize="off">
 		</p>
 		</span>
 
 		<span id="wan_iptv_port4_x">
   	<p style="margin-top:5px;color:#66CCFF;">IPTV (LAN port 4):</p>
 		<p style="font-size:10px;">
-			VID:<input type="text" name="switch_wan1tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan1tagid"); %>">
-			PRIO:<input type="text" name="switch_wan1prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan1prio"); %>">
+			VID:<input type="text" name="switch_wan1tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan1tagid"); %>" autocorrect="off" autocapitalize="off">
+			PRIO:<input type="text" name="switch_wan1prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan1prio"); %>" autocorrect="off" autocapitalize="off">
 		</p>
 		</span>
 
 		<span id="wan_voip_port3_x">
   	<p style="margin-top:5px;color:#66CCFF;">VoIP (LAN port 3):</p>
 		<p style="font-size:10px;">
-			VID:<input type="text" name="switch_wan2tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan2tagid"); %>">
-			PRIO:<input type="text" name="switch_wan2prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan2prio"); %>">
+			VID:<input type="text" name="switch_wan2tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan2tagid"); %>" autocorrect="off" autocapitalize="off">
+			PRIO:<input type="text" name="switch_wan2prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan2prio"); %>" autocorrect="off" autocapitalize="off">
 		</p>
 		</span>
 

@@ -4223,6 +4223,9 @@ int asus_usb_interface(const char *device_name, const char *action){
 	char conf_file[32];
 	char port_path[8];
 	int port_num;
+	int turn_on_led = 1;
+	char class_path[PATH_MAX], class[10] = "";
+
 	usb_dbg("(%s): action=%s.\n", device_name, action);
 
 	if(!strcmp(nvram_safe_get("stop_ui"), "1")){
@@ -4269,8 +4272,23 @@ int asus_usb_interface(const char *device_name, const char *action){
 	// If remove the device? Handle the remove hotplug of the printer and modem.
 	if(!check_hotplug_action(action)){
 		snprintf(nvram_usb_path, 32, "usb_led%d", port_num);
-		if(!strcmp(nvram_safe_get(nvram_usb_path), "1"))
-			nvram_unset(nvram_usb_path);
+		if (!strcmp(nvram_safe_get(nvram_usb_path), "1")) {
+			int turn_off_led = 1;
+			disk_info_t *disk_list, *disk_info;
+
+			disk_list = read_disk_data();
+			for (disk_info = disk_list; disk_info != NULL && turn_off_led; disk_info = disk_info->next) {
+				if (port_num != atoi(disk_info->port))
+					continue;
+
+				turn_off_led = 0;
+				_dprintf("Another disk exist on USB port %d, don't turn off USB LED\n", port_num);
+			}
+			free_disk_data(&disk_list);
+
+			if (turn_off_led)
+				nvram_unset(nvram_usb_path);
+		}
 
 		strcpy(device_type, nvram_safe_get(prefix));
 
@@ -4326,13 +4344,19 @@ int asus_usb_interface(const char *device_name, const char *action){
 		return 0;
 	}
 
+	/* Don't turn on USB LED for USB HUB. */
+	snprintf(class_path, sizeof(class_path), "/sys/bus/usb/devices/%s/%s",
+		device_name, strchr(device_name, ':')? "bInterfaceClass" : "bDeviceClass");
+	if (f_read_string(class_path, class, sizeof(class)) > 0 && atoi(class) == 9)
+		turn_on_led = 0;
+
 	snprintf(nvram_usb_path, 32, "usb_led%d", port_num);
 #ifdef RT4GAC55U
 	if(nvram_get_int("usb_buildin") == port_num)
 		; //skip this LED
 	else
 #endif	/* RT4GAC55U */
-	if(strcmp(nvram_safe_get(nvram_usb_path), "1"))
+	if (turn_on_led && strcmp(nvram_safe_get(nvram_usb_path), "1"))
 		nvram_set(nvram_usb_path, "1");
 
 #ifdef RTCONFIG_USB_MODEM

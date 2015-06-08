@@ -133,6 +133,45 @@ typedef struct {
 	} iface[2];
 } wanface_list_t;
 
+#ifdef RTCONFIG_TCODE
+struct tcode_nvram_s {
+	int model;
+	char *odmpid;
+	char *tcode;
+	char *name;
+	char *value;
+};
+
+struct tcode_rc_support_s {
+	int model;
+	char *tcode;
+	char *features;
+};
+
+struct tcode_location_s {
+	int model;
+	char *location;
+	char *reg_2g_name;
+	char *reg_2g_value;
+	char *rev_2g_name;	/* non-BRCM model, this maybe NULL */
+	char *rev_2g_value;	/* non-BRCM model, this maybe NULL */
+	char *reg_5g_name;	/* For 2G model, this should be NULL */
+	char *reg_5g_value;	/* For 2G model, this should be NULL */
+	char *rev_5g_name;
+	char *rev_5g_value;
+#ifdef RTCONFIG_TRI_BAND_5G
+	char *reg_5g2_name;	/* For 2G model, this should be NULL */
+	char *reg_5g2_value;	/* For 2G model, this should be NULL */
+	char *rev_5g2_name;
+	char *rev_5g2_value;
+	char *reg_5g3_name;	/* For 2G model, this should be NULL */
+	char *reg_5g3_value;	/* For 2G model, this should be NULL */
+	char *rev_5g3_name;
+	char *rev_5g3_value;
+#endif
+};
+#endif
+
 extern char *read_whole_file(const char *target);
 extern char *get_line_from_buffer(const char *buf, char *line, const int line_size);
 extern char *get_upper_str(const char *const str, char **target);
@@ -189,6 +228,8 @@ extern int foreach_wif(int include_vifs, void *param,
 extern void dbgprintf (const char * format, ...); //Ren
 extern void cprintf(const char *format, ...);
 extern int _eval(char *const argv[], const char *path, int timeout, int *ppid);
+extern char *enc_str(char *str, char *enc_buf);
+extern char *dec_str(char *ec_str, char *dec_buf);
 
 // usb.c
 #ifdef RTCONFIG_USB
@@ -490,8 +531,19 @@ struct ifaces_stats {
 #define MAX_NR_WL_IF			1	/* Single 2G */
 #endif	/* ! RTCONFIG_HAS_5G */
 
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
+static inline int __access_point_mode(int sw_mode)
+{
+	return (sw_mode == SW_MODE_AP);
+}
+
+static inline int access_point_mode(void)
+{
+	return __access_point_mode(nvram_get_int("sw_mode"));
+}
+
 #if defined(RTCONFIG_WIRELESSREPEATER)
-static inline int __is_repeater_mode(int sw_mode)
+static inline int __repeater_mode(int sw_mode)
 {
 	return (sw_mode == SW_MODE_REPEATER
 #if defined(RTCONFIG_PROXYSTA)
@@ -499,28 +551,72 @@ static inline int __is_repeater_mode(int sw_mode)
 #endif
 		);
 }
-static inline int is_repeater_mode(void)
+static inline int repeater_mode(void)
 {
-	return __is_repeater_mode(nvram_get_int("sw_mode"));
+	return __repeater_mode(nvram_get_int("sw_mode"));
 }
 #else
-static inline int __is_repeater_mode(int sw_mode) { return 0; }
-static inline int is_repeater_mode(void) { return 0; }
+static inline int __repeater_mode(int sw_mode) { return 0; }
+static inline int repeater_mode(void) { return 0; }
 #endif
 
 #if defined(RTCONFIG_WIRELESSREPEATER) && defined(RTCONFIG_PROXYSTA)
-static inline int __is_mediabridge_mode(int sw_mode)
+static inline int __mediabridge_mode(int sw_mode)
 {
 	return (sw_mode == SW_MODE_REPEATER && nvram_get_int("wlc_psta") == 1);
 }
-static inline int is_mediabridge_mode(void)
+static inline int mediabridge_mode(void)
 {
-	return __is_mediabridge_mode(nvram_get_int("sw_mode"));
+	return __mediabridge_mode(nvram_get_int("sw_mode"));
 }
 #else
-static inline int __is_mediabridge_mode(int sw_mode) { return 0; }
-static inline int is_mediabridge_mode(void) { return 0; }
+static inline int __mediabridge_mode(int sw_mode) { return 0; }
+static inline int mediabridge_mode(void) { return 0; }
 #endif
+#else
+/* Should be Broadcom platform. */
+static inline int __access_point_mode(int sw_mode)
+{
+	return (sw_mode == SW_MODE_AP
+#if defined(RTCONFIG_PROXYSTA)
+		&& !nvram_get_int("wlc_psta")
+#endif
+		);
+}
+
+static inline int access_point_mode(void)
+{
+	return __access_point_mode(nvram_get_int("sw_mode"));
+}
+
+#if defined(RTCONFIG_WIRELESSREPEATER)
+static inline int __repeater_mode(int sw_mode)
+{
+	return (sw_mode == SW_MODE_REPEATER);
+}
+static inline int repeater_mode(void)
+{
+	return __repeater_mode(nvram_get_int("sw_mode"));
+}
+#else
+static inline int __repeater_mode(int sw_mode) { return 0; }
+static inline int repeater_mode(void) { return 0; }
+#endif
+
+#if defined(RTCONFIG_WIRELESSREPEATER) && defined(RTCONFIG_PROXYSTA)
+static inline int __mediabridge_mode(int sw_mode)
+{
+	return (sw_mode == SW_MODE_AP && nvram_get_int("wlc_psta") == 1);
+}
+static inline int mediabridge_mode(void)
+{
+	return __mediabridge_mode(nvram_get_int("sw_mode"));
+}
+#else
+static inline int __mediabridge_mode(int sw_mode) { return 0; }
+static inline int mediabridge_mode(void) { return 0; }
+#endif
+#endif	/* RTCONFIG_RALINK || RTCONFIG_QCA */
 
 static inline int get_wps_multiband(void)
 {
@@ -557,7 +653,7 @@ extern int get_primaryif_dualwan_unit(void);
 #else
 static inline int dualwan_unit__usbif(int unit)
 {
-#ifdef RTCONFIG_USB
+#ifdef RTCONFIG_USB_MODEM
 	return (unit == WAN_UNIT_SECOND);
 #else
 	return 0;
@@ -570,7 +666,7 @@ static inline int dualwan_unit__nonusbif(int unit)
 }
 static inline int get_usbif_dualwan_unit(void)
 {
-#ifdef RTCONFIG_USB
+#ifdef RTCONFIG_USB_MODEM
 	return WAN_UNIT_SECOND;
 #else
 	return -1;
@@ -732,14 +828,19 @@ extern char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric);
 extern const char *ipv6_gateway_address(void);
 #endif
 #ifdef RTCONFIG_OPENVPN
-extern char *get_parsed_crt(const char *name, char *buf);
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+#define OVPN_FS_PATH	"/jffs/openvpn"
+#endif
+extern char *get_parsed_crt(const char *name, char *buf, size_t buf_len);
 extern int set_crt_parsed(const char *name, char *file_path);
+extern int ovpn_crt_is_empty(const char *name);
 #endif
 extern int get_wifi_unit(char *wif);
 extern int is_psta(int unit);
 extern int is_psr(int unit);
 extern int psta_exist();
 extern int psta_exist_except(int unit);
+extern int psr_exist();
 extern int psr_exist_except(int unit);
 extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
 extern int check_bwdpi_nvram_setting();
@@ -791,7 +892,13 @@ extern int get_dualwan_primary(void);
 extern int get_dualwan_secondary(void) ;
 #else
 static inline int get_wans_dualwan(void) { return WANS_DUALWAN_IF_WAN; }
-static inline int get_dualwan_by_unit(int unit) { return ((unit == WAN_UNIT_SECOND)? WANS_DUALWAN_IF_USB:WANS_DUALWAN_IF_WAN); }
+static inline int get_dualwan_by_unit(int unit) {
+#ifdef RTCONFIG_USB_MODEM
+	return ((unit == WAN_UNIT_FIRST)? WANS_DUALWAN_IF_WAN:WANS_DUALWAN_IF_USB);
+#else
+	return ((unit == WAN_UNIT_FIRST)? WANS_DUALWAN_IF_WAN:WANS_DUALWAN_IF_NONE);
+#endif
+}
 #endif
 extern void set_lan_phy(char *phy);
 extern void add_lan_phy(char *phy);
@@ -975,5 +1082,29 @@ static inline int is_usb3_port(char *usb_node)
 	return 0;
 }
 #endif
+
+#ifdef RTCONFIG_BCM5301X_TRAFFIC_MONITOR
+
+#define MIB_P0_PAGE 0x20	/* port 0 */
+#define MIB_RX_REG 0x88
+#define MIB_TX_REG 0x00
+
+#if defined(RTN18U) || defined(RTAC56U) || defined(RTAC56S) || defined(RTAC68U) || defined(RTAC3200)
+#define CPU_PORT "5"
+#endif
+
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+#ifdef RTCONFIG_EXT_RTL8365MB
+#define CPU_PORT "7"
+#else
+#define CPU_PORT "5"
+#endif
+#endif
+
+#ifdef RTAC87U
+#define CPU_PORT "7"	/* RT-AC87U */
+#define RGMII_PORT "5"	/* RT-AC87U */
+#endif
+#endif	/* RTCONFIG_BCM5301X_TRAFFIC_MONITOR */
 
 #endif	/* !__SHARED_H__ */

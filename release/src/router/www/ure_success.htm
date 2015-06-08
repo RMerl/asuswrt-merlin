@@ -59,7 +59,7 @@ function addBookmarkForBrowser(sTitle) {
 <body onload="initial();" class="LevelQIS">
 <script>
 	var sw_mode = '<% nvram_get("sw_mode"); %>';
-	if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
+	if((sw_mode == 2 ||sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 		sw_mode = 2;
 
 	if(sw_mode != 2){

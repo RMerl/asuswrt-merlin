@@ -14,21 +14,21 @@
 var selectedAccount = parent.getSelectedAccount();
 
 function initial(){
-	showtext($("selected_account"), decodeURIComponent(selectedAccount));
+	showtext(document.getElementById("selected_account"), decodeURIComponent(selectedAccount));
 	document.deleteAccountForm.Cancel.focus();	
 	clickevent();
 }
 
 function clickevent(){
-	$("Submit").onclick = function(){
-			$("account").value = decodeURIComponent(selectedAccount);
+	document.getElementById("Submit").onclick = function(){
+			document.getElementById("account").value = decodeURIComponent(selectedAccount);
 			
 			parent.showLoading();
 			document.deleteAccountForm.submit();
 			parent.hidePop("apply");
 		};
 	
-	$("Cancel").onclick = function(){
+	document.getElementById("Cancel").onclick = function(){
 			parent.hidePop('OverlayMask');
 		};
 }

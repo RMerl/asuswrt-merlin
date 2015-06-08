@@ -337,6 +337,38 @@ static struct sk_buff *osl_alloc_skb(unsigned int len)
 #define CTFPOOL_LOCK(ctfpool, flags)	spin_lock_bh(&(ctfpool)->lock)
 #define CTFPOOL_UNLOCK(ctfpool, flags)	spin_unlock_bh(&(ctfpool)->lock)
 #endif /* CTFPOOL_SPINLOCK */
+
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+static int ctfpool_tail __read_mostly = 0;
+
+void osl_ctfpool_direction(int tail)
+{
+	static struct {
+		spinlock_t lock;
+	} dummy = { .lock = __SPIN_LOCK_UNLOCKED(dummy.lock) };
+	static atomic_t tail_users = ATOMIC_INIT(0);
+#ifdef CTFPOOL_SPINLOCK
+	unsigned long flags;
+#endif /* CTFPOOL_SPINLOCK */
+	int changed;
+
+	changed = tail ?
+		atomic_add_unless(&tail_users, 1, 0) :
+		atomic_add_unless(&tail_users, -1, 1);
+	if (changed)
+		return;
+
+	CTFPOOL_LOCK(&dummy, flags);
+
+	ctfpool_tail = tail ?
+		!atomic_inc_and_test(&tail_users) :
+		!atomic_dec_and_test(&tail_users);
+	printk("ctfpool: set %s direction\n", ctfpool_tail ? "tail" : "head");
+
+	CTFPOOL_UNLOCK(&dummy, flags);
+}
+#endif
+
 /*
  * Allocate and add an object to packet pool.
  */
@@ -370,8 +402,26 @@ osl_ctfpool_add(osl_t *osh)
 	}
 
 	/* Add to ctfpool */
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+	if (osh->ctfpool->head == NULL) {
+		osh->ctfpool->head = skb;
+		osh->ctfpool->tail = skb;
+		skb->next = NULL;  /* tail end */
+	}
+	else if (!ctfpool_tail) {
+		skb->next = (struct sk_buff *)osh->ctfpool->head;
+		osh->ctfpool->head = skb;
+	}
+	else {
+		((struct sk_buff *)osh->ctfpool->tail)->next = skb;
+		osh->ctfpool->tail = skb;
+		skb->next = NULL;  /* tail end */
+	}
+#else
 	skb->next = (struct sk_buff *)osh->ctfpool->head;
 	osh->ctfpool->head = skb;
+#endif
+
 	osh->ctfpool->fast_frees++;
 	osh->ctfpool->curr_obj++;
 
@@ -453,6 +503,9 @@ osl_ctfpool_cleanup(osl_t *osh)
 
 	ASSERT(osh->ctfpool->curr_obj == 0);
 	osh->ctfpool->head = NULL;
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+	osh->ctfpool->tail = NULL;
+#endif
 	CTFPOOL_UNLOCK(osh->ctfpool, flags);
 
 	kfree(osh->ctfpool);
@@ -686,13 +739,33 @@ osl_pktfastfree(osl_t *osh, struct sk_buff *skb)
 #if 0
 	ASSERT(ctfpool != NULL);
 #else
-	if (ctfpool == NULL) return;
+	if (ctfpool == NULL) {
+		__kfree_skb(skb);
+		return;
+	}
 #endif
 
 	/* Add object to the ctfpool */
 	CTFPOOL_LOCK(ctfpool, flags);
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+	if (ctfpool->head == NULL) {
+		ctfpool->head = skb;
+		ctfpool->tail = skb;
+		skb->next = NULL;  /* tail end */
+	}
+	else if (!ctfpool_tail) {
+		skb->next = (struct sk_buff *)ctfpool->head;
+		ctfpool->head = skb;
+	}
+	else {
+		((struct sk_buff *)ctfpool->tail)->next = skb;
+		ctfpool->tail = skb;
+		skb->next = NULL;  /* tail end */
+	}
+#else
 	skb->next = (struct sk_buff *)ctfpool->head;
 	ctfpool->head = (void *)skb;
+#endif
 
 	ctfpool->fast_frees++;
 	ctfpool->curr_obj++;

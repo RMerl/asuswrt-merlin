@@ -78,7 +78,7 @@ window.onresize = cal_panel_block;
 <% get_AiDisk_status(); %>
 var AM_to_cifs = get_share_management_status("cifs");  // Account Management for Network-Neighborhood
 var AM_to_ftp = get_share_management_status("ftp");  // Account Management for FTP
-var $j = jQuery.noConflict();
+
 var button_flag = 0;
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
@@ -106,7 +106,7 @@ function applyRule(){
 
 function check_weakness(){
 	cal_panel_block();
-	$j('#weakness_div').fadeIn();
+	document.getElementById('#weakness_div').fadeIn();
 	check_login_name_password();
 	check_wireless_password();
 	check_wireless_encryption();
@@ -123,7 +123,7 @@ function check_weakness(){
 }
 
 function close_weakness_status(){
-	$j('#weakness_div').fadeOut(100);
+	document.getElementById('#weakness_div').fadeOut(100);
 }
 
 function enable_whole_security(){
@@ -270,56 +270,66 @@ function enable_whole_security(){
 	}		
 }
 function check_login_name_password(){
-	var username = document.form.http_username.value;
-	var password = document.form.http_passwd.value;
 
-	if(username == "admin" || password == "admin"){
-		$('login_password').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'><#checkbox_No#></a>";
-		$('login_password').className = "status_no";	
-		$('login_password').onmouseover = function(){overHint(10);}
-		$('login_password').onmouseout = function(){nd();}
+	if('<% check_acorpw(); %>' == '1'){
+		document.getElementById('login_password').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('login_password').className = "status_no";	
+		document.getElementById('login_password').onmouseover = function(){overHint(10);}
+		document.getElementById('login_password').onmouseout = function(){nd();}
 	}
 	else{
-		$('login_password').innerHTML = "<#checkbox_Yes#>";
-		$('login_password').className = "status_yes";
+		document.getElementById('login_password').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('login_password').className = "status_yes";
 	}
 }
 
 function check_wireless_password(){
-	var wireless_password = document.form.wl_wpa_psk.value;
-	chkPass(document.form.wl_wpa_psk.value,"http_passwd");
-	if($('score').className == "status_no")
+	var nScore = '<% check_passwd_strength("wl_key"); %>';
+	var oScore = document.getElementById("score");
+	if (nScore >= 0 && nScore < 20) { sComplexity = "<#PASS_score0#>"; }
+	else if (nScore >= 20 && nScore < 40) { sComplexity = "<#PASS_score1#>"; }
+	else if (nScore >= 40 && nScore < 60) { sComplexity = "<#PASS_score2#>"; }
+	else if (nScore >= 60 && nScore < 80) { sComplexity = "<#PASS_score3#>"; }
+	else if (nScore >= 80 && nScore <= 100) { sComplexity = "<#PASS_score4#>"; }
+
+	if(nScore >= 0 && nScore < 40){
+		document.getElementById('score').className = "status_no";			
+	}
+	else if(nScore >= 40 && nScore <= 100){
+		document.getElementById('score').className = "status_yes";		
+	}	
+	oScore.innerHTML = sComplexity;
+	if(document.getElementById('score').className == "status_no")
 	{
-		$('score').onmouseover = function(){overHint(11);}
-		$('score').onmouseout = function(){nd();}
+		document.getElementById('score').onmouseover = function(){overHint(11);}
+		document.getElementById('score').onmouseout = function(){nd();}
 	}
 }
 
 function check_wireless_encryption(){
-	var encryption_type = document.form.wl_auth_mode_x.value;
-	if(encryption_type == "psk2" || encryption_type == "pskpsk2" || encryption_type == "wpa2" || encryption_type == "wpawpa2"){		
-		$('wireless_encryption').innerHTML = "<#PASS_score3#>";
-		$('wireless_encryption').className = "status_yes";
+	if('<% check_wireless_encryption(); %>' == '1'){		
+		document.getElementById('wireless_encryption').innerHTML = "<#PASS_score3#>";
+		document.getElementById('wireless_encryption').className = "status_yes";
 	}
 	else{
-		$('wireless_encryption').innerHTML = "<a href='Advanced_Wireless_Content.asp' target='_blank'><#PASS_score1#></a>";
-		$('wireless_encryption').className = "status_no";	
-		$('wireless_encryption').onmouseover = function(){overHint(12);}
-		$('wireless_encryption').onmouseout = function(){nd();}
+		document.getElementById('wireless_encryption').innerHTML = "<a href='Advanced_Wireless_Content.asp' target='_blank'><#PASS_score1#></a>";
+		document.getElementById('wireless_encryption').className = "status_no";	
+		document.getElementById('wireless_encryption').onmouseover = function(){overHint(12);}
+		document.getElementById('wireless_encryption').onmouseout = function(){nd();}
 	}
 }
 
 function check_WPS(){
 	var wps_enable = document.form.wps_enable.value;
 	if(wps_enable == 0){
-		$('wps_status').innerHTML = "<#checkbox_Yes#>";
-		$('wps_status').className = "status_yes";
+		document.getElementById('wps_status').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('wps_status').className = "status_yes";
 	}
 	else{
-		$('wps_status').innerHTML = "<a href='Advanced_WWPS_Content.asp' target='_blank'><#checkbox_No#></a>";
-		$('wps_status').className = "status_no";	
-		$('wps_status').onmouseover = function(){overHint(25);}
-		$('wps_status').onmouseout = function(){nd();}
+		document.getElementById('wps_status').innerHTML = "<a href='Advanced_WWPS_Content.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('wps_status').className = "status_no";	
+		document.getElementById('wps_status').onmouseover = function(){overHint(25);}
+		document.getElementById('wps_status').onmouseout = function(){nd();}
 	}
 }
 
@@ -336,14 +346,14 @@ function check_upnp(){
                 var wan1_upnp_enable = 0;
 
 	if(wan0_unpn_enable == 0 && wan1_upnp_enable == 0){
-		$('upnp_service').innerHTML = "<#checkbox_Yes#>";
-		$('upnp_service').className = "status_yes";
+		document.getElementById('upnp_service').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('upnp_service').className = "status_yes";
 	}
 	else{
-		$('upnp_service').innerHTML = "<a href='Advanced_WAN_Content.asp' target='_blank'><#checkbox_No#></a>";
-		$('upnp_service').className = "status_no";
-		$('upnp_service').onmouseover = function(){overHint(13);}
-		$('upnp_service').onmouseout = function(){nd();}
+		document.getElementById('upnp_service').innerHTML = "<a href='Advanced_WAN_Content.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('upnp_service').className = "status_no";
+		document.getElementById('upnp_service').onmouseover = function(){overHint(13);}
+		document.getElementById('upnp_service').onmouseout = function(){nd();}
 	}
 }
 
@@ -351,14 +361,14 @@ function check_wan_access(){
 	var wan_access_enable = document.form.misc_http_x.value;
 
 	if(wan_access_enable == 0){
-		$('access_from_wan').innerHTML = "<#checkbox_Yes#>";
-		$('access_from_wan').className = "status_yes";
+		document.getElementById('access_from_wan').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('access_from_wan').className = "status_yes";
 	}
 	else{
-		$('access_from_wan').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'><#checkbox_No#></a>";
-		$('access_from_wan').className = "status_no";
-		$('access_from_wan').onmouseover = function(){overHint(14);}
-		$('access_from_wan').onmouseout = function(){nd();}
+		document.getElementById('access_from_wan').innerHTML = "<a href='Advanced_System_Content.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('access_from_wan').className = "status_no";
+		document.getElementById('access_from_wan').onmouseover = function(){overHint(14);}
+		document.getElementById('access_from_wan').onmouseout = function(){nd();}
 	}
 }
 
@@ -366,27 +376,27 @@ function check_ping_form_wan(){
 	var wan_ping_enable = document.form.misc_ping_x.value;
 
 	if(wan_ping_enable == 0){
-		$('ping_from_wan').innerHTML = "<#checkbox_Yes#>";
-		$('ping_from_wan').className = "status_yes";
+		document.getElementById('ping_from_wan').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('ping_from_wan').className = "status_yes";
 	}
 	else{
-		$('ping_from_wan').innerHTML = "<a href='Advanced_BasicFirewall_Content.asp' target='_blank'><#checkbox_No#></a>";
-		$('ping_from_wan').className = "status_no";
-		$('ping_from_wan').onmouseover = function(){overHint(15);}
-		$('ping_from_wan').onmouseout = function(){nd();}
+		document.getElementById('ping_from_wan').innerHTML = "<a href='Advanced_BasicFirewall_Content.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('ping_from_wan').className = "status_no";
+		document.getElementById('ping_from_wan').onmouseover = function(){overHint(15);}
+		document.getElementById('ping_from_wan').onmouseout = function(){nd();}
 	}
 }
 
 function check_dmz(){
 	if(document.form.dmz_ip.value == ""){
-		$('dmz_service').innerHTML = "<#checkbox_Yes#>";
-		$('dmz_service').className = "status_yes";
+		document.getElementById('dmz_service').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('dmz_service').className = "status_yes";
 	}
 	else{
-		$('dmz_service').innerHTML = "<a href='Advanced_Exposed_Content.asp' target='_blank'><#checkbox_No#></a>";
-		$('dmz_service').className = "status_no";
-		$('dmz_service').onmouseover = function(){overHint(16);}
-		$('dmz_service').onmouseout = function(){nd();}
+		document.getElementById('dmz_service').innerHTML = "<a href='Advanced_Exposed_Content.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('dmz_service').className = "status_no";
+		document.getElementById('dmz_service').onmouseover = function(){overHint(16);}
+		document.getElementById('dmz_service').onmouseout = function(){nd();}
 	}
 }
 
@@ -394,14 +404,14 @@ function check_port_trigger(){
 	var port_trigger_enable = document.form.autofw_enable_x.value;
 
 	if(port_trigger_enable == 0){
-		$('port_tirgger').innerHTML = "<#checkbox_Yes#>";
-		$('port_tirgger').className = "status_yes";
+		document.getElementById('port_tirgger').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('port_tirgger').className = "status_yes";
 	}
 	else{
-		$('port_tirgger').innerHTML = "<a href='Advanced_PortTrigger_Content.asp' target='_blank'><#checkbox_No#></a>";
-		$('port_tirgger').className = "status_no";
-		$('port_tirgger').onmouseover = function(){overHint(17);}
-		$('port_tirgger').onmouseout = function(){nd();}
+		document.getElementById('port_tirgger').innerHTML = "<a href='Advanced_PortTrigger_Content.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('port_tirgger').className = "status_no";
+		document.getElementById('port_tirgger').onmouseover = function(){overHint(17);}
+		document.getElementById('port_tirgger').onmouseout = function(){nd();}
 	}
 
 }
@@ -410,14 +420,14 @@ function check_port_forwarding(){
 	var port_forwarding_enable = document.form.vts_enable_x.value;
 
 	if(port_forwarding_enable == 0){
-		$('port_forwarding').innerHTML = "<#checkbox_Yes#>";
-		$('port_forwarding').className = "status_yes";
+		document.getElementById('port_forwarding').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('port_forwarding').className = "status_yes";
 	}
 	else{
-		$('port_forwarding').innerHTML = "<a href='Advanced_VirtualServer_Content.asp' target='_blank'><#checkbox_No#></a>";
-		$('port_forwarding').className = "status_no";
-		$('port_forwarding').onmouseover = function(){overHint(18);}
-		$('port_forwarding').onmouseout = function(){nd();}
+		document.getElementById('port_forwarding').innerHTML = "<a href='Advanced_VirtualServer_Content.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('port_forwarding').className = "status_no";
+		document.getElementById('port_forwarding').onmouseover = function(){overHint(18);}
+		document.getElementById('port_forwarding').onmouseout = function(){nd();}
 	}
 }
 
@@ -425,14 +435,14 @@ function check_ftp_anonymous(){
 	var ftp_account_mode = get_manage_type('ftp');		//0: shared mode, 1: account mode
 	
 	if(ftp_account_mode == 0){
-		$('ftp_account').innerHTML = "<a href='Advanced_AiDisk_ftp.asp' target='_blank'><#checkbox_No#></a>";
-		$('ftp_account').className = "status_no";
-		$('ftp_account').onmouseover = function(){overHint(19);}
-		$('ftp_account').onmouseout = function(){nd();}
+		document.getElementById('ftp_account').innerHTML = "<a href='Advanced_AiDisk_ftp.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('ftp_account').className = "status_no";
+		document.getElementById('ftp_account').onmouseover = function(){overHint(19);}
+		document.getElementById('ftp_account').onmouseout = function(){nd();}
 	}
 	else{
-		$('ftp_account').innerHTML = "<#checkbox_Yes#>";
-		$('ftp_account').className = "status_yes";
+		document.getElementById('ftp_account').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('ftp_account').className = "status_yes";
 	}
 }
 
@@ -440,14 +450,14 @@ function check_samba_anonymous(){
 	var samba_account_mode = get_manage_type('cifs');
 	
 	if(samba_account_mode == 0){
-		$('samba_account').innerHTML = "<a href='Advanced_AiDisk_samba.asp' target='_blank'><#checkbox_No#></a>";
-		$('samba_account').className = "status_no";
-		$('samba_account').onmouseover = function(){overHint(20);}
-		$('samba_account').onmouseout = function(){nd();}
+		document.getElementById('samba_account').innerHTML = "<a href='Advanced_AiDisk_samba.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('samba_account').className = "status_no";
+		document.getElementById('samba_account').onmouseover = function(){overHint(20);}
+		document.getElementById('samba_account').onmouseout = function(){nd();}
 	}
 	else{
-		$('samba_account').innerHTML = "<#checkbox_Yes#>";
-		$('samba_account').className = "status_yes";
+		document.getElementById('samba_account').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('samba_account').className = "status_yes";
 	}
 }
 
@@ -457,36 +467,36 @@ function check_TM_feature(){
 	var wrs_mals_enable = document.form.wrs_mals_enable.value;
 
 	if(wrs_mals_enable == 1){
-		$('wrs_service').innerHTML = "<#checkbox_Yes#>";
-		$('wrs_service').className = "status_yes";
+		document.getElementById('wrs_service').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('wrs_service').className = "status_yes";
 	}
 	else{
-		$('wrs_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
-		$('wrs_service').className = "status_no";
-		$('wrs_service').onmouseover = function(){overHint(21);}
-		$('wrs_service').onmouseout = function(){nd();}
+		document.getElementById('wrs_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('wrs_service').className = "status_no";
+		document.getElementById('wrs_service').onmouseover = function(){overHint(21);}
+		document.getElementById('wrs_service').onmouseout = function(){nd();}
 	}
 
 	if(wrs_vp_enable == 1){
-		$('vp_service').innerHTML = "<#checkbox_Yes#>";
-		$('vp_service').className = "status_yes";
+		document.getElementById('vp_service').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('vp_service').className = "status_yes";
 	}
 	else{
-		$('vp_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
-		$('vp_service').className = "status_no";
-		$('vp_service').onmouseover = function(){overHint(22);}
-		$('vp_service').onmouseout = function(){nd();}
+		document.getElementById('vp_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('vp_service').className = "status_no";
+		document.getElementById('vp_service').onmouseover = function(){overHint(22);}
+		document.getElementById('vp_service').onmouseout = function(){nd();}
 	}
 	
 	if(wrs_cc_enable == 1){
-		$('cc_service').innerHTML = "<#checkbox_Yes#>";
-		$('cc_service').className = "status_yes";
+		document.getElementById('cc_service').innerHTML = "<#checkbox_Yes#>";
+		document.getElementById('cc_service').className = "status_yes";
 	}
 	else{
-		$('cc_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
-		$('cc_service').className = "status_no";
-		$('cc_service').onmouseover = function(){overHint(23);}
-		$('cc_service').onmouseout = function(){nd();}
+		document.getElementById('cc_service').innerHTML = "<a href='AiProtection_HomeProtection.asp' target='_blank'><#checkbox_No#></a>";
+		document.getElementById('cc_service').className = "status_no";
+		document.getElementById('cc_service').onmouseover = function(){overHint(23);}
+		document.getElementById('cc_service').onmouseout = function(){nd();}
 	}
 }
 
@@ -510,11 +520,11 @@ function cal_panel_block(){
 		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
 	}
 
-	if($("weakness_div"))
-		$("weakness_div").style.marginLeft = blockmarginLeft+"px";
+	if(document.getElementById("weakness_div"))
+		document.getElementById("weakness_div").style.marginLeft = blockmarginLeft+"px";
 		
-	if($("alert_preference"))
-		$("alert_preference").style.marginLeft = blockmarginLeft+"px";	
+	if(document.getElementById("alert_preference"))
+		document.getElementById("alert_preference").style.marginLeft = blockmarginLeft+"px";	
 }
 
 function switchAccount(){
@@ -533,18 +543,18 @@ function resultOfSwitchShareMode(){
 
 function show_tm_eula(){
 	if(document.form.preferred_lang.value == "JP"){
-			$j.get("JP_tm_eula.htm", function(data){
-				$('agreement_panel').innerHTML= data;
+			$.get("JP_tm_eula.htm", function(data){
+				document.getElementById('agreement_panel').innerHTML= data;
 			});
 	}
 	else{
-			$j.get("tm_eula.htm", function(data){
-				$('agreement_panel').innerHTML= data;
+			$.get("tm_eula.htm", function(data){
+				document.getElementById('agreement_panel').innerHTML= data;
 			});
 	}
 	dr_advise();
 	cal_agreement_block();
-	$j("#agreement_panel").fadeIn(300);
+	document.getElementById("#agreement_panel").fadeIn(300);
 }
 
 function cal_agreement_block(){
@@ -567,7 +577,7 @@ function cal_agreement_block(){
 		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
 	}
 
-	$("agreement_panel").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("agreement_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function cancel(){
@@ -593,18 +603,18 @@ function eula_confirm(){
 function show_alert_preference(){
 	cal_panel_block();
 	parse_wrs_mail_bit();
-	$j('#alert_preference').fadeIn(300);
-	$('mail_address').value = document.form.PM_MY_EMAIL.value;
-	$('mail_password').value = document.form.PM_SMTP_AUTH_PASS.value;
+	document.getElementById('#alert_preference').fadeIn(300);
+	document.getElementById('mail_address').value = document.form.PM_MY_EMAIL.value;
+	document.getElementById('mail_password').value = document.form.PM_SMTP_AUTH_PASS.value;
 }
 
 function close_alert_preference(){
-	$j('#alert_preference').fadeOut(100);
+	document.getElementById('#alert_preference').fadeOut(100);
 }
 
 function apply_alert_preference(){
-	var address_temp = $('mail_address').value;
-	var account_temp = $('mail_address').value.split("@");
+	var address_temp = document.getElementById('mail_address').value;
+	var account_temp = document.getElementById('mail_address').value.split("@");
 	var smtpList = new Array();
 	var mail_bit = 0;
 	smtpList = [
@@ -615,7 +625,7 @@ function apply_alert_preference(){
 	if(address_temp.indexOf('@') != -1){
 		if(account_temp[1] != "gmail.com"){
 			alert("Wrong mail domain");
-			$('mail_address').focus();
+			document.getElementById('mail_address').focus();
 			return false;
 		}	
 		
@@ -636,10 +646,10 @@ function apply_alert_preference(){
 	
 	document.form.wrs_mail_bit.value = mail_bit;
 	document.form.PM_SMTP_AUTH_USER.value = account_temp[0];
-	document.form.PM_SMTP_AUTH_PASS.value = $('mail_password').value;	
+	document.form.PM_SMTP_AUTH_PASS.value = document.getElementById('mail_password').value;	
 	document.form.PM_SMTP_SERVER.value = smtpList[0].smtpServer;	
 	document.form.PM_SMTP_PORT.value = smtpList[0].smtpPort;	
-	$j('#alert_preference').fadeOut(100);
+	document.getElementById('#alert_preference').fadeOut(100);
 	document.form.submit();
 }
 
@@ -772,10 +782,16 @@ function parse_wrs_mail_bit(){
 		</tr>	
 		<tr>
 			<td>
-				<div style="text-align:center;margin-top:10px;">
-					<input class="button_gen" type="button" onclick="close_weakness_status();" value="<#CTL_close#>">
-					<input class="button_gen_long" type="button" onclick="enable_whole_security();" value="<#CTL_secure#>">
-				</div>
+				<table style="margin-top:10px;margin-left:auto;margin-right:auto;">
+					<tr>
+						<td>
+							<input class="button_gen" type="button" onclick="close_weakness_status();" value="<#CTL_close#>">
+						</td>
+						<td>
+							<input class="button_gen_long" type="button" onclick="enable_whole_security();" value="<#CTL_secure#>">
+						</td>
+					</tr>
+				</table>
 			</td>
 		</tr>
 	</table>
@@ -825,7 +841,7 @@ function parse_wrs_mail_bit(){
 						<th><#PPPConnection_Password_itemname#></th>
 						<td>
 							<div>
-								<input type="password" class="input_30_table" id="mail_password" maxlength="100" value="">
+								<input type="password" class="input_30_table" id="mail_password" maxlength="100" value="" autocorrect="off" autocapitalize="off">
 							</div>
 						</td>
 					</tr>
@@ -879,10 +895,6 @@ function parse_wrs_mail_bit(){
 <input type="hidden" name="wrs_mals_enable" value="<% nvram_get("wrs_mals_enable"); %>">
 <input type="hidden" name="wrs_cc_enable" value="<% nvram_get("wrs_cc_enable"); %>">
 <input type="hidden" name="wrs_vp_enable" value="<% nvram_get("wrs_vp_enable"); %>">
-<input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>" disabled>
-<input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>" disabled>
-<input type="hidden" name="wl_wpa_psk" value="<% nvram_get("wl_wpa_psk"); %>" disabled>
-<input type="hidden" name="wl_auth_mode_x" value="<% nvram_get("wl_auth_mode_x"); %>" disabled>
 <input type="hidden" name="wan0_upnp_enable" value="<% nvram_get("wan0_upnp_enable"); %>" disabled>
 <input type="hidden" name="wan1_upnp_enable" value="<% nvram_get("wan1_upnp_enable"); %>" disabled>
 <input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>" disabled>
@@ -1020,7 +1032,7 @@ function parse_wrs_mail_bit(){
 																	<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_mals_enable"></div>
 																	<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 																		<script type="text/javascript">
-																			$j('#radio_mals_enable').iphoneSwitch('<% nvram_get("wrs_mals_enable"); %>',
+																			document.getElementById('#radio_mals_enable').iphoneSwitch('<% nvram_get("wrs_mals_enable"); %>',
 																				function(){																					
 																					if(document.form.TM_EULA.value == 0){
 																						button_flag = 1;
@@ -1045,7 +1057,7 @@ function parse_wrs_mail_bit(){
 																	<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_vp_enable"></div>
 																	<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 																		<script type="text/javascript">
-																			$j('#radio_vp_enable').iphoneSwitch('<% nvram_get("wrs_vp_enable"); %>',
+																			document.getElementById('#radio_vp_enable').iphoneSwitch('<% nvram_get("wrs_vp_enable"); %>',
 																				function(){																				
 																					if(document.form.TM_EULA.value == 0){
 																						button_flag = 2;
@@ -1088,7 +1100,7 @@ function parse_wrs_mail_bit(){
 													<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_cc_enable"></div>
 													<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 														<script type="text/javascript">
-															$j('#radio_cc_enable').iphoneSwitch('<% nvram_get("wrs_cc_enable"); %>',
+															document.getElementById('#radio_cc_enable').iphoneSwitch('<% nvram_get("wrs_cc_enable"); %>',
 																function(){																
 																	if(document.form.TM_EULA.value == 0){
 																		button_flag = 3;

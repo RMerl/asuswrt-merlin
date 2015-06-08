@@ -984,8 +984,8 @@ dev_nvram_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 	ssize_t ret;
 	unsigned long off;
 
-	if (count > sizeof(tmp)) {
-		if (!(name = kmalloc(count, GFP_KERNEL)))
+	if ((count+1) > sizeof(tmp)) {
+		if (!(name = kmalloc(count+1, GFP_KERNEL)))
 			return -ENOMEM;
 	}
 
@@ -993,6 +993,7 @@ dev_nvram_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 		ret = -EFAULT;
 		goto done;
 	}
+	name[count] = '\0';
 
 	if (*name == '\0') {
 		/* Get all variables */
@@ -1036,7 +1037,7 @@ dev_nvram_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 	char tmp[512], *name = tmp, *value;
 	ssize_t ret;
 
-	if ((count + 1) > sizeof(tmp)) {
+	if ((count+1) > sizeof(tmp)) {
 		if (!(name = kmalloc(count+1, GFP_KERNEL)))
 			return -ENOMEM;
 	}
@@ -1045,7 +1046,7 @@ dev_nvram_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 		ret = -EFAULT;
 		goto done;
 	}
-	name[count] = '\0';	
+	name[count] = '\0';
 	value = name;
 	name = strsep(&value, "=");
 	if (value)

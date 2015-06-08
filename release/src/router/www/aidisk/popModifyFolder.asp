@@ -20,8 +20,8 @@ var DisplayFolderName = selectedFolder;
 function initial(){
 	DisplayFolderName = check_folder_length(selectedFolder);
 
-	showtext($("selected_Pool"), parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[parent.getSelectedPoolOrder()].partName);
-	showtext($("selected_Folder"), showhtmlspace(showhtmland(DisplayFolderName)));
+	showtext(document.getElementById("selected_Pool"), parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[parent.getSelectedPoolOrder()].partName);
+	showtext(document.getElementById("selected_Folder"), showhtmlspace(showhtmland(DisplayFolderName)));
 
 	document.modifyFolderForm.new_folder.focus();
 	clickevent();
@@ -33,12 +33,12 @@ function clickevent(){
 	else
 		document.getElementById('new_folder').attachEvent('onkeydown',keyDownHandler);
 	
-	$("Submit").onclick = submit;
+	document.getElementById("Submit").onclick = submit;
 }
 function submit(){
 	if(validForm()){
-		$("pool").value = PoolDevice;
-		$("folder").value = selectedFolder;
+		document.getElementById("pool").value = PoolDevice;
+		document.getElementById("folder").value = selectedFolder;
 		if(parent.document.form.current_page.value != "mediaserver.asp" 
 		&& parent.document.form.current_page.value != "Advanced_AiDisk_NFS.asp" 
 		&& parent.document.form.current_page.value != "Tools_OtherSettings.asp" 
@@ -73,29 +73,29 @@ function keyDownHandler(event){
 }
 
 function validForm(){
-	$("new_folder").value = trim($("new_folder").value);
+	document.getElementById("new_folder").value = trim(document.getElementById("new_folder").value);
 	
 	// share name
-	if($("new_folder").value.length == 0){
+	if(document.getElementById("new_folder").value.length == 0){
 		alert("<#File_content_alert_desc6#>");
-		$("new_folder").focus();
+		document.getElementById("new_folder").focus();
 		return false;
 	}
 	
 	var re = new RegExp("[^a-zA-Z0-9 _-]+","gi");
-	if(re.test($("new_folder").value)){
+	if(re.test(document.getElementById("new_folder").value)){
 		alert("<#File_content_alert_desc7#>");
-		$("new_folder").focus();
+		document.getElementById("new_folder").focus();
 		return false;
 	}
 	
-	if(parent.checkDuplicateName($("new_folder").value, folderlist)){
+	if(parent.checkDuplicateName(document.getElementById("new_folder").value, folderlist)){
 		alert("<#File_content_alert_desc8#>");
-		$("new_folder").focus();
+		document.getElementById("new_folder").focus();
 		return false;
 	}
 	
-	if(trim($("new_folder").value).length > 12)
+	if(trim(document.getElementById("new_folder").value).length > 12)
 		if (!(confirm("<#File_content_alert_desc10#>")))
 			return false;
 	
@@ -157,7 +157,7 @@ function check_folder_length(folder_name){   //Jieming added at 2013/04/16, to d
       </tr>
       <tr>
         <th><#NewFolderName#>: </th>
-        <td><input class="input_25_table" type="text" name="new_folder" id="new_folder" onkeypress="return NoSubmit(event)" ></td>
+        <td><input class="input_25_table" type="text" name="new_folder" id="new_folder" onkeypress="return NoSubmit(event)" autocorrect="off" autocapitalize="off"></td>
       </tr>
       <tr bgcolor="#E6E6E6">
         <th colspan="2" align="right"><input id="Submit" type="button" class="button_gen" value="<#CTL_modify#>"></th>

@@ -26,10 +26,8 @@
 #include <typedefs.h>
 #include <bcmdefs.h>
 #ifdef HNDCTF
-#ifdef RTCONFIG_BWDPI
 #include <ctf/hndctf.h>
-#endif
-#endif
+#endif /* HNDCTF */
 
 /* net device transmit always called with BH disabled */
 netdev_tx_t BCMFASTPATH_HOST br_dev_xmit(struct sk_buff *skb, struct net_device *dev)
@@ -41,7 +39,6 @@ netdev_tx_t BCMFASTPATH_HOST br_dev_xmit(struct sk_buff *skb, struct net_device 
 	struct br_cpu_netstats *brstats = this_cpu_ptr(br->stats);
 	
 #ifdef HNDCTF
-#ifdef RTCONFIG_BWDPI
 	/* For broadstream iqos inbound traffic. 
 	  * Inbound traffic need to apply qdisc rule to br interface, and ctf need to use 
 	  * dev_queue_xmit of bridge dev to transmit packet. 
@@ -63,7 +60,6 @@ netdev_tx_t BCMFASTPATH_HOST br_dev_xmit(struct sk_buff *skb, struct net_device 
 		}
 	}
 #endif /* HNDCTF */
-#endif
 
 #ifdef CONFIG_BRIDGE_NETFILTER
 	if (skb->nf_bridge && (skb->nf_bridge->mask & BRNF_BRIDGED_DNAT)) {

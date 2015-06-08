@@ -16,13 +16,24 @@ var now_flag = '<% get_parameter("flag"); %>';
 var new_wan_link_str = "";
 var detectType = "";
 
+var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
+if(wans_dualwan != ""){
+	var ewan_index = wans_dualwan.indexOf("wan");
+	var usb_index = wans_dualwan.indexOf("usb");
+	var autodet_state = (ewan_index == 0)? '<% nvram_get("autodet_state"); %>': '<% nvram_get("autodet1_state"); %>';
+	var autodet_auxstate = (ewan_index == 0)? '<% nvram_get("autodet_auxstate"); %>': '<% nvram_get("autodet1_auxstate"); %>';
+}
+else{
+	var autodet_state = '<% nvram_get("autodet_state"); %>';
+	var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';	
+}
+var none_index = wans_dualwan.indexOf("none");
 var wantype = '';
 var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
 var RetryCountDown_fail = 10;
 var qtn_ready_fail_count = 15;
-var autodet_state = "";
 var first_wanstate = -1;
 var first_wansbstate = -1;
 var first_wanauxstate = -1;
@@ -35,25 +46,24 @@ var wan_wanauxstate = -1;
 var usb_wanstate = -1;
 var usb_wansbstate = -1;
 var usb_wanauxstate = -1;
-var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
 var apps_sq = '<% nvram_get("apps_sq"); %>';
-var ewan_index = wans_dualwan.indexOf("wan");
-var usb_index = wans_dualwan.indexOf("usb");
-var none_index = wans_dualwan.indexOf("none");
 var based_modelid = '<% nvram_get("productid"); %>';
 var modem_autoapn = '<% nvram_get("modem_autoapn"); %>';
+var usb_modem_auto_lines = "";
 var usb_modem_auto_running = "";
-var usb_modem_auto_isp = "";
+var usb_modem_auto_spn = "";
 var sim_state = -1;
 var wans_mode = '<% nvram_get("wans_mode"); %>';
 var g3err_pin = '<% nvram_get("g3err_pin"); %>';
 var pin_remaining_count = '<% nvram_get("usb_modem_act_auth_pin"); %>';
 var puk_remaining_count = '<% nvram_get("usb_modem_act_auth_puk"); %>';
 
+<% dual_wanstate(); %>
+
 function QKDetect_load_body(){
 	parent.set_step("t1");
 	parent.document.title = "<#Web_Title#> - <#QKSet_detect_sanglass#>";
-	setTimeout('getWANStatus();', 5000);
+	setTimeout('getWANStatus();', 1000);
 
 	if(parent.ISMOBILE){
 		hideObjs();
@@ -61,7 +71,7 @@ function QKDetect_load_body(){
 		parent.set_step("");
 	}
 
-	if(pin_remaining_count == ""){
+	if(gobi_support && (pin_remaining_count == "" || pin_remaining_count == "0")){
 		getSimAuth();
 	}
 }
@@ -88,8 +98,14 @@ function getDualWANState(){
 		usb_wansbstate = second_wansbstate;
 		usb_wanauxstate = second_wanauxstate;
 	}
+
+	if(usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0)
+		parent.usb_connected = 1;
+
 }
 
+var wait_autoisp = 2;
+var run_update_apn = 1;
 function getWANStatus(){
 	$.ajax({
 		url: '/result_of_get_changed_status_QIS.asp',
@@ -102,9 +118,10 @@ function getWANStatus(){
 				parent.refreshpage();
 			}
 			else
-				getWANStatus();			
+				getWANStatus();
 		},
 		success: function(response){
+			parent.wan_autodet_state = autodet_state;
 			RetryCountDown_fail = 10;
 			if(based_modelid == "4G-AC55U"){
 				getDualWANState();
@@ -123,7 +140,7 @@ function getWANStatus(){
 			}
 
 			if(autodet_state == "" || autodet_state == "0"){
-				setTimeout('getWANStatus();', 1000);
+				setTimeout('getWANStatus();', 500);
 			}
 			else if( qtn_ready_t != "1" && '<% nvram_get("productid"); %>' == "RT-AC87U"){
 				if(apps_sq == '1'){
@@ -131,16 +148,16 @@ function getWANStatus(){
 						alert("QTN not ready");
 					else{
 						--qtn_ready_fail_count;
-						setTimeout('getWANStatus();', 1000);
+						setTimeout('getWANStatus();', 500);
 					}
 				}else{
-					setTimeout('getWANStatus();', 1000);
+					setTimeout('getWANStatus();', 500);
 				}
 			}
 			else if(autodet_state == "2" && autodet_auxstate == "6"){
 				redirect_page("internet_type");
 			}
-			else if(autodet_state == "5" && autodet_auxstate != "4"){
+			else if(now_flag != "sim" && autodet_state == "5" && autodet_auxstate != "4"){
 				redirect_page("internet_type");
 			}
 			else if(wanstate == 4 && wansbstate == 4){
@@ -155,12 +172,37 @@ function getWANStatus(){
 					}	
 					else if(wan_wanstate == 2 && wan_wansbstate == 0 && wan_wanauxstate == 0){
 						if(sim_state == 1){
-							if(modem_autoapn == "1" && usb_modem_auto_running != " " && usb_modem_auto_running != "1")
-								setTimeout('getWANStatus();', 3000);
-							else if(modem_autoapn == "1" && usb_modem_auto_running == "1" && usb_modem_auto_isp != "")
-								setTimeout('getWANStatus();', 1000);							
-							else
+							if(modem_autoapn == "1"){
+								if(run_update_apn){
+									parent.update_apn_progress();
+									run_update_apn = 0;
+								}
+
+								if(usb_modem_auto_spn.length != 0){
+									setTimeout('getWANStatus();', 1000);
+								}
+								else{				
+									if(usb_modem_auto_running.length == 0 || usb_modem_auto_lines.length == 0){
+										setTimeout('getWANStatus();', 3000);
+									}
+									else{
+										if(usb_modem_auto_running != usb_modem_auto_lines)
+											setTimeout('getWANStatus();', 5000);
+										else{
+											if(wait_autoisp > 0 ){
+												setTimeout('getWANStatus();', 1000);
+												wait_autoisp--;
+											}
+											else{
+												redirect_page("modem");	
+											}
+										}
+									}
+								}
+							}
+							else{
 								redirect_page("modem");
+							}
 						}
 						else if(sim_state == 2){
 							document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_pin_hint#></strong>";
@@ -207,20 +249,45 @@ function getWANStatus(){
 					}	
 				}
 				else{
-				   setTimeout('$("#img_obj")[0].src = "/images/checked_qis.png";document.getElementById("img_obj").style.width="20px"',1000);
-				   setTimeout('document.getElementById("wan_sucess_desc").style.display = "";', 2000);
-				   setTimeout('redirect_page("wireless");', 3000);     
+				   setTimeout('$("#img_obj")[0].src = "/images/checked_qis.png";document.getElementById("img_obj").style.width="20px"',100);
+				   setTimeout('document.getElementById("wan_sucess_desc").style.display = "";', 500);
+				   setTimeout('redirect_page("wireless");', 1000);
 				}
 			}			
 			else if(autodet_state == 4 && parent.hadPlugged("modem")){ // ethernet did not plug
 				if(based_modelid == "4G-AC55U"){
 					if(sim_state == 1){
-						if(modem_autoapn == "1" && usb_modem_auto_running != " " && usb_modem_auto_running != "1")
-								setTimeout('getWANStatus();', 5000);
-						else if(modem_autoapn == "1" && usb_modem_auto_running == "1" && usb_modem_auto_isp != "")
-								setTimeout('getWANStatus();', 1000);	
-						else	
+						if(modem_autoapn == "1"){
+							if(run_update_apn){
+								parent.update_apn_progress();
+								run_update_apn = 0;
+							}
+								
+							if(usb_modem_auto_spn.length != 0){
+								setTimeout('getWANStatus();', 1000);
+							}
+							else{
+								if(usb_modem_auto_running.length == 0 || usb_modem_auto_lines.length == 0 ){
+										setTimeout('getWANStatus();', 2000);
+								}
+								else{
+									if(usb_modem_auto_running != usb_modem_auto_lines)
+										setTimeout('getWANStatus();', 5000);
+									else{
+										if(wait_autoisp > 0 ){
+											setTimeout('getWANStatus();', 1000);
+											wait_autoisp--;
+										}
+										else{
+											redirect_page("modem");	
+										}
+									}
+								}
+							}
+						}
+						else{
 							redirect_page("modem");
+						}	
 					}
 					else if(sim_state == 2){
 						document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_pin_hint#></strong>";
@@ -314,7 +381,7 @@ function setPin(){
 				document.simact_form.save_pin.value = "0";	
 			document.simact_form.wan_unit.value = usb_index;
 			document.simact_form.submit();
-			setTimeout("getWANStatus();", 5000);
+			setTimeout("getWANStatus();", 10000);
 		}
 	}
 	else{
@@ -417,9 +484,11 @@ function getSimAuth(){
 	<tr>
 		<td align="right" width="10px">
 			<img id="img_obj" src="/images/InternetScan.gif" ></span>
-                </td>     
+		</td>     
 		<td class="test_css">
-			<strong><span><#QKSet_detect_waitdesc#></span></strong>
+			<strong>
+				<span><#QKSet_detect_waitdesc#></span>
+			</strong>
 		</td>
 	</tr>
 	<br>
@@ -428,7 +497,9 @@ function getSimAuth(){
 			<img src="/images/checked_qis.png" width="20px"></span>
 		</td>     
 		<td class="test_css">
-			<strong><span><#QIS_autoMAC_result_desc2#></span></strong>
+			<strong>
+				<span><#QIS_autoMAC_result_desc2#></span>
+			</strong>
 		</td>
 	</tr>
 	</table>
@@ -456,13 +527,13 @@ function getSimAuth(){
 		<tr id="sim_puk_tr" style="display:none">
 			<th style="width:160px; text-align:left;"><#Mobile_puk#></th>
 				<td>
-					<input type="text" maxlength="8" class="input_20_table" name="sim_puk" autocapitalization="off" value="" /><span id="puk_status" style="display:none;"></span>
+					<input type="text" maxlength="8" class="input_20_table" name="sim_puk" autocorrect="off" autocapitalize="off" value="" /><span id="puk_status" style="display:none;"></span>
 				</td>
 		</tr>	
 		<tr id="sim_pin_tr" style="display:none">
 			<th style="width:160px; text-align:left;" id="sim_pin_hd"></a></th>
 			<td>
-				<input id="pincode" name="pincode" class="input_20_table" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/><span id="save_pin_ckb_span"><input type="checkbox" name="save_pin_ckb" id="save_pin_ckb" value="" onclick=""><#Mobile_save_pin#></input></span>
+				<input id="pincode" name="pincode" class="input_20_table" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" autocorrect="off" autocapitalize="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/><span id="save_pin_ckb_span"><input type="checkbox" name="save_pin_ckb" id="save_pin_ckb" value="" onclick=""><#Mobile_save_pin#></input></span>
 			</td>
 		</tr>
 			<th></th>

@@ -5,7 +5,7 @@ CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/sqlite -I$(TOP)/bwdp
 CFLAGS += -I$(TOP)/util-linux/include
 CFLAGS += -idirafter$(LINUXDIR)/arch/arm/include -idirafter$(LINUXDIR)/include
 
-LDFLAGS += $(EXTRALDFLAGS2)
+LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared
 LDFLAGS += -L$(TOP)/bwdpi -lbwdpi
 LDFLAGS += -L$(TOP)/sqlite/.libs -lsqlite3
 #LDFLAGS += -lpthread
@@ -52,7 +52,7 @@ install: all
 
 %.o: %.c
 	@echo " [bwdpi_sqlite] CC $@"
-	$(CC) $(CFLAGS) -c $<
+	@$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm -f *.o bwdpi_sqlite libbwdpi_sql.so

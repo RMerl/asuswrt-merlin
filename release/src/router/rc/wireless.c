@@ -45,12 +45,14 @@ int wds_enable(void)
 #endif
 
 #ifdef CONFIG_BCMWL5
-void
+int
 start_nas(void)
 {
-	stop_nas();
+	char *nas_argv[] = { "nas", NULL };
+	pid_t pid;
 
-	system("nas&");
+	stop_nas();
+	return _eval(nas_argv, NULL, 0, &pid);
 }
 
 void
@@ -226,7 +228,7 @@ _dprintf("Ready to disconnect...%d.\n", wlc_count);
 #else
 #ifdef RTCONFIG_QCA
 #ifdef RTCONFIG_PROXYSTA
-					if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_psta") == 1)
+					if (mediabridge_mode())
 						sleep(10);
 					else
 #endif

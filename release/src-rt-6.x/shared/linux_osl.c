@@ -516,7 +516,7 @@ osl_pktfastget(osl_t *osh, uint len)
 	skb->next = skb->prev = NULL;
 #if defined(__ARM_ARCH_7A__)
 	skb->data = skb->head + NET_SKB_PAD;
-	skb->tail = skb->head + NET_SKB_PAD;
+	skb->tail = skb->data;
 #else
 	skb->data = skb->head + NET_SKB_PAD_ALLOC;
 	skb->tail = skb->data;
@@ -630,8 +630,15 @@ osl_pktfastfree(osl_t *osh, struct sk_buff *skb)
 #endif
 
 	ctfpool = (ctfpool_t *)CTFPOOLPTR(osh, skb);
-//	ASSERT(ctfpool != NULL);
-	if (ctfpool == NULL) return;
+
+#if 0
+	ASSERT(ctfpool != NULL);
+#else
+	if (ctfpool == NULL) {
+		__kfree_skb(skb);
+		return;
+	}
+#endif
 
 	/* Add object to the ctfpool */
 	CTFPOOL_LOCK(ctfpool, flags);

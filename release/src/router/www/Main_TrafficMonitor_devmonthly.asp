@@ -24,8 +24,6 @@
 <script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script type='text/javascript'>
 
-var $j = jQuery.noConflict();
-
 <% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;
 
 try {
@@ -395,7 +393,7 @@ function switchPage(page){
 }
 
 function updateClientList(e){
-	$j.ajax({
+	$.ajax({
 		url: '/update_clients.asp',
 		dataType: 'script',
 		error: function(xhr) {

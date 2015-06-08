@@ -35,7 +35,7 @@
 }
 </style>
 <script>
-var $j = jQuery.noConflict();
+
 <% wanlink(); %>
 <% secondary_wanlink(); %>
 window.onresize = function() {
@@ -66,8 +66,8 @@ function initial(){
 		var wan0_ipaddr = wanlink_ipaddr();
 		var wan1_ipaddr = secondary_wanlink_ipaddr();		document.getElementById("wan_ctrl").style.display = "none";
 		document.getElementById("dualwan_ctrl").style.display = "";	
-		document.getElementById("dualwan_ctrl").innerHTML = "<#PPTP_desc2#> <span class='formfontdesc'>Primary WAN IP : ' + wan0_ipaddr + ' </sapn><span class='formfontdesc'>Secondary WAN IP : ' + wan1_ipaddr + '</sapn>";
-		//check DUT is belong to private IP.
+		document.getElementById("dualwan_ctrl").innerHTML = '<#PPTP_desc2#> <span class="formfontdesc">Primary WAN IP : ' + wan0_ipaddr + ' </sapn><span class="formfontdesc">Secondary WAN IP : ' + wan1_ipaddr + '</sapn>';
+		//check DUT is belong to private IP. //realip doesn't support lb
 		if(validator.isPrivateIP(wan0_ipaddr) && validator.isPrivateIP(wan1_ipaddr)){
 			document.getElementById("privateIP_notes").style.display = "";
 		}
@@ -83,7 +83,11 @@ function initial(){
 		}
 		document.getElementById("wan_ctrl").innerHTML = "<#PPTP_desc2#>" +  wan_ipaddr;
 		//check DUT is belong to private IP.
-		if(validator.isPrivateIP(wan_ipaddr)){
+		if(realip_support){
+			if(!external_ip)
+				document.getElementById("privateIP_notes").style.display = "";
+		}
+		else if(validator.isPrivateIP(wan_ipaddr)){
 			document.getElementById("privateIP_notes").style.display = "";
 		}
 	}
@@ -442,7 +446,7 @@ function edit_Row(userName) {
 	document.form.pptpd_sr_ipaddr.value = "";
 	document.form.pptpd_sr_netmask.value = "";
 
-	$j("#edit_sr_block").fadeIn(300);
+	$("#edit_sr_block").fadeIn(300);
 	cal_panel_block("edit_sr_block");
 
 	var pptpd_sr_rulelist_row = pptpd_sr_rulelist_array.split("<");
@@ -613,7 +617,7 @@ function switchMode(mode){
 
 function srCancel() {
 	pptpd_sr_edit_username = "";
-	$j("#edit_sr_block").fadeOut(300);
+	$("#edit_sr_block").fadeOut(300);
 }
 
 function srConfirm() {
@@ -829,7 +833,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 											<td>
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_VPNServer_enable"></div>												
 												<script type="text/javascript">
-													$j('#radio_VPNServer_enable').iphoneSwitch('<% nvram_get("pptpd_enable"); %>',
+													$('#radio_VPNServer_enable').iphoneSwitch('<% nvram_get("pptpd_enable"); %>',
 													function(){
 														document.form.pptpd_enable.value = "1";
 														formShowAndHide(1, "pptpd");						
@@ -888,10 +892,10 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 											<tr>
 												<td width="15%" style="text-align:center;">-</td>
 												<td width="30%">
-													<input type="text" class="input_22_table" maxlength="64" name="pptpd_clientlist_username" onKeyPress="return validator.isString(this, event)">
+													<input type="text" class="input_22_table" maxlength="64" name="pptpd_clientlist_username" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 												</td>
 												<td width="30%">
-													<input type="text" class="input_22_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return validator.isString(this, event)">
+													<input type="text" class="input_22_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 												</td>
 												<td width="15%">
 													<div><input type="button" class="add_btn" onClick="addRow_Group(16);" value=""></div>
@@ -944,11 +948,11 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 										</tr>									 								 
 										<tr>
 											<th><#IPConnection_x_DNSServer1_itemname#></th>
-											<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_dns1" value="<% nvram_get("pptpd_dns1"); %>" onkeypress="return validator.isIPAddr(this, event)" ></td>
+											<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_dns1" value="<% nvram_get("pptpd_dns1"); %>" onkeypress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
 										</tr>
 										<tr>
 											<th><#IPConnection_x_DNSServer2_itemname#></th>
-											<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_dns2" value="<% nvram_get("pptpd_dns2"); %>" onkeypress="return validator.isIPAddr(this, event)" ></td>
+											<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_dns2" value="<% nvram_get("pptpd_dns2"); %>" onkeypress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
 										</tr>
 										<tr>
 											<th><#IPConnection_x_WINSServerEnable_itemname#></th>
@@ -959,25 +963,25 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 										</tr>
 										<tr>
 											<th><#IPConnection_x_WINSServer1_itemname#></th>
-											<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins1" value="<% nvram_get("pptpd_wins1"); %>" onkeypress="return validator.isIPAddr(this, event)" ></td>
+											<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins1" value="<% nvram_get("pptpd_wins1"); %>" onkeypress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
 										</tr>
 										<tr>
 											<th><#IPConnection_x_WINSServer2_itemname#></th>
-											<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins2" value="<% nvram_get("pptpd_wins2"); %>" onkeypress="return validator.isIPAddr(this, event)" ></td>
+											<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_wins2" value="<% nvram_get("pptpd_wins2"); %>" onkeypress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
 										</tr>
 										<tr>
 											<th>MRU</th>
-											<td><input type="text" maxlength="4" class="input_15_table" name="pptpd_mru" value="<% nvram_get("pptpd_mru"); %>" onKeyPress="return validator.isNumber(this,event)" ></td>
+											<td><input type="text" maxlength="4" class="input_15_table" name="pptpd_mru" value="<% nvram_get("pptpd_mru"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off"></td>
 										</tr>
 										<tr>
 											<th>MTU</th>
-											<td><input type="text" maxlength="4" class="input_15_table" name="pptpd_mtu" value="<% nvram_get("pptpd_mtu"); %>" onKeyPress="return validator.isNumber(this,event)" ></td>
+											<td><input type="text" maxlength="4" class="input_15_table" name="pptpd_mtu" value="<% nvram_get("pptpd_mtu"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off"></td>
 										</tr>
 										<tr>
 											<th><#vpn_client_ip#></th>
 											<td>
-												<input type="text" maxlength="15" class="input_15_table" name="_pptpd_clients_start" onBlur="setEnd();"  onKeyPress="return validator.isIPAddr(this, event);" value=""/> ~
-												<span id="pptpd_subnet" style="font-family: Lucida Console;color: #FFF;"></span><input type="text" maxlength="3" class="input_3_table" name="_pptpd_clients_end" value=""/><span style="color:#FFCC00;"> <#vpn_maximum_clients#></span>
+												<input type="text" maxlength="15" class="input_15_table" name="_pptpd_clients_start" onBlur="setEnd();"  onKeyPress="return validator.isIPAddr(this, event);" value="" autocorrect="off" autocapitalize="off"/> ~
+												<span id="pptpd_subnet" style="font-family: Lucida Console;color: #FFF;"></span><input type="text" maxlength="3" class="input_3_table" name="_pptpd_clients_end" value="" autocorrect="off" autocapitalize="off"/><span style="color:#FFCC00;"> <#vpn_maximum_clients#></span>
 												<br /><span id="pptpd_conflict"></span>	
 											</td>
 										</tr>
@@ -1005,13 +1009,13 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 		<tr>
 			<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(6,1);"><#RouterConfig_GWStaticIP_itemname#></a></th>
 			<td>
-				<input type="text" class="input_20_table" maxlength="15" name="pptpd_sr_ipaddr" onKeyPress="return validator.isIPAddr(this, event)">
+				<input type="text" class="input_20_table" maxlength="15" name="pptpd_sr_ipaddr" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
 			</td>
 		</tr>
 		<tr>
 			<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(6,2);"><#RouterConfig_GWStaticMask_itemname#></a></th>
 			<td>
-				<input type="text" class="input_20_table" maxlength="15" name="pptpd_sr_netmask" onKeyPress="return validator.isIPAddr(this, event)" >
+				<input type="text" class="input_20_table" maxlength="15" name="pptpd_sr_netmask" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
 			</td>
 		</tr>
 	</table>

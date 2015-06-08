@@ -191,6 +191,7 @@ extern void g_assert_type; EXPORT_SYMBOL(g_assert_type);
 extern void osl_attach; EXPORT_SYMBOL(osl_attach);
 extern void osl_ctfpool_add; EXPORT_SYMBOL(osl_ctfpool_add);
 extern void osl_ctfpool_cleanup; EXPORT_SYMBOL(osl_ctfpool_cleanup);
+extern void osl_ctfpool_direction; EXPORT_SYMBOL(osl_ctfpool_direction);
 extern void osl_ctfpool_init; EXPORT_SYMBOL(osl_ctfpool_init);
 extern void osl_ctfpool_replenish; EXPORT_SYMBOL(osl_ctfpool_replenish);
 extern void osl_ctfpool_stats; EXPORT_SYMBOL(osl_ctfpool_stats);

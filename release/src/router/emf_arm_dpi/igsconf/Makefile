@@ -2,6 +2,7 @@
 # $Id: Makefile 382663 2013-02-03 04:40:03Z $
 #
 
+include ../../common.mak
 CROSS =
 CC = $(CROSS)gcc
 AR = $(CROSS)ar

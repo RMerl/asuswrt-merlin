@@ -17,33 +17,33 @@
 <% login_state_hook(); %>
 
 function initial(){
-	showtext($("printerModel"), parent.usbPorts[parent.currentUsbPort].deviceName);
+	showtext(document.getElementById("printerModel"), parent.usbPorts[parent.currentUsbPort].deviceName);
 	
 	if(parent.usbPorts[parent.currentUsbPort].deviceName != ""
 			&& parent.usbPorts[parent.currentUsbPort].serialNum == "<% nvram_get("u2ec_serial"); %>")
 	{
-		showtext($("printerStatus"), '<#CTL_Enabled#>');
-		$("printer_button").style.display = "";
-		$("button_descrition").style.display = "";
+		showtext(document.getElementById("printerStatus"), '<#CTL_Enabled#>');
+		document.getElementById("printer_button").style.display = "";
+		document.getElementById("button_descrition").style.display = "";
 	}
 	else{
-		showtext($("printerStatus"), '<#CTL_Disabled#>');
-		$("printer_button").style.display = "none";
-		$("button_descrition").style.display = "none";
+		showtext(document.getElementById("printerStatus"), '<#CTL_Disabled#>');
+		document.getElementById("printer_button").style.display = "none";
+		document.getElementById("button_descrition").style.display = "none";
 	}
 
 	if('<% nvram_get("mfp_ip_monopoly"); %>' != "" && '<% nvram_get("mfp_ip_monopoly"); %>' != login_ip_str()){
-		$("monoBtn").style.display = "none";
-		$("monoDesc").style.display = "";
- 		$("monoP").style.width = "";
- 		$("monoP").style.float = "";
+		document.getElementById("monoBtn").style.display = "none";
+		document.getElementById("monoDesc").style.display = "";
+ 		document.getElementById("monoP").style.width = "";
+ 		document.getElementById("monoP").style.float = "";
 	}
 	else{
-		$("monoBtn").style.display = "";
-		$("monoDesc").style.display = "none";
+		document.getElementById("monoBtn").style.display = "";
+		document.getElementById("monoDesc").style.display = "none";
 	}
 
-	addOnlineHelp($("faq"), ["monopoly", "mode"]);
+	addOnlineHelp(document.getElementById("faq"), ["monopoly", "mode"]);
 }
 
 function cleanTask(){

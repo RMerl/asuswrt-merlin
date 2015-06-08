@@ -258,8 +258,10 @@ OBJS += bwdpi_check.o
 OBJS += bwdpi_wred_alive.o
 endif
 
-ifeq ($(or $(RTCONFIG_BWDPI),$(RTCONFIG_TRAFFIC_CONTROL)),y)
 OBJS += hour_monitor.o
+
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+OBJS += alert_mail.o
 endif
 
 ifeq ($(RTCONFIG_IPERF),y)
@@ -280,6 +282,10 @@ endif
 
 ifeq ($(RTCONFIG_TR069),y)
 OBJS += tr069.o
+endif
+
+ifeq ($(and $(RTCONFIG_USER_LOW_RSSI),$(RTCONFIG_BCMARM)),y)
+OBJS += roamast.o
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -335,6 +341,7 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-unlock
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog
+	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog02
 ifeq ($(RTCONFIG_FANCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc phy_tempsense
 endif
@@ -388,8 +395,8 @@ endif
 
 ifeq ($(RTCONFIG_QCA),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
+endif	
 	@cd $(INSTALLDIR)/sbin && ln -sf rc delay_exec
-endif
 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wanduck
 	@cd $(INSTALLDIR)/sbin && ln -sf rc tcpcheck
@@ -436,10 +443,6 @@ ifeq ($(RTCONFIG_DSL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc gen_ralink_config
 endif
 endif
-ifeq ($(RTCONFIG_QCA),y)
-	@cd $(INSTALLDIR)/sbin && ln -sf rc FWRITE
-	@cd $(INSTALLDIR)/sbin && ln -sf rc FREAD
-endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd 
 ifeq ($(RTCONFIG_SSH),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_sshd
@@ -451,7 +454,9 @@ ifeq ($(RTCONFIG_PARENTALCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc pc_block
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wlcscan
+ifeq ($(RTCONFIG_WIRELESSREPEATER),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wlcconnect
+endif
 ifeq ($(RTAC66U), y)
 #	@cd $(INSTALLDIR)/sbin && ln -sf rc acsd_restart_wl
 endif
@@ -475,13 +480,12 @@ ifeq ($(RTCONFIG_BWDPI),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_check
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_wred_alive
 endif
-ifeq ($(or $(RTCONFIG_BWDPI),$(RTCONFIG_TRAFFIC_CONTROL)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hour_monitor
-endif
 ifeq ($(RTCONFIG_SPEEDTEST),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc speedtest
 endif
 ifeq ($(RTCONFIG_USB_MODEM),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc start_udhcpc
 	@cd $(INSTALLDIR)/sbin && ln -sf rc write_3g_ppp_conf
 ifeq ($(or $(RTCONFIG_JFFS2),$(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_UBIFS)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc lplus
@@ -500,6 +504,10 @@ ifeq ($(and $(RTCONFIG_IPV6),$(RTCONFIG_WIDEDHCP6)),y)
 endif
 ifeq ($(RTCONFIG_TR069),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc dhcpc_lease
+endif
+
+ifeq ($(and $(RTCONFIG_USER_LOW_RSSI),$(RTCONFIG_BCMARM)),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc roamast
 endif
 
 clean:

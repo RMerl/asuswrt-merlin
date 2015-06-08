@@ -30,19 +30,19 @@ function initial(){
 	document.form.freq_hour.value = diskmon_freq_row[2];
 
 	if(diskmon_status == "1")
-		showtext($("mon_status"), "Start");
+		showtext(document.getElementById("mon_status"), "Start");
 	else if(diskmon_status == "2")
-		showtext($("mon_status"), "Umount");
+		showtext(document.getElementById("mon_status"), "Umount");
 	else if(diskmon_status == "3")
-		showtext($("mon_status"), "Scan");
+		showtext(document.getElementById("mon_status"), "Scan");
 	else if(diskmon_status == "4")
-		showtext($("mon_status"), "Re-Mount");
+		showtext(document.getElementById("mon_status"), "Re-Mount");
 	else if(diskmon_status == "5")
-		showtext($("mon_status"), "Finish");
+		showtext(document.getElementById("mon_status"), "Finish");
 	else if(diskmon_status == "6")
-		showtext($("mon_status"), "Stop forcely");
+		showtext(document.getElementById("mon_status"), "Stop forcely");
 	else
-		showtext($("mon_status"), "Idle");
+		showtext(document.getElementById("mon_status"), "Idle");
 
 	gen_port_option();
 

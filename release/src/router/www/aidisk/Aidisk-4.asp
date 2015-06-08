@@ -28,19 +28,19 @@ function initial(){
 	showDDNS();
 	clickevent();
 	parent.restore_help_td();	
-	$("finish").focus();
+	document.getElementById("finish").focus();
 }
 
 function show_dummyshareway(){
-	switch(parent.$("dummyShareway").value){
+	switch(parent.document.getElementById("dummyShareway").value){
 		case "0":
-			showtext($("dummyShareStr"), "\"<#Step2_method1#>\"");
+			showtext(document.getElementById("dummyShareStr"), "\"<#Step2_method1#>\"");
 			break;
 		case "1":
-			showtext($("dummyShareStr"), "\"<#Step2_method2#>\"");
+			showtext(document.getElementById("dummyShareStr"), "\"<#Step2_method2#>\"");
 			break;
 		case "2":
-			showtext($("dummyShareStr"), "\"<#Step2_method3#>\"");
+			showtext(document.getElementById("dummyShareStr"), "\"<#Step2_method3#>\"");
 			break;
 		//default:
 		//	alert("dummy: System error!");
@@ -67,32 +67,32 @@ function valid_wan_ip() {
         else if(ip_num > C_class_start && ip_num < C_class_end)
                 ip_class = 'C';
         else if(ip_num != 0){
-		$("priv_wan_ip").style.display = "none";
+		document.getElementById("priv_wan_ip").style.display = "none";
                 return;
         }
-	$("priv_wan_ip").style.display = "";
+	document.getElementById("priv_wan_ip").style.display = "";
         return;
 }
 
 function showDDNS(){
-	$("priv_wan_ip").style.display = "none";
+	document.getElementById("priv_wan_ip").style.display = "none";
 	if('<% nvram_get("enable_ftp"); %>' == '1'){
 		if(this.ddns_enable_x == "1"){
-			$("haveDDNS").style.display = "";
-			$("noFTP").style.display = "none";
-			$("noDDNS").style.display = "none";
+			document.getElementById("haveDDNS").style.display = "";
+			document.getElementById("noFTP").style.display = "none";
+			document.getElementById("noDDNS").style.display = "none";
 			valid_wan_ip();
 		}
 		else{
-			$("haveDDNS").style.display = "none";
-			$("noFTP").style.display = "none";
-			$("noDDNS").style.display = "";
+			document.getElementById("haveDDNS").style.display = "none";
+			document.getElementById("noFTP").style.display = "none";
+			document.getElementById("noDDNS").style.display = "";
 		}
 	}
 	else{
-		$("haveDDNS").style.display = "none";
-		$("noFTP").style.display = "none";
-		$("noDDNS").style.display = "none";
+		document.getElementById("haveDDNS").style.display = "none";
+		document.getElementById("noFTP").style.display = "none";
+		document.getElementById("noDDNS").style.display = "none";
 	}
 }
 
@@ -115,9 +115,9 @@ function compute_work_time(){
       }
     }
 
-    if(parent.$("dummyShareway").value == "1")
+    if(parent.document.getElementById("dummyShareway").value == "1")
       return FOLDER_WORK_TIME*total_folder_number*2+SAFE_TIME;
-    else if(parent.$("dummyShareway").value == "2")
+    else if(parent.document.getElementById("dummyShareway").value == "2")
       return FOLDER_WORK_TIME*total_folder_number+SAFE_TIME;
     else
       return SAFE_TIME;
@@ -125,12 +125,12 @@ function compute_work_time(){
 }
 
 function clickevent(){
-	$("finish").onclick = function(){
+	document.getElementById("finish").onclick = function(){
 			parent.showLoading();
 			//parent.showLoading(compute_work_time(), "waiting");
 			parent.document.parameterForm.next_page.value = "/aidisk.asp";
 
-			if(parent.$("dummyShareway").value == "0")
+			if(parent.document.getElementById("dummyShareway").value == "0")
 				parent.switchShareMode("ftp", "share");
 			else
 				parent.initialAccount();

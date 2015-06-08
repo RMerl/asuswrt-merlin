@@ -47,19 +47,19 @@ function showmacfilter_rulelist(){
 	}
   	code +='</tr></table>';
 	
-	$("macfilter_rulelist_Block").innerHTML = code;
+	document.getElementById("macfilter_rulelist_Block").innerHTML = code;
 }
 
 function deleteRow(r){
   var i=r.parentNode.parentNode.rowIndex;
-  $('macfilter_rulelist_table').deleteRow(i);
+  document.getElementById('macfilter_rulelist_table').deleteRow(i);
   
   var macfilter_rulelist_value = "";
-	for(i=0; i<$('macfilter_rulelist_table').rows.length; i++){
+	for(i=0; i<document.getElementById('macfilter_rulelist_table').rows.length; i++){
 		macfilter_rulelist_value += "&#60";
-		macfilter_rulelist_value += $('macfilter_rulelist_table').rows[i].cells[0].innerHTML;
+		macfilter_rulelist_value += document.getElementById('macfilter_rulelist_table').rows[i].cells[0].innerHTML;
 		macfilter_rulelist_value += "&#62";
-                macfilter_rulelist_value += $('macfilter_rulelist_table').rows[i].cells[1].innerHTML;
+                macfilter_rulelist_value += document.getElementById('macfilter_rulelist_table').rows[i].cells[1].innerHTML;
 	}
 	
 	macfilter_rulelist_array = macfilter_rulelist_value;
@@ -68,8 +68,8 @@ function deleteRow(r){
 }
 
 function addRow(obj, obj2, upper){
-		var rule_num = $('macfilter_rulelist_table').rows.length;//rule lists 
-		var item_num = $('macfilter_rulelist_table').rows[0].cells.length; //3 column
+		var rule_num = document.getElementById('macfilter_rulelist_table').rows.length;//rule lists 
+		var item_num = document.getElementById('macfilter_rulelist_table').rows[0].cells.length; //3 column
 		
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
@@ -91,8 +91,8 @@ function addRow(obj, obj2, upper){
 		//Viz check same rule
 		for(i=0; i<rule_num; i++){
 			for(j=0; j<item_num-2; j++){		//only 1 value column
-				//alert(obj.value+","+$('macfilter_rulelist_table').rows[i].cells[j].innerHTML);
-				if(obj.value.toLowerCase() == $('macfilter_rulelist_table').rows[i].cells[j].innerHTML.toLowerCase()){
+				//alert(obj.value+","+document.getElementById('macfilter_rulelist_table').rows[i].cells[j].innerHTML);
+				if(obj.value.toLowerCase() == document.getElementById('macfilter_rulelist_table').rows[i].cells[j].innerHTML.toLowerCase()){
 					alert("<#JS_duplicate#>");
 					return false;
 				}	
@@ -111,15 +111,15 @@ function addRow(obj, obj2, upper){
 
 function applyRule(){
 	if(prevent_lock()){
-		var rule_num = $('macfilter_rulelist_table').rows.length;//幾組rule list 
-		var item_num = $('macfilter_rulelist_table').rows[0].cells.length; //兩欄位
+		var rule_num = document.getElementById('macfilter_rulelist_table').rows.length;//幾組rule list 
+		var item_num = document.getElementById('macfilter_rulelist_table').rows[0].cells.length; //兩欄位
 		var tmp_value = "";
 	
 		for(i=0; i<rule_num; i++){
 			tmp_value += "<"		
 			for(j=0; j<item_num-1; j++){	
-				//Viz alert($('macfilter_rulelist_table').rows[i].cells[j].innerHTML);
-				tmp_value += $('macfilter_rulelist_table').rows[i].cells[j].innerHTML;
+				//Viz alert(document.getElementById('macfilter_rulelist_table').rows[i].cells[j].innerHTML);
+				tmp_value += document.getElementById('macfilter_rulelist_table').rows[i].cells[j].innerHTML;
 				if(j != item_num-2)	
 					tmp_value += ">";
 			}
@@ -162,19 +162,19 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").style.display = "";
 		return false;
 	}if(flag == 2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";		
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";		
+		document.getElementById("check_mac").style.display = "";
 		return false;		
 	}else{
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}	
 }
@@ -260,7 +260,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
        	</tr>
         	<tr>
           		<td width="40%">
-          			<input type="text" maxlength="17" class="input_macaddr_table" name="macfilter_list_x_0"  onKeyPress="return validator.isHWAddr(this,event)">
+          			<input type="text" maxlength="17" class="input_macaddr_table" name="macfilter_list_x_0"  onKeyPress="return validator.isHWAddr(this,event)" autocorrect="off" autocapitalize="off">
 		  	</td>          			
 			<td width="40%">
 				<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="macfilter_name_x_0">

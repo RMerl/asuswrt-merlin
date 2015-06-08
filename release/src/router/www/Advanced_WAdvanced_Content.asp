@@ -87,12 +87,43 @@
 	border-bottom-right-radius: 1px;
 }
 #slider .ui-slider-handle { border-color: #93E7FF; }
+.parental_th{
+	color:white;
+	background:#2F3A3E;
+	cursor: pointer;
+	width:160px;
+	height:22px;
+	border-bottom:solid 1px black;
+	border-right:solid 1px black;
+} 
+.parental_th:hover{
+	background:rgb(94, 116, 124);
+	cursor: pointer;
+}
 
+.checked{
+	background-color:#9CB2BA;
+	width:82px;
+	border-bottom:solid 1px black;
+	border-right:solid 1px black;
+}
+
+.disabled{
+	width:82px;
+	border-bottom:solid 1px black;
+	border-right:solid 1px black;
+	background-color:#475A5F;
+}
+
+  #selectable .ui-selecting { background: #FECA40; }
+  #selectable .ui-selected { background: #F39814; color: white; }
+  #selectable .ui-unselected { background: gray; color: green; }
+  #selectable .ui-unselecting { background: green; color: black; }
+  #selectable { border-spacing:0px; margin-left:0px;margin-top:0px; padding: 0px; width:100%;}
+  #selectable td { height: 22px; }
 
 </style>
 <script>
-var $j = jQuery.noConflict();//var flag = 0;
-
 //Get boot loader version and convert type form string to Integer
 var bl_version = '<% nvram_get("bl_version"); %>';
 var bl_version_array = bl_version.split(".");
@@ -124,32 +155,36 @@ var mcast_rates = [
 	["CCK 11",	 "6",  1, 0, 1]
 ];
 
-var flag_week = 0;
-var flag_weekend = 0;
-var flag_initial =0;
 var wl_version = "<% nvram_get("wl_version"); %>";
 var sdk_version_array = new Array();
 sdk_version_array = wl_version.split(".");
 var sdk_6 = sdk_version_array[0] == "6" ? true:false
 var sdk_7 = sdk_version_array[0] == "7" ? true:false
 var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
-
+var reboot_needed_time = eval("<% get_default_reboot_time(); %>");
+var orig_region = '<% nvram_get("location_code"); %>';
+var array = new Array(7);
+var clock_type = "";
+var wifi_schedule_value = '<% nvram_get("wl_sched"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
 function initial(){
 	show_menu();
 	register_event();
-	
+	init_array(array);
+	init_cookie();
+	count_time();
+
 	if(userRSSI_support)
 		changeRSSI(wl_user_rssi_onload);
 	else
-		$("rssiTr").style.display = "none";
+		document.getElementById("rssiTr").style.display = "none";
 
 	if(!band5g_support)
-		$("wl_unit_field").style.display = "none";
+		document.getElementById("wl_unit_field").style.display = "none";
 
 	regen_band(document.form.wl_unit);
 
 	if(sw_mode == "2"){
-		var _rows = $("WAdvTable").rows;
+		var _rows = document.getElementById("WAdvTable").rows;
 		for(var i=0; i<_rows.length; i++){
 			if(_rows[i].className.search("rept") == -1){
 				_rows[i].style.display = "none";
@@ -161,20 +196,20 @@ function initial(){
 		return false;
 	}
 
-	$("wl_rate").style.display = "none";
+	document.getElementById("wl_rate").style.display = "none";
 
 	if(Rawifi_support){
 		inputCtrl(document.form.wl_noisemitigation, 0);
 	}
 	else if(Qcawifi_support){
 		// FIXME
-		$("DLSCapable").style.display = "none";	
-		$("PktAggregate").style.display = "none";
+		document.getElementById("DLSCapable").style.display = "none";	
+		document.getElementById("PktAggregate").style.display = "none";
 		inputCtrl(document.form.wl_noisemitigation, 0);
 	}else{
 		// BRCM
-		$("DLSCapable").style.display = "none";	
-		$("PktAggregate").style.display = "none";
+		document.getElementById("DLSCapable").style.display = "none";	
+		document.getElementById("PktAggregate").style.display = "none";
 		
 		if('<% nvram_get("wl_unit"); %>' == '1' || sdk_6){	// MODELDEP: for Broadcom SDK 6.x model
 			inputCtrl(document.form.wl_noisemitigation, 0);
@@ -222,7 +257,7 @@ function initial(){
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
 		{
-			$('wl_txbf_desc').innerHTML = "802.11ac Beamforming";
+			document.getElementById('wl_txbf_desc').innerHTML = "802.11ac Beamforming";
 			inputCtrl(document.form.wl_txbf, 1);
 		}	
 
@@ -261,7 +296,7 @@ function initial(){
 			else
 				inputCtrl(document.form.wl_turbo_qam, 1);
 				
-			$('wl_txbf_desc').innerHTML = "<#WLANConfig11b_x_ExpBeam#>";
+			document.getElementById('wl_txbf_desc').innerHTML = "<#WLANConfig11b_x_ExpBeam#>";
 			inputCtrl(document.form.wl_txbf, 1);
 			inputCtrl(document.form.wl_itxbf, 1);
 		}	
@@ -304,7 +339,7 @@ function initial(){
 
 
 	if(repeater_support || psta_support){		//with RE mode
-		$("DLSCapable").style.display = "none";	
+		document.getElementById("DLSCapable").style.display = "none";	
 	}	
 
 	if(document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "1"){		//auto , n only		
@@ -320,27 +355,23 @@ function initial(){
 		inputCtrl(document.form.wl_wme_no_ack, 1);
 	}	
 		
-	loadDateTime();
 	adjust_tx_power();	
-	setFlag_TimeFiled();	
-	check_Timefield_checkbox();
-	control_TimeField();		
-	
 	if(svc_ready == "0")
-		$('svc_hint_div').style.display = "";	
+		document.getElementById('svc_hint_div').style.display = "";	
+	
 	corrected_timezone();	
 	
 	if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1'){	//for RT-AC87U 5G Advanced setting
-		$("wl_mrate_select").style.display = "none";
-		$("wl_plcphdr_field").style.display = "none";
-		$("ampdu_rts_tr").style.display = "none";
-		$("rts_threshold").style.display = "none";
-		$("wl_frameburst_field").style.display = "none";
-		$("wl_wme_apsd_field").style.display = "none";
-		$("wl_ampdu_mpdu_field").style.display = "none";
-		$("wl_ack_ratio_field").style.display = "none";
+		document.getElementById("wl_mrate_select").style.display = "none";
+		document.getElementById("wl_plcphdr_field").style.display = "none";
+		document.getElementById("ampdu_rts_tr").style.display = "none";
+		document.getElementById("rts_threshold").style.display = "none";
+		document.getElementById("wl_frameburst_field").style.display = "none";
+		document.getElementById("wl_wme_apsd_field").style.display = "none";
+		document.getElementById("wl_ampdu_mpdu_field").style.display = "none";
+		document.getElementById("wl_ack_ratio_field").style.display = "none";
 		document.getElementById('wl_80211h_tr').style.display = "";
-		$("wl_regmode_field").style.display = "none";
+		document.getElementById("wl_regmode_field").style.display = "none";
 	}
 	
 	/*Airtime fairness, only for Broadcom ARM platform, except RT-AC87U 5G*/
@@ -362,9 +393,23 @@ function initial(){
 	}
 
 	if(Rawifi_support || Qcawifi_support)	//brcm : 3 ; else : 1
-		document.getElementById("wl_dtim_th").onClick = function(){openHint(3, 4)};
+		document.getElementById("wl_dtim_th").onClick = function (){openHint(3, 4);}
 	else
-		document.getElementById("wl_dtim_th").onClick = function(){openHint(3, 11)};
+		document.getElementById("wl_dtim_th").onClick = function (){openHint(3, 11);}
+	
+	/*location_code Setting*/		
+	if(location_list_support){
+		document.getElementById('region_tr').style.display = "";
+		generate_region();
+	}		
+}
+
+/* MODELDEP by Territory Code */
+function generate_region(){
+	var region_name = ["Asia", "Australia", "Brazil", "Canada", "China", "Europe", "Japan", "Korea", "Malaysia", "Middle East", "Russia", "Singapore", "Turkey", "Taiwan", "Ukraine", "United States"];
+	var region_value = ["APAC", "AU", "BZ", "CA", "CN", "EU", "JP", "KR", "MY", "ME", "RU", "SG", "TR", "TW", "UA", "US"];
+	var current_region = '<% nvram_get("location_code"); %>';
+	add_options_x2(document.form.location_code, region_name, region_value, current_region);
 }
 
 function adjust_tx_power(){
@@ -373,7 +418,7 @@ function adjust_tx_power(){
 	var translated_value = 0;
 	
 	if(!power_support){
-		$("wl_txPower_field").style.display = "none";
+		document.getElementById("wl_txPower_field").style.display = "none";
 	}
 	else{
 		if(power_value_old != ""){
@@ -385,13 +430,13 @@ function adjust_tx_power(){
 				translated_value = 1;			
 			}
 
-			$('slider').children[0].style.width = translated_value + "%";
-			$('slider').children[1].style.left = translated_value + "%";
+			document.getElementById('slider').children[0].style.width = translated_value + "%";
+			document.getElementById('slider').children[1].style.left = translated_value + "%";
 			document.form.wl_txpower.value = translated_value;
 		}
 		else{
-			$('slider').children[0].style.width = power_value_new + "%";
-			$('slider').children[1].style.left = power_value_new + "%";
+			document.getElementById('slider').children[0].style.width = power_value_new + "%";
+			document.getElementById('slider').children[1].style.left = power_value_new + "%";
 			document.form.wl_txpower.value = power_value_new;
 		}
 	}
@@ -430,7 +475,15 @@ function applyRule(){
 			if(document.form.wl1_80211h[0].selected && "<% nvram_get("wl1_chanspec"); %>" == "0")	//Interlocking set acs_dfs="0" while disabled 802.11h and wl1_chanspec="0"(Auto)
 				document.form.acs_dfs.value = "0";
 		}
-
+		
+		if(location_list_support){
+			if(orig_region.length >= 0 && orig_region != document.form.location_code.value){
+				document.form.action_script.value = "reboot";
+				document.form.action_wait.value = reboot_needed_time;
+			}				
+		}
+		
+		document.form.wl_sched.value = wifi_schedule_value;	
 		showLoading();
 		document.form.submit();
 	}
@@ -446,15 +499,7 @@ function validForm(){
 			return false;
 		}	
 	}
-	
-	if(!validator.timeRange(document.form.wl_radio_time_x_starthour, 0) || !validator.timeRange(document.form.wl_radio_time2_x_starthour, 0)
-			|| !validator.timeRange(document.form.wl_radio_time_x_startmin, 1) || !validator.timeRange(document.form.wl_radio_time2_x_startmin, 1)
-			|| !validator.timeRange(document.form.wl_radio_time_x_endhour, 2) || !validator.timeRange(document.form.wl_radio_time2_x_endhour, 2)
-			|| !validator.timeRange(document.form.wl_radio_time_x_endmin, 3) || !validator.timeRange(document.form.wl_radio_time2_x_endmin, 3)
-			){
-		return false;
-	}
-	
+		
 	if(power_support && !Rawifi_support && !Qcawifi_support){
 		// MODELDEP
 		if(hw_ver.search("RTN12HP") != -1){
@@ -473,9 +518,6 @@ function validForm(){
 			}
 		}
 	}
-	
-	if(sw_mode != 2)
-		updateDateTime();	
 
 	return true;
 }
@@ -486,141 +528,8 @@ function done_validating(action){
 
 function disableAdvFn(row){
 	for(var i=row; i>=3; i--){
-		$("WAdvTable").deleteRow(i);
+		document.getElementById("WAdvTable").deleteRow(i);
 	}
-}
-
-function loadDateTime(){
-	document.form.wl_radio_date_x_Sun.checked = getDateCheck(document.form.wl_radio_date_x.value, 0);
-	document.form.wl_radio_date_x_Mon.checked = getDateCheck(document.form.wl_radio_date_x.value, 1);
-	document.form.wl_radio_date_x_Tue.checked = getDateCheck(document.form.wl_radio_date_x.value, 2);
-	document.form.wl_radio_date_x_Wed.checked = getDateCheck(document.form.wl_radio_date_x.value, 3);
-	document.form.wl_radio_date_x_Thu.checked = getDateCheck(document.form.wl_radio_date_x.value, 4);
-	document.form.wl_radio_date_x_Fri.checked = getDateCheck(document.form.wl_radio_date_x.value, 5);
-	document.form.wl_radio_date_x_Sat.checked = getDateCheck(document.form.wl_radio_date_x.value, 6);
-	document.form.wl_radio_time_x_starthour.value = getTimeRange(document.form.wl_radio_time_x.value, 0);
-	document.form.wl_radio_time_x_startmin.value = getTimeRange(document.form.wl_radio_time_x.value, 1);
-	document.form.wl_radio_time_x_endhour.value = getTimeRange(document.form.wl_radio_time_x.value, 2);
-	document.form.wl_radio_time_x_endmin.value = getTimeRange(document.form.wl_radio_time_x.value, 3);
-	document.form.wl_radio_time2_x_starthour.value = getTimeRange(document.form.wl_radio_time2_x.value, 0);
-	document.form.wl_radio_time2_x_startmin.value = getTimeRange(document.form.wl_radio_time2_x.value, 1);
-	document.form.wl_radio_time2_x_endhour.value = getTimeRange(document.form.wl_radio_time2_x.value, 2);
-	document.form.wl_radio_time2_x_endmin.value = getTimeRange(document.form.wl_radio_time2_x.value, 3);
-}
-function control_TimeField(){		//control time of week & weekend field when wireless radio is down , Jieming added 2012/08/22
-	if(!document.form.wl_radio[0].checked){
-		$("wl_sched_enable").style.display = "none";
-		$('enable_date_week_tr').style.display="none";
-		$('enable_time_week_tr').style.display="none";
-		$('enable_date_weekend_tr').style.display="none";
-		$('enable_time_weekend_tr').style.display="none";
-	}
-	else{
-		$("wl_sched_enable").style.display = "";
-		if(!document.form.wl_timesched[0].checked){
-			$('enable_date_week_tr').style.display="none";
-			$('enable_time_week_tr').style.display="none";
-			$('enable_date_weekend_tr').style.display="none";
-			$('enable_time_weekend_tr').style.display="none";
-		}
-		else{
-			$('enable_date_week_tr').style.display="";
-			$('enable_time_week_tr').style.display="";
-			$('enable_date_weekend_tr').style.display="";
-			$('enable_time_weekend_tr').style.display="";	
-		}
-	}
-}
-function check_Timefield_checkbox(){			// To check the checkbox od Date is checked or not and control Time field disabled or not, Jieming add at 2012/10/05
-	if(document.form.wl_radio_date_x_Mon.checked == true 
-		|| document.form.wl_radio_date_x_Tue.checked == true
-		|| document.form.wl_radio_date_x_Wed.checked == true
-		|| document.form.wl_radio_date_x_Thu.checked == true
-		|| document.form.wl_radio_date_x_Fri.checked == true){
-			if(flag_week != 1 || flag_initial == 0){
-				inputCtrl(document.form.wl_radio_time_x_starthour,1);
-				inputCtrl(document.form.wl_radio_time_x_startmin,1);
-				inputCtrl(document.form.wl_radio_time_x_endhour,1);
-				inputCtrl(document.form.wl_radio_time_x_endmin,1);
-				document.form.wl_radio_time_x.disabled = false;
-				flag_week =1;
-			}
-	}
-	else{
-			if(flag_week != 0 || flag_initial == 0){
-				inputCtrl(document.form.wl_radio_time_x_starthour,0);
-				inputCtrl(document.form.wl_radio_time_x_startmin,0);
-				inputCtrl(document.form.wl_radio_time_x_endhour,0);
-				inputCtrl(document.form.wl_radio_time_x_endmin,0);
-				document.form.wl_radio_time_x.disabled = true;
-				$('enable_time_week_tr').style.display ="";
-				flag_week = 0;
-			}
-	}
-		
-	if(document.form.wl_radio_date_x_Sun.checked == true || document.form.wl_radio_date_x_Sat.checked == true){
-		if(flag_weekend != 1 || flag_initial == 0){
-			inputCtrl(document.form.wl_radio_time2_x_starthour,1);
-			inputCtrl(document.form.wl_radio_time2_x_startmin,1);
-			inputCtrl(document.form.wl_radio_time2_x_endhour,1);
-			inputCtrl(document.form.wl_radio_time2_x_endmin,1);
-			document.form.wl_radio_time2_x.disabled = false;
-			flag_weekend =1;
-		}
-	}
-	else{
-		if(flag_weekend != 0 || flag_initial == 0){
-			inputCtrl(document.form.wl_radio_time2_x_starthour,0);
-			inputCtrl(document.form.wl_radio_time2_x_startmin,0);
-			inputCtrl(document.form.wl_radio_time2_x_endhour,0);
-			inputCtrl(document.form.wl_radio_time2_x_endmin,0);
-			document.form.wl_radio_time2_x.disabled = true;
-			$("enable_time_weekend_tr").style.display = "";
-			flag_weekend =0;
-		}
-	}
-	flag_initial = 1;
-}
-
-function updateDateTime(){
-	document.form.wl_radio_date_x.value = setDateCheck(
-		document.form.wl_radio_date_x_Sun,
-		document.form.wl_radio_date_x_Mon,
-		document.form.wl_radio_date_x_Tue,
-		document.form.wl_radio_date_x_Wed,
-		document.form.wl_radio_date_x_Thu,
-		document.form.wl_radio_date_x_Fri,
-		document.form.wl_radio_date_x_Sat);
-	document.form.wl_radio_time_x.value = setTimeRange(
-		document.form.wl_radio_time_x_starthour,
-		document.form.wl_radio_time_x_startmin,
-		document.form.wl_radio_time_x_endhour,
-		document.form.wl_radio_time_x_endmin);
-	document.form.wl_radio_time2_x.value = setTimeRange(
-		document.form.wl_radio_time2_x_starthour,
-		document.form.wl_radio_time2_x_startmin,
-		document.form.wl_radio_time2_x_endhour,
-		document.form.wl_radio_time2_x_endmin);
-}
-function setFlag_TimeFiled(){
-	if(document.form.wl_radio_date_x_Mon.checked == true 
-		|| document.form.wl_radio_date_x_Tue.checked == true
-		|| document.form.wl_radio_date_x_Wed.checked == true
-		|| document.form.wl_radio_date_x_Thu.checked == true
-		|| document.form.wl_radio_date_x_Fri.checked == true){
-			flag_week = 1;
-		}
-	else{
-			flag_week = 0;
-	}
-
-	if(document.form.wl_radio_date_x_Sun.checked == true || document.form.wl_radio_date_x_Sat.checked == true){
-		flag_weekend = 1;
-	}
-	else{
-		flag_weekend = 0;
-	}
-
 }
 
 function enable_wme_check(obj){
@@ -648,25 +557,25 @@ function enable_wme_check(obj){
 /* AMPDU RTS for AC model, Jieming added at 2013.08.26 */
 function check_ampdu_rts(){
 	if(document.form.wl_nmode_x.value != 2 && band5g_11ac_support){
-		$('ampdu_rts_tr').style.display = "";
+		document.getElementById('ampdu_rts_tr').style.display = "";
 		if(document.form.wl_ampdu_rts.value == 1){
 			document.form.wl_rts.disabled = false;
-			$('rts_threshold').style.display = "";
+			document.getElementById('rts_threshold').style.display = "";
 		}	
 		else{
 			document.form.wl_rts.disabled = true;
-			$('rts_threshold').style.display = "none";
+			document.getElementById('rts_threshold').style.display = "none";
 		}	
 	}
 	else{
 		document.form.wl_ampdu_rts.disabled = true;
-		$('ampdu_rts_tr').style.display = "none";
+		document.getElementById('ampdu_rts_tr').style.display = "none";
 	}
 }
 
 function register_event(){
-	$j(function() {
-		$j( "#slider" ).slider({
+	$(function() {
+		$( "#slider" ).slider({
 			orientation: "horizontal",
 			range: "min",
 			min:1,
@@ -680,6 +589,75 @@ function register_event(){
 			}
 		}); 
 	});
+	
+	var array_temp = new Array(7);
+	var checked = 0
+	var unchecked = 0;
+	init_array(array_temp);
+
+  $(function() {
+    $( "#selectable" ).selectable({
+		filter:'td',
+		selecting: function(event, ui){
+					
+		},
+		unselecting: function(event, ui){
+			
+		},
+		selected: function(event, ui){	
+			id = ui.selected.getAttribute('id');
+			column = parseInt(id.substring(0,1), 10);
+			row = parseInt(id.substring(1,3), 10);	
+
+			array_temp[column][row] = 1;
+			if(array[column][row] == 1){
+				checked = 1;
+			}
+			else if(array[column][row] == 0){
+				unchecked = 1;
+			}
+		},
+		unselected: function(event, ui){
+
+		},		
+		stop: function(event, ui){
+			if((checked == 1 && unchecked == 1) || (checked == 0 && unchecked == 1)){
+				for(i=0;i<7;i++){
+					for(j=0;j<24;j++){
+						if(array_temp[i][j] == 1){
+						array[i][j] = array_temp[i][j];					
+						array_temp[i][j] = 0;		//initialize
+						if(j < 10){
+							j = "0" + j;						
+						}		
+							id = i.toString() + j.toString();					
+							document.getElementById(id).className = "checked";					
+						}
+					}
+				}									
+			}
+			else if(checked == 1 && unchecked == 0){
+				for(i=0;i<7;i++){
+					for(j=0;j<24;j++){
+						if(array_temp[i][j] == 1){
+						array[i][j] = 0;					
+						array_temp[i][j] = 0;
+						
+						if(j < 10){
+							j = "0" + j;						
+						}
+							id = i.toString() + j.toString();											
+							document.getElementById(id).className = "disabled";												
+						}
+					}
+				}			
+			}
+		
+			checked = 0;
+			unchecked = 0;
+		}		
+	});		
+  });
 }
 
 function set_power(power_value){	
@@ -693,9 +671,393 @@ function set_power(power_value){
 		alert("The maximun value of power is 1");
 	}
 	
-	$('slider').children[0].style.width = power_value + "%";
-	$('slider').children[1].style.left = power_value + "%";
+	document.getElementById('slider').children[0].style.width = power_value + "%";
+	document.getElementById('slider').children[1].style.left = power_value + "%";
 	document.form.wl_txpower.value = power_value;
+}
+
+function init_array(arr){
+	for(i=0;i<7;i++){
+		arr[i] = new Array(24);
+
+		for(j=0;j<24;j++){
+			arr[i][j] = 0;
+		}
+	}
+}
+
+function init_cookie(){
+	if(document.cookie.indexOf('clock_type') == -1)		//initialize
+		document.cookie = "clock_type=1";		
+			
+	x = document.cookie.split(';');
+	for(i=0;i<x.length;i++){
+		if(x[i].indexOf('clock_type') != -1){
+			clock_type = x[i].substring(x[i].length-1, x[i].length);			
+		}	
+	}
+}
+
+//draw time slot at first time
+function redraw_selected_time(obj){
+	var start_day = 0;
+	var end_day = 0;
+	var start_time = "";
+	var end_time = "";
+	var time_temp = "";
+	var duration = "";
+	var id = "";
+
+	for(i=0;i<obj.length;i++){
+		time_temp = obj[i];
+		start_day = parseInt(time_temp.substring(0,1), 10);
+		end_day =  parseInt(time_temp.substring(1,2), 10);
+		start_time =  parseInt(time_temp.substring(2,4), 10);
+		end_time =  parseInt(time_temp.substring(4,6), 10);
+		if((start_day == end_day) && (end_time - start_time) < 0)	//for Sat 23 cross to Sun 00
+			end_day = 7;
+
+		if(start_day == end_day){			// non cross day
+			duration = end_time - start_time;
+			if(duration == 0)	//for whole selected
+				duration = 7*24;
+			
+			while(duration >0){
+				array[start_day][start_time] = 1;
+				if(start_time < 10)
+					start_time = "0" + start_time;
+								
+				id = start_day.toString() + start_time.toString();
+				document.getElementById(id).className = "checked";
+				start_time++;
+				if(start_time == 24){
+					start_time = 0;
+					start_day++;
+					if(start_day == 7)
+						start_day = 0;
+				}
+	
+				duration--;
+				id = "";		
+			}	
+		}else{			// cross day
+			var duration_day = 0;
+			if(end_day - start_day < 0)
+				duration_day = 7 - start_day;
+			else
+				duration_day = end_day - start_day;
+		
+			duration = (24 - start_time) + (duration_day - 1)*24 + end_time;
+			while(duration > 0){
+				array[start_day][start_time] = 1;
+				if(start_time < 10)
+					start_time = "0" + start_time;
+				
+				id = start_day.toString() + start_time.toString();
+				document.getElementById(id).className = "checked";
+				start_time++;
+				if(start_time == 24){
+					start_time = 0;
+					start_day++;
+					if(start_day == 7)
+						start_day = 0;		
+				}
+				
+				duration--;
+				id = "";	
+			}		
+		}	
+	}
+}
+
+function select_all(){
+	var full_flag = 1;
+	for(i=0;i<7;i++){
+		for(j=0;j<24;j++){
+			if(array[i][j] ==0){ 
+				full_flag = 0;
+				break;
+			}
+		}
+		
+		if(full_flag == 0){
+			break;
+		}
+	}
+
+	if(full_flag == 1){
+		for(i=0;i<7;i++){
+			for(j=0;j<24;j++){
+				array[i][j] = 0;
+				if(j<10){
+					j = "0"+j;
+				}
+		
+				id = i.toString() + j.toString();
+				document.getElementById(id).className = "disabled";
+			}
+		}	
+	}
+	else{
+		for(i=0;i<7;i++){
+			for(j=0;j<24;j++){
+				if(array[i][j] == 1)
+					continue;
+				else{	
+					array[i][j] = 1;
+					if(j<10){
+						j = "0"+j;
+					}
+			
+					id = i.toString() + j.toString();
+					document.getElementById(id).className = "checked";
+				}
+			}
+		}
+	}
+}
+
+function select_all_day(day){
+	var check_flag = 0
+	day = day.substring(4,5);
+	for(i=0;i<24;i++){
+		if(array[day][i] == 0){
+			check_flag = 1;			
+		}			
+	}
+	
+	if(check_flag == 1){
+		for(j=0;j<24;j++){
+			array[day][j] = 1;
+			if(j<10){
+				j = "0"+j;
+			}
+		
+			id = day + j;
+			document.getElementById(id).className = "checked";	
+		}
+	}
+	else{
+		for(j=0;j<24;j++){
+			array[day][j] = 0;
+			if(j<10){
+				j = "0"+j;
+			}
+		
+			id = day + j;
+			document.getElementById(id).className = "disabled";	
+		}
+	}
+}
+
+function select_all_time(time){
+	var check_flag = 0;
+	time_int = parseInt(time, 10);	
+	for(i=0;i<7;i++){
+		if(array[i][time] == 0){
+			check_flag = 1;			
+		}			
+	}
+	
+	if(time<10){
+		time = "0"+time;
+	}
+
+	if(check_flag == 1){
+		for(i=0;i<7;i++){
+			array[i][time_int] = 1;
+			
+		id = i + time;
+		document.getElementById(id).className = "checked";
+		}
+	}
+	else{
+		for(i=0;i<7;i++){
+			array[i][time_int] = 0;
+
+		id = i + time;
+		document.getElementById(id).className = "disabled";
+		}
+	}
+}
+
+function change_clock_type(type){
+	document.cookie = "clock_type="+type;
+	if(type == 1)
+		var array_time = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
+	else
+		var array_time = ["12", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+
+	for(i=0;i<24;i++){
+		if(type == 1)
+			document.getElementById(i).innerHTML = array_time[i] +" ~ "+ array_time[i+1];
+		else{
+			if(i<11 || i == 23)
+				document.getElementById(i).innerHTML = array_time[i] +" ~ "+ array_time[i+1] + " AM";
+			else
+				document.getElementById(i).innerHTML = array_time[i] +" ~ "+ array_time[i+1] + " PM";
+		}	
+	}
+}
+
+function save_wifi_schedule(){
+	var flag = 0;
+	var start_day = 0;
+	var end_day = 0;
+	var start_time = 0;
+	var end_time = 0;
+	var time_temp = "";
+	
+	for(i=0;i<7;i++){
+		for(j=0;j<24;j++){
+			if(array[i][j] == 1){
+				if(flag == 0){
+					flag =1;
+					start_day = i;
+					if(j<10)
+						j = "0" + j;
+						
+					start_time = j;				
+				}
+			}
+			else{
+				if(flag == 1){
+					flag =0;
+					end_day = i;
+					if(j<10)
+						j = "0" + j;
+					
+					end_time = j;		
+					if(time_temp != "")
+						time_temp += "<";
+				
+					time_temp += start_day.toString() + end_day.toString() + start_time.toString() + end_time.toString();
+				}
+			}
+		}	
+	}
+	
+	if(flag == 1){
+		if(time_temp != "")
+			time_temp += "<";
+									
+		time_temp += start_day.toString() + "0" + start_time.toString() + "00";	
+	}
+	
+	if(time_temp == "")
+		time_temp = "<";
+		
+	wifi_schedule_value = time_temp;
+	document.getElementById("schedule_block").style.display = "none";
+	document.getElementById("titl_desc").style.display = "";
+	document.getElementById("WAdvTable").style.display = "";
+	document.getElementById("apply_btn").style.display = "";
+}
+
+function cancel_wifi_schedule(client){
+	init_array(array);
+	document.getElementById("schedule_block").style.display = "none";
+	document.getElementById("titl_desc").style.display = "";
+	document.getElementById("WAdvTable").style.display = "";
+	document.getElementById("apply_btn").style.display = "";
+}
+
+function count_time(){		// To count system time
+	systime_millsec += 1000;
+	setTimeout("count_time()", 1000);
+}
+
+function showclock(){
+	JS_timeObj.setTime(systime_millsec);
+	JS_timeObj2 = JS_timeObj.toString();	
+	JS_timeObj2 = JS_timeObj2.substring(0,3) + ", " +
+	              JS_timeObj2.substring(4,10) + "  " +
+				  checkTime(JS_timeObj.getHours()) + ":" +
+				  checkTime(JS_timeObj.getMinutes()) + ":" +
+				  checkTime(JS_timeObj.getSeconds()) + "  " +
+				  JS_timeObj.getFullYear();
+	document.getElementById("system_time").value = JS_timeObj2;
+	setTimeout("showclock()", 1000);
+	
+	if(svc_ready == "0")
+		document.getElementById('svc_hint_div').style.display = "";
+	corrected_timezone();
+}
+
+
+function show_wifi_schedule(){
+	document.getElementById("titl_desc").style.display = "none";
+	document.getElementById("WAdvTable").style.display = "none";
+	document.getElementById("apply_btn").style.display = "none";
+	document.getElementById("schedule_block").style.display = "";
+
+	var array_date = ["Select All", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+	var array_time_id = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
+	if(clock_type == "1")
+		var array_time = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"];
+	else
+		var array_time = ["12am", "1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm", "12am"];
+	
+	var code = "";
+	
+	wifi_schedule_row = wifi_schedule_value.split('<');
+
+	code +='<div style="margin-bottom:10px;color: #003399;font-family: Verdana;" align="left">';
+	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable">';
+	code +='<thead><tr><td colspan="6" id="LWFilterList"><#ParentalCtrl_Act_schedule#></td></tr></thead>';
+	code +='<tr><th style="width:40%;height:20px;" align="right"><#General_x_SystemTime_itemname#></th>';	
+	code +='<td align="left" style="color:#FFF"><input type="text" id="system_time" name="system_time" class="devicepin" value="" readonly="1" style="font-size:12px;width:200px;"></td></tr>';		
+	code +='</table><table id="main_select_table">';
+	code +='<table  id="selectable" class="table_form" >';
+	code += "<tr>";
+	for(i=0;i<8;i++){
+		if(i == 0)
+			code +="<th class='parental_th' onclick='select_all();'>"+array_date[i]+"</th>";	
+		else
+			code +="<th id=col_"+(i-1)+" class='parental_th' onclick='select_all_day(this.id);'>"+array_date[i]+"</th>";			
+	}
+	
+	code += "</tr>";
+	for(i=0;i<24;i++){
+		code += "<tr>";
+		code +="<th id="+i+" class='parental_th' onclick='select_all_time(this.id)'>"+ array_time[i] + " ~ " + array_time[i+1] +"</th>";
+		for(j=0;j<7;j++){
+			code += "<td id="+ j + array_time_id[i] +" class='disabled' ></td>";		
+		}
+		
+		code += "</tr>";			
+	}
+	
+	code +='</table></table></div>';
+	document.getElementById("mainTable").innerHTML = code;
+
+	register_event();
+	redraw_selected_time(wifi_schedule_row);
+	
+	var code_temp = "";
+	code_temp = '<table style="width:350px;margin-left:20px;"><tr>';
+	code_temp += "<td><div style=\"width:95px;font-family:Arial,sans-serif,Helvetica;font-size:18px;\"><#Clock_Format#></div></td>";
+	code_temp += '<td><div>';
+	code_temp += '<select id="clock_type_select" class="input_option" onchange="change_clock_type(this.value);">';
+	code_temp += '<option value="0" >12-hour</option>';
+	code_temp += '<option value="1" >24-hour</option>';
+	code_temp += '</select>';
+	code_temp += '</div></td>';
+	code_temp += '<td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Allow</div></td>';
+	code_temp += '<td><div style="width:90px;height:20px;background:#9CB2BA;"></div></td>';
+	code_temp += '<td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Deny</div></td>';
+	code_temp += '<td><div style="width:90px;height:20px;border:solid 1px #000"></div></td>';
+	code_temp += '</tr></table>';
+	document.getElementById('hintBlock').innerHTML = code_temp;
+	document.getElementById('hintBlock').style.marginTop = "10px";
+	document.getElementById('hintBlock').style.display = "";
+	document.getElementById("ctrlBtn").innerHTML = '<input class="button_gen" type="button" onClick="cancel_wifi_schedule();" value="<#CTL_Cancel#>">';
+	document.getElementById("ctrlBtn").innerHTML += '<input class="button_gen" type="button" onClick="save_wifi_schedule();" value="<#CTL_ok#>">';  
+	document.getElementById('clock_type_select')[clock_type].selected = true;		// set clock type by cookie
+	
+	document.getElementById("mainTable").style.display = "";
+	$("#mainTable").fadeIn();
+	showclock();
 }
 </script>
 </head>
@@ -705,11 +1067,11 @@ function set_power(power_value){
 
 <div id="Loading" class="popup_bg"></div>
 
+
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>"><input type="hidden" name="wl_nmode_x" value="<% nvram_get("wl_nmode_x"); %>">
 <input type="hidden" name="wl_gmode_protection_x" value="<% nvram_get("wl_gmode_protection_x"); %>">
-
 <input type="hidden" name="current_page" value="Advanced_WAdvanced_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_WAdvanced_Content.asp">
 <input type="hidden" name="group_id" value="">
@@ -720,9 +1082,6 @@ function set_power(power_value){
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="wl_radio_date_x" value="<% nvram_get("wl_radio_date_x"); %>">
-<input type="hidden" name="wl_radio_time_x" value="<% nvram_get("wl_radio_time_x"); %>">
-<input type="hidden" name="wl_radio_time2_x" value="<% nvram_get("wl_radio_time2_x"); %>">
 <input type="hidden" name="wl_subunit" value="-1">
 <input type="hidden" name="wl_amsdu" value="<% nvram_get("wl_amsdu"); %>">
 <input type="hidden" name="wl0_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
@@ -731,6 +1090,7 @@ function set_power(power_value){
 <input type="hidden" name="wl1_80211h_orig" value="<% nvram_get("wl1_80211h"); %>" >
 <input type="hidden" name="acs_dfs" value="<% nvram_get("acs_dfs"); %>">
 <input type="hidden" name="w_Setting" value="1">
+<input type="hidden" name="wl_sched" value="<% nvram_get("wl_sched"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -756,10 +1116,20 @@ function set_power(power_value){
 		  			<div>&nbsp;</div>
 		  			<div class="formfonttitle"><#menu5_1#> - <#menu5_1_6#></div>
 		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		 				<div class="formfontdesc"><#WLANConfig11b_display5_sectiondesc#></div>
+		 				<div id="titl_desc" class="formfontdesc"><#WLANConfig11b_display5_sectiondesc#></div>
 		 				<div id="svc_hint_div" style="display:none;margin-left:5px;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"><#General_x_SystemTime_syncNTP#></span></div>
 		  			<div id="timezone_hint_div" style="margin-left:5px;display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>	
 
+
+					<div id="schedule_block" style="display:none">
+						<div id="hintBlock" style="width: 650px; margin-top: 10px;">
+							<table style="width:350px;"><tbody><tr><td><div style="width:95px;font-family:Arial,sans-serif,Helvetica;font-size:18px;">Clock Format</div></td><td><div><select id="clock_type_select" class="input_option" onchange="change_clock_type(this.value);"><option value="0">12-hour</option><option value="1">24-hour</option></select></div></td><td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Allow</div></td><td><div style="width:90px;height:20px;background:#9CB2BA;"></div></td><td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Deny</div></td><td><div style="width:90px;height:20px;border:solid 1px #000"></div></td></tr></tbody></table>
+						</div>
+						<div id="mainTable" style="padding:0 20px 20px 20px;"></div>
+						<div id="ctrlBtn" style="text-align:center;"></div>
+					</div>
+
+					
 					<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" id="WAdvTable">	
 
 					<tr id="wl_unit_field" class="rept">
@@ -770,7 +1140,7 @@ function set_power(power_value){
 								<option class="content_input_fd" value="1"<% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
 							</select>			
 						</td>
-				  </tr>
+					</tr>
 					<tr id="wl_rf_enable">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 1);"><#WLANConfig11b_x_RadioEnable_itemname#></a></th>
 			  			<td>
@@ -784,45 +1154,7 @@ function set_power(power_value){
 			  			<td>
 			  				<input type="radio" value="1" name="wl_timesched" class="input" onClick="control_TimeField();return change_common_radio(this, 'WLANConfig11b', 'wl_timesched', '1');" <% nvram_match("wl_timesched", "1", "checked"); %>><#checkbox_Yes#>
 			    			<input type="radio" value="0" name="wl_timesched" class="input" onClick="control_TimeField();return change_common_radio(this, 'WLANConfig11b', 'wl_timesched', '0')" <% nvram_match("wl_timesched", "0", "checked"); %>><#checkbox_No#>
-			  			</td>
-					</tr>
-
-					<tr id="enable_date_week_tr">
-			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 2);"><#WLANConfig11b_x_RadioEnableDate_itemname#> (week days)</a></th>
-			  			<td>
-								
-							<input type="checkbox" class="input" name="wl_radio_date_x_Mon" onclick="check_Timefield_checkbox()"><#date_Mon_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Tue" onclick="check_Timefield_checkbox()"><#date_Tue_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Wed" onclick="check_Timefield_checkbox()"><#date_Wed_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Thu" onclick="check_Timefield_checkbox()"><#date_Thu_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Fri" onclick="check_Timefield_checkbox()"><#date_Fri_itemdesc#>						
-							<span id="blank_warn" style="display:none;"><#JS_Shareblanktest#></span>	
-			  			</td>
-					</tr>
-					<tr id="enable_time_week_tr" >
-			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 3);"><#WLANConfig11b_x_RadioEnableTime_itemname#></a></th>
-			  			<td>
-			  				<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_starthour" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 0);" > :
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_startmin" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 1);"> -
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_endhour" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 2);"> :
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time_x_endmin" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 3);">
-						</td>
-					</tr>
-					<tr id="enable_date_weekend_tr">
-			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 2);"><#WLANConfig11b_x_RadioEnableDate_itemname#> (weekend)</a></th>
-			  			<td>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Sat" onclick="check_Timefield_checkbox()"><#date_Sat_itemdesc#>
-							<input type="checkbox" class="input" name="wl_radio_date_x_Sun" onclick="check_Timefield_checkbox()"><#date_Sun_itemdesc#>					
-							<span id="blank_warn" style="display:none;"><#JS_Shareblanktest#></span>	
-			  			</td>
-					</tr>
-					<tr id="enable_time_weekend_tr">
-			  			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(3, 3);"><#WLANConfig11b_x_RadioEnableTime_itemname#></a></th>
-			  			<td>
-			  				<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_starthour" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 0);"> :
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_startmin" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 1);"> -
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_endhour" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 2);"> :
-							<input type="text" maxlength="2" class="input_3_table" name="wl_radio_time2_x_endmin" onKeyPress="return validator.isNumber(this,event)" onblur="validator.timeRange(this, 3);">
+							<span style="padding-left:20px;cursor:pointer;text-decoration:underline" onclick="show_wifi_schedule();">Time Setting</span>
 						</td>
 					</tr>
 
@@ -864,7 +1196,7 @@ function set_power(power_value){
 							</select>
 							<span id="rssiDbm" style="color:#FFF">
 								Disconnect clients with RSSI lower than
-			  				<input type="text" maxlength="3" name="wl_user_rssi" class="input_3_table" value="<% nvram_get("wl_user_rssi"); %>">
+			  				<input type="text" maxlength="3" name="wl_user_rssi" class="input_3_table" value="<% nvram_get("wl_user_rssi"); %>" autocorrect="off" autocapitalize="off">
 								dB
 							</span>
 						</td>
@@ -912,7 +1244,7 @@ function set_power(power_value){
 					<tr>
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 9);"><#WLANConfig11b_x_Frag_itemname#></a></th>
 			  			<td>
-			  				<input type="text" maxlength="4" name="wl_frag" id="wl_frag" class="input_6_table" value="<% nvram_get("wl_frag"); %>" onKeyPress="return validator.isNumber(this,event)">
+			  				<input type="text" maxlength="4" name="wl_frag" id="wl_frag" class="input_6_table" value="<% nvram_get("wl_frag"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off">
 						</td>
 					</tr>
 					<tr id='ampdu_rts_tr'>
@@ -927,19 +1259,19 @@ function set_power(power_value){
 					<tr id="rts_threshold">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 10);"><#WLANConfig11b_x_RTS_itemname#></a></th>
 			  			<td>
-			  				<input type="text" maxlength="4" name="wl_rts" class="input_6_table" value="<% nvram_get("wl_rts"); %>" onKeyPress="return validator.isNumber(this,event)">
+			  				<input type="text" maxlength="4" name="wl_rts" class="input_6_table" value="<% nvram_get("wl_rts"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off">
 			  			</td>
 					</tr>
 					<tr id="wl_dtim_field">
 			  			<th><a class="hintstyle" id="wl_dtim_th" href="javascript:void(0);" onClick=""><#WLANConfig11b_x_DTIM_itemname#></a></th>
 						<td>
-			  				<input type="text" maxlength="3" name="wl_dtim" class="input_6_table" value="<% nvram_get("wl_dtim"); %>" onKeyPress="return validator.isNumber(this,event)">
+			  				<input type="text" maxlength="3" name="wl_dtim" class="input_6_table" value="<% nvram_get("wl_dtim"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off">
 						</td>			  
 					</tr>
 					<tr id="wl_bcn_field">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 12);"><#WLANConfig11b_x_Beacon_itemname#></a></th>
 						<td>
-							<input type="text" maxlength="4" name="wl_bcn" class="input_6_table" value="<% nvram_get("wl_bcn"); %>" onKeyPress="return validator.isNumber(this,event)">
+							<input type="text" maxlength="4" name="wl_bcn" class="input_6_table" value="<% nvram_get("wl_bcn"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off">
 						</td>
 					</tr>
 					<tr id="wl_frameburst_field">
@@ -1023,7 +1355,7 @@ function set_power(power_value){
 					</tr>
 					
 					<tr> <!-- MODELDEP: RT-AC55U -->
-						<th><a class="hintstyle" href="javascript:void(0);"">Enable accurate traffic counter</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);">Enable accurate traffic counter</a></th>
 						<td>
 							<select name="traffic_5g" class="input_option">
 								<option value="1" <% nvram_match("traffic_5g", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
@@ -1119,7 +1451,7 @@ function set_power(power_value){
 								<table>
 									<tr >
 										<td style="border:0px;width:60px;">
-											<input id="wl_txpower" name="wl_txpower" type="text" maxlength="3" class="input_3_table" value="<% nvram_get("wl_txpower"); %>" style="margin-left:-10px;" onkeyup="set_power(this.value);"> %
+											<input id="wl_txpower" name="wl_txpower" type="text" maxlength="3" class="input_3_table" value="<% nvram_get("wl_txpower"); %>" style="margin-left:-10px;" onkeyup="set_power(this.value);" autocorrect="off" autocapitalize="off"> %
 										</td>					
 										<td style="border:0px;">
 											<div id="slider" style="width:200px;"></div>
@@ -1129,9 +1461,13 @@ function set_power(power_value){
 							</div>
 						</td>
 					</tr>
+					<tr id="region_tr" style="display:none">
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="">Region</a></th>
+						<td><select name="location_code" class="input_option"></select></td>
+					</tr>
 				</table>
 					
-						<div class="apply_gen">
+						<div class="apply_gen" id="apply_btn">
 							<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
 						</div>
 					
@@ -1141,8 +1477,6 @@ function set_power(power_value){
 </table>		
 </td>
 </form>
-
-
         </tr>
       </table>				
 		<!--===================================Ending of Main Content===========================================-->		
@@ -1151,7 +1485,6 @@ function set_power(power_value){
     <td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
-
 <div id="footer"></div>
 </body>
 </html>

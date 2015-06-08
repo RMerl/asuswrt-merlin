@@ -68,11 +68,59 @@ version 2.73
 	    Fix broken DNSSEC validation of ECDSA signatures.
 
 	    Add --dnssec-timestamp option, which provides an automatic
-	    way to detect when the system time becomes valid after boot
-	    on systems without an RTC, whilst allowing DNS queries before the
-	    clock is valid so that NTP can run. Thanks to
-	    Kevin Darbyshire-Bryant for developing this idea.
-	
+	    way to detect when the system time becomes valid after 
+	    boot on systems without an RTC, whilst allowing DNS 
+	    queries before the clock is valid so that NTP can run. 
+	    Thanks to Kevin Darbyshire-Bryant for developing this idea.
+
+	    Add --tftp-no-fail option. Thanks to Stefan Tomanek for
+	    the patch.
+
+	    Fix crash caused by looking up servers.bind, CHAOS text 
+	    record, when more than about five --servers= lines are 
+	    in the dnsmasq config. This causes memory corruption 
+	    which causes a crash later. Thanks to Matt Coddington for 
+	    sterling work chasing this down.
+
+	    Fix crash on receipt of certain malformed DNS requests.
+	    Thanks to Nick Sampanis for spotting the problem.
+	    Note that this is could allow the dnsmasq process's
+	    memory to be read by an attacker under certain
+	    circumstances, so it has a CVE, CVE-2015-3294 
+
+            Fix crash in authoritative DNS code, if a .arpa zone 
+	    is declared as authoritative, and then a PTR query which
+	    is not to be treated as authoritative arrived. Normally, 
+	    directly declaring .arpa zone as authoritative is not 
+	    done, so this crash wouldn't be seen. Instead the 
+	    relevant .arpa zone should be specified as a subnet
+	    in the auth-zone declaration. Thanks to Johnny S. Lee
+	    for the bugreport and initial patch.
+
+	    Fix authoritative DNS code to correctly reply to NS 
+	    and SOA queries for .arpa zones for which we are 
+	    declared authoritative by means of a subnet in auth-zone.
+	    Previously we provided correct answers to PTR queries
+	    in such zones (including NS and SOA) but not direct
+	    NS and SOA queries. Thanks to Johnny S. Lee for 
+ 	    pointing out the problem.
+
+	    Fix logging of DHCPREPLY which should be suppressed 
+	    by quiet-dhcp6. Thanks to J. Pablo Abonia for 
+	    spotting the problem.
+
+	    Try and handle net connections with broken fragmentation 
+	    that lose large UDP packets. If a server times out, 
+            reduce the maximum UDP packet size field in the EDNS0
+	    header to 1280 bytes. If it then answers, make that
+	    change permanent.
+
+	    Check IPv4-mapped IPv6 addresses when --stop-rebind
+	    is active. Thanks to Jordan Milne for spotting this.
+
+	    Allow DHCPv4 options T1 and T2 to be set using --dhcp-option.
+	    Thanks to Kevin Benton for patches and work on this.
+
 	
 version 2.72
             Add ra-advrouter mode, for RFC-3775 mobile IPv6 support.
@@ -117,7 +165,7 @@ version 2.72
             Fix problem with --local-service option on big-endian platforms
 	    Thanks to Richard Genoud for the patch.
 
-
+	
 version 2.71
             Subtle change to error handling to help DNSSEC validation 
 	    when servers fail to provide NODATA answers for 

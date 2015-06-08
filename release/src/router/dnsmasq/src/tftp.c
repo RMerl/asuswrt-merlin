@@ -236,7 +236,7 @@ void tftp_request(struct listener *listen, time_t now)
       if (ioctl(listen->tftpfd, SIOCGIFMTU, &ifr) != -1)
 	mtu = ifr.ifr_mtu;      
     }
-  
+
   if (name)
     {
       /* check for per-interface prefix */ 

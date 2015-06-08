@@ -187,7 +187,7 @@ update_prefix(ia, pinfo, pifc, dhcpifp, ctlp, callback)
 	}
 
 	/* update the timestamp of update */
-	sp->updatetime = time(NULL);
+	sp->updatetime = dhcp6_time(NULL);
 
 	/* update the prefix according to pinfo */
 	sp->prefix.pltime = pinfo->pltime;
@@ -314,7 +314,7 @@ duration(iac)
 	time_t now;
 
 	/* Determine the smallest period until pltime expires. */
-	now = time(NULL);
+	now = dhcp6_time(NULL);
 	for (sp = TAILQ_FIRST(&iac_pd->siteprefix_head); sp;
 	    sp = TAILQ_NEXT(sp, link)) {
 		passed = now > sp->updatetime ?

@@ -34,7 +34,7 @@ function initial() {
 
 	if (igd2_support)
 	{
-		$("pinholespan").style.display="";
+		document.getElementById("pinholespan").style.display="";
 		show_pinholes();
 	}
 }
@@ -71,7 +71,7 @@ function show_pinholes() {
 	}
 
 	code += '</tr></table>';
-	$("pinholesblock").innerHTML = code;
+	document.getElementById("pinholesblock").innerHTML = code;
 }
 
 

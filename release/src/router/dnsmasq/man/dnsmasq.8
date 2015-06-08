@@ -50,6 +50,10 @@ Additional hosts file. Read the specified file as well as /etc/hosts. If -h is g
 only the specified file. This option may be repeated for more than one
 additional hosts file. If a directory is given, then read all the files contained in that directory. 
 .TP
+.B --hostsdir=<path>
+Read all the hosts files contained in the directory. New or changed files
+are read automatically. See --dhcp-hostsdir for details.
+.TP
 .B \-E, --expand-hosts
 Add the domain to simple names (without a period) in /etc/hosts
 in the same way as for DHCP-derived names. Note that this does not
@@ -456,7 +460,7 @@ but provides some syntactic sugar to make specifying address-to-name queries eas
 is exactly equivalent to 
 .B --server=/3.2.1.in-addr.arpa/192.168.0.1
 .TP
-.B \-A, --address=/<domain>/[domain/]<ipaddr>
+.B \-A, --address=/<domain>/[domain/][<ipaddr>]
 Specify an IP address to return for any host in the given domains.
 Queries in the domains are never forwarded and always replied to
 with the specified IP address which may be IPv4 or IPv6. To give
@@ -468,7 +472,10 @@ domain specification works in the same was as for --server, with the
 additional facility that /#/ matches any domain. Thus
 --address=/#/1.2.3.4 will always return 1.2.3.4 for any query not
 answered from /etc/hosts or DHCP and not sent to an upstream
-nameserver by a more specific --server directive.
+nameserver by a more specific --server directive. As for --server,
+one or more domains with no address returns a no-such-domain answer, so
+--address=/example.com/ is equivalent to --server=/example.com/ and returns 
+NXDOMAIN for example.com and all its subdomains.
 .TP
 .B --ipset=/<domain>/[domain/]<ipset>[,<ipset>]
 Places the resolved IP addresses of queries for the specified domains
@@ -512,7 +519,7 @@ zone files: the port, weight and priority numbers are in a different
 order. More than one SRV record for a given service/domain is allowed,
 all that match are returned.
 .TP
-.B --host-record=<name>[,<name>....][<IPv4-address>],[<IPv6-address>]
+.B --host-record=<name>[,<name>....],[<IPv4-address>],[<IPv6-address>]
 Add A, AAAA and PTR records to the DNS. This adds one or more names to
 the DNS with associated IPv4 (A) and IPv6 (AAAA) records. A name may
 appear in more than one 
@@ -669,6 +676,13 @@ removes the time-window checks (but not other DNSSEC validation.) only until the
 that dnsmasq should be started with this flag when the platform determines that reliable time is not currently available. As soon as 
 reliable time is established, a SIGHUP should be sent to dnsmasq, which enables time checking, and purges the cache of DNS records
 which have not been throughly checked.
+.TP
+.B --dnssec-timestamp=<path>
+Enables an alternative way of checking the validity of the system time for DNSSEC (see --dnssec-no-timecheck). In this case, the 
+system time is considered to be valid once it becomes later than the timestamp on the specified file. The file is created and 
+its timestamp set automatically by dnsmasq. The file must be stored on a persistent filesystem, so that it and its mtime are carried 
+over system restarts. The timestamp file is created after dnsmasq has dropped root, so it must be in a location writable by the 
+unprivileged user that dnsmasq runs as.
 .TP
 .B --proxy-dnssec
 Copy the DNSSEC Authenticated Data bit from upstream servers to downstream clients and cache it.  This is an 
@@ -979,12 +993,15 @@ dhcp-optsfile will be re-read when dnsmasq receives SIGHUP. Note that
 it is possible to encode the information in a
 .TP
 .B --dhcp-hostsdir=<path>
-This is exactly equivalent to dhcp-hostfile, except for the following. The path MUST be a
+This is equivalent to dhcp-hostsfile, except for the following. The path MUST be a
 directory, and not an individual file. Changed or new files within
 the directory are read automatically, without the need to send SIGHUP.
 If a file is deleted for changed after it has been read by dnsmasq, then the
 host record it contained will remain until dnsmasq recieves a SIGHUP, or 
 is restarted; ie host records are only added dynamically.
+.TP
+.B --dhcp-optsdir=<path>
+This is equivalent to dhcp-optsfile, with the differences noted for --dhcp-hostsdir.
 .TP
 .B --dhcp-boot
 flag as DHCP options, using the options names bootfile-name,
@@ -1694,6 +1711,9 @@ Absolute paths (starting with /) are allowed, but they must be within
 the tftp-root. If the optional interface argument is given, the
 directory is only used for TFTP requests via that interface.
 .TP
+.B --tftp-no-fail
+Do not abort startup if specified tftp root directories are inaccessible.
+.TP
 .B --tftp-unique-root
 Add the IP address of the TFTP client as a path component on the end
 of the TFTP-root (in standard dotted-quad format). Only valid if a
@@ -1791,7 +1811,8 @@ clears its cache and then re-loads
 .I /etc/hosts
 and 
 .I /etc/ethers 
-and any file given by --dhcp-hostsfile, --dhcp-optsfile or --addn-hosts.
+and any file given by --dhcp-hostsfile, --dhcp-hostsdir, --dhcp-optsfile, 
+--dhcp-optsdir, --addn-hosts or --hostsdir.
 The dhcp lease change script is called for all
 existing DHCP leases. If 
 .B

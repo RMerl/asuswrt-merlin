@@ -171,6 +171,13 @@ extern int nvram_commit(void);
 extern int nvram_getall(char *nvram_buf, int count);
 
 /*
+ * Get get buff translated
+ * @param	buf	string buffer would like to be translated
+ * @return	translated string buffer
+ */
+extern char * nvram_xfr(const char *buf);
+
+/*
  * returns the crc value of the nvram
  * @param	nvh	nvram header pointer
  */

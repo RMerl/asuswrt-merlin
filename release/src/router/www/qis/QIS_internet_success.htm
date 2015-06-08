@@ -38,18 +38,18 @@ function QKfinish_load_body(){
 	}
 	
 	if(now_flag.length > 0){
-		$("fail_to_connect").style.display = "";
-		$("succeed_to_connect").style.display = "none";
+		document.getElementById("fail_to_connect").style.display = "";
+		document.getElementById("succeed_to_connect").style.display = "none";
 		
 		show_fail_response();
 		
-		showtext($("title_item"), "<#PPPConnection_x_WANLink_itemname#>");
+		showtext(document.getElementById("title_item"), "<#PPPConnection_x_WANLink_itemname#>");
 	}
 	else{
-		$("fail_to_connect").style.display = "none";
-		$("succeed_to_connect").style.display = "";
-		$("li_of_wireless").style.display = "";		
-		showtext($("title_item"), "<#QKSet_finish_desc#>");
+		document.getElementById("fail_to_connect").style.display = "none";
+		document.getElementById("succeed_to_connect").style.display = "";
+		document.getElementById("li_of_wireless").style.display = "";		
+		showtext(document.getElementById("title_item"), "<#QKSet_finish_desc#>");
 	}
 
 }
@@ -58,10 +58,10 @@ function show_fail_response(){
 	var html_code = "";
 	
 	if(now_flag.indexOf("dhcp_wrong_") >= 0){
-		$("link_id").onclick = function(){
+		document.getElementById("link_id").onclick = function(){
 				gotoDetect();
 			};
-		showtext($("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+		showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
 		
 		//html_code += "<#QKSet_Internet_Setup_fail_reason1#><br>\n";
 		html_code += "<br>\n";
@@ -95,21 +95,21 @@ function show_fail_response(){
 			html_code += "<#QIS_internet_success_desc4#>\n";
 		}
 		
-		$("link_reason").innerHTML = html_code;
+		document.getElementById("link_reason").innerHTML = html_code;
 	}
 	else if(now_flag.indexOf("pppoe_wrong_") >= 0){
 		if(now_flag == "pppoe_wrong_input"){
-			$("link_id").onclick = function(){
+			document.getElementById("link_id").onclick = function(){
 					gotoPPPoE();
 				};
-			showtext($("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
-			showtext($("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
+			showtext(document.getElementById("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
 		}
 		else{
-			$("link_id").onclick = function(){
+			document.getElementById("link_id").onclick = function(){
 					gotoDetect();
 				};
-			showtext($("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
 			
 			//html_code += "<#QKSet_Internet_Setup_fail_reason3#><br>\n";
 			html_code += "<br>\n";
@@ -143,22 +143,22 @@ function show_fail_response(){
 				html_code += "<#QIS_internet_success_desc4#>\n";
 			}
 			
-			$("link_reason").innerHTML = html_code;
+			document.getElementById("link_reason").innerHTML = html_code;
 		}
 	}
 	else if(now_flag.indexOf("pptp_wrong_") >= 0){
 		if(now_flag == "pptp_wrong_input"){
-			$("link_id").onclick = function(){
+			document.getElementById("link_id").onclick = function(){
 					gotoPPTP();
 				};
-			showtext($("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
-			showtext($("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
+			showtext(document.getElementById("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
 		}
 		else{
-			$("link_id").onclick = function(){
+			document.getElementById("link_id").onclick = function(){
 					gotoDetect();
 				};
-			showtext($("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
 			
 			//html_code += "<#QKSet_Internet_Setup_fail_reason4#><br>\n";
 			html_code += "<br>\n";
@@ -192,22 +192,22 @@ function show_fail_response(){
 				html_code += "<#QIS_internet_success_desc4#>\n";
 			}
 			
-			$("link_reason").innerHTML = html_code;
+			document.getElementById("link_reason").innerHTML = html_code;
 		}
 	}
 	else if(now_flag.indexOf("l2tp_wrong_") >= 0){
 		if(now_flag == "l2tp_wrong_input"){
-			$("link_id").onclick = function(){
+			document.getElementById("link_id").onclick = function(){
 					gotoL2TP();
 				};
-			showtext($("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
-			showtext($("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
+			showtext(document.getElementById("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
 		}
 		else{
-			$("link_id").onclick = function(){
+			document.getElementById("link_id").onclick = function(){
 					gotoDetect();
 				};
-			showtext($("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
 			
 			//html_code += "<#QKSet_Internet_Setup_fail_reason5#><br>\n";
 			html_code += "<br>\n";
@@ -241,14 +241,14 @@ function show_fail_response(){
 				html_code += "<#QIS_internet_success_desc4#>\n";
 			}
 			
-			$("link_reason").innerHTML = html_code;
+			document.getElementById("link_reason").innerHTML = html_code;
 		}
 	}
 	else if(now_flag.indexOf("static_wrong_") >= 0){
-		$("link_id").onclick = function(){
+		document.getElementById("link_id").onclick = function(){
 				gotoDetect();
 			};
-		showtext($("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+		showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
 		
 		//html_code += "<#QKSet_Internet_Setup_fail_reason6#><br>\n";
 		html_code += "<br>\n";
@@ -282,7 +282,7 @@ function show_fail_response(){
 			html_code += "<#QIS_internet_success_desc4#>\n";
 		}
 		
-		$("link_reason").innerHTML = html_code;
+		document.getElementById("link_reason").innerHTML = html_code;
 	}
 }
 
@@ -312,7 +312,7 @@ function gotoWireless(){
 		action = "/qis/QIS_wireless.htm";
 		target = "";
 		
-		$("flag").value = "";
+		document.getElementById("flag").value = "";
 		
 		submit();
 	}
@@ -323,7 +323,7 @@ function gotoDetect(){
 		action = "/QIS_wizard.htm";
 		target = "_parent";
 		
-		$("flag").value = "detect";
+		document.getElementById("flag").value = "detect";
 		
 		submit();
 	}
@@ -334,7 +334,7 @@ function gotoPPPoE(){
 		action = "/QIS_wizard.htm";
 		target = "_parent";
 		
-		$("flag").value = "pppoe";
+		document.getElementById("flag").value = "pppoe";
 		
 		submit();
 	}
@@ -345,7 +345,7 @@ function gotoPPTP(){
 		action = "/QIS_wizard.htm";
 		target = "_parent";
 		
-		$("flag").value = "pptp";
+		document.getElementById("flag").value = "pptp";
 		
 		submit();
 	}
@@ -356,7 +356,7 @@ function gotoL2TP(){
 		action = "/QIS_wizard.htm";
 		target = "_parent";
 		
-		$("flag").value = "l2tp";
+		document.getElementById("flag").value = "l2tp";
 		
 		submit();
 	}
@@ -369,10 +369,10 @@ function set_x_Setting(set, page){
 		
 		current_page.value = page;
 		next_page.value = page;
-		$("x_Setting").disabled = false;
+		document.getElementById("x_Setting").disabled = false;
 		x_Setting.value = set;
 		
-		$("flag").value = "";
+		document.getElementById("flag").value = "";
 		submit();
 	}
 }

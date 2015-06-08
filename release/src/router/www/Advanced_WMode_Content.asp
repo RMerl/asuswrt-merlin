@@ -66,7 +66,7 @@
 
 var wl_wdslist_array = '<% nvram_get("wl_wdslist"); %>';
 var wds_aplist = "";
-var $j = jQuery.noConflict();
+
 
 function initial(){
 	show_menu();
@@ -234,7 +234,7 @@ function wds_scan(){
 	else if('<% nvram_get("wl_unit"); %>' == '2')
 		var ajaxURL = '/wds_aplist_5g_2.asp';
 
-	$j.ajax({
+	$.ajax({
 		url: ajaxURL,
 		dataType: 'script',
 		
@@ -349,9 +349,9 @@ function wl_bwch_hint(){
 function wl_vht_hint(){ 
 	var u='<% nvram_get("wl_unit"); %>';	
    	if(u=='1')
-	   $("wlvht").style.display ="";  
+	   document.getElementById("wlvht").style.display ="";  
    	else
-	   $("wlvht").style.display ="none";  
+	   document.getElementById("wlvht").style.display ="none";  
 }
 
 </script>
@@ -425,19 +425,19 @@ function wl_vht_hint(){
 										<tr>
 											<th>2.4GHz MAC</th>
 											<td>
-												<input type="text" maxlength="17" class="input_20_table" id="wl0_hwaddr" name="wl0_hwaddr" value="<% nvram_get("wl0_hwaddr"); %>" readonly>
+												<input type="text" maxlength="17" class="input_20_table" id="wl0_hwaddr" name="wl0_hwaddr" value="<% nvram_get("wl0_hwaddr"); %>" readonly autocorrect="off" autocapitalize="off">
 											</td>		
 										</tr>					
 										<tr id="wl_5g_mac">
 											<th id="wl_5g_mac_th1">5GHz MAC</th>
 											<td>
-												<input type="text" maxlength="17" class="input_20_table" id="wl1_hwaddr" name="wl1_hwaddr" value="<% nvram_get("wl1_hwaddr"); %>" readonly>
+												<input type="text" maxlength="17" class="input_20_table" id="wl1_hwaddr" name="wl1_hwaddr" value="<% nvram_get("wl1_hwaddr"); %>" readonly autocorrect="off" autocapitalize="off">
 											</td>		
 										</tr>	
 										<tr id="wl_5g_mac_2" style="display:none">
 											<th>5GHz-2 MAC</th>
 											<td>
-												<input type="text" maxlength="17" class="input_20_table" id="wl2_hwaddr" name="wl2_hwaddr" value="<% nvram_get("wl2_hwaddr"); %>" readonly>
+												<input type="text" maxlength="17" class="input_20_table" id="wl2_hwaddr" name="wl2_hwaddr" value="<% nvram_get("wl2_hwaddr"); %>" readonly autocorrect="off" autocapitalize="off">
 											</td>		
 										</tr>			  
 										<tr id="wl_unit_field">
@@ -496,7 +496,7 @@ function wl_vht_hint(){
 										</tr>
 										<tr>
 											<td width="80%">
-												<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return validator.isHWAddr(this,event)">
+												<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return validator.isHWAddr(this,event)" autocorrect="off" autocapitalize="off">
 												<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_AP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 												<div id="WDSAPList" class="WDSAPList">
 													<div style="width:98px">

@@ -21,8 +21,6 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript">
-var $j = jQuery.noConflict();
-
 <% get_AiDisk_status(); %>
 <% get_permissions_of_account(); %>
 
@@ -53,6 +51,10 @@ function initial(){
 	
 	document.aidiskForm.protocol.value = PROTOCOL;
 	
+	if(is_KR_sku){
+		document.getElementById("radio_anonymous_enable_tr").style.display = "none";
+	}
+	
 	// show accounts
 	showAccountMenu();
 	
@@ -66,12 +68,12 @@ function initial(){
 
 	// show mask
 	if(get_manage_type(PROTOCOL)){
-		$("loginMethod").innerHTML = "<#Aidisk_FTP_hint_2#>";
-		$("accountMask").style.display = "none";
+		document.getElementById("loginMethod").innerHTML = "<#Aidisk_FTP_hint_2#>";
+		document.getElementById("accountMask").style.display = "none";
 	}
 	else{
-		$("loginMethod").innerHTML = "<#Aidisk_FTP_hint_1#>";
-		$("accountMask").style.display = "block";
+		document.getElementById("loginMethod").innerHTML = "<#Aidisk_FTP_hint_1#>";
+		document.getElementById("accountMask").style.display = "block";
 	}
 	
 	// show folder's tree
@@ -81,8 +83,8 @@ function initial(){
 	// the click event of the buttons
 	onEvent();
 	if(!hadPlugged('storage')){
-		//$("accountbtn").disabled = true;
-		//$("sharebtn").disabled = true;	
+		//document.getElementById("accountbtn").disabled = true;
+		//document.getElementById("sharebtn").disabled = true;	
 	}
 }
 
@@ -206,7 +208,7 @@ function showAccountMenu(){
 		}
 	}
 	
-	$("account_menu").innerHTML = account_menu_code;
+	document.getElementById("account_menu").innerHTML = account_menu_code;
 	
 	if(this.accounts.length > 0){
 		if(get_manage_type(PROTOCOL) == 1)
@@ -232,17 +234,17 @@ function showPermissionTitle(){
 	
 	code += '</tr></table>';
 	
-	$("permissionTitle").innerHTML = code;
+	document.getElementById("permissionTitle").innerHTML = code;
 }
 
 var controlApplyBtn = 0;
 function showApplyBtn(){
 	if(this.controlApplyBtn == 1){
-		$("changePermissionBtn").className = "button_gen_long";
-		$("changePermissionBtn").disabled = false;
+		document.getElementById("changePermissionBtn").className = "button_gen_long";
+		document.getElementById("changePermissionBtn").disabled = false;
 	}else{
-		$("changePermissionBtn").className = "button_gen_long_dis";
-		$("changePermissionBtn").disabled = true;
+		document.getElementById("changePermissionBtn").className = "button_gen_long_dis";
+		document.getElementById("changePermissionBtn").disabled = true;
 	}	
 }
 
@@ -316,7 +318,7 @@ function contrastSelectAccount(account_order){
 		this.lastClickedAccount.className = "userIcon";
 	}
 	
-	var selectedObj = $("account"+account_order);
+	var selectedObj = document.getElementById("account"+account_order);
 	
 	selectedObj.className = "userIcon_click";
 	this.lastClickedAccount = selectedObj;
@@ -368,28 +370,28 @@ function submitChangePermission(protocol){
 				
 					document.aidiskForm.action = "/aidisk/set_account_permission.asp";
 					if(target_account == "guest")
-						$("account").disabled = 1;
+						document.getElementById("account").disabled = 1;
 					else{
-						$("account").disabled = 0;
-						$("account").value = target_account;
+						document.getElementById("account").disabled = 0;
+						document.getElementById("account").value = target_account;
 					}
-					$("pool").value = usbPartitionMountPoint;
+					document.getElementById("pool").value = usbPartitionMountPoint;
 					if(target_folder == "")
-						$("folder").disabled = 1;
+						document.getElementById("folder").disabled = 1;
 					else{
-						$("folder").disabled = 0;
-						$("folder").value = target_folder;
+						document.getElementById("folder").disabled = 0;
+						document.getElementById("folder").value = target_folder;
 					}
-					$("protocol").value = protocol;
-					$("permission").value = changedPermissions[target_account][usbPartitionMountPoint][target_folder];
+					document.getElementById("protocol").value = protocol;
+					document.getElementById("permission").value = changedPermissions[target_account][usbPartitionMountPoint][target_folder];
 					
 					// mark this item which is set
 					changedPermissions[target_account][usbPartitionMountPoint][target_folder] = -1;
-					/*alert("account = "+$("account").value+"\n"+
-						  "pool = "+$("pool").value+"\n"+
-						  "folder = "+$("folder").value+"\n"+
-						  "protocol = "+$("protocol").value+"\n"+
-						  "permission = "+$("permission").value);//*/
+					/*alert("account = "+document.getElementById("account").value+"\n"+
+						  "pool = "+document.getElementById("pool").value+"\n"+
+						  "folder = "+document.getElementById("folder").value+"\n"+
+						  "protocol = "+document.getElementById("protocol").value+"\n"+
+						  "permission = "+document.getElementById("permission").value);//*/
 					showLoading();
 					document.aidiskForm.submit();
 					return;
@@ -443,31 +445,31 @@ function resultOfSwitchWanStatus(){
 function onEvent(){
 	// account action buttons
 	if(get_manage_type(PROTOCOL) == 1 && accounts.length < 6){
-		changeActionButton($("createAccountBtn"), 'User', 'Add', 0);
+		changeActionButton(document.getElementById("createAccountBtn"), 'User', 'Add', 0);
 		
-		$("createAccountBtn").onclick = function(){
+		document.getElementById("createAccountBtn").onclick = function(){
 				popupWindow('OverlayMask','/aidisk/popCreateAccount.asp');
 			};
-		$("createAccountBtn").onmouseover = function(){
+		document.getElementById("createAccountBtn").onmouseover = function(){
 				changeActionButton(this, 'User', 'Add', 1);
 			};
-		$("createAccountBtn").onmouseout = function(){
+		document.getElementById("createAccountBtn").onmouseout = function(){
 				changeActionButton(this, 'User', 'Add', 0);
 			};
 	}
 	else{
-		changeActionButton($("createAccountBtn"), 'User', 'Add');
+		changeActionButton(document.getElementById("createAccountBtn"), 'User', 'Add');
 		
-		$("createAccountBtn").onclick = function(){};
-		$("createAccountBtn").onmouseover = function(){};
-		$("createAccountBtn").onmouseout = function(){};
-		$("createAccountBtn").title = (accounts.length < 6)?"<#AddAccountTitle#>":"<#account_overflow#>";
+		document.getElementById("createAccountBtn").onclick = function(){};
+		document.getElementById("createAccountBtn").onmouseover = function(){};
+		document.getElementById("createAccountBtn").onmouseout = function(){};
+		document.getElementById("createAccountBtn").title = (accounts.length < 6)?"<#AddAccountTitle#>":"<#account_overflow#>";
 	}
 	
 	if(this.accounts.length > 0 && this.selectedAccount != null && this.selectedAccount.length > 0 && this.accounts[0] != this.selectedAccount){
-		changeActionButton($("modifyAccountBtn"), 'User', 'Mod', 0);
+		changeActionButton(document.getElementById("modifyAccountBtn"), 'User', 'Mod', 0);
 		
-		$("modifyAccountBtn").onclick = function(){
+		document.getElementById("modifyAccountBtn").onclick = function(){
 				if(!selectedAccount){
 					alert("<#AiDisk_unselected_account#>");
 					return;
@@ -475,168 +477,174 @@ function onEvent(){
 				
 				popupWindow('OverlayMask','/aidisk/popModifyAccount.asp');
 			};
-		$("modifyAccountBtn").onmouseover = function(){
+		document.getElementById("modifyAccountBtn").onmouseover = function(){
 				changeActionButton(this, 'User', 'Mod', 1);
 			};
-		$("modifyAccountBtn").onmouseout = function(){
+		document.getElementById("modifyAccountBtn").onmouseout = function(){
 				changeActionButton(this, 'User', 'Mod', 0);
 			};
 	}
 	else{
-		changeActionButton($("modifyAccountBtn"), 'User', 'Mod');
+		changeActionButton(document.getElementById("modifyAccountBtn"), 'User', 'Mod');
 		
-		$("modifyAccountBtn").onclick = function(){};
-		$("modifyAccountBtn").onmouseover = function(){};
-		$("modifyAccountBtn").onmouseout = function(){};
+		document.getElementById("modifyAccountBtn").onclick = function(){};
+		document.getElementById("modifyAccountBtn").onmouseover = function(){};
+		document.getElementById("modifyAccountBtn").onmouseout = function(){};
 	}
 	
 	if(this.accounts.length > 1 && this.selectedAccount != null && this.selectedAccount.length > 0 && this.accounts[0] != this.selectedAccount){
-		changeActionButton($("deleteAccountBtn"), 'User', 'Del', 0);
+		changeActionButton(document.getElementById("deleteAccountBtn"), 'User', 'Del', 0);
 		
-		$("deleteAccountBtn").onclick = function(){
-				if(!selectedAccount){
-					alert("<#AiDisk_unselected_account#>");
-					return;
-				}
+		document.getElementById("deleteAccountBtn").onclick = function(){
+			if(!selectedAccount){
+				alert("<#AiDisk_unselected_account#>");
+				return;
+			}
 				
-				popupWindow('OverlayMask','/aidisk/popDeleteAccount.asp');
-			};
-		$("deleteAccountBtn").onmouseover = function(){
-				changeActionButton(this, 'User', 'Del', 1);
-			};
-		$("deleteAccountBtn").onmouseout = function(){
-				changeActionButton(this, 'User', 'Del', 0);
-			};
+			popupWindow('OverlayMask','/aidisk/popDeleteAccount.asp');
+		};
+		
+		document.getElementById("deleteAccountBtn").onmouseover = function(){
+			changeActionButton(this, 'User', 'Del', 1);
+		};
+		
+		document.getElementById("deleteAccountBtn").onmouseout = function(){
+			changeActionButton(this, 'User', 'Del', 0);
+		};
 	}
 	else{
-		changeActionButton($("deleteAccountBtn"), 'User', 'Del');
+		changeActionButton(document.getElementById("deleteAccountBtn"), 'User', 'Del');
 		
-		$("deleteAccountBtn").onclick = function(){};
-		$("deleteAccountBtn").onmouseover = function(){};
-		$("deleteAccountBtn").onmouseout = function(){};
+		document.getElementById("deleteAccountBtn").onclick = function(){};
+		document.getElementById("deleteAccountBtn").onmouseover = function(){};
+		document.getElementById("deleteAccountBtn").onmouseout = function(){};
 	}
 	
 	// folder action buttons
 	if(this.selectedPoolOrder >= 0 && this.selectedFolderOrder < 0){
-		changeActionButton($("createFolderBtn"), 'Folder', 'Add', 0);
+		changeActionButton(document.getElementById("createFolderBtn"), 'Folder', 'Add', 0);
 		
-		$("createFolderBtn").onclick = function(){
-				if(selectedDiskOrder < 0){
-					alert("<#AiDisk_unselected_disk#>");
-					return;
-				}
-				if(selectedPoolOrder < 0){
-					alert("<#AiDisk_unselected_partition#>");
-					return;
-				}
-				
-				popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');
-			};
-		$("createFolderBtn").onmouseover = function(){
-				changeActionButton(this, 'Folder', 'Add', 1);
-			};
-		$("createFolderBtn").onmouseout = function(){
-				changeActionButton(this, 'Folder', 'Add', 0);
-			};
+		document.getElementById("createFolderBtn").onclick = function(){
+			if(selectedDiskOrder < 0){
+				alert("<#AiDisk_unselected_disk#>");
+				return;
+			}
+			if(selectedPoolOrder < 0){
+				alert("<#AiDisk_unselected_partition#>");
+				return;
+			}		
+			popupWindow('OverlayMask','/aidisk/popCreateFolder.asp');
+		};
+		
+		document.getElementById("createFolderBtn").onmouseover = function(){
+			changeActionButton(this, 'Folder', 'Add', 1);
+		};
+		
+		document.getElementById("createFolderBtn").onmouseout = function(){
+			changeActionButton(this, 'Folder', 'Add', 0);
+		};
 	}
 	else{
-		changeActionButton($("createFolderBtn"), 'Folder', 'Add');
+		changeActionButton(document.getElementById("createFolderBtn"), 'Folder', 'Add');
 		
-		$("createFolderBtn").onclick = function(){};
-		$("createFolderBtn").onmouseover = function(){};
-		$("createFolderBtn").onmouseout = function(){};
+		document.getElementById("createFolderBtn").onclick = function(){};
+		document.getElementById("createFolderBtn").onmouseover = function(){};
+		document.getElementById("createFolderBtn").onmouseout = function(){};
 	}
 	
 	if(this.selectedFolderOrder >= 0){
-		changeActionButton($("deleteFolderBtn"), 'Folder', 'Del', 0);
-		changeActionButton($("modifyFolderBtn"), 'Folder', 'Mod', 0);
+		changeActionButton(document.getElementById("deleteFolderBtn"), 'Folder', 'Del', 0);
+		changeActionButton(document.getElementById("modifyFolderBtn"), 'Folder', 'Mod', 0);
 		
-		$("deleteFolderBtn").onclick = function(){
-				if(selectedFolderOrder < 0){
-					alert("<#AiDisk_unselected_folder#>");
-					return;
-				}
+		document.getElementById("deleteFolderBtn").onclick = function(){
+			if(selectedFolderOrder < 0){
+				alert("<#AiDisk_unselected_folder#>");
+				return;
+			}
 				
-				popupWindow('OverlayMask','/aidisk/popDeleteFolder.asp');
-			};
-		$("deleteFolderBtn").onmouseover = function(){
-				changeActionButton(this, 'Folder', 'Del', 1);
-			};
-		$("deleteFolderBtn").onmouseout = function(){
-				changeActionButton(this, 'Folder', 'Del', 0);
-			};
+			popupWindow('OverlayMask','/aidisk/popDeleteFolder.asp');
+		};
+
+		document.getElementById("deleteFolderBtn").onmouseover = function(){
+			changeActionButton(this, 'Folder', 'Del', 1);
+		};
+
+		document.getElementById("deleteFolderBtn").onmouseout = function(){
+			changeActionButton(this, 'Folder', 'Del', 0);
+		};
 		
-		$("modifyFolderBtn").onclick = function(){
-				if(selectedFolderOrder < 0){
-					alert("<#AiDisk_unselected_folder#>");
-					return;
-				}
-				
-				popupWindow('OverlayMask','/aidisk/popModifyFolder.asp');
-			};
-		$("modifyFolderBtn").onmouseover = function(){
-				changeActionButton(this, 'Folder', 'Mod', 1);
-			};
-		$("modifyFolderBtn").onmouseout = function(){
-				changeActionButton(this, 'Folder', 'Mod', 0);
-			};
+		document.getElementById("modifyFolderBtn").onclick = function(){
+			if(selectedFolderOrder < 0){
+				alert("<#AiDisk_unselected_folder#>");
+				return;
+			}				
+			popupWindow('OverlayMask','/aidisk/popModifyFolder.asp');
+		};
+		
+		document.getElementById("modifyFolderBtn").onmouseover = function(){
+			changeActionButton(this, 'Folder', 'Mod', 1);
+		};
+		
+		document.getElementById("modifyFolderBtn").onmouseout = function(){
+			changeActionButton(this, 'Folder', 'Mod', 0);
+		};
 	}
 	else{
-		changeActionButton($("deleteFolderBtn"), 'Folder', 'Del');
-		changeActionButton($("modifyFolderBtn"), 'Folder', 'Mod');
+		changeActionButton(document.getElementById("deleteFolderBtn"), 'Folder', 'Del');
+		changeActionButton(document.getElementById("modifyFolderBtn"), 'Folder', 'Mod');
 		
-		$("deleteFolderBtn").onclick = function(){};
-		$("deleteFolderBtn").onmouseover = function(){};
-		$("deleteFolderBtn").onmouseout = function(){};
-		
-		$("modifyFolderBtn").onclick = function(){};
-		$("modifyFolderBtn").onmouseover = function(){};
-		$("modifyFolderBtn").onmouseout = function(){};
+		document.getElementById("deleteFolderBtn").onclick = function(){};
+		document.getElementById("deleteFolderBtn").onmouseover = function(){};
+		document.getElementById("deleteFolderBtn").onmouseout = function(){};
+ 		
+		document.getElementById("modifyFolderBtn").onclick = function(){};
+		document.getElementById("modifyFolderBtn").onmouseover = function(){};
+		document.getElementById("modifyFolderBtn").onmouseout = function(){};
 	}
 	
-	$("changePermissionBtn").onclick = function(){
-			submitChangePermission(PROTOCOL);
-		};
+	document.getElementById("changePermissionBtn").onclick = function(){
+		submitChangePermission(PROTOCOL);
+	};
 }
 
 function unload_body(){
-	$("createAccountBtn").onclick = function(){};
-	$("createAccountBtn").onmouseover = function(){};
-	$("createAccountBtn").onmouseout = function(){};
+	document.getElementById("createAccountBtn").onclick = function(){};
+	document.getElementById("createAccountBtn").onmouseover = function(){};
+	document.getElementById("createAccountBtn").onmouseout = function(){};
 	
-	$("deleteAccountBtn").onclick = function(){};
-	$("deleteAccountBtn").onmouseover = function(){};
-	$("deleteAccountBtn").onmouseout = function(){};
+	document.getElementById("deleteAccountBtn").onclick = function(){};
+	document.getElementById("deleteAccountBtn").onmouseover = function(){};
+	document.getElementById("deleteAccountBtn").onmouseout = function(){};
 	
-	$("modifyAccountBtn").onclick = function(){};
-	$("modifyAccountBtn").onmouseover = function(){};
-	$("modifyAccountBtn").onmouseout = function(){};
+	document.getElementById("modifyAccountBtn").onclick = function(){};
+	document.getElementById("modifyAccountBtn").onmouseover = function(){};
+	document.getElementById("modifyAccountBtn").onmouseout = function(){};
 	
-	$("createFolderBtn").onclick = function(){};
-	$("createFolderBtn").onmouseover = function(){};
-	$("createFolderBtn").onmouseout = function(){};
+	document.getElementById("createFolderBtn").onclick = function(){};
+	document.getElementById("createFolderBtn").onmouseover = function(){};
+	document.getElementById("createFolderBtn").onmouseout = function(){};
 	
-	$("deleteFolderBtn").onclick = function(){};
-	$("deleteFolderBtn").onmouseover = function(){};
-	$("deleteFolderBtn").onmouseout = function(){};
+	document.getElementById("deleteFolderBtn").onclick = function(){};
+	document.getElementById("deleteFolderBtn").onmouseover = function(){};
+	document.getElementById("deleteFolderBtn").onmouseout = function(){};
 	
-	$("modifyFolderBtn").onclick = function(){};
-	$("modifyFolderBtn").onmouseover = function(){};
-	$("modifyFolderBtn").onmouseout = function(){};
+	document.getElementById("modifyFolderBtn").onclick = function(){};
+	document.getElementById("modifyFolderBtn").onmouseover = function(){};
+	document.getElementById("modifyFolderBtn").onmouseout = function(){};
 }
 
 function applyRule(){
     if(validForm()){
         showLoading();
-				document.form.submit();
+	document.form.submit();
      }
 }
 
 function validForm(){
 	if(!validator.range(document.form.st_max_user, 1, 10)){
-			document.form.st_max_user.focus();
-			document.form.st_max_user.select();
-			return false;
+		document.form.st_max_user.focus();
+		document.form.st_max_user.select();
+		return false;
 	}
 
 	return true;
@@ -719,7 +727,7 @@ function validForm(){
 						<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_ftp_enable"></div>
 						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 							<script type="text/javascript">
-								$j('#radio_ftp_enable').iphoneSwitch(FTP_status, 
+								$('#radio_ftp_enable').iphoneSwitch(FTP_status, 
 									function() {
 										switchAppStatus(PROTOCOL);
 									},
@@ -732,13 +740,13 @@ function validForm(){
 					</td>
 				</tr>										
 
-				<tr style="height: 60px;">
+				<tr id="radio_anonymous_enable_tr" style="height: 60px;">
 				<th><#AiDisk_Anonymous_Login#></th>
 					<td>
 						<div class="left" style="margin-top:5px;width:94px; float:left; cursor:pointer;" id="radio_anonymous_enable"></div>
 						<div class="iphone_switch_container" style="display: table-cell;vertical-align: middle;height:45px; position: relative; overflow: hidden">
 							<script type="text/javascript">
-								$j('#radio_anonymous_enable').iphoneSwitch(!get_manage_type(PROTOCOL), 
+								$('#radio_anonymous_enable').iphoneSwitch(!get_manage_type(PROTOCOL), 
 									function() {
 										switchAccount(PROTOCOL);
 									},
@@ -756,7 +764,7 @@ function validForm(){
 						<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,1);"><#ShareNode_MaximumLoginUser_itemname#></a>
 					</th>
 					<td>
-						<input type="text" name="st_max_user" class="input_3_table" maxlength="2" value="<% nvram_get("st_max_user"); %>" onKeyPress="return validator.isNumber(this, event);">
+						<input type="text" name="st_max_user" class="input_3_table" maxlength="2" value="<% nvram_get("st_max_user"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">
 					</td>
 				</tr>
 				<tr>
@@ -780,7 +788,7 @@ function validForm(){
 						<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_wan_ftp_enable"></div>
 						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 							<script type="text/javascript">
-								$j('#radio_wan_ftp_enable').iphoneSwitch(FTP_WAN_status,
+								$('#radio_wan_ftp_enable').iphoneSwitch(FTP_WAN_status,
 									function() {
 										switchWanStatus(1);
 									},

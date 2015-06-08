@@ -1,6 +1,6 @@
 /*
  * Flow Accelerator setup functions
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -101,9 +101,7 @@ extern void fa_conntrack(fa_t *fa, ctf_ipc_t *ipc, bool v6);
 extern void fa_et_up(fa_t *fa);
 extern void fa_et_down(fa_t *fa);
 extern void fa_set_name(fa_t *fa, char *name);
-#ifdef RGMII_BCM_FA
 extern void fa_set_aux_unit(si_t *sih, uint unit);
-#endif
 extern char *fa_get_macaddr(si_t *sih, char *vars, uint unit);
 extern int fa_read_proc(char *buffer, char **start, off_t offset, int length,
 	int *eof, void *data);

@@ -12,8 +12,8 @@ function winW_H(){
 } 
 
 function LoadingTime(seconds, flag){
-	showtext($("proceeding_main_txt"), "<#Main_alert_proceeding_desc1#>...");
-	$("Loading").style.visibility = "visible";
+	showtext(document.getElementById("proceeding_main_txt"), "<#Main_alert_proceeding_desc1#>...");
+	document.getElementById("Loading").style.visibility = "visible";
 	
 	y = y+progress;
 	if(typeof(seconds) == "number" && seconds >= 0){
@@ -25,14 +25,14 @@ function LoadingTime(seconds, flag){
    			document.body.removeChild(document.body.lastChild);
 			}
 
-			showtext($("proceeding_main_txt"), "<#Main_alert_proceeding_desc4#>");
-			showtext($("proceeding_txt"), Math.round(y)+"% <#Main_alert_proceeding_desc1#>");
+			showtext(document.getElementById("proceeding_main_txt"), "<#Main_alert_proceeding_desc4#>");
+			showtext(document.getElementById("proceeding_txt"), Math.round(y)+"% <#Main_alert_proceeding_desc1#>");
 			--seconds;
 			setTimeout("LoadingTime("+seconds+", '"+flag+"');", 1000);
 		}
 		else{
-			showtext($("proceeding_main_txt"), translate("<#Main_alert_proceeding_desc3#>"));
-			showtext($("proceeding_txt"), "");
+			showtext(document.getElementById("proceeding_main_txt"), translate("<#Main_alert_proceeding_desc3#>"));
+			showtext(document.getElementById("proceeding_txt"), "");
 			y = 0;
 			
 			if(flag != "waiting")
@@ -42,23 +42,23 @@ function LoadingTime(seconds, flag){
 }
 
 function LoadingProgress(seconds){
-	$("LoadingBar").style.visibility = "visible";
+	document.getElementById("LoadingBar").style.visibility = "visible";
 	
 	y = y + progress;
 	if(typeof(seconds) == "number" && seconds >= 0){
 		if(seconds != 0){
-			$("proceeding_img").style.width = Math.round(y) + "%";
-			$("proceeding_img_text").innerHTML = Math.round(y) + "%";
+			document.getElementById("proceeding_img").style.width = Math.round(y) + "%";
+			document.getElementById("proceeding_img_text").innerHTML = Math.round(y) + "%";
 	
-			if($("loading_block1")){
-				$("proceeding_img_text").style.width = document.getElementById("loading_block1").clientWidth;
-				$("proceeding_img_text").style.marginLeft = "175px";
+			if(document.getElementById("loading_block1")){
+				document.getElementById("proceeding_img_text").style.width = document.getElementById("loading_block1").clientWidth;
+				document.getElementById("proceeding_img_text").style.marginLeft = "175px";
 			}	
 			--seconds;
 			setTimeout("LoadingProgress("+seconds+");", 1000);
 		}
 		else{
-			$("proceeding_img_text").innerHTML = "<#Main_alert_proceeding_desc3#>";
+			document.getElementById("proceeding_img_text").innerHTML = "<#Main_alert_proceeding_desc3#>";
 			y = 0;
 			if(location.pathname.indexOf("QIS_wizard.htm") < 0 && location.pathname.indexOf("Advanced_FirmwareUpgrade_Content") < 0 && location.pathname.indexOf("Advanced_SettingBackup_Content") < 0){
 				setTimeout("hideLoadingBar();",1000);
@@ -112,11 +112,11 @@ function showLoading(seconds, flag){
 	
 	blockmarginTop= winHeight*0.3	
 	
-	$("loadingBlock").style.marginTop = blockmarginTop+"px";
-	$("loadingBlock").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("loadingBlock").style.marginTop = blockmarginTop+"px";
+	document.getElementById("loadingBlock").style.marginLeft = blockmarginLeft+"px";
 
-	$("Loading").style.width = winW+"px";
-	$("Loading").style.height = winH+"px";
+	document.getElementById("Loading").style.width = winW+"px";
+	document.getElementById("Loading").style.height = winH+"px";
 	
 	loadingSeconds = seconds;
 	progress = 100/loadingSeconds;
@@ -169,16 +169,16 @@ function showLoadingBar(seconds){
 	
 	blockmarginTop= winHeight*0.3			
 	
-	$("loadingBarBlock").style.marginTop = blockmarginTop+"px";
+	document.getElementById("loadingBarBlock").style.marginTop = blockmarginTop+"px";
 	// marked by Jerry 2012.11.14 using CSS to decide the margin
-	$("loadingBarBlock").style.marginLeft = blockmarginLeft+"px";
+	document.getElementById("loadingBarBlock").style.marginLeft = blockmarginLeft+"px";
 
 	
 	/*blockmarginTop = document.documentElement.scrollTop + 200;
-	$("loadingBarBlock").style.marginTop = blockmarginTop+"px";*/
+	document.getElementById("loadingBarBlock").style.marginTop = blockmarginTop+"px";*/
 
-	$("LoadingBar").style.width = winW+"px";
-	$("LoadingBar").style.height = winH+"px";
+	document.getElementById("LoadingBar").style.width = winW+"px";
+	document.getElementById("LoadingBar").style.height = winH+"px";
 	
 	loadingSeconds = seconds;
 	progress = 100/loadingSeconds;
@@ -187,11 +187,11 @@ function showLoadingBar(seconds){
 }
 
 function hideLoadingBar(){
-	$("LoadingBar").style.visibility = "hidden";
+	document.getElementById("LoadingBar").style.visibility = "hidden";
 }
 
 function hideLoading(flag){
-	$("Loading").style.visibility = "hidden";
+	document.getElementById("Loading").style.visibility = "hidden";
 	htmlbodyforIE = document.getElementsByTagName("html");  //this both for IE&FF, use "html" but not "body" because <!DOCTYPE html PUBLIC.......>
 	htmlbodyforIE[0].style.overflow = "";	  //hidden the Y-scrollbar for preventing from user scroll it.
 }             
@@ -216,8 +216,8 @@ function dr_advise(){
 	winW_H();
 	var blockmarginTop;
 	blockmarginTop = document.documentElement.scrollTop + 200;	
-	$("dr_sweet_advise").style.marginTop = blockmarginTop+"px"
-	$("hiddenMask").style.width = winW+"px";
-	$("hiddenMask").style.height = winH+"px";	
-	$("hiddenMask").style.visibility = "visible";
+	document.getElementById("dr_sweet_advise").style.marginTop = blockmarginTop+"px"
+	document.getElementById("hiddenMask").style.width = winW+"px";
+	document.getElementById("hiddenMask").style.height = winH+"px";	
+	document.getElementById("hiddenMask").style.visibility = "visible";
 }

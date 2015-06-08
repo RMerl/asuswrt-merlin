@@ -26,7 +26,7 @@ var macAddr = '<% nvram_get("lan_hwaddr"); %>'.toUpperCase().replace(/:/g, "");
 var MD5DDNSName = "A"+hexMD5(macAddr).toUpperCase()+".asuscomm.com";
 var restart_time = 0;
 
-var $j = jQuery.noConflict();
+
 
 <% wanlink(); %>
 
@@ -37,47 +37,47 @@ function initial(){
 	
 	var ip_type = valid_is_wan_ip(wanlink_ipaddr());
 	
-	$("process_status").style.display = "none";
+	document.getElementById("process_status").style.display = "none";
 	
 	if( enable_webdav == "1" ){
 		
 		//- public ip
 		if( ip_type == 1 ){
 			if( ddns_hostname_x != "" && ddns_enable_x == "1" ){
-				$("process_status").style.display = "block";
-				$("proceeding_main_txt").innerHTML = 'Complete...';
+				document.getElementById("process_status").style.display = "block";
+				document.getElementById("proceeding_main_txt").innerHTML = 'Complete...';
 				
 				setTimeout("open_aicloud()", restart_time*1000);
 			}
 			else if( ddns_hostname_x != "" && ddns_enable_x == "0" ){
-				$("process_status").style.display = "block";
-				$("proceeding_main_txt").innerHTML = 'Enable DDNS...';
+				document.getElementById("process_status").style.display = "block";
+				document.getElementById("proceeding_main_txt").innerHTML = 'Enable DDNS...';
 				
 				enable_ddns();
 			}
 			else{
-				$("process_status").style.display = "block";
-				$("proceeding_main_txt").innerHTML = 'Register DDNS...';
+				document.getElementById("process_status").style.display = "block";
+				document.getElementById("proceeding_main_txt").innerHTML = 'Register DDNS...';
 				
 				register_ddns();
 			}
 		}
 		else{
-			$("process_status").style.display = "none";
-			$("aicloud_learn_more").style.display = "none";
+			document.getElementById("process_status").style.display = "none";
+			document.getElementById("aicloud_learn_more").style.display = "none";
 			if(tmo_support)
 				var theUrl = "cellspot.router"; 
 			else
 				var theUrl = "router.asus.com";
-			$("aicloud_main_text").innerHTML = "<#AiCloud_maintext_note0#>"+ theUrl +"<#AiCloud_maintext_note1#>";
+			document.getElementById("aicloud_main_text").innerHTML = "<#AiCloud_maintext_note0#>"+ theUrl +"<#AiCloud_maintext_note1#>";
 		}
 	}
 	else{
 		process_times = 3;
 		current_process_times = 0;
 		
-		$("proceeding_main_txt").innerHTML = 'Enable aicloud...';
-		$("process_status").style.display = "block";
+		document.getElementById("proceeding_main_txt").innerHTML = 'Enable aicloud...';
+		document.getElementById("process_status").style.display = "block";
 		
 		enable_aicloud();
 		
@@ -90,7 +90,7 @@ function onProcessTimer(){
 	current_process_times++;
 		
 	if( current_process_times <= process_times ){
-		$("proceeding_txt").innerHTML = ", " + Math.floor((current_process_times/process_times)*100) + "%";
+		document.getElementById("proceeding_txt").innerHTML = ", " + Math.floor((current_process_times/process_times)*100) + "%";
 		setTimeout("onProcessTimer();", 1000);
 	}
 	else
@@ -98,7 +98,7 @@ function onProcessTimer(){
 }
 
 function checkDDNSReturnCode(){
-    $j.ajax({
+    $.ajax({
     	url: '/ajax_ddnscode.asp',
     	dataType: 'script', 
 

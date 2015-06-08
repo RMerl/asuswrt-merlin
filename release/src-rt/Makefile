@@ -1060,6 +1060,13 @@ define RouterOptions
 		sed -i "/RTCONFIG_WPSMULTIBAND/d" $(1); \
 		echo "# RTCONFIG_WPSMULTIBAND is not set" >>$(1); \
 	fi; \
+	if [ "$(RALINK_DFS)" = "y" ]; then \
+		sed -i "/RTCONFIG_RALINK_DFS/d" $(1); \
+		echo "RTCONFIG_RALINK_DFS=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_RALINK_DFS/d" $(1); \
+		echo "# RTCONFIG_RALINK_DFS is not set" >>$(1); \
+	fi; \
 	if [ "$(EM)" = "y" ]; then \
 		sed -i "/RTCONFIG_ENGINEERING_MODE/d" $(1); \
 		echo "RTCONFIG_ENGINEERING_MODE=y" >>$(1); \
@@ -1183,6 +1190,14 @@ define RouterOptions
 		sed -i "/RTCONFIG_TRAFFIC_CONTROL/d" $(1); \
 		echo "RTCONFIG_TRAFFIC_CONTROL=y" >>$(1); \
 	fi; \
+	if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
+		sed -i "/RTCONFIG_CTF_PPTP_L2TP/d" $(1); \
+		echo "RTCONFIG_CTF_PPTP_L2TP=y" >>$(1); \
+	fi; \
+	if [ "$(BCM5301X_TRAFFIC_MONITOR)" = "y" ]; then \
+		sed -i "/RTCONFIG_BCM5301X_TRAFFIC_MONITOR/d" $(1); \
+		echo "RTCONFIG_BCM5301X_TRAFFIC_MONITOR=y" >>$(1); \
+	fi; \
 	if [ "$(SPEEDTEST)" = "y" ]; then \
 		sed -i "/RTCONFIG_SPEEDTEST/d" $(1); \
 		echo "RTCONFIG_SPEEDTEST=y" >>$(1); \
@@ -1190,6 +1205,18 @@ define RouterOptions
 	if [ "$(BCM_794)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCM_794/d" $(1); \
 		echo "RTCONFIG_BCM_794=y" >>$(1); \
+	fi; \
+	if [ "$(BCM_7114)" = "y" ]; then \
+		sed -i "/RTCONFIG_BCM_7114/d" $(1); \
+		echo "RTCONFIG_BCM_7114=y" >>$(1); \
+		sed -i "/RTCONFIG_BCMBSD/d" $(1); \
+		echo "RTCONFIG_BCMBSD=y" >>$(1); \
+		sed -i "/RTCONFIG_BCMDCS/d" $(1); \
+		echo "RTCONFIG_BCMDCS=y" >>$(1); \
+		sed -i "/RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY/d" $(1); \
+		echo "RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY=y" >>$(1); \
+		sed -i "/RTCONFIG_WLEXE/d" $(1); \
+		echo "RTCONFIG_WLEXE=y" >>$(1); \
 	fi; \
 	if [ "$(BCM10)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCM10/d" $(1); \
@@ -1208,16 +1235,20 @@ define RouterOptions
 		echo "RTCONFIG_BCMDCS=y" >>$(1); \
 		sed -i "/RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY/d" $(1); \
 		echo "RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY=y" >>$(1); \
-		sed -i "/RTCONFIG_DPSTA/d" $(1); \
-		echo "RTCONFIG_DPSTA=y" >>$(1); \
-		sed -i "/RTCONFIG_DHDAP/d" $(1); \
-		echo "RTCONFIG_DHDAP=y" >>$(1); \
 		sed -i "/RTCONFIG_GMAC3/d" $(1); \
 		echo "RTCONFIG_GMAC3=y" >>$(1); \
 	fi; \
 	if [ "$(BUILD_BCM7)" = "y" ]; then \
 		sed -i "/RTCONFIG_BUILDBCM7/d" $(1); \
 		echo "RTCONFIG_BUILDBCM7=y" >>$(1); \
+	fi; \
+	if [ "$(DHDAP)" = "y" ]; then \
+		sed -i "/RTCONFIG_DHDAP/d" $(1); \
+		echo "RTCONFIG_DHDAP=y" >>$(1); \
+	fi; \
+	if [ "$(DPSTA)" = "y" ]; then \
+		sed -i "/RTCONFIG_DPSTA/d" $(1); \
+		echo "RTCONFIG_DPSTA=y" >>$(1); \
 	fi; \
 	if [ "$(ROMCFE)" = "y" ]; then \
 		sed -i "/RTCONFIG_ROMCFE/d" $(1); \
@@ -1247,10 +1278,6 @@ define RouterOptions
 		sed -i "/RTCONFIG_NOWL/d" $(1); \
 		echo "RTCONFIG_NOWL=y" >>$(1); \
 	fi; \
-	if [ "$(TCODE)" = "y" ]; then \
-		sed -i "/RTCONFIG_TCODE/d" $(1); \
-		echo "RTCONFIG_TCODE=y" >>$(1); \
-	fi; \
 	if [ "$(WIFILOGO)" = "y" ]; then \
 		sed -i "/RTCONFIG_WIFILOGO/d" $(1); \
 		echo "RTCONFIG_WIFILOGO=y" >>$(1); \
@@ -1265,6 +1292,11 @@ define RouterOptions
 	if [ "$(SWITCH2)" = "RTL8365MB" ]; then \
 		sed -i "/RTCONFIG_EXT_RTL8365MB/d" $(1); \
 		echo "RTCONFIG_EXT_RTL8365MB=y" >>$(1); \
+	else \
+	if [ "$(SWITCH2)" = "" ]; then \
+		sed -i "/RTCONFIG_EXT_RTL8365MB/d" $(1); \
+		echo "# RTCONFIG_EXT_RTL8365MB is not set" >>$(1); \
+	fi; \
 	fi; \
 	if [ "$(TOR)" = "y" ]; then \
 		sed -i "/RTCONFIG_TOR/d" $(1); \
@@ -1289,6 +1321,10 @@ define RouterOptions
 	if [ "$(CLOUDCHECK)" = "y" ]; then \
 		sed -i "/RTCONFIG_CLOUDCHECK/d" $(1); \
 		echo "RTCONFIG_CLOUDCHECK=y" >>$(1); \
+	fi; \
+	if [ "$(GETREALIP)" = "y" ]; then \
+		sed -i "/RTCONFIG_GETREALIP/d" $(1); \
+		echo "RTCONFIG_GETREALIP=y" >>$(1); \
 	fi; \
 	if [ "$(BCM_MMC)" = "y" ]; then \
 		sed -i "/RTCONFIG_MMC_LED/d" $(1); \
@@ -1996,6 +2032,12 @@ define KernelConfig
 	else \
 		echo "# CONFIG_RTAC3200 is not set" >>$(1); \
 	fi; \
+	sed -i "/CONFIG_CTF_PPTP_L2TP/d" $(1); \
+	if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
+		echo "CONFIG_CTF_PPTP_L2TP=y" >>$(1); \
+	else \
+		echo "# CONFIG_CTF_PPTP_L2TP is not set" >>$(1); \
+	fi; \
 	if [ "$(BCM_794)" = "y" ]; then \
 		sed -i "/CONFIG_CR4_OFFLOAD/d" $(1); \
 		echo "# CONFIG_CR4_OFFLOAD is not set" >>$(1); \
@@ -2053,6 +2095,17 @@ define KernelConfig
 		sed -i "/CONFIG_PLC/d" $(1); \
 		echo "# CONFIG_PLC is not set" >>$(1); \
 	fi; \
+	if [ "$(DHDAP)" = "y" ]; then \
+		sed -i "/CONFIG_DHDAP/d" $(1); \
+		echo "CONFIG_DHDAP=m" >>$(1); \
+	else \
+		sed -i "/CONFIG_DHDAP/d" $(1); \
+		echo "# CONFIG_DHDAP is not set" >>$(1); \
+	fi; \
+	if [ "$(DPSTA)" = "y" ]; then \
+		sed -i "/CONFIG_DPSTA/d" $(1); \
+		echo "CONFIG_DPSTA=m" >>$(1); \
+	fi; \
 	sed -i "/CONFIG_LINUX_MTD/d" $(1); \
 	if [ "$(LINUX_MTD)" = "" ]; then \
 		echo "CONFIG_LINUX_MTD=32" >>$(1); \
@@ -2064,6 +2117,12 @@ define KernelConfig
 		echo "CONFIG_NF_CONNTRACK_EVENTS=y" >>$(1); \
 	else \
 		echo "# CONFIG_NF_CONNTRACK_EVENTS is not set" >>$(1); \
+	fi; \
+	if [ "$(USB_DEBUG)" = "y" ]; then \
+		sed -i "/CONFIG_USB_DEBUG/d" $(1); \
+		echo "CONFIG_USB_DEBUG=y" >>$(1); \
+		sed -i "/CONFIG_DEBUG_FS/d" $(1); \
+		echo "CONFIG_DEBUG_FS=y" >>$(1); \
 	fi; \
 	if [ "$(TFAT)" = "y" ]; then \
 		sed -i "/CONFIG_MSDOS_FS/d" $(1); \
@@ -2107,11 +2166,13 @@ define KernelConfig
 		sed -i "/CONFIG_BONDING/d" $(1); \
 		echo "CONFIG_BONDING=m" >>$(1); \
 	fi; \
-	if [ "$(BCM7)" = "y" ]; then \
-		sed -i "/CONFIG_DPSTA/d" $(1); \
-		echo "CONFIG_DPSTA=m" >>$(1); \
-		sed -i "/CONFIG_DHDAP/d" $(1); \
-		echo "CONFIG_DHDAP=m" >>$(1); \
+	if [ "$(BCM_7114)" = "y" ]; then \
+		sed -i "/CONFIG_CR4_OFFLOAD/d" $(1); \
+		echo "# CONFIG_CR4_OFFLOAD is not set" >>$(1); \
+		sed -i "/CONFIG_PLAT_UART_CLOCKS/d" $(1); \
+		echo "# CONFIG_PLAT_UART_CLOCKS is not set" >>$(1); \
+		sed -i "/CONFIG_NF_CONNTRACK_EVENTS/d" $(1); \
+		echo "# CONFIG_NF_CONNTRACK_EVENTS is not set" >>$(1); \
 	fi; \
 	if [ "$(BCM10)" = "y" ]; then \
 		sed -i "/CONFIG_CR4_OFFLOAD/d" $(1); \
@@ -2124,8 +2185,6 @@ define KernelConfig
 		echo "CONFIG_BCM_FA=y" >>$(1); \
 		sed -i "/CONFIG_BCM_GMAC3/d" $(1); \
 		echo "# CONFIG_BCM_GMAC3 is not set" >>$(1); \
-		sed -i "/CONFIG_DHDAP/d" $(1); \
-		echo "# CONFIG_DHDAP is not set" >>$(1); \
 	fi; \
 	if [ "$(RGMII_BCM_FA)" = "y" ]; then \
 		sed -i "/CONFIG_RGMII_BCM_FA/d" $(1); \
@@ -2134,6 +2193,11 @@ define KernelConfig
 	if [ "$(SWITCH2)" = "RTL8365MB" ]; then \
 		sed -i "/CONFIG_RTL8365MB/d" $(1); \
 		echo "CONFIG_RTL8365MB=m" >>$(1); \
+	else \
+	if [ "$(SWITCH2)" = "" ]; then \
+		sed -i "/CONFIG_RTL8365MB/d" $(1); \
+		echo "# CONFIG_RTL8365MB is not set" >>$(1); \
+	fi; \
 	fi; \
 	if [ "$(BCM_MMC)" = "y" ]; then \
 		sed -i "/CONFIG_MMC/d" $(1); \

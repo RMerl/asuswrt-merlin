@@ -482,7 +482,7 @@ void create_passwd(void)
 
 	strcpy(salt, "$1$");
 	f_read("/dev/urandom", s, 6);
-	base64_encode(s, salt + 3, 6);
+	base64_encode((unsigned char *) s, salt + 3, 6);
 	salt[3 + 8] = 0;
 	p = salt;
 	while (*p) {
@@ -670,12 +670,186 @@ int get_dhcpd_lmax()
 }
 #endif
 
+#ifdef RTCONFIG_PUSH_EMAIL
+#define	MAIL_CONF "/tmp/var/tmp/data"
+void start_sendmail(void)
+{
+	FILE *fp;
+	char tmp[128], buf[1024], smtp_auth_pass[256];
+	memset(buf, 0, sizeof(buf));
+	memset(tmp, 0, sizeof(tmp));
+	memset(smtp_auth_pass, 0, sizeof(smtp_auth_pass));
+#ifdef RTCONFIG_HTTPS
+	strncpy(smtp_auth_pass,pwdec(nvram_get("PM_SMTP_AUTH_PASS")),256);
+#else
+	strncpy(smtp_auth_pass,nvram_get("PM_SMTP_AUTH_PASS"),256);
+#endif
+	/* write the configuration file.*/
+	if (!(fp = fopen(MAIL_CONF, "w"))) {
+		logmessage("email", "Failed to send mail!\n");
+		return;
+	}
+//	fp = fopen("/tmp/var/tmp/data","w");
+//	if(fp == NULL){
+//		logmessage("email", "Failed to send mail!\n");
+//	}
+	sprintf(buf,
+		"SMTP_SERVER = '%s'\n"
+		"SMTP_PORT = '%s'\n"
+		"MY_NAME = '%s'\n"
+		"MY_EMAIL = '%s'\n"
+		"USE_TLS = '%s'\n"
+		"SMTP_AUTH = '%s'\n"
+		"SMTP_AUTH_USER = '%s'\n"
+		"SMTP_AUTH_PASS = '%s'\n"
+		, nvram_get("PM_SMTP_SERVER")
+		, nvram_get("PM_SMTP_PORT")
+		, nvram_get("PM_MY_NAME")
+		, nvram_get("PM_MY_EMAIL")
+		, nvram_get("PM_USE_TLS")
+		, nvram_get("PM_SMTP_AUTH")
+		, nvram_get("PM_SMTP_AUTH_USER")
+		, smtp_auth_pass
+	);
+	fputs(buf,fp);
+	fclose(fp);
+
+	mkdir_if_none("/etc/email");
+	fp = fopen("/etc/email/mailContent", "w");
+	if(fp == NULL){
+		logmessage("email", "Failed to send mail!\n");
+	}
+	sprintf(buf,
+		"%s\r\n", nvram_get("PM_LETTER_CONTENT")
+	);
+	fputs(buf,fp);
+	fclose(fp);
+
+	sprintf(tmp, "cat /etc/email/mailContent | email -c %s -s \"%s\" -a %s %s &"
+		, MAIL_CONF
+		, nvram_get("PM_MAIL_SUBJECT")
+		, nvram_get("PM_MAIL_FILE")
+		, nvram_get("PM_MAIL_TARGET")
+	);
+
+	system(tmp);
+}
+#endif
+
+void stop_hour_monitor_service()
+{
+	killall("hour_monitor", SIGTERM);
+}
+
+void start_hour_monitor_service()
+{
+	char *cmd[] = {"hour_monitor", NULL};
+	int pid;
+
+	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER)
+		return;
+	
+	if(!pids("hour_monitor"))
+		_eval(cmd, NULL, 0, &pid);
+}
+
+void check_hour_monitor_service()
+{
+	if(hour_monitor_function_check()) start_hour_monitor_service();
+}
+
+void reset_traffic_control_counter()
+{
+	// reset counter when alert line or limit line changes
+	if((nvram_get_int("traffic_control_alert_max") != nvram_get_int("traffic_control_alert_max_t")) ||
+		(nvram_get_int("traffic_control_limit_max") != nvram_get_int("traffic_control_limit_max_t")))
+	{
+		nvram_set("traffic_control_count", "0");
+		nvram_set("traffic_control_limit_max_t", nvram_safe_get("traffic_control_limit_max"));
+		nvram_set("traffic_control_alert_max_t", nvram_safe_get("traffic_control_alert_max"));
+	}
+}
+
+#ifdef RTCONFIG_TRAFFIC_CONTROL
+static void traffic_control_limit_service()
+{
+	int val = 0;
+	int save = 0;
+	FILE *fp;
+	char buf[4];
+	char *p, *q;
+
+	int debug = nvram_get_int("traffic_control_debug");
+
+	memset(buf, 0, sizeof(buf));
+
+	if((fp = fopen("/tmp/traffic_control_limit", "r")) != NULL)
+	{
+		while (fgets(buf, sizeof(buf), fp))
+		{
+			if ((vstrsep(buf, ",", &p, &q)) != 2) break;
+			if (!strcmp(p, "1")) val += 1; // primary wan
+			if (!strcmp(q, "1")) val += 2; // secondary wan
+			if(debug) dbg("%s : p=%s, q=%s, val=%d\n", __FUNCTION__, p, q, val);
+		}
+		fclose(fp);
+	}
+	
+	// stop primary wan
+	if(((val & 0x1) != 0) && (nvram_get_int("wan0_state_t") == WAN_STATE_CONNECTED)){
+		nvram_set("wan0_enable", "0");
+		stop_wan_if(0);
+		update_wan_state("wan0_", WAN_STATE_STOPPED, WAN_STOPPED_REASON_METER_LIMIT);
+		save = 1;
+	}
+
+	// stop secondary wan
+	if(((val & 0x2) != 0) && (nvram_get_int("wan1_state_t") == WAN_STATE_CONNECTED)){
+		nvram_set("wan1_enable", "0");
+		stop_wan_if(1);
+		update_wan_state("wan1_", WAN_STATE_STOPPED, WAN_STOPPED_REASON_METER_LIMIT);
+		save = 1;
+	}
+	
+	if(save) eval("traffic_control", "-w");
+}
+
+static int traffic_control_is_first = 1;
+void traffic_control_limit_check()
+{
+	// upadte /jffs/traffic_control/xxx/tmp each 30 secs
+	if(nvram_get_int("traffic_control_enable"))
+	{
+		if(traffic_control_is_first){
+			eval("traffic_control", "-c");
+			traffic_control_is_first = 0;
+		}
+		else{
+			eval("traffic_control", "-q");
+		}
+	}
+
+	// do traffic limiter
+	if(nvram_get_int("traffic_control_limit_enable"))
+	{
+		traffic_control_limit_service();
+	}
+}
+
+void start_traffic_control_init()
+{
+	traffic_control_is_first = 1;
+	nvram_set("traffic_control_limit_max_t", nvram_safe_get("traffic_control_limit_max"));
+	nvram_set("traffic_control_alert_max_t", nvram_safe_get("traffic_control_alert_max"));
+}
+#endif
+
 void start_dnsmasq()
 {
 	FILE *fp;
 	char *lan_ifname, *lan_ipaddr;
 	char *value;
-	int i, have_dhcp = 0;
+	int /*i,*/ have_dhcp = 0;
 	int unit;
 	char prefix[8];
 
@@ -875,21 +1049,13 @@ void start_dnsmasq()
 		unsigned char hwaddr[6];
 		char buf[13];
 
-#ifdef RTAC87U
-		ether_atoe(nvram_safe_get("et1macaddr"), hwaddr);
-#else
-		ether_atoe(nvram_safe_get("et0macaddr"), hwaddr);
-#endif
+		ether_atoe(get_lan_hwaddr(), hwaddr);
 		snprintf(buf, sizeof(buf), "%02X%02X%02X",
 			 hwaddr[0], hwaddr[1], hwaddr[2]);
 
 		fprintf(fp, "dhcp-option=cpewan-id,vi-encap:3561,4,\"%s\"\n", buf);
 
-#ifdef RTAC87U
-		ether_atoe(nvram_safe_get("et1macaddr"), hwaddr);
-#else
-		ether_atoe(nvram_safe_get("et0macaddr"), hwaddr);
-#endif
+		ether_atoe(get_lan_hwaddr, hwaddr);
 		snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X",
 			 hwaddr[0], hwaddr[1], hwaddr[2],
 			 hwaddr[3], hwaddr[4], hwaddr[5]);
@@ -1159,8 +1325,8 @@ void add_ip6_lanaddr(void)
 	if (*p) {
 		snprintf(ip, sizeof(ip), "%s/%d", p, nvram_get_int("ipv6_prefix_length") ? : 64);
 		eval("ip", "-6", "addr", "add", ip, "dev", nvram_safe_get("lan_ifname"));
-		if (!nvram_match("ipv6_rtr_addr", p))
-			nvram_set("ipv6_rtr_addr", p);
+		if (!nvram_match("ipv6_rtr_addr", (char*)p))
+			nvram_set("ipv6_rtr_addr", (char*)p);
 	}
 
 	switch (get_ipv6_service()) {
@@ -1170,8 +1336,8 @@ void add_ip6_lanaddr(void)
 		/* fall through */
 	case IPV6_MANUAL:
 		p = ipv6_prefix(NULL);
-		if (*p && !nvram_match("ipv6_prefix", p))
-			nvram_set("ipv6_prefix", p);
+		if (*p && !nvram_match("ipv6_prefix", (char*)p))
+			nvram_set("ipv6_prefix", (char*)p);
 		break;
 	}
 }
@@ -1822,7 +1988,6 @@ start_wps(void)
 #ifdef CONFIG_BCMWL5
 	char *wps_argv[] = {"/bin/wps_monitor", NULL};
 	pid_t pid;
-	int wait_time = 3;
 #endif
 	if (wps_band_radio_off(get_radio_band(nvram_get_int("wps_band"))))
 		return 1;
@@ -1854,15 +2019,6 @@ start_wps(void)
 	{
 #ifdef CONFIG_BCMWL5
 		nvram_set("wl_wps_mode", "enabled");
-		eval("killall", "wps_monitor");
-		do {
-			if ((pid = get_pid_by_name("/bin/wps_monitor")) <= 0)
-				break;
-			wait_time--;
-			sleep(1);
-		} while (wait_time);
-		if (wait_time == 0)
-			dbG("Unable to kill wps_monitor!\n");
 #ifdef CONFIG_BCMWL5
 		if (!restore_defaults_g)
 #endif
@@ -1979,18 +2135,8 @@ start_hspotap(void)
 {
 	char *hs_argv[] = {"/bin/hspotap", NULL};
 	pid_t pid;
-	int wait_time = 3;
 
-	eval("killall", "hspotap");
-	do {
-		if ((pid = get_pid_by_name("/bin/hspotap")) <= 0)
-			break;
-		wait_time--;
-		sleep(1);
-	} while (wait_time);
-
-	if (wait_time == 0)
-		dprintf("Unable to kill hspotap!\n");
+	stop_hspotap();
 
 	if (!restore_defaults_g && (check_hspotap_envrams() == 1))
 		_eval(hs_argv, NULL, 0, &pid);
@@ -1998,14 +2144,10 @@ start_hspotap(void)
 	return 0;
 }
 
-int
+void
 stop_hspotap(void)
 {
-	int ret = 0;
-
-	ret = eval("killall", "hspotap");
-
-	return ret;
+	killall_tk("hspotap");
 }
 #endif
 
@@ -2023,12 +2165,10 @@ start_eapd(void)
 	return ret;
 }
 
-int
+void
 stop_eapd(void)
 {
-	int ret = eval("killall","eapd");
-
-	return ret;
+	killall_tk("eapd");
 }
 #endif
 
@@ -2041,12 +2181,10 @@ start_dcsd(void)
 	return ret;
 }
 
-int
+void
 stop_dcsd(void)
 {
-	int ret = eval("killall","dcsd");
-
-	return ret;
+	killall_tk("dcsd");
 }
 #endif /* BCM_DCS */
 
@@ -2077,8 +2215,7 @@ int start_networkmap(int bootwait)
 
 void stop_networkmap(void)
 {
-	if (pids("networkmap"))
-		killall_tk("networkmap");
+	killall_tk("networkmap");
 }
 
 #ifdef RTCONFIG_LLDP
@@ -2124,8 +2261,7 @@ void stop_hotplug2(void)
 void
 stop_infosvr()
 {
-	if (pids("infosvr"))
-		killall_tk("infosvr");
+	killall_tk("infosvr");
 }
 
 int
@@ -2318,9 +2454,9 @@ ddns_updated_main(int argc, char *argv[])
 int
 start_ddns(void)
 {
-	FILE *fp;
+//	FILE *fp;
 	char *wan_ip, *wan_ifname;
-	char *ddns_cache;
+//	char *ddns_cache;
 	char *server;
 	char *user;
 	char *passwd;
@@ -2688,7 +2824,7 @@ start_igmp_proxy(void)
 void
 stop_igmp_proxy(void)
 {
-	eval("killall", "igmp");
+	killall_tk("igmp");
 }
 #endif
 
@@ -2711,8 +2847,6 @@ stop_misc(void)
 		killall_tk("phy_tempsense");
 #endif
 #ifdef RTCONFIG_BCMWL6
-	if (pids("igmp"))
-		killall_tk("igmp");
 #ifdef RTCONFIG_PROXYSTA
 	if (pids("psta_monitor"))
 		killall_tk("psta_monitor");
@@ -2738,6 +2872,9 @@ stop_misc(void)
 #endif
 #ifdef BCM_SSD
 	stop_ssd();
+#endif
+#if defined(RTCONFIG_DHDAP)
+	stop_dhd_monitor();
 #endif
 	stop_igmp_proxy();
 #ifdef RTCONFIG_HSPOT
@@ -3102,9 +3239,10 @@ void start_upnp(void)
 					   (min_lifetime > 0 ? min_lifetime : 120),
 					   (max_lifetime > 0 ? max_lifetime : 86400));
 
+				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
 				fappend(f, "/etc/upnp/config.custom");
 				append_custom_config("upnp", f);
-				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
+
 				fclose(f);
 				use_custom_config("upnp", "/etc/upnp/config");
 				run_postconf("upnp", "/etc/upnp/config");
@@ -3204,10 +3342,8 @@ int start_lltd(void)
 	return 0;
 }
 
-int stop_lltd(void)
+void stop_lltd(void)
 {
-	int ret;
-
 #ifdef CONFIG_BCMWL5
 	char *odmpid = nvram_safe_get("odmpid");
 	int model = get_model();
@@ -3215,31 +3351,29 @@ int stop_lltd(void)
 	{
 		switch (model) {
 		case MODEL_RTN66U:
-			ret = eval("killall", "lld2d.rtn66r");
+			killall_tk("lld2d.rtn66r");
 			break;
 		case MODEL_RTAC66U:
-			ret = eval("killall", "lld2d.rtac66r");
+			killall_tk("lld2d.rtac66r");
 			break;
 		case MODEL_RTAC68U:
 			if (!strcmp(odmpid, "RT-AC68P"))
-				ret = eval("killall", "lld2d.rtac68p");
+				killall_tk("lld2d.rtac68p");
 			else if (!strcmp(odmpid, "RT-AC68R"))
-				ret = eval("killall", "lld2d.rtac68r");
+				killall_tk("lld2d.rtac68r");
 			else if (!strcmp(odmpid, "RT-AC68W"))
-				ret = eval("killall", "lld2d.rtac68w");
+				killall_tk("lld2d.rtac68w");
 			else if (!strcmp(odmpid, "RT-AC68RW"))
-				ret = eval("killall", "lld2d.rtac68rw");
+				killall_tk("lld2d.rtac68rw");
 			break;
 		default:
-			ret = eval("killall", "lld2d");
+			killall_tk("lld2d");
 			break;
 		}
 	}
 	else
 #endif
-	ret = eval("killall", "lld2d");
-
-	return ret;
+	killall_tk("lld2d");
 }
 
 #if defined(RTCONFIG_MDNS)
@@ -3588,6 +3722,9 @@ start_services(void)
 #ifdef BCM_SSD
 	start_ssd();
 #endif
+#if defined(RTCONFIG_DHDAP)
+	start_dhd_monitor();
+#endif
 	start_acsd();
 #endif
 #endif
@@ -3610,7 +3747,12 @@ start_services(void)
 #ifdef RTCONFIG_DSL
 	start_spectrum(); //Ren
 #endif
+#ifdef RTCONFIG_TRAFFIC_CONTROL
+	start_traffic_control_init();
+#endif
 	start_watchdog();
+	start_watchdog02();
+	start_hour_monitor_service();
 #ifdef RTCONFIG_FANCTRL
 	start_phy_tempsense();
 #endif
@@ -3733,9 +3875,7 @@ stop_services(void)
 	stop_upnp();
 	stop_lltd();
 	stop_watchdog();
-#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
 	stop_hour_monitor_service();
-#endif
 #ifdef RTCONFIG_FANCTRL
 	stop_phy_tempsense();
 #endif
@@ -3777,6 +3917,9 @@ stop_services(void)
 #endif
 #ifdef BCM_SSD
 	stop_ssd();
+#endif
+#if defined(RTCONFIG_DHDAP)
+	stop_dhd_monitor();
 #endif
 	stop_igmp_proxy();
 #ifdef RTCONFIG_HSPOT
@@ -3843,7 +3986,7 @@ int stop_wifi_service(void)
 		__get_wlifname(unit, sunit, wif);
 		sprintf(path, "/sys/class/net/%s", wif);
 		if (d_exists(path))
-			eval("ifconfig", wif, "down");
+			ifconfig(wif, 0, NULL, NULL);
 		sprintf(pid_path, "/var/run/hostapd_%s.pid", wif);
 		if (!f_exists(pid_path))
 			continue;
@@ -3902,12 +4045,17 @@ void stop_wanduck(void)
 	killall("wanduck", SIGTERM);
 }
 
-int
-stop_watchdog(void)
+void
+ stop_watchdog(void)
+ {
+	killall_tk("watchdog");
+}
+
+void
+stop_watchdog02(void)
 {
-	if (pids("watchdog"))
-		killall_tk("watchdog");
-	return 0;
+	/* do nothing */
+	return;
 }
 
 int
@@ -3915,6 +4063,17 @@ start_watchdog(void)
 {
 	char *watchdog_argv[] = {"watchdog", NULL};
 	pid_t whpid;
+
+	return _eval(watchdog_argv, NULL, 0, &whpid);
+}
+
+int
+start_watchdog02(void)
+{
+	char *watchdog_argv[] = {"watchdog02", NULL};
+	pid_t whpid;
+
+	if (pidof("watchdog02") > 0) return -1;
 
 	return _eval(watchdog_argv, NULL, 0, &whpid);
 }
@@ -4257,6 +4416,8 @@ again:
 	else if(strcmp(script, "upgrade") == 0) {
 		if(action & RC_SERVICE_STOP) {
 
+			eval("/sbin/ejusb", "-1", "0");
+			logmessage("usb", "USB is ejected");
 		   if(!(nvram_match("webs_state_flag", "1") && nvram_match("webs_state_upgrade", "0")))
 			stop_wanduck();
 			stop_wan();
@@ -4415,6 +4576,9 @@ again:
 #ifdef BCM_SSD
 		stop_ssd();
 #endif
+#if defined(RTCONFIG_DHDAP)
+		stop_dhd_monitor();
+#endif
 		stop_igmp_proxy();
 #ifdef RTCONFIG_HSPOT
 		stop_hspotap();
@@ -4510,6 +4674,9 @@ again:
 #ifdef BCM_SSD
 			start_ssd();
 #endif
+#if defined(RTCONFIG_DHDAP)
+			start_dhd_monitor();
+#endif
 			start_acsd();
 #endif
 			/* Link-up LAN ports after DHCP server ready. */
@@ -4545,6 +4712,9 @@ again:
 #endif
 #ifdef BCM_SSD
 			stop_ssd();
+#endif
+#if defined(RTCONFIG_DHDAP)
+			stop_dhd_monitor();
 #endif
 			stop_igmp_proxy();
 #ifdef RTCONFIG_HSPOT
@@ -4590,6 +4760,9 @@ again:
 #endif
 #ifdef BCM_SSD
 			start_ssd();
+#endif
+#if defined(RTCONFIG_DHDAP)
+			start_dhd_monitor();
 #endif
 			start_acsd();
 #endif
@@ -4640,6 +4813,9 @@ again:
 #endif
 #ifdef BCM_SSD
 			stop_ssd();
+#endif
+#if defined(RTCONFIG_DHDAP)
+			stop_dhd_monitor();
 #endif
 			stop_igmp_proxy();
 #ifdef RTCONFIG_HSPOT
@@ -4692,6 +4868,9 @@ again:
 #endif
 #ifdef BCM_SSD
 			start_ssd();
+#endif
+#if defined(RTCONFIG_DHDAP)
+			start_dhd_monitor();
 #endif
 			start_acsd();
 #endif
@@ -4928,6 +5107,9 @@ check_ddr_done:
 #ifdef BCM_SSD
 			start_ssd();
 #endif
+#if defined(RTCONFIG_DHDAP)
+			start_dhd_monitor();
+#endif
 			start_acsd();
 #endif
 			start_wl();
@@ -5145,7 +5327,7 @@ check_ddr_done:
 		}
 	}
 #ifdef RTCONFIG_USB_MODEM
-	else if(!strncmp(script, "simauth", 6)){
+	else if(!strncmp(script, "simauth", 7)){
 		char *at_cmd[] = {"modem_status.sh", "simauth", NULL};
 
 		_eval(at_cmd, NULL, 0, NULL);
@@ -5222,8 +5404,17 @@ check_ddr_done:
 		if(strlen(isp) > 0)
 			_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
+	else if(!strncmp(script, "sendSMS", 7)){
+		char phone[32], message[PATH_MAX];
+		char *at_cmd[] = {"modem_status.sh", "send_sms", phone, message, NULL};
+
+		snprintf(phone, 32, "%s", nvram_safe_get("modem_sms_phone"));
+		snprintf(message, PATH_MAX, "%s %s bytes.", nvram_safe_get("modem_sms_message"), nvram_safe_get("modem_bytes_data_limit"));
+
+		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
+	}
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
-	else if(!strncmp(script, "datacount", 10)){
+	else if(!strncmp(script, "datacount", 9)){
 		char *at_cmd[] = {"modem_status.sh", "bytes", NULL};
 
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
@@ -5239,14 +5430,33 @@ check_ddr_done:
 
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 	}
-	else if(!strncmp(script, "sim_del", 10)){
+	else if(!strncmp(script, "sim_del", 7)){
 		char sim_order[32];
 		char *at_cmd[] = {"modem_status.sh", "imsi_del", sim_order, NULL};
-		_dprintf("sim_del: %s.\n", cmd[1]);
 
-		snprintf(sim_order, 32, "modem_sim_imsi%s", cmd[1]);
+		snprintf(sim_order, 32, "%s", cmd[1]);
 
 		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
+	}
+	else if(!strncmp(script, "set_dataset", 11)){
+		char *at_cmd[] = {"modem_status.sh", "set_dataset", NULL};
+
+		_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
+	}
+#endif
+#ifdef RT4GAC55U
+	else if(!strncmp(script, "simdetect", 9)){
+		// Need to reboot after this.
+		char buf[4];
+		char *at_cmd1[] = {"modem_status.sh", "simdetect", NULL};
+		char *at_cmd2[] = {"modem_status.sh", "simdetect", buf, NULL};
+
+		if(cmd[1]){
+			snprintf(buf, 4, "%s", cmd[1]);
+			_eval(at_cmd2, ">/tmp/modem_action.ret", 0, NULL);
+		}
+		else
+			_eval(at_cmd1, ">/tmp/modem_action.ret", 0, NULL);
 	}
 #endif
 #endif // RTCONFIG_USB_MODEM
@@ -5400,13 +5610,17 @@ check_ddr_done:
 		if(action & RC_SERVICE_STOP) stop_dpi_engine_service(1);
 	}
 #endif
-#if defined(RTCONFIG_TRAFFIC_CONTROL) || defined(RTCONFIG_BWDPI)
-	else if (strcmp(script, "hour_monitor") == 0)
+	else if (strcmp(script, "traffic_analyzer") == 0)
 	{
-		if(action & RC_SERVICE_STOP) stop_hour_monitor_service();
-		if(action & RC_SERVICE_START) start_hour_monitor_service();
+		// only stop service need to save database
+		if(action & RC_SERVICE_STOP) hm_traffic_analyzer_save();
 	}
-#endif
+	else if (strcmp(script, "traffic_control") == 0)
+	{
+		// only stop service need to save database
+		if(action & RC_SERVICE_STOP) hm_traffic_control_save();
+		if(action & RC_SERVICE_START) reset_traffic_control_counter();
+	}
 	else if (strcmp(script, "logger") == 0)
 	{
 		if(action & RC_SERVICE_STOP) stop_logger();
@@ -5484,7 +5698,7 @@ check_ddr_done:
 			stop_sshd();
 #endif
 			stop_logger();
-			stop_httpd();
+			//stop_httpd();
 		}
 		if(action & RC_SERVICE_START) {
 			refresh_ntpc();
@@ -5493,8 +5707,20 @@ check_ddr_done:
 #ifdef RTCONFIG_SSH
 			start_sshd();
 #endif
-			start_httpd();
+			//start_httpd();
 			start_firewall(wan_primary_ifunit(), 0);
+		}
+	}
+	else if (strcmp(script, "change_https") == 0)
+	{
+		if(action & RC_SERVICE_STOP) {
+			stop_httpd();
+		}
+		if(action & RC_SERVICE_START) {
+			start_httpd();
+#ifdef RTCONFIG_BWDPI
+			setup_wrs_conf();
+#endif
 		}
 	}
 	else if (strcmp(script, "wps_method")==0)
@@ -5952,6 +6178,24 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
                 if(action & RC_SERVICE_START) start_cloudcheck();
         }
 #endif
+#ifdef RTCONFIG_GETREALIP
+	else if(!strcmp(script, "getrealip")){
+		char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+		int wan_unit = atoi(cmd[1]);
+		char *getip[] = {"getrealip.sh", NULL};
+		pid_t pid;
+
+		snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
+
+		if(action & RC_SERVICE_STOP){
+			nvram_set(strcat_r(prefix, "realip_state", tmp), "0");
+			nvram_set(strcat_r(prefix, "realip_ip", tmp), "");
+		}
+		if(action & RC_SERVICE_START){
+			_eval(getip, ">>/dev/null", 0, &pid);
+		}
+	}
+#endif
 	else
 	{
 		fprintf(stderr,
@@ -6215,7 +6459,7 @@ void set_acs_ifnames()
 
 #if defined(RTAC3200) || defined(RTAC5300)
 	nvram_set("wl0_acs_excl_chans", "");
-	if (nvram_match("wl1_country_code", "EU")) {
+	if (nvram_match("wl1_country_code", "E0")) {
 		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
@@ -6233,9 +6477,9 @@ void set_acs_ifnames()
 		/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
 		nvram_set("wl2_acs_excl_chans",
-			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a");
+			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
 	}
 #else
 	if (nvram_match("wl1_country_code", "EU"))
@@ -6280,7 +6524,7 @@ start_acsd()
 	if(nvram_match("nowl", "1")) return 0;
 
 #ifdef RTCONFIG_PROXYSTA
-	if (psta_exist())
+	if (psta_exist() || psr_exist())
 		return 0;
 #endif
 
@@ -6292,18 +6536,10 @@ start_acsd()
 	return ret;
 }
 
-int
+void
 stop_acsd(void)
 {
-	int ret = 0;
-
-	if (pids("acsd"))
-	{
-		ret = eval("killall", "acsd");
-		sleep(3);
-	}
-
-	return ret;
+	killall_tk("acsd");
 }
 #endif
 
@@ -6314,6 +6550,8 @@ start_toads(void)
 	char toad_ifname[16];
 	char *next;
 
+	stop_toads();
+
 	foreach(toad_ifname, nvram_safe_get("toad_ifnames"), next) {
 		eval("/usr/sbin/toad", "-i", toad_ifname);
 	}
@@ -6322,7 +6560,7 @@ start_toads(void)
 static void
 stop_toads(void)
 {
-	eval("killall", "toad");
+	killall_tk("toad");
 }
 #endif
 
@@ -6345,11 +6583,9 @@ int start_bsd(void)
 	return ret;
 }
 
-int stop_bsd(void)
+void stop_bsd(void)
 {
-	int ret = eval("killall", "bsd");
-
-	return ret;
+	killall_tk("bsd");
 }
 #endif /* BCM_BSD */
 
@@ -6360,19 +6596,41 @@ int start_ssd(void)
 	char *ssd_argv[] = {"/usr/sbin/ssd", NULL};
 	pid_t pid;
 
+	stop_ssd();
+
 	if (nvram_match("ssd_enable", "1"))
 		ret = _eval(ssd_argv, NULL, 0, &pid);
 
 	return ret;
 }
 
-int stop_ssd(void)
+void stop_ssd(void)
 {
-	int ret = eval("killall", "ssd");
+	killall_tk("ssd");
+}
+#endif /* BCM_SSD */
+
+#if defined(RTCONFIG_DHDAP)
+int start_dhd_monitor(void)
+{
+	int ret = 0;
+
+#if defined(RTCONFIG_BCM7)
+	return ret;
+#endif
+	killall_tk("dhd_monitor");
+
+	ret = eval("/usr/sbin/dhd_monitor");
 
 	return ret;
 }
-#endif /* BCM_SSD */
+
+int stop_dhd_monitor(void)
+{
+	/* Don't kill dhd_monitor here */
+	return 0;
+}
+#endif /* RTCONFIG_DHDAP */
 
 #ifdef RT4GAC55U
 int start_lteled(void)
@@ -6380,16 +6638,17 @@ int start_lteled(void)
 	char *lteled_argv[] = {"lteled", NULL};
 	pid_t pid;
 
+	stop_lteled();
+
 	if(nvram_get_int("lteled_down"))
 		return 0;
 
 	return _eval(lteled_argv, NULL, 0, &pid);
 }
 
-int stop_lteled(void)
+void stop_lteled(void)
 {
-	int ret = eval("killall", "lteled");
-	return ret;
+	killall_tk("lteled");
 }
 #endif	/* RT4GAC55U */
 
@@ -6448,6 +6707,9 @@ firmware_check_main(int argc, char *argv[])
 	start_cloudcheck();
 #endif
 
+#if defined(RTCONFIG_USER_LOW_RSSI) && defined(RTCONFIG_BCMARM)
+	start_roamast();
+#endif
 	return 0;
 
 }
@@ -6494,96 +6756,6 @@ rsasign_sig_check_main(int argc, char *argv[])
 		nvram_set("bwdpi_rsa_check", "0");
 	}
 	return 0;
-}
-#endif
-
-#ifdef RTCONFIG_PUSH_EMAIL
-#define	MAIL_CONF "/tmp/var/tmp/data"
-void start_sendmail(void)
-{
-	FILE *fp;
-	char tmp[128], buf[1024], smtp_auth_pass[256];
-	memset(buf, 0, sizeof(buf));
-	memset(tmp, 0, sizeof(tmp));
-	memset(smtp_auth_pass, 0, sizeof(smtp_auth_pass));
-#ifdef RTCONFIG_HTTPS
-	strncpy(smtp_auth_pass,pwdec(nvram_get("PM_SMTP_AUTH_PASS")),256);
-#else
-	strncpy(smtp_auth_pass,nvram_get("PM_SMTP_AUTH_PASS"),256);
-#endif
-	/* write the configuration file.*/
-	if (!(fp = fopen(MAIL_CONF, "w"))) {
-		logmessage("email", "Failed to send mail!\n");
-		return;
-	}
-//	fp = fopen("/tmp/var/tmp/data","w");
-//	if(fp == NULL){
-//		logmessage("email", "Failed to send mail!\n");
-//	}
-	sprintf(buf,
-		"SMTP_SERVER = '%s'\n"
-		"SMTP_PORT = '%s'\n"
-		"MY_NAME = '%s'\n"
-		"MY_EMAIL = '%s'\n"
-		"USE_TLS = '%s'\n"
-		"SMTP_AUTH = '%s'\n"
-		"SMTP_AUTH_USER = '%s'\n"
-		"SMTP_AUTH_PASS = '%s'\n"
-		, nvram_get("PM_SMTP_SERVER")
-		, nvram_get("PM_SMTP_PORT")
-		, nvram_get("PM_MY_NAME")
-		, nvram_get("PM_MY_EMAIL")
-		, nvram_get("PM_USE_TLS")
-		, nvram_get("PM_SMTP_AUTH")
-		, nvram_get("PM_SMTP_AUTH_USER")
-		, smtp_auth_pass
-	);
-	fputs(buf,fp);
-	fclose(fp);
-
-	mkdir_if_none("/etc/email");
-	fp = fopen("/etc/email/mailContent", "w");
-	if(fp == NULL){
-		logmessage("email", "Failed to send mail!\n");
-	}
-	sprintf(buf,
-		"%s\r\n", nvram_get("PM_LETTER_CONTENT")
-	);
-	fputs(buf,fp);
-	fclose(fp);
-
-	sprintf(tmp, "cat /etc/email/mailContent | email -c %s -s \"%s\" -a %s %s &"
-		, MAIL_CONF
-		, nvram_get("PM_MAIL_SUBJECT")
-		, nvram_get("PM_MAIL_FILE")
-		, nvram_get("PM_MAIL_TARGET")
-	);
-
-	system(tmp);
-}
-#endif
-
-#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_TRAFFIC_CONTROL)
-void stop_hour_monitor_service()
-{
-	eval("killall", "-9", "hour_monitor");
-}
-
-void start_hour_monitor_service()
-{
-	char *cmd[] = {"hour_monitor", NULL};
-	int pid;
-
-	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER){
-		return;
-	}
-	
-	if(!pids("hour_monitor")) _eval(cmd, NULL, 0, &pid);
-}
-
-void check_hour_monitor_service()
-{
-	if(hour_monitor_function_check()) start_hour_monitor_service();
 }
 #endif
 
@@ -6756,9 +6928,9 @@ void stop_Tor_proxy(void)
 void start_Tor_proxy(void)
 {
 	FILE *fp;
-        pid_t pid;
-        char *Tor_argv[] = { "Tor",
-                "-f", "/tmp/torrc", "--quiet", NULL};
+	pid_t pid;
+	char *Tor_argv[] = { "Tor",
+		"-f", "/tmp/torrc", "--quiet", NULL};
 	char *Socksport;
 	char *Transport;
 	char *Dnsport;
@@ -6771,7 +6943,7 @@ void start_Tor_proxy(void)
 		return;
 	
 	if ((fp = fopen("/tmp/torrc", "w")) == NULL)
-                return;
+		return;
 
 #if (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
 	mdesc_stat_tmp = stat("/tmp/.tordb/cached-microdesc-consensus", &mdstat_tmp);
@@ -6833,6 +7005,31 @@ void start_cloudcheck(void){
 		return;
 
 	_eval(cmd, NULL, 0, &pid);
+}
+#endif
+
+#if defined(RTCONFIG_USER_LOW_RSSI) && defined(RTCONFIG_BCMARM)
+void stop_roamast(void){
+	if (pids("roamast"))
+                killall("roamast", SIGTERM);
+}
+
+void start_roamast(void){
+	char *cmd[] = {"roamast", NULL};
+	char prefix[] = "wl_XXXXX";
+	char tmp[32];
+	pid_t pid;
+	int i;
+
+	stop_roamast();
+
+	for (i = 0; i <= DEV_NUMIFS; i++) {
+		sprintf(prefix, "wl%d_", i);
+		if( nvram_get_int(strcat_r(prefix, "user_rssi", tmp)) != 0 ) {
+			_eval(cmd, NULL, 0, &pid);
+			break;
+		}
+	}
 }
 #endif
 

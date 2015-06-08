@@ -232,7 +232,14 @@ unsigned char *do_rfc1035_name(unsigned char *p, char *sval)
     {
       unsigned char *cp = p++;
       for (j = 0; *sval && (*sval != '.'); sval++, j++)
-	*p++ = *sval;
+	{
+#ifdef HAVE_DNSSEC
+	  if (option_bool(OPT_DNSSEC_VALID) && *sval == NAME_ESCAPE)
+	    *p++ = (*(++sval))-1;
+	  else
+#endif		
+	    *p++ = *sval;
+	}
       *cp  = j;
       if (*sval)
 	sval++;

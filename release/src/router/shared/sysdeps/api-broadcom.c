@@ -176,6 +176,79 @@ skip:
 	return SWITCH_UNKNOWN;
 }
 
+#ifdef RTCONFIG_BCM5301X_TRAFFIC_MONITOR
+
+uint32_t robo_ioctl_len(int fd, int write, int page, int reg, uint32_t *value, uint32_t len)
+{
+	static int __ioctl_args[2] = { SIOCGETCROBORD, SIOCSETCROBOWR };
+	struct ifreq ifr;
+	int ret, vecarg[4];
+	int i;
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "eth0");
+	ifr.ifr_data = (caddr_t) vecarg;
+
+	vecarg[0] = (page << 16) | reg;
+	vecarg[1] = len;
+
+	ret = ioctl(fd, __ioctl_args[write], (caddr_t)&ifr);
+
+	*value = vecarg[2];
+
+	return ret;
+}
+
+uint32_t traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx)
+{
+	int fd, model;
+	uint32_t value;
+	char port_name[30] = {0};
+	char port[30], *next;
+
+	*rx = 0;
+	*tx = 0;
+
+	strcat_r(ifname, "ports", port_name);
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0) return 0;
+
+	/* RX */
+	foreach (port, nvram_safe_get(port_name), next) {
+		if(strncmp(port, CPU_PORT, 1) != 0
+#ifdef RTAC87U
+			&& strncmp(port, RGMII_PORT, 1) != 0
+#endif
+		){
+			if (robo_ioctl_len(fd, 0 /* robord */, MIB_P0_PAGE + atoi(port), MIB_RX_REG, &value, 8) < 0)
+				_dprintf("et ioctl SIOCGETCROBORD failed!\n");
+			else{
+				*rx = *rx + value;
+			}
+		}
+	}
+
+	/* TX */
+	foreach (port, nvram_safe_get(port_name), next) {
+		if(strncmp(port, CPU_PORT, 1) != 0
+#ifdef RTAC87U
+			&& strncmp(port, RGMII_PORT, 1) != 0
+#endif
+		){
+			fprintf(stderr, "cal port: [%s]\n", port);
+			if (robo_ioctl_len(fd, 0 /* robord */, MIB_P0_PAGE + atoi(port), MIB_TX_REG, &value, 8) < 0)
+				_dprintf("et ioctl SIOCGETCROBORD failed!\n");
+			else{
+				*tx = *tx  + value;
+			}
+		}
+	}
+	close(fd);
+	return 1;
+}
+#endif	/* RTCONFIG_BCM5301X_TRAFFIC_MONITOR */
+
 int robo_ioctl(int fd, int write, int page, int reg, uint32_t *value)
 {
 	static int __ioctl_args[2] = { SIOCGETCROBORD, SIOCSETCROBOWR };

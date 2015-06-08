@@ -25,19 +25,19 @@ function initial(){
 }
 
 function hideAll(_value){
-	$("st_webdav_mode_tr").style.display = (_value == 0) ? "none" : "";
-	$("webdav_http_port_tr").style.display = (_value == 0) ? "none" : "";
-	$("webdav_https_port_tr").style.display = (_value == 0) ? "none" : "";
+	document.getElementById("st_webdav_mode_tr").style.display = (_value == 0) ? "none" : "";
+	document.getElementById("webdav_http_port_tr").style.display = (_value == 0) ? "none" : "";
+	document.getElementById("webdav_https_port_tr").style.display = (_value == 0) ? "none" : "";
 
 	if(_value == 1)
 		showPortItem(document.form.st_webdav_mode.value);
 }
 
 function showPortItem(_value){
-	$("webdav_http_port_tr").style.display = (_value == 0) ? "" : "none";
+	document.getElementById("webdav_http_port_tr").style.display = (_value == 0) ? "" : "none";
 	document.form.webdav_http_port.disabled = (_value == 0) ? false : true;
 
-	$("webdav_https_port_tr").style.display =  (_value == 0) ? "none" : "";
+	document.getElementById("webdav_https_port_tr").style.display =  (_value == 0) ? "none" : "";
 	document.form.webdav_https_port.disabled = (_value == 0) ? true : false;
 }
 
@@ -141,14 +141,14 @@ function applyRule(){
         	<tr id="webdav_http_port_tr" style="display:none;">
           	<th width="40%">WebDav to Samba Port</th>
 						<td>
-							<input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_http_port"); %>" onKeyPress="return validator.isNumber(this, event);">
+							<input type="text" name="webdav_http_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_http_port"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">
 						</td>
 					</tr>
 
         	<tr id="webdav_https_port_tr" style="display:none;">
           	<th width="40%">WebDav to Samba Port</th>
 						<td>
-							<input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_https_port"); %>" onKeyPress="return validator.isNumber(this, event);">
+							<input type="text" name="webdav_https_port" class="input_6_table" maxlength="5" value="<% nvram_get("webdav_https_port"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">
 						</td>
 					</tr>
 

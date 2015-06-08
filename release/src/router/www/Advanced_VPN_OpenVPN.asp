@@ -62,7 +62,7 @@
 </style>
 <script>
 window.onresize = cal_panel_block;
-var $j = jQuery.noConflict();
+
 <% wanlink(); %>
 <% vpn_server_get_parameter(); %>;
 
@@ -106,12 +106,20 @@ var ciphersarray = [
 
 function initial(){
 	var currentcipher = "<% nvram_get("vpn_server_cipher"); %>";
+
 	show_menu();		
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "VPN"]);
 
 	formShowAndHide(vpn_server_enable, vpn_server_mode);
 	//check DUT is belong to private IP.
-	if(validator.isPrivateIP(wanlink_ipaddr())) {
+
+	if(realip_support){
+		if(!external_ip){
+			document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>"
+			document.getElementById("privateIP_notes").style.display = "";			
+		}
+	}
+	else if(validator.isPrivateIP(wanlink_ipaddr())){	
 		document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>"
 		document.getElementById("privateIP_notes").style.display = "";
 	}
@@ -541,7 +549,7 @@ function showopenvpnd_clientlist(){
 	var vpn_server_clientlist_row = vpn_server_clientlist_array.split('<');
 	var code = "";
 	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="openvpnd_clientlist_table">';
-	code +='<tr id="row0"><td width="15%" id="conn0"></td><td width="35%"><% nvram_get("http_username"); %></td><td width="35%" style="text-align:center;">-</td><td width="15%" style="text-align:center;">-</td></tr>';
+	code +='<tr id="row0"><td width="15%" id="conn0"></td><td width="35%" title="<% nvram_get("http_username"); %>"><% nvram_get("http_username"); %></td><td width="35%" style="text-align:center;">-</td><td width="15%" style="text-align:center;">-</td></tr>';
 	if(vpn_server_clientlist_row.length > 1){
 		for(var i = 1; i < vpn_server_clientlist_row.length; i++){
 			overlib_str2[i] = "";
@@ -619,7 +627,7 @@ function check_vpn_server_state(){
 }
 
 function update_vpn_server_state() {
-	$j.ajax({
+	$.ajax({
 		url: '/ajax_openvpn_server.asp',
 		dataType: 'script',
 
@@ -669,12 +677,12 @@ function showMailPanel(){
 	}
 
 	if(checker.server == "" || checker.mailPort == "" || checker.user == "" || checker.pass == ""){
-		$j("#mailConfigPanelContainer").fadeIn(300);
-		$j("#mailSendPanelContainer").fadeOut(300);
+		$("#mailConfigPanelContainer").fadeIn(300);
+		$("#mailSendPanelContainer").fadeOut(300);
 	}
 	else{
-		$j("#mailConfigPanelContainer").fadeOut(300);
-		$j("#mailSendPanelContainer").fadeIn(300);
+		$("#mailConfigPanelContainer").fadeOut(300);
+		$("#mailSendPanelContainer").fadeIn(300);
 	}
 }
 
@@ -768,11 +776,11 @@ function update_visibility(){
 function set_Keys(auth) {
 	cal_panel_block();
 	updateCRTValue(auth);
-	$j("#tlsKey_panel").fadeIn(300);
+	$("#tlsKey_panel").fadeIn(300);
 }
 
 function updateCRTValue(auth){
-	$j.ajax({
+	$.ajax({
 		url: '/ajax_openvpn_server.asp',
 		dataType: 'script',
 		timeout: 1500,
@@ -916,7 +924,7 @@ function del_openvpnRow(r) {
 
 function cancel_Key_panel(auth) {
 	this.FromObject ="0";
-	$j("#tlsKey_panel").fadeOut(300);	
+	$("#tlsKey_panel").fadeOut(300);	
 	setTimeout("openvpn_decodeKeys(1);", 400);
 }
 
@@ -1163,7 +1171,7 @@ function cal_panel_block(){
 											<td>
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_VPNServer_enable"></div>												
 												<script type="text/javascript">													
-													$j('#radio_VPNServer_enable').iphoneSwitch(vpn_server_enable,
+													$('#radio_VPNServer_enable').iphoneSwitch(vpn_server_enable,
 													function(){
 														enable_openvpn(1);
 														document.form.VPNServer_enable.value = "1";
@@ -1239,10 +1247,10 @@ function cal_panel_block(){
 												<td width="15%" style="text-align:center;">-
 												</td>
 												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_username" onKeyPress="return validator.isString(this, event)">
+													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_username" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 												</td>
 												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_password" onKeyPress="return validator.isString(this, event)">
+													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_password" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 												</td>
 												<td width="15%">
 													<div><input type="button" class="add_btn" onClick="addRow_Group(16);" value=""></div>
@@ -1279,7 +1287,7 @@ function cal_panel_block(){
 														else
 															var service_state_advanced = false;
 															
-														$j('#radio_service_enable').iphoneSwitch(service_state_advanced,
+														$('#radio_service_enable').iphoneSwitch(service_state_advanced,
 															function() {
 																document.form.action_script.value = "start_vpnserver"+openvpn_unit;
 																parent.showLoading();
@@ -1316,7 +1324,7 @@ function cal_panel_block(){
 											<tr>
 												<th>Server Port</th>
 												<td>
-													<input type="text" maxlength="5" class="input_6_table" name="vpn_server_port" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 1, 65535)" value="<% nvram_get("vpn_server_port"); %>" >
+													<input type="text" maxlength="5" class="input_6_table" name="vpn_server_port" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 1, 65535)" value="<% nvram_get("vpn_server_port"); %>" autocorrect="off" autocapitalize="off">
 													<span style="color:#FC0">(<#Setting_factorydefault_value#> : 1194)</span>
 												</td>
 											</tr>
@@ -1378,8 +1386,8 @@ function cal_panel_block(){
 											<tr id="server_snnm">
 												<th><#vpn_openvpn_SubnetMsak#></th>
 												<td>
-													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_sn" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_sn"); %>">
-													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_nm" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_nm"); %>">
+													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_sn" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_sn"); %>" autocorrect="off" autocapitalize="off">
+													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_nm" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_nm"); %>" autocorrect="off" autocapitalize="off">
 												</td>
 											</tr>
 											<tr id="server_dhcp">
@@ -1392,21 +1400,21 @@ function cal_panel_block(){
 											<tr id="server_range">
 												<th><#vpn_openvpn_ClientPool#></th>
 												<td>
-													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_r1" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_r1"); %>">
-													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_r2" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_r2"); %>">
+													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_r1" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_r1"); %>" autocorrect="off" autocapitalize="off">
+													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_r2" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_r2"); %>" autocorrect="off" autocapitalize="off">
 												</td>
 											</tr>
 											<tr id="server_local">
 												<th><#vpn_openvpn_LocalRemote_IP#></th>
 												<td>
-													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_local" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_local"); %>">
-													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_remote" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_remote"); %>">
+													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_local" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_local"); %>" autocorrect="off" autocapitalize="off">
+													<input type="text" maxlength="15" class="input_15_table" name="vpn_server_remote" onkeypress="return validator.isIPAddr(this, event);" value="<% nvram_get("vpn_server_remote"); %>" autocorrect="off" autocapitalize="off">
 												</td>
 											</tr>
 											<tr>
 												<th><#vpn_openvpn_PollInterval#></th>
 												<td>
-													<input type="text" maxlength="4" class="input_6_table" name="vpn_server_poll" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 0, 1440)" value="<% nvram_get("vpn_server_poll"); %>"> <#Minute#>
+													<input type="text" maxlength="4" class="input_6_table" name="vpn_server_poll" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 0, 1440)" value="<% nvram_get("vpn_server_poll"); %>" autocorrect="off" autocapitalize="off"> <#Minute#>
 													<span style="color:#FC0">(<#zero_disable#>)</span>
 												</td>
 											</tr>
@@ -1458,7 +1466,7 @@ function cal_panel_block(){
 											<tr id="server_reneg">
 												<th><#vpn_openvpn_TLSTime#></th>
 												<td>
-													<input type="text" maxlength="5" class="input_6_table" name="vpn_server_reneg" onblur="validator.range(this, -1, 2147483647)" value="<% nvram_get("vpn_server_reneg"); %>"> <#Second#>
+													<input type="text" maxlength="5" class="input_6_table" name="vpn_server_reneg" onblur="validator.range(this, -1, 2147483647)" value="<% nvram_get("vpn_server_reneg"); %>" autocorrect="off" autocapitalize="off"> <#Second#>
 													<span style="color:#FC0">(<#Setting_factorydefault_value#> : -1)</span>
 												</td>
 											</tr>
@@ -1502,13 +1510,13 @@ function cal_panel_block(){
 											<tr>							
 												<div id="VPNClientList_Block_PC" class="VPNClientList_Block_PC"></div>
 												<td width="36%">
-								 					<input type="text" class="input_25_table" maxlength="25" name="vpn_clientlist_commonname_0">
+								 					<input type="text" class="input_25_table" maxlength="25" name="vpn_clientlist_commonname_0" autocorrect="off" autocapitalize="off">
 								 				</td>
 												<td width="20%">
-								 					<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_subnet_0"  onkeypress="return validator.isIPAddr(this, event);">
+								 					<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_subnet_0"  onkeypress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
 								 				</td>
 												<td width="20%">
-								 					<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_netmask_0"  onkeypress="return validator.isIPAddr(this, event);">
+								 					<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_netmask_0"  onkeypress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
 								 				</td>
 								 				<td width="12%">
 													<select name="vpn_clientlist_push_0" class="input_option">
@@ -1576,7 +1584,7 @@ function cal_panel_block(){
 				<tr>
 					<th>PM_MAIL_TARGET</th>
 					<td valign="top">
-						<input type="text" class="input_32_table" name="PM_MAIL_TARGET" value="">
+						<input type="text" class="input_32_table" name="PM_MAIL_TARGET" value="" autocorrect="off" autocapitalize="off">
 					</td>
 				</tr>
 			</table>
@@ -1587,16 +1595,16 @@ function cal_panel_block(){
 				<img id="mailSendLoadingIcon" style="margin-left:5px;display:none;" src="/images/InternetScan.gif">
 				<script>
 					document.getElementById("mailSendPannelCancel").onclick = function(){
-						$j("#mailSendPanelContainer").fadeOut(300);
+						$("#mailSendPanelContainer").fadeOut(300);
 					}
 					document.getElementById("mailSendPannelSubmiter").onclick = function(){
 						// ToDo: validator.
-						$j("#mailSendLoadingIcon").fadeIn(200);
+						$("#mailSendLoadingIcon").fadeIn(200);
 						document.mailSendForm.submit();
 						setTimeout(function(){
 							document.mailSendForm.PM_MAIL_TARGET.value = "";
-							$j("#mailSendLoadingIcon").fadeOut(200);
-							$j("#mailSendPanelContainer").fadeOut(300);
+							$("#mailSendLoadingIcon").fadeOut(200);
+							$("#mailSendPanelContainer").fadeOut(300);
 						}, document.mailSendForm.action_wait.value*1000);
 					}
 				</script>
@@ -1651,7 +1659,7 @@ function cal_panel_block(){
 				<tr>
 					<th>PM_SMTP_AUTH_USER</th>
 					<td valign="top">
-						<input type="text" class="input_32_table" name="PM_SMTP_AUTH_USER_TMP" value="<% nvram_get("PM_SMTP_AUTH_USER"); %>">
+						<input type="text" class="input_32_table" name="PM_SMTP_AUTH_USER_TMP" value="<% nvram_get("PM_SMTP_AUTH_USER"); %>" autocorrect="off" autocapitalize="off">
 						<script>
 							document.mailConfigForm.PM_SMTP_AUTH_USER_TMP.onkeyup = function(){
 								document.mailConfigForm.PM_MY_NAME_TMP.value = this.value;
@@ -1663,19 +1671,19 @@ function cal_panel_block(){
 				<tr>
 					<th>PM_SMTP_AUTH_PASS</th>
 					<td valign="top">
-						<input type="password" class="input_32_table" name="PM_SMTP_AUTH_PASS_TMP" maxlength="100" value="">
+						<input type="password" class="input_32_table" name="PM_SMTP_AUTH_PASS_TMP" maxlength="100" value="" autocorrect="off" autocapitalize="off">
 					</td>
 				</tr>    				      			
 				<tr>
 					<th>PM_MY_NAME (Optional)</th>
 					<td valign="top">
-						<input type="text" class="input_32_table" name="PM_MY_NAME_TMP" value="<% nvram_get("PM_MY_NAME"); %>">
+						<input type="text" class="input_32_table" name="PM_MY_NAME_TMP" value="<% nvram_get("PM_MY_NAME"); %>" autocorrect="off" autocapitalize="off">
 					</td>
 				</tr>    				      			
 				<tr>
 					<th>PM_MY_EMAIL (Optional)</th>
 					<td valign="top">
-						<input type="text" class="input_32_table" name="PM_MY_EMAIL_TMP" value="<% nvram_get("PM_MY_EMAIL"); %>">
+						<input type="text" class="input_32_table" name="PM_MY_EMAIL_TMP" value="<% nvram_get("PM_MY_EMAIL"); %>" autocorrect="off" autocapitalize="off">
 					</td>
 				</tr>    				      			
 			</table>
@@ -1686,7 +1694,7 @@ function cal_panel_block(){
 				<img id="mailConfigLoadingIcon" style="margin-left:5px;display:none;" src="/images/InternetScan.gif">
 				<script>
 					document.getElementById("mailConfigPannelCancel").onclick = function(){
-						$j("#mailConfigPanelContainer").fadeOut(300);
+						$("#mailConfigPanelContainer").fadeOut(300);
 					}
 					document.getElementById("mailConfigPannelSubmiter").onclick = function(){
 						// ToDo: validator.
@@ -1701,10 +1709,10 @@ function cal_panel_block(){
 						document.mailConfigForm.PM_MY_NAME.value = document.mailConfigForm.PM_MY_NAME_TMP.value;
 						document.mailConfigForm.PM_MY_EMAIL.value = document.mailConfigForm.PM_MY_EMAIL_TMP.value;
 
-						$j("#mailConfigLoadingIcon").fadeIn(200);
+						$("#mailConfigLoadingIcon").fadeIn(200);
 						document.mailConfigForm.submit();
 						setTimeout(function(){
-							$j("#mailConfigLoadingIcon").fadeOut(200);
+							$("#mailConfigLoadingIcon").fadeOut(200);
 							showMailPanel();
 						}, document.mailConfigForm.action_wait.value*1000);
 					}

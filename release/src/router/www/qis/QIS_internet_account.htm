@@ -29,7 +29,7 @@ function QKaccount_load_body(){
 		parent.set_step("t2");
 		hideLinkTag();
 		flash_button();
-		$("descritpion_tail1").innerHTML = "<#qis_pppoe_desc2#>";
+		document.getElementById("descritpion_tail1").innerHTML = "<#qis_pppoe_desc2#>";
 		if(now_flag != "auto_way_pppoe")
 			show_prev_button();					
 		document.getElementById("nextButton").focus();
@@ -73,8 +73,8 @@ function show_prev_button(){
 		document.form.prev_page.value = parent.document.QKform.prev_page.value;
 		parent.document.QKform.prev_page.value = "/qis/QIS_internet_ip.htm";
 	}
-	else if(parent.$("flag").value == "pppoe"){
-		$("prevButton").value = '<#menu5#>';
+	else if(parent.document.getElementById("flag").value == "pppoe"){
+		document.getElementById("prevButton").value = '<#menu5#>';
 		
 		document.form.prev_page.value = "/Advanced_WAN_Content.asp";
 	}
@@ -125,7 +125,7 @@ function submitForm(o, s){
 		document.form.wan_dns2_x.disabled = false;
 		document.form.wan_heartbeat_x.disabled = false;
 		
-		$("x_Setting").disabled = false;
+		document.getElementById("x_Setting").disabled = false;
 		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';		
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
 		
@@ -154,12 +154,12 @@ function submitForm(o, s){
 		if(original_switch_wantag != document.form.switch_wantag.value){
 				document.form.action_script.value	= "reboot";
 				document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 10");
-				$("loadHint").style.display = "";
-				$("nextButton").style.display = "none";
-				$("prevButton").style.display = "none";
+				document.getElementById("loadHint").style.display = "";
+				document.getElementById("nextButton").style.display = "none";
+				document.getElementById("prevButton").style.display = "none";
 		}
 
-		$("x_Setting").disabled = false;
+		document.getElementById("x_Setting").disabled = false;
 		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
 
@@ -233,17 +233,17 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
 		return false;
 	}else if(flag == 2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
 		return false;
 	}else{
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}
 }
@@ -307,14 +307,14 @@ function check_macaddr(obj,flag){ //control hint of input mac address
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_UserName_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36" autocapitalization="off" autocomplete="off"/>
+	  <input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36" autocomplete="off" autocorrect="off" autocapitalize="off"/>
 	</td>
   </tr>
 
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_Password_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" tabindex="2" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36" autocapitalization="off" autocomplete="off"/>	  
+	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" tabindex="2" onkeypress="return validator.isString(this, event);" class="input_32_table" size="36" autocomplete="off" autocorrect="off" autocapitalize="off"/>	  
 	</td>
   </tr>
 	<tr>
@@ -330,7 +330,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 			</span>
 		</th>
 	  <td class="QISformtd">
-		<input type="text" name="wan_hwaddr_x" tabindex="2" onkeypress="return validator.isHWAddr(this,event);" class="input_20_table" maxlength="17" value=""/>
+		<input type="text" name="wan_hwaddr_x" tabindex="2" onkeypress="return validator.isHWAddr(this,event);" class="input_20_table" maxlength="17" value="" autocorrect="off" autocapitalize="off"/>
 		&nbsp&nbsp&nbsp
 		<input type="button" class="button_gen_long" tabindex="3" onclick="showMAC();" value="<#BOP_isp_MACclone#>">		
 	  </td>
@@ -357,11 +357,11 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		<div id="DNSDiv">
 			<div class="row">
 				<label><#PPPConnection_UserName_itemname#></label>
-				<input type="text" name="wan_pppoe_username_m" placeholder="" maxlength="64" value="" autocapitalization="off" autocomplete="off"/>
+				<input type="text" name="wan_pppoe_username_m" placeholder="" maxlength="64" value="" autocomplete="off" autocorrect="off" autocapitalize="off"/>
 			</div>
 			<div class="row">
 				<label><#PPPConnection_Password_itemname#></label>
-				<input name="wan_pppoe_passwd_m" type="text" placeholder="" maxlength="64" autocapitalization="off" autocomplete="off">
+				<input name="wan_pppoe_passwd_m" type="text" placeholder="" maxlength="64" autocomplete="off" autocorrect="off" autocapitalize="off">
 			</div>
 			<div class="row">
 				<label><#BOP_isp_MACclone#></label>
@@ -374,7 +374,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 
 			<div class="row_end">
 				<label>MAC Address:</label>
-				<input name="wan_hwaddr_x_m" type="text" placeholder="" onkeypress="return validator.isHWAddr(this,event);" autocapitalization="off" maxlength="17">
+				<input name="wan_hwaddr_x_m" type="text" placeholder="" onkeypress="return validator.isHWAddr(this,event);" maxlength="17" autocorrect="off" autocapitalize="off">
 			</div>
 		</div>
 	</fieldset>

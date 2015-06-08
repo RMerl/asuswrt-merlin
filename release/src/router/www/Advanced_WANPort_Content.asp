@@ -51,7 +51,21 @@
 	background-color:#3366FF;
 	color:#FFFFFF;
 	cursor:default;
-}	
+}
+
+#detect_time_confirm{
+	position:absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:20000;
+	margin-left: 40%;
+	margin-top:10%;
+	background-color:#232629;
+	width:400px;
+	box-shadow: 3px 3px 10px #000;
+	font:13px Arial, Helvetica, sans-serif;
+}
 </style>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
@@ -78,10 +92,13 @@ if(gobi_support){
 		mobile_enable_orig = '<% nvram_get("wan0_enable"); %>';
 	else if(usb_index == 1)
 		mobile_enable_orig = '<% nvram_get("wan1_enable"); %>';
-}	
+}
 var wans_mode_orig = '<% nvram_get("wans_mode"); %>';
+var wans_standby_orig = '<% nvram_get("wans_standby"); %>';
+var min_detect_interval = 2;
+var min_fo_detect_count = 5;
 
-var $j = jQuery.noConflict();
+
 
 var country = new Array("None", "China");
 var country_n_isp = new Array;
@@ -103,7 +120,21 @@ function initial(){
 
     	if( wans_mode_orig == "lb")
     		document.form.wans_mode.value = "fo";
+    	else
+    		document.form.wans_mode.value = wans_mode_orig;
+
+		document.getElementById("fo_detection_count_hd").innerHTML = "Failover Retry Count";
+		document.getElementById("fo_seconds").style.display = "none";
+		document.getElementById("fo_tail_msg").style.display = "";
+		document.getElementById("fb_detection_count_hd").innerHTML = "Failback Retry Count";
+		document.getElementById("fb_seconds").style.display = "none";
+		document.getElementById("fb_tail_msg").style.display = "";
+    	document.getElementById("wandog_title").innerHTML = "Enable User-Defined Target";
+
+    	update_consume_bytes();
     }
+    else
+    	document.form.wans_mode.value = wans_mode_orig;
 
 	form_show(wans_flag);		
 	setTimeout("showLANIPList();", 1000);
@@ -111,6 +142,10 @@ function initial(){
 	if(based_modelid == "RT-AC87U"){ //MODELDEP: RT-AC87 : Quantenna port
                 document.form.wans_lanport1.remove(0);   //Primary LAN1
                 document.form.wans_lanport2.remove(0);   //Secondary LAN1
+	}
+
+	if(based_modelid == "4G-AC55U"){
+		update_detection_time();
 	}
 }
 
@@ -129,8 +164,8 @@ function form_show(v){
 		document.form.wans_routing_enable[1].checked = true;		
 		document.form.wans_routing_enable[0].disabled = true;
 		document.form.wans_routing_enable[1].disabled = true;
-		$('Routing_rules_table').style.display = "none";
-		$('wans_RoutingRules_Block').style.display = "none";	
+		document.getElementById('Routing_rules_table').style.display = "none";
+		document.getElementById('wans_RoutingRules_Block').style.display = "none";	
 		document.form.wans_primary.value = wans_dualwan_orig.split(" ")[0];	
 		appendLANoption1(document.form.wans_primary);
 		appendModeOption2("0");
@@ -298,14 +333,31 @@ function applyRule(){
 
 	if(wans_dualwan_orig.split(" ")[1] == "none")
 		document.form.wan_unit.value = 0;
-		
+
+	if(document.form.wandog_enable_radio[0].checked == true){
+		if(document.form.wandog_target.value == ""){
+			alert("Target cannot be blank.");
+			document.form.wandog_target.focus();
+			return;
+		}
+	}
+
 	var reboot_time	= eval("<% get_default_reboot_time(); %>");
 	if(based_modelid =="DSL-AC68U")
 		reboot_time += 70;
-	document.form.action_wait.value = reboot_time;	
+	document.form.action_wait.value = reboot_time;
+
+	if(document.form.wans_standby.value == "1" && document.form.wans_standby.value != wans_standby_orig){
+		document.getElementById("detect_time_confirm").style.display = "block";
+		document.form.detect_interval.value = min_detect_interval;
+		add_option_count(document.form.detect_interval, document.form.detect_count, min_fo_detect_count);
+		update_str_time();
+		return;
+	}
 
 	showLoading();
 	document.form.submit();
+
 }
 
 function addWANOption(obj, wanscapItem){
@@ -416,7 +468,7 @@ function appendLANoption2(obj){
 }
 
 function appendModeOption(v){
-		var wandog_enable_orig = "<% nvram_get("wandog_enable"); %>";
+		var wandog_enable_orig = '<% nvram_get("wandog_enable"); %>';
 		if(v == "lb"){
 			document.getElementById("lb_note").style.display = "";
 			inputCtrl(document.form.wans_lb_ratio_0, 1);
@@ -444,13 +496,13 @@ function appendModeOption(v){
 			inputCtrl(document.form.wans_routing_enable[1], 1);				
 			if('<% nvram_get("wans_routing_enable"); %>' == 1){
 				document.form.wans_routing_enable[0].checked = true;
-				$('Routing_rules_table').style.display = "";
-				$('wans_RoutingRules_Block').style.display = "";
+				document.getElementById('Routing_rules_table').style.display = "";
+				document.getElementById('wans_RoutingRules_Block').style.display = "";
 			}
 			else{
 				document.form.wans_routing_enable[1].checked = true;
-				$('Routing_rules_table').style.display = "none";
-				$('wans_RoutingRules_Block').style.display = "none";
+				document.getElementById('Routing_rules_table').style.display = "none";
+				document.getElementById('wans_RoutingRules_Block').style.display = "none";
 			}				
 			
 			appendModeOption2("0");
@@ -476,8 +528,8 @@ function appendModeOption(v){
 			document.form.wans_routing_enable[1].checked = true;				
 			document.form.wans_routing_enable[0].disabled = true;
 			document.form.wans_routing_enable[1].disabled = true;
-			$('Routing_rules_table').style.display = "none";
-			$('wans_RoutingRules_Block').style.display = "none";
+			document.getElementById('Routing_rules_table').style.display = "none";
+			document.getElementById('wans_RoutingRules_Block').style.display = "none";
 			
 			document.form.wandog_enable_radio[0].disabled = false;
 			document.form.wandog_enable_radio[1].disabled = false;
@@ -494,7 +546,7 @@ function appendModeOption(v){
 
 			add_option_count(document.form.wandog_interval, document.form.wandog_maxfail, wandog_maxfail_orig);
 
-			if("<% nvram_get("wans_mode"); %>" == "fb" ? true : false)
+			if(document.form.wans_mode.value == "fb" ? true : false)
 			{
 				document.getElementById("fb_checkbox").checked = true;
 				document.getElementById("wandog_fb_count_tr").style.display = "";
@@ -512,15 +564,15 @@ function appendModeOption(v){
 
 function appendModeOption2(v){
 	if(v == "1"){
-		inputCtrl(document.form.wandog_target, 1);		
+		inputCtrl(document.form.wandog_target, 1);
 	}else{
 		inputCtrl(document.form.wandog_target, 0);
 	}
 }
 
 function addRow_Group(upper){
-			var rule_num = $('wans_RoutingRules_table').rows.length;
-			var item_num = $('wans_RoutingRules_table').rows[0].cells.length;	
+			var rule_num = document.getElementById('wans_RoutingRules_table').rows.length;
+			var item_num = document.getElementById('wans_RoutingRules_table').rows[0].cells.length;	
 			if(rule_num >= upper){
 				alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 				return false;	
@@ -545,12 +597,12 @@ function addRow_Group(upper){
 			//Viz check same rule  //match(From IP, To IP) is not accepted
 			if(item_num >=2){	
 					for(i=0; i<rule_num; i++){	
-							if((document.form.wans_FromIP_x_0.value == $('wans_RoutingRules_table').rows[i].cells[0].innerHTML
-									&& document.form.wans_ToIP_x_0.value == $('wans_RoutingRules_table').rows[i].cells[1].innerHTML)
-								|| (document.form.wans_FromIP_x_0.value == $('wans_RoutingRules_table').rows[i].cells[0].innerHTML
-										&& (document.form.wans_ToIP_x_0.value == 'all' || $('wans_RoutingRules_table').rows[i].cells[1].innerHTML == 'all') )
-								|| (document.form.wans_ToIP_x_0.value == $('wans_RoutingRules_table').rows[i].cells[1].innerHTML
-										&& (document.form.wans_FromIP_x_0.value == 'all' || $('wans_RoutingRules_table').rows[i].cells[0].innerHTML == 'all') )		){
+							if((document.form.wans_FromIP_x_0.value == document.getElementById('wans_RoutingRules_table').rows[i].cells[0].innerHTML
+									&& document.form.wans_ToIP_x_0.value == document.getElementById('wans_RoutingRules_table').rows[i].cells[1].innerHTML)
+								|| (document.form.wans_FromIP_x_0.value == document.getElementById('wans_RoutingRules_table').rows[i].cells[0].innerHTML
+										&& (document.form.wans_ToIP_x_0.value == 'all' || document.getElementById('wans_RoutingRules_table').rows[i].cells[1].innerHTML == 'all') )
+								|| (document.form.wans_ToIP_x_0.value == document.getElementById('wans_RoutingRules_table').rows[i].cells[1].innerHTML
+										&& (document.form.wans_FromIP_x_0.value == 'all' || document.getElementById('wans_RoutingRules_table').rows[i].cells[0].innerHTML == 'all') )		){
 											
 									alert("<#JS_duplicate#>");
 									document.form.wans_FromIP_x_0.focus();
@@ -612,12 +664,12 @@ function show_wans_rules(){
 		}
 	}
   code +='</table>';
-	$("wans_RoutingRules_Block").innerHTML = code;
+	document.getElementById("wans_RoutingRules_Block").innerHTML = code;
 }
 
 function save_table(){
-	var rule_num = $('wans_RoutingRules_table').rows.length;
-	var item_num = $('wans_RoutingRules_table').rows[0].cells.length;
+	var rule_num = document.getElementById('wans_RoutingRules_table').rows.length;
+	var item_num = document.getElementById('wans_RoutingRules_table').rows[0].cells.length;
 	var tmp_value = "";
     var comp_tmp = "";
 
@@ -625,9 +677,9 @@ function save_table(){
 		tmp_value += "<"		
 		for(j=0; j<item_num-1; j++){							
 			if(j==2){
-				tmp_value += $('wans_RoutingRules_table').rows[i].cells[2].firstChild.value;
+				tmp_value += document.getElementById('wans_RoutingRules_table').rows[i].cells[2].firstChild.value;
 			}else{						
-				tmp_value += $('wans_RoutingRules_table').rows[i].cells[j].innerHTML;
+				tmp_value += document.getElementById('wans_RoutingRules_table').rows[i].cells[j].innerHTML;
 			}
 			
 			if(j != item_num-2)	
@@ -717,16 +769,16 @@ function appendcountry(obj){
 
 function del_Row(obj){
   var i=obj.parentNode.parentNode.rowIndex;
-  $('wans_RoutingRules_table').deleteRow(i);
+  document.getElementById('wans_RoutingRules_table').deleteRow(i);
   
   var routing_rules_value = "";
-	for(k=0; k<$('wans_RoutingRules_table').rows.length; k++){
-		for(j=0; j<$('wans_RoutingRules_table').rows[k].cells.length-1; j++){
+	for(k=0; k<document.getElementById('wans_RoutingRules_table').rows.length; k++){
+		for(j=0; j<document.getElementById('wans_RoutingRules_table').rows[k].cells.length-1; j++){
 			if(j == 0)	
 				routing_rules_value += "&#60";
 			else
 				routing_rules_value += "&#62";
-			routing_rules_value += $('wans_RoutingRules_table').rows[k].cells[j].innerHTML;		
+			routing_rules_value += document.getElementById('wans_RoutingRules_table').rows[k].cells[j].innerHTML;		
 		}
 	}
 	
@@ -751,7 +803,7 @@ function showLANIPList(){
 		code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+APPListArray[i][1]+'\');"><strong>'+APPListArray[i][0]+'</strong></div></a>';
 	}
 	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	$("ClientList_Block_PC").innerHTML = code;
+	document.getElementById("ClientList_Block_PC").innerHTML = code;
 }
 
 function setClientIP(ipaddr){
@@ -763,15 +815,15 @@ function setClientIP(ipaddr){
 var over_var = 0;
 var isMenuopen = 0;
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 }
 
 function pullLANIPList(obj){
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		document.form.wandog_target.focus();		
 		isMenuopen = 1;
 	}
@@ -781,24 +833,27 @@ function pullLANIPList(obj){
 
 function enable_lb_rules(flag){
 	if(flag == "1"){
-			$('Routing_rules_table').style.display = "";
-			$('wans_RoutingRules_Block').style.display = "";	
+			document.getElementById('Routing_rules_table').style.display = "";
+			document.getElementById('wans_RoutingRules_Block').style.display = "";	
 	}
 	else{
-			$('Routing_rules_table').style.display = "none";
-			$('wans_RoutingRules_Block').style.display = "none";
+			document.getElementById('Routing_rules_table').style.display = "none";
+			document.getElementById('wans_RoutingRules_Block').style.display = "none";
 	}
 }
 
 var str0="";
 function add_option_count(obj, obj_t, selected_flag){
 		
-		if(obj_t.name == "wandog_maxfail" || (obj_t.name == "wandog_fb_count" && document.getElementById("wandog_fb_count_tr").style.display == "")){
+		if(obj_t.name == "wandog_maxfail" || (obj_t.name == "wandog_fb_count" && document.getElementById("wandog_fb_count_tr").style.display == "") || obj_t.name == "detect_count"){
 				
 				free_options(obj_t);
 				for(var i=1; i<100; i++){
-						//add_option(selectObj, str, value, selected)
-						str0 = i*parseInt(obj.value);
+						if(based_modelid == "4G-AC55U")
+							str0= i;
+						else
+							str0 = i*parseInt(obj.value);
+
 						if(selected_flag == i)
 								add_option(obj_t, str0, i, 1);
 						else
@@ -822,6 +877,59 @@ function hotstandby_act(enable){
 			}
 		}
 	}
+}
+
+function update_detection_time(){
+	if(based_modelid == "4G-AC55U"){
+		document.getElementById("fo_detection_time").innerHTML = parseInt(document.form.wandog_interval.value)*parseInt(document.form.wandog_maxfail.value);
+		if(document.form.wans_mode.value == "fb")
+			document.getElementById("fb_detection_time").innerHTML = parseInt(document.form.wandog_interval.value)*parseInt(document.form.wandog_fb_count.value);
+	}
+}
+
+function update_consume_bytes(){
+    var consume_warning_str;
+    var interval_value = parseInt(document.form.wandog_interval.value);
+    var consume_bytes;
+    var MBytes = 1024*1024;
+
+    if(based_modelid == "4G-AC55U"){
+    consume_bytes = 86400/interval_value*128*30;
+	consume_bytes = Math.ceil(consume_bytes/MBytes);
+    consume_warning_str = "<#Detect_consume_warning1#> "+consume_bytes+" <#Detect_consume_warning2#>";
+    document.getElementById("consume_bytes_warning").style.display= "";
+    document.getElementById("consume_bytes_warning").innerHTML = consume_warning_str;
+	}
+}
+
+function validate_interval_value(){
+	if(!validator.numberRange(document.form.detect_interval, 1, 9)){
+		document.form.detect_interval.focus();
+	}
+}
+
+function update_str_time(){
+	if(!validator.numberRange(document.form.detect_interval, 1, 9)){
+		document.form.detect_interval.focus();
+		return;
+	}
+	var detection_time = parseInt(document.form.detect_interval.value)*parseInt(document.form.detect_count.value);
+	document.getElementById("str_detect_time").innerHTML = detection_time;
+	document.getElementById("detection_time_value").innerHTML = detection_time;
+}
+
+function change_detect_settings(){
+	document.getElementById("detect_time_confirm").style.display = "none";
+	document.form.wandog_interval.value = document.form.detect_interval.value;
+	document.form.wandog_maxfail.value = document.form.detect_count.value;
+	showLoading();
+	document.form.submit();
+}
+
+function remain_origins(){
+	document.getElementById("detect_time_confirm").style.display = "none";
+	showLoading();
+	document.form.submit();
 }
 
 </script>
@@ -852,7 +960,32 @@ function hotstandby_act(enable){
 <input type="hidden" name="wans_routing_rulelist" value=''>
 <input type="hidden" name="wan0_enable" value="<% nvram_get("wan0_enable"); %>">
 <input type="hidden" name="wan1_enable" value="<% nvram_get("wan1_enable"); %>">
-
+<!--===================================Beginning of Detection Time Confirm===========================================-->
+<div id="detect_time_confirm" style="display:none;">
+		<!--div style="margin:20px 30px 20px;"-->
+		<table width="90%" border="0" align="left" cellpadding="4" cellspacing="0" style="margin:15px 20px 15px; text-align:left;">
+			<tr><td colspan="2">To enable Hot Standby mode, it will accelerate the switching speed of the internet connection when incumbent interface failure.</td></tr><tr><td colspan="2">System will keep the standby WAN in connected state and reduce the detection interval, which will be shrunk to <span id="str_detect_time"></span>&nbsp;<#Second#>.</td></tr>
+			<tr>
+				<th style="width:30%;">Retry <#Interval#>:</th>
+				<td>
+					<input type="text" name="detect_interval" class="input_3_table" maxlength="1" value=min_detect_inverval; placeholder="5" autocorrect="off" autocapitalize="off" onKeyPress="return validator.isNumber(this, event);" onblur="update_str_time();" style="width: 38px; margin: 0px;">&nbsp;&nbsp;<#Second#>
+				</td>
+			</tr>
+			<tr>
+				<th>Retry Count:</th>
+				<td>
+					<select name="detect_count" class="input_option" onchange="update_str_time();" style="margin: 0px 0px;"></select>
+					<span id="detect_tail_msg">&nbsp;( Detection Time: <span id="detection_time_value"></span>&nbsp;&nbsp;<#Second#>)</span>
+				</td>
+			</tr>
+			</table>
+		<!--/div-->
+		<div style="padding-bottom:10px;width:100%;text-align:center;">
+		<input id="yesButton" class="button_gen" type="button" value="<#checkbox_Yes#>" onclick="change_detect_settings();">
+		<input id="noButton" class="button_gen" type="button" value="<#checkbox_No#>" onclick="remain_origins();">
+		</div>	
+</div>
+<!--===================================End of Detection Time Confirm===========================================-->
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>		
@@ -890,7 +1023,7 @@ function hotstandby_act(enable){
 												<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_dualwan_enable"></div>
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
-													$j('#radio_dualwan_enable').iphoneSwitch(wans_dualwan_orig.split(' ')[1] != 'none',
+													$('#radio_dualwan_enable').iphoneSwitch(wans_dualwan_orig.split(' ')[1] != 'none',
 														 function() {
 															wans_flag = 1;
 															inputCtrl(document.form.wans_second, 1);
@@ -936,7 +1069,7 @@ function hotstandby_act(enable){
 										<tr id="wans_mode_tr">
 											<th><#dualwan_mode#></th>
 											<td>
-												<input type="hidden" name="wans_mode" value='<% nvram_get("wans_mode"); %>'>
+												<input type="hidden" name="wans_mode" value=''>
 												<select id="wans_mode_option" class="input_option" onchange="appendModeOption(this.value);">
 													<option value="fo"><#dualwan_mode_fo#></option>
 													<option value="lb" <% nvram_match("wans_mode", "lb", "selected"); %>><#dualwan_mode_lb#></option>
@@ -948,7 +1081,8 @@ function hotstandby_act(enable){
 										  				document.form.wans_mode.value = (this.checked == true ? "fb" : "fo");
 										  				document.getElementById("wandog_fb_count_tr").style.display = (this.checked == true ? "" : "none");
 										  				if(document.getElementById("wandog_fb_count_tr").style.display == "")
-															add_option_count(document.form.wandog_interval, document.form.wandog_fb_count, wandog_fb_count_orig);	
+															add_option_count(document.form.wandog_interval, document.form.wandog_fb_count, wandog_fb_count_orig);
+														update_detection_time();
 										  			}
 										  		</script>
 												<div id="lb_note" style="color:#FFCC00; display:none;"><#dualwan_lb_note#></div>
@@ -968,9 +1102,9 @@ function hotstandby_act(enable){
 			          		<tr>
 			            		<th><#dualwan_mode_lb_setting#></th>
 			            		<td>
-									<input type="text" maxlength="1" class="input_3_table" name="wans_lb_ratio_0" value="" onkeypress="return validator.isNumber(this,event);" />
+									<input type="text" maxlength="1" class="input_3_table" name="wans_lb_ratio_0" value="" onkeypress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off"/>
 									&nbsp; : &nbsp;
-									<input type="text" maxlength="1" class="input_3_table" name="wans_lb_ratio_1" value="" onkeypress="return validator.isNumber(this,event);" />												
+									<input type="text" maxlength="1" class="input_3_table" name="wans_lb_ratio_1" value="" onkeypress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off"/>												
 								</td>
 			          		</tr>
 
@@ -1010,37 +1144,39 @@ function hotstandby_act(enable){
 					</thead>
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,4);"><#Delay#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,4);">First Time <#Delay#></a></th>
 						<td>
-		        		<input type="text" name="wandog_delay" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_delay"); %>" onKeyPress="return validator.isNumber(this, event);" placeholder="0">&nbsp;&nbsp;<#Second#>
+		        		<input type="text" name="wandog_delay" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_delay"); %>" onKeyPress="return validator.isNumber(this, event);" placeholder="0" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;<#Second#>
 						</td>
-					</tr>					
+					</tr>			
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,3);"><#Interval#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,3);">Retry <#Interval#></a></th>
 						<td>
-		        		<input type="text" name="wandog_interval" class="input_3_table" maxlength="1" value="<% nvram_get("wandog_interval"); %>" onBlur="add_option_count(this, document.form.wandog_maxfail, document.form.wandog_maxfail.value);add_option_count(this, document.form.wandog_fb_count, document.form.wandog_fb_count.value);" onKeyPress="return validator.isNumber(this, event);" placeholder="5">&nbsp;&nbsp;<#Second#>
+		        		<input type="text" name="wandog_interval" class="input_3_table" maxlength="1" value="<% nvram_get("wandog_interval"); %>" onblur="add_option_count(this, document.form.wandog_maxfail, document.form.wandog_maxfail.value);add_option_count(this, document.form.wandog_fb_count, document.form.wandog_fb_count.value);update_consume_bytes();update_detection_time();" onKeyPress="return validator.isNumber(this, event);" placeholder="5" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;<#Second#><div><span id="consume_bytes_warning" style="display:none;"></span></div>
 						</td>
-					</tr>	
+					</tr>
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,5);"><#dualwan_pingtime_detect#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,5);"><div id="fo_detection_count_hd"><#dualwan_pingtime_detect#></div></a></th>
 						<td>
-									<select name="wandog_maxfail" class="input_option">
-									</select>&nbsp;&nbsp;<#Second#>
+									<select name="wandog_maxfail" class="input_option" onchange="update_detection_time();">
+									</select>&nbsp;&nbsp;<span id="fo_seconds" style="color:#FFFFFF;"><#Second#></span>
+									<span id="fo_tail_msg" style="display: none">(<#dualwan_pingtime_detect#>: <span id="fo_detection_time"></span>&nbsp;&nbsp;<#Second#>)</span>
 						</td>
-					</tr>	
+					</tr>
 
 					<tr id="wandog_fb_count_tr">
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,6);"><#dualwan_pingtime_fb_detect#></a></th>	
-						<td>		        		
-									<select name="wandog_fb_count" class="input_option">
-									</select>&nbsp;&nbsp;<#Second#>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,6);"><div id="fb_detection_count_hd"><#dualwan_pingtime_fb_detect#></div></a></th>	
+						<td>     		
+									<select name="wandog_fb_count" class="input_option" onchange="update_detection_time();">
+									</select>&nbsp;&nbsp;<span id="fb_seconds" style="color:#FFFFFF;"><#Second#></span>
+									<span id="fb_tail_msg" style="display: none">(<#dualwan_pingtime_fb_detect#>: <span id="fb_detection_time"></span>&nbsp;&nbsp;<#Second#>)</span>
 						</td>
 					</tr>
 					
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);"><#wandog_enable#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,1);"><div id="wandog_title"><#wandog_enable#></div></a></th>
 				        <td>
 					 		<input type="radio" value="1" id="wandog_enable_radio1" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "1", "checked"); %> onClick="appendModeOption2(this.value);"><label for="wandog_enable_radio1"><#checkbox_Yes#></label>
 	 						<input type="radio" value="0" id="wandog_enable_radio2" name="wandog_enable_radio" class="content_input_fd" <% nvram_match("wandog_enable", "0", "checked"); %> onClick="appendModeOption2(this.value);"><label for="wandog_enable_radio2"><#checkbox_No#></label>
@@ -1049,7 +1185,7 @@ function hotstandby_act(enable){
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,2);"><#NetworkTools_target#></a></th>
 						<td>
-								<input type="text" class="input_32_table" name="wandog_target" maxlength="100" value="<% nvram_get("wandog_target"); %>" placeholder="ex: www.google.com">
+								<input type="text" class="input_32_table" name="wandog_target" maxlength="100" value="<% nvram_get("wandog_target"); %>" placeholder="ex: www.google.com" autocorrect="off" autocapitalize="off">
 								<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_network_host#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 								<div id="ClientList_Block_PC" class="ClientList_Block_PC" style="display:none;"></div>
 						</td>
@@ -1091,10 +1227,10 @@ function hotstandby_act(enable){
 			  			<!-- rules info -->
 			  		
             			<td width="30%">            			
-                		<input type="text" class="input_15_table" maxlength="18" name="wans_FromIP_x_0" style="" onKeyPress="return validator.isIPAddrPlusNetmask(this,event)">
+                		<input type="text" class="input_15_table" maxlength="18" name="wans_FromIP_x_0" style="" onKeyPress="return validator.isIPAddrPlusNetmask(this,event)" autocorrect="off" autocapitalize="off">
                 	</td>
             			<td width="30%">
-            				<input type="text" class="input_15_table" maxlength="18" name="wans_ToIP_x_0" onkeypress="return validator.isIPAddrPlusNetmask(this,event)">
+            				<input type="text" class="input_15_table" maxlength="18" name="wans_ToIP_x_0" onkeypress="return validator.isIPAddrPlusNetmask(this,event)" autocorrect="off" autocapitalize="off">
             			</td>
             			<td width="25%">
 										<select name="wans_unit_x_0" class="input_option">

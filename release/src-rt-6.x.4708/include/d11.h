@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: d11.h 454474 2014-02-10 22:56:34Z $
+ * $Id: d11.h 460918 2014-03-10 15:05:05Z $
  */
 
 #ifndef	_D11_H
@@ -1402,7 +1402,7 @@ BWL_PRE_PACKED_STRUCT struct d11actxh_cache {
 	uint8   FallbackMpduMax;                /* 3 */
 	uint16  AmpduDur;                       /* 4 - 5 */
 	uint8   BAWin;                          /* 6 */
-	uint8   Pad;                            /* 7 */
+	uint8   MaxAggLen;                      /* 7 */
 	uint8   TkipPH1Key[10];                 /*  8 - 17 */
 	uint8   TSCPN[6];                       /* 18 - 23 */
 } BWL_POST_PACKED_STRUCT;

@@ -100,24 +100,24 @@ function updateOptions(){
 
 function hideCNT(_val){
 	if(_val == "ping"){
-		$("pingCNT_tr").style.display = "";
-		$("cmdDesc").innerHTML = "<#NetworkTools_Ping#>";
+		document.getElementById("pingCNT_tr").style.display = "";
+		document.getElementById("cmdDesc").innerHTML = "<#NetworkTools_Ping#>";
 	}
 	else if(_val == "traceroute"){
-		$("pingCNT_tr").style.display = "none";
-		$("cmdDesc").innerHTML = "<#NetworkTools_tr#>";
+		document.getElementById("pingCNT_tr").style.display = "none";
+		document.getElementById("cmdDesc").innerHTML = "<#NetworkTools_tr#>";
 	}
 	else{
-		$("pingCNT_tr").style.display = "none";
-		$("cmdDesc").innerHTML = "<#NetworkTools_nslookup#>";
+		document.getElementById("pingCNT_tr").style.display = "none";
+		document.getElementById("cmdDesc").innerHTML = "<#NetworkTools_nslookup#>";
 	}
 }
 
-var $j = jQuery.noConflict();
+
 var _responseLen;
 var noChange = 0;
 function checkCmdRet(){
-	$j.ajax({
+	$.ajax({
 		url: '/cmdRet_check.htm',
 		dataType: 'html',
 		
@@ -176,7 +176,7 @@ function showLANIPList(){
 		code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+AppListArray[i][1]+'\');"><strong>'+AppListArray[i][0]+'</strong></div></a>';
 	}
 	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	$("ClientList_Block_PC").innerHTML = code;
+	document.getElementById("ClientList_Block_PC").innerHTML = code;
 }
 
 function setClientIP(ipaddr){
@@ -188,15 +188,15 @@ function setClientIP(ipaddr){
 var over_var = 0;
 var isMenuopen = 0;
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 }
 
 function pullLANIPList(obj){
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		document.form.destIP.focus();		
 		isMenuopen = 1;
 	}
@@ -255,7 +255,7 @@ function pullLANIPList(obj){
 										<tr>
 											<th width="20%"><#NetworkTools_target#></th>
 											<td>
-												<input type="text" class="input_32_table" name="destIP" maxlength="100" value="" placeholder="ex: www.google.com">
+												<input type="text" class="input_32_table" name="destIP" maxlength="100" value="" placeholder="ex: www.google.com" autocorrect="off" autocapitalize="off">
 												<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_network_host#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 												<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 											</td>
@@ -263,7 +263,7 @@ function pullLANIPList(obj){
 										<tr id="pingCNT_tr">
 											<th width="20%"><#NetworkTools_Count#></th>
 											<td>
-		              			<input type="text" name="pingCNT" class="input_3_table" maxlength="2" value="" onKeyPress="return validator.isNumber(this, event);" placeholder="5">
+												<input type="text" name="pingCNT" class="input_3_table" maxlength="2" value="" onKeyPress="return validator.isNumber(this, event);" placeholder="5" autocorrect="off" autocapitalize="off">
 											</td>
 										</tr>
 									</table>
@@ -295,7 +295,6 @@ function pullLANIPList(obj){
 </body>
 <script type="text/javascript">
 <!--[if !IE]>-->
-	jQuery.noConflict();
 	(function($){
 		var textArea = document.getElementById('textarea');
 		textArea.scrollTop = textArea.scrollHeight;

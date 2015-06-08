@@ -54,7 +54,11 @@ int br_handle_frame_finish(struct sk_buff *skb)
 
 	/* insert into forwarding database after filtering to avoid spoofing */
 	br = p->br;
+#ifdef HNDCTF
+	br_fdb_update(br, p, eth_hdr(skb)->h_source, skb);
+#else
 	br_fdb_update(br, p, eth_hdr(skb)->h_source);
+#endif
 
 	if (is_multicast_ether_addr(dest) &&
 	    br_multicast_rcv(br, p, skb))
@@ -115,7 +119,11 @@ static int br_handle_local_finish(struct sk_buff *skb)
 {
 	struct net_bridge_port *p = br_port_get_rcu(skb->dev);
 
+#ifdef HNDCTF
+	br_fdb_update(p->br, p, eth_hdr(skb)->h_source, skb);
+#else
 	br_fdb_update(p->br, p, eth_hdr(skb)->h_source);
+#endif
 	return 0;	 /* process further */
 }
 

@@ -30,6 +30,17 @@ var wanauxstate = -1;
 <% wanstate(); %>
 <% wanlink(); %>
 
+var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
+if(wans_dualwan != ""){
+	var ewan_index = wans_dualwan.indexOf("wan");
+	var autodet_state = (ewan_index == 0)? '<% nvram_get("autodet_state"); %>': '<% nvram_get("autodet1_state"); %>';
+	var autodet_auxstate = (ewan_index == 0)? '<% nvram_get("autodet_auxstate"); %>': '<% nvram_get("autodet1_auxstate"); %>';
+}
+else{
+	var autodet_state = '<% nvram_get("autodet_state"); %>';
+	var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';
+}
+
 function LinkCheck(url)
 {
     var http = new XMLHttpRequest();
@@ -102,9 +113,6 @@ function QKinternettype_load_body(){
 	if(parent.ISMOBILE){
 		document.getElementById("QISmain").style.display = "none";
 		document.getElementById("QISmain_m").style.display = "";
-		if(based_modelid == "4G-AC55U"){
-			document.getElementById("Productdesc_0_m").style.display = "";
-		}
 		return true;
 	}
 
@@ -149,14 +157,11 @@ function QKinternettype_load_body(){
 		document.getElementById("Productdesc_2").innerHTML = check_desc2;
 		document.getElementById("Productdesc_3").innerHTML = check_desc3;
 		document.getElementById("Productdesc_4").innerHTML = check_desc4;
-	}	
-	
+	}
+
 	if(based_modelid == "4G-AC55U"){
-		var check_desc0 = "<#QIS_welcome_feature0#>";	
-		document.getElementById("Productdesc_0").style.display = "";	
-		document.getElementById("Productdesc_0").innerHTML = check_desc0;
-		document.getElementById("desc_td").width = "60%";
-		document.getElementById("product_td").width = "40%";
+		document.getElementById("main_manual").style.display = "none";
+		document.getElementById("lte_manual").style.display = "";
 	}
 	
 	document.getElementById("btn_next_step").focus();
@@ -368,8 +373,7 @@ function uploadSetting(){
 						<td id="desc_td" width="55%" colspan="2" >
 							<div id="productDesc" style="font-style:italic;">				
 								<p style="font-size:20px;font-weight:bolder;margin-bottom:15px;"><#statusTitle_System#></p>
-								<ul>		
-									<li style="line-height:25px; display:none" id="Productdesc_0"></li>								
+								<ul>							
 									<li style="line-height:25px;" id="Productdesc_1"></li>
 									<li style="line-height:25px;" id="Productdesc_2"></li>
 									<li style="line-height:25px;" id="Productdesc_3"></li>
@@ -407,15 +411,23 @@ function uploadSetting(){
 			<td>
 				<div id="AreaHint" style="margin-top:25px;">
 					<div><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
-					<div style="padding-left:20px;margin-top:10px">
+					<div id="main_manual" style="padding-left:20px;margin-top:10px">
 						<span>You are a network expert and want to skip internet setup wizard? Click</span>
-						<a><span style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick="submitForm(0)">Manual Setting</span></a>
+						<a><span style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick="submitForm(0)"><#Manual_Setting_btn#></span></a>
 						<span>to setup Internet, wireless in advanced mode or configure <#Web_Title2#> as <#OP_AP_item#></span>
 						<span id="repeater_title" style="display:none">/ <#OP_RE_item#></span>
 						<span id="mediaBridge_title" style="display:none">/ Media Bridge</span>
 						<span>.&nbsp Click</span>
-						<a><label for="upload_setting_profile" style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick="">Restore Setting</label></a>
+						<a><label for="upload_setting_profile" style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick=""><#Setting_upload_itemname#></label></a>
 						<span>to load saved configuration settings.</span>
+					</div>	
+					<div id="lte_manual" style="padding-left:20px;margin-top:10px;display:none">
+						<span>Click</span>
+						<a><span style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick="submitForm(0)"><#Manual_Setting_btn#></span></a>
+						<span>to setup Internet manually if you have know the Internet connection type.</span>
+						<span>Click</span>
+						<a><label for="upload_setting_profile" style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick=""><#Setting_upload_itemname#></label></a>
+						<span>restore the configuration if you back up the configuration settings before resetting the router.</span>
 					</div>
 					<div style="height:30px;display:none">
 						<input id="upload_setting_profile" type="file" name="file" class="input" style="color:#FFCC00;" onchange="uploadSetting();">
@@ -428,8 +440,7 @@ function uploadSetting(){
 
 <div style="display:none;" id="QISmain_m">
 	<div id="QISFeature" style="margin-left:-20px;">
-		<ul>		
-			<li style="line-height:25px; display:none" id="Productdesc_0_m"><#QIS_welcome_feature0#></li>				
+		<ul>			
 			<li style="line-height:25px;"><#QIS_welcome_feature1#></li>
 			<li style="line-height:25px;"><#QIS_welcome_feature2#></li>
 			<li style="line-height:25px;"><#QIS_welcome_feature3#></li>

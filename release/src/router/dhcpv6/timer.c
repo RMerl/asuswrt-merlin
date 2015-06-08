@@ -35,6 +35,7 @@
 
 #include <netinet/in.h>
 
+#include <errno.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <stdlib.h>
@@ -56,18 +57,39 @@ static struct timeval tm_max = {0x7fffffff, 0x7fffffff};
 static void timeval_add __P((struct timeval *, struct timeval *,
 			     struct timeval *));
 
-int gettimeofdaymonotonic(struct timeval *tv)
+time_t
+dhcp6_time(now)
+	struct timeval *now;
 {
-	struct timespec ts;
-	int retval = clock_gettime(CLOCK_MONOTONIC, &ts);
+	struct timeval tv;
+	int retval;
+#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
+	struct timespec tp;
+
+	/*
+	 * clock_gettime() is granted to be increased monotonically when the
+	 * monotonic clock is queried. Time starting point is unspecified, it
+	 * could be the system start-up time, the Epoch, or something else,
+	 * in any case the time starting point does not change once that the
+	 * system has started up.
+	 */
+	retval = clock_gettime(CLOCK_MONOTONIC, &tp);
 	if (retval == 0) {
-		if (tv) {
-			tv->tv_sec = ts.tv_sec;
-			tv->tv_usec = ts.tv_nsec / 1000;
-		}
-		return retval;
+		tv.tv_sec = tp.tv_sec;
+		tv.tv_usec = tp.tv_nsec / 1000;
 	}
-	return gettimeofday(tv, NULL);
+#else
+	retval = gettimeofday(&tv, NULL);
+#endif
+	if (retval != 0) {
+		dprintf(LOG_ERR, FNAME,
+			"get time failed: %s", strerror(errno));
+		return (time_t)-1;
+	}
+
+	if (now)
+		*now = tv;
+	return tv.tv_sec;
 }
 
 void
@@ -121,7 +143,7 @@ dhcp6_set_timer(tm, timer)
 	struct timeval now;
 
 	/* reset the timer */
-	gettimeofdaymonotonic(&now);
+	dhcp6_time(&now);
 
 	timeval_add(&now, tm, &timer->tm);
 
@@ -144,7 +166,7 @@ dhcp6_check_timer()
 	struct timeval now;
 	struct dhcp6_timer *tm, *tm_next;
 
-	gettimeofdaymonotonic(&now);
+	dhcp6_time(&now);
 
 	tm_sentinel = tm_max;
 	for (tm = LIST_FIRST(&timer_head); tm; tm = tm_next) {
@@ -177,7 +199,7 @@ dhcp6_timer_rest(timer)
 	struct timeval now;
 	static struct timeval returnval; /* XXX */
 
-	gettimeofdaymonotonic(&now);
+	dhcp6_time(&now);
 	if (TIMEVAL_LEQ(timer->tm, now)) {
 		dprintf(LOG_DEBUG, FNAME,
 		    "a timer must be expired, but not yet");

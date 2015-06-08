@@ -173,16 +173,14 @@ static struct xt_match time_match[] = {
 
 static int __init init(void)
 {
-	printk("ipt_time loading\n");
 	//return ipt_register_match(&time_match);
-	return xt_register_match(&time_match);
+	return xt_register_matches(time_match, ARRAY_SIZE(time_match));
 }
 
 static void __exit fini(void)
 {
 	//ipt_unregister_match(&time_match);
-	xt_unregister_match(&time_match);
-	printk("ipt_time unloaded\n");
+	xt_unregister_matches(time_match, ARRAY_SIZE(time_match));
 }
 
 module_init(init);

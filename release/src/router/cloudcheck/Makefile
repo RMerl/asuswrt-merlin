@@ -17,8 +17,6 @@ install:
 	@echo " [cloudcheck] installing..."
 	install -D $(SRCDIR)/booster $(INSTALLDIR)/bin/booster
 	install -D $(SRCDIR)/booster_watchdog $(INSTALLDIR)/bin/booster_watchdog
-	install -D $(SRCDIR)/libpolarssl.so.0 $(INSTALLDIR)/lib/libpolarssl.so.0
-	cd $(INSTALLDIR)/lib && ln -sf libpolarssl.so.0 libpolarssl.so
 
 clean:
 	rm -f stamp-h1

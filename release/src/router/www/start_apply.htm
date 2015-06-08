@@ -10,7 +10,7 @@
 
 var page_modified = 0;
 var restart_time = 0;
-var rc_support = "<% nvram_get("rc_support"); %>"; 
+var rc_support = '<% nvram_get("rc_support"); %>'; 
 var dsl_support = (rc_support.search("dsl") == -1) ? false : true;
 var tmo_support = (rc_support.search("tmo") == -1) ? false : true;
 var current_page = '<% get_parameter("current_page"); %>';
@@ -114,7 +114,220 @@ var makeRequest = {
 	}
 };
 
+function showWlHint(){
+	var wl_nband_title = (function(){
+		String.prototype.toArray = function(){
+			var ret = eval(this.toString());
+			if(Object.prototype.toString.apply(ret) === '[object Array]')
+				return ret;
+			return [];
+		}
+
+		var wl_nband_title = [];
+		var wl_nband_array = "<% wl_nband_info(); %>".toArray();
+		var band2g_count = 0;
+		var band5g_count = 0;
+		for (var j=0; j<wl_nband_array.length; j++) {
+			if(wl_nband_array[j] == '2'){
+				band2g_count++;
+				wl_nband_title.push("2.4GHz-" + band2g_count);
+			}
+			else if(wl_nband_array[j] == '1'){
+				band5g_count++;
+				wl_nband_title.push("5GHz-" + band5g_count);
+			}
+		}
+		if(wl_nband_title.indexOf("2.4GHz-2") == -1) wl_nband_title[wl_nband_title.indexOf("2.4GHz-1")] = "2.4GHz";
+		if(wl_nband_title.indexOf("5GHz-2") == -1) wl_nband_title[wl_nband_title.indexOf("5GHz-1")] = "5GHz";
+
+		return wl_nband_title;
+	})();
+
+	var doRedirect = function(){
+		var getXMLAndRedirect = function(){
+			if(makeRequest._notSupportXML){
+				if(current_page.length > 0){
+					top.location.href = current_page;
+				}
+			}
+
+			makeRequest.start('/httpd_check.xml', function(xmldoc){
+				var httpds = xmldoc.getElementsByTagName("httpd");
+				if (httpds !== null && httpds[0] !== null) {
+					if(top.document.getElementById("connectedHint")){
+						top.document.getElementById("connectedHint").innerHTML = "<#DrSurf_sweet_advise2#>";
+					}
+
+					setTimeout(function(){
+						top.location.href = current_page;
+						if(top.document.getElementById("wlHint")) top.document.getElementById("wlHint").style.display = "none";
+					}, 300);
+				}
+			}, getXMLAndRedirect);
+		};
+		
+		getXMLAndRedirect();
+	};
+
+	var getWlHint = function(wlObj){
+		if(wlObj.length == 0 || typeof wlObj == "undefined") return false;
+
+		var wlHintCss = document.createElement("style");
+		wlHintCss.type = "text/css";
+		wlHintCss.innerHTML += ".dr_sweet_advise_wl_hint{";
+		wlHintCss.innerHTML += "filter:alpha(opacity=90);";
+		wlHintCss.innerHTML += "opacity:.90;";
+		wlHintCss.innerHTML += "-webkit-border-radius: 10px;";
+		wlHintCss.innerHTML += "-moz-border-radius: 10px;";
+		wlHintCss.innerHTML += "border-radius: 10px;";
+		wlHintCss.innerHTML += "behavior: url(/PIE.htc);";
+		wlHintCss.innerHTML += "border-radius: 10px 10px 10px 10px;";
+		wlHintCss.innerHTML += "border: 0px;";
+		wlHintCss.innerHTML += "width:90%;";
+		wlHintCss.innerHTML += "max-width: 900px;";
+		wlHintCss.innerHTML += "margin-top: 100px;";
+		wlHintCss.innerHTML += "font-size:26px;";
+		wlHintCss.innerHTML += "color:#FFFFFF;";
+		wlHintCss.innerHTML += "background-color:#000000;";
+		wlHintCss.innerHTML += "font-family:Arial, Helvetica, sans-serif;";
+		wlHintCss.innerHTML += "}";
+		wlHintCss.innerHTML += ".wl_hint_content{";
+		wlHintCss.innerHTML += "-webkit-border-radius: 10px;";
+		wlHintCss.innerHTML += "-moz-border-radius: 10px;";
+		wlHintCss.innerHTML += "border-radius: 10px;";
+		wlHintCss.innerHTML += "background-color:#FFFFFF;";
+		wlHintCss.innerHTML += "color:#006699;";
+		wlHintCss.innerHTML += "border:1px solid #999;";
+		wlHintCss.innerHTML += "margin:10px;";
+		wlHintCss.innerHTML += "text-align:left;";
+		wlHintCss.innerHTML += "padding:10px;";
+		wlHintCss.innerHTML += "font-size:18px;";
+		wlHintCss.innerHTML += "font-family:Arial, Verdana, Helvetica, sans-serif;";
+		wlHintCss.innerHTML += "line-height:130%;";
+		wlHintCss.innerHTML += "}";
+		wlHintCss.innerHTML += ".wl_hint_content span{";
+		wlHintCss.innerHTML += "color:#FF6600;";
+		wlHintCss.innerHTML += "}";
+		top.document.body.appendChild(wlHintCss);
+
+		var wlHintDiv = document.createElement("div");
+		var htmlCode = '';
+		wlHintDiv.setAttribute("id", "wlHint");
+		htmlCode += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;text-align:center;z-index:99999;background-color:#444F53;overflow:hidden;">';
+		htmlCode += '<table cellpadding="5" cellspacing="0" class="dr_sweet_advise_wl_hint" align="center">';
+		htmlCode += '<tbody>';
+		htmlCode += '<tr>';
+		htmlCode += '<td>';
+		htmlCode += '<div class="wl_hint_content">';
+		htmlCode += "<#DrSurf_sweet_advise1#>";
+		htmlCode += '<div id="wireless_client_detect" style="margin-top:15px;">';
+		htmlCode += '<#qis_tutor_title1#>:';
+		htmlCode += '<ul>';
+
+		for(var i=0; i<wlObj.length; i++){
+			htmlCode += (wlObj.length == 1) ? "" : '<li style="font-family:Lucida Console; margin-top: 10px;"><b>' + wlObj[i].band + ':</b>';
+			htmlCode += '<ul>';
+			htmlCode += '<li>';
+			htmlCode += '<#Wireless_name#>: <span style="font-weight:bold;font-size:20px;font-family:Lucida Console;">'
+			htmlCode += wlObj[i].ssid;
+			htmlCode += '</span>';
+			htmlCode += '</li>';
+			htmlCode += '<li> ';
+			htmlCode += '<#Network_key#>: <span style="font-weight:bold;font-size:20px;font-family:Lucida Console;">'
+			htmlCode += (wlObj[i].key == "") ? "Open System" : wlObj[i].key;
+			htmlCode += '</span>';
+			htmlCode += '</li>';
+			htmlCode += '</ul>';
+			htmlCode += (wlObj.length == 1) ? "" : '</li>';
+		}		
+		
+		htmlCode += '</ul>';
+		htmlCode += '</div>';
+		htmlCode += '<div style="text-align: right;"><span style="font-size:28px;margin-right:5px;" id="connectedHint"></span>';
+		htmlCode += '<img width="32px" src="images/InternetScan.gif" />';
+		htmlCode += '</div>';
+		htmlCode += '</div>';
+		htmlCode += '</td>';
+		htmlCode += '</tr>';
+		htmlCode += '</tbody>';
+		htmlCode += '</table></div>';
+		wlHintDiv.innerHTML = htmlCode;
+		top.document.body.appendChild(wlHintDiv);
+	};
+
+	var genWlObj = function(){
+		var wlObj = [];
+		var wlUnit = function(_band, _ssid, _key){
+			this.band = _band;
+			this.ssid = _ssid;
+			this.key = _key;
+		}
+
+		var ssid_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>')];
+		var auth_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_auth_mode_x"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_auth_mode_x"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_auth_mode_x"); %>')];
+		var key_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>')];
+
+		var ssid_param = [decodeURIComponent('<% get_ascii_parameter("wl0_ssid"); %>'), decodeURIComponent('<% get_ascii_parameter("wl1_ssid"); %>'), decodeURIComponent('<% get_ascii_parameter("wl2_ssid"); %>')];
+		var auth_param = [decodeURIComponent('<% get_ascii_parameter("wl0_auth_mode_x"); %>'), decodeURIComponent('<% get_ascii_parameter("wl1_auth_mode_x"); %>'), decodeURIComponent('<% get_ascii_parameter("wl2_auth_mode_x"); %>')];
+		var key_param = [decodeURIComponent('<% get_ascii_parameter("wl0_wpa_psk"); %>'), decodeURIComponent('<% get_ascii_parameter("wl1_wpa_psk"); %>'), decodeURIComponent('<% get_ascii_parameter("wl2_wpa_psk"); %>')];
+
+		var applyParam = {
+			unit: decodeURIComponent('<% get_ascii_parameter("wl_unit"); %>'),
+			ssid: decodeURIComponent('<% get_ascii_parameter("wl_ssid"); %>'),
+			auth: decodeURIComponent('<% get_ascii_parameter("wl_auth_mode_x"); %>'),
+			key: decodeURIComponent('<% get_ascii_parameter("wl_wpa_psk"); %>'),
+			smartConnect: decodeURIComponent('<% get_ascii_parameter("smart_connect_x"); %>')
+		}
+
+		// original profile
+		for(var i=0; i<wl_nband_title.length; i++){
+			wlObj.push(new wlUnit(wl_nband_title[i], ssid_nvram[i], (auth_nvram[i] == "open") ? "" : key_nvram[i]));
+		}
+
+		if(applyParam.ssid != ""){
+			// handle wl
+			if(applyParam.smartConnect == 1){
+				applyParam.unit = 0;
+				wlObj.length = 1;
+			}
+
+			wlObj[applyParam.unit].ssid = applyParam.ssid;
+			wlObj[applyParam.unit].key = (applyParam.auth == "open") ? "" : applyParam.key;				
+		}
+		else{
+			// handle wlX
+			for(var i=0; i<wlObj.length; i++){
+				if(ssid_param[i] != ""){
+					wlObj[i].ssid = ssid_param[i];
+					wlObj[i].key = (auth_param[i] == "open") ? "" : key_param[i];
+				}
+			}			
+		}
+
+		return wlObj;
+	};
+
+	getWlHint(genWlObj());	
+	setTimeout(function(){doRedirect();}, 5000);
+}
+
 function initial(){
+	var isWLclient = function () {  //detect login client is by wireless or wired
+		<% login_state_hook(); %>
+		var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
+			
+		if(wireless.length > 0) {
+			for(var i = 0; i < wireless.length; i += 1) {
+				if(wireless[i][0].toUpperCase() == login_mac_str().toUpperCase()) {
+					return true;  //wireless
+				}
+			}
+		}
+
+		return false; //wired
+	};
+
+
 	var getXMLAndRedirect = function(){
 		if(makeRequest._notSupportXML){
 			if(getflag !== ""){
@@ -206,21 +419,6 @@ function initial(){
 				else{			
 					parent.showLoading(restart_time, "waiting");
 
-					var isWLclient = function () {  //detect login client is by wireless or wired
-						<% login_state_hook(); %>
-						var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-							
-						if(wireless.length > 0) {
-							for(var i = 0; i < wireless.length; i += 1) {
-								if(wireless[i][0].toUpperCase() == login_mac_str().toUpperCase()) {
-									return true;  //wireless
-								}
-							}
-						}
-
-						return false; //wired
-					};
-
 					if(isWLclient()) {
 							setTimeout(getXMLAndRedirect, restart_time*1000);
 					}
@@ -284,7 +482,10 @@ function initial(){
 	else if(page_modified == 1){
 		parent.showLoading(restart_time, "waiting");
 		if(current_page.length > 0){
-			if(current_page.indexOf("clients.asp") >= 0){
+			if(action_script == "restart_wireless" && isWLclient()){
+				showWlHint();
+			}
+			else if(current_page.indexOf("clients.asp") >= 0){
 				document.redirectForm.flag.value = "Client";
 				setTimeout("top_delay_redirect('/');", restart_time*1000);
 			}

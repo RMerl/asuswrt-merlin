@@ -176,25 +176,25 @@ function change_dsl_diag_enable(value) {
 <tr>
 <th width="30%"><#feedback_country#> *</th>
 <td>
-	<input type="text" name="fb_country" maxlength="30" class="input_25_table" value="">
+	<input type="text" name="fb_country" maxlength="30" class="input_25_table" value="" autocorrect="off" autocapitalize="off">
 </td>
 </tr>
 <tr>
 <th><#feedback_isp#> *</th>
 <td>
-	<input type="text" name="fb_ISP" maxlength="40" class="input_25_table" value="">
+	<input type="text" name="fb_ISP" maxlength="40" class="input_25_table" value="" autocorrect="off" autocapitalize="off">
 </td>
 </tr>
 <tr>
 <th>Name of the Subscribed Plan/Service/Package *</th>
 <td>
-	<input type="text" name="fb_Subscribed_Info" maxlength="50" class="input_25_table" value="">
+	<input type="text" name="fb_Subscribed_Info" maxlength="50" class="input_25_table" value="" autocorrect="off" autocapitalize="off">
 </td>
 </tr>
 <tr>
 <th><#feedback_email#> *</th>
 <td>
-	<input type="text" name="fb_email" maxlength="50" class="input_25_table" value="">
+	<input type="text" name="fb_email" maxlength="50" class="input_25_table" value="" autocorrect="off" autocapitalize="off">
 </td>
 </tr>
 
@@ -250,7 +250,7 @@ function change_dsl_diag_enable(value) {
 	<td>
 		<textarea name="fb_comment" maxlength="2000" cols="55" rows="8" style="font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" onKeyDown="textCounter(this,document.form.msglength,2000);" onKeyUp="textCounter(this,document.form.msglength,2000)"></textarea>
 		<span style="color:#FC0">Maximum of 2000 characters - characters left : </span>
-		<input type="text" class="input_6_table" name="msglength" id="msglength" maxlength="4" value="2000" readonly>
+		<input type="text" class="input_6_table" name="msglength" id="msglength" maxlength="4" value="2000" autocorrect="off" autocapitalize="off" readonly>
 	</td>
 </tr>
 

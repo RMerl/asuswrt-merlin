@@ -29,7 +29,6 @@ p{
 </style>
 
 <script>
-var $j = jQuery.noConflict();
 overlib_str_tmp = "";
 overlib.isOut = true;
 
@@ -138,7 +137,7 @@ function get_wlclient_list() {
 		timedEvent = 0;
 	}
 
-	$j.ajax({
+	$.ajax({
 		url: '/ajax_wificlients.asp',
 		dataType: 'script', 
 		error: function(xhr){

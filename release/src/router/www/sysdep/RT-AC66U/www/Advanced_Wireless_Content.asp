@@ -24,7 +24,7 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
-var $j = jQuery.noConflict();<% wl_get_parameter(); %>
+<% wl_get_parameter(); %>
 
 wl_channel_list_2g = <% channel_list_2g(); %>;
 wl_channel_list_5g = <% channel_list_5g(); %>;
@@ -70,7 +70,7 @@ function initial(){
 	wl_auth_mode_change(1);
 
 	if(optimizeXbox_support){
-		$("wl_optimizexbox_span").style.display = "";
+		document.getElementById("wl_optimizexbox_span").style.display = "";
 		document.form.wl_optimizexbox_ckb.checked = ('<% nvram_get("wl_optimizexbox"); %>' == 1) ? true : false;
 	}
 
@@ -86,7 +86,7 @@ function initial(){
 	regen_band(document.form.wl_unit);
 
 	if(document.form.wl_unit[0].selected == true){
-		$("wl_gmode_checkbox").style.display = "";
+		document.getElementById("wl_gmode_checkbox").style.display = "";
 	}
 
 	if(tmo_support)
@@ -94,11 +94,11 @@ function initial(){
 
 	if(document.form.wl_nmode_x.value=='1'){
 		document.form.wl_gmode_check.checked = false;
-		$("wl_gmode_check").disabled = true;
+		document.getElementById("wl_gmode_check").disabled = true;
 	}
 	else{
 		document.form.wl_gmode_check.checked = true;
-		$("wl_gmode_check").disabled = false;
+		document.getElementById("wl_gmode_check").disabled = false;
 	}
 
 	if(document.form.wl_gmode_protection.value == "auto")
@@ -107,7 +107,7 @@ function initial(){
 		document.form.wl_gmode_check.checked = false;
 
 	if(!band5g_support)	
-		$("wl_unit_field").style.display = "none";
+		document.getElementById("wl_unit_field").style.display = "none";
 
 	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
@@ -120,7 +120,7 @@ function initial(){
 		|| (based_modelid == "RT-AC66U" && wl1_dfs == "1")		//0: A2 not support, 1: B0 support
 		|| based_modelid == "RT-N66U"){
 				if(document.form.wl_channel.value  == '0' && '<% nvram_get("wl_unit"); %>' == '1'){
-						$('dfs_checkbox').style.display = "";
+						document.getElementById('dfs_checkbox').style.display = "";
 						check_DFS_support(document.form.acs_dfs_checkbox);
 				}
 		}
@@ -133,7 +133,7 @@ function initial(){
 		|| based_modelid == "RT-N66U"
 		|| based_modelid == "RT-AC53U"){		
 			if(document.form.wl_channel.value  == '0' && '<% nvram_get("wl_unit"); %>' == '1')
-				$('acs_band1_checkbox').style.display = "";					
+				document.getElementById('acs_band1_checkbox').style.display = "";					
 		}
 	}
 
@@ -258,15 +258,15 @@ function mbss_display_ctrl(){
 			add_options_value(document.form.wl_subunit, i, '<% nvram_get("wl_subunit"); %>');
 	}	
 	else
-		$("wl_subunit_field").style.display = "none";
+		document.getElementById("wl_subunit_field").style.display = "none";
 
 	if(document.form.wl_subunit.value != 0){
-		$("wl_bw_field").style.display = "none";
-		$("wl_channel_field").style.display = "none";
-		$("wl_nctrlsb_field").style.display = "none";
+		document.getElementById("wl_bw_field").style.display = "none";
+		document.getElementById("wl_channel_field").style.display = "none";
+		document.getElementById("wl_nctrlsb_field").style.display = "none";
 	}
 	else
-		$("wl_bss_enabled_field").style.display = "none";
+		document.getElementById("wl_bss_enabled_field").style.display = "none";
 }
 
 function add_options_value(o, arr, orig){
@@ -387,8 +387,14 @@ function validForm(){
 		if(!validate_wlphrase('WLANConfig11b', 'wl_phrase_x', document.form.wl_phrase_x))
 			return false;	
 	if(auth_mode == "psk" || auth_mode == "psk2" || auth_mode == "pskpsk2"){ //2008.08.04 lock modified
-		if(!validator.psk(document.form.wl_wpa_psk))
-			return false;
+		if(is_KR_sku){
+			if(!validator.psk_KR(document.form.wl_wpa_psk))
+				return false;
+		}
+		else{
+			if(!validator.psk(document.form.wl_wpa_psk))
+				return false;
+		}
 		
 		if(!validator.range(document.form.wl_wpa_gtk_rekey, 0, 2592000))
 			return false;
@@ -419,7 +425,7 @@ function validate_wlphrase(s, v, obj){
 
 function disableAdvFn(){
 	for(var i=18; i>=3; i--)
-		$("WLgeneral").deleteRow(i);
+		document.getElementById("WLgeneral").deleteRow(i);
 }
 
 function _change_wl_unit(val){
@@ -464,15 +470,15 @@ function check_NOnly_to_GN(){
 			for(var i=0;i<gn_array_5g.length;i++){
 				if(gn_array_5g[i][0] == "1" && (gn_array_5g[i][3] == "tkip" || gn_array_5g[i][5] == "1" || gn_array_5g[i][5] == "2")){
 					if(document.form.wl_nmode_x.value == "0")
-						$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_Auto_note#>';
+						document.getElementById('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_Auto_note#>';
 					else{
 						if(band5g_11ac_support)
-							$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NAC_note#>';
+							document.getElementById('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NAC_note#>';
 						else
-							$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NOnly_note#>';
+							document.getElementById('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NOnly_note#>';
 					}	
 						
-					$('wl_NOnly_note').style.display = "";
+					document.getElementById('wl_NOnly_note').style.display = "";
 					return false;
 				}
 			}		
@@ -481,18 +487,18 @@ function check_NOnly_to_GN(){
 			for(var i=0;i<gn_array_2g.length;i++){
 				if(gn_array_2g[i][0] == "1" && (gn_array_2g[i][3] == "tkip" || gn_array_2g[i][5] == "1" || gn_array_2g[i][5] == "2")){
 					if(document.form.wl_nmode_x.value == "0")
-						$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_Auto_note#>';
+						document.getElementById('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_Auto_note#>';
 					else	
-						$('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NOnly_note#>';
+						document.getElementById('wl_NOnly_note').innerHTML = '<br>* <#WLANConfig11n_NOnly_note#>';
 						
-					$('wl_NOnly_note').style.display = "";
+					document.getElementById('wl_NOnly_note').style.display = "";
 					return false;
 				}
 			}	
 		}	
 	}
 		
-	$('wl_NOnly_note').style.display = "none";
+	document.getElementById('wl_NOnly_note').style.display = "none";
 	return true;
 //  Viz add 2012.11.05 restriction for 'N Only' mode  ) end		
 }
@@ -553,11 +559,11 @@ function enableSmartCon(val){
 	document.form.smart_connect_x.value = val;
 
 	if(val == 0){
-		$("wl_unit_field").style.display = "";
+		document.getElementById("wl_unit_field").style.display = "";
 		document.form.wl_nmode_x.disabled = "";
 		document.getElementById("wl_optimizexbox_span").style.display = "";
 		if(document.form.wl_unit[0].selected == true){
-			$("wl_gmode_checkbox").style.display = "";
+			document.getElementById("wl_gmode_checkbox").style.display = "";
 		}
 		if(band5g_11ac_support){
 			regen_5G_mode(document.form.wl_nmode_x,'<% nvram_get("wl_unit"); %>')		
@@ -570,7 +576,7 @@ function enableSmartCon(val){
 		change_wl_nmode(document.form.wl_nmode_x);
 	}
 	else if(val == 1){
-		$("wl_unit_field").style.display = "none";
+		document.getElementById("wl_unit_field").style.display = "none";
 		regen_auto_option(document.form.wl_nmode_x);
 		document.getElementById("wl_optimizexbox_span").style.display = "none";
 		document.getElementById("wl_gmode_checkbox").style.display = "none";
@@ -718,7 +724,7 @@ function regen_auto_option(obj){
 							else
 								smart_connect_flag_t = flag;
 
-								$j('#radio_smartcon_enable').iphoneSwitch(smart_connect_flag_t>0, 
+								$('#radio_smartcon_enable').iphoneSwitch(smart_connect_flag_t>0, 
 								 function() {
 									enableSmartCon(1);
 								 },
@@ -756,7 +762,7 @@ function regen_auto_option(obj){
 				<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#WLANConfig11b_SSID_itemname#></a></th>
 					<td>
-						<input type="text" maxlength="32" class="input_32_table" id="wl_ssid" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>" onkeypress="return validator.isString(this, event)">
+						<input type="text" maxlength="32" class="input_32_table" id="wl_ssid" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>" onkeypress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 					</td>
 		  	</tr>
 			  
@@ -845,8 +851,7 @@ function regen_auto_option(obj){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 7);"><#WLANConfig11b_x_PSKKey_itemname#></a></th>
 					<td>
-						<input id="wl_wpa_psk" name="wl_wpa_psk" maxlength="64" class="input_32_table" type="password" autocapitalization="off" onBlur="switchType(this, false);" onFocus="switchType(this, true);" value="<% nvram_get("wl_wpa_psk"); %>">
-					</td>
+				  		<input type="text" name="wl_wpa_psk" maxlength="64" class="input_32_table" value="<% nvram_get("wl_wpa_psk"); %>" autocorrect="off" autocapitalize="off">					</td>
 			  	</tr>
 			  		  
 			  	<tr>
@@ -875,28 +880,28 @@ function regen_auto_option(obj){
 			  
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey1_itemname#></th>
-					<td><input type="text" name="wl_key1" id="wl_key1" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key1"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
+					<td><input type="text" name="wl_key1" id="wl_key1" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key1"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');" autocorrect="off" autocapitalize="off"></td>
 			  	</tr>
 			  
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey2_itemname#></th>
-					<td><input type="text" name="wl_key2" id="wl_key2" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key2"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
+					<td><input type="text" name="wl_key2" id="wl_key2" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key2"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');" autocorrect="off" autocapitalize="off"></td>
 			  	</tr>
 			  
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey3_itemname#></th>
-					<td><input type="text" name="wl_key3" id="wl_key3" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key3"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
+					<td><input type="text" name="wl_key3" id="wl_key3" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key3"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');" autocorrect="off" autocapitalize="off"></td>
 			  	</tr>
 			  
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 18);"><#WLANConfig11b_WEPKey4_itemname#></th>
-					<td><input type="text" name="wl_key4" id="wl_key4" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key4"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');"></td>
+					<td><input type="text" name="wl_key4" id="wl_key4" maxlength="32" class="input_32_table" value="<% nvram_get("wl_key4"); %>" onKeyUp="return change_wlkey(this, 'WLANConfig11b');" autocorrect="off" autocapitalize="off"></td>
 		  		</tr>
 
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 8);"><#WLANConfig11b_x_Phrase_itemname#></a></th>
 					<td>
-				  		<input type="text" name="wl_phrase_x" maxlength="64" class="input_32_table" value="<% nvram_get("wl_phrase_x"); %>" onKeyUp="return is_wlphrase('WLANConfig11b', 'wl_phrase_x', this);">
+				  		<input type="text" name="wl_phrase_x" maxlength="64" class="input_32_table" value="<% nvram_get("wl_phrase_x"); %>" onKeyUp="return is_wlphrase('WLANConfig11b', 'wl_phrase_x', this);" autocorrect="off" autocapitalize="off">
 					</td>
 			  	</tr>
 			  
@@ -913,7 +918,7 @@ function regen_auto_option(obj){
 			  
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 11);"><#WLANConfig11b_x_Rekey_itemname#></a></th>
-					<td><input type="text" maxlength="7" name="wl_wpa_gtk_rekey" class="input_6_table"  value="<% nvram_get("wl_wpa_gtk_rekey"); %>" onKeyPress="return validator.isNumber(this,event);"></td>
+					<td><input type="text" maxlength="7" name="wl_wpa_gtk_rekey" class="input_6_table"  value="<% nvram_get("wl_wpa_gtk_rekey"); %>" onKeyPress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off"></td>
 			  	</tr>
 		  	</table>
 			  

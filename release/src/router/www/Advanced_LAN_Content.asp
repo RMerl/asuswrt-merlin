@@ -35,16 +35,16 @@ function initial(){
 	show_menu();
 	
 	if(sw_mode == "1"){
-		 $("table_proto").style.display = "none";
-		 $("table_gateway").style.display = "none";
-		 $("table_dnsenable").style.display = "none";
-		 $("table_dns1").style.display = "none";
-		 $("table_dns2").style.display = "none";
+		 document.getElementById("table_proto").style.display = "none";
+		 document.getElementById("table_gateway").style.display = "none";
+		 document.getElementById("table_dnsenable").style.display = "none";
+		 document.getElementById("table_dns1").style.display = "none";
+		 document.getElementById("table_dns2").style.display = "none";
 		 /*  Not needed to show out. Viz 2012.04
 		 if(pptpd_support){
 		 	var chk_vpn = check_vpn();
 			 if(chk_vpn){
-		 		$("VPN_conflict").style.display = "";	
+		 		document.getElementById("VPN_conflict").style.display = "";	
 			 }
 		 }*/
 	}
@@ -427,7 +427,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
 			</th>			
 			<td>
-			  <input type="text" maxlength="15" class="input_15_table" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event);">
+			  <input type="text" maxlength="15" class="input_15_table" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
 			</td>
 		  </tr>
 		  
@@ -436,7 +436,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 			  <a class="hintstyle"  href="javascript:void(0);" onClick="openHint(4,2);"><#IPConnection_x_ExternalSubnetMask_itemname#></a>
 			</th>
 			<td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" onkeypress="return validator.isIPAddr(this, event);" >
+				<input type="text" maxlength="15" class="input_15_table" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" onkeypress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
 			  <input type="hidden" name="dhcp_start" value="<% nvram_get("dhcp_start"); %>">
 			  <input type="hidden" name="dhcp_end" value="<% nvram_get("dhcp_end"); %>">
 			</td>
@@ -445,7 +445,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 			<tr id="table_gateway">
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
 			<td>
-				<input type="text" name="lan_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("lan_gateway"); %>" onKeyPress="return validator.isIPAddr(this, event);">
+				<input type="text" name="lan_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("lan_gateway"); %>" onKeyPress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
 			</td>
 			</tr>
 
@@ -462,7 +462,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a>
 			</th>
       <td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" onkeypress="return validator.isIPAddr(this, event)" >
+				<input type="text" maxlength="15" class="input_15_table" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" onkeypress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
 			</td>
       </tr>
 
@@ -471,7 +471,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a>
 			</th>
       <td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" onkeypress="return validator.isIPAddr(this, event)" >
+				<input type="text" maxlength="15" class="input_15_table" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" onkeypress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off" >
 			</td>
       </tr>  
 

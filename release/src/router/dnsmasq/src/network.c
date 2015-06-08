@@ -1396,6 +1396,7 @@ void add_update_server(int flags,
       serv->domain = domain_str;
       serv->next = next;
       serv->queries = serv->failed_queries = 0;
+      serv->edns_pktsz = daemon->edns_pktsz;
 #ifdef HAVE_LOOP
       serv->uid = rand32();
 #endif      

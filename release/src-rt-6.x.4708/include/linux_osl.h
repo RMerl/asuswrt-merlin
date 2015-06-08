@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.h 419467 2013-08-21 09:19:48Z $
+ * $Id: linux_osl.h 469495 2014-04-10 14:25:54Z $
  */
 
 #ifndef _linux_osl_h_
@@ -458,6 +458,9 @@ extern void osl_writel(osl_t *osh, volatile uint32 *r, uint32 v);
 #define	CTFPOOL_REFILL_THRESH	3
 typedef struct ctfpool {
 	void		*head;
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+	void            *tail;
+#endif
 	spinlock_t	lock;
 	uint		max_obj;
 	uint		curr_obj;
@@ -515,6 +518,10 @@ extern void osl_ctfpool_replenish(osl_t *osh, uint thresh);
 extern int32 osl_ctfpool_init(osl_t *osh, uint numobj, uint size);
 extern void osl_ctfpool_cleanup(osl_t *osh);
 extern void osl_ctfpool_stats(osl_t *osh, void *b);
+
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+extern void osl_ctfpool_direction(int tail);
+#endif
 #endif /* CTFPOOL */
 
 #ifdef CTFMAP
@@ -558,21 +565,17 @@ do { \
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
 #define	SKIPCT	(1 << 2)
 #define	CHAINED	(1 << 3)
-#ifdef RTCONFIG_BWDPI
 #define	TOBR	(1 << 5)	/* Sync with other branch */
-#endif
 #define	PKTSETSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags |= SKIPCT)
 #define	PKTCLRSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags &= (~SKIPCT))
 #define	PKTSKIPCT(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags & SKIPCT)
 #define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags |= CHAINED)
 #define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags &= (~CHAINED))
 #define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->pktc_flags & CHAINED)
-#ifdef RTCONFIG_BWDPI
 #define	PKTSETTOBR(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags |= TOBR)
 #define	PKTCLRTOBR(osh, skb)	(((struct sk_buff*)(skb))->pktc_flags &= (~TOBR))
 #define	PKTISTOBR(skb)		(((struct sk_buff*)(skb))->pktc_flags & TOBR)
 #define	PKTSETCTFIPCTXIF(skb, ifp)	(((struct sk_buff*)(skb))->ctf_ipc_txif = ifp)
-#endif
 #else
 #define	SKIPCT	(1 << 18)
 #define	CHAINED	(1 << 19)
@@ -582,12 +585,10 @@ do { \
 #define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->mac_len |= CHAINED)
 #define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->mac_len &= (~CHAINED))
 #define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->mac_len & CHAINED)
-#ifdef RTCONFIG_BWDPI
 #define	PKTSETCTFIPCTXIF(skb, ifp)
 #define	PKTSETTOBR(osh, skb)
 #define	PKTCLRTOBR(osh, skb)
 #define	PKTISTOBR(skb)	FALSE
-#endif
 #endif /* 2.6.36 */
 #else /* 2.6.22 */
 #define	SKIPCT	(1 << 2)
@@ -598,12 +599,10 @@ do { \
 #define	PKTSETCHAINED(osh, skb)	(((struct sk_buff*)(skb))->__unused |= CHAINED)
 #define	PKTCLRCHAINED(osh, skb)	(((struct sk_buff*)(skb))->__unused &= (~CHAINED))
 #define	PKTISCHAINED(skb)	(((struct sk_buff*)(skb))->__unused & CHAINED)
-#ifdef RTCONFIG_BWDPI
 #define	PKTSETCTFIPCTXIF(skb, ifp)
 #define	PKTSETTOBR(osh, skb)
 #define	PKTCLRTOBR(osh, skb)
 #define	PKTISTOBR(skb)	FALSE
-#endif
 #endif /* 2.6.22 */
 typedef struct ctf_mark {
 	uint32	value;
@@ -681,6 +680,11 @@ extern struct sk_buff *osl_pkt_tonative(osl_t *osh, void *pkt);
 						((x) ? CHECKSUM_UNNECESSARY : CHECKSUM_NONE))
 /* PKTSETSUMNEEDED and PKTSUMGOOD are not possible because skb->ip_summed is overloaded */
 #define PKTSHARED(skb)                  (((struct sk_buff*)(skb))->cloned)
+
+#if defined(CTF_PPTP) || defined(CTF_L2TP)
+#define DEVMTU(dev)                  (((struct net_device*)(dev))->mtu)
+#define DEVIFINDEX(dev)                  (((struct net_device*)(dev))->ifindex)
+#endif
 
 #ifdef CONFIG_NF_CONNTRACK_MARK
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))

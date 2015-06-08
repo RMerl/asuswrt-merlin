@@ -71,6 +71,9 @@ OBJS += et_linux.o bcmwifi_channels.o
 else ifeq ($(RTCONFIG_HSPOT),y)
 OBJS += bcmwifi_channels.o
 endif
+ifeq ($(RTCONFIG_BCM_7114),y)
+OBJS += confmtd_utils.o
+endif
 
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += $(TOP)/wireless_tools/iwlib.o

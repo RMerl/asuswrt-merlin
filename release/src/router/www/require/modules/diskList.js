@@ -1,6 +1,6 @@
-﻿define(["/jquery.js"], function($j){
+﻿define(["/jquery.js"], function($){
 
-	var $j = jQuery.noConflict();
+	
 	var diskList = function(){};
 	var usbDevicesList = new Array();
 
@@ -197,7 +197,7 @@
 		update: function(callback){
 			window.usbDevicesListUpdated = [];
 
-			$j.ajax({ 
+			$.ajax({ 
 				url: '/update_diskinfo.asp',
 				dataType: 'script',
 

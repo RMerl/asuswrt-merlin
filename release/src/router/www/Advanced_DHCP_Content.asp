@@ -96,14 +96,14 @@ if(yadns_support){
 function initial(){
 	show_menu();
 	//Viz 2011.10{ for LAN ip in DHCP pool or Static list
-	showtext($("LANIP"), '<% nvram_get("lan_ipaddr"); %>');
+	showtext(document.getElementById("LANIP"), '<% nvram_get("lan_ipaddr"); %>');
 	if((inet_network(document.form.lan_ipaddr.value)>=inet_network(document.form.dhcp_start.value))&&(inet_network(document.form.lan_ipaddr.value)<=inet_network(document.form.dhcp_end.value))){
-			$('router_in_pool').style.display="";
+			document.getElementById('router_in_pool').style.display="";
 	}else if(dhcp_staticlists != ""){
 			for(var i = 1; i < staticclist_row.length; i++){
 					var static_ip = staticclist_row[i].split('&#62')[1];
 					if(static_ip == document.form.lan_ipaddr.value){
-								$('router_in_pool').style.display="";
+								document.getElementById('router_in_pool').style.display="";
   				}
 			}
 	}
@@ -114,15 +114,15 @@ function initial(){
 	if(pptpd_support){
 		var chk_vpn = check_vpn();
 		if(chk_vpn == true){
-	 		$("VPN_conflict").style.display = "";
-	 		$("VPN_conflict_span").innerHTML = "<#vpn_conflict_dhcp#>"+pptpd_clients;
+	 		document.getElementById("VPN_conflict").style.display = "";
+	 		document.getElementById("VPN_conflict_span").innerHTML = "<#vpn_conflict_dhcp#>"+pptpd_clients;
 		}
 	}
 
 	if(yadns_support){
 		if(yadns_enable != 0 && yadns_mode != -1){
-			$("yadns_hint").style.display = "";
-			$("yadns_hint").innerHTML = "<span><#YandexDNS_settings_hint#></span>";
+			document.getElementById("yadns_hint").style.display = "";
+			document.getElementById("yadns_hint").innerHTML = "<span><#YandexDNS_settings_hint#></span>";
 		}
 	}
 
@@ -134,7 +134,7 @@ function initial(){
 	//		document.form.sip_server.parentNode.parentNode.style.display = "";
 	//}
 
-	addOnlineHelp($("faq"), ["set", "up", "specific", "IP", "address"]);
+	addOnlineHelp(document.getElementById("faq"), ["set", "up", "specific", "IP", "address"]);
 }
 
 function addRow(obj, head){
@@ -154,8 +154,8 @@ function addRow_Group(upper){
 	if(static_enable != "1")
 		document.form.dhcp_static_x[0].checked = true;
 
-	var rule_num = $('dhcp_staticlist_table').rows.length;
-	var item_num = $('dhcp_staticlist_table').rows[0].cells.length;
+	var rule_num = document.getElementById('dhcp_staticlist_table').rows.length;
+	var item_num = document.getElementById('dhcp_staticlist_table').rows[0].cells.length;
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;
@@ -178,13 +178,13 @@ function addRow_Group(upper){
 		//Viz check same rule  //match(ip or mac) is not accepted
 		if(item_num >=2){
 			for(i=0; i<rule_num; i++){
-					if(document.form.dhcp_staticmac_x_0.value.toLowerCase() == $('dhcp_staticlist_table').rows[i].cells[0].innerHTML.toLowerCase()){
+					if(document.form.dhcp_staticmac_x_0.value.toLowerCase() == document.getElementById('dhcp_staticlist_table').rows[i].cells[0].innerHTML.toLowerCase()){
 						alert("<#JS_duplicate#>");
 						document.form.dhcp_staticmac_x_0.focus();
 						document.form.dhcp_staticmac_x_0.select();
 						return false;
 					}
-					if(document.form.dhcp_staticip_x_0.value == $('dhcp_staticlist_table').rows[i].cells[1].innerHTML){
+					if(document.form.dhcp_staticip_x_0.value == document.getElementById('dhcp_staticlist_table').rows[i].cells[1].innerHTML){
 						alert("<#JS_duplicate#>");
 						document.form.dhcp_staticip_x_0.focus();
 						document.form.dhcp_staticip_x_0.select();
@@ -204,16 +204,16 @@ function addRow_Group(upper){
 
 function del_Row(r){
   var i=r.parentNode.parentNode.rowIndex;
-  $('dhcp_staticlist_table').deleteRow(i);
+  document.getElementById('dhcp_staticlist_table').deleteRow(i);
 
   var dhcp_staticlist_value = "";
-	for(k=0; k<$('dhcp_staticlist_table').rows.length; k++){
-		for(j=0; j<$('dhcp_staticlist_table').rows[k].cells.length-1; j++){
+	for(k=0; k<document.getElementById('dhcp_staticlist_table').rows.length; k++){
+		for(j=0; j<document.getElementById('dhcp_staticlist_table').rows[k].cells.length-1; j++){
 			if(j == 0)
 				dhcp_staticlist_value += "&#60";
 			else
 				dhcp_staticlist_value += "&#62";
-			dhcp_staticlist_value += $('dhcp_staticlist_table').rows[k].cells[j].innerHTML;
+			dhcp_staticlist_value += document.getElementById('dhcp_staticlist_table').rows[k].cells[j].innerHTML;
 		}
 	}
 
@@ -224,9 +224,9 @@ function del_Row(r){
 
 function edit_Row(r){
 	var i=r.parentNode.parentNode.rowIndex;
-	document.form.dhcp_staticmac_x_0.value = $('dhcp_staticlist_table').rows[i].cells[0].innerHTML;
-	document.form.dhcp_staticip_x_0.value = $('dhcp_staticlist_table').rows[i].cells[1].innerHTML;
-	document.form.dhcp_staticname_x_0.value = $('dhcp_staticlist_table').rows[i].cells[2].innerHTML;
+	document.form.dhcp_staticmac_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[0].innerHTML;
+	document.form.dhcp_staticip_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[1].innerHTML;
+	document.form.dhcp_staticname_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[2].innerHTML;
   del_Row(r);
 }
 
@@ -250,19 +250,19 @@ function showdhcp_staticlist(){
 		}
 	}
   code +='</table>';
-	$("dhcp_staticlist_Block").innerHTML = code;
+	document.getElementById("dhcp_staticlist_Block").innerHTML = code;
 }
 
 function applyRule(){
 	if(validForm()){
-		var rule_num = $('dhcp_staticlist_table').rows.length;
-		var item_num = $('dhcp_staticlist_table').rows[0].cells.length;
+		var rule_num = document.getElementById('dhcp_staticlist_table').rows.length;
+		var item_num = document.getElementById('dhcp_staticlist_table').rows[0].cells.length;
 		var tmp_value = "";
 
 		for(i=0; i<rule_num; i++){
 			tmp_value += "<";
 			for(j=0; j<item_num-1; j++){
-				tmp_value += $('dhcp_staticlist_table').rows[i].cells[j].innerHTML;
+				tmp_value += document.getElementById('dhcp_staticlist_table').rows[i].cells[j].innerHTML;
 				if(j != item_num-2)
 					tmp_value += ">";
 			}
@@ -439,7 +439,7 @@ function showLANIPList(){
 		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';
 	}
 
-	$("ClientList_Block_PC").innerHTML = htmlCode;
+	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 
@@ -456,8 +456,8 @@ var over_var = 0;
 var isMenuopen = 0;
 
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 }
 
@@ -465,7 +465,7 @@ function pullLANIPList(obj){
 
 	if(isMenuopen == 0){
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';
+		document.getElementById("ClientList_Block_PC").style.display = 'block';
 		document.form.dhcp_staticmac_x_0.focus();
 		isMenuopen = 1;
 	}
@@ -481,8 +481,8 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
+		document.getElementById("check_mac").style.display = "";
 		obj.focus();
 		obj.select();
 		return false;
@@ -491,13 +491,13 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").style.display = "";
 		obj.focus();
 		obj.select();
 		return false;
 	}else{
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}
 }
@@ -612,35 +612,35 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			  <tr>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,2);"><#LANHostConfig_DomainName_itemname#></a></th>
 				<td>
-				  <input type="text" maxlength="32" class="input_25_table" name="lan_domain" value="<% nvram_get("lan_domain"); %>">
+				  <input type="text" maxlength="32" class="input_25_table" name="lan_domain" value="<% nvram_get("lan_domain"); %>" autocorrect="off" autocapitalize="off">
 				</td>
 			  </tr>
 
 			  <tr>
 			  <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,3);"><#LANHostConfig_MinAddress_itemname#></a></th>
 			  <td>
-				<input type="text" maxlength="15" class="input_15_table" name="dhcp_start" value="<% nvram_get("dhcp_start"); %>" onKeyPress="return  validator.isIPAddr(this,event);" >
+				<input type="text" maxlength="15" class="input_15_table" name="dhcp_start" value="<% nvram_get("dhcp_start"); %>" onKeyPress="return  validator.isIPAddr(this,event);" autocorrect="off" autocapitalize="off">
 			  </td>
 			  </tr>
 
 			  <tr>
             <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,4);"><#LANHostConfig_MaxAddress_itemname#></a></th>
             <td>
-              <input type="text" maxlength="15" class="input_15_table" name="dhcp_end" value="<% nvram_get("dhcp_end"); %>" onKeyPress="return validator.isIPAddr(this,event)" >
+              <input type="text" maxlength="15" class="input_15_table" name="dhcp_end" value="<% nvram_get("dhcp_end"); %>" onKeyPress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off">
             </td>
 			  </tr>
 
 			  <tr>
             <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,5);"><#LANHostConfig_LeaseTime_itemname#></a></th>
             <td>
-              <input type="text" maxlength="6" name="dhcp_lease" class="input_15_table" value="<% nvram_get("dhcp_lease"); %>" onKeyPress="return validator.isNumber(this,event)">
+              <input type="text" maxlength="6" name="dhcp_lease" class="input_15_table" value="<% nvram_get("dhcp_lease"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off">
             </td>
 			  </tr>
 
 			  <tr>
             <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,6);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
             <td>
-              <input type="text" maxlength="15" class="input_15_table" name="dhcp_gateway_x" value="<% nvram_get("dhcp_gateway_x"); %>" onKeyPress="return validator.isIPAddr(this,event)">
+              <input type="text" maxlength="15" class="input_15_table" name="dhcp_gateway_x" value="<% nvram_get("dhcp_gateway_x"); %>" onKeyPress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off">
             </td>
 			  </tr>
 
@@ -661,7 +661,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			  <tr>
 				<th width="200"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,7);">DNS Server 1</a></th>
 				<td>
-				  <input type="text" maxlength="15" class="input_15_table" name="dhcp_dns1_x" value="<% nvram_get("dhcp_dns1_x"); %>" onKeyPress="return validator.isIPAddr(this,event)">
+				  <input type="text" maxlength="15" class="input_15_table" name="dhcp_dns1_x" value="<% nvram_get("dhcp_dns1_x"); %>" onKeyPress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off">
 				  <div id="yadns_hint" style="display:none;"></div>
 				</td>
 			  </tr>
@@ -689,7 +689,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			  <tr>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,8);"><#LANHostConfig_x_WINSServer_itemname#></a></th>
 				<td>
-				  <input type="text" maxlength="15" class="input_15_table" name="dhcp_wins_x" value="<% nvram_get("dhcp_wins_x"); %>" onkeypress="return validator.isIPAddr(this,event)"/>
+				  <input type="text" maxlength="15" class="input_15_table" name="dhcp_wins_x" value="<% nvram_get("dhcp_wins_x"); %>" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off"/>
 				</td>
 			  </tr>
 			</table>
@@ -726,15 +726,15 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			  	<tr>
 				<!-- client info -->
             			<td width="27%">
-					<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return validator.isHWAddr(this,event)" onClick="hideClients_Block();">
+					<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return validator.isHWAddr(this,event)" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
 					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 				</td>
             			<td width="27%">
-            				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return validator.isIPAddr(this,event)">
+            				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off">
             			</td>
             			<td width="27%">
-					<input type="text" class="input_15_table" maxlenght="15" onkeypress="return is_alphanum(this,event);" onblur="validator.safeName(this);" name="dhcp_staticname_x_0">
+					<input type="text" class="input_15_table" maxlenght="15" onkeypress="return is_alphanum(this,event);" onblur="validator.safeName(this);" name="dhcp_staticname_x_0" autocorrect="off" autocapitalize="off">
 				</td>
 				<td width="19%">
 										<div>

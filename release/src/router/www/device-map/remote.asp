@@ -18,26 +18,26 @@ var re_status = parent.getConnectingStatus();
 
 function initial(){
 	if(re_status == -1){
-		showtext($("Connstatus"), "<#OP_RE_item#>");
-		$("remoteIP_tr").style.display = "none";
+		showtext(document.getElementById("Connstatus"), "<#OP_RE_item#>");
+		document.getElementById("remoteIP_tr").style.display = "none";
 		setTimeout("set_re_status();",6000);
 	}
 	else
 		set_re_status();
 		
-	$("remoteIP_span").innerHTML = (remoteIP == "")?"<#AP_fail_get_IPaddr#>":remoteIP;
+	document.getElementById("remoteIP_span").innerHTML = (remoteIP == "")?"<#AP_fail_get_IPaddr#>":remoteIP;
 }
 
 function set_re_status(){
 	re_status = parent.getConnectingStatus();
 	//alert("re_status "+re_status);
 	if(re_status == 2){
-		showtext($("Connstatus"), "<#Connected#>");
-		$("remoteIP_tr").style.display = "";
+		showtext(document.getElementById("Connstatus"), "<#Connected#>");
+		document.getElementById("remoteIP_tr").style.display = "";
 	}
 	else{
-		showtext($("Connstatus"), "<#CTL_Disconnect#>");
-		$("remoteIP_tr").style.display = "none";
+		showtext(document.getElementById("Connstatus"), "<#CTL_Disconnect#>");
+		document.getElementById("remoteIP_tr").style.display = "none";
 	}
 }
 

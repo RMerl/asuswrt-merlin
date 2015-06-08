@@ -66,14 +66,14 @@ function initial(){
 }
 
 function applyRule(){
-	var rule_num = $('sr_rulelist_table').rows.length;
-	var item_num = $('sr_rulelist_table').rows[0].cells.length;
+	var rule_num = document.getElementById('sr_rulelist_table').rows.length;
+	var item_num = document.getElementById('sr_rulelist_table').rows[0].cells.length;
 	var tmp_value = "";
 
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"		
 		for(j=0; j<item_num-1; j++){	
-			tmp_value += $('sr_rulelist_table').rows[i].cells[j].innerHTML;
+			tmp_value += document.getElementById('sr_rulelist_table').rows[i].cells[j].innerHTML;
 			if(j != item_num-2)	
 				tmp_value += ">";
 		}
@@ -126,8 +126,8 @@ function addRow_Group(upper){
 	if('<% nvram_get("sr_enable_x"); %>' != "1")
 		document.form.sr_enable_x[0].checked = true;
 	
-	var rule_num = $('sr_rulelist_table').rows.length;
-	var item_num = $('sr_rulelist_table').rows[0].cells.length;		
+	var rule_num = document.getElementById('sr_rulelist_table').rows.length;
+	var item_num = document.getElementById('sr_rulelist_table').rows[0].cells.length;		
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;	
@@ -186,8 +186,8 @@ function addRow_Group(upper){
 //Viz check same rule  //match(ip+netmask) is not accepted 
 		if(item_num >=2){
 			for(i=0; i<rule_num; i++){
-					if(document.form.sr_ipaddr_x_0.value == $('sr_rulelist_table').rows[i].cells[0].innerHTML 
-						&& document.form.sr_gateway_x_0.value == $('sr_rulelist_table').rows[i].cells[2].innerHTML){
+					if(document.form.sr_ipaddr_x_0.value == document.getElementById('sr_rulelist_table').rows[i].cells[0].innerHTML 
+						&& document.form.sr_gateway_x_0.value == document.getElementById('sr_rulelist_table').rows[i].cells[2].innerHTML){
 						alert("<#JS_duplicate#>");
 						document.form.sr_gateway_x_0.value="";
 						document.form.sr_ipaddr_x_0.focus();
@@ -213,27 +213,27 @@ function addRow_Group(upper){
 function edit_Row(r){ 	
 	var i=r.parentNode.parentNode.rowIndex;
   	
-	document.form.sr_ipaddr_x_0.value = $('sr_rulelist_table').rows[i].cells[0].innerHTML;
-	document.form.sr_netmask_x_0.value = $('sr_rulelist_table').rows[i].cells[1].innerHTML; 
-	document.form.sr_gateway_x_0.value = $('sr_rulelist_table').rows[i].cells[2].innerHTML; 
-	document.form.sr_matric_x_0.value = $('sr_rulelist_table').rows[i].cells[3].innerHTML;
-	document.form.sr_if_x_0.value = $('sr_rulelist_table').rows[i].cells[4].innerHTML;
+	document.form.sr_ipaddr_x_0.value = document.getElementById('sr_rulelist_table').rows[i].cells[0].innerHTML;
+	document.form.sr_netmask_x_0.value = document.getElementById('sr_rulelist_table').rows[i].cells[1].innerHTML; 
+	document.form.sr_gateway_x_0.value = document.getElementById('sr_rulelist_table').rows[i].cells[2].innerHTML; 
+	document.form.sr_matric_x_0.value = document.getElementById('sr_rulelist_table').rows[i].cells[3].innerHTML;
+	document.form.sr_if_x_0.value = document.getElementById('sr_rulelist_table').rows[i].cells[4].innerHTML;
 	
   del_Row(r);	
 }
 
 function del_Row(r){
   var i=r.parentNode.parentNode.rowIndex;
-  $('sr_rulelist_table').deleteRow(i);
+  document.getElementById('sr_rulelist_table').deleteRow(i);
   
   var sr_rulelist_value = "";
-	for(k=0; k<$('sr_rulelist_table').rows.length; k++){
-		for(j=0; j<$('sr_rulelist_table').rows[k].cells.length-1; j++){
+	for(k=0; k<document.getElementById('sr_rulelist_table').rows.length; k++){
+		for(j=0; j<document.getElementById('sr_rulelist_table').rows[k].cells.length-1; j++){
 			if(j == 0)	
 				sr_rulelist_value += "&#60";
 			else
 				sr_rulelist_value += "&#62";
-			sr_rulelist_value += $('sr_rulelist_table').rows[k].cells[j].innerHTML;		
+			sr_rulelist_value += document.getElementById('sr_rulelist_table').rows[k].cells[j].innerHTML;		
 		}
 	}
 	
@@ -262,7 +262,7 @@ function showsr_rulelist(){
 		}
 	}
   code +='</table>';
-	$("sr_rulelist_Block").innerHTML = code;
+	document.getElementById("sr_rulelist_Block").innerHTML = code;
 }
 
 
@@ -283,7 +283,7 @@ function showLANIPList(){
 		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
 	}
 
-	$("ClientList_Block_PC").innerHTML = htmlCode;
+	document.getElementById("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function setClientIP(ipaddr){
@@ -297,8 +297,8 @@ var over_var = 0;
 var isMenuopen = 0;
 
 function hideClients_Block(){
-	$("pull_arrow").src = "/images/arrow-down.gif";
-	$('ClientList_Block_PC').style.display='none';
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('ClientList_Block_PC').style.display='none';
 	isMenuopen = 0;
 }
 
@@ -306,7 +306,7 @@ function pullLANIPList(obj){
 	
 	if(isMenuopen == 0){		
 		obj.src = "/images/arrow-top.gif"
-		$("ClientList_Block_PC").style.display = 'block';		
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
 		document.form.sr_ipaddr_x_0.focus();		
 		isMenuopen = 1;
 	}
@@ -315,9 +315,9 @@ function pullLANIPList(obj){
 }
 function Ctrl_LANIPList(obj){
 	if(obj.value != "LAN")
-		$("pull_arrow").style.display ="none";
+		document.getElementById("pull_arrow").style.display ="none";
 	else
-		$("pull_arrow").style.display ="";
+		document.getElementById("pull_arrow").style.display ="";
 }
 
 //Viz add 2012.02 LAN client ip } end  
@@ -402,13 +402,13 @@ function Ctrl_LANIPList(obj){
 			  <tr>
 			  	<!-- client info -->		
 					<td width="18%">
-						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" onKeyPress="return validator.isIPAddr(this, event)">
-					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return validator.isIPAddr(this, event)" ></td>
-					<td width="34%"><input type="text" class="input_20_table" maxlength="15" name="sr_gateway_x_0" style="margin-left:-22px;width:180px;" onKeyPress="return validator.isIPAddr(this, event)"  onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}">
+						<input type="text" class="input_20_table" maxlength="15" name="sr_ipaddr_x_0" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
+					<td width="18%"><input type="text" maxlength="15" class="input_15_table" name="sr_netmask_x_0" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
+					<td width="34%"><input type="text" class="input_20_table" maxlength="15" name="sr_gateway_x_0" style="margin-left:-22px;width:180px;" onKeyPress="return validator.isIPAddr(this, event)"  onClick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" autocorrect="off" autocapitalize="off">
 					<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#select_IP#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 					<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 					</td>
-					<td width="8%"><input type="text" maxlength="3" class="input_3_table" name="sr_matric_x_0"  onKeyPress="return validator.isNumber(this, event);"></td>
+					<td width="8%"><input type="text" maxlength="3" class="input_3_table" name="sr_matric_x_0"  onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off"></td>
 					<td width="10%">
 						<select name="sr_if_x_0" class="input_option" style="width:62px;" onchange="Ctrl_LANIPList(this);">
 							<option value="LAN">LAN</option>

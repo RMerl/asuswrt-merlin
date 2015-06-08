@@ -1,30 +1,32 @@
 var productid = '<#Web_Title2#>';
 helpcontent[0] = new Array("",
-							 "<#WLANConfig11b_SSID_itemdesc#>",
-						   "<#WLANConfig11b_x_BlockBCSSID_itemdesc#>",						   
-						   "<#WLANConfig11b_Channel_itemdesc#>",
-						   "<#WLANConfig11b_x_Mode_itemdesc2#>",
-						   "<#WLANConfig11b_AuthenticationMethod_itemdesc#>",
-						   "<#WLANConfig11b_WPAType_itemdesc#>",
-						   "<#WLANConfig11b_x_PSKKey_itemdesc#>",
-						   "<#WLANConfig11b_x_Phrase_itemdesc#>",
-						   "<#WLANConfig11b_WEPType_itemdesc#>",
-						   "<#WLANConfig11b_WEPDefaultKey_itemdesc#>",
-						   "<#WLANConfig11b_x_Rekey_itemdesc#><#JS_field_wanip_rule3#>",	//11
-						   "<#WLANConfig11b_WEPKey_itemtype1#>",
-						   "<#WLANConfig11b_WEPKey_itemtype2#>",
-						   "<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
-						   "To locate the 40MHz channel in combination with the control channel", //<#WLANConfig11b_EChannel_itemdesc#>
-							 "<#WLANConfig11b_TxPower_help1#>",
-							 "<#WLANConfig11b_TxPower_help#>",
-							 "WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
-							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
-							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
-							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",	//21
-							 '<div><#qis_wireless_help1#></div><br/><img src="/images/qis/select_wireless.jpg">',
-							 '<div><#qis_wireless_help2#></div><br/><img width="350px" src="/images/qis/security_key.png">',
-							 "<#WLANConfig11n_automode_limition_hint#>"
-							 );
+			"<#WLANConfig11b_SSID_itemdesc#>",
+			"<#WLANConfig11b_x_BlockBCSSID_itemdesc#>",						   
+			"<#WLANConfig11b_Channel_itemdesc#>",
+			"<#WLANConfig11b_x_Mode_itemdesc2#>",
+			"<#WLANConfig11b_AuthenticationMethod_itemdesc#>",
+			"<#WLANConfig11b_WPAType_itemdesc#>",
+			"<#WLANConfig11b_x_PSKKey_itemdesc#>",
+			"<#WLANConfig11b_x_Phrase_itemdesc#>",
+			"<#WLANConfig11b_WEPType_itemdesc#>",
+			"<#WLANConfig11b_WEPDefaultKey_itemdesc#>",
+			"<#WLANConfig11b_x_Rekey_itemdesc#><#JS_field_wanip_rule3#>",	//11
+			"<#WLANConfig11b_WEPKey_itemtype1#>",
+			"<#WLANConfig11b_WEPKey_itemtype2#>",
+			"<#WLANConfig11b_ChannelBW_itemdesc#><br/><#WLANConfig11b_Wireless_Speed_itemname_3#>",
+			"To locate the 40MHz channel in combination with the control channel", //<#WLANConfig11b_EChannel_itemdesc#>
+			"<#WLANConfig11b_TxPower_help1#>",
+			"<#WLANConfig11b_TxPower_help#>",
+			"WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
+			"<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
+			"<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
+			"<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",	//21
+			'<div><#qis_wireless_help1#></div><br/><img src="/images/qis/select_wireless.jpg">',
+			'<div><#qis_wireless_help2#></div><br/><img width="350px" src="/images/qis/security_key.png">',
+			"<#WLANConfig11n_automode_limition_hint#>",
+			"<#Access_Time_desc#>",
+			"<#Access_Intranet_desc#>"
+			 );
 helpcontent[1] = new Array("",
 						   "<#WLANConfig11b_x_APMode_itemdesc#>",
 						   "<#WLANConfig11b_Channel_itemdesc#>",
@@ -296,3 +298,11 @@ if('<% nvram_default_get("lan_ipaddr"); %>' != "192.168.1.1"){
 	helpcontent[4][1] = "<#LANHostConfig_IPRouters_itemdesc#>".replace("192.168.1.1", '<% nvram_default_get("lan_ipaddr"); %>');
 	helpcontent[24][5] = "<#LANHostConfig_IPRouters_itemdesc#>".replace("192.168.1.1", '<% nvram_default_get("lan_ipaddr"); %>');
 }
+
+//Mobile Broadband
+helpcontent[28] = new Array("",
+							"<#Mobile_StartDay_Desc#>",
+							"<#Mobile_Usage_Limit_Desc#>",
+							"<#Mobile_Usage_Alert_Desc#>",
+							"<#Mobile_SMS_Noti_Desc#>",
+							"<#Mobile_SIM_Detector_Desc#>");

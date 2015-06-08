@@ -556,6 +556,9 @@ all: vmlinux
 # Broadcom features compile options
 ifneq ($(CONFIG_BCM_CTF),)
 KBUILD_CFLAGS += -DHNDCTF -DCTFPOOL -DCTFMAP -DPKTC -DCTF_PPPOE
+ifneq ($(CONFIG_CTF_PPTP_L2TP),)
+KBUILD_CFLAGS += -DCTF_PPTP -DCTF_L2TP
+endif
 ifneq ($(CONFIG_WL_USBAP),)
 KBUILD_CFLAGS += -DCTFPOOL_SPINLOCK
 endif

@@ -163,7 +163,7 @@ update_address(ia, addr, dhcpifp, ctlp, callback)
 	}
 
 	/* update the timestamp of update */
-	sa->updatetime = time(NULL);
+	sa->updatetime = dhcp6_time(NULL);
 
 	/* update the prefix according to addr */
 	sa->addr.pltime = addr->pltime;
@@ -267,7 +267,7 @@ duration_addr(iac)
 	time_t now;
 
 	/* Determine the smallest period until pltime expires. */
-	now = time(NULL);
+	now = dhcp6_time(NULL);
 	for (sa = TAILQ_FIRST(&iac_na->statefuladdr_head); sa;
 	    sa = TAILQ_NEXT(sa, link)) {
 		passed = now > sa->updatetime ?
