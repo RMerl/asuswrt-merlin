@@ -911,7 +911,6 @@ do_genkey (const struct options * options)
 bool
 do_persist_tuntap (const struct options *options)
 {
-#ifdef ENABLE_FEATURE_TUN_PERSIST
   if (options->persist_config)
     {
       /* sanity check on options for --mktun or --rmtun */
@@ -927,14 +926,21 @@ do_persist_tuntap (const struct options *options)
 	)
 	msg (M_FATAL|M_OPTERR,
 	     "options --mktun or --rmtun should only be used together with --dev");
+#ifdef ENABLE_FEATURE_TUN_PERSIST
       tuncfg (options->dev, options->dev_type, options->dev_node,
 	      options->persist_mode,
 	      options->username, options->groupname, &options->tuntap_options);
       if (options->persist_mode && options->lladdr)
         set_lladdr(options->dev, options->lladdr, NULL);
       return true;
-    }
+#else
+      msg( M_FATAL|M_OPTERR,
+	"options --mktun and --rmtun are not available on your operating "
+	"system.  Please check 'man tun' (or 'tap'), whether your system "
+        "supports using 'ifconfig %s create' / 'destroy' to create/remove "
+        "persistant tunnel interfaces.", options->dev );
 #endif
+    }
   return false;
 }
 
@@ -942,22 +948,19 @@ do_persist_tuntap (const struct options *options)
  * Should we become a daemon?
  * Return true if we did it.
  */
-static bool
-possibly_become_daemon (const struct options *options, const bool first_time)
+bool
+possibly_become_daemon (const struct options *options)
 {
   bool ret = false;
-  if (first_time && options->daemon)
+  if (options->daemon)
     {
       ASSERT (!options->inetd);
-      if (daemon (options->cd_dir != NULL, options->log) < 0)
+      /* Don't chdir immediately, but the end of the init sequence, if needed */
+      if (daemon (1, options->log) < 0)
 	msg (M_ERR, "daemon() failed or unsupported");
       restore_signal_state ();
       if (options->log)
 	set_std_files_to_null (true);
-
-#if defined(ENABLE_PKCS11)
-      pkcs11_forkFixup ();
-#endif
 
       ret = true;
     }
@@ -1486,6 +1489,9 @@ do_open_tun (struct context *c)
       msg (M_INFO, "Preserving previous TUN/TAP instance: %s",
 	   c->c1.tuntap->actual_name);
 
+      /* explicitly set the ifconfig_* env vars */
+      do_ifconfig_setenv(c->c1.tuntap, c->c2.es);
+
       /* run the up script if user specified --up-restart */
       if (c->options.up_restart)
 	run_up_down (c->options.up_script,
@@ -1801,6 +1807,19 @@ do_deferred_options (struct context *c, const unsigned int found)
       msg (D_PUSH, "OPTIONS IMPORT: peer-id set");
       c->c2.tls_multi->use_peer_id = true;
       c->c2.tls_multi->peer_id = c->options.peer_id;
+      frame_add_to_extra_frame(&c->c2.frame, +3);	/* peer-id overhead */
+      if ( !c->options.ce.link_mtu_defined )
+	{
+	  frame_add_to_link_mtu(&c->c2.frame, +3);
+	  msg (D_PUSH, "OPTIONS IMPORT: adjusting link_mtu to %d",
+				EXPANDED_SIZE(&c->c2.frame));
+	}
+      else
+	{
+	  msg (M_WARN, "OPTIONS IMPORT: WARNING: peer-id set, but link-mtu"
+                       " fixed by config - reducing tun-mtu to %d, expect"
+                       " MTU problems", TUN_MTU_SIZE(&c->c2.frame) );
+	}
     }
 #endif
 }
@@ -1809,15 +1828,11 @@ do_deferred_options (struct context *c, const unsigned int found)
  * Possible hold on initialization
  */
 static bool
-do_hold (struct context *c)
+do_hold (void)
 {
 #ifdef ENABLE_MANAGEMENT
   if (management)
     {
-      /* if c is defined, daemonize before hold */
-      if (c && c->options.daemon && management_should_daemonize (management))
-	do_init_first_time (c);
-
       /* block until management hold is released */
       if (management_hold (management))
 	return true;
@@ -1883,7 +1898,7 @@ socket_restart_pause (struct context *c)
   c->persist.restart_sleep_seconds = 0;
 
   /* do managment hold on context restart, i.e. second, third, fourth, etc. initialization */
-  if (do_hold (NULL))
+  if (do_hold ())
     sec = 0;
 
   if (sec)
@@ -1902,7 +1917,7 @@ do_startup_pause (struct context *c)
   if (!c->first_time)
     socket_restart_pause (c);
   else
-    do_hold (NULL); /* do management hold on first context initialization */
+    do_hold (); /* do management hold on first context initialization */
 }
 
 /*
@@ -2257,6 +2272,7 @@ do_init_crypto_tls (struct context *c, const unsigned int flags)
   to.tmp_dir = options->tmp_dir;
   if (options->ccd_exclusive)
     to.client_config_dir_exclusive = options->client_config_dir;
+  to.auth_user_pass_file = options->auth_user_pass_file;
 #endif
 
 #ifdef ENABLE_X509_TRACK
@@ -2402,6 +2418,17 @@ do_init_frame (struct context *c)
    * make sure values are rational, etc.
    */
   frame_finalize_options (c, NULL);
+
+  /* packets with peer-id (P_DATA_V2) need 3 extra bytes in frame (on client)
+   * and need link_mtu+3 bytes on socket reception (on server).
+   *
+   * accomodate receive path in f->extra_link
+   *            send path in f->extra_buffer (+leave room for alignment)
+   *
+   * f->extra_frame is adjusted when peer-id option is push-received
+   */
+  frame_add_to_extra_link(&c->c2.frame, 3);
+  frame_add_to_extra_buffer(&c->c2.frame, 8);
 
 #ifdef ENABLE_FRAGMENT
   /*
@@ -2739,7 +2766,7 @@ do_compute_occ_strings (struct context *c)
 static void
 do_init_first_time (struct context *c)
 {
-  if (c->first_time && !c->did_we_daemonize && !c->c0)
+  if (c->first_time && !c->c0)
     {
       struct context_0 *c0;
 
@@ -2754,12 +2781,9 @@ do_init_first_time (struct context *c)
       /* get --writepid file descriptor */
       get_pid_file (c->options.writepid, &c0->pid_state);
 
-      /* become a daemon if --daemon */
-      c->did_we_daemonize = possibly_become_daemon (&c->options, c->first_time);
-
-      /* should we disable paging? */
-      if (c->options.mlock && c->did_we_daemonize)
-	platform_mlockall (true);	/* call again in case we daemonized */
+      /* perform postponed chdir if --daemon */
+      if (c->did_we_daemonize && c->options.cd_dir == NULL)
+	platform_chdir("/");
 
       /* save process ID in a file */
       write_pid (&c0->pid_state);
@@ -3200,7 +3224,7 @@ open_management (struct context *c)
 	    }
 
 	  /* initial management hold, called early, before first context initialization */
-	  do_hold (c);
+	  do_hold ();
 	  if (IS_SIG (c))
 	    {
 	      msg (M_WARN, "Signal received from management interface, exiting");

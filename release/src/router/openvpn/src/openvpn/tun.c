@@ -396,6 +396,49 @@ is_tun_p2p (const struct tuntap *tt)
 }
 
 /*
+ * Set the ifconfig_* environment variables, both for IPv4 and IPv6
+ */
+void
+do_ifconfig_setenv (const struct tuntap *tt, struct env_set *es)
+{
+    struct gc_arena gc = gc_new ();
+    const char *ifconfig_local = print_in_addr_t (tt->local, 0, &gc);
+    const char *ifconfig_remote_netmask = print_in_addr_t (tt->remote_netmask, 0, &gc);
+
+    /*
+     * Set environmental variables with ifconfig parameters.
+     */
+    if (tt->did_ifconfig_setup)
+    {
+	bool tun = is_tun_p2p (tt);
+
+	setenv_str (es, "ifconfig_local", ifconfig_local);
+	if (tun)
+	{
+	    setenv_str (es, "ifconfig_remote", ifconfig_remote_netmask);
+	}
+	else
+	{
+	    const char *ifconfig_broadcast = print_in_addr_t (tt->broadcast, 0, &gc);
+	    setenv_str (es, "ifconfig_netmask", ifconfig_remote_netmask);
+	    setenv_str (es, "ifconfig_broadcast", ifconfig_broadcast);
+	}
+    }
+
+    if (tt->did_ifconfig_ipv6_setup)
+    {
+	const char *ifconfig_ipv6_local = print_in6_addr (tt->local_ipv6, 0, &gc);
+	const char *ifconfig_ipv6_remote = print_in6_addr (tt->remote_ipv6, 0, &gc);
+
+	setenv_str (es, "ifconfig_ipv6_local", ifconfig_ipv6_local);
+	setenv_int (es, "ifconfig_ipv6_netbits", tt->netbits_ipv6);
+	setenv_str (es, "ifconfig_ipv6_remote", ifconfig_ipv6_remote);
+    }
+
+    gc_free (&gc);
+}
+
+/*
  * Init tun/tap object.
  *
  * Set up tuntap structure for ifconfig,
@@ -427,9 +470,6 @@ init_tun (const char *dev,       /* --dev option */
   if (ifconfig_local_parm && ifconfig_remote_netmask_parm)
     {
       bool tun = false;
-      const char *ifconfig_local = NULL;
-      const char *ifconfig_remote_netmask = NULL;
-      const char *ifconfig_broadcast = NULL;
 
       /*
        * We only handle TUN/TAP devices here, not --dev null devices.
@@ -491,44 +531,19 @@ init_tun (const char *dev,       /* --dev option */
 	}
 
       /*
-       * Set ifconfig parameters
-       */
-      ifconfig_local = print_in_addr_t (tt->local, 0, &gc);
-      ifconfig_remote_netmask = print_in_addr_t (tt->remote_netmask, 0, &gc);
-
-      /*
        * If TAP-style interface, generate broadcast address.
        */
       if (!tun)
 	{
 	  tt->broadcast = generate_ifconfig_broadcast_addr (tt->local, tt->remote_netmask);
-	  ifconfig_broadcast = print_in_addr_t (tt->broadcast, 0, &gc);
 	}
 
-      /*
-       * Set environmental variables with ifconfig parameters.
-       */
-      if (es)
-	{
-	  setenv_str (es, "ifconfig_local", ifconfig_local);
-	  if (tun)
-	    {
-	      setenv_str (es, "ifconfig_remote", ifconfig_remote_netmask);
-	    }
-	  else
-	    {
-	      setenv_str (es, "ifconfig_netmask", ifconfig_remote_netmask);
-	      setenv_str (es, "ifconfig_broadcast", ifconfig_broadcast);
-	    }
-	}
 
       tt->did_ifconfig_setup = true;
     }
 
   if (ifconfig_ipv6_local_parm && ifconfig_ipv6_remote_parm)
     {
-      const char *ifconfig_ipv6_local = NULL;
-      const char *ifconfig_ipv6_remote = NULL;
 
       /*
        * Convert arguments to binary IPv6 addresses.
@@ -541,23 +556,13 @@ init_tun (const char *dev,       /* --dev option */
 	}
       tt->netbits_ipv6 = ifconfig_ipv6_netbits_parm;
 
-      /*
-       * Set ifconfig parameters
-       */
-      ifconfig_ipv6_local = print_in6_addr (tt->local_ipv6, 0, &gc);
-      ifconfig_ipv6_remote = print_in6_addr (tt->remote_ipv6, 0, &gc);
-
-      /*
-       * Set environmental variables with ifconfig parameters.
-       */
-      if (es)
-	{
-	  setenv_str (es, "ifconfig_ipv6_local", ifconfig_ipv6_local);
-	  setenv_int (es, "ifconfig_ipv6_netbits", tt->netbits_ipv6);
-	  setenv_str (es, "ifconfig_ipv6_remote", ifconfig_ipv6_remote);
-	}
       tt->did_ifconfig_ipv6_setup = true;
     }
+
+  /*
+   * Set environmental variables with ifconfig parameters.
+   */
+  if (es) do_ifconfig_setenv(tt, es);
 
   gc_free (&gc);
   return tt;
@@ -618,6 +623,28 @@ void delete_route_connected_v6_net(struct tuntap * tt,
 }
 #endif
 
+#if defined(TARGET_FREEBSD)||defined(TARGET_DRAGONFLY)
+/* we can't use true subnet mode on tun on all platforms, as that
+ * conflicts with IPv6 (wants to use ND then, which we don't do),
+ * but the OSes want "a remote address that is different from ours"
+ * - so we construct one, normally the first in the subnet, but if
+ * this is the same as ours, use the second one.
+ * The actual address does not matter at all, as the tun interface
+ * is still point to point and no layer 2 resolution is done...
+ */
+
+char *
+create_arbitrary_remote( struct tuntap *tt, struct gc_arena * gc )
+{
+  in_addr_t remote;
+
+  remote = (tt->local & tt->remote_netmask) +1;
+
+  if ( remote == tt->local ) remote ++;
+
+  return print_in_addr_t (remote, 0, &gc);
+}
+#endif
 
 /* execute the ifconfig command through the shell */
 void
@@ -1121,7 +1148,7 @@ do_ifconfig (struct tuntap *tt,
 			  IFCONFIG_PATH,
 			  actual,
 			  ifconfig_local,
-			  ifconfig_local,
+			  create_arbitrary_remote( tt, &gc ),
 			  tun_mtu,
 			  ifconfig_remote_netmask
 			  );
@@ -1717,9 +1744,9 @@ write_tun (struct tuntap* tt, uint8_t *buf, int len)
       pi.flags = 0;
 
       if(iph->version == 6)
-	pi.proto = htons(ETH_P_IPV6);
+	pi.proto = htons(OPENVPN_ETH_P_IPV6);
       else
-	pi.proto = htons(ETH_P_IP);
+	pi.proto = htons(OPENVPN_ETH_P_IPV4);
 
       vect[0].iov_len = sizeof(pi);
       vect[0].iov_base = &pi;

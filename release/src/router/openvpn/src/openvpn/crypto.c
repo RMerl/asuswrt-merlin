@@ -403,11 +403,27 @@ crypto_adjust_frame_parameters(struct frame *frame,
 			       bool packet_id,
 			       bool packet_id_long_form)
 {
-  frame_add_to_extra_frame (frame,
-			    (packet_id ? packet_id_size (packet_id_long_form) : 0) +
-			    ((cipher_defined && use_iv) ? cipher_kt_iv_size (kt->cipher) : 0) +
-			    (cipher_defined ? cipher_kt_block_size (kt->cipher) : 0) + /* worst case padding expansion */
-			    kt->hmac_length);
+  size_t crypto_overhead = 0;
+
+  if (packet_id)
+    crypto_overhead += packet_id_size (packet_id_long_form);
+
+  if (cipher_defined)
+    {
+      if (use_iv)
+	crypto_overhead += cipher_kt_iv_size (kt->cipher);
+
+      if (cipher_kt_mode_cbc (kt->cipher))
+	/* worst case padding expansion */
+	crypto_overhead += cipher_kt_block_size (kt->cipher);
+    }
+
+  crypto_overhead += kt->hmac_length;
+
+  frame_add_to_extra_frame (frame, crypto_overhead);
+
+  msg(D_MTU_DEBUG, "%s: Adjusting frame parameters for crypto by %zu bytes",
+      __func__, crypto_overhead);
 }
 
 /*
@@ -787,6 +803,7 @@ get_tls_handshake_key (const struct key_type *key_type,
 	    msg (M_INFO,
 		 "Control Channel Authentication: using '%s' as a free-form passphrase file",
 		 passphrase_file);
+	    msg (M_WARN, "DEPRECATED OPTION: Using freeform files for tls-auth is deprecated and is not  supported in OpenVPN 2.4 or newer versions");
 	  }
       }
       /* handle key direction */

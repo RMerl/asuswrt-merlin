@@ -740,7 +740,11 @@ static const char usage_message[] =
 #ifdef ENABLE_PKCS11
   "\n"
   "PKCS#11 standalone options:\n"
-  "--show-pkcs11-ids provider [cert_private] : Show PKCS#11 available ids.\n" 
+#ifdef DEFAULT_PKCS11_MODULE
+  "--show-pkcs11-ids [provider] [cert_private] : Show PKCS#11 available ids.\n"
+#else
+  "--show-pkcs11-ids provider [cert_private] : Show PKCS#11 available ids.\n"
+#endif
   "                                            --verb option can be added *BEFORE* this.\n"
 #endif				/* ENABLE_PKCS11 */
   "\n"
@@ -1267,7 +1271,7 @@ option_iroute_ipv6 (struct options *o,
 
   ALLOC_OBJ_GC (ir, struct iroute_ipv6, &o->gc);
 
-  if ( get_ipv6_addr (prefix_str, &ir->network, &ir->netbits, NULL, msglevel ) < 0 )
+  if ( !get_ipv6_addr (prefix_str, &ir->network, &ir->netbits, NULL, msglevel ))
     {
       msg (msglevel, "in --iroute-ipv6 %s: Bad IPv6 prefix specification",
 	   prefix_str);
@@ -2126,7 +2130,9 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
       if (options->ssl_flags & SSLF_OPT_VERIFY)
 	msg (M_USAGE, "--opt-verify requires --mode server");
       if (options->server_flags & SF_TCP_NODELAY_HELPER)
-	msg (M_USAGE, "--tcp-nodelay requires --mode server");
+	msg (M_WARN, "WARNING: setting tcp-nodelay on the client side will not "
+             "affect the server. To have TCP_NODELAY in both direction use "
+             "tcp-nodelay in the server configuration instead.");
       if (options->auth_user_pass_verify_script)
 	msg (M_USAGE, "--auth-user-pass-verify requires --mode server");
 #if PORT_SHARE
@@ -2331,6 +2337,9 @@ options_postprocess_verify_ce (const struct options *options, const struct conne
       MUST_BE_UNDEF (pkcs11_id);
       MUST_BE_UNDEF (pkcs11_id_management);
 #endif
+#if P2MP
+      MUST_BE_UNDEF (server_poll_timeout);
+#endif
 
       if (pull)
 	msg (M_USAGE, err, "--pull");
@@ -2394,7 +2403,7 @@ options_postprocess_mutate_ce (struct options *o, struct connection_entry *ce)
     {
 #ifdef ENABLE_FRAGMENT
       if (ce->fragment)
-	o->ce.mssfix = ce->fragment;
+	ce->mssfix = ce->fragment;
 #else
       msg (M_USAGE, "--mssfix must specify a parameter");
 #endif      
@@ -2463,6 +2472,15 @@ options_postprocess_mutate_invariant (struct options *options)
       options->route_delay_defined = false;
 #endif
     }
+#endif
+
+#ifdef DEFAULT_PKCS11_MODULE
+  /* If p11-kit is present on the system then load its p11-kit-proxy.so
+     by default if the user asks for PKCS#11 without otherwise specifying
+     the module to use. */
+  if (!options->pkcs11_providers[0] &&
+      (options->pkcs11_id || options->pkcs11_id_management))
+    options->pkcs11_providers[0] = DEFAULT_PKCS11_MODULE;
 #endif
 }
 
@@ -2537,6 +2555,24 @@ options_postprocess_mutate (struct options *o)
     }
   else
     options_postprocess_mutate_ce (o, &o->ce);  
+
+#ifdef ENABLE_CRYPTOAPI
+  if (o->cryptoapi_cert)
+    {
+      const int tls_version_max =
+	  (o->ssl_flags >> SSLF_TLS_VERSION_MAX_SHIFT) &
+	  SSLF_TLS_VERSION_MAX_MASK;
+
+      if (tls_version_max == TLS_VER_UNSPEC || tls_version_max > TLS_VER_1_1)
+	{
+	  msg(M_WARN, "Warning: cryptapicert used, setting maximum TLS "
+	      "version to 1.1.");
+	  o->ssl_flags &= ~(SSLF_TLS_VERSION_MAX_MASK <<
+	      SSLF_TLS_VERSION_MAX_SHIFT);
+	  o->ssl_flags |= (TLS_VER_1_1 << SSLF_TLS_VERSION_MAX_SHIFT);
+	}
+    }
+#endif /* ENABLE_CRYPTOAPI */
 
 #if P2MP
   /*
@@ -3719,12 +3755,21 @@ static char *
 read_inline_file (struct in_src *is, const char *close_tag, struct gc_arena *gc)
 {
   char line[OPTION_LINE_SIZE];
-  struct buffer buf = alloc_buf (10000);
+  struct buffer buf = alloc_buf (8*OPTION_LINE_SIZE);
   char *ret;
   while (in_src_get (is, line, sizeof (line)))
     {
       if (!strncmp (line, close_tag, strlen (close_tag)))
 	break;
+      if (!buf_safe (&buf, strlen(line)))
+	{
+	  /* Increase buffer size */
+	  struct buffer buf2 = alloc_buf (buf.capacity * 2);
+	  ASSERT (buf_copy (&buf2, &buf));
+	  buf_clear (&buf);
+	  free_buf (&buf);
+	  buf = buf2;
+	}
       buf_printf (&buf, "%s", line);
     }
   ret = string_alloc (BSTR (&buf), gc);
@@ -6919,11 +6964,34 @@ add_option (struct options *options,
 #endif /* ENABLE_SSL */
 #endif /* ENABLE_CRYPTO */
 #ifdef ENABLE_PKCS11
-  else if (streq (p[0], "show-pkcs11-ids") && p[1])
+  else if (streq (p[0], "show-pkcs11-ids"))
     {
       char *provider =  p[1];
       bool cert_private = (p[2] == NULL ? false : ( atoi (p[2]) != 0 ));
 
+#ifdef DEFAULT_PKCS11_MODULE
+      if (!provider)
+	provider = DEFAULT_PKCS11_MODULE;
+      else if (!p[2])
+        {
+	  char *endp = NULL;
+	  int i = strtol(provider, &endp, 10);
+
+	  if (*endp == 0)
+	    {
+	      /* There was one argument, and it was purely numeric.
+		 Interpret it as the cert_private argument */
+	      provider = DEFAULT_PKCS11_MODULE;
+	      cert_private = i;
+	    }
+        }
+#else
+      if (!provider)
+	{
+	  msg (msglevel, "--show-pkcs11-ids requires a provider parameter");
+            goto err;
+	}
+#endif
       VERIFY_PERMISSION (OPT_P_GENERAL);
 
       set_debug_level (options->verbosity, SDL_CONSTRAIN);
@@ -6982,7 +7050,6 @@ add_option (struct options *options,
       options->pkcs11_id_management = true;
     }
 #endif
-#ifdef ENABLE_FEATURE_TUN_PERSIST
   else if (streq (p[0], "rmtun"))
     {
       VERIFY_PERMISSION (OPT_P_GENERAL);
@@ -6995,8 +7062,7 @@ add_option (struct options *options,
       options->persist_config = true;
       options->persist_mode = 1;
     }
-#endif
-  else if (streq (p[0], "peer-id"))
+  else if (streq (p[0], "peer-id") && p[1])
     {
       VERIFY_PERMISSION (OPT_P_PEER_ID);
       options->use_peer_id = true;

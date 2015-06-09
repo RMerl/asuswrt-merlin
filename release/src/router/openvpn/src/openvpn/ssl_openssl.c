@@ -121,15 +121,15 @@ tmp_rsa_cb (SSL * s, int is_export, int keylength)
 void
 tls_ctx_server_new(struct tls_root_ctx *ctx, unsigned int ssl_flags)
 {
-  const int tls_version_min =
-      (ssl_flags >> SSLF_TLS_VERSION_MIN_SHIFT) & SSLF_TLS_VERSION_MIN_MASK;
+  const int tls_version_max =
+      (ssl_flags >> SSLF_TLS_VERSION_MAX_SHIFT) & SSLF_TLS_VERSION_MAX_MASK;
 
   ASSERT(NULL != ctx);
 
-  if (tls_version_min > TLS_VER_UNSPEC)
-    ctx->ctx = SSL_CTX_new (SSLv23_server_method ());
-  else
+  if (tls_version_max == TLS_VER_1_0)
     ctx->ctx = SSL_CTX_new (TLSv1_server_method ());
+  else
+    ctx->ctx = SSL_CTX_new (SSLv23_server_method ());
 
   if (ctx->ctx == NULL)
     msg (M_SSLERR, "SSL_CTX_new SSLv23_server_method");
@@ -140,15 +140,15 @@ tls_ctx_server_new(struct tls_root_ctx *ctx, unsigned int ssl_flags)
 void
 tls_ctx_client_new(struct tls_root_ctx *ctx, unsigned int ssl_flags)
 {
-  const int tls_version_min =
-      (ssl_flags >> SSLF_TLS_VERSION_MIN_SHIFT) & SSLF_TLS_VERSION_MIN_MASK;
+  const int tls_version_max =
+      (ssl_flags >> SSLF_TLS_VERSION_MAX_SHIFT) & SSLF_TLS_VERSION_MAX_MASK;
 
   ASSERT(NULL != ctx);
 
-  if (tls_version_min > TLS_VER_UNSPEC)
-    ctx->ctx = SSL_CTX_new (SSLv23_client_method ());
-  else
+  if (tls_version_max == TLS_VER_1_0)
     ctx->ctx = SSL_CTX_new (TLSv1_client_method ());
+  else
+    ctx->ctx = SSL_CTX_new (SSLv23_client_method ());
 
   if (ctx->ctx == NULL)
     msg (M_SSLERR, "SSL_CTX_new SSLv23_client_method");
@@ -237,6 +237,10 @@ tls_ctx_set_options (struct tls_root_ctx *ctx, unsigned int ssl_flags)
 #ifdef SSL_OP_NO_TLSv1_2
     if (tls_ver_min > TLS_VER_1_2 || tls_ver_max < TLS_VER_1_2)
       sslopt |= SSL_OP_NO_TLSv1_2;
+#endif
+#ifdef SSL_OP_NO_COMPRESSION
+    /* Disable compression - flag not available in OpenSSL 0.9.8 */
+    sslopt |= SSL_OP_NO_COMPRESSION;
 #endif
     SSL_CTX_set_options (ctx->ctx, sslopt);
   }
@@ -1336,7 +1340,7 @@ show_available_tls_ciphers (const char *cipher_list)
       }
 
     }
-  printf ("\n");
+  printf ("\n" SHOW_TLS_CIPHER_LIST_WARNING);
 
   SSL_free (ssl);
   SSL_CTX_free (tls_ctx.ctx);

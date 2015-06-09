@@ -137,10 +137,6 @@ openvpn_getaddrinfo (unsigned int flags,
 
   ASSERT(res);
 
-#if defined(HAVE_RES_INIT)
-  res_init ();
-#endif
-
   if (!hostname)
     hostname = "::";
 
@@ -197,6 +193,9 @@ openvpn_getaddrinfo (unsigned int flags,
        */
       while (true)
         {
+#ifndef WIN32
+	  res_init ();
+#endif
           /* try hostname lookup */
           hints.ai_flags = 0;
           dmsg (D_SOCKET_DEBUG, "GETADDRINFO flags=0x%04x ai_family=%d ai_socktype=%d",
@@ -215,10 +214,13 @@ openvpn_getaddrinfo (unsigned int flags,
                     }
                   else
                     {
+		      /* turn success into failure (interrupted syscall) */
                       if (0 == status) {
                           ASSERT(res);
                           freeaddrinfo(*res);
-                          res = NULL;
+                          *res = NULL;
+                          status = EAI_AGAIN;	/* = temporary failure */
+                          errno = EINTR;
                       }
                       goto done;
                     }
