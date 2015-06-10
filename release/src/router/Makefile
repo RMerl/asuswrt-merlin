@@ -3060,7 +3060,7 @@ openpam-clean:
 	@[ ! -f openpam/Makefile ] || $(MAKE) -C openpam distclean
 	@rm -f openpam/stamp-h1
 
-openvpn/stamp-h1: lzo zlib
+openvpn/stamp-h1: lzo zlib nvram
 	cd openvpn && ./autogen.sh && \
 	export OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include"; \
 	export OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto"; \
