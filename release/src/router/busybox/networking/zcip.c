@@ -30,11 +30,15 @@
 //usage:     "\n	-f		Run in foreground"
 //usage:     "\n	-q		Quit after obtaining address"
 //usage:     "\n	-r 169.254.x.x	Request this address first"
+//usage:     "\n	-l x.x.0.0	Use this range instead of 169.254"
+//usage:     "\n	-p FILE		Create pidfile"
 //usage:     "\n	-v		Verbose"
-//usage:     "\n	-S		Log to syslog too"
 //usage:     "\n"
 //usage:     "\nWith no -q, runs continuously monitoring for ARP conflicts,"
 //usage:     "\nexits only on I/O errors (link down etc)"
+
+/* Override ENABLE_FEATURE_PIDFILE */
+#define WANT_PIDFILE 1
 
 #include "libbb.h"
 #include <netinet/ether.h>
@@ -88,10 +92,15 @@ enum {
 struct globals {
 	struct sockaddr saddr;
 	struct ether_addr eth_addr;
+	uint32_t localnet_ip;
+	int verbose;
+	char *pidfile;
 } FIX_ALIASING;
 #define G (*(struct globals*)&bb_common_bufsiz1)
 #define saddr    (G.saddr   )
 #define eth_addr (G.eth_addr)
+#define verbose  (G.verbose )
+#define pidfile  (G.pidfile )
 #define INIT_G() do { } while (0)
 
 
@@ -99,14 +108,14 @@ struct globals {
  * Pick a random link local IP address on 169.254/16, except that
  * the first and last 256 addresses are reserved.
  */
-static uint32_t pick(void)
+static uint32_t pick_nip(void)
 {
 	unsigned tmp;
 
 	do {
 		tmp = rand() & IN_CLASSB_HOST;
 	} while (tmp > (IN_CLASSB_HOST - 0x0200));
-	return htonl((LINKLOCAL_ADDR + 0x0100) + tmp);
+	return htonl((G.localnet_ip + 0x0100) + tmp);
 }
 
 /**
@@ -170,7 +179,8 @@ static int run(char *argv[3], const char *param, struct in_addr *ip)
 		xsetenv("ip", addr);
 		fmt -= 3;
 	}
-	bb_info_msg(fmt, argv[2], argv[0], addr);
+	if (verbose)
+		bb_info_msg(fmt, argv[2], argv[0], addr);
 
 	status = spawn_and_wait(argv + 1);
 	if (status < 0) {
@@ -190,6 +200,12 @@ static ALWAYS_INLINE unsigned random_delay_ms(unsigned secs)
 	return rand() % (secs * 1000);
 }
 
+static void zcip_shutdown(int sig UNUSED_PARAM)
+{
+	remove_pidfile(pidfile);
+	exit(EXIT_SUCCESS);
+}
+
 /**
  * main program
  */
@@ -198,6 +214,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 {
 	int state;
 	char *r_opt;
+	const char *l_opt = "169.254.0.0";
 	unsigned opts;
 
 	// ugly trick, but I want these zeroed in one go
@@ -211,7 +228,6 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 		unsigned nprobes;
 		unsigned nclaims;
 		int ready;
-		int verbose;
 	} L;
 #define null_ip    (L.null_ip   )
 #define null_addr  (L.null_addr )
@@ -222,18 +238,16 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 #define nprobes    (L.nprobes   )
 #define nclaims    (L.nclaims   )
 #define ready      (L.ready     )
-#define verbose    (L.verbose   )
 
 	memset(&L, 0, sizeof(L));
 	INIT_G();
 
 #define FOREGROUND (opts & 1)
 #define QUIT       (opts & 2)
-#define SYSLOG     (opts & 4)
 	// parse commandline: prog [options] ifname script
 	// exactly 2 args; -v accumulates and implies -f
 	opt_complementary = "=2:vv:vf";
-	opts = getopt32(argv, "fqr:vS", &r_opt, &verbose);
+	opts = getopt32(argv, "fqr:l:p:v", &r_opt, &l_opt, &pidfile, &verbose);
 #if !BB_MMU
 	// on NOMMU reexec early (or else we will rerun things twice)
 	if (!FOREGROUND)
@@ -243,18 +257,28 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 	// (need to do it before openlog to prevent openlog from taking
 	// fd 3 (sock_fd==3))
 	xmove_fd(xsocket(AF_PACKET, SOCK_PACKET, htons(ETH_P_ARP)), sock_fd);
-	if (!FOREGROUND && SYSLOG) {
+	if (!FOREGROUND) {
 		// do it before all bb_xx_msg calls
 		openlog(applet_name, 0, LOG_DAEMON);
 		logmode |= LOGMODE_SYSLOG;
 	}
+	{ // -l n.n.n.n
+		struct in_addr net;
+		if (inet_aton(l_opt, &net) == 0
+		 || (net.s_addr & htonl(IN_CLASSB_NET)) != net.s_addr
+		) {
+			bb_error_msg_and_die("invalid network address");
+		}
+		G.localnet_ip = ntohl(net.s_addr);
+	}
 	if (opts & 4) { // -r n.n.n.n
 		if (inet_aton(r_opt, &ip) == 0
-		 || (ntohl(ip.s_addr) & IN_CLASSB_NET) != LINKLOCAL_ADDR
+		 || (ntohl(ip.s_addr) & IN_CLASSB_NET) != G.localnet_ip
 		) {
 			bb_error_msg_and_die("invalid link address");
 		}
 	}
+
 	argv += optind - 1;
 
 	/* Now: argv[0]:junk argv[1]:intf argv[2]:script argv[3]:NULL */
@@ -297,7 +321,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 		srand(t);
 	}
 	if (ip.s_addr == 0)
-		ip.s_addr = pick();
+		ip.s_addr = pick_nip();
 
 	// FIXME cases to handle:
 	//  - zcip already running!
@@ -308,8 +332,12 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 #if BB_MMU
 		bb_daemonize(0 /*was: DAEMON_CHDIR_ROOT*/);
 #endif
-		bb_info_msg("start, interface %s", argv_intf);
+		if (verbose)
+			bb_info_msg("start, interface %s", argv_intf);
 	}
+
+	write_pidfile(pidfile);
+	bb_signals(BB_FATAL_SIGS, zcip_shutdown);
 
 	// run the dynamic address negotiation protocol,
 	// restarting after address conflicts:
@@ -355,7 +383,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 
 		default:
 			//bb_perror_msg("poll"); - done in safe_poll
-			return EXIT_FAILURE;
+			goto die;
 
 		// timeout
 		case 0:
@@ -368,11 +396,11 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 					nprobes++;
 					VDBG("probe/%u %s@%s\n",
 							nprobes, argv_intf, inet_ntoa(ip));
+					timeout_ms = PROBE_MIN * 1000;
+					timeout_ms += random_delay_ms(PROBE_MAX - PROBE_MIN);
 					arp(/* ARPOP_REQUEST, */
 							/* &eth_addr, */ null_ip,
 							&null_addr, ip);
-					timeout_ms = PROBE_MIN * 1000;
-					timeout_ms += random_delay_ms(PROBE_MAX - PROBE_MIN);
 				}
 				else {
 					// Switch to announce state.
@@ -380,10 +408,10 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 					nclaims = 0;
 					VDBG("announce/%u %s@%s\n",
 							nclaims, argv_intf, inet_ntoa(ip));
+					timeout_ms = ANNOUNCE_INTERVAL * 1000;
 					arp(/* ARPOP_REQUEST, */
 							/* &eth_addr, */ ip,
 							&eth_addr, ip);
-					timeout_ms = ANNOUNCE_INTERVAL * 1000;
 				}
 				break;
 			case RATE_LIMIT_PROBE:
@@ -393,10 +421,10 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 				nclaims = 0;
 				VDBG("announce/%u %s@%s\n",
 						nclaims, argv_intf, inet_ntoa(ip));
+				timeout_ms = ANNOUNCE_INTERVAL * 1000;
 				arp(/* ARPOP_REQUEST, */
 						/* &eth_addr, */ ip,
 						&eth_addr, ip);
-				timeout_ms = ANNOUNCE_INTERVAL * 1000;
 				break;
 			case ANNOUNCE:
 				// timeouts in the ANNOUNCE state mean no conflicting ARP packets
@@ -405,10 +433,10 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 					nclaims++;
 					VDBG("announce/%u %s@%s\n",
 							nclaims, argv_intf, inet_ntoa(ip));
+					timeout_ms = ANNOUNCE_INTERVAL * 1000;
 					arp(/* ARPOP_REQUEST, */
 							/* &eth_addr, */ ip,
 							&eth_addr, ip);
-					timeout_ms = ANNOUNCE_INTERVAL * 1000;
 				}
 				else {
 					// Switch to monitor state.
@@ -422,8 +450,10 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 
 					// NOTE: all other exit paths
 					// should deconfig ...
-					if (QUIT)
-						return EXIT_SUCCESS;
+					if (QUIT) {
+						xfunc_error_retval = EXIT_SUCCESS;
+						goto die;
+					}
 				}
 				break;
 			case DEFEND:
@@ -435,7 +465,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 			default:
 				// Invalid, should never happen.  Restart the whole protocol.
 				state = PROBE;
-				ip.s_addr = pick();
+				ip.s_addr = pick_nip();
 				timeout_ms = 0;
 				nprobes = 0;
 				nclaims = 0;
@@ -468,14 +498,15 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 					if (ready) {
 						run(argv, "deconfig", &ip);
 					}
-					return EXIT_FAILURE;
+					goto die;
 				}
 				continue;
 			}
 
 			// read ARP packet
 			if (safe_read(sock_fd, &p, sizeof(p)) < 0) {
-				bb_perror_msg_and_die(bb_msg_read_error);
+				bb_perror_msg(bb_msg_read_error);
+				goto die;
 			}
 			if (p.eth.ether_type != htons(ETHERTYPE_ARP))
 				continue;
@@ -497,22 +528,28 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 			}
 #endif
 			if (p.arp.arp_op != htons(ARPOP_REQUEST)
-			 && p.arp.arp_op != htons(ARPOP_REPLY))
+			 && p.arp.arp_op != htons(ARPOP_REPLY)
+			) {
 				continue;
+			}
 
 			source_ip_conflict = 0;
 			target_ip_conflict = 0;
 
-			if (memcmp(p.arp.arp_spa, &ip.s_addr, sizeof(struct in_addr)) == 0
-			 && memcmp(&p.arp.arp_sha, &eth_addr, ETH_ALEN) != 0
-			) {
-				source_ip_conflict = 1;
-			}
-			if (p.arp.arp_op == htons(ARPOP_REQUEST)
-			 && memcmp(p.arp.arp_tpa, &ip.s_addr, sizeof(struct in_addr)) == 0
-			 && memcmp(&p.arp.arp_tha, &eth_addr, ETH_ALEN) != 0
-			) {
-				target_ip_conflict = 1;
+			if (memcmp(&p.arp.arp_sha, &eth_addr, ETH_ALEN) != 0) {
+				if (memcmp(p.arp.arp_spa, &ip.s_addr, sizeof(struct in_addr)) == 0) {
+					/* A probe or reply with source_ip == chosen ip */
+					source_ip_conflict = 1;
+				}
+				if (p.arp.arp_op == htons(ARPOP_REQUEST)
+				 && memcmp(p.arp.arp_spa, &null_ip, sizeof(struct in_addr)) == 0
+				 && memcmp(p.arp.arp_tpa, &ip.s_addr, sizeof(struct in_addr)) == 0
+				) {
+					/* A probe with source_ip == 0.0.0.0, target_ip == chosen ip:
+					 * another host trying to claim this ip!
+					 */
+					target_ip_conflict = 1;
+				}
 			}
 
 			VDBG("state = %d, source ip conflict = %d, target ip conflict = %d\n",
@@ -531,7 +568,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 					}
 
 					// restart the whole protocol
-					ip.s_addr = pick();
+					ip.s_addr = pick_nip();
 					timeout_ms = 0;
 					nprobes = 0;
 					nclaims = 0;
@@ -557,7 +594,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 					run(argv, "deconfig", &ip);
 
 					// restart the whole protocol
-					ip.s_addr = pick();
+					ip.s_addr = pick_nip();
 					timeout_ms = 0;
 					nprobes = 0;
 					nclaims = 0;
@@ -567,7 +604,7 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 				// Invalid, should never happen.  Restart the whole protocol.
 				VDBG("invalid state -- starting over\n");
 				state = PROBE;
-				ip.s_addr = pick();
+				ip.s_addr = pick_nip();
 				timeout_ms = 0;
 				nprobes = 0;
 				nclaims = 0;
@@ -576,5 +613,10 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
 			break; // case 1 (packets arriving)
 		} // switch poll
 	} // while (1)
+
+die:
+	remove_pidfile(pidfile);
+	xfunc_die();
+
 #undef argv_intf
 }
