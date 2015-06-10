@@ -1,6 +1,29 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.55 (xx-xxx-2015)
+   - NEW: Merged with GPL 6065.  Notable changes from Asus:
+             o New token-based webui authentication (more secure)
+             o OpenVPN certificates moved to JFFS2, saving nvram.
+               key/cert fields will show up empty on the webui,
+               any new key/cert you paste will be written back
+               to /jffs/openvpn/ .
+             o New network client list on the network map
+             o CTF support for PPTP/L2TP WAN (Russian ISPs) (ARM)
+
+  - CHANGED: The JFFS2 partition is now always enabled, as it is
+             required by various firmware functions.  The options
+             to format it or to enable/disable user config/scripts
+             remain configurable.
+  - CHANGED: Updated OpenVPN to 2.3.7
+  - FIXED: The exported opvn config for clients had the incorrect port
+           value.
+  - FIXED: Busybox's zcip was missing a patch from 378_4950, preventing
+           it from working (and in turn preventing igmpproxy from working
+           for people with PPPoE connections where their modem does not
+           provide any DHCP lease to the physical WAN interface)
+
+
 378.54 (7-June-2015)
    IMPORTANT: if you were previously using the AiProtection ad blocker, you
               will need to manually disable it over SSH after flashing this
