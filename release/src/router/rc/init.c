@@ -1047,8 +1047,12 @@ restore_defaults(void)
 	bsd_defaults();
 #endif
 #ifdef RTCONFIG_DHDAP
-	snprintf(tmp, sizeof(tmp), "wl%d_cfg_maxassoc", i);
-	nvram_unset(tmp);
+//	snprintf(tmp, sizeof(tmp), "wl%d_cfg_maxassoc", i);
+//	nvram_unset(tmp);
+	nvram_unset("wl_cfg_maxassoc");
+	nvram_unset("wl0_cfg_maxassoc");
+	nvram_unset("wl1_cfg_maxassoc");
+	nvram_unset("wl2_cfg_maxassoc");
 #endif
 
 	if (restore_defaults) {
