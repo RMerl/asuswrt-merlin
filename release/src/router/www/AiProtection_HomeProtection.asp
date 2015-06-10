@@ -106,7 +106,7 @@ function applyRule(){
 
 function check_weakness(){
 	cal_panel_block();
-	document.getElementById('#weakness_div').fadeIn();
+	$('#weakness_div').fadeIn();
 	check_login_name_password();
 	check_wireless_password();
 	check_wireless_encryption();
@@ -123,7 +123,7 @@ function check_weakness(){
 }
 
 function close_weakness_status(){
-	document.getElementById('#weakness_div').fadeOut(100);
+	$('#weakness_div').fadeOut(100);
 }
 
 function enable_whole_security(){
@@ -554,7 +554,7 @@ function show_tm_eula(){
 	}
 	dr_advise();
 	cal_agreement_block();
-	document.getElementById("#agreement_panel").fadeIn(300);
+	$("#agreement_panel").fadeIn(300);
 }
 
 function cal_agreement_block(){
@@ -603,13 +603,13 @@ function eula_confirm(){
 function show_alert_preference(){
 	cal_panel_block();
 	parse_wrs_mail_bit();
-	document.getElementById('#alert_preference').fadeIn(300);
+	$('#alert_preference').fadeIn(300);
 	document.getElementById('mail_address').value = document.form.PM_MY_EMAIL.value;
 	document.getElementById('mail_password').value = document.form.PM_SMTP_AUTH_PASS.value;
 }
 
 function close_alert_preference(){
-	document.getElementById('#alert_preference').fadeOut(100);
+	$('#alert_preference').fadeOut(100);
 }
 
 function apply_alert_preference(){
@@ -649,7 +649,7 @@ function apply_alert_preference(){
 	document.form.PM_SMTP_AUTH_PASS.value = document.getElementById('mail_password').value;	
 	document.form.PM_SMTP_SERVER.value = smtpList[0].smtpServer;	
 	document.form.PM_SMTP_PORT.value = smtpList[0].smtpPort;	
-	document.getElementById('#alert_preference').fadeOut(100);
+	$('#alert_preference').fadeOut(100);
 	document.form.submit();
 }
 
@@ -1032,7 +1032,7 @@ function parse_wrs_mail_bit(){
 																	<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_mals_enable"></div>
 																	<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 																		<script type="text/javascript">
-																			document.getElementById('#radio_mals_enable').iphoneSwitch('<% nvram_get("wrs_mals_enable"); %>',
+																			$('#radio_mals_enable').iphoneSwitch('<% nvram_get("wrs_mals_enable"); %>',
 																				function(){																					
 																					if(document.form.TM_EULA.value == 0){
 																						button_flag = 1;
@@ -1057,7 +1057,7 @@ function parse_wrs_mail_bit(){
 																	<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_vp_enable"></div>
 																	<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 																		<script type="text/javascript">
-																			document.getElementById('#radio_vp_enable').iphoneSwitch('<% nvram_get("wrs_vp_enable"); %>',
+																			$('#radio_vp_enable').iphoneSwitch('<% nvram_get("wrs_vp_enable"); %>',
 																				function(){																				
 																					if(document.form.TM_EULA.value == 0){
 																						button_flag = 2;
@@ -1100,7 +1100,7 @@ function parse_wrs_mail_bit(){
 													<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_cc_enable"></div>
 													<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 														<script type="text/javascript">
-															document.getElementById('#radio_cc_enable').iphoneSwitch('<% nvram_get("wrs_cc_enable"); %>',
+															$('#radio_cc_enable').iphoneSwitch('<% nvram_get("wrs_cc_enable"); %>',
 																function(){																
 																	if(document.form.TM_EULA.value == 0){
 																		button_flag = 3;
