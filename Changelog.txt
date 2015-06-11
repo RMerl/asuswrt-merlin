@@ -1,6 +1,15 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.54_2 (10-June-2015)
+  - FIXED: The exported opvn config for clients had the incorrect port
+           value.
+  - FIXED: Busybox's zcip was missing a patch from 378_4950, preventing
+           it from working (and in turn preventing igmpproxy from working
+           for people with PPPoE connections where their modem does not
+           provide any DHCP lease to the physical WAN interface)
+
+
 378.54_1 (8-June-2015)
    - Some of the builds were unstable, did a complete recompile of all
      releases.  There was no code change.
