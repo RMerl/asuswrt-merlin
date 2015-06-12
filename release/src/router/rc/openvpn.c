@@ -1242,7 +1242,7 @@ void start_vpnserver(int serverNum)
 		else
 		{	//generate dh param file
 			sprintf(fpath, "/etc/openvpn/server%d/dh.pem", serverNum);
-			eval("openssl", "dhparam", "-out", fpath, "512");
+			eval("openssl", "dhparam", "-out", fpath, "1024");
 			fp = fopen(fpath, "r");
 			if(fp) {
 				set_crt_parsed(&buffer[0], fpath);
