@@ -47,7 +47,7 @@ function show_leases() {
 	var code, i, line;
 	var Days, Hours, Minutes, Seconds;
 
-	code = '<table width="100%" id="24G" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
 	code += '<thead><tr>';
 	code += '<td width=20%">Time Left</td>';
 	code += '<td width=20%">MAC</td>';
@@ -75,7 +75,7 @@ function show_leases() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="5">No active leases.</td></tr>';
+		code += '<tr><td colspan="4">No active leases.</td></tr>';
 	}
 
 	code += '</tr></table>';
@@ -114,7 +114,7 @@ function show_leases() {
 		<td valign="top">
 			<div id="tabMenu" class="submenuBlock"></div>     
 			<!--===================================Beginning of Main Content===========================================-->
-				<table width="98%" border="0" align="lease" cellpadding="0" cellspacing="0">
+				<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 					<tr>
 						<td valign="top">
 							<table width="760px" border="0" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">
@@ -124,19 +124,20 @@ function show_leases() {
 										<div>&nbsp;</div>
 										<div class="formfonttitle"><#System_Log#> - <#menu5_7_3#></div>
 										<div style="margin-lease:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+										<div class="formfontdesc"><#DHCPlease_title#></div>
 										<br>
-										<span>
-											<div class="leaseheader">Currently active DHCP leases:</div>
+                                                                                <div style="margin-top:8px">
+											<div class="leaseheader">DHCP leases:</div>
 											<div id="leaseblock"></div>
 											<br>
-										</span>
+										</div>
 										<div class="apply_gen">
 											<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
 										</div>
 									</td>
 								</tr>
-								</tbody>		  
-							</table>	
+								</tbody>
+							</table>
 						</td>
 					</tr>
 				</table>
