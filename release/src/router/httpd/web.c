@@ -3998,8 +3998,8 @@ ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 
+#define DHCP_LEASE_FILE         "/var/lib/misc/dnsmasq.leases"
 #ifdef RTCONFIG_IPV6
-#define DHCP_LEASE_FILE		"/var/lib/misc/dnsmasq.leases"
 #define IPV6_CLIENT_NEIGH	"/tmp/ipv6_neigh"
 #define IPV6_CLIENT_INFO	"/tmp/ipv6_client_info"
 #define	IPV6_CLIENT_LIST	"/tmp/ipv6_client_list"
@@ -12544,7 +12544,10 @@ ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv)
 	char hostname[16], duration[9], ip[40], mac[18];
 	int ret=0;
 
-	leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
+	killall("dnsmasq", SIGUSR2);
+	sleep(1);
+
+	leaselist = read_whole_file(DHCP_LEASE_FILE);
 	if (!leaselist)
 		return websWrite(wp, "leasearray = [];\n");
 
