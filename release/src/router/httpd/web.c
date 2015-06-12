@@ -182,6 +182,7 @@ extern int ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv);
 #ifdef RTCONFIG_IGD2
 extern int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
 #endif
+int ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv);
 
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
 
@@ -12462,6 +12463,7 @@ struct ej_handler ej_handlers[] = {
 	{ "ipv6_pinholes",  ej_ipv6_pinhole_array},
 #endif
 #endif
+	{ "get_leases_array", ej_get_leases_array},
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif
@@ -12533,6 +12535,30 @@ write_ver:
 	nvram_set_f("general.log", "productid", productid);
 	nvram_set_f("general.log", "firmver", fwver);
 }
+
+
+int
+ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv)
+{
+	char *leaselist = NULL, *leaselistptr;
+	char hostname[16], duration[9], ip[40], mac[18];
+	int ret=0;
+
+	leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
+	if (!leaselist)
+		return websWrite(wp, "leasearray = [];\n");
+
+	ret += websWrite(wp, "leasearray= [");
+	leaselistptr = leaselist;
+
+	while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%8s %17s %15s %15s %*s", duration, mac, ip, hostname) == 4)) {
+		ret += websWrite(wp, "['%s', '%s', '%s', '%s'],\n", duration, mac, ip, hostname);
+		leaselistptr = strstr(leaselistptr,"\n")+1;
+	}
+        ret += websWrite(wp, "[]];\n");
+	return ret;
+}
+
 
 #ifdef RTCONFIG_IPV6
 #ifdef RTCONFIG_IGD2
