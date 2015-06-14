@@ -68,7 +68,7 @@ ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv)
 	leaselistptr = leaselist;
 
 	while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%8s %17s %15s %15s %*s", duration, mac, ip, hostname) == 4)) {
-		ret += websWrite(wp, "['%s', '%s', '%s', '%s'],\n", duration, mac, ip, hostname);
+		ret += websWrite(wp, "[\"%s\", \"%s\", \"%s\", \"%s\"],\n", duration, mac, ip, hostname);
 		leaselistptr = strstr(leaselistptr,"\n")+1;
 	}
 	ret += websWrite(wp, "[]];\n");
@@ -147,7 +147,7 @@ ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
 		}
 
 		ret += websWrite(wp,
-			"['%s', '%s', '%s', '%s', '%s'],\n",
+			"[\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"],\n",
 			src, sport, dst, dport, proto);
 	}
 	ret += websWrite(wp, "[]];\n");
@@ -189,7 +189,7 @@ ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 			"%255[^\n]",
 			proto, eport, iaddr, iport, timestamp, desc) < 6) continue;
 
-		ret += websWrite(wp, "['%s', '%s', '%s', '%s', '%s', '%s'],\n",
+		ret += websWrite(wp, "[\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"],\n",
 			proto, eport, iaddr, iport, timestamp, desc);
 	}
 
@@ -279,9 +279,9 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 
 		ret += websWrite(wp, "["
 #ifdef NATSRC_SUPPORT
-			"'%s', "
+			"\"%s\", "
 #endif
-			"'%s', '%s', '%s', '%s', '%s', '%s'],\n",
+			"\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"],\n",
 #ifdef NATSRC_SUPPORT
 			src,
 #endif
