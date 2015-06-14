@@ -15,14 +15,15 @@
  * MA 02111-1307 USA
  */
 
-int ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv);
 
 #ifdef RTCONFIG_IGD2
 #ifdef RTCONFIG_IPV6
-int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 #endif
 
-int ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv);
 
-int ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv);
+

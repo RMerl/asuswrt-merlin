@@ -2300,6 +2300,7 @@ wl_status_5g_array(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int ret, retval = 0;
 	qcsapi_SSID ssid;
+	char ssidtmp[sizeof(qcsapi_SSID)*2];
 	qcsapi_unsigned_int channel;
 	qcsapi_unsigned_int bw;
 	char chspec_str[8];
@@ -2314,7 +2315,11 @@ wl_status_5g_array(int eid, webs_t wp, int argc, char_t **argv)
 		ret += websWrite(wp, "\"\",\"\",\"\",\"\",\"\",\"\",");
 		dbG("rpc_qcsapi_get_SSID %s error, return: %d\n", WIFINAME, ret);
 	}
-	retval += websWrite(wp, "\"%s\",", ssid);
+
+	if (str_escape_quotes(ssidtmp, ssid, sizeof(ssidtmp)) == 0 )
+		strncpy(ssidtmp, ssid, sizeof(ssidtmp));
+
+	retval += websWrite(wp, "\"%s\",", ssidtmp);
 
 	int rssi_by_chain[4], rssi;
 	qcsapi_wifi_get_rssi_by_chain(WIFINAME, 0, &rssi_by_chain[0]);
@@ -2373,7 +2378,7 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 	char *leaselist = NULL, *leaselistptr;
 	int found;
 	char ipentry[40], macentry[18];
-	char hostnameentry[16];
+	char hostnameentry[32], tmp[16];
 
 	if (!rpc_qtn_ready())
 		return retval;
@@ -2450,7 +2455,7 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 			if (leaselist) {
 				leaselistptr = leaselist;
 
-				while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, hostnameentry) == 3)) {
+				while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, tmp) == 3)) {
 					if (upper_strcmp(macentry,  wl_ether_etoa((struct ether_addr *) &sta_address)) == 0) {
 						found += 2;
 						break;
@@ -2458,6 +2463,9 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 						leaselistptr = strstr(leaselistptr,"\n")+1;
 					}
 				}
+				if ((found) && (str_escape_quotes(hostnameentry, tmp, sizeof(hostnameentry)) == 0 ))
+					strncpy(hostnameentry, tmp, sizeof(hostnameentry));
+
 				if (found == 0) {
 					// Not in arplist nor in leaselist
 					ret += websWrite(wp, "\"<not found>\",\"<not found>\",");

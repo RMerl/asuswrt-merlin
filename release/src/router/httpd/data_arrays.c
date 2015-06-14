@@ -50,6 +50,7 @@
 
 #include "data_arrays.h"
 
+
 int
 ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -166,7 +167,7 @@ int
 ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 {
 	FILE *fp;
-	char proto[4], eport[6], iaddr[sizeof("255.255.255.255")], iport[6], timestamp[15], desc[255];
+	char proto[4], eport[6], iaddr[sizeof("255.255.255.255")], iport[6], timestamp[15], desc[200], desc2[256];
 	int ret=0;
 	char line[256];
 
@@ -186,11 +187,14 @@ ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 			"%15[^:]:"
 			"%5[^:]:"
 			"%14[^:]:"
-			"%255[^\n]",
+			"%200[^\n]",
 			proto, eport, iaddr, iport, timestamp, desc) < 6) continue;
 
+		if (str_escape_quotes(desc2, desc, sizeof(desc2)) == 0)
+			strncpy(desc2, desc, sizeof(desc2));
+
 		ret += websWrite(wp, "[\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"],\n",
-			proto, eport, iaddr, iport, timestamp, desc);
+			proto, eport, iaddr, iport, timestamp, desc2);
 	}
 
 	fclose(fp);
@@ -293,5 +297,3 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
         ret += websWrite(wp, "[]];\n");
 	return ret;
 }
-
-
