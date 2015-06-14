@@ -4193,7 +4193,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ret += wl_status_5g_array(eid, wp, argc, argv);
 		else
 #endif
-		ret += wl_status_array(eid, wp, argc, argv, unit);
+			ret += wl_status_array(eid, wp, argc, argv, unit);
 	}
 
 	if (nvram_match(strcat_r(prefix, "mode", tmp), "ap"))
@@ -4252,7 +4252,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	else
 		ret += websWrite(wp, "wificlients24 = [");
 
-	#ifdef RTCONFIG_QTN
+#ifdef RTCONFIG_QTN
 	if (unit && rpc_qtn_ready())
 	{
 		ret += ej_wl_status_5g_array(eid, wp, argc, argv);
