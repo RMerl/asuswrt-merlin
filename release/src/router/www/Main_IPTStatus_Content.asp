@@ -15,10 +15,51 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script></script>
+<script>
+<% get_vserver_array(); %>
+
+function initial() {
+        show_menu();
+        show_vserver();
+}
+
+function show_vserver() {
+	var code, i, line;
+
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+	code += '<thead><tr>';
+	code += '<td width=20%">Destination</td>';
+	code += '<td width=10%">Proto</td>';
+	code += '<td width=15%">Port range</td>';
+	code += '<td width=20%">Redirect to</td>';
+	code += '<td width=15%">Local Port</td>';
+	code += '<td width=20%">Chain</td>';
+	code += '</tr></thead>';
+
+	if (vserverarray.length > 1) {
+		for (i = 0; i < vserverarray.length-1; ++i) {
+			line = vserverarray[i];
+			code += '<tr>';
+			code += '<td>' + line[0] + '</td>';
+			code += '<td>' + line[1] + '</td>';
+			code += '<td>' + line[2] + '</td>';
+			code += '<td>' + line[3] + '</td>';
+			code += '<td>' + line[4] + '</td>';
+			code += '<td>' + line[5] + '</td>';
+			code += '</tr>';
+		}
+	} else {
+		code += '<tr><td colspan="4">No active port forwards.</td></tr>';
+	}
+
+	code += '</tr></table>';
+	document.getElementById("vserverblock").innerHTML = code;
+}
+
+</script>
 </head>
 
-<body onload="show_menu();">
+<body onload="initial();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
@@ -54,10 +95,11 @@
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#System_Log#> - <#menu5_7_5#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-									<div class="formfontdesc"><#PortForward_title#></div>
-									<div style="margin-top:8px">   
-										<textarea style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" cols="63" rows="25" readonly="readonly" wrap=off ><% nvram_dump("iptable.log","iptable.sh"); %></textarea><!--==magic 2008.11 del name ,if there are name, when the form was sent, the textarea also will be sent==-->
-									</div>
+									<br>
+                                                                                <div style="margin-top:8px">
+											<div id="vserverblock"></div>
+										</div>
+									<br>
 									<div class="apply_gen">
 										<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
 									</div>

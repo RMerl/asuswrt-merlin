@@ -75,6 +75,7 @@ ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 
+
 #ifdef RTCONFIG_IPV6
 #ifdef RTCONFIG_IGD2
 int
@@ -159,4 +160,100 @@ ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
 }
 #endif
 #endif
+
+
+int
+ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *fp;
+	char *nat_argv[] = {"iptables", "-t", "nat", "-nxL", NULL};
+	char line[256], tmp[256];
+	char target[16], proto[16];
+	char src[sizeof("255.255.255.255")];
+	char dst[sizeof("255.255.255.255")];
+	char *range, *host, *port, *ptr, *val;
+	int ret = 0;
+	char chain[16];
+
+	/* dump nat table including VSERVER and VUPNP chains */
+	_eval(nat_argv, ">/tmp/vserver.log", 10, NULL);
+
+	ret += websWrite(wp, "var vserverarray = [");
+
+	fp = fopen("/tmp/vserver.log", "r");
+
+	if (fp == NULL) {
+                ret += websWrite(wp, "[];\n");
+                return ret;
+        }
+
+	while (fgets(line, sizeof(line), fp) != NULL)
+	{
+
+		// If it's a chain definition then store it for following rules
+		if (!strncmp(line, "Chain",  5)){
+			if (sscanf(line, "%*s%*[ \t]%15s%*[ \t]%*s", chain) == 1)
+				continue;
+		}
+		tmp[0] = '\0';
+		if (sscanf(line,
+		    "%15s%*[ \t]"		// target
+		    "%15s%*[ \t]"		// prot
+		    "%*s%*[ \t]"		// opt
+		    "%15[^/]/%*d%*[ \t]"	// source
+		    "%15[^/]/%*d%*[ \t]"	// destination
+		    "%255[^\n]",		// options
+		    target, proto, src, dst, tmp) < 4) continue;
+
+		/* TODO: add port trigger, portmap, etc support */
+		if (strcmp(target, "DNAT") != 0)
+			continue;
+
+		/* Don't list DNS redirections  from DNSFilter */
+		if (strcmp(chain, "DNSFILTER") ==0)
+			continue;
+
+		/* uppercase proto */
+		for (ptr = proto; *ptr; ptr++)
+			*ptr = toupper(*ptr);
+#ifdef NATSRC_SUPPORT
+		/* parse source */
+		if (strcmp(src, "0.0.0.0") == 0)
+			strcpy(src, "ALL");
+#endif
+		/* parse destination */
+		if (strcmp(dst, "0.0.0.0") == 0)
+			strcpy(dst, "ALL");
+
+		/* parse options */
+		port = host = range = "";
+		ptr = tmp;
+		while ((val = strsep(&ptr, " ")) != NULL) {
+			if (strncmp(val, "dpt:", 4) == 0)
+				range = val + 4;
+			else if (strncmp(val, "dpts:", 5) == 0)
+				range = val + 5;
+			else if (strncmp(val, "to:", 3) == 0) {
+				port = host = val + 3;
+				strsep(&port, ":");
+			}
+		}
+
+		ret += websWrite(wp, "["
+#ifdef NATSRC_SUPPORT
+			"'%s', "
+#endif
+			"'%s', '%s', '%s', '%s', '%s', '%s'],\n",
+#ifdef NATSRC_SUPPORT
+			src,
+#endif
+			dst, proto, range, host, port ? : range, chain);
+	}
+	fclose(fp);
+	unlink("/tmp/vserver.log");
+
+        ret += websWrite(wp, "[]];\n");
+	return ret;
+}
+
 
