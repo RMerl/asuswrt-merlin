@@ -1441,7 +1441,7 @@ function retOverLibStr(client){
 }
 
 function ajaxCallJsonp(target){    
-    var data = $j.getJSON(target, {format: "json"});
+    var data = $.getJSON(target, {format: "json"});
 
     data.success(function(msg){
     	parent.retObj = msg;
@@ -1462,7 +1462,7 @@ function oui_query(mac){
 
 	var tab = new Array();
 	tab = mac.split(mac.substr(2,1));
-	$j.ajax({
+	$.ajax({
 	    url: 'http://standards.ieee.org/cgi-bin/ouisearch?'+ tab[0] + '-' + tab[1] + '-' + tab[2],
 		type: 'GET',
 	    error: function(xhr) {
