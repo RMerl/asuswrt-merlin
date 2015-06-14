@@ -50,7 +50,7 @@ OBJS = httpd.o cgi.o ej.o
 OBJS += web.o common.o nvram_f.o 
 OBJS += aspbw.o initial_web_hook.o
 OBJS += apps.o
-OBJS += sysinfo.o
+OBJS += sysinfo.o data_arrays.o
 
 ifeq ($(CONFIG_RALINK),y)
 OBJS += web-ralink.o

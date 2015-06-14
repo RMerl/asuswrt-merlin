@@ -105,6 +105,7 @@ typedef unsigned long long u64;
 #include <sys/sysinfo.h>
 
 #include "sysinfo.h"
+#include "data_arrays.h"
 
 #ifdef RTCONFIG_QTN
 #include "web-qtn.h"
@@ -178,11 +179,6 @@ int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
 #ifdef RTCONFIG_IPV6
 extern int ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv);
 #endif
-
-#ifdef RTCONFIG_IGD2
-extern int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
-#endif
-int ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv);
 
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
 
@@ -3998,8 +3994,8 @@ ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 
-#define DHCP_LEASE_FILE         "/var/lib/misc/dnsmasq.leases"
 #ifdef RTCONFIG_IPV6
+#define DHCP_LEASE_FILE         "/var/lib/misc/dnsmasq.leases"
 #define IPV6_CLIENT_NEIGH	"/tmp/ipv6_neigh"
 #define IPV6_CLIENT_INFO	"/tmp/ipv6_client_info"
 #define	IPV6_CLIENT_LIST	"/tmp/ipv6_client_list"
@@ -12536,117 +12532,6 @@ write_ver:
 	nvram_set_f("general.log", "firmver", fwver);
 }
 
-
-int
-ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv)
-{
-	char *leaselist = NULL, *leaselistptr;
-	char hostname[16], duration[9], ip[40], mac[18];
-	int ret=0;
-
-	killall("dnsmasq", SIGUSR2);
-	sleep(1);
-
-	leaselist = read_whole_file(DHCP_LEASE_FILE);
-	if (!leaselist)
-		return websWrite(wp, "leasearray = [];\n");
-
-	ret += websWrite(wp, "leasearray= [");
-	leaselistptr = leaselist;
-
-	while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%8s %17s %15s %15s %*s", duration, mac, ip, hostname) == 4)) {
-		ret += websWrite(wp, "['%s', '%s', '%s', '%s'],\n", duration, mac, ip, hostname);
-		leaselistptr = strstr(leaselistptr,"\n")+1;
-	}
-        ret += websWrite(wp, "[]];\n");
-	return ret;
-}
-
-
-#ifdef RTCONFIG_IPV6
-#ifdef RTCONFIG_IGD2
-int
-ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
-{
-	FILE *fp;
-	char *ipt_argv[] = {"ip6tables", "-nxL", "UPNP", NULL};
-	char line[256], tmp[256];
-	char target[16], proto[16];
-	char src[45];
-	char dst[45];
-	char *sport, *dport, *ptr, *val;
-	int ret = 0;
-
-	ret += websWrite(wp, "var pinholes = ");
-
-        if (!(ipv6_enabled() && is_routing_enabled())) {
-                ret += websWrite(wp, "[];\n");
-                return ret;
-        }
-
-	_eval(ipt_argv, ">/tmp/pinhole.log", 10, NULL);
-
-	fp = fopen("/tmp/pinhole.log", "r");
-	if (fp == NULL) {
-		ret += websWrite(wp, "[];\n");
-		return ret;
-	}
-
-	ret += websWrite(wp, "[");
-
-	while (fgets(line, sizeof(line), fp) != NULL)
-	{
-		tmp[0] = '\0';
-		if (sscanf(line,
-		    "%15s%*[ \t]"		// target
-		    "%15s%*[ \t]"		// prot
-		    "%44[^/]/%*d%*[ \t]"	// source
-		    "%44[^/]/%*d%*[ \t]"	// destination
-		    "%255[^\n]",		// options
-		    target, proto, src, dst, tmp) < 5) continue;
-
-		if (strcmp(target, "ACCEPT")) continue;
-
-		/* uppercase proto */
-		for (ptr = proto; *ptr; ptr++)
-			*ptr = toupper(*ptr);
-
-		/* parse source */
-		if (strcmp(src, "::") == 0)
-			strcpy(src, "ALL");
-
-		/* parse destination */
-		if (strcmp(dst, "::") == 0)
-			strcpy(dst, "ALL");
-
-		/* parse options */
-		sport = dport = "";
-		ptr = tmp;
-		while ((val = strsep(&ptr, " ")) != NULL) {
-			if (strncmp(val, "dpt:", 4) == 0)
-				dport = val + 4;
-			if (strncmp(val, "spt:", 4) == 0)
-				sport = val + 4;
-			else if (strncmp(val, "dpts:", 5) == 0)
-				dport = val + 5;
-			else if (strncmp(val, "spts:", 5) == 0)
-				sport = val + 5;
-		}
-
-		ret += websWrite(wp,
-			"['%s', '%s', '%s', '%s', '%s'],\n",
-			src, sport, dst, dport, proto);
-	}
-	ret += websWrite(wp, "[]];\n");
-
-	fclose(fp);
-	unlink("/tmp/pinhole.log");
-
-	return ret;
-
-}
-#endif
-#endif
 
 int
 get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
