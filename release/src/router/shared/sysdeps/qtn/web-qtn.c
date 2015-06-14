@@ -2390,31 +2390,31 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 
 			ret = qcsapi_wifi_get_associated_device_mac_addr(ifname, i, (uint8_t *) &sta_address);
 			if (ret < 0) {
-				ret += websWrite(wp, "-1];");
+				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_associated_device_mac_addr %s error, return: %d\n", ifname, ret);
 			}
 
 			ret= qcsapi_wifi_get_rssi_in_dbm_per_association(ifname, i, &rssi);
 			if (ret < 0) {
-				ret += websWrite(wp, "-1];");
+				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_rssi_in_dbm_per_association %s error, return: %d\n", ifname, ret);
 			}
 
 			ret = qcsapi_wifi_get_tx_phy_rate_per_association(ifname, i, &tx_phy_rate);
 			if (ret < 0) {
-				ret += websWrite(wp, "-1];");
+				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_tx_phy_rate_per_association %s error, return: %d\n", ifname, ret);
 			}
 
 			ret = qcsapi_wifi_get_rx_phy_rate_per_association(ifname, i, &rx_phy_rate);
 			if (ret < 0) {
-				ret += websWrite(wp, "-1];");
+				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_rx_phy_rate_per_association %s error, return: %d\n", ifname, ret);
 			}
 
 			ret = qcsapi_wifi_get_time_associated_per_association(ifname, i, &time_associated);
 			if (ret < 0) {
-				ret += websWrite(wp, "-1];");
+				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_time_associated_per_association %s error, return: %d\n", ifname, ret);
 			}
 
@@ -2445,10 +2445,10 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 				}
 
 				if (found || !leaselist) {
-					ret += websWrite(wp, "\"%s\",", (found ? ipentry : ""));
+					retval += websWrite(wp, "\"%s\",", (found ? ipentry : ""));
 				}
 			} else {
-				ret += websWrite(wp, "\"<unknown>\",");
+				retval += websWrite(wp, "\"<unknown>\",");
 			}
 
 			// Retrieve hostname from dnsmasq leases
@@ -2468,19 +2468,19 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 
 				if (found == 0) {
 					// Not in arplist nor in leaselist
-					ret += websWrite(wp, "\"<not found>\",\"<not found>\",");
+					retval += websWrite(wp, "\"<not found>\",\"<not found>\",");
 				} else if (found == 1) {
 					// Only in arplist (static IP)
-					ret += websWrite(wp, "\"<not found>\",");
+					retval += websWrite(wp, "\"<not found>\",");
 				} else if (found == 2) {
 					// Only in leaselist (dynamic IP that has not communicated with router for a while)
-					ret += websWrite(wp, "\"%s\", \"%s\",", ipentry, hostnameentry);
+					retval += websWrite(wp, "\"%s\", \"%s\",", ipentry, hostnameentry);
 				} else if (found == 3) {
 					// In both arplist and leaselist (dynamic IP)
-					ret += websWrite(wp, "\"%s\",", hostnameentry);
+					retval += websWrite(wp, "\"%s\",", hostnameentry);
 				}
 			} else {
-				ret += websWrite(wp, "\"<unknown>\",");
+				retval += websWrite(wp, "\"<unknown>\",");
 			}
 
 			retval += websWrite(wp, "\"%d\",", rssi);
