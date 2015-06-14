@@ -12461,6 +12461,7 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "get_leases_array", ej_get_leases_array},
 	{ "get_vserver_array", ej_get_vserver_array},
+	{ "get_upnp_array", ej_get_upnp_array},
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif

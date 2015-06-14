@@ -163,6 +163,44 @@ ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
 
 
 int
+ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *fp;
+	char proto[4], eport[6], iaddr[sizeof("255.255.255.255")], iport[6], timestamp[15], desc[255];
+	int ret=0;
+	char line[256];
+
+	ret += websWrite(wp, "var upnparray = [");
+
+	fp = fopen("/var/log/upnp.leases", "r");
+	if (fp == NULL) {
+		ret += websWrite(wp, "[];\n");
+		return ret;
+	}
+
+	while (fgets(line, sizeof(line), fp) != NULL)
+	{
+		if (sscanf(line,
+			"%3[^:]:"
+			"%5[^:]:"
+			"%15[^:]:"
+			"%5[^:]:"
+			"%14[^:]:"
+			"%255[^\n]",
+			proto, eport, iaddr, iport, timestamp, desc) < 6) continue;
+
+		ret += websWrite(wp, "['%s', '%s', '%s', '%s', '%s', '%s'],\n",
+			proto, eport, iaddr, iport, timestamp, desc);
+	}
+
+	fclose(fp);
+
+	ret += websWrite(wp, "[]];\n");
+	return ret;
+
+}
+
+int
 ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 {
 	FILE *fp;
@@ -209,8 +247,8 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 		if (strcmp(target, "DNAT") != 0)
 			continue;
 
-		/* Don't list DNS redirections  from DNSFilter */
-		if (strcmp(chain, "DNSFILTER") ==0)
+		/* Don't list DNS redirections  from DNSFilter or UPNP */
+		if ((strcmp(chain, "DNSFILTER") == 0) || (strcmp(chain, "VUPNP") == 0))
 			continue;
 
 		/* uppercase proto */

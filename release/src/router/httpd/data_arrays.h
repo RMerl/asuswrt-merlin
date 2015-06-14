@@ -25,3 +25,4 @@ int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
 
 int ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv);
 
+int ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv);

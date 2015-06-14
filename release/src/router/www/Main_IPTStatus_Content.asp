@@ -11,17 +11,77 @@
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 
+<style>
+.tableheader{
+        background-color:#475a5f;
+        color:#FFCC00;
+	font-size: 125%;
+}
+</style>
+
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script>
 <% get_vserver_array(); %>
+<% get_upnp_array(); %>
 
 function initial() {
         show_menu();
         show_vserver();
+	show_upnp();
 }
+
+
+function show_upnp() {
+        var code, i, line;
+	var now = Math.floor(Date.now() / 1000);
+	var expire;
+	var Hours, Minutes, Seconds;
+
+        code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+        code += '<thead><tr>';
+        code += '<td width=8%">Proto</td>';
+        code += '<td width=8%">Port</td>';
+        code += '<td width=17%">Redirect to</td>';
+        code += '<td width=12%">Local Port</td>';
+	code += '<td width=13%">Time left</td>';
+        code += '<td width=42%">Description</td>';
+        code += '</tr></thead>';
+
+	if (upnparray.length > 1) {
+		for (i = 0; i < upnparray.length-1; ++i) {
+			line = upnparray[i];
+
+			code += '<tr>';
+			code += '<td>' + line[0] + '</td>';
+			code += '<td>' + line[1] + '</td>';
+			code += '<td>' + line[2] + '</td>';
+			code += '<td>' + line[3] + '</td>';
+
+			if (line[4] != 0) {
+				expire = line[4] - now;
+
+				Hours = Math.floor((expire / 3600));
+				Minutes = Math.floor(expire % 3600 / 60);
+				Seconds = Math.floor(expire % 60);
+				code += '<td>' + Hours + "h " + Minutes + "m "+ Seconds + "s" + '</td>';
+			} else {
+				code += '<td>' + 'N/A' + '</td>';
+			}
+
+			code += '<td>' + line[5].shorter(45) + '</td>';
+			code += '</tr>';
+		}
+	} else {
+		code += '<tr><td colspan="6">No active UPNP forward.</td></tr>';
+	}
+
+	code += '</tr></table>';
+	document.getElementById("upnpblock").innerHTML = code;
+}
+
 
 function show_vserver() {
 	var code, i, line;
@@ -49,7 +109,7 @@ function show_vserver() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="4">No active port forwards.</td></tr>';
+		code += '<tr><td colspan="6">No active port forwards.</td></tr>';
 	}
 
 	code += '</tr></table>';
@@ -96,10 +156,22 @@ function show_vserver() {
 									<div class="formfonttitle"><#System_Log#> - <#menu5_7_5#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<br>
-                                                                                <div style="margin-top:8px">
-											<div id="vserverblock"></div>
+                                                                            
+									<div style="margin-top:8px">
+										<div class="tableheader">
+											Virtual servers
 										</div>
+										<div id="vserverblock"></div>
+									</div>
 									<br>
+									<div style="margin-top:8px">
+										<div class="tableheader">
+											UPNP, NAT-PMP and PCP forwards
+										</div>
+										<div id="upnpblock"></div>
+									</div>
+									<br>
+
 									<div class="apply_gen">
 										<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
 									</div>
