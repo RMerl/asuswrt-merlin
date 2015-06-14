@@ -23,18 +23,12 @@
 p{
 	font-weight: bolder;
 }
-.leaseheader{
-        background-color:#475a5f;
-        color:#FFCC00;
-	font-size: 125%;
-}
 </style>
 
 
 <script>
 <% get_leases_array(); %>
 
-var $j = jQuery.noConflict();
 overlib_str_tmp = "";
 overlib.isOut = true;
 
@@ -127,10 +121,9 @@ function show_leases() {
 										<div class="formfontdesc"><#DHCPlease_title#></div>
 										<br>
                                                                                 <div style="margin-top:8px">
-											<div class="leaseheader">DHCP leases:</div>
 											<div id="leaseblock"></div>
-											<br>
 										</div>
+										<br>
 										<div class="apply_gen">
 											<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
 										</div>
