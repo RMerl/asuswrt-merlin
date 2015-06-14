@@ -2390,31 +2390,26 @@ ej_wl_status_qtn_array(int eid, webs_t wp, int argc, char_t **argv, const char *
 
 			ret = qcsapi_wifi_get_associated_device_mac_addr(ifname, i, (uint8_t *) &sta_address);
 			if (ret < 0) {
-				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_associated_device_mac_addr %s error, return: %d\n", ifname, ret);
 			}
 
 			ret= qcsapi_wifi_get_rssi_in_dbm_per_association(ifname, i, &rssi);
 			if (ret < 0) {
-				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_rssi_in_dbm_per_association %s error, return: %d\n", ifname, ret);
 			}
 
 			ret = qcsapi_wifi_get_tx_phy_rate_per_association(ifname, i, &tx_phy_rate);
 			if (ret < 0) {
-				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_tx_phy_rate_per_association %s error, return: %d\n", ifname, ret);
 			}
 
 			ret = qcsapi_wifi_get_rx_phy_rate_per_association(ifname, i, &rx_phy_rate);
 			if (ret < 0) {
-				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_rx_phy_rate_per_association %s error, return: %d\n", ifname, ret);
 			}
 
 			ret = qcsapi_wifi_get_time_associated_per_association(ifname, i, &time_associated);
 			if (ret < 0) {
-				retval += websWrite(wp, "-1];");
 				dbG("Qcsapi qcsapi_wifi_get_time_associated_per_association %s error, return: %d\n", ifname, ret);
 			}
 
