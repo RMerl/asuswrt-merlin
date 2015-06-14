@@ -12,12 +12,14 @@ Asuswrt-Merlin Changelog
              o CTF support for PPTP/L2TP WAN (Russian ISPs) (ARM)
 
   - NEW: Reformatted DHCP lease list under System Log.
+  - NEW: Reformatted Port Forward page under System Log.
+  - NEW: Display more details about UPNP/NAT-PMP/PCP redirections.
   - CHANGED: The JFFS2 partition is now always enabled, as it is
              required by various firmware functions.  The options
              to format it or to enable/disable user config/scripts
              remain configurable.
   - CHANGED: Updated OpenVPN to 2.3.7.
-  - CHANGED: Updated OpenSSL to 1.0.2b.
+  - CHANGED: Updated OpenSSL to 1.0.2c.
 
 
 
