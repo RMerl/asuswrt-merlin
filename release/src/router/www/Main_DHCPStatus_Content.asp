@@ -43,10 +43,10 @@ function show_leases() {
 
 	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
 	code += '<thead><tr>';
-	code += '<td width=20%">Time Left</td>';
-	code += '<td width=20%">MAC</td>';
-	code += '<td width=20%">IP Address</td>';
-	code += '<td width=40%">Hostname</td>';
+	code += '<td width="20%">Time Left</td>';
+	code += '<td width="20%">MAC</td>';
+	code += '<td width="20%">IP Address</td>';
+	code += '<td width="40%">Hostname</td>';
 	code += '</tr></thead>';
 
 	if ("<% nvram_get("dhcp_enable_x"); %>" == "0") {

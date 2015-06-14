@@ -42,12 +42,12 @@ function show_upnp() {
 
         code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
         code += '<thead><tr>';
-        code += '<td width=8%">Proto</td>';
-        code += '<td width=8%">Port</td>';
-        code += '<td width=17%">Redirect to</td>';
-        code += '<td width=12%">Local Port</td>';
-	code += '<td width=13%">Time left</td>';
-        code += '<td width=42%">Description</td>';
+        code += '<td width="8%">Proto</td>';
+        code += '<td width="8%">Port</td>';
+        code += '<td width="17%">Redirect to</td>';
+        code += '<td width="12%">Local Port</td>';
+	code += '<td width="13%">Time left</td>';
+        code += '<td width="42%">Description</td>';
         code += '</tr></thead>';
 
 	if (upnparray.length > 1) {
@@ -88,12 +88,12 @@ function show_vserver() {
 
 	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
 	code += '<thead><tr>';
-	code += '<td width=20%">Destination</td>';
-	code += '<td width=10%">Proto</td>';
-	code += '<td width=15%">Port range</td>';
-	code += '<td width=20%">Redirect to</td>';
-	code += '<td width=15%">Local Port</td>';
-	code += '<td width=20%">Chain</td>';
+	code += '<td width="20%">Destination</td>';
+	code += '<td width="10%">Proto</td>';
+	code += '<td width="15%">Port range</td>';
+	code += '<td width="20%">Redirect to</td>';
+	code += '<td width="15%">Local Port</td>';
+	code += '<td width="20%">Chain</td>';
 	code += '</tr></thead>';
 
 	if (vserverarray.length > 1) {
