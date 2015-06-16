@@ -175,7 +175,7 @@ ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 
 	fp = fopen("/var/lib/misc/upnp.leases", "r");
 	if (fp == NULL) {
-		ret += websWrite(wp, "[];\n");
+		ret += websWrite(wp, "[]];\n");
 		return ret;
 	}
 
@@ -225,7 +225,7 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 	fp = fopen("/tmp/vserver.log", "r");
 
 	if (fp == NULL) {
-                ret += websWrite(wp, "[];\n");
+                ret += websWrite(wp, "[]];\n");
                 return ret;
         }
 
