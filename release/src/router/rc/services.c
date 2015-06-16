@@ -3239,7 +3239,9 @@ void start_upnp(void)
 					   (min_lifetime > 0 ? min_lifetime : 120),
 					   (max_lifetime > 0 ? max_lifetime : 86400));
 
-				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
+				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n"
+				           "lease_file=/var/lib/misc/upnp.leases\n");
+
 				fappend(f, "/etc/upnp/config.custom");
 				append_custom_config("upnp", f);
 
