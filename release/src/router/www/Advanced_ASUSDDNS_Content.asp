@@ -181,7 +181,7 @@ function validForm(){
 				return false;
 			}
 
-			if(document.form.ddns_server_x.selectedIndex != 9){             // Not CUSTOM
+			if(document.form.ddns_server_x.value != "CUSTOM"){             // Not CUSTOM
 				if(document.form.ddns_username_x.value == ""){
 					alert("<#QKSet_account_nameblank#>");
 					document.form.ddns_username_x.focus();
