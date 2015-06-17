@@ -1082,14 +1082,18 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		return (ej_wl_status(eid, wp, 0, NULL, 0));	/* FIXME */
 	else if (strcmp(file, "wlan11b_2g.log")==0)
 		return (ej_wl_status_2g(eid, wp, 0, NULL));
+#if 0
 	else if (strcmp(file, "leases.log")==0)
 		return (ej_lan_leases(eid, wp, 0, NULL));
+#endif
 #ifdef RTCONFIG_IPV6
 	else if (strcmp(file, "ipv6_network.log")==0)
 		return (ej_lan_ipv6_network(eid, wp, 0, NULL));
 #endif
+#if 0
 	else if (strcmp(file, "iptable.log")==0)
 		return (get_nat_vserver_table(eid, wp, 0, NULL));
+#endif
 	else if (strcmp(file, "route.log")==0)
 		return (ej_route_table(eid, wp, 0, NULL));
 	else if (strcmp(file, "wps_info.log")==0)
@@ -3883,6 +3887,7 @@ ej_dhcpLeaseMacList(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 
+#if 0
 int
 ej_lan_leases(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -3949,6 +3954,7 @@ ej_lan_leases(int eid, webs_t wp, int argc, char_t **argv)
 
 	return ret;
 }
+#endif
 
 int
 ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
@@ -12534,7 +12540,7 @@ write_ver:
 	nvram_set_f("general.log", "firmver", fwver);
 }
 
-
+#if 0
 int
 get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -12630,6 +12636,7 @@ get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 
 	return ret;
 }
+#endif
 
 /* remove space in the end of string */
 char *trim_r(char *str)
