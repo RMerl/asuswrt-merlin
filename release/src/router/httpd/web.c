@@ -105,6 +105,7 @@ typedef unsigned long long u64;
 #include <sys/sysinfo.h>
 
 #include "sysinfo.h"
+#include "data_arrays.h"
 
 #ifdef RTCONFIG_QTN
 #include "web-qtn.h"
@@ -177,10 +178,6 @@ int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
 
 #ifdef RTCONFIG_IPV6
 extern int ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv);
-#endif
-
-#ifdef RTCONFIG_IGD2
-extern int ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
@@ -1085,14 +1082,18 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		return (ej_wl_status(eid, wp, 0, NULL, 0));	/* FIXME */
 	else if (strcmp(file, "wlan11b_2g.log")==0)
 		return (ej_wl_status_2g(eid, wp, 0, NULL));
+#if 0
 	else if (strcmp(file, "leases.log")==0)
 		return (ej_lan_leases(eid, wp, 0, NULL));
+#endif
 #ifdef RTCONFIG_IPV6
 	else if (strcmp(file, "ipv6_network.log")==0)
 		return (ej_lan_ipv6_network(eid, wp, 0, NULL));
 #endif
+#if 0
 	else if (strcmp(file, "iptable.log")==0)
 		return (get_nat_vserver_table(eid, wp, 0, NULL));
+#endif
 	else if (strcmp(file, "route.log")==0)
 		return (ej_route_table(eid, wp, 0, NULL));
 	else if (strcmp(file, "wps_info.log")==0)
@@ -3886,6 +3887,7 @@ ej_dhcpLeaseMacList(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 
+#if 0
 int
 ej_lan_leases(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -3952,6 +3954,7 @@ ej_lan_leases(int eid, webs_t wp, int argc, char_t **argv)
 
 	return ret;
 }
+#endif
 
 int
 ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
@@ -3998,7 +4001,7 @@ ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
 }
 
 #ifdef RTCONFIG_IPV6
-#define DHCP_LEASE_FILE		"/var/lib/misc/dnsmasq.leases"
+#define DHCP_LEASE_FILE         "/var/lib/misc/dnsmasq.leases"
 #define IPV6_CLIENT_NEIGH	"/tmp/ipv6_neigh"
 #define IPV6_CLIENT_INFO	"/tmp/ipv6_client_info"
 #define	IPV6_CLIENT_LIST	"/tmp/ipv6_client_list"
@@ -6375,11 +6378,6 @@ wps_finish:
 		sprintf(command, "%s %s", action_mode, pincode);
 		notify_rc(command);
 
-		if(nvram_invmatch("wans_mode", "lb")){
-			sprintf(command, "restart_wan_if %s", wan_unit);
-			notify_rc_and_period_wait(command, 1);
-		}
-
 		if(save_nvram)
 			nvram_commit();		
 	}	
@@ -6402,11 +6400,6 @@ wps_finish:
 
 		sprintf(command, "%s %s %s", action_mode, puk, newpin);
 		notify_rc(command);
-
-		if(nvram_invmatch("wans_mode", "lb")){
-			sprintf(command, "restart_wan_if %s", wan_unit);
-			notify_rc_and_period_wait(command, 1);
-		}
 	}	
 	else if (!strcmp(action_mode, "restart_simauth"))
 	{
@@ -11501,7 +11494,7 @@ ej_cpu_usage(int eid, webs_t wp, int argc, char_t **argv){
 	int from_app = 0;
 
 	if (ejArgs(argc, argv, "%s", &name_t) < 1) {
-		_dprintf("name_t = NULL\n");
+//		_dprintf("name_t = NULL\n");
 	}else if(!strncmp(name_t, "appobj", 6))
 		from_app = 1;
 
@@ -12462,6 +12455,9 @@ struct ej_handler ej_handlers[] = {
 	{ "ipv6_pinholes",  ej_ipv6_pinhole_array},
 #endif
 #endif
+	{ "get_leases_array", ej_get_leases_array},
+	{ "get_vserver_array", ej_get_vserver_array},
+	{ "get_upnp_array", ej_get_upnp_array},
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif
@@ -12534,91 +12530,7 @@ write_ver:
 	nvram_set_f("general.log", "firmver", fwver);
 }
 
-#ifdef RTCONFIG_IPV6
-#ifdef RTCONFIG_IGD2
-int
-ej_ipv6_pinhole_array(int eid, webs_t wp, int argc, char_t **argv)
-{
-	FILE *fp;
-	char *ipt_argv[] = {"ip6tables", "-nxL", "UPNP", NULL};
-	char line[256], tmp[256];
-	char target[16], proto[16];
-	char src[45];
-	char dst[45];
-	char *sport, *dport, *ptr, *val;
-	int ret = 0;
-
-	ret += websWrite(wp, "var pinholes = ");
-
-        if (!(ipv6_enabled() && is_routing_enabled())) {
-                ret += websWrite(wp, "[];\n");
-                return ret;
-        }
-
-	_eval(ipt_argv, ">/tmp/pinhole.log", 10, NULL);
-
-	fp = fopen("/tmp/pinhole.log", "r");
-	if (fp == NULL) {
-		ret += websWrite(wp, "[];\n");
-		return ret;
-	}
-
-	ret += websWrite(wp, "[");
-
-	while (fgets(line, sizeof(line), fp) != NULL)
-	{
-		tmp[0] = '\0';
-		if (sscanf(line,
-		    "%15s%*[ \t]"		// target
-		    "%15s%*[ \t]"		// prot
-		    "%44[^/]/%*d%*[ \t]"	// source
-		    "%44[^/]/%*d%*[ \t]"	// destination
-		    "%255[^\n]",		// options
-		    target, proto, src, dst, tmp) < 5) continue;
-
-		if (strcmp(target, "ACCEPT")) continue;
-
-		/* uppercase proto */
-		for (ptr = proto; *ptr; ptr++)
-			*ptr = toupper(*ptr);
-
-		/* parse source */
-		if (strcmp(src, "::") == 0)
-			strcpy(src, "ALL");
-
-		/* parse destination */
-		if (strcmp(dst, "::") == 0)
-			strcpy(dst, "ALL");
-
-		/* parse options */
-		sport = dport = "";
-		ptr = tmp;
-		while ((val = strsep(&ptr, " ")) != NULL) {
-			if (strncmp(val, "dpt:", 4) == 0)
-				dport = val + 4;
-			if (strncmp(val, "spt:", 4) == 0)
-				sport = val + 4;
-			else if (strncmp(val, "dpts:", 5) == 0)
-				dport = val + 5;
-			else if (strncmp(val, "spts:", 5) == 0)
-				sport = val + 5;
-		}
-
-		ret += websWrite(wp,
-			"['%s', '%s', '%s', '%s', '%s'],\n",
-			src, sport, dst, dport, proto);
-	}
-	ret += websWrite(wp, "[]];\n");
-
-	fclose(fp);
-	unlink("/tmp/pinhole.log");
-
-	return ret;
-
-}
-#endif
-#endif
-
+#if 0
 int
 get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -12714,6 +12626,7 @@ get_nat_vserver_table(int eid, webs_t wp, int argc, char_t **argv)
 
 	return ret;
 }
+#endif
 
 /* remove space in the end of string */
 char *trim_r(char *str)

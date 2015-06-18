@@ -150,3 +150,30 @@ int remove_word(char *buffer, const char *word)
 
 	return 1;
 }
+
+/* Escape characters that could break a Javascript array */
+int str_escape_quotes(const char *output, const char *input, int outsize)
+{
+	char *src = (char *)input;
+	char *dst = (char *)output;
+	char *end = (char *)output + outsize - 1;
+	char *escape = "'\"\\";
+
+	if (src == NULL || dst == NULL || outsize <= 0)
+		return 0;
+
+	for ( ; *src && dst < end; src++) {
+		if (strchr(escape, *src)) {
+			if (dst + 2 > end)
+				break;
+			*dst++ = '\\';
+			*dst++ = *src;
+		} else {
+			*dst++ = *src;
+		}
+	}
+	if (dst <= end)
+		*dst = '\0';
+
+	return dst - output;
+}

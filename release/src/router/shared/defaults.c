@@ -1617,6 +1617,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "x_Setting", "0"},		// is any setting set
 	{ "r_Setting", "0"},		// is repeater set
 	{ "w_Setting", "0"},		// is wilreess set
+	{ "ui_Setting", "0"},		// is UI set
 
 	{ "asus_mfg", "0"},		// 2008.03 James.
 	{ "asus_mfg_flash", ""},	// 2008.03 James.

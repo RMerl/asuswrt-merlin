@@ -979,6 +979,7 @@ restore_defaults(void)
 	int restore_defaults;
 	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
 	int unit;
+	int i, j;
 
 	nvram_unset(ASUS_STOP_COMMIT);
 	nvram_unset(LED_CTRL_HIPRIO);
@@ -1047,12 +1048,10 @@ restore_defaults(void)
 	bsd_defaults();
 #endif
 #ifdef RTCONFIG_DHDAP
-//	snprintf(tmp, sizeof(tmp), "wl%d_cfg_maxassoc", i);
-//	nvram_unset(tmp);
-	nvram_unset("wl_cfg_maxassoc");
-	nvram_unset("wl0_cfg_maxassoc");
-	nvram_unset("wl1_cfg_maxassoc");
-	nvram_unset("wl2_cfg_maxassoc");
+	for (i = 0; i < MAX_NVPARSE; i++) {
+		snprintf(tmp, sizeof(tmp), "wl%d_cfg_maxassoc", i);
+		nvram_unset(tmp);
+	}
 #endif
 
 	if (restore_defaults) {
@@ -1135,7 +1134,6 @@ restore_defaults(void)
 	}
 
 	// default for USB state control variables. {
-	int i, j;
 
 #ifdef RTCONFIG_USB
 	// unset USB node nvrams.
@@ -1275,7 +1273,6 @@ restore_defaults(void)
 			break;
 
 		case MODEL_RTAC5300:
-			nvram_set("ctf_disable_force", "1");
 			nvram_set("reboot_time", "160");
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:

@@ -697,6 +697,7 @@ void do_file(char *path, FILE *stream)
 
 #endif
 int is_firsttime(void);
+int is_ui_firsttime(void);
 
 time_t detect_timestamp, detect_timestamp_old, signal_timestamp;
 char detect_timestampstr[32];
@@ -806,8 +807,9 @@ handle_request(void)
 							continue;
 						}
 						snprintf(Accept_Language,sizeof(Accept_Language),"%s",pLang->Target_Lang);
-						if (is_firsttime ()) {
+						if (is_ui_firsttime ()) {
 							nvram_set("preferred_lang", Accept_Language);
+							nvram_set("ui_Setting", "1");
 						}
 						break;
 					}
@@ -1391,6 +1393,14 @@ int is_firsttime(void)
 		return 0;
 	else
 		return 1;
+}
+
+int is_ui_firsttime(void)
+{
+        if (strcmp(nvram_get("ui_Setting"), "1")==0)
+                return 0;
+        else
+                return 1;
 }
 
 /* str_replace

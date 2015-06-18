@@ -54,26 +54,21 @@ fi
 if [ "$1" == "set" ]; then
 	content=`grep "$modem_imsi," $dataf 2>/dev/null`
 else
-	modem_imsi_s=`echo $modem_imsi |cut -c 1-5 2>/dev/null`
-	data_num=`grep $modem_imsi_s $dataf |wc -l 2>/dev/null`
-
 	total_line=`wc -l $dataf |awk '{print $1}' 2>/dev/null`
 	nvram set usb_modem_auto_lines=$total_line
-	line=1
-	content=`sed -n ${line}p $dataf 2>/dev/null`
-	while [ "$content" != "" ]; do
-		nvram set usb_modem_auto_running=$line
-		compare=`echo "$content" |awk '{FS=","; print $1}' 2>/dev/null`
-		len=${#compare}
-		target=`echo $modem_imsi |cut -c '1-'$len 2>/dev/null`
+	nvram set usb_modem_auto_running=1
 
-		if [ "$compare" == "$target" ]; then
-			break
-		fi
+	modem_imsi_s=`echo $modem_imsi |cut -c 1-6 2>/dev/null`
+	data_num=`grep "$modem_imsi_s," $dataf |wc -l 2>/dev/null`
+	if [ $data_num -eq 0 ]; then
+		modem_imsi_s=`echo $modem_imsi |cut -c 1-5 2>/dev/null`
+		data_num=`grep "$modem_imsi_s," $dataf |wc -l 2>/dev/null`
+	fi
 
-		line=$((line+1))
-		content=`sed -n ${line}p $dataf 2>/dev/null`
-	done
+	if [ $data_num -ne 0 ]; then
+		content=`grep "$modem_imsi_s," $dataf 2>/dev/null`
+	fi
+
 	nvram set usb_modem_auto_running=$total_line
 fi
 

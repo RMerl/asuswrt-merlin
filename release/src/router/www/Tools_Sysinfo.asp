@@ -35,8 +35,6 @@ etherstate = "<% sysinfo("ethernet"); %>";
 odmpid = "<% nvram_get("odmpid");%>";
 ctf_fa = "<% nvram_get("ctf_fa_mode"); %>";
 
-var $j = jQuery.noConflict();
-
 overlib_str_tmp = "";
 overlib.isOut = true;
 
@@ -75,7 +73,7 @@ function initial(){
 }
 
 function update_temperatures(){
-	$j.ajax({
+	$.ajax({
 		url: '/ajax_coretmp.asp',
 		dataType: 'script',
 		error: function(xhr){
@@ -222,7 +220,7 @@ function show_etherstate(){
 }
 
 function updateClientList(e){
-	$j.ajax({
+	$.ajax({
 		url: '/update_clients.asp',
 		dataType: 'script', 
 		error: function(xhr) {

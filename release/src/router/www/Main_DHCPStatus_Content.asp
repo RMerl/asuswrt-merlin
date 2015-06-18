@@ -16,10 +16,71 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
+<style>
+p{
+	font-weight: bolder;
+}
+</style>
+
+
+<script>
+<% get_leases_array(); %>
+
+overlib_str_tmp = "";
+overlib.isOut = true;
+
+function initial() {
+	show_menu();
+	show_leases();
+}
+
+function show_leases() {
+	var code, i, line;
+	var Days, Hours, Minutes, Seconds;
+
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+	code += '<thead><tr>';
+	code += '<td width="20%">Time Left</td>';
+	code += '<td width="20%">MAC</td>';
+	code += '<td width="20%">IP Address</td>';
+	code += '<td width="40%">Hostname</td>';
+	code += '</tr></thead>';
+
+	if ("<% nvram_get("dhcp_enable_x"); %>" == "0") {
+		code += '<tr><td colspan="4">DHCP server is disabled.</td></tr>';
+	} else if (leasearray.length > 1) {
+		for (i = 0; i < leasearray.length-1; ++i) {
+			line = leasearray[i];
+			code += '<tr>';
+
+			Days = Math.floor(line[0] / (60*60*24));        
+			Hours = Math.floor((line[0] / 3600) % 24);
+			Minutes = Math.floor(line[0] % 3600 / 60);
+			Seconds = Math.floor(line[0] % 60);
+			code += '<td>' + Days + "d " + Hours + "h " + Minutes + "m "+ Seconds + "s" + '</td>';
+
+			overlib_str = "<p><#MAC_Address#>:</p>" + line[1];
+			code += '<td><span class="ClientName" onclick="oui_query(\'' + line[1] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[1].toUpperCase() +'</span></td>'; 
+			code += '<td>' + line[2] + '</td>';
+			code += '<td>' + line[3] + '</td>';
+			code += '</tr>';
+		}
+	} else {
+		code += '<tr><td colspan="4">No active leases.</td></tr>';
+	}
+
+	code += '</tr></table>';
+	document.getElementById("leaseblock").innerHTML = code;
+}
+
+
+</script>
 </head>
 
-<body onload="show_menu();">
+<body onload="initial();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 
@@ -56,18 +117,20 @@
 									<td valign="top">
 										<div>&nbsp;</div>
 										<div class="formfonttitle"><#System_Log#> - <#menu5_7_3#></div>
-										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+										<div style="margin-lease:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="formfontdesc"><#DHCPlease_title#></div>
-										<div style="margin-top:8px">   
-											<textarea cols="63" rows="25" readonly="readonly" wrap=off style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("leases.log", "leases.sh"); %></textarea>
+										<br>
+                                                                                <div style="margin-top:8px">
+											<div id="leaseblock"></div>
 										</div>
+										<br>
 										<div class="apply_gen">
 											<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
 										</div>
-									</td><!--==magic 2008.11 del name ,if there are name, when the form was sent, the textarea also will be sent==-->
+									</td>
 								</tr>
-								</tbody>		  
-							</table>	
+								</tbody>
+							</table>
 						</td>
 					</tr>
 				</table>

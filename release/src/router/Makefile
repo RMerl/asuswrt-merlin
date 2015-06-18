@@ -199,6 +199,10 @@ ifeq ($(RTCONFIG_DEBUG),y)
 export CFLAGS += -g
 endif
 
+ifeq ($(RTCONFIG_SFP)$(RTCONFIG_4M_SFP),y)
+export  MUVER := _1.4
+endif
+
 #
 #
 #
@@ -537,7 +541,7 @@ obj-$(RTCONFIG_WEBDAV) += libexif
 obj-$(RTCONFIG_IXIAEP) += ixia_endpoint$(BCMEX)
 
 # Add for ASUS Components
-obj-y += miniupnpd
+obj-y += miniupnpd$(MUVER)
 obj-y += igmpproxy
 obj-y += snooper
 ifeq ($(RTCONFIG_BCMWL6),y)
@@ -1678,25 +1682,25 @@ iptables-1.4.x-clean:
 
 upnp: nvram$(BCMEX) shared iptables
 
-miniupnpd/config.h:
+miniupnpd$(MUVER)/config.h:
 ifeq ($(RTCONFIG_IGD2),y)
-	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg $(if $(RTCONFIG_IPV6),--ipv6,) --igd2
+	cd miniupnpd$(MUVER) && ./genconfig.sh --leasefile --vendorcfg $(if $(RTCONFIG_IPV6),--ipv6,) --igd2
 else
-	cd miniupnpd && ./genconfig.sh --leasefile --vendorcfg
+	cd miniupnpd$(MUVER) && ./genconfig.sh --leasefile --vendorcfg
 endif
 
-miniupnpd: $(IPTABLES_TARGET) miniupnpd/config.h
+miniupnpd$(MUVER): $(IPTABLES_TARGET) miniupnpd$(MUVER)/config.h
 	@$(SEP)
-	cp -f ./shared/version.h miniupnpd/.
-	$(MAKE) -C miniupnpd -f Makefile.merlin $(PARALLEL_BUILD)
+	cp -f ./shared/version.h miniupnpd$(MUVER)/.
+	$(MAKE) -C miniupnpd$(MUVER) -f Makefile.merlin $(PARALLEL_BUILD)
 
-miniupnpd-clean:
-	-@$(MAKE) -C miniupnpd -f Makefile.merlin clean
-	-@rm miniupnpd/config.h
+miniupnpd$(MUVER)-clean:
+	-@$(MAKE) -C miniupnpd$(MUVER) -f Makefile.merlin clean
+	-@rm miniupnpd$(MUVER)/config.h
 
-miniupnpd-install:
-	install -D miniupnpd/miniupnpd $(INSTALLDIR)/miniupnpd/usr/sbin/miniupnpd
-	$(STRIP) $(INSTALLDIR)/miniupnpd/usr/sbin/miniupnpd
+miniupnpd$(MUVER)-install:
+	install -D miniupnpd$(MUVER)/miniupnpd $(INSTALLDIR)/miniupnpd$(MUVER)/usr/sbin/miniupnpd
+	$(STRIP) $(INSTALLDIR)/miniupnpd$(MUVER)/usr/sbin/miniupnpd
 
 # !!TB
 shared: busybox $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(RTCONFIG_HTTPS),openssl)
@@ -3060,7 +3064,7 @@ openpam-clean:
 	@[ ! -f openpam/Makefile ] || $(MAKE) -C openpam distclean
 	@rm -f openpam/stamp-h1
 
-openvpn/stamp-h1: lzo zlib
+openvpn/stamp-h1: lzo zlib nvram
 	cd openvpn && ./autogen.sh && \
 	export OPENSSL_CRYPTO_CFLAGS="-I$(TOP)/openssl/include"; \
 	export OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto"; \

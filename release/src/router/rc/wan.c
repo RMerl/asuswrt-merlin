@@ -1230,13 +1230,11 @@ start_wan_if(int unit)
 		}
 
 		TRACE_PT("3g begin.\n");
-#ifdef RTCONFIG_USB_MODEM_PIN
 		if(nvram_match("g3err_pin", "1")){
 			TRACE_PT("3g end: PIN error previously!\n");
 			update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_PINCODE_ERR);
 			return;
 		}
-#endif
 
 		update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
 
@@ -1306,13 +1304,11 @@ start_wan_if(int unit)
 
 			_eval(modem_argv, ">>/tmp/usb.log", 0, NULL);
 
-#ifdef RTCONFIG_USB_MODEM_PIN
 			if(nvram_match("g3err_pin", "1")){
 				TRACE_PT("3g end: PIN error!\n");
 				update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_PINCODE_ERR);
 				return;
 			}
-#endif
 
 			ptr = nvram_safe_get("usb_modem_act_sim");
 			if(strlen(ptr) > 0){

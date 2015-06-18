@@ -3764,9 +3764,6 @@ int asus_tty(const char *device_name, const char *action){
 	char current_act[16], current_def[16];
 	int cur_val, tmp_val;
 	int retry;
-#ifndef RTCONFIG_USB_MODEM_PIN
-	char cmd[32];
-#endif
 	int wan_unit;
 	char port_path[8];
 	char buf1[32];
@@ -4081,14 +4078,6 @@ usb_dbg("(%s): cur_val=%d, tmp_val=%d.\n", device_name, cur_val, tmp_val);
 
 				return 0;
 			}
-#endif
-
-#ifndef RTCONFIG_USB_MODEM_PIN
-			// If PIN enable, start_wan() here is too soon to work the modem.
-usb_dbg("(%s): got tty nodes and notify restart wan(%d)...\n", device_name, wan_unit);
-			memset(cmd, 0, 32);
-			sprintf(cmd, "restart_wan_if %d", wan_unit);
-			notify_rc_and_wait(cmd);
 #endif
 		}
 #ifdef RTCONFIG_DUALWAN

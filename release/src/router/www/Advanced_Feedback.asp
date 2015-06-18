@@ -41,7 +41,13 @@ function redirect(){
 }
 
 function applyRule(){
-	if(link_status == "2" && link_auxstatus == "0"){
+	//single / dual WAN connected check
+	if(((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")) ||
+		(dualwan_enabled &&
+				((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")) ||
+				((secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2"))
+		)
+	){
 
 		/*if(document.form.feedbackresponse.value == "3"){
 				alert("Feedback report daily maximum(10) send limit reached.");
