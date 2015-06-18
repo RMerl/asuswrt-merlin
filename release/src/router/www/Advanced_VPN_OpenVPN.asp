@@ -1212,7 +1212,7 @@ function cal_panel_block(){
 												</script>
               									<div id="openvpn_initial" style="display:none;margin-left:5px;">
               										<span>              												
-              											 <#vpn_openvpn_init#>
+												 Initializing the settings of OpenVPN server, this can take between 5 and 15 minutes...
               											 <img src="images/InternetScan.gif" />
               										</span>              											
               									</div>
