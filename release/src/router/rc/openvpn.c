@@ -1247,19 +1247,17 @@ void start_vpnserver(int serverNum)
 			f_read_string("/tmp/output.txt", &buffer[0], 64);
 			if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
 				if (i < 1024) {
-					logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit), you should re-generate it.", serverNum, i);
-#if 0	// Doing this at boot time causes multiple services to skip start, we need a better solution...
+					logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
 					sprintf(&buffer[0], "/etc/openvpn/server%d/dh.pem", serverNum);
 					unlink(&buffer[0]);
 					valid = 0;      // Not valid after all, must regenerate
-#endif
 				}
 			}
 		}
 		if (valid == 0)
-		{	//generate dh param file
+		{	// Provide a 2048-bit PEM, from RFC 3526.
 			sprintf(fpath, "/etc/openvpn/server%d/dh.pem", serverNum);
-			eval("openssl", "dhparam", "-out", fpath, "1024");
+			eval("cp", "/rom/dh2048.pem", fpath);
 			fp = fopen(fpath, "r");
 			if(fp) {
 				set_crt_parsed(&buffer[0], fpath);
