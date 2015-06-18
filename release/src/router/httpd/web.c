@@ -6378,11 +6378,6 @@ wps_finish:
 		sprintf(command, "%s %s", action_mode, pincode);
 		notify_rc(command);
 
-		if(nvram_invmatch("wans_mode", "lb")){
-			sprintf(command, "restart_wan_if %s", wan_unit);
-			notify_rc_and_period_wait(command, 1);
-		}
-
 		if(save_nvram)
 			nvram_commit();		
 	}	
@@ -6405,11 +6400,6 @@ wps_finish:
 
 		sprintf(command, "%s %s %s", action_mode, puk, newpin);
 		notify_rc(command);
-
-		if(nvram_invmatch("wans_mode", "lb")){
-			sprintf(command, "restart_wan_if %s", wan_unit);
-			notify_rc_and_period_wait(command, 1);
-		}
 	}	
 	else if (!strcmp(action_mode, "restart_simauth"))
 	{
@@ -11504,7 +11494,7 @@ ej_cpu_usage(int eid, webs_t wp, int argc, char_t **argv){
 	int from_app = 0;
 
 	if (ejArgs(argc, argv, "%s", &name_t) < 1) {
-		_dprintf("name_t = NULL\n");
+//		_dprintf("name_t = NULL\n");
 	}else if(!strncmp(name_t, "appobj", 6))
 		from_app = 1;
 

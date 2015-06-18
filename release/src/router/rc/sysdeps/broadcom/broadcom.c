@@ -3552,3 +3552,86 @@ setPSK(const char *psk)
 	return 0;
 }
 #endif
+
+#ifdef RTCONFIG_BCMWL6
+int
+wl_check_chanspec()
+{
+	wl_uint32_list_t *list;
+	chanspec_t c, chansp_40m;
+	int ret = 0, i, count;
+	char data_buf[WLC_IOCTL_MAXLEN];
+	char chanbuf[CHANSPEC_STR_LEN];
+	char word[256], *next;
+	char tmp[256], tmp2[256], prefix[] = "wlXXXXXXXXXX_";
+	int unit = 0;
+	int match;
+	int match_ctrl_ch;
+	int match_40m_ch;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit++);
+		c = 0;
+		chansp_40m = 0;
+		match = 0;
+		match_ctrl_ch = 0;
+		match_40m_ch = 0;
+
+		if (!nvram_get_int(strcat_r(prefix, "chanspec", tmp)))
+			continue;
+
+		memset(data_buf, 0, WLC_IOCTL_MAXLEN);
+		ret = wl_iovar_getbuf(word, "chanspecs", &c, sizeof(chanspec_t),
+			data_buf, WLC_IOCTL_MAXLEN);
+		if (ret < 0) {
+			dbg("failed to get valid chanspec list\n");
+			continue;
+		}
+
+		list = (wl_uint32_list_t *)data_buf;
+		count = dtoh32(list->count);
+
+		if (!count) {
+			dbg("number of valid chanspec is 0\n");
+			continue;
+		} else
+		for (i = 0; i < count; i++) {
+			c = (chanspec_t)dtoh32(list->element[i]);
+
+			if (!match &&
+			    !strcmp(wf_chspec_ntoa(c, chanbuf), nvram_safe_get(strcat_r(prefix, "chanspec", tmp)))) {
+				match = 1;
+				break;
+			}
+
+			if (wf_chspec_ctlchan(c) == wf_chspec_ctlchan(wf_chspec_aton(nvram_safe_get(strcat_r(prefix, "chanspec", tmp))))) {
+				if (!match_ctrl_ch)
+					match_ctrl_ch = 1;
+
+				if (!match_40m_ch && CHSPEC_IS40(c)) {
+					match_40m_ch = 1;
+					chansp_40m = c;
+				}
+			}
+		}
+
+		if (!match) {
+			dbg("chanspec %s is invalid\n", nvram_safe_get(strcat_r(prefix, "chanspec", tmp)));
+
+			if (match_40m_ch) {
+				dbg("downgraded to 40M chanspec\n");
+				nvram_set(strcat_r(prefix, "chanspec", tmp), wf_chspec_ntoa(chansp_40m, chanbuf));
+			} else if (match_ctrl_ch) {
+				dbg("downgraded to 20M chanspec\n");
+				nvram_set_int(strcat_r(prefix, "chanspec", tmp), wf_chspec_ctlchan(wf_chspec_aton(nvram_safe_get(strcat_r(prefix, "chanspec", tmp2)))));
+			} else {
+				dbg("downgraded to auto chanspec\n");
+				nvram_set_int(strcat_r(prefix, "chanspec", tmp), 0);
+				nvram_set_int(strcat_r(prefix, "bw", tmp), 0);
+			}
+		}
+	}
+
+	return ret;
+}
+#endif

@@ -86,6 +86,7 @@
 var cpu_info_old = new Array();
 var core_num = '<%cpu_core_num();%>';
 var cpu_usage_array = new Array();
+var array_size = 46;
 for(i=0;i<core_num;i++){
 	cpu_info_old[i] = {
 		total:0,
@@ -93,12 +94,12 @@ for(i=0;i<core_num;i++){
 	}
 	
 	cpu_usage_array[i] = new Array();
-	for(j=0;j<46;j++){
+	for(j=0;j<array_size;j++){
 		cpu_usage_array[i][j] = 101;
 	}
 }
-var ram_usage_array = new Array(31);
-for(i=0;i<31;i++){
+var ram_usage_array = new Array(array_size);
+for(i=0;i<array_size;i++){
 	ram_usage_array[i] = 101;
 }
 /*End*/
@@ -173,8 +174,8 @@ function render_RAM(total, free, used){
 	ram_usage_array.push(100 - used_percentage);
 	ram_usage_array.splice(0,1);
 	
-	for(i=0;i<31;i++){
-		pt += i*9 +","+ ram_usage_array[i] + " ";
+	for(i=0;i<array_size;i++){
+		pt += i*6 +","+ ram_usage_array[i] + " ";
 	}
 
 	document.getElementById('ram_graph').setAttribute('points', pt);
@@ -200,7 +201,7 @@ function render_CPU(cpu_info_new){
 		document.getElementById('cpu'+i+'_quantification').innerHTML = percentage +"%"
 		cpu_usage_array[i].push(100 - percentage);
 		cpu_usage_array[i].splice(0,1);
-		for(j=0;j<46;j++){
+		for(j=0;j<array_size;j++){
 			pt += j*6 +","+ cpu_usage_array[i][j] + " ";	
 		}
 

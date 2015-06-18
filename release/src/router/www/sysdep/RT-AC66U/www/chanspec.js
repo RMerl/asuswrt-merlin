@@ -327,27 +327,32 @@ function wl_chanspec_list_change(){
 						
 						if(bw_cap == "0"){	// [20/40/80 MHz] (auto)
 							document.getElementById('wl_nctrlsb_field').style.display = "";
-								for(var i=0;i<wl_channel_list_5g_2.length;i++){
-										if(wl_channel_list_5g_2[i] == "165")		//165 belong to 20MHz
-												wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i];
-										else if(document.form.preferred_lang.value == "UK")		// auto for UK
-												wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);
-										else if(band5g_11ac_support){
-												if(country == "EU" && (parseInt(wl_channel_list_5g_2[i]) == 116 || parseInt(wl_channel_list_5g_2[i]) == 140)){		//	belong to 20MHz
-													wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i];
-												}
-												else if(country == "EU" && parseInt(wl_channel_list_5g_2[i]) > 116 && parseInt(wl_channel_list_5g_2[i]) < 140){	// belong to 40MHz	
-														wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);
-												}else if(country == "TW" && parseInt(wl_channel_list_5g_2[i]) >= 56 && parseInt(wl_channel_list_5g_2[i]) <= 64){	// belong to 40MHz
-														wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);
-												}else{	
-														wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i]+"/80";												
-												}		
-										}
-										else{		// for 802.11n, RT-N66U
-											wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);									
-										}										
-								}								
+							for(var i=0;i<wl_channel_list_5g_2.length;i++){
+								if(wl_channel_list_5g_2[i] == "165" || wl_channel_list_5g_2[i] == "140")		//165 belong to 20MHz
+									wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i];
+								else if((wl_channel_list_5g_2[i] == "56") && country == "TW")		//56 belong 20MHz only for TW
+									wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i];		
+								else if(document.form.preferred_lang.value == "UK")		// auto for UK
+									wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);
+								else if(band5g_11ac_support){
+									if(country == "EU" && parseInt(wl_channel_list_5g_2[i]) == 116){		//	belong to 20MHz
+									wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i];
+									}else if((country == "EU" || country == "E0")&& parseInt(wl_channel_list_5g_2[i]) > 116 && parseInt(wl_channel_list_5g_2[i]) < 140){	// belong to 40MHz												
+										wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);
+									}else if(country == "TW" && parseInt(wl_channel_list_5g_2[i]) >= 56 && parseInt(wl_channel_list_5g_2[i]) <= 64){	// belong to 40MHz
+										wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);
+									}else if(country == "JP" && ( parseInt(wl_channel_list_5g_2[i]) == 132 || parseInt(wl_channel_list_5g_2[i]) == 136)){		// belong to 40MHz
+										wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);														
+									}else if(document.form.wl_nmode_x.value ==1){
+										wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);
+									}else{	
+										wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i]+"/80";												
+									}		
+								}
+								else{		// for 802.11n, RT-N66U
+									wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);									
+								}										
+							}								
 						}
 						else if(bw_cap == "3"){	// [80 MHz]
 							document.getElementById('wl_nctrlsb_field').style.display = "";

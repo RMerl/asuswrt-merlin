@@ -2982,7 +2982,7 @@ ppp_get_conn_pkt_info(void *pppif, struct ctf_ppp *ctfppp){
 	ctfppp->psk.po = po;
 
 	sk = po->chan.private;
-	if(sk){
+	if (sk && sk == &po->sk){
 		ctfppp->psk.pppox_protocol = sk->sk_protocol;
 		switch (sk->sk_protocol){
 		case PX_PROTO_OE:

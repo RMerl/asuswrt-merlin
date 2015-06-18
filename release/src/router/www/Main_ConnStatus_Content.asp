@@ -41,11 +41,10 @@ function updateOptions(){
 }
 
 
-var $j = jQuery.noConflict();
 var _responseLen;
 var noChange = 0;
 function checkCmdRet(){
-	$j.ajax({
+	$.ajax({
 		url: '/cmdRet_check.htm',
 		dataType: 'html',
 		

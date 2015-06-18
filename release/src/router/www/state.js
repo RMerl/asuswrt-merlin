@@ -1434,11 +1434,16 @@ function show_menu(){
 		setTimeout('cal_height();', 1);
 
 	if(notice_acpw_is_default == 1){	//case1
-		notification.array[0] = 'noti_acpw';
-		notification.acpw = 1;
-		notification.desc[0] = '<#ASUSGATE_note1#>';
-		notification.action_desc[0] = '<#ASUSGATE_act_change#>';
-		notification.clickCallBack[0] = "location.href = 'Advanced_System_Content.asp?af=http_passwd2';"
+		if(default_psk_support){
+			location.href = 'Main_Password.asp?nextPage=' + window.location.pathname.substring(1 ,window.location.pathname.length);
+		}
+		else{
+			notification.array[0] = 'noti_acpw';
+			notification.acpw = 1;
+			notification.desc[0] = '<#ASUSGATE_note1#>';
+			notification.action_desc[0] = '<#ASUSGATE_act_change#>';
+			notification.clickCallBack[0] = "location.href = 'Advanced_System_Content.asp?af=http_passwd2';"
+		}
 	}else
 		notification.acpw = 0;
 /*

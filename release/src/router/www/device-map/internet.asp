@@ -7,15 +7,13 @@
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <title></title>
-<link rel="stylesheet" type="text/css" href="../NM_style.css">
-<link rel="stylesheet" type="text/css" href="../form_style.css">
+<link rel="stylesheet" type="text/css" href="/NM_style.css">
+<link rel="stylesheet" type="text/css" href="/form_style.css">
+<link rel="stylesheet" type="text/css" href="/index_style.css">
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
-<script>
-
-</script>
 <script>
 <% wanlink(); %>
 <% first_wanlink(); %>
@@ -166,7 +164,7 @@ function initial(){
 			if(dsl_support && wans_dualwan.split(" ")[0] == "usb" && parent.document.form.dual_wan_flag.value == 0){
 				document.getElementById("goDualWANSetting").style.display = "none";
 				document.getElementById("dualwan_enable_button").style.display = "none";
-			}
+			}			
 			else if(parent.document.form.dual_wan_flag.value == 0){
 				document.getElementById("goDualWANSetting").style.display = "none";
 				document.getElementById("dualwan_enable_button").style.display = "";
@@ -216,6 +214,9 @@ function initial(){
 
 	if(parent.wans_flag){
 		if(unit == 0){
+			if(dsl_support && wans_dualwan.split(" ")[0] == "dsl"){
+				document.getElementById("divSwitchMenu").style.display = "";	
+			}
 			update_all_ip(first_wanip, first_wannetmask, first_wandns, first_wangateway , 0);
 			update_all_xip(first_wanxip, first_wanxnetmask, first_wanxdns, first_wanxgateway, 0);
 		}
@@ -242,6 +243,7 @@ function update_connection_type(dualwan_unit){
 		var wanlink_type_conv = wanlink_type();
 
 	if (dsl_support) {
+		
 		if( wans_dualwan.split(" ")[dualwan_unit] == "dsl" ) {
 			if(dslx_transmode == "atm") {
 				if (dslproto == "pppoa" || dslproto == "ipoa")
@@ -627,6 +629,18 @@ function manualSetup(){
 	</tr>
 </table>
 <table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px" id="rt_table">
+<tr>
+	<td>
+		<div id="divSwitchMenu" style="margin-top:4px;margin-right:4px;float:right;display:none;">
+			<div style="width:80px;height:30px;border-top-left-radius:8px;border-bottom-left-radius:8px;" class="block_filter_pressed">
+				<div style="text-align:center;padding-top:5px;color:#93A9B1;font-size:14px">WAN</div>
+			</div>
+			<div style="width:80px;height:30px;margin:-32px 0px 0px 80px;border-top-right-radius:8px;border-bottom-right-radius:8px;" class="block_filter">
+				<a href="/device-map/DSL_dashboard.asp"><div class="block_filter_name">DSL</div></a>
+			</div>
+		</div>
+	</td>	
+</tr>	
 <tr id="wan_enable_button">
     <td height="50" style="padding:10px 15px 0px 15px;">
     		<p class="formfonttitle_nwm" style="float:left;width:98px;"><#menu5_3_1#></p>

@@ -265,7 +265,9 @@ static int wlconf(char *ifname, int unit, int subunit)
 #ifdef RTCONFIG_QTN
 GEN_CONF:
 #endif
-
+#ifdef RTCONFIG_BCMWL6
+		wl_check_chanspec();
+#endif
 		generate_wl_para(unit, subunit);
 
 		for (r = 1; r < MAX_NO_MSSID; r++)	// early convert for wlx.y
@@ -369,7 +371,7 @@ GEN_CONF:
 				nvram_match(strcat_r(prefix, "nmode", tmp), "-1"))
 				eval("wl", "-i", ifname, "rtsthresh", "65535");
 #endif
-			if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
+			if (nvram_match(strcat_r(prefix, "nband", tmp), "1") && !nvram_match("ATEMODE", "1")) {
 #if defined(DSL_AC68U)
 				if (	nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&
 					nvram_match(strcat_r(prefix, "country_rev", tmp), "13"))

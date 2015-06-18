@@ -220,6 +220,7 @@ typedef struct ws_info_t	{
 
 #define EXTEND_CAP_AAE_BASIC		0x0010
 #define EXTEND_CAP_HWCTRL		0x0020
+#define EXTEND_CAP_SWCTRL		0x0040
 
 #define EXTEND_WEBDAV_TYPE_HTTP		0x00
 #define EXTEND_WEBDAV_TYPE_HTTPS	0x01
@@ -246,11 +247,20 @@ typedef struct webdav_info_t {
 typedef struct hwctrl_info_t {
         BYTE EnableLed;
         BYTE EnableBuzz;
+	BYTE Reserved[14];
 } HWCTRL_INFO_T;
 
-typedef struct general_info_t {
+typedef struct swctrl_info_t {
+	BYTE ROGAPILevel;
+	BYTE AiHOMEAPILevel;
+	BYTE AiProtectionAPILevel;
+	BYTE Reserved[13];
+} SWCTRL_INFO_T;
+
+typedef struct device_info_t {
 	WEBDAV_INFO_T wt;
 	HWCTRL_INFO_T hw;
+	SWCTRL_INFO_T sw;
 } DEVICE_INFO_T;
 
 typedef struct storage_info_t {

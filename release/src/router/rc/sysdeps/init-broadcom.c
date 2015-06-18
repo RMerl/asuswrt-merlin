@@ -1279,8 +1279,13 @@ void generate_switch_para(void)
 			char *hw_name = "et1";
 #else
 			/* WAN L1 L2 L3 L4 CPU */	/*vision: WAN L1 L2 L3 L4 */
+#if 0
 			const int ports[SWPORT_COUNT] = { 0, 1, 2, 3, 4, 5 };
 			char *hw_name = "et0";
+#else
+			const int ports[SWPORT_COUNT] = { 0, 1, 2, 3, 4, 7 };
+			char *hw_name = "et1";
+#endif
 #endif
 			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")) ? SWCFG_DEFAULT : cfg;
 			wan_phyid = ports[0];	// record the phy num of the wan port on the case
@@ -2380,120 +2385,6 @@ void chanspec_fix_5g(int unit)
 		dbG("fix nctrlsb of channel %d as %s\n", channel, "upper");
 		nvram_set(strcat_r(prefix, "nctrlsb", tmp), "upper");
 	}
-}
-
-void chanspec_fix(int unit)
-{
-//	char *chanspec_5g_20m[] = {"0", "36", "40", "44", "48", "56", "60", "64", "149", "153", "157", "161", "165"};
-	char *chanspec_5g_20m_xx[] = {"0", "36", "40", "44", "48", "52", "56", "60", "64", "100", "104", "108", "112", "116", "120", "124", "128", "132", "136", "140", "144", "149", "153", "157", "161", "165"};
-//	char *chanspec_5g_40m[] = {"0", "40u", "48u", "64u", "153u", "161u", "36l", "44l", "60l", "149l", "157l"};
-	char *chanspec_5g_40m_xx[] = {"0", "40u", "48u", "56u", "64u", "104u", "112u", "120u", "128u", "136u", "144u", "153u", "161u", "36l", "44l", "52l", "60l", "100l", "108l", "116l", "124l", "132l", "140l", "149l", "157l"};
-//	char *chanspec_5g_80m[] = {"0", "36/80", "40/80", "44/80", "48/80", "149/80", "153/80", "157/80", "161/80"};
-	char *chanspec_5g_80m_xx[] = {"0", "36/80", "40/80", "44/80", "48/80", "52/80", "56/80", "60/80", "64/80", "100/80", "104/80", "108/80", "112/80", "116/80", "120/80", "124/80", "128/80", "132/80", "136/80", "140/80", "144/80", "149/80", "153/80", "157/80", "161/80"};
-//	char *chanspec_20m[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"};
-	char *chanspec_20m_xx[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"};
-	char *chanspec_40m[] = {"0", "1l", "2l", "3l", "4l", "5l", "5u", "6l", "6u", "7l", "7u", "8l", "8u", "9l", "9u", "10u", "11u", "12u", "13u"};
-
-	char tmp[100], prefix[]="wlXXXXXXX_";
-	int i;
-
-	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-	dbG("unit: %d, bw_cap: %s, chanspec: %s\n", unit, nvram_safe_get(strcat_r(prefix, "bw_cap", tmp)), nvram_safe_get(strcat_r(prefix, "chanspec", tmp)));
-
-//	if (nvram_match(strcat_r(prefix, "country_code", tmp), "XX"))	// worldwide
-	{
-		if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))	// 2.4G
-		{
-			if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "3"))
-				goto BAND_2G_BW_40M_XX;
-			else
-				goto BAND_2G_BW_20M_XX;
-BAND_2G_BW_40M_XX:
-			for (i = 0; i < (sizeof(chanspec_40m)/sizeof(chanspec_40m[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_40m[i])) return;
-			}
-BAND_2G_BW_20M_XX:
-			for (i = 0; i < (sizeof(chanspec_20m_xx)/sizeof(chanspec_20m_xx[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_20m_xx[i])) return;
-			}
-		}
-		else
-		{
-			if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "7"))
-				goto BAND_5G_BW_80M_XX;
-			else if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "3"))
-				goto BAND_5G_BW_40M_XX;
-			else
-				goto BAND_5G_BW_20M_XX;
-BAND_5G_BW_80M_XX:
-			for (i = 0; i < (sizeof(chanspec_5g_80m_xx)/sizeof(chanspec_5g_80m_xx[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_80m_xx[i])) return;
-			}
-BAND_5G_BW_40M_XX:
-			for (i = 0; i < (sizeof(chanspec_5g_40m_xx)/sizeof(chanspec_5g_40m_xx[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_40m_xx[i])) return;
-			}
-BAND_5G_BW_20M_XX:
-			for (i = 0; i < (sizeof(chanspec_5g_20m_xx)/sizeof(chanspec_5g_20m_xx[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_20m_xx[i])) return;
-			}
-		}
-	}
-#if 0
-	else
-	{
-		if (nvram_match(strcat_r(prefix, "nband", tmp), "2"))	// 2.4G
-		{
-			if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "3"))
-				goto BAND_2G_BW_40M;
-			else
-				goto BAND_2G_BW_20M;
-BAND_2G_BW_40M:
-			for (i = 0; i < (sizeof(chanspec_40m)/sizeof(chanspec_40m[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_40m[i])) return;
-			}
-BAND_2G_BW_20M:
-			for (i = 0; i < (sizeof(chanspec_20m)/sizeof(chanspec_20m[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_20m[i])) return;
-			}
-		}
-		else
-		{
-			if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "7"))
-				goto BAND_5G_BW_80M;
-			else if (nvram_match(strcat_r(prefix, "bw_cap", tmp), "3"))
-				goto BAND_5G_BW_40M;
-			else
-				goto BAND_5G_BW_20M;
-BAND_5G_BW_80M:
-			for (i = 0; i < (sizeof(chanspec_5g_80m)/sizeof(chanspec_5g_80m[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_80m[i])) return;
-			}
-BAND_5G_BW_40M:
-			for (i = 0; i < (sizeof(chanspec_5g_40m)/sizeof(chanspec_5g_40m[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_40m[i])) return;
-			}
-BAND_5G_BW_20M:
-			for (i = 0; i < (sizeof(chanspec_5g_20m)/sizeof(chanspec_5g_20m[0])); i++)
-			{
-				if (nvram_match(strcat_r(prefix, "chanspec", tmp), chanspec_5g_20m[i])) return;
-			}
-		}
-	}
-#endif
-	dbG("reset %s for invalid setting\n", strcat_r(prefix, "chanspec", tmp));
-	nvram_set(strcat_r(prefix, "chanspec", tmp), "0");
-	nvram_set(strcat_r(prefix, "bw_cap", tmp), "3");
-	nvram_set(strcat_r(prefix, "obss_coex", tmp), "1");
 }
 
 static int set_wltxpower_once = 0;
@@ -5506,9 +5397,6 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "obss_coex", tmp), "1");
 		}
 
-		if (nvram_match(strcat_r(prefix, "nband", tmp), "1"))		// 5G
-		chanspec_fix(unit);
-
 //		if (unit)
 		{
 			if (nvram_match(strcat_r(prefix, "txbf", tmp), "1"))
@@ -5593,7 +5481,7 @@ void generate_wl_para(int unit, int subunit)
 		sprintf(tmp2, "%d", nvram_get_int(strcat_r(prefix, "pmk_cache", tmp)) * 60);
 		nvram_set(strcat_r(prefix, "net_reauth", tmp), tmp2);
 
-		if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
+		if (nvram_match(strcat_r(prefix, "nband", tmp), "1") && !nvram_match("ATEMODE", "1")) {
 			if (	((get_model() == MODEL_RTAC68U || get_model() == MODEL_RPAC68U || get_model() == MODEL_DSLAC68U) &&
 				(nvram_match(strcat_r(prefix, "reg_mode", tmp), "off") || nvram_match(strcat_r(prefix, "reg_mode", tmp), "d")) &&
 			      ((nvram_match(strcat_r(prefix, "country_code", tmp), "EU") &&

@@ -1094,7 +1094,11 @@ static inline int is_usb3_port(char *usb_node)
 #define CPU_PORT "5"
 #endif
 
-#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+#ifdef RTAC5300
+#define CPU_PORT "7"
+#endif
+
+#if defined(RTAC88U) || defined(RTAC3100)/* || defined(RTAC5300)*/
 #ifdef RTCONFIG_EXT_RTL8365MB
 #define CPU_PORT "7"
 #else

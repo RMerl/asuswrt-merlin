@@ -166,6 +166,10 @@ int WAN_FB_UNIT;
 #endif
 #ifdef RTCONFIG_USB_MODEM
 char modem_type[32];
+int sim_lock = 0;
+#ifdef RT4GAC55U
+char usb_if[16];
+#endif
 #endif
 
 int scan_interval;

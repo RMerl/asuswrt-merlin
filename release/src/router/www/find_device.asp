@@ -142,24 +142,6 @@
 }
 
 </style>
-<script>	
-function document.getElementById(){
-	var elements = new Array();
-	
-	for(var i = 0; i < arguments.length; ++i){
-		var element = arguments[i];
-		if(typeof element == 'string')
-			element = document.getElementById(element);
-		
-		if(arguments.length == 1)
-			return element;
-		
-		elements.push(element);
-	}
-	
-	return elements;
-}
-</script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
 var rescan = 0;
