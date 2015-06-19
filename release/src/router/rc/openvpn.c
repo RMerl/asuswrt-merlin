@@ -1248,8 +1248,6 @@ void start_vpnserver(int serverNum)
 			if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
 				if (i < 1024) {
 					logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
-					sprintf(&buffer[0], "/etc/openvpn/server%d/dh.pem", serverNum);
-					unlink(&buffer[0]);
 					valid = 0;      // Not valid after all, must regenerate
 				}
 			}
@@ -1260,6 +1258,7 @@ void start_vpnserver(int serverNum)
 			eval("cp", "/rom/dh2048.pem", fpath);
 			fp = fopen(fpath, "r");
 			if(fp) {
+				sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
 				set_crt_parsed(&buffer[0], fpath);
 				fclose(fp);
 			}
