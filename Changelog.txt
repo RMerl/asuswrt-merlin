@@ -2,12 +2,15 @@ Asuswrt-Merlin Changelog
 ========================
 
 378.55 (xx-xxx-2015)
-   - NEW: Merged with GPL 6065.  Notable changes from Asus:
+   - NEW: Merged with GPL 6117.  Notable changes from Asus:
              o New token-based webui authentication (more secure)
              o OpenVPN certificates moved to JFFS2, saving nvram.
                key/cert fields will show up empty on the webui,
                any new key/cert you paste will be written back
-               to /jffs/openvpn/ .
+               to /jffs/openvpn/ .  This means that if you revert
+               back to a previous version, your key/certs will
+               no longer be in nvram, so OpenVPN instances will
+               fail to start.
              o New network client list on the network map
              o CTF support for PPTP/L2TP WAN (Russian ISPs) (ARM)
 
@@ -20,7 +23,23 @@ Asuswrt-Merlin Changelog
              remain configurable.
   - CHANGED: Updated OpenVPN to 2.3.7.
   - CHANGED: Updated OpenSSL to 1.0.2c.
-
+  - CHANGED: Use a pre-generated 2048-bit DH from RFC 3526 instead of 
+             generating our own when doing the first time setup for 
+             OpenVPN servers.  This is necessary as openssl 1.0.2b and 
+             up now reject 512-bit DHs, and generating a 1024-bit
+             would take far too long on a router.
+             The end-user still has the possibility of providing his
+             own - as long it's 1024-bit or stronger.
+  - FIXED: Wireless Log page would fail to load if the SSID
+           contained certain characters
+  - FIXED: Wireless Log page would fail to load when in Media Bridge
+           on the RT-AC87U
+  - FIXED: DDNS page would complain about an empty account field
+           when setting it to CUSTOM with no prior value in that field.
+  - FIXED: Automatically generated DH was too weak (512-bit) and 
+           preventing clients based on newer OpenSSL releases from 
+           connecting.  We automatically replace any weak PEM with our 
+           2048-bit one.
 
 
 378.54_2 (10-June-2015)
