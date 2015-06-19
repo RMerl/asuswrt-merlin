@@ -40,15 +40,15 @@ function show_upnp() {
 	var expire;
 	var Hours, Minutes, Seconds;
 
-        code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
-        code += '<thead><tr>';
-        code += '<td width="8%">Proto</td>';
-        code += '<td width="8%">Port</td>';
-        code += '<td width="17%">Redirect to</td>';
-        code += '<td width="12%">Local Port</td>';
-	code += '<td width="13%">Time left</td>';
-        code += '<td width="42%">Description</td>';
-        code += '</tr></thead>';
+        code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
+	code += '<thead><tr><td colspan="6">UPNP, NAT-PMP and PCP forwards</td></tr></thead>';
+        code += '<tr><th width="8%">Proto</th>';
+        code += '<th width="8%">Port</th>';
+        code += '<th width="17%">Redirect to</th>';
+        code += '<th width="12%">Local Port</th>';
+	code += '<th width="13%">Time left</th>';
+        code += '<th width="42%">Description</th>';
+        code += '</tr>';
 
 	if (upnparray.length > 1) {
 		for (i = 0; i < upnparray.length-1; ++i) {
@@ -86,15 +86,15 @@ function show_upnp() {
 function show_vserver() {
 	var code, i, line;
 
-	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
-	code += '<thead><tr>';
-	code += '<td width="20%">Destination</td>';
-	code += '<td width="10%">Proto</td>';
-	code += '<td width="15%">Port range</td>';
-	code += '<td width="20%">Redirect to</td>';
-	code += '<td width="15%">Local Port</td>';
-	code += '<td width="20%">Chain</td>';
-	code += '</tr></thead>';
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
+	code += '<thead><tr><td colspan="6">Virtual Servers</td></tr></thead>';
+	code += '<tr><th width="20%">Destination</th>';
+	code += '<th width="10%">Proto</th>';
+	code += '<th width="15%">Port range</th>';
+	code += '<th width="20%">Redirect to</th>';
+	code += '<th width="15%">Local Port</th>';
+	code += '<th width="20%">Chain</th>';
+	code += '</tr>';
 
 	if (vserverarray.length > 1) {
 		for (i = 0; i < vserverarray.length-1; ++i) {
@@ -158,16 +158,10 @@ function show_vserver() {
 									<br>
                                                                             
 									<div style="margin-top:8px">
-										<div class="tableheader">
-											Virtual servers
-										</div>
 										<div id="vserverblock"></div>
 									</div>
 									<br>
 									<div style="margin-top:8px">
-										<div class="tableheader">
-											UPNP, NAT-PMP and PCP forwards
-										</div>
 										<div id="upnpblock"></div>
 									</div>
 									<br>

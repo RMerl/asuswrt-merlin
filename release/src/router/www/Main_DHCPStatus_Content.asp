@@ -41,13 +41,13 @@ function show_leases() {
 	var code, i, line;
 	var Days, Hours, Minutes, Seconds;
 
-	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
-	code += '<thead><tr>';
-	code += '<td width="20%">Time Left</td>';
-	code += '<td width="20%">MAC</td>';
-	code += '<td width="20%">IP Address</td>';
-	code += '<td width="40%">Hostname</td>';
-	code += '</tr></thead>';
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
+	code += '<thead><tr><td colspan="4">DHCP Leases</td></tr></thead>';
+	code += '<tr><th width="20%">Time Left</th>';
+	code += '<th width="20%">MAC</th>';
+	code += '<th width="20%">IP Address</th>';
+	code += '<th width="40%">Hostname</th>';
+	code += '</tr>';
 
 	if ("<% nvram_get("dhcp_enable_x"); %>" == "0") {
 		code += '<tr><td colspan="4">DHCP server is disabled.</td></tr>';
