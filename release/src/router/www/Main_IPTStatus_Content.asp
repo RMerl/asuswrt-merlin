@@ -11,14 +11,6 @@
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 
-<style>
-.tableheader{
-        background-color:#475a5f;
-        color:#FFCC00;
-	font-size: 125%;
-}
-</style>
-
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -28,27 +20,27 @@
 <% get_upnp_array(); %>
 
 function initial() {
-        show_menu();
-        show_vserver();
+	show_menu();
+	show_vserver();
 	show_upnp();
 }
 
 
 function show_upnp() {
-        var code, i, line;
+	var code, i, line;
 	var now = Math.floor(Date.now() / 1000);
 	var expire;
 	var Hours, Minutes, Seconds;
 
-        code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
+	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
 	code += '<thead><tr><td colspan="6">UPNP, NAT-PMP and PCP forwards</td></tr></thead>';
-        code += '<tr><th width="8%">Proto</th>';
-        code += '<th width="8%">Port</th>';
-        code += '<th width="17%">Redirect to</th>';
-        code += '<th width="12%">Local Port</th>';
+	code += '<tr><th width="8%">Proto</th>';
+	code += '<th width="8%">Port</th>';
+	code += '<th width="17%">Redirect to</th>';
+	code += '<th width="12%">Local Port</th>';
 	code += '<th width="13%">Time left</th>';
-        code += '<th width="42%">Description</th>';
-        code += '</tr>';
+	code += '<th width="42%">Description</th>';
+	code += '</tr>';
 
 	if (upnparray.length > 1) {
 		for (i = 0; i < upnparray.length-1; ++i) {
@@ -156,7 +148,7 @@ function show_vserver() {
 									<div class="formfonttitle"><#System_Log#> - <#menu5_7_5#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<br>
-                                                                            
+
 									<div style="margin-top:8px">
 										<div id="vserverblock"></div>
 									</div>
