@@ -1093,9 +1093,9 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 #if 0
 	else if (strcmp(file, "iptable.log")==0)
 		return (get_nat_vserver_table(eid, wp, 0, NULL));
-#endif
 	else if (strcmp(file, "route.log")==0)
 		return (ej_route_table(eid, wp, 0, NULL));
+#endif
 	else if (strcmp(file, "wps_info.log")==0)
 	{
 #ifndef RTAC3200
@@ -4405,7 +4405,7 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 
-#if 1 /* temporary till httpd route table redo */
+#if 0 /* temporary till httpd route table redo */
 static void INET6_displayroutes(webs_t wp)
 {
 	char addr6[128], *naddr6;
@@ -4498,6 +4498,7 @@ static void INET6_displayroutes(webs_t wp)
 #endif
 #endif
 
+#if 0
 static int ipv4_route_table(webs_t wp)
 {
 	FILE *fp;
@@ -4566,7 +4567,9 @@ static int ipv4_route_table(webs_t wp)
 
 	return ret;
 }
+#endif
 
+#if 0
 int
 ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -4614,6 +4617,7 @@ ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 
 	return ret;
 }
+#endif
 
 static int ej_get_arp_table(int eid, webs_t wp, int argc, char_t **argv){
 	const int MAX = 80;
@@ -12458,6 +12462,7 @@ struct ej_handler ej_handlers[] = {
 	{ "get_leases_array", ej_get_leases_array},
 	{ "get_vserver_array", ej_get_vserver_array},
 	{ "get_upnp_array", ej_get_upnp_array},
+	{ "get_route_array", ej_get_route_array},
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif
