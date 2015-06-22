@@ -4524,7 +4524,7 @@ int reset_qtn(int restart)
 {
 	int wait_loop;
 	gen_stateless_conf();
-	system("cp /rom/qtn/* /tmp/");
+	system("cp -rp /rom/qtn/* /tmp/");
 	if( restart == 0){
 		lanport_ctrl(0);
 #if 1	/* replaced by raw Ethernet frame */

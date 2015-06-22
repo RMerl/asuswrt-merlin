@@ -1093,8 +1093,10 @@ ifeq ($(RTCONFIG_ROMATECCODEFIX),y)
 endif
 ifeq ($(RTCONFIG_QTN),y)
 	# install qtn boot-code and firmware
-	install -D qtnimage/topaz-linux.lzma.img $(TARGETDIR)/rom/qtn/topaz-linux.lzma.img
-	install -D qtnimage/u-boot.bin $(TARGETDIR)/rom/qtn/u-boot.bin
+	install -D qtnimage/topaz-linux.lzma.img $(TARGETDIR)/rom/qtn/boot/topaz-linux.lzma.img
+	install -D qtnimage/u-boot.bin $(TARGETDIR)/rom/qtn/boot/u-boot.bin
+	ln -s /rom/qtn/boot/topaz-linux.lzma.img $(TARGETDIR)/rom/qtn/topaz-linux.lzma.img
+	ln -s /rom/qtn/boot/u-boot.bin $(TARGETDIR)/rom/qtn/u-boot.bin
 	install -D qtnimage/router_command.sh $(TARGETDIR)/rom/qtn/router_command.sh
 	install -D qtnimage/qtn_dbg.sh $(TARGETDIR)/rom/qtn/qtn_dbg.sh
 	install -D qtnimage/start-stateless-slave $(TARGETDIR)/rom/qtn/start-stateless-slave
