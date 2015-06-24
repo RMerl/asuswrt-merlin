@@ -2804,10 +2804,46 @@ ifneq ($(MEDIA_SERVER_STATIC),y)
 	$(STRIP) $(INSTALLDIR)/libvorbis/usr/lib/libvorbis.so.0
 endif
 
-minidlna: zlib sqlite ffmpeg libogg flac jpeg libexif libid3tag libvorbis
+minidlna: zlib sqlite ffmpeg libogg flac jpeg libexif libid3tag libvorbis minidlna/Makefile
 	@$(SEP)
-	@cd minidlna && ./genosver.sh
-	@$(MAKE) -C minidlna CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1) minidlna $(PARALLEL_BUILD)
+	@$(MAKE) -C minidlna CC=$(CC) $(PARALLEL_BUILD)
+
+minidlna/Makefile: minidlna/configure
+	$(MAKE) minidlna-configure
+
+minidlna/configure:
+	( cd minidlna; ./autogen.sh )
+
+minidlna-configure:
+	cd minidlna && \
+	LIBS="-ldl -lm -lpthread -lz -lexif -ljpeg -lsqlite3 -lid3tag -lFLAC -lvorbis -logg -lavformat -lavcodec -lavutil" \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -D_GNU_SOURC -D_FILE_OFFSET_BITS=64 -ffunction-sections -fdata-sections \
+		$(if $(RTN65U,y),-DRTN56U=1) $(if $(or $(RTN66U), $(RTAC86U)),-DRTN66U=1)" \
+	CPPFLAGS="-I$(TOP)/zlib \
+		-I$(TOP)/ffmpeg/libavutil -I$(TOP)/ffmpeg/libavcodec -I$(TOP)/ffmpeg/libavformat \
+		-I$(TOP)/ffmpeg/libswscale -I$(TOP)/ffmpeg \
+		-I$(TOP)/flac/include -I$(TOP)/sqlite -I$(TOP)/jpeg \
+		-I$(TOP)/libexif -I$(TOP)/libid3tag -I$(TOP)/libogg/include \
+		-I$(TOP)/libvorbis/include -I$(TOP)/shared" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections \
+		-L$(TOP)/zlib -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections \
+		-L$(TOP)/zlib -L$(TOP)/sqlite/.libs -L$(TOP)/jpeg -L$(TOP)/libvorbis/lib/.libs \
+		-L$(TOP)/libogg/src/.libs -L$(TOP)/libexif/libexif/.libs -L$(TOP)/flac/src/libFLAC/.libs \
+		-L$(TOP)/ffmpeg/libavutil -L$(TOP)/ffmpeg/libavcodec -L$(TOP)/ffmpeg/libavformat \
+		-L$(TOP)/libid3tag/.libs" \
+	ac_cv_header_linux_netlink_h=no \
+	$(CONFIGURE)  --with-db-path=/tmp/minidlna --with-log-path=/tmp/minidlna \
+		--with-os-name=Asuswrt --with-os-version=378.xx --with-os-url="http://asuswrt.lostrealm.ca" \
+		--enable-tivo && \
+	echo "#undef USE_DAEMON" >> config.h
+
+minidlna-clean:
+	-@$(MAKE) -C minidlna clean
+	@rm -f minidlna/Makefile
+
+minidlna-install:
+	install -D minidlna/minidlnad $(INSTALLDIR)/minidlna/usr/sbin/minidlna
+	$(STRIP) $(INSTALLDIR)/minidlna/usr/sbin/minidlna
 
 libgdbm/stamp-h1:
 	cd libgdbm && \
