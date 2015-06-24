@@ -86,7 +86,7 @@ static void svq1_write_header(SVQ1Context *s, int frame_type)
     /* frame type */
     put_bits(&s->pb, 2, frame_type - 1);
 
-    if (frame_type == FF_I_TYPE) {
+    if (frame_type == AV_PICTURE_TYPE_I) {
 
         /* no checksum since frame code is 0x20 */
 
@@ -280,7 +280,7 @@ static int svq1_encode_plane(SVQ1Context *s, int plane, unsigned char *src_plane
     block_width = (width + 15) / 16;
     block_height = (height + 15) / 16;
 
-    if(s->picture.pict_type == FF_P_TYPE){
+    if(s->picture.pict_type == AV_PICTURE_TYPE_P){
         s->m.avctx= s->avctx;
         s->m.current_picture_ptr= &s->m.current_picture;
         s->m.last_picture_ptr   = &s->m.last_picture;
@@ -382,11 +382,11 @@ static int svq1_encode_plane(SVQ1Context *s, int plane, unsigned char *src_plane
             ff_init_block_index(&s->m);
             ff_update_block_index(&s->m);
 
-            if(s->picture.pict_type == FF_I_TYPE || (s->m.mb_type[x + y*s->m.mb_stride]&CANDIDATE_MB_TYPE_INTRA)){
+            if(s->picture.pict_type == AV_PICTURE_TYPE_I || (s->m.mb_type[x + y*s->m.mb_stride]&CANDIDATE_MB_TYPE_INTRA)){
                 for(i=0; i<6; i++){
                     init_put_bits(&s->reorder_pb[i], reorder_buffer[0][i], 7*32);
                 }
-                if(s->picture.pict_type == FF_P_TYPE){
+                if(s->picture.pict_type == AV_PICTURE_TYPE_P){
                     const uint8_t *vlc= ff_svq1_block_type_vlc[SVQ1_BLOCK_INTRA];
                     put_bits(&s->reorder_pb[5], vlc[1], vlc[0]);
                     score[0]= vlc[1]*lambda;
@@ -401,12 +401,12 @@ static int svq1_encode_plane(SVQ1Context *s, int plane, unsigned char *src_plane
 
             best=0;
 
-            if(s->picture.pict_type == FF_P_TYPE){
+            if(s->picture.pict_type == AV_PICTURE_TYPE_P){
                 const uint8_t *vlc= ff_svq1_block_type_vlc[SVQ1_BLOCK_INTER];
                 int mx, my, pred_x, pred_y, dxy;
                 int16_t *motion_ptr;
 
-                motion_ptr= h263_pred_motion(&s->m, 0, 0, &pred_x, &pred_y);
+                motion_ptr= ff_h263_pred_motion(&s->m, 0, 0, &pred_x, &pred_y);
                 if(s->m.mb_type[x + y*s->m.mb_stride]&CANDIDATE_MB_TYPE_INTER){
                     for(i=0; i<6; i++)
                         init_put_bits(&s->reorder_pb[i], reorder_buffer[1][i], 7*32);
@@ -496,7 +496,7 @@ static av_cold int svq1_encode_init(AVCodecContext *avctx)
     s->m.me.score_map = av_mallocz(ME_MAP_SIZE*sizeof(uint32_t));
     s->mb_type        = av_mallocz((s->y_block_width+1)*s->y_block_height*sizeof(int16_t));
     s->dummy          = av_mallocz((s->y_block_width+1)*s->y_block_height*sizeof(int32_t));
-    h263_encode_init(&s->m); //mv_penalty
+    ff_h263_encode_init(&s->m); //mv_penalty
 
     return 0;
 }
@@ -528,8 +528,8 @@ static int svq1_encode_frame(AVCodecContext *avctx, unsigned char *buf,
     init_put_bits(&s->pb, buf, buf_size);
 
     *p = *pict;
-    p->pict_type = avctx->gop_size && avctx->frame_number % avctx->gop_size ? FF_P_TYPE : FF_I_TYPE;
-    p->key_frame = p->pict_type == FF_I_TYPE;
+    p->pict_type = avctx->gop_size && avctx->frame_number % avctx->gop_size ? AV_PICTURE_TYPE_P : AV_PICTURE_TYPE_I;
+    p->key_frame = p->pict_type == AV_PICTURE_TYPE_I;
 
     svq1_write_header(s, p->pict_type);
     for(i=0; i<3; i++){
@@ -572,7 +572,7 @@ static av_cold int svq1_encode_end(AVCodecContext *avctx)
 }
 
 
-AVCodec svq1_encoder = {
+AVCodec ff_svq1_encoder = {
     "svq1",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_SVQ1,

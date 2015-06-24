@@ -23,7 +23,7 @@
 #include "metadata.h"
 #include "libavutil/avstring.h"
 
-#if LIBAVFORMAT_VERSION_MAJOR < 53
+#if FF_API_OLD_METADATA
 
 #define SIZE_OFFSET(x) sizeof(((AVFormatContext*)0)->x),offsetof(AVFormatContext,x)
 
@@ -108,10 +108,11 @@ void ff_metadata_demux_compat(AVFormatContext *ctx)
 
 
 #define FILL_METADATA(s, key, value) {                                        \
-    if (value && *value && !av_metadata_get(s->metadata, #key, NULL, 0))      \
+    if (!av_metadata_get(s->metadata, #key, NULL, 0))                         \
         av_metadata_set2(&s->metadata, #key, value, 0);                       \
     }
-#define FILL_METADATA_STR(s, key)  FILL_METADATA(s, key, s->key)
+#define FILL_METADATA_STR(s, key) {                                           \
+    if (s->key && *s->key)  FILL_METADATA(s, key, s->key); }
 #define FILL_METADATA_INT(s, key) {                                           \
     char number[10];                                                          \
     snprintf(number, sizeof(number), "%d", s->key);                           \
@@ -144,4 +145,4 @@ void ff_metadata_mux_compat(AVFormatContext *ctx)
     }
 }
 
-#endif /* LIBAVFORMAT_VERSION_MAJOR < 53 */
+#endif /* FF_API_OLD_METADATA */

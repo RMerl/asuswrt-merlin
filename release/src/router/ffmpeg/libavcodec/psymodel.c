@@ -45,19 +45,6 @@ av_cold int ff_psy_init(FFPsyContext *ctx, AVCodecContext *avctx,
     return 0;
 }
 
-FFPsyWindowInfo ff_psy_suggest_window(FFPsyContext *ctx,
-                                      const int16_t *audio, const int16_t *la,
-                                      int channel, int prev_type)
-{
-    return ctx->model->window(ctx, audio, la, channel, prev_type);
-}
-
-void ff_psy_set_band_info(FFPsyContext *ctx, int channel,
-                          const float *coeffs, FFPsyWindowInfo *wi)
-{
-    ctx->model->analyze(ctx, channel, coeffs, wi);
-}
-
 av_cold void ff_psy_end(FFPsyContext *ctx)
 {
     if (ctx->model->end)
@@ -88,8 +75,9 @@ av_cold struct FFPsyPreprocessContext* ff_psy_preprocess_init(AVCodecContext *av
         cutoff_coeff = 2.0 * avctx->cutoff / avctx->sample_rate;
 
     if (cutoff_coeff)
-    ctx->fcoeffs = ff_iir_filter_init_coeffs(FF_FILTER_TYPE_BUTTERWORTH, FF_FILTER_MODE_LOWPASS,
-                                             FILT_ORDER, cutoff_coeff, 0.0, 0.0);
+    ctx->fcoeffs = ff_iir_filter_init_coeffs(avctx, FF_FILTER_TYPE_BUTTERWORTH,
+                                             FF_FILTER_MODE_LOWPASS, FILT_ORDER,
+                                             cutoff_coeff, 0.0, 0.0);
     if (ctx->fcoeffs) {
         ctx->fstate = av_mallocz(sizeof(ctx->fstate[0]) * avctx->channels);
         for (i = 0; i < avctx->channels; i++)
@@ -123,5 +111,6 @@ av_cold void ff_psy_preprocess_end(struct FFPsyPreprocessContext *ctx)
         for (i = 0; i < ctx->avctx->channels; i++)
             ff_iir_filter_free_state(ctx->fstate[i]);
     av_freep(&ctx->fstate);
+    av_free(ctx);
 }
 

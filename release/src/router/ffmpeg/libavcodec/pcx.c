@@ -22,6 +22,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 #include "bytestream.h"
 #include "get_bits.h"
@@ -87,6 +88,8 @@ static int pcx_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
                  bytes_per_scanline;
     uint8_t *ptr;
     uint8_t const *bufstart = buf;
+    uint8_t *scanline;
+    int ret = -1;
 
     if (buf[0] != 0x0a || buf[1] > 5) {
         av_log(avctx, AV_LOG_ERROR, "this is not PCX encoded data\n");
@@ -140,7 +143,7 @@ static int pcx_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     if (p->data[0])
         avctx->release_buffer(avctx, p);
 
-    if (avcodec_check_dimensions(avctx, w, h))
+    if (av_image_check_size(w, h, 0, avctx))
         return -1;
     if (w != avctx->width || h != avctx->height)
         avcodec_set_dimensions(avctx, w, h);
@@ -149,14 +152,16 @@ static int pcx_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
         return -1;
     }
 
-    p->pict_type = FF_I_TYPE;
+    p->pict_type = AV_PICTURE_TYPE_I;
 
     ptr    = p->data[0];
     stride = p->linesize[0];
 
-    if (nplanes == 3 && bits_per_pixel == 8) {
-        uint8_t scanline[bytes_per_scanline];
+    scanline = av_malloc(bytes_per_scanline);
+    if (!scanline)
+        return AVERROR(ENOMEM);
 
+    if (nplanes == 3 && bits_per_pixel == 8) {
         for (y=0; y<h; y++) {
             buf = pcx_rle_decode(buf, scanline, bytes_per_scanline, compressed);
 
@@ -170,7 +175,6 @@ static int pcx_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
         }
 
     } else if (nplanes == 1 && bits_per_pixel == 8) {
-        uint8_t scanline[bytes_per_scanline];
         const uint8_t *palstart = bufstart + buf_size - 769;
 
         for (y=0; y<h; y++, ptr+=stride) {
@@ -184,11 +188,10 @@ static int pcx_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
         }
         if (*buf++ != 12) {
             av_log(avctx, AV_LOG_ERROR, "expected palette after image data\n");
-            return -1;
+            goto end;
         }
 
     } else if (nplanes == 1) {   /* all packed formats, max. 16 colors */
-        uint8_t scanline[bytes_per_scanline];
         GetBitContext s;
 
         for (y=0; y<h; y++) {
@@ -202,7 +205,6 @@ static int pcx_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
         }
 
     } else {    /* planar, 4, 8 or 16 colors */
-        uint8_t scanline[bytes_per_scanline];
         int i;
 
         for (y=0; y<h; y++) {
@@ -230,7 +232,10 @@ static int pcx_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     *picture = s->picture;
     *data_size = sizeof(AVFrame);
 
-    return buf - bufstart;
+    ret = buf - bufstart;
+end:
+    av_free(scanline);
+    return ret;
 }
 
 static av_cold int pcx_end(AVCodecContext *avctx) {
@@ -242,7 +247,7 @@ static av_cold int pcx_end(AVCodecContext *avctx) {
     return 0;
 }
 
-AVCodec pcx_decoder = {
+AVCodec ff_pcx_decoder = {
     "pcx",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_PCX,

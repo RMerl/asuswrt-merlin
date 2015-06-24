@@ -37,12 +37,14 @@
 #include <sys/select.h>
 
 #include "libavutil/log.h"
+#include "libavutil/opt.h"
 #include "libavcodec/avcodec.h"
-#include "libavformat/avformat.h"
+#include "avdevice.h"
 
 #define AUDIO_BLOCK_SIZE 4096
 
 typedef struct {
+    AVClass *class;
     int fd;
     int sample_rate;
     int channels;
@@ -179,9 +181,7 @@ static int audio_write_packet(AVFormatContext *s1, AVPacket *pkt)
     uint8_t *buf= pkt->data;
 
     while (size > 0) {
-        len = AUDIO_BLOCK_SIZE - s->buffer_ptr;
-        if (len > size)
-            len = size;
+        len = FFMIN(AUDIO_BLOCK_SIZE - s->buffer_ptr, size);
         memcpy(s->buffer + s->buffer_ptr, buf, len);
         s->buffer_ptr += len;
         if (s->buffer_ptr >= AUDIO_BLOCK_SIZE) {
@@ -216,15 +216,17 @@ static int audio_read_header(AVFormatContext *s1, AVFormatParameters *ap)
     AVStream *st;
     int ret;
 
-    if (ap->sample_rate <= 0 || ap->channels <= 0)
-        return -1;
+#if FF_API_FORMAT_PARAMETERS
+    if (ap->sample_rate > 0)
+        s->sample_rate = ap->sample_rate;
+    if (ap->channels > 0)
+        s->channels = ap->channels;
+#endif
 
     st = av_new_stream(s1, 0);
     if (!st) {
         return AVERROR(ENOMEM);
     }
-    s->sample_rate = ap->sample_rate;
-    s->channels = ap->channels;
 
     ret = audio_open(s1, 0, s1->filename);
     if (ret < 0) {
@@ -293,7 +295,20 @@ static int audio_read_close(AVFormatContext *s1)
 }
 
 #if CONFIG_OSS_INDEV
-AVInputFormat oss_demuxer = {
+static const AVOption options[] = {
+    { "sample_rate", "", offsetof(AudioData, sample_rate), FF_OPT_TYPE_INT, {.dbl = 48000}, 1, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
+    { "channels",    "", offsetof(AudioData, channels),    FF_OPT_TYPE_INT, {.dbl = 2},     1, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
+    { NULL },
+};
+
+static const AVClass oss_demuxer_class = {
+    .class_name     = "OSS demuxer",
+    .item_name      = av_default_item_name,
+    .option         = options,
+    .version        = LIBAVUTIL_VERSION_INT,
+};
+
+AVInputFormat ff_oss_demuxer = {
     "oss",
     NULL_IF_CONFIG_SMALL("Open Sound System capture"),
     sizeof(AudioData),
@@ -302,11 +317,12 @@ AVInputFormat oss_demuxer = {
     audio_read_packet,
     audio_read_close,
     .flags = AVFMT_NOFILE,
+    .priv_class = &oss_demuxer_class,
 };
 #endif
 
 #if CONFIG_OSS_OUTDEV
-AVOutputFormat oss_muxer = {
+AVOutputFormat ff_oss_muxer = {
     "oss",
     NULL_IF_CONFIG_SMALL("Open Sound System playback"),
     "",
@@ -315,11 +331,7 @@ AVOutputFormat oss_muxer = {
     /* XXX: we make the assumption that the soundcard accepts this format */
     /* XXX: find better solution with "preinit" method, needed also in
        other formats */
-#if HAVE_BIGENDIAN
-    CODEC_ID_PCM_S16BE,
-#else
-    CODEC_ID_PCM_S16LE,
-#endif
+    AV_NE(CODEC_ID_PCM_S16BE, CODEC_ID_PCM_S16LE),
     CODEC_ID_NONE,
     audio_write_header,
     audio_write_packet,

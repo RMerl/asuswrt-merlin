@@ -65,9 +65,6 @@ typedef struct {
 
     AVCodecContext *avctx;
     GetBitContext gb;
-    /* init to 0; first frame decode should initialize from extradata and
-     * set this to 1 */
-    int context_initialized;
 
     int numchannels;
     int bytespersample;
@@ -471,21 +468,7 @@ static int alac_decode_frame(AVCodecContext *avctx,
 
     /* short-circuit null buffers */
     if (!inbuffer || !input_buffer_size)
-        return input_buffer_size;
-
-    /* initialize from the extradata */
-    if (!alac->context_initialized) {
-        if (alac->avctx->extradata_size != ALAC_EXTRADATA_SIZE) {
-            av_log(avctx, AV_LOG_ERROR, "alac: expected %d extradata bytes\n",
-                ALAC_EXTRADATA_SIZE);
-            return input_buffer_size;
-        }
-        if (alac_set_info(alac)) {
-            av_log(avctx, AV_LOG_ERROR, "alac: set_info failed\n");
-            return input_buffer_size;
-        }
-        alac->context_initialized = 1;
-    }
+        return -1;
 
     init_get_bits(&alac->gb, inbuffer, input_buffer_size * 8);
 
@@ -493,7 +476,7 @@ static int alac_decode_frame(AVCodecContext *avctx,
     if (channels > MAX_CHANNELS) {
         av_log(avctx, AV_LOG_ERROR, "channels > %d not supported\n",
                MAX_CHANNELS);
-        return input_buffer_size;
+        return -1;
     }
 
     /* 2^result = something to do with output waiting.
@@ -522,10 +505,10 @@ static int alac_decode_frame(AVCodecContext *avctx,
         outputsamples = alac->setinfo_max_samples_per_frame;
 
     switch (alac->setinfo_sample_size) {
-    case 16: avctx->sample_fmt    = SAMPLE_FMT_S16;
+    case 16: avctx->sample_fmt    = AV_SAMPLE_FMT_S16;
              alac->bytespersample = channels << 1;
              break;
-    case 24: avctx->sample_fmt    = SAMPLE_FMT_S32;
+    case 24: avctx->sample_fmt    = AV_SAMPLE_FMT_S32;
              alac->bytespersample = channels << 2;
              break;
     default: av_log(avctx, AV_LOG_ERROR, "Sample depth %d is not supported.\n",
@@ -547,11 +530,11 @@ static int alac_decode_frame(AVCodecContext *avctx,
 
     if (!isnotcompressed) {
         /* so it is compressed */
-        int16_t predictor_coef_table[channels][32];
-        int predictor_coef_num[channels];
-        int prediction_type[channels];
-        int prediction_quantitization[channels];
-        int ricemodifier[channels];
+        int16_t predictor_coef_table[MAX_CHANNELS][32];
+        int predictor_coef_num[MAX_CHANNELS];
+        int prediction_type[MAX_CHANNELS];
+        int prediction_quantitization[MAX_CHANNELS];
+        int ricemodifier[MAX_CHANNELS];
         int i, chan;
 
         interlacing_shift = get_bits(&alac->gb, 8);
@@ -678,9 +661,17 @@ static av_cold int alac_decode_init(AVCodecContext * avctx)
 {
     ALACContext *alac = avctx->priv_data;
     alac->avctx = avctx;
-    alac->context_initialized = 0;
-
     alac->numchannels = alac->avctx->channels;
+
+    /* initialize from the extradata */
+    if (alac->avctx->extradata_size < ALAC_EXTRADATA_SIZE) {
+        av_log(avctx, AV_LOG_ERROR, "alac: extradata is too small\n");
+        return AVERROR_INVALIDDATA;
+    }
+    if (alac_set_info(alac)) {
+        av_log(avctx, AV_LOG_ERROR, "alac: set_info failed\n");
+        return -1;
+    }
 
     return 0;
 }
@@ -699,7 +690,7 @@ static av_cold int alac_decode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec alac_decoder = {
+AVCodec ff_alac_decoder = {
     "alac",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_ALAC,

@@ -68,7 +68,7 @@ typedef struct SmcContext {
         row_ptr += stride * 4; \
     } \
     total_blocks--; \
-    if (total_blocks < 0) \
+    if (total_blocks < 0 + !!n_blocks) \
     { \
         av_log(s->avctx, AV_LOG_INFO, "warning: block counter just went negative (this should not happen)\n"); \
         return; \
@@ -428,6 +428,7 @@ static av_cold int smc_decode_init(AVCodecContext *avctx)
     s->avctx = avctx;
     avctx->pix_fmt = PIX_FMT_PAL8;
 
+    avcodec_get_frame_defaults(&s->frame);
     s->frame.data[0] = NULL;
 
     return 0;
@@ -471,7 +472,7 @@ static av_cold int smc_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec smc_decoder = {
+AVCodec ff_smc_decoder = {
     "smc",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_SMC,

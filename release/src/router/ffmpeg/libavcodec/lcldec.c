@@ -117,6 +117,7 @@ static unsigned int mszh_decomp(const unsigned char * srcptr, int srclen, unsign
 }
 
 
+#if CONFIG_ZLIB_DECODER
 /**
  * \brief decompress a zlib-compressed data block into decomp_buf
  * \param src compressed input buffer
@@ -124,7 +125,6 @@ static unsigned int mszh_decomp(const unsigned char * srcptr, int srclen, unsign
  * \param offset offset in decomp_buf
  * \param expected expected decompressed length
  */
-#if CONFIG_ZLIB_DECODER
 static int zlib_decomp(AVCodecContext *avctx, const uint8_t *src, int src_len, int offset, int expected)
 {
     LclDecContext *c = avctx->priv_data;
@@ -223,8 +223,29 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
                 len = mszh_dlen;
             }
             break;
-        case COMP_MSZH_NOCOMP:
+        case COMP_MSZH_NOCOMP: {
+            int bppx2;
+            switch (c->imgtype) {
+            case IMGTYPE_YUV111:
+            case IMGTYPE_RGB24:
+                bppx2 = 6;
+                break;
+            case IMGTYPE_YUV422:
+            case IMGTYPE_YUV211:
+                bppx2 = 4;
+                break;
+            case IMGTYPE_YUV411:
+            case IMGTYPE_YUV420:
+                bppx2 = 3;
+                break;
+            default:
+                bppx2 = 0; // will error out below
+                break;
+            }
+            if (len < ((width * height * bppx2) >> 1))
+                return AVERROR_INVALIDDATA;
             break;
+        }
         default:
             av_log(avctx, AV_LOG_ERROR, "BUG! Unknown MSZH compression in frame decoder.\n");
             return -1;
@@ -453,9 +474,10 @@ static av_cold int decode_init(AVCodecContext *avctx)
     unsigned int max_basesize = FFALIGN(avctx->width, 4) * FFALIGN(avctx->height, 4) + AV_LZO_OUTPUT_PADDING;
     unsigned int max_decomp_size;
 
+    avcodec_get_frame_defaults(&c->pic);
     if (avctx->extradata_size < 8) {
         av_log(avctx, AV_LOG_ERROR, "Extradata size too small.\n");
-        return 1;
+        return AVERROR_INVALIDDATA;
     }
 
     /* Check codec type */
@@ -504,7 +526,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
         break;
     default:
         av_log(avctx, AV_LOG_ERROR, "Unsupported image format %d.\n", c->imgtype);
-        return 1;
+        return AVERROR_INVALIDDATA;
     }
 
     /* Detect compression method */
@@ -521,7 +543,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
             break;
         default:
             av_log(avctx, AV_LOG_ERROR, "Unsupported compression format for MSZH (%d).\n", c->compression);
-            return 1;
+            return AVERROR_INVALIDDATA;
         }
         break;
 #if CONFIG_ZLIB_DECODER
@@ -539,7 +561,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
         default:
             if (c->compression < Z_NO_COMPRESSION || c->compression > Z_BEST_COMPRESSION) {
                 av_log(avctx, AV_LOG_ERROR, "Unsupported compression level for ZLIB: (%d).\n", c->compression);
-                return 1;
+                return AVERROR_INVALIDDATA;
             }
             av_log(avctx, AV_LOG_DEBUG, "Compression level for ZLIB: (%d).\n", c->compression);
         }
@@ -547,14 +569,14 @@ static av_cold int decode_init(AVCodecContext *avctx)
 #endif
     default:
         av_log(avctx, AV_LOG_ERROR, "BUG! Unknown codec in compression switch.\n");
-        return 1;
+        return AVERROR_INVALIDDATA;
     }
 
     /* Allocate decompression buffer */
     if (c->decomp_size) {
         if ((c->decomp_buf = av_malloc(max_decomp_size)) == NULL) {
             av_log(avctx, AV_LOG_ERROR, "Can't allocate decompression buffer.\n");
-            return 1;
+            return AVERROR(ENOMEM);
         }
     }
 
@@ -580,7 +602,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
         if (zret != Z_OK) {
             av_log(avctx, AV_LOG_ERROR, "Inflate init error: %d\n", zret);
             av_freep(&c->decomp_buf);
-            return 1;
+            return AVERROR_INVALIDDATA;
         }
     }
 #endif
@@ -609,7 +631,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
 }
 
 #if CONFIG_MSZH_DECODER
-AVCodec mszh_decoder = {
+AVCodec ff_mszh_decoder = {
     "mszh",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MSZH,
@@ -624,7 +646,7 @@ AVCodec mszh_decoder = {
 #endif
 
 #if CONFIG_ZLIB_DECODER
-AVCodec zlib_decoder = {
+AVCodec ff_zlib_decoder = {
     "zlib",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ZLIB,

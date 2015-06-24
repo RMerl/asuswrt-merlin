@@ -25,27 +25,42 @@
  */
 
 #include "avcodec.h"
+#include "imgconvert.h"
 #include "raw.h"
 #include "libavutil/intreadwrite.h"
+#include "libavutil/imgutils.h"
+#include "libavutil/opt.h"
 
 typedef struct RawVideoContext {
+    AVClass *av_class;
+    uint32_t palette[AVPALETTE_COUNT];
     unsigned char * buffer;  /* block of memory for holding one frame */
     int             length;  /* number of bytes in buffer */
     int flip;
     AVFrame pic;             ///< AVCodecContext.coded_frame
+    int tff;
 } RawVideoContext;
 
-static const PixelFormatTag pixelFormatBpsAVI[] = {
+static const AVOption options[]={
+{"top", "top field first", offsetof(RawVideoContext, tff), FF_OPT_TYPE_INT, {.dbl = -1}, -1, 1, AV_OPT_FLAG_DECODING_PARAM|AV_OPT_FLAG_VIDEO_PARAM},
+{NULL}
+};
+static const AVClass class = { "rawdec", NULL, options, LIBAVUTIL_VERSION_INT };
+
+static const PixelFormatTag pix_fmt_bps_avi[] = {
+    { PIX_FMT_MONOWHITE, 1 },
+    { PIX_FMT_PAL8,    2 },
     { PIX_FMT_PAL8,    4 },
     { PIX_FMT_PAL8,    8 },
+    { PIX_FMT_RGB444, 12 },
     { PIX_FMT_RGB555, 15 },
     { PIX_FMT_RGB555, 16 },
     { PIX_FMT_BGR24,  24 },
-    { PIX_FMT_RGB32,  32 },
+    { PIX_FMT_BGRA,   32 },
     { PIX_FMT_NONE, 0 },
 };
 
-static const PixelFormatTag pixelFormatBpsMOV[] = {
+static const PixelFormatTag pix_fmt_bps_mov[] = {
     { PIX_FMT_MONOWHITE, 1 },
     { PIX_FMT_PAL8,      2 },
     { PIX_FMT_PAL8,      4 },
@@ -55,10 +70,11 @@ static const PixelFormatTag pixelFormatBpsMOV[] = {
     { PIX_FMT_RGB555BE, 16 },
     { PIX_FMT_RGB24,    24 },
     { PIX_FMT_ARGB,     32 },
+    { PIX_FMT_MONOWHITE,33 },
     { PIX_FMT_NONE, 0 },
 };
 
-static enum PixelFormat findPixelFormat(const PixelFormatTag *tags, unsigned int fourcc)
+enum PixelFormat ff_find_pix_fmt(const PixelFormatTag *tags, unsigned int fourcc)
 {
     while (tags->pix_fmt >= 0) {
         if (tags->fourcc == fourcc)
@@ -73,24 +89,35 @@ static av_cold int raw_init_decoder(AVCodecContext *avctx)
     RawVideoContext *context = avctx->priv_data;
 
     if (avctx->codec_tag == MKTAG('r','a','w',' '))
-        avctx->pix_fmt = findPixelFormat(pixelFormatBpsMOV, avctx->bits_per_coded_sample);
+        avctx->pix_fmt = ff_find_pix_fmt(pix_fmt_bps_mov, avctx->bits_per_coded_sample);
+    else if (avctx->codec_tag == MKTAG('W','R','A','W'))
+        avctx->pix_fmt = ff_find_pix_fmt(pix_fmt_bps_avi, avctx->bits_per_coded_sample);
     else if (avctx->codec_tag)
-        avctx->pix_fmt = findPixelFormat(ff_raw_pixelFormatTags, avctx->codec_tag);
-    else if (avctx->bits_per_coded_sample)
-        avctx->pix_fmt = findPixelFormat(pixelFormatBpsAVI, avctx->bits_per_coded_sample);
+        avctx->pix_fmt = ff_find_pix_fmt(ff_raw_pix_fmt_tags, avctx->codec_tag);
+    else if (avctx->pix_fmt == PIX_FMT_NONE && avctx->bits_per_coded_sample)
+        avctx->pix_fmt = ff_find_pix_fmt(pix_fmt_bps_avi, avctx->bits_per_coded_sample);
 
+    if (avctx->pix_fmt == PIX_FMT_NONE) {
+        av_log(avctx, AV_LOG_ERROR, "Pixel format was not specified and cannot be detected\n");
+        return AVERROR(EINVAL);
+    }
+
+    ff_set_systematic_pal2(context->palette, avctx->pix_fmt);
     context->length = avpicture_get_size(avctx->pix_fmt, avctx->width, avctx->height);
-    context->buffer = av_malloc(context->length);
-    context->pic.pict_type = FF_I_TYPE;
+    if((avctx->bits_per_coded_sample == 4 || avctx->bits_per_coded_sample == 2) &&
+       avctx->pix_fmt==PIX_FMT_PAL8 &&
+       (!avctx->codec_tag || avctx->codec_tag == MKTAG('r','a','w',' '))){
+        context->buffer = av_malloc(context->length);
+        if (!context->buffer)
+            return -1;
+    }
+    context->pic.pict_type = AV_PICTURE_TYPE_I;
     context->pic.key_frame = 1;
 
     avctx->coded_frame= &context->pic;
 
-    if (!context->buffer)
-        return -1;
-
     if((avctx->extradata_size >= 9 && !memcmp(avctx->extradata + avctx->extradata_size - 9, "BottomUp", 9)) ||
-       avctx->codec_tag == MKTAG( 3 ,  0 ,  0 ,  0 ))
+        avctx->codec_tag == MKTAG(3, 0, 0, 0) || avctx->codec_tag == MKTAG('W','R','A','W'))
         context->flip=1;
 
     return 0;
@@ -112,15 +139,25 @@ static int raw_decode(AVCodecContext *avctx,
     AVFrame * frame = (AVFrame *) data;
     AVPicture * picture = (AVPicture *) data;
 
+    frame->pict_type        = avctx->coded_frame->pict_type;
     frame->interlaced_frame = avctx->coded_frame->interlaced_frame;
     frame->top_field_first = avctx->coded_frame->top_field_first;
+    frame->reordered_opaque = avctx->reordered_opaque;
+    frame->pkt_pts          = avctx->pkt->pts;
+    frame->pkt_pos          = avctx->pkt->pos;
+
+    if(context->tff>=0){
+        frame->interlaced_frame = 1;
+        frame->top_field_first  = context->tff;
+    }
+
+    if(buf_size < context->length - (avctx->pix_fmt==PIX_FMT_PAL8 ? 256*4 : 0))
+        return -1;
 
     //2bpp and 4bpp raw in avi and mov (yes this is ugly ...)
-    if((avctx->bits_per_coded_sample == 4 || avctx->bits_per_coded_sample == 2) &&
-       avctx->pix_fmt==PIX_FMT_PAL8 &&
-       (!avctx->codec_tag || avctx->codec_tag == MKTAG('r','a','w',' '))){
+    if (context->buffer) {
         int i;
-        uint8_t *dst = context->buffer + 256*4;
+        uint8_t *dst = context->buffer;
         buf_size = context->length - 256*4;
         if (avctx->bits_per_coded_sample == 4){
             for(i=0; 2*i+1 < buf_size; i++){
@@ -141,12 +178,11 @@ static int raw_decode(AVCodecContext *avctx,
        avctx->codec_tag == MKTAG('A', 'V', 'u', 'p'))
         buf += buf_size - context->length;
 
-    if(buf_size < context->length - (avctx->pix_fmt==PIX_FMT_PAL8 ? 256*4 : 0))
-        return -1;
-
     avpicture_fill(picture, buf, avctx->pix_fmt, avctx->width, avctx->height);
-    if(avctx->pix_fmt==PIX_FMT_PAL8 && buf_size < context->length){
-        frame->data[1]= context->buffer;
+    if((avctx->pix_fmt==PIX_FMT_PAL8 && buf_size < context->length) ||
+       (avctx->pix_fmt!=PIX_FMT_PAL8 &&
+        (av_pix_fmt_descriptors[avctx->pix_fmt].flags & PIX_FMT_PAL))){
+        frame->data[1]= context->palette;
     }
     if (avctx->palctrl && avctx->palctrl->palette_changed) {
         memcpy(frame->data[1], avctx->palctrl->palette, AVPALETTE_SIZE);
@@ -185,7 +221,7 @@ static av_cold int raw_close_decoder(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec rawvideo_decoder = {
+AVCodec ff_rawvideo_decoder = {
     "rawvideo",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RAWVIDEO,
@@ -195,4 +231,5 @@ AVCodec rawvideo_decoder = {
     raw_close_decoder,
     raw_decode,
     .long_name = NULL_IF_CONFIG_SMALL("raw video"),
+    .priv_class= &class,
 };

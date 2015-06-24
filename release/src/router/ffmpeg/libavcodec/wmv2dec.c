@@ -87,7 +87,7 @@ static int decode_ext_header(Wmv2Context *w){
 
     if(s->avctx->extradata_size<4) return -1;
 
-    init_get_bits(&gb, s->avctx->extradata, s->avctx->extradata_size*8);
+    init_get_bits(&gb, s->avctx->extradata, 32);
 
     fps                = get_bits(&gb, 5);
     s->bit_rate        = get_bits(&gb, 11)*1024;
@@ -116,21 +116,11 @@ int ff_wmv2_decode_picture_header(MpegEncContext * s)
     Wmv2Context * const w= (Wmv2Context*)s;
     int code;
 
-#if 0
-{
-int i;
-for(i=0; i<s->gb.size*8; i++)
-    printf("%d", get_bits1(&s->gb));
-//    get_bits1(&s->gb);
-printf("END\n");
-return -1;
-}
-#endif
     if(s->picture_number==0)
         decode_ext_header(w);
 
     s->pict_type = get_bits1(&s->gb) + 1;
-    if(s->pict_type == FF_I_TYPE){
+    if(s->pict_type == AV_PICTURE_TYPE_I){
         code = get_bits(&s->gb, 7);
         av_log(s->avctx, AV_LOG_DEBUG, "I7:%X/\n", code);
     }
@@ -145,7 +135,7 @@ int ff_wmv2_decode_secondary_picture_header(MpegEncContext * s)
 {
     Wmv2Context * const w= (Wmv2Context*)s;
 
-    if (s->pict_type == FF_I_TYPE) {
+    if (s->pict_type == AV_PICTURE_TYPE_I) {
         if(w->j_type_bit) w->j_type= get_bits1(&s->gb);
         else              w->j_type= 0; //FIXME check
 
@@ -316,10 +306,6 @@ static inline int wmv2_decode_inter_block(Wmv2Context *w, DCTELEM *block, int n,
 
     if(w->per_block_abt)
         w->abt_type= decode012(&s->gb);
-#if 0
-    if(w->per_block_abt)
-        printf("B%d", w->abt_type);
-#endif
     w->abt_type_table[n]= w->abt_type;
 
     if(w->abt_type){
@@ -356,7 +342,7 @@ int ff_wmv2_decode_mb(MpegEncContext *s, DCTELEM block[6][64])
 
     if(w->j_type) return 0;
 
-    if (s->pict_type == FF_P_TYPE) {
+    if (s->pict_type == AV_PICTURE_TYPE_P) {
         if(IS_SKIP(s->current_picture.mb_type[s->mb_y * s->mb_stride + s->mb_x])){
             /* skip mb */
             s->mb_intra = 0;
@@ -433,7 +419,7 @@ int ff_wmv2_decode_mb(MpegEncContext *s, DCTELEM block[6][64])
             }
         }
     } else {
-//if(s->pict_type==FF_P_TYPE)
+//if(s->pict_type==AV_PICTURE_TYPE_P)
 //   printf("%d%d ", s->inter_intra_pred, cbp);
 //printf("I at %d %d %d %06X\n", s->mb_x, s->mb_y, ((cbp&3)? 1 : 0) +((cbp&0x3C)? 2 : 0), show_bits(&s->gb, 24));
         s->ac_pred = get_bits1(&s->gb);
@@ -484,7 +470,7 @@ static av_cold int wmv2_decode_end(AVCodecContext *avctx)
     return ff_h263_decode_end(avctx);
 }
 
-AVCodec wmv2_decoder = {
+AVCodec ff_wmv2_decoder = {
     "wmv2",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_WMV2,

@@ -26,37 +26,61 @@
 #   define ELF @
 #endif
 
-        .macro require8, val=1
+        .syntax unified
+
+.macro  require8 val=1
 ELF     .eabi_attribute 24, \val
-        .endm
+.endm
 
-        .macro preserve8, val=1
+.macro  preserve8 val=1
 ELF     .eabi_attribute 25, \val
-        .endm
+.endm
 
-        .macro function name, export=0
-        .macro endfunc
+.macro  function name, export=0
+    .macro endfunc
 ELF     .size   \name, . - \name
         .endfunc
         .purgem endfunc
-        .endm
-.if \export
+    .endm
+        .text
+    .if \export
         .global EXTERN_ASM\name
 EXTERN_ASM\name:
-.endif
+    .endif
 ELF     .type   \name, %function
         .func   \name
 \name:
-        .endm
+.endm
 
-        .macro movrel rd, val
-#if HAVE_ARMV6T2 && !CONFIG_PIC
+.macro  const   name, align=2
+    .macro endconst
+ELF     .size   \name, . - \name
+        .purgem endconst
+    .endm
+        .section        .rodata
+        .align          \align
+\name:
+.endm
+
+.macro  mov32   rd, val
+#if HAVE_ARMV6T2
+        movw            \rd, #(\val) & 0xffff
+    .if (\val) >> 16
+        movt            \rd, #(\val) >> 16
+    .endif
+#else
+        ldr             \rd, =\val
+#endif
+.endm
+
+.macro  movrel rd, val
+#if HAVE_ARMV6T2 && !CONFIG_PIC && !defined(__APPLE__)
         movw            \rd, #:lower16:\val
         movt            \rd, #:upper16:\val
 #else
         ldr             \rd, =\val
 #endif
-        .endm
+.endm
 
 #if HAVE_VFP_ARGS
         .eabi_attribute 28, 1

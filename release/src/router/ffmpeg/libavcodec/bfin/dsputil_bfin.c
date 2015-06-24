@@ -197,11 +197,14 @@ static int bfin_pix_abs8_xy2 (void *c, uint8_t *blk1, uint8_t *blk2, int line_si
 
 void dsputil_init_bfin( DSPContext* c, AVCodecContext *avctx )
 {
+    const int high_bit_depth = avctx->codec_id == CODEC_ID_H264 && avctx->bits_per_raw_sample > 8;
+
     c->get_pixels         = ff_bfin_get_pixels;
     c->diff_pixels        = ff_bfin_diff_pixels;
     c->put_pixels_clamped = ff_bfin_put_pixels_clamped;
     c->add_pixels_clamped = ff_bfin_add_pixels_clamped;
 
+    if (!high_bit_depth)
     c->clear_blocks       = bfin_clear_blocks;
     c->pix_sum            = ff_bfin_pix_sum;
     c->pix_norm1          = ff_bfin_pix_norm1;
@@ -228,18 +231,7 @@ void dsputil_init_bfin( DSPContext* c, AVCodecContext *avctx )
     c->sse[1] = ff_bfin_sse8;
     c->sse[2] = ff_bfin_sse4;
 
-
-    /**
-     * Halfpel motion compensation with rounding (a+b+1)>>1.
-     * This is an array[4][4] of motion compensation functions for 4
-     * horizontal blocksizes (8,16) and the 4 halfpel positions
-     * *pixels_tab[ 0->16xH 1->8xH ][ xhalfpel + 2*yhalfpel ]
-     * @param block destination where the result is stored
-     * @param pixels source
-     * @param line_size number of bytes in a horizontal line of block
-     * @param h height
-     */
-
+    if (!high_bit_depth) {
     c->put_pixels_tab[0][0] = bfin_put_pixels16;
     c->put_pixels_tab[0][1] = bfin_put_pixels16_x2;
     c->put_pixels_tab[0][2] = bfin_put_pixels16_y2;
@@ -259,6 +251,7 @@ void dsputil_init_bfin( DSPContext* c, AVCodecContext *avctx )
     c->put_no_rnd_pixels_tab[0][1] = bfin_put_pixels16_x2_nornd;
     c->put_no_rnd_pixels_tab[0][2] = bfin_put_pixels16_y2_nornd;
 /*     c->put_no_rnd_pixels_tab[0][3] = ff_bfin_put_pixels16_xy2_nornd; */
+    }
 
     if (avctx->dct_algo == FF_DCT_AUTO)
         c->fdct               = ff_bfin_fdct;

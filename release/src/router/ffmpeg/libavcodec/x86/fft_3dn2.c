@@ -23,7 +23,7 @@
 #include "libavcodec/dsputil.h"
 #include "fft.h"
 
-DECLARE_ALIGNED(8, static const int, m1m1)[2] = { 1<<31, 1<<31 };
+DECLARE_ALIGNED(8, static const unsigned int, m1m1)[2] = { 1U<<31, 1U<<31 };
 
 #ifdef EMULATE_3DNOWEXT
 #define PSWAPD(s,d)\
@@ -56,7 +56,7 @@ void ff_fft_calc_3dn2(FFTContext *s, FFTComplex *z)
 void ff_imdct_half_3dn2(FFTContext *s, FFTSample *output, const FFTSample *input)
 {
     x86_reg j, k;
-    long n = 1 << s->mdct_bits;
+    long n = s->mdct_size;
     long n2 = n >> 1;
     long n4 = n >> 2;
     long n8 = n >> 3;
@@ -70,7 +70,7 @@ void ff_imdct_half_3dn2(FFTContext *s, FFTSample *output, const FFTSample *input
     in1 = input;
     in2 = input + n2 - 1;
 #ifdef EMULATE_3DNOWEXT
-    __asm__ volatile("movd %0, %%mm7" ::"r"(1<<31));
+    __asm__ volatile("movd %0, %%mm7" ::"r"(1U<<31));
 #endif
     for(k = 0; k < n4; k++) {
         // FIXME a single block is faster, but gcc 2.95 and 3.4.x on 32bit can't compile it
@@ -147,7 +147,7 @@ void ff_imdct_half_3dn2(FFTContext *s, FFTSample *output, const FFTSample *input
 void ff_imdct_calc_3dn2(FFTContext *s, FFTSample *output, const FFTSample *input)
 {
     x86_reg j, k;
-    long n = 1 << s->mdct_bits;
+    long n = s->mdct_size;
     long n4 = n >> 2;
 
     ff_imdct_half_3dn2(s, output+n4, input);

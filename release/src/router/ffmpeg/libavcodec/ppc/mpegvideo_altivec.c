@@ -23,10 +23,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "libavutil/cpu.h"
 #include "libavcodec/dsputil.h"
 #include "libavcodec/mpegvideo.h"
 
-#include "dsputil_ppc.h"
 #include "util_altivec.h"
 #include "types_altivec.h"
 #include "dsputil_altivec.h"
@@ -479,13 +479,10 @@ static int dct_quantize_altivec(MpegEncContext* s,
 static void dct_unquantize_h263_altivec(MpegEncContext *s,
                                  DCTELEM *block, int n, int qscale)
 {
-POWERPC_PERF_DECLARE(altivec_dct_unquantize_h263_num, 1);
     int i, level, qmul, qadd;
     int nCoeffs;
 
     assert(s->block_last_index[n]>=0);
-
-POWERPC_PERF_START_COUNT(altivec_dct_unquantize_h263_num, 1);
 
     qadd = (qscale - 1) | 1;
     qmul = qscale << 1;
@@ -569,13 +566,12 @@ POWERPC_PERF_START_COUNT(altivec_dct_unquantize_h263_num, 1);
             block[0] = backup_0;
         }
     }
-POWERPC_PERF_STOP_COUNT(altivec_dct_unquantize_h263_num, nCoeffs == 63);
 }
 
 
 void MPV_common_init_altivec(MpegEncContext *s)
 {
-    if ((mm_flags & FF_MM_ALTIVEC) == 0) return;
+    if (!(av_get_cpu_flags() & AV_CPU_FLAG_ALTIVEC)) return;
 
     if (s->avctx->lowres==0) {
         if ((s->avctx->idct_algo == FF_IDCT_AUTO) ||

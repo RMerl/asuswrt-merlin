@@ -25,8 +25,9 @@
 #define AVCODEC_DNXHDENC_H
 
 #include <stdint.h>
-#include "libavcodec/mpegvideo.h"
-#include "libavcodec/dnxhddata.h"
+
+#include "mpegvideo.h"
+#include "dnxhddata.h"
 
 typedef struct {
     uint16_t mb;
@@ -39,6 +40,7 @@ typedef struct {
 } RCEntry;
 
 typedef struct DNXHDEncContext {
+    AVClass *class;
     MpegEncContext m; ///< Used for quantization dsp functions
 
     AVFrame frame;
@@ -54,6 +56,9 @@ typedef struct DNXHDEncContext {
     unsigned dct_uv_offset;
     int interlaced;
     int cur_field;
+
+    int nitris_compat;
+    unsigned min_padding;
 
     DECLARE_ALIGNED(16, DCTELEM, blocks)[8][64];
 

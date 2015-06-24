@@ -20,6 +20,7 @@
  */
 
 #include "libavutil/intreadwrite.h"
+#include "libavutil/imgutils.h"
 #include "bytestream.h"
 #include "avcodec.h"
 
@@ -54,6 +55,7 @@ static int decode_frame(AVCodecContext *avctx,
                         AVPacket *avpkt)
 {
     const uint8_t *buf = avpkt->data;
+    const uint8_t *buf_end = avpkt->data + avpkt->size;
     int buf_size       = avpkt->size;
     DPXContext *const s = avctx->priv_data;
     AVFrame *picture  = data;
@@ -65,6 +67,11 @@ static int decode_frame(AVCodecContext *avctx,
     int w, h, stride, bits_per_color, descriptor, elements, target_packet_size, source_packet_size;
 
     unsigned int rgbBuffer;
+
+    if (avpkt->size <= 1634) {
+        av_log(avctx, AV_LOG_ERROR, "Packet too small for DPX header\n");
+        return AVERROR_INVALIDDATA;
+    }
 
     magic_num = AV_RB32(buf);
     buf += 4;
@@ -81,6 +88,10 @@ static int decode_frame(AVCodecContext *avctx,
     }
 
     offset = read32(&buf, endian);
+    if (avpkt->size <= offset) {
+        av_log(avctx, AV_LOG_ERROR, "Invalid data start offset\n");
+        return AVERROR_INVALIDDATA;
+    }
     // Need to end in 0x304 offset from start of file
     buf = avpkt->data + 0x304;
     w = read32(&buf, endian);
@@ -94,6 +105,10 @@ static int decode_frame(AVCodecContext *avctx,
     buf += 3;
     avctx->bits_per_raw_sample =
     bits_per_color = buf[0];
+
+    buf += 825;
+    avctx->sample_aspect_ratio.num = read32(&buf, endian);
+    avctx->sample_aspect_ratio.den = read32(&buf, endian);
 
     switch (descriptor) {
         case 51: // RGBA
@@ -120,7 +135,7 @@ static int decode_frame(AVCodecContext *avctx,
         case 10:
             avctx->pix_fmt = PIX_FMT_RGB48;
             target_packet_size = 6;
-            source_packet_size = elements * 2;
+            source_packet_size = 4;
             break;
         case 12:
         case 16:
@@ -139,7 +154,7 @@ static int decode_frame(AVCodecContext *avctx,
 
     if (s->picture.data[0])
         avctx->release_buffer(avctx, &s->picture);
-    if (avcodec_check_dimensions(avctx, w, h))
+    if (av_image_check_size(w, h, 0, avctx))
         return -1;
     if (w != avctx->width || h != avctx->height)
         avcodec_set_dimensions(avctx, w, h);
@@ -154,6 +169,10 @@ static int decode_frame(AVCodecContext *avctx,
     ptr    = p->data[0];
     stride = p->linesize[0];
 
+    if (source_packet_size*avctx->width*avctx->height > buf_end - buf) {
+        av_log(avctx, AV_LOG_ERROR, "Overread buffer. Invalid header?\n");
+        return -1;
+    }
     switch (bits_per_color) {
         case 10:
             for (x = 0; x < avctx->height; x++) {
@@ -214,7 +233,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec dpx_decoder = {
+AVCodec ff_dpx_decoder = {
     "dpx",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_DPX,

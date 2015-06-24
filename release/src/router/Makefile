@@ -2614,11 +2614,12 @@ ffmpeg/stamp-h1: zlib
 		--enable-pthreads --enable-small --disable-encoders --disable-filters \
 		--disable-muxers --disable-devices --disable-ffmpeg --disable-ffplay \
 		--disable-ffserver --disable-ffprobe --disable-avdevice --disable-swscale \
-		--disable-hwaccels --disable-network --disable-bsfs --disable-mpegaudio-hp \
+		--disable-hwaccels --disable-network --disable-bsfs \
 		--enable-demuxers $(FFMPEG_CONFIGURE_DEMUXERS) \
 		--disable-decoders $(FFMPEG_CONFIGURE_DECODERS) \
 		--disable-parsers $(FFMPEG_CONFIGURE_PARSERS) \
 		--disable-protocols $(FFMPEG_CONFIGURE_PROTOCOLS) \
+		--disable-postproc --disable-avfilter \
 		--extra-cflags="-Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections -fPIC -I$(TOP)/zlib" \
 		--extra-ldflags="-ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" \
 		--extra-libs="-L$(TOP)/zlib -lz" \

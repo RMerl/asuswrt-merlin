@@ -27,8 +27,10 @@
 #define AVUTIL_MEM_H
 
 #include "attributes.h"
+#include "error.h"
+#include "avutil.h"
 
-#if defined(__ICC) || defined(__SUNPRO_C)
+#if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1110 || defined(__SUNPRO_C)
     #define DECLARE_ALIGNED(n,t,v)      t __attribute__ ((aligned (n))) v
     #define DECLARE_ASM_CONST(n,t,v)    const t __attribute__ ((aligned (n))) v
 #elif defined(__TI_COMPILER_VERSION__)
@@ -40,7 +42,7 @@
         static const t __attribute__((aligned(n))) v
 #elif defined(__GNUC__)
     #define DECLARE_ALIGNED(n,t,v)      t __attribute__ ((aligned (n))) v
-    #define DECLARE_ASM_CONST(n,t,v)    static const t attribute_used __attribute__ ((aligned (n))) v
+    #define DECLARE_ASM_CONST(n,t,v)    static const t av_used __attribute__ ((aligned (n))) v
 #elif defined(_MSC_VER)
     #define DECLARE_ALIGNED(n,t,v)      __declspec(align(n)) t v
     #define DECLARE_ASM_CONST(n,t,v)    __declspec(align(n)) static const t v
@@ -55,26 +57,34 @@
     #define av_malloc_attrib
 #endif
 
-#if (!defined(__ICC) || __ICC > 1110) && AV_GCC_VERSION_AT_LEAST(4,3)
+#if AV_GCC_VERSION_AT_LEAST(4,3)
     #define av_alloc_size(n) __attribute__((alloc_size(n)))
 #else
     #define av_alloc_size(n)
 #endif
 
+#if LIBAVUTIL_VERSION_MAJOR < 51
+#   define FF_INTERNAL_MEM_TYPE unsigned int
+#   define FF_INTERNAL_MEM_TYPE_MAX_VALUE UINT_MAX
+#else
+#   define FF_INTERNAL_MEM_TYPE size_t
+#   define FF_INTERNAL_MEM_TYPE_MAX_VALUE SIZE_MAX
+#endif
+
 /**
- * Allocates a block of size bytes with alignment suitable for all
+ * Allocate a block of size bytes with alignment suitable for all
  * memory accesses (including vectors if available on the CPU).
  * @param size Size in bytes for the memory block to be allocated.
  * @return Pointer to the allocated block, NULL if the block cannot
  * be allocated.
  * @see av_mallocz()
  */
-void *av_malloc(unsigned int size) av_malloc_attrib av_alloc_size(1);
+void *av_malloc(FF_INTERNAL_MEM_TYPE size) av_malloc_attrib av_alloc_size(1);
 
 /**
- * Allocates or reallocates a block of memory.
- * If ptr is NULL and size > 0, allocates a new block. If
- * size is zero, frees the memory block pointed to by ptr.
+ * Allocate or reallocate a block of memory.
+ * If ptr is NULL and size > 0, allocate a new block. If
+ * size is zero, free the memory block pointed to by ptr.
  * @param size Size in bytes for the memory block to be allocated or
  * reallocated.
  * @param ptr Pointer to a memory block already allocated with
@@ -83,10 +93,20 @@ void *av_malloc(unsigned int size) av_malloc_attrib av_alloc_size(1);
  * cannot be reallocated or the function is used to free the memory block.
  * @see av_fast_realloc()
  */
-void *av_realloc(void *ptr, unsigned int size) av_alloc_size(2);
+void *av_realloc(void *ptr, FF_INTERNAL_MEM_TYPE size) av_alloc_size(2);
 
 /**
- * Frees a memory block which has been allocated with av_malloc(z)() or
+ * Allocate or reallocate a block of memory.
+ * This function does the same thing as av_realloc, except:
+ * - It takes two arguments and checks the result of the multiplication for
+ *   integer overflow.
+ * - It frees the input block in case of failure, thus avoiding the memory
+ *   leak with the classic "buf = realloc(buf); if (!buf) return -1;".
+ */
+void *av_realloc_f(void *ptr, size_t nelem, size_t elsize);
+
+/**
+ * Free a memory block which has been allocated with av_malloc(z)() or
  * av_realloc().
  * @param ptr Pointer to the memory block which should be freed.
  * @note ptr = NULL is explicitly allowed.
@@ -96,17 +116,29 @@ void *av_realloc(void *ptr, unsigned int size) av_alloc_size(2);
 void av_free(void *ptr);
 
 /**
- * Allocates a block of size bytes with alignment suitable for all
+ * Allocate a block of size bytes with alignment suitable for all
  * memory accesses (including vectors if available on the CPU) and
- * zeroes all the bytes of the block.
+ * zero all the bytes of the block.
  * @param size Size in bytes for the memory block to be allocated.
  * @return Pointer to the allocated block, NULL if it cannot be allocated.
  * @see av_malloc()
  */
-void *av_mallocz(unsigned int size) av_malloc_attrib av_alloc_size(1);
+void *av_mallocz(FF_INTERNAL_MEM_TYPE size) av_malloc_attrib av_alloc_size(1);
 
 /**
- * Duplicates the string s.
+ * Allocate a block of nmemb * size bytes with alignment suitable for all
+ * memory accesses (including vectors if available on the CPU) and
+ * zero all the bytes of the block.
+ * The allocation will fail if nmemb * size is greater than or equal
+ * to INT_MAX.
+ * @param nmemb
+ * @param size
+ * @return Pointer to the allocated block, NULL if it cannot be allocated.
+ */
+void *av_calloc(size_t nmemb, size_t size) av_malloc_attrib;
+
+/**
+ * Duplicate the string s.
  * @param s string to be duplicated
  * @return Pointer to a newly allocated string containing a
  * copy of s or NULL if the string cannot be allocated.
@@ -114,12 +146,36 @@ void *av_mallocz(unsigned int size) av_malloc_attrib av_alloc_size(1);
 char *av_strdup(const char *s) av_malloc_attrib;
 
 /**
- * Frees a memory block which has been allocated with av_malloc(z)() or
+ * Free a memory block which has been allocated with av_malloc(z)() or
  * av_realloc() and set the pointer pointing to it to NULL.
  * @param ptr Pointer to the pointer to the memory block which should
  * be freed.
  * @see av_free()
  */
 void av_freep(void *ptr);
+
+/**
+ * Add an element to a dynamic array.
+ *
+ * @param tab_ptr Pointer to the array.
+ * @param nb_ptr  Pointer to the number of elements in the array.
+ * @param elem    Element to be added.
+ */
+void av_dynarray_add(void *tab_ptr, int *nb_ptr, void *elem);
+
+/**
+ * Multiply two size_t values checking for overflow.
+ * @return  0 if success, AVERROR(EINVAL) if overflow.
+ */
+static inline int av_size_mult(size_t a, size_t b, size_t *r)
+{
+    size_t t = a * b;
+    /* Hack inspired from glibc: only try the division if nelem and elsize
+     * are both greater than sqrt(SIZE_MAX). */
+    if ((a | b) >= ((size_t)1 << (sizeof(size_t) * 4)) && a && t / a != b)
+        return AVERROR(EINVAL);
+    *r = t;
+    return 0;
+}
 
 #endif /* AVUTIL_MEM_H */

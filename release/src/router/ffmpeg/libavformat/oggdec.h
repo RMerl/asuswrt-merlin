@@ -51,6 +51,11 @@ struct ogg_codec {
      * 0 if granule is the end time of the associated packet.
      */
     int granule_is_start;
+    /**
+     * Number of expected headers
+     */
+    int nb_header;
+    void (*cleanup)(AVFormatContext *s, int idx);
 };
 
 struct ogg_stream {
@@ -98,6 +103,7 @@ struct ogg {
 #define OGG_FLAG_BOS  2
 #define OGG_FLAG_EOS  4
 
+extern const struct ogg_codec ff_celt_codec;
 extern const struct ogg_codec ff_dirac_codec;
 extern const struct ogg_codec ff_flac_codec;
 extern const struct ogg_codec ff_ogm_audio_codec;
@@ -111,7 +117,7 @@ extern const struct ogg_codec ff_speex_codec;
 extern const struct ogg_codec ff_theora_codec;
 extern const struct ogg_codec ff_vorbis_codec;
 
-int ff_vorbis_comment(AVFormatContext *ms, AVMetadata **m, const uint8_t *buf, int size);
+int ff_vorbis_comment(AVFormatContext *ms, AVDictionary **m, const uint8_t *buf, int size);
 
 static inline int
 ogg_find_stream (struct ogg * ogg, int serial)

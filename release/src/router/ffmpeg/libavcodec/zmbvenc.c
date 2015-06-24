@@ -134,7 +134,7 @@ static int encode_frame(AVCodecContext *avctx, uint8_t *buf, int buf_size, void 
     if(c->curfrm == c->keyint)
         c->curfrm = 0;
     *p = *pict;
-    p->pict_type= keyframe ? FF_I_TYPE : FF_P_TYPE;
+    p->pict_type= keyframe ? AV_PICTURE_TYPE_I : AV_PICTURE_TYPE_P;
     p->key_frame= keyframe;
     chpal = !keyframe && memcmp(p->data[1], c->pal2, 1024);
 
@@ -181,7 +181,7 @@ static int encode_frame(AVCodecContext *avctx, uint8_t *buf, int buf_size, void 
         int x, y, bh2, bw2, xored;
         uint8_t *tsrc, *tprev;
         uint8_t *mv;
-        int mx, my, bv;
+        int mx, my;
 
         bw = (avctx->width + ZMBV_BLOCK - 1) / ZMBV_BLOCK;
         bh = (avctx->height + ZMBV_BLOCK - 1) / ZMBV_BLOCK;
@@ -197,7 +197,7 @@ static int encode_frame(AVCodecContext *avctx, uint8_t *buf, int buf_size, void 
                 tsrc = src + x;
                 tprev = prev + x;
 
-                bv = zmbv_me(c, tsrc, p->linesize[0], tprev, c->pstride, x, y, &mx, &my, &xored);
+                zmbv_me(c, tsrc, p->linesize[0], tprev, c->pstride, x, y, &mx, &my, &xored);
                 mv[0] = (mx << 1) | !!xored;
                 mv[1] = my << 1;
                 tprev += mx + my * c->pstride;
@@ -323,7 +323,7 @@ static av_cold int encode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec zmbv_encoder = {
+AVCodec ff_zmbv_encoder = {
     "zmbv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ZMBV,

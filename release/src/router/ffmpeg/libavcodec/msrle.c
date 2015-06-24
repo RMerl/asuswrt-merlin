@@ -55,6 +55,9 @@ static av_cold int msrle_decode_init(AVCodecContext *avctx)
     s->avctx = avctx;
 
     switch (avctx->bits_per_coded_sample) {
+    case 1:
+        avctx->pix_fmt = PIX_FMT_MONOWHITE;
+        break;
     case 4:
     case 8:
         avctx->pix_fmt = PIX_FMT_PAL8;
@@ -67,6 +70,7 @@ static av_cold int msrle_decode_init(AVCodecContext *avctx)
         return -1;
     }
 
+    avcodec_get_frame_defaults(&s->frame);
     s->frame.data[0] = NULL;
 
     return 0;
@@ -143,7 +147,7 @@ static av_cold int msrle_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec msrle_decoder = {
+AVCodec ff_msrle_decoder = {
     "msrle",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MSRLE,

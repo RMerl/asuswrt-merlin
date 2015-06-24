@@ -25,10 +25,13 @@
 #include <stdlib.h>
 #include "libavutil/avstring.h"
 #include "libavutil/bswap.h"
+#include "libavutil/dict.h"
 #include "libavcodec/get_bits.h"
 #include "libavcodec/bytestream.h"
 #include "avformat.h"
+#include "internal.h"
 #include "oggdec.h"
+#include "vorbiscomment.h"
 
 static int ogm_chapter(AVFormatContext *as, uint8_t *key, uint8_t *val)
 {
@@ -55,8 +58,8 @@ static int ogm_chapter(AVFormatContext *as, uint8_t *key, uint8_t *val)
         if (!chapter)
             return 0;
 
-        av_metadata_set2(&chapter->metadata, "title", val,
-                         AV_METADATA_DONT_STRDUP_VAL);
+        av_dict_set(&chapter->metadata, "title", val,
+                         AV_DICT_DONT_STRDUP_VAL);
     } else
         return 0;
 
@@ -65,7 +68,7 @@ static int ogm_chapter(AVFormatContext *as, uint8_t *key, uint8_t *val)
 }
 
 int
-ff_vorbis_comment(AVFormatContext * as, AVMetadata **m, const uint8_t *buf, int size)
+ff_vorbis_comment(AVFormatContext * as, AVDictionary **m, const uint8_t *buf, int size)
 {
     const uint8_t *p = buf;
     const uint8_t *end = buf + size;
@@ -125,9 +128,9 @@ ff_vorbis_comment(AVFormatContext * as, AVMetadata **m, const uint8_t *buf, int 
             ct[vl] = 0;
 
             if (!ogm_chapter(as, tt, ct))
-                av_metadata_set2(m, tt, ct,
-                                   AV_METADATA_DONT_STRDUP_KEY |
-                                   AV_METADATA_DONT_STRDUP_VAL);
+                av_dict_set(m, tt, ct,
+                                   AV_DICT_DONT_STRDUP_KEY |
+                                   AV_DICT_DONT_STRDUP_VAL);
         }
     }
 
@@ -136,6 +139,8 @@ ff_vorbis_comment(AVFormatContext * as, AVMetadata **m, const uint8_t *buf, int 
     if (n > 0)
         av_log(as, AV_LOG_INFO,
                "truncated comment header, %i comments not found\n", n);
+
+    ff_metadata_conv(m, NULL, ff_vorbiscomment_metadata_conv);
 
     return 0;
 }
@@ -183,6 +188,16 @@ fixup_vorbis_headers(AVFormatContext * as, struct oggvorbis_private *priv,
     return offset;
 }
 
+static void vorbis_cleanup(AVFormatContext *s, int idx)
+{
+    struct ogg *ogg = s->priv_data;
+    struct ogg_stream *os = ogg->streams + idx;
+    struct oggvorbis_private *priv = os->private;
+    int i;
+    if (os->private)
+        for (i = 0; i < 3; i++)
+            av_freep(&priv->packet[i]);
+}
 
 static int
 vorbis_header (AVFormatContext * s, int idx)
@@ -206,12 +221,19 @@ vorbis_header (AVFormatContext * s, int idx)
         return -1;
 
     priv = os->private;
+
+    if (priv->packet[pkt_type>>1])
+        return -1;
+    if (pkt_type > 1 && !priv->packet[0] || pkt_type > 3 && !priv->packet[1])
+        return -1;
+
     priv->len[pkt_type >> 1] = os->psize;
     priv->packet[pkt_type >> 1] = av_mallocz(os->psize);
     memcpy(priv->packet[pkt_type >> 1], os->buf + os->pstart, os->psize);
     if (os->buf[os->pstart] == 1) {
         const uint8_t *p = os->buf + os->pstart + 7; /* skip "\001vorbis" tag */
         unsigned blocksize, bs0, bs1;
+        int srate;
 
         if (os->psize != 30)
             return -1;
@@ -220,7 +242,7 @@ vorbis_header (AVFormatContext * s, int idx)
             return -1;
 
         st->codec->channels = bytestream_get_byte(&p);
-        st->codec->sample_rate = bytestream_get_le32(&p);
+        srate = bytestream_get_le32(&p);
         p += 4; // skip maximum bitrate
         st->codec->bit_rate = bytestream_get_le32(&p); // nominal bitrate
         p += 4; // skip minimum bitrate
@@ -240,11 +262,21 @@ vorbis_header (AVFormatContext * s, int idx)
         st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
         st->codec->codec_id = CODEC_ID_VORBIS;
 
-        st->time_base.num = 1;
-        st->time_base.den = st->codec->sample_rate;
+        if (srate > 0) {
+            st->codec->sample_rate = srate;
+            av_set_pts_info(st, 64, 1, srate);
+        }
     } else if (os->buf[os->pstart] == 3) {
-        if (os->psize > 8)
-            ff_vorbis_comment (s, &st->metadata, os->buf + os->pstart + 7, os->psize - 8);
+        if (os->psize > 8 &&
+            ff_vorbis_comment(s, &st->metadata, os->buf + os->pstart + 7, os->psize - 8) >= 0) {
+            // drop all metadata we parsed and which is not required by libvorbis
+            unsigned new_len = 7 + 4 + AV_RL32(priv->packet[1] + 7) + 4 + 1;
+            if (new_len >= 16 && new_len < os->psize) {
+                AV_WL32(priv->packet[1] + new_len - 5, 0);
+                priv->packet[1][new_len - 1] = 1;
+                priv->len[1] = new_len;
+            }
+        }
     } else {
         st->codec->extradata_size =
             fixup_vorbis_headers(s, priv, &st->codec->extradata);
@@ -256,5 +288,7 @@ vorbis_header (AVFormatContext * s, int idx)
 const struct ogg_codec ff_vorbis_codec = {
     .magic = "\001vorbis",
     .magicsize = 7,
-    .header = vorbis_header
+    .header = vorbis_header,
+    .cleanup= vorbis_cleanup,
+    .nb_header = 3,
 };

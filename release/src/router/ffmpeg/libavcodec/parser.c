@@ -72,9 +72,9 @@ AVCodecParserContext *av_parser_init(int codec_id)
         }
     }
     s->fetch_timestamp=1;
-    s->pict_type = FF_I_TYPE;
+    s->pict_type = AV_PICTURE_TYPE_I;
     s->key_frame = -1;
-    s->convergence_duration = AV_NOPTS_VALUE;
+    s->convergence_duration = 0;
     s->dts_sync_point       = INT_MIN;
     s->dts_ref_dts_delta    = INT_MIN;
     s->pts_dts_delta        = INT_MIN;
@@ -105,6 +105,7 @@ void ff_fetch_timestamp(AVCodecParserContext *s, int off, int remove){
     }
 }
 
+#if LIBAVCODEC_VERSION_MAJOR < 53
 /**
  *
  * @param buf           input
@@ -139,6 +140,7 @@ int av_parser_parse(AVCodecParserContext *s,
 {
     return av_parser_parse2(s, avctx, poutbuf, poutbuf_size, buf, buf_size, pts, dts, AV_NOPTS_VALUE);
 }
+#endif
 
 int av_parser_parse2(AVCodecParserContext *s,
                      AVCodecContext *avctx,
@@ -149,6 +151,12 @@ int av_parser_parse2(AVCodecParserContext *s,
 {
     int index, i;
     uint8_t dummy_buf[FF_INPUT_BUFFER_PADDING_SIZE];
+
+    if(!(s->flags & PARSER_FLAG_FETCHED_OFFSET)) {
+        s->next_frame_offset =
+        s->cur_offset        = pos;
+        s->flags |= PARSER_FLAG_FETCHED_OFFSET;
+    }
 
     if (buf_size == 0) {
         /* padding is always necessary even if EOF, so we add it here */
@@ -215,7 +223,7 @@ int av_parser_change(AVCodecParserContext *s,
     *poutbuf_size= buf_size;
     if(avctx->extradata){
         if(  (keyframe && (avctx->flags2 & CODEC_FLAG2_LOCAL_HEADER))
-            /*||(s->pict_type != FF_I_TYPE && (s->flags & PARSER_FLAG_DUMP_EXTRADATA_AT_NOKEY))*/
+            /*||(s->pict_type != AV_PICTURE_TYPE_I && (s->flags & PARSER_FLAG_DUMP_EXTRADATA_AT_NOKEY))*/
             /*||(? && (s->flags & PARSER_FLAG_DUMP_EXTRADATA_AT_BEGIN)*/){
             int size= buf_size + avctx->extradata_size;
             *poutbuf_size= size;
@@ -271,8 +279,10 @@ int ff_combine_frame(ParseContext *pc, int next, const uint8_t **buf, int *buf_s
     if(next == END_NOT_FOUND){
         void* new_buffer = av_fast_realloc(pc->buffer, &pc->buffer_size, (*buf_size) + pc->index + FF_INPUT_BUFFER_PADDING_SIZE);
 
-        if(!new_buffer)
+        if(!new_buffer) {
+            pc->index = 0;
             return AVERROR(ENOMEM);
+        }
         pc->buffer = new_buffer;
         memcpy(&pc->buffer[pc->index], *buf, *buf_size);
         pc->index += *buf_size;
@@ -285,11 +295,15 @@ int ff_combine_frame(ParseContext *pc, int next, const uint8_t **buf, int *buf_s
     /* append to buffer */
     if(pc->index){
         void* new_buffer = av_fast_realloc(pc->buffer, &pc->buffer_size, next + pc->index + FF_INPUT_BUFFER_PADDING_SIZE);
-
-        if(!new_buffer)
+        if(!new_buffer) {
+            pc->overread_index =
+            pc->index = 0;
             return AVERROR(ENOMEM);
+        }
         pc->buffer = new_buffer;
-        memcpy(&pc->buffer[pc->index], *buf, next + FF_INPUT_BUFFER_PADDING_SIZE );
+        if (next > -FF_INPUT_BUFFER_PADDING_SIZE)
+            memcpy(&pc->buffer[pc->index], *buf,
+                   next + FF_INPUT_BUFFER_PADDING_SIZE);
         pc->index = 0;
         *buf= pc->buffer;
     }
@@ -301,12 +315,11 @@ int ff_combine_frame(ParseContext *pc, int next, const uint8_t **buf, int *buf_s
         pc->overread++;
     }
 
-#if 0
     if(pc->overread){
-        printf("overread %d, state:%X next:%d index:%d o_index:%d\n", pc->overread, pc->state, next, pc->index, pc->overread_index);
-        printf("%X %X %X %X\n", (*buf)[0], (*buf)[1],(*buf)[2],(*buf)[3]);
+        av_dlog(pc, "overread %d, state:%X next:%d index:%d o_index:%d\n",
+                pc->overread, pc->state, next, pc->index, pc->overread_index);
+        av_dlog(pc, "%X %X %X %X\n", (*buf)[0], (*buf)[1],(*buf)[2],(*buf)[3]);
     }
-#endif
 
     return 0;
 }

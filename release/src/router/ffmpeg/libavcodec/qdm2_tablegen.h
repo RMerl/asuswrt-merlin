@@ -20,12 +20,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef QDM2_TABLEGEN_H
-#define QDM2_TABLEGEN_H
+#ifndef AVCODEC_QDM2_TABLEGEN_H
+#define AVCODEC_QDM2_TABLEGEN_H
 
 #include <stdint.h>
 #include <math.h>
-#include "../libavutil/attributes.h"
+#include "libavutil/attributes.h"
 
 #define SOFTCLIP_THRESHOLD 27600
 #define HARDCLIP_THRESHOLD 35716
@@ -37,7 +37,7 @@
 #include "libavcodec/qdm2_tables.h"
 #else
 static uint16_t softclip_table[HARDCLIP_THRESHOLD - SOFTCLIP_THRESHOLD + 1];
-static float noise_table[4096];
+static float noise_table[4096 + 20];
 static uint8_t random_dequant_index[256][5];
 static uint8_t random_dequant_type24[128][3];
 static float noise_samples[128];
@@ -99,4 +99,4 @@ static av_cold void init_noise_samples(void) {
 }
 #endif /* CONFIG_HARDCODED_TABLES */
 
-#endif /* QDM2_TABLEGEN_H */
+#endif /* AVCODEC_QDM2_TABLEGEN_H */

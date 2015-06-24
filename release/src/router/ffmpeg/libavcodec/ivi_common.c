@@ -40,7 +40,7 @@ VLC ff_ivi_mb_vlc_tabs [8];
 VLC ff_ivi_blk_vlc_tabs[8];
 
 /**
- *  Reverses "nbits" bits of the value "val" and returns the result
+ *  Reverse "nbits" bits of the value "val" and return the result
  *  in the least significant bits.
  */
 static uint16_t inv_bits(uint16_t val, int nbits)
@@ -123,6 +123,10 @@ int ff_ivi_dec_huff_desc(GetBitContext *gb, int desc_coded, int which_tab,
         if (huff_tab->tab_sel == 7) {
             /* custom huffman table (explicitly encoded) */
             new_huff.num_rows = get_bits(gb, 4);
+            if (!new_huff.num_rows) {
+                av_log(avctx, AV_LOG_ERROR, "Empty custom Huffman table!\n");
+                return AVERROR_INVALIDDATA;
+            }
 
             for (i = 0; i < new_huff.num_rows; i++)
                 new_huff.xbits[i] = get_bits(gb, 4);
@@ -136,9 +140,10 @@ int ff_ivi_dec_huff_desc(GetBitContext *gb, int desc_coded, int which_tab,
                 result = ff_ivi_create_huff_from_desc(&huff_tab->cust_desc,
                         &huff_tab->cust_tab, 0);
                 if (result) {
+                    huff_tab->cust_desc.num_rows = 0; // reset faulty description
                     av_log(avctx, AV_LOG_ERROR,
                            "Error while initializing custom vlc table!\n");
-                    return -1;
+                    return result;
                 }
             }
             huff_tab->tab = &huff_tab->cust_tab;
@@ -207,14 +212,15 @@ int av_cold ff_ivi_init_planes(IVIPlaneDesc *planes, const IVIPicConfig *cfg)
             band->width    = b_width;
             band->height   = b_height;
             band->pitch    = width_aligned;
-            band->bufs[0]  = av_malloc(buf_size);
-            band->bufs[1]  = av_malloc(buf_size);
+            band->aheight  = height_aligned;
+            band->bufs[0]  = av_mallocz(buf_size);
+            band->bufs[1]  = av_mallocz(buf_size);
             if (!band->bufs[0] || !band->bufs[1])
                 return AVERROR(ENOMEM);
 
             /* allocate the 3rd band buffer for scalability mode */
             if (cfg->luma_bands > 1) {
-                band->bufs[2] = av_malloc(buf_size);
+                band->bufs[2] = av_mallocz(buf_size);
                 if (!band->bufs[2])
                     return AVERROR(ENOMEM);
             }
@@ -338,7 +344,8 @@ int ff_ivi_decode_blocks(GetBitContext *gb, IVIBandDesc *band, IVITile *tile)
     RVMapDesc   *rvmap = band->rv_map;
     void (*mc_with_delta_func)(int16_t *buf, const int16_t *ref_buf, uint32_t pitch, int mc_type);
     void (*mc_no_delta_func)  (int16_t *buf, const int16_t *ref_buf, uint32_t pitch, int mc_type);
-    const uint8_t   *base_tab, *scale_tab;
+    const uint16_t  *base_tab;
+    const uint8_t   *scale_tab;
 
     prev_dc = 0; /* init intra prediction for the DC coefficient */
 
@@ -363,6 +370,8 @@ int ff_ivi_decode_blocks(GetBitContext *gb, IVIBandDesc *band, IVITile *tile)
 
         base_tab  = is_intra ? band->intra_base  : band->inter_base;
         scale_tab = is_intra ? band->intra_scale : band->inter_scale;
+        if (scale_tab)
+            quant = scale_tab[quant];
 
         if (!is_intra) {
             mv_x = mb->mv_x;
@@ -373,6 +382,21 @@ int ff_ivi_decode_blocks(GetBitContext *gb, IVIBandDesc *band, IVITile *tile)
                 mc_type = ((mv_y & 1) << 1) | (mv_x & 1);
                 mv_x >>= 1;
                 mv_y >>= 1; /* convert halfpel vectors into fullpel ones */
+            }
+            if (mb->type) {
+                int dmv_x, dmv_y, cx, cy;
+
+                dmv_x = mb->mv_x >> band->is_halfpel;
+                dmv_y = mb->mv_y >> band->is_halfpel;
+                cx    = mb->mv_x &  band->is_halfpel;
+                cy    = mb->mv_y &  band->is_halfpel;
+
+                if (   mb->xpos + dmv_x < 0
+                    || mb->xpos + dmv_x + band->mb_size + cx > band->pitch
+                    || mb->ypos + dmv_y < 0
+                    || mb->ypos + dmv_y + band->mb_size + cy > band->aheight) {
+                    return AVERROR_INVALIDDATA;
+                }
             }
         }
 
@@ -386,6 +410,11 @@ int ff_ivi_decode_blocks(GetBitContext *gb, IVIBandDesc *band, IVITile *tile)
             }
 
             if (cbp & 1) { /* block coded ? */
+                if (!band->scan) {
+                    av_log(NULL, AV_LOG_ERROR, "Scan pattern is not set.\n");
+                    return AVERROR_INVALIDDATA;
+                }
+
                 scan_pos = -1;
                 memset(trvec, 0, num_coeffs*sizeof(trvec[0])); /* zero transform vector */
                 memset(col_flags, 0, sizeof(col_flags));      /* zero column flags */
@@ -401,6 +430,10 @@ int ff_ivi_decode_blocks(GetBitContext *gb, IVIBandDesc *band, IVITile *tile)
                         hi  = get_vlc2(gb, band->blk_vlc.tab->table, IVI_VLC_BITS, 1);
                         val = IVI_TOSIGNED((hi << 6) | lo); /* merge them and convert into signed val */
                     } else {
+                        if (sym >= 256U) {
+                            av_log(NULL, AV_LOG_ERROR, "Invalid sym encountered: %d.\n", sym);
+                            return -1;
+                        }
                         run = rvmap->runtab[sym];
                         val = rvmap->valtab[sym];
                     }
@@ -411,12 +444,12 @@ int ff_ivi_decode_blocks(GetBitContext *gb, IVIBandDesc *band, IVITile *tile)
                         break;
                     pos = band->scan[scan_pos];
 
-                    if (IVI_DEBUG && !val)
-                        av_log(NULL, AV_LOG_ERROR, "Val = 0 encountered!\n");
+                    if (!val)
+                        av_dlog(NULL, "Val = 0 encountered!\n");
 
-                    q = (base_tab[pos] * scale_tab[quant]) >> 8;
+                    q = (base_tab[pos] * quant) >> 9;
                     if (q > 1)
-                        val = val * q + FFSIGN(val) * ((q >> 1) - (q & 1));
+                        val = val * q + FFSIGN(val) * (((q ^ 1) - 1) >> 1);
                     trvec[pos] = val;
                     col_flags[pos & col_mask] |= !!val; /* track columns containing non-zero coeffs */
                 }// while
@@ -462,7 +495,7 @@ int ff_ivi_decode_blocks(GetBitContext *gb, IVIBandDesc *band, IVITile *tile)
     return 0;
 }
 
-void ff_ivi_process_empty_tile(AVCodecContext *avctx, IVIBandDesc *band,
+int ff_ivi_process_empty_tile(AVCodecContext *avctx, IVIBandDesc *band,
                                IVITile *tile, int32_t mv_scale)
 {
     int             x, y, need_mc, mbn, blk, num_blocks, mv_x, mv_y, mc_type;
@@ -472,6 +505,13 @@ void ff_ivi_process_empty_tile(AVCodecContext *avctx, IVIBandDesc *band,
     int16_t         *dst;
     void (*mc_no_delta_func)(int16_t *buf, const int16_t *ref_buf, uint32_t pitch,
                              int mc_type);
+
+    if (tile->num_MBs != IVI_MBs_PER_TILE(tile->width, tile->height, band->mb_size)) {
+        av_log(avctx, AV_LOG_ERROR, "Allocated tile size %d mismatches "
+               "parameters %d in ivi_process_empty_tile()\n",
+               tile->num_MBs, IVI_MBs_PER_TILE(tile->width, tile->height, band->mb_size));
+        return AVERROR_INVALIDDATA;
+    }
 
     offs       = tile->ypos * band->pitch + tile->xpos;
     mb         = tile->mbs;
@@ -553,10 +593,12 @@ void ff_ivi_process_empty_tile(AVCodecContext *avctx, IVIBandDesc *band,
             dst += band->pitch;
         }
     }
+
+    return 0;
 }
 
 
-#if IVI_DEBUG
+#ifdef DEBUG
 uint16_t ivi_calc_band_checksum (IVIBandDesc *band)
 {
     int         x, y;
@@ -639,6 +681,36 @@ const IVIHuffDesc ff_ivi_blk_huff_desc[8] = {
     {13, {3, 4, 5, 5, 5, 5, 6, 4, 3, 3, 2, 1, 1}},
     {13, {3, 4, 5, 5, 5, 6, 5, 4, 3, 3, 2, 1, 1}},
     {9,  {3, 4, 4, 5, 5, 5, 6, 5, 5}}
+};
+
+
+/**
+ *  Scan patterns shared between indeo4 and indeo5
+ */
+const uint8_t ff_ivi_vertical_scan_8x8[64] = {
+    0,  8, 16, 24, 32, 40, 48, 56,
+    1,  9, 17, 25, 33, 41, 49, 57,
+    2, 10, 18, 26, 34, 42, 50, 58,
+    3, 11, 19, 27, 35, 43, 51, 59,
+    4, 12, 20, 28, 36, 44, 52, 60,
+    5, 13, 21, 29, 37, 45, 53, 61,
+    6, 14, 22, 30, 38, 46, 54, 62,
+    7, 15, 23, 31, 39, 47, 55, 63
+};
+
+const uint8_t ff_ivi_horizontal_scan_8x8[64] = {
+     0,  1,  2,  3,  4,  5,  6,  7,
+     8,  9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23,
+    24, 25, 26, 27, 28, 29, 30, 31,
+    32, 33, 34, 35, 36, 37, 38, 39,
+    40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, 52, 53, 54, 55,
+    56, 57, 58, 59, 60, 61, 62, 63
+};
+
+const uint8_t ff_ivi_direct_scan_4x4[16] = {
+    0, 1, 4, 8, 5, 2, 3, 6, 9, 12, 13, 10, 7, 11, 14, 15
 };
 
 

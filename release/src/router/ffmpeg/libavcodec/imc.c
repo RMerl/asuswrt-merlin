@@ -40,6 +40,8 @@
 #include "get_bits.h"
 #include "dsputil.h"
 #include "fft.h"
+#include "libavutil/audioconvert.h"
+#include "sinewin.h"
 
 #include "imcdata.h"
 
@@ -86,8 +88,8 @@ typedef struct {
 
     DSPContext dsp;
     FFTContext fft;
-    DECLARE_ALIGNED(16, FFTComplex, samples)[COEFFS/2];
-    DECLARE_ALIGNED(16, float, out_samples)[COEFFS];
+    DECLARE_ALIGNED(32, FFTComplex, samples)[COEFFS/2];
+    float *out_samples;
 } IMCContext;
 
 static VLC huffman_vlc[4][4];
@@ -102,9 +104,14 @@ static VLC_TYPE vlc_tables[VLC_TABLES_SIZE][2];
 
 static av_cold int imc_decode_init(AVCodecContext * avctx)
 {
-    int i, j;
+    int i, j, ret;
     IMCContext *q = avctx->priv_data;
     double r1, r2;
+
+    if (avctx->channels != 1) {
+        av_log_ask_for_sample(avctx, "Number of channels is not supported\n");
+        return AVERROR_PATCHWELCOME;
+    }
 
     q->decoder_reset = 1;
 
@@ -116,8 +123,8 @@ static av_cold int imc_decode_init(AVCodecContext * avctx)
     for(i = 0; i < COEFFS; i++)
         q->mdct_sine_window[i] *= sqrt(2.0);
     for(i = 0; i < COEFFS/2; i++){
-        q->post_cos[i] = cos(i / 256.0 * M_PI);
-        q->post_sin[i] = sin(i / 256.0 * M_PI);
+        q->post_cos[i] = (1.0f / 32768) * cos(i / 256.0 * M_PI);
+        q->post_sin[i] = (1.0f / 32768) * sin(i / 256.0 * M_PI);
 
         r1 = sin((i * 4.0 + 1.0) / 1024.0 * M_PI);
         r2 = cos((i * 4.0 + 1.0) / 1024.0 * M_PI);
@@ -154,10 +161,13 @@ static av_cold int imc_decode_init(AVCodecContext * avctx)
     }
     q->one_div_log2 = 1/log(2);
 
-    ff_fft_init(&q->fft, 7, 1);
+    if ((ret = ff_fft_init(&q->fft, 7, 1))) {
+        av_log(avctx, AV_LOG_INFO, "FFT init failed\n");
+        return ret;
+    }
     dsputil_init(&q->dsp, avctx);
-    avctx->sample_fmt = SAMPLE_FMT_S16;
-    avctx->channel_layout = (avctx->channels==2) ? CH_LAYOUT_STEREO : CH_LAYOUT_MONO;
+    avctx->sample_fmt = AV_SAMPLE_FMT_FLT;
+    avctx->channel_layout = (avctx->channels==2) ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
     return 0;
 }
 
@@ -362,7 +372,7 @@ static int bit_allocation (IMCContext* q, int stream_format_code, int freebits, 
         iacc = 0;
 
         for(j = (stream_format_code & 0x2)?4:0; j < BANDS; j++) {
-            cwlen = av_clip((int)((q->flcoeffs4[j] * 0.5) - summa + 0.5), 0, 6);
+            cwlen = av_clipf(((q->flcoeffs4[j] * 0.5) - summa + 0.5), 0, 6);
 
             q->bitsBandT[j] = cwlen;
             summer += q->bandWidthT[j] * cwlen;
@@ -563,8 +573,8 @@ static void imc_imdct256(IMCContext *q) {
     }
 
     /* FFT */
-    ff_fft_permute(&q->fft, q->samples);
-    ff_fft_calc (&q->fft, q->samples);
+    q->fft.fft_permute(&q->fft, q->samples);
+    q->fft.fft_calc   (&q->fft, q->samples);
 
     /* postrotation, window and reorder */
     for(i = 0; i < COEFFS/2; i++){
@@ -660,8 +670,9 @@ static int imc_decode_frame(AVCodecContext * avctx,
         return -1;
     }
     for(i = 0; i < IMC_BLOCK_SIZE / 2; i++)
-        buf16[i] = bswap_16(((const uint16_t*)buf)[i]);
+        buf16[i] = av_bswap16(((const uint16_t*)buf)[i]);
 
+    q->out_samples = data;
     init_get_bits(&q->gb, (const uint8_t*)buf16, IMC_BLOCK_SIZE * 8);
 
     /* Check the frame header */
@@ -805,9 +816,7 @@ static int imc_decode_frame(AVCodecContext * avctx,
 
     imc_imdct256(q);
 
-    q->dsp.float_to_int16(data, q->out_samples, COEFFS);
-
-    *data_size = COEFFS * sizeof(int16_t);
+    *data_size = COEFFS * sizeof(float);
 
     return IMC_BLOCK_SIZE;
 }
@@ -822,7 +831,7 @@ static av_cold int imc_decode_close(AVCodecContext * avctx)
 }
 
 
-AVCodec imc_decoder = {
+AVCodec ff_imc_decoder = {
     .name = "imc",
     .type = AVMEDIA_TYPE_AUDIO,
     .id = CODEC_ID_IMC,

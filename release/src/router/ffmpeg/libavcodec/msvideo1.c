@@ -72,6 +72,7 @@ static av_cold int msvideo1_decode_init(AVCodecContext *avctx)
         avctx->pix_fmt = PIX_FMT_RGB555;
     }
 
+    avcodec_get_frame_defaults(&s->frame);
     s->frame.data[0] = NULL;
 
     return 0;
@@ -331,7 +332,7 @@ static av_cold int msvideo1_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec msvideo1_decoder = {
+AVCodec ff_msvideo1_decoder = {
     "msvideo1",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MSVIDEO1,

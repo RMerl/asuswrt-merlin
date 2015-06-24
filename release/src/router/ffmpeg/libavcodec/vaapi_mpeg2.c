@@ -44,7 +44,7 @@ static int vaapi_mpeg2_start_frame(AVCodecContext *avctx, av_unused const uint8_
     VAIQMatrixBufferMPEG2 *iq_matrix;
     int i;
 
-    dprintf(avctx, "vaapi_mpeg2_start_frame()\n");
+    av_dlog(avctx, "vaapi_mpeg2_start_frame()\n");
 
     vactx->slice_param_size = sizeof(VASliceParameterBufferMPEG2);
 
@@ -72,10 +72,10 @@ static int vaapi_mpeg2_start_frame(AVCodecContext *avctx, av_unused const uint8_
     pic_param->picture_coding_extension.bits.is_first_field     = mpeg2_get_is_frame_start(s);
 
     switch (s->pict_type) {
-    case FF_B_TYPE:
+    case AV_PICTURE_TYPE_B:
         pic_param->backward_reference_picture = ff_vaapi_get_surface_id(&s->next_picture);
         // fall-through
-    case FF_P_TYPE:
+    case AV_PICTURE_TYPE_P:
         pic_param->forward_reference_picture = ff_vaapi_get_surface_id(&s->last_picture);
         break;
     }
@@ -109,9 +109,9 @@ static int vaapi_mpeg2_decode_slice(AVCodecContext *avctx, const uint8_t *buffer
     MpegEncContext * const s = avctx->priv_data;
     VASliceParameterBufferMPEG2 *slice_param;
     GetBitContext gb;
-    uint32_t start_code, quantiser_scale_code, intra_slice_flag, macroblock_offset;
+    uint32_t start_code av_unused, quantiser_scale_code, intra_slice_flag, macroblock_offset;
 
-    dprintf(avctx, "vaapi_mpeg2_decode_slice(): buffer %p, size %d\n", buffer, size);
+    av_dlog(avctx, "vaapi_mpeg2_decode_slice(): buffer %p, size %d\n", buffer, size);
 
     /* Determine macroblock_offset */
     init_get_bits(&gb, buffer, 8 * size);
@@ -138,7 +138,7 @@ static int vaapi_mpeg2_decode_slice(AVCodecContext *avctx, const uint8_t *buffer
     return 0;
 }
 
-AVHWAccel mpeg2_vaapi_hwaccel = {
+AVHWAccel ff_mpeg2_vaapi_hwaccel = {
     .name           = "mpeg2_vaapi",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_MPEG2VIDEO,

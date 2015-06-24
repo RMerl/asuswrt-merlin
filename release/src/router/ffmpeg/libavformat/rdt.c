@@ -33,6 +33,7 @@
 #include "libavutil/md5.h"
 #include "rm.h"
 #include "internal.h"
+#include "avio_internal.h"
 #include "libavcodec/get_bits.h"
 
 struct RDTDemuxContext {
@@ -63,7 +64,7 @@ ff_rdt_parse_open(AVFormatContext *ic, int first_stream_of_set_idx,
     do {
         s->n_streams++;
     } while (first_stream_of_set_idx + s->n_streams < ic->nb_streams &&
-             s->streams[s->n_streams]->priv_data == s->streams[0]->priv_data);
+             s->streams[s->n_streams]->id == s->streams[0]->id);
     s->prev_set_id    = -1;
     s->prev_stream_id = -1;
     s->prev_timestamp = -1;
@@ -76,17 +77,13 @@ ff_rdt_parse_open(AVFormatContext *ic, int first_stream_of_set_idx,
 void
 ff_rdt_parse_close(RDTDemuxContext *s)
 {
-    int i;
-
-    for (i = 1; i < s->n_streams; i++)
-        s->streams[i]->priv_data = NULL;
-
     av_free(s);
 }
 
 struct PayloadContext {
     AVFormatContext *rmctx;
-    RMStream *rmst[MAX_STREAMS];
+    int nb_rmst;
+    RMStream **rmst;
     uint8_t *mlti_data;
     unsigned int mlti_data_size;
     char buffer[RTP_MAX_PACKET_LENGTH + FF_INPUT_BUFFER_PADDING_SIZE];
@@ -134,50 +131,50 @@ ff_rdt_calc_response_and_checksum(char response[41], char chksum[9],
 static int
 rdt_load_mdpr (PayloadContext *rdt, AVStream *st, int rule_nr)
 {
-    ByteIOContext pb;
+    AVIOContext pb;
     int size;
     uint32_t tag;
 
     /**
      * Layout of the MLTI chunk:
-     * 4:MLTI
-     * 2:<number of streams>
+     * 4: MLTI
+     * 2: number of streams
      * Then for each stream ([number_of_streams] times):
-     *     2:<mdpr index>
-     * 2:<number of mdpr chunks>
+     *     2: mdpr index
+     * 2: number of mdpr chunks
      * Then for each mdpr chunk ([number_of_mdpr_chunks] times):
-     *     4:<size>
-     *     [size]:<data>
+     *     4: size
+     *     [size]: data
      * we skip MDPR chunks until we reach the one of the stream
      * we're interested in, and forward that ([size]+[data]) to
      * the RM demuxer to parse the stream-specific header data.
      */
     if (!rdt->mlti_data)
         return -1;
-    init_put_byte(&pb, rdt->mlti_data, rdt->mlti_data_size, 0,
+    ffio_init_context(&pb, rdt->mlti_data, rdt->mlti_data_size, 0,
                   NULL, NULL, NULL, NULL);
-    tag = get_le32(&pb);
+    tag = avio_rl32(&pb);
     if (tag == MKTAG('M', 'L', 'T', 'I')) {
         int num, chunk_nr;
 
         /* read index of MDPR chunk numbers */
-        num = get_be16(&pb);
+        num = avio_rb16(&pb);
         if (rule_nr < 0 || rule_nr >= num)
             return -1;
-        url_fskip(&pb, rule_nr * 2);
-        chunk_nr = get_be16(&pb);
-        url_fskip(&pb, (num - 1 - rule_nr) * 2);
+        avio_skip(&pb, rule_nr * 2);
+        chunk_nr = avio_rb16(&pb);
+        avio_skip(&pb, (num - 1 - rule_nr) * 2);
 
         /* read MDPR chunks */
-        num = get_be16(&pb);
+        num = avio_rb16(&pb);
         if (chunk_nr >= num)
             return -1;
         while (chunk_nr--)
-            url_fskip(&pb, get_be32(&pb));
-        size = get_be32(&pb);
+            avio_skip(&pb, avio_rb32(&pb));
+        size = avio_rb32(&pb);
     } else {
         size = rdt->mlti_data_size;
-        url_fseek(&pb, 0, SEEK_SET);
+        avio_seek(&pb, 0, SEEK_SET);
     }
     if (ff_rm_read_mdpr_codecdata(rdt->rmctx, &pb, st, rdt->rmst[st->index], size) < 0)
         return -1;
@@ -299,22 +296,22 @@ rdt_parse_packet (AVFormatContext *ctx, PayloadContext *rdt, AVStream *st,
                   const uint8_t *buf, int len, int flags)
 {
     int seq = 1, res;
-    ByteIOContext pb;
+    AVIOContext pb;
 
     if (rdt->audio_pkt_cnt == 0) {
         int pos;
 
-        init_put_byte(&pb, buf, len, 0, NULL, NULL, NULL, NULL);
+        ffio_init_context(&pb, buf, len, 0, NULL, NULL, NULL, NULL);
         flags = (flags & RTP_FLAG_KEY) ? 2 : 0;
         res = ff_rm_parse_packet (rdt->rmctx, &pb, st, rdt->rmst[st->index], len, pkt,
                                   &seq, flags, *timestamp);
-        pos = url_ftell(&pb);
+        pos = avio_tell(&pb);
         if (res < 0)
             return res;
         if (res > 0) {
             if (st->codec->codec_id == CODEC_ID_AAC) {
                 memcpy (rdt->buffer, buf + pos, len - pos);
-                rdt->rmctx->pb = av_alloc_put_byte (rdt->buffer, len - pos, 0,
+                rdt->rmctx->pb = avio_alloc_context (rdt->buffer, len - pos, 0,
                                                     NULL, NULL, NULL, NULL);
             }
             goto get_cache;
@@ -336,8 +333,9 @@ get_cache:
 
 int
 ff_rdt_parse_packet(RDTDemuxContext *s, AVPacket *pkt,
-                    const uint8_t *buf, int len)
+                    uint8_t **bufptr, int len)
 {
+    uint8_t *buf = bufptr ? *bufptr : NULL;
     int seq_no, flags = 0, stream_id, set_id, is_keyframe;
     uint32_t timestamp;
     int rv= 0;
@@ -420,8 +418,18 @@ rdt_parse_sdp_line (AVFormatContext *s, int st_index,
         int n, first = -1;
 
         for (n = 0; n < s->nb_streams; n++)
-            if (s->streams[n]->priv_data == stream->priv_data) {
+            if (s->streams[n]->id == stream->id) {
+                int count = s->streams[n]->index + 1;
                 if (first == -1) first = n;
+                if (rdt->nb_rmst < count) {
+                    RMStream **rmst= av_realloc(rdt->rmst, count*sizeof(*rmst));
+                    if (!rmst)
+                        return AVERROR(ENOMEM);
+                    memset(rmst + rdt->nb_rmst, 0,
+                           (count - rdt->nb_rmst) * sizeof(*rmst));
+                    rdt->rmst    = rmst;
+                    rdt->nb_rmst = count;
+                }
                 rdt->rmst[s->streams[n]->index] = ff_rm_alloc_rmstream();
                 rdt_load_mdpr(rdt, s->streams[n], (n - first) * 2);
 
@@ -451,10 +459,9 @@ add_dstream(AVFormatContext *s, AVStream *orig_st)
 {
     AVStream *st;
 
-    if (!(st = av_new_stream(s, 0)))
+    if (!(st = av_new_stream(s, orig_st->id)))
         return NULL;
     st->codec->codec_type = orig_st->codec->codec_type;
-    st->priv_data         = orig_st->priv_data;
     st->first_dts         = orig_st->first_dts;
 
     return st;
@@ -465,7 +472,7 @@ real_parse_asm_rulebook(AVFormatContext *s, AVStream *orig_st,
                         const char *p)
 {
     const char *end;
-    int n_rules, odd = 0;
+    int n_rules = 0, odd = 0;
     AVStream *st;
 
     /**
@@ -483,7 +490,7 @@ real_parse_asm_rulebook(AVFormatContext *s, AVStream *orig_st,
      * for multi-bitrate streams.
      */
     if (*p == '\"') p++;
-    for (n_rules = 0; s->nb_streams < MAX_STREAMS;) {
+    while (1) {
         if (!(end = strchr(p, ';')))
             break;
         if (!odd && end != p) {
@@ -491,6 +498,8 @@ real_parse_asm_rulebook(AVFormatContext *s, AVStream *orig_st,
                 st = add_dstream(s, orig_st);
             else
                 st = orig_st;
+            if (!st)
+                break;
             real_parse_asm_rule(st, p, end);
             n_rules++;
         }
@@ -514,7 +523,7 @@ rdt_new_context (void)
 {
     PayloadContext *rdt = av_mallocz(sizeof(PayloadContext));
 
-    av_open_input_stream(&rdt->rmctx, NULL, "", &rdt_demuxer, NULL);
+    avformat_open_input(&rdt->rmctx, "", &ff_rdt_demuxer, NULL);
 
     return rdt;
 }
@@ -524,14 +533,15 @@ rdt_free_context (PayloadContext *rdt)
 {
     int i;
 
-    for (i = 0; i < MAX_STREAMS; i++)
+    for (i = 0; i < rdt->nb_rmst; i++)
         if (rdt->rmst[i]) {
             ff_rm_free_rmstream(rdt->rmst[i]);
             av_freep(&rdt->rmst[i]);
         }
     if (rdt->rmctx)
-        av_close_input_stream(rdt->rmctx);
+        av_close_input_file(rdt->rmctx);
     av_freep(&rdt->mlti_data);
+    av_freep(&rdt->rmst);
     av_free(rdt);
 }
 
@@ -541,10 +551,10 @@ static RTPDynamicProtocolHandler ff_rdt_ ## n ## _handler = { \
     .codec_type       = t, \
     .codec_id         = CODEC_ID_NONE, \
     .parse_sdp_a_line = rdt_parse_sdp_line, \
-    .open             = rdt_new_context, \
-    .close            = rdt_free_context, \
+    .alloc            = rdt_new_context, \
+    .free             = rdt_free_context, \
     .parse_packet     = rdt_parse_packet \
-};
+}
 
 RDT_HANDLER(live_video, "x-pn-multirate-realvideo-live", AVMEDIA_TYPE_VIDEO);
 RDT_HANDLER(live_audio, "x-pn-multirate-realaudio-live", AVMEDIA_TYPE_AUDIO);

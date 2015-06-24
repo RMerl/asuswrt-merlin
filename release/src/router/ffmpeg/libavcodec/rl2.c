@@ -50,7 +50,7 @@ typedef struct Rl2Context {
 /**
  * Run Length Decode a single 320x200 frame
  * @param s rl2 context
- * @param buf input buffer
+ * @param in input buffer
  * @param size input buffer size
  * @param out ouput buffer
  * @param stride stride of the output buffer
@@ -134,6 +134,7 @@ static av_cold int rl2_decode_init(AVCodecContext *avctx)
     int i;
     s->avctx = avctx;
     avctx->pix_fmt = PIX_FMT_PAL8;
+    avcodec_get_frame_defaults(&s->frame);
 
     /** parse extra data */
     if(!avctx->extradata || avctx->extradata_size < EXTRADATA1_SIZE){
@@ -169,15 +170,6 @@ static av_cold int rl2_decode_init(AVCodecContext *avctx)
 }
 
 
-/**
- * Decode a single frame
- * @param avctx decoder context
- * @param data decoded frame
- * @param data_size size of the decoded frame
- * @param buf input buffer
- * @param buf_size input buffer size
- * @return 0 success, -1 on error
- */
 static int rl2_decode_frame(AVCodecContext *avctx,
                               void *data, int *data_size,
                               AVPacket *avpkt)
@@ -228,7 +220,7 @@ static av_cold int rl2_decode_end(AVCodecContext *avctx)
 }
 
 
-AVCodec rl2_decoder = {
+AVCodec ff_rl2_decoder = {
     "rl2",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RL2,

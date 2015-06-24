@@ -10,10 +10,10 @@ THIS_LIB   := $(SUBDIR)$($(CONFIG_SHARED:yes=S)LIBNAME)
 all-$(CONFIG_STATIC): $(SUBDIR)$(LIBNAME)
 all-$(CONFIG_SHARED): $(SUBDIR)$(SLIBNAME)
 
-$(SUBDIR)%-test.o: $(SUBDIR)%.c
+$(SUBDIR)%-test.o: $(SUBDIR)%-test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DTEST -c $(CC_O) $^
 
-$(SUBDIR)%-test.o: $(SUBDIR)%-test.c
+$(SUBDIR)%-test.o: $(SUBDIR)%.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DTEST -c $(CC_O) $^
 
 $(SUBDIR)x86/%.o: $(SUBDIR)x86/%.asm
@@ -50,12 +50,12 @@ endif
 
 clean::
 	$(RM) $(addprefix $(SUBDIR),*-example$(EXESUF) *-test$(EXESUF) $(CLEANFILES) $(CLEANSUFFIXES) $(LIBSUFFIXES)) \
-	    $(addprefix $(SUBDIR), $(foreach suffix,$(CLEANSUFFIXES),$(addsuffix /$(suffix),$(DIRS)))) \
+	    $(foreach dir,$(DIRS),$(CLEANSUFFIXES:%=$(SUBDIR)$(dir)/%)) \
 	    $(HOSTOBJS) $(HOSTPROGS)
 
 distclean:: clean
-	$(RM)  $(addprefix $(SUBDIR),$(DISTCLEANSUFFIXES)) \
-            $(addprefix $(SUBDIR), $(foreach suffix,$(DISTCLEANSUFFIXES),$(addsuffix /$(suffix),$(DIRS))))
+	$(RM) $(DISTCLEANSUFFIXES:%=$(SUBDIR)%) \
+	    $(foreach dir,$(DIRS),$(DISTCLEANSUFFIXES:%=$(SUBDIR)$(dir)/%))
 
 install-lib$(NAME)-shared: $(SUBDIR)$(SLIBNAME)
 	$(Q)mkdir -p "$(SHLIBDIR)"
@@ -88,9 +88,9 @@ uninstall-libs::
 	-$(RM) "$(LIBDIR)/$(LIBNAME)"
 
 uninstall-headers::
-	$(RM) $(addprefix "$(INCINSTDIR)/",$(HEADERS))
+	$(RM) $(addprefix "$(INCINSTDIR)/",$(HEADERS)) $(addprefix "$(INCINSTDIR)/",$(BUILT_HEADERS))
 	$(RM) "$(LIBDIR)/pkgconfig/lib$(NAME).pc"
-	-rmdir "$(INCDIR)"
+	-rmdir "$(INCINSTDIR)"
 endef
 
 $(eval $(RULES))

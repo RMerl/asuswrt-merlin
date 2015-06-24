@@ -46,15 +46,15 @@ static const AVCodecTag nut_tags[] = {
 
 #if CONFIG_LIBNUT_MUXER
 static int av_write(void * h, size_t len, const uint8_t * buf) {
-    ByteIOContext * bc = h;
-    put_buffer(bc, buf, len);
-    //put_flush_packet(bc);
+    AVIOContext * bc = h;
+    avio_write(bc, buf, len);
+    //avio_flush(bc);
     return len;
 }
 
 static int nut_write_header(AVFormatContext * avf) {
     NUTContext * priv = avf->priv_data;
-    ByteIOContext * bc = avf->pb;
+    AVIOContext * bc = avf->pb;
     nut_muxer_opts_tt mopts = {
         .output = {
             .priv = bc,
@@ -137,12 +137,12 @@ static int nut_write_packet(AVFormatContext * avf, AVPacket * pkt) {
 }
 
 static int nut_write_trailer(AVFormatContext * avf) {
-    ByteIOContext * bc = avf->pb;
+    AVIOContext * bc = avf->pb;
     NUTContext * priv = avf->priv_data;
     int i;
 
     nut_muxer_uninit_reorder(priv->nut);
-    put_flush_packet(bc);
+    avio_flush(bc);
 
     for(i = 0; priv->s[i].type != -1; i++ ) av_freep(&priv->s[i].fourcc);
     av_freep(&priv->s);
@@ -150,7 +150,7 @@ static int nut_write_trailer(AVFormatContext * avf) {
     return 0;
 }
 
-AVOutputFormat libnut_muxer = {
+AVOutputFormat ff_libnut_muxer = {
     "libnut",
     "nut format",
     "video/x-nut",
@@ -172,22 +172,22 @@ static int nut_probe(AVProbeData *p) {
 }
 
 static size_t av_read(void * h, size_t len, uint8_t * buf) {
-    ByteIOContext * bc = h;
-    return get_buffer(bc, buf, len);
+    AVIOContext * bc = h;
+    return avio_read(bc, buf, len);
 }
 
 static off_t av_seek(void * h, long long pos, int whence) {
-    ByteIOContext * bc = h;
+    AVIOContext * bc = h;
     if (whence == SEEK_END) {
-        pos = url_fsize(bc) + pos;
+        pos = avio_size(bc) + pos;
         whence = SEEK_SET;
     }
-    return url_fseek(bc, pos, whence);
+    return avio_seek(bc, pos, whence);
 }
 
 static int nut_read_header(AVFormatContext * avf, AVFormatParameters * ap) {
     NUTContext * priv = avf->priv_data;
-    ByteIOContext * bc = avf->pb;
+    AVIOContext * bc = avf->pb;
     nut_demuxer_opts_tt dopts = {
         .input = {
             .priv = bc,
@@ -272,7 +272,7 @@ static int nut_read_packet(AVFormatContext * avf, AVPacket * pkt) {
     if (pd.flags & NUT_FLAG_KEY) pkt->flags |= AV_PKT_FLAG_KEY;
     pkt->pts = pd.pts;
     pkt->stream_index = pd.stream;
-    pkt->pos = url_ftell(avf->pb);
+    pkt->pos = avio_tell(avf->pb);
 
     ret = nut_read_frame(priv->nut, &pd.len, pkt->data);
 
@@ -297,7 +297,7 @@ static int nut_read_close(AVFormatContext *s) {
     return 0;
 }
 
-AVInputFormat libnut_demuxer = {
+AVInputFormat ff_libnut_demuxer = {
     "libnut",
     NULL_IF_CONFIG_SMALL("NUT format"),
     sizeof(NUTContext),

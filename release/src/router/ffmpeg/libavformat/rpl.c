@@ -20,6 +20,7 @@
  */
 
 #include "libavutil/avstring.h"
+#include "libavutil/dict.h"
 #include "avformat.h"
 #include <stdlib.h>
 
@@ -47,11 +48,11 @@ typedef struct RPLContext {
     uint32_t frame_in_part;
 } RPLContext;
 
-static int read_line(ByteIOContext * pb, char* line, int bufsize)
+static int read_line(AVIOContext * pb, char* line, int bufsize)
 {
     int i;
     for (i = 0; i < bufsize - 1; i++) {
-        int b = get_byte(pb);
+        int b = avio_r8(pb);
         if (b == 0)
             break;
         if (b == '\n') {
@@ -76,7 +77,7 @@ static int32_t read_int(const char* line, const char** endptr, int* error)
     return result;
 }
 
-static int32_t read_line_and_int(ByteIOContext * pb, int* error)
+static int32_t read_line_and_int(AVIOContext * pb, int* error)
 {
     char line[RPL_LINE_LENGTH];
     const char *endptr;
@@ -110,7 +111,7 @@ static AVRational read_fps(const char* line, int* error)
 
 static int rpl_read_header(AVFormatContext *s, AVFormatParameters *ap)
 {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     RPLContext *rpl = s->priv_data;
     AVStream *vst = NULL, *ast = NULL;
     int total_audio_size;
@@ -131,11 +132,11 @@ static int rpl_read_header(AVFormatContext *s, AVFormatParameters *ap)
     // for the text in a few cases; samples needed.)
     error |= read_line(pb, line, sizeof(line));      // ARMovie
     error |= read_line(pb, line, sizeof(line));      // movie name
-    av_metadata_set2(&s->metadata, "title"    , line, 0);
+    av_dict_set(&s->metadata, "title"    , line, 0);
     error |= read_line(pb, line, sizeof(line));      // date/copyright
-    av_metadata_set2(&s->metadata, "copyright", line, 0);
+    av_dict_set(&s->metadata, "copyright", line, 0);
     error |= read_line(pb, line, sizeof(line));      // author and other
-    av_metadata_set2(&s->metadata, "author"   , line, 0);
+    av_dict_set(&s->metadata, "author"   , line, 0);
 
     // video headers
     vst = av_new_stream(s, 0);
@@ -250,7 +251,7 @@ static int rpl_read_header(AVFormatContext *s, AVFormatParameters *ap)
     error |= read_line(pb, line, sizeof(line));  // offset to key frame list
 
     // Read the index
-    url_fseek(pb, chunk_catalog_offset, SEEK_SET);
+    avio_seek(pb, chunk_catalog_offset, SEEK_SET);
     total_audio_size = 0;
     for (i = 0; i < number_of_chunks; i++) {
         int64_t offset, video_size, audio_size;
@@ -274,7 +275,7 @@ static int rpl_read_header(AVFormatContext *s, AVFormatParameters *ap)
 static int rpl_read_packet(AVFormatContext *s, AVPacket *pkt)
 {
     RPLContext *rpl = s->priv_data;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVStream* stream;
     AVIndexEntry* index_entry;
     uint32_t ret;
@@ -292,18 +293,18 @@ static int rpl_read_packet(AVFormatContext *s, AVPacket *pkt)
     index_entry = &stream->index_entries[rpl->chunk_number];
 
     if (rpl->frame_in_part == 0)
-        if (url_fseek(pb, index_entry->pos, SEEK_SET) < 0)
+        if (avio_seek(pb, index_entry->pos, SEEK_SET) < 0)
             return AVERROR(EIO);
 
     if (stream->codec->codec_type == AVMEDIA_TYPE_VIDEO &&
         stream->codec->codec_tag == 124) {
         // We have to split Escape 124 frames because there are
         // multiple frames per chunk in Escape 124 samples.
-        uint32_t frame_size, frame_flags;
+        uint32_t frame_size;
 
-        frame_flags = get_le32(pb);
-        frame_size = get_le32(pb);
-        if (url_fseek(pb, -8, SEEK_CUR) < 0)
+        avio_skip(pb, 4); /* flags */
+        frame_size = avio_rl32(pb);
+        if (avio_seek(pb, -8, SEEK_CUR) < 0)
             return AVERROR(EIO);
 
         ret = av_get_packet(pb, pkt, frame_size);
@@ -349,7 +350,7 @@ static int rpl_read_packet(AVFormatContext *s, AVPacket *pkt)
     return ret;
 }
 
-AVInputFormat rpl_demuxer = {
+AVInputFormat ff_rpl_demuxer = {
     "rpl",
     NULL_IF_CONFIG_SMALL("RPL/ARMovie format"),
     sizeof(RPLContext),

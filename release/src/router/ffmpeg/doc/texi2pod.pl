@@ -26,6 +26,7 @@
 $output = 0;
 $skipping = 0;
 %sects = ();
+@sects_sequence = ();
 $section = "";
 @icstack = ();
 @endwstack = ();
@@ -99,15 +100,21 @@ while(<$inf>) {
         next;
     };
 
+    /^\@include\s+(.+)$/ and do {
+        push @instack, $inf;
+        $inf = gensym();
+
+        # Try cwd and $ibase.
+        open($inf, "<" . $1)
+            or open($inf, "<" . $ibase . "/" . $1)
+                or die "cannot open $1 or $ibase/$1: $!\n";
+        next;
+    };
+
     # Look for blocks surrounded by @c man begin SECTION ... @c man end.
     # This really oughta be @ifman ... @end ifman and the like, but such
     # would require rev'ing all other Texinfo translators.
-    /^\@c\s+man\s+begin\s+([A-Z]+)\s+([A-Za-z0-9-]+)/ and do {
-        $output = 1 if exists $defs{$2};
-        $sect = $1;
-        next;
-    };
-    /^\@c\s+man\s+begin\s+([A-Z]+)/ and $sect = $1, $output = 1, next;
+    /^\@c\s+man\s+begin\s+([A-Za-z ]+)/ and $sect = $1, push (@sects_sequence, $sect), $output = 1, next;
     /^\@c\s+man\s+end/ and do {
         $sects{$sect} = "" unless exists $sects{$sect};
         $sects{$sect} .= postprocess($section);
@@ -224,27 +231,18 @@ while(<$inf>) {
 
     # Single line command handlers.
 
-    /^\@include\s+(.+)$/ and do {
-        push @instack, $inf;
-        $inf = gensym();
-
-        # Try cwd and $ibase.
-        open($inf, "<" . $1)
-            or open($inf, "<" . $ibase . "/" . $1)
-                or die "cannot open $1 or $ibase/$1: $!\n";
-        next;
-    };
-
-    /^\@(?:section|unnumbered|unnumberedsec|center)\s+(.+)$/
+    /^\@(?:section|unnumbered|unnumberedsec|center|heading)\s+(.+)$/
         and $_ = "\n=head2 $1\n";
-    /^\@subsection\s+(.+)$/
+    /^\@(?:subsection|subheading)\s+(.+)$/
         and $_ = "\n=head3 $1\n";
+    /^\@(?:subsubsection|subsubheading)\s+(.+)$/
+        and $_ = "\n=head4 $1\n";
 
     # Block command handlers:
-    /^\@itemize\s+(\@[a-z]+|\*|-)/ and do {
+    /^\@itemize\s*(\@[a-z]+|\*|-)?/ and do {
         push @endwstack, $endw;
         push @icstack, $ic;
-        $ic = $1;
+        $ic = $1 ? $1 : "*";
         $_ = "\n=over 4\n";
         $endw = "itemize";
     };
@@ -303,8 +301,8 @@ die "No filename or title\n" unless defined $fn && defined $tl;
 $sects{NAME} = "$fn \- $tl\n";
 $sects{FOOTNOTES} .= "=back\n" if exists $sects{FOOTNOTES};
 
-for $sect (qw(NAME SYNOPSIS DESCRIPTION OPTIONS EXAMPLES ENVIRONMENT FILES
-              BUGS NOTES FOOTNOTES SEEALSO AUTHOR COPYRIGHT)) {
+unshift @sects_sequence, "NAME";
+for $sect (@sects_sequence) {
     if(exists $sects{$sect}) {
         $head = $sect;
         $head =~ s/SEEALSO/SEE ALSO/;
@@ -350,6 +348,7 @@ sub postprocess
     # @* is also impossible in .pod; we discard it and any newline that
     # follows it.  Similarly, our macro @gol must be discarded.
 
+    s/\@anchor{(?:[^\}]*)\}//g;
     s/\(?\@xref\{(?:[^\}]*)\}(?:[^.<]|(?:<[^<>]*>))*\.\)?//g;
     s/\s+\(\@pxref\{(?:[^\}]*)\}\)//g;
     s/;\s+\@pxref\{(?:[^\}]*)\}//g;

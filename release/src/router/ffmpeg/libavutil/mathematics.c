@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include "mathematics.h"
+#include "libavutil/common.h"
 
 const uint8_t ff_sqrt_tab[256]={
   0, 16, 23, 28, 32, 36, 40, 43, 46, 48, 51, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 77, 79, 80, 82, 84, 85, 87, 88, 90,
@@ -78,7 +79,7 @@ int64_t av_rescale_rnd(int64_t a, int64_t b, int64_t c, enum AVRounding rnd){
     int64_t r=0;
     assert(c > 0);
     assert(b >=0);
-    assert(rnd >=0 && rnd<=5 && rnd!=4);
+    assert((unsigned)rnd<=5 && rnd!=4);
 
     if(a<0 && a != INT64_MIN) return -av_rescale_rnd(-a, b, c, rnd ^ ((rnd>>1)&1));
 
@@ -139,9 +140,18 @@ int64_t av_rescale_q(int64_t a, AVRational bq, AVRational cq){
 int av_compare_ts(int64_t ts_a, AVRational tb_a, int64_t ts_b, AVRational tb_b){
     int64_t a= tb_a.num * (int64_t)tb_b.den;
     int64_t b= tb_b.num * (int64_t)tb_a.den;
+    if((FFABS(ts_a)|a|FFABS(ts_b)|b)<=INT_MAX)
+        return (ts_a*a > ts_b*b) - (ts_a*a < ts_b*b);
     if (av_rescale_rnd(ts_a, a, b, AV_ROUND_DOWN) < ts_b) return -1;
     if (av_rescale_rnd(ts_b, b, a, AV_ROUND_DOWN) < ts_a) return  1;
     return 0;
+}
+
+int64_t av_compare_mod(uint64_t a, uint64_t b, uint64_t mod){
+    int64_t c= (a-b) & (mod-1);
+    if(c > (mod>>1))
+        c-= mod;
+    return c;
 }
 
 #ifdef TEST

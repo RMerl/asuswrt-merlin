@@ -27,12 +27,45 @@
 #endif
 #include <unistd.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <stdlib.h>
 #include "os_support.h"
+#include "url.h"
 
 
 /* standard file protocol */
+
+static int file_read(URLContext *h, unsigned char *buf, int size)
+{
+    int fd = (intptr_t) h->priv_data;
+    return read(fd, buf, size);
+}
+
+static int file_write(URLContext *h, const unsigned char *buf, int size)
+{
+    int fd = (intptr_t) h->priv_data;
+    return write(fd, buf, size);
+}
+
+static int file_get_handle(URLContext *h)
+{
+    return (intptr_t) h->priv_data;
+}
+
+static int file_check(URLContext *h, int mask)
+{
+    struct stat st;
+    int ret = stat(h->filename, &st);
+    if (ret < 0)
+        return AVERROR(errno);
+
+    ret |= st.st_mode&S_IRUSR ? mask&AVIO_RDONLY : 0;
+    ret |= st.st_mode&S_IWUSR ? mask&AVIO_WRONLY : 0;
+    ret |= st.st_mode&S_IWUSR && st.st_mode&S_IRUSR ? mask&AVIO_RDWR : 0;
+
+    return ret;
+}
+
+#if CONFIG_FILE_PROTOCOL
 
 static int file_open(URLContext *h, const char *filename, int flags)
 {
@@ -41,9 +74,9 @@ static int file_open(URLContext *h, const char *filename, int flags)
 
     av_strstart(filename, "file:", &filename);
 
-    if (flags & URL_RDWR) {
+    if (flags & AVIO_RDWR) {
         access = O_CREAT | O_TRUNC | O_RDWR;
-    } else if (flags & URL_WRONLY) {
+    } else if (flags & AVIO_WRONLY) {
         access = O_CREAT | O_TRUNC | O_WRONLY;
     } else {
         access = O_RDONLY;
@@ -56,18 +89,6 @@ static int file_open(URLContext *h, const char *filename, int flags)
         return AVERROR(errno);
     h->priv_data = (void *) (intptr_t) fd;
     return 0;
-}
-
-static int file_read(URLContext *h, unsigned char *buf, int size)
-{
-    int fd = (intptr_t) h->priv_data;
-    return read(fd, buf, size);
-}
-
-static int file_write(URLContext *h, unsigned char *buf, int size)
-{
-    int fd = (intptr_t) h->priv_data;
-    return write(fd, buf, size);
 }
 
 /* XXX: use llseek */
@@ -88,22 +109,20 @@ static int file_close(URLContext *h)
     return close(fd);
 }
 
-static int file_get_handle(URLContext *h)
-{
-    return (intptr_t) h->priv_data;
-}
-
-URLProtocol file_protocol = {
-    "file",
-    file_open,
-    file_read,
-    file_write,
-    file_seek,
-    file_close,
+URLProtocol ff_file_protocol = {
+    .name                = "file",
+    .url_open            = file_open,
+    .url_read            = file_read,
+    .url_write           = file_write,
+    .url_seek            = file_seek,
+    .url_close           = file_close,
     .url_get_file_handle = file_get_handle,
+    .url_check           = file_check,
 };
 
-/* pipe protocol */
+#endif /* CONFIG_FILE_PROTOCOL */
+
+#if CONFIG_PIPE_PROTOCOL
 
 static int pipe_open(URLContext *h, const char *filename, int flags)
 {
@@ -113,7 +132,7 @@ static int pipe_open(URLContext *h, const char *filename, int flags)
 
     fd = strtol(filename, &final, 10);
     if((filename == final) || *final ) {/* No digits found, or something like 10ab */
-        if (flags & URL_WRONLY) {
+        if (flags & AVIO_WRONLY) {
             fd = 1;
         } else {
             fd = 0;
@@ -127,10 +146,13 @@ static int pipe_open(URLContext *h, const char *filename, int flags)
     return 0;
 }
 
-URLProtocol pipe_protocol = {
-    "pipe",
-    pipe_open,
-    file_read,
-    file_write,
+URLProtocol ff_pipe_protocol = {
+    .name                = "pipe",
+    .url_open            = pipe_open,
+    .url_read            = file_read,
+    .url_write           = file_write,
     .url_get_file_handle = file_get_handle,
+    .url_check           = file_check,
 };
+
+#endif /* CONFIG_PIPE_PROTOCOL */

@@ -92,7 +92,7 @@ typedef struct IdcinDemuxContext {
 
 static int idcin_probe(AVProbeData *p)
 {
-    unsigned int number;
+    unsigned int number, sample_rate;
 
     /*
      * This is what you could call a "probabilistic" file check: id CIN
@@ -121,18 +121,18 @@ static int idcin_probe(AVProbeData *p)
        return 0;
 
     /* check the audio sample rate */
-    number = AV_RL32(&p->buf[8]);
-    if ((number != 0) && ((number < 8000) | (number > 48000)))
+    sample_rate = AV_RL32(&p->buf[8]);
+    if (sample_rate && (sample_rate < 8000 || sample_rate > 48000))
         return 0;
 
     /* check the audio bytes/sample */
     number = AV_RL32(&p->buf[12]);
-    if (number > 2)
+    if (number > 2 || sample_rate && !number)
         return 0;
 
     /* check the audio channels */
     number = AV_RL32(&p->buf[16]);
-    if (number > 2)
+    if (number > 2 || sample_rate && !number)
         return 0;
 
     /* return half certainly since this check is a bit sketchy */
@@ -142,18 +142,18 @@ static int idcin_probe(AVProbeData *p)
 static int idcin_read_header(AVFormatContext *s,
                              AVFormatParameters *ap)
 {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     IdcinDemuxContext *idcin = s->priv_data;
     AVStream *st;
     unsigned int width, height;
     unsigned int sample_rate, bytes_per_sample, channels;
 
     /* get the 5 header parameters */
-    width = get_le32(pb);
-    height = get_le32(pb);
-    sample_rate = get_le32(pb);
-    bytes_per_sample = get_le32(pb);
-    channels = get_le32(pb);
+    width = avio_rl32(pb);
+    height = avio_rl32(pb);
+    sample_rate = avio_rl32(pb);
+    bytes_per_sample = avio_rl32(pb);
+    channels = avio_rl32(pb);
 
     st = av_new_stream(s, 0);
     if (!st)
@@ -169,7 +169,7 @@ static int idcin_read_header(AVFormatContext *s,
     /* load up the Huffman tables into extradata */
     st->codec->extradata_size = HUFFMAN_TABLE_SIZE;
     st->codec->extradata = av_malloc(HUFFMAN_TABLE_SIZE);
-    if (get_buffer(pb, st->codec->extradata, HUFFMAN_TABLE_SIZE) !=
+    if (avio_read(pb, st->codec->extradata, HUFFMAN_TABLE_SIZE) !=
         HUFFMAN_TABLE_SIZE)
         return AVERROR(EIO);
     /* save a reference in order to transport the palette */
@@ -221,7 +221,7 @@ static int idcin_read_packet(AVFormatContext *s,
     unsigned int command;
     unsigned int chunk_size;
     IdcinDemuxContext *idcin = s->priv_data;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     int i;
     int palette_scale;
     unsigned char r, g, b;
@@ -231,13 +231,13 @@ static int idcin_read_packet(AVFormatContext *s,
         return AVERROR(EIO);
 
     if (idcin->next_chunk_is_video) {
-        command = get_le32(pb);
+        command = avio_rl32(pb);
         if (command == 2) {
             return AVERROR(EIO);
         } else if (command == 1) {
             /* trigger a palette change */
             idcin->palctrl.palette_changed = 1;
-            if (get_buffer(pb, palette_buffer, 768) != 768)
+            if (avio_read(pb, palette_buffer, 768) != 768)
                 return AVERROR(EIO);
             /* scale the palette as necessary */
             palette_scale = 2;
@@ -255,9 +255,9 @@ static int idcin_read_packet(AVFormatContext *s,
             }
         }
 
-        chunk_size = get_le32(pb);
+        chunk_size = avio_rl32(pb);
         /* skip the number of decoded bytes (always equal to width * height) */
-        url_fseek(pb, 4, SEEK_CUR);
+        avio_skip(pb, 4);
         chunk_size -= 4;
         ret= av_get_packet(pb, pkt, chunk_size);
         if (ret < 0)
@@ -286,7 +286,7 @@ static int idcin_read_packet(AVFormatContext *s,
     return ret;
 }
 
-AVInputFormat idcin_demuxer = {
+AVInputFormat ff_idcin_demuxer = {
     "idcin",
     NULL_IF_CONFIG_SMALL("id Cinematic format"),
     sizeof(IdcinDemuxContext),

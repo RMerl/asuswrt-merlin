@@ -25,6 +25,7 @@
  * @author Michael Niedermayer <michaelni@gmx.at>
  */
 
+#include "libavutil/avassert.h"
 #include "internal.h"
 #include "dsputil.h"
 #include "avcodec.h"
@@ -109,7 +110,7 @@ int ff_h264_fill_default_ref_list(H264Context *h){
     MpegEncContext * const s = &h->s;
     int i, len;
 
-    if(h->slice_type_nos==FF_B_TYPE){
+    if(h->slice_type_nos==AV_PICTURE_TYPE_B){
         Picture *sorted[32];
         int cur_poc, list;
         int lens[2];
@@ -148,7 +149,7 @@ int ff_h264_fill_default_ref_list(H264Context *h){
     for (i=0; i<h->ref_count[0]; i++) {
         tprintf(h->s.avctx, "List0: %s fn:%d 0x%p\n", (h->default_ref_list[0][i].long_ref ? "LT" : "ST"), h->default_ref_list[0][i].pic_id, h->default_ref_list[0][i].data[0]);
     }
-    if(h->slice_type_nos==FF_B_TYPE){
+    if(h->slice_type_nos==AV_PICTURE_TYPE_B){
         for (i=0; i<h->ref_count[1]; i++) {
             tprintf(h->s.avctx, "List1: %s fn:%d 0x%p\n", (h->default_ref_list[1][i].long_ref ? "LT" : "ST"), h->default_ref_list[1][i].pic_id, h->default_ref_list[1][i].data[0]);
         }
@@ -300,7 +301,7 @@ int ff_h264_decode_ref_pic_list_reordering(H264Context *h){
 
 void ff_h264_fill_mbaff_ref_list(H264Context *h){
     int list, i, j;
-    for(list=0; list<2; list++){ //FIXME try list_count
+    for(list=0; list<h->list_count; list++){
         for(i=0; i<h->ref_count[list]; i++){
             Picture *frame = &h->ref_list[list][i];
             Picture *field = &h->ref_list[list][16+2*i];
@@ -474,6 +475,25 @@ static void print_long_term(H264Context *h) {
     }
 }
 
+void ff_generate_sliding_window_mmcos(H264Context *h) {
+    MpegEncContext * const s = &h->s;
+    av_assert0(h->long_ref_count + h->short_ref_count <= h->sps.ref_frame_count);
+
+    h->mmco_index= 0;
+    if(h->short_ref_count && h->long_ref_count + h->short_ref_count == h->sps.ref_frame_count &&
+            !(FIELD_PICTURE && !s->first_field && s->current_picture_ptr->reference)) {
+        h->mmco[0].opcode= MMCO_SHORT2UNUSED;
+        h->mmco[0].short_pic_num= h->short_ref[ h->short_ref_count - 1 ]->frame_num;
+        h->mmco_index= 1;
+        if (FIELD_PICTURE) {
+            h->mmco[0].short_pic_num *= 2;
+            h->mmco[1].opcode= MMCO_SHORT2UNUSED;
+            h->mmco[1].short_pic_num= h->mmco[0].short_pic_num + 1;
+            h->mmco_index= 2;
+        }
+    }
+}
+
 int ff_h264_execute_ref_pic_marking(H264Context *h, MMCO *mmco, int mmco_count){
     MpegEncContext * const s = &h->s;
     int i, av_uninit(j);
@@ -602,15 +622,16 @@ int ff_h264_execute_ref_pic_marking(H264Context *h, MMCO *mmco, int mmco_count){
         }
     }
 
-    if (h->long_ref_count + h->short_ref_count > h->sps.ref_frame_count){
+    if (h->long_ref_count + h->short_ref_count > FFMAX(h->sps.ref_frame_count, 1)){
 
         /* We have too many reference frames, probably due to corrupted
          * stream. Need to discard one frame. Prevents overrun of the
          * short_ref and long_ref buffers.
          */
         av_log(h->s.avctx, AV_LOG_ERROR,
-               "number of reference frames exceeds max (probably "
-               "corrupt input), discarding one\n");
+               "number of reference frames (%d+%d) exceeds max (%d; probably "
+               "corrupt input), discarding one\n",
+               h->long_ref_count, h->short_ref_count, h->sps.ref_frame_count);
 
         if (h->long_ref_count && !h->short_ref_count) {
             for (i = 0; i < 16; ++i)
@@ -657,7 +678,7 @@ int ff_h264_decode_ref_pic_marking(H264Context *h, GetBitContext *gb){
                 }
                 if(opcode==MMCO_SHORT2LONG || opcode==MMCO_LONG2UNUSED || opcode==MMCO_LONG || opcode==MMCO_SET_MAX_LONG){
                     unsigned int long_arg= get_ue_golomb_31(gb);
-                    if(long_arg >= 32 || (long_arg >= 16 && !(opcode == MMCO_LONG2UNUSED && FIELD_PICTURE))){
+                    if(long_arg >= 32 || (long_arg >= 16 && !(opcode == MMCO_SET_MAX_LONG && long_arg == 16) && !(opcode == MMCO_LONG2UNUSED && FIELD_PICTURE))){
                         av_log(h->s.avctx, AV_LOG_ERROR, "illegal long ref in memory management control operation %d\n", opcode);
                         return -1;
                     }
@@ -673,20 +694,7 @@ int ff_h264_decode_ref_pic_marking(H264Context *h, GetBitContext *gb){
             }
             h->mmco_index= i;
         }else{
-            assert(h->long_ref_count + h->short_ref_count <= h->sps.ref_frame_count);
-
-            if(h->short_ref_count && h->long_ref_count + h->short_ref_count == h->sps.ref_frame_count &&
-                    !(FIELD_PICTURE && !s->first_field && s->current_picture_ptr->reference)) {
-                h->mmco[0].opcode= MMCO_SHORT2UNUSED;
-                h->mmco[0].short_pic_num= h->short_ref[ h->short_ref_count - 1 ]->frame_num;
-                h->mmco_index= 1;
-                if (FIELD_PICTURE) {
-                    h->mmco[0].short_pic_num *= 2;
-                    h->mmco[1].opcode= MMCO_SHORT2UNUSED;
-                    h->mmco[1].short_pic_num= h->mmco[0].short_pic_num + 1;
-                    h->mmco_index= 2;
-                }
-            }
+            ff_generate_sliding_window_mmcos(h);
         }
     }
 
