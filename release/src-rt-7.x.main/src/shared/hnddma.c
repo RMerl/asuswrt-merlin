@@ -2,7 +2,7 @@
  * Generic Broadcom Home Networking Division (HND) DMA module.
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -3768,8 +3768,7 @@ _dma_rxtx_error(dma_info_t *di, bool istx)
 
 			if ((status1 & D64_XS1_XE_MASK) != D64_XS1_XE_NOERR)
 				return TRUE;
-			else if ((si_coreid(di->sih) == GMAC_CORE_ID && si_corerev(di->sih) >= 4) ||
-				(si_coreid(di->sih) == D11_CORE_ID)) {  //cathy add D11_CORE_ID
+			else if (si_coreid(di->sih) == GMAC_CORE_ID && si_corerev(di->sih) >= 4) {
 				curr = (uint16)(B2I(((R_REG(di->osh, &di->d64txregs->status0) &
 					D64_XS0_CD_MASK) - di->xmtptrbase) &
 					D64_XS0_CD_MASK, dma64dd_t));

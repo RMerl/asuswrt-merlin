@@ -107,8 +107,13 @@ ENTRY(stext)
 	ldr	r3, =0x0000ffff			@ CID_ID_MASK
 	and	r5, r4, r3
 	ldr	r3, =53010			@ BCM4707_CHIP_ID
+	cmp	r5, r3				@ r5 to store chip id
+	beq	1f
+	ldr	r3, =53030			@ BCM47094_CHIP_ID
 	cmp	r5, r3
 	bne	no_acp
+	b	bx_acp
+1:
 	/* Compare Chip Rev */	
 	ldr	r3, =0x000f0000			@ CID_REV_MASK
 	and	r4, r4, r3

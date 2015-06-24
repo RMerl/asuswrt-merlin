@@ -1,7 +1,7 @@
 # Helper makefile for building Broadcom wl device driver
 # This file maps wl driver feature flags (import) to WLFLAGS and WLFILES_SRC (export).
 #
-# Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-# $Id: wl.mk 473082 2014-04-27 07:58:15Z $
+# $Id: wl.mk 525064 2015-01-08 21:08:25Z $
 
 
 
@@ -992,6 +992,9 @@ ifeq ($(IGMP_UCQUERY), 1)
 endif
 ifeq ($(UCAST_UPNP), 1)
 	WLFLAGS += -DWL_UCAST_UPNP
+endif
+ifeq ($(IGMPQ_FILTER), 1)
+	WLFLAGS += -DWL_WMF_IGMP_QUERY_FILTER
 endif
 #endif
 

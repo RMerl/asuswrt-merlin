@@ -1,7 +1,7 @@
 /*
  * Linux OS Independent Layer
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.c 488475 2014-07-01 05:47:28Z $
+ * $Id: linux_osl.c 513755 2014-11-07 08:29:37Z $
  */
 
 #define LINUX_PORT
@@ -838,7 +838,10 @@ osl_pktfastfree(osl_t *osh, struct sk_buff *skb)
 #if 0
 	ASSERT(ctfpool != NULL);
 #else
-	if (ctfpool == NULL) return;
+	if (ctfpool == NULL) {
+		__kfree_skb(skb);
+		return;
+	}
 #endif
 
 	/* Add object to the ctfpool */
@@ -1431,13 +1434,7 @@ osl_cache_inv(void *va, uint size)
 
 inline void osl_prefetch(const void *ptr)
 {
-	/* Borrowed from linux/linux-2.6/include/asm-mips/processor.h */
-	__asm__ __volatile__(
-		"   .set	mips4		\n"
-		"   pref	%0, (%1)	\n"
-		"   .set	mips0		\n"
-		:
-		: "i" (Pref_Load), "r" (ptr));
+	__asm__ __volatile__(".set mips4\npref %0,(%1)\n.set mips0\n"::"i" (Pref_Load), "r" (ptr));
 }
 
 #elif defined(__ARM_ARCH_7A__)
@@ -1468,12 +1465,7 @@ osl_cache_inv(void *va, uint size)
 
 inline void osl_prefetch(const void *ptr)
 {
-	/* Borrowed from linux/linux-2.6/include/asm-arm/processor.h */
-	__asm__ __volatile__(
-		"pld\t%0"
-		:
-		: "o" (*(char *)ptr)
-		: "cc");
+	__asm__ __volatile__("pld\t%0" :: "o"(*(char *)ptr) : "cc");
 }
 
 int osl_arch_is_coherent(void)

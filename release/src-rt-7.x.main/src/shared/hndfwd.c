@@ -1,7 +1,7 @@
 /** HND GMAC Forwarder Implementation: LAN(GMAC) <--FWD--> WLAN
  * Include WOFA dictionary with 3 stage lookup.
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -420,10 +420,11 @@ __fwder_wofa_del(fwder_wofa_t * fwder_wofa, uint16 * symbol, wofa_t wofa)
 						FWDER_WARN((
 						   "%s sym->wofa<0x%08x> != wofa<0x%08x>\n",
 						   __FUNCTION__, (uint)sym->wofa, (uint)wofa));
+					} else {
+						sym->wofa = FWDER_WOFA_INVALID;
+						sym->hash16 = 0; /* 0 is a valid value */
+						fwder_wofa->syms--;
 					}
-					sym->wofa = FWDER_WOFA_INVALID;
-					sym->hash16 = 0; /* 0 is a valid value */
-					fwder_wofa->syms--;
 				}
 			}
 			sym++; /* next bin in bkt collision list */

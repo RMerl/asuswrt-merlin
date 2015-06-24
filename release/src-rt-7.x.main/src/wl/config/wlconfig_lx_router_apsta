@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -53,6 +53,7 @@ PSTA=1
 DWDS=1
 IGMP_UCQUERY=1
 UCAST_UPNP=1
+IGMPQ_FILTER=1
 TRAFFIC_MGMT=1
 TRAFFIC_MGMT_RSSI_POLICY=1
 TRAFFIC_MGMT_DWM=1

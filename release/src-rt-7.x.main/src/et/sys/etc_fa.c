@@ -1,7 +1,7 @@
 /*
  *  Flow Accelerator setup functions
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -186,7 +186,7 @@
 
 #define	PRINT_POOL_TABLE_HDR(pr, b) pr(b, "%-8s %-17s External\n", "Pool-idx", "Rmap_SA");
 
-#define FA_CAPABLE(rev)		((rev) >= 3)
+#define FA_CAPABLE(rev, chip)		(((rev) >= 3) || (CHIPID(chip) == BCM47094_CHIP_ID))
 #define FA_ON_MODE_VALID()	(getintvar(NULL, "ctf_fa_mode") == CTF_FA_BYPASS || \
 				 getintvar(NULL, "ctf_fa_mode") == CTF_FA_NORMAL)
 
@@ -204,7 +204,7 @@ static int aux_unit = -1;
 
 #define	FA_NAPT(fai)		((fa_info_t *)(fai))->napt
 #define FA_NAPT_TPL_CMP(p, v6, sip, dip, proto, sp, dp) \
-	(!(((v6) ? memcmp(p->sip, sip, 32) : \
+	(!(((v6) ? memcmp(p->sip, sip, sizeof(p->sip) + sizeof(p->dip)) : \
 		(p->sip[0] ^ sip[0]) | (p->dip[0] ^ dip[0])) | \
 	((p->proto ^ proto) | \
 	(p->sp ^ sp) | \
@@ -225,6 +225,8 @@ static int aux_unit = -1;
 	sum = ((sum >> 16) + (sum & 0xffff)); \
 	(((sum >> 8) + (sum & 0xff)) & (FA_NAPT_SZ - 1)); \
 })
+
+#define IF_NAME_ETH	"eth%d"
 
 typedef int (* print_buf_t)(void *buf, const char *f, ...);
 
@@ -1181,6 +1183,7 @@ fa_dump_entries(fa_info_t *fai, uint8 opt, print_buf_t prnt, void *b)
 					}
 					break;
 				default:
+					ASSERT(0);
 					break;
 				}
 
@@ -1282,7 +1285,7 @@ uint
 fa_core2unit(si_t *sih, uint coreunit)
 {
 	int unit = coreunit;
-	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih));
+	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih), sih->chip);
 
 	if (!FA_ON_MODE_VALID() || !fa_capable)
 		goto done;
@@ -1313,7 +1316,7 @@ fa_t *
 fa_attach(si_t *sih, void *et, char *vars, uint coreunit, void *robo)
 {
 	fa_info_t *fai = NULL;
-	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih));
+	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih), sih->chip);
 
 	/* By pass fa attach if FA configuration is not enabled or invalid */
 	if (!FA_ON_MODE_VALID() || !fa_capable)
@@ -1366,7 +1369,8 @@ fa_attach(si_t *sih, void *et, char *vars, uint coreunit, void *robo)
 	}
 
 	/* A2 chipid need to enable this WAR selectively. */
-	if (BCM4707_CHIP(CHIPID(sih->chip)) && fai->chiprev == 2) {
+	if ((BCM4707_CHIP(CHIPID(sih->chip)) && fai->chiprev == 2) &&
+		(CHIPID(sih->chip) != BCM47094_CHIP_ID)) {
 			fai->pub.flags |= FA_777WAR_ENABLED;
 			ET_ERROR(("%s: Enabling FA WAR CHIPID(0x%x) CHIPREV(0x%x)\n",
 				__FUNCTION__, CHIPID(sih->chip), CHIPREV(sih->chiprev)));
@@ -1445,10 +1449,22 @@ fa_process_tx(fa_t *fa, void *p)
 	fa_info_t *fai = (fa_info_t *)fa;
 	osl_t *osh = si_osh(fai->sih);
 
+	/* Validate the packet pointer */
+	if (p == NULL)
+		return NULL;
+
 	BCM_REFERENCE(osh);
 
-	if (PKTHEADROOM(osh, p) < 4)
+	if (PKTHEADROOM(osh, p) < 4) {
+		void *tmp_p = p;
 		p = PKTEXPHEADROOM(osh, p, 4);
+		/* To free original one and check the new one */
+		PKTFREE(osh, tmp_p, TRUE);
+		if (p == NULL) {
+			ET_ERROR(("%s: Out of memory while adjusting headroom\n", __FUNCTION__));
+			return NULL;
+		}
+	}
 
 	/* For now always opcode 0x0 */
 	PKTPUSH(osh, p, 4);
@@ -1821,7 +1837,7 @@ fa_et_down(fa_t *fa)
 void
 fa_set_aux_unit(si_t *sih, uint unit)
 {
-	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih));
+	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih), sih->chip);
 
 	if (!fa_capable || (aux_unit != -1) || (unit == FA_FA_CORE_UNIT))
 		return;
@@ -1835,7 +1851,7 @@ fa_get_macaddr(si_t *sih, char *vars, uint unit)
 	char *mac, name[128];
 	uint nvram_etunit = unit;
 	uint coreunit = fa_unit2core(unit);
-	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih));
+	bool fa_capable = FA_CAPABLE(fa_chip_rev(sih), sih->chip);
 
 	if (FA_ON_MODE_VALID() && fa_capable && FA_AUX_CORE(coreunit) &&
 	    getintvar(NULL, "ctf_fa_mode") == CTF_FA_NORMAL)
@@ -1853,9 +1869,17 @@ fa_get_macaddr(si_t *sih, char *vars, uint unit)
 void
 fa_set_name(fa_t *fa, char *name)
 {
-	/* The ethernet network interface uses "eth0". Use aux0 instead */
-	if (FA_IS_AUX_DEV(fa))
-		strncpy(name, "aux", 3);
+	/* The ethernet network interface uses "eth%d" by default.
+	 * Replace the original value "eth%d" with "aux%d" for AUX device.
+	 */
+	if (FA_IS_AUX_DEV(fa)) {
+		if (strlen(name) == strlen(IF_NAME_ETH)) {
+			memcpy(name, "aux", 3);
+		} else {
+			ET_ERROR(("%s Unknown ethernet interface (%s)\n", __FUNCTION__, name));
+			ASSERT(0);
+		}
+	}
 }
 
 int

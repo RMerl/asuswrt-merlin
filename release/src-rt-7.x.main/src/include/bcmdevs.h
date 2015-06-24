@@ -1,7 +1,7 @@
 /*
  * Broadcom device-specific manifest constants.
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmdevs.h 472529 2014-04-24 08:55:47Z $
+ * $Id: bcmdevs.h 527583 2015-01-19 13:35:34Z $
  */
 
 #ifndef	_BCMDEVS_H
@@ -178,6 +178,9 @@
 #define BCM43602_D11AC_ID	0x43ba		/* ac dualband PCI devid SPROM programmed */
 #define BCM43602_D11AC2G_ID	0x43bb		/* 43602 802.11ac 2.4G device */
 #define BCM43602_D11AC5G_ID	0x43bc		/* 43602 802.11ac 5G device */
+#define BCM53573_D11AC_ID	0x43b4		/* 53573 802.11ac dualband device */
+#define BCM53573_D11AC2G_ID	0x43b5		/* 53573 802.11ac 2.4G device */
+#define BCM53573_D11AC5G_ID	0x43b6		/* 53573 802.11ac 5G device */
 
 /* PCI Subsystem ID */
 #define BCM943228HMB_SSID_VEN1	0x0607
@@ -358,8 +361,11 @@
 #define	BCM4704_CHIP_ID		0x4704		/* 4704 chipcommon chipid */
 #define	BCM4706_CHIP_ID		0x5300		/* 4706 chipcommon chipid */
 #define BCM4707_CHIP_ID		53010		/* 4707 chipcommon chipid */
+#define BCM47094_CHIP_ID	53030		/* 47094 chipcommon chipid */
 #define BCM53018_CHIP_ID	53018		/* 53018 chipcommon chipid */
-#define BCM4707_CHIP(chipid)	(((chipid) == BCM4707_CHIP_ID) || ((chipid) == BCM53018_CHIP_ID))
+#define BCM4707_CHIP(chipid)	(((chipid) == BCM4707_CHIP_ID) || \
+				((chipid) == BCM53018_CHIP_ID) || \
+				((chipid) == BCM47094_CHIP_ID))
 #define	BCM4710_CHIP_ID		0x4710		/* 4710 chipid */
 #define	BCM4712_CHIP_ID		0x4712		/* 4712 chipcommon chipid */
 #define	BCM4716_CHIP_ID		0x4716		/* 4716 chipcommon chipid */
@@ -374,6 +380,9 @@
 #define	BCM5356_CHIP_ID		0x5356		/* 5356 chipcommon chipid */
 #define	BCM5357_CHIP_ID		0x5357		/* 5357 chipcommon chipid */
 #define	BCM53572_CHIP_ID	53572		/* 53572 chipcommon chipid */
+#define	BCM53573_CHIP_ID	53573		/* 53573 chipcommon chipid */
+#define BCM53573_CHIP(chipid)	(CHIPID(chipid) == BCM53573_CHIP_ID)
+#define BCM53573_CHIP_GRPID	BCM53573_CHIP_ID
 
 /* Package IDs */
 #define	BCM4303_PKG_ID		2		/* 4303 package id */

@@ -24,6 +24,7 @@ pb-y				+= emf_arm$(EX7)/igsconf
 pb-y				+= emf_arm$(EX7)
 pb-y				+= wl_arm$(EX7)
 pb-$(RTCONFIG_BCM7)		+= dhd
+pb-$(RTCONFIG_BCM_7114)		+= dhd_monitor
 pb-$(RTCONFIG_HSPOT)		+= hspot_ap$(BCMEX)$(EX7)
 pb-$(RTCONFIG_BCM7)		+= toad
 pb-$(RTCONFIG_BCM7)		+= bsd
@@ -121,7 +122,7 @@ emf_arm$(EX7):
 	$(call inst,$(S)/emf,$(D)/..,emf.o)
 	$(call inst,$(S)/igs,$(D)/..,igs.o)
 
-libupnp:
+libupnp$(BCMEX)$(EX7):
 	echo ${S} ${D}
 	$(call inst,$(S),$(D),libupnp.so)
 
@@ -161,13 +162,17 @@ utils_arm$(EX7):
 	$(call inst,$(S),$(D),wl)
 
 wl_arm$(EX7):
-	$(call inst,$(S),$(D),wl_apsta.o)
+	-$(call inst,$(S),$(D),wl_apsta.o)
+	-$(call inst,$(S),$(D),dhd.o)
 
 rtl_bin:
 	$(call inst,$(S),$(D),rtl8365mb.o)
 
 dhd:
 	$(call inst,$(S),$(D),dhd.o)
+
+dhd_monitor:
+	$(call inst,$(S),$(D),dhd_monitor)
 
 hspot_ap$(BCMEX)$(EX7):
 	$(call inst,$(S),$(D),hspotap)

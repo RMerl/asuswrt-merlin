@@ -752,39 +752,28 @@ static int __devinit sdhci_pci_probe(struct pci_dev *pdev,
 	u8 slots, rev, first_bar;
 	int ret, i;
 
-	printk("\n[%s] chk 1\n", __FUNCTION__);	// tmp test
 	BUG_ON(pdev == NULL);
 	BUG_ON(ent == NULL);
 
-	printk("\n[%s] chk 2\n", __FUNCTION__);	// tmp test
 	pci_read_config_byte(pdev, PCI_CLASS_REVISION, &rev);
 
 	dev_info(&pdev->dev, "SDHCI controller found [%04x:%04x] (rev %x)\n",
 		 (int)pdev->vendor, (int)pdev->device, (int)rev);
 
-	printk("SDHCI controller found [%04x:%04x] (rev %x)\n",
-		 (int)pdev->vendor, (int)pdev->device, (int)rev);	// tmp test
-
 	ret = pci_read_config_byte(pdev, PCI_SLOT_INFO, &slots);
 	if (ret)
 		return ret;
-	printk("\n[%s] chk 3\n", __FUNCTION__);	// tmp test
 
 	slots = PCI_SLOT_INFO_SLOTS(slots) + 1;
 	dev_dbg(&pdev->dev, "found %d slot(s)\n", slots);
-
-	printk("found %d slot(s)\n", slots);	// tmp test
-
 	if (slots == 0)
 		return -ENODEV;
 
-	printk("\n[%s] chk 4\n", __FUNCTION__);	// tmp test
 	BUG_ON(slots > MAX_SLOTS);
 
 	ret = pci_read_config_byte(pdev, PCI_SLOT_INFO, &first_bar);
 	if (ret)
 		return ret;
-	printk("\n[%s] chk 5\n", __FUNCTION__);	// tmp test
 
 	first_bar &= PCI_SLOT_INFO_FIRST_BAR_MASK;
 
@@ -792,20 +781,17 @@ static int __devinit sdhci_pci_probe(struct pci_dev *pdev,
 		dev_err(&pdev->dev, "Invalid first BAR. Aborting.\n");
 		return -ENODEV;
 	}
-	printk("\n[%s] chk 6\n", __FUNCTION__);	// tmp test
 
 	ret = pci_enable_device(pdev);
 	if (ret)
 		return ret;
 
-	printk("\n[%s] chk 7\n", __FUNCTION__);	// tmp test
 	chip = kzalloc(sizeof(struct sdhci_pci_chip), GFP_KERNEL);
 	if (!chip) {
 		ret = -ENOMEM;
 		goto err;
 	}
 
-	printk("\n[%s] chk 8\n", __FUNCTION__);	// tmp test
 	chip->pdev = pdev;
 	chip->fixes = (const struct sdhci_pci_fixes*)ent->driver_data;
 	if (chip->fixes)
@@ -814,14 +800,12 @@ static int __devinit sdhci_pci_probe(struct pci_dev *pdev,
 
 	pci_set_drvdata(pdev, chip);
 
-	printk("\n[%s] chk 9\n", __FUNCTION__);	// tmp test
 	if (chip->fixes && chip->fixes->probe) {
 		ret = chip->fixes->probe(chip);
 		if (ret)
 			goto free;
 	}
 
-	printk("\n[%s] chk 10\n", __FUNCTION__);	// tmp test
 	for (i = 0;i < slots;i++) {
 		slot = sdhci_pci_probe_slot(pdev, chip, first_bar + i);
 		if (IS_ERR(slot)) {
@@ -834,16 +818,13 @@ static int __devinit sdhci_pci_probe(struct pci_dev *pdev,
 		chip->slots[i] = slot;
 	}
 
-	printk("\n[%s] chk end , successfully\n", __FUNCTION__);	// tmp test
 	return 0;
 
 free:
-	printk("\n[%s] chk pt free\n", __FUNCTION__);	// tmp test
 	pci_set_drvdata(pdev, NULL);
 	kfree(chip);
 
 err:
-	printk("\n[%s] chk pt err:%d\n", __FUNCTION__, ret);	// tmp test
 	pci_disable_device(pdev);
 	return ret;
 }

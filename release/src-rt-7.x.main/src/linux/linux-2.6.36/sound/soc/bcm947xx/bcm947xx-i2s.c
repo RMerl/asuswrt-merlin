@@ -1,7 +1,7 @@
 /*
  * ALSA I2S Interface for the Broadcom BCM947XX family of SOCs
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -530,7 +530,10 @@ bcm947xx_i2s_pci_attach(uint16 vendor, uint16 device, ulong regs, uint bustype, 
 		/* Write to the 2nd chipcontrol reg. to turn on I2C-via-gpio pins */
 		ret = si_pmu_chipcontrol(snd->sih, PMU1_PLL0_CHIPCTL1,
 		                         CCTRL_5357_I2CSPI_PINS_ENABLE, 0);
-	} else if (CHIPID(snd->sih->chip) == BCM4707_CHIP_ID && snd->sih->chippkg == BCM4709_PKG_ID) {
+	} else if ((CHIPID(snd->sih->chip) == BCM4707_CHIP_ID &&
+			snd->sih->chippkg == BCM4709_PKG_ID) ||
+			(CHIPID(snd->sih->chip) == BCM47094_CHIP_ID &&
+			snd->sih->chippkg == BCM4709_PKG_ID)) {
 		snd->irq = 120;
 		/* Enable I2S clock. */
 		{

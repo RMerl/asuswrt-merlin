@@ -151,7 +151,13 @@ printhex:
 		mrc	p15, 0, r2, c1, c0	@ read SysCtrl
 		tst	r2, #1			@ MMU enabled?
 		ldrne	r2, =hexbuf		@ =1 virtual
-		ldreq	r2, =__virt_to_phys(hexbuf) @ =0 physical
+		ldr	r3, =hexbuf
+		ldr	r4, =PAGE_OFFSET
+		sub	r3, r3, r4		@ get offset
+		ldr	r4, =ddr_phys_offset_va
+		ldr	r4, [r4, #0x0]		@ get real PHYS_OFFSET value
+		add	r3, r3, r4
+		ldreq	r2, [r3, #0x0]		@ =0 physical
 		add	r3, r2, r1
 		mov	r1, #0
 		strb	r1, [r3]

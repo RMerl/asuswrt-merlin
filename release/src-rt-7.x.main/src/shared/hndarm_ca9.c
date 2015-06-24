@@ -1,7 +1,7 @@
 /*
  * BCM43XX Sonics SiliconBackplane ARM core routines
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,10 +29,13 @@
 #include <armca9_core.h>
 #include <ddr_core.h>
 
-#define PLL_SUP_4708 0x00000001
-#define PLL_SUP_4709 0x00000002
-#define PLL_SUP_DDR2 0x00000001
-#define PLL_SUP_DDR3 0x00000002
+#define PLL_SUP_4708	0x00000001
+#define PLL_SUP_4709	0x00000002
+#define PLL_SUP_47092	0x00000004
+#define PLL_SUP_47094	0x00000008
+#define PLL_SUP_NS_ALL	(PLL_SUP_4708 | PLL_SUP_4709 | PLL_SUP_47092 | PLL_SUP_47094)
+#define PLL_SUP_DDR2	0x00000001
+#define PLL_SUP_DDR3	0x00000002
 
 struct arm_pll {
 	uint32 clk;
@@ -49,20 +52,22 @@ struct ddr_clk {
 };
 
 static struct arm_pll arm_pll_table[] = {
-	{ 600,	0x1003001, PLL_SUP_4708 | PLL_SUP_4709},
-	{ 800,	0x1004001, PLL_SUP_4708 | PLL_SUP_4709},
-	{ 1000, 0x1005001, PLL_SUP_4709},
+	{ 600,	0x1003001, PLL_SUP_NS_ALL},
+	{ 800,	0x1004001, PLL_SUP_NS_ALL},
+	{ 1000, 0x1005001, PLL_SUP_4709 | PLL_SUP_47092 | PLL_SUP_47094},
+	{ 1200, 0x1006001, PLL_SUP_47094},
+	{ 1400, 0x1007001, PLL_SUP_47094},
 	{0}
 };
 
 static struct ddr_clk ddr_clock_pll_table[] = {
-	{ 333, 0x17800000, 0x1e0f1219, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_4708 | PLL_SUP_4709},
-	{ 389, 0x18c00000, 0x23121219, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_4708 | PLL_SUP_4709},
-	{ 400, 0x18000000, 0x20101019, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_4708 | PLL_SUP_4709},
-	{ 533, 0x18000000, 0x20100c19, PLL_SUP_DDR3, PLL_SUP_4708 | PLL_SUP_4709},
-	{ 666, 0x17800000, 0x1e0f0919, PLL_SUP_DDR3, PLL_SUP_4709},
-	{ 775, 0x17c00000, 0x20100819, PLL_SUP_DDR3, PLL_SUP_4709},
-	{ 800, 0x18000000, 0x20100819, PLL_SUP_DDR3, PLL_SUP_4709},
+	{ 333, 0x17800000, 0x1e0f1219, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_NS_ALL},
+	{ 389, 0x18c00000, 0x23121219, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_NS_ALL},
+	{ 400, 0x18000000, 0x20101019, PLL_SUP_DDR2 | PLL_SUP_DDR3, PLL_SUP_NS_ALL},
+	{ 533, 0x18000000, 0x20100c19, PLL_SUP_DDR3, PLL_SUP_NS_ALL},
+	{ 666, 0x17800000, 0x1e0f0919, PLL_SUP_DDR3, PLL_SUP_4709 | PLL_SUP_47094},
+	{ 775, 0x17c00000, 0x20100819, PLL_SUP_DDR3, PLL_SUP_4709 | PLL_SUP_47094},
+	{ 800, 0x18000000, 0x20100819, PLL_SUP_DDR3, PLL_SUP_4709 | PLL_SUP_47094},
 	{0}
 };
 
@@ -152,12 +157,21 @@ BCMINITFN(si_arm_setclock)(si_t *sih, uint32 armclock, uint32 ddrclock, uint32 a
 			ddr_flag = ((si_core_sflags(sih, 0, 0) & DDR_TYPE_MASK)
 				== DDR_STAT_DDR3)? PLL_SUP_DDR3 : PLL_SUP_DDR2;
 		}
+
 		switch (sih->chippkg) {
 			case BCM4708_PKG_ID:
-				platform_flag = PLL_SUP_4708;
+				if (CHIPID(sih->chip) == BCM47094_CHIP_ID) {
+					platform_flag = PLL_SUP_47092;
+				} else {
+					platform_flag = PLL_SUP_4708;
+				}
 				break;
 			case BCM4709_PKG_ID:
-				platform_flag = PLL_SUP_4709;
+				if (CHIPID(sih->chip) == BCM47094_CHIP_ID) {
+					platform_flag = PLL_SUP_47094;
+				} else {
+					platform_flag = PLL_SUP_4709;
+				}
 				break;
 		}
 

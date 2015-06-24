@@ -2,7 +2,7 @@
  * Linux device driver for
  * Broadcom BCM47XX 10/100/1000 Mbps Ethernet Controller
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: et_linux.c 499431 2014-08-28 19:05:17Z $
+ * $Id: et_linux.c 526408 2015-01-14 06:05:30Z $
  */
 
 #include <et_cfg.h>
@@ -224,13 +224,6 @@ typedef struct et_info {
 static int et_found = 0;
 static et_info_t *et_list = NULL;
 
-/* defines */
-#ifdef PLC
-#define DATAHIWAT       280             /* data msg txq hiwat mark */
-#else
-#define	DATAHIWAT	4000		/* data msg txq hiwat mark */
-#endif /* PLC */
-
 #define	ET_INFO(dev)	(et_info_t *)(DEV_PRIV(dev))
 
 
@@ -391,14 +384,13 @@ module_param(passivemode, int, 0);
 static int txworkq = 0;
 module_param(txworkq, int, 0);
 
-#if defined(BCM_GMAC3)
-#define ET_TXQ_THRESH_DEFAULT   1024
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+#define ET_TXQ_THRESH_DEFAULT   1536
 #else
-#define ET_TXQ_THRESH_DEFAULT   512
-#endif /* BCM_GMAC3 */
+#define ET_TXQ_THRESH_DEFAULT   3300
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) */
 
-#define ET_TXQ_THRESH	0
-static int et_txq_thresh = ET_TXQ_THRESH;
+static int et_txq_thresh = ET_TXQ_THRESH_DEFAULT;
 module_param(et_txq_thresh, int, 0);
 
 static uint et_rxlazy_timeout = ET_RXLAZY_TIMEOUT;
@@ -1694,34 +1686,17 @@ et_sendnext(et_info_t *et)
 			/* If this device is connected to FA, and FA is configures
 			 * to receive bcmhdr, add one.
 			 */
-			if (FA_TX_BCM_HDR((fa_t *)et->etc->fa))
+			if (FA_TX_BCM_HDR((fa_t *)et->etc->fa)) {
 				p = fa_process_tx(et->etc->fa, p);
+
+				/* Bypass transmitting since the packet pointer is NULL */
+				if (p == NULL)
+					continue;
+			}
 #endif /* ETFA */
 			(*etc->chops->tx)(etc->ch, p);
 			etc->txframe++;
 			etc->txbyte += PKTLEN(et->osh, p);
-		}
-	}
-
-	/* no flow control when qos is enabled */
-	if (!et->etc->qos) {
-		/* stop the queue whenever txq fills */
-		if ((et->txq_pktcnt[TX_Q0] > DATAHIWAT) && !netif_queue_stopped(et->dev)) {
-			netif_stop_queue(et->dev);
-		} else if (netif_queue_stopped(et->dev) &&
-		         (et->txq_pktcnt[TX_Q0] < (DATAHIWAT/2))) {
-			netif_wake_queue(et->dev);
-		}
-	} else {
-		/* drop the frame if corresponding prec txq len exceeds hiwat
-		 * when qos is enabled.
-		 */
-		if ((priq != TC_NONE) && (et->txq_pktcnt[priq] > DATAHIWAT)) {
-			skb = et_skb_dequeue(et, priq);
-			PKTCFREE(et->osh, skb, TRUE);
-			ET_TRACE(("et%d: %s: txqlen %d txq_pktcnt = %d\n", et->etc->unit,
-			          __FUNCTION__, skb_queue_len(&et->txq[priq]),
-			          et->txq_pktcnt[priq]));
 		}
 	}
 
@@ -3003,7 +2978,7 @@ et_ctf_forward(et_info_t *et, struct sk_buff *skb)
 {
 #ifdef HNDCTF
 	int ret;
-#endif /* HNDCTF */
+#endif
 
 #ifdef CONFIG_IP_NF_DNSMQ
 	if(dnsmq_hit_hook&&dnsmq_hit_hook(skb))

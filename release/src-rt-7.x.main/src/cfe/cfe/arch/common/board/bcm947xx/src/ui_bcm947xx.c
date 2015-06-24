@@ -2,7 +2,7 @@
  * Broadcom Common Firmware Environment (CFE)
  * Board device initialization, File: ui_bcm947xx.c
  *
- * Copyright (C) 2012, Broadcom Corporation
+ * Copyright (C) 2015, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -10,7 +10,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: ui_bcm947xx.c 398971 2013-04-26 22:39:49Z $
+ * $Id: ui_bcm947xx.c 522461 2014-12-22 19:04:35Z $
  */
 
 #include "lib_types.h"
@@ -103,65 +103,65 @@ ui_cmd_reboot(ui_cmdline_t *cmd, int argc, char *argv[])
 static int
 _ui_cmd_nvram(ui_cmdline_t *cmd, int argc, char *argv[])
 {
-        char *command, *name, *value;
-        char *buf;
-        size_t size;
-        int ret;
+	char *command, *name, *value;
+	char *buf;
+	size_t size;
+	int ret;
 
-        if (!(command = cmd_getarg(cmd, 0)))
-                return CFE_ERR_INV_PARAM;
+	if (!(command = cmd_getarg(cmd, 0)))
+		return CFE_ERR_INV_PARAM;
 
-        if (!strcmp(command, "get")) {
-                if ((name = cmd_getarg(cmd, 1)))
-                        if ((value = nvram_get(name)))
-                                printf("%s\n", value);
-        } else if (!strcmp(command, "set")) {
-                if ((name = cmd_getarg(cmd, 1))) {
-                        if ((value = strchr(name, '=')))
-                                *value++ = '\0';
-                        else if ((value = cmd_getarg(cmd, 2))) {
-                                if (*value == '=')
-                                        value = cmd_getarg(cmd, 3);
-                        }
-                        if (value)
-                                nvram_set(name, value);
-                }
-        } else if (!strcmp(command, "unset")) {
-                if ((name = cmd_getarg(cmd, 1)))
-                        nvram_unset(name);
-        } else if (!strcmp(command, "commit")) {
-                nvram_commit();
-        } else if (!strcmp(command, "corrupt")) {
-                /* corrupt nvram */
-                nvram_commit_internal(TRUE);
+	if (!strcmp(command, "get")) {
+		if ((name = cmd_getarg(cmd, 1)))
+			if ((value = nvram_get(name)))
+				printf("%s\n", value);
+	} else if (!strcmp(command, "set")) {
+		if ((name = cmd_getarg(cmd, 1))) {
+			if ((value = strchr(name, '=')))
+				*value++ = '\0';
+			else if ((value = cmd_getarg(cmd, 2))) {
+				if (*value == '=')
+					value = cmd_getarg(cmd, 3);
+			}
+			if (value)
+				nvram_set(name, value);
+		}
+	} else if (!strcmp(command, "unset")) {
+		if ((name = cmd_getarg(cmd, 1)))
+			nvram_unset(name);
+	} else if (!strcmp(command, "commit")) {
+		nvram_commit();
+	} else if (!strcmp(command, "corrupt")) {
+		/* corrupt nvram */
+		nvram_commit_internal(TRUE);
 #ifdef BCMNVRAMW
-        } else if (!strcmp(command, "otpcommit")) {
-                nvram_otpcommit((void *)sih);
+	} else if (!strcmp(command, "otpcommit")) {
+		nvram_otpcommit((void *)sih);
 #endif
-        } else if (!strcmp(command, "erase")) {
-                extern char *flashdrv_nvram;
-                if ((ret = cfe_open(flashdrv_nvram)) < 0)
-                        return ret;
-                if (!(buf = KMALLOC(MAX_NVRAM_SPACE, 0))) {
-                        cfe_close(ret);
-                        return CFE_ERR_NOMEM;
-                }
-                memset(buf, 0xff, MAX_NVRAM_SPACE);
-                cfe_writeblk(ret, 0, (unsigned char *)buf, MAX_NVRAM_SPACE);
-                cfe_close(ret);
-                KFREE(buf);
-        } else if (!strcmp(command, "show") || !strcmp(command, "getall")) {
-                if (!(buf = KMALLOC(MAX_NVRAM_SPACE, 0)))
-                        return CFE_ERR_NOMEM;
-                nvram_getall(buf, MAX_NVRAM_SPACE);
-                for (name = buf; *name; name += strlen(name) + 1)
-                        printf("%s\n", name);
-                size = sizeof(struct nvram_header) + ((uintptr)name - (uintptr)buf);
-                printf("size: %d bytes (%d left)\n", size, MAX_NVRAM_SPACE - size);
-                KFREE(buf);
-        }
+	} else if (!strcmp(command, "erase")) {
+		extern char *flashdrv_nvram;
+		if ((ret = cfe_open(flashdrv_nvram)) < 0)
+			return ret;
+		if (!(buf = KMALLOC(MAX_NVRAM_SPACE, 0))) {
+			cfe_close(ret);
+			return CFE_ERR_NOMEM;
+		}
+		memset(buf, 0xff, MAX_NVRAM_SPACE);
+		cfe_writeblk(ret, 0, (unsigned char *)buf, MAX_NVRAM_SPACE);
+		cfe_close(ret);
+		KFREE(buf);
+	} else if (!strcmp(command, "show") || !strcmp(command, "getall")) {
+		if (!(buf = KMALLOC(MAX_NVRAM_SPACE, 0)))
+			return CFE_ERR_NOMEM;
+		nvram_getall(buf, MAX_NVRAM_SPACE);
+		for (name = buf; *name; name += strlen(name) + 1)
+			printf("%s\n", name);
+		size = sizeof(struct nvram_header) + ((uintptr)name - (uintptr)buf);
+		printf("size: %d bytes (%d left)\n", size, MAX_NVRAM_SPACE - size);
+		KFREE(buf);
+	}
 
-        return 0;
+	return 0;
 }
 
 static int
@@ -174,22 +174,78 @@ ui_cmd_nvram(ui_cmdline_t *cmd, int argc, char *argv[])
 static int
 ui_cmd_devinfo(ui_cmdline_t *cmd, int argc, char *argv[])
 {
-        int ret;
-    char *tmp;
+	int ret;
+	char *tmp;
 
-        tmp = flashdrv_nvram;
-        flashdrv_nvram = devinfo_flashdrv_nvram;
-        _nvram_hash_select(1);  /* 1 is devinfo hash table idx */
+	tmp = flashdrv_nvram;
+	flashdrv_nvram = devinfo_flashdrv_nvram;
+	_nvram_hash_select(1);	/* 1 is devinfo hash table idx */
 
-        ret = _ui_cmd_nvram(cmd, argc, argv);
+	ret = _ui_cmd_nvram(cmd, argc, argv);
 
-        /* revert back to default nvram hash table */
-        flashdrv_nvram = tmp;
-        _nvram_hash_select(0);  /* 0 is nvram hash table idx */
+	/* revert back to default nvram hash table */
+	flashdrv_nvram = tmp;
+	_nvram_hash_select(0);	/* 0 is nvram hash table idx */
 
-        return (ret);
+	return (ret);
+}
+#endif /* BCM_DEVINFO */
+
+#if defined(DUAL_IMAGE) || defined(FAILSAFE_UPGRADE)
+#define MAX_BOOT_IMGAGE			2
+#define IMAGE_NAME_SIZE			16
+typedef enum {
+	TRX_CRC_NONE,
+	TRX_CRC_CHK_FAIL,
+	TRX_CRC_CHK_PASS,
+	TRX_CRC_CHK_MAX
+} TRX_CRC_STATE_T;
+
+typedef struct trx_crc_rec_t_ {
+	TRX_CRC_STATE_T	state;
+	int	code;
+	char name[IMAGE_NAME_SIZE];
+} trx_crc_rec_t;
+
+trx_crc_rec_t img_crc_rec[MAX_BOOT_IMGAGE] = {
+	{TRX_CRC_NONE, -1, {0}},
+	{TRX_CRC_NONE, -1, {0}},
+};
+
+#ifndef RESCUE_MODE
+static void
+init_trx_crc_rec(char *trx_name)
+{
+	int nlen = IMAGE_NAME_SIZE - 1;
+
+	if (trx_name == NULL)
+		return;
+
+	strncpy(img_crc_rec[0].name, trx_name, nlen);
+	strncpy(img_crc_rec[1].name, trx_name, nlen);
+
+	/* 2nd image suffix, note, cfe does not have a strncat() */
+	strcat(img_crc_rec[1].name, "2");
 }
 #endif
+
+static int
+get_crc_rec_idx(char *trx_name)
+{
+	int idx;
+
+	if (trx_name == NULL)
+		return -1;
+
+	for (idx = 0; idx < MAX_BOOT_IMGAGE; idx++) {
+		if (strncmp(img_crc_rec[idx].name, trx_name, IMAGE_NAME_SIZE - 1) == 0) {
+			return idx;
+		}
+	}
+
+	return (-1);
+}
+#endif /* DUAL_IMAGE || FAILSAFE_UPGRADE */
 
 static int
 check_trx(char *trx_name)
@@ -206,16 +262,24 @@ check_trx(char *trx_name)
 #endif /* CFG_NFLASH */
 	int first_read = 1;
 	unsigned int len, count;
+#if defined(DUAL_IMAGE) || defined(FAILSAFE_UPGRADE)
+	int idx;
+
+	idx = get_crc_rec_idx(trx_name);
+	if ((idx != -1) && (img_crc_rec[idx].state != TRX_CRC_NONE)) {
+		return (img_crc_rec[idx].code);
+	}
+#endif /* DUAL_IMAGE || FAILSAFE_UPGRADE */
 
 	/* Open header */
 	ret = fs_init("raw", &fsctx, trx_name);
 	if (ret)
-		return ret;
+		goto error;
 
 	ret = fs_open(fsctx, &ref, "", FILE_MODE_READ);
 	if (ret) {
 		fs_uninit(fsctx);
-		return ret;
+		goto error;
 	}
 
 	/* Read header */
@@ -265,34 +329,44 @@ check_trx(char *trx_name)
 done:
 	fs_close(fsctx, ref);
 	fs_uninit(fsctx);
+error:
 	if (ret)
 		xprintf("%s\n", cfe_errortext(ret));
+
+#if defined(DUAL_IMAGE) || defined(FAILSAFE_UPGRADE)
+	/* cache update crc check result */
+	if (idx != -1) {
+		img_crc_rec[idx].state = (ret == 0) ? TRX_CRC_CHK_PASS : TRX_CRC_CHK_FAIL;
+		img_crc_rec[idx].code = ret;
+	}
+#endif /* DUAL_IMAGE || FAILSAFE_UPGRADE */
+
 	return ret;
 }
 
 #ifdef RESCUE_MODE
 bool mmode_set(void)
 {
-        unsigned long gpioin;
+	unsigned long gpioin;
 
-        sih = si_kattach(SI_OSH);
-        ASSERT(sih);
-        gpioin = si_gpioin(sih);
+	sih = si_kattach(SI_OSH);
+	ASSERT(sih);
+	gpioin = si_gpioin(sih);
 
-        si_detach(sih);
-        return gpioin & RST_BTN_GPIO ? FALSE : TRUE;
+	si_detach(sih);
+	return gpioin & RST_BTN_GPIO ? FALSE : TRUE;
 }
 
 bool rmode_set(void) /* reset mode */
 {
-        unsigned long gpioin;
+	unsigned long gpioin;
 
-        sih = si_kattach(SI_OSH);
-        ASSERT(sih);
-        gpioin = si_gpioin(sih);
+	sih = si_kattach(SI_OSH);
+	ASSERT(sih);
+	gpioin = si_gpioin(sih);
 
-        si_detach(sih);
-        return gpioin & WPS_BTN_GPIO ? FALSE : TRUE;
+	si_detach(sih);
+	return gpioin & WPS_BTN_GPIO ? FALSE : TRUE;
 }
 
 extern void LEDON(void)
@@ -341,50 +415,50 @@ extern void LEDOFF(void)
 #if defined(RTAC68U) || defined(RTAC87U)
 extern void OTHERLEDOFF(void)
 {
-        sih = si_kattach(SI_OSH);
-        ASSERT(sih);
-        si_gpioouten(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioout(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioouten(sih, USB_LED_GPIO, USB_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioout(sih, USB_LED_GPIO, USB_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioouten(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
-        si_gpioout(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
+	sih = si_kattach(SI_OSH);
+	ASSERT(sih);
+	si_gpioouten(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, WL5G_LED_GPIO, WL5G_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, USB_LED_GPIO, USB_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, USB_LED_GPIO, USB_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioouten(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
+	si_gpioout(sih, USB3_LED_GPIO, USB3_LED_GPIO, GPIO_DRV_PRIORITY);
 }
 #endif
 #endif
 unsigned char DETECT(void)
 {
-        unsigned char d = 0;
-        char *rescueflag;
+	unsigned char d = 0;
+	char *rescueflag;
 
-        if ((rescueflag = nvram_get("rescueflag")) != NULL) {
-                if (!nvram_invmatch("rescueflag", "enable")) {
-                        xprintf("Rescue Flag enable.\n");
-                        d = 1;
-                }
-                else {
-                        xprintf("Rescue Flag disable.\n");
-                        if (mmode_set())
-                                d = 1;
-                        else
-                                d = 0;
-                }
-                nvram_set("rescueflag", "disable");
-                nvram_commit();
-        }
-        else {
-                xprintf("Null Rescue Flag.\n");
-                if (mmode_set())
-                        d = 1;
-                else
-                        d = 0;
-        }
+	if ((rescueflag = nvram_get("rescueflag")) != NULL) {
+		if (!nvram_invmatch("rescueflag", "enable")) {
+			xprintf("Rescue Flag enable.\n");
+			d = 1;
+		}
+		else {
+			xprintf("Rescue Flag disable.\n");
+			if (mmode_set())
+				d = 1;
+			else
+				d = 0;
+		}
+		nvram_set("rescueflag", "disable");
+		nvram_commit();
+	}
+	else {
+		xprintf("Null Rescue Flag.\n");
+		if (mmode_set())
+			d = 1;
+		else
+			d = 0;
+	}
 
-        /* Set 1 to be high active and 0 to be low active */
-        if (d==1)
-                return 1;
-        else
-                return 0;
+	/* Set 1 to be high active and 0 to be low active */
+	if (d==1)
+		return 1;
+	else
+		return 0;
 }
 #endif // RESCUE_MODE
 
@@ -535,25 +609,27 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
 	uint32 osaddr;
 	int bufsize = 0;
 #ifndef RESCUE_MODE
-        int retry = 0;
-        int trx_failed;
+	int retry = 0;
+	int trx_failed;
 #else
-        int  i = 0;
-        GPIO_INIT();
-        LEDON();
+	int  i = 0;
+	GPIO_INIT();
+	LEDON();
 #if 0
 #if defined(RTAC68U) || defined(RTAC87U)
 	OTHERLEDOFF();
 #endif
 #endif
 #endif
-#ifdef FAILSAFE_UPGRADE
+#if defined(FAILSAFE_UPGRADE) || defined(DUAL_IMAGE)
+#ifndef RESCUE_MODE
+	char *trx_name_1st = NULL;
+	char *trx_name_2nd = NULL;
+	int boot_img_idx = 0;
+#endif
 	char *bootpartition = nvram_get(BOOTPARTITION);
 	char *partialboots = nvram_get(PARTIALBOOTS);
 	char *maxpartialboots = nvram_get(MAXPARTIALBOOTS);
-#endif
-#ifdef DUAL_IMAGE
-	char *bootpartition = nvram_get(IMAGE_BOOT);
 #endif
 #ifdef CFG_NFLASH
 	char trx_name[16], os_name[16];
@@ -561,12 +637,14 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
 	char *trx_name = "flash1.trx";
 	char *os_name = "flash0.os";
 #endif	/* CFG_NFLASH */
+
+#ifdef RESCUE_MODE
 	int FW_err_count;
 	char FW_err[4];
-
+#endif
 #ifdef DUAL_TRX
-        char *trx2_name = "nflash1.trx2";
-        int trx1_ret, trx2_ret;
+	char *trx2_name = "nflash1.trx2";
+	int trx1_ret, trx2_ret;
 #endif
 
 	val = nvram_get("os_ram_addr");
@@ -581,66 +659,66 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
 	}
 
 #ifdef RESCUE_MODE
-        strcpy(trx_name, "nflash1.trx");
-        strcpy(os_name, "nflash0.os");
+	strcpy(trx_name, "nflash1.trx");
+	strcpy(os_name, "nflash0.os");
 
-        if (DETECT()) {
-                xprintf("Hello!! Enter Rescue Mode: (by Force)\n\n");
-                /* Wait forever for an image */
-                while ((ret = ui_docommand("flash -noheader : nflash1.trx")) == CFE_ERR_TIMEOUT) {
-                        if (i%2 == 0) {
-                                LEDOFF();
-                        } else {
-                                LEDON();
+	if (DETECT()) {
+		xprintf("Hello!! Enter Rescue Mode: (by Force)\n\n");
+		/* Wait forever for an image */
+		while ((ret = ui_docommand("flash -noheader : nflash1.trx")) == CFE_ERR_TIMEOUT) {
+			if (i%2 == 0) {
+				LEDOFF();
+			} else {
+				LEDON();
 			}
-                        i++;
-                        if (i==0xffffff)
-                                i = 0;
-                }
-        }
+			i++;
+			if (i==0xffffff)
+				i = 0;
+		}
+	}
 #if 0
-        else if (rmode_set()) {
-                xprintf("Wait until reset button released...\n");
-                while(rmode_set() == 1) {
-                        if ((i%100000) < 50000) {
-                                LEDON();
-                        }
-                        else {
-                                LEDOFF();
-                        }
-                        i++;
+	else if (rmode_set()) {
+		xprintf("Wait until reset button released...\n");
+		while(rmode_set() == 1) {
+			if ((i%100000) < 50000) {
+				LEDON();
+			}
+			else {
+				LEDOFF();
+			}
+			i++;
 
-                        if (i==0xffffff) {
-                                i = 0;
-                        }
-                }
-                ui_docommand ("nvram erase");
-                ui_docommand ("reboot");
-        }
+			if (i==0xffffff) {
+				i = 0;
+			}
+		}
+		ui_docommand ("nvram erase");
+		ui_docommand ("reboot");
+	}
 #endif
-        else {
-                xprintf("boot the image...\n"); // tmp test
+	else {
+		xprintf("boot the image...\n"); // tmp test
 #ifdef DUAL_TRX
-                trx1_ret = check_trx(trx_name);
-                trx2_ret = check_trx(trx2_name);
-                xprintf("Check 2 trx result: %d, %d\n", trx1_ret, trx2_ret);
+		trx1_ret = check_trx(trx_name);
+		trx2_ret = check_trx(trx2_name);
+		xprintf("Check 2 trx result: %d, %d\n", trx1_ret, trx2_ret);
 
-                if( trx1_ret == 0 && trx2_ret != 0 ) {
-                        //copy trx1 -> trx2
-                        ret = ui_docommand("flash -size=48234496 nflash1.trx nflash1.trx2 -cfe");
-                }
-                else if( trx1_ret != 0 && trx2_ret == 0 ) {
-                        //copy trx2 -> trx1
-                        ret = ui_docommand("flash -size=50331648 nflash1.trx2 nflash1.trx -cfe");
-                        //check trx1 again
-                        trx1_ret = check_trx(trx_name);
-                        xprintf("Check trx1 result= %d\n", trx1_ret);
-                }
-                if(trx1_ret) { //trx1 failed
+		if( trx1_ret == 0 && trx2_ret != 0 ) {
+			//copy trx1 -> trx2
+			ret = ui_docommand("flash -size=48234496 nflash1.trx nflash1.trx2 -cfe");
+		}
+		else if( trx1_ret != 0 && trx2_ret == 0 ) {
+			//copy trx2 -> trx1
+			ret = ui_docommand("flash -size=50331648 nflash1.trx2 nflash1.trx -cfe");
+			//check trx1 again
+			trx1_ret = check_trx(trx_name);
+			xprintf("Check trx1 result= %d\n", trx1_ret);
+		}
+		if(trx1_ret) { //trx1 failed
 #else
-                if (check_trx(trx_name) || nvram_match("asus_trx_test", "1")) {
+		if (check_trx(trx_name) || nvram_match("asus_trx_test", "1")) {
 #endif
-                        xprintf("Hello!! Enter Rescue Mode: (Check error)\n\n");
+			xprintf("Hello!! Enter Rescue Mode: (Check error)\n\n");
 			FW_err_count = atoi(nvram_get("Ate_FW_err"));
 			FW_err_count++;
 			sprintf(FW_err, "%d", FW_err_count);
@@ -659,56 +737,56 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
 					else
 						cfe_sleep(2*CFE_HZ);
 				}
-                        	/* Wait awhile for an image */
+				/* Wait awhile for an image */
 				xprintf("\n2. enter tftp mode:\n");
 				i=0;
-                        	while ((ret = ui_docommand("flash -noheader : nflash1.trx")) == CFE_ERR_TIMEOUT) {
-                                	if (i%2 == 0)
-                                        	LEDOFF();
-                                	else
-                                        	LEDON();
-                                	i++;
+				while ((ret = ui_docommand("flash -noheader : nflash1.trx")) == CFE_ERR_TIMEOUT) {
+					if (i%2 == 0)
+						LEDOFF();
+					else
+						LEDON();
+					i++;
 					/*
-                                	if (i==0xffffff)
-                                        	i = 0;
+					if (i==0xffffff)
+						i = 0;
 					*/
-                                	if (i > 20)
+					if (i > 20)
 						break;
-                        	}
+				}
 				/* try reboot if no actions at all */
-                        	xprintf("\n\n3. rebooting...\n");
-                		ui_docommand ("reboot");
+				xprintf("\n\n3. rebooting...\n");
+				ui_docommand ("reboot");
 			}
-                } else if (!nvram_invmatch("boot_wait", "on")) {
-                //} else if (0) {
-                        xprintf("go load\n");   // tmp test
-                        ui_get_loadbuf(&ptr, &bufsize);
-                        /* Load the image */
-                        sprintf(buf, "load -raw -addr=0x%x -max=0x%x :", (unsigned int)ptr, bufsize);
-                        ret = ui_docommand(buf);
+		} else if (!nvram_invmatch("boot_wait", "on")) {
+		//} else if (0) {
+			xprintf("go load\n");   // tmp test
+			ui_get_loadbuf(&ptr, &bufsize);
+			/* Load the image */
+			sprintf(buf, "load -raw -addr=0x%x -max=0x%x :", (unsigned int)ptr, bufsize);
+			ret = ui_docommand(buf);
 
-                	/* Load was successful. Check for the TRX magic.
-                 	* If it's a TRX image, then proceed to flash it, else try to boot
-                 	* Note: To boot a TRX image directly from the memory, address will need to be
-                 	* load address + trx header length.
-                 	*/
-                        if (ret == 0) {
-                                file_buf = (struct trx_header *)ptr;
-                                /* If it's a TRX, then proceed to writing to flash else,
-                                 * try to boot from memory
-                                 */
-                                if (file_buf->magic != TRX_MAGIC) {
-                                        sprintf(buf, "boot -raw -z -addr=0x%x -max=0x%x -fs=memory :0x%x",
-                                                osaddr, (unsigned int)bufsize, (unsigned int)ptr);
-                                        return ui_docommand(buf);
-                                }
-                                /* Flash the image from memory directly */
-                                sprintf(buf, "flash -noheader -mem -size=0x%x 0x%x nflash1.trx",
-                                        (unsigned int)file_buf->len, (unsigned int)ptr);
-                                ret = ui_docommand(buf);
-                        }
-                }
-        }
+			/* Load was successful. Check for the TRX magic.
+			* If it's a TRX image, then proceed to flash it, else try to boot
+			* Note: To boot a TRX image directly from the memory, address will need to be
+			* load address + trx header length.
+			*/
+			if (ret == 0) {
+				file_buf = (struct trx_header *)ptr;
+				/* If it's a TRX, then proceed to writing to flash else,
+				 * try to boot from memory
+				 */
+				if (file_buf->magic != TRX_MAGIC) {
+					sprintf(buf, "boot -raw -z -addr=0x%x -max=0x%x -fs=memory :0x%x",
+						osaddr, (unsigned int)bufsize, (unsigned int)ptr);
+					return ui_docommand(buf);
+				}
+				/* Flash the image from memory directly */
+				sprintf(buf, "flash -noheader -mem -size=0x%x 0x%x nflash1.trx",
+					(unsigned int)file_buf->len, (unsigned int)ptr);
+				ret = ui_docommand(buf);
+			}
+		}
+	}
 
 #else // RESCUE_MODE
 
@@ -717,11 +795,19 @@ ui_cmd_go(ui_cmdline_t *cmd, int argc, char *argv[])
 #ifdef CFG_NFLASH
 		ui_get_trx_flashdev(trx_name);
 #endif
-		trx_failed = check_trx(trx_name);
-#ifdef CFG_NFLASH
-		strcat(trx_name, "2");
-#endif
-		trx_failed &= check_trx(trx_name);
+		/* init trx crc check records */
+		init_trx_crc_rec(trx_name);
+
+		/* optimize boot image check */
+		boot_img_idx = atoi(bootpartition) % MAX_BOOT_IMGAGE;
+		trx_name_1st = img_crc_rec[boot_img_idx].name;
+		trx_name_2nd = img_crc_rec[boot_img_idx ^ 0x1].name; /* flip the idx */
+
+		trx_failed = check_trx(trx_name_1st);
+		if (trx_failed != 0) {
+			printf("partition 0 trx image check error. %d", trx_failed);
+			trx_failed &= check_trx(trx_name_2nd);
+		}
 	} else
 #endif	/* FAILSAFE_UPGRADE || DUAL_IMAGE */
 	{
@@ -881,29 +967,29 @@ ui_init_bcm947xxcmds(void)
 	           "set [name=value];Sets the value of the specified variable|"
 	           "unset [name];Deletes the specified variable|"
 	           "commit;Commit variables to flash|"
-		   "corrupt;Corrupt NVRAM -- For testing purposes|"
+			   "corrupt;Corrupt NVRAM -- For testing purposes|"
 #ifdef BCMNVRAMW
 		       "otpcommit ;Commit otp nvram header to flash"
 #endif
 	           "erase;Erase all nvram|"
 	           "show;Shows all variables|");
 #ifdef BCM_DEVINFO
-        cmd_addcmd("devinfo",
-                   ui_cmd_devinfo,
-                   NULL,
-                   "Device Info NVRAM utility.",
-                   "devinfo [command] [args..]\n\n"
-                   "Access devinfo NVRAM.",
-                   "get [name];Gets the value of the specified variable|"
-                   "set [name=value];Sets the value of the specified variable|"
-                   "unset [name];Deletes the specified variable|"
-                   "commit;Commit variables to flash|"
+	cmd_addcmd("devinfo",
+	           ui_cmd_devinfo,
+	           NULL,
+	           "Device Info NVRAM utility.",
+	           "devinfo [command] [args..]\n\n"
+	           "Access devinfo NVRAM.",
+	           "get [name];Gets the value of the specified variable|"
+	           "set [name=value];Sets the value of the specified variable|"
+	           "unset [name];Deletes the specified variable|"
+	           "commit;Commit variables to flash|"
 #ifdef BCMNVRAMW
-                       "otpcommit ;Commit otp devinfo nvram header to flash"
-#endif
-                   "erase;Erase all devinfo nvram|"
-                   "show;Shows all devinfo nvram variables|");
-#endif
+		       "otpcommit ;Commit otp devinfo nvram header to flash"
+#endif /* BCMNVRAMW */
+	           "erase;Erase all devinfo nvram|"
+	           "show;Shows all devinfo nvram variables|");
+#endif /* BCM_DEVINFO */
 	cmd_addcmd("go",
 	           ui_cmd_go,
 	           NULL,

@@ -215,9 +215,10 @@ static void __init brcm_setup(void)
 			ns_acp_win_size = SZ_32M;
 		else
 			ns_acp_win_size = SZ_256M;
-	} else if (BCM4707_CHIP(CHIPID(sih->chip)) &&
-		(CHIPREV(sih->chiprev) == 4 || CHIPREV(sih->chiprev) == 6)) {
-		/* Chiprev 4 for NS-B0 and chiprev 6 for NS-B1 */
+	} else if ((BCM4707_CHIP(CHIPID(sih->chip)) &&
+		(CHIPREV(sih->chiprev) == 4 || CHIPREV(sih->chiprev) == 6)) ||
+		(CHIPID(sih->chip) == BCM47094_CHIP_ID)) {
+		/* For NS-Bx and NS47094. Chiprev 4 for NS-B0 and chiprev 6 for NS-B1 */
 		ns_acp_win_size = SZ_1G;
 	}
 

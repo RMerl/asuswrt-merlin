@@ -3,7 +3,7 @@
  *
  * This file implements the chip-specific routines for the GMAC core.
  *
- * Copyright (C) 2014, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etcgmac.c 488475 2014-07-01 05:47:28Z $
+ * $Id: etcgmac.c 523524 2014-12-31 02:48:08Z $
  */
 
 #include <et_cfg.h>
@@ -1210,8 +1210,9 @@ chipinreset:
 		}
 	}
 
-	/* 3GMAC: for BCM4707, only do core reset at chipattach */
-	if (CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) {
+	/* 3GMAC: for BCM4707 and BCM47094, only do core reset at chipattach */
+	if ((CHIPID(ch->sih->chip) != BCM4707_CHIP_ID) &&
+	    (CHIPID(ch->sih->chip) != BCM47094_CHIP_ID)) {
 		/* reset core */
 		si_core_reset(ch->sih, flagbits, 0);
 	}
