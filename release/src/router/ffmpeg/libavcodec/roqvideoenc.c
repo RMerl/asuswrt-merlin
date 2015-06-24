@@ -165,7 +165,7 @@ static int eval_motion_dist(RoqContext *enc, int x, int y, motion_vect vect,
 }
 
 /**
- * Returns distortion between two macroblocks
+ * @return distortion between two macroblocks
  */
 static inline int squared_diff_macroblock(uint8_t a[], uint8_t b[], int size)
 {
@@ -240,7 +240,7 @@ typedef struct RoqTempData
 } RoqTempdata;
 
 /**
- * Initializes cel evaluators and sets their source coordinates
+ * Initialize cel evaluators and set their source coordinates
  */
 static void create_cel_evals(RoqContext *enc, RoqTempdata *tempData)
 {
@@ -393,7 +393,7 @@ static void motion_search(RoqContext *enc, int blocksize)
 }
 
 /**
- * Gets distortion for all options available to a subcel
+ * Get distortion for all options available to a subcel
  */
 static void gather_data_for_subcel(SubcelEvaluation *subcel, int x,
                                    int y, RoqContext *enc, RoqTempdata *tempData)
@@ -457,7 +457,7 @@ static void gather_data_for_subcel(SubcelEvaluation *subcel, int x,
 }
 
 /**
- * Gets distortion for all options available to a cel
+ * Get distortion for all options available to a cel
  */
 static void gather_data_for_cel(CelEvaluation *cel, RoqContext *enc,
                                 RoqTempdata *tempData)
@@ -773,7 +773,7 @@ static inline void frame_block_to_cell(uint8_t *block, uint8_t **data,
 }
 
 /**
- * Creates YUV clusters for the entire image
+ * Create YUV clusters for the entire image
  */
 static void create_clusters(AVFrame *frame, int w, int h, uint8_t *yuvClusters)
 {
@@ -898,9 +898,20 @@ static void roq_encode_video(RoqContext *enc)
     for (i=0; i<enc->width*enc->height/64; i++)
         gather_data_for_cel(tempData->cel_evals + i, enc, tempData);
 
-    /* Quake 3 can't handle chunks bigger than 65536 bytes */
-    if (tempData->mainChunkSize/8 > 65536) {
-        enc->lambda *= .8;
+    /* Quake 3 can't handle chunks bigger than 65535 bytes */
+    if (tempData->mainChunkSize/8 > 65535) {
+        av_log(enc->avctx, AV_LOG_ERROR,
+               "Warning, generated a frame too big (%d > 65535), "
+               "try using a smaller qscale value.\n",
+               tempData->mainChunkSize/8);
+        enc->lambda *= 1.5;
+        tempData->mainChunkSize = 0;
+        memset(tempData->used_option, 0, sizeof(tempData->used_option));
+        memset(tempData->codebooks.usedCB4, 0,
+               sizeof(tempData->codebooks.usedCB4));
+        memset(tempData->codebooks.usedCB2, 0,
+               sizeof(tempData->codebooks.usedCB2));
+
         goto retry_encode;
     }
 
@@ -929,6 +940,8 @@ static int roq_encode_init(AVCodecContext *avctx)
     RoqContext *enc = avctx->priv_data;
 
     av_lfg_init(&enc->randctx, 1);
+
+    enc->avctx = avctx;
 
     enc->framesSinceKeyframe = 0;
     if ((avctx->width & 0xf) || (avctx->height & 0xf)) {
@@ -1054,7 +1067,7 @@ static int roq_encode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec roq_encoder =
+AVCodec ff_roq_encoder =
 {
     "roqvideo",
     AVMEDIA_TYPE_VIDEO,

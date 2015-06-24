@@ -91,20 +91,57 @@ int ff_mpegaudio_decode_header(MPADecodeHeader *s, uint32_t header)
     }
 
 #if defined(DEBUG)
-    dprintf(NULL, "layer%d, %d Hz, %d kbits/s, ",
+    av_dlog(NULL, "layer%d, %d Hz, %d kbits/s, ",
            s->layer, s->sample_rate, s->bit_rate);
     if (s->nb_channels == 2) {
         if (s->layer == 3) {
             if (s->mode_ext & MODE_EXT_MS_STEREO)
-                dprintf(NULL, "ms-");
+                av_dlog(NULL, "ms-");
             if (s->mode_ext & MODE_EXT_I_STEREO)
-                dprintf(NULL, "i-");
+                av_dlog(NULL, "i-");
         }
-        dprintf(NULL, "stereo");
+        av_dlog(NULL, "stereo");
     } else {
-        dprintf(NULL, "mono");
+        av_dlog(NULL, "mono");
     }
-    dprintf(NULL, "\n");
+    av_dlog(NULL, "\n");
 #endif
     return 0;
+}
+
+int ff_mpa_decode_header(AVCodecContext *avctx, uint32_t head, int *sample_rate, int *channels, int *frame_size, int *bit_rate)
+{
+    MPADecodeHeader s1, *s = &s1;
+
+    if (ff_mpa_check_header(head) != 0)
+        return -1;
+
+    if (ff_mpegaudio_decode_header(s, head) != 0) {
+        return -1;
+    }
+
+    switch(s->layer) {
+    case 1:
+        avctx->codec_id = CODEC_ID_MP1;
+        *frame_size = 384;
+        break;
+    case 2:
+        avctx->codec_id = CODEC_ID_MP2;
+        *frame_size = 1152;
+        break;
+    default:
+    case 3:
+        avctx->codec_id = CODEC_ID_MP3;
+        if (s->lsf)
+            *frame_size = 576;
+        else
+            *frame_size = 1152;
+        break;
+    }
+
+    *sample_rate = s->sample_rate;
+    *channels = s->nb_channels;
+    *bit_rate = s->bit_rate;
+    avctx->sub_id = s->layer;
+    return s->frame_size;
 }

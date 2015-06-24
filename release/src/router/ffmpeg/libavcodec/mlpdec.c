@@ -133,6 +133,9 @@ typedef struct MLPDecodeContext {
     //! Index of the last substream to decode - further substreams are skipped.
     uint8_t     max_decoded_substream;
 
+    //! Stream needs channel reordering to comply with FFmpeg's channel order
+    uint8_t     needs_reordering;
+
     //! number of PCM samples contained in each frame
     int         access_unit_size;
     //! next power of two above the number of samples in each frame
@@ -318,13 +321,33 @@ static int read_major_sync(MLPDecodeContext *m, GetBitContext *gb)
 
     m->avctx->bits_per_raw_sample = mh.group1_bits;
     if (mh.group1_bits > 16)
-        m->avctx->sample_fmt = SAMPLE_FMT_S32;
+        m->avctx->sample_fmt = AV_SAMPLE_FMT_S32;
     else
-        m->avctx->sample_fmt = SAMPLE_FMT_S16;
+        m->avctx->sample_fmt = AV_SAMPLE_FMT_S16;
 
     m->params_valid = 1;
     for (substr = 0; substr < MAX_SUBSTREAMS; substr++)
         m->substream[substr].restart_seen = 0;
+
+    if (mh.stream_type == 0xbb) {
+        /* MLP stream */
+        m->avctx->channel_layout = ff_mlp_layout[mh.channels_mlp];
+    } else { /* mh.stream_type == 0xba */
+        /* TrueHD stream */
+        if (mh.channels_thd_stream2) {
+            m->avctx->channel_layout = ff_truehd_layout(mh.channels_thd_stream2);
+        } else {
+            m->avctx->channel_layout = ff_truehd_layout(mh.channels_thd_stream1);
+        }
+        if (m->avctx->channels &&
+            !m->avctx->request_channels && !m->avctx->request_channel_layout &&
+            av_get_channel_layout_nb_channels(m->avctx->channel_layout) != m->avctx->channels) {
+            m->avctx->channel_layout = 0;
+            av_log_ask_for_sample(m->avctx, "Unknown channel layout.");
+        }
+    }
+
+    m->needs_reordering = mh.channels_mlp >= 18 && mh.channels_mlp <= 20;
 
     return 0;
 }
@@ -434,6 +457,24 @@ static int read_restart_header(MLPDecodeContext *m, GetBitContext *gbp,
             return -1;
         }
         s->ch_assign[ch_assign] = ch;
+    }
+
+    if (m->avctx->codec_id == CODEC_ID_MLP && m->needs_reordering) {
+        if (m->avctx->channel_layout == (AV_CH_LAYOUT_QUAD|AV_CH_LOW_FREQUENCY) ||
+            m->avctx->channel_layout == AV_CH_LAYOUT_5POINT0_BACK) {
+            int i = s->ch_assign[4];
+            s->ch_assign[4] = s->ch_assign[3];
+            s->ch_assign[3] = s->ch_assign[2];
+            s->ch_assign[2] = i;
+        } else if (m->avctx->channel_layout == AV_CH_LAYOUT_5POINT1_BACK) {
+            FFSWAP(int, s->ch_assign[2], s->ch_assign[4]);
+            FFSWAP(int, s->ch_assign[3], s->ch_assign[5]);
+        }
+    }
+    if (m->avctx->codec_id == CODEC_ID_TRUEHD &&
+        m->avctx->channel_layout == AV_CH_LAYOUT_7POINT1) {
+        FFSWAP(int, s->ch_assign[4], s->ch_assign[6]);
+        FFSWAP(int, s->ch_assign[5], s->ch_assign[7]);
     }
 
     checksum = ff_mlp_restart_checksum(buf, get_bits_count(gbp) - start_count);
@@ -909,7 +950,12 @@ static int output_data_internal(MLPDecodeContext *m, unsigned int substr,
     int32_t *data_32 = (int32_t*) data;
     int16_t *data_16 = (int16_t*) data;
 
-    if (*data_size < (s->max_channel + 1) * s->blockpos * (is32 ? 4 : 2))
+    if (m->avctx->channels != s->max_matrix_channel + 1) {
+        av_log(m->avctx, AV_LOG_ERROR, "channel count mismatch\n");
+        return AVERROR_INVALIDDATA;
+    }
+
+    if (*data_size < m->avctx->channels * s->blockpos * (is32 ? 4 : 2))
         return -1;
 
     for (i = 0; i < s->blockpos; i++) {
@@ -931,7 +977,7 @@ static int output_data_internal(MLPDecodeContext *m, unsigned int substr,
 static int output_data(MLPDecodeContext *m, unsigned int substr,
                        uint8_t *data, unsigned int *data_size)
 {
-    if (m->avctx->sample_fmt == SAMPLE_FMT_S32)
+    if (m->avctx->sample_fmt == AV_SAMPLE_FMT_S32)
         return output_data_internal(m, substr, data, data_size, 1);
     else
         return output_data_internal(m, substr, data, data_size, 0);
@@ -939,8 +985,8 @@ static int output_data(MLPDecodeContext *m, unsigned int substr,
 
 
 /** Read an access unit from the stream.
- *  Returns < 0 on error, 0 if not enough data is present in the input stream
- *  otherwise returns the number of bytes consumed. */
+ *  @return negative on error, 0 if not enough data is present in the input stream,
+ *  otherwise the number of bytes consumed. */
 
 static int read_access_unit(AVCodecContext *avctx, void* data, int *data_size,
                             AVPacket *avpkt)
@@ -1137,7 +1183,7 @@ error:
     return -1;
 }
 
-AVCodec mlp_decoder = {
+AVCodec ff_mlp_decoder = {
     "mlp",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_MLP,
@@ -1150,7 +1196,7 @@ AVCodec mlp_decoder = {
 };
 
 #if CONFIG_TRUEHD_DECODER
-AVCodec truehd_decoder = {
+AVCodec ff_truehd_decoder = {
     "truehd",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_TRUEHD,

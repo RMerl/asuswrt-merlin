@@ -29,14 +29,6 @@ Michael's TODO list: (unordered) (if anyone wanna help with sth, just ask)
 - more optimizations
 - simper rate control
 
-Francois' TODO list: (unordered, without any timeframe)
--------------------
-- test MACE decoder against the openquicktime one as suggested by A'rpi
-- BeOS audio input grabbing backend
-- BeOS video input grabbing backend
-- publish my BeOS libposix on BeBits so I can officially support ffserver :)
-- check the whole code for thread-safety (global and init stuff)
-
 Philip'a TODO list: (alphabetically ordered) (please help)
 ------------------
 - Add a multi-ffm filetype so that feeds can be recorded into multiple files rather
@@ -77,7 +69,7 @@ unassigned TODO: (unordered)
 - JPEG2000 decoder & encoder
 - MPEG4 GMC encoding support
 - macroblock based pixel format (better cache locality, somewhat complex, one paper claimed it faster for high res)
-- regression tests for codecs which do not have an encoder (I+P-frame bitstream in svn)
+- regression tests for codecs which do not have an encoder (I+P-frame bitstream in the 'master' branch)
 - add support for using mplayers video filters to ffmpeg
 - H264 encoder
 - per MB ratecontrol (so VCD and such do work better)

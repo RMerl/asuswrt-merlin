@@ -94,6 +94,7 @@ static av_cold int cinvideo_decode_init(AVCodecContext *avctx)
     cin->avctx = avctx;
     avctx->pix_fmt = PIX_FMT_PAL8;
 
+    avcodec_get_frame_defaults(&cin->frame);
     cin->frame.data[0] = NULL;
 
     cin->bitmap_size = avctx->width * avctx->height;
@@ -145,11 +146,11 @@ static int cin_decode_huffman(const unsigned char *src, int src_size, unsigned c
     return dst_cur - dst;
 }
 
-static void cin_decode_lzss(const unsigned char *src, int src_size, unsigned char *dst, int dst_size)
+static int cin_decode_lzss(const unsigned char *src, int src_size, unsigned char *dst, int dst_size)
 {
     uint16_t cmd;
     int i, sz, offset, code;
-    unsigned char *dst_end = dst + dst_size;
+    unsigned char *dst_end = dst + dst_size, *dst_start = dst;
     const unsigned char *src_end = src + src_size;
 
     while (src < src_end && dst < dst_end) {
@@ -160,6 +161,8 @@ static void cin_decode_lzss(const unsigned char *src, int src_size, unsigned cha
             } else {
                 cmd = AV_RL16(src); src += 2;
                 offset = cmd >> 4;
+                if ((int) (dst - dst_start) < offset + 1)
+                    return AVERROR_INVALIDDATA;
                 sz = (cmd & 0xF) + 2;
                 /* don't use memcpy/memmove here as the decoding routine (ab)uses */
                 /* buffer overlappings to repeat bytes in the destination */
@@ -171,6 +174,8 @@ static void cin_decode_lzss(const unsigned char *src, int src_size, unsigned cha
             }
         }
     }
+
+    return 0;
 }
 
 static void cin_decode_rle(const unsigned char *src, int src_size, unsigned char *dst, int dst_size)
@@ -200,13 +205,7 @@ static int cinvideo_decode_frame(AVCodecContext *avctx,
     const uint8_t *buf = avpkt->data;
     int buf_size = avpkt->size;
     CinVideoContext *cin = avctx->priv_data;
-    int i, y, palette_type, palette_colors_count, bitmap_frame_type, bitmap_frame_size;
-
-    cin->frame.buffer_hints = FF_BUFFER_HINTS_VALID | FF_BUFFER_HINTS_PRESERVE | FF_BUFFER_HINTS_REUSABLE;
-    if (avctx->reget_buffer(avctx, &cin->frame)) {
-        av_log(cin->avctx, AV_LOG_ERROR, "delphinecinvideo: reget_buffer() failed to allocate a frame\n");
-        return -1;
-    }
+    int i, y, palette_type, palette_colors_count, bitmap_frame_type, bitmap_frame_size, res = 0;
 
     palette_type = buf[0];
     palette_colors_count = AV_RL16(buf+1);
@@ -216,7 +215,11 @@ static int cinvideo_decode_frame(AVCodecContext *avctx,
     bitmap_frame_size = buf_size - 4;
 
     /* handle palette */
+    if (bitmap_frame_size < palette_colors_count * (3 + (palette_type != 0)))
+        return AVERROR_INVALIDDATA;
     if (palette_type == 0) {
+        if (palette_colors_count > 256)
+            return AVERROR_INVALIDDATA;
         for (i = 0; i < palette_colors_count; ++i) {
             cin->palette[i] = bytestream_get_le24(&buf);
             bitmap_frame_size -= 3;
@@ -228,8 +231,6 @@ static int cinvideo_decode_frame(AVCodecContext *avctx,
             bitmap_frame_size -= 4;
         }
     }
-    memcpy(cin->frame.data[1], cin->palette, sizeof(cin->palette));
-    cin->frame.palette_has_changed = 1;
 
     /* note: the decoding routines below assumes that surface.width = surface.pitch */
     switch (bitmap_frame_type) {
@@ -262,17 +263,31 @@ static int cinvideo_decode_frame(AVCodecContext *avctx,
           cin->bitmap_table[CIN_CUR_BMP], cin->bitmap_size);
         break;
     case 38:
-        cin_decode_lzss(buf, bitmap_frame_size,
-          cin->bitmap_table[CIN_CUR_BMP], cin->bitmap_size);
+        res = cin_decode_lzss(buf, bitmap_frame_size,
+                              cin->bitmap_table[CIN_CUR_BMP],
+                              cin->bitmap_size);
+        if (res < 0)
+            return res;
         break;
     case 39:
-        cin_decode_lzss(buf, bitmap_frame_size,
-          cin->bitmap_table[CIN_CUR_BMP], cin->bitmap_size);
+        res = cin_decode_lzss(buf, bitmap_frame_size,
+                              cin->bitmap_table[CIN_CUR_BMP],
+                              cin->bitmap_size);
+        if (res < 0)
+            return res;
         cin_apply_delta_data(cin->bitmap_table[CIN_PRE_BMP],
           cin->bitmap_table[CIN_CUR_BMP], cin->bitmap_size);
         break;
     }
 
+    cin->frame.buffer_hints = FF_BUFFER_HINTS_VALID | FF_BUFFER_HINTS_PRESERVE | FF_BUFFER_HINTS_REUSABLE;
+    if (avctx->reget_buffer(avctx, &cin->frame)) {
+        av_log(cin->avctx, AV_LOG_ERROR, "delphinecinvideo: reget_buffer() failed to allocate a frame\n");
+        return -1;
+    }
+
+    memcpy(cin->frame.data[1], cin->palette, sizeof(cin->palette));
+    cin->frame.palette_has_changed = 1;
     for (y = 0; y < cin->avctx->height; ++y)
         memcpy(cin->frame.data[0] + (cin->avctx->height - 1 - y) * cin->frame.linesize[0],
           cin->bitmap_table[CIN_CUR_BMP] + y * cin->avctx->width,
@@ -305,9 +320,14 @@ static av_cold int cinaudio_decode_init(AVCodecContext *avctx)
     CinAudioContext *cin = avctx->priv_data;
 
     cin->avctx = avctx;
+    if (avctx->channels != 1) {
+        av_log_ask_for_sample(avctx, "Number of channels is not supported\n");
+        return AVERROR_PATCHWELCOME;
+    }
+
     cin->initial_decode_frame = 1;
     cin->delta = 0;
-    avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
 
     return 0;
 }
@@ -343,7 +363,7 @@ static int cinaudio_decode_frame(AVCodecContext *avctx,
 }
 
 
-AVCodec dsicinvideo_decoder = {
+AVCodec ff_dsicinvideo_decoder = {
     "dsicinvideo",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_DSICINVIDEO,
@@ -356,7 +376,7 @@ AVCodec dsicinvideo_decoder = {
     .long_name = NULL_IF_CONFIG_SMALL("Delphine Software International CIN video"),
 };
 
-AVCodec dsicinaudio_decoder = {
+AVCodec ff_dsicinaudio_decoder = {
     "dsicinaudio",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_DSICINAUDIO,

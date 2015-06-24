@@ -18,8 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-//#define DEBUG_ALIGNMENT
-#ifdef DEBUG_ALIGNMENT
+#ifdef DEBUG
 #define ASSERT_ALIGNED(ptr) assert(((unsigned long)ptr&0x0000000F));
 #else
 #define ASSERT_ALIGNED(ptr) ;
@@ -75,9 +74,9 @@
 #define noop(a) a
 #define add28(a) vec_add(v28ss, a)
 
+#ifdef PREFIX_h264_chroma_mc8_altivec
 static void PREFIX_h264_chroma_mc8_altivec(uint8_t * dst, uint8_t * src,
                                     int stride, int h, int x, int y) {
-  POWERPC_PERF_DECLARE(PREFIX_h264_chroma_mc8_num, 1);
     DECLARE_ALIGNED(16, signed int, ABCD)[4] =
                         {((8 - x) * (8 - y)),
                          ((    x) * (8 - y)),
@@ -102,8 +101,6 @@ static void PREFIX_h264_chroma_mc8_altivec(uint8_t * dst, uint8_t * src,
     vec_u8 vsrcCuc, vsrc2uc, vsrc3uc;
     vec_s16 vsrc2ssH, vsrc3ssH, psum;
     vec_u8 vdst, ppsum, vfdst, fsum;
-
-  POWERPC_PERF_START_COUNT(PREFIX_h264_chroma_mc8_num, 1);
 
     if (((unsigned long)dst) % 16 == 0) {
         fperm = (vec_u8){0x10, 0x11, 0x12, 0x13,
@@ -203,10 +200,11 @@ static void PREFIX_h264_chroma_mc8_altivec(uint8_t * dst, uint8_t * src,
             }
         }
     }
-    POWERPC_PERF_STOP_COUNT(PREFIX_h264_chroma_mc8_num, 1);
 }
+#endif
 
 /* this code assume that stride % 16 == 0 */
+#ifdef PREFIX_no_rnd_vc1_chroma_mc8_altivec
 static void PREFIX_no_rnd_vc1_chroma_mc8_altivec(uint8_t * dst, uint8_t * src, int stride, int h, int x, int y) {
    DECLARE_ALIGNED(16, signed int, ABCD)[4] =
                         {((8 - x) * (8 - y)),
@@ -288,14 +286,15 @@ static void PREFIX_no_rnd_vc1_chroma_mc8_altivec(uint8_t * dst, uint8_t * src, i
         }
     }
 }
+#endif
 
 #undef noop
 #undef add28
 #undef CHROMA_MC8_ALTIVEC_CORE
 
 /* this code assume stride % 16 == 0 */
+#ifdef PREFIX_h264_qpel16_h_lowpass_altivec
 static void PREFIX_h264_qpel16_h_lowpass_altivec(uint8_t * dst, uint8_t * src, int dstStride, int srcStride) {
-    POWERPC_PERF_DECLARE(PREFIX_h264_qpel16_h_lowpass_num, 1);
     register int i;
 
     LOAD_ZERO;
@@ -322,8 +321,6 @@ static void PREFIX_h264_qpel16_h_lowpass_altivec(uint8_t * dst, uint8_t * src, i
               psumA, psumB, sumA, sumB;
 
     vec_u8 sum, vdst, fsum;
-
-    POWERPC_PERF_START_COUNT(PREFIX_h264_qpel16_h_lowpass_num, 1);
 
     for (i = 0 ; i < 16 ; i ++) {
         vec_u8 srcR1 = vec_ld(-2, src);
@@ -433,13 +430,12 @@ static void PREFIX_h264_qpel16_h_lowpass_altivec(uint8_t * dst, uint8_t * src, i
         src += srcStride;
         dst += dstStride;
     }
-    POWERPC_PERF_STOP_COUNT(PREFIX_h264_qpel16_h_lowpass_num, 1);
 }
+#endif
 
 /* this code assume stride % 16 == 0 */
+#ifdef PREFIX_h264_qpel16_v_lowpass_altivec
 static void PREFIX_h264_qpel16_v_lowpass_altivec(uint8_t * dst, uint8_t * src, int dstStride, int srcStride) {
-    POWERPC_PERF_DECLARE(PREFIX_h264_qpel16_v_lowpass_num, 1);
-
     register int i;
 
     LOAD_ZERO;
@@ -489,8 +485,6 @@ static void PREFIX_h264_qpel16_v_lowpass_altivec(uint8_t * dst, uint8_t * src, i
               sum1A, sum1B, sum2A, sum2B, sum3A, sum3B;
 
     vec_u8 sum, vdst, fsum, srcP3a, srcP3b, srcP3;
-
-    POWERPC_PERF_START_COUNT(PREFIX_h264_qpel16_v_lowpass_num, 1);
 
     for (i = 0 ; i < 16 ; i++) {
         srcP3a = vec_ld(0, srcbis += srcStride);
@@ -544,12 +538,12 @@ static void PREFIX_h264_qpel16_v_lowpass_altivec(uint8_t * dst, uint8_t * src, i
 
         dst += dstStride;
     }
-    POWERPC_PERF_STOP_COUNT(PREFIX_h264_qpel16_v_lowpass_num, 1);
 }
+#endif
 
 /* this code assume stride % 16 == 0 *and* tmp is properly aligned */
+#ifdef PREFIX_h264_qpel16_hv_lowpass_altivec
 static void PREFIX_h264_qpel16_hv_lowpass_altivec(uint8_t * dst, int16_t * tmp, uint8_t * src, int dstStride, int tmpStride, int srcStride) {
-    POWERPC_PERF_DECLARE(PREFIX_h264_qpel16_hv_lowpass_num, 1);
     register int i;
     LOAD_ZERO;
     const vec_u8 permM2 = vec_lvsl(-2, src);
@@ -589,7 +583,6 @@ static void PREFIX_h264_qpel16_hv_lowpass_altivec(uint8_t * dst, int16_t * tmp, 
     vec_u8 fsum, sumv, sum, vdst;
     vec_s16 ssume, ssumo;
 
-    POWERPC_PERF_START_COUNT(PREFIX_h264_qpel16_hv_lowpass_num, 1);
     src -= (2 * srcStride);
     for (i = 0 ; i < 21 ; i ++) {
         vec_u8 srcM2, srcM1, srcP0, srcP1, srcP2, srcP3;
@@ -779,5 +772,5 @@ static void PREFIX_h264_qpel16_hv_lowpass_altivec(uint8_t * dst, int16_t * tmp, 
 
         dst += dstStride;
     }
-    POWERPC_PERF_STOP_COUNT(PREFIX_h264_qpel16_hv_lowpass_num, 1);
 }
+#endif

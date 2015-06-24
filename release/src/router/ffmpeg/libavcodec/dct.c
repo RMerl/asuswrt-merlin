@@ -29,7 +29,8 @@
 
 #include <math.h>
 #include "libavutil/mathematics.h"
-#include "fft.h"
+#include "dct.h"
+#include "dct32.h"
 
 /* sin((M_PI * x / (2*n)) */
 #define SIN(s,n,x) (s->costab[(n) - (x)])
@@ -55,7 +56,7 @@ static void ff_dst_calc_I_c(DCTContext *ctx, FFTSample *data)
     }
 
     data[n/2] *= 2;
-    ff_rdft_calc(&ctx->rdft, data);
+    ctx->rdft.rdft_calc(&ctx->rdft, data);
 
     data[0] *= 0.5f;
 
@@ -89,7 +90,7 @@ static void ff_dct_calc_I_c(DCTContext *ctx, FFTSample *data)
         data[n - i] = tmp1 + s;
     }
 
-    ff_rdft_calc(&ctx->rdft, data);
+    ctx->rdft.rdft_calc(&ctx->rdft, data);
     data[n] = data[1];
     data[1] = next;
 
@@ -117,7 +118,7 @@ static void ff_dct_calc_III_c(DCTContext *ctx, FFTSample *data)
 
     data[1] = 2 * next;
 
-    ff_rdft_calc(&ctx->rdft, data);
+    ctx->rdft.rdft_calc(&ctx->rdft, data);
 
     for (i = 0; i < n / 2; i++) {
         float tmp1 = data[i        ] * inv_n;
@@ -148,7 +149,7 @@ static void ff_dct_calc_II_c(DCTContext *ctx, FFTSample *data)
         data[n-i-1] = tmp1 - s;
     }
 
-    ff_rdft_calc(&ctx->rdft, data);
+    ctx->rdft.rdft_calc(&ctx->rdft, data);
 
     next = data[1] * 0.5;
     data[1] *= -1;
@@ -167,9 +168,9 @@ static void ff_dct_calc_II_c(DCTContext *ctx, FFTSample *data)
     }
 }
 
-void ff_dct_calc(DCTContext *s, FFTSample *data)
+static void dct32_func(DCTContext *ctx, FFTSample *data)
 {
-    s->dct_calc(s, data);
+    ctx->dct32(data, data);
 }
 
 av_cold int ff_dct_init(DCTContext *s, int nbits, enum DCTTransformType inverse)
@@ -177,29 +178,39 @@ av_cold int ff_dct_init(DCTContext *s, int nbits, enum DCTTransformType inverse)
     int n = 1 << nbits;
     int i;
 
+    memset(s, 0, sizeof(*s));
+
     s->nbits    = nbits;
     s->inverse  = inverse;
 
-    ff_init_ff_cos_tabs(nbits+2);
+    if (inverse == DCT_II && nbits == 5) {
+        s->dct_calc = dct32_func;
+    } else {
+        ff_init_ff_cos_tabs(nbits+2);
 
-    s->costab = ff_cos_tabs[nbits+2];
+        s->costab = ff_cos_tabs[nbits+2];
 
-    s->csc2 = av_malloc(n/2 * sizeof(FFTSample));
+        s->csc2 = av_malloc(n/2 * sizeof(FFTSample));
 
-    if (ff_rdft_init(&s->rdft, nbits, inverse == DCT_III) < 0) {
-        av_free(s->csc2);
-        return -1;
+        if (ff_rdft_init(&s->rdft, nbits, inverse == DCT_III) < 0) {
+            av_free(s->csc2);
+            return -1;
+        }
+
+        for (i = 0; i < n/2; i++)
+            s->csc2[i] = 0.5 / sin((M_PI / (2*n) * (2*i + 1)));
+
+        switch(inverse) {
+        case DCT_I  : s->dct_calc = ff_dct_calc_I_c; break;
+        case DCT_II : s->dct_calc = ff_dct_calc_II_c ; break;
+        case DCT_III: s->dct_calc = ff_dct_calc_III_c; break;
+        case DST_I  : s->dct_calc = ff_dst_calc_I_c; break;
+        }
     }
 
-    for (i = 0; i < n/2; i++)
-        s->csc2[i] = 0.5 / sin((M_PI / (2*n) * (2*i + 1)));
+    s->dct32 = ff_dct32_float;
+    if (HAVE_MMX)     ff_dct_init_mmx(s);
 
-    switch(inverse) {
-    case DCT_I  : s->dct_calc = ff_dct_calc_I_c; break;
-    case DCT_II : s->dct_calc = ff_dct_calc_II_c ; break;
-    case DCT_III: s->dct_calc = ff_dct_calc_III_c; break;
-    case DST_I  : s->dct_calc = ff_dst_calc_I_c; break;
-    }
     return 0;
 }
 

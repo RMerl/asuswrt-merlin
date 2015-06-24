@@ -20,8 +20,8 @@
  */
 #include "avcodec.h"
 #include "get_bits.h"
-#include "colorspace.h"
 #include "dsputil.h"
+#include "libavutil/colorspace.h"
 
 //#define DEBUG
 
@@ -34,8 +34,8 @@ static void yuv_a_to_rgba(const uint8_t *ycbcr, const uint8_t *alpha, uint32_t *
 
     for (i = num_values; i > 0; i--) {
         y = *ycbcr++;
-        cb = *ycbcr++;
         cr = *ycbcr++;
+        cb = *ycbcr++;
         YUV_TO_RGB1_CCIR(cb, cr);
         YUV_TO_RGB2_CCIR(r, g, b, y);
         *rgba++ = (*alpha++ << 24) | (r << 16) | (g << 8) | b;
@@ -120,6 +120,14 @@ static void guess_palette(uint32_t *rgba_palette,
                           uint8_t *alpha,
                           uint32_t subtitle_color)
 {
+    static const uint8_t level_map[4][4] = {
+        // this configuration (full range, lowest to highest) in tests
+        // seemed most common, so assume this
+        {0xff},
+        {0x00, 0xff},
+        {0x00, 0x80, 0xff},
+        {0x00, 0x55, 0xaa, 0xff},
+    };
     uint8_t color_used[16];
     int nb_opaque_colors, i, level, j, r, g, b;
 
@@ -138,18 +146,18 @@ static void guess_palette(uint32_t *rgba_palette,
     if (nb_opaque_colors == 0)
         return;
 
-    j = nb_opaque_colors;
+    j = 0;
     memset(color_used, 0, 16);
     for(i = 0; i < 4; i++) {
         if (alpha[i] != 0) {
             if (!color_used[colormap[i]])  {
-                level = (0xff * j) / nb_opaque_colors;
+                level = level_map[nb_opaque_colors][j];
                 r = (((subtitle_color >> 16) & 0xff) * level) >> 8;
                 g = (((subtitle_color >> 8) & 0xff) * level) >> 8;
                 b = (((subtitle_color >> 0) & 0xff) * level) >> 8;
                 rgba_palette[i] = b | (g << 8) | (r << 16) | ((alpha[i] * 17) << 24);
                 color_used[colormap[i]] = (i + 1);
-                j--;
+                j++;
             } else {
                 rgba_palette[i] = (rgba_palette[color_used[colormap[i]] - 1] & 0x00ffffff) |
                                     ((alpha[i] * 17) << 24);
@@ -173,7 +181,6 @@ static int decode_dvd_subtitles(AVSubtitle *sub_header,
 
     if (buf_size < 10)
         return -1;
-    memset(sub_header, 0, sizeof(*sub_header));
 
     if (AV_RB16(buf) == 0) {   /* HD subpicture with 4-byte offsets */
         big_offsets = 1;
@@ -190,7 +197,7 @@ static int decode_dvd_subtitles(AVSubtitle *sub_header,
     while (cmd_pos > 0 && cmd_pos < buf_size - 2 - offset_size) {
         date = AV_RB16(buf + cmd_pos);
         next_cmd_pos = READ_OFFSET(buf + cmd_pos + 2);
-        dprintf(NULL, "cmd_pos=0x%04x next=0x%04x date=%d\n",
+        av_dlog(NULL, "cmd_pos=0x%04x next=0x%04x date=%d\n",
                 cmd_pos, next_cmd_pos, date);
         pos = cmd_pos + 2 + offset_size;
         offset1 = -1;
@@ -198,7 +205,7 @@ static int decode_dvd_subtitles(AVSubtitle *sub_header,
         x1 = y1 = x2 = y2 = 0;
         while (pos < buf_size) {
             cmd = buf[pos++];
-            dprintf(NULL, "cmd=%02x\n", cmd);
+            av_dlog(NULL, "cmd=%02x\n", cmd);
             switch(cmd) {
             case 0x00:
                 /* menu subpicture */
@@ -231,7 +238,7 @@ static int decode_dvd_subtitles(AVSubtitle *sub_header,
                 alpha[1] = buf[pos + 1] >> 4;
                 alpha[0] = buf[pos + 1] & 0x0f;
                 pos += 2;
-            dprintf(NULL, "alpha=%x%x%x%x\n", alpha[0],alpha[1],alpha[2],alpha[3]);
+            av_dlog(NULL, "alpha=%x%x%x%x\n", alpha[0],alpha[1],alpha[2],alpha[3]);
                 break;
             case 0x05:
             case 0x85:
@@ -243,7 +250,7 @@ static int decode_dvd_subtitles(AVSubtitle *sub_header,
                 y2 = ((buf[pos + 4] & 0x0f) << 8) | buf[pos + 5];
                 if (cmd & 0x80)
                     is_8bit = 1;
-                dprintf(NULL, "x1=%d x2=%d y1=%d y2=%d\n", x1, x2, y1, y2);
+                av_dlog(NULL, "x1=%d x2=%d y1=%d y2=%d\n", x1, x2, y1, y2);
                 pos += 6;
                 break;
             case 0x06:
@@ -251,7 +258,7 @@ static int decode_dvd_subtitles(AVSubtitle *sub_header,
                     goto fail;
                 offset1 = AV_RB16(buf + pos);
                 offset2 = AV_RB16(buf + pos + 2);
-                dprintf(NULL, "offset1=0x%04x offset2=0x%04x\n", offset1, offset2);
+                av_dlog(NULL, "offset1=0x%04x offset2=0x%04x\n", offset1, offset2);
                 pos += 4;
                 break;
             case 0x86:
@@ -259,7 +266,7 @@ static int decode_dvd_subtitles(AVSubtitle *sub_header,
                     goto fail;
                 offset1 = AV_RB32(buf + pos);
                 offset2 = AV_RB32(buf + pos + 4);
-                dprintf(NULL, "offset1=0x%04x offset2=0x%04x\n", offset1, offset2);
+                av_dlog(NULL, "offset1=0x%04x offset2=0x%04x\n", offset1, offset2);
                 pos += 8;
                 break;
 
@@ -282,7 +289,7 @@ static int decode_dvd_subtitles(AVSubtitle *sub_header,
             case 0xff:
                 goto the_end;
             default:
-                dprintf(NULL, "unrecognised subpicture command 0x%x\n", cmd);
+                av_dlog(NULL, "unrecognised subpicture command 0x%x\n", cmd);
                 goto the_end;
             }
         }
@@ -460,7 +467,7 @@ static int dvdsub_decode(AVCodecContext *avctx,
 {
     const uint8_t *buf = avpkt->data;
     int buf_size = avpkt->size;
-    AVSubtitle *sub = (void *)data;
+    AVSubtitle *sub = data;
     int is_menu;
 
     is_menu = decode_dvd_subtitles(sub, buf, buf_size);
@@ -475,7 +482,7 @@ static int dvdsub_decode(AVCodecContext *avctx,
         goto no_subtitle;
 
 #if defined(DEBUG)
-    dprintf(NULL, "start=%d ms end =%d ms\n",
+    av_dlog(NULL, "start=%d ms end =%d ms\n",
             sub->start_display_time,
             sub->end_display_time);
     ppm_save("/tmp/a.ppm", sub->rects[0]->pict.data[0],
@@ -486,7 +493,7 @@ static int dvdsub_decode(AVCodecContext *avctx,
     return buf_size;
 }
 
-AVCodec dvdsub_decoder = {
+AVCodec ff_dvdsub_decoder = {
     "dvdsub",
     AVMEDIA_TYPE_SUBTITLE,
     CODEC_ID_DVD_SUBTITLE,

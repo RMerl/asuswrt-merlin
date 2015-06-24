@@ -26,4 +26,7 @@ libavutil/libavutil.so.50
 libavutil/libavutil.ver
 libswscale/libswscale-uninstalled.pc
 libswscale/libswscale.pc
-version.h
+config.fate
+libavfilter/libavfilter-uninstalled.pc
+libavfilter/libavfilter.pc
+

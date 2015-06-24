@@ -18,8 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/intreadwrite.h"
 #include "avcodec.h"
-#include "mpegaudio.h"
+#include "mpegaudiodecheader.h"
 #include "mpegaudiodata.h"
 
 
@@ -89,7 +90,7 @@ static int mp3_header_decompress(AVBitStreamFilterContext *bsfc, AVCodecContext 
     return 1;
 }
 
-AVBitStreamFilter mp3_header_decompress_bsf={
+AVBitStreamFilter ff_mp3_header_decompress_bsf={
     "mp3decomp",
     0,
     mp3_header_decompress,

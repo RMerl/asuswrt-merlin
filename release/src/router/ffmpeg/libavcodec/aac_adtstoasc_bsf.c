@@ -20,7 +20,7 @@
  */
 
 #include "avcodec.h"
-#include "aac_parser.h"
+#include "aacadtsdec.h"
 #include "put_bits.h"
 #include "get_bits.h"
 #include "mpeg4audio.h"
@@ -72,7 +72,7 @@ static int aac_adtstoasc_filter(AVBitStreamFilterContext *bsfc,
         int            pce_size = 0;
         uint8_t        pce_data[MAX_PCE_SIZE];
         if (!hdr.chan_config) {
-            init_get_bits(&gb, buf, buf_size);
+            init_get_bits(&gb, buf, buf_size * 8);
             if (get_bits(&gb, 3) != 5) {
                 av_log_missing_feature(avctx, "PCE based channel configuration, where the PCE is not the first syntax element is", 0);
                 return -1;
@@ -107,7 +107,7 @@ static int aac_adtstoasc_filter(AVBitStreamFilterContext *bsfc,
     return 0;
 }
 
-AVBitStreamFilter aac_adtstoasc_bsf = {
+AVBitStreamFilter ff_aac_adtstoasc_bsf = {
     "aac_adtstoasc",
     sizeof(AACBSFContext),
     aac_adtstoasc_filter,

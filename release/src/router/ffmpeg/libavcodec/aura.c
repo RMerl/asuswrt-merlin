@@ -39,6 +39,7 @@ static av_cold int aura_decode_init(AVCodecContext *avctx)
     if (avctx->width & 0x3)
         return -1;
     avctx->pix_fmt = PIX_FMT_YUV422P;
+    avcodec_get_frame_defaults(&s->frame);
 
     return 0;
 }
@@ -122,7 +123,7 @@ static av_cold int aura_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec aura2_decoder = {
+AVCodec ff_aura2_decoder = {
     "aura2",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_AURA2,

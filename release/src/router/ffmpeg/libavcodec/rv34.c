@@ -62,8 +62,10 @@ static const int rv34_mb_type_to_lavc[12] = {
 
 static RV34VLC intra_vlcs[NUM_INTRA_TABLES], inter_vlcs[NUM_INTER_TABLES];
 
+static int rv34_decode_mv(RV34DecContext *r, int block_type);
+
 /**
- * @defgroup vlc RV30/40 VLC generating functions
+ * @name RV30/40 VLC generating functions
  * @{
  */
 
@@ -103,8 +105,8 @@ static void rv34_gen_vlc(const uint8_t *bits, int size, VLC *vlc, const uint8_t 
 {
     int i;
     int counts[17] = {0}, codes[17];
-    uint16_t cw[size], syms[size];
-    uint8_t bits2[size];
+    uint16_t cw[MAX_VLC_SIZE], syms[MAX_VLC_SIZE];
+    uint8_t bits2[MAX_VLC_SIZE];
     int maxbits = 0, realsize = 0;
 
     for(i = 0; i < size; i++){
@@ -171,7 +173,7 @@ static av_cold void rv34_init_tables(void)
 
 
 /**
- * @defgroup transform RV30/40 inverse transform functions
+ * @name RV30/40 inverse transform functions
  * @{
  */
 
@@ -246,7 +248,7 @@ static void rv34_inv_transform_noround(DCTELEM *block){
 
 
 /**
- * @defgroup block RV30/40 4x4 block decoding functions
+ * @name RV30/40 4x4 block decoding functions
  * @{
  */
 
@@ -393,7 +395,7 @@ static inline void rv34_dequant4x4_16x16(DCTELEM *block, int Qdc, int Q)
 
 
 /**
- * @defgroup bitstream RV30/40 bitstream parsing
+ * @name RV30/40 bitstream parsing
  * @{
  */
 
@@ -432,10 +434,76 @@ static inline int rv34_decode_dquant(GetBitContext *gb, int quant)
         return get_bits(gb, 5);
 }
 
+/**
+ * Decode macroblock header and return CBP in case of success, -1 otherwise.
+ */
+static int rv34_decode_mb_header(RV34DecContext *r, int8_t *intra_types)
+{
+    MpegEncContext *s = &r->s;
+    GetBitContext *gb = &s->gb;
+    int mb_pos = s->mb_x + s->mb_y * s->mb_stride;
+    int i, t;
+
+    if(!r->si.type){
+        r->is16 = get_bits1(gb);
+        if(!r->is16 && !r->rv30){
+            if(!get_bits1(gb))
+                av_log(s->avctx, AV_LOG_ERROR, "Need DQUANT\n");
+        }
+        s->current_picture_ptr->mb_type[mb_pos] = r->is16 ? MB_TYPE_INTRA16x16 : MB_TYPE_INTRA;
+        r->block_type = r->is16 ? RV34_MB_TYPE_INTRA16x16 : RV34_MB_TYPE_INTRA;
+    }else{
+        r->block_type = r->decode_mb_info(r);
+        if(r->block_type == -1)
+            return -1;
+        s->current_picture_ptr->mb_type[mb_pos] = rv34_mb_type_to_lavc[r->block_type];
+        r->mb_type[mb_pos] = r->block_type;
+        if(r->block_type == RV34_MB_SKIP){
+            if(s->pict_type == AV_PICTURE_TYPE_P)
+                r->mb_type[mb_pos] = RV34_MB_P_16x16;
+            if(s->pict_type == AV_PICTURE_TYPE_B)
+                r->mb_type[mb_pos] = RV34_MB_B_DIRECT;
+        }
+        r->is16 = !!IS_INTRA16x16(s->current_picture_ptr->mb_type[mb_pos]);
+        rv34_decode_mv(r, r->block_type);
+        if(r->block_type == RV34_MB_SKIP){
+            fill_rectangle(intra_types, 4, 4, r->intra_types_stride, 0, sizeof(intra_types[0]));
+            return 0;
+        }
+        r->chroma_vlc = 1;
+        r->luma_vlc   = 0;
+    }
+    if(IS_INTRA(s->current_picture_ptr->mb_type[mb_pos])){
+        if(r->is16){
+            t = get_bits(gb, 2);
+            fill_rectangle(intra_types, 4, 4, r->intra_types_stride, t, sizeof(intra_types[0]));
+            r->luma_vlc   = 2;
+        }else{
+            if(r->decode_intra_types(r, gb, intra_types) < 0)
+                return -1;
+            r->luma_vlc   = 1;
+        }
+        r->chroma_vlc = 0;
+        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 0);
+    }else{
+        for(i = 0; i < 16; i++)
+            intra_types[(i & 3) + (i>>2) * r->intra_types_stride] = 0;
+        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 1);
+        if(r->mb_type[mb_pos] == RV34_MB_P_MIX16x16){
+            r->is16 = 1;
+            r->chroma_vlc = 1;
+            r->luma_vlc   = 2;
+            r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 0);
+        }
+    }
+
+    return rv34_decode_cbp(gb, r->cur_vlcs, r->is16);
+}
+
 /** @} */ //bitstream functions
 
 /**
- * @defgroup mv motion vector related code (prediction, reconstruction, motion compensation)
+ * @name motion vector related code (prediction, reconstruction, motion compensation)
  * @{
  */
 
@@ -718,12 +786,12 @@ static inline void rv34_mc(RV34DecContext *r, const int block_type,
         uint8_t *uvbuf= s->edge_emu_buffer + 22 * s->linesize;
 
         srcY -= 2 + 2*s->linesize;
-        ff_emulated_edge_mc(s->edge_emu_buffer, srcY, s->linesize, (width<<3)+6, (height<<3)+6,
+        s->dsp.emulated_edge_mc(s->edge_emu_buffer, srcY, s->linesize, (width<<3)+6, (height<<3)+6,
                             src_x - 2, src_y - 2, s->h_edge_pos, s->v_edge_pos);
         srcY = s->edge_emu_buffer + 2 + 2*s->linesize;
-        ff_emulated_edge_mc(uvbuf     , srcU, s->uvlinesize, (width<<2)+1, (height<<2)+1,
+        s->dsp.emulated_edge_mc(uvbuf     , srcU, s->uvlinesize, (width<<2)+1, (height<<2)+1,
                             uvsrc_x, uvsrc_y, s->h_edge_pos >> 1, s->v_edge_pos >> 1);
-        ff_emulated_edge_mc(uvbuf + 16, srcV, s->uvlinesize, (width<<2)+1, (height<<2)+1,
+        s->dsp.emulated_edge_mc(uvbuf + 16, srcV, s->uvlinesize, (width<<2)+1, (height<<2)+1,
                             uvsrc_x, uvsrc_y, s->h_edge_pos >> 1, s->v_edge_pos >> 1);
         srcU = uvbuf;
         srcV = uvbuf + 16;
@@ -816,7 +884,7 @@ static int rv34_decode_mv(RV34DecContext *r, int block_type)
         ZERO8x2(s->current_picture_ptr->motion_val[0][s->mb_x * 2 + s->mb_y * 2 * s->b8_stride], s->b8_stride);
         return 0;
     case RV34_MB_SKIP:
-        if(s->pict_type == FF_P_TYPE){
+        if(s->pict_type == AV_PICTURE_TYPE_P){
             ZERO8x2(s->current_picture_ptr->motion_val[0][s->mb_x * 2 + s->mb_y * 2 * s->b8_stride], s->b8_stride);
             rv34_mc_1mv (r, block_type, 0, 0, 0, 2, 2, 0);
             break;
@@ -885,7 +953,7 @@ static int rv34_decode_mv(RV34DecContext *r, int block_type)
 /** @} */ // mv group
 
 /**
- * @defgroup recons Macroblock reconstruction functions
+ * @name Macroblock reconstruction functions
  * @{
  */
 /** mapping of RV30/40 intra prediction types to standard H.264 types */
@@ -1027,79 +1095,6 @@ static void rv34_output_macroblock(RV34DecContext *r, int8_t *intra_types, int c
     }
 }
 
-/** @} */ // recons group
-
-/**
- * @addtogroup bitstream
- * Decode macroblock header and return CBP in case of success, -1 otherwise.
- */
-static int rv34_decode_mb_header(RV34DecContext *r, int8_t *intra_types)
-{
-    MpegEncContext *s = &r->s;
-    GetBitContext *gb = &s->gb;
-    int mb_pos = s->mb_x + s->mb_y * s->mb_stride;
-    int i, t;
-
-    if(!r->si.type){
-        r->is16 = get_bits1(gb);
-        if(!r->is16 && !r->rv30){
-            if(!get_bits1(gb))
-                av_log(s->avctx, AV_LOG_ERROR, "Need DQUANT\n");
-        }
-        s->current_picture_ptr->mb_type[mb_pos] = r->is16 ? MB_TYPE_INTRA16x16 : MB_TYPE_INTRA;
-        r->block_type = r->is16 ? RV34_MB_TYPE_INTRA16x16 : RV34_MB_TYPE_INTRA;
-    }else{
-        r->block_type = r->decode_mb_info(r);
-        if(r->block_type == -1)
-            return -1;
-        s->current_picture_ptr->mb_type[mb_pos] = rv34_mb_type_to_lavc[r->block_type];
-        r->mb_type[mb_pos] = r->block_type;
-        if(r->block_type == RV34_MB_SKIP){
-            if(s->pict_type == FF_P_TYPE)
-                r->mb_type[mb_pos] = RV34_MB_P_16x16;
-            if(s->pict_type == FF_B_TYPE)
-                r->mb_type[mb_pos] = RV34_MB_B_DIRECT;
-        }
-        r->is16 = !!IS_INTRA16x16(s->current_picture_ptr->mb_type[mb_pos]);
-        rv34_decode_mv(r, r->block_type);
-        if(r->block_type == RV34_MB_SKIP){
-            fill_rectangle(intra_types, 4, 4, r->intra_types_stride, 0, sizeof(intra_types[0]));
-            return 0;
-        }
-        r->chroma_vlc = 1;
-        r->luma_vlc   = 0;
-    }
-    if(IS_INTRA(s->current_picture_ptr->mb_type[mb_pos])){
-        if(r->is16){
-            t = get_bits(gb, 2);
-            fill_rectangle(intra_types, 4, 4, r->intra_types_stride, t, sizeof(intra_types[0]));
-            r->luma_vlc   = 2;
-        }else{
-            if(r->decode_intra_types(r, gb, intra_types) < 0)
-                return -1;
-            r->luma_vlc   = 1;
-        }
-        r->chroma_vlc = 0;
-        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 0);
-    }else{
-        for(i = 0; i < 16; i++)
-            intra_types[(i & 3) + (i>>2) * r->intra_types_stride] = 0;
-        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 1);
-        if(r->mb_type[mb_pos] == RV34_MB_P_MIX16x16){
-            r->is16 = 1;
-            r->chroma_vlc = 1;
-            r->luma_vlc   = 2;
-            r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 0);
-        }
-    }
-
-    return rv34_decode_cbp(gb, r->cur_vlcs, r->is16);
-}
-
-/**
- * @addtogroup recons
- * @{
- */
 /**
  * mask for retrieving all bits in coded block pattern
  * corresponding to one 8x8 block
@@ -1108,6 +1103,8 @@ static int rv34_decode_mb_header(RV34DecContext *r, int8_t *intra_types)
 
 #define U_CBP_MASK 0x0F0000
 #define V_CBP_MASK 0xF00000
+
+/** @} */ // recons group
 
 
 static void rv34_apply_differences(RV34DecContext *r, int cbp)
@@ -1142,7 +1139,7 @@ static int rv34_set_deblock_coef(RV34DecContext *r)
     MpegEncContext *s = &r->s;
     int hmvmask = 0, vmvmask = 0, i, j;
     int midx = s->mb_x * 2 + s->mb_y * 2 * s->b8_stride;
-    int16_t (*motion_val)[2] = s->current_picture_ptr->motion_val[0][midx];
+    int16_t (*motion_val)[2] = &s->current_picture_ptr->motion_val[0][midx];
     for(j = 0; j < 16; j += 8){
         for(i = 0; i < 2; i++){
             if(is_mv_diff_gt_3(motion_val + i, 1))
@@ -1197,7 +1194,7 @@ static int rv34_decode_macroblock(RV34DecContext *r, int8_t *intra_types)
     cbp = cbp2 = rv34_decode_mb_header(r, intra_types);
     r->cbp_luma  [mb_pos] = cbp;
     r->cbp_chroma[mb_pos] = cbp >> 16;
-    if(s->pict_type == FF_I_TYPE)
+    if(s->pict_type == AV_PICTURE_TYPE_I)
         r->deblock_coefs[mb_pos] = 0xFFFF;
     else
         r->deblock_coefs[mb_pos] = rv34_set_deblock_coef(r) | r->cbp_luma[mb_pos];
@@ -1283,6 +1280,14 @@ static int rv34_decode_slice(RV34DecContext *r, int end, const uint8_t* buf, int
 
     if ((s->mb_x == 0 && s->mb_y == 0) || s->current_picture_ptr==NULL) {
         if(s->width != r->si.width || s->height != r->si.height){
+
+            if (HAVE_THREADS &&
+                (s->avctx->active_thread_type & FF_THREAD_FRAME)) {
+                av_log_missing_feature(s->avctx, "Width/height changing with "
+                                       "frame threading is", 0);
+                return AVERROR_PATCHWELCOME;
+            }
+
             av_log(s->avctx, AV_LOG_DEBUG, "Changing dimensions to %dx%d\n", r->si.width,r->si.height);
             MPV_common_end(s);
             s->width  = r->si.width;
@@ -1298,16 +1303,27 @@ static int rv34_decode_slice(RV34DecContext *r, int end, const uint8_t* buf, int
             r->cbp_chroma = av_realloc(r->cbp_chroma, r->s.mb_stride * r->s.mb_height * sizeof(*r->cbp_chroma));
             r->deblock_coefs = av_realloc(r->deblock_coefs, r->s.mb_stride * r->s.mb_height * sizeof(*r->deblock_coefs));
         }
-        s->pict_type = r->si.type ? r->si.type : FF_I_TYPE;
+        s->pict_type = r->si.type ? r->si.type : AV_PICTURE_TYPE_I;
         if(MPV_frame_start(s, s->avctx) < 0)
             return -1;
         ff_er_frame_start(s);
         r->cur_pts = r->si.pts;
-        if(s->pict_type != FF_B_TYPE){
+        if(s->pict_type != AV_PICTURE_TYPE_B){
             r->last_pts = r->next_pts;
             r->next_pts = r->cur_pts;
         }
         s->mb_x = s->mb_y = 0;
+    } else {
+        int slice_type = r->si.type ? r->si.type : AV_PICTURE_TYPE_I;
+
+        if (slice_type != s->pict_type) {
+            av_log(s->avctx, AV_LOG_ERROR, "Slice type mismatch\n");
+            return AVERROR_INVALIDDATA;
+        }
+        if (s->width != r->si.width || s->height != r->si.height) {
+            av_log(s->avctx, AV_LOG_ERROR, "Size mismatch\n");
+            return AVERROR_INVALIDDATA;
+        }
     }
 
     r->si.end = end;
@@ -1384,7 +1400,7 @@ av_cold int ff_rv34_decode_init(AVCodecContext *avctx)
     if (MPV_common_init(s) < 0)
         return -1;
 
-    ff_h264_pred_init(&r->h, CODEC_ID_RV40);
+    ff_h264_pred_init(&r->h, CODEC_ID_RV40, 8);
 
     r->intra_types_stride = 4*s->mb_stride + 4;
     r->intra_types_hist = av_malloc(r->intra_types_stride * 4 * 2 * sizeof(*r->intra_types_hist));
@@ -1439,30 +1455,41 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
         slice_count = (*buf++) + 1;
         slices_hdr = buf + 4;
         buf += 8 * slice_count;
+        buf_size -= 1 + 8 * slice_count;
     }else
         slice_count = avctx->slice_count;
 
     //parse first slice header to check whether this frame can be decoded
-    if(get_slice_offset(avctx, slices_hdr, 0) > buf_size){
-        av_log(avctx, AV_LOG_ERROR, "Slice offset is greater than frame size\n");
-        return -1;
+    if(get_slice_offset(avctx, slices_hdr, 0) < 0 ||
+       get_slice_offset(avctx, slices_hdr, 0) > buf_size){
+        av_log(avctx, AV_LOG_ERROR, "Slice offset is invalid\n");
+        return AVERROR_INVALIDDATA;
     }
-    init_get_bits(&s->gb, buf+get_slice_offset(avctx, slices_hdr, 0), buf_size-get_slice_offset(avctx, slices_hdr, 0));
+    init_get_bits(&s->gb, buf+get_slice_offset(avctx, slices_hdr, 0), (buf_size-get_slice_offset(avctx, slices_hdr, 0))*8);
     if(r->parse_slice_header(r, &r->s.gb, &si) < 0 || si.start){
         av_log(avctx, AV_LOG_ERROR, "First slice header is incorrect\n");
-        return -1;
+        return AVERROR_INVALIDDATA;
     }
-    if((!s->last_picture_ptr || !s->last_picture_ptr->data[0]) && si.type == FF_B_TYPE)
-        return -1;
+    if ((!s->last_picture_ptr || !s->last_picture_ptr->data[0]) &&
+        si.type == AV_PICTURE_TYPE_B) {
+        av_log(avctx, AV_LOG_ERROR, "Invalid decoder state: B-frame without "
+               "reference data.\n");
+        return AVERROR_INVALIDDATA;
+    }
+
+#if FF_API_HURRY_UP
     /* skip b frames if we are in a hurry */
     if(avctx->hurry_up && si.type==FF_B_TYPE) return buf_size;
-    if(   (avctx->skip_frame >= AVDISCARD_NONREF && si.type==FF_B_TYPE)
-       || (avctx->skip_frame >= AVDISCARD_NONKEY && si.type!=FF_I_TYPE)
-       ||  avctx->skip_frame >= AVDISCARD_ALL)
-        return buf_size;
+#endif
+
+    if(   (avctx->skip_frame >= AVDISCARD_NONREF && si.type==AV_PICTURE_TYPE_B)
+       || (avctx->skip_frame >= AVDISCARD_NONKEY && si.type!=AV_PICTURE_TYPE_I)
+       ||  avctx->skip_frame >= AVDISCARD_ALL)        return avpkt->size;
+#if FF_API_HURRY_UP
     /* skip everything if we are in a hurry>=5 */
     if(avctx->hurry_up>=5)
         return buf_size;
+#endif
 
     for(i=0; i<slice_count; i++){
         int offset= get_slice_offset(avctx, slices_hdr, i);
@@ -1472,13 +1499,18 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
         else
             size= get_slice_offset(avctx, slices_hdr, i+1) - offset;
 
-        if(offset > buf_size){
-            av_log(avctx, AV_LOG_ERROR, "Slice offset is greater than frame size\n");
+        if(offset < 0 || offset > buf_size){
+            av_log(avctx, AV_LOG_ERROR, "Slice offset is invalid\n");
             break;
         }
 
         r->si.end = s->mb_width * s->mb_height;
         if(i+1 < slice_count){
+            if (get_slice_offset(avctx, slices_hdr, i+1) < 0 ||
+                get_slice_offset(avctx, slices_hdr, i+1) > buf_size) {
+                av_log(avctx, AV_LOG_ERROR, "Slice offset is invalid\n");
+                break;
+            }
             init_get_bits(&s->gb, buf+get_slice_offset(avctx, slices_hdr, i+1), (buf_size-get_slice_offset(avctx, slices_hdr, i+1))*8);
             if(r->parse_slice_header(r, &r->s.gb, &si) < 0){
                 if(i+2 < slice_count)
@@ -1488,18 +1520,22 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
             }else
                 r->si.end = si.start;
         }
+        if (size < 0 || size > buf_size - offset) {
+            av_log(avctx, AV_LOG_ERROR, "Slice size is invalid\n");
+            break;
+        }
         last = rv34_decode_slice(r, r->si.end, buf + offset, size);
         s->mb_num_left = r->s.mb_x + r->s.mb_y*r->s.mb_width - r->si.start;
         if(last)
             break;
     }
 
-    if(last){
+    if(last && s->current_picture_ptr){
         if(r->loop_filter)
             r->loop_filter(r, s->mb_height - 1);
         ff_er_frame_end(s);
         MPV_frame_end(s);
-        if (s->pict_type == FF_B_TYPE || s->low_delay) {
+        if (s->pict_type == AV_PICTURE_TYPE_B || s->low_delay) {
             *pict= *(AVFrame*)s->current_picture_ptr;
         } else if (s->last_picture_ptr != NULL) {
             *pict= *(AVFrame*)s->last_picture_ptr;
@@ -1511,7 +1547,7 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
         }
         s->current_picture_ptr= NULL; //so we can detect if frame_end wasnt called (find some nicer solution...)
     }
-    return buf_size;
+    return avpkt->size;
 }
 
 av_cold int ff_rv34_decode_end(AVCodecContext *avctx)

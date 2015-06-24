@@ -20,7 +20,7 @@
  */
 
 /**
- * @file: dpcm.c
+ * @file
  * Assorted DPCM (differential pulse code modulation) audio codecs
  * by Mike Melanson (melanson@pcisys.net)
  * Xan DPCM decoder by Mario Brito (mbrito@student.dei.uc.pt)
@@ -155,7 +155,7 @@ static av_cold int dpcm_decode_init(AVCodecContext *avctx)
         break;
     }
 
-    avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
     return 0;
 }
 
@@ -169,6 +169,7 @@ static int dpcm_decode_frame(AVCodecContext *avctx,
     int in, out = 0;
     int predictor[2];
     int channel_number = 0;
+    int stereo = s->channels - 1;
     short *output_samples = data;
     int shift[2];
     unsigned char byte;
@@ -176,6 +177,9 @@ static int dpcm_decode_frame(AVCodecContext *avctx,
 
     if (!buf_size)
         return 0;
+
+    if (stereo && (buf_size & 1))
+        buf_size--;
 
     // almost every DPCM variant expands one byte of data into two
     if(*data_size/2 < buf_size)
@@ -295,11 +299,11 @@ static int dpcm_decode_frame(AVCodecContext *avctx,
     }
 
     *data_size = out * sizeof(short);
-    return buf_size;
+    return avpkt->size;
 }
 
 #define DPCM_DECODER(id, name, long_name_)      \
-AVCodec name ## _decoder = {                    \
+AVCodec ff_ ## name ## _decoder = {             \
     #name,                                      \
     AVMEDIA_TYPE_AUDIO,                         \
     id,                                         \
@@ -309,7 +313,7 @@ AVCodec name ## _decoder = {                    \
     NULL,                                       \
     dpcm_decode_frame,                          \
     .long_name = NULL_IF_CONFIG_SMALL(long_name_), \
-};
+}
 
 DPCM_DECODER(CODEC_ID_INTERPLAY_DPCM, interplay_dpcm, "DPCM Interplay");
 DPCM_DECODER(CODEC_ID_ROQ_DPCM, roq_dpcm, "DPCM id RoQ");

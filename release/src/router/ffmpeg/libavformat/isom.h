@@ -25,7 +25,7 @@
 #define AVFORMAT_ISOM_H
 
 #include "avio.h"
-#include "riff.h"
+#include "internal.h"
 #include "dv.h"
 
 /* isom.c */
@@ -88,7 +88,7 @@ typedef struct {
 } MOVTrackExt;
 
 typedef struct MOVStreamContext {
-    ByteIOContext *pb;
+    AVIOContext *pb;
     int ffindex;          ///< AVStream index
     int next_chunk;
     unsigned int chunk_count;
@@ -109,7 +109,7 @@ typedef struct MOVStreamContext {
     unsigned int keyframe_count;
     int *keyframes;
     int time_scale;
-    int time_offset;      ///< time offset of the first edit list entry
+    int64_t time_offset;  ///< time offset of the first edit list entry
     int current_sample;
     unsigned int bytes_per_frame;
     unsigned int samples_per_frame;
@@ -141,8 +141,20 @@ typedef struct MOVContext {
     int chapter_track;
 } MOVContext;
 
-int ff_mp4_read_descr_len(ByteIOContext *pb);
-int ff_mov_read_esds(AVFormatContext *fc, ByteIOContext *pb, MOVAtom atom);
+int ff_mp4_read_descr_len(AVIOContext *pb);
+int ff_mp4_read_descr(AVFormatContext *fc, AVIOContext *pb, int *tag);
+int ff_mp4_read_dec_config_descr(AVFormatContext *fc, AVStream *st, AVIOContext *pb);
+
+#define MP4IODescrTag                   0x02
+#define MP4ESDescrTag                   0x03
+#define MP4DecConfigDescrTag            0x04
+#define MP4DecSpecificDescrTag          0x05
+
+int ff_mov_read_esds(AVFormatContext *fc, AVIOContext *pb, MOVAtom atom);
 enum CodecID ff_mov_get_lpcm_codec_id(int bps, int flags);
+
+int ff_mov_read_stsd_entries(MOVContext *c, AVIOContext *pb, int entries);
+void ff_mov_read_chan(AVFormatContext *s, int64_t size, AVCodecContext *codec);
+void ff_mov_write_chan(AVIOContext *pb, int64_t channel_layout);
 
 #endif /* AVFORMAT_ISOM_H */

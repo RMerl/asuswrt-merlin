@@ -33,31 +33,31 @@ static const char AMRWB_header [] = "#!AMR-WB\n";
 #if CONFIG_AMR_MUXER
 static int amr_write_header(AVFormatContext *s)
 {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVCodecContext *enc = s->streams[0]->codec;
 
     s->priv_data = NULL;
 
     if (enc->codec_id == CODEC_ID_AMR_NB)
     {
-        put_tag(pb, AMR_header);       /* magic number */
+        avio_write(pb, AMR_header,   sizeof(AMR_header)   - 1); /* magic number */
     }
     else if(enc->codec_id == CODEC_ID_AMR_WB)
     {
-        put_tag(pb, AMRWB_header);       /* magic number */
+        avio_write(pb, AMRWB_header, sizeof(AMRWB_header) - 1); /* magic number */
     }
     else
     {
         return -1;
     }
-    put_flush_packet(pb);
+    avio_flush(pb);
     return 0;
 }
 
 static int amr_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
-    put_buffer(s->pb, pkt->data, pkt->size);
-    put_flush_packet(s->pb);
+    avio_write(s->pb, pkt->data, pkt->size);
+    avio_flush(s->pb);
     return 0;
 }
 #endif /* CONFIG_AMR_MUXER */
@@ -78,11 +78,11 @@ static int amr_probe(AVProbeData *p)
 static int amr_read_header(AVFormatContext *s,
                            AVFormatParameters *ap)
 {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVStream *st;
     uint8_t header[9];
 
-    get_buffer(pb, header, 6);
+    avio_read(pb, header, 6);
 
     st = av_new_stream(s, 0);
     if (!st)
@@ -91,7 +91,7 @@ static int amr_read_header(AVFormatContext *s,
     }
     if(memcmp(header,AMR_header,6)!=0)
     {
-        get_buffer(pb, header+6, 3);
+        avio_read(pb, header+6, 3);
         if(memcmp(header,AMRWB_header,9)!=0)
         {
             return -1;
@@ -100,12 +100,14 @@ static int amr_read_header(AVFormatContext *s,
         st->codec->codec_tag = MKTAG('s', 'a', 'w', 'b');
         st->codec->codec_id = CODEC_ID_AMR_WB;
         st->codec->sample_rate = 16000;
+        st->codec->frame_size = 320;
     }
     else
     {
         st->codec->codec_tag = MKTAG('s', 'a', 'm', 'r');
         st->codec->codec_id = CODEC_ID_AMR_NB;
         st->codec->sample_rate = 8000;
+        st->codec->frame_size = 160;
     }
     st->codec->channels = 1;
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
@@ -119,6 +121,7 @@ static int amr_read_packet(AVFormatContext *s,
 {
     AVCodecContext *enc = s->streams[0]->codec;
     int read, size = 0, toc, mode;
+    int64_t pos = avio_tell(s->pb);
 
     if (url_feof(s->pb))
     {
@@ -126,7 +129,7 @@ static int amr_read_packet(AVFormatContext *s,
     }
 
 //FIXME this is wrong, this should rather be in a AVParset
-    toc=get_byte(s->pb);
+    toc=avio_r8(s->pb);
     mode = (toc >> 3) & 0x0F;
 
     if (enc->codec_id == CODEC_ID_AMR_NB)
@@ -151,11 +154,14 @@ static int amr_read_packet(AVFormatContext *s,
         return AVERROR(EIO);
     }
 
+    /* Both AMR formats have 50 frames per second */
+    s->streams[0]->codec->bit_rate = size*8*50;
+
     pkt->stream_index = 0;
-    pkt->pos= url_ftell(s->pb);
+    pkt->pos = pos;
     pkt->data[0]=toc;
     pkt->duration= enc->codec_id == CODEC_ID_AMR_NB ? 160 : 320;
-    read = get_buffer(s->pb, pkt->data+1, size-1);
+    read = avio_read(s->pb, pkt->data+1, size-1);
 
     if (read != size-1)
     {
@@ -167,7 +173,7 @@ static int amr_read_packet(AVFormatContext *s,
 }
 
 #if CONFIG_AMR_DEMUXER
-AVInputFormat amr_demuxer = {
+AVInputFormat ff_amr_demuxer = {
     "amr",
     NULL_IF_CONFIG_SMALL("3GPP AMR file format"),
     0, /*priv_data_size*/
@@ -175,11 +181,12 @@ AVInputFormat amr_demuxer = {
     amr_read_header,
     amr_read_packet,
     NULL,
+    .flags = AVFMT_GENERIC_INDEX,
 };
 #endif
 
 #if CONFIG_AMR_MUXER
-AVOutputFormat amr_muxer = {
+AVOutputFormat ff_amr_muxer = {
     "amr",
     NULL_IF_CONFIG_SMALL("3GPP AMR file format"),
     "audio/amr",

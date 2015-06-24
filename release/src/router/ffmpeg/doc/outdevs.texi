@@ -1,0 +1,73 @@
+@chapter Output Devices
+@c man begin OUTPUT DEVICES
+
+Output devices are configured elements in FFmpeg which allow to write
+multimedia data to an output device attached to your system.
+
+When you configure your FFmpeg build, all the supported output devices
+are enabled by default. You can list all available ones using the
+configure option "--list-outdevs".
+
+You can disable all the output devices using the configure option
+"--disable-outdevs", and selectively enable an output device using the
+option "--enable-outdev=@var{OUTDEV}", or you can disable a particular
+input device using the option "--disable-outdev=@var{OUTDEV}".
+
+The option "-formats" of the ff* tools will display the list of
+enabled output devices (amongst the muxers).
+
+A description of the currently available output devices follows.
+
+@section alsa
+
+ALSA (Advanced Linux Sound Architecture) output device.
+
+@section oss
+
+OSS (Open Sound System) output device.
+
+@section sdl
+
+SDL (Simple Directmedia Layer) output device.
+
+This output devices allows to show a video stream in an SDL
+window. Only one SDL window is allowed per application, so you can
+have only one instance of this output device in an application.
+
+To enable this output device you need libsdl installed on your system
+when configuring your build.
+
+For more information about SDL, check:
+@url{http://www.libsdl.org/}
+
+@subsection Options
+
+@table @option
+
+@item window_title
+Set the SDL window title, if not specified default to the filename
+specified for the output device.
+
+@item icon_title
+Set the name of the iconified SDL window, if not specified it is set
+to the same value of @var{window_title}.
+
+@item window_size
+Set the SDL window size, can be a string of the form
+@var{width}x@var{height} or a video size abbreviation.
+If not specified it defaults to the size of the input video.
+@end table
+
+@subsection Examples
+
+The following command shows the @file{ffmpeg} output is an
+SDL window, forcing its size to the qcif format:
+@example
+ffmpeg -i INPUT -vcodec rawvideo -pix_fmt yuv420p -window_size qcif -f sdl "SDL output"
+@end example
+
+@section sndio
+
+sndio audio output device.
+
+@c man end OUTPUT DEVICES

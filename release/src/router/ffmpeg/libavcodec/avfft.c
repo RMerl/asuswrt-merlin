@@ -19,6 +19,8 @@
 #include "libavutil/mem.h"
 #include "avfft.h"
 #include "fft.h"
+#include "rdft.h"
+#include "dct.h"
 
 /* FFT */
 
@@ -26,8 +28,8 @@ FFTContext *av_fft_init(int nbits, int inverse)
 {
     FFTContext *s = av_malloc(sizeof(*s));
 
-    if (s)
-        ff_fft_init(s, nbits, inverse);
+    if (s && ff_fft_init(s, nbits, inverse))
+        av_freep(&s);
 
     return s;
 }
@@ -56,8 +58,8 @@ FFTContext *av_mdct_init(int nbits, int inverse, double scale)
 {
     FFTContext *s = av_malloc(sizeof(*s));
 
-    if (s)
-        ff_mdct_init(s, nbits, inverse, scale);
+    if (s && ff_mdct_init(s, nbits, inverse, scale))
+        av_freep(&s);
 
     return s;
 }
@@ -93,15 +95,15 @@ RDFTContext *av_rdft_init(int nbits, enum RDFTransformType trans)
 {
     RDFTContext *s = av_malloc(sizeof(*s));
 
-    if (s)
-        ff_rdft_init(s, nbits, trans);
+    if (s && ff_rdft_init(s, nbits, trans))
+        av_freep(&s);
 
     return s;
 }
 
 void av_rdft_calc(RDFTContext *s, FFTSample *data)
 {
-    ff_rdft_calc(s, data);
+    s->rdft_calc(s, data);
 }
 
 void av_rdft_end(RDFTContext *s)
@@ -120,15 +122,15 @@ DCTContext *av_dct_init(int nbits, enum DCTTransformType inverse)
 {
     DCTContext *s = av_malloc(sizeof(*s));
 
-    if (s)
-        ff_dct_init(s, nbits, inverse);
+    if (s && ff_dct_init(s, nbits, inverse))
+        av_freep(&s);
 
     return s;
 }
 
 void av_dct_calc(DCTContext *s, FFTSample *data)
 {
-    ff_dct_calc(s, data);
+    s->dct_calc(s, data);
 }
 
 void av_dct_end(DCTContext *s)

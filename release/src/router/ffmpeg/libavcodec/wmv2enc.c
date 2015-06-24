@@ -72,7 +72,7 @@ int ff_wmv2_encode_picture_header(MpegEncContext * s, int picture_number)
     Wmv2Context * const w= (Wmv2Context*)s;
 
     put_bits(&s->pb, 1, s->pict_type - 1);
-    if(s->pict_type == FF_I_TYPE){
+    if(s->pict_type == AV_PICTURE_TYPE_I){
         put_bits(&s->pb, 7, 0);
     }
     put_bits(&s->pb, 5, s->qscale);
@@ -87,7 +87,7 @@ int ff_wmv2_encode_picture_header(MpegEncContext * s, int picture_number)
 
     assert(s->flipflop_rounding);
 
-    if (s->pict_type == FF_I_TYPE) {
+    if (s->pict_type == AV_PICTURE_TYPE_I) {
         assert(s->no_rounding==1);
         if(w->j_type_bit) put_bits(&s->pb, 1, w->j_type);
 
@@ -171,7 +171,7 @@ void ff_wmv2_encode_mb(MpegEncContext * s,
                  wmv2_inter_table[w->cbp_table_index][cbp + 64][0]);
 
         /* motion vector */
-        h263_pred_motion(s, 0, 0, &pred_x, &pred_y);
+        ff_h263_pred_motion(s, 0, 0, &pred_x, &pred_y);
         ff_msmpeg4_encode_motion(s, motion_x - pred_x,
                               motion_y - pred_y);
     } else {
@@ -191,7 +191,7 @@ void ff_wmv2_encode_mb(MpegEncContext * s,
             coded_cbp |= val << (5 - i);
         }
 
-        if (s->pict_type == FF_I_TYPE) {
+        if (s->pict_type == AV_PICTURE_TYPE_I) {
             put_bits(&s->pb,
                      ff_msmp4_mb_i_table[coded_cbp][1], ff_msmp4_mb_i_table[coded_cbp][0]);
         } else {
@@ -211,7 +211,7 @@ void ff_wmv2_encode_mb(MpegEncContext * s,
     }
 }
 
-AVCodec wmv2_encoder = {
+AVCodec ff_wmv2_encoder = {
     "wmv2",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_WMV2,

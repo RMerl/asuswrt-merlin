@@ -14,15 +14,15 @@ eval do_$test=y
 do_lavf()
 {
     file=${outfile}lavf.$1
-    do_ffmpeg $file -t 1 -qscale 10 -f image2 -vcodec pgmyuv -i $raw_src -f s16le -i $pcm_src $2
-    do_ffmpeg_crc $file -i $target_path/$file $3
+    do_ffmpeg $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $DEC_OPTS -ar 44100 -f s16le -i $pcm_src $ENC_OPTS -t 1 -qscale 10 $2
+    do_ffmpeg_crc $file $DEC_OPTS -i $target_path/$file $3
 }
 
 do_streamed_images()
 {
     file=${outfile}${1}pipe.$1
-    do_ffmpeg $file -t 1 -qscale 10 -f image2 -vcodec pgmyuv -i $raw_src -f image2pipe
-    do_ffmpeg_crc $file -f image2pipe -i $target_path/$file
+    do_ffmpeg $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src -f image2pipe $ENC_OPTS -t 1 -qscale 10
+    do_ffmpeg_crc $file $DEC_OPTS -f image2pipe -i $target_path/$file
 }
 
 do_image_formats()
@@ -30,22 +30,20 @@ do_image_formats()
     outfile="$datadir/images/$1/"
     mkdir -p "$outfile"
     file=${outfile}%02d.$1
-    $echov $ffmpeg -t 0.5 -y -qscale 10 -f image2 -vcodec pgmyuv -i $raw_src $2 $3 -flags +bitexact -sws_flags +accurate_rnd+bitexact $target_path/$file
-    $ffmpeg -t 0.5 -y -qscale 10 -f image2 -vcodec pgmyuv -i $raw_src $2 $3 -flags +bitexact -sws_flags +accurate_rnd+bitexact $target_path/$file
+    run_ffmpeg $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $2 $ENC_OPTS $3 -t 0.5 -y -qscale 10 $target_path/$file
     do_md5sum ${outfile}02.$1 >> $logfile
-    do_ffmpeg_crc $file $3 -i $target_path/$file
+    do_ffmpeg_crc $file $DEC_OPTS $3 -i $target_path/$file
     wc -c ${outfile}02.$1 >> $logfile
 }
 
 do_audio_only()
 {
     file=${outfile}lavf.$1
-    do_ffmpeg $file -t 1 -qscale 10 -f s16le -i $pcm_src
-    do_ffmpeg_crc $file -i $target_path/$file
+    do_ffmpeg $file $DEC_OPTS $2 -ar 44100 -f s16le -i $pcm_src $ENC_OPTS -t 1 -qscale 10 $3
+    do_ffmpeg_crc $file $DEC_OPTS $4 -i $target_path/$file
 }
 
 rm -f "$logfile"
-rm -f "$benchfile"
 
 if [ -n "$do_avi" ] ; then
 do_lavf avi
@@ -57,7 +55,7 @@ fi
 
 if [ -n "$do_rm" ] ; then
 file=${outfile}lavf.rm
-do_ffmpeg $file -t 1 -qscale 10 -f image2 -vcodec pgmyuv -i $raw_src -f s16le -i $pcm_src
+do_ffmpeg $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $DEC_OPTS -ar 44100 -f s16le -i $pcm_src $ENC_OPTS -t 1 -qscale 10 -acodec ac3_fixed
 # broken
 #do_ffmpeg_crc $file -i $target_path/$file
 fi
@@ -68,7 +66,10 @@ fi
 
 if [ -n "$do_mxf" ] ; then
 do_lavf mxf "-ar 48000 -bf 2 -timecode_frame_start 264363"
-do_lavf mxf_d10 "-ar 48000 -ac 2 -r 25 -s 720x576 -padtop 32 -vcodec mpeg2video -intra -flags +ildct+low_delay -dc 10 -flags2 +ivlc+non_linear_q -qscale 1 -ps 1 -qmin 1 -rc_max_vbv_use 1 -rc_min_vbv_use 1 -pix_fmt yuv422p -minrate 30000k -maxrate 30000k -b 30000k -bufsize 1200000 -top 1 -rc_init_occupancy 1200000 -qmax 12 -f mxf_d10"
+fi
+
+if [ -n "$do_mxf_d10" ]; then
+do_lavf mxf_d10 "-ar 48000 -ac 2 -r 25 -s 720x576 -vf pad=720:608:0:32 -vcodec mpeg2video -intra -flags +ildct+low_delay -dc 10 -flags2 +ivlc+non_linear_q -qscale 1 -ps 1 -qmin 1 -rc_max_vbv_use 1 -rc_min_vbv_use 1 -pix_fmt yuv422p -minrate 30000k -maxrate 30000k -b 30000k -bufsize 1200000 -top 1 -rc_init_occupancy 1200000 -qmax 12 -f mxf_d10"
 fi
 
 if [ -n "$do_ts" ] ; then
@@ -128,13 +129,13 @@ fi
 
 if [ -n "$do_gif" ] ; then
 file=${outfile}lavf.gif
-do_ffmpeg $file -t 1 -qscale 10 -f image2 -vcodec pgmyuv -i $raw_src -pix_fmt rgb24
-#do_ffmpeg_crc $file -i $target_path/$file
+do_ffmpeg $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $ENC_OPTS -t 1 -qscale 10 -pix_fmt rgb24
+do_ffmpeg_crc $file $DEC_OPTS -i $target_path/$file -pix_fmt rgb24
 fi
 
 if [ -n "$do_yuv4mpeg" ] ; then
 file=${outfile}lavf.y4m
-do_ffmpeg $file -t 1 -qscale 10 -f image2 -vcodec pgmyuv -i $raw_src
+do_ffmpeg $file $DEC_OPTS -f image2 -vcodec pgmyuv -i $raw_src $ENC_OPTS -t 1 -qscale 10
 #do_ffmpeg_crc $file -i $target_path/$file
 fi
 
@@ -146,6 +147,10 @@ fi
 
 if [ -n "$do_ppm" ] ; then
 do_image_formats ppm
+fi
+
+if [ -n "$do_png" ] ; then
+do_image_formats png
 fi
 
 if [ -n "$do_bmp" ] ; then
@@ -165,7 +170,7 @@ do_image_formats sgi
 fi
 
 if [ -n "$do_jpg" ] ; then
-do_image_formats jpg "-flags +bitexact -dct fastint -idct simple -pix_fmt yuvj420p" "-f image2"
+do_image_formats jpg "-pix_fmt yuvj420p" "-f image2"
 fi
 
 if [ -n "$do_pcx" ] ; then
@@ -179,11 +184,11 @@ do_audio_only wav
 fi
 
 if [ -n "$do_alaw" ] ; then
-do_audio_only al
+do_audio_only al "" "" "-ar 44100"
 fi
 
 if [ -n "$do_mulaw" ] ; then
-do_audio_only ul
+do_audio_only ul "" "" "-ar 44100"
 fi
 
 if [ -n "$do_au" ] ; then
@@ -202,8 +207,16 @@ if [ -n "$do_voc" ] ; then
 do_audio_only voc
 fi
 
+if [ -n "$do_voc_s16" ] ; then
+do_audio_only s16.voc "-ac 2" "-acodec pcm_s16le"
+fi
+
 if [ -n "$do_ogg" ] ; then
 do_audio_only ogg
+fi
+
+if [ -n "$do_rso" ] ; then
+do_audio_only rso
 fi
 
 # pix_fmt conversions
@@ -216,11 +229,9 @@ conversions="yuv420p yuv422p yuv444p yuyv422 yuv410p yuv411p yuvj420p \
              monob yuv440p yuvj440p"
 for pix_fmt in $conversions ; do
     file=${outfile}${pix_fmt}.yuv
-    do_ffmpeg_nocheck $file -r 1 -t 1 -f image2 -vcodec pgmyuv -i $raw_src \
-                            -f rawvideo -s 352x288 -pix_fmt $pix_fmt $target_path/$raw_dst
-    do_ffmpeg $file -f rawvideo -s 352x288 -pix_fmt $pix_fmt -i $target_path/$raw_dst \
-                    -f rawvideo -s 352x288 -pix_fmt yuv444p
+    run_ffmpeg $DEC_OPTS -r 1 -t 1 -f image2 -vcodec pgmyuv -i $raw_src \
+               $ENC_OPTS -f rawvideo -s 352x288 -pix_fmt $pix_fmt $target_path/$raw_dst
+    do_ffmpeg $file $DEC_OPTS -f rawvideo -s 352x288 -pix_fmt $pix_fmt -i $target_path/$raw_dst \
+                    $ENC_OPTS -f rawvideo -s 352x288 -pix_fmt yuv444p
 done
 fi
-
-rm -f "$bench" "$bench2"

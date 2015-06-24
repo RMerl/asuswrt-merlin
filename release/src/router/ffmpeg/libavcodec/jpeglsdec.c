@@ -203,6 +203,11 @@ static inline void ls_decode_line(JLSState *state, MJpegDecodeContext *s, void *
                 x += stride;
             }
 
+            if (x >= w) {
+                av_log(NULL, AV_LOG_ERROR, "run overflow\n");
+                return;
+            }
+
             /* decode run termination value */
             Rb = R(last, x);
             RItype = (FFABS(Ra - Rb) <= state->near) ? 1 : 0;
@@ -363,7 +368,7 @@ int ff_jpegls_decode_picture(MJpegDecodeContext *s, int near, int point_transfor
 }
 
 
-AVCodec jpegls_decoder = {
+AVCodec ff_jpegls_decoder = {
     "jpegls",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_JPEGLS,

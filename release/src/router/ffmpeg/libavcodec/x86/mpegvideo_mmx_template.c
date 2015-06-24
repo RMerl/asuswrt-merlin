@@ -116,22 +116,11 @@ static int RENAME(dct_quantize)(MpegEncContext *s,
             q = s->c_dc_scale;
         /* note: block[0] is assumed to be positive */
         if (!s->h263_aic) {
-#if 1
         __asm__ volatile (
                 "mul %%ecx                \n\t"
                 : "=d" (level), "=a"(dummy)
                 : "a" ((block[0]>>2) + q), "c" (ff_inverse[q<<1])
         );
-#else
-        __asm__ volatile (
-                "xorl %%edx, %%edx        \n\t"
-                "divw %%cx                \n\t"
-                "movzwl %%ax, %%eax       \n\t"
-                : "=a" (level)
-                : "a" ((block[0]>>2) + q), "c" (q<<1)
-                : "%edx"
-        );
-#endif
         } else
             /* For AIC we skip quant/dequant of INTRADC */
             level = (block[0] + 4)>>3;
@@ -158,7 +147,7 @@ static int RENAME(dct_quantize)(MpegEncContext *s,
             "pxor "MM"6, "MM"6                  \n\t"
             "psubw (%3), "MM"6                  \n\t" // -bias[0]
             "mov $-128, %%"REG_a"               \n\t"
-            ASMALIGN(4)
+            ".p2align 4                         \n\t"
             "1:                                 \n\t"
             MOVQ" (%1, %%"REG_a"), "MM"0        \n\t" // block[i]
             SAVE_SIGN(MM"1", MM"0")                   // ABS(block[i])
@@ -180,6 +169,8 @@ static int RENAME(dct_quantize)(MpegEncContext *s,
             : "+a" (last_non_zero_p1)
             : "r" (block+64), "r" (qmat), "r" (bias),
               "r" (inv_zigzag_direct16+64), "r" (temp_block+64)
+              XMM_CLOBBERS_ONLY("%xmm0", "%xmm1", "%xmm2", "%xmm3",
+                                "%xmm4", "%xmm5", "%xmm6", "%xmm7")
         );
     }else{ // FMT_H263
         __asm__ volatile(
@@ -188,7 +179,7 @@ static int RENAME(dct_quantize)(MpegEncContext *s,
             "pxor "MM"7, "MM"7                  \n\t" // 0
             "pxor "MM"4, "MM"4                  \n\t" // 0
             "mov $-128, %%"REG_a"               \n\t"
-            ASMALIGN(4)
+            ".p2align 4                         \n\t"
             "1:                                 \n\t"
             MOVQ" (%1, %%"REG_a"), "MM"0        \n\t" // block[i]
             SAVE_SIGN(MM"1", MM"0")                   // ABS(block[i])
@@ -212,6 +203,8 @@ static int RENAME(dct_quantize)(MpegEncContext *s,
             : "+a" (last_non_zero_p1)
             : "r" (block+64), "r" (qmat+64), "r" (bias+64),
               "r" (inv_zigzag_direct16+64), "r" (temp_block+64)
+              XMM_CLOBBERS_ONLY("%xmm0", "%xmm1", "%xmm2", "%xmm3",
+                                "%xmm4", "%xmm5", "%xmm6", "%xmm7")
         );
     }
     __asm__ volatile(

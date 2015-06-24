@@ -25,7 +25,7 @@
 
 #include "libavutil/bswap.h"
 #include "avformat.h"
-#include "raw.h"
+#include "pcm.h"
 
 /* if we don't know the size in advance */
 #define AU_UNKNOWN_SIZE ((uint32_t)(~0))
@@ -34,7 +34,7 @@ static int sol_probe(AVProbeData *p)
 {
     /* check file header */
     uint16_t magic;
-    magic=le2me_16(*((uint16_t*)p->buf));
+    magic=av_le2ne16(*((uint16_t*)p->buf));
     if ((magic == 0x0B8D || magic == 0x0C0D || magic == 0x0C8D) &&
         p->buf[2] == 'S' && p->buf[3] == 'O' &&
         p->buf[4] == 'L' && p->buf[5] == 0)
@@ -85,23 +85,22 @@ static int sol_channels(int magic, int type)
 static int sol_read_header(AVFormatContext *s,
                           AVFormatParameters *ap)
 {
-    int size;
     unsigned int magic,tag;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     unsigned int id, channels, rate, type;
     enum CodecID codec;
     AVStream *st;
 
     /* check ".snd" header */
-    magic = get_le16(pb);
-    tag = get_le32(pb);
+    magic = avio_rl16(pb);
+    tag = avio_rl32(pb);
     if (tag != MKTAG('S', 'O', 'L', 0))
         return -1;
-    rate = get_le16(pb);
-    type = get_byte(pb);
-    size = get_le32(pb);
+    rate = avio_rl16(pb);
+    type = avio_r8(pb);
+    avio_skip(pb, 4); /* size */
     if (magic != 0x0B8D)
-        get_byte(pb); /* newer SOLs contain padding byte */
+        avio_r8(pb); /* newer SOLs contain padding byte */
 
     codec = sol_codec_id(magic, type);
     channels = sol_channels(magic, type);
@@ -133,6 +132,8 @@ static int sol_read_packet(AVFormatContext *s,
     if (url_feof(s->pb))
         return AVERROR(EIO);
     ret= av_get_packet(s->pb, pkt, MAX_SIZE);
+    if (ret < 0)
+        return ret;
     pkt->stream_index = 0;
 
     /* note: we need to modify the packet size here to handle the last
@@ -141,7 +142,7 @@ static int sol_read_packet(AVFormatContext *s,
     return 0;
 }
 
-AVInputFormat sol_demuxer = {
+AVInputFormat ff_sol_demuxer = {
     "sol",
     NULL_IF_CONFIG_SMALL("Sierra SOL format"),
     0,

@@ -19,15 +19,14 @@
  */
 
 #include "config.h"
-#include "libavformat/avformat.h"
 #include "avdevice.h"
 
 #define REGISTER_OUTDEV(X,x) { \
-          extern AVOutputFormat x##_muxer; \
-          if(CONFIG_##X##_OUTDEV)  av_register_output_format(&x##_muxer); }
+          extern AVOutputFormat ff_##x##_muxer; \
+          if(CONFIG_##X##_OUTDEV)  av_register_output_format(&ff_##x##_muxer); }
 #define REGISTER_INDEV(X,x) { \
-          extern AVInputFormat x##_demuxer; \
-          if(CONFIG_##X##_INDEV)   av_register_input_format(&x##_demuxer); }
+          extern AVInputFormat ff_##x##_demuxer; \
+          if(CONFIG_##X##_INDEV)   av_register_input_format(&ff_##x##_demuxer); }
 #define REGISTER_INOUTDEV(X,x)  REGISTER_OUTDEV(X,x); REGISTER_INDEV(X,x)
 
 void avdevice_register_all(void)
@@ -40,13 +39,18 @@ void avdevice_register_all(void)
 
     /* devices */
     REGISTER_INOUTDEV (ALSA, alsa);
-    REGISTER_INOUTDEV (AUDIO_BEOS, audio_beos);
     REGISTER_INDEV    (BKTR, bktr);
+    REGISTER_INDEV    (DSHOW, dshow);
     REGISTER_INDEV    (DV1394, dv1394);
+    REGISTER_INDEV    (FBDEV, fbdev);
     REGISTER_INDEV    (JACK, jack);
     REGISTER_INOUTDEV (OSS, oss);
+    REGISTER_OUTDEV   (SDL, sdl);
+    REGISTER_INOUTDEV (SNDIO, sndio);
     REGISTER_INDEV    (V4L2, v4l2);
+#if FF_API_V4L
     REGISTER_INDEV    (V4L, v4l);
+#endif
     REGISTER_INDEV    (VFWCAP, vfwcap);
     REGISTER_INDEV    (X11_GRAB_DEVICE, x11_grab_device);
 

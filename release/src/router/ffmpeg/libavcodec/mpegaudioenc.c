@@ -27,8 +27,9 @@
 #include "avcodec.h"
 #include "put_bits.h"
 
-#undef  CONFIG_MPEGAUDIO_HP
-#define CONFIG_MPEGAUDIO_HP 0
+#define FRAC_BITS   15   /* fractional bits for sb_samples and dct */
+#define WFRAC_BITS  14   /* fractional bits for window */
+
 #include "mpegaudio.h"
 
 /* currently, cannot change these constants (need to modify
@@ -40,12 +41,10 @@
 typedef struct MpegAudioContext {
     PutBitContext pb;
     int nb_channels;
-    int freq, bit_rate;
     int lsf;           /* 1 if mpeg2 low bitrate selected */
     int bitrate_index; /* bit rate */
     int freq_index;
     int frame_size; /* frame size, in bits, without padding */
-    int64_t nb_samples; /* total number of samples encoded */
     /* padding computation */
     int frame_frac, frame_frac_incr, do_padding;
     short samples_buf[MPA_MAX_CHANNELS][SAMPLES_BUF_SIZE]; /* buffer for filter */
@@ -79,8 +78,6 @@ static av_cold int MPA_encode_init(AVCodecContext *avctx)
     }
     bitrate = bitrate / 1000;
     s->nb_channels = channels;
-    s->freq = freq;
-    s->bit_rate = bitrate * 1000;
     avctx->frame_size = MPA_FRAME_SIZE;
 
     /* encoding freq */
@@ -126,7 +123,7 @@ static av_cold int MPA_encode_init(AVCodecContext *avctx)
     s->sblimit = ff_mpa_sblimit_table[table];
     s->alloc_table = ff_mpa_alloc_tables[table];
 
-    dprintf(avctx, "%d kb/s, %d Hz, frame_size=%d bits, table=%d, padincr=%x\n",
+    av_dlog(avctx, "%d kb/s, %d Hz, frame_size=%d bits, table=%d, padincr=%x\n",
             bitrate, freq, s->frame_size, table, s->frame_frac_incr);
 
     for(i=0;i<s->nb_channels;i++)
@@ -310,7 +307,7 @@ static void idct32(int *out, int *tab)
 
 #define WSHIFT (WFRAC_BITS + 15 - FRAC_BITS)
 
-static void filter(MpegAudioContext *s, int ch, short *samples, int incr)
+static void filter(MpegAudioContext *s, int ch, const short *samples, int incr)
 {
     short *p, *q;
     int sum, offset, i, j;
@@ -551,13 +548,11 @@ static void compute_bit_allocation(MpegAudioContext *s,
                 }
             }
         }
-#if 0
-        printf("current=%d max=%d max_sb=%d alloc=%d\n",
-               current_frame_size, max_frame_size, max_sb,
-               bit_alloc[max_sb]);
-#endif
         if (max_sb < 0)
             break;
+        av_dlog(NULL, "current=%d max=%d max_sb=%d max_ch=%d alloc=%d\n",
+                current_frame_size, max_frame_size, max_sb, max_ch,
+                bit_alloc[max_ch][max_sb]);
 
         /* find alloc table entry (XXX: not optimal, should use
            pointer table) */
@@ -595,13 +590,6 @@ static void compute_bit_allocation(MpegAudioContext *s,
     }
     *padding = max_frame_size - current_frame_size;
     assert(*padding >= 0);
-
-#if 0
-    for(i=0;i<s->sblimit;i++) {
-        printf("%d ", bit_alloc[i]);
-    }
-    printf("\n");
-#endif
 }
 
 /*
@@ -723,15 +711,7 @@ static void encode_frame(MpegAudioContext *s,
                             /* group the 3 values to save bits */
                             put_bits(p, -bits,
                                      q[0] + steps * (q[1] + steps * q[2]));
-#if 0
-                            printf("%d: gr1 %d\n",
-                                   i, q[0] + steps * (q[1] + steps * q[2]));
-#endif
                         } else {
-#if 0
-                            printf("%d: gr3 %d %d %d\n",
-                                   i, q[0], q[1], q[2]);
-#endif
                             put_bits(p, bits, q[0]);
                             put_bits(p, bits, q[1]);
                             put_bits(p, bits, q[2]);
@@ -756,7 +736,7 @@ static int MPA_encode_frame(AVCodecContext *avctx,
                             unsigned char *frame, int buf_size, void *data)
 {
     MpegAudioContext *s = avctx->priv_data;
-    short *samples = data;
+    const short *samples = data;
     short smr[MPA_MAX_CHANNELS][SBLIMIT];
     unsigned char bit_alloc[MPA_MAX_CHANNELS][SBLIMIT];
     int padding, i;
@@ -778,7 +758,6 @@ static int MPA_encode_frame(AVCodecContext *avctx,
 
     encode_frame(s, bit_alloc, padding);
 
-    s->nb_samples += MPA_FRAME_SIZE;
     return put_bits_ptr(&s->pb) - s->pb.buf;
 }
 
@@ -788,7 +767,7 @@ static av_cold int MPA_encode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec mp2_encoder = {
+AVCodec ff_mp2_encoder = {
     "mp2",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_MP2,
@@ -797,9 +776,7 @@ AVCodec mp2_encoder = {
     MPA_encode_frame,
     MPA_encode_close,
     NULL,
-    .sample_fmts = (const enum SampleFormat[]){SAMPLE_FMT_S16,SAMPLE_FMT_NONE},
+    .sample_fmts = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_S16,AV_SAMPLE_FMT_NONE},
     .supported_samplerates= (const int[]){44100, 48000,  32000, 22050, 24000, 16000, 0},
     .long_name = NULL_IF_CONFIG_SMALL("MP2 (MPEG audio layer 2)"),
 };
-
-#undef FIX

@@ -20,27 +20,39 @@
 
 #include "dsputil.h"
 #include "vorbis.h"
+#include "libavutil/audioconvert.h"
 
 const uint8_t ff_vorbis_channel_layout_offsets[8][8] = {
-    { 0, },
-    { 0, 1, },
-    { 0, 2, 1, },
-    { 0, 1, 2, 3, },
-    { 0, 2, 1, 3, 4, },
-    { 0, 2, 1, 5, 3, 4, },
-    { 0, 2, 1, 6, 5, 3, 4, },
-    { 0, 2, 1, 7, 5, 6, 3, 4},
+    { 0 },
+    { 0, 1 },
+    { 0, 2, 1 },
+    { 0, 1, 2, 3 },
+    { 0, 2, 1, 3, 4 },
+    { 0, 2, 1, 5, 3, 4 },
+    { 0, 2, 1, 6, 5, 3, 4 },
+    { 0, 2, 1, 7, 5, 6, 3, 4 },
+};
+
+const uint8_t ff_vorbis_encoding_channel_layout_offsets[8][8] = {
+    { 0 },
+    { 0, 1 },
+    { 0, 2, 1 },
+    { 0, 1, 2, 3 },
+    { 0, 2, 1, 3, 4 },
+    { 0, 2, 1, 4, 5, 3 },
+    { 0, 2, 1, 5, 6, 4, 3 },
+    { 0, 2, 1, 6, 7, 4, 5, 3 },
 };
 
 const int64_t ff_vorbis_channel_layouts[9] = {
-    CH_LAYOUT_MONO,
-    CH_LAYOUT_STEREO,
-    CH_LAYOUT_SURROUND,
-    CH_LAYOUT_QUAD,
-    CH_LAYOUT_5POINT0_BACK,
-    CH_LAYOUT_5POINT1_BACK,
-    CH_LAYOUT_5POINT1|CH_BACK_CENTER,
-    CH_LAYOUT_7POINT1,
+    AV_CH_LAYOUT_MONO,
+    AV_CH_LAYOUT_STEREO,
+    AV_CH_LAYOUT_SURROUND,
+    AV_CH_LAYOUT_QUAD,
+    AV_CH_LAYOUT_5POINT0_BACK,
+    AV_CH_LAYOUT_5POINT1_BACK,
+    AV_CH_LAYOUT_5POINT1|AV_CH_BACK_CENTER,
+    AV_CH_LAYOUT_7POINT1,
     0
 };
 

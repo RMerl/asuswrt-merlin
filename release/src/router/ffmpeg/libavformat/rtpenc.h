@@ -25,6 +25,7 @@
 #include "rtp.h"
 
 struct RTPMuxContext {
+    const AVClass *av_class;
     AVFormatContext *ic;
     AVStream *st;
     int payload_type;
@@ -50,16 +51,33 @@ struct RTPMuxContext {
     uint8_t *buf_ptr;
 
     int max_frames_per_packet;
+
+    /**
+     * Number of bytes used for H.264 NAL length, if the MP4 syntax is used
+     * (1, 2 or 4)
+     */
+    int nal_length_size;
+
+    int flags;
 };
 
 typedef struct RTPMuxContext RTPMuxContext;
+
+#define FF_RTP_FLAG_MP4A_LATM 1
+
+#define FF_RTP_FLAG_OPTS(ctx, fieldname) \
+    { "rtpflags", "RTP muxer flags", offsetof(ctx, fieldname), FF_OPT_TYPE_FLAGS, {.dbl = 0}, INT_MIN, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, "rtpflags" }, \
+    { "latm", "Use MP4A-LATM packetization instead of MPEG4-GENERIC for AAC", 0, FF_OPT_TYPE_CONST, {.dbl = FF_RTP_FLAG_MP4A_LATM}, INT_MIN, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, "rtpflags" } \
 
 void ff_rtp_send_data(AVFormatContext *s1, const uint8_t *buf1, int len, int m);
 
 void ff_rtp_send_h264(AVFormatContext *s1, const uint8_t *buf1, int size);
 void ff_rtp_send_h263(AVFormatContext *s1, const uint8_t *buf1, int size);
 void ff_rtp_send_aac(AVFormatContext *s1, const uint8_t *buff, int size);
+void ff_rtp_send_latm(AVFormatContext *s1, const uint8_t *buff, int size);
 void ff_rtp_send_amr(AVFormatContext *s1, const uint8_t *buff, int size);
 void ff_rtp_send_mpegvideo(AVFormatContext *s1, const uint8_t *buf1, int size);
+void ff_rtp_send_xiph(AVFormatContext *s1, const uint8_t *buff, int size);
+void ff_rtp_send_vp8(AVFormatContext *s1, const uint8_t *buff, int size);
 
 #endif /* AVFORMAT_RTPENC_H */

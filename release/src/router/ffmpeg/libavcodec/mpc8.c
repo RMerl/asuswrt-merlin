@@ -29,10 +29,10 @@
 #include "avcodec.h"
 #include "get_bits.h"
 #include "dsputil.h"
-#include "mpegaudio.h"
+#include "mpegaudiodsp.h"
+#include "libavutil/audioconvert.h"
 
 #include "mpc.h"
-#include "mpcdata.h"
 #include "mpc8data.h"
 #include "mpc8huff.h"
 
@@ -99,6 +99,7 @@ static av_cold int mpc8_decode_init(AVCodecContext * avctx)
     MPCContext *c = avctx->priv_data;
     GetBitContext gb;
     static int vlc_initialized = 0;
+    int channels;
 
     static VLC_TYPE band_table[542][2];
     static VLC_TYPE q1_table[520][2];
@@ -118,6 +119,7 @@ static av_cold int mpc8_decode_init(AVCodecContext * avctx)
     memset(c->oldDSCF, 0, sizeof(c->oldDSCF));
     av_lfg_init(&c->rnd, 0xDEADBEEF);
     dsputil_init(&c->dsp, avctx);
+    ff_mpadsp_init(&c->mpadsp);
 
     ff_mpc_init();
 
@@ -125,12 +127,19 @@ static av_cold int mpc8_decode_init(AVCodecContext * avctx)
 
     skip_bits(&gb, 3);//sample rate
     c->maxbands = get_bits(&gb, 5) + 1;
-    skip_bits(&gb, 4);//channels
+    if (c->maxbands >= BANDS)
+        return AVERROR_INVALIDDATA;
+    channels = get_bits(&gb, 4) + 1;
+    if (channels > 2) {
+        av_log_missing_feature(avctx, "Multichannel MPC SV8", 1);
+        return -1;
+    }
     c->MSS = get_bits1(&gb);
     c->frames = 1 << (get_bits(&gb, 3) * 2);
 
-    avctx->sample_fmt = SAMPLE_FMT_S16;
-    avctx->channel_layout = (avctx->channels==2) ? CH_LAYOUT_STEREO : CH_LAYOUT_MONO;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
+    avctx->channel_layout = (channels==2) ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+    avctx->channels = channels;
 
     if(vlc_initialized) return 0;
     av_log(avctx, AV_LOG_DEBUG, "Initing VLC\n");
@@ -235,9 +244,15 @@ static int mpc8_decode_frame(AVCodecContext * avctx,
     GetBitContext gb2, *gb = &gb2;
     int i, j, k, ch, cnt, res, t;
     Band *bands = c->bands;
-    int off;
+    int off, out_size;
     int maxband, keyframe;
     int last[2];
+
+    out_size = MPC_FRAME_SIZE * 2 * avctx->channels;
+    if (*data_size < out_size) {
+        av_log(avctx, AV_LOG_ERROR, "Output buffer is too small\n");
+        return AVERROR(EINVAL);
+    }
 
     keyframe = c->cur_frame == 0;
 
@@ -254,6 +269,8 @@ static int mpc8_decode_frame(AVCodecContext * avctx,
         maxband = c->last_max_band + get_vlc2(gb, band_vlc.table, MPC8_BANDS_BITS, 2);
         if(maxband > 32) maxband -= 33;
     }
+    if(maxband > c->maxbands)
+        return AVERROR_INVALIDDATA;
     c->last_max_band = maxband;
 
     /* read subband indexes */
@@ -387,19 +404,19 @@ static int mpc8_decode_frame(AVCodecContext * avctx,
         }
     }
 
-    ff_mpc_dequantize_and_synth(c, maxband, data);
+    ff_mpc_dequantize_and_synth(c, maxband, data, avctx->channels);
 
     c->cur_frame++;
 
     c->last_bits_used = get_bits_count(gb);
     if(c->cur_frame >= c->frames)
         c->cur_frame = 0;
-    *data_size =  MPC_FRAME_SIZE * 4;
+    *data_size =  out_size;
 
     return c->cur_frame ? c->last_bits_used >> 3 : buf_size;
 }
 
-AVCodec mpc8_decoder = {
+AVCodec ff_mpc8_decoder = {
     "mpc8",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_MUSEPACK8,

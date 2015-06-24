@@ -30,9 +30,18 @@
 #ifndef AVCODEC_AACDECTAB_H
 #define AVCODEC_AACDECTAB_H
 
+#include "libavutil/audioconvert.h"
 #include "aac.h"
 
 #include <stdint.h>
+
+/* @name ltp_coef
+ * Table of the LTP coefficients
+ */
+static const float ltp_coef[8] = {
+    0.570829, 0.696616, 0.813004, 0.911304,
+    0.984900, 1.067894, 1.194601, 1.369533,
+};
 
 /* @name tns_tmp2_map
  * Tables of the tmp2[] arrays of LPC coefficients used for TNS.
@@ -82,13 +91,13 @@ static const uint8_t aac_channel_layout_map[7][5][2] = {
 };
 
 static const int64_t aac_channel_layout[8] = {
-    CH_LAYOUT_MONO,
-    CH_LAYOUT_STEREO,
-    CH_LAYOUT_SURROUND,
-    CH_LAYOUT_4POINT0,
-    CH_LAYOUT_5POINT0_BACK,
-    CH_LAYOUT_5POINT1_BACK,
-    CH_LAYOUT_7POINT1_WIDE,
+    AV_CH_LAYOUT_MONO,
+    AV_CH_LAYOUT_STEREO,
+    AV_CH_LAYOUT_SURROUND,
+    AV_CH_LAYOUT_4POINT0,
+    AV_CH_LAYOUT_5POINT0_BACK,
+    AV_CH_LAYOUT_5POINT1_BACK,
+    AV_CH_LAYOUT_7POINT1_WIDE,
     0,
 };
 

@@ -32,6 +32,8 @@
 #if defined(__MINGW32__) && !defined(__MINGW32CE__)
 #  include <fcntl.h>
 #  define lseek(f,p,w) _lseeki64((f), (p), (w))
+#  define stat _stati64
+#  define fstat(f,s) _fstati64((f), (s))
 #endif /* defined(__MINGW32__) && !defined(__MINGW32CE__) */
 
 static inline int is_dos_path(const char *path)
@@ -43,21 +45,9 @@ static inline int is_dos_path(const char *path)
     return 0;
 }
 
-#ifdef __BEOS__
-#  include <sys/socket.h>
-#  include <netinet/in.h>
-   /* not net_server ? */
-#  include <BeBuild.h>
-   /* R5 didn't have usleep, fake it. Haiku and Zeta has it now. */
-#  if B_BEOS_VERSION <= B_BEOS_VERSION_5
-#    include <OS.h>
-     /* doesn't set errno but that's enough */
-#    define usleep(t)  snooze((bigtime_t)(t))
-#  endif
-#  ifndef SA_RESTART
-#    warning SA_RESTART not implemented; ffserver might misbehave.
-#    define SA_RESTART 0
-#  endif
+#if defined(_WIN32) && !defined(__MINGW32CE__)
+int ff_win32_open(const char *filename, int oflag, int pmode);
+#define open ff_win32_open
 #endif
 
 #if CONFIG_NETWORK
@@ -70,7 +60,6 @@ typedef int socklen_t;
 #define closesocket close
 #endif
 
-#if CONFIG_FFSERVER
 #if !HAVE_POLL_H
 typedef unsigned long nfds_t;
 
@@ -97,7 +86,6 @@ struct pollfd {
 
 int poll(struct pollfd *fds, nfds_t numfds, int timeout);
 #endif /* HAVE_POLL_H */
-#endif /* CONFIG_FFSERVER */
 #endif /* CONFIG_NETWORK */
 
 #endif /* AVFORMAT_OS_SUPPORT_H */

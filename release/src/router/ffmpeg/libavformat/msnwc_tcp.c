@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008  Ramiro Polla <ramiro@lisha.ufsc.br>
+ * Copyright (C) 2008  Ramiro Polla
  *
  * This file is part of FFmpeg.
  *
@@ -71,7 +71,7 @@ static int msnwc_tcp_probe(AVProbeData *p)
 
 static int msnwc_tcp_read_header(AVFormatContext *ctx, AVFormatParameters *ap)
 {
-    ByteIOContext *pb = ctx->pb;
+    AVIOContext *pb = ctx->pb;
     AVCodecContext *codec;
     AVStream *st;
 
@@ -88,7 +88,7 @@ static int msnwc_tcp_read_header(AVFormatContext *ctx, AVFormatParameters *ap)
 
     /* Some files start with "connected\r\n\r\n".
      * So skip until we find the first byte of struct size */
-    while(get_byte(pb) != HEADER_SIZE && !url_feof(pb));
+    while(avio_r8(pb) != HEADER_SIZE && !url_feof(pb));
 
     if(url_feof(pb)) {
         av_log(ctx, AV_LOG_ERROR, "Could not find valid start.");
@@ -100,23 +100,23 @@ static int msnwc_tcp_read_header(AVFormatContext *ctx, AVFormatParameters *ap)
 
 static int msnwc_tcp_read_packet(AVFormatContext *ctx, AVPacket *pkt)
 {
-    ByteIOContext *pb = ctx->pb;
+    AVIOContext *pb = ctx->pb;
     uint16_t keyframe;
     uint32_t size, timestamp;
 
-    url_fskip(pb, 1); /* one byte has been read ahead */
-    url_fskip(pb, 2);
-    url_fskip(pb, 2);
-    keyframe = get_le16(pb);
-    size = get_le32(pb);
-    url_fskip(pb, 4);
-    url_fskip(pb, 4);
-    timestamp = get_le32(pb);
+    avio_skip(pb, 1); /* one byte has been read ahead */
+    avio_skip(pb, 2);
+    avio_skip(pb, 2);
+    keyframe = avio_rl16(pb);
+    size = avio_rl32(pb);
+    avio_skip(pb, 4);
+    avio_skip(pb, 4);
+    timestamp = avio_rl32(pb);
 
     if(!size || av_get_packet(pb, pkt, size) != size)
         return -1;
 
-    url_fskip(pb, 1); /* Read ahead one byte of struct size like read_header */
+    avio_skip(pb, 1); /* Read ahead one byte of struct size like read_header */
 
     pkt->pts = timestamp;
     pkt->dts = timestamp;
@@ -130,7 +130,7 @@ static int msnwc_tcp_read_packet(AVFormatContext *ctx, AVPacket *pkt)
     return HEADER_SIZE + size;
 }
 
-AVInputFormat msnwc_tcp_demuxer = {
+AVInputFormat ff_msnwc_tcp_demuxer = {
     "msnwctcp",
     NULL_IF_CONFIG_SMALL("MSN TCP Webcam stream"),
     0,

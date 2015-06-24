@@ -46,7 +46,7 @@ static void fill_picture_parameters(struct dxva_context *ctx, const H264Context 
 {
     const MpegEncContext *s = &h->s;
     const Picture *current_picture = s->current_picture_ptr;
-    int i;
+    int i, j;
 
     memset(pp, 0, sizeof(*pp));
     /* Configure current picture */
@@ -56,16 +56,16 @@ static void fill_picture_parameters(struct dxva_context *ctx, const H264Context 
     /* Configure the set of references */
     pp->UsedForReferenceFlags  = 0;
     pp->NonExistingFrameFlags  = 0;
-    for (i = 0; i < FF_ARRAY_ELEMS(pp->RefFrameList); i++) {
-        if (i < h->short_ref_count + h->long_ref_count) {
-            const Picture *r;
-            if (i < h->short_ref_count) {
-                r = h->short_ref[i];
-                assert(!r->long_ref);
-            } else {
-                r = h->long_ref[i - h->short_ref_count];
-                assert(r->long_ref);
-            }
+    for (i = 0, j = 0; i < FF_ARRAY_ELEMS(pp->RefFrameList); i++) {
+        const Picture *r;
+        if (j < h->short_ref_count) {
+            r = h->short_ref[j++];
+        } else {
+            r = NULL;
+            while (!r && j < h->short_ref_count + 16)
+                r = h->long_ref[j++ - h->short_ref_count];
+        }
+        if (r) {
             fill_picture_entry(&pp->RefFrameList[i],
                                ff_dxva2_get_surface_index(ctx, r),
                                r->long_ref != 0);
@@ -158,9 +158,10 @@ static void fill_scaling_lists(const H264Context *h, DXVA_Qmatrix_H264 *qm)
         for (j = 0; j < 16; j++)
             qm->bScalingLists4x4[i][j] = h->pps.scaling_matrix4[i][zigzag_scan[j]];
 
-    for (i = 0; i < 2; i++)
-        for (j = 0; j < 64; j++)
-            qm->bScalingLists8x8[i][j] = h->pps.scaling_matrix8[i][ff_zigzag_direct[j]];
+    for (j = 0; j < 64; j++) {
+        qm->bScalingLists8x8[0][j] = h->pps.scaling_matrix8[0][ff_zigzag_direct[j]];
+        qm->bScalingLists8x8[1][j] = h->pps.scaling_matrix8[3][ff_zigzag_direct[j]];
+    }
 }
 
 static int is_slice_short(struct dxva_context *ctx)
@@ -194,7 +195,7 @@ static void fill_slice_long(AVCodecContext *avctx, DXVA_Slice_H264_Long *slice,
 
     slice->first_mb_in_slice     = (s->mb_y >> FIELD_OR_MBAFF_PICTURE) * s->mb_width + s->mb_x;
     slice->NumMbsForSlice        = 0; /* XXX it is set once we have all slices */
-    slice->BitOffsetToSliceData  = get_bits_count(&s->gb) + 8;
+    slice->BitOffsetToSliceData  = get_bits_count(&s->gb);
     slice->slice_type            = ff_h264_get_slice_type(h);
     if (h->slice_type_fixed)
         slice->slice_type += 5;
@@ -246,7 +247,7 @@ static void fill_slice_long(AVCodecContext *avctx, DXVA_Slice_H264_Long *slice,
     slice->slice_qs_delta    = 0; /* XXX not implemented by FFmpeg */
     slice->slice_qp_delta    = s->qscale - h->pps.init_qp;
     slice->redundant_pic_cnt = h->redundant_pic_count;
-    if (h->slice_type == FF_B_TYPE)
+    if (h->slice_type == AV_PICTURE_TYPE_B)
         slice->direct_spatial_mv_pred_flag = h->direct_spatial_mv_pred;
     slice->cabac_init_idc = h->pps.cabac ? h->cabac_init_idc : 0;
     if (h->deblocking_filter < 2)
@@ -403,7 +404,7 @@ static int decode_slice(AVCodecContext *avctx,
                         position, size);
     ctx_pic->slice_count++;
 
-    if (h->slice_type != FF_I_TYPE && h->slice_type != FF_SI_TYPE)
+    if (h->slice_type != AV_PICTURE_TYPE_I && h->slice_type != AV_PICTURE_TYPE_SI)
         ctx_pic->pp.wBitFields &= ~(1 << 15); /* Set IntraPicFlag to 0 */
     return 0;
 }
@@ -423,7 +424,7 @@ static int end_frame(AVCodecContext *avctx)
                                      commit_bitstream_and_slice_buffer);
 }
 
-AVHWAccel h264_dxva2_hwaccel = {
+AVHWAccel ff_h264_dxva2_hwaccel = {
     .name           = "h264_dxva2",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_H264,

@@ -62,7 +62,13 @@ static inline int get_byte(LZOContext *c) {
 static inline int get_len(LZOContext *c, int x, int mask) {
     int cnt = x & mask;
     if (!cnt) {
-        while (!(x = get_byte(c))) cnt += 255;
+        while (!(x = get_byte(c))) {
+            if (cnt >= INT_MAX - 1000) {
+                c->error |= AV_LZO_ERROR;
+                break;
+            }
+            cnt += 255;
+        }
         cnt += mask + x;
     }
     return cnt;
@@ -119,9 +125,8 @@ static inline void memcpy_backptr(uint8_t *dst, int back, int cnt);
  * thus creating a repeating pattern with a period length of back.
  */
 static inline void copy_backptr(LZOContext *c, int back, int cnt) {
-    register const uint8_t *src = &c->out[-back];
     register uint8_t *dst = c->out;
-    if (src < c->out_start || src > dst) {
+    if (dst - c->out_start < back) {
         c->error |= AV_LZO_INVALID_BACKPTR;
         return;
     }
@@ -175,6 +180,14 @@ int av_lzo1x_decode(void *out, int *outlen, const void *in, int *inlen) {
     int state= 0;
     int x;
     LZOContext c;
+    if (*outlen <= 0 || *inlen <= 0) {
+        int res = 0;
+        if (*outlen <= 0)
+            res |= AV_LZO_OUTPUT_FULL;
+        if (*inlen <= 0)
+            res |= AV_LZO_INPUT_DEPLETED;
+        return res;
+    }
     c.in = in;
     c.in_end = (const uint8_t *)in + *inlen;
     c.out = c.out_start = out;

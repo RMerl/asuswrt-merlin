@@ -41,13 +41,13 @@ void rv20_encode_picture_header(MpegEncContext *s, int picture_number){
     put_bits(&s->pb, 1, s->no_rounding);
 
     assert(s->f_code == 1);
-    assert(s->unrestricted_mv == 1);
+    assert(s->unrestricted_mv == 0);
     assert(s->alt_inter_vlc == 0);
     assert(s->umvplus == 0);
     assert(s->modified_quant==1);
     assert(s->loop_filter==1);
 
-    s->h263_aic= s->pict_type == FF_I_TYPE;
+    s->h263_aic= s->pict_type == AV_PICTURE_TYPE_I;
     if(s->h263_aic){
         s->y_dc_scale_table=
         s->c_dc_scale_table= ff_aic_dc_scale_table;
@@ -57,7 +57,7 @@ void rv20_encode_picture_header(MpegEncContext *s, int picture_number){
     }
 }
 
-AVCodec rv20_encoder = {
+AVCodec ff_rv20_encoder = {
     "rv20",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RV20,

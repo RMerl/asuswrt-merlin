@@ -25,7 +25,7 @@
  */
 
 #include "avformat.h"
-#include "riff.h"
+#include "internal.h"
 #include "caf.h"
 
 /**
@@ -39,6 +39,8 @@ const AVCodecTag ff_codec_caf_tags[] = {
   /*{ CODEC_ID_DVAUDIO,         MKBETAG('v','d','v','a') },*/
   /*{ CODEC_ID_DVAUDIO,         MKBETAG('d','v','c','a') },*/
     { CODEC_ID_ADPCM_IMA_QT,    MKBETAG('i','m','a','4') },
+    { CODEC_ID_AMR_NB,          MKBETAG('s','a','m','r') },
+    { CODEC_ID_GSM,             MKBETAG('a','g','s','m') },
     { CODEC_ID_MACE3,           MKBETAG('M','A','C','3') },
     { CODEC_ID_MACE6,           MKBETAG('M','A','C','6') },
     { CODEC_ID_MP3,             MKBETAG('.','m','p','3') },
@@ -56,3 +58,4 @@ const AVCodecTag ff_codec_caf_tags[] = {
   /*{ MPEG4TwinVQ               MKBETAG('t','w','v','q') },*/
     { CODEC_ID_NONE,            0 },
 };
+

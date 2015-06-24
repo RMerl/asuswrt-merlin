@@ -1,25 +1,720 @@
-Never assume the API of libav* to be stable unless at least 1 week has passed since
-the last major version increase.
+Never assume the API of libav* to be stable unless at least 1 month has passed
+since the last major version increase.
+
 The last version increases were:
-libavcodec:  ?
-libavdevice: ?
-libavfilter: 2009-10-18
-libavformat: ?
-libpostproc: ?
-libswscale:  ?
-libavutil:   2009-03-08
+libavcodec:  2011-04-18
+libavdevice: 2011-04-18
+libavfilter: 2011-04-18
+libavformat: 2011-04-18
+libpostproc: 2011-04-18
+libswscale:  2011-06-20
+libavutil:   2011-04-18
 
 
 API changes, most recent first:
 
+
+2011-06-19 - xxxxxxx - lavfi 2.23.0 - avfilter.h
+  Add layout negotiation fields and helper functions.
+
+  In particular, add in_chlayouts and out_chlayouts to AVFilterLink,
+  and the functions:
+  avfilter_set_common_sample_formats()
+  avfilter_set_common_channel_layouts()
+  avfilter_all_channel_layouts()
+
+2011-06-19 - xxxxxxx - lavfi 2.22.0 - AVFilterFormats
+  Change type of AVFilterFormats.formats from int * to int64_t *,
+  and update formats handling API accordingly.
+
+  avfilter_make_format_list() still takes a int32_t array and converts
+  it to int64_t. A new function, avfilter_make_format64_list(), that
+  takes int64_t arrays has been added.
+
+2011-06-19 - xxxxxxx - lavfi 2.21.0 - vsink_buffer.h
+  Add video sink buffer and vsink_buffer.h public header.
+
+2011-06-12 - xxxxxxx - lavfi 2.18.0 - avcodec.h
+  Add avfilter_get_video_buffer_ref_from_frame() function in
+  libavfilter/avcodec.h.
+
+2011-06-12 - xxxxxxx - lavfi 2.17.0 - avfiltergraph.h
+  Add avfilter_inout_alloc() and avfilter_inout_free() functions.
+
+2011-06-12 - xxxxxxx - lavfi 2.16.0 - avfilter_graph_parse()
+  Change avfilter_graph_parse() signature.
+
+2011-07-10 - xxxxxxx - lavf 53.3.0
+  Add avformat_find_stream_info(), deprecate av_find_stream_info().
+
+2011-07-10 - xxxxxxx - lavc 53.6.0
+  Add avcodec_open2(), deprecate avcodec_open().
+
+2011-06-xx - xxxxxxx - lavf 53.2.0 - avformat.h
+  Add avformat_open_input and avformat_write_header().
+  Deprecate av_open_input_stream, av_open_input_file,
+  AVFormatParameters and av_write_header.
+
+2011-06-xx - xxxxxxx - lavu 51.7.0 - opt.h
+  Add av_opt_set_dict() and av_opt_find().
+  Deprecate av_find_opt().
+  Add AV_DICT_APPEND flag.
+
+2011-06-xx - xxxxxxx - lavu 51.6.0 - opt.h
+  Add av_opt_flag_is_set().
+
+2011-06-10 - c381960 - lavfi 2.15.0 - avfilter_get_audio_buffer_ref_from_arrays
+  Add avfilter_get_audio_buffer_ref_from_arrays() to avfilter.h.
+
+2011-06-09 - f9ecb84 / d9f80ea - lavu 51.8.0 - AVMetadata
+  Move AVMetadata from lavf to lavu and rename it to
+  AVDictionary -- new installed header dict.h.
+  All av_metadata_* functions renamed to av_dict_*.
+
+2011-06-07 - d552f61 / a6703fa - lavu 51.8.0 - av_get_bytes_per_sample()
+  Add av_get_bytes_per_sample() in libavutil/samplefmt.h.
+  Deprecate av_get_bits_per_sample_fmt().
+
+2011-06-xx - f956924 / b39b062 - lavu 51.8.0 - opt.h
+  Add av_opt_free convenience function.
+
+2011-06-06 - 95a0242 - lavfi 2.14.0 - AVFilterBufferRefAudioProps
+  Remove AVFilterBufferRefAudioProps.size, and use nb_samples in
+  avfilter_get_audio_buffer() and avfilter_default_get_audio_buffer() in
+  place of size.
+
+2011-06-06 - 0bc2cca - lavu 51.6.0 - av_samples_alloc()
+  Switch nb_channels and nb_samples parameters order in
+  av_samples_alloc().
+
+2011-06-06 - e1c7414 - lavu 51.5.0 - av_samples_*
+  Change the data layout created by av_samples_fill_arrays() and
+  av_samples_alloc().
+
+2011-06-06 - 27bcf55 - lavfi 2.13.0 - vsrc_buffer.h
+  Make av_vsrc_buffer_add_video_buffer_ref() accepts an additional
+  flags parameter in input.
+
+2011-06-03 - e977ca2 - lavfi 2.12.0 - avfilter_link_free()
+  Add avfilter_link_free() function.
+
+2011-06-02 - 5ad38d9 - lavu 51.4.0 - av_force_cpu_flags()
+  Add av_cpu_flags() in libavutil/cpu.h.
+
+2011-05-28 - e71f260 - lavu 51.3.0 - pixdesc.h
+  Add av_get_pix_fmt_name() in libavutil/pixdesc.h, and deprecate
+  avcodec_get_pix_fmt_name() in libavcodec/avcodec.h in its favor.
+
+2011-05-25 - 39e4206 / 30315a8 - lavf 53.3.0 - avformat.h
+  Add fps_probe_size to AVFormatContext.
+
+2011-05-22 - 5ecdfd0 - lavf 53.2.0 - avformat.h
+  Introduce avformat_alloc_output_context2() and deprecate
+  avformat_alloc_output_context().
+
+2011-05-22 - 83db719 - lavfi 2.10.0 - vsrc_buffer.h
+  Make libavfilter/vsrc_buffer.h public.
+
+2011-05-19 - c000a9f - lavfi 2.8.0 - avcodec.h
+  Add av_vsrc_buffer_add_frame() to libavfilter/avcodec.h.
+
+2011-05-14 - 9fdf772 - lavfi 2.6.0 - avcodec.h
+  Add avfilter_get_video_buffer_ref_from_frame() to libavfilter/avcodec.h.
+
+2011-05-18 - 75a37b5 / 64150ff - lavc 53.7.0 - AVCodecContext.request_sample_fmt
+  Add request_sample_fmt field to AVCodecContext.
+
+2011-05-10 - 59eb12f / 188dea1 - lavc 53.6.0 - avcodec.h
+  Deprecate AVLPCType and the following fields in
+  AVCodecContext: lpc_coeff_precision, prediction_order_method,
+  min_partition_order, max_partition_order, lpc_type, lpc_passes.
+  Corresponding FLAC encoder options should be used instead.
+
+2011-05-07 - 9fdf772 - lavfi 2.5.0 - avcodec.h
+  Add libavfilter/avcodec.h header and avfilter_copy_frame_props()
+  function.
+
+2011-05-07 - 18ded93 - lavc 53.5.0 - AVFrame
+  Add format field to AVFrame.
+
+2011-05-07 - 22333a6 - lavc 53.4.0 - AVFrame
+  Add width and height fields to AVFrame.
+
+2011-05-01 - 35fe66a - lavfi 2.4.0 - avfilter.h
+  Rename AVFilterBufferRefVideoProps.pixel_aspect to
+  sample_aspect_ratio.
+
+2011-05-01 - 77e9dee - lavc 53.3.0 - AVFrame
+  Add a sample_aspect_ratio field to AVFrame.
+
+2011-05-01 - 1ba5727 - lavc 53.2.0 - AVFrame
+  Add a pkt_pos field to AVFrame.
+
+2011-04-29 - 35ceaa7 - lavu 51.2.0 - mem.h
+  Add av_dynarray_add function for adding
+  an element to a dynamic array.
+
+2011-04-26 - d7e5aeb / bebe72f - lavu 51.1.0 - avutil.h
+  Add AVPictureType enum and av_get_picture_type_char(), deprecate
+  FF_*_TYPE defines and av_get_pict_type_char() defined in
+  libavcodec/avcodec.h.
+
+2011-04-26 - d7e5aeb / 10d3940 - lavfi 2.3.0 - avfilter.h
+  Add pict_type and key_frame fields to AVFilterBufferRefVideo.
+
+2011-04-26 - d7e5aeb / 7a11c82 - lavfi 2.2.0 - vsrc_buffer
+  Add sample_aspect_ratio fields to vsrc_buffer arguments
+
+2011-04-21 - 8772156 / 94f7451 - lavc 53.1.0 - avcodec.h
+  Add CODEC_CAP_SLICE_THREADS for codecs supporting sliced threading.
+
+2011-04-15 - lavc 52.120.0 - avcodec.h
+  AVPacket structure got additional members for passing side information:
+    c407984 / 4de339e introduce side information for AVPacket
+    c407984 / 2d8591c make containers pass palette change in AVPacket
+
+2011-04-12 - lavf 52.107.0 - avio.h
+  Avio cleanup, part II - deprecate the entire URLContext API:
+    c55780d / 175389c add avio_check as a replacement for url_exist
+    9891004 / ff1ec0c add avio_pause and avio_seek_time as replacements
+            for _av_url_read_fseek/fpause
+    d4d0932 / cdc6a87 deprecate av_protocol_next(), avio_enum_protocols
+            should be used instead.
+    c88caa5 / 80c6e23 rename url_set_interrupt_cb->avio_set_interrupt_cb.
+    c88caa5 / f87b1b3 rename open flags: URL_* -> AVIO_*
+    d4d0932 / f8270bb add avio_enum_protocols.
+    d4d0932 / 5593f03 deprecate URLProtocol.
+    d4d0932 / c486dad deprecate URLContext.
+    d4d0932 / 026e175 deprecate the typedef for URLInterruptCB
+    c88caa5 / 8e76a19 deprecate av_register_protocol2.
+    11d7841 / b840484 deprecate URL_PROTOCOL_FLAG_NESTED_SCHEME
+    11d7841 / 1305d93 deprecate av_url_read_seek
+    11d7841 / fa104e1 deprecate av_url_read_pause
+    434f248 / 727c7aa deprecate url_get_filename().
+    434f248 / 5958df3 deprecate url_max_packet_size().
+    434f248 / 1869ea0 deprecate url_get_file_handle().
+    434f248 / 32a97d4 deprecate url_filesize().
+    434f248 / e52a914 deprecate url_close().
+    434f248 / 58a48c6 deprecate url_seek().
+    434f248 / 925e908 deprecate url_write().
+    434f248 / dce3756 deprecate url_read_complete().
+    434f248 / bc371ac deprecate url_read().
+    434f248 / 0589da0 deprecate url_open().
+    434f248 / 62eaaea deprecate url_connect.
+    434f248 / 5652bb9 deprecate url_alloc.
+    434f248 / 333e894 deprecate url_open_protocol
+    434f248 / e230705 deprecate url_poll and URLPollEntry
+
+2011-04-08 - lavf 52.106.0 - avformat.h
+  Minor avformat.h cleanup:
+    d4d0932 / a9bf9d8 deprecate av_guess_image2_codec
+    d4d0932 / c3675df rename avf_sdp_create->av_sdp_create
+
+2011-04-03 - lavf 52.105.0 - avio.h
+  Large-scale renaming/deprecating of AVIOContext-related functions:
+    2cae980 / 724f6a0 deprecate url_fdopen
+    2cae980 / 403ee83 deprecate url_open_dyn_packet_buf
+    2cae980 / 6dc7d80 rename url_close_dyn_buf       -> avio_close_dyn_buf
+    2cae980 / b92c545 rename url_open_dyn_buf        -> avio_open_dyn_buf
+    2cae980 / 8978fed introduce an AVIOContext.seekable field as a replacement for
+            AVIOContext.is_streamed and url_is_streamed()
+    1caa412 / b64030f deprecate get_checksum()
+    1caa412 / 4c4427a deprecate init_checksum()
+    2fd41c9 / 4ec153b deprecate udp_set_remote_url/get_local_port
+    4fa0e24 / 933e90a deprecate av_url_read_fseek/fpause
+    4fa0e24 / 8d9769a deprecate url_fileno
+    0fecf26 / b7f2fdd rename put_flush_packet -> avio_flush
+    0fecf26 / 35f1023 deprecate url_close_buf
+    0fecf26 / 83fddae deprecate url_open_buf
+    0fecf26 / d9d86e0 rename url_fprintf -> avio_printf
+    0fecf26 / 59f65d9 deprecate url_setbufsize
+    6947b0c / 3e68b3b deprecate url_ferror
+    66e5b1d deprecate url_feof
+    e8bb2e2 deprecate url_fget_max_packet_size
+    76aa876 rename url_fsize -> avio_size
+    e519753 deprecate url_fgetc
+    655e45e deprecate url_fgets
+    a2704c9 rename url_ftell -> avio_tell
+    e16ead0 deprecate get_strz() in favor of avio_get_str
+    0300db8,2af07d3 rename url_fskip -> avio_skip
+    6b4aa5d rename url_fseek -> avio_seek
+    61840b4 deprecate put_tag
+    22a3212 rename url_fopen/fclose -> avio_open/close.
+    0ac8e2b deprecate put_nbyte
+    77eb550 rename put_byte          -> avio_w8
+                   put_[b/l]e<type>  -> avio_w[b/l]<type>
+                   put_buffer        -> avio_write
+    b7effd4 rename get_byte          -> avio_r8,
+                   get_[b/l]e<type>  -> avio_r[b/l]<type>
+                   get_buffer        -> avio_read
+    b3db9ce deprecate get_partial_buffer
+    8d9ac96 rename av_alloc_put_byte -> avio_alloc_context
+
+2011-03-25 - 27ef7b1 / 34b47d7 - lavc 52.115.0 - AVCodecContext.audio_service_type
+  Add audio_service_type field to AVCodecContext.
+
+2011-03-17 - e309fdc - lavu 50.40.0 - pixfmt.h
+  Add PIX_FMT_BGR48LE and PIX_FMT_BGR48BE pixel formats
+
+2011-03-02 - 863c471 - lavf  52.103.0 - av_pkt_dump2, av_pkt_dump_log2
+  Add new functions av_pkt_dump2, av_pkt_dump_log2 that uses the
+  source stream timebase for outputting timestamps. Deprecate
+  av_pkt_dump and av_pkt_dump_log.
+
+2011-02-20 - e731b8d - lavf  52.102.0 - avio.h
+  * e731b8d - rename init_put_byte() to ffio_init_context(), deprecating the
+              original, and move it to a private header so it is no longer
+              part of our public API. Instead, use av_alloc_put_byte().
+  * ae628ec - rename ByteIOContext to AVIOContext.
+
+2011-02-16 - 09d171b - lavf  52.101.0 - avformat.h
+                       lavu  52.39.0  - parseutils.h
+  * 610219a - Add av_ prefix to dump_format().
+  * f6c7375 - Replace parse_date() in lavf with av_parse_time() in lavu.
+  * ab0287f - Move find_info_tag from lavf to lavu and add av_prefix to it.
+
+2011-02-15 - lavu 52.38.0 - merge libavcore
+  libavcore is merged back completely into libavutil
+
+2011-02-10 - 55bad0c - lavc 52.113.0 - vbv_delay
+  Add vbv_delay field to AVCodecContext
+
+2011-02-14 - 24a83bd - lavf 52.100.0 - AV_DISPOSITION_CLEAN_EFFECTS
+  Add AV_DISPOSITION_CLEAN_EFFECTS disposition flag.
+
+2011-02-14 - 910b5b8 - lavfi 1.76.0 - AVFilterLink sample_aspect_ratio
+  Add sample_aspect_ratio field to AVFilterLink.
+
+2011-02-10 - 12c14cd - lavf 52.99.0 - AVStream.disposition
+  Add AV_DISPOSITION_HEARING_IMPAIRED and AV_DISPOSITION_VISUAL_IMPAIRED.
+
+2011-02-09 - c0b102c - lavc 52.112.0 - avcodec_thread_init()
+  Deprecate avcodec_thread_init()/avcodec_thread_free() use; instead
+  set thread_count before calling avcodec_open.
+
+2011-02-09 - 37b00b4 - lavc 52.111.0 - threading API
+  Add CODEC_CAP_FRAME_THREADS with new restrictions on get_buffer()/
+  release_buffer()/draw_horiz_band() callbacks for appropriate codecs.
+  Add thread_type and active_thread_type fields to AVCodecContext.
+
+2011-02-08 - 3940caa - lavf 52.98.0 - av_probe_input_buffer
+  Add av_probe_input_buffer() to avformat.h for probing format from a
+  ByteIOContext.
+
+2011-02-06 - fe174fc - lavf 52.97.0 - avio.h
+  Add flag for non-blocking protocols: URL_FLAG_NONBLOCK
+
+2011-02-04 - f124b08 - lavf 52.96.0 - avformat_free_context()
+  Add avformat_free_context() in avformat.h.
+
+2011-02-03 - f5b82f4 - lavc 52.109.0 - add CODEC_ID_PRORES
+  Add CODEC_ID_PRORES to avcodec.h.
+
+2011-02-03 - fe9a3fb - lavc 52.109.0 - H.264 profile defines
+  Add defines for H.264 * Constrained Baseline and Intra profiles
+
+2011-02-02 - lavf 52.95.0
+  * 50196a9 - add a new installed header version.h.
+  * 4efd5cf, dccbd97, 93b78d1 - add several variants of public
+    avio_{put,get}_str* functions.  Deprecate corresponding semi-public
+    {put,get}_str*.
+
+2011-02-02 - dfd2a00 - lavu 50.37.0 - log.h
+  Make av_dlog public.
+
+2011-01-31 - 7b3ea55 - lavfi 1.76.0 - vsrc_buffer
+  Add sample_aspect_ratio fields to vsrc_buffer arguments
+
+2011-01-31 - 910b5b8 - lavfi 1.75.0 - AVFilterLink sample_aspect_ratio
+  Add sample_aspect_ratio field to AVFilterLink.
+
+2011-01-15 - r26374 - lavfi 1.74.0 - AVFilterBufferRefAudioProps
+  Rename AVFilterBufferRefAudioProps.samples_nb to nb_samples.
+
+2011-01-14 - r26330 - lavf 52.93.0 - av_metadata_copy()
+  Add av_metadata_copy() in avformat.h.
+
+2011-01-07 - r26262 - lavc 52.107.0 - deprecate reordered_opaque
+  Deprecate reordered_opaque in favor of pkt_pts/dts.
+
+2011-01-07 - r26261 - lavc 52.106.0 - pkt_dts
+  Add pkt_dts to AVFrame, this will in the future allow multithreading decoders
+  to not mess up dts.
+
+2011-01-07 - r26260 - lavc 52.105.0 - pkt_pts
+  Add pkt_pts to AVFrame.
+
+2011-01-07 - r26259 - lavc 52.104.0 - av_get_profile_name()
+  Add av_get_profile_name to libavcodec/avcodec.h.
+
+2010-12-27 - r26108 - lavfi 1.71.0 - AV_PERM_NEG_LINESIZES
+  Add AV_PERM_NEG_LINESIZES in avfilter.h.
+
+2010-12-27 - r26104 - lavf 52.91.0 - av_find_best_stream()
+  Add av_find_best_stream to libavformat/avformat.h.
+
+2010-12-27 - r26103 - lavf 52.90.0
+  Add AVFMT_NOSTREAMS flag for formats with no streams,
+  like e.g. text metadata.
+
+2010-12-22 - r26073 - lavu 50.36.0 - file.h
+  Add functions av_file_map() and av_file_unmap() in file.h.
+
+2010-12-19 - r26056 - lavu 50.35.0 - error.h
+  Add "not found" error codes:
+  AVERROR_DEMUXER_NOT_FOUND
+  AVERROR_MUXER_NOT_FOUND
+  AVERROR_DECODER_NOT_FOUND
+  AVERROR_ENCODER_NOT_FOUND
+  AVERROR_PROTOCOL_NOT_FOUND
+  AVERROR_FILTER_NOT_FOUND
+  AVERROR_BSF_NOT_FOUND
+  AVERROR_STREAM_NOT_FOUND
+
+2010-12-09 - r25923 - lavcore 0.16.0 - avcore.h
+  Move AV_NOPTS_VALUE, AV_TIME_BASE, AV_TIME_BASE_Q symbols from
+  avcodec.h to avcore.h.
+
+2010-12-04 - r25886 - lavc 52.98.0 - CODEC_CAP_NEG_LINESIZES
+  Add CODEC_CAP_NEG_LINESIZES codec capability flag in avcodec.h.
+
+2010-12-04 - r25879 - lavu 50.34.0 - av_get_pix_fmt_string()
+  Deprecate avcodec_pix_fmt_string() in favor of
+  pixdesc.h/av_get_pix_fmt_string().
+
+2010-12-04 - r25878 - lavcore 0.15.0 - av_image_alloc()
+  Add av_image_alloc() to libavcore/imgutils.h.
+
+2010-12-02 - r25862 - lavfi 1.67.0 - avfilter_graph_create_filter()
+  Add function avfilter_graph_create_filter() in avfiltergraph.h.
+
+2010-11-25 - r25826 - lavfi 1.65.0 - avfilter_get_video_buffer_ref_from_arrays()
+  Add function avfilter_get_video_buffer_ref_from_arrays() in
+  avfilter.h.
+
+2010-11-21 - r25787 - lavcore 0.14.0 - audioconvert.h
+  Add a public audio channel API in audioconvert.h, and deprecate the
+  corresponding functions in libavcodec:
+  avcodec_get_channel_name()
+  avcodec_get_channel_layout()
+  avcodec_get_channel_layout_string()
+  avcodec_channel_layout_num_channels()
+  and the CH_* macros defined in libavcodec/avcodec.h.
+
+2010-11-21 - r25777 - lavf 52.85.0 - avformat.h
+  Add av_append_packet().
+
+2010-11-21 - r25776 - lavc 52.97.0 - avcodec.h
+  Add av_grow_packet().
+
+2010-11-17 - r25761 - lavcore 0.13.0 - parseutils.h
+  Add av_parse_color() declared in libavcore/parseutils.h.
+
+2010-11-13 - r25745 - lavc 52.95.0 - AVCodecContext
+  Add AVCodecContext.subtitle_header and AVCodecContext.subtitle_header_size
+  fields.
+
+2010-11-13 - r25740 - lavfi 1.62.0 - avfiltergraph.h
+  Make avfiltergraph.h public.
+
+2010-11-13 - r25737 - lavfi 1.61.0 - avfiltergraph.h
+  Remove declarations from avfiltergraph.h for the functions:
+  avfilter_graph_check_validity()
+  avfilter_graph_config_links()
+  avfilter_graph_config_formats()
+  which are now internal.
+  Use avfilter_graph_config() instead.
+
+2010-11-08 - r25708 - lavu 50.33.0 - eval.h
+  Deprecate functions:
+  av_parse_and_eval_expr(),
+  av_parse_expr(),
+  av_eval_expr(),
+  av_free_expr(),
+  in favor of the functions:
+  av_expr_parse_and_eval(),
+  av_expr_parse(),
+  av_expr_eval(),
+  av_expr_free().
+
+2010-11-08 - r25707 - lavfi 1.59.0 - avfilter_free()
+  Rename avfilter_destroy() to avfilter_free().
+  This change breaks libavfilter API/ABI.
+
+2010-11-07 - r25705 - lavfi 1.58.0 - avfiltergraph.h
+  Remove graphparser.h header, move AVFilterInOut and
+  avfilter_graph_parse() declarations to libavfilter/avfiltergraph.h.
+
+2010-11-07 - r25700 - lavfi 1.57.0 - AVFilterInOut
+  Rename field AVFilterInOut.filter to AVFilterInOut.filter_ctx.
+  This change breaks libavfilter API.
+
+2010-11-04 - r25674 - lavfi 1.56.0 - avfilter_graph_free()
+  Rename avfilter_graph_destroy() to avfilter_graph_free().
+  This change breaks libavfilter API/ABI.
+
+2010-11-04 - r25673 - lavfi 1.55.0 - avfilter_graph_alloc()
+  Add avfilter_graph_alloc() to libavfilter/avfiltergraph.h.
+
+2010-11-02 - r25654 - lavcore 0.12.0 - av_get_bits_per_sample_fmt()
+  Add av_get_bits_per_sample_fmt() to libavcore/samplefmt.h and
+  deprecate av_get_bits_per_sample_format().
+
+2010-11-02 - r25653 - lavcore 0.11.0 - samplefmt.h
+  Add sample format functions in libavcore/samplefmt.h:
+  av_get_sample_fmt_name(),
+  av_get_sample_fmt(),
+  av_get_sample_fmt_string(),
+  and deprecate the corresponding libavcodec/audioconvert.h functions:
+  avcodec_get_sample_fmt_name(),
+  avcodec_get_sample_fmt(),
+  avcodec_sample_fmt_string().
+
+2010-11-02 - r25652 - lavcore 0.10.0 - samplefmt.h
+  Define enum AVSampleFormat in libavcore/samplefmt.h, deprecate enum
+  SampleFormat.
+
+2010-10-16 - r25502 - lavfi 1.52.0 - avfilter_graph_config()
+  Add the function avfilter_graph_config() in avfiltergraph.h.
+
+2010-10-15 - r25493 - lavf 52.83.0 - metadata API
+  Change demuxers to export metadata in generic format and
+  muxers to accept generic format. Deprecate the public
+  conversion API.
+
+2010-10-10 - r25441 - lavfi 1.49.0 - AVFilterLink.time_base
+  Add time_base field to AVFilterLink.
+
+2010-09-27 - r25236 - lavu 50.31.0 - av_set_options_string()
+  Move av_set_options_string() from libavfilter/parseutils.h to
+  libavutil/opt.h.
+
+2010-09-27 - r25227 - lavfi 1.47.0 - AVFilterLink
+  Make the AVFilterLink fields srcpad and dstpad store the pointers to
+  the source and destination pads, rather than their indexes.
+
+2010-09-27 - r25225 - lavu 50.30.0 - av_get_token()
+  Move av_get_token() from libavfilter/parseutils.h to
+  libavutil/avstring.h.
+
+2010-09-26 - r32368 - lsws 0.12.0 - swscale.h
+  Add the functions sws_alloc_context() and sws_init_context().
+
+2010-09-26 - r25210 - lavu 50.29.0 - opt.h
+  Move libavcodec/opt.h to libavutil/opt.h.
+
+2010-09-24 - r25174 - lavu 50.28.0 - av_log_set_flags()
+  Default of av_log() changed due to many problems to the old no repeat
+  detection. Read the docs of AV_LOG_SKIP_REPEATED in log.h before
+  enabling it for your app!.
+
+2010-09-24 - r25167 - lavc 52.90.0 - av_opt_show2()
+  Deprecate av_opt_show() in favor or av_opt_show2().
+
+2010-09-14 - r25120 - lavu 50.27.0 - av_popcount()
+  Add av_popcount() to libavutil/common.h.
+
+2010-09-08 - r25076 - lavu 50.26.0 - av_get_cpu_flags()
+  Add av_get_cpu_flags().
+
+2010-09-07 - r25067 - lavcore 0.9.0 - av_image_copy()
+  Add av_image_copy().
+
+2010-09-07 - r25064 - lavcore 0.8.0 - av_image_copy_plane()
+  Add av_image_copy_plane().
+
+2010-09-07 - r25057 - lavcore 0.7.0 - imgutils.h
+  Adopt hierarchical scheme for the imgutils.h function names,
+  deprecate the old names.
+
+2010-09-04 - r25040 - lavu 50.25.0 - AV_CPU_FLAG_*
+  Deprecate the FF_MM_* flags defined in libavcodec/avcodec.h in favor
+  of the AV_CPU_FLAG_* flags defined in libavutil/cpu.h.
+
+2010-08-26 - r24936 - lavc 52.87.0 - avcodec_get_channel_layout()
+  Add avcodec_get_channel_layout() in audioconvert.h.
+
+2010-08-20 - r24851 - lavcore 0.6.0 - av_fill_image_max_pixsteps()
+  Rename av_fill_image_max_pixstep() to av_fill_image_max_pixsteps().
+
+2010-08-18 - r24827 - lavcore 0.5.0 - av_fill_image_max_pixstep()
+  Add av_fill_image_max_pixstep() in imgutils.h.
+
+2010-08-17 - r24814 - lavu 50.24.0 - AV_NE()
+  Add the AV_NE macro.
+
+2010-08-17 - r24811 - lavfi 1.36.0 - audio framework
+  Implement AVFilterBufferRefAudioProps struct for audio properties,
+  get_audio_buffer(), filter_samples() functions and related changes.
+
+2010-08-12 - r24787 - lavcore 0.4.0 - av_get_image_linesize()
+  Add av_get_image_linesize() in imgutils.h.
+
+2010-08-11 - r24773 - lavfi 1.34.0 - AVFilterBufferRef
+  Resize data and linesize arrays in AVFilterBufferRef to 8.
+
+  This change breaks libavfilter API/ABI.
+
+2010-08-11 - r24768 - lavc 52.85.0 - av_picture_data_copy()
+  Add av_picture_data_copy in avcodec.h.
+
+2010-08-11 - r24765 - lavfi 1.33.0 - avfilter_open()
+  Change avfilter_open() signature:
+  AVFilterContext *avfilter_open(AVFilter *filter, const char *inst_name) ->
+  int avfilter_open(AVFilterContext **filter_ctx, AVFilter *filter, const char *inst_name);
+
+  This change breaks libavfilter API/ABI.
+
+2010-08-11 - r24763 - lavfi 1.32.0 - AVFilterBufferRef
+  Add a type field to AVFilterBufferRef, and move video specific
+  properties to AVFilterBufferRefVideoProps.
+
+  This change breaks libavfilter API/ABI.
+
+2010-08-07 - r24732 - lavfi 1.31.0 - AVFilterLink
+  Rename AVFilterLink fields:
+  AVFilterLink.srcpic    ->  AVFilterLink.src_buf
+  AVFilterLink.cur_pic   ->  AVFilterLink.cur_buf
+  AVFilterLink.outpic    ->  AVFilterLink.out_buf
+
+2010-08-07 - r24731 - lavfi 1.30.0
+  Rename functions and fields:
+  avfilter_(un)ref_pic       -> avfilter_(un)ref_buffer
+  avfilter_copy_picref_props -> avfilter_copy_buffer_ref_props
+  AVFilterBufferRef.pic      -> AVFilterBufferRef.buffer
+
+2010-08-07 - r24730 - lavfi 1.29.0 - AVFilterBufferRef
+  Rename AVFilterPicRef to AVFilterBufferRef.
+
+2010-08-07 - r24728 - lavfi 1.28.0 - AVFilterBuffer
+  Move format field from AVFilterBuffer to AVFilterPicRef.
+
+2010-08-06 - r24709 - lavcore 0.3.0 - av_check_image_size()
+  Deprecate avcodec_check_dimensions() in favor of the function
+  av_check_image_size() defined in libavcore/imgutils.h.
+
+2010-07-30 - r24592 - lavfi 1.27.0 - AVFilterBuffer
+  Increase size of the arrays AVFilterBuffer.data and
+  AVFilterBuffer.linesize from 4 to 8.
+
+  This change breaks libavfilter ABI.
+
+2010-07-29 - r24583 - lavcore 0.2.0 - imgutils.h
+  Add functions av_fill_image_linesizes() and
+  av_fill_image_pointers(), declared in libavcore/imgutils.h.
+
+2010-07-27 - r24518 - lavcore 0.1.0 - parseutils.h
+  Deprecate av_parse_video_frame_size() and av_parse_video_frame_rate()
+  defined in libavcodec in favor of the newly added functions
+  av_parse_video_size() and av_parse_video_rate() declared in
+  libavcore/parseutils.h.
+
+2010-07-23 - r24439 - lavu 50.23.0 - mathematics.h
+  Add the M_PHI constant definition.
+
+2010-07-22 - r24424 - lavfi 1.26.0 - media format generalization
+  Add a type field to AVFilterLink.
+
+  Change the field types:
+  enum PixelFormat format   -> int format   in AVFilterBuffer
+  enum PixelFormat *formats -> int *formats in AVFilterFormats
+  enum PixelFormat *format  -> int format   in AVFilterLink
+
+  Change the function signatures:
+  AVFilterFormats *avfilter_make_format_list(const enum PixelFormat *pix_fmts); ->
+  AVFilterFormats *avfilter_make_format_list(const int *fmts);
+
+  int avfilter_add_colorspace(AVFilterFormats **avff, enum PixelFormat pix_fmt); ->
+  int avfilter_add_format    (AVFilterFormats **avff, int fmt);
+
+  AVFilterFormats *avfilter_all_colorspaces(void); ->
+  AVFilterFormats *avfilter_all_formats    (enum AVMediaType type);
+
+  This change breaks libavfilter API/ABI.
+
+2010-07-21 - r24393 - lavcore 0.0.0
+  Add libavcore.
+
+2010-07-17 - r24291 - lavfi 1.25.0 - AVFilterBuffer
+  Remove w and h fields from AVFilterBuffer.
+
+2010-07-17 - r24284 - lavfi 1.24.0 - AVFilterBuffer
+  Rename AVFilterPic to AVFilterBuffer.
+
+2010-07-17 - r24278 - lavf 52.74.0 - url_fskip()
+  Make url_fskip() return an int error code instead of void.
+
+2010-07-11 - r24199 - lavc 52.83.0
+  Add AVCodecContext.lpc_type and AVCodecContext.lpc_passes fields.
+  Add AVLPCType enum.
+  Deprecate AVCodecContext.use_lpc.
+
+2010-07-11 - r24185 - lavc 52.82.0 - avsubtitle_free()
+  Add a function for free the contents of a AVSubtitle generated by
+  avcodec_decode_subtitle.
+
+2010-07-11 - r24174 - lavu 50.22.0 - bswap.h and intreadwrite.h
+  Make the bswap.h and intreadwrite.h API public.
+
+2010-07-08 - r24101 - lavu 50.21.0 - pixdesc.h
+  Rename read/write_line() to av_read/write_image_line().
+
+2010-07-07 - r24091 - lavfi 1.21.0 - avfilter_copy_picref_props()
+  Add avfilter_copy_picref_props().
+
+2010-07-03 - r24021 - lavc 52.79.0
+  Add FF_COMPLIANCE_UNOFFICIAL and change all instances of
+  FF_COMPLIANCE_INOFFICIAL to use FF_COMPLIANCE_UNOFFICIAL.
+
+2010-07-02 - r23985 - lavu 50.20.0 - lfg.h
+  Export av_lfg_init(), av_lfg_get(), av_mlfg_get(), and av_bmg_get() through
+  lfg.h.
+
+2010-06-28 - r23835 - lavfi 1.20.1 - av_parse_color()
+  Extend av_parse_color() syntax, make it accept an alpha value specifier and
+  set the alpha value to 255 by default.
+
+2010-06-22 - r23706 - lavf 52.71.0 - URLProtocol.priv_data_size, priv_data_class
+  Add priv_data_size and priv_data_class to URLProtocol.
+
+2010-06-22 - r23704 - lavf 52.70.0 - url_alloc(), url_connect()
+  Add url_alloc() and url_connect().
+
+2010-06-22 - r23702 - lavf 52.69.0 - av_register_protocol2()
+  Add av_register_protocol2(), deprecating av_register_protocol().
+
+2010-06-09 - r23551 - lavu 50.19.0 - av_compare_mod()
+  Add av_compare_mod() to libavutil/mathematics.h.
+
+2010-06-05 - r23485 - lavu 50.18.0 - eval API
+  Make the eval API public.
+
+2010-06-04 - r23461 - lavu 50.17.0 - AV_BASE64_SIZE
+  Add AV_BASE64_SIZE() macro.
+
+2010-06-02 - r23421 - lavc 52.73.0 - av_get_codec_tag_string()
+  Add av_get_codec_tag_string().
+
 2010-06-01 - r31301 - lsws 0.11.0 - convertPalette API
-  Add sws_convertPalette8ToPacked32 and sws_convertPalette8ToPacked24
+  Add sws_convertPalette8ToPacked32() and sws_convertPalette8ToPacked24().
 
 2010-05-26 - r23334 - lavc 52.72.0 - CODEC_CAP_EXPERIMENTAL
   Add CODEC_CAP_EXPERIMENTAL flag.
+  NOTE: this was backported to 0.6
+
+2010-05-23 - r23255 - lavu 50.16.0 - av_get_random_seed()
+  Add av_get_random_seed().
 
 2010-05-18 - r23161 - lavf 52.63.0 - AVFMT_FLAG_RTP_HINT
-  Add AVFMT_FLAG_RTP_HINT as possible value for AVFormatContext.flags
+  Add AVFMT_FLAG_RTP_HINT as possible value for AVFormatContext.flags.
+  NOTE: this was backported to 0.6
+
+2010-05-09 - r23066 - lavfi 1.20.0 - AVFilterPicRef
+  Add interlaced and top_field_first fields to AVFilterPicRef.
+
+------------------------------8<-------------------------------------
+                   0.6 branch was cut here
+----------------------------->8--------------------------------------
 
 2010-05-01 - r23002 - lavf 52.62.0 - probe function
   Add av_probe_input_format2 to API, it allows ignoring probe
@@ -30,7 +725,7 @@ API changes, most recent first:
   existing tags.
 
 2010-04-01 - r22753 - lavc 52.66.0
-  Add avcodec_get_edge_width()
+  Add avcodec_get_edge_width().
 
 2010-03-31 - r22750 - lavc 52.65.0
   Add avcodec_copy_context().
@@ -49,7 +744,7 @@ API changes, most recent first:
   Implement av_strerror().
 
 2010-03-23 - r22649 - lavc 52.60.0 - av_dct_init()
-  Support DCT-I and DST-I
+  Support DCT-I and DST-I.
 
 2010-03-15 - r22540 - lavf 52.56.0 - AVFormatContext.start_time_realtime
   Add AVFormatContext.start_time_realtime field.
@@ -83,13 +778,13 @@ API changes, most recent first:
 2010-01-30 - r21545 - lavu 50.8.0 - av_get_pix_fmt()
   Add av_get_pix_fmt().
 
-2010-01-21 - r30381 - lsws 0.9.0 - sws_scale
+2010-01-21 - r30381 - lsws 0.9.0 - sws_scale()
   Change constness attributes of sws_scale() parameters.
 
 2010-01-10 - r21121 - lavfi 1.15.0 - avfilter_graph_config_links()
   Add a log_ctx parameter to avfilter_graph_config_links().
 
-2010-01-07 - r30236 - lsws 0.8.0 - sws_isSupported{In,Out}put
+2010-01-07 - r30236 - lsws 0.8.0 - sws_isSupported{In,Out}put()
   Add sws_isSupportedInput() and sws_isSupportedOutput() functions.
 
 2010-01-06 - r21035 - lavfi 1.14.0 - avfilter_add_colorspace()
@@ -106,7 +801,8 @@ API changes, most recent first:
   Add av_guess_format(), it should be used in place of guess_format().
 
 2009-12-13 - r20834 - lavf 52.43.0 - metadata API
-  Add av_metadata_set2(), AV_METADATA_DONT_STRDUP_KEY and AV_METADATA_DONT_STRDUP_VAL.
+  Add av_metadata_set2(), AV_METADATA_DONT_STRDUP_KEY and
+  AV_METADATA_DONT_STRDUP_VAL.
 
 2009-12-13 - r20829 - lavu 50.7.0 - avstring.h API
   Add av_d2str().
@@ -172,10 +868,10 @@ API changes, most recent first:
   When the lock manager is registered, FFmpeg is guaranteed to behave
   correctly in a multi-threaded application.
 
-2009-04-30 - r18719 - lavc 52.28.0 - av_free_packet
+2009-04-30 - r18719 - lavc 52.28.0 - av_free_packet()
   av_free_packet() is no longer an inline function. It is now exported.
 
-2009-04-11 - r18431 - lavc 52.25.0 - deprecate av_destruct_packet_nofree
+2009-04-11 - r18431 - lavc 52.25.0 - deprecate av_destruct_packet_nofree()
   Please use NULL instead. This has been supported since r16506
   (lavf > 52.23.1, lavc > 52.10.0).
 
@@ -185,7 +881,7 @@ API changes, most recent first:
   avcodec_decode_subtitle2(). These new functions take an AVPacket *pkt
   argument instead of a const uint8_t *buf / int buf_size pair.
 
-2009-04-03 - r18321 - lavu 50.3.0 - av_fifo_space
+2009-04-03 - r18321 - lavu 50.3.0 - av_fifo_space()
   Introduce the av_fifo_space() function.
 
 2009-04-02 - r18317 - lavc 52.23.0 - AVPacket

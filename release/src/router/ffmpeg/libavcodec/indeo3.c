@@ -1,7 +1,4 @@
 /*
- * Intel Indeo 3 (IV31, IV32, etc.) video decoder for ffmpeg
- * written, produced, and directed by Alan Smithee
- *
  * This file is part of FFmpeg.
  *
  * FFmpeg is free software; you can redistribute it and/or
@@ -19,10 +16,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+/**
+ * @file
+ * Intel Indeo 3 (IV31, IV32, etc.) video decoder for FFmpeg
+ * written, produced, and directed by Alan Smithee
+ *
+ * For some documentation see:
+ * http://wiki.multimedia.cx/index.php?title=Indeo_3
+ */
 
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 #include "dsputil.h"
 #include "bytestream.h"
@@ -148,13 +151,13 @@ static av_cold void iv_free_func(Indeo3DecodeContext *s)
 }
 
 struct ustr {
-    long xpos;
-    long ypos;
-    long width;
-    long height;
-    long split_flag;
-    long split_direction;
-    long usl7;
+    int xpos;
+    int ypos;
+    int width;
+    int height;
+    int split_flag;
+    int split_direction;
+    int usl7;
 };
 
 
@@ -202,14 +205,15 @@ struct ustr {
 
 static void iv_Decode_Chunk(Indeo3DecodeContext *s,
         uint8_t *cur, uint8_t *ref, int width, int height,
-        const uint8_t *buf1, long cb_offset, const uint8_t *hdr,
+        const uint8_t *buf1, int cb_offset, const uint8_t *hdr,
         const uint8_t *buf2, int min_width_160)
 {
     uint8_t bit_buf;
-    unsigned long bit_pos, lv, lv1, lv2;
-    long *width_tbl, width_tbl_arr[10];
+    unsigned int bit_pos, lv, lv1, lv2;
+    int *width_tbl, width_tbl_arr[10];
     const signed char *ref_vectors;
     uint8_t *cur_frm_pos, *ref_frm_pos, *cp, *cp2;
+    uint8_t *cur_end = cur + width*height + width;
     uint32_t *cur_lp, *ref_lp;
     const uint32_t *correction_lp[2], *correctionloworder_lp[2], *correctionhighorder_lp[2];
     uint8_t *correction_type_sp[2];
@@ -356,17 +360,19 @@ static void iv_Decode_Chunk(Indeo3DecodeContext *s,
                             k = *buf1++;
                             cur_lp = ((uint32_t *)cur_frm_pos) + width_tbl[lp2];
                             ref_lp = ((uint32_t *)ref_frm_pos) + width_tbl[lp2];
+                            if ((uint8_t *)cur_lp >= cur_end-3)
+                                break;
 
                             switch(correction_type_sp[0][k]) {
                             case 0:
-                                *cur_lp = le2me_32(((le2me_32(*ref_lp) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
+                                *cur_lp = av_le2ne32(((av_le2ne32(*ref_lp) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
                                 lp2++;
                                 break;
                             case 1:
-                                res = ((le2me_16(((unsigned short *)(ref_lp))[0]) >> 1) + correction_lp[lp2 & 0x01][*buf1]) << 1;
-                                ((unsigned short *)cur_lp)[0] = le2me_16(res);
-                                res = ((le2me_16(((unsigned short *)(ref_lp))[1]) >> 1) + correction_lp[lp2 & 0x01][k]) << 1;
-                                ((unsigned short *)cur_lp)[1] = le2me_16(res);
+                                res = ((av_le2ne16(((unsigned short *)(ref_lp))[0]) >> 1) + correction_lp[lp2 & 0x01][*buf1]) << 1;
+                                ((unsigned short *)cur_lp)[0] = av_le2ne16(res);
+                                res = ((av_le2ne16(((unsigned short *)(ref_lp))[1]) >> 1) + correction_lp[lp2 & 0x01][k]) << 1;
+                                ((unsigned short *)cur_lp)[1] = av_le2ne16(res);
                                 buf1++;
                                 lp2++;
                                 break;
@@ -462,19 +468,19 @@ static void iv_Decode_Chunk(Indeo3DecodeContext *s,
 
                             switch(correction_type_sp[lp2 & 0x01][k]) {
                             case 0:
-                                cur_lp[width_tbl[1]] = le2me_32(((le2me_32(*ref_lp) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
+                                cur_lp[width_tbl[1]] = av_le2ne32(((av_le2ne32(*ref_lp) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
                                 if(lp2 > 0 || flag1 == 0 || strip->ypos != 0)
                                     cur_lp[0] = ((cur_lp[-width_tbl[1]] >> 1) + (cur_lp[width_tbl[1]] >> 1)) & 0xFEFEFEFE;
                                 else
-                                    cur_lp[0] = le2me_32(((le2me_32(*ref_lp) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
+                                    cur_lp[0] = av_le2ne32(((av_le2ne32(*ref_lp) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
                                 lp2++;
                                 break;
 
                             case 1:
-                                res = ((le2me_16(((unsigned short *)ref_lp)[0]) >> 1) + correction_lp[lp2 & 0x01][*buf1]) << 1;
-                                ((unsigned short *)cur_lp)[width_tbl[2]] = le2me_16(res);
-                                res = ((le2me_16(((unsigned short *)ref_lp)[1]) >> 1) + correction_lp[lp2 & 0x01][k]) << 1;
-                                ((unsigned short *)cur_lp)[width_tbl[2]+1] = le2me_16(res);
+                                res = ((av_le2ne16(((unsigned short *)ref_lp)[0]) >> 1) + correction_lp[lp2 & 0x01][*buf1]) << 1;
+                                ((unsigned short *)cur_lp)[width_tbl[2]] = av_le2ne16(res);
+                                res = ((av_le2ne16(((unsigned short *)ref_lp)[1]) >> 1) + correction_lp[lp2 & 0x01][k]) << 1;
+                                ((unsigned short *)cur_lp)[width_tbl[2]+1] = av_le2ne16(res);
 
                                 if(lp2 > 0 || flag1 == 0 || strip->ypos != 0)
                                     cur_lp[0] = ((cur_lp[-width_tbl[1]] >> 1) + (cur_lp[width_tbl[1]] >> 1)) & 0xFEFEFEFE;
@@ -591,8 +597,8 @@ static void iv_Decode_Chunk(Indeo3DecodeContext *s,
 
                                 switch(correction_type_sp[lp2 & 0x01][k]) {
                                 case 0:
-                                    cur_lp[width_tbl[1]] = le2me_32(((le2me_32(lv1) >> 1) + correctionloworder_lp[lp2 & 0x01][k]) << 1);
-                                    cur_lp[width_tbl[1]+1] = le2me_32(((le2me_32(lv2) >> 1) + correctionhighorder_lp[lp2 & 0x01][k]) << 1);
+                                    cur_lp[width_tbl[1]] = av_le2ne32(((av_le2ne32(lv1) >> 1) + correctionloworder_lp[lp2 & 0x01][k]) << 1);
+                                    cur_lp[width_tbl[1]+1] = av_le2ne32(((av_le2ne32(lv2) >> 1) + correctionhighorder_lp[lp2 & 0x01][k]) << 1);
                                     if(lp2 > 0 || strip->ypos != 0 || flag1 == 0) {
                                         cur_lp[0] = ((cur_lp[-width_tbl[1]] >> 1) + (cur_lp[width_tbl[1]] >> 1)) & 0xFEFEFEFE;
                                         cur_lp[1] = ((cur_lp[-width_tbl[1]+1] >> 1) + (cur_lp[width_tbl[1]+1] >> 1)) & 0xFEFEFEFE;
@@ -604,8 +610,8 @@ static void iv_Decode_Chunk(Indeo3DecodeContext *s,
                                     break;
 
                                 case 1:
-                                    cur_lp[width_tbl[1]] = le2me_32(((le2me_32(lv1) >> 1) + correctionloworder_lp[lp2 & 0x01][*buf1]) << 1);
-                                    cur_lp[width_tbl[1]+1] = le2me_32(((le2me_32(lv2) >> 1) + correctionloworder_lp[lp2 & 0x01][k]) << 1);
+                                    cur_lp[width_tbl[1]] = av_le2ne32(((av_le2ne32(lv1) >> 1) + correctionloworder_lp[lp2 & 0x01][*buf1]) << 1);
+                                    cur_lp[width_tbl[1]+1] = av_le2ne32(((av_le2ne32(lv2) >> 1) + correctionloworder_lp[lp2 & 0x01][k]) << 1);
                                     if(lp2 > 0 || strip->ypos != 0 || flag1 == 0) {
                                         cur_lp[0] = ((cur_lp[-width_tbl[1]] >> 1) + (cur_lp[width_tbl[1]] >> 1)) & 0xFEFEFEFE;
                                         cur_lp[1] = ((cur_lp[-width_tbl[1]+1] >> 1) + (cur_lp[width_tbl[1]+1] >> 1)) & 0xFEFEFEFE;
@@ -748,20 +754,20 @@ static void iv_Decode_Chunk(Indeo3DecodeContext *s,
                                 case 0:
                                     lv1 = correctionloworder_lp[lp2 & 0x01][k];
                                     lv2 = correctionhighorder_lp[lp2 & 0x01][k];
-                                    cur_lp[0] = le2me_32(((le2me_32(ref_lp[0]) >> 1) + lv1) << 1);
-                                    cur_lp[1] = le2me_32(((le2me_32(ref_lp[1]) >> 1) + lv2) << 1);
-                                    cur_lp[width_tbl[1]] = le2me_32(((le2me_32(ref_lp[width_tbl[1]]) >> 1) + lv1) << 1);
-                                    cur_lp[width_tbl[1]+1] = le2me_32(((le2me_32(ref_lp[width_tbl[1]+1]) >> 1) + lv2) << 1);
+                                    cur_lp[0] = av_le2ne32(((av_le2ne32(ref_lp[0]) >> 1) + lv1) << 1);
+                                    cur_lp[1] = av_le2ne32(((av_le2ne32(ref_lp[1]) >> 1) + lv2) << 1);
+                                    cur_lp[width_tbl[1]] = av_le2ne32(((av_le2ne32(ref_lp[width_tbl[1]]) >> 1) + lv1) << 1);
+                                    cur_lp[width_tbl[1]+1] = av_le2ne32(((av_le2ne32(ref_lp[width_tbl[1]+1]) >> 1) + lv2) << 1);
                                     lp2++;
                                     break;
 
                                 case 1:
                                     lv1 = correctionloworder_lp[lp2 & 0x01][*buf1++];
                                     lv2 = correctionloworder_lp[lp2 & 0x01][k];
-                                    cur_lp[0] = le2me_32(((le2me_32(ref_lp[0]) >> 1) + lv1) << 1);
-                                    cur_lp[1] = le2me_32(((le2me_32(ref_lp[1]) >> 1) + lv2) << 1);
-                                    cur_lp[width_tbl[1]] = le2me_32(((le2me_32(ref_lp[width_tbl[1]]) >> 1) + lv1) << 1);
-                                    cur_lp[width_tbl[1]+1] = le2me_32(((le2me_32(ref_lp[width_tbl[1]+1]) >> 1) + lv2) << 1);
+                                    cur_lp[0] = av_le2ne32(((av_le2ne32(ref_lp[0]) >> 1) + lv1) << 1);
+                                    cur_lp[1] = av_le2ne32(((av_le2ne32(ref_lp[1]) >> 1) + lv2) << 1);
+                                    cur_lp[width_tbl[1]] = av_le2ne32(((av_le2ne32(ref_lp[width_tbl[1]]) >> 1) + lv1) << 1);
+                                    cur_lp[width_tbl[1]+1] = av_le2ne32(((av_le2ne32(ref_lp[width_tbl[1]+1]) >> 1) + lv2) << 1);
                                     lp2++;
                                     break;
 
@@ -849,22 +855,22 @@ static void iv_Decode_Chunk(Indeo3DecodeContext *s,
 
                             switch(correction_type_sp[lp2 & 0x01][k]) {
                             case 0:
-                                cur_lp[0] = le2me_32(((le2me_32(*ref_lp) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
-                                cur_lp[width_tbl[1]] = le2me_32(((le2me_32(ref_lp[width_tbl[1]]) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
+                                cur_lp[0] = av_le2ne32(((av_le2ne32(*ref_lp) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
+                                cur_lp[width_tbl[1]] = av_le2ne32(((av_le2ne32(ref_lp[width_tbl[1]]) >> 1) + correction_lp[lp2 & 0x01][k]) << 1);
                                 lp2++;
                                 break;
 
                             case 1:
                                 lv1 = (unsigned short)(correction_lp[lp2 & 0x01][*buf1++]);
                                 lv2 = (unsigned short)(correction_lp[lp2 & 0x01][k]);
-                                res = (unsigned short)(((le2me_16(((unsigned short *)ref_lp)[0]) >> 1) + lv1) << 1);
-                                ((unsigned short *)cur_lp)[0] = le2me_16(res);
-                                res = (unsigned short)(((le2me_16(((unsigned short *)ref_lp)[1]) >> 1) + lv2) << 1);
-                                ((unsigned short *)cur_lp)[1] = le2me_16(res);
-                                res = (unsigned short)(((le2me_16(((unsigned short *)ref_lp)[width_tbl[2]]) >> 1) + lv1) << 1);
-                                ((unsigned short *)cur_lp)[width_tbl[2]] = le2me_16(res);
-                                res = (unsigned short)(((le2me_16(((unsigned short *)ref_lp)[width_tbl[2]+1]) >> 1) + lv2) << 1);
-                                ((unsigned short *)cur_lp)[width_tbl[2]+1] = le2me_16(res);
+                                res = (unsigned short)(((av_le2ne16(((unsigned short *)ref_lp)[0]) >> 1) + lv1) << 1);
+                                ((unsigned short *)cur_lp)[0] = av_le2ne16(res);
+                                res = (unsigned short)(((av_le2ne16(((unsigned short *)ref_lp)[1]) >> 1) + lv2) << 1);
+                                ((unsigned short *)cur_lp)[1] = av_le2ne16(res);
+                                res = (unsigned short)(((av_le2ne16(((unsigned short *)ref_lp)[width_tbl[2]]) >> 1) + lv1) << 1);
+                                ((unsigned short *)cur_lp)[width_tbl[2]] = av_le2ne16(res);
+                                res = (unsigned short)(((av_le2ne16(((unsigned short *)ref_lp)[width_tbl[2]+1]) >> 1) + lv2) << 1);
+                                ((unsigned short *)cur_lp)[width_tbl[2]+1] = av_le2ne16(res);
                                 lp2++;
                                 break;
 
@@ -966,6 +972,7 @@ static av_cold int indeo3_decode_init(AVCodecContext *avctx)
     s->width = avctx->width;
     s->height = avctx->height;
     avctx->pix_fmt = PIX_FMT_YUV410P;
+    avcodec_get_frame_defaults(&s->frame);
 
     if (!(ret = build_modpred(s)))
         ret = iv_alloc_frames(s);
@@ -981,7 +988,7 @@ static int iv_decode_frame(AVCodecContext *avctx,
     Indeo3DecodeContext *s = avctx->priv_data;
     unsigned int image_width, image_height,
                  chroma_width, chroma_height;
-    unsigned long flags, cb_offset, data_size,
+    unsigned int flags, cb_offset, data_size,
                   y_offset, v_offset, u_offset, mc_vector_count;
     const uint8_t *hdr_pos, *buf_pos;
 
@@ -995,7 +1002,7 @@ static int iv_decode_frame(AVCodecContext *avctx,
     image_height = bytestream_get_le16(&buf_pos);
     image_width  = bytestream_get_le16(&buf_pos);
 
-    if(avcodec_check_dimensions(avctx, image_width, image_height))
+    if(av_image_check_size(image_width, image_height, 0, avctx))
         return -1;
     if (image_width != avctx->width || image_height != avctx->height) {
         int ret;
@@ -1133,10 +1140,13 @@ static av_cold int indeo3_decode_end(AVCodecContext *avctx)
 
     iv_free_func(s);
 
+    if (s->frame.data[0])
+        avctx->release_buffer(avctx, &s->frame);
+
     return 0;
 }
 
-AVCodec indeo3_decoder = {
+AVCodec ff_indeo3_decoder = {
     "indeo3",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_INDEO3,

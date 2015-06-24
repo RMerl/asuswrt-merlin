@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <math.h>
 
+#include "libavutil/cpu.h"
 #include "libavutil/common.h"
 #include "libavutil/lfg.h"
 
@@ -94,24 +95,24 @@ struct algo algos[] = {
   {"SIMPLE-C",        1, ff_simple_idct,     ff_ref_idct, NO_PERM},
 
 #if HAVE_MMX
-  {"MMX",             0, ff_fdct_mmx,        ff_ref_fdct, NO_PERM, FF_MM_MMX},
+  {"MMX",             0, ff_fdct_mmx,        ff_ref_fdct, NO_PERM, AV_CPU_FLAG_MMX},
 #if HAVE_MMX2
-  {"MMX2",            0, ff_fdct_mmx2,       ff_ref_fdct, NO_PERM, FF_MM_MMX2},
-  {"SSE2",            0, ff_fdct_sse2,       ff_ref_fdct, NO_PERM, FF_MM_SSE2},
+  {"MMX2",            0, ff_fdct_mmx2,       ff_ref_fdct, NO_PERM, AV_CPU_FLAG_MMX2},
+  {"SSE2",            0, ff_fdct_sse2,       ff_ref_fdct, NO_PERM, AV_CPU_FLAG_SSE2},
 #endif
 
 #if CONFIG_GPL
-  {"LIBMPEG2-MMX",    1, ff_mmx_idct,        ff_ref_idct, MMX_PERM, FF_MM_MMX},
-  {"LIBMPEG2-MMX2",   1, ff_mmxext_idct,     ff_ref_idct, MMX_PERM, FF_MM_MMX2},
+  {"LIBMPEG2-MMX",    1, ff_mmx_idct,        ff_ref_idct, MMX_PERM, AV_CPU_FLAG_MMX},
+  {"LIBMPEG2-MMX2",   1, ff_mmxext_idct,     ff_ref_idct, MMX_PERM, AV_CPU_FLAG_MMX2},
 #endif
-  {"SIMPLE-MMX",      1, ff_simple_idct_mmx, ff_ref_idct, MMX_SIMPLE_PERM, FF_MM_MMX},
-  {"XVID-MMX",        1, ff_idct_xvid_mmx,   ff_ref_idct, NO_PERM, FF_MM_MMX},
-  {"XVID-MMX2",       1, ff_idct_xvid_mmx2,  ff_ref_idct, NO_PERM, FF_MM_MMX2},
-  {"XVID-SSE2",       1, ff_idct_xvid_sse2,  ff_ref_idct, SSE2_PERM, FF_MM_SSE2},
+  {"SIMPLE-MMX",      1, ff_simple_idct_mmx, ff_ref_idct, MMX_SIMPLE_PERM, AV_CPU_FLAG_MMX},
+  {"XVID-MMX",        1, ff_idct_xvid_mmx,   ff_ref_idct, NO_PERM, AV_CPU_FLAG_MMX},
+  {"XVID-MMX2",       1, ff_idct_xvid_mmx2,  ff_ref_idct, NO_PERM, AV_CPU_FLAG_MMX2},
+  {"XVID-SSE2",       1, ff_idct_xvid_sse2,  ff_ref_idct, SSE2_PERM, AV_CPU_FLAG_SSE2},
 #endif
 
 #if HAVE_ALTIVEC
-  {"altivecfdct",     0, fdct_altivec,       ff_ref_fdct, NO_PERM, FF_MM_ALTIVEC},
+  {"altivecfdct",     0, fdct_altivec,       ff_ref_fdct, NO_PERM, AV_CPU_FLAG_ALTIVEC},
 #endif
 
 #if ARCH_BFIN
@@ -187,14 +188,14 @@ DECLARE_ALIGNED(8, static DCTELEM, block_org)[64];
 static inline void mmx_emms(void)
 {
 #if HAVE_MMX
-    if (cpu_flags & FF_MM_MMX)
+    if (cpu_flags & AV_CPU_FLAG_MMX)
         __asm__ volatile ("emms\n\t");
 #endif
 }
 
 static void dct_error(const char *name, int is_idct,
                void (*fdct_func)(DCTELEM *block),
-               void (*fdct_ref)(DCTELEM *block), int form, int test)
+               void (*fdct_ref)(DCTELEM *block), int form, int test, const int bits)
 {
     int it, i, scale;
     int err_inf, v;
@@ -203,6 +204,7 @@ static void dct_error(const char *name, int is_idct,
     int maxout=0;
     int blockSumErrMax=0, blockSumErr;
     AVLFG prng;
+    const int vals=1<<bits;
 
     av_lfg_init(&prng, 1);
 
@@ -215,7 +217,7 @@ static void dct_error(const char *name, int is_idct,
         switch(test){
         case 0:
             for(i=0;i<64;i++)
-                block1[i] = (av_lfg_get(&prng) % 512) -256;
+                block1[i] = (av_lfg_get(&prng) % (2*vals)) -vals;
             if (is_idct){
                 ff_ref_fdct(block1);
 
@@ -226,10 +228,10 @@ static void dct_error(const char *name, int is_idct,
         case 1:{
             int num = av_lfg_get(&prng) % 10 + 1;
             for(i=0;i<num;i++)
-                block1[av_lfg_get(&prng) % 64] = av_lfg_get(&prng) % 512 -256;
+                block1[av_lfg_get(&prng) % 64] = av_lfg_get(&prng) % (2*vals) -vals;
         }break;
         case 2:
-            block1[0] = av_lfg_get(&prng) % 4096 - 2048;
+            block1[0] = av_lfg_get(&prng) % (16*vals) - (8*vals);
             block1[63]= (block1[0]&1)^1;
         break;
         }
@@ -311,25 +313,23 @@ static void dct_error(const char *name, int is_idct,
     }
     for(i=0; i<64; i++) sysErrMax= FFMAX(sysErrMax, FFABS(sysErr[i]));
 
-#if 1 // dump systematic errors
     for(i=0; i<64; i++){
         if(i%8==0) printf("\n");
         printf("%7d ", (int)sysErr[i]);
     }
     printf("\n");
-#endif
 
     printf("%s %s: err_inf=%d err2=%0.8f syserr=%0.8f maxout=%d blockSumErr=%d\n",
            is_idct ? "IDCT" : "DCT",
            name, err_inf, (double)err2 / NB_ITS / 64.0, (double)sysErrMax / NB_ITS, maxout, blockSumErrMax);
-#if 1 //Speed test
+
     /* speed test */
     for(i=0;i<64;i++)
         block1[i] = 0;
     switch(test){
     case 0:
         for(i=0;i<64;i++)
-            block1[i] = av_lfg_get(&prng) % 512 -256;
+            block1[i] = av_lfg_get(&prng) % (2*vals) -vals;
         if (is_idct){
             ff_ref_fdct(block1);
 
@@ -339,10 +339,10 @@ static void dct_error(const char *name, int is_idct,
     break;
     case 1:{
     case 2:
-        block1[0] = av_lfg_get(&prng) % 512 -256;
-        block1[1] = av_lfg_get(&prng) % 512 -256;
-        block1[2] = av_lfg_get(&prng) % 512 -256;
-        block1[3] = av_lfg_get(&prng) % 512 -256;
+        block1[0] = av_lfg_get(&prng) % (2*vals) -vals;
+        block1[1] = av_lfg_get(&prng) % (2*vals) -vals;
+        block1[2] = av_lfg_get(&prng) % (2*vals) -vals;
+        block1[3] = av_lfg_get(&prng) % (2*vals) -vals;
     }break;
     }
 
@@ -375,7 +375,6 @@ static void dct_error(const char *name, int is_idct,
     printf("%s %s: %0.1f kdct/s\n",
            is_idct ? "IDCT" : "DCT",
            name, (double)it1 * 1000.0 / (double)ti1);
-#endif
 }
 
 DECLARE_ALIGNED(8, static uint8_t, img_dest)[64];
@@ -554,7 +553,8 @@ int main(int argc, char **argv)
     int test_idct = 0, test_248_dct = 0;
     int c,i;
     int test=1;
-    cpu_flags = mm_support();
+    int bits=8;
+    cpu_flags = av_get_cpu_flags();
 
     ff_ref_dct_init();
     idct_mmx_init();
@@ -584,6 +584,7 @@ int main(int argc, char **argv)
     }
 
     if(optind <argc) test= atoi(argv[optind]);
+    if(optind+1 < argc) bits= atoi(argv[optind+1]);
 
     printf("ffmpeg DCT/IDCT test\n");
 
@@ -592,7 +593,7 @@ int main(int argc, char **argv)
     } else {
       for (i=0;algos[i].name;i++)
         if (algos[i].is_idct == test_idct && !(~cpu_flags & algos[i].mm_support)) {
-          dct_error (algos[i].name, algos[i].is_idct, algos[i].func, algos[i].ref, algos[i].format, test);
+          dct_error (algos[i].name, algos[i].is_idct, algos[i].func, algos[i].ref, algos[i].format, test, bits);
         }
     }
     return 0;

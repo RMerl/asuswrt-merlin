@@ -21,15 +21,32 @@
 #ifndef AVFORMAT_NETWORK_H
 #define AVFORMAT_NETWORK_H
 
+#include <errno.h>
+
 #include "config.h"
+#include "libavutil/error.h"
+#include "os_support.h"
 
 #if HAVE_WINSOCK2_H
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#define ff_neterrno() (-WSAGetLastError())
-#define FF_NETERROR(err) (-WSA##err)
-#define WSAEAGAIN WSAEWOULDBLOCK
+#define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#define ETIMEDOUT       WSAETIMEDOUT
+#define ECONNREFUSED    WSAECONNREFUSED
+#define EINPROGRESS     WSAEINPROGRESS
+
+static inline int ff_neterrno(void)
+{
+    int err = WSAGetLastError();
+    switch (err) {
+    case WSAEWOULDBLOCK:
+        return AVERROR(EAGAIN);
+    case WSAEINTR:
+        return AVERROR(EINTR);
+    }
+    return -err;
+}
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,11 +54,14 @@
 #include <netdb.h>
 
 #define ff_neterrno() AVERROR(errno)
-#define FF_NETERROR(err) AVERROR(err)
 #endif
 
 #if HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+
+#if HAVE_POLL_H
+#include <poll.h>
 #endif
 
 int ff_socket_nonblock(int socket, int enable);
@@ -54,6 +74,15 @@ static inline int ff_network_init(void)
         return 0;
 #endif
     return 1;
+}
+
+static inline int ff_network_wait_fd(int fd, int write)
+{
+    int ev = write ? POLLOUT : POLLIN;
+    struct pollfd p = { .fd = fd, .events = ev, .revents = 0 };
+    int ret;
+    ret = poll(&p, 1, 100);
+    return ret < 0 ? ff_neterrno() : p.revents & (ev | POLLERR | POLLHUP) ? 0 : AVERROR(EAGAIN);
 }
 
 static inline void ff_network_close(void)
@@ -150,5 +179,30 @@ const char *ff_gai_strerror(int ecode);
 #define getnameinfo ff_getnameinfo
 #define gai_strerror ff_gai_strerror
 #endif
+
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN INET_ADDRSTRLEN
+#endif
+
+#ifndef IN_MULTICAST
+#define IN_MULTICAST(a) ((((uint32_t)(a)) & 0xf0000000) == 0xe0000000)
+#endif
+#ifndef IN6_IS_ADDR_MULTICAST
+#define IN6_IS_ADDR_MULTICAST(a) (((uint8_t *) (a))[0] == 0xff)
+#endif
+
+static inline int ff_is_multicast_address(struct sockaddr *addr)
+{
+    if (addr->sa_family == AF_INET) {
+        return IN_MULTICAST(ntohl(((struct sockaddr_in *)addr)->sin_addr.s_addr));
+    }
+#if HAVE_STRUCT_SOCKADDR_IN6
+    if (addr->sa_family == AF_INET6) {
+        return IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)addr)->sin6_addr);
+    }
+#endif
+
+    return 0;
+}
 
 #endif /* AVFORMAT_NETWORK_H */

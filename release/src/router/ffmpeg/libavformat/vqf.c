@@ -21,6 +21,7 @@
 
 #include "avformat.h"
 #include "libavutil/intreadwrite.h"
+#include "libavutil/dict.h"
 
 typedef struct VqfContext {
     int frame_bit_len;
@@ -54,9 +55,9 @@ static void add_metadata(AVFormatContext *s, const char *tag,
     buf = av_malloc(len+1);
     if (!buf)
         return;
-    get_buffer(s->pb, buf, len);
+    avio_read(s->pb, buf, len);
     buf[len] = 0;
-    av_metadata_set2(&s->metadata, tag, buf, AV_METADATA_DONT_STRDUP_VAL);
+    av_dict_set(&s->metadata, tag, buf, AV_DICT_DONT_STRDUP_VAL);
 }
 
 static int vqf_read_header(AVFormatContext *s, AVFormatParameters *ap)
@@ -72,9 +73,9 @@ static int vqf_read_header(AVFormatContext *s, AVFormatParameters *ap)
     if (!st)
         return AVERROR(ENOMEM);
 
-    url_fskip(s->pb, 12);
+    avio_skip(s->pb, 12);
 
-    header_size = get_be32(s->pb);
+    header_size = avio_rb32(s->pb);
 
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
     st->codec->codec_id   = CODEC_ID_TWINVQ;
@@ -82,12 +83,12 @@ static int vqf_read_header(AVFormatContext *s, AVFormatParameters *ap)
 
     do {
         int len;
-        chunk_tag = get_le32(s->pb);
+        chunk_tag = avio_rl32(s->pb);
 
         if (chunk_tag == MKTAG('D','A','T','A'))
             break;
 
-        len = get_be32(s->pb);
+        len = avio_rb32(s->pb);
 
         if ((unsigned) len > INT_MAX/2) {
             av_log(s, AV_LOG_ERROR, "Malformed header\n");
@@ -98,10 +99,10 @@ static int vqf_read_header(AVFormatContext *s, AVFormatParameters *ap)
 
         switch(chunk_tag){
         case MKTAG('C','O','M','M'):
-            st->codec->channels = get_be32(s->pb) + 1;
-            read_bitrate        = get_be32(s->pb);
-            rate_flag           = get_be32(s->pb);
-            url_fskip(s->pb, len-12);
+            st->codec->channels = avio_rb32(s->pb) + 1;
+            read_bitrate        = avio_rb32(s->pb);
+            rate_flag           = avio_rb32(s->pb);
+            avio_skip(s->pb, len-12);
 
             st->codec->bit_rate              = read_bitrate*1000;
             st->codec->bits_per_coded_sample = 16;
@@ -140,7 +141,7 @@ static int vqf_read_header(AVFormatContext *s, AVFormatParameters *ap)
             av_log(s, AV_LOG_ERROR, "Unknown chunk: %c%c%c%c\n",
                    ((char*)&chunk_tag)[0], ((char*)&chunk_tag)[1],
                    ((char*)&chunk_tag)[2], ((char*)&chunk_tag)[3]);
-            url_fskip(s->pb, FFMIN(len, header_size));
+            avio_skip(s->pb, FFMIN(len, header_size));
             break;
         }
 
@@ -200,7 +201,7 @@ static int vqf_read_packet(AVFormatContext *s, AVPacket *pkt)
     int ret;
     int size = (c->frame_bit_len - c->remaining_bits + 7)>>3;
 
-    pkt->pos          = url_ftell(s->pb);
+    pkt->pos          = avio_tell(s->pb);
     pkt->stream_index = 0;
 
     if (av_new_packet(pkt, size+2) < 0)
@@ -208,7 +209,7 @@ static int vqf_read_packet(AVFormatContext *s, AVPacket *pkt)
 
     pkt->data[0] = 8 - c->remaining_bits; // Number of bits to skip
     pkt->data[1] = c->last_frame_bits;
-    ret = get_buffer(s->pb, pkt->data+2, size);
+    ret = avio_read(s->pb, pkt->data+2, size);
 
     if (ret<=0) {
         av_free_packet(pkt);
@@ -226,7 +227,7 @@ static int vqf_read_seek(AVFormatContext *s,
 {
     VqfContext *c = s->priv_data;
     AVStream *st;
-    int ret;
+    int64_t ret;
     int64_t pos;
 
     st = s->streams[stream_index];
@@ -240,14 +241,14 @@ static int vqf_read_seek(AVFormatContext *s,
     st->cur_dts = av_rescale(pos, st->time_base.den,
                              st->codec->bit_rate * (int64_t)st->time_base.num);
 
-    if ((ret = url_fseek(s->pb, ((pos-7) >> 3) + s->data_offset, SEEK_SET)) < 0)
+    if ((ret = avio_seek(s->pb, ((pos-7) >> 3) + s->data_offset, SEEK_SET)) < 0)
         return ret;
 
     c->remaining_bits = -7 - ((pos-7)&7);
     return 0;
 }
 
-AVInputFormat vqf_demuxer = {
+AVInputFormat ff_vqf_demuxer = {
     "vqf",
     NULL_IF_CONFIG_SMALL("Nippon Telegraph and Telephone Corporation (NTT) TwinVQ"),
     sizeof(VqfContext),

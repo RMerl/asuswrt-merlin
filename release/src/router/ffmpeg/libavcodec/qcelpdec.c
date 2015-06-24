@@ -92,7 +92,7 @@ static av_cold int qcelp_decode_init(AVCodecContext *avctx)
     QCELPContext *q = avctx->priv_data;
     int i;
 
-    avctx->sample_fmt = SAMPLE_FMT_FLT;
+    avctx->sample_fmt = AV_SAMPLE_FMT_FLT;
 
     for(i=0; i<10; i++)
         q->prev_lspf[i] = (i+1)/11.;
@@ -101,8 +101,8 @@ static av_cold int qcelp_decode_init(AVCodecContext *avctx)
 }
 
 /**
- * Decodes the 10 quantized LSP frequencies from the LSPV/LSP
- * transmission codes of any bitrate and checks for badly received packets.
+ * Decode the 10 quantized LSP frequencies from the LSPV/LSP
+ * transmission codes of any bitrate and check for badly received packets.
  *
  * @param q the context
  * @param lspf line spectral pair frequencies
@@ -197,7 +197,7 @@ static int decode_lspf(QCELPContext *q, float *lspf)
 }
 
 /**
- * Converts codebook transmission codes to GAIN and INDEX.
+ * Convert codebook transmission codes to GAIN and INDEX.
  *
  * @param q the context
  * @param gain array holding the decoded gain
@@ -309,7 +309,7 @@ static int codebook_sanity_check_for_rate_quarter(const uint8_t *cbgain)
 }
 
 /**
- * Computes the scaled codebook vector Cdn From INDEX and GAIN
+ * Compute the scaled codebook vector Cdn From INDEX and GAIN
  * for all rates.
  *
  * The specification lacks some information here.
@@ -564,8 +564,8 @@ static void apply_pitch_filters(QCELPContext *q, float *cdn_vector)
 }
 
 /**
- * Reconstructs LPC coefficients from the line spectral pair frequencies
- * and performs bandwidth expansion.
+ * Reconstruct LPC coefficients from the line spectral pair frequencies
+ * and perform bandwidth expansion.
  *
  * @param lspf line spectral pair frequencies
  * @param lpc linear predictive coding coefficients
@@ -594,7 +594,7 @@ static void lspf2lpc(const float *lspf, float *lpc)
 }
 
 /**
- * Interpolates LSP frequencies and computes LPC coefficients
+ * Interpolate LSP frequencies and compute LPC coefficients
  * for a given bitrate & pitch subframe.
  *
  * TIA/EIA/IS-733 2.4.3.3.4, 2.4.8.7.2
@@ -738,10 +738,16 @@ static int qcelp_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     int buf_size = avpkt->size;
     QCELPContext *q = avctx->priv_data;
     float *outbuffer = data;
-    int   i;
+    int   i, out_size;
     float quantized_lspf[10], lpc[10];
     float gain[16];
     float *formant_mem;
+
+    out_size = 160 * av_get_bytes_per_sample(avctx->sample_fmt);
+    if (*data_size < out_size) {
+        av_log(avctx, AV_LOG_ERROR, "Output buffer is too small\n");
+        return AVERROR(EINVAL);
+    }
 
     if((q->bitrate = determine_bitrate(avctx, buf_size, &buf)) == I_F_Q)
     {
@@ -837,12 +843,12 @@ erasure:
     memcpy(q->prev_lspf, quantized_lspf, sizeof(q->prev_lspf));
     q->prev_bitrate = q->bitrate;
 
-    *data_size = 160 * sizeof(*outbuffer);
+    *data_size = out_size;
 
-    return *data_size;
+    return buf_size;
 }
 
-AVCodec qcelp_decoder =
+AVCodec ff_qcelp_decoder =
 {
     .name   = "qcelp",
     .type   = AVMEDIA_TYPE_AUDIO,

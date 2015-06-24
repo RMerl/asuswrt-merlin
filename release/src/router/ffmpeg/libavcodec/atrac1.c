@@ -36,6 +36,7 @@
 #include "get_bits.h"
 #include "dsputil.h"
 #include "fft.h"
+#include "sinewin.h"
 
 #include "atrac.h"
 #include "atrac1data.h"
@@ -59,11 +60,11 @@ typedef struct {
     int                 log2_block_count[AT1_QMF_BANDS];    ///< log2 number of blocks in a band
     int                 num_bfus;                           ///< number of Block Floating Units
     float*              spectrum[2];
-    DECLARE_ALIGNED(16, float, spec1)[AT1_SU_SAMPLES];     ///< mdct buffer
-    DECLARE_ALIGNED(16, float, spec2)[AT1_SU_SAMPLES];     ///< mdct buffer
-    DECLARE_ALIGNED(16, float, fst_qmf_delay)[46];         ///< delay line for the 1st stacked QMF filter
-    DECLARE_ALIGNED(16, float, snd_qmf_delay)[46];         ///< delay line for the 2nd stacked QMF filter
-    DECLARE_ALIGNED(16, float, last_qmf_delay)[256+23];    ///< delay line for the last stacked QMF filter
+    DECLARE_ALIGNED(32, float, spec1)[AT1_SU_SAMPLES];     ///< mdct buffer
+    DECLARE_ALIGNED(32, float, spec2)[AT1_SU_SAMPLES];     ///< mdct buffer
+    DECLARE_ALIGNED(32, float, fst_qmf_delay)[46];         ///< delay line for the 1st stacked QMF filter
+    DECLARE_ALIGNED(32, float, snd_qmf_delay)[46];         ///< delay line for the 2nd stacked QMF filter
+    DECLARE_ALIGNED(32, float, last_qmf_delay)[256+23];    ///< delay line for the last stacked QMF filter
 } AT1SUCtx;
 
 /**
@@ -71,13 +72,13 @@ typedef struct {
  */
 typedef struct {
     AT1SUCtx            SUs[AT1_MAX_CHANNELS];              ///< channel sound unit
-    DECLARE_ALIGNED(16, float, spec)[AT1_SU_SAMPLES];      ///< the mdct spectrum buffer
+    DECLARE_ALIGNED(32, float, spec)[AT1_SU_SAMPLES];      ///< the mdct spectrum buffer
 
-    DECLARE_ALIGNED(16, float,  low)[256];
-    DECLARE_ALIGNED(16, float,  mid)[256];
-    DECLARE_ALIGNED(16, float, high)[512];
+    DECLARE_ALIGNED(32, float,  low)[256];
+    DECLARE_ALIGNED(32, float,  mid)[256];
+    DECLARE_ALIGNED(32, float, high)[512];
     float*              bands[3];
-    DECLARE_ALIGNED(16, float, out_samples)[AT1_MAX_CHANNELS][AT1_SU_SAMPLES];
+    DECLARE_ALIGNED(32, float, out_samples)[AT1_MAX_CHANNELS][AT1_SU_SAMPLES];
     FFTContext          mdct_ctx[3];
     int                 channels;
     DSPContext          dsp;
@@ -99,7 +100,7 @@ static void at1_imdct(AT1Ctx *q, float *spec, float *out, int nbits,
         for (i = 0; i < transf_size / 2; i++)
             FFSWAP(float, spec[i], spec[transf_size - 1 - i]);
     }
-    ff_imdct_half(mdct_context, out, spec);
+    mdct_context->imdct_half(mdct_context, out, spec);
 }
 
 
@@ -141,7 +142,7 @@ static int at1_imdct_block(AT1SUCtx* su, AT1Ctx *q)
 
             /* overlap and window */
             q->dsp.vector_fmul_window(&q->bands[band_num][start_pos], prev_buf,
-                                      &su->spectrum[0][ref_pos + start_pos], ff_sine_32, 0, 16);
+                                      &su->spectrum[0][ref_pos + start_pos], ff_sine_32, 16);
 
             prev_buf = &su->spectrum[0][ref_pos+start_pos + 16];
             start_pos += block_size;
@@ -223,7 +224,7 @@ static int at1_unpack_dequant(GetBitContext* gb, AT1SUCtx* su,
 
             int num_specs = specs_per_bfu[bfu_num];
             int word_len  = !!idwls[bfu_num] + idwls[bfu_num];
-            float scale_factor = sf_table[idsfs[bfu_num]];
+            float scale_factor = ff_atrac_sf_table[idsfs[bfu_num]];
             bits_used += word_len * num_specs; /* add number of bits consumed by current BFU */
 
             /* check for bitstream overflow */
@@ -275,7 +276,7 @@ static int atrac1_decode_frame(AVCodecContext *avctx, void *data,
     const uint8_t *buf = avpkt->data;
     int buf_size       = avpkt->size;
     AT1Ctx *q          = avctx->priv_data;
-    int ch, ret, i;
+    int ch, ret, i, out_size;
     GetBitContext gb;
     float* samples = data;
 
@@ -283,6 +284,13 @@ static int atrac1_decode_frame(AVCodecContext *avctx, void *data,
     if (buf_size < 212 * q->channels) {
         av_log(q,AV_LOG_ERROR,"Not enought data to decode!\n");
         return -1;
+    }
+
+    out_size = q->channels * AT1_SU_SAMPLES *
+               av_get_bytes_per_sample(avctx->sample_fmt);
+    if (*data_size < out_size) {
+        av_log(avctx, AV_LOG_ERROR, "Output buffer is too small\n");
+        return AVERROR(EINVAL);
     }
 
     for (ch = 0; ch < q->channels; ch++) {
@@ -317,7 +325,7 @@ static int atrac1_decode_frame(AVCodecContext *avctx, void *data,
         }
     }
 
-    *data_size = q->channels * AT1_SU_SAMPLES * sizeof(*samples);
+    *data_size = out_size;
     return avctx->block_align;
 }
 
@@ -326,8 +334,13 @@ static av_cold int atrac1_decode_init(AVCodecContext *avctx)
 {
     AT1Ctx *q = avctx->priv_data;
 
-    avctx->sample_fmt = SAMPLE_FMT_FLT;
+    avctx->sample_fmt = AV_SAMPLE_FMT_FLT;
 
+    if (avctx->channels < 1 || avctx->channels > AT1_MAX_CHANNELS) {
+        av_log(avctx, AV_LOG_ERROR, "Unsupported number of channels: %d\n",
+               avctx->channels);
+        return AVERROR(EINVAL);
+    }
     q->channels = avctx->channels;
 
     /* Init the mdct transforms */
@@ -365,7 +378,7 @@ static av_cold int atrac1_decode_end(AVCodecContext * avctx) {
 }
 
 
-AVCodec atrac1_decoder = {
+AVCodec ff_atrac1_decoder = {
     .name = "atrac1",
     .type = AVMEDIA_TYPE_AUDIO,
     .id = CODEC_ID_ATRAC1,

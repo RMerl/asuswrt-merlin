@@ -51,6 +51,11 @@ static int rv30_parse_slice_header(RV34DecContext *r, GetBitContext *gb, SliceIn
     skip_bits1(gb);
     si->pts = get_bits(gb, 13);
     rpr = get_bits(gb, r->rpr);
+    if (r->s.avctx->extradata_size < 8 + rpr*2) {
+        av_log(r->s.avctx, AV_LOG_WARNING,
+               "Extradata does not contain selected resolution\n");
+        rpr = 0;
+    }
     if(rpr){
         w = r->s.avctx->extradata[6 + rpr*2] << 2;
         h = r->s.avctx->extradata[7 + rpr*2] << 2;
@@ -74,7 +79,7 @@ static int rv30_decode_intra_types(RV34DecContext *r, GetBitContext *gb, int8_t 
     for(i = 0; i < 4; i++, dst += r->intra_types_stride - 4){
         for(j = 0; j < 4; j+= 2){
             int code = svq3_get_ue_golomb(gb) << 1;
-            if(code >= 81*2){
+            if(code >= 81U*2U){
                 av_log(r->s.avctx, AV_LOG_ERROR, "Incorrect intra prediction code\n");
                 return -1;
             }
@@ -103,7 +108,7 @@ static int rv30_decode_mb_info(RV34DecContext *r)
     GetBitContext *gb = &s->gb;
     int code = svq3_get_ue_golomb(gb);
 
-    if(code > 11){
+    if(code > 11U){
         av_log(s->avctx, AV_LOG_ERROR, "Incorrect MB type code\n");
         return -1;
     }
@@ -111,7 +116,7 @@ static int rv30_decode_mb_info(RV34DecContext *r)
         av_log(s->avctx, AV_LOG_ERROR, "dquant needed\n");
         code -= 6;
     }
-    if(s->pict_type != FF_B_TYPE)
+    if(s->pict_type != AV_PICTURE_TYPE_B)
         return rv30_p_types[code];
     else
         return rv30_b_types[code];
@@ -256,6 +261,7 @@ static av_cold int rv30_decode_init(AVCodecContext *avctx)
     if(avctx->extradata_size - 8 < (r->rpr - 1) * 2){
         av_log(avctx, AV_LOG_ERROR, "Insufficient extradata - need at least %d bytes, got %d\n",
                6 + r->rpr * 2, avctx->extradata_size);
+        return AVERROR(EINVAL);
     }
     r->parse_slice_header = rv30_parse_slice_header;
     r->decode_intra_types = rv30_decode_intra_types;
@@ -266,7 +272,7 @@ static av_cold int rv30_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec rv30_decoder = {
+AVCodec ff_rv30_decoder = {
     "rv30",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RV30,
