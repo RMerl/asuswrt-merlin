@@ -2595,7 +2595,7 @@ endif
 
 FFMPEG_FILTER_CONFIG= $(foreach c, $(2), --$(1)="$(c)")
 
-FFMPEG_DECODERS:=aac ac3 atrac3 h264 jpegls mp3 mpeg1video mpeg2video mpeg4 mpeg4aac mpegvideo png wmav1 wmav2
+FFMPEG_DECODERS:=aac ac3 atrac3 h264 jpegls mp3 mpeg1video mpeg2video mpeg4 mpeg4aac mpegvideo png wmav1 wmav2 svq3
 FFMPEG_CONFIGURE_DECODERS:=$(call FFMPEG_FILTER_CONFIG,enable-decoder,$(FFMPEG_DECODERS))
 
 FFMPEG_PARSERS:=aac ac3 h264 mpeg4video mpegaudio mpegvideo
