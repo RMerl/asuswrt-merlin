@@ -123,6 +123,7 @@ tivo_unescape_tag(char *tag)
 	modifyString(tag, "&amp;lt;", "&lt;", 1);
 	modifyString(tag, "&amp;amp;gt;", "&gt;", 1);
 	modifyString(tag, "&amp;gt;", "&gt;", 1);
+	modifyString(tag, "&amp;quot;", "&quot;", 1);
 	return tag;
 }
 
@@ -185,13 +186,8 @@ callback(void *args, int argc, char **argv, char **azColName)
 			episode = strstr(title, " - ");
 			if( episode )
 			{
-				strcatf(str, "<Title>%.*s</Title>"
-				             "<EpisodeTitle>%s</EpisodeTitle>", 
-				             (int)(episode-title), title, episode+3);
-			}
-			else
-			{
-				strcatf(str, "<Title>%s</Title>", title);
+				strcatf(str, "<EpisodeTitle>%s</EpisodeTitle>", episode+3);
+				*episode = '\0';
 			}
 			if( date )
 			{
@@ -202,13 +198,13 @@ callback(void *args, int argc, char **argv, char **azColName)
 				strcatf(str, "<CaptureDate>0x%X</CaptureDate>", (unsigned int)mktime(&tm));
 			}
 			if( comment )
-				strcatf(str, "<Description>%s</Description>", comment);
+				strcatf(str, "<Description>%s</Description>", tivo_unescape_tag(comment));
 		}
 		else
 		{
 			return 0;
 		}
-		strcatf(str, "<Title>%s</Title>", tivo_unescape_tag(title));
+		strcatf(str, "<Title>%s</Title>", title);
 		if( artist ) {
 			strcatf(str, "<ArtistName>%s</ArtistName>", tivo_unescape_tag(artist));
 		}

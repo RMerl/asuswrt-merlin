@@ -307,7 +307,7 @@ SendSSDPNotifies(int s, const char *host, unsigned short port,
 	}
 }
 
-void
+static void
 ParseUPnPClient(char *location)
 {
 	char buf[8192];

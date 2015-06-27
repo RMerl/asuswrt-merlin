@@ -328,6 +328,7 @@ inotify_insert_file(char * name, const char * path)
 			if( !is_audio(path) &&
 			    !is_video(path) &&
 			    !is_playlist(path) )
+				return -1;
 			break;
 		case TYPE_AUDIO|TYPE_IMAGES:
 			if( !is_image(path) &&
