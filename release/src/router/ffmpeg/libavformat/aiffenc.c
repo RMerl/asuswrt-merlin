@@ -21,6 +21,8 @@
 
 #include "avformat.h"
 #include "aiff.h"
+#include "avio_internal.h"
+#include "isom.h"
 
 typedef struct {
     int64_t form;
@@ -31,7 +33,7 @@ typedef struct {
 static int aiff_write_header(AVFormatContext *s)
 {
     AIFFOutputContext *aiff = s->priv_data;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVCodecContext *enc = s->streams[0]->codec;
     AVExtFloat sample_rate;
     int aifc = 0;
@@ -43,10 +45,10 @@ static int aiff_write_header(AVFormatContext *s)
         aifc = 1;
 
     /* FORM AIFF header */
-    put_tag(pb, "FORM");
-    aiff->form = url_ftell(pb);
-    put_be32(pb, 0);                    /* file length */
-    put_tag(pb, aifc ? "AIFC" : "AIFF");
+    ffio_wfourcc(pb, "FORM");
+    aiff->form = avio_tell(pb);
+    avio_wb32(pb, 0);                    /* file length */
+    ffio_wfourcc(pb, aifc ? "AIFC" : "AIFF");
 
     if (aifc) { // compressed audio
         enc->bits_per_coded_sample = 16;
@@ -55,18 +57,24 @@ static int aiff_write_header(AVFormatContext *s)
             return -1;
         }
         /* Version chunk */
-        put_tag(pb, "FVER");
-        put_be32(pb, 4);
-        put_be32(pb, 0xA2805140);
+        ffio_wfourcc(pb, "FVER");
+        avio_wb32(pb, 4);
+        avio_wb32(pb, 0xA2805140);
+    }
+
+    if (enc->channels > 2 && enc->channel_layout) {
+        ffio_wfourcc(pb, "CHAN");
+        avio_wb32(pb, 12);
+        ff_mov_write_chan(pb, enc->channel_layout);
     }
 
     /* Common chunk */
-    put_tag(pb, "COMM");
-    put_be32(pb, aifc ? 24 : 18); /* size */
-    put_be16(pb, enc->channels);  /* Number of channels */
+    ffio_wfourcc(pb, "COMM");
+    avio_wb32(pb, aifc ? 24 : 18); /* size */
+    avio_wb16(pb, enc->channels);  /* Number of channels */
 
-    aiff->frames = url_ftell(pb);
-    put_be32(pb, 0);              /* Number of frames */
+    aiff->frames = avio_tell(pb);
+    avio_wb32(pb, 0);              /* Number of frames */
 
     if (!enc->bits_per_coded_sample)
         enc->bits_per_coded_sample = av_get_bits_per_sample(enc->codec_id);
@@ -77,75 +85,75 @@ static int aiff_write_header(AVFormatContext *s)
     if (!enc->block_align)
         enc->block_align = (enc->bits_per_coded_sample * enc->channels) >> 3;
 
-    put_be16(pb, enc->bits_per_coded_sample); /* Sample size */
+    avio_wb16(pb, enc->bits_per_coded_sample); /* Sample size */
 
     sample_rate = av_dbl2ext((double)enc->sample_rate);
-    put_buffer(pb, (uint8_t*)&sample_rate, sizeof(sample_rate));
+    avio_write(pb, (uint8_t*)&sample_rate, sizeof(sample_rate));
 
     if (aifc) {
-        put_le32(pb, enc->codec_tag);
-        put_be16(pb, 0);
+        avio_wl32(pb, enc->codec_tag);
+        avio_wb16(pb, 0);
     }
 
     /* Sound data chunk */
-    put_tag(pb, "SSND");
-    aiff->ssnd = url_ftell(pb);         /* Sound chunk size */
-    put_be32(pb, 0);                    /* Sound samples data size */
-    put_be32(pb, 0);                    /* Data offset */
-    put_be32(pb, 0);                    /* Block-size (block align) */
+    ffio_wfourcc(pb, "SSND");
+    aiff->ssnd = avio_tell(pb);         /* Sound chunk size */
+    avio_wb32(pb, 0);                    /* Sound samples data size */
+    avio_wb32(pb, 0);                    /* Data offset */
+    avio_wb32(pb, 0);                    /* Block-size (block align) */
 
     av_set_pts_info(s->streams[0], 64, 1, s->streams[0]->codec->sample_rate);
 
     /* Data is starting here */
-    put_flush_packet(pb);
+    avio_flush(pb);
 
     return 0;
 }
 
 static int aiff_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
-    ByteIOContext *pb = s->pb;
-    put_buffer(pb, pkt->data, pkt->size);
+    AVIOContext *pb = s->pb;
+    avio_write(pb, pkt->data, pkt->size);
     return 0;
 }
 
 static int aiff_write_trailer(AVFormatContext *s)
 {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AIFFOutputContext *aiff = s->priv_data;
     AVCodecContext *enc = s->streams[0]->codec;
 
     /* Chunks sizes must be even */
     int64_t file_size, end_size;
-    end_size = file_size = url_ftell(pb);
+    end_size = file_size = avio_tell(pb);
     if (file_size & 1) {
-        put_byte(pb, 0);
+        avio_w8(pb, 0);
         end_size++;
     }
 
-    if (!url_is_streamed(s->pb)) {
+    if (s->pb->seekable) {
         /* File length */
-        url_fseek(pb, aiff->form, SEEK_SET);
-        put_be32(pb, file_size - aiff->form - 4);
+        avio_seek(pb, aiff->form, SEEK_SET);
+        avio_wb32(pb, file_size - aiff->form - 4);
 
         /* Number of sample frames */
-        url_fseek(pb, aiff->frames, SEEK_SET);
-        put_be32(pb, (file_size-aiff->ssnd-12)/enc->block_align);
+        avio_seek(pb, aiff->frames, SEEK_SET);
+        avio_wb32(pb, (file_size-aiff->ssnd-12)/enc->block_align);
 
         /* Sound Data chunk size */
-        url_fseek(pb, aiff->ssnd, SEEK_SET);
-        put_be32(pb, file_size - aiff->ssnd - 4);
+        avio_seek(pb, aiff->ssnd, SEEK_SET);
+        avio_wb32(pb, file_size - aiff->ssnd - 4);
 
         /* return to the end */
-        url_fseek(pb, end_size, SEEK_SET);
+        avio_seek(pb, end_size, SEEK_SET);
 
-        put_flush_packet(pb);
+        avio_flush(pb);
     }
 
     return 0;
 }
 
-AVOutputFormat aiff_muxer = {
+AVOutputFormat ff_aiff_muxer = {
     "aiff",
     NULL_IF_CONFIG_SMALL("Audio IFF"),
     "audio/aiff",

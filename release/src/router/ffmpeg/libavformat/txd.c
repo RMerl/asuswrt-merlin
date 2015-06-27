@@ -52,14 +52,14 @@ static int txd_read_header(AVFormatContext *s, AVFormatParameters *ap) {
 }
 
 static int txd_read_packet(AVFormatContext *s, AVPacket *pkt) {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     unsigned int id, chunk_size, marker;
     int ret;
 
 next_chunk:
-    id         = get_le32(pb);
-    chunk_size = get_le32(pb);
-    marker     = get_le32(pb);
+    id         = avio_rl32(pb);
+    chunk_size = avio_rl32(pb);
+    marker     = avio_rl32(pb);
 
     if (url_feof(s->pb))
         return AVERROR_EOF;
@@ -73,7 +73,7 @@ next_chunk:
             if (chunk_size > 100)
                 break;
         case TXD_EXTRA:
-            url_fskip(s->pb, chunk_size);
+            avio_skip(s->pb, chunk_size);
         case TXD_FILE:
         case TXD_TEXTURE:
             goto next_chunk;
@@ -90,7 +90,7 @@ next_chunk:
     return 0;
 }
 
-AVInputFormat txd_demuxer =
+AVInputFormat ff_txd_demuxer =
 {
     "txd",
     NULL_IF_CONFIG_SMALL("Renderware TeXture Dictionary"),

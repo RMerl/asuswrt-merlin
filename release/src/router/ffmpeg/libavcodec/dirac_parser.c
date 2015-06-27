@@ -33,7 +33,7 @@
 #define DIRAC_PARSE_INFO_PREFIX 0x42424344
 
 /**
- * Finds the end of the current frame in the bitstream.
+ * Find the end of the current frame in the bitstream.
  * @return the position of the first byte of the next frame or -1
  */
 typedef struct DiracParseContext {
@@ -194,7 +194,7 @@ static int dirac_combine_frame(AVCodecParserContext *s, AVCodecContext *avctx,
                 avctx->has_b_frames = 1;
         }
         if (avctx->has_b_frames && s->pts == s->dts)
-             s->pict_type = FF_B_TYPE;
+             s->pict_type = AV_PICTURE_TYPE_B;
 
         /* Finally have a complete Dirac data unit */
         *buf      = pc->dirac_unit;
@@ -247,7 +247,7 @@ static void dirac_parse_close(AVCodecParserContext *s)
         av_free(pc->buffer);
 }
 
-AVCodecParser dirac_parser = {
+AVCodecParser ff_dirac_parser = {
     { CODEC_ID_DIRAC },
     sizeof(DiracParseContext),
     NULL,

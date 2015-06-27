@@ -53,6 +53,7 @@ static av_cold int cyuv_decode_init(AVCodecContext *avctx)
         return -1;
     s->height = avctx->height;
     avctx->pix_fmt = PIX_FMT_YUV411P;
+    avcodec_get_frame_defaults(&s->frame);
 
     return 0;
 }
@@ -178,7 +179,7 @@ static av_cold int cyuv_decode_end(AVCodecContext *avctx)
 }
 
 #if CONFIG_AURA_DECODER
-AVCodec aura_decoder = {
+AVCodec ff_aura_decoder = {
     "aura",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_AURA,
@@ -194,7 +195,7 @@ AVCodec aura_decoder = {
 #endif
 
 #if CONFIG_CYUV_DECODER
-AVCodec cyuv_decoder = {
+AVCodec ff_cyuv_decoder = {
     "cyuv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_CYUV,

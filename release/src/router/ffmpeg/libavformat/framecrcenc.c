@@ -28,12 +28,12 @@ static int framecrc_write_packet(struct AVFormatContext *s, AVPacket *pkt)
     char buf[256];
 
     snprintf(buf, sizeof(buf), "%d, %"PRId64", %d, 0x%08x\n", pkt->stream_index, pkt->dts, pkt->size, crc);
-    put_buffer(s->pb, buf, strlen(buf));
-    put_flush_packet(s->pb);
+    avio_write(s->pb, buf, strlen(buf));
+    avio_flush(s->pb);
     return 0;
 }
 
-AVOutputFormat framecrc_muxer = {
+AVOutputFormat ff_framecrc_muxer = {
     "framecrc",
     NULL_IF_CONFIG_SMALL("framecrc testing format"),
     NULL,

@@ -1,7 +1,7 @@
 /*
  * filter graphs
- * copyright (c) 2008 Vitor Sessak
- * copyright (c) 2007 Bobby Bingham
+ * Copyright (c) 2008 Vitor Sessak
+ * Copyright (c) 2007 Bobby Bingham
  *
  * This file is part of FFmpeg.
  *
@@ -23,15 +23,25 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "libavutil/avstring.h"
 #include "avfilter.h"
 #include "avfiltergraph.h"
+#include "internal.h"
 
-void avfilter_graph_destroy(AVFilterGraph *graph)
+AVFilterGraph *avfilter_graph_alloc(void)
 {
-    for(; graph->filter_count > 0; graph->filter_count --)
-        avfilter_destroy(graph->filters[graph->filter_count - 1]);
-    av_freep(&graph->scale_sws_opts);
-    av_freep(&graph->filters);
+    return av_mallocz(sizeof(AVFilterGraph));
+}
+
+void avfilter_graph_free(AVFilterGraph **graph)
+{
+    if (!*graph)
+        return;
+    for (; (*graph)->filter_count > 0; (*graph)->filter_count--)
+        avfilter_free((*graph)->filters[(*graph)->filter_count - 1]);
+    av_freep(&(*graph)->scale_sws_opts);
+    av_freep(&(*graph)->filters);
+    av_freep(graph);
 }
 
 int avfilter_graph_add_filter(AVFilterGraph *graph, AVFilterContext *filter)
@@ -47,12 +57,33 @@ int avfilter_graph_add_filter(AVFilterGraph *graph, AVFilterContext *filter)
     return 0;
 }
 
-int avfilter_graph_check_validity(AVFilterGraph *graph, AVClass *log_ctx)
+int avfilter_graph_create_filter(AVFilterContext **filt_ctx, AVFilter *filt,
+                                 const char *name, const char *args, void *opaque,
+                                 AVFilterGraph *graph_ctx)
+{
+    int ret;
+
+    if ((ret = avfilter_open(filt_ctx, filt, name)) < 0)
+        goto fail;
+    if ((ret = avfilter_init_filter(*filt_ctx, args, opaque)) < 0)
+        goto fail;
+    if ((ret = avfilter_graph_add_filter(graph_ctx, *filt_ctx)) < 0)
+        goto fail;
+    return 0;
+
+fail:
+    if (*filt_ctx)
+        avfilter_free(*filt_ctx);
+    *filt_ctx = NULL;
+    return ret;
+}
+
+int ff_avfilter_graph_check_validity(AVFilterGraph *graph, AVClass *log_ctx)
 {
     AVFilterContext *filt;
     int i, j;
 
-    for (i=0; i < graph->filter_count; i++) {
+    for (i = 0; i < graph->filter_count; i++) {
         filt = graph->filters[i];
 
         for (j = 0; j < filt->input_count; j++) {
@@ -60,7 +91,7 @@ int avfilter_graph_check_validity(AVFilterGraph *graph, AVClass *log_ctx)
                 av_log(log_ctx, AV_LOG_ERROR,
                        "Input pad \"%s\" for the filter \"%s\" of type \"%s\" not connected to any source\n",
                        filt->input_pads[j].name, filt->name, filt->filter->name);
-                return -1;
+                return AVERROR(EINVAL);
             }
         }
 
@@ -69,7 +100,7 @@ int avfilter_graph_check_validity(AVFilterGraph *graph, AVClass *log_ctx)
                 av_log(log_ctx, AV_LOG_ERROR,
                        "Output pad \"%s\" for the filter \"%s\" of type \"%s\" not connected to any destination\n",
                        filt->output_pads[j].name, filt->name, filt->filter->name);
-                return -1;
+                return AVERROR(EINVAL);
             }
         }
     }
@@ -77,7 +108,7 @@ int avfilter_graph_check_validity(AVFilterGraph *graph, AVClass *log_ctx)
     return 0;
 }
 
-int avfilter_graph_config_links(AVFilterGraph *graph, AVClass *log_ctx)
+int ff_avfilter_graph_config_links(AVFilterGraph *graph, AVClass *log_ctx)
 {
     AVFilterContext *filt;
     int i, ret;
@@ -98,8 +129,8 @@ AVFilterContext *avfilter_graph_get_filter(AVFilterGraph *graph, char *name)
 {
     int i;
 
-    for(i = 0; i < graph->filter_count; i ++)
-        if(graph->filters[i]->name && !strcmp(name, graph->filters[i]->name))
+    for (i = 0; i < graph->filter_count; i++)
+        if (graph->filters[i]->name && !strcmp(name, graph->filters[i]->name))
             return graph->filters[i];
 
     return NULL;
@@ -107,44 +138,42 @@ AVFilterContext *avfilter_graph_get_filter(AVFilterGraph *graph, char *name)
 
 static int query_formats(AVFilterGraph *graph, AVClass *log_ctx)
 {
-    int i, j;
+    int i, j, ret;
     int scaler_count = 0;
     char inst_name[30];
 
-    /* ask all the sub-filters for their supported colorspaces */
-    for(i = 0; i < graph->filter_count; i ++) {
-        if(graph->filters[i]->filter->query_formats)
+    /* ask all the sub-filters for their supported media formats */
+    for (i = 0; i < graph->filter_count; i++) {
+        if (graph->filters[i]->filter->query_formats)
             graph->filters[i]->filter->query_formats(graph->filters[i]);
         else
             avfilter_default_query_formats(graph->filters[i]);
     }
 
     /* go through and merge as many format lists as possible */
-    for(i = 0; i < graph->filter_count; i ++) {
+    for (i = 0; i < graph->filter_count; i++) {
         AVFilterContext *filter = graph->filters[i];
 
-        for(j = 0; j < filter->input_count; j ++) {
+        for (j = 0; j < filter->input_count; j++) {
             AVFilterLink *link = filter->inputs[j];
-            if(link && link->in_formats != link->out_formats) {
-                if(!avfilter_merge_formats(link->in_formats,
-                                           link->out_formats)) {
+            if (link && link->in_formats != link->out_formats) {
+                if (!avfilter_merge_formats(link->in_formats,
+                                            link->out_formats)) {
                     AVFilterContext *scale;
                     char scale_args[256];
                     /* couldn't merge format lists. auto-insert scale filter */
                     snprintf(inst_name, sizeof(inst_name), "auto-inserted scaler %d",
                              scaler_count++);
-                    scale =
-                        avfilter_open(avfilter_get_by_name("scale"),inst_name);
-
-                    snprintf(scale_args, sizeof(scale_args), "0:0:%s", graph->scale_sws_opts);
-                    if(!scale || scale->filter->init(scale, scale_args, NULL) ||
-                                 avfilter_insert_filter(link, scale, 0, 0)) {
-                        avfilter_destroy(scale);
-                        return -1;
+                    av_strlcpy(scale_args, "0:0", sizeof(scale_args));
+                    if (graph->scale_sws_opts) {
+                        av_strlcat(scale_args, ":", sizeof(scale_args));
+                        av_strlcat(scale_args, graph->scale_sws_opts, sizeof(scale_args));
                     }
-
-                    if (avfilter_graph_add_filter(graph, scale) < 0)
-                        return -1;
+                    if ((ret = avfilter_graph_create_filter(&scale, avfilter_get_by_name("scale"),
+                                                            inst_name, scale_args, NULL, graph)) < 0)
+                        return ret;
+                    if ((ret = avfilter_insert_filter(link, scale, 0, 0)) < 0)
+                        return ret;
 
                     scale->filter->query_formats(scale);
                     if (((link = scale-> inputs[0]) &&
@@ -154,7 +183,7 @@ static int query_formats(AVFilterGraph *graph, AVClass *log_ctx)
                         av_log(log_ctx, AV_LOG_ERROR,
                                "Impossible to convert between the formats supported by the filter "
                                "'%s' and the filter '%s'\n", link->src->name, link->dst->name);
-                        return -1;
+                        return AVERROR(EINVAL);
                     }
                 }
             }
@@ -166,40 +195,62 @@ static int query_formats(AVFilterGraph *graph, AVClass *log_ctx)
 
 static void pick_format(AVFilterLink *link)
 {
-    if(!link || !link->in_formats)
+    if (!link || !link->in_formats)
         return;
 
     link->in_formats->format_count = 1;
     link->format = link->in_formats->formats[0];
-
     avfilter_formats_unref(&link->in_formats);
     avfilter_formats_unref(&link->out_formats);
+
+    if (link->type == AVMEDIA_TYPE_AUDIO) {
+        link->in_chlayouts->format_count = 1;
+        link->channel_layout = link->in_chlayouts->formats[0];
+        avfilter_formats_unref(&link->in_chlayouts);
+        avfilter_formats_unref(&link->out_chlayouts);
+    }
+
 }
 
 static void pick_formats(AVFilterGraph *graph)
 {
     int i, j;
 
-    for(i = 0; i < graph->filter_count; i ++) {
+    for (i = 0; i < graph->filter_count; i++) {
         AVFilterContext *filter = graph->filters[i];
 
-        for(j = 0; j < filter->input_count; j ++)
+        for (j = 0; j < filter->input_count; j++)
             pick_format(filter->inputs[j]);
-        for(j = 0; j < filter->output_count; j ++)
+        for (j = 0; j < filter->output_count; j++)
             pick_format(filter->outputs[j]);
     }
 }
 
-int avfilter_graph_config_formats(AVFilterGraph *graph, AVClass *log_ctx)
+int ff_avfilter_graph_config_formats(AVFilterGraph *graph, AVClass *log_ctx)
 {
+    int ret;
+
     /* find supported formats from sub-filters, and merge along links */
-    if(query_formats(graph, log_ctx))
-        return -1;
+    if ((ret = query_formats(graph, log_ctx)) < 0)
+        return ret;
 
     /* Once everything is merged, it's possible that we'll still have
-     * multiple valid colorspace choices. We pick the first one. */
+     * multiple valid media format choices. We pick the first one. */
     pick_formats(graph);
 
     return 0;
 }
 
+int avfilter_graph_config(AVFilterGraph *graphctx, void *log_ctx)
+{
+    int ret;
+
+    if ((ret = ff_avfilter_graph_check_validity(graphctx, log_ctx)))
+        return ret;
+    if ((ret = ff_avfilter_graph_config_formats(graphctx, log_ctx)))
+        return ret;
+    if ((ret = ff_avfilter_graph_config_links(graphctx, log_ctx)))
+        return ret;
+
+    return 0;
+}

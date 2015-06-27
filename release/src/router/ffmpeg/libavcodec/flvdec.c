@@ -20,6 +20,7 @@
 #include "mpegvideo.h"
 #include "h263.h"
 #include "flv.h"
+#include "libavutil/imgutils.h"
 
 void ff_flv2_decode_ac_esc(GetBitContext *gb, int *level, int *run, int *last){
     int is11 = get_bits1(gb);
@@ -82,15 +83,15 @@ int ff_flv_decode_picture_header(MpegEncContext *s)
         width = height = 0;
         break;
     }
-    if(avcodec_check_dimensions(s->avctx, width, height))
+    if(av_image_check_size(width, height, 0, s->avctx))
         return -1;
     s->width = width;
     s->height = height;
 
-    s->pict_type = FF_I_TYPE + get_bits(&s->gb, 2);
-    s->dropable= s->pict_type > FF_P_TYPE;
+    s->pict_type = AV_PICTURE_TYPE_I + get_bits(&s->gb, 2);
+    s->dropable= s->pict_type > AV_PICTURE_TYPE_P;
     if (s->dropable)
-        s->pict_type = FF_P_TYPE;
+        s->pict_type = AV_PICTURE_TYPE_P;
 
     skip_bits1(&s->gb); /* deblocking flag */
     s->chroma_qscale= s->qscale = get_bits(&s->gb, 5);
@@ -108,7 +109,7 @@ int ff_flv_decode_picture_header(MpegEncContext *s)
 
     if(s->avctx->debug & FF_DEBUG_PICT_INFO){
         av_log(s->avctx, AV_LOG_DEBUG, "%c esc_type:%d, qp:%d num:%d\n",
-               s->dropable ? 'D' : av_get_pict_type_char(s->pict_type), s->h263_flv-1, s->qscale, s->picture_number);
+               s->dropable ? 'D' : av_get_picture_type_char(s->pict_type), s->h263_flv-1, s->qscale, s->picture_number);
     }
 
     s->y_dc_scale_table=
@@ -117,7 +118,7 @@ int ff_flv_decode_picture_header(MpegEncContext *s)
     return 0;
 }
 
-AVCodec flv_decoder = {
+AVCodec ff_flv_decoder = {
     "flv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_FLV1,
@@ -127,6 +128,7 @@ AVCodec flv_decoder = {
     ff_h263_decode_end,
     ff_h263_decode_frame,
     CODEC_CAP_DRAW_HORIZ_BAND | CODEC_CAP_DR1,
+    .max_lowres= 3,
     .long_name= NULL_IF_CONFIG_SMALL("Flash Video (FLV) / Sorenson Spark / Sorenson H.263"),
     .pix_fmts= ff_pixfmt_list_420,
 };

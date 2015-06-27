@@ -71,7 +71,7 @@ static const int h263_mb_type_b_map[15]= {
 void ff_h263_show_pict_info(MpegEncContext *s){
     if(s->avctx->debug&FF_DEBUG_PICT_INFO){
     av_log(s->avctx, AV_LOG_DEBUG, "qp:%d %c size:%d rnd:%d%s%s%s%s%s%s%s%s%s %d/%d\n",
-         s->qscale, av_get_pict_type_char(s->pict_type),
+         s->qscale, av_get_picture_type_char(s->pict_type),
          s->gb.size_in_bits, 1-s->no_rounding,
          s->obmc ? " AP" : "",
          s->umvplus ? " UMV" : "",
@@ -100,7 +100,7 @@ static VLC cbpc_b_vlc;
 /* init vlcs */
 
 /* XXX: find a better solution to handle static init */
-void h263_decode_init_vlc(MpegEncContext *s)
+void ff_h263_decode_init_vlc(MpegEncContext *s)
 {
     static int done = 0;
 
@@ -117,18 +117,18 @@ void h263_decode_init_vlc(MpegEncContext *s)
                  &ff_h263_cbpy_tab[0][1], 2, 1,
                  &ff_h263_cbpy_tab[0][0], 2, 1, 64);
         INIT_VLC_STATIC(&mv_vlc, MV_VLC_BITS, 33,
-                 &mvtab[0][1], 2, 1,
-                 &mvtab[0][0], 2, 1, 538);
+                 &ff_mvtab[0][1], 2, 1,
+                 &ff_mvtab[0][0], 2, 1, 538);
         init_rl(&ff_h263_rl_inter, ff_h263_static_rl_table_store[0]);
-        init_rl(&rl_intra_aic, ff_h263_static_rl_table_store[1]);
+        init_rl(&ff_rl_intra_aic, ff_h263_static_rl_table_store[1]);
         INIT_VLC_RL(ff_h263_rl_inter, 554);
-        INIT_VLC_RL(rl_intra_aic, 554);
+        INIT_VLC_RL(ff_rl_intra_aic, 554);
         INIT_VLC_STATIC(&h263_mbtype_b_vlc, H263_MBTYPE_B_VLC_BITS, 15,
-                 &h263_mbtype_b_tab[0][1], 2, 1,
-                 &h263_mbtype_b_tab[0][0], 2, 1, 80);
+                 &ff_h263_mbtype_b_tab[0][1], 2, 1,
+                 &ff_h263_mbtype_b_tab[0][0], 2, 1, 80);
         INIT_VLC_STATIC(&cbpc_b_vlc, CBPC_B_VLC_BITS, 4,
-                 &cbpc_b_tab[0][1], 2, 1,
-                 &cbpc_b_tab[0][0], 2, 1, 8);
+                 &ff_cbpc_b_tab[0][1], 2, 1,
+                 &ff_cbpc_b_tab[0][0], 2, 1, 8);
     }
 }
 
@@ -152,7 +152,7 @@ int ff_h263_decode_mba(MpegEncContext *s)
  */
 static int h263_decode_gob_header(MpegEncContext *s)
 {
-    unsigned int val, gfid, gob_number;
+    unsigned int val, gob_number;
     int left;
 
     /* Check for GOB Start Code */
@@ -183,12 +183,12 @@ static int h263_decode_gob_header(MpegEncContext *s)
         s->qscale = get_bits(&s->gb, 5); /* SQUANT */
         if(get_bits1(&s->gb)==0)
             return -1;
-        gfid = get_bits(&s->gb, 2); /* GFID */
+        skip_bits(&s->gb, 2); /* GFID */
     }else{
         gob_number = get_bits(&s->gb, 5); /* GN */
         s->mb_x= 0;
         s->mb_y= s->gob_index* gob_number;
-        gfid = get_bits(&s->gb, 2); /* GFID */
+        skip_bits(&s->gb, 2); /* GFID */
         s->qscale = get_bits(&s->gb, 5); /* GQUANT */
     }
 
@@ -268,7 +268,7 @@ int ff_h263_resync(MpegEncContext *s){
     return -1;
 }
 
-int h263_decode_motion(MpegEncContext * s, int pred, int f_code)
+int ff_h263_decode_motion(MpegEncContext * s, int pred, int f_code)
 {
     int code, val, sign, shift, l;
     code = get_vlc2(&s->gb, mv_vlc.table, MV_VLC_BITS, 2);
@@ -325,7 +325,7 @@ static int h263p_decode_umotion(MpegEncContext * s, int pred)
    code >>= 1;
 
    code = (sign) ? (pred - code) : (pred + code);
-   dprintf(s->avctx,"H.263+ UMV Motion = %d\n", code);
+   av_dlog(s->avctx,"H.263+ UMV Motion = %d\n", code);
    return code;
 
 }
@@ -347,7 +347,7 @@ static void preview_obmc(MpegEncContext *s){
         s->block_index[i]+= 1;
     s->mb_x++;
 
-    assert(s->pict_type == FF_P_TYPE);
+    assert(s->pict_type == AV_PICTURE_TYPE_P);
 
     do{
         if (get_bits1(&s->gb)) {
@@ -379,16 +379,16 @@ static void preview_obmc(MpegEncContext *s){
         if ((cbpc & 16) == 0) {
                 s->current_picture.mb_type[xy]= MB_TYPE_16x16 | MB_TYPE_L0;
                 /* 16x16 motion prediction */
-                mot_val= h263_pred_motion(s, 0, 0, &pred_x, &pred_y);
+                mot_val= ff_h263_pred_motion(s, 0, 0, &pred_x, &pred_y);
                 if (s->umvplus)
                    mx = h263p_decode_umotion(s, pred_x);
                 else
-                   mx = h263_decode_motion(s, pred_x, 1);
+                   mx = ff_h263_decode_motion(s, pred_x, 1);
 
                 if (s->umvplus)
                    my = h263p_decode_umotion(s, pred_y);
                 else
-                   my = h263_decode_motion(s, pred_y, 1);
+                   my = ff_h263_decode_motion(s, pred_y, 1);
 
                 mot_val[0       ]= mot_val[2       ]=
                 mot_val[0+stride]= mot_val[2+stride]= mx;
@@ -397,16 +397,16 @@ static void preview_obmc(MpegEncContext *s){
         } else {
             s->current_picture.mb_type[xy]= MB_TYPE_8x8 | MB_TYPE_L0;
             for(i=0;i<4;i++) {
-                mot_val = h263_pred_motion(s, i, 0, &pred_x, &pred_y);
+                mot_val = ff_h263_pred_motion(s, i, 0, &pred_x, &pred_y);
                 if (s->umvplus)
                   mx = h263p_decode_umotion(s, pred_x);
                 else
-                  mx = h263_decode_motion(s, pred_x, 1);
+                  mx = ff_h263_decode_motion(s, pred_x, 1);
 
                 if (s->umvplus)
                   my = h263p_decode_umotion(s, pred_y);
                 else
-                  my = h263_decode_motion(s, pred_y, 1);
+                  my = ff_h263_decode_motion(s, pred_y, 1);
                 if (s->umvplus && (mx - pred_x) == 1 && (my - pred_y) == 1)
                   skip_bits1(&s->gb); /* Bit stuffing to prevent PSC */
                 mot_val[0] = mx;
@@ -430,7 +430,7 @@ static void h263_decode_dquant(MpegEncContext *s){
 
     if(s->modified_quant){
         if(get_bits1(&s->gb))
-            s->qscale= modified_quant_tab[get_bits1(&s->gb)][ s->qscale ];
+            s->qscale= ff_modified_quant_tab[get_bits1(&s->gb)][ s->qscale ];
         else
             s->qscale= get_bits(&s->gb, 5);
     }else
@@ -448,7 +448,7 @@ static int h263_decode_block(MpegEncContext * s, DCTELEM * block,
 
     scan_table = s->intra_scantable.permutated;
     if (s->h263_aic && s->mb_intra) {
-        rl = &rl_intra_aic;
+        rl = &ff_rl_intra_aic;
         i = 0;
         if (s->ac_pred) {
             if (s->h263_aic_dir)
@@ -460,7 +460,7 @@ static int h263_decode_block(MpegEncContext * s, DCTELEM * block,
         /* DC coef */
         if(s->codec_id == CODEC_ID_RV10){
 #if CONFIG_RV10_DECODER
-          if (s->rv10_version == 3 && s->pict_type == FF_I_TYPE) {
+          if (s->rv10_version == 3 && s->pict_type == AV_PICTURE_TYPE_I) {
             int component, diff;
             component = (n <= 3 ? 0 : n - 4 + 1);
             level = s->last_dc[component];
@@ -537,7 +537,7 @@ retry:
         if (i >= 64){
             if(s->alt_inter_vlc && rl == &ff_h263_rl_inter && !s->mb_intra){
                 //Looks like a hack but no, it's the way it is supposed to work ...
-                rl = &rl_intra_aic;
+                rl = &ff_rl_intra_aic;
                 i = 0;
                 s->gb= gb;
                 s->dsp.clear_block(block);
@@ -554,7 +554,7 @@ retry:
     }
 not_coded:
     if (s->mb_intra && s->h263_aic) {
-        h263_pred_acdc(s, block, n);
+        ff_h263_pred_acdc(s, block, n);
         i = 63;
     }
     s->block_last_index[n] = i;
@@ -608,7 +608,7 @@ int ff_h263_decode_mb(MpegEncContext *s,
 
     assert(!s->h263_pred);
 
-    if (s->pict_type == FF_P_TYPE) {
+    if (s->pict_type == AV_PICTURE_TYPE_P) {
         do{
             if (get_bits1(&s->gb)) {
                 /* skip mb */
@@ -653,11 +653,11 @@ int ff_h263_decode_mb(MpegEncContext *s,
             s->current_picture.mb_type[xy]= MB_TYPE_16x16 | MB_TYPE_L0;
             /* 16x16 motion prediction */
             s->mv_type = MV_TYPE_16X16;
-            h263_pred_motion(s, 0, 0, &pred_x, &pred_y);
+            ff_h263_pred_motion(s, 0, 0, &pred_x, &pred_y);
             if (s->umvplus)
                mx = h263p_decode_umotion(s, pred_x);
             else
-               mx = h263_decode_motion(s, pred_x, 1);
+               mx = ff_h263_decode_motion(s, pred_x, 1);
 
             if (mx >= 0xffff)
                 return -1;
@@ -665,7 +665,7 @@ int ff_h263_decode_mb(MpegEncContext *s,
             if (s->umvplus)
                my = h263p_decode_umotion(s, pred_y);
             else
-               my = h263_decode_motion(s, pred_y, 1);
+               my = ff_h263_decode_motion(s, pred_y, 1);
 
             if (my >= 0xffff)
                 return -1;
@@ -678,18 +678,18 @@ int ff_h263_decode_mb(MpegEncContext *s,
             s->current_picture.mb_type[xy]= MB_TYPE_8x8 | MB_TYPE_L0;
             s->mv_type = MV_TYPE_8X8;
             for(i=0;i<4;i++) {
-                mot_val = h263_pred_motion(s, i, 0, &pred_x, &pred_y);
+                mot_val = ff_h263_pred_motion(s, i, 0, &pred_x, &pred_y);
                 if (s->umvplus)
                   mx = h263p_decode_umotion(s, pred_x);
                 else
-                  mx = h263_decode_motion(s, pred_x, 1);
+                  mx = ff_h263_decode_motion(s, pred_x, 1);
                 if (mx >= 0xffff)
                     return -1;
 
                 if (s->umvplus)
                   my = h263p_decode_umotion(s, pred_y);
                 else
-                  my = h263_decode_motion(s, pred_y, 1);
+                  my = ff_h263_decode_motion(s, pred_y, 1);
                 if (my >= 0xffff)
                     return -1;
                 s->mv[0][i][0] = mx;
@@ -700,7 +700,7 @@ int ff_h263_decode_mb(MpegEncContext *s,
                 mot_val[1] = my;
             }
         }
-    } else if(s->pict_type==FF_B_TYPE) {
+    } else if(s->pict_type==AV_PICTURE_TYPE_B) {
         int mb_type;
         const int stride= s->b8_stride;
         int16_t *mot_val0 = s->current_picture.motion_val[0][ 2*(s->mb_x + s->mb_y*stride) ];
@@ -761,11 +761,11 @@ int ff_h263_decode_mb(MpegEncContext *s,
 //FIXME UMV
 
             if(USES_LIST(mb_type, 0)){
-                int16_t *mot_val= h263_pred_motion(s, 0, 0, &mx, &my);
+                int16_t *mot_val= ff_h263_pred_motion(s, 0, 0, &mx, &my);
                 s->mv_dir = MV_DIR_FORWARD;
 
-                mx = h263_decode_motion(s, mx, 1);
-                my = h263_decode_motion(s, my, 1);
+                mx = ff_h263_decode_motion(s, mx, 1);
+                my = ff_h263_decode_motion(s, my, 1);
 
                 s->mv[0][0][0] = mx;
                 s->mv[0][0][1] = my;
@@ -774,11 +774,11 @@ int ff_h263_decode_mb(MpegEncContext *s,
             }
 
             if(USES_LIST(mb_type, 1)){
-                int16_t *mot_val= h263_pred_motion(s, 0, 1, &mx, &my);
+                int16_t *mot_val= ff_h263_pred_motion(s, 0, 1, &mx, &my);
                 s->mv_dir |= MV_DIR_BACKWARD;
 
-                mx = h263_decode_motion(s, mx, 1);
-                my = h263_decode_motion(s, my, 1);
+                mx = ff_h263_decode_motion(s, mx, 1);
+                my = ff_h263_decode_motion(s, my, 1);
 
                 s->mv[1][0][0] = mx;
                 s->mv[1][0][1] = my;
@@ -829,8 +829,8 @@ intra:
     }
 
     while(pb_mv_count--){
-        h263_decode_motion(s, 0, 1);
-        h263_decode_motion(s, 0, 1);
+        ff_h263_decode_motion(s, 0, 1);
+        ff_h263_decode_motion(s, 0, 1);
     }
 
     /* decode each block */
@@ -843,7 +843,7 @@ intra:
     if(s->pb_frame && h263_skip_b_part(s, cbpb) < 0)
         return -1;
     if(s->obmc && !s->mb_intra){
-        if(s->pict_type == FF_P_TYPE && s->mb_x+1<s->mb_width && s->mb_num_left != 1)
+        if(s->pict_type == AV_PICTURE_TYPE_P && s->mb_x+1<s->mb_width && s->mb_num_left != 1)
             preview_obmc(s);
     }
 end:
@@ -864,7 +864,7 @@ end:
 }
 
 /* most is hardcoded. should extend to handle all h263 streams */
-int h263_decode_picture_header(MpegEncContext *s)
+int ff_h263_decode_picture_header(MpegEncContext *s)
 {
     int format, width, height, i;
     uint32_t startcode;
@@ -916,12 +916,12 @@ int h263_decode_picture_header(MpegEncContext *s)
     if (format != 7 && format != 6) {
         s->h263_plus = 0;
         /* H.263v1 */
-        width = h263_format[format][0];
-        height = h263_format[format][1];
+        width = ff_h263_format[format][0];
+        height = ff_h263_format[format][1];
         if (!width)
             return -1;
 
-        s->pict_type = FF_I_TYPE + get_bits1(&s->gb);
+        s->pict_type = AV_PICTURE_TYPE_I + get_bits1(&s->gb);
 
         s->h263_long_vectors = get_bits1(&s->gb);
 
@@ -951,7 +951,7 @@ int h263_decode_picture_header(MpegEncContext *s)
         if (ufep == 1) {
             /* OPPTYPE */
             format = get_bits(&s->gb, 3);
-            dprintf(s->avctx, "ufep=1, format: %d\n", format);
+            av_dlog(s->avctx, "ufep=1, format: %d\n", format);
             s->custom_pcf= get_bits1(&s->gb);
             s->umvplus = get_bits1(&s->gb); /* Unrestricted Motion Vector */
             if (get_bits1(&s->gb) != 0) {
@@ -961,6 +961,8 @@ int h263_decode_picture_header(MpegEncContext *s)
             s->h263_aic = get_bits1(&s->gb); /* Advanced Intra Coding (AIC) */
             s->loop_filter= get_bits1(&s->gb);
             s->unrestricted_mv = s->umvplus || s->obmc || s->loop_filter;
+            if(s->avctx->lowres)
+                s->loop_filter = 0;
 
             s->h263_slice_structured= get_bits1(&s->gb);
             if (get_bits1(&s->gb) != 0) {
@@ -985,11 +987,11 @@ int h263_decode_picture_header(MpegEncContext *s)
         /* MPPTYPE */
         s->pict_type = get_bits(&s->gb, 3);
         switch(s->pict_type){
-        case 0: s->pict_type= FF_I_TYPE;break;
-        case 1: s->pict_type= FF_P_TYPE;break;
-        case 2: s->pict_type= FF_P_TYPE;s->pb_frame = 3;break;
-        case 3: s->pict_type= FF_B_TYPE;break;
-        case 7: s->pict_type= FF_I_TYPE;break; //ZYGO
+        case 0: s->pict_type= AV_PICTURE_TYPE_I;break;
+        case 1: s->pict_type= AV_PICTURE_TYPE_P;break;
+        case 2: s->pict_type= AV_PICTURE_TYPE_P;s->pb_frame = 3;break;
+        case 3: s->pict_type= AV_PICTURE_TYPE_B;break;
+        case 7: s->pict_type= AV_PICTURE_TYPE_I;break; //ZYGO
         default:
             return -1;
         }
@@ -1002,7 +1004,7 @@ int h263_decode_picture_header(MpegEncContext *s)
             if (format == 6) {
                 /* Custom Picture Format (CPFMT) */
                 s->aspect_ratio_info = get_bits(&s->gb, 4);
-                dprintf(s->avctx, "aspect: %d\n", s->aspect_ratio_info);
+                av_dlog(s->avctx, "aspect: %d\n", s->aspect_ratio_info);
                 /* aspect ratios:
                 0 - forbidden
                 1 - 1:1
@@ -1015,7 +1017,7 @@ int h263_decode_picture_header(MpegEncContext *s)
                 width = (get_bits(&s->gb, 9) + 1) * 4;
                 skip_bits1(&s->gb);
                 height = get_bits(&s->gb, 9) * 4;
-                dprintf(s->avctx, "\nH.263+ Custom picture: %dx%d\n",width,height);
+                av_dlog(s->avctx, "\nH.263+ Custom picture: %dx%d\n",width,height);
                 if (s->aspect_ratio_info == FF_ASPECT_EXTENDED) {
                     /* aspected dimensions */
                     s->avctx->sample_aspect_ratio.num= get_bits(&s->gb, 8);
@@ -1024,8 +1026,8 @@ int h263_decode_picture_header(MpegEncContext *s)
                     s->avctx->sample_aspect_ratio= ff_h263_pixel_aspect[s->aspect_ratio_info];
                 }
             } else {
-                width = h263_format[format][0];
-                height = h263_format[format][1];
+                width = ff_h263_format[format][0];
+                height = ff_h263_format[format][1];
                 s->avctx->sample_aspect_ratio= (AVRational){12,11};
             }
             if ((width == 0) || (height == 0))
@@ -1112,7 +1114,7 @@ int h263_decode_picture_header(MpegEncContext *s)
     }
 
         ff_h263_show_pict_info(s);
-    if (s->pict_type == FF_I_TYPE && s->codec_tag == AV_RL32("ZYGO")){
+    if (s->pict_type == AV_PICTURE_TYPE_I && s->codec_tag == AV_RL32("ZYGO")){
         int i,j;
         for(i=0; i<85; i++) av_log(s->avctx, AV_LOG_DEBUG, "%d", get_bits1(&s->gb));
         av_log(s->avctx, AV_LOG_DEBUG, "\n");

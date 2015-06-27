@@ -33,8 +33,6 @@
 #include "get_bits.h"
 #include <stdint.h>
 
-#define IVI_DEBUG 0
-
 #define IVI_VLC_BITS 13 ///< max number of bits of the ivi's huffman codes
 
 /**
@@ -65,6 +63,21 @@ enum {
 
 extern VLC ff_ivi_mb_vlc_tabs [8]; ///< static macroblock Huffman tables
 extern VLC ff_ivi_blk_vlc_tabs[8]; ///< static block Huffman tables
+
+
+/**
+ *  Common scan patterns (defined in ivi_common.c)
+ */
+extern const uint8_t ff_ivi_vertical_scan_8x8[64];
+extern const uint8_t ff_ivi_horizontal_scan_8x8[64];
+extern const uint8_t ff_ivi_direct_scan_4x4[16];
+
+
+/**
+ *  Declare inverse transform function types
+ */
+typedef void (InvTransformPtr)(const int32_t *in, int16_t *out, uint32_t pitch, const uint8_t *flags);
+typedef void (DCTransformPtr) (const int32_t *in, int16_t *out, uint32_t pitch, int blk_size);
 
 
 /**
@@ -119,6 +132,7 @@ typedef struct {
     int             band_num;       ///< band number
     int             width;
     int             height;
+    int             aheight;        ///< aligned band height
     const uint8_t   *data_ptr;      ///< ptr to the first byte of the band data
     int             data_size;      ///< size of the band data
     int16_t         *buf;           ///< pointer to the output buffer for this band
@@ -138,22 +152,20 @@ typedef struct {
 
     IVIHuffTab      blk_vlc;        ///< vlc table for decoding block data
 
-    uint16_t        *dequant_intra; ///< ptr to dequant tables for intra blocks
-    uint16_t        *dequant_inter; ///< ptr dequant tables for inter blocks
     int             num_corr;       ///< number of correction entries
     uint8_t         corr[61*2];     ///< rvmap correction pairs
     int             rvmap_sel;      ///< rvmap table selector
     RVMapDesc       *rv_map;        ///< ptr to the RLE table for this band
     int             num_tiles;      ///< number of tiles in this band
     IVITile         *tiles;         ///< array of tile descriptors
-    void (*inv_transform)(const int32_t *in, int16_t *out, uint32_t pitch, const uint8_t *flags); ///< inverse transform function pointer
-    void (*dc_transform) (const int32_t *in, int16_t *out, uint32_t pitch, int blk_size);   ///< dc transform function pointer, it may be NULL
+    InvTransformPtr *inv_transform;
+    DCTransformPtr  *dc_transform;
     int             is_2d_trans;    ///< 1 indicates that the two-dimensional inverse transform is used
     int32_t         checksum;       ///< for debug purposes
     int             checksum_present;
     int             bufsize;        ///< band buffer size in bytes
-    const uint8_t   *intra_base;    ///< quantization matrix for intra blocks
-    const uint8_t   *inter_base;    ///< quantization matrix for inter blocks
+    const uint16_t  *intra_base;    ///< quantization matrix for intra blocks
+    const uint16_t  *inter_base;    ///< quantization matrix for inter blocks
     const uint8_t   *intra_scale;   ///< quantization coefficient for intra blocks
     const uint8_t   *inter_scale;   ///< quantization coefficient for inter blocks
 } IVIBandDesc;
@@ -181,7 +193,7 @@ typedef struct {
     uint8_t     chroma_bands;
 } IVIPicConfig;
 
-/** compares some properties of two pictures */
+/** compare some properties of two pictures */
 static inline int ivi_pic_config_cmp(IVIPicConfig *str1, IVIPicConfig *str2)
 {
     return (str1->pic_width    != str2->pic_width    || str1->pic_height    != str2->pic_height    ||
@@ -200,143 +212,141 @@ static inline int ivi_pic_config_cmp(IVIPicConfig *str1, IVIPicConfig *str2)
 /** convert unsigned values into signed ones (the sign is in the LSB) */
 #define IVI_TOSIGNED(val) (-(((val) >> 1) ^ -((val) & 1)))
 
-/** scales motion vector */
+/** scale motion vector */
 static inline int ivi_scale_mv(int mv, int mv_scale)
 {
     return (mv + (mv > 0) + (mv_scale - 1)) >> mv_scale;
 }
 
 /**
- *  Generates a huffman codebook from the given descriptor
- *  and converts it into the FFmpeg VLC table.
+ *  Generate a huffman codebook from the given descriptor
+ *  and convert it into the FFmpeg VLC table.
  *
- *  @param cb   [in]  pointer to codebook descriptor
- *  @param vlc  [out] where to place the generated VLC table
- *  @param flag [in]  flag: 1 - for static or 0 for dynamic tables
+ *  @param[in]   cb    pointer to codebook descriptor
+ *  @param[out]  vlc   where to place the generated VLC table
+ *  @param[in]   flag  flag: 1 - for static or 0 for dynamic tables
  *  @return     result code: 0 - OK, -1 = error (invalid codebook descriptor)
  */
 int  ff_ivi_create_huff_from_desc(const IVIHuffDesc *cb, VLC *vlc, int flag);
 
 /**
- * Initializes static codes used for macroblock and block decoding.
+ * Initialize static codes used for macroblock and block decoding.
  */
 void ff_ivi_init_static_vlc(void);
 
 /**
- *  Decodes a huffman codebook descriptor from the bitstream
- *  and selects specified huffman table.
+ *  Decode a huffman codebook descriptor from the bitstream
+ *  and select specified huffman table.
  *
- *  @param gb           [in,out] the GetBit context
- *  @param desc_coded   [in] flag signalling if table descriptor was coded
- *  @param which_tab    [in] codebook purpose (IVI_MB_HUFF or IVI_BLK_HUFF)
- *  @param huff_tab     [out] pointer to the descriptor of the selected table
- *  @param avctx        [in] AVCodecContext pointer
+ *  @param[in,out]  gb          the GetBit context
+ *  @param[in]      desc_coded  flag signalling if table descriptor was coded
+ *  @param[in]      which_tab   codebook purpose (IVI_MB_HUFF or IVI_BLK_HUFF)
+ *  @param[out]     huff_tab    pointer to the descriptor of the selected table
+ *  @param[in]      avctx       AVCodecContext pointer
  *  @return             zero on success, negative value otherwise
  */
 int  ff_ivi_dec_huff_desc(GetBitContext *gb, int desc_coded, int which_tab,
                           IVIHuffTab *huff_tab, AVCodecContext *avctx);
 
 /**
- *  Compares two huffman codebook descriptors.
+ *  Compare two huffman codebook descriptors.
  *
- *  @param desc1    [in] ptr to the 1st descriptor to compare
- *  @param desc2    [in] ptr to the 2nd descriptor to compare
+ *  @param[in]  desc1  ptr to the 1st descriptor to compare
+ *  @param[in]  desc2  ptr to the 2nd descriptor to compare
  *  @return         comparison result: 0 - equal, 1 - not equal
  */
 int  ff_ivi_huff_desc_cmp(const IVIHuffDesc *desc1, const IVIHuffDesc *desc2);
 
 /**
- *  Copies huffman codebook descriptors.
+ *  Copy huffman codebook descriptors.
  *
- *  @param dst  [out] ptr to the destination descriptor
- *  @param src  [in]  ptr to the source descriptor
+ *  @param[out]  dst  ptr to the destination descriptor
+ *  @param[in]   src  ptr to the source descriptor
  */
 void ff_ivi_huff_desc_copy(IVIHuffDesc *dst, const IVIHuffDesc *src);
 
 /**
- *  Initializes planes (prepares descriptors, allocates buffers etc).
+ *  Initialize planes (prepares descriptors, allocates buffers etc).
  *
- *  @param planes       [in,out] pointer to the array of the plane descriptors
- *  @param cfg          [in] pointer to the ivi_pic_config structure describing picture layout
+ *  @param[in,out]  planes  pointer to the array of the plane descriptors
+ *  @param[in]      cfg     pointer to the ivi_pic_config structure describing picture layout
  *  @return             result code: 0 - OK
  */
 int  ff_ivi_init_planes(IVIPlaneDesc *planes, const IVIPicConfig *cfg);
 
 /**
- *  Frees planes, bands and macroblocks buffers.
+ *  Free planes, bands and macroblocks buffers.
  *
- *  @param planes       [in] pointer to the array of the plane descriptors
+ *  @param[in]  planes  pointer to the array of the plane descriptors
  */
 void ff_ivi_free_buffers(IVIPlaneDesc *planes);
 
 /**
- *  Initializes tile and macroblock descriptors.
+ *  Initialize tile and macroblock descriptors.
  *
- *  @param planes       [in,out] pointer to the array of the plane descriptors
- *  @param tile_width   [in]     tile width
- *  @param tile_height  [in]     tile height
+ *  @param[in,out]  planes       pointer to the array of the plane descriptors
+ *  @param[in]      tile_width   tile width
+ *  @param[in]      tile_height  tile height
  *  @return             result code: 0 - OK
  */
 int  ff_ivi_init_tiles(IVIPlaneDesc *planes, int tile_width, int tile_height);
 
 /**
- *  Decodes size of the tile data.
+ *  Decode size of the tile data.
  *  The size is stored as a variable-length field having the following format:
  *  if (tile_data_size < 255) than this field is only one byte long
  *  if (tile_data_size >= 255) than this field four is byte long: 0xFF X1 X2 X3
  *  where X1-X3 is size of the tile data
  *
- *  @param gb   [in,out] the GetBit context
+ *  @param[in,out]  gb  the GetBit context
  *  @return     size of the tile data in bytes
  */
 int  ff_ivi_dec_tile_data_size(GetBitContext *gb);
 
 /**
- *  Decodes block data:
- *  extracts huffman-coded transform coefficients from the bitstream,
- *  dequantizes them, applies inverse transform and motion compensation
+ *  Decode block data:
+ *  extract huffman-coded transform coefficients from the bitstream,
+ *  dequantize them, apply inverse transform and motion compensation
  *  in order to reconstruct the picture.
  *
- *  @param gb   [in,out] the GetBit context
- *  @param band [in]     pointer to the band descriptor
- *  @param tile [in]     pointer to the tile descriptor
+ *  @param[in,out]  gb    the GetBit context
+ *  @param[in]      band  pointer to the band descriptor
+ *  @param[in]      tile  pointer to the tile descriptor
  *  @return     result code: 0 - OK, -1 = error (corrupted blocks data)
  */
 int  ff_ivi_decode_blocks(GetBitContext *gb, IVIBandDesc *band, IVITile *tile);
 
 /**
- *  Handles empty tiles by performing data copying and motion
+ *  Handle empty tiles by performing data copying and motion
  *  compensation respectively.
  *
- *  @param avctx    [in] ptr to the AVCodecContext
- *  @param band     [in] pointer to the band descriptor
- *  @param tile     [in] pointer to the tile descriptor
- *  @param mv_scale [in] scaling factor for motion vectors
+ *  @param[in]  avctx     ptr to the AVCodecContext
+ *  @param[in]  band      pointer to the band descriptor
+ *  @param[in]  tile      pointer to the tile descriptor
+ *  @param[in]  mv_scale  scaling factor for motion vectors
  */
-void ff_ivi_process_empty_tile(AVCodecContext *avctx, IVIBandDesc *band,
+int ff_ivi_process_empty_tile(AVCodecContext *avctx, IVIBandDesc *band,
                                IVITile *tile, int32_t mv_scale);
 
 /**
- *  Converts and outputs the current plane.
+ *  Convert and output the current plane.
  *  This conversion is done by adding back the bias value of 128
  *  (subtracted in the encoder) and clipping the result.
  *
- *  @param plane        [in]  pointer to the descriptor of the plane being processed
- *  @param dst          [out] pointer to the buffer receiving converted pixels
- *  @param dst_pitch    [in]  pitch for moving to the next y line
+ *  @param[in]   plane      pointer to the descriptor of the plane being processed
+ *  @param[out]  dst        pointer to the buffer receiving converted pixels
+ *  @param[in]   dst_pitch  pitch for moving to the next y line
  */
 void ff_ivi_output_plane(IVIPlaneDesc *plane, uint8_t *dst, int dst_pitch);
 
-#if IVI_DEBUG
 /**
- *  Calculates band checksum from band data.
+ *  Calculate band checksum from band data.
  */
 uint16_t ivi_calc_band_checksum (IVIBandDesc *band);
 
 /**
- *  Verifies that band data lies in range.
+ *  Verify that band data lies in range.
  */
 int ivi_check_band (IVIBandDesc *band, const uint8_t *ref, int pitch);
-#endif
 
 #endif /* AVCODEC_IVI_COMMON_H */

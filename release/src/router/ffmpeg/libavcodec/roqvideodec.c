@@ -157,8 +157,16 @@ static av_cold int roq_decode_init(AVCodecContext *avctx)
     RoqContext *s = avctx->priv_data;
 
     s->avctx = avctx;
+
+    if (avctx->width%16 || avctx->height%16) {
+         av_log_ask_for_sample(avctx, "dimensions not being a multiple of 16 are unsupported\n");
+         return AVERROR_PATCHWELCOME;
+    }
+
     s->width = avctx->width;
     s->height = avctx->height;
+    avcodec_get_frame_defaults(&s->frames[0]);
+    avcodec_get_frame_defaults(&s->frames[1]);
     s->last_frame    = &s->frames[0];
     s->current_frame = &s->frames[1];
     avctx->pix_fmt = PIX_FMT_YUV444P;
@@ -210,7 +218,7 @@ static av_cold int roq_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec roq_decoder = {
+AVCodec ff_roq_decoder = {
     "roqvideo",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ROQ,

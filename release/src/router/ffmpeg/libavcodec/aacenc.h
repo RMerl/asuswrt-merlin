@@ -30,6 +30,10 @@
 
 #include "psymodel.h"
 
+typedef struct AACEncOptions {
+    int stereo_mode;
+} AACEncOptions;
+
 struct AACEncContext;
 
 typedef struct AACCoefficientsEncoder {
@@ -48,12 +52,13 @@ extern AACCoefficientsEncoder ff_aac_coders[];
  * AAC encoder context
  */
 typedef struct AACEncContext {
+    AVClass *av_class;
+    AACEncOptions options;                       ///< encoding options
     PutBitContext pb;
     FFTContext mdct1024;                         ///< long (1024 samples) frame transform context
     FFTContext mdct128;                          ///< short (128 samples) frame transform context
     DSPContext  dsp;
-    DECLARE_ALIGNED(16, FFTSample, output)[2048]; ///< temporary buffer for MDCT input coefficients
-    int16_t* samples;                            ///< saved preprocessed input
+    int16_t *samples;                            ///< saved preprocessed input
 
     int samplerate_index;                        ///< MPEG-4 samplerate index
 
@@ -64,8 +69,8 @@ typedef struct AACEncContext {
     int cur_channel;
     int last_frame;
     float lambda;
-    DECLARE_ALIGNED(16, int,   qcoefs)[96][2];   ///< quantized coefficients
-    DECLARE_ALIGNED(16, float, scoefs)[1024];    ///< scaled coefficients
+    DECLARE_ALIGNED(16, int,   qcoefs)[96];      ///< quantized coefficients
+    DECLARE_ALIGNED(32, float, scoefs)[1024];    ///< scaled coefficients
 } AACEncContext;
 
 #endif /* AVCODEC_AACENC_H */

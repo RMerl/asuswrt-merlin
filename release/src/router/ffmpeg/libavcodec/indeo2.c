@@ -146,14 +146,18 @@ static int ir2_decode_frame(AVCodecContext *avctx,
     AVFrame * const p= (AVFrame*)&s->picture;
     int start;
 
-    if(p->data[0])
-        avctx->release_buffer(avctx, p);
-
     p->reference = 1;
     p->buffer_hints = FF_BUFFER_HINTS_VALID | FF_BUFFER_HINTS_PRESERVE | FF_BUFFER_HINTS_REUSABLE;
     if (avctx->reget_buffer(avctx, p)) {
         av_log(s->avctx, AV_LOG_ERROR, "reget_buffer() failed\n");
         return -1;
+    }
+
+    start = 48; /* hardcoded for now */
+
+    if (start >= buf_size) {
+        av_log(s->avctx, AV_LOG_ERROR, "input buffer size too small (%d)\n", buf_size);
+        return AVERROR_INVALIDDATA;
     }
 
     s->decode_delta = buf[18];
@@ -163,9 +167,8 @@ static int ir2_decode_frame(AVCodecContext *avctx,
     for (i = 0; i < buf_size; i++)
         buf[i] = av_reverse[buf[i]];
 #endif
-    start = 48; /* hardcoded for now */
 
-    init_get_bits(&s->gb, buf + start, buf_size - start);
+    init_get_bits(&s->gb, buf + start, (buf_size - start) * 8);
 
     if (s->decode_delta) { /* intraframe */
         ir2_decode_plane(s, avctx->width, avctx->height,
@@ -195,6 +198,7 @@ static av_cold int ir2_decode_init(AVCodecContext *avctx){
     Ir2Context * const ic = avctx->priv_data;
     static VLC_TYPE vlc_tables[1 << CODE_VLC_BITS][2];
 
+    avcodec_get_frame_defaults(&ic->picture);
     ic->avctx = avctx;
 
     avctx->pix_fmt= PIX_FMT_YUV410P;
@@ -224,7 +228,7 @@ static av_cold int ir2_decode_end(AVCodecContext *avctx){
     return 0;
 }
 
-AVCodec indeo2_decoder = {
+AVCodec ff_indeo2_decoder = {
     "indeo2",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_INDEO2,

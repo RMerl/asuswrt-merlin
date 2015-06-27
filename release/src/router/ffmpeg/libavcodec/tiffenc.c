@@ -42,6 +42,7 @@ static const uint8_t type_sizes2[6] = {
 };
 
 typedef struct TiffEncoderContext {
+    AVClass *avclass;
     AVCodecContext *avctx;
     AVFrame picture;
 
@@ -210,18 +211,19 @@ static int encode_frame(AVCodecContext * avctx, unsigned char *buf,
     uint32_t *strip_offsets = NULL;
     int bytes_per_row;
     uint32_t res[2] = { 72, 1 };        // image resolution (72/1)
-    static const uint16_t bpp_tab[] = { 8, 8, 8, 8 };
+    uint16_t bpp_tab[] = { 8, 8, 8, 8 };
     int ret = -1;
     int is_yuv = 0;
     uint8_t *yuv_line = NULL;
     int shift_h, shift_v;
 
+    s->avctx = avctx;
     s->buf_start = buf;
     s->buf = &ptr;
     s->buf_size = buf_size;
 
     *p = *pict;
-    p->pict_type = FF_I_TYPE;
+    p->pict_type = AV_PICTURE_TYPE_I;
     p->key_frame = 1;
     avctx->coded_frame= &s->picture;
 
@@ -255,12 +257,10 @@ static int encode_frame(AVCodecContext * avctx, unsigned char *buf,
         s->photometric_interpretation = 3;
         break;
     case PIX_FMT_MONOBLACK:
-        s->bpp = 1;
-        s->photometric_interpretation = 1;
-        break;
     case PIX_FMT_MONOWHITE:
         s->bpp = 1;
-        s->photometric_interpretation = 0;
+        s->photometric_interpretation = avctx->pix_fmt == PIX_FMT_MONOBLACK;
+        bpp_tab[0] = 1;
         break;
     case PIX_FMT_YUV420P:
     case PIX_FMT_YUV422P:
@@ -282,7 +282,7 @@ static int encode_frame(AVCodecContext * avctx, unsigned char *buf,
         return -1;
     }
     if (!is_yuv)
-        s->bpp_tab_size = (s->bpp >> 3);
+        s->bpp_tab_size = ((s->bpp + 7) >> 3);
 
     if (s->compr == TIFF_DEFLATE || s->compr == TIFF_ADOBE_DEFLATE || s->compr == TIFF_LZW)
         //best choose for DEFLATE
@@ -305,6 +305,10 @@ static int encode_frame(AVCodecContext * avctx, unsigned char *buf,
 
     strip_sizes = av_mallocz(sizeof(*strip_sizes) * strips);
     strip_offsets = av_mallocz(sizeof(*strip_offsets) * strips);
+    if (!strip_sizes || !strip_offsets) {
+        ret = AVERROR(ENOMEM);
+        goto fail;
+    }
 
     bytes_per_row = (((s->width - 1)/s->subsampling[0] + 1) * s->bpp
                     * s->subsampling[0] * s->subsampling[1] + 7) >> 3;
@@ -312,6 +316,7 @@ static int encode_frame(AVCodecContext * avctx, unsigned char *buf,
         yuv_line = av_malloc(bytes_per_row);
         if (yuv_line == NULL){
             av_log(s->avctx, AV_LOG_ERROR, "Not enough memory\n");
+            ret = AVERROR(ENOMEM);
             goto fail;
         }
     }
@@ -324,6 +329,10 @@ static int encode_frame(AVCodecContext * avctx, unsigned char *buf,
 
         zlen = bytes_per_row * s->rps;
         zbuf = av_malloc(zlen);
+        if (!zbuf) {
+            ret = AVERROR(ENOMEM);
+            goto fail;
+        }
         strip_offsets[0] = ptr - buf;
         zn = 0;
         for (j = 0; j < s->rps; j++) {
@@ -348,8 +357,13 @@ static int encode_frame(AVCodecContext * avctx, unsigned char *buf,
     } else
 #endif
     {
-        if(s->compr == TIFF_LZW)
+        if (s->compr == TIFF_LZW) {
             s->lzws = av_malloc(ff_lzw_encode_state_size);
+            if (!s->lzws) {
+                ret = AVERROR(ENOMEM);
+                goto fail;
+            }
+        }
         for (i = 0; i < s->height; i++) {
             if (strip_sizes[i / s->rps] == 0) {
                 if(s->compr == TIFF_LZW){
@@ -442,7 +456,7 @@ fail:
     return ret;
 }
 
-AVCodec tiff_encoder = {
+AVCodec ff_tiff_encoder = {
     "tiff",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_TIFF,

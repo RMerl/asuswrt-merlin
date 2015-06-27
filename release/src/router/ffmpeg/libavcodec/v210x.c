@@ -52,7 +52,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
     }
 
     if(avpkt->size > avctx->width * avctx->height * 8 / 3){
-        av_log(avctx, AV_LOG_ERROR, "Probably padded data, need sample!\n");
+        av_log_ask_for_sample(avctx, "Probably padded data\n");
     }
 
     pic->reference= 0;
@@ -63,16 +63,16 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
     udst= (uint16_t *)pic->data[1];
     vdst= (uint16_t *)pic->data[2];
     yend= ydst + width;
-    pic->pict_type= FF_I_TYPE;
+    pic->pict_type= AV_PICTURE_TYPE_I;
     pic->key_frame= 1;
 
     for(;;){
-        uint32_t v= be2me_32(*src++);
+        uint32_t v= av_be2ne32(*src++);
         *udst++= (v>>16) & 0xFFC0;
         *ydst++= (v>>6 ) & 0xFFC0;
         *vdst++= (v<<4 ) & 0xFFC0;
 
-        v= be2me_32(*src++);
+        v= av_be2ne32(*src++);
         *ydst++= (v>>16) & 0xFFC0;
 
         if(ydst >= yend){
@@ -87,7 +87,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
         *udst++= (v>>6 ) & 0xFFC0;
         *ydst++= (v<<4 ) & 0xFFC0;
 
-        v= be2me_32(*src++);
+        v= av_be2ne32(*src++);
         *vdst++= (v>>16) & 0xFFC0;
         *ydst++= (v>>6 ) & 0xFFC0;
 
@@ -102,7 +102,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
 
         *udst++= (v<<4 ) & 0xFFC0;
 
-        v= be2me_32(*src++);
+        v= av_be2ne32(*src++);
         *ydst++= (v>>16) & 0xFFC0;
         *vdst++= (v>>6 ) & 0xFFC0;
         *ydst++= (v<<4 ) & 0xFFC0;
@@ -132,7 +132,7 @@ static av_cold int decode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec v210x_decoder = {
+AVCodec ff_v210x_decoder = {
     "v210x",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_V210X,

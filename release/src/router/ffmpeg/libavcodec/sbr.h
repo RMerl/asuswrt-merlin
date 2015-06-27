@@ -31,6 +31,7 @@
 
 #include <stdint.h>
 #include "fft.h"
+#include "aacps.h"
 
 /**
  * Spectral Band Replication header - spectrum parameters that invoke a reset if they differ from the previous header.
@@ -41,7 +42,7 @@ typedef struct {
     uint8_t bs_xover_band;
 
     /**
-     * @defgroup bs_header_extra_1     Variables associated with bs_header_extra_1
+     * @name Variables associated with bs_header_extra_1
      * @{
      */
     uint8_t bs_freq_scale;
@@ -57,7 +58,7 @@ typedef struct {
  */
 typedef struct {
     /**
-     * @defgroup bitstream     Main bitstream data variables
+     * @name Main bitstream data variables
      * @{
      */
     unsigned           bs_frame_class;
@@ -73,7 +74,7 @@ typedef struct {
     /** @} */
 
     /**
-     * @defgroup state         State variables
+     * @name State variables
      * @{
      */
     DECLARE_ALIGNED(16, float, synthesis_filterbank_samples)[SBR_SYNTHESIS_BUF_SIZE];
@@ -115,7 +116,7 @@ typedef struct {
     SpectrumParameters spectrum_params;
     int                bs_amp_res_header;
     /**
-     * @defgroup bs_header_extra_2     variables associated with bs_header_extra_2
+     * @name Variables associated with bs_header_extra_2
      * @{
      */
     unsigned           bs_limiter_bands;
@@ -133,6 +134,7 @@ typedef struct {
     ///The number of frequency bands in f_master
     unsigned           n_master;
     SBRData            data[2];
+    PSContext          ps;
     ///N_Low and N_High respectively, the number of frequency bands for low and high resolution
     unsigned           n[2];
     ///Number of noise floor bands
@@ -157,7 +159,7 @@ typedef struct {
     ///QMF output of the HF generator
     float              X_high[64][40][2];
     ///QMF values of the reconstructed signal
-    DECLARE_ALIGNED(16, float, X)[2][2][32][64];
+    DECLARE_ALIGNED(16, float, X)[2][2][38][64];
     ///Zeroth coefficient used to filter the subband signals
     float              alpha0[64][2];
     ///First coefficient used to filter the subband signals
@@ -176,7 +178,7 @@ typedef struct {
     float              s_m[7][48];
     float              gain[7][48];
     DECLARE_ALIGNED(16, float, qmf_filter_scratch)[5][64];
-    RDFTContext        rdft;
+    FFTContext         mdct_ana;
     FFTContext         mdct;
 } SpectralBandReplication;
 

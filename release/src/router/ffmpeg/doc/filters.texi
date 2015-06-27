@@ -1,0 +1,2000 @@
+@chapter Filtergraph description
+@c man begin FILTERGRAPH DESCRIPTION
+
+A filtergraph is a directed graph of connected filters. It can contain
+cycles, and there can be multiple links between a pair of
+filters. Each link has one input pad on one side connecting it to one
+filter from which it takes its input, and one output pad on the other
+side connecting it to the one filter accepting its output.
+
+Each filter in a filtergraph is an instance of a filter class
+registered in the application, which defines the features and the
+number of input and output pads of the filter.
+
+A filter with no input pads is called a "source", a filter with no
+output pads is called a "sink".
+
+@section Filtergraph syntax
+
+A filtergraph can be represented using a textual representation, which
+is recognized by the @code{-vf} and @code{-af} options of the ff*
+tools, and by the @code{av_parse_graph()} function defined in
+@file{libavfilter/avfiltergraph}.
+
+A filterchain consists of a sequence of connected filters, each one
+connected to the previous one in the sequence. A filterchain is
+represented by a list of ","-separated filter descriptions.
+
+A filtergraph consists of a sequence of filterchains. A sequence of
+filterchains is represented by a list of ";"-separated filterchain
+descriptions.
+
+A filter is represented by a string of the form:
+[@var{in_link_1}]...[@var{in_link_N}]@var{filter_name}=@var{arguments}[@var{out_link_1}]...[@var{out_link_M}]
+
+@var{filter_name} is the name of the filter class of which the
+described filter is an instance of, and has to be the name of one of
+the filter classes registered in the program.
+The name of the filter class is optionally followed by a string
+"=@var{arguments}".
+
+@var{arguments} is a string which contains the parameters used to
+initialize the filter instance, and are described in the filter
+descriptions below.
+
+The list of arguments can be quoted using the character "'" as initial
+and ending mark, and the character '\' for escaping the characters
+within the quoted text; otherwise the argument string is considered
+terminated when the next special character (belonging to the set
+"[]=;,") is encountered.
+
+The name and arguments of the filter are optionally preceded and
+followed by a list of link labels.
+A link label allows to name a link and associate it to a filter output
+or input pad. The preceding labels @var{in_link_1}
+... @var{in_link_N}, are associated to the filter input pads,
+the following labels @var{out_link_1} ... @var{out_link_M}, are
+associated to the output pads.
+
+When two link labels with the same name are found in the
+filtergraph, a link between the corresponding input and output pad is
+created.
+
+If an output pad is not labelled, it is linked by default to the first
+unlabelled input pad of the next filter in the filterchain.
+For example in the filterchain:
+@example
+nullsrc, split[L1], [L2]overlay, nullsink
+@end example
+the split filter instance has two output pads, and the overlay filter
+instance two input pads. The first output pad of split is labelled
+"L1", the first input pad of overlay is labelled "L2", and the second
+output pad of split is linked to the second input pad of overlay,
+which are both unlabelled.
+
+In a complete filterchain all the unlabelled filter input and output
+pads must be connected. A filtergraph is considered valid if all the
+filter input and output pads of all the filterchains are connected.
+
+Follows a BNF description for the filtergraph syntax:
+@example
+@var{NAME}             ::= sequence of alphanumeric characters and '_'
+@var{LINKLABEL}        ::= "[" @var{NAME} "]"
+@var{LINKLABELS}       ::= @var{LINKLABEL} [@var{LINKLABELS}]
+@var{FILTER_ARGUMENTS} ::= sequence of chars (eventually quoted)
+@var{FILTER}           ::= [@var{LINKLABELS}] @var{NAME} ["=" @var{FILTER_ARGUMENTS}] [@var{LINKLABELS}]
+@var{FILTERCHAIN}      ::= @var{FILTER} [,@var{FILTERCHAIN}]
+@var{FILTERGRAPH}      ::= @var{FILTERCHAIN} [;@var{FILTERGRAPH}]
+@end example
+
+@c man end FILTERGRAPH DESCRIPTION
+
+@chapter Audio Filters
+@c man begin AUDIO FILTERS
+
+When you configure your FFmpeg build, you can disable any of the
+existing filters using --disable-filters.
+The configure output will show the audio filters included in your
+build.
+
+Below is a description of the currently available audio filters.
+
+@section anull
+
+Pass the audio source unchanged to the output.
+
+@c man end AUDIO FILTERS
+
+@chapter Audio Sources
+@c man begin AUDIO SOURCES
+
+Below is a description of the currently available audio sources.
+
+@section anullsrc
+
+Null audio source, never return audio frames. It is mainly useful as a
+template and to be employed in analysis / debugging tools.
+
+It accepts as optional parameter a string of the form
+@var{sample_rate}:@var{channel_layout}.
+
+@var{sample_rate} specify the sample rate, and defaults to 44100.
+
+@var{channel_layout} specify the channel layout, and can be either an
+integer or a string representing a channel layout. The default value
+of @var{channel_layout} is 3, which corresponds to CH_LAYOUT_STEREO.
+
+Check the channel_layout_map definition in
+@file{libavcodec/audioconvert.c} for the mapping between strings and
+channel layout values.
+
+Follow some examples:
+@example
+#  set the sample rate to 48000 Hz and the channel layout to CH_LAYOUT_MONO.
+anullsrc=48000:4
+
+# same as
+anullsrc=48000:mono
+@end example
+
+@c man end AUDIO SOURCES
+
+@chapter Audio Sinks
+@c man begin AUDIO SINKS
+
+Below is a description of the currently available audio sinks.
+
+@section anullsink
+
+Null audio sink, do absolutely nothing with the input audio. It is
+mainly useful as a template and to be employed in analysis / debugging
+tools.
+
+@c man end AUDIO SINKS
+
+@chapter Video Filters
+@c man begin VIDEO FILTERS
+
+When you configure your FFmpeg build, you can disable any of the
+existing filters using --disable-filters.
+The configure output will show the video filters included in your
+build.
+
+Below is a description of the currently available video filters.
+
+@section blackframe
+
+Detect frames that are (almost) completely black. Can be useful to
+detect chapter transitions or commercials. Output lines consist of
+the frame number of the detected frame, the percentage of blackness,
+the position in the file if known or -1 and the timestamp in seconds.
+
+In order to display the output lines, you need to set the loglevel at
+least to the AV_LOG_INFO value.
+
+The filter accepts the syntax:
+@example
+blackframe[=@var{amount}:[@var{threshold}]]
+@end example
+
+@var{amount} is the percentage of the pixels that have to be below the
+threshold, and defaults to 98.
+
+@var{threshold} is the threshold below which a pixel value is
+considered black, and defaults to 32.
+
+@section copy
+
+Copy the input source unchanged to the output. Mainly useful for
+testing purposes.
+
+@section crop
+
+Crop the input video to @var{out_w}:@var{out_h}:@var{x}:@var{y}.
+
+The parameters are expressions containing the following constants:
+
+@table @option
+@item E, PI, PHI
+the corresponding mathematical approximated values for e
+(euler number), pi (greek PI), PHI (golden ratio)
+
+@item x, y
+the computed values for @var{x} and @var{y}. They are evaluated for
+each new frame.
+
+@item in_w, in_h
+the input width and heigth
+
+@item iw, ih
+same as @var{in_w} and @var{in_h}
+
+@item out_w, out_h
+the output (cropped) width and heigth
+
+@item ow, oh
+same as @var{out_w} and @var{out_h}
+
+@item n
+the number of input frame, starting from 0
+
+@item pos
+the position in the file of the input frame, NAN if unknown
+
+@item t
+timestamp expressed in seconds, NAN if the input timestamp is unknown
+
+@end table
+
+The @var{out_w} and @var{out_h} parameters specify the expressions for
+the width and height of the output (cropped) video. They are
+evaluated just at the configuration of the filter.
+
+The default value of @var{out_w} is "in_w", and the default value of
+@var{out_h} is "in_h".
+
+The expression for @var{out_w} may depend on the value of @var{out_h},
+and the expression for @var{out_h} may depend on @var{out_w}, but they
+cannot depend on @var{x} and @var{y}, as @var{x} and @var{y} are
+evaluated after @var{out_w} and @var{out_h}.
+
+The @var{x} and @var{y} parameters specify the expressions for the
+position of the top-left corner of the output (non-cropped) area. They
+are evaluated for each frame. If the evaluated value is not valid, it
+is approximated to the nearest valid value.
+
+The default value of @var{x} is "(in_w-out_w)/2", and the default
+value for @var{y} is "(in_h-out_h)/2", which set the cropped area at
+the center of the input image.
+
+The expression for @var{x} may depend on @var{y}, and the expression
+for @var{y} may depend on @var{x}.
+
+Follow some examples:
+@example
+# crop the central input area with size 100x100
+crop=100:100
+
+# crop the central input area with size 2/3 of the input video
+"crop=2/3*in_w:2/3*in_h"
+
+# crop the input video central square
+crop=in_h
+
+# delimit the rectangle with the top-left corner placed at position
+# 100:100 and the right-bottom corner corresponding to the right-bottom
+# corner of the input image.
+crop=in_w-100:in_h-100:100:100
+
+# crop 10 pixels from the left and right borders, and 20 pixels from
+# the top and bottom borders
+"crop=in_w-2*10:in_h-2*20"
+
+# keep only the bottom right quarter of the input image
+"crop=in_w/2:in_h/2:in_w/2:in_h/2"
+
+# crop height for getting Greek harmony
+"crop=in_w:1/PHI*in_w"
+
+# trembling effect
+"crop=in_w/2:in_h/2:(in_w-out_w)/2+((in_w-out_w)/2)*sin(n/10):(in_h-out_h)/2 +((in_h-out_h)/2)*sin(n/7)"
+
+# erratic camera effect depending on timestamp
+"crop=in_w/2:in_h/2:(in_w-out_w)/2+((in_w-out_w)/2)*sin(t*10):(in_h-out_h)/2 +((in_h-out_h)/2)*sin(t*13)"
+
+# set x depending on the value of y
+"crop=in_w/2:in_h/2:y:10+10*sin(n/10)"
+@end example
+
+@section cropdetect
+
+Auto-detect crop size.
+
+Calculate necessary cropping parameters and prints the recommended
+parameters through the logging system. The detected dimensions
+correspond to the non-black area of the input video.
+
+It accepts the syntax:
+@example
+cropdetect[=@var{limit}[:@var{round}[:@var{reset}]]]
+@end example
+
+@table @option
+
+@item limit
+Threshold, which can be optionally specified from nothing (0) to
+everything (255), defaults to 24.
+
+@item round
+Value which the width/height should be divisible by, defaults to
+16. The offset is automatically adjusted to center the video. Use 2 to
+get only even dimensions (needed for 4:2:2 video). 16 is best when
+encoding to most video codecs.
+
+@item reset
+Counter that determines after how many frames cropdetect will reset
+the previously detected largest video area and start over to detect
+the current optimal crop area. Defaults to 0.
+
+This can be useful when channel logos distort the video area. 0
+indicates never reset and return the largest area encountered during
+playback.
+@end table
+
+@section drawbox
+
+Draw a colored box on the input image.
+
+It accepts the syntax:
+@example
+drawbox=@var{x}:@var{y}:@var{width}:@var{height}:@var{color}
+@end example
+
+@table @option
+
+@item x, y
+Specify the top left corner coordinates of the box. Default to 0.
+
+@item width, height
+Specify the width and height of the box, if 0 they are interpreted as
+the input width and height. Default to 0.
+
+@item color
+Specify the color of the box to write, it can be the name of a color
+(case insensitive match) or a 0xRRGGBB[AA] sequence.
+@end table
+
+Follow some examples:
+@example
+# draw a black box around the edge of the input image
+drawbox
+
+# draw a box with color red and an opacity of 50%
+drawbox=10:20:200:60:red@@0.5"
+@end example
+
+@section drawtext
+
+Draw text string or text from specified file on top of video using the
+libfreetype library.
+
+To enable compilation of this filter you need to configure FFmpeg with
+@code{--enable-libfreetype}.
+
+The filter also recognizes strftime() sequences in the provided text
+and expands them accordingly. Check the documentation of strftime().
+
+The filter accepts parameters as a list of @var{key}=@var{value} pairs,
+separated by ":".
+
+The description of the accepted parameters follows.
+
+@table @option
+
+@item fontfile
+The font file to be used for drawing text. Path must be included.
+This parameter is mandatory.
+
+@item text
+The text string to be drawn. The text must be a sequence of UTF-8
+encoded characters.
+This parameter is mandatory if no file is specified with the parameter
+@var{textfile}.
+
+@item textfile
+A text file containing text to be drawn. The text must be a sequence
+of UTF-8 encoded characters.
+
+This parameter is mandatory if no text string is specified with the
+parameter @var{text}.
+
+If both text and textfile are specified, an error is thrown.
+
+@item x, y
+The offsets where text will be drawn within the video frame.
+Relative to the top/left border of the output image.
+
+The default value of @var{x} and @var{y} is 0.
+
+@item fontsize
+The font size to be used for drawing text.
+The default value of @var{fontsize} is 16.
+
+@item fontcolor
+The color to be used for drawing fonts.
+Either a string (e.g. "red") or in 0xRRGGBB[AA] format
+(e.g. "0xff000033"), possibly followed by an alpha specifier.
+The default value of @var{fontcolor} is "black".
+
+@item boxcolor
+The color to be used for drawing box around text.
+Either a string (e.g. "yellow") or in 0xRRGGBB[AA] format
+(e.g. "0xff00ff"), possibly followed by an alpha specifier.
+The default value of @var{boxcolor} is "white".
+
+@item box
+Used to draw a box around text using background color.
+Value should be either 1 (enable) or 0 (disable).
+The default value of @var{box} is 0.
+
+@item shadowx, shadowy
+The x and y offsets for the text shadow position with respect to the
+position of the text. They can be either positive or negative
+values. Default value for both is "0".
+
+@item shadowcolor
+The color to be used for drawing a shadow behind the drawn text.  It
+can be a color name (e.g. "yellow") or a string in the 0xRRGGBB[AA]
+form (e.g. "0xff00ff"), possibly followed by an alpha specifier.
+The default value of @var{shadowcolor} is "black".
+
+@item ft_load_flags
+Flags to be used for loading the fonts.
+
+The flags map the corresponding flags supported by libfreetype, and are
+a combination of the following values:
+@table @var
+@item default
+@item no_scale
+@item no_hinting
+@item render
+@item no_bitmap
+@item vertical_layout
+@item force_autohint
+@item crop_bitmap
+@item pedantic
+@item ignore_global_advance_width
+@item no_recurse
+@item ignore_transform
+@item monochrome
+@item linear_design
+@item no_autohint
+@item end table
+@end table
+
+Default value is "render".
+
+For more information consult the documentation for the FT_LOAD_*
+libfreetype flags.
+
+@item tabsize
+The size in number of spaces to use for rendering the tab.
+Default value is 4.
+@end table
+
+For example the command:
+@example
+drawtext="fontfile=/usr/share/fonts/truetype/freefont/FreeSerif.ttf: text='Test Text'"
+@end example
+
+will draw "Test Text" with font FreeSerif, using the default values
+for the optional parameters.
+
+The command:
+@example
+drawtext="fontfile=/usr/share/fonts/truetype/freefont/FreeSerif.ttf: text='Test Text':\
+          x=100: y=50: fontsize=24: fontcolor=yellow@@0.2: box=1: boxcolor=red@@0.2"
+@end example
+
+will draw 'Test Text' with font FreeSerif of size 24 at position x=100
+and y=50 (counting from the top-left corner of the screen), text is
+yellow with a red box around it. Both the text and the box have an
+opacity of 20%.
+
+Note that the double quotes are not necessary if spaces are not used
+within the parameter list.
+
+For more information about libfreetype, check:
+@url{http://www.freetype.org/}.
+
+@section fade
+
+Apply fade-in/out effect to input video.
+
+It accepts the parameters:
+@var{type}:@var{start_frame}:@var{nb_frames}
+
+@var{type} specifies if the effect type, can be either "in" for
+fade-in, or "out" for a fade-out effect.
+
+@var{start_frame} specifies the number of the start frame for starting
+to apply the fade effect.
+
+@var{nb_frames} specifies the number of frames for which the fade
+effect has to last. At the end of the fade-in effect the output video
+will have the same intensity as the input video, at the end of the
+fade-out transition the output video will be completely black.
+
+A few usage examples follow, usable too as test scenarios.
+@example
+# fade in first 30 frames of video
+fade=in:0:30
+
+# fade out last 45 frames of a 200-frame video
+fade=out:155:45
+
+# fade in first 25 frames and fade out last 25 frames of a 1000-frame video
+fade=in:0:25, fade=out:975:25
+
+# make first 5 frames black, then fade in from frame 5-24
+fade=in:5:20
+@end example
+
+@section fieldorder
+
+Transform the field order of the input video.
+
+It accepts one parameter which specifies the required field order that
+the input interlaced video will be transformed to. The parameter can
+assume one of the following values:
+
+@table @option
+@item 0 or bff
+output bottom field first
+@item 1 or tff
+output top field first
+@end table
+
+Default value is "tff".
+
+Transformation is achieved by shifting the picture content up or down
+by one line, and filling the remaining line with appropriate picture content.
+This method is consistent with most broadcast field order converters.
+
+If the input video is not flagged as being interlaced, or it is already
+flagged as being of the required output field order then this filter does
+not alter the incoming video.
+
+This filter is very useful when converting to or from PAL DV material,
+which is bottom field first.
+
+For example:
+@example
+./ffmpeg -i in.vob -vf "fieldorder=bff" out.dv
+@end example
+
+@section fifo
+
+Buffer input images and send them when they are requested.
+
+This filter is mainly useful when auto-inserted by the libavfilter
+framework.
+
+The filter does not take parameters.
+
+@section format
+
+Convert the input video to one of the specified pixel formats.
+Libavfilter will try to pick one that is supported for the input to
+the next filter.
+
+The filter accepts a list of pixel format names, separated by ":",
+for example "yuv420p:monow:rgb24".
+
+Some examples follow:
+@example
+# convert the input video to the format "yuv420p"
+format=yuv420p
+
+# convert the input video to any of the formats in the list
+format=yuv420p:yuv444p:yuv410p
+@end example
+
+@anchor{frei0r}
+@section frei0r
+
+Apply a frei0r effect to the input video.
+
+To enable compilation of this filter you need to install the frei0r
+header and configure FFmpeg with --enable-frei0r.
+
+The filter supports the syntax:
+@example
+@var{filter_name}[@{:|=@}@var{param1}:@var{param2}:...:@var{paramN}]
+@end example
+
+@var{filter_name} is the name to the frei0r effect to load. If the
+environment variable @env{FREI0R_PATH} is defined, the frei0r effect
+is searched in each one of the directories specified by the colon
+separated list in @env{FREIOR_PATH}, otherwise in the standard frei0r
+paths, which are in this order: @file{HOME/.frei0r-1/lib/},
+@file{/usr/local/lib/frei0r-1/}, @file{/usr/lib/frei0r-1/}.
+
+@var{param1}, @var{param2}, ... , @var{paramN} specify the parameters
+for the frei0r effect.
+
+A frei0r effect parameter can be a boolean (whose values are specified
+with "y" and "n"), a double, a color (specified by the syntax
+@var{R}/@var{G}/@var{B}, @var{R}, @var{G}, and @var{B} being float
+numbers from 0.0 to 1.0) or by an @code{av_parse_color()} color
+description), a position (specified by the syntax @var{X}/@var{Y},
+@var{X} and @var{Y} being float numbers) and a string.
+
+The number and kind of parameters depend on the loaded effect. If an
+effect parameter is not specified the default value is set.
+
+Some examples follow:
+@example
+# apply the distort0r effect, set the first two double parameters
+frei0r=distort0r:0.5:0.01
+
+# apply the colordistance effect, takes a color as first parameter
+frei0r=colordistance:0.2/0.3/0.4
+frei0r=colordistance:violet
+frei0r=colordistance:0x112233
+
+# apply the perspective effect, specify the top left and top right
+# image positions
+frei0r=perspective:0.2/0.2:0.8/0.2
+@end example
+
+For more information see:
+@url{http://piksel.org/frei0r}
+
+@section gradfun
+
+Fix the banding artifacts that are sometimes introduced into nearly flat
+regions by truncation to 8bit colordepth.
+Interpolate the gradients that should go where the bands are, and
+dither them.
+
+This filter is designed for playback only.  Do not use it prior to
+lossy compression, because compression tends to lose the dither and
+bring back the bands.
+
+The filter takes two optional parameters, separated by ':':
+@var{strength}:@var{radius}
+
+@var{strength} is the maximum amount by which the filter will change
+any one pixel. Also the threshold for detecting nearly flat
+regions. Acceptable values range from .51 to 255, default value is
+1.2, out-of-range values will be clipped to the valid range.
+
+@var{radius} is the neighborhood to fit the gradient to. A larger
+radius makes for smoother gradients, but also prevents the filter from
+modifying the pixels near detailed regions. Acceptable values are
+8-32, default value is 16, out-of-range values will be clipped to the
+valid range.
+
+@example
+# default parameters
+gradfun=1.2:16
+
+# omitting radius
+gradfun=1.2
+@end example
+
+@section hflip
+
+Flip the input video horizontally.
+
+For example to horizontally flip the video in input with
+@file{ffmpeg}:
+@example
+ffmpeg -i in.avi -vf "hflip" out.avi
+@end example
+
+@section hqdn3d
+
+High precision/quality 3d denoise filter. This filter aims to reduce
+image noise producing smooth images and making still images really
+still. It should enhance compressibility.
+
+It accepts the following optional parameters:
+@var{luma_spatial}:@var{chroma_spatial}:@var{luma_tmp}:@var{chroma_tmp}
+
+@table @option
+@item luma_spatial
+a non-negative float number which specifies spatial luma strength,
+defaults to 4.0
+
+@item chroma_spatial
+a non-negative float number which specifies spatial chroma strength,
+defaults to 3.0*@var{luma_spatial}/4.0
+
+@item luma_tmp
+a float number which specifies luma temporal strength, defaults to
+6.0*@var{luma_spatial}/4.0
+
+@item chroma_tmp
+a float number which specifies chroma temporal strength, defaults to
+@var{luma_tmp}*@var{chroma_spatial}/@var{luma_spatial}
+@end table
+
+@section lut, lutrgb, lutyuv
+
+Compute a look-up table for binding each pixel component input value
+to an output value, and apply it to input video.
+
+@var{lutyuv} applies a lookup table to a YUV input video, @var{lutrgb}
+to an RGB input video.
+
+These filters accept in input a ":"-separated list of options, which
+specify the expressions used for computing the lookup table for the
+corresponding pixel component values.
+
+The @var{lut} filter requires either YUV or RGB pixel formats in
+input, and accepts the options:
+@table @option
+@var{c0} (first  pixel component)
+@var{c1} (second pixel component)
+@var{c2} (third  pixel component)
+@var{c3} (fourth pixel component, corresponds to the alpha component)
+@end table
+
+The exact component associated to each option depends on the format in
+input.
+
+The @var{lutrgb} filter requires RGB pixel formats in input, and
+accepts the options:
+@table @option
+@var{r} (red component)
+@var{g} (green component)
+@var{b} (blue component)
+@var{a} (alpha component)
+@end table
+
+The @var{lutyuv} filter requires YUV pixel formats in input, and
+accepts the options:
+@table @option
+@var{y} (Y/luminance component)
+@var{u} (U/Cb component)
+@var{v} (V/Cr component)
+@var{a} (alpha component)
+@end table
+
+The expressions can contain the following constants and functions:
+
+@table @option
+@item E, PI, PHI
+the corresponding mathematical approximated values for e
+(euler number), pi (greek PI), PHI (golden ratio)
+
+@item w, h
+the input width and heigth
+
+@item val
+input value for the pixel component
+
+@item clipval
+the input value clipped in the @var{minval}-@var{maxval} range
+
+@item maxval
+maximum value for the pixel component
+
+@item minval
+minimum value for the pixel component
+
+@item negval
+the negated value for the pixel component value clipped in the
+@var{minval}-@var{maxval} range , it corresponds to the expression
+"maxval-clipval+minval"
+
+@item clip(val)
+the computed value in @var{val} clipped in the
+@var{minval}-@var{maxval} range
+
+@item gammaval(gamma)
+the computed gamma correction value of the pixel component value
+clipped in the @var{minval}-@var{maxval} range, corresponds to the
+expression
+"pow((clipval-minval)/(maxval-minval)\,@var{gamma})*(maxval-minval)+minval"
+
+@end table
+
+All expressions default to "val".
+
+Some examples follow:
+@example
+# negate input video
+lutrgb="r=maxval+minval-val:g=maxval+minval-val:b=maxval+minval-val"
+lutyuv="y=maxval+minval-val:u=maxval+minval-val:v=maxval+minval-val"
+
+# the above is the same as
+lutrgb="r=negval:g=negval:b=negval"
+lutyuv="y=negval:u=negval:v=negval"
+
+# negate luminance
+lutyuv=negval
+
+# remove chroma components, turns the video into a graytone image
+lutyuv="u=128:v=128"
+
+# apply a luma burning effect
+lutyuv="y=2*val"
+
+# remove green and blue components
+lutrgb="g=0:b=0"
+
+# set a constant alpha channel value on input
+format=rgba,lutrgb=a="maxval-minval/2"
+
+# correct luminance gamma by a 0.5 factor
+lutyuv=y=gammaval(0.5)
+@end example
+
+@section mp
+
+Apply an MPlayer filter to the input video.
+
+This filter provides a wrapper around most of the filters of
+MPlayer/MEncoder.
+
+This wrapper is considered experimental. Some of the wrapped filters
+may not work properly and we may drop support for them, as they will
+be implemented natively into FFmpeg. Thus you should avoid
+depending on them when writing portable scripts.
+
+The filters accepts the parameters:
+@var{filter_name}[:=]@var{filter_params}
+
+@var{filter_name} is the name of a supported MPlayer filter,
+@var{filter_params} is a string containing the parameters accepted by
+the named filter.
+
+The list of the currently supported filters follows:
+@table @var
+@item 2xsai
+@item blackframe
+@item boxblur
+@item cropdetect
+@item decimate
+@item delogo
+@item denoise3d
+@item detc
+@item dint
+@item divtc
+@item down3dright
+@item dsize
+@item eq2
+@item eq
+@item field
+@item fil
+@item fixpts
+@item framestep
+@item fspp
+@item geq
+@item gradfun
+@item harddup
+@item hqdn3d
+@item hue
+@item il
+@item ilpack
+@item ivtc
+@item kerndeint
+@item mcdeint
+@item mirror
+@item noise
+@item ow
+@item palette
+@item perspective
+@item phase
+@item pp7
+@item pullup
+@item qp
+@item rectangle
+@item remove-logo
+@item rgbtest
+@item rotate
+@item sab
+@item screenshot
+@item smartblur
+@item softpulldown
+@item softskip
+@item spp
+@item swapuv
+@item telecine
+@item test
+@item tile
+@item tinterlace
+@item unsharp
+@item uspp
+@item yuvcsp
+@item yvu9
+@end table
+
+The parameter syntax and behavior for the listed filters are the same
+of the corresponding MPlayer filters. For detailed instructions check
+the "VIDEO FILTERS" section in the MPlayer manual.
+
+Some examples follow:
+@example
+# remove a logo by interpolating the surrounding pixels
+mp=delogo=200:200:80:20:1
+
+# adjust gamma, brightness, contrast
+mp=eq2=1.0:2:0.5
+
+# tweak hue and saturation
+mp=hue=100:-10
+@end example
+
+See also mplayer(1), @url{http://www.mplayerhq.hu/}.
+
+@section negate
+
+Negate input video.
+
+This filter accepts an integer in input, if non-zero it negates the
+alpha component (if available). The default value in input is 0.
+
+@section noformat
+
+Force libavfilter not to use any of the specified pixel formats for the
+input to the next filter.
+
+The filter accepts a list of pixel format names, separated by ":",
+for example "yuv420p:monow:rgb24".
+
+Some examples follow:
+@example
+# force libavfilter to use a format different from "yuv420p" for the
+# input to the vflip filter
+noformat=yuv420p,vflip
+
+# convert the input video to any of the formats not contained in the list
+noformat=yuv420p:yuv444p:yuv410p
+@end example
+
+@section null
+
+Pass the video source unchanged to the output.
+
+@section ocv
+
+Apply video transform using libopencv.
+
+To enable this filter install libopencv library and headers and
+configure FFmpeg with --enable-libopencv.
+
+The filter takes the parameters: @var{filter_name}@{:=@}@var{filter_params}.
+
+@var{filter_name} is the name of the libopencv filter to apply.
+
+@var{filter_params} specifies the parameters to pass to the libopencv
+filter. If not specified the default values are assumed.
+
+Refer to the official libopencv documentation for more precise
+informations:
+@url{http://opencv.willowgarage.com/documentation/c/image_filtering.html}
+
+Follows the list of supported libopencv filters.
+
+@anchor{dilate}
+@subsection dilate
+
+Dilate an image by using a specific structuring element.
+This filter corresponds to the libopencv function @code{cvDilate}.
+
+It accepts the parameters: @var{struct_el}:@var{nb_iterations}.
+
+@var{struct_el} represents a structuring element, and has the syntax:
+@var{cols}x@var{rows}+@var{anchor_x}x@var{anchor_y}/@var{shape}
+
+@var{cols} and @var{rows} represent the number of colums and rows of
+the structuring element, @var{anchor_x} and @var{anchor_y} the anchor
+point, and @var{shape} the shape for the structuring element, and
+can be one of the values "rect", "cross", "ellipse", "custom".
+
+If the value for @var{shape} is "custom", it must be followed by a
+string of the form "=@var{filename}". The file with name
+@var{filename} is assumed to represent a binary image, with each
+printable character corresponding to a bright pixel. When a custom
+@var{shape} is used, @var{cols} and @var{rows} are ignored, the number
+or columns and rows of the read file are assumed instead.
+
+The default value for @var{struct_el} is "3x3+0x0/rect".
+
+@var{nb_iterations} specifies the number of times the transform is
+applied to the image, and defaults to 1.
+
+Follow some example:
+@example
+# use the default values
+ocv=dilate
+
+# dilate using a structuring element with a 5x5 cross, iterate two times
+ocv=dilate=5x5+2x2/cross:2
+
+# read the shape from the file diamond.shape, iterate two times
+# the file diamond.shape may contain a pattern of characters like this:
+#   *
+#  ***
+# *****
+#  ***
+#   *
+# the specified cols and rows are ignored (but not the anchor point coordinates)
+ocv=0x0+2x2/custom=diamond.shape:2
+@end example
+
+@subsection erode
+
+Erode an image by using a specific structuring element.
+This filter corresponds to the libopencv function @code{cvErode}.
+
+The filter accepts the parameters: @var{struct_el}:@var{nb_iterations},
+with the same meaning and use of those of the dilate filter
+(@pxref{dilate}).
+
+@subsection smooth
+
+Smooth the input video.
+
+The filter takes the following parameters:
+@var{type}:@var{param1}:@var{param2}:@var{param3}:@var{param4}.
+
+@var{type} is the type of smooth filter to apply, and can be one of
+the following values: "blur", "blur_no_scale", "median", "gaussian",
+"bilateral". The default value is "gaussian".
+
+@var{param1}, @var{param2}, @var{param3}, and @var{param4} are
+parameters whose meanings depend on smooth type. @var{param1} and
+@var{param2} accept integer positive values or 0, @var{param3} and
+@var{param4} accept float values.
+
+The default value for @var{param1} is 3, the default value for the
+other parameters is 0.
+
+These parameters correspond to the parameters assigned to the
+libopencv function @code{cvSmooth}.
+
+@section overlay
+
+Overlay one video on top of another.
+
+It takes two inputs and one output, the first input is the "main"
+video on which the second input is overlayed.
+
+It accepts the parameters: @var{x}:@var{y}.
+
+@var{x} is the x coordinate of the overlayed video on the main video,
+@var{y} is the y coordinate. The parameters are expressions containing
+the following parameters:
+
+@table @option
+@item main_w, main_h
+main input width and height
+
+@item W, H
+same as @var{main_w} and @var{main_h}
+
+@item overlay_w, overlay_h
+overlay input width and height
+
+@item w, h
+same as @var{overlay_w} and @var{overlay_h}
+@end table
+
+Be aware that frames are taken from each input video in timestamp
+order, hence, if their initial timestamps differ, it is a a good idea
+to pass the two inputs through a @var{setpts=PTS-STARTPTS} filter to
+have them begin in the same zero timestamp, as it does the example for
+the @var{movie} filter.
+
+Follow some examples:
+@example
+# draw the overlay at 10 pixels from the bottom right
+# corner of the main video.
+overlay=main_w-overlay_w-10:main_h-overlay_h-10
+
+# insert a transparent PNG logo in the bottom left corner of the input
+movie=logo.png [logo];
+[in][logo] overlay=10:main_h-overlay_h-10 [out]
+
+# insert 2 different transparent PNG logos (second logo on bottom
+# right corner):
+movie=logo1.png [logo1];
+movie=logo2.png [logo2];
+[in][logo1]       overlay=10:H-h-10 [in+logo1];
+[in+logo1][logo2] overlay=W-w-10:H-h-10 [out]
+
+# add a transparent color layer on top of the main video,
+# WxH specifies the size of the main input to the overlay filter
+color=red@.3:WxH [over]; [in][over] overlay [out]
+@end example
+
+You can chain togheter more overlays but the efficiency of such
+approach is yet to be tested.
+
+@section pad
+
+Add paddings to the input image, and places the original input at the
+given coordinates @var{x}, @var{y}.
+
+It accepts the following parameters:
+@var{width}:@var{height}:@var{x}:@var{y}:@var{color}.
+
+The parameters @var{width}, @var{height}, @var{x}, and @var{y} are
+expressions containing the following constants:
+
+@table @option
+@item E, PI, PHI
+the corresponding mathematical approximated values for e
+(euler number), pi (greek PI), phi (golden ratio)
+
+@item in_w, in_h
+the input video width and heigth
+
+@item iw, ih
+same as @var{in_w} and @var{in_h}
+
+@item out_w, out_h
+the output width and heigth, that is the size of the padded area as
+specified by the @var{width} and @var{height} expressions
+
+@item ow, oh
+same as @var{out_w} and @var{out_h}
+
+@item x, y
+x and y offsets as specified by the @var{x} and @var{y}
+expressions, or NAN if not yet specified
+
+@item a
+input display aspect ratio, same as @var{iw} / @var{ih}
+
+@item hsub, vsub
+horizontal and vertical chroma subsample values. For example for the
+pixel format "yuv422p" @var{hsub} is 2 and @var{vsub} is 1.
+@end table
+
+Follows the description of the accepted parameters.
+
+@table @option
+@item width, height
+
+Specify the size of the output image with the paddings added. If the
+value for @var{width} or @var{height} is 0, the corresponding input size
+is used for the output.
+
+The @var{width} expression can reference the value set by the
+@var{height} expression, and viceversa.
+
+The default value of @var{width} and @var{height} is 0.
+
+@item x, y
+
+Specify the offsets where to place the input image in the padded area
+with respect to the top/left border of the output image.
+
+The @var{x} expression can reference the value set by the @var{y}
+expression, and viceversa.
+
+The default value of @var{x} and @var{y} is 0.
+
+@item color
+
+Specify the color of the padded area, it can be the name of a color
+(case insensitive match) or a 0xRRGGBB[AA] sequence.
+
+The default value of @var{color} is "black".
+
+@end table
+
+Some examples follow:
+
+@example
+# Add paddings with color "violet" to the input video. Output video
+# size is 640x480, the top-left corner of the input video is placed at
+# column 0, row 40.
+pad=640:480:0:40:violet
+
+# pad the input to get an output with dimensions increased bt 3/2,
+# and put the input video at the center of the padded area
+pad="3/2*iw:3/2*ih:(ow-iw)/2:(oh-ih)/2"
+
+# pad the input to get a squared output with size equal to the maximum
+# value between the input width and height, and put the input video at
+# the center of the padded area
+pad="max(iw\,ih):ow:(ow-iw)/2:(oh-ih)/2"
+
+# pad the input to get a final w/h ratio of 16:9
+pad="ih*16/9:ih:(ow-iw)/2:(oh-ih)/2"
+
+# double output size and put the input video in the bottom-right
+# corner of the output padded area
+pad="2*iw:2*ih:ow-iw:oh-ih"
+@end example
+
+@section pixdesctest
+
+Pixel format descriptor test filter, mainly useful for internal
+testing. The output video should be equal to the input video.
+
+For example:
+@example
+format=monow, pixdesctest
+@end example
+
+can be used to test the monowhite pixel format descriptor definition.
+
+@section scale
+
+Scale the input video to @var{width}:@var{height} and/or convert the image format.
+
+The parameters @var{width} and @var{height} are expressions containing
+the following constants:
+
+@table @option
+@item E, PI, PHI
+the corresponding mathematical approximated values for e
+(euler number), pi (greek PI), phi (golden ratio)
+
+@item in_w, in_h
+the input width and heigth
+
+@item iw, ih
+same as @var{in_w} and @var{in_h}
+
+@item out_w, out_h
+the output (cropped) width and heigth
+
+@item ow, oh
+same as @var{out_w} and @var{out_h}
+
+@item a
+input display aspect ratio, same as @var{iw} / @var{ih}
+
+@item hsub, vsub
+horizontal and vertical chroma subsample values. For example for the
+pixel format "yuv422p" @var{hsub} is 2 and @var{vsub} is 1.
+@end table
+
+If the input image format is different from the format requested by
+the next filter, the scale filter will convert the input to the
+requested format.
+
+If the value for @var{width} or @var{height} is 0, the respective input
+size is used for the output.
+
+If the value for @var{width} or @var{height} is -1, the scale filter will
+use, for the respective output size, a value that maintains the aspect
+ratio of the input image.
+
+The default value of @var{width} and @var{height} is 0.
+
+Some examples follow:
+@example
+# scale the input video to a size of 200x100.
+scale=200:100
+
+# scale the input to 2x
+scale=2*iw:2*ih
+# the above is the same as
+scale=2*in_w:2*in_h
+
+# scale the input to half size
+scale=iw/2:ih/2
+
+# increase the width, and set the height to the same size
+scale=3/2*iw:ow
+
+# seek for Greek harmony
+scale=iw:1/PHI*iw
+scale=ih*PHI:ih
+
+# increase the height, and set the width to 3/2 of the height
+scale=3/2*oh:3/5*ih
+
+# increase the size, but make the size a multiple of the chroma
+scale="trunc(3/2*iw/hsub)*hsub:trunc(3/2*ih/vsub)*vsub"
+
+# increase the width to a maximum of 500 pixels, keep the same input aspect ratio
+scale='min(500\, iw*3/2):-1'
+@end example
+
+@section select
+Select frames to pass in output.
+
+It accepts in input an expression, which is evaluated for each input
+frame. If the expression is evaluated to a non-zero value, the frame
+is selected and passed to the output, otherwise it is discarded.
+
+The expression can contain the following constants:
+
+@table @option
+@item PI
+Greek PI
+
+@item PHI
+golden ratio
+
+@item E
+Euler number
+
+@item n
+the sequential number of the filtered frame, starting from 0
+
+@item selected_n
+the sequential number of the selected frame, starting from 0
+
+@item prev_selected_n
+the sequential number of the last selected frame, NAN if undefined
+
+@item TB
+timebase of the input timestamps
+
+@item pts
+the PTS (Presentation TimeStamp) of the filtered video frame,
+expressed in @var{TB} units, NAN if undefined
+
+@item t
+the PTS (Presentation TimeStamp) of the filtered video frame,
+expressed in seconds, NAN if undefined
+
+@item prev_pts
+the PTS of the previously filtered video frame, NAN if undefined
+
+@item prev_selected_pts
+the PTS of the last previously filtered video frame, NAN if undefined
+
+@item prev_selected_t
+the PTS of the last previously selected video frame, NAN if undefined
+
+@item start_pts
+the PTS of the first video frame in the video, NAN if undefined
+
+@item start_t
+the time of the first video frame in the video, NAN if undefined
+
+@item pict_type
+the picture type of the filtered frame, can assume one of the following
+values:
+@table @option
+@item PICT_TYPE_I
+@item PICT_TYPE_P
+@item PICT_TYPE_B
+@item PICT_TYPE_S
+@item PICT_TYPE_SI
+@item PICT_TYPE_SP
+@item PICT_TYPE_BI
+@end table
+
+@item interlace_type
+the frame interlace type, can assume one of the following values:
+@table @option
+@item INTERLACE_TYPE_P
+the frame is progressive (not interlaced)
+@item INTERLACE_TYPE_T
+the frame is top-field-first
+@item INTERLACE_TYPE_B
+the frame is bottom-field-first
+@end table
+
+@item key
+1 if the filtered frame is a key-frame, 0 otherwise
+
+@item pos
+the position in the file of the filtered frame, -1 if the information
+is not available (e.g. for synthetic video)
+@end table
+
+The default value of the select expression is "1".
+
+Some examples follow:
+
+@example
+# select all frames in input
+select
+
+# the above is the same as:
+select=1
+
+# skip all frames:
+select=0
+
+# select only I-frames
+select='eq(pict_type\,PICT_TYPE_I)'
+
+# select one frame every 100
+select='not(mod(n\,100))'
+
+# select only frames contained in the 10-20 time interval
+select='gte(t\,10)*lte(t\,20)'
+
+# select only I frames contained in the 10-20 time interval
+select='gte(t\,10)*lte(t\,20)*eq(pict_type\,PICT_TYPE_I)'
+
+# select frames with a minimum distance of 10 seconds
+select='isnan(prev_selected_t)+gte(t-prev_selected_t\,10)'
+@end example
+
+@anchor{setdar}
+@section setdar
+
+Set the Display Aspect Ratio for the filter output video.
+
+This is done by changing the specified Sample (aka Pixel) Aspect
+Ratio, according to the following equation:
+@math{DAR = HORIZONTAL_RESOLUTION / VERTICAL_RESOLUTION * SAR}
+
+Keep in mind that this filter does not modify the pixel dimensions of
+the video frame. Also the display aspect ratio set by this filter may
+be changed by later filters in the filterchain, e.g. in case of
+scaling or if another "setdar" or a "setsar" filter is applied.
+
+The filter accepts a parameter string which represents the wanted
+display aspect ratio.
+The parameter can be a floating point number string, or an expression
+of the form @var{num}:@var{den}, where @var{num} and @var{den} are the
+numerator and denominator of the aspect ratio.
+If the parameter is not specified, it is assumed the value "0:1".
+
+For example to change the display aspect ratio to 16:9, specify:
+@example
+setdar=16:9
+# the above is equivalent to
+setdar=1.77777
+@end example
+
+See also the "setsar" filter documentation (@pxref{setsar}).
+
+@section setpts
+
+Change the PTS (presentation timestamp) of the input video frames.
+
+Accept in input an expression evaluated through the eval API, which
+can contain the following constants:
+
+@table @option
+@item PTS
+the presentation timestamp in input
+
+@item PI
+Greek PI
+
+@item PHI
+golden ratio
+
+@item E
+Euler number
+
+@item N
+the count of the input frame, starting from 0.
+
+@item STARTPTS
+the PTS of the first video frame
+
+@item INTERLACED
+tell if the current frame is interlaced
+
+@item POS
+original position in the file of the frame, or undefined if undefined
+for the current frame
+
+@item PREV_INPTS
+previous input PTS
+
+@item PREV_OUTPTS
+previous output PTS
+
+@end table
+
+Some examples follow:
+
+@example
+# start counting PTS from zero
+setpts=PTS-STARTPTS
+
+# fast motion
+setpts=0.5*PTS
+
+# slow motion
+setpts=2.0*PTS
+
+# fixed rate 25 fps
+setpts=N/(25*TB)
+
+# fixed rate 25 fps with some jitter
+setpts='1/(25*TB) * (N + 0.05 * sin(N*2*PI/25))'
+@end example
+
+@anchor{setsar}
+@section setsar
+
+Set the Sample (aka Pixel) Aspect Ratio for the filter output video.
+
+Note that as a consequence of the application of this filter, the
+output display aspect ratio will change according to the following
+equation:
+@math{DAR = HORIZONTAL_RESOLUTION / VERTICAL_RESOLUTION * SAR}
+
+Keep in mind that the sample aspect ratio set by this filter may be
+changed by later filters in the filterchain, e.g. if another "setsar"
+or a "setdar" filter is applied.
+
+The filter accepts a parameter string which represents the wanted
+sample aspect ratio.
+The parameter can be a floating point number string, or an expression
+of the form @var{num}:@var{den}, where @var{num} and @var{den} are the
+numerator and denominator of the aspect ratio.
+If the parameter is not specified, it is assumed the value "0:1".
+
+For example to change the sample aspect ratio to 10:11, specify:
+@example
+setsar=10:11
+@end example
+
+@section settb
+
+Set the timebase to use for the output frames timestamps.
+It is mainly useful for testing timebase configuration.
+
+It accepts in input an arithmetic expression representing a rational.
+The expression can contain the constants "PI", "E", "PHI", "AVTB" (the
+default timebase), and "intb" (the input timebase).
+
+The default value for the input is "intb".
+
+Follow some examples.
+
+@example
+# set the timebase to 1/25
+settb=1/25
+
+# set the timebase to 1/10
+settb=0.1
+
+#set the timebase to 1001/1000
+settb=1+0.001
+
+#set the timebase to 2*intb
+settb=2*intb
+
+#set the default timebase value
+settb=AVTB
+@end example
+
+@section showinfo
+
+Show a line containing various information for each input video frame.
+The input video is not modified.
+
+The shown line contains a sequence of key/value pairs of the form
+@var{key}:@var{value}.
+
+A description of each shown parameter follows:
+
+@table @option
+@item n
+sequential number of the input frame, starting from 0
+
+@item pts
+Presentation TimeStamp of the input frame, expressed as a number of
+time base units. The time base unit depends on the filter input pad.
+
+@item pts_time
+Presentation TimeStamp of the input frame, expressed as a number of
+seconds
+
+@item pos
+position of the frame in the input stream, -1 if this information in
+unavailable and/or meanigless (for example in case of synthetic video)
+
+@item fmt
+pixel format name
+
+@item sar
+sample aspect ratio of the input frame, expressed in the form
+@var{num}/@var{den}
+
+@item s
+size of the input frame, expressed in the form
+@var{width}x@var{height}
+
+@item i
+interlaced mode ("P" for "progressive", "T" for top field first, "B"
+for bottom field first)
+
+@item iskey
+1 if the frame is a key frame, 0 otherwise
+
+@item type
+picture type of the input frame ("I" for an I-frame, "P" for a
+P-frame, "B" for a B-frame, "?" for unknown type).
+Check also the documentation of the @code{AVPictureType} enum and of
+the @code{av_get_picture_type_char} function defined in
+@file{libavutil/avutil.h}.
+
+@item checksum
+Adler-32 checksum of all the planes of the input frame
+
+@item plane_checksum
+Adler-32 checksum of each plane of the input frame, expressed in the form
+"[@var{c0} @var{c1} @var{c2} @var{c3}]"
+@end table
+
+@section slicify
+
+Pass the images of input video on to next video filter as multiple
+slices.
+
+@example
+./ffmpeg -i in.avi -vf "slicify=32" out.avi
+@end example
+
+The filter accepts the slice height as parameter. If the parameter is
+not specified it will use the default value of 16.
+
+Adding this in the beginning of filter chains should make filtering
+faster due to better use of the memory cache.
+
+@section split
+
+Pass on the input video to two outputs. Both outputs are identical to
+the input video.
+
+For example:
+@example
+[in] split [splitout1][splitout2];
+[splitout1] crop=100:100:0:0    [cropout];
+[splitout2] pad=200:200:100:100 [padout];
+@end example
+
+will create two separate outputs from the same input, one cropped and
+one padded.
+
+@section transpose
+
+Transpose rows with columns in the input video and optionally flip it.
+
+It accepts a parameter representing an integer, which can assume the
+values:
+
+@table @samp
+@item 0
+Rotate by 90 degrees counterclockwise and vertically flip (default), that is:
+@example
+L.R     L.l
+. . ->  . .
+l.r     R.r
+@end example
+
+@item 1
+Rotate by 90 degrees clockwise, that is:
+@example
+L.R     l.L
+. . ->  . .
+l.r     r.R
+@end example
+
+@item 2
+Rotate by 90 degrees counterclockwise, that is:
+@example
+L.R     R.r
+. . ->  . .
+l.r     L.l
+@end example
+
+@item 3
+Rotate by 90 degrees clockwise and vertically flip, that is:
+@example
+L.R     r.R
+. . ->  . .
+l.r     l.L
+@end example
+@end table
+
+@section unsharp
+
+Sharpen or blur the input video.
+
+It accepts the following parameters:
+@var{luma_msize_x}:@var{luma_msize_y}:@var{luma_amount}:@var{chroma_msize_x}:@var{chroma_msize_y}:@var{chroma_amount}
+
+Negative values for the amount will blur the input video, while positive
+values will sharpen. All parameters are optional and default to the
+equivalent of the string '5:5:1.0:5:5:0.0'.
+
+@table @option
+
+@item luma_msize_x
+Set the luma matrix horizontal size. It can be an integer between 3
+and 13, default value is 5.
+
+@item luma_msize_y
+Set the luma matrix vertical size. It can be an integer between 3
+and 13, default value is 5.
+
+@item luma_amount
+Set the luma effect strength. It can be a float number between -2.0
+and 5.0, default value is 1.0.
+
+@item chroma_msize_x
+Set the chroma matrix horizontal size. It can be an integer between 3
+and 13, default value is 5.
+
+@item chroma_msize_y
+Set the chroma matrix vertical size. It can be an integer between 3
+and 13, default value is 5.
+
+@item luma_amount
+Set the chroma effect strength. It can be a float number between -2.0
+and 5.0, default value is 0.0.
+
+@end table
+
+@example
+# Strong luma sharpen effect parameters
+unsharp=7:7:2.5
+
+# Strong blur of both luma and chroma parameters
+unsharp=7:7:-2:7:7:-2
+
+# Use the default values with @command{ffmpeg}
+./ffmpeg -i in.avi -vf "unsharp" out.mp4
+@end example
+
+@section vflip
+
+Flip the input video vertically.
+
+@example
+./ffmpeg -i in.avi -vf "vflip" out.avi
+@end example
+
+@section yadif
+
+Deinterlace the input video ("yadif" means "yet another deinterlacing
+filter").
+
+It accepts the optional parameters: @var{mode}:@var{parity}.
+
+@var{mode} specifies the interlacing mode to adopt, accepts one of the
+following values:
+
+@table @option
+@item 0
+output 1 frame for each frame
+@item 1
+output 1 frame for each field
+@item 2
+like 0 but skips spatial interlacing check
+@item 3
+like 1 but skips spatial interlacing check
+@end table
+
+Default value is 0.
+
+@var{parity} specifies the picture field parity assumed for the input
+interlaced video, accepts one of the following values:
+
+@table @option
+@item 0
+assume top field first
+@item 1
+assume bottom field first
+@item -1
+enable automatic detection
+@end table
+
+Default value is -1.
+If interlacing is unknown or decoder does not export this information,
+top field first will be assumed.
+
+@c man end VIDEO FILTERS
+
+@chapter Video Sources
+@c man begin VIDEO SOURCES
+
+Below is a description of the currently available video sources.
+
+@section buffer
+
+Buffer video frames, and make them available to the filter chain.
+
+This source is mainly intended for a programmatic use, in particular
+through the interface defined in @file{libavfilter/vsrc_buffer.h}.
+
+It accepts the following parameters:
+@var{width}:@var{height}:@var{pix_fmt_string}:@var{timebase_num}:@var{timebase_den}:@var{sample_aspect_ratio_num}:@var{sample_aspect_ratio.den}:@var{scale_params}
+
+All the parameters but @var{scale_params} need to be explicitely
+defined.
+
+Follows the list of the accepted parameters.
+
+@table @option
+
+@item width, height
+Specify the width and height of the buffered video frames.
+
+@item pix_fmt_string
+A string representing the pixel format of the buffered video frames.
+It may be a number corresponding to a pixel format, or a pixel format
+name.
+
+@item timebase_num, timebase_den
+Specify numerator and denomitor of the timebase assumed by the
+timestamps of the buffered frames.
+
+@item sample_aspect_ratio.num, sample_aspect_ratio.den
+Specify numerator and denominator of the sample aspect ratio assumed
+by the video frames.
+
+@item scale_params
+Specify the optional parameters to be used for the scale filter which
+is automatically inserted when an input change is detected in the
+input size or format.
+@end table
+
+For example:
+@example
+buffer=320:240:yuv410p:1:24:1:1
+@end example
+
+will instruct the source to accept video frames with size 320x240 and
+with format "yuv410p", assuming 1/24 as the timestamps timebase and
+square pixels (1:1 sample aspect ratio).
+Since the pixel format with name "yuv410p" corresponds to the number 6
+(check the enum PixelFormat definition in @file{libavutil/pixfmt.h}),
+this example corresponds to:
+@example
+buffer=320:240:6:1:24:1:1
+@end example
+
+@section color
+
+Provide an uniformly colored input.
+
+It accepts the following parameters:
+@var{color}:@var{frame_size}:@var{frame_rate}
+
+Follows the description of the accepted parameters.
+
+@table @option
+
+@item color
+Specify the color of the source. It can be the name of a color (case
+insensitive match) or a 0xRRGGBB[AA] sequence, possibly followed by an
+alpha specifier. The default value is "black".
+
+@item frame_size
+Specify the size of the sourced video, it may be a string of the form
+@var{width}x@var{heigth}, or the name of a size abbreviation. The
+default value is "320x240".
+
+@item frame_rate
+Specify the frame rate of the sourced video, as the number of frames
+generated per second. It has to be a string in the format
+@var{frame_rate_num}/@var{frame_rate_den}, an integer number, a float
+number or a valid video frame rate abbreviation. The default value is
+"25".
+
+@end table
+
+For example the following graph description will generate a red source
+with an opacity of 0.2, with size "qcif" and a frame rate of 10
+frames per second, which will be overlayed over the source connected
+to the pad with identifier "in".
+
+@example
+"color=red@@0.2:qcif:10 [color]; [in][color] overlay [out]"
+@end example
+
+@section movie
+
+Read a video stream from a movie container.
+
+It accepts the syntax: @var{movie_name}[:@var{options}] where
+@var{movie_name} is the name of the resource to read (not necessarily
+a file but also a device or a stream accessed through some protocol),
+and @var{options} is an optional sequence of @var{key}=@var{value}
+pairs, separated by ":".
+
+The description of the accepted options follows.
+
+@table @option
+
+@item format_name, f
+Specifies the format assumed for the movie to read, and can be either
+the name of a container or an input device. If not specified the
+format is guessed from @var{movie_name} or by probing.
+
+@item seek_point, sp
+Specifies the seek point in seconds, the frames will be output
+starting from this seek point, the parameter is evaluated with
+@code{av_strtod} so the numerical value may be suffixed by an IS
+postfix. Default value is "0".
+
+@item stream_index, si
+Specifies the index of the video stream to read. If the value is -1,
+the best suited video stream will be automatically selected. Default
+value is "-1".
+
+@end table
+
+This filter allows to overlay a second video on top of main input of
+a filtergraph as shown in this graph:
+@example
+input -----------> deltapts0 --> overlay --> output
+                                    ^
+                                    |
+movie --> scale--> deltapts1 -------+
+@end example
+
+Some examples follow:
+@example
+# skip 3.2 seconds from the start of the avi file in.avi, and overlay it
+# on top of the input labelled as "in".
+movie=in.avi:seek_point=3.2, scale=180:-1, setpts=PTS-STARTPTS [movie];
+[in] setpts=PTS-STARTPTS, [movie] overlay=16:16 [out]
+
+# read from a video4linux2 device, and overlay it on top of the input
+# labelled as "in"
+movie=/dev/video0:f=video4linux2, scale=180:-1, setpts=PTS-STARTPTS [movie];
+[in] setpts=PTS-STARTPTS, [movie] overlay=16:16 [out]
+
+@end example
+
+@section nullsrc
+
+Null video source, never return images. It is mainly useful as a
+template and to be employed in analysis / debugging tools.
+
+It accepts as optional parameter a string of the form
+@var{width}:@var{height}:@var{timebase}.
+
+@var{width} and @var{height} specify the size of the configured
+source. The default values of @var{width} and @var{height} are
+respectively 352 and 288 (corresponding to the CIF size format).
+
+@var{timebase} specifies an arithmetic expression representing a
+timebase. The expression can contain the constants "PI", "E", "PHI",
+"AVTB" (the default timebase), and defaults to the value "AVTB".
+
+@section frei0r_src
+
+Provide a frei0r source.
+
+To enable compilation of this filter you need to install the frei0r
+header and configure FFmpeg with --enable-frei0r.
+
+The source supports the syntax:
+@example
+@var{size}:@var{rate}:@var{src_name}[@{=|:@}@var{param1}:@var{param2}:...:@var{paramN}]
+@end example
+
+@var{size} is the size of the video to generate, may be a string of the
+form @var{width}x@var{height} or a frame size abbreviation.
+@var{rate} is the rate of the video to generate, may be a string of
+the form @var{num}/@var{den} or a frame rate abbreviation.
+@var{src_name} is the name to the frei0r source to load. For more
+information regarding frei0r and how to set the parameters read the
+section "frei0r" (@pxref{frei0r}) in the description of the video
+filters.
+
+Some examples follow:
+@example
+# generate a frei0r partik0l source with size 200x200 and framerate 10
+# which is overlayed on the overlay filter main input
+frei0r_src=200x200:10:partik0l=1234 [overlay]; [in][overlay] overlay
+@end example
+
+@c man end VIDEO SOURCES
+
+@chapter Video Sinks
+@c man begin VIDEO SINKS
+
+Below is a description of the currently available video sinks.
+
+@section buffersink
+
+Buffer video frames, and make them available to the end of the filter
+graph.
+
+This sink is mainly intended for a programmatic use, in particular
+through the interface defined in @file{libavfilter/vsink_buffer.h}.
+
+It does not require a string parameter in input, but you need to
+specify a pointer to a list of supported pixel formats terminated by
+-1 in the opaque parameter provided to @code{avfilter_init_filter}
+when initializing this sink.
+
+@section nullsink
+
+Null video sink, do absolutely nothing with the input video. It is
+mainly useful as a template and to be employed in analysis / debugging
+tools.
+
+@c man end VIDEO SINKS
+

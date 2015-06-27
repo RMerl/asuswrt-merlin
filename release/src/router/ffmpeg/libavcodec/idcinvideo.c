@@ -77,7 +77,7 @@ typedef struct IdcinContext {
 /*
  * Find the lowest probability node in a Huffman table, and mark it as
  * being assigned to a higher probability.
- * Returns the node index of the lowest unused node, or -1 if all nodes
+ * @return the node index of the lowest unused node, or -1 if all nodes
  * are used.
  */
 static int huff_smallest_node(hnode *hnodes, int num_hnodes) {
@@ -165,6 +165,7 @@ static av_cold int idcin_decode_init(AVCodecContext *avctx)
         huff_build_tree(s, i);
     }
 
+    avcodec_get_frame_defaults(&s->frame);
     s->frame.data[0] = NULL;
 
     return 0;
@@ -253,7 +254,7 @@ static av_cold int idcin_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec idcin_decoder = {
+AVCodec ff_idcin_decoder = {
     "idcinvideo",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_IDCIN,

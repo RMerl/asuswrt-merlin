@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2007 Bobby Bingham
+ * Copyright (c) 2007 Bobby Bingham
  *
  * This file is part of FFmpeg.
  *
@@ -88,13 +88,13 @@ static AVFilterFormats *make_format_list(FormatContext *format, int flag)
 #if CONFIG_FORMAT_FILTER
 static int query_formats_format(AVFilterContext *ctx)
 {
-    avfilter_set_common_formats(ctx, make_format_list(ctx->priv, 1));
+    avfilter_set_common_pixel_formats(ctx, make_format_list(ctx->priv, 1));
     return 0;
 }
 
 AVFilter avfilter_vf_format = {
     .name      = "format",
-    .description = "Convert the input video to one of the specified pixel formats.",
+    .description = NULL_IF_CONFIG_SMALL("Convert the input video to one of the specified pixel formats."),
 
     .init      = init,
 
@@ -118,13 +118,13 @@ AVFilter avfilter_vf_format = {
 #if CONFIG_NOFORMAT_FILTER
 static int query_formats_noformat(AVFilterContext *ctx)
 {
-    avfilter_set_common_formats(ctx, make_format_list(ctx->priv, 0));
+    avfilter_set_common_pixel_formats(ctx, make_format_list(ctx->priv, 0));
     return 0;
 }
 
 AVFilter avfilter_vf_noformat = {
     .name      = "noformat",
-    .description = "Force libavfilter not to use any of the specified pixel formats for the input to the next filter.",
+    .description = NULL_IF_CONFIG_SMALL("Force libavfilter not to use any of the specified pixel formats for the input to the next filter."),
 
     .init      = init,
 

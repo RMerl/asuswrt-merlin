@@ -34,8 +34,7 @@
 #include "get_bits.h"
 #include "dsputil.h"
 #include "mpegaudio.h"
-
-#include "mpcdata.h"
+#include "mpegaudiodsp.h"
 
 #define BANDS            32
 #define SAMPLES_PER_BAND 36
@@ -52,6 +51,7 @@ typedef struct {
 
 typedef struct {
     DSPContext dsp;
+    MPADSPContext mpadsp;
     GetBitContext gb;
     int IS, MSS, gapless;
     int lastframelen;
@@ -72,6 +72,6 @@ typedef struct {
 } MPCContext;
 
 void ff_mpc_init(void);
-void ff_mpc_dequantize_and_synth(MPCContext *c, int maxband, void *dst);
+void ff_mpc_dequantize_and_synth(MPCContext *c, int maxband, void *dst, int channels);
 
 #endif /* AVCODEC_MPC_H */

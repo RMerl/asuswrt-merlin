@@ -27,8 +27,8 @@
 #include "libavutil/log.h"
 #include "libavutil/fifo.h"
 #include "libavcodec/avcodec.h"
-#include "libavformat/avformat.h"
 #include "libavformat/timefilter.h"
+#include "avdevice.h"
 
 /**
  * Size of the internal FIFO buffers as a number of audio packets
@@ -314,7 +314,7 @@ static int audio_read_close(AVFormatContext *context)
     return 0;
 }
 
-AVInputFormat jack_demuxer = {
+AVInputFormat ff_jack_demuxer = {
     "jack",
     NULL_IF_CONFIG_SMALL("JACK Audio Connection Kit"),
     sizeof(JackData),

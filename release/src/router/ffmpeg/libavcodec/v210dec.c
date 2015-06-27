@@ -30,7 +30,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
         av_log(avctx, AV_LOG_ERROR, "v210 needs even width\n");
         return -1;
     }
-    avctx->pix_fmt             = PIX_FMT_YUV422P16;
+    avctx->pix_fmt             = PIX_FMT_YUV422P10;
     avctx->bits_per_raw_sample = 10;
 
     avctx->coded_frame         = avcodec_alloc_frame();
@@ -63,15 +63,15 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     y = (uint16_t*)pic->data[0];
     u = (uint16_t*)pic->data[1];
     v = (uint16_t*)pic->data[2];
-    pic->pict_type = FF_I_TYPE;
+    pic->pict_type = AV_PICTURE_TYPE_I;
     pic->key_frame = 1;
 
 #define READ_PIXELS(a, b, c)         \
     do {                             \
-        val  = le2me_32(*src++);     \
-        *a++ =  val <<  6;           \
-        *b++ = (val >>  4) & 0xFFC0; \
-        *c++ = (val >> 14) & 0xFFC0; \
+        val  = av_le2ne32(*src++);   \
+        *a++ =  val & 0x3FF;         \
+        *b++ = (val >> 10) & 0x3FF;  \
+        *c++ = (val >> 20) & 0x3FF;  \
     } while (0)
 
     for (h = 0; h < avctx->height; h++) {
@@ -86,16 +86,16 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
         if (w < avctx->width - 1) {
             READ_PIXELS(u, y, v);
 
-            val  = le2me_32(*src++);
-            *y++ =  val <<  6;
+            val  = av_le2ne32(*src++);
+            *y++ =  val & 0x3FF;
         }
         if (w < avctx->width - 3) {
-            *u++ = (val >>  4) & 0xFFC0;
-            *y++ = (val >> 14) & 0xFFC0;
+            *u++ = (val >> 10) & 0x3FF;
+            *y++ = (val >> 20) & 0x3FF;
 
-            val  = le2me_32(*src++);
-            *v++ =  val <<  6;
-            *y++ = (val >>  4) & 0xFFC0;
+            val  = av_le2ne32(*src++);
+            *v++ =  val & 0x3FF;
+            *y++ = (val >> 10) & 0x3FF;
         }
 
         psrc += stride;
@@ -120,7 +120,7 @@ static av_cold int decode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec v210_decoder = {
+AVCodec ff_v210_decoder = {
     "v210",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_V210,

@@ -218,7 +218,7 @@ static int tgq_decode_frame(AVCodecContext *avctx,
 
     if (!s->frame.data[0]) {
         s->frame.key_frame = 1;
-        s->frame.pict_type = FF_I_TYPE;
+        s->frame.pict_type = AV_PICTURE_TYPE_I;
         s->frame.buffer_hints = FF_BUFFER_HINTS_VALID;
         if (avctx->get_buffer(avctx, &s->frame)) {
             av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
@@ -243,7 +243,7 @@ static av_cold int tgq_decode_end(AVCodecContext *avctx){
     return 0;
 }
 
-AVCodec eatgq_decoder = {
+AVCodec ff_eatgq_decoder = {
     "eatgq",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_TGQ,

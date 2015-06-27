@@ -796,7 +796,7 @@ static av_cold int sonic_decode_init(AVCodecContext *avctx)
     if (get_bits1(&gb)) // XXX FIXME
         av_log(avctx, AV_LOG_INFO, "Custom quant table\n");
 
-    s->block_align = (int)(2048.0*(s->samplerate/44100))/s->downsampling;
+    s->block_align = (int)(2048.0*s->samplerate/44100)/s->downsampling;
     s->frame_size = s->channels*s->block_align*s->downsampling;
 //    avctx->frame_size = s->block_align;
 
@@ -825,7 +825,7 @@ static av_cold int sonic_decode_init(AVCodecContext *avctx)
     }
     s->int_samples = av_mallocz(4* s->frame_size);
 
-    avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
     return 0;
 }
 
@@ -935,7 +935,7 @@ static int sonic_decode_frame(AVCodecContext *avctx,
     return (get_bits_count(&gb)+7)/8;
 }
 
-AVCodec sonic_decoder = {
+AVCodec ff_sonic_decoder = {
     "sonic",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_SONIC,
@@ -949,7 +949,7 @@ AVCodec sonic_decoder = {
 #endif /* CONFIG_SONIC_DECODER */
 
 #if CONFIG_SONIC_ENCODER
-AVCodec sonic_encoder = {
+AVCodec ff_sonic_encoder = {
     "sonic",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_SONIC,
@@ -963,7 +963,7 @@ AVCodec sonic_encoder = {
 #endif
 
 #if CONFIG_SONIC_LS_ENCODER
-AVCodec sonic_ls_encoder = {
+AVCodec ff_sonic_ls_encoder = {
     "sonicls",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_SONIC_LS,

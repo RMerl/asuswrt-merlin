@@ -52,7 +52,7 @@ static inline int sad_hpel_motion_search(MpegEncContext * s,
                                   int src_index, int ref_index,
                                   int size, int h);
 
-static inline int update_map_generation(MotionEstContext *c)
+static inline unsigned update_map_generation(MotionEstContext *c)
 {
     c->map_generation+= 1<<(ME_MAP_MV_BITS*2);
     if(c->map_generation==0){
@@ -1040,7 +1040,7 @@ void ff_estimate_p_frame_motion(MpegEncContext * s,
     /* intra / predictive decision */
     pix = c->src[0][0];
     sum = s->dsp.pix_sum(pix, s->linesize);
-    varc = s->dsp.pix_norm1(pix, s->linesize) - (((unsigned)(sum*sum))>>8) + 500;
+    varc = s->dsp.pix_norm1(pix, s->linesize) - (((unsigned)sum*sum)>>8) + 500;
 
     pic->mb_mean[s->mb_stride * mb_y + mb_x] = (sum+128)>>8;
     pic->mb_var [s->mb_stride * mb_y + mb_x] = (varc+128)>>8;
@@ -1119,10 +1119,6 @@ void ff_estimate_p_frame_motion(MpegEncContext * s,
 //    pic->mb_cmp_score[s->mb_stride * mb_y + mb_x] = dmin;
     c->mc_mb_var_sum_temp += (vard+128)>>8;
 
-#if 0
-    printf("varc=%4d avg_var=%4d (sum=%4d) vard=%4d mx=%2d my=%2d\n",
-           varc, s->avg_mb_var, sum, vard, mx - xx, my - yy);
-#endif
     if(mb_type){
         int p_score= FFMIN(vard, varc-500+(s->lambda2>>FF_LAMBDA_SHIFT)*100);
         int i_score= varc-500+(s->lambda2>>FF_LAMBDA_SHIFT)*20;
@@ -1206,7 +1202,7 @@ void ff_estimate_p_frame_motion(MpegEncContext * s,
         if((c->avctx->mb_cmp&0xFF)==FF_CMP_SSE){
             intra_score= varc - 500;
         }else{
-            int mean= (sum+128)>>8;
+            unsigned mean = (sum+128)>>8;
             mean*= 0x01010101;
 
             for(i=0; i<16; i++){
@@ -1476,6 +1472,7 @@ static inline int bidir_refine(MpegEncContext * s, int mb_x, int mb_y)
     const int xmax= c->xmax<<shift;
     const int ymax= c->ymax<<shift;
 #define HASH(fx,fy,bx,by) ((fx)+17*(fy)+63*(bx)+117*(by))
+#define HASH8(fx,fy,bx,by) ((uint8_t)HASH(fx,fy,bx,by))
     int hashidx= HASH(motion_fx,motion_fy, motion_bx, motion_by);
     uint8_t map[256];
 
@@ -1510,21 +1507,21 @@ static inline int bidir_refine(MpegEncContext * s, int mb_x, int mb_y)
 { 1, 1,-1,-1}, {-1,-1, 1, 1}, { 1,-1,-1, 1}, {-1, 1, 1,-1}, { 1,-1, 1,-1}, {-1, 1,-1, 1},
         };
         static const uint8_t hash[]={
-HASH( 0, 0, 0, 1), HASH( 0, 0, 0,-1), HASH( 0, 0, 1, 0), HASH( 0, 0,-1, 0), HASH( 0, 1, 0, 0), HASH( 0,-1, 0, 0), HASH( 1, 0, 0, 0), HASH(-1, 0, 0, 0),
+HASH8( 0, 0, 0, 1), HASH8( 0, 0, 0,-1), HASH8( 0, 0, 1, 0), HASH8( 0, 0,-1, 0), HASH8( 0, 1, 0, 0), HASH8( 0,-1, 0, 0), HASH8( 1, 0, 0, 0), HASH8(-1, 0, 0, 0),
 
-HASH( 0, 0, 1, 1), HASH( 0, 0,-1,-1), HASH( 0, 1, 1, 0), HASH( 0,-1,-1, 0), HASH( 1, 1, 0, 0), HASH(-1,-1, 0, 0), HASH( 1, 0, 0, 1), HASH(-1, 0, 0,-1),
-HASH( 0, 1, 0, 1), HASH( 0,-1, 0,-1), HASH( 1, 0, 1, 0), HASH(-1, 0,-1, 0),
-HASH( 0, 0,-1, 1), HASH( 0, 0, 1,-1), HASH( 0,-1, 1, 0), HASH( 0, 1,-1, 0), HASH(-1, 1, 0, 0), HASH( 1,-1, 0, 0), HASH( 1, 0, 0,-1), HASH(-1, 0, 0, 1),
-HASH( 0,-1, 0, 1), HASH( 0, 1, 0,-1), HASH(-1, 0, 1, 0), HASH( 1, 0,-1, 0),
+HASH8( 0, 0, 1, 1), HASH8( 0, 0,-1,-1), HASH8( 0, 1, 1, 0), HASH8( 0,-1,-1, 0), HASH8( 1, 1, 0, 0), HASH8(-1,-1, 0, 0), HASH8( 1, 0, 0, 1), HASH8(-1, 0, 0,-1),
+HASH8( 0, 1, 0, 1), HASH8( 0,-1, 0,-1), HASH8( 1, 0, 1, 0), HASH8(-1, 0,-1, 0),
+HASH8( 0, 0,-1, 1), HASH8( 0, 0, 1,-1), HASH8( 0,-1, 1, 0), HASH8( 0, 1,-1, 0), HASH8(-1, 1, 0, 0), HASH8( 1,-1, 0, 0), HASH8( 1, 0, 0,-1), HASH8(-1, 0, 0, 1),
+HASH8( 0,-1, 0, 1), HASH8( 0, 1, 0,-1), HASH8(-1, 0, 1, 0), HASH8( 1, 0,-1, 0),
 
-HASH( 0, 1, 1, 1), HASH( 0,-1,-1,-1), HASH( 1, 1, 1, 0), HASH(-1,-1,-1, 0), HASH( 1, 1, 0, 1), HASH(-1,-1, 0,-1), HASH( 1, 0, 1, 1), HASH(-1, 0,-1,-1),
-HASH( 0,-1, 1, 1), HASH( 0, 1,-1,-1), HASH(-1, 1, 1, 0), HASH( 1,-1,-1, 0), HASH( 1, 1, 0,-1), HASH(-1,-1, 0, 1), HASH( 1, 0,-1, 1), HASH(-1, 0, 1,-1),
-HASH( 0, 1,-1, 1), HASH( 0,-1, 1,-1), HASH( 1,-1, 1, 0), HASH(-1, 1,-1, 0), HASH(-1, 1, 0, 1), HASH( 1,-1, 0,-1), HASH( 1, 0, 1,-1), HASH(-1, 0,-1, 1),
-HASH( 0, 1, 1,-1), HASH( 0,-1,-1, 1), HASH( 1, 1,-1, 0), HASH(-1,-1, 1, 0), HASH( 1,-1, 0, 1), HASH(-1, 1, 0,-1), HASH(-1, 0, 1, 1), HASH( 1, 0,-1,-1),
+HASH8( 0, 1, 1, 1), HASH8( 0,-1,-1,-1), HASH8( 1, 1, 1, 0), HASH8(-1,-1,-1, 0), HASH8( 1, 1, 0, 1), HASH8(-1,-1, 0,-1), HASH8( 1, 0, 1, 1), HASH8(-1, 0,-1,-1),
+HASH8( 0,-1, 1, 1), HASH8( 0, 1,-1,-1), HASH8(-1, 1, 1, 0), HASH8( 1,-1,-1, 0), HASH8( 1, 1, 0,-1), HASH8(-1,-1, 0, 1), HASH8( 1, 0,-1, 1), HASH8(-1, 0, 1,-1),
+HASH8( 0, 1,-1, 1), HASH8( 0,-1, 1,-1), HASH8( 1,-1, 1, 0), HASH8(-1, 1,-1, 0), HASH8(-1, 1, 0, 1), HASH8( 1,-1, 0,-1), HASH8( 1, 0, 1,-1), HASH8(-1, 0,-1, 1),
+HASH8( 0, 1, 1,-1), HASH8( 0,-1,-1, 1), HASH8( 1, 1,-1, 0), HASH8(-1,-1, 1, 0), HASH8( 1,-1, 0, 1), HASH8(-1, 1, 0,-1), HASH8(-1, 0, 1, 1), HASH8( 1, 0,-1,-1),
 
-HASH( 1, 1, 1, 1), HASH(-1,-1,-1,-1),
-HASH( 1, 1, 1,-1), HASH(-1,-1,-1, 1), HASH( 1, 1,-1, 1), HASH(-1,-1, 1,-1), HASH( 1,-1, 1, 1), HASH(-1, 1,-1,-1), HASH(-1, 1, 1, 1), HASH( 1,-1,-1,-1),
-HASH( 1, 1,-1,-1), HASH(-1,-1, 1, 1), HASH( 1,-1,-1, 1), HASH(-1, 1, 1,-1), HASH( 1,-1, 1,-1), HASH(-1, 1,-1, 1),
+HASH8( 1, 1, 1, 1), HASH8(-1,-1,-1,-1),
+HASH8( 1, 1, 1,-1), HASH8(-1,-1,-1, 1), HASH8( 1, 1,-1, 1), HASH8(-1,-1, 1,-1), HASH8( 1,-1, 1, 1), HASH8(-1, 1,-1,-1), HASH8(-1, 1, 1, 1), HASH8( 1,-1,-1,-1),
+HASH8( 1, 1,-1,-1), HASH8(-1,-1, 1, 1), HASH8( 1,-1,-1, 1), HASH8(-1, 1, 1,-1), HASH8( 1,-1, 1,-1), HASH8(-1, 1,-1, 1),
 };
 
 #define CHECK_BIDIR(fx,fy,bx,by)\
@@ -1894,7 +1891,7 @@ int ff_get_best_fcode(MpegEncContext * s, int16_t (*mv_table)[2], int type)
                             continue;
 
                     for(j=0; j<fcode && j<8; j++){
-                        if(s->pict_type==FF_B_TYPE || s->current_picture.mc_mb_var[xy] < s->current_picture.mb_var[xy])
+                        if(s->pict_type==AV_PICTURE_TYPE_B || s->current_picture.mc_mb_var[xy] < s->current_picture.mb_var[xy])
                             score[j]-= 170;
                     }
                 }
@@ -1926,7 +1923,7 @@ void ff_fix_long_p_mvs(MpegEncContext * s)
     MotionEstContext * const c= &s->me;
     const int f_code= s->f_code;
     int y, range;
-    assert(s->pict_type==FF_P_TYPE);
+    assert(s->pict_type==AV_PICTURE_TYPE_P);
 
     range = (((s->out_format == FMT_MPEG1 || s->msmpeg4_version) ? 8 : 16) << f_code);
 

@@ -68,6 +68,7 @@
 #include <string.h>
 
 #include "libavutil/intreadwrite.h"
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 
 #define PALETTE_COUNT 256
@@ -88,14 +89,6 @@
 #define CPL0_TAG MKBETAG('C', 'P', 'L', '0')
 #define CPLZ_TAG MKBETAG('C', 'P', 'L', 'Z')
 #define VPTZ_TAG MKBETAG('V', 'P', 'T', 'Z')
-
-#define VQA_DEBUG 0
-
-#if VQA_DEBUG
-#define vqa_debug printf
-#else
-static inline void vqa_debug(const char *format, ...) { }
-#endif
 
 typedef struct VqaContext {
 
@@ -145,9 +138,13 @@ static av_cold int vqa_decode_init(AVCodecContext *avctx)
     /* load up the VQA parameters from the header */
     vqa_header = (unsigned char *)s->avctx->extradata;
     s->vqa_version = vqa_header[0];
+    if (s->vqa_version < 1 || s->vqa_version > 3) {
+        av_log(s->avctx, AV_LOG_ERROR, "  VQA video: unsupported version %d\n", s->vqa_version);
+        return -1;
+    }
     s->width = AV_RL16(&vqa_header[6]);
     s->height = AV_RL16(&vqa_header[8]);
-    if(avcodec_check_dimensions(avctx, s->width, s->height)){
+    if(av_image_check_size(s->width, s->height, 0, avctx)){
         s->width= s->height= 0;
         return -1;
     }
@@ -160,6 +157,12 @@ static av_cold int vqa_decode_init(AVCodecContext *avctx)
         ((s->vector_height != 2) && (s->vector_height != 4))) {
         /* return without further initialization */
         return -1;
+    }
+
+    if (s->width  & (s->vector_width  - 1) ||
+        s->height & (s->vector_height - 1)) {
+        av_log(avctx, AV_LOG_ERROR, "Image size not multiple of block size\n");
+        return AVERROR_INVALIDDATA;
     }
 
     /* allocate codebooks */
@@ -186,6 +189,7 @@ static av_cold int vqa_decode_init(AVCodecContext *avctx)
         (s->height / s->vector_height) * 2;
     s->decode_buffer = av_malloc(s->decode_buffer_size);
 
+    avcodec_get_frame_defaults(&s->frame);
     s->frame.data[0] = NULL;
 
     return 0;
@@ -211,7 +215,7 @@ static void decode_format80(const unsigned char *src, int src_size,
 
     while (src_index < src_size) {
 
-        vqa_debug("      opcode %02X: ", src[src_index]);
+        av_dlog(NULL, "      opcode %02X: ", src[src_index]);
 
         /* 0x80 means that frame is finished */
         if (src[src_index] == 0x80)
@@ -230,8 +234,10 @@ static void decode_format80(const unsigned char *src, int src_size,
             src_index += 2;
             src_pos = AV_RL16(&src[src_index]);
             src_index += 2;
-            vqa_debug("(1) copy %X bytes from absolute pos %X\n", count, src_pos);
+            av_dlog(NULL, "(1) copy %X bytes from absolute pos %X\n", count, src_pos);
             CHECK_COUNT();
+            if (src_pos + count > dest_size)
+                return;
             for (i = 0; i < count; i++)
                 dest[dest_index + i] = dest[src_pos + i];
             dest_index += count;
@@ -242,7 +248,7 @@ static void decode_format80(const unsigned char *src, int src_size,
             count = AV_RL16(&src[src_index]);
             src_index += 2;
             color = src[src_index++];
-            vqa_debug("(2) set %X bytes to %02X\n", count, color);
+            av_dlog(NULL, "(2) set %X bytes to %02X\n", count, color);
             CHECK_COUNT();
             memset(&dest[dest_index], color, count);
             dest_index += count;
@@ -252,8 +258,10 @@ static void decode_format80(const unsigned char *src, int src_size,
             count = (src[src_index++] & 0x3F) + 3;
             src_pos = AV_RL16(&src[src_index]);
             src_index += 2;
-            vqa_debug("(3) copy %X bytes from absolute pos %X\n", count, src_pos);
+            av_dlog(NULL, "(3) copy %X bytes from absolute pos %X\n", count, src_pos);
             CHECK_COUNT();
+            if (src_pos + count > dest_size)
+                return;
             for (i = 0; i < count; i++)
                 dest[dest_index + i] = dest[src_pos + i];
             dest_index += count;
@@ -261,7 +269,7 @@ static void decode_format80(const unsigned char *src, int src_size,
         } else if (src[src_index] > 0x80) {
 
             count = src[src_index++] & 0x3F;
-            vqa_debug("(4) copy %X bytes from source to dest\n", count);
+            av_dlog(NULL, "(4) copy %X bytes from source to dest\n", count);
             CHECK_COUNT();
             memcpy(&dest[dest_index], &src[src_index], count);
             src_index += count;
@@ -272,8 +280,10 @@ static void decode_format80(const unsigned char *src, int src_size,
             count = ((src[src_index] & 0x70) >> 4) + 3;
             src_pos = AV_RB16(&src[src_index]) & 0x0FFF;
             src_index += 2;
-            vqa_debug("(5) copy %X bytes from relpos %X\n", count, src_pos);
+            av_dlog(NULL, "(5) copy %X bytes from relpos %X\n", count, src_pos);
             CHECK_COUNT();
+            if (dest_index < src_pos)
+                return;
             for (i = 0; i < count; i++)
                 dest[dest_index + i] = dest[dest_index - src_pos + i];
             dest_index += count;
@@ -463,8 +473,6 @@ static void vqa_decode_chunk(VqaContext *s)
             switch (s->vqa_version) {
 
             case 1:
-/* still need sample media for this case (only one game, "Legend of
- * Kyrandia III : Malcolm's Revenge", is known to use this version) */
                 lobyte = s->decode_buffer[lobytes * 2];
                 hibyte = s->decode_buffer[(lobytes * 2) + 1];
                 vector_index = ((hibyte << 8) | lobyte) >> 3;
@@ -519,6 +527,11 @@ static void vqa_decode_chunk(VqaContext *s)
         chunk_size = AV_RB32(&s->buf[cbp0_chunk + 4]);
         cbp0_chunk += CHUNK_PREAMBLE_SIZE;
 
+        if (chunk_size > MAX_CODEBOOK_SIZE - s->next_codebook_buffer_index) {
+            av_log(s->avctx, AV_LOG_ERROR, "cbp0 chunk too large (0x%X bytes)\n", chunk_size);
+            return;
+        }
+
         /* accumulate partial codebook */
         memcpy(&s->next_codebook_buffer[s->next_codebook_buffer_index],
             &s->buf[cbp0_chunk], chunk_size);
@@ -541,6 +554,11 @@ static void vqa_decode_chunk(VqaContext *s)
 
         chunk_size = AV_RB32(&s->buf[cbpz_chunk + 4]);
         cbpz_chunk += CHUNK_PREAMBLE_SIZE;
+
+        if (chunk_size > MAX_CODEBOOK_SIZE - s->next_codebook_buffer_index) {
+            av_log(s->avctx, AV_LOG_ERROR, "cbpz chunk too large (0x%X bytes)\n", chunk_size);
+            return;
+        }
 
         /* accumulate partial codebook */
         memcpy(&s->next_codebook_buffer[s->next_codebook_buffer_index],
@@ -608,7 +626,7 @@ static av_cold int vqa_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec vqa_decoder = {
+AVCodec ff_vqa_decoder = {
     "vqavideo",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_WS_VQA,

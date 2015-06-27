@@ -52,6 +52,7 @@
 #include "acelp_vectors.h"
 #include "acelp_pitch_delay.h"
 #include "lsp.h"
+#include "amr.h"
 
 #include "amrnbdata.h"
 
@@ -153,7 +154,7 @@ static av_cold int amrnb_decode_init(AVCodecContext *avctx)
     AMRContext *p = avctx->priv_data;
     int i;
 
-    avctx->sample_fmt = SAMPLE_FMT_FLT;
+    avctx->sample_fmt = AV_SAMPLE_FMT_FLT;
 
     // p->excitation always points to the same position in p->excitation_buf
     p->excitation = &p->excitation_buf[PITCH_DELAY_MAX + LP_FILTER_ORDER + 1];
@@ -195,45 +196,16 @@ static enum Mode unpack_bitstream(AMRContext *p, const uint8_t *buf,
     p->bad_frame_indicator = !get_bits1(&gb); // quality bit
     skip_bits(&gb, 2);                        // two padding bits
 
-    if (mode < MODE_DTX) {
-        uint16_t *data = (uint16_t *)&p->frame;
-        const uint8_t *order = amr_unpacking_bitmaps_per_mode[mode];
-        int field_size;
-
-        memset(&p->frame, 0, sizeof(AMRNBFrame));
-        buf++;
-        while ((field_size = *order++)) {
-            int field = 0;
-            int field_offset = *order++;
-            while (field_size--) {
-               int bit = *order++;
-               field <<= 1;
-               field |= buf[bit >> 3] >> (bit & 7) & 1;
-            }
-            data[field_offset] = field;
-        }
-    }
+    if (mode < MODE_DTX)
+        ff_amr_bit_reorder((uint16_t *) &p->frame, sizeof(AMRNBFrame), buf + 1,
+                           amr_unpacking_bitmaps_per_mode[mode]);
 
     return mode;
 }
 
 
-/// @defgroup amr_lpc_decoding AMR pitch LPC coefficient decoding functions
+/// @name AMR pitch LPC coefficient decoding functions
 /// @{
-
-/**
- * Convert an lsf vector into an lsp vector.
- *
- * @param lsf               input lsf vector
- * @param lsp               output lsp vector
- */
-static void lsf2lsp(const float *lsf, double *lsp)
-{
-    int i;
-
-    for (i = 0; i < LP_FILTER_ORDER; i++)
-        lsp[i] = cos(2.0 * M_PI * lsf[i]);
-}
 
 /**
  * Interpolate the LSF vector (used for fixed gain smoothing).
@@ -283,7 +255,7 @@ static void lsf2lsp_for_mode12k2(AMRContext *p, double lsp[LP_FILTER_ORDER],
     }
 
     if (update)
-        memcpy(p->prev_lsf_r, lsf_r, LP_FILTER_ORDER * sizeof(float));
+        memcpy(p->prev_lsf_r, lsf_r, LP_FILTER_ORDER * sizeof(*lsf_r));
 
     for (i = 0; i < LP_FILTER_ORDER; i++)
         lsf_q[i] = lsf_r[i] * (LSF_R_FAC / 8000.0) + lsf_no_r[i] * (1.0 / 8000.0);
@@ -293,7 +265,7 @@ static void lsf2lsp_for_mode12k2(AMRContext *p, double lsp[LP_FILTER_ORDER],
     if (update)
         interpolate_lsf(p->lsf_q, lsf_q);
 
-    lsf2lsp(lsf_q, lsp);
+    ff_acelp_lsf2lspd(lsp, lsf_q, LP_FILTER_ORDER);
 }
 
 /**
@@ -357,7 +329,7 @@ static void lsf2lsp_3(AMRContext *p)
     interpolate_lsf(p->lsf_q, lsf_q);
     memcpy(p->prev_lsf_r, lsf_r, LP_FILTER_ORDER * sizeof(*lsf_r));
 
-    lsf2lsp(lsf_q, p->lsp[3]);
+    ff_acelp_lsf2lspd(p->lsp[3], lsf_q, LP_FILTER_ORDER);
 
     // interpolate LSP vectors at subframes 1, 2 and 3
     for (i = 1; i <= 3; i++)
@@ -369,7 +341,7 @@ static void lsf2lsp_3(AMRContext *p)
 /// @}
 
 
-/// @defgroup amr_pitch_vector_decoding AMR pitch vector decoding functions
+/// @name AMR pitch vector decoding functions
 /// @{
 
 /**
@@ -431,7 +403,7 @@ static void decode_pitch_vector(AMRContext *p,
 /// @}
 
 
-/// @defgroup amr_algebraic_code_book AMR algebraic code book (fixed) vector decoding functions
+/// @name AMR algebraic code book (fixed) vector decoding functions
 /// @{
 
 /**
@@ -575,7 +547,7 @@ static void pitch_sharpening(AMRContext *p, int subframe, enum Mode mode,
 /// @}
 
 
-/// @defgroup amr_gain_decoding AMR gain decoding functions
+/// @name AMR gain decoding functions
 /// @{
 
 /**
@@ -661,7 +633,7 @@ static void decode_gains(AMRContext *p, const AMRNBSubframe *amr_subframe,
 /// @}
 
 
-/// @defgroup amr_pre_processing AMR pre-processing functions
+/// @name AMR preprocessing functions
 /// @{
 
 /**
@@ -779,7 +751,7 @@ static const float *anti_sparseness(AMRContext *p, AMRFixed *fixed_sparse,
 /// @}
 
 
-/// @defgroup amr_synthesis AMR synthesis functions
+/// @name AMR synthesis functions
 /// @{
 
 /**
@@ -840,7 +812,7 @@ static int synthesis(AMRContext *p, float *lpc,
 /// @}
 
 
-/// @defgroup amr_update AMR update functions
+/// @name AMR update functions
 /// @{
 
 /**
@@ -865,7 +837,7 @@ static void update_state(AMRContext *p)
 /// @}
 
 
-/// @defgroup amr_postproc AMR Post processing functions
+/// @name AMR Postprocessing functions
 /// @{
 
 /**
@@ -1064,7 +1036,7 @@ static int amrnb_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
 }
 
 
-AVCodec amrnb_decoder = {
+AVCodec ff_amrnb_decoder = {
     .name           = "amrnb",
     .type           = AVMEDIA_TYPE_AUDIO,
     .id             = CODEC_ID_AMR_NB,
@@ -1072,5 +1044,5 @@ AVCodec amrnb_decoder = {
     .init           = amrnb_decode_init,
     .decode         = amrnb_decode_frame,
     .long_name      = NULL_IF_CONFIG_SMALL("Adaptive Multi-Rate NarrowBand"),
-    .sample_fmts    = (enum SampleFormat[]){SAMPLE_FMT_FLT,SAMPLE_FMT_NONE},
+    .sample_fmts    = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_FLT,AV_SAMPLE_FMT_NONE},
 };

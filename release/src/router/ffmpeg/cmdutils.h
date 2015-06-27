@@ -22,10 +22,16 @@
 #ifndef FFMPEG_CMDUTILS_H
 #define FFMPEG_CMDUTILS_H
 
-#include <inttypes.h>
+#include <stdint.h>
+
 #include "libavcodec/avcodec.h"
+#include "libavfilter/avfilter.h"
 #include "libavformat/avformat.h"
 #include "libswscale/swscale.h"
+
+#ifdef __MINGW32__
+#undef main /* We don't want SDL to override our main() */
+#endif
 
 /**
  * program name, defined by the program for show_version().
@@ -37,12 +43,28 @@ extern const char program_name[];
  */
 extern const int program_birth_year;
 
-extern const int this_year;
-
 extern const char **opt_names;
 extern AVCodecContext *avcodec_opts[AVMEDIA_TYPE_NB];
 extern AVFormatContext *avformat_opts;
 extern struct SwsContext *sws_opts;
+extern AVDictionary *format_opts, *video_opts, *audio_opts, *sub_opts;
+
+/**
+ * Initialize the cmdutils option system, in particular
+ * allocate the *_opts contexts.
+ */
+void init_opts(void);
+/**
+ * Uninitialize the cmdutils option system, in particular
+ * free the *_opts contexts and their contents.
+ */
+void uninit_opts(void);
+
+/**
+ * Trivial log callback.
+ * Only suitable for opt_help and similar since it lacks prefix handling.
+ */
+void log_callback_help(void* ptr, int level, const char* fmt, va_list vl);
 
 /**
  * Fallback for options that are not explicitly handled, these will be
@@ -51,7 +73,7 @@ extern struct SwsContext *sws_opts;
 int opt_default(const char *opt, const char *arg);
 
 /**
- * Sets the libav* libraries log level.
+ * Set the libav* libraries log level.
  */
 int opt_loglevel(const char *opt, const char *arg);
 
@@ -61,8 +83,8 @@ int opt_loglevel(const char *opt, const char *arg);
 int opt_timelimit(const char *opt, const char *arg);
 
 /**
- * Parses a string and returns its corresponding value as a double.
- * Exits from the application if the string cannot be correctly
+ * Parse a string and return its corresponding value as a double.
+ * Exit from the application if the string cannot be correctly
  * parsed or the corresponding value is invalid.
  *
  * @param context the context of the value to be set (e.g. the
@@ -76,8 +98,8 @@ int opt_timelimit(const char *opt, const char *arg);
 double parse_number_or_die(const char *context, const char *numstr, int type, double min, double max);
 
 /**
- * Parses a string specifying a time and returns its corresponding
- * value as a number of microseconds. Exits from the application if
+ * Parse a string specifying a time and return its corresponding
+ * value as a number of microseconds. Exit from the application if
  * the string cannot be correctly parsed.
  *
  * @param context the context of the value to be set (e.g. the
@@ -104,15 +126,14 @@ typedef struct {
 #define OPT_INT    0x0080
 #define OPT_FLOAT  0x0100
 #define OPT_SUBTITLE 0x0200
-#define OPT_FUNC2  0x0400
-#define OPT_INT64  0x0800
-#define OPT_EXIT   0x1000
+#define OPT_INT64  0x0400
+#define OPT_EXIT   0x0800
+#define OPT_DATA   0x1000
      union {
-        void (*func_arg)(const char *); //FIXME passing error code as int return would be nicer then exit() in the func
         int *int_arg;
         char **str_arg;
         float *float_arg;
-        int (*func2_arg)(const char *, const char *);
+        int (*func_arg)(const char *, const char *);
         int64_t *int64_arg;
     } u;
     const char *help;
@@ -122,20 +143,20 @@ typedef struct {
 void show_help_options(const OptionDef *options, const char *msg, int mask, int value);
 
 /**
- * Parses the command line arguments.
+ * Parse the command line arguments.
  * @param options Array with the definitions required to interpret every
- * option of the form: -<option_name> [<argument>]
+ * option of the form: -option_name [argument]
  * @param parse_arg_function Name of the function called to process every
  * argument without a leading option name flag. NULL if such arguments do
  * not have to be processed.
  */
 void parse_options(int argc, char **argv, const OptionDef *options,
-                   void (* parse_arg_function)(const char*));
+                   int (* parse_arg_function)(const char *opt, const char *arg));
 
-void set_context_opts(void *ctx, void *opts_ctx, int flags);
+void set_context_opts(void *ctx, void *opts_ctx, int flags, AVCodec *codec);
 
 /**
- * Prints an error message to stderr, indicating filename and a human
+ * Print an error message to stderr, indicating filename and a human
  * readable description of the error code err.
  *
  * If strerror_r() is not available the use of this function in a
@@ -145,79 +166,106 @@ void set_context_opts(void *ctx, void *opts_ctx, int flags);
  */
 void print_error(const char *filename, int err);
 
-void list_fmts(void (*get_fmt_string)(char *buf, int buf_size, int fmt), int nb_fmts);
-
 /**
- * Prints the program banner to stderr. The banner contents depend on the
+ * Print the program banner to stderr. The banner contents depend on the
  * current version of the repository and of the libav* libraries used by
  * the program.
  */
 void show_banner(void);
 
 /**
- * Prints the version of the program to stdout. The version message
+ * Print the version of the program to stdout. The version message
  * depends on the current versions of the repository and of the libav*
  * libraries.
+ * This option processing function does not utilize the arguments.
  */
-void show_version(void);
+int opt_version(const char *opt, const char *arg);
 
 /**
- * Prints the license of the program to stdout. The license depends on
+ * Print the license of the program to stdout. The license depends on
  * the license of the libraries compiled into the program.
+ * This option processing function does not utilize the arguments.
  */
-void show_license(void);
+int opt_license(const char *opt, const char *arg);
 
 /**
- * Prints a listing containing all the formats supported by the
+ * Print a listing containing all the formats supported by the
  * program.
+ * This option processing function does not utilize the arguments.
  */
-void show_formats(void);
+int opt_formats(const char *opt, const char *arg);
 
 /**
- * Prints a listing containing all the codecs supported by the
+ * Print a listing containing all the codecs supported by the
  * program.
+ * This option processing function does not utilize the arguments.
  */
-void show_codecs(void);
+int opt_codecs(const char *opt, const char *arg);
 
 /**
- * Prints a listing containing all the filters supported by the
+ * Print a listing containing all the filters supported by the
  * program.
+ * This option processing function does not utilize the arguments.
  */
-void show_filters(void);
+int opt_filters(const char *opt, const char *arg);
 
 /**
- * Prints a listing containing all the bit stream filters supported by the
+ * Print a listing containing all the bit stream filters supported by the
  * program.
+ * This option processing function does not utilize the arguments.
  */
-void show_bsfs(void);
+int opt_bsfs(const char *opt, const char *arg);
 
 /**
- * Prints a listing containing all the protocols supported by the
+ * Print a listing containing all the protocols supported by the
  * program.
+ * This option processing function does not utilize the arguments.
  */
-void show_protocols(void);
+int opt_protocols(const char *opt, const char *arg);
 
 /**
- * Prints a listing containing all the pixel formats supported by the
+ * Print a listing containing all the pixel formats supported by the
  * program.
+ * This option processing function does not utilize the arguments.
  */
-void show_pix_fmts(void);
+int opt_pix_fmts(const char *opt, const char *arg);
 
 /**
- * Returns a positive value if reads from standard input a line
- * starting with [yY], otherwise returns 0.
+ * Return a positive value if a line read from standard input
+ * starts with [yY], otherwise return 0.
  */
 int read_yesno(void);
 
 /**
- * Reads the file with name filename, and puts its content in a newly
+ * Read the file with name filename, and put its content in a newly
  * allocated 0-terminated buffer.
  *
- * @param bufptr puts here the pointer to the newly allocated buffer
- * @param size puts here the size of the newly allocated buffer
+ * @param bufptr location where pointer to buffer is returned
+ * @param size   location where size of buffer is returned
  * @return 0 in case of success, a negative value corresponding to an
  * AVERROR error code in case of failure.
  */
 int read_file(const char *filename, char **bufptr, size_t *size);
+
+/**
+ * Get a file corresponding to a preset file.
+ *
+ * If is_path is non-zero, look for the file in the path preset_name.
+ * Otherwise search for a file named arg.ffpreset in the directories
+ * $FFMPEG_DATADIR (if set), $HOME/.ffmpeg, and in the datadir defined
+ * at configuration time or in a "ffpresets" folder along the executable
+ * on win32, in that order. If no such file is found and
+ * codec_name is defined, then search for a file named
+ * codec_name-preset_name.ffpreset in the above-mentioned directories.
+ *
+ * @param filename buffer where the name of the found filename is written
+ * @param filename_size size in bytes of the filename buffer
+ * @param preset_name name of the preset to search
+ * @param is_path tell if preset_name is a filename path
+ * @param codec_name name of the codec for which to look for the
+ * preset, may be NULL
+ */
+FILE *get_preset_file(char *filename, size_t filename_size,
+                      const char *preset_name, int is_path, const char *codec_name);
 
 #endif /* FFMPEG_CMDUTILS_H */

@@ -61,7 +61,7 @@ static int decode_frame(AVCodecContext *avctx,
         av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
         return -1;
     }
-    p->pict_type= FF_I_TYPE;
+    p->pict_type= AV_PICTURE_TYPE_I;
     p->key_frame= 1;
 
     for(i=0; i<16; i++){
@@ -127,7 +127,7 @@ static int encode_frame(AVCodecContext *avctx, unsigned char *buf, int buf_size,
     int size;
 
     *p = *pict;
-    p->pict_type= FF_I_TYPE;
+    p->pict_type= AV_PICTURE_TYPE_I;
     p->key_frame= 1;
 
     emms_c();
@@ -146,6 +146,7 @@ static av_cold void common_init(AVCodecContext *avctx){
     VCR1Context * const a = avctx->priv_data;
 
     avctx->coded_frame= (AVFrame*)&a->picture;
+    avcodec_get_frame_defaults(&a->picture);
     a->avctx= avctx;
 }
 
@@ -176,7 +177,7 @@ static av_cold int encode_init(AVCodecContext *avctx){
 }
 #endif
 
-AVCodec vcr1_decoder = {
+AVCodec ff_vcr1_decoder = {
     "vcr1",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_VCR1,
@@ -190,7 +191,7 @@ AVCodec vcr1_decoder = {
 };
 
 #if CONFIG_VCR1_ENCODER
-AVCodec vcr1_encoder = {
+AVCodec ff_vcr1_encoder = {
     "vcr1",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_VCR1,

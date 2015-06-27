@@ -39,22 +39,27 @@ static int vp5_parse_header(VP56Context *s, const uint8_t *buf, int buf_size,
     VP56RangeCoder *c = &s->c;
     int rows, cols;
 
-    vp56_init_range_decoder(&s->c, buf, buf_size);
+    ff_vp56_init_range_decoder(&s->c, buf, buf_size);
     s->framep[VP56_FRAME_CURRENT]->key_frame = !vp56_rac_get(c);
     vp56_rac_get(c);
-    vp56_init_dequant(s, vp56_rac_gets(c, 6));
+    ff_vp56_init_dequant(s, vp56_rac_gets(c, 6));
     if (s->framep[VP56_FRAME_CURRENT]->key_frame)
     {
         vp56_rac_gets(c, 8);
         if(vp56_rac_gets(c, 5) > 5)
-            return 0;
+            return AVERROR_INVALIDDATA;
         vp56_rac_gets(c, 2);
         if (vp56_rac_get(c)) {
             av_log(s->avctx, AV_LOG_ERROR, "interlacing not supported\n");
-            return 0;
+            return AVERROR_PATCHWELCOME;
         }
         rows = vp56_rac_gets(c, 8);  /* number of stored macroblock rows */
         cols = vp56_rac_gets(c, 8);  /* number of stored macroblock cols */
+        if (!rows || !cols) {
+            av_log(s->avctx, AV_LOG_ERROR, "Invalid size %dx%d\n",
+                   cols << 4, rows << 4);
+            return AVERROR_INVALIDDATA;
+        }
         vp56_rac_gets(c, 8);  /* number of displayed macroblock rows */
         vp56_rac_gets(c, 8);  /* number of displayed macroblock cols */
         vp56_rac_gets(c, 2);
@@ -62,11 +67,11 @@ static int vp5_parse_header(VP56Context *s, const uint8_t *buf, int buf_size,
             16*cols != s->avctx->coded_width ||
             16*rows != s->avctx->coded_height) {
             avcodec_set_dimensions(s->avctx, 16*cols, 16*rows);
-            return 2;
+            return VP56_SIZE_CHANGE;
         }
     } else if (!s->macroblocks)
-        return 0;
-    return 1;
+        return AVERROR_INVALIDDATA;
+    return 0;
 }
 
 static void vp5_parse_vector_adjustment(VP56Context *s, VP56mv *vect)
@@ -116,7 +121,7 @@ static void vp5_parse_vector_models(VP56Context *s)
                 model->vector_pdv[comp][node] = vp56_rac_gets_nn(c, 7);
 }
 
-static void vp5_parse_coeff_models(VP56Context *s)
+static int vp5_parse_coeff_models(VP56Context *s)
 {
     VP56RangeCoder *c = &s->c;
     VP56Model *model = s->modelp;
@@ -160,6 +165,7 @@ static void vp5_parse_coeff_models(VP56Context *s)
                 for (ctx=0; ctx<6; ctx++)
                     for (node=0; node<5; node++)
                         model->coeff_acct[pt][ct][cg][ctx][node] = av_clip(((model->coeff_ract[pt][ct][cg][node] * vp5_ract_lc[ct][cg][node][ctx][0] + 128) >> 8) + vp5_ract_lc[ct][cg][node][ctx][1], 1, 254);
+    return 0;
 }
 
 static void vp5_parse_coeff(VP56Context *s)
@@ -182,7 +188,8 @@ static void vp5_parse_coeff(VP56Context *s)
         model1 = model->coeff_dccv[pt];
         model2 = model->coeff_dcct[pt][ctx];
 
-        for (coeff_idx=0; coeff_idx<64; ) {
+        coeff_idx = 0;
+        for (;;) {
             if (vp56_rac_get_prob(c, model2[0])) {
                 if (vp56_rac_get_prob(c, model2[2])) {
                     if (vp56_rac_get_prob(c, model2[3])) {
@@ -219,8 +226,11 @@ static void vp5_parse_coeff(VP56Context *s)
                 ct = 0;
                 s->coeff_ctx[vp56_b6to4[b]][coeff_idx] = 0;
             }
+            coeff_idx++;
+            if (coeff_idx >= 64)
+                break;
 
-            cg = vp5_coeff_groups[++coeff_idx];
+            cg = vp5_coeff_groups[coeff_idx];
             ctx = s->coeff_ctx[vp56_b6to4[b]][coeff_idx];
             model1 = model->coeff_ract[pt][ct][cg];
             model2 = cg > 2 ? model1 : model->coeff_acct[pt][ct][cg][ctx];
@@ -254,7 +264,7 @@ static av_cold int vp5_decode_init(AVCodecContext *avctx)
 {
     VP56Context *s = avctx->priv_data;
 
-    vp56_init(avctx, 1, 0);
+    ff_vp56_init(avctx, 1, 0);
     s->vp56_coord_div = vp5_coord_div;
     s->parse_vector_adjustment = vp5_parse_vector_adjustment;
     s->parse_coeff = vp5_parse_coeff;
@@ -266,15 +276,15 @@ static av_cold int vp5_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec vp5_decoder = {
+AVCodec ff_vp5_decoder = {
     "vp5",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_VP5,
     sizeof(VP56Context),
     vp5_decode_init,
     NULL,
-    vp56_free,
-    vp56_decode_frame,
+    ff_vp56_free,
+    ff_vp56_decode_frame,
     CODEC_CAP_DR1,
     .long_name = NULL_IF_CONFIG_SMALL("On2 VP5"),
 };

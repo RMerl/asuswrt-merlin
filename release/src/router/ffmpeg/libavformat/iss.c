@@ -39,12 +39,12 @@ typedef struct {
     int sample_start_pos;
 } IssDemuxContext;
 
-static void get_token(ByteIOContext *s, char *buf, int maxlen)
+static void get_token(AVIOContext *s, char *buf, int maxlen)
 {
     int i = 0;
     char c;
 
-    while ((c = get_byte(s))) {
+    while ((c = avio_r8(s))) {
         if(c == ' ')
             break;
         if (i < maxlen-1)
@@ -52,7 +52,7 @@ static void get_token(ByteIOContext *s, char *buf, int maxlen)
     }
 
     if(!c)
-        get_byte(s);
+        avio_r8(s);
 
     buf[i] = 0; /* Ensure null terminated, but may be truncated */
 }
@@ -68,7 +68,7 @@ static int iss_probe(AVProbeData *p)
 static av_cold int iss_read_header(AVFormatContext *s, AVFormatParameters *ap)
 {
     IssDemuxContext *iss = s->priv_data;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVStream *st;
     char token[MAX_TOKEN_SIZE];
     int stereo, rate_divisor;
@@ -87,7 +87,7 @@ static av_cold int iss_read_header(AVFormatContext *s, AVFormatParameters *ap)
     get_token(pb, token, sizeof(token)); //Version ID
     get_token(pb, token, sizeof(token)); //Size
 
-    iss->sample_start_pos = url_ftell(pb);
+    iss->sample_start_pos = avio_tell(pb);
 
     st = av_new_stream(s, 0);
     if (!st)
@@ -116,13 +116,13 @@ static int iss_read_packet(AVFormatContext *s, AVPacket *pkt)
         return AVERROR(EIO);
 
     pkt->stream_index = 0;
-    pkt->pts = url_ftell(s->pb) - iss->sample_start_pos;
+    pkt->pts = avio_tell(s->pb) - iss->sample_start_pos;
     if(s->streams[0]->codec->channels > 0)
         pkt->pts /= s->streams[0]->codec->channels*2;
     return 0;
 }
 
-AVInputFormat iss_demuxer = {
+AVInputFormat ff_iss_demuxer = {
     "ISS",
     NULL_IF_CONFIG_SMALL("Funcom ISS format"),
     sizeof(IssDemuxContext),

@@ -78,13 +78,13 @@ static int lmlm4_read_header(AVFormatContext *s, AVFormatParameters *ap) {
 }
 
 static int lmlm4_read_packet(AVFormatContext *s, AVPacket *pkt) {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     int ret;
     unsigned int frame_type, packet_size, padding, frame_size;
 
-    get_be16(pb);                       /* channel number */
-    frame_type  = get_be16(pb);
-    packet_size = get_be32(pb);
+    avio_rb16(pb);                       /* channel number */
+    frame_type  = avio_rb16(pb);
+    packet_size = avio_rb32(pb);
     padding     = -packet_size & 511;
     frame_size  = packet_size - 8;
 
@@ -100,7 +100,7 @@ static int lmlm4_read_packet(AVFormatContext *s, AVPacket *pkt) {
     if ((ret = av_get_packet(pb, pkt, frame_size)) <= 0)
         return AVERROR(EIO);
 
-    url_fskip(pb, padding);
+    avio_skip(pb, padding);
 
     switch (frame_type) {
         case LMLM4_I_FRAME:
@@ -117,7 +117,7 @@ static int lmlm4_read_packet(AVFormatContext *s, AVPacket *pkt) {
     return ret;
 }
 
-AVInputFormat lmlm4_demuxer = {
+AVInputFormat ff_lmlm4_demuxer = {
     "lmlm4",
     NULL_IF_CONFIG_SMALL("lmlm4 raw format"),
     0,

@@ -1,24 +1,39 @@
 ;*****************************************************************************
 ;* x86inc.asm
 ;*****************************************************************************
-;* Copyright (C) 2005-2008 Loren Merritt <lorenm@u.washington.edu>
+;* Copyright (C) 2005-2011 x264 project
 ;*
-;* This file is part of FFmpeg.
+;* Authors: Loren Merritt <lorenm@u.washington.edu>
+;*          Anton Mitrofanov <BugMaster@narod.ru>
+;*          Jason Garrett-Glaser <darkshikari@gmail.com>
 ;*
-;* FFmpeg is free software; you can redistribute it and/or
-;* modify it under the terms of the GNU Lesser General Public
-;* License as published by the Free Software Foundation; either
-;* version 2.1 of the License, or (at your option) any later version.
+;* Permission to use, copy, modify, and/or distribute this software for any
+;* purpose with or without fee is hereby granted, provided that the above
+;* copyright notice and this permission notice appear in all copies.
 ;*
-;* FFmpeg is distributed in the hope that it will be useful,
-;* but WITHOUT ANY WARRANTY; without even the implied warranty of
-;* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;* Lesser General Public License for more details.
-;*
-;* You should have received a copy of the GNU Lesser General Public
-;* License along with FFmpeg; if not, write to the Free Software
-;* 51, Inc., Foundation Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+;* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+;* WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+;* MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+;* ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+;* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+;* ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+;* OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;*****************************************************************************
+
+; This is a header file for the x264ASM assembly language, which uses
+; NASM/YASM syntax combined with a large number of macros to provide easy
+; abstraction between different calling conventions (x86_32, win64, linux64).
+; It also has various other useful features to simplify writing the kind of
+; DSP functions that are most often used in x264.
+
+; Unlike the rest of x264, this file is available under an ISC license, as it
+; has significant usefulness outside of x264 and we want it to be available
+; to the largest audience possible.  Of course, if you modify it for your own
+; purposes to add a new feature, we strongly encourage contributing a patch
+; as this feature might be useful for others as well.  Send patches or ideas
+; to x264-devel@videolan.org .
+
+%define program_name ff
 
 %ifdef ARCH_X86_64
     %ifidn __OUTPUT_FORMAT__,win32
@@ -26,6 +41,12 @@
     %else
         %define UNIX64
     %endif
+%endif
+
+%ifdef PREFIX
+    %define mangle(x) _ %+ x
+%else
+    %define mangle(x) x
 %endif
 
 ; FIXME: All of the 64bit asm functions that take a stride as an argument
@@ -42,33 +63,32 @@
     %elifidn __OUTPUT_FORMAT__,macho
         SECTION .text align=%1
         fakegot:
+    %elifidn __OUTPUT_FORMAT__,aout
+        section .text
     %else
         SECTION .rodata align=%1
     %endif
 %endmacro
 
-; PIC support macros.
-; x86_64 can't fit 64bit address literals in most instruction types,
-; so shared objects (under the assumption that they might be anywhere
-; in memory) must use an address mode that does fit.
-; So all accesses to global variables must use this macro, e.g.
-;     mov eax, [foo GLOBAL]
-; instead of
-;     mov eax, [foo]
-;
-; x86_32 doesn't require PIC.
-; Some distros prefer shared objects to be PIC, but nothing breaks if
-; the code contains a few textrels, so we'll skip that complexity.
+; aout does not support align=
+%macro SECTION_TEXT 0-1 16
+    %ifidn __OUTPUT_FORMAT__,aout
+        SECTION .text
+    %else
+        SECTION .text align=%1
+    %endif
+%endmacro
 
 %ifdef WIN64
     %define PIC
 %elifndef ARCH_X86_64
+; x86_32 doesn't require PIC.
+; Some distros prefer shared objects to be PIC, but nothing breaks if
+; the code contains a few textrels, so we'll skip that complexity.
     %undef PIC
 %endif
 %ifdef PIC
-    %define GLOBAL wrt rip
-%else
-    %define GLOBAL
+    default rel
 %endif
 
 ; Macros to eliminate most code duplication between x86_32 and x86_64:
@@ -163,7 +183,7 @@ DECLARE_REG_SIZE bp, bpl
     %endrep
 %endmacro
 
-DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7
+DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9
 
 %ifdef ARCH_X86_64
     %define gprsize 8
@@ -259,21 +279,25 @@ DECLARE_REG 6, rax, eax, ax,  al,  [rsp + stack_offset + 56]
     %endif
 %endmacro
 
-%macro PROLOGUE 2-4+ ; #args, #regs, #xmm_regs, arg_names...
+%macro PROLOGUE 2-4+ 0 ; #args, #regs, #xmm_regs, arg_names...
     ASSERT %2 >= %1
     %assign regs_used %2
     ASSERT regs_used <= 7
-    %if %0 > 2
-        %assign xmm_regs_used %3
-    %else
-        %assign xmm_regs_used 0
-    %endif
-    ASSERT xmm_regs_used <= 16
     %if regs_used > 4
         push r4
         push r5
         %assign stack_offset stack_offset+16
     %endif
+    WIN64_SPILL_XMM %3
+    LOAD_IF_USED 4, %1
+    LOAD_IF_USED 5, %1
+    LOAD_IF_USED 6, %1
+    DEFINE_ARGS %4
+%endmacro
+
+%macro WIN64_SPILL_XMM 1
+    %assign xmm_regs_used %1
+    ASSERT xmm_regs_used <= 16
     %if xmm_regs_used > 6
         sub rsp, (xmm_regs_used-6)*16+16
         %assign stack_offset stack_offset+(xmm_regs_used-6)*16+16
@@ -283,13 +307,9 @@ DECLARE_REG 6, rax, eax, ax,  al,  [rsp + stack_offset + 56]
             movdqa [rsp + (%%i-6)*16+8], xmm %+ %%i
         %endrep
     %endif
-    LOAD_IF_USED 4, %1
-    LOAD_IF_USED 5, %1
-    LOAD_IF_USED 6, %1
-    DEFINE_ARGS %4
 %endmacro
 
-%macro RESTORE_XMM_INTERNAL 1
+%macro WIN64_RESTORE_XMM_INTERNAL 1
     %if xmm_regs_used > 6
         %assign %%i xmm_regs_used
         %rep (xmm_regs_used-6)
@@ -300,14 +320,14 @@ DECLARE_REG 6, rax, eax, ax,  al,  [rsp + stack_offset + 56]
     %endif
 %endmacro
 
-%macro RESTORE_XMM 1
-    RESTORE_XMM_INTERNAL %1
+%macro WIN64_RESTORE_XMM 1
+    WIN64_RESTORE_XMM_INTERNAL %1
     %assign stack_offset stack_offset-(xmm_regs_used-6)*16+16
     %assign xmm_regs_used 0
 %endmacro
 
 %macro RET 0
-    RESTORE_XMM_INTERNAL rsp
+    WIN64_RESTORE_XMM_INTERNAL rsp
     %if regs_used > 4
         pop r5
         pop r4
@@ -388,7 +408,7 @@ DECLARE_REG 6, ebp, ebp, bp, null, [esp + stack_offset + 28]
     %endif
 %endmacro
 
-%macro PROLOGUE 2-4+ ; #args, #regs, arg_names...
+%macro PROLOGUE 2-4+ ; #args, #regs, #xmm_regs, arg_names...
     ASSERT %2 >= %1
     %assign regs_used %2
     ASSERT regs_used <= 7
@@ -424,6 +444,13 @@ DECLARE_REG 6, ebp, ebp, bp, null, [esp + stack_offset + 28]
 
 %endif ;======================================================================
 
+%ifndef WIN64
+%macro WIN64_SPILL_XMM 1
+%endmacro
+%macro WIN64_RESTORE_XMM 1
+%endmacro
+%endif
+
 
 
 ;=============================================================================
@@ -434,10 +461,7 @@ DECLARE_REG 6, ebp, ebp, bp, null, [esp + stack_offset + 28]
 
 ; Symbol prefix for C linkage
 %macro cglobal 1-2+
-    %xdefine %1 ff_%1
-    %ifdef PREFIX
-        %xdefine %1 _ %+ %1
-    %endif
+    %xdefine %1 mangle(program_name %+ _ %+ %1)
     %xdefine %1.skip_prologue %1 %+ .skip_prologue
     %ifidn __OUTPUT_FORMAT__,elf
         global %1:function hidden
@@ -454,10 +478,20 @@ DECLARE_REG 6, ebp, ebp, bp, null, [esp + stack_offset + 28]
 %endmacro
 
 %macro cextern 1
-    %ifdef PREFIX
-        %xdefine %1 _%1
-    %endif
+    %xdefine %1 mangle(program_name %+ _ %+ %1)
     extern %1
+%endmacro
+
+;like cextern, but without the prefix
+%macro cextern_naked 1
+    %xdefine %1 mangle(%1)
+    extern %1
+%endmacro
+
+%macro const 2+
+    %xdefine %1 mangle(program_name %+ _ %+ %1)
+    global %1
+    %1: %2
 %endmacro
 
 ; This is needed for ELF, otherwise the GNU linker assumes the stack is
@@ -465,9 +499,6 @@ DECLARE_REG 6, ebp, ebp, bp, null, [esp + stack_offset + 28]
 %ifidn __OUTPUT_FORMAT__,elf
 SECTION .note.GNU-stack noalloc noexec nowrite progbits
 %endif
-
-%assign FENC_STRIDE 16
-%assign FDEC_STRIDE 32
 
 ; merge mmx and sse*
 
@@ -480,13 +511,14 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
 %endmacro
 
 %macro INIT_MMX 0
+    %assign avx_enabled 0
     %define RESET_MM_PERMUTATION INIT_MMX
     %define mmsize 8
     %define num_mmregs 8
     %define mova movq
     %define movu movq
     %define movh movd
-    %define movnt movntq
+    %define movnta movntq
     %assign %%i 0
     %rep 8
     CAT_XDEFINE m, %%i, mm %+ %%i
@@ -501,6 +533,7 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
 %endmacro
 
 %macro INIT_XMM 0
+    %assign avx_enabled 0
     %define RESET_MM_PERMUTATION INIT_XMM
     %define mmsize 16
     %define num_mmregs 8
@@ -510,11 +543,36 @@ SECTION .note.GNU-stack noalloc noexec nowrite progbits
     %define mova movdqa
     %define movu movdqu
     %define movh movq
-    %define movnt movntdq
+    %define movnta movntdq
     %assign %%i 0
     %rep num_mmregs
     CAT_XDEFINE m, %%i, xmm %+ %%i
     CAT_XDEFINE nxmm, %%i, %%i
+    %assign %%i %%i+1
+    %endrep
+%endmacro
+
+%macro INIT_AVX 0
+    INIT_XMM
+    %assign avx_enabled 1
+    %define PALIGNR PALIGNR_SSSE3
+    %define RESET_MM_PERMUTATION INIT_AVX
+%endmacro
+
+%macro INIT_YMM 0
+    %assign avx_enabled 1
+    %define RESET_MM_PERMUTATION INIT_YMM
+    %define mmsize 32
+    %define num_mmregs 8
+    %ifdef ARCH_X86_64
+    %define num_mmregs 16
+    %endif
+    %define mova vmovaps
+    %define movu vmovups
+    %assign %%i 0
+    %rep num_mmregs
+    CAT_XDEFINE m, %%i, ymm %+ %%i
+    CAT_XDEFINE nymm, %%i, %%i
     %assign %%i %%i+1
     %endrep
 %endmacro
@@ -575,7 +633,10 @@ INIT_MMX
 %endrep
 %endmacro
 
-%macro SAVE_MM_PERMUTATION 1
+; If SAVE_MM_PERMUTATION is placed at the end of a function and given the
+; function name, then any later calls to that function will automatically
+; load the permutation, so values can be returned in mmregs.
+%macro SAVE_MM_PERMUTATION 1 ; name to save as
     %assign %%i 0
     %rep num_mmregs
     CAT_XDEFINE %1_m, %%i, m %+ %%i
@@ -583,7 +644,7 @@ INIT_MMX
     %endrep
 %endmacro
 
-%macro LOAD_MM_PERMUTATION 1
+%macro LOAD_MM_PERMUTATION 1 ; name to load from
     %assign %%i 0
     %rep num_mmregs
     CAT_XDEFINE m, %%i, %1_m %+ %%i
@@ -599,7 +660,7 @@ INIT_MMX
     %endif
 %endmacro
 
-;Substitutions that reduce instruction size but are functionally equivalent
+; Substitutions that reduce instruction size but are functionally equivalent
 %macro add 2
     %ifnum %2
         %if %2==128
@@ -623,3 +684,222 @@ INIT_MMX
         sub %1, %2
     %endif
 %endmacro
+
+;=============================================================================
+; AVX abstraction layer
+;=============================================================================
+
+%assign i 0
+%rep 16
+    %if i < 8
+        CAT_XDEFINE sizeofmm, i, 8
+    %endif
+    CAT_XDEFINE sizeofxmm, i, 16
+    CAT_XDEFINE sizeofymm, i, 32
+%assign i i+1
+%endrep
+%undef i
+
+;%1 == instruction
+;%2 == 1 if float, 0 if int
+;%3 == 0 if 3-operand (xmm, xmm, xmm), 1 if 4-operand (xmm, xmm, xmm, imm)
+;%4 == number of operands given
+;%5+: operands
+%macro RUN_AVX_INSTR 6-7+
+    %if sizeof%5==32
+        v%1 %5, %6, %7
+    %else
+        %if sizeof%5==8
+            %define %%regmov movq
+        %elif %2
+            %define %%regmov movaps
+        %else
+            %define %%regmov movdqa
+        %endif
+
+        %if %4>=3+%3
+            %ifnidn %5, %6
+                %if avx_enabled && sizeof%5==16
+                    v%1 %5, %6, %7
+                %else
+                    %%regmov %5, %6
+                    %1 %5, %7
+                %endif
+            %else
+                %1 %5, %7
+            %endif
+        %elif %3
+            %1 %5, %6, %7
+        %else
+            %1 %5, %6
+        %endif
+    %endif
+%endmacro
+
+;%1 == instruction
+;%2 == 1 if float, 0 if int
+;%3 == 0 if 3-operand (xmm, xmm, xmm), 1 if 4-operand (xmm, xmm, xmm, imm)
+%macro AVX_INSTR 3
+    %macro %1 2-8 fnord, fnord, fnord, %1, %2, %3
+        %ifidn %3, fnord
+            RUN_AVX_INSTR %6, %7, %8, 2, %1, %2
+        %elifidn %4, fnord
+            RUN_AVX_INSTR %6, %7, %8, 3, %1, %2, %3
+        %elifidn %5, fnord
+            RUN_AVX_INSTR %6, %7, %8, 4, %1, %2, %3, %4
+        %else
+            RUN_AVX_INSTR %6, %7, %8, 5, %1, %2, %3, %4, %5
+        %endif
+    %endmacro
+%endmacro
+
+AVX_INSTR addpd, 1, 0
+AVX_INSTR addps, 1, 0
+AVX_INSTR addsd, 1, 0
+AVX_INSTR addss, 1, 0
+AVX_INSTR addsubpd, 1, 0
+AVX_INSTR addsubps, 1, 0
+AVX_INSTR andpd, 1, 0
+AVX_INSTR andps, 1, 0
+AVX_INSTR andnpd, 1, 0
+AVX_INSTR andnps, 1, 0
+AVX_INSTR blendpd, 1, 0
+AVX_INSTR blendps, 1, 0
+AVX_INSTR blendvpd, 1, 0
+AVX_INSTR blendvps, 1, 0
+AVX_INSTR cmppd, 1, 0
+AVX_INSTR cmpps, 1, 0
+AVX_INSTR cmpsd, 1, 0
+AVX_INSTR cmpss, 1, 0
+AVX_INSTR divpd, 1, 0
+AVX_INSTR divps, 1, 0
+AVX_INSTR divsd, 1, 0
+AVX_INSTR divss, 1, 0
+AVX_INSTR dppd, 1, 0
+AVX_INSTR dpps, 1, 0
+AVX_INSTR haddpd, 1, 0
+AVX_INSTR haddps, 1, 0
+AVX_INSTR hsubpd, 1, 0
+AVX_INSTR hsubps, 1, 0
+AVX_INSTR maxpd, 1, 0
+AVX_INSTR maxps, 1, 0
+AVX_INSTR maxsd, 1, 0
+AVX_INSTR maxss, 1, 0
+AVX_INSTR minpd, 1, 0
+AVX_INSTR minps, 1, 0
+AVX_INSTR minsd, 1, 0
+AVX_INSTR minss, 1, 0
+AVX_INSTR mpsadbw, 0, 1
+AVX_INSTR mulpd, 1, 0
+AVX_INSTR mulps, 1, 0
+AVX_INSTR mulsd, 1, 0
+AVX_INSTR mulss, 1, 0
+AVX_INSTR orpd, 1, 0
+AVX_INSTR orps, 1, 0
+AVX_INSTR packsswb, 0, 0
+AVX_INSTR packssdw, 0, 0
+AVX_INSTR packuswb, 0, 0
+AVX_INSTR packusdw, 0, 0
+AVX_INSTR paddb, 0, 0
+AVX_INSTR paddw, 0, 0
+AVX_INSTR paddd, 0, 0
+AVX_INSTR paddq, 0, 0
+AVX_INSTR paddsb, 0, 0
+AVX_INSTR paddsw, 0, 0
+AVX_INSTR paddusb, 0, 0
+AVX_INSTR paddusw, 0, 0
+AVX_INSTR palignr, 0, 1
+AVX_INSTR pand, 0, 0
+AVX_INSTR pandn, 0, 0
+AVX_INSTR pavgb, 0, 0
+AVX_INSTR pavgw, 0, 0
+AVX_INSTR pblendvb, 0, 0
+AVX_INSTR pblendw, 0, 1
+AVX_INSTR pcmpestri, 0, 0
+AVX_INSTR pcmpestrm, 0, 0
+AVX_INSTR pcmpistri, 0, 0
+AVX_INSTR pcmpistrm, 0, 0
+AVX_INSTR pcmpeqb, 0, 0
+AVX_INSTR pcmpeqw, 0, 0
+AVX_INSTR pcmpeqd, 0, 0
+AVX_INSTR pcmpeqq, 0, 0
+AVX_INSTR pcmpgtb, 0, 0
+AVX_INSTR pcmpgtw, 0, 0
+AVX_INSTR pcmpgtd, 0, 0
+AVX_INSTR pcmpgtq, 0, 0
+AVX_INSTR phaddw, 0, 0
+AVX_INSTR phaddd, 0, 0
+AVX_INSTR phaddsw, 0, 0
+AVX_INSTR phsubw, 0, 0
+AVX_INSTR phsubd, 0, 0
+AVX_INSTR phsubsw, 0, 0
+AVX_INSTR pmaddwd, 0, 0
+AVX_INSTR pmaddubsw, 0, 0
+AVX_INSTR pmaxsb, 0, 0
+AVX_INSTR pmaxsw, 0, 0
+AVX_INSTR pmaxsd, 0, 0
+AVX_INSTR pmaxub, 0, 0
+AVX_INSTR pmaxuw, 0, 0
+AVX_INSTR pmaxud, 0, 0
+AVX_INSTR pminsb, 0, 0
+AVX_INSTR pminsw, 0, 0
+AVX_INSTR pminsd, 0, 0
+AVX_INSTR pminub, 0, 0
+AVX_INSTR pminuw, 0, 0
+AVX_INSTR pminud, 0, 0
+AVX_INSTR pmulhuw, 0, 0
+AVX_INSTR pmulhrsw, 0, 0
+AVX_INSTR pmulhw, 0, 0
+AVX_INSTR pmullw, 0, 0
+AVX_INSTR pmulld, 0, 0
+AVX_INSTR pmuludq, 0, 0
+AVX_INSTR pmuldq, 0, 0
+AVX_INSTR por, 0, 0
+AVX_INSTR psadbw, 0, 0
+AVX_INSTR pshufb, 0, 0
+AVX_INSTR psignb, 0, 0
+AVX_INSTR psignw, 0, 0
+AVX_INSTR psignd, 0, 0
+AVX_INSTR psllw, 0, 0
+AVX_INSTR pslld, 0, 0
+AVX_INSTR psllq, 0, 0
+AVX_INSTR pslldq, 0, 0
+AVX_INSTR psraw, 0, 0
+AVX_INSTR psrad, 0, 0
+AVX_INSTR psrlw, 0, 0
+AVX_INSTR psrld, 0, 0
+AVX_INSTR psrlq, 0, 0
+AVX_INSTR psrldq, 0, 0
+AVX_INSTR psubb, 0, 0
+AVX_INSTR psubw, 0, 0
+AVX_INSTR psubd, 0, 0
+AVX_INSTR psubq, 0, 0
+AVX_INSTR psubsb, 0, 0
+AVX_INSTR psubsw, 0, 0
+AVX_INSTR psubusb, 0, 0
+AVX_INSTR psubusw, 0, 0
+AVX_INSTR punpckhbw, 0, 0
+AVX_INSTR punpckhwd, 0, 0
+AVX_INSTR punpckhdq, 0, 0
+AVX_INSTR punpckhqdq, 0, 0
+AVX_INSTR punpcklbw, 0, 0
+AVX_INSTR punpcklwd, 0, 0
+AVX_INSTR punpckldq, 0, 0
+AVX_INSTR punpcklqdq, 0, 0
+AVX_INSTR pxor, 0, 0
+AVX_INSTR shufps, 0, 1
+AVX_INSTR subpd, 1, 0
+AVX_INSTR subps, 1, 0
+AVX_INSTR subsd, 1, 0
+AVX_INSTR subss, 1, 0
+AVX_INSTR unpckhpd, 1, 0
+AVX_INSTR unpckhps, 1, 0
+AVX_INSTR unpcklpd, 1, 0
+AVX_INSTR unpcklps, 1, 0
+AVX_INSTR xorpd, 1, 0
+AVX_INSTR xorps, 1, 0
+
+; 3DNow instructions, for sharing code between AVX, SSE and 3DN
+AVX_INSTR pfadd, 1, 0
+AVX_INSTR pfsub, 1, 0
+AVX_INSTR pfmul, 1, 0

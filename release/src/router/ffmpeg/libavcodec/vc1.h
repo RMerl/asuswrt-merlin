@@ -26,6 +26,7 @@
 #include "avcodec.h"
 #include "mpegvideo.h"
 #include "intrax8.h"
+#include "vc1dsp.h"
 
 /** Markers used in VC-1 AP frame data */
 //@{
@@ -155,12 +156,14 @@ enum COTypes {
 typedef struct VC1Context{
     MpegEncContext s;
     IntraX8Context x8;
+    VC1DSPContext vc1dsp;
 
     int bits;
 
     /** Simple/Main Profile sequence header */
     //@{
-    int res_sm;           ///< reserved, 2b
+    int res_sprite;       ///< reserved, sprite mode
+    int res_y411;         ///< reserved, old interlaced mode
     int res_x8;           ///< reserved
     int multires;         ///< frame-level RESPIC syntax element present
     int res_fasttx;       ///< reserved, always 1
@@ -214,6 +217,8 @@ typedef struct VC1Context{
     int k_y;              ///< Number of bits for MVs (depends on MV range)
     int range_x, range_y; ///< MV range
     uint8_t pq, altpq;    ///< Current/alternate frame quantizer scale
+    uint8_t zz_8x8[4][64];///< Zigzag table for TT_8x8, permuted for IDCT
+    int left_blk_sh, top_blk_sh; ///< Either 3 or 0, positions of l/t in blk[]
     const uint8_t* zz_8x4;///< Zigzag scan table for TT_8x4 coding mode
     const uint8_t* zz_4x8;///< Zigzag scan table for TT_4x8 coding mode
     /** pquant parameters */
@@ -232,7 +237,7 @@ typedef struct VC1Context{
     //@}
     int ttfrm;            ///< Transform type info present at frame level
     uint8_t ttmbf;        ///< Transform type flag
-    uint8_t ttblk4x4;     ///< Value of ttblk which indicates a 4x4 transform
+    int *ttblk_base, *ttblk; ///< Transform type at the block level
     int codingset;        ///< index of current table set from 11.8 to use for luma block decoding
     int codingset2;       ///< index of current table set from 11.8 to use for chroma block decoding
     int pqindex;          ///< raw pqindex used in coding set selection
@@ -302,11 +307,21 @@ typedef struct VC1Context{
     uint8_t range_mapuv;
     //@}
 
+    /** Frame decoding info for sprite modes */
+    //@{
+    int new_sprite;
+    int two_sprites;
+    //@}
+
     int p_frame_skipped;
     int bi_type;
     int x8_type;
 
+    DCTELEM (*block)[6][64];
+    int n_allocated_blks, cur_blk_idx, left_blk_idx, topleft_blk_idx, top_blk_idx;
     uint32_t *cbp_base, *cbp;
+    uint8_t *is_intra_base, *is_intra;
+    int16_t (*luma_mv_base)[2], (*luma_mv)[2];
     uint8_t bfraction_lut_index;///< Index for BFRACTION value (see Table 40, reproduced into ff_vc1_bfraction_lut[])
     uint8_t broken_link;        ///< Broken link flag (BROKEN_LINK syntax element)
     uint8_t closed_entry;       ///< Closed entry point flag (CLOSED_ENTRY syntax element)

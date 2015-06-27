@@ -1,6 +1,6 @@
 /*
  * Filter layer - format negotiation
- * copyright (c) 2007 Bobby Bingham
+ * Copyright (c) 2007 Bobby Bingham
  *
  * This file is part of FFmpeg.
  *
@@ -20,6 +20,7 @@
  */
 
 #include "libavutil/pixdesc.h"
+#include "libavutil/audioconvert.h"
 #include "avfilter.h"
 
 /**
@@ -43,6 +44,12 @@ AVFilterFormats *avfilter_merge_formats(AVFilterFormats *a, AVFilterFormats *b)
 {
     AVFilterFormats *ret;
     unsigned i, j, k = 0;
+
+    if (a == b)
+        return a;
+
+    if (a == b)
+        return a;
 
     ret = av_mallocz(sizeof(AVFilterFormats));
 
@@ -70,49 +77,92 @@ AVFilterFormats *avfilter_merge_formats(AVFilterFormats *a, AVFilterFormats *b)
     return ret;
 }
 
-AVFilterFormats *avfilter_make_format_list(const enum PixelFormat *pix_fmts)
+#define MAKE_FORMAT_LIST()                                              \
+    AVFilterFormats *formats;                                           \
+    int count = 0;                                                      \
+    if (fmts)                                                           \
+        for (count = 0; fmts[count] != -1; count++)                     \
+            ;                                                           \
+    formats = av_mallocz(sizeof(AVFilterFormats));                      \
+    if (!formats) return NULL;                                          \
+    formats->format_count = count;                                      \
+    if (count) {                                                        \
+        formats->formats  = av_malloc(sizeof(*formats->formats)*count); \
+        if (!formats->formats) {                                        \
+            av_free(formats);                                           \
+            return NULL;                                                \
+        }                                                               \
+    }
+
+AVFilterFormats *avfilter_make_format_list(const int *fmts)
 {
-    AVFilterFormats *formats;
-    int count;
-
-    for (count = 0; pix_fmts[count] != PIX_FMT_NONE; count++)
-        ;
-
-    formats               = av_mallocz(sizeof(AVFilterFormats));
-    formats->formats      = av_malloc(sizeof(*formats->formats) * count);
-    formats->format_count = count;
-    memcpy(formats->formats, pix_fmts, sizeof(*formats->formats) * count);
+    MAKE_FORMAT_LIST();
+    while (count--)
+        formats->formats[count] = fmts[count];
 
     return formats;
 }
 
-int avfilter_add_colorspace(AVFilterFormats **avff, enum PixelFormat pix_fmt)
+AVFilterFormats *avfilter_make_format64_list(const int64_t *fmts)
 {
-    enum PixelFormat *pix_fmts;
+    MAKE_FORMAT_LIST();
+    if (count)
+        memcpy(formats->formats, fmts, sizeof(*formats->formats) * count);
+
+    return formats;
+}
+
+int avfilter_add_format(AVFilterFormats **avff, int64_t fmt)
+{
+    int64_t *fmts;
 
     if (!(*avff) && !(*avff = av_mallocz(sizeof(AVFilterFormats))))
         return AVERROR(ENOMEM);
 
-    pix_fmts = av_realloc((*avff)->formats,
-                          sizeof((*avff)->formats) * ((*avff)->format_count+1));
-    if (!pix_fmts)
+    fmts = av_realloc((*avff)->formats,
+                      sizeof(*(*avff)->formats) * ((*avff)->format_count+1));
+    if (!fmts)
         return AVERROR(ENOMEM);
 
-    (*avff)->formats = pix_fmts;
-    (*avff)->formats[(*avff)->format_count++] = pix_fmt;
+    (*avff)->formats = fmts;
+    (*avff)->formats[(*avff)->format_count++] = fmt;
     return 0;
 }
 
-AVFilterFormats *avfilter_all_colorspaces(void)
+AVFilterFormats *avfilter_all_formats(enum AVMediaType type)
 {
     AVFilterFormats *ret = NULL;
-    enum PixelFormat pix_fmt;
+    int fmt;
+    int num_formats = type == AVMEDIA_TYPE_VIDEO ? PIX_FMT_NB    :
+                      type == AVMEDIA_TYPE_AUDIO ? AV_SAMPLE_FMT_NB : 0;
 
-    for (pix_fmt = 0; pix_fmt < PIX_FMT_NB; pix_fmt++)
-        if (!(av_pix_fmt_descriptors[pix_fmt].flags & PIX_FMT_HWACCEL))
-            avfilter_add_colorspace(&ret, pix_fmt);
+    for (fmt = 0; fmt < num_formats; fmt++)
+        if ((type != AVMEDIA_TYPE_VIDEO) ||
+            (type == AVMEDIA_TYPE_VIDEO && !(av_pix_fmt_descriptors[fmt].flags & PIX_FMT_HWACCEL)))
+            avfilter_add_format(&ret, fmt);
 
     return ret;
+}
+
+AVFilterFormats *avfilter_all_channel_layouts(void)
+{
+    static int64_t chlayouts[] = {
+        AV_CH_LAYOUT_MONO,
+        AV_CH_LAYOUT_STEREO,
+        AV_CH_LAYOUT_4POINT0,
+        AV_CH_LAYOUT_QUAD,
+        AV_CH_LAYOUT_5POINT0,
+        AV_CH_LAYOUT_5POINT0_BACK,
+        AV_CH_LAYOUT_5POINT1,
+        AV_CH_LAYOUT_5POINT1_BACK,
+        AV_CH_LAYOUT_5POINT1|AV_CH_LAYOUT_STEREO_DOWNMIX,
+        AV_CH_LAYOUT_7POINT1,
+        AV_CH_LAYOUT_7POINT1_WIDE,
+        AV_CH_LAYOUT_7POINT1|AV_CH_LAYOUT_STEREO_DOWNMIX,
+        -1,
+    };
+
+    return avfilter_make_format64_list(chlayouts);
 }
 
 void avfilter_formats_ref(AVFilterFormats *f, AVFilterFormats **ref)

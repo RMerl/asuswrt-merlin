@@ -424,10 +424,10 @@ static const uint16_t * const cf_table[16] = {
 };
 
 
-/** Initializes a given lookup table using a given delta
+/** Initialize a given lookup table using a given delta
  */
-static void bgmc_lut_fillp(uint8_t *lut, unsigned int *lut_status,
-                           unsigned int delta)
+static void bgmc_lut_fillp(uint8_t *lut, int *lut_status,
+                           int delta)
 {
     unsigned int sx, i;
 
@@ -446,10 +446,10 @@ static void bgmc_lut_fillp(uint8_t *lut, unsigned int *lut_status,
 }
 
 
-/** Retunes the index of a suitable lookup table for a given delta
+/** Retune the index of a suitable lookup table for a given delta
  */
-static uint8_t* bgmc_lut_getp(uint8_t *lut, unsigned int *lut_status,
-                              unsigned int delta)
+static uint8_t* bgmc_lut_getp(uint8_t *lut, int *lut_status,
+                              int delta)
 {
     unsigned int i = av_clip(delta, 0, LUT_BUFF - 1);
 
@@ -462,9 +462,9 @@ static uint8_t* bgmc_lut_getp(uint8_t *lut, unsigned int *lut_status,
 }
 
 
-/** Initializes the lookup table arrays
+/** Initialize the lookup table arrays
  */
-int ff_bgmc_init(AVCodecContext *avctx, uint8_t **cf_lut, unsigned int **cf_lut_status)
+int ff_bgmc_init(AVCodecContext *avctx, uint8_t **cf_lut, int **cf_lut_status)
 {
     *cf_lut        = av_malloc(sizeof(*cf_lut       ) * LUT_BUFF * 16 * LUT_SIZE);
     *cf_lut_status = av_malloc(sizeof(*cf_lut_status) * LUT_BUFF);
@@ -473,22 +473,25 @@ int ff_bgmc_init(AVCodecContext *avctx, uint8_t **cf_lut, unsigned int **cf_lut_
         ff_bgmc_end(cf_lut, cf_lut_status);
         av_log(avctx, AV_LOG_ERROR, "Allocating buffer memory failed.\n");
         return AVERROR(ENOMEM);
+    } else {
+        // initialize lut_status buffer to a value never used to compare against
+        memset(*cf_lut_status, -1, sizeof(*cf_lut_status) * LUT_BUFF);
     }
 
     return 0;
 }
 
 
-/** Releases the lookup table arrays
+/** Release the lookup table arrays
  */
-void ff_bgmc_end(uint8_t **cf_lut, unsigned int **cf_lut_status)
+void ff_bgmc_end(uint8_t **cf_lut, int **cf_lut_status)
 {
     av_freep(cf_lut);
     av_freep(cf_lut_status);
 }
 
 
-/** Initializes decoding and reads the first value
+/** Initialize decoding and reads the first value
  */
 void ff_bgmc_decode_init(GetBitContext *gb,
                       unsigned int *h, unsigned int *l, unsigned int *v)
@@ -507,12 +510,12 @@ void ff_bgmc_decode_end(GetBitContext *gb)
 }
 
 
-/** Reads and decodes a block Gilbert-Moore coded symbol
+/** Read and decode a block Gilbert-Moore coded symbol
  */
 void ff_bgmc_decode(GetBitContext *gb, unsigned int num, int32_t *dst,
-                 unsigned int delta, unsigned int sx,
+                 int delta, unsigned int sx,
                  unsigned int *h, unsigned int *l, unsigned int *v,
-                 uint8_t *cf_lut, unsigned int *cf_lut_status)
+                 uint8_t *cf_lut, int *cf_lut_status)
 {
     unsigned int i;
     uint8_t *lut = bgmc_lut_getp(cf_lut, cf_lut_status, delta);
