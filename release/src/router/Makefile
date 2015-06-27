@@ -2840,6 +2840,7 @@ minidlna-configure:
 minidlna-clean:
 	-@$(MAKE) -C minidlna clean
 	@rm -f minidlna/Makefile
+	@rm -f minidlna/configure
 
 minidlna-install:
 	install -D minidlna/minidlnad $(INSTALLDIR)/minidlna/usr/sbin/minidlna
