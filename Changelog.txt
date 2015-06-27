@@ -16,7 +16,9 @@ Asuswrt-Merlin Changelog
 
   - NEW: Reformatted DHCP lease list under System Log.
   - NEW: Reformatted Port Forward page under System Log.
-  - NEW: Display more details about UPNP/NAT-PMP/PCP redirections.
+  - NEW: Reformatted Route Table page under System Log.
+  - NEW: Display more details about UPNP/NAT-PMP/PCP redirections
+         on the Port Forward page.
   - CHANGED: The JFFS2 partition is now always enabled, as it is
              required by various firmware functions.  The options
              to format it or to enable/disable user config/scripts
@@ -30,16 +32,21 @@ Asuswrt-Merlin Changelog
              would take far too long on a router.
              The end-user still has the possibility of providing his
              own - as long it's 1024-bit or stronger.
+  - CHANGED: Updated minidlna to upstream Git snapshot from 2015-06-26,
+             and switched to the newer build system.
+  - CHANGED: Upgraded ffmpeg from 0.6.0 to 0.7.17.
   - FIXED: Wireless Log page would fail to load if the SSID
            contained certain characters
   - FIXED: Wireless Log page would fail to load when in Media Bridge
-           on the RT-AC87U
+           mode on the RT-AC87U
   - FIXED: DDNS page would complain about an empty account field
            when setting it to CUSTOM with no prior value in that field.
   - FIXED: Automatically generated DH was too weak (512-bit) and 
            preventing clients based on newer OpenSSL releases from 
            connecting.  We automatically replace any weak PEM with our 
            2048-bit one.
+  - FIXED: minidlna could get stuck building its database (reverted
+           Asus's recent memory optimizations)
 
 
 378.54_2 (10-June-2015)
