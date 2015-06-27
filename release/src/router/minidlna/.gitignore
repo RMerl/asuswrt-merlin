@@ -39,3 +39,4 @@ osver.h
 minidlnad
 tagutils/.dirstamp
 linux/minidlna.init.d.script
+configure
