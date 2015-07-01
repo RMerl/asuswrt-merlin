@@ -105,7 +105,7 @@ function show_ipv6clients() {
 function show_pinholes() {
 	var code, i, rule
 
-	code = '<table width="100%" id="24G" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
+	code = '<table width="100%" id="pinholes" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
 	code += '<thead><tr><td colspan="5">IPv6 pinhole rules opened in the firewall through UPnP/IGD2</td></tr></thead>';
 	code += '<th width=34%">Remote</th>';
 	code += '<th width=12%">Port</th>';
