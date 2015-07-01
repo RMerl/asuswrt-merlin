@@ -49,6 +49,7 @@
 #include <linux/version.h>
 
 #include "data_arrays.h"
+#include "httpd.h"
 
 
 int
@@ -507,4 +508,127 @@ ej_get_route_array(int eid, webs_t wp, int argc, char_t **argv)
 	ret += websWrite(wp, "[]];\n");
 	return ret;
 }
+
+#ifdef RTCONFIG_IPV6
+ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *fp;
+	char buf[64+32+8192+1];
+	char *hostname, *macaddr, ipaddrs[8192+1];
+	char ipv6_dns_str[1024];
+	char *wan_type, *wan_dns, *p;
+	int service, i, ret = 0;
+
+	ret += websWrite(wp, "var ipv6cfgarray = [");
+
+	if (!(ipv6_enabled() && is_routing_enabled())) {
+		ret += websWrite(wp, "[]];\n");
+		ret += websWrite(wp, "var ipv6clientarray = [");
+		ret += websWrite(wp, "[]];\n");
+		return ret;
+	}
+
+	service = get_ipv6_service();
+	switch (service) {
+	case IPV6_NATIVE_DHCP:
+		wan_type = "Native with DHCP-PD"; break;
+	case IPV6_6TO4:
+		wan_type = "Tunnel 6to4"; break;
+	case IPV6_6IN4:
+		wan_type = "Tunnel 6in4"; break;
+	case IPV6_6RD:
+		wan_type = "Tunnel 6rd"; break;
+	case IPV6_MANUAL:
+		wan_type = "Static"; break;
+	default:
+		wan_type = "Disabled"; break;
+	}
+
+	ret += websWrite(wp, "[\"IPv6 Connection Type\",\"%s\"],", wan_type);
+
+	ret += websWrite(wp, "[\"WAN IPv6 Address\",\"%s\"],",
+			 getifaddr((char *) get_wan6face(), AF_INET6, GIF_PREFIXLEN) ? : nvram_safe_get("ipv6_rtr_addr"));
+
+
+	ret += websWrite(wp, "[\"WAN IPv6 Gateway\",\"%s\"],",
+			 ipv6_gateway_address() ? : "");
+
+	ret += websWrite(wp, "[\"LAN IPv6 Address\",\"%s/%d\"],",
+			 nvram_safe_get("ipv6_rtr_addr"), nvram_get_int("ipv6_prefix_length"));
+
+	ret += websWrite(wp, "[\"LAN IPv6 Link-Local Address\",\"%s\"],",
+			 getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_LINKLOCAL | GIF_PREFIXLEN) ? : "");
+
+	if (service == IPV6_NATIVE_DHCP) {
+		ret += websWrite(wp, "[\"DHCP-PD\",\"%s\"],",
+			 nvram_get_int("ipv6_dhcp_pd") ? "Enabled" : "Disabled");
+	}
+
+	ret += websWrite(wp, "[\"LAN IPv6 Prefix\",\"%s/%d\"],",
+			 nvram_safe_get("ipv6_prefix"), nvram_get_int("ipv6_prefix_length"));
+
+	if (service == IPV6_NATIVE_DHCP &&
+	    nvram_get_int("ipv6_dnsenable")) {
+		wan_dns = nvram_safe_get("ipv6_get_dns");
+	} else {
+		char nvname[sizeof("ipv6_dnsXXX")];
+		char *next = ipv6_dns_str;
+
+		ipv6_dns_str[0] = '\0';
+		for (i = 1; i <= 3; i++) {
+			snprintf(nvname, sizeof(nvname), "ipv6_dns%d", i);
+			wan_dns = nvram_safe_get(nvname);
+			if (*wan_dns)
+				next += sprintf(next, *ipv6_dns_str ? " %s" : "%s", wan_dns);
+		}
+		wan_dns = ipv6_dns_str;
+	}
+
+	ret += websWrite(wp, "[\"DNS Address\",\"%s\"],", wan_dns);
+	ret += websWrite(wp, "[]];\n");
+
+	ret += websWrite(wp, "var ipv6clientarray = [");
+
+	/* Refresh lease file to get actual expire time */
+	killall("dnsmasq", SIGUSR2);
+	usleep(100 * 1000);
+
+	get_ipv6_client_info();
+	get_ipv6_client_list();
+
+	if ((fp = fopen(IPV6_CLIENT_LIST, "r")) == NULL) {
+		_dprintf("can't open %s: %s", IPV6_CLIENT_LIST, strerror(errno));
+		return ret;
+	}
+
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		char *ptr = buf;
+
+		ptr = strsep(&ptr, "\n");
+		hostname = strsep(&ptr, " ");
+		macaddr = strsep(&ptr, " ");
+		if (!macaddr || *macaddr == '\0' ||
+		    !ptr || *ptr == '\0')
+			continue;
+
+		if (strlen(hostname) > 32)
+			sprintf(hostname + 29, "...");
+
+		ipaddrs[0] = '\0';
+		p = ipaddrs;
+		while (ptr && *ptr) {
+			char *next = strsep(&ptr, ",\n");
+			if (next && *next)
+				p += snprintf(p, sizeof(ipaddrs) + ipaddrs - p, "%s%s", *ipaddrs ? ", " : "", next);
+		}
+
+		ret += websWrite(wp, "[\"%s\", \"%s\", \"%s\"],",
+				 hostname, macaddr, ipaddrs);
+	}
+	fclose(fp);
+
+	ret += websWrite(wp, "[]];\n");
+	return ret;
+}
+#endif
 

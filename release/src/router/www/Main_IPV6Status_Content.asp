@@ -16,27 +16,94 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
+<script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 
 <style>
 .pinholeheader{
         background-color:#475a5f;
         color:#FFCC00;
 	font-size: 125%;
+
+p{
+	font-weight: bolder;
 }
 </style>
+
 
 <script>
 
 <% ipv6_pinholes(); %>
+<% get_ipv6net_array(); %>
+
+overlib_str_tmp = "";
+overlib.isOut = true;
 
 function initial() {
 	show_menu();
+
+	show_ipv6config();
+	show_ipv6clients();
 
 	if (igd2_support)
 	{
 		document.getElementById("pinholespan").style.display="";
 		show_pinholes();
 	}
+}
+
+
+function show_ipv6config() {
+	var code, i, line
+
+	code = '<table width="100%" id="ipv6config" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+	code += '<thead><tr><td colspan="2">IPv6 Configuration</td></tr></thead>';
+
+	if (ipv6cfgarray.length > 1) {
+		for (i = 0; i < ipv6cfgarray.length-1; ++i) {
+			line = ipv6cfgarray[i];
+                        code += '<tr><th>' + line[0] + '</th>';
+			code += '<td>' + line[1] + '</td>';
+			code += '</tr>';
+		}
+	} else {
+		code += '<tr><td colspan="2">IPv6 Not enabled.</td></tr>';
+	}
+
+	code += '</tr></table>';
+	document.getElementById("ipv6configblock").innerHTML = code;
+}
+
+
+function show_ipv6clients() {
+	var code, i, line
+
+	code = '<table width="100%" id="ipv6clients" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
+	code += '<thead><tr><td colspan="3">IPv6 Clients</td></tr></thead>';
+
+	code += '<tr><th width="25%">Hostname</th>';
+	code += '<th width="25%">MAC</th>';
+	code += '<th width="50%">IP Address</th>';
+	code += '</tr>';
+
+	if (ipv6clientarray.length > 1) {
+		for (i = 0; i < ipv6clientarray.length-1; ++i) {
+			line = ipv6clientarray[i];
+			code += '<tr><td>' + line[0].tagescape() + '</td>';
+
+			overlib_str = "<p><#MAC_Address#>:</p>" + line[1];
+			code += '<td><span class="ClientName" onclick="oui_query(\'' + line[1] +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[1].toUpperCase() +'</span></td>';
+
+			code += '<td>' + line[2] + '</td>';
+			code += '</tr>';
+                }
+	} else {
+		code += '<tr><td colspan="3">No IPv6 clients.</td></tr>';
+	}
+	code += '</table>';
+	document.getElementById("ipv6clientsblock").innerHTML = code;
 }
 
 
@@ -116,8 +183,12 @@ function show_pinholes() {
 										<div class="formfonttitle"><#System_Log#> - <#ipv6_info#></div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="formfontdesc"><#ipv6_info_desc#></div>
-										<div style="margin-top:8px">   
-											<textarea cols="63" rows="25" readonly="readonly" wrap="off" style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("ipv6_network.log", "ipv6_network.sh"); %></textarea>
+                                                                        
+										<div style="margin-top:8px">
+											<div id="ipv6configblock"></div>
+										</div>
+                                                                        	<div style="margin-top:8px">
+											<div id="ipv6clientsblock"></div>
 										</div>
 										<br>
 										<span id="pinholespan" style="display:none;">
