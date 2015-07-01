@@ -17,6 +17,7 @@ Asuswrt-Merlin Changelog
   - NEW: Reformatted DHCP lease list under System Log.
   - NEW: Reformatted Port Forward page under System Log.
   - NEW: Reformatted Route Table page under System Log.
+  - NEW: Reformatted IPv6 Status page under System Log.
   - NEW: Display more details about UPNP/NAT-PMP/PCP redirections
          on the Port Forward page.
   - CHANGED: The JFFS2 partition is now always enabled, as it is
@@ -35,6 +36,12 @@ Asuswrt-Merlin Changelog
   - CHANGED: Updated minidlna to upstream Git snapshot from 2015-06-26,
              and switched to the newer build system.
   - CHANGED: Upgraded ffmpeg from 0.6.0 to 0.7.17.
+  - CHANGED: Accept DHCP lease duration of up to 31 days on the DHCP page
+  - CHANGED: No longer regularly flush caches from memory on ARM
+             router.  This will mean a lower amount of free memory is
+             shown, however that memory gets freed whenever something
+             actually needs it, so this is normal. (ARM)
+  - CHANGED: Display the size of cache memory on the Tools -> Sysinfo page
   - FIXED: Wireless Log page would fail to load if the SSID
            contained certain characters
   - FIXED: Wireless Log page would fail to load when in Media Bridge
