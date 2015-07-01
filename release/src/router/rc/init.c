@@ -5013,6 +5013,10 @@ void force_free_caches()
 		free_caches(FREE_MEM_PAGE, 2, 0);
 	}
 #endif
+
+#ifdef RTCONFIG_BCMARM
+	f_write_string("/proc/sys/vm/drop_caches", "1", 0, 0);
+#endif
 }
 
 #ifdef RTN65U
