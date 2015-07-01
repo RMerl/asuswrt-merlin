@@ -377,6 +377,11 @@ function updateClientList(e){
 					</tr>
 
 					<tr>
+						<th>Cache</th>
+						<td> <% sysinfo("memory.cache"); %>&nbsp;MB</td>
+					</tr>
+
+					<tr>
 						<th>Swap usage</th>
 						<td><% sysinfo("memory.swap.used"); %> / <% sysinfo("memory.swap.total"); %>&nbsp;MB</td>
 					</tr>

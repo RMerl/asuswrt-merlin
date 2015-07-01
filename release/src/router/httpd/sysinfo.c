@@ -72,6 +72,7 @@ unsigned int get_wifi_clients(int radio, int querytype);
 unsigned int get_qtn_version(char *version, int len);
 
 #define MBYTES 1024 / 1024
+#define KBYTES 1024
 
 #define SI_WL_QUERY_ASSOC 1
 #define SI_WL_QUERY_AUTHE 2
@@ -142,6 +143,19 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 		} else if(strcmp(type,"memory.swap.used") == 0) {
 			sysinfo(&sys);
 			sprintf(result,"%.2f",((sys.totalswap - sys.freeswap) / (float)MBYTES));
+		} else if(strcmp(type,"memory.cache") == 0) {
+			int size = 0;
+			char *buffer = read_whole_file("/proc/meminfo");
+
+			if (buffer) {
+				tmp = strstr(buffer, "Cached");
+				if (tmp)
+					sscanf(tmp, "Cached:            %d kB\n", &size);
+				free(buffer);
+				sprintf(result,"%.2f", (size / (float)KBYTES));
+			} else {
+				strcpy(result,"??");
+			}
 		} else if(strcmp(type,"cpu.load.1") == 0) {
 			sysinfo(&sys);
 			sprintf(result,"%.2f",(sys.loads[0] / (float)(1<<SI_LOAD_SHIFT)));
