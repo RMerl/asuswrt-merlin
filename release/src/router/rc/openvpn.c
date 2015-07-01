@@ -1200,7 +1200,7 @@ void start_vpnserver(int serverNum)
 			fprintf(fp, "%s", get_parsed_crt(&buffer[0], buffer2, sizeof(buffer2)));
 			fclose(fp);
 
-			sprintf(&buffer[0], "openssl verify -CAfile /etc/openvpn/server%d/ca.crt /tmp/test.crt > /tmp/output.txt", serverNum);
+			sprintf(&buffer[0], "/usr/sbin/openssl verify -CAfile /etc/openvpn/server%d/ca.crt /tmp/test.crt > /tmp/output.txt", serverNum);
 			system(&buffer[0]);
 			f_read_string("/tmp/output.txt", &buffer[0], 64);
 	                unlink("/tmp/test.crt");
@@ -1242,7 +1242,7 @@ void start_vpnserver(int serverNum)
 			valid = 1;	// Tentative state
 
 			// Validate DH strength
-			sprintf(&buffer[0], "openssl dhparam -in /etc/openvpn/server%d/dh.pem -text | grep \"DH Parameters:\" > /tmp/output.txt", serverNum);
+			sprintf(&buffer[0], "/usr/sbin/openssl dhparam -in /etc/openvpn/server%d/dh.pem -text | grep \"DH Parameters:\" > /tmp/output.txt", serverNum);
 			system(&buffer[0]);
 			f_read_string("/tmp/output.txt", &buffer[0], 64);
 			if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
