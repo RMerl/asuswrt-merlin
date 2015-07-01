@@ -64,7 +64,7 @@ function show_ipv6config() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="2">IPv6 Not enabled.</td></tr>';
+		code += '<tr><td colspan="2"><span>IPv6 Not enabled.</span></td></tr>';
 	}
 
 	code += '</tr></table>';
@@ -95,7 +95,7 @@ function show_ipv6clients() {
 			code += '</tr>';
                 }
 	} else {
-		code += '<tr><td colspan="3">No IPv6 clients.</td></tr>';
+		code += '<tr><td colspan="3"><span>No IPv6 clients.</span></td></tr>';
 	}
 	code += '</table>';
 	document.getElementById("ipv6clientsblock").innerHTML = code;
@@ -129,7 +129,7 @@ function show_pinholes() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="5">No pinhole configured.</td></tr>';
+		code += '<tr><td colspan="5"><span>No pinhole configured.</span></td></tr>';
 	}
 
 	code += '</tr></table>';
