@@ -1168,7 +1168,9 @@ function edit_delete(){
 		document.getElementById("statusframe").contentWindow.refreshpage();
 
 		setTimeout("document.getElementById('loadingIcon').style.display='none'", 3500);
-		setTimeout("document.getElementById('deleteBtn').style.display='none'", 3500);
+//		setTimeout("document.getElementById('deleteBtn').style.display='none'", 3500);
+	} else {
+		alert("This entry does not already exist on the custom client list!");
 	}
 }
 
@@ -1235,7 +1237,7 @@ function hideEditBlock(){
 	document.getElementById('edit_usericon_block').style.display = "none";
 	document.getElementById('loadingIcon').style.display = 'none';
 	document.getElementById('loadingUserIcon').style.display = 'none';
-	document.getElementById('deleteBtn').style.display ='none';
+//	document.getElementById('deleteBtn').style.display ='none';
 }
 
 //check user icon num is over 100 or not.
@@ -1864,7 +1866,7 @@ function previewImage(imageObj) {
 		</tr>
 	</table>		
 	<div style="margin-top:5px;padding-bottom:10px;width:100%;text-align:center;">
-		<input class="button_gen" type="button" onclick="edit_delete();" id="deleteBtn" value="<#CTL_del#>" style="display:none;">
+		<input class="button_gen" type="button" onclick="edit_delete();" id="deleteBtn" value="<#CTL_del#>">
 		<input class="button_gen" type="button" id="blockBtn" value="<#Block#>" title="<#block_client#>" style="display:none;">
 		<script>
 			document.maclist_form.wl0_maclist_x.value = (function(){
