@@ -1545,13 +1545,13 @@ endif	# BCM7
 ifeq ($(RTCONFIG_DHDAP),y)
 dhd:
 	@true
-ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
-	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe
-endif
+#ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
+#	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe
+#endif
 
 dhd-clean :
 ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
-	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe clean
+#	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe clean
 	rm -f $(INSTALLDIR)/dhd/usr/sbin/dhd
 	cd $(SRCBASE_DHD) && rm -f `find ./ -name "*.cmd" && find ./ -name "*.o"`
 endif
