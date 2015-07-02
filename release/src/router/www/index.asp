@@ -992,6 +992,7 @@ function validForm(){
 			retFlag = 0;
 		}
 
+/*
 		document.list_form.dhcp_staticlist.value.split("<").forEach(function(element, index){
 			if(element.indexOf(document.getElementById("ipaddr_field").value) != -1){
 				if(element.indexOf(document.getElementById("macaddr_field").value) == -1){
@@ -1002,7 +1003,7 @@ function validForm(){
 				}
 			}
 		});
-		
+*/		
 		return retFlag;
 	}
 
