@@ -69,7 +69,7 @@ function show_leases() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="4">No active leases.</td></tr>';
+		code += '<tr><td colspan="4"><span>No active leases.</span></td></tr>';
 	}
 
 	code += '</tr></table>';

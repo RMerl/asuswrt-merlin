@@ -210,15 +210,17 @@ image_free(image_s *pimage)
 pix
 get_pix(image_s *pimage, int32_t x, int32_t y)
 {
-	if((x >= 0) && (y >= 0) && (x < pimage->width) && (y < pimage->height))
-	{
-		return(pimage->buf[(y * pimage->width) + x]);
-	}
-	else
-	{
-		pix vpix = BLACK;
-		return(vpix);
-	}
+	if (x < 0)
+		x = 0;
+	else if (x >= pimage->width)
+		x = pimage->width - 1;
+
+	if (y < 0)
+		y = 0;
+	else if (y >= pimage->height)
+		y = pimage->height - 1;
+
+	return(pimage->buf[(y * pimage->width) + x]);
 }
 
 void
@@ -454,6 +456,7 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
 	cinfo.scale_denom = scale;
 	cinfo.do_fancy_upsampling = FALSE;
 	cinfo.do_block_smoothing = FALSE;
+	cinfo.dct_method = JDCT_IFAST;
 	jpeg_start_decompress(&cinfo);
 	w = cinfo.output_width;
 	h = cinfo.output_height;

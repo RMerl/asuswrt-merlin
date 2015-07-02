@@ -360,7 +360,7 @@ function validForm(){
 //} Viz 2011.10 check if DHCP pool in default pool
 
 
-	if(!validator.range(document.form.dhcp_lease, 120, 604800))
+	if(!validator.range(document.form.dhcp_lease, 120, 2678400))
  
 		return false;
 
@@ -633,7 +633,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			  <tr>
             <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,5);"><#LANHostConfig_LeaseTime_itemname#></a></th>
             <td>
-              <input type="text" maxlength="6" name="dhcp_lease" class="input_15_table" value="<% nvram_get("dhcp_lease"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off">
+              <input type="text" maxlength="7" name="dhcp_lease" class="input_15_table" value="<% nvram_get("dhcp_lease"); %>" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off">
             </td>
 			  </tr>
 

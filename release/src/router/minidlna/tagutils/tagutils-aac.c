@@ -117,6 +117,9 @@ _get_aactags(char *file, struct song_metadata *psong)
 				psong->album = strdup((char*)&current_data[16]);
 			else if(!memcmp(current_atom, "\xA9" "cmt", 4))
 				psong->comment = strdup((char*)&current_data[16]);
+			else if(!memcmp(current_atom, "aART", 4) ||
+				!memcmp(current_atom, "aart", 4))
+				psong->contributor[ROLE_ALBUMARTIST] = strdup((char*)&current_data[16]);
 			else if(!memcmp(current_atom, "\xA9" "dir", 4))
 				psong->contributor[ROLE_CONDUCTOR] = strdup((char*)&current_data[16]);
 			else if(!memcmp(current_atom, "\xA9" "wrt", 4))

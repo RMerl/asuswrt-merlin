@@ -55,7 +55,7 @@ function show_routev4() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="8">No IPv4 routes.</td></tr>';
+		code += '<tr><td colspan="8"><span>No IPv4 routes.</span></td></tr>';
 	}
 
 	code += '</tr></table>';
@@ -90,7 +90,7 @@ function show_routev6() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="6">No IPv6 routes.</td></tr>';
+		code += '<tr><td colspan="6"><span>No IPv6 routes.</span></td></tr>';
 	}
 
 	code += '</tr></table>';

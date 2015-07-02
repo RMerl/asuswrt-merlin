@@ -123,7 +123,7 @@ seedRandomByte(uint32_t seed)
 	return sqlite3Prng.s[t];
 }
 
-void
+static void
 seedRandomness(int n, void *pbuf, uint32_t seed)
 {
 	unsigned char *zbuf = pbuf;

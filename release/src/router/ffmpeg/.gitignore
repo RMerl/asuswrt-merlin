@@ -29,4 +29,4 @@ libswscale/libswscale.pc
 config.fate
 libavfilter/libavfilter-uninstalled.pc
 libavfilter/libavfilter.pc
-
+/version.h

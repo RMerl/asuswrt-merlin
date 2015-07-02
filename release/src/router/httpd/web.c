@@ -1085,12 +1085,10 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 #if 0
 	else if (strcmp(file, "leases.log")==0)
 		return (ej_lan_leases(eid, wp, 0, NULL));
-#endif
 #ifdef RTCONFIG_IPV6
 	else if (strcmp(file, "ipv6_network.log")==0)
 		return (ej_lan_ipv6_network(eid, wp, 0, NULL));
 #endif
-#if 0
 	else if (strcmp(file, "iptable.log")==0)
 		return (get_nat_vserver_table(eid, wp, 0, NULL));
 	else if (strcmp(file, "route.log")==0)
@@ -4014,7 +4012,6 @@ static int compare_back(FILE *fp, int current_line, char *buffer);
 static int check_mac_previous(char *mac);
 static char *value(FILE *fp, int line, int token);
 static void find_hostname_by_mac(char *mac, char *hostname);
-static void get_ipv6_client_info();
 static int total_lines = 0;
 
 /* Init File and clear the content */
@@ -4199,7 +4196,7 @@ END:
 	strcpy(hostname, "<unknown>");
 }
 
-static void get_ipv6_client_info()
+void get_ipv6_client_info()
 {
 	FILE *fp;
 	char buffer[128], ipv6_addr[128], mac[32];
@@ -4240,7 +4237,7 @@ static void get_ipv6_client_info()
 	fclose(fp);
 }
 
-static void get_ipv6_client_list(void)
+void get_ipv6_client_list(void)
 {
 	FILE *fp;
 	int line_index = 1;
@@ -4294,6 +4291,7 @@ static int ipv6_client_numbers(void)
 }
 #endif
 
+#if 0
 int
 ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -4404,6 +4402,7 @@ ej_lan_ipv6_network(int eid, webs_t wp, int argc, char_t **argv)
 
 	return ret;
 }
+#endif
 
 #if 0 /* temporary till httpd route table redo */
 static void INET6_displayroutes(webs_t wp)
@@ -5980,13 +5979,11 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			strncasecmp(system_cmd, "ether-wake", 10) == 0
 		)){
 			strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
-			sys_script("syscmd.sh");        // Immediately run it
 		}
 		else if(!strcmp(current_url, "Main_AdmStatus_Content.asp"))
 		{
 			if(strncasecmp(system_cmd, "run_telnetd", 11) == 0){
 				strncpy(SystemCmd, system_cmd, sizeof(SystemCmd));
-				sys_script("syscmd.sh");				
 			}else if(strncasecmp(system_cmd, "run_infosvr", 11) == 0){
 				nvram_set("ateCommand_flag", "1");
 			}
@@ -6001,7 +5998,9 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			strcpy(SystemCmd, "");
 		}
 
-		websRedirect(wp, current_url);
+		if (SystemCmd[0] != '\0')
+			sys_script("syscmd.sh");
+
 		return 0;
 	}
 	else if (!strcmp(action_mode," Clear "))
@@ -10273,29 +10272,29 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		}
 		else if(strstr(line, "MOUNT_PATH") != NULL){
 			memset(buf, 0, PATH_MAX);
-			substr(dest, line, 11, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX-11);
 			char_to_ascii(buf, dest);
 			strcpy(mounted_path, buf);
 		}
 		else if(strstr(line, "FILENAME") != NULL){
-			substr(dest, line, 9, PATH_MAX);
+			substr(dest, line, 9, PATH_MAX-9);
 			strcpy(target_obj, dest); // support Chinese
 			break;
 		}
 		else if(strstr(line, "ERR_MSG") != NULL){
-			substr(dest, line, 8, PATH_MAX);
+			substr(dest, line, 8, PATH_MAX-8);
 			strcpy(error_msg, dest);
 		}
 		else if(strstr(line, "TOTAL_SPACE") != NULL){
-			substr(dest, line, 12, PATH_MAX);
+			substr(dest, line, 12, PATH_MAX-12);
 			strcpy(full_capa, dest);
 		}
 		else if(strstr(line, "USED_SPACE") != NULL){
-			substr(dest, line, 11, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX-11);
 			strcpy(used_capa, dest);
 		}
 		else if(strstr(line, "CAPTCHA_URL") != NULL){
-			substr(dest, line, 12, PATH_MAX);
+			substr(dest, line, 12, PATH_MAX-12);
 			strcpy(captcha_url, dest);
 		}
 
@@ -10612,29 +10611,29 @@ int ej_UI_rs_status(int eid, webs_t wp, int argc, char **argv){
 			strncpy(status, convert_cloudsync_status(line), 16);
 		}
 		else if(strstr(line, "RULENUM") != NULL){
-			substr(dest, line, 8, PATH_MAX);
+			substr(dest, line, 8, PATH_MAX-8);
 			strcpy(rulenum, dest);
 		}
 		else if(strstr(line, "MOUNT_PATH") != NULL){
 			memset(buf, 0, PATH_MAX);
-			substr(dest, line, 11, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX-11);
 			char_to_ascii(buf, dest);
 			strcpy(mounted_path, buf);
 		}
 		else if(strstr(line, "FILENAME") != NULL){
-			substr(dest, line, 9, PATH_MAX);
+			substr(dest, line, 9, PATH_MAX-9);
 			strcpy(target_obj, dest); // support Chinese
 		}
 		else if(strstr(line, "ERR_MSG") != NULL){
-			substr(dest, line, 8, PATH_MAX);
+			substr(dest, line, 8, PATH_MAX-8);
 			strcpy(error_msg, dest);
 		}
 		else if(strstr(line, "TOTAL_SPACE") != NULL){
-			substr(dest, line, 12, PATH_MAX);
+			substr(dest, line, 12, PATH_MAX-12);
 			strcpy(full_capa, dest);
 		}
 		else if(strstr(line, "USED_SPACE") != NULL){
-			substr(dest, line, 11, PATH_MAX);
+			substr(dest, line, 11, PATH_MAX-11);
 			strcpy(used_capa, dest);
 		}
 
@@ -12458,6 +12457,7 @@ struct ej_handler ej_handlers[] = {
 #ifdef RTCONFIG_IGD2
 	{ "ipv6_pinholes",  ej_ipv6_pinhole_array},
 #endif
+	{ "get_ipv6net_array", ej_lan_ipv6_network_array},
 #endif
 	{ "get_leases_array", ej_get_leases_array},
 	{ "get_vserver_array", ej_get_vserver_array},

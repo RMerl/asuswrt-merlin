@@ -2818,7 +2818,7 @@ minidlna-configure:
 	cd minidlna && \
 	LIBS="-ldl -lm -lpthread -lz -lexif -ljpeg -lsqlite3 -lid3tag -lFLAC -lvorbis -logg -lavformat -lavcodec -lavutil" \
 	CFLAGS="-Os -Wall $(EXTRACFLAGS) -D_GNU_SOURC -D_FILE_OFFSET_BITS=64 -ffunction-sections -fdata-sections \
-		$(if $(RTN65U,y),-DRTN56U=1) $(if $(or $(RTN66U), $(RTAC86U)),-DRTN66U=1)" \
+		$(if $(RTN65U,y),-DRTN56U=1) $(if $(or $(RTN66U), $(RTAC66U)),-DRTN66U=1)" \
 	CPPFLAGS="-I$(TOP)/zlib \
 		-I$(TOP)/ffmpeg/libavutil -I$(TOP)/ffmpeg/libavcodec -I$(TOP)/ffmpeg/libavformat \
 		-I$(TOP)/ffmpeg/libswscale -I$(TOP)/ffmpeg \
@@ -2840,6 +2840,7 @@ minidlna-configure:
 minidlna-clean:
 	-@$(MAKE) -C minidlna clean
 	@rm -f minidlna/Makefile
+	@rm -f minidlna/configure
 
 minidlna-install:
 	install -D minidlna/minidlnad $(INSTALLDIR)/minidlna/usr/sbin/minidlna

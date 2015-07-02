@@ -1688,6 +1688,8 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	}
 
 	DPRINTF(E_INFO, L_HTTP, "Serving resized image for ObjectId: %lld [%s]\n", id, file_path);
+	if( rotate )
+		DPRINTF(E_DEBUG, L_HTTP, "Rotating image %d degrees\n", rotate);
 	switch( rotate )
 	{
 		case 90:

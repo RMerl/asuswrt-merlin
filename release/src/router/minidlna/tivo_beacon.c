@@ -176,7 +176,7 @@ sendBeaconMessage(int fd, struct sockaddr_in * client, int len, int broadcast)
  *
  * Returns true if this was a broadcast beacon msg
  */
-int
+static int
 rcvBeaconMessage(char *beacon)
 {
 	char *tivoConnect = NULL;
