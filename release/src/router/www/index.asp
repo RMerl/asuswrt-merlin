@@ -992,6 +992,7 @@ function validForm(){
 			retFlag = 0;
 		}
 
+/*
 		document.list_form.dhcp_staticlist.value.split("<").forEach(function(element, index){
 			if(element.indexOf(document.getElementById("ipaddr_field").value) != -1){
 				if(element.indexOf(document.getElementById("macaddr_field").value) == -1){
@@ -1002,7 +1003,7 @@ function validForm(){
 				}
 			}
 		});
-		
+*/		
 		return retFlag;
 	}
 
@@ -1081,8 +1082,8 @@ function edit_confirm(){
 			dhcp_staticlist_orig = document.list_form.dhcp_staticlist.value;
 		}
 		else {
-			document.list_form.action_script.value = "restart_net_and_phy";
-			document.list_form.action_wait.value = "35";
+			document.list_form.action_script.value = "restart_dnsmasq";
+			document.list_form.action_wait.value = "10";
 			document.list_form.flag.value = "";
 			document.list_form.dhcp_staticlist.disabled = false;
 			document.list_form.dhcp_static_x.value = 1;
@@ -1167,7 +1168,9 @@ function edit_delete(){
 		document.getElementById("statusframe").contentWindow.refreshpage();
 
 		setTimeout("document.getElementById('loadingIcon').style.display='none'", 3500);
-		setTimeout("document.getElementById('deleteBtn').style.display='none'", 3500);
+//		setTimeout("document.getElementById('deleteBtn').style.display='none'", 3500);
+	} else {
+		alert("This entry does not already exist on the custom client list!");
 	}
 }
 
@@ -1234,7 +1237,7 @@ function hideEditBlock(){
 	document.getElementById('edit_usericon_block').style.display = "none";
 	document.getElementById('loadingIcon').style.display = 'none';
 	document.getElementById('loadingUserIcon').style.display = 'none';
-	document.getElementById('deleteBtn').style.display ='none';
+//	document.getElementById('deleteBtn').style.display ='none';
 }
 
 //check user icon num is over 100 or not.
@@ -1863,7 +1866,7 @@ function previewImage(imageObj) {
 		</tr>
 	</table>		
 	<div style="margin-top:5px;padding-bottom:10px;width:100%;text-align:center;">
-		<input class="button_gen" type="button" onclick="edit_delete();" id="deleteBtn" value="<#CTL_del#>" style="display:none;">
+		<input class="button_gen" type="button" onclick="edit_delete();" id="deleteBtn" value="<#CTL_del#>">
 		<input class="button_gen" type="button" id="blockBtn" value="<#Block#>" title="<#block_client#>" style="display:none;">
 		<script>
 			document.maclist_form.wl0_maclist_x.value = (function(){

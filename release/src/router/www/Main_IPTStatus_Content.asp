@@ -67,7 +67,7 @@ function show_upnp() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="6">No active UPNP forward.</td></tr>';
+		code += '<tr><td colspan="6"><span>No active UPNP forward.</span></td></tr>';
 	}
 
 	code += '</tr></table>';
@@ -101,7 +101,7 @@ function show_vserver() {
 			code += '</tr>';
 		}
 	} else {
-		code += '<tr><td colspan="6">No active port forwards.</td></tr>';
+		code += '<tr><td colspan="6"><span>No active port forwards.</span></td></tr>';
 	}
 
 	code += '</tr></table>';
