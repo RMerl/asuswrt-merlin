@@ -42,6 +42,8 @@ Asuswrt-Merlin Changelog
              shown, however that memory gets freed whenever something
              actually needs it, so this is normal. (ARM)
   - CHANGED: Display the size of cache memory on the Tools -> Sysinfo page
+  - CHANGED: Improvements to the Networkmap (ability to remove an entry,
+             removed the alert() from modifying an existing entry)
   - FIXED: Wireless Log page would fail to load if the SSID
            contained certain characters
   - FIXED: Wireless Log page would fail to load when in Media Bridge
