@@ -1082,8 +1082,8 @@ function edit_confirm(){
 			dhcp_staticlist_orig = document.list_form.dhcp_staticlist.value;
 		}
 		else {
-			document.list_form.action_script.value = "restart_net_and_phy";
-			document.list_form.action_wait.value = "35";
+			document.list_form.action_script.value = "restart_dnsmasq";
+			document.list_form.action_wait.value = "10";
 			document.list_form.flag.value = "";
 			document.list_form.dhcp_staticlist.disabled = false;
 			document.list_form.dhcp_static_x.value = 1;
