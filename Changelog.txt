@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.55 Beta 1 (3-June-2015)
+378.55 Beta 1 (3-July-2015)
    - NEW: Merged with GPL 6117.  Notable changes from Asus:
              o New token-based webui authentication (more secure)
              o OpenVPN certificates moved to JFFS2, saving nvram.
