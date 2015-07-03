@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.54 (7-June-2015)
-===========================================
+Asuswrt-Merlin - build 378.55 Beta 1 (3-July-2015)
+==================================================
 
 About
 -----
@@ -54,7 +54,7 @@ Here is a list of features that Asuswrt-merlin adds over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.378_5134 source code from Asus
+   - Based on 3.0.0.4.378_6117 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -106,6 +106,8 @@ Web interface:
    - Display the Ethernet port states
    - Wireless site survey
    - Advanced Wireless client list display, including automated refresh
+   - Redesigned layout of the various System Log sections
+
 
 A few features that first appeared in Asuswrt-Merlin have since been 
 integrated/enabled/re-implemented in the official firmware:
