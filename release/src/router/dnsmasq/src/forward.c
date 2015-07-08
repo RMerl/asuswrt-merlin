@@ -769,7 +769,8 @@ void reply_query(int fd, int family, time_t now)
 	  header->arcount = htons(0);
 	  if ((nn = resize_packet(header, (size_t)n, pheader, plen)))
 	    {
-	      header->hb3 &= ~(HB3_QR | HB3_TC);
+	      header->hb3 &= ~(HB3_QR | HB3_AA | HB3_TC);
+	      header->hb4 &= ~(HB4_RA | HB4_RCODE);
 	      forward_query(-1, NULL, NULL, 0, header, nn, now, forward, 0, 0);
 	      return;
 	    }

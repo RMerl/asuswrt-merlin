@@ -121,6 +121,11 @@ version 2.73
 	    Allow DHCPv4 options T1 and T2 to be set using --dhcp-option.
 	    Thanks to Kevin Benton for patches and work on this.
 
+            Fix code for DHCPCONFIRM DHCPv6 messages to confirm addresses
+	    in the correct subnet, even of not in dynamic address 
+	    allocation range. Thanks to Steve Hirsch for spotting
+	    the problem.
+	
 	
 version 2.72
             Add ra-advrouter mode, for RFC-3775 mobile IPv6 support.

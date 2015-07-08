@@ -77,53 +77,7 @@ int extract_name(struct dns_header *header, size_t plen, unsigned char **pp,
 	  
 	  p = l + (unsigned char *)header;
 	}
-      else if (label_type == 0x80)
-	return 0; /* reserved */
-      else if (label_type == 0x40)
-	{ /* ELT */
-	  unsigned int count, digs;
-	  
-	  if ((l & 0x3f) != 1)
-	    return 0; /* we only understand bitstrings */
-
-	  if (!isExtract)
-	    return 0; /* Cannot compare bitsrings */
-	  
-	  count = *p++;
-	  if (count == 0)
-	    count = 256;
-	  digs = ((count-1)>>2)+1;
-	  
-	  /* output is \[x<hex>/siz]. which is digs+7/8/9 chars */
-	  namelen += digs+7;
-	  if (count > 9)
-	    namelen++;
-	  if (count > 99)
-	    namelen++;
-	  if (namelen+1 >= MAXDNAME)
-	    return 0;
-
-	  if (!CHECK_LEN(header, p, plen, (count-1)>>3))
-	    return 0;
-
-	  *cp++ = '\\';
-	  *cp++ = '[';
-	  *cp++ = 'x';
-	  for (j=0; j<digs; j++)
-	    {
-	      unsigned int dig;
-	      if (j%2 == 0)
-		dig = *p >> 4;
-	      else
-		dig = *p++ & 0x0f;
-	      
-	      *cp++ = dig < 10 ? dig + '0' : dig + 'A' - 10;
-	    } 
-	  cp += sprintf((char *)cp, "/%d]", count);
-	  /* do this here to overwrite the zero char from sprintf */
-	  *cp++ = '.';
-	}
-      else 
+      else if (label_type == 0x00)
 	{ /* label_type = 0 -> label. */
 	  namelen += l + 1; /* include period */
 	  if (namelen >= MAXDNAME)
@@ -176,12 +130,14 @@ int extract_name(struct dns_header *header, size_t plen, unsigned char **pp,
 		      retvalue =  2;
 		  }
 	      }
-	  
+	    
 	  if (isExtract)
 	    *cp++ = '.';
 	  else if (*cp != 0 && *cp++ != '.')
 	    retvalue = 2;
 	}
+      else
+	return 0; /* label types 0x40 and 0x80 not supported */
     }
 }
  

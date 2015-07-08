@@ -84,15 +84,15 @@ struct dns_header {
   u16 qdcount,ancount,nscount,arcount;
 };
 
-#define HB3_QR       0x80
+#define HB3_QR       0x80 /* Query */
 #define HB3_OPCODE   0x78
-#define HB3_AA       0x04
-#define HB3_TC       0x02
-#define HB3_RD       0x01
+#define HB3_AA       0x04 /* Authoritative Answer */
+#define HB3_TC       0x02 /* TrunCated */
+#define HB3_RD       0x01 /* Recursion Desired */
 
-#define HB4_RA       0x80
-#define HB4_AD       0x20
-#define HB4_CD       0x10
+#define HB4_RA       0x80 /* Recursion Available */
+#define HB4_AD       0x20 /* Authenticated Data */
+#define HB4_CD       0x10 /* Checking Disabled */
 #define HB4_RCODE    0x0f
 
 #define OPCODE(x)          (((x)->hb3 & HB3_OPCODE) >> 3)
