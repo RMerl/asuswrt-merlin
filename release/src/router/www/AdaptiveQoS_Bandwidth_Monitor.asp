@@ -218,8 +218,30 @@ router_traffic_old = new Array();
 function calculate_router_traffic(traffic){
 	router_traffic_new = new Array();
 	router_traffic_new = traffic;
-	var tx = router_traffic_new[0] - router_traffic_old[0];
-	var rx = router_traffic_new[1] - router_traffic_old[1];
+	var tx = 0;
+	var rx = 0;
+
+	if(!router_traffic_old){
+		router_traffic_old = [0, 0];
+	}
+	
+	if(router_traffic_new[0] - router_traffic_old[0] < 0){		// to control overflow issue
+		tx = (parseInt(router_traffic_new[0]) + Math.pow(2,32)) - router_traffic_old[0];	
+	}
+	else{
+		tx = router_traffic_new[0] - router_traffic_old[0];
+	}
+	
+	if(router_traffic_new[1] - router_traffic_old[1] < 0){
+		rx = (parseInt(router_traffic_new[1]) + Math.pow(2,32)) - router_traffic_old[1];
+	}
+	else{
+		rx = router_traffic_new[1] - router_traffic_old[1];
+	}
+
+	
+	
+	
 	tx = tx*8/detect_interval;		// translate to bits
 	rx = rx*8/detect_interval;
 	var tx_kb = tx/1024;
@@ -627,12 +649,32 @@ function calculate_traffic(array_traffic){
 			var tx_width = 0;
 			var rx_width = 0;
 			
-			diff_tx = (client_traffic_old[client_traffic_new[i]]) ? client_traffic_new[client_traffic_new[i]].tx - client_traffic_old[client_traffic_new[i]].tx : 0;
-			diff_rx = (client_traffic_old[client_traffic_new[i]]) ? client_traffic_new[client_traffic_new[i]].rx - client_traffic_old[client_traffic_new[i]].rx : 0;
+			if(client_traffic_old[client_traffic_new[i]]){
+				if((client_traffic_new[client_traffic_new[i]].tx - client_traffic_old[client_traffic_new[i]].tx) < 0){
+					diff_tx = (parseInt(client_traffic_new[client_traffic_new[i]].tx) + Math.pow(2,32)) - client_traffic_old[client_traffic_new[i]].tx;
+				}
+				else{
+					diff_tx = client_traffic_new[client_traffic_new[i]].tx - client_traffic_old[client_traffic_new[i]].tx;
+				}			
+			}
+			else{
+				diff_tx = 0;
+			}
+			
+			if(client_traffic_old[client_traffic_new[i]]){
+				if((client_traffic_new[client_traffic_new[i]].rx - client_traffic_old[client_traffic_new[i]].rx) < 0){
+					diff_rx = (parseInt(client_traffic_new[client_traffic_new[i]].rx) + Math.pow(2,32)) - client_traffic_old[client_traffic_new[i]].rx;
+				}
+				else{
+					diff_rx = client_traffic_new[client_traffic_new[i]].rx - client_traffic_old[client_traffic_new[i]].rx;
+				}
+			}
+			else{
+				diff_rx = 0;
+			}
 			
 			diff_tx = diff_tx*8/detect_interval;
 			diff_rx = diff_rx*8/detect_interval;
-	
 			diff_tx_kb = diff_tx/1024;
 			diff_rx_kb = diff_rx/1024;
 			diff_tx_mb = diff_tx/1024/1024;
@@ -646,55 +688,69 @@ function calculate_traffic(array_traffic){
 					}
 					catch(e){
 						console.log("[" + i + "] " + client_traffic_new[i]);
+						continue;
 					}
 				}
 				else{				
 					tx_width = parseInt(diff_tx_kb/(upload_maximum/5)*30);
 					if(diff_tx_kb.toFixed(1) >= 0.1 && tx_width < 1)
 						tx_width = 1;
-					
-					document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+
+					if(document.getElementById(client_traffic_new[i]+'_upload_bar') != "undefined" && document.getElementById(client_traffic_new[i]+'_upload_bar') != null){
+						document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+					}
 				}
 
 				if(diff_tx_kb < 1024){	
-					document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_kb.toFixed(1);
-					document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Kb";	
+					if(document.getElementById(client_traffic_new[i]+'_upload') != "undefined" && document.getElementById(client_traffic_new[i]+'_upload') != null){
+						document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_kb.toFixed(1);
+						document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Kb";	
+					}
 				}
 				else{
-					document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) ; 
-					document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";	
+					if(document.getElementById(client_traffic_new[i]+'_upload') != "undefined" && document.getElementById(client_traffic_new[i]+'_upload') != null){
+						document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) ; 
+						document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";	
+					}
 				}
 			}
 			else if((diff_tx_kb >= upload_maximum/5) && (diff_tx_kb < upload_maximum*2/5)){
 				tx_width = parseInt((diff_tx_kb - (upload_maximum/5))/(upload_maximum/5)*25);
 				tx_width += 30;
-				document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-				document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";			
+				if(document.getElementById(client_traffic_new[i]+'_upload') != "undefined" && document.getElementById(client_traffic_new[i]+'_upload') != null){
+					document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+					document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
+					document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";
+				}
 			}
 			else if((diff_tx_kb >= upload_maximum*2/5) && (diff_tx_kb < upload_maximum*3/5)){
 				tx_width = parseInt((diff_tx_kb - (upload_maximum*2/5))/(upload_maximum/5)*20);
 				tx_width += 55;
-				document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-				document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";	
+				if(document.getElementById(client_traffic_new[i]+'_upload') != "undefined" && document.getElementById(client_traffic_new[i]+'_upload') != null){
+					document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+					document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
+					document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";
+				}
 			}
 			else if((diff_tx_kb >= upload_maximum*3/5) && (diff_tx_kb < upload_maximum*4/5)){
 				tx_width = parseInt((diff_tx_kb - (upload_maximum*3/5))/(upload_maximum/5)*15);
 				tx_width += 75;
-				document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-				document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";
+				if(document.getElementById(client_traffic_new[i]+'_upload') != "undefined" && document.getElementById(client_traffic_new[i]+'_upload') != null){
+					document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+					document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
+					document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";
+				}
 			}
 			else{
 				tx_width = parseInt((diff_tx_kb - (upload_maximum*4/5))/(upload_maximum/5)*15);
 				tx_width += 90;
 				if(tx_width > 100)
 					tx_width = 100;
-					
-				document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
-				document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
-				document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";				
+				if(document.getElementById(client_traffic_new[i]+'_upload') != "undefined" && document.getElementById(client_traffic_new[i]+'_upload') != null){
+					document.getElementById(client_traffic_new[i]+'_upload_bar').style.width = tx_width + "%";
+					document.getElementById(client_traffic_new[i]+'_upload').innerHTML = diff_tx_mb.toFixed(1) 
+					document.getElementById(client_traffic_new[i]+'_upload_unit').innerHTML = "Mb";
+				}
 			}
 				
 			// download traffic
@@ -705,45 +761,57 @@ function calculate_traffic(array_traffic){
 					}
 					catch(e){
 						console.log("[" + i + "] " + client_traffic_new[i]);
+						continue;
 					}			
 				}	
 				else{
 					rx_width = parseInt(diff_rx_kb/(download_maximum/5)*30);
 					if( diff_rx_kb.toFixed(1) >= 0.1 &&  rx_width < 1)
 						rx_width = 1;
-						
-					document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
+					if(document.getElementById(client_traffic_new[i]+'_download_bar') != "undefined" && document.getElementById(client_traffic_new[i]+'_download_bar') != null){	
+						document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
+					}
 				}	
 					
 				if(diff_rx_kb < 1024){
-					document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_kb.toFixed(1);
-					document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Kb";			
+					if(document.getElementById(client_traffic_new[i]+'_download') != "undefined" && document.getElementById(client_traffic_new[i]+'_download') != null){	
+						document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_kb.toFixed(1);
+						document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Kb";			
+					}
 				}
 				else{
-					document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-					document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";				
+					if(document.getElementById(client_traffic_new[i]+'_download') != "undefined" && document.getElementById(client_traffic_new[i]+'_download') != null){	
+						document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+						document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";				
+					}
 				}									
 			}
 			else if((diff_rx_kb >= download_maximum/5) && (diff_rx_kb < download_maximum*2/5)){		//	25%
 				rx_width = parseInt((diff_rx_kb - (download_maximum/5))/(download_maximum/5)*25);
 				rx_width += 30;
-				document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
-				document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-				document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				if(document.getElementById(client_traffic_new[i]+'_download') != "undefined" && document.getElementById(client_traffic_new[i]+'_download') != null){	
+					document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";
+					document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";
+				}
 			}
 			else if((diff_rx_kb >= download_maximum*2/5) && (diff_rx_kb < download_maximum*3/5)){		// 20%
 				rx_width = parseInt((diff_rx_kb - (download_maximum*2/5))/(download_maximum/5)*20);
 				rx_width += 55;
-				document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";				
-				document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-				document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				if(document.getElementById(client_traffic_new[i]+'_download') != "undefined" && document.getElementById(client_traffic_new[i]+'_download') != null){	
+					document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";				
+					document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				}
 			}
 			else if((diff_rx_kb >= download_maximum*3/5) && (diff_rx_kb <download_maximum*4/5)){		//	15%
 				rx_width = parseInt((diff_rx_kb - (download_maximum*3/5))/(download_maximum/5)*15);
 				rx_width += 75;
-				document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
-				document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-				document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				if(document.getElementById(client_traffic_new[i]+'_download') != "undefined" && document.getElementById(client_traffic_new[i]+'_download') != null){		
+					document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
+					document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				}
 			}
 			else{		//10%
 				rx_width = parseInt((diff_rx_kb - (download_maximum*4/5))/(download_maximum/5)*10);
@@ -751,9 +819,11 @@ function calculate_traffic(array_traffic){
 				if(rx_width > 100)
 					rx_width = 100;
 				
-				document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
-				document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
-				document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				if(document.getElementById(client_traffic_new[i]+'_download') != "undefined" && document.getElementById(client_traffic_new[i]+'_download') != null){	
+					document.getElementById(client_traffic_new[i]+'_download_bar').style.width = rx_width + "%";	
+					document.getElementById(client_traffic_new[i]+'_download').innerHTML = diff_rx_mb.toFixed(1);
+					document.getElementById(client_traffic_new[i]+'_download_unit').innerHTML = "Mb";	
+				}
 			}	
 		}	
 	}
