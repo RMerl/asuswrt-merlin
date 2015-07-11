@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.55 Beta 2 (xx-July-2015)
+378.55 Beta 2 (11-July-2015)
    - CHANGED: Updated dnsmasq to 2.73 RC9 (backport from GPL 6975)
    - CHANGED: Updated odhcp6c to newer version (backport from GPL 6975)
    - CHANGED: Updated openssl to 1.0.2d (fixes CVE-2015-1793, only present
