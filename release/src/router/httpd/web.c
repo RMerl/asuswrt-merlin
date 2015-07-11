@@ -1871,10 +1871,15 @@ static int validate_apply(webs_t wp) {
 				}
 			}
 #endif
-			else if((!strncmp(name, "vpn_crt", 7)) || (!strncmp(name, "sshd_", 5))) {
+			else if(!strncmp(name, "vpn_crt", 7)) {
+				nvram_set(name, value);			// save to nvram
+				get_parsed_crt(name, tmp, sizeof (tmp));// then migrate to jffs
+				_dprintf("set %s=%s'n", name, value);
+			}
+			else if(!strncmp(name, "sshd_", 5)) {
 				write_encoded_crt(name, value);
 				nvram_modified = 1;
-				_dprintf("set %s=%s\n", name, tmp);
+				_dprintf("set %s=%s\n", name, value);
 			}
 #ifdef RTCONFIG_DISK_MONITOR
 			else if(!strncmp(name, "diskmon_", 8) && atoi(unit_str) != -1) {
