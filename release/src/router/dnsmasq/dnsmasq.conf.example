@@ -251,6 +251,13 @@
 # the IP address 192.168.0.60
 #dhcp-host=id:01:02:02:04,192.168.0.60
 
+# Always give the Infiniband interface with hardware address
+# 80:00:00:48:fe:80:00:00:00:00:00:00:f4:52:14:03:00:28:05:81 the
+# ip address 192.168.0.61. The client id is derived from the prefix
+# ff:00:00:00:00:00:02:00:00:02:c9:00 and the last 8 pairs of
+# hex digits of the hardware address.
+#dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:f4:52:14:03:00:28:05:81,192.168.0.61
+
 # Always give the host with client identifier "marjorie"
 # the IP address 192.168.0.60
 #dhcp-host=id:marjorie,192.168.0.60

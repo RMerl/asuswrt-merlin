@@ -308,8 +308,9 @@ void start_vpnclient(int clientNum)
 			fprintf(fp, "auth-user-pass up\n");
 
 		sprintf(&buffer[0], "vpn_crt_client%d_crl", clientNum);
-		if ( !nvram_is_empty(&buffer[0]) )
-			fprintf(fp, "crl-verify crl.pem\n");
+		if ( !ovpn_crt_is_empty(&buffer[0]) )
+			fprintf(fp, "secret static.key\n");
+
 	}
 	else if ( cryptMode == SECRET )
 	{
@@ -389,7 +390,7 @@ void start_vpnclient(int clientNum)
 		}
 
 		sprintf(&buffer[0], "vpn_crt_client%d_crl", clientNum);
-		if ( !nvram_is_empty(&buffer[0]) )
+		if ( !ovpn_crt_is_empty(&buffer[0]) )
 		{
 			sprintf(&buffer[0], "/etc/openvpn/client%d/crl.pem", clientNum);
 			fp = fopen(&buffer[0], "w");
@@ -1018,7 +1019,7 @@ void start_vpnserver(int serverNum)
 		//if ( !ovpn_crt_is_empty(&buffer[0]) )
 			fprintf(fp, "key server.key\n");
 		sprintf(&buffer[0], "vpn_crt_server%d_crl", serverNum);
-		if ( !nvram_is_empty(&buffer[0]) )
+		if ( !ovpn_crt_is_empty(&buffer[0]) )
 			fprintf(fp, "crl-verify crl.pem\n");
 	}
 	else if ( cryptMode == SECRET )
@@ -1171,7 +1172,7 @@ void start_vpnserver(int serverNum)
 			//}
 
 			sprintf(&buffer[0], "vpn_crt_server%d_crl", serverNum);
-			if ( !nvram_is_empty(&buffer[0]) )
+			if ( !ovpn_crt_is_empty(&buffer[0]) )
 			{
 				sprintf(&buffer[0], "/etc/openvpn/server%d/crl.pem", serverNum);
 				fp = fopen(&buffer[0], "w");

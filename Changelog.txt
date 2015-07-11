@@ -1,7 +1,27 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.55 Beta 1 (3-June-2015)
+378.55 Beta 2 (11-July-2015)
+   - CHANGED: Updated dnsmasq to 2.73 RC9 (backport from GPL 6975)
+   - CHANGED: Updated odhcp6c to newer version (backport from GPL 6975)
+   - CHANGED: Updated openssl to 1.0.2d (fixes CVE-2015-1793, only present
+              in Beta 1 - 54_2 was not affected)
+   - CHANGED: Display existing key/certs on the OpenVPN pages once
+              they've been migrated to JFFS.
+   - FIXED: Time scheduler-related features (Parental Control & Wifi 
+            scheduler) were broken (backported fix from Asus's GPL 6975)
+            (beta 1 regression)
+   - FIXED: QTN firmware was still being copied to RAM rather than rely
+            on the symlink to flash added in Beta 1, to save 4 MB of RAM.
+            (AC87U)
+   - FIXED: Dropbox cloud sync would fail on some setups (backport
+            from GPL 6975)
+   - FIXED: Entware-setup script would generate an invalid services-start
+            script
+   - FIXED: Duplicate zoneedit entry on the DDNS service list.
+
+
+378.55 Beta 1 (3-July-2015)
    - NEW: Merged with GPL 6117.  Notable changes from Asus:
              o New token-based webui authentication (more secure)
              o OpenVPN certificates moved to JFFS2, saving nvram.

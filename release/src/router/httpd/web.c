@@ -1871,10 +1871,15 @@ static int validate_apply(webs_t wp) {
 				}
 			}
 #endif
-			else if((!strncmp(name, "vpn_crt", 7)) || (!strncmp(name, "sshd_", 5))) {
+			else if(!strncmp(name, "vpn_crt", 7)) {
+				nvram_set(name, value);			// save to nvram
+				get_parsed_crt(name, tmp, sizeof (tmp));// then migrate to jffs
+				_dprintf("set %s=%s'n", name, value);
+			}
+			else if(!strncmp(name, "sshd_", 5)) {
 				write_encoded_crt(name, value);
 				nvram_modified = 1;
-				_dprintf("set %s=%s\n", name, tmp);
+				_dprintf("set %s=%s\n", name, value);
 			}
 #ifdef RTCONFIG_DISK_MONITOR
 			else if(!strncmp(name, "diskmon_", 8) && atoi(unit_str) != -1) {
@@ -11297,6 +11302,8 @@ int ej_getADSLToneAmount(int eid, webs_t wp, int argc, char_t **argv)
 	websWrite(wp, "%d", tones);
 	return 0;
 }
+#endif
+// Ren.E
 
 int show_file_content(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -11324,8 +11331,6 @@ int show_file_content(int eid, webs_t wp, int argc, char_t **argv)
 	fclose(fp);
 	return ret;
 }
-#endif
-//Ren.E
 
 int ej_backup_nvram(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -12275,8 +12280,8 @@ struct ej_handler ej_handlers[] = {
 	{ "spectrum", ej_spectrum}, //Ren
 	{ "get_annexmode", ej_getAnnexMode}, //Ren
 	{ "get_adsltoneamount", ej_getADSLToneAmount}, //Ren
-	{ "show_file_content", show_file_content}, //Ren
 #endif
+	{ "show_file_content", show_file_content}, //Ren
 	{ "backup_nvram", ej_backup_nvram},
 //tomato qos^^^^^^^^^^^^ end Viz
 	{ "wl_get_parameter", ej_wl_get_parameter},

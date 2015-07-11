@@ -1089,7 +1089,7 @@ static int dhcp6_no_relay(struct state *state, int msg_type, void *inbuff, size_
 	      {
 		struct in6_addr *req_addr = opt6_ptr(ia_option, 0);
 		
-		if (!address6_available(state->context, req_addr, tagif, 1))
+		if (!address6_valid(state->context, req_addr, tagif, 1))
 		  {
 		    o1 = new_opt6(OPTION6_STATUS_CODE);
 		    put_opt6_short(DHCP6NOTONLINK);

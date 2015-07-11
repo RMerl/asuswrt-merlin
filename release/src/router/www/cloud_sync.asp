@@ -1599,6 +1599,17 @@ function dropbox_login(){
 	var redirect_url = "https://oauth.asus.com/aicloud/dropbox.html";			
 	var callback_url = window.location.href.slice(0,b) + "/dropbox_callback.htm,onDropBoxLogin"; 
 
+	//workaround for encode issue, if the original string is not a multiple of 6, the base64 encode result will display = at the end
+	//Then Dropbox will encode the url twice, the char = will become %3D, and callback oauth.asus.com will cause url not correct.
+	//So need add not use char at callback_url for a multiple of 6
+	var remainder = callback_url.length % 6;
+	if(remainder != 0) {
+		var not_use = "";
+		for(var i = remainder; i < 6; i += 1) {
+			not_use += ",";
+		}
+		callback_url += not_use; 
+	}
 	var url = "https://www.dropbox.com/1/oauth2/authorize?response_type=token&client_id=" + app_key;
 	url += "&redirect_uri=" + encodeURIComponent(redirect_url);
 	url += "&state=base64_" + base64Encode(callback_url);

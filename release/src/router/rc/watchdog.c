@@ -982,7 +982,7 @@ static int in_sched(int now_mins, int now_dow, int (*enableTime)[24])
         int x=0,y=0;
         int tableTimeStart, tableTimeEnd;
         // 8*60*60 = AM0.00~AM8.00
-        currentTime = (now_mins*60+8*60*60) + now_dow*DAYEND;
+        currentTime = (now_mins*60) + now_dow*DAYEND;
 
         for(;x<7;x++)
         {
@@ -993,6 +993,11 @@ static int in_sched(int now_mins, int now_dow, int (*enableTime)[24])
                         {
                                 tableTimeStart = x*DAYEND + y*60*60;
                                 tableTimeEnd = x*DAYEND + (y+1)*60*60;
+
+				if(y==23)
+				tableTimeEnd = tableTimeEnd - 1; //sunday = 0 ~ 86399
+				//_dprintf("tableTimeStart == %d  %d  %d\n",tableTimeStart,tableTimeEnd,currentTime);
+
                                 if(tableTimeStart<=currentTime && currentTime < tableTimeEnd)
                                 {
                                         return 1;
@@ -1038,9 +1043,17 @@ int timecheck_item(char *activeTime)
                 }
 	 }
 
-
         active = 0;
-        if(activeTime[0] != NULL)
+	if(activeTime[0] == '0' && activeTime[1] == '0' && activeTime[2] == '0' && activeTime[3] == '0'
+		&& activeTime[4] == '0' && activeTime[5] == '0')
+	{
+		tableAllOn = 1;
+	}
+	else if(activeTime[0] == NULL)
+	{
+		tableAllOn = 1;
+	}
+	else
         {
 
                 /* Counting variables quantity*/
@@ -1070,7 +1083,7 @@ int timecheck_item(char *activeTime)
                                 else
                                 {
                                   endTime[loopCount - (4+7*x)] = activeTime[loopCount];
-                                        if(atoi(endTime) == 0){
+                                        if((loopCount - (4+7*x)) == 1&& atoi(endTime) == 0){
                                                 endTime[0] = '2';
                                                 endTime[1] = '4';
                                                 if(Date[1] == '0')
@@ -1082,8 +1095,6 @@ int timecheck_item(char *activeTime)
                                 loopCount++;
                         }while(activeTime[loopCount]!='<' && loopCount < strlen(activeTime));
                                 loopCount++;
-
-
                                 /*Check which time will enable or disable wifi radio*/
                                 int offSet=0;
                                 if(Date[0] == Date[1])
@@ -1094,61 +1105,18 @@ int timecheck_item(char *activeTime)
                                 }
                                 else
                                 {
-                                        if(atoi(startTime) < atoi(endTime))
-                                        {
-                                                z=0;
-                                                for(;z<((atoi(endTime) - atoi(startTime))+24*((Date[1]-'0')-(Date[0]-'0')));z++)
-                                                {
-                                                        if((atoi(startTime)+z)%24==0)
-                                                        {
-                                                                offSet++;
-                                                        }
-                                                                schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
-                                                }
-                                        }
-                                        else if(startTime == endTime)
-                                        {
-                                                z=0;
-                                                for(;z<(24*((Date[1]-'0')-(Date[0]-'0')));z++)
-                                                {
-                                                        if((atoi(startTime)+z)%24==0)
-                                                        {
-                                                                offSet++;
-                                                        }
-                                                                schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
-                                                }
-                                        }
-                                        else if(startTime == endTime)
-                                        {
-                                                z=0;
-                                                for(;z<(24*((Date[1]-'0')-(Date[0]-'0')));z++)
-                                                {
-                                                        if((atoi(startTime)+z)%24==0)
-                                                        {
-                                                                offSet++;
-                                                        }
-                                                                schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
-                                                }
-                                        }
-                                        else
-                                        {
-                                                z=0;
-                                                for(;z<(24*((Date[1]-'0')-(Date[0]-'0'))-(atoi(startTime)-atoi(endTime)));z++)
-                                                {
-                                                        if((atoi(startTime)+z)%24==0)
-                                                        {
-                                                                offSet++;
-                                                        }
-                                                                schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
-                                                }
-                                        }
-
-                        }
+									z=0;
+									for(;z<((atoi(endTime) - atoi(startTime))+24*(Date[1] - Date[0]));z++)
+									{
+										schedTable[Date[0]-'0'+offSet][(atoi(startTime)+z)%24] = 1;
+										if((atoi(startTime)+z)%24==23)
+										{
+											offSet++;
+										}
+									}
+								}
                 }//end for loop (schedCount)
         }
-	else
-        tableAllOn = 1;
-
 
         if(tableAllOn!=1)
         active = in_sched(current, now_dow, schedTable);
@@ -1208,6 +1176,14 @@ void timecheck(void)
 			item++;
 			unit++;
 			continue;
+		}
+
+		/*transfer wl_sched NULL value to 000000 value, because
+		of old version firmware with wrong default value*/
+		if(!strcmp(nvram_safe_get("wl_sched"), "") || !strcmp(nvram_safe_get(strcat_r(prefix, "sched", tmp)), ""))
+		{
+			nvram_set(strcat_r(prefix, "sched", tmp),"000000");
+			nvram_set("wl_sched", "000000");
 		}
 
 		schedTime = nvram_safe_get(strcat_r(prefix, "sched", tmp));

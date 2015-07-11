@@ -38,3 +38,4 @@ v3nametest
 heartbeat_test
 evp_extra_test
 constant_time_test
+verify_extra_test

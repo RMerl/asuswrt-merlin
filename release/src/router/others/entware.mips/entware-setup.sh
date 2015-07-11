@@ -84,17 +84,17 @@ cat > /jffs/scripts/services-start << EOF
 script="/opt/etc/init.d/rc.unslung"
 
 i=60
-until [ -x "${script}" ]
+until [ -x "\${script}" ]
 do
-        i=$(($i-1))
-        if [ "$i" -lt 1 ]
+        i=\$((\$i-1))
+        if [ "\$i" -lt 1 ]
         then
                 logger "Could not start Entware"
                 exit
         fi
         sleep 1
 done
-${script} start
+\${script} start
 EOF
 chmod +x /jffs/scripts/services-start
 
