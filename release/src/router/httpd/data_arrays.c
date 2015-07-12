@@ -55,25 +55,50 @@
 int
 ej_get_leases_array(int eid, webs_t wp, int argc, char_t **argv)
 {
-	char *leaselist = NULL, *leaselistptr;
-	char hostname[16], duration[9], ip[40], mac[18];
+	FILE *fp;
+	struct in_addr addr4;
+	struct in6_addr addr6;
+	char line[256];
+	char *hwaddr, *ipaddr, *name, *next;
+	unsigned int expires;
 	int ret=0;
 
 	killall("dnsmasq", SIGUSR2);
 	sleep(1);
 
-	leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
-	if (!leaselist)
+	if (!(fp = fopen("/var/lib/misc/dnsmasq.leases", "r")))
 		return websWrite(wp, "leasearray = [];\n");
 
 	ret += websWrite(wp, "leasearray= [");
-	leaselistptr = leaselist;
 
-	while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%8s %17s %15s %15s %*s", duration, mac, ip, hostname) == 4)) {
-		ret += websWrite(wp, "[\"%s\", \"%s\", \"%s\", \"%s\"],\n", duration, mac, ip, hostname);
-		leaselistptr = strstr(leaselistptr,"\n")+1;
+	while ((next = fgets(line, sizeof(line), fp)) != NULL) {
+		/* line should start with a numeric value */
+		if (sscanf(next, "%u ", &expires) != 1)
+			continue;
+
+		strsep(&next, " ");
+		hwaddr = strsep(&next, " ") ? : "";
+		ipaddr = strsep(&next, " ") ? : "";
+		name = strsep(&next, " ") ? : "";
+
+		if (strlen(name) > 32) {
+			strcpy(name + 29, "...");
+			name[32] = '\0';
+		}
+
+		if (inet_pton(AF_INET6, ipaddr, &addr6) != 0) {
+			/* skip ipv6 leases, they have no hwaddr, but client id */
+			// hwaddr = next ? : "";
+			continue;
+
+		} else if (inet_pton(AF_INET, ipaddr, &addr4) == 0)
+			continue;
+
+		ret += websWrite(wp, "[\"%d\", \"%s\", \"%s\", \"%s\"],\n", expires, hwaddr, ipaddr, name);
 	}
 	ret += websWrite(wp, "[]];\n");
+	fclose(fp);
+
 	return ret;
 }
 
@@ -510,6 +535,7 @@ ej_get_route_array(int eid, webs_t wp, int argc, char_t **argv)
 }
 
 #ifdef RTCONFIG_IPV6
+int
 ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
 {
 	FILE *fp;
