@@ -1,6 +1,11 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.55 (17-July-2015)
+   - FIXED: DHCP lease page could get confused by IPv6 clients on
+            the LAN.
+
+
 378.55 Beta 2 (11-July-2015)
    - CHANGED: Updated dnsmasq to 2.73 RC9 (backport from GPL 6975)
    - CHANGED: Updated odhcp6c to newer version (backport from GPL 6975)
@@ -64,6 +69,8 @@ Asuswrt-Merlin Changelog
   - CHANGED: Display the size of cache memory on the Tools -> Sysinfo page
   - CHANGED: Improvements to the Networkmap (ability to remove an entry,
              removed the alert() from modifying an existing entry)
+  - CHANGED: Save over 4 MB of RAM on the RT-AC87U by not copying
+             the QTN firmware to RAM (RT-AC87)
   - FIXED: Wireless Log page would fail to load if the SSID
            contained certain characters
   - FIXED: Wireless Log page would fail to load when in Media Bridge
