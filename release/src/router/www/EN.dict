@@ -2018,7 +2018,7 @@ vpn_openvpn_fail3=Diffle Hellman parameters field error! <p>Please check the Key
 vpn_openvpn_fail4=OpenVPN server daemon failed to start. <p>Please check your device environment or contents on the Advanced Setting page.
 vpn_openvpn_hint1=To use your own key, click the yellow link to modify settings.
 vpn_openvpn_hint2=Refer to the <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_LogStatus_Content.asp">System Log</a> for any error messages related to OpenVPN.
-vpn_openvpn_init=Initialinzing the settings of OpenVPN server now, please wait a few minutes to let the server to setup completed before VPN clients establish the connection.
+vpn_openvpn_init=Initializing the settings of OpenVPN server now, please wait a few minutes to let the server to setup completed before VPN clients establish the connection.
 vpn_openvpn_interface=Interface Type
 vpn_openvpn_KC_CA=Certificate Authority
 vpn_openvpn_KC_DH=Diffie Hellman parameters
