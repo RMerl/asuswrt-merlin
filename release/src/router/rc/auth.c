@@ -139,6 +139,60 @@ wpacli_main(int argc, char **argv)
 }
 #endif
 
+#ifdef RTCONFIG_TELENET
+static int stop_lanauth(int unit);
+
+static int
+start_lanauth(int unit, int restart)
+{
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
+	char path[sizeof("/tmp/lanauthXXXXXXXXXX")], *value;
+	char *lanauth_argv[] = {
+		"/usr/sbin/lanauth",
+	    /*	"-v", protocol,	   */
+	    /*	"-l", acces level, */
+		NULL, NULL,	/* -b localip */
+		NULL, NULL,	/* -p password */
+		NULL
+	};
+	int index = 1; /* first NULL */
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	snprintf(path, sizeof(path), "/tmp/lanauth%d", unit);
+
+	if (restart)
+		stop_lanauth(unit);
+
+	value = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+	if (*value && inet_addr(value) != INADDR_ANY) {
+		lanauth_argv[index++] = "-b";
+		lanauth_argv[index++] = value;
+	}
+
+	lanauth_argv[index++] = "-p";
+	lanauth_argv[index++] = nvram_safe_get(strcat_r(prefix, "pppoe_passwd", tmp));
+
+	if (f_exists(path))
+		unlink(path);
+	symlink(lanauth_argv[0], path);
+	lanauth_argv[0] = path;
+
+	/* Start lanauth */
+	return _eval(lanauth_argv, NULL, 0, NULL);
+}
+
+static int
+stop_lanauth(int unit)
+{
+	char path[sizeof("lanauthXXXXXXXXXX")];
+
+	snprintf(path, sizeof(path), "lanauth%d", unit);
+	killall_tk(path);
+
+	return 0;
+}
+#endif
+
 int
 start_auth(int unit, int wan_up)
 {
@@ -157,6 +211,10 @@ start_auth(int unit, int wan_up)
 #ifdef RTCONFIG_EAPOL
 	if (strcmp(wan_auth, "8021x-md5") == 0 && !wan_up)
 		ret = start_wpa_supplicant(unit, 0);
+#endif
+#ifdef RTCONFIG_TELENET
+	if (strcmp(wan_auth, "telenet") == 0 && wan_up)
+		ret = start_lanauth(unit, 0);
 #endif
 
 	_dprintf("%s:: done\n", __func__);
@@ -181,6 +239,10 @@ stop_auth(int unit, int wan_down)
 	if (!wan_down)
 		ret = stop_wpa_supplicant(unit);
 #endif
+#ifdef RTCONFIG_TELENET
+	if (wan_down)
+		ret = stop_lanauth(unit);
+#endif
 
 	_dprintf("%s:: done\n", __func__);
 	return ret;
@@ -204,6 +266,10 @@ restart_auth(int unit)
 #ifdef RTCONFIG_EAPOL
 	if (strcmp(wan_auth, "8021x-md5") == 0)
 		ret = start_wpa_supplicant(unit, 1);
+#endif
+#ifdef RTCONFIG_TELENET
+	if (strcmp(wan_auth, "telenet") == 0)
+		ret = start_lanauth(unit, 1);
 #endif
 
 	_dprintf("%s:: done\n", __func__);
