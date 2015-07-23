@@ -10,75 +10,75 @@ INPUT="$BOLD => $NORM"
 i=1 # Will count available partitions (+ 1)
 cd /tmp
 
-echo -e $INFO This script will guide you through the Entware-Arm installation.
-echo -e $INFO Script modifies only \"entware.arm\" folder on the chosen drive,
-echo -e $INFO no other data will be touched. Existing installation will be
-echo -e $INFO replaced with this one. Also some start scripts will be installed,
-echo -e $INFO the old ones will be saved on partition where Entware is installed
-echo -e $INFO like /tmp/mnt/sda1/jffs_scripts_backup.tgz
-echo 
+printf "$INFO This script will guide you through the Entware-Arm installation.\n"
+printf "$INFO Script modifies only \"entware.arm\" folder on the chosen drive,\n"
+printf "$INFO no other data will be touched. Existing installation will be\n"
+printf "$INFO replaced with this one. Also some start scripts will be installed,\n"
+printf "$INFO the old ones will be saved on partition where Entware is installed\n"
+printf "$INFO like /tmp/mnt/sda1/jffs_scripts_backup.tgz\n"
+printf "\n"
 
 if [ ! -d /jffs/scripts ]
 then
-  echo -e "$ERROR Please \"Enable JFFS partition\" & \"JFFS custom scripts and configs\""
-  echo -e "$ERROR from router web UI: www.asusrouter.com/Advanced_System_Content.asp"
-  echo -e "$ERROR then reboot router and try again. Exiting..."
+  printf "$ERROR Please \"Enable JFFS partition\" & \"JFFS custom scripts and configs\"\n"
+  printf "$ERROR from router web UI: www.asusrouter.com/Advanced_System_Content.asp\n"
+  printf "$ERROR then reboot router and try again. Exiting...\n"
   exit 1
 fi
 
-echo -e $INFO Looking for available  partitions...
+printf "$INFO Looking for available  partitions...\n"
 for mounted in `/bin/mount | grep -E 'ext2|ext3|ext4' | cut -d" " -f3`
 do
   isPartitionFound="true"
-  echo "[$i] -->" $mounted
+  printf "[%d] --> %s\n" "$i" "$mounted"
   eval mounts$i=$mounted
   i=`expr $i + 1`
 done
 
-if [ $i == "1" ]
+if [ $i = "1" ]
 then
-  echo -e "$ERROR No ext2/ext3/ext4 partition available. Exiting..."
+  printf "$ERROR No ext2/ext3/ext4 partition available. Exiting...\n"
   exit 1
 fi
 
-echo -en "$INPUT Please enter partition number or 0 to exit\n$BOLD[0-`expr $i - 1`]$NORM: "
+printf "$INPUT Please enter partition number or 0 to exit\n$BOLD%s$NORM: " "[0-`expr $i - 1`]"
 read partitionNumber
-if [ "$partitionNumber" == "0" ]
+if [ "$partitionNumber" = "0" ]
 then
-  echo -e $INFO Exiting...
+  printf "$INFO Exiting...\n"
   exit 0
 fi
 
 if [ "$partitionNumber" -gt `expr $i - 1` ]
 then
-  echo -e "$ERROR Invalid partition number!  Exiting..."
+  printf "$ERROR Invalid partition number!  Exiting...\n"
   exit 1
 fi
 
 eval entPartition=\$mounts$partitionNumber
-echo -e "$INFO $entPartition selected.\n"
+printf "$INFO %s selected.\n\n" "$entPartition"
 entFolder=$entPartition/entware.arm
 
 if [ -d $entFolder ]
 then
-  echo -e "$WARNING Found previous installation, saving..."
+  printf "$WARNING Found previous installation, saving...\n"
   mv $entFolder $entFolder-old_`date +\%F_\%H-\%M`
 fi
-echo -e $INFO Creating $entFolder folder...
+printf "$INFO Creating %s folder...\n" "$entFolder"
 mkdir $entFolder
 
 if [ -d /tmp/opt ]
 then
-  echo -e "$WARNING Deleting old /tmp/opt symlink..."
+  printf "$WARNING Deleting old /tmp/opt symlink...\n"
   rm /tmp/opt
 fi
-echo -e $INFO Creating /tmp/opt symlink...
+printf "$INFO Creating /tmp/opt symlink...\n"
 ln -s $entFolder /tmp/opt
 
-echo -e $INFO Creating /jffs scripts backup...
+printf "$INFO Creating /jffs scripts backup...\n"
 tar -czf $entPartition/jffs_scripts_backup_`date +\%F_\%H-\%M`.tgz /jffs/scripts/* >/dev/nul
 
-echo -e "$INFO Modifying start scripts..."
+printf "$INFO Modifying start scripts...\n"
 cat > /jffs/scripts/services-start << EOF
 #!/bin/sh
 script="/opt/etc/init.d/rc.unslung"
@@ -116,7 +116,7 @@ EOF
 eval sed -i 's,__Partition__,$entPartition,g' /jffs/scripts/post-mount
 chmod +x /jffs/scripts/post-mount
 
-echo -e "$INFO Starting Entware-Arm deployment....\n"
+printf "$INFO Starting Entware-Arm deployment....\n\n"
 wget http://qnapware.zyxmon.org/binaries-armv7/installer/entware_install_arm.sh
 sh ./entware_install_arm.sh
 sync
