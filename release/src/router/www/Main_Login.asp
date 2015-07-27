@@ -215,7 +215,7 @@ function login(){
 					<tr style="height:42px;">
 						<td colspan="2">
 							<div style="margin:20px 0px 0px 78px;">
-								<input type="password" autocapitalization="off" autocomplete="off" value="" name="login_passwd" tabindex="2" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="Password">
+								<input type="password" autocapitalization="off" autocomplete="off" value="" name="login_passwd" tabindex="2" class="form_input" maxlength="16" onkeyup="" onBlur="" placeholder="Password">
 							</div>
 						</td>
 					</tr>
