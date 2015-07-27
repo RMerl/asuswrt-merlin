@@ -17,6 +17,10 @@ config RTCONFIG_EAPOL
 	bool "EAPOL"
 	default y
 
+config RTCONFIG_TELENET
+	bool "TELENET"
+	default y
+
 config RTCONFIG_PPTPD
 	bool "PPTPD"
 	default n
