@@ -1,4 +1,4 @@
-/* $Id: getifaddr.c,v 1.19 2013/12/13 14:28:40 nanard Exp $ */
+/* $Id: getifaddr.c,v 1.23 2014/05/06 14:40:53 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -50,6 +50,7 @@ getifaddr(const char * ifname, char * buf, int len,
 		return -1;
 	}
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	ifr.ifr_name[IFNAMSIZ-1] = '\0';
 	if(ioctl(s, SIOCGIFFLAGS, &ifr, &ifrlen) < 0)
 	{
 		syslog(LOG_DEBUG, "ioctl(s, SIOCGIFFLAGS, ...): %m");
@@ -63,16 +64,6 @@ getifaddr(const char * ifname, char * buf, int len,
 		return -1;
 	}
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-	if(ioctl(s, SIOCGIFFLAGS, &ifr) < 0)
-	{
-		syslog(LOG_DEBUG, "ioctl(s, SIOCGIFFLAGS, ...): %m");
-		close(s);
-		return -1;
-	} else
-	if ((ifr.ifr_flags & IFF_UP) == 0) {
-		close(s);
-		return -1;
-	}
 	if(ioctl(s, SIOCGIFADDR, &ifr, &ifrlen) < 0)
 	{
 		syslog(LOG_ERR, "ioctl(s, SIOCGIFADDR, ...): %m");

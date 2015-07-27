@@ -1,4 +1,4 @@
-/* $Id: natpmp.c,v 1.51 2015/02/08 09:18:15 nanard Exp $ */
+/* $Id: natpmp.c,v 1.52 2015/05/27 12:43:14 nanard Exp $ */
 /* MiniUPnP project
  * (c) 2007-2015 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
@@ -394,7 +394,7 @@ void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 					if(r==0) {
 						if(strcmp(senderaddrstr, iaddr_old)==0
 						    && iport==iport_old) {
-							/* redirection allready existing */
+							/* redirection already existing */
 							syslog(LOG_INFO, "port %hu %s already redirected to %s:%hu, replacing",
 							       eport, (proto==IPPROTO_TCP)?"tcp":"udp", iaddr_old, iport_old);
 							/* remove and then add again */

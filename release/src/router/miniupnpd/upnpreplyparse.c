@@ -1,7 +1,7 @@
-/* $Id: upnpreplyparse.c,v 1.18 2014/11/05 05:36:08 nanard Exp $ */
+/* $Id: upnpreplyparse.c,v 1.19 2015/07/15 10:29:11 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
- * (c) 2006-2014 Thomas Bernard
+ * (c) 2006-2015 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -40,6 +40,15 @@ NameValueParserEndElt(void * d, const char * name, int l)
 		/* standard case. Limited to n chars strings */
 		l = data->cdatalen;
 	    nv = malloc(sizeof(struct NameValue));
+		if(nv == NULL)
+		{
+			/* malloc error */
+#ifdef DEBUG
+			fprintf(stderr, "%s: error allocating memory",
+			        "NameValueParserEndElt");
+#endif /* DEBUG */
+			return;
+		}
 	    if(l>=(int)sizeof(nv->value))
 	        l = sizeof(nv->value) - 1;
 	    strncpy(nv->name, data->curelt, 64);
@@ -72,6 +81,10 @@ NameValueParserGetData(void * d, const char * datas, int l)
 		if(!data->portListing)
 		{
 			/* malloc error */
+#ifdef DEBUG
+			fprintf(stderr, "%s: error allocating memory",
+			        "NameValueParserGetData");
+#endif /* DEBUG */
 			return;
 		}
 		memcpy(data->portListing, datas, l);
@@ -180,5 +193,5 @@ DisplayNameValueList(char * buffer, int bufsize)
     }
     ClearNameValueList(&pdata);
 }
-#endif
+#endif /* DEBUG */
 
