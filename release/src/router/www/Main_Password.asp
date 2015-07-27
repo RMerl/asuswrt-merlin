@@ -319,14 +319,14 @@ function showError(str){
 					<tr style="height:72px;">
 						<td colspan="2">
 							<div style="margin:30px 0px 0px 78px;">
-								<input type="password" autocapitalization="off" autocomplete="off" value="" name="http_passwd" tabindex="2" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="<#PASS_new#>">
+								<input type="password" autocapitalization="off" autocomplete="off" value="" name="http_passwd" tabindex="2" class="form_input" maxlength="16" onkeyup="" onBlur="" placeholder="<#PASS_new#>">
 							</div>
 						</td>
 					</tr>
 					<tr style="height:72px;">
 						<td colspan="2">
 							<div style="margin:30px 0px 0px 78px;">
-								<input type="password" autocapitalization="off" autocomplete="off" value="" name="http_passwd_2" tabindex="3" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="<#Confirmpassword#>">
+								<input type="password" autocapitalization="off" autocomplete="off" value="" name="http_passwd_2" tabindex="3" class="form_input" maxlength="16" onkeyup="" onBlur="" placeholder="<#Confirmpassword#>">
 							</div>
 						</td>
 					</tr>
