@@ -278,14 +278,13 @@ int main(_unused int argc, char* const argv[])
 		odhcp6c_clear_state(STATE_NTP_FQDN);
 		odhcp6c_clear_state(STATE_SIP_IP);
 		odhcp6c_clear_state(STATE_SIP_FQDN);
+		dhcpv6_set_ia_mode(ia_na_mode, ia_pd_mode);
 		bound = false;
 
 		syslog(LOG_NOTICE, "(re)starting transaction on %s", ifname);
 
 		signal_usr1 = signal_usr2 = false;
-		int mode = dhcpv6_set_ia_mode(ia_na_mode, ia_pd_mode);
-		if (mode != DHCPV6_STATELESS)
-			mode = dhcpv6_request(DHCPV6_MSG_SOLICIT);
+		int mode = dhcpv6_request(DHCPV6_MSG_SOLICIT);
 		odhcp6c_signal_process();
 
 		if (mode < 0)
@@ -438,7 +437,7 @@ static int usage(void)
 	"	-a		Don't send Accept Reconfigure option\n"
 	"	-f		Don't send Client FQDN option\n"
 	"	-k		Don't send a RELEASE when stopping\n"
-	"	-t <seconds>	Maximum timeout for DHCPv6-SOLICIT (120)\n"
+	"	-t <seconds>	Maximum timeout for DHCPv6-SOLICIT (3600)\n"
 	"	-m <seconds>	Minimum time between accepting updates (30)\n"
 	"\nInvocation options:\n"
 	"	-p <pidfile>	Set pidfile (/var/run/odhcp6c.pid)\n"
@@ -554,15 +553,14 @@ void* odhcp6c_get_state(enum odhcp6c_state state, size_t *len)
 }
 
 
-static struct odhcp6c_entry* odhcp6c_find_entry(enum odhcp6c_state state, const struct odhcp6c_entry *new)
+struct odhcp6c_entry* odhcp6c_find_entry(enum odhcp6c_state state, const struct odhcp6c_entry *new)
 {
-	size_t len, cmplen = offsetof(struct odhcp6c_entry, target) + ((new->length + 7) / 8);
-	uint8_t *start = odhcp6c_get_state(state, &len);
+	size_t len, cmplen = offsetof(struct odhcp6c_entry, target) + new->length / 8;
+	struct odhcp6c_entry *start = odhcp6c_get_state(state, &len);
+	struct odhcp6c_entry *x = NULL;
 
-	for (struct odhcp6c_entry *c = (struct odhcp6c_entry*)start;
-			(uint8_t*)c < &start[len] && &c->auxtarget[c->auxlen] <= &start[len];
-			c = (struct odhcp6c_entry*)(&c->auxtarget[c->auxlen]))
-		if (!memcmp(c, new, cmplen) && !memcmp(c->auxtarget, new->auxtarget, new->auxlen))
+	for (struct odhcp6c_entry *c = start; !x && c < &start[len/sizeof(*c)]; ++c)
+		if (!memcmp(c, new, cmplen))
 			return c;
 
 	return NULL;
@@ -574,7 +572,7 @@ bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new,
 {
 	size_t len;
 	struct odhcp6c_entry *x = odhcp6c_find_entry(state, new);
-	uint8_t *start = odhcp6c_get_state(state, &len);
+	struct odhcp6c_entry *start = odhcp6c_get_state(state, &len);
 
 	if (x && x->valid > new->valid && new->valid < safe)
 		new->valid = safe;
@@ -586,18 +584,20 @@ bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new,
 					new->valid - x->valid < min_update_interval &&
 					new->preferred >= x->preferred &&
 					new->preferred != UINT32_MAX &&
-					new->preferred - x->preferred < min_update_interval)
+					new->preferred - x->preferred < min_update_interval &&
+					x->class == new->class)
 				return false;
 			x->valid = new->valid;
 			x->preferred = new->preferred;
 			x->t1 = new->t1;
 			x->t2 = new->t2;
+			x->class = new->class;
 			x->iaid = new->iaid;
 		} else {
-			odhcp6c_add_state(state, new, sizeof(*new) + new->auxlen);
+			odhcp6c_add_state(state, new, sizeof(*new));
 		}
 	} else if (x) {
-		odhcp6c_remove_state(state, ((uint8_t*)x) - start, sizeof(*x) + x->auxlen);
+		odhcp6c_remove_state(state, (x - start) * sizeof(*x), sizeof(*x));
 	}
 	return true;
 }
@@ -606,10 +606,8 @@ bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new,
 static void odhcp6c_expire_list(enum odhcp6c_state state, uint32_t elapsed)
 {
 	size_t len;
-	uint8_t *start = odhcp6c_get_state(state, &len);
-	for (struct odhcp6c_entry *c = (struct odhcp6c_entry*)start;
-			(uint8_t*)c < &start[len] && &c->auxtarget[c->auxlen] <= &start[len];
-			c = (struct odhcp6c_entry*)(&c->auxtarget[c->auxlen])) {
+	struct odhcp6c_entry *start = odhcp6c_get_state(state, &len);
+	for (struct odhcp6c_entry *c = start; c < &start[len / sizeof(*c)]; ++c) {
 		if (c->t1 < elapsed)
 			c->t1 = 0;
 		else if (c->t1 != UINT32_MAX)
@@ -631,7 +629,7 @@ static void odhcp6c_expire_list(enum odhcp6c_state state, uint32_t elapsed)
 			c->valid -= elapsed;
 
 		if (!c->valid)
-			odhcp6c_remove_state(state, ((uint8_t*)c) - start, sizeof(*c) + c->auxlen);
+			odhcp6c_remove_state(state, (c - start) * sizeof(*c), sizeof(*c));
 	}
 }
 
@@ -645,7 +643,6 @@ void odhcp6c_expire(void)
 	odhcp6c_expire_list(STATE_RA_PREFIX, elapsed);
 	odhcp6c_expire_list(STATE_RA_ROUTE, elapsed);
 	odhcp6c_expire_list(STATE_RA_DNS, elapsed);
-	odhcp6c_expire_list(STATE_RA_SEARCH, elapsed);
 	odhcp6c_expire_list(STATE_IA_NA, elapsed);
 	odhcp6c_expire_list(STATE_IA_PD, elapsed);
 }

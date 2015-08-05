@@ -29,7 +29,8 @@ especially routers. It compiles to only about 35 KB (-Os -s).
 	h) Configurable SOL_MAX_RT
 	i) DS-Lite AFTR-Name Option
 	j) Softwire address and port mapped clients (MAP, LW4over6)
-	j) CER-ID (experimental)
+	k) Prefix Class (experimental)
+	l) CER-ID (experimental)
 
 4. Support for requesting and parsing Router Advertisements
 	a) parsing of prefixes, routes, MTU and RDNSS options
@@ -77,10 +78,5 @@ Environment:
 * RA_ROUTES		A space-separated list of routes from the RA
 				Format: <address>/<length>,gateway,valid,metric
 * RA_DNS		A space-separated list of recursive DNS servers from the RA
-* RA_DOMAINS		A space-separated list of DNS search domains from the RA
-* RA_HOPLIMIT	Highest hop-limit received in RAs
-* RA_MTU		MTU-value received in RA
-* RA_REACHABLE	ND Reachability time
-* RA_RETRANSMIT	ND Retransmit time
 * AFTR			The DS-Lite AFTR domain name
 * MAPE / MAPT / LW4O6	Softwire rules for MAPE, MAPT and LW4O6

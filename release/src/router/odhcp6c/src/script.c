@@ -163,7 +163,9 @@ static void entry_to_env(const char *name, const void *data, size_t len, enum en
 				buf_len += snprintf(&buf[buf_len], 24, ",%u,%u", e[i].preferred, e[i].valid);
 			}
 
-			if (type == ENTRY_PREFIX && ntohl(e[i].iaid) != 1)
+			if ((type == ENTRY_PREFIX || type == ENTRY_ADDRESS) && e[i].class)
+				buf_len += snprintf(&buf[buf_len], 12, ",class=%u", e[i].class);
+			else if (type == ENTRY_PREFIX && ntohl(e[i].iaid) != 1)
 				buf_len += snprintf(&buf[buf_len], 16, ",class=%08x", ntohl(e[i].iaid));
 
 			if (type == ENTRY_PREFIX && e[i].priority) {
@@ -178,34 +180,6 @@ static void entry_to_env(const char *name, const void *data, size_t len, enum en
 	}
 
 	buf[buf_len - 1] = '\0';
-	putenv(buf);
-}
-
-
-static void search_to_env(const char *name, const uint8_t *start, size_t len)
-{
-	size_t buf_len = strlen(name);
-	char *buf = realloc(NULL, buf_len + 2 + len);
-	char *c = mempcpy(buf, name, buf_len);
-	*c++ = '=';
-
-	for (struct odhcp6c_entry *e = (struct odhcp6c_entry*)start;
-				(uint8_t*)e < &start[len] && &e->auxtarget[e->auxlen] <= &start[len];
-				e = (struct odhcp6c_entry*)(&e->auxtarget[e->auxlen])) {
-		c = mempcpy(c, e->auxtarget, e->auxlen);
-		*c++ = ' ';
-	}
-
-	c[-1] = '\0';
-	putenv(buf);
-}
-
-
-static void int_to_env(const char *name, int value)
-{
-	size_t len = 12 + strlen(name);
-	char *buf = realloc(NULL, len);
-	snprintf(buf, len, "%s=%d", name, value);
 	putenv(buf);
 }
 
@@ -247,6 +221,7 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 	uint16_t otype, olen;
 	dhcpv6_for_each_option(data, &data[len], otype, olen, odata) {
 		struct dhcpv6_s46_rule *rule = (struct dhcpv6_s46_rule*)odata;
+		struct dhcpv6_s46_dmr *dmr = (struct dhcpv6_s46_dmr*)odata;
 		struct dhcpv6_s46_v4v6bind *bind = (struct dhcpv6_s46_v4v6bind*)odata;
 
 		if (state != STATE_S46_LW && otype == DHCPV6_OPT_S46_RULE &&
@@ -282,7 +257,7 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 					fprintf(fp, "br=%s,", buf6);
 				} else if (state == STATE_S46_MAPT && otype == DHCPV6_OPT_S46_DMR &&
 						olen >= sizeof(struct dhcpv6_s46_dmr)) {
-					struct dhcpv6_s46_dmr *dmr = (struct dhcpv6_s46_dmr*)odata;
+					dmr = (struct dhcpv6_s46_dmr*)odata;
 					memset(&in6, 0, sizeof(in6));
 					size_t prefix6len = dmr->dmr_prefix6_len;
 					prefix6len = (prefix6len % 8 == 0) ? prefix6len / 8 : prefix6len / 8 + 1;
@@ -295,8 +270,6 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 					fprintf(fp, "dmr=%s/%d,", buf6, dmr->dmr_prefix6_len);
 				}
 			}
-
-			fputc(' ', fp);
 		} else if (state == STATE_S46_LW && otype == DHCPV6_OPT_S46_V4V6BIND &&
 				olen >= sizeof(struct dhcpv6_s46_v4v6bind)) {
 			char buf4[INET_ADDRSTRLEN];
@@ -314,8 +287,8 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 			inet_ntop(AF_INET, &bind->ipv4_address, buf4, sizeof(buf4));
 			inet_ntop(AF_INET6, &in6, buf6, sizeof(buf6));
 
-			fprintf(fp, "type=%s,prefix4len=32,prefix6len=%d,ipv4prefix=%s,ipv6prefix=%s,",
-					type, bind->bindprefix6_len, buf4, buf6);
+			fprintf(fp, "type=%s,ipv4address=%s,prefix6len=%d,ipv6prefix=%s,",
+					type, buf4, bind->bindprefix6_len, buf6);
 
 			s46_to_env_portparams(&bind->bind_ipv6_prefix[prefix6len],
 					olen - sizeof(*bind) - prefix6len, fp);
@@ -326,9 +299,9 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 					fprintf(fp, "br=%s,", buf6);
 				}
 			}
-
-			fputc(' ', fp);
 		}
+
+		fputc(' ', fp);
 	}
 
 	fclose(fp);
@@ -360,14 +333,12 @@ void script_call(const char *status)
 	uint8_t *s46_lw = odhcp6c_get_state(STATE_S46_LW, &s46_lw_len);
 	uint8_t *passthru = odhcp6c_get_state(STATE_PASSTHRU, &passthru_len);
 
-	size_t prefix_len, address_len, ra_pref_len,
-		ra_route_len, ra_dns_len, ra_search_len;
+	size_t prefix_len, address_len, ra_pref_len, ra_route_len, ra_dns_len;
 	uint8_t *prefix = odhcp6c_get_state(STATE_IA_PD, &prefix_len);
 	uint8_t *address = odhcp6c_get_state(STATE_IA_NA, &address_len);
 	uint8_t *ra_pref = odhcp6c_get_state(STATE_RA_PREFIX, &ra_pref_len);
 	uint8_t *ra_route = odhcp6c_get_state(STATE_RA_ROUTE, &ra_route_len);
 	uint8_t *ra_dns = odhcp6c_get_state(STATE_RA_DNS, &ra_dns_len);
-	uint8_t *ra_search = odhcp6c_get_state(STATE_RA_SEARCH, &ra_search_len);
 
 	// Don't set environment before forking, because env is leaky.
 	if (fork() == 0) {
@@ -394,12 +365,6 @@ void script_call(const char *status)
 		entry_to_env("RA_ADDRESSES", ra_pref, ra_pref_len, ENTRY_ADDRESS);
 		entry_to_env("RA_ROUTES", ra_route, ra_route_len, ENTRY_ROUTE);
 		entry_to_env("RA_DNS", ra_dns, ra_dns_len, ENTRY_HOST);
-		search_to_env("RA_DOMAINS", ra_search, ra_search_len);
-
-		int_to_env("RA_HOPLIMIT", ra_conf_hoplimit(0));
-		int_to_env("RA_MTU", ra_conf_mtu(0));
-		int_to_env("RA_REACHABLE", ra_conf_reachable(0));
-		int_to_env("RA_RETRANSMIT", ra_conf_retransmit(0));
 
 		char *buf = malloc(10 + passthru_len * 2);
 		strncpy(buf, "PASSTHRU=", 10);
@@ -410,4 +375,7 @@ void script_call(const char *status)
 		execv(argv[0], argv);
 		_exit(128);
 	}
+
+	// Delete lost prefixes and user opts
+	odhcp6c_clear_state(STATE_CUSTOM_OPTS);
 }

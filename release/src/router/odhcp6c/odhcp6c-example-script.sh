@@ -12,7 +12,6 @@ update_resolv() {
 			echo "nameserver $c #odhcp6c:$device:" >> /tmp/resolv.conf.tmp
 		done
 		mv /tmp/resolv.conf.tmp /etc/resolv.conf
-		chmod 0644 /etc/resolv.conf
 	) 9>/tmp/resolv.conf.lock
 	rm -f /tmp/resolv.conf.lock /tmp/resolv.conf.tmp
 }
