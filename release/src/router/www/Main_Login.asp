@@ -3,11 +3,11 @@
 <html xmlns:v>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
-<meta HTTP-EQUIV="Expires" CONTENT="-1">
-<link rel="shortcut icon" href="images/favicon.png">
-<link rel="icon" href="images/favicon.png">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache"/>
+<meta HTTP-EQUIV="Expires" CONTENT="-1"/>
+<link rel="shortcut icon" href="images/favicon.png"/>
+<link rel="icon" href="images/favicon.png"/>
 <title>ASUS Login</title>
 <style>
 .content{
@@ -176,24 +176,24 @@ function login(){
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
 
 <form method="post" name="form" action="/login.cgi" target="hidden_frame" onsubmit="return login();">
-<input type="hidden" name="group_id" value="">
-<input type="hidden" name="action_mode" value="">
-<input type="hidden" name="action_script" value="">
-<input type="hidden" name="action_wait" value="5">
-<input type="hidden" name="current_page" value="Main_Login.asp">
-<input type="hidden" name="next_page" value="Main_Login.asp">
-<input type="hidden" name="flag" value="">
-<input type="hidden" name="login_authorization" value="">
-<input name="foilautofill" style="display: none;" type="password">
+<input type="hidden" name="group_id" value=""/>
+<input type="hidden" name="action_mode" value=""/>
+<input type="hidden" name="action_script" value=""/>
+<input type="hidden" name="action_wait" value="5"/>
+<input type="hidden" name="current_page" value="Main_Login.asp"/>
+<input type="hidden" name="next_page" value="Main_Login.asp"/>
+<input type="hidden" name="flag" value=""/>
+<input type="hidden" name="login_authorization" value=""/>
+<input name="foilautofill" style="display: none;" type="password"/>
 <table align="center" cellpadding="0" cellspacing="0">
-	<tr height="35px"></tr>
+	<tr style="height:35px;"></tr>
 	<tr>
 		<td>
 			<div>
 				<table class="content">
 					<tr style="height:23px;">
 						<td style="width:73px" align="left">
-							<div><img src="/images/New_ui/icon_titleName.png"></div>
+							<div><img src="/images/New_ui/icon_titleName.png"/></div>
 						</td>
 						<td align="left">
 							<div class="title_name">SIGN IN</div>
@@ -208,14 +208,15 @@ function login(){
 					<tr style="height:42px;">
 						<td colspan="2">
 							<div style="margin:20px 0px 0px 78px;">
-								<input type="text" id="login_username" name="login_username" tabindex="1" class="form_input" maxlength="20" value="" autocapitalization="off" autocomplete="off" placeholder="Username">
+								<input type="text" id="login_username" name="login_username" tabindex="1" class="form_input" maxlength="20" value="" autocapitalization="off" autocomplete="off" placeholder="Username"/>
 							</div>
 						</td>
 					</tr>
 					<tr style="height:42px;">
 						<td colspan="2">
 							<div style="margin:20px 0px 0px 78px;">
-								<input type="password" autocapitalization="off" autocomplete="off" value="" name="login_passwd" tabindex="2" class="form_input" maxlength="16" onkeyup="" onpaste="return false;"/ onBlur="" placeholder="Password">
+								<input type="password" autocapitalization="off" autocomplete="off" value="" name="login_passwd" tabindex="2" class="form_input" maxlength="16" onkeyup="" onBlur="" placeholder="Password"/>
+
 							</div>
 						</td>
 					</tr>
@@ -227,7 +228,7 @@ function login(){
 					<tr align="right" style="height:38px;">
 						<td colspan="2">
 							<div style="text-align: center;float:right; margin:30px 0px 0px 78px;">
-								<input type="submit" class="button" onclick="login();" value="Sign In">
+								<input type="submit" class="button" onclick="login();" value="Sign In"/>
 							</div>	
 						</td>
 					</tr>
