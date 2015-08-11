@@ -47,6 +47,17 @@ enum {
 
 //0:WAN, 1:LAN, lan_wan_partition[][0] is port0
 static const int lan_wan_partition[9][NR_WANLAN_PORT] = {
+#if defined(PLN12)
+	/* L0, L1, L2, L3, W */
+	{1,1,1,1,0}, //LLLLW
+	{1,1,1,0,0}, //LLLWW
+	{1,1,0,1,0}, //LLWLW
+	{1,0,1,1,0}, //LWLLW
+	{0,1,1,1,0}, //WLLLW
+	{1,1,0,0,0}, //LLWWW
+	{0,0,1,1,0}, //WWLLW
+	{1,1,1,1,1}  //ALL
+#else
 	/* W, L1, L2, L3, L4 */
 	{0,1,1,1,1}, //WLLLL
 	{0,0,1,1,1}, //WWLLL
@@ -56,18 +67,25 @@ static const int lan_wan_partition[9][NR_WANLAN_PORT] = {
 	{0,0,0,1,1}, //WWWLL
 	{0,1,1,0,0}, //WLLWW
 	{1,1,1,1,1}  //ALL
+#endif
 };
 
 void reset_qca_switch(void);
 
-////// AC55U definition
 #define RGMII_PORT		P6_PORT
 #define SGMII_PORT		P0_PORT
+#if defined(PLN12)
+#define	CPU_PORT_TO_WAN		P0_PORT // QCA953X GMAC1(eth1) connect to WAN port
+#define CPU_PORT_TO_LAN		P0_PORT // QCA953X GMAC1(eth1) connect to LAN port
+#elif (defined(PLAC56) || defined(PLAC66U))
+#define	CPU_PORT_TO_WAN		SGMII_PORT // QCA956X SGMII MAC0(eth0) connect to WAN port
+#define CPU_PORT_TO_LAN		SGMII_PORT // QCA956X SGMII MAC0(eth0) connect to LAN port
+#else /* RT-AC55U || 4G-AC55U */
 #define	CPU_PORT_TO_WAN		RGMII_PORT // AC55U RGMII MAC0(eth0) connect to WAN port
 #define CPU_PORT_TO_LAN		SGMII_PORT // AC55U SGMII MAC1(eth1) connect to LAN port
+#endif
 #define	CPU_PORT_WAN_MASK	(1U << CPU_PORT_TO_WAN)
 #define CPU_PORT_LAN_MASK	(1U << CPU_PORT_TO_LAN)
-//////
 
 #define WANLANPORTS_MASK	((1U << WAN_PORT) | (1U << LAN1_PORT) | (1U << LAN2_PORT) | (1U << LAN3_PORT) | (1U << LAN4_PORT))	/* ALL WAN/LAN port bit-mask */
 
@@ -145,7 +163,11 @@ static unsigned int get_lan_port_mask(void)
 	unsigned int m = nvram_get_int("lanports_mask");
 
 	if (sw_mode == SW_MODE_AP)
+#if defined(PLN12)
+		m = ((1U << LAN1_PORT) | (1U << LAN4_PORT));
+#else
 		m = WANLANPORTS_MASK;
+#endif
 
 	return m;
 }
@@ -218,9 +240,9 @@ int qca8337_vlan_set(int idx, int vid, int prio, int mbr, int untag)
 	sprintf(idx_str , "%d", idx);
 	sprintf(vid_str , "%d", vid);
 	sprintf(prio_str, "%d", prio);
-	eval("swconfig", "dev", "eth0", "vlan", idx_str, "set", "vid", vid_str);
-	eval("swconfig", "dev", "eth0", "vlan", idx_str, "set", "vpri", prio_str);
-	eval("swconfig", "dev", "eth0", "vlan", idx_str, "set", "ports", ports);
+	eval("swconfig", "dev", MII_IFNAME, "vlan", idx_str, "set", "vid", vid_str);
+	eval("swconfig", "dev", MII_IFNAME, "vlan", idx_str, "set", "vpri", prio_str);
+	eval("swconfig", "dev", MII_IFNAME, "vlan", idx_str, "set", "ports", ports);
 	return 0;
 }
 
@@ -262,7 +284,7 @@ static int get_qca8337_port_info(unsigned int port, unsigned int *link, unsigned
 	 * 4. port:5 link:up speed:100baseT half-duplex auto
 	 * 5. failed
 	 */
-	sprintf(buf, "swconfig dev eth0 port %d get link", port);
+	sprintf(buf, "swconfig dev %s port %d get link", MII_IFNAME, port);
 	if ((fp = popen(buf, "r")) == NULL) {
 		_dprintf("%s: Run [%s] fail!\n", __func__, buf);
 		return -2;
@@ -410,7 +432,13 @@ static void config_qca8337_LANWANPartition(int type)
 	reset_qca_switch();
 
 	// LAN 
+#if defined(PLN12)
+	qca8337_vlan_set(1, 1, 0, (lan_mask | CPU_PORT_LAN_MASK), lan_mask);
+#elif (defined(PLAC56) || defined(PLAC66U))
+	qca8337_vlan_set(1, 1, 0, (lan_mask | CPU_PORT_LAN_MASK | (1U << RGMII_PORT)), lan_mask | (1U << RGMII_PORT));
+#else /* RT-AC55U || 4G-AC55U */
 	qca8337_vlan_set(1, 1, 0, (lan_mask | CPU_PORT_LAN_MASK), (lan_mask | CPU_PORT_LAN_MASK));
+#endif
 
 	// WAN & DUALWAN
 	if (sw_mode == SW_MODE_ROUTER) {
@@ -418,19 +446,28 @@ static void config_qca8337_LANWANPartition(int type)
 		case WANSCAP_WAN | WANSCAP_LAN:
 			qca8337_vlan_set(2, 2, 0, (wan_mask      | CPU_PORT_WAN_MASK), wan_mask);
 			qca8337_vlan_set(3, 3, 0, (wans_lan_mask | CPU_PORT_WAN_MASK), wans_lan_mask);
-			eval("swconfig", "dev", "eth0", "set", "enable_vlan", "1"); // enable vlan
+			eval("swconfig", "dev", MII_IFNAME, "set", "enable_vlan", "1"); // enable vlan
 			break;
 		case WANSCAP_LAN:
 			qca8337_vlan_set(2, 2, 0, (wans_lan_mask | CPU_PORT_WAN_MASK), (wans_lan_mask | CPU_PORT_WAN_MASK));
 			break;
 		case WANSCAP_WAN:
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+			qca8337_vlan_set(2, 2, 0, (wan_mask      | CPU_PORT_WAN_MASK), wan_mask);
+			eval("swconfig", "dev", MII_IFNAME, "set", "enable_vlan", "1"); // enable vlan
+#else /* RT-AC55U || 4G-AC55U */
 			qca8337_vlan_set(2, 2, 0, (wan_mask      | CPU_PORT_WAN_MASK), (wan_mask      | CPU_PORT_WAN_MASK));
+#endif
 			break;
 		default:
 			_dprintf("%s: Unknown WANSCAP %x\n", __func__, wanscap_wanlan);
 		}
 	}
-	eval("swconfig", "dev", "eth0", "set", "apply"); // apply changes
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+	else
+		eval("swconfig", "dev", MII_IFNAME, "set", "enable_vlan", "1"); // enable vlan
+#endif
+	eval("swconfig", "dev", MII_IFNAME, "set", "apply"); // apply changes
 }
 
 static void get_qca8337_WAN_Speed(unsigned int *speed)
@@ -481,7 +518,7 @@ static void link_down_up_qca8337_PHY(unsigned int mask, int status)
 		if (!(m & 1))
 			continue;
 		sprintf(idx, "%d", i);
-		eval("swconfig", "dev", "eth0", "port", idx, "set", "power", action);
+		eval("swconfig", "dev", MII_IFNAME, "port", idx, "set", "power", action);
 	}
 }
 
@@ -501,7 +538,7 @@ void set_mt7620_esw_broadcast_rate(int bsr)
 
 void reset_qca_switch(void)
 {
-	eval("swconfig", "dev", "eth0", "set", "reset"); // clear
+	eval("swconfig", "dev", MII_IFNAME, "set", "reset"); // clear
 	nvram_unset("vlan_idx");
 }
 
@@ -573,15 +610,19 @@ static void initialize_Vlan(int stb_bitmask)
 	reset_qca_switch();
 
 	// LAN
+#if (defined(PLAC56) || defined(PLAC66U))
+	qca8337_vlan_set(1, 1, 0, (lan_mask | CPU_PORT_LAN_MASK | (1U << RGMII_PORT)), (lan_mask | CPU_PORT_LAN_MASK | (1U << RGMII_PORT)));
+#else
 	qca8337_vlan_set(1, 1, 0, (lan_mask | CPU_PORT_LAN_MASK), (lan_mask | CPU_PORT_LAN_MASK));
+#endif
 
 	// DUALWAN
 	if (wanscap_lan) {
 		qca8337_vlan_set(wans_lan_vid, wans_lan_vid, 0, (wans_lan_mask | CPU_PORT_WAN_MASK), wans_lan_mask);
 		if(wans_lan_vid == 3)
-			eval("swconfig", "dev", "eth0", "set", "enable_vlan", "1"); // enable vlan
+			eval("swconfig", "dev", MII_IFNAME, "set", "enable_vlan", "1"); // enable vlan
 	}
-	eval("swconfig", "dev", "eth0", "set", "apply");
+	eval("swconfig", "dev", MII_IFNAME, "set", "apply");
 }
 
 
@@ -647,13 +688,13 @@ static void create_Vlan(int bitmask)
 		char pvid[8];
 		qca8337_vlan_set(2, vid, prio, mbr_qca, untag_qca);
 		sprintf(pvid, "%d", vid);
-		eval("swconfig", "dev", "eth0", "port", "set", "pvid", pvid);
+		eval("swconfig", "dev", MII_IFNAME, "port", "set", "pvid", pvid);
 	}
 	else {	//IPTV, VoIP port
 		qca8337_vlan_set(-1, vid, prio, mbr_qca, untag_qca);
 	}
-	eval("swconfig", "dev", "eth0", "set", "enable_vlan", "1"); // enable vlan
-	eval("swconfig", "dev", "eth0", "set", "apply"); // apply changes
+	eval("swconfig", "dev", MII_IFNAME, "set", "enable_vlan", "1"); // enable vlan
+	eval("swconfig", "dev", MII_IFNAME, "set", "apply"); // apply changes
 }
 
 #if 0
@@ -872,6 +913,16 @@ void ATE_qca8337_port_status(void)
 		get_qca8337_port_info(lan_id_to_port_nr(i), &pS.link[i], &pS.speed[i]);
 	}
 
+#if defined(PLN12)	
+	sprintf(buf, "L1=%C;L2=%C;",
+		(pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
+		(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X');
+#elif defined(PLAC56)
+	sprintf(buf, "L1=%C;L2=%C;L3=%C;",
+		(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
+		(pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
+		(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X');
+#else
 	// RT-AC55U 
 	sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
 		(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
@@ -879,6 +930,7 @@ void ATE_qca8337_port_status(void)
 		(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
 		(pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
 		(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X');
+#endif	
 	puts(buf);
 }
 

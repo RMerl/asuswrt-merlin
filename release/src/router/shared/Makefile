@@ -134,6 +134,14 @@ CFLAGS	+= -I$(TOP)/bled
 OBJS	+= bled.o
 endif
 
+ifeq ($(RTCONFIG_QCA_PLC_UTILS),y)
+OBJS	+= plc_utils.o
+endif
+
+ifeq ($(RTCONFIG_TCODE),y)
+OBJS    += tcode.o
+endif
+
 vpath %.c sysdeps $(SRCBASE)/shared/ $(WLAN_ComponentSrcDirs)
 ifeq ($(RTCONFIG_RALINK),y)
 vpath %.c sysdeps/ralink
@@ -175,6 +183,13 @@ install: all
 clean:
 	rm -f *.o *.so *.a .*.depend sysdeps/*.o sysdeps/broadcom/*.o sysdeps/ralink/*.o sysdeps/qtn/*.o
 
+ifeq ($(RTCONFIG_TCODE),y)
+ifneq ($(wildcard ./prebuild/tcode.o),)
+tcode.o:
+	@-cp -f ./prebuild/tcode.o .
+endif
+endif
+
 %.o: %.c .%.depend
 	@echo " [shared] CC $@"
 	@$(CC) $(CFLAGS) -o $@ -c $<
@@ -185,5 +200,5 @@ clean:
 .%.depend: %.c
 	@$(CC) $(CFLAGS) -M $< > $@
 
--include $(OBJS:%.o=.%.depend)
+#-include $(OBJS:%.o=.%.depend)
 

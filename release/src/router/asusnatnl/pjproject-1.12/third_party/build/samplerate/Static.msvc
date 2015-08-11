@@ -1,0 +1,138 @@
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+CPP=cl.exe
+RSC=rc.exe
+F90=df.exe
+BSC32=bscmake.exe
+BSC32_SBRS= \
+	
+LIB32=link.exe -lib
+
+OUTDIR_REL=.\output\libsamplerate-i386-win32-vc-release
+INTDIR_REL=.\output\libsamplerate-i386-win32-vc-release
+OUTDIR_DEB=.\output\libsamplerate-i386-win32-vc-debug
+INTDIR_DEB=.\output\libsamplerate-i386-win32-vc-debug
+
+LIB_REL=..\..\lib\libsamplerate-i386-win32-vc-release.lib
+LIB_DEB=..\..\lib\libsamplerate-i386-win32-vc-debug.lib
+
+ALL : $(LIB_REL) $(LIB_DEB)
+
+CLEAN :
+	-@erase "$(INTDIR_REL)\*.obj"
+	-@erase "$(INTDIR_REL)\*.pch"
+	-@erase "$(INTDIR_REL)\*.pdb"
+	-@erase "$(INTDIR_REL)\*.idb"
+	@rmdir $(INTDIR_REL)
+	-@erase "$(INTDIR_DEB)\*.obj"
+	-@erase "$(INTDIR_DEB)\*.pch"
+	-@erase "$(INTDIR_DEB)\*.pdb"
+	-@erase "$(INTDIR_DEB)\*.idb"
+	@rmdir $(INTDIR_DEB)
+	-@erase $(LIB_REL)
+	-@erase $(LIB_DEB)
+
+"$(OUTDIR_REL)" :
+    if not exist "$(OUTDIR_REL)/$(NULL)" mkdir "$(OUTDIR_REL)"
+
+CPP_PROJ_REL=/nologo /MD /W3 /GX /O2 /I "../win32" /I "../../libsamplerate/src" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fp"$(INTDIR_REL)\libsamplerate_static.pch" /YX /Fo"$(INTDIR_REL)\\" /Fd"$(INTDIR_REL)\\" /FD /c 
+	
+LIB32_FLAGS_REL=/nologo /out:$(LIB_REL)
+LIB32_OBJS_REL= \
+	"$(INTDIR_REL)\samplerate.obj" \
+	"$(INTDIR_REL)\src_linear.obj" \
+	"$(INTDIR_REL)\src_sinc.obj" \
+	"$(INTDIR_REL)\src_zoh.obj"
+
+$(LIB_REL) : "$(OUTDIR_REL)" $(DEF_FILE) $(LIB32_OBJS_REL)
+    $(LIB32) @<<
+  $(LIB32_FLAGS_REL) $(DEF_FLAGS) $(LIB32_OBJS_REL)
+<<
+
+"$(OUTDIR_DEB)" :
+    if not exist "$(OUTDIR_DEB)/$(NULL)" mkdir "$(OUTDIR_DEB)"
+
+CPP_PROJ_DEB=/nologo /MTd /W3 /Gm /GX /ZI /Od /I "../win32" /I "../../libsamplerate/src" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"$(INTDIR_DEB)\libsamplerate_static.pch" /YX /Fo"$(INTDIR_DEB)\\" /Fd"$(INTDIR_DEB)\\" /FD /GZ /c 
+LIB32_FLAGS_DEB=/nologo /out:$(LIB_DEB)
+LIB32_OBJS_DEB= \
+	"$(INTDIR_DEB)\samplerate.obj" \
+	"$(INTDIR_DEB)\src_linear.obj" \
+	"$(INTDIR_DEB)\src_sinc.obj" \
+	"$(INTDIR_DEB)\src_zoh.obj"
+
+$(LIB_DEB) : "$(OUTDIR_DEB)" $(DEF_FILE) $(LIB32_OBJS_DEB)
+    $(LIB32) @<<
+  $(LIB32_FLAGS_DEB) $(DEF_FLAGS) $(LIB32_OBJS_DEB)
+<<
+
+
+..\..\libsamplerate\src\samplerate.c : \
+	"..\..\libsamplerate\src\common.h"\
+	"..\..\libsamplerate\src\config.h"\
+	"..\..\libsamplerate\src\float_cast.h"\
+	"..\..\libsamplerate\src\samplerate.h"\
+	
+
+..\..\libsamplerate\src\src_linear.c : \
+	"..\..\libsamplerate\src\common.h"\
+	"..\..\libsamplerate\src\config.h"\
+	"..\..\libsamplerate\src\float_cast.h"\
+	"..\..\libsamplerate\src\samplerate.h"\
+	
+
+..\..\libsamplerate\src\src_sinc.c : \
+	"..\..\libsamplerate\src\common.h"\
+	"..\..\libsamplerate\src\config.h"\
+	"..\..\libsamplerate\src\fastest_coeffs.h"\
+	"..\..\libsamplerate\src\float_cast.h"\
+	"..\..\libsamplerate\src\high_qual_coeffs.h"\
+	"..\..\libsamplerate\src\mid_qual_coeffs.h"\
+	"..\..\libsamplerate\src\samplerate.h"\
+	
+
+..\..\libsamplerate\src\src_zoh.c : \
+	"..\..\libsamplerate\src\common.h"\
+	"..\..\libsamplerate\src\config.h"\
+	"..\..\libsamplerate\src\float_cast.h"\
+	"..\..\libsamplerate\src\samplerate.h"\
+	
+
+
+SOURCE=..\..\libsamplerate\src\samplerate.c
+
+"$(INTDIR_DEB)\samplerate.obj" : $(SOURCE) "$(INTDIR_DEB)"
+	$(CPP) $(CPP_PROJ_DEB) $(SOURCE)
+"$(INTDIR_REL)\samplerate.obj" : $(SOURCE) "$(INTDIR_REL)"
+	$(CPP) $(CPP_PROJ_REL) $(SOURCE)
+
+
+SOURCE=..\..\libsamplerate\src\src_linear.c
+
+"$(INTDIR_DEB)\src_linear.obj" : $(SOURCE) "$(INTDIR_DEB)"
+	$(CPP) $(CPP_PROJ_DEB) $(SOURCE)
+"$(INTDIR_REL)\src_linear.obj" : $(SOURCE) "$(INTDIR_REL)"
+	$(CPP) $(CPP_PROJ_REL) $(SOURCE)
+
+
+SOURCE=..\..\libsamplerate\src\src_sinc.c
+
+"$(INTDIR_DEB)\src_sinc.obj" : $(SOURCE) "$(INTDIR_DEB)"
+	$(CPP) $(CPP_PROJ_DEB) $(SOURCE)
+"$(INTDIR_REL)\src_sinc.obj" : $(SOURCE) "$(INTDIR_REL)"
+	$(CPP) $(CPP_PROJ_REL) $(SOURCE)
+
+
+SOURCE=..\..\libsamplerate\src\src_zoh.c
+
+"$(INTDIR_DEB)\src_zoh.obj" : $(SOURCE) "$(INTDIR_DEB)"
+	$(CPP) $(CPP_PROJ_DEB) $(SOURCE)
+"$(INTDIR_REL)\src_zoh.obj" : $(SOURCE) "$(INTDIR_REL)"
+	$(CPP) $(CPP_PROJ_REL) $(SOURCE)
+
+
+

@@ -19,6 +19,8 @@
 #include <unistd.h>
 #include <stdarg.h>
 
+#include "mem_pool.h"
+
 //#define NVRAM_ 1
 
 #define CMD_SPLIT "\n"
@@ -60,6 +62,7 @@ typedef cJSON *(*proc_pt)(char *filename);
 //#define TEST 1
 #define RENAME_F
 #define TOKENFILE 1
+#define MEM_POOL_ENABLE 1
 
 
 
@@ -154,7 +157,8 @@ struct queue_entry
     struct queue_entry * next_ptr;   /* Pointer to next entry */
     //int type;
     //char filename[256];
-    char cmd_name[1024];
+    //char cmd_name[1024];
+    char *cmd_name;
     char *re_cmd;
     int is_first;
     //int id;

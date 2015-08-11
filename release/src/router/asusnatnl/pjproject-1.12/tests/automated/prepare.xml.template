@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<Scenario site="$(HOSTNAME)" url="http://my.cdash.org/submit.php?project=PJSIP" wdir="$(PJDIR)/tests/automated">
+ 
+	<Submit group="Experimental" build="Test-Preparation">
+		<Configure cmd="$(NOP)" />
+		<Build cmd="$(NOP)" />
+
+		<!-- GNU Makefile based scenario 
+		     Requirement:
+		      - none
+		  -->
+		<Test name="Configuring GNU scenario" cmd="python configure.py -t gnu -o gnu.xml gnu.xml.template" />
+
+		<!-- GNU Makefile with Intel IPP scenario.
+		     Requirements:
+		      - IPPROOT
+		      - IPPSAMPLES
+		      - IPPARCH (optional)
+
+		 -->
+		<Test name="Configuring GNU IPP scenario" cmd="python configure.py -t gnu -o gnu-ipp.xml gnu-ipp.xml.template" />
+
+		<!-- iPhone target.
+		     Requriement(s):
+		      - valid SDK is installed
+
+		 -->
+		<Test name="Configuring iPhone scenario" cmd="python configure.py -t gnu -o iphone.xml iphone.xml.template" />
+
+		<!-- MSVC target.
+		     Requirements:
+		      - Build from VS successfully
+		      - VS paths are set
+
+		 -->
+		<Test name="Configuring Visual Studio for Win32" cmd="python configure.py -t vs -vstarget Release -o msvc-win32.xml -nopjsuatest msvc.xml.template" />
+
+		<!-- Symbian target.
+		     Requirement:
+		       - EPOCROOT (modify below)
+		-->
+		<Test name="Configuring Symbian scenario" cmd='CMD /C SET EPOCROOT=\S60\devices\S60_5th_Edition_SDK_v1.0&amp;&amp; devices -setdefault @S60_5th_Edition_SDK_v1.0:com.nokia.s60&amp;&amp; python configure.py -t s60 -s60target &quot;gcce urel&quot; -o symbian.xml symbian.xml.template' />
+
+	</Submit>
+	
+</Scenario>

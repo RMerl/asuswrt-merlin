@@ -39,6 +39,8 @@
 #define assert(a)
 #endif
 
+#include <json.h>
+
 #if defined(linux)
 /* Use SVID search */
 #define __USE_GNU
@@ -82,6 +84,26 @@ get_cgi(char *name)
 	hsearch_r(e, FIND, &ep, &htab);
 
 	return ep ? ep->data : NULL;
+}
+
+char *
+get_cgi_json(char *name, json_object *root)
+{
+	if(root == NULL){
+		ENTRY e, *ep;
+
+	if (!htab.table)
+		return NULL;
+
+	e.key = name;
+	hsearch_r(e, FIND, &ep, &htab);
+
+	return ep ? ep->data : NULL;
+	}else{
+		struct json_object *json_value;
+		json_value = json_object_object_get(root, name);
+		return (char *)json_object_get_string(json_value);
+	}
 }
 
 void

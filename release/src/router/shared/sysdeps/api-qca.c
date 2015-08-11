@@ -27,7 +27,7 @@
 
 typedef uint32_t __u32;
 
-/////// copy fro qca-wifi
+/////// copy from qca-wifi
 #define IEEE80211_CHAN_MAX      255
 #define IEEE80211_IOCTL_GETCHANINFO     (SIOCIWFIRSTPRIV+7)
 typedef unsigned int	u_int;

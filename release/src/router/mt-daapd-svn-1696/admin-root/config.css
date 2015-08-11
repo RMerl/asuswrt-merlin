@@ -1,0 +1,51 @@
+label {
+  float: left;
+  width: 11em;
+  font: icon;
+  padding-top: .3em;
+  padding-left: 1em;
+}
+input {
+  font: icon;
+}
+select {
+  font: icon;
+}
+#config_path_label {
+  float: left;
+  width: 11em;
+  font:icon;
+  padding: .3em 0 .5em 1em;
+}
+#config_path {
+  float: left;
+  width: 40em;
+  font: icon;
+  padding: .3em 0 .5em 0;
+}
+.addItemHref {
+  float: left;
+  margin-left: 11em;
+  font: icon;
+  padding-left: 1.5em;
+  margin-bottom: .5em;
+}
+.message_div {
+  background-color: yellow;
+  padding: 1em;
+  border: 1px solid #8CACBB;
+}
+#messages {
+  background-color: yellow;
+  padding: .5em;
+  border: 1px solid #8CACBB;
+  width: 40em;
+  float: left;
+  margin-left: 1em;
+}
+#buttons {
+  float: left;
+}
+#buttons input {
+  width: 7em;
+}

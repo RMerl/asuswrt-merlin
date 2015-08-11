@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<config>
+    <section name="Server">
+        <item id="general:servername" restart="true">
+            <name>Server Name</name>
+            <short_description>
+                The name iTunes and other daap clients should see
+            </short_description>
+            <long_description>
+                This is both the name of the server as advertised via Bonjour, and the
+                name of the database exported via DAAP. Also know as "What shows up in
+                iTunes".
+            </long_description>
+            <type size="20">text</type>
+        </item>
+        <item id="general:web_root" advanced="true" required="true" restart="true">
+            <name>Web Root</name>
+            <short_description></short_description>
+            <type size="80" browse="directory">text</type>
+        </item>
+        <item id="general:port" advanced="true" required="true" restart="true">
+            <name>Port</name>
+            <short_description>
+                The port the server should run at; default is 3689
+            </short_description>
+            <type size="20">text</type>
+        </item>
+        <item id="general:logfile">
+            <name>Logfile</name>
+            <short_description></short_description>
+            <type size="80" browse="file">text</type>
+        </item>
+        <item id="general:runas" advanced="true" required="true" restart="true">
+            <name>Run As</name>
+            <short_description></short_description>
+            <type size="20">text</type>
+        </item>
+        <item id="general:admin_pw" required="true">
+            <name>Admin password</name>
+            <short_description>
+                The password for this administration interface.
+            </short_description>
+            <type size="20">text</type>
+        </item>
+        <item id="general:password">
+            <name>Music Password</name>
+            <short_description>
+                The password clients need to access this server.
+            </short_description>
+            <type size="20">text</type>
+        </item>
+        <item id="general:compress" advanced="true">
+            <name>Compress</name>
+            <short_description>
+                Should browsing data be compressed on the way to the client?
+            </short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+	<item id="general:truncate" advanced="true">
+	    <name>Truncate Logfile</name>
+            <short_description>
+	        Should the logfile get truncated on startup?
+	    </short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+	</item>
+
+        <item id="general:debuglevel" advanced="true">
+            <name>Debug Level</name>
+            <short_description>
+                Possible values are 0 to 9, 9 being the most detailed debug level.
+            </short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+            </options>
+        </item>
+    </section>
+
+    <section name="Music Files">
+        <item id="general:mp3_dir" required="true">
+            <name>Music Folder</name>
+            <short_description></short_description>
+            <type size="80" multiple="true" add_item_label="Add music folder" browse="directory">text</type>
+        </item>
+        <item id="general:extensions">
+            <name>Extensions</name>
+            <short_description></short_description>
+            <type size="20">text</type>
+        </item>
+        <item id="general:playlist">
+            <name>Playlist File</name>
+            <short_description></short_description>
+            <type size="80" browse="file">text</type>
+        </item>
+        <item id="general:compdirs" advanced="true">
+            <name>Compilation Directories</name>
+            <short_description></short_description>
+            <type size="80" multiple="true" add_item_label="Add compilation directory" browse="directory">text</type>
+        </item>
+    </section>
+    <section name="Scanning" advanced="true">
+        <item id="scanning:mp3_tag_codepage">
+	    <name>MP3 Tag Codepage</name>
+	    <short_description>
+	        What codepage non-utf mp3 tags should be converted from (default: ISO-8859-1)
+            </short_description>
+            <type>text</type>
+	</item>
+        <item id="scanning:process_playlists">
+            <name>Process Playlists</name>
+            <short_description>
+                Should static playlists (.m3u, etc) be processed?
+            </short_description>
+            <type default_value="1">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="scanning:process_itunes">
+            <name>Process iTunes files</name>
+            <short_description>
+                Should iTunes xml-files be processed?
+            </short_description>
+            <type default_value="1">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="scanning:process_m3u">
+            <name>Process .m3u files</name>
+            <short_description>
+                Should .m3u playlists be processed?
+            </short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+	<item id="scanning:case_sensitive">
+	    <name>Case Sensitive</name>
+	    <short_description>
+	        Is the filesystem case sensitive?
+	    </short_description>
+            <type default_value="1">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="scanning:ignore_appledouble">
+            <name>Ignore appledouble</name>
+            <short_description>
+                Skip appledouble files when scanning
+            </short_description>
+            <type default_value="1">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="scanning:ignore_dotfiles">
+            <name>Ignore dotfiles</name>
+            <short_description>
+                Ignore unix hidden dot files
+            </short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="scanning:concat_compilations">
+            <name>Group compilations</name>
+            <short_description>
+                Compilations are grouped under "Various artist"
+            </short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="scanning:follow_symlinks">
+            <name>Follow Symlinks</name>
+            <short_description>
+                Should symlinks be followed when scanning directories?
+            </short_description>
+            <type default_value="1">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="scanning:skip_first">
+            <name>Skip First Scan</name>
+            <short_description>
+                Should the initial boot-up scan be skipped?
+            </short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+    </section>
+    <section name="Database">
+        <item id="general:db_type" advanced="true" restart="true">
+            <name>Database Type</name>
+            <short_description></short_description>
+            <type default_value="sqlite">select</type>
+            <options>
+                <option value="sqlite">sqlite</option>
+                <option value="sqlite3">sqlite3</option>
+            </options>
+        </item>
+        <item id="general:db_parms" advanced="true" restart="true">
+            <name>Database Directory</name>
+            <short_description></short_description>
+            <type size="80" browse="directory">text</type>
+        </item>
+        <item id="general:scan_type" restart="true">
+            <name>Scan Type</name>
+            <short_description></short_description>
+            <type default_value="2">select</type>
+            <options>
+                <option value="0">0 - Normal</option>
+                <option value="1">1 - Aggressive</option>
+                <option value="2">2 - Painfully aggressive</option>
+            </options>
+        </item>
+        <item id="general:rescan_interval" restart="true">
+            <name>Rescan Interval</name>
+            <short_description>
+                How often should Firefly look for new files? In seconds.
+            </short_description>
+            <type size="20">text</type>
+        </item>
+        <item id="general:always_scan" restart="true">
+            <name>Always Scan</name>
+            <short_description></short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+    </section>
+
+    <section name="Daap" advanced="true">
+        <item id="daap:correct_order">
+            <name>Ordered Playlists</name>
+            <short_description>
+                Should playlists be returned in the order specified in the playlist?
+            </short_description>
+            <type default_value="1">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="daap:empty_strings">
+            <name>Empty strings</name>
+            <short_description></short_description>
+            <type default_value="0">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="daap:supports_update">
+            <name>Supports update</name>
+            <short_description></short_description>
+            <type default_value="1">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        <item id="daap:supports_browse">
+            <name>Supports browse</name>
+            <short_description></short_description>
+            <type default_value="1">select</type>
+            <options>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </options>
+        </item>
+        
+    </section>
+
+    <section name="Plugins" advanced="true">
+        <item id="plugins:plugin_dir" config_section="plugins" restart="true">
+            <name>Plugin Directory</name>
+            <short_description></short_description>
+            <type size="80" browse="directory">text</type>
+        </item>
+    </section>
+
+    <section name="Transcoding" advanced="true">
+        <item id="general:ssc_prog">
+            <name>SSC Program</name>
+            <short_description></short_description>
+            <type size="80" browse="file">text</type>
+        </item>
+        <item id="general:ssc_codectypes">
+            <name>SSC Codec Types</name>
+            <short_description></short_description>
+            <type size="80">text</type>
+        </item>
+        <item id="general:never_transcode">
+            <name>Never Transcode</name>
+            <short_description>
+                Codecs to not transcode, even if plugins are available
+            </short_description>
+            <type size="80">text</type>
+        </item>
+        <item id="general:always_transcode">
+            <name>Always Transcode</name>
+            <short_description>
+                Codecs to always transcode, even if client plays it
+            </short_description>
+            <type size="80">text</type>
+        </item>
+    </section>
+</config>

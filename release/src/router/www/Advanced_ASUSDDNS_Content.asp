@@ -20,6 +20,11 @@
 <script>
 <% wanlink(); %>
 var ddns_hostname_x_t = '<% nvram_get("ddns_hostname_x"); %>';
+var ddns_server_x_t = '<% nvram_get("ddns_server_x"); %>';
+var ddns_updated_t = '<% nvram_get("ddns_updated"); %>';
+var wans_mode ='<% nvram_get("wans_mode"); %>';
+var no_phddns = isSupport("no_phddns");
+
 function init(){
 	show_menu();
 	if(realip_support){
@@ -34,14 +39,24 @@ function init(){
     	valid_wan_ip();
 
     ddns_load_body();
+
+	if(dualWAN_support && wans_mode == "lb")
+		document.getElementById("lb_note").style.display = "";
+
+	if(no_phddns){
+		for(var i = 0; i < document.form.ddns_server_x.length; i++){
+			if(document.form.ddns_server_x.options[i].value == "WWW.ORAY.COM"){
+				document.form.ddns_server_x.remove(i);
+				break;
+			}
+		}
+	}
 }
 
 function check_update(){
     var ddns_ipaddr_t = '<% nvram_get("ddns_ipaddr"); %>';
 		ddns_ipaddr_t = ddns_ipaddr_t.replace(/&#10/g,"");
-  
-	var ddns_server_x_t = '<% nvram_get("ddns_server_x"); %>';
-    var ddns_updated_t = '<% nvram_get("ddns_updated"); %>';
+
     if ((wanlink_ipaddr() == ddns_ipaddr_t) &&
         (ddns_server_x_t == document.form.ddns_server_x.value) &&
         (ddns_hostname_x_t == document.form.ddns_hostname_x.value) &&
@@ -54,7 +69,7 @@ function check_update(){
 }
 
 function force_update() {
-    var r = confirm("IP address, server and hostname have not changed since the last update. If you want to update, please click 'yes'");
+    var r = confirm("<#LANHostConfig_x_DDNS_update_confirm#>");
 	if(r == false)
 		return false
 		
@@ -119,10 +134,17 @@ function ddns_load_body(){
                 document.getElementById("ddns_hostname_x").value = "<#asusddns_inputhint#>";
         }
 		
-        change_ddns_setting(document.form.ddns_server_x.value);       
+        change_ddns_setting(document.form.ddns_server_x.value);
+	    if(document.form.ddns_server_x.value == "WWW.ORAY.COM"){
+		    if(ddns_updated_t == "1"){
+				document.getElementById("ddns_hostname_info_tr").style.display = "";
+				document.getElementById("ddns_hostname_x_value").innerHTML = ddns_hostname_x_t;
+			}
+		}
     }else{
         inputCtrl(document.form.ddns_server_x, 0);
         document.getElementById('ddns_hostname_tr').style.display = "none";
+        document.getElementById("ddns_hostname_info_tr").style.display = "none";
         inputCtrl(document.form.ddns_username_x, 0);
         inputCtrl(document.form.ddns_passwd_x, 0);
         document.form.ddns_wildcard_x[0].disabled= 1;
@@ -132,13 +154,14 @@ function ddns_load_body(){
    
     hideLoading();
     var ddnsHint = getDDNSState(ddns_return_code, ddns_hostname_x_t, ddns_old_name);
+
     if(ddnsHint != "")
         alert(ddnsHint);
     if(ddns_return_code.indexOf('200')!=-1 || ddns_return_code.indexOf('220')!=-1 || ddns_return_code == 'register,230'){
         showhide("wan_ip_hide2", 0);
         if(ddns_server_x == "WWW.ASUS.COM")
             showhide("wan_ip_hide3", 1);       
-    } 
+    }
 }
 
 function applyRule(){
@@ -172,7 +195,7 @@ function validForm(){
 			if(!validator.numberRange(document.form.ddns_refresh_x, 0, 365))
 				return false;
 
-			if(document.form.ddns_hostname_x.value == ""){
+			if(document.form.ddns_server_x.value != "WWW.ORAY.COM" && document.form.ddns_hostname_x.value == ""){
 				alert("<#LANHostConfig_x_DDNS_alarm_14#>");
 				document.form.ddns_hostname_x.focus();
 				document.form.ddns_hostname_x.select();
@@ -225,8 +248,8 @@ function checkDDNSReturnCode(){
     	success: function(response){
             if(ddns_return_code == 'ddns_query')
         	    setTimeout("checkDDNSReturnCode();", 500);
-            else 
-                refreshpage();
+            else          	
+                refreshpage(); 
        }
    });
 }
@@ -292,7 +315,7 @@ function onSubmitApply(s){
 	document.form.action_script.value = s;
 	return true;
 }
-
+	
 </script>
 </head>
 
@@ -336,12 +359,12 @@ function onSubmitApply(s){
 		  		<div>&nbsp;</div>
 		  		<div class="formfonttitle"><#menu5_3#> - <#menu5_3_6#></div>
 		  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		 		  <div class="formfontdesc"><#LANHostConfig_x_DDNSEnable_sectiondesc#></div>
-		 		  <div class="formfontdesc" style="margin-top:-8px;"><#NSlookup_help#></div>	
-				  <div class="formfontdesc" id="wan_ip_hide2" style="color:#FFCC00;"><#LANHostConfig_x_DDNSEnable_sectiondesc2#></div>
-					<div class="formfontdesc" id="wan_ip_hide3" style="color:#FFCC00;"><#LANHostConfig_x_DDNSEnable_sectiondesc3#></div>
-
-			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+		 		<div class="formfontdesc"><#LANHostConfig_x_DDNSEnable_sectiondesc#></div>
+		 		<div class="formfontdesc" style="margin-top:-8px;"><#NSlookup_help#></div>
+				<div class="formfontdesc" id="wan_ip_hide2" style="color:#FFCC00;"><#LANHostConfig_x_DDNSEnable_sectiondesc2#></div>
+				<div class="formfontdesc" id="wan_ip_hide3" style="color:#FFCC00;"><#LANHostConfig_x_DDNSEnable_sectiondesc3#></div>
+				<div class="formfontdesc" id="lb_note" style="color:#FFCC00; display:none;"><#lb_note_ddns#></div>
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 				<input type="hidden" name="wl_gmode_protection_x" value="<% nvram_get("wl_gmode_protection_x"); %>">
 			<tr>
 				<th><#LANHostConfig_x_DDNSEnable_itemname#></th>
@@ -359,11 +382,11 @@ function onSubmitApply(s){
                     			<option value="WWW.DYNDNS.ORG(CUSTOM)" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG(CUSTOM)","selected"); %>>WWW.DYNDNS.ORG(CUSTOM)</option>
                     			<option value="WWW.DYNDNS.ORG(STATIC)" <% nvram_match("ddns_server_x", "WWW.DYNDNS.ORG(STATIC)","selected"); %>>WWW.DYNDNS.ORG(STATIC)</option>
                     			<option value="WWW.SELFHOST.DE" <% nvram_match("ddns_server_x", "WWW.SELFHOST.DE","selected"); %>>WWW.SELFHOST.DE</option>
-					<option value="WWW.ZONEEDIT.COM" <% nvram_match("ddns_server_x", "WWW.ZONEEDIT.COM","selected"); %>>WWW.ZONEEDIT.COM</option>
+								<option value="WWW.ZONEEDIT.COM" <% nvram_match("ddns_server_x", "WWW.ZONEEDIT.COM","selected"); %>>WWW.ZONEEDIT.COM</option>
                     			<option value="WWW.DNSOMATIC.COM" <% nvram_match("ddns_server_x", "WWW.DNSOMATIC.COM","selected"); %>>WWW.DNSOMATIC.COM</option>
                     			<option value="WWW.TUNNELBROKER.NET" <% nvram_match("ddns_server_x", "WWW.TUNNELBROKER.NET","selected"); %>>WWW.TUNNELBROKER.NET</option>
-					<option value="WWW.NO-IP.COM" <% nvram_match("ddns_server_x", "WWW.NO-IP.COM","selected"); %>>WWW.NO-IP.COM</option>
-                    			<option value="WWW.NAMECHEAP.COM" <% nvram_match("ddns_server_x", "WWW.NAMECHEAP.COM","selected"); %>>WWW.NAMECHEAP.COM</option>
+								<option value="WWW.NO-IP.COM" <% nvram_match("ddns_server_x", "WWW.NO-IP.COM","selected"); %>>WWW.NO-IP.COM</option>
+								<option value="WWW.ORAY.COM" <% nvram_match("ddns_server_x", "WWW.ORAY.COM","selected"); %>>WWW.ORAY.COM(花生壳)</option>                    			<option value="WWW.NAMECHEAP.COM" <% nvram_match("ddns_server_x", "WWW.NAMECHEAP.COM","selected"); %>>WWW.NAMECHEAP.COM</option>
 					<option value="CUSTOM" <% nvram_match("ddns_server_x", "CUSTOM","selected");  %>>Custom</option>
                   		</select>
 				<a id="link" href="javascript:openLink('x_DDNSServer')" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_DDNSServer_linkname#></a>
@@ -386,7 +409,11 @@ function onSubmitApply(s){
 					</div>	
 							
 				</td>
-			</tr>			
+			</tr>
+			<tr id="ddns_hostname_info_tr" style="display:none;">
+				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,13);"><#LANHostConfig_x_DDNSHostNames_itemname#></a></th>
+				<td id="ddns_hostname_x_value"><% nvram_get("ddns_hostname_x"); %></td>
+			</tr>
 			<tr>
 				<th id="ddns_username_th"><#LANHostConfig_x_DDNSUserName_itemname#></th>
 				<td><input type="text" maxlength="32" class="input_25_table" name="ddns_username_x" value="<% nvram_get("ddns_username_x"); %>" onKeyPress="return validator.isString(this, event)" autocomplete="off" autocorrect="off" autocapitalize="off"></td>

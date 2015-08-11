@@ -73,7 +73,7 @@ objs = cache.o rfc1035.o util.o option.o forward.o network.o \
        dnsmasq.o dhcp.o lease.o rfc2131.o netlink.o dbus.o bpf.o \
        helper.o tftp.o log.o conntrack.o dhcp6.o rfc3315.o \
        dhcp-common.o outpacket.o radv.o slaac.o auth.o ipset.o \
-       domain.o dnssec.o blockdata.o tables.o loop.o inotify.o
+       domain.o dnssec.o blockdata.o tables.o loop.o inotify.o poll.o
 
 hdrs = dnsmasq.h config.h dhcp-protocol.h dhcp6-protocol.h \
        dns-protocol.h radv-protocol.h ip6addr.h
@@ -117,7 +117,7 @@ install-i18n : all-i18n install-common
 	cd $(MAN); ../bld/install-man $(DESTDIR)$(MANDIR) $(INSTALL)
 
 merge : 
-	@cd $(BUILDDIR) && $(MAKE) -f $(top)/Makefile dnsmasq.pot
+	@cd $(BUILDDIR) && $(MAKE) top="$(top)" -f $(top)/Makefile dnsmasq.pot
 	for f in `cd $(PO); echo *.po`; do \
 		echo -n msgmerge $(PO)/$$f && $(MSGMERGE) --no-wrap -U $(PO)/$$f $(BUILDDIR)/dnsmasq.pot; \
 	done

@@ -122,8 +122,8 @@ var g_image_player = {
 			startIndex:default_index,
 			storage: g_storage,
 			stringTable: m,
-			enableExifFunc: 0,
-			enableShareFunc: 0,
+			enableExifFunc: 1,
+			enableShareFunc: 1,
 			closeHandler: close_handler,
 			initCompleteHandler: init_handler
 		});

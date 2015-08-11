@@ -109,7 +109,7 @@ static void md5_hash_block(const void *buffer, md5_ctx_t *ctx)
 	for (i = 0; i < 16; i++) {
 		cwp[i] = SWAP_LE32(words[i]);
 	}
-	words += 16;
+	//words += 16;
 
 	pc = C_array;
 	pp = P_array;

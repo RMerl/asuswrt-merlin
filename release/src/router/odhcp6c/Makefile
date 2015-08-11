@@ -4,7 +4,7 @@ BUILDDIR = $(SRC)
 DESTDIR  = 
 CFLAGS   = -g -std=gnu99 -D_GNU_SOURCE -Wall -Wextra -pedantic $(EXT_CFLAGS)
 LDFLAGS  = $(EXT_LDFLAGS)
-LIBS     =
+LIBS     = -Wl,--as-needed -lresolv
 
 INSTALL  = install
 SRC      = src

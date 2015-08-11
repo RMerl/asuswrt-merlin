@@ -280,6 +280,9 @@ int main(int argc, char *argv[])
 	fprintf(fp, "smb encrypt = disabled\n");
 	fprintf(fp, "smb passwd file = /etc/samba/smbpasswd\n");
 #endif
+#ifdef RTCONFIG_RECVFILE
+	fprintf(fp, "use recvfile = yes\n");
+#endif
 
 	fprintf(fp, "force directory mode = 0777\n");
 	fprintf(fp, "force create mode = 0777\n");

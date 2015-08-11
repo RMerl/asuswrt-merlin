@@ -35,6 +35,9 @@
 
 #include <typedefs.h>
 #include <bcmdefs.h>
+#if defined(CONFIG_BCM_RECVFILE)
+#include <net/sock.h>
+#endif /* CONFIG_BCM_RECVFILE */
 
 /*
  * Attempt to steal a page from a pipe buffer. This should perhaps go into
@@ -1391,6 +1394,182 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 	return -EINVAL;
 }
 
+#if defined(CONFIG_BCM_RECVFILE)
+/* Copy data directly from socket to file(pagecache) */
+static ssize_t BCMFASTPATH_HOST do_splice_from_socket(struct file *file, struct socket *sock,
+				     loff_t __user *off_out, size_t count)
+{
+	struct address_space *mapping = file->f_mapping;
+	struct inode *inode = mapping->host;
+	loff_t pos, start_pos;
+	int count_tmp, copied_bytes;
+	int err = 0;
+	int idx;
+	int cPagesAllocated = 0;
+	struct recvfile_ctl_blk *rv_cb;
+	struct kvec *iov;
+	struct msghdr msg;
+	long rcvtimeo;
+	int ret;
+
+	if (count > MAX_PAGES_PER_RECVFILE * PAGE_SIZE) {
+		printk(KERN_WARNING "%s: count(%u) exceeds maxinum\n", __func__, count);
+		return -EINVAL;
+	}
+
+	if (off_out) {
+		if (copy_from_user(&start_pos, off_out, sizeof(loff_t)))
+			return -EFAULT;
+	} else {
+		return -EINVAL;
+	}
+
+	pos = start_pos;
+
+	rv_cb = kmalloc(MAX_PAGES_PER_RECVFILE * sizeof(struct recvfile_ctl_blk), GFP_KERNEL);
+	if (!rv_cb) {
+		printk(KERN_WARNING "%s:memory allocation for rcv_cb failed\n", __func__);
+		return -ENOMEM;
+	}
+
+	iov = kmalloc(MAX_PAGES_PER_RECVFILE * sizeof(struct kvec), GFP_KERNEL);
+	if (!iov) {
+		kfree(rv_cb);
+		printk(KERN_WARNING "%s:memory allocation for iov failed\n", __func__);
+		return -ENOMEM;
+	}
+
+	mutex_lock(&inode->i_mutex);
+
+	vfs_check_frozen(inode->i_sb, SB_FREEZE_WRITE);
+
+	/* We can write back this queue in page reclaim */
+	current->backing_dev_info = mapping->backing_dev_info;
+
+	err = generic_write_checks(file, &pos, &count, S_ISBLK(inode->i_mode));
+	if (err != 0 || count == 0)
+		goto done;
+
+	file_remove_suid(file);
+	file_update_time(file);
+
+	count_tmp = count;
+	do {
+		unsigned long bytes;	/* Bytes to write to page */
+		unsigned long offset;	/* Offset into pagecache page */
+		struct page *pageP;
+		void *fsdata;
+
+		offset = (pos & (PAGE_CACHE_SIZE - 1));
+		bytes = PAGE_CACHE_SIZE - offset;
+		if (bytes > count_tmp)
+			bytes = count_tmp;
+
+		ret = mapping->a_ops->write_begin(file, mapping, pos, bytes,
+				AOP_FLAG_UNINTERRUPTIBLE,
+				&pageP, &fsdata);
+
+		if (unlikely(ret)) {
+			err = ret;
+			for (idx = 0; idx < cPagesAllocated; idx++) {
+				kunmap(rv_cb[idx].rv_page);
+				ret = mapping->a_ops->write_end(file, mapping,
+						rv_cb[idx].rv_pos,
+						rv_cb[idx].rv_count,
+						0,
+						rv_cb[idx].rv_page,
+						rv_cb[idx].rv_fsdata);
+			}
+			goto done;
+		}
+		rv_cb[cPagesAllocated].rv_page = pageP;
+		rv_cb[cPagesAllocated].rv_pos = pos;
+		rv_cb[cPagesAllocated].rv_count = bytes;
+		rv_cb[cPagesAllocated].rv_fsdata = fsdata;
+		iov[cPagesAllocated].iov_base = kmap(pageP) + offset;
+		iov[cPagesAllocated].iov_len = bytes;
+		cPagesAllocated++;
+		count_tmp -= bytes;
+		pos += bytes;
+	} while (count_tmp);
+
+	/* IOV is ready, receive the data from socket now */
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	msg.msg_iov = (struct iovec *)&iov[0];
+	msg.msg_iovlen = cPagesAllocated ;
+	msg.msg_control = NULL;
+	msg.msg_controllen = 0;
+	msg.msg_flags = MSG_KERNSPACE;
+	rcvtimeo = sock->sk->sk_rcvtimeo;
+	sock->sk->sk_rcvtimeo = 8 * HZ;
+
+	ret = kernel_recvmsg(sock, &msg, &iov[0], cPagesAllocated, count,
+			MSG_WAITALL | MSG_NOCATCHSIG);
+
+	sock->sk->sk_rcvtimeo = rcvtimeo;
+
+	if (unlikely(ret != count)) {
+		if (ret < 0) {
+			err = -EPIPE;
+			count = 0;
+		} else {
+			/* We have read some data from socket */
+			count = ret;
+		}
+	} else {
+		err = 0;
+	}
+
+	/* Adjust the pagecache pages len based on the amount of data copied
+	 * truncate the pages which are not used
+	 */
+	count_tmp = count;
+
+	for (idx=0; idx < cPagesAllocated; idx++) {
+		if (count_tmp) {
+			copied_bytes = min(rv_cb[idx].rv_count, (unsigned int)count_tmp);
+			count_tmp -= copied_bytes;
+		} else {
+			copied_bytes = 0;
+		}
+
+		kunmap(rv_cb[idx].rv_page);
+		ret = mapping->a_ops->write_end(file, mapping,
+				rv_cb[idx].rv_pos,
+				rv_cb[idx].rv_count,
+				copied_bytes,
+				rv_cb[idx].rv_page,
+				rv_cb[idx].rv_fsdata);
+
+		if (unlikely(ret < 0)) {
+			printk(KERN_WARNING"%s: write_end fail,ret = %d\n", __func__, ret);
+		}
+	}
+
+	if (count) {
+		balance_dirty_pages_ratelimited_nr(mapping, cPagesAllocated);
+	}
+
+	/* Fix pos based on returned bytes from recvmsg */
+	pos = start_pos + count;
+	if (off_out && copy_to_user(off_out, &pos, sizeof(loff_t)))
+		ret = -EFAULT;
+
+done:
+	current->backing_dev_info = NULL;
+	mutex_unlock(&inode->i_mutex);
+
+	kfree(rv_cb);
+	kfree(iov);
+
+	if (err)
+		return err;
+	else
+		return count;
+}
+#endif /* CONFIG_BCM_RECVFILE */
+
 /*
  * Map an iov into an array of pages and offset/length tupples. With the
  * partial_page structure, we can map several non-contiguous ranges into
@@ -1707,6 +1886,55 @@ SYSCALL_DEFINE6(splice, int, fd_in, loff_t __user *, off_in,
 		return 0;
 
 	error = -EBADF;
+
+#if defined(CONFIG_BCM_RECVFILE)
+	/* If input is socket and output is file try to copy from socket to file directly */
+	{
+		struct socket *sock = NULL;
+
+		/* Check if fd_in is a socket */
+		sock = sockfd_lookup(fd_in, (int *)&error);
+		if (sock) {
+			out = NULL;
+			if (!sock->sk)
+				goto done;
+
+			out = fget_light(fd_out, &fput_out);
+
+			if (out) {
+				struct pipe_inode_info *opipe;
+
+				opipe = get_pipe_info(out);
+				if (opipe) {
+					/* Output is pipe go regular processing */
+					printk(KERN_WARNING "out_fd is a pipe\n");
+					goto regular_proc;
+				}
+
+				if (!(out->f_mode & FMODE_WRITE))
+					goto done;
+
+				if ((out->f_op && out->f_op->splice_write)) {
+					error = do_splice_from_socket(out, sock, off_out, len);
+				} else {
+					/* Splice from socket->file not supported */
+					error = -EBADF;
+				}
+			}
+done:
+			if (out)
+				fput_light(out, fput_out);
+			fput(sock->file);
+			return error;
+
+regular_proc:
+			if (out)
+				fput_light(out, fput_out);
+			fput(sock->file);
+		}
+	}
+#endif /* CONFIG_BCM_RECVFILE */
+
 	in = fget_light(fd_in, &fput_in);
 	if (in) {
 		if (in->f_mode & FMODE_READ) {

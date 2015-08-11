@@ -694,6 +694,12 @@ void reset_client_setting(int unit){
 	snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, nv);
 	unlink(file_path);
 #endif
+	sprintf(nv, "vpn_crt_client%d_crl", unit);
+	nvram_set(nv, "");
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+	snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, nv);
+	unlink(file_path);
+#endif
 }
 
 void parse_openvpn_status(int unit){

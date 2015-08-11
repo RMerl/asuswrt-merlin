@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<designerData version="1.1.0">
+  <componentManifest>
+    <manifestEntry id="com.nokia.sdt.series60.CAknApplication" version="1.1.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.NonLayoutBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CAknDocument" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CAknViewAppUi" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CAknAppUi" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CAknAppUiBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.DesignTimeContainer" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPane" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.ControlBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPaneCaption" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPaneTitleBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CBA" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CBABase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.AvkonViewReference" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.DesignReference" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.WaitDialog" version="1.0.0"/>
+  </componentManifest>
+  <property id="com.nokia.sdt.symbian.dm.RESOURCE_DIRECTORY_ID">data</property>
+  <property id="com.nokia.sdt.component.symbian.vendor">com.nokia.series60</property>
+  <property id="com.nokia.sdt.component.symbian.version">3.0.1</property>
+  <property id="com.nokia.sdt.symbian.dm.COMPONENT_PROVIDER">com.nokia.sdt.component.symbian.Symbian-Provider</property>
+  <property id="com.nokia.sdt.symbian.dm.INCLUDE_DIRECTORY_ID">inc</property>
+  <property id="com.nokia.sdt.symbian.dm.ROOT_CONTAINER">symbian_ua_guiAppUi</property>
+  <property id="com.nokia.sdt.symbian.dm.SOURCE_DIRECTORY_ID">src</property>
+  <property id="com.nokia.sdt.symbian.dm.LOCALIZED_FILE_FORMAT">loc</property>
+  <property id="com.nokia.sdt.symbian.dm.ROOT_APPLICATION_NAME">symbian_ua_gui</property>
+  <property id="com.nokia.sdt.symbian.dm.SOURCEGEN_PROVIDER">com.nokia.sdt.sourcegen.Symbian-Provider</property>
+  <property id="com.nokia.sdt.symbian.dm.BUILD_DIRECTORY_ID">group</property>
+  <component id="com.nokia.sdt.series60.CAknApplication">
+    <property id="className">Csymbian_ua_guiApplication</property>
+    <property id="documentBase">symbian_ua_gui</property>
+    <property id="name">symbian_ua_guiApplication</property>
+    <property id="uid">0xEBD12EE4</property>
+    <component id="com.nokia.sdt.series60.CAknDocument">
+      <property id="className">Csymbian_ua_guiDocument</property>
+      <property id="name">symbian_ua_guiDocument</property>
+      <component id="com.nokia.sdt.series60.CAknViewAppUi">
+        <property id="initialDesign" type="componentRef">aknViewReference2</property>
+        <property id="className">Csymbian_ua_guiAppUi</property>
+        <compoundProperty id="location">
+          <property id="x">52</property>
+          <property id="y">45</property>
+        </compoundProperty>
+        <property id="name">symbian_ua_guiAppUi</property>
+        <compoundProperty id="size">
+          <property id="width">240</property>
+          <property id="height">320</property>
+        </compoundProperty>
+        <component id="com.nokia.sdt.series60.StatusPane">
+          <compoundProperty id="location">
+            <property id="x">20</property>
+          </compoundProperty>
+          <property id="name">statusPane</property>
+          <compoundProperty id="size">
+            <property id="width">204</property>
+            <property id="height">66</property>
+          </compoundProperty>
+          <component id="com.nokia.sdt.series60.StatusPaneCaption">
+            <property id="shortCaption" type="i18n">STR_symbian_ua_guiApplication_2</property>
+            <compoundProperty id="location">
+              <property id="x">56</property>
+            </compoundProperty>
+            <property id="longCaption" type="i18n">STR_symbian_ua_guiApplication_1</property>
+            <property id="name">caption</property>
+            <compoundProperty id="size">
+              <property id="width">148</property>
+              <property id="height">43</property>
+            </compoundProperty>
+          </component>
+        </component>
+        <component id="com.nokia.sdt.series60.CBA">
+          <compoundProperty id="location">
+            <property id="y">288</property>
+          </compoundProperty>
+          <compoundProperty id="info"/>
+          <property id="name">controlPane</property>
+          <compoundProperty id="size">
+            <property id="width">240</property>
+            <property id="height">32</property>
+          </compoundProperty>
+        </component>
+        <component id="com.nokia.sdt.series60.AvkonViewReference">
+          <property id="filePath">symbian_ua_guiContainer.uidesign</property>
+          <property id="baseName">symbian_ua_guiContainer</property>
+          <compoundProperty id="tabImage"/>
+          <property id="name">aknViewReference1</property>
+        </component>
+        <component id="com.nokia.sdt.series60.AvkonViewReference">
+          <property id="filePath">symbian_ua_guiSettingItemList.uidesign</property>
+          <property id="baseName">symbian_ua_guiSettingItemList</property>
+          <compoundProperty id="tabImage"/>
+          <property id="name">aknViewReference2</property>
+        </component>
+        <component id="com.nokia.sdt.series60.WaitDialog">
+          <compoundProperty id="location">
+            <property id="x">0</property>
+            <property id="y">171</property>
+          </compoundProperty>
+          <property id="name">dlg_wait_init</property>
+          <property id="text" type="i18n">STR_symbian_ua_guiApplication_3</property>
+          <compoundProperty id="size">
+            <property id="width">240</property>
+            <property id="height">149</property>
+          </compoundProperty>
+          <eventBinding id="canceled" handlerDisplay="HandleDlg_wait_initCanceledL" handlerSymbol="cpp@src//symbian_ua_guiAppUi.cpp/function(Csymbian_ua_guiAppUi::HandleDlg_wait_initCanceledL(CAknProgressDialog*))"/>
+        </component>
+      </component>
+    </component>
+  </component>
+  <stringBundle>
+    <stringTable language="LANG_English">
+      <string id="STR_symbian_ua_guiApplication_1">symbian_ua_gui</string>
+      <string id="STR_symbian_ua_guiApplication_2">symbian_ua_gui</string>
+      <string id="STR_symbian_ua_guiApplication_3">Please wait...</string>
+    </stringTable>
+  </stringBundle>
+  <macroTable/>
+  <sourceMappingState>
+    <resourceMappings>
+      <resourceMapping instanceName="symbian_ua_guiAppUi">r_application_symbian_ua_gui_app_ui</resourceMapping>
+      <resourceMapping instanceName="statusPane">r_application_status_pane</resourceMapping>
+      <resourceMapping instanceName="aknViewReference2" rsrcId="tabText">r_application_akn_view_reference2</resourceMapping>
+      <resourceMapping instanceName="dlg_wait_init">r_application_dlg_wait_init</resourceMapping>
+      <resourceMapping instanceName="symbian_ua_guiAppUi" rsrcId="localisable_app_info">r_localisable_app_info</resourceMapping>
+      <resourceMapping instanceName="aknViewReference1" rsrcId="tabText">r_application_akn_view_reference1</resourceMapping>
+    </resourceMappings>
+    <enumMappings>
+      <enumMapping instanceName="aknViewReference2" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_VIEW_UID">ESymbian_ua_guiSettingItemListViewId</enumMapping>
+      <enumMapping instanceName="dlg_wait_init" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_DIALOG_LINE_ID">ESymbian_ua_guiApplicationDlg_wait_init</enumMapping>
+      <enumMapping instanceName="aknViewReference1" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_VIEW_UID">ESymbian_ua_guiContainerViewId</enumMapping>
+    </enumMappings>
+    <arrayMappings/>
+  </sourceMappingState>
+  <generatedFiles>
+    <file>src/symbian_ua_guiAppUi.cpp</file>
+    <file>src/symbian_ua_guiDocument.cpp</file>
+    <file>inc/symbian_ua_guiApplication.h</file>
+    <file>src/symbian_ua_guiApplication.cpp</file>
+    <file>inc/symbian_ua_guiAppUi.h</file>
+    <file>inc/symbian_ua_guiDocument.h</file>
+    <file>data/symbian_ua_gui.rss</file>
+    <file>data/symbian_ua_guiContainer.rssi</file>
+    <file>inc/symbian_ua_gui.hrh</file>
+    <file>inc/symbian_ua_guiContainer.hrh</file>
+    <file>data/symbian_ua_guiSettingItemList.rssi</file>
+    <file>inc/symbian_ua_guiSettingItemList.hrh</file>
+    <file>data/symbian_ua_gui.loc</file>
+    <file>data/symbian_ua_gui.l01</file>
+    <file>data/symbian_ua_guiContainer.loc</file>
+    <file>data/symbian_ua_guiContainer.l01</file>
+    <file>data/symbian_ua_guiSettingItemList.loc</file>
+    <file>data/symbian_ua_guiSettingItemList.l01</file>
+  </generatedFiles>
+</designerData>

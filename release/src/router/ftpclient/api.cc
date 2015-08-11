@@ -169,7 +169,7 @@ int download_(char *serverpath,int index)
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 30);
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
         res = curl_easy_perform(curl);
         DEBUG("\nres:%d\n",res);
         if(res != CURLE_OK && res != CURLE_PARTIAL_FILE && res != CURLE_OPERATION_TIMEDOUT)
@@ -214,12 +214,11 @@ int upload(char *localpath1,int index)
     if(access(localpath1,F_OK) != 0)
     {
         DEBUG("Local has no %s\n",localpath1);
-        return LOCAL_FILE_LOST;
+        return LOCAL_FILE_LOST;//902
     }
     write_log(S_UPLOAD,"",localpath1,index);
 
     char *serverpath = localpath_to_serverpath(localpath1,index);
-
     char *chr_coding = utf8_to(serverpath,index);
     free(serverpath);
     char *url_coding = oauth_url_escape(chr_coding);
@@ -233,18 +232,20 @@ int upload(char *localpath1,int index)
     CURLcode res;
     struct stat info;
     if(stat(localpath1,&info) == -1)
-        return LOCAL_FILE_LOST;
+        return LOCAL_FILE_LOST;//902
 
     FILE *g_stream,*fp;
     g_stream = fopen(localpath1,"rb");
     if(g_stream == NULL)
-        return LOCAL_FILE_LOST;
+        return LOCAL_FILE_LOST;//902
 
     fp = fopen(CURL_HEAD,"wb");
 
     if(LOCAL_FILE.path != NULL)
         free(LOCAL_FILE.path);
     LOCAL_FILE.path = (char*)malloc(sizeof(char)*(strlen(localpath1) + 1));
+     //2014.10.29 by sherry 未初始化
+    memset(LOCAL_FILE.path,'\0',sizeof(char)*(strlen(localpath1) + 1));
     sprintf(LOCAL_FILE.path,"%s",localpath1);
     LOCAL_FILE.index = index;
 
@@ -257,7 +258,7 @@ int upload(char *localpath1,int index)
         curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, progress_data);
 #endif
         curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(curl, CURLOPT_INFILESIZE, (curl_off_t)info.st_size);
+        curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)info.st_size);
         curl_easy_setopt(curl, CURLOPT_URL, fullserverpath);
         if(strlen(ftp_config.multrule[index]->user_pwd) != 1)
             curl_easy_setopt(curl, CURLOPT_USERPWD, ftp_config.multrule[index]->user_pwd);
@@ -269,18 +270,21 @@ int upload(char *localpath1,int index)
         //curl_easy_setopt(curl, CURLOPT_FTP_CREATE_MISSING_DIRS, 1L);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT,1);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME,30);
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+        curl_easy_setopt(curl,CURLOPT_TIMEOUT,90);//设置一个长整形数，作为最大延续多少秒
         //curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, debugFun);
         //curl_easy_setopt(curl, CURLOPT_DEBUGDATA, debugFile);
         res = curl_easy_perform(curl);
         DEBUG("\nres = %d\n",res);
         free(fullserverpath);
-        if(res != CURLE_OK && res != CURLE_OPERATION_TIMEDOUT)
+        //2014.11.06 by sherry
+        //if(res != CURLE_OK && res != CURLE_OPERATION_TIMEDOUT)
+        if(res != CURLE_OK)
         {
             curl_easy_cleanup(curl);
             fclose(fp);
             fclose(g_stream);
-            if(upload_break == 1)
+            if(upload_break == 1)//程序退出
             {
                 FILE *f_stream = fopen(g_pSyncList[index]->up_item_file, "w");
                 if(f_stream == NULL)
@@ -293,11 +297,37 @@ int upload(char *localpath1,int index)
                 upload_break = 0;
                 return res;
             }
-            if(upload_file_lost == 1)
+            if(upload_file_lost == 1)//上传的文件丢失
             {
                 upload_file_lost = 0;
                 return 0;
             }
+            //2014.11.07 by sherry
+            if(res==55)//CURLE_SEND_ERROR
+            {
+               Delete(localpath1,index);
+               action_item *item;
+               item = get_action_item("upload",localpath1,g_pSyncList[index]->unfinished_list,index);
+               if(item == NULL)
+               {
+                   add_action_item("upload",localpath1,g_pSyncList[index]->unfinished_list);
+               }
+               write_log(S_ERROR,"failed sending network data","",index);
+               return CURLE_SEND_ERROR;
+            }
+            if(res==28)//CURLE_OPERATION_TIMEDOUT
+            {
+               Delete(localpath1,index);
+               action_item *item;
+               item = get_action_item("upload",localpath1,g_pSyncList[index]->unfinished_list,index);
+               if(item == NULL)
+               {
+                   add_action_item("upload",localpath1,g_pSyncList[index]->unfinished_list);
+               }
+               write_log(S_ERROR,"the timeout time was reached","",index);
+               return CURLE_OPERATION_TIMEDOUT;
+            }
+
             FILE *fp1 = fopen(CURL_HEAD,"rb");
             char buff[512]={0};
             char *p;
@@ -316,6 +346,8 @@ int upload(char *localpath1,int index)
         }
         else
         {
+            DEBUG("uploading ok!\n");
+            del_action_item("upload",localpath1,g_pSyncList[index]->unfinished_list);
             curl_easy_cleanup(curl);
             fclose(fp);
             fclose(g_stream);
@@ -358,7 +390,7 @@ int my_delete_DELE(char *localpath,int index)
             curl_easy_setopt(curl, CURLOPT_WRITEHEADER, fp);
             curl_easy_setopt(curl,CURLOPT_LOW_SPEED_LIMIT,1);
             curl_easy_setopt(curl,CURLOPT_LOW_SPEED_TIME,30);
-            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
             res = curl_easy_perform(curl);
             DEBUG("\nres = %d\n",res);
             if(res != CURLE_OK)
@@ -433,7 +465,7 @@ int my_delete_RMD(char *localpath,int index)
             curl_easy_setopt(curl, CURLOPT_WRITEHEADER, fp);
             curl_easy_setopt(curl,CURLOPT_LOW_SPEED_LIMIT,1);
             curl_easy_setopt(curl,CURLOPT_LOW_SPEED_TIME,30);
-            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
             res = curl_easy_perform(curl);
             DEBUG("\nres = %d\n",res);
             if(res != CURLE_OK)
@@ -566,7 +598,7 @@ int my_rename_(char *localpath,char *newername,int index)
     CURL *curl;
     CURLcode res;
     curl = curl_easy_init();
-    if(curl)
+    if(curl)//curl初始化成功
     {
         headerlist = curl_slist_append(headerlist,A);
         headerlist = curl_slist_append(headerlist,B);
@@ -578,19 +610,26 @@ int my_rename_(char *localpath,char *newername,int index)
         curl_easy_setopt(curl, CURLOPT_POSTQUOTE, headerlist);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 30);
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
         res=curl_easy_perform(curl);
-        DEBUG("\nres = %d\n",res);
         if(res != CURLE_OK)
-        {
-            char *temp = (char*)malloc(sizeof(char)*(strlen(prepath) + strlen(newername) + 1));
-            memset(temp,'\0',sizeof(char)*(strlen(prepath) + strlen(newername) + 1));
+        {    //2014.10.30 by sherry  处理“rename会挂掉"的bug
+//            char *temp = (char*)malloc(sizeof(char)*(strlen(prepath) + strlen(newername) + 1));
+//            memset(temp,'\0',sizeof(char)*(strlen(prepath) + strlen(newername) + 1));
+//            sprintf(temp,"%s/%s",prepath,newername);
+            char *temp = (char*)malloc(sizeof(char)*(strlen(prepath) + strlen(newername) + 2));
+            memset(temp,'\0',sizeof(char)*(strlen(prepath) + strlen(newername) + 2));
             sprintf(temp,"%s/%s",prepath,newername);
             int status = 0;
-            if(!test_if_dir(temp)){
+            if(!test_if_dir(temp))//test_if_dir如果是folder则返回1
+            {
+               //file
                 status = upload(temp,index);
-            }else{
-                status = moveFolder(oldname + 1,temp,index);
+            }
+            else
+            {
+                //folder
+                status = moveFolder(localpath,temp,index);
             }
             free(A);
             free(B);
@@ -598,7 +637,7 @@ int my_rename_(char *localpath,char *newername,int index)
             free(temp);
             free(prepath);
             free(cd_path);
-            //free(newername);
+            //free(newername);形参，函数开始调用时分配动态存储空间，函数结束时释放
             curl_slist_free_all(headerlist);
             curl_easy_cleanup(curl);
             return status;
@@ -613,7 +652,7 @@ int my_rename_(char *localpath,char *newername,int index)
             curl_slist_free_all(headerlist);
             curl_easy_cleanup(curl);
             return 0;
-        }
+        } 
     }
     else
     {
@@ -628,7 +667,8 @@ int my_rename_(char *localpath,char *newername,int index)
 
 int my_mkdir_(char *localpath,int index)
 {
-    if(access(localpath,0) != 0)
+    if(access(localpath,0) != 0)//检查本地端文件是否存在，
+        //如果文件存在，返回0，不存在，返回-1
     {
         DEBUG("Local has no %s\n",localpath);
         return LOCAL_FILE_LOST;
@@ -660,7 +700,7 @@ int my_mkdir_(char *localpath,int index)
         curl_easy_setopt(curl, CURLOPT_WRITEHEADER, fp);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 30);
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
         res = curl_easy_perform(curl);
         DEBUG("res:%d\n",res);
         if(res != CURLE_OK)
@@ -746,6 +786,7 @@ int moveFolder(char *old_dir,char *new_dir,int index)
 
             sprintf(new_fullname,"%s/%s",new_dir,ent->d_name);
             sprintf(old_fullname,"%s/%s",old_dir,ent->d_name);
+
             if(socket_check(new_dir,ent->d_name,index) == 1)
                 continue;
             if(test_if_dir(new_fullname) == 1)
@@ -811,10 +852,11 @@ int socket_check(char *dir,char *name,int index)
     char *p = NULL;
     char *q = NULL;
 
-    char *fullpath = my_str_malloc(strlen(dir) + strlen(name) + 1);
+    //char *fullpath = my_str_malloc(strlen(dir) + strlen(name) + 1);//2014.11.5 by sherry
+    char *fullpath = my_str_malloc(strlen(dir) + strlen(name) + 2);//内存分配不足
     sprintf(fullpath,"%s/%s",dir,name);
 
-    printf("fullpath:%s\n",fullpath);
+    DEBUG("fullpath:%s\n",fullpath);
 
     Node *pTemp = g_pSyncList[index]->SocketActionList->next;
     while(pTemp != NULL)
@@ -876,8 +918,8 @@ int socket_check(char *dir,char *name,int index)
             sprintf(dir1,"\n%s\n",dir);
             sprintf(dir2,"\n%s/",dir);
 
-            printf("dir1:%s\n",dir1);
-            printf("dir2:%s\n",dir2);
+            DEBUG("dir1:%s\n",dir1);
+            DEBUG("dir2:%s\n",dir2);
 
             p = strstr(pTemp->cmdName,dir1);
             q = strstr(pTemp->cmdName,dir2);

@@ -57,12 +57,16 @@ height:80px;
 <script type="text/javascript" src="/smb/js/tools.js"></script>
 <script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
 <script type="text/javascript">
-var this_service="";
-var this_url="";
-var this_files="";
+var g_service="";
 var m = new lang();
 var g_storage = new myStorage();
 var g_sharelink_array = new Array();
+var g_sharelink_publish_array = new Array(0);
+var g_webdav_client = new davlib.DavClient();
+var g_hostName = "";
+var g_is_private_ip = 0;
+var g_expire_time;
+var g_expire_time_title;
 
 function refreshShareFileList(){
 	
@@ -116,20 +120,188 @@ function refreshShareFileList(){
 	});
 }
 
+function publish_sharelink(){
+	var len = g_sharelink_publish_array.length;
+	
+	if(len<=0)
+		return;
+		
+	if(g_service=="facebook"){
+					for(var i=0; i<len; i++){
+			var share_link = g_sharelink_publish_array[i];
+						var sharetitle = m.getString('msg_sharelink_desc1');
+						var url = 'http://www.facebook.com/sharer.php?u=' + encodeURIComponent(share_link) + 
+								  "&t=" +  encodeURIComponent(sharetitle);	
+						window.open(url);
+					}
+					
+		parent.closeModal(0);
+				}
+	else if(g_service=="googleplus"){
+					for(var i=0; i<len; i++){
+			var share_link = g_sharelink_publish_array[i];
+						var url = 'https://plus.google.com/share?url=' + encodeURIComponent(share_link);
+						window.open(url);
+					}
+					
+		parent.closeModal(0);
+				}
+	else if(g_service=="twitter"){
+					for(var i=0; i<len; i++){
+			var share_link = g_sharelink_publish_array[i];
+			var url = 'http://twitter.com/home/?status=' + encodeURIComponent(share_link);
+					window.open(url);
+		}
+					
+		parent.closeModal(0);
+				}
+	else if(g_service=="plurk"){
+					var share_content = "";
+					share_content += m.getString('msg_sharelink_desc1') + "\n\n";
+					for(var i=0; i<len; i++){
+			var share_link = g_sharelink_publish_array[i];
+						share_content += share_link;
+						
+						if(i!=len-1)
+							share_content += "\n\n";
+					}
+					
+					var url = 'http://www.plurk.com/?qualifier=shares&status=' + encodeURIComponent(share_content);
+					window.open(url);
+					
+		parent.closeModal(0);
+				}
+	else if(g_service=="weibo"){
+					var share_content = "";
+					for(var i=0; i<len; i++){
+			var share_link = g_sharelink_publish_array[i];
+						var sharetitle = m.getString('msg_sharelink_desc1');
+						var url = 'http://service.weibo.com/share/share.php?url=' + encodeURIComponent(share_link) + 
+								  "&title=" +  encodeURIComponent(sharetitle);	
+						window.open(url);
+					}
+					
+		parent.closeModal(0);
+				}
+	else if(g_service=="qq"){
+					var share_content = "";
+					for(var i=0; i<len; i++){
+			var share_link = g_sharelink_publish_array[i];
+						var sharetitle = m.getString('msg_sharelink_desc1');
+						var url = 'http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=' + encodeURIComponent(share_link) + 
+								  "&title=" +  encodeURIComponent(sharetitle);		
+						window.open(url);
+					}
+					
+		parent.closeModal(0);
+				}
+				else{
+					var content = "";
+					content += m.getString('msg_sharelink_desc1');
+					for(var i = 0; i < len; i++){
+			var share_link = g_sharelink_publish_array[i];
+						content += share_link;
+						if(i!=len-1)
+							content += "\n\n";			
+					}	
+					
+		if(g_expire_time>0){
+						var share_expire_time = m.getString('msg_sharelink_desc2');
+			share_expire_time = share_expire_time.replace("%s", g_expire_time_title);					
+						content += share_expire_time;
+					}
+					
+		if(g_is_private_ip==1){
+						content += m.getString('msg_sharelink_desc3');
+					}
+					
+					$("#sharelink").val(content);
+	
+					$("#process_sharelink").hide();
+					$("#show_sharelink").show();
+					$("#publish_sharelink").hide();
+					
+					$('input#cancel').attr("value", m.getString('btn_apply'));
+				}
+			}
+
+function webdav_sharelink_callbackfunction(error, content, statusstring){
+	if(error==200){
+					
+		var data = parseXml(statusstring);				
+		var share_link = $(data).find('sharelink').text();
+							
+		if(share_link==''){
+			alert("Invalid share link!");
+			return;
+		}
+
+		var sharelink = g_hostName + "/" + share_link;
+		g_sharelink_publish_array.push(sharelink);
+	}
+			else if(error==405){
+				var msg = m.getString("msg_exceed_max_sharelink");
+				msg = msg.replace("%d", g_storage.get('max_sharelink'));
+				alert(msg);
+		return;
+			}
+			else{
+				alert("Fail to generate share link!");	
+		return;
+			}
+	
+	g_sharelink_array.splice(0,1);
+	
+	//- Complete	
+	if(g_sharelink_array.length<=0){
+		publish_sharelink();
+		return;
+	}
+	
+	var filepath = g_sharelink_array[0].file_path;
+	var filename = g_sharelink_array[0].file_name;
+	var fileurl = String(filepath).replace(filename, "");
+	g_webdav_client.GSL(fileurl, fileurl, filename, g_expire_time, 1, webdav_sharelink_callbackfunction);
+}
+
 $("document").ready(function() {
 	var vars = getUrlVars();
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
-	this_service = vars["s"];
-	this_url = vars["u"];
-	this_files = vars["f"];
+	g_service = vars["s"];
+	var files = vars["f"];
 	
-	var the_array = this_files.split(";");
+	var the_array = files.split(";");
 	
 	if(the_array.length<=0)
 		return;
+		
+	g_webdav_client.initialize();
+	
+	var webdav_mode = g_storage.get('webdav_mode');
+	var ddns_host_name = g_storage.get('ddns_host_name');    
+	var cur_host_name = window.location.host;
+		
+	if(!isPrivateIP(cur_host_name))
+		g_hostName = cur_host_name;
+	else			
+		g_hostName = (ddns_host_name=="") ? cur_host_name : ddns_host_name;
+			
+	if(g_hostName.indexOf(":")!=-1)
+		g_hostName = g_hostName.substring(0, g_hostName.indexOf(":"));
+				
+	g_is_private_ip = isPrivateIP(g_hostName);
+				
+	if( webdav_mode == 0 ) //- Only enable http
+		g_hostName = "http://" + g_hostName + ":" + g_storage.get("http_port");
+	else{
+		g_hostName = "https://" + g_hostName;
+		
+		if(g_storage.get("https_port")!="443")
+			g_hostName += ":" + g_storage.get("https_port");
+	}
 		
 	$('span#desc').text(m.getString('msg_sharelink'));
 	$('#sharelink_warning').text(m.getString('msg_sharelink_warning'));
@@ -150,16 +322,16 @@ $("document").ready(function() {
 	$("#expire_day").empty();
 	$(select_html).appendTo($("#expire_day"));
 							
-	if(this_service=="facebook"){
+	if(g_service=="facebook"){
 		$("#publish_sharelink").attr("value", m.getString("title_share2")+ " " +m.getString("title_facebook"));	
 	}
-	else if(this_service=="googleplus"){
+	else if(g_service=="googleplus"){
 		$("#publish_sharelink").attr("value", m.getString("title_share2")+ " " +m.getString("title_googleplus"));	
 	}
-	else if(this_service=="twitter"){
+	else if(g_service=="twitter"){
 		$("#publish_sharelink").attr("value", m.getString("title_share2")+ " " +m.getString("title_twitter"));	
 	}
-	else if(this_service=="plurk"){
+	else if(g_service=="plurk"){
 		$("#publish_sharelink").attr("value", m.getString("title_share2")+ " " +m.getString("title_plurk"));	
 	}
 	else{
@@ -191,152 +363,19 @@ $("document").ready(function() {
 		if(g_sharelink_array.length<=0)
 			return;
 		
-		var selectFiles = "";		
-		var webdav_mode = g_storage.get('webdav_mode');
-		var ddns_host_name = g_storage.get('ddns_host_name');    
-		var cur_host_name = window.location.host;
-		var hostName = "";
-		var is_private_ip = 0;
-		
-		if(!isPrivateIP(cur_host_name))
-			hostName = cur_host_name;
-		else			
-			hostName = (ddns_host_name=="") ? cur_host_name : ddns_host_name;
-			
-		if(hostName.indexOf(":")!=-1)
-			hostName = hostName.substring(0, hostName.indexOf(":"));
+		g_sharelink_publish_array = new Array(0);
 				
-		is_private_ip = isPrivateIP(hostName);
-				
-		if( webdav_mode == 0 ) //- Only enable http
-			hostName = "http://" + hostName + ":" + g_storage.get("http_port");
-		else{
-			hostName = "https://" + hostName;
-			
-			if(g_storage.get("https_port")!="443")
-				hostName += ":" + g_storage.get("https_port");
+		g_expire_time = $("#expire_day").val();
+		g_expire_time_title = $("#expire_day option:selected").text();
+		if(g_expire_time=="custom"){
+			g_expire_time = parseInt($("#input_expire_day").val())*86400;
+			g_expire_time_title = $("#input_expire_day").val() + m.getString("title_day_unit");
 		}
 		
-		var count = g_sharelink_array.length;
-		for(var i=0; i<count; i++){
-			selectFiles += g_sharelink_array[i].file_name;				
-			if(i!=count-1) selectFiles += ";";
-		}
-		
-		var expire_time = $("#expire_day").val();
-		var expire_time_title = $("#expire_day option:selected").text();
-		if(expire_time=="custom"){
-			expire_time = parseInt($("#input_expire_day").val())*86400;
-			expire_time_title = $("#input_expire_day").val() + m.getString("title_day_unit");
-		}
-		
-		var client = new davlib.DavClient();
-		client.initialize();
-		
-		client.GSL(this_url, this_url, selectFiles, expire_time, 1, function(error, content, statusstring){			
-			if(error==200){
-				
-				var data = parseXml(statusstring);				
-				var result = $(data).find('sharelink').text();
-						
-				if(result==''){
-					alert("Fail to parse xml!");
-					return;
-				}
-				
-				var result_sharelink = result.split(";");
-				var len = result_sharelink.length;
-				
-				if(this_service=="facebook"){
-					for(var i=0; i<len; i++){
-						var share_link = hostName + "/" + result_sharelink[i];
-						var sharetitle = m.getString('msg_sharelink_desc1');
-						var url = 'http://www.facebook.com/sharer.php?u=' + encodeURIComponent(share_link) + 
-								  "&t=" +  encodeURIComponent(sharetitle);	
-						window.open(url);
-					}
-					
-					parent.closeJqmWindow(0);
-				}
-				else if(this_service=="googleplus"){
-					for(var i=0; i<len; i++){
-						var share_link = hostName + "/" + result_sharelink[i];
-						var url = 'https://plus.google.com/share?url=' + encodeURIComponent(share_link);
-						window.open(url);
-					}
-					
-					parent.closeJqmWindow(0);
-				}
-				else if(this_service=="twitter"){
-					var share_content = "";
-					for(var i=0; i<len; i++){
-						var share_link = hostName + "/" + result_sharelink[i];
-						share_content += share_link;
-						
-						if(i!=len-1)
-							share_content += "\n\n";
-					}
-					
-					var url = 'http://twitter.com/home/?status=' + encodeURIComponent(share_content);
-					window.open(url);
-					
-					parent.closeJqmWindow(0);
-				}
-				else if(this_service=="plurk"){
-					var share_content = "";
-					share_content += m.getString('msg_sharelink_desc1') + "\n\n";
-					for(var i=0; i<len; i++){
-						var share_link = hostName + "/" + result_sharelink[i];
-						share_content += share_link;
-						
-						if(i!=len-1)
-							share_content += "\n\n";
-					}
-					
-					var url = 'http://www.plurk.com/?qualifier=shares&status=' + encodeURIComponent(share_content);
-					window.open(url);
-					
-					parent.closeJqmWindow(0);
-				}
-				else{
-					var content = "";
-					content += m.getString('msg_sharelink_desc1');
-					var len = g_sharelink_array.length;
-					for(var i = 0; i < len; i++){
-						var share_link = hostName + "/" + result_sharelink[i];
-						content += share_link;
-						if(i!=len-1)
-							content += "\n\n";			
-					}	
-					
-					if(expire_time>0){
-						var share_expire_time = m.getString('msg_sharelink_desc2');
-						share_expire_time = share_expire_time.replace("%s", expire_time_title);					
-						content += share_expire_time;
-					}
-					
-					if(is_private_ip==1){
-						content += m.getString('msg_sharelink_desc3');
-					}
-					
-					$("#sharelink").val(content);
-	
-					$("#process_sharelink").hide();
-					$("#show_sharelink").show();
-					$("#publish_sharelink").hide();
-					
-					$('input#cancel').attr("value", m.getString('btn_apply'));
-				}
-			}
-			else if(error==405){
-				var msg = m.getString("msg_exceed_max_sharelink");
-				msg = msg.replace("%d", g_storage.get('max_sharelink'));
-				alert(msg);
-			}
-			else{
-				alert("Fail to generate share link!");	
-			}
-		});
+		var filepath = g_sharelink_array[0].file_path;
+		var filename = g_sharelink_array[0].file_name;
+		var fileurl = String(filepath).replace(filename, "");
+		g_webdav_client.GSL(fileurl, fileurl, filename, g_expire_time, 1, webdav_sharelink_callbackfunction);
 	});
 	
 	$("select.expire_day").change(function(){
@@ -372,7 +411,7 @@ $("document").ready(function() {
 	});
 	
 	$('input.numInput').keyup(function(e){
-		var pnumber = $(this).attr("value");		
+		var pnumber = $(this).prop("value");
 		if (!/^\d+$/.test(pnumber))
     	{
         	$(this).val(/^\d+/.exec($(this).val()));
@@ -425,7 +464,7 @@ function select_all(){
                         <select id="expire_day" name="expire_day" class="expire_day">
                         </select>
                         <span id="custom_expire_day" style="display:none">
-                        	<input id="input_expire_day" class="numInput" maxlength="2" style="width:25px;" value="3"><span id="day_unit" style="padding-left:5px;">å¤©</span>
+                        	<input id="input_expire_day" name="input_expire_day" class="numInput" maxlength="2" style="width:25px;" value="3"><span id="day_unit" style="padding-left:5px;">å¤?/span>
                         </span>
                     </div>
                 </div>
@@ -445,7 +484,7 @@ function select_all(){
                             <select id="expire_day" name="expire_day" class="expire_day">
                             </select>
                             <span id="custom_expire_day" style="display:none">
-                                <input id="input_expire_day" class="numInput" maxlength="2" style="width:25px;" value="3"><span id="day_unit" style="padding-left:5px;">å¤©</span>
+                                <input id="input_expire_day" class="numInput" maxlength="2" style="width:25px;" value="3"><span id="day_unit" style="padding-left:5px;">å¤?/span>
                             </span>
                         </div>
                     </div>

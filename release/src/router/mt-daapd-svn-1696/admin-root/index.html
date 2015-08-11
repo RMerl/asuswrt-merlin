@@ -1,0 +1,84 @@
+@include hdr.html@
+
+<h2>Server Status</h2>
+
+<div id="server_stopped_message" style="display: none;">The Firefly server is not running, this page will be inaccessible until you start the server again.</div>
+<table id="service" cellspacing="0">
+<thead>
+  <tr>
+    <th>Service</th>
+    <th>Status</th>
+    <th>Control</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Bonjour</td>
+    <td id="rendezvous">Running</td>
+    <td><!-- <a href="config-update.html?action=stopmdns">Stop MDNS Server</a> --></td>
+  </tr>
+  <tr>
+    <td>Firefly Media Server</td>
+    <td id="daap_server">Running</td>
+    <td><input id="button_stop_server" type="button" value="Stop Server" /></td>
+  </tr>
+  <tr>
+    <td>File scanner</td>
+    <td id="file_scanner">Idle</td>
+    <td><input id="button_start_scan" type="button" value="Start Scan" /></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td><input id="button_start_full_scan" type="button" value="Start Full Scan" /></td>
+  </tr>  
+</tbody>
+</table>  
+<br />
+<table id="plugin" cellspacing="0">
+  <col style="width: 20ex;" />
+  <col />
+<thead>
+  <tr><th>Plugin</th><th>Version</th></tr>
+</thead>
+<tbody>
+  <tr><td></td><td></tr></tr>
+</tbody>
+</table>
+<br />
+<table id="stat" cellspacing="0">
+  <col style="width: 20ex;" />
+  <col />
+  <tr>
+    <th>Uptime</th>
+    <td id="uptime">&#x00a0;</td>
+  </tr>
+  <tr>
+    <th>Songs</th>
+    <td id="songs">&#x00a0;</td>
+  </tr>
+  <tr>
+   <th>Songs Served</th>
+   <td id="songs_served">&#x00a0;</td>
+  </tr>
+  <tr>
+    <th>DB Version</th>
+    <td>2</td>
+  </tr>
+</table>
+<br />
+<table id="thread" cellspacing="0">
+  <col style="width: 20ex;" />
+  <col />
+<thead>
+  <tr>
+    <th>Client IP</th>
+    <th>Action</th>
+  </tr>
+</thead>
+<tbody>
+  <tr><td></td><td></td></tr>
+</tbody>  
+</table>
+
+@include ftr.html@

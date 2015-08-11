@@ -19,6 +19,7 @@
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <style>
 .contentM_qis{
 	position:absolute;
@@ -32,6 +33,8 @@
 	margin-top: -450px;
 	width:340px;
 	height:160px;
+	box-shadow: 3px 3px 10px #000;
+	display:none;
 }
 </style>
 <script>
@@ -39,8 +42,8 @@
 <% wanlink(); %>
 <% secondary_wanlink(); %>
 window.onresize = function() {
-	if(document.getElementById("edit_sr_block").style.display == "") {
-		cal_panel_block("edit_sr_block");
+	if(document.getElementById("edit_sr_block").style.display == "block") {
+		cal_panel_block("edit_sr_block", 0.35);
 	}
 }
 var pptpd_clientlist_array_ori = '<% nvram_char_to_ascii("","pptpd_clientlist"); %>';
@@ -66,7 +69,7 @@ function initial(){
 		var wan0_ipaddr = wanlink_ipaddr();
 		var wan1_ipaddr = secondary_wanlink_ipaddr();		document.getElementById("wan_ctrl").style.display = "none";
 		document.getElementById("dualwan_ctrl").style.display = "";	
-		document.getElementById("dualwan_ctrl").innerHTML = '<#PPTP_desc2#> <span class="formfontdesc">Primary WAN IP : ' + wan0_ipaddr + ' </sapn><span class="formfontdesc">Secondary WAN IP : ' + wan1_ipaddr + '</sapn>';
+		document.getElementById("dualwan_ctrl").innerHTML = "<#PPTP_desc2#> <span class=\"formfontdesc\">Primary WAN IP : " + wan0_ipaddr + " </sapn><span class=\"formfontdesc\">Secondary WAN IP : " + wan1_ipaddr + "</sapn>";
 		//check DUT is belong to private IP. //realip doesn't support lb
 		if(validator.isPrivateIP(wan0_ipaddr) && validator.isPrivateIP(wan1_ipaddr)){
 			document.getElementById("privateIP_notes").style.display = "";
@@ -416,38 +419,13 @@ function addRow_Group(upper){
 	}
 }
 
-function cal_panel_block(obj) {
-	var blockmarginLeft;
-	if(window.innerWidth) {
-		winWidth = window.innerWidth;
-	}
-	else if((document.body) && (document.body.clientWidth)) {
-		winWidth = document.body.clientWidth;
-	}
-		
-	if(document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth) {
-		winWidth = document.documentElement.clientWidth;
-	}
-		
-	if(winWidth >1050) {	
-		winPadding = (winWidth - 1050) / 2;	
-		winWidth = 1105;
-		blockmarginLeft = (winWidth * 0.35) + winPadding;
-	}
-	else if(winWidth <= 1050) {
-		blockmarginLeft = (winWidth) * 0.35 + document.body.scrollLeft;	
-	}
-
-	document.getElementById(obj).style.marginLeft = blockmarginLeft + "px";
-}
-
 function edit_Row(userName) {
 	pptpd_sr_edit_username = userName;
 	document.form.pptpd_sr_ipaddr.value = "";
 	document.form.pptpd_sr_netmask.value = "";
 
 	$("#edit_sr_block").fadeIn(300);
-	cal_panel_block("edit_sr_block");
+	cal_panel_block("edit_sr_block", 0.35);
 
 	var pptpd_sr_rulelist_row = pptpd_sr_rulelist_array.split("<");
 	for(var i = 1; i < pptpd_sr_rulelist_row.length; i += 1) {
@@ -999,7 +977,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 		</td>
 	</tr>
 </table>
-<div id="edit_sr_block" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;display:none;">
+<div id="edit_sr_block" class="contentM_qis">
 	<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable" style="margin-top:8px;">
 		<thead>
 			<tr>

@@ -1,0 +1,154 @@
+README file for resample-1.x.tgz from the 
+Digital Audio Resampling Home Page located at
+http://ccrma.stanford.edu/~jos/resample/.
+
+SOFTWARE FOR SAMPLING-RATE CONVERSION AND FIR DIGITAL FILTER DESIGN
+
+For installation instructions, read the INSTALL file in this directory.
+
+The resample program "resamples" a soundfile to change its sampling
+rate.  For example, it can be used to convert the sampling rate from
+48 kHz (used by DAT machines) to 44.1 kHz (the standard sampling rate
+for Compact Discs).  The command line for this operation would look
+something like
+
+	resample -by 0.91875 dat.snd cd.snd
+
+or, more simply,
+
+	resample -to 44100 dat.snd cd.snd
+
+Any reasonable sampling rate can be converted to any other.
+
+The windowfilter program designs Finite-Impulse-Response (FIR) digital
+filters by the so-called "window method."  In this method, the ideal
+impulse response (a sinc function) is "windowed" by a Kaiser window (a
+popular window used in spectrum analysis). 
+
+The resample program uses 32-bit fixed-point arithmetic: 16-bits data
+and 16-bits coefficients.  The input soundfile must be 16-bit mono or
+stereo (interleaved) audio data.
+
+SNDLIB
+
+The program uses elements of Bill Schottstaedt's sndlib sound file
+library.  This means resample can read many different kinds of sound
+file header (AIFF, WAV, NeXT, IRCAM, etc.).
+
+The sndlib files used by resample are included in this directory to
+ensure stability. The latest version of sndlib should be available as
+
+	ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
+
+See sndlib.html in the sndlib distribution for documentation of SNDLIB.
+
+CONTENTS of ./src directory
+
+resample.c	Sampling-rate conversion program.
+resample.1	Manual page for resample. Try "nroff -man resample.1".
+resamplesubs.c	Subroutines used by resample.
+resample.h	Configuration constants for the sampling rate converter.
+stdefs.h	Machine-dependent definitions, useful constants and macros.
+
+windowfilter.c	Program for designing FIR digital filters used by resample.
+windowfilter.1	Manual page for windowfilter.
+filterkit.c	Library for filter design, application, and file management.
+filterkit.h	Declarations (procedure prototypes) for the filterkit library.
+
+README		This file.
+README.deemph   A word about deemphasis filtering.
+LGPL            GNU Lesser General Public License (LGPL)
+
+SNDLIB files:
+    io.c
+    audio.c
+    headers.c
+    sound.c
+    sndlib.h
+    sndlib-strings.h
+
+COPYING
+
+SNDLIB files are Copyright 2000 by Bill Schottstaedt <bil@ccrma.stanford.edu>.
+
+The remaining files in this package, unless otherwise noted, are
+Copyright 1994-2006 by Julius O. Smith III <jos@ccrma.stanford.edu>,
+all rights reserved.  Permission to use and copy is granted subject to
+the terms of the "GNU Lesser General Public License" (LGPL) as
+published by the Free Software Foundation; either version 2.1 of the
+License, or any later version.  In addition, we request that a copy of
+any modified files be sent by email to jos@ccrma.stanford.edu so that
+we may incorporate them into the CCRMA version.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+FILTERKIT CONTENTS
+
+	LpFilter() - Calculates the filter coeffs for a Kaiser-windowed
+		low-pass filter with a given roll-off frequency.  These
+		coeffs are stored into a array of doubles.
+
+	writeFilter() - Writes a filter to a file.
+
+	makeFilter() - A section of the original SAIL program.  Calls 
+		LpFilter() to create a filter, then scales the double
+		coeffs into a array of half words.
+
+	readFilter() - Reads a filter from a file.
+
+	FilterUp() - Applies a filter to a given sample when up-converting.
+
+	FilterUD() - Applies a filter to a given sample when up- or down-
+		converting.  Both are repoductions of the original SAIL
+		program.
+
+	initZerox() - Initialization routine for the zerox() function.  Must
+		be called before zerox() is called.  This routine loads
+		the correct filter so zerox() can use it.
+
+	zerox() - Given a pointer into a sample, finds a zero-crossing on the
+		interval [pointer-1:pointer+2] by iteration.
+
+	Query() - Ask the user for a yes/no question with prompt, default, 
+		and optional help.
+
+	GetUShort() - Ask the user for a unsigned short with prompt, default,
+		and optional help.
+
+	GetDouble() -  Ask the user for a double with prompt, default, and
+		optional help.
+
+	GetString() -  Ask the user for a string with prompt, default, and
+		optional help.
+
+
+FILTER FILE FORMAT
+
+	File Name: "F" Nmult "T" Nhc ".filter"
+		example: "F13T8.filter" and "F27T8.filter"
+
+	Structure of File:
+		"ScaleFactor" LpScl
+		"Length" Nwing
+		"Coeffs:"
+		Imp[0]
+		Imp[1]
+		  :
+		Imp[Nwing-1]
+		"Differences:"
+		ImpD[0]
+		ImpD[1]
+		  :
+		ImpD[Nwing-1]
+		EOF
+
+	where:	Something enclosed in "" indicates specific characters in the file.
+		Nmult, Nwing, Imp[], and ImpD[] are variables (HWORD)
+		Npc is a conversion constant.
+		EOF is the end of the file.
+
+	See writeFilter() and readFilter() in "filterkit.c" for more details.
+

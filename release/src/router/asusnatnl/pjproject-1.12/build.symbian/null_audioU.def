@@ -1,0 +1,12 @@
+EXPORTS
+	pjmedia_snd_deinit                       @ 1 NONAME
+	pjmedia_snd_get_dev_count                @ 2 NONAME
+	pjmedia_snd_get_dev_info                 @ 3 NONAME
+	pjmedia_snd_init                         @ 4 NONAME
+	pjmedia_snd_open                         @ 5 NONAME
+	pjmedia_snd_open_player                  @ 6 NONAME
+	pjmedia_snd_open_rec                     @ 7 NONAME
+	pjmedia_snd_stream_close                 @ 8 NONAME
+	pjmedia_snd_stream_get_info              @ 9 NONAME
+	pjmedia_snd_stream_start                 @ 10 NONAME
+	pjmedia_snd_stream_stop                  @ 11 NONAME

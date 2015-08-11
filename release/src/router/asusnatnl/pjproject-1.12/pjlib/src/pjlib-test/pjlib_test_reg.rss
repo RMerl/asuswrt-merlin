@@ -1,0 +1,12 @@
+// Symbian application registration info for pjlib-test
+
+#include <appinfo.rh>
+
+UID2 KUidAppRegistrationResourceFile
+UID3 0xA0000002
+
+RESOURCE APP_REGISTRATION_INFO
+{
+    app_file="pjlib_test";
+}
+

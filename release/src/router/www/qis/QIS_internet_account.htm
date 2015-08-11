@@ -16,6 +16,7 @@
 <% login_state_hook(); %>
 var now_flag = '<% get_parameter("flag"); %>';
 <% wan_get_parameter(); %>
+var is_TW_sku = (ttc.search("TW") == -1) ? false : true;
 
 function QKaccount_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_account_webtitle#>";
@@ -30,6 +31,8 @@ function QKaccount_load_body(){
 		hideLinkTag();
 		flash_button();
 		document.getElementById("descritpion_tail1").innerHTML = "<#qis_pppoe_desc2#>";
+		if(is_TW_sku)		
+			document.getElementById("isp_TW_desc").style.display = "";
 		if(now_flag != "auto_way_pppoe")
 			show_prev_button();					
 		document.getElementById("nextButton").focus();
@@ -129,7 +132,7 @@ function submitForm(o, s){
 		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';		
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
 		
-		if(parent.isManual)
+		if(parent.flag_manual)
 			document.form.flag.value = "manual";
 		else
 			document.form.flag.value = "verify_detect";
@@ -152,24 +155,37 @@ function submitForm(o, s){
 		document.form.switch_wan2prio.value = parent.document.QKform.switch_wan2prio.value;
 		document.form.switch_stb_x.value = parent.document.QKform.switch_stb_x.value;
 		if(original_switch_wantag != document.form.switch_wantag.value){
-				document.form.action_script.value	= "reboot";
-				document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 10");
-				document.getElementById("loadHint").style.display = "";
-				document.getElementById("nextButton").style.display = "none";
-				document.getElementById("prevButton").style.display = "none";
+			/*
+			document.form.action_script.value	= "reboot";
+			document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 10");
+			document.getElementById("loadHint").style.display = "";
+			document.getElementById("nextButton").style.display = "none";
+			document.getElementById("prevButton").style.display = "none";
+			*/
+			var reboot_time = eval("<% get_default_reboot_time(); %> + 10");
+			document.form.action_script.value = "saveNvram";
+			document.form.action_wait.value = "0";
+			parent.sysReboot = true;
+			
+			if(reboot_time > parent.rebootTime)
+				parent.rebootTime = reboot_time;
 		}
 
 		document.getElementById("x_Setting").disabled = false;
 		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
 
-		if(parent.isManual)
+		if(parent.flag_manual)
 			document.form.flag.value = "manual";
 		else
 			document.form.flag.value = "verify_detect";
 
 		document.form.next_page.value = "/QIS_wizard.htm";
 		document.form.submit();
+		if(original_switch_wantag != document.form.switch_wantag.value)
+			setTimeout(function(){
+				location.href = "/qis/QIS_wireless.htm";
+			}, 500);
 	}
 	else if(document.form.wan_proto.value == 'pptp'|| document.form.wan_proto.value == 'l2tp'){
 		document.form.next_page.value = "QIS_internet_ip.htm";
@@ -339,6 +355,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
   <tr>
   	<td colspan=2 class="QISformtd">
 	  	<div id="descritpion_tail1"></div>
+	  	<div id="isp_TW_desc" style="padding:10px 0px 10px 0px;line-height:15px;display:none;"><#QIS_SmartConn_ISPDesc_TW#></div>
 		</td>
   </tr>
 </table>

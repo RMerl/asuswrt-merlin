@@ -43,6 +43,14 @@
 #include <assert.h>
 #include <qcsapi_rpc_common/common/rpc_pci.h>
 
+#ifndef PCIE_RPC_TYPE
+	#error "Not configure PCIE_RPC_TYPE"
+#else
+	#if (PCIE_RPC_TYPE != RPC_TYPE_CALL_QCSAPI_PCIE) && (PCIE_RPC_TYPE != RPC_TYPE_QCSAPI_PCIE)
+	#error "Configuration invalid value for PCIE_RPC_TYPE"
+	#endif
+#endif
+
 /*
  * Private data kept per client handle
  */

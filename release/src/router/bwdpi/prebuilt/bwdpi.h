@@ -87,14 +87,15 @@ struct mac_group{
 typedef struct bwdpi_client bwdpi_device;
 struct bwdpi_client{
 	char hostname[32];
-	char devicetype[100];
-	char classname[100];
+	char vendor_name[100];
 	char type_name[100];
+	char device_name[100];
 };
 
 typedef struct mail_info mail_s;
 struct mail_info{
 	int type;
+	char rule[32];
 	char mac[18];
 	char hostname[100];
 	char url[128];
@@ -157,7 +158,7 @@ extern void get_traffic_hook(char *mode, char *name, char *dura, char *date, int
 extern void get_device_hook(char *MAC, int *retval, webs_t wp);
 extern void get_device_stat(char *MAC);
 extern int device_main(char *MAC);
-extern void bwdpi_client_info(char *MAC, bwdpi_device *device);
+extern int bwdpi_client_info(char *MAC, bwdpi_device *device);
 extern int device_info_main(char *MAC);
 extern int wrs_url_main();
 extern void redirect_page_status(int cat_id, int *retval, webs_t wp);
@@ -198,6 +199,3 @@ extern void extract_data(char *path, FILE *fp);
 //watchdog_check.c
 extern void auto_sig_check();
 extern void sqlite_db_check();
-extern void stop_bwdpi_monitor_service();
-extern void start_bwdpi_monitor_service();
-extern void check_bwdpi_monitor();

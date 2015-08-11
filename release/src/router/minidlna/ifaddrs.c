@@ -236,14 +236,13 @@ nl_recvmsg (int sd, int request, int seq,
 }
 
 static int
-nl_getmsg (int sd, int request, int seq, struct nlmsghdr **nlhp, int *done)
+nl_getmsg (int sd, int request, int seq, pid_t pid, struct nlmsghdr **nlhp, int *done)
 {
   struct nlmsghdr *nh;
   size_t bufsize = 65536, lastbufsize = 0;
   void *buff = NULL;
   int result = 0, read_size;
   int msg_flags;
-  pid_t pid = getpid ();
   for (;;)
     {
       void *newbuff = realloc (buff, bufsize);
@@ -300,7 +299,7 @@ nl_getmsg (int sd, int request, int seq, struct nlmsghdr **nlhp, int *done)
 }
 
 static int
-nl_getlist (int sd, int seq,
+nl_getlist (int sd, int seq, pid_t pid,
 	    int request,
 	    struct nlmsg_list **nlm_list, struct nlmsg_list **nlm_end)
 {
@@ -315,7 +314,7 @@ nl_getlist (int sd, int seq,
     seq = (int) time (NULL);
   while (!done)
     {
-      status = nl_getmsg (sd, request, seq, &nlh, &done);
+      status = nl_getmsg (sd, request, seq, pid, &nlh, &done);
       if (status < 0)
 	return status;
       if (nlh)
@@ -395,7 +394,7 @@ nl_close (int sd)
 
 /* ---------------------------------------------------------------------- */
 static int
-nl_open (void)
+nl_open (pid_t *pid)
 {
   struct sockaddr_nl nladdr;
   int sd;
@@ -409,6 +408,16 @@ nl_open (void)
     {
       nl_close (sd);
       return -1;
+    }
+  if (pid)
+    {
+      socklen_t len = sizeof(nladdr);
+      if (getsockname (sd, (struct sockaddr *) &nladdr, &len) < 0)
+        {
+          nl_close (sd);
+          return -1;
+        }
+      *pid = nladdr.nl_pid;
     }
   return sd;
 }
@@ -424,7 +433,7 @@ getifaddrs (struct ifaddrs **ifap)
   size_t dlen, xlen, nlen;
   uint32_t max_ifindex = 0;
 
-  pid_t pid = getpid ();
+  pid_t pid;
   int seq;
   int result;
   int build;			/* 0 or 1 */
@@ -439,19 +448,19 @@ getifaddrs (struct ifaddrs **ifap)
 
 /* ---------------------------------- */
   /* open socket and bind */
-  sd = nl_open ();
+  sd = nl_open (&pid);
   if (sd < 0)
     return -1;
 
 /* ---------------------------------- */
   /* gather info */
-  if ((seq = nl_getlist (sd, 0, RTM_GETLINK, &nlmsg_list, &nlmsg_end)) < 0)
+  if ((seq = nl_getlist (sd, 0, pid, RTM_GETLINK, &nlmsg_list, &nlmsg_end)) < 0)
     {
       free_nlmsglist (nlmsg_list);
       nl_close (sd);
       return -1;
     }
-  if ((seq = nl_getlist (sd, seq + 1, RTM_GETADDR,
+  if ((seq = nl_getlist (sd, seq + 1, pid, RTM_GETADDR,
 			 &nlmsg_list, &nlmsg_end)) < 0)
     {
       free_nlmsglist (nlmsg_list);

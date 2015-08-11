@@ -27,6 +27,7 @@
 var now_flag = '<% get_parameter("flag"); %>';
 <% wan_get_parameter(); %>
 var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
+var is_TW_sku = (ttc.search("TW") == -1) ? false : true;
 
 function QKaccount_load_body(){
 	document.getElementById("vpn_client_desc").onmouseover = function(){overHint(50);}
@@ -42,7 +43,9 @@ function QKaccount_load_body(){
 		parent.set_step("t2");
 		hideLinkTag();
 		flash_button();
-	//	document.getElementById("descritpion_tail1").innerHTML = "<#qis_pppoe_desc2#>";
+		//	document.getElementById("descritpion_tail1").innerHTML = "<#qis_pppoe_desc2#>";
+		if(is_TW_sku)		
+			document.getElementById("isp_TW_desc").style.display = "";
 		if(now_flag != "auto_way_pppoe")
 			show_prev_button();					
 		document.getElementById("nextButton").focus();
@@ -144,7 +147,7 @@ function submitForm(o, s){
 		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';		
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
 		
-		if(parent.isManual)
+		if(parent.flag_manual)
 			document.form.flag.value = "manual";
 		else
 			document.form.flag.value = "verify_detect";
@@ -160,24 +163,37 @@ function submitForm(o, s){
 		var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
 		set_ISP_profile();
 		if(original_switch_wantag != document.form.switch_wantag.value){
+			/*
 			document.form.action_script.value	= "reboot";
 			document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 10");
 			document.getElementById("loadHint").style.display = "";
 			document.getElementById("nextButton").style.display = "none";
 			document.getElementById("prevButton").style.display = "none";
+			*/
+			var reboot_time = eval("<% get_default_reboot_time(); %> + 10");
+			document.form.action_script.value = "saveNvram";
+			document.form.action_wait.value = "0";
+			parent.sysReboot = true;
+			
+			if(reboot_time > parent.rebootTime)
+				parent.rebootTime = reboot_time;
 		}
 		
 		document.getElementById("x_Setting").disabled = false;
 		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
 		document.form.sw_mode.value = parent.document.QKform.sw_mode.value;
 
-		if(parent.isManual)
+		if(parent.flag_manual)
 			document.form.flag.value = "manual";
 		else
 			document.form.flag.value = "verify_detect";
 
 		document.form.next_page.value = "/QIS_wizard.htm";
 		document.form.submit();
+		if(original_switch_wantag != document.form.switch_wantag.value)
+			setTimeout(function(){
+				location.href = "/qis/QIS_wireless.htm";
+			}, 500);
 	}
 	else if(document.form.wan_proto.value == 'pptp'|| document.form.wan_proto.value == 'l2tp'){
 		document.form.next_page.value = "QIS_internet_ip.htm";
@@ -579,7 +595,8 @@ function enable_ISP_special(){
 	<td style="width:350px;height:400px;background:#444F52;border-radius:10px;">
 		<div id="image_field" class="image_field" ></div>
 		<div id="isp_card_desc" style="padding:0 15px 15px 15px;line-height:15px;margin-top:-60px;"><#QIS_SmartConn_ISPDesc2#></div>
-		<div id="sparcial_ISP_field" style="text-align:center;display:none">
+		<div id="isp_TW_desc" style="padding:0 15px 15px 15px;line-height:15px;display:none;"><#QIS_SmartConn_ISPDesc_TW#></div>
+		<div id="sparcial_ISP_field" style="text-align:center;display:none">		
 			<!--p class="QISGeneralFont" style="font-style:normal;color:#66CCFF;font-size:12px;font-weight:bolder;"><#PPPConnection_x_HostNameForISP_sectionname#></p-->
 			<div style="line-height:25px;height:300px;">
 				<span>
@@ -593,7 +610,7 @@ function enable_ISP_special(){
 						<option value="m1_fiber" <% nvram_match("switch_wantag", "m1_fiber", "selected"); %>>M1-Fiber</option>
 						<option value="maxis_fiber" <% nvram_match("switch_wantag", "maxis_fiber", "selected"); %>>Maxis-Fiber</option>
 						<option value="maxis_fiber_sp" <% nvram_match("switch_wantag", "maxis_fiber_sp", "selected"); %>>Maxis-Fiber-Special</option>
-						<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>>Manual</option>
+						<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>><#Manual_Setting_btn#></option>
 					</select>
 				</span>
 
@@ -606,7 +623,7 @@ function enable_ISP_special(){
 				</span>
 
 				<span id="wan_internet_x">
-			<p style="margin-top:5px;color:#66CCFF;">Internet:</p>
+			<p style="margin-top:5px;color:#66CCFF;"><#Internet#>:</p>
 				<p style="font-size:10px;">
 					VID:<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>" autocorrect="off" autocapitalize="off">
 					PRIO:<input type="text" name="switch_wan0prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>" autocorrect="off" autocapitalize="off">

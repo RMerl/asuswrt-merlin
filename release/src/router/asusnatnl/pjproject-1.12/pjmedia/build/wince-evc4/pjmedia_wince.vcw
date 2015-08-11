@@ -1,0 +1,206 @@
+Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "PocketPJ"="..\..\..\pjsip-apps\src\pocketpj\PocketPJ.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libgsmcodec"="..\..\..\third_party\build\gsm\libgsmcodec.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libilbccodec"="..\..\..\third_party\build\ilbc\libilbccodec.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libportaudio"="..\..\..\third_party\build\portaudio\libportaudio.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libresample"="..\..\..\third_party\build\resample\libresample.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libspeex"="..\..\..\third_party\build\speex\libspeex.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libsrtp"="..\..\..\third_party\build\srtp\libsrtp.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib_util_wince"="..\..\..\pjlib-util\build\wince-evc4\pjlib_util_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib_wince"="..\..\..\pjlib\build\wince-evc4\pjlib_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_codec_wince"=".\pjmedia_codec_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_test"=".\pjmedia_test.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libgsmcodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libilbccodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libportaudio
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libresample
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libspeex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsrtp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_codec_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjnath_wince
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "pjmedia_wince"=".\pjmedia_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjnath_wince"="..\..\..\pjnath\build\wince-evc4\pjnath_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

@@ -121,5 +121,5 @@ const char* push_msg_template =
 ;
 
 const char* wb_custom_header = 
-"Set-Cookie:ONE_VER=1_0; path=/; sid=appid";
+"Set-Cookie:ONE_VER=1_0; path=/; sid=1001";
 #endif

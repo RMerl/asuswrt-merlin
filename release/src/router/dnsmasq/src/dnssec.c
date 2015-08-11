@@ -34,8 +34,6 @@
 #include <nettle/dsa-compat.h>
 #endif
 
-#include <utime.h>
-
 #define SERIAL_UNDEF  -100
 #define SERIAL_EQ        0
 #define SERIAL_LT       -1
@@ -427,13 +425,12 @@ static int serial_compare_32(unsigned long s1, unsigned long s2)
 */
 
 static time_t timestamp_time;
-static int back_to_the_future;
 
 int setup_timestamp(void)
 {
   struct stat statbuf;
   
-  back_to_the_future = 0;
+  daemon->back_to_the_future = 0;
   
   if (!daemon->timestamp_file)
     return 0;
@@ -447,7 +444,7 @@ int setup_timestamp(void)
 	  /* time already OK, update timestamp, and do key checking from the start. */
 	  if (utime(daemon->timestamp_file, NULL) == -1)
 	    my_syslog(LOG_ERR, _("failed to update mtime on %s: %s"), daemon->timestamp_file, strerror(errno));
-	  back_to_the_future = 1;
+	  daemon->back_to_the_future = 1;
 	  return 0;
 	}
       return 1;
@@ -487,17 +484,17 @@ static int check_date_range(unsigned long date_start, unsigned long date_end)
      and start checking keys */
   if (daemon->timestamp_file)
     {
-      if (back_to_the_future == 0 && difftime(timestamp_time, curtime) <= 0)
+      if (daemon->back_to_the_future == 0 && difftime(timestamp_time, curtime) <= 0)
 	{
 	  if (utime(daemon->timestamp_file, NULL) != 0)
 	    my_syslog(LOG_ERR, _("failed to update mtime on %s: %s"), daemon->timestamp_file, strerror(errno));
 	  
-	  back_to_the_future = 1;	
+	  daemon->back_to_the_future = 1;
 	  set_option_bool(OPT_DNSSEC_TIME);
 	  queue_event(EVENT_RELOAD); /* purge cache */
 	} 
 
-      if (back_to_the_future == 0)
+      if (daemon->back_to_the_future == 0)
 	return 1;
     }
   else if (option_bool(OPT_DNSSEC_TIME))
@@ -1223,16 +1220,23 @@ int dnssec_validate_ds(time_t now, struct dns_header *header, size_t plen, char 
     val = dnssec_validate_reply(now, header, plen, name, keyname, NULL, &neganswer, &nons);
   /* Note dnssec_validate_reply() will have cached positive answers */
   
-  if (val == STAT_NO_SIG || val == STAT_INSECURE)
+  if (val == STAT_INSECURE)
     val = STAT_BOGUS;
-  
+
   p = (unsigned char *)(header+1);
   extract_name(header, plen, &p, name, 1, 4);
   p += 4; /* qtype, qclass */
   
   if (!(p = skip_section(p, ntohs(header->ancount), header, plen)))
     val = STAT_BOGUS;
-  
+   
+  /* If we return STAT_NO_SIG, name contains the name of the DS query */
+  if (val == STAT_NO_SIG)
+    {
+      *keyname = 0;
+      return val;
+    }  
+
   /* If the key needed to validate the DS is on the same domain as the DS, we'll
      loop getting nowhere. Stop that now. This can happen of the DS answer comes
      from the DS's zone, and not the parent zone. */
@@ -1875,11 +1879,14 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
    
   if (neganswer && !have_answer)
     *neganswer = 1;
-
+  
   /* No data, therefore no sigs */
   if (ntohs(header->ancount) + ntohs(header->nscount) == 0)
-    return STAT_NO_SIG;
-  
+    {
+      *keyname = 0;
+      return STAT_NO_SIG;
+    }
+
   for (p1 = ans_start, i = 0; i < ntohs(header->ancount) + ntohs(header->nscount); i++)
     {
       if (!extract_name(header, plen, &p1, name, 1, 10))
@@ -1948,6 +1955,19 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
 		{
 		  if (class)
 		    *class = class1; /* Class for DS or DNSKEY */
+
+		  if (rc == STAT_NO_SIG)
+		    {
+		      /* If we dropped off the end of a CNAME chain, return
+			 STAT_NO_SIG and the last name is keyname. This is used for proving non-existence
+			 if DS records in CNAME chains. */
+		      if (cname_count == CNAME_CHAIN || i < ntohs(header->ancount)) 
+			/* No CNAME chain, or no sig in answer section, return empty name. */
+			*keyname = 0;
+		      else if (!extract_name(header, plen, &qname, keyname, 1, 0))
+			return STAT_BOGUS;
+		    }
+ 
 		  return rc;
 		}
 	      
@@ -2060,8 +2080,17 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
   /* NXDOMAIN or NODATA reply, prove that (name, class1, type1) can't exist */
   /* First marshall the NSEC records, if we've not done it previously */
   if (!nsec_type && !(nsec_type = find_nsec_records(header, plen, &nsecs, &nsec_count, qclass)))
-    return STAT_NO_SIG; /* No NSECs, this is probably a dangling CNAME pointing into
-			   an unsigned zone. Return STAT_NO_SIG to cause this to be proved. */
+    {
+      /* No NSEC records. If we dropped off the end of a CNAME chain, return
+	 STAT_NO_SIG and the last name is keyname. This is used for proving non-existence
+	 if DS records in CNAME chains. */
+      if (cname_count == CNAME_CHAIN) /* No CNAME chain, return empty name. */
+	*keyname = 0;
+      else if (!extract_name(header, plen, &qname, keyname, 1, 0))
+	return STAT_BOGUS;
+      return STAT_NO_SIG; /* No NSECs, this is probably a dangling CNAME pointing into
+			     an unsigned zone. Return STAT_NO_SIG to cause this to be proved. */
+    }
    
   /* Get name of missing answer */
   if (!extract_name(header, plen, &qname, name, 1, 0))
@@ -2084,6 +2113,7 @@ int dnssec_chase_cname(time_t now, struct dns_header *header, size_t plen, char 
   unsigned char *p = (unsigned char *)(header+1);
   int type, class, qclass, rdlen, j, rc;
   int cname_count = CNAME_CHAIN;
+  char *wildname;
 
   /* Get question */
   if (!extract_name(header, plen, &p, name, 1, 4))
@@ -2117,7 +2147,50 @@ int dnssec_chase_cname(time_t now, struct dns_header *header, size_t plen, char 
 	    return STAT_INSECURE;
 	  
 	  /* validate CNAME chain, return if insecure or need more data */
-	  rc = validate_rrset(now, header, plen, class, type, name, keyname, NULL, NULL, 0, 0, 0);
+	  rc = validate_rrset(now, header, plen, class, type, name, keyname, &wildname, NULL, 0, 0, 0);
+	   
+	  if (rc == STAT_SECURE_WILDCARD)
+	    {
+	      int nsec_type, nsec_count, i;
+	      unsigned char **nsecs;
+
+	      /* An attacker can replay a wildcard answer with a different
+		 answer and overlay a genuine RR. To prove this
+		 hasn't happened, the answer must prove that
+		 the genuine record doesn't exist. Check that here. */
+	      if (!(nsec_type = find_nsec_records(header, plen, &nsecs, &nsec_count, class)))
+		return STAT_BOGUS; /* No NSECs or bad packet */
+	      
+	      /* Note that we're called here because something didn't validate in validate_reply,
+		 so we can't assume that any NSEC records have been validated. We do them by steam here */
+
+	      for (i = 0; i < nsec_count; i++)
+		{
+		  unsigned char *p1 = nsecs[i];
+		  
+		  if (!extract_name(header, plen, &p1, daemon->workspacename, 1, 0))
+		    return STAT_BOGUS;
+
+		  rc = validate_rrset(now, header, plen, class, nsec_type, daemon->workspacename, keyname, NULL, NULL, 0, 0, 0);
+
+		  /* NSECs can't be wildcards. */
+		  if (rc == STAT_SECURE_WILDCARD)
+		    rc = STAT_BOGUS;
+
+		  if (rc != STAT_SECURE)
+		    return rc;
+		}
+
+	      if (nsec_type == T_NSEC)
+		rc = prove_non_existence_nsec(header, plen, nsecs, nsec_count, daemon->workspacename, keyname, name, type, NULL);
+	      else
+		rc = prove_non_existence_nsec3(header, plen, nsecs, nsec_count, daemon->workspacename, 
+					       keyname, name, type, wildname, NULL);
+	      
+	      if (rc != STAT_SECURE)
+		return rc;
+	    }
+	  
 	  if (rc != STAT_SECURE)
 	    {
 	      if (rc == STAT_NO_SIG)

@@ -1361,13 +1361,13 @@ done:
 						// there's some problem with fsck.ext4.
 						&& strcmp(type, "ext4")
 						){
-					cprintf("asusware: umount partition %s...\n", dev_name);
+					cprintf("%s: umount partition %s...\n", apps_folder, dev_name);
 					logmessage("asusware", "umount partition %s...\n", dev_name);
 					diskmon_status(DISKMON_UMOUNT);
 
 					findmntents(dev_name, 0, umount_mountpoint, EFH_HP_REMOVE);
 
-					cprintf("asusware: Automatically scan partition %s...\n", dev_name);
+					cprintf("%s: Automatically scan partition %s...\n", apps_folder, dev_name);
 					logmessage("asusware", "Automatically scan partition %s...\n", dev_name);
 					diskmon_status(DISKMON_SCAN);
 
@@ -1375,13 +1375,13 @@ done:
 					sprintf(command, "app_fsck.sh %s %s", type, dev_name);
 					system(command);
 
-					cprintf("asusware: re-mount partition %s...\n", dev_name);
+					cprintf("%s: re-mount partition %s...\n", apps_folder, dev_name);
 					logmessage("asusware", "re-mount partition %s...\n", dev_name);
 					diskmon_status(DISKMON_REMOUNT);
 
 					ret = mount_r(dev_name, mountpoint, type);
 
-					cprintf("asusware: done.\n");
+					cprintf("%s: done.\n", apps_folder);
 					logmessage("asusware", "done.\n");
 					diskmon_status(DISKMON_FINISH);
 				}
@@ -1466,7 +1466,7 @@ done:
 					++count;
 				}
 
-				if(type == 1 || type == 2 || type == 3){
+				if(type == 1 || type == 2 || type == 3 || type == 4 || type == 5){
 					if(strlen(cloud_setting_buf) > 0)
 						sprintf(cloud_setting_buf, "%s<%s", cloud_setting_buf, b);
 					else
@@ -1888,6 +1888,7 @@ void write_ftpd_conf()
 #if (!defined(LINUX30) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36))
 	fprintf(fp, "use_sendfile=NO\n");
 #endif
+
 #ifdef RTCONFIG_IPV6
 /* vsftpd 3.x */
 /*
@@ -2047,7 +2048,7 @@ void enable_gro(int interval)
 	/* enabled gso on vlan interface */
 	lan_ifnames = nvram_safe_get("lan_ifnames");
 	foreach(lan_ifname, lan_ifnames, next) {
-	if (!strncmp(lan_ifname, "vlan", 4)) {
+		if (!strncmp(lan_ifname, "vlan", 4)) {
 			sprintf(path, ">>/proc/net/vlan/%s", lan_ifname);
 			sprintf(parm, "-gro %d", interval);
 			argv[1] = parm;
@@ -2778,7 +2779,7 @@ void start_webdav(void)	// added by Vanic
 	system("sh /opt/etc/init.d/S50aicloud scan");
 #else
 */
-	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER) return;
+	//if(nvram_get_int("sw_mode") != SW_MODE_ROUTER) return;
 
 	if (nvram_get_int("webdav_aidisk") || nvram_get_int("webdav_proxy"))
 		nvram_set("enable_webdav", "1");
@@ -2790,6 +2791,11 @@ void start_webdav(void)	// added by Vanic
 	}
 
 	if (nvram_match("enable_webdav", "0")) return;
+
+#ifdef RTCONFIG_TUNNEL
+	//- start tunnel
+	start_mastiff();
+#endif
 
 #ifndef RTCONFIG_WEBDAV
 	if(f_exists("/opt/etc/init.d/S50aicloud"))
@@ -2857,6 +2863,12 @@ void stop_webdav(void)
 
 	logmessage("WEBDAV Server", "daemon is stopped");
 #endif
+
+#ifdef RTCONFIG_TUNNEL
+        //- stop tunnel
+        stop_mastiff();
+#endif
+
 }
 //#endif	// RTCONFIG_WEBDAV
 
@@ -2893,9 +2905,9 @@ void start_cloudsync(int fromUI)
 	char *cmd2_argv[] = { "nice", "-n", "10", "asuswebstorage", NULL };
 	char *cmd3_argv[] = { "touch", cloud_token, NULL };
 	char *cmd4_argv[] = { "nice", "-n", "10", "webdav_client", NULL };
-	char *cmd5_argv[] = { "dropbox_client", NULL };
-	char *cmd6_argv[] = { "ftpclient", NULL};
-	char *cmd7_argv[] = { "sambaclient", NULL};
+	char *cmd5_argv[] = { "nice", "-n", "10", "dropbox_client", NULL };
+	char *cmd6_argv[] = { "nice", "-n", "10", "ftpclient", NULL};
+	char *cmd7_argv[] = { "nice", "-n", "10", "sambaclient", NULL};
 	char buf[32];
 
 	memset(buf, 0, 32);
@@ -3085,7 +3097,7 @@ void stop_cloudsync(int type)
 	}
 
 	if(type == 1){
-		if(pids("inotify") && !pids("asuswebstorage") && !pids("dropbox_client") && !pids("ftpclient"))
+		if(pids("inotify") && !pids("asuswebstorage") && !pids("dropbox_client") && !pids("ftpclient") && !pids("sambaclient"))
 			killall_tk("inotify");
 
 		if(pids("webdav_client"))
@@ -3094,7 +3106,7 @@ void stop_cloudsync(int type)
 		logmessage("Webdav_client", "daemon is stopped");
 	}
 	else if(type == 2){
-		if(pids("inotify") && !pids("asuswebstorage") && !pids("dropbox_client") && !pids("webdav_client"))
+		if(pids("inotify") && !pids("asuswebstorage") && !pids("dropbox_client") && !pids("webdav_client") && !pids("sambaclient"))
 			killall_tk("inotify");
 
 		if(pids("ftpclient"))
@@ -3103,7 +3115,7 @@ void stop_cloudsync(int type)
 		logmessage("ftp client", "daemon is stoped");
 	}
 	else if(type == 3){
-		if(pids("inotify") && !pids("asuswebstorage") && !pids("webdav_client") && !pids("ftpclient"))
+		if(pids("inotify") && !pids("asuswebstorage") && !pids("webdav_client") && !pids("ftpclient") && !pids("sambaclient"))
 			killall_tk("inotify");
 
 		if(pids("dropbox_client"))
@@ -3121,7 +3133,7 @@ void stop_cloudsync(int type)
 		logmessage("sambaclient", "daemon is stoped");
 	}
 	else if(type == 0){
-		if(pids("inotify") && !pids("webdav_client") && !pids("dropbox_client") && !pids("ftpclient"))
+		if(pids("inotify") && !pids("webdav_client") && !pids("dropbox_client") && !pids("ftpclient") && !pids("sambaclient"))
 			killall_tk("inotify");
 
 		if(pids("asuswebstorage"))

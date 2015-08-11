@@ -20,6 +20,7 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
+<script type="text/javascript" src="/form.js"></script>
 <style type="text/css">
 /* folder tree */
 .mask_bg{
@@ -129,13 +130,22 @@
 	margin-left:226px;
 	margin-top: 10px;
 	width:740px;
+	box-shadow: 3px 3px 10px #000;
+	display: none;
 }
 </style>
 <script>
 
-window.onresize = function(){
-	cal_panel_block("cloudAddTable_div");
-	cal_panel_block("folderTree_panel");
+window.onresize = function() {
+	if(document.getElementById("cloudAddTable_div").style.display == "block") {
+		cal_panel_block("cloudAddTable_div", 0.2);
+	}
+	if(document.getElementById("folderTree_panel").style.display == "block") {
+		cal_panel_block("folderTree_panel", 0.25);
+	}
+	if(document.getElementById("invitation").style.display == "block") {
+		cal_panel_block("invitation", 0.25);
+	}
 }
 <% get_AiDisk_status(); %>
 // invitation
@@ -202,7 +212,7 @@ function showInvitation(){
 	if(window.scrollTo)
 		window.scrollTo(0,0);
 
-	cal_panel_block("cloudAddTable_div");
+	cal_panel_block("invitation", 0.25);
 	if(!isInvite){
 		document.getElementById("invitationInfo").innerHTML = "<br/> <#aicloud_invitation_invalid#>";
 		$("#invitation").fadeIn(300);
@@ -222,7 +232,7 @@ function showInvitation(){
 		
 		if(decode_array[3] != ""){
 			htmlCode += "<tr id='verification' height='40px'><td width='30%'>Verification</td><td><input id='veriCode' type='text' onkeypress='return validator.isNumber(this,event)' class='input_6_table' style='margin-left:0px;' maxlength='4' value=''>";
-			htmlCode += "<span style='color:#FC0;display:none;margin-left:5px;' id='codeHint'>Invalid verification code!</span></td></tr>";
+			htmlCode += "<span style='color:#FC0;display:none;margin-left:5px;' id='codeHint'><#JS_Invalid_Vcode#></span></td></tr>";
 		}
 
 		htmlCode += "</table>";
@@ -1037,19 +1047,19 @@ function convSrv(val){
 
 function showAddTable(srv, row_number){
 	var _srv = convSrv(srv);
-	cal_panel_block("cloudAddTable_div");
+	cal_panel_block("cloudAddTable_div", 0.2);
 
 	if(_srv == "webstorage"
 	|| _srv == "ftpserver"
 	|| _srv == "dropbox"
 	|| _srv == "sambaclient"){
-		$("#cloudAddTable").fadeIn();
+		$("#cloudAddTable_div").fadeIn();
 		document.getElementById("creatBtn").style.display = "none";
 		$("#applyDiv").fadeIn();
 		edit_Row(row_number);	
 	}
 	else if(_srv == "new_rule"){
-		$("#cloudAddTable").fadeIn();
+		$("#cloudAddTable_div").fadeIn();
 		document.getElementById("creatBtn").style.display = "none";
 		document.getElementById("divOneProvider").style.display = "none";
 		document.getElementById("povider_tr").style.display = "";
@@ -1067,7 +1077,7 @@ function showAddTable(srv, row_number){
 			document.getElementById("sambaclient_name").value = "WORKGROUP";
 	}
 	else{
-		document.getElementById("cloudAddTable").style.display = "none";
+		$("#cloudAddTable_div").fadeOut();
 		$("#creatBtn").fadeIn();
 		document.getElementById("applyDiv").style.display = "none";
 	}
@@ -1081,7 +1091,7 @@ function get_disk_tree(){
 		return false;	
 	}
 	
-	cal_panel_block("folderTree_panel");
+	cal_panel_block("folderTree_panel", 0.25);
 	$("#folderTree_panel").fadeIn(300);
 	get_layer_items("0");
 }
@@ -1379,36 +1389,6 @@ function confirm_folderTree(){
 	$("#folderTree_panel").fadeOut(300);
 }
 
-function cal_panel_block(obj){
-		var blockmarginLeft;
-		var multiple = 0;
-		if(obj == "cloudAddTable_div")
-			multiple = 0.2;
-		else
-			multiple = 0.25;	// for panel ID 'folderTree_panel'
-
-		if (window.innerWidth)
-			winWidth = window.innerWidth;
-		else if ((document.body) && (document.body.clientWidth))
-			winWidth = document.body.clientWidth;
-		
-		if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-			winWidth = document.documentElement.clientWidth;
-		}
-
-		if(winWidth >1050){	
-			winPadding = (winWidth-1050)/2;	
-			winWidth = 1105;
-			blockmarginLeft= (winWidth*multiple)+winPadding;
-		}
-		else if(winWidth <=1050){
-			blockmarginLeft= (winWidth)*multiple + document.body.scrollLeft;	
-		}
-
-		document.getElementById(obj).style.marginLeft = blockmarginLeft+"px";
-		document.getElementById("invitation").style.marginLeft = blockmarginLeft+"px";
-}
-
 function change_service(obj){
 	$('#WebStorage').parent().css('display','none');
 	$('#Dropbox').parent().css('display','none');
@@ -1523,29 +1503,6 @@ function refresh_captcha(){
 	}
 }
 
-function cal_addTable_block(){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.2)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.2+document.body.scrollLeft;	
-	}
-
-	document.getElementById("cloudAddTable_div").style.marginLeft = blockmarginLeft+"px";
-}
-
 //- Login dropbox
 function dropbox_login(){
 	var base64Encode = function(input) {
@@ -1644,7 +1601,7 @@ function onDropBoxLogin(token, uid){
 		<table>
 			<tr>
 				<td>
-					<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:20px;margin-left:30px;">You have got a new invitation!</div>
+					<div class="machineName" style="font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:20px;margin-left:30px;"><#Cloudsync_Get_Invitation#></div>	<!-- You have got a new invitation! -->
 				</td>
 			</tr>
 		</table>
@@ -1658,7 +1615,7 @@ function onDropBoxLogin(token, uid){
 
 <!-- floder tree-->
 <div id="DM_mask" class="mask_bg"></div>
-<div id="folderTree_panel" class="panel_folder" style="z-index:1000;">
+<div id="folderTree_panel" class="panel_folder">
 	<table><tr><td>
 		<div class="machineName" style="width:200px;font-family:Microsoft JhengHei;font-size:12pt;font-weight:bolder; margin-top:15px;margin-left:30px;"><#Web_Title2#></div>
 		</td>
@@ -1695,8 +1652,8 @@ function onDropBoxLogin(token, uid){
 <input type="hidden" name="action_wait" value="1">
 <input type="hidden" name="cloud_sync" value="">
 <input type="hidden" name="enable_cloudsync" value="<% nvram_get("enable_cloudsync"); %>">
-<div id="cloudAddTable_div" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
-					<table width="97%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="cloudAddTable" style="margin-top:10px;margin-bottom:10px;display:none;">
+<div id="cloudAddTable_div" class="contentM_qis">
+					<table width="97%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="cloudAddTable" style="margin-top:10px;margin-bottom:10px;">
 	  					<thead>
 	   					<tr>
 	   						<td colspan="6" id="cloud_synclist"><#aicloud_cloud_list#></td>
@@ -1731,12 +1688,12 @@ function onDropBoxLogin(token, uid){
 							</tr>	
 						<tr style="display:none;">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Server Name
+								<#Server_Name#>	<!-- Server Name -->
 							</th>			
 							<td>
 							  <input type="text" class="input_32_table" maxlength="32" style="height: 23px;" id="sambaclient_name" name="sambaclient_name" autocorrect="off" autocapitalize="off">
 							  &nbsp;
-							  <span>(Optional)</span>
+							  <span><#feedback_optional#></span>
 							</td>
 						</tr>	
 						<tr style="display:none;">
@@ -1750,7 +1707,7 @@ function onDropBoxLogin(token, uid){
 						</tr>	
 						<tr style="display:none;">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Server share folder
+								<#Cloudsync_Shared_Folder#><!-- Server share folder -->
 							</th>			
 							<td>
 							  <input type="text"  class="input_32_table" style="height: 23px;" id="sambaclient_sharefolder" name="sambaclient_sharefolder" value="" autocorrect="off" autocapitalize="off">
@@ -1777,7 +1734,7 @@ function onDropBoxLogin(token, uid){
 						</tr>	
 						<tr style="display:none;">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Remote Path
+								<#Cloudsync_Remote_Path#>	<!-- Remote Path -->
 							</th>			
 							<td>
 							  <input type="text" class="input_32_table" style="height: 23px;" id="ftp_root_path" name="ftp_root_path" value="" autocorrect="off" autocapitalize="off">
@@ -1831,16 +1788,16 @@ function onDropBoxLogin(token, uid){
 								<#routerSync_Security_code#>
 							</th>
 							<td>
-								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" autocorrect="off" autocapitalize="off">OTP Authentication</div>
+								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" autocorrect="off" autocapitalize="off"><#OTP_Auth#><!--OTP Authentication--></div>
 							</td>
 						  </tr>
 						  <tr height="45px;" id="captcha_tr" style="display:none;">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Captcha
+								<#Captcha#>	<!-- Captcha -->
 							</th>			
 							<td style="height:85px;">
 								<div style="height:25px;"><input id="captcha_field" name="captcha_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-top:8px;" autocomplete="off" autocorrect="off" autocapitalize="off"></div>
-								<div id="captcha_hint" style="color:#FC0;height:25px;margin-top:10px;">Please input the captcha</div>						
+								<div id="captcha_hint" style="color:#FC0;height:25px;margin-top:10px;"><#Captcha_note#></div>	<!-- Please input the captcha -->
 								<div>
 									<iframe id="captcha_iframe" frameborder="0" scrolling="no" src="" style="width:230px;height:80px;*width:210px;*height:87px;margin:-60px 0 0 160px;*margin-left:165px;"></iframe>
 								</div>
@@ -1956,7 +1913,7 @@ function onDropBoxLogin(token, uid){
 							<table width="99%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="cloud_synclist_table">
 								<tbody>
 									<tr height="55px">
-										<td style="color:#FFCC00;" colspan="6">Detecting...</td>
+										<td style="color:#FFCC00;" colspan="6"><#QKSet_detect_sanglass#>...</td>	<!-- Detecting -->
 									</tr>
 								</tbody>
 							</table>

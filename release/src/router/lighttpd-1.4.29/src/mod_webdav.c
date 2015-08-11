@@ -717,9 +717,9 @@ static int get_minidlna_db_path(plugin_data *p){
 		free(media_dir);
 #endif
 #endif
-	Cdbg(DBE, ".............................minidlna_db_dir=%s", p->minidlna_db_dir->ptr);
-	Cdbg(DBE, ".............................minidlna_db_file=%s", p->minidlna_db_file->ptr);
-	Cdbg(DBE, ".............................minidlna_media_dir=%s", p->minidlna_media_dir->ptr);
+	//Cdbg(DBE, ".............................minidlna_db_dir=%s", p->minidlna_db_dir->ptr);
+	//Cdbg(DBE, ".............................minidlna_db_file=%s", p->minidlna_db_file->ptr);
+	//Cdbg(DBE, ".............................minidlna_media_dir=%s", p->minidlna_media_dir->ptr);
 	
 }
 
@@ -1164,13 +1164,11 @@ static int webdav_copy_dir(server *srv, connection *con, plugin_data *p, physica
 			buffer_copy_string_buffer(s.path, src->path);
 			BUFFER_APPEND_SLASH(s.path);
 			buffer_append_string(s.path, de->d_name);
-			Cdbg(DBE, "1 s.path=%s, de->d_name=%s", s.path->ptr, de->d_name);
 			
 			buffer_copy_string_buffer(d.path, dst->path);
 			BUFFER_APPEND_SLASH(d.path);
 			buffer_append_string(d.path, de->d_name);
-			Cdbg(DBE, "2 d.path=%s, de->d_name=%s", d.path->ptr, de->d_name);
-
+			
 			buffer_copy_string_buffer(s.rel_path, src->rel_path);
 			BUFFER_APPEND_SLASH(s.rel_path);
 			buffer_append_string(s.rel_path, de->d_name);
@@ -1436,7 +1434,7 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 					sprintf(sql_query, "%s WHERE PATH = '%s'", sql_query, dst->path->ptr);
 					#endif
 					
-					Cdbg(DBE, "sql_query=%s", sql_query);
+					//Cdbg(DBE, "sql_query=%s", sql_query);
 
 					if( sql_get_table(sql_minidlna, sql_query, &result, &rows, NULL) == SQLITE_OK ){
 						if( rows ){
@@ -1461,13 +1459,13 @@ static int webdav_get_live_property(server *srv, connection *con, plugin_data *p
 								buffer_append_string(b, resolution);
 								buffer_append_string_len(b, CONST_STR_LEN("</D:resolution>"));
 
-								buffer_append_string_len(b, CONST_STR_LEN("<D:creator>"));
-								buffer_append_string(b, creator);
-								buffer_append_string_len(b, CONST_STR_LEN("</D:creator>"));
-
-								buffer_append_string_len(b, CONST_STR_LEN("<D:artist>"));
-								buffer_append_string(b, artist);
-								buffer_append_string_len(b, CONST_STR_LEN("</D:artist>"));
+								buffer_append_string_len(b, CONST_STR_LEN("<D:creator><![CDATA["));								
+								buffer_append_string(b, creator);								
+								buffer_append_string_len(b, CONST_STR_LEN("]]></D:creator>"));	
+								
+								buffer_append_string_len(b, CONST_STR_LEN("<D:artist><![CDATA["));								
+								buffer_append_string(b, artist);								
+								buffer_append_string_len(b, CONST_STR_LEN("]]></D:artist>"));
 
 								buffer_append_string_len(b, CONST_STR_LEN("<D:mime>"));
 								buffer_append_string(b, mime);
@@ -3543,7 +3541,7 @@ propmatch_cleanup:
 				log_error_write(srv, __FILE__, __LINE__, "ss",
 					"remove lock:", sqlite3_errmsg(p->conf.sql));
 
-				Cdbg(DBE, "3.%s", sqlite3_errmsg(p->conf.sql));
+				Cdbg(DBE, "error -> %s", sqlite3_errmsg(p->conf.sql));
 			}
 			
 			if (0 == sqlite3_changes(p->conf.sql)) {
@@ -4313,12 +4311,11 @@ propmatch_cleanup:
 		if(!buffer_is_empty(keyword)){			
 			buffer_urldecode_path(keyword);
 
-			Cdbg(DBE, "keyword=%s, rrrr=%d", keyword->ptr, strncmp(keyword->ptr, "*", 1));
 			if(strstr(keyword->ptr, "*")||strstr(keyword->ptr, "?")){
 				char buff[4096];
 				char* tmp = replace_str(keyword->ptr, "*", "%", (char *)&buff[0]);
 				tmp = replace_str(tmp, "?", "_", (char *)&buff[0]);
-				Cdbg(DBE, "keyword=%s", tmp);
+				 
 				sprintf(sql_query, "%s and ( PATH LIKE '%s' or TITLE LIKE '%s' )", sql_query, tmp, tmp); 
 			}
 			else
@@ -4735,7 +4732,7 @@ propmatch_cleanup:
 			return HANDLER_FINISHED;
 		}		
 		
-		buffer* classify;
+		buffer* classify = NULL;
 		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Classify"))) {
 			classify = ds->value;
@@ -4937,7 +4934,7 @@ propmatch_cleanup:
 			return HANDLER_FINISHED;
 		}
 
-		buffer* play_id;
+		buffer* play_id = NULL;
 		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "id"))) {
 			play_id = ds->value;
@@ -5103,7 +5100,7 @@ propmatch_cleanup:
 			return HANDLER_FINISHED;
 		}
 
-		buffer* file;
+		buffer* file = NULL;
 		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "File"))) {
 			file = ds->value;
@@ -5146,7 +5143,7 @@ propmatch_cleanup:
 	
 	case HTTP_METHOD_GETVIDEOSUBTITLE:{
 		
-		buffer* filename;
+		buffer* filename = NULL;
 		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
 			filename = ds->value;
@@ -5369,10 +5366,10 @@ propmatch_cleanup:
 	case HTTP_METHOD_UPLOADTOFACEBOOK:{
 		Cdbg(1, "do HTTP_METHOD_UPLOADTOFACEBOOK");
 		
-		buffer* filename;
-		buffer* title;
-		buffer* album;
-		buffer* auth_token;
+		buffer* filename = NULL;		
+		buffer* title = NULL;		
+		buffer* album = NULL;		
+		buffer* auth_token = NULL;
 		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
 			filename = ds->value;
@@ -5500,13 +5497,238 @@ propmatch_cleanup:
 		con->file_finished = 1;
 		return HANDLER_FINISHED;
 	}
+
+	case HTTP_METHOD_UPLOADTOPICASA:{
+		Cdbg(DBE, "do HTTP_METHOD_UPLOADTOPICASA");
+
+		buffer* filename = NULL;
+		buffer* title = NULL;
+		buffer* auth_token = NULL;
+		buffer* user_id = NULL;
+		buffer* album_id = NULL;
+		long response_result = 0;
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
+			filename = ds->value;
+			buffer_urldecode_path(filename);
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TITLE"))) {
+			title = ds->value;
+			buffer_urldecode_path(title);
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "UID"))) {
+			user_id = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "AID"))) {
+			album_id = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TOKEN"))) {
+			auth_token = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+		
+		CURL *curl;
+		CURLcode rt;
+
+		#if 0
+		_buffer_t upload_response;
+		#endif
+		
+		buffer* buffer_photoid;
+		
+		curl = curl_easy_init();
+		if(curl) {
+			Cdbg(DBE, "curl_easy_init OK");
+
+			char request_url[1024] = "\0";
+			sprintf(request_url, "https://picasaweb.google.com/data/feed/api/user/%s/albumid/%s", user_id->ptr, album_id->ptr);
+			curl_easy_setopt(curl, CURLOPT_URL, request_url);
+			
+			char photo_path[1024] = "\0";
+			sprintf(photo_path, "%s/%s", con->physical.path->ptr, filename->ptr);
+			
+			FILE *fd;
+ 			fd = fopen(photo_path, "rb"); /* open file to upload */ 
+		  	if(!fd) {
+				curl_easy_cleanup(curl);
+		    	con->http_status = 404;
+				return HANDLER_FINISHED;
+		 	}
+
+			/* to get the file size */
+			struct stat file_info;
+  			if(fstat(fileno(fd), &file_info) != 0) {
+				fclose(fd);
+				curl_easy_cleanup(curl);
+		    	con->http_status = 404;
+				return HANDLER_FINISHED;
+			}
+
+			long file_size = file_info.st_size;
+			char* file_data = (char*) malloc (sizeof(char)*file_size);
+  			if(file_data == NULL) {
+				fclose(fd);
+				curl_easy_cleanup(curl);
+		    	con->http_status = 400;
+				return HANDLER_FINISHED;
+			}
+
+  			// copy the file into the buffer:
+		  	size_t result = fread( file_data, 1, file_size, fd );
+
+			if (result != file_size) {
+				free(file_data);
+				fclose(fd);
+				curl_easy_cleanup(curl);
+		    	con->http_status = 400;
+				return HANDLER_FINISHED;
+			}
+
+			char mpart1[4096] = "\0";
+  			sprintf(mpart1, "\nMedia multipart posting\n"
+				"--END_OF_PART\n"
+				"Content-Type: application/atom+xml\n\n"
+				"<entry xmlns='http://www.w3.org/2005/Atom'>\n"
+				"<title>%s</title>\n"
+                "<summary></summary>\n"
+                "<category scheme=\"http://schemas.google.com/g/2005#kind\"\n"
+                " term=\"http://schemas.google.com/photos/2007#photo\"/>"
+				"</entry>\n"
+				"--END_OF_PART\n"
+				"Content-Type: image/jpeg\n\n", title->ptr);
+
+			int mpart1size = strlen(mpart1);
+			int postdata_length = mpart1size + file_size + strlen("\n--END_OF_PART--");
+  			char *postdata = (char*)malloc(sizeof(char)*postdata_length);
+
+			if(postdata == NULL) {
+				free(file_data);
+				fclose(fd);
+				curl_easy_cleanup(curl);
+		    	con->http_status = 400;
+				return HANDLER_FINISHED;
+			}
+			
+			memcpy( postdata, mpart1, mpart1size);
+			memcpy( postdata + mpart1size, file_data, file_size);
+			memcpy( postdata + mpart1size + file_size, "\n--END_OF_PART--", strlen("\n--END_OF_PART--") );
+
+			free(file_data);
+			fclose(fd);
+			
+			struct curl_slist *headers = NULL;
+			headers = curl_slist_append(headers,"Content-Type: multipart/related; boundary=\"END_OF_PART\"");
+			headers = curl_slist_append(headers,"MIME-version: 1.0");
+			headers = curl_slist_append(headers,"Expect:");
+			headers = curl_slist_append(headers,"GData-Version: 2");
+			
+			char authHeader[1024] = "\0";
+			sprintf(authHeader, "Authorization: OAuth %s", auth_token->ptr);
+			headers = curl_slist_append(headers, authHeader);
+  
+			char content_length[1024] = "\0";
+			sprintf(content_length, "Content-Length=%d", file_size);
+			headers = curl_slist_append(headers, content_length);
+			
+			curl_easy_setopt(curl, CURLOPT_VERBOSE, 2);
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			curl_easy_setopt(curl, CURLOPT_UPLOAD, 0);
+			curl_easy_setopt(curl, CURLOPT_POST, 1);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postdata);
+  			curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, postdata_length);
+  			
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+
+			#if 0
+			memset(&upload_response,0,sizeof(_buffer_t));
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _picasa_api_buffer_write_func);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &upload_response);
+			#endif
+			
+			Cdbg(DBE, "Uploading...");
+			rt = curl_easy_perform(curl);
+			
+			curl_slist_free_all(headers);
+			
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_result);
+
+			#if 0
+			if( response_result == 201 ){
+				Cdbg(DBE, "complete upload...%s", upload_response.data);
+				
+				xmlDocPtr xml = xmlParseDoc((xmlChar *)upload_response.data);
+				if(xml){
+					xmlNode *rootnode = xmlDocGetRootElement(xml);
+					Cdbg(1, "rootnode->name=%s", rootnode->name);
+					if (0 == xmlStrcmp(rootnode->name, BAD_CAST "entry")) {
+
+						xmlNodePtr entryChilds = rootnode->xmlChildrenNode;
+
+						if( entryChilds != NULL ){
+				        	do{
+								if ((!xmlStrcmp(entryChilds->name, BAD_CAST "id")) ){
+						        	// Get the photo id used in uri for update
+						            xmlChar *id= xmlNodeListGetString(xml, entryChilds->xmlChildrenNode, 1);
+						            if( xmlStrncmp(id, BAD_CAST "http://", 7) ){
+						            	buffer_photoid = buffer_init();
+										buffer_copy_string( buffer_photoid, id );
+										Cdbg(DBE, "buffer_photoid=%s", buffer_photoid->ptr);
+						            }
+						            xmlFree(id);
+
+									break;
+					          	}
+							}while( (entryChilds = entryChilds->next)!=NULL );
+      					}
+					}
+
+					xmlFreeDoc(xml);
+				}
+			}
+			#endif
+  			
+			/* Done. Cleanup. */ 
+			free(postdata);
+
+			#if 0
+			free(upload_response.data);
+			#endif
+			
+			curl_easy_cleanup(curl);
+		}
+		
+		con->http_status = ( response_result == 201 ) ? 200 : 501;
+		con->file_finished = 1;
+		return HANDLER_FINISHED;
+	}
 	
 	case HTTP_METHOD_UPLOADTOFLICKR:{
 		Cdbg(1, "do HTTP_METHOD_UPLOADTOFLICKR");
 
-		buffer* filename;
-		buffer* title;
-		buffer* auth_token;
+		buffer* filename = NULL;
+		buffer* title = NULL;
+		buffer* auth_token = NULL;
 		
 		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
 			filename = ds->value;
@@ -5759,6 +5981,188 @@ propmatch_cleanup:
 
 		buffer_free(buffer_photoid);
 		
+		con->file_finished = 1;
+		return HANDLER_FINISHED;
+	}
+
+	case HTTP_METHOD_UPLOADTOTWITTER:{
+		Cdbg(DBE, "do HTTP_METHOD_UPLOADTOTWITTER");
+
+		buffer* filename = NULL;
+		buffer* title = NULL;
+		buffer* auth_token = NULL;
+		buffer* auth_secret = NULL;
+		buffer* nonce = NULL;
+		buffer* timestamp = NULL;
+		buffer* signature = NULL;
+		buffer* photo_size_limit = NULL;
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "FILENAME"))) {
+			filename = ds->value;
+			buffer_urldecode_path(filename);
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TITLE"))) {
+			title = ds->value;
+			buffer_urldecode_path(title);
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TOKEN"))) {
+			auth_token = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "SECRET"))) {
+			auth_secret = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "NONCE"))) {
+			nonce = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "TIMESTAMP"))) {
+			timestamp = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+		
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "SIGNATURE"))) {
+			signature = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+
+		if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "PHOTOSIZELIMIT"))) {
+			photo_size_limit = ds->value;
+		} else {
+			con->http_status = 400;
+			return HANDLER_FINISHED;
+		}
+			
+		char consumer_key[100] = "hBQrdHdHClXylEI6by40DTMVA";
+		//char consumer_secret[100] = "2PlfH4Bx9XVZTYjOz3hoeqAY31aPUx916hU0R4gu0D0uCZ4Y4L";
+		
+		CURL *curl;
+		CURLcode rt;
+		struct curl_httppost *formpost = NULL;
+		struct curl_httppost *lastptr = NULL;
+		char* response_str = NULL;
+		long response_code = 0;
+		
+		curl = curl_easy_init();
+		if(curl) {
+			Cdbg(DBE, "curl_easy_init OK");
+
+			/* Set Host to target in HTTP header, and set response handler
+		 	* function */
+		 	//curl_easy_setopt(curl, CURLOPT_URL, "https://upload.twitter.com/1.1/statuses/update_with_media.json");
+			curl_easy_setopt(curl, CURLOPT_URL, "https://api.twitter.com/1.1/statuses/update_with_media.json");
+
+			struct curl_slist *headers = NULL;
+			char authHeader[1024] = "\0";
+			sprintf(authHeader, "Authorization: OAuth"
+				" oauth_consumer_key=\"%s\","
+				" oauth_nonce=\"%s\","
+				" oauth_signature_method=\"HMAC-SHA1\","
+				" oauth_timestamp=\"%s\","
+				" oauth_token=\"%s\","
+				" oauth_version=\"1.0\","
+				" oauth_signature=\"%s\"",
+				consumer_key,
+				nonce->ptr,
+				timestamp->ptr,
+				auth_token->ptr,
+				signature->ptr);
+			headers = curl_slist_append(headers, authHeader);
+			
+			headers = curl_slist_append(headers,"Content-Type: multipart/form-data");
+			
+			char photo_path[1024] = "\0";
+			sprintf(photo_path, "%s/%s", con->physical.path->ptr, filename->ptr);
+			Cdbg(DBE, "photo_path=%s", photo_path);
+
+			FILE *fd;
+ 			fd = fopen(photo_path, "rb"); /* open file to upload */ 
+		  	if(!fd) {
+				curl_easy_cleanup(curl);
+		    	con->http_status = 404;
+				return HANDLER_FINISHED;
+		 	}
+
+			/* to get the file size */
+			struct stat file_info;
+  			if(fstat(fileno(fd), &file_info) != 0) {
+				fclose(fd);
+				curl_easy_cleanup(curl);
+		    	con->http_status = 404;
+				return HANDLER_FINISHED;
+			}
+
+			long file_size = file_info.st_size;
+			long l_photo_size_limit = atol(photo_size_limit->ptr);
+			fclose(fd);
+
+			if(file_size>=l_photo_size_limit){
+				curl_easy_cleanup(curl);
+		    	con->http_status = 501;
+				return HANDLER_FINISHED;
+			}
+
+			curl_formadd(&formpost, &lastptr,
+			             CURLFORM_COPYNAME, "status",
+			             CURLFORM_COPYCONTENTS, title->ptr, CURLFORM_END);
+			
+			curl_formadd(&formpost, &lastptr,
+			             CURLFORM_COPYNAME, "media[]",
+			             CURLFORM_FILE, photo_path, CURLFORM_END);
+			
+			curl_easy_setopt(curl, CURLOPT_VERBOSE, 2);
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+			
+			curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+						
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback_func);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_str);
+						
+			Cdbg(DBE, "Uploading...");
+			rt = curl_easy_perform(curl);
+			
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+			
+			Cdbg(DBE, "response_code=%d, response_str = %s", response_code, response_str);
+			
+			free(response_str);
+			
+			/* Done. Cleanup. */ 
+			curl_easy_cleanup(curl);
+			curl_formfree(formpost);
+		}
+
+		
+		if(response_code==200){
+			con->http_status = 200;
+		}
+		else
+			con->http_status = 501;
+
 		con->file_finished = 1;
 		return HANDLER_FINISHED;
 	}

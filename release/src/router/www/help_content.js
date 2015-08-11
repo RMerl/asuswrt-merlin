@@ -213,13 +213,14 @@ helpcontent[19] = new Array("",
 							"<#Setting_upload_itemdesc#>");
 // QoS
 helpcontent[20] = new Array("",
-							"<#BM_measured_uplink_speed_desc#>",
-							"<#BM_manual_uplink_speed_desc#>",
+							"",
+							'<#BM_manual_link_speed_desc#>',
 							"<#min_bound_desc#>",
 							"<#max_bound_desc#>",
 							"<#bound_zero_desc#>",
 							"<#EzQoS_type_adaptive_desc#>",
-							"<#EzQoS_type_traditional_desc#>");
+							"<#EzQoS_type_traditional_desc#>",
+							"Bandwidth Limiter helps you to control download and upload max speed of your cleint devices.");	//untranslated string
 // HSDPA
 helpcontent[21] = new Array("",
 							"<#HSDPAConfig_hsdpa_mode_itemdesc#>",
@@ -235,7 +236,7 @@ helpcontent[21] = new Array("",
 							"<#HSDPAConfig_username_itemdesc#>",
 							"<#HSDPAConfig_password_itemdesc#>",
 							"<#HSDPAConfig_usbadaptor_itemdesc#>");
-							
+					
 helpcontent[22] = new Array("",
 							"<#OP_GW_desc#>",
 							"<#OP_GW_desc#>",
@@ -271,7 +272,7 @@ helpcontent[25] = new Array("",
 							"This item allows you to control whether to Enable/Disable UPBO(Upstream Power Back Off) for VDSL. DSLAM could use UPBO to reduce the Tx Power of your xDSL modem router, in some cases abnormal UPBO control from DSLAM could leads to sync up issue(such as not enough Tx Power to sync with minimum rate). Thus with this feature now you could disable UPBO and will not get affected by DSLAM setting.",
 							"This item configures Profile to be used for VDSL connection, default is 30a multi mode. However in order to work around the non-standard 30a multi mode VDSL DSLAM sync issue, which deployed by some of Germany ISP, set to 17a multi mode might be needed in order for the VDSL line to sync up. For users of other countries, there is no need to change this setting.",
 							"Apply special settings for specific country. With this option, the Stability Adjustment for ADSL is properly set according to the selected country.", 
-							"This item allows system to monitor the ADSL line, designed to maintain stability of the line. Based on current line condition necessary changes will be adopted.",
+							"This item allows system to monitor the DSL line, designed to maintain stability of the line. Based on current line condition necessary changes will be adopted.",
 							"This feature allows system to capture diagnostic DSL debug log in the background, duration depends on the \"Diagnostic debug log capture duration\" option, after capture completed debug log would be transmitted automatically to ASUS Support Team for analysis.",
 							"The G.INP stands for Impulse Noise Protection. It works on ADSL2, ADSL2+, and VDSL2 only. It is enabled to provide enhanced protection against impulse noise or to increase the efficiency of providing impulse noise protection. If your DSLAM does not support it, please disable it.",
 							"This item configures Rx AGC(Auto Gain Control) GAIN for ADSL, if tweak the Stability Adjustment (ADSL) setting still could not get desired downstream speed, then could try to set Rx AGC GAIN Adjustment to High Performance mode. However if your ADSL connection is unstable and has some CRC then could set to Stable mode.",
@@ -304,5 +305,9 @@ helpcontent[28] = new Array("",
 							"<#Mobile_StartDay_Desc#>",
 							"<#Mobile_Usage_Limit_Desc#>",
 							"<#Mobile_Usage_Alert_Desc#>",
-							"<#Mobile_SMS_Noti_Desc#>",
-							"<#Mobile_SIM_Detector_Desc#>");
+							"<#Mobile_SMS_Noti_Desc#>");
+
+//Switch Control
+helpcontent[29] = new Array("",
+							"This item had various names: Port Trunking/ Bonding/ Teaming/ Link Aggregation/ 802.3ad.");/*untranslated*/
+

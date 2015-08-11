@@ -24,7 +24,6 @@ extern int file_lock(char *tag);
 extern void file_unlock(int lockfd);
 extern void char_to_ascii(const char *output, const char *input);
 
-char cmd[32];
 #define	WIFINAME	"wifi0"
 #if 0
 void inc_mac(char *mac, int plus);
@@ -74,8 +73,12 @@ setCountryCode_5G_qtn(const char *cc)
 		return -1;
 	}
 
-	sprintf(cmd, "asuscfe1:ccode=%s", cc);
-	eval("nvram", "set", cmd );
+	if (!factory_debug_raw()) {
+		fprintf(stderr, "ATE command error\n");
+		return -1;
+	}
+
+	ATE_BRCM_SET("1:ccode", cc);
 	puts(nvram_safe_get("1:ccode"));
 
 	return 1;
@@ -84,7 +87,7 @@ setCountryCode_5G_qtn(const char *cc)
 int
 getCountryCode_5G_qtn(void)
 {
-	puts(nvram_safe_get("1:ccode"));
+	puts(cfe_nvram_safe_get_raw("1:ccode"));
 
 	return 0;
 }
@@ -112,9 +115,12 @@ int setRegrev_5G_qtn(const char *regrev)
 		return -1;
 	}
 
-	memset(cmd, 0, 32);
-	sprintf(cmd, "asuscfe1:regrev=%s", regrev);
-	eval("nvram", "set", cmd );
+	if (!factory_debug_raw()) {
+		fprintf(stderr, "ATE command error\n");
+		return -1;
+	}
+
+	ATE_BRCM_SET("1:regrev", regrev);
 	puts(nvram_safe_get("1:regrev"));
 	return 1;
 }
@@ -122,14 +128,13 @@ int setRegrev_5G_qtn(const char *regrev)
 int
 getRegrev_5G_qtn(void)
 {
-	puts(nvram_safe_get("1:regrev"));
+	puts(cfe_nvram_safe_get_raw("1:regrev"));
 	return 0;
 }
 
 int setMAC_5G_qtn(const char *mac)
 {
 	int ret;
-	char cmd_l[64];
 	char value[20] = {0};
 
 	if( mac==NULL || !isValidMacAddr(mac) )
@@ -159,9 +164,12 @@ int setMAC_5G_qtn(const char *mac)
 		return -1;
 	}
 
-	memset(cmd_l, 0, 64);
-	sprintf(cmd_l, "asuscfe1:macaddr=%s", mac);
-	eval("nvram", "set", cmd_l );
+	if (!factory_debug_raw()) {
+		fprintf(stderr, "ATE command error\n");
+		return -1;
+	}
+
+	ATE_BRCM_SET("1:macaddr", mac);
 	// puts(nvram_safe_get("1:macaddr"));
 
 	puts(value);

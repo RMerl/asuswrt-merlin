@@ -1,0 +1,46 @@
+#if defined(PJ_BUILD_DLL)
+TARGET		pjsdp.dll
+TARGETTYPE	dll
+UID		0x0 0xA0000006
+
+CAPABILITY	None
+LIBRARY		pjlib_util.lib pjlib.lib charconv.lib euser.lib estlib.lib
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\pjsdp.def
+
+#else
+
+TARGET 		pjsdp.lib
+TARGETTYPE 	lib
+
+#endif
+
+SOURCEPATH	..\pjmedia\src\pjmedia
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+// Must compile as C++, otherwise exception would not work
+OPTION          CW -lang c++
+OPTION          ARMCC --cpp --gnu
+OPTION          GCC     -x c++
+OPTION          GCCE    -x c++
+
+//
+// Platform independent source
+//
+SOURCE		errno.c
+SOURCE		sdp_wrap.cpp
+SOURCE		sdp_cmp.c
+SOURCE		sdp_neg.c
+
+
+SYSTEMINCLUDE	..\pjlib\include 
+SYSTEMINCLUDE	..\pjlib-util\include 
+SYSTEMINCLUDE	..\pjmedia\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+

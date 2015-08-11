@@ -3430,6 +3430,15 @@ int check_skip_folder_name(char* foldername){
 
 	return 0;
 }
+
+int prefix_is(char* source, char* prefix){
+	if(source==NULL||prefix==NULL)
+		return -1;
+	
+	int index = strstr(source, prefix) - source;
+	Cdbg(DBE, "prefix_is: source=%s, prefix=%s, index=%d", source, prefix, index);
+	return (index==0) ? 1 : -1;
+}
 #if 0
 int is_utf8_file(const char* file){
 	FILE* fp;

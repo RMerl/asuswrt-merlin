@@ -1,5 +1,6 @@
 ﻿<% wanlink(); %>
 <% wanstate(); %>
+var autodet_plc_state = "<% nvram_get("autodet_plc_state"); %>";
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
 if(wans_dualwan != ""){
 	var ewan_index = wans_dualwan.indexOf("wan");

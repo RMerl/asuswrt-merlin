@@ -1,0 +1,141 @@
+@include hdr.html@
+<style type="text/css">
+#genre_div select, #artist_div select, #album_div select {
+  font: icon;
+  width: 30ex;
+  overflow: hidden;
+}
+#source_div select {
+  font: icon;
+  width: 25ex;
+}
+#songs th {
+  text-align: center;
+}
+#songs_data td {
+  text-align: left;
+}
+#genre_div, #artist_div, #album_div {
+  float: left;
+  padding-left: 2ex;
+}
+#search_div {
+  float: right;
+}
+#source_div {
+  float: left;
+  clear: both;
+}
+#songs_div {
+  float: left;
+  padding-left: 2ex;
+  padding-top: 1ex;
+}
+#edit_playlist_name {
+  position: absolute;
+  font: icon;
+  width: 25ex;
+  display: none;
+}
+#songs_data {
+  table-layout: fixed;
+}
+#songs_data td {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.row_selected {
+  background-color: #8CACBB;
+}
+#spinner {
+  float: right;
+  margin-right: 2em;
+  visibility: hidden;
+}
+</style>
+<div id="search_div">
+<label for="search">search</label>
+<input type="text" name="search" id="search" size="30" title="search songs, artists, albums, genres" />
+</div>
+<img id="spinner" src="/spinner.gif" />
+<div style="clear: both;"><!-- buggy IE div --></div>
+<div id="source_div">
+  <label for="source">Source<br /></label>
+  <select id="source" name="select" size="20">
+
+    <option value="1">Library</option>
+  </select><br />
+<input type="text" id="edit_playlist_name" value="" />
+<div id="busymsg" style="text-align:center;color:red; visibility: hidden;">Busy ...</div>
+<a href="javascript://" id="add_playlist_href">Add static playlist</a>
+<br /> <br />
+<strong>Things that work:</strong><br />
+* Browse Library and playlists<br />
+* Search Library and playlists<br />
+* Dblclick playlist = rename<br />
+* Add static playlist<br />
+* Delete playlist (hit delete)<br />
+<br />
+<strong>Broken stuff</strong><br />
+* Truncated song info<br />
+* IE no playlist rename<br />
+* IE no add playlist<br />
+* IE scrollbar misaligned<br />
+</div>
+<div id="genre_div">
+  Genre<br />
+
+  <select id="genres" name="select" multiple="multiple" size="15">
+    <option value="all">all</option>
+  </select>
+</div> 
+<div id="artist_div"> 
+Artist<br />
+  <select id="artists" name="select" multiple="multiple" size="15">
+        <option value="all">all</option>
+  </select>
+</div>
+<div id="album_div">
+Album<br />
+  <select id="albums" name="select" multiple="multiple" size="15">
+    <option value="all">all</option>
+  </select>
+</div>
+<div id="songs_div" style="float: left; width:549px;">
+  <table id="songs" style="width:530px;" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <th style="width: 240px;">Song</th>
+      <th style="width: 50px;">Time</th>
+      <th style="width: 120px;">Artist</th>
+      <th style="width: 120px;">Album</th>
+    </tr>
+  </table>
+  <table id="songs_data" style="width:530px;" border="0" cellspacing="0" cellpadding="0">
+      <col style="width: 240px;" />
+      <col style="width: 50px;" />
+      <col style="width: 120px;" />
+      <col style="width: 120px;" />
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&#x00a0;</td><td></td><td></td><td></td><td></td></tr>
+  </table>
+</div>
+@include ftr.html@

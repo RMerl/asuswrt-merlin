@@ -1,0 +1,26 @@
+TARGET 		libresample.lib
+TARGETTYPE 	lib
+
+SOURCEPATH	..\third_party\resample\src
+
+//
+// GCCE optimization setting
+//
+OPTION		GCCE -O2 -fno-unit-at-a-time
+OPTION          ARMCC --gnu
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+MACRO       	RESAMPLE_HAS_SMALL_FILTER=1
+MACRO       	RESAMPLE_HAS_LARGE_FILTER=0
+
+SOURCE		resamplesubs.c
+
+SYSTEMINCLUDE	..\third_party\resample\include
+SYSTEMINCLUDE	..\third_party\build\resample
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+
+

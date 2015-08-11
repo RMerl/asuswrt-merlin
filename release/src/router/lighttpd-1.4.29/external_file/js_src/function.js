@@ -12,73 +12,39 @@ function open_rename_window(file_name, uhref, isdir){
 		$modalWindow.jqmShow();
 	}
 }
-/*
-function open_sharelink_window(url, input){
-	var selectURL = url;
-	var selectFiles = "";	
-	var bod = "";
+
+function open_copymove_window(action, uhref, files){
 	
-	if( input instanceof Array ){		
-		var count = input.length;
-		
-		for(var i=0; i<count; i++){
-			selectFiles += input[i];				
-			if(i!=count-1) selectFiles += ";";
+	var input_files = "";
+	
+	if (files instanceof Array) {
+		for(var i=0; i<files.length; i++){
+			input_files += files[i];
+			if(i!=files.length-1) input_files += ",";
 		}
 	}
-	else {
-    	selectFiles = input;
-	}
-	
-	if(selectURL=="" || selectFiles=="") return;
-	
-	var webdav_mode = g_storage.get('webdav_mode');
-	var ddns_host_name = g_storage.get('ddns_host_name');    
-					
-	var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
-	if(hostName.indexOf(":")!=-1)
-		hostName = hostName.substring(0, hostName.indexOf(":"));
-			
-	var is_private_ip = isPrivateIP(hostName);
-			
-	if( webdav_mode == 0 ) //- Only enable http
-		hostName = "http://" + hostName + ":" + g_storage.get("http_port");
 	else
-		hostName = "https://" + hostName;
+		input_files = files;
+		
+	if(input_files=="" || uhref=="") return;
 	
-	g_webdav_client.GSL(selectURL, selectURL, selectFiles, 86400, 1, function(error, content, statusstring){
-		if(error==200){
-			var data = parseXml(statusstring);				
-			var result = $(data).find('sharelink').text();
-					
-			if(result==''){
-				alert("Fail to parse xml!");
-				return;
-			}
-									
-			var aa = result.split(";");
-			var len = aa.length;
-					
-			for(var i=0; i<len; i++){
-				bod += hostName + "/" + aa[i];
-				if(i!=len-1)
-					//bod += "<br><br>";
-					bod += ";";
-			}
-					
-			var $modalWindow = $("div#modalWindow");
-			g_modal_url = '/smb/css/sharelink.html?v='+bod+'&b='+is_private_ip;
-			g_modal_window_width = 600;
-			g_modal_window_height = 530;
-			$('#jqmMsg').css("display", "none");
-			$('#jqmTitleText').text(m.getString('title_sharelink'));
-			if($modalWindow){
-				$modalWindow.jqmShow();
-			}
-		}
-	});
+	var $modalWindow = $("div#modalWindow");
+	g_modal_url = '/smb/css/copymove.html?a='+action+'&o='+input_files+'&f='+uhref;		
+				
+	g_modal_window_width = 500;
+	g_modal_window_height = 500;
+	$('#jqmMsg').css("display", "none");
+	
+	if(action=="copy")
+		$('#jqmTitleText').text(m.getString('func_copy'));
+	else if(action=="move")
+		$('#jqmTitleText').text(m.getString('func_move'));
+		
+	if($modalWindow){
+		$modalWindow.jqmShow();
+	}
 }
-*/
+
 function open_upload2service_window(service, input){
 
 	var upload_list = "";
@@ -106,6 +72,14 @@ function open_upload2service_window(service, input){
 		g_modal_url = '/smb/css/service/flickr.html';
 		modalWindow_title = m.getString("title_upload2") + " " + m.getString("title_flickr");
 	}
+	else if(service=="picasa"){
+		g_modal_url = '/smb/css/service/picasa.html';
+		modalWindow_title = m.getString("title_upload2") + " " + m.getString("title_picasa");
+	}
+	else if(service=="twitter"){
+		g_modal_url = '/smb/css/service/twitter.html';
+		modalWindow_title = m.getString("title_upload2") + " " + m.getString("title_twitter");
+	}
 	
 	g_modal_url += '?v=' + upload_list;
 					
@@ -116,9 +90,8 @@ function open_upload2service_window(service, input){
 	$modalWindow.jqmShow();
 }
 
-function open_sharelink_window(share2service, url, input){
+function open_sharelink_window(share2service, input){
 	
-	var selectURL = url;
 	var selectFiles = "";	
 	var bod = "";
 	
@@ -134,7 +107,7 @@ function open_sharelink_window(share2service, url, input){
     	selectFiles = input;
 	}
 	
-	if(selectURL=="" || selectFiles=="") return;
+	if(selectFiles=="") return;
 	
 	var window_title = "";
 	if(share2service=="facebook"){
@@ -149,12 +122,18 @@ function open_sharelink_window(share2service, url, input){
 	else if(share2service=="plurk"){
 		window_title = m.getString("title_share2")+ " " +m.getString("title_plurk");
 	}
+	else if(share2service=="weibo"){
+		window_title = m.getString("title_share2")+ " " +m.getString("title_weibo");
+	}
+	else if(share2service=="qq"){
+		window_title = m.getString("title_share2")+ " " +m.getString("title_qq");
+	}
 	else{
 		window_title = m.getString("title_gen_sharelink");
 	}
 	
 	var $modalWindow = $("div#modalWindow");
-	g_modal_url = '/smb/css/sharelink.html?s='+share2service+'&u='+selectURL+'&f='+selectFiles;	
+	g_modal_url = '/smb/css/sharelink.html?s='+share2service+'&f='+selectFiles;
 	g_modal_window_width = 600;
 	g_modal_window_height = 530;
 	$('#jqmMsg').css("display", "none");

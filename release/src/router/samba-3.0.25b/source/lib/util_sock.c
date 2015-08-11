@@ -747,6 +747,245 @@ BOOL receive_smb(int fd, char *buffer, unsigned int timeout)
 	return(True);
 }
 
+#if defined(HAVE_BCM_RECVFILE)
+BOOL is_valid_for_recvfile(char *inbuf)
+{
+	ssize_t len = 0;
+
+	if (CVAL(inbuf,smb_com) != SMBwriteX) {
+		return False;
+	}
+
+	/* It is not safe for recvfile since
+	 * payload might be a sub-protocol and not process yet.
+	 */
+	len = smb_len(inbuf);
+	if (len < (STANDARD_WRITEX_HDR_SIZE + SAFETY_MARGIN)) {
+		return False;
+	}
+
+	return True;
+}
+
+
+/****************************************************************************
+ Read an smb from a fd.
+ The timeout is in milliseconds.
+ This function will return on receipt of a session keepalive packet.
+ Doesn't check the MAC on signed packets.
+****************************************************************************/
+
+static inline BOOL receive_smb_raw_recvfile(int fd, char *buffer, size_t buflen, unsigned int timeout, size_t *pending_bytes_p)
+{
+	ssize_t len,ret,hdrlen;
+
+	smb_read_error = 0;
+
+	len = read_smb_length_return_keepalive(fd,buffer,timeout);
+	if (len < 0) {
+		DEBUG(0,("receive_smb_raw: length < 0!\n"));
+
+		/*
+		 * Correct fix. smb_read_error may have already been
+		 * set. Only set it here if not already set. Global
+		 * variables still suck :-). JRA.
+		 */
+		if (smb_read_error == 0)
+			smb_read_error = READ_ERROR;
+		return False;
+	}
+
+	if (len > buflen) {
+		DEBUG(0,("Invalid packet length! (%lu bytes).\n",(unsigned long)len));
+
+		/*
+		 * smb_read_error may have already been
+		 * set. Only set it here if not already set. Global
+		 * variables still suck :-). JRA.
+		 */
+		if (smb_read_error == 0)
+			smb_read_error = READ_ERROR;
+		return False;
+	}
+
+	if (len > 0) {
+		ssize_t hdrlen = 0;
+		int msg_type = CVAL(buffer,0);
+
+		if ((msg_type == 0) && (len > STANDARD_WRITEX_HDR_SIZE)) {
+			/* First read the SMB header & check if it is a WriteAndX */
+			if (timeout > 0) {
+				ret = read_socket_with_timeout(fd,buffer+4,STANDARD_WRITEX_HDR_SIZE,STANDARD_WRITEX_HDR_SIZE,timeout);
+			} else {
+				ret = read_data(fd,buffer+4,STANDARD_WRITEX_HDR_SIZE);
+			}
+
+			if (ret != STANDARD_WRITEX_HDR_SIZE) {
+				if (smb_read_error == 0) {
+					smb_read_error = READ_ERROR;
+				}
+				DEBUG(0, ("readfailed for read "));
+				return False;
+			}
+
+			/* Check if the message is WriteAndX */
+			if (is_valid_for_recvfile(buffer)) {
+				*pending_bytes_p = len - STANDARD_WRITEX_HDR_SIZE;
+
+				SSVAL(buffer+4,len, 0);
+
+				return True;
+			} else {
+				/* Read remaining bytes and fall back to regular read/write */
+				hdrlen = STANDARD_WRITEX_HDR_SIZE;
+				len -= STANDARD_WRITEX_HDR_SIZE;
+
+				*pending_bytes_p = 0;
+			}
+
+		}
+
+		if (timeout > 0) {
+			ret = read_socket_with_timeout(fd,buffer+4+hdrlen,len,len,timeout);
+		} else {
+			ret = read_data(fd,buffer+4+hdrlen,len);
+		}
+
+		if (ret != len) {
+			if (smb_read_error == 0) {
+				smb_read_error = READ_ERROR;
+			}
+			DEBUG(0, ("read data failed here "));
+			return False;
+		}
+
+		/* Not all of samba3 properly checks for packet-termination of strings. This
+		   ensures that we don't run off into empty space. */
+		SSVAL(buffer+4,len+hdrlen, 0);
+	}
+
+	return True;
+}
+
+BOOL receive_smb_recvfile(int fd, char *buffer, size_t buflen, unsigned int timeout, size_t *pending_bytes_p)
+{
+
+	if (!receive_smb_raw_recvfile(fd, buffer, buflen, timeout, pending_bytes_p)) {
+		DEBUG(0, ("receive_smb_recvfile: failed\n"));
+		return False;
+	}
+
+	/* Check the incoming SMB signature. */
+	if (!srv_check_sign_mac(buffer, True)) {
+		DEBUG(0, ("receive_smb: SMB Signature verification failed on incoming packet!\n"));
+		if (smb_read_error == 0)
+			smb_read_error = READ_BAD_SIG;
+		return False;
+	};
+
+	return(True);
+}
+
+size_t discard_bytes_from_fd(int fd, size_t count)
+{
+	char buffer[4096];
+	size_t ret;
+	size_t todiscard = count;
+
+	while (todiscard > 0) {
+		ret = sys_read(fd, buffer, MIN(count,4096));
+
+		if (ret <= 0) {
+			return -1;
+		}
+		todiscard -= ret;
+	}
+	return count;
+}
+
+size_t fake_recvfile(int fromfd, int tofd, SMB_OFF_T offset, size_t count, char *buffer)
+{
+	size_t nread, nwritten, total_written = 0;
+	size_t ret;
+
+	/* Here we are assuming the buffer can hold atleast count bytes
+	 * This is taken care at Inbuf alloction
+	 */
+	while (count > 0) {
+		nread = sys_read(fromfd, buffer + total_written, count);
+
+		if (nread <= 0) {
+			return -1;
+		}
+
+		count -= nread;
+		nwritten =0;
+
+		while (nread > 0) {
+
+			ret = sys_pwrite(tofd, buffer+total_written, nread, offset+total_written);
+
+			if (ret <= 0) {
+				if (count) {
+					/* Discard any unread bytes */
+					discard_bytes_from_fd(fromfd, count);
+				}
+				return -1;
+			}
+
+			nread -= ret;
+			total_written += ret;
+		}
+	}
+
+	return total_written;
+}
+
+size_t sys_recvfile(int fromfd, int tofd, SMB_OFF_T offset, size_t count, char *buffer)
+{
+
+	size_t total_written = 0;
+	static use_recvfile = 1;
+
+	DEBUG(10,("sys_recvfile entered %d bytes to client. %d\n",
+				(int)offset,(int)count ));
+
+	if (!use_recvfile) {
+		return fake_recvfile(fromfd, tofd, offset, count, buffer);
+	}
+
+	while (count > 0) {
+		int nwritten;
+
+		nwritten = splice(fromfd, NULL, tofd, &offset,
+			       MIN(count, 65536), SPLICE_F_MOVE);
+		if (nwritten == -1) {
+			if (errno == EINTR) {
+				continue;
+			}
+			if (total_written == 0 &&
+			    (errno == EBADF || errno == EINVAL)) {
+				use_recvfile = 0;
+				return fake_recvfile(fromfd, tofd, offset, count, buffer);
+			}
+			break;
+		}
+
+		total_written += nwritten;
+		count -= nwritten;
+	}
+
+	if (count) {
+		/* Discard unread bytes */
+		discard_bytes_from_fd(fromfd, count);
+	}
+
+	DEBUG(10,("sys_recvfile exit total_written=%d bytes\n", (int)total_written));
+
+	return total_written;
+}
+#endif /* HAVE_BCM_RECVFILE */
+
 /****************************************************************************
  Send an smb to a fd.
 ****************************************************************************/

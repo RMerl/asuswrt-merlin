@@ -16,7 +16,9 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/form.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <style>
 #switch_menu{
 	text-align:right
@@ -44,12 +46,12 @@
 }
 </style>
 <script>
+window.onresize = function() {
+	if(document.getElementById("agreement_panel").style.display == "block") {
+		cal_panel_block("agreement_panel", 0.25);
+	}
+} 
 
-window.onresize = cal_agreement_block;
-var client_list_array = '<% get_client_detail_info(); %>';	
-var client_list_row = client_list_array.split('<');
-var custom_name = decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
-var custom_name_row = custom_name.split('<');
 var apps_filter = "<% nvram_get("wrs_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var wrs_filter = "<% nvram_get("wrs_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var wrs_app_filter = "<% nvram_get("wrs_app_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
@@ -71,7 +73,7 @@ var curState = '<% nvram_get("wrs_enable"); %>';
 function initial(){
 	show_menu();
 	//show_inner_tab();
-	document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
+	document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;"><#AiProtection_title#></div></td></tr></tbody></table>';
 	document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 	translate_category_id();
 	genMain_table();
@@ -101,9 +103,8 @@ function hideClients_Block(){
 
 }
 
-function setClientIP(devname, macaddr){
-	document.form.PC_devicename.value = devname;
-	document.form.PC_mac.value = macaddr;
+function setClientIP(macaddr){
+	document.form.PC_devicename.value = macaddr;
 	hideClients_Block();
 	over_var = 0;
 }
@@ -205,6 +206,29 @@ function deleteRow_main(obj){
 	genMain_table();
 }
 
+function check_macaddr(obj,flag){ //control hint of input mac address
+	if(flag == 1){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").style.display = "";
+		return false;
+	}else if(flag ==2){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").style.display = "";
+		return false;		
+	}else{	
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
+		return true;
+	}	
+}
+
 function addRow_main(obj, length){	
 	var category_array = $(obj.parentNode).siblings()[2].children;
 	var subCategory_array;
@@ -215,24 +239,17 @@ function addRow_main(obj, length){
 	var blank_category = 0;
 	var apps_filter_row =  apps_filter.split("<");
 	var apps_filter_col = "";
-	
-	if(!validator.string(document.form.PC_devicename))
-		return false;
-	
+		
 	if(document.form.PC_devicename.value == ""){
 		alert("<#JS_fieldblank#>");
 		document.form.PC_devicename.focus();
 		return false;
 	}
-	
-	for(var i = 0; i < document.form.PC_devicename.value.length; ++i){
-		if(document.form.PC_devicename.value.charAt(i) == '<' || document.form.PC_devicename.value.charAt(i) == '>'){
-			invalid_char += document.form.PC_devicename.value.charAt(i);
-			document.form.PC_devicename.focus();
-			alert("<#JS_validstr2#> ' "+invalid_char + " '");
-			return false;			
-		}
-	}	
+	else if(!check_macaddr(document.form.PC_devicename, check_hwaddr_flag(document.form.PC_devicename))){
+		document.form.PC_devicename.focus();
+		document.form.PC_devicename.select();	
+		return false;	
+	}
 	
 	for(i=0; i < category_array.length;i++){
 		subCategory_array = category_array[i].children[2].children;	
@@ -242,14 +259,14 @@ function addRow_main(obj, length){
 				blank_category = 1;
 		}
 	}
-	
 	for(i=0;i<apps_filter_row.length;i++){
-		apps_filter_col = apps_filter_row[i].split(">");
-		if(apps_filter_col[1] == document.form.PC_mac.value){
-			alert("<#JS_duplicate#>");
-			document.form.PC_mac.value = "";
-			document.form.PC_devicename.value = "";
-			return false;
+		if(apps_filter_row[i] != "") {
+			apps_filter_col = apps_filter_row[i].split(">");
+			if(apps_filter_col[1].toUpperCase() == document.form.PC_devicename.value.toUpperCase()){
+				alert("<#JS_duplicate#>");
+				document.form.PC_devicename.value = "";
+				return false;
+			}
 		}
 	}
 	
@@ -266,10 +283,7 @@ function addRow_main(obj, length){
 		apps_filter += enable_checkbox.checked ? 1:0;
 	}	
 
-	if(document.form.PC_mac.value == "")
-		apps_filter += ">" + document.form.PC_devicename.value + ">";
-	else
-		apps_filter += ">" + document.form.PC_mac.value + ">";
+	apps_filter += ">" + document.form.PC_devicename.value + ">";
 
 	/* To check which checkbox is checked*/
 	for(i=0; i < category_array.length;i++){
@@ -294,7 +308,6 @@ function addRow_main(obj, length){
 			apps_filter += ">";
 	}
 	
-	document.form.PC_mac.value = "";
 	document.form.PC_devicename.value = "";
 	genMain_table();	
 }
@@ -309,8 +322,6 @@ function genMain_table(){
 						 "<#AiProtection_filter_message_desc#>", 
 						 "<#AiProtection_filter_p2p_desc#>", 
 						 "<#AiProtection_filter_stream_desc#>"];
-		
-	var match_flag = 0;
 
 	var apps_filter_row = apps_filter.split("<");
 	var code = "";	
@@ -323,7 +334,7 @@ function genMain_table(){
 	code += '<th width="5%" height="30px" title="<#select_all#>">';
 	code += '<input id="selAll" type="checkbox" onclick="selectAll(this, 0);" value="">';
 	code += '</th>';
-	code += '<th width="40%">Client\'s MAC address</th>';
+	code += '<th width="40%">Client\'s MAC address</th>';/*untranslated*/
 	code += '<th width="40%"><#AiProtection_filter_category#></th>';
 	code += '<th width="10%"><#list_add_delete#></th>';
 	code += '</tr>';
@@ -332,7 +343,7 @@ function genMain_table(){
 	code += '<input type="checkbox" checked="">';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
-	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>" autocorrect="off" autocapitalize="off">';
+	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="ex: <% nvram_get("lan_hwaddr"); %>" autocorrect="off" autocapitalize="off">';
 	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code += '<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>';	
 	code += '</td>';
@@ -360,25 +371,14 @@ function genMain_table(){
 	else{
 		for(k=0;k< apps_filter_row.length;k++){
 			var apps_filter_col = apps_filter_row[k].split('>');
-			var cat_flag = new Array(apps_filter_col[2]);
 			var apps_client_name = "";
-
-			for(i=0;i<custom_name_row.length;i++){
-				var custom_name_col = custom_name_row[i].split(">");
-				if(custom_name_col[1] == apps_filter_col[1]){
-					apps_client_name =  custom_name_col[0];
-					match_flag = 1;
-				}
+			var apps_client_mac = apps_filter_col[1];
+			var clientObj = clientList[apps_client_mac];
+			if(clientObj == undefined) {
+				apps_client_name = "";
 			}
-			
-			if(match_flag == 0){		//if doesn't match client name by custom client list
-				for(i=1;i<client_list_row.length;i++){
-					var client_list_col = client_list_row[i].split('>');
-					if(client_list_col[3] == apps_filter_col[1]){
-						apps_client_name = client_list_col[1];
-						match_flag = 1;			
-					}				
-				}		
+			else {
+				apps_client_name = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
 			}
 
 			code += '<tr>';
@@ -388,18 +388,12 @@ function genMain_table(){
 			else	
 				code += '<input type="checkbox">';
 							
-			code += '</td>';	
-			if(match_flag == 1){
-				code += '<td title="'+apps_filter_col[1]+'">'+ apps_client_name + '<br>(' +  apps_filter_col[1]  +')</td>';
-			}
-			else{
-				if(apps_filter_col[1] == ""){		//input manually
-					code += '<td title="'+document.form.PC_devicename.value+'">'+ document.form.PC_devicename.value +'</td>';	
-				}
-				else{
-					code += '<td title="'+apps_filter_col[1]+'">'+ apps_filter_col[1] +'</td>';	
-				}	
-			}
+			code += '</td>';
+
+			if(apps_client_name != "")
+				code += '<td title="' + apps_client_mac + '">'+ apps_client_name + '<br>(' +  apps_filter_col[1]  +')</td>';
+			else
+				code += '<td title="' + apps_client_mac + '">' + apps_client_mac + '</td>';
 			
 			code += '<td style="text-align:left;">';	
 			for(i=0;i<category_name.length;i++){
@@ -433,8 +427,6 @@ function genMain_table(){
 			code += '</td>';
 			code += '<td><input class="remove_btn" type="button" onclick="deleteRow_main(this);"></td>';
 			code += '</tr>';
-		
-			match_flag = 0;
 		}
 	}
 	
@@ -446,49 +438,11 @@ function genMain_table(){
 
 function showLANIPList(){
 	var code = "";
-	var show_name = "";
-	var custom_col_temp = new Array();
-	var match_flag = 0;
-	var custom_name_temp = "";
-	if(custom_name_row != ""){
-		for(i=0;i<custom_name_row.length;i++){
-			custom_col_temp[i] = custom_name_row[i].split('>');	
-		}
-	}
-	
-	for(var i = 1; i < client_list_row.length; i++){
-		var client_list_col = client_list_row[i].split('>');
-		if(client_list_col[1] && client_list_col[1].length > 20)
-			show_name = client_list_col[1].substring(0, 16) + "..";
-		else
-			show_name = client_list_col[1];
-			
-		if(custom_name != ""){	
-			for(k=0;k<custom_name_row.length;k++){
-				if(custom_col_temp[k][1] == client_list_col[3]){
-					match_flag = 1;									
-					custom_name_temp = custom_col_temp[k][0];
-				}
-			}
-		}		
+	for(var i = 0; i < clientList.length; i += 1) {
+		var clientObj = clientList[clientList[i]];
+		var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
 
-		if(match_flag){
-			code += '<a><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+ custom_name_temp +'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[3]+'</strong> ';
-			if(show_name && show_name.length > 0)
-				code += '( '+custom_name_temp+')';
-				
-			match_flag =0;	
-		}
-		else{
-			if(client_list_col[1])
-				code += '<a><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[1]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[3]+'</strong> ';
-			else
-				code += '<a><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[3]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[3]+'</strong> ';			
-		
-			if(show_name && show_name.length > 0)
-				code += '( '+show_name+')';
-		}	
-				
+		code += '<a title=' + clientList[i] + '><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'' + clientList[i] + '\');"><strong>' + clientName + '</strong> ';
 		code += ' </div></a>';
 	}
 	
@@ -759,31 +713,8 @@ function show_tm_eula(){
 		});
 	}
 	dr_advise();
-	cal_agreement_block();
+	cal_panel_block("agreement_panel", 0.25);
 	$("#agreement_panel").fadeIn(300);
-}
-
-function cal_agreement_block(){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.25)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
-	}
-
-	document.getElementById("agreement_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function cancel(){
@@ -806,7 +737,7 @@ function eula_confirm(){
 <body onload="initial();" onunload="unload_body();" onselectstart="return false;">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;display:none;position:absolute;"></div>
+<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
@@ -823,7 +754,6 @@ function eula_confirm(){
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="PC_mac" value="">
 <input type="hidden" name="wrs_enable" value="<% nvram_get("wrs_enable"); %>">
 <input type="hidden" name="wrs_enable_ori" value="<% nvram_get("wrs_enable"); %>">
 <input type="hidden" name="wrs_app_enable" value="<% nvram_get("wrs_app_enable"); %>">
@@ -852,7 +782,7 @@ function eula_confirm(){
 									<table width="730px">
 										<tr>
 											<td align="left">
-												<div class="formfonttitle" style="width:400px">AiProtection - <#AiProtection_filter#></div>
+												<div class="formfonttitle" style="width:400px"><#AiProtection_title#> - <#AiProtection_filter#></div>
 											</td>
 											<td>
 												<div id="switch_menu" style="margin:-20px 0px 0px -20px;">

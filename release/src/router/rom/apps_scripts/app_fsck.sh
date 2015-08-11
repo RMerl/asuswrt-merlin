@@ -50,8 +50,8 @@ log_option="> $log_file 2>&1"
 
 if [ "$autofix" == "1" ]; then
 	if [ "$1" == "tfat" ]; then
-		autocheck_option="-vV"
-		autofix_option="-a"
+		autocheck_option="-s"
+		autofix_option="-r"
 	elif [ "$1" == "ntfs" ] || [ "$1" == "tntfs" ]; then
 		if [ "$ntfs_mod" == "open" ]; then
 			autocheck_option=
@@ -80,7 +80,7 @@ if [ "$autofix" == "1" ]; then
 	fi
 else
 	if [ "$1" == "tfat" ]; then
-		autocheck_option="-vV"
+		autocheck_option="-s"
 		autofix_option=
 	elif [ "$1" == "ntfs" ] || [ "$1" == "tntfs" ]; then
 		if [ "$ntfs_mod" == "open" ]; then
@@ -115,7 +115,7 @@ set -o pipefail
 _set_fsck_code $2 2
 if [ "$1" == "tfat" ]; then
 	# return value = 0: FS be ok.
-	eval fsck_msdos $autocheck_option $autofix_option $2 $log_option
+	eval fatfsck $autocheck_option $autofix_option $2 $log_option
 
 	if [ "$?" == "0" ]; then
 		_set_fsck_code $2 0

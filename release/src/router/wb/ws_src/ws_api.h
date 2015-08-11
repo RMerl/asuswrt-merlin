@@ -1,8 +1,9 @@
 #ifndef __WS_API_H__
 #define __WS_API_H__
 
-#define TRANSFER_TYPE		"http://"
-#define SERVER 				"aae-spweb.asus.com"
+#define TRANSFER_TYPE		"https://"
+//#define SERVER 				"aae-spweb.asus.com"
+#define SERVER 				"aae-spweb.asuscloud.com"
 #define GET_SERVICE_AREA	"/aae/getservicearea"
 #define LOGIN				"/aae/login"
 #define QUERY_FRIEND		"/aae/queryfriend"
@@ -36,7 +37,7 @@
 #define MAX_STATUS_LEN		32
 #define MAX_DESC_LEN		64
 #define MAX_PIN_LEN		64
-#define MAX_IP_LEN		32
+#define MAX_IP_LEN		128 	//32
 
 typedef struct _GetServiceArea
 {
@@ -148,6 +149,7 @@ typedef struct _Updateiceinfo{
 
 typedef struct _Keepalive{
 	char	status[MAX_STATUS_LEN];
+	//char	deviceticketexpiretime[MAX_DEV_TICKET_EXP_LEN];
 	char	time[MAX_TIME_LEN];
 }Keepalive, *pKeepalive;
 

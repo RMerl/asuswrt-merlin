@@ -255,19 +255,14 @@ function initial(){
 		if(	based_modelid == "RT-AC3200" || based_modelid == "RT-AC69U" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
-			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
+			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87" ||
+			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
+			based_modelid == "RT-AC5300")
 		{
 			document.getElementById('wl_txbf_desc').innerHTML = "802.11ac Beamforming";
 			inputCtrl(document.form.wl_txbf, 1);
-		}	
-
-		if(	based_modelid == "RT-AC3200" || based_modelid == "RT-AC69U" ||
-			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
-			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
-			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87")
-		{
 			inputCtrl(document.form.wl_itxbf, 1);
-		}
+		}	
 				
 		if( based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP")
 			inputCtrl(document.form.traffic_5g, 1);
@@ -280,7 +275,9 @@ function initial(){
 			based_modelid == "RT-AC87U" ||
 			based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "4G-AC55U" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || 
-			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
+			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
+			based_modelid == "RT-AC5300")
 		{
 			inputCtrl(document.form.usb_usb3, 1);
 		}	
@@ -289,7 +286,9 @@ function initial(){
 			based_modelid == "RT-N18U" ||
 			based_modelid == "RT-AC69U" ||
 			based_modelid == "RT-AC87U" ||
-			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U")
+			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
+			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
+			based_modelid == "RT-AC5300")
 		{
 			if(based_modelid == "RT-N18U" && bootLoader_ver < 2000)
 				inputCtrl(document.form.wl_turbo_qam, 0);
@@ -370,7 +369,7 @@ function initial(){
 		document.getElementById("wl_wme_apsd_field").style.display = "none";
 		document.getElementById("wl_ampdu_mpdu_field").style.display = "none";
 		document.getElementById("wl_ack_ratio_field").style.display = "none";
-		document.getElementById('wl_80211h_tr').style.display = "";
+		//document.getElementById('wl_80211h_tr').style.display = "";
 		document.getElementById("wl_regmode_field").style.display = "none";
 	}
 	
@@ -399,16 +398,33 @@ function initial(){
 	
 	/*location_code Setting*/		
 	if(location_list_support){
-		document.getElementById('region_tr').style.display = "";
 		generate_region();
-	}		
+		document.getElementById('region_tr').style.display = "";
+	}
+
+	control_TimeField();
 }
 
 /* MODELDEP by Territory Code */
 function generate_region(){
-	var region_name = ["Asia", "Australia", "Brazil", "Canada", "China", "Europe", "Japan", "Korea", "Malaysia", "Middle East", "Russia", "Singapore", "Turkey", "Taiwan", "Ukraine", "United States"];
-	var region_value = ["APAC", "AU", "BZ", "CA", "CN", "EU", "JP", "KR", "MY", "ME", "RU", "SG", "TR", "TW", "UA", "US"];
+	//var region_name = ["Asia", "Australia", "Brazil", "Canada", "China", "Europe", "Japan", "Korea", "Malaysia", "Middle East", "Russia", "Singapore", "Turkey", "Taiwan", "Ukraine", "United States"];
+	var region_name = ["Asia", "China", "Europe", "Korea", "Russia", "Singapore", "United States"];	//Viz mod 2015.06.15
+	//var region_value = ["APAC", "AU", "BZ", "CA", "CN", "EU", "JP", "KR", "MY", "ME", "RU", "SG", "TR", "TW", "UA", "US"];
+	region_value = ["AP", "CN", "EU", "KR", "RU", "SG", "US"]; //Viz mod 2015.06.15
 	var current_region = '<% nvram_get("location_code"); %>';
+	if(current_region == '')
+		current_region = ttc.split("/")[0];
+
+	var is_CN_sku = (function(){
+		if(productid !== "RT-AC87U" && productid !== "RT-AC68U" && productid !== "RT-AC66U" && productid !== "RT-N66U")	return false;
+		return ('<% nvram_get("territory_code"); %>'.search("CN") == -1) ? false : true;
+	})();
+
+	if(is_CN_sku){
+		region_name.push("Australia");
+		region_value.push("XX");
+	} 
+
 	add_options_x2(document.form.location_code, region_name, region_value, current_region);
 }
 
@@ -944,9 +960,6 @@ function save_wifi_schedule(){
 		time_temp += start_day.toString() + "0" + start_time.toString() + "00";	
 	}
 	
-	if(time_temp == "")
-		time_temp = "<";
-		
 	wifi_schedule_value = time_temp;
 	document.getElementById("schedule_block").style.display = "none";
 	document.getElementById("titl_desc").style.display = "";
@@ -1059,6 +1072,25 @@ function show_wifi_schedule(){
 	$("#mainTable").fadeIn();
 	showclock();
 }
+
+function control_TimeField(){
+	if(document.form.wl_radio[0].checked){
+		document.getElementById("wl_sched_enable").style.display = "";
+		document.form.wl_timesched.disabled = false;
+		if(document.form.wl_timesched[0].checked){
+			document.getElementById("time_setting").style.display = "";
+			document.form.wl_sched.disabled = false;
+		}
+		else{
+			document.getElementById("time_setting").style.display = "none";
+			document.form.wl_sched.disabled = true;
+		}
+	}
+	else{
+		document.getElementById("wl_sched_enable").style.display = "none";
+		document.form.wl_timesched.disabled = true;
+	}
+}
 </script>
 </head>
 
@@ -1123,7 +1155,7 @@ function show_wifi_schedule(){
 
 					<div id="schedule_block" style="display:none">
 						<div id="hintBlock" style="width: 650px; margin-top: 10px;">
-							<table style="width:350px;"><tbody><tr><td><div style="width:95px;font-family:Arial,sans-serif,Helvetica;font-size:18px;">Clock Format</div></td><td><div><select id="clock_type_select" class="input_option" onchange="change_clock_type(this.value);"><option value="0">12-hour</option><option value="1">24-hour</option></select></div></td><td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Allow</div></td><td><div style="width:90px;height:20px;background:#9CB2BA;"></div></td><td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Deny</div></td><td><div style="width:90px;height:20px;border:solid 1px #000"></div></td></tr></tbody></table>
+							<table style="width:350px;"><tbody><tr><td><div style="width:95px;font-family:Arial,sans-serif,Helvetica;font-size:18px;"><#Clock_Format#></div></td><td><div><select id="clock_type_select" class="input_option" onchange="change_clock_type(this.value);"><option value="0">12-hour</option><option value="1">24-hour</option></select></div></td><td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Allow</div></td><td><div style="width:90px;height:20px;background:#9CB2BA;"></div></td><td><div align="left" style="font-family:Arial,sans-serif,Helvetica;font-size:18px;margin:0px 5px 0px 30px;">Deny</div></td><td><div style="width:90px;height:20px;border:solid 1px #000"></div></td></tr></tbody></table>
 						</div>
 						<div id="mainTable" style="padding:0 20px 20px 20px;"></div>
 						<div id="ctrlBtn" style="text-align:center;"></div>
@@ -1144,8 +1176,8 @@ function show_wifi_schedule(){
 					<tr id="wl_rf_enable">
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 1);"><#WLANConfig11b_x_RadioEnable_itemname#></a></th>
 			  			<td>
-			  				<input type="radio" value="1" name="wl_radio" class="input" onClick="control_TimeField(1);" <% nvram_match("wl_radio", "1", "checked"); %>><#checkbox_Yes#>
-			    			<input type="radio" value="0" name="wl_radio" class="input" onClick="control_TimeField(0);" <% nvram_match("wl_radio", "0", "checked"); %>><#checkbox_No#>
+			  				<input type="radio" value="1" name="wl_radio" class="input" onClick="control_TimeField();" <% nvram_match("wl_radio", "1", "checked"); %>><#checkbox_Yes#>
+			    			<input type="radio" value="0" name="wl_radio" class="input" onClick="control_TimeField();" <% nvram_match("wl_radio", "0", "checked"); %>><#checkbox_No#>
 			  			</td>
 					</tr>
 
@@ -1154,7 +1186,7 @@ function show_wifi_schedule(){
 			  			<td>
 			  				<input type="radio" value="1" name="wl_timesched" class="input" onClick="control_TimeField();return change_common_radio(this, 'WLANConfig11b', 'wl_timesched', '1');" <% nvram_match("wl_timesched", "1", "checked"); %>><#checkbox_Yes#>
 			    			<input type="radio" value="0" name="wl_timesched" class="input" onClick="control_TimeField();return change_common_radio(this, 'WLANConfig11b', 'wl_timesched', '0')" <% nvram_match("wl_timesched", "0", "checked"); %>><#checkbox_No#>
-							<span style="padding-left:20px;cursor:pointer;text-decoration:underline" onclick="show_wifi_schedule();">Time Setting</span>
+							<span id="time_setting" style="padding-left:20px;cursor:pointer;text-decoration:underline" onclick="show_wifi_schedule();">Time Setting</span>
 						</td>
 					</tr>
 
@@ -1223,8 +1255,8 @@ function show_wifi_schedule(){
 			  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3, 8);"><#WLANConfig11b_DataRate_itemname#></a></th>
 			  			<td>
 			  				<select name="wl_rateset" class="input_option">
-				  				<option value="default" <% nvram_match("wl_rateset", "default","selected"); %>>Default</option>
-				  				<option value="all" <% nvram_match("wl_rateset", "all","selected"); %>>All</option>
+				  				<option value="default" <% nvram_match("wl_rateset", "default","selected"); %>><#Setting_factorydefault_value#></option>
+				  				<option value="all" <% nvram_match("wl_rateset", "all","selected"); %>><#All#></option>
 				  				<option value="12" <% nvram_match("wl_rateset", "12","selected"); %>>1, 2 Mbps</option>
 							</select>
 						</td>
@@ -1233,8 +1265,8 @@ function show_wifi_schedule(){
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,20);"><#WLANConfig11n_PremblesType_itemname#></a></th>
 						<td>
 						<select name="wl_plcphdr" class="input_option">
-							<option value="long" <% nvram_match("wl_plcphdr", "long", "selected"); %>>Long</option>
-							<option value="short" <% nvram_match("wl_plcphdr", "short", "selected"); %>>Short</option>
+							<option value="long" <% nvram_match("wl_plcphdr", "long", "selected"); %>><#WLANConfig11n_PremblesType_long#></option>
+							<option value="short" <% nvram_match("wl_plcphdr", "short", "selected"); %>><#WLANConfig11n_PremblesType_short#></option>
 <!-- auto mode applicable for STA only
 							<option value="auto" <% nvram_match("wl_plcphdr", "auto", "selected"); %>><#Auto#></option>
 -->
@@ -1248,7 +1280,7 @@ function show_wifi_schedule(){
 						</td>
 					</tr>
 					<tr id='ampdu_rts_tr'>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,30);">AMPDU RTS</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,30);">AMPDU RTS</a></th>	<!-- untranslated -->
 						<td>
 							<select name="wl_ampdu_rts" class="input_option" onchange="check_ampdu_rts();">
 								<option value="1" <% nvram_match("wl_ampdu_rts", "1", "selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
@@ -1355,7 +1387,7 @@ function show_wifi_schedule(){
 					</tr>
 					
 					<tr> <!-- MODELDEP: RT-AC55U -->
-						<th><a class="hintstyle" href="javascript:void(0);">Enable accurate traffic counter</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);"><#WLANConfig11b_x_traffic_counter#></a></th>
 						<td>
 							<select name="traffic_5g" class="input_option">
 								<option value="1" <% nvram_match("traffic_5g", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
@@ -1396,7 +1428,7 @@ function show_wifi_schedule(){
 					<!-- [MODELDEP] end -->
 					<!--For 5GHz of RT-AC87U  -->
 					<tr id="wl_80211h_tr" style="display:none;">
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="">IEEE 802.11h support</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#WLANConfig11b_x_80211H#></a></th>
 						<td>
 							<select name="wl1_80211h" class="input_option">
 									<option value="0" <% nvram_match("wl1_80211h", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -1408,7 +1440,7 @@ function show_wifi_schedule(){
 					
 					<!--Broadcom ARM platform only, except RT-AC87U(5G) -->
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,32);">Airtime Fairness</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(3,32);"><#WLANConfig11b_x_Airtime_Fairness#></a></th>
 						<td>
 							<select name="wl_atf" class="input_option">
 									<option value="0" <% nvram_match("wl_atf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -1462,7 +1494,7 @@ function show_wifi_schedule(){
 						</td>
 					</tr>
 					<tr id="region_tr" style="display:none">
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="">Region</a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#WLANConfig11b_x_Region#></a></th>
 						<td><select name="location_code" class="input_option"></select></td>
 					</tr>
 				</table>

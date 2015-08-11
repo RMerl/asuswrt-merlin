@@ -22,7 +22,7 @@ int sql_get_table(sqlite3 *db, const char *sql, char ***pazResult, int *pnRow, i
 }
 
 static
-long long int traffic_control_realtime_traffic(char *interface)
+long long int traffic_control_realtime_traffic(char *interface, int unit)
 {
 	long long int result = 0;
 	FILE *fp = NULL;
@@ -30,18 +30,17 @@ long long int traffic_control_realtime_traffic(char *interface)
 	unsigned long long tx = 0, rx = 0;	// current
 	unsigned long long tx_t = 0, rx_t = 0;	// old
 	unsigned long long tx_n = 0, rx_n = 0;	// diff
-	char ifmap[12];	// ifname after mapping
+	char ifmap[IFNAME_MAX];	// ifname after mapping
+	char wanif[IFNAME_MAX];
 	char buf[256];
-	char tx_buf[64], rx_buf[64];
-	char tx_path[48], rx_path[48];
+	char tx_buf[IFPATH_MAX], rx_buf[IFPATH_MAX];
+	char tx_path[IFPATH_MAX], rx_path[IFPATH_MAX];
 	char *p = NULL;
  	char *ifname = NULL;
 
 	int debug = nvram_get_int("traffic_control_debug");
 
 	memset(buf, 0, sizeof(buf));
-
-	// word and ifmap mapping
 	memset(ifmap, 0, sizeof(ifmap));
 	ifname_mapping(interface, ifmap); // database interface mapping
 	if(debug) dbg("%s: interface=%s, ifmap=%s\n", __FUNCTION__, interface, ifmap);
@@ -67,7 +66,9 @@ long long int traffic_control_realtime_traffic(char *interface)
 			else
 				++ifname;
 
-			if(strcmp(ifname, interface)) continue;
+			memset(wanif, 0, sizeof(wanif));
+			snprintf(wanif, sizeof(wanif), "wan%d_ifname", unit);
+			if(strcmp(ifname, nvram_safe_get(wanif))) continue;
 			else match = 1;
 
 			// search traffic
@@ -120,16 +121,18 @@ long long int traffic_control_realtime_traffic(char *interface)
 	return result;
 }
 
-void traffic_cotrol_WanStat(char *buf, char *ifname, char *ifmap, char *start, char *end)
+void traffic_cotrol_WanStat(char *buf, char *ifname, char *start, char *end, int unit)
 {
-	if(ifname == NULL || start == NULL || end == NULL){
+	if(ifname == NULL || start == NULL || end == NULL ||
+		(strcmp(ifname, "wan") && strcmp(ifname, "lan") && strcmp(ifname, "usb"))){
 		sprintf(buf, "[0]");
 		return;
 	}
 
 	int lock;	// file lock
 	int ret;
-	char path[48];
+	char path[IFPATH_MAX];
+	char ifmap[IFNAME_MAX];	// ifname after mapping
 	char sql[256];
 	char cmd[256];
 	sqlite3 *db;
@@ -143,6 +146,11 @@ void traffic_cotrol_WanStat(char *buf, char *ifname, char *ifmap, char *start, c
 	int debug = nvram_get_int("traffic_control_debug");
 	lock = file_lock("traffic_control");
 
+	// word and ifmap mapping
+	memset(ifmap, 0, sizeof(ifmap));
+	ifname_mapping(ifname, ifmap); // database interface mapping
+	if(debug) dbg("%s: ifname=%s, ifmap=%s\n", __FUNCTION__, ifname, ifmap);
+
 	snprintf(path, sizeof(path), "/jffs/traffic_control/%s/traffic.db", ifmap);
 
 	ret = sqlite3_open(path, &db);
@@ -150,7 +158,8 @@ void traffic_cotrol_WanStat(char *buf, char *ifname, char *ifmap, char *start, c
 		printf("%s : Can't open database %s\n", __FUNCTION__, sqlite3_errmsg(db));
 		sqlite3_close(db);
 		file_unlock(lock);
-		exit(1);
+		sprintf(buf, "[0]");
+		return;
 	}
 	
 	memset(sql, 0, sizeof(sql));
@@ -165,7 +174,7 @@ void traffic_cotrol_WanStat(char *buf, char *ifname, char *ifmap, char *start, c
 	// real-time traffic (not data in database)
 	if(debug) dbg("%s : te=%ld, now=%ld, diff=%ld, DAY=%ld\n", __FUNCTION__, te, now, (te - now), DAY);
 	if((te - now) < DAY && (te - now) > 0){
-		current = traffic_control_realtime_traffic(ifname); // using original interface to query real-time traffic
+		current = traffic_control_realtime_traffic(ifname, unit);
 		memset(cmd, 0, sizeof(cmd));
 		sprintf(cmd, "echo -n %lld > /jffs/traffic_control/%s/tmp", current, ifmap);
 		system(cmd);
@@ -195,61 +204,29 @@ void traffic_cotrol_WanStat(char *buf, char *ifname, char *ifmap, char *start, c
 	file_unlock(lock);
 }
 
-void traffic_control_hook(char *ifname, char *start, char *end, int *retval, webs_t wp)
+void traffic_control_hook(char *ifname, char *start, char *end, char *unit, int *retval, webs_t wp)
 {
 	char buf[64];
+	int unit_t = atoi(unit);
 	memset(buf, 0, sizeof(buf));
 	int debug = nvram_get_int("traffic_control_debug");
-	if(debug) dbg("%s : ifname=%s, start=%s, end=%s\n", __FUNCTION__, ifname, start, end);
+	if(debug) dbg("%s : ifname=%s, start=%s, end=%s, unit_t=%d\n", __FUNCTION__, ifname, start, end, unit_t);
 
-	traffic_cotrol_WanStat(buf, ifname, ifname, start, end);
+	traffic_cotrol_WanStat(buf, ifname, start, end, unit_t);
 	
 	*retval += websWrite(wp, buf);
 }
 
 /*
 	interface mapping rule
-	ex. 
-		WAN eth0 -> vlan1 or 2
-		LAN eth0 -> vlan2 or 3
-		vlanX -> vlanX
-		usbX -> usbX
+	ex.
+	word = wan / lan / usb
+	ifname = wan / lan / usb / imsi(number)
 */
 void ifname_mapping(char *word, char *ifname)
 {
-	int model = get_model();
-
-	/* special model using SIM card, ex. 4G-AC55U */
-	if(model == MODEL_RT4GAC55U)
-	{
+	if(!strcmp(word, "usb") && nvram_get_int("usb_modem_act_imsi"))
+		sprintf(ifname, nvram_safe_get("usb_modem_act_imsi"));
+	else
 		sprintf(ifname, word);
-		return;
-	}
-
-	/* vlanX or usbX */
-	if(strstr(word, "vlan") || strstr(word, "usb"))
-	{
-		sprintf(ifname, word);
-		return;
-	}
-	
-	/*
-		not vlanX
-		change eth0/ppp0 into vlan1 or vlan2 when using WAN
-		change eth0/ppp0 into vlan2 or vlan3 when using LAN
-	*/
-	if(strstr(nvram_safe_get("wans_dualwan"), "wan"))
-	{
-		if (model == MODEL_RTN12D1 || model == MODEL_RTN12HP || model == MODEL_RTN12HP_B1)
-			sprintf(ifname, "vlan1");
-		else
-			sprintf(ifname, "vlan2");
-	}
-	else if(strstr(nvram_safe_get("wans_dualwan"), "lan"))
-	{
-		if (model == MODEL_RTN12D1 || model == MODEL_RTN12HP || model == MODEL_RTN12HP_B1)
-			sprintf(ifname, "vlan2");
-		else
-			sprintf(ifname, "vlan3");
-	}
 }

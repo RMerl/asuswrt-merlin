@@ -269,16 +269,19 @@ function tab_reset(v){
 			document.getElementById("t2").style.display = "none";
 		}
 	}else if(v == 1){	//Smart Connect
-		document.getElementById("span0").innerHTML = "Tri-band Smart Connect";
+		if(based_modelid == "RT-AC5300")
+			document.getElementById("span0").innerHTML = "2.4GHz, 5GHz-1 and 5GHz-2";
+		else
+			document.getElementById("span0").innerHTML = "Tri-band Smart Connect";
 		document.getElementById("t1").style.display = "none";
 		document.getElementById("t2").style.display = "none";				
-		document.getElementById("t0").style.width = (tab_width*wl_info.wl_if_total) +'px';
+		document.getElementById("t0").style.width = (tab_width*wl_info.wl_if_total+10) +'px';
 	}
 	else if(v == 2){ //5GHz Smart Connect
 		document.getElementById("span0").innerHTML = "2.4GHz";
-		document.getElementById("span1").innerHTML = "5GHz Smart Connect";
+		document.getElementById("span1").innerHTML = "5GHz-1 and 5GHz-2";
 		document.getElementById("t2").style.display = "none";	
-		document.getElementById("t1").style.width = "140px";
+		document.getElementById("t1").style.width = "155px";
 	}
 }
 

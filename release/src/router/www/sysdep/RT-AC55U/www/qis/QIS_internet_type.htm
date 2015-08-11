@@ -399,6 +399,7 @@ function switch_dialUp_type(obj){
 	}
 }
 
+
 function detect_if_wan_plug(flag){
 	$.ajax({
 		url: '/result_of_get_changed_status_QIS.asp',
@@ -694,7 +695,7 @@ function enable_ISP_special(){
 						<option value="m1_fiber" <% nvram_match("switch_wantag", "m1_fiber", "selected"); %>>M1-Fiber</option>
 						<option value="maxis_fiber" <% nvram_match("switch_wantag", "maxis_fiber", "selected"); %>>Maxis-Fiber</option>
 						<option value="maxis_fiber_sp" <% nvram_match("switch_wantag", "maxis_fiber_sp", "selected"); %>>Maxis-Fiber-Special</option>
-						<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>>Manual</option>
+						<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>><#Manual_Setting_btn#></option>
 					</select>
 				</span>
 
@@ -707,7 +708,7 @@ function enable_ISP_special(){
 				</span>
 
 				<span id="wan_internet_x">
-			<p style="margin-top:5px;color:#66CCFF;">Internet:</p>
+			<p style="margin-top:5px;color:#66CCFF;"><#Internet#>:</p>
 				<p style="font-size:10px;">
 					VID:<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>" autocorrect="off" autocapitalize="off">
 					PRIO:<input type="text" name="switch_wan0prio" class="input_6_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>" autocorrect="off" autocapitalize="off">
@@ -737,7 +738,7 @@ function enable_ISP_special(){
 	<tr>
 		<td colspan="2">
 			<div style="color:#FC0;font-size:14px;margin-top:10px;"><#QIS_SmartConn_TypeNote#></div>
-			<div id="wan_unplug" style="color:#FC0;font-size:14px;margin-top:10px;">* <#web_redirect_suggestion1#></div>
+			<div id="wan_unplug" style="color:#FC0;font-size:14px;margin-top:10px;display:none">* <#web_redirect_suggestion1#></div>
 		</td>
 	</tr>
   </table> 
@@ -852,7 +853,7 @@ function enable_ISP_special(){
 	</div>
 
 	<div id="unify_input" style="display:none;left:100%;position:absolute;width:100%">
-		<div class="itemTitle">Iinternet:</div>
+		<div class="itemTitle"><#Internet#>:</div>
 		<fieldset class="theFieldset" id="unify_input_1">
 			<div class="row">
 				<label>VID</label>

@@ -1062,10 +1062,14 @@ esta opción también forza que el archivo de cambio de arriendos sea llamado
 cuando hay cambios hechos a el client-id y tiempos de arriendo y vencimiento.
 .TP
 .B --bridge-interface=<nombre de interface>,<alias>[,<alias>]
-Tratar paquetes de pedidos DHCP que llegan a cualquiera de las interfaces <alias>
-como si hubieran llegado a la interface <nombre de interface>. Esta opción
-es necesaria al usar bridging estilo viejo en plataformas BSD, dado a que
-los paquetes llegan a interfaces tap que no tienen una dirección IP.
+Tratar paquetes de pedidos DHCP (v4 y v6) y de IPv6 Router Solicit que
+llegan a cualquiera de las interfaces <alias> como si hubieran llegado
+a la interface <nombre de interface>.  Esta opción permite que dnsmasq
+puede proporcionar los servicios DHCP y RA a través de interfaces
+ethernet sin dirección y sin puente; por ejemplo en un nodo de cálculo
+de OpenStack, donde cada una de esas interfaces es una interfaz TAP
+para una máquina virtual, o al usar bridging estilo viejo en
+plataformas BSD.
 .TP
 .B \-s, --domain=<dominio>[,<rango de IPs>]
 Especifica los dominios DNS para el servidor DHCP. Dominios pueden ser

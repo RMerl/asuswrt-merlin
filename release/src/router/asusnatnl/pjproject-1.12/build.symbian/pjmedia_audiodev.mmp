@@ -1,0 +1,33 @@
+TARGET 		pjmedia_audiodev.lib
+TARGETTYPE 	lib
+
+SOURCEPATH	..\pjmedia\src\pjmedia-audiodev
+
+//
+// GCCE optimization setting
+//
+//OPTION		GCCE -O2 -fno-unit-at-a-time
+OPTION          ARMCC --gnu
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+SOURCE		audiodev.c
+SOURCE		errno.c
+SOURCE		symb_aps_dev.cpp
+SOURCE		symb_mda_dev.cpp
+SOURCE		symb_vas_dev.cpp
+SOURCE		null_dev.c
+
+SYSTEMINCLUDE	..\pjmedia\include
+SYSTEMINCLUDE	..\pjlib\include 
+SYSTEMINCLUDE	..\pjlib-util\include 
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+SYSTEMINCLUDE   \epoc32\include\mmf\server 
+SYSTEMINCLUDE   \epoc32\include\mmf\common 
+SYSTEMINCLUDE   \epoc32\include\mda\common 
+SYSTEMINCLUDE	\epoc32\include\mmf\plugin 
+
+

@@ -1,0 +1,51 @@
+#define SND_USE_APS	0
+#define SND_USE_VAS	0
+
+TARGET 			symsndtest.exe
+TARGETTYPE 		exe
+UID			0x0 0xA000000E
+
+OPTION			ARMCC --gnu
+
+SOURCEPATH		..\pjsip-apps\src\symsndtest
+
+MACRO			PJ_M_I386=1
+MACRO			PJ_SYMBIAN=1
+
+// Test files
+
+SOURCE			app_main.cpp
+SOURCE			main_symbian.cpp
+
+START RESOURCE  	symsndtest_reg.rss
+	TARGETPATH	\private\10003a3f\apps
+END
+
+SYSTEMINCLUDE		..\pjlib\include
+SYSTEMINCLUDE		..\pjmedia\include
+
+SYSTEMINCLUDE		\epoc32\include
+SYSTEMINCLUDE		\epoc32\include\libc
+
+LIBRARY			charconv.lib euser.lib estlib.lib
+LIBRARY			esock.lib insock.lib
+STATICLIBRARY		pjmedia_audiodev.lib
+STATICLIBRARY		pjmedia.lib
+STATICLIBRARY		pjlib.lib 
+STATICLIBRARY		libresample.lib
+
+#if SND_USE_APS
+	LIBRARY		APSSession2.lib
+	CAPABILITY	NetworkServices LocalServices ReadUserData WriteUserData UserEnvironment MultimediaDD
+#elif SND_USE_VAS
+	LIBRARY		VoIPAudioIntfc.lib
+	CAPABILITY	NetworkServices LocalServices ReadUserData WriteUserData UserEnvironment MultimediaDD
+#else
+	LIBRARY 	mediaclientaudiostream.lib
+	LIBRARY 	mediaclientaudioinputstream.lib
+	CAPABILITY	NetworkServices LocalServices ReadUserData WriteUserData UserEnvironment
+#endif
+
+#ifdef WINSCW
+	STATICLIBRARY   eexe.lib ecrt0.lib
+#endif

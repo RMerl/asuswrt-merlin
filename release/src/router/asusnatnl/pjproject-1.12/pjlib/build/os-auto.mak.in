@@ -1,0 +1,35 @@
+# @configure_input@
+
+# Determine OS specific files
+AC_OS_OBJS=@ac_os_objs@
+
+#
+# PJLIB_OBJS specified here are object files to be included in PJLIB
+# (the library) for this specific operating system. Object files common 
+# to all operating systems should go in Makefile instead.
+#
+export PJLIB_OBJS +=	$(AC_OS_OBJS) \
+			addr_resolv_sock.o \
+			log_writer_stdout.o \
+			os_timestamp_common.o \
+			pool_policy_malloc.o sock_bsd.o sock_select.o
+
+#
+# TEST_OBJS are operating system specific object files to be included in
+# the test application.
+#
+export TEST_OBJS +=	@ac_main_obj@
+
+#
+# Additional LDFLAGS for pjlib-test
+#
+export TEST_LDFLAGS += @LDFLAGS@ @LIBS@
+
+#
+# TARGETS are make targets in the Makefile, to be executed for this given
+# operating system.
+#
+export TARGETS	    =	pjlib pjlib-test
+
+
+

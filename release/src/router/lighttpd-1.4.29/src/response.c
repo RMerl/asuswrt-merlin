@@ -535,7 +535,7 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			log_error_write(srv, __FILE__, __LINE__,  "sb", "Path         :", con->physical.path);
 		}
 
-		Cdbg(DBE, "plugins_call_handle_physical.....................");
+		Cdbg(1, "plugins_call_handle_physical.....................");
 		switch(r = plugins_call_handle_physical(srv, con)) {
 			case HANDLER_GO_ON:
 				break;
@@ -684,7 +684,7 @@ Cdbg(DBE, "enter http_response_prepare..mode=[%d], status=[%d][%s]", con->mode, 
 			if (found == 0) {
 				/* no it really doesn't exists */
 				con->http_status = 404;
-
+				
 				if (con->conf.log_file_not_found) {
 					log_error_write(srv, __FILE__, __LINE__, "sbsb",
 							"file not found:", con->uri.path,

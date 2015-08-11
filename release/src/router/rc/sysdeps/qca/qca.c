@@ -286,8 +286,9 @@ setCountryCode_2G(const char *cc)
 	else if (!strcasecmp(cc, "CA")) ;
 	else if (!strcasecmp(cc, "TW")) ;
 	else if (!strcasecmp(cc, "CN")) ;
-	else if (!strcasecmp(cc, "GB")) ;
 	else if (!strcasecmp(cc, "SG")) ;
+	else if (!strcasecmp(cc, "GB")) ;
+	else if (!strcasecmp(cc, "DE")) ;
 	else if (!strcasecmp(cc, "HU")) ;
 	else if (!strcasecmp(cc, "DB")) ;
 	else
@@ -504,6 +505,7 @@ int setAllLedOn(void)
 	case MODEL_RTAC55U:
 	case MODEL_RTAC55UHP:
 	case MODEL_RT4GAC55U:
+	case MODEL_PLAC66U:
 		wan_red_led_control(LED_OFF);					/* Turn off WAN RED LED */
 		led_control(LED_2G, LED_ON);
 #if defined(RTCONFIG_ETRON_XHCI_USB3_LED)
@@ -517,6 +519,22 @@ int setAllLedOn(void)
 #if defined(RTN14U)
 	case MODEL_RTN14U:
 		led_control(LED_2G, LED_ON);
+		break;
+#endif
+#ifdef PLN12
+	case MODEL_PLN12:
+		led_control(LED_POWER_RED, LED_ON);
+		led_control(LED_2G_GREEN, LED_ON);
+		led_control(LED_2G_ORANGE, LED_ON);
+		led_control(LED_2G_RED, LED_ON);
+		break;
+#endif
+#ifdef PLAC56
+	case MODEL_PLAC56:
+		led_control(LED_2G_GREEN, LED_ON);
+		led_control(LED_2G_RED, LED_ON);
+		led_control(LED_5G_GREEN, LED_ON);
+		led_control(LED_5G_RED, LED_ON);
 		break;
 #endif
 	}
@@ -572,6 +590,7 @@ int setAllLedOff(void)
 	case MODEL_RTAC55U:
 	case MODEL_RTAC55UHP:
 	case MODEL_RT4GAC55U:
+	case MODEL_PLAC66U:
 		wan_red_led_control(LED_OFF);
 		led_control(LED_2G, LED_OFF);
 #if defined(RTCONFIG_ETRON_XHCI_USB3_LED)
@@ -585,6 +604,22 @@ int setAllLedOff(void)
 #if defined(RTN14U)
 	case MODEL_RTN14U:
 		led_control(LED_2G, LED_OFF);
+		break;
+#endif
+#ifdef PLN12
+	case MODEL_PLN12:
+		led_control(LED_POWER_RED, LED_OFF);
+		led_control(LED_2G_GREEN, LED_OFF);
+		led_control(LED_2G_ORANGE, LED_OFF);
+		led_control(LED_2G_RED, LED_OFF);
+		break;
+#endif
+#ifdef PLAC56
+	case MODEL_PLAC56:
+		led_control(LED_2G_GREEN, LED_OFF);
+		led_control(LED_2G_RED, LED_OFF);
+		led_control(LED_5G_GREEN, LED_OFF);
+		led_control(LED_5G_RED, LED_OFF);
 		break;
 #endif
 	}
@@ -774,8 +809,6 @@ int bw40_channel_check(int band,char *ext)
 }   
    
 
-
-
 #define MAX_NO_GUEST 3
 int gen_ath_config(int band, int is_iNIC,int subnet)
 {
@@ -811,7 +844,9 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	char path1[50],path2[50],path3[50];
 	int rep_mode;
 	char *uuid = nvram_safe_get("uuid");
-
+#ifdef RTCONFIG_QCA_TW_AUTO_BAND4
+	unsigned char CC[3];
+#endif	
 	rep_mode=0;
 	bg_prot=0;
 	ban=0;
@@ -1426,14 +1461,31 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	else
 		val=nvram_get_int("wl1_channel");
 
+	
+#ifdef RTCONFIG_QCA_TW_AUTO_BAND4
+	if(band) //5G, flush block-channel list
+		fprintf(fp3, "wifitool %s block_acs_channel 0\n",wif);
+#endif			
 	if(val)
 	{
 		fprintf(fp3, "iwpriv wifi%d dcs_enable 0\n",band);	//not to scan and change to other channels
 		fprintf(fp3, "iwconfig %s channel %d\n",wif,val);
 	}
 	else if(subnet==0)
+	{	
+#ifdef RTCONFIG_QCA_TW_AUTO_BAND4
+		if(band) //5G
+		{
+			memset(CC, 0, sizeof(CC));
+	        	FRead(CC, OFFSET_COUNTRY_CODE, 2);
+	                if(!strcmp(CC,"TW"))//old NCC
+				fprintf(fp3, "wifitool %s block_acs_channel 52,56,60,64\n",wif);
+			//else if(!strcmp(CC,"AA"))//new NCC
+			//	fprintf(fp3, "wifitool %s block_acs_channel 36,40,44,48\n",wif);
+		}	
+#endif		
 	   	fprintf(fp3, "iwconfig %s channel auto\n",wif);
-
+	}
 	if(!band && strstr(t_mode, "11N") != NULL) //only 2.4G && N mode is used
 		fprintf(fp3,"iwpriv %s disablecoext %d\n",wif,nvram_get_int(strcat_r(tmpfix, "bw", tmp))==2?1:0);	// when N mode is used
 
@@ -2014,14 +2066,19 @@ void __wps_oob(const int multiband)
 
 		nvram_set("w_Setting", "0");
 		wl_default_wps(i);
-		nvram_commit();
 
 		qca_wif_up(word);
-		gen_qca_wifi_cfgs();
 		g_isEnrollee[i] = 0;
 
 		++i;
 	}
+
+#ifdef RTCONFIG_TCODE
+	restore_defaults_wifi(0);
+#endif
+	nvram_commit();
+
+	gen_qca_wifi_cfgs();
 }
 
 void wps_oob(void)
@@ -2082,10 +2139,6 @@ void start_wsc(void)
 	}
 }
 
-void start_wsc_pin_enrollee(void)
-{
-}
-
 static void __stop_wsc(int multiband)
 {
 	int i;
@@ -2123,6 +2176,160 @@ void stop_wsc_both(void)
 	__stop_wsc(1);
 #endif
 }
+
+#ifdef RTCONFIG_WPS_ENROLLEE
+void start_wsc_enrollee(void)
+{
+	int i;
+	char word[256], *next, ifnames[128];
+	char conf[64];
+	FILE *fp;
+
+	i = 0;
+	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
+	foreach(word, ifnames, next) {
+		if (i >= MAX_NR_WL_IF)
+			break;
+
+		dbg("%s: start wsc enrollee(%d)\n", __func__, i);
+
+		if (nvram_get_int("sw_mode") == SW_MODE_ROUTER 
+				|| nvram_get_int("sw_mode") == SW_MODE_AP) {
+			sprintf(conf, "/etc/Wireless/conf/wpa_supplicant-sta%d.conf", i);
+			if ((fp = fopen(conf, "w+")) < 0) {
+				_dprintf("%s: Can't open %s\n", __func__, conf);
+				continue;
+			}
+			fprintf(fp, "ctrl_interface=/var/run/wpa_supplicant\n");
+			fprintf(fp, "update_config=1\n");
+			fclose(fp);
+
+			doSystem("wlanconfig sta%d create wlandev wifi%d wlanmode sta nosbeacon", i, i);
+			doSystem("ifconfig sta%d up", i);
+			doSystem("wpa_supplicant -B -P /var/run/wifi-sta%d.pid -D athr -i sta%d -b br0 -c /etc/Wireless/conf/wpa_supplicant-sta%d.conf", i, i, i);
+		}
+
+		doSystem("wpa_cli -i sta%d wps_pbc", i);
+		i++;
+	}
+}
+
+void stop_wsc_enrollee(void)
+{
+	int i;
+	char word[256], *next, ifnames[128];
+	char fpath[32];
+
+	i = 0;
+	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
+	foreach(word, ifnames, next) {
+		if (i >= MAX_NR_WL_IF)
+			break;
+
+		doSystem("wpa_cli -i sta%d wps_cancel", i);
+
+		if (nvram_get_int("sw_mode") == SW_MODE_ROUTER 
+				|| nvram_get_int("sw_mode") == SW_MODE_AP) {
+			sprintf(fpath, "/var/run/wifi-sta%d.pid", i);
+			kill_pidfile_tk(fpath);
+			unlink(fpath);
+			sprintf(fpath, "/etc/Wireless/conf/wpa_supplicant-sta%d.conf", i);
+			unlink(fpath);
+
+			doSystem("ifconfig sta%d down", i);
+			doSystem("wlanconfig sta%d destroy", i);
+		}
+
+		i++;
+	}
+}
+
+#ifdef RTCONFIG_WIFI_CLONE
+void wifi_clone(int unit)
+{
+	char buf[512];
+	FILE *fp;
+	int len;
+	char *pt1, *pt2;
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+
+	sprintf(buf, "/etc/Wireless/conf/wpa_supplicant-sta%d.conf", unit);
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	fp = fopen(buf, "r");
+	if (fp) {
+		memset(buf, 0, sizeof(buf));
+		len = fread(buf, 1, sizeof(buf), fp);
+		pclose(fp);
+		if (len > 1) {
+			buf[len-1] = '\0';
+			//SSID
+			pt1 = strstr(buf, "ssid=\"");
+			if (pt1) {
+				pt2 = pt1 + strlen("ssid=\"");
+				pt1 = strstr(pt2, "\"");
+				if (pt1) {
+					*pt1 = '\0';
+					chomp(pt2);
+					nvram_set(strcat_r(prefix, "ssid", tmp), pt2);
+				}
+			}
+					nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
+			//PSK
+			pt2 = pt1 + 1;
+			pt1 = strstr(pt2, "psk=\"");
+			if (pt1) {	//WPA2-PSK
+				pt2 = pt1 + strlen("psk=\"");
+				pt1 = strstr(pt2, "\"");
+				if (pt1) {
+					*pt1 = '\0';
+					chomp(pt2);
+					nvram_set(strcat_r(prefix, "wpa_psk", tmp), pt2);
+					nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "psk2");
+					nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
+				}
+			}
+			else {		//OPEN
+				nvram_set(strcat_r(prefix, "auth_mode_x", tmp), "open");
+				nvram_set(strcat_r(prefix, "wep_x", tmp), "0");
+			}
+			nvram_set("x_Setting", "1");
+			nvram_commit();
+		}
+	}
+}
+#endif
+
+char *getWscStatus_enrollee(int unit)
+{
+	char buf[512];
+	FILE *fp;
+	int len;
+	char *pt1, *pt2;
+
+	sprintf(buf, "wpa_cli -i sta%d status", unit);
+	fp = popen(buf, "r");
+	if (fp) {
+		memset(buf, 0, sizeof(buf));
+		len = fread(buf, 1, sizeof(buf), fp);
+		pclose(fp);
+		if (len > 1) {
+			buf[len-1] = '\0';
+			pt1 = strstr(buf, "wpa_state=");
+			if (pt1) {
+				pt2 = pt1 + strlen("wpa_state=");
+				pt1 = strstr(pt2, "address=");
+				if (pt1) {
+					*pt1 = '\0';
+					chomp(pt2);
+				}
+				return pt2;
+			}
+		}
+	}
+
+	return "";
+}
+#endif
 
 char *getWscStatus(int unit)
 {
@@ -2412,7 +2619,7 @@ int Set_Device_Flags(const char *flags_str)
 #endif
 
 
-
+#ifdef RTCONFIG_USER_LOW_RSSI
 typedef struct _WLANCONFIG_LIST {
          char addr[18];
          unsigned int aid;
@@ -2505,6 +2712,7 @@ void rssi_check_unit(int unit)
 			unlink(STA_LOW_RSSI_PATH);
 		}
 }
+#endif
 
 #ifdef RTCONFIG_ATEUSB3_FORCE
 int getForceU3(void)
@@ -2572,6 +2780,36 @@ int setTerritoryCode(const char *tcode)
 	FWrite(tcode, OFFSET_TERRITORY_CODE, 5);
 	nvram_set("territory_code", tcode);
 
+	return 0;
+}
+
+int
+getPSK(void)
+{
+	char buffer[15];
+	memset(buffer,0,sizeof(buffer));
+	FRead(buffer, OFFSET_PSK, 14);
+	puts(buffer);
+	return 0;
+}
+
+int
+setPSK(const char *psk)
+{
+	int i;
+	char buffer[15];
+	if (psk == NULL || strlen(psk) < 8 ||strlen(psk) > 32)
+		return -1;
+
+        for (i = 0; i < strlen(psk) ; i++) {
+		if (psk[i] == '0' || psk[i] == '1' || psk[i] == '8')
+			return -1;
+		else if (psk[i] != '_' && !isalnum(psk[i]))
+			return -1;
+        }
+	memset(buffer,0,sizeof(buffer));
+	memcpy(buffer,psk,14);
+	FWrite(buffer, OFFSET_PSK, 15);
 	return 0;
 }
 #endif

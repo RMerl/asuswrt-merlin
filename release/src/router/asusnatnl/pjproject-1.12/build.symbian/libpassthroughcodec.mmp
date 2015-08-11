@@ -1,0 +1,27 @@
+TARGET		libpassthroughcodec.lib
+TARGETTYPE	lib
+
+MACRO		HAVE_CONFIG_H
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+//
+// GCCE optimization setting
+//
+OPTION		GCCE -O2 -fno-unit-at-a-time
+OPTION          ARMCC --gnu
+
+//
+// Passthrough codecs wrapper for pjmedia-codec
+//
+SOURCEPATH 	..\pjmedia\src\pjmedia-codec
+SOURCE		passthrough.c
+
+//
+// Header files
+//
+SYSTEMINCLUDE	..\pjmedia\include
+SYSTEMINCLUDE	..\pjlib\include 
+
+SYSTEMINCLUDE	\epoc32\include 
+SYSTEMINCLUDE	\epoc32\include\libc

@@ -110,7 +110,7 @@ fi
 
 nvram set apps_state_autorun=3 # EXECUTING
 link_internet=`nvram get link_internet`
-if [ "$link_internet" == "1" ]; then
+if [ "$link_internet" == "2" ]; then
 	app_update.sh &
 fi
 

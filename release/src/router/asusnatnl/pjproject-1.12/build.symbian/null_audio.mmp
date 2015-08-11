@@ -1,0 +1,40 @@
+#if defined(PJ_BUILD_DLL)
+
+TARGET		null_audio.dll
+TARGETTYPE	dll
+UID		0x0 0xA0000000
+
+
+CAPABILITY	None
+LIBRARY		pjlib.lib charconv.lib euser.lib estlib.lib
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\null_audio.def
+
+#else
+
+TARGET 		null_audio.lib
+TARGETTYPE 	lib
+
+#endif
+
+SOURCEPATH	..\pjmedia\src\pjmedia
+
+OPTION		CW -lang c++
+OPTION          ARMCC --gnu
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+//
+// Platform independent source
+//
+SOURCE		nullsound.c
+
+SYSTEMINCLUDE	..\pjlib\include
+SYSTEMINCLUDE	..\pjmedia\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+

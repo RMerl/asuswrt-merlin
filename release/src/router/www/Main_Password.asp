@@ -11,80 +11,72 @@
 <title>ASUS Login</title>
 <style>
 .content{
-width:580px;
-height:526px;
-margin: 20px auto 40px auto;
-background:rgba(40,52,55,0.1);
+	width:580px;
+	height:526px;
+	background:rgba(40,52,55,0.1);
 }
 .wrapper{
-background:url(images/New_ui/login_bg.png) #283437 no-repeat;
-background-size: 1280px 1076px;
-background-position: center 0%;
-width:99%;
-height:100%;
+	background:url(images/New_ui/login_bg.png) #283437 no-repeat;
+	background-size: 1280px 1076px;
+	background-position: center 0%;
+	margin: 0px; 
 }
-
 .title_name {
-font-family:Arial;
-font-size: 40pt;
-color:#93d2d9;
+	font-family:Arial;
+	font-size: 40pt;
+	color:#93d2d9;
 }
 .prod_madelName{
-font-family: Arial;
-font-size: 26pt;
-color:#fff;
+	font-family: Arial;
+	font-size: 26pt;
+	color:#fff;
 }
 .p1{
-font-family: Arial;
-font-size: 16pt;
-color:#fff;
+	font-family: Arial;
+	font-size: 16pt;
+	color:#fff;
 }
-
 .button{
-background:rgba(255,255,255,0.1);
-border: solid 1px #6e8385;
-border-radius: 4px ;
-transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
-height: 68px;
-width: 253px;
-font-family: Arial;
-font-size: 28pt;
-color:#fff;
-color:#000\9; /* IE6 IE7 IE8 */
-text-align:center;
-Vertical-align:center
+	background:rgba(255,255,255,0.1);
+	border: solid 1px #6e8385;
+	border-radius: 4px ;
+	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
+	height: 68px;
+	width: 300px;
+	font-family: Arial;
+	font-size: 28pt;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	text-align:center;
+	vertical-align:center
 }
-
 .button_text{
-font-family: Arial;
-font-size: 28pt;
-color:#fff;
-text-align:center;
-Vertical-align:center
+	font-family: Arial;
+	font-size: 28pt;
+	color:#fff;
+	text-align:center;
+	vertical-align:center
 }
-
 .form_input{
-background-color:rgba(255,255,255,0.2);
-border-radius: 4px;
-padding:26px 22px;
-width: 480px;
-border: 0;
-height:25px;
-color:#fff;
-color:#000\9; /* IE6 IE7 IE8 */
-font-size:28px
+	background-color:rgba(255,255,255,0.2);
+	border-radius: 4px;
+	padding:26px 22px;
+	width: 480px;
+	border: 0;
+	height:25px;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	font-size:28px
 }
-
 .form_input_text{
-font-family: Arial;
-font-size: 28pt;
-color:#a9a9a9;
+	font-family: Arial;
+	font-size: 28pt;
+	color:#a9a9a9;
 }
-
 .p2{
-font-family: Arial;
-font-size: 18pt;
-color:#28fff7;
+	font-family: Arial;
+	font-size: 18pt;
+	color:#28fff7;
 }
 </style>
 <script>
@@ -94,10 +86,41 @@ var is_KR_sku = (function(){
 })();
 
 function initial(){
-	document.form.login_username.focus();
-
 	if(is_KR_sku)
 		document.getElementById("KRHint").style.display = "";
+
+	var windowHeight = (function(){
+		if(window.innerHeight)
+			return window.innerHeight;
+		else if(document.body && document.body.clientHeight)
+			return document.body.clientHeight;
+		else if(document.documentElement && document.documentElement.clientHeight)
+			return document.documentElement.clientHeight;
+		else
+			return 800;
+	})();
+
+	document.getElementById("loginTable").style.height = windowHeight + "px";
+	document.getElementById("loginTable").style.display = "";
+	document.form.login_username.focus();
+
+	document.form.http_username.onkeyup = function(e){
+		if(e.keyCode == 13){
+			document.form.http_passwd.focus();
+		}
+	};
+
+	document.form.http_passwd.onkeyup = function(e){
+		if(e.keyCode == 13){
+			document.form.http_passwd_2.focus();
+		}
+	};
+
+	document.form.http_passwd_2.onkeyup = function(e){
+		if(e.keyCode == 13){
+			submitForm();
+		}
+	};
 }
 
 function submitForm(){
@@ -280,8 +303,7 @@ function showError(str){
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="login_authorization" value="">
 <input name="foilautofill" style="display: none;" type="password">
-<table align="center" cellpadding="0" cellspacing="0">
-	<tr height="75px"></tr>
+<table id="loginTable" align="center" cellpadding="0" cellspacing="0" style="display:none">
 	<tr>
 		<td>
 			<div>
@@ -301,7 +323,7 @@ function showError(str){
 									<#Web_Title2#> is currently not protected and uses an unsafe default username and password.
 								</div>
 								<div style="margin-bottom:10px;">
-									Please change your login username and password for better router security.
+									<#QIS_pass_desc1#>
 								</div>
 								<div id="KRHint" style="margin-bottom:10px;display:none">
 									<#JS_validPWD#>
@@ -338,7 +360,7 @@ function showError(str){
 					<tr align="right" style="height:68px;">
 						<td colspan="2">
 							<div style="text-align: center;float:right; margin:50px 0px 0px 78px;">
-								<input type="submit" class="button" onclick="submitForm();" value="<#CTL_modify#>">
+								<input type="button" class="button" onclick="submitForm();" value="<#CTL_modify#>">
 							</div>	
 						</td>
 					</tr>
@@ -346,7 +368,6 @@ function showError(str){
 			</div>
 		</td>
 	</tr>
-	<tr></tr>
 </table>
 </form>
 </body>

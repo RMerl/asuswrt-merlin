@@ -1,0 +1,122 @@
+#if defined(PJ_BUILD_DLL)
+TARGET		pjlib.dll
+TARGETTYPE	dll
+UID		0x0 0xA0000001
+
+CAPABILITY	NONE
+LIBRARY		esock.lib insock.lib charconv.lib euser.lib estlib.lib
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\pjlib.def
+
+#else
+
+TARGET 		pjlib.lib
+TARGETTYPE 	lib
+
+#endif
+
+SOURCEPATH	..\pjlib\src\pj
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+// Must compile as C++, otherwise exception would not work
+OPTION          CW -lang c++
+OPTION          ARMCC --cpp --gnu
+OPTION          GCC     -x c++
+OPTION          GCCE    -x c++
+
+//
+// Platform independent source
+//
+SOURCE		activesock.c
+SOURCE		array.c
+SOURCE		config.c
+SOURCE		ctype.c
+SOURCE		errno.c
+SOURCE		fifobuf.c
+SOURCE		guid.c
+SOURCE		hash.c
+SOURCE		list.c
+SOURCE		lock.c
+SOURCE		string.c
+SOURCE		log.c
+SOURCE		os_info.c
+SOURCE		os_info_symbian.cpp
+SOURCE		os_time_common.c
+SOURCE		pool.c
+SOURCE		pool_buf.c
+SOURCE		pool_caching.c
+SOURCE		rand.c
+SOURCE		rbtree.c
+SOURCE		ssl_sock_common.c
+SOURCE		ssl_sock_dump.c
+SOURCE		sock_common.c
+SOURCE		sock_qos_common.c
+SOURCE		types.c
+
+
+//
+// Platform dependent source
+//
+SOURCE		compat\string_compat.c
+SOURCE		addr_resolv_symbian.cpp
+SOURCE		exception_symbian.cpp
+SOURCE		file_access_unistd.c
+SOURCE		file_io_ansi.c
+SOURCE		guid_simple.c
+SOURCE		ioqueue_symbian.cpp
+SOURCE		ip_helper_symbian.cpp
+SOURCE		log_writer_symbian_console.cpp
+SOURCE		os_core_symbian.cpp
+SOURCE		os_error_symbian.cpp
+SOURCE		os_timestamp_common.c
+SOURCE		os_time_unix.c
+SOURCE		os_timestamp_posix.c
+SOURCE		pool_policy_new.cpp
+SOURCE		ssl_sock_symbian.cpp
+SOURCE		sock_symbian.cpp
+SOURCE		sock_select_symbian.cpp
+SOURCE		sock_qos_symbian.cpp
+SOURCE		timer_symbian.cpp
+SOURCE		unicode_symbian.cpp
+
+//DOCUMENT	os_symbian.h
+
+//DOCUMENT	pj\addr_resolv.h
+//DOCUMENT	pj\array.h
+//DOCUMENT	pj\assert.h
+//DOCUMENT	pj\config.h
+//DOCUMENT	pj\config_site.h
+//DOCUMENT	pj\config_site_sample.h
+//DOCUMENT	pj\ctype.h
+//DOCUMENT	pj\errno.h
+//DOCUMENT	pj\except.h
+//DOCUMENT	pj\file_access.h
+//DOCUMENT	pj\file_io.h
+//DOCUMENT	pj\guid.h
+//DOCUMENT	pj\hash.h
+//DOCUMENT	pj\ioqueue.h
+//DOCUMENT	pj\ip_helper.h
+//DOCUMENT	pj\list.h
+//DOCUMENT	pj\lock.h
+//DOCUMENT	pj\log.h
+//DOCUMENT	pj\os.h
+//DOCUMENT	pj\\pool.h
+//DOCUMENT	pj\\pool_buf.h
+//DOCUMENT	pj\rand.h
+//DOCUMENT	pj\rbtree.h
+//DOCUMENT	pj\sock.h
+//DOCUMENT	pj\sock_select.h
+//DOCUMENT	pj\string.h
+//DOCUMENT	pj\timer.h
+//DOCUMENT	pj\types.h
+//DOCUMENT	pj\unicode.h
+
+SYSTEMINCLUDE	..\pjlib\include
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+
+

@@ -211,6 +211,12 @@ void SearchServerTree(Server_TreeNode* treeRoot)
 
 int create_sync_list()
 {
+
+#if MEM_POOL_ENABLE
+        mem_pool_init();
+        printf("######eable mem  pool######\n");
+#endif
+
     local_sync = 0;
     server_sync = 1;
     finished_initial = 0;

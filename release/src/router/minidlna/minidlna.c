@@ -180,7 +180,11 @@ sighup(int sig)
 static void
 set_startup_time(void)
 {
+#if 0
 	startup_time = time(NULL);
+#else
+	startup_time = uptime();
+#endif
 }
 
 static void
@@ -313,6 +317,7 @@ check_db(sqlite3 *db, int new_db, pid_t *scanner_pid)
 	char **result;
 	int i, rows = 0;
 	int ret;
+	int retry_times;
 
 	if (!new_db)
 	{
@@ -364,9 +369,15 @@ rescan:
 				ret, DB_VERSION);
 		sqlite3_close(db);
 
+		retry_times = 0;
+retry:
 		snprintf(cmd, sizeof(cmd), "rm -rf %s/files.db %s/art_cache", db_path_spec, db_path_spec);
-		if (system(cmd) != 0)
+		if (system(cmd) != 0) {
+			if (retry_times++ < 2)
+				goto retry;
+
 			DPRINTF(E_FATAL, L_GENERAL, "Failed to clean old file cache!  Exiting...\n");
+		}
 
 		open_db(&db);
 		if (CreateDatabase() != 0)
@@ -529,6 +540,7 @@ init(int argc, char **argv)
 	media_types types;
 	uid_t uid = 0;
 	char *ptr, *shift;
+	int retry_times;
 
 	/* first check if "-f" option is used */
 	for (i=2; i<argc; i++)
@@ -868,8 +880,14 @@ init(int argc, char **argv)
 			}
 
 			snprintf(buf, sizeof(buf), "rm -rf %s/files.db %s/art_cache", db_path_spec, db_path_spec);
-			if (system(buf) != 0)
+			retry_times = 0;
+retry:
+			if (system(buf) != 0) {
+				if (retry_times++ < 2)
+					goto retry;
+
 				DPRINTF(E_FATAL, L_GENERAL, "Failed to clean old file cache. EXITING\n");
+			}
 			break;
 		case 'u':
 			if (i+1 != argc)
@@ -1128,6 +1146,8 @@ RETURN:
 }
 #endif
 
+#define MIN_MCAST_REFRESH	250
+
 /* === main === */
 /* process HTTP or SSDP requests */
 int
@@ -1143,6 +1163,7 @@ main(int argc, char **argv)
 	fd_set writeset;
 	struct timeval timeout, timeofday, lastnotifytime = {0, 0};
 	time_t lastupdatetime = 0;
+	time_t lastrenewmcast = 0;
 	int max_fd = -1;
 	int last_changecnt = 0;
 	pid_t scanner_pid = 0;
@@ -1230,13 +1251,18 @@ main(int argc, char **argv)
 #endif
 
 	reload_ifaces(0);
+#if 0
 	lastnotifytime.tv_sec = time(NULL) + runtime_vars.notify_interval;
+#else
+	lastnotifytime.tv_sec = lastrenewmcast = uptime();
+#endif
 
 	/* main loop */
 	while (!quitting)
 	{
 		/* Check if we need to send SSDP NOTIFY messages and do it if
 		 * needed */
+#if 0
 		if (gettimeofday(&timeofday, 0) < 0)
 		{
 			DPRINTF(E_ERROR, L_GENERAL, "gettimeofday(): %s\n", strerror(errno));
@@ -1244,7 +1270,18 @@ main(int argc, char **argv)
 			timeout.tv_usec = 0;
 		}
 		else
+#else
+		timeofday.tv_sec = uptime();
+		timeofday.tv_usec = 0;
+#endif
 		{
+			if ((runtime_vars.notify_interval > MIN_MCAST_REFRESH) &&
+				(uptime() >= (lastrenewmcast + MIN_MCAST_REFRESH)))
+			{
+				reload_ifaces(0);
+				lastrenewmcast = uptime();
+			}
+
 			/* the comparison is not very precise but who cares ? */
 			if (timeofday.tv_sec >= (lastnotifytime.tv_sec + runtime_vars.notify_interval))
 			{

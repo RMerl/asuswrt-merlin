@@ -1,0 +1,275 @@
+/*
+========================================================================
+ Name        : symbian_ua_guiSettingItemList.rssi
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+#include "symbian_ua_guiSettingItemList.hrh"
+#include "symbian_ua_guiSettingItemList.loc"
+
+RESOURCE AVKON_VIEW r_symbian_ua_gui_setting_item_list_symbian_ua_gui_setting_item_list_view
+	{
+	cba = r_symbian_ua_gui_setting_item_list_control_pane;
+	menubar = r_symbian_ua_gui_setting_item_list_options_menu;
+	}
+RESOURCE MENU_BAR r_symbian_ua_gui_setting_item_list_options_menu
+	{
+	titles =
+		{
+		MENU_TITLE
+			{
+			menu_pane = r_symbian_ua_gui_setting_item_list_menu_pane1_menu_pane;
+			}
+		};
+	}
+RESOURCE MENU_PANE r_symbian_ua_gui_setting_item_list_menu_pane1_menu_pane
+	{
+	items =
+		{
+		MENU_ITEM
+			{
+			command = ESymbian_ua_guiSettingItemListViewMenuItem1Command;
+			txt = STR_symbian_ua_guiSettingItemListView_4;
+			}
+		};
+	}
+RESOURCE STATUS_PANE_APP_MODEL r_symbian_ua_gui_setting_item_list_status_pane
+	{
+	panes =
+		{
+		SPANE_PANE
+			{
+			id = EEikStatusPaneUidTitle;
+			type = EAknCtTitlePane;
+			resource = r_symbian_ua_gui_setting_item_list_title_resource;
+			}
+		};
+	}
+RESOURCE TITLE_PANE r_symbian_ua_gui_setting_item_list_title_resource
+	{
+	txt = STR_symbian_ua_guiSettingItemListView_2;
+	}
+RESOURCE AVKON_SETTING_ITEM_LIST r_symbian_ua_gui_setting_item_list_symbian_ua_gui_setting_item_list
+	{
+	items =
+		{
+		AVKON_SETTING_ITEM
+			{
+			name = STR_symbian_ua_guiSettingItemListView_5;
+			identifier = ESymbian_ua_guiSettingItemListViewEd_registrar;
+			setting_page_resource = r_symbian_ua_gui_setting_item_list_ed_registrar_setting_page_resource;
+			},
+		AVKON_SETTING_ITEM
+			{
+			name = STR_symbian_ua_guiSettingItemListView_8;
+			identifier = ESymbian_ua_guiSettingItemListViewEd_user;
+			setting_page_resource = r_symbian_ua_gui_setting_item_list_ed_user_setting_page_resource;
+			},
+		AVKON_SETTING_ITEM
+			{
+			name = STR_symbian_ua_guiSettingItemListView_16;
+			identifier = ESymbian_ua_guiSettingItemListViewEd_password;
+			setting_page_resource = r_symbian_ua_gui_setting_item_list_ed_password_setting_page_resource;
+			},
+		AVKON_SETTING_ITEM
+			{
+			name = STR_symbian_ua_guiSettingItemListView_24;
+			identifier = ESymbian_ua_guiSettingItemListViewB_srtp;
+			setting_page_resource = r_symbian_ua_gui_setting_item_list_b_srtp_setting_page_resource;
+			associated_resource = r_symbian_ua_gui_setting_item_list_b_srtp;
+			},
+		AVKON_SETTING_ITEM
+			{
+			name = STR_symbian_ua_guiSettingItemListView_46;
+			identifier = ESymbian_ua_guiSettingItemListViewB_ice;
+			setting_page_resource = r_symbian_ua_gui_setting_item_list_b_ice_setting_page_resource;
+			associated_resource = r_symbian_ua_gui_setting_item_list_b_ice;
+			},
+		AVKON_SETTING_ITEM
+			{
+			name = STR_symbian_ua_guiSettingItemListView_19;
+			identifier = ESymbian_ua_guiSettingItemListViewEd_stun_server;
+			setting_page_resource = r_symbian_ua_gui_setting_item_list_ed_stun_server_setting_page_resource;
+			}
+		};
+	}
+RESOURCE CBA r_symbian_ua_gui_setting_item_list_control_pane
+	{
+	buttons =
+		{
+		CBA_BUTTON
+			{
+			id = EAknSoftkeyOptions;
+			txt = STR_symbian_ua_guiSettingItemListView_140;
+			},
+		CBA_BUTTON
+			{
+			id = EAknSoftkeySave;
+			txt = STR_symbian_ua_guiSettingItemListView_141;
+			}
+		};
+	}
+RESOURCE AVKON_SETTING_PAGE r_symbian_ua_gui_setting_item_list_ed_registrar_setting_page_resource
+	{
+	number = -16380;
+	label = STR_symbian_ua_guiSettingItemListView_5;
+	type = EEikCtEdwin;
+	editor_resource_id = r_symbian_ua_gui_setting_item_list_ed_registrar_editor_resource_id;
+	}
+RESOURCE EDWIN r_symbian_ua_gui_setting_item_list_ed_registrar_editor_resource_id
+	{
+	maxlength = 255;
+	default_case = EAknEditorLowerCase;
+	allowed_case_modes = EAknEditorAllCaseModes;
+	numeric_keymap = EAknEditorStandardNumberModeKeymap;
+	default_input_mode = EAknEditorTextInputMode;
+	allowed_input_modes = EAknEditorTextInputMode | EAknEditorNumericInputMode | EAknEditorSecretAlphaInputMode | EAknEditorKatakanaInputMode | EAknEditorFullWidthTextInputMode | EAknEditorFullWidthNumericInputMode | EAknEditorFullWidthKatakanaInputMode | EAknEditorHiraganaKanjiInputMode | EAknEditorHalfWidthTextInputMode;
+	special_character_table = 0;
+	}
+RESOURCE AVKON_SETTING_PAGE r_symbian_ua_gui_setting_item_list_ed_user_setting_page_resource
+	{
+	number = -16380;
+	label = STR_symbian_ua_guiSettingItemListView_8;
+	type = EEikCtEdwin;
+	editor_resource_id = r_symbian_ua_gui_setting_item_list_ed_user_editor_resource_id;
+	}
+RESOURCE EDWIN r_symbian_ua_gui_setting_item_list_ed_user_editor_resource_id
+	{
+	maxlength = 255;
+	default_case = EAknEditorLowerCase;
+	allowed_case_modes = EAknEditorAllCaseModes;
+	numeric_keymap = EAknEditorStandardNumberModeKeymap;
+	default_input_mode = EAknEditorTextInputMode;
+	allowed_input_modes = EAknEditorTextInputMode | EAknEditorNumericInputMode | EAknEditorSecretAlphaInputMode | EAknEditorKatakanaInputMode | EAknEditorFullWidthTextInputMode | EAknEditorFullWidthNumericInputMode | EAknEditorFullWidthKatakanaInputMode | EAknEditorHiraganaKanjiInputMode | EAknEditorHalfWidthTextInputMode;
+	special_character_table = 0;
+	}
+RESOURCE AVKON_SETTING_PAGE r_symbian_ua_gui_setting_item_list_ed_password_setting_page_resource
+	{
+	number = -16380;
+	label = STR_symbian_ua_guiSettingItemListView_16;
+	type = EEikCtSecretEd;
+	editor_resource_id = r_symbian_ua_gui_setting_item_list_ed_password_editor_resource_id;
+	}
+RESOURCE SECRETED r_symbian_ua_gui_setting_item_list_ed_password_editor_resource_id
+	{num_letters = 32;
+
+	}
+RESOURCE AVKON_SETTING_PAGE r_symbian_ua_gui_setting_item_list_ed_stun_server_setting_page_resource
+	{
+	number = -16380;
+	label = STR_symbian_ua_guiSettingItemListView_19;
+	type = EEikCtEdwin;
+	editor_resource_id = r_symbian_ua_gui_setting_item_list_ed_stun_server_editor_resource_id;
+	}
+RESOURCE EDWIN r_symbian_ua_gui_setting_item_list_ed_stun_server_editor_resource_id
+	{
+	maxlength = 255;
+	default_case = EAknEditorTextCase;
+	allowed_case_modes = EAknEditorAllCaseModes;
+	numeric_keymap = EAknEditorStandardNumberModeKeymap;
+	default_input_mode = EAknEditorTextInputMode;
+	allowed_input_modes = EAknEditorTextInputMode | EAknEditorNumericInputMode | EAknEditorSecretAlphaInputMode | EAknEditorKatakanaInputMode | EAknEditorFullWidthTextInputMode | EAknEditorFullWidthNumericInputMode | EAknEditorFullWidthKatakanaInputMode | EAknEditorHiraganaKanjiInputMode | EAknEditorHalfWidthTextInputMode;
+	special_character_table = 0;
+	}
+RESOURCE AVKON_SETTING_PAGE r_symbian_ua_gui_setting_item_list_b_srtp_setting_page_resource
+	{
+	number = -16380;
+	label = STR_symbian_ua_guiSettingItemListView_24;
+	type = EAknCtPopupSettingList;
+	editor_resource_id = r_symbian_ua_gui_setting_item_list_b_srtp_editor_resource_id;
+	}
+RESOURCE POPUP_SETTING_LIST r_symbian_ua_gui_setting_item_list_b_srtp_editor_resource_id
+	{
+	}
+RESOURCE AVKON_POPUP_SETTING_TEXTS r_symbian_ua_gui_setting_item_list_b_srtp
+	{
+	setting_texts_resource = r_symbian_ua_gui_setting_item_list_b_srtp_setting_texts_resource;
+	popped_up_texts_resource = r_symbian_ua_gui_setting_item_list_b_srtp_popped_up_texts_resource;
+	}
+RESOURCE ARRAY r_symbian_ua_gui_setting_item_list_b_srtp_setting_texts_resource
+	{
+	items =
+		{
+		AVKON_ENUMERATED_TEXT
+			{
+			text = STR_symbian_ua_guiSettingItemListView_25;
+			value = 1;
+			},
+		AVKON_ENUMERATED_TEXT
+			{
+			text = STR_symbian_ua_guiSettingItemListView_27;
+			}
+		};
+	}
+RESOURCE ARRAY r_symbian_ua_gui_setting_item_list_b_srtp_popped_up_texts_resource
+	{
+	items =
+		{
+		LBUF
+			{
+			txt = STR_symbian_ua_guiSettingItemListView_26;
+			},
+		LBUF
+			{
+			txt = STR_symbian_ua_guiSettingItemListView_28;
+			}
+		};
+	}
+RESOURCE AVKON_SETTING_PAGE r_symbian_ua_gui_setting_item_list_b_ice_setting_page_resource
+	{
+	number = -16380;
+	label = STR_symbian_ua_guiSettingItemListView_46;
+	type = EAknCtPopupSettingList;
+	editor_resource_id = r_symbian_ua_gui_setting_item_list_b_ice_editor_resource_id;
+	}
+RESOURCE POPUP_SETTING_LIST r_symbian_ua_gui_setting_item_list_b_ice_editor_resource_id
+	{
+	}
+RESOURCE AVKON_POPUP_SETTING_TEXTS r_symbian_ua_gui_setting_item_list_b_ice
+	{
+	setting_texts_resource = r_symbian_ua_gui_setting_item_list_b_ice_setting_texts_resource;
+	popped_up_texts_resource = r_symbian_ua_gui_setting_item_list_b_ice_popped_up_texts_resource;
+	}
+RESOURCE ARRAY r_symbian_ua_gui_setting_item_list_b_ice_setting_texts_resource
+	{
+	items =
+		{
+		AVKON_ENUMERATED_TEXT
+			{
+			text = STR_symbian_ua_guiSettingItemListView_47;
+			value = 1;
+			},
+		AVKON_ENUMERATED_TEXT
+			{
+			text = STR_symbian_ua_guiSettingItemListView_49;
+			}
+		};
+	}
+RESOURCE ARRAY r_symbian_ua_gui_setting_item_list_b_ice_popped_up_texts_resource
+	{
+	items =
+		{
+		LBUF
+			{
+			txt = STR_symbian_ua_guiSettingItemListView_48;
+			},
+		LBUF
+			{
+			txt = STR_symbian_ua_guiSettingItemListView_50;
+			}
+		};
+	}
+RESOURCE TBUF r_symbian_ua_gui_setting_item_list_ed_registrar
+	{
+	buf = STR_symbian_ua_guiSettingItemListView_3;
+	}
+RESOURCE TBUF r_symbian_ua_gui_setting_item_list_ed_user
+	{
+	buf = STR_symbian_ua_guiSettingItemListView_7;
+	}
+RESOURCE TBUF r_symbian_ua_gui_setting_item_list_ed_stun_server
+	{
+	buf = STR_symbian_ua_guiSettingItemListView_18;
+	}

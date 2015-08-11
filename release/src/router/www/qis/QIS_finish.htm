@@ -177,7 +177,6 @@ function yadns_apply(){
 	var yadns_update = document.getElementsByName("yadns_update")[0];
 
 	document.getElementById('loadingIcon').style.display='';
-	parent.yadns_done = true;
 	yadns_update.yadns_enable_x.value = enable ? "1" : "0";
 	yadns_update.yadns_mode.value = (enable && defmode) ? "1" : yadns_mode;
 	yadns_update.submit();
@@ -186,7 +185,7 @@ function yadns_apply(){
 function yadns_change(need_apply){
 	var enable = document.getElementById("yadns_enable").checked;
 
-	parent.yadns_done = !need_apply;
+	parent.yadns_stage = need_apply ? 1 : 0;
 	document.getElementById("yadns_defmode").disabled = !enable;
 }
 
@@ -238,7 +237,7 @@ function detect_httpd(){
 				progressBar = 100;
 				document.getElementById('progress_bar_no').innerHTML = "100%";
 				document.getElementById("updateProgress").style.width = "100%";
-				document.getElementById("liveUpdateResult").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>";
+				document.getElementById("liveUpdateResult").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>";	/* untranslated */	/* Need to fine tune error cases */
 				document.getElementById("newFWgraded").style.display = "";
 				return false;				
 			}else if(webs_state_error == "3"){
@@ -312,9 +311,9 @@ function QKfinish_load_body(){
 	parent.detect_firmware();
 
 	var shown_str;
-	if(parent.yadns_support && parent.yadns_done){
-		gotoNext();
-		return false;
+	if(parent.yadns_support && parent.yadns_stage == 2) {
+		parent.yadns_stage++;
+		checkIsNewFirmware();
 	}
 		
 	document.getElementById("QISmain").style.display = "";
@@ -599,14 +598,20 @@ function QKfinish_load_body(){
 				shown_str = '<% nvram_get("wl0_key4"); %>';
 		}
 		else if(auth_mode2 == "psk"){
+			if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+				$("#security2_block")[0].style.display = "none";
 			$("#security2")[0].innerHTML = "WPA-Personal - TKIP";
 			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
 		}
 		else if(auth_mode2 == "psk2"){
+			if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+				$("#security2_block")[0].style.display = "none";
 			$("#security2")[0].innerHTML = "WPA2-Personal - AES";
 			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
 		}	
 		else if(auth_mode2 == "pskpsk2"){
+			if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+				$("#security2_block")[0].style.display = "none";
 			$("#security2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
 			shown_str = '<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>';
 		}
@@ -654,14 +659,20 @@ function QKfinish_load_body(){
 					shown_str = '<% nvram_get("wl1_key4"); %>';
 			}
 			else if(auth_mode == "psk"){
+				if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+					$("#security5_block")[0].style.display = "none";
 				$("#security5")[0].innerHTML = "WPA-Personal - TKIP";
 				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
 			}
 			else if(auth_mode == "psk2"){
+				if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+					$("#security5_block")[0].style.display = "none";
 				$("#security5")[0].innerHTML = "WPA2-Personal - AES";
 				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
 			}
 			else if(auth_mode == "pskpsk2"){
+				if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+					$("#security5_block")[0].style.display = "none";
 				$("#security5")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
 				shown_str = '<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>';
 			}
@@ -838,16 +849,22 @@ function QKfinish_load_body(){
 				shown_str = '<% nvram_get("wl2_key4"); %>';
 		}
 		else if(auth_mode_5_2 == "psk"){
+			if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+				$("#security5_2_block")[0].style.display = "none";
 			$("#security5_2")[0].innerHTML = "WPA-Personal - TKIP";
 			$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
 			shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
 		}
 		else if(auth_mode_5_2 == "psk2"){
+			if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+				$("#security5_2_block")[0].style.display = "none";
 			$("#security5_2")[0].innerHTML = "WPA2-Personal - AES";
 			$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
 			shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
 		}
 		else if(auth_mode_5_2 == "pskpsk2"){
+			if(parent.based_modelid == "RT-AC5300" || parent.based_modelid == "RT-AC3200")
+				$("#security5_2_block")[0].style.display = "none";
 			$("#security5_2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
 			$("#key5_2_item")[0].innerHTML = "<#Network_key#>";
 			shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
@@ -1003,7 +1020,7 @@ function QKfinish_load_body(){
 		$("#lanip")[0].innerHTML = reIP;
 		$(".wlcItem").css("display", "none");
 
-		if(parent.yadns_support){
+		if(parent.yadns_support && sw_mode==1 ){
 			$("#yadns_enable").checked = (yadns_enable != 0) ? true : false;
 			$("#yadns_defmode").checked = (yadns_mode == 1) ? true : false;
 			if(!parent.yadns_hideqis || yadns_enable != 0)
@@ -1097,24 +1114,37 @@ function gotoASUS(){
 	parent.location.href = "http://www.asus.com/support/";
 }
 
+var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 function goto_index(){
 	document.restartForm.force_change.value++;
 	document.restartForm.action_wait.value = 0;
 
-	if(parent.based_modelid == "4G-AC55U" && parent.wan_autodet_state == "4" && parent.usb_connected == 1){
+	if(parent.based_modelid == "4G-AC55U" && parent.wan_autodet_state == "4" && parent.usb_connected == 1 && wans_dualwan_orig == "wan usb"){
 		document.restartForm.wans_dualwan.disabled = false;
 		document.restartForm.wans_dualwan.value = "usb wan";
 		parent.sysReboot = true;
 	}
 
 	if(parent.sysReboot){
-		document.restartForm.action_wait.value = eval("<% get_default_reboot_time(); %>");
+		document.restartForm.action_wait.value = parent.rebootTime;
 		document.restartForm.action_script.value = "reboot";
 	}
-	else if(top.restartWireless){
-		document.restartForm.action_wait.value = 2;
-		document.restartForm.action_script.value = "restart_wireless;";
-	}
+	else{
+		if(parent.restartTime){
+			document.restartForm.action_script.value = "restart_time";
+		}
+
+		if(top.restartWireless){
+			document.restartForm.action_wait.value = 2;
+			if(document.restartForm.action_script.value == "")
+				document.restartForm.action_script.value = "restart_wireless";
+			else
+				document.restartForm.action_script.value += ";restart_wireless";
+		}
+		
+		if(parent.restartTime)
+			document.restartForm.action_wait.value = 5;
+	}	
 
 	if(document.restartForm.action_wait.value == 0){
 		document.getElementById('loadingIcon').style.display = '';
@@ -1142,9 +1172,10 @@ function startLiveDetect(){
 }
 
 function gotoNext(){
-	if(parent.yadns_support && !parent.yadns_done)
+	if(parent.yadns_support && parent.yadns_stage == 1) {
+		parent.yadns_stage++;
 		return yadns_apply();
-
+	}
 	return checkIsNewFirmware();
 }
 
@@ -1484,7 +1515,7 @@ function chkMBConState(){
 		<td id="tdWlcItem" align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"></td>	
 	</tr>
 	<tr class="wlcItem">
-	  <th width="180"><span id="wlcssid_item"><#Wireless_name#>(Remote)</span></th>
+	  <th width="180"><span id="wlcssid_item"><#Wireless_name#> (<#remote#>)</span></th>
 	  <td class="QISformtd">
 			<span id="wlcssid"></span>
 	  </td>
@@ -1571,13 +1602,13 @@ function chkMBConState(){
 	<div id="newFWDetected">
 		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;line-height:180%;font-size:18px;">
 			<div style="text-align:left;" id="showLiveUpdateResult_div">
-			<#exist_new#><br><br>Do not power off <#Web_Title2#> while upgrade in progress.
+			<#exist_new#><br><br><#Main_alert_proceeding_desc5#>
 			<br>
 			<br>
-			<div id="current_fw_div" style="display:none;">Your current firmware version is <span style="font-family:Segoe UI, Arial, sans-serif;" id="currentFW"></span></div>
+			<div id="current_fw_div" style="display:none;"><#ADSL_FW_item1#> : <span style="font-family:Segoe UI, Arial, sans-serif;" id="currentFW"></span></div>
 			<br>
 			<br>
-				<div id="Latest_fw_div" style="display:none;">Latest firmware version is <span style="font-family:Segoe UI, Arial, sans-serif;" id="latestFW"></span></div>	
+				<div id="Latest_fw_div" style="display:none;"><#ADSL_FW_item3#> : <span style="font-family:Segoe UI, Arial, sans-serif;" id="latestFW"></span></div>	
 			</div>
 		</div>
 		<br>
@@ -1604,7 +1635,7 @@ function chkMBConState(){
 
 	<div id="progressBar" class="QISGeneralFont" style="margin-top:5px;text-align:center;display:none;*margin-left:70px;line-height: 180%;font-size:18px;">
 		<div style="text-align:left;">
-		<#FIRM_ok_desc#><br>Do not power off <#Web_Title2#> while upgrade in progress.
+		<#FIRM_ok_desc#><br><#Main_alert_proceeding_desc5#>
 		</div>
 		<br>
 		<div id="updateProgress_bg" style="text-align:left;*margin-left:-65px;">

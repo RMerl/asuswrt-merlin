@@ -13,6 +13,7 @@
 #define QVLAN_MODE_PTHRU		0
 #define QVLAN_MODE_MBSS			1
 #define QVLAN_MODE_DYNAMIC		2
+#define QVLAN_MODE_MAX			(QVLAN_MODE_DYNAMIC)
 #define QVLAN_SHIFT_MODE		16
 #define QVLAN_MASK_MODE			0xffff0000
 #define QVLAN_MASK_VID			0x00000fff
@@ -115,4 +116,13 @@ qtn_vlan_is_group_addr(const uint8_t *mac)
 		&& mac[4] != 0xff);
 }
 
+RUBY_INLINE int
+qtn_vlancfg_reform(struct qtn_vlan_config *vcfg)
+{
+	/* remove 0,15,16,31 bits to restore vlan_cfg */
+	vcfg->vlan_cfg &= 0x7ffe7ffe;
+	vcfg->vlan_cfg >>= 1;
+
+	return ((vcfg->vlan_cfg & QVLAN_MASK_MODE) >> QVLAN_SHIFT_MODE);
+}
 #endif

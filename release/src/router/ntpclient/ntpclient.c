@@ -532,11 +532,8 @@ int main(int argc, char *argv[]) {
 		if (!primary_loop(usd, probe_count, cycle_time)) {
 			if (!nvram_match("ntp_ready", "1")) {
 				nvram_set("ntp_ready", "1");
-				if(nvram_contains_word("rc_support", "defpsk")){
+				if (nvram_contains_word("rc_support", "defpsk"))
 					nvram_set("x_Setting", "1");
-					nvram_set("w_Setting", "1");
-				}
-
 				doSystem("kill -SIGTSTP `cat %s`", "/var/run/ntp.pid");
 			}
 			close(usd);

@@ -1,0 +1,21 @@
+export CC = @CC@ -c
+export CXX = @CXX@ -c
+export AR = @AR@
+export LD = @LD@
+export LDOUT = -o 
+export RANLIB = @RANLIB@
+
+export OBJEXT := .@OBJEXT@
+export LIBEXT := .@LIBEXT@
+export LIBEXT2 := @LIBEXT2@
+
+export CC_OUT := @CC_OUT@
+export CC_INC := @CC_INC@
+export CC_DEF := @CC_DEF@
+export CC_OPTIMIZE := @CC_OPTIMIZE@
+export CC_LIB := -l
+
+export CC_SOURCES :=
+export CC_CFLAGS := @CC_CFLAGS@
+export CC_LDFLAGS :=
+

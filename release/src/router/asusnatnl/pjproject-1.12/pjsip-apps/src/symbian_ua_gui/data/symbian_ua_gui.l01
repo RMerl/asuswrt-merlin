@@ -1,0 +1,12 @@
+/*
+========================================================================
+ Name        : symbian_ua_gui.l01
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+// localized strings for language: UK English (01)
+#define STR_symbian_ua_guiApplication_1 "symbian_ua_gui"
+#define STR_symbian_ua_guiApplication_2 "symbian_ua_gui"
+#define STR_symbian_ua_guiApplication_3 "Please wait..."

@@ -443,6 +443,9 @@ typedef struct {
 	BOOL bNTAclSupport;
 	BOOL bForceUnknownAclUser;
 	BOOL bUseSendfile;
+#if defined(HAVE_BCM_RECVFILE)
+	BOOL bUseRecvfile;
+#endif /* HAVE_BCM_RECVFILE */
 	BOOL bProfileAcls;
 	BOOL bMap_acl_inherit;
 	BOOL bAfs_Share;
@@ -584,6 +587,9 @@ static service sDefault = {
 	True,			/* bNTAclSupport */
 	False,                  /* bForceUnknownAclUser */
 	False,			/* bUseSendfile */
+#if defined(HAVE_BCM_RECVFILE)
+	False,			/* bUseRecvfile */
+#endif /* HAVE_BCM_RECVFILE */
 	False,			/* bProfileAcls */
 	False,			/* bMap_acl_inherit */
 	False,			/* bAfs_Share */
@@ -1029,6 +1035,9 @@ static struct parm_struct parm_table[] = {
 	{"sync always", P_BOOL, P_LOCAL, &sDefault.bSyncAlways, NULL, NULL, FLAG_ADVANCED | FLAG_SHARE}, 
 	{"use mmap", P_BOOL, P_GLOBAL, &Globals.bUseMmap, NULL, NULL, FLAG_ADVANCED}, 
 	{"use sendfile", P_BOOL, P_LOCAL, &sDefault.bUseSendfile, NULL, NULL, FLAG_ADVANCED | FLAG_SHARE}, 
+#if defined(HAVE_BCM_RECVFILE)
+	{"use recvfile", P_BOOL, P_LOCAL, &sDefault.bUseRecvfile, NULL, NULL, FLAG_ADVANCED | FLAG_SHARE},
+#endif /* HAVE_BCM_RECVFILE */
 	{"hostname lookups", P_BOOL, P_GLOBAL, &Globals.bHostnameLookups, NULL, NULL, FLAG_ADVANCED}, 
 	{"write cache size", P_INTEGER, P_LOCAL, &sDefault.iWriteCacheSize, NULL, NULL, FLAG_ADVANCED | FLAG_SHARE | FLAG_DEPRECATED}, 
 
@@ -2112,6 +2121,9 @@ FN_LOCAL_BOOL(lp_nt_acl_support, bNTAclSupport)
 FN_LOCAL_BOOL(lp_force_unknown_acl_user, bForceUnknownAclUser)
 FN_LOCAL_BOOL(lp_ea_support, bEASupport)
 FN_LOCAL_BOOL(_lp_use_sendfile, bUseSendfile)
+#if defined(HAVE_BCM_RECVFILE)
+FN_LOCAL_BOOL(_lp_use_recvfile, bUseRecvfile)
+#endif /* HAVE_BCM_RECVFILE */
 FN_LOCAL_BOOL(lp_profile_acls, bProfileAcls)
 FN_LOCAL_BOOL(lp_map_acl_inherit, bMap_acl_inherit)
 FN_LOCAL_BOOL(lp_afs_share, bAfs_Share)
@@ -5591,6 +5603,29 @@ void set_use_sendfile(int snum, BOOL val)
 	else
 		sDefault.bUseSendfile = val;
 }
+
+#if defined(HAVE_BCM_RECVFILE)
+/*******************************************************************
+  check if recvfile is enabled
+ ********************************************************************/
+
+BOOL lp_use_recvfile(int snum)
+{
+    return (_lp_use_recvfile(snum));
+}
+
+/*******************************************************************
+  Turn off recvfile if we find the underlying OS doesn't support it.
+ ********************************************************************/
+
+void set_use_recvfile(int snum, BOOL val)
+{
+    if (LP_SNUM_OK(snum))
+        ServicePtrs[snum]->bUseRecvfile = val;
+    else
+        sDefault.bUseRecvfile = val;
+}
+#endif /* HAVE_BCM_RECVFILE */
 
 /*******************************************************************
  Turn off storing DOS attributes if this share doesn't support it.

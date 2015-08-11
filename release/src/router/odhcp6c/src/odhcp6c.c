@@ -25,7 +25,6 @@
 #include <stdbool.h>
 
 #include <net/if.h>
-#include <sys/wait.h>
 #include <sys/syscall.h>
 #include <arpa/inet.h>
 
@@ -46,10 +45,12 @@ static volatile bool signal_usr2 = false;
 static volatile bool signal_term = false;
 
 static int urandom_fd = -1, allow_slaac_only = 0;
-static bool bound = false, release = true;
+static bool bound = false, release = true, ra = false;
 static time_t last_update = 0;
 
 static unsigned int min_update_interval = DEFAULT_MIN_UPDATE_INTERVAL;
+static unsigned int script_sync_delay = 10;
+static unsigned int script_accu_delay = 1;
 
 int main(_unused int argc, char* const argv[])
 {
@@ -222,6 +223,9 @@ int main(_unused int argc, char* const argv[])
 		}
 	}
 
+	if (allow_slaac_only > 0)
+		script_sync_delay = allow_slaac_only;
+
 	openlog("odhcp6c", logopt, LOG_DAEMON);
 	if (!verbosity)
 		setlogmask(LOG_UPTO(LOG_WARNING));
@@ -234,7 +238,6 @@ int main(_unused int argc, char* const argv[])
 	signal(SIGIO, sighandler);
 	signal(SIGHUP, sighandler);
 	signal(SIGINT, sighandler);
-	signal(SIGCHLD, sighandler);
 	signal(SIGTERM, sighandler);
 	signal(SIGUSR1, sighandler);
 	signal(SIGUSR2, sighandler);
@@ -266,7 +269,7 @@ int main(_unused int argc, char* const argv[])
 		}
 	}
 
-	script_call("started");
+	script_call("started", 0, false);
 
 	while (!signal_term) { // Main logic
 		odhcp6c_clear_state(STATE_SERVER_ID);
@@ -278,13 +281,14 @@ int main(_unused int argc, char* const argv[])
 		odhcp6c_clear_state(STATE_NTP_FQDN);
 		odhcp6c_clear_state(STATE_SIP_IP);
 		odhcp6c_clear_state(STATE_SIP_FQDN);
-		dhcpv6_set_ia_mode(ia_na_mode, ia_pd_mode);
 		bound = false;
 
 		syslog(LOG_NOTICE, "(re)starting transaction on %s", ifname);
 
 		signal_usr1 = signal_usr2 = false;
-		int mode = dhcpv6_request(DHCPV6_MSG_SOLICIT);
+		int mode = dhcpv6_set_ia_mode(ia_na_mode, ia_pd_mode);
+		if (mode != DHCPV6_STATELESS)
+			mode = dhcpv6_request(DHCPV6_MSG_SOLICIT);
 		odhcp6c_signal_process();
 
 		if (mode < 0)
@@ -315,7 +319,7 @@ int main(_unused int argc, char* const argv[])
 
 			while (!signal_usr2 && !signal_term) {
 				signal_usr1 = false;
-				script_call("informed");
+				script_call("informed", script_sync_delay, true);
 
 				int res = dhcpv6_poll_reconfigure();
 				odhcp6c_signal_process();
@@ -341,7 +345,7 @@ int main(_unused int argc, char* const argv[])
 
 		case DHCPV6_STATEFUL:
 			bound = true;
-			script_call("bound");
+			script_call("bound", script_sync_delay, true);
 			syslog(LOG_NOTICE, "entering stateful-mode on %s", ifname);
 
 			while (!signal_usr2 && !signal_term) {
@@ -350,7 +354,7 @@ int main(_unused int argc, char* const argv[])
 				int res = dhcpv6_poll_reconfigure();
 				odhcp6c_signal_process();
 				if (res > 0) {
-					script_call("updated");
+					script_call("updated", 0, false);
 					continue;
 				}
 
@@ -365,7 +369,7 @@ int main(_unused int argc, char* const argv[])
 				odhcp6c_signal_process();
 				if (res > 0) { // Renew was succesfull
 					// Publish updates
-					script_call("updated");
+					script_call("updated", 0, false);
 					continue; // Renew was successful
 				}
 
@@ -384,7 +388,7 @@ int main(_unused int argc, char* const argv[])
 				odhcp6c_signal_process();
 
 				if (res > 0)
-					script_call("rebound");
+					script_call("rebound", 0, true);
 				else {
 					break;
 				}
@@ -404,7 +408,7 @@ int main(_unused int argc, char* const argv[])
 
 		// Add all prefixes to lost prefixes
 		bound = false;
-		script_call("unbound");
+		script_call("unbound", 0, true);
 
 		if (server_id_len > 0 && (ia_pd_len > 0 || ia_na_len > 0) && release)
 			dhcpv6_request(DHCPV6_MSG_RELEASE);
@@ -413,7 +417,7 @@ int main(_unused int argc, char* const argv[])
 		odhcp6c_clear_state(STATE_IA_PD);
 	}
 
-	script_call("stopped");
+	script_call("stopped", 0, true);
 	return 0;
 }
 
@@ -437,7 +441,7 @@ static int usage(void)
 	"	-a		Don't send Accept Reconfigure option\n"
 	"	-f		Don't send Client FQDN option\n"
 	"	-k		Don't send a RELEASE when stopping\n"
-	"	-t <seconds>	Maximum timeout for DHCPv6-SOLICIT (3600)\n"
+	"	-t <seconds>	Maximum timeout for DHCPv6-SOLICIT (120)\n"
 	"	-m <seconds>	Minimum time between accepting updates (30)\n"
 	"\nInvocation options:\n"
 	"	-p <pidfile>	Set pidfile (/var/run/odhcp6c.pid)\n"
@@ -483,11 +487,16 @@ bool odhcp6c_signal_process(void)
 
 		bool ra_updated = ra_process();
 
-		if (ra_link_up())
+		if (ra_link_up()) {
 			signal_usr2 = true;
+			ra = false;
+		}
 
-		if (ra_updated && (bound || allow_slaac_only >= 0))
-			script_call("ra-updated"); // Immediate process urgent events
+		if (ra_updated && (bound || allow_slaac_only >= 0)) {
+			script_call("ra-updated", (!ra && !bound) ?
+					script_sync_delay : script_accu_delay, false);
+			ra = true;
+		}
 	}
 
 	return signal_usr1 || signal_usr2 || signal_term;
@@ -553,14 +562,15 @@ void* odhcp6c_get_state(enum odhcp6c_state state, size_t *len)
 }
 
 
-struct odhcp6c_entry* odhcp6c_find_entry(enum odhcp6c_state state, const struct odhcp6c_entry *new)
+static struct odhcp6c_entry* odhcp6c_find_entry(enum odhcp6c_state state, const struct odhcp6c_entry *new)
 {
-	size_t len, cmplen = offsetof(struct odhcp6c_entry, target) + new->length / 8;
-	struct odhcp6c_entry *start = odhcp6c_get_state(state, &len);
-	struct odhcp6c_entry *x = NULL;
+	size_t len, cmplen = offsetof(struct odhcp6c_entry, target) + ((new->length + 7) / 8);
+	uint8_t *start = odhcp6c_get_state(state, &len);
 
-	for (struct odhcp6c_entry *c = start; !x && c < &start[len/sizeof(*c)]; ++c)
-		if (!memcmp(c, new, cmplen))
+	for (struct odhcp6c_entry *c = (struct odhcp6c_entry*)start;
+			(uint8_t*)c < &start[len] && &c->auxtarget[c->auxlen] <= &start[len];
+			c = (struct odhcp6c_entry*)(&c->auxtarget[c->auxlen]))
+		if (!memcmp(c, new, cmplen) && !memcmp(c->auxtarget, new->auxtarget, new->auxlen))
 			return c;
 
 	return NULL;
@@ -572,7 +582,7 @@ bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new,
 {
 	size_t len;
 	struct odhcp6c_entry *x = odhcp6c_find_entry(state, new);
-	struct odhcp6c_entry *start = odhcp6c_get_state(state, &len);
+	uint8_t *start = odhcp6c_get_state(state, &len);
 
 	if (x && x->valid > new->valid && new->valid < safe)
 		new->valid = safe;
@@ -584,20 +594,18 @@ bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new,
 					new->valid - x->valid < min_update_interval &&
 					new->preferred >= x->preferred &&
 					new->preferred != UINT32_MAX &&
-					new->preferred - x->preferred < min_update_interval &&
-					x->class == new->class)
+					new->preferred - x->preferred < min_update_interval)
 				return false;
 			x->valid = new->valid;
 			x->preferred = new->preferred;
 			x->t1 = new->t1;
 			x->t2 = new->t2;
-			x->class = new->class;
 			x->iaid = new->iaid;
 		} else {
-			odhcp6c_add_state(state, new, sizeof(*new));
+			odhcp6c_add_state(state, new, sizeof(*new) + new->auxlen);
 		}
 	} else if (x) {
-		odhcp6c_remove_state(state, (x - start) * sizeof(*x), sizeof(*x));
+		odhcp6c_remove_state(state, ((uint8_t*)x) - start, sizeof(*x) + x->auxlen);
 	}
 	return true;
 }
@@ -606,8 +614,10 @@ bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new,
 static void odhcp6c_expire_list(enum odhcp6c_state state, uint32_t elapsed)
 {
 	size_t len;
-	struct odhcp6c_entry *start = odhcp6c_get_state(state, &len);
-	for (struct odhcp6c_entry *c = start; c < &start[len / sizeof(*c)]; ++c) {
+	uint8_t *start = odhcp6c_get_state(state, &len);
+	for (struct odhcp6c_entry *c = (struct odhcp6c_entry*)start;
+			(uint8_t*)c < &start[len] && &c->auxtarget[c->auxlen] <= &start[len];
+			c = (struct odhcp6c_entry*)(&c->auxtarget[c->auxlen])) {
 		if (c->t1 < elapsed)
 			c->t1 = 0;
 		else if (c->t1 != UINT32_MAX)
@@ -629,7 +639,7 @@ static void odhcp6c_expire_list(enum odhcp6c_state state, uint32_t elapsed)
 			c->valid -= elapsed;
 
 		if (!c->valid)
-			odhcp6c_remove_state(state, (c - start) * sizeof(*c), sizeof(*c));
+			odhcp6c_remove_state(state, ((uint8_t*)c) - start, sizeof(*c) + c->auxlen);
 	}
 }
 
@@ -643,6 +653,7 @@ void odhcp6c_expire(void)
 	odhcp6c_expire_list(STATE_RA_PREFIX, elapsed);
 	odhcp6c_expire_list(STATE_RA_ROUTE, elapsed);
 	odhcp6c_expire_list(STATE_RA_DNS, elapsed);
+	odhcp6c_expire_list(STATE_RA_SEARCH, elapsed);
 	odhcp6c_expire_list(STATE_IA_NA, elapsed);
 	odhcp6c_expire_list(STATE_IA_PD, elapsed);
 }
@@ -666,9 +677,7 @@ bool odhcp6c_is_bound(void)
 
 static void sighandler(int signal)
 {
-	if (signal == SIGCHLD)
-		while (waitpid(-1, NULL, WNOHANG) > 0);
-	else if (signal == SIGUSR1)
+	if (signal == SIGUSR1)
 		signal_usr1 = true;
 	else if (signal == SIGUSR2)
 		signal_usr2 = true;

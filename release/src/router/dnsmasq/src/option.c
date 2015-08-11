@@ -2699,6 +2699,8 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 		  new->flags |= CONTEXT_RA_ROUTER | CONTEXT_RA;
 		else if (strcmp(a[leasepos], "ra-stateless") == 0)
 		  new->flags |= CONTEXT_RA_STATELESS | CONTEXT_DHCP | CONTEXT_RA;
+		else if (strcmp(a[leasepos], "off-link") == 0)
+		  new->flags |= CONTEXT_RA_OFF_LINK;
 		else if (leasepos == 1 && inet_pton(AF_INET6, a[leasepos], &new->end6))
 		  new->flags |= CONTEXT_DHCP; 
 		else if (strstr(a[leasepos], "constructor:") == a[leasepos])
@@ -4369,7 +4371,7 @@ void read_opts(int argc, char **argv, char *compile_opts)
 {
   char *buff = opt_malloc(MAXDNAME);
   int option, conffile_opt = '7', testmode = 0;
-  char *arg, *conffile = NULL;
+  char *arg, *conffile = CONFFILE;
       
   opterr = 0;
 
@@ -4486,11 +4488,8 @@ void read_opts(int argc, char **argv, char *compile_opts)
   if (conffile)
     {
       one_file(conffile, conffile_opt);
-      free(conffile);
-    }
-  else
-    {
-      one_file(CONFFILE, conffile_opt);
+      if (conffile_opt == 0)
+	free(conffile);
     }
 
   /* port might not be known when the address is parsed - fill in here */

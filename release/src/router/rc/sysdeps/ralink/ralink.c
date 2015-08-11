@@ -452,7 +452,7 @@ int getRegDomain_5G(void)
 }
 
 
-int setRegSpec(const char *regSpec)
+int setRegSpec(const char *regSpec, int do_write)
 {
 	char REGSPEC[MAX_REGSPEC_LEN+1];
 	char file[64];
@@ -465,7 +465,7 @@ int setRegSpec(const char *regSpec)
 	for (i=0; regSpec[i]!='\0' ;i++)
 		REGSPEC[i]=(char)toupper(regSpec[i]);
 
-	// may be CE, FCC, AU, SG, NCC, JP. It is based on files in /ra_SKU/
+	// may be CE, FCC, AU, SG, NCC, NCC2, JP. It is based on files in /ra_SKU/
 	snprintf(file, sizeof(file), "/ra_SKU/SingleSKU_%s.dat", REGSPEC);
 	if (!f_exists(file))
 		return -1;
@@ -486,7 +486,8 @@ int setRegSpec(const char *regSpec)
 #endif	/* RTAC52U */
 #endif	/* RTCONFIG_HAS_5G */
 
-	FWrite(REGSPEC, REGSPEC_ADDR, MAX_REGSPEC_LEN);
+	if(do_write)
+		FWrite(REGSPEC, REGSPEC_ADDR, MAX_REGSPEC_LEN);
 	return 0;
 }
 
@@ -2070,14 +2071,31 @@ int gen_ralink_config(int band, int is_iNIC)
 			if (atoi(str) == 0)
 			{
 				fprintf(fp, "AutoChannelSelect=%d\n", 2);
+				memset(tmpstr, 0x0, sizeof(tmpstr));
 				if (band && nvram_get_int(strcat_r(prefix, "bw", tmp)) > 0) {
 #ifdef RTN56U
 					if (nvram_match(strcat_r(prefix, "country_code", tmp), "TW"))
-						fprintf(fp, "AutoChannelSkipList=%d;%d\n", 56, 165);
+						sprintf(tmpstr,"%d;%d",56,165);
 					else
 #endif
-					fprintf(fp, "AutoChannelSkipList=%d\n", 165); // skip 165 in A band when bw setting to 20/40Mhz or 40Mhz.
+					sprintf(tmpstr,"%d",165);// skip 165 in A band when bw setting to 20/40Mhz or 40Mhz.
 				}
+
+#ifdef RTCONFIG_MTK_TW_AUTO_BAND4 //NCC: for 5G BAND24 & BAND14
+				if(band)
+				{	
+					if(strlen(tmpstr))
+						sprintf(tmpstr,"%s;",tmpstr);
+
+					if(nvram_match("reg_spec","NCC"))  //skip band2
+						sprintf(tmpstr,"%s%d;%d;%d;%d",tmpstr,52,56,60,64);
+					else if (nvram_match("reg_spec","NCC2")) //skip band1
+						sprintf(tmpstr,"%s%d;%d;%d;%d",tmpstr,36,40,44,48);
+				}	
+#endif				
+				
+				fprintf(fp,"AutoChannelSkipList=%s\n",tmpstr);
+				
 			}
 			else
 				fprintf(fp, "AutoChannelSelect=%d\n", 0);

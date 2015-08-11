@@ -1,0 +1,683 @@
+;
+; Copyright 1992 by Jutta Degener and Carsten Bormann, Technische
+; Universitaet Berlin.  See the accompanying file "COPYRIGHT" for
+; details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+;
+;
+;	Lines starting with ' (in the first col) are echoed.
+;	Lines starting with " (in the first col) are echoed to stderr.
+;	Lines starting with ; or empty lines are ignored.
+;
+;	The part after (including) a trailing '=' is what you expect;
+;	there will be output if the result is different.
+;
+;	-  and +  by itself mean MIN_WORD and MAX_WORD, respectively;
+;	-- and ++ mean MIN_LONGWORD and MAX_LONGWORD.
+;
+
+'test the basic arithmetic operations used for the rpe-ltd filtering.
+'
+'add ================
+'  basic
+
+	add  0  0 	=  0
+	add  7  4	= 11
+	add  4  6 	= 10
+	add  1  1 	=  2
+
+'  negative operands
+
+	add  -7  4	= -3
+	add   4 -6 	= -2
+	add  -1 -3 	= -4
+	add   7 -4	=  3
+	add  -4  6 	=  2
+
+'  positive overflow
+; (max-word = 32767)
+	add  + 1	= +
+	add  + +	= +
+	add  -1 + 	= 32766
+	add  32766 2	= +
+	add  1 32766  	= +
+
+'  underflow
+; (min-word = 32768)
+
+	add  - -1	= -
+	add  - -	= -
+	add  1 -	= -32767  
+	add  -32767 -2	= -
+	add  -1 -32766 	= -32767
+	add  -32767 -1	= -
+	add  - +	= -1
+	add  + -	= -1
+	add  0 -	= -
+	add  0 +	= +
+'
+
+'L_add ================
+'  basic 
+
+	L_add  0  0 	=  0
+	L_add  7  4	= 11
+	L_add  4  6 	= 10
+	L_add  1  1 	=  2
+
+'  negative operands
+
+	L_add  -7  4	= -3
+	L_add   4 -6 	= -2
+	L_add  -1 -3 	= -4
+	L_add   7 -4	=  3
+	L_add  -4  6 	=  2
+	L_add   0 -1 	= -1
+
+'  positive overflow
+; (max-longword = 2147483647)
+	L_add  ++ 1	= ++
+	L_add  ++ ++	= ++
+	L_add  -1 ++ 	= 2147483646
+	L_add  2147483646 2 = ++
+	L_add  1 2147483645 = 2147483646
+
+'  underflow
+; (min-longword = -2147483648)
+
+	L_add  -- -1	= --
+	L_add  -- --	= --
+	L_add  1 --	= -2147483647
+	L_add  -2147483647 -2	= --
+	L_add  -1 -2147483646 	= -2147483647
+	L_add  -2147483647 -1	= --
+	L_add  -- ++	= -1
+	L_add  ++ --	= -1
+	L_add  0 --	= --
+	L_add  0 ++	= ++
+'
+
+'sub ================
+'  basic 
+
+	sub  0  0 	=  0
+	sub  7  4	=  3
+	sub  4  6 	= -2
+	sub  1  0 	=  1
+
+'  negative operands
+
+	sub  -7  4	= -11
+	sub   4 -6 	=  10
+	sub  -1 -3 	=  2
+	sub   7 -4	=  11
+	sub  -4  6 	= -10
+
+'  positive overflow
+; (max-word = 32767)
+	sub  1 -	= +
+	sub  + +	= 0
+	sub  + 0	= +
+	sub  + -1 	= +
+	sub  + 1 	= 32766
+	sub  1 + 	= -32766 
+	sub  0 +  	= -32767
+
+'  underflow
+; (min-word = 32768)
+
+	sub  - -1	= -32767
+	sub  - 1	= -
+	sub  - -	= 0
+	sub  - +	= -
+	sub  + -	= +
+	sub  1 -	= +
+	sub  -1 -	= +
+	sub  -32767 2	= -
+	sub  0 -	= +
+' 
+
+'L_sub ================
+'  basic 
+
+	L_sub  0  0 	=  0
+	L_sub  7  4	=  3
+	L_sub  4  6 	= -2
+	L_sub  1  0 	=  1
+
+'  negative operands
+
+	L_sub  -7  4	= -11
+	L_sub   4 -6 	=  10
+	L_sub  -1 -3 	=  2
+	L_sub   7 -4	=  11
+	L_sub  -4  6 	= -10
+
+'  positive overflow
+	L_sub  1 --	= ++
+	L_sub  ++ ++	= 0
+	L_sub  ++ 0	= ++
+	L_sub  ++ -1 	= ++
+	L_sub  ++ 1 	=  2147483646
+	L_sub  1 ++ 	= -2147483646
+	L_sub  0 ++  	= -2147483647
+
+'  underflow
+
+	L_sub  -- -1	= -2147483647
+	L_sub  -- 1	= --
+	L_sub  -- --	= 0
+	L_sub  -- ++	= --
+	L_sub  + --	= ++
+	L_sub  1 --	= ++
+	L_sub  -1 --	= ++
+	L_sub  -2147483647 2 = --
+	L_sub  0 --	= ++
+
+'
+'abs ================
+'  basic 
+
+	abs	   0	=   0
+	abs	   2	=   2
+	abs	-459	= 459
+
+'  overflow
+
+	abs	 +	=   +
+	abs	 -	=   +
+	abs 	-32767  =   +
+	abs 	 32766  = 32766
+	abs 	-32766  = 32766
+
+'
+'mult ================
+;  actually, a * b >> 15
+
+'  basic 
+	mult	0  0		= 0
+	mult	0x100 0x100	= 2
+	mult	4711 0x4000	= 2355
+
+'  negative operands
+	mult	-1  0		=  0
+
+	mult	-0x100   0x100	= -2
+	mult	 0x100  -0x100	= -2
+	mult	-0x100  -0x100	=  2
+
+	mult	-4711   0x4000	= -2356
+	mult	 4711  -0x4000	= -2356
+	mult	-4711  -0x4000	=  2355
+
+'  overflow
+	mult	+ + 	 = 32766
+	mult	+ 0x4000 = 0x3fff
+	mult	0x4000 + = 0x3fff
+	mult	+ 1	 = 0
+	mult	+ 2	 = 1
+	mult	+ 3	 = 2
+
+'  underflow
+	mult	- - 	 = +
+	mult	- + 	 = -32767
+	mult	+ - 	 = -32767
+	mult	- 1	 = -1
+	mult	- 2	 = -2
+	mult	- 3	 = -3
+
+'
+'mult_r ================
+;  actually, (a * b + 16384) >> 15
+
+'  basic 
+	mult_r	0  0		= 0
+	mult_r	0x100 0x100	= 2
+	mult_r	4711 0x4000	= 2356
+
+'  negative operands
+	mult_r	-1  0		=  0
+
+	mult_r	-0x100   0x100	= -2
+	mult_r	 0x100  -0x100	= -2
+	mult_r	-0x100  -0x100	=  2
+
+	mult_r	-4711   0x4000	= -2355
+	mult_r	 4711  -0x4000	= -2355
+	mult_r	-4711  -0x4000	=  2356
+
+'  overflow
+	mult_r	+ + 	 = 32766
+	mult_r	+ 32766	 = 32765
+	mult_r	32766 +	 = 32765
+	mult_r	+ 0x4000 = 0x4000
+	mult_r	0x4000 + = 0x4000
+	mult_r	+ 0x4001 = 0x4000
+	mult_r	0x4001 + = 0x4000
+	mult_r	+ 2	 = 2
+	mult_r	+ 1	 = 1
+	mult_r	1 +	 = 1
+	mult_r	+ 0	 = 0
+	mult_r	0 +	 = 0
+
+'  underflow
+	mult_r	- - 	 = +
+	mult_r	- + 	 = -32767
+	mult_r	+ - 	 = -32767
+	mult_r	- 1	 = -1
+	mult_r	- 2	 = -2
+	mult_r	- 3	 = -3
+
+'
+'L_mult ================
+;  actually, (a * b) << 1
+;  assert (a != MIN_WORD && b != MIN_WORD)
+
+'  basic 
+	L_mult	0  0	= 0
+	L_mult	2  3	= 12
+	L_mult	4711 5	= 47110
+
+'  negative operands
+
+	L_mult	-2  3	= -12
+	L_mult	 2 -3	= -12
+	L_mult	-2 -3	=  12
+	L_mult -4711  5	= -47110
+	L_mult	4711 -5	= -47110
+	L_mult -4711 -5	=  47110
+
+'  overflow
+	L_mult	+ + 	 = 2147352578
+	L_mult	+ -32767 = -2147352578
+	L_mult	-32767 + = -2147352578
+	L_mult	+ 2	 = 131068
+	L_mult	+ 1	 = 65534
+	L_mult	1 +	 = 65534
+	L_mult	+ 0	 = 0
+	L_mult	0 +	 = 0
+
+'
+'div ================
+;  actually, (32767 * a) / b
+;  assert (a > 0 && b >= a)
+
+'  basic 
+	div	1 1		= +
+	div	4711 4711 	= +
+	div	5 10		= 0x4000
+	div	5 20		= 0x2000
+	div	5 40		= 0x1000
+
+'  overflow
+	div	+ + 		= +
+	div	0x4000 +	= 0x4000
+	div	1 +		= 1
+	div	1 2		= 0x4000
+'
+'norm ================
+
+'  positive
+	norm	1		= 30
+	norm	2		= 29
+	norm	3		= 29
+	norm	4		= 28
+	norm	5		= 28
+; etc, etc...
+	norm	0x08000000	= 3
+	norm	0x10000000	= 2
+	norm	0x20000000	= 1
+	norm	0x20000001	= 1
+	norm	0x3fffffff	= 1
+	norm	0x40000000	= 0
+	norm	0x40000001	= 0
+	norm	0x4ffffffe	= 0
+	norm	++		= 0
+
+'  negative
+	norm	-1		= 31
+	norm	-2		= 30
+	norm	-3		= 29
+	norm	-4		= 29
+	norm	-5		= 28
+; etc, etc...
+	norm	0x4fffffff	= 0
+	norm	--		= 0
+'
+'>> ================
+
+'  basic 
+	>>	1 1		= 0
+	>>	4 2		= 1
+	>>	0x1100 5	= 0x88
+
+'  negative operand
+
+	>>	1 -1		= 2
+	>>	1 -2		= 4
+	>>	0x88 -5		= 0x1100
+
+'  overflow
+	>>	-1 4711		= -1
+	>>	1  4711		= 0
+	>>	-4711 4711 	= -1
+	>>	4711 4711 	= 0
+	>>	+ 1		=  16383
+	>>	- 1		= -16384
+'
+'L_>> ================
+
+'  basic 
+	L_>>	1 1		= 0
+	L_>>	4 2		= 1
+	L_>>	0x1100 5	= 0x88
+
+'  negative operand
+
+	L_>>	1 -1		= 2
+	L_>>	1 -2		= 4
+	L_>>	0x88 -5		= 0x1100
+
+'  overflow
+	L_>>	-1 4711		= -1
+	L_>>	1  4711		= 0
+	L_>>	-4711 4711 	= -1
+	L_>>	4711 4711 	= 0
+	L_>>	++ 1		=  1073741823
+	L_>>	-- 1		= -1073741824
+
+'
+'<< ================
+
+'  basic 
+	<<	1 1		= 2
+	<<	4 2		= 16
+	<<	0x0088 5	= 0x1100
+
+'  negative operand
+
+	<<	1 -1		= 0
+	<<	4 -2		= 1
+	<<	0x1100 -5	= 0x0088
+
+'  overflow
+	<<	-1 4711		= 0
+	<<	1  4711		= 0
+	<<	-4711 4711 	= 0
+	<<	4711 4711 	= 0
+	<<	4711 -4711 	= 0
+	<<	-4711 -4711 	= -1
+	<<	+ 1		= 0xfffe
+	<<	-1 1		= 0xfffe
+	<<	- 1		= 0
+'
+'L_<< ================
+
+'  basic 
+	L_<<	1 1		= 2
+	L_<<	4 2		= 16
+	L_<<	0x0088 5	= 0x1100
+
+'  negative operand
+
+	L_<<	1 -1		= 0
+	L_<<	4 -2		= 1
+	L_<<	0x1100 -5	= 0x0088
+
+'  overflow
+	L_<<	-1 4711		= 0
+	L_<<	1  4711		= 0
+	L_<<	-4711 4711 	= 0
+	L_<<	4711 4711 	= 0
+	L_<<	4711 -4711 	= 0
+	L_<<	-4711 -4711 	= -1
+	L_<<	++ 1		= -2
+	L_<<	-1 1		= -2
+	L_<<	-- 1		= 0
+
+'macros
+'
+'add ================
+'  basic
+
+	M_add  0  0 	=  0
+	M_add  7  4	= 11
+	M_add  4  6 	= 10
+	M_add  1  1 	=  2
+
+'  negative operands
+
+	M_add  -7  4	= -3
+	M_add   4 -6 	= -2
+	M_add  -1 -3 	= -4
+	M_add   7 -4	=  3
+	M_add  -4  6 	=  2
+
+'  positive overflow
+; (max-word = 32767)
+	M_add  + 1	= +
+	M_add  + +	= +
+	M_add  -1 + 	= 32766
+	M_add  32766 2	= +
+	M_add  1 32766  	= +
+
+'  underflow
+; (min-word = 32768)
+
+	M_add  - -1	= -
+	M_add  - -	= -
+	M_add  1 -	= -32767  
+	M_add  -32767 -2 = -
+	M_add  -1 -32766 = -32767
+	M_add  -32767 -1 = -
+	M_add  - +	= -1
+	M_add  + -	= -1
+	M_add  0 -	= -
+	M_add  0 +	= +
+'
+
+'L_add ================
+'  basic 
+
+	M_L_add  0  0 	=  0
+	M_L_add  7  4	= 11
+	M_L_add  4  6 	= 10
+	M_L_add  1  1 	=  2
+
+'  negative operands
+
+	M_L_add  -7  4	= -3
+	M_L_add   4 -6 	= -2
+	M_L_add  -1 -3 	= -4
+	M_L_add   7 -4	=  3
+	M_L_add  -4  6 	=  2
+	M_L_add   0 -1 	= -1
+
+'  positive overflow
+; (max-longword = 2147483647)
+	M_L_add  ++ 1	= ++
+	M_L_add  ++ ++	= ++
+	M_L_add  -1 ++ 	= 2147483646
+	M_L_add  2147483646 2 = ++
+	M_L_add  1 2147483645 = 2147483646
+
+'  underflow
+; (min-longword = -2147483648)
+
+	M_L_add  -- -1	= --
+	M_L_add  -- --	= --
+	M_L_add  1 --	= -2147483647
+	M_L_add  -2147483647 -2	= --
+	M_L_add  -1 -2147483646 	= -2147483647
+	M_L_add  -2147483647 -1	= --
+	M_L_add  -- ++	= -1
+	M_L_add  ++ --	= -1
+	M_L_add  0 --	= --
+	M_L_add  0 ++	= ++
+'
+
+'sub ================
+'  basic 
+
+	M_sub  0  0 	=  0
+	M_sub  7  4	=  3
+	M_sub  4  6 	= -2
+	M_sub  1  0 	=  1
+
+'  negative operands
+
+	M_sub  -7  4	= -11
+	M_sub   4 -6 	=  10
+	M_sub  -1 -3 	=  2
+	M_sub   7 -4	=  11
+	M_sub  -4  6 	= -10
+
+'  positive overflow
+; (max-word = 32767)
+	M_sub  1 -	= +
+	M_sub  + +	= 0
+	M_sub  + 0	= +
+	M_sub  + -1 	= +
+	M_sub  + 1 	= 32766
+	M_sub  1 + 	= -32766 
+	M_sub  0 +  	= -32767
+
+'  underflow
+; (min-word = 32768)
+
+	M_sub  - -1	= -32767
+	M_sub  - 1	= -
+	M_sub  - -	= 0
+	M_sub  - +	= -
+	M_sub  + -	= +
+	M_sub  1 -	= +
+	M_sub  -1 -	= +
+	M_sub  -32767 2	= -
+	M_sub  0 -	= +
+' 
+'
+'abs ================
+'  basic 
+
+	M_abs	   0	=   0
+	M_abs	   2	=   2
+	M_abs	-459	= 459
+
+'  overflow
+
+	M_abs	 +	=   +
+	M_abs	 -	=   +
+	M_abs 	-32767  =   +
+	M_abs 	 32766  = 32766
+	M_abs 	-32766  = 32766
+
+'
+'mult ================
+;  actually, a * b >> 15
+
+'  basic 
+	M_mult	0  0		= 0
+	M_mult	0x100 0x100	= 2
+	M_mult	4711 0x4000	= 2355
+
+'  negative operands
+	M_mult	-1  0		=  0
+
+	M_mult	-0x100   0x100	= -2
+	M_mult	 0x100  -0x100	= -2
+	M_mult	-0x100  -0x100	=  2
+
+	M_mult	-4711   0x4000	= -2356
+	M_mult	 4711  -0x4000	= -2356
+	M_mult	-4711  -0x4000	=  2355
+
+'  overflow
+	M_mult	+ + 	 = 32766
+	M_mult	+ 0x4000 = 0x3fff
+	M_mult	0x4000 + = 0x3fff
+	M_mult	+ 1	 = 0
+	M_mult	+ 2	 = 1
+	M_mult	+ 3	 = 2
+
+'  underflow
+;	M_mult - - 	= +			assert !(a == b && b == MIN_WORD)
+ 	M_mult - -32767	= +
+ 	M_mult -32767 -	= +
+	M_mult	- + 	= -32767
+	M_mult	+ - 	= -32767
+	M_mult	- 1	= -1
+	M_mult	- 2	= -2
+	M_mult	- 3	= -3
+
+'
+'mult_r ================
+;  actually, (a * b + 16384) >> 15
+
+'  basic 
+	M_mult_r 0  0		= 0
+	M_mult_r 0x100 0x100	= 2
+	M_mult_r 4711 0x4000	= 2356
+
+'  negative operands
+	M_mult_r -1  0		=  0
+
+	M_mult_r -0x100   0x100	= -2
+	M_mult_r  0x100  -0x100	= -2
+	M_mult_r -0x100  -0x100	=  2
+
+	M_mult_r -4711   0x4000	= -2355
+	M_mult_r  4711  -0x4000	= -2355
+	M_mult_r -4711  -0x4000	=  2356
+
+'  overflow
+	M_mult_r + + 	 = 32766
+	M_mult_r + 32766  = 32765
+	M_mult_r 32766 +  = 32765
+	M_mult_r + 0x4000 = 0x4000
+	M_mult_r 0x4000 + = 0x4000
+	M_mult_r + 0x4001 = 0x4000
+	M_mult_r 0x4001 + = 0x4000
+	M_mult_r + 2	 = 2
+	M_mult_r + 1	 = 1
+	M_mult_r 1 +	 = 1
+	M_mult_r + 0	 = 0
+	M_mult_r 0 +	 = 0
+
+'  underflow
+;	M_mult_r - - 	 = +			assert !(a == b && b == MIN_WORD)
+ 	M_mult_r - -32767 = +
+ 	M_mult_r -32767 - = +
+	M_mult_r - + 	 = -32767
+	M_mult_r + - 	 = -32767
+	M_mult_r - 1	 = -1
+	M_mult_r - 2	 = -2
+	M_mult_r - 3	 = -3
+
+'
+'L_mult ================
+;  actually, (a * b) << 1
+;  assert (a != MIN_WORD && b != MIN_WORD)
+
+'  basic 
+	M_L_mult	0  0	= 0
+	M_L_mult	2  3	= 12
+	M_L_mult	4711 5	= 47110
+
+'  negative operands
+
+	M_L_mult	-2  3	= -12
+	M_L_mult	 2 -3	= -12
+	M_L_mult	-2 -3	=  12
+	M_L_mult -4711  5	= -47110
+	M_L_mult	4711 -5	= -47110
+	M_L_mult -4711 -5	=  47110
+
+'  overflow
+ 	M_L_mult	+ + 	 = 2147352578
+	M_L_mult	+ -32767 = -2147352578
+	M_L_mult	-32767 + = -2147352578
+	M_L_mult	+ 2	 = 131068
+	M_L_mult	+ 1	 = 65534
+	M_L_mult	1 +	 = 65534
+	M_L_mult	+ 0	 = 0
+	M_L_mult	0 +	 = 0
+

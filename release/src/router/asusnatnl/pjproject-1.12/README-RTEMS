@@ -1,0 +1,87 @@
+
+
+
+              Build Instructions for PJLIB/PJMEDIA/PJSIP RTEMS Port
+
+
+
+The RTEMS port uses the POSIX abstraction layer at the moment, and has been 
+tested with RTEMS 4.6 on i386 target.
+
+
+Building RTEMS
+---------------
+I use RTEMS 4.6 on a cygwin host with i386/pc386 as target, but I think it 
+should work with different RTEMS versions/hosts/targets. 
+
+RTEMS was built with the following commands:
+
+  $ /opt/src/rtems-4.6.6/configure --enable-cxx --enable-posix --enable-networking --enable-rdbg --enable-tests --enable-rtemsbsp=pc386 --target=i386-rtems
+  $ make
+  $ make install
+
+
+Supported Targets
+-----------------
+At the moment, pjlib supports i386 and mpc860 CPU target. For other targets, 
+you would need to create/tweak the appropriate "m-xxx.mak" in "build" directory
+and the corresponding "m_xxx.h" header file in "pj/compat" directory.
+
+Please refer to pjlib porting guide about how to port PJLIB to new CPU target.
+
+
+Building PJLIB/PJMEDIA/PJSIP
+----------------------------
+Use the following steps to build the libraries:
+
+
+1. Set RTEMS_LIBRARY_PATH environment variable to point to your BSP directory 
+   (which is <RTEMS INSTALLATION POINT>/<BOARD SUPPORT PACKAGE>). 
+
+   For example (with sh):
+ 
+   $ export RTEMS_LIBRARY_PATH=/opt/rtems-4.6/i386-rtems/pc386
+
+
+2. Unfortunately pjproject's configure script is unable to create "build.mak" 
+   for cross compilation (but this may change in the future), so we need to 
+   create "build.mak" manually.
+
+   The file "README-configure" has some info about the variables in "build.mak".
+
+   For example, the "build.mak" for i386 target:
+
+   export MACHINE_NAME := i386
+   export OS_NAME := rtems
+   export HOST_NAME := mingw
+   export CC_NAME := gcc
+   export TARGET_NAME := i386-rtems
+   export CROSS_COMPILE := i386-rtems-
+
+
+3. Put additional CFLAGS or LDFLAGS that are specific to your target in 
+   "user.mak".
+
+   For example, my "user.mak" looks like this:
+
+   export CFLAGS += 
+   export LDFLAGS += -Wl,-Ttext,0x00100000 -Wl,--defsym -Wl,HeapSize=0x400000
+
+
+4. Build the libraries:
+
+   $ make dep && make distclean && make
+
+
+5. That should be it. The libraries should be in "lib" directory and 
+   applications in "bin" directory.
+
+
+
+Acknowledgements
+----------------
+Many thanks for Phil Torre <ptorre at zetron dot com>, who did most of the 
+initial porting and testing with pjlib etc. All credits go to him.
+
+
+

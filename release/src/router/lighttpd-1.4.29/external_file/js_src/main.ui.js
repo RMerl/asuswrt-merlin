@@ -290,6 +290,7 @@ function createLayout(){
 		layout_html += "<div class='albutton toolbar-button-right disable' id='btnDeleteSel' style='display:block'><div class='ticon'></div></div>";
 		layout_html += "<div class='albutton toolbar-button-right disable' id='btnDownload' style='display:block'><div class='ticon'></div></div>";
 		layout_html += "<div class='albutton toolbar-button-right disable' id='btnRename' style='display:block'><div class='ticon'></div></div>";
+		layout_html += "<div class='albutton toolbar-button-right disable' id='btnCopyMove' style='display:block'><div class='ticon'></div></div>";
 		//layout_html += "<div class='abbutton toolbar-button-right disable' id='btnUnLock' style='display:block'><div class='ticon'></div></div>";
 		//layout_html += "<div class='abbutton toolbar-button-right disable' id='btnLock' style='display:block'><div class='ticon'></div></div>";
 		layout_html += "</div>";
@@ -313,11 +314,11 @@ function createLayout(){
 	  	//layout_html += "<dd><a id='test_func'>" + m.getString('title_test') + "</a></dt>";
 		//layout_html += "<dd><a id='test_func2'>" + m.getString('title_test') + "</a></dt>";
 	  
-	  	//layout_html += "<dd><a id='help'>" + m.getString('title_help') + "</a></dt>";
-		layout_html += "<dd><a id='web_help' href='http://event.asus.com/2012/nw/aicloud/faq.html' target='_blank'>" + m.getString('title_help') + "</a></dt>";
+	  	layout_html += "<dd><a id='web_help' href='http://event.asus.com/2012/nw/aicloud/faq.html' target='_blank'>" + m.getString('title_help') + "</a></dt>";
 		layout_html += "<dd><a id='web_feedback' href='https://vip.asus.com/VIP2/Services/QuestionForm/TechQuery' target='_blank'>" + m.getString('title_feedback') + "</a></dt>";
 	  	layout_html += "<dd><a id='version'>" + m.getString('title_version') + "</a></dt>";		
 	  	layout_html += "<dd><a id='crt'>" + m.getString('title_crt') + "</a></dt>";
+	  	//layout_html += "<dd><a id='community'>" + m.getString('title_community') + "</a></dt>";
 		layout_html += "<dd><a id='sharelink'>" + m.getString('title_sharelink') + "</a></dt>";
 	  	layout_html += "<dd><a id='rescan_samba'>" + m.getString('title_rescan') + "</a></dt>";
 	  	layout_html += "<dd><a id='config'>" + m.getString('btn_config') + "</a></dt>";
@@ -428,13 +429,28 @@ function createLayout(){
 		doLOGOUT();
 	});	
 	
-	$(".navigation li, .navigation li a").mouseenter(function(){
+	var navigation_dd_show_timer;
+	
+	$(".navigation li").click(function(){
+		clearInterval(navigation_dd_show_timer);
 		$(this).find("dd").fadeIn("fast");
 	});
 	
+	$(".navigation li").mouseenter(function(){
+		var self = $(this);
+		
+		clearInterval(navigation_dd_show_timer);
+		
+		navigation_dd_show_timer = setTimeout(function(){
+			self.find("dd").fadeIn("fast");
+		}, 500);
+	});
+	
 	$(".navigation li, .navigation li a").mouseleave(function(){
+		clearInterval(navigation_dd_show_timer);
 		$(this).find("dd").fadeOut("fast");
 	});
+	
 	/*
 	if(g_support_html5==1){
   		var dropZone = document.getElementById('fileview');
@@ -459,6 +475,7 @@ function createLayout(){
 	$("#btnDeleteSel").attr("title", m.getString('btn_delselect'));
 	$("#btnDownload").attr("title", m.getString('func_download'));
 	$("#btnRename").attr("title", m.getString('btn_rename'));
+	$("#btnCopyMove").attr("title", m.getString('title_copymove'));
 	$("#btnSetting").attr("title", m.getString('title_setting'));
 	$("#btnRefresh").attr("title", m.getString('btn_refresh'));
 }
@@ -921,11 +938,13 @@ function showHideEditUIRegion(show){
 		if(isAiModeView()<0) $("#btnDeleteSel").removeClass("disable");
 		$("#btnDownload").removeClass("disable");
 		$("#btnShareLink").removeClass("disable");
+		$("#btnCopyMove").removeClass("disable");
 	}
 	else{
 		$("#btnDeleteSel").addClass("disable");
 		$("#btnDownload").addClass("disable");
 		$("#btnShareLink").addClass("disable");
+		$("#btnCopyMove").addClass("disable");
 	}
 
 	if((g_select_file_count+g_select_folder_count==1) && isAiModeView()<0){

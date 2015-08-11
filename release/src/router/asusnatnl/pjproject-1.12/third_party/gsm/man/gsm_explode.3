@@ -1,0 +1,47 @@
+.\"
+.\" Copyright 1992 by Jutta Degener and Carsten Bormann, Technische
+.\" Universitaet Berlin.  See the accompanying file "COPYRIGHT" for
+.\" details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+.\"
+.PU
+.TH GSM_EXPLODE 3 
+.SH NAME
+gsm_explode, gsm_implode \(em GSM\ 06.10 supplementary
+functions for testing
+.SH SYNOPSIS
+#include "gsm.h"
+.PP
+void gsm_explode(g, frame, xframe)
+.br
+gsm        g;
+.br
+gsm_frame  frame;
+.br
+gsm_signal xframe[ 76 ];
+.PP
+void gsm_implode(g, xframe, frame)
+.br
+gsm        g;
+.br
+gsm_signal xframe[ 76 ];
+.br
+gsm_frame  frame;
+.SH "DESCRIPTION"
+Gsm is an implementation of the final draft GSM 06.10
+standard for full-rate speech transcoding.
+Test data for implementations of this particular document
+can be bought and used to verify an implementation.
+.PP
+The encoded test data uses a format different from what
+one would use to transmit frames with the least number
+of bits.
+Gsm_explode() and gsm_implode() convert between the
+internal, small, 33-byte format and the 76-word format
+used by the test data.
+.PP
+.SH "RETURN VALUE"
+gsm_explode() returns -1 if the passed frame is invalid, else 0.
+.SH BUGS
+Please direct bug reports to jutta@cs.tu-berlin.de and cabo@cs.tu-berlin.de.
+.SH "SEE ALSO"
+gsm(3)

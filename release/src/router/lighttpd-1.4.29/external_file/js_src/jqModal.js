@@ -60,7 +60,7 @@ close:function(s){
  	if(h.o)h.o.remove();} return F;
 },
 params:{}};
-var s=0,H=$.jqm.hash,A=[],ie6=$.browser.msie&&($.browser.version == "6.0"),F=false,
+var s=0,H=$.jqm.hash,A=[],ie6=false/*$.browser.msie&&($.browser.version == "6.0")*/,F=false,
 i=$('<iframe src="javascript:false;document.write(\'\');" class="jqm"></iframe>').css({opacity:0}),
 e=function(h){if(ie6)if(h.o)h.o.html('<p style="width:100%;height:100%"/>').prepend(i);else if(!$('iframe.jqm',h.w)[0])h.w.prepend(i); f(h);},
 f=function(h){try{$(':input:visible',h.w)[0].focus();}catch(_){}},

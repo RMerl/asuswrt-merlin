@@ -645,7 +645,7 @@ int get_radio(int unit, int subunit)
 		}
 		else
 		{
-			ret = qcsapi_wifi_rfstatus(WIFINAME, (qcsapi_unsigned_int *) &n);
+			ret = qcsapi_wifi_rfstatus((qcsapi_unsigned_int *) &n);
 //			if (ret < 0)
 //				dbG("Qcsapi qcsapi_wifi_rfstatus %s error, return: %d\n", wl_vifname_qtn(unit, subunit), ret);
 

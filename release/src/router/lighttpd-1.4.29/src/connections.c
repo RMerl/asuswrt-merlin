@@ -467,7 +467,11 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_GETVIDEOSUBTITLE:
 		case HTTP_METHOD_UPLOADTOFACEBOOK:
 		case HTTP_METHOD_UPLOADTOFLICKR:
+		case HTTP_METHOD_UPLOADTOPICASA:		
+		case HTTP_METHOD_UPLOADTOTWITTER:
 		case HTTP_METHOD_GENROOTCERTIFICATE:
+		case HTTP_METHOD_SETROOTCERTIFICATE:
+		case HTTP_METHOD_GETX509CERTINFO:
 		case HTTP_METHOD_APPLYAPP:
 		case HTTP_METHOD_NVRAMGET:
 		case HTTP_METHOD_GETCPUUSAGE:
@@ -747,10 +751,9 @@ static void check_direct_file(server *srv, connection *con)
 }
 #endif
 
-
 static int parser_share_link(server *srv, connection *con){	
 	int result=0;
-
+	
 	if(strncmp(con->request.uri->ptr, "/ASUSHARE", 9)==0){
 		
 		char mac[20]="\0";		
@@ -773,7 +776,7 @@ static int parser_share_link(server *srv, connection *con){
 		Cdbg(DBE, "mac=%s", mac);
 		
 		char* key = ldb_base64_encode(mac, strlen(mac));		
-		int y = strstr (con->request.uri->ptr+1,"/") - (con->request.uri->ptr);
+		int y = strstr (con->request.uri->ptr+1, "/") - (con->request.uri->ptr);
 		
 		if(y<=9){
 			if(key){
@@ -784,8 +787,8 @@ static int parser_share_link(server *srv, connection *con){
 		}
 		
 		buffer* filename = buffer_init();
-		buffer_copy_string_len(filename, con->request.uri->ptr+y, con->request.uri->used-y);
-
+		buffer_copy_string_len(filename, con->request.uri->ptr+1+y, con->request.uri->used-2-y);
+		
 		buffer* substrencode = buffer_init();
 		buffer_copy_string_len(substrencode,con->request.uri->ptr+9,y-9);
 
@@ -857,16 +860,29 @@ static int parser_share_link(server *srv, connection *con){
 			buffer_free(pass);
 			buffer_free(expire);
 			
+			buffer_copy_string( con->share_link_shortpath, "ASUSHARE");
+			buffer_append_string_buffer( con->share_link_shortpath, substrencode );
+			BUFFER_APPEND_SLASH(con->share_link_shortpath);
+			
+			buffer_copy_string_len( con->share_link_realpath, decode_str, x );
+			BUFFER_APPEND_SLASH(con->share_link_realpath);
+
+			buffer_urldecode_path(filename);
+			buffer_copy_string_buffer( con->share_link_filename, filename );
+
 			buffer_reset(con->request.uri);
-			buffer_copy_string_len(con->request.uri, decode_str, x);
+			buffer_copy_string_buffer(con->request.uri, con->share_link_realpath);
 			buffer_append_string_buffer(con->request.uri, filename);
 
+			con->share_link_type = 0;
+			
 			if(decode_str){
 				free(decode_str);
 				decode_str = NULL;
 			}
+		
 		}
-
+		
 		buffer_free(substrencode);		
 		buffer_free(filename);
 
@@ -874,8 +890,12 @@ static int parser_share_link(server *srv, connection *con){
 			free(key);
 			key=NULL;
 		}
-		
-		Cdbg(DBE, "end parser_share_file, con->request.uri=%s", con->request.uri->ptr);
+
+		Cdbg(DBE, "con->share_link_basic_auth=%s", con->share_link_basic_auth->ptr);
+		Cdbg(DBE, "con->share_link_shortpath=%s", con->share_link_shortpath->ptr);
+		Cdbg(DBE, "con->share_link_realpath=%s", con->share_link_realpath->ptr);
+		Cdbg(DBE, "con->share_link_filename=%s", con->share_link_filename->ptr);
+		Cdbg(DBE, "con->request.uri=%s", con->request.uri->ptr);
 
 		if(bExpired==0)
 			result = 1;
@@ -935,7 +955,11 @@ static int parser_share_link(server *srv, connection *con){
 				buffer_append_string_buffer( con->share_link_basic_auth, c->auth );
 
 				buffer_copy_string_buffer( con->share_link_shortpath, c->shortpath );
+				BUFFER_APPEND_SLASH(con->share_link_shortpath);
+				
 				buffer_copy_string_buffer( con->share_link_realpath, c->realpath );
+				BUFFER_APPEND_SLASH(con->share_link_realpath);
+				
 				buffer_copy_string_buffer( con->share_link_filename, c->filename );
 				
 				//- share_link_type: 0: none, 1: sharelink for general use, 2: sharelink for router sync
@@ -969,9 +993,12 @@ static int parser_share_link(server *srv, connection *con){
 
 		buffer_free(sharepath);
 		buffer_free(filename);
-		
-		Cdbg(DBE, "end parser_share_file, con->request.uri=%s, con->mode=%d, con->share_link_basic_auth=%s", 
-				con->request.uri->ptr, con->mode, con->share_link_basic_auth->ptr);
+
+		Cdbg(DBE, "con->share_link_basic_auth=%s", con->share_link_basic_auth->ptr);
+		Cdbg(DBE, "con->share_link_shortpath=%s", con->share_link_shortpath->ptr);
+		Cdbg(DBE, "con->share_link_realpath=%s", con->share_link_realpath->ptr);
+		Cdbg(DBE, "con->share_link_filename=%s", con->share_link_filename->ptr);
+		Cdbg(DBE, "con->request.uri=%s", con->request.uri->ptr);
 
 		if(con->share_link_type==1)
 			log_sys_write(srv, "sbss", "Download file", c->filename, "from ip", con->dst_addr_buf->ptr);
@@ -991,18 +1018,70 @@ static int redirect_mobile_share_link(server *srv, connection *con){
 	strcpy(file_ext, aa);
 	for (int i = 0; file_ext[i]; i++)
 		file_ext[i] = tolower(file_ext[i]);
-				
+
 	if( con->share_link_basic_auth->used &&
+		ds_userAgent && 
+		con->conf.is_ssl &&
+		( //strstr( ds_userAgent->value->ptr, "Chrome" ) ||
+		  strstr( ds_userAgent->value->ptr, "Android"  ) ) ){
+
+		buffer *out;
+		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/html; charset=UTF-8"));
+					
+		out = chunkqueue_get_append_buffer(con->write_queue);
+
+	#if EMBEDDED_EANBLE
+		char* webdav_http_port = nvram_get_webdav_http_port();
+	#else
+		char* webdav_http_port = "8082";
+	#endif
+
+		//- https -> http url
+		buffer* redirect_url = buffer_init();
+		buffer_copy_string_len(redirect_url, CONST_STR_LEN("http://"));
+		
+		char* b = strstr(con->request.http_host->ptr, ":");
+		if(b!=NULL)
+			buffer_append_string_len(redirect_url, con->request.http_host->ptr, b-con->request.http_host->ptr);
+		else
+			buffer_append_string_buffer(redirect_url, con->request.http_host);
+		
+		buffer_append_string_len(redirect_url, CONST_STR_LEN(":"));
+		buffer_append_string(redirect_url, webdav_http_port);
+		buffer_append_string_len(redirect_url, CONST_STR_LEN("/"));
+		buffer_append_string_buffer(redirect_url, con->share_link_shortpath);
+		buffer_append_string_encoded(redirect_url, con->share_link_filename->ptr, strlen(con->share_link_filename->ptr), ENCODING_REL_URI);		
+
+		Cdbg(1, "redirect_url = %s", redirect_url->ptr);
+				
+		buffer_append_string_len(out, CONST_STR_LEN("<html>"));
+		buffer_append_string_len(out, CONST_STR_LEN("<head>"));
+		buffer_append_string_len(out, CONST_STR_LEN("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"));
+		buffer_append_string_len(out, CONST_STR_LEN("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">"));
+		buffer_append_string_len(out, CONST_STR_LEN("<meta http-equiv=\"refresh\" content=\"0;url="));
+		buffer_append_string_buffer(out, redirect_url);
+		buffer_append_string_len(out, CONST_STR_LEN("\">"));
+		buffer_append_string_len(out, CONST_STR_LEN("</head>"));
+		buffer_append_string_len(out, CONST_STR_LEN("</html>"));
+
+		buffer_free(redirect_url);
+		
+		con->file_finished = 1;
+		con->http_status = 200; 
+
+		return 1;
+	}
+	else if( con->share_link_basic_auth->used &&
 		ds_userAgent && 
 		con->conf.is_ssl &&
 		( strncmp(file_ext, "mp3", 3) == 0 ||
 		  strncmp(file_ext, "mp4", 3) == 0 ||
 		  strncmp(file_ext, "m4v", 3) == 0 ) &&
 		( //strstr( ds_userAgent->value->ptr, "Chrome" ) ||
+		  //strstr( ds_userAgent->value->ptr, "Android" ) || 
 		  strstr( ds_userAgent->value->ptr, "iPhone" ) || 
 		  strstr( ds_userAgent->value->ptr, "iPad"	 ) || 
-		  strstr( ds_userAgent->value->ptr, "iPod"	 ) ||
-		  strstr( ds_userAgent->value->ptr, "Android"  ) ) ){
+		  strstr( ds_userAgent->value->ptr, "iPod"	 ) ) ){
 					
 		buffer *out;
 		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/html; charset=UTF-8"));
@@ -1026,6 +1105,8 @@ static int redirect_mobile_share_link(server *srv, connection *con){
 		stat_cache_entry *sce = NULL;
 					
 		buffer* html_file = buffer_init();
+
+#if EMBEDDED_EANBLE		
 #ifndef APP_IPKG
 		if( strncmp(file_ext, "mp3", 3) == 0 )
 			buffer_copy_string(html_file, "/usr/lighttpd/css/iaudio.html");
@@ -1039,7 +1120,16 @@ static int redirect_mobile_share_link(server *srv, connection *con){
 				 strncmp(file_ext, "m4v", 3) == 0 )
 			buffer_copy_string(html_file, "/opt/etc/aicloud_UI/css/ivideo.html");
 #endif
+#else
+		if( strncmp(file_ext, "mp3", 3) == 0 )
+			buffer_copy_string(html_file, "/usr/css/iaudio.html");
+		else if( strncmp(file_ext, "mp4", 3) == 0 ||
+				 strncmp(file_ext, "m4v", 3) == 0 )
+			buffer_copy_string(html_file, "/usr/css/ivideo.html");
+#endif
+
 		con->mode = DIRECT;
+
 		if (HANDLER_ERROR != stat_cache_get_entry(srv, con, html_file, &sce)) {
 			http_chunk_append_file(srv, con, html_file, 0, sce->st.st_size);
 			response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_BUF_LEN(sce->content_type));
@@ -1050,7 +1140,7 @@ static int redirect_mobile_share_link(server *srv, connection *con){
 			con->file_finished = 1;
 			con->http_status = 404;
 		}
-	
+		
 		Cdbg(DBE, "ds_userAgent->value=%s, file_ext=%s, html_file=%s", ds_userAgent->value->ptr, file_ext, html_file->ptr);
 	
 		free(file_ext);
@@ -2167,7 +2257,7 @@ Cdbg(DBE, "enter..state=[%d][%s], status=[%d]", con->state, connection_get_state
 					if (con->http_status == 404 ||
 					    con->http_status == 403) {
 						/* 404 error-handler */
-
+						Cdbg(DBE, "404 not found, %s", con->request.uri->ptr);
 						if (con->in_error_handler == 0 &&
 						    (!buffer_is_empty(con->conf.error_handler) ||
 						     !buffer_is_empty(con->error_handler))) {

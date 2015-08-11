@@ -14,6 +14,7 @@ char username[256];
 char password[256];
 
 int is_renamed = 1;
+int access_token_expired;
 
 char *Clientfp="*";
 double start_time;
@@ -1203,6 +1204,7 @@ int api_metadata(char *phref,proc_pt cmd_data)
     CURL *curl;
     CURLcode res;
     FILE *fp;
+    FILE *hd;
     char *myUrl;
     char *phref_tmp=oauth_url_escape(phref);
     //wd_DEBUG("get %s metadata\n",phref);
@@ -1234,8 +1236,10 @@ int api_metadata(char *phref,proc_pt cmd_data)
         //curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,0);
         //fp=fopen("/tmp/data_5.txt","w");
         fp=fopen(Con(TMP_R,data_5.txt),"w");
+        hd=fopen(Con(TMP_R,data_check_access_token.txt),"w");
         curl_easy_setopt(curl,CURLOPT_TIMEOUT,90);
         curl_easy_setopt(curl,CURLOPT_WRITEDATA,fp);
+        curl_easy_setopt(curl,CURLOPT_WRITEHEADER,hd);
         res=curl_easy_perform(curl);
 
         //wd_DEBUG("res = %d\n",res);
@@ -1244,10 +1248,30 @@ int api_metadata(char *phref,proc_pt cmd_data)
         curl_slist_free_all(headerlist);
         //curl_global_cleanup();
         if(res!=0){
+            fclose(hd);
             free(header);
             free(myUrl);
             wd_DEBUG("api_metadata %s [%d] failed!\n",phref,res);
             return -1;
+        }
+        else
+        {
+            rewind(hd);
+            char tmp[256]="\0";
+            fgets(tmp,sizeof(tmp),hd);
+            wd_DEBUG("tmp:%s\n",tmp);
+            if(strstr(tmp,"401")!=NULL)
+            {
+                write_log(S_ERROR,"Access token has expired,please re-authenticate!","",0);
+                exit_loop = 1;
+                access_token_expired = 1;
+                fclose(hd);
+                free(header);
+                free(myUrl);
+                return -1;
+            }
+            fclose(hd);
+
         }
     }
     free(myUrl);
@@ -1596,35 +1620,54 @@ int api_download(char *fullname,char *filename,int index)
         write_log(S_INITIAL,"","",index);
     return 0;
 }
-int get_file_size(char *filename)
+
+//int get_file_size(char *filename)
+//{
+//    int file_len = 0;
+//    int fd = 0;
+
+//    fd = open(filename, O_RDONLY);
+//    if(fd < 0)
+//    {
+//        perror("open");
+//        /*
+//         fix below bug:
+//            1.create file a;
+//            2.rename a-->b;
+//            final open() 'a' failed ,will exit();
+//        */
+//        //exit(-1);
+//        return -1;
+//    }
+
+//    file_len = lseek(fd, 0, SEEK_END);
+//    //wd_DEBUG("file_len is %d\n",file_len);
+//    if(file_len < 0)
+//    {
+//        perror("lseek");
+//        exit(-1);
+//    }
+//    close(fd);
+//    return file_len;
+//}
+
+long long int
+        get_file_size(const char *file)
 {
-    int file_len = 0;
-    int fd = 0;
+    struct stat file_info;
 
-    fd = open(filename, O_RDONLY);
-    if(fd < 0)
-    {
-        perror("open");
-        /*
-         fix below bug:
-            1.create file a;
-            2.rename a-->b;
-            final open() 'a' failed ,will exit();
-        */
-        //exit(-1);
-        return -1;
-    }
+    if( !(file || *file) )
+        return 0;
 
-    file_len = lseek(fd, 0, SEEK_END);
-    //wd_DEBUG("file_len is %d\n",file_len);
-    if(file_len < 0)
-    {
-        perror("lseek");
-        exit(-1);
-    }
-    close(fd);
-    return file_len;
+    if( file[0] == '-' )
+        return 0;
+
+    if( stat(file, &file_info) == -1 )
+        return 0;
+    else
+        return(file_info.st_size);
 }
+
 int api_upload_put_test(char *filename,char *serverpath,int flag)
 {
     CURL *curl;
@@ -1648,7 +1691,7 @@ int api_upload_put_test(char *filename,char *serverpath,int flag)
     filesize = filesize / 1024 / 1024;
 
     fp_1=fopen(filename,"rb");
-    int size=get_file_size(filename);
+    long long int size=get_file_size(filename);
 
     char *header;
     static const char buf[]="Content-Type: test/plain";
@@ -1748,7 +1791,7 @@ int api_upload_put(char *filename,char *serverpath,int flag,int index)
         return LOCAL_FILE_LOST;
     }
 
-    int size=get_file_size(filename);
+    long long int size=get_file_size(filename);
     //printf("size=%d,filesize=%lu\n",size,filesize);
     char *header;
     static const char buf[]="Content-Type: test/plain";
@@ -1920,7 +1963,7 @@ int api_upload_post()
     filesize = filesize / 1024 / 1024;
 
     fp_1=fopen("cookie_login.txt","rb+");
-    int size=get_file_size("cookie_login.txt");
+    long long int size=get_file_size("cookie_login.txt");
     wd_DEBUG("size=%d,filesize=%lu\n",size,filesize);
     char *header;
     static const char buf[]="Content-Type: test/plain";
@@ -2337,7 +2380,7 @@ int api_upload_chunk_commit(char *upload_id,char *filename,int flag,int index)
 */
 int is_server_enough(char *filename)
 {
-    unsigned long size_lo=get_file_size(filename);
+    long long int size_lo=get_file_size(filename);
     if(size_lo == -1)
         return -1;
     int status;
@@ -2625,7 +2668,7 @@ int upload_file(char *filename,char *serverpath,int flag,int index)
 
     write_log(S_UPLOAD,"",filename,index);
 
-    unsigned long size = get_file_size(filename);
+    long long int size = get_file_size(filename);
     if( size == -1)
     {
         if(access(filename,F_OK) != 0)
@@ -2986,6 +3029,7 @@ void init_globar_var()
     disk_change = 0;
 #endif
     upload_chunk = NULL;
+    access_token_expired = 0;
     exit_loop = 0;
     stop_progress = 0;
     finished_initial=0;
@@ -3761,7 +3805,14 @@ int sync_local_with_server_perform(Server_TreeNode *treenode,Browse *perform_br,
             }
             add_action_item("remove",localfiletmp->path,g_pSyncList[index]->server_action_list);
 
-            unlink(localfiletmp->path);
+            //[bug][fix]:local file size > cloud space,then the local file will be unlink
+            action_item *pp;
+            pp = get_action_item("upload",localfiletmp->path,
+                                 g_pSyncList[index]->up_space_not_enough_list,index);
+            if(pp == NULL)
+            {
+                unlink(localfiletmp->path);
+            }
 
             localfiletmp = localfiletmp->next;
         }
@@ -3847,7 +3898,14 @@ int sync_local_with_server_perform(Server_TreeNode *treenode,Browse *perform_br,
 
                 add_action_item("remove",localfiletmp->path,g_pSyncList[index]->server_action_list);
 
-                unlink(localfiletmp->path);
+                //[bug][fix]:local file size > cloud space,then the local file will be unlink
+                action_item *pp;
+                pp = get_action_item("upload",localfiletmp->path,
+                                     g_pSyncList[index]->up_space_not_enough_list,index);
+                if(pp == NULL)
+                {
+                    unlink(localfiletmp->path);
+                }
 
             }
             else
@@ -6101,8 +6159,21 @@ int add_socket_item(char *buf){
     //receve_socket = 1;
     g_pSyncList[i]->receve_socket = 1;
     pthread_mutex_unlock(&mutex_receve_socket);
+
+#if MEM_POOL_ENABLE
+    SocketActionTmp = mem_alloc(16);
+#else
     SocketActionTmp = malloc (sizeof (struct queue_entry));
+#endif
+
+    //SocketActionTmp = malloc (sizeof (struct queue_entry));
     memset(SocketActionTmp,0,sizeof(struct queue_entry));
+    int len = strlen(buf)+1;
+#if MEM_POOL_ENABLE
+    SocketActionTmp->cmd_name = mem_alloc(len);
+#else
+    SocketActionTmp->cmd_name = (char *)calloc(len,sizeof(char));
+#endif
     sprintf(SocketActionTmp->cmd_name,"%s",buf);
     SocketActionTmp->re_cmd = NULL;
     SocketActionTmp->is_first = 0;
@@ -6331,6 +6402,9 @@ void clean_up()
     }
     free(g_pSyncList);
 
+#if MEM_POOL_ENABLE
+    mem_pool_destroy();
+#endif
 
     wd_DEBUG("clean up end !!!\n");
 
@@ -7081,9 +7155,18 @@ void *Socket_Parser()
                         {
                             pthread_mutex_lock(&mutex_socket);
                             socket_execute = queue_dequeue(g_pSyncList[i]->SocketActionList);
-                            if(socket_execute->re_cmd)
-                                free(socket_execute->re_cmd);
-                            free(socket_execute);
+
+#if MEM_POOL_ENABLE
+                    mem_free(socket_execute->cmd_name);
+                    mem_free(socket_execute->re_cmd);
+                    mem_free(socket_execute);
+#else
+                    if(socket_execute->re_cmd)
+                        free(socket_execute->re_cmd);
+                    if(socket_execute->cmd_name)
+                        free(socket_execute->cmd_name);
+                    free(socket_execute);
+#endif
                             //printf("del socket item ok\n");
                             pthread_mutex_unlock(&mutex_socket);
                         }
@@ -7170,9 +7253,17 @@ void *Socket_Parser()
                             wd_DEBUG("del socket item ok?\n");
                             pthread_mutex_lock(&mutex_socket);
                             socket_execute = queue_dequeue(g_pSyncList[i]->SocketActionList);
-                            if(socket_execute->re_cmd)
-                                free(socket_execute->re_cmd);
-                            free(socket_execute);
+#if MEM_POOL_ENABLE
+                    mem_free(socket_execute->cmd_name);
+                    mem_free(socket_execute->re_cmd);
+                    mem_free(socket_execute);
+#else
+                    if(socket_execute->re_cmd)
+                        free(socket_execute->re_cmd);
+                    if(socket_execute->cmd_name)
+                        free(socket_execute->cmd_name);
+                    free(socket_execute);
+#endif
                             wd_DEBUG("del socket item ok\n");
                             pthread_mutex_unlock(&mutex_socket);
                         }
@@ -7181,12 +7272,17 @@ void *Socket_Parser()
                             wd_DEBUG("del socket item ok?\n");
                             pthread_mutex_lock(&mutex_socket);
                             socket_execute = queue_dequeue_t(g_pSyncList[i]->SocketActionList);
-                            if(socket_execute != NULL)
-                            {
-                                if(socket_execute->re_cmd)
-                                    free(socket_execute->re_cmd);
-                                free(socket_execute);
-                            }
+#if MEM_POOL_ENABLE
+                    mem_free(socket_execute->cmd_name);
+                    mem_free(socket_execute->re_cmd);
+                    mem_free(socket_execute);
+#else
+                    if(socket_execute->re_cmd)
+                        free(socket_execute->re_cmd);
+                    if(socket_execute->cmd_name)
+                        free(socket_execute->cmd_name);
+                    free(socket_execute);
+#endif
                             wd_DEBUG("del socket item ok\n");
                             pthread_mutex_unlock(&mutex_socket);
                         }
@@ -8649,7 +8745,8 @@ void stop_process_clean_up(){
     //free_disk_struc(&follow_disk_info_start);
     //free_disk_struc(&config_disk_info_start);
 
-    unlink(general_log);
+    if(!access_token_expired)
+        unlink(general_log);
 }
 char *change_local_same_file(char *oldname,int index)
 {
@@ -9519,7 +9616,17 @@ void queue_destroy (queue_t q)
             queue_entry_t next = q->head;
             q->head = next->next_ptr;
             next->next_ptr = NULL;
+
+#if MEM_POOL_ENABLE
+            mem_free(next->cmd_name);
+            mem_free(next->re_cmd);
+            mem_free (next);
+#else
+            if(next->re_cmd)
+                free(next->re_cmd);
+            free(next->cmd_name);
             free (next);
+#endif
         }
         q->head = q->tail = NULL;
         free (q);

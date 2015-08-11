@@ -1,0 +1,17 @@
+/*
+========================================================================
+ Name        : symbian_ua_gui.hrh
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+enum Tsymbian_ua_guiViewUids
+	{
+	ESymbian_ua_guiContainerViewId = 1,
+	ESymbian_ua_guiSettingItemListViewId
+	};
+enum TSymbian_ua_guiApplicationControls
+	{
+	ESymbian_ua_guiApplicationDlg_wait_init = 1
+	};

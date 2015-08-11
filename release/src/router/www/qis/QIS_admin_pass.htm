@@ -33,8 +33,7 @@ for(var i=0; i<accounts.length; i++){
 }
 
 function QKinternettype_load_body(){
-
-	if(parent.based_modelid == "RT-N11P"){	//MODELDEP : RT-N11P (RT-N12+, RT-N12E_B)
+	if(parent.based_modelid == "RT-N11P" || parent.based_modelid == "PL-N12" || parent.based_modelid == "PL-AC56"){
 			document.getElementById("point4").style.display = "none";
 	}
 	else{
@@ -228,7 +227,7 @@ function submitForm(){
 
 	if(parent.tmo_support && parent.ISMOBILE)
 		document.form.action = "/qis/QIS_wireless.htm";
-	else if(parent.flag_manual == 1)
+	else if(parent.flag_manual == 1 && !hwmodeSwitch_support)
 		document.form.action = "/qis/QIS_manual.htm";
 	else if(parent.flag_manual == "modem")
 		document.form.action = "/qis/QIS_modem.htm";
@@ -337,28 +336,28 @@ function clean_scorebar(obj){
 		<tr>
 		  <th width="240"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,5)"><#Router_Login_Name#></a></th>
 		  <td class="QISformtd">
-				<div>
-					<input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_15_table" maxlength="20" value="<% nvram_get("http_username"); %>" autocomplete="off" autocorrect="off" autocapitalize="off">
-					<br /><span id="alert_msg1" style="color:#FC0;margin-left:8px;display:none;"></span>
-				</div>
+			<div>
+				<input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_18_table" maxlength="20" value="<% nvram_get("http_username"); %>" autocomplete="off" autocorrect="off" autocapitalize="off">
+				<br /><span id="alert_msg1" style="color:#FC0;margin-left:8px;display:none;"></span>
+			</div>
 		  </td>
 		</tr>	
 		<tr>
 			<th width="240"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 			<td class="QISformtd">
-				<input type="password" autocomplete="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_15_table" maxlength="16" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;"/ onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off">
+				<input type="password" autocomplete="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_18_table" maxlength="16" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="return false;"/ onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off">
 			&nbsp;&nbsp;
-			<div id="scorebarBorder" style="margin-left:140px; margin-top:-26px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
+				<div id="scorebarBorder" style="margin-left:180px; margin-top:-26px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 				<div id="score" style="margin-top:3px;"></div>
 				<div id="scorebar">&nbsp;</div>        	
-			</div>
+				</div>
 			</td>
 		</tr>	
 		<tr>
 			<th width="240"><span class="hintstyle"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></span></th>
 			<td class="QISformtd">
-				<input type="password" autocomplete="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_15_table" maxlength="16" onpaste="return false;" autocorrect="off" autocapitalize="off"/>
-				<div style="margin:-25px 0px 0px 135px;"><input type="checkbox" name="show_pass_1" tabindex="4" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
+				<input type="password" autocomplete="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_18_table" maxlength="16" onpaste="return false;" autocorrect="off" autocapitalize="off"/>
+				<div style="margin:-25px 0px 0px 175px;"><input type="checkbox" name="show_pass_1" tabindex="4" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 			</td>
 		</tr>
 		<tr>
@@ -389,7 +388,7 @@ function clean_scorebar(obj){
 			<li><#QIS_pass_desc5#>&nbsp;<% nvram_default_get("http_username"); %>&nbsp;/&nbsp;<% nvram_default_get("http_passwd"); %>
 		</ul>
 	</div>
-	<div id="loginImage" style="margin-left:320px;margin-top:-200px;"><img width="300px" src="/images/qis/router_login.jpg"></span></div>
+	<div id="loginImage" style="margin-left:320px;margin-top:-200px;"><img width="300px" style="border-radius:5px;" src="/images/qis/router_login.jpg"></span></div>
 </div>
 <br>
 

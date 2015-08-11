@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<?codewarrior exportversion="1.0" ideversion="5.5" success="y" ?>
+
+<!DOCTYPE MWIDEWORKSPACE [
+<!ELEMENT MWIDEWORKSPACE (WINDOW*, COMWINDOW*)>
+<!ELEMENT WINDOW (SESSION, EDOCTYPE, PATH, FRAMELOC, FRAMESIZE, DOCKINFO)>
+<!ELEMENT COMWINDOW (SESSION, CLSID, OWNERPROJECT, DATA, FRAMELOC, FRAMESIZE, DOCKINFO)>
+<!ELEMENT SESSION (#PCDATA)>
+<!ELEMENT EDOCTYPE (#PCDATA)>
+<!ELEMENT DEFAULT (#PCDATA)>
+<!ELEMENT MAXIMIZED (#PCDATA)>
+<!ELEMENT PATH (#PCDATA)>
+<!ATTLIST PATH USERELATIVEPATHS (true | false) "true">
+<!ELEMENT FRAMELOC (X, Y)>
+<!ELEMENT X (#PCDATA)>
+<!ELEMENT Y (#PCDATA)>
+<!ELEMENT FRAMESIZE (W, H)>
+<!ELEMENT W (#PCDATA)>
+<!ELEMENT H (#PCDATA)>
+<!ELEMENT DOCKINFO (STATUS, ROW, COLUMN, DOCKBARID, PCTWIDTH, HGT, GROUPID)>
+<!ELEMENT STATUS (#PCDATA)>
+<!ELEMENT ROW (#PCDATA)>
+<!ELEMENT COLUMN (#PCDATA)>
+<!ELEMENT DOCKBARID (#PCDATA)>
+<!ELEMENT PCTWIDTH (#PCDATA)>
+<!ELEMENT HGT (#PCDATA)>
+<!ELEMENT GROUPID (GIDHIGHPART, GIDLOWPART)>
+<!ELEMENT GIDHIGHPART (#PCDATA)>
+<!ELEMENT GIDLOWPART (#PCDATA)>
+<!ELEMENT CLSID (#PCDATA)>
+<!ELEMENT OWNERPROJECT (#PCDATA)>
+<!ATTLIST OWNERPROJECT USERELATIVEPATHS (true | false) "true">
+<!ELEMENT DATA (#PCDATA)>
+<!ATTLIST DATA BINARYFORMAT (true | false) "true">
+]>
+
+<MWIDEWORKSPACE>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <DEFAULT>true</DEFAULT>
+        <PATH USERELATIVEPATHS = "true">pjlib.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">pjlib_util.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">pjnath.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">null_audio.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">pjsdp.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">pjmedia.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">pjsip.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">pjsip_simple.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">pjsip_ua.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">pjsua_lib.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-1</SESSION>
+        <EDOCTYPE>0</EDOCTYPE>
+        <PATH USERELATIVEPATHS = "true">symbian_ua.mcp</PATH>
+        <FRAMELOC>
+            <X>0</X>
+            <Y>0</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>347</W>
+            <H>128</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>1</STATUS>
+            <ROW>0</ROW>
+            <COLUMN>0</COLUMN>
+            <DOCKBARID>59420</DOCKBARID>
+            <PCTWIDTH>1.000000</PCTWIDTH>
+            <HGT>350</HGT>
+            <GROUPID>
+                <GIDHIGHPART>4294967294</GIDHIGHPART>
+                <GIDLOWPART>4294967294</GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-2147483648</SESSION>
+        <EDOCTYPE>20</EDOCTYPE>
+        <FRAMELOC>
+            <X>4</X>
+            <Y>23</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>1464</W>
+            <H>3681</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>0</STATUS>
+            <ROW></ROW>
+            <COLUMN></COLUMN>
+            <DOCKBARID></DOCKBARID>
+            <PCTWIDTH></PCTWIDTH>
+            <HGT></HGT>
+            <GROUPID>
+                <GIDHIGHPART></GIDHIGHPART>
+                <GIDLOWPART></GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-2147483648</SESSION>
+        <EDOCTYPE>36</EDOCTYPE>
+        <FRAMELOC>
+            <X>4</X>
+            <Y>23</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>366</W>
+            <H>354</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>0</STATUS>
+            <ROW></ROW>
+            <COLUMN></COLUMN>
+            <DOCKBARID></DOCKBARID>
+            <PCTWIDTH></PCTWIDTH>
+            <HGT></HGT>
+            <GROUPID>
+                <GIDHIGHPART></GIDHIGHPART>
+                <GIDLOWPART></GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+    <WINDOW>
+        <SESSION>-2147483648</SESSION>
+        <EDOCTYPE>23</EDOCTYPE>
+        <FRAMELOC>
+            <X>6</X>
+            <Y>81</Y>
+        </FRAMELOC>
+        <FRAMESIZE>
+            <W>566</W>
+            <H>477</H>
+        </FRAMESIZE>
+        <DOCKINFO>
+            <STATUS>0</STATUS>
+            <ROW></ROW>
+            <COLUMN></COLUMN>
+            <DOCKBARID></DOCKBARID>
+            <PCTWIDTH></PCTWIDTH>
+            <HGT></HGT>
+            <GROUPID>
+                <GIDHIGHPART></GIDHIGHPART>
+                <GIDLOWPART></GIDLOWPART>
+            </GROUPID>
+        </DOCKINFO>
+    </WINDOW>
+</MWIDEWORKSPACE>

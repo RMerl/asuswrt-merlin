@@ -84,6 +84,17 @@ config FEATURE_UDHCPC_ARPING
 	  will DHCPDECLINE the offer if the address is in use,
 	  and restart the discover process.
 
+config FEATURE_UDHCPC_SANITIZEOPT
+	bool "Do not pass malformed host and domain names"
+	default y
+	depends on UDHCPC
+	help
+	  If selected, udhcpc will check some options (such as option 12 -
+	  hostname) and if they don't look like valid hostnames
+	  (for example, if they start with dash or contain spaces),
+	  they will be replaced with string "bad" when exporting
+	  to the environment.
+
 config FEATURE_UDHCP_PORT
 	bool "Enable '-P port' option for udhcpd and udhcpc"
 	default n

@@ -55,10 +55,14 @@ struct qrpc_clnt_raw_priv {
 	struct rpc_err		rpc_error;
 	XDR			xdrs_out;
 	XDR			xdrs_in;
-	struct qrpc_raw_ethpkt	*pkt_outbuf;
-	struct qrpc_raw_ethpkt	*pkt_inbuf;
+	uint8_t			*outbuf;
+	uint8_t			*out_pktbuf;
+	uint8_t			*inbuf;
+	uint8_t			*in_pktbuf;
+	struct qrpc_frame_hdr	out_hdr;
 	uint32_t		xdrs_outpos;
 	int			raw_sock;
+	uint8_t			sess_id;
 };
 
 static const struct clnt_ops qrpc_clnt_raw_ops = {
@@ -70,45 +74,19 @@ static const struct clnt_ops qrpc_clnt_raw_ops = {
 	qrpc_clnt_raw_control
 };
 
-static int qrpc_clnt_raw_config_dst(struct qrpc_clnt_raw_priv *const priv,
-					const char *const srcif_name, const uint8_t *dmac_addr)
-{
-	struct ifreq ifreq;
-	struct ethhdr *const eth_packet = &priv->pkt_outbuf->hdr.eth_hdr;
-
-	memset(&ifreq, 0, sizeof(ifreq));
-	strncpy(ifreq.ifr_name, srcif_name, IFNAMSIZ - 1);
-	if (ioctl(priv->raw_sock, SIOCGIFINDEX, &ifreq) < 0) {
-		printf("%s interface doesn't exist\n", srcif_name);
-		return -1;
-	}
-
-	priv->dst_addr.sll_family = AF_PACKET;
-	priv->dst_addr.sll_protocol = htons(QRPC_RAW_SOCK_PROT);
-	priv->dst_addr.sll_ifindex = ifreq.ifr_ifindex;
-	priv->dst_addr.sll_halen = ETH_ALEN;
-	memcpy(priv->dst_addr.sll_addr, dmac_addr, ETH_ALEN);
-
-	memcpy(eth_packet->h_dest, priv->dst_addr.sll_addr, ETH_ALEN);
-	if (ioctl(priv->raw_sock, SIOCGIFHWADDR, &ifreq) < 0)
-		return -1;
-	memcpy(eth_packet->h_source, ifreq.ifr_addr.sa_data, ETH_ALEN);
-	eth_packet->h_proto = htons(QRPC_RAW_SOCK_PROT);
-
-	return 0;
-}
-
 static void qrpc_clnt_raw_free_priv(struct qrpc_clnt_raw_priv *const priv)
 {
-	free(priv->pkt_outbuf);
-	free(priv->pkt_inbuf);
+	free(priv->outbuf);
+	free(priv->out_pktbuf);
+	free(priv->inbuf);
+	free(priv->in_pktbuf);
 	if (priv->raw_sock >= 0)
 		close(priv->raw_sock);
 	free(priv);
 }
 
 CLIENT *qrpc_clnt_raw_create(u_long prog, u_long vers,
-				const char *const srcif_name, const uint8_t * dmac_addr)
+		const char *const srcif_name, const uint8_t * dmac_addr, uint8_t sess_id)
 {
 	CLIENT *client;
 	int rawsock_fd;
@@ -119,7 +97,7 @@ CLIENT *qrpc_clnt_raw_create(u_long prog, u_long vers,
 	if (rawsock_fd < 0)
 		return NULL;
 
-	if (qrpc_set_filter(rawsock_fd) < 0) {
+	if (qrpc_set_prot_filter(rawsock_fd, QRPC_RAW_SOCK_PROT) < 0) {
 		close(rawsock_fd);
 		return NULL;
 	}
@@ -131,14 +109,18 @@ CLIENT *qrpc_clnt_raw_create(u_long prog, u_long vers,
 	}
 
 	priv->raw_sock = rawsock_fd;
-	priv->pkt_outbuf = calloc(1, sizeof(*priv->pkt_outbuf));
-	priv->pkt_inbuf = calloc(1, sizeof(*priv->pkt_inbuf));
-	if (!priv->pkt_outbuf || !priv->pkt_inbuf) {
+	priv->outbuf = calloc(1, QRPC_BUFFER_LEN);
+	priv->inbuf = calloc(1, QRPC_BUFFER_LEN);
+	priv->out_pktbuf = calloc(1, ETH_FRAME_LEN);
+	priv->in_pktbuf = calloc(1, ETH_FRAME_LEN);
+	if (!priv->outbuf || !priv->inbuf || !priv->out_pktbuf || !priv->in_pktbuf) {
 		qrpc_clnt_raw_free_priv(priv);
 		return NULL;
 	}
 
-	if (qrpc_clnt_raw_config_dst(priv, srcif_name, dmac_addr) < 0) {
+	if (qrpc_clnt_raw_config_dst(rawsock_fd, srcif_name, &priv->dst_addr,
+					dmac_addr, &priv->out_hdr.qhdr,
+						QRPC_RAW_SOCK_PROT) < 0) {
 		qrpc_clnt_raw_free_priv(priv);
 		return NULL;
 	}
@@ -153,11 +135,11 @@ CLIENT *qrpc_clnt_raw_create(u_long prog, u_long vers,
 	client->cl_private = (caddr_t) priv;
 	client->cl_auth = authnone_create();
 
-	xdrmem_create(&priv->xdrs_in, priv->pkt_inbuf->payload,
-			sizeof(priv->pkt_inbuf->payload), XDR_DECODE);
+	xdrmem_create(&priv->xdrs_in, (char *)priv->inbuf + sizeof(struct qrpc_frame_hdr),
+			QRPC_BUFFER_LEN - sizeof(struct qrpc_frame_hdr), XDR_DECODE);
 
-	xdrmem_create(&priv->xdrs_out, priv->pkt_outbuf->payload,
-			sizeof(priv->pkt_outbuf->payload), XDR_ENCODE);
+	xdrmem_create(&priv->xdrs_out, (char *)priv->outbuf,
+			QRPC_BUFFER_LEN, XDR_ENCODE);
 	call_msg.rm_xid = getpid();
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
@@ -170,20 +152,44 @@ CLIENT *qrpc_clnt_raw_create(u_long prog, u_long vers,
 	}
 	priv->xdrs_outpos = XDR_GETPOS(&(priv->xdrs_out));
 
+	priv->sess_id = sess_id;
+
 	return client;
 }
 
 static int qrpc_clnt_raw_call_send(struct qrpc_clnt_raw_priv *const priv, const int len)
 {
 	int ret;
+	static const uint16_t payload_max = ETH_FRAME_LEN - sizeof(struct qrpc_frame_hdr);
+	uint16_t pkt_nr;
+	uint16_t i;
+	uint16_t payload_done = 0;
+	struct qrpc_frame_hdr *hdr;
 
-	do {
-		ret = sendto(priv->raw_sock, priv->pkt_outbuf, len, 0,
-				(struct sockaddr *)&priv->dst_addr, sizeof(priv->dst_addr));
-	} while (ret < 0 && errno == EINTR);
-	if (len != ret) {
-		priv->rpc_error.re_status = RPC_CANTSEND;
-		return -1;
+	pkt_nr = (len + payload_max - 1) / payload_max;
+
+	for (i = 0; i < pkt_nr; i++) {
+		uint16_t payload_len = MIN((uint16_t)len - payload_done, payload_max);
+
+		/* build an EthII frame */
+		priv->out_hdr.sub_type = ((i != pkt_nr - 1) ? QRPC_FRAME_TYPE_FRAG
+			: QRPC_FRAME_TYPE_COMPLETE);
+		priv->out_hdr.sid = priv->sess_id;
+
+		hdr = (struct qrpc_frame_hdr *)priv->out_pktbuf;
+		memcpy(hdr, &priv->out_hdr, sizeof(priv->out_hdr));
+		memcpy(hdr + 1, priv->outbuf + payload_done, payload_len);
+		payload_done += payload_len;
+
+		do {
+			ret = sendto(priv->raw_sock, priv->out_pktbuf, sizeof(struct qrpc_frame_hdr) + payload_len, 0,
+					(struct sockaddr *)&priv->dst_addr, sizeof(priv->dst_addr));
+		} while (ret < 0 && errno == EINTR);
+
+		if ((uint16_t)ret != sizeof(struct qrpc_frame_hdr) + payload_len) {
+			priv->rpc_error.re_status = RPC_CANTSEND;
+			return -1;
+		}
 	}
 
 	return 0;
@@ -195,35 +201,50 @@ static int qrpc_clnt_raw_call_recv(struct qrpc_clnt_raw_priv *const priv)
 	struct sockaddr_ll lladdr;
 	socklen_t addrlen = sizeof(lladdr);
 	int ret;
-
-	fds.fd = priv->raw_sock;
-	fds.events = POLLIN;
-	do {
-		ret = poll(&fds, 1, QRPC_CLNT_RAW_POLL_TIMEOUT);
-	} while (ret < 0 && errno == EINTR);
-	if (!ret) {
-		priv->rpc_error.re_status = RPC_TIMEDOUT;
-		return -1;
-	}
-	if (ret < 0) {
-		priv->rpc_error.re_status = RPC_SYSTEMERROR;
-		return -1;
-	}
+	uint16_t payload_done = sizeof(struct qrpc_frame_hdr);
+	struct qrpc_frame_hdr hdr;
 
 	do {
-		ret = recvfrom(priv->raw_sock, priv->pkt_inbuf, sizeof(*priv->pkt_inbuf),
-				0, (struct sockaddr *)&lladdr, &addrlen);
-	} while (ret < 0 && errno == EINTR);
+		fds.fd = priv->raw_sock;
+		fds.events = POLLIN;
+		do {
+			ret = poll(&fds, 1, QRPC_CLNT_RAW_POLL_TIMEOUT);
+		} while (ret < 0 && errno == EINTR);
+		if (!ret) {
+			priv->rpc_error.re_status = RPC_TIMEDOUT;
+			return -1;
+		}
+		if (ret < 0) {
+			priv->rpc_error.re_status = RPC_SYSTEMERROR;
+			return -1;
+		}
 
-	if (lladdr.sll_pkttype != PACKET_HOST) {
-		priv->rpc_error.re_status = RPC_TIMEDOUT;
-		return -1;
-	}
+		do {
+			ret = recvfrom(priv->raw_sock, priv->in_pktbuf, ETH_FRAME_LEN,
+					0, (struct sockaddr *)&lladdr, &addrlen);
+		} while (ret < 0 && errno == EINTR);
 
-	if (ret < (int)sizeof(struct qrpc_raw_ethhdr)) {
-		priv->rpc_error.re_status = RPC_CANTRECV;
-		return -1;
-	}
+		if (lladdr.sll_pkttype != PACKET_HOST) {
+			priv->rpc_error.re_status = RPC_TIMEDOUT;
+			return -1;
+		}
+
+		if ((ret < (int)sizeof(struct qrpc_frame_hdr))
+				|| (ret - sizeof(struct qrpc_frame_hdr) + payload_done > QRPC_BUFFER_LEN)) {
+			priv->rpc_error.re_status = RPC_CANTRECV;
+			return -1;
+		}
+
+		/* assemble the buffer */
+		memcpy(&hdr, priv->in_pktbuf, sizeof(struct qrpc_frame_hdr));
+		memcpy(priv->inbuf + payload_done, priv->in_pktbuf + sizeof(struct qrpc_frame_hdr),
+			ret - sizeof(struct qrpc_frame_hdr));
+
+		payload_done += (ret - sizeof(struct qrpc_frame_hdr));
+
+	} while (hdr.sub_type == QRPC_FRAME_TYPE_FRAG);
+
+	memcpy(priv->inbuf, &hdr, sizeof(struct qrpc_frame_hdr));
 
 	return 0;
 }
@@ -237,6 +258,8 @@ enum clnt_stat qrpc_clnt_raw_call(CLIENT *cl, u_long proc, xdrproc_t xargs, cadd
 	XDR *xdrs_in = &priv->xdrs_in;
 	struct rpc_msg reply_msg;
 	struct timeval curr_time;
+	struct qrpc_frame_hdr *hdr;
+	uint16_t tmp;
 
 	if (xargs) {
 		xdrs_out->x_op = XDR_ENCODE;
@@ -248,10 +271,11 @@ enum clnt_stat qrpc_clnt_raw_call(CLIENT *cl, u_long proc, xdrproc_t xargs, cadd
 			priv->rpc_error.re_status = RPC_CANTENCODEARGS;
 			return priv->rpc_error.re_status;
 		}
-		++priv->pkt_outbuf->hdr.seq;
-		if (qrpc_clnt_raw_call_send(priv,
-					sizeof(struct qrpc_raw_ethhdr) + XDR_GETPOS(xdrs_out)) < 0)
+		tmp = ntohs(priv->out_hdr.seq);
+		priv->out_hdr.seq = htons(tmp + 1);
+		if (qrpc_clnt_raw_call_send(priv, XDR_GETPOS(xdrs_out)) < 0) {
 			return priv->rpc_error.re_status;
+		}
 	}
 
 	if (gettimeofday(&curr_time, NULL) < 0) {
@@ -267,7 +291,9 @@ enum clnt_stat qrpc_clnt_raw_call(CLIENT *cl, u_long proc, xdrproc_t xargs, cadd
 			else
 				break;
 		}
-		if (xargs && priv->pkt_outbuf->hdr.seq != priv->pkt_inbuf->hdr.seq) {
+
+		hdr = (struct qrpc_frame_hdr *)priv->inbuf;
+		if (xargs && priv->out_hdr.seq != hdr->seq) {
 			continue;
 		}
 

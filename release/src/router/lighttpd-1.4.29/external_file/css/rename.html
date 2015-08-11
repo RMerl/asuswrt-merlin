@@ -14,6 +14,29 @@ body{
 	overflow: hidden;
 	background: #e8e8e8;
 }
+#loading{
+	width:100%;
+	height:100%;
+	position:absolute;
+	opacity: 0.7;
+	background-color: rgb(0, 0, 0);
+	display:none;
+	left:0px;
+	top:0px;
+}
+#loading #main{
+	margin: 0 auto;
+	top: 10px;
+	position:relative;
+	text-align:center;
+}
+.dialog_text_input{
+	height: 24px;
+	font-size: 12px;
+	color: #505A64;
+	padding: 1px 3px;
+	border: 1px solid;
+}
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
 <script type="text/javascript">
@@ -72,7 +95,11 @@ function doRenameOK(e) {
 			oldFile = oldFile.substring(0, oldFile.length-1);
 	}
 	
-	parent.doRENAME(oldFile, myencodeURI(newName));
+	$("#loading").show();
+	
+	parent.doRENAME(oldFile, myencodeURI(newName), function(){
+		$("#loading").hide();
+	});
 };
 
 function doCancel(e) {
@@ -93,23 +120,37 @@ function onKeyDownHandler(e){
 
 <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">
 	<tr>
-  	<td>
-    <div id="mainRegion" style="overflow:hidden">
-    	<input id='dir_name' type='text' value='' style='width:480px' 
-    		onkeydown='onKeyDownHandler(event);' 
-    		maxlength='50'>
-		</div>
-    </td>    
-  </tr>
-  <tr style='height:20px'></tr>
-  <tr>
-  	<td>
-  	<div class="table_block_footer" style="text-align:right">
-    	<button id="ok" class='btnStyle' onmousedown="doRenameOK();" disabled="true">OK</button>
-      <button id="cancel" class="btnStyle" onmousedown="doCancel();">Close</button>
-    </div>
-    </td>
-  </tr>
+  		<td>
+    		<div id="mainRegion" style="overflow:hidden">
+    			<input id='dir_name' class='dialog_text_input' type='text' value='' style='width:475px' 
+    				onkeydown='onKeyDownHandler(event);' 
+    				maxlength='50'>
+			</div>
+    	</td>    
+  	</tr>
+	<tr style='height:10px'></tr>
+  	<tr>
+  		<td>
+  			<div class="table_block_footer" style="text-align:right">
+    			<button id="ok" class='btnStyle' onmousedown="doRenameOK();" disabled="true">OK</button>
+      			<button id="cancel" class="btnStyle" onmousedown="doCancel();">Close</button>
+    		</div>
+    	</td>
+  	</tr>
 </table>
+<div id="loading">
+	<table id="main" style="table-layout: fixed">
+		<tr>
+			<td>
+				<img src="/smb/css/load.gif" style="width:18px;height:18px">
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<span style="color:#fff">Please wait for complete...</span>
+			</td>
+		</tr>
+	</table>
+</div>
 </body>
 </html>

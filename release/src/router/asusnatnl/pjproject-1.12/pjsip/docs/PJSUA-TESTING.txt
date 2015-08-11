@@ -1,0 +1,47 @@
+TESTING
+
+SANITY CHECKS:
+- Do pjlib-test
+- Do pjsip-test
+
+BASIC FLOW TEST (compaq1.cfg, compaq2.cfg);
+- with other pjsua
+- with EyeBeam
+- Register 
+	- with Route
+	- without Route
+	- with TCP
+- Presence (client and server)
+- Call (UAC and UAS)
+	- hold and being held
+	- DTMF send/receive
+- IM and typing
+- Call transfer (with and without norefersub)
+- Call Hold
+- Re-Invite
+- DTMF
+- RTCP
+- TCP (if there's UDP route, then Contact will be UDP)
+
+- Repeat basic flow test without Route set (to wheter TCP is correctly specified in the contact etc)
+
+
+- STUN test	(fwd1.cfg)
+
+COMPATIBILITY WITH FWD
+- presence (xpidf)
+
+
+MULTIPLE ACCOUNTS (combo.cfg)
+
+DIGEST with qop=auth (sipcenter?)
+
+AUDIO QUALITY
+- call to another pjsua that loops incoming call
+
+TEST THE SAMPLES
+
+LINUX TEST
+
+UPDATE DOCUMENTATION
+

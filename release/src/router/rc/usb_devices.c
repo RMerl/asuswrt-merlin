@@ -1268,7 +1268,7 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "CheckSuccess=%d\n",	20);
 			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011062000000100000000000000000000");
 			break;
-		case SN_HUAWEI_EC306:
+		case SN_Huawei_EC306:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1505);
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
@@ -1616,6 +1616,13 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
 			fprintf(fp, "TargetProduct=0x%04x\n",	0x1506);
 			fprintf(fp, "MessageContent=%s\n",	"55534243000000000000000000000011060000000100000000000000000000");
+			break;
+		case SN_Huawei_E3372:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x157d);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "TargetProductList=%s\n",	"14db,14dc");
+			fprintf(fp, "HuaweiNewMode=1\n");
 			break;
 		case SN_Teracom_LW272:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x230d);
@@ -2176,6 +2183,8 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_TP_Link_MA260, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x155b)
 			write_3g_conf(fp, SN_Huawei_E3131, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x157d)
+			write_3g_conf(fp, SN_Huawei_E3372, 1, vid, pid);
 		else if(vid == 0x12d1)
 			write_3g_conf(fp, UNKNOWNDEV, 1, vid, pid);
 		else{
@@ -2543,7 +2552,7 @@ int write_beceem_conf(const char *eth_node){
 		fprintf(fp, "CenterFrequencyMHz                2505 2515 2525 2625\n");
 		fprintf(fp, "EAPMethod                         4\n");
 		fprintf(fp, "ValidateServerCert                Yes\n");
-		fprintf(fp, "CACertFileName                    '/lib/firmware/Server_CA.pem'\n");
+		fprintf(fp, "CACertFileName                    '/tmp/Beceem_firmware/Server_CA.pem'\n");
 		fprintf(fp, "TLSDeviceCertFileName             'DeviceMemSlot3'\n");
 		fprintf(fp, "TLSDevicePrivateKeyFileName       'DeviceMemSlot2'\n");
 		fprintf(fp, "TLSDevicePrivateKeyPassword       'Motorola'\n");
@@ -4435,22 +4444,26 @@ int asus_usb_interface(const char *device_name, const char *action){
 
 		char *isp = nvram_safe_get("modem_isp");
 
-		unlink("/tmp/Beceem_firmware/macxvi.cfg");
+		eval("rm", "-rf", BECEEM_DIR);
+		eval("mkdir", "-p", BECEEM_DIR);
+		eval("ln", "-sf", "/rom/Beceem_firmware/RemoteProxy.cfg", "/tmp/Beceem_firmware/RemoteProxy.cfg");
+
 		if(!strcmp(isp, "Yota")){
-			eval("ln", "-sf", "/tmp/Beceem_firmware/macxvi200.bin.normal", "/tmp/Beceem_firmware/macxvi200.bin");
-			eval("ln", "-sf", "/tmp/Beceem_firmware/macxvi.cfg.yota", "/tmp/Beceem_firmware/macxvi.cfg");
+			eval("ln", "-sf", "/rom/Beceem_firmware/macxvi200.bin.normal", "/tmp/Beceem_firmware/macxvi200.bin");
+			eval("ln", "-sf", "/rom/Beceem_firmware/macxvi.cfg.yota", "/tmp/Beceem_firmware/macxvi.cfg");
+			eval("ln", "-sf", "/rom/Beceem_firmware/Server_CA.pem.yota", "/tmp/Beceem_firmware/Server_CA.pem");
 		}
 		else if(!strcmp(isp, "GMC")){
-			eval("ln", "-sf", "/tmp/Beceem_firmware/macxvi200.bin.normal", "/tmp/Beceem_firmware/macxvi200.bin");
-			eval("ln", "-sf", "/tmp/Beceem_firmware/macxvi.cfg.gmc", "/tmp/Beceem_firmware/macxvi.cfg");
+			eval("ln", "-sf", "/rom/Beceem_firmware/macxvi200.bin.normal", "/tmp/Beceem_firmware/macxvi200.bin");
+			eval("ln", "-sf", "/rom/Beceem_firmware/macxvi.cfg.gmc", "/tmp/Beceem_firmware/macxvi.cfg");
 		}
 		else if(!strcmp(isp, "FreshTel")){
-			eval("ln", "-sf", "/tmp/Beceem_firmware/macxvi200.bin.normal", "/tmp/Beceem_firmware/macxvi200.bin");
-			eval("ln", "-sf", "/tmp/Beceem_firmware/macxvi.cfg.freshtel", "/tmp/Beceem_firmware/macxvi.cfg");
+			eval("ln", "-sf", "/rom/Beceem_firmware/macxvi200.bin.normal", "/tmp/Beceem_firmware/macxvi200.bin");
+			eval("ln", "-sf", "/rom/Beceem_firmware/macxvi.cfg.freshtel", "/tmp/Beceem_firmware/macxvi.cfg");
 		}
 		else if(!strcmp(isp, "Giraffe")){
-			eval("ln", "-sf", "/tmp/Beceem_firmware/macxvi200.bin.giraffe", "/tmp/Beceem_firmware/macxvi200.bin");
-			eval("ln", "-sf", "/tmp/Beceem_firmware/macxvi.cfg.giraffe", "/tmp/Beceem_firmware/macxvi.cfg");
+			eval("ln", "-sf", "/rom/Beceem_firmware/macxvi200.bin.giraffe", "/tmp/Beceem_firmware/macxvi200.bin");
+			eval("ln", "-sf", "/rom/Beceem_firmware/macxvi.cfg.giraffe", "/tmp/Beceem_firmware/macxvi.cfg");
 		}
 		else{
 			usb_dbg("(%s): Didn't assign the ISP or it was not supported.\n", device_name);

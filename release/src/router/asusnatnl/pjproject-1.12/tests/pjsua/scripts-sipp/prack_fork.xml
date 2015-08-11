@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- This program is free software; you can redistribute it and/or      -->
+<!-- modify it under the terms of the GNU General Public License as     -->
+<!-- published by the Free Software Foundation; either version 2 of the -->
+<!-- License, or (at your option) any later version.                    -->
+<!--                                                                    -->
+<!-- This program is distributed in the hope that it will be useful,    -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of     -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      -->
+<!-- GNU General Public License for more details.                       -->
+<!--                                                                    -->
+<!-- You should have received a copy of the GNU General Public License  -->
+<!-- along with this program; if not, write to the                      -->
+<!-- Free Software Foundation, Inc.,                                    -->
+<!-- 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA             -->
+<!--                                                                    -->
+<!--                 Sipp default 'uas' scenario.                       -->
+<!--                                                                    -->
+
+<scenario name="Forked INVITE, one of them require PRACK">
+  <recv request="INVITE" crlf="true">
+   <action>
+    <ereg regexp="branch=([0-9a-zA-Z]*)"
+          search_in="msg"
+          assign_to="3"/>
+    <ereg regexp="CSeq: ([0-9a-zA-Z ]*)"
+          search_in="msg"
+          assign_to="4"/>
+   </action>
+  </recv>
+
+  <send>
+    <![CDATA[
+      SIP/2.0 100 Trying
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+  <!-- Call leg 1: 180/Ringing -->
+  <send>
+    <![CDATA[
+      SIP/2.0 180 Ringing
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=1
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: <sip:WRONG_UA@192.168.0.1>
+    ]]>
+  </send>
+
+  <!-- Call leg 2: 180/Ringing with 100rel -->
+  <send retrans="1000">
+    <![CDATA[
+      SIP/2.0 180 Ringing
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=2
+      [last_Call-ID:]
+      [last_CSeq:]
+      Require: 100rel
+      RSeq: 1
+      Contact: <sip:RIGHT_UA@[local_ip]:[local_port]>
+    ]]>
+  </send>
+
+  <!-- Expect PRACK -->
+  <recv request="PRACK"
+        optional="false"
+        rtd="true"
+        crlf="true">
+  </recv>
+
+  <!-- Send 200/OK to PRACK -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+  <!-- Send 200/OK to INVITE -->
+  <send retrans="500">
+    <![CDATA[
+      SIP/2.0 200 OK
+      Via: SIP/2.0/UDP 127.0.0.1:5080;received=127.0.0.1;rport=5080;[$3]
+      [last_From:]
+      [last_To:];tag=2
+      [last_Call-ID:]
+      [$4]
+      Contact: <sip:RIGHT_UA@[local_ip]:[local_port]>
+      Content-Type: application/sdp
+
+      v=0
+      o=- 3442013205 3442013205 IN IP4 192.168.0.13
+      s=pjsip
+      c=IN IP4 192.168.0.13
+      t=0 0
+      m=audio 4002 RTP/AVP 0
+      a=rtpmap:0 PCMU/8000
+    ]]>
+  </send>
+
+  <!-- Receive ACK -->
+  <recv request="ACK"
+        optional="false"
+        rtd="true"
+        crlf="true">
+  </recv>
+
+  <!-- Receive BYE -->
+  <recv request="BYE" crlf="true">
+  </recv>
+
+  <!-- Send 200/OK to BYE -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+
+
+  <!-- Keep the call open for a while in case the 200 is lost to be     -->
+  <!-- able to retransmit it if we receive the BYE again.               -->
+  <pause milliseconds="4000"/>
+
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<designerData version="1.1.0">
+  <componentManifest>
+    <manifestEntry id="com.nokia.sdt.series60.CAknView" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.DesignTimeContainer" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPane" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.ControlBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPaneTitle" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPaneTitleBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CBA" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CBABase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CAknSettingItemList" version="1.1.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.ContainerBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CEikEdwin" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CEikEdwinBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.EditorBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CCoeControlBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.SecretEditor" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CAknBinaryPopupSettingItem" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.EnumeratedTextPopupBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuBar" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuPane" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuItem" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuItemBase" version="1.0.0"/>
+  </componentManifest>
+  <property id="com.nokia.sdt.symbian.dm.RESOURCE_DIRECTORY_ID">data</property>
+  <property id="com.nokia.sdt.component.symbian.vendor">com.nokia.series60</property>
+  <property id="com.nokia.sdt.component.symbian.version">3.0.1</property>
+  <property id="com.nokia.sdt.symbian.dm.COMPONENT_PROVIDER">com.nokia.sdt.component.symbian.Symbian-Provider</property>
+  <property id="com.nokia.sdt.symbian.dm.INCLUDE_DIRECTORY_ID">inc</property>
+  <property id="com.nokia.sdt.symbian.dm.SOURCE_DIRECTORY_ID">src</property>
+  <property id="com.nokia.sdt.symbian.dm.SOURCEGEN_PROVIDER">com.nokia.sdt.sourcegen.Symbian-Provider</property>
+  <property id="com.nokia.sdt.symbian.dm.BUILD_DIRECTORY_ID">group</property>
+  <component id="com.nokia.sdt.series60.CAknView">
+    <property id="className">Csymbian_ua_guiSettingItemListView</property>
+    <compoundProperty id="location">
+      <property id="x">52</property>
+      <property id="y">45</property>
+    </compoundProperty>
+    <property id="optionsMenu" type="componentRef">optionsMenu</property>
+    <property id="name">symbian_ua_guiSettingItemListView</property>
+    <compoundProperty id="size">
+      <property id="width">240</property>
+      <property id="height">320</property>
+    </compoundProperty>
+    <component id="com.nokia.sdt.series60.StatusPane">
+      <compoundProperty id="location">
+        <property id="x">20</property>
+      </compoundProperty>
+      <property id="name">statusPane</property>
+      <compoundProperty id="size">
+        <property id="width">204</property>
+        <property id="height">66</property>
+      </compoundProperty>
+      <component id="com.nokia.sdt.series60.StatusPaneTitle">
+        <compoundProperty id="location">
+          <property id="x">56</property>
+        </compoundProperty>
+        <property id="name">title</property>
+        <property id="titleText" type="i18n">STR_symbian_ua_guiSettingItemListView_2</property>
+        <compoundProperty id="size">
+          <property id="width">148</property>
+          <property id="height">43</property>
+        </compoundProperty>
+        <compoundProperty id="image"/>
+      </component>
+    </component>
+    <component id="com.nokia.sdt.series60.CBA">
+      <compoundProperty id="location">
+        <property id="y">288</property>
+      </compoundProperty>
+      <compoundProperty id="info">
+        <property id="leftText" type="i18n">STR_symbian_ua_guiSettingItemListView_140</property>
+        <property id="rightText" type="i18n">STR_symbian_ua_guiSettingItemListView_141</property>
+        <property id="rightId">EAknSoftkeySave</property>
+      </compoundProperty>
+      <property id="name">controlPane</property>
+      <compoundProperty id="size">
+        <property id="width">240</property>
+        <property id="height">32</property>
+      </compoundProperty>
+      <eventBinding id="rightSoftKeyPressed" handlerDisplay="HandleControlPaneRightSoftKeyPressedL" handlerSymbol="cpp@src//symbian_ua_guiSettingItemListView.cpp/function(Csymbian_ua_guiSettingItemListView::HandleControlPaneRightSoftKeyPressedL(TInt))"/>
+    </component>
+    <component id="com.nokia.sdt.series60.CAknSettingItemList">
+      <compoundProperty id="size">
+        <property id="width">240</property>
+        <property id="height">222</property>
+      </compoundProperty>
+      <property id="className">CSymbian_ua_guiSettingItemList</property>
+      <compoundProperty id="location">
+        <property id="y">66</property>
+      </compoundProperty>
+      <property id="EAknSettingItemNumberedStyle">false</property>
+      <property id="title" type="i18n">STR_symbian_ua_guiSettingItemListView_1</property>
+      <property id="name">symbian_ua_guiSettingItemList</property>
+      <property id="exitsApp">false</property>
+      <component id="com.nokia.sdt.series60.CEikEdwin">
+        <compoundProperty id="size">
+          <property id="height">58</property>
+          <property id="width">240</property>
+        </compoundProperty>
+        <property id="defaultCase">EAknEditorLowerCase</property>
+        <compoundProperty id="avkonFlags"/>
+        <compoundProperty id="location">
+          <property id="x">0</property>
+          <property id="y">0</property>
+        </compoundProperty>
+        <property id="itemTitle" type="i18n">STR_symbian_ua_guiSettingItemListView_5</property>
+        <compoundProperty id="flags"/>
+        <compoundProperty id="allowedCaseModes"/>
+        <property id="name">ed_registrar</property>
+        <property id="text" type="i18n">STR_symbian_ua_guiSettingItemListView_3</property>
+        <compoundProperty id="allowedInputModes">
+          <property id="EAknEditorKatakanaInputMode">true</property>
+          <property id="EAknEditorFullWidthTextInputMode">true</property>
+          <property id="EAknEditorFullWidthNumericInputMode">true</property>
+          <property id="EAknEditorFullWidthKatakanaInputMode">true</property>
+          <property id="EAknEditorHiraganaKanjiInputMode">true</property>
+          <property id="EAknEditorHalfWidthTextInputMode">true</property>
+        </compoundProperty>
+      </component>
+      <component id="com.nokia.sdt.series60.CEikEdwin">
+        <compoundProperty id="size">
+          <property id="height">58</property>
+          <property id="width">240</property>
+        </compoundProperty>
+        <property id="defaultCase">EAknEditorLowerCase</property>
+        <compoundProperty id="avkonFlags"/>
+        <compoundProperty id="location">
+          <property id="x">0</property>
+          <property id="y">58</property>
+        </compoundProperty>
+        <property id="itemTitle" type="i18n">STR_symbian_ua_guiSettingItemListView_8</property>
+        <compoundProperty id="flags"/>
+        <compoundProperty id="allowedCaseModes"/>
+        <property id="name">ed_user</property>
+        <property id="text" type="i18n">STR_symbian_ua_guiSettingItemListView_7</property>
+        <compoundProperty id="allowedInputModes">
+          <property id="EAknEditorKatakanaInputMode">true</property>
+          <property id="EAknEditorFullWidthTextInputMode">true</property>
+          <property id="EAknEditorFullWidthNumericInputMode">true</property>
+          <property id="EAknEditorFullWidthKatakanaInputMode">true</property>
+          <property id="EAknEditorHiraganaKanjiInputMode">true</property>
+          <property id="EAknEditorHalfWidthTextInputMode">true</property>
+        </compoundProperty>
+      </component>
+      <component id="com.nokia.sdt.series60.SecretEditor">
+        <property id="maxLength">32</property>
+        <compoundProperty id="location">
+          <property id="x">0</property>
+          <property id="y">116</property>
+        </compoundProperty>
+        <property id="name">ed_password</property>
+        <property id="itemTitle" type="i18n">STR_symbian_ua_guiSettingItemListView_16</property>
+        <compoundProperty id="size">
+          <property id="height">58</property>
+          <property id="width">240</property>
+        </compoundProperty>
+      </component>
+      <component id="com.nokia.sdt.series60.CAknBinaryPopupSettingItem">
+        <sequenceProperty id="items">
+          <compoundElement>
+            <property id="settingText" type="i18n">STR_symbian_ua_guiSettingItemListView_25</property>
+            <property id="popupText" type="i18n">STR_symbian_ua_guiSettingItemListView_26</property>
+            <property id="value">1</property>
+          </compoundElement>
+          <compoundElement>
+            <property id="settingText" type="i18n">STR_symbian_ua_guiSettingItemListView_27</property>
+            <property id="popupText" type="i18n">STR_symbian_ua_guiSettingItemListView_28</property>
+          </compoundElement>
+        </sequenceProperty>
+        <compoundProperty id="size">
+          <property id="height">0</property>
+          <property id="width">240</property>
+        </compoundProperty>
+        <compoundProperty id="location">
+          <property id="x">0</property>
+          <property id="y">174</property>
+        </compoundProperty>
+        <property id="itemTitle" type="i18n">STR_symbian_ua_guiSettingItemListView_24</property>
+        <property id="active">1</property>
+        <property id="name">b_srtp</property>
+        <property id="itemHidden">true</property>
+      </component>
+      <component id="com.nokia.sdt.series60.CAknBinaryPopupSettingItem">
+        <sequenceProperty id="items">
+          <compoundElement>
+            <property id="settingText" type="i18n">STR_symbian_ua_guiSettingItemListView_47</property>
+            <property id="popupText" type="i18n">STR_symbian_ua_guiSettingItemListView_48</property>
+            <property id="value">1</property>
+          </compoundElement>
+          <compoundElement>
+            <property id="settingText" type="i18n">STR_symbian_ua_guiSettingItemListView_49</property>
+            <property id="popupText" type="i18n">STR_symbian_ua_guiSettingItemListView_50</property>
+          </compoundElement>
+        </sequenceProperty>
+        <compoundProperty id="size">
+          <property id="height">0</property>
+          <property id="width">240</property>
+        </compoundProperty>
+        <compoundProperty id="location">
+          <property id="x">0</property>
+          <property id="y">174</property>
+        </compoundProperty>
+        <property id="itemTitle" type="i18n">STR_symbian_ua_guiSettingItemListView_46</property>
+        <property id="active">1</property>
+        <property id="name">b_ice</property>
+        <property id="itemHidden">true</property>
+      </component>
+      <component id="com.nokia.sdt.series60.CEikEdwin">
+        <compoundProperty id="size">
+          <property id="height">0</property>
+          <property id="width">240</property>
+        </compoundProperty>
+        <compoundProperty id="avkonFlags"/>
+        <compoundProperty id="location">
+          <property id="x">0</property>
+          <property id="y">174</property>
+        </compoundProperty>
+        <property id="itemTitle" type="i18n">STR_symbian_ua_guiSettingItemListView_19</property>
+        <compoundProperty id="flags"/>
+        <compoundProperty id="allowedCaseModes"/>
+        <property id="name">ed_stun_server</property>
+        <property id="text" type="i18n">STR_symbian_ua_guiSettingItemListView_18</property>
+        <property id="itemHidden">true</property>
+        <compoundProperty id="allowedInputModes">
+          <property id="EAknEditorKatakanaInputMode">true</property>
+          <property id="EAknEditorFullWidthTextInputMode">true</property>
+          <property id="EAknEditorFullWidthNumericInputMode">true</property>
+          <property id="EAknEditorFullWidthKatakanaInputMode">true</property>
+          <property id="EAknEditorHiraganaKanjiInputMode">true</property>
+          <property id="EAknEditorHalfWidthTextInputMode">true</property>
+        </compoundProperty>
+      </component>
+    </component>
+    <component id="com.nokia.sdt.series60.MenuBar">
+      <compoundProperty id="location">
+        <property id="x">3</property>
+        <property id="y">248</property>
+      </compoundProperty>
+      <property id="name">optionsMenu</property>
+      <compoundProperty id="size">
+        <property id="height">40</property>
+        <property id="width">237</property>
+      </compoundProperty>
+      <component id="com.nokia.sdt.series60.MenuPane">
+        <compoundProperty id="location"/>
+        <property id="name">menuPane1</property>
+        <compoundProperty id="size">
+          <property id="height">40</property>
+          <property id="width">237</property>
+        </compoundProperty>
+        <component id="com.nokia.sdt.series60.MenuItem">
+          <compoundProperty id="location">
+            <property id="x">5</property>
+            <property id="y">2</property>
+          </compoundProperty>
+          <property id="name">menuItem1</property>
+          <property id="text" type="i18n">STR_symbian_ua_guiSettingItemListView_4</property>
+          <compoundProperty id="size">
+            <property id="width">222</property>
+            <property id="height">33</property>
+          </compoundProperty>
+          <eventBinding id="selected" handlerDisplay="HandleChangeSelectedSettingItemL" handlerSymbol="cpp@src//symbian_ua_guiSettingItemListView.cpp/function(Csymbian_ua_guiSettingItemListView::HandleChangeSelectedSettingItemL(TInt))"/>
+        </component>
+      </component>
+    </component>
+  </component>
+  <stringBundle>
+    <stringTable language="LANG_English">
+      <string id="STR_symbian_ua_guiSettingItemListView_1">Settings</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_2">Account Settings</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_4">Change</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_3"/>
+      <string id="STR_symbian_ua_guiSettingItemListView_5">Registrar</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_7"/>
+      <string id="STR_symbian_ua_guiSettingItemListView_8">User</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_16">Password</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_18"/>
+      <string id="STR_symbian_ua_guiSettingItemListView_19">STUN Server</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_24">SRTP</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_25">On</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_26">Popup text for On</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_27">Off</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_28">Popup text for Off</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_46">ICE</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_47">On</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_48">Popup text for On</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_49">Off</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_50">Popup text for Off</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_140">Options</string>
+      <string id="STR_symbian_ua_guiSettingItemListView_141">Done</string>
+    </stringTable>
+  </stringBundle>
+  <macroTable/>
+  <sourceMappingState>
+    <resourceMappings>
+      <resourceMapping instanceName="b_srtp" rsrcId="member$setting_page_resource">r_symbian_ua_gui_setting_item_list_b_srtp_setting_page_resource</resourceMapping>
+      <resourceMapping instanceName="ed_stun_server">r_symbian_ua_gui_setting_item_list_ed_stun_server_editor_resource_id</resourceMapping>
+      <resourceMapping instanceName="b_ice" rsrcId="setting">r_symbian_ua_gui_setting_item_list_b_ice_setting_texts_resource</resourceMapping>
+      <resourceMapping instanceName="ed_registrar">r_symbian_ua_gui_setting_item_list_ed_registrar_editor_resource_id</resourceMapping>
+      <resourceMapping instanceName="ed_user" rsrcId="text">r_symbian_ua_gui_setting_item_list_ed_user</resourceMapping>
+      <resourceMapping instanceName="b_srtp" rsrcId="popup">r_symbian_ua_gui_setting_item_list_b_srtp_popped_up_texts_resource</resourceMapping>
+      <resourceMapping instanceName="ed_stun_server" rsrcId="text">r_symbian_ua_gui_setting_item_list_ed_stun_server</resourceMapping>
+      <resourceMapping instanceName="optionsMenu">r_symbian_ua_gui_setting_item_list_options_menu</resourceMapping>
+      <resourceMapping instanceName="ed_password" rsrcId="member$setting_page_resource">r_symbian_ua_gui_setting_item_list_ed_password_setting_page_resource</resourceMapping>
+      <resourceMapping instanceName="b_ice" rsrcId="popup">r_symbian_ua_gui_setting_item_list_b_ice_popped_up_texts_resource</resourceMapping>
+      <resourceMapping instanceName="symbian_ua_guiSettingItemListView">r_symbian_ua_gui_setting_item_list_symbian_ua_gui_setting_item_list_view</resourceMapping>
+      <resourceMapping instanceName="ed_password">r_symbian_ua_gui_setting_item_list_ed_password_editor_resource_id</resourceMapping>
+      <resourceMapping instanceName="symbian_ua_guiSettingItemList">r_symbian_ua_gui_setting_item_list_symbian_ua_gui_setting_item_list</resourceMapping>
+      <resourceMapping instanceName="b_ice" rsrcId="member$setting_page_resource">r_symbian_ua_gui_setting_item_list_b_ice_setting_page_resource</resourceMapping>
+      <resourceMapping instanceName="statusPane">r_symbian_ua_gui_setting_item_list_status_pane</resourceMapping>
+      <resourceMapping instanceName="b_ice">r_symbian_ua_gui_setting_item_list_b_ice_editor_resource_id</resourceMapping>
+      <resourceMapping instanceName="ed_user">r_symbian_ua_gui_setting_item_list_ed_user_editor_resource_id</resourceMapping>
+      <resourceMapping instanceName="b_srtp" rsrcId="associated">r_symbian_ua_gui_setting_item_list_b_srtp</resourceMapping>
+      <resourceMapping instanceName="ed_registrar" rsrcId="text">r_symbian_ua_gui_setting_item_list_ed_registrar</resourceMapping>
+      <resourceMapping instanceName="b_srtp">r_symbian_ua_gui_setting_item_list_b_srtp_editor_resource_id</resourceMapping>
+      <resourceMapping instanceName="b_srtp" rsrcId="setting">r_symbian_ua_gui_setting_item_list_b_srtp_setting_texts_resource</resourceMapping>
+      <resourceMapping instanceName="ed_registrar" rsrcId="member$setting_page_resource">r_symbian_ua_gui_setting_item_list_ed_registrar_setting_page_resource</resourceMapping>
+      <resourceMapping instanceName="menuPane1">r_symbian_ua_gui_setting_item_list_menu_pane1_menu_pane</resourceMapping>
+      <resourceMapping instanceName="ed_user" rsrcId="member$setting_page_resource">r_symbian_ua_gui_setting_item_list_ed_user_setting_page_resource</resourceMapping>
+      <resourceMapping instanceName="controlPane">r_symbian_ua_gui_setting_item_list_control_pane</resourceMapping>
+      <resourceMapping instanceName="title">r_symbian_ua_gui_setting_item_list_title_resource</resourceMapping>
+      <resourceMapping instanceName="ed_stun_server" rsrcId="member$setting_page_resource">r_symbian_ua_gui_setting_item_list_ed_stun_server_setting_page_resource</resourceMapping>
+      <resourceMapping instanceName="b_ice" rsrcId="associated">r_symbian_ua_gui_setting_item_list_b_ice</resourceMapping>
+    </resourceMappings>
+    <enumMappings>
+      <enumMapping instanceName="menuItem1" propertyId="command" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_COMMANDS">ESymbian_ua_guiSettingItemListViewMenuItem1Command</enumMapping>
+      <enumMapping instanceName="ed_password" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_SETTING_ITEM_ID">ESymbian_ua_guiSettingItemListViewEd_password</enumMapping>
+      <enumMapping instanceName="ed_user" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_CONTROL_TYPE">EEikCtEdwin</enumMapping>
+      <enumMapping instanceName="ed_stun_server" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_SETTING_ITEM_ID">ESymbian_ua_guiSettingItemListViewEd_stun_server</enumMapping>
+      <enumMapping instanceName="title" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_STATUS_PANE_ID">EEikStatusPaneUidTitle</enumMapping>
+      <enumMapping instanceName="ed_user" propertyId="defaultCase">EAknEditorLowerCase</enumMapping>
+      <enumMapping instanceName="b_ice" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_SETTING_ITEM_ID">ESymbian_ua_guiSettingItemListViewB_ice</enumMapping>
+      <enumMapping instanceName="ed_user" propertyId="numericKeymap">EAknEditorStandardNumberModeKeymap</enumMapping>
+      <enumMapping instanceName="ed_stun_server" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_CONTROL_TYPE">EEikCtEdwin</enumMapping>
+      <enumMapping instanceName="b_srtp" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_SETTING_ITEM_ID">ESymbian_ua_guiSettingItemListViewB_srtp</enumMapping>
+      <enumMapping instanceName="ed_user" propertyId="defaultInputMode">EAknEditorTextInputMode</enumMapping>
+      <enumMapping instanceName="ed_registrar" propertyId="numericKeymap">EAknEditorStandardNumberModeKeymap</enumMapping>
+      <enumMapping instanceName="b_srtp" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_CONTROL_TYPE">EAknCtPopupSettingList</enumMapping>
+      <enumMapping instanceName="ed_registrar" propertyId="defaultInputMode">EAknEditorTextInputMode</enumMapping>
+      <enumMapping instanceName="title" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_CONTROL_TYPE">EAknCtTitlePane</enumMapping>
+      <enumMapping instanceName="symbian_ua_guiSettingItemListView" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_VIEW_UID">ESymbian_ua_guiSettingItemListViewId</enumMapping>
+      <enumMapping instanceName="ed_registrar" propertyId="defaultCase">EAknEditorLowerCase</enumMapping>
+      <enumMapping instanceName="ed_password" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_CONTROL_TYPE">EEikCtSecretEd</enumMapping>
+      <enumMapping instanceName="controlPane" propertyId="leftId" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_COMMANDS">EAknSoftkeyOptions</enumMapping>
+      <enumMapping instanceName="ed_user" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_SETTING_ITEM_ID">ESymbian_ua_guiSettingItemListViewEd_user</enumMapping>
+      <enumMapping instanceName="controlPane" propertyId="rightId" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_COMMANDS">EAknSoftkeySave</enumMapping>
+      <enumMapping instanceName="ed_stun_server" propertyId="numericKeymap">EAknEditorStandardNumberModeKeymap</enumMapping>
+      <enumMapping instanceName="save_SettingsMenuItem" propertyId="command" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_COMMANDS">ESymbian_ua_guiSettingItemListViewSave_SettingsMenuItemCommand</enumMapping>
+      <enumMapping instanceName="ed_registrar" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_SETTING_ITEM_ID">ESymbian_ua_guiSettingItemListViewEd_registrar</enumMapping>
+      <enumMapping instanceName="ed_stun_server" propertyId="defaultInputMode">EAknEditorTextInputMode</enumMapping>
+      <enumMapping instanceName="b_ice" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_CONTROL_TYPE">EAknCtPopupSettingList</enumMapping>
+      <enumMapping instanceName="ed_registrar" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_CONTROL_TYPE">EEikCtEdwin</enumMapping>
+      <enumMapping instanceName="ed_stun_server" propertyId="defaultCase">EAknEditorTextCase</enumMapping>
+    </enumMappings>
+    <arrayMappings/>
+  </sourceMappingState>
+  <generatedFiles>
+    <file>src/symbian_ua_guiSettingItemList.cpp</file>
+    <file>src/Symbian_ua_guiSettingItemListSets.cpp</file>
+    <file>src/symbian_ua_guiSettingItemListView.cpp</file>
+    <file>inc/Symbian_ua_guiSettingItemListSettings.h</file>
+    <file>inc/symbian_ua_guiSettingItemList.h</file>
+    <file>inc/symbian_ua_guiSettingItemListView.h</file>
+    <file>data/symbian_ua_gui.rss</file>
+    <file>data/symbian_ua_guiContainer.rssi</file>
+    <file>inc/symbian_ua_gui.hrh</file>
+    <file>inc/symbian_ua_guiContainer.hrh</file>
+    <file>data/symbian_ua_guiSettingItemList.rssi</file>
+    <file>inc/symbian_ua_guiSettingItemList.hrh</file>
+    <file>data/symbian_ua_gui.loc</file>
+    <file>data/symbian_ua_gui.l01</file>
+    <file>data/symbian_ua_guiContainer.loc</file>
+    <file>data/symbian_ua_guiContainer.l01</file>
+    <file>data/symbian_ua_guiSettingItemList.loc</file>
+    <file>data/symbian_ua_guiSettingItemList.l01</file>
+  </generatedFiles>
+</designerData>

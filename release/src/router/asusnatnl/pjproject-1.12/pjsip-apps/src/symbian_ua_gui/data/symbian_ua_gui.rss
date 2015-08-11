@@ -1,0 +1,71 @@
+/*
+========================================================================
+ Name        : symbian_ua_gui.rss
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+NAME SYMB
+
+#include <avkon.rsg>
+#include <avkon.rh>
+#include <eikon.rh>
+#include <appinfo.rh>
+#include "symbian_ua_gui.hrh"
+#include "symbian_ua_gui.loc"
+
+RESOURCE RSS_SIGNATURE
+	{
+	}
+RESOURCE TBUF
+	{
+	buf = "symbian_ua_gui";
+	}
+RESOURCE EIK_APP_INFO r_application_symbian_ua_gui_app_ui
+	{
+	cba = R_AVKON_SOFTKEYS_OPTIONS_EXIT;
+	status_pane = r_application_status_pane;
+	}
+RESOURCE STATUS_PANE_APP_MODEL r_application_status_pane
+	{
+	}
+RESOURCE LOCALISABLE_APP_INFO r_localisable_app_info
+	{
+	short_caption = STR_symbian_ua_guiApplication_2;
+	caption_and_icon = CAPTION_AND_ICON_INFO
+		{
+		caption = STR_symbian_ua_guiApplication_1;
+		number_of_icons = 0;
+		};
+	}
+RESOURCE TBUF r_application_akn_view_reference1
+	{
+	}
+
+RESOURCE TBUF r_application_akn_view_reference2
+	{
+	}
+
+RESOURCE DIALOG r_application_dlg_wait_init
+	{
+	flags = EAknWaitNoteFlags;
+	buttons = R_AVKON_SOFTKEYS_CANCEL;
+	items =
+		{
+		DLG_LINE
+			{
+			type = EAknCtNote;
+			id = ESymbian_ua_guiApplicationDlg_wait_init;
+			control = AVKON_NOTE
+				{
+				layout = EWaitLayout;
+				singular_label = STR_symbian_ua_guiApplication_3;
+				animation = R_QGN_GRAF_WAIT_BAR_ANIM;
+				};
+			}
+		};
+	}
+
+#include "symbian_ua_guiContainer.rssi"
+#include "symbian_ua_guiSettingItemList.rssi"

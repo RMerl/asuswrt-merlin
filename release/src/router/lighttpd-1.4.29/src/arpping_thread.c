@@ -674,30 +674,32 @@ void dumparptable(void)
 	    if (!strcmp(device, g_scan_interface) && strlen(hw_address)!=0)
 	    {
 	    	Cdbg(DBE, "%s, %s", ip_entry, hw_address);
-	        //strcpy(mac_clone[mac_num++], hw_address);
-
+	        
 			int bFound = 0;
 			smb_srv_info_t *p;
 
 			//- Check this pc is existed!
 			for (p = smb_srv_info_list; p; p = p->next) {						
-				if( strcmp(p->ip->ptr, ip_entry)==0 &&
-				    strcmp(p->mac->ptr, hw_address)==0 ){
+				if( strcmp(p->ip->ptr, ip_entry)==0/* &&
+				    strcmp(p->mac->ptr, hw_address)==0*/ ){
 					bFound = 1;
 					break;
 				}
 			}
 
-			//- If same mac but not same ip, remove it!
+			//- If same mac but not same ip or same ip, remove it!
 			for (p = smb_srv_info_list; p; p = p->next) {						
 				if( ( strcmp(p->ip->ptr, ip_entry)!=0 && strcmp(p->mac->ptr, hw_address)==0 ) ||
-				     strcmp(p->mac->ptr, "00:00:00:00:00:00")==0 ){
+					 strcmp(p->mac->ptr, "00:00:00:00:00:00")==0 ){
+
+					Cdbg(DBE, "Remove ip=[%s]", ip_entry);
+					
 					buffer_free(p->ip);
 					buffer_free(p->mac);
 					buffer_free(p->name);
 					DLIST_REMOVE(smb_srv_info_list, p);
 					free(p);
-					//fprintf(stderr,"\t\tRemove ip=[%s] in list!\n", checkip);
+					
 					break;
 				}
 			}
@@ -723,7 +725,7 @@ void dumparptable(void)
 				
 				DLIST_ADD(smb_srv_info_list, smb_srv_info);
 
-				Cdbg(DBE ,"add ip=[%s] to list!\n", ip_entry);
+				Cdbg(DBE, "Add ip=[%s] to list!\n", ip_entry);
 
 				//save_arpping_list();
 			}

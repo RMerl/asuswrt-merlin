@@ -2027,8 +2027,14 @@ function menuHandler(event){
 	
 		var webdav_mode = g_storage.get('webdav_mode');
 		var ddns_host_name = g_storage.get('ddns_host_name');    
-	    			
-		var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
+	    var cur_host_name = window.location.host;
+	    var hostName = "";
+	    
+	    if(!isPrivateIP(cur_host_name))
+			hostName = cur_host_name;
+		else			
+			hostName = (ddns_host_name=="") ? cur_host_name : ddns_host_name;
+		
 		if(hostName.indexOf(":")!=-1)
 			hostName = hostName.substring(0, hostName.indexOf(":"));
 			

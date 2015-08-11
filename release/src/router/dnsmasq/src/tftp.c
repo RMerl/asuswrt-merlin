@@ -502,7 +502,7 @@ static struct tftp_file *check_tftp_fileperm(ssize_t *len, char *prefix)
   return NULL;
 }
 
-void check_tftp_listeners(fd_set *rset, time_t now)
+void check_tftp_listeners(time_t now)
 {
   struct tftp_transfer *transfer, *tmp, **up;
   ssize_t len;
@@ -518,7 +518,7 @@ void check_tftp_listeners(fd_set *rset, time_t now)
       
       prettyprint_addr(&transfer->peer, daemon->addrbuff);
      
-      if (FD_ISSET(transfer->sockfd, rset))
+      if (poll_check(transfer->sockfd, POLLIN))
 	{
 	  /* we overwrote the buffer... */
 	  daemon->srv_save = NULL;

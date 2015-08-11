@@ -1,0 +1,316 @@
+//Microsoft eMbedded Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+#include "newres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "#include ""newres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\PocketPJ.rc2""  // non-Microsoft eMbedded Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#include ""wceres.rc""         // WCE-specific components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\PocketPJ.ico"
+IDI_ONLINE              ICON    DISCARDABLE     "res\\online.ico"
+IDI_OFFLINE             ICON    DISCARDABLE     "res\\offline.ico"
+IDI_INVISIBLE           ICON    DISCARDABLE     "res\\invisibl.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_POCKETPJ_DIALOG DIALOGEX 0, 0, 139, 151
+STYLE WS_POPUP | WS_VISIBLE | WS_CAPTION
+EXSTYLE WS_EX_APPWINDOW | 0x80000000L
+CAPTION "PocketPJ"
+FONT 8, "System"
+BEGIN
+    LTEXT           "sip:user@pjsip.lab",IDC_ACC_ID,22,5,115,8
+    CONTROL         135,IDC_BTN_ACC,"Static",SS_BITMAP | SS_NOTIFY | 
+                    WS_BORDER | WS_TABSTOP,7,3,12,11
+    CONTROL         "List1",IDC_BUDDY_LIST,"SysListView32",LVS_SMALLICON | 
+                    LVS_SINGLESEL | LVS_SORTASCENDING | WS_BORDER | 
+                    WS_TABSTOP,7,35,127,109
+    LTEXT           "URL:",IDC_STATIC,7,19,16,8
+    EDITTEXT        IDC_URL,25,16,97,12,ES_AUTOHSCROLL
+    CONTROL         138,IDC_BTN_ACTION,"Static",SS_BITMAP | SS_NOTIFY | 
+                    WS_BORDER,125,16,12,11
+END
+
+IDD_SETTING DIALOG DISCARDABLE  0, 0, 140, 143
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "PocketPJ Settings.."
+FONT 8, "System"
+BEGIN
+    EDITTEXT        IDC_DOMAIN,38,7,78,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_USER,38,21,78,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_PASSWD,38,35,78,12,ES_PASSWORD | ES_AUTOHSCROLL
+    EDITTEXT        IDC_DNS,38,49,78,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_STUN_SRV,56,64,77,12,ES_AUTOHSCROLL
+    CONTROL         "ICE",IDC_ICE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,79,
+                    24,10
+    CONTROL         "TCP",IDC_TCP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,33,
+                    79,24,10
+    CONTROL         "SRTP",IDC_SRTP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,61,
+                    79,29,10
+    CONTROL         "PUBLISH",IDC_PUBLISH,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,93,79,40,10
+    CONTROL         "EC, tail:",IDC_ECHO_SUPPRESS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,92,37,10
+    EDITTEXT        IDC_EC_TAIL,47,91,23,12,ES_AUTOHSCROLL
+    CONTROL         "VAD",IDC_VAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,93,
+                    92,25,10
+    COMBOBOX        IDC_CODECS,59,105,42,39,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "OK",IDOK,17,122,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,73,122,50,14
+    LTEXT           "Domain:",IDC_STATIC,7,8,30,9
+    LTEXT           "User:",IDC_STATIC,7,22,30,9
+    LTEXT           "Passwd:",IDC_STATIC,7,36,30,9
+    CONTROL         "STUN Srv:",IDC_STUN,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,65,47,10
+    LTEXT           "DNS:",IDC_STATIC,8,50,30,9
+    LTEXT           "ms",IDC_STATIC,75,92,13,9
+    LTEXT           "Codec priority:",IDC_STATIC,7,107,49,9
+    CONTROL         "AA",IDC_AA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,107,
+                    107,25,10
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "HP\0"
+            VALUE "FileDescription", "PocketPJ WCE MFC Application\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "PocketPJ\0"
+            VALUE "LegalCopyright", "Copyright © 2008\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "PocketPJ.exe\0"
+            VALUE "ProductName", "PocketPJ Application\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_POCKETPJ_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 137
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 144
+        HORZGUIDE, 28
+    END
+
+    IDD_SETTING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 133
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 136
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_ONLINE              BITMAP  DISCARDABLE     "res\\online.bmp"
+IDB_OFFLINE             BITMAP  DISCARDABLE     "res\\offline.bmp"
+IDB_INVISIBLE           BITMAP  DISCARDABLE     "res\\invisibl.bmp"
+IDB_ACTION              BITMAP  DISCARDABLE     "res\\action.bmp"
+IDB_BLANK               BITMAP  DISCARDABLE     "res\\blank.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menubar
+//
+
+IDR_ACC_MENU MENU DISCARDABLE 
+BEGIN
+    POPUP "Set Online Status:"
+    BEGIN
+        MENUITEM "&Online",                     IDC_ACC_ONLINE
+        MENUITEM "&Invisible",                  IDC_ACC_INVISIBLE
+        MENUITEM SEPARATOR
+        MENUITEM "&Settings...",                IDC_ACC_SETTINGS
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       IDOK
+    END
+END
+
+IDR_URI_MENU MENU DISCARDABLE 
+BEGIN
+    POPUP "URI Action"
+    BEGIN
+        MENUITEM "&Call...",                    IDC_URI_CALL
+        MENUITEM "Add to Buddy List",           IDC_URI_ADD_BUDDY
+        MENUITEM "&Del Buddy",                  IDC_URI_DEL_BUDDY
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Data
+//
+
+IDR_ACC_MENU SHMENUBAR DISCARDABLE 
+BEGIN
+    IDR_ACC_MENU, 1,
+    I_IMAGENONE, IDC_MENU1, TBSTATE_ENABLED, 
+    TBSTYLE_DROPDOWN | TBSTYLE_AUTOSIZE, IDS_CAP_MENUITEM32786, 0, 0,
+END
+
+IDR_URI_MENU SHMENUBAR DISCARDABLE 
+BEGIN
+    IDR_URI_MENU, 1,
+    I_IMAGENONE, IDC_MENU2, TBSTATE_ENABLED, 
+    TBSTYLE_DROPDOWN | TBSTYLE_AUTOSIZE, IDS_CAP_MENUITEM32790, 0, 0,
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_CAP_ONLINE          "Online"
+    IDS_CAP_OFFLINE         "Offline"
+    IDS_CAP_INVISIBLE       "Invisible"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_CAP_MENUITEM32786   "Set Online Status:"
+    IDS_CAP_MENUITEM32790   "URI Action"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\PocketPJ.rc2"  // non-Microsoft eMbedded Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+// #include "wceres.rc"         // WCE-specific components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

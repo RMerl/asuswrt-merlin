@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="pjproject-vs8-common-defaults"
+	OutputDirectory=".\output\$(ProjectName)-$(TargetCPU)-$(PlatformName)-vc$(VSVer)-$(ConfigurationName)"
+	IntermediateDirectory="$(OutDir)"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		BrowseInformation="1"
+		WarningLevel="4"
+		CompileAs="0"
+	/>
+	<Tool
+		Name="VCLibrarianTool"
+		OutputFile="..\lib\$(ProjectName)-$(TargetCPU)-$(PlatformName)-vc$(VSVer)-$(ConfigurationName).lib"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		OutputFile="..\bin\$(ProjectName)-$(TargetCPU)-$(PlatformName)-vc$(VSVer)-$(ConfigurationName).exe"
+	/>
+	<UserMacro
+		Name="VSVer"
+		Value="8"
+	/>
+</VisualStudioPropertySheet>

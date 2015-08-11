@@ -1,0 +1,92 @@
+
+Fri Jun  2 06:27:56 2006	Jutta Degener (jutta@pobox.com)
+
+	* Release 1.0 Patchlevel 12
+	src/code.c: removed modifiable static storage that made the library
+	 	non-reentrant.  (Thanks to Paul Gibbs for pointing out the bug.)
+
+Sat Mar 18 11:48:28 2006	Jutta Degener (jutta@pobox.com)
+
+	* Release 1.0 Patchlevel 11
+	src/gsm_implode.c: fix WAV49 implode
+	move source archive location
+
+Fri Jul  5 19:26:37 1996 	Jutta Degener (jutta@cs.tu-berlin.de)
+
+	* Release 1.0 Patchlevel 10
+	src/toast_alaw.c: exchanged A-law tables for something
+		slightly more A-law.
+
+Tue Jul  2 12:18:20 1996  Jutta Degener (jutta@cs.tu-berlin.de)
+
+	* Release 1.0 Patchlevel 9
+	src/long_term.c: in FLOAT_MUL mode, an array was accessed past its end
+	src/gsm_option.c: three options related to WAV #49 packing
+	src/gsm_encode.c: support WAV #49-style encoding.
+	src/gsm_decode.c: support WAV #49-style decoding.
+	tls/sour.c: generate the WAV bit shifting code, encode
+	tls/ginger.c: generate the WAV bit shifting code, decode
+	The WAV code goes back to an inofficial patch #8 that
+	Jeff Chilton sent us (hence the jump from 7 to 9).
+	src/toast.c: add _fsetmode() calls to set stdin/stdout to
+		binary (from an OS/2 port by Arnd Gronenberg.)
+
+Tue Mar  7 01:55:10 1995  Jutta Degener (jutta@cs.tu-berlin.de)
+
+	* Release 1.0 Patchlevel 7
+	src/long_term.c: Yet another 16-bit overflow
+	src/toast.c: -C option to toast, cuts LPC time
+	src/gsm_option.c: corresponding LPC_CUT option to GSM library
+
+Fri Dec 30 23:33:50 1994  Jutta Degener (jutta@cs.tu-berlin.de)
+
+        * Release 1.0 Patchlevel 6
+        src/lpc.c: fixed 16-bit addition overflow in Autocorrelation code
+        src/add.c: gsm_L_asl should fall back on gsm_L_asr, not gsm_asr
+
+Mon Nov 28 20:49:57 1994  Jutta Degener (jutta@cs.tu-berlin.de)
+	
+	* Release 1.0 Patchlevel 5
+	src/toast_audio.c: initialization should return -1 on error
+	src/gsm_destroy.c: #include configuration header file
+	src/add.c: gsm_sub should cast its parameters to longword
+	man/*: bug reports to {jutta,cabo}@cs.tu-berlin.de, not to toast@tub
+	inc/private.h: longword long by default, not int
+	inc/toast.h: read/write fopen modes "rb" and "wb", not just "r"
+	src/toast.c: better (or different, anyway) error handling in process()
+
+Tue May 10 19:41:34 1994  Jutta Degener (jutta at kugelbus)
+	
+	* Release 1.0 Patchlevel 4
+	inc/private.h: GSM_ADD should cast to ulongword, not to unsigned.
+	src/long_term.c: missing cast to longword.
+	add-test/add_test.c: Test macros too, not only functions,
+	thanks to Simao Ferraz de Campos Neto, simao@dragon.cpqd.ansp.br
+	General cleanup: remove unused variables, add function prototypes.
+
+Tue Jan 25 22:53:40 1994  Jutta Degener (jutta at kugelbus)
+
+	* Release 1.0 Patchlevel 3
+	changed rpe.c's STEP macro to work with 16-bit integers,
+	thanks to Dr Alex Lee (alexlee@solomon.technet.sg);
+	removed non-fatal bugs from add-test.dta, private.h
+	and toast_audio.c, thanks to P. Emanuelsson.
+
+Fri Jan 29 19:02:12 1993  Jutta Degener  (jutta at kraftbus)
+	
+	* Release 1.0 Patchlevel 2
+	fixed L_add(0,-1) in src/add.c and inc/private.h,
+	thanks to Raphael Trommer at AT&T Bell Laboratories;
+	various other ANSI C compatibility details
+
+Fri Oct 30 17:58:54 1992  Jutta Degener  (jutta at kraftbus)
+
+	* Release 1.0 Patchlevel 1
+	Switched uid/gid in toast's [f]chown calls.
+
+Wed Oct 28 14:12:35 1992  Carsten Bormann  (cabo at kubus)
+
+	* Release 1.0: released
+	Copyright 1992 by Jutta Degener and Carsten Bormann, Technische
+	Universitaet Berlin.  See the accompanying file "COPYRIGHT" for
+	details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.

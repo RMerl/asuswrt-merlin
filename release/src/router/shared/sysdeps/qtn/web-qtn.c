@@ -1148,7 +1148,7 @@ void rpc_set_radio(int unit, int subunit, int on)
 		}
 	}
 	else {
-		ret = qcsapi_wifi_rfenable(WIFINAME, (qcsapi_unsigned_int) on);
+		ret = qcsapi_wifi_rfenable((qcsapi_unsigned_int) on);
 		if (ret < 0)
 			dbG("Qcsapi qcsapi_wifi_rfenable %s, return: %d\n", WIFINAME, ret);
 	}
@@ -1161,11 +1161,15 @@ int rpc_update_ap_isolate(const char *ifname, const int isolate)
 	if(!rpc_qtn_ready())
 		return -1;
 
+	qcsapi_wifi_rfenable((qcsapi_unsigned_int) 0 /* off */);
 	ret = qcsapi_wifi_set_ap_isolate(ifname, isolate);
 	if(ret < 0){
-		dbG("Qcsapi qcsapi_wifi_set_ap_isolate %s error, return: %d\n", ifname, ret);
+		dbG("qcsapi_wifi_set_ap_isolate %s error, return: %d\n", ifname, ret);
 		return ret;
+	}else{
+		dbG("qcsapi_wifi_set_ap_isolate OK\n");
 	}
+	qcsapi_wifi_rfenable((qcsapi_unsigned_int) 1 /* on */);
 
 	return 0;
 }
@@ -1798,6 +1802,14 @@ ej_wl_sta_list_qtn(int eid, webs_t wp, int argc, char_t **argv, const char *ifna
 	if (!rpc_qtn_ready())
 		return retval;
 
+	int from_app = 0;
+	char *name_t = NULL;
+
+	if (strArgs(argc, argv, "%s", &name_t) < 1) {
+		//_dprintf("name_t = NULL\n");
+	} else if (!strncmp(name_t, "appobj", 6))
+		from_app = 1;
+
 	sscanf(ifname, "wifi%d", &index);
 	if (index == -1) return retval;
 	else if (index == 0)
@@ -1821,17 +1833,34 @@ ej_wl_sta_list_qtn(int eid, webs_t wp, int argc, char_t **argv, const char *ifna
 					firstRow = 0;
 				else
 				retval += websWrite(wp, ", ");
-				retval += websWrite(wp, "[");
+				if(from_app == 0)
+					retval += websWrite(wp, "[");
 
 				retval += websWrite(wp, "\"%s\"", wl_ether_etoa((struct ether_addr *) &sta_address));
-				retval += websWrite(wp, ", \"%s\"", "Yes");
-				retval += websWrite(wp, ", \"%s\"", !(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "open")) ? "Yes" : "No");
+				if(from_app == 1){
+					retval += websWrite(wp, ":{");
+					retval += websWrite(wp, "\"isWL\":");
+				}
+				if(from_app == 0)
+					retval += websWrite(wp, ", \"%s\"", "Yes");
+				else
+					retval += websWrite(wp, "\"%s\"", "Yes");
+				if(from_app == 0)
+					retval += websWrite(wp, ", \"%s\"", !(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "open")) ? "Yes" : "No");
+				if(from_app == 1){
+					ret += websWrite(wp, ",\"rssi\":");
+				}
 				ret= qcsapi_wifi_get_rssi_in_dbm_per_association(ifname, i, &rssi);
 				if (ret < 0)
 					dbG("Qcsapi qcsapi_wifi_get_rssi_in_dbm_per_association %s error, return: %d\n", ifname, ret);
-				retval += websWrite(wp, ", \"%d\"", rssi);
-
-				retval += websWrite(wp, "]");
+				if(from_app == 0)
+					retval += websWrite(wp, ", \"%d\"", rssi);
+				else
+					retval += websWrite(wp, "\"%d\"", rssi);
+				if(from_app == 0)
+					retval += websWrite(wp, "]");
+				else
+					retval += websWrite(wp, "}");
 			}
 		}
 	}

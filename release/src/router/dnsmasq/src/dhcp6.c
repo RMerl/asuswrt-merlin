@@ -144,6 +144,8 @@ void dhcp6_packet(time_t now)
 
   if ((port = relay_reply6(&from, sz, ifr.ifr_name)) == 0)
     {
+      struct dhcp_bridge *bridge, *alias;
+
       for (tmp = daemon->if_except; tmp; tmp = tmp->next)
 	if (tmp->name && wildcard_match(tmp->name, ifr.ifr_name))
 	  return;
@@ -160,6 +162,30 @@ void dhcp6_packet(time_t now)
       memset(&parm.fallback, 0, IN6ADDRSZ);
       memset(&parm.ll_addr, 0, IN6ADDRSZ);
       memset(&parm.ula_addr, 0, IN6ADDRSZ);
+
+      /* If the interface on which the DHCPv6 request was received is
+         an alias of some other interface (as specified by the
+         --bridge-interface option), change parm.ind so that we look
+         for DHCPv6 contexts associated with the aliased interface
+         instead of with the aliasing one. */
+      for (bridge = daemon->bridges; bridge; bridge = bridge->next)
+	{
+	  for (alias = bridge->alias; alias; alias = alias->next)
+	    if (wildcard_matchn(alias->iface, ifr.ifr_name, IF_NAMESIZE))
+	      {
+		parm.ind = if_nametoindex(bridge->iface);
+		if (!parm.ind)
+		  {
+		    my_syslog(MS_DHCP | LOG_WARNING,
+			      _("unknown interface %s in bridge-interface"),
+			      bridge->iface);
+		    return;
+		  }
+		break;
+	      }
+	  if (alias)
+	    break;
+	}
       
       for (context = daemon->dhcp6; context; context = context->next)
 	if (IN6_IS_ADDR_UNSPECIFIED(&context->start6) && context->prefix == 0)
@@ -208,7 +234,7 @@ void dhcp6_packet(time_t now)
       /* May have configured relay, but not DHCP server */
       if (!daemon->doing_dhcp6)
 	return;
-      
+
       lease_prune(NULL, now); /* lose any expired leases */
       
       port = dhcp6_reply(parm.current, if_index, ifr.ifr_name, &parm.fallback, 

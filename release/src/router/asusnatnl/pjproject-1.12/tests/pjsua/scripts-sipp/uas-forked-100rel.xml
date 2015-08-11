@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- This program is free software; you can redistribute it and/or      -->
+<!-- modify it under the terms of the GNU General Public License as     -->
+<!-- published by the Free Software Foundation; either version 2 of the -->
+<!-- License, or (at your option) any later version.                    -->
+<!--                                                                    -->
+<!-- This program is distributed in the hope that it will be useful,    -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of     -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      -->
+<!-- GNU General Public License for more details.                       -->
+<!--                                                                    -->
+<!-- You should have received a copy of the GNU General Public License  -->
+<!-- along with this program; if not, write to the                      -->
+<!-- Free Software Foundation, Inc.,                                    -->
+<!-- 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA             -->
+<!--                                                                    -->
+<!--                 Sipp default 'uas' scenario.                       -->
+<!--                                                                    -->
+
+<scenario name="Forked INVITE, one of them require PRACK">
+  <recv request="INVITE" crlf="true">
+   <action>
+    <ereg regexp="branch=([0-9a-zA-Z\-]*)"
+          search_in="hdr"
+	  header="Via"
+          assign_to="1,2"/>
+    <assign assign_to="1" variable="2"/>
+    <ereg regexp="CSeq: [ 0-9A-Z]+"
+          search_in="msg"
+          assign_to="4"/>
+    </action>
+  </recv>
+
+  <send>
+    <![CDATA[
+      SIP/2.0 100 Trying
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [$4]
+    ]]>
+  </send>
+
+  <!-- Call leg 1 sends 180/Ringing -->
+  <send retrans="500">
+    <![CDATA[
+      SIP/2.0 180 Ringing1
+      Via: SIP/2.0/UDP 127.0.0.1;received=127.0.0.1;branch=[$2]
+      [last_From:]
+      [last_To:];tag=UA_1
+      [last_Call-ID:]
+      [$4]
+      Contact: <sip:UA_1@[local_ip]:[local_port]>
+      Require: 100rel
+      RSeq: 1000
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <recv request="PRACK" crlf="true">
+  </recv>
+
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+
+  <pause milliseconds="2000" />
+
+  <!-- Call leg 2: 180/Ringing -->
+  <send retrans="500">
+    <![CDATA[
+      SIP/2.0 180 Ringing2
+      Via: SIP/2.0/UDP 127.0.0.1;received=127.0.0.1;branch=[$2]
+      [last_From:]
+      [last_To:];tag=UA_2
+      [last_Call-ID:]
+      [$4]
+      Contact: <sip:UA_2@[local_ip]:[local_port]>
+      Require: 100rel
+      RSeq: 2000
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <recv request="PRACK" crlf="true">
+  </recv>
+
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+
+  <pause milliseconds="2000" />
+
+  <!-- Call leg 2: sends Ringing again with correct RSeq -->
+  <send retrans="500">
+    <![CDATA[
+      SIP/2.0 180 Ringing2b
+      Via: SIP/2.0/UDP 127.0.0.1;received=127.0.0.1;branch=[$2]
+      [last_From:]
+      [last_To:];tag=UA_2
+      [last_Call-ID:]
+      [$4]
+      Contact: <sip:UA_2@[local_ip]:[local_port]>
+      Require: 100rel
+      RSeq: 2001
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <recv request="PRACK" crlf="true">
+  </recv>
+
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+
+  <pause milliseconds="2000" />
+
+  <!-- Call leg 2: sends Ringing again with WRONG RSeq. There should be no PRACK -->
+  <send>
+    <![CDATA[
+      SIP/2.0 180 Ringing2c
+      Via: SIP/2.0/UDP 127.0.0.1;received=127.0.0.1;branch=[$2]
+      [last_From:]
+      [last_To:];tag=UA_2
+      [last_Call-ID:]
+      [$4]
+      Contact: <sip:UA_2@[local_ip]:[local_port]>
+      Require: 100rel
+      RSeq: 2004
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <pause milliseconds="2000" />
+
+  <!-- Then Call leg 1 sends 180/Ringing again -->
+  <send retrans="500">
+    <![CDATA[
+      SIP/2.0 180 Ringing1b
+      Via: SIP/2.0/UDP 127.0.0.1;received=127.0.0.1;branch=[$2]
+      [last_From:]
+      [last_To:];tag=UA_1
+      [last_Call-ID:]
+      [$4]
+      Contact: <sip:UA_1@[local_ip]:[local_port]>
+      Require: 100rel
+      RSeq: 1001
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <recv request="PRACK" crlf="true">
+  </recv>
+
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+
+  <pause milliseconds="2000" />
+
+  <!-- 603/Decline -->
+  <send>
+    <![CDATA[
+      SIP/2.0 603 Decline
+      Via: SIP/2.0/UDP 127.0.0.1;received=127.0.0.1;rport=5080;branch=[$2]
+      [last_From:]
+      [last_To:];tag=UA_1
+      [last_Call-ID:]
+      [$4]
+      Content-Length: 0
+    ]]>
+  </send>
+
+
+  <!-- Receive ACK -->
+  <recv request="ACK"
+        optional="false"
+        rtd="true"
+        crlf="true">
+  </recv>
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

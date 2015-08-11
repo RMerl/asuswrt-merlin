@@ -49,34 +49,34 @@ void init_devs(void)
 	/* Below device node are used by proprietary driver.
 	 * Thus, we cannot use GPL-only symbol to create/remove device node dynamically.
 	 */
-	MKNOD("/dev/swnat0", S_IFCHR | 0x666, makedev(210, 0));
-	MKNOD("/dev/hwnat0", S_IFCHR | 0x666, makedev(220, 0));
-	MKNOD("/dev/acl0", S_IFCHR | 0x666, makedev(230, 0));
-	MKNOD("/dev/ac0", S_IFCHR | 0x666, makedev(240, 0));
-	MKNOD("/dev/mtr0", S_IFCHR | 0x666, makedev(250, 0));
-	MKNOD("/dev/rtkswitch", S_IFCHR | 0x666, makedev(206, 0));
-	MKNOD("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
+	MKNOD("/dev/swnat0", S_IFCHR | 0666, makedev(210, 0));
+	MKNOD("/dev/hwnat0", S_IFCHR | 0666, makedev(220, 0));
+	MKNOD("/dev/acl0", S_IFCHR | 0666, makedev(230, 0));
+	MKNOD("/dev/ac0", S_IFCHR | 0666, makedev(240, 0));
+	MKNOD("/dev/mtr0", S_IFCHR | 0666, makedev(250, 0));
+	MKNOD("/dev/rtkswitch", S_IFCHR | 0666, makedev(206, 0));
+	MKNOD("/dev/nvram", S_IFCHR | 0666, makedev(228, 0));
 #else
-	MKNOD("/dev/video0", S_IFCHR | 0x666, makedev(81, 0));
+	MKNOD("/dev/video0", S_IFCHR | 0666, makedev(81, 0));
 #if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U)
-	MKNOD("/dev/rtkswitch", S_IFCHR | 0x666, makedev(206, 0));
+	MKNOD("/dev/rtkswitch", S_IFCHR | 0666, makedev(206, 0));
 #endif
-	MKNOD("/dev/spiS0", S_IFCHR | 0x666, makedev(217, 0));
-	MKNOD("/dev/i2cM0", S_IFCHR | 0x666, makedev(218, 0));
+	MKNOD("/dev/spiS0", S_IFCHR | 0666, makedev(217, 0));
+	MKNOD("/dev/i2cM0", S_IFCHR | 0666, makedev(218, 0));
 #if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 #else
-	MKNOD("/dev/rdm0", S_IFCHR | 0x666, makedev(254, 0));
+	MKNOD("/dev/rdm0", S_IFCHR | 0666, makedev(254, 0));
 #endif
-	MKNOD("/dev/flash0", S_IFCHR | 0x666, makedev(200, 0));
-	MKNOD("/dev/swnat0", S_IFCHR | 0x666, makedev(210, 0));
-	MKNOD("/dev/hwnat0", S_IFCHR | 0x666, makedev(220, 0));
-	MKNOD("/dev/acl0", S_IFCHR | 0x666, makedev(230, 0));
-	MKNOD("/dev/ac0", S_IFCHR | 0x666, makedev(240, 0));
-	MKNOD("/dev/mtr0", S_IFCHR | 0x666, makedev(250, 0));
-	MKNOD("/dev/gpio0", S_IFCHR | 0x666, makedev(252, 0));
-	MKNOD("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
-	MKNOD("/dev/PCM", S_IFCHR | 0x666, makedev(233, 0));
-	MKNOD("/dev/I2S", S_IFCHR | 0x666, makedev(234, 0));
+	MKNOD("/dev/flash0", S_IFCHR | 0666, makedev(200, 0));
+	MKNOD("/dev/swnat0", S_IFCHR | 0666, makedev(210, 0));
+	MKNOD("/dev/hwnat0", S_IFCHR | 0666, makedev(220, 0));
+	MKNOD("/dev/acl0", S_IFCHR | 0666, makedev(230, 0));
+	MKNOD("/dev/ac0", S_IFCHR | 0666, makedev(240, 0));
+	MKNOD("/dev/mtr0", S_IFCHR | 0666, makedev(250, 0));
+	MKNOD("/dev/gpio0", S_IFCHR | 0666, makedev(252, 0));
+	MKNOD("/dev/nvram", S_IFCHR | 0666, makedev(228, 0));
+	MKNOD("/dev/PCM", S_IFCHR | 0666, makedev(233, 0));
+	MKNOD("/dev/I2S", S_IFCHR | 0666, makedev(234, 0));
 #endif
 	{
 		int status;
@@ -688,7 +688,32 @@ static void create_SingleSKU(const char *path, const char *pBand, const char *re
 	sprintf(dest, "%s/SingleSKU%s.dat", path, pBand);
 
 	eval("mkdir", "-p", path);
+	unlink(dest);
 	eval("ln", "-s", src, dest);
+}
+
+void gen_ra_sku(const char *reg_spec)
+{
+#ifdef RTAC52U	// [0x40002] == 0x00 0x02
+	unsigned char dst[16];
+	if (!(FRead(dst, OFFSET_EEPROM_VER, 2) < 0) && dst[0] == 0x00 && dst[1] == 0x02)
+	{
+		create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec, "_0002");
+	}
+	else
+#endif
+	create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec, "");
+
+#ifdef RTCONFIG_HAS_5G
+#ifdef RTAC52U	// [0x40002] == 0x00 0x02
+	if (!(FRead(dst, OFFSET_EEPROM_VER, 2) < 0) && dst[0] == 0x00 && dst[1] == 0x02)
+	{
+		create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec, "_0002");
+	}
+	else
+#endif
+	create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec, "");
+#endif	/* RTCONFIG_HAS_5G */
 }
 #endif	/* RA_SINGLE_SKU */
 
@@ -829,7 +854,9 @@ void init_syspara(void)
 		chk_valid_country_code(country_code);
 		nvram_set("wl_country_code", country_code);
 		nvram_set("wl0_country_code", country_code);
+#ifdef RTCONFIG_HAS_5G
 		nvram_set("wl1_country_code", country_code);
+#endif
 	}
 #if defined(RTN14U) // for CE Adaptivity
 	if ((strcmp(country_code, "DE") == 0) || (strcmp(country_code, "EU") == 0))
@@ -886,6 +913,7 @@ void init_syspara(void)
 			nvram_set("wl0_country_code", "DB");
 	}
 
+#ifdef RTCONFIG_HAS_5G
 	if (FRead(dst, REG5G_EEPROM_ADDR, MAX_REGDOMAIN_LEN)<0 || memcmp(dst,"5G_", 3) != 0)
 	{
 		_dprintf("Read REG5G_EEPROM_ADDR fail or invalid value\n");
@@ -916,13 +944,16 @@ void init_syspara(void)
 		else
 			nvram_set("wl1_country_code", "DB");
 	}
+#endif	/* RTCONFIG_HAS_5G */
 #endif	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
 #if defined(RTN56U) || defined(RTCONFIG_DSL)
 		if (nvram_match("wl_country_code", "BR"))
 		{
 			nvram_set("wl_country_code", "UZ");
 			nvram_set("wl0_country_code", "UZ");
+#ifdef RTCONFIG_HAS_5G
 			nvram_set("wl1_country_code", "UZ");
+#endif	/* RTCONFIG_HAS_5G */
 		}
 #endif
 		if (nvram_match("wl_country_code", "HK") && nvram_match("preferred_lang", ""))
@@ -1053,30 +1084,7 @@ void init_syspara(void)
 
 #ifdef RA_SINGLE_SKU
 #if defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
-	{
-		char *reg_spec;
-
-		reg_spec = nvram_safe_get("reg_spec");
-#ifdef RTAC52U	// [0x40002] == 0x00 0x02
-		if (!(FRead(dst, OFFSET_EEPROM_VER, 2) < 0) && dst[0] == 0x00 && dst[1] == 0x02)
-		{
-			create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec, "_0002");
-		}
-		else
-#endif
-		create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec, "");
-
-#ifdef RTCONFIG_HAS_5G
-#ifdef RTAC52U	// [0x40002] == 0x00 0x02
-		if (!(FRead(dst, OFFSET_EEPROM_VER, 2) < 0) && dst[0] == 0x00 && dst[1] == 0x02)
-		{
-			create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec, "_0002");
-		}
-		else
-#endif
-		create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec, "");
-#endif	/* RTCONFIG_HAS_5G */
-	}
+	gen_ra_sku(nvram_safe_get("reg_spec"));
 #endif	/* RTAC52U && RTAC51U && RTN54U && RTAC54U && RTAC1200HP && RTN56UB1 */
 #endif	/* RA_SINGLE_SKU */
 
@@ -1160,7 +1168,7 @@ void reinit_hwnat(int unit)
 		return;
 
 	/* If QoS is enabled, disable hwnat. */
-	if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)
+	if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") != 1)
 		act = 0;
 
 #if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
@@ -1315,4 +1323,24 @@ wl_exist(char *ifname, int band)
 	_dprintf("eval(iwpriv, %s, stat) ret(%d)\n", ifname, ret);
 	return !ret;
 }
+
+#ifdef RA_SINGLE_SKU
+void reset_ra_sku(const char *location, const char *country, const char *reg_spec)
+{
+	const char *try_list[] = { reg_spec, location, country, "CE", "FCC"};
+	int i;
+	for (i = 0; i < ARRAY_SIZE(try_list); i++) {
+		if(try_list[i] != NULL && setRegSpec(try_list[i], 0) == 0)
+			break;
+	}
+
+	if(i >= ARRAY_SIZE(try_list)) {
+		cprintf("## NO SKU suit for %s\n", location);
+		return;
+	}
+
+	cprintf("using %s SKU for %s\n", try_list[i], location);
+	gen_ra_sku(try_list[i]);
+}
+#endif	/* RA_SINGLE_SKU */
 

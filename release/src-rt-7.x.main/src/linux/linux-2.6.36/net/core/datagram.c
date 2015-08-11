@@ -58,6 +58,11 @@
 #include <net/tcp_states.h>
 #include <trace/events/skb.h>
 
+#if defined(CONFIG_BCM_RECVFILE)
+#include <typedefs.h>
+#include <bcmdefs.h>
+#endif /* CONFIG_BCM_RECVFILE */
+
 /*
  *	Is a socket 'connection oriented' ?
  */
@@ -127,6 +132,68 @@ out_noerr:
 	error = 1;
 	goto out;
 }
+
+#if defined(CONFIG_BCM_RECVFILE)
+/*
+ *	skb_copy_datagram_to_kernel_iovec - Copy a datagram to a kernel iovec structure.
+ *	@skb: buffer to copy
+ *	@offset: offset in the buffer to start copying from
+ *	@to: io vector to copy to
+ *	@len: amount of data to copy from buffer to iovec
+ *
+ *	Note: the iovec is modified during the copy.
+ */
+int BCMFASTPATH_HOST skb_copy_datagram_to_kernel_iovec(const struct sk_buff *skb, int offset,
+				      struct iovec *to, int len)
+{
+	int i, fraglen, end = 0;
+	struct sk_buff *next = skb_shinfo(skb)->frag_list;
+
+	if (!len)
+		return 0;
+
+next_skb:
+	fraglen = skb_headlen(skb);
+	i = -1;
+
+	while (1) {
+		int start = end;
+
+		if ((end += fraglen) > offset) {
+			int copy = end - offset;
+			int o = offset - start;
+
+			if (copy > len)
+				copy = len;
+			if (i == -1)
+				memcpy_tokerneliovec(to, skb->data + o, copy);
+			else {
+				skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+				struct page *page = skb_frag_page(frag);
+				void *p = kmap(page) + frag->page_offset + o;
+				memcpy_tokerneliovec(to, p, copy);
+				kunmap(page);
+			}
+
+			if (!(len -= copy))
+				return 0;
+			offset += copy;
+		}
+		if (++i >= skb_shinfo(skb)->nr_frags)
+			break;
+		fraglen = skb_shinfo(skb)->frags[i].size;
+	}
+	if (next) {
+		skb = next;
+		BUG_ON(skb_shinfo(skb)->frag_list);
+		next = skb->next;
+		goto next_skb;
+	}
+
+	return -EFAULT;
+}
+EXPORT_SYMBOL(skb_copy_datagram_to_kernel_iovec);
+#endif /* CONFIG_BCM_RECVFILE */
 
 /**
  *	__skb_recv_datagram - Receive a datagram skbuff

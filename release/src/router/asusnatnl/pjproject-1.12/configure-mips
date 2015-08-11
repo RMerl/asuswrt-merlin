@@ -1,0 +1,51 @@
+#!/bin/sh
+
+CUR_DIR=`pwd`
+user=`echo $HOME`
+
+#SYSROOT=$ANDROID_TOOLCHAIN_DIR/sysroot
+#echo $SYSROOT
+#echo sysroot = $SYSROOT
+#ANDROID_CFLAGS="-I$ANDROID_INC_PATH -I$CUR_DIR/j_inc"
+#ANDROID_LDFLAGS=-L$ANDROID_LIB_PATH
+#ANDROID_LDLIBS=-llog
+
+##### OPENSSL
+#TOP=$CUR_DIR/../
+OPENSSL_DIR=$TOP/openssl
+OPENSSL_INC=$OPENSSL_DIR/include
+OPENSSL_LIB=$OPENSSL_DIR
+OPENSSL_CFLAGS=-I$OPENSSL_INC
+OPENSSL_LDFLAGS="-L$OPENSSL_LIB"
+OPENSSL_LDLIBS="-lssl -lcrypto"
+
+##### Debug Flag
+#GDB_CFLAGS=-g
+
+#BZIP2_DIR=$TOP/asusnatnl/pjproject-1.12/third_party/bzip2
+#BZIP2_CFLAGS=-I$BZIP2_DIR
+#BZIP2_LDFLAGS=-L$BZIP2_DIR
+#BZIP2_LDLIBS=-lbz2
+
+#export CC=arm-linux-androideabi-gcc
+#export CXX=arm-linux-androideabi-g++
+
+#### LIBC libstdc++
+#SYSLIB_LDFLAGS="-L$CUR_DIR/../gemtek_lib"
+#SYSLIB_LIBS="-lc -lstdc++"
+
+
+export CC=mipsel-uclibc-gcc
+export CXX=mipsel-uclibc-g++
+export AR=$(AR)
+export LD=mipsel-uclibc-ld
+export LDFLAGS="$OPENSSL_LDFLAGS $SYSLIB_LDFLAGS" 
+#export LIBS="$OPENSSL_LDLIBS"
+export LIBS="$LIBS $OPENSSL_LDLIBS $SYSLIB_LIBS"
+export CFLAGS="$OPENSSL_CFLAGS $GDB_CFLAGS -DPJ_M_MIPS=1 -O2"
+export CPPFLAGS=
+
+
+#./configure --prefix=$CUR_DIR/_inst --host=arm-linux-androideabi --target=arm-linux-androideabi
+#./configure --prefix=$CUR_DIR/_inst --host=android --target=arm
+./configure --prefix=$CUR_DIR/_inst --host=mips-linux --target=mips-linux

@@ -74,7 +74,7 @@ var makeRequest = {
 		xmlHttp.onreadystatechange = function(){
 			if(xmlHttp.readyState == 4){
 				if(xmlHttp.status == 200){
-					callBackSuccess(xmlHttp.responseXML);
+					callBackSuccess(xmlHttp);
 				}
 				else{
 					makeRequest._notSuccessCount++;
@@ -125,8 +125,10 @@ function showWlHint(){
 				}
 			}
 
-			makeRequest.start('/httpd_check.xml', function(xmldoc){
-				var httpds = xmldoc.getElementsByTagName("httpd");
+			makeRequest.start('/httpd_check.xml', function(xhr){
+				if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/index.asp";
+
+				var httpds = xhr.responseXML.getElementsByTagName("httpd");
 				if (httpds !== null && httpds[0] !== null) {
 					if(top.document.getElementById("connectedHint")){
 						top.document.getElementById("connectedHint").innerHTML = "<#DrSurf_sweet_advise2#>";
@@ -297,8 +299,10 @@ function showdr_advise(setting){
 			}
 		}
 
-		makeRequest.start('/httpd_check.xml', function(xmldoc){
-			var httpds = xmldoc.getElementsByTagName("httpd");
+		makeRequest.start('/httpd_check.xml', function(xhr){
+			if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/index.asp";
+
+			var httpds = xhr.responseXML.getElementsByTagName("httpd");
 			if (httpds !== null && httpds[0] !== null) {
 				var redirectPage = current_page;
 				if(redirectPage.length > 0) {
@@ -354,7 +358,6 @@ function afterLiveUpdate(){
 function initial(){
 	var isWLclient = function () {  //detect login client is by wireless or wired
 		<% login_state_hook(); %>
-					return true;  //wireless
 		var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 						
 		if(wireless.length > 0) {
@@ -414,6 +417,9 @@ function initial(){
 			if(action_script.search("restart_wireless") != -1 || action_script.search("restart_all") != -1  || action_script.search("reboot") != -1){
 				showWlHint();
 				return;
+			}
+			if(current_page.indexOf("index.asp") >= 0){
+				parent.showLoading(restart_time, "waiting");
 			}
 		}
 		else if(getflag == "finish"){

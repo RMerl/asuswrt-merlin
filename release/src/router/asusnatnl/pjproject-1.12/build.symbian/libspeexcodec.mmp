@@ -1,0 +1,74 @@
+TARGET		libspeexcodec.lib
+TARGETTYPE	lib
+
+MACRO		HAVE_CONFIG_H
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+//
+// GCCE optimization setting
+//
+OPTION		GCCE -O2 -fno-unit-at-a-time
+OPTION          ARMCC --gnu
+
+//
+// Speex files
+//
+SOURCEPATH	..\third_party\speex\libspeex
+
+SOURCE		bits.c
+SOURCE		cb_search.c
+SOURCE		exc_5_64_table.c
+SOURCE		exc_5_256_table.c
+SOURCE		exc_8_128_table.c
+SOURCE		exc_10_16_table.c
+SOURCE		exc_10_32_table.c
+SOURCE		exc_20_32_table.c
+SOURCE		fftwrap.c
+SOURCE		filterbank.c
+SOURCE		filters.c
+SOURCE		gain_table.c
+SOURCE		gain_table_lbr.c
+SOURCE		hexc_10_32_table.c
+SOURCE		hexc_table.c
+SOURCE		high_lsp_tables.c
+SOURCE		kiss_fft.c
+SOURCE		kiss_fftr.c
+SOURCE		lpc.c
+SOURCE		lsp.c
+SOURCE		lsp_tables_nb.c
+SOURCE		ltp.c
+SOURCE		mdf.c
+SOURCE		modes.c
+SOURCE		modes_wb.c
+SOURCE		nb_celp.c
+SOURCE		preprocess.c
+SOURCE		quant_lsp.c
+SOURCE		sb_celp.c
+SOURCE		smallft.c
+SOURCE		speex.c
+SOURCE		speex_callbacks.c
+SOURCE		speex_header.c
+SOURCE		stereo.c
+SOURCE		vbr.c
+SOURCE		vq.c
+SOURCE		window.c
+
+//
+// Speex codec wrapper for pjmedia-codec
+//
+SOURCEPATH 	..\pjmedia\src\pjmedia-codec
+SOURCE		speex_codec.c
+
+//
+// Header files
+//
+SYSTEMINCLUDE	..\third_party\speex\include\speex
+SYSTEMINCLUDE	..\third_party\speex\include
+SYSTEMINCLUDE	..\third_party\speex\symbian
+
+SYSTEMINCLUDE	..\pjmedia\include
+SYSTEMINCLUDE	..\pjlib\include 
+
+SYSTEMINCLUDE	\epoc32\include 
+SYSTEMINCLUDE	\epoc32\include\libc

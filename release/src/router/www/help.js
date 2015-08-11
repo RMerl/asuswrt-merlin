@@ -96,12 +96,13 @@ function suspendconn(wan_index, wanenable){
 	if(gobi_support && (wan_index == usb_index)){
 		document.internetForm_title.wan_enable.value = wanenable;
 		document.internetForm_title.wan_unit.value = wan_index;
-	}	
-	else{
-		document.internetForm_title.modem_enable.value = wanenable;
 	}
+	else{
+		document.internetForm_title.wan_enable.value = wanenable;
+	}
+	
 	showLoading();
-	document.internetForm_title.submit();	
+	document.internetForm_title.submit();
 }
 
 function enableMonomode(){
@@ -129,6 +130,15 @@ function gotoguestnetwork(){
 function gotocooler(){
 	top.location.href = "/Advanced_PerformanceTuning_Content.asp";
 }
+
+function priority_change(){
+	top.location.href = "/AdaptiveQoS_Adaptive.asp";
+}
+
+function qos_disable(){	
+	document.qosDisableForm.submit();
+}
+
 // Viz add 2013.04 for dsl sync status
 function gotoDSL_log(){
 	top.location.href = "/Main_AdslStatus_Content.asp";
@@ -293,6 +303,26 @@ function overHint(itemNum){
 		statusmenu += "<span><#AiProtection_scan_note11#></span>";	
 	if(itemNum == 10)		
 		statusmenu += "<span><#AiProtection_scan_note10#></span>";	
+	
+	// Viz add 2015.07 bwdpi : Adpative QoS mode start
+	if(itemNum == "A"){
+		statusmenu = "<div class='StatusHint'><#Adaptive_QoS#> :</div>";
+		if(bwdpi_app_rulelist == "9,20<8<4<0,5,6,15,17<13,24<1,3,14<7,10,11,21,23<<"){
+			modeDesc = "Game mode";
+		}	
+		else if(bwdpi_app_rulelist == "9,20<4<0,5,6,15,17<8<13,24<1,3,14<7,10,11,21,23<<"){
+			modeDesc = "Media Streaming mode";
+		}	
+		else if(bwdpi_app_rulelist == "9,20<13,24<4<0,5,6,15,17<8<1,3,14<7,10,11,21,23<<"){
+			modeDesc = "Web Surfing mode";
+		}	
+		else{
+			modeDesc = "Customize mode";
+		}		
+		
+		statusmenu += "<span>" + modeDesc + "</span>";
+	}
+	// Viz add 2015.07 bwdpi : Adpative QoS mode end
 	
 	// Viz add 2013.04 for dsl sync status
 	if(itemNum == 9){		
@@ -853,11 +883,16 @@ function openHint(hint_array_id, hint_show_id, flag){
 	if(hint_array_id == 24){
 		var _caption = "";
 
-		if(hint_show_id == 8){	//2014.10 Viz add for dsl dslx_diag_state
+		if(hint_show_id == 9){	//2015.07 Viz add for bwdpi : Adaptive QoS mode
+			statusmenu = "<span class='StatusClickHint' onclick='priority_change();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Change priority mode</span><br>";
+			statusmenu += "<span class='StatusClickHint' onclick='qos_disable();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Disable QoS</span>";
+			_caption = "<#Adaptive_QoS#>";
+		}
+		else if(hint_show_id == 8){	//2014.10 Viz add for dsl dslx_diag_state
 			statusmenu = "<span class='StatusClickHint' onclick='cancel_diag();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Cancel debug capture</span>";
 			_caption = "DSL Line Diagnostic capture";
 		}
-		if(hint_show_id == 7){
+		else if(hint_show_id == 7){
 			statusmenu = "<span class='StatusClickHint' onclick='gotoModem();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
 			if(usb_index == -1){
 				statusmenu += "<#Activate_usb#></span>"

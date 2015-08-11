@@ -1,0 +1,11 @@
+//  LOCALISATION STRINGS
+
+// Caption string for app.
+#define qtn_caption_string "symbian_ua_gui"
+
+// Short caption string for app.
+#define qtn_short_caption_string "HW"
+
+#define qtn_loc_resource_file_1 "\\resource\\apps\\symbian_ua_gui"
+
+// End of File

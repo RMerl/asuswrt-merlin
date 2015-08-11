@@ -27,6 +27,11 @@
 #include <net/checksum.h>
 #include <net/sock.h>
 
+#if defined(CONFIG_BCM_RECVFILE)
+#include <typedefs.h>
+#include <bcmdefs.h>
+#endif /* CONFIG_BCM_RECVFILE */
+
 /*
  *	Verify iovec. The caller must ensure that the iovec is big enough
  *	to hold the message iovec.
@@ -121,6 +126,33 @@ int memcpy_toiovecend(const struct iovec *iov, unsigned char *kdata,
 	return 0;
 }
 EXPORT_SYMBOL(memcpy_toiovecend);
+
+#if defined(CONFIG_BCM_RECVFILE)
+/* This was removed in 2.6. Re-add it for splice from socket to file. */
+/*
+ *	In kernel copy to iovec. Returns -EFAULT on error.
+ *
+ *	Note: this modifies the original iovec.
+ */
+
+void BCMFASTPATH_HOST memcpy_tokerneliovec(struct iovec *iov, unsigned char *kdata, int len)
+{
+	while (len > 0) {
+		if (iov->iov_len) {
+			int copy = min_t(unsigned int, iov->iov_len, len);
+
+			memcpy(iov->iov_base, kdata, copy);
+
+			len -= copy;
+			kdata += copy;
+			iov->iov_base += copy;
+			iov->iov_len -= copy;
+		}
+		iov++;
+	}
+}
+EXPORT_SYMBOL(memcpy_tokerneliovec);
+#endif /* CONFIG_BCM_RECVFILE */
 
 /*
  *	Copy iovec to kernel. Returns -EFAULT on error.

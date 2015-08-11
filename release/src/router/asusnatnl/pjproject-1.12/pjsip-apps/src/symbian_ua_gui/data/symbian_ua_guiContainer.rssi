@@ -1,0 +1,141 @@
+/*
+========================================================================
+ Name        : symbian_ua_guiContainer.rssi
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+#include "symbian_ua_guiContainer.hrh"
+#include "symbian_ua_guiContainer.loc"
+
+RESOURCE AVKON_VIEW r_symbian_ua_gui_container_symbian_ua_gui_container_view
+	{
+	cba = r_symbian_ua_gui_container_control_pane;
+	menubar = r_symbian_ua_gui_container_options_menu;
+	}
+RESOURCE MENU_BAR r_symbian_ua_gui_container_options_menu
+	{titles =
+			{
+			MENU_TITLE
+				{
+				menu_pane = r_symbian_ua_gui_container_menu_pane1_menu_pane;
+				}
+			};
+
+	}
+RESOURCE STATUS_PANE_APP_MODEL r_symbian_ua_gui_container_status_pane
+	{
+	panes =
+		{
+		SPANE_PANE
+			{
+			id = EEikStatusPaneUidTitle;
+			type = EAknCtTitlePane;
+			resource = r_symbian_ua_gui_container_title_resource;
+			}
+		};
+	}
+RESOURCE TITLE_PANE r_symbian_ua_gui_container_title_resource
+	{
+	txt = STR_symbian_ua_guiContainerView_1;
+	}
+RESOURCE CBA r_symbian_ua_gui_container_control_pane
+	{
+	buttons =
+		{
+		CBA_BUTTON
+			{
+			id = EAknSoftkeyOptions;
+			txt = STR_symbian_ua_guiContainerView_7;
+			},
+		CBA_BUTTON
+			{
+			id = ESymbian_ua_guiContainerViewControlPaneRightId;
+			txt = STR_symbian_ua_guiContainerView_8;
+			}
+		};
+	}
+RESOURCE LABEL r_symbian_ua_gui_container_label1
+	{
+	txt = STR_symbian_ua_guiContainerView_2;
+	horiz_align = EEikLabelAlignHCenter;
+	}
+RESOURCE EDWIN r_symbian_ua_gui_container_ed_url
+	{
+	maxlength = 255;
+	default_case = EAknEditorLowerCase;
+	allowed_case_modes = EAknEditorAllCaseModes;
+	numeric_keymap = EAknEditorStandardNumberModeKeymap;
+	default_input_mode = EAknEditorTextInputMode;
+	allowed_input_modes = EAknEditorTextInputMode | EAknEditorNumericInputMode | EAknEditorSecretAlphaInputMode | EAknEditorFullWidthTextInputMode | EAknEditorFullWidthNumericInputMode | EAknEditorHalfWidthTextInputMode;
+	special_character_table = R_AVKON_URL_SPECIAL_CHARACTER_TABLE_DIALOG;
+	avkon_flags = EAknEditorFlagNoT9 | EAknEditorFlagSupressShiftMenu;
+	}
+RESOURCE TBUF r_symbian_ua_gui_container_ed_url_2
+	{
+	buf = STR_symbian_ua_guiContainerView_4;
+	}
+RESOURCE MENU_PANE r_symbian_ua_gui_container_menu_pane1_menu_pane
+	{
+	items =
+		{
+		MENU_ITEM
+			{
+			command = ESymbian_ua_guiContainerViewSettingMenuItemCommand;
+			txt = STR_symbian_ua_guiContainerView_9;
+			},
+		MENU_ITEM
+			{
+			command = EAknCmdExit;
+			txt = STR_symbian_ua_guiContainerView_10;
+			}
+		};
+	}
+RESOURCE EDWIN r_symbian_ua_gui_container_ed_info
+	{
+	flags = EEikEdwinReadOnly;
+	lines = 10;
+	maxlength = 2000;
+	default_case = EAknEditorTextCase;
+	allowed_case_modes = EAknEditorAllCaseModes;
+	numeric_keymap = EAknEditorStandardNumberModeKeymap;
+	default_input_mode = EAknEditorTextInputMode;
+	allowed_input_modes = EAknEditorTextInputMode | EAknEditorNumericInputMode | EAknEditorSecretAlphaInputMode | EAknEditorKatakanaInputMode | EAknEditorFullWidthTextInputMode | EAknEditorFullWidthNumericInputMode | EAknEditorFullWidthKatakanaInputMode | EAknEditorHiraganaKanjiInputMode | EAknEditorHalfWidthTextInputMode;
+	avkon_flags = EAknEditorFlagNoEditIndicators | EAknEditorFlagEnableScrollBars;
+	special_character_table = 0;
+	}
+RESOURCE TBUF r_symbian_ua_gui_container_ed_info_2
+	{
+	buf = STR_symbian_ua_guiContainerView_3;
+	}
+RESOURCE TBUF r_symbian_ua_gui_container_note_error
+	{
+	buf = STR_symbian_ua_guiContainerView_13;
+	}
+RESOURCE TBUF r_symbian_ua_gui_container_note_info
+	{
+	buf = STR_symbian_ua_guiContainerView_16;
+	}
+RESOURCE TBUF r_symbian_ua_gui_container_note_warning
+	{
+	buf = STR_symbian_ua_guiContainerView_17;
+	}
+RESOURCE DIALOG r_symbian_ua_gui_container_qry_accept_call
+	{
+	flags = EAknGeneralQueryFlags;
+	buttons = R_AVKON_SOFTKEYS_YES_NO;
+	items =
+		{
+		DLG_LINE
+			{
+			type = EAknCtQuery;
+			id = ESymbian_ua_guiContainerViewQry_accept_call;
+			control = AVKON_CONFIRMATION_QUERY
+				{
+				layout = EConfirmationQueryLayout;
+				label = STR_symbian_ua_guiContainerView_18;
+				};
+			}
+		};
+	}

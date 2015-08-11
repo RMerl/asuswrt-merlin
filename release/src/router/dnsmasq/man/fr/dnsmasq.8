@@ -852,7 +852,7 @@ et
 pour plus de détails).
 
 Pour IPv6, le mode peut-être une combinaison des valeurs
-.B ra-only, slaac, ra-names, ra-stateless.
+.B ra-only, slaac, ra-names, ra-stateless, off-link.
 
 .B ra-only
 indique à dnsmasq de n'effectuer que des annonces de routeur (Router
@@ -887,6 +887,9 @@ peut-être combiné avec
 .B ra-stateless
 et
 .B slaac.
+
+.B off-link
+indique à dnsmasq d'annoncer le préfixe sans le bit L (sur lien).
 
 .TP
 .B \-G, --dhcp-host=[<adresse matérielle>][,id:<identifiant client>|*][,set:<label>][,<adresse IP>][,<nom d'hôte>][,<durée de bail>][,ignore]
@@ -1655,11 +1658,14 @@ changement d'état de bail à chaque changement de l'identifiant de client, de
 longueur de bail ou de date d'expiration.
 .TP
 .B --bridge-interface=<interface>,<alias>[,<alias>]
-Traiter les requêtes DHCP arrivant sur n'importe laquelle des interfaces <alias>
-comme si elles arrivaient de l'interface <interface>. Cette option est
-nécessaire lors de l'utilisation de pont ethernet "ancien mode" sur plate-forme
-BSD, puisque dans ce cas les paquets arrivent sur des interfaces "tap" n'ont
-pas d'adresse IP.  Chaque <alias> peut finir avec un simple '*' joker.
+Traiter les requêtes DHCP (v4 et v6) et IPv6 Router Solicit arrivant
+sur n'importe laquelle des interfaces <alias> comme si elles
+arrivaient de l'interface <interface>. Cette option permet à dnsmasq
+de fournir les service DHCP et RA sur les interfaces ethernet non
+adressés et non pontés; par exemple sur un hôte de calcul d'OpenStack
+où chaque telle interface est une interface TAP à une machine
+virtuelle, ou lors de l'utilisation de pont ethernet "ancien mode" sur
+plate-forme BSD.  Chaque <alias> peut finir avec un simple '*' joker.
 .TP
 .B \-s, --domain=<domaine>[,<gamme d'adresses>[,local]]
 Spécifie le domaine du serveur DHCP. Le domaine peut être donné de manière

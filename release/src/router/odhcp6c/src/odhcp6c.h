@@ -24,12 +24,12 @@
 #define ND_OPT_RECURSIVE_DNS 25
 #define ND_OPT_DNSSL 31
 
-#define DHCPV6_SOL_MAX_RT 3600
+#define DHCPV6_SOL_MAX_RT 120
 #define DHCPV6_REQ_MAX_RT 30
 #define DHCPV6_CNF_MAX_RT 4
 #define DHCPV6_REN_MAX_RT 600
 #define DHCPV6_REB_MAX_RT 600
-#define DHCPV6_INF_MAX_RT 3600
+#define DHCPV6_INF_MAX_RT 120
 
 #define DEFAULT_MIN_UPDATE_INTERVAL 30
 
@@ -65,10 +65,6 @@ enum dhcvp6_opt {
 	DHCPV6_OPT_PD_EXCLUDE = 67,
 	DHCPV6_OPT_SOL_MAX_RT = 82,
 	DHCPV6_OPT_INF_MAX_RT = 83,
-#ifdef EXT_PREFIX_CLASS
-	/* draft-bhandari-dhc-class-based-prefix, not yet standardized */
-	DHCPV6_OPT_PREFIX_CLASS = EXT_PREFIX_CLASS,
-#endif
 #ifdef EXT_CER_ID
 	/* draft-donley-dhc-cer-id-option-03 */
 	DHCPV6_OPT_CER_ID = EXT_CER_ID,
@@ -259,6 +255,7 @@ enum odhcp6c_state {
 	STATE_RA_ROUTE,
 	STATE_RA_PREFIX,
 	STATE_RA_DNS,
+	STATE_RA_SEARCH,
 	STATE_AFTR_NAME,
 	STATE_VENDORCLASS,
 	STATE_USERCLASS,
@@ -293,15 +290,16 @@ enum odhcp6c_ia_mode {
 
 struct odhcp6c_entry {
 	struct in6_addr router;
-	uint16_t length;
+	uint8_t auxlen;
+	uint8_t length;
 	int16_t priority;
 	struct in6_addr target;
 	uint32_t valid;
 	uint32_t preferred;
 	uint32_t t1;
 	uint32_t t2;
-	uint16_t class;
 	uint32_t iaid;
+	uint8_t auxtarget[];
 };
 
 struct odhcp6c_request_prefix {
@@ -310,7 +308,7 @@ struct odhcp6c_request_prefix {
 };
 
 int init_dhcpv6(const char *ifname, unsigned int client_options, int sol_timeout);
-void dhcpv6_set_ia_mode(enum odhcp6c_ia_mode na, enum odhcp6c_ia_mode pd);
+int dhcpv6_set_ia_mode(enum odhcp6c_ia_mode na, enum odhcp6c_ia_mode pd);
 int dhcpv6_request(enum dhcpv6_msg type);
 int dhcpv6_poll_reconfigure(void);
 int dhcpv6_promote_server_cand(void);
@@ -319,9 +317,14 @@ int init_rtnetlink(void);
 int set_rtnetlink_addr(int ifindex, const struct in6_addr *addr,
 		uint32_t pref, uint32_t valid);
 
+int ra_conf_hoplimit(int newvalue);
+int ra_conf_mtu(int newvalue);
+int ra_conf_reachable(int newvalue);
+int ra_conf_retransmit(int newvalue);
+
 int script_init(const char *path, const char *ifname);
 ssize_t script_unhexlify(uint8_t *dst, size_t len, const char *src);
-void script_call(const char *status);
+void script_call(const char *status, int delay, bool resume);
 
 bool odhcp6c_signal_process(void);
 uint64_t odhcp6c_get_milli_time(void);
@@ -338,7 +341,6 @@ void* odhcp6c_move_state(enum odhcp6c_state state, size_t *len);
 void* odhcp6c_get_state(enum odhcp6c_state state, size_t *len);
 
 // Entry manipulation
-struct odhcp6c_entry* odhcp6c_find_entry(enum odhcp6c_state state, const struct odhcp6c_entry *new);
 bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new, uint32_t safe, bool filterexcess);
 
 void odhcp6c_expire(void);

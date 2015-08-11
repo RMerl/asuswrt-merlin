@@ -304,6 +304,8 @@ function handle_11ac_80MHz(){
 function change_ddns_setting(v){
 		var hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
 		if (v == "WWW.ASUS.COM"){
+				document.getElementById("ddns_hostname_info_tr").style.display = "none";
+				document.getElementById("ddns_hostname_tr").style.display="";
 				document.form.ddns_hostname_x.parentNode.style.display = "none";
 				document.form.DDNSName.parentNode.style.display = "";
 				var ddns_hostname_title = hostname_x.substring(0, hostname_x.indexOf('.asuscomm.com'));
@@ -341,7 +343,22 @@ function change_ddns_setting(v){
 				else
 					showhide("need_custom_scripts", 0);
 		}
+		else if( v == "WWW.ORAY.COM"){
+			document.getElementById("ddns_hostname_tr").style.display="none";
+			inputCtrl(document.form.ddns_username_x, 1);
+			inputCtrl(document.form.ddns_passwd_x, 1);
+			document.form.ddns_wildcard_x[0].disabled= 1;
+			document.form.ddns_wildcard_x[1].disabled= 1;
+			showhide("link", 1);
+			showhide("linkToHome", 0);
+			showhide("wildcard_field",0);
+			document.form.ddns_regular_check.value = 0;
+			showhide("check_ddns_field", 0);
+			inputCtrl(document.form.ddns_regular_period, 0);			
+		}
 		else{
+				document.getElementById("ddns_hostname_info_tr").style.display = "none";
+				document.getElementById("ddns_hostname_tr").style.display="";
 				document.form.ddns_hostname_x.parentNode.style.display = "";
 				document.form.DDNSName.parentNode.style.display = "none";
 				inputCtrl(document.form.ddns_username_x, 1);
@@ -380,6 +397,7 @@ function change_ddns_setting(v){
 function change_common_radio(o, s, v, r){
 	if(v == "ddns_enable_x"){
 		var hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
+		var ddns_updated = '<% nvram_get("ddns_updated"); %>';
 		if(r == 1){
 			inputCtrl(document.form.ddns_server_x, 1);
 			if('<% nvram_get("ddns_server_x"); %>' == 'WWW.ASUS.COM'){
@@ -390,13 +408,18 @@ function change_common_radio(o, s, v, r){
 					if(!ddns_hostname_title)
 						document.getElementById("DDNSName").value = "<#asusddns_inputhint#>";
 					else
-						document.getElementById("DDNSName").value = ddns_hostname_title;						
+						document.getElementById("DDNSName").value = ddns_hostname_title;			
 				}else{
 					document.getElementById("DDNSName").value = "<#asusddns_inputhint#>";
 				}
 				showhide("wildcard_field",0);
 			}else{
-				document.form.ddns_hostname_x.parentNode.parentNode.parentNode.style.display = "";
+				if(document.form.ddns_server_x.value == "WWW.ORAY.COM"){
+					if(ddns_updated == "1")
+						document.getElementById("ddns_hostname_info_tr").style.display = "";
+				}
+				else
+					document.form.ddns_hostname_x.parentNode.parentNode.parentNode.style.display = "";
 				inputCtrl(document.form.ddns_username_x, 1);
 				inputCtrl(document.form.ddns_passwd_x, 1);
 				showhide("wildcard_field",1);				
@@ -405,7 +428,10 @@ function change_common_radio(o, s, v, r){
 		}else{
 			if(document.form.ddns_server_x.value == "WWW.ASUS.COM"){
 				document.form.DDNSName.parentNode.parentNode.parentNode.style.display = "none";
-			}else{
+			}
+			else{
+				if(document.form.ddns_server_x.value == "WWW.ORAY.COM")
+					document.getElementById("ddns_hostname_info_tr").style.display = "none";
 				document.form.ddns_hostname_x.parentNode.parentNode.parentNode.style.display = "none";
 				inputCtrl(document.form.ddns_username_x, 0);
 				inputCtrl(document.form.ddns_passwd_x, 0);			
@@ -526,6 +552,8 @@ function openLink(s){
 			tourl = "http://www.no-ip.com/newUser.php";
 		else if (document.form.ddns_server_x.value == 'WWW.NAMECHEAP.COM')
 			tourl = "https://www.namecheap.com";
+		else if (document.form.ddns_server_x.value == 'WWW.ORAY.COM')
+			tourl = "http://www.oray.com/";
 		else	tourl = "";
 		link = window.open(tourl, "DDNSLink","toolbar=yes,location=yes,directories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,copyhistory=no,width=640,height=480");
 	}

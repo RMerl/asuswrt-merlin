@@ -117,7 +117,10 @@ function load_ISP_profile(){
 		document.form.switch_stb_x.value = setting_value[3];
 	}
 
-	if(document.form.switch_wantag.value == "maxis_fiber_sp_iptv" || document.form.switch_wantag.value == "maxis_fiber_iptv") {
+	if(document.form.switch_wantag.value == "maxis_fiber_sp_iptv" || 
+	   document.form.switch_wantag.value == "maxis_fiber_iptv" ||
+	   document.form.switch_wantag.value == "meo"
+	) {
 		document.form.mr_enable_x.value = "1";
 		document.form.emf_enable.value = "1";
 	}
@@ -342,7 +345,7 @@ function change_rmvlan(){
 	  <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 	  	<thead>
 			<tr>
-				<td colspan="2">Port</td>
+				<td colspan="2"><#Port_Mapping_item1#></td>
 			</tr>
 		</thead>
 	    	<tr>
@@ -363,7 +366,7 @@ function change_rmvlan(){
                                         <option value="maxis_fiber_iptv" <% nvram_match("switch_wantag", "maxis_fiber_iptv", "selected"); %>>Maxis-Fiber-IPTV</option>
                                         <option value="maxis_fiber_sp_iptv" <% nvram_match("switch_wantag", "maxis_fiber_sp_iptv", "selected"); %>>Maxis-Fiber-Special-IPTV</option>
 -->
-						<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>>Manual</option>
+					<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>><#Manual_Setting_btn#></option>
 				</select>
 			</td>
 			</tr>
@@ -390,7 +393,7 @@ function change_rmvlan(){
 	  	<td>LAN3</td>
 		</tr>
 		<tr id="wan_internet_x">
-	  	<th width="30%">Internet</th>
+	  	<th width="30%"><#Internet#></th>
 	  	<td>
 			VID&nbsp;<input type="text" name="switch_wan0tagid" class="input_6_table" maxlength="4" value="<% nvram_get( "switch_wan0tagid"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;&nbsp;&nbsp;
 			PRIO&nbsp;<input type="text" name="switch_wan0prio" class="input_3_table" maxlength="1" value="<% nvram_get( "switch_wan0prio"); %>" onKeyPress="return validator.isNumber(this, event);" autocorrect="off" autocapitalize="off">

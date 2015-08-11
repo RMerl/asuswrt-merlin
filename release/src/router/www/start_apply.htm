@@ -100,7 +100,7 @@ var makeRequest = {
 		xmlHttp.onreadystatechange = function(){
 			if(xmlHttp.readyState == 4){
 				if(xmlHttp.status == 200){
-					callBackSuccess(xmlHttp.responseXML);
+					callBackSuccess(xmlHttp);
 				}
 				else{
 					makeRequest._notSuccessCount++;
@@ -151,8 +151,10 @@ function showWlHint(){
 				}
 			}
 
-			makeRequest.start('/httpd_check.xml', function(xmldoc){
-				var httpds = xmldoc.getElementsByTagName("httpd");
+			makeRequest.start('/httpd_check.xml', function(xhr){
+				if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/index.asp";
+
+				var httpds = xhr.responseXML.getElementsByTagName("httpd");
 				if (httpds !== null && httpds[0] !== null) {
 					if(top.document.getElementById("connectedHint")){
 						top.document.getElementById("connectedHint").innerHTML = "<#DrSurf_sweet_advise2#>";
@@ -327,7 +329,6 @@ function initial(){
 		return false; //wired
 	};
 
-
 	var getXMLAndRedirect = function(){
 		if(makeRequest._notSupportXML){
 			if(getflag !== ""){
@@ -339,8 +340,10 @@ function initial(){
 			}
 		}
 
-		makeRequest.start('/httpd_check.xml', function(xmldoc){
-			var httpds = xmldoc.getElementsByTagName("httpd");
+		makeRequest.start('/httpd_check.xml', function(xhr){
+			if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/index.asp";
+
+			var httpds = xhr.responseXML.getElementsByTagName("httpd");
 			if (httpds !== null && httpds[0] !== null) {
 				if(parent.parent.document.getElementById("drword")) {
 					parent.parent.document.getElementById("drword").innerHTML = "<#DrSurf_sweet_advise2#><br/><br/>";
@@ -463,6 +466,8 @@ function initial(){
 		parent.stopFlag = 1;
 		parent.showLoading(restart_time);
 		setTimeout("parent.parent.location.href='"+next_page+"';", (restart_time+2)*1000);
+	}else if(action_script == "start_sig_check"){	//check signature, do nothing
+		
 	}
 	else if(getflag == "liveUpdate"){
 		setTimeout("parent.detect_firmware();", 5000);

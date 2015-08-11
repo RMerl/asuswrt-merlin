@@ -10,10 +10,18 @@
 /*
  *  DFS-reentry
  */
-#define IEEE80211_PICK_DOMIAN_MASK	0x00FF
+#define IEEE80211_PICK_DOMIAN_MASK	0x0007
 #define IEEE80211_PICK_ALL		0x0001		/* pick channel from all available channels */
 #define IEEE80211_PICK_DFS		0x0002		/* pick channel from available DFS channel */
 #define IEEE80211_PICK_NONDFS		0x0004		/* pick channel from available non-DFS channel */
+
+#define IEEE80211_PICK_CONTROL_MASK		0x00F8
+#define IEEE80211_PICK_SCAN_FLUSH		0x0008
+#define IEEE80211_PICK_BG_ACTIVE		0x0010
+#define IEEE80211_PICK_BG_PASSIVE_FAST		0x0020
+#define IEEE80211_PICK_BG_PASSIVE_NORMAL	0x0040
+#define IEEE80211_PICK_BG_PASSIVE_SLOW		0x0080
+#define IEEE80211_PICK_BG_MODE_MASK		0x00F0
 
 #define IEEE80211_PICK_ALGORITHM_MASK	0xFF00
 #define IEEE80211_PICK_CLEAREST		0x0100		/* pick clearest channel */

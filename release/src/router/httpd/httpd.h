@@ -54,6 +54,7 @@ extern struct mime_handler mime_handlers[];
 #define MIME_EXCEPTION_NOAUTH_ALL 	1<<0
 #define MIME_EXCEPTION_NOAUTH_FIRST	1<<1
 #define MIME_EXCEPTION_NORESETTIME	1<<2
+#define MIME_EXCEPTION_MAINPAGE 	1<<3
 #define CHECK_REFERER	1
 
 #define SERVER_NAME "httpd/2.0"
@@ -70,6 +71,15 @@ extern struct mime_handler mime_handlers[];
 #define REFERERFAIL	6
 #define LOGINLOCK	7
 #define ISLOGOUT	8
+#define NOLOGIN		9
+
+/* image path for app */
+#define IMAGE_MODEL_PRODUCT	"/images/Model_product.png"
+#define IMAGE_WANUNPLUG		"/images/WANunplug.png"
+#define IMAGE_ROUTER_MODE	"/images/New_ui/rt.jpg"
+#define IMAGE_REPEATER_MODE	"/images/New_ui/re.jpg"
+#define IMAGE_AP_MODE		"/images/New_ui/ap.jpg"
+#define IMAGE_MEDIA_BRIDGE_MODE	"/images/New_ui/mb.jpg"
 
 /* Exception MIME handler */
 struct except_mime_handler {
@@ -237,7 +247,7 @@ extern void set_cgi(char *name, char *value);
 /* httpd.c */
 extern void start_ssl(void);
 extern char *gethost(void);
-extern void http_logout(unsigned int ip, char *cookies);
+extern void http_logout(unsigned int ip, char *cookies, int fromapp_flag);
 extern int is_auth(void);
 extern int is_firsttime(void);
 extern char *generate_token(void);

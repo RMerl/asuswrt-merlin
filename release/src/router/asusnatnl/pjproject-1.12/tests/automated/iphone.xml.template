@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<Scenario site="$(HOSTNAME)" url="http://my.cdash.org/submit.php?project=PJSIP" wdir="$(PJDIR)">
+ 
+	<Submit group="Experimental" build="iPhoneOS-default">
+		<Update />
+		<FileWrite file="user.mak">
+		  <![CDATA[
+# Written by ccdash
+export CFLAGS += -Wno-unused-label -g
+]]>			
+		</FileWrite>
+		<FileWrite file="pjlib/include/pj/config_site.h">
+		  <![CDATA[
+/* Written by ccdash */
+#define PJ_CONFIG_IPHONE	1
+#include <pj/config_site_sample.h>
+]]>			
+		</FileWrite>
+		<Configure cmd="./configure-iphone" />
+		<Build cmd="make distclean &amp;&amp; make dep &amp;&amp; make clean &amp;&amp; make" />
+	</Submit>
+	
+</Scenario>

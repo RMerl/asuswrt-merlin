@@ -1,0 +1,59 @@
+Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "pjlib_util_test_wince"=".\pjlib_util_test_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_wince
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "pjlib_util_wince"=".\pjlib_util_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib_wince"="..\..\..\pjlib\build\wince-evc4\pjlib_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

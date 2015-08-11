@@ -1,0 +1,1923 @@
+# Microsoft eMbedded Visual Tools Project File - Name="PocketPJ" - Package Owner=<4>
+# Microsoft eMbedded Visual Tools Generated Build File, Format Version 6.02
+# ** DO NOT EDIT **
+
+# TARGTYPE "Win32 (WCE ARMV4) Application" 0xa301
+# TARGTYPE "Win32 (WCE emulator) Application" 0xa601
+
+CFG=PocketPJ - Win32 (WCE emulator) Debug
+!MESSAGE This is not a valid makefile. To build this project using NMAKE,
+!MESSAGE use the Export Makefile command and run
+!MESSAGE 
+!MESSAGE NMAKE /f "PocketPJ.vcn".
+!MESSAGE 
+!MESSAGE You can specify a configuration when running NMAKE
+!MESSAGE by defining the macro CFG on the command line. For example:
+!MESSAGE 
+!MESSAGE NMAKE /f "PocketPJ.vcn" CFG="PocketPJ - Win32 (WCE emulator) Debug"
+!MESSAGE 
+!MESSAGE Possible choices for configuration are:
+!MESSAGE 
+!MESSAGE "PocketPJ - Win32 (WCE emulator) Release" (based on "Win32 (WCE emulator) Application")
+!MESSAGE "PocketPJ - Win32 (WCE emulator) Debug" (based on "Win32 (WCE emulator) Application")
+!MESSAGE "PocketPJ - Win32 (WCE ARMV4) Release" (based on "Win32 (WCE ARMV4) Application")
+!MESSAGE "PocketPJ - Win32 (WCE ARMV4) Debug" (based on "Win32 (WCE ARMV4) Application")
+!MESSAGE 
+
+# Begin Project
+# PROP AllowPerConfigDependencies 0
+# PROP Scc_ProjName ""
+# PROP Scc_LocalPath ""
+# PROP ATL_Project 2
+
+!IF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Release"
+
+# PROP BASE Use_MFC 2
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "emulatorRel"
+# PROP BASE Intermediate_Dir "emulatorRel"
+# PROP BASE CPU_ID "{32E52003-403E-442D-BE48-DE10F8C6131D}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 2
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "emulatorRel"
+# PROP Intermediate_Dir "emulatorRel"
+# PROP CPU_ID "{32E52003-403E-442D-BE48-DE10F8C6131D}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+RSC=rc.exe
+# ADD BASE RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "NDEBUG" /d "$(CePlatform)" /d "_X86_" /d "x86" /d "_i386_" /d "_AFXDLL" /r
+# ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "NDEBUG" /d "$(CePlatform)" /d "_X86_" /d "x86" /d "_i386_" /d "_AFXDLL" /r
+CPP=cl.exe
+# ADD BASE CPP /nologo /W3 /D "_i386_" /D UNDER_CE=$(CEVersion) /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "NDEBUG" /D "_WIN32_WCE_CEPC" /D "_AFXDLL" /Yu"stdafx.h" /Gs8192 /GF /O2 /c
+# ADD CPP /nologo /W3 /D "_i386_" /D UNDER_CE=$(CEVersion) /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "NDEBUG" /D "_WIN32_WCE_CEPC" /D "_AFXDLL" /Yu"stdafx.h" /Gs8192 /GF /O2 /c
+MTL=midl.exe
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"wWinMainCRTStartup" /subsystem:$(CESubsystem) /MACHINE:IX86
+# ADD LINK32 /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"wWinMainCRTStartup" /subsystem:$(CESubsystem) /MACHINE:IX86
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Debug"
+
+# PROP BASE Use_MFC 2
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "emulatorDbg"
+# PROP BASE Intermediate_Dir "emulatorDbg"
+# PROP BASE CPU_ID "{32E52003-403E-442D-BE48-DE10F8C6131D}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 2
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "emulatorDbg"
+# PROP Intermediate_Dir "emulatorDbg"
+# PROP CPU_ID "{32E52003-403E-442D-BE48-DE10F8C6131D}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+RSC=rc.exe
+# ADD BASE RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "DEBUG" /d "$(CePlatform)" /d "_X86_" /d "x86" /d "_i386_" /d "_AFXDLL" /r
+# ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "DEBUG" /d "$(CePlatform)" /d "_X86_" /d "x86" /d "_i386_" /d "_AFXDLL" /r
+CPP=cl.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D "_i386_" /D UNDER_CE=$(CEVersion) /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "_WIN32_WCE_CEPC" /D "_AFXDLL" /Yu"stdafx.h" /Gs8192 /GF /c
+# ADD CPP /nologo /W3 /Zi /Od /I "../../../pjlib/include" /I "../../../pjlib-util/include" /I "../../../pjnath/include" /I "../../../pjmedia/include" /I "../../../pjsip/include" /D "DEBUG" /D "_i386_" /D UNDER_CE=$(CEVersion) /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "_WIN32_WCE_CEPC" /D "_AFXDLL" /FR /Yu"stdafx.h" /Gs8192 /GF /c
+MTL=midl.exe
+# ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
+# ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"wWinMainCRTStartup" /debug /subsystem:$(CESubsystem) /MACHINE:IX86
+# ADD LINK32 commctrl.lib coredll.lib winsock.lib ws2.lib iphlpapi.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"wWinMainCRTStartup" /debug /subsystem:$(CESubsystem) /MACHINE:IX86
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Release"
+
+# PROP BASE Use_MFC 2
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ARMV4Rel"
+# PROP BASE Intermediate_Dir "ARMV4Rel"
+# PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 2
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "ARMV4Rel"
+# PROP Intermediate_Dir "ARMV4Rel"
+# PROP CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+RSC=rc.exe
+# ADD BASE RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "NDEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /d "_AFXDLL" /r
+# ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "NDEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /d "_AFXDLL" /r
+CPP=clarm.exe
+# ADD BASE CPP /nologo /W3 /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_AFXDLL" /Yu"stdafx.h" /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "../../../pjlib/include" /I "../../../pjlib-util/include" /I "../../../pjnath/include" /I "../../../pjmedia/include" /I "../../../pjsip/include" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_AFXDLL" /Yu"stdafx.h" /O2 /M$(CECrtMT) /c
+MTL=midl.exe
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"wWinMainCRTStartup" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+# ADD LINK32 commctrl.lib coredll.lib winsock.lib ws2.lib iphlpapi.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"wWinMainCRTStartup" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Debug"
+
+# PROP BASE Use_MFC 2
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "ARMV4Dbg"
+# PROP BASE Intermediate_Dir "ARMV4Dbg"
+# PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 2
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "ARMV4Dbg"
+# PROP Intermediate_Dir "ARMV4Dbg"
+# PROP CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+RSC=rc.exe
+# ADD BASE RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "DEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /d "_AFXDLL" /r
+# ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "DEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /d "_AFXDLL" /r
+CPP=clarm.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "UNICODE" /D "_UNICODE" /D "_AFXDLL" /Yu"stdafx.h" /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "../../../pjlib/include" /I "../../../pjlib-util/include" /I "../../../pjnath/include" /I "../../../pjmedia/include" /I "../../../pjsip/include" /D "DEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "UNICODE" /D "_UNICODE" /D "_AFXDLL" /FR /Yu"stdafx.h" /M$(CECrtMTDebug) /c
+MTL=midl.exe
+# ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
+# ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"wWinMainCRTStartup" /debug /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+# ADD LINK32 commctrl.lib coredll.lib winsock.lib ws2.lib iphlpapi.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"wWinMainCRTStartup" /debug /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+
+!ENDIF 
+
+# Begin Target
+
+# Name "PocketPJ - Win32 (WCE emulator) Release"
+# Name "PocketPJ - Win32 (WCE emulator) Debug"
+# Name "PocketPJ - Win32 (WCE ARMV4) Release"
+# Name "PocketPJ - Win32 (WCE ARMV4) Debug"
+# Begin Group "Source Files"
+
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=.\PocketPJ.cpp
+
+!IF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Release"
+
+DEP_CPP_POCKE=\
+	".\PocketPJ.h"\
+	".\PocketPJDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Debug"
+
+DEP_CPP_POCKE=\
+	"..\..\..\pjlib-util\include\pjlib-util.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\base64.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\config.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\crc32.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\dns.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\errno.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\getopt.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\pcap.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_bitwise.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_uint.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\srv_resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\stun_simple.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\types.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\xml.h"\
+	"..\..\..\pjlib\include\pj\addr_resolv.h"\
+	"..\..\..\pjlib\include\pj\array.h"\
+	"..\..\..\pjlib\include\pj\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_armcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_codew.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcce.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_msvc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_mwcc.h"\
+	"..\..\..\pjlib\include\pj\compat\ctype.h"\
+	"..\..\..\pjlib\include\pj\compat\errno.h"\
+	"..\..\..\pjlib\include\pj\compat\high_precision.h"\
+	"..\..\..\pjlib\include\pj\compat\m_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_darwinos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux_kernel.h"\
+	"..\..\..\pjlib\include\pj\compat\os_palmos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_rtems.h"\
+	"..\..\..\pjlib\include\pj\compat\os_sunos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_symbian.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32_wince.h"\
+	"..\..\..\pjlib\include\pj\compat\setjmp.h"\
+	"..\..\..\pjlib\include\pj\compat\size_t.h"\
+	"..\..\..\pjlib\include\pj\compat\stdarg.h"\
+	"..\..\..\pjlib\include\pj\compat\string.h"\
+	"..\..\..\pjlib\include\pj\config.h"\
+	"..\..\..\pjlib\include\pj\config_site.h"\
+	"..\..\..\pjlib\include\pj\config_site_sample.h"\
+	"..\..\..\pjlib\include\pj\ctype.h"\
+	"..\..\..\pjlib\include\pj\errno.h"\
+	"..\..\..\pjlib\include\pj\except.h"\
+	"..\..\..\pjlib\include\pj\fifobuf.h"\
+	"..\..\..\pjlib\include\pj\file_access.h"\
+	"..\..\..\pjlib\include\pj\file_io.h"\
+	"..\..\..\pjlib\include\pj\guid.h"\
+	"..\..\..\pjlib\include\pj\hash.h"\
+	"..\..\..\pjlib\include\pj\ioqueue.h"\
+	"..\..\..\pjlib\include\pj\ip_helper.h"\
+	"..\..\..\pjlib\include\pj\list.h"\
+	"..\..\..\pjlib\include\pj\list_i.h"\
+	"..\..\..\pjlib\include\pj\lock.h"\
+	"..\..\..\pjlib\include\pj\log.h"\
+	"..\..\..\pjlib\include\pj\os.h"\
+	"..\..\..\pjlib\include\pj\pool.h"\
+	"..\..\..\pjlib\include\pj\pool_alt.h"\
+	"..\..\..\pjlib\include\pj\pool_buf.h"\
+	"..\..\..\pjlib\include\pj\pool_i.h"\
+	"..\..\..\pjlib\include\pj\rand.h"\
+	"..\..\..\pjlib\include\pj\rbtree.h"\
+	"..\..\..\pjlib\include\pj\sock.h"\
+	"..\..\..\pjlib\include\pj\sock_select.h"\
+	"..\..\..\pjlib\include\pj\string.h"\
+	"..\..\..\pjlib\include\pj\string_i.h"\
+	"..\..\..\pjlib\include\pj\timer.h"\
+	"..\..\..\pjlib\include\pj\types.h"\
+	"..\..\..\pjlib\include\pj\unicode.h"\
+	"..\..\..\pjlib\include\pjlib.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\gsm.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\ilbc.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\l16.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\speex.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\types.h"\
+	"..\..\..\pjmedia\include\pjmedia.h"\
+	"..\..\..\pjmedia\include\pjmedia\alaw_ulaw.h"\
+	"..\..\..\pjmedia\include\pjmedia\bidirectional.h"\
+	"..\..\..\pjmedia\include\pjmedia\clock.h"\
+	"..\..\..\pjmedia\include\pjmedia\codec.h"\
+	"..\..\..\pjmedia\include\pjmedia\conference.h"\
+	"..\..\..\pjmedia\include\pjmedia\config.h"\
+	"..\..\..\pjmedia\include\pjmedia\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\endpoint.h"\
+	"..\..\..\pjmedia\include\pjmedia\errno.h"\
+	"..\..\..\pjmedia\include\pjmedia\g711.h"\
+	"..\..\..\pjmedia\include\pjmedia\jbuf.h"\
+	"..\..\..\pjmedia\include\pjmedia\master_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\mem_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\null_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\plc.h"\
+	"..\..\..\pjmedia\include\pjmedia\port.h"\
+	"..\..\..\pjmedia\include\pjmedia\resample.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtcp.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp_neg.h"\
+	"..\..\..\pjmedia\include\pjmedia\session.h"\
+	"..\..\..\pjmedia\include\pjmedia\silencedet.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\splitcomb.h"\
+	"..\..\..\pjmedia\include\pjmedia\stream.h"\
+	"..\..\..\pjmedia\include\pjmedia\tonegen.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_ice.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_srtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_udp.h"\
+	"..\..\..\pjmedia\include\pjmedia\types.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_playlist.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\wave.h"\
+	"..\..\..\pjnath\include\pjnath.h"\
+	"..\..\..\pjnath\include\pjnath\config.h"\
+	"..\..\..\pjnath\include\pjnath\errno.h"\
+	"..\..\..\pjnath\include\pjnath\ice_session.h"\
+	"..\..\..\pjnath\include\pjnath\ice_strans.h"\
+	"..\..\..\pjnath\include\pjnath\nat_detect.h"\
+	"..\..\..\pjnath\include\pjnath\stun_auth.h"\
+	"..\..\..\pjnath\include\pjnath\stun_config.h"\
+	"..\..\..\pjnath\include\pjnath\stun_msg.h"\
+	"..\..\..\pjnath\include\pjnath\stun_session.h"\
+	"..\..\..\pjnath\include\pjnath\stun_transaction.h"\
+	"..\..\..\pjnath\include\pjnath\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\evsub.h"\
+	"..\..\..\pjsip\include\pjsip-simple\iscomposing.h"\
+	"..\..\..\pjsip\include\pjsip-simple\pidf.h"\
+	"..\..\..\pjsip\include\pjsip-simple\presence.h"\
+	"..\..\..\pjsip\include\pjsip-simple\publish.h"\
+	"..\..\..\pjsip\include\pjsip-simple\rpid.h"\
+	"..\..\..\pjsip\include\pjsip-simple\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\xpidf.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_100rel.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_inv.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_regc.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_replaces.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_xfer.h"\
+	"..\..\..\pjsip\include\pjsip.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_aka.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_autoconf.h"\
+	"..\..\..\pjsip\include\pjsip\sip_config.h"\
+	"..\..\..\pjsip\include\pjsip\sip_dialog.h"\
+	"..\..\..\pjsip\include\pjsip\sip_endpoint.h"\
+	"..\..\..\pjsip\include\pjsip\sip_errno.h"\
+	"..\..\..\pjsip\include\pjsip\sip_event.h"\
+	"..\..\..\pjsip\include\pjsip\sip_module.h"\
+	"..\..\..\pjsip\include\pjsip\sip_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_parser.h"\
+	"..\..\..\pjsip\include\pjsip\sip_resolve.h"\
+	"..\..\..\pjsip\include\pjsip\sip_tel_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transaction.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_loop.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tcp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tls.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_udp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_types.h"\
+	"..\..\..\pjsip\include\pjsip\sip_ua_layer.h"\
+	"..\..\..\pjsip\include\pjsip\sip_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_util.h"\
+	"..\..\..\pjsip\include\pjsip_simple.h"\
+	"..\..\..\pjsip\include\pjsip_ua.h"\
+	"..\..\..\pjsip\include\pjsua-lib\pjsua.h"\
+	".\PocketPJ.h"\
+	".\PocketPJDlg.h"\
+	".\PopUpWnd.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_POCKE=\
+	"..\..\..\pjlib-util\include\pjlib-util.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\base64.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\config.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\crc32.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\dns.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\errno.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\getopt.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\pcap.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_bitwise.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_uint.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\srv_resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\stun_simple.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\types.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\xml.h"\
+	"..\..\..\pjlib\include\pj\addr_resolv.h"\
+	"..\..\..\pjlib\include\pj\array.h"\
+	"..\..\..\pjlib\include\pj\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_armcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_codew.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcce.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_msvc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_mwcc.h"\
+	"..\..\..\pjlib\include\pj\compat\ctype.h"\
+	"..\..\..\pjlib\include\pj\compat\errno.h"\
+	"..\..\..\pjlib\include\pj\compat\high_precision.h"\
+	"..\..\..\pjlib\include\pj\compat\m_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_darwinos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux_kernel.h"\
+	"..\..\..\pjlib\include\pj\compat\os_palmos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_rtems.h"\
+	"..\..\..\pjlib\include\pj\compat\os_sunos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_symbian.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32_wince.h"\
+	"..\..\..\pjlib\include\pj\compat\setjmp.h"\
+	"..\..\..\pjlib\include\pj\compat\size_t.h"\
+	"..\..\..\pjlib\include\pj\compat\stdarg.h"\
+	"..\..\..\pjlib\include\pj\compat\string.h"\
+	"..\..\..\pjlib\include\pj\config.h"\
+	"..\..\..\pjlib\include\pj\config_site.h"\
+	"..\..\..\pjlib\include\pj\config_site_sample.h"\
+	"..\..\..\pjlib\include\pj\ctype.h"\
+	"..\..\..\pjlib\include\pj\errno.h"\
+	"..\..\..\pjlib\include\pj\except.h"\
+	"..\..\..\pjlib\include\pj\fifobuf.h"\
+	"..\..\..\pjlib\include\pj\file_access.h"\
+	"..\..\..\pjlib\include\pj\file_io.h"\
+	"..\..\..\pjlib\include\pj\guid.h"\
+	"..\..\..\pjlib\include\pj\hash.h"\
+	"..\..\..\pjlib\include\pj\ioqueue.h"\
+	"..\..\..\pjlib\include\pj\ip_helper.h"\
+	"..\..\..\pjlib\include\pj\list.h"\
+	"..\..\..\pjlib\include\pj\list_i.h"\
+	"..\..\..\pjlib\include\pj\lock.h"\
+	"..\..\..\pjlib\include\pj\log.h"\
+	"..\..\..\pjlib\include\pj\os.h"\
+	"..\..\..\pjlib\include\pj\pool.h"\
+	"..\..\..\pjlib\include\pj\pool_alt.h"\
+	"..\..\..\pjlib\include\pj\pool_buf.h"\
+	"..\..\..\pjlib\include\pj\pool_i.h"\
+	"..\..\..\pjlib\include\pj\rand.h"\
+	"..\..\..\pjlib\include\pj\rbtree.h"\
+	"..\..\..\pjlib\include\pj\sock.h"\
+	"..\..\..\pjlib\include\pj\sock_select.h"\
+	"..\..\..\pjlib\include\pj\string.h"\
+	"..\..\..\pjlib\include\pj\string_i.h"\
+	"..\..\..\pjlib\include\pj\timer.h"\
+	"..\..\..\pjlib\include\pj\types.h"\
+	"..\..\..\pjlib\include\pj\unicode.h"\
+	"..\..\..\pjlib\include\pjlib.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\gsm.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\ilbc.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\l16.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\speex.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\types.h"\
+	"..\..\..\pjmedia\include\pjmedia.h"\
+	"..\..\..\pjmedia\include\pjmedia\alaw_ulaw.h"\
+	"..\..\..\pjmedia\include\pjmedia\bidirectional.h"\
+	"..\..\..\pjmedia\include\pjmedia\clock.h"\
+	"..\..\..\pjmedia\include\pjmedia\codec.h"\
+	"..\..\..\pjmedia\include\pjmedia\conference.h"\
+	"..\..\..\pjmedia\include\pjmedia\config.h"\
+	"..\..\..\pjmedia\include\pjmedia\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\endpoint.h"\
+	"..\..\..\pjmedia\include\pjmedia\errno.h"\
+	"..\..\..\pjmedia\include\pjmedia\g711.h"\
+	"..\..\..\pjmedia\include\pjmedia\jbuf.h"\
+	"..\..\..\pjmedia\include\pjmedia\master_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\mem_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\null_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\plc.h"\
+	"..\..\..\pjmedia\include\pjmedia\port.h"\
+	"..\..\..\pjmedia\include\pjmedia\resample.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtcp.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp_neg.h"\
+	"..\..\..\pjmedia\include\pjmedia\session.h"\
+	"..\..\..\pjmedia\include\pjmedia\silencedet.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\splitcomb.h"\
+	"..\..\..\pjmedia\include\pjmedia\stream.h"\
+	"..\..\..\pjmedia\include\pjmedia\tonegen.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_ice.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_srtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_udp.h"\
+	"..\..\..\pjmedia\include\pjmedia\types.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_playlist.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\wave.h"\
+	"..\..\..\pjnath\include\pjnath.h"\
+	"..\..\..\pjnath\include\pjnath\config.h"\
+	"..\..\..\pjnath\include\pjnath\errno.h"\
+	"..\..\..\pjnath\include\pjnath\ice_session.h"\
+	"..\..\..\pjnath\include\pjnath\ice_strans.h"\
+	"..\..\..\pjnath\include\pjnath\nat_detect.h"\
+	"..\..\..\pjnath\include\pjnath\stun_auth.h"\
+	"..\..\..\pjnath\include\pjnath\stun_config.h"\
+	"..\..\..\pjnath\include\pjnath\stun_msg.h"\
+	"..\..\..\pjnath\include\pjnath\stun_session.h"\
+	"..\..\..\pjnath\include\pjnath\stun_transaction.h"\
+	"..\..\..\pjnath\include\pjnath\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\evsub.h"\
+	"..\..\..\pjsip\include\pjsip-simple\iscomposing.h"\
+	"..\..\..\pjsip\include\pjsip-simple\pidf.h"\
+	"..\..\..\pjsip\include\pjsip-simple\presence.h"\
+	"..\..\..\pjsip\include\pjsip-simple\publish.h"\
+	"..\..\..\pjsip\include\pjsip-simple\rpid.h"\
+	"..\..\..\pjsip\include\pjsip-simple\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\xpidf.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_100rel.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_inv.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_regc.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_replaces.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_xfer.h"\
+	"..\..\..\pjsip\include\pjsip.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_aka.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_autoconf.h"\
+	"..\..\..\pjsip\include\pjsip\sip_config.h"\
+	"..\..\..\pjsip\include\pjsip\sip_dialog.h"\
+	"..\..\..\pjsip\include\pjsip\sip_endpoint.h"\
+	"..\..\..\pjsip\include\pjsip\sip_errno.h"\
+	"..\..\..\pjsip\include\pjsip\sip_event.h"\
+	"..\..\..\pjsip\include\pjsip\sip_module.h"\
+	"..\..\..\pjsip\include\pjsip\sip_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_parser.h"\
+	"..\..\..\pjsip\include\pjsip\sip_resolve.h"\
+	"..\..\..\pjsip\include\pjsip\sip_tel_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transaction.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_loop.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tcp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tls.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_udp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_types.h"\
+	"..\..\..\pjsip\include\pjsip\sip_ua_layer.h"\
+	"..\..\..\pjsip\include\pjsip\sip_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_util.h"\
+	"..\..\..\pjsip\include\pjsip_simple.h"\
+	"..\..\..\pjsip\include\pjsip_ua.h"\
+	"..\..\..\pjsip\include\pjsua-lib\pjsua.h"\
+	".\PocketPJ.h"\
+	".\PocketPJDlg.h"\
+	".\PopUpWnd.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_POCKE=\
+	"..\..\..\pjlib-util\include\pjlib-util.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\base64.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\config.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\crc32.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\dns.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\errno.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\getopt.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\pcap.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_bitwise.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_uint.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\srv_resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\stun_simple.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\types.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\xml.h"\
+	"..\..\..\pjlib\include\pj\addr_resolv.h"\
+	"..\..\..\pjlib\include\pj\array.h"\
+	"..\..\..\pjlib\include\pj\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_armcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_codew.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcce.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_msvc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_mwcc.h"\
+	"..\..\..\pjlib\include\pj\compat\ctype.h"\
+	"..\..\..\pjlib\include\pj\compat\errno.h"\
+	"..\..\..\pjlib\include\pj\compat\high_precision.h"\
+	"..\..\..\pjlib\include\pj\compat\m_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_darwinos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux_kernel.h"\
+	"..\..\..\pjlib\include\pj\compat\os_palmos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_rtems.h"\
+	"..\..\..\pjlib\include\pj\compat\os_sunos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_symbian.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32_wince.h"\
+	"..\..\..\pjlib\include\pj\compat\setjmp.h"\
+	"..\..\..\pjlib\include\pj\compat\size_t.h"\
+	"..\..\..\pjlib\include\pj\compat\stdarg.h"\
+	"..\..\..\pjlib\include\pj\compat\string.h"\
+	"..\..\..\pjlib\include\pj\config.h"\
+	"..\..\..\pjlib\include\pj\config_site.h"\
+	"..\..\..\pjlib\include\pj\config_site_sample.h"\
+	"..\..\..\pjlib\include\pj\ctype.h"\
+	"..\..\..\pjlib\include\pj\errno.h"\
+	"..\..\..\pjlib\include\pj\except.h"\
+	"..\..\..\pjlib\include\pj\fifobuf.h"\
+	"..\..\..\pjlib\include\pj\file_access.h"\
+	"..\..\..\pjlib\include\pj\file_io.h"\
+	"..\..\..\pjlib\include\pj\guid.h"\
+	"..\..\..\pjlib\include\pj\hash.h"\
+	"..\..\..\pjlib\include\pj\ioqueue.h"\
+	"..\..\..\pjlib\include\pj\ip_helper.h"\
+	"..\..\..\pjlib\include\pj\list.h"\
+	"..\..\..\pjlib\include\pj\list_i.h"\
+	"..\..\..\pjlib\include\pj\lock.h"\
+	"..\..\..\pjlib\include\pj\log.h"\
+	"..\..\..\pjlib\include\pj\os.h"\
+	"..\..\..\pjlib\include\pj\pool.h"\
+	"..\..\..\pjlib\include\pj\pool_alt.h"\
+	"..\..\..\pjlib\include\pj\pool_buf.h"\
+	"..\..\..\pjlib\include\pj\pool_i.h"\
+	"..\..\..\pjlib\include\pj\rand.h"\
+	"..\..\..\pjlib\include\pj\rbtree.h"\
+	"..\..\..\pjlib\include\pj\sock.h"\
+	"..\..\..\pjlib\include\pj\sock_select.h"\
+	"..\..\..\pjlib\include\pj\string.h"\
+	"..\..\..\pjlib\include\pj\string_i.h"\
+	"..\..\..\pjlib\include\pj\timer.h"\
+	"..\..\..\pjlib\include\pj\types.h"\
+	"..\..\..\pjlib\include\pj\unicode.h"\
+	"..\..\..\pjlib\include\pjlib.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\gsm.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\ilbc.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\l16.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\speex.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\types.h"\
+	"..\..\..\pjmedia\include\pjmedia.h"\
+	"..\..\..\pjmedia\include\pjmedia\alaw_ulaw.h"\
+	"..\..\..\pjmedia\include\pjmedia\bidirectional.h"\
+	"..\..\..\pjmedia\include\pjmedia\clock.h"\
+	"..\..\..\pjmedia\include\pjmedia\codec.h"\
+	"..\..\..\pjmedia\include\pjmedia\conference.h"\
+	"..\..\..\pjmedia\include\pjmedia\config.h"\
+	"..\..\..\pjmedia\include\pjmedia\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\endpoint.h"\
+	"..\..\..\pjmedia\include\pjmedia\errno.h"\
+	"..\..\..\pjmedia\include\pjmedia\g711.h"\
+	"..\..\..\pjmedia\include\pjmedia\jbuf.h"\
+	"..\..\..\pjmedia\include\pjmedia\master_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\mem_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\null_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\plc.h"\
+	"..\..\..\pjmedia\include\pjmedia\port.h"\
+	"..\..\..\pjmedia\include\pjmedia\resample.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtcp.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp_neg.h"\
+	"..\..\..\pjmedia\include\pjmedia\session.h"\
+	"..\..\..\pjmedia\include\pjmedia\silencedet.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\splitcomb.h"\
+	"..\..\..\pjmedia\include\pjmedia\stream.h"\
+	"..\..\..\pjmedia\include\pjmedia\tonegen.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_ice.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_srtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_udp.h"\
+	"..\..\..\pjmedia\include\pjmedia\types.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_playlist.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\wave.h"\
+	"..\..\..\pjnath\include\pjnath.h"\
+	"..\..\..\pjnath\include\pjnath\config.h"\
+	"..\..\..\pjnath\include\pjnath\errno.h"\
+	"..\..\..\pjnath\include\pjnath\ice_session.h"\
+	"..\..\..\pjnath\include\pjnath\ice_strans.h"\
+	"..\..\..\pjnath\include\pjnath\nat_detect.h"\
+	"..\..\..\pjnath\include\pjnath\stun_auth.h"\
+	"..\..\..\pjnath\include\pjnath\stun_config.h"\
+	"..\..\..\pjnath\include\pjnath\stun_msg.h"\
+	"..\..\..\pjnath\include\pjnath\stun_session.h"\
+	"..\..\..\pjnath\include\pjnath\stun_transaction.h"\
+	"..\..\..\pjnath\include\pjnath\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\evsub.h"\
+	"..\..\..\pjsip\include\pjsip-simple\iscomposing.h"\
+	"..\..\..\pjsip\include\pjsip-simple\pidf.h"\
+	"..\..\..\pjsip\include\pjsip-simple\presence.h"\
+	"..\..\..\pjsip\include\pjsip-simple\publish.h"\
+	"..\..\..\pjsip\include\pjsip-simple\rpid.h"\
+	"..\..\..\pjsip\include\pjsip-simple\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\xpidf.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_100rel.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_inv.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_regc.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_replaces.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_xfer.h"\
+	"..\..\..\pjsip\include\pjsip.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_aka.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_autoconf.h"\
+	"..\..\..\pjsip\include\pjsip\sip_config.h"\
+	"..\..\..\pjsip\include\pjsip\sip_dialog.h"\
+	"..\..\..\pjsip\include\pjsip\sip_endpoint.h"\
+	"..\..\..\pjsip\include\pjsip\sip_errno.h"\
+	"..\..\..\pjsip\include\pjsip\sip_event.h"\
+	"..\..\..\pjsip\include\pjsip\sip_module.h"\
+	"..\..\..\pjsip\include\pjsip\sip_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_parser.h"\
+	"..\..\..\pjsip\include\pjsip\sip_resolve.h"\
+	"..\..\..\pjsip\include\pjsip\sip_tel_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transaction.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_loop.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tcp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tls.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_udp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_types.h"\
+	"..\..\..\pjsip\include\pjsip\sip_ua_layer.h"\
+	"..\..\..\pjsip\include\pjsip\sip_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_util.h"\
+	"..\..\..\pjsip\include\pjsip_simple.h"\
+	"..\..\..\pjsip\include\pjsip_ua.h"\
+	"..\..\..\pjsip\include\pjsua-lib\pjsua.h"\
+	".\PocketPJ.h"\
+	".\PocketPJDlg.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\PocketPJ.rc
+
+!IF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Release"
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Debug"
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Release"
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\PocketPJDlg.cpp
+
+!IF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Release"
+
+DEP_CPP_POCKET=\
+	".\PocketPJ.h"\
+	".\PocketPJDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Debug"
+
+DEP_CPP_POCKET=\
+	"..\..\..\pjlib-util\include\pjlib-util.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\base64.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\config.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\crc32.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\dns.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\errno.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\getopt.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\pcap.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_bitwise.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_uint.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\srv_resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\stun_simple.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\types.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\xml.h"\
+	"..\..\..\pjlib\include\pj\addr_resolv.h"\
+	"..\..\..\pjlib\include\pj\array.h"\
+	"..\..\..\pjlib\include\pj\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_armcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_codew.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcce.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_msvc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_mwcc.h"\
+	"..\..\..\pjlib\include\pj\compat\ctype.h"\
+	"..\..\..\pjlib\include\pj\compat\errno.h"\
+	"..\..\..\pjlib\include\pj\compat\high_precision.h"\
+	"..\..\..\pjlib\include\pj\compat\m_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_darwinos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux_kernel.h"\
+	"..\..\..\pjlib\include\pj\compat\os_palmos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_rtems.h"\
+	"..\..\..\pjlib\include\pj\compat\os_sunos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_symbian.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32_wince.h"\
+	"..\..\..\pjlib\include\pj\compat\setjmp.h"\
+	"..\..\..\pjlib\include\pj\compat\size_t.h"\
+	"..\..\..\pjlib\include\pj\compat\stdarg.h"\
+	"..\..\..\pjlib\include\pj\compat\string.h"\
+	"..\..\..\pjlib\include\pj\config.h"\
+	"..\..\..\pjlib\include\pj\config_site.h"\
+	"..\..\..\pjlib\include\pj\config_site_sample.h"\
+	"..\..\..\pjlib\include\pj\ctype.h"\
+	"..\..\..\pjlib\include\pj\errno.h"\
+	"..\..\..\pjlib\include\pj\except.h"\
+	"..\..\..\pjlib\include\pj\fifobuf.h"\
+	"..\..\..\pjlib\include\pj\file_access.h"\
+	"..\..\..\pjlib\include\pj\file_io.h"\
+	"..\..\..\pjlib\include\pj\guid.h"\
+	"..\..\..\pjlib\include\pj\hash.h"\
+	"..\..\..\pjlib\include\pj\ioqueue.h"\
+	"..\..\..\pjlib\include\pj\ip_helper.h"\
+	"..\..\..\pjlib\include\pj\list.h"\
+	"..\..\..\pjlib\include\pj\list_i.h"\
+	"..\..\..\pjlib\include\pj\lock.h"\
+	"..\..\..\pjlib\include\pj\log.h"\
+	"..\..\..\pjlib\include\pj\os.h"\
+	"..\..\..\pjlib\include\pj\pool.h"\
+	"..\..\..\pjlib\include\pj\pool_alt.h"\
+	"..\..\..\pjlib\include\pj\pool_buf.h"\
+	"..\..\..\pjlib\include\pj\pool_i.h"\
+	"..\..\..\pjlib\include\pj\rand.h"\
+	"..\..\..\pjlib\include\pj\rbtree.h"\
+	"..\..\..\pjlib\include\pj\sock.h"\
+	"..\..\..\pjlib\include\pj\sock_select.h"\
+	"..\..\..\pjlib\include\pj\string.h"\
+	"..\..\..\pjlib\include\pj\string_i.h"\
+	"..\..\..\pjlib\include\pj\timer.h"\
+	"..\..\..\pjlib\include\pj\types.h"\
+	"..\..\..\pjlib\include\pj\unicode.h"\
+	"..\..\..\pjlib\include\pjlib.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\gsm.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\ilbc.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\l16.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\speex.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\types.h"\
+	"..\..\..\pjmedia\include\pjmedia.h"\
+	"..\..\..\pjmedia\include\pjmedia\alaw_ulaw.h"\
+	"..\..\..\pjmedia\include\pjmedia\bidirectional.h"\
+	"..\..\..\pjmedia\include\pjmedia\clock.h"\
+	"..\..\..\pjmedia\include\pjmedia\codec.h"\
+	"..\..\..\pjmedia\include\pjmedia\conference.h"\
+	"..\..\..\pjmedia\include\pjmedia\config.h"\
+	"..\..\..\pjmedia\include\pjmedia\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\endpoint.h"\
+	"..\..\..\pjmedia\include\pjmedia\errno.h"\
+	"..\..\..\pjmedia\include\pjmedia\g711.h"\
+	"..\..\..\pjmedia\include\pjmedia\jbuf.h"\
+	"..\..\..\pjmedia\include\pjmedia\master_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\mem_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\null_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\plc.h"\
+	"..\..\..\pjmedia\include\pjmedia\port.h"\
+	"..\..\..\pjmedia\include\pjmedia\resample.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtcp.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp_neg.h"\
+	"..\..\..\pjmedia\include\pjmedia\session.h"\
+	"..\..\..\pjmedia\include\pjmedia\silencedet.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\splitcomb.h"\
+	"..\..\..\pjmedia\include\pjmedia\stream.h"\
+	"..\..\..\pjmedia\include\pjmedia\tonegen.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_ice.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_srtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_udp.h"\
+	"..\..\..\pjmedia\include\pjmedia\types.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_playlist.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\wave.h"\
+	"..\..\..\pjnath\include\pjnath.h"\
+	"..\..\..\pjnath\include\pjnath\config.h"\
+	"..\..\..\pjnath\include\pjnath\errno.h"\
+	"..\..\..\pjnath\include\pjnath\ice_session.h"\
+	"..\..\..\pjnath\include\pjnath\ice_strans.h"\
+	"..\..\..\pjnath\include\pjnath\nat_detect.h"\
+	"..\..\..\pjnath\include\pjnath\stun_auth.h"\
+	"..\..\..\pjnath\include\pjnath\stun_config.h"\
+	"..\..\..\pjnath\include\pjnath\stun_msg.h"\
+	"..\..\..\pjnath\include\pjnath\stun_session.h"\
+	"..\..\..\pjnath\include\pjnath\stun_transaction.h"\
+	"..\..\..\pjnath\include\pjnath\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\evsub.h"\
+	"..\..\..\pjsip\include\pjsip-simple\iscomposing.h"\
+	"..\..\..\pjsip\include\pjsip-simple\pidf.h"\
+	"..\..\..\pjsip\include\pjsip-simple\presence.h"\
+	"..\..\..\pjsip\include\pjsip-simple\publish.h"\
+	"..\..\..\pjsip\include\pjsip-simple\rpid.h"\
+	"..\..\..\pjsip\include\pjsip-simple\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\xpidf.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_100rel.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_inv.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_regc.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_replaces.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_xfer.h"\
+	"..\..\..\pjsip\include\pjsip.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_aka.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_autoconf.h"\
+	"..\..\..\pjsip\include\pjsip\sip_config.h"\
+	"..\..\..\pjsip\include\pjsip\sip_dialog.h"\
+	"..\..\..\pjsip\include\pjsip\sip_endpoint.h"\
+	"..\..\..\pjsip\include\pjsip\sip_errno.h"\
+	"..\..\..\pjsip\include\pjsip\sip_event.h"\
+	"..\..\..\pjsip\include\pjsip\sip_module.h"\
+	"..\..\..\pjsip\include\pjsip\sip_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_parser.h"\
+	"..\..\..\pjsip\include\pjsip\sip_resolve.h"\
+	"..\..\..\pjsip\include\pjsip\sip_tel_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transaction.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_loop.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tcp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tls.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_udp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_types.h"\
+	"..\..\..\pjsip\include\pjsip\sip_ua_layer.h"\
+	"..\..\..\pjsip\include\pjsip\sip_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_util.h"\
+	"..\..\..\pjsip\include\pjsip_simple.h"\
+	"..\..\..\pjsip\include\pjsip_ua.h"\
+	"..\..\..\pjsip\include\pjsua-lib\pjsua.h"\
+	".\PocketPJ.h"\
+	".\PocketPJDlg.h"\
+	".\PopUpWnd.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	{$(INCLUDE)}"ipexport.h"\
+	{$(INCLUDE)}"Iphlpapi.h"\
+	{$(INCLUDE)}"iptypes.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_POCKET=\
+	"..\..\..\pjlib-util\include\pjlib-util.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\base64.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\config.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\crc32.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\dns.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\errno.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\getopt.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\pcap.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_bitwise.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_uint.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\srv_resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\stun_simple.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\types.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\xml.h"\
+	"..\..\..\pjlib\include\pj\addr_resolv.h"\
+	"..\..\..\pjlib\include\pj\array.h"\
+	"..\..\..\pjlib\include\pj\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_armcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_codew.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcce.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_msvc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_mwcc.h"\
+	"..\..\..\pjlib\include\pj\compat\ctype.h"\
+	"..\..\..\pjlib\include\pj\compat\errno.h"\
+	"..\..\..\pjlib\include\pj\compat\high_precision.h"\
+	"..\..\..\pjlib\include\pj\compat\m_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_darwinos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux_kernel.h"\
+	"..\..\..\pjlib\include\pj\compat\os_palmos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_rtems.h"\
+	"..\..\..\pjlib\include\pj\compat\os_sunos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_symbian.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32_wince.h"\
+	"..\..\..\pjlib\include\pj\compat\setjmp.h"\
+	"..\..\..\pjlib\include\pj\compat\size_t.h"\
+	"..\..\..\pjlib\include\pj\compat\stdarg.h"\
+	"..\..\..\pjlib\include\pj\compat\string.h"\
+	"..\..\..\pjlib\include\pj\config.h"\
+	"..\..\..\pjlib\include\pj\config_site.h"\
+	"..\..\..\pjlib\include\pj\config_site_sample.h"\
+	"..\..\..\pjlib\include\pj\ctype.h"\
+	"..\..\..\pjlib\include\pj\errno.h"\
+	"..\..\..\pjlib\include\pj\except.h"\
+	"..\..\..\pjlib\include\pj\fifobuf.h"\
+	"..\..\..\pjlib\include\pj\file_access.h"\
+	"..\..\..\pjlib\include\pj\file_io.h"\
+	"..\..\..\pjlib\include\pj\guid.h"\
+	"..\..\..\pjlib\include\pj\hash.h"\
+	"..\..\..\pjlib\include\pj\ioqueue.h"\
+	"..\..\..\pjlib\include\pj\ip_helper.h"\
+	"..\..\..\pjlib\include\pj\list.h"\
+	"..\..\..\pjlib\include\pj\list_i.h"\
+	"..\..\..\pjlib\include\pj\lock.h"\
+	"..\..\..\pjlib\include\pj\log.h"\
+	"..\..\..\pjlib\include\pj\os.h"\
+	"..\..\..\pjlib\include\pj\pool.h"\
+	"..\..\..\pjlib\include\pj\pool_alt.h"\
+	"..\..\..\pjlib\include\pj\pool_buf.h"\
+	"..\..\..\pjlib\include\pj\pool_i.h"\
+	"..\..\..\pjlib\include\pj\rand.h"\
+	"..\..\..\pjlib\include\pj\rbtree.h"\
+	"..\..\..\pjlib\include\pj\sock.h"\
+	"..\..\..\pjlib\include\pj\sock_select.h"\
+	"..\..\..\pjlib\include\pj\string.h"\
+	"..\..\..\pjlib\include\pj\string_i.h"\
+	"..\..\..\pjlib\include\pj\timer.h"\
+	"..\..\..\pjlib\include\pj\types.h"\
+	"..\..\..\pjlib\include\pj\unicode.h"\
+	"..\..\..\pjlib\include\pjlib.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\gsm.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\ilbc.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\l16.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\speex.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\types.h"\
+	"..\..\..\pjmedia\include\pjmedia.h"\
+	"..\..\..\pjmedia\include\pjmedia\alaw_ulaw.h"\
+	"..\..\..\pjmedia\include\pjmedia\bidirectional.h"\
+	"..\..\..\pjmedia\include\pjmedia\clock.h"\
+	"..\..\..\pjmedia\include\pjmedia\codec.h"\
+	"..\..\..\pjmedia\include\pjmedia\conference.h"\
+	"..\..\..\pjmedia\include\pjmedia\config.h"\
+	"..\..\..\pjmedia\include\pjmedia\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\endpoint.h"\
+	"..\..\..\pjmedia\include\pjmedia\errno.h"\
+	"..\..\..\pjmedia\include\pjmedia\g711.h"\
+	"..\..\..\pjmedia\include\pjmedia\jbuf.h"\
+	"..\..\..\pjmedia\include\pjmedia\master_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\mem_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\null_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\plc.h"\
+	"..\..\..\pjmedia\include\pjmedia\port.h"\
+	"..\..\..\pjmedia\include\pjmedia\resample.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtcp.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp_neg.h"\
+	"..\..\..\pjmedia\include\pjmedia\session.h"\
+	"..\..\..\pjmedia\include\pjmedia\silencedet.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\splitcomb.h"\
+	"..\..\..\pjmedia\include\pjmedia\stream.h"\
+	"..\..\..\pjmedia\include\pjmedia\tonegen.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_ice.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_srtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_udp.h"\
+	"..\..\..\pjmedia\include\pjmedia\types.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_playlist.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\wave.h"\
+	"..\..\..\pjnath\include\pjnath.h"\
+	"..\..\..\pjnath\include\pjnath\config.h"\
+	"..\..\..\pjnath\include\pjnath\errno.h"\
+	"..\..\..\pjnath\include\pjnath\ice_session.h"\
+	"..\..\..\pjnath\include\pjnath\ice_strans.h"\
+	"..\..\..\pjnath\include\pjnath\nat_detect.h"\
+	"..\..\..\pjnath\include\pjnath\stun_auth.h"\
+	"..\..\..\pjnath\include\pjnath\stun_config.h"\
+	"..\..\..\pjnath\include\pjnath\stun_msg.h"\
+	"..\..\..\pjnath\include\pjnath\stun_session.h"\
+	"..\..\..\pjnath\include\pjnath\stun_transaction.h"\
+	"..\..\..\pjnath\include\pjnath\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\evsub.h"\
+	"..\..\..\pjsip\include\pjsip-simple\iscomposing.h"\
+	"..\..\..\pjsip\include\pjsip-simple\pidf.h"\
+	"..\..\..\pjsip\include\pjsip-simple\presence.h"\
+	"..\..\..\pjsip\include\pjsip-simple\publish.h"\
+	"..\..\..\pjsip\include\pjsip-simple\rpid.h"\
+	"..\..\..\pjsip\include\pjsip-simple\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\xpidf.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_100rel.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_inv.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_regc.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_replaces.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_xfer.h"\
+	"..\..\..\pjsip\include\pjsip.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_aka.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_autoconf.h"\
+	"..\..\..\pjsip\include\pjsip\sip_config.h"\
+	"..\..\..\pjsip\include\pjsip\sip_dialog.h"\
+	"..\..\..\pjsip\include\pjsip\sip_endpoint.h"\
+	"..\..\..\pjsip\include\pjsip\sip_errno.h"\
+	"..\..\..\pjsip\include\pjsip\sip_event.h"\
+	"..\..\..\pjsip\include\pjsip\sip_module.h"\
+	"..\..\..\pjsip\include\pjsip\sip_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_parser.h"\
+	"..\..\..\pjsip\include\pjsip\sip_resolve.h"\
+	"..\..\..\pjsip\include\pjsip\sip_tel_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transaction.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_loop.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tcp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tls.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_udp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_types.h"\
+	"..\..\..\pjsip\include\pjsip\sip_ua_layer.h"\
+	"..\..\..\pjsip\include\pjsip\sip_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_util.h"\
+	"..\..\..\pjsip\include\pjsip_simple.h"\
+	"..\..\..\pjsip\include\pjsip_ua.h"\
+	"..\..\..\pjsip\include\pjsua-lib\pjsua.h"\
+	".\PocketPJ.h"\
+	".\PocketPJDlg.h"\
+	".\PopUpWnd.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	{$(INCLUDE)}"ipexport.h"\
+	{$(INCLUDE)}"Iphlpapi.h"\
+	{$(INCLUDE)}"iptypes.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_POCKET=\
+	"..\..\..\pjlib-util\include\pjlib-util.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\base64.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\config.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\crc32.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\dns.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\errno.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\getopt.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\pcap.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_bitwise.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_uint.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\srv_resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\stun_simple.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\types.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\xml.h"\
+	"..\..\..\pjlib\include\pj\addr_resolv.h"\
+	"..\..\..\pjlib\include\pj\array.h"\
+	"..\..\..\pjlib\include\pj\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_armcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_codew.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcce.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_msvc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_mwcc.h"\
+	"..\..\..\pjlib\include\pj\compat\ctype.h"\
+	"..\..\..\pjlib\include\pj\compat\errno.h"\
+	"..\..\..\pjlib\include\pj\compat\high_precision.h"\
+	"..\..\..\pjlib\include\pj\compat\m_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_darwinos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux_kernel.h"\
+	"..\..\..\pjlib\include\pj\compat\os_palmos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_rtems.h"\
+	"..\..\..\pjlib\include\pj\compat\os_sunos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_symbian.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32_wince.h"\
+	"..\..\..\pjlib\include\pj\compat\setjmp.h"\
+	"..\..\..\pjlib\include\pj\compat\size_t.h"\
+	"..\..\..\pjlib\include\pj\compat\stdarg.h"\
+	"..\..\..\pjlib\include\pj\compat\string.h"\
+	"..\..\..\pjlib\include\pj\config.h"\
+	"..\..\..\pjlib\include\pj\config_site.h"\
+	"..\..\..\pjlib\include\pj\config_site_sample.h"\
+	"..\..\..\pjlib\include\pj\ctype.h"\
+	"..\..\..\pjlib\include\pj\errno.h"\
+	"..\..\..\pjlib\include\pj\except.h"\
+	"..\..\..\pjlib\include\pj\fifobuf.h"\
+	"..\..\..\pjlib\include\pj\file_access.h"\
+	"..\..\..\pjlib\include\pj\file_io.h"\
+	"..\..\..\pjlib\include\pj\guid.h"\
+	"..\..\..\pjlib\include\pj\hash.h"\
+	"..\..\..\pjlib\include\pj\ioqueue.h"\
+	"..\..\..\pjlib\include\pj\ip_helper.h"\
+	"..\..\..\pjlib\include\pj\list.h"\
+	"..\..\..\pjlib\include\pj\list_i.h"\
+	"..\..\..\pjlib\include\pj\lock.h"\
+	"..\..\..\pjlib\include\pj\log.h"\
+	"..\..\..\pjlib\include\pj\os.h"\
+	"..\..\..\pjlib\include\pj\pool.h"\
+	"..\..\..\pjlib\include\pj\pool_alt.h"\
+	"..\..\..\pjlib\include\pj\pool_buf.h"\
+	"..\..\..\pjlib\include\pj\pool_i.h"\
+	"..\..\..\pjlib\include\pj\rand.h"\
+	"..\..\..\pjlib\include\pj\rbtree.h"\
+	"..\..\..\pjlib\include\pj\sock.h"\
+	"..\..\..\pjlib\include\pj\sock_select.h"\
+	"..\..\..\pjlib\include\pj\string.h"\
+	"..\..\..\pjlib\include\pj\string_i.h"\
+	"..\..\..\pjlib\include\pj\timer.h"\
+	"..\..\..\pjlib\include\pj\types.h"\
+	"..\..\..\pjlib\include\pj\unicode.h"\
+	"..\..\..\pjlib\include\pjlib.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\gsm.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\ilbc.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\l16.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\speex.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\types.h"\
+	"..\..\..\pjmedia\include\pjmedia.h"\
+	"..\..\..\pjmedia\include\pjmedia\alaw_ulaw.h"\
+	"..\..\..\pjmedia\include\pjmedia\bidirectional.h"\
+	"..\..\..\pjmedia\include\pjmedia\clock.h"\
+	"..\..\..\pjmedia\include\pjmedia\codec.h"\
+	"..\..\..\pjmedia\include\pjmedia\conference.h"\
+	"..\..\..\pjmedia\include\pjmedia\config.h"\
+	"..\..\..\pjmedia\include\pjmedia\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\endpoint.h"\
+	"..\..\..\pjmedia\include\pjmedia\errno.h"\
+	"..\..\..\pjmedia\include\pjmedia\g711.h"\
+	"..\..\..\pjmedia\include\pjmedia\jbuf.h"\
+	"..\..\..\pjmedia\include\pjmedia\master_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\mem_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\null_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\plc.h"\
+	"..\..\..\pjmedia\include\pjmedia\port.h"\
+	"..\..\..\pjmedia\include\pjmedia\resample.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtcp.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp_neg.h"\
+	"..\..\..\pjmedia\include\pjmedia\session.h"\
+	"..\..\..\pjmedia\include\pjmedia\silencedet.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\splitcomb.h"\
+	"..\..\..\pjmedia\include\pjmedia\stream.h"\
+	"..\..\..\pjmedia\include\pjmedia\tonegen.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_ice.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_srtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_udp.h"\
+	"..\..\..\pjmedia\include\pjmedia\types.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_playlist.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\wave.h"\
+	"..\..\..\pjnath\include\pjnath.h"\
+	"..\..\..\pjnath\include\pjnath\config.h"\
+	"..\..\..\pjnath\include\pjnath\errno.h"\
+	"..\..\..\pjnath\include\pjnath\ice_session.h"\
+	"..\..\..\pjnath\include\pjnath\ice_strans.h"\
+	"..\..\..\pjnath\include\pjnath\nat_detect.h"\
+	"..\..\..\pjnath\include\pjnath\stun_auth.h"\
+	"..\..\..\pjnath\include\pjnath\stun_config.h"\
+	"..\..\..\pjnath\include\pjnath\stun_msg.h"\
+	"..\..\..\pjnath\include\pjnath\stun_session.h"\
+	"..\..\..\pjnath\include\pjnath\stun_transaction.h"\
+	"..\..\..\pjnath\include\pjnath\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\evsub.h"\
+	"..\..\..\pjsip\include\pjsip-simple\iscomposing.h"\
+	"..\..\..\pjsip\include\pjsip-simple\pidf.h"\
+	"..\..\..\pjsip\include\pjsip-simple\presence.h"\
+	"..\..\..\pjsip\include\pjsip-simple\publish.h"\
+	"..\..\..\pjsip\include\pjsip-simple\rpid.h"\
+	"..\..\..\pjsip\include\pjsip-simple\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\xpidf.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_100rel.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_inv.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_regc.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_replaces.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_xfer.h"\
+	"..\..\..\pjsip\include\pjsip.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_aka.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_autoconf.h"\
+	"..\..\..\pjsip\include\pjsip\sip_config.h"\
+	"..\..\..\pjsip\include\pjsip\sip_dialog.h"\
+	"..\..\..\pjsip\include\pjsip\sip_endpoint.h"\
+	"..\..\..\pjsip\include\pjsip\sip_errno.h"\
+	"..\..\..\pjsip\include\pjsip\sip_event.h"\
+	"..\..\..\pjsip\include\pjsip\sip_module.h"\
+	"..\..\..\pjsip\include\pjsip\sip_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_parser.h"\
+	"..\..\..\pjsip\include\pjsip\sip_resolve.h"\
+	"..\..\..\pjsip\include\pjsip\sip_tel_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transaction.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_loop.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tcp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tls.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_udp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_types.h"\
+	"..\..\..\pjsip\include\pjsip\sip_ua_layer.h"\
+	"..\..\..\pjsip\include\pjsip\sip_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_util.h"\
+	"..\..\..\pjsip\include\pjsip_simple.h"\
+	"..\..\..\pjsip\include\pjsip_ua.h"\
+	"..\..\..\pjsip\include\pjsua-lib\pjsua.h"\
+	".\PocketPJ.h"\
+	".\PocketPJDlg.h"\
+	".\PopUpDlg.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\PopUpWnd.cpp
+
+!IF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Release"
+
+DEP_CPP_POPUP=\
+	".\PopUpWnd.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Debug"
+
+DEP_CPP_POPUP=\
+	"..\..\..\pjlib-util\include\pjlib-util.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\base64.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\config.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\crc32.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\dns.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\errno.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\getopt.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\pcap.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_bitwise.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_uint.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\srv_resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\stun_simple.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\types.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\xml.h"\
+	"..\..\..\pjlib\include\pj\addr_resolv.h"\
+	"..\..\..\pjlib\include\pj\array.h"\
+	"..\..\..\pjlib\include\pj\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_armcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_codew.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcce.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_msvc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_mwcc.h"\
+	"..\..\..\pjlib\include\pj\compat\ctype.h"\
+	"..\..\..\pjlib\include\pj\compat\errno.h"\
+	"..\..\..\pjlib\include\pj\compat\high_precision.h"\
+	"..\..\..\pjlib\include\pj\compat\m_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_darwinos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux_kernel.h"\
+	"..\..\..\pjlib\include\pj\compat\os_palmos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_rtems.h"\
+	"..\..\..\pjlib\include\pj\compat\os_sunos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_symbian.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32_wince.h"\
+	"..\..\..\pjlib\include\pj\compat\setjmp.h"\
+	"..\..\..\pjlib\include\pj\compat\size_t.h"\
+	"..\..\..\pjlib\include\pj\compat\stdarg.h"\
+	"..\..\..\pjlib\include\pj\compat\string.h"\
+	"..\..\..\pjlib\include\pj\config.h"\
+	"..\..\..\pjlib\include\pj\config_site.h"\
+	"..\..\..\pjlib\include\pj\config_site_sample.h"\
+	"..\..\..\pjlib\include\pj\ctype.h"\
+	"..\..\..\pjlib\include\pj\errno.h"\
+	"..\..\..\pjlib\include\pj\except.h"\
+	"..\..\..\pjlib\include\pj\fifobuf.h"\
+	"..\..\..\pjlib\include\pj\file_access.h"\
+	"..\..\..\pjlib\include\pj\file_io.h"\
+	"..\..\..\pjlib\include\pj\guid.h"\
+	"..\..\..\pjlib\include\pj\hash.h"\
+	"..\..\..\pjlib\include\pj\ioqueue.h"\
+	"..\..\..\pjlib\include\pj\ip_helper.h"\
+	"..\..\..\pjlib\include\pj\list.h"\
+	"..\..\..\pjlib\include\pj\list_i.h"\
+	"..\..\..\pjlib\include\pj\lock.h"\
+	"..\..\..\pjlib\include\pj\log.h"\
+	"..\..\..\pjlib\include\pj\os.h"\
+	"..\..\..\pjlib\include\pj\pool.h"\
+	"..\..\..\pjlib\include\pj\pool_alt.h"\
+	"..\..\..\pjlib\include\pj\pool_buf.h"\
+	"..\..\..\pjlib\include\pj\pool_i.h"\
+	"..\..\..\pjlib\include\pj\rand.h"\
+	"..\..\..\pjlib\include\pj\rbtree.h"\
+	"..\..\..\pjlib\include\pj\sock.h"\
+	"..\..\..\pjlib\include\pj\sock_select.h"\
+	"..\..\..\pjlib\include\pj\string.h"\
+	"..\..\..\pjlib\include\pj\string_i.h"\
+	"..\..\..\pjlib\include\pj\timer.h"\
+	"..\..\..\pjlib\include\pj\types.h"\
+	"..\..\..\pjlib\include\pj\unicode.h"\
+	"..\..\..\pjlib\include\pjlib.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\gsm.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\ilbc.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\l16.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\speex.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\types.h"\
+	"..\..\..\pjmedia\include\pjmedia.h"\
+	"..\..\..\pjmedia\include\pjmedia\alaw_ulaw.h"\
+	"..\..\..\pjmedia\include\pjmedia\bidirectional.h"\
+	"..\..\..\pjmedia\include\pjmedia\clock.h"\
+	"..\..\..\pjmedia\include\pjmedia\codec.h"\
+	"..\..\..\pjmedia\include\pjmedia\conference.h"\
+	"..\..\..\pjmedia\include\pjmedia\config.h"\
+	"..\..\..\pjmedia\include\pjmedia\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\endpoint.h"\
+	"..\..\..\pjmedia\include\pjmedia\errno.h"\
+	"..\..\..\pjmedia\include\pjmedia\g711.h"\
+	"..\..\..\pjmedia\include\pjmedia\jbuf.h"\
+	"..\..\..\pjmedia\include\pjmedia\master_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\mem_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\null_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\plc.h"\
+	"..\..\..\pjmedia\include\pjmedia\port.h"\
+	"..\..\..\pjmedia\include\pjmedia\resample.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtcp.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp_neg.h"\
+	"..\..\..\pjmedia\include\pjmedia\session.h"\
+	"..\..\..\pjmedia\include\pjmedia\silencedet.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\splitcomb.h"\
+	"..\..\..\pjmedia\include\pjmedia\stream.h"\
+	"..\..\..\pjmedia\include\pjmedia\tonegen.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_ice.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_srtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_udp.h"\
+	"..\..\..\pjmedia\include\pjmedia\types.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_playlist.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\wave.h"\
+	"..\..\..\pjnath\include\pjnath.h"\
+	"..\..\..\pjnath\include\pjnath\config.h"\
+	"..\..\..\pjnath\include\pjnath\errno.h"\
+	"..\..\..\pjnath\include\pjnath\ice_session.h"\
+	"..\..\..\pjnath\include\pjnath\ice_strans.h"\
+	"..\..\..\pjnath\include\pjnath\nat_detect.h"\
+	"..\..\..\pjnath\include\pjnath\stun_auth.h"\
+	"..\..\..\pjnath\include\pjnath\stun_config.h"\
+	"..\..\..\pjnath\include\pjnath\stun_msg.h"\
+	"..\..\..\pjnath\include\pjnath\stun_session.h"\
+	"..\..\..\pjnath\include\pjnath\stun_transaction.h"\
+	"..\..\..\pjnath\include\pjnath\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\evsub.h"\
+	"..\..\..\pjsip\include\pjsip-simple\iscomposing.h"\
+	"..\..\..\pjsip\include\pjsip-simple\pidf.h"\
+	"..\..\..\pjsip\include\pjsip-simple\presence.h"\
+	"..\..\..\pjsip\include\pjsip-simple\publish.h"\
+	"..\..\..\pjsip\include\pjsip-simple\rpid.h"\
+	"..\..\..\pjsip\include\pjsip-simple\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\xpidf.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_100rel.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_inv.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_regc.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_replaces.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_xfer.h"\
+	"..\..\..\pjsip\include\pjsip.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_aka.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_autoconf.h"\
+	"..\..\..\pjsip\include\pjsip\sip_config.h"\
+	"..\..\..\pjsip\include\pjsip\sip_dialog.h"\
+	"..\..\..\pjsip\include\pjsip\sip_endpoint.h"\
+	"..\..\..\pjsip\include\pjsip\sip_errno.h"\
+	"..\..\..\pjsip\include\pjsip\sip_event.h"\
+	"..\..\..\pjsip\include\pjsip\sip_module.h"\
+	"..\..\..\pjsip\include\pjsip\sip_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_parser.h"\
+	"..\..\..\pjsip\include\pjsip\sip_resolve.h"\
+	"..\..\..\pjsip\include\pjsip\sip_tel_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transaction.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_loop.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tcp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tls.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_udp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_types.h"\
+	"..\..\..\pjsip\include\pjsip\sip_ua_layer.h"\
+	"..\..\..\pjsip\include\pjsip\sip_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_util.h"\
+	"..\..\..\pjsip\include\pjsip_simple.h"\
+	"..\..\..\pjsip\include\pjsip_ua.h"\
+	"..\..\..\pjsip\include\pjsua-lib\pjsua.h"\
+	".\PocketPJDlg.h"\
+	".\PopUpWnd.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_POPUP=\
+	"..\..\..\pjlib-util\include\pjlib-util.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\base64.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\config.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\crc32.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\dns.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\errno.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\getopt.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\hmac_sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\md5.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\pcap.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_bitwise.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\scanner_cis_uint.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\sha1.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\srv_resolver.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\stun_simple.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\types.h"\
+	"..\..\..\pjlib-util\include\pjlib-util\xml.h"\
+	"..\..\..\pjlib\include\pj\addr_resolv.h"\
+	"..\..\..\pjlib\include\pj\array.h"\
+	"..\..\..\pjlib\include\pj\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\assert.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_armcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_codew.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_gcce.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_msvc.h"\
+	"..\..\..\pjlib\include\pj\compat\cc_mwcc.h"\
+	"..\..\..\pjlib\include\pj\compat\ctype.h"\
+	"..\..\..\pjlib\include\pj\compat\errno.h"\
+	"..\..\..\pjlib\include\pj\compat\high_precision.h"\
+	"..\..\..\pjlib\include\pj\compat\m_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_auto.h"\
+	"..\..\..\pjlib\include\pj\compat\os_darwinos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux.h"\
+	"..\..\..\pjlib\include\pj\compat\os_linux_kernel.h"\
+	"..\..\..\pjlib\include\pj\compat\os_palmos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_rtems.h"\
+	"..\..\..\pjlib\include\pj\compat\os_sunos.h"\
+	"..\..\..\pjlib\include\pj\compat\os_symbian.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32.h"\
+	"..\..\..\pjlib\include\pj\compat\os_win32_wince.h"\
+	"..\..\..\pjlib\include\pj\compat\setjmp.h"\
+	"..\..\..\pjlib\include\pj\compat\size_t.h"\
+	"..\..\..\pjlib\include\pj\compat\stdarg.h"\
+	"..\..\..\pjlib\include\pj\compat\string.h"\
+	"..\..\..\pjlib\include\pj\config.h"\
+	"..\..\..\pjlib\include\pj\config_site.h"\
+	"..\..\..\pjlib\include\pj\config_site_sample.h"\
+	"..\..\..\pjlib\include\pj\ctype.h"\
+	"..\..\..\pjlib\include\pj\errno.h"\
+	"..\..\..\pjlib\include\pj\except.h"\
+	"..\..\..\pjlib\include\pj\fifobuf.h"\
+	"..\..\..\pjlib\include\pj\file_access.h"\
+	"..\..\..\pjlib\include\pj\file_io.h"\
+	"..\..\..\pjlib\include\pj\guid.h"\
+	"..\..\..\pjlib\include\pj\hash.h"\
+	"..\..\..\pjlib\include\pj\ioqueue.h"\
+	"..\..\..\pjlib\include\pj\ip_helper.h"\
+	"..\..\..\pjlib\include\pj\list.h"\
+	"..\..\..\pjlib\include\pj\list_i.h"\
+	"..\..\..\pjlib\include\pj\lock.h"\
+	"..\..\..\pjlib\include\pj\log.h"\
+	"..\..\..\pjlib\include\pj\os.h"\
+	"..\..\..\pjlib\include\pj\pool.h"\
+	"..\..\..\pjlib\include\pj\pool_alt.h"\
+	"..\..\..\pjlib\include\pj\pool_buf.h"\
+	"..\..\..\pjlib\include\pj\pool_i.h"\
+	"..\..\..\pjlib\include\pj\rand.h"\
+	"..\..\..\pjlib\include\pj\rbtree.h"\
+	"..\..\..\pjlib\include\pj\sock.h"\
+	"..\..\..\pjlib\include\pj\sock_select.h"\
+	"..\..\..\pjlib\include\pj\string.h"\
+	"..\..\..\pjlib\include\pj\string_i.h"\
+	"..\..\..\pjlib\include\pj\timer.h"\
+	"..\..\..\pjlib\include\pj\types.h"\
+	"..\..\..\pjlib\include\pj\unicode.h"\
+	"..\..\..\pjlib\include\pjlib.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\gsm.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\ilbc.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\l16.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\speex.h"\
+	"..\..\..\pjmedia\include\pjmedia-codec\types.h"\
+	"..\..\..\pjmedia\include\pjmedia.h"\
+	"..\..\..\pjmedia\include\pjmedia\alaw_ulaw.h"\
+	"..\..\..\pjmedia\include\pjmedia\bidirectional.h"\
+	"..\..\..\pjmedia\include\pjmedia\clock.h"\
+	"..\..\..\pjmedia\include\pjmedia\codec.h"\
+	"..\..\..\pjmedia\include\pjmedia\conference.h"\
+	"..\..\..\pjmedia\include\pjmedia\config.h"\
+	"..\..\..\pjmedia\include\pjmedia\config_auto.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo.h"\
+	"..\..\..\pjmedia\include\pjmedia\echo_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\endpoint.h"\
+	"..\..\..\pjmedia\include\pjmedia\errno.h"\
+	"..\..\..\pjmedia\include\pjmedia\g711.h"\
+	"..\..\..\pjmedia\include\pjmedia\jbuf.h"\
+	"..\..\..\pjmedia\include\pjmedia\master_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\mem_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\null_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\plc.h"\
+	"..\..\..\pjmedia\include\pjmedia\port.h"\
+	"..\..\..\pjmedia\include\pjmedia\resample.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtcp.h"\
+	"..\..\..\pjmedia\include\pjmedia\rtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp.h"\
+	"..\..\..\pjmedia\include\pjmedia\sdp_neg.h"\
+	"..\..\..\pjmedia\include\pjmedia\session.h"\
+	"..\..\..\pjmedia\include\pjmedia\silencedet.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound.h"\
+	"..\..\..\pjmedia\include\pjmedia\sound_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\splitcomb.h"\
+	"..\..\..\pjmedia\include\pjmedia\stream.h"\
+	"..\..\..\pjmedia\include\pjmedia\tonegen.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_ice.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_srtp.h"\
+	"..\..\..\pjmedia\include\pjmedia\transport_udp.h"\
+	"..\..\..\pjmedia\include\pjmedia\types.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_playlist.h"\
+	"..\..\..\pjmedia\include\pjmedia\wav_port.h"\
+	"..\..\..\pjmedia\include\pjmedia\wave.h"\
+	"..\..\..\pjnath\include\pjnath.h"\
+	"..\..\..\pjnath\include\pjnath\config.h"\
+	"..\..\..\pjnath\include\pjnath\errno.h"\
+	"..\..\..\pjnath\include\pjnath\ice_session.h"\
+	"..\..\..\pjnath\include\pjnath\ice_strans.h"\
+	"..\..\..\pjnath\include\pjnath\nat_detect.h"\
+	"..\..\..\pjnath\include\pjnath\stun_auth.h"\
+	"..\..\..\pjnath\include\pjnath\stun_config.h"\
+	"..\..\..\pjnath\include\pjnath\stun_msg.h"\
+	"..\..\..\pjnath\include\pjnath\stun_session.h"\
+	"..\..\..\pjnath\include\pjnath\stun_transaction.h"\
+	"..\..\..\pjnath\include\pjnath\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\evsub.h"\
+	"..\..\..\pjsip\include\pjsip-simple\iscomposing.h"\
+	"..\..\..\pjsip\include\pjsip-simple\pidf.h"\
+	"..\..\..\pjsip\include\pjsip-simple\presence.h"\
+	"..\..\..\pjsip\include\pjsip-simple\publish.h"\
+	"..\..\..\pjsip\include\pjsip-simple\rpid.h"\
+	"..\..\..\pjsip\include\pjsip-simple\types.h"\
+	"..\..\..\pjsip\include\pjsip-simple\xpidf.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_100rel.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_inv.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_regc.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_replaces.h"\
+	"..\..\..\pjsip\include\pjsip-ua\sip_xfer.h"\
+	"..\..\..\pjsip\include\pjsip.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_aka.h"\
+	"..\..\..\pjsip\include\pjsip\sip_auth_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_autoconf.h"\
+	"..\..\..\pjsip\include\pjsip\sip_config.h"\
+	"..\..\..\pjsip\include\pjsip\sip_dialog.h"\
+	"..\..\..\pjsip\include\pjsip\sip_endpoint.h"\
+	"..\..\..\pjsip\include\pjsip\sip_errno.h"\
+	"..\..\..\pjsip\include\pjsip\sip_event.h"\
+	"..\..\..\pjsip\include\pjsip\sip_module.h"\
+	"..\..\..\pjsip\include\pjsip\sip_msg.h"\
+	"..\..\..\pjsip\include\pjsip\sip_parser.h"\
+	"..\..\..\pjsip\include\pjsip\sip_resolve.h"\
+	"..\..\..\pjsip\include\pjsip\sip_tel_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transaction.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_loop.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tcp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_tls.h"\
+	"..\..\..\pjsip\include\pjsip\sip_transport_udp.h"\
+	"..\..\..\pjsip\include\pjsip\sip_types.h"\
+	"..\..\..\pjsip\include\pjsip\sip_ua_layer.h"\
+	"..\..\..\pjsip\include\pjsip\sip_uri.h"\
+	"..\..\..\pjsip\include\pjsip\sip_util.h"\
+	"..\..\..\pjsip\include\pjsip_simple.h"\
+	"..\..\..\pjsip\include\pjsip_ua.h"\
+	"..\..\..\pjsip\include\pjsua-lib\pjsua.h"\
+	".\PocketPJDlg.h"\
+	".\PopUpWnd.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_POPUP=\
+	".\PopUpWnd.h"\
+	".\StdAfx.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\SettingsDlg.cpp
+
+!IF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Release"
+
+DEP_CPP_SETTI=\
+	".\PocketPJ.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Debug"
+
+DEP_CPP_SETTI=\
+	".\PocketPJ.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_SETTI=\
+	".\PocketPJ.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_SETTI=\
+	".\PocketPJ.h"\
+	".\SettingsDlg.h"\
+	".\StdAfx.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\StdAfx.cpp
+
+!IF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Release"
+
+DEP_CPP_STDAF=\
+	".\StdAfx.h"\
+	
+# ADD CPP /Yc"stdafx.h"
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE emulator) Debug"
+
+DEP_CPP_STDAF=\
+	".\StdAfx.h"\
+	
+# ADD CPP /Yc"stdafx.h"
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_STDAF=\
+	".\StdAfx.h"\
+	
+# ADD CPP /Yc"stdafx.h"
+
+!ELSEIF  "$(CFG)" == "PocketPJ - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_STDAF=\
+	".\StdAfx.h"\
+	
+# ADD CPP /Yc"stdafx.h"
+
+!ENDIF 
+
+# End Source File
+# End Group
+# Begin Group "Header Files"
+
+# PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\newres.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\PocketPJ.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\PocketPJDlg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\PopUpWnd.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\SettingsDlg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\StdAfx.h
+# End Source File
+# End Group
+# Begin Group "Resource Files"
+
+# PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# Begin Source File
+
+SOURCE=.\res\action.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\blank.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\invisibl.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\invisibl.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\offline.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\offline.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\online.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\online.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\PocketPJ.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\PocketPJ.rc2
+# PROP Exclude_From_Scan -1
+# PROP BASE Exclude_From_Build 1
+# PROP Exclude_From_Build 1
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=.\ReadMe.txt
+# End Source File
+# End Target
+# End Project

@@ -37,6 +37,9 @@ static const struct model_s model_list[] = {
 	{ "RT-AC55U",	MODEL_RTAC55U	},
 	{ "RT-AC55UHP",	MODEL_RTAC55UHP	},
 	{ "4G-AC55U",	MODEL_RT4GAC55U	},
+	{ "PL-N12",	MODEL_PLN12	},
+	{ "PL-AC56",	MODEL_PLAC56	},
+	{ "PL-AC66U",	MODEL_PLAC66U	},
 #else
 	{ "RT-N66U",	MODEL_RTN66U	},
 	{ "RT-AC56S",	MODEL_RTAC56S	},
@@ -72,6 +75,8 @@ static const struct model_s model_list[] = {
 	{ "RT-N10D1",	MODEL_RTN10D1	},
 	{ "RT-N10PV2",	MODEL_RTN10PV2	},
 	{ "DSL-AC68U",	MODEL_DSLAC68U	},
+	{ "RT-AC1200G", MODEL_RTAC1200G	},
+	{ "RT-AC1200G+", MODEL_RTAC1200GP},
 #endif	/* !RTCONFIG_RALINK */
 	{ NULL, 0 },
 };

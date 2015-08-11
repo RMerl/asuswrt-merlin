@@ -1,0 +1,99 @@
+How to get started:
+
+   Edit the Makefile.
+
+	You should configure a few machine-dependencies and what
+	compiler you want to use.
+
+  	The code works both with ANSI and K&R-C.  Use
+	-DNeedFunctionPrototypes to compile with, or
+	-UNeedFunctionPrototypes to compile without, function
+	prototypes in the header files.
+ 
+   Make addtst
+
+	The "add" program that will be compiled and run checks whether
+	the basic math functions of the gsm library work with your
+	compiler.  If it prints anything to stderr, complain (to us).
+
+   Edit inc/config.h.
+
+   Make
+
+   	Local versions of the gsm library and the "compress"-like filters
+	toast, untoast and tcat will be generated.
+
+   	If the compilation aborts because of a missing function,
+	declaration, or header file, see if there's something in
+	inc/config.h to work around it.  If not, complain.
+
+   Try it
+
+	Grab an audio file from somewhere (raw u-law or Sun .au is fine, 
+    	linear 16-bit in host byte order will do), copy it, toast it,
+	untoast it, and listen to the result.
+    
+	The GSM-encoded and -decoded audio should have the quality
+	of a good phone line.  If the resulting audio is noisier than
+	your original, or if you hear compression artifacts, complain;
+	that's a bug in our software, not a bug in the GSM encoding
+	standard itself.
+
+Installation
+
+   You can install the gsm library interface, or the toast binaries,
+   or both.
+
+   Edit the Makefile
+	
+	Fill in the directories where you want to install the
+	library, header files, manual pages, and binaries.
+
+	Turn off the installation of one half of the distribution
+	(i.e., gsm library or toast binaries) by not setting the
+	corresponding directory root Makefile macro.
+
+   make install
+
+	will install the programs "toast" with two links named
+	"tcat" and "untoast", and the gsm library "libgsm.a" with
+	a "gsm.h" header file, and their respective manual pages.
+
+
+Optimizing
+
+   This code was developed on a machine without an integer
+   multiplication instruction, where we obtained the fastest result by
+   replacing some of the integer multiplications with floating point
+   multiplications.
+
+   If your machine does multiply integers fast enough,
+   leave USE_FLOAT_MUL undefined.  The results should be the
+   same in both cases.
+
+   On machines with fast floating point arithmetic, defining
+   both USE_FLOAT_MUL and FAST makes a run-time library
+   option available that will (in a few crucial places) use
+   ``native'' floating point operations rather than the bit-by-bit
+   defined ones of the GSM standard.  If you use this fast
+   option, the outcome will not be bitwise identical to the
+   results prescribed by the standard, but it is compatible with
+   the standard encoding, and a user is unlikely to notice a
+   difference.
+
+
+Bug Reports
+
+   Please direct bug reports, questions, and comments to
+   jutta@cs.tu-berlin.de and cabo@informatik.uni-bremen.de.
+
+
+Good luck,
+
+   Jutta Degener,
+   Carsten Bormann
+
+--
+Copyright 1992, 1993, 1994, by Jutta Degener and Carsten Bormann,
+Technische Universitaet Berlin.  See the accompanying file "COPYRIGHT"
+for details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.

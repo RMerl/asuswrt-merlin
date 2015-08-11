@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysinfo.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -501,3 +502,10 @@ resolve_unknown_type(const char * path, media_types dir_type)
 	return type;
 }
 
+long uptime(void)
+{
+	struct sysinfo info;
+	sysinfo(&info);
+
+	return info.uptime;
+}

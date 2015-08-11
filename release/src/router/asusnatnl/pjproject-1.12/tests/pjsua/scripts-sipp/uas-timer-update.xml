@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- This program is free software; you can redistribute it and/or      -->
+<!-- modify it under the terms of the GNU General Public License as     -->
+<!-- published by the Free Software Foundation; either version 2 of the -->
+<!-- License, or (at your option) any later version.                    -->
+<!--                                                                    -->
+<!-- This program is distributed in the hope that it will be useful,    -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of     -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      -->
+<!-- GNU General Public License for more details.                       -->
+<!--                                                                    -->
+<!-- You should have received a copy of the GNU General Public License  -->
+<!-- along with this program; if not, write to the                      -->
+<!-- Free Software Foundation, Inc.,                                    -->
+<!-- 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA             -->
+
+
+<!--                                                                    -->
+<!--   Session timer where UAS incidates support for UPDATE.            -->
+<!--   In this case, UAC will first use empty UPDATE, which we          -->
+<!--   will reply with 400. UAC MUST retry sending UPDATE with SDP.     -->
+
+<scenario name="Basic UAS responder">
+  <recv request="INVITE" crlf="true">
+  </recv>
+
+  <send retrans="500">
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: <sip:[local_ip]:[local_port];transport=[transport]> 
+      Allow: UPDATE, INVITE
+      Require: timer
+      Session-Expires: 90;refresher=uac
+      Content-Type: application/sdp
+      Content-Length: [len]
+ 
+      v=0
+      o=Some-UserAgent 68 210 IN IP4 [local_ip]
+      s=SIP Call
+      c=IN IP4 [local_ip]
+      t=0 0
+      m=audio 17294 RTP/AVP 0 101
+      c=IN IP4 [local_ip]
+      a=rtpmap:101 telephone-event/8000
+      a=fmtp:101 0-16
+    ]]>
+  </send>
+
+  <recv request="ACK"
+        optional="true"
+        rtd="true"
+        crlf="true"> 
+  </recv> 
+ 
+  <recv request="UPDATE" crlf="true">
+  </recv>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 400 Want SDP Body
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: <sip:[local_ip]:[local_port];transport=[transport]> 
+      Allow: INVITE
+      Require: timer
+      Session-Expires: 90;refresher=uac
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <recv request="UPDATE" crlf="true">
+  </recv>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: <sip:[local_ip]:[local_port];transport=[transport]> 
+      Allow: INVITE
+      Require: timer
+      Session-Expires: 90;refresher=uac
+      Content-Type: application/sdp
+      Content-Length: [len]
+ 
+      v=0
+      o=Some-UserAgent 68 210 IN IP4 [local_ip]
+      s=SIP Call
+      c=IN IP4 [local_ip]
+      t=0 0
+      m=audio 17294 RTP/AVP 0 101
+      c=IN IP4 [local_ip]
+      a=rtpmap:101 telephone-event/8000
+      a=fmtp:101 0-16
+    ]]>
+  </send>
+
+
+  <!-- Keep the call open for a while in case the 200 is lost to be     -->
+  <!-- able to retransmit it if we receive the BYE again.               -->
+  <pause milliseconds="4000"/>
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

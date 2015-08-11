@@ -16,6 +16,7 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
+<script type="text/javascript" src="/form.js"></script>
 <style>
 .weakness{
 	width:650px;
@@ -25,6 +26,7 @@
 	z-index:10;
 	margin-left:300px;
 	border-radius:10px;
+	display: none;
 }
 
 .weakness_router_status{
@@ -72,9 +74,30 @@
 	background-color:#1CFE16;
 }
 
+.alertpreference{
+	width:650px;
+	height:290px;
+	position:absolute;
+	background: rgba(0,0,0,0.8);
+	z-index:10;
+	margin-left:260px;
+	border-radius:10px;
+	padding:15px 10px 20px 10px;
+	display: none;
+}
 </style>
 <script>
-window.onresize = cal_panel_block;
+window.onresize = function() {
+	if(document.getElementById("weakness_div").style.display == "block") {
+		cal_panel_block("weakness_div", 0.25);
+	}
+	if(document.getElementById("alert_preference").style.display == "block") {
+		cal_panel_block("alert_preference", 0.25);
+	}
+	if(document.getElementById("agreement_panel").style.display == "block") {
+		cal_panel_block("agreement_panel", 0.25);
+	}
+} 
 <% get_AiDisk_status(); %>
 var AM_to_cifs = get_share_management_status("cifs");  // Account Management for Network-Neighborhood
 var AM_to_ftp = get_share_management_status("ftp");  // Account Management for FTP
@@ -85,7 +108,7 @@ var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 
 function initial(){
 	show_menu();
-	document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;">AiProtection</div></td></tr></tbody></table>';
+	document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;"><#AiProtection_title#></div></td></tr></tbody></table>';
 	document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 }
 
@@ -105,7 +128,7 @@ function applyRule(){
 }
 
 function check_weakness(){
-	cal_panel_block();
+	cal_panel_block("weakness_div", 0.25);
 	$('#weakness_div').fadeIn();
 	check_login_name_password();
 	check_wireless_password();
@@ -334,26 +357,33 @@ function check_WPS(){
 }
 
 function check_upnp(){
-	var wan0_unpn_enable = document.form.wan0_upnp_enable.value;
-        var wans_dualwan_orig = document.form.wans_dualwan.value;
-	if(wans_dualwan_orig.search(" ") == -1)
-		var wans_flag = 0;
-	else
-		var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
-        if (wans_flag == 1)
-                var wan1_upnp_enable = document.form.wan1_upnp_enable.value;
-        else
-                var wan1_upnp_enable = 0;
-
-	if(wan0_unpn_enable == 0 && wan1_upnp_enable == 0){
-		document.getElementById('upnp_service').innerHTML = "<#checkbox_Yes#>";
-		document.getElementById('upnp_service').className = "status_yes";
+	var wan0_upnp_enable = document.form.wan0_upnp_enable.value;
+	var wan1_upnp_enable = document.form.wan1_upnp_enable.value;
+	
+	if(dualwan_enabled){
+		if(wan0_upnp_enable == 0 && wan1_upnp_enable == 0){
+			document.getElementById('upnp_service').innerHTML = "<#checkbox_Yes#>";
+			document.getElementById('upnp_service').className = "status_yes";
+		}
+		else{
+			document.getElementById('upnp_service').innerHTML = "<a href='Advanced_WAN_Content.asp' target='_blank'><#checkbox_No#></a>";
+			document.getElementById('upnp_service').className = "status_no";
+			document.getElementById('upnp_service').onmouseover = function(){overHint(13);}
+			document.getElementById('upnp_service').onmouseout = function(){nd();}
+		}
 	}
 	else{
-		document.getElementById('upnp_service').innerHTML = "<a href='Advanced_WAN_Content.asp' target='_blank'><#checkbox_No#></a>";
-		document.getElementById('upnp_service').className = "status_no";
-		document.getElementById('upnp_service').onmouseover = function(){overHint(13);}
-		document.getElementById('upnp_service').onmouseout = function(){nd();}
+		if(wan0_upnp_enable == 0){
+			document.getElementById('upnp_service').innerHTML = "<#checkbox_Yes#>";
+			document.getElementById('upnp_service').className = "status_yes";
+		}
+		else{
+			document.getElementById('upnp_service').innerHTML = "<a href='Advanced_WAN_Content.asp' target='_blank'><#checkbox_No#></a>";
+			document.getElementById('upnp_service').className = "status_no";
+			document.getElementById('upnp_service').onmouseover = function(){overHint(13);}
+			document.getElementById('upnp_service').onmouseout = function(){nd();}
+		}
+	
 	}
 }
 
@@ -500,33 +530,6 @@ function check_TM_feature(){
 	}
 }
 
-function cal_panel_block(){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.25)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
-	}
-
-	if(document.getElementById("weakness_div"))
-		document.getElementById("weakness_div").style.marginLeft = blockmarginLeft+"px";
-		
-	if(document.getElementById("alert_preference"))
-		document.getElementById("alert_preference").style.marginLeft = blockmarginLeft+"px";	
-}
-
 function switchAccount(){
 	document.samba_Form.action = "/aidisk/switch_share_mode.asp";
 	document.ftp_Form.action = "/aidisk/switch_share_mode.asp";
@@ -553,31 +556,8 @@ function show_tm_eula(){
 			});
 	}
 	dr_advise();
-	cal_agreement_block();
+	cal_panel_block("agreement_panel", 0.25);
 	$("#agreement_panel").fadeIn(300);
-}
-
-function cal_agreement_block(){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.25)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
-	}
-
-	document.getElementById("agreement_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function cancel(){
@@ -601,7 +581,8 @@ function eula_confirm(){
 }
 
 function show_alert_preference(){
-	cal_panel_block();
+	cal_panel_block("alert_preference", 0.25);
+	check_smtp_server_type();
 	parse_wrs_mail_bit();
 	$('#alert_preference').fadeIn(300);
 	document.getElementById('mail_address').value = document.form.PM_MY_EMAIL.value;
@@ -611,28 +592,39 @@ function show_alert_preference(){
 function close_alert_preference(){
 	$('#alert_preference').fadeOut(100);
 }
-
+var smtpList = new Array();
+smtpList = [
+	{smtpServer: "smtp.gmail.com", smtpPort: "587", smtpDomain: "gmail.com"},
+	{smtpServer: "smtp.aol.com", smtpPort: "587", smtpDomain: "aol.com"},
+	{smtpServer: "smtp.qq.com", smtpPort: "587", smtpDomain: "qq.com"},
+	{smtpServer: "smtp.163.com", smtpPort: "25", smtpDomain: "163.com"},
+	{end: 0}
+];
 function apply_alert_preference(){
 	var address_temp = document.getElementById('mail_address').value;
 	var account_temp = document.getElementById('mail_address').value.split("@");
-	var smtpList = new Array();
-	var mail_bit = 0;
-	smtpList = [
-		{smtpServer: "smtp.gmail.com", smtpPort: "587", smtpDomain: "gmail.com"},
-		{end: 0}
-	];
 	
-	if(address_temp.indexOf('@') != -1){
-		if(account_temp[1] != "gmail.com"){
+	var mail_bit = 0;
+	var server_index = document.getElementById("mail_provider").value;
+
+	
+	if(address_temp.indexOf('@') != -1){	
+		if(account_temp[1] != "gmail.com" && account_temp[1] != "aol.com" && account_temp[1] != "qq.com" && account_temp[1] != "163.com"){
 			alert("Wrong mail domain");
 			document.getElementById('mail_address').focus();
 			return false;
-		}	
+		}
 		
+		if(document.form.PM_MY_EMAIL.value == "" || document.form.PM_MY_EMAIL.value != address_temp)
+			document.form.action_script.value += ";send_confirm_mail";
+				
 		document.form.PM_MY_EMAIL.value = address_temp;	
 	}
 	else{	
-		document.form.PM_MY_EMAIL.value = account_temp[0] + "@" +smtpList[0].smtpDomain;
+		if(document.form.PM_MY_EMAIL.value == "" || document.form.PM_MY_EMAIL.value != address_temp)
+			document.form.action_script.value += ";send_confirm_mail";
+			
+		document.form.PM_MY_EMAIL.value = account_temp[0] + "@" +smtpList[server_index].smtpDomain;
 	}
 	
 	if(document.getElementById("mal_website_item").checked)
@@ -647,8 +639,8 @@ function apply_alert_preference(){
 	document.form.wrs_mail_bit.value = mail_bit;
 	document.form.PM_SMTP_AUTH_USER.value = account_temp[0];
 	document.form.PM_SMTP_AUTH_PASS.value = document.getElementById('mail_password').value;	
-	document.form.PM_SMTP_SERVER.value = smtpList[0].smtpServer;	
-	document.form.PM_SMTP_PORT.value = smtpList[0].smtpPort;	
+	document.form.PM_SMTP_SERVER.value = smtpList[server_index].smtpServer;	
+	document.form.PM_SMTP_PORT.value = smtpList[server_index].smtpPort;	
 	$('#alert_preference').fadeOut(100);
 	document.form.submit();
 }
@@ -660,9 +652,20 @@ function parse_wrs_mail_bit(){
 		mail_bit_array[i] = quot%2; 
 		quot = parseInt(quot/2);	
 	}
+	
 	document.getElementById("mal_website_item").checked =  mail_bit_array[0] == 1 ? true : false;
 	document.getElementById("vp_item").checked =  mail_bit_array[1] == 1 ? true : false;
 	document.getElementById("cc_item").checked =  mail_bit_array[2] == 1 ? true : false;
+}
+
+function check_smtp_server_type(){
+	for(i = 0;i < smtpList.length; i++){
+		if(smtpList[i].smtpServer == document.form.PM_SMTP_SERVER.value){
+			document.getElementById("mail_provider").value = i;
+			break;
+		}
+	}
+
 }
 </script>
 </head>
@@ -670,12 +673,12 @@ function parse_wrs_mail_bit(){
 <body onload="initial();" onunload="unload_body();" onselectstart="return false;">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;display:none;position:absolute;"></div>
+<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5.]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
 </div>
-<div id="weakness_div" class="weakness" style="display:none;">
+<div id="weakness_div" class="weakness">
 	<table style="width:99%;">
 		<tr>
 			<td>
@@ -798,7 +801,7 @@ function parse_wrs_mail_bit(){
 
 </div>
 
-<div id="alert_preference" style="width:650px;height:290px;position:absolute;background:rgba(0,0,0,0.8);z-index:10;border-radius:10px;margin-left:260px;padding:15px 10px 20px 10px;display:none">
+<div id="alert_preference" class="alertpreference">
 	<table style="width:99%">
 		<tr>
 			<th>
@@ -817,6 +820,9 @@ function parse_wrs_mail_bit(){
 							<div>
 								<select class="input_option" id="mail_provider">
 									<option value="0">Google</option>							
+									<option value="1">AOL</option>							
+									<option value="2">QQ</option>							
+									<option value="3">163</option>							
 								</select>
 							</div>
 						</td>
@@ -935,7 +941,7 @@ function parse_wrs_mail_bit(){
 										<table width="730px">
 											<tr>
 												<td align="left">
-													<span class="formfonttitle">AiProtection - <#AiProtection_Home#></span>
+													<span class="formfonttitle"><#AiProtection_title#> - <#AiProtection_Home#></span>
 												</td>
 											</tr>
 										</table>

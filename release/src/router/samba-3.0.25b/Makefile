@@ -14,6 +14,10 @@ ifneq ($(CONFIG_LINUX26),y)
 SMBCFLAGS += -DMAX_DEBUG_LEVEL="-1"
 endif
 
+ifeq ($(RTCONFIG_RECVFILE), y)
+BCMCFLAGS += -DHAVE_BCM_RECVFILE
+endif
+
 ifeq ($(RTCONFIG_BCMARM), y)
 HOST = arm
 else
@@ -24,7 +28,7 @@ all: .conf apps
 
 apps: .conf
 	mkdir -p $(srcdir)/bin
-	$(MAKE) -C $(srcdir) all
+	$(MAKE) -C $(srcdir) CFLAGS+=$(BCMCFLAGS) all
 
 .conf:
 	cd $(srcdir) && \

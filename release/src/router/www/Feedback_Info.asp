@@ -27,18 +27,30 @@ function initial(){
 }
 
 function check_info(){
-
+	//0:initial  1:Success  2.Failed  3.Limit?  4.dla
 	if(wan_diag_state == "4"){	
 		document.getElementById("fb_send_debug_log").style.display = "";
 		document.getElementById("Email_subject").href = "mailto:xdsl_feedback@asus.com?Subject="+based_modelid;
 		get_debug_log_info();
-	}else
-		document.getElementById("fb_success").style.display = "";
+	}
+	else{
+		if(dsl_support){
+			document.getElementById("fb_success_dsl_0").style.display = "";
+			document.getElementById("fb_success_dsl_1").style.display = "";
+		}
+		else{
+			document.getElementById("fb_success_router_0").style.display = "";
+			document.getElementById("fb_success_router_1").style.display = "";
+		}
+	} 	
 
-	if(fb_state == "2"){
-		document.getElementById("fb_fail").style.display = "";
-	}else{	// 0:init 2:Fail 3:limit reached?
-		//document.getElementById("fb_fail").style.display = "";
+	if(dsl_support && fb_state == "2"){
+		document.getElementById("fb_fail_dsl").style.display = "";
+		document.getElementById("fb_fail_textarea").style.display = "";
+	}
+	else if(fb_state == "2"){
+		document.getElementById("fb_fail_router").style.display = "";
+		document.getElementById("fb_fail_textarea").style.display = "";
 	}
 }
 
@@ -124,17 +136,38 @@ function reset_diag_state(){
 		  <div class="formfonttitle"><#menu5_6#> - <#menu_feedback#></div>
 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
-<div id="fb_success" style="display:none;">
+<div id="fb_success_dsl_0" style="display:none;">
 	<br>
 	<br>
-	<div class="feedback_info_0">Thanks for taking the time to submit your feedback.</div>
+	<div class="feedback_info_0">Thanks for taking the time to submit your feedback.</div>	<!-- untranslated -->
 	<br>
-<div id="fb_fail" style="display:none;" class="feedback_info_1">
+</div>
+
+<div id="fb_success_router_0" style="display:none;">
+        <br>
+        <br>
+        <div class="feedback_info_0">Thanks for taking the time to submit your feedback.</div>
+        <br>
+</div>
+
+<div id="fb_fail_dsl" style="display:none;" class="feedback_info_1">
 	However system currently experiencing issue connecting to mail server, it could be caused by your ISP blocked SMTP port 25. Thus please send us an email directly ( <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a>). Simply copy from following text area and paste as mail content.
 	<br>
+</div>
+
+<div id="fb_fail_router" style="display:none;" class="feedback_info_1">
+	Sorry, you didn’t send feedback successfully. Please confirm that you have internet access, and then send your comments/suggestions again. Thank you!
+	<br>
+	However system currently experiencing issue connecting to mail server, it could be caused by your ISP blocked SMTP port 25. Thus please send us an email directly ( <a href="mailto:router_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">router_feedback@asus.com </a>). Simply copy from following text area and paste as mail content.
+	<br>
+</div>
+
+<div id="fb_fail_textarea" style="display:none;">
 	<textarea name="fb_fail_content" cols="70" rows="10" style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" readonly><% nvram_dump("fb_fail_content", ""); %></textarea>
 	<br>
 </div>
+
+<div id="fb_success_dsl_1" style="display:none;">
 	<br>
 	<div class="feedback_info_1">We are working hard to improve the firmware of <#Web_Title2#> and your feedback is very important to us. However due to the volume of feedback, please expect a slight delay in email responses.</div>
 	<br>
@@ -143,6 +176,15 @@ function reset_diag_state(){
 	<br>
 	<br>	
 </div>
+
+<div id="fb_success_router_1" style="display:none;">	
+	<br>
+	<div class="feedback_info_1"> 
+	We value every piece of feedback we receive. We cannot respond individually to every one, but we will use your comments as we strive to improve your ASUS experience.
+	</div>
+	<br>
+	<br>
+</div>	
 
 <div id="fb_send_debug_log" style="display:none;">
 	<br>

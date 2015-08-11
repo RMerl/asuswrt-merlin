@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - VPN Client Settings</title>
+<title><#Web_Title#> - <#vpnc_title#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
@@ -29,7 +29,7 @@
 	background-color:#2B373B;
 	display:none;
 	margin-left: 30%;
-	margin-top: 10px;
+	top: 290px;
 	width:650px;
 }
 .contentM_qis_manual{
@@ -817,7 +817,7 @@ function del_Row(rowdata, flag){
 					<tr>
 						<td bgcolor="#4D595D" valign="top">
 							<div>&nbsp;</div>
-							<div class="formfonttitle">VPN - VPN Client</div>
+							<div class="formfonttitle">VPN - <#vpnc_title#></div>
 							<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 							<div class="formfontdesc">
 								<#vpnc_desc1#><br>
@@ -854,7 +854,7 @@ function del_Row(rowdata, flag){
 							</table>          					
 							<div id="vpnc_clientlist_Block"></div>
 							<div class="apply_gen">
-								<input class="button_gen" onclick="Add_profile()" type="button" value="Add profile">
+								<input class="button_gen_long" onclick="Add_profile()" type="button" value="<#vpnc_step1#>">
 							</div>
            				</td>
          			</tr>        			

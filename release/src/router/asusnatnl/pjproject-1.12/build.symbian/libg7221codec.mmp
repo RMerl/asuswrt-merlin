@@ -1,0 +1,56 @@
+TARGET 		libg7221codec.lib
+TARGETTYPE 	lib
+
+//OPTION		CW -lang c++
+OPTION		GCCE -O2 -fno-unit-at-a-time
+OPTION          ARMCC --gnu
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+//
+// GSM codec third party source
+//
+
+SOURCEPATH	..\third_party\g7221\common
+
+SOURCE		basic_op.c
+SOURCE		common.c
+SOURCE		huff_tab.c
+SOURCE		tables.c
+
+SOURCEPATH	..\third_party\g7221\decode
+
+SOURCE		coef2sam.c
+SOURCE		dct4_s.c
+SOURCE		decoder.c
+
+SOURCEPATH	..\third_party\g7221\encode
+
+SOURCE		dct4_a.c
+SOURCE		encoder.c
+SOURCE		sam2coef.c
+
+
+//
+// GSM codec wrapper for pjmedia-codec
+//
+
+SOURCEPATH 	..\pjmedia\src\pjmedia-codec
+SOURCE		g7221.c
+
+//
+// Header files
+//
+
+
+SYSTEMINCLUDE	..\pjmedia\include
+SYSTEMINCLUDE	..\pjlib\include 
+SYSTEMINCLUDE	..\third_party
+SYSTEMINCLUDE	..\third_party\g7221\common
+SYSTEMINCLUDE	..\third_party\g7221\decode
+SYSTEMINCLUDE	..\third_party\g7221\encode
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+

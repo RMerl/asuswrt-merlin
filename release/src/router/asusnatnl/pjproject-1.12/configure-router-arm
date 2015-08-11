@@ -1,0 +1,26 @@
+#!/bin/sh
+CUR_DIR=`pwd`
+user=`echo $HOME`
+
+##### OPENSSL
+#TOP=$CUR_DIR/../
+OPENSSL_DIR=$TOP/openssl
+OPENSSL_INC=$OPENSSL_DIR/include
+OPENSSL_LIB=$OPENSSL_DIR
+OPENSSL_CFLAGS=-I$OPENSSL_INC
+OPENSSL_LDFLAGS="-L$OPENSSL_LIB"
+OPENSSL_LDLIBS="-lssl -lcrypto"
+
+
+GDB_CFLAGS=-g
+export LIBS="$LIBS $OPENSSL_LDLIBS "
+export CFLAGS="$OPENSSL_CFLAGS $GDB_CFLAGS -O2 -fPIC"
+export LDFLAGS="$OPENSSL_LDFLAGS -lstdc++" 
+mkdir -p pjlib/lib
+mkdir -p pjlib-util/lib
+mkdir -p pjsip/lib
+mkdir -p pjsip-apps/lib
+mkdir -p pjmedia/lib
+mkdir -p pjnath/lib
+./configure --prefix=$CUR_DIR/_inst --host=arm-linux --target=arm-linux
+

@@ -1,0 +1,140 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "libportaudio"="..\..\third_party\build\portaudio\libportaudio.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libsrtp"="..\..\third_party\build\srtp\libsrtp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjaut"=".\pjaut.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "pjlib"="..\..\pjlib\build\pjlib.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib_util"="..\..\pjlib-util\build\pjlib_util.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia"=".\pjmedia.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "pjmedia_codec"=".\pjmedia_codec.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_test"=".\pjmedia_test.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjmedia
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsdp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libportaudio
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsrtp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

@@ -112,7 +112,6 @@ function QKInternet_load_body(){
 			
 	if(gobi_support){
 		document.getElementById("page_desc").innerHTML = "<#Mobile_apn_profile#>"
-		document.getElementById("gotoUSB").style.display = "none";
     	document.getElementById("adapter_type").style.display = "none";
 	}
 }
@@ -173,9 +172,13 @@ function submitForm(){
 
 	// move reboot to finish page
 	if(document.form.action_script.value == "reboot"){
+		var reboot_time = eval("<% get_default_reboot_time(); %> + 30");
 		document.form.action_script.value = "saveNvram";
 		document.form.action_wait.value = "0";
 		parent.sysReboot = true;
+		
+		if(reboot_time > parent.rebootTime)
+			parent.rebootTime = reboot_time;
 	}
 
 	document.form.submit();
@@ -747,9 +750,6 @@ function inet_ntoa(ip_num){
 					<td align="left">
 						<div class="description_down" id="page_desc"><#menu5_4_4#></div>
 					</td>
-					<td id="gotoUSB" align="right">
-						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
-					</td>
 				</tr>
 			</table>
 		</div>
@@ -878,7 +878,7 @@ function inet_ntoa(ip_num){
 <div id="Conn3GFail" style="display:none;">
 	<div>
 		<p class="QISGeneralFont" style="font-size:20px;line-height:30px;">
-			Unable to connect to the Internet, please re-enter the information, or double-check your account data with your ISP.		
+			<#HSDPAConfig_Conn3GFail#><!-- Unable to connect to the Internet, please re-enter the information, or double-check your account data with your ISP. -->
 		</p>
 	</div>
 	<div class="apply_gen" id="resetField" style="margin-top:30px">

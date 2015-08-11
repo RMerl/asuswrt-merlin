@@ -28,9 +28,11 @@ int getStorageStatus(STORAGE_INFO_T *st)
 
 	st->AppHttpPort = __cpu_to_le16(nvram_get_int("dm_http_port"));
 
+	/*
 	if(nvram_get_int("sw_mode")!=SW_MODE_ROUTER) {
 		return 0;
 	}
+	*/
 
 	st->MagicWord = __cpu_to_le16(EXTEND_MAGIC);
 	st->AppAPILevel = EXTEND_API_LEVEL;
@@ -42,6 +44,11 @@ int getStorageStatus(STORAGE_INFO_T *st)
 	st->ExtendCap = 0;
 	if(check_if_file_exist("/opt/etc/init.d/S50aicloud")) 
 		st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_WEBDAV);
+#endif
+
+
+#ifdef RTCONFIG_TUNNEL
+	st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_AAE_BASIC);
 #endif
 
 	if(nvram_get_int("enable_webdav")) 	
@@ -65,6 +72,20 @@ int getStorageStatus(STORAGE_INFO_T *st)
 	st->u.wt.WANIPAddr = __cpu_to_le32(inet_network(get_wanip()));
 
 	st->u.wt.isNotDefault = nvram_get_int("x_Setting");
+
+
+#ifdef RTCONFIG_TUNNEL
+	if(nvram_get_int("aae_enable"))
+	{
+		st->EnableAAE = 1;
+		const char* tnl_devid = nvram_get("aae_deviceid");
+		if(tnl_devid) {
+			strcpy(st->AAEDeviceID, tnl_devid);
+			printf("AAE DeviceID =%s <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", st->AAEDeviceID);
+		}
+	}
+#endif
+
 
 	return 0;
 }

@@ -1,0 +1,32 @@
+#!/bin/sh
+
+CURRENTPATH=`pwd`
+#OPENSSL_VER=1.0.1c
+OPENSSL_PATH="${CURRENTPATH}/../openssl/platforms/"
+OPENSSL_LIB_PATH="${CURRENTPATH}/../release/ios/lib/"
+OPENSSL_INC_PATH="${CURRENTPATH}/../openssl-1.0.1l/include/"
+##### BZIP2
+BZIP2_DIR=${CURRENTPATH}/third_party/bzip2
+BZIP2_CFLAGS=-I$BZIP2_DIR
+BZIP2_LDFLAGS=-L$BZIP2_DIR
+BZIP2_LDLIBS=-lbz2
+#####
+
+
+echo "${OPENSSL_PATH}"
+SIMULATOR_SDK_VER="iPhoneOS.sdk"
+DEVELOPER=`xcode-select -print-path`
+SDK_PATH="${DEVELOPER}/Platforms/iPhoneOS.platform/Developer/SDKs/${SIMULATOR_SDK_VER}"
+#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator6.0.sdk/Developer 
+export DEVPATH=${DEVELOPER}/Platforms/iPhoneOS.platform/Developer
+#export CC=${DEVELOPER}/Platforms/iPhoneOS.platform/Developer/usr/bin/gcc
+export CC=${DEVELOPER}/usr/bin/gcc
+#export OPENSSL=${OPENSSL_PATH}
+#export CFLAGS="-O2 -m32 -miphoneos-version-min=4.0 -Wno-unused-label -I${OPENSSL}/include"
+#export CFLAGS="-O2  -Wno-unused-label -I${OPENSSL}/include -DPJ_CONFIG_IPHONE=1 -isysroot ${SDK_PATH} -miphoneos-version-min=7.0${BZIP2_CFLAGS}"
+export CFLAGS="-O2  -Wno-unused-label -I${OPENSSL_INC_PATH} -DPJ_CONFIG_IPHONE=1"
+export LDFLAGS="${OPENSSL_LIB_PATH}/libssl-armv7.a ${OPENSSL_LIB_PATH}/libcrypto-armv7.a" 
+export ARCH="-arch armv7"
+export CROSS_TYPE=armv7-apple-darwin9
+./configure-iphone CC=${CC} ARCH=${ARCH}
+#make dep && make clean && make

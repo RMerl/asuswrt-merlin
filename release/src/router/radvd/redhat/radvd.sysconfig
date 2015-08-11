@@ -1,6 +1,0 @@
-
-# No chroot; /var/run/radvd must be owned by -u.
-OPTIONS="-u radvd"
-
-# Chroot; directory structure under /var/chroot/radvd has to be populated.
-#OPTIONS="-u radvd -t /var/chroot/radvd"

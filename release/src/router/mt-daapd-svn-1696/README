@@ -1,0 +1,25 @@
+$Id: README 658 2005-09-23 05:26:52Z rpedde $
+
+Here's the short and sweet of it:
+
+./configure; make; make install
+
+You'll still need to make a configuration file in /etc/mt-daapd.conf
+
+You can use the sample in contrib/mt-daapd.conf as a starting point.
+
+cp contrib/mt-daapd.conf /etc
+cp contrib/mt-daapd.playlist /etc
+
+Edit /etc/mt-daapd.conf to taste.
+
+You'll still need distro-specific startup scripts.  Check
+the contrib directory to see if there are rc scripts for your
+distro.
+
+Questions?  Check the forums at www.mt-daapd.org or mail 
+rpedde@users.sourceforge.net
+
+
+
+

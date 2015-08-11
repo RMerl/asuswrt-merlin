@@ -60,7 +60,11 @@ int SMB_download(char *serverpath, int index)
         int buflen;
 
         char *localpath = serverpath_to_localpath(serverpath, index);
-        char *localpath_td = my_malloc(strlen(localpath) + strlen(".asus.td") + 1);
+        //char *localpath_td = my_malloc(strlen(localpath) + strlen(".asus.td") + 1);
+        char *localpath_td = my_malloc(strlen(localpath) + 9);
+        //2014.10.20 by sherry malloc申请内存是否成功
+        //if(localpath_td==NULL)
+          //  return NULL;
         sprintf(localpath_td, "%s%s", localpath, ".asus.td");
 
         write_log(S_DOWNLOAD, "", serverpath, index);
@@ -88,31 +92,38 @@ int SMB_download(char *serverpath, int index)
 
         SMB_init(index);
         int fd = -1;
-        if((fd = smbc_open(serverpath, O_RDONLY, FILE_MODE)) > 0){
+        if((fd = smbc_open(serverpath, O_RDONLY, FILE_MODE)) > 0)
+        {
                 unsigned long long cli_filesize = 0;
                 unsigned long long smb_filesize = 0;
                 smb_filesize = smbc_lseek(fd, 0L, SEEK_END);
                 smbc_lseek(fd, halfsize, SEEK_SET);
-                while((buflen = smbc_read(fd, buffer, sizeof(buffer))) > 0 && exit_loop == 0){
+                while((buflen = smbc_read(fd, buffer, sizeof(buffer))) > 0 && exit_loop == 0)
+                {
+                    //2014.11.20 by sherry 判断是否write成功
                         write(dst_fd, buffer, buflen);
                         cli_filesize += buflen;
                         printf("\rDownload [%s] percent - %f ", serverpath, (float)cli_filesize/(float)smb_filesize);
                 }
-                if(cli_filesize == smb_filesize){
+                if(cli_filesize == smb_filesize)
+                {
                         rename(localpath_td, localpath);
                         free(localpath);
                         free(localpath_td);
                         smbc_close(fd);
                         close(dst_fd);
                 }
-                else{
+                else
+                {
                         free(localpath);
                         free(localpath_td);
                         smbc_close(fd);
                         close(dst_fd);
                         return -1;
                 }
-        }else{
+        }
+        else
+        {
                 printf("smbc_open() - %s failed\n", serverpath);
                 close(dst_fd);
                 free(localpath);
@@ -141,24 +152,40 @@ int SMB_upload(char *localpath, int index)
         char *serverpath = localpath_to_serverpath(localpath, index);
         int smb_fd = smbc_open(serverpath, O_RDWR|O_CREAT, FILE_MODE);
         int cli_fd;
-        if((cli_fd = open(localpath, O_RDONLY, FILE_MODE)) > 0){
+        if((cli_fd = open(localpath, O_RDONLY, FILE_MODE)) > 0)
+        {//以只读的方式打开，文件
+            DEBUG("open localpath sucess\n");
                 unsigned long long cli_filesize = 0;
                 unsigned long long smb_filesize = 0;
                 cli_filesize = lseek(cli_fd, 0L, SEEK_END);
-                lseek(cli_fd, 0L, SEEK_SET);
-                while((buflen = read(cli_fd, buffer, sizeof(buffer))) > 0 && exit_loop == 0){
+                lseek(cli_fd, 0L, SEEK_SET);//read or write 文件的偏移量
+                //2014.11.19 by sherry 判断上传是否成功
+
+                //buflen = read(cli_fd, buffer, sizeof(buffer));
+                //DEBUG("buflen=%d\n",buflen);
+                //while(buflen > 0 && exit_loop == 0)
+                while((buflen = read(cli_fd, buffer, sizeof(buffer))) > 0 && exit_loop == 0)
+                {
                         smb_filesize += buflen;
-                        smbc_write(smb_fd, buffer, buflen);
+                        //2014.11.19 by sherry 判断上传是否成功
+                        //smbc_write(smb_fd, buffer, buflen);//smb_fd为server端的文件
+                        int res=0;
+                        res=smbc_write(smb_fd, buffer, buflen);
+                        if(res==-1)
+                            return -1;
+
                         printf("\rUpload [%s] percent - %f ", localpath, (float)smb_filesize/(float)cli_filesize);
                 }
                 if(smb_filesize != cli_filesize && exit_loop != 0)
                 {
+                        DEBUG("smb_filesize != cli_filesize && exit_loop != 0");
                         FILE *f_stream = fopen(g_pSyncList[index]->up_item_file, "w");
                         fprintf(f_stream, "%s", localpath);
                         fclose(f_stream);
                 }
                 smbc_close(smb_fd);
                 close(cli_fd);
+                DEBUG("upload --end\n");
         }
         free(serverpath);
         return 0;
@@ -225,7 +252,7 @@ int SMB_del(char *url, int index)
                                 res = smbc_unlink(new_url);
                         }
                 }
-                res = smbc_rmdir(url);
+                res = smbc_rmdir(url);//删除成功返回0，失败返回-1
         }
         smbc_closedir(dh);
         return res;
@@ -248,6 +275,7 @@ int SMB_rm(char *localpath, int index)
 /* mkdir (folder) */
 int SMB_mkdir(char *localpath, int index)
 {
+    DEBUG("SMB_mkdir start\n");
         if(access(localpath, F_OK) != 0)
         {
                 printf("Local has no %s\n", localpath);
@@ -257,8 +285,11 @@ int SMB_mkdir(char *localpath, int index)
         SMB_init(index);
 
         char *serverpath = localpath_to_serverpath(localpath, index);
+        DEBUG("SMB_mkdir --serverpath=%s\n",serverpath);
         int res = smbc_mkdir(serverpath, DIR_MODE);
+        DEBUG("SMB_mkdir --res=%d\n",res);
         free(serverpath);
+        DEBUG("SMB_mkdir end\n");
         return res;
 }
 

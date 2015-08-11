@@ -294,8 +294,16 @@ enum ASUS_IOCTL_SUBCMD {
 #define	QC98XX_EEPROM_MAC_OFFSET	(OFFSET_MAC_ADDR & 0xFFF) // 6
 
 #define OFFSET_PIN_CODE			(MTD_FACTORY_BASE_ADDRESS + 0x0D180)	/* 0x40180 -> 0x4D180 */
-
+#define OFFSET_PSK			(MTD_FACTORY_BASE_ADDRESS + 0x0ff60)    /* 15 bytes */  
 #define OFFSET_TERRITORY_CODE		(MTD_FACTORY_BASE_ADDRESS + 0x0ff90)	/* 5 bytes, e.g., US/01, US/02, TW/01, etc. */
+/*
+ * PIB parameters of Powerline Communication (PLC)
+ */
+#ifdef RTCONFIG_QCA_PLC_UTILS
+#define OFFSET_PLC_MAC			(MTD_FACTORY_BASE_ADDRESS + 0x0D18E)	// 6
+#define OFFSET_PLC_NMK			(MTD_FACTORY_BASE_ADDRESS + 0x0D194)	// 16
+#endif
+
 #define OFFSET_DEV_FLAGS		(MTD_FACTORY_BASE_ADDRESS + 0x0ffa0)	//device dependent flags
 #define OFFSET_ODMPID			(MTD_FACTORY_BASE_ADDRESS + 0x0ffb0)	//the shown model name (for Bestbuy and others)
 #define OFFSET_FAIL_RET			(MTD_FACTORY_BASE_ADDRESS + 0x0ffc0)
@@ -321,6 +329,15 @@ enum ASUS_IOCTL_SUBCMD {
 
 #define GPIO_DIR_OUT		1
 #define GPIO_DIR_IN		0
+
+/*
+ * interface of CPU to LAN
+ */
+#if defined(PLN12)
+#define MII_IFNAME	"eth1"
+#else
+#define MII_IFNAME	"eth0"
+#endif
 
 unsigned long task_mask;
 

@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
 	output = qcsapi_output_stdio_adapter();
 
-	clnt = qrpc_clnt_raw_create(QCSAPI_PROG, QCSAPI_VERS, argv[1], dst_mac);
+	clnt = qrpc_clnt_raw_create(QCSAPI_PROG, QCSAPI_VERS, argv[1], dst_mac, QRPC_QCSAPI_RPCD_SID);
 	if (clnt == NULL) {
 		clnt_pcreateerror("QRPC: ");
 		exit (1);

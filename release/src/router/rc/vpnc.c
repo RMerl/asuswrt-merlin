@@ -533,7 +533,7 @@ vpnc_ipup_main(int argc, char **argv)
 	if ((value = getenv("IPLOCAL"))) {
 		if (nvram_invmatch(strcat_r(prefix, "ipaddr", tmp), value))
 			ifconfig(vpnc_ifname, IFUP, "0.0.0.0", NULL);
-		_ifconfig(vpnc_ifname, IFUP, value, "255.255.255.255", getenv("IPREMOTE"));
+		_ifconfig(vpnc_ifname, IFUP, value, "255.255.255.255", getenv("IPREMOTE"), 0);
 		nvram_set(strcat_r(prefix, "ipaddr", tmp), value);
 		nvram_set(strcat_r(prefix, "netmask", tmp), "255.255.255.255");
 	}

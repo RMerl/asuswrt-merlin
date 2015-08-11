@@ -107,7 +107,6 @@ width:300px;
 height:55px;
 margin-top:0px;
 float:left;
-cursor:pointer;
 }
 
 #header_region #user{
@@ -446,25 +445,20 @@ height: 25px;
 background-color: #FFC322;
 text-align:center;
 display:none;
+font-size:16px;
 }
 
 #button_panel {
 margin:0;
 padding:0;
 width:500px;
-/*height:47px;*/
 height:40px;
 float:left;
 position:absolute;
 display:block;
-/*
-background-image:url("images/button_panel_bg.png");
-background-repeat:repeat-x;
-*/
 background-color: #424242;
 z-index:0;
 bottom:0px;
-/*border-left:1px solid;*/
 }
 
 #button_panel #ui_region{
@@ -476,7 +470,7 @@ left:0px;
 }
 
 #button_panel #edit_ui_region{
-width: 160px;
+width: 200px;
 height: 100%;
 right: 0px;
 bottom: 0px;
@@ -696,6 +690,7 @@ background-color: #fff;
 cursor:pointer;
 position: absolute;
 bottom: 0px;
+font-size:16px;
 }
 
 #fileview .nextDiv:hover {
@@ -896,6 +891,7 @@ color: #ffffff;
 width:120px;
 height:40px;
 cursor:pointer;
+font-size:16px;
 }
 .abbutton.disable {
 cursor:default;
@@ -1016,6 +1012,16 @@ background-position: -360px -95px;
 }
 #btnRename.disable .ticon{
 background-position: -360px -135px;
+}
+
+#btnCopyMove .ticon{
+background-position: -980px -55px;
+}
+#btnCopyMove .ticon:hover{
+background-position: -980px -95px;
+}
+#btnCopyMove.disable .ticon{
+background-position: -980px -135px;
 }
 
 #btnDeleteSel .ticon{
@@ -1142,9 +1148,13 @@ top: 80px;
 left: 40px;
 }
 
-#table_login fieldset {  
+#table_login{
+	padding:0 5px 0 5px;
+}
+#table_login #main {  
 font-family:Verdana, Arial, Helvetica, sans-serif;  
-font-size:14px;  
+font-size:14px;
+padding: 0 10px 0 10px;
 }
 /*--------------------------------------*/
 
@@ -2099,4 +2109,11 @@ cursor:pointer;
 background-position: -520px -430px;
 }
 
+.dialog_text_input{
+height: 24px;
+font-size: 12px;
+color: #505A64;
+padding: 1px 3px;
+border: 1px solid;
+}
 /*---------------------------------------------------*/

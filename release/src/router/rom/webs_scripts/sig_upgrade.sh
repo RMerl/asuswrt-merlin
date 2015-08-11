@@ -75,7 +75,11 @@ else
 			mkdir /jffs/signature
 			mv /tmp/rule.trf /jffs/signature/rule.trf
 		fi
-		rc rc_service restart_wrs
+		if [ "$1" == "" ];then
+			rc rc_service restart_wrs
+		else
+			echo "do nothing..."	
+		fi
 	else
 		echo "---- sig check error ----" >> /tmp/sig_upgrade.log
 		nvram set sig_state_error=3	# wrong sig trf

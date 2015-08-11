@@ -1,0 +1,54 @@
+#if defined(PJ_BUILD_DLL)
+
+TARGET		pjsip_simple.dll
+TARGETTYPE	dll
+
+UID		0x0 0xA0000008
+
+
+CAPABILITY	None
+LIBRARY		pjsip.lib pjsdp.lib pjlib_util.lib pjlib.lib esock.lib insock.lib charconv.lib euser.lib estlib.lib
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\pjsip_simple.def
+
+#else
+
+TARGET 		pjsip_simple.lib
+TARGETTYPE 	lib
+
+#endif
+
+SOURCEPATH	..\pjsip\src\pjsip-simple
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+// Must compile as C++, otherwise exception would not work
+OPTION          CW -lang c++
+OPTION          ARMCC --cpp --gnu
+OPTION          GCC     -x c++
+OPTION          GCCE    -x c++
+
+// PJSIP-SIMPLE files
+
+SOURCE	errno.c
+SOURCE	evsub.c
+SOURCE	evsub_msg.c
+SOURCE	iscomposing.c
+SOURCE	mwi.c
+SOURCE	pidf.c
+SOURCE	presence.c
+SOURCE	presence_body.c
+SOURCE	publishc.c
+SOURCE	rpid.c
+SOURCE	xpidf.c
+
+SYSTEMINCLUDE	..\pjlib\include 
+SYSTEMINCLUDE	..\pjlib-util\include 
+SYSTEMINCLUDE	..\pjsip\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+

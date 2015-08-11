@@ -7,6 +7,7 @@
 */
 #include <syslog.h>
 #include "../shared/version.h"
+#include "../shared/shared.h"
 
 #define FALSE   0
 #define TRUE    1
@@ -64,17 +65,24 @@
 #define SMB_SESSON_ANDX_RSP     6
 
 #ifdef DEBUG
-	#define NMP_DEBUG(fmt, args...) printf(fmt, ## args)
+	#define NMP_DEBUG(fmt, args...) _dprintf(fmt, ## args)
 	//#define NMP_DEBUG(fmt, args...) syslog(LOG_NOTICE, fmt, ## args)
 #else
 	#define NMP_DEBUG(fmt, args...)
 #endif
 
 #ifdef DEBUG_MORE
-        #define NMP_DEBUG_M(fmt, args...) printf(fmt, ## args)
+        #define NMP_DEBUG_M(fmt, args...) _dprintf(fmt, ## args)
 	//#define NMP_DEBUG_M(fmt, args...) syslog(LOG_NOTICE, fmt, ## args)
 #else
         #define NMP_DEBUG_M(fmt, args...)
+#endif
+
+#ifdef DEBUG_FUNCTION
+        #define NMP_DEBUG_F(fmt, args...) _dprintf(fmt, ## args)
+        //#define NMP_DEBUG_FUN(fmt, args...) syslog(LOG_NOTICE, fmt, ## args)
+#else
+        #define NMP_DEBUG_F(fmt, args...)
 #endif
 
 typedef unsigned char UCHAR;
@@ -86,12 +94,19 @@ typedef struct {
         unsigned char   ip_addr[255][4];
         unsigned char   mac_addr[255][6];
 	unsigned char   user_define[255][16];
-	unsigned char   device_name[255][16];
+	unsigned char   device_name[255][32];
+	unsigned char	apl_dev[255][16];
         int             type[255];
         int             http[255];
         int             printer[255];
         int             itune[255];
 	int		exist[255];
+#ifdef RTCONFIG_BWDPI
+	char		bwdpi_host[255][32];
+	char		bwdpi_vendor[255][100];
+	char		bwdpi_type[255][100];
+	char		bwdpi_device[255][100];
+#endif
         int             ip_mac_num;
 	int 		detail_info_num;
 } CLIENT_DETAIL_INFO_TABLE, *P_CLIENT_DETAIL_INFO_TABLE;
@@ -300,6 +315,7 @@ typedef struct
         USHORT nativeLanMan_len;
 } MY_DEVICE_INFO;
 
+int FindHostname(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab);
 int FindAllApp( unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab);
 int asusdiscovery();
 int FindHostname( P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab);

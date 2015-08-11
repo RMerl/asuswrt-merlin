@@ -1,0 +1,4835 @@
+# Microsoft eMbedded Visual Tools Project File - Name="libgsmcodec" - Package Owner=<4>
+# Microsoft eMbedded Visual Tools Generated Build File, Format Version 6.02
+# ** DO NOT EDIT **
+
+# TARGTYPE "Win32 (WCE x86) Static Library" 0x8304
+# TARGTYPE "Win32 (WCE MIPS16) Static Library" 0x8904
+# TARGTYPE "Win32 (WCE SH4) Static Library" 0x8604
+# TARGTYPE "Win32 (WCE MIPSII) Static Library" 0xa104
+# TARGTYPE "Win32 (WCE MIPSIV_FP) Static Library" 0x9204
+# TARGTYPE "Win32 (WCE SH3) Static Library" 0x8104
+# TARGTYPE "Win32 (WCE ARMV4) Static Library" 0xa304
+# TARGTYPE "Win32 (WCE ARMV4I) Static Library" 0xa504
+# TARGTYPE "Win32 (WCE emulator) Static Library" 0xa604
+# TARGTYPE "Win32 (WCE MIPSII_FP) Static Library" 0xa204
+# TARGTYPE "Win32 (WCE ARMV4T) Static Library" 0xa404
+# TARGTYPE "Win32 (WCE MIPSIV) Static Library" 0x9604
+
+CFG=libgsmcodec - Win32 (WCE MIPSII_FP) Debug
+!MESSAGE This is not a valid makefile. To build this project using NMAKE,
+!MESSAGE use the Export Makefile command and run
+!MESSAGE 
+!MESSAGE NMAKE /f "libgsmcodec.vcn".
+!MESSAGE 
+!MESSAGE You can specify a configuration when running NMAKE
+!MESSAGE by defining the macro CFG on the command line. For example:
+!MESSAGE 
+!MESSAGE NMAKE /f "libgsmcodec.vcn" CFG="libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+!MESSAGE 
+!MESSAGE Possible choices for configuration are:
+!MESSAGE 
+!MESSAGE "libgsmcodec - Win32 (WCE MIPSII_FP) Release" (based on "Win32 (WCE MIPSII_FP) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPSII_FP) Debug" (based on "Win32 (WCE MIPSII_FP) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPSII) Release" (based on "Win32 (WCE MIPSII) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPSII) Debug" (based on "Win32 (WCE MIPSII) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE SH4) Release" (based on "Win32 (WCE SH4) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE SH4) Debug" (based on "Win32 (WCE SH4) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE SH3) Release" (based on "Win32 (WCE SH3) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE SH3) Debug" (based on "Win32 (WCE SH3) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPSIV) Release" (based on "Win32 (WCE MIPSIV) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPSIV) Debug" (based on "Win32 (WCE MIPSIV) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE emulator) Release" (based on "Win32 (WCE emulator) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE emulator) Debug" (based on "Win32 (WCE emulator) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE ARMV4I) Release" (based on "Win32 (WCE ARMV4I) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE ARMV4I) Debug" (based on "Win32 (WCE ARMV4I) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPSIV_FP) Release" (based on "Win32 (WCE MIPSIV_FP) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug" (based on "Win32 (WCE MIPSIV_FP) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE ARMV4) Release" (based on "Win32 (WCE ARMV4) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE ARMV4) Debug" (based on "Win32 (WCE ARMV4) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPS16) Release" (based on "Win32 (WCE MIPS16) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE MIPS16) Debug" (based on "Win32 (WCE MIPS16) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE ARMV4T) Release" (based on "Win32 (WCE ARMV4T) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE ARMV4T) Debug" (based on "Win32 (WCE ARMV4T) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE x86) Release" (based on "Win32 (WCE x86) Static Library")
+!MESSAGE "libgsmcodec - Win32 (WCE x86) Debug" (based on "Win32 (WCE x86) Static Library")
+!MESSAGE 
+
+# Begin Project
+# PROP AllowPerConfigDependencies 0
+# PROP Scc_ProjName ""
+# PROP Scc_LocalPath ""
+# PROP ATL_Project 2
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\MIPSII_FPRel"
+# PROP BASE Intermediate_Dir "output\MIPSII_FPRel"
+# PROP BASE CPU_ID "{D8AC856C-B213-4895-9E83-9EC51A55201E}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\MIPSII_FPRel"
+# PROP Intermediate_Dir "output\MIPSII_FPRel"
+# PROP CPU_ID "{D8AC856C-B213-4895-9E83-9EC51A55201E}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D "MIPSII_FP" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QMmips2 /QMFPE- /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D "MIPSII_FP" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QMmips2 /QMFPE- /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\MIPSII_FPDbg"
+# PROP BASE Intermediate_Dir "output\MIPSII_FPDbg"
+# PROP BASE CPU_ID "{D8AC856C-B213-4895-9E83-9EC51A55201E}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\MIPSII_FPDbg"
+# PROP Intermediate_Dir "output\MIPSII_FPDbg"
+# PROP CPU_ID "{D8AC856C-B213-4895-9E83-9EC51A55201E}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D "MIPSII_FP" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QMmips2 /QMFPE- /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D "MIPSII_FP" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QMmips2 /QMFPE- /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\MIPSIIRel"
+# PROP BASE Intermediate_Dir "output\MIPSIIRel"
+# PROP BASE CPU_ID "{689DDC64-9D9D-11D5-96F8-00207802C01C}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\MIPSIIRel"
+# PROP Intermediate_Dir "output\MIPSIIRel"
+# PROP CPU_ID "{689DDC64-9D9D-11D5-96F8-00207802C01C}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QMmips2 /QMFPE /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QMmips2 /QMFPE /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\MIPSIIDbg"
+# PROP BASE Intermediate_Dir "output\MIPSIIDbg"
+# PROP BASE CPU_ID "{689DDC64-9D9D-11D5-96F8-00207802C01C}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\MIPSIIDbg"
+# PROP Intermediate_Dir "output\MIPSIIDbg"
+# PROP CPU_ID "{689DDC64-9D9D-11D5-96F8-00207802C01C}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QMmips2 /QMFPE /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QMmips2 /QMFPE /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\SH4Rel"
+# PROP BASE Intermediate_Dir "output\SH4Rel"
+# PROP BASE CPU_ID "{D6519021-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\SH4Rel"
+# PROP Intermediate_Dir "output\SH4Rel"
+# PROP CPU_ID "{D6519021-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=shcl.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH4" /D "_SH4_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /Qsh4 /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH4" /D "_SH4_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /Qsh4 /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\SH4Dbg"
+# PROP BASE Intermediate_Dir "output\SH4Dbg"
+# PROP BASE CPU_ID "{D6519021-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\SH4Dbg"
+# PROP Intermediate_Dir "output\SH4Dbg"
+# PROP CPU_ID "{D6519021-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=shcl.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH4" /D "_SH4_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /Qsh4 /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH4" /D "_SH4_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /Qsh4 /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\SH3Rel"
+# PROP BASE Intermediate_Dir "output\SH3Rel"
+# PROP BASE CPU_ID "{D6519020-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\SH3Rel"
+# PROP Intermediate_Dir "output\SH3Rel"
+# PROP CPU_ID "{D6519020-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=shcl.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH3" /D "_SH3_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH3" /D "_SH3_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\SH3Dbg"
+# PROP BASE Intermediate_Dir "output\SH3Dbg"
+# PROP BASE CPU_ID "{D6519020-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\SH3Dbg"
+# PROP Intermediate_Dir "output\SH3Dbg"
+# PROP CPU_ID "{D6519020-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=shcl.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH3" /D "_SH3_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH3" /D "_SH3_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\MIPSIVRel"
+# PROP BASE Intermediate_Dir "output\MIPSIVRel"
+# PROP BASE CPU_ID "{0B2FE524-26C5-4194-8CEF-B1582DEB5A98}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\MIPSIVRel"
+# PROP Intermediate_Dir "output\MIPSIVRel"
+# PROP CPU_ID "{0B2FE524-26C5-4194-8CEF-B1582DEB5A98}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "_MIPS64" /D "R4000" /D "MIPSIV" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QMmips4 /QMn32 /QMFPE /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "_MIPS64" /D "R4000" /D "MIPSIV" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QMmips4 /QMn32 /QMFPE /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\MIPSIVDbg"
+# PROP BASE Intermediate_Dir "output\MIPSIVDbg"
+# PROP BASE CPU_ID "{0B2FE524-26C5-4194-8CEF-B1582DEB5A98}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\MIPSIVDbg"
+# PROP Intermediate_Dir "output\MIPSIVDbg"
+# PROP CPU_ID "{0B2FE524-26C5-4194-8CEF-B1582DEB5A98}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "_MIPS64" /D "R4000" /D "MIPSIV" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QMmips4 /QMn32 /QMFPE /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "_MIPS64" /D "R4000" /D "MIPSIV" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QMmips4 /QMn32 /QMFPE /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\emulatorRel"
+# PROP BASE Intermediate_Dir "output\emulatorRel"
+# PROP BASE CPU_ID "{32E52003-403E-442D-BE48-DE10F8C6131D}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\emulatorRel"
+# PROP Intermediate_Dir "output\emulatorRel"
+# PROP CPU_ID "{32E52003-403E-442D-BE48-DE10F8C6131D}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=cl.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "NDEBUG" /D "_LIB" /YX /Gs8192 /GF /O2 /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "NDEBUG" /D "_LIB" /YX /Gs8192 /GF /O2 /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\emulatorDbg"
+# PROP BASE Intermediate_Dir "output\emulatorDbg"
+# PROP BASE CPU_ID "{32E52003-403E-442D-BE48-DE10F8C6131D}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\emulatorDbg"
+# PROP Intermediate_Dir "output\emulatorDbg"
+# PROP CPU_ID "{32E52003-403E-442D-BE48-DE10F8C6131D}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=cl.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "_LIB" /YX /Gs8192 /GF /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "_LIB" /YX /Gs8192 /GF /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\ARMV4IRel"
+# PROP BASE Intermediate_Dir "output\ARMV4IRel"
+# PROP BASE CPU_ID "{DC70F430-E78B-494F-A9D5-62ADC56443B8}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\ARMV4IRel"
+# PROP Intermediate_Dir "output\ARMV4IRel"
+# PROP CPU_ID "{DC70F430-E78B-494F-A9D5-62ADC56443B8}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clarm.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "ARM" /D "_ARM_" /D "$(CePlatform)" /D "ARMV4I" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QRarch4T /QRinterwork-return /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "ARM" /D "_ARM_" /D "$(CePlatform)" /D "ARMV4I" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QRarch4T /QRinterwork-return /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\ARMV4IDbg"
+# PROP BASE Intermediate_Dir "output\ARMV4IDbg"
+# PROP BASE CPU_ID "{DC70F430-E78B-494F-A9D5-62ADC56443B8}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\ARMV4IDbg"
+# PROP Intermediate_Dir "output\ARMV4IDbg"
+# PROP CPU_ID "{DC70F430-E78B-494F-A9D5-62ADC56443B8}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clarm.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "ARM" /D "_ARM_" /D "$(CePlatform)" /D "ARMV4I" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QRarch4T /QRinterwork-return /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "ARM" /D "_ARM_" /D "$(CePlatform)" /D "ARMV4I" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QRarch4T /QRinterwork-return /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\MIPSIV_FPRel"
+# PROP BASE Intermediate_Dir "output\MIPSIV_FPRel"
+# PROP BASE CPU_ID "{046A430D-7770-48AB-89B5-24C2D300B03F}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\MIPSIV_FPRel"
+# PROP Intermediate_Dir "output\MIPSIV_FPRel"
+# PROP CPU_ID "{046A430D-7770-48AB-89B5-24C2D300B03F}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "_MIPS64" /D "R4000" /D "MIPSIV" /D "MIPSIV_FP" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QMmips4 /QMn32 /QMFPE- /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "_MIPS64" /D "R4000" /D "MIPSIV" /D "MIPSIV_FP" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QMmips4 /QMn32 /QMFPE- /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\MIPSIV_FPDbg"
+# PROP BASE Intermediate_Dir "output\MIPSIV_FPDbg"
+# PROP BASE CPU_ID "{046A430D-7770-48AB-89B5-24C2D300B03F}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\MIPSIV_FPDbg"
+# PROP Intermediate_Dir "output\MIPSIV_FPDbg"
+# PROP CPU_ID "{046A430D-7770-48AB-89B5-24C2D300B03F}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "_MIPS64" /D "R4000" /D "MIPSIV" /D "MIPSIV_FP" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QMmips4 /QMn32 /QMFPE- /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "_MIPS64" /D "R4000" /D "MIPSIV" /D "MIPSIV_FP" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QMmips4 /QMn32 /QMFPE- /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\ARMV4Rel"
+# PROP BASE Intermediate_Dir "output\ARMV4Rel"
+# PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\ARMV4Rel"
+# PROP Intermediate_Dir "output\ARMV4Rel"
+# PROP CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clarm.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\ARMV4Dbg"
+# PROP BASE Intermediate_Dir "output\ARMV4Dbg"
+# PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\ARMV4Dbg"
+# PROP Intermediate_Dir "output\ARMV4Dbg"
+# PROP CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clarm.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\MIPS16Rel"
+# PROP BASE Intermediate_Dir "output\MIPS16Rel"
+# PROP BASE CPU_ID "{D6519013-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\MIPS16Rel"
+# PROP Intermediate_Dir "output\MIPS16Rel"
+# PROP CPU_ID "{D6519013-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D "MIPS16" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_MIPS16_" /D "MIPS16SUPPORT" /D "_LIB" /YX /QMmips16 /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D "MIPS16" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_MIPS16_" /D "MIPS16SUPPORT" /D "_LIB" /YX /QMmips16 /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\MIPS16Dbg"
+# PROP BASE Intermediate_Dir "output\MIPS16Dbg"
+# PROP BASE CPU_ID "{D6519013-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\MIPS16Dbg"
+# PROP Intermediate_Dir "output\MIPS16Dbg"
+# PROP CPU_ID "{D6519013-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clmips.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D "MIPS16" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_MIPS16_" /D "MIPS16SUPPORT" /D "_LIB" /YX /QMmips16 /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "MIPS" /D "_MIPS_" /D "R4000" /D "MIPSII" /D "MIPS16" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_MIPS16_" /D "MIPS16SUPPORT" /D "_LIB" /YX /QMmips16 /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\ARMV4TRel"
+# PROP BASE Intermediate_Dir "output\ARMV4TRel"
+# PROP BASE CPU_ID "{F52316A9-3B7C-4FE7-A67F-68350B41240D}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\ARMV4TRel"
+# PROP Intermediate_Dir "output\ARMV4TRel"
+# PROP CPU_ID "{F52316A9-3B7C-4FE7-A67F-68350B41240D}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clthumb.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "ARM" /D "_ARM_" /D "$(CePlatform)" /D "THUMB" /D "_THUMB_" /D "ARMV4T" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QRarch4T /QRinterwork-return /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "ARM" /D "_ARM_" /D "$(CePlatform)" /D "THUMB" /D "_THUMB_" /D "ARMV4T" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /QRarch4T /QRinterwork-return /O2 /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\ARMV4TDbg"
+# PROP BASE Intermediate_Dir "output\ARMV4TDbg"
+# PROP BASE CPU_ID "{F52316A9-3B7C-4FE7-A67F-68350B41240D}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\ARMV4TDbg"
+# PROP Intermediate_Dir "output\ARMV4TDbg"
+# PROP CPU_ID "{F52316A9-3B7C-4FE7-A67F-68350B41240D}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clthumb.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "ARM" /D "_ARM_" /D "$(CePlatform)" /D "THUMB" /D "_THUMB_" /D "ARMV4T" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QRarch4T /QRinterwork-return /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "ARM" /D "_ARM_" /D "$(CePlatform)" /D "THUMB" /D "_THUMB_" /D "ARMV4T" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /QRarch4T /QRinterwork-return /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "output\X86Rel"
+# PROP BASE Intermediate_Dir "output\X86Rel"
+# PROP BASE CPU_ID "{D6518FF3-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "output\X86Rel"
+# PROP Intermediate_Dir "output\X86Rel"
+# PROP CPU_ID "{D6518FF3-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=cl.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "NDEBUG" /D "_LIB" /YX /Gs8192 /GF /O2 /c
+# ADD CPP /nologo /W3 /I "." /I "../../gsm/inc" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "NDEBUG" /D "_LIB" /YX /Gs8192 /GF /O2 /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "output\X86Dbg"
+# PROP BASE Intermediate_Dir "output\X86Dbg"
+# PROP BASE CPU_ID "{D6518FF3-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "output\X86Dbg"
+# PROP Intermediate_Dir "output\X86Dbg"
+# PROP CPU_ID "{D6518FF3-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=cl.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "_LIB" /YX /Gs8192 /GF /c
+# ADD CPP /nologo /W3 /Zi /Od /I "." /I "../../gsm/inc" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "_LIB" /YX /Gs8192 /GF /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ENDIF 
+
+# Begin Target
+
+# Name "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+# Name "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+# Name "libgsmcodec - Win32 (WCE MIPSII) Release"
+# Name "libgsmcodec - Win32 (WCE MIPSII) Debug"
+# Name "libgsmcodec - Win32 (WCE SH4) Release"
+# Name "libgsmcodec - Win32 (WCE SH4) Debug"
+# Name "libgsmcodec - Win32 (WCE SH3) Release"
+# Name "libgsmcodec - Win32 (WCE SH3) Debug"
+# Name "libgsmcodec - Win32 (WCE MIPSIV) Release"
+# Name "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+# Name "libgsmcodec - Win32 (WCE emulator) Release"
+# Name "libgsmcodec - Win32 (WCE emulator) Debug"
+# Name "libgsmcodec - Win32 (WCE ARMV4I) Release"
+# Name "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+# Name "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+# Name "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+# Name "libgsmcodec - Win32 (WCE ARMV4) Release"
+# Name "libgsmcodec - Win32 (WCE ARMV4) Debug"
+# Name "libgsmcodec - Win32 (WCE MIPS16) Release"
+# Name "libgsmcodec - Win32 (WCE MIPS16) Debug"
+# Name "libgsmcodec - Win32 (WCE ARMV4T) Release"
+# Name "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+# Name "libgsmcodec - Win32 (WCE x86) Release"
+# Name "libgsmcodec - Win32 (WCE x86) Debug"
+# Begin Group "Source Files"
+
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=..\..\gsm\src\add.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_ADD_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\code.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_CODE_=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\debug.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_DEBUG=\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\decode.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_DECOD=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\gsm_create.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_GSM_C=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	".\config.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\gsm_decode.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_GSM_D=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\gsm_destroy.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_GSM_DE=\
+	"..\..\gsm\inc\config.h"\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\proto.h"\
+	".\config.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\gsm_encode.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_GSM_E=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\gsm_explode.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_GSM_EX=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\gsm_implode.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_GSM_I=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\gsm_option.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_GSM_O=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\gsm_print.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_GSM_P=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\long_term.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_LONG_=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\lpc.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_LPC_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\preprocess.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_PREPR=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\rpe.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_RPE_C=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\short_term.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_SHORT=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\src\table.c
+
+!IF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII_FP) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSII) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH4) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE SH3) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE emulator) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4I) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPSIV_FP) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE MIPS16) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE ARMV4T) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Release"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libgsmcodec - Win32 (WCE x86) Debug"
+
+DEP_CPP_TABLE=\
+	"..\..\gsm\inc\gsm.h"\
+	"..\..\gsm\inc\private.h"\
+	"..\..\gsm\inc\proto.h"\
+	"..\..\gsm\inc\unproto.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# End Group
+# Begin Group "Header Files"
+
+# PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\config.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\inc\config.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\inc\gsm.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\inc\private.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\inc\proto.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\inc\toast.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\gsm\inc\unproto.h
+# End Source File
+# End Group
+# End Target
+# End Project

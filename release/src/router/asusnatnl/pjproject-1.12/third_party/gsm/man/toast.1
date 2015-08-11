@@ -1,0 +1,156 @@
+.\"
+.\" Copyright 1992 by Jutta Degener and Carsten Bormann, Technische
+.\" Universitaet Berlin.  See the accompanying file "COPYRIGHT" for
+.\" details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+.\"
+.if n .ds mU u
+.if t .ds mU \(*m
+.\"
+.TH TOAST 1 local
+.SH NAME
+toast \(em GSM\ 06.10 lossy sound compression
+.SH SYNOPSIS
+.ll +8
+.B toast
+[
+.B \-cdfpvhualsFC
+] [
+.I "filename...\&"
+]
+.LP
+.B untoast
+[
+.B \-cfpvhuaslF
+] [
+.I "filename...\&"
+]
+.LP
+.B tcat
+[
+.B \-vhuaslF
+] [
+.I "filename...\&"
+]
+.ll -8
+.SH DESCRIPTION
+Toast compresses the sound files given on its command line.
+Each file is replaced by a file with the extension
+.I \&.gsm .
+If no files are specified, the compression is applied to the
+standard input, and its result is written to standard output.
+.PP
+Toasted files can be restored to something not quite unlike
+their original form by running toast
+.I "\-d"
+, or 
+.I untoast
+, on the \&.gsm-files or standard input.
+.PP
+The program 
+.I tcat
+(the same as running
+.I "untoast \-c"
+)  uncompresses its input on standard output,
+but leaves the compressed .gsm\-files alone.
+.PP
+When files are compressed or uncompressed into other files,
+the ownership (if run by root), modes, accessed and modified times
+are maintained between both versions.
+.SH OPTIONS
+.TP
+.B \-c
+(cat)
+Write to the standard output; no files are changed.
+.TP
+.B \-d
+(decode)
+Decode, rather than encode, the files.
+.TP
+.B \-f
+(force)
+Force replacement of output files if they exist.
+If \-f is omitted and toast (or untoast) is run interactively from
+a terminal, the user is prompted as to whether the file should be replaced.
+.TP
+.B \-p
+(precious)
+Do not delete the source files.
+Source files are implicitly left alone whenever \-c is
+specified or tcat is run.
+.TP
+.B \-C
+(LTP cut-off)
+Ignore most sample values when calculating the GSM long-term
+correlation lag during encoding.
+(The multiplications that do this are a bottleneck
+of the algorithm.)
+The resulting encoding process will not produce
+exactly the same results as GSM 06.10 would,
+but remains close enough to be compatible.
+.br
+The
+.B \-C
+option applies only to the encoder and is silently
+ignored by the decoder.
+.TP
+.B \-F
+(fast)
+On systems with a floating point processor, but without
+a multiplication instruction, \-F sacrifices standard conformance to
+performance and nearly doubles the speed of the algorithm.
+.br
+The resulting encoding and decoding process will not produce
+exactly the same results as GSM 06.10 would, but remains close
+enough to be compatible.
+.br
+The default is standard-conforming operation.
+.TP
+.B \-v
+(version)\ 
+outputs the version of toast (or untoast or tcat) to stdout and exits.
+.TP
+.B \-h
+(help)\ 
+prints a short overview of the options.
+.PP
+Toast, untoast and tcat try to guess the appropriate audio data 
+format from the file suffix.
+Command line options can also specify a format to be used for 
+all files.
+.br
+The following formats are supported:
+.TP
+.B "\-u"
+(\(*mU-law)
+8 kHz, 8 bit \(*mU-law encoding (file suffix .u)
+.TP
+.B "\-a"
+(A-law)
+8 kHz, 8 bit A-law encoding (file suffix .A)
+.TP
+.B "\-s"
+(Sun audio)
+8 kHz, 8 bit \(*mU-law encoding with audio header (file suffix .au)
+.TP
+.B "-l"
+(linear)
+8 kHz, 16 bit signed linear encoding in host byte order
+with 13 significant bits (file suffix .l)
+.PP
+In absence of options or suffixes to specify a format, 
+\(*mU-law encoding as forced by \-u is assumed.
+.PP
+.SH PECULIARITIES
+A four bit magic number is prefixed to each 32 1/2-byte GSM frame,
+mainly because 32 1/2-bytes are rather clumsy to handle.
+.SH WARNING
+The compression algorithm used is a lossy compression algorithm
+devised especially for speech; on no account should it be used
+for text, pictures or any other non-speech-data you consider
+valuable.
+.SH BUGS
+Please direct bug reports to jutta@cs.tu-berlin.de.
+.SH "SEE ALSO"
+gsm(3)
+.\"
+.\" Toast is dedicated to Bill Sienkiewicz, author of "Stray Toasters".

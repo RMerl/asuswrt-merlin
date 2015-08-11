@@ -1,0 +1,450 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1D3623260D0F684500981E51 /* ipjsuaAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3623250D0F684500981E51 /* ipjsuaAppDelegate.m */; };
+		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
+		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
+		1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF5F4DF0D08C38300B7A737 /* UIKit.framework */; };
+		28216C970DB411BC00E5133A /* FirstViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 28216C960DB411BC00E5133A /* FirstViewController.m */; };
+		282CCBFE0DB6C98000C4EA27 /* SecondView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 282CCBFD0DB6C98000C4EA27 /* SecondView.xib */; };
+		288765080DF74369002DB57D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 288765070DF74369002DB57D /* CoreGraphics.framework */; };
+		28AD73880D9D96C1002E5188 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 28AD73870D9D96C1002E5188 /* MainWindow.xib */; };
+		3A0D789F121E324E009D5030 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A0D789E121E324E009D5030 /* CFNetwork.framework */; };
+		3A0D7ECD123DD46C009D5030 /* MainWindow-iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3A0D7ECC123DD46C009D5030 /* MainWindow-iPad.xib */; };
+		3A0D7F20123F2254009D5030 /* SecondView-iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3A0D7F1F123F2254009D5030 /* SecondView-iPad.xib */; };
+		3AE9099D11587BB900FAEAA5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE9099C11587BB900FAEAA5 /* AudioToolbox.framework */; };
+		3AE90A2D1158B52500FAEAA5 /* pjsua_app.c in Sources */ = {isa = PBXBuildFile; fileRef = 3AE90A2C1158B52500FAEAA5 /* pjsua_app.c */; };
+		3AE90A6A1158C6B400FAEAA5 /* libgsmcodec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A691158C6B400FAEAA5 /* libgsmcodec-arm-apple-darwin9.a */; };
+		3AE90A6C1158C6B400FAEAA5 /* libpj-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A6B1158C6B400FAEAA5 /* libpj-arm-apple-darwin9.a */; };
+		3AE90A6E1158C6B400FAEAA5 /* libpjlib-util-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A6D1158C6B400FAEAA5 /* libpjlib-util-arm-apple-darwin9.a */; };
+		3AE90A701158C6B400FAEAA5 /* libpjmedia-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A6F1158C6B400FAEAA5 /* libpjmedia-arm-apple-darwin9.a */; };
+		3AE90A721158C6B400FAEAA5 /* libpjmedia-audiodev-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A711158C6B400FAEAA5 /* libpjmedia-audiodev-arm-apple-darwin9.a */; };
+		3AE90A741158C6B400FAEAA5 /* libpjmedia-codec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A731158C6B400FAEAA5 /* libpjmedia-codec-arm-apple-darwin9.a */; };
+		3AE90A761158C6B400FAEAA5 /* libpjnath-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A751158C6B400FAEAA5 /* libpjnath-arm-apple-darwin9.a */; };
+		3AE90A781158C6B400FAEAA5 /* libpjsip-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A771158C6B400FAEAA5 /* libpjsip-arm-apple-darwin9.a */; };
+		3AE90A7A1158C6B400FAEAA5 /* libpjsip-simple-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A791158C6B400FAEAA5 /* libpjsip-simple-arm-apple-darwin9.a */; };
+		3AE90A7C1158C6B400FAEAA5 /* libpjsip-ua-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A7B1158C6B400FAEAA5 /* libpjsip-ua-arm-apple-darwin9.a */; };
+		3AE90A7E1158C6B400FAEAA5 /* libpjsua-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A7D1158C6B400FAEAA5 /* libpjsua-arm-apple-darwin9.a */; };
+		3AE90A801158C6B400FAEAA5 /* libresample-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90A7F1158C6B400FAEAA5 /* libresample-arm-apple-darwin9.a */; };
+		3AE90AC01158F0C400FAEAA5 /* config.cfg in Resources */ = {isa = PBXBuildFile; fileRef = 3AE90ABF1158F0C400FAEAA5 /* config.cfg */; };
+		3AE90C51115A35BB00FAEAA5 /* TabBarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3AE90C50115A35BB00FAEAA5 /* TabBarController.m */; };
+		3AE90DAD115BB1CF00FAEAA5 /* ConfigViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3AE90DAC115BB1CF00FAEAA5 /* ConfigViewController.m */; };
+		3AE90EB7115F7BCE00FAEAA5 /* libg7221codec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90EB1115F7BCE00FAEAA5 /* libg7221codec-arm-apple-darwin9.a */; };
+		3AE90EB8115F7BCE00FAEAA5 /* libilbccodec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90EB2115F7BCE00FAEAA5 /* libilbccodec-arm-apple-darwin9.a */; };
+		3AE90EB9115F7BCE00FAEAA5 /* libmilenage-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90EB3115F7BCE00FAEAA5 /* libmilenage-arm-apple-darwin9.a */; };
+		3AE90EBA115F7BCE00FAEAA5 /* libpjsdp-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90EB4115F7BCE00FAEAA5 /* libpjsdp-arm-apple-darwin9.a */; };
+		3AE90EBB115F7BCE00FAEAA5 /* libspeex-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90EB5115F7BCE00FAEAA5 /* libspeex-arm-apple-darwin9.a */; };
+		3AE90EBC115F7BCE00FAEAA5 /* libsrtp-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AE90EB6115F7BCE00FAEAA5 /* libsrtp-arm-apple-darwin9.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		1D3623240D0F684500981E51 /* ipjsuaAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ipjsuaAppDelegate.h; sourceTree = "<group>"; };
+		1D3623250D0F684500981E51 /* ipjsuaAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ipjsuaAppDelegate.m; sourceTree = "<group>"; };
+		1D6058910D05DD3D006BFB54 /* ipjsua.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ipjsua.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		28216C950DB411BC00E5133A /* FirstViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FirstViewController.h; sourceTree = "<group>"; };
+		28216C960DB411BC00E5133A /* FirstViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FirstViewController.m; sourceTree = "<group>"; };
+		282CCBFD0DB6C98000C4EA27 /* SecondView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SecondView.xib; sourceTree = "<group>"; };
+		288765070DF74369002DB57D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		28A0AB4B0D9B1048005BE974 /* ipjsua_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ipjsua_Prefix.pch; sourceTree = "<group>"; };
+		28AD73870D9D96C1002E5188 /* MainWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainWindow.xib; sourceTree = "<group>"; };
+		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		3A0D789E121E324E009D5030 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		3A0D7ECC123DD46C009D5030 /* MainWindow-iPad.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = "MainWindow-iPad.xib"; path = "Resources-iPad/MainWindow-iPad.xib"; sourceTree = "<group>"; };
+		3A0D7F1F123F2254009D5030 /* SecondView-iPad.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = "SecondView-iPad.xib"; path = "Resources-iPad/SecondView-iPad.xib"; sourceTree = "<group>"; };
+		3AE9099C11587BB900FAEAA5 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		3AE90A2C1158B52500FAEAA5 /* pjsua_app.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pjsua_app.c; path = ../pjsua/pjsua_app.c; sourceTree = SOURCE_ROOT; };
+		3AE90A691158C6B400FAEAA5 /* libgsmcodec-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libgsmcodec-arm-apple-darwin9.a"; path = "../../../third_party/lib/libgsmcodec-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A6B1158C6B400FAEAA5 /* libpj-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpj-arm-apple-darwin9.a"; path = "../../../pjlib/lib/libpj-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A6D1158C6B400FAEAA5 /* libpjlib-util-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjlib-util-arm-apple-darwin9.a"; path = "../../../pjlib-util/lib/libpjlib-util-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A6F1158C6B400FAEAA5 /* libpjmedia-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjmedia-arm-apple-darwin9.a"; path = "../../../pjmedia/lib/libpjmedia-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A711158C6B400FAEAA5 /* libpjmedia-audiodev-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjmedia-audiodev-arm-apple-darwin9.a"; path = "../../../pjmedia/lib/libpjmedia-audiodev-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A731158C6B400FAEAA5 /* libpjmedia-codec-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjmedia-codec-arm-apple-darwin9.a"; path = "../../../pjmedia/lib/libpjmedia-codec-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A751158C6B400FAEAA5 /* libpjnath-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjnath-arm-apple-darwin9.a"; path = "../../../pjnath/lib/libpjnath-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A771158C6B400FAEAA5 /* libpjsip-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjsip-arm-apple-darwin9.a"; path = "../../../pjsip/lib/libpjsip-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A791158C6B400FAEAA5 /* libpjsip-simple-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjsip-simple-arm-apple-darwin9.a"; path = "../../../pjsip/lib/libpjsip-simple-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A7B1158C6B400FAEAA5 /* libpjsip-ua-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjsip-ua-arm-apple-darwin9.a"; path = "../../../pjsip/lib/libpjsip-ua-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A7D1158C6B400FAEAA5 /* libpjsua-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjsua-arm-apple-darwin9.a"; path = "../../../pjsip/lib/libpjsua-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90A7F1158C6B400FAEAA5 /* libresample-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libresample-arm-apple-darwin9.a"; path = "../../../third_party/lib/libresample-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90ABF1158F0C400FAEAA5 /* config.cfg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = config.cfg; sourceTree = "<group>"; };
+		3AE90B131159D38400FAEAA5 /* gui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gui.h; path = ../pjsua/gui.h; sourceTree = SOURCE_ROOT; };
+		3AE90C4F115A35BB00FAEAA5 /* TabBarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TabBarController.h; sourceTree = "<group>"; };
+		3AE90C50115A35BB00FAEAA5 /* TabBarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TabBarController.m; sourceTree = "<group>"; };
+		3AE90DAB115BB1CF00FAEAA5 /* ConfigViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConfigViewController.h; sourceTree = "<group>"; };
+		3AE90DAC115BB1CF00FAEAA5 /* ConfigViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConfigViewController.m; sourceTree = "<group>"; };
+		3AE90EB1115F7BCE00FAEAA5 /* libg7221codec-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libg7221codec-arm-apple-darwin9.a"; path = "../../../third_party/lib/libg7221codec-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90EB2115F7BCE00FAEAA5 /* libilbccodec-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libilbccodec-arm-apple-darwin9.a"; path = "../../../third_party/lib/libilbccodec-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90EB3115F7BCE00FAEAA5 /* libmilenage-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libmilenage-arm-apple-darwin9.a"; path = "../../../third_party/lib/libmilenage-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90EB4115F7BCE00FAEAA5 /* libpjsdp-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpjsdp-arm-apple-darwin9.a"; path = "../../../pjmedia/lib/libpjsdp-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90EB5115F7BCE00FAEAA5 /* libspeex-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libspeex-arm-apple-darwin9.a"; path = "../../../third_party/lib/libspeex-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		3AE90EB6115F7BCE00FAEAA5 /* libsrtp-arm-apple-darwin9.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsrtp-arm-apple-darwin9.a"; path = "../../../third_party/lib/libsrtp-arm-apple-darwin9.a"; sourceTree = SOURCE_ROOT; };
+		8D1107310486CEB800E47090 /* ipjsua-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "ipjsua-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1D60588F0D05DD3D006BFB54 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
+				1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */,
+				288765080DF74369002DB57D /* CoreGraphics.framework in Frameworks */,
+				3AE9099D11587BB900FAEAA5 /* AudioToolbox.framework in Frameworks */,
+				3AE90A6A1158C6B400FAEAA5 /* libgsmcodec-arm-apple-darwin9.a in Frameworks */,
+				3AE90A6C1158C6B400FAEAA5 /* libpj-arm-apple-darwin9.a in Frameworks */,
+				3AE90A6E1158C6B400FAEAA5 /* libpjlib-util-arm-apple-darwin9.a in Frameworks */,
+				3AE90A701158C6B400FAEAA5 /* libpjmedia-arm-apple-darwin9.a in Frameworks */,
+				3AE90A721158C6B400FAEAA5 /* libpjmedia-audiodev-arm-apple-darwin9.a in Frameworks */,
+				3AE90A741158C6B400FAEAA5 /* libpjmedia-codec-arm-apple-darwin9.a in Frameworks */,
+				3AE90A761158C6B400FAEAA5 /* libpjnath-arm-apple-darwin9.a in Frameworks */,
+				3AE90A781158C6B400FAEAA5 /* libpjsip-arm-apple-darwin9.a in Frameworks */,
+				3AE90A7A1158C6B400FAEAA5 /* libpjsip-simple-arm-apple-darwin9.a in Frameworks */,
+				3AE90A7C1158C6B400FAEAA5 /* libpjsip-ua-arm-apple-darwin9.a in Frameworks */,
+				3AE90A7E1158C6B400FAEAA5 /* libpjsua-arm-apple-darwin9.a in Frameworks */,
+				3AE90A801158C6B400FAEAA5 /* libresample-arm-apple-darwin9.a in Frameworks */,
+				3AE90EB7115F7BCE00FAEAA5 /* libg7221codec-arm-apple-darwin9.a in Frameworks */,
+				3AE90EB8115F7BCE00FAEAA5 /* libilbccodec-arm-apple-darwin9.a in Frameworks */,
+				3AE90EB9115F7BCE00FAEAA5 /* libmilenage-arm-apple-darwin9.a in Frameworks */,
+				3AE90EBA115F7BCE00FAEAA5 /* libpjsdp-arm-apple-darwin9.a in Frameworks */,
+				3AE90EBB115F7BCE00FAEAA5 /* libspeex-arm-apple-darwin9.a in Frameworks */,
+				3AE90EBC115F7BCE00FAEAA5 /* libsrtp-arm-apple-darwin9.a in Frameworks */,
+				3A0D789F121E324E009D5030 /* CFNetwork.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		080E96DDFE201D6D7F000001 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				3AE90DAB115BB1CF00FAEAA5 /* ConfigViewController.h */,
+				3AE90DAC115BB1CF00FAEAA5 /* ConfigViewController.m */,
+				28216C950DB411BC00E5133A /* FirstViewController.h */,
+				28216C960DB411BC00E5133A /* FirstViewController.m */,
+				3AE90C4F115A35BB00FAEAA5 /* TabBarController.h */,
+				3AE90C50115A35BB00FAEAA5 /* TabBarController.m */,
+				1D3623240D0F684500981E51 /* ipjsuaAppDelegate.h */,
+				1D3623250D0F684500981E51 /* ipjsuaAppDelegate.m */,
+			);
+			path = Classes;
+			sourceTree = "<group>";
+		};
+		19C28FACFE9D520D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1D6058910D05DD3D006BFB54 /* ipjsua.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		29B97314FDCFA39411CA2CEA /* ipjsua */ = {
+			isa = PBXGroup;
+			children = (
+				080E96DDFE201D6D7F000001 /* Classes */,
+				29B97315FDCFA39411CA2CEA /* Other Sources */,
+				29B97317FDCFA39411CA2CEA /* Resources */,
+				3A0D7ECB123DD46C009D5030 /* Resources-iPad */,
+				29B97323FDCFA39411CA2CEA /* Frameworks */,
+				3AE909B211587D2700FAEAA5 /* Libraries */,
+				19C28FACFE9D520D11CA2CBB /* Products */,
+			);
+			name = ipjsua;
+			sourceTree = "<group>";
+		};
+		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				3AE90B131159D38400FAEAA5 /* gui.h */,
+				3AE90ABF1158F0C400FAEAA5 /* config.cfg */,
+				3AE90A2C1158B52500FAEAA5 /* pjsua_app.c */,
+				28A0AB4B0D9B1048005BE974 /* ipjsua_Prefix.pch */,
+				29B97316FDCFA39411CA2CEA /* main.m */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		29B97317FDCFA39411CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				282CCBFD0DB6C98000C4EA27 /* SecondView.xib */,
+				28AD73870D9D96C1002E5188 /* MainWindow.xib */,
+				8D1107310486CEB800E47090 /* ipjsua-Info.plist */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1DF5F4DF0D08C38300B7A737 /* UIKit.framework */,
+				1D30AB110D05D00D00671497 /* Foundation.framework */,
+				288765070DF74369002DB57D /* CoreGraphics.framework */,
+				3AE9099C11587BB900FAEAA5 /* AudioToolbox.framework */,
+				3A0D789E121E324E009D5030 /* CFNetwork.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3A0D7ECB123DD46C009D5030 /* Resources-iPad */ = {
+			isa = PBXGroup;
+			children = (
+				3A0D7F1F123F2254009D5030 /* SecondView-iPad.xib */,
+				3A0D7ECC123DD46C009D5030 /* MainWindow-iPad.xib */,
+			);
+			name = "Resources-iPad";
+			sourceTree = "<group>";
+		};
+		3AE909B211587D2700FAEAA5 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				3AE90EB1115F7BCE00FAEAA5 /* libg7221codec-arm-apple-darwin9.a */,
+				3AE90EB2115F7BCE00FAEAA5 /* libilbccodec-arm-apple-darwin9.a */,
+				3AE90EB3115F7BCE00FAEAA5 /* libmilenage-arm-apple-darwin9.a */,
+				3AE90EB4115F7BCE00FAEAA5 /* libpjsdp-arm-apple-darwin9.a */,
+				3AE90EB5115F7BCE00FAEAA5 /* libspeex-arm-apple-darwin9.a */,
+				3AE90EB6115F7BCE00FAEAA5 /* libsrtp-arm-apple-darwin9.a */,
+				3AE90A691158C6B400FAEAA5 /* libgsmcodec-arm-apple-darwin9.a */,
+				3AE90A6B1158C6B400FAEAA5 /* libpj-arm-apple-darwin9.a */,
+				3AE90A6D1158C6B400FAEAA5 /* libpjlib-util-arm-apple-darwin9.a */,
+				3AE90A6F1158C6B400FAEAA5 /* libpjmedia-arm-apple-darwin9.a */,
+				3AE90A711158C6B400FAEAA5 /* libpjmedia-audiodev-arm-apple-darwin9.a */,
+				3AE90A731158C6B400FAEAA5 /* libpjmedia-codec-arm-apple-darwin9.a */,
+				3AE90A751158C6B400FAEAA5 /* libpjnath-arm-apple-darwin9.a */,
+				3AE90A771158C6B400FAEAA5 /* libpjsip-arm-apple-darwin9.a */,
+				3AE90A791158C6B400FAEAA5 /* libpjsip-simple-arm-apple-darwin9.a */,
+				3AE90A7B1158C6B400FAEAA5 /* libpjsip-ua-arm-apple-darwin9.a */,
+				3AE90A7D1158C6B400FAEAA5 /* libpjsua-arm-apple-darwin9.a */,
+				3AE90A7F1158C6B400FAEAA5 /* libresample-arm-apple-darwin9.a */,
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1D6058900D05DD3D006BFB54 /* ipjsua */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "ipjsua" */;
+			buildPhases = (
+				1D60588D0D05DD3D006BFB54 /* Resources */,
+				1D60588E0D05DD3D006BFB54 /* Sources */,
+				1D60588F0D05DD3D006BFB54 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ipjsua;
+			productName = ipjsua;
+			productReference = 1D6058910D05DD3D006BFB54 /* ipjsua.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		29B97313FDCFA39411CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				ORGANIZATIONNAME = "Teluu Inc. (http://www.teluu.com)";
+			};
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "ipjsua" */;
+			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 29B97314FDCFA39411CA2CEA /* ipjsua */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1D6058900D05DD3D006BFB54 /* ipjsua */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1D60588D0D05DD3D006BFB54 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				28AD73880D9D96C1002E5188 /* MainWindow.xib in Resources */,
+				282CCBFE0DB6C98000C4EA27 /* SecondView.xib in Resources */,
+				3AE90AC01158F0C400FAEAA5 /* config.cfg in Resources */,
+				3A0D7ECD123DD46C009D5030 /* MainWindow-iPad.xib in Resources */,
+				3A0D7F20123F2254009D5030 /* SecondView-iPad.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1D60588E0D05DD3D006BFB54 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
+				1D3623260D0F684500981E51 /* ipjsuaAppDelegate.m in Sources */,
+				28216C970DB411BC00E5133A /* FirstViewController.m in Sources */,
+				3AE90A2D1158B52500FAEAA5 /* pjsua_app.c in Sources */,
+				3AE90C51115A35BB00FAEAA5 /* TabBarController.m in Sources */,
+				3AE90DAD115BB1CF00FAEAA5 /* ConfigViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1D6058940D05DD3E006BFB54 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = ipjsua_Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PJ_AUTOCONF=1",
+					USE_GUI,
+				);
+				INFOPLIST_FILE = "ipjsua-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 3.2;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../third_party/lib\"",
+					"\"$(SRCROOT)/../../../pjlib/lib\"",
+					"\"$(SRCROOT)/../../../pjlib-util/lib\"",
+					"\"$(SRCROOT)/../../../pjmedia/lib\"",
+					"\"$(SRCROOT)/../../../pjnath/lib\"",
+					"\"$(SRCROOT)/../../../pjsip/lib\"",
+				);
+				PRODUCT_NAME = ipjsua;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1D6058950D05DD3E006BFB54 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = ipjsua_Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PJ_AUTOCONF=1",
+					USE_GUI,
+				);
+				INFOPLIST_FILE = "ipjsua-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 3.2;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../third_party/lib\"",
+					"\"$(SRCROOT)/../../../pjlib/lib\"",
+					"\"$(SRCROOT)/../../../pjlib-util/lib\"",
+					"\"$(SRCROOT)/../../../pjmedia/lib\"",
+					"\"$(SRCROOT)/../../../pjnath/lib\"",
+					"\"$(SRCROOT)/../../../pjsip/lib\"",
+				);
+				PRODUCT_NAME = ipjsua;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C01FCF4F08A954540054247B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_PREPROCESSOR_DEFINITIONS = USE_GUI;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../../pjsip/include,
+					../../../pjlib/include,
+					"../../../pjlib-util/include",
+					../../../pjnath/include,
+					../../../pjmedia/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					../../../pjlib/lib,
+					"../../../pjlib-util/lib",
+					../../../pjnath/lib,
+					../../../pjmedia/lib,
+					../../../pjsip/lib,
+					../../../third_party/lib,
+				);
+				OTHER_CFLAGS = "";
+				PREBINDING = NO;
+				SDKROOT = iphoneos5.1;
+			};
+			name = Debug;
+		};
+		C01FCF5008A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_PREPROCESSOR_DEFINITIONS = USE_GUI;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../../pjsip/include,
+					../../../pjlib/include,
+					"../../../pjlib-util/include",
+					../../../pjnath/include,
+					../../../pjmedia/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					../../../pjlib/lib,
+					"../../../pjlib-util/lib",
+					../../../pjnath/lib,
+					../../../pjmedia/lib,
+					../../../pjsip/lib,
+					../../../third_party/lib,
+				);
+				OTHER_CFLAGS = "";
+				PREBINDING = NO;
+				SDKROOT = iphoneos5.1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "ipjsua" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1D6058940D05DD3E006BFB54 /* Debug */,
+				1D6058950D05DD3E006BFB54 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "ipjsua" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4F08A954540054247B /* Debug */,
+				C01FCF5008A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+}

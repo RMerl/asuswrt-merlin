@@ -18,6 +18,8 @@
 <script type="text/javascript" src="/help.js"></script>
 
 <script>
+var lacp_support = isSupport("lacp");
+
 function initial(){
 	var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 	var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
@@ -25,14 +27,22 @@ function initial(){
 	show_menu();
 
 	if(ctf_disable == 1){
-		document.getElementById("ctfLevelDesc").innerHTML = "NAT traffic is processed by CPU.";
+		document.getElementById("ctfLevelDesc").innerHTML = "<#NAT_Acceleration_ctf_disable#>";
 	}
 	else{
 		if(ctf_fa_mode == '2')
-			document.getElementById("ctfLevelDesc").innerHTML = "CTF(Cut Through Forwarding) and FA(Flow Acceleration) accelerator are enabled.";
+			document.getElementById("ctfLevelDesc").innerHTML = "<#NAT_Acceleration_ctf_fa_mode2#>";
 		else
-			document.getElementById("ctfLevelDesc").innerHTML = "CTF(Cut Through Forwarding) is enabled.";
+			document.getElementById("ctfLevelDesc").innerHTML = "<#NAT_Acceleration_ctf_fa_mode1#>";
 	}
+
+	if(lacp_support){
+		document.getElementById("lacp_tr").style.display = "";
+	}
+	else{
+		document.form.lacp_enabled.disabled = true;
+	}
+
 }
 
 function applyRule(){
@@ -116,7 +126,7 @@ function applyRule(){
 												<td>
 													<select name="ctf_disable_force" class="input_option">
 														<option class="content_input_fd" value="1" <% nvram_match("ctf_disable", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-														<option class="content_input_fd" value="0" <% nvram_match("ctf_disable", "0","selected"); %>>Auto</option>
+														<option class="content_input_fd" value="0" <% nvram_match("ctf_disable", "0","selected"); %>><#Auto#></option>
 													</select>
 													&nbsp
 													<span id="ctfLevelDesc"></span>
@@ -141,7 +151,18 @@ function applyRule(){
 												</td>
 											</tr>
 
-										</table>	
+											<tr id="lacp_tr" style="display:none;">
+		      									<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);">Bonding/ Link aggregation</a></th><!--untranslated-->
+												<td>
+													<select name="lacp_enabled" class="input_option">
+														<option class="content_input_fd" value="0" <% nvram_match("lacp_enabled", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+														<option class="content_input_fd" value="1" <% nvram_match("lacp_enabled", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+													</select>
+													&nbsp
+													<div id="lacp_desc"><span >Please enable Bonding (802.3ad) support of your wired client and connect it to Router LAN1 and LAN2.</span><div><!--untranslated-->
+												</td>
+											</tr> 											  
+										</table>
 
 										<div class="apply_gen">
 											<input class="button_gen" onclick="applyRule()" type="button" value="<#CTL_apply#>"/>

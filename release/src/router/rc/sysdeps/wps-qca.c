@@ -42,7 +42,12 @@ start_wps_method(void)
 		return 0;
 	}
 
-	start_wsc();
+#ifdef RTCONFIG_WPS_ENROLLEE
+	if (nvram_match("wps_enrollee", "1"))
+		start_wsc_enrollee();
+	else
+#endif
+		start_wsc();
 
 	return 0;
 }
@@ -50,26 +55,18 @@ start_wps_method(void)
 int 
 stop_wps_method(void)
 {
-	char word[256], *next, ifnames[128];
-	int i, wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
-
 	if(getpid()!=1) {
 		notify_rc("stop_wps_method");
 		return 0;
 	}
 
-	i = 0;
-	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
-	foreach (word, ifnames, next) {
-		if (i >= MAX_NR_WL_IF)
-			break;
-		if (!multiband && wps_band != i) {
-			++i;
-			continue;
-		}
-		doSystem("hostapd_cli -i%s wps_cancel", get_wifname(i));	// WPS disabled
-		++i;
+#ifdef RTCONFIG_WPS_ENROLLEE
+	if (nvram_match("wps_enrollee", "1")) {
+		stop_wsc_enrollee();
 	}
+	else
+#endif
+		stop_wsc();
 
 	return 0;
 }
@@ -98,17 +95,39 @@ int is_wps_stopped(void)
 			continue;
 		}
 
-		strcpy(status, getWscStatus(i));
+#ifdef RTCONFIG_WPS_ENROLLEE
+		if (nvram_match("wps_enrollee", "1"))
+			strcpy(status, getWscStatus_enrollee(i));
+		else
+#endif
+			strcpy(status, getWscStatus(i));
 
 		//dbG("band %d wps status: %s\n", i, status);
-		if (!strcmp(status, "Success")) {
+		if (!strcmp(status, "Success") 
+#ifdef RTCONFIG_WPS_ENROLLEE
+				|| !strcmp(status, "COMPLETED")
+#endif
+		) {
 			dbG("\nWPS %s\n", status);
 #ifdef RTCONFIG_WPS_LED
 			nvram_set("wps_success", "1");
 #endif
+#if (defined(RTCONFIG_WPS_ENROLLEE) && defined(RTCONFIG_WIFI_CLONE))
+			if (nvram_match("wps_enrollee", "1")) {
+				nvram_set("wps_e_success", "1");
+#if defined(PLN12)
+				set_wifiled(4);
+#endif
+				wifi_clone(i);
+			}
+#endif
 			ret = 1;
 		}
-		else if (!strcmp(status, "Failed")) {
+		else if (!strcmp(status, "Failed") 
+#ifdef RTCONFIG_WPS_ENROLLEE
+				|| !strcmp(status, "INACTIVE")
+#endif
+		) {
 			dbG("\nWPS %s\n", status);
 			ret = 1;
 		}

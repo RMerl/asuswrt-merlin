@@ -7,4 +7,5 @@ ifeq ($(RTCONFIG_DUAL_TRX), y)
 EXTRACFLAGS += -DRTCONFIG_DUAL_TRX                    
 endif
 
+
 export EXTRACFLAGS

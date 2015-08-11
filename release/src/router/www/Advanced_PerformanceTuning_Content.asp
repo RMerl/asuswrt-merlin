@@ -128,7 +128,7 @@ function changeTempUnit(num){
 								<tr bgcolor="#4D595D" style="height:10px">
 								  <td valign="top">
 									  <div>&nbsp;</div>
-									  <div class="formfonttitle"><#menu5_6_adv#> - Performance tuning</div>
+									  <div class="formfonttitle"><#menu5_6#> - Performance tuning</div>
 									  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									  <!--div class="formfontdesc"><#PerformaceTuning_desc#></div-->
 									</td>

@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<Scenario site="$(HOSTNAME)" url="http://my.cdash.org/submit.php?project=PJSIP" wdir="$(PJDIR)">
+        <!-- Symbian S60 default -->
+	<Submit group="Experimental" build="$(OS)-$(S60TARGETNAME)-default" >
+		<Update disabled="1" />
+		<FileWrite file="pjlib/include/pj/config_site.h">
+		  <![CDATA[
+/* Written by ccdash */
+#include <pj/config_site_sample.h>
+#undef PJ_HAS_IPV6
+#define PJ_HAS_IPV6		1
+#undef PJMEDIA_HAS_G7221_CODEC 
+#define PJMEDIA_HAS_G7221_CODEC 1
+]]>			
+		</FileWrite>
+		<Configure cmd="cmd /c devices -setdefault $(S60DEVICE)" />
+		<Build wdir="build.symbian" cmd='cmd /C &quot;SET EPOCROOT=$(EPOCROOT)&amp;&amp; bldmake bldfiles &amp;&amp; abld reallyclean $(S60TARGET) &amp;&amp; abld build $(S60TARGET)&quot;' />
+	</Submit>
+</Scenario>
+

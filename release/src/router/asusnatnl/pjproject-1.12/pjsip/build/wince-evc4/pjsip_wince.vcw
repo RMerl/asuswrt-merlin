@@ -1,0 +1,161 @@
+Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "pjlib_util_wince"="..\..\..\pjlib-util\build\wince-evc4\pjlib_util_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib_wince"="..\..\..\pjlib\build\wince-evc4\pjlib_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_codec_wince"="..\..\..\pjmedia\build\wince-evc4\pjmedia_codec_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_wince"="..\..\..\pjmedia\build\wince-evc4\pjmedia_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjnath_wince"="..\..\..\pjnath\build\wince-evc4\pjnath_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_core_wince"=".\pjsip_core_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_simple_wince"=".\pjsip_simple_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_ua_wince"=".\pjsip_ua_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsua_lib_wince"=".\pjsua_lib_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "test_pjsip_wince"=".\test_pjsip_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_core_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_simple_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_ua_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsua_lib_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjnath_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_wince
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

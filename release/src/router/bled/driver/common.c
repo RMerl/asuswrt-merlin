@@ -89,6 +89,8 @@ static void wproc_disable_bled(char *cmd_str);
 static void wproc_enable_bled(char *cmd_str);
 static void wproc_delete_bled(char *cmd_str);
 static void wproc_debug_check(char *cmd_str);
+static void wproc_set_udef_pattern(char *cmd_str);
+static void wproc_set_mode(char *cmd_str);
 
 static struct bled_wproc_handler_s {
 	char *cmd;
@@ -98,6 +100,8 @@ static struct bled_wproc_handler_s {
 	{ "enable bled",	wproc_enable_bled },
 	{ "delete",		wproc_delete_bled },	/* delete ## */
 	{ "debug check",	wproc_debug_check },	/* debug check ## [0|1] */
+	{ "set udef pattern",	wproc_set_udef_pattern },	/* set udef pattern ## interval v1 [v2 [v3 [...]]] */
+	{ "set mode",		wproc_set_mode },	/* set mode ## [0|1] */
 
 	{ NULL, NULL },
 };
@@ -154,13 +158,14 @@ static inline int calc_nr_bus(unsigned int m)
 }
 
 /**
- * core bottom half handler of a bled. (caller may be timer handler or workqueue)
+ * core bottom half handler of a bled.
  * @bp:
  */
 static void __bled_bh_func(struct bled_priv *bp)
 {
 	int i;
 	unsigned long t;
+	struct udef_pattern_s *patt;
 
 	if (unlikely(!bp))
 		return;
@@ -175,33 +180,47 @@ static void __bled_bh_func(struct bled_priv *bp)
 		return;
 	}
 
-	if (bp->next_blink_ts && time_after_eq(jiffies, bp->next_blink_ts)) {
-		bled_ctrl(bp, bp->value ^ 1);
-		bp->next_blink_ts = jiffies + bp->next_blink_interval;
-	}
-
-	if (unlikely(bp->bh_type == BLED_BHTYPE_HYBRID)) {
-		/* Don't use bp->next_blilnk_ts here. We need to keep timer running. */
-		mod_timer(&bp->timer, jiffies + bp->next_blink_interval);
-		return;
-	}
-
-	if (time_after_eq(jiffies, bp->next_check_ts)) {
-		i = bp->check(bp);
-		if (unlikely(bp->check2))
-			i += bp->check2(bp);
-
-		if (!bp->next_blink_ts && i) {
-			bp->next_blink_interval = bp->interval;
-			bp->next_blink_ts = jiffies + bp->next_blink_interval;
-		} else if (!i) {
-			bp->next_blink_ts = 0;
-			bled_ctrl(bp, 1);
+	switch (bp->mode) {
+	case BLED_UDEF_PATTERN_MODE:
+		patt = &bp->udef_pattern;
+		if (unlikely(!bp->next_blink_ts))
+			patt->curr = 0;
+		if (!bp->next_blink_ts || time_after_eq(jiffies, bp->next_blink_ts)) {
+			bled_ctrl(bp, patt->value[patt->curr]);
+			bp->next_blink_ts = bp->next_check_ts = jiffies + patt->interval[patt->curr];
+			if (++patt->curr >= patt->nr_pattern)
+				patt->curr = 0;
 		}
-		if (unlikely(i && bp->next_check_interval == BLED_WAIT_IF_INTERVAL))
-			bp->next_check_interval = bled_check_interval_tbl[bp->bh_type];
+		break;
+	default:	/* BLED_NORMAL_MODE */
+		if (bp->next_blink_ts && time_after_eq(jiffies, bp->next_blink_ts)) {
+			bled_ctrl(bp, bp->value ^ 1);
+			bp->next_blink_ts = jiffies + bp->next_blink_interval;
+		}
 
-		bp->next_check_ts = jiffies + bp->next_check_interval;
+		if (unlikely(bp->bh_type == BLED_BHTYPE_HYBRID)) {
+			/* Don't use bp->next_blilnk_ts here. We need to keep timer running. */
+			mod_timer(&bp->timer, jiffies + bp->next_blink_interval);
+			return;
+		}
+
+		if (time_after_eq(jiffies, bp->next_check_ts)) {
+			i = bp->check(bp);
+			if (unlikely(bp->check2))
+				i += bp->check2(bp);
+
+			if (!bp->next_blink_ts && i) {
+				bp->next_blink_interval = bp->interval;
+				bp->next_blink_ts = jiffies + bp->next_blink_interval;
+			} else if (!i) {
+				bp->next_blink_ts = 0;
+				bled_ctrl(bp, 1);
+			}
+			if (unlikely(i && bp->next_check_interval == BLED_WAIT_IF_INTERVAL))
+				bp->next_check_interval = bled_check_interval_tbl[bp->bh_type];
+
+			bp->next_check_ts = jiffies + bp->next_check_interval;
+		}
 	}
 
 	t = bp->next_blink_ts;
@@ -221,6 +240,7 @@ static void bled_timer_func(unsigned long data)
 /**
  * workqueue of a bled.
  * Run check function of a bled only.
+ * Workqueue would be disabled when bp->mode = BLED_UDEF_PATTERN_MODE.
  */
 static void bled_wq_func(struct work_struct *work)
 {
@@ -322,6 +342,16 @@ static int validate_bled(struct bled_common *bc, int type)
 			bc->gpio_api_id, p->gpio_set, p->gpio_get);
 		return -EINVAL;
 	}
+	if (bc->mode >= BLED_MODE_MAX)
+		return -EINVAL;
+	if (bc->nr_pattern &&
+	    (bc->pattern_interval < BLED_UDEF_PATTERN_MIN_INTERVAL ||
+	     bc->pattern_interval > BLED_UDEF_PATTERN_MAX_INTERVAL))
+	{
+	    printk(KERN_INFO "bled: invalid user defined pattern. (%u, %u)\n",
+		    bc->nr_pattern, bc->pattern_interval);
+	    return -EINVAL;
+	}
 
 	return 0;
 }
@@ -392,12 +422,15 @@ static int validate_usbbus_bled(struct usbbus_bled *ul)
  */
 static int init_bled_priv(struct bled_priv *bp, struct bled_common *bc)
 {
+	unsigned int i, curr;
 	struct gpio_api_s *p;
+	struct udef_pattern_s *patt = &bp->udef_pattern;
 
 	bp->gpio_nr = bc->gpio_nr;
 	bp->active_low = !!bc->active_low;
 	bp->state = BLED_STATE_STOP;
 	bp->bh_type = bc->bh_type;
+	bp->mode = BLED_NORMAL_MODE;
 	bp->next_blink_ts = 0;
 	bp->next_check_interval = bled_check_interval_tbl[bp->bh_type];
 	bp->next_check_ts = jiffies + bp->next_check_interval;
@@ -411,6 +444,19 @@ static int init_bled_priv(struct bled_priv *bp, struct bled_common *bc)
 			bc->gpio_nr, bc->interval);
 		bc->interval = 1;
 	}
+
+	memset(&bp->udef_pattern, 0, sizeof(bp->udef_pattern));
+	patt->value[0] = !!bc->pattern[0];
+	for (i = 0, curr = 0; i < bc->nr_pattern; ++i) {
+		if (patt->value[curr] != !!bc->pattern[i])
+			curr++;
+
+		patt->value[curr] = !!bc->pattern[i];
+		patt->interval[curr] += msecs_to_jiffies(bc->pattern_interval);
+	}
+	if (curr)
+		patt->nr_pattern = ++curr;
+
 	dbg_bl("GPIO#%d BLED: %ums --> %ld jiffies\n",
 		bc->gpio_nr, bc->interval, bp->interval);
 	p = &gpio_api_tbl[bc->gpio_api_id];
@@ -533,7 +579,7 @@ static void wproc_delete_bled(char *cmd_str)
 	char *p = cmd_str;
 	struct bled_priv *bp;
 
-	/* cmd_str = "delete ##
+	/* cmd_str = "delete ##"
 	 * ## means gpio_nr
 	 */
 	if (!cmd_str)
@@ -562,7 +608,7 @@ static void wproc_debug_check(char *cmd_str)
 	int r, gpio_nr, v;
 	struct bled_priv *bp;
 
-	/* cmd_str = "delete ##
+	/* cmd_str = "debug check ## [0|1]"
 	 * ## means gpio_nr
 	 */
 	if (!cmd_str)
@@ -582,6 +628,140 @@ static void wproc_debug_check(char *cmd_str)
 			bp->flags &= ~(BLED_FLAGS_DBG_CHECK_FUNC);
 		} else {
 			bp->flags |= BLED_FLAGS_DBG_CHECK_FUNC;
+		}
+	}
+	mutex_unlock(&bled_list_lock);
+}
+
+/**
+ * Handler of /proc/bled write procedure
+ * Set user defined pattern of a bled.
+ * @cmd_str:	commmand string
+ * 		set udef pattern ## interval v1 [v2 [v3 [...]]]
+ */
+static void wproc_set_udef_pattern(char *cmd_str)
+{
+	int r, gpio_nr, v;
+	char *p;
+	unsigned int curr, interval;
+	struct bled_priv *bp;
+	struct udef_pattern_s pattern, *patt = &pattern;
+
+	/* cmd_str = "set udef pattern ## interval v1 [v2 [v3 [...]]]"
+	 * ## means gpio_nr
+	 */
+	if (!cmd_str)
+		return;
+
+	if ((r = sscanf(cmd_str, "set udef pattern %d %d", &gpio_nr, &interval)) != 2) {
+		dbg_bl("%s: invalid command [%s]\n", __func__, cmd_str);
+		return;
+	}
+
+	if (gpio_nr < 0 || gpio_nr >= 0xFF ||
+	    interval < BLED_UDEF_PATTERN_MIN_INTERVAL ||
+	    interval > BLED_UDEF_PATTERN_MAX_INTERVAL) {
+		dbg_bl("%s: invalid parameter. (gpio_nr %d interval %u)\n",
+			__func__, gpio_nr, interval);
+		return;
+	}
+
+	p = cmd_str + 16;		/* skip "set udef pattern" */
+	while (*p && !isdigit(*p))
+		p++;
+	while (*p && isdigit(*p))	/* skip GPIO number */
+		p++;
+	while (*p && !isdigit(*p))
+		p++;
+	while (*p && isdigit(*p))	/* skip interval */
+		p++;
+	while (*p && !isdigit(*p))
+		p++;
+
+	memset(&pattern, 0, sizeof(pattern));
+	patt->value[0] = !!simple_strtoul(p, NULL, 10);
+	for (curr = 0; *p != '\0' && curr < (BLED_MAX_NR_PATTERN - 1); ) {
+		v = !!simple_strtoul(p, NULL, 10);
+		if (patt->value[curr] != v)
+			curr++;
+
+		patt->value[curr] = v;
+		patt->interval[curr] += msecs_to_jiffies(interval);
+
+		while (*p && isdigit(*p))
+			p++;
+		while (*p && !isdigit(*p))
+			p++;
+	}
+	if (!curr) {
+		dbg_bl("Unknown user defined pattern.\n");
+		return;
+	}
+
+	patt->nr_pattern = ++curr;
+	mutex_lock(&bled_list_lock);
+	if ((bp = find_bled_priv_by_gpio(gpio_nr))) {
+		local_bh_disable();
+		bp->udef_pattern = *patt;
+		local_bh_enable();
+	}
+	mutex_unlock(&bled_list_lock);
+}
+
+/**
+ * Handler of /proc/bled write procedure
+ * Set mode of a bled.
+ * @cmd_str:	commmand string
+ * 		set mode ## [0|1]
+ */
+static void wproc_set_mode(char *cmd_str)
+{
+	int r, gpio_nr, v;
+	struct bled_priv *bp;
+	struct udef_pattern_s *patt;
+
+	/* cmd_str = "set mode ##
+	 * ## means gpio_nr
+	 */
+	if (!cmd_str)
+		return;
+
+	if ((r = sscanf(cmd_str, "set mode %d %d", &gpio_nr, &v)) != 2) {
+		dbg_bl("%s: invalid command [%s]\n", __func__, cmd_str);
+		return;
+	}
+
+	if (gpio_nr < 0 || gpio_nr >= 0xFF || (v && v != 1))
+		return;
+
+	mutex_lock(&bled_list_lock);
+	if ((bp = find_bled_priv_by_gpio(gpio_nr))) {
+		switch (v) {
+		case BLED_UDEF_PATTERN_MODE:
+			patt = &bp->udef_pattern;
+			if (!patt->nr_pattern) {
+				dbg_bl("User defined pattern of GPIO#%d absent!\n", gpio_nr);
+				break;
+			}
+			if (bp->bh_type == BLED_BHTYPE_HYBRID)
+				cancel_delayed_work(&bp->bled_work);
+			del_timer_sync(&bp->timer);
+			patt->curr = 0;
+			bp->next_blink_ts = 0;
+			bp->mode = v;
+			mod_timer(&bp->timer, jiffies);
+			break;
+		default:	/* BLED_NORMAL_MODE */
+			if (bp->reset_check)
+				bp->reset_check(bp);
+			local_bh_disable();
+			bp->next_blink_ts = 0;
+			bp->next_check_ts = jiffies + bp->next_check_interval;
+			bp->mode = BLED_NORMAL_MODE;
+			local_bh_enable();
+			if (bp->bh_type == BLED_BHTYPE_HYBRID)
+				schedule_delayed_work(&bp->bled_work, bp->next_check_interval);
+			mod_timer(&bp->timer, bp->next_check_ts);
 		}
 	}
 	mutex_unlock(&bled_list_lock);
@@ -627,8 +807,10 @@ static char *get_bhtype_str(struct bled_priv *bp)
 
 static int proc_bled_show(struct seq_file *m, void *v)
 {
+	unsigned i;
 	struct bled_priv *bp;
-	const char *sep = "________________________________________________________________________________";
+	struct udef_pattern_s *patt;
+	const char *sep = "___________________________________________________________________________________";
 
 	mutex_lock(&bled_list_lock);
 	seq_printf(m, TFMT "%d\n", "bled start", bled_start);
@@ -638,6 +820,7 @@ static int proc_bled_show(struct seq_file *m, void *v)
 		seq_printf(m, TFMT "%d (%s active)\n", "LED GPIO#", bp->gpio_nr, (bp->active_low)? "low":"high");
 		seq_printf(m, TFMT "%d (%s) / %d / %x / %s\n", "Type / State / Flags / LED",
 			bp->type, get_bhtype_str(bp), bp->state, bp->flags, (bp->value)? "ON":"OFF");
+		seq_printf(m, TFMT "%u\n", "Mode", bp->mode);
 		if (bp->flags & BLED_FLAGS_DBG_CHECK_FUNC) {
 			seq_printf(m, TFMT "%8lu bytes/%3u ms\n", "Blink threshold",
 				bp->threshold, jiffies_to_msecs(bp->next_check_interval));
@@ -651,6 +834,19 @@ static int proc_bled_show(struct seq_file *m, void *v)
 			seq_printf(m, TFMT "%p\n", "Check traffic", bp->check);
 #endif
 		}
+
+		seq_printf(m, TFMT, "User defined pattern (ms)");
+		patt = &bp->udef_pattern;
+		if (!patt->nr_pattern) {
+			seq_printf(m, "N/A\n");
+		} else {
+			for (i = 0; i < patt->nr_pattern; ++i) {
+				seq_printf(m, "%d,%4u%s", !!patt->value[i],
+					jiffies_to_msecs(patt->interval[i]),
+					(i == patt->nr_pattern - 1)? "\n" : ", ");
+			}
+		}
+
 		if (bp->type >= 0 && bp->type < BLED_TYPE_MAX && bled_type_printer[bp->type])
 			bled_type_printer[bp->type](bp, m);
 		if (bp->type == BLED_TYPE_SWPORTS_BLED && bled_type_printer[BLED_TYPE_NETDEV_BLED])
@@ -677,7 +873,7 @@ static int proc_bled_write(struct file* file, const char __user* buffer, size_t 
 	struct bled_wproc_handler_s *wh;
 
 	if (!buf) {
-		dbg_bl_v("allocate %lu bytes fail!\n", count);
+		dbg_bl_v("allocate %u bytes fail!\n", count);
 		return count;
 	}
 
@@ -1154,6 +1350,113 @@ static int handle_get_bled_type(unsigned long arg)
 	return 0;
 }
 
+/**
+ * Handle BLED_CTL_SET_UDEF_PATTERN ioctl command.
+ * @arg:	pointer to parameter in user-space
+ * 		(pointer to integer)
+ * @return:
+ * 	0:	success
+ *  otherwise:	fail
+ */
+static int handle_set_udef_pattern(unsigned long arg)
+{
+	unsigned int i, curr;
+	struct bled_common bled, *bc = &bled;
+	struct bled_priv *bp;
+	struct udef_pattern_s pattern, *patt = &pattern;
+
+	if (copy_from_user(bc, (void __user *) arg, sizeof(struct bled_common)))
+		return -EFAULT;
+
+	if (bc->gpio_nr >= 0xFF)
+		return -EINVAL;
+	if (!bc->nr_pattern ||
+	    bc->pattern_interval < BLED_UDEF_PATTERN_MIN_INTERVAL ||
+	    bc->pattern_interval > BLED_UDEF_PATTERN_MAX_INTERVAL)
+		return -EINVAL;
+	if (!(bp = find_bled_priv_by_gpio(bc->gpio_nr)))
+		return -ENODEV;
+
+	dbg_bl_v("GPIO#%d: set user defined pattern. (nr: %u, interval: %ums)\n",
+		bc->gpio_nr, bc->nr_pattern, bc->pattern_interval);
+	memset(&pattern, 0, sizeof(pattern));
+	patt->value[0] = !!bc->pattern[0];
+	for (i = 0, curr = 0; i < bc->nr_pattern && curr < (BLED_MAX_NR_PATTERN - 1); ++i) {
+		if (patt->value[curr] != !!bc->pattern[i])
+			curr++;
+
+		patt->value[curr] = !!bc->pattern[i];
+		patt->interval[curr] += msecs_to_jiffies(bc->pattern_interval);
+	}
+	patt->nr_pattern = ++curr;
+	local_bh_disable();
+	bp->udef_pattern = *patt;
+	local_bh_enable();
+
+	return 0;
+}
+
+/**
+ * Handle BLED_CTL_SET_MODE ioctl command.
+ * @arg:	pointer to parameter in user-space
+ * 		(pointer to integer)
+ * @return:
+ * 	0:	success
+ *  otherwise:	fail
+ */
+static int handle_set_mode(unsigned long arg)
+{
+	struct bled_common bled, *bc = &bled;
+	struct bled_priv *bp;
+	struct udef_pattern_s *patt;
+
+	if (copy_from_user(bc, (void __user *) arg, sizeof(struct bled_common)))
+		return -EFAULT;
+
+	if (bc->gpio_nr >= 0xFF)
+		return -EINVAL;
+	if (!(bp = find_bled_priv_by_gpio(bc->gpio_nr)))
+		return -ENODEV;
+
+	if (bp->mode == bc->mode)
+		return 0;
+
+	dbg_bl_v("GPIO#%d: mode %d -> %d\n", bc->gpio_nr, bp->mode, bc->mode);
+	switch (bc->mode) {
+	case BLED_UDEF_PATTERN_MODE:
+		patt = &bp->udef_pattern;
+		if (!patt->nr_pattern) {
+			dbg_bl("User defined pattern of GPIO#%d absent!\n", bc->gpio_nr);
+			return -EINVAL;
+		}
+		if (bp->bh_type == BLED_BHTYPE_HYBRID)
+			cancel_delayed_work(&bp->bled_work);
+		del_timer_sync(&bp->timer);
+		patt->curr = 0;
+		bp->next_blink_ts = 0;
+		bp->mode = bc->mode;
+		mod_timer(&bp->timer, jiffies);
+		break;
+	case BLED_NORMAL_MODE:
+		if (bp->bh_type == BLED_BHTYPE_HYBRID)
+			cancel_delayed_work(&bp->bled_work);
+		del_timer_sync(&bp->timer);
+		if (bp->reset_check)
+			bp->reset_check(bp);
+		bp->next_blink_ts = 0;
+		bp->next_check_ts = jiffies + bp->next_check_interval;
+		bp->mode = bc->mode;
+		if (bp->bh_type == BLED_BHTYPE_HYBRID)
+			schedule_delayed_work(&bp->bled_work, bp->next_check_interval);
+		mod_timer(&bp->timer, bp->next_check_ts);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static long bled_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = -EINVAL;
@@ -1195,6 +1498,12 @@ static long bled_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	case BLED_CTL_GET_BLED_TYPE:
 		ret = handle_get_bled_type(arg);
+		break;
+	case BLED_CTL_SET_UDEF_PATTERN:
+		ret = handle_set_udef_pattern(arg);
+		break;
+	case BLED_CTL_SET_MODE:
+		ret = handle_set_mode(arg);
 		break;
 	}
 

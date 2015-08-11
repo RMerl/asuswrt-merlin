@@ -1,0 +1,2298 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="9.00"
+	Name="samples"
+	ProjectGUID="{E378A1FC-0C9C-4462-860F-7E60BC1BF84E}"
+	RootNamespace="samples"
+	Keyword="MakeFileProj"
+	TargetFrameworkVersion="131072"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+		<Platform
+			Name="Pocket PC 2003 (ARMV4)"
+		/>
+		<Platform
+			Name="Smartphone 2003 (ARMV4)"
+		/>
+		<Platform
+			Name="x64"
+		/>
+		<Platform
+			Name="Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+		/>
+		<Platform
+			Name="Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+		/>
+		<Platform
+			Name="Windows Mobile 6 Standard SDK (ARMV4I)"
+		/>
+		<Platform
+			Name="Windows Mobile 6 Professional SDK (ARMV4I)"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\output\$(ProjectName)-i386-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Pocket PC 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Smartphone 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath="&quot;C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64&quot;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory=".\output\$(ProjectName)-i386-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Pocket PC 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Smartphone 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Static|Win32"
+			OutputDirectory=".\output\$(ProjectName)-i386-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Static|Pocket PC 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Static|Smartphone 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Static|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Static|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Static|Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dynamic|Win32"
+			OutputDirectory=".\output\$(ProjectName)-i386-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dynamic|Pocket PC 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dynamic|Smartphone 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dynamic|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dynamic|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dynamic|Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dynamic|Win32"
+			OutputDirectory=".\output\$(ProjectName)-i386-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dynamic|Pocket PC 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dynamic|Smartphone 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dynamic|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dynamic|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dynamic|Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Static|Win32"
+			OutputDirectory=".\output\$(ProjectName)-i386-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Static|Pocket PC 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Static|Smartphone 2003 (ARMV4)"
+			OutputDirectory=".\output\$(ProjectName)-wm2003sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Static|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Static|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5ppc-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Static|Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm5sp-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dll|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dll|Pocket PC 2003 (ARMV4)"
+			OutputDirectory="Pocket PC 2003 (ARMV4)\$(ConfigurationName)"
+			IntermediateDirectory="Pocket PC 2003 (ARMV4)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dll|Smartphone 2003 (ARMV4)"
+			OutputDirectory="Smartphone 2003 (ARMV4)\$(ConfigurationName)"
+			IntermediateDirectory="Smartphone 2003 (ARMV4)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dll|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dll|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+			OutputDirectory="Windows Mobile 5.0 Pocket PC SDK (ARMV4I)\$(ConfigurationName)"
+			IntermediateDirectory="Windows Mobile 5.0 Pocket PC SDK (ARMV4I)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dll|Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+			OutputDirectory="Windows Mobile 5.0 Smartphone SDK (ARMV4I)\$(ConfigurationName)"
+			IntermediateDirectory="Windows Mobile 5.0 Smartphone SDK (ARMV4I)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dll|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dll|Pocket PC 2003 (ARMV4)"
+			OutputDirectory="Pocket PC 2003 (ARMV4)\$(ConfigurationName)"
+			IntermediateDirectory="Pocket PC 2003 (ARMV4)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dll|Smartphone 2003 (ARMV4)"
+			OutputDirectory="Smartphone 2003 (ARMV4)\$(ConfigurationName)"
+			IntermediateDirectory="Smartphone 2003 (ARMV4)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dll|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dll|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
+			OutputDirectory="Windows Mobile 5.0 Pocket PC SDK (ARMV4I)\$(ConfigurationName)"
+			IntermediateDirectory="Windows Mobile 5.0 Pocket PC SDK (ARMV4I)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dll|Windows Mobile 5.0 Smartphone SDK (ARMV4I)"
+			OutputDirectory="Windows Mobile 5.0 Smartphone SDK (ARMV4I)\$(ConfigurationName)"
+			IntermediateDirectory="Windows Mobile 5.0 Smartphone SDK (ARMV4I)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Windows Mobile 6 Standard SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6std-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Windows Mobile 6 Professional SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6pro-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Windows Mobile 6 Standard SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6std-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Windows Mobile 6 Professional SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6pro-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Static|Windows Mobile 6 Standard SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6std-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Static|Windows Mobile 6 Professional SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6pro-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dynamic|Windows Mobile 6 Standard SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6std-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Dynamic|Windows Mobile 6 Professional SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6pro-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dynamic|Windows Mobile 6 Standard SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6std-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug-Dynamic|Windows Mobile 6 Professional SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6pro-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=debug-dynamic VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Static|Windows Mobile 6 Standard SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6std-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release-Static|Windows Mobile 6 Professional SDK (ARMV4I)"
+			OutputDirectory=".\output\$(ProjectName)-wm6pro-$(PlatformName)-vs8-$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile=""
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8"
+				ReBuildCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 /a"
+				CleanCommandLine="nmake /NOLOGO /S /f Samples-vc.mak BUILD_MODE=release-static VC_VER=8 clean"
+				Output="All samples"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				ExecutionBucket="7"
+			/>
+			<Tool
+				Name="VCCodeSignTool"
+			/>
+			<DeploymentTool
+				ForceDirty="-1"
+				RemoteDirectory=""
+				RegisterOutput="0"
+				AdditionalFiles=""
+			/>
+			<DebuggerTool
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
+			<File
+				RelativePath="..\src\samples\aectest.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\auddemo.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\confbench.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\confsample.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\encdec.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\footprint.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\httpdemo.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\icedemo.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\jbsim.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\latency.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\level.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\mix.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\pcaputil.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\pjsip-perf.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\playfile.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\playsine.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\recfile.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\resampleplay.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\simple_pjsua.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\simpleua.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\siprtp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\siprtp_report.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\sipstateless.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\sndinfo.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\sndtest.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\stateful_proxy.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\stateless_proxy.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\streamutil.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\strerror.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\tonegen.c"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl"
+			>
+			<File
+				RelativePath="..\src\samples\proxy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\samples\util.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
+		</Filter>
+		<File
+			RelativePath="Samples-vc.mak"
+			>
+		</File>
+		<File
+			RelativePath="Samples.mak"
+			>
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

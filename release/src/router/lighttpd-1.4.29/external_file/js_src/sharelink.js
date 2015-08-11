@@ -339,7 +339,7 @@ function createThumbView(query_type, parent_url, folder_array, file_array){
 			html += '1';
 		else
 			html += '0';
-									
+								
 		html += '" uhref="';
 		html += folder_array[i].href;
 		html += '">';
@@ -716,6 +716,7 @@ function doPROPFIND(open_url, complete_handler, auth){
 						
 						if(this_href!=""){							
 								if( this_contenttype=="httpd/unix-directory" ){
+									
 									g_folder_array.push({ contenttype: this_contenttype, 
 										                  href: this_href,
 										                  name: this_name,

@@ -101,7 +101,7 @@ function detect_firmware(){
       								{
       										document.getElementById('update_scan').style.display="none";
       										document.getElementById('update_states').style.display="none";
-      										if(confirm("<#exist_new#>\n\nDo not power off <#Web_Title2#> while upgrade in progress.")){
+      										if(confirm("<#exist_new#>\n\n<#Main_alert_proceeding_desc5#>")){
       												document.start_update.action_mode.value="apply";
       												document.start_update.action_script.value="start_webs_upgrade";
 															document.start_update.submit();
@@ -233,7 +233,7 @@ function isDownloading(){
 								return false;
 						}
 						else if(webs_state_error == 2){
-								document.getElementById("drword").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>"; //Untranslated.fw_size_higher_mem
+								document.getElementById("drword").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>"; /* untranslated */ //Untranslated.fw_size_higher_mem
 								return false;						
 						}
 						else if(webs_state_error == 3){
@@ -292,7 +292,7 @@ function submitForm(){
 			<span id="proceeding_img_text"></span>
 			<div id="proceeding_img"></div>
 		</div>
-		<div id="loading_block2" style="margin:5px auto; width:85%;"><#FIRM_ok_desc#><br>Do not power off <#Web_Title2#> while upgrade in progress.</div>
+		<div id="loading_block2" style="margin:5px auto; width:85%;"><#FIRM_ok_desc#><br><#Main_alert_proceeding_desc5#></div>
 		<div id="loading_block3" style="margin:5px auto;width:85%; font-size:12pt;"></div>
 		</td>
 	</tr>
@@ -344,7 +344,7 @@ function submitForm(){
 		<tr>
 		  <td bgcolor="#4D595D" valign="top"  >
 		  <div>&nbsp;</div>
-		  <div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_3#></div>
+		  <div class="formfonttitle"><#menu5_6#> - <#menu5_6_3#></div>
 		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="../images/New_ui/export/line_export.png"></div>
 		  <div class="formfontdesc"><strong>
 		  	<#FW_note#></strong>

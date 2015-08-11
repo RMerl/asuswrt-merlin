@@ -1040,6 +1040,8 @@ void bcmvlan_models(int model, char *vlan)
 	case MODEL_RTAC88U:
 	case MODEL_RTAC3100:
 	case MODEL_RTAC5300:
+	case MODEL_RTAC1200G:
+	case MODEL_RTAC1200GP:
 		strcpy(vlan, "vlan1");
 		break;
 	case MODEL_RTN53:

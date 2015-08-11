@@ -55,6 +55,9 @@ function initial(){
 
 	if(sw_mode == "2" || sw_mode == "3" || sw_mode == "4")
 		document.getElementById("aidisk_hyperlink").style.display = "none";
+		
+	if(noaidisk_support)
+		document.getElementById("aidisk_hyperlink").style.display = "none";
 	
 	if(based_modelid == "RT-AC87U" && parent.currentUsbPort == 0){
 		document.getElementById('reduce_usb3_table').style.display = "";

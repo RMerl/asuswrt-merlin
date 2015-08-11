@@ -70,12 +70,16 @@ void init_devs(void)
 {
 	int status;
 
-	__mknod("/dev/nvram", S_IFCHR | 0x666, makedev(228, 0));
+	__mknod("/dev/nvram", S_IFCHR | 0666, makedev(228, 0));
 	__mknod("/dev/dk0", S_IFCHR | 0666, makedev(63, 0));
 	__mknod("/dev/dk1", S_IFCHR | 0666, makedev(63, 1));
 	__mknod("/dev/armem", S_IFCHR | 0660, makedev(1, 13));
 	__mknod("/dev/sfe", S_IFCHR | 0660, makedev(252, 0)); // TBD
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+	eval("ln", "-sf", "/dev/mtdblock2", "/dev/caldata");	/* mtdblock2 = SPI flash, Factory MTD partition */
+#else
 	eval("ln", "-sf", "/dev/mtdblock3", "/dev/caldata");	/* mtdblock3 = Factory MTD partition */
+#endif
 
 	if ((status = WEXITSTATUS(modprobe("nvram_linux"))))
 		printf("## modprove(nvram_linux) fail status(%d)\n", status);
@@ -113,6 +117,9 @@ static void init_switch_qca(void)
 	if (is_routing_enabled())
 		config_3052(nvram_get_int("switch_stb_x"));
 #else
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+	eval("ifconfig", MII_IFNAME, "hw", "ether", nvram_safe_get("et0macaddr"));
+#endif
 	if (strlen(nvram_safe_get("wan0_ifname"))) {
 		eval("ifconfig", nvram_safe_get("wan0_ifname"), "hw",
 		     "ether", nvram_safe_get("et0macaddr"));
@@ -146,7 +153,7 @@ void enable_jumbo_frame(void)
 		mtu = 9000;
 
 	sprintf(mtu_str, "%d", mtu);
-	eval("swconfig", "dev", "eth0", "set", "max_frame_size", mtu_str);
+	eval("swconfig", "dev", MII_IFNAME, "set", "max_frame_size", mtu_str);
 }
 
 void init_switch(void)
@@ -248,6 +255,11 @@ void config_switch(void)
 		eval("rtkswitch", "27");	// software reset
 	}
 
+#ifdef RTCONFIG_DEFAULT_AP_MODE
+	if (nvram_get_int("sw_mode") != SW_MODE_ROUTER)
+		system("rtkswitch 8 7"); // LLLLL
+	else
+#endif
 	system("rtkswitch 8 0"); // init, rtkswitch 114,115,14,15 need it
 	if (is_routing_enabled()) {
 		char parm_buf[] = "XXX";
@@ -511,10 +523,11 @@ void config_switch(void)
 int switch_exist(void)
 {
 	FILE *fp;
-	char buf[512];
+	char cmd[64], buf[512];
 	int rlen;
 
-	if ((fp = popen("swconfig dev eth0 port 0 get link", "r")) == NULL) {
+	sprintf(cmd, "swconfig dev %s port 0 get link", MII_IFNAME);
+	if ((fp = popen(cmd, "r")) == NULL) {
 		return 0;
 	}
 	rlen = fread(buf, 1, sizeof(buf), fp);
@@ -533,13 +546,15 @@ static const char * country_to_code(char *ctry, int band)
 	if (strcmp(ctry, "US") == 0)
 		return "841";
 	else if (strcmp(ctry, "CA") == 0)
-		return "5001";
+		return "124";
 	else if (strcmp(ctry, "TW") == 0)
 		return "158";
 	else if (strcmp(ctry, "CN") == 0)
 		return "156";
 	else if (strcmp(ctry, "GB") == 0)
 		return "826";
+	else if (strcmp(ctry, "DE") == 0)
+		return "276";
 	else if (strcmp(ctry, "SG") == 0)
 		return "702";
 	else if (strcmp(ctry, "HU") == 0)
@@ -776,7 +791,11 @@ void init_syspara(void)
 #else
 	//TODO: separate for different chipset solution
 	nvram_set("et0macaddr", macaddr);
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+	nvram_set("et1macaddr", macaddr);
+#else
 	nvram_set("et1macaddr", macaddr2);
+#endif
 #endif
 
 	dst = (unsigned char*) country_code;
@@ -788,6 +807,7 @@ void init_syspara(void)
 	}
 	else
 	{
+		dst[FACTORY_COUNTRY_CODE_LEN]='\0';
 		chk_valid_country_code(country_code);
 		nvram_set("wl_country_code", country_code);
 		nvram_set("wl0_country_code", country_code);
@@ -839,6 +859,18 @@ void init_syspara(void)
 			nvram_set("territory_code", buffer);
 		}
 	}
+
+	/* PSK */
+	memset(buffer, 0, sizeof(buffer));
+	if (FRead(buffer, OFFSET_PSK, 14) < 0) {
+		_dprintf("READ ASUS PSK: Out of scope\n");
+		nvram_set("wifi_psk", "");
+	} else {
+		if (buffer[0] == 0xff)
+			nvram_set("wifi_psk", "");
+		else
+			nvram_set("wifi_psk", buffer);
+	}
 #endif
 
 	memset(buffer, 0, sizeof(buffer));
@@ -866,7 +898,9 @@ void init_syspara(void)
 	nvram_set("firmver", rt_version);
 	nvram_set("productid", rt_buildname);
 
+#if !defined(RTCONFIG_TCODE) // move the verification later bcz TCODE/LOC
 	verify_ctl_table();
+#endif
 }
 
 #ifdef RTCONFIG_ATEUSB3_FORCE
@@ -918,10 +952,10 @@ char *__get_wlifname(int band, int subunit, char *buf)
 void reinit_sfe(int unit)
 {
 	int prim_unit = wan_primary_ifunit();
-	int act = 1;	/* -1/0/otherwise: ignore/remove sfe/load sfe */
+	int act = 1,i;	/* -1/0/otherwise: ignore/remove sfe/load sfe */
 	struct load_sfe_kmod_seq_s *p = &load_sfe_kmod_seq[0];
 #if defined(RTCONFIG_DUALWAN)
-	int nat_x = -1, i, l, t, link_wan = 1, link_wans_lan = 1;
+	int nat_x = -1, l, t, link_wan = 1, link_wans_lan = 1;
 	int wans_cap = get_wans_dualwan() & WANSCAP_WAN;
 	int wanslan_cap = get_wans_dualwan() & WANSCAP_LAN;
 	char nat_x_str[] = "wanX_nat_xXXXXXX";
@@ -930,7 +964,7 @@ void reinit_sfe(int unit)
 		return;
 
 	/* If QoS is enabled, disable sfe. */
-	if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)
+	if (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") != 1)
 		act = 0;
 
 	if (act > 0 && !nvram_match("switch_wantag", "none") && !nvram_match("switch_wantag", ""))

@@ -31,7 +31,7 @@
 #define FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
 
-#define __DEBUG__
+//#define __DEBUG__
 #ifdef __DEBUG__
 #define DEBUG(info, ...) printf(info,##__VA_ARGS__)
 #else
@@ -120,6 +120,7 @@ typedef struct SYNC_LIST
     int no_local_root;
     int init_completed;
     int sync_disk_exist;
+    int IsNetWorkUnlink; //2014.11.20 by sherry (ip是否正确，网络通不通)
     action_item *copy_file_list;
     action_item *server_action_list;
     action_item *dragfolder_action_list;

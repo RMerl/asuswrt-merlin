@@ -49,6 +49,7 @@ var overlib_str = new Array();	//Viz add 2011.07 for record longer virtual srvr 
 
 var vts_rulelist_array = "<% nvram_char_to_ascii("","vts_rulelist"); %>";
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
+var wans_mode ='<% nvram_get("wans_mode"); %>';
 
 function initial(){
 	show_menu();
@@ -62,6 +63,9 @@ function initial(){
 		document.getElementById('FTP_desc').style.display = "none";
 		document.form.vts_ftpport.parentNode.parentNode.style.display = "none";
 	}
+
+	if(dualWAN_support && wans_mode == "lb")
+		document.getElementById("lb_note").style.display = "";
 }
 
 function isChange(){
@@ -204,14 +208,15 @@ function showLANIPList(){
 	for(var i=0; i<clientList.length;i++){
 		var clientObj = clientList[clientList[i]];
 
-		if(clientObj.ip == "offline") clientObj.ip = "";
-		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
+		if(clientObj.isOnline) {
+			if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
 
-		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
-		htmlCode += clientObj.ip;
-		htmlCode += '\');"><strong>';
-		htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
-		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+			htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
+			htmlCode += clientObj.ip;
+			htmlCode += '\');"><strong>';
+			htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
+			htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+		}
 	}
 
 	document.getElementById("ClientList_Block").innerHTML = htmlCode;
@@ -553,6 +558,7 @@ function changeBgColor(obj, num){
 		<div class="formfontdesc" style="margin-top:-10px;">
 			<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#menu5_3_4#>&nbspFAQ</a>
 		</div>
+		<div class="formfontdesc" id="lb_note" style="color:#FFCC00; display:none;"><#lb_note_portForwarding#></div>
 
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
 					  <thead>
