@@ -1,7 +1,8 @@
 
 include ../common.mak
 #CC = gcc
-CFLAGS += -I. -fPIC -O -g -Wall -Werror -Wno-unused-variable -Wno-unused-parameter -fstrict-aliasing
+#CFLAGS = -I. -fPIC -O -g -Wall -Werror -Wno-unused-variable -Wno-unused-parameter
+CFLAGS += -I. -fPIC -O -g -Wall -Werror -Wno-unused-variable -Wno-unused-parameter
 CFLAGS += -D_GNU_SOURCE
 
 COMMON_PROG_OBJS = \
@@ -9,7 +10,6 @@ COMMON_PROG_OBJS = \
 	qcsapi_driver.o	\
 	qcsapi_output.o	\
 	qcsapi_sem.o	\
-	qcsapi_util.o
 
 SOCKET_PROG_OBJS = \
 	$(COMMON_PROG_OBJS)				\
@@ -38,8 +38,6 @@ LIB_OBJS = \
 TARGETS = qcsapi_sockrpc \
 	qcsapi_sockraw \
 	$(LIB_REALNAME)
-
-CFLAGS += -DPCIE_RPC_TYPE=RPC_TYPE_QCSAPI_PCIE
 
 all: $(TARGETS)
 
