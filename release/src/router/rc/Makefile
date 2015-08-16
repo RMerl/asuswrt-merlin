@@ -359,7 +359,6 @@ endif
 all: prebuilt rc
 
 prebuilt:
-	echo BLAHBLAHBLAH
 # Dig into our collection of prebuilt objects based on model and architecture.
 	@-rm -f ./prebuild/*.o || true
 ifeq ($(RTCONFIG_BCMARM),y)
