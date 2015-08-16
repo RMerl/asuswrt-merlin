@@ -271,13 +271,10 @@ define platformKernelConfig
 				cp $(SRCBASE)/router/wl_arm_10/prebuilt/wl_apsta.o $(SRCBASE)/wl/linux ; \
 			fi; \
 		else \
-			if [ "$(BWDPI)" = "y" ] && [ -d $(SRCBASE)/router/wl_arm/dpi/$(BUILD_NAME) ]; then \
+			if [ -d $(SRCBASE)/router/wl_arm/$(BUILD_NAME) ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
-				cp $(SRCBASE)/router/wl_arm/dpi/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
-			elif [ -d $(SRCBASE)/router/wl_arm/normal/$(BUILD_NAME) ]; then \
-				mkdir $(SRCBASE)/wl/linux ; \
-				cp $(SRCBASE)/router/wl_arm/normal/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
-            elif [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
+				cp $(SRCBASE)/router/wl_arm/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
+			elif [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
 				cp $(SRCBASE)/router/wl_arm/prebuilt/* $(SRCBASE)/wl/linux ; \
 			elif [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME) ]; then \
