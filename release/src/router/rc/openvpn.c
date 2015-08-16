@@ -1245,11 +1245,12 @@ void start_vpnserver(int serverNum)
 			// Validate DH strength
 			sprintf(&buffer[0], "/usr/sbin/openssl dhparam -in /etc/openvpn/server%d/dh.pem -text | grep \"DH Parameters:\" > /tmp/output.txt", serverNum);
 			system(&buffer[0]);
-			f_read_string("/tmp/output.txt", &buffer[0], 64);
-			if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
-				if (i < 1024) {
-					logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
-					valid = 0;      // Not valid after all, must regenerate
+			if (f_read_string("/tmp/output.txt", &buffer[0], 64) > 0) {
+				if (sscanf(strstr(&buffer[0],"DH Parameters"),"DH Parameters: (%d bit)", &i)) {
+					if (i < 1024) {
+						logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
+						valid = 0;      // Not valid after all, must regenerate
+					}
 				}
 			}
 		}
