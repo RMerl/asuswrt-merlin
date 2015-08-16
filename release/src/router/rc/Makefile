@@ -356,7 +356,18 @@ ifeq ($(RTCONFIG_TUNNEL),y)
 OBJS += natnl_api.o
 endif
 
-all: rc
+all: prebuilt rc
+
+prebuilt:
+	echo BLAHBLAHBLAH
+# Dig into our collection of prebuilt objects based on model and architecture.
+	@-rm -f ./prebuild/*.o || true
+ifeq ($(RTCONFIG_BCMARM),y)
+	@-cp -f ./prebuild/arm/* ./prebuild/
+else
+	@-cp -f ./prebuild/mips/* ./prebuild/
+endif
+	@-cp -f ./prebuild/models/$(BUILD_NAME)/* ./prebuild/
 
 rc: $(OBJS)
 	@echo " [rc] CC $@"
@@ -594,7 +605,7 @@ endif
 endif
 ifeq ($(RTCONFIG_HTTPS),y)
 pwdec.o:
-	@-cp -f ./prebuild/pwdec$(BCMEX).o pwdec.o
+	@-cp -f ./prebuild/pwdec.o .
 endif
 else
 ifeq ($(RTCONFIG_HTTPS),y)
