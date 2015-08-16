@@ -2626,8 +2626,10 @@ function oui_query(mac){
 		type: 'GET',
 	    success: function(response) {
 			if(overlib.isOut) return nd();
-
-			var overlibStrTmp = retOverLibStr(clientList[mac]);
+			if (typeof clientList[mac] != "undefined")
+				var overlibStrTmp  = retOverLibStr(clientList[mac]);
+			else
+				var overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
 			if(response.responseText.search("Sorry!") == -1) {
 				var retData = response.responseText.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("&lt;/");
 				overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
