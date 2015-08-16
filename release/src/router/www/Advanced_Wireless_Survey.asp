@@ -31,8 +31,6 @@ var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
 var _wlc_ssid;
 var _sw_mode;
 
-var $j = jQuery.noConflict();
-
 var isrescan = 0;
 
 overlib_str_tmp = "";
@@ -124,7 +122,7 @@ var sorter = {
 // end
 
 function update_site_info(){
-	$j.ajax({
+	$.ajax({
 		url: '/apscan.asp',
 		dataType: 'script',
 		error: function(xhr){
