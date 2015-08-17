@@ -108,7 +108,7 @@ chmod +x /jffs/scripts/services-stop
 cat > /jffs/scripts/post-mount << EOF
 #!/bin/sh
 
-if [ \$1 = "__Partition__" ]
+if [ \$1="__Partition__" ]
 then
   ln -nsf \$1/entware.arm /tmp/opt
 fi
