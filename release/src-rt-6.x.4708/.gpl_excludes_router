@@ -52,7 +52,6 @@ release/src/router/netconf
 release/src/router/ntfs-3g
 release/src/router/openlldp
 release/src/router/p910nd
-release/src/router/plc-utils
 release/src/router/pptp-client
 release/src/router/prebuilt
 release/src/router/procps-3.2.8
