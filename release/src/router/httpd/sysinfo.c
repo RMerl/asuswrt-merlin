@@ -430,9 +430,9 @@ unsigned int get_phy_temperature(int radio)
 	strcpy(buf, "phy_tempsense");
 
 	if (radio == 2) {
-		interface = "eth1";
+		interface = nvram_get("wl0_ifname");
 	} else if (radio == 5) {
-		interface = "eth2";
+		interface = nvram_get("wl1_ifname");
 	} else {
 		return 0;
 	}
