@@ -153,7 +153,13 @@ else
 vpath %.c sysdeps/broadcom  $(SRCBASE)/shared/bcmwifi/src
 endif
 
-all: libshared.so libshared.a
+all: prebuilt libshared.so libshared.a
+
+prebuilt:
+# Dig into our collection of prebuilt objects based on model and architecture.
+	@-rm -f ./prebuild/*.o || true
+	@-cp -f ./prebuild/models/$(BUILD_NAME)/* ./prebuild/
+
 
 ifeq ($(CONFIG_BCMWL5),y)
 OBJS += wlif_utils.o UdpLib.o bcmutils.o
