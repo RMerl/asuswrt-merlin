@@ -520,7 +520,6 @@ function ovpnFileChecker(){
 					setTimeout("ovpnFileChecker();",1000);
 				}
 				else{
-					setManualTable(openvpn_unit);
 					setTimeout("location.href='Advanced_OpenVPNClient_Content.asp';", 3000);
 				}
 			}
