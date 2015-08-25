@@ -768,6 +768,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ct_tcp_timeout",		""},
 	{ "ct_udp_timeout",		"30 180"},
 	{ "ct_timeout",			""},
+	{ "ct_max",			"300000"}, //All the models we support would default to this value
 
 #ifdef RTCONFIG_RALINK
 #elif defined(RTCONFIG_QCA)
