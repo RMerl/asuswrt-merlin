@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 378.55 (17-July-2015)
+Asuswrt-Merlin - build 378.56 (xx-xxxx-2015)
 ============================================
 
 About
@@ -54,7 +54,7 @@ Here is a list of features that Asuswrt-merlin adds over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.378_6117 source code from Asus
+   - Based on 3.0.0.4.378_7838 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
