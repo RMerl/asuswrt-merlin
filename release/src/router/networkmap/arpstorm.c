@@ -2,14 +2,13 @@
 #include <sys/ioctl.h>
 #include <linux/if_packet.h>
 #include <stdio.h>
-#include <linux/in.h>
+//#include <linux/in.h>
 #include <linux/if_ether.h>
 #include <net/if.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
 #include <sys/time.h>
-#include "../shared/shutils.h"    // for eval()
 #include <bcmnvram.h>
 #include <stdlib.h>
 #include <asm/byteorder.h>

@@ -109,10 +109,7 @@ var getBand = '<% get_parameter("band"); %>';
 var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
 var ISMOBILE = false;
 var isPassChanged = false;
-
-if(yadns_support){
-	var yadns_changed = false;
-}
+var yadns_stage = 0;
 
 // live update
 
@@ -131,13 +128,13 @@ var current_extendno = "";
 var liveUpdateFinish = false;
 var new_FW = false;
 var retry = 0;
-var isManual = false;
 var isStatic = false;
 var staticIP = false;
 
 var restartTime = false;
 var restartWireless = false;
 var sysReboot = false;
+var rebootTime = eval("<% get_default_reboot_time(); %>");
 
 var wan_autodet_state = "";
 var usb_connected = 0;

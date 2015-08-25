@@ -1,0 +1,60 @@
+TARGET		libsrtp.lib
+TARGETTYPE	lib
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+//
+// GCCE optimization setting
+//
+OPTION		GCCE -O2 -fno-unit-at-a-time
+OPTION          ARMCC --gnu
+
+//
+// Speex files
+//
+SOURCEPATH	..\third_party\srtp
+
+SOURCE crypto\ae_xfm\xfm.c
+SOURCE crypto\cipher\aes.c
+SOURCE crypto\cipher\aes_cbc.c
+SOURCE crypto\cipher\aes_icm.c
+SOURCE crypto\cipher\cipher.c
+SOURCE crypto\cipher\null_cipher.c
+SOURCE crypto\hash\auth.c
+SOURCE crypto\hash\hmac.c
+SOURCE crypto\hash\null_auth.c
+SOURCE crypto\hash\sha1.c
+SOURCE crypto\kernel\alloc.c
+SOURCE crypto\kernel\crypto_kernel.c
+//SOURCE crypto\kernel\err.c
+SOURCE crypto\kernel\key.c
+SOURCE crypto\math\datatypes.c
+SOURCE crypto\math\gf2_8.c
+//SOURCE crypto\math\math.c
+SOURCE crypto\math\stat.c
+SOURCE crypto\replay\rdb.c
+SOURCE crypto\replay\rdbx.c
+//SOURCE crypto\replay\ut_sim.c
+SOURCE crypto\rng\ctr_prng.c
+SOURCE crypto\rng\prng.c
+//SOURCE crypto\rng\rand_linux_kernel.c
+SOURCE crypto\rng\rand_source.c
+SOURCE pjlib\srtp_err.c
+SOURCE srtp\srtp.c
+SOURCE tables\aes_tables.c
+
+//SOURCEPATH	..\pjmedia\src\pjmedia
+
+//SOURCE transport_srtp.c
+
+//
+// Header files
+//
+SYSTEMINCLUDE	..\third_party\srtp\include
+SYSTEMINCLUDE	..\third_party\srtp\crypto\include
+SYSTEMINCLUDE	..\third_party\build\srtp
+SYSTEMINCLUDE	..\pjlib\include 
+
+SYSTEMINCLUDE	\epoc32\include 
+SYSTEMINCLUDE	\epoc32\include\libc

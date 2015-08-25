@@ -1,8 +1,10 @@
 #ifndef __CURL_API_H__
 #define __CURL_API_H__
-
+// READ_CB use for READ DATA from memory to curl socket 
 typedef size_t 		(*READ_CB)(void *ptr, size_t size, size_t nmemb, void *userp);
+// WRITE_CB use for WRITE DATA from scocket to memory
 typedef size_t 		(*WRITE_CB)	(char *in, size_t size, size_t nmemb, void* fn_struct);
+
 struct input_info {
   const char *readptr;
   int sizeleft;

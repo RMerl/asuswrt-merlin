@@ -3,6 +3,12 @@
 echo ">"
 cat /proc/bus/usb/devices
 echo ">"
+lsmod
+echo ">"
+ifconfig
+echo ">"
+mount
+echo ">"
 cat /etc/g3.conf.1
 echo ">"
 cat /etc/g3.conf.2
@@ -10,10 +16,6 @@ echo ">"
 cat /tmp/ppp/peers/3g
 echo ">"
 ls /dev/tty*
-echo ">"
-ifconfig
-echo ">"
-lsmod
 echo ">"
 nvram get firmver
 echo ">"
@@ -24,16 +26,17 @@ echo ">"
 echo "dualwan nvram:>"
 nvram show|grep ^wans_
 echo ">"
+echo "modem nvram:>"
 nvram get Dev3G
 echo ">"
+nvram show|grep ^modem_ |grep -v "modem_pincode="
+echo ">"
+echo "modem state:>"
 nvram show|grep g3state
 echo ">"
 nvram show|grep g3err
 echo ">"
-echo "modem nvram:>"
-nvram show|grep ^modem_ |grep -v "modem_pincode="
-echo ">"
-echo "modem state:>"
+echo "modem act state:>"
 str=`nvram get usb_modem_act_path`
 echo "usb_modem_act_path=$str"
 str=`nvram get usb_modem_act_type`
@@ -88,7 +91,7 @@ echo "show dns nvram >"
 nvram show|grep dns
 echo ">"
 echo "syslog>"
-cat /tmp/syslog.log
+cat /tmp/syslog.log |tail -n 50
 echo ">"
 echo "usblog>"
 cat /tmp/usb.log

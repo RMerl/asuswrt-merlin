@@ -18,6 +18,7 @@
 #ifdef HAVE_INOTIFY
 
 #include <sys/inotify.h>
+#include <sys/param.h> /* For MAXSYMLINKS */
 
 /* the strategy is to set a inotify on the directories containing
    resolv files, for any files in the directory which are close-write 
@@ -35,10 +36,55 @@
 static char *inotify_buffer;
 #define INOTIFY_SZ (sizeof(struct inotify_event) + NAME_MAX + 1)
 
+/* If path is a symbolic link, return the path it
+   points to, made absolute if relative.
+   If path doesn't exist or is not a symlink, return NULL.
+   Return value is malloc'ed */
+static char *my_readlink(char *path)
+{
+  ssize_t rc, size = 64;
+  char *buf;
+
+  while (1)
+    {
+      buf = safe_malloc(size);
+      rc = readlink(path, buf, (size_t)size);
+      
+      if (rc == -1)
+	{
+	  /* Not link or doesn't exist. */
+	  if (errno == EINVAL || errno == ENOENT)
+	    return NULL;
+	  else
+	    die(_("cannot access path %s: %s"), path, EC_MISC);
+	}
+      else if (rc < size-1)
+	{
+	  char *d;
+	  
+	  buf[rc] = 0;
+	  if (buf[0] != '/' && ((d = strrchr(path, '/'))))
+	    {
+	      /* Add path to relative link */
+	      char *new_buf = safe_malloc((d - path) + strlen(buf) + 2);
+	      *(d+1) = 0;
+	      strcpy(new_buf, path);
+	      strcat(new_buf, buf);
+	      free(buf);
+	      buf = new_buf;
+	    }
+	  return buf;
+	}
+
+      /* Buffer too small, increase and retry */
+      size += 64;
+      free(buf);
+    }
+}
+
 void inotify_dnsmasq_init()
 {
   struct resolvc *res;
-
   inotify_buffer = safe_malloc(INOTIFY_SZ);
   daemon->inotifyfd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
   
@@ -47,19 +93,22 @@ void inotify_dnsmasq_init()
   
   for (res = daemon->resolv_files; res; res = res->next)
     {
-      char *d = NULL, *path;
-      
-      if (!(path = realpath(res->name, NULL)))
+      char *d, *new_path, *path = safe_malloc(strlen(res->name) + 1);
+      int links = MAXSYMLINKS;
+
+      strcpy(path, res->name);
+
+      /* Follow symlinks until we reach a non-symlink, or a non-existant file. */
+      while ((new_path = my_readlink(path)))
 	{
-	  /* realpath will fail if the file doesn't exist, but
-	     dnsmasq copes with missing files, so fall back 
-	     and assume that symlinks are not in use in that case. */
-	  if (errno == ENOENT)
-	    path = res->name;
-	  else
-	    die(_("cannot cannonicalise resolv-file %s: %s"), res->name, EC_MISC); 
+	  if (links-- == 0)
+	    die(_("too many symlinks following %s"), res->name, EC_MISC);
+	  free(path);
+	  path = new_path;
 	}
-      
+
+      res->wd = -1;
+
       if ((d = strrchr(path, '/')))
 	{
 	  *d = 0; /* make path just directory */
@@ -70,10 +119,11 @@ void inotify_dnsmasq_init()
 	  
 	  if (res->wd == -1 && errno == ENOENT)
 	    die(_("directory %s for resolv-file is missing, cannot poll"), res->name, EC_MISC);
-	  
-	  if (res->wd == -1)
-	    die(_("failed to create inotify for %s: %s"), res->name, EC_MISC);
-	}
+	}	  
+	 
+      if (res->wd == -1)
+	die(_("failed to create inotify for %s: %s"), res->name, EC_MISC);
+	
     }
 }
 

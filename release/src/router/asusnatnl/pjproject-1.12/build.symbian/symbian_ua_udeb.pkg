@@ -1,0 +1,21 @@
+; symbian_ua_udeb.pkg
+
+; for Carbide development, please use symbian_ua.pkg for comfortness
+; (epoc32 path, platform, and target are set automatically using env vars)
+
+; Languages
+&EN
+
+; Header
+#{"symbian_ua"},(0x200235D3), 0, 1, 1
+
+; Platform compatibility
+[0x101F7961], *, *, *,{"Series60ProductID"}
+
+; vendor
+%{"PJSIP"}
+:"PJSIP"
+
+; Target
+"C:\Symbian\9.2\S60_3rd_FP1\epoc32\release\gcce\UDEB\symbian_ua.exe"-"!:\sys\bin\symbian_ua.exe"
+"C:\Symbian\9.2\S60_3rd_FP1\epoc32\data\z\private\10003a3f\apps\symbian_ua_reg.rSC"-"!:\private\10003a3f\import\apps\symbian_ua_reg.rSC"

@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# chkconfig: 2345 85 15
+# description: mt-daapd is a multi-threaded DAAP server for iTunes
+# processname: mt-daapd
+# pidfile: /var/run/mt-daapd
+#
+
+# source function library
+. /etc/init.d/functions
+[ -e @prefix@/etc/daapd.conf ]
+
+RETVAL=0
+
+start() {
+	echo -n $"Starting DAAP server: "
+	daemon @prefix@/sbin/mt-daapd 
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/mt-daapd
+}
+
+stop() {
+	echo -n $"Shutting down DAAP server: "
+	# This is broken.
+	killall -INT mt-daapd
+#	killproc mt-daapd
+	RETVAL=$?
+
+	echo
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/mt-daapd
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	stop
+	start
+	RETVAL=$?
+	;;
+  status)
+	status mt-daapd
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+	exit 1
+esac
+
+exit $RETVAL
+

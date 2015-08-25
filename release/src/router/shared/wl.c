@@ -92,6 +92,7 @@ wl_iovar_getbuf(char *ifname, char *iovar, void *param, int paramlen, void *bufp
 	int err;
 	uint namelen;
 	uint iolen;
+	uint wlc_cmd = WLC_GET_VAR;
 
 	namelen = strlen(iovar) + 1;	 /* length of iovar name plus null */
 	iolen = namelen + paramlen;
@@ -103,7 +104,11 @@ wl_iovar_getbuf(char *ifname, char *iovar, void *param, int paramlen, void *bufp
 	memcpy(bufptr, iovar, namelen);	/* copy iovar name including null */
 	memcpy((int8*)bufptr + namelen, param, paramlen);
 
-	err = wl_ioctl(ifname, WLC_GET_VAR, bufptr, buflen);
+#if defined(RTAC5300) || defined(RTAC88U) || defined(RTAC3100)
+	if(strcmp(iovar, "clm_data_ver") == 0)
+		wlc_cmd = 310;
+#endif
+	err = wl_ioctl(ifname, wlc_cmd, bufptr, buflen);
 
 	return (err);
 }

@@ -120,6 +120,9 @@ OBJS += openvpn_options.o
 LIBS += -L$(TOP)/openssl -lssl -lcrypto -ldl
 endif
 
+CFLAGS += -I$(TOP)/json-c
+LIBS += -L$(TOP)/json-c/.libs -ljson-c
+
 ifeq ($(RTCONFIG_BWDPI),y)
 LIBS += -L$(TOP)/bwdpi -lbwdpi
 LIBS += -L$(TOP)/bwdpi_sqlite -lbwdpi_sql
@@ -138,7 +141,7 @@ LIBS += -L$(TOP)/GeoIP-1.6.2/libGeoIP/.libs -lGeoIP
 endif
 
 ifeq ($(RTCONFIG_QCA),y)
-LIBS += -lpthread
+LIBS += -lpthread -ldl
 endif
 
 export CFLAGS

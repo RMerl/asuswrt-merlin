@@ -1,0 +1,13 @@
+Build steps:
+1. aclocal
+2. automake --add-missing
+3. ./configure
+4. make
+
+Run:
+./src/phddns -h
+
+Advanced:
+1. The key in src/phkey.h is just for test, please goto http://open.oray.com to get your own code.
+2. Interactive code are in phruncall.*, this can be removed if you just want core functioning of phddns
+3. You shouldn't change UDP keepalive behaviours, or you device will be rejected some day.

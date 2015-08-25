@@ -1,0 +1,19 @@
+; symbian_ua.pkg
+
+; Languages
+&EN
+
+; Header
+;#{"symbian_ua"},(0x200235D3), 0, 1, 1
+#{"symbian_ua"},(0xA000000D), 0, 1, 1
+
+; Platform compatibility
+[0x101F7961], *, *, *,{"Series60ProductID"}
+
+; vendor
+%{"PJSIP"}
+:"PJSIP"
+
+; Target
+"$(EPOCROOT)Epoc32\release\$(PLATFORM)\$(TARGET)\symbian_ua.exe"-"!:\sys\bin\symbian_ua.exe"
+"$(EPOCROOT)Epoc32\data\z\private\10003a3f\apps\symbian_ua_reg.rSC"-"!:\private\10003a3f\import\apps\symbian_ua_reg.rSC"

@@ -10,6 +10,7 @@
 #CC = mipsel-uclibc-g++
 CPPFLAGS = -I$(TOP)/libiconv-1.14/include -I$(TOP)/curl-7.21.7/include -I$(TOP)/openssl/include -I$(TOP)/libxml2/include
 CPPFLAGS += -D_FILE_OFFSET_BITS=64 -DNVRAM_ -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared
+CPPFLAGS += $(if $(QCA),$(EXTRACFLAGS))
 
 LDFLAGS = -L$(TOP)/curl-7.21.7/lib/.libs -L$(TOP)/libxml2/.libs -L$(TOP)/libiconv-1.14/lib/.libs -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -L$(TOP)/openssl
 
@@ -28,7 +29,7 @@ objects = ftpclient.o api.o list.o
 all: ftpclient
 
 ftpclient: $(objects)
-	$(CXX)  $(CPPFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) -o $@ $^ $(CPPFLAGS) $(LDFLAGS) $(LIBS) 
 
 .PHONY: clean
 clean:

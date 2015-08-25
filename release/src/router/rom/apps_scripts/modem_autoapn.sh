@@ -171,6 +171,8 @@ elif [ $modem_country_num -eq 310 ]; then
 	modem_country=US
 elif [ $modem_country_num -eq 452 ]; then
 	modem_country=VN
+elif [ $modem_country_num -eq 425 ]; then
+	modem_country=IL
 fi
 
 if [ "$1" == "console" ]; then

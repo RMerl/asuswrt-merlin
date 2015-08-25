@@ -1,0 +1,11 @@
+*.lo
+*.la
+tests/Makefile
+config.h
+config.status
+config.log
+*.pc
+Makefile
+libtool
+.deps
+.libs

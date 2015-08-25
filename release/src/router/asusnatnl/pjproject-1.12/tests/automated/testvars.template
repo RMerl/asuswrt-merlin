@@ -1,0 +1,33 @@
+Variables:
+-----------------------------
+DISABLED = 	"$(DISABLED)"
+GCC = 		"$(GCC)"
+HOSTNAME = 	"$(HOSTNAME)"
+OS = 		"$(OS)"
+PJDIR = 	"$(PJDIR)"
+SUFFIX = 	"$(SUFFIX)"
+NOTEST = 	"$(NOTEST)"
+
+S60 only:
+------------------------------
+S60TARGET = 	"$(S60TARGET)"
+S60TARGETNAME = "$(S60TARGETNAME)"
+S60DEVICE = 	"$(S60DEVICE)"
+EPOCROOT = 	"$(EPOCROOT)"
+
+VS only:
+------------------------------
+VS = 		"$(VS)"
+VSTARGET = 	"$(VSTARGET)"
+
+PJSUA-TESTS:
+------------------------------
+$(PJSUA-TESTS)
+------------------------------
+
+OTHER:
+------------------------------
+IPPROOT
+IPPSAMPLES
+IPPARCH
+NOP (cmdline to do nothing)

@@ -1,0 +1,148 @@
+#!/bin/sh
+
+PJDIR=`pwd`
+
+#
+# Detect machine, unless the choice has been made already.
+#
+if [ "$MACHINE" = "" ]; then
+	MACHINE=`uname -m`
+fi	
+
+if echo $MACHINE | grep sun4u > /dev/null; then
+    MACHINE_NAME=sparc
+elif echo $MACHINE | grep i.86 > /dev/null; then
+    MACHINE_NAME=i386
+elif echo $MACHINE | grep x86_64 > /dev/null; then
+    MACHINE_NAME=x86_64
+elif echo $MACHINE | grep alpha > /dev/null; then
+    MACHINE_NAME=alpha
+elif echo $MACHINE | grep Mac > /dev/null; then
+    MACHINE_NAME=powerpc
+else
+    echo "Unable to detect processor type ('uname -m' == '$MACHINE')"
+    exit 1
+fi
+
+#
+# Detect OS and host, unless the choice has been made already
+#
+if [ "$SYSTEM" = "" ]; then
+    SYSTEM=`uname -s`
+fi	
+ 
+
+if echo $SYSTEM | grep -i sunos > /dev/null; then
+    OS_NAME=sunos
+    HOST_NAME=unix
+elif echo $SYSTEM | grep -i linux > /dev/null; then
+    OS_NAME=linux
+    HOST_NAME=unix
+    # More on linux version
+    KERNEL_VER=`uname -r`
+    if echo $KERNEL_VER | grep '^2\.4' > /dev/null; then
+	LINUX_POLL=select
+    elif echo $KERNEL_VER | grep '^2\.2' > /dev/null; then
+	LINUX_POLL=select
+    elif echo $KERNEL_VER | grep '^2\.0' > /dev/null; then
+	LINUX_EPOLL=select
+    else
+#	LINUX_POLL=epoll
+	LINUX_POLL=select
+    fi
+elif echo $SYSTEM | grep -i mingw > /dev/null; then
+    OS_NAME=win32
+    HOST_NAME=mingw
+elif echo $SYSTEM | grep -i cygwin > /dev/null; then
+    OS_NAME=win32
+    HOST_NAME=mingw
+elif echo $SYSTEM | grep -i darwin > /dev/null; then
+    OS_NAME=darwinos
+    HOST_NAME=unix
+elif echo $SYSTEM | grep -i rtems > /dev/null; then
+    OS_NAME=rtems
+    HOST_NAME=unix
+else
+    echo "Unable to detect system type ('uname -s' == '$SYSTEM')"
+    exit 1
+fi
+
+#
+# Detect gcc, unless it has been chosen already
+#
+if [ "$CC_NAME" = "" ]; then
+	if gcc --version 2>&1 > /dev/null; then
+		CC_NAME=gcc
+	else
+		echo "Unable to find gcc"
+		exit 1
+	fi
+fi	
+ 
+
+#
+# Specify TARGET_NAME, if not already choosen.
+#
+if [ "$TARGET_NAME" = "" ]; then
+   TARGET_NAME=$MACHINE_NAME-$OS_NAME-$CC_NAME
+fi
+
+
+if test -f build.mak; then
+  echo 'Saving build.mak --> build.mak.old'
+  cp -f build.mak build.mak.old
+fi
+
+echo 'build.mak configurations are set as follows:'
+echo " PJDIR         = $PJDIR"
+echo " MACHINE_NAME  = $MACHINE_NAME"
+echo " OS_NAME       = $OS_NAME"
+echo " HOST_NAME     = $HOST_NAME"
+echo " CC_NAME       = $CC_NAME"
+echo " TARGET_NAME   = $TARGET_NAME"
+echo " CROSS_COMPILE = $CROSS_COMPILE"
+echo " LINUX_POLL    = $LINUX_POLL"
+
+echo "# Auto-generated build.mak" > build.mak
+echo "export PJDIR := $PJDIR" >> build.mak
+echo "export MACHINE_NAME := $MACHINE_NAME" >> build.mak
+echo "export OS_NAME := $OS_NAME" >> build.mak
+echo "export HOST_NAME := $HOST_NAME" >> build.mak
+echo "export CC_NAME := $CC_NAME" >> build.mak
+echo "export TARGET_NAME := $TARGET_NAME" >> build.mak
+echo "export CROSS_COMPILE := $CROSS_COMPILE" >> build.mak
+echo "export LINUX_POLL := $LINUX_POLL" >> build.mak
+
+echo >> build.mak
+
+cat << EOF >> build.mak
+export APP_CC = \$(CROSS_COMPILE)\$(CC_NAME)
+
+export APP_CFLAGS = \$(CC_CFLAGS) \$(OS_CFLAGS) \$(HOST_CFLAGS) \$(M_CFLAGS) \$(CFLAGS) -I\$(PJDIR)/pjlib/include -I\$(PJDIR)/pjlib-util/include -I\$(PJDIR)/pjnath/include -I\$(PJDIR)/pjmedia/include -I\$(PJDIR)/pjsip/include
+
+export APP_CXXFLAGS = \$(APP_CFLAGS)
+
+export APP_LDFLAGS = -L\$(PJDIR)/pjlib/lib -L\$(PJDIR)/pjlib-util/lib -L\$(PJDIR)/pjnath/lib -L\$(PJDIR)/pjmedia/lib -L\$(PJDIR)/pjsip/lib -L\$(PJDIR)/third_party/lib 
+
+export APP_LDLIBS = -lpjsua-\$(TARGET_NAME) -lpjsip-ua-\$(TARGET_NAME) -lpjsip-simple-\$(TARGET_NAME) -lpjsip-\$(TARGET_NAME) -lpjmedia-codec-\$(TARGET_NAME) -lpjmedia-\$(TARGET_NAME) -lpjnath-\$(TARGET_NAME) -lpjlib-util-\$(TARGET_NAME) \$(APP_THIRD_PARTY_LIBS) \$(APP_THIRD_PARTY_EXT) -lpj-\$(TARGET_NAME) \$(CC_LDFLAGS) \$(OS_LDFLAGS) \$(M_LDFLAGS) \$(HOST_LDFLAGS) \$(LDFLAGS)
+
+export PJ_DIR = \$(PJDIR)
+export PJ_CC = \$(APP_CC)
+export PJ_CFLAGS = \$(APP_CFLAGS)
+export PJ_CXXFLAGS = \$(APP_CXXFLAGS)
+export PJ_LDFLAGS = \$(APP_LDFLAGS)
+export PJ_LDLIBS = \$(APP_LDLIBS)
+
+EOF
+
+touch user.mak
+
+
+echo
+echo "The configuration for current host has been written to 'build.mak'."
+echo "Customizations can be put in:"
+echo "  - 'user.mak'"
+echo "  - 'pjlib/include/pj/config_site.h'"
+echo
+echo "Next, run 'make dep && make clean && make'"
+

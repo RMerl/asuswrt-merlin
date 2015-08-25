@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<Scenario site="$(HOSTNAME)" url="http://my.cdash.org/submit.php?project=PJSIP" wdir="$(PJDIR)">
+ 
+	<Submit group="Experimental" build="$(OS)-$(VS)-$(VSTARGET)-default" exclude="(.*amr.*)">
+		<Update />
+		<FileWrite file="pjlib/include/pj/config_site.h">
+		  <![CDATA[
+/* Written by ccdash */
+#define PJ_HAS_IPV6		1
+#define PJMEDIA_HAS_G7221_CODEC 1
+#define PJ_TODO(x)
+]]>			
+		</FileWrite>
+		<Configure cmd="cmd /c echo success" />
+		<Build cmd='vcbuild.exe /nologo /nohtmllog /nocolor /rebuild pjproject-vs8.sln "$(VSTARGET)|Win32"' />
+		<Test name="pjlib-test" info="" wdir="pjlib/bin" cmd="pjlib-test-i386-Win32-vc8-$(VSTARGET)" disabled=$(NOTEST)/>
+		<Test name="pjlib-util-test" info="" wdir="pjlib-util/bin" cmd="pjlib-util-test-i386-Win32-vc8-$(VSTARGET)" disabled=$(NOTEST) />
+		<Test name="pjnath-test" info="" wdir="pjnath/bin" cmd="pjnath-test-i386-Win32-vc8-$(VSTARGET)" disabled=$(NOTEST) />
+		<Test name="pjmedia-test" info="" wdir="pjmedia/bin" cmd="pjmedia-test-i386-Win32-vc8-$(VSTARGET)" disabled=$(NOTEST) />
+		<Test name="pjsip-test" info="" wdir="pjsip/bin" cmd="pjsip-test-i386-Win32-vc8-$(VSTARGET)" disabled=$(NOTEST) />
+		$(PJSUA-TESTS)
+	</Submit>
+	
+</Scenario>

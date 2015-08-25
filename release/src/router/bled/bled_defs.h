@@ -67,11 +67,23 @@ enum bled_type {
 	BLED_TYPE_MAX
 };
 
+enum bled_mode {
+	BLED_NORMAL_MODE = 0,			/* Normal mode. e.g., NETDEV_BLED, SWPORTS_BLED, or USBBUS_BLED. */
+	BLED_UDEF_PATTERN_MODE,			/* User defined pattern mode. */
+
+	BLED_MODE_MAX
+};
+
 enum gpio_api {
 	GPIO_API_PLATFORM = 0,
 
 	GPIO_API_MAX
 };
+
+#define BLED_MAX_NR_PATTERN		(100)
+#define BLED_UDEF_PATTERN_MIN_INTERVAL	(50)	/* unit: ms */
+#define BLED_UDEF_PATTERN_MAX_INTERVAL	(3000)	/* unit: ms */
+
 
 struct bled_common {
 	unsigned int gpio_nr;
@@ -79,8 +91,12 @@ struct bled_common {
 	enum gpio_api gpio_api_id;
 	enum bled_state state;
 	enum bled_bh_type bh_type;
+	enum bled_mode mode;
 	unsigned int min_blink_speed;	/* unit: KB/s */
 	unsigned int interval;		/* unit: ms */
+	unsigned int pattern_interval;	/* unit: ms (BLED_UDEF_PATTERN_MIN_INTERVAL ~ BLED_UDEF_PATTERN_MAX_INTERVAL) */
+	unsigned int nr_pattern;	/* number of valid item in pattern[] */
+	unsigned int pattern[BLED_MAX_NR_PATTERN];	/* 0: Turn off LED; otherwise: Turn on LED */
 };
 
 struct ndev_bled {
@@ -99,14 +115,16 @@ struct usbbus_bled {
 };
 
 #define BLED_CTL_CHG_STATE		_IOW('B', 0, struct bled_common)	/* gpio_nr, state */
-#define BLED_CTL_ADD_NETDEV_BLED	_IOW('B', 1, struct ndev_bled)		/* all fields, except state */
+#define BLED_CTL_ADD_NETDEV_BLED	_IOW('B', 1, struct ndev_bled)		/* all fields; except mode, state */
 #define BLED_CTL_DEL_BLED		_IOW('B', 2, struct bled_common)	/* gpio_nr */
 #define BLED_CTL_ADD_NETDEV_IF		_IOW('B', 3, struct ndev_bled)		/* gpio_nr, ifname */
 #define BLED_CTL_DEL_NETDEV_IF		_IOW('B', 4, struct ndev_bled)		/* gpio_nr, ifname */
-#define BLED_CTL_ADD_SWPORTS_BLED	_IOW('B', 5, struct swport_bled)	/* all fields, except state */
+#define BLED_CTL_ADD_SWPORTS_BLED	_IOW('B', 5, struct swport_bled)	/* all fields; except mode, state */
 #define BLED_CTL_UPD_SWPORTS_MASK	_IOW('B', 6, struct swport_bled)	/* gpio_nr, port_mask */
-#define BLED_CTL_ADD_USBBUS_BLED	_IOW('B', 7, struct usbbus_bled)	/* all fields, except state */
+#define BLED_CTL_ADD_USBBUS_BLED	_IOW('B', 7, struct usbbus_bled)	/* all fields; except mode, state */
 #define BLED_CTL_GET_BLED_TYPE		_IOWR('B', 8, int)			/* input: gpio_nr; output: enum bled_type */
+#define BLED_CTL_SET_UDEF_PATTERN	_IOW('B', 9, struct bled_common)	/* gpio_nr, pattern_interval, nr_pattern, pattern[] */
+#define BLED_CTL_SET_MODE		_IOW('B',10, struct bled_common)	/* gpio_nr, mode */
 
 #define BLED_TIMER_CHECK_INTERVAL	(HZ / 5)				/* unit: jiffies */
 #define BLED_HYBRID_CHECK_INTERVAL	(HZ / 2)				/* unit: jiffies */
@@ -168,6 +186,12 @@ struct usbbus_bled_priv {
 	struct usbbus_bled_stat busstat[BLED_MAX_NR_USBBUS];
 };
 
+struct udef_pattern_s {
+	unsigned int curr, nr_pattern;
+	unsigned char value[BLED_MAX_NR_PATTERN];		/* 0: Turn off LED; 1: Turn on LED. */
+	unsigned long interval[BLED_MAX_NR_PATTERN];		/* pattern interval in jiffies. */
+};
+
 struct bled_priv {
 	struct list_head list;
 	unsigned int gpio_nr;
@@ -175,6 +199,7 @@ struct bled_priv {
 	enum bled_state state;
 	enum bled_type type;
 	enum bled_bh_type bh_type;
+	enum bled_mode mode;
 	unsigned int value;					/* 0: LED OFF; 1: LED on */
 	unsigned long next_blink_interval;			/* unit: jiffies */
 	unsigned long next_blink_ts;				/* unit: jiffies */
@@ -183,6 +208,7 @@ struct bled_priv {
 	unsigned long threshold;				/* unit: bytes */
 	unsigned long interval;					/* unit: jiffies */
 	unsigned int flags;
+	struct udef_pattern_s udef_pattern;			/* User defined pattern. */
 
 	struct timer_list timer;
 	struct delayed_work bled_work;

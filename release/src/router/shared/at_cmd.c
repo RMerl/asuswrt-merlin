@@ -393,5 +393,20 @@ char * Gobi_SelectBand(const char *band, char *line, int size)
 	return p;
 }
 
+char * Gobi_BandChannel(char *line, int size)
+{
+	const char *atCmd   = "$CRFI";
+	const char *tmpFile = "/tmp/at_crfi";
+	char *p = NULL;
+
+	if (Gobi_AtCommand(atCmd, tmpFile) >= 0
+	    && (p = get_line_by_str(line, size, tmpFile, "$CRFI:")) != NULL)
+	{
+		skip_space(p);
+		cut_space(p);
+	}
+	return p;
+}
+
 #endif	/* RTCONFIG_USB_MODEM */
 

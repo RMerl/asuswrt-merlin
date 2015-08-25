@@ -53,7 +53,13 @@ function restoreRule(){
 
 function saveSetting(){
 	var flag = 0;
-	flag = document.getElementById("transfer_ddns").checked ? 1 : 0;
+	if(ddns_enable == 1 && ddns_server != "WWW.ASUS.COM"){
+		flag = 1;
+	}
+	else{	//ASUS DDNS
+		flag = document.getElementById("transfer_ddns").checked ? 1 : 0;
+	}
+	
 	location.href='Settings_'+productid+'.CFG?path=' + flag;
 }
 
@@ -179,7 +185,7 @@ function detect_httpd(){
 								<tr>
 			  						<td bgcolor="#4D595D" valign="top">
 				  						<div>&nbsp;</div>
-				  						<div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_4#></div>
+				  						<div class="formfonttitle"><#menu5_6#> - <#menu5_6_4#></div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="formfontdesc"><#Setting_save_upload_desc#></div>
 

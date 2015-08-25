@@ -125,10 +125,7 @@ function initial(){
 
 		document.getElementById("fo_detection_count_hd").innerHTML = "Failover Retry Count";
 		document.getElementById("fo_seconds").style.display = "none";
-		document.getElementById("fo_tail_msg").style.display = "";
-		document.getElementById("fb_detection_count_hd").innerHTML = "Failback Retry Count";
-		document.getElementById("fb_seconds").style.display = "none";
-		document.getElementById("fb_tail_msg").style.display = "";
+		document.getElementById("fo_tail_msg").style.display = "";		
     	document.getElementById("wandog_title").innerHTML = "Enable User-Defined Target";
 
     	update_consume_bytes();
@@ -342,10 +339,13 @@ function applyRule(){
 		}
 	}
 
-	var reboot_time	= eval("<% get_default_reboot_time(); %>");
-	if(based_modelid =="DSL-AC68U")
-		reboot_time += 70;
-	document.form.action_wait.value = reboot_time;
+	if(wans_dualwan_orig != document.form.wans_dualwan.value){
+		var reboot_time	= eval("<% get_default_reboot_time(); %>");
+		if(based_modelid =="DSL-AC68U")
+			reboot_time += 70;
+		document.form.action_script.value = "reboot";
+		document.form.action_wait.value = reboot_time;
+	}
 
 	if(document.form.wans_standby.value == "1" && document.form.wans_standby.value != wans_standby_orig){
 		document.getElementById("detect_time_confirm").style.display = "block";
@@ -471,10 +471,11 @@ function appendModeOption(v){
 		var wandog_enable_orig = '<% nvram_get("wandog_enable"); %>';
 		if(v == "lb"){
 			document.getElementById("lb_note").style.display = "";
+			document.getElementById("lb_note2").style.display = "";
 			inputCtrl(document.form.wans_lb_ratio_0, 1);
-			inputCtrl(document.form.wans_lb_ratio_1, 1);		
+			inputCtrl(document.form.wans_lb_ratio_1, 1);
 			document.form.wans_lb_ratio_0.value = '<% nvram_get("wans_lb_ratio"); %>'.split(':')[0];
-			document.form.wans_lb_ratio_1.value = '<% nvram_get("wans_lb_ratio"); %>'.split(':')[1];			
+			document.form.wans_lb_ratio_1.value = '<% nvram_get("wans_lb_ratio"); %>'.split(':')[1];
 			inputCtrl(document.form.wans_isp_unit[0], 1);
 			inputCtrl(document.form.wans_isp_unit[1], 1);
 			inputCtrl(document.form.wans_isp_unit[2], 1);
@@ -516,6 +517,7 @@ function appendModeOption(v){
 		}
 		else{ //Failover / Failback
 			document.getElementById('lb_note').style.display = "none";
+			document.getElementById("lb_note2").style.display = "none";
 			inputCtrl(document.form.wans_lb_ratio_0, 0);
 			inputCtrl(document.form.wans_lb_ratio_1, 0);
 			inputCtrl(document.form.wans_isp_unit[0], 0);
@@ -943,8 +945,8 @@ function remain_origins(){
 <input type="hidden" name="next_page" value="Advanced_WANPort_Content.asp">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_wait" value="">
-<input type="hidden" name="action_script" value="reboot">
+<input type="hidden" name="action_wait" value="5">
+<input type="hidden" name="action_script" value="start_multipath">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
@@ -964,15 +966,15 @@ function remain_origins(){
 <div id="detect_time_confirm" style="display:none;">
 		<!--div style="margin:20px 30px 20px;"-->
 		<table width="90%" border="0" align="left" cellpadding="4" cellspacing="0" style="margin:15px 20px 15px; text-align:left;">
-			<tr><td colspan="2">To enable Hot Standby mode, it will accelerate the switching speed of the internet connection when incumbent interface failure.</td></tr><tr><td colspan="2">System will keep the standby WAN in connected state and reduce the detection interval, which will be shrunk to <span id="str_detect_time"></span>&nbsp;<#Second#>.</td></tr>
+			<tr><td colspan="2"><#Standby_hint1#></td></tr><tr><td colspan="2"><#Standby_hint2#>&nbsp;<span id="str_detect_time"></span>&nbsp;<#Second#>.</td></tr>
 			<tr>
-				<th style="width:30%;">Retry <#Interval#>:</th>
+				<th style="width:30%;"><#Retry_interval#>:</th>
 				<td>
-					<input type="text" name="detect_interval" class="input_3_table" maxlength="1" value=min_detect_inverval; placeholder="5" autocorrect="off" autocapitalize="off" onKeyPress="return validator.isNumber(this, event);" onblur="update_str_time();" style="width: 38px; margin: 0px;">&nbsp;&nbsp;<#Second#>
+					<input type="text" name="detect_interval" class="input_3_table" maxlength="1" value=""; placeholder="5" autocorrect="off" autocapitalize="off" onKeyPress="return validator.isNumber(this, event);" onblur="update_str_time();" style="width: 38px; margin: 0px;">&nbsp;&nbsp;<#Second#>
 				</td>
 			</tr>
 			<tr>
-				<th>Retry Count:</th>
+				<th><#Retry_count#>:</th>
 				<td>
 					<select name="detect_count" class="input_option" onchange="update_str_time();" style="margin: 0px 0px;"></select>
 					<span id="detect_tail_msg">&nbsp;( Detection Time: <span id="detection_time_value"></span>&nbsp;&nbsp;<#Second#>)</span>
@@ -1049,7 +1051,7 @@ function remain_origins(){
 													<option value="1" <% nvram_match("wans_lanport", "1", "selected"); %>>LAN Port 1</option>
 													<option value="2" <% nvram_match("wans_lanport", "2", "selected"); %>>LAN Port 2</option>
 													<option value="3" <% nvram_match("wans_lanport", "3", "selected"); %>>LAN Port 3</option>
-													<option value="4" <% nvram_match("wans_lanport", "4", "selected"); %>>LAN Port 4</option>												
+													<option value="4" <% nvram_match("wans_lanport", "4", "selected"); %>>LAN Port 4</option>
 												</select>
 											</td>
 									  	</tr>
@@ -1086,6 +1088,7 @@ function remain_origins(){
 										  			}
 										  		</script>
 												<div id="lb_note" style="color:#FFCC00; display:none;"><#dualwan_lb_note#></div>
+												<div id="lb_note2" style="color:#FFCC00; display:none;"><#dualwan_lb_note2#></div>
 											</td>
 									  	</tr>
 
@@ -1144,14 +1147,14 @@ function remain_origins(){
 					</thead>
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,4);">First Time <#Delay#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,4);"><#Delay#></a></th>
 						<td>
 		        		<input type="text" name="wandog_delay" class="input_3_table" maxlength="2" value="<% nvram_get("wandog_delay"); %>" onKeyPress="return validator.isNumber(this, event);" placeholder="0" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;<#Second#>
 						</td>
-					</tr>			
+					</tr>
 
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,3);">Retry <#Interval#></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,3);"><#Retry_interval#></a></th>
 						<td>
 		        		<input type="text" name="wandog_interval" class="input_3_table" maxlength="1" value="<% nvram_get("wandog_interval"); %>" onblur="add_option_count(this, document.form.wandog_maxfail, document.form.wandog_maxfail.value);add_option_count(this, document.form.wandog_fb_count, document.form.wandog_fb_count.value);update_consume_bytes();update_detection_time();" onKeyPress="return validator.isNumber(this, event);" placeholder="5" autocorrect="off" autocapitalize="off">&nbsp;&nbsp;<#Second#><div><span id="consume_bytes_warning" style="display:none;"></span></div>
 						</td>

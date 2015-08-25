@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Publish Form</title>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<script>
+var m = new lang();
+var g_storage = new myStorage();
+var g_bLoginGoogle = false;
+var g_token = "";
+var g_uid = "";
+var g_app_id = "103584452676-oo7gkbh8dg7nm07lao9a0i3r9jh6jfra.apps.googleusercontent.com";
+var server_url = "http://oauth.asus.com/aicloud/";
+var ajax_dataType = "json";
+var g_uploadfile_url_array = new Array();
+var g_uploadfile_title_array = new Array();
+var g_upload_timer = null;
+var g_bUpload = false;
+var g_uploadfile_item = {
+	_array: new Array(),
+	add: function(url, filename, textAreaClassName, filext, icon_url){
+		
+		var obj = {};
+		obj.url = url;
+		obj.filename = filename;
+		obj.textAreaClassName = textAreaClassName;
+		obj.filext = filext;
+		obj.icon_url = icon_url;
+		
+		this._array.push(obj);
+	},
+	length: function(){
+		return this._array.length;	
+	},
+	get: function(i){
+		if(i<0||i>this._array.length-1)
+			return null;
+		return this._array[i];
+	},
+	remove: function(i){
+		if(i>=0&&i<=this._array.length-1){
+			this._array.splice(i, 1);
+		}
+	}
+};
+
+$(document).ready(function(){
+	
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+
+	if( isBrowser("msie") && getInternetExplorerVersion() <= 8 ){
+		ajax_dataType = "jsonp";
+	}
+	
+	var uploadfile_url = getUrlVars()["v"];
+	
+	var array = uploadfile_url.split(";");
+	
+	if(array.length<=0){
+		return;
+	}
+	
+	g_token = (g_storage.getl("google_access_token") == undefined) ? "" : g_storage.getl("google_access_token");
+	
+	$("#default_user_pic").show();
+	$("#user_pic").hide();
+	$("tr.tr_album").hide();
+	
+	var upload_html = "";
+	for(var i=0; i<array.length; i++){
+		if(array[i]=="")
+			continue;
+			
+		var className = "textArea" + ( i + 1 );
+		var param = String(array[i]).split(",");
+		var uploadfile_url = param[0];
+		var is_dir = param[1];
+		var this_filename = decodeURIComponent( uploadfile_url.substr( uploadfile_url.lastIndexOf("/") + 1, uploadfile_url.length-1 ) );
+		var filext = getFileExt(uploadfile_url);
+		var icon_url = server_url + "images/";
+		
+		upload_html += '<table class="x-table ' +　className + '" width="100%" height="100%" style="display: table;border-collapse: separate;border-spacing: 2px;border-color: gray;">';
+        upload_html += '<tr>';
+        upload_html += '<td class="x-table-layout-cell" rowspan="2" id="ext-gen80">';
+        upload_html += '<div id="imgContainer" class=" x-panel service_upload_image_container">';
+        upload_html += '<div class="x-panel-bwrap" id="ext-gen81">';
+        upload_html += '<div class="x-panel-body service_upload_image_container_body x-panel-body-noheader" id="ext-gen82" style="display: table-cell;text-align: center;vertical-align: middle;">';
+		
+		if(is_dir==1){
+			icon_url += "folder_icon.png";
+			upload_html += '<div class="bicon folderDiv service_upload_image"></div>';
+		}
+		else{
+			if(filext=='jpg'||filext=='jpeg'||filext=='png'||filext=='gif'){
+				icon_url = uploadfile_url;
+				$("tr.tr_album").show();
+				
+				upload_html += '<img id="user_img" class="service_upload_image" src="' + uploadfile_url + '">';
+			}			
+			else if(filext=='mp3'){
+				icon_url += "audio_icon.png";
+				upload_html += '<div class="bicon audiofileDiv service_upload_image"></div>';
+			}
+			else if(filext=='pdf'){
+				icon_url += "pdf_icon.png";
+				upload_html += '<div class="bicon pdffileDiv service_upload_image"></div>';
+			}
+			else if(filext=='doc'||filext=='docx'){
+				icon_url += "word_icon.png";
+				upload_html += '<div class="bicon docfileDiv service_upload_image"></div>';
+			}
+			else if(filext=='ppt'||filext=='pptx'){
+				icon_url += "ppt_icon.png";
+				upload_html += '<div class="bicon pptfileDiv service_upload_image"></div>';
+			}
+			else if(filext=='xls'||filext=='xlsx'){
+				icon_url += "xls_icon.png";
+				upload_html += '<div class="bicon xlsfileDiv service_upload_image"></div>';
+			}
+			else{
+				icon_url += "file_icon.png";
+				upload_html += '<div class="bicon fileDiv service_upload_image"></div>';
+			}
+		}
+		
+        upload_html += '</div>';
+        upload_html += '</div>';
+        upload_html += '</div>';
+        upload_html += '</td>';
+        upload_html += '<td>';
+		upload_html += '<label id="ext-comp-1010">' + m.getString('title_message') + '</label><br>';
+        upload_html += '<textarea style="resize: none; width: 292px; height: 82px;" autocomplete="off" id="title" name="title" class="x-form-textarea x-form-field service_upload_field ' + className + '">' + this_filename + '</textarea>';
+        upload_html += '</td></tr>';
+        upload_html += '</table>';
+		
+		g_uploadfile_item.add(uploadfile_url, this_filename, className, filext, icon_url);
+	}
+	
+	$(upload_html).appendTo( $(".service_image_upload_container") );
+	
+	$("#ext-comp-1011").text(m.getString('title_album'));
+	$("#new_album_name").val(m.getString('title_new_album_name'));
+	$("#user_authorize").text(m.getString('title_login'));
+	$("#user_deletetoken").text(m.getString('title_logout'));
+	$("button#upload_photo").text(m.getString('btn_publish'));
+	$("button#cancel").text(m.getString('btn_cancel'));
+	$('#sharelink_warning').text(m.getString('msg_sharelink_warning'));
+	
+	google_get_userprofile();
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	//- Login
+	$(".user_login_option").click(function(){
+		if(g_bLoginGoogle)
+			return;
+			
+		google_login();
+	});
+	
+	//- Logout
+	$("#user_deletetoken").click(function(){
+		g_token = "";
+		g_storage.setl("google_access_token", "");
+		
+		window.location.reload();
+	});
+	
+	$("#open_addalbum_dialog").click(function(){
+		
+		$("#newalbum").css("display","block");
+		$("#newalbum").css("left", tempX );
+				
+		if( tempY + $("#filelink").height() > $("body").height() )
+			$("#newalbum").css("top", $("body").height() - $("#filelink").height() );
+		else
+			$("#newalbum").css("top", tempY );
+	});
+	
+	//- new album
+	$("#addalbum").click(function(){		
+		google_new_album();
+		onCloseDialog();
+	});
+	
+	$("#new_album_name").click(function(){
+		$(this).select();	
+	});
+});
+
+function google_login(){
+	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
+	var callback_function = "onGoogleLogin";
+		
+	var auth_url = server_url + "google_authorize.html";
+	var redirect_url = window.location.href.slice(0,b) + "/smb/css/service/callback.html";
+		
+	var url = "https://accounts.google.com/o/oauth2/auth?" +
+			  "response_type=token" +				  
+			  "&redirect_uri=" + encodeURIComponent(auth_url) + 
+			  "&client_id=" + g_app_id +
+			  "&scope=https://www.googleapis.com%2Fauth%2Fuserinfo.email+https://www.googleapis.com%2Fauth%2Fuserinfo.profile+https://picasaweb.google.com%2Fdata" + 
+			  "&state=/callback=" + callback_function + "+ps5host=" + redirect_url;
+		
+	window.open(url,"mywindow","menubar=1,resizable=0,width=630,height=250, top=100, left=300");
+}
+
+function onGoogleLogin( token, uid ){
+	
+	if(token=="")
+		return;
+	
+	g_token = token;
+	g_storage.setl("google_access_token", token);
+	
+	google_get_userprofile();
+}
+
+function google_get_userprofile(){
+	 
+	var token = (g_storage.getl("google_access_token") == undefined) ? "" : g_storage.getl("google_access_token");
+	
+	if(token=="")
+		return;
+	
+	$.ajax({
+		url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=" + token,
+	    type: 'GET',
+	    dataType: 'jsonp',
+	    timeout: 20000,
+	    success: function(response){
+	    	var username = response.name;
+	    	var userpic = response.picture;
+	    	g_uid = response.id;
+			
+			g_bLoginGoogle = true;
+			
+			$("#user_authorize").text(username);
+			
+			$("#user_authorize").removeClass("user_login_option");
+			$("#user_authorize").click(null);
+	
+			$("#user_deletetoken").css("visibility", "visible");			
+			$('#user_pic').attr('src', userpic); //取得大頭
+			$("#default_user_pic").hide();
+			$("#user_pic").show();
+			
+			//- Get album list		
+			google_get_albumlist();
+			
+			$("#upload_photo").removeAttr("disabled");
+			$("#addalbum").removeAttr("disabled");
+		},
+		error: function(xhr, status, error){
+	    	alert(status+", "+error);
+	    }
+	});
+}
+
+function google_get_albumlist(){
+	$("#album_combo").empty();
+	
+	if(!g_bLoginGoogle||g_uid==""||g_token=="")
+		return;
+	
+	$.ajax({
+		url: "https://picasaweb.google.com/data/feed/api/user/" + g_uid + "?access_token=" + g_token,
+	    type: 'GET',
+	    dataType: 'jsonp',
+	    timeout: 20000,
+	    success: function(xml){
+	    	$('entry', xml).each(function(i){
+				var albumId = $(this).children('gphoto\\:id').text();
+				var title = $(this).find("title").text();
+				
+				var option_html = "<option value='" + albumId + "'>" + title + "</option>";
+				$(option_html).appendTo($("#album_combo"));
+			});
+		},
+		error: function(xhr, status, error){
+	    	alert(status+", "+error);
+	    }
+	});
+}
+
+function google_new_album(){	
+	
+	if(!g_bLoginGoogle)
+		return;
+		
+	$("#addalbum").attr("disabled", "disabled");
+	$(".table_block_upload").css("visibility", "visible");
+	$(".table_block_upload span.msg").text(m.getString('title_create_album'));
+		
+	//建立相簿	
+	var args = {};
+	args.method = "flickr.photosets.create";
+	args.api_key = g_app_id;
+	args.title = $("#new_album_name").val();
+	args.description = "AiCloud";
+	args.primary_photo_id = "876121100429";
+	
+	$.ajax({
+		url: "https://api.flickr.com/services/rest/",
+		data: args,
+	  	type: 'POST',
+	  	dataType: 'xml',
+	  	timeout: 20000,
+		success: function(xml){			
+			//var albumId = response.id;			
+			flickr_get_albumlist();	
+			$("#addalbum").removeAttr("disabled");
+			$(".table_block_upload").css("visibility", "hidden");
+		},
+		error: function(err) {
+			//alert('Error occured: '+err.responseText);
+		}
+	});
+}
+
+function getFileExt(filename){
+	var ext = /^.+\.([^.]+)$/.exec(filename);
+  	return ext == null ? "" : ext[1].toLowerCase();
+}
+
+function google_upload_photo(){
+	if(!g_bLoginGoogle)
+		return;
+		
+	if(g_uploadfile_item.length()<=0){
+		alert(m.getString('msg_no_upload'));
+		return;
+	}
+	
+	var count = 0;
+	var total = g_uploadfile_item.length();
+	$(".service_image_upload_container").animate({
+		scrollTop: 0
+	}, 'slow');
+	
+	$(".service_image_upload_container").attr("disabled", "disabled");
+	$("#upload_photo").attr("disabled", "disabled");
+	$(".table_block_upload").css("visibility", "visible");
+	$(".table_block_upload span.msg").text(m.getString('title_init_upload'));
+	$(".service_upload_field").attr("disabled", "disabled");
+	
+	var uid = g_uid;
+    var accessToken = g_token;
+	var albumId = $("#album_combo").val();
+	
+	g_bUpload = false;
+	
+	var client = new davlib.DavClient();
+	client.initialize();
+	
+	g_upload_timer = setInterval( function(){
+		if(g_uploadfile_item.length()<=0){
+			alert(m.getString('msg_publish_complete'));
+			clearInterval(g_upload_timer);
+			client = null;
+			parent.closeJqmWindow();
+			return;
+		}
+				
+		if(g_bUpload==true)
+			return;
+					
+		var uploadfile_obj = g_uploadfile_item.get(0);
+				
+		if(uploadfile_obj==null)
+			return;
+				
+		var url = uploadfile_obj.url;
+		var filename = myencodeURI(uploadfile_obj.filename);
+		var title = myencodeURI($("textarea." + uploadfile_obj.textAreaClassName).val());
+		var pos = count*$(".service_image_upload_container table").height();
+		var filext = uploadfile_obj.filext;
+		var this_url = url.substring(0, url.lastIndexOf("/"));
+		
+		$(".service_image_upload_container").animate({scrollTop: pos}, 'slow');
+					
+		g_bUpload = true;
+				
+		if(filext=='jpg'||filext=='jpeg'||filext=='png'||filext=='gif'){
+			$(".table_block_upload span.msg").text(m.getString('title_upload1') + " " + ( total - g_uploadfile_item.length() + 1 ) + "/" + total );
+				
+			client.UPLOADTOPICASA(this_url, filename, title, g_uid, albumId, accessToken, function(error, content, statusstring){				
+				if(error==200){
+					var data = parseXml(statusstring);
+					var x = $(data);
+					var photoid = x.find("photoid").text();
+					
+					$(".table_block_upload span.msg").text(m.getString('msg_publish_complete'));
+						
+					g_uploadfile_item.remove(0);
+						
+					g_bUpload = false;
+					
+					count++;
+				}
+				else{
+					alert("Fail to upload! " + m.getString(error));	
+				}
+			});		
+		}		
+	}, 1000 );
+}
+
+function onCloseDialog(){
+	$("#newalbum").css("display","none");	
+}
+
+function doCancel(e) {
+	parent.closeJqmWindow();
+};
+
+// Detect if the browser is IE or not.
+// If it is not IE, we assume that the browser is NS.
+var IE = document.all?true:false
+
+// If NS -- that is, !IE -- then set up for mouse capture
+if (!IE) document.captureEvents(Event.MOUSEMOVE)
+
+// Set-up to use getMouseXY function onMouseMove
+document.onmousemove = getMouseXY;
+
+// Temporary variables to hold mouse x-y pos.s
+var tempX = 0
+var tempY = 0
+
+// Main function to retrieve mouse x-y pos.s
+
+function getMouseXY(e) {
+	if (IE) { // grab the x-y pos.s if browser is IE
+    	tempX = event.clientX + document.body.scrollLeft
+    	tempY = event.clientY + document.body.scrollTop
+  	} else {  // grab the x-y pos.s if browser is NS
+    	tempX = e.pageX
+    	tempY = e.pageY
+  	}  
+  	// catch possible negative values in NS4
+  	if (tempX < 0){tempX = 0}
+  	if (tempY < 0){tempY = 0}  
+  	return true
+}
+</script>
+<table class="x-table-layout" cellspacing="0" style="width:100%;height:100%;font-size:14px;" id="ext-gen94">
+	<tbody>
+    	<tr>
+            <td>
+                <div style="background-color:#FF9100;width:99%;padding:5px;">
+                    <span id="sharelink_warning" name="sharelink_warning" style="color:#fff"></span>
+                </div>
+            </td>
+        </tr>
+		<tr id="tr_user_option">        
+            <td class="x-table-layout-cell" colspan="1" id="ext-gen84">
+            	<div class=" x-panel x-panel-noborder">
+            		<div class="x-panel-bwrap" id="ext-gen85">
+            			<div class="x-panel-body x-panel-body-noheader x-panel-body-noborder" id="ext-gen86">
+                        	<div id="default_user_pic" class="user_image"></div>
+            				<img id="user_pic" border="0" height="50px">
+            				<img class="loading-img" src="/smb/css/load.gif" style="visibility: hidden;">
+            				<span id="user_authorize" class="user_login_option">Login</span>
+            				<span id="user_deletetoken" style="visibility: hidden;">Logout</span>
+            			</div>
+                	</div>
+            	</div>
+            </td>
+		</tr>
+        <tr id="tr_image_upload">
+        	<td class="x-table-layout-cell" colspan="1" id="ext-gen88">
+            	<div class="service_image_upload_container ">
+                </div>
+            </td>
+		</tr>        
+        <tr id="tr_album">
+        	<td class="x-table-layout-cell" colspan="1" id="ext-gen90" >
+            	<label id="ext-comp-1011" name="ext-comp-1011">Upload Album：</label>
+                <div class="x-form-field-wrap x-form-field-trigger-wrap x-item-disabled" id="ext-gen92" style="width: 320px;">
+            		<select id="album_combo" name="album_combo" class="x-form-text x-form-field x-form-empty-field" style="width: 295px;" ></select>
+                    <!--<button id="open_addalbum_dialog" class="btnStyle x-form-addalbum">+</button>-->
+                </div>
+            </td>
+        </tr>
+       	<tr>
+        	<td>
+            	<div class="table_block_upload" style="float:left;height:30px;visibility: hidden;">
+                	<img class="upload-img" src="/smb/css/load.gif">
+                    <span class='msg'>Upload to...</span>
+                </div>                
+        		<div class="table_block_footer" style="float:right;height:30px;">
+            		<button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+            		<button id="upload_photo" class="btnStyle" onclick="google_upload_photo();" value="" disabled="disabled">Upload</button>
+        		</div>
+        	</td>
+		</tr>
+   </tbody>
+</table>
+<div id="newalbum" style="display:none; position:absolute; background:#FFF8A8; width:200px; height:auto; border:1px solid #000000; padding:0">
+	<div style="background: #747474;text-align:right;">	
+		<a onclick="onCloseDialog()" style="cursor:pointer;color:#fff;padding:2px">[X]</a>
+	</div>
+	<div style="width:100%; height:100%;padding:5px">
+		<input type="text" size="24" autocomplete="off" id="new_album_name" name="new_album_name" class="x-form-text x-form-field x-form-empty-field" style="width:150px;background-color:#CCC" value="New Album Name">
+        <button id="addalbum" class="btnStyle x-form-addalbum" disabled>+</button> 
+	</div>
+</div>
+</body>
+</html>

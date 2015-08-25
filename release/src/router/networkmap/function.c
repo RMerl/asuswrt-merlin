@@ -18,10 +18,12 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <asm/byteorder.h>
-#include <iboxcom.h>
+#include "iboxcom.h"
 #include "../shared/shutils.h"
 
 extern int scan_count;//from networkmap;
+extern FILE *fp_upnp;
+extern FILE *fp_smb;
 
 static char *strip_chars(char *str, char *reject);
 void interrupt();
@@ -51,9 +53,9 @@ void fixstr(const char *buf)
 
         for (i = 0; i < 16; i++)
         {
-                if (*p < 0x20)
-			*p = 0x0;
-		if (i == 15)
+                if (*p < 0x21)
+                        *p = 0x0;
+                if (i == 15)
                         *p = '\0';
                 p++;
         }
@@ -110,7 +112,7 @@ int SendHttpReq(unsigned char *des_ip)
                 getlen = recv(sock_http, buffer, sizeof(buffer) - 1, 0);
                 if (getlen > 0)
                 {
-                        NMP_DEBUG_M("Check http response: %s\n", buffer);
+                        NMP_DEBUG_F("Check http response: %s\n", buffer);
                         if(!memcmp(buffer, "HTTP/1.", 7) &&
 			  (!memcmp(buffer+9, "2", 1)||!memcmp(buffer+9, "3", 1)||!memcmp(buffer+9, "401", 3)) )
                         {
@@ -122,7 +124,7 @@ int SendHttpReq(unsigned char *des_ip)
                 gettimeofday(&tv2, NULL);
 		if( (((tv2.tv_sec)*1000000 + tv2.tv_usec)-((tv1.tv_sec)*1000000 + tv1.tv_usec)) > RCV_TIMEOUT*1000000 )
                 {
-                        NMP_DEBUG_M("Http receive timeout\n");
+                        NMP_DEBUG_F("Http receive timeout\n");
                         break;
                 }
         }
@@ -155,7 +157,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
     sock_nbns = socket(AF_INET, SOCK_DGRAM, 0);
     if (-1 == sock_nbns)
     {
-        NMP_DEBUG_M("NBNS: socket error.\n");
+        NMP_DEBUG_F("NBNS: socket error.\n");
         return -1;
     }
     memset(&my_addr, 0, sizeof(my_addr));
@@ -169,7 +171,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
     status = bind(sock_nbns, (struct sockaddr *)&my_addr, sizeof(my_addr));
     if (-1 == status)
     {
-        NMP_DEBUG_M("NBNS: bind error.\n");
+        NMP_DEBUG_F("NBNS: bind error.\n");
         return -1;
     }
 
@@ -191,16 +193,17 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
 
         recvlen = recvfrom(sock_nbns, recvbuf, sizeof(recvbuf), 0, (struct sockaddr *)&other_addr2, &other_addr_len2);
         if( recvlen > 0 ) {
-	    NMP_DEBUG_M("NBNS Response:\n");
+	    NMP_DEBUG_F("NBNS Response:\n");
+
 	    #if 0 //def DEBUG_MORE
 	    	int x;
 	    	for(x=0; x<recvlen; x++)
-	    	    NMP_DEBUG_M("%02x ",recvbuf[x]);
-	    	NMP_DEBUG_M("\n");
+	    	    NMP_DEBUG_F("%02x ",recvbuf[x]);
+	    	NMP_DEBUG_F("\n");
 	    #endif
 
 	    nbns_response =(NBNS_RESPONSE *)recvbuf;
-	    NMP_DEBUG_M("flags: %02x %02x, number of names= %d\n", 
+	    NMP_DEBUG_F("flags: %02x %02x, number of names= %d\n", 
 		nbns_response->flags[0],nbns_response->flags[1],nbns_response->number_of_names);
 	    if( nbns_response->number_of_names ==0 ) {
 		exit++; //Not support NBNS name query
@@ -216,7 +219,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
 		fixstr(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
 		file_unlock(lock);
 	    	memcpy(NetBIOS_name, nbns_response->device_name1, 15);
-		NMP_DEBUG("Device name:%s~%s~\n", nbns_response->device_name1,
+		NMP_DEBUG_F("Device name:%s~%s~\n", nbns_response->device_name1,
 		p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
             	break;
 	    }
@@ -224,7 +227,7 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
 	    {
                 exit++; //Not support NBNS name query
                 if( exit==6 ){
-			NMP_DEBUG("Unknown error!\n");
+			NMP_DEBUG_F("Unknown error!\n");
 			break;
 		}
 	    }
@@ -234,14 +237,14 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
        	    retry++;
             if( retry==3 )
 	    {
-		NMP_DEBUG_M("NBNS timeout...\n");
+		NMP_DEBUG_F("NBNS timeout...\n");
                 break;
 	    }
         }
 	sleep(1); //2008.09.16 Yau add
     }
     close(sock_nbns);
-    NMP_DEBUG_M("NBNS close socket\n");
+    NMP_DEBUG_F("NBNS close socket\n");
     return 0;
 }
 
@@ -257,7 +260,7 @@ int lpd515(unsigned char *dest_ip)
 
     	if ((sockfd1 = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     	{
-        	NMP_DEBUG_M("LPD515: socket create error.\n");
+        	NMP_DEBUG_F("LPD515: socket create error.\n");
         	return -1;
     	}
 
@@ -271,7 +274,7 @@ int lpd515(unsigned char *dest_ip)
 
     	if (connect(sockfd1, (struct sockaddr*)&other_addr1, sizeof(other_addr1)) == -1)
     	{
-        	NMP_DEBUG_M("LPD515: socket connect failed!\n");
+        	NMP_DEBUG_F("LPD515: socket connect failed!\n");
 		return -1;
      	}
 
@@ -282,7 +285,7 @@ int lpd515(unsigned char *dest_ip)
         sprintf(sendbuf1, "%c%s%c", lpd.cmd_code, lpd.options, lpd.lf);
         if ((sendlen1 = send(sockfd1, sendbuf1, strlen(sendbuf1), 0)) == -1)
         {
-             	NMP_DEBUG_M("LPD515: Send packet failed!\n");
+             	NMP_DEBUG_F("LPD515: Send packet failed!\n");
 	    	return -1;
         }
         gettimeofday(&tv1, NULL);
@@ -307,7 +310,7 @@ int raw9100(unsigned char *dest_ip)
     struct timeval timeout={0, 500000};
     if ((sockfd2 = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        NMP_DEBUG_M("RAW9100: socket create error.\n");
+        NMP_DEBUG_F("RAW9100: socket create error.\n");
         return -1;
     }
 
@@ -321,7 +324,7 @@ int raw9100(unsigned char *dest_ip)
 
     if (connect(sockfd2, (struct sockaddr*)&other_addr2, sizeof(other_addr2)) == -1)
     {
-        NMP_DEBUG_M("RAW9100: socket connect failed!\n");
+        NMP_DEBUG_F("RAW9100: socket connect failed!\n");
     	close(sockfd2);
     	return -1;
     }
@@ -382,7 +385,7 @@ int open_socket_ipv4( unsigned char *src_ip )
 	struct timeval timeout={1, 0};
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval)) < 0)
         {
-                NMP_DEBUG_M("SO_RCVTIMEO failed: %s\n", strerror(errno));
+                NMP_DEBUG_F("SO_RCVTIMEO failed: %s\n", strerror(errno));
                 return -1;
         }
 
@@ -394,7 +397,7 @@ int open_socket_ipv4( unsigned char *src_ip )
         int flag=1;
         if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) < 0)
         {
-                NMP_DEBUG_M("SO_REUSEADDR failed: %s\n", strerror(errno));
+                NMP_DEBUG_F("SO_REUSEADDR failed: %s\n", strerror(errno));
                 return -1;
         }
         if(bind(fd, (struct sockaddr*) &local, sizeof(local)) < 0)
@@ -580,7 +583,7 @@ int ctrlpt(unsigned char *dest_ip)
                                 nbytes = recvfrom(ssdp_fd, buf, sizeof(buf), 0, (struct sockaddr*)&destaddr, &addrlen);
                                 buf[nbytes] = '\0';
 
-                                NMP_DEBUG_M("recv: %d from: %s\n", nbytes, inet_ntoa(destaddr.sin_addr));
+                                //NMP_DEBUG_F("recv: %d from: %s\n", nbytes, inet_ntoa(destaddr.sin_addr));
                                 if( !memcmp(&destaddr.sin_addr, dest_ip, 4) )
                                 {
                                         if(MATCH_PREFIX(buf, "HTTP/1.1 200 OK"))
@@ -617,7 +620,7 @@ static char *strip_chars(char *str, char *reject)
 void interrupt()
 {
         global_exit = TRUE;
-        NMP_DEBUG_M("no upnp device of this ip\n");
+        NMP_DEBUG_F("no upnp device of this ip\n");
         return_value = FALSE;
 }
 
@@ -771,7 +774,8 @@ int process_device_response(char *msg)
                         break;
                 }
         }
-        NMP_DEBUG_M("UPnP location=%s\n", location);
+        NMP_DEBUG_F("UPnP location=%s\n", location);
+        //fprintf(fp_upnp, "UPnP location=%s\n", location);//Yau     
 
         // get the destination ip
         location += 7;
@@ -825,8 +829,10 @@ int process_device_response(char *msg)
                 data[nbytes] ='\0';
                 strcat(descri, data);
         }
-        //printf("%s", descri);
+        //printf("%s\n", descri);
         //printf("len = %d", len);
+	//if(fp_upnp!=NULL)
+	//	fprintf(fp_upnp, "%s\n\n", descri);//Yau
 
         //store the useful information.
         store_description(descri);
@@ -848,7 +854,7 @@ int create_http_socket_ctrlpt(char *host, ushort destport)
         struct sockaddr_in destaddr;            // the device address information
         int fd;
 
-	NMP_DEBUG_M("UPnP create http socket to: %s:%d\n", host,destport);
+	NMP_DEBUG_F("UPnP create http socket to: %s:%d\n", host,destport);
         // create out http socket
         if((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
                 return -1;
@@ -943,8 +949,8 @@ void store_description(char *msg)
                 {
                 case 0:
                         strcpy(description.friendlyname, tmp);
-                        NMP_DEBUG_M("friendlyname = %s\n", tmp);
-#ifdef NMP_DEBUG_M
+                        NMP_DEBUG_F("friendlyname = %s\n", tmp);
+#ifdef NMP_DEBUG_F
 	if(strstr(tmp, "WDTVLive")) {
         	FILE *fp = fopen("/var/networkmap.upnp", "w");
         	if(fp != NULL) {
@@ -956,23 +962,23 @@ void store_description(char *msg)
                         break;
                 case 1:
                         strcpy(description.manufacturer, tmp);
-                        NMP_DEBUG_M("manufacturer = %s\n", tmp);
+                        NMP_DEBUG_F("manufacturer = %s\n", tmp);
                         break;
                 case 2:
                         strcpy(description.presentation, tmp);
-                        NMP_DEBUG_M("presentation = %s\n", tmp);
+                        NMP_DEBUG_F("presentation = %s\n", tmp);
                         break;
                 case 3:
                         strcpy(description.description, tmp);
-                        NMP_DEBUG_M("description = %s\n", tmp);
+                        NMP_DEBUG_F("description = %s\n", tmp);
                         break;
                 case 4:
                         strcpy(description.modelname, tmp);
-                        NMP_DEBUG_M("modelname = %s\n", tmp);
+                        NMP_DEBUG_F("modelname = %s\n", tmp);
                         break;
                 case 5:
                         strcpy(description.modelnumber, tmp);
-                        NMP_DEBUG_M("modelnumber = %s\n", tmp);
+                        NMP_DEBUG_F("modelnumber = %s\n", tmp);
                         break;
                 case 6: // tmp="urn:schemas-upnp-org:service:serviceType:v"
                         mxend = tmp;
@@ -987,11 +993,11 @@ void store_description(char *msg)
                         }
                         tmp[j-1] = '\0';
                         strcpy(description.service[s_num].name, tmp);
-                        NMP_DEBUG_M("service %d name = %s\n", s_num, tmp);
+                        NMP_DEBUG_F("service %d name = %s\n", s_num, tmp);
                         break;
                 case 7:
                         strcpy(description.service[s_num].url, tmp);
-                        NMP_DEBUG_M("service %d url = %s\n", s_num, tmp);
+                        NMP_DEBUG_F("service %d url = %s\n", s_num, tmp);
                         s_num++;
                         break;
                 }
@@ -1125,12 +1131,14 @@ SMBretry:
         }
         ul = 0;
         ioctl(sockfd, FIONBIO, &ul);
-        NMP_DEBUG_M("NetBIOS(NBSS) connected\n");
+        NMP_DEBUG_F("NetBIOS(NBSS) connected\n");
 
         operate = NBSS_REQ;
         while(operate != 0)
         {
-		NMP_DEBUG_M("Operate= %d\n", operate);
+		NMP_DEBUG_F("Operate= %d\n", operate);
+		if(fp_smb!=NULL)
+			fprintf(fp_smb, "Operate= %d\n", operate);
                 switch(operate)
                 {
                         case NBSS_REQ:  // first send nbss request
@@ -1175,7 +1183,7 @@ SMBretry:
                                                 {
                                                         if(nbss_buf[0] == 0x83)
 							{
-								NMP_DEBUG_M("Called Name Error!\n");
+								NMP_DEBUG_F("Called Name Error!\n");
 								smbretry_flag++;
                                                         	close(sockfd);
                                                                 sleep(1);
@@ -1198,7 +1206,7 @@ SMBretry:
                                 gettimeofday(&tv2, NULL);
                                 if((tv2.tv_sec - tv1.tv_sec) > RCV_TIMEOUT)
                                 {
-                                        NMP_DEBUG_M("NBSS receive timeout\n");
+                                        NMP_DEBUG_F("NBSS receive timeout\n");
                                         operate = 0;
                                         break;
                                 }
@@ -1263,10 +1271,12 @@ SMBretry:
                                                 }
                                                 if(numbytes > 0)
                                                 {
+							if(fp_smb!=NULL)
+								fprintf(fp_smb, "SMB_NEGOTIATE_RSP: %s\n", buf);//Yau
                                                         if(buf[4] == 0xFF && buf[5] == 0x53 && buf[6]==0x4d
                                                                 && buf[7]==0x42 && buf[8]==0x72)
                                                         {
-                                                                NMP_DEBUG_M("SMS rev%02x\n", buf[0]);
+                                                                NMP_DEBUG_F("SMS rev%02x\n", buf[0]);
                                                                 securitymode = buf[39];
                                                                 operate = SMB_SESSON_ANDX_REQ;
                                                         }
@@ -1431,6 +1441,8 @@ SMBretry:
                                                 }
                                                 if(numbytes > 0)
                                                 {
+							if(fp_smb!=NULL)
+								fprintf(fp_smb, "SMB_SESSON_ANDX_RSP:\n%s\n", buf);//Yau
                                                         if(buf[4] == 0xFF && buf[5] == 0x53 && buf[6]==0x4d
                                                                 && buf[7]==0x42 && buf[8]==0x73)
                                                         {
@@ -1446,7 +1458,7 @@ SMBretry:
                                                                                 i++;
                                                                         }
                                                                         i += 2;
-									NMP_DEBUG_M("\nNativeOS: %s\n", SMB_OS);
+									NMP_DEBUG_F("\nNativeOS: %s\n", SMB_OS);
 
                                                                         while(memcmp(buf+i, tmpch, 2) != 0)
                                                                         {
@@ -1459,7 +1471,7 @@ SMBretry:
 										snprintf(SMB_PriDomain, sizeof(SMB_PriDomain), "%s%c", SMB_PriDomain, buf[i]);
                                                                                 i++;
                                                                         }
-                                                                        NMP_DEBUG_M("Primary Domain: %s\n", SMB_PriDomain);
+                                                                        NMP_DEBUG_F("Primary Domain: %s\n", SMB_PriDomain);
                                                                 }
                                                                 else //Windows
                                                                 {
@@ -1475,7 +1487,7 @@ SMBretry:
                                                                                 i++;
                                                                         }
                                                                         i += 2;
-									NMP_DEBUG_M("\nNativeOS: %s\n", SMB_OS);
+									NMP_DEBUG_F("\nNativeOS: %s\n", SMB_OS);
 
                                                                         while(memcmp(buf+i, tmpch, 2) != 0)
                                                                         {
@@ -1487,7 +1499,7 @@ SMBretry:
 										snprintf(SMB_PriDomain, sizeof(SMB_PriDomain), "%s%c", SMB_PriDomain, buf[i]);
                                                                                 i++;
                                                                         }
-									NMP_DEBUG_M("Primary Domain: %s\n", SMB_PriDomain);
+									NMP_DEBUG_F("Primary Domain: %s\n", SMB_PriDomain);
                                                                 }
                                                                 operate = 0;
                                                         }
@@ -1499,7 +1511,7 @@ SMBretry:
 
                                 if((tv2.tv_sec - tv1.tv_sec) > RCV_TIMEOUT)
                                 {
-                                        NMP_DEBUG_M("SMB receive timeout\n");
+                                        NMP_DEBUG_F("SMB receive timeout\n");
                                         operate = 0;
                                         break;
                                 }
@@ -1558,7 +1570,7 @@ Asus_Device_Discovery(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DE
     	sock_dd = socket(AF_INET, SOCK_DGRAM, 0);
     	if (-1 == sock_dd)
     	{
-        	NMP_DEBUG("DD: socket error.\n");
+        	NMP_DEBUG_F("DD: socket error.\n");
         	return -1;
     	}
 
@@ -1570,14 +1582,14 @@ Asus_Device_Discovery(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DE
         int flag=1;
         if (setsockopt(sock_dd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) < 0)
         {
-                NMP_DEBUG_M("DD: SO_REUSEADDR failed: %s\n", strerror(errno));
+                NMP_DEBUG_F("DD: SO_REUSEADDR failed: %s\n", strerror(errno));
                 return -1;
         }
 
     	status = bind(sock_dd, (struct sockaddr *)&my_addr, sizeof(my_addr));
     	if (-1 == status)
     	{
-        	NMP_DEBUG_M("DD: bind error.\n");
+        	NMP_DEBUG_F("DD: bind error.\n");
         	return -1;
     	}
 
@@ -1600,7 +1612,7 @@ Asus_Device_Discovery(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DE
 
 	        if( recvlen > 0 ) {
 			if(UnpackGetInfo(txPdubuf, &get_info)) {
-				NMP_DEBUG_M("DD: productID= %s\n", get_info.ProductID);
+				NMP_DEBUG_F("DD: productID= %s~\n", get_info.ProductID);
 				memcpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], get_info.ProductID, 16);
 				p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 3;
 				break;
@@ -1616,6 +1628,45 @@ Asus_Device_Discovery(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DE
 }
 /* End of discovery */
 
+void
+get_name_from_dhcp_lease(unsigned char *mac, char *dev_name)
+{
+        FILE *fp;
+        char line[256], dev_mac[18];
+        char *hwaddr, *ipaddr, *name, *next, *ret;
+        unsigned int expires;
+
+        if (!nvram_get_int("dhcp_enable_x"))
+                return;
+
+        sprintf(dev_mac, "%02x:%02x:%02x:%02x:%02x:%02x",
+                *mac,*(mac+1),*(mac+2),*(mac+3),*(mac+4),*(mac+5));
+
+	NMP_DEBUG_F("Check dhcp lease table\n");
+        /* Read leases file */
+        if (!(fp = fopen("/var/lib/misc/dnsmasq.leases", "r")))
+                return;
+
+        while ((next = fgets(line, sizeof(line), fp)) != NULL) {
+                /* line should start from numeric value */
+                if (sscanf(next, "%u ", &expires) != 1)
+                        continue;
+
+                strsep(&next, " ");
+                hwaddr = strsep(&next, " ") ? : "";
+                ipaddr = strsep(&next, " ") ? : "";
+		name = strsep(&next, " ") ? : "";
+
+		if(!strcmp(dev_mac, hwaddr)) {
+			NMP_DEBUG_F("Find the same MAC(%s)! copy device name\n", dev_mac);
+			strncpy(dev_name, name, 15);
+			break;
+		}
+	}
+	fclose(fp);
+
+	return;
+}
 void toLowerCase(char *str) {
     char *p;
 
@@ -1634,7 +1685,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         UCHAR nativeLanMan[32];
 	int lock;
 
-        NMP_DEBUG("*FindAllApp: %d -> %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",p_client_detail_info_tab->detail_info_num,
+        NMP_DEBUG_F("*FindAllApp: %d -> %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",p_client_detail_info_tab->detail_info_num,
                 p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][0],
 		p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][1],
 		p_client_detail_info_tab->ip_addr[p_client_detail_info_tab->detail_info_num][2],
@@ -1646,6 +1697,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
                 p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][4],
                 p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num][5]
 	);
+
 	//NBSS Called and Calling Name
         UCHAR des_hostname[16] = {
                                 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
@@ -1661,17 +1713,17 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         memcpy(nativeLanMan, "Samba", 5);
 
 	//ASUS Device Discovery
-	Asus_Device_Discovery(src_ip, dest_ip, p_client_detail_info_tab);
+	//Asus_Device_Discovery(src_ip, dest_ip, p_client_detail_info_tab);
 
         //http service detect
         ret = SendHttpReq(dest_ip);
 	lock = file_lock("networkmap");
 	if(ret) {
-		NMP_DEBUG("Found HTTP\n");
+		NMP_DEBUG_F("Found HTTP\n");
 		p_client_detail_info_tab->http[p_client_detail_info_tab->detail_info_num] = 1;
 	}
 	else {
-		NMP_DEBUG("HTTP Not Found\n");
+		NMP_DEBUG_F("HTTP Not Found\n");
 		p_client_detail_info_tab->http[p_client_detail_info_tab->detail_info_num] = 0;
 	}
 	file_unlock(lock);
@@ -1682,7 +1734,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         ret = lpd515(dest_ip);
 	if(!ret) {
 		lock = file_lock("networkmap");
-                NMP_DEBUG("LPR Printer Server found!\n");
+                NMP_DEBUG_F("LPR Printer Server found!\n");
                 p_client_detail_info_tab->printer[p_client_detail_info_tab->detail_info_num] = 1;
 		file_unlock(lock);
         }
@@ -1690,11 +1742,11 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 		ret = raw9100(dest_ip);
 		lock = file_lock("networkmap");
 		if(!ret) {
-                	NMP_DEBUG("RAW Printer Server found!\n");
+                	NMP_DEBUG_F("RAW Printer Server found!\n");
                 	p_client_detail_info_tab->printer[p_client_detail_info_tab->detail_info_num] = 2;
         	}
         	else {
-                	NMP_DEBUG("Printer Server not found!\n");
+                	NMP_DEBUG_F("Printer Server not found!\n");
                 	p_client_detail_info_tab->printer[p_client_detail_info_tab->detail_info_num] = 0;
         	}
 		file_unlock(lock);
@@ -1706,11 +1758,11 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         ret = send_mdns_packet_ipv4(src_ip, dest_ip);
 	lock = file_lock("networkmap");
 	if(ret) {
-		NMP_DEBUG("Found iTune Server!\n");
+		NMP_DEBUG_F("Found iTune Server!\n");
                 p_client_detail_info_tab->itune[p_client_detail_info_tab->detail_info_num] = 1;
         }
         else {
-                NMP_DEBUG("No iTune Server!\n");
+                NMP_DEBUG_F("No iTune Server!\n");
                 p_client_detail_info_tab->itune[p_client_detail_info_tab->detail_info_num] = 0;
         }
 	file_unlock(lock);
@@ -1721,7 +1773,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
             if( ctrlpt(dest_ip) )//UPNP detect
             {
 		lock = file_lock("networkmap");
-		NMP_DEBUG("Find UPnP device: description= %s, modelname= %s\n",description.description, description.modelname);
+		NMP_DEBUG_F("Find UPnP device: description= %s, modelname= %s\n",description.description, description.modelname);
 	        //parse description
 	        toLowerCase(description.description);
 		if( strstr(description.description, "router")!=NULL )
@@ -1756,13 +1808,13 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 		file_unlock(lock);
 	    }
 	    else 
-		NMP_DEBUG("UPnP no response!\n");
+		NMP_DEBUG_F("UPnP no response!\n");
 	}
         if(scan_count==0) //leave when click refresh
                 return 0;
 
         //nbns name query
-	NMP_DEBUG("NBNS Name Query...\n");
+	NMP_DEBUG_F("NBNS Name Query...\n");
        	Nbns_query(src_ip, dest_ip, p_client_detail_info_tab);
         if(scan_count==0) //leave when click refresh
                 return 0;
@@ -1770,7 +1822,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 	if(p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num]==0)
 	{
         	//Check SMB data
-        	NMP_DEBUG("Check Samba... \n");
+        	NMP_DEBUG_F("Check Samba... \n");
         	memcpy(des_hostname, NetBIOS_name, 16);
 		strcpy(my_hostname, MODEL_NAME);
 	       	my_dvinfo.des_hostname= des_hostname;
@@ -1795,25 +1847,23 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
 			if( strstr(SMB_OS, "Windows")!=NULL )
 			{
 				p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 1;
-				NMP_DEBUG("Find: PC!\n");
+				NMP_DEBUG_F("Find: PC!\n");
 			}
                 	else if( strstr(SMB_PriDomain, "NAS")!=NULL )
 			{
                         	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 4;
-				NMP_DEBUG("Find: NAS Server!\n");
+				NMP_DEBUG_F("Find: NAS Server!\n");
 			}
-	                else
-			{
-       		                p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 6;
-                                NMP_DEBUG("Find: Nothing!\n");
-                        }
-		}
-	        else
-		{
-                	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 6;
-                        NMP_DEBUG("Find: Nothing!\n");
                 }
 		file_unlock(lock);
+	}
+
+	if(!strcmp("", p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num])) {
+		get_name_from_dhcp_lease(p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->detail_info_num],
+					 p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
+		fixstr(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
+		NMP_DEBUG_F("Get device name from dhcp lease: %s\n", 
+		p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
 	}
 
 	return 1;

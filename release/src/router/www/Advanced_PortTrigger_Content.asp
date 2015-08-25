@@ -18,13 +18,16 @@
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script>
-var autofw_rulelist_array = "<% nvram_char_to_ascii("","autofw_rulelist"); %>";
+var autofw_rulelist_array = '<% nvram_char_to_ascii("","autofw_rulelist"); %>';
+var wans_mode ='<% nvram_get("wans_mode"); %>';
 
 function initial(){
-	show_menu(); 
-	well_known_apps(); 
+	show_menu();
+	well_known_apps();
 	showautofw_rulelist();
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "port", "trigger"]);
+	if(dualWAN_support && wans_mode == "lb")
+		document.getElementById("lb_note").style.display = "";
 }
 
 function well_known_apps(){
@@ -284,14 +287,15 @@ function trigger_validate_duplicate(o, v, l, off){
 		<div class="formfontdesc"><#IPConnection_porttrigger_sectiondesc#></div>
 		<div class="formfontdesc" style="margin-top:-10px;">
 			<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#menu5_3_3#>&nbspFAQ</a>
-		</div>			
-
-	    		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
+		</div>
+		<div class="formfontdesc" id="lb_note" style="color:#FFCC00; display:none;"><#lb_note_portTrigger#></div>
+	
+		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
 					  <thead>
 					  <tr>
 						<td colspan="6"><#t2BC#></td>
 					  </tr>
-					  </thead>		
+					  </thead>
 
           	<tr>
             	<th colspan="2"><#IPConnection_autofwEnable_itemname#></th>

@@ -2,7 +2,7 @@ Package: smartsync
 Architecture: mipsel
 Priority: optional
 Section: net
-Version: 1.0.0.10
+Version: 1.0.0.12.0.gf3cf217
 OptionalUtility:
 Maintainer: ASUS
 Source: http://nw-dlcdnet.asus.com/asusware/mipsel/stable

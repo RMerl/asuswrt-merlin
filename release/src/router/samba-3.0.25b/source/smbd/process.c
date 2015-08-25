@@ -348,7 +348,11 @@ static int select_on_fd(int fd, int maxfd, fd_set *fds)
 The timeout is in milliseconds
 ****************************************************************************/
 
+#if defined(HAVE_BCM_RECVFILE)
+static BOOL receive_message_or_smb(char *buffer, int buffer_len, int timeout, size_t *pending_bytes_p)
+#else
 static BOOL receive_message_or_smb(char *buffer, int buffer_len, int timeout)
+#endif /* HAVE_BCM_RECVFILE */
 {
 	fd_set r_fds, w_fds;
 	int selrtn;
@@ -521,6 +525,13 @@ static BOOL receive_message_or_smb(char *buffer, int buffer_len, int timeout)
 		goto again;
 	}
 
+#if defined(HAVE_BCM_RECVFILE)
+    if (lp_use_recvfile(-1)) {
+        return receive_smb_recvfile(smbd_server_fd(), buffer,
+            BUFFER_SIZE + LARGE_WRITEX_HDR_SIZE, 0, pending_bytes_p);
+    }
+    else
+#endif /* HAVE_BCM_RECVFILE */
 	return receive_smb(smbd_server_fd(), buffer, 0);
 }
 
@@ -887,7 +898,11 @@ static void smb_dump(const char *name, int type, char *data, ssize_t len)
  Do a switch on the message type, and return the response size
 ****************************************************************************/
 
+#if defined(HAVE_BCM_RECVFILE)
+static int switch_message(int type,char *inbuf,char *outbuf,int size,int bufsize, size_t pending_bytes)
+#else
 static int switch_message(int type,char *inbuf,char *outbuf,int size,int bufsize)
+#endif /* HAVE_BCM_RECVFILE */
 {
 	static pid_t pid= (pid_t)-1;
 	int outsize = 0;
@@ -1000,7 +1015,19 @@ static int switch_message(int type,char *inbuf,char *outbuf,int size,int bufsize
 		}
 
 		current_inbuf = inbuf; /* In case we need to defer this message in open... */
-		outsize = smb_messages[type].fn(conn, inbuf,outbuf,size,bufsize);
+#if defined(HAVE_BCM_RECVFILE)
+		/* SMBWriteandX */
+		if ((type == SMBwriteX) && pending_bytes) {
+		    outsize = reply_write_and_X_recvfile(conn, inbuf,outbuf,size,bufsize,&pending_bytes);
+		    if (pending_bytes) {
+				discard_bytes_from_fd(smbd_server_fd(), pending_bytes);
+		    }
+		}
+		else
+#endif /* HAVE_BCM_RECVFILE */
+		{
+			outsize = smb_messages[type].fn(conn, inbuf,outbuf,size,bufsize);
+		}
 	}
 
 	smb_dump(smb_fn_name(type), 0, outbuf, outsize);
@@ -1012,7 +1039,11 @@ static int switch_message(int type,char *inbuf,char *outbuf,int size,int bufsize
  Construct a reply to the incoming packet.
 ****************************************************************************/
 
+#if defined(HAVE_BCM_RECVFILE)
+static int construct_reply(char *inbuf,char *outbuf,int size,int bufsize, size_t pending_bytes)
+#else
 static int construct_reply(char *inbuf,char *outbuf,int size,int bufsize)
+#endif /* HAVE_BCM_RECVFILE */
 {
 	int type = CVAL(inbuf,smb_com);
 	int outsize = 0;
@@ -1023,11 +1054,15 @@ static int construct_reply(char *inbuf,char *outbuf,int size,int bufsize)
 	reset_chain_p();
 
 	if (msg_type != 0)
-		return(reply_special(inbuf,outbuf));  
+		return(reply_special(inbuf,outbuf));
 
 	construct_reply_common(inbuf, outbuf);
 
+#if defined(HAVE_BCM_RECVFILE)
+	outsize = switch_message(type,inbuf,outbuf,size,bufsize, pending_bytes);
+#else
 	outsize = switch_message(type,inbuf,outbuf,size,bufsize);
+#endif /* HAVE_BCM_RECVFILE */
 
 	outsize += chain_size;
 
@@ -1040,7 +1075,11 @@ static int construct_reply(char *inbuf,char *outbuf,int size,int bufsize)
  Process an smb from the client
 ****************************************************************************/
 
+#if defined(HAVE_BCM_RECVFILE)
+static void process_smb(char *inbuf, char *outbuf, size_t pending_bytes)
+#else
 static void process_smb(char *inbuf, char *outbuf)
+#endif /* HAVE_BCM_RECVFILE */
 {
 	static int trans_num;
 	int msg_type = CVAL(inbuf,0);
@@ -1072,12 +1111,16 @@ static void process_smb(char *inbuf, char *outbuf)
 	else if(msg_type == SMBkeepalive)
 		return; /* Keepalive packet. */
 
+#if defined(HAVE_BCM_RECVFILE)
+	nread = construct_reply(inbuf,outbuf,nread,max_send, pending_bytes);
+#else
 	nread = construct_reply(inbuf,outbuf,nread,max_send);
-      
-	if(nread > 0) {
+#endif  /* HAVE_BCM_RECVFILE */
+
+	if (nread > 0) {
 		if (CVAL(outbuf,0) == 0)
 			show_msg(outbuf);
-	
+
 		if (nread != smb_len(outbuf) + 4) {
 			DEBUG(0,("ERROR: Invalid message response size! %d %d\n",
 				nread, smb_len(outbuf)));
@@ -1221,7 +1264,11 @@ int chain_reply(char *inbuf,char *outbuf,int size,int bufsize)
 
 	/* process the request */
 	outsize2 = switch_message(smb_com2,inbuf2,outbuf2,new_size,
+#if defined(HAVE_BCM_RECVFILE)
+				bufsize-chain_size, 0);
+#else
 				bufsize-chain_size);
+#endif  /* HAVE_BCM_RECVFILE */
 
 	/* copy the new reply and request headers over the old ones, but
 		preserve the smb_com field */
@@ -1547,12 +1594,15 @@ void smbd_process(void)
 		int deadtime = lp_deadtime()*60;
 		int select_timeout = setup_select_timeout();
 		int num_echos;
+#if defined(HAVE_BCM_RECVFILE)
+        size_t pending_bytes = 0;
+#endif /* HAVE_BCM_RECVFILE */
 
 		if (deadtime <= 0)
 			deadtime = DEFAULT_SMBD_TIMEOUT;
 
-		errno = 0;      
-		
+		errno = 0;
+
 		/* free up temporary memory */
 		lp_TALLOC_FREE();
 		main_loop_TALLOC_FREE();
@@ -1570,7 +1620,12 @@ void smbd_process(void)
 		clobber_region(SAFE_STRING_FUNCTION_NAME, SAFE_STRING_LINE, InBuffer, total_buffer_size);
 #endif
 
-		while (!receive_message_or_smb(InBuffer,BUFFER_SIZE+LARGE_WRITEX_HDR_SIZE,select_timeout)) {
+#if defined(HAVE_BCM_RECVFILE)
+		while (!receive_message_or_smb(InBuffer,BUFFER_SIZE+LARGE_WRITEX_HDR_SIZE,select_timeout,&pending_bytes))
+#else
+		while (!receive_message_or_smb(InBuffer,BUFFER_SIZE+LARGE_WRITEX_HDR_SIZE,select_timeout))
+#endif /* HAVE_BCM_RECVFILE */
+		{
 			if(!timeout_processing( deadtime, &select_timeout, &last_timeout_processing_time))
 				return;
 			num_smbs = 0; /* Reset smb counter. */
@@ -1584,12 +1639,16 @@ void smbd_process(void)
 		 * faster than the select timeout, thus starving out the
 		 * essential processing (change notify, blocking locks) that
 		 * the timeout code does. JRA.
-		 */ 
+		 */
 		num_echos = smb_echo_count;
 
 		clobber_region(SAFE_STRING_FUNCTION_NAME, SAFE_STRING_LINE, OutBuffer, total_buffer_size);
 
+#if defined(HAVE_BCM_RECVFILE)
+		process_smb(InBuffer, OutBuffer, pending_bytes);
+#else
 		process_smb(InBuffer, OutBuffer);
+#endif /* HAVE_BCM_RECVFILE */
 
 		if (smb_echo_count != num_echos) {
 			if(!timeout_processing( deadtime, &select_timeout, &last_timeout_processing_time))

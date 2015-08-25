@@ -156,7 +156,7 @@ function getUrlVars(){
 }
 
 function parseXml(xml) {
-	if (jQuery.browser.msie) {
+	if(isIE()){
 		var xmlDoc = new ActiveXObject("Microsoft.XMLDOM"); 
     	xmlDoc.loadXML(xml);
     	xml = xmlDoc;

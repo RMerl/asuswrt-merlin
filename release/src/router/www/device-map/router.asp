@@ -67,8 +67,13 @@ function initial(){
 		document.form.wl_subunit.value = -1;
 	
 	if(smart_connect_support){
-		document.getElementById("smartcon_enable_field").style.display = '';
-		document.getElementById("smartcon_enable_line").style.display = '';
+		if(based_modelid == "RT-AC5300")
+			if('<% nvram_get("smart_connect_x"); %>' !=0){
+				document.getElementById("smart_connect_field").style.display = '';
+		}else{
+			document.getElementById("smartcon_enable_field").style.display = '';
+			document.getElementById("smartcon_enable_line").style.display = '';
+		}
 	}
 
 	if(band5g_support){
@@ -353,6 +358,7 @@ function show_LAN_info(v){
 	else if (document.form.wl_unit.value == 2){
 		document.getElementById("macaddr_wl2").style.display = "none";
 		document.getElementById("macaddr_wl5").style.display = "none";
+		document.getElementById("macaddr_wl5_2").style.display = "";
 	}
 	if(smart_connect_support){
 		if(v == '1'){
@@ -364,6 +370,13 @@ function show_LAN_info(v){
 			document.getElementById("macaddr_wl5").style.display = "";
 			document.getElementById("macaddr_wl5_2").style.display = "";
 			parent.document.getElementById("statusframe").height = 760;
+		}else if(document.form.wl_unit.value != 0 && v == '2'){
+			document.getElementById("macaddr_wl2").style.display = "none";
+			showtext(document.getElementById("MAC_wl5"), '<% nvram_get("wl1_hwaddr"); %>');
+			showtext(document.getElementById("MAC_wl5_2"), '<% nvram_get("wl2_hwaddr"); %>');
+			document.getElementById("macaddr_wl5_title").innerHTML = "5GHz-1 ";
+			document.getElementById("macaddr_wl5").style.display = "";
+			document.getElementById("macaddr_wl5_2").style.display = "";
 		}else{
 			parent.document.getElementById("statusframe").height = 735;
 		}
@@ -486,21 +499,28 @@ function tab_reset(v){
 			document.getElementById("t2").style.display = "none";
 		}
 	}else if(v == 1){	//Smart Connect
-		document.getElementById("span0").innerHTML = "Tri-band Smart Connect";
+		if(based_modelid == "RT-AC5300")
+			document.getElementById("span0").innerHTML = "2.4GHz, 5GHz-1 and 5GHz-2";
+		else
+			document.getElementById("span0").innerHTML = "Tri-band Smart Connect";
 		document.getElementById("t1").style.display = "none";
 		document.getElementById("t2").style.display = "none";				
-		document.getElementById("t0").style.width = (tab_width*wl_info.wl_if_total) +'px';
+		document.getElementById("t0").style.width = (tab_width*wl_info.wl_if_total+10) +'px';
 	}
 	else if(v == 2){ //5GHz Smart Connect
 		document.getElementById("span0").innerHTML = "2.4GHz";
-		document.getElementById("span1").innerHTML = "5GHz Smart Connect";
+		document.getElementById("span1").innerHTML = "5GHz-1 and 5GHz-2";
 		document.getElementById("t2").style.display = "none";	
-		document.getElementById("t1").style.width = "140px";
+		document.getElementById("t1").style.width = "155px";
 	}
 }
 
 function change_smart_connect(v){
 	document.form.smart_connect_x.value = v;
+
+	if(based_modelid=="RT-AC5300")
+		document.form.smart_connect_t.value = v;
+
 	show_LAN_info(v);
 	switch(v){
 		case '0':
@@ -599,6 +619,17 @@ function change_smart_connect(v){
 		</table>
 
 		<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" class="table1px" id="WLnetworkmap">
+               <tr id="smart_connect_field" style="display:none">
+                       <td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
+                               <p class="formfonttitle_nwm" >Smart Connect</p>
+                               <select style="*margin-top:-7px;" name="smart_connect_t" class="input_option" onchange="change_smart_connect(this.value);">
+                                       <option value="0" <% nvram_match("smart_connect_x", "0", "selected"); %>>none</option>
+                                       <option value="1" <% nvram_match("smart_connect_x", "1", "selected"); %>>Tri-band Smart Connect</option>
+                                       <option value="2" <% nvram_match("smart_connect_x", "2", "selected"); %>>5Ghz Smart Connect</option>
+                               </select>                               
+                               <img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
+                       </td>
+               </tr>
   		<tr id="smartcon_enable_field" style="display:none">
 			  	<td>
 			  	<div><table><tr>
@@ -814,7 +845,7 @@ function change_smart_connect(v){
   		</tr>
   		<tr id="macaddr_wl5_2" style="display:none;">
     			<td style="padding:5px 10px 0px 10px;">
-    				<p class="formfonttitle_nwm" >Wireless <span id="macaddr_wl5_title">5GHz-2 </span><#MAC_Address#></p>
+    				<p class="formfonttitle_nwm" >Wireless <span id="macaddr_wl5_2_title">5GHz-2 </span><#MAC_Address#></p>
     				<p style="padding-left:10px; margin-bottom:5px; margin-top:3px; *margin-top:-5px; padding-bottom:3px; margin-right:10px; background-color:#444f53; line-height:20px;" id="MAC_wl5_2"></p>
     			</td>
   		</tr>  

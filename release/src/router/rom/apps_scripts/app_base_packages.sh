@@ -126,7 +126,7 @@ if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 		cd $CURRENT_PWD
 		rm -rf $target
 	else
-		if [ "$link_internet" != "1" ]; then
+		if [ "$link_internet" != "2" ]; then
 			echo "Couldn't connect Internet to install the base apps!"
 			nvram set apps_state_error=5
 			exit 1

@@ -66,7 +66,7 @@ int get_path_to_index(char *path);
 void del_download_only_action_item(const char *action, const char *path, action_item *head);
 int add_all_download_only_dragfolder_socket_list(const char *dir, int index);
 void del_all_items(char *dir, int index);
-CloudFile *get_CloudFile_node(Server_TreeNode* treeRoot, const char *dofile_href, int a);
+CloudFile *get_CloudFile_node(Server_TreeNode* treeRoot, const char *dofile_href, int a,int index);
 char *write_error_message(char *format,...);
 int write_conflict_log(char *fullname, int type, char *msg);
 char *change_same_name(char *localpath, int index, int flag);

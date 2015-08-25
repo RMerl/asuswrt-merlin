@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="pjproject-vs8-win32-common-defaults"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		PreprocessorDefinitions="_WIN64;WIN32;PJ_WIN32=1;_x86_64;__x86_64;PJ_M_X86_64=1;"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		SubSystem="1"
+		TargetMachine="1"
+	/>
+	<UserMacro
+		Name="TargetCPU"
+		Value="x64"
+	/>
+</VisualStudioPropertySheet>

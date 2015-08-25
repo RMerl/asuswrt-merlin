@@ -16,10 +16,11 @@ void traffic_control_datawrite()
 	int lock;	// file lock
 	int ret;
 	char *p = NULL, *ifname = NULL;
+	char *g, *word, *dualwan; // wan / lan / usb
+	char ifmap[IFNAME_MAX];	// ifname after mapping
+	char wanif[IFNAME_MAX];
 	char *zErr = NULL;
-	char path[48], folder[48], tx_path[48], rx_path[48];
-	char word[16], tmp[64], prefix[] = "wanXXXXXXXXXX_";
-	char ifmap[12];	// ifname after mapping
+	char path[IFPATH_MAX], folder[IFPATH_MAX], tx_path[IFPATH_MAX], rx_path[IFPATH_MAX];
 	char buf[256];
 	char cmd[256];
 	char sql[256];
@@ -37,13 +38,15 @@ void traffic_control_datawrite()
 	mkdir("/jffs/traffic_control", 0666);
 
 	// create database for each interface
-	for(unit = 0; unit < 2; unit++)
+	g = dualwan = strdup(nvram_safe_get("wans_dualwan"));
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 	{
 		memset(ifmap, 0, sizeof(ifmap));
-		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		strncpy(word, nvram_safe_get(strcat_r(prefix, "ifname", tmp)), 16);
+		memset(wanif, 0, sizeof(wanif));
+		if((!g) || ((word = strsep(&g, " ")) == NULL)) continue;
+		if(!strcmp(word, "none")) continue;
+		snprintf(wanif, sizeof(wanif), "wan%d_ifname", unit);
 		ifname_mapping(word, ifmap); // database interface mapping
-		if(debug) dbg("%s: word=%s, ifmap=%s\n", __FUNCTION__, word, ifmap);
 
 		snprintf(folder, sizeof(folder), "/jffs/traffic_control/%s", ifmap);
 		snprintf(path, sizeof(path), "/jffs/traffic_control/%s/traffic.db", ifmap);
@@ -120,8 +123,8 @@ void traffic_control_datawrite()
 					++ifname;
 
 				// check wan ifname
-				if (strcmp(ifname, word)) continue;
-				if (debug) dbg("%s: word=%s, ifmap=%s, ifname=%s\n", __FUNCTION__, word, ifmap, ifname);
+				if (strcmp(ifname, nvram_safe_get(wanif))) continue;
+				if (debug) dbg("%s: wanif=%s, word=%s, ifmap=%s, ifname=%s\n", __FUNCTION__, nvram_safe_get(wanif), word, ifmap, ifname);
 
 				// search traffic
 				if (sscanf(p + 1, "%llu%*u%*u%*u%*u%*u%*u%*u%llu", &rx, &tx) != 2) continue;
@@ -185,6 +188,7 @@ void traffic_control_datawrite()
 		}// record database
 		sqlite3_close(db);
 	}// create database for each interface
+	free(dualwan);
 	file_unlock(lock);
 }
 
@@ -198,8 +202,8 @@ void traffic_control_dataread(char *q_if, char *q_ts, char *q_te)
 	int cols;
 	char **result;
 	time_t ts, te;
-	char ifmap[12];	// ifname after mapping
-	char path[48];
+	char ifmap[IFNAME_MAX];	// ifname after mapping
+	char path[IFPATH_MAX];
 	char sql[256];
 
 	int debug = nvram_get_int("traffic_control_debug");
@@ -233,7 +237,7 @@ void traffic_control_dataread(char *q_if, char *q_ts, char *q_te)
 		int index = cols;
 		for(i = 0; i < rows; i++){
 			for(j = 0; j < cols; j++){
-				if(debug) dbg("%s :[%3d/%3d] %16s\n", __FUNCTION__, i, j, result[index]);
+				printf("%s :[%3d/%3d] %16s\n", __FUNCTION__, i, j, result[index]);
 				++index;
 			}
 		}
@@ -257,8 +261,7 @@ void traffic_control_queryreal()
 	int limit = 0;
 	time_t now;
 	char *start;
-	char ifmap[12];	// ifname after mapping
-	char word[16], tmp[64], prefix[] = "wanXXXXXXXXXX_";
+	char *g, *word, *dualwan; // wan / lan / usb
 	char buf[64], end[32];
 	char tmp2[4];
 
@@ -273,7 +276,8 @@ void traffic_control_queryreal()
 	time(&now);
 	sprintf(end, "%ld", now + 30); // for get realtime, to add 30 secs
 
-	for(unit = 0; unit < 2; unit++)
+	g = dualwan = strdup(nvram_safe_get("wans_dualwan"));
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 	{
 		char *pos = NULL;
 		char *old = NULL;
@@ -281,17 +285,11 @@ void traffic_control_queryreal()
 		int size = 0;
 		double real = 0;
 
-		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		strncpy(word, nvram_safe_get(strcat_r(prefix, "ifname", tmp)), 16);
-
+		if((!g) || ((word = strsep(&g, " ")) == NULL)) continue;
+		if(!strcmp(word, "none")) continue;
 		if(!strcmp(end, "") || !strcmp(word, "")) start = NULL;
 
-		// word and ifmap mapping
-		memset(ifmap, 0, sizeof(ifmap));
-		ifname_mapping(word, ifmap); // database interface mapping
-		if(debug) dbg("%s: word=%s, ifmap=%s\n", __FUNCTION__, word, ifmap);
-
-		traffic_cotrol_WanStat(buf, word, ifmap, start, end);
+		traffic_cotrol_WanStat(buf, word, start, end, unit);
 
 		old = buf;
 		pos = strchr(old, ']');
@@ -341,6 +339,7 @@ void traffic_control_queryreal()
 		if(debug) dbg("%s : word=%s, pos=%s, old=%s, size=%d, new=%s, real=%.2f, result = %d, count = %d, tmp2 = %s\n",
 			 __FUNCTION__, word, pos, old, size, new, real, result, count, tmp2);
 	}
+	free(dualwan);
 
 	memset(buf, 0, sizeof(buf));
 	sprintf(buf, "echo -n %d > /tmp/traffic_control_alert_mail", result);
@@ -367,9 +366,9 @@ void traffic_control_HW_reboot()
 	int lock;	// file lock
 	int ret;
 	char *zErr = NULL;
-	char path[48], rx_path[48];
-	char word[16], tmp[64], prefix[] = "wanXXXXXXXXXX_";
-	char ifmap[12];	// ifname after mapping
+	char path[IFPATH_MAX], rx_path[IFPATH_MAX];
+	char *g, *word, *dualwan; // wan / lan / usb
+	char ifmap[IFNAME_MAX];	// ifname after mapping
 	char cmd[256];
 	char tmp_t[64];
 	char sql[256];
@@ -377,16 +376,15 @@ void traffic_control_HW_reboot()
 	FILE *fn = NULL;
 	unsigned long long current = 0;	// current
 
-	int debug = nvram_get_int("traffic_control_debug");
 	lock = file_lock("traffic_control");
 	
-	for(unit = 0; unit < 2; unit++)
+	g = dualwan = strdup(nvram_safe_get("wans_dualwan"));
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 	{
 		memset(ifmap, 0, sizeof(ifmap));
-		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		strncpy(word, nvram_safe_get(strcat_r(prefix, "ifname", tmp)), 16);
+		if((!g) || ((word = strsep(&g, " ")) == NULL)) continue;
+		if(!strcmp(word, "none")) continue;
 		ifname_mapping(word, ifmap); // database interface mapping
-		if(debug) dbg("%s: word=%s, ifmap=%s\n", __FUNCTION__, word, ifmap);
 
 		snprintf(path, sizeof(path), "/jffs/traffic_control/%s/traffic.db", ifmap);
 		snprintf(rx_path, sizeof(rx_path), "/jffs/traffic_control/%s/tmp", ifmap);
@@ -432,6 +430,7 @@ void traffic_control_HW_reboot()
 		}
 		sqlite3_close(db);
 	}
+	free(dualwan);
 	file_unlock(lock);
 }
 

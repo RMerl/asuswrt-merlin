@@ -3164,6 +3164,125 @@ int reply_write_and_X(connection_struct *conn, char *inbuf,char *outbuf,int leng
 	return chain_reply(inbuf,outbuf,length,bufsize);
 }
 
+#if defined(HAVE_BCM_RECVFILE)
+/****************************************************************************
+ Reply to a write and X usig recvfile.
+****************************************************************************/
+
+int reply_write_and_X_recvfile(connection_struct *conn, char *inbuf,char *outbuf,int length,int bufsize, size_t *pending_bytes_p)
+{
+	files_struct *fsp = file_fsp(inbuf,smb_vwv2);
+	SMB_OFF_T startpos = IVAL_TO_SMB_OFF_T(inbuf,smb_vwv3);
+	size_t numtowrite = SVAL(inbuf,smb_vwv10);
+	BOOL write_through = BITSETW(inbuf+smb_vwv7,0);
+	ssize_t nwritten = -1;
+	unsigned int smb_doff = SVAL(inbuf,smb_vwv11);
+	unsigned int smblen = smb_len(inbuf);
+	char *data;
+	BOOL large_writeX = ((CVAL(inbuf,smb_wct) == 14) && (smblen > 0xFFFF));
+	NTSTATUS status;
+	START_PROFILE(SMBwriteX);
+
+	/* If it's an IPC, pass off the pipe handler. */
+	if (IS_IPC(conn)) {
+		END_PROFILE(SMBwriteX);
+		return reply_pipe_write_and_X(inbuf,outbuf,length,bufsize);
+	}
+
+	CHECK_FSP(fsp,conn);
+	if (!CHECK_WRITE(fsp)) {
+		return(ERROR_DOS(ERRDOS,ERRbadaccess));
+	}
+
+	set_message(outbuf,6,0,True);
+
+	/* Deal with possible LARGE_WRITEX */
+	if (large_writeX) {
+		numtowrite |= ((((size_t)SVAL(inbuf,smb_vwv9)) & 1 ) << 16);
+	}
+
+	if (smb_doff > smblen || (smb_doff + numtowrite > smblen)) {
+		END_PROFILE(SMBwriteX);
+		return ERROR_DOS(ERRDOS,ERRbadmem);
+	}
+
+	data = smb_base(inbuf) + smb_doff;
+
+	if (CVAL(inbuf,smb_wct) == 14) {
+#ifdef LARGE_SMB_OFF_T
+		/*
+		 * This is a large offset (64 bit) write.
+		 */
+		startpos |= (((SMB_OFF_T)IVAL(inbuf,smb_vwv12)) << 32);
+#else /* !LARGE_SMB_OFF_T */
+		/*
+		 * Ensure we haven't been sent a >32 bit offset.
+		 */
+		if (IVAL(inbuf,smb_vwv12) != 0) {
+			DEBUG(0,("reply_write_and_X - large offset (%x << 32) used and we don't support \
+					64 bit offsets.\n", (unsigned int)IVAL(inbuf,smb_vwv12)));
+			END_PROFILE(SMBwriteX);
+			return ERROR_DOS(ERRDOS,ERRbadaccess);
+		}
+#endif /* LARGE_SMB_OFF_T */
+	}
+
+	if (is_locked(fsp,(uint32)SVAL(inbuf,smb_pid),(SMB_BIG_UINT)numtowrite,(SMB_BIG_UINT)startpos, WRITE_LOCK)) {
+		END_PROFILE(SMBwriteX);
+		return ERROR_DOS(ERRDOS,ERRlock);
+	}
+
+	/* X/Open SMB protocol says that, unlike SMBwrite
+	if the length is zero then NO truncation is
+	done, just a write of zero. To truncate a file,
+	use SMBwrite. */
+
+	if (numtowrite == 0) {
+		nwritten = 0;
+	} else {
+
+		if ((*pending_bytes_p == 0) && schedule_aio_write_and_X(conn, inbuf, outbuf, length, bufsize,
+					fsp,data,startpos,numtowrite)) {
+			END_PROFILE(SMBwriteX);
+			return -1;
+		}
+
+		/* CALL recvfile directly from here */
+		nwritten = sys_recvfile(smbd_server_fd(), fsp->fh->fd,startpos, numtowrite, inbuf+STANDARD_WRITEX_HDR_SIZE);
+
+		*pending_bytes_p = numtowrite - nwritten;
+	}
+
+	if (((nwritten == 0) && (numtowrite != 0))||(nwritten < 0)) {
+		END_PROFILE(SMBwriteX);
+		return(UNIXERROR(ERRHRD,ERRdiskfull));
+	}
+
+	SSVAL(outbuf,smb_vwv2,nwritten);
+	if (large_writeX)
+		SSVAL(outbuf,smb_vwv4,(nwritten>>16)&1);
+
+	if (nwritten < (ssize_t)numtowrite) {
+		SCVAL(outbuf,smb_rcls,ERRHRD);
+		SSVAL(outbuf,smb_err,ERRdiskfull);
+	}
+
+	DEBUG(3,("writeX fnum=%d num=%d wrote=%d\n",
+		fsp->fnum, (int)numtowrite, (int)nwritten));
+
+	status = sync_file(conn, fsp, write_through);
+	if (!NT_STATUS_IS_OK(status)) {
+		END_PROFILE(SMBwriteX);
+		DEBUG(5,("reply_write_and_X: sync_file for %s returned %s\n",
+			fsp->fsp_name, nt_errstr(status) ));
+		return ERROR_NT(status);
+	}
+
+	END_PROFILE(SMBwriteX);
+	return chain_reply(inbuf,outbuf,length,bufsize);
+}
+#endif /* HAVE_BCM_RECVFILE */
+
 /****************************************************************************
  Reply to a lseek.
 ****************************************************************************/

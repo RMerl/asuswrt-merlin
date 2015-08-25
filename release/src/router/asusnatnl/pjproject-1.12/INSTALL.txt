@@ -1,0 +1,48 @@
+[Last update: 2007/02/18]
+
+-= INTRO=-
+
+This top level projects:
+
+ - pjlib:       portability and basic framework library
+ - pjlib-util:  lexical scanner, XML, STUN, MD5, DNS, etc.
+ - pjmedia:     media framework and codecs
+ - pjsip:       SIP stacks (core, UA layer, SIMPLE, etc.)
+ - pjsip-apps:  SIP apps (pjsua, pjsip-perf)
+
+
+-= COMPILING =-
+
+On Windows:
+ - Visual Studio 6: open pjproject.dsw
+ - Visual Studio 8/2005: open pjproject-vs8.sln
+ - Embedded VisualC 4: open open pjsip-apps\build\wince-evc4\wince_demos.vcw
+ - Build pjsua
+
+With Makefile:
+ - on top level dir (e.g. ~/pjproject)
+ - ./configure && make dep && make clean && make
+
+Binaries will be in pjsip-apps/bin.
+
+
+-= PYTHON MODULE =-
+
+On Windows:
+ - Visual Studio 6: open pjsip-apps\build\pjsip_apps.dsw
+ - Build py_pjsua module
+
+With GNU and Python:
+ - cd pjsip-apps/src/py_pjsua
+ - python setup.py install
+
+One Python sample application is provided:
+ pjsip-apps/src/py_pjsua/pjsua_app.py
+ 
+ 
+-= PORTING =-
+
+ - Just need to port pjlib.
+ - PJLIB doc has detailed info how to do this.
+ - Must pass pjlib-test!
+

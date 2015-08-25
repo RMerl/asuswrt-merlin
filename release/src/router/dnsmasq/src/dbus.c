@@ -70,6 +70,21 @@ const char* introspection_xml_template =
 "      <arg name=\"hwaddr\" type=\"s\"/>\n"
 "      <arg name=\"hostname\" type=\"s\"/>\n"
 "    </signal>\n"
+#ifdef HAVE_DHCP
+"    <method name=\"AddDhcpLease\">\n"
+"       <arg name=\"ipaddr\" type=\"s\"/>\n"
+"       <arg name=\"hwaddr\" type=\"s\"/>\n"
+"       <arg name=\"hostname\" type=\"ay\"/>\n"
+"       <arg name=\"clid\" type=\"ay\"/>\n"
+"       <arg name=\"lease_duration\" type=\"u\"/>\n"
+"       <arg name=\"ia_id\" type=\"u\"/>\n"
+"       <arg name=\"is_temporary\" type=\"b\"/>\n"
+"    </method>\n"
+"    <method name=\"DeleteDhcpLease\">\n"
+"       <arg name=\"ipaddr\" type=\"s\"/>\n"
+"       <arg name=\"success\" type=\"b\" direction=\"out\"/>\n"
+"    </method>\n"
+#endif
 "  </interface>\n"
 "</node>\n";
 
@@ -421,17 +436,183 @@ static DBusMessage *dbus_set_bool(DBusMessage *message, int flag, char *name)
 
   if (enabled)
     { 
-      my_syslog(LOG_INFO, "Enabling --%s option from D-Bus", name);
+      my_syslog(LOG_INFO, _("Enabling --%s option from D-Bus"), name);
       set_option_bool(flag);
     }
   else
     {
-      my_syslog(LOG_INFO, "Disabling --%s option from D-Bus", name);
+      my_syslog(LOG_INFO, _("Disabling --%s option from D-Bus"), name);
       reset_option_bool(flag);
     }
 
   return NULL;
 }
+
+#ifdef HAVE_DHCP
+static DBusMessage *dbus_add_lease(DBusMessage* message)
+{
+  struct dhcp_lease *lease;
+  const char *ipaddr, *hwaddr, *hostname, *tmp;
+  const unsigned char* clid;
+  int clid_len, hostname_len, hw_len, hw_type;
+  dbus_uint32_t expires, ia_id;
+  dbus_bool_t is_temporary;
+  struct all_addr addr;
+  time_t now = dnsmasq_time();
+  unsigned char dhcp_chaddr[DHCP_CHADDR_MAX];
+
+  DBusMessageIter iter, array_iter;
+  if (!dbus_message_iter_init(message, &iter))
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Failed to initialize dbus message iter");
+
+  if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Expected string as first argument");
+
+  dbus_message_iter_get_basic(&iter, &ipaddr);
+  dbus_message_iter_next(&iter);
+
+  if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Expected string as second argument");
+    
+  dbus_message_iter_get_basic(&iter, &hwaddr);
+  dbus_message_iter_next(&iter);
+
+  if ((dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) ||
+      (dbus_message_iter_get_element_type(&iter) != DBUS_TYPE_BYTE))
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Expected byte array as third argument");
+    
+  dbus_message_iter_recurse(&iter, &array_iter);
+  dbus_message_iter_get_fixed_array(&array_iter, &hostname, &hostname_len);
+  tmp = memchr(hostname, '\0', hostname_len);
+  if (tmp)
+    {
+      if (tmp == &hostname[hostname_len - 1])
+	hostname_len--;
+      else
+	return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				      "Hostname contains an embedded NUL character");
+    }
+  dbus_message_iter_next(&iter);
+
+  if ((dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_ARRAY) ||
+      (dbus_message_iter_get_element_type(&iter) != DBUS_TYPE_BYTE))
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Expected byte array as fourth argument");
+
+  dbus_message_iter_recurse(&iter, &array_iter);
+  dbus_message_iter_get_fixed_array(&array_iter, &clid, &clid_len);
+  dbus_message_iter_next(&iter);
+
+  if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_UINT32)
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Expected uint32 as fifth argument");
+    
+  dbus_message_iter_get_basic(&iter, &expires);
+  dbus_message_iter_next(&iter);
+
+  if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_UINT32)
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+                                    "Expected uint32 as sixth argument");
+  
+  dbus_message_iter_get_basic(&iter, &ia_id);
+  dbus_message_iter_next(&iter);
+
+  if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_BOOLEAN)
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Expected uint32 as sixth argument");
+
+  dbus_message_iter_get_basic(&iter, &is_temporary);
+
+  if (inet_pton(AF_INET, ipaddr, &addr.addr.addr4))
+    {
+      if (ia_id != 0 || is_temporary)
+	return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				      "ia_id and is_temporary must be zero for IPv4 lease");
+      
+      if (!(lease = lease_find_by_addr(addr.addr.addr4)))
+    	lease = lease4_allocate(addr.addr.addr4);
+    }
+#ifdef HAVE_DHCP6
+  else if (inet_pton(AF_INET6, ipaddr, &addr.addr.addr6))
+    {
+      if (!(lease = lease6_find_by_addr(&addr.addr.addr6, 128, 0)))
+	lease = lease6_allocate(&addr.addr.addr6,
+				is_temporary ? LEASE_TA : LEASE_NA);
+      lease_set_iaid(lease, ia_id);
+    }
+#endif
+  else
+    return dbus_message_new_error_printf(message, DBUS_ERROR_INVALID_ARGS,
+					 "Invalid IP address '%s'", ipaddr);
+   
+  hw_len = parse_hex((char*)hwaddr, dhcp_chaddr, DHCP_CHADDR_MAX, NULL,
+		     &hw_type);
+  if (hw_type == 0 && hw_len != 0)
+    hw_type = ARPHRD_ETHER;
+
+    lease_set_hwaddr(lease, dhcp_chaddr, clid, hw_len, hw_type,
+                   clid_len, now, 0);
+  lease_set_expires(lease, expires, now);
+  if (hostname_len != 0)
+    lease_set_hostname(lease, hostname, 0, get_domain(lease->addr), NULL);
+    
+  lease_update_file(now);
+  lease_update_dns(0);
+
+  return NULL;
+}
+
+static DBusMessage *dbus_del_lease(DBusMessage* message)
+{
+  struct dhcp_lease *lease;
+  DBusMessageIter iter;
+  const char *ipaddr;
+  DBusMessage *reply;
+  struct all_addr addr;
+  dbus_bool_t ret = 1;
+  time_t now = dnsmasq_time();
+
+  if (!dbus_message_iter_init(message, &iter))
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Failed to initialize dbus message iter");
+   
+  if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_STRING)
+    return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+				  "Expected string as first argument");
+   
+  dbus_message_iter_get_basic(&iter, &ipaddr);
+
+  if (inet_pton(AF_INET, ipaddr, &addr.addr.addr4))
+    lease = lease_find_by_addr(addr.addr.addr4);
+#ifdef HAVE_DHCP6
+  else if (inet_pton(AF_INET6, ipaddr, &addr.addr.addr6))
+    lease = lease6_find_by_addr(&addr.addr.addr6, 128, 0);
+#endif
+  else
+    return dbus_message_new_error_printf(message, DBUS_ERROR_INVALID_ARGS,
+					 "Invalid IP address '%s'", ipaddr);
+    
+  if (lease)
+    {
+      lease_prune(lease, now);
+      lease_update_file(now);
+      lease_update_dns(0);
+    }
+  else
+    ret = 0;
+  
+  if ((reply = dbus_message_new_method_return(message)))
+    dbus_message_append_args(reply, DBUS_TYPE_BOOLEAN, &ret,
+			     DBUS_TYPE_INVALID);
+  
+    
+  return reply;
+}
+#endif
 
 DBusHandlerResult message_handler(DBusConnection *connection, 
 				  DBusMessage *message, 
@@ -490,6 +671,16 @@ DBusHandlerResult message_handler(DBusConnection *connection,
     {
       reply = dbus_set_bool(message, OPT_BOGUSPRIV, "bogus-priv");
     }
+#ifdef HAVE_DHCP
+  else if (strcmp(method, "AddDhcpLease") == 0)
+    {
+      reply = dbus_add_lease(message);
+    }
+  else if (strcmp(method, "DeleteDhcpLease") == 0)
+    {
+      reply = dbus_del_lease(message);
+    }
+#endif
   else if (strcmp(method, "ClearCache") == 0)
     clear_cache = 1;
   else
@@ -558,8 +749,7 @@ char *dbus_init(void)
 }
  
 
-void set_dbus_listeners(int *maxfdp,
-			fd_set *rset, fd_set *wset, fd_set *eset)
+void set_dbus_listeners(void)
 {
   struct watch *w;
   
@@ -569,19 +759,17 @@ void set_dbus_listeners(int *maxfdp,
 	unsigned int flags = dbus_watch_get_flags(w->watch);
 	int fd = dbus_watch_get_unix_fd(w->watch);
 	
-	bump_maxfd(fd, maxfdp);
-	
 	if (flags & DBUS_WATCH_READABLE)
-	  FD_SET(fd, rset);
+	  poll_listen(fd, POLLIN);
 	
 	if (flags & DBUS_WATCH_WRITABLE)
-	  FD_SET(fd, wset);
+	  poll_listen(fd, POLLOUT);
 	
-	FD_SET(fd, eset);
+	poll_listen(fd, POLLERR);
       }
 }
 
-void check_dbus_listeners(fd_set *rset, fd_set *wset, fd_set *eset)
+void check_dbus_listeners()
 {
   DBusConnection *connection = (DBusConnection *)daemon->dbus;
   struct watch *w;
@@ -592,13 +780,13 @@ void check_dbus_listeners(fd_set *rset, fd_set *wset, fd_set *eset)
 	unsigned int flags = 0;
 	int fd = dbus_watch_get_unix_fd(w->watch);
 	
-	if (FD_ISSET(fd, rset))
+	if (poll_check(fd, POLLIN))
 	  flags |= DBUS_WATCH_READABLE;
 	
-	if (FD_ISSET(fd, wset))
+	if (poll_check(fd, POLLOUT))
 	  flags |= DBUS_WATCH_WRITABLE;
 	
-	if (FD_ISSET(fd, eset))
+	if (poll_check(fd, POLLERR))
 	  flags |= DBUS_WATCH_ERROR;
 
 	if (flags != 0)

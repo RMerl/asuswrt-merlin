@@ -113,8 +113,21 @@ int init_gpio(void)
 #ifdef RT4GAC55U
 		, "led_lte_gpio", "led_sig1_gpio", "led_sig2_gpio", "led_sig3_gpio"
 #endif
+#ifdef PLN12
+		, "led_pwr_red_gpio", "led_2g_green_gpio", "led_2g_orange_gpio", "led_2g_red_gpio"
+#endif
+#ifdef PLAC56
+		, "led_2g_green_gpio", "led_2g_red_gpio"
+		, "led_5g_green_gpio", "led_5g_red_gpio"
+#endif
 #ifdef RTCONFIG_MMC_LED
 		, "led_mmc_gpio"
+#endif
+#ifdef RTCONFIG_RTAC5300
+		, "rpm_fan_gpio"
+#endif
+#ifdef RTCONFIG_RESET_SWITCH
+		, "reset_switch_gpio"
 #endif
 			   };
 	int use_gpio, gpio_pin;
@@ -171,7 +184,11 @@ int init_gpio(void)
 #endif	/* RT4GAC55U */
 	}
 
+#ifdef PLN12
+	if((gpio_pin = (use_gpio = nvram_get_int("led_pwr_red_gpio")) & 0xff) != 0xff)
+#else
 	if((gpio_pin = (use_gpio = nvram_get_int("led_pwr_gpio")) & 0xff) != 0xff)
+#endif
 	{
 		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 		set_gpio(gpio_pin, enable);
@@ -189,6 +206,14 @@ int init_gpio(void)
 		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 		set_gpio(gpio_pin, enable);
 	}
+
+#ifdef RTAC5300
+	// RPM of FAN
+	if((gpio_pin = (use_gpio = nvram_get_int("rpm_fan_gpio")) & 0xff) != 0xff){
+	enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
+	set_gpio(gpio_pin, enable);
+	}
+#endif
 
 	// TODO: system dependent initialization
 	return 0;
@@ -271,6 +296,9 @@ void get_gpio_values_once(void)
 #ifdef RTCONFIG_MMC_LED
 	led_gpio_table[LED_MMC] = __get_gpio("led_mmc_gpio");
 #endif
+#ifdef RTCONFIG_RESET_SWITCH
+	led_gpio_table[LED_RESET_SWITCH] = __get_gpio("reset_switch_gpio");
+#endif
 #ifdef RTCONFIG_LED_ALL
 	led_gpio_table[LED_ALL] = __get_gpio("led_all_gpio");
 #endif
@@ -284,6 +312,23 @@ void get_gpio_values_once(void)
 	led_gpio_table[LED_SIG1] = __get_gpio("led_sig1_gpio");
 	led_gpio_table[LED_SIG2] = __get_gpio("led_sig2_gpio");
 	led_gpio_table[LED_SIG3] = __get_gpio("led_sig3_gpio");
+#endif
+
+#ifdef RTAC5300
+	led_gpio_table[RPM_FAN] = __get_gpio("rpm_fan_gpio");
+#endif
+
+#ifdef PLN12
+	led_gpio_table[LED_POWER_RED] = __get_gpio("led_pwr_red_gpio");
+	led_gpio_table[LED_2G_GREEN] = __get_gpio("led_2g_green_gpio");
+	led_gpio_table[LED_2G_ORANGE] = __get_gpio("led_2g_orange_gpio");
+	led_gpio_table[LED_2G_RED] = __get_gpio("led_2g_red_gpio");
+#endif
+#ifdef PLAC56
+	led_gpio_table[LED_2G_GREEN] = __get_gpio("led_2g_green_gpio");
+	led_gpio_table[LED_2G_RED] = __get_gpio("led_2g_red_gpio");
+	led_gpio_table[LED_5G_GREEN] = __get_gpio("led_5g_green_gpio");
+	led_gpio_table[LED_5G_RED] = __get_gpio("led_5g_red_gpio");
 #endif
 
 #ifdef RTCONFIG_SWMODE_SWITCH

@@ -576,12 +576,6 @@ char *print_mac(char *buff, unsigned char *mac, int len)
   return buff;
 }
 
-void bump_maxfd(int fd, int *max)
-{
-  if (fd > *max)
-    *max = fd;
-}
-
 /* rc is return from sendto and friends.
    Return 1 if we should retry.
    Set errno to zero if we succeeded. */

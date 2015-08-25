@@ -739,22 +739,36 @@ function submitForm(){
 			document.form.switch_wan2prio.value = parent.document.QKform.switch_wan2prio.value;
 			document.form.switch_stb_x.value = parent.document.QKform.switch_stb_x.value;
 			document.form.flag.value = "verify_detect";
-  		if(original_switch_wantag != document.form.switch_wantag.value){
-					document.form.action_script.value	= "reboot";
-					document.form.flag.value = "verify_detect_reboot";
-					document.form.action_wait.value	= "<% get_default_reboot_time(); %>";
-					document.getElementById("loadHint").style.display = "";
-					document.getElementById("nextButton").style.display = "none";
-					document.getElementById("prevButton").style.display = "none";
+  			if(original_switch_wantag != document.form.switch_wantag.value){
+				/*
+				document.form.action_script.value	= "reboot";
+				document.form.flag.value = "verify_detect_reboot";
+				document.form.action_wait.value	= "<% get_default_reboot_time(); %>";
+				document.getElementById("loadHint").style.display = "";
+				document.getElementById("nextButton").style.display = "none";
+				document.getElementById("prevButton").style.display = "none";*/
+				var reboot_time = eval("<% get_default_reboot_time(); %> + 10");
+				document.form.action_script.value = "saveNvram";
+				document.form.action_wait.value = "0";
+				parent.sysReboot = true;
+			
+				if(reboot_time > parent.rebootTime)
+					parent.rebootTime = reboot_time;
+
+
 			}
 
 			document.getElementById("x_Setting").disabled = false;
 			document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
 			document.form.sw_mode.value = 1;
 			document.form.action = "/start_apply.htm";
-			if(parent.isManual) document.form.flag.value = "manual";
+			if(parent.flag_manual) document.form.flag.value = "manual";
 
 			document.form.submit();
+			if(original_switch_wantag != document.form.switch_wantag.value)
+				setTimeout(function(){
+					location.href = "/qis/QIS_wireless.htm";
+				}, 500);
 			return true;
 	}
 	else

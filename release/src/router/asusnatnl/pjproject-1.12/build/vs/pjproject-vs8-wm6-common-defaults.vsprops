@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="pjproject-vs8-wm6-common-defaults"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		PreprocessorDefinitions="_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES);WINCE;$(ARCHFAM);$(_ARCHFAM_)"
+		DebugInformationFormat="3"
+		DisableSpecificWarnings="4214;4201"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		SubSystem="9"
+		StackReserveSize="65536"
+		StackCommitSize="4096"
+		EntryPointSymbol="WinMainCRTStartup"
+	/>
+	<Tool
+		Name="VCResourceCompilerTool"
+		PreprocessorDefinitions="_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES);WINCE;$(ARCHFAM);$(_ARCHFAM_)"
+	/>
+	<UserMacro
+		Name="TargetCPU"
+		Value="armv4i"
+	/>
+</VisualStudioPropertySheet>

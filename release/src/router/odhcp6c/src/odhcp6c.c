@@ -25,7 +25,6 @@
 #include <stdbool.h>
 
 #include <net/if.h>
-#include <sys/wait.h>
 #include <sys/syscall.h>
 #include <arpa/inet.h>
 
@@ -46,10 +45,12 @@ static volatile bool signal_usr2 = false;
 static volatile bool signal_term = false;
 
 static int urandom_fd = -1, allow_slaac_only = 0;
-static bool bound = false, release = true;
+static bool bound = false, release = true, ra = false;
 static time_t last_update = 0;
 
 static unsigned int min_update_interval = DEFAULT_MIN_UPDATE_INTERVAL;
+static unsigned int script_sync_delay = 10;
+static unsigned int script_accu_delay = 1;
 
 int main(_unused int argc, char* const argv[])
 {
@@ -222,6 +223,9 @@ int main(_unused int argc, char* const argv[])
 		}
 	}
 
+	if (allow_slaac_only > 0)
+		script_sync_delay = allow_slaac_only;
+
 	openlog("odhcp6c", logopt, LOG_DAEMON);
 	if (!verbosity)
 		setlogmask(LOG_UPTO(LOG_WARNING));
@@ -234,7 +238,6 @@ int main(_unused int argc, char* const argv[])
 	signal(SIGIO, sighandler);
 	signal(SIGHUP, sighandler);
 	signal(SIGINT, sighandler);
-	signal(SIGCHLD, sighandler);
 	signal(SIGTERM, sighandler);
 	signal(SIGUSR1, sighandler);
 	signal(SIGUSR2, sighandler);
@@ -266,7 +269,7 @@ int main(_unused int argc, char* const argv[])
 		}
 	}
 
-	script_call("started");
+	script_call("started", 0, false);
 
 	while (!signal_term) { // Main logic
 		odhcp6c_clear_state(STATE_SERVER_ID);
@@ -316,7 +319,7 @@ int main(_unused int argc, char* const argv[])
 
 			while (!signal_usr2 && !signal_term) {
 				signal_usr1 = false;
-				script_call("informed");
+				script_call("informed", script_sync_delay, true);
 
 				int res = dhcpv6_poll_reconfigure();
 				odhcp6c_signal_process();
@@ -342,7 +345,7 @@ int main(_unused int argc, char* const argv[])
 
 		case DHCPV6_STATEFUL:
 			bound = true;
-			script_call("bound");
+			script_call("bound", script_sync_delay, true);
 			syslog(LOG_NOTICE, "entering stateful-mode on %s", ifname);
 
 			while (!signal_usr2 && !signal_term) {
@@ -351,7 +354,7 @@ int main(_unused int argc, char* const argv[])
 				int res = dhcpv6_poll_reconfigure();
 				odhcp6c_signal_process();
 				if (res > 0) {
-					script_call("updated");
+					script_call("updated", 0, false);
 					continue;
 				}
 
@@ -366,7 +369,7 @@ int main(_unused int argc, char* const argv[])
 				odhcp6c_signal_process();
 				if (res > 0) { // Renew was succesfull
 					// Publish updates
-					script_call("updated");
+					script_call("updated", 0, false);
 					continue; // Renew was successful
 				}
 
@@ -385,7 +388,7 @@ int main(_unused int argc, char* const argv[])
 				odhcp6c_signal_process();
 
 				if (res > 0)
-					script_call("rebound");
+					script_call("rebound", 0, true);
 				else {
 					break;
 				}
@@ -405,7 +408,7 @@ int main(_unused int argc, char* const argv[])
 
 		// Add all prefixes to lost prefixes
 		bound = false;
-		script_call("unbound");
+		script_call("unbound", 0, true);
 
 		if (server_id_len > 0 && (ia_pd_len > 0 || ia_na_len > 0) && release)
 			dhcpv6_request(DHCPV6_MSG_RELEASE);
@@ -414,7 +417,7 @@ int main(_unused int argc, char* const argv[])
 		odhcp6c_clear_state(STATE_IA_PD);
 	}
 
-	script_call("stopped");
+	script_call("stopped", 0, true);
 	return 0;
 }
 
@@ -484,11 +487,16 @@ bool odhcp6c_signal_process(void)
 
 		bool ra_updated = ra_process();
 
-		if (ra_link_up())
+		if (ra_link_up()) {
 			signal_usr2 = true;
+			ra = false;
+		}
 
-		if (ra_updated && (bound || allow_slaac_only >= 0))
-			script_call("ra-updated"); // Immediate process urgent events
+		if (ra_updated && (bound || allow_slaac_only >= 0)) {
+			script_call("ra-updated", (!ra && !bound) ?
+					script_sync_delay : script_accu_delay, false);
+			ra = true;
+		}
 	}
 
 	return signal_usr1 || signal_usr2 || signal_term;
@@ -669,9 +677,7 @@ bool odhcp6c_is_bound(void)
 
 static void sighandler(int signal)
 {
-	if (signal == SIGCHLD)
-		while (waitpid(-1, NULL, WNOHANG) > 0);
-	else if (signal == SIGUSR1)
+	if (signal == SIGUSR1)
 		signal_usr1 = true;
 	else if (signal == SIGUSR2)
 		signal_usr2 = true;

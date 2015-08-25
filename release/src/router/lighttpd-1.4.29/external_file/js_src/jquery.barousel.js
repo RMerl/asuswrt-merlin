@@ -210,8 +210,8 @@ www.juliendecaudin.com
 		}
                 
         strNavList += "<div class='nav_btn nav_btn_icon close transparent'><a href='#' title='close'>&nbsp;</a></div>";
-         
-        if(settings.enableExifFunc==1 && !(isIE()&&getInternetExplorerVersion()<=10)){       
+        
+        if(settings.enableExifFunc==1 && !(isIE()&&getInternetExplorerVersion()<=10)){
 	        strNavList += '<div class="image_exif_wrapper turn_c">';
 	        strNavList += '<table><tr>';
 	        strNavList += '<td><span>' + settings.stringTable.getString("title_exif_info") + ':</span></td>';

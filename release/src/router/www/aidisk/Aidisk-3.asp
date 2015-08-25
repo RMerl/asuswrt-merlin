@@ -291,14 +291,12 @@ function cleandef(){
 
 		<tr valign="bottom">
   		<td width="20%">
-  			<div class="apply_gen" style="margin-top:30px">	
-  				<input type="button" id="prevButton" value="<#btn_pre#>" onclick="go_pre_page();" class="button_gen">
-	    		<input type="submit" id="nextButton" value="<#btn_next#>" class="button_gen">
-					<!--a href="javascript:go_pre_page();"><div class="titlebtn" align="center" style="margin-left:275px;_margin-left:137px;"><span><#btn_pre#></span></div></a-->
-	    		<!--a href="javascript:go_next_page();"><div class="titlebtn" align="center"><span><#btn_next#></span></div></a-->
-					<img id="loadingIcon" style="display:none;margin-top:7px" src="/images/InternetScan.gif"></span>
-				</div>
-	    </td>
+			<div class="apply_gen" style="margin-top:30px">	
+				<input type="button" id="prevButton" value="<#CTL_prev#>" onclick="go_pre_page();" class="button_gen">
+				<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen">
+				<img id="loadingIcon" style="display:none;margin-top:7px" src="/images/InternetScan.gif"></span>
+			</div>
+		</td>
 	  </tr>
 	  <!-- end -->
   </table>

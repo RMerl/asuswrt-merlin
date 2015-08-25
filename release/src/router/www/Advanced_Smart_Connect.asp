@@ -257,6 +257,11 @@ var bsd_if_qualify_policy_bin = [reverse_bin(createBinaryString(parseInt(bsd_if_
 /*[bounce detect] */
 var bsd_bounce_detect = '<% nvram_get("bsd_bounce_detect"); %>'.split(" ");	//[windows time in sec, counts, dwell time in sec]
 
+var start_band_idx=0;
+if('<% nvram_get("smart_connect_x"); %>' == 2){
+	start_band_idx = 1;
+}
+
 function initial(){
 	show_menu();
 	gen_bsd_steering_div();
@@ -295,11 +300,14 @@ function gen_bsd_steering_div(flag){
 	code +='<table cellspacing="0" cellpadding="4" bordercolor="#6b8fa3" border="1" align="center" width="100%" class="FormTable" id="MainTable1">';
 	code +='<thead><tr><td colspan="4"><#smart_connect_Steering#></td></tr></thead>';
 	code +='<tr><th><#Interface#></th>';
-	code +='<td width="27%" align="center" >2.4GHz</td><td width="27%" align="center" >5GHz-1</td><td width="27%" align="center" >5GHz-2</td>';
+	if(start_band_idx == '1')
+		code +='<td width="34%" align="center" >5GHz-1</td><td width="34%" align="center" >5GHz-2</td>';
+	else
+		code +='<td width="27%" align="center" >2.4GHz</td><td width="27%" align="center" >5GHz-1</td><td width="27%" align="center" >5GHz-2</td>';
 	code +='</tr>';
 
 	code +='<tr><th>Enable Load Balance</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td>';
 		code +='<input onclick="change_lb(1,'+i+');" type="radio" name="wl'+i+'_bsd_steering_balance" value="1"><#checkbox_Yes#>';
 		code +='<input onclick="change_lb(0,'+i+');" type="radio" name="wl'+i+'_bsd_steering_balance" value="0"><#checkbox_No#>';
@@ -308,7 +316,7 @@ function gen_bsd_steering_div(flag){
 	code +='</tr>';
 
 		code +='<tr><th><#smart_connect_Bandwidth#></th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){	
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){	
 		code +='<td><span class="steering_on_'+i+'"><div><table><tr>';
 		code +='<td style="border:0px;width:35px; padding-left:0px">';
 		code +='<div id="slider_wl'+i+'_bsd_steering_bandutil" style="width:80px;"></div></td>';
@@ -319,7 +327,7 @@ function gen_bsd_steering_div(flag){
 	code +='</tr>';
 
 	code +='<tr><th>RSSI</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td><span class="steering_on_'+i+'"><div><table><tr><td style="border:0px; padding-left:0px">';
 		code +='<select class="input_option" name="wl'+i+'_bsd_steering_rssi_s">';
 		code +='<option selected="" value="0" class="content_input_fd">Less</option>';
@@ -331,7 +339,7 @@ function gen_bsd_steering_div(flag){
 	}
 	code +='</tr>';
 		code +='<tr><th>PHY Rate Less</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td><span class="steering_on_'+i+'"><div><table><tr><td style="border:0px;width:35px; padding-left:0px">';
 		code +='<div id="slider_wl'+i+'_bsd_steering_phy_l" style="width:80px;"></div></td>';
 		code +='<td style="border:0px">';
@@ -342,7 +350,7 @@ function gen_bsd_steering_div(flag){
 	code +='</tr>';
 
 	code +='<tr><th>PHY Rate Greater</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td><span class="steering_on_'+i+'"><div><table><tr>';
 		code +='<td style="border:0px;width:35px; padding-left:0px">';
 		code +='<div id="slider_wl'+i+'_bsd_steering_phy_g" style="width:80px;"></div>';
@@ -355,7 +363,7 @@ function gen_bsd_steering_div(flag){
 	code +='</tr>';
 
 	code +='<tr><th>VHT</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td style="padding-left:12px"><span class="steering_on_'+i+'">';
 		code +='<select class="input_option" name="wl'+i+'_bsd_steering_vht_s">';
 		code +='<option selected="" value="0" class="content_input_fd"><#All#></option>';
@@ -376,7 +384,7 @@ function gen_bsd_sta_select_div(){
 	code +='<thead><tr><td colspan="4"><#smart_connect_STA#></td></tr></thead>';
 	
 	code +='<tr><th>RSSI</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td><div><table><tr>';
 		code +='<td style="border:0px; padding-left:0px">';
 		code +='<select class="input_option" name="wl'+i+'_bsd_sta_select_policy_rssi_s">';
@@ -391,7 +399,7 @@ function gen_bsd_sta_select_div(){
 	code +='</tr>';
 
 	code +='<tr><th>PHY Rate Less</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td><div><table><tr>';
 		code +='<td style="border:0px;width:35px; padding-left:0px">';
 		code +='<div id="slider_wl'+i+'_bsd_sta_select_policy_phy_l" style="width:80px;"></div>';
@@ -403,7 +411,7 @@ function gen_bsd_sta_select_div(){
 	code +='</tr>';
 
 	code +='<tr><th>PHY Rate Greater</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td><div><table><tr>';
 		code +='<td style="border:0px;width:35px; padding-left:0px">';
 		code +='<div id="slider_wl'+i+'_bsd_sta_select_policy_phy_g" style="width:80px;"></div>';
@@ -415,7 +423,7 @@ function gen_bsd_sta_select_div(){
 	code +='</tr>';
 
 	code +='<tr><th>VHT</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td style="padding-left:12px">';
 		code +='<select class="input_option" name="wl'+i+'_bsd_sta_select_policy_vht_s">';
 		code +='<option selected="" value="0" class="content_input_fd"><#All#></option>';
@@ -435,7 +443,8 @@ function gen_bsd_if_select_div(){
 	code +='<thead><tr><td colspan="4"><#smart_connect_ISQP#></td></tr></thead>';
 
 	code +='<tr><th><#Interface_target#></th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+     if('<% nvram_get("smart_connect_x"); %>' != 2){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td style="padding:0px 0px 0px 0px;"><div><table><tr>';
 		code +='<td style="border:0px; padding:0px 0px 0px 3px;">1:</td>';
 		code +='<td style="border:0px; padding:0px 0px 0px 1px;">';
@@ -484,10 +493,13 @@ function gen_bsd_if_select_div(){
 		code +='</option>';
 		code +='</select></td></tr></table></div></td>';
 	}
+     }else{
+		code +='<td>5GHz-2</td><td>5GHz-1</td>'
+	}
 	code +='</tr>';
 
 	code +='<tr><th><#smart_connect_Bandwidth#></th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td><div><table><tr>';
 		code +='<td style="border:0px;width:35px; padding-left:0px">';
 		code +='<div id="slider_wl'+i+'_bsd_if_qualify_policy" style="width:80px;"></div>';
@@ -498,7 +510,7 @@ function gen_bsd_if_select_div(){
 	code +='</tr>';
 
 	code +='<tr><th>VHT</th>';
-	for(i = 0; i < wl_info.wl_if_total; i++){
+	for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 		code +='<td style="padding-left:12px">';
 		code +='<select onchange="check_vht(this,'+i+');" class="input_option" name="wl'+i+'_bsd_if_qualify_policy_vht_s">';
 		code +='<option selected="" value="0" class="content_input_fd"><#All#></option>';
@@ -549,7 +561,7 @@ function handle_bsd_nvram(){
 
 	var bsd_if_select_policy_idx = [];
 
-  for(i = 0; i < wl_info.wl_if_total; i++){
+  for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 	/* [bsd_steering_policy] - bsd_steering_policy setting */
 	set_bandutil_qualify_power(bsd_steering_policy[i][0],'wl'+i+'_bsd_steering_bandutil');
 	if(bsd_steering_policy_bin[i][6] == 0){
@@ -588,13 +600,15 @@ function handle_bsd_nvram(){
 	else if(bsd_sta_select_policy_bin[i][2] == 1 && bsd_sta_select_policy_bin[i][3] == 0)	//legacy
 		document.form['wl'+i+'_bsd_sta_select_policy_vht_s'].value = 2;	
 
-	/* [Interface Select and Qualify Procedures] - bsd_if_qualify_policy setting*/
-	var bsd_if_select_policy_1st = wl_name[wl_ifnames.indexOf(bsd_if_select_policy[i][0])]; 
-	var bsd_if_select_policy_2nd = wl_name[wl_ifnames.indexOf(bsd_if_select_policy[i][1])]; 
-	bsd_if_select_policy_idx[i] = [bsd_if_select_policy_1st,bsd_if_select_policy_2nd];
-	document.form['wl'+i+'_bsd_if_select_policy_first'].value = wl_names[i].indexOf(bsd_if_select_policy_idx[i][0]);
-	document.form['wl'+i+'_bsd_if_select_policy_second'].value = (wl_names[i].indexOf(bsd_if_select_policy_idx[i][1]) == -1 ? 2:wl_names[i].indexOf(bsd_if_select_policy_idx[i][1]));
-	change_bsd_if_select(eval(document.form['wl'+i+'_bsd_if_select_policy_first']));
+	if('<% nvram_get("smart_connect_x"); %>' != 2){
+		/* [Interface Select and Qualify Procedures] - bsd_if_qualify_policy setting*/
+		var bsd_if_select_policy_1st = wl_name[wl_ifnames.indexOf(bsd_if_select_policy[i][0])]; 
+		var bsd_if_select_policy_2nd = wl_name[wl_ifnames.indexOf(bsd_if_select_policy[i][1])]; 
+		bsd_if_select_policy_idx[i] = [bsd_if_select_policy_1st,bsd_if_select_policy_2nd];
+		document.form['wl'+i+'_bsd_if_select_policy_first'].value = wl_names[i].indexOf(bsd_if_select_policy_idx[i][0]);
+		document.form['wl'+i+'_bsd_if_select_policy_second'].value = (wl_names[i].indexOf(bsd_if_select_policy_idx[i][1]) == -1 ? 2:wl_names[i].indexOf(bsd_if_select_policy_idx[i][1]));
+		change_bsd_if_select(eval(document.form['wl'+i+'_bsd_if_select_policy_first']));
+	}
 	set_bandutil_qualify_power(bsd_if_qualify_policy[i][0],'wl'+i+'_bsd_if_qualify_policy');
 	document.getElementById('wl'+i+'_bsd_if_qualify_policy').value = bsd_if_qualify_policy[i][0];	
 
@@ -650,7 +664,7 @@ function applyRule(){
 	var bsd_steering_policy_bin_t = [];
 	var bsd_sta_select_policy_bin_t = [];
 	var bsd_if_qualify_policy_bin_t = [];
-  for(i = 0; i < wl_info.wl_if_total; i++){
+  for(i = start_band_idx; i < wl_info.wl_if_total; i++){
 	/* [bsd_steering_policy] - [bw util%, x, x, RSSI threshold, phy rate, flag] */
 	bsd_steering_policy_bin_t[i] = bsd_steering_policy_bin[i].split("");
 	bsd_steering_policy[i][0] = document.form['wl'+i+'_bsd_steering_bandutil'].value;
@@ -707,10 +721,17 @@ function applyRule(){
   	}	
   	bsd_if_qualify_policy[i][1] = '0x' + (parseInt(reverse_bin(bsd_if_qualify_policy_bin_t[i].join("")),2)).toString(16);
 	document.form['wl'+i+'_bsd_if_qualify_policy'].value = bsd_if_qualify_policy[i].toString().replace(/,/g,' ');
-
-	bsd_if_select_policy[i][0] = wl_ifnames[wl_name.indexOf(wl_names[i][document.form['wl'+i+'_bsd_if_select_policy_first'].value])];
-	bsd_if_select_policy[i][1] = wl_ifnames[wl_name.indexOf(wl_names[i][document.form['wl'+i+'_bsd_if_select_policy_second'].value])];
-	document.form['wl'+i+'_bsd_if_select_policy'].value = bsd_if_select_policy[i].toString().replace(/,/g,' ');
+	if('<% nvram_get("smart_connect_x"); %>' != '2'){
+		bsd_if_select_policy[i][0] = wl_ifnames[wl_name.indexOf(wl_names[i][document.form['wl'+i+'_bsd_if_select_policy_first'].value])];
+		bsd_if_select_policy[i][1] = wl_ifnames[wl_name.indexOf(wl_names[i][document.form['wl'+i+'_bsd_if_select_policy_second'].value])];
+		document.form['wl'+i+'_bsd_if_select_policy'].value = bsd_if_select_policy[i].toString().replace(/,/g,' ');
+	}else{
+		document.form.wl0_bsd_steering_policy.disabled = true;
+		document.form.wl0_bsd_sta_select_policy.disabled = true;
+		document.form.wl0_bsd_if_qualify_policy.disabled = true;
+		document.form.wl0_bsd_if_select_policy.disabled = true;
+		document.form['wl'+i+'_bsd_if_select_policy'].disabled = true;	
+	}
   }
 
 	bsd_bounce_detect[0] = document.form.windows_time_sec.value;

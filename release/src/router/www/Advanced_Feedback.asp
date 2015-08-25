@@ -20,19 +20,253 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 
 <script>
+var orig_page = '<% get_parameter("origPage"); %>';
 function initial(){
 	show_menu();
-	change_dsl_diag_enable(0);
+	if(dsl_support){
+		change_dsl_diag_enable(0);
+		document.getElementById("fb_desc1").style.display = "";
+		inputCtrl(document.form.fb_ptype, 0);
+		inputCtrl(document.form.fb_pdesc, 0);
+		
+	}
+	else{
+		document.getElementById("fb_desc0").style.display = "";
+		inputCtrl(document.form.fb_ISP, 0);
+		inputCtrl(document.form.fb_Subscribed_Info, 0);
+		document.form.attach_syslog_id.checked = true;
+		document.form.attach_cfgfile_id.checked = true;
+		document.form.attach_iptables.checked = false;
+		document.getElementById("attach_iptables_span").style.display = "none";		
+		inputCtrl(document.form.dslx_diag_enable[0], 0);
+		inputCtrl(document.form.dslx_diag_enable[1], 0);
+		inputCtrl(document.form.dslx_diag_duration, 0);
+		inputCtrl(document.form.fb_availability, 0);
+		
+		gen_ptype_list(orig_page);
+		Reload_pdesc(document.form.fb_ptype,orig_page);
+	}		
+	
+	setTimeout("check_wan_state();", 300);
+}
+
+function check_wan_state(){
+	
+	if(sw_mode != 3 && document.getElementById("connect_status").className == "connectstatusoff"){
+		document.getElementById("fb_desc_disconnect").style.display = "";
+		document.form.fb_country.disabled = "true";
+		document.form.fb_email.disabled = "true";
+		document.form.attach_syslog.disabled = "true";
+		document.form.attach_cfgfile.disabled = "true";
+		document.form.fb_comment.disabled = "true";
+		document.form.btn_send.disabled = "true";
+		if(dsl_support){
+			document.form.fb_ISP.disabled = "true";
+			document.form.fb_Subscribed_Info.disabled = "true";
+			document.form.attach_iptables.disabled = "true";
+			document.form.dslx_diag_enable[0].disabled = "true";
+			document.form.dslx_diag_enable[1].disabled = "true";
+			document.form.dslx_diag_duration.disabled = "true";
+			document.form.fb_availability.disabled = "true";
+			
+		}
+		else{
+			document.form.fb_ptype.disabled = "true";
+			document.form.fb_pdesc.disabled = "true";
+		}		
+	}
+	else{
+		document.getElementById("fb_desc_disconnect").style.display = "none";
+		document.form.fb_country.disabled = "";
+		document.form.fb_email.disabled = "";
+		document.form.attach_syslog.disabled = "";
+		document.form.attach_cfgfile.disabled = "";
+		document.form.fb_comment.disabled = "";
+		document.form.btn_send.disabled = "";
+		if(dsl_support){
+			document.form.fb_ISP.disabled = "";
+			document.form.fb_Subscribed_Info.disabled = "";
+			document.form.attach_iptables.disabled = "";
+			document.form.dslx_diag_enable[0].disabled = "";
+			document.form.dslx_diag_enable[1].disabled = "";
+			document.form.dslx_diag_duration.disabled = "";
+			document.form.fb_availability.disabled = "";
+			
+		}
+		else{
+			document.form.fb_ptype.disabled = "";
+			document.form.fb_pdesc.disabled = "";
+		}
+	}		
+		
+	setTimeout("check_wan_state();", 3000);
+}
+
+function gen_ptype_list(url){
+	ptypelist = new Array();
+	ptypelist.push(["<#Select_menu_default#> ...", "No_selected"]);
+	ptypelist.push(["Setting Problem", "Setting_Problem"]);	
+	ptypelist.push(["Connection/Speed Problem", "Connection_or_Speed_Problem"]);
+	ptypelist.push(["Compatibility Problem", "Compatibility_Problem"]);
+	ptypelist.push(["Translation of Suggestion", "Translation_of_Suggestion"]);
+	ptypelist.push(["<#Adaptive_Others#>", "Other_Problem"]);
+	free_options(document.form.fb_ptype);
+	document.form.fb_ptype.options.length = ptypelist.length;
+	for(var i = 0; i < ptypelist.length; i++){
+		document.form.fb_ptype.options[i] = new Option(ptypelist[i][0], ptypelist[i][1]);
+	}	
+	if(url)		//with url : Setting Problem
+		document.form.fb_ptype.options[1].selected = "1";
+}
+
+function Reload_pdesc(obj, url){
+	//alert(obj.value+" ; "+url);
+	free_options(document.form.fb_pdesc);
+	var ptype = obj.value;
+	desclist = new Array();
+	url_group = new Array();
+	desclist.push(["<#Select_menu_default#> ...","No_selected"]);
+	url_group.push(["select"]);//false value
+	if(ptype == "Setting_Problem"){
+		desclist.push(["<#QIS#>","QIS"]);
+		url_group.push(["QIS"]);
+
+		desclist.push(["<#menu1#>","Network Map"]);
+		url_group.push(["index"]);
+
+		desclist.push(["<#Guest_Network#>","Guest Network"]);
+		url_group.push(["Guest_network"]);
+
+		desclist.push(["<#AiProtection_title#>","AiProtection"]);
+		url_group.push(["AiProtection"]);
+
+		desclist.push(["<#Adaptive_QoS#>","Adaptive QoS"]);	//5
+		url_group.push(["AdaptiveQoS"]);
+
+		desclist.push(["<#EzQoS_type_traditional#>","Traditional QoS"]);
+		url_group.push(["AiProtection"]);
+
+		desclist.push(["<#Menu_TrafficManager#>","Traffic Analyzer"]);
+		url_group.push(["TrafficMonitor"]);
+
+		desclist.push(["<#Parental_Control#>","Parental Ctrl"]);
+		url_group.push(["ParentalControl"]);
+
+		desclist.push(["<#Menu_usb_application#>","USB Application"]);
+		url_group.push(["APP_", "AiDisk", "aidisk", "mediaserver", "PrinterServer", "TimeMachine"]);
+
+		desclist.push(["AiCloud","AiCloud"]);	//10
+		url_group.push(["cloud"]);
+
+		desclist.push(["<#menu5_1#>","Wireless"]);
+		url_group.push(["ACL", "WAdvanced", "Wireless", "WMode", "WSecurity", "WWPS"]);
+
+		desclist.push(["<#menu5_3#>","WAN"]);
+		url_group.push(["WAN_", "PortTrigger", "VirtualServer", "Exposed", "NATPassThrough"]);
+
+		desclist.push(["<#dualwan#>","Dual WAN"]);
+		url_group.push(["WANPort"]);
+
+		desclist.push(["<#menu5_2#>","LAN"]);
+		url_group.push(["LAN", "DHCP", "GWStaticRoute", "IPTV", "SwitchCtrl"]);
+
+		desclist.push(["<#menu5_4_4#>","USB dongle"]);	//15
+		url_group.push(["Modem"]);
+
+		desclist.push(["Download Master","DM"]);
+		url_group.push(["DownloadMaster"]);//false value
+
+		desclist.push(["<#menu5_3_6#>","DDNS"]);
+		url_group.push(["DDNS"]);
+
+		desclist.push(["IPv6","IPv6"]);
+		url_group.push(["IPv6"]);
+
+		desclist.push(["VPN","VPN"]);
+		url_group.push(["VPN"]);
+
+		desclist.push(["<#menu5_5#>","Firewall"]);	//20
+		url_group.push(["Firewall", "KeywordFilter", "URLFilter"]);
+
+		desclist.push(["<#menu5_6#>","Administration"]);
+		url_group.push(["OperationMode", "System", "SettingBackup"]);
+
+		desclist.push(["<#System_Log#>","System Log"]);
+		url_group.push(["VPN"]);
+
+		desclist.push(["<#Network_Tools#>","Network Tools"]);
+		url_group.push(["Status_"]);
+
+		desclist.push(["Rescue Mode","Rescue"]);
+		url_group.push(["Rescue"]);//false value
+
+		desclist.push(["With other network devices","Other Devices"]);	//25
+		url_group.push(["Other_Device"]);//false value
+
+		desclist.push(["Cannot access firmware page","Fail to access"]);
+		url_group.push(["GUI"]);//false value
+
+		desclist.push(["<#menu5_6_3#>","FW update"]);
+		url_group.push(["FirmwareUpgrade"]);
+
+	}
+	else if(ptype == "Connection_or_Speed_Problem"){
+		
+		desclist.push(["Slow wireless speed","Wireless speed"]);
+		desclist.push(["Slow wired speed","Wired speed"]);
+		desclist.push(["Unstable connection problem","Unstable connection"]);
+		desclist.push(["Router reboot automatically","Router reboot"]);
+		
+	}
+	else if(ptype == "Compatibility_Problem"){
+		
+		desclist.push(["with modem","Compatible Problem"]);
+		desclist.push(["with other router","Compatible Problem"]);
+		desclist.push(["On OS or Application","Compatible Problem"]);
+		desclist.push(["with printer","Compatible Problem"]);
+		desclist.push(["with USB modem","Compatible Problem"]);
+		desclist.push(["with external hardware disk","Compatible Problem"]);
+		desclist.push(["with other network devices","Compatible Problem"]);
+
+	}
+	else if(ptype == "Translation_of_Suggestion"){
+		
+		desclist.splice(0,1);
+		desclist.push(["Translation of Suggestion","Translation"]);		
+	}
+	else{	//Other_Problem
+		
+		desclist.splice(0,1);		
+		desclist.push(["<#Adaptive_Others#>","others"]);
+	}
+
+	document.form.fb_pdesc.options.length = desclist.length;
+	if(obj.value == "Setting_Problem" && url){
+		for(var i = 0; i < url_group.length; i++){	
+			document.form.fb_pdesc.options[i] = new Option(desclist[i][0], desclist[i][1]);
+			//with url : Find pdesc in Setting Problem
+			for(var j = 0; j < url_group[i].length; j++){
+				if(url.search(url_group[i][j]) >= 0){					
+					document.form.fb_pdesc.options[i].selected = "1";
+				}
+			}		
+		}
+	}
+	else{
+		for(var i = 0; i < desclist.length; i++){
+			document.form.fb_pdesc.options[i] = new Option(desclist[i][0], desclist[i][1]);
+		}	
+	}
 }
 
 function updateUSBStatus(){	
 	if(allUsbStatus.search("storage") == "-1"){			
-			document.getElementById("storage_ready").style.display = "none";
-			document.getElementById("be_lack_storage").style.display = "";
+		document.getElementById("storage_ready").style.display = "none";
+		document.getElementById("be_lack_storage").style.display = "";
 	}
 	else{		
-			document.getElementById("storage_ready").style.display = "";
-			document.getElementById("be_lack_storage").style.display = "none";
+		document.getElementById("storage_ready").style.display = "";
+		document.getElementById("be_lack_storage").style.display = "none";
 	}					
 }
 
@@ -41,13 +275,12 @@ function redirect(){
 }
 
 function applyRule(){
-	//single / dual WAN connected check
-	if(((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")) ||
-		(dualwan_enabled &&
-				((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")) ||
-				((secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2"))
-		)
-	){
+	//WAN connected check
+	if(sw_mode != 3 && document.getElementById("connect_status").className == "connectstatusoff"){
+                alert("<#USB_Application_No_Internet#>");
+                return false;
+        }
+	else{
 
 		/*if(document.form.feedbackresponse.value == "3"){
 				alert("Feedback report daily maximum(10) send limit reached.");
@@ -61,10 +294,12 @@ function applyRule(){
 			document.form.PM_attach_cfgfile.value = 1;
 		else
 			document.form.PM_attach_cfgfile.value = 0;
-		if(document.form.attach_iptables.checked == true)
-			document.form.PM_attach_iptables.value = 1;
-		else
-			document.form.PM_attach_iptables.value = 0;
+		if(dsl_support){
+			if(document.form.attach_iptables.checked == true)
+				document.form.PM_attach_iptables.value = 1;
+			else
+				document.form.PM_attach_iptables.value = 0;
+		}	
                 
 		if(document.form.fb_email.value == ""){
 			if(!confirm("<#feedback_email_confirm#>")){
@@ -73,24 +308,24 @@ function applyRule(){
 			}
 		}
 		else{	//validate email
-			
-				if(!isEmail(document.form.fb_email.value)){
-						alert("<#feedback_email_alert#>");    					
-						document.form.fb_email.focus();
-						return false;
-				}
+			if(!isEmail(document.form.fb_email.value)){
+				alert("<#feedback_email_alert#>");    					
+				document.form.fb_email.focus();
+				return false;
+			}
 		}
+
 		document.form.fb_browserInfo.value = navigator.userAgent;
-		if(document.form.dslx_diag_enable[0].checked == true){
-			document.form.action_wait.value="120";
-			showLoading(120);
-		}else	
+		if(dsl_support){
+			if(document.form.dslx_diag_enable[0].checked == true){
+				document.form.action_wait.value="120";
+				showLoading(120);
+			}else	
+				showLoading(60);
+		}
+		else
 			showLoading(60);
 		document.form.submit();
-	}
-	else{
-		alert("<#USB_Application_No_Internet#>");
-		return false;
 	}
 }
 
@@ -149,7 +384,7 @@ function change_dsl_diag_enable(value) {
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="current_page" value="Advanced_Feedback.asp">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_DSLsendmail">
+<input type="hidden" name="action_script" value="restart_sendmail">
 <input type="hidden" name="action_wait" value="60">
 <input type="hidden" name="PM_attach_syslog" value="">
 <input type="hidden" name="PM_attach_cfgfile" value="">
@@ -177,7 +412,9 @@ function change_dsl_diag_enable(value) {
 <div>&nbsp;</div>
 <div class="formfonttitle"><#menu5_6#> - <#menu_feedback#></div>
 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-<div class="formfontdesc"><#Feedback_desc#></div>
+<div id="fb_desc0" class="formfontdesc" style="display:none;"><#Feedback_desc0#></div>
+<div id="fb_desc1" class="formfontdesc" style="display:none;"><#Feedback_desc1#></div>
+<div id="fb_desc_disconnect" class="formfontdesc" style="display:none;color:#FC0;">Now this function can't work, because your ASUS Router isn't connected to the Internet. Please send your Feedback to this email address : <a href="mailto:router_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">router_feedback@asus.com </a></div><!-- untranslated -->
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <tr>
 <th width="30%"><#feedback_country#> *</th>
@@ -207,9 +444,9 @@ function change_dsl_diag_enable(value) {
 <tr>
 <th>Extra information for debugging *</th>
 <td>
-	<input type="checkbox" class="input" name="attach_syslog">Syslog&nbsp;&nbsp;&nbsp;
-	<input type="checkbox" class="input" name="attach_cfgfile">Setting file&nbsp;&nbsp;&nbsp;
-	<input type="checkbox" class="input" name="attach_iptables">Iptable setting
+	<input type="checkbox" class="input" name="attach_syslog" id="attach_syslog_id"><label for="attach_syslog_id"><#System_Log#></label>&nbsp;&nbsp;&nbsp;
+	<input type="checkbox" class="input" name="attach_cfgfile" id="attach_cfgfile_id"><label for="attach_cfgfile_id">Setting file</label>&nbsp;&nbsp;&nbsp;
+	<span id="attach_iptables_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_iptables" id="attach_iptables_id"><label for="attach_iptables_id">Iptable setting</label></span>
 </td>
 </tr>
 
@@ -249,6 +486,25 @@ function change_dsl_diag_enable(value) {
 	</select>
 </td>
 </tr>
+
+<tr>
+<th><#feedback_problem_type#></th>
+<td>
+	<select class="input_option" name="fb_ptype" onChange="Reload_pdesc(this);">
+		
+	</select>
+</td>
+</tr>
+
+<tr>
+<th><#feedback_problem_desc#></th>
+<td>
+	<select class="input_option" name="fb_pdesc">
+		
+	</select>
+</td>
+</tr>
+
 <tr>
 	<th>
 		<#feedback_comments#> *
@@ -263,7 +519,7 @@ function change_dsl_diag_enable(value) {
 <tr align="center">
 	<td colspan="2">
 		<div style="margin-left:-680px;"><#feedback_optional#></div>
-		<input class="button_gen" onclick="applyRule()" type="button" value="Send"/>
+		<input class="button_gen" name="btn_send" onclick="applyRule()" type="button" value="Send"/>
 	</td>	
 </tr>
 

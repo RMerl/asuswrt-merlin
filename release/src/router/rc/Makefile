@@ -117,9 +117,15 @@ LDFLAGS += -static
 endif
 LDFLAGS += $(EXTRA_LDFLAGS)
 
-OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o mtd.o
+OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o #mtd.o
 OBJS += firewall.o ppp.o services.o common.o
 OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o #cpu.o
+ifeq ($(RTAC1200G),y)
+OBJS += mtd_sflash.o
+else
+OBJS += mtd.o
+endif
+
 ifeq ($(RTCONFIG_FANCTRL),y)
 OBJS += phy_tempsense.o
 endif
@@ -135,7 +141,7 @@ endif
 else ifeq ($(RTCONFIG_QCA),y)
 OBJS += init-qca.o wps-qca.o qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.o,prebuild/ctl.o)
 else
-OBJS += init-broadcom.o wps-broadcom.o broadcom.o
+OBJS += init-broadcom.o wps-broadcom.o broadcom.o ate-broadcom.o
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += init-broadcom-dsl.o
 endif
@@ -205,13 +211,16 @@ OBJS += pc.o
 OBJS += pc_block.o
 endif
 
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+OBJS += dsl_fb.o
+endif
+
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += dsl.o
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += dsl-upg.o
 endif
 ifeq ($(RTCONFIG_DSL_TCLINUX),y)
-OBJS += dsl_fb.o
 OBJS += dsl_diag.o
 endif
 endif
@@ -236,6 +245,22 @@ endif
 
 ifeq ($(RTCONFIG_SHP),y)
 CFLAGS += -DSHP
+endif
+
+ifeq ($(RTCONFIG_USB),y)
+ifneq ($(RTCONFIG_BLINK_LED),y)
+SW_USBLED=y
+endif
+endif
+
+ifeq ($(RTCONFIG_DSL),y)
+ifneq ($(RTCONFIG_DUALWAN),y)
+SW_DSLWANLED=y
+endif
+endif
+
+ifneq (,$(filter y,$(RTCONFIG_WLAN_LED) $(RTN18U) $(RTCONFIG_FAKE_ETLAN_LED) $(SW_USBLED) $(RTCONFIG_MMC_LED) $(RTCONFIG_BRCM_USBAP) $(RTAC66U) $(BCM4352) $(SW_DSLWANLED)))
+CFLAGS += -DSW_DEVLED
 endif
 
 ifeq ($(RTCONFIG_TIMEMACHINE),y)
@@ -284,8 +309,33 @@ ifeq ($(RTCONFIG_TR069),y)
 OBJS += tr069.o
 endif
 
-ifeq ($(and $(RTCONFIG_USER_LOW_RSSI),$(RTCONFIG_BCMARM)),y)
+ifeq ($(or $(and $(RTCONFIG_USER_LOW_RSSI),$(RTCONFIG_BCMARM)),$(RTCONFIG_NEW_USER_LOW_RSSI)),y)
 OBJS += roamast.o
+endif
+
+ifeq ($(RTCONFIG_TCODE),y)
+OBJS += tcode_rc.o
+ifeq ($(CONFIG_BCMWL5),y)
+OBJS += tcode_brcm.o
+endif
+endif
+
+ifeq ($(RTCONFIG_LACP),y)
+OBJS += agg_brcm.o
+endif
+
+ifeq ($(RTCONFIG_DUALWAN),y)
+ifeq ($(CONFIG_BCMWL5),y)
+OBJS += dualwan.o
+endif
+endif
+
+ifeq ($(RTCONFIG_DHCP_OVERRIDE),y)
+OBJS += detectWAN_arp.o
+endif
+
+ifeq ($(RTCONFIG_KEY_GUARD),y)
+OBJS += keyguard.o
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -302,7 +352,21 @@ else
 vpath %.c sysdeps sysdeps/broadcom
 endif
 
-all: rc
+ifeq ($(RTCONFIG_TUNNEL),y)
+OBJS += natnl_api.o
+endif
+
+all: prebuilt rc
+
+prebuilt:
+# Dig into our collection of prebuilt objects based on model and architecture.
+	@-rm -f ./prebuild/*.o || true
+ifeq ($(RTCONFIG_BCMARM),y)
+	@-cp -f ./prebuild/arm/* ./prebuild/
+else
+	@-cp -f ./prebuild/mips/* ./prebuild/
+endif
+	@-cp -f ./prebuild/models/$(BUILD_NAME)/* ./prebuild/
 
 rc: $(OBJS)
 	@echo " [rc] CC $@"
@@ -342,6 +406,7 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog02
+	@cd $(INSTALLDIR)/sbin && ln -sf rc sw_devled
 ifeq ($(RTCONFIG_FANCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc phy_tempsense
 endif
@@ -371,6 +436,9 @@ ifeq ($(RTCONFIG_QCA),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_wps_er
 endif
 endif
+ifeq ($(RTCONFIG_QCA_PLC_UTILS),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc autodet_plc
+endif
 
 #	ifeq ($(RTCONFIG_HEARTBEAT),y)
 #		@cd $(INSTALLDIR)/sbin && ln -sf rc hb_connect
@@ -399,6 +467,9 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc delay_exec
 
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wanduck
+ifeq ($(CONFIG_BCMWL5),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc dualwan
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc tcpcheck
 	@cd $(INSTALLDIR)/sbin && ln -sf rc auto_macclone
 ifeq ($(RTCONFIG_USB),y)
@@ -443,6 +514,9 @@ ifeq ($(RTCONFIG_DSL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc gen_ralink_config
 endif
 endif
+ifeq ($(CONFIG_BCMWL5),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc set_factory_mode
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd 
 ifeq ($(RTCONFIG_SSH),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_sshd
@@ -485,7 +559,6 @@ ifeq ($(RTCONFIG_SPEEDTEST),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc speedtest
 endif
 ifeq ($(RTCONFIG_USB_MODEM),y)
-	@cd $(INSTALLDIR)/sbin && ln -sf rc start_udhcpc
 	@cd $(INSTALLDIR)/sbin && ln -sf rc write_3g_ppp_conf
 ifeq ($(or $(RTCONFIG_JFFS2),$(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_UBIFS)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc lplus
@@ -498,18 +571,19 @@ endif
 ifeq ($(RT4GAC55U),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc lteled
 endif
-ifeq ($(and $(RTCONFIG_IPV6),$(RTCONFIG_WIDEDHCP6)),y)
-	@cd $(INSTALLDIR)/sbin && ln -sf rc stop_ipv6
-	@cd $(INSTALLDIR)/sbin && ln -sf rc start_dhcp6c
-endif
 ifeq ($(RTCONFIG_TR069),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc dhcpc_lease
 endif
 
-ifeq ($(and $(RTCONFIG_USER_LOW_RSSI),$(RTCONFIG_BCMARM)),y)
+ifeq ($(or $(and $(RTCONFIG_USER_LOW_RSSI),$(RTCONFIG_BCMARM)),$(RTCONFIG_NEW_USER_LOW_RSSI)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc roamast
 endif
-
+ifeq ($(RTCONFIG_DHCP_OVERRIDE),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc detectWAN_arp
+endif
+ifeq ($(RTCONFIG_KEY_GUARD),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc keyguard
+endif
 clean:
 	rm -f rc *.o .*.depend
 
@@ -517,27 +591,67 @@ size: rc
 	mipsel-uclibc-nm --print-size --size-sort rc
 
 # handle prebuilt object here
-ifneq ($(wildcard ./prebuild),)
-ifeq ($(RTCONFIG_DSL),y)
-ifeq ($(RTCONFIG_DSL_TCLINUX),y)
+ifneq ($(wildcard ./prebuild/dsl_fb.o),)
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 dsl_fb.o:
 	@-cp -f ./prebuild/dsl_fb.o .
+endif
+ifeq ($(RTCONFIG_DSL),y)
+ifeq ($(RTCONFIG_DSL_TCLINUX),y)
 dsl_diag.o:
 	@-cp -f ./prebuild/dsl_diag.o .
 endif
 endif
 ifeq ($(RTCONFIG_HTTPS),y)
 pwdec.o:
-	@-cp -f ./prebuild/pwdec$(BCMEX).o pwdec.o
+	@-cp -f ./prebuild/pwdec.o .
 endif
 else
 ifeq ($(RTCONFIG_HTTPS),y)
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 dsl_fb.o:dsl_fb.c
 	@echo "encrypt dsl password"
 	./dsl_fb_enc.sh
 	$(CC) $(CFLAGS) -c dsl_fb.c
 	@echo "decrypt dsl password"
 	./dsl_fb_dec.sh
+endif
+endif
+endif
+
+ifeq ($(CONFIG_BCMWL5),y)
+ifneq ($(wildcard ./prebuild/ate-broadcom.o),)
+ate-broadcom.o:
+	@-cp -f ./prebuild/ate-broadcom.o .
+endif
+endif
+
+ifeq ($(RTCONFIG_TCODE),y)
+ifneq ($(wildcard ./prebuild/tcode_rc.o),)
+tcode_rc.o:
+	@-cp -f ./prebuild/tcode_rc.o .
+endif
+ifeq ($(CONFIG_BCMWL5),y)
+ifneq ($(wildcard ./prebuild/tcode_brcm.o),)
+tcode_brcm.o:
+	@-cp -f ./prebuild/tcode_brcm.o .
+endif
+endif
+endif
+
+ifeq ($(RTCONFIG_LACP),y)
+ifneq ($(wildcard ./prebuild/agg_brcm.o),)
+agg_brcm.o:
+	@-cp -f ./prebuild/agg_brcm.o .
+endif
+endif
+
+ifeq ($(RTCONFIG_DUALWAN),y)
+ifeq ($(CONFIG_BCMWL5),y)
+ifneq ($(wildcard ./prebuild/dualwan.o),)
+dualwan.o:
+	@-cp -f ./prebuild/dualwan.o .
+endif
 endif
 endif
 

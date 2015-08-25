@@ -1,0 +1,443 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "libg7221codec"="..\..\third_party\build\g7221\libg7221codec.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libgsmcodec"="..\..\third_party\build\gsm\libgsmcodec.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libilbccodec"="..\..\third_party\build\ilbc\libilbccodec.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libportaudio"="..\..\third_party\build\portaudio\libportaudio.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libresample"="..\..\third_party\build\resample\libresample.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libspeex"="..\..\third_party\build\speex\libspeex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libsrtp"="..\..\third_party\build\srtp\libsrtp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib"="..\..\pjlib\build\pjlib.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib_util"="..\..\pjlib-util\build\pjlib_util.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia"="..\..\pjmedia\build\pjmedia.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_audiodev"="..\..\pjmedia\build\pjmedia_audiodev.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_codec"="..\..\pjmedia\build\pjmedia_codec.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjnath"="..\..\pjnath\build\pjnath.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_core"="..\..\pjsip\build\pjsip_core.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_simple"="..\..\pjsip\build\pjsip_simple.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_ua"="..\..\pjsip\build\pjsip_ua.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsua"=".\pjsua.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_codec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_core
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_simple
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_ua
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsua_lib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjnath
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libgsmcodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libilbccodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libportaudio
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libresample
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libspeex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_audiodev
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsrtp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libg7221codec
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "pjsua_lib"="..\..\pjsip\build\pjsua_lib.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "python_pjsua"=".\python_pjsua.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libgsmcodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libilbccodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libportaudio
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libresample
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libspeex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsrtp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_codec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjnath
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_core
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_simple
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_ua
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsua_lib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_audiodev
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libg7221codec
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "sample_debug"=".\sample_debug.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_codec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_core
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_simple
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_ua
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsua_lib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libgsmcodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libilbccodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libportaudio
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libresample
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libspeex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsrtp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_audiodev
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjnath
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "samples"=".\samples.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_codec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_core
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_simple
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_ua
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsua_lib
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- This program is free software; you can redistribute it and/or      -->
+<!-- modify it under the terms of the GNU General Public License as     -->
+<!-- published by the Free Software Foundation; either version 2 of the -->
+<!-- License, or (at your option) any later version.                    -->
+<!--                                                                    -->
+<!-- This program is distributed in the hope that it will be useful,    -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of     -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      -->
+<!-- GNU General Public License for more details.                       -->
+<!--                                                                    -->
+<!-- You should have received a copy of the GNU General Public License  -->
+<!-- along with this program; if not, write to the                      -->
+<!-- Free Software Foundation, Inc.,                                    -->
+<!-- 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA             -->
+<!--                                                                    -->
+<!--                 Sipp default 'uas' scenario.                       -->
+<!--                                                                    -->
+
+<scenario name="Offer answer glare (#1166)">
+  <!-- By adding rrs="true" (Record Route Sets), the route sets         -->
+  <!-- are saved and used for following messages sent. Useful to test   -->
+  <!-- against stateful SIP proxies/B2BUAs.                             -->
+
+  <recv request="INVITE" crlf="true">
+    <action>
+	<ereg regexp=".*" search_in="hdr" header="From" assign_to="3"/>
+	<ereg regexp="sip:(.*)>" search_in="hdr" header="Contact" assign_to="4,5"/>
+        <assign assign_to="4" variable="5" />
+    </action>
+  </recv>
+
+  <send retrans="500">
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: sip:sipp@[local_ip]:[local_port]
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=- 1 1 IN IP4 192.168.0.15
+      s=pjmedia
+      c=IN IP4 192.168.0.15
+      t=0 0
+      m=audio 4004 RTP/AVP 0
+
+    ]]>
+  </send>
+
+  <recv request="ACK" crlf="true">
+  </recv>
+
+  <recv request="UPDATE" crlf="true">
+    <action>
+	<ereg regexp=".*" search_in="hdr" header="From" assign_to="3"/>
+	<ereg regexp="sip:(.*)>" search_in="hdr" header="Contact" assign_to="4,5"/>
+        <assign assign_to="4" variable="5" />
+	<ereg regexp=".*" search_in="hdr" header="Via" assign_to="6"/>
+	<ereg regexp=".*" search_in="hdr" header="CSeq" assign_to="7"/>
+    </action>
+  </recv>
+
+  <send retrans="500">
+    <![CDATA[
+
+      INVITE sip:[$5] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      From: sipp  <sip:sipp@[local_ip]:[local_port]>;tag=[call_number]
+      To[$3]
+      Call-ID: [call_id]
+      Cseq: 1 INVITE
+      Contact: sip:sipp@[local_ip]:[local_port]
+      Max-Forwards: 70
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=- 2 2 IN IP4 192.168.0.15
+      s=pjmedia
+      c=IN IP4 192.168.0.15
+      t=0 0
+      m=audio 4004 RTP/AVP 0
+
+    ]]>
+  </send>
+
+  <recv response="491" rtd="true">
+  </recv>
+  
+  <send>
+    <![CDATA[
+
+      ACK sip:[$5] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      From: sipp  <sip:sipp@[local_ip]:[local_port]>;tag=[call_number]
+      To[$3]
+      Call-ID: [call_id]
+      Cseq: 1 INVITE
+      Contact: sip:sipp@[local_ip]:[local_port]
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      Via[$6]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      CSeq[$7]
+      Contact: sip:sipp@[local_ip]:[local_port]
+      Content-Type: application/sdp
+      Content-Length: [len]
+      Allow: INVITE, UPDATE, ACK, BYE
+
+      v=0
+      o=- 3441953879 3441953879 IN IP4 192.168.0.15
+      s=pjmedia
+      c=IN IP4 192.168.0.15
+      t=0 0
+      m=audio 4004 RTP/AVP 0 111
+      a=rtpmap:0 PCMU/8000
+      a=rtpmap:111 telephone-event/8000
+      a=fmtp:111 0-15
+
+    ]]>
+  </send>
+  <!-- Keep the call open for a while in case the 200 is lost to be     -->
+  <!-- able to retransmit it if we receive the BYE again.               -->
+  <pause milliseconds="4000"/>
+
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

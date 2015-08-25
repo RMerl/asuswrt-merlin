@@ -146,7 +146,7 @@ function change_v3_priv_type(type){
 	<tr>
 		  <td bgcolor="#4D595D" valign="top"  >
 		  <div>&nbsp;</div>
-		  <div class="formfonttitle"><#menu5_6_adv#> - SNMP</div>
+		  <div class="formfonttitle"><#menu5_6#> - SNMP</div>
 		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  <div class="formfontdesc"></div>
 

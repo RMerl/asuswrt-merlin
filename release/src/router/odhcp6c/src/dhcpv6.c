@@ -319,17 +319,21 @@ static void dhcpv6_send(enum dhcpv6_msg type, uint8_t trid[3], uint32_t ecs)
 		for (size_t i = 0; i < n_prefixes; i++) {
 			struct dhcpv6_ia_hdr hdr_ia_pd = {
 				htons(DHCPV6_OPT_IA_PD),
-				htons(sizeof(hdr_ia_pd) - 4 + sizeof(struct dhcpv6_ia_prefix)),
+				htons(sizeof(hdr_ia_pd) - 4 +
+				      sizeof(struct dhcpv6_ia_prefix) * !!request_prefixes[i].length),
 				request_prefixes[i].iaid, 0, 0
 			};
 			struct dhcpv6_ia_prefix pref = {
 				.type = htons(DHCPV6_OPT_IA_PREFIX),
-				.len = htons(25), .prefix = request_prefixes[i].length
+				.len = htons(sizeof(pref) - 4),
+				.prefix = request_prefixes[i].length
 			};
 			memcpy(ia_pd + ia_pd_len, &hdr_ia_pd, sizeof(hdr_ia_pd));
 			ia_pd_len += sizeof(hdr_ia_pd);
-			memcpy(ia_pd + ia_pd_len, &pref, sizeof(pref));
-			ia_pd_len += sizeof(pref);
+			if (request_prefixes[i].length) {
+				memcpy(ia_pd + ia_pd_len, &pref, sizeof(pref));
+				ia_pd_len += sizeof(pref);
+			}
 		}
 	} else {
 		struct odhcp6c_entry *e = odhcp6c_get_state(STATE_IA_PD, &ia_pd_entries);
@@ -840,18 +844,6 @@ static int dhcpv6_handle_advert(enum dhcpv6_msg orig, const int rc,
 		if (otype == DHCPV6_OPT_SERVERID && olen <= 130) {
 			memcpy(cand.duid, odata, olen);
 			cand.duid_len = olen;
-		} else if (otype == DHCPV6_OPT_STATUS && olen >= 2) {
-			int error = ((int)odata[0] << 8 | (int)odata[1]);
-
-			switch (error) {
-			case DHCPV6_NoPrefixAvail:
-				// Status code on global level
-				cand.preference -= 2000;
-				break;
-
-			default :
-				break;
-			}
 		} else if (otype == DHCPV6_OPT_PREF && olen >= 1 &&
 				cand.preference >= 0) {
 			cand.preference = pref = odata[0];

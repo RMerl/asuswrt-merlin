@@ -1,0 +1,52 @@
+#!/bin/sh
+
+CUR_DIR=`pwd`
+user=`echo $HOME`
+ANDROID_TOOLCHAIN_DIR=$user/android-toolchain
+NDK=$user/android/android-ndk-r7b
+#SYSROOT=$NDK/platforms/android-9/arch-arm
+$NDK/build/tools/make-standalone-toolchain.sh --platform=android-9 --install-dir=$ANDROID_TOOLCHAIN_DIR
+
+#echo 'print sysroot'
+#user=`echo $HOME`
+#echo $user
+#ANDROID_TOOLCHAIN_DIR=$user/android-toolchain
+#echo $ANDROID_TOOLCHAIN_DIR
+SYSROOT=$ANDROID_TOOLCHAIN_DIR/sysroot
+ANDROID_LIB_PATH=$SYSROOT/usr/lib
+ANDROID_INC_PATH=$SYSROOT/usr/include
+#echo $SYSROOT
+#ANDROID_LDFLAGS="-L$(SYSROOT)/usr/lib -llog"
+#ANDROID_CFLAGS="-I$ANDORID_TOOLCHAIN/sysroot -I$CUR_DIR/j_inc"
+##export ANDROID_BUILD=y
+echo android lib = $ANDROID_LIB_PATH
+echo sysroot = $SYSROOT
+echo andorid inc = $ANDROID_INC_PATH
+ANDROID_CFLAGS="-I$ANDROID_INC_PATH -I$CUR_DIR/j_inc"
+ANDROID_LDFLAGS=-L$ANDROID_LIB_PATH
+ANDROID_LDLIBS=-llog
+
+##### OPENSSL
+OPENSSL_DIR=$CUR_DIR/../openssl-1.0.1c
+OPENSSL_INC=$OPENSSL_DIR/include
+OPENSSL_LIB=$OPENSSL_DIR
+OPENSSL_CFLAGS=-I$OPENSSL_INC
+OPENSSL_LDFLAGS=-L$OPENSSL_LIB
+OPENSSL_LDLIBS=-lssl
+
+##### Debug Flag
+GDB_CFLAGS=-g
+
+export PATH=$ANDROID_TOOLCHAIN_DIR/bin:$PATH
+export CC=arm-linux-androideabi-gcc
+export CXX=arm-linux-androideabi-g++
+export LDFLAGS="$ANDROID_LDFLAGS $OPENSSL_LDFLAGS"
+#export LIBS="-lsupc++ $ANDROID_LDLIBS"
+export LIBS="$ANDROID_LDFLAGS $ANDROID_LDLIBS $OPENSSL_LDLIBS"
+export CFLAGS="-I$ANDROID_TOOLCHAIN_DIR/include -DPJ_ANDROID=1 $ANDROID_CFLAGS $OPENSSL_CFLAGS $GDB_CFLAGS"
+export CPPFLAGS=
+
+
+#./configure --prefix=$CUR_DIR/_inst --host=arm-linux-androideabi --target=arm-linux-androideabi
+#./configure --prefix=$CUR_DIR/_inst --host=android --target=arm
+./configure --prefix=$CUR_DIR/_inst --host=arm-linux --target=arm-linux

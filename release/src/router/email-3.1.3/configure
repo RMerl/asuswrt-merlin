@@ -6278,14 +6278,21 @@ done
 
 
 echo $ECHO_N "checking if strftime is GNU or Non-GNU... "
-${srcdir}/check_strftime.sh $CC
-if test $? -ne 0
-then
-    echo "Non-GNU"
-else
-    echo "GNU"
-    CFLAGS="$CFLAGS -DUSE_GNU_STRFTIME"
-fi
+#${srcdir}/check_strftime.sh $CC
+#if test $? -ne 0
+#then
+#    echo "Non-GNU"
+#else
+#    echo "GNU"
+#    CFLAGS="$CFLAGS -DUSE_GNU_STRFTIME"
+#fi
+###### Force strftime to GNU type
+	echo ""
+	echo "++++++++++++++++++++++++++++"
+	echo "Force strftime to GNU type"
+	echo "++++++++++++++++++++++++++++"
+	CFLAGS="$CFLAGS -DUSE_GNU_STRFTIME"
+######
 
 ver="$version"
 

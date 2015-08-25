@@ -98,6 +98,7 @@ int __config_netdev_bled(const char *led_gpio, const char *ifname, unsigned int 
 	bl->active_low = !!(nvram_get_int(led_gpio) & GPIO_ACTIVE_LOW);
 	bl->state = BLED_STATE_STOP;
 	bl->bh_type = BLED_BHTYPE_TIMER;
+	bl->mode = BLED_NORMAL_MODE;
 	bl->min_blink_speed = min_blink_speed;
 	bl->interval = interval;
 	strcpy(nl.ifname, ifname);
@@ -132,6 +133,131 @@ int config_netdev_bled(const char *led_gpio, const char *ifname)
 	unsigned int interval = 100;		/* ms */
 
 	return __config_netdev_bled(led_gpio, ifname, min_blink_speed, interval);
+}
+
+/**
+ * Set user defined pattern to a bled.
+ * @led_gpio:	pointer to name of "led_xxx_gpio", the bled must be configured first.
+ * 		e.g., config_netdev_bled(), config_swports_bled(), and config_usbbus_bled()
+ * @interval:	length of each item in @pattern. (unit: ms)
+ * 		BLED_UDEF_PATTERN_MIN_INTERVAL ~ BLED_UDEF_PATTERN_MAX_INTERVAL
+ * @pattern:	user defined pattern. e.g., "1 0 1 1 0 0"
+ * 		0: turn off LED.
+ * 		otherwise: turn on LED.
+ * @return:
+ */
+int set_bled_udef_pattern(const char *led_gpio, unsigned int interval, const char *pattern)
+{
+	int gpio_nr, fd, r, ret = 0;
+	char *str, *p, *token;
+	struct bled_common bl_common, *bl = &bl_common;
+	unsigned int curr, *patt = &bl->pattern[0];
+
+	if (!led_gpio || *led_gpio == '\0' || !(nvram_get_int(led_gpio) & GPIO_BLINK_LED) ||
+	    interval < BLED_UDEF_PATTERN_MIN_INTERVAL || interval > BLED_UDEF_PATTERN_MAX_INTERVAL ||
+	    !pattern || *pattern == '\0')
+		return -1;
+
+	if ((gpio_nr = extract_gpio_pin(led_gpio)) < 0) {
+		ret = -2;
+		goto exit_set_bled_udef_pattern;
+	}
+
+	if (!(str = strdup(pattern))) {
+		ret = -3;
+		goto exit_set_bled_udef_pattern;
+	}
+	memset(bl, 0, sizeof(*bl));
+	bl->gpio_nr = gpio_nr;
+	bl->pattern_interval = interval;
+	for (curr = 0, p = str; curr < BLED_MAX_NR_PATTERN; curr++, p = NULL) {
+		if (!(token = strtok(p, " ")))
+			break;
+		*patt++ = !!atoi(token);
+	}
+	if (!curr) {
+		_dprintf("%s: %s: pattern not found.\n", __func__, led_gpio);
+		ret = -4;
+		goto exit_set_bled_udef_pattern;
+	}
+	bl->nr_pattern = curr;
+
+	if ((fd = open(BLED_DEVNAME, O_RDWR)) < 0) {
+		_dprintf("%s: open %s fail. (%s)\n", __func__, BLED_DEVNAME, strerror(errno));
+		ret = -5;
+		goto exit_set_bled_udef_pattern;
+	}
+
+	if ((r = ioctl(fd, BLED_CTL_SET_UDEF_PATTERN, bl)) < 0) {
+		_dprintf("%s: ioctl(BLED_CTL_SET_UDEF_PATTERN) fail, return %d errno %d (%s)\n",
+			__func__, r, errno, strerror(errno));
+		close(fd);
+		ret = -6;
+		goto exit_set_bled_udef_pattern;
+	}
+
+	close(fd);
+	free(str);
+
+exit_set_bled_udef_pattern:
+
+	return ret;
+}
+
+/**
+ * Set operation mode of a bled.
+ * @led_gpio:	pointer to name of "led_xxx_gpio", the bled must be configured first.
+ * 		e.g., config_netdev_bled(), config_swports_bled(), and config_usbbus_bled()
+ * @mode:	one of bled_mode enumeration, except BLED_MODE_MAX
+ * @return:
+ */
+static int __set_bled_mode(const char *led_gpio, enum bled_mode bled_mode)
+{
+	int gpio_nr, fd, r, ret = 0;
+	struct bled_common bl_common, *bl = &bl_common;
+
+	if (!led_gpio || *led_gpio == '\0' || !(nvram_get_int(led_gpio) & GPIO_BLINK_LED) ||
+	    bled_mode < 0 || bled_mode >= BLED_MODE_MAX)
+		return -1;
+
+	if ((gpio_nr = extract_gpio_pin(led_gpio)) < 0) {
+		ret = -2;
+		goto exit___set_bled_mode;
+	}
+
+	if ((fd = open(BLED_DEVNAME, O_RDWR)) < 0) {
+		_dprintf("%s: open %s fail. (%s)\n", __func__, BLED_DEVNAME, strerror(errno));
+		ret = -3;
+		goto exit___set_bled_mode;
+	}
+
+	memset(bl, 0, sizeof(*bl));
+	bl->gpio_nr = gpio_nr;
+	bl->mode = bled_mode;
+
+	if ((r = ioctl(fd, BLED_CTL_SET_MODE, bl)) < 0) {
+		_dprintf("%s: ioctl(BLED_CTL_SET_MODE) fail, return %d errno %d (%s)\n",
+			__func__, r, errno, strerror(errno));
+		close(fd);
+		ret = -4;
+		goto exit___set_bled_mode;
+	}
+
+	close(fd);
+
+exit___set_bled_mode:
+
+	return ret;
+}
+
+int set_bled_normal_mode(const char *led_gpio)
+{
+	return __set_bled_mode(led_gpio, BLED_NORMAL_MODE);
+}
+
+int set_bled_udef_pattern_mode(const char *led_gpio)
+{
+	return __set_bled_mode(led_gpio, BLED_UDEF_PATTERN_MODE);
 }
 
 /**
@@ -344,6 +470,7 @@ int __config_swports_bled(const char *led_gpio, unsigned int port_mask, unsigned
 	bl->active_low = !!(nvram_get_int(led_gpio) & GPIO_ACTIVE_LOW);
 	bl->state = BLED_STATE_STOP;
 	bl->bh_type = sleep? BLED_BHTYPE_HYBRID:BLED_BHTYPE_TIMER;
+	bl->mode = BLED_NORMAL_MODE;
 	bl->min_blink_speed = min_blink_speed;
 	bl->interval = interval;
 	sl.port_mask = port_mask;
@@ -455,6 +582,7 @@ int __config_usbbus_bled(const char *led_gpio, char *bus_list, unsigned int min_
 	bl->active_low = !!(nvram_get_int(led_gpio) & GPIO_ACTIVE_LOW);
 	bl->state = BLED_STATE_STOP;
 	bl->bh_type = BLED_BHTYPE_TIMER;
+	bl->mode = BLED_NORMAL_MODE;
 	bl->min_blink_speed = min_blink_speed;
 	bl->interval = interval;
 	ul.bus_mask = bus_mask;
@@ -524,4 +652,68 @@ int is_swports_bled(const char *led_gpio)
 	return (get_bled_type(led_gpio) == BLED_TYPE_SWPORTS_BLED)? 1:0;
 }
 
+
+/*
+ * model dependence
+ */
+#if defined(PLN12)
+void set_wifiled(int mode)
+{
+	switch (mode) {
+	case 1: /* on */
+		set_bled_udef_pattern("led_2g_green_gpio", 1000, "1 1");
+		set_bled_udef_pattern_mode("led_2g_green_gpio");
+		set_bled_udef_pattern("led_2g_orange_gpio", 1000, "1 1");
+		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		set_bled_udef_pattern("led_2g_red_gpio", 1000, "1 1");
+		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		break;
+	case 2: /* off */
+		set_bled_udef_pattern("led_2g_green_gpio", 1000, "0 0");
+		set_bled_udef_pattern_mode("led_2g_green_gpio");
+		set_bled_udef_pattern("led_2g_orange_gpio", 1000, "0 0");
+		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		set_bled_udef_pattern("led_2g_red_gpio", 1000, "0 0");
+		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		break;
+	case 3:	/* WPS */
+		set_bled_udef_pattern("led_2g_green_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
+		set_bled_udef_pattern_mode("led_2g_green_gpio");
+		set_bled_udef_pattern("led_2g_orange_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
+		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		set_bled_udef_pattern("led_2g_red_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
+		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		break;
+	case 4: /* WPS success */
+		set_bled_udef_pattern("led_2g_green_gpio", 100, "0 1");
+		set_bled_udef_pattern_mode("led_2g_green_gpio");
+		set_bled_udef_pattern("led_2g_orange_gpio", 100, "0 1");
+		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		set_bled_udef_pattern("led_2g_red_gpio", 100, "0 1");
+		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		break;
+	case 5: /* press reset button */
+		set_bled_udef_pattern("led_2g_green_gpio", 500, "0 1");
+		set_bled_udef_pattern_mode("led_2g_green_gpio");
+		set_bled_udef_pattern("led_2g_orange_gpio", 500, "0 1");
+		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		set_bled_udef_pattern("led_2g_red_gpio", 500, "0 1");
+		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		break;
+	case 6: /* firmware upgrade */
+		set_bled_udef_pattern("led_2g_green_gpio", 1000, "0 1");
+		set_bled_udef_pattern_mode("led_2g_green_gpio");
+		set_bled_udef_pattern("led_2g_orange_gpio", 1000, "0 1");
+		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		set_bled_udef_pattern("led_2g_red_gpio", 1000, "0 1");
+		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		break;
+	default:
+		/* normal mode */
+		set_bled_normal_mode("led_2g_green_gpio");
+		set_bled_normal_mode("led_2g_orange_gpio");
+		set_bled_normal_mode("led_2g_red_gpio");
+	}
+}
+#endif
 #endif	/* RTCONFIG_BLINK_LED */

@@ -146,16 +146,16 @@ char *arp_mac(struct in_addr sin_addr){
 void handle_req(int sockfd, char *buf, char *mac){
 
 	char page[2*MAX_LEN];
-	char time[100];
+	char timebuf[100];
 	char dut_addr[64];
 	time_t now;
 
         if(!strncmp(buf, "GET /", 5)){
 		memset(page, 0, sizeof(page));
 		memset(dut_addr, 0, sizeof(dut_addr));
-		now = uptime();
-        	(void)strftime(time, sizeof(time), RFC1123FMT, gmtime(&now));
-		sprintf(page, "%s%s%s%s%s%s", page, "HTTP/1.0 302 Moved Temporarily\r\n", "Server: pc_block\r\n", "Date: ", time, "\r\n");
+		now = time(NULL);
+		strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
+		sprintf(page, "%s%s%s%s%s%s", page, "HTTP/1.0 302 Moved Temporarily\r\n", "Server: pc_block\r\n", "Date: ", timebuf, "\r\n");
 		strcpy(dut_addr, nvram_safe_get("lan_ipaddr"));
 
 		sprintf(page, "%s%s%s%s%s%s%s", page, "Connection: close\r\n", "Location:http://", dut_addr, "/blocking.asp?mac=", mac,"\r\nContent-Type: text/plain\r\n\r\n<html></html>\r\n");

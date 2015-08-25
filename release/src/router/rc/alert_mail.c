@@ -12,6 +12,7 @@
 // define function bit, you can define more functions as below
 #define TM_WRS_MAIL		0x01
 #define TRAFFIC_CONTROL_MAIL	0x02
+#define CONFIRM_MAIL		0x04
 
 #define MAIL_CONTENT	"/tmp/push_mail"
 #define MAIL_CONF	"/etc/email/email.conf"
@@ -26,15 +27,16 @@ static int value = 0;
 	path :
 		attachment file or some information in file, if no file, path will be NULL
 */
-static
 void am_send_mail(int type, char *path)
 {
+	int lock; // file lock
 	FILE *fp;
 	char title[64], smtp_auth_pass[256];
 	char date[30];
 	time_t now;
 	int status = 0;
-
+	
+	lock = file_lock("email");
 	memset(title, 0, sizeof(title));
 	memset(date, 0, sizeof(date));
 	memset(smtp_auth_pass, 0, sizeof(smtp_auth_pass));
@@ -75,6 +77,8 @@ void am_send_mail(int type, char *path)
 	if(type == TRAFFIC_CONTROL_MAIL)
 		sprintf(title, "Traffic control alert! %s", date);
 #endif
+	if(type == CONFIRM_MAIL)
+		sprintf(title, "%s Mail Alert Verify", nvram_safe_get("productid"));
 
 	// create command (attachment or not)
 	char cmd[512];
@@ -100,13 +104,19 @@ void am_send_mail(int type, char *path)
 		// extract mail log into seperated event information
 		extract_data(path, fp);
 
-		fprintf(fp, "Suggest action: Your client devices has been detected suspicious networking behavior and blocked connection with destination server to protect your sensitive information.\nBased on our recommendation, you can\n");
-		fprintf(fp, "1. Remove app that access this site and don't visit this website to prevent any personal information leak.\n");
-		fprintf(fp, "2. Check your router security setting.\n");
-		fprintf(fp, "3. Update security patch for your client or new firmware for your router.\n");
-		fprintf(fp, "Please refer to attached log file for detail information. You also can link to trend micro website to download security trial software for your client device protection.\n");
+		fprintf(fp, "%s\'s AiProtection detected suspicious networking behavior and prevented your device making a connection to a malicious website (see above and the attached log for details).", nvram_safe_get("productid"));
+		fprintf(fp, "Suggested actions:\n");
+		fprintf(fp, "1. If you know that the cause of this attempted connection was a proprietary app or program and not a web browser, we recommand that you uninstall it from your device.\n");
+		fprintf(fp, "2. Ensure your device is up to time in all its operating system patches as well as updates to all apps or programs.\n");
+		fprintf(fp, "3. You should take this opportunity to check for, and install, any router firmware updates.\n");
+		fprintf(fp, "4. If you continue to receive such alerts for similar attempted connections, investigation into the cause will be necessary.\n");
+		fprintf(fp, "Meanwhile, rest assured that AiProtection continues to help kepp you safe on the Internet.\n");
 		fprintf(fp, "\n");
+		fprintf(fp, "You also can link to trend micro website to download security trial software for your client device protection.\n");
 		fprintf(fp, "http://www.trendmicro.com/\n");
+		fprintf(fp, "\n");
+		fprintf(fp, "ASUS AiProtection FAQ:\n");
+		fprintf(fp, "http://www.asus.com/support/FAQ/1012070/\n");
 		logmessage("alert mail", "AiProtection send mail");
 	}
 #endif
@@ -134,8 +144,18 @@ void am_send_mail(int type, char *path)
 		logmessage("alert mail", "Traffic control send mail");
 	}
 #endif
+	if(type == CONFIRM_MAIL)
+	{
+		fprintf(fp, "Dear user,\n\n");
+		fprintf(fp, "This is for your mail address confirmation and please click below link to go back firmware page for configuration.\n\n");
+		fprintf(fp, "http://router.asus.com/\n\n");
+		fprintf(fp, "Thanks,\n");
+		fprintf(fp, "ASUSTeK Computer Inc.\n");
+		logmessage("alert mail", "Confirm Mail");
+	}
 	status = pclose(fp);
 	if(status == -1) _dprintf("%s : errno %d (%s)\n", __FUNCTION__, errno, strerror(errno));
+	file_unlock(lock);
 }
 
 #ifdef RTCONFIG_BWDPI
@@ -206,7 +226,11 @@ void am_traffic_control_mail()
 	}
 
 	// check flag only
-	if(flag) am_send_mail(TRAFFIC_CONTROL_MAIL , path);
+	if(flag){
+		// send alert SMS
+		if(nvram_get_int("modem_sms_limit")) traffic_control_sendSMS(0);
+		am_send_mail(TRAFFIC_CONTROL_MAIL , path);
+	}
 }
 #endif
 

@@ -3,15 +3,11 @@
 # echo "This is a script to get the modem status."
 
 
-modem_enable=`nvram get modem_enable`
-modem_type=`nvram get usb_modem_act_type`
 act_node1="usb_modem_act_int"
 act_node2="usb_modem_act_bulk"
 modem_vid=`nvram get usb_modem_act_vid`
 modem_pid=`nvram get usb_modem_act_pid`
 modem_dev=`nvram get usb_modem_act_dev`
-modem_roaming_scantime=`nvram get modem_roaming_scantime`
-modem_roaming_scanlist=`nvram get modem_roaming_scanlist`
 sim_order=`nvram get modem_sim_order`
 
 at_lock="flock -x /tmp/at_cmd_lock"
@@ -49,6 +45,7 @@ _get_qcqmi_by_usbnet(){
 
 
 act_node=
+#modem_type=`nvram get usb_modem_act_type`
 #if [ "$modem_type" == "tty" -o "$modem_type" == "mbim" ]; then
 #	if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
 #		act_node=$act_node1
@@ -91,11 +88,11 @@ if [ "$1" == "bytes" -o "$1" == "bytes-" ]; then
 	echo "  tx_new=$tx_new."
 
 	if [ "$1" == "bytes" ]; then
-		rx_old=`cat "$jffs_dir/sim/$sim_order/modem_bytes_rx" 2>/dev/null`
+		rx_old=`nvram get modem_bytes_rx`
 		if [ -z "$rx_old" ]; then
 			rx_old=0
 		fi
-		tx_old=`cat "$jffs_dir/sim/$sim_order/modem_bytes_tx" 2>/dev/null`
+		tx_old=`nvram get modem_bytes_tx`
 		if [ -z "$tx_old" ]; then
 			tx_old=0
 		fi
@@ -120,15 +117,13 @@ if [ "$1" == "bytes" -o "$1" == "bytes-" ]; then
 		echo "  rx_now=$rx_now."
 		echo "  tx_now=$tx_now."
 
-		echo -n "$rx_now" > "$jffs_dir/sim/$sim_order/modem_bytes_rx"
 		nvram set modem_bytes_rx=$rx_now
-		echo -n "$tx_now" > "$jffs_dir/sim/$sim_order/modem_bytes_tx"
 		nvram set modem_bytes_tx=$tx_now
 	else
-		echo -n 0 > "$jffs_dir/sim/$sim_order/modem_bytes_rx"
-		nvram set modem_bytes_rx=0
-		echo -n 0 > "$jffs_dir/sim/$sim_order/modem_bytes_tx"
-		nvram set modem_bytes_tx=0
+		rx_now=0
+		tx_now=0
+		nvram set modem_bytes_rx=$rx_now
+		nvram set modem_bytes_tx=$tx_now
 		data_start=`nvram get modem_bytes_data_start 2>/dev/null`
 		if [ -n "$data_start" ]; then
 			echo -n "$data_start" > "$jffs_dir/sim/$sim_order/modem_bytes_data_start"
@@ -139,6 +134,22 @@ if [ "$1" == "bytes" -o "$1" == "bytes-" ]; then
 	nvram set modem_bytes_tx_reset=$tx_new
 	echo "set rx_reset=$rx_new."
 	echo "set tx_reset=$tx_new."
+
+	echo "done."
+elif [ "$1" == "bytes+" ]; then
+	if [ -z "$sim_order" ]; then
+		echo "12:Fail to get the SIM order."
+		exit 12
+	fi
+
+	if [ ! -d "$jffs_dir/sim/$sim_order" ]; then
+		mkdir -p "$jffs_dir/sim/$sim_order"
+	fi
+
+	rx_now=`nvram get modem_bytes_rx`
+	tx_now=`nvram get modem_bytes_tx`
+	echo -n "$rx_now" > "$jffs_dir/sim/$sim_order/modem_bytes_rx"
+	echo -n "$tx_now" > "$jffs_dir/sim/$sim_order/modem_bytes_tx"
 
 	echo "done."
 elif [ "$1" == "get_dataset" ]; then
@@ -176,6 +187,11 @@ elif [ "$1" == "get_dataset" ]; then
 		echo -n "$data_warning" > "$jffs_dir/sim/$sim_order/modem_bytes_data_warning"
 	fi
 	nvram set modem_bytes_data_warning=$data_warning
+
+	rx_now=`cat "$jffs_dir/sim/$sim_order/modem_bytes_rx" 2>/dev/null`
+	tx_now=`cat "$jffs_dir/sim/$sim_order/modem_bytes_tx" 2>/dev/null`
+	nvram set modem_bytes_rx=$rx_now
+	nvram set modem_bytes_tx=$tx_now
 
 	echo "done."
 elif [ "$1" == "set_dataset" ]; then
@@ -216,6 +232,7 @@ elif [ "$1" == "set_dataset" ]; then
 
 	echo "done."
 elif [ "$1" == "sim" ]; then
+	modem_enable=`nvram get modem_enable`
 	simdetect=`nvram get usb_modem_act_simdetect`
 	if [ -z "$simdetect" ]; then
 		modem_status.sh simdetect
@@ -250,7 +267,7 @@ elif [ "$1" == "sim" ]; then
 			echo "SIM not inserted."
 			act_sim=-1
 		else
-			if [ "$modem_enable" == "2" -a "$sim_inserted3" == "SIM busy" ]; then
+			if [ "$modem_enable" == "2" ]; then
 				echo "Detected CDMA2000's SIM"
 				act_sim=1
 			else
@@ -577,6 +594,8 @@ elif [ "$1" == "band" ]; then
 	fi
 elif [ "$1" == "scan" ]; then
 	echo "Start to scan the stations:"
+	modem_roaming_scantime=`nvram get modem_roaming_scantime`
+	modem_roaming_scanlist=`nvram get modem_roaming_scanlist`
 	nvram set usb_modem_act_scanning=2
 	at_ret=`$at_lock modem_at.sh '+COPS=2' |grep "OK" 2>/dev/null`
 
@@ -638,7 +657,8 @@ elif [ "$1" == "scan" ]; then
 
 	echo "done."
 elif [ "$1" == "station" ]; then
-	$at_lock modem_at.sh "+COPS=1,0,\"$2\"" 1,2>/dev/null
+	modem_reg_time=`nvram get modem_reg_time`
+	$at_lock modem_at.sh "+COPS=1,0,\"$2\"" "$modem_reg_time" 1,2>/dev/null
 	if [ $? -ne 0 ]; then
 		echo "19:Fail to set the station: $2."
 		exit 19

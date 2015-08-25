@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<designerData version="1.1.0">
+  <componentManifest>
+    <manifestEntry id="com.nokia.sdt.series60.CAknView" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.DesignTimeContainer" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPane" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.ControlBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPaneTitle" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StatusPaneTitleBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CBA" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CBABase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CCoeControl" version="1.1.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.ContainerBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CEikLabel" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CCoeControlBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CEikEdwin" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.CEikEdwinBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.EditorBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuBar" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuPane" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuItem" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.MenuItemBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.StandardNote" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.NonLayoutBase" version="1.0.0"/>
+    <manifestEntry id="com.nokia.sdt.series60.ConfirmationQuery" version="1.0.0"/>
+  </componentManifest>
+  <property id="com.nokia.sdt.symbian.dm.RESOURCE_DIRECTORY_ID">data</property>
+  <property id="com.nokia.sdt.component.symbian.vendor">com.nokia.series60</property>
+  <property id="com.nokia.sdt.component.symbian.version">3.0.1</property>
+  <property id="com.nokia.sdt.symbian.dm.COMPONENT_PROVIDER">com.nokia.sdt.component.symbian.Symbian-Provider</property>
+  <property id="com.nokia.sdt.symbian.dm.INCLUDE_DIRECTORY_ID">inc</property>
+  <property id="com.nokia.sdt.symbian.dm.SOURCE_DIRECTORY_ID">src</property>
+  <property id="com.nokia.sdt.symbian.dm.SOURCEGEN_PROVIDER">com.nokia.sdt.sourcegen.Symbian-Provider</property>
+  <property id="com.nokia.sdt.symbian.dm.BUILD_DIRECTORY_ID">group</property>
+  <component id="com.nokia.sdt.series60.CAknView">
+    <property id="className">Csymbian_ua_guiContainerView</property>
+    <compoundProperty id="location">
+      <property id="x">52</property>
+      <property id="y">45</property>
+    </compoundProperty>
+    <property id="optionsMenu" type="componentRef">optionsMenu</property>
+    <property id="name">symbian_ua_guiContainerView</property>
+    <compoundProperty id="size">
+      <property id="width">240</property>
+      <property id="height">320</property>
+    </compoundProperty>
+    <component id="com.nokia.sdt.series60.StatusPane">
+      <compoundProperty id="location">
+        <property id="x">20</property>
+      </compoundProperty>
+      <property id="name">statusPane</property>
+      <compoundProperty id="size">
+        <property id="width">204</property>
+        <property id="height">66</property>
+      </compoundProperty>
+      <component id="com.nokia.sdt.series60.StatusPaneTitle">
+        <compoundProperty id="location">
+          <property id="x">56</property>
+        </compoundProperty>
+        <property id="name">title</property>
+        <property id="titleText" type="i18n">STR_symbian_ua_guiContainerView_1</property>
+        <compoundProperty id="size">
+          <property id="width">148</property>
+          <property id="height">43</property>
+        </compoundProperty>
+        <compoundProperty id="image"/>
+      </component>
+    </component>
+    <component id="com.nokia.sdt.series60.CBA">
+      <compoundProperty id="location">
+        <property id="y">288</property>
+      </compoundProperty>
+      <compoundProperty id="info">
+        <property id="rightId">UNIQUE</property>
+        <property id="leftText" type="i18n">STR_symbian_ua_guiContainerView_7</property>
+        <property id="rightText" type="i18n">STR_symbian_ua_guiContainerView_8</property>
+      </compoundProperty>
+      <property id="name">controlPane</property>
+      <compoundProperty id="size">
+        <property id="width">240</property>
+        <property id="height">32</property>
+      </compoundProperty>
+      <eventBinding id="rightSoftKeyPressed" handlerDisplay="CallSoftKeyPressedL" handlerSymbol="cpp@src//symbian_ua_guiContainerView.cpp/function(Csymbian_ua_guiContainerView::CallSoftKeyPressedL(TInt))"/>
+    </component>
+    <component id="com.nokia.sdt.series60.CCoeControl">
+      <property id="initialFocus" type="componentRef">ed_url</property>
+      <compoundProperty id="location">
+        <property id="y">66</property>
+      </compoundProperty>
+      <property id="className">CSymbian_ua_guiContainer</property>
+      <property id="name">symbian_ua_guiContainer</property>
+      <compoundProperty id="size">
+        <property id="width">240</property>
+        <property id="height">222</property>
+      </compoundProperty>
+      <component id="com.nokia.sdt.series60.CEikLabel">
+        <compoundProperty id="location">
+          <property id="x">2</property>
+          <property id="y">23</property>
+        </compoundProperty>
+        <property id="name">label1</property>
+        <property id="text" type="i18n">STR_symbian_ua_guiContainerView_2</property>
+        <compoundProperty id="size">
+          <property id="width">32</property>
+          <property id="height">28</property>
+        </compoundProperty>
+      </component>
+      <component id="com.nokia.sdt.series60.CEikEdwin">
+        <property id="defaultCase">EAknEditorLowerCase</property>
+        <compoundProperty id="size">
+          <property id="width">197</property>
+          <property id="height">28</property>
+        </compoundProperty>
+        <compoundProperty id="avkonFlags">
+          <property id="EAknEditorFlagNoT9">true</property>
+          <property id="EAknEditorFlagFixedCase">false</property>
+          <property id="EAknEditorFlagNoEditIndicators">false</property>
+          <property id="EAknEditorFlagNoLRNavigation">false</property>
+          <property id="EAknEditorFlagSupressShiftMenu">true</property>
+          <property id="EAknEditorFlagEnableScrollBars">false</property>
+          <property id="EAknEditorFlagMTAutoOverwrite">false</property>
+          <property id="EAknEditorFlagUseSCTNumericCharmap">false</property>
+          <property id="EAknEditorFlagLatinInputModesOnly">false</property>
+          <property id="EAknEditorFlagForceTransparentFepModes">false</property>
+          <property id="EAknEditorFlagAllowEntersWithScrollDown">false</property>
+          <property id="EAknEditorFlagEnablePictographInput">false</property>
+          <property id="EAknEditorFlagFindPane">false</property>
+        </compoundProperty>
+        <compoundProperty id="location">
+          <property id="x">49</property>
+          <property id="y">25</property>
+        </compoundProperty>
+        <compoundProperty id="flags"/>
+        <compoundProperty id="allowedCaseModes"/>
+        <property id="name">ed_url</property>
+        <property id="text" type="i18n">STR_symbian_ua_guiContainerView_4</property>
+        <compoundProperty id="allowedInputModes">
+          <property id="EAknEditorFullWidthTextInputMode">true</property>
+          <property id="EAknEditorFullWidthNumericInputMode">true</property>
+          <property id="EAknEditorHalfWidthTextInputMode">true</property>
+          <property id="EAknEditorTextInputMode">true</property>
+          <property id="EAknEditorNumericInputMode">true</property>
+          <property id="EAknEditorSecretAlphaInputMode">true</property>
+          <property id="EAknEditorFullWidthKatakanaInputMode">false</property>
+          <property id="EAknEditorHiraganaInputMode">false</property>
+          <property id="EAknEditorHiraganaKanjiInputMode">false</property>
+          <property id="EAknEditorKatakanaInputMode">false</property>
+        </compoundProperty>
+        <property id="specialCharacterTable">R_AVKON_URL_SPECIAL_CHARACTER_TABLE_DIALOG</property>
+      </component>
+      <component id="com.nokia.sdt.series60.CEikEdwin">
+        <compoundProperty id="size">
+          <property id="width">235</property>
+          <property id="height">143</property>
+        </compoundProperty>
+        <compoundProperty id="avkonFlags">
+          <property id="EAknEditorFlagNoEditIndicators">true</property>
+          <property id="EAknEditorFlagFixedCase">false</property>
+          <property id="EAknEditorFlagNoT9">false</property>
+          <property id="EAknEditorFlagNoLRNavigation">false</property>
+          <property id="EAknEditorFlagSupressShiftMenu">false</property>
+          <property id="EAknEditorFlagEnableScrollBars">true</property>
+          <property id="EAknEditorFlagMTAutoOverwrite">false</property>
+          <property id="EAknEditorFlagUseSCTNumericCharmap">false</property>
+          <property id="EAknEditorFlagLatinInputModesOnly">false</property>
+          <property id="EAknEditorFlagForceTransparentFepModes">false</property>
+          <property id="EAknEditorFlagAllowEntersWithScrollDown">false</property>
+          <property id="EAknEditorFlagEnablePictographInput">false</property>
+          <property id="EAknEditorFlagFindPane">false</property>
+        </compoundProperty>
+        <compoundProperty id="location">
+          <property id="x">3</property>
+          <property id="y">78</property>
+        </compoundProperty>
+        <compoundProperty id="flags">
+          <property id="EEikEdwinReadOnly">true</property>
+          <property id="EEikEdwinKeepDocument">false</property>
+          <property id="EEikEdwinSegmentedStorage">false</property>
+          <property id="EEikEdwinNoAutoSelection">false</property>
+          <property id="EEikEdwinJustAutoCurEnd">false</property>
+          <property id="EEikEdwinNoWrap">false</property>
+          <property id="EEikEdwinLineCursor">false</property>
+          <property id="EEikEdwinNoHorizScrolling">false</property>
+          <property id="EEikEdwinInclusiveSizeFixed">false</property>
+          <property id="EEikEdwinDisplayOnly">false</property>
+          <property id="EEikEdwinAlwaysShowSelection">false</property>
+          <property id="EEikEdwinAllowPictures">false</property>
+          <property id="EEikEdwinAllowUndo">false</property>
+          <property id="EEikEdwinNoLineOrParaBreaks">false</property>
+          <property id="EEikEdwinOnlyASCIIChars">false</property>
+          <property id="EEikEdwinIgnoreVirtualCursor">false</property>
+          <property id="EEikEdwinAvkonDisableCursor">false</property>
+          <property id="EEikEdwinAlternativeWrapping">false</property>
+          <property id="EEikEdwinResizable">false</property>
+        </compoundProperty>
+        <compoundProperty id="allowedCaseModes"/>
+        <property id="maxLength">2000</property>
+        <property id="name">ed_info</property>
+        <property id="text" type="i18n">STR_symbian_ua_guiContainerView_3</property>
+        <compoundProperty id="allowedInputModes">
+          <property id="EAknEditorKatakanaInputMode">true</property>
+          <property id="EAknEditorFullWidthTextInputMode">true</property>
+          <property id="EAknEditorFullWidthNumericInputMode">true</property>
+          <property id="EAknEditorFullWidthKatakanaInputMode">true</property>
+          <property id="EAknEditorHiraganaKanjiInputMode">true</property>
+          <property id="EAknEditorHalfWidthTextInputMode">true</property>
+        </compoundProperty>
+        <property id="lines">10</property>
+      </component>
+    </component>
+    <component id="com.nokia.sdt.series60.MenuBar">
+      <compoundProperty id="location">
+        <property id="x">3</property>
+        <property id="y">215</property>
+      </compoundProperty>
+      <property id="name">optionsMenu</property>
+      <compoundProperty id="size">
+        <property id="height">73</property>
+        <property id="width">237</property>
+      </compoundProperty>
+      <component id="com.nokia.sdt.series60.MenuPane">
+        <compoundProperty id="location"/>
+        <property id="name">menuPane1</property>
+        <compoundProperty id="size">
+          <property id="height">73</property>
+          <property id="width">237</property>
+        </compoundProperty>
+        <component id="com.nokia.sdt.series60.MenuItem">
+          <compoundProperty id="location">
+            <property id="x">5</property>
+            <property id="y">2</property>
+          </compoundProperty>
+          <property id="name">settingMenuItem</property>
+          <property id="text" type="i18n">STR_symbian_ua_guiContainerView_9</property>
+          <compoundProperty id="size">
+            <property id="width">222</property>
+            <property id="height">33</property>
+          </compoundProperty>
+          <eventBinding id="selected" handlerDisplay="HandleSettingMenuItemSelectedL" handlerSymbol="cpp@src//symbian_ua_guiContainerView.cpp/function(Csymbian_ua_guiContainerView::HandleSettingMenuItemSelectedL(TInt))"/>
+        </component>
+        <component id="com.nokia.sdt.series60.MenuItem">
+          <compoundProperty id="location">
+            <property id="x">5</property>
+            <property id="y">35</property>
+          </compoundProperty>
+          <property id="name">exitMenuItem</property>
+          <property id="text" type="i18n">STR_symbian_ua_guiContainerView_10</property>
+          <property id="command">EAknCmdExit</property>
+          <compoundProperty id="size">
+            <property id="width">222</property>
+            <property id="height">33</property>
+          </compoundProperty>
+        </component>
+      </component>
+    </component>
+    <component id="com.nokia.sdt.series60.StandardNote">
+      <property id="type">CAknErrorNote</property>
+      <compoundProperty id="location">
+        <property id="x">8</property>
+        <property id="y">171</property>
+      </compoundProperty>
+      <property id="name">note_error</property>
+      <property id="text" type="i18n">STR_symbian_ua_guiContainerView_13</property>
+      <compoundProperty id="size">
+        <property id="width">227</property>
+        <property id="height">114</property>
+      </compoundProperty>
+    </component>
+    <component id="com.nokia.sdt.series60.StandardNote">
+      <property id="type">CAknInformationNote</property>
+      <compoundProperty id="location">
+        <property id="x">8</property>
+        <property id="y">171</property>
+      </compoundProperty>
+      <property id="name">note_info</property>
+      <property id="text" type="i18n">STR_symbian_ua_guiContainerView_16</property>
+      <compoundProperty id="size">
+        <property id="width">227</property>
+        <property id="height">114</property>
+      </compoundProperty>
+    </component>
+    <component id="com.nokia.sdt.series60.StandardNote">
+      <property id="type">CAknWarningNote</property>
+      <compoundProperty id="location">
+        <property id="x">8</property>
+        <property id="y">171</property>
+      </compoundProperty>
+      <property id="name">note_warning</property>
+      <property id="text" type="i18n">STR_symbian_ua_guiContainerView_17</property>
+      <compoundProperty id="size">
+        <property id="width">227</property>
+        <property id="height">114</property>
+      </compoundProperty>
+    </component>
+    <component id="com.nokia.sdt.series60.ConfirmationQuery">
+      <compoundProperty id="location">
+        <property id="x">0</property>
+        <property id="y">171</property>
+      </compoundProperty>
+      <property id="name">qry_accept_call</property>
+      <property id="text" type="i18n">STR_symbian_ua_guiContainerView_18</property>
+      <compoundProperty id="size">
+        <property id="width">240</property>
+        <property id="height">149</property>
+      </compoundProperty>
+    </component>
+  </component>
+  <stringBundle>
+    <stringTable language="LANG_English">
+      <string id="STR_symbian_ua_guiContainerView_1">PJSUA for S60</string>
+      <string id="STR_symbian_ua_guiContainerView_2">URL</string>
+      <string id="STR_symbian_ua_guiContainerView_4">sip:</string>
+      <string id="STR_symbian_ua_guiContainerView_7">Options</string>
+      <string id="STR_symbian_ua_guiContainerView_8">Call</string>
+      <string id="STR_symbian_ua_guiContainerView_9">Setting</string>
+      <string id="STR_symbian_ua_guiContainerView_10">Exit</string>
+      <string id="STR_symbian_ua_guiContainerView_3"/>
+      <string id="STR_symbian_ua_guiContainerView_13">Failed initializing PJSUA!</string>
+      <string id="STR_symbian_ua_guiContainerView_16">Register Success</string>
+      <string id="STR_symbian_ua_guiContainerView_17">Register Failed</string>
+      <string id="STR_symbian_ua_guiContainerView_18">Accept Call</string>
+    </stringTable>
+  </stringBundle>
+  <macroTable/>
+  <sourceMappingState>
+    <resourceMappings>
+      <resourceMapping instanceName="qry_accept_call">r_symbian_ua_gui_container_qry_accept_call</resourceMapping>
+      <resourceMapping instanceName="note_warning">r_symbian_ua_gui_container_note_warning</resourceMapping>
+      <resourceMapping instanceName="ed_info" rsrcId="text">r_symbian_ua_gui_container_ed_info_2</resourceMapping>
+      <resourceMapping instanceName="optionsMenu">r_symbian_ua_gui_container_options_menu</resourceMapping>
+      <resourceMapping instanceName="menuPane1">r_symbian_ua_gui_container_menu_pane1_menu_pane</resourceMapping>
+      <resourceMapping instanceName="title">r_symbian_ua_gui_container_title_resource</resourceMapping>
+      <resourceMapping instanceName="statusPane">r_symbian_ua_gui_container_status_pane</resourceMapping>
+      <resourceMapping instanceName="ed_url">r_symbian_ua_gui_container_ed_url</resourceMapping>
+      <resourceMapping instanceName="symbian_ua_guiContainerView">r_symbian_ua_gui_container_symbian_ua_gui_container_view</resourceMapping>
+      <resourceMapping instanceName="label1">r_symbian_ua_gui_container_label1</resourceMapping>
+      <resourceMapping instanceName="controlPane">r_symbian_ua_gui_container_control_pane</resourceMapping>
+      <resourceMapping instanceName="ed_url" rsrcId="text">r_symbian_ua_gui_container_ed_url_2</resourceMapping>
+      <resourceMapping instanceName="note_info">r_symbian_ua_gui_container_note_info</resourceMapping>
+      <resourceMapping instanceName="note_error">r_symbian_ua_gui_container_note_error</resourceMapping>
+      <resourceMapping instanceName="ed_info">r_symbian_ua_gui_container_ed_info</resourceMapping>
+    </resourceMappings>
+    <enumMappings>
+      <enumMapping instanceName="title" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_CONTROL_TYPE">EAknCtTitlePane</enumMapping>
+      <enumMapping instanceName="settingMenuItem" propertyId="command" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_COMMANDS">ESymbian_ua_guiContainerViewSettingMenuItemCommand</enumMapping>
+      <enumMapping instanceName="ed_info" propertyId="numericKeymap">EAknEditorStandardNumberModeKeymap</enumMapping>
+      <enumMapping instanceName="label1" propertyId="font">EEikLabelFontNormal</enumMapping>
+      <enumMapping instanceName="ed_url" propertyId="defaultCase">EAknEditorLowerCase</enumMapping>
+      <enumMapping instanceName="symbian_ua_guiContainerView" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_VIEW_UID">ESymbian_ua_guiContainerViewId</enumMapping>
+      <enumMapping instanceName="label1" propertyId="alignment">EEikLabelAlignHCenter</enumMapping>
+      <enumMapping instanceName="controlPane" propertyId="leftId" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_COMMANDS">EAknSoftkeyOptions</enumMapping>
+      <enumMapping instanceName="qry_accept_call" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_DIALOG_LINE_ID">ESymbian_ua_guiContainerViewQry_accept_call</enumMapping>
+      <enumMapping instanceName="controlPane" propertyId="rightId" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_COMMANDS">ESymbian_ua_guiContainerViewControlPaneRightId</enumMapping>
+      <enumMapping instanceName="exitMenuItem" propertyId="command" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_COMMANDS">EAknCmdExit</enumMapping>
+      <enumMapping instanceName="title" propertyId="" nameAlgorithm="com.nokia.sdt.component.symbian.NAME_ALG_STATUS_PANE_ID">EEikStatusPaneUidTitle</enumMapping>
+      <enumMapping instanceName="ed_url" propertyId="numericKeymap">EAknEditorStandardNumberModeKeymap</enumMapping>
+      <enumMapping instanceName="ed_info" propertyId="defaultInputMode">EAknEditorTextInputMode</enumMapping>
+      <enumMapping instanceName="ed_url" propertyId="defaultInputMode">EAknEditorTextInputMode</enumMapping>
+      <enumMapping instanceName="ed_info" propertyId="defaultCase">EAknEditorTextCase</enumMapping>
+    </enumMappings>
+    <arrayMappings/>
+  </sourceMappingState>
+  <generatedFiles>
+    <file>inc/symbian_ua_guiContainer.h</file>
+    <file>inc/symbian_ua_guiContainerView.h</file>
+    <file>src/symbian_ua_guiContainerView.cpp</file>
+    <file>src/symbian_ua_guiContainer.cpp</file>
+    <file>data/symbian_ua_gui.rss</file>
+    <file>data/symbian_ua_guiContainer.rssi</file>
+    <file>inc/symbian_ua_gui.hrh</file>
+    <file>inc/symbian_ua_guiContainer.hrh</file>
+    <file>data/symbian_ua_guiSettingItemList.rssi</file>
+    <file>inc/symbian_ua_guiSettingItemList.hrh</file>
+    <file>data/symbian_ua_gui.loc</file>
+    <file>data/symbian_ua_gui.l01</file>
+    <file>data/symbian_ua_guiContainer.loc</file>
+    <file>data/symbian_ua_guiContainer.l01</file>
+    <file>data/symbian_ua_guiSettingItemList.loc</file>
+    <file>data/symbian_ua_guiSettingItemList.l01</file>
+  </generatedFiles>
+</designerData>

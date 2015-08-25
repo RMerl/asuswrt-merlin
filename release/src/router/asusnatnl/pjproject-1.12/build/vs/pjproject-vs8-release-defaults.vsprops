@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="pjproject-vs8-release-defaults"
+	InheritedPropertySheets=".\pjproject-vs8-common-defaults.vsprops"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		Optimization="2"
+		PreprocessorDefinitions="NDEBUG"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		LinkIncremental="1"
+	/>
+</VisualStudioPropertySheet>

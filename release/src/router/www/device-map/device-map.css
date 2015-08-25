@@ -42,7 +42,39 @@ body {
 	background-position:50% 61.10%;
 	cursor:pointer;
 }
-
+.clientIcon_clicked{
+	width:80px;
+	height:60px;
+	background-image:url('/images/New_ui/networkmap/client-listover.png') !important;
+	background-repeat:no-repeat;
+	cursor:pointer;
+}
+.venderIcon {
+	width:80px;
+	height:60px;
+	background-image:url('/images/New_ui/networkmap/vender-list.png');
+	background-repeat:no-repeat;
+	background-position:52% 71.8%;
+	cursor:pointer;
+}
+.venderIcon:hover {
+	background-image:url('/images/New_ui/networkmap/vender-listover.png') !important;
+}
+.venderIcon_no_hover {
+	width:80px;
+	height:60px;
+	background-image:url('/images/New_ui/networkmap/vender-list.png');
+	background-repeat:no-repeat;
+	background-position:52% 71.8%;
+	cursor:pointer;
+}
+.venderIcon_clicked{
+	width:80px;
+	height:60px;
+	background-image:url('/images/New_ui/networkmap/vender-listover.png') !important;
+	background-repeat:no-repeat;
+	cursor:pointer;
+}
 /*
 Unknown			0 
 Windows			1
@@ -69,17 +101,17 @@ Printer			18
 	background-position:52% -1.5% !important;
 }
 .type1{
-	background-position:52% 58.15% !important;
+	background-position:52% 58.2% !important;
 }
 .type2{
-	background-position:52% -0.15% !important;
+	background-position:52% -0.1% !important;
 }
 .type3{
 	/* Same as type 2 */
-	background-position:52% -0.15% !important;
+	background-position:52% -0.1% !important;
 }
 .type4{
-	background-position:52% 6.35% !important;
+	background-position:52% 6.40% !important;
 }
 .type5{
 	background-position:52% 12.85% !important;
@@ -89,40 +121,40 @@ Printer			18
 	background-position:52% -1.5% !important;
 }
 .type7{
-	background-position:52% 71.1% !important;
+	background-position:52% 71.15% !important;
 }
 .type8{
-	background-position:52% 90.55% !important;
+	background-position:52% 90.6% !important;
 }
 .type9{
-	background-position:52% 19.3% !important;
+	background-position:52% 19.35% !important;
 }
 .type10{
-	background-position:52% 25.75% !important;
+	background-position:52% 25.82% !important;
 }
 .type11{
-	background-position:52% 32.25% !important;
+	background-position:52% 32.3% !important;
 }
 .type12{
-	background-position:52% 38.7% !important;
+	background-position:52% 38.78% !important;
 }
 .type13{
-	background-position:52% 45.2% !important;
+	background-position:52% 45.25% !important;
 }
 .type14{
-	background-position:52% 51.7% !important;
+	background-position:52% 51.72% !important;
 }
 .type15{
-	background-position:52% 64.65% !important;
+	background-position:52% 64.68% !important;
 }
 .type16{
-	background-position:52% 77.6% !important;
+	background-position:52% 77.63% !important;
 }
 .type17{
-	background-position:52% 84.05% !important;
+	background-position:52% 84.12% !important;
 }
 .type18{
-	background-position:52% 97.05% !important;
+	background-position:52% 97.08% !important;
 }
 
 .type0:hover{
@@ -145,7 +177,89 @@ Printer			18
 
 .type0_viewMode{
 	background-image:url('/images/New_ui/networkmap/client.png') !important;
-	background-position:52% -3% !important;
+	background-position:52% -1.5% !important;
+}
+
+.adobe{
+	background-position:52% -0.05% !important;
+}
+.google{
+	background-position:52% 3.73% !important;
+}
+.apple{
+	background-position:52% 7.53% !important;
+}
+.belkin{
+	background-position:52% 11.3% !important;
+}
+.dell{
+	background-position:52% 15.08% !important;
+}
+.microsoft{
+	background-position:52% 18.85% !important;
+}
+.amazon{
+	background-position:52% 22.65% !important;
+}
+.ibm{
+	background-position:52% 26.43% !important;
+}
+.sony{
+	background-position:52% 30.2% !important;
+}
+.htc{
+	background-position:52% 33.98% !important;
+}
+.huawei{
+	background-position:52% 37.77% !important;
+}
+.samsung{
+	background-position:52% 41.55% !important;
+}
+.nec{
+	background-position:52% 45.35% !important;
+}
+.synology{
+	background-position:52% 49.13% !important;
+}
+.lenovo{
+	background-position:52% 52.9% !important;
+}
+.fujitsu{
+	background-position:52% 56.7% !important;
+}
+.panasonic{
+	background-position:52% 60.48% !important;
+}
+.toshiba{
+	background-position:52% 64.25% !important;
+}
+.pioneer{
+	background-position:52% 68.05% !important;
+}
+.asus{
+	background-position:52% 71.82% !important;
+}
+.ralink{
+	background-position:52% 75.6% !important;
+}
+.tp-link{
+	background-position:52% 79.4% !important;
+}
+.honhai{
+	background-position:52% 83.18% !important;
+}
+.buffalo{
+	background-position:52% 86.95% !important;
+}
+.vmware{
+	background-position:52% 90.73% !important;
+}
+.bizlink{
+	background-position:52% 94.52% !important;
+}
+.d-link{
+	background-position:52% 98.3% !important;
 }
 
 .clientBg{
@@ -154,6 +268,7 @@ Printer			18
 	height:85px;
 	background-image:url('/images/New_ui/networkmap/bg.png');
 	background-repeat:no-repeat;
+	cursor: pointer;
 }
 .radioIcon{
 	background-image:url('/images/survey/radio_status.png');
@@ -161,7 +276,6 @@ Printer			18
 	height: 21px;
 	width: 28px;
 	position: relative;
-	margin-left: -2px;
 }
 .radio_1{
   background-position: 0% 2px;
@@ -175,40 +289,152 @@ Printer			18
 .radio_4{
   background-position: 0% -64px;
 }
-.band_chrome{
-	font-size: 9px;
-	transform:scale(0.75);
-	font-family: Arial;
+.band_block {
 	background-color: #06CCDE;
-	color: #000000;
-	font-weight: bolder;
-	text-align: center;
-	line-height: 16px;
-	letter-spacing: 1px;
-	margin-left: -7px;
-	margin-bottom: -20px;
-	margin-top: -2px;
-	height: 15px;
-	width: 38px;
-}
-.band{
-	font-size: 9px;
-	font-family: Arial;
-	background-color: #06CCDE;
-	color: #000000;
-	font-weight: bolder;
-	text-align: center;
-	line-height: 12px;
-	letter-spacing: 1px;
-	margin-left: -2px;
-	margin-bottom: -18px;
 	height: 11px;
 	width: 28px;
 }
+.band_txt_chrome {
+	font-size: 9px;
+	-webkit-transform : scale(0.75); 
+	font-family: Arial;
+	color: #000000;
+	font-weight: bolder;
+	letter-spacing: 1px;
+	display : inline-block;
+	white-space: nowrap;
+	width: 30px;
+	height: 11px;
+	line-height: 12px;
+	margin-left: -2px;
+	text-align: center;
+}
+.band_txt {
+	font-size: 9px;
+	font-family: Arial;
+	color: #000000;
+	font-weight: bolder;
+	display : inline-block;
+	white-space: nowrap;
+	width: 28px;
+	height: 11px;
+	line-height: 12px;
+	text-align: center;
+}
 .radio_wired{
 	height: 28px;
-	margin-bottom: -20px;
+	width: 28px;
 	background-image:url('/images/New_ui/networkmap/wiredIcon.png') !important;
+}
+.clientlist_content{
+	position: absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index: 200;
+	background-color:#2B373B;
+	margin-left: 100px;
+	margin-top: -320px;
+	width:425px;
+	height:auto;
+	box-shadow: 3px 3px 10px #000;
+	display:block;
+	padding: 10px;
+}
+.clientlist_content td{
+	border: 0;
+	height: 0px;
+}
+.client_tag{
+	background-color: #475A5F;
+	font-size: 12px;
+	font-family: monospace;
+	padding: 2px;
+	border-radius: 3px;
+	margin-left:5px;
+}
+
+.client_canvasUserIcon{
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+}
+.client_icon_list table{
+	border: 1px solid #000000;
+	border-collapse: collapse;
+}
+.client_icon_list div{
+	background-image:url('/images/New_ui/networkmap/client-list.png');
+	background-repeat:no-repeat;
+	height:55px;
+	width:60px;
+	cursor:pointer;
+	background-position:-21px 0%;
+}
+.client_icon_list div:hover{
+	background-image:url('/images/New_ui/networkmap/client-listover.png');
+}
+.client_icon_list td{
+	border: 1px solid #000000;
+	border-collapse: collapse;
+}
+.client_icon_list td:hover{
+	border-radius: 7px;
+	background-color:#84C1FF;
+}
+.client_upload_div{
+	cursor: pointer;
+	background-image:none !important;
+	border: 2px dashed #A1A99F;
+	width: 56px !important;
+	height: 50px !important;
+	text-align: center;
+	line-height: 50px;
+	color: #A1A99F;
+	font-size: 50px;
+}
+.client_upload_div:hover{
+	cursor: pointer;
+	background-image:none !important;
+	border: 2px dashed #FFFFFF;
+	width: 56px !important;
+	height: 50px !important;
+	text-align: center;
+	line-height: 50px;
+	color: #FFFFFF;
+	font-size: 50px;
+}
+.client_upload_file{
+	cursor: pointer;
+	display: block !important;
+	opacity: 0 !important;
+	overflow: hidden !important;
+	width: 55px !important;
+	height:55px !important;
+	margin-top: -52px;
+	margin-left: -2px;
+}
+.client_icon_list_td:hover {
+	cursor: pointer;
+	background-color:#2B373B !important;
+}
+.disabled{
+	background:#475a5f;
+	width:200px;
+	height:15px;
+	padding:5px 0px 5px 5px;
+	margin-left:2px;
+	border-radius:5px;
+}
+.client_preview_icon{
+	background-color: #172327;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	width: 120px;
+	height: 95px;
+	padding-top: 10px;
+	cursor:pointer;
 }
 .clientlist_viewlist {
 	position: absolute;
@@ -220,19 +446,28 @@ Printer			18
 	margin-left: 140px;
 	margin-top: -920px;
 	width:950px;
-	height:850px;
+	height:auto;
 	box-shadow: 3px 3px 10px #000;
 	display:block;
 	overflow: auto;
 }
 .imgUserIcon_viewlist {
-	width: 39px;
-	height: 39px;
+	width: 40px;
+	height: 40px;
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;
 	position: relative;
-	margin-top: 4px;
+	margin-top: 3px;
+}
+.imgUserIcon_card{
+	cursor: pointer;
+	position: relative; 
+	width: 52px;
+	height: 52px;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
 }
 .clientlist_expander {
 	cursor: pointer;
@@ -257,12 +492,29 @@ Printer			18
 	border-top-right-radius:8px;
 	border-bottom-right-radius:8px;
 }
+.clientState {
+	width:85%;
+	float:left;
+	height: 28px;
+	line-height: 28px;
+}
+.changeClientIcon {
+	width: 120px;
+	margin-top:10px;
+	cursor: pointer;
+	text-decoration: underline;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	color: #FFFFFF;
+	height: 15px;
+	line-height: 15px;
+}
 .ipMethodTag{
 	background-color: #222;
 	font-size: 10px;
 	font-family: monospace;
-	padding: 2px 3px;
-	border-radius: 3px;
+	padding: 3px 5px;
+	border-radius: 5px;
 }
 .clientlist_circle {
 	position: relative;
@@ -280,4 +532,88 @@ Printer			18
 	text-align: center;
 	margin-top: 3px;
 	line-height: 16px;
+}
+.viewclientlist_clientName_edit {
+	cursor: pointer;
+	width: 100%;
+	height: 47px;
+	line-height: 47px;
+}
+.viewclientlist_clientName_edit:hover {
+	background-color: #444f53;
+	text-decoration:underline;
+}
+
+.card_table {
+	width:100%;
+	text-align:left;
+	border:0;
+}
+.card_table td{
+	background-color: #2B373B;
+	text-align: left;
+}
+.card_table td span{
+	color: #FFFFFF;
+}
+
+.internetAllow {
+	cursor: default;
+	background-image: url('/images/New_ui/networkmap/internet_allow.svg');
+	background-repeat:no-repeat;
+	height: 28px;
+	width: 28px;
+}
+.internetBlock {
+	cursor: default;
+	background-image: url('/images/New_ui/networkmap/internet_block.svg');
+	background-repeat:no-repeat;
+	height: 28px;
+	width: 28px;
+}
+.internetTimeLimits {
+	cursor: default;
+	background-image: url('/images/New_ui/TimeLimits.png');
+	background-repeat:no-repeat;
+	height: 28px;
+	width: 35px;
+	background-size: 35px 28px;
+}
+.internetTimeEdit {
+	cursor: pointer;
+	background-image: url('/images/New_ui/networkmap/internet_edit.svg');
+	background-repeat:no-repeat;
+	height: 30px;
+	width: 35px;
+}
+.usericons_content{
+	position:absolute;
+	left: 50%;
+	top: 50%;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:200;
+	background-color:#2B373B;
+	margin-left: -250px;
+	margin-top: 10px;
+	width:650px;
+	height:250px;
+	box-shadow: 3px 3px 10px #000;
+	display: block;
+}
+.card_imgUploadIcon{
+	position: relative; 
+	width: 52px;
+	height: 52px;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+}
+.card_client_name_text{
+	font-family: Lucida Console;
+	font-size: 14px;
+	font-weight: bolder;
+	color: #FFFFFF;
+	padding-left: 0.4em;
 }

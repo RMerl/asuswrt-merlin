@@ -1,0 +1,21 @@
+/*
+========================================================================
+ Name        : symbian_ua_guiContainer.l01
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+// localized strings for language: UK English (01)
+#define STR_symbian_ua_guiContainerView_1 "PJSUA for S60"
+#define STR_symbian_ua_guiContainerView_7 "Options"
+#define STR_symbian_ua_guiContainerView_8 "Call"
+#define STR_symbian_ua_guiContainerView_2 "URL"
+#define STR_symbian_ua_guiContainerView_4 "sip:"
+#define STR_symbian_ua_guiContainerView_9 "Setting"
+#define STR_symbian_ua_guiContainerView_10 "Exit"
+#define STR_symbian_ua_guiContainerView_3 ""
+#define STR_symbian_ua_guiContainerView_13 "Failed initializing PJSUA!"
+#define STR_symbian_ua_guiContainerView_16 "Register Success"
+#define STR_symbian_ua_guiContainerView_17 "Register Failed"
+#define STR_symbian_ua_guiContainerView_18 "Accept Call"

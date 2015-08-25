@@ -21,9 +21,14 @@
 <script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="/form.js"></script>
 <script>
 
-
+window.onresize = function() {
+	if(document.getElementById("folderTree_panel").style.display == "block") {
+		cal_panel_block("folderTree_panel", 0.25);
+	}
+} 
 
 function initial(){
 	show_menu();
@@ -52,7 +57,7 @@ function initial(){
 
 function selPartition(){
 	show_partition();
-	cal_panel_block('folderTree_panel');
+	cal_panel_block("folderTree_panel", 0.25);
 	$("#folderTree_panel").fadeIn(300);
 }
 
@@ -143,28 +148,6 @@ function applyRule(){
 	document.form.tm_ui_setting.value = "1";
 	showLoading(); 
 	document.form.submit();
-}
-
-function cal_panel_block(obj_id){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.25)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
-	}
-	document.getElementById(obj_id).style.marginLeft = blockmarginLeft+"px";
 }
 </script>
 </head>

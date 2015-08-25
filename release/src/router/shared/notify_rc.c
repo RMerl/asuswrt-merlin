@@ -125,6 +125,12 @@ static int notify_rc_internal(const char *event_name, bool do_wait, int wait)
 	_dprintf("%s %d:notify_rc: %s\n", p2, getpid(), event_name);
 	logmessage_normal("rc_service", "%s %d:notify_rc %s", p2, getpid(), event_name);
 
+	// finish the last rc_service as soon as possibly.
+	if(strstr(event_name, "reboot")){
+		_dprintf("%s: kill the shell scripts for reboot.\n", event_name);
+		eval("killall", "sh");
+	}
+
 	if (!wait_rc_service(wait)) {
 		logmessage_normal("rc_service", "skip the event: %s.", event_name);
 		_dprintf("rc_service: skip the event: %s.\n", event_name);

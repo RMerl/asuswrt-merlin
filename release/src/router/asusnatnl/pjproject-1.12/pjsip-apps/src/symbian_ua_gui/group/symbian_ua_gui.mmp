@@ -1,0 +1,102 @@
+// The part below will be overwritten by automated test
+// =BEGIN
+#define SND_HAS_APS	0
+#define SND_HAS_VAS	0
+#define SND_HAS_MDA	1
+// =END
+
+TARGET			symbian_ua_gui.exe
+UID			0x100039CE 0xEBD12EE4
+VENDORID	  	0
+TARGETTYPE		exe
+EPOCSTACKSIZE		0x8000
+
+MACRO			PJ_M_I386=1
+MACRO			PJ_SYMBIAN=1
+
+SYSTEMINCLUDE		\epoc32\include
+SYSTEMINCLUDE		\epoc32\include\variant 
+SYSTEMINCLUDE		\epoc32\include\ecom
+SYSTEMINCLUDE		\epoc32\include\libc
+SYSTEMINCLUDE		..\..\..\..\pjlib\include
+SYSTEMINCLUDE		..\..\..\..\pjlib-util\include
+SYSTEMINCLUDE		..\..\..\..\pjnath\include
+SYSTEMINCLUDE		..\..\..\..\pjmedia\include
+SYSTEMINCLUDE		..\..\..\..\pjsip\include
+
+USERINCLUDE		..\inc 
+USERINCLUDE		..\data
+
+SOURCEPATH		..\data
+
+START RESOURCE		symbian_ua_gui.rss
+HEADER
+TARGETPATH 		resource\apps
+END //RESOURCE
+
+START RESOURCE		symbian_ua_gui_reg.rss
+TARGETPATH 	  	\private\10003a3f\apps
+END //RESOURCE
+
+LIBRARY			euser.lib apparc.lib cone.lib eikcore.lib avkon.lib
+LIBRARY			commonengine.lib efsrv.lib estor.lib eikcoctl.lib eikdlg.lib 
+LIBRARY			eikctl.lib bafl.lib fbscli.lib aknnotify.lib aknicon.lib
+LIBRARY			etext.lib gdi.lib egul.lib insock.lib
+LIBRARY			ecom.lib inetprotutil.lib http.lib esock.lib
+LIBRARY			charconv.lib estlib.lib 
+LIBRARY			securesocket.lib x509.lib crypto.lib x500.lib
+LIBRARY			hal.lib
+
+// Ordering static libs based on dependencies, most to least dependent,
+// this could be necessary for some SDKs, e.g: S60 3rd MR
+STATICLIBRARY		pjsua_lib.lib
+STATICLIBRARY		pjsip_ua.lib pjsip_simple.lib pjsip.lib
+STATICLIBRARY		libgsmcodec.lib libspeexcodec.lib 
+STATICLIBRARY		libg7221codec.lib libpassthroughcodec.lib
+STATICLIBRARY		pjmedia.lib
+STATICLIBRARY		pjmedia_audiodev.lib
+STATICLIBRARY		pjsdp.lib
+STATICLIBRARY		pjnath.lib
+STATICLIBRARY		pjlib_util.lib pjlib.lib
+STATICLIBRARY		libsrtp.lib
+STATICLIBRARY		libresample.lib
+
+
+#if SND_HAS_APS
+	LIBRARY		APSSession2.lib
+#endif
+
+#if SND_HAS_VAS
+	LIBRARY		VoIPAudioIntfc.lib		
+#endif
+
+#if SND_HAS_MDA
+	LIBRARY 	mediaclientaudiostream.lib
+	LIBRARY 	mediaclientaudioinputstream.lib
+#endif
+
+#if SND_HAS_APS || SND_HAS_VAS
+	CAPABILITY	NetworkServices LocalServices ReadUserData WriteUserData UserEnvironment MultimediaDD
+#else
+	CAPABILITY	NetworkServices LocalServices ReadUserData WriteUserData UserEnvironment
+#endif
+
+LANG 			01
+
+START BITMAP		symbian_ua_gui.mbm
+HEADER
+TARGETPATH		\resource\apps
+SOURCEPATH		..\gfx
+SOURCE	c12,1		list_icon.bmp list_icon_mask.bmp
+END
+
+SOURCEPATH		..\src
+SOURCE 			symbian_ua_guiContainerView.cpp 
+SOURCE 			symbian_ua_guiContainer.cpp 
+SOURCE 			symbian_ua_guiAppUi.cpp 
+SOURCE 			symbian_ua_guiDocument.cpp 
+SOURCE 			symbian_ua_guiApplication.cpp 
+SOURCE 			symbian_ua_guiSettingItemList.cpp 
+SOURCE 			Symbian_ua_guiSettingItemListSets.cpp 
+SOURCE 			symbian_ua_guiSettingItemListView.cpp
+SOURCE 			symbian_ua.cpp

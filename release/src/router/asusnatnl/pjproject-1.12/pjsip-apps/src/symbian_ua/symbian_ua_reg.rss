@@ -1,0 +1,10 @@
+#include <appinfo.rh>
+
+UID2 KUidAppRegistrationResourceFile
+UID3 0xA000000D
+
+RESOURCE APP_REGISTRATION_INFO
+{
+    app_file="symbian_ua";
+}
+

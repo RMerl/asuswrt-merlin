@@ -175,6 +175,9 @@ const struct file_operations fat_file_operations = {
 #endif
 	.fsync		= fat_file_fsync,
 	.splice_read	= generic_file_splice_read,
+#if defined(CONFIG_BCM_RECVFILE)
+	.splice_write = generic_file_splice_write,
+#endif /* CONFIG_BCM_RECVFILE */
 };
 
 static int fat_cont_expand(struct inode *inode, loff_t size)

@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title></title>
+<style>
+html{
+	margin:0 0;
+	padding:0px;
+	font-size:14px;
+}
+body{
+	display: block;
+	overflow: hidden;
+	background: #e8e8e8;
+}
+#loading{
+	width:100%;
+	height:100%;
+	position:absolute;
+	opacity: 0.7;
+	background-color: rgb(0, 0, 0);
+	display:none;
+	left:0px;
+	top:0px;
+}
+#loading #main{
+	margin: 0 auto;
+	top: 200px;
+	position:relative;
+	text-align:center;
+}
+#jstree_main{
+	width:480px;
+	height:400px;
+	overflow:auto;
+	border: 1px #949493 solid;
+}
+</style>
+<link rel="stylesheet" href="/smb/css/style-jstree.css" />
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/jstree.min.js"></script>
+<script type="text/javascript">
+var g_action;
+var g_src_url;
+var g_dst_url;
+var m = new lang();
+var g_storage = new myStorage();
+var g_src_files = null;
+var g_overwrite;
+
+$("document").ready(function() {
+	
+	document.oncontextmenu = function() {return false;};
+	
+	var vars = getUrlVars();
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	$('button#ok').text(m.getString('btn_ok'));
+	$('button#cancel').text(m.getString('btn_cancel'));
+	$('#select_dest').text(m.getString('title_select_dest'));
+	
+	g_action = vars["a"];
+	g_src_url = vars["f"]; //- source file path
+	
+	var src_name = vars["o"]; //- source file name
+	g_src_files = src_name.split(",");
+	
+	$('#jstree_main').jstree({
+		"core" : {
+	    	"animation" : 0,
+	    	"check_callback" : true,
+	    	"themes" : { "variant" : "small", "stripes" : true },
+	    	'data': {
+            	"url" : function (node) {
+            		return '/query_field.json';
+		      	},
+                "type": "GET",
+                "dataType": "JSON",
+                "contentType": "application/json",
+                "data": function (node) {
+                	var uhref = "";
+    				if(node.id!="#"){
+    					uhref = $("#"+node.id).attr("data-path");
+    				}
+    				return { 'action' : 'query_disk_folder', 'id' : node.id, 'path' : uhref };
+                }
+            }
+	  	}
+	}).bind("select_node.jstree", function (e, data) {
+		var id = data.node.id;
+        var uhref = encodeURI($("#"+id).attr("data-path"));
+        var isroot = $("#"+id).attr("data-root");
+       
+       	if(isroot==1){
+       		$('button#ok').attr("disabled", true);
+       		g_dst_url = "";
+       	}
+       	else{
+        	$('button#ok').attr("disabled", false);
+        	//g_dst_url = uhref + "/" + g_src_name;
+        	g_dst_url = uhref;
+        }
+	});
+});
+
+function doOK(e) {
+	
+	if(g_src_files.length<=0){
+		alert("Please select file first!");
+		return;	
+	}
+	
+	if(g_src_url==''){		
+		alert("No source url specified!");
+		return;
+	}
+	
+	if(g_dst_url==''){		
+		alert("No dest url specified!");
+		return;
+	}
+	
+	if(g_src_url==g_dst_url){
+		alert("Can't select the same folder!");
+		return;
+	}
+		
+	g_overwrite = ($("input[name=submenu_samefile]:checked").val()==0) ? false : true;
+	
+	var src_url = g_src_url + "/" + g_src_files[0];
+	var dst_url = g_dst_url + "/" + g_src_files[0];
+	
+	$("#loading").show();
+	
+	$("#msg").text(((g_action=="copy")?"Copy ":"Move ") + "[" + decodeURIComponent(g_src_files[0]) + "]" );
+	
+	parent.doCOPYMOVE(g_action, src_url, dst_url, g_overwrite, webdav_callbackfunction);
+};
+
+function webdav_callbackfunction(error, statusstring, content){
+	if(error){
+		if( error==201||error==204||(error==412&&!g_overwrite) ){				
+		}
+		else{
+			$("#loading").hide();
+			alert(m.getString(error));
+			return;
+		}
+	}
+		
+	g_src_files.splice(0,1);
+		
+	if(g_src_files.length<=0){
+		$("#loading").hide();
+		parent.closeJqmWindow(1);
+		return;
+	}
+	
+	var src_url = g_src_url + "/" + g_src_files[0];
+	var dst_url = g_dst_url + "/" + g_src_files[0];
+	
+	$("#msg").text(((g_action=="copy")?"Copy ":"Move ") + "[" + decodeURIComponent(g_src_files[0]) + "]" );
+	
+	parent.doCOPYMOVE(g_action, src_url, dst_url, g_overwrite, webdav_callbackfunction);	
+}
+
+function doCancel(e) {
+	parent.closeJqmWindow();
+};
+
+function onKeyDownHandler(e){	
+	$('button#ok').attr("disabled", false);
+	
+	if(e.keyCode==13){
+		doOK(e);
+	}
+}
+
+</script>
+</head>
+<body>
+
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">
+	<tr style="height:30px">
+  		<td>
+  			<span id="select_dest">請選擇目的地</span>
+  		</td>
+  	</tr>
+	<tr>
+  		<td>
+    		<div id="jstree_main">
+    			<ul id="#">
+    			</ul>
+			</div>
+    	</td>    
+  	</tr>
+  	<tr>
+  		<td>
+  			<span>檔案若已存在</span>
+  			<input type="radio" id="submenu_skip" name="submenu_samefile" value="0" checked>略過
+            <input type="radio" id="submenu_overwrite" name="submenu_samefile" value="1" >覆寫
+  		</td>
+  	</tr>
+  	<tr style="height:30px">
+  		<td>
+  			<div class="table_block_footer" style="text-align:right">
+    			<button id="ok" class='btnStyle' onmousedown="doOK();" disabled="true">OK</button>
+      			<button id="cancel" class="btnStyle" onmousedown="doCancel();">Close</button>
+    		</div>
+    	</td>
+  	</tr>
+</table>
+
+<div id="loading">
+	<table id="main" style="table-layout: fixed">
+		<tr>
+			<td>
+				<img src="/smb/css/load.gif" style="width:18px;height:18px">
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<span id="msg" style="color:#fff"></span>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<span style="color:#fff">Please wait for complete...</span>
+			</td>
+		</tr>
+	</table>
+</div>
+
+</body>
+</html>

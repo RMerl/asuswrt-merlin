@@ -1,0 +1,83 @@
+TARGET 		pjlib_test.exe
+TARGETTYPE 	exe
+UID		0x0 0xA0000002
+
+
+SOURCEPATH	..\pjlib\src\pjlib-test
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+// Must compile as C++, otherwise exception would not work
+OPTION CW -lang c++
+OPTION ARMCC --cpp --gnu
+OPTION GCC -x c++
+OPTION GCCE -x c++
+
+#if defined(PJ_BUILD_DLL)
+MACRO		PJ_DLL
+LIBRARY		pjlib.lib 
+#else
+STATICLIBRARY	pjlib.lib 
+#endif
+
+// Test files
+
+SOURCE	activesock.c
+SOURCE	atomic.c
+SOURCE	echo_clt.c
+SOURCE	errno.c
+SOURCE	exception_wrap.cpp
+SOURCE	fifobuf.c
+SOURCE	file.c
+SOURCE	hash_test.c
+SOURCE	ioq_perf.c
+SOURCE	ioq_tcp.c
+SOURCE	ioq_udp.c
+SOURCE	ioq_unreg.c
+SOURCE	list.c
+SOURCE	mutex.c
+SOURCE	os.c
+SOURCE	pool_wrap.cpp
+SOURCE	pool_perf.c
+SOURCE	rand.c
+SOURCE	rbtree.c
+SOURCE	select.c
+SOURCE	sleep.c
+SOURCE	sock.c
+SOURCE	sock_perf.c
+SOURCE	ssl_sock.c
+SOURCE	string.c
+SOURCE	test_wrap.cpp
+SOURCE	thread.c
+SOURCE	timer.c
+SOURCE	timestamp.c
+SOURCE	udp_echo_srv_ioqueue.c
+SOURCE	udp_echo_srv_sync.c
+SOURCE	util.c
+
+SOURCE	main_symbian.cpp
+
+DOCUMENT test.h
+
+START RESOURCE  	pjlib_test_reg.rss
+	TARGETPATH      \private\10003a3f\apps
+END
+
+SYSTEMINCLUDE	..\pjlib\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+
+LIBRARY		esock.lib insock.lib charconv.lib euser.lib estlib.lib 
+LIBRARY		securesocket.lib x509.lib crypto.lib x500.lib 
+LIBRARY		hal.lib efsrv.lib
+ 
+#ifdef WINSCW
+STATICLIBRARY   eexe.lib ecrt0.lib
+#endif
+
+// Need a bit of mem for logging in the app.
+EPOCSTACKSIZE		32768
+
+CAPABILITY	NetworkServices LocalServices ReadUserData WriteUserData UserEnvironment

@@ -76,6 +76,39 @@ border: 1px solid #ccc;
 margin-bottom: 10px;
 display: block;
 }
+.x-panel-community{
+position:relative;
+}
+.x-panel-bwrap{
+overflow: hidden;
+zoom: 1;
+left: 0;
+top: 0;	
+}
+.user_image{
+background:transparent url("style-theme.png") no-repeat top left;
+background-position: -240px -530px;
+width:54px;
+height:54px;
+}
+#user_authorize {
+color: #3B5998;
+font-weight: bold;
+position: absolute;
+left: 60px;
+top: 40px;
+}
+.user_login_option {
+text-decoration: underline;
+cursor: pointer;
+}
+#user_deletetoken {
+color: #3B5998;
+position: absolute;
+left: 110px;
+top: 130px;
+cursor: pointer;
+}
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
 <script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
@@ -83,9 +116,15 @@ display: block;
 <script type="text/javascript">
 var m = new lang();
 var g_storage = new myStorage();
+var server_url = "http://oauth.asus.com/aicloud/";
+var g_bLoginFacebook = false;
+var g_bLoginGoogle = false;
+var g_key_file = null;
+var g_crt_file = null;
+var g_intermediate_crt_file = null;
 
 $("document").ready(function() {
-	document.oncontextmenu = function() {return false;};
+	//document.oncontextmenu = function() {return false;};
 	
 	var vars = getUrlVars();
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
@@ -172,6 +211,17 @@ $("document").ready(function() {
 		}		
 	});
 	
+	$("button#btn_import_crt").click(function(){
+		
+		$("#import_crt").show();
+		$("#import_crt").css("left", tempX );
+				
+		if( tempY + $("#filelink").height() > $("body").height() )
+			$("#import_crt").css("top", $("body").height() - $("#filelink").height() );
+		else
+			$("#import_crt").css("top", tempY );
+	});
+	
 	$("button#btn_export_crt").click(function(){
 		window.open("/aicloud.crt");
 	});
@@ -197,21 +247,135 @@ $("document").ready(function() {
 	
 	$("#label_gen_crt").text(m.getString("title_gen_crt"));
 	$("#btn_gen_crt").text(m.getString("title_gen_crt"));
+	$("#btn_import_crt").text(m.getString("title_import_crt"));
 	$("#desc_gen_crt").text(m.getString("title_desc_gen_crt"));
 	$("#label_server_crt").text(m.getString("title_server_crt"));
 	$("#label_crt_type").text(m.getString("title_crt_type"));
 	$("#label_self_crt_type").text(m.getString("title_self_crt_type"));
 	$("#label_crt_to").text(m.getString("title_crt_to"));
+	$("#label_crt_from").text(m.getString("title_crt_from"));
+	$("#label_crt_end_date").text(m.getString("title_crt_end_date"));
 	$("#btn_export_crt").text(m.getString("title_export_crt"));
-	$("#label_https_crt_cn").text(g_storage.get('https_crt_cn'));
-	$("#crt_creating").text(g_storage.get('msg_gen_crt_creating'));
+	$("#label_https_crt_cn").text(m.getString('https_crt_cn'));
+	$("#crt_creating").text(m.getString('msg_gen_crt_creating'));
+	
+	$("#desc_import_crt").text(m.getString('desc_import_crt'));
+	$("#label_select_private_key").text(m.getString('title_select_private_key'));
+	$("#label_select_certificate").text(m.getString('title_select_certificate'));
+	$("#label_select_intermediate_certificate").text(m.getString('title_select_intermediate_certificate'));
+	$("#import").text(m.getString('title_import_crt'));
 	
 	if(_showTabIndex==1)
 		refreshShareLinkList();
+	else if(_showTabIndex==3)
+		refreshCertificateInfo();
 	
 	$(".abgne_tab").css("height", $(window).height()-80);
 	
+	$("#facebook .user_login_option").click(function(){
+		
+		if(g_bLoginFacebook)
+			return;
+			
+		facebook_login();
+	});
+	
+	$("#google .user_login_option").click(function(){
+		
+		if(g_bLoginGoogle)
+			return;
+			
+		google_login();
+	});
+	
+	$("#btn_select_key").change(function(evt){
+		
+		if(evt.target.files.length!=1){
+			alert("Please select a key file!");
+			return;
+		}
+		
+		g_key_file = evt.target.files[0];
+	});
+	
+	$("#btn_select_crt").change(function(evt){
+		if(evt.target.files.length!=1){
+			alert("Please select a key file!");
+			return;
+		}
+		
+		g_crt_file = evt.target.files[0];
+	});
+	
+	$("#btn_select_intermediate_crt").change(function(evt){
+		if(evt.target.files.length!=1){
+			return;
+		}
+		
+		g_intermediate_crt_file = evt.target.files[0];
+	});
 });
+
+function onFacebookLogin( token, uid ){
+	
+	alert(token+", "+uid);
+	
+	/*
+	g_token = token,
+	g_uid = uid;
+	
+	g_storage.sett("facebook_access_token", g_token);
+	g_storage.sett("facebook_uid", uid);
+	
+	facebook_get_userprofile();
+	*/
+}
+
+function facebook_login(){
+	var app_id = "697618710295679";
+	window._onFacebookLogin = this.onFacebookLogin;
+	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
+	var callback_function = "_onFacebookLogin";
+	
+	var auth_url = server_url + "fb_authorize.html?callback=" + callback_function + "&ps5host=";
+	var redirect_url = window.location.href.slice(0,b) + "/smb/css/service/callback.html&response_type=token";
+	var url = "http://www.facebook.com/dialog/oauth/?scope=publish_stream%2Cuser_photos%2Coffline_access&client_id=" + app_id + "&display=popup&redirect_uri=" + encodeURIComponent(auth_url) + redirect_url;
+	
+	window.open(url,"mywindow","menubar=1,resizable=0,width=630,height=250, top=100, left=300");
+}
+
+function onGoogleLogin( token, uid ){
+	
+	alert(token+", "+uid);
+	
+	/*
+	g_token = token,
+	g_uid = uid;
+	
+	g_storage.sett("facebook_access_token", g_token);
+	g_storage.sett("facebook_uid", uid);
+	
+	facebook_get_userprofile();
+	*/
+}
+
+function google_login(){
+	var app_id = "103584452676-oo7gkbh8dg7nm07lao9a0i3r9jh6jfra.apps.googleusercontent.com";
+	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
+	var callback_function = "onGoogleLogin";
+		
+	var auth_url = server_url + "google_authorize.html";
+	var redirect_url = window.location.href.slice(0,b) + "/smb/css/service/callback.html";
+		
+	var url = "https://accounts.google.com/o/oauth2/auth?" +
+			  "response_type=token" +				  
+			  "&redirect_uri=" + encodeURIComponent(auth_url) + 
+			  "&client_id=" + app_id +
+			  "&scope=https://www.googleapis.com%2Fauth%2Fuserinfo.email+https://www.googleapis.com%2Fauth%2Fuserinfo.profile+https://picasaweb.google.com%2Fdata" + 
+			  "&state=/callback=" + callback_function + "+ps5host=" + redirect_url;
+		
+	window.open(url,"mywindow","menubar=1,resizable=0,width=630,height=250, top=100, left=300");
+}
 
 function getLatestVersion(){
 	var client = new davlib.DavClient();
@@ -388,7 +552,7 @@ function refreshShareLinkList(){
 				var del_count = 0;
 		
 				$("input:checkbox.check_del").each(function(){
-					if($(this).attr("checked")){
+					if($(this).prop("checked")){
 						del_count++;
 					}
 				});
@@ -428,7 +592,7 @@ function refreshShareLinkList(){
 					$("div.delcheck_block").css("visibility", "hidden");
 					
 					$("input:checkbox.check_del").each(function(){
-						if($(this).attr("checked")){
+						if($(this).prop("checked")){
 							
 							client.REMOVESL("/", $(this).attr("link"), function(error, content, statusstring){	
 								if(error==200){
@@ -440,10 +604,9 @@ function refreshShareLinkList(){
 				}				
 			});
 			
-			$("input.select_all").click(function(){
-				if($(this).attr("checked")){
-					$("input:checkbox.check_del").attr("checked", "checked");
-					
+			$("input.select_all").change(function(){
+				if($(this).prop("checked")){
+					$('input:checkbox.check_del').prop('checked', true);					
 					$("div.delcheck_block").css("visibility", "");
 					
 					var newTop = tempY+10;
@@ -454,7 +617,7 @@ function refreshShareLinkList(){
 					}, 'fast');
 				}
 				else{
-					$("input:checkbox.check_del").removeAttr("checked");
+					$('input:checkbox.check_del').prop('checked', false);
 					
 					var newTop = tempY+10;
 					var newLeft = 0;
@@ -472,6 +635,66 @@ function refreshShareLinkList(){
 	});
 }
 
+function refreshCertificateInfo(){
+	var client = new davlib.DavClient();
+	client.initialize();
+	client.GETX509CERTINFO("/", function(error, content, statusstring){	
+		if(error==200){
+				
+			var data = parseXml(statusstring);
+						
+			var issuer = $(data).find('issuer').text();
+			var subject = $(data).find('subject').text();
+			var crt_start_date = $(data).find('crt_start_date').text();
+			var crt_end_date = $(data).find('crt_end_date').text();
+				
+			if(subject!=""){
+				subject = subject.substring( subject.indexOf("CN=")+3, subject.length );
+					
+				if(subject.indexOf("/")!=-1){
+					subject = subject.substring( 0, subject.indexOf("/") );
+				}
+			}
+				
+			if(issuer!=""){
+				issuer = issuer.substring( issuer.indexOf("CN=")+3, issuer.length );
+					
+				if(issuer.indexOf("/")!=-1){
+					issuer = issuer.substring( 0, issuer.indexOf("/") );
+				}
+			}
+				
+			//crt_end_date = "160607080028Z";
+			if(crt_end_date!=""){
+				
+				var mydate = new Date( 2000+parseInt(crt_end_date.substring(0, 2)), 
+				                       parseInt(crt_end_date.substring(2, 4)),
+				                       parseInt(crt_end_date.substring(4, 6)));
+					                       
+				crt_end_date = mydate.getFullYear() + "-" + mydate.getMonth() + "-" + mydate.getDate();
+					                       
+				//alert(crt_end_date.substring(0, 2)+", "+crt_end_date.substring(2, 4) + ", " + crt_end_date.substring(4, 6));
+				//alert(mydate.toISOString().slice(0, 10).replace(/-/g, '-'));
+				//alert(mydate.getFullYear() + " - " + mydate.getMonth() + " - " + mydate.getDate());
+			}
+				
+			if(issuer==subject){
+				$("#label_self_crt_type").text(m.getString("title_self_crt_type"));
+			}
+			else{
+				$("#label_self_crt_type").text(m.getString("title_third_crt_type"));
+			}
+				
+			$("#label_https_crt_cn").text(subject);
+			$("#label_https_crt_issuer").text(issuer);
+			$("#label_https_crt_end_date").text(crt_end_date);
+			//alert(content + ", " + statusstring);
+		}
+			
+		client = null;	
+	});
+}
+
 function doOK(e) {
 	parent.closeJqmWindow();
 };
@@ -482,6 +705,136 @@ function doCancel(e) {
 
 function onCloseShareLink(){
 	$("#filelink").css("display","none");	
+}
+
+function onCloseImportCrt(){
+	$('#import_crt').hide();
+}
+
+function read_file(the_file, onReadCompleteHandler){
+	if(the_file==null)
+		return;
+		
+	var start = 0;
+	var stop = the_file.size-1;
+	var bSliceAsBinary = 0;
+	var reader = new FileReader();
+	reader.onloadend = function(evt) {			
+		if (evt.target.readyState == FileReader.DONE) { // DONE == 2
+			if(onReadCompleteHandler)
+				onReadCompleteHandler(evt, bSliceAsBinary);
+		}
+	};
+			
+	if (the_file.webkitSlice) {
+		var blob = the_file.webkitSlice(start, stop+1);
+		//reader.readAsArrayBuffer(blob);
+		reader.readAsText(blob);
+		bSliceAsBinary = 1;
+	} 
+	else if (the_file.mozSlice) {      
+		var blob = the_file.mozSlice(start, stop+1);
+		reader.readAsBinaryString(blob);
+		bSliceAsBinary = 0;			
+	}
+	else {
+		var blob = the_file.slice(start, stop+1);			
+		//reader.readAsArrayBuffer(blob);
+		reader.readAsText(blob);
+		bSliceAsBinary = 1;			
+    }
+}
+
+function onDoImportCrt(){
+	
+	if(g_key_file==null){
+		alert("Please select a key file.");
+		return;
+	}
+	
+	if(g_crt_file==null){
+		alert("Please select a crt file.");
+		return;
+	}
+	
+	var key_pem = "";
+	var crt_pem = "";
+	var intermediate_crt_pem = "";
+	var set_pem_content = function(){
+		
+		if(g_key_file!=null && key_pem=="")
+			return;
+			
+		if(g_crt_file!=null && crt_pem=="")
+			return;
+			
+		if(g_intermediate_crt_file!=null && intermediate_crt_pem=="")
+			return;
+			
+		var client = new davlib.DavClient();
+		client.initialize();
+		
+		client.SETROOTCERTIFICATE( '/', key_pem, crt_pem, intermediate_crt_pem, function(context, status, statusstring){
+			if(context=="200"){
+				$('#import_crt').hide();
+				
+				alert(m.getString("msg_import_crt_complete"));
+					
+				client.APPLYAPP("/", "apply", "", "restart_webdav", function(error, statusstring, content){				
+					if(error==200){
+						setTimeout( function(){
+							parent.location.reload(false);
+						}, 6000 );
+					}
+						
+					client = null;
+				});		
+			}
+			else{
+				alert("Fail to set pem file!");
+			}
+		}, null );
+	}
+		
+	read_file(g_key_file, function(evt, bSliceAsBinary){
+		//alert("done: " +　evt.target.result.byteLength + ", " + bSliceAsBinary + ", " + evt.target.result);
+		var content = evt.target.result;
+		
+		if(content.indexOf("-----BEGIN RSA PRIVATE KEY-----")!=0){
+			alert("Invalid key file format!");
+			return;
+		}
+		
+		key_pem = content;
+		
+		set_pem_content();
+	});
+	
+	read_file(g_crt_file, function(evt, bSliceAsBinary){
+		var content = evt.target.result;
+		
+		if(content.indexOf("-----BEGIN CERTIFICATE-----")!=0){
+			alert("Invalid cert file format!");
+			return;
+		}
+		
+		crt_pem = content;
+		
+		set_pem_content();
+	});
+	
+	read_file(g_intermediate_crt_file, function(evt, bSliceAsBinary){
+		var content = evt.target.result;
+		
+		if(content.indexOf("-----BEGIN CERTIFICATE-----")!=0){
+			alert("Invalid intermediate cert file format!");
+			return;
+		}
+		
+		intermediate_crt_pem = content;
+				
+		set_pem_content();
+	});
 }
 
 // Detect if the browser is IE or not.
@@ -526,6 +879,7 @@ function getMouseXY(e) {
 				<li id='sharelink'><a href="#tab2">分享清單</a></li>
 				<li id='version'><a href="#tab3">版本</a></li>
                 <li id='settings'><a href="#tab4">憑證</a></li>
+                <li id='community'><a href="#tab5">社群網路</a></li>
 			</ul>
 			<div class="tab_container">
 				<div id="tab1" class="tab_content">
@@ -569,7 +923,7 @@ function getMouseXY(e) {
                                                 </td>
                                                 <td><i>&nbsp;</i></td>
                                                 <td>
-                                                	<!--<button type="button" id="ext-gen1077" class=" x-btn-text">匯入憑證</button>-->
+                                                	<button type="button" id="btn_import_crt" name="btn_import_crt">匯入憑證</button>
 												</td>
                                             </tr>
                                             <tr>
@@ -591,7 +945,7 @@ function getMouseXY(e) {
                         <div>
                         	<div style="width:700px;">
                             	<div style="width:100%;">
-                                	<table cellspacing="0" style="width: auto;">
+                                	<table cellspacing="5" style="width: auto;">
                                     	<tbody>
                                         	<tr>
                                             	<td id="label_crt_type">狀態:</td>
@@ -604,9 +958,14 @@ function getMouseXY(e) {
                                                 <td id="label_https_crt_cn"></td>
                                             </tr>
                                             <tr>
-                                            	<td><i>&nbsp;</i></td>
+                                            	<td id="label_crt_from">核發單位:</td>
                                                 <td></td>
-                                                <td><i>&nbsp;</i></td>
+                                                <td id="label_https_crt_issuer"></td>
+                                            </tr>
+                                            <tr>
+                                            	<td id="label_crt_end_date">有效日期:</td>
+                                                <td></td>
+                                                <td id="label_https_crt_end_date"></td>
                                             </tr>
                                         	<tr>
                                             	 <td>
@@ -626,7 +985,45 @@ function getMouseXY(e) {
                             </div>
                         </div>
                     </fieldset>
+                    
                 </div>
+                
+                <div id="tab5" class="tab_content">
+                	<span style="padding:10px 0 10px 0">在此登入社群網路來取得更多服務</span>
+                	<fieldset style="width: 700px;">
+                    	<legend>
+                        	<span id="label_community">FaceBook</span>
+                        </legend>
+                        <div>
+                        	<div class="x-panel-bwrap">
+			            		<div class="x-panel-community" id="facebook">
+			                       	<div class="user_image"></div>
+			            			<img id="user_pic" border="0">
+			            			<img class="loading-img" src="/smb/css/load.gif" style="visibility: hidden;">
+			            			<span id="user_authorize" class="user_login_option">Login</span>
+			            			<span id="user_deletetoken" style="visibility: hidden;">Logout</span>
+			            		</div>
+			                </div>
+                        </div>
+                    </fieldset>
+                    <fieldset style="width: 700px;">
+                    	<legend>
+                        	<span id="label_community">Google</span>
+                        </legend>
+                        <div>
+                        	<div class="x-panel-bwrap">
+			            		<div class="x-panel-community" id="google">
+			                       	<div class="user_image"></div>
+			            			<img id="user_pic" border="0">
+			            			<img class="loading-img" src="/smb/css/load.gif" style="visibility: hidden;">
+			            			<span id="user_authorize" class="user_login_option">Login</span>
+			            			<span id="user_deletetoken" style="visibility: hidden;">Logout</span>
+			            		</div>
+			            	</div>
+                        </div>
+                    </fieldset>
+                </div>	
+                
 			</div>
 		</div>
 	</td>    
@@ -649,6 +1046,37 @@ function getMouseXY(e) {
 	<div style="width:100%; height:100%;padding:5px">
 		<p class="desc_share_link" style=" font-size:100%">Press [Ctrl+C] to copy the share link.</p>
 		<input id="resourcefile" type="text" value="" style="width:200px">
+	</div>
+</div>
+
+<div id="import_crt" style="display:none; position:absolute; background:#FFF8A8; width:auto; height:auto; border:1px solid #000000; padding:0">
+	<div style="background: #747474;text-align:right;">	
+		<a onclick="onCloseImportCrt()" style="cursor:pointer;color:#fff;padding:2px">[X]</a>
+	</div>
+	<div style="width:100%; height:100%;padding:5px">
+		<p id="desc_import_crt" style=" font-size:100%"></p>
+		<table style="width:100%;padding:10px">
+  			<tr>
+  				<td id="label_select_private_key">私鑰:</td>
+  				<td><input type="file" id="btn_select_key"></td>
+  			</tr>
+  			<tr>
+  				<td id="label_select_certificate">憑證:</td>
+  				<td><input type="file" id="btn_select_crt"></td>
+  			</tr>
+  			<tr>
+  				<td id="label_select_intermediate_certificate">中繼憑證:</td>
+  				<td><input type="file" id="btn_select_intermediate_crt"></td>
+  			</tr>
+  			<tr>
+				<td colspan="2">
+					<div class="table_block_footer" style="text-align:right">
+				    	<button id="import" class='btnStyle' onClick="onDoImportCrt();">匯入</button>        
+				    	<button id="cancel" name="cancel" class="btnStyle" onClick="onCloseImportCrt();">Close</button>
+				    </div>
+				</td>
+		  	</tr>
+  		</table>
 	</div>
 </div>
 

@@ -1,0 +1,31 @@
+/*
+========================================================================
+ Name        : symbian_ua_guiSettingItemList.l01
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+// localized strings for language: UK English (01)
+#define STR_symbian_ua_guiSettingItemListView_1 "Settings"
+#define STR_symbian_ua_guiSettingItemListView_2 "Account Settings"
+#define STR_symbian_ua_guiSettingItemListView_4 "Change"
+#define STR_symbian_ua_guiSettingItemListView_16 "Password"
+#define STR_symbian_ua_guiSettingItemListView_18 ""
+#define STR_symbian_ua_guiSettingItemListView_19 "STUN Server"
+#define STR_symbian_ua_guiSettingItemListView_24 "SRTP"
+#define STR_symbian_ua_guiSettingItemListView_25 "On"
+#define STR_symbian_ua_guiSettingItemListView_26 "Popup text for On"
+#define STR_symbian_ua_guiSettingItemListView_27 "Off"
+#define STR_symbian_ua_guiSettingItemListView_28 "Popup text for Off"
+#define STR_symbian_ua_guiSettingItemListView_3 ""
+#define STR_symbian_ua_guiSettingItemListView_5 "Registrar"
+#define STR_symbian_ua_guiSettingItemListView_7 ""
+#define STR_symbian_ua_guiSettingItemListView_8 "User"
+#define STR_symbian_ua_guiSettingItemListView_46 "ICE"
+#define STR_symbian_ua_guiSettingItemListView_47 "On"
+#define STR_symbian_ua_guiSettingItemListView_48 "Popup text for On"
+#define STR_symbian_ua_guiSettingItemListView_49 "Off"
+#define STR_symbian_ua_guiSettingItemListView_140 "Options"
+#define STR_symbian_ua_guiSettingItemListView_141 "Done"
+#define STR_symbian_ua_guiSettingItemListView_50 "Popup text for Off"

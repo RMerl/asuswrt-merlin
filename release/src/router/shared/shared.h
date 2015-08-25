@@ -55,6 +55,14 @@
 #define	DEV_GPIO(arg)	"/dev/gpio/"#arg
 #endif
 
+#if defined(RTCONFIG_DEFAULT_AP_MODE)
+#define DUT_DOMAIN_NAME "ap.asus.com"
+#else
+#define DUT_DOMAIN_NAME "router.asus.com"
+#endif
+#define OLD_DUT_DOMAIN_NAME1 "www.asusnetwork.net"
+#define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
+
 //version.c
 extern const char *rt_version;
 extern const char *rt_serialno;
@@ -132,45 +140,6 @@ typedef struct {
 		char ip[sizeof("xxx.xxx.xxx.xxx") + 1];
 	} iface[2];
 } wanface_list_t;
-
-#ifdef RTCONFIG_TCODE
-struct tcode_nvram_s {
-	int model;
-	char *odmpid;
-	char *tcode;
-	char *name;
-	char *value;
-};
-
-struct tcode_rc_support_s {
-	int model;
-	char *tcode;
-	char *features;
-};
-
-struct tcode_location_s {
-	int model;
-	char *location;
-	char *reg_2g_name;
-	char *reg_2g_value;
-	char *rev_2g_name;	/* non-BRCM model, this maybe NULL */
-	char *rev_2g_value;	/* non-BRCM model, this maybe NULL */
-	char *reg_5g_name;	/* For 2G model, this should be NULL */
-	char *reg_5g_value;	/* For 2G model, this should be NULL */
-	char *rev_5g_name;
-	char *rev_5g_value;
-#ifdef RTCONFIG_TRI_BAND_5G
-	char *reg_5g2_name;	/* For 2G model, this should be NULL */
-	char *reg_5g2_value;	/* For 2G model, this should be NULL */
-	char *rev_5g2_name;
-	char *rev_5g2_value;
-	char *reg_5g3_name;	/* For 2G model, this should be NULL */
-	char *reg_5g3_value;	/* For 2G model, this should be NULL */
-	char *rev_5g3_name;
-	char *rev_5g3_value;
-#endif
-};
-#endif
 
 extern char *read_whole_file(const char *target);
 extern char *get_line_from_buffer(const char *buf, char *line, const int line_size);
@@ -275,6 +244,9 @@ enum {
 	MODEL_RTAC55U,
 	MODEL_RTAC55UHP,
 	MODEL_RT4GAC55U,
+	MODEL_PLN12,
+	MODEL_PLAC56,
+	MODEL_PLAC66U,
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
 	MODEL_RTN65U,
@@ -309,6 +281,8 @@ enum {
 	MODEL_RTN10P,
 	MODEL_RTN10D1,
 	MODEL_RTN10PV2,
+	MODEL_RTAC1200G,
+	MODEL_RTAC1200GP,
 	MODEL_GENERIC
 };
 
@@ -521,8 +495,26 @@ struct ifaces_stats {
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(ary) (sizeof(ary) / sizeof((ary)[0]))
 #endif
+#ifdef PLN12
+	LED_POWER_RED,
+	LED_2G_GREEN,
+	LED_2G_ORANGE,
+	LED_2G_RED,
+#endif
+#ifdef PLAC56
+	LED_2G_GREEN,
+	LED_2G_RED,
+	LED_5G_GREEN,
+	LED_5G_RED,
+#endif
 #ifdef RTCONFIG_MMC_LED
 	LED_MMC,
+#endif
+#ifdef RTCONFIG_RESET_SWITCH
+	LED_RESET_SWITCH,
+#endif
+#ifdef RTAC5300
+	RPM_FAN,	/* use to control FAN RPM (Hi/Lo) */
 #endif
 
 #if defined(RTCONFIG_HAS_5G)
@@ -831,6 +823,9 @@ extern const char *ipv6_gateway_address(void);
 #ifdef RTCONFIG_OPENVPN
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 #define OVPN_FS_PATH	"/jffs/openvpn"
+#define MAX_OVPN_CLIENT	5
+#else
+#define MAX_OVPN_CLIENT	1
 #endif
 extern char *get_parsed_crt(const char *name, char *buf, size_t buf_len);
 extern int set_crt_parsed(const char *name, char *file_path);
@@ -959,6 +954,9 @@ static inline int wan_red_led_control(int onoff) { return 0; }
 #if defined(RTCONFIG_BLINK_LED)
 extern int __config_netdev_bled(const char *led_gpio, const char *ifname, unsigned int min_blink_speed, unsigned int interval);
 extern int config_netdev_bled(const char *led_gpio, const char *ifname);
+extern int set_bled_udef_pattern(const char *led_gpio, unsigned int interval, const char *pattern);
+extern int set_bled_normal_mode(const char *led_gpio);
+extern int set_bled_udef_pattern_mode(const char *led_gpio);
 extern int start_bled(unsigned int gpio_nr);
 extern int stop_bled(unsigned int gpio_nr);
 extern int del_bled(unsigned int gpio_nr);
@@ -968,6 +966,9 @@ extern int __config_swports_bled(const char *led_gpio, unsigned int port_mask, u
 extern int update_swports_bled(const char *led_gpio, unsigned int port_mask);
 extern int __config_usbbus_bled(const char *led_gpio, char *bus_list, unsigned int min_blink_speed, unsigned int interval);
 extern int is_swports_bled(const char *led_gpio);
+#if defined(PLN12)
+extern void set_wifiled(int mode);
+#endif
 
 static inline void enable_wifi_bled(char *ifname)
 {
@@ -1042,6 +1043,9 @@ static inline int config_usbbus_bled(const char *led_gpio, char *bus_list)
 #else	/* !RTCONFIG_BLINK_LED */
 static inline int __config_netdev_bled(const char *led_gpio, const char *ifname, unsigned int min_blink_speed, unsigned int interval) { return 0; }
 static inline int config_netdev_bled(const char *led_gpio, const char *ifname) { return 0; }
+static inline int set_bled_udef_pattern(const char *led_gpio, unsigned int interval, const char *pattern) { return 0; }
+static inline int set_bled_normal_mode(const char *led_gpio) { return 0; }
+static inline int set_bled_udef_pattern_mode(const char *led_gpio) { return 0; }
 static inline int start_bled(unsigned int gpio_nr) { return 0; }
 static inline int stop_bled(unsigned int gpio_nr) { return 0; }
 static inline int chg_bled_state(unsigned int gpio_nr) { return 0; }
@@ -1090,7 +1094,7 @@ static inline int is_usb3_port(char *usb_node)
 #define MIB_RX_REG 0x88
 #define MIB_TX_REG 0x00
 
-#if defined(RTN18U) || defined(RTAC56U) || defined(RTAC56S) || defined(RTAC68U) || defined(RTAC3200)
+#if defined(RTN18U) || defined(RTAC56U) || defined(RTAC56S) || defined(RTAC68U) || defined(RTAC3200) || defined(DSL_AC68U)
 #define CPU_PORT "5"
 #endif
 

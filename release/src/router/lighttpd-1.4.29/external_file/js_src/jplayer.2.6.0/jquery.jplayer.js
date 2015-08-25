@@ -1730,6 +1730,12 @@
 			});
 			return media;
 		},
+		//- 20140819 Sungmin add
+		setSize: function(size){
+			this.options.size.width = size.width;
+			this.options.size.height = size.height;
+			this._refreshSize();
+		},
 		setMedia: function(media) {
 		
 			/*	media[format] = String: URL of format. Must contain all of the supplied option's video or audio formats.

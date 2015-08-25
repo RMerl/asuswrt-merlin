@@ -37,3 +37,60 @@ function IPinputCtrl(obj, t){
 		}
 	}
 }
+
+function cal_panel_block(obj, multiple) {
+	var isMobile = function() {
+		var tmo_support = ('<% nvram_get("rc_support"); %>'.search("tmo") == -1) ? false : true;
+		if(!tmo_support)
+			return false;
+		
+		if(	navigator.userAgent.match(/iPhone/i)	|| 
+			navigator.userAgent.match(/iPod/i)		||
+			navigator.userAgent.match(/iPad/i)		||
+			(navigator.userAgent.match(/Android/i) && (navigator.userAgent.match(/Mobile/i) || navigator.userAgent.match(/Tablet/i))) ||
+			(navigator.userAgent.match(/Opera/i) && (navigator.userAgent.match(/Mobi/i) || navigator.userAgent.match(/Mini/i))) ||	// Opera mobile or Opera Mini
+			navigator.userAgent.match(/IEMobile/i)	||	// IE Mobile
+			navigator.userAgent.match(/BlackBerry/i)	//BlackBerry
+		 ) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	};
+	var blockmarginLeft;
+	if (window.innerWidth) {
+		winWidth = window.innerWidth;
+	}
+	else if ((document.body) && (document.body.clientWidth)) {
+		winWidth = document.body.clientWidth;
+	}
+
+	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth) {
+		winWidth = document.documentElement.clientWidth;
+	}
+
+	if(winWidth > 1050) {
+		winPadding = (winWidth - 1050) / 2;
+		winWidth = 1105;
+		blockmarginLeft = (winWidth * multiple) + winPadding;
+	}
+	else if(winWidth <= 1050) {
+		if(isMobile()) {
+			if(document.body.scrollLeft < 50) {
+				blockmarginLeft= (winWidth) * multiple + document.body.scrollLeft;
+			}
+			else if(document.body.scrollLeft >320) {
+				blockmarginLeft = 320;
+			}
+			else {
+				blockmarginLeft = document.body.scrollLeft;
+			}	
+		}
+		else {
+			blockmarginLeft = (winWidth) * multiple + document.body.scrollLeft;	
+		}
+	}
+
+	document.getElementById(obj).style.marginLeft = blockmarginLeft + "px";
+}

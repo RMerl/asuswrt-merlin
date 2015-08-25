@@ -90,6 +90,7 @@ global.uploadlib = new function() {
 				//alert(evt.target.result.byteLength);
 				  	
 				var tURL = this_upload_handler.url + encodeURIComponent(path) + encodeURIComponent(pfile.name);
+				
 				this_upload_handler.webdav.PUT(tURL, 
 					evt.target.result, 
 					bSliceAsBinary, 

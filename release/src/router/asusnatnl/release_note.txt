@@ -1,0 +1,473 @@
+﻿﻿2015-07-09: 1.7.11.16/1.8.0.16
+==> SDK : 1. Bug Fix (SDK). Fix assertion crash issue.
+
+﻿2015-07-02: 1.8.0.15
+==> SDK : 1. Bug Fix (SDK). Fix crash issue which APP calls natnl_hangup_call (java : NatHangupCall) multiple times.
+          2. Update (SDK). Correct 60104 event timing.
+          3. Update (SDK). Adjust UDT send/recv buffer size from 1460*512/1460*64 to 1460*64/1460*64.
+          4. Update (SDK). Handle urgent data when DTLS is enabled.
+          5. Update (SDK). APP can set natnl_config.use_turn = 6 (java NatConfig.use_turn) to force to use TCP TURN.
+          6. Adding (docs). Add Java Document for Javalibrary.
+          7. Adding (SDK). Add tnl_port_cnt and tnl_ports into natnl_tnl_info structure (java : NatTnlInfo class).
+          8. Adding (SDK). Add natnl_set_tnl_transfer_speed_limit (java : NatSetTnlTransferSpeedLimit) API for setting transfer speed limit dynamically.
+
+2015-07-02: 1.7.11.15
+==> SDK : 1. Bug Fix (SDK). Fix crash issue which APP calls natnl_hangup_call (java : NatHangupCall) multiple times.
+          2. Update (SDK). Correct 60104 event timing.
+          3. Update (SDK). Adjust UDT send/recv buffer size from 1460*512/1460*64 to 1460*64/1460*64.
+          4. Update (SDK). Handle urgent data when DTLS is enabled.
+          5. Update (SDK). APP can set natnl_config.use_turn = 6 (java NatConfig.use_turn) to force to use TCP TURN.
+
+2015-06-04:
+=>> SDK : 1. Adding (SDK). Add natnl_read_tnl_transfer_speed API to provide the current tx/rx speed of tunnel.
+          2. Bug Fix (SDK). Fix "entry == ht->heap[timer_node_slot]" assertion issue.
+
+2015-05-28:
+==> SDK : 1. Adding (SDK). Support 443 port for SIP TLS connection.
+          2. Bug Fix (SDK). Fix two assertion crash issues.
+
+﻿2015-04-24 1.8.0.12:
+==> SDK : 1. Adding (SDK). Add NATNL_SC_INSTANT_MSG_TOO_LONG(60000014) for natnl_send_instant_msg API.
+          2. Update (SDK). Enable SIP MESSAGE method support for natnl_send_instant_msg API.
+          3. Bug Fix (SDK). Try to fix udt_connect failed issue.
+          4. Bug Fix (SDK). When --enable-secure-data option is on, the 60000006 error occurs frequently on making call process.
+
+2015-04-14:
+==> SDK : 1. Bug Fix (SDK). Try to fix udt_connect failed issue.
+
+2015-04-13
+==> SDK : 1. Bug Fix (SDK). When --enable-secure-data option is on, the 60000006 error occurs frequently on making call process.
+
+2015-03-13
+==> SDK : 1. Bug Fix (SDK). SDK crash issue on making call process.
+
+2015-03-13
+==> SDK : 1. Bug Fix (SDK). Fix the issue that SDK handles response packet from SIP too slow on iOS platform.
+
+2015-03-12
+==> SDK : 1. Update (SDK). Remove tunnel type tcp. 
+          2. Update (SDK). Shorten the time of making call procedure. 
+          3. Update (SDK). Adjust internal tunnel send/recv buffer size to 1460*8/1460*64. 
+          4. Update (SDK). Report hangup ok if disconnected with SIP when state is in-call. 
+          5. Update (SDK). Adjust SIP TCP connection timeout value to 60 seconds on every platform. This can avoid to wait too much time for detecting disconnected from SIP when network is down.
+          6. Update (SDK). Update OpenSSL to openssl-1.0.1l.
+
+2015-01-19
+==> SDK : 1. Update (SDK). Fix the issue that SDK can't be loaded on some low memory platform.
+
+2015-01-15
+==> SDK : 1. Tuning (SDK). Modify udt connect timeout from 30s to 3s. To avoid that SDK is blocked a long time if app hangup tunnel immediately when tunnel success to be builded.
+          2. Adding (SDK). Add turn_mapped_address to natnl_tnl_event.
+          3. Adding (SDK). Add a NatLibInit(NatCallback natcb, NatConfig natcfg, String app_data) overloading API. It allows APP pass a APP defined stirng into SDK. SDK will fill this into every callback event.
+
+2014-11-20
+==> SDK : 1. Bug Fix (SDK). Some resource didn't be released when tunnel hanging up. It causes server-side app can't accept new tunnel connection when it didn't be restarted in long time.
+          2. Bug Fix (SDK). In some environment SDK should choose UDP tunnel but SDK choose TURN tunnel.
+          3. Tuning (SDK). Randomize the re-register delay time in the range of 1ms ~ 10000ms.
+
+2014-10-29
+==> SDK : 1. Bug Fix (SDK). Fix crash issue on calling natnl_detect_nat_type by using different thread with initializing SDK.
+          2. Bug Fix (SDK). Fix SDK assertion crash in some SIP retry case.
+          3. Tuning (SDK). Solve the issue which hanging up during making call but tunnel is still made.
+          4. Tuning (SDK). If APP call natnl_lib_deinit many times in short period, the SDK may crash. In this case SDK will notify 60103 with status_code=60000011(NATNL_SC_DE_INITIALIZING).
+          5. Tuning (SDK). Fix SDK response too slow issue on receiving a INVITE message.
+          6. Adding (SDK). Allocate UDP/TCP TURN at the same time. This can fix turn allocating failed in some blocking udp turn packet environment.
+          7. Adding (SDK). Add timestamp of candidate collection into SDP of SIP message for fine tune use.
+
+2014-10-09
+==> SDK : 1. Adding (SDK). Support secure tunnel by setting natnl_config.enable_secured_data = 1 in UAC.
+          2. Tuning (SDK). Notify APP 60105(make call failed) immediately when ICE negotiation failed (no tunnel path is detected).
+          3. Tuning (SDK). Modify TURN allocation waiting time to 3 seconds on UAS side when natnl_config.use_turn = 2.
+          4. Tuning (SDK). Notify 60110 (register failed) event on re-register failed  when disconnected from SIP.
+          5. Bug Fix (SDK). Cancel tcp_sess_check_timer when hangup. This fix assertion check failed on hanging up during making call.
+===>Android
+          1. Adding (JNI). Add NatMakeCall(CallInfo callinfo) API. 
+             1.1 The APP can prepare a CallInfo object and assign the memeber (CalleeID, UserID, srv_port, srv_port_cnt and timeout) of this object with appropriate value. 
+             1.2 Pass the CallInfo object into this API.
+             1.3 When this API return 0, APP can get the call_id from CallInfo.ReturnCallID field.
+===>iOS
+          1. Add x86_64 arch for SDK.
+
+2014-09-04
+==> SDK : 1. Tuning (SDK). Adjust upnp port mapping flow. To avoid wait too much time for setting upnp port mapping and cause INVITE request timeout (408) on UAC.
+
+2014-08-14
+==> SDK : 1. Tuning (SDK). Independent tcp upnp setting from stun binding.
+          2. Tuning (SDK). Speedup De-initialization process. De-initialize without waiting un-register and hanging up response.
+          3. Tuning (SDK). Remove upnp port mapping when call hang up.
+          4. Adding (SDK). Print stack trace in debugging log file when SDK crash on Windows platform. To enable this function, asusnatnl.pdb must exist in the execution folder of APP.
+
+2014-07-24
+==> SDK : 1. Bug Fix (SDK). SDK still can be initialized when max_instances exceeded.
+          2. Tuning (SDK). Implement SIP rotation failover mechanism.
+          3. Tuning (SDK). To avoid power consuming issue after SDK intialize. Create media tranport at making call stage and destroy media tranport on call hanging up.
+
+2014-06-20
+==> SDK : 1. Bug Fix (SDK). SDK crash if log_file_flags was set.
+          2. Bug Fix (SDK). Fix making call failed in fast_init mode if sip server request authentication.
+          3. Bug Fix (SDK). SDK crash when re-register timer is triggered by disconnecting with sip server.
+          4. Bug Fix (SDK). Data can't be transferred on some environment even if making call OK.
+          5. Bug Fix (SDK). TT Bug 420225 and ​425038.
+          6. Bug Fix (SDK). After making call failed with PJNATH_EICEFAILED error, the CPU usage of SDK is extreme high.
+          7. Tuning (SDK). Try to improve the probability of choosing upnp tcp.
+          8  Adding (SDK). Add natnl_detect_nat_type API.
+          9. Adding (SDK). Add writing log to syslog on linux platform. To enable this mechanism, you can OR the value 0x1110 to natnl_config.log_cfg.log_file_flags and set a suitable natnl_config.log_cfg.syslog_falicity (Please reference to syslog.h on linux).
+===>Android/Java
+	    1. Add fast_init in NatConfig
+         2. Add sys_log in LogCfg
+===>iOS
+	    1. Add arm64 arch for SDK 
+
+2014-05-15
+==> SDK : 1. Adding (SDK). Add fast_init to natnl_config. If fast_init=1, SDK would do fast initialization and wouldn't notify 60005 event.
+          2. Tuning (SDK). Allow both of callee device_id formats device_id or device_id@realm.
+          3. Tuning (SDK). Discard to use getifaddrs function.
+          4. Tuning (SDK). Ignore the situation of STUN testing failed. 
+          5. Bug Fix (SDK). SIP server failover mechanism didn't work.
+          6. Bug Fix (SDK). User assigned port mapping mechanism didn't work.
+
+2014-04-16
+==> Android/Java
+	  1. Add overloading member function public void LoaAndroidNatLib(String libname_version)
+﻿2014-04-01
+==> SDK : 1. Bug Fix (SDK). When call hangup, sdk will be blocked about 60 seconds on tunnel type TURN.
+          2. Bug Fix (SDK). If network disconnected, TCP tunnel will be blocked on hanging up tunnel.
+
+
+2014-03-25
+==> SDK : 1. Adding (SDK). Add idle_timeout_sec to natnl_config. If no data are transferred through tunnel in [idle_timeout_sec] seconds, SDK will notify NATNL_TNL_EVENT_IDLE_TIMEOUT(60113) event. If [idle_timeout_sec] is 0, SDK would never notify NATNL_TNL_EVENT_IDLE_TIMEOUT event.
+          2. Adding (SDK). Add app_data to natnl_tnl_event. This value came from the third argument of natnl_lib_init2 or the fourth argument of natnl_lib_init_with_inst_id2.
+          3. Bug Fix (SDK). When video player stops getting streaming data from TCP tunnel, it will cause that SDK keeps a lot of streaming data in memory.
+          4. Bug Fix (SDK). High CPU usage.
+          5. Bug Fix (SDK). Unstable relay tunnel.
+          6. Bug Fix (SDK). Fix several crash issues.
+          7. Bug Fix (SDK). Fix several deadlock issues.
+          8. Bug Fix (SDK). Local SDK didn't notify remote SDK to close session while local APP closes session.
+==> Android/Java
+	  1. Add member 'idle_timeout' in NatConfig class.         
+
+
+2014-02-25
+==> SDK : 1. Adding (SDK). Add is_server_side_app into natnl_config. If the app is server role this value MUSTassign 1. The default value is 0.
+          2. Tuning (SDK). Disable audio related functions.
+          3. Tuning (SDK). Don't allocate TURN if nat type of UAS is OPEN.
+          4. Bug Fix (SDK). natnl_set_max_instances will fail if use argument value 1024. 
+          5. Bug Fix (SDK). Upnp doesn't work.
+          6. Bug Fix (SDK). SDK would not select tcp as tunnel when app make call at second time.
+          7. Bug Fix (SDK). UDP tunnel CPU burst, performance and deadlock issues.
+          8. Bug fix (SDK). Remove the mechanism of ip change auto recovery.
+==> Java: 
+	  1. Add "is_server_side_app" member into NatConfig.java
+==> coding guide:
+	  1. Callback function,
+	請勿讓callback function 停留過多的時間如呼叫 natnl_lib_init/deinit/hangup/makecall 或其他等待行為,
+因為停留過多的時間會造成SDK內部處理異常, 所以如果收到callback event 可以使用message queue
+處理您的後續動作, 讓callback function 快速結束。也盡量避免在callback function 內create sub thread,
+因為callback funciton 的thread結束而sub thread還未結束，在某些平台可能會 發生exeception.
+
+2014-01-16
+==> SDK : 1. Bug Fix (SDK). Assertion failed issue on initialization when max_calls > 4.
+          2. Bug Fix (SDK). Memory leak issue.
+          3. Bug Fix (SDK). API natnl_lib_deinit_all didn't destroy logging instance issue.
+          4. Bug Fix (SDK). Infinite to set UPnP port forwarding.
+          5. Tuning (SDK). Re-define PJSUA_MAX_CALLS from 32 to 15.
+
+2014-01-13
+==> SDK : 1. Adding (SDK). Add qos_priority to natnl_srv_port structure. APP can set this value to configure tunnel session priority. Valid range is 0~99. 0 is highest priority. 99 is lowest priority.
+          2. Bug Fix (SDK). Make call may pop assertion message.
+          3. Bug Fix (SDK). NOT_FOUND error when iOS initialize.
+          4. Bug Fix (SDK). 488 error when making call. Because TCP port is already used by another application.
+          5. Bug Fix (SDK). socket reset by peer and read 0 bytes issue.
+==> Java: 
+	1. Add java api  for int NatTunnelPort(int call_id, int action, int tnl_port_count, NatConfig natcfg, int instance_id); 
+	2. Add qos_priority member in SrvPort
+
+2014-01-03
+==> SDK : 1. Adding (SDK). Support multiple instances. If app want to use multipe instances, it must call natnl_set_max_instances to set maximum number of instances first.
+          2. Adding (SDK). Add natnl_set_max_instances and natnl_lib_deinit_all APIs for multiple instances.
+          3. Adding (SDK). Existing APIs with instance id version. (natnl_lib_init, natnl_pool_dump, natnl_dump_version, natnl_lib_deinit, natnl_make_call, natnl_hangup_call, natnl_reg_device, natnl_unreg_device, natnl_update_config, natnl_tunnel_port etc).
+          4. Adding (SDK). Add local_ip, public_ip, upnp_port, inst_id to natnl_tnl_event structure.
+          5. Tuning (SDK). Modify MAX_TEXT_LEN from 128 to 32.
+          6. Tuning (SDK). Fix critical compiler warning.
+          7. Bug Fix (SDK). Frequently allocate memory issue.
+          8. Bug Fix (SDK). Deadlock issue.
+          9. Bug Fix (SDK). Broken pipe issue on linux.
+
+==> Java: 
+	1. Add JNI functions that support multiple instances.
+	2. modified java apple sample for multiple instances.
+==> ios:
+	1. replace the dylib with static 1ib
+	2. remove build phase with run script
+	3. modifed ios sample for static lib
+
+2013-11-06
+==> SDK : 1. Bug Fix (SDK). Make call ok but lport deosn't work on iOS.
+          2. Bug Fix (SDK). Tunnel is blocked after some connections(127.0.0.1:lport) by app on iOS.
+          3. Bug Fix (SDK). SDK crash on C# app.
+          4. Bug Fix (SDK). natnl_tnl_event.para.remote_info.remote_device_id is empty on UAC.
+==> Android/Java:
+	1. Modified interface for JNI NatMakeCall with arguments
+		user_id, callee_id, timeout, srv_port_cnt, srv_port[]
+	2. Modified Sample code for Androdi/Java
+	3. Fixed iOS sample code bug for the local/remote is not added when tunnel started.
+2013-10-24
+==> SDK : 1. Tuning (SDK). Fine tune throughput of TCP tunnel on low performance device.
+          2. Tuning (SDK). Speedup making call process.
+          3. Bug Fix (SDK). TCP may not be chosen as tunnel path on multiple interfaces environment.
+          4. Bug Fix (SDK). After hanging up call by UAS. If UAC make call again, SDK will not listen loopback:lport. 
+          5. Adding (SDK). Add local_ip, public_ip and upnp_port into natnl_tnl_event structure. These information will be provided on NATNL_TNL_EVENT_NAT_TYPE_DETECTED event.
+          6. Adding (SDK). Add natnl_add_upnp_mapping and natnl_del_upnp_mapping APIs. These two APIs are used to add/delete port forwarding of network devices which support upnp.
+
+==>JAVA : 
+	1. Add  JNI Functions - public  static native int NatAddUpnpMapping(String iport, String eport, String proto, String leaseDuration);
+    	1. Add  JNI Functions - public static native int NatDelUpnpMapping(String eport, String proto);
+	1. Add members in NatCallback - 	public String                 local_ip;
+				/* 
+					The local ip of the device. 
+					This is filled by NATNL_TNL_EVENT_NAT_TYPE_DETECTED event.
+				*/
+				public String                 public_ip;
+				/* 
+					The public ip of the device. 
+					This is filled by NATNL_TNL_EVENT_NAT_TYPE_DETECTED event.
+				*/
+				public int                  upnp_port[]; // 4 slot 
+				/* 
+					The upnp port for every call slot. 
+					If sdk failed to set upnp port mapping, the port number is 0.
+					This is filled by NATNL_TNL_EVENT_NAT_TYPE_DETECTED event.
+				*/
+
+2013-09-18
+==> SDK : 1. Adding (SDK). Add API natnl_update_config. Currently application can use this API to change log settings dynamically.
+          2. Adding (SDK). Add API natnl_tunnel_port. Application can use this API to add/delete tunnel port pair (lport,rport) dynamically.
+          3. Adding (SDK). UAC can make multiple calls at the same time (up to 4) now.
+          4. Adding (SDK). UAS-side application can initiate a connection and sending data to UAC-side application. To do this we must meet two conditions, First, UAS-side must know UAC-side application's listenning port(e.g. rport). Second, UAS-side application must use API natnl_tunnel_port to add tunnel port pair.
+
+2013-07-24
+==> SDK : 1. Bug Fix (SDK). Data can't be transferred between linux (android, iOS) and windows.
+
+2013-07-22
+==> SDK : 1. Adding (SDK). Internal process for device ip change (local or external). If the internal process failed, SDK still notify application NATNL_TNL_EVENT_IP_CHANGED(60108).
+
+2013-05-24
+==> SDK : 1. Tuning (SDK). Speed up initialization and de-initialization process.
+
+2013-05-16
+==> SDK : 1. Bug Fix (SDK). Fix infinite re-registration issue. Change the key input value from pj_sockaddr structure to ip:port format for transport hash-table.
+          2. Bug Fix (SDK). ACK or BYE packet may not be delivered. Always use TCP or TLS to send sip packet.
+          3. Adding (SDK). Support more than one server (sip, stun and turn, up to 8) in natnl_config and try another server automatically when connection failed.
+==> Android: Add x86 sdk.
+
+2013.04.23
+==> SDK : 1. Bug Fix (SDK). Fix bug 265354. Make call failed with NATNL_SC_NOT_INITED when nat type is open. Because SDK notify init_ok too early.
+          2. Bug Fix (SDK). Fix bug 259562. There is deadlock when the registration timing is close to making call's.
+
+2013.04.02
+==> SDK : 1. Bug Fix (SDK). Fix bug 265354. SDK may not notify IP_CHANGED event.
+==> WIN8 : update version to 1.3.3.0
+
+2013.03.22
+==> SDK : 1. Bug Fix (SDK). SDK crash when make call with initialization first.
+          2. Bug Fix (SDK). SDK may not notify IP_CHAGNED event.
+          3. Adding  (SDK). Add local and remote SDK version to natnl_tnl_event structure.
+          4. Adding  (SDK). Support TURN "Try Alternate" mechanism.
+          5. ADding  (SDK). Add bandwidth_KBs_limit to natnl_config structure for bandwidth control.
+          6. Adding  (SDK). Add natnl_reg_device and natnl_unreg_device API.
+          7. Adding  (SDK). Add NATNL_TNL_EVENT_REG_OK and NATNL_TNL_EVENT_REG_FAILED events for natnl_reg_device API.
+          8. Adding  (SDK). Add NATNL_TNL_EVENT_UNREG_OK and NATNL_TNL_EVENT_UNREG_FAILED events for natnl_unreg_device API.
+
+==> Android/Java: 
+	  1. Add bandwidth_KBs_limit in NatConfig class
+          2. Add CallerSDKVersion in NatCallback class
+	  3. Add CalleeSDKVersion in NatCallback class
+
+
+2013.03.13
+==> SDK : 1. Bug fix (SDK). Android TLS issue.
+          2. Bug fix (SDK). SDK doesn't notify NATNL_TNL_EVENT_IP_CHANGED event sometimes.
+          3. Bug fix (SDK). Fix 408 (request timeout) issue.
+          4. Bug fix (SDK). Try to fix assertion fail issue.
+          5. Adding  (SDK). Add disable_sdp_compress to natnl_config structure for debugging use. APP can ignore it.
+
+2013.03.06
+==> SDK : 1. Bug fix (SDK). Solve the problem that TURN can't finish transferring file.
+          2. Bug fix (SDK). When init failed for timeout, SDK may crash.
+          3. Adding  (SDK). Add NATNL_TNL_EVENT_IP_CHANGED event and NATNL_SC_IP_CHANGED status_code. When APP receive the event, it must do deiniet and init.
+
+2013.02.22
+==> SDK : 1. Bug fix (SDK). Change TURNs MAX_MSG_LEN from 1024 to 1021. Solve the problem that TURN can't finish transferring file.
+          2. Bug fix (SDK). Fixed UDT segment fault in Linux.
+          3. Bug fix (SDK). natnl_lib_init doesn't return sometimes.
+          4. Bug Fix (SDK). When uPnP is enabled, if UAC and UAS are at the same subnet, the selected tunnel type will be UDP. after fixing, the selected tunnel type is TCP
+          5. Bug fix (SDK). Fixed udt hangup deadlock  in linux.
+          6. Bug fix (SDK). UAS will crash on hanging up call when UAC and UAS use same router that is configured to use PPPoE.
+          7. Bug fix (SDK). TCP can't transfer data sometimes when UAC and UAS use same router that is configured to use PPPoE.
+          8. Bug fix (SDK). SDK can't select TCP as tunnel path when UAS installed multiple network interfaces.
+
+2013.02.18
+==> SDK : 1. Bug fix (SDK). SDK may crash after hangup (UAC and UAS are use same router and the router is configured to use PPPoE).
+          2. Bug fix (SDK). TLS doesn't work.
+
+2013.01.31
+==> iOS: 1. update correct sample code
+==> SDK : 1. Bug fix (SDK). android, can't make call immediately after hanging up call.
+          2. Bug fix (SDK). Use-turn=2 can't work when uac's turn is not the same as uas's turn.
+          3. Bug fix (SDK). SDK doesn't notify KA_TIMEOUT event on unpluging ethernet after initialization.
+          4. Bug fix (SDK). Memory leak problem.
+          5. Bug fix (SDK). 2 uac to one uas, one uac hanging up affect another uac/uas tunnel.
+          6. Tunning (SDK). candidate rule host tcp > reflective tcp > reflective udp > turn.
+
+2013.01.11
+==> SDK : 1. Bug fix (asusnatnl.dll). Don't do hangup on_ice_complete() when status is not success.
+          2. Bug fix (asusnatnl.dll). The deaklock problem which will cause data sending hang up when transport type is turn(should also happen in TCP)
+          3. Bug fix (asusnatnl.dll). Some functions no return value.
+          4. Bug fix (asusnatnl.dll). UDT(UDP) connection problems.
+          5. Tunning (asusnatnl.dll). If there are data received in tnl_timeout_sec period, don't notify APP NATNL_TNL_EVENT_KA_TIMEOUT(60002).
+          6. Tunning (asusnatnl.dll). Re-schedule ICE keep alive timer after keep alive timeout.
+          7. Tunning (asusnatnl.dll). Notify NATNL_TNL_EVENT_MAKECALL_FAILED(60105) when ICE can't select any candidate as tunnel path.
+          8. Tunning (asusnatnl.dll). Set PJ_IOQUEUE_URGENT_DATA flags according to per packet instead of turn session.
+          9. Tunning (asusnatnl.dll). When TCP socket return 10053 or 103 on sending data, notify APP NATNL_TNL_EVENT_KA_TIMEOUT for re-initialization.
+          10. Tunning (asusnatnl.dll). Raise tunnel control packet priority (TCP and TURN).
+          11. Tunning (asusnatnl.dll). Deallocate TURN when ICE doesn't select TURN.
+==> Support:
+	1. Metro Apps of NAT solution
+		1) Add asusnatnl.dll for win8 x86/arm for package
+		2) Add wrc.dll + wrc.winmd for package
+		3) Add Metro Apps sample code for NAT solution
+
+2013.01.04
+==> SDK : 1. Bug fix (asusnatnl.dll). Ignore refresh allocation timeout on TURN.
+          2. Tunning (asusnatnl.dll). Set TURN socket's recv and send buffer to 24MB and 1MB.
+          3. Tunning (asusnatnl.dll). Remove RTCP candidate.
+          4. Tunning (asusnatnl_test.exe). Do GET and PUT command with thread.
+
+2012.12.27
+==> SDK : Add UDT functions
+==> Windows on Arm : supported
+
+2012.12.13
+==> SDK : 1. Bug fix (asusnatnl.dll). Wrong ua_type in NATNL_TNL_EVENT_KA_TIMEOUT.
+          2. Tunning (asusnatnl.dll). Close udpclient’s tcp_sock when hangup call.
+          3. Tunning (asusnatnl.dll). Move NATNL_TNL_EVENT_NAT_TYPE_DETECTED(6005) event to the timing that upnp is set.
+          4. Tunning (asusnatnl.dll). Add NATNL_SC_ALREDAY_INITED(60000004) status code for re-init without deinit.
+          5. Tunning (asusnatnl.dll). Iclude UDT's(UDP) structures for future use.
+
+2012.11.29
+=> SDK : 1. Bug fix (asusnatnl.dll). SDK will crash after 1 hour when tunnel builded.
+         2. Bug fix (asusnatnl.dll). Data cannot be transferred between x86 and x64 SDK.
+         3. Bug fix (asusnatnl.dll). Wrong ua_type in NATNL_TNL_EVENT_KA_TIMEOUT event.
+         4. Bug fix (asusnatnl.dll). asusnatnl.dll Add verify_server option to natnl_config structure.
+         5. Tunning (asusnatnl.dll). Improve performance.
+
+=> Java/Android:	1. update NatLib.jar
+	 		2. add field verify_server in class NatnlConfig
+
+2012.11.15 release note
+=> Apple iOS: 	1. Add Sample code for xcode 4.5.2 
+		2. Release i386 for iOS6.0 simulator
+		3. Release armv7 for iOS6.0
+		4. Prepare native lib and header files.
+		5. Add ios readme
+
+=> SDK : 1. Bug fix (asusnatnl.dll). on_ice_transport_error may cause SIGSEGV error.
+         2. Add function (asusnatnl.dll). AAdd tnl_timeout_sec to natnl_config. (default and maximum : 180, minimum : 0)
+         3. Tunning (asusnatnl.dll). Support tread safe. (Application can call SDK functions on different thread at the same process)
+         4. Tunning (asusnatnl.dll). Conficts with DLNA, SDK may init failed with PJLIB_UTIL_ESTUNNOTRESPOND error.
+
+2012.11.01 release note
+=> Add Java API libraries(JAR&Native) for android and applets.
+=> Java: 1. Change SetInfo API to SetCfg and pass class object as arguments.
+         2. Add abstract class to implement callback functions for init/makcall completion.
+         3. Add Java Jar Libraries Natnl_Java_SDK.txt for HOW TO USE.
+=> SDK : 1. Improve (asusnatnl.dll). Improve tunnel's throughput.
+         2. Bug fix (asusnatnl.dll). ua_type is wrong value in callback natnl_tnl_event when tunnel builded.
+         3. Bug fix (asusnatnl.dll). After hanging up A call B's tunnel, the data can’t be sent to A on B call A's tunnel (TCP).
+         4. Bug fix (asusnatnl_test.exe). Invoke natnl_lib_deinit() twrice after receiving “q” command.
+
+
+2012.10.18 release note
+=> Android Java sample code
+	Add: 	NatCb, natnl_config classes
+		NatSetCfg, NatSetCb methods
+		Natnl_Java_SDK.txt, HOW TO USE API and CLASSES
+=> Native JNI
+	Add: NatSetCfg, NatSetCb
+
+=> SDK 
+	Add:	natnl_tnl_event 中增加 nat_type 代表 SDK 所偵測網路環境的 NAT Type ，此欄位只有在 callback function 被呼叫且中的 event 為
+   		NATNL_TNL_EVENT_START (make call 完成) 與 NATNL_TNL_EVENT_NAT_TYPE_DETECTED (NAT Type 偵測完成) 時有意義，
+		以下說明不同的 nat_type 的 value 所代表的 nat type。
+   		0 : unknown
+   		1 : err_unknown
+   		2 : open
+   		3 : blocked
+   		4 : symmetric_udp
+   		5 : full_cone
+   		6 : symmetric
+   		7 : restricted
+   		8 : port restricted
+	Add:	natnl_tnl_event 中增加 tnl_type 代表 SDK 在 make call 所選擇的 tunnel type ，只有在 callback function 被呼叫且中的 event 為 
+   		NATNL_TNL_EVENT_START (make call 完成) 時有意義，以下說明不同 tnl_type 的 value 所代表的 tunnel type。
+   		0 : UNKNOWN
+   		1 : TCP
+   		2 : TURN
+   		3 : UDP
+	Add:	增加一個可以動態調整 SDK 的 log 輸出設定功能，在 APP 的運行目錄中如果有名為 natnl_log.cfg 的檔案存在的話，SDK 會依照此設定檔來進行 log 輸出。
+   		而此設定檔內容就如同 natnl.cfg 中的設定值是一樣的，目前可接受 --log-level, --log-file, --log-append。
+	Add:	error hadler ，處理  make call 完成後，UAC 或 UAS 直接關閉後，另一端沒有任何反應的問題。
+		目前會利用 callback function 通知 APP NATNL_TNL_EVENT_KA_TIMEOUT event 表示 tunnel 已斷線。
+	Modify:	natnl_tnl_event 中修改 ua_type 的值所代表的意義。
+   		0 : UNKNOWN
+   		1 : UAC
+   		2 : UAS
+
+2012.09.27 release
+
+
+Android/Applet UI:
+	1. added -
+		-Log-Level
+		-Log-append
+		-Log-file
+		-Max-Call
+		-use-upnp
+		-user-port
+			+local_data_port-external_data_port
+			+local_control_port-external_control_port
+	
+		
+	2. deleted -	
+		- NONE button
+		- PUT/GET button
+
+	3. modified -
+		- Scrollview
+
+SDK:
+	1. Fixed -
+		natnl Bug fix. SDK may crash when do quit without hanging up call.
+		natnl When UAS and UAC both are on same subnet, SDK should use TCP directly.
+		Not Acceptable will occur on UAS when UAC calls.
+		SDK does not release listening tcp port when natnl_lib_deinit called.
+		SDK will terminate abnormally when REGISTER fail and --use-turn is 2.
+		When only tcp candidate exists, SDK doesn't notify APP NATNL_TNL_EVENT_START event.
+		tcp_sess_check_timer may rise exception when tcp_session is freed.
+		natnl Change worker thread's polling timeout to 1 for high CPU loading.
+		natnl CHange PJ_TCP_MAX_PKT_LEN from 24*1024*1024 to 1024*1024.
+		natnl Change worker thread's polling timeout to 0 and UPNP_TCP_MSG_MAX_LEN to 1024.
+ 		natnl Keep ICE negotiation in progress when TURN allocation failed.
+    		If --log-file is empty string, SDK would terminate by segmentation fault.
+		natnl Update config files.
+		Segmentation fault would occur when lport of tunnel-port is in use.
+		natnl Resolve the issue that pc(not install VC 2008 redistributable package) can't run asusnatnl_test.exe. Change runtime library option of all projects from /MD to /
+		ICE wouldn't select TURN candidate when --use-stun and --use-upnp disabled.
+
+	2. Added -
+		natnl Add timeout_sec parameter to natnl_make_call. 
+		natnl Add DISCARD_GBN_PROTO defined.
+		natnl Add log_filename, log_file_flags to natnl_config structure.
+		natnl Configure pjsip to support TLS.
+		natnl Add --max-calls option to config file.
+

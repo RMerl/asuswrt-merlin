@@ -441,3 +441,9 @@ legend {
 	background: url(../images/survey/radio_status.png);
 	background-position: -0px -147px; width: 28px; height: 20px;
 }
+
+.cfg_val{
+	font-size:14px;
+	font-weight:bolder;
+	color:#FC0;
+}

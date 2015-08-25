@@ -25,6 +25,11 @@ LDFLAGS += -L$(TOP)/nvram$(BCMEX) -L$(PLATFORMDIR)/install/nvram/usr/lib -lnvram
 LDFLAGS += -L$(TOP)/shared -L$(PLATFORMDIR)/install/shared/usr/lib -lshared
 LDFLAGS += -lgcc_s
 
+ifeq ($(RTCONFIG_QTN),y)
+CFLAGS += -I$(TOP)/libqcsapi_client -I$(TOP)/httpd -I./sysdeps/qtn
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
+
 OBJS := dhd_monitor.o
 
 ifeq ($(wildcard $(SRCBASE)/router/dhd_monitor/*.c),)
@@ -42,8 +47,13 @@ install: all
 	install dhd_monitor $(INSTALLDIR)/usr/sbin
 	$(STRIP) $(INSTALLDIR)/usr/sbin/dhd_monitor
 
+ifeq ($(wildcard $(SRCBASE)/router/dhd_monitor/*.c),)
+dhd_monitor:
+	-cp -f prebuilt/dhd_monitor dhd_monitor
+else
 dhd_monitor: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+endif
 
 %.o: .%.depend
 .%.depend: %.c

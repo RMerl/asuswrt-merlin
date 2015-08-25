@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <arpa/inet.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 
 #include "odhcp6c.h"
@@ -39,14 +40,27 @@ static const int8_t hexvals[] = {
 };
 
 
+static char action[16] = "";
+static char *argv[4] = {NULL, NULL, action, NULL};
+static volatile pid_t running = 0;
+static time_t started;
 
-static char *argv[4] = {NULL, NULL, NULL, NULL};
 
+static void script_sighandle(int signal)
+{
+	if (signal == SIGCHLD) {
+		pid_t child;
+		while ((child = waitpid(-1, NULL, WNOHANG)) > 0)
+			if (running == child)
+				running = 0;
+	}
+}
 
 int script_init(const char *path, const char *ifname)
 {
 	argv[0] = (char*)path;
 	argv[1] = (char*)ifname;
+	signal(SIGCHLD, script_sighandle);
 	return 0;
 }
 
@@ -336,41 +350,61 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 }
 
 
-void script_call(const char *status)
+void script_call(const char *status, int delay, bool resume)
 {
-	size_t dns_len, search_len, custom_len, sntp_ip_len, ntp_ip_len, ntp_dns_len;
-	size_t sip_ip_len, sip_fqdn_len, aftr_name_len, cer_len, addr_len;
-	size_t s46_mapt_len, s46_mape_len, s46_lw_len, passthru_len;
+	time_t now = odhcp6c_get_milli_time() / 1000;
 
-	odhcp6c_expire();
+	if (running) {
+		kill(running, SIGTERM);
+		delay -= now - started;
+	}
 
-	struct in6_addr *addr = odhcp6c_get_state(STATE_SERVER_ADDR, &addr_len);
-	struct in6_addr *dns = odhcp6c_get_state(STATE_DNS, &dns_len);
-	uint8_t *search = odhcp6c_get_state(STATE_SEARCH, &search_len);
-	uint8_t *custom = odhcp6c_get_state(STATE_CUSTOM_OPTS, &custom_len);
-	struct in6_addr *sntp = odhcp6c_get_state(STATE_SNTP_IP, &sntp_ip_len);
-	struct in6_addr *ntp = odhcp6c_get_state(STATE_NTP_IP, &ntp_ip_len);
-	uint8_t *ntp_dns = odhcp6c_get_state(STATE_NTP_FQDN, &ntp_dns_len);
-	struct in6_addr *sip = odhcp6c_get_state(STATE_SIP_IP, &sip_ip_len);
-	uint8_t *sip_fqdn = odhcp6c_get_state(STATE_SIP_FQDN, &sip_fqdn_len);
-	uint8_t *aftr_name = odhcp6c_get_state(STATE_AFTR_NAME, &aftr_name_len);
-	struct in6_addr *cer = odhcp6c_get_state(STATE_CER, &cer_len);
-	uint8_t *s46_mapt = odhcp6c_get_state(STATE_S46_MAPT, &s46_mapt_len);
-	uint8_t *s46_mape = odhcp6c_get_state(STATE_S46_MAPE, &s46_mape_len);
-	uint8_t *s46_lw = odhcp6c_get_state(STATE_S46_LW, &s46_lw_len);
-	uint8_t *passthru = odhcp6c_get_state(STATE_PASSTHRU, &passthru_len);
+	if (resume || !action[0])
+		strncpy(action, status, sizeof(action) - 1);
 
-	size_t prefix_len, address_len, ra_pref_len,
-		ra_route_len, ra_dns_len, ra_search_len;
-	uint8_t *prefix = odhcp6c_get_state(STATE_IA_PD, &prefix_len);
-	uint8_t *address = odhcp6c_get_state(STATE_IA_NA, &address_len);
-	uint8_t *ra_pref = odhcp6c_get_state(STATE_RA_PREFIX, &ra_pref_len);
-	uint8_t *ra_route = odhcp6c_get_state(STATE_RA_ROUTE, &ra_route_len);
-	uint8_t *ra_dns = odhcp6c_get_state(STATE_RA_DNS, &ra_dns_len);
-	uint8_t *ra_search = odhcp6c_get_state(STATE_RA_SEARCH, &ra_search_len);
+	pid_t pid = fork();
+	if (pid > 0) {
+		running = pid;
+		started = now;
 
-	// Don't set environment before forking, because env is leaky.
-	if (fork() == 0) {
+		if (!resume)
+			action[0] = 0;
+	} else if (pid == 0) {
+		size_t dns_len, search_len, custom_len, sntp_ip_len, ntp_ip_len, ntp_dns_len;
+		size_t sip_ip_len, sip_fqdn_len, aftr_name_len, cer_len, addr_len;
+		size_t s46_mapt_len, s46_mape_len, s46_lw_len, passthru_len;
+
+		signal(SIGTERM, SIG_DFL);
+		if (delay > 0) {
+			sleep(delay);
+			odhcp6c_expire();
+		}
+
+		struct in6_addr *addr = odhcp6c_get_state(STATE_SERVER_ADDR, &addr_len);
+		struct in6_addr *dns = odhcp6c_get_state(STATE_DNS, &dns_len);
+		uint8_t *search = odhcp6c_get_state(STATE_SEARCH, &search_len);
+		uint8_t *custom = odhcp6c_get_state(STATE_CUSTOM_OPTS, &custom_len);
+		struct in6_addr *sntp = odhcp6c_get_state(STATE_SNTP_IP, &sntp_ip_len);
+		struct in6_addr *ntp = odhcp6c_get_state(STATE_NTP_IP, &ntp_ip_len);
+		uint8_t *ntp_dns = odhcp6c_get_state(STATE_NTP_FQDN, &ntp_dns_len);
+		struct in6_addr *sip = odhcp6c_get_state(STATE_SIP_IP, &sip_ip_len);
+		uint8_t *sip_fqdn = odhcp6c_get_state(STATE_SIP_FQDN, &sip_fqdn_len);
+		uint8_t *aftr_name = odhcp6c_get_state(STATE_AFTR_NAME, &aftr_name_len);
+		struct in6_addr *cer = odhcp6c_get_state(STATE_CER, &cer_len);
+		uint8_t *s46_mapt = odhcp6c_get_state(STATE_S46_MAPT, &s46_mapt_len);
+		uint8_t *s46_mape = odhcp6c_get_state(STATE_S46_MAPE, &s46_mape_len);
+		uint8_t *s46_lw = odhcp6c_get_state(STATE_S46_LW, &s46_lw_len);
+		uint8_t *passthru = odhcp6c_get_state(STATE_PASSTHRU, &passthru_len);
+
+		size_t prefix_len, address_len, ra_pref_len,
+			ra_route_len, ra_dns_len, ra_search_len;
+		uint8_t *prefix = odhcp6c_get_state(STATE_IA_PD, &prefix_len);
+		uint8_t *address = odhcp6c_get_state(STATE_IA_NA, &address_len);
+		uint8_t *ra_pref = odhcp6c_get_state(STATE_RA_PREFIX, &ra_pref_len);
+		uint8_t *ra_route = odhcp6c_get_state(STATE_RA_ROUTE, &ra_route_len);
+		uint8_t *ra_dns = odhcp6c_get_state(STATE_RA_DNS, &ra_dns_len);
+		uint8_t *ra_search = odhcp6c_get_state(STATE_RA_SEARCH, &ra_search_len);
+
 		ipv6_to_env("SERVER", addr, addr_len / sizeof(*addr));
 		ipv6_to_env("RDNSS", dns, dns_len / sizeof(*dns));
 		ipv6_to_env("SNTP_IP", sntp, sntp_ip_len / sizeof(*sntp));
@@ -406,7 +440,6 @@ void script_call(const char *status)
 		script_hexlify(&buf[9], passthru, passthru_len);
 		putenv(buf);
 
-		argv[2] = (char*)status;
 		execv(argv[0], argv);
 		_exit(128);
 	}

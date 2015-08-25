@@ -1,297 +1,200 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns:v>
 <head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=1"/>
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - <#errormessage_title#></title>                          
-<!--link rel="stylesheet" type="text/css" href="index_style.css"-->
-<!--link rel="stylesheet" type="text/css" href="form_style.css"-->
-<!--link rel="stylesheet" type="text/css" href="other.css"-->
+<title><#Web_Title#> - <#errormessage_title#></title>
 <style>
-.page_body{
-	background-color:#21333e;
-	margin:10px auto;
+.content{
+	width:580px;
+	background:rgba(40,52,55,0.1); 
 }
-.page_body_mobile{
-	background-color:black;
-	margin:0px auto;
+.wrapper{
+	background:url(images/New_ui/login_bg.png) #283437 no-repeat;
+	background-size: 1280px 1076px;
+	background-position: center 0%;
+	margin: 0px; 
 }
-.loadingBarBlock{
-	filter:alpha(opacity=90);
-	opacity:.90;
-	-webkit-border-radius: 10px;
-	-moz-border-radius: 10px;
-	border-radius: 10px;
-	behavior: url(/PIE.htc);
-	border-radius: 10px 10px 10px 10px;
-	border: 0px;
-	width:300px;
-	font-size:12px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
-	color:#FFFFFF;
-	background-color:#000000;
-	position:absolute;
-	margin:5px 35% 5px;
+.title_name {
+	font-family:Arial;
+	font-size: 26pt;
+	color:#93d2d9;
 }
-.erTable thead{
-	color:#FFFFFF;
-	font-weight:bolder;
-	font-size:15px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
+.prod_madelName{
+	font-family: Arial;
+	font-size: 22pt;
+	color:#fff;
+}
+.p1{
+	font-family: Arial;
+	font-size: 16pt;
+	color:#fff;
+}
+.button{
+	background:rgba(255,255,255,0.1);
+	border: solid 1px #6e8385;
+	border-radius: 4px ;
+	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
+	height: 68px;
+	width: 300px;
+	font-family: Arial;
+	font-size: 28pt;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
 	text-align:center;
-	line-height:25px;
+	vertical-align:center
 }
-.erTable th{
-	font-weight:bolder;
-	font-size:13px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
-	line-height:25px;
-	text-align:left;
+.button_text{
+	font-family: Arial;
+	font-size: 28pt;
+	color:#fff;
+	text-align:center;
+	vertical-align:center
 }
-.erTable thead td{
-	height:52px;
-	background: #7d7e7d; /* Old browsers */
-	background: -moz-linear-gradient(top, #7d7e7d 0%, #0e0e0e 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7d7e7d), color-stop(100%,#0e0e0e)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* Opera11.10+ */
-	background: -ms-linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* IE10+ */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7d7e7d', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
-	background: linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* W3C */
+.form_input{
+	background-color:rgba(255,255,255,0.2);
+	border-radius: 4px;
+	padding:26px 22px;
+	width: 480px;
+	border: 0;
+	height:25px;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	font-size:28px
 }
-
-.erTable tbody th{
-	background: #000; /* Old browsers */
-	font-size:15px;
+.form_input_text{
+	font-family: Arial;
+	font-size: 28pt;
+	color:#a9a9a9;
 }
-.erpage_td{
-	background: #000; /* Old browsers */
+.p2{
+	font-family: Arial;
+	font-size: 18pt;
+	color:#28fff7;
 }
-.erpage_footer{
-	height:36px;
-	background: #0e0e0e; /* Old browsers */
-	background: -moz-linear-gradient(top, #0e0e0e 0%, #7d7e7d 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#0e0e0e), color-stop(100%,#7d7e7d)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Opera11.10+ */
-	background: -ms-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* IE10+ */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0e0e0e', endColorstr='#7d7e7d',GradientType=0 ); /* IE6-9 */
-	background: linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* W3C */
-	-webkit-border-bottom-right-radius: 10px;
-	-webkit-border-bottom-left-radius: 10px;
-	-moz-border-radius-bottomright: 10px;
-	-moz-border-radius-bottomleft: 10px;
-	border-bottom-right-radius: 10px;
-	border-bottom-left-radius: 10px;
-	
-}
-.Epagecontent{
-	font-size:12px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
-	border:1px dashed #333;
-	background-color:#FFF;
-	width:90%;
-	padding:5px;
-	margin:2px 0px 10px 20px;
-	line-height:20px;
-	color:#000;
-}
-.Epagetitle{
-	font-size:14px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
-	font-weight: bolder;
-	line-height:30px;
-	color:#FFF;
-	margin:0px 0px 0px 20px;
-}
-.alertImg{
-	position:absolute;
-	z-index:600;
-	margin:-117px 0px 0px 410px;
-}
-.er_title{
-	color:#FC0;
-	background-color:#000000;
-	font-weight:bolder;
-	height:30px;
-	line-height:24px;
-	margin:5px 0px 0px 20px;
-}	
-.Bar_container{
-	width:85%;
-	height:21px;
-	border:2px inset #999;
-	margin:0 auto;
-	background-color:#FFFFFF;
-	z-index:100;
-}
-#proceeding_img_text{
-	position:absolute; z-index:101; font-size:11px; color:#000000; margin-left:110px; line-height:21px;
-}
-#proceeding_img{
- 	height:21px;
-	background:#C0D1D3 url(/images/proceeding_img.gif);
-}
-.modelName{
-	color:#FFFFFF;
-	font-size:22px;
-	font-family:Verdana;
-	font-weight:bolder;
-	border:0px solid #333;
-	width:300px;
-	position:absolute;
-	height:20px;
-	letter-spacing:1px;
-	margin:10px 0px 0px 18px;
-}
-.popup_bar_bg{
-	position:absolute;	
-	margin: auto;
-	top: 0;
-	left: 0;
-	width:100%;
-	height:100%;
-	z-index:99;
-	background-color: #444F53;
-	filter:alpha(opacity=90);  /*IE5、IE5.5、IE6、IE7*/
-	opacity: .9;  /*Opera9.0+、Firefox1.5+、Safari、Chrome*/
-	background-repeat: repeat;
-	visibility:hidden;
-	overflow:hidden;
-}
-
 .button_gen{
 	font-weight: bolder;
 	text-shadow: 1px 1px 0px black;
-  background: transparent url(/images/New_ui/contentbt_normal.png) no-repeat scroll center top;
-  _background: transparent url(/images/New_ui/contentbt_normal_ie6.png) no-repeat scroll center top;
-  border:0;
-  color: #FFFFFF;
+	background: transparent url(/images/New_ui/contentbt_normal.png) no-repeat scroll center top;
+	_background: transparent url(/images/New_ui/contentbt_normal_ie6.png) no-repeat scroll center top;
+	border:0;
+	color: #FFFFFF;
 	height:33px;
 	font-family:Verdana;
 	font-size:12px;
-  padding:0 .70em 0 .70em;  
- 	width:122px;
-  overflow:visible;
+	padding:0 .70em 0 .70em;  
+	width:122px;
+	overflow:visible;
 	cursor:pointer;
 	outline: none; /* for Firefox */
- 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
- 	white-space:normal;
+	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+	white-space:normal;
 }
 .button_gen:hover{
 	font-weight: bolder;
 	background:url(/images/New_ui/contentbt_over.png) no-repeat;
 	height:33px;
- 	width:122px;
- 	padding:0 .70em 0 .70em;  
- 	background-position:0px;
+	width:122px;
+	padding:0 .70em 0 .70em;  
+	background-position:0px;
 	cursor:pointer;
 	outline: none; /* for Firefox */
- 	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+	hlbr:expression(this.onFocus=this.blur()); /* for IE */
 }
-
-.radius{
-	-webkit-border-top-left-radius: 10px;
-	-webkit-border-top-right-radius: 10px;
-	-moz-border-radius-topleft: 10px;
-	-moz-border-radius-topright: 10px;
-	border-top-left-radius: 10px;
-	border-top-right-radius: 10px
+a{
+	cursor: pointer;
+	color:#FFF;
+	text-decoration:underline;
 }
-
-.footer_mobile{
-	height:36px;
-	background: #0e0e0e; /* Old browsers */
-	background: -moz-linear-gradient(top, #0e0e0e 0%, #7d7e7d 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#0e0e0e), color-stop(100%,#7d7e7d)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Opera11.10+ */
-	background: -ms-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* IE10+ */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0e0e0e', endColorstr='#7d7e7d',GradientType=0 ); /* IE6-9 */
-	background: linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* W3C */
-	box-sizing:border-box;
-	position:relative;
-	bottom:0;
-	height:36px;
-	width:100%;
-}
-
-.content_block{
-	width:500px;
-	margin:40px auto 0px auto;
-}
-.content_block_mobile{
-	width:100%;
-}
-</style>	
+</style>
 <script type="text/JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
+// get the wan state at the first time.
+var casenum = '<% get_parameter("flag"); %>';
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 4;
 if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
-var detect_dhcp_pppoe = "";
-var current_lanip = '<% nvram_get("lan_ipaddr"); %>';
-var current_mask = '<% nvram_get("lan_netmask"); %>';
-var new_lan_ip = '';
-var reboot_time = 5;
+
+<% wanstate(); %>
 var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
-var _wlc_ssid = decodeURIComponent('<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>');
-
-// get the wan state at the first time.
-<% wanstate(); %>
-<% login_state_hook(); %>
-var done_setting_lan = 0;
-var winH, winW;
-var progress, y;
 
 //2014.05 Viz add for T-MOBILE 
-var rc_support = "<% nvram_get("rc_support"); %>";
-function isSupport(_ptn){
-	return (rc_support.search(_ptn) == -1) ? false : true;
-}
+var isSupport = function(_ptn){return ('<% nvram_get("rc_support"); %>'.search(_ptn) == -1) ? false : true;}
 var tmo_support = isSupport("tmo");
-if(tmo_support)
-        var theUrl = "cellspot.router"; 
-else
-        var theUrl = "router.asus.com";
+var dsl_support = isSupport("dsl");
 
 //Dual WAN unit
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
-if(wans_dualwan_orig.search(" ") == -1)
-        var wans_flag = 0;
-else
-        var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1 : 0;
+if(wans_dualwan_orig.search(" ") == -1) wans_flag = 0;
 
-var casenum = '<% get_parameter("flag"); %>';
+var new_lan_ip = (function(){
+	var current_lanip = '<% nvram_get("lan_ipaddr"); %>';
+	var current_mask = '<% nvram_get("lan_netmask"); %>';
 
-var dsl_support = isSupport("dsl");
+	var inet_aton = function(ip_str){
+		if(!ip_str)
+			return -1;
+		
+		var re = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
+		if(re.test(ip_str)){
+			var v1 = parseInt(RegExp.$1);
+			var v2 = parseInt(RegExp.$2);
+			var v3 = parseInt(RegExp.$3);
+			var v4 = parseInt(RegExp.$4);	
+			if(v1 < 256 && v2 < 256 && v3 < 256 && v4 < 256)
+				return v1*256*256*256+v2*256*256+v3*256+v4;
+		}
+		
+		return -2;
+	}
 
-function initial(){
-	var LoginIP = login_ip_str();
-	var nowIP = login_ip_str_now();
-	
-	if(isMobile()){
-		document.getElementById('body_tag').className = "page_body_mobile";
-		document.getElementById('main_content').className = "content_block_mobile";
-		document.getElementById('footer').className = "";
-		document.getElementById('failReason').style.fontSize = "16px";
-		document.getElementById('suggestion_block').style.fontSize = "16px";
+	var inet_ntoa = function(ip_num){
+		var v1, v2, v3, v4;
+		var ip_str = "";
+		
+		if(!ip_num || typeof(ip_num) != "number")
+			return null;
+		
+		v1 = (ip_num&0xff000000)>>>24;
+		v2 = (ip_num&0x00ff0000)>>>16;
+		v3 = (ip_num&0x0000ff00)>>>8;
+		v4 = (ip_num&0x000000ff);
+
+		ip_str = v1+"."+v2+"."+v3+"."+v4;
+		
+		return ip_str;
+	}
+
+	if(tmo_support){		
+		return (current_lanip.indexOf("192.168.29") == -1) ? "192.168.29.1" : "192.168.24.1";
 	}
 	else{
-		document.getElementById('table_head').className = "radius";
-	}
-	
+		var reverse_mask_num = ~(inet_aton(current_mask));
+		var current_lanip_num = inet_aton(current_lanip);
+		var new_lanip_num = current_lanip_num+reverse_mask_num+1;	
+
+		return inet_ntoa(new_lanip_num);
+	}	
+})();
+
+function initial(){
+	<% login_state_hook(); %>
+	var LoginIP = login_ip_str();
+	var nowIP = login_ip_str_now();
 	var html_code = '';
-	var html_code_notlogin = "<ul>\n<li>Please check with your network administrator.</li>\n</ul>\n";	
-	hideLinkTag();
+	var html_code_notlogin = "<ul><li>Please check with your network administrator.</li></ul>";	
+	var showtext = function(obj, str){if(obj)obj.innerHTML=str;}
+
 	if(casenum == 1){
 		showtext($("#failReason1")[0], "<#web_redirect_reason1#>");
 		html_code += "<ul>";
@@ -304,14 +207,14 @@ function initial(){
 		if(wansbstate == 2 || wanauxstate == 3){
 			showtext($("#failReason1")[0], "<#web_redirect_reason2_1#>");			
 			html_code += "<div>";
-			html_code += "<a href='javascript:pppoeLink();' style='color:#569AC7;text-decoration:underline;'><#web_redirect_suggestion2_1#></a>";
+			html_code += "<a href='javascript:pppoeLink();'><#web_redirect_suggestion2_1#></a>";
 			html_code += "<span><#web_redirect_suggestion2_1_desc#></span>";
 			html_code += "</div>";
 		}
 		else{
 			showtext($("#failReason1")[0], "<#web_redirect_reason2_2#>");
 			html_code += "<div>";
-			html_code += "<a href='javascript:detectLink();' style='color:#569AC7; text-decoration:underline;'><#web_redirect_suggestion2_2#></a>";
+			html_code += "<a href='javascript:detectLink();'><#web_redirect_suggestion2_2#></a>";
 			html_code += "<span><#web_redirect_suggestion2_2_desc#></span>";
 			html_code += "</div>";		
 		}	
@@ -337,37 +240,34 @@ function initial(){
 		else
 			showtext($("#failReason1")[0], "<#web_redirect_reason5_2#>");
 		
-		html_code += '<ul>\n';
+		html_code += '<ul>';
 		if(wanstate == 5)
-			html_code += '<li><#web_redirect_suggestion5_1#></li>\n';
+			html_code += '<li><#web_redirect_suggestion5_1#></li>';
 		else
-			html_code += '<li><#web_redirect_suggestion5_2#></li>\n';
+			html_code += '<li><#web_redirect_suggestion5_2#></li>';
 		
-		html_code += '</ul>\n';
+		html_code += '</ul>';
 		if(wanstate == 5){
-			html_code += '<ul>\n';
-			html_code += '<li><a href="javascript:manually_start_wan_Link();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion_manually_start_wan#></a></li>\n';
-			html_code += '</ul>\n';
+			html_code += '<ul>';
+			html_code += '<li><a href="javascript:manually_start_wan_Link();"><#web_redirect_suggestion_manually_start_wan#></a></li>';
+			html_code += '</ul>';
 		}	
 	}
-	else if(casenum == 6){
-		new_lan_ip = get_new_lanip();
+	else if(casenum.search("6") !== -1){
 		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
 			showtext($("#failReason1")[0], "IP conflict detected. Please check again.");
 			html_code = html_code_notlogin;
-			$("#Epage_Suggest1")[0].style.display= "none";
-			$("#Epage_Suggest2")[0].style.display= "";
 		}else{		
 			showtext($("#failReason1")[0], "<#web_redirect_reason6#>");
-			html_code += "<ul>\n";
-			html_code += "<li><#web_redirect_case6_desc1#><br>";
-			html_code += "<B>"+new_lan_ip+"</B></li>\n";
-			html_code += "<li><#web_redirect_case6_desc2#></li>\n";
-			html_code += "</ul>\n";
-			html_code += "<br>\n";
-			html_code += "<div style=\"text-align: right;\">\n";
-			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"change_lan_subnet();\" value=\"<#CTL_next#>\">\n";
-			html_code += "</div>\n";	
+			html_code += "<ul>";
+			html_code += "<li><#web_redirect_case6_desc1#>";
+			html_code += "<span style='font-weight:bolder'>"+new_lan_ip+"</span></li>";
+			html_code += "<br><li><#web_redirect_case6_desc2#></li>";
+			html_code += "<br><li><#web_redirect_suggestion0_1#></li>";
+			html_code += "</ul>";
+			html_code += "<div id='submitBtn' style=\"text-align: right;\">";
+			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"change_lan_subnet();\" value=\"<#CTL_next#>\">";
+			html_code += "</div>";	
 		}			
 
 		$("#suggestion").hide();
@@ -376,29 +276,21 @@ function initial(){
 		showtext($("#failReason1")[0], "<#APSurvey_action_ConnectingStatus0#>");		
 		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
 			html_code = html_code_notlogin;
-			$("#Epage_Suggest1")[0].style.display= "none";
-			$("#Epage_Suggest2")[0].style.display= "";
 		}
 		else{		
-			html_code += "<ul>\n";
-			html_code += "<li><#APSurvey_action_search_again_hint2#>";
-			html_code += "<span style=\"text-align: right;\">\n";
-			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'/QIS_wizard.htm?flag=";
+			html_code += "<ul>";
 
+			html_code += "<li><a href='/QIS_wizard.htm?flag=";
 			if(sw_mode == "2")
 				html_code += "sitesurvey_rep";
 			else
 				html_code += "sitesurvey_mb";
+			html_code += "'><#APSurvey_action_search_again_hint2#></a>";
+			html_code += "</li>";
 
-			html_code += "\';\" value=\"<#QIS_rescan#>\">";
-			html_code += "</span>\n";
-			html_code += "</li>\n";
-			html_code += "<li><#QKSet_finish_moveto8#>";
-			html_code += "<span style=\"text-align: right;\">\n";
-			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"javascript:location.href=\'QIS_wizard.htm?flag=manual\';\" value=\"<#Manual_Setting_btn#>\">";
-			html_code += "</span>\n";
-			html_code += "</li>\n";
-			html_code += "</ul>\n";						
+			html_code += "<br><li><a href='/QIS_wizard.htm?flag=manual'><#QKSet_finish_moveto8#></a></li>";
+			html_code += "<br><li><#web_redirect_suggestion0_1#></li>";
+			html_code += "</ul>";						
 		}
 		
 		$("#suggestion").hide();
@@ -407,302 +299,161 @@ function initial(){
 		parent.location = "/index.asp";
 	}
 	
-	if(tmo_support && isMobile()){
-		$('#Epage_Suggest').hide();
-		$('#suggestion_block').hide();
+	$("#case_content")[0].innerHTML  = html_code;
+	if(casenum == "6_1"){
+		change_lan_subnet();
 	}
-	
-	$("#case_content")[0].innerHTML = html_code;
-}
 
-function isMobile(){
-	if(	navigator.userAgent.match(/iPhone/i) || 
-		navigator.userAgent.match(/iPod/i)    ||
-		navigator.userAgent.match(/iPad/i)    ||
-		(navigator.userAgent.match(/Android/i) && (navigator.userAgent.match(/Mobile/i) || navigator.userAgent.match(/Tablet/i))) ||
-		(navigator.userAgent.match(/Opera/i) && (navigator.userAgent.match(/Mobi/i) || navigator.userAgent.match(/Mini/i))) ||		// Opera mobile or Opera Mini
-		navigator.userAgent.match(/IEMobile/i)	||		// IE Mobile
-		navigator.userAgent.match(/BlackBerry/i)		//BlackBerry
-	 ){
-		return true;
-	}
-	else{
-		return false;
-	}
-}
+	var windowHeight = (function(){
+		if(window.innerHeight)
+			return window.innerHeight;
+		else if(document.body && document.body.clientHeight)
+			return document.body.clientHeight;
+		else if(document.documentElement && document.documentElement.clientHeight)
+			return document.documentElement.clientHeight;
+		else
+			return 800;
+	})();
 
-function showtext(obj, str){
-	if(obj)
-		obj.innerHTML = str;
-}
-
-function hideLinkTag(){
-	if(document.all){
-		var tagObjs = document.all.tags("a");
-		
-		for(var i = 0; i < tagObjs.length; ++i)
-			tagObjs(i).outerHTML = tagObjs(i).outerHTML.replace(">"," hidefocus=true>");
-	}
-}
-
-function wanLink(){
-	if(wans_flag){
-                if(wans_dualwan_orig.split(" ")[0].toUpperCase == "USB")
-                        location.href = '/Advanced_Modem_Content.asp';
-                else if(dsl_support){
-                        if(wans_dualwan_orig.split(" ")[0].toUpperCase == "WAN" || wans_dualwan_orig.split(" ")[0].toUpperCase == "LAN")
-                                location.href = '/Advanced_WAN_Content.asp';
-                        else
-                                location.href = '/Advanced_DSL_Content.asp';
-                }
-                else
-                        location.href = '/Advanced_WAN_Content.asp';
-        }
-        else{
-                if(dsl_support)                 
-                        location.href = '/Advanced_DSL_Content.asp';
-                else
-                        location.href = '/Advanced_WAN_Content.asp';
-        }
+	document.getElementById("loginTable").style.height = windowHeight + "px";
+	document.getElementById("loginTable").style.display = "";
 }
 
 function pppoeLink(){
-	location.href = "/QIS_wizard.htm?flag=pppoe";
+	top.location.href = "/QIS_wizard.htm?flag=pppoe";
 }
 
 function detectLink(){
-	location.href = "/QIS_wizard.htm?flag=detect";
+	top.location.href = "/QIS_wizard.htm?flag=detect";
 }
 
 function manually_start_wan_Link(){
-	location.href = "/index.asp?flag=Internet";
+	top.location.href = "/index.asp?flag=Internet";
 }
 
 function change_lan_subnet(){
-	showLoadingBar(reboot_time);
-	send_setting();
-	setTimeout("check_system_ready();", reboot_time*1000);
-}
-
-function check_system_ready(){
-	if(wanstate != 2){
-		$("#proceeding_action")[0].innerHTML = "<#error_page_lanip_changed_desc1#>";
-		detect_router();
-		setTimeout("check_system_ready();", 3000);
-	}
-	else{
-		$("#proceeding_img")[0].style.width = "100%";
-		$("#proceeding_img_text")[0].innerHTML = "<#Main_alert_proceeding_desc3#>";
-		$("#proceeding_action")[0].innerHTML = "<#APSurvey_action_renew_success#>";
-
-		if('<% nvram_get("x_Setting"); %>' == '0')
-			setTimeout("parent.location = \"http://"+new_lan_ip+"/QIS_wizard.htm?flag=welcome\"", 2*1000);
-		else
-			setTimeout("parent.location = \"http://"+new_lan_ip+"/QIS_wizard.htm?flag=detect\"", 2*1000);
-	}
+	send_setting(); 
+	$("#submitBtn").html('<span><#CTL_reconnection#>&nbsp</span><img src="/images/InternetScan.gif">')
 }
 
 function send_setting(){
 	$.ajax({
 		url: '/setting_lan.htm',
 		dataType: 'script',
-		
+
 		error: function(xhr){
-			setTimeout("send_setting();", 1000);
+			setTimeout(send_setting, 1000);
+			if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/Main_Login.asp?page=error_page.htm?flag=6_1";
 		},
+
 		success: function(response){
-			;
+			setTimeout(detect_router, 5000);
 		}
 	});
+}
+
+function iAmAlive(json){
+	top.location.href = location.origin.replace(location.hostname, new_lan_ip) 
+		+ "/QIS_wizard.htm?flag=" 
+		+ (function(){return (('<% nvram_get("x_Setting"); %>' === '0')?"welcome":"detect")})();
 }
 
 function detect_router(){
 	$.ajax({
-		url: 'http://'+new_lan_ip+'/WAN_info.asp',
-		dataType: 'script',
-		
+		url: location.origin.replace(location.hostname, new_lan_ip) + "/httpd_check.json",
+		dataType: 'jsonp',
+		timeout: 2000,
+
 		error: function(xhr){
-			setTimeout("detect_router();", 1000);
-		},
-		success: function(response){
-			setTimeout("detect_router();", 1000);
+			setTimeout(detect_router, 1000);
+			setTimeout(function(){
+				$("#case_content ul").html("<li><#error_page_lanip_changed_desc1#></li>");
+			}, 3000);
 		}
 	});
 }
-
-function get_new_lanip(){
-	if(tmo_support){		
-		if(current_lanip.indexOf("192.168.29") >= 0)
-				return "192.168.24.1";
-		else
-				return "192.168.29.1";	
-	}
-	else{
-		var reverse_mask_num = ~(inet_aton(current_mask));
-		var current_lanip_num = inet_aton(current_lanip);
-		var new_lanip_num = current_lanip_num+reverse_mask_num+1;	
-		return inet_ntoa(new_lanip_num);
-	}	
-}
-
-function inet_aton(ip_str){
-	if(!ip_str)
-		return -1;
-	
-	var re = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
-	if(re.test(ip_str)){
-		var v1 = parseInt(RegExp.$1);
-		var v2 = parseInt(RegExp.$2);
-		var v3 = parseInt(RegExp.$3);
-		var v4 = parseInt(RegExp.$4);	
-		if(v1 < 256 && v2 < 256 && v3 < 256 && v4 < 256)
-			return v1*256*256*256+v2*256*256+v3*256+v4;
-	}
-	
-	return -2;
-}
-
-function inet_ntoa(ip_num){
-	var v1, v2, v3, v4;
-	var ip_str = "";
-	
-	if(!ip_num || typeof(ip_num) != "number")
-		return null;
-	
-	v1 = (ip_num&0xff000000)>>>24;
-	v2 = (ip_num&0x00ff0000)>>>16;
-	v3 = (ip_num&0x0000ff00)>>>8;
-	v4 = (ip_num&0x000000ff);
-
-	ip_str = v1+"."+v2+"."+v3+"."+v4;
-	
-	return ip_str;
-}
-
-function winW_H(){
-	if(parseInt(navigator.appVersion) > 3){
-		winW = document.documentElement.scrollWidth;
-		if(document.documentElement.clientHeight > document.documentElement.scrollHeight)
-			winH = document.documentElement.clientHeight;
-		else
-			winH = document.documentElement.scrollHeight;
-	}
-} 
-
-function showLoadingBar(seconds){
-	htmlbodyforIE = document.getElementsByTagName("html");  //this both for IE&FF, use "html" but not "body" because <!DOCTYPE html PUBLIC.......>
-	htmlbodyforIE[0].style.overflow = "hidden";	  //hidden the Y-scrollbar for preventing from user scroll it.
-	
-	winW_H();
-	var blockmarginTop;
-	blockmarginTop = document.documentElement.scrollTop + 200;
-	$("#loadingBarBlock")[0].style.marginTop = blockmarginTop+"px";
-	$("#LoadingBar")[0].style.width = winW+"px";
-	$("#LoadingBar")[0].style.height = winH+"px";
-	
-	if(!seconds)
-		seconds = 0;
-	else
-		progress = 100/seconds;
-	
-	y = 0;
-	LoadingProgress(seconds);
-}
-
-function LoadingProgress(seconds){
-	$("#LoadingBar")[0].style.visibility = "visible";
-	
-	y = y+progress;
-	if(typeof(seconds) == "number" && seconds >= 0){
-		if(seconds != 0){
-			if(Math.round(y) == 100){
-				$("#proceeding_img")[0].style.width = "99%";
-				$("#proceeding_img_text")[0].innerHTML = "99%";
-			}
-			else{
-				$("#proceeding_img")[0].style.width = Math.round(y) + "%";
-				$("#proceeding_img_text")[0].innerHTML = Math.round(y) + "%";
-			}
-			--seconds;
-			setTimeout("LoadingProgress("+seconds+");", 1000);
-		}
-		else{
-			$("#proceeding_img")[0].style.width = "99%";
-			$("#proceeding_img_text")[0].innerHTML = "99%";
-			y = 0;
-		}
-	}
-}
-
-function hideLoadingBar(){
-	$("#LoadingBar")[0].style.visibility = "hidden";
-}
 </script>
 </head>
+<body class="wrapper" onload="initial();">
+<table id="loginTable" align="center" cellpadding="0" cellspacing="0" style="display:none">
+	<tr>
+		<td>
+			<div>
+				<table class="content">
+					<tr style="height:43px;">
+						<td style="width:73px" align="left">
+							<div><img src="/images/New_ui/icon_titleName.png"></div>
+						</td>
+						<td align="left">
+							<div class="title_name"><#web_redirect_message#></div>
+						</td>
+					</tr>
+					<tr style="height:60px;"> 
+						<td colspan="2"><div class="prod_madelName" style="margin-left:78px;"><#Web_Title2#></div></td>
+					</tr>
 
-<body id="body_tag" onload="initial();" class="page_body">
-	<div id="LoadingBar" class="popup_bar_bg">
-		<table cellpadding="5" cellspacing="0" id="loadingBarBlock" class="loadingBarBlock" align="center">
-			<tr>
-				<td height="80">
-					<div class="Bar_container">
-						<span id="proceeding_img_text"></span>
-						<div id="proceeding_img"></div>
-					</div>
-					<div id="proceeding_action" style="margin:5px auto; width:85%;">Changing the local subnet...</div>
-				</td>
-			</tr>
-		</table>
-	<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
-	</div>
+					<tr valign="top">
+						<td colspan="2">
+							<div class="p1" style="margin:20px 0px 0px 78px;">
+								<#web_redirect_fail_reason0#>
+							</div>
 
-	<div id="main_content" class="content_block">   
-		<table style="width:100%" border="0" align="center" cellspacing="0" class="erTable">
-			<thead>
-				<tr>
-					<td id="table_head" height="52" align="left" valign="top"><span class="modelName"><#Web_Title2#></span></td>
-				</tr>
-			</thead>
-			<tr>
-				<th valign="top" height="60px"><div class="er_title"><#web_redirect_message#></div></th>
-			</tr>
-		
-			<tr>
-				<td  valign="top" class="erpage_td">
-					<!--div class="alertImg"><img src="images/alertImg.png"></div-->
-					<span class="Epagetitle"><#web_redirect_fail_reason0#> :</span>
-				  
-					<div id="failReason" class="Epagecontent" style="color:red">
-						<ul>
-							<li>
+							<div class="p1" style="margin:10px 0px 0px 78px;background-color:rgba(255,255,255,0.2);padding:15px;line-height:30px;border-radius:5px;"> 
 								<span id="failReason1"></span>
-							</li>
-						</ul>
-					</div>
-				  
-					<div id="Epage_Suggest" class="Epagetitle">
-						<div id="Epage_Suggest1"><span><#web_redirect_suggestion0#>: (<#web_redirect_suggestion0_1#>)</span></div>
-						<div id="Epage_Suggest2" style="display:none;"><span><#web_redirect_suggestion0#>: </span></div>	
-					</div>
-					<div id="suggestion_block" class="Epagecontent">
-						<div id="case_content"></div>
-						<div id="suggestion" style="">
-							<ul>
-								<li>
-									<span id="suggestion_final"><#web_redirect_suggestion_final#></span>&nbsp;
-									<a href="javascript:wanLink();" style="color:#569AC7; text-decoration:underline;"><#web_redirect_suggestion_etc#></a>&nbsp;
-									<span><#web_redirect_suggestion_etc_desc#></span>
-								</li>
-							</ul>
-						</div>
-					</div>
-				</td>
-			</tr>
-		  
-			<tr>
-				<td id="footer" height="22" class="erpage_footer"><span></span></td>
-			</tr>
-		</table>
-	</div>
+							</div>
+						</td>
+					</tr>					
+
+					<tr valign="top">
+						<td colspan="2">
+							<div class="p1" style="margin:20px 0px 0px 78px;">
+								<#web_redirect_suggestion0#>
+							</div>
+
+							<div class="p1" style="margin:10px 0px 0px 78px;background-color:rgba(255,255,255,0.2);padding:10px;line-height:30px;border-radius:5px;">
+								<div id="case_content"></div>
+
+								<div id="suggestion">
+									<ul>
+										<li> 
+											<span><#web_redirect_suggestion_final#></span>
+											<a id="wanLink"><#web_redirect_suggestion_etc#></a>
+											<script>
+												$("#wanLink").click(function(){
+													if(wans_flag){
+												        if(wans_dualwan_orig.split(" ")[0].toUpperCase == "USB")
+															top.location.href = '/Advanced_Modem_Content.asp';
+												        else if(dsl_support){
+												            if(wans_dualwan_orig.split(" ")[0].toUpperCase == "WAN" || wans_dualwan_orig.split(" ")[0].toUpperCase == "LAN")
+																top.location.href = '/Advanced_WAN_Content.asp';
+												            else
+												                top.location.href = '/Advanced_DSL_Content.asp';
+												        }
+												        else
+															top.location.href = '/Advanced_WAN_Content.asp';
+												    }
+												    else{
+												        if(dsl_support)                 
+												            top.location.href = '/Advanced_DSL_Content.asp';
+												        else if(sw_mode == 3)
+												            top.location.href = '/index.asp';
+												        else
+												            top.location.href = '/Advanced_WAN_Content.asp';
+												    }
+												})
+											</script>
+										</li> 
+									</ul>
+								</div>
+							</div>
+						</td>
+					</tr>					
+
+				</table>
+			</div>
+		</td>
+	</tr>
+</table>
+</form>
 </body>
 </html>

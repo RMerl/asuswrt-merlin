@@ -141,6 +141,7 @@ static int mton(uint32_t mask)
 	return i;
 }
 
+#if ENABLE_FEATURE_UDHCPC_SANITIZEOPT
 /* Check if a given label represents a valid DNS label
  * Return pointer to the first character after the label upon success,
  * NULL otherwise.
@@ -197,6 +198,9 @@ static int good_hostname(const char *name)
 		name++;
 	}
 }
+#else
+# define good_hostname(name) 1
+#endif
 
 /* Create "opt_name=opt_value" string */
 static NOINLINE char *xmalloc_optname_optval(uint8_t *option, const struct dhcp_optflag *optflag, const char *opt_name)

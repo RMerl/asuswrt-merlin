@@ -1,0 +1,438 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Publish Form</title>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript" src="/smb/js/davclient_tools.js"></script>
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<script>
+var m = new lang();
+var g_storage = new myStorage();
+var g_bLoginTwitter = false;
+var g_token = "";
+var g_uid = "";
+var g_api_key = "hBQrdHdHClXylEI6by40DTMVA";
+var g_api_secret = "2PlfH4Bx9XVZTYjOz3hoeqAY31aPUx916hU0R4gu0D0uCZ4Y4L";
+var server_url = "https://oauth.asus.com/aicloud/twitter/";
+//var server_url = "https://www.efroip.com/ischool/auth/twitter/";
+var ajax_dataType = "json";
+var g_photo_size_limit = 0;
+var g_uploadfile_url_array = new Array();
+var g_uploadfile_title_array = new Array();
+var g_upload_timer = null;
+var g_bUpload = false;
+var g_uploadfile_item = {
+	_array: new Array(),
+	add: function(url, filename, textAreaClassName, filext, icon_url){
+		
+		var obj = {};
+		obj.url = url;
+		obj.filename = filename;
+		obj.textAreaClassName = textAreaClassName;
+		obj.filext = filext;
+		obj.icon_url = icon_url;
+		
+		this._array.push(obj);
+	},
+	length: function(){
+		return this._array.length;	
+	},
+	get: function(i){
+		if(i<0||i>this._array.length-1)
+			return null;
+		return this._array[i];
+	},
+	remove: function(i){
+		if(i>=0&&i<=this._array.length-1){
+			this._array.splice(i, 1);
+		}
+	}
+};
+
+$(document).ready(function(){
+	
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+
+	if( isBrowser("msie") && getInternetExplorerVersion() <= 8 ){
+		ajax_dataType = "jsonp";
+	}
+	
+	var uploadfile_url = getUrlVars()["v"];
+	
+	var array = uploadfile_url.split(";");
+	
+	if(array.length<=0){
+		return;
+	}
+	
+	g_token = (g_storage.getl("twitter_access_token") == undefined) ? "" : g_storage.getl("twitter_access_token");
+	
+	$("#default_user_pic").show();
+	$("#user_pic").hide();
+	
+	var upload_html = "";
+	for(var i=0; i<array.length; i++){
+		if(array[i]=="")
+			continue;
+			
+		var className = "textArea" + ( i + 1 );
+		var param = String(array[i]).split(",");
+		var uploadfile_url = param[0];
+		var is_dir = param[1];
+		var this_filename = decodeURIComponent( uploadfile_url.substr( uploadfile_url.lastIndexOf("/") + 1, uploadfile_url.length-1 ) );
+		var filext = getFileExt(uploadfile_url);
+		var icon_url = server_url + "images/";
+		
+		upload_html += '<table class="x-table ' +　className + '" width="100%" height="100%" style="display: table;border-collapse: separate;border-spacing: 2px;border-color: gray;">';
+        upload_html += '<tr>';
+        upload_html += '<td class="x-table-layout-cell" rowspan="2" id="ext-gen80">';
+        upload_html += '<div id="imgContainer" class=" x-panel service_upload_image_container">';
+        upload_html += '<div class="x-panel-bwrap" id="ext-gen81">';
+        upload_html += '<div class="x-panel-body service_upload_image_container_body x-panel-body-noheader" id="ext-gen82" style="display: table-cell;text-align: center;vertical-align: middle;">';
+		
+		if(is_dir==1){
+			icon_url += "folder_icon.png";
+			upload_html += '<div class="bicon folderDiv service_upload_image"></div>';
+		}
+		else{
+			if(filext=='jpg'||filext=='jpeg'||filext=='png'||filext=='gif'){
+				icon_url = uploadfile_url;
+				
+				upload_html += '<img id="user_img" class="service_upload_image" src="' + uploadfile_url + '">';
+			}			
+			else if(filext=='mp3'){
+				icon_url += "audio_icon.png";
+				upload_html += '<div class="bicon audiofileDiv service_upload_image"></div>';
+			}
+			else if(filext=='pdf'){
+				icon_url += "pdf_icon.png";
+				upload_html += '<div class="bicon pdffileDiv service_upload_image"></div>';
+			}
+			else if(filext=='doc'||filext=='docx'){
+				icon_url += "word_icon.png";
+				upload_html += '<div class="bicon docfileDiv service_upload_image"></div>';
+			}
+			else if(filext=='ppt'||filext=='pptx'){
+				icon_url += "ppt_icon.png";
+				upload_html += '<div class="bicon pptfileDiv service_upload_image"></div>';
+			}
+			else if(filext=='xls'||filext=='xlsx'){
+				icon_url += "xls_icon.png";
+				upload_html += '<div class="bicon xlsfileDiv service_upload_image"></div>';
+			}
+			else{
+				icon_url += "file_icon.png";
+				upload_html += '<div class="bicon fileDiv service_upload_image"></div>';
+			}
+		}
+		
+        upload_html += '</div>';
+        upload_html += '</div>';
+        upload_html += '</div>';
+        upload_html += '</td>';
+        upload_html += '<td>';
+		upload_html += '<label id="ext-comp-1010">' + m.getString('title_message') + '</label><br>';
+        upload_html += '<textarea style="resize: none; width: 292px; height: 82px;" autocomplete="off" id="title" name="title" class="x-form-textarea x-form-field service_upload_field ' + className + '">' + this_filename + '</textarea>';
+        upload_html += '</td></tr>';
+        upload_html += '</table>';
+		
+		g_uploadfile_item.add(uploadfile_url, this_filename, className, filext, icon_url);
+	}
+	
+	$(upload_html).appendTo( $(".service_image_upload_container") );
+	
+	$("#user_authorize").text(m.getString('title_login'));
+	$("#user_deletetoken").text(m.getString('title_logout'));
+	$("button#upload_photo").text(m.getString('btn_publish'));
+	$("button#cancel").text(m.getString('btn_cancel'));
+	$('#sharelink_warning').text(m.getString('msg_sharelink_warning'));
+	
+	twitter_get_userprofile();
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	//- Login
+	$(".user_login_option").click(function(){
+		if(g_bLoginTwitter)
+			return;
+			
+		twitter_login();
+	});
+	
+	//- Logout
+	$("#user_deletetoken").click(function(){
+		g_token = "";
+		g_storage.setl("twitter_access_token", "");
+		g_storage.setl("twitter_access_token_secret", "");
+		
+		window.location.reload();
+	});
+});
+
+function twitter_login(){
+	
+	var callback_function = "onTwitterLogin";
+	
+	var b = window.location.href.indexOf("/",window.location.protocol.length+2);
+	var redirect_url = window.location.href.slice(0,b) + "/smb/css/service/callback.html";
+	
+	//var url = server_url + "twitter_authorize.html?action=login&callback="+callback_function+"&redirect_uri=" + encodeURIComponent(redirect_url);
+	var url = server_url + "twitter_utils.php?action=login&callback="+callback_function+"&redirect_uri=" + encodeURIComponent(redirect_url);
+	window.open(url);
+}
+
+function onTwitterLogin( token, uid, vars ){
+	
+	if(token=="")
+		return;
+	
+	g_token = token;
+	g_storage.setl("twitter_access_token", token);
+	g_storage.setl("twitter_access_token_secret", vars["token_secret"]);
+	
+	twitter_get_userprofile();
+}
+
+function twitter_get_userprofile(){
+	 
+	var token = (g_storage.getl("twitter_access_token")==undefined) ? "" : g_storage.getl("twitter_access_token");
+	var token_secret = (g_storage.getl("twitter_access_token_secret")==undefined) ? "" : g_storage.getl("twitter_access_token_secret");
+	
+	if(token==""||token_secret=="")
+		return;
+	
+	sParameter = "action=getuser&token=" + token + "&secret=" + token_secret;
+	
+	$.ajax({
+		url: server_url + "twitter_utils.php",
+        type: 'GET',
+        dataType: 'jsonp',
+        data: sParameter,
+        success: function(response){
+        	var code = response.code;
+        	
+        	if(code!=200){
+        		alert(response.message);
+        		return;	
+        	}
+        	
+        	//alert(response.photo_size_limit+", "+response.max_media_per_upload+", "+response.characters_reserved_per_media);
+			var username = response.name;
+			var userpic = response.picture;
+	    	g_uid = response.id;
+			g_photo_size_limit = response.photo_size_limit;
+			
+			g_bLoginTwitter = true;
+			
+			$("#user_authorize").text(username);
+			
+			$("#user_authorize").removeClass("user_login_option");
+			$("#user_authorize").click(null);
+	
+			$("#user_deletetoken").css("visibility", "visible");			
+			$('#user_pic').attr('src', userpic); //取得大頭
+			$("#default_user_pic").hide();
+			$("#user_pic").show();
+			
+			$("#upload_photo").removeAttr("disabled");
+			$("#addalbum").removeAttr("disabled");
+			
+			$("#max_upload_file_size").text("Note: The Maximum upload file size is "+size_format(response.photo_size_limit)+".");
+			//$("textarea").attr("maxlength", response.characters_reserved_per_media);
+	    },
+		error: function(xhr, status, error){
+	    	alert(status+", "+error);
+	    }
+	});
+}
+
+function getFileExt(filename){
+	var ext = /^.+\.([^.]+)$/.exec(filename);
+  	return ext == null ? "" : ext[1].toLowerCase();
+}
+
+function twitter_upload_photo(){
+	if(!g_bLoginTwitter)
+		return;
+		
+	if(g_uploadfile_item.length()<=0){
+		alert(m.getString('msg_no_upload'));
+		return;
+	}
+	
+	var token = (g_storage.getl("twitter_access_token")==undefined) ? "" : g_storage.getl("twitter_access_token");
+	var token_secret = (g_storage.getl("twitter_access_token_secret")==undefined) ? "" : g_storage.getl("twitter_access_token_secret");
+	
+	if(token==""||token_secret=="")
+		return;
+	
+	//var d = new Date();
+	//var mt = d.getTime();
+	
+	//sParameter = "action=upload&token=" + token + "&secret=" + token_secret + "&timestamp=" + mt.toString();
+	/*
+	//token = "2570496763-njFfnB4cG6mOs8PJCqxfNyhSwkh2Rcr0iAOxu0W";
+	//token_secret = "Q3Q1qFyjZm75fghrHqfwrYCSx75oYCXLwPLHKX02MTT4Y";
+	sParameter = "action=buildsignature&token=" + token + "&secret=" + token_secret + 
+	             "&rurl=" + encodeURI("https://api.twitter.com/1.1/account/verify_credentials.json") +
+	             "&method=GET";
+	*/
+	
+	sParameter = "action=buildsignature&token=" + token + "&secret=" + token_secret + 
+	             "&rurl=" + encodeURI("https://api.twitter.com/1.1/statuses/update_with_media.json") +
+	             "&method=POST&version=1.1";
+	           
+	//alert(sParameter);
+	
+	$.ajax({
+		url: server_url + "twitter_utils.php",
+        type: 'GET',
+        dataType: 'jsonp',
+        data: sParameter,
+        success: function(response){
+			//alert(response.oauth_nonce+", "+response.oauth_signature);
+			
+			var signature_base_string = response.signature_base_string;
+			var oauth_signature = response.oauth_signature;
+			var oauth_nonce = response.oauth_nonce;
+			var oauth_timestamp = response.oauth_timestamp;
+			//alert(signature_base_string+", "+oauth_signature);
+			var count = 0;
+			var total = g_uploadfile_item.length();
+			$(".service_image_upload_container").animate({
+				scrollTop: 0
+			}, 'slow');
+			
+			$(".service_image_upload_container").attr("disabled", "disabled");
+			$("#upload_photo").attr("disabled", "disabled");
+			$(".table_block_upload").css("visibility", "visible");
+			$(".table_block_upload span.msg").text(m.getString('title_init_upload'));
+			$(".service_upload_field").attr("disabled", "disabled");
+			
+			g_bUpload = false;
+			
+			var client = new davlib.DavClient();
+			client.initialize();
+			
+			g_upload_timer = setInterval( function(){
+				if(g_uploadfile_item.length()<=0){
+					alert(m.getString('msg_publish_complete'));
+					clearInterval(g_upload_timer);
+					client = null;
+					parent.closeJqmWindow();
+					return;
+				}
+						
+				if(g_bUpload==true)
+					return;
+							
+				var uploadfile_obj = g_uploadfile_item.get(0);
+						
+				if(uploadfile_obj==null)
+					return;
+						
+				var url = uploadfile_obj.url;
+				var filename = myencodeURI(uploadfile_obj.filename);
+				var title = myencodeURI($("textarea." + uploadfile_obj.textAreaClassName).val());
+				var pos = count*$(".service_image_upload_container table").height();
+				var filext = uploadfile_obj.filext;
+				var this_url = url.substring(0, url.lastIndexOf("/"));
+				
+				$(".service_image_upload_container").animate({scrollTop: pos}, 'slow');
+							
+				g_bUpload = true;
+						
+				if(filext=='jpg'||filext=='jpeg'||filext=='png'||filext=='gif'){
+					$(".table_block_upload span.msg").text(m.getString('title_upload1') + " " + ( total - g_uploadfile_item.length() + 1 ) + "/" + total );
+					
+					client.UPLOADTOTWITTER(this_url, filename, title, token, token_secret, oauth_nonce, oauth_timestamp, oauth_signature, g_photo_size_limit, function(error, content, statusstring){				
+						if(error==200){
+							var data = parseXml(statusstring);
+							var x = $(data);
+							var photoid = x.find("photoid").text();
+							
+							$(".table_block_upload span.msg").text(m.getString('msg_publish_complete'));
+								
+							g_uploadfile_item.remove(0);
+								
+							g_bUpload = false;
+							
+							count++;
+						}
+						else{
+							alert("Fail to upload! ");
+							$(".table_block_upload").css("visibility", "hidden");
+						}
+					});		
+				}		
+			}, 1000 );
+		
+		},
+		error: function(xhr, status, error){
+	    	alert(status+", "+error);
+	    }
+	});
+}
+
+function onCloseDialog(){
+	$("#newalbum").css("display","none");	
+}
+
+function doCancel(e) {
+	parent.closeJqmWindow();
+}
+</script>
+<table class="x-table-layout" cellspacing="0" style="width:100%;height:100%;font-size:14px;" id="ext-gen94">
+	<tbody>
+    	<tr>
+            <td>
+                <div style="background-color:#FF9100;width:99%;padding:5px;">
+                    <span id="sharelink_warning" name="sharelink_warning" style="color:#fff"></span>
+                </div>
+            </td>
+        </tr>
+		<tr id="tr_user_option">        
+            <td class="x-table-layout-cell" colspan="1" id="ext-gen84">
+            	<div class=" x-panel x-panel-noborder">
+            		<div class="x-panel-bwrap" id="ext-gen85">
+            			<div class="x-panel-body x-panel-body-noheader x-panel-body-noborder" id="ext-gen86">
+                        	<div id="default_user_pic" class="user_image"></div>
+            				<img id="user_pic" border="0" height="50px">
+            				<img class="loading-img" src="/smb/css/load.gif" style="visibility: hidden;">
+            				<span id="user_authorize" class="user_login_option">Login</span>
+            				<span id="user_deletetoken" style="visibility: hidden;">Logout</span>
+            			</div>
+                	</div>
+            	</div>
+            </td>
+		</tr>
+        <tr id="tr_image_upload">
+        	<td class="x-table-layout-cell" colspan="1" id="ext-gen88">
+            	<div class="service_image_upload_container ">
+                </div>
+            </td>
+		</tr>
+		<tr>
+        	<td class="x-table-layout-cell" colspan="1" id="ext-gen90" >
+            	<span id="max_upload_file_size" style="color:#ff0000"></span>
+            </td>
+        </tr>
+       	<tr>
+        	<td>
+            	<div class="table_block_upload" style="float:left;height:30px;visibility: hidden;">
+                	<img class="upload-img" src="/smb/css/load.gif">
+                    <span class='msg'>Upload to...</span>
+                </div>                
+        		<div class="table_block_footer" style="float:right;height:30px;">
+            		<button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+            		<button id="upload_photo" class="btnStyle" onclick="twitter_upload_photo();" value="" disabled="disabled">Upload</button>
+        		</div>
+        	</td>
+		</tr>
+   </tbody>
+</table>
+</body>
+</html>

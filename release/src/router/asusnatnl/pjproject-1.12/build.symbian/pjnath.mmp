@@ -1,0 +1,65 @@
+#if defined(PJ_BUILD_DLL)
+TARGET		pjnath.dll
+TARGETTYPE	dll
+UID		0x0 0xA0000005
+
+CAPABILITY	None
+LIBRARY		pjlib_util.lib pjlib.lib esock.lib insock.lib charconv.lib euser.lib estlib.lib
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\pjnath.def
+
+#else
+
+TARGET 		pjnath.lib
+TARGETTYPE 	lib
+
+#endif
+
+OPTION          ARMCC --gnu
+
+SOURCEPATH	..\pjnath\src\pjnath
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+//
+// PJNATH files
+//
+SOURCE	errno.c
+SOURCE	ice_session.c
+SOURCE	ice_strans.c
+SOURCE	nat_detect.c
+SOURCE	stun_auth.c
+SOURCE	stun_msg.c
+SOURCE	stun_msg_dump.c
+SOURCE	stun_session.c
+SOURCE	stun_sock.c
+SOURCE	stun_transaction.c
+SOURCE	turn_session.c
+SOURCE	turn_sock.c
+
+//
+// Include files
+//
+//DOCUMENT pjnath\config.h
+//DOCUMENT pjnath\\errno.h
+//DOCUMENT pjnath\\ice_session.h
+//DOCUMENT pjnath\\ice_strans.h
+//DOCUMENT pjnath\\stun_auth.h
+//DOCUMENT pjnath\\stun_config.h
+//DOCUMENT pjnath\\stun_msg.h
+//DOCUMENT pjnath\\stun_session.h
+//DOCUMENT pjnath\\stun_transaction.h
+//DOCUMENT pjnath\\types.h
+
+
+
+SYSTEMINCLUDE	..\pjlib\include 
+SYSTEMINCLUDE	..\pjlib-util\include
+SYSTEMINCLUDE	..\pjnath\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+

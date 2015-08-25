@@ -17,7 +17,7 @@ I/O buffer size and alignment giving the highest throughput on a
 platform to tune performance critical applications.
 
 With --speedtest option it runs a different test, which takes speed
-samples at fixed intervals while writting a file to disk.
+samples at fixed intervals while writing a file to disk.
 
 --- Usage ---
 
@@ -33,6 +33,8 @@ tuxera.bench [OPTIONS]
    -s, --speedtest          Run speed test
    -B, --blocksize NUMBER   Block size for speed test [default: 1048576 bytes]
    -f, --filesize  NUMBER   File size for speed test  [default: 1024 MB]
+   -c, --cpuusage  NUMBER   Displays the CPU Utilization Statistics\n
+                            1 - Display CPU performance results\n
    -h, --help               Display this help
 
 Typically the default buffer alignment gives the best performance
@@ -130,5 +132,4 @@ Please send feedback and support queries to support@tuxera.com.
 Thank you.
 
 
-Copyright (c) 2008-2013 Tuxera Inc. All Rights Reserved.
-
+Copyright (c) 2008-2014 Tuxera Inc. All Rights Reserved.

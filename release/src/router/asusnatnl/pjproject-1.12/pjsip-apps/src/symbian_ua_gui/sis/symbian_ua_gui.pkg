@@ -1,0 +1,36 @@
+; symbian_ua_gui.pkg
+; This is an auto-generated PKG file by Carbide.
+; This file uses variables specific to Carbide builds that will not work
+; on command-line builds. If you want to use this generated PKG file from the
+; command-line tools you will need to modify the variables with the appropriate
+; values: $(EPOCROOT), $(PLATFORM), $(TARGET)
+; Also, the resource file entries should be changed to match the language
+; used in the build. For example, if building for LANGUAGE_01, change the file
+; extensions .rsc to .r01.
+;
+;Language - standard language definitions
+&EN
+
+; standard SIS file header
+#{"symbian_ua_gui"},(0xEBD12EE4),1,0,0
+
+;Localised Vendor name
+%{"Vendor-EN"}
+
+;Unique Vendor name
+:"Vendor"
+
+;Supports Series 60 v 3.0
+[0x101F7961], 0, 0, 0, {"Series60ProductID"}
+
+;Files to install
+;You should change the source paths to match that of your environment
+;<source> <destination>
+"$(EPOCROOT)Epoc32\release\$(PLATFORM)\$(TARGET)\symbian_ua_gui.exe"		-"!:\sys\bin\symbian_ua_gui.exe"
+"$(EPOCROOT)Epoc32\data\z\resource\apps\symbian_ua_gui.r01"		-"!:\resource\apps\symbian_ua_gui.r01"
+"$(EPOCROOT)Epoc32\data\z\private\10003a3f\apps\symbian_ua_gui_reg.r01"	-"!:\private\10003a3f\import\apps\symbian_ua_gui_reg.r01"
+"$(EPOCROOT)epoc32\data\z\resource\apps\symbian_ua_gui_aif.mif" -"!:\resource\apps\symbian_ua_gui_aif.mif"
+"$(EPOCROOT)epoc32\data\z\resource\apps\symbian_ua_gui.mbm" -"!:\resource\apps\symbian_ua_gui.mbm"
+; Add any installation notes if applicable
+;"symbian_ua_gui.txt"					  -"!:\private\0xEBD12EE4\symbian_ua_gui.txt"
+

@@ -235,6 +235,7 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "server.modules+=(\"mod_aidisk_access\")\n");
 	fprintf(fp, "server.modules+=(\"mod_sharelink\")\n");
 	fprintf(fp, "server.modules+=(\"mod_create_captcha_image\")\n");
+	fprintf(fp, "server.modules+=(\"mod_query_field_json\")\n");
 	fprintf(fp, "server.modules+=(\"mod_webdav\")\n");
 	fprintf(fp, "server.modules+=(\"mod_smbdav\")\n");
 	fprintf(fp, "server.modules+=(\"mod_redirect\")\n");
@@ -248,20 +249,21 @@ int main(int argc, char *argv[]) {
 	}
 #else
 	fprintf(fp, "server.modules+=(\"aicloud_mod_alias\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_userdir\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_aidisk_access\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_sharelink\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_create_captcha_image\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_webdav\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_smbdav\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_redirect\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_compress\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_usertrack\")\n");
-        fprintf(fp, "server.modules+=(\"aicloud_mod_rewrite\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_userdir\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_aidisk_access\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_sharelink\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_create_captcha_image\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_query_field_json\")\n");
+	fprintf(fp, "server.modules+=(\"aicloud_mod_webdav\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_smbdav\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_redirect\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_compress\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_usertrack\")\n");
+    fprintf(fp, "server.modules+=(\"aicloud_mod_rewrite\")\n");
 	
-        if (webdav_match("st_webdav_mode", 2)){
-                fprintf(fp, "server.modules+=(\"aicloud_mod_access\")\n");
-                fprintf(fp, "server.modules+=(\"aicloud_mod_auth\")\n");
+    if (webdav_match("st_webdav_mode", 2)){
+        fprintf(fp, "server.modules+=(\"aicloud_mod_access\")\n");
+        fprintf(fp, "server.modules+=(\"aicloud_mod_auth\")\n");
 	}
 #endif
 	/* Basic setting */
@@ -328,6 +330,9 @@ int main(int argc, char *argv[]) {
 //	fprintf(fp, "$SERVER[\"socket\"]==\":8999\"{\n");
 //	fprintf(fp, "	alias.url=(\"/webdav\"=>\"/mnt/\")\n");
 //	fprintf(fp, "   $HTTP[\"url\"]=~\"^/usbdisk($|/)\"{\n");
+
+	fprintf(fp, "   url.aicloud-auth-deny = (\"query_field.json\")\n");
+
 	fprintf(fp, "   $HTTP[\"url\"]=~\"^/%s($|/)\"{\n",get_productid());
     fprintf(fp, "       server.document-root = \"/\"\n");
 //	fprintf(fp, "       alias.url=(\"/usbdisk\"=>\"/mnt\")\n");
@@ -347,7 +352,6 @@ int main(int argc, char *argv[]) {
 	fprintf(fp, "		webdav.activate=\"enable\"\n");
 	fprintf(fp, "		webdav.is-readonly=\"disable\"\n");
 //	fprintf(fp, "		webdav.sqlite-db-name=\"/tmp/lighttpd/webdav.db\"\n");
-	fprintf(fp, "       url.aicloud-auth-deny = (\"jplayer\")\n");
 	fprintf(fp, "	}\n");
 	fprintf(fp, "	else $HTTP[\"url\"] =~ \"^/favicon.ico$\"{\n");
     fprintf(fp, "		server.document-root = \"/\"\n");
@@ -485,8 +489,23 @@ WEBDAV_SETTING:
 	/* default : https://192.168.1.1:443/webdav */
 	fprintf(fp, "$SERVER[\"socket\"]==\":%s\"{\n",get_webdav_https_port());
 	//fprintf(fp, "	ssl.pemfile=\"/tmp/lighttpd/server.pem\"\n");
-	fprintf(fp, " ssl.pemfile=\"/etc/server.pem\"\n");
+	fprintf(fp, "	ssl.pemfile=\"/etc/server.pem\"\n");
+	
+	//FILE* fd;
+	//if (NULL != (fd = fopen("/etc/intermediate_cert.pem", "rb"))) {
+	if (nvram_match("https_intermediate_crt_save", "1")){
+		fprintf(fp, "   ssl.ca-file=\"/etc/intermediate_cert.pem\"\n");
+		//fclose(fd);
+	}
+
 	fprintf(fp, "	ssl.engine=\"enable\"\n");
+	fprintf(fp, "   ssl.use-compression=\"disable\"\n");
+	fprintf(fp, "   ssl.use-sslv2=\"disable\"\n");
+	fprintf(fp, "   ssl.use-sslv3=\"disable\"\n");
+	fprintf(fp, "   ssl.honor-cipher-order=\"enable\"\n");
+//fprintf(fp, "   ssl.cipher-list=\"ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:ECDHE-RSA-AES128-SHA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;\"\n");
+	fprintf(fp, "   ssl.cipher-list=\"ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:ECDHE-RSA-AES128-SHA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4\"\n");
+	fprintf(fp, "   url.aicloud-auth-deny = (\"query_field.json\")\n");
 	//fprintf(fp, "	alias.url=(\"/webdav\"=>\"/mnt/\")\n"); 
 //	fprintf(fp, "	$HTTP[\"url\"]=~\"^/usbdisk($|/)\"{\n");
 	fprintf(fp, "	$HTTP[\"url\"]=~\"^/%s($|/)\"{\n", get_productid());
@@ -508,7 +527,6 @@ WEBDAV_SETTING:
 	fprintf(fp, "		webdav.activate=\"enable\"\n");
 	fprintf(fp, "		webdav.is-readonly=\"disable\"\n");
 //	fprintf(fp, "		webdav.sqlite-db-name=\"/tmp/lighttpd/webdav.db\"\n");
-	fprintf(fp, "       url.aicloud-auth-deny = (\"jplayer\")\n");
 	fprintf(fp, "	}\n");
 	fprintf(fp, "	else $HTTP[\"url\"] =~ \"^/favicon.ico$\"{\n");
     fprintf(fp, "		server.document-root = \"/\"\n");

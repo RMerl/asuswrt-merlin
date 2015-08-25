@@ -1,0 +1,13 @@
+# Package Information for pkg-config
+
+prefix=@PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libpjproject
+Description: Multimedia communication library
+URL: http://www.pjsip.org
+Version: @PJ_VERSION@
+Libs: -L${libdir} @PJ_LDLIBS@
+Cflags: -I${includedir} @PJ_INSTALL_CFLAGS@

@@ -1,0 +1,65 @@
+Delivered-To: oyvindharboe@gmail.com
+Received: by 10.100.7.20 with SMTP id 20cs86142ang;
+        Wed, 16 Jul 2008 00:45:59 -0700 (PDT)
+Received: by 10.142.238.12 with SMTP id l12mr5009290wfh.204.1216194359186;
+        Wed, 16 Jul 2008 00:45:59 -0700 (PDT)
+Return-Path: <andrew@lunn.ch>
+Received: from cpanel5.proisp.no (cpanel5.proisp.no [209.85.100.29])
+        by mx.google.com with ESMTP id 31si6762736wff.16.2008.07.16.00.45.57;
+        Wed, 16 Jul 2008 00:45:59 -0700 (PDT)
+Received-SPF: fail (google.com: domain of andrew@lunn.ch does not designate 209.85.100.29 as permitted sender) client-ip=209.85.100.29;
+Authentication-Results: mx.google.com; spf=hardfail (google.com: domain of andrew@lunn.ch does not designate 209.85.100.29 as permitted sender) smtp.mail=andrew@lunn.ch
+Received: from londo.lunn.ch ([80.238.139.98]:48839 ident=mail)
+	by cpanel5.proisp.no with esmtp (Exim 4.69)
+	(envelope-from <andrew@lunn.ch>)
+	id 1KJ1ht-00085G-Ng
+	for oyvind.harboe@zylin.com; Wed, 16 Jul 2008 09:45:52 +0200
+Received: from lunn by londo.lunn.ch with local (Exim 3.36 #1 (Debian))
+	id 1KJ1hq-0005ss-00; Wed, 16 Jul 2008 09:45:46 +0200
+Date: Wed, 16 Jul 2008 09:45:46 +0200
+From: Andrew Lunn <andrew@lunn.ch>
+To: ?yvind Harboe <oyvind.harboe@zylin.com>
+Cc: jim-devel@lists.berlios.de, antirez@gmail.com, patthoyts@users.sf.net,
+	andrew@lunn.ch, openocd@duaneellis.com, uklein@klein-messgeraete.de,
+	ml-jim@qiao.in-berlin.de
+Subject: Re: Change Jim Tcl license
+Message-ID: <20080716074546.GC24771@lunn.ch>
+References: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+User-Agent: Mutt/1.5.18 (2008-05-17)
+X-Spam-Status: No, score=-2.6
+X-Spam-Score: -25
+X-Spam-Bar: --
+X-Spam-Flag: NO
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - cpanel5.proisp.no
+X-AntiAbuse: Original Domain - zylin.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - lunn.ch
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+
+On Wed, Jul 16, 2008 at 09:34:14AM +0200, ?yvind Harboe wrote:
+> Hi all,
+> 
+> I'm currently the maintainer of Jim Tcl trying as best as I can
+> to fill Salvatore's shoes.
+> 
+> Short story:
+> 
+> If you have contributed to Jim Tcl, please reply to this email
+> that you agree that we can switch Jim Tcl to a FreeBSD license.
+
+I've no problems with this, but my contributions are very minimal.
+
+Do you want this written down, in blood, to keep the lawyers happy?
+
+At a minimum i think everybody's agreement needs to be posted to a
+public email list which is publicly archived etc so there is a
+record of the agreement...
+
+       Andrew

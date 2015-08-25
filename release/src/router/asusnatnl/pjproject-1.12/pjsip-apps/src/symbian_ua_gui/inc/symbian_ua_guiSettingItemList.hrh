@@ -1,0 +1,22 @@
+/*
+========================================================================
+ Name        : symbian_ua_guiSettingItemList.hrh
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+enum TSymbian_ua_guiSettingItemListViewCommands
+	{
+	ESymbian_ua_guiSettingItemListViewMenuItem1Command = 0x6000,
+	ESymbian_ua_guiSettingItemListViewSave_SettingsMenuItemCommand
+	};
+enum TSymbian_ua_guiSettingItemListViewSave_SettingsItems
+	{
+	ESymbian_ua_guiSettingItemListViewEd_registrar = 1,
+	ESymbian_ua_guiSettingItemListViewEd_user,
+	ESymbian_ua_guiSettingItemListViewEd_password,
+	ESymbian_ua_guiSettingItemListViewEd_stun_server,
+	ESymbian_ua_guiSettingItemListViewB_srtp,
+	ESymbian_ua_guiSettingItemListViewB_ice
+	};

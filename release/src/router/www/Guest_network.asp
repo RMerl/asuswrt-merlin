@@ -13,30 +13,82 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <link href="other.css"  rel="stylesheet" type="text/css">
+<link rel="stylesheet" type="text/css" href="/device-map/device-map.css">
 <script type="text/javascript" src="/state.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
+<script type="text/javascript" src="/jquery.xdomainajax.js"></script>
+<style>
+.WL_MAC_Block{
+	border:1px outset #999;
+	background-color:#576D73;
+	position:absolute;
+	*margin-top:27px;	
+	margin-left:107px;
+	*margin-left:-133px;
+	width:255px;
+	text-align:left;	
+	height:auto;
+	overflow-y:auto;
+	z-index:200;
+	padding: 1px;
+	display:none;
+}
+.WL_MAC_Block div{
+	background-color:#576D73;
+	height:auto;
+	*height:20px;
+	line-height:20px;
+	text-decoration:none;
+	font-family: Lucida Console;
+	padding-left:2px;
+}
+.WL_MAC_Block a{
+	background-color:#EFEFEF;
+	color:#FFF;
+	font-size:12px;
+	font-family:Arial, Helvetica, sans-serif;
+	text-decoration:none;	
+}
+.WL_MAC_Block div:hover, .WL_MAC_Block a:hover{
+	background-color:#3366FF;
+	color:#FFFFFF;
+	cursor:default;
+}
+</style>
 <script>
 var radio_2 = '<% nvram_get("wl0_radio"); %>';
 var radio_5 = '<% nvram_get("wl1_radio"); %>';
 <% radio_status(); %>
 
-var wl1_macmode = '<% nvram_get("wl1_macmode"); %>';
-var wl0_macmode = '<% nvram_get("wl0_macmode"); %>';
 var wl1_nmode_x = '<% nvram_get("wl1_nmode_x"); %>';
 var wl0_nmode_x = '<% nvram_get("wl0_nmode_x"); %>';
 if(wl_info.band5g_2_support){
 	var wl2_nmode_x = '<% nvram_get("wl2_nmode_x"); %>';
-	var wl2_macmode = '<% nvram_get("wl2_macmode"); %>';
 }
 
 <% wl_get_parameter(); %>
 
 wl_channel_list_2g = '<% channel_list_2g(); %>';
 wl_channel_list_5g = '<% channel_list_5g(); %>';
+
+var gn_array = gn_array_2g;
+var wl_maclist_x_array = gn_array[0][16];
+
+var manually_maclist_list_array = new Array();
+Object.prototype.getKey = function(value) {
+	for(var key in this) {
+		if(this[key] == value) {
+			return key;
+		}
+	}
+	return null;
+};
 
 function initial(){
 	show_menu();	
@@ -80,6 +132,8 @@ function initial(){
 		document.getElementById('gn_desc').parentNode.appendChild(childsel);
 		document.getElementById("wl_NOnly_note").innerHTML="* Please change the guest network authentication to WPA2 Personal AES.";	
 	}
+
+	setTimeout("showWLMACList();", 1000);	
 }
 
 function change_wl_expire_radio(){
@@ -199,8 +253,7 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 			}														
 			
 			if(sw_mode != "3"){
-					if(gn_array[i][0] == "1")
-							htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][12] +'</td></tr>';
+					if(gn_array[i][0] == "1") htmlcode += '<tr><td align="center" onclick="change_guest_unit('+ unit +','+ subunit +');">'+ gn_array[i][12] +'</td></tr>';
 			}
 										
 			if(gn_array[i][0] == "1"){
@@ -223,33 +276,6 @@ function _change_wl_unit_status(__unit){
 	document.titleForm.current_page.value = "Advanced_WAdvanced_Content.asp?af=wl_radio";
 	document.titleForm.next_page.value = "Advanced_WAdvanced_Content.asp?af=wl_radio";
 	change_wl_unit_status(__unit);
-}
-
-function goToACLFilter(){
-	if(sw_mode == 2 || sw_mode == 4) return false;
-	
-	var page_temp = "";
-	document.titleForm.wl_unit.disabled = false;
-	document.titleForm.wl_unit.value = document.form.wl_unit.value;
-	var macmode;
-	if(document.form.wl_unit.value == "1")
-		macmode = wl1_macmode;
-	else
-		macmode = wl0_macmode;
-	if(macmode == "disabled")
-		page_temp = "Advanced_ACL_Content.asp?af=enable_mac";
-	else 
-		page_temp = "Advanced_ACL_Content.asp?af=wl_maclist_x_0";
-		
-	if(document.titleForm.current_page.value == "")
-		document.titleForm.current_page.value = page_temp;
-	if(document.titleForm.next_page.value == "")
-		document.titleForm.next_page.value = page_temp;
-			
-	document.titleForm.action_mode.value = "change_wl_unit";
-	document.titleForm.action = "apply.cgi";
-	document.titleForm.target = "";
-	document.titleForm.submit();
 }
 
 function gen_gntable(){
@@ -336,6 +362,7 @@ function applyRule(){
 
 	if(validForm()){
 		showLoading();
+		updateMacList();
 		inputCtrl(document.form.wl_crypto, 1);
 		inputCtrl(document.form.wl_wpa_psk, 1);
 		inputCtrl(document.form.wl_wep_x, 1);
@@ -350,24 +377,12 @@ function applyRule(){
 		else
 			document.form.wl_expire.value = 0;
 
-		if(document.form.wl_macmode_option.value == "disabled"){
-			document.form.wl_macmode.value = "disabled";
-		}
-		else{
-			var macmode;
-			if(document.form.wl_unit.value == "1")
-				macmode = wl1_macmode;
-			else
-				macmode = wl0_macmode;
-			document.form.wl_macmode.value = macmode;
-		}
-
 		if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius") {
 			document.form.next_page.value = "/Advanced_WSecurity_Content.asp?gwlu=" + document.form.wl_unit.value;
 		}
 
 		if(based_modelid == "RT-AC87U") //MODELDEP: RT-AC87U need to extend waiting time to get new wl value
-			document.form.action_wait.value = parseInt(document.form.action_wait.value)+3;
+			document.form.action_wait.value = parseInt(document.form.action_wait.value)+5;
 
 		document.form.submit();
 	}
@@ -449,6 +464,7 @@ function guest_divctrl(flag){
 		
 		document.getElementById("gnset_table").style.display = "none";
 		document.getElementById("applyButton").style.display = "none";
+		document.getElementById("maclistMain").style.display = "none";
 	}
 }
 
@@ -491,21 +507,18 @@ function close_guest_unit(_unit, _subunit){
 }
 
 function change_guest_unit(_unit, _subunit){
-	var gn_array, macmode, idx;
+	var idx;
 	switch(_unit){
 		case 0:
 			gn_array = gn_array_2g;
-			macmode = wl0_macmode;
 			document.form.wl_nmode_x.value = wl0_nmode_x;
 			break;
 		case 1:			
 			gn_array = gn_array_5g;
-			macmode = wl1_macmode;
 			document.form.wl_nmode_x.value = wl1_nmode_x;
 			break;
 		case 2:
 			gn_array = gn_array_5g_2;
-			macmode = wl2_macmode;
 			document.form.wl_nmode_x.value = wl2_nmode_x;
 			break;
 	}
@@ -529,33 +542,15 @@ function change_guest_unit(_unit, _subunit){
 	document.form.wl_key4.value = decodeURIComponent(gn_array[idx][10]);
 	document.form.wl_expire.value = decodeURIComponent(gn_array[idx][11]);
 	document.form.wl_lanaccess.value = decodeURIComponent(gn_array[idx][12]);
-	if(decodeURIComponent(gn_array[idx][14]) == "disabled"){
-		document.form.wl_macmode_option.options[0].selected = 0;
-		document.form.wl_macmode_option.options[1].selected = 1;
-	}
-	else{
-		document.form.wl_macmode_option.options[0].selected = 1;
-		document.form.wl_macmode_option.options[1].selected = 0;
-	}
 
 	wl_wep_change();
-	change_wl_expire_radio();
-	if(macmode == "disabled"){
-		document.form.wl_macmode_option.disabled = "disabled";
-		document.getElementById('ACL_disabled_hint').style.display = "";
-		document.getElementById('ACL_enabled_hint').style.display = "none";
-	}
-	else{
-		document.form.wl_macmode_option.disabled = "";
-		document.getElementById('ACL_disabled_hint').style.display = "none";
-		document.getElementById('ACL_enabled_hint').style.display = "";
-	}
-	
+	change_wl_expire_radio();	
 	guest_divctrl(1);
+
+	updateMacModeOption();
 }
 
 function create_guest_unit(_unit, _subunit){
-	var gn_array;
 	switch(_unit){
 		case 0:
 			gn_array = gn_array_2g;
@@ -600,6 +595,233 @@ function genBWTable(_unit){
 		}
 	}
 }
+
+// mac filter
+function updateMacModeOption(){
+	wl_maclist_x_array = gn_array[document.form.wl_subunit.value-1][16];
+	var wl_maclist_x_row = wl_maclist_x_array.split('&#60');
+	var clientName = "New device";
+	manually_maclist_list_array = [];
+	for(var i = 1; i < wl_maclist_x_row.length; i += 1) {
+		if(clientList[wl_maclist_x_row[i]]) {
+			clientName = (clientList[wl_maclist_x_row[i]].nickName == "") ? clientList[wl_maclist_x_row[i]].name : clientList[wl_maclist_x_row[i]].nickName;
+		}
+		else {
+			clientName = "New device";
+		}
+		manually_maclist_list_array[wl_maclist_x_row[i]] = clientName;
+	}
+	show_wl_maclist_x();
+
+	document.form.wl_macmode.value = gn_array[document.form.wl_subunit.value-1][14];
+	document.form.wl_maclist_x.value = gn_array[document.form.wl_subunit.value-1][16];
+	document.getElementById("maclistMain").style.display = (document.form.wl_macmode.value == "disabled") ? "none" : "";
+}
+
+function show_wl_maclist_x(){
+	var code = "";
+	code +='<table width="80%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table"  id="wl_maclist_x_table">'; 
+	if(Object.keys(manually_maclist_list_array).length == 0)
+		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td>';
+	else{
+		//user icon
+		var userIconBase64 = "NoIcon";
+		var clientName, deviceType, deviceVender;
+		Object.keys(manually_maclist_list_array).forEach(function(key) {
+			var clientMac = key;
+			if(clientList[clientMac]) {
+				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;
+				deviceType = clientList[clientMac].type;
+				deviceVender = clientList[clientMac].dpiVender;
+			}
+			else {
+				clientName = "New device";
+				deviceType = 0;
+				deviceVender = "";
+			}
+			code +='<tr id="row_'+clientMac+'">';
+			code +='<td width="80%" align="center">';
+			code += '<table style="width:100%;"><tr><td style="width:40%;height:56px;border:0px;float:right;">';
+			if(clientList[clientMac] == undefined) {
+				code += '<div style="height:56px;" class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+			}
+			else {
+				if(usericon_support) {
+					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
+				}
+				if(userIconBase64 != "NoIcon") {
+					code += '<div style="width:81px;text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+				}
+				else if( (deviceType != "0" && deviceType != "6") || deviceVender == "") {
+					code += '<div style="height:56px;" class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' +clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+				}
+				else if(deviceVender != "" ) {
+					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
+					if(venderIconClassName != "") {
+						code += '<div style="height:56px;" class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+					}
+					else {
+						code += '<div style="height:56px;" class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+					}
+				}
+			}
+			code += '</td><td style="width:60%;border:0px;">';
+			code += '<div>' + clientName + '</div>';
+			code += '<div>' + clientMac + '</div>';
+			code += '</td></tr></table>';
+			code += '</td>';
+			code +='<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this, \'' + clientMac + '\');\" value=\"\"/></td></tr>';		
+		});
+	}	
+	
+  	code +='</tr></table>';
+	document.getElementById("wl_maclist_x_Block").innerHTML = code;
+}
+
+function deleteRow(r, delMac){
+	var i = r.parentNode.parentNode.rowIndex;
+	delete manually_maclist_list_array[delMac];
+	document.getElementById('wl_maclist_x_table').deleteRow(i);
+
+	if(Object.keys(manually_maclist_list_array).length == 0)
+		show_wl_maclist_x();
+}
+
+function addRow(obj, upper){
+	var rule_num = document.getElementById('wl_maclist_x_table').rows.length;
+	var item_num = document.getElementById('wl_maclist_x_table').rows[0].cells.length;
+	var mac = obj.value.toUpperCase();
+
+	if(rule_num >= upper){
+		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
+		return false;	
+	}	
+	
+	if(mac==""){
+		alert("<#JS_fieldblank#>");
+		obj.focus();
+		obj.select();			
+		return false;
+	}else if(!check_macaddr(obj, check_hwaddr_flag(obj))){
+		obj.focus();
+		obj.select();	
+		return false;	
+	}
+		
+		//Viz check same rule
+	for(i=0; i<rule_num; i++){
+		for(j=0; j<item_num-1; j++){	
+			if(manually_maclist_list_array[mac] != null){
+				alert("<#JS_duplicate#>");
+				return false;
+			}	
+		}		
+	}		
+	
+	if(clientList[mac]) {
+		manually_maclist_list_array[mac] = (clientList[mac].nickName == "") ? clientList[mac].name : clientList[mac].nickName;
+	}
+	else {
+		manually_maclist_list_array[mac] = "New device";
+	}
+
+	obj.value = ""
+	show_wl_maclist_x();
+}
+
+function updateMacList(){
+	var rule_num = document.getElementById('wl_maclist_x_table').rows.length;
+	var item_num = document.getElementById('wl_maclist_x_table').rows[0].cells.length;
+	var tmp_value = "";
+
+	Object.keys(manually_maclist_list_array).forEach(function(key) {
+		tmp_value += "<" + key;
+	});
+
+	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
+		tmp_value = "";	
+
+	document.form.wl_maclist_x.value = tmp_value;
+}
+
+function change_wl_unit(){
+	FormActions("apply.cgi", "change_wl_unit", "", "");
+	document.form.target = "";
+	document.form.submit();
+}
+
+function check_macaddr(obj,flag){ //control hint of input mac address
+	if(flag == 1){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").style.display = "";
+		return false;
+	}else if(flag ==2){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").style.display = "";
+		return false;		
+	}else{	
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
+		return true;
+	}	
+}
+
+//Viz add 2013.01 pull out WL client mac START
+function pullWLMACList(obj){	
+	if(isMenuopen == 0){		
+		obj.src = "/images/arrow-top.gif"
+		document.getElementById("WL_MAC_List_Block").style.display = "block";
+		document.form.wl_maclist_x_0.focus();		
+		isMenuopen = 1;
+	}
+	else
+		hideClients_Block();
+}
+
+var over_var = 0;
+var isMenuopen = 0;
+
+function hideClients_Block(){
+	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById("WL_MAC_List_Block").style.display="none";
+	isMenuopen = 0;
+}
+
+function showWLMACList(){
+	var code = "";
+	var show_macaddr = "";
+	var wireless_flag = 0;
+	for(i=0;i<clientList.length;i++){
+		if(clientList[clientList[i]].isWL != 0){		//0: wired, 1: 2.4GHz, 2: 5GHz, filter clients under current band
+			wireless_flag = 1;
+			var clientName = (clientList[clientList[i]].nickName == "") ? clientList[clientList[i]].name : clientList[clientList[i]].nickName;
+			code += '<a title=' + clientList[i] + '><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\''+clientList[i]+'\');"><strong>' + clientName + '</strong> ';
+			code += ' </div></a>';
+		}
+	}
+			
+	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+	document.getElementById("WL_MAC_List_Block").innerHTML = code;
+	
+	if(wireless_flag == 0)
+		document.getElementById("pull_arrow").style.display = "none";
+	else
+		document.getElementById("pull_arrow").style.display = "";
+}
+
+function setClientmac(macaddr){
+	document.form.wl_maclist_x_0.value = macaddr;
+	hideClients_Block();
+	over_var = 0;
+}
+// end
 </script>
 </head>
 
@@ -661,10 +883,10 @@ function genBWTable(_unit){
 <input type="hidden" name="wl_key_type" value='<% nvram_get("wl_key_type"); %>'> <!--Lock Add 2009.03.10 for ralink platform-->
 <input type="hidden" name="wl_channel_orig" value='<% nvram_get("wl_channel"); %>'>
 <input type="hidden" name="wl_expire" value='<% nvram_get("wl_expire"); %>'>
-<input type="hidden" name="wl_macmode" value='<% nvram_get("wl_macmode"); %>'>
 <input type="hidden" name="wl_mbss" value="1">
 <input type="hidden" name="wl_gmode_protection" value="<% nvram_get("wl_gmode_protection"); %>" disabled>
 <input type="hidden" name="wl_mode_x" value="<% nvram_get("wl_mode_x"); %>" disabled>
+<input type="hidden" name="wl_maclist_x" value="<% nvram_get("wl_maclist_x"); %>">
 <select name="wl_subunit" class="input_option" onChange="change_wl_unit();" style="display:none"></select>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -707,7 +929,7 @@ function genBWTable(_unit){
 						<div id="guest_table5"></div>
 						<div id="guest_table5_2"></div>
 					<!-- setting table -->
-						<table width="80%" border="1" align="center" style="margin-top:10px;margin-bottom:20px;display:none" cellpadding="4" cellspacing="0" id="gnset_table" class="FormTable">
+						<table width="80%" border="1" align="center" style="margin-top:10px;display:none" cellpadding="4" cellspacing="0" id="gnset_table" class="FormTable">
 							<tr id="wl_unit_field" style="display:none">
 								<th><#Interface#></th>
 								<td>
@@ -884,17 +1106,46 @@ function genBWTable(_unit){
 							<tr>
 								<th><#enable_macmode#></th>
 								<td>
-									<select name="wl_macmode_option" class="input_option">
-										<option class="content_input_fd" value="" <% nvram_match("wl_macmode", "","selected"); %>><#checkbox_Yes#></option>
-										<option class="content_input_fd" value="disabled" <% nvram_match("wl_macmode", "disabled","selected"); %>><#checkbox_No#></option>
+									<select name="wl_macmode" class="input_option">
+										<option class="content_input_fd" value="disabled" <% nvram_match("wl_macmode", "disabled","selected"); %>><#btn_disable#></option>
+										<option class="content_input_fd" value="allow" <% nvram_match("wl_macmode", "allow","selected"); %>><#FirewallConfig_MFMethod_item1#></option>
+										<option class="content_input_fd" value="deny" <% nvram_match("wl_macmode", "deny","selected"); %>><#FirewallConfig_MFMethod_item2#></option>
 									</select>
-									&nbsp;
-									<span id="ACL_enabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#FirewallConfig_MFList_groupitemname#></span>
-									<span id="ACL_disabled_hint" style="cursor:pointer;display:none;text-decoration:underline;" onclick="goToACLFilter();"><#Guest_Network_enable_ACL#></span>	
+									<script>
+									document.form.wl_macmode.onchange = function(){
+										document.getElementById("maclistMain").style.display = (this.value == "disabled") ? "none" : "";
+									}
+									</script>
 								</td>
 							</tr>
 						</table>
-						<div class="apply_gen" id="applyButton" style="display:none">
+
+						<div id="maclistMain">
+							<table id="maclistTable" width="80%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
+								<thead>
+									<tr>
+										<td colspan="2"><#FirewallConfig_MFList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;16)</td>
+									</tr>
+								</thead>
+									<tr>
+										<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">Client's MAC address<!--untranslated--></th> 
+										<th width="20%"><#list_add_delete#></th>
+									</tr>
+									<tr>
+										<td width="80%">
+											<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return validator.isHWAddr(this,event)" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off" placeholder="ex: <% nvram_get("lan_hwaddr"); %>" style="width:255px;">
+											<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="<#select_wireless_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
+											<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
+										</td>
+										<td width="20%">	
+											<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, 16);" value="">
+										</td>
+									</tr>      		
+							</table>
+							<div id="wl_maclist_x_Block"></div>
+						</div>
+
+						<div class="apply_gen" id="applyButton" style="display:none;margin-top:20px">
 							<input type="button" class="button_gen" value="<#CTL_Cancel#>" onclick="guest_divctrl(0);">
 							<input type="button" class="button_gen" value="<#CTL_apply#>" onclick="applyRule();">
 						</div>			  	

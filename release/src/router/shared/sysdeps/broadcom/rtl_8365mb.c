@@ -58,6 +58,8 @@ int rtkswitch_ioctl(int val, int val2, int val3)
 	switch (val) {
 	/* w/ no options */
 	case INIT_SWITCH:
+	case INIT_SWITCH_UP:
+	case GET_EXT_TXRXDELAY:
 	case GET_LANPORTS_LINK_STATUS:
 	case BAD_ADDR_X:
 	case POWERUP_LANPORTS:

@@ -1,0 +1,52 @@
+#if defined(PJ_BUILD_DLL)
+
+TARGET		pjsua_lib.dll
+TARGETTYPE	dll
+
+UID		0x0 0xA000000B 
+
+
+CAPABILITY	None
+LIBRARY		pjsip_ua.lib pjsip_simple.lib pjsip.lib pjmedia.lib null_audio.lib pjsdp.lib pjnath.lib pjlib_util.lib pjlib.lib esock.lib insock.lib charconv.lib euser.lib estlib.lib
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\pjsua_lib.def
+
+#else
+
+TARGET 		pjsua_lib.lib
+TARGETTYPE 	lib
+
+#endif
+
+SOURCEPATH	..\pjsip\src\pjsua-lib
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+// Must compile as C++, otherwise exception would not work
+OPTION          CW -lang c++
+OPTION          ARMCC --cpp --gnu
+OPTION          GCC     -x c++
+OPTION          GCCE    -x c++
+
+// PJLIB-UTIL files
+
+SOURCE	pjsua_acc.c
+SOURCE	pjsua_call.c
+SOURCE	pjsua_core.c
+SOURCE	pjsua_im.c
+SOURCE	pjsua_media.c
+SOURCE	pjsua_pres.c
+
+SYSTEMINCLUDE	..\pjlib\include 
+SYSTEMINCLUDE	..\pjlib-util\include
+SYSTEMINCLUDE	..\pjnath\include
+SYSTEMINCLUDE	..\pjmedia\include
+SYSTEMINCLUDE	..\pjsip\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+
+

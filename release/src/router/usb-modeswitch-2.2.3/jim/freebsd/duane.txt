@@ -1,0 +1,65 @@
+Delivered-To: oyvindharboe@gmail.com
+Received: by 10.100.7.20 with SMTP id 20cs93801ang;
+        Wed, 16 Jul 2008 03:40:02 -0700 (PDT)
+Received: by 10.142.148.10 with SMTP id v10mr5070849wfd.317.1216204801306;
+        Wed, 16 Jul 2008 03:40:01 -0700 (PDT)
+Return-Path: <openocd@duaneellis.com>
+Received: from cpanel5.proisp.no (cpanel5.proisp.no [209.85.100.29])
+        by mx.google.com with ESMTP id 27si9313433wff.3.2008.07.16.03.40.00;
+        Wed, 16 Jul 2008 03:40:01 -0700 (PDT)
+Received-SPF: neutral (google.com: 209.85.100.29 is neither permitted nor denied by best guess record for domain of openocd@duaneellis.com) client-ip=209.85.100.29;
+Authentication-Results: mx.google.com; spf=neutral (google.com: 209.85.100.29 is neither permitted nor denied by best guess record for domain of openocd@duaneellis.com) smtp.mail=openocd@duaneellis.com
+Received: from smtpout10-04.prod.mesa1.secureserver.net ([64.202.165.238]:48803 helo=smtpout10.prod.mesa1.secureserver.net)
+	by cpanel5.proisp.no with smtp (Exim 4.69)
+	(envelope-from <openocd@duaneellis.com>)
+	id 1KJ4QL-0005cq-GB
+	for oyvind.harboe@zylin.com; Wed, 16 Jul 2008 12:39:54 +0200
+Received: (qmail 2305 invoked from network); 16 Jul 2008 10:39:56 -0000
+Received: from unknown (68.37.53.103)
+  by smtpout10-04.prod.mesa1.secureserver.net (64.202.165.238) with ESMTP; 16 Jul 2008 10:39:55 -0000
+Message-ID: <487DCFEC.4010104@duaneellis.com>
+Date: Wed, 16 Jul 2008 06:39:40 -0400
+From: Duane Ellis <openocd@duaneellis.com>
+Reply-To: openocd@duaneellis.com
+User-Agent: Thunderbird 2.0.0.14 (Windows/20080421)
+MIME-Version: 1.0
+To: =?ISO-8859-1?Q?=D8yvind_Harboe?= <oyvind.harboe@zylin.com>
+CC: jim-devel@lists.berlios.de, antirez@gmail.com, 
+ patthoyts@users.sf.net, andrew@lunn.ch, uklein@klein-messgeraete.de, 
+ ml-jim@qiao.in-berlin.de
+Subject: Re: Change Jim Tcl license
+References: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+In-Reply-To: <c09652430807160034pd4a5b0q18f69a219827e111@mail.gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Spam-Status: No, score=-2.6
+X-Spam-Score: -25
+X-Spam-Bar: --
+X-Spam-Flag: NO
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - cpanel5.proisp.no
+X-AntiAbuse: Original Domain - zylin.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - duaneellis.com
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+
+Oyvind Harboe wrote:
+> Short story:
+>
+> If you have contributed to Jim Tcl, please reply to this email
+> that you agree that we can switch Jim Tcl to a FreeBSD license.
+>
+> Once I have a record of all contributors agreeing to switch
+> to a FreeBSD license, I'll update CVS.
+>
+>   
+OK - from me
+
+    --Duane.
+
+-Duane.
+
+
+

@@ -48,7 +48,7 @@ int ASUS_Discovery()
     }
 
     a_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (a_socket == 0)
+    if (a_socket < 0)
     {
         myAsusDiscoveryDebugPrint("Create socket failed");
         return 0;
@@ -61,6 +61,10 @@ int ASUS_Discovery()
         myAsusDiscoveryDebugPrint("setsockopt: SO_REUSEADDR failed\n");
         return 0;
     }
+
+    char *lan_ifname;
+    lan_ifname = nvram_safe_get("lan_ifname");
+    setsockopt(a_socket, SOL_SOCKET, SO_BINDTODEVICE, lan_ifname, strlen(lan_ifname));
 
     // set broadcast flag
     int broadcast = 1;
@@ -75,7 +79,6 @@ int ASUS_Discovery()
 
     struct sockaddr_in clit;
     memset(&clit, 0, sizeof(clit));
-    //clit.sin_len = sizeof(clit);
     clit.sin_family = AF_INET;
     clit.sin_port = htons(INFO_SERVER_PORT);
     clit.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -88,13 +91,12 @@ int ASUS_Discovery()
         a_socket = 0;
         return 0;
     }
-   
+
 	struct sockaddr_in serv;
 	memset(&serv, 0, sizeof(serv));
-	//serv.sin_len = sizeof(serv);
     	serv.sin_family = AF_INET;
 	serv.sin_port = htons(INFO_SERVER_PORT);
-    	serv.sin_addr.s_addr = inet_addr("255.255.255.255");
+	inet_aton("255.255.255.255", &serv.sin_addr);
     
 	char pdubuf[INFO_PDU_LENGTH] = {0};
 	pdubuf[0] = 0x0C; //12
@@ -110,7 +112,6 @@ int ASUS_Discovery()
     	// POLLRDNORM  non-OOB/URG data available
 	struct pollfd pollfd[1];    
     	pollfd->fd = a_socket;
-    	//pollfd->events = POLLRDNORM; //Yau
 	pollfd->events = POLLIN;
     	pollfd->revents = 0;
     
@@ -182,17 +183,18 @@ int ASUS_Discovery()
         char asus_device_list_buf[2048] = {0};
         int getRouterIndex;
 
-        for (getRouterIndex = 0; getRouterIndex < a_GetRouterCount-1; getRouterIndex++)
+        for (getRouterIndex = 0; getRouterIndex < a_GetRouterCount; getRouterIndex++)
         {
                 ip_addr_t = inet_addr(searchRouterInfo[getRouterIndex].routerIPAddress);
-                sprintf(asus_device_buf, "<%d>%s>%s>%s>%d>>>%s>%s",
+                sprintf(asus_device_buf, "<%d>%s>%s>%s>%d>%s>%s>%d",
                 3,
                 searchRouterInfo[getRouterIndex].routerProductID,
                 searchRouterInfo[getRouterIndex].routerIPAddress,
                 searchRouterInfo[getRouterIndex].routerRealMacAddress,
                 ((ip_addr_t&lan_netmask)==(lan_gateway&lan_netmask))?1:0,
                 searchRouterInfo[getRouterIndex].routerSSID,
-                searchRouterInfo[getRouterIndex].routerSubMask
+                searchRouterInfo[getRouterIndex].routerSubMask,
+                searchRouterInfo[getRouterIndex].routerOperationMode
                 );
                 strcat(asus_device_list_buf, asus_device_buf);
         }

@@ -1,0 +1,84 @@
+// These part may be overwritten by automated test
+// =BEGIN
+#define SND_HAS_APS	0
+#define SND_HAS_VAS	0
+#define SND_HAS_MDA	1
+// =END
+
+TARGET 			symbian_ua.exe
+TARGETTYPE 		exe
+//UID			0x0 0x200235D3
+UID			0x0 0xA000000D
+
+SOURCEPATH		..\pjsip-apps\src\symbian_ua
+
+OPTION			ARMCC --gnu
+
+MACRO			PJ_M_I386=1
+MACRO			PJ_SYMBIAN=1
+
+// Source files
+
+SOURCE			ua.cpp
+SOURCE			main_symbian.cpp
+
+DOCUMENT 		ua.h
+
+START RESOURCE  	symbian_ua_reg.rss
+	TARGETPATH      \private\10003a3f\apps
+END
+
+SYSTEMINCLUDE		..\pjlib\include
+SYSTEMINCLUDE		..\pjlib-util\include
+SYSTEMINCLUDE		..\pjnath\include
+SYSTEMINCLUDE		..\pjmedia\include
+SYSTEMINCLUDE		..\pjsip\include
+
+SYSTEMINCLUDE		\epoc32\include
+SYSTEMINCLUDE		\epoc32\include\libc
+
+// Ordering static libs based on dependencies, most to least dependent,
+// this could be necessary for some SDKs, e.g: S60 3rd MR
+STATICLIBRARY		pjsua_lib.lib
+STATICLIBRARY		pjsip_ua.lib pjsip_simple.lib pjsip.lib
+STATICLIBRARY		libgsmcodec.lib libspeexcodec.lib 
+STATICLIBRARY		libg7221codec.lib libpassthroughcodec.lib
+STATICLIBRARY		pjmedia.lib
+STATICLIBRARY		pjmedia_audiodev.lib
+STATICLIBRARY		pjsdp.lib
+STATICLIBRARY		pjnath.lib
+STATICLIBRARY		pjlib_util.lib pjlib.lib
+STATICLIBRARY		libsrtp.lib
+STATICLIBRARY		libresample.lib
+
+#if SND_HAS_APS
+	LIBRARY		APSSession2.lib
+#endif
+
+#if SND_HAS_VAS
+	LIBRARY		VoIPAudioIntfc.lib		
+#endif
+
+#if SND_HAS_MDA
+	LIBRARY 	mediaclientaudiostream.lib
+	LIBRARY 	mediaclientaudioinputstream.lib
+#endif
+
+#if SND_HAS_APS || SND_HAS_VAS
+	CAPABILITY	NetworkServices LocalServices ReadUserData WriteUserData UserEnvironment MultimediaDD
+#else
+	CAPABILITY	NetworkServices LocalServices ReadUserData WriteUserData UserEnvironment
+#endif
+	
+#ifdef WINSCW
+	STATICLIBRARY   eexe.lib ecrt0.lib
+#endif
+
+LIBRARY			esock.lib insock.lib charconv.lib euser.lib estlib.lib commdb.lib apengine.lib 
+LIBRARY			securesocket.lib x509.lib crypto.lib x500.lib 
+LIBRARY			hal.lib efsrv.lib
+
+// The default 8KB seems to be insufficient with all bells and
+// whistles turned on
+EPOCSTACKSIZE		12288
+

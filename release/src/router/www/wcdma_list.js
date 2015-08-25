@@ -1,7 +1,7 @@
 ﻿/* combined all protocol into this database */
 function gen_country_list(){
 	countrylist = new Array();
-	countrylist.push(["Manual", ""]);	
+	countrylist.push(["Others", ""]);
 	countrylist.push(["Australia", "AU"]);
 	countrylist.push(["Austria", "AT"]);
 	countrylist.push(["Bosnia and Herzegovina", "BA"]);
@@ -16,9 +16,11 @@ function gen_country_list(){
 	countrylist.push(["Egypt", "EG"]);
 	countrylist.push(["Finland", "FI"]);
 	countrylist.push(["Germany", "DE"]);
+	countrylist.push(["Greece", "GR"]);
 	countrylist.push(["Hong Kong", "HK"]);
 	countrylist.push(["India", "IN"]);
 	countrylist.push(["Indonesia", "ID"]);
+	countrylist.push(["Israel", "IL"]);
 	countrylist.push(["Italy", "IT"]);
 	countrylist.push(["Japan", "JP"]);
 	countrylist.push(["Malaysia", "MY"]);
@@ -174,6 +176,14 @@ function gen_list(){
 		userlist = new Array("tmobile", "tmobile", "tmobile", "tmobile", "tmobile", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "simyo", "blau", "", "eplus", "eplus", "", "", "", "", "", "", "", "", "", "", "");
 		passlist = new Array("tm", "tm", "tm", "tm", "tm", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "simyo", "blau", "", "gprs", "gprs", "", "", "", "", "", "", "", "", "", "", "");
 	}
+	else if(country == "GR"){
+		protolist = new Array("1");
+		isplist = new Array("WIND");
+		apnlist = new Array("gint.b-online.gr");
+		daillist = new Array("*99#");
+		userlist = new Array("");
+		passlist = new Array("");
+        }
 	else if(country == "HK"){
 		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1");
 		isplist = new Array("SmarTone", "3", "One2Free", "PCCW mobile", "New World Mobility", "CSL", "CMCC HK", "All 3G ISP support");
@@ -181,6 +191,14 @@ function gen_list(){
 		daillist = new Array("*99***1#", "*99***1#", "*99***1#", "*99#", "*99***1#", "*99***1#", "*99***1#", "*99***1#");
 		userlist = new Array("", "", "", "", "", "", "", "");
 		passlist = new Array("", "", "", "", "", "", "", "");
+	}
+	else if(country == "IL"){
+		protolist = new Array("1");
+		isplist = new Array("Cellcom");
+		apnlist = new Array("sphone");
+		daillist = new Array("*99#");
+		userlist = new Array("");
+		passlist = new Array("");
 	}
 	else if(country == "IN"){
 		protolist = new Array("2", "2", "2", "1", "1", "1");

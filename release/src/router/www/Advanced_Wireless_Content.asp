@@ -215,7 +215,7 @@ function applyRule(){
 		
 	if(validForm()){
 		if(document.form.wl_closed[0].checked && document.form.wps_enable.value == 1){
-			if(confirm("Selecting Hide SSID will disable WPS. Are you sure?")){
+			if(confirm("<#wireless_JS_Hide_SSID#>")){
 				document.form.wps_enable.value = "0";	
 			}
 			else{	
@@ -226,14 +226,14 @@ function applyRule(){
 		if(document.form.wps_enable.value == 1){		//disable WPS if choose WEP or WPA/TKIP Encryption
 			if(wps_multiband_support && (document.form.wps_multiband.value == 1	|| document.form.wps_band.value == wl_unit_value)){		//Ralink, Qualcomm Atheros
 				if(document.form.wl_auth_mode_x.value == "open" && document.form.wl_wep_x.value == "0"){
-					if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))
+					if(!confirm("<#wireless_JS_WPS_open#>"))
 						return false;		
 				}
 		
 				if( document.form.wl_auth_mode_x.value == "shared"
 				 ||	document.form.wl_auth_mode_x.value == "psk" || document.form.wl_auth_mode_x.value == "wpa"
 				 || document.form.wl_auth_mode_x.value == "open" && (document.form.wl_wep_x.value == "1" || document.form.wl_wep_x.value == "2")){		//open wep case			
-					if(confirm("Selecting WEP or TKIP Encryption will disable the WPS. Are you sure ?")){
+					if(confirm("<#wireless_JS_disable_WPS#>")){
 						document.form.wps_enable.value = "0";	
 					}
 					else{	
@@ -243,14 +243,14 @@ function applyRule(){
 			}
 			else{			//Broadcom 
 				if(document.form.wl_auth_mode_x.value == "open" && document.form.wl_wep_x.value == "0"){
-					if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))
+					if(!confirm("<#wireless_JS_WPS_open#>"))
 						return false;		
 				}
 		
 				if( document.form.wl_auth_mode_x.value == "shared"
 				 ||	document.form.wl_auth_mode_x.value == "psk" || document.form.wl_auth_mode_x.value == "wpa"
 				 || document.form.wl_auth_mode_x.value == "open" && (document.form.wl_wep_x.value == "1" || document.form.wl_wep_x.value == "2")){		//open wep case			
-					if(confirm("Selecting WEP or TKIP Encryption will disable the WPS. Are you sure ?")){
+					if(confirm("<#wireless_JS_disable_WPS#>")){
 						document.form.wps_enable.value = "0";	
 					}
 					else{	

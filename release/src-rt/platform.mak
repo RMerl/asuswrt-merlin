@@ -59,6 +59,12 @@ define platformKernelConfig
 	else \
 		echo "# CONFIG_RGMII_BCM_FA is not set" >> $(1); \
 	fi; \
+	if [ "$(LACP)" = "y" ]; then \
+		sed -i "/CONFIG_LACP/d" $(1); \
+		echo "CONFIG_LACP=m" >>$(1); \
+		sed -i "/CONFIG_BCM_AGG/d" $(1); \
+		echo "CONFIG_BCM_AGG=y" >>$(1); \
+	fi; \
 	if [ "$(BCMNAND)" = "y" ]; then \
 		sed -i "/CONFIG_MTD_NFLASH/d" $(1); \
 		echo "CONFIG_MTD_NFLASH=y" >>$(1); \
@@ -87,24 +93,20 @@ define platformKernelConfig
 				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 				cp -f $(SRCBASE)/router/dpsta/bcm7_3200/dpsta.o $(SRCBASE)/router/dpsta/linux; \
 			fi; \
-		elif [ "$(BCM794)" = "y" ]; then \
-			if [ "$(ARMCPUSMP)" = "up" ]; then \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-			else \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-			fi; \
-		elif [ "$(BCM7114)" = "y" ]; then \
-			if [ "$(ARMCPUSMP)" = "up" ]; then \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-			else \
-				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
-			fi; \
+		elif [ "$(BCM_7114)" = "y" ]; then \
+			cp -f $(SRCBASE)/router/ctf_arm/bcm_7114/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 		elif [ "$(BCM10)" = "y" ]; then \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			else \
 				cp -f $(SRCBASE)/router/ctf_arm/bcm7/ctf.* $(SRCBASE)/router/ctf_arm/linux/; \
 			fi; \
+		elif [ "$(BCM9)" = "y" ]; then \
+                        if [ "$(ARMCPUSMP)" = "up" ]; then \
+                                cp -f $(SRCBASE)/router/ctf_arm/bcm7_up/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+                        else \
+                                cp -f $(SRCBASE)/router/ctf_arm/bcm9/ctf.* $(SRCBASE)/router/ctf_arm/linux/;\
+                        fi; \
 		else \
 			if [ "$(ARMCPUSMP)" = "up" ]; then \
 				if [ "$(CTF_PPTP_L2TP)" = "y" ]; then \
@@ -269,13 +271,10 @@ define platformKernelConfig
 				cp $(SRCBASE)/router/wl_arm_10/prebuilt/wl_apsta.o $(SRCBASE)/wl/linux ; \
 			fi; \
 		else \
-			if [ "$(BWDPI)" = "y" ] && [ -d $(SRCBASE)/router/wl_arm/dpi/$(BUILD_NAME) ]; then \
+			if [ -d $(SRCBASE)/router/wl_arm/$(BUILD_NAME) ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
-				cp $(SRCBASE)/router/wl_arm/dpi/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
-			elif [ -d $(SRCBASE)/router/wl_arm/normal/$(BUILD_NAME) ]; then \
-				mkdir $(SRCBASE)/wl/linux ; \
-				cp $(SRCBASE)/router/wl_arm/normal/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
-            elif [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
+				cp $(SRCBASE)/router/wl_arm/$(BUILD_NAME)/prebuilt/* $(SRCBASE)/wl/linux ; \
+			elif [ -d $(SRCBASE)/router/wl_arm/prebuilt ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
 				cp $(SRCBASE)/router/wl_arm/prebuilt/* $(SRCBASE)/wl/linux ; \
 			elif [ -d $(SRCBASE)/wl/sysdeps/$(BUILD_NAME) ]; then \

@@ -362,7 +362,7 @@ fi
 
 nvram set apps_state_install=3 # DOWNLOADING
 link_internet=`nvram get link_internet`
-if [ "$link_internet" != "1" ]; then
+if [ "$link_internet" != "2" ]; then
 	cp -f $apps_local_space/optware.asus $APPS_INSTALL_PATH/lib/ipkg/lists/
 	if [ -n "$third_lib" ]; then
 		cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
@@ -563,8 +563,7 @@ fi
 echo "Enabling the package: $1..."
 app_set_enabled.sh $1 "yes"
 
-link_internet=`nvram get link_internet`
-if [ "$link_internet" == "1" ]; then
+if [ "$link_internet" == "2" ]; then
 	app_update.sh&
 fi
 

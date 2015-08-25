@@ -77,11 +77,6 @@
 	background:url(images/New_ui/bottom_bg1.png) 0 0 repeat;
 }
 
-.device_img3{
-  background: url(../images/wl_device/wl_devices.png) no-repeat;
-  background-position: 5px -57px; width: 30px; height: 32px;
-}
-
 .wifi_logo{
 	background: url(../images/New_ui/wifi-logo.png) no-repeat;
 	background-position: 1px 7px;width: 30px; height: 32px;
@@ -352,11 +347,7 @@ function showclient_list(list){
 		code +='<tr id="row'+i+'">';
 
 		for(var j = 0; j < client_list_col.length; j++){
-			if(j == 0){
-				code +='<td width="6%" class="border2" height="30px;" title="'+DEVICE_TYPE[client_list_col[0]]+'">';
-				code +='<div class="device_img3"></div></td>';
-			}
-			else if(j == 1){
+			if(j == 1){
 				if(client_list_col[1] != "")
 					code += '<td width="23%" class="border2">'+ '<div class="ClientName">' + client_list_col[1] + '</div>' + '<div class="macName">' + client_list_col[3] + '</div>' + '</td>';	// Show Device-name
 			}

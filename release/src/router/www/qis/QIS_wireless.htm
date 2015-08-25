@@ -12,6 +12,9 @@
 <script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script>
+var wl0_ssid_orig = '<% nvram_get("wl0_ssid"); %>';
+var wl1_ssid_orig = '<% nvram_get("wl1_ssid"); %>';
+
 if('<% nvram_get("x_Setting"); %>' == '0')
 	var smart_connect_tmp = '1';
 else
@@ -169,8 +172,8 @@ function QKWireless_load_body(){
 				document.getElementById("wl_unit_field_5").style.display = "";
 				document.getElementById("wl_unit_field_6").style.display = "";	
 				document.getElementById("wl_unit_field_1_1").innerHTML = '5 GHz-1 - <#Security#>';
-				document.getElementById("syncCheckbox").innerHTML = '<#qis_ssid_desc1#>';
-				document.getElementById("syncCheckbox_5_2").innerHTML = '<#qis_ssid_desc2#>';
+				document.getElementById("syncCheckbox").innerHTML = "<#qis_ssid_desc1#>";
+				document.getElementById("syncCheckbox_5_2").innerHTML = "<#qis_ssid_desc2#>";
 		}
 		
 		if(parent.document.QKform.sw_mode.value == 2){
@@ -289,7 +292,7 @@ function submitForm(){
 					if(document.form.wps_band.value == 0 
 					|| document.form.wps_dualband.value == 1            //RT-AC87U, dual band WPS
 					|| (!Rawifi_support && !Qcawifi_support && based_modelid != "RT-AC87U")){		//Broadcom
-						if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))    
+						if(!confirm("<#wireless_JS_WPS_open#>"))    
 							return false;
 					}
 				}
@@ -375,7 +378,7 @@ function submitForm(){
 						|| document.form.wps_dualband.value == "1"              //RT-AC87U dual band WPS
 						|| document.form.wps_multiband.value == "1"   //MTK, QCA platform dual band WPS
 						|| (!Rawifi_support && !Qcawifi_support && based_modelid != "RT-AC87U")){
-							if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))
+							if(!confirm("<#wireless_JS_WPS_open#>"))
 								return false;
 						}
 					}           		
@@ -459,7 +462,7 @@ function submitForm(){
 				if((document.form.wps_enable.value == 1 && document.form.wps_band.value == 2)
 				|| (based_modelid == "RT-AC87U" && document.form.wps_dualband.value == 1)
 				|| (!Rawifi_support && !Qcawifi_support && based_modelid != "RT-AC87U")){
-					if(!confirm("Are you sure to configure WPS in Open System (no security) ?"))	
+					if(!confirm("<#wireless_JS_WPS_open#>"))	
 						return false;	
 				}				
 			}				
@@ -899,26 +902,30 @@ function Sync_2ghz(band){
 			document.form.wl2_wpa_psk.value = document.form.wl0_wpa_psk.value; 		
 		}else if(document.form.sync_with_2ghz.checked == true){
 				document.form.wl1_wpa_psk.value = document.form.wl0_wpa_psk.value;
-				document.form.wl1_ssid.value = document.form.wl0_ssid.value + "_5G";
+				if(document.form.wl0_ssid.value != wl0_ssid_orig)
+					document.form.wl1_ssid.value = document.form.wl0_ssid.value + "_5G";
 
 				if(wl_info.band5g_2_support && document.form.sync_with_5ghz.checked == true){
 					document.form.wl2_wpa_psk.value = document.form.wl0_wpa_psk.value;
-					document.form.wl2_ssid.value = document.form.wl0_ssid.value + "_5G_2";
+					if(document.form.wl0_ssid.value != wl0_ssid_orig)
+						document.form.wl2_ssid.value = document.form.wl0_ssid.value + "_5G-2";
 				}
 		}
 	}else
 		document.form.sync_with_2ghz.checked = false;
 		if(wl_info.band5g_2_support && document.form.sync_with_5ghz.checked == true){
-			document.form.wl2_wpa_psk.value = document.form.wl1_wpa_psk.value; 
-			document.form.wl2_ssid.value = document.form.wl1_ssid.value + "_5G_2";			
-		}	
+			document.form.wl2_wpa_psk.value = document.form.wl1_wpa_psk.value;
+			if(document.form.wl1_ssid.value != wl1_ssid_orig)
+				document.form.wl2_ssid.value = document.form.wl1_ssid.value + "-2";
+		}
 }
 
 function Sync_2ghz_m(band){
 	if(band == 2){
 		if(document.form.sync_with_2ghz_m.checked == true){
-			document.form.wl1_wpa_psk_m.value = document.form.wl0_wpa_psk_m.value; 
-			document.form.wl1_ssid_m.value = document.form.wl0_ssid_m.value + "_5G";
+			document.form.wl1_wpa_psk_m.value = document.form.wl0_wpa_psk_m.value;
+			if(document.form.wl0_ssid_m.value != wl0_ssid_orig)
+				document.form.wl1_ssid_m.value = document.form.wl0_ssid_m.value + "_5G";
 		}
 	}
 	else
@@ -929,7 +936,8 @@ function Sync_5ghz(band){
 	if(band == 2){
 		if(document.form.sync_with_5ghz.checked == true){
 			document.form.wl2_wpa_psk.value = document.form.wl1_wpa_psk.value;
-			document.form.wl2_ssid.value = document.form.wl1_ssid.value + "_5G_2";
+			if(document.form.wl1_ssid.value != wl1_ssid_orig)
+				document.form.wl2_ssid.value = document.form.wl1_ssid.value + "-2";
 		}
 	}
 	else
@@ -940,7 +948,8 @@ function Sync_5ghz_m(band){
 	if(band == 2){
 		if(document.form.sync_with_5ghz_m.checked == true){
 			document.form.wl2_wpa_psk_m.value = document.form.wl1_wpa_psk_m.value;
-			document.form.wl2_ssid_m.value = document.form.wl1_ssid_m.value + "_5G_2";
+			if(document.form.wl1_ssid_m.value != wl1_ssid_orig)
+			document.form.wl2_ssid_m.value = document.form.wl1_ssid_m.value + "-2";
 		}
 	}
 	else

@@ -1,0 +1,2 @@
+This Python module is now deprecated. Please use the new implementation under
+pjsip-apps/python directory.

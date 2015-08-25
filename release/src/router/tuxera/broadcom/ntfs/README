@@ -250,10 +250,10 @@ file system read performance is rarely higher than this values.
 
 --- Contact & Support Information ---
 
-Please send support queries to ntfs-support@tuxera.com. 
+Please send feedback and support queries to ntfs-support@tuxera.com.
 
-Besides describing your issue please provide the below information 
-then Tuxera's engineers can address them:
+Besides describing your issue please provide the following information
+to help Tuxera's engineers address the issue:
 
   - detailed console error messages
   - kernel log by using the 'dmesg' command, or 'cat /proc/kmsg'
@@ -261,5 +261,4 @@ then Tuxera's engineers can address them:
 
 Thank you.
 
-Copyright (c) 2008-2012 Tuxera Inc. All Rights Reserved.
-
+Copyright (c) 2008-2015 Tuxera Inc. All Rights Reserved.

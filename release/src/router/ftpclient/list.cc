@@ -20,13 +20,14 @@ void replace_char_in_str(char *str,char newchar,char oldchar){
 
 }
 
-void my_local_mkdir(char *path)
+void my_local_mkdir(char *path)//看是否有此(path)路径，没有就创建
 {
     //char error_message[256];
     DIR *dir;
     if(NULL == (dir = opendir(path)))
     {
-        if(-1 == mkdir(path,0777))
+        if(-1 == mkdir(path,0777)) //mkdir(path,0777)定义一个以path命名的目录，
+            //0777是默认模式，表示文件所有者，文件所有组以及其他用户都具有读写执行的权限
         {
             DEBUG("please check disk can write or dir has exist???");
             DEBUG("mkdir %s fail\n",path);
@@ -165,13 +166,12 @@ char *change_server_same_name(char *fullname,int index)
     sprintf(fullname_tmp,"%s",fullname);
 
     DEBUG("%s\n",fullname);
-    DEBUG("%s\n",fullname_tmp);
     char *temp = get_prepath(fullname_tmp,strlen(fullname_tmp));
     filename = (char *)malloc(sizeof(char)*(strlen(fullname_tmp) - strlen(temp) + 1));
     sprintf(filename,"%s",fullname_tmp + strlen(temp));
     //filename = fullname_tmp + strlen(temp);
     free(temp);
-    len = strlen(fullname_tmp);
+    //len = strlen(fullname_tmp);//2014.11.11 by sherry
     path = get_prepath(fullname,strlen(fullname));
 
     free(fullname_tmp);
@@ -188,11 +188,14 @@ char *change_server_same_name(char *fullname,int index)
         snprintf(newfilename,252-j,"%s",filename);
         lens = get_prefix(newfilename,strlen(newfilename));
         sprintf(tail,"(%d)",i);
-        string newname(newfilename),temp(tail);
+
+        string newname(newfilename),temp(tail);//拷贝构造函数
         newname = newname.insert(lens,temp);
         //sprintf(newfilename,"%s(%d)",newfilename,i);
         memset(newfilename,'\0',sizeof(newfilename));
+        //strcpy(newfilename,newname.c_str());
         sprintf(newfilename,"%s",newname.c_str());
+
         //newname.~string();
         //temp.~string();
         DEBUG("newfilename = %s\n",newfilename);
@@ -217,11 +220,18 @@ char *change_server_same_name(char *fullname,int index)
     }
     free(path);
     char *tmp = get_prepath(temp_name,strlen(temp_name));
-    temp_name = temp_name + strlen(tmp) + 1;
+    //2014.11.11 by sherry  free的内存空间和申请的不一致，程序挂掉
+    //temp_name = temp_name + strlen(tmp) + 1;
+    char *temp_name1=NULL;
+    temp_name1=my_str_malloc(strlen(temp_name)-strlen(tmp)+1);
+    sprintf(temp_name1,"%s",temp_name + strlen(tmp) + 1);
+
     free(tmp);
     free(filename);
+    free(temp_name);//2014.11.11 by sherry
+
 //    temp_name = temp_name + strlen(get_prepath(temp_name,strlen(temp_name))) + 1;
-    return temp_name;
+    return temp_name1;//2014.11.11 by sherry
 }
 
 char *change_local_same_name(char *fullname)
@@ -413,7 +423,7 @@ int isServerChanged(Server_TreeNode *newNode,Server_TreeNode *oldNode)
 */
 CloudFile *get_CloudFile_node(Server_TreeNode* treeRoot,const char *dofile_href,int a)
 {
-    //DEBUG("****get_CloudFile_node****dofile_href = %s\n",dofile_href);
+    DEBUG("****get_CloudFile_node****dofile_href = %s\n",dofile_href);
     int href_len = strlen(dofile_href);
     CloudFile *finded_file = NULL;
     if(treeRoot == NULL)
@@ -445,7 +455,7 @@ CloudFile *get_CloudFile_node(Server_TreeNode* treeRoot,const char *dofile_href,
         int int_file = 0x2;
         CloudFile *de_foldercurrent = NULL;
         CloudFile *de_filecurrent = NULL;
-        //DEBUG("111111folder = %d,file = %d\n",treeRoot->browse->foldernumber,treeRoot->browse->filenumber);
+        DEBUG("111111folder = %d,file = %d\n",treeRoot->browse->foldernumber,treeRoot->browse->filenumber);
         if(treeRoot->browse->foldernumber > 0)
             de_foldercurrent = treeRoot->browse->folderlist->next;
         if(treeRoot->browse->filenumber > 0)
@@ -456,7 +466,7 @@ CloudFile *get_CloudFile_node(Server_TreeNode* treeRoot,const char *dofile_href,
             {
                 if(de_foldercurrent->href != NULL)
                 {
-                    //DEBUG("de_foldercurrent->href = %s\n",de_foldercurrent->href);
+                    DEBUG("de_foldercurrent->href = %s\n",de_foldercurrent->href);
                     if(!(strncmp(de_foldercurrent->href,dofile_href,href_len)))
                     {
                         return de_foldercurrent;
@@ -471,10 +481,10 @@ CloudFile *get_CloudFile_node(Server_TreeNode* treeRoot,const char *dofile_href,
             {
                 if(de_filecurrent->href != NULL)
                 {
-                    //DEBUG("de_filecurrent->href = %s\n",de_filecurrent->href);
+                    DEBUG("de_filecurrent->href = %s\n",de_filecurrent->href);
                     if(!(strncmp(de_filecurrent->href,dofile_href,href_len)))
                     {
-                        //DEBUG("get it\n");
+                        DEBUG("get it\n");
                         return de_filecurrent;
                     }
                 }
@@ -529,29 +539,38 @@ void del_all_items(char *dir,int index)
 
 char *get_prepath(char *temp,int len)
 {
-    char *p = temp;
-    char *q = temp;
-    int count = 0,count_1 = 0;
-    while(strlen(p) != 0)
+    //2014.09.26 by sherry
+    //野指针，内存越界
+//    char *p = temp;
+//    char *q = temp;
+//    int count = 0,count_1 = 0;
+//    while(strlen(p) != 0) //p 得到字符串的总长度
+//    {
+//        if(p[0] == '/')
+//        {
+//            count++;
+//        }
+//        p++;
+//    }
+//    while(strlen(q) != 0) //q 定位到最后一个'/'
+//    {
+//        if(q[0] == '/')
+//        {
+//            count_1++;
+//            if(count_1 == count)
+//            {
+//                break;
+//            }
+//        }
+//        q++;
+//    }
+    char *q;
+    q=strrchr(temp,'/');
+    if( q == NULL)
     {
-        if(p[0] == '/')
-        {
-            count++;
-        }
-        p++;
+        return NULL;
     }
-    while(strlen(q) != 0)
-    {
-        if(q[0] == '/')
-        {
-            count_1++;
-            if(count_1 == count)
-            {
-                break;
-            }
-        }
-        q++;
-    }
+
     char *ret = (char *)malloc(sizeof(char)*(len - strlen(q) + 1));
     memset(ret,'\0',sizeof(char)*(len - strlen(q) + 1));
     strncpy(ret,temp,len-strlen(q));
@@ -560,29 +579,34 @@ char *get_prepath(char *temp,int len)
 
 int get_prefix(char *temp,int len)
 {
-    char *p = temp;
-    char *q = temp;
-    int count = 0,count_1 = 0;
-    while(strlen(p) != 0)
-    {
-        if(p[0] == '.')
-        {
-            count++;
-        }
-        p++;
-    }
-    while(strlen(q) != 0)
-    {
-        if(q[0] == '.')
-        {
-            count_1++;
-            if(count_1 == count)
-            {
-                break;
-            }
-        }
-        q++;
-    }
+//    char *p = temp;
+//    char *q = temp;
+//    int count = 0,count_1 = 0;
+//    while(strlen(p) != 0)
+//    {
+//        if(p[0] == '.')
+//        {
+//            count++;
+//        }
+//        p++;
+//    }
+//    while(strlen(q) != 0)
+//    {
+//        if(q[0] == '.')
+//        {
+//            count_1++;
+//            if(count_1 == count)
+//            {
+//                break;
+//            }
+//        }
+//        q++;
+//    }
+    //2014.11.06 by sherry 程序挂掉
+    char *q;
+    q=strrchr(temp,'.');
+    if(q==NULL)
+        return len;
     return len-strlen(q);
 }
 
@@ -669,6 +693,7 @@ void free_CloudFile_item(CloudFile *head)
         free(p);
         p = head;
     }
+    //head=NULL;
 }
 
 int is_folder(char *p){
@@ -800,7 +825,7 @@ int ChangeFile_modtime(char *filepath,time_t servermodtime,int index)
     if(newpath_re != NULL)
     {
         DEBUG("newpath_re = %s\n",newpath_re);
-        utime(newpath_re,ub);
+        utime(newpath_re,ub);//修改参数filename文件所属的inode存取时间
     }
     else
     {
@@ -815,22 +840,64 @@ int ChangeFile_modtime(char *filepath,time_t servermodtime,int index)
 
 char *localpath_to_serverpath(char *from_localpath,int index)
 {
+    //2014.10.27 by sherry
+    //未考虑在根目录下操作的情况
+//    char *p = from_localpath;
+//    p = p + strlen(ftp_config.multrule[index]->base_path);
+//    char *serverpath = (char*)malloc(sizeof(char)*(strlen(ftp_config.multrule[index]->rooturl) + strlen(p) + 1));
+//    memset(serverpath,'\0',sizeof(char)*(strlen(ftp_config.multrule[index]->rooturl) + strlen(p) + 1));
+//    sprintf(serverpath,"%s%s",ftp_config.multrule[index]->rooturl,p);
+//    return serverpath;
+
     char *p = from_localpath;
-    p = p + strlen(ftp_config.multrule[index]->base_path);
-    char *serverpath = (char*)malloc(sizeof(char)*(strlen(ftp_config.multrule[index]->rooturl) + strlen(p) + 1));
-    memset(serverpath,'\0',sizeof(char)*(strlen(ftp_config.multrule[index]->rooturl) + strlen(p) + 1));
-    sprintf(serverpath,"%s%s",ftp_config.multrule[index]->rooturl,p);
-    return serverpath;
+    char *serverpath;
+
+    if(!strcmp(from_localpath,ftp_config.multrule[index]->base_path))
+    {
+        serverpath = (char*)malloc(sizeof(char)*(strlen(ftp_config.multrule[index]->rooturl) + 1));
+        memset(serverpath,'\0',sizeof(char)*(strlen(ftp_config.multrule[index]->rooturl) + 1));
+        sprintf(serverpath,"%s",ftp_config.multrule[index]->rooturl);
+        return serverpath;
+    }
+    else
+    {
+        p = p + strlen(ftp_config.multrule[index]->base_path);
+        serverpath = (char*)malloc(sizeof(char)*(strlen(ftp_config.multrule[index]->rooturl) + strlen(p) + 1));
+        memset(serverpath,'\0',sizeof(char)*(strlen(ftp_config.multrule[index]->rooturl) + strlen(p) + 1));
+        sprintf(serverpath,"%s%s",ftp_config.multrule[index]->rooturl,p);
+        return serverpath;
+    }
 }
 
 char *serverpath_to_localpath(char *from_serverpath,int index)
 {
+    //2014.10.28 by sherry
+    //未考虑在根目录下操作的情况
+//    char *p = from_serverpath;
+//    p = p + strlen(ftp_config.multrule[index]->rooturl);
+//    char *localpath = (char*)malloc(sizeof(char)*(ftp_config.multrule[index]->base_path_len + strlen(p) + 1));
+//    memset(localpath,'\0',sizeof(char)*(ftp_config.multrule[index]->base_path_len + strlen(p) + 1));
+//    sprintf(localpath,"%s%s",ftp_config.multrule[index]->base_path,p);
+//    return localpath;
+
     char *p = from_serverpath;
-    p = p + strlen(ftp_config.multrule[index]->rooturl);
-    char *localpath = (char*)malloc(sizeof(char)*(ftp_config.multrule[index]->base_path_len + strlen(p) + 1));
-    memset(localpath,'\0',sizeof(char)*(ftp_config.multrule[index]->base_path_len + strlen(p) + 1));
-    sprintf(localpath,"%s%s",ftp_config.multrule[index]->base_path,p);
-    return localpath;
+    char *localpath;
+    if(!strcmp(from_serverpath,ftp_config.multrule[index]->rooturl))
+    {
+        localpath=(char*)malloc(sizeof(char)*(ftp_config.multrule[index]->base_path_len + 1));
+        memset(localpath,'\0',sizeof(char)*(ftp_config.multrule[index]->base_path_len + 1));
+        sprintf(localpath,"%s",ftp_config.multrule[index]->base_path);
+        return localpath;
+    }
+    else
+    {
+        p = p + strlen(ftp_config.multrule[index]->rooturl);
+        localpath = (char*)malloc(sizeof(char)*(ftp_config.multrule[index]->base_path_len + strlen(p) + 1));
+        memset(localpath,'\0',sizeof(char)*(ftp_config.multrule[index]->base_path_len + strlen(p) + 1));
+        sprintf(localpath,"%s%s",ftp_config.multrule[index]->base_path,p);
+        return localpath;
+    }
+
 }
 
 int test_if_dir_empty(char *dir)
@@ -1177,7 +1244,8 @@ char *my_str_malloc(size_t len)
         exit(1);
     }
 
-    memset(s,'\0',sizeof(s));
+    //memset(s,'\0',sizeof(s));//2014.10.28 by sherry sizeof(指针)为固定值4
+    memset(s,'\0',sizeof(char)*len);
     return s;
 }
 
@@ -1200,7 +1268,7 @@ long long int get_local_freespace(int index)
 char *get_socket_base_path(char *cmd)
 {
 
-    //DEBUG("get_socket_base_path cmd : %s\n",cmd);
+    DEBUG("get_socket_base_path cmd : %s\n",cmd);
 
     char *temp = NULL;
     char *temp1 = NULL;
@@ -1278,6 +1346,7 @@ mod_time *get_mtime_1(FILE *fp)
             res=0;
         }
         fclose(fp);
+        DEBUG1("@@@@@@@@@@@@modtime_1=%s\n",modtime_1);
         return modtime_1;
     }
     else
@@ -1289,9 +1358,10 @@ int getCloudInfo_one(char *URL,int (* cmd_data)(char *,int),int index)
     DEBUG("%s\n",URL);
     int status;
     char *command = (char *)malloc(sizeof(char)*(strlen(URL) + 7));
-    memset(command,'\0',sizeof(command));
+    //memset(command,'\0',sizeof(command));//2014.10.28 by sherry sizeof(指针)=4
+    memset(command,'\0',sizeof(char)*(strlen(URL) + 7));
     sprintf(command,"LIST %s",URL);
-    printf("command = %s\n",command);
+    DEBUG("command = %s\n",command);
     char *temp = utf8_to(command,index);
     free(command);
     CURL *curl;
@@ -1307,9 +1377,9 @@ int getCloudInfo_one(char *URL,int (* cmd_data)(char *,int),int index)
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(curl,CURLOPT_LOW_SPEED_LIMIT,1);
         curl_easy_setopt(curl,CURLOPT_LOW_SPEED_TIME,30);
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
         res = curl_easy_perform(curl);
-        printf("getCloudInfo_one() - res = %d\n",res);
+        DEBUG("getCloudInfo_one() - res = %d\n",res);
         if(res != CURLE_OK)
         {
             curl_easy_cleanup(curl);
@@ -1575,6 +1645,12 @@ int parse_config(const char *path,Config *config)
             }
             i++;
         }
+
+        //DEBUG("%s\n",buffer);
+        //int x;
+        //x = config->dir_num;
+        //for(x=0;)
+
         fclose(fp);
     }
     int m;
@@ -1600,8 +1676,7 @@ int usr_auth(char *ip,char *user_pwd)
         curl_easy_setopt(curl,CURLOPT_LOW_SPEED_LIMIT,1);
         curl_easy_setopt(curl,CURLOPT_LOW_SPEED_TIME,10);
         curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
-        res = curl_easy_perform(curl);
-        DEBUG("res = %d\n",res);
+        res = curl_easy_perform(curl);// 28:a timeout was reached  7:couldn't connect to server
         curl_easy_cleanup(curl);
         return res;
     }

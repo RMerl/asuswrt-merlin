@@ -1599,6 +1599,22 @@ static inline struct sk_buff *netdev_alloc_skb_ip_align(struct net_device *dev,
 
 extern struct page *__netdev_alloc_page(struct net_device *dev, gfp_t gfp_mask);
 
+#if defined(CONFIG_BCM_RECVFILE)
+/**
+ * skb_frag_page - retrieve the page refered to by a paged fragment
+ * @frag: the paged fragment
+ *
+ * Returns the &struct page associated with @frag.
+ */
+static inline struct page *skb_frag_page(const skb_frag_t *frag)
+{
+	return frag->page;
+}
+extern int skb_copy_datagram_to_kernel_iovec(const struct sk_buff *from,
+					       int offset, struct iovec *to,
+					       int size);
+#endif /* CONFIG_BCM_RECVFILE */
+
 /**
  *	netdev_alloc_page - allocate a page for ps-rx on a specific device
  *	@dev: network device to receive on

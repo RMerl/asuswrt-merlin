@@ -45,11 +45,17 @@ extern "C"
 #endif
 
 #define __DEBUG__
-
 #ifdef __DEBUG__
 #define DEBUG(info, ...) printf(info,##__VA_ARGS__)
 #else
 #define DEBUG(info, ...)
+#endif
+
+#define __DEBUG1__
+#ifdef __DEBUG1__
+#define DEBUG1(info, ...) printf(info,##__VA_ARGS__)
+#else
+#define DEBUG1(info, ...)
 #endif
 
 #define __FTPDEBUG__
@@ -162,6 +168,8 @@ typedef struct SYNC_LIST
     int init_completed;
     int sync_disk_exist;
     int upload_break;
+    int IsNetWorkUnlink;    //2014.11.03 by sherry (ip是否正确，网络通不通)
+    int IsPermission;       //2014.11.04 by sherry (server权限)
     action_item *copy_file_list;         //The copy files
     action_item *server_action_list;    //Server变化导致的Socket
     action_item *dragfolder_action_list;   //dragfolder时递归动作造成的Socket重复
@@ -327,6 +335,9 @@ char *serverpath_to_localpath(char *from_serverpath,int index);
 int is_file(char *p);
 int is_folder(char *p);
 int is_local_space_enough(CloudFile *do_file,int index);
+int is_server_space_enough(char *localfilepath,int index);//2014.11.14 by sherry add：server是否足够
+//int get_server_info(char *URL,int (* cmd_data)(char *,int),int index);//2014.11.14 by sherry add：server是否足够
+int get_server_info(char *URL,int index);
 int is_server_have_localpath(char *path,Server_TreeNode *treenode,int index);
 void free_action_item(action_item *head);
 void free_CloudFile_item(CloudFile *head);

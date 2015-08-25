@@ -214,7 +214,8 @@ function initial(){
 
 	if(parent.wans_flag){
 		if(unit == 0){
-			if(dsl_support && wans_dualwan.split(" ")[0] == "dsl"){
+			if(dsl_support && wans_dualwan.split(" ")[0] == "dsl" 
+				&& (productid == "DSL-AC68U" || productid == "DSL-AC68R")){     //MODELDEP: DSL-AC68U,DSL-AC68R
 				document.getElementById("divSwitchMenu").style.display = "";	
 			}
 			update_all_ip(first_wanip, first_wannetmask, first_wandns, first_wangateway , 0);
@@ -226,6 +227,10 @@ function initial(){
 		}
 	}
 	else{
+		if(dsl_support && wans_dualwan.split(" ")[0] == "dsl"
+			&& (productid == "DSL-AC68U" || productid == "DSL-AC68R")){     //MODELDEP: DSL-AC68U,DSL-AC68R
+			document.getElementById("divSwitchMenu").style.display = "";
+		}
 		update_all_ip(wanip, wannetmask, wandns, wangateway , unit);
 		update_all_xip(wanxip, wanxnetmask, wanxdns, wanxgateway, unit);
 	}

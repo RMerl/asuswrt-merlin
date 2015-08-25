@@ -654,7 +654,7 @@ Provide DS records to act a trust anchors for DNSSEC
 validation. Typically these will be the DS record(s) for Zone Signing
 key(s) of the root zone,
 but trust anchors for limited domains are also possible. The current
-root-zone trust anchors may be donwloaded from https://data.iana.org/root-anchors/root-anchors.xml 
+root-zone trust anchors may be downloaded from https://data.iana.org/root-anchors/root-anchors.xml 
 .TP
 .B --dnssec-check-unsigned
 As a default, dnsmasq does not check that unsigned DNS replies are
@@ -833,7 +833,7 @@ and
 for details.)
 
 For IPv6, the mode may be some combination of
-.B ra-only, slaac, ra-names, ra-stateless, ra-advrouter.
+.B ra-only, slaac, ra-names, ra-stateless, ra-advrouter, off-link.
 
 .B ra-only
 tells dnsmasq to offer Router Advertisement only on this subnet,
@@ -872,6 +872,9 @@ and
 enables a mode where router address(es) rather than prefix(es) are included in the advertisements.
 This is described in RFC-3775 section 7.2 and is used in mobile IPv6. In this mode the interval option
 is also included, as described in RFC-3775 section 7.3.
+
+.B off-link
+tells dnsmasq to advertise the prefix without the on-link (aka L) bit set.
 
 .TP
 .B \-G, --dhcp-host=[<hwaddr>][,id:<client_id>|*][,set:<tag>][,<ipaddr>][,<hostname>][,<lease_time>][,ignore]
@@ -1597,11 +1600,13 @@ option also forces the leasechange script to be called on changes
 to the client-id and lease length and expiry time.
 .TP
 .B --bridge-interface=<interface>,<alias>[,<alias>]
-Treat DHCP request packets arriving at any of the <alias> interfaces
-as if they had arrived at <interface>. This option is necessary when
-using "old style" bridging on BSD platforms, since
-packets arrive at tap interfaces which don't have an IP address.
-A trailing '*' wildcard can be used in each <alias>.
+Treat DHCP (v4 and v6) request and IPv6 Router Solicit packets
+arriving at any of the <alias> interfaces as if they had arrived at
+<interface>.  This option allows dnsmasq to provide DHCP and RA
+service over unaddressed and unbridged Ethernet interfaces, e.g. on an
+OpenStack compute host where each such interface is a TAP interface to
+a VM, or as in "old style bridging" on BSD platforms.  A trailing '*'
+wildcard can be used in each <alias>.
 .TP
 .B \-s, --domain=<domain>[,<address range>[,local]]
 Specifies DNS domains for the DHCP server. Domains may be be given 

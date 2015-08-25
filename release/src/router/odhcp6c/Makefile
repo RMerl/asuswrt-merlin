@@ -4,13 +4,14 @@ BUILDDIR = $(SRC)
 DESTDIR  = 
 CFLAGS   = -g -std=gnu99 -D_GNU_SOURCE -Wall -Wextra -pedantic $(EXT_CFLAGS)
 LDFLAGS  = $(EXT_LDFLAGS)
-LIBS     =
+LIBS     = -Wl,--as-needed -lresolv
 
 INSTALL  = install
 SRC      = src
 
 top ?= $(CURDIR)
 
+CFLAGS += $(if $(EXT_PREFIX_CLASS),-DEXT_PREFIX_CLASS=$(EXT_PREFIX_CLASS),)
 CFLAGS += $(if $(EXT_CER_ID),-DEXT_CER_ID=$(EXT_CER_ID),)
 
 OBJS := odhcp6c.o dhcpv6.o ra.o script.o md5.o

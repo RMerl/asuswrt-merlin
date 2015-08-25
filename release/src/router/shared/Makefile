@@ -134,6 +134,14 @@ CFLAGS	+= -I$(TOP)/bled
 OBJS	+= bled.o
 endif
 
+ifeq ($(RTCONFIG_QCA_PLC_UTILS),y)
+OBJS	+= plc_utils.o
+endif
+
+ifeq ($(RTCONFIG_TCODE),y)
+OBJS    += tcode.o
+endif
+
 vpath %.c sysdeps $(SRCBASE)/shared/ $(WLAN_ComponentSrcDirs)
 ifeq ($(RTCONFIG_RALINK),y)
 vpath %.c sysdeps/ralink
@@ -145,7 +153,13 @@ else
 vpath %.c sysdeps/broadcom  $(SRCBASE)/shared/bcmwifi/src
 endif
 
-all: libshared.so libshared.a
+all: prebuilt libshared.so libshared.a
+
+prebuilt:
+# Dig into our collection of prebuilt objects based on model and architecture.
+	@-rm -f ./prebuild/*.o || true
+	@-cp -f ./prebuild/models/$(BUILD_NAME)/* ./prebuild/
+
 
 ifeq ($(CONFIG_BCMWL5),y)
 OBJS += wlif_utils.o UdpLib.o bcmutils.o
@@ -175,6 +189,13 @@ install: all
 clean:
 	rm -f *.o *.so *.a .*.depend sysdeps/*.o sysdeps/broadcom/*.o sysdeps/ralink/*.o sysdeps/qtn/*.o
 
+ifeq ($(RTCONFIG_TCODE),y)
+ifneq ($(wildcard ./prebuild/tcode.o),)
+tcode.o:
+	@-cp -f ./prebuild/tcode.o .
+endif
+endif
+
 %.o: %.c .%.depend
 	@echo " [shared] CC $@"
 	@$(CC) $(CFLAGS) -o $@ -c $<
@@ -185,5 +206,5 @@ clean:
 .%.depend: %.c
 	@$(CC) $(CFLAGS) -M $< > $@
 
--include $(OBJS:%.o=.%.depend)
+#-include $(OBJS:%.o=.%.depend)
 

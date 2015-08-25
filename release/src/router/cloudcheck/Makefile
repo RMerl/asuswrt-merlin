@@ -1,7 +1,11 @@
 include ../common.mak
 
 ifeq ($(RTCONFIG_BCMARM),y)
+ifeq ($(RTCONFIG_BCM7),y)
+SRCDIR=broadcom_arm_7
+else
 SRCDIR=broadcom_arm
+endif
 else
 SRCDIR=broadcom_mipsel
 endif

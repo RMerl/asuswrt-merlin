@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<scenario name="Early BYE">
+  <recv request="INVITE" crlf="true">
+    <action>
+	<ereg regexp=".*" search_in="hdr" header="From" assign_to="3"/>
+	<ereg regexp="sip:(.*)>" search_in="hdr" header="Contact" assign_to="4,5"/>
+        <assign assign_to="4" variable="5" />
+    </action>
+  </recv>
+
+  <send>
+    <![CDATA[
+      SIP/2.0 100 Trying
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 180 Ringing
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: sip:sipp@[local_ip]:[local_port]
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <send retrans="500">
+    <![CDATA[
+
+      BYE sip:[$5] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port]
+      From: sipp  <sip:sipp@[local_ip]:[local_port]>;tag=[call_number]
+      To[$3]
+      Call-ID: [call_id]
+      Cseq: 1 BYE
+      Contact: sip:sipp@[local_ip]:[local_port]
+      Max-Forwards: 70
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+   <recv response="200">
+   </recv>
+
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

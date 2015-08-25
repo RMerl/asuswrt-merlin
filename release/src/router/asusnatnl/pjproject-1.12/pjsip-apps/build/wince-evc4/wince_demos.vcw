@@ -1,0 +1,305 @@
+Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "libgsmcodec"="..\..\..\THIRD_PARTY\BUILD\GSM\libgsmcodec.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libilbccodec"="..\..\..\THIRD_PARTY\BUILD\ILBC\libilbccodec.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libmilenage"="..\..\..\third_party\build\milenage\libmilenage.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libportaudio"="..\..\..\THIRD_PARTY\BUILD\PORTAUDIO\libportaudio.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libresample"="..\..\..\THIRD_PARTY\BUILD\RESAMPLE\libresample.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libspeex"="..\..\..\THIRD_PARTY\BUILD\SPEEX\libspeex.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libsrtp"="..\..\..\third_party\build\srtp\libsrtp.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib_util_wince"="..\..\..\pjlib-util\build\wince-evc4\pjlib_util_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjlib_wince"="..\..\..\pjlib\build\wince-evc4\pjlib_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_auddev_wince"="..\..\..\pjmedia\build\wince-evc4\pjmedia_auddev_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_codec_wince"="..\..\..\pjmedia\build\wince-evc4\pjmedia_codec_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjmedia_wince"="..\..\..\pjmedia\build\wince-evc4\pjmedia_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjnath_wince"="..\..\..\pjnath\build\wince-evc4\pjnath_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_core_wince"="..\..\..\pjsip\build\wince-evc4\pjsip_core_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_simple_wince"="..\..\..\pjsip\build\wince-evc4\pjsip_simple_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsip_ua_wince"="..\..\..\pjsip\build\wince-evc4\pjsip_ua_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pjsua_lib_wince"="..\..\..\pjsip\build\wince-evc4\pjsua_lib_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_codec_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_core_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_simple_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_ua_wince
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "pjsua_wince"="..\..\src\pjsua_wince\pjsua_wince.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name pjlib_util_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjlib_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_codec_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_core_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_simple_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsip_ua_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjsua_lib_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjnath_wince
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libgsmcodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libilbccodec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libportaudio
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libresample
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libspeex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libmilenage
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsrtp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pjmedia_auddev_wince
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

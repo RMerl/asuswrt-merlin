@@ -54,6 +54,12 @@
   width: 66px;
   height: 66px;
 }
+#mediaserver2_png{
+  background: url(images/New_ui/USBExt/APP_list.png);
+  background-position: 0px -380px;
+  width: 66px;
+  height: 66px;
+}
 #aicloud_png{
   background: url(images/New_ui/USBExt/APP_list.png);
   background-position: 0px -456px;
@@ -96,45 +102,40 @@ if(_apps_action == 'cancel')
 var webs_state_update;
 var webs_state_error;
 var webs_state_info;
-
+var wan_unit_orig = '<% nvram_get("wan_unit"); %>';
 
 function initial(){
 	show_menu();
 
 	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk_png", ""],
-												["<#Servers_Center#>", tablink[4][1], "<#UPnPMediaServer_Help#>", "server_png", ""],
-												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer_png", ""],
-												["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem_png", ""],
-												["Time Machine", "Advanced_TimeMachine.asp", "<#TimeMach_enable_hint#>", "TimeMachine_png", "1.0.0.1"]];
+			["<#Servers_Center#>", tablink[4][1], "<#UPnPMediaServer_Help#>", "server_png", ""],
+			["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer_png", ""],
+			["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem_png", ""],
+			["<#TimeMach#>", "Advanced_TimeMachine.asp", "<#TimeMach_enable_hint#>", "TimeMachine_png", "1.0.0.1"]];
 	
 	if(!media_support){
-			default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");
+		default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");
 	}
 	
-	if(dualWAN_support){
-		default_apps_array[3][2] += "<br><br>Make sure Dual WAN support is enabled first.";
-	}
-
-	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4){
+	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4 || noaidisk_support)
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("AiDisk")[0]);
+
+	if(!printer_support)
+		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("<#Network_Printer_Server#>")[0]);
+
+	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4 || !modem_support || based_modelid == "4G-AC55U")
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("3G/4G")[0]);
-	}
-	
-	if(!printer_support){
-			default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("<#Network_Printer_Server#>")[0]);
-	}
 
-	if(!timemachine_support){
-		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("Time Machine")[0]);
-	}
+	if(!timemachine_support)
+		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("<#TimeMach#>")[0]);
 
-	if(!modem_support || based_modelid == "4G-AC55U"){
-		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("3G/4G")[0]);		
+	if(!nodm_support){              
+		addOnlineHelp(document.getElementById("faq2"), ["ASUSWRT", "download","associated"]);
 	}
 
 	trNum = default_apps_array.length;
 	calHeight(0);
-
+	
 	if(_apps_action == '' && 
 		(apps_state_upgrade == 4 || apps_state_upgrade == "") && 
 		(apps_state_enable == 2 || apps_state_enable == "") &&
@@ -149,9 +150,6 @@ function initial(){
 		setTimeout("update_appstate();", 2000);
 	}
 
-	if(!nodm_support){		
-		addOnlineHelp(document.getElementById("faq2"), ["ASUSWRT", "download","associated"]);
-	}
 }
 
 function calHeight(_trNum){
@@ -480,7 +478,7 @@ function show_apps(){
 			apps_array.splice(dm_idx[0], 1);
 	}
 
-	if(media_support || nomedia_support){ // buildin or not support 
+	if(media_support || nomedia_support){ // buildin or hidden 
 		// remove mediaserver
 		var media_idx = apps_array.getIndexByValue2D("mediaserver");
 		if(media_idx[1] != -1 && media_idx != -1)
@@ -514,9 +512,18 @@ function show_apps(){
 	for(var i = 0; i < default_apps_array.length; i++){
 		htmlcode += '<tr><td align="center" class="app_table_radius_left" style="width:85px">';
 		//Viz modified to CSS sprites : htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/'+ default_apps_array[i][3] +'" style="cursor:pointer" onclick="location.href=\''+ default_apps_array[i][1] +'\';">';
-		htmlcode += '<div id="'+default_apps_array[i][3]+'" style="cursor:pointer" onclick="location.href=\''+ default_apps_array[i][1] +'\';"></div>';
+		if(i == 3 && wan_unit_orig != usb_index && usb_index != -1){
+			htmlcode += '<div id="'+default_apps_array[i][3]+'" style="cursor:pointer" onclick="go_modem_page('+usb_index+');"></div>';
+		}
+		else
+			htmlcode += '<div id="'+default_apps_array[i][3]+'" style="cursor:pointer" onclick="location.href=\''+ default_apps_array[i][1] +'\';"></div>';
 		htmlcode += '</td><td class="app_table_radius_right" style="width:350px;">\n';
-		htmlcode += '<div class="app_name"><a style="text-decoration: underline;" href="' + default_apps_array[i][1] + '">' + default_apps_array[i][0] + '</a></div>\n';
+		if(i == 3 && wan_unit_orig != usb_index && usb_index != -1){
+			console.log("2 need to change wan unit!");
+			htmlcode += '<div class="app_name"><a style="text-decoration: underline; cursor:pointer;" onclick="go_modem_page('+usb_index+');">'+ default_apps_array[i][0] + '</a></div>\n';
+		}
+		else
+			htmlcode += '<div class="app_name"><a style="text-decoration: underline;" href="' + default_apps_array[i][1] + '">' + default_apps_array[i][0] + '</a></div>\n';
 		if(i ==3){
 			htmlcode += '<div class="app_desc">' + default_apps_array[i][2] + ' <a href="http://www.asus.com/event/networks_3G4G_support/" target="_blank" style="text-decoration:underline;">Support</a></div>\n';
 		}
@@ -837,6 +844,14 @@ function reloadAPP(){
 	document.app_form.apps_flag.value = "";
 	location.href = "/APP_Installation.asp";
 }
+
+function go_modem_page(usb_unit_flag){
+	document.act_form.wan_unit.value = usb_unit_flag;
+	document.act_form.action_mode.value = "change_wan_unit";
+	document.act_form.target = "";
+	document.act_form.submit();
+	location.herf = default_apps_array[3][1];
+}
 </script>
 </head>
 
@@ -872,7 +887,7 @@ function reloadAPP(){
 	</td>
 	
     <td valign="top">
-		<div id="tabMenu" style="*margin-top: -150px;"></div>
+		<div id="tabMenu" style="*margin-top: -160px;"></div>
 		<br>
 <!--=====Beginning of Main Content=====-->
 <div class="app_table" id="applist_table">
@@ -969,6 +984,12 @@ function reloadAPP(){
 </div>
 
 <div id="footer"></div>
+<form method="post" name="act_form" action="/apply.cgi" target="hidden_frame">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="wan_unit" value="">
+<input type="hidden" name="current_page" value="Advanced_Modem_Content.asp">
+</form>
 </body>
 </html>
 

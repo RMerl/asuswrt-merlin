@@ -1,0 +1,47 @@
+#if defined(PJ_BUILD_DLL)
+
+TARGET		symbian_audio.dll
+TARGETTYPE	dll
+UID		0x0 0xA000000C
+
+CAPABILITY	None
+LIBRARY		pjlib.lib charconv.lib euser.lib estlib.lib
+LIBRARY 	mediaclientaudiostream.lib
+LIBRARY 	mediaclientaudioinputstream.lib
+
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\symbian_audio.def
+
+#else
+
+TARGET 		symbian_audio.lib
+TARGETTYPE 	lib
+
+#endif
+
+SOURCEPATH	..\pjmedia\src\pjmedia
+
+OPTION		CW -lang c++
+OPTION		GCCE -O2 -fno-unit-at-a-time
+OPTION          ARMCC --gnu
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+SOURCE		nullsound.c
+SOURCE		symbian_sound.cpp
+SOURCE		symbian_sound_aps.cpp
+
+SYSTEMINCLUDE	..\pjlib\include
+SYSTEMINCLUDE	..\pjmedia\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+SYSTEMINCLUDE   \epoc32\include\mmf\server 
+SYSTEMINCLUDE   \epoc32\include\mmf\common 
+SYSTEMINCLUDE   \epoc32\include\mda\common 
+
+SYSTEMINCLUDE	\epoc32\include\mmf\plugin 
+

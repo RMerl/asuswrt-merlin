@@ -1,0 +1,11 @@
+/*
+========================================================================
+ Name        : symbian_ua_guiContainer.loc
+ Author      : nanang
+ Copyright   : (c) PJSIP 2008
+ Description : 
+========================================================================
+*/
+#ifdef LANGUAGE_01
+#include "symbian_ua_guiContainer.l01"
+#endif

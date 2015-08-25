@@ -18,6 +18,7 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
+<script type="text/javascript" src="/form.js"></script>
 <style type="text/css">
 .upnp_table{
 	height: 790px;
@@ -106,7 +107,11 @@ var FromObject = "0";
 var lastClickedObj = 0;
 var disk_flag=0;
 var PROTOCOL = "cifs";
-window.onresize = cal_panel_block;
+window.onresize = function() {
+	if(document.getElementById("folderTree_panel").style.display == "block") {
+		cal_panel_block("folderTree_panel", 0.25);
+	}
+} 
 
 var dms_dir_x_array = '<% nvram_get("dms_dir_x"); %>';
 var dms_dir_type_x_array = '<% nvram_get("dms_dir_type_x"); %>';
@@ -321,7 +326,7 @@ function get_disk_tree(){
 		alert('<#no_usb_found#>');
 		return false;	
 	}
-	cal_panel_block();
+	cal_panel_block("folderTree_panel", 0.25);
 	$("#folderTree_panel").fadeIn(300);
 	get_layer_items("0");
 }
@@ -608,29 +613,6 @@ function confirm_folderTree(){
 	this.FromObject ="0";
 	$("#folderTree_panel").fadeOut(300);
 	//check_dir_path();
-}
-
-function cal_panel_block(){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.25)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
-	}
-
-	document.getElementById("folderTree_panel").style.marginLeft = blockmarginLeft+"px";
 }
 
 function check_dir_path(){

@@ -1,0 +1,11 @@
+The gsm library has been tested successfully on the following platforms:
+
+- Various Sun4s running SunOS 4.1.2
+- SPARC1 (SunOS 4.1.1)
+- Integrated Solutions 68k Optimum running 4.3BSD UNIX with a Green Hills cc
+- NeXTstation running NeXT-OS/Mach 3.0
+- No-name AT/386 with Xenix 2.3.2 (using -DSTUPID_COMPILER)
+- RS/6000-350 running AIX 3.2.0
+- RS/6000-320 running AIX 3.1.5
+- Alliant FX80 (Concentrix 5.7)
+- SGI Indigo XS4000 (IRIX 4.0.5F)

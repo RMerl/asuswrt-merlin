@@ -366,6 +366,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 		     strcpy(ginfo->ProductID, productid_g);	// disable for tmp
 		     strcpy(ginfo->FirmwareVersion, firmver_g); // disable for tmp
 		     memcpy(ginfo->MacAddress, mac, 6);
+		     ginfo->OperationMode = (char)nvram_get_int("sw_mode");
 
 #ifdef WAVESERVER    // eric++
 	     	     // search /tmp/waveserver and get information

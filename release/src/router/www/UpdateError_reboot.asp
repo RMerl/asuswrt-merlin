@@ -16,7 +16,7 @@
 		parent.document.getElementById("hiddenMask").style.visibility = "hidden";
 		// parent.document.getElementById('loading_block1').style.display = "none";
 		parent.document.getElementById('loading_block2').innerHTML = "<#FIRM_fail_desc#>";
-		parent.document.getElementById('loading_block3').innerHTML = "Do not power off <#Web_Title2#> while upgrade in progress.";
+		parent.document.getElementById('loading_block3').innerHTML = "<#Main_alert_proceeding_desc5#>";
 		// parent.document.getElementById('loading_block3').style.display = "none";
 		// reboottime += 40;
 		parent.showLoadingBar(reboottime);

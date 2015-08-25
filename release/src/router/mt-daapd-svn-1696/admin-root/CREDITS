@@ -1,0 +1,148 @@
+* $Id: CREDITS 1562 2007-04-25 03:16:53Z rpedde $ */
+
+I've received lots of help from people on this project.
+
+These are the people who have contributed to whatever
+small success this project enjoys (in order of contribution).
+If I've forgotten anyone, I apologize -- email me and I'll
+make it right.
+
+Dr. Steve Robbins
+ * uici stuff
+
+The Plone project
+ * css files for the admin interface
+
+Aubin Paul
+ * Patches for Debian package generation
+ * Precompiled Debian binaries
+
+Paul Forgey
+ * Tons of troubleshooting on Solaris
+ * Fixes for readdir_r
+ * Fixes for alignment problems in XING header parsing
+
+Paul Hubbard
+ * T/S and patch testing to resolve scanning bugs
+
+David Buttrick
+ * Webmastering, FAQ maintenance, Doc maintenance
+
+Hans-Christoph Steiner
+ * Webmastering, FAQ maintenance, Doc maintenance
+ * Amazing amounts of troubleshooting, testing on OSX 10.2
+
+David Imhoff
+ * Code cleanup patches (_XOPEN_SOURCE, declaration problems)
+
+James Turner
+ * Fixes for OSX 10.2
+ * configure.in suggestions
+
+Hiren Joshi
+ * Dynamic art code
+
+David W. Berry
+ * Tons of protocol compliance fixes.
+ * Browse, query, and index support
+
+Paul Kim
+ * Dynamic art code for AAC
+ * Various AAC meta-info cleanups
+ * Compilation tag support (aac and mp3)
+ * ogg/vorbis tag handling
+
+Stephen Lee
+ * Patches for proper url decoding
+
+Rob Nunn
+ * gentoo rc script
+
+Frank Schwichtenberg
+ * patches for static playlist bug
+
+Gavin Shelley
+ * patches for Solaris strftime
+
+Stephen Rubner
+ * fixes for ulong ino_t
+
+Ciamac Moallemi
+ * gzip content-encoding
+
+Roger Mundt
+ * troubleshooting and debugging help
+
+dirkthedaring2 (?)
+ * fixes for inverted playlist
+ * speedups on connect
+
+Adrian Schroeter
+ * fixes for AMD64
+ * -Wall cleanups
+
+Timo J. Rinne
+ * Server-side format conversion (on-the-fly transcoding)
+
+Herman I. May
+ * Web wrangling and forums question answering
+ * HTML interface fixes
+
+North Overby
+ * Patches for disc number
+ * alac speedups for nslu2
+
+Joe Holt
+ * Fixes for web config stupidness
+
+Mark Woehrer
+ * Patches for "Date Added" in iTunes xml scanner
+ 
+Stefan Bruns
+ * Speedups for javascript in playlist page, konq fixes, css fixes
+ * Fixes for mlit -> xml serialization when block len = 0
+
+blech (from the forums)
+ * Fixes for iTunes 5 view persistence
+
+Phil Packer
+ * Patches for returning static playlists in order
+
+Diego Penneno
+ * Patches for multiple PID files to facilitate gentoo init scripts
+ * configure patches
+ 
+Patrick Kolla
+ * Popup "wizard" for smart playlists
+ * Stylish new web interface look.. woohoo!
+
+slomo (from the forums)
+ * Musepack tag parsing support.
+
+Anders Betner
+ * Web interface mojo -- ajaxy web config and playlist editor
+
+MikeC
+ * Win32 panel configurator
+
+MikeK
+ * OSX Preference pane/helper, and OSX packaging
+
+Eddie Bindt
+ * Dutch Translations
+
+Julien Richefeu
+ * French Translations
+
+Helmut Wieser
+ * German Translations
+
+Luca Paolini
+ * Italian Translations
+
+Gareth Potter
+ * Japanese Translations
+
+Anton Johansson
+ * Swedish Translations
+

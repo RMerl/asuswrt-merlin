@@ -169,6 +169,80 @@ Return an array of strings, each string is the IP address of an upstream
 server which has been found to loop queries back to this dnsmasq instance, and 
 it therefore not being used.
 
+AddDhcpLease
+------------
+
+Returns nothing. Adds or updates a DHCP or DHCPv6 lease to the internal lease
+database, as if a client requested and obtained a lease.
+
+If a lease for the IPv4 or IPv6 address already exist, it is overwritten.
+
+Note that this function will trigger the DhcpLeaseAdded or DhcpLeaseUpdated
+D-Bus signal and will run the configured DHCP lease script accordingly.
+
+This function takes many arguments which are the lease parameters:
+- A string with the textual representation of the IPv4 or IPv6 address of the
+  client.
+
+  Examples:
+  "192.168.1.115"
+  "1003:1234:abcd::1%eth0"
+  "2001:db8:abcd::1"
+
+- A string representing the hardware address of the client, using the same
+  format as the one used in the lease database.
+
+  Examples:
+
+  "00:23:45:67:89:ab"
+  "06-00:20:e0:3b:13:af" (token ring)
+
+- The hostname of the client, as an array of bytes (so there is no problem
+  with non-ASCII character encoding). May be empty.
+
+  Example (for "hostname.or.fqdn"):
+  [104, 111, 115, 116, 110, 97, 109, 101, 46, 111, 114, 46, 102, 113, 100, 110]
+
+- The client identifier (IPv4) or DUID (IPv6) as an array of bytes. May be
+  empty.
+
+  Examples:
+
+  DHCPv6 DUID:
+  [0, 3, 0, 1, 0, 35, 69, 103, 137, 171]
+  DHCPv4 client identifier:
+  [255, 12, 34, 56, 78, 0, 1, 0, 1, 29, 9, 99, 190, 35, 69, 103, 137, 171]
+
+- The duration of the lease, in seconds. If the lease is updated, then
+  the duration replaces the previous duration.
+
+  Example:
+
+  7200
+
+- The IAID (Identity association identifier) of the DHCPv6 lease, as a network
+  byte-order unsigned integer. For DHCPv4 leases, this must be set to 0.
+
+  Example (for IPv6):
+
+  203569230
+
+- A boolean which, if true, indicates that the DHCPv6 lease is for a temporary
+  address (IA_TA). If false, the DHCPv6 lease is for a non-temporary address
+  (IA_NA). For DHCPv4 leases, this must be set to false.
+
+RemoveDhcpLease
+---------------
+
+Returns nothing. Removes a DHCP or DHCPv6 lease to the internal lease
+database, as if a client sent a release message to abandon a lease.
+
+This function takes only one parameter: the text representation of the
+IPv4 or IPv6 address of the lease to remove.
+
+Note that this function will trigger the DhcpLeaseRemoved signal and the
+configured DHCP lease script will be run with the "del" action.
+
 
 
 2. SIGNALS

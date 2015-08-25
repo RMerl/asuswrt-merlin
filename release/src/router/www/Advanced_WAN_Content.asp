@@ -177,7 +177,7 @@ function genWANSoption(){
 
 function applyRule(){
 	if(ctf.dhcpToPppoe() && ctf.getLevel() == 2){
-		if(confirm("Level 2 CTF can not be supported under PPPoE、PPTP or L2TP. If you want to switch to Level 1 CTF, please click confirm.")){
+		if(confirm("<#ctf_confirm#>")){	/*Level 2 CTF can not be supported under PPPoE、PPTP or L2TP. If you want to switch to Level 1 CTF, please click confirm.*/
 			document.form.ctf_disable_force.value = 0;
 			document.form.ctf_fa_mode.value = 0;	
 			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
@@ -1034,9 +1034,9 @@ function pass_checked(obj){
           	<!-- 2008.03 James. patch for Oleg's patch. { -->
           	<input type="text" name="wan_heartbeat_x" class="input_32_table" maxlength="256" value="<% nvram_get("wan_heartbeat_x"); %>" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off"></td>
           	<!-- 2008.03 James. patch for Oleg's patch. } -->
-        	</tr>
+		</tr>
 		<tr id="vpn_dhcp">
-		<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,);"-->Enable VPN + DHCP Connection<!--/a--></th>
+		<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,);"--><#PPPConnection_x_vpn_dhcp_itemname#><!--/a--></th><!-- Enable VPN + DHCP Connection -->
 		<td><input type="radio" name="wan_vpndhcp" class="input" value="1" onclick="return change_common_radio(this, 'IPConnection', 'wan_vpndhcp', 1)" <% nvram_match("wan_vpndhcp", "1", "checked"); %> /><#checkbox_Yes#>
 		    <input type="radio" name="wan_vpndhcp" class="input" value="0" onclick="return change_common_radio(this, 'IPConnection', 'wan_vpndhcp', 0)" <% nvram_match("wan_vpndhcp", "0", "checked"); %> /><#checkbox_No#>
 		</td>

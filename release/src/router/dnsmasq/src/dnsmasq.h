@@ -82,7 +82,7 @@ typedef unsigned long long u64;
 #if defined(HAVE_SOLARIS_NETWORK)
 #  include <sys/sockio.h>
 #endif
-#include <sys/select.h>
+#include <sys/poll.h>
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/un.h>
@@ -117,6 +117,7 @@ typedef unsigned long long u64;
 #include <sys/uio.h>
 #include <syslog.h>
 #include <dirent.h>
+#include <utime.h>
 #ifndef HAVE_LINUX_NETWORK
 #  include <net/if_dl.h>
 #endif
@@ -868,6 +869,7 @@ struct dhcp_context {
 #define CONTEXT_USED           (1u<<15)
 #define CONTEXT_OLD            (1u<<16)
 #define CONTEXT_V6             (1u<<17)
+#define CONTEXT_RA_OFF_LINK    (1u<<18)
 
 struct ping_result {
   struct in_addr addr;
@@ -991,6 +993,7 @@ extern struct daemon {
 #endif
 #ifdef HAVE_DNSSEC
   struct ds_config *ds;
+  int back_to_the_future;
   char *timestamp_file;
 #endif
 
@@ -1190,7 +1193,6 @@ int memcmp_masked(unsigned char *a, unsigned char *b, int len,
 		  unsigned int mask);
 int expand_buf(struct iovec *iov, size_t size);
 char *print_mac(char *buff, unsigned char *mac, int len);
-void bump_maxfd(int fd, int *max);
 int read_write(int fd, unsigned char *packet, int size, int rw);
 
 int wildcard_match(const char* wildcard, const char* match);
@@ -1201,8 +1203,8 @@ void die(char *message, char *arg1, int exit_code);
 int log_start(struct passwd *ent_pw, int errfd);
 int log_reopen(char *log_file);
 void my_syslog(int priority, const char *format, ...);
-void set_log_writer(fd_set *set, int *maxfdp);
-void check_log_writer(fd_set *set);
+void set_log_writer(void);
+void check_log_writer(int force);
 void flush_log(void);
 
 /* option.c */
@@ -1368,8 +1370,8 @@ int iface_enumerate(int family, void *parm, int (callback)());
 /* dbus.c */
 #ifdef HAVE_DBUS
 char *dbus_init(void);
-void check_dbus_listeners(fd_set *rset, fd_set *wset, fd_set *eset);
-void set_dbus_listeners(int *maxfdp, fd_set *rset, fd_set *wset, fd_set *eset);
+void check_dbus_listeners(void);
+void set_dbus_listeners(void);
 #  ifdef HAVE_DHCP
 void emit_dbus_signal(int action, struct dhcp_lease *lease, char *hostname);
 #  endif
@@ -1396,7 +1398,7 @@ int helper_buf_empty(void);
 /* tftp.c */
 #ifdef HAVE_TFTP
 void tftp_request(struct listener *listen, time_t now);
-void check_tftp_listeners(fd_set *rset, time_t now);
+void check_tftp_listeners(time_t now);
 int do_tftp_script_run(void);
 #endif
 
@@ -1513,3 +1515,10 @@ void inotify_dnsmasq_init();
 int inotify_check(time_t now);
 void set_dynamic_inotify(int flag, int total_size, struct crec **rhash, int revhashsz);
 #endif
+
+/* poll.c */
+void poll_reset(void);
+int poll_check(int fd, short event);
+void poll_listen(int fd, short event);
+int do_poll(int timeout);
+

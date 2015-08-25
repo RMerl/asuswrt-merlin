@@ -17,10 +17,11 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script> 
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="/form.js"></script>
 <style type="text/css">
 .splitLine{
 	background-image: url('/images/New_ui/export/line_export.png');
@@ -60,6 +61,25 @@
 	border-radius:10px;
 	margin-left:10px;
 	background-position:50% 64.40%;
+}
+.trafficVenderIcons{
+	width:56px;
+	height:56px;
+	background-image:url('/images/New_ui/networkmap/vender-list.png');
+	background-repeat:no-repeat;
+	border-radius:10px;
+	margin-left:10px;
+}
+.trafficVenderIcons:hover{
+	background-image:url('/images/New_ui/networkmap/vender-listover.png');
+}
+.trafficVenderIcons_clicked{
+	width:56px;
+	height:56px;
+	background-image:url('/images/New_ui/networkmap/vender-listover.png');
+	background-repeat:no-repeat;
+	border-radius:10px;
+	margin-left:10px;
 }
 
 .qosLevel{
@@ -115,15 +135,17 @@
 // disable auto log out
 AUTOLOGOUT_MAX_MINUTE = 0;
 var detect_interval = 2;	// get information per second
-window.onresize = cal_agreement_block;
+window.onresize = function() {
+	if(document.getElementById("agreement_panel").style.display == "block") {
+		cal_panel_block("agreement_panel", 0.25);
+	}
+} 
 var qos_rulelist = "<% nvram_get("qos_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var curState = '<% nvram_get("apps_analysis"); %>';
 
 function register_event(){
 	var color_array = ["#F01F09", "#F08C09", "#F3DD09", "#59E920", "#58CCED", "inherit"];
-	var $j = jQuery.noConflict();
-
-	$j(function() {
+	$(function() {
 		$("#sortable").sortable();
 		$("#sortable").disableSelection();
 		$("#0,#1,#2,#3,#4,#5").draggable({helper:"clone",revert:true,revertDuration:10}); 
@@ -143,7 +165,7 @@ function register_event(){
 				this.style.backgroundColor = "";
 				this.style.fontWeight = "";
 				this.children[0].children[0].style.backgroundColor = color_array[ui.draggable[0].id];
-				if(this.children[0].children[0].className.indexOf("trafficIcons") == -1) {
+				if(this.children[0].children[0].className.indexOf("trafficIcons") == -1 && this.children[0].children[0].className.indexOf("trafficVenderIcons") == -1) {
 					this.children[0].children[0].setAttribute("class", "closed qosLevel divUserIcon");
 				}
 				regen_qos_rule(this.children[0].children[0], ui.draggable[0].id);				
@@ -398,19 +420,31 @@ function show_clients(priority_type){
 			code += '<img id="imgUserIcon_'+ i +'" class="imgUserIcon" src="' + userIconBase64 + '">';
 			code += '</div>';
 		}
-		else {
+		else if( (clientObj.type != "0" && clientObj.type != "6") || clientObj.dpiVender == "") {
 			code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed trafficIcons type' + clientObj.type + ' qosLevel' + clientObj.qosLevel + '"></div>';
-		}			
+		}
+		else if(clientObj.dpiVender != "") {
+			var clientListCSS = "";
+			var venderIconClassName = getVenderIconClassName(clientObj.dpiVender.toLowerCase());
+			if(venderIconClassName != "") {
+				clientListCSS = "trafficVenderIcons " + venderIconClassName;
+			}
+			else {
+				clientListCSS = "trafficIcons type" + clientObj.type;
+			}
+			code += '<div id="icon_' + i + '" onclick="show_apps(this);" class="closed ' + clientListCSS + ' qosLevel' + clientObj.qosLevel + '"></div>';
+		}
 		code += '</td>';
 		code += '<td style="width:180px;">';
 
-		if(clientObj.name.length > 23){
-			short_name = clientObj.name.substr(0,20) + "...";	
+		var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
+		if(clientName.length > 23){
+			short_name = clientName.substr(0,20) + "...";	
 			//code += '<div style="font-family:Courier New,Courier,mono;" title="' + clientObj.mac + '&#10'+ clientObj.name +'">'+ short_name +'</div>';	
 			code += '<div style="font-family:Courier New,Courier,mono;" title="' + clientObj.mac + '">'+ short_name +'</div>';			
 		}
 		else{
-			code += '<div style="font-family:Courier New,Courier,mono;" title="' + clientObj.mac + '">'+ clientObj.name +'</div>';			
+			code += '<div style="font-family:Courier New,Courier,mono;" title="' + clientObj.mac + '">'+ clientName +'</div>';			
 		}
 	
 		code += '</td>';		
@@ -491,10 +525,23 @@ function show_apps(obj){
 		parent_obj_temp.appendChild(last_element);
 		register_event();
 		if(children_obj != undefined) {
-			obj.setAttribute("class", "closed qosLevel" + clientObj.qosLevel);
+			obj.setAttribute("class", "closed qosLevel" + clientObj.qosLevel + " divUserIcon");
 		}
 		else {
-			obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel);
+			if( (clientObj.type != "0" && clientObj.type != "6") || clientObj.dpiVender == "") {
+				obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel + " divUserIcon");
+			}
+			else if(clientObj.dpiVender != "") {
+				var clientListCSS = "";
+				var venderIconClassName = getVenderIconClassName(clientObj.dpiVender.toLowerCase());
+				if(venderIconClassName != "") {
+					clientListCSS = "trafficVenderIcons " + venderIconClassName;
+				}
+				else {
+					clientListCSS = "trafficIcons type" + clientObj.type;
+				}
+				obj.setAttribute("class", "closed " + clientListCSS + " qosLevel" + clientObj.qosLevel + " divUserIcon");
+			}
 		}
 	}
 	else{
@@ -518,10 +565,23 @@ function show_apps(obj){
 		parent_obj.appendChild(new_element);
 		parent_obj.appendChild(last_element);
 		if(children_obj != undefined) {
-			obj.setAttribute("class", "opened clicked qosLevel" + clientObj.qosLevel);
+			obj.setAttribute("class", "opened clicked qosLevel" + clientObj.qosLevel + " divUserIcon");
 		}
 		else {
-			obj.setAttribute("class", "opened trafficIcons_clicked type" + clientObj.type + " clicked qosLevel" + clientObj.qosLevel);
+			if( (clientObj.type != "0" && clientObj.type != "6") || clientObj.dpiVender == "") {
+				obj.setAttribute("class", "opened trafficIcons_clicked type" + clientObj.type + " clicked qosLevel" + clientObj.qosLevel + " divUserIcon");
+			}
+			else if(clientObj.dpiVender != "") {
+				var clientListCSS = "";
+				var venderIconClassName = getVenderIconClassName(clientObj.dpiVender.toLowerCase());
+				if(venderIconClassName != "") {
+					clientListCSS = "trafficVenderIcons_clicked " + venderIconClassName;
+				}
+				else {
+					clientListCSS = "trafficIcons_clicked type" + clientObj.type;
+				}
+				obj.setAttribute("class", "opened " + clientListCSS + " clicked qosLevel" + clientObj.qosLevel + " divUserIcon");
+			}
 		}
 		update_device_tarffic();
 		update_apps_tarffic(client_mac, obj, new_element);		
@@ -553,10 +613,23 @@ function cancel_previous_device_apps(obj){
 	parent_obj_temp.appendChild(first_element);
 	parent_obj_temp.appendChild(last_element);
 	if(children_obj != undefined) {
-		obj.setAttribute("class", "closed qosLevel" + clientObj.qosLevel);
+		obj.setAttribute("class", "closed qosLevel" + clientObj.qosLevel + " divUserIcon");
 	}
 	else {
-		obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel);
+		if( (clientObj.type != "0" && clientObj.type != "6") || clientObj.dpiVender == "") {
+			obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel + " divUserIcon");
+		}
+		else if(clientObj.dpiVender != "") {
+			var clientListCSS = "";
+			var venderIconClassName = getVenderIconClassName(clientObj.dpiVender.toLowerCase());
+			if(venderIconClassName != "") {
+				clientListCSS = "trafficVenderIcons " + venderIconClassName;
+			}
+			else {
+				clientListCSS = "trafficIcons type" + clientObj.type;
+			}
+			obj.setAttribute("class", "closed " + clientListCSS + " qosLevel" + clientObj.qosLevel + " divUserIcon");
+		}
 	}
 }
 
@@ -619,7 +692,7 @@ function render_apps(apps_array, obj_icon, apps_field){
 	}
 
 	if(code == ""){
-		code = "<tr><td colspan='3' style='text-align:center;color:#FFCC00'><div style='padding:5px 0px;border-top:solid 1px #333;'>No Traffic in the list</div></td></tr>";
+		code = "<tr><td colspan='3' style='text-align:center;color:#FFCC00'><div style='padding:5px 0px;border-top:solid 1px #333;'><#Bandwidth_monitor_noList#></div></td></tr>";	/*No Traffic in the list*/
 	}
 
 	$(apps_field).empty();
@@ -1087,30 +1160,6 @@ function applyRule(){
 	document.form.submit();
 }
 
-function cal_agreement_block(){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-		
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.25)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.25+document.body.scrollLeft;	
-
-	}
-
-	document.getElementById("agreement_panel").style.marginLeft = blockmarginLeft+"px";
-}
-
 function eula_confirm(){
 	document.form.TM_EULA.value = 1;
 	document.form.apps_analysis.value = 1;
@@ -1129,7 +1178,7 @@ function cancel(){
 <body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;display:none;position:absolute;"></div>
+<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center">
 	</table>
@@ -1196,7 +1245,7 @@ function cancel(){
 																				});
 																			}	
 																			dr_advise();
-																			cal_agreement_block();
+																			cal_panel_block("agreement_panel", 0.25);
 																			$("#agreement_panel").fadeIn(300);
 																			return false;
 																		}
@@ -1228,7 +1277,7 @@ function cancel(){
 									<table style="width:99%;">
 										<tr>
 											<td id="upload_unit" style="width:50%;">
-												<div style="position:absolute;margin-left:75px;font-size:16px;">Upload</div>
+												<div style="margin:-10px 0 5px 70px;font-size:16px;text-align:center;"><#upload_bandwidth#></div>
 												<div style="position:absolute;margin:12px 0px 0px 112px;font-size:16px;display:none;"></div>
 												<div style="position:absolute;margin:-8px 0px 0px 222px;font-size:16px;display:none;"></div>
 												<div style="position:absolute;margin:50px 0px 0px 300px;font-size:16px;display:none;"></div>
@@ -1239,7 +1288,7 @@ function cancel(){
 												<div id="indicator_upload" style="background-image:url('images/New_ui/indicator.png');position:absolute;height:100px;width:50px;background-repeat:no-repeat;margin:-110px 0px 0px 194px;"></div>
 											</td>
 											<td id="download_unit">	
-												<div style="position:absolute;font-size:16px;">Download</div>
+												<div style="margin:-10px 0 5px -55px;font-size:16px;text-align:center;"><#download_bandwidth#></div>
 												<div style="position:absolute;margin:12px 0px 0px 88px;font-size:16px;display:none;"></div>
 												<div style="position:absolute;margin:-6px 0px 0px 203px;font-size:16px;display:none;"></div>
 												<div style="position:absolute;margin:50px 0px 0px 275px;font-size:16px;display:none;"></div>
@@ -1355,10 +1404,10 @@ function cancel(){
 						</tr>
 						<tr>
 							<td>
-								<div style=" *width:136px;margin:5px 0px 0px 300px;" class="titlebtn" align="center">
-									<span onClick="applyRule();"><#CTL_apply#></span>
+								<div style=" *width:136px;margin:5px 0px 0px 300px;" class="titlebtn" align="center" onClick="applyRule();">
+									<span><#CTL_apply#></span>
+									<div style="margin:-30px 0 0px -480px;"><a style="text-decoration:underline;" href="http://www.asus.com/us/support/FAQ/1008717/" target="_blank"><#Bandwidth_monitor_WANLAN#> FAQ</a></div>
 								</div>
-								<div style="margin: 60px 0 0px 500px;"><a style="text-decoration:underline;" href="http://www.asus.com/support/FAQ/1008717/" target="_blank"><#Bandwidth_monitor_WANLAN#> FAQ</a></div>
 							</td>
 						</tr>		
 					</table>

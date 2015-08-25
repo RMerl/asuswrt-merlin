@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- This program is free software; you can redistribute it and/or      -->
+<!-- modify it under the terms of the GNU General Public License as     -->
+<!-- published by the Free Software Foundation; either version 2 of the -->
+<!-- License, or (at your option) any later version.                    -->
+<!--                                                                    -->
+<!-- This program is distributed in the hope that it will be useful,    -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of     -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      -->
+<!-- GNU General Public License for more details.                       -->
+<!--                                                                    -->
+<!-- You should have received a copy of the GNU General Public License  -->
+<!-- along with this program; if not, write to the                      -->
+<!-- Free Software Foundation, Inc.,                                    -->
+<!-- 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA             -->
+<!--                                                                    -->
+<!--                 Sipp default 'uas' scenario.                       -->
+<!--                                                                    -->
+
+<scenario name="Forked INVITE, one of them require PRACK">
+  <recv request="INVITE" crlf="true">
+   <action>
+    <ereg regexp="branch=([0-9a-zA-Z]*)"
+          search_in="hdr"
+	  header="Via"
+          assign_to="1,2"/>
+    <assign assign_to="1" variable="2"/>
+    </action>
+  </recv>
+
+  <send>
+    <![CDATA[
+      SIP/2.0 100 Trying
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+  <!-- Call leg 1: 200/OK -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      Via: SIP/2.0/UDP 127.0.0.1;received=127.0.0.1;rport=5080;branch=[$2]
+      [last_From:]
+      [last_To:];tag=UA_1
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: <sip:UA_1@[local_ip]:[local_port]>
+      Content-Type: application/sdp
+
+      v=0
+      o=- 3442013205 3442013205 IN IP4 192.168.0.13
+      s=pjsip
+      c=IN IP4 192.168.0.13
+      t=0 0
+      m=audio 4002 RTP/AVP 0
+      a=rtpmap:0 PCMU/8000
+    ]]>
+  </send>
+
+  <!-- Call leg 2: 200/OK -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      Via: SIP/2.0/UDP 127.0.0.1;received=127.0.0.1;rport=5080;branch=[$2]
+      [last_From:]
+      [last_To:];tag=UA_2
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: <sip:UA_2@[local_ip]:[local_port]>
+      Content-Type: application/sdp
+
+      v=0
+      o=- 3442013205 3442013205 IN IP4 192.168.0.13
+      s=pjsip
+      c=IN IP4 192.168.0.13
+      t=0 0
+      m=audio 4002 RTP/AVP 0
+      a=rtpmap:0 PCMU/8000
+    ]]>
+  </send>
+
+  <!-- Receive ACK -->
+  <recv request="ACK"
+        optional="false"
+        rtd="true"
+        crlf="true">
+  </recv>
+
+  <!-- Receive BYE -->
+  <recv request="BYE" crlf="true">
+  </recv>
+
+  <!-- Send 200/OK to BYE -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+
+
+  <!-- Receive ACK -->
+  <recv request="ACK"
+        optional="false"
+        rtd="true"
+        crlf="true">
+  </recv>
+
+  <!-- Receive BYE -->
+  <recv request="BYE" crlf="true">
+  </recv>
+
+  <!-- Send 200/OK to BYE -->
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+    ]]>
+  </send>
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

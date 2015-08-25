@@ -29,7 +29,7 @@ else
 all: asuswebstorage
 endif
 
-asuswebstorage: asuswebstorage.o api.o function.o list.o
+asuswebstorage: asuswebstorage.o api.o function.o list.o mem_pool.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS)  $^ -o $@ 
 
 

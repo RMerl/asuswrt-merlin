@@ -115,6 +115,7 @@ qtn_monitor_exit(int sig)
 
 void rpc_parse_nvram_from_httpd(int unit, int subunit)
 {
+	int ret = 0;
 	if (!rpc_qtn_ready())
 		return;
 
@@ -136,6 +137,27 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 		rpc_update_wdslist();
 		rpc_update_wds_psk(nvram_safe_get("wl1_wds_psk"));
 		rpc_update_ap_isolate(WIFINAME, atoi(nvram_safe_get("wl1_ap_isolate")));
+
+		if(nvram_get_int("wps_enable") == 1){
+			ret = rpc_qcsapi_wifi_disable_wps(WIFINAME, 0);
+			if (ret < 0)
+				dbG("rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
+
+			ret = qcsapi_wps_set_ap_pin(WIFINAME, nvram_safe_get("wps_device_pin"));
+			if (ret < 0)
+				dbG("qcsapi_wps_set_ap_pin %s error, return: %d\n", WIFINAME, ret);
+
+			ret = qcsapi_wps_registrar_set_pp_devname(WIFINAME, 0, (const char *) get_productid());
+			if (ret < 0)
+				dbG("qcsapi_wps_registrar_set_pp_devname %s error, return: %d\n", WIFINAME, ret);
+
+		}else{
+			ret = rpc_qcsapi_wifi_disable_wps(WIFINAME, 1);
+			if (ret < 0)
+				dbG("rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
+		}
+
+
 	}else if (unit == 1 && subunit == 1){
 		if(nvram_get_int("wl1.1_bss_enabled") == 1){
 			rpc_update_mbss("wl1.1_ssid", nvram_safe_get("wl1.1_ssid"));
@@ -313,17 +335,23 @@ QTN_RESET:
 
 		rpc_update_wdslist();
 
-		ret = qcsapi_wps_set_ap_pin(WIFINAME, nvram_safe_get("wps_device_pin"));
-		if (ret < 0)
-			dbG("Qcsapi qcsapi_wps_set_ap_pin %s error, return: %d\n", WIFINAME, ret);
+		if(nvram_get_int("wps_enable") == 1){
+			ret = rpc_qcsapi_wifi_disable_wps(WIFINAME, 0);
+			if (ret < 0)
+				dbG("rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
 
-		ret = qcsapi_wps_registrar_set_pp_devname(WIFINAME, 0, (const char *) get_productid());
-		if (ret < 0)
-			dbG("Qcsapi qcsapi_wps_registrar_set_pp_devname %s error, return: %d\n", WIFINAME, ret);
+			ret = qcsapi_wps_set_ap_pin(WIFINAME, nvram_safe_get("wps_device_pin"));
+			if (ret < 0)
+				dbG("qcsapi_wps_set_ap_pin %s error, return: %d\n", WIFINAME, ret);
 
-		ret = rpc_qcsapi_wifi_disable_wps(WIFINAME, !nvram_get_int("wps_enable"));
-		if (ret < 0)
-			dbG("Qcsapi rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
+			ret = qcsapi_wps_registrar_set_pp_devname(WIFINAME, 0, (const char *) get_productid());
+			if (ret < 0)
+				dbG("qcsapi_wps_registrar_set_pp_devname %s error, return: %d\n", WIFINAME, ret);
+		}else{
+			ret = rpc_qcsapi_wifi_disable_wps(WIFINAME, 1);
+			if (ret < 0)
+				dbG("rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
+		}
 
 		rpc_set_radio(1, 0, nvram_get_int("wl1_radio"));
 

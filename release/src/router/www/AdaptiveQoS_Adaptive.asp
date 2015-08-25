@@ -59,10 +59,79 @@
 .priority_lowest{
 	margin:-10px 0px 20px 0px;
 }
+
+.quick_setup{
+	width:120px;
+	height:120px;
+	margin-left:67px;
+	cursor:pointer;
+}
+
+#Game{	
+	background-image:url('/images/New_ui/QoS_quick/game.svg');
+}
+
+#Game:hover{	
+	background-image:url('/images/New_ui/QoS_quick/game_act.svg');
+}
+
+#Game_act{
+	background-image:url('/images/New_ui/QoS_quick/game_act.svg');
+}
+
+#Media{
+	background-image:url('/images/New_ui/QoS_quick/media.svg');
+}
+
+#Media:hover{
+	background-image:url('/images/New_ui/QoS_quick/media_act.svg');
+}
+
+#Media_act{
+	background-image:url('/images/New_ui/QoS_quick/media_act.svg');
+}
+
+#Web{
+	background-image:url('/images/New_ui/QoS_quick/web.svg');
+}
+
+#Web:hover{
+	background-image:url('/images/New_ui/QoS_quick/web_act.svg');
+}
+
+#Web_act{
+	background-image:url('/images/New_ui/QoS_quick/web_act.svg');
+}
+
+#Customize{
+	background-image:url('/images/New_ui/QoS_quick/customize.svg');
+}
+
+#Customize:hover{
+	background-image:url('/images/New_ui/QoS_quick/customize_act.svg');
+}
+
+#Customize_act{
+	background-image:url('/images/New_ui/QoS_quick/customize_act.svg');
+}
+
+.actived_check{
+	width:40px;
+	height:40px;
+	margin-left:150px;
+	margin-top:-35px;
+	background-image:url('/images/New_ui/QoS_quick/actived.svg');
+}
+
+.Quick_Setup_tile{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size:18px;
+	font-weight:bold;
+}
 </style>
 <script>
-var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");;
-var category_title = ["", "<#Adaptive_Game#>", "<#Adaptive_Stream#>","<#Adaptive_Message#>", "<#Adaptive_WebSurf#>","<#Adaptive_FileTransfer#>", "<#Adaptive_Others#>"];					 
+var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");
+var category_title = ["", "<#Adaptive_Game#>", "<#Adaptive_Stream#>","<#Adaptive_Message#>", "<#Adaptive_WebSurf#>","<#Adaptive_FileTransfer#>", "<#Adaptive_Others#>"];
 var cat_id_array = [[9,20], [8], [4], [0,5,6,15,17], [13,24], [1,3,14], [7,10,11,21,23]];
 
 function register_event(){
@@ -93,8 +162,44 @@ function register_overHint(){
 
 function initial(){
 	show_menu();
-	gen_category_block();
-	register_event();
+	show_settings(0);	
+}
+
+function show_settings(flag){
+	
+	if(flag != 0){
+		document.getElementById("quick_setup_desc").style.display = "none";
+		document.getElementById("quick_setup_table").style.display = "none";
+		document.getElementById("category_table").style.display = "";
+		gen_category_block();
+		register_event();
+	}
+	else{
+		document.getElementById("quick_setup_desc").style.display = "";
+		document.getElementById("quick_setup_table").style.display = "";
+		document.getElementById("category_table").style.display = "none";
+		check_actived();
+	}	
+}
+
+function check_actived(){
+
+	if(bwdpi_app_rulelist == "9,20<8<4<0,5,6,15,17<13,24<1,3,14<7,10,11,21,23<<"){
+		document.getElementById("Game").id = "Game_act";
+		document.getElementById("checked_Game").style.display = "";
+	}	
+	else if(bwdpi_app_rulelist == "9,20<4<0,5,6,15,17<8<13,24<1,3,14<7,10,11,21,23<<"){
+		document.getElementById("Media").id = "Media_act";
+		document.getElementById("checked_Media").style.display = "";
+	}	
+	else if(bwdpi_app_rulelist == "9,20<13,24<4<0,5,6,15,17<8<1,3,14<7,10,11,21,23<<"){
+		document.getElementById("Web").id = "Web_act";
+		document.getElementById("checked_Web").style.display = "";
+	}	
+	else{
+		document.getElementById("Customize").id = "Customize_act";
+		document.getElementById("checked_Customize").style.display = "";
+	}	
 }
 
 function switchPage(page){
@@ -140,8 +245,49 @@ function regen_priority(obj){
 }
 
 function applyRule(){
-	document.form.bwdpi_app_rulelist.value = bwdpi_app_rulelist;
+	if(document.getElementById("Game_act")) 
+		document.form.bwdpi_app_rulelist.value = "9,20<8<4<0,5,6,15,17<13,24<1,3,14<7,10,11,21,23<<";
+	else if(document.getElementById("Media_act")) 
+		document.form.bwdpi_app_rulelist.value = "9,20<4<0,5,6,15,17<8<13,24<1,3,14<7,10,11,21,23<<";
+	else if(document.getElementById("Web_act")) 
+		document.form.bwdpi_app_rulelist.value = "9,20<13,24<4<0,5,6,15,17<8<1,3,14<7,10,11,21,23<<";
+	else	
+		document.form.bwdpi_app_rulelist.value = bwdpi_app_rulelist;
 	document.form.submit();
+}
+
+var avoidkey;
+var lastName;
+function clickEvent(obj){
+	var icon;
+	var stitle;	
+	
+	if(document.getElementById("Game_act")) document.getElementById("Game_act").id = "Game";
+	if(document.getElementById("Media_act")) document.getElementById("Media_act").id = "Media";
+	if(document.getElementById("Web_act")) document.getElementById("Web_act").id = "Web";
+	if(document.getElementById("Customize_act")) document.getElementById("Customize_act").id = "Customize";
+	if(obj.id.indexOf("Game") >= 0){
+		document.getElementById("Game").id = "Game_act";
+		stitle = "Game";
+	}
+	else if(obj.id.indexOf("Media") >= 0){
+		obj.id = "Media_act";		
+		stitle = "Media";
+	}
+	else if(obj.id.indexOf("Web") >= 0){		
+		obj.id = "Web_act";
+		stitle = "Web";
+	}
+	else if(obj.id.indexOf("Customize") >= 0){
+		//obj.id = "Customize_act";
+		show_settings(1);
+		stitle = "Customize";
+	}
+	else
+		alert("mouse over on wrong place!");
+	
+	avoidkey = icon;	
+	lastName = icon;
 }
 </script>
 </head>
@@ -184,14 +330,14 @@ function applyRule(){
 								<td bgcolor="#4D595D" valign="top">
 									<table width="100%">
 										<tr>
-											<td  class="formfonttitle" align="left">								
-												<div><#Adaptive_QoS#> - <#EzQoS_type_adaptive#></div>
+											<td class="formfonttitle" align="left">								
+												<div><#Adaptive_QoS#> - <#Adaptive_QoS#></div>
 											</td>
 											<td align="right">
 												<div>
 													<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
 														<option value="1" ><#Adaptive_QoS_Conf#></option>
-														<option value="2" selected><#EzQoS_type_adaptive#></option>														
+														<option value="2" selected><#Adaptive_QoS#></option>														
 													</select>	    
 												</div>
 											</td>	
@@ -202,26 +348,80 @@ function applyRule(){
 							<tr>
 								<td height="5" bgcolor="#4D595D" valign="top"><img src="images/New_ui/export/line_export.png" /></td>
 							</tr>
+						</table>
+						
+						<table id="quick_setup_desc" width="100%" border="0">
 							<tr>
 								<td height="30" align="left" valign="top" bgcolor="#4D595D">																		
-									<div class="formfontdesc" style="line-height:20px;font-size:14px;"><#Adaptive_QoS_desc#></div>
-								</td>
+									<div class="formfontdesc" style="line-height:20px;font-size:14px;">Please select priority mode depending on your networking environment. You can also choice customize mode to prioritize app category.</div>
+								</td>								
+							</tr>
+						</table>	
+						
+						<table id="quick_setup_table" width="70%" border="0" align="center">							
+							<tr  height="40">
 							</tr>	
 							<tr>
 								<td>
+									<div id="Game" class="quick_setup" onclick="clickEvent(this);" title="This mode is suitable for playing internet game and boost your gaming bandwidth."><a href=""></a></div>
+									<div id="checked_Game" class="actived_check" style="display:none;"></div>
+								</td>	
+								<td>
+									<div id="Media" class="quick_setup" onclick="clickEvent(this);" title="This mode is suitable for playing video streaming and make sure your viewing experience."><a href=""></a></div>
+									<div id="checked_Media" class="actived_check" style="display:none;"></div>
+								</td>
+							</tr>
+							<tr height="40px" align="center">
+								<td class="Quick_Setup_tile">GAME</td>	
+								<td class="Quick_Setup_tile">Media Streaming</td>
+							</tr>
+							<tr height="40px">
+							</tr>	
+							<tr>
+								<td>
+									<div id="Web" class="quick_setup" onclick="clickEvent(this);" title="This mode is suitable for general web browsing and avoid to networking latency whileﬁfile transferring."><a href=""></a></div>
+									<div id="checked_Web" class="actived_check" style="display:none;"></div>
+								</td>	
+								<td>
+									<div id="Customize" class="quick_setup" onclick="clickEvent(this);" title="Manually prioritize apps category depending on your preference."><a href=""></a></div>
+									<div id="checked_Customize" class="actived_check" style="display:none;"></div>
+								</td>	
+							</tr>	
+							<tr height="40px" align="center">
+								<td class="Quick_Setup_tile">Web Surfing</td>
+								<td class="Quick_Setup_tile">Customize</td>
+							</tr>
+							<tr  height="40">
+							</tr>
+						</table>	
+						
+						<table id="category_table" width="100%">
+							<tr>
+								<td width="700px" height="30" align="left" valign="top" bgcolor="#4D595D">																		
+									<div class="formfontdesc" style="line-height:20px;font-size:14px;"><#Adaptive_QoS_desc#></div>
+								</td>
+								<td align="right">
+									<img onclick="show_settings(0);" align="right" style="cursor:pointer;marigin-left:-10px;" title="<#Menu_usb_application#>" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">
+								</td>
+							</tr>	
+							<tr>
+								<td colspan="2">
 									<div class="priority priority_highest"><#Highest#></div>
 								</td>
 							</tr>
 							<tr>
-								<td>	
+								<td colspan="2">	
 									<div id="category_list"></div>
 								</td>
 							</tr>
 							<tr>
-								<td>
+								<td colspan="2">
 									<div class="priority priority_lowest"><#Lowest#></div>	
 								</td>
 							</tr>
+						</table>
+						
+						<table width="100%">
 							<tr>
 								<td height="50" >
 									<div style=" *width:136px;margin-left:300px;" class="titlebtn" align="center" onClick="applyRule()"><span><#CTL_apply#></span></div>

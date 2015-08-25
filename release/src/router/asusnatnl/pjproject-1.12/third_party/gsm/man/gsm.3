@@ -1,0 +1,105 @@
+.\"
+.\" Copyright 1992 by Jutta Degener and Carsten Bormann, Technische
+.\" Universitaet Berlin.  See the accompanying file "COPYRIGHT" for
+.\" details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+.\"
+.PU
+.TH GSM 3 
+.SH NAME
+gsm_create, gsm_destroy, gsm_encode, gsm_decode \(em GSM\ 06.10 lossy sound compression
+.SH SYNOPSIS
+.PP
+#include "gsm.h"
+.PP
+gsm gsm_create();
+.PP
+void gsm_encode(handle, src, dst)
+.br
+gsm handle;
+.br
+gsm_signal src[160];
+.br
+gsm_frame dst;
+.PP
+int gsm_decode(handle, src, dst)
+.br
+gsm handle;
+.br
+gsm_frame src;
+.br
+gsm_signal dst[160];
+.PP
+void gsm_destroy(handle)
+.br
+gsm handle;
+.br
+.SH "DESCRIPTION"
+Gsm is an implementation of the final draft GSM 06.10
+standard for full-rate speech transcoding.
+.PP
+gsm_create() initializes a gsm pass and returns a 'gsm' object
+which can be used as a handle in subsequent calls to gsm_decode(),
+gsm_encode() or gsm_destroy().
+.PP
+gsm_encode() encodes an array of 160 13-bit samples (given as
+gsm_signal's, signed integral values of at least 16 bits) into
+a gsm_frame of 33 bytes.
+(gsm_frame is a type defined as an array of 33 gsm_bytes in gsm.h.)
+.PP
+gsm_decode() decodes a gsm_frame into an array of 160 13-bit samples
+(given as gsm_signals), which sound rather like what you handed to
+gsm_encode() on the other side of the wire.
+.PP
+gsm_destroy() finishes a gsm pass and frees all storage associated
+with it.
+.SS "Sample format"
+The following scaling is assumed for input to the algorithm:
+.br
+.nf
+   0  1                             11 12
+   S..v..v..v..v..v..v..v..v..v..v..v..v..*..*..*
+.nf
+.br
+Only the top 13 bits are used as a signed input value.
+The output of gsm_decode() has the three lower bits set to zero.
+.\" .SH OPTIONS
+.SH "RETURN VALUE"
+gsm_create() returns an opaque handle object of type gsm, or 0 on error.
+gsm_decode() returns -1 if the passed frame is invalid, else 0.
+.SH EXAMPLE
+.nf
+#include "gsm.h"
+
+gsm handle;
+gsm_frame buf;
+gsm_signal sample[160];
+int cc, soundfd;
+
+play() {	/* read compressed data from standard input, write to soundfd */
+
+	if (!(handle = gsm_create())) error...
+	while (cc = read(0, (char *)buf, sizeof buf)) {
+		if (cc != sizeof buf) error...
+		if (gsm_decode(handle, buf, sample) < 0) error... 
+		if (write(soundfd, sample, sizeof sample) != sizeof sample)
+			error...
+	}
+	gsm_destroy(handle);
+}
+
+record() {	/* read from soundfd, write compressed to standard output */
+
+	if (!(handle = gsm_create())) error...
+	while (cc = read(soundfd, sample, sizeof sample)) {
+		if (cc != sizeof sample) error...
+		gsm_encode(handle, sample, buf);
+		if (write(1, (char *)buf, sizeof buf) != sizeof sample) 
+			error...
+	}
+	gsm_destroy(handle);
+}
+.nf
+.SH BUGS
+Please direct bug reports to jutta@cs.tu-berlin.de and cabo@cs.tu-berlin.de.
+.SH "SEE ALSO"
+toast(1), gsm_print(3), gsm_explode(3), gsm_option(3)

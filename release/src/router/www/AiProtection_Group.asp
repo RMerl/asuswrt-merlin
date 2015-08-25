@@ -72,7 +72,7 @@ function initial(){
 			<table width="730px">
 				<tr>
 					<td align="left">
-						<span class="formfonttitle">AiProtection - Group</span>
+						<span class="formfonttitle"><#AiProtection_title#> - Group</span>
 					</td>
 					<td>
 						<img onclick="go_setting('/AiProtection_HomeSecurity.asp')" align="right" style="cursor:pointer;position:absolute;margin-left:-20px;margin-top:-30px;" title="AiProtection" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'">

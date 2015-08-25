@@ -116,7 +116,7 @@ static void no_blink(int sig)
 	usb_busy = 0;
 }
 
-#ifdef RTCONFIG_LED_BTN
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 static void reset_status(int sig)
 {
 	status_usb_old = -1;
@@ -168,13 +168,13 @@ static void usbled(int sig)
 #endif
 
 	if (nvram_match("asus_mfg", "1")
-#ifdef RTCONFIG_LED_BTN
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 			|| !nvram_get_int("AllLED")
 #endif
 			)
 		no_blink(sig);
 	else if (!usb_busy
-#ifdef RTCONFIG_LED_BTN
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 			&& nvram_get_int("AllLED")
 #endif
 			)
@@ -216,7 +216,7 @@ static void usbled(int sig)
 		}
 	}
 	else
-#ifdef RTCONFIG_LED_BTN
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 	if (nvram_get_int("AllLED"))
 #endif
 	{
@@ -265,7 +265,7 @@ usbled_main(int argc, char *argv[])
 	sigaddset(&sigs_to_catch, SIGTERM);
 	sigaddset(&sigs_to_catch, SIGUSR1);
 	sigaddset(&sigs_to_catch, SIGUSR2);
-#ifdef RTCONFIG_LED_BTN
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 	sigaddset(&sigs_to_catch, SIGTSTP);
 #endif
 	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
@@ -274,7 +274,7 @@ usbled_main(int argc, char *argv[])
 	signal(SIGTERM, usbled_exit);
 	signal(SIGUSR1, blink);
 	signal(SIGUSR2, no_blink);
-#ifdef RTCONFIG_LED_BTN
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
 	signal(SIGTSTP, reset_status);
 #endif
 	alarmtimer(USBLED_NORMAL_PERIOD, 0);

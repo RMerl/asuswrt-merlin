@@ -778,7 +778,7 @@ int network_init(server *srv) {
 			return -1;
 		}
 	}
-
+	
 	switch(backend) {
 	case NETWORK_BACKEND_WRITE:
 		srv->network_backend_write = network_write_chunkqueue_write;

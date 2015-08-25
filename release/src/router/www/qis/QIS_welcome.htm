@@ -27,6 +27,7 @@ var MP_png_path = '';
 var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
+var plc_cnt = -1;
 <% wanstate(); %>
 <% wanlink(); %>
 
@@ -87,6 +88,10 @@ function QKinternettype_load_body(){
 	if(parent.psta_support){
 		document.getElementById("mediaBridge_title").style.display = "";
 	}
+
+	if(parent.wisp_support){
+                document.getElementById("wisp_title").style.display = "";
+        }
 	
 	parent.document.title = "<#Web_Title#> - Welcome!";
 	parent.set_step("t0");		
@@ -231,7 +236,7 @@ function detect_if_wan_plug(flag){
 					document.getElementById("loadingIcon").style.display = "none";
 					changeiuiBackground(0);
 				}
-				setTimeout("update_wan_info(1);", 1000);
+				setTimeout("update_wan_info(1);", 2000);
 			}
 			else if(autodet_state == "0"){
 				detect_if_wan_plug();
@@ -262,13 +267,70 @@ function update_wan_info(flag){
 			if(flag == null){
 				document.getElementById("loadingIcon").style.display = "";
 				changeiuiBackground(1);
-				setTimeout("detect_if_wan_plug();", 1000);
+				setTimeout("detect_if_wan_plug();", 2000);
 			}
 			else{
-				setTimeout("detect_if_wan_plug(1);", 1000);
+				setTimeout("detect_if_wan_plug(1);", 2000);
 			}
 		}
 	});	
+}
+
+function detect_if_plc_plug(flag){
+	$.ajax({
+		url: '/result_of_get_changed_status_QIS.asp',
+		dataType: 'script',
+		error: function(xhr){
+			detect_if_plc_plug();
+		},
+		success: function(response){
+			if(autodet_plc_state < 2){
+				if(flag == null){
+					document.getElementById("producticon").style.display = "none";
+					document.getElementById("wan_unplug").style.display = "";
+					document.getElementById("unplugImg1").style.display = "none"
+					document.getElementById("loadingIcon").style.display = "none";
+					changeiuiBackground(0);
+				}
+				setTimeout("update_plc_info(1);", 1000);
+			}
+			else
+				submitForm(1);
+		}
+	});
+}
+
+function update_plc_info(flag){
+	$.ajax({
+		url: '/start_plcdet.asp',
+		dataType: 'script',
+		error: function(xhr){
+			update_plc_info();
+		},
+		success: function(response){
+			if(flag == null){
+				document.getElementById("loadingIcon").style.display = "";
+				changeiuiBackground(1);
+				if(plc_cnt == 2){
+					alert("<#ConnectionFailed#>!!<#web_redirect_suggestion1#>");
+					submitForm(1);
+				}
+				else
+					setTimeout("detect_if_plc_plug();", 1000);
+			}
+			else{
+				setTimeout("detect_if_plc_plug(1);", 1000);
+				plc_cnt=2;
+			}
+		}
+	});
+}
+
+function startDetect(){
+	if(parent.powerline_support)
+		update_plc_info();
+	else
+		update_wan_info();
 }
 
 function skip(){
@@ -314,7 +376,7 @@ function submitenter(myfield,e){
 	else return true;
 
 	if (keycode == 13){
-		update_wan_info();
+		startDetect();
    	return false;
   }
 	else
@@ -381,9 +443,8 @@ function uploadSetting(){
 								</ul>	
 							</div>
 						</td>
-
 						<td id="product_td" width="45%" style="height:300px">
-							<div id="producticon"><img id="ModelPid_img" src=""></div>
+							<div id="producticon" style="margin-bottom:-70px;"><img id="ModelPid_img" src=""></div>
 							<div id="wan_unplug" style="display:none;text-align:center;margin-top:-30px;*margin-top:25px;">
 								<img src="/images/qis/border.png">
 								<div style="margin-top:-330px">
@@ -399,8 +460,9 @@ function uploadSetting(){
 						</td>
 					</tr>
 					<tr>
-						<td colspan="3" align="center">
-							<input class="button_gen" id="btn_next_step" type="button" value="<#btn_go#>" onclick="update_wan_info();" style="margin-left:-80px;">
+						<td colspan="3" align="left">
+							<input class="button_gen" type="button" value="<#Manual_Setting_btn#>" onclick="submitForm(0);" style="margin-left:30px;">
+							<input class="button_gen" id="btn_next_step" type="button" value="<#btn_go#>" onclick="startDetect();" style="margin-left:50px;">
 							<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 						</td>
 					</tr>
@@ -412,22 +474,17 @@ function uploadSetting(){
 				<div id="AreaHint" style="margin-top:25px;">
 					<div><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 					<div id="main_manual" style="padding-left:20px;margin-top:10px">
-						<span>You are a network expert and want to skip internet setup wizard? Click</span>
-						<a><span style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick="submitForm(0)"><#Manual_Setting_btn#></span></a>
-						<span>to setup Internet, wireless in advanced mode or configure <#Web_Title2#> as <#OP_AP_item#></span>
+						<span><#QKset_skip_setup#> </span>
+						<span><#QKset_setup_manual_1#> <#OP_AP_item#></span>
 						<span id="repeater_title" style="display:none">/ <#OP_RE_item#></span>
 						<span id="mediaBridge_title" style="display:none">/ Media Bridge</span>
-						<span>.&nbsp Click</span>
-						<a><label for="upload_setting_profile" style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick=""><#Setting_upload_itemname#></label></a>
-						<span>to load saved configuration settings.</span>
+						<span id="wisp_title" style="display:none">/ <#OP_WISP_item#></span>
+						<span>. </span>
+						<span><#QKset_restore_0#></span>
 					</div>	
 					<div id="lte_manual" style="padding-left:20px;margin-top:10px;display:none">
-						<span>Click</span>
-						<a><span style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick="submitForm(0)"><#Manual_Setting_btn#></span></a>
-						<span>to setup Internet manually if you have know the Internet connection type.</span>
-						<span>Click</span>
-						<a><label for="upload_setting_profile" style="text-decoration:underline;cursor:pointer;font-weight:bold" onclick=""><#Setting_upload_itemname#></label></a>
-						<span>restore the configuration if you back up the configuration settings before resetting the router.</span>
+						<span><#QKset_setup_manual_0#> </span>
+						<span><#QKset_restore_1#></span>
 					</div>
 					<div style="height:30px;display:none">
 						<input id="upload_setting_profile" type="file" name="file" class="input" style="color:#FFCC00;" onchange="uploadSetting();">
@@ -456,7 +513,7 @@ function uploadSetting(){
 	</div><br>
 	<fieldset class="theFieldset">
 		<div id="nextBtn" class="row">
-			<a id="loadingIcon_iui" class="iuiA" onclick="update_wan_info();"><#CTL_next#></a>
+			<a id="loadingIcon_iui" class="iuiA" onclick="startDetect();"><#CTL_next#></a>
 		</div>
 		<div id="skipBtn" class="row">
 			<a id="loadingIcon_skip" class="iuiA" onclick="skip();"><#CTL_next#></a>

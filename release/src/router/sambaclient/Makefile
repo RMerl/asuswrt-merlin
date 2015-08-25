@@ -18,6 +18,9 @@ endif
 
 CFLAGS = -g -D_FILE_OFFSET_BITS=64 -DHAVE_LIBSMBCLIENT_H -I/$(TOP)/$(SMBSRC)/source3/include
 CFLAGS += -DNVRAM_ -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared
+CFLAGS += $(if $(QCA),$(EXTRACFLAGS))
+
+CFLAGS += -Wall
 
 LDFLAGS = -L/$(TOP)/$(SMBSRC)/source3/bin -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 LIBS = -lpthread -lsmbclient -lwbclient

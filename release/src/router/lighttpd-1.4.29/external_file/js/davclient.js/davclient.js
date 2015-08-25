@@ -372,10 +372,11 @@ global.davlib = new function() {
         */
         var request = this._getRequest('COPY', path, handler, context);
         var tourl = this._generateUrl(topath);
-        request.setRequestHeader("Destination", tourl);
+        request.setRequestHeader("Destination", tourl);        
         if (overwrite) {
-            request.setRequestHeader("Overwrite", "F");
+            request.setRequestHeader("Overwrite", overwrite);
         };
+        
         if (locktoken) {
             request.setRequestHeader('If', '<' + locktoken + '>');
         };
@@ -399,6 +400,7 @@ global.davlib = new function() {
         if (overwrite) {
             request.setRequestHeader("Overwrite", overwrite);
         };
+        
         if (locktoken) {        	
             request.setRequestHeader('If', '<' + locktoken + '>');
         };
@@ -455,218 +457,219 @@ global.davlib = new function() {
         request.send(xml);        
     };
 		
-		this.DavClient.prototype.WOL = function(path,mac,handler,context,locktoken){			
-			var request = this._getRequest('WOL',path,handler,context);
-			request.setRequestHeader("WOLMAC",mac);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.WOL = function(path,mac,handler,context,locktoken){			
+		var request = this._getRequest('WOL',path,handler,context);
+		request.setRequestHeader("WOLMAC",mac);
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GSL = function(path,urlPath,fileName,expire,toShare,handler,context,locktoken){			
-			var request = this._getRequest('GSL',path,handler,context);
-			request.setRequestHeader("URL",urlPath);
-			request.setRequestHeader("FILENAME",fileName);
-			request.setRequestHeader("EXPIRE",expire);
-			request.setRequestHeader("TOSHARE",toShare);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GSL = function(path,urlPath,fileName,expire,toShare,handler,context,locktoken){			
+		var request = this._getRequest('GSL',path,handler,context);
+		request.setRequestHeader("URL",urlPath);
+		request.setRequestHeader("FILENAME",fileName);
+		request.setRequestHeader("EXPIRE",expire);
+		request.setRequestHeader("TOSHARE",toShare);
+		
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GSLL = function(path,handler,context,locktoken){			
-			var request = this._getRequest('GSLL',path,handler,context);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GSLL = function(path,handler,context,locktoken){			
+		var request = this._getRequest('GSLL',path,handler,context);
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.REMOVESL = function(path,sharelink,handler,context,locktoken){			
-			var request = this._getRequest('REMOVESL',path,handler,context);
-			request.setRequestHeader("SHARELINK",sharelink);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.REMOVESL = function(path,sharelink,handler,context,locktoken){			
+		var request = this._getRequest('REMOVESL',path,handler,context);
+		request.setRequestHeader("SHARELINK",sharelink);
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.LOGOUT = function(path,handler,context,locktoken){			
-			var request = this._getRequest('LOGOUT',path,handler,context);			
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.LOGOUT = function(path,handler,context,locktoken){			
+		var request = this._getRequest('LOGOUT',path,handler,context);			
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETSRVTIME = function(path,handler,context,locktoken){			
-			var request = this._getRequest('GETSRVTIME',path,handler,context);			
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETSRVTIME = function(path,handler,context,locktoken){			
+		var request = this._getRequest('GETSRVTIME',path,handler,context);			
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.RESCANSMBPC = function(path,handler,context,locktoken){			
-			var request = this._getRequest('RESCANSMBPC',path,handler,context);			
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.RESCANSMBPC = function(path,handler,context,locktoken){			
+		var request = this._getRequest('RESCANSMBPC',path,handler,context);			
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETROUTERMAC = function(path,handler,context,locktoken){			
-			var request = this._getRequest('GETROUTERMAC',path,handler,context);			
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETROUTERMAC = function(path,handler,context,locktoken){			
+		var request = this._getRequest('GETROUTERMAC',path,handler,context);			
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETROUTERINFO = function(path,handler,context,locktoken){			
-			var request = this._getRequest('GETROUTERINFO',path,handler,context);			
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETROUTERINFO = function(path,handler,context,locktoken){			
+		var request = this._getRequest('GETROUTERINFO',path,handler,context);			
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETNOTICE = function(path,timestamp,handler,context,locktoken){
-			var request = this._getRequest('GETNOTICE',path,handler,context);	
-			request.setRequestHeader("TIMESTAMP",timestamp);
-			request.send('');
+	this.DavClient.prototype.GETNOTICE = function(path,timestamp,handler,context,locktoken){
+		var request = this._getRequest('GETNOTICE',path,handler,context);	
+		request.setRequestHeader("TIMESTAMP",timestamp);
+		request.send('');
+	};
+		
+	this.DavClient.prototype.GETFIRMVER = function(path,handler,context,locktoken){			
+		var request = this._getRequest('GETFIRMVER',path,handler,context);			
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETFIRMVER = function(path,handler,context,locktoken){			
-			var request = this._getRequest('GETFIRMVER',path,handler,context);			
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETLATESTVER = function(path,handler,context,locktoken){			
+		var request = this._getRequest('GETLATESTVER',path,handler,context);
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETLATESTVER = function(path,handler,context,locktoken){			
-			var request = this._getRequest('GETLATESTVER',path,handler,context);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETDISKSPACE = function(path,diskname,handler,context,locktoken){			
+		var request = this._getRequest('GETDISKSPACE',path,handler,context);
+		request.setRequestHeader("DISKNAME",diskname);
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETDISKSPACE = function(path,diskname,handler,context,locktoken){			
-			var request = this._getRequest('GETDISKSPACE',path,handler,context);
-			request.setRequestHeader("DISKNAME",diskname);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
-		};
-		
-		this.DavClient.prototype.PROPFINDMEDIALIST = function(path, handler, context, media_type, start, 
+	this.DavClient.prototype.PROPFINDMEDIALIST = function(path, handler, context, media_type, start, 
 			end, keyword, orderby, orderrule, parentid){
-			/* perform a PROPFINDMEDIALIST request
-			*/
+		/* perform a PROPFINDMEDIALIST request
+		*/
+		
+		var request = this._getRequest('PROPFINDMEDIALIST', path, handler, context);
+		request.setRequestHeader('Content-type', 'text/xml; charset=UTF-8');
+		
+		if(media_type){
+			request.setRequestHeader("MediaType", media_type);
+		};
 			
-			var request = this._getRequest('PROPFINDMEDIALIST', path, handler, context);
-			request.setRequestHeader('Content-type', 'text/xml; charset=UTF-8');
-			
-			if(media_type){
-				request.setRequestHeader("MediaType", media_type);
-			};
-			
-			if(start) {
-				request.setRequestHeader("Start", start);
-			};
+		if(start) {
+			request.setRequestHeader("Start", start);
+		};
 												  
-			if (end) {
-				request.setRequestHeader("End", end);
-			};
+		if (end) {
+			request.setRequestHeader("End", end);
+		};
+		
+		if (keyword) {
+			request.setRequestHeader("Keyword", keyword);
+		};
+		
+		if (orderby) {
+			request.setRequestHeader("Orderby", orderby);
+		};
 			
-			if (keyword) {
-				request.setRequestHeader("Keyword", keyword);
-			};
+		if (orderrule) {
+			request.setRequestHeader("Orderrule", orderrule);
+		};
 			
-			if (orderby) {
-				request.setRequestHeader("Orderby", orderby);
-			};
-			
-			if (orderrule) {
-				request.setRequestHeader("Orderrule", orderrule);
-			};
-			
-			if (parentid) {
-				request.setRequestHeader("Parentid", parentid);
-			};
-			/*
-			var xml = '<?xml version="1.0" encoding="UTF-8" ?>' +
+		if (parentid) {
+			request.setRequestHeader("Parentid", parentid);
+		};
+		/*
+		var xml = '<?xml version="1.0" encoding="UTF-8" ?>' +
                   '<D:propfind xmlns:D="DAV:">' +
                   '<D:allprop />' +
                   '</D:propfind>';
-			*/
-			var xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>' +
-					  '<D:propfind xmlns:D="DAV:">' +
-					  '<D:prop>' +
- 					  '<D:getlastmodified/>' +
-					  '<D:getcontentlength/>' +
-					  '<D:getcontenttype/>' +
-					  '<D:getmatadata/>' +						
-					  '</D:prop>' +
-					  '</D:propfind>';
+		*/
+		var xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>' +
+				  '<D:propfind xmlns:D="DAV:">' +
+				  '<D:prop>' +
+ 				  '<D:getlastmodified/>' +
+				  '<D:getcontentlength/>' +
+				  '<D:getcontenttype/>' +
+				  '<D:getmatadata/>' +						
+				  '</D:prop>' +
+				  '</D:propfind>';
 									  
-			request.send(xml);
-		};
+		request.send(xml);
+	};
 		
-		this.DavClient.prototype.GETMUSICCLASSIFICATION = function(path,classify,handler,context,locktoken){			
-			var request = this._getRequest('GETMUSICCLASSIFICATION',path,handler,context);	
-			if (classify) {
-				request.setRequestHeader("Classify", classify);
-			};		
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETMUSICCLASSIFICATION = function(path,classify,handler,context,locktoken){			
+		var request = this._getRequest('GETMUSICCLASSIFICATION',path,handler,context);	
+		if (classify) {
+			request.setRequestHeader("Classify", classify);
+		};		
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETMUSICPLAYLIST = function(path,id,handler,context,locktoken){			
-			var request = this._getRequest('GETMUSICPLAYLIST',path,handler,context);	
-			if (id) {
-				request.setRequestHeader("id", id);
-			};		
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETMUSICPLAYLIST = function(path,id,handler,context,locktoken){			
+		var request = this._getRequest('GETMUSICPLAYLIST',path,handler,context);	
+		if (id) {
+			request.setRequestHeader("id", id);
+		};		
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETPRODUCTICON = function(path,handler,context,locktoken){			
-			var request = this._getRequest('GETPRODUCTICON',path,handler,context);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETPRODUCTICON = function(path,handler,context,locktoken){			
+		var request = this._getRequest('GETPRODUCTICON',path,handler,context);
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 				
-		this.DavClient.prototype.GETTHUMBIMAGE = function(path, file, handler,context,locktoken){			
-			var request = this._getRequest('GETTHUMBIMAGE',path,handler,context);
-			if (file) {
-				request.setRequestHeader("File", file);
-			};
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETTHUMBIMAGE = function(path, file, handler,context,locktoken){			
+		var request = this._getRequest('GETTHUMBIMAGE',path,handler,context);
+		if (file) {
+			request.setRequestHeader("File", file);
 		};
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
+		};
+		request.send('');
+	};
 		
-		this.DavClient.prototype.GETVIDEOSUBTITLE = function(path,name,handler,context,locktoken){			
-			var request = this._getRequest('GETVIDEOSUBTITLE',path,handler,context);
-			request.setRequestHeader("FILENAME", name);
-			if(locktoken){
-				request.setRequestHeader('If','<'+locktoken+'>');
-			};
-			request.send('');
+	this.DavClient.prototype.GETVIDEOSUBTITLE = function(path,name,handler,context,locktoken){			
+		var request = this._getRequest('GETVIDEOSUBTITLE',path,handler,context);
+		request.setRequestHeader("FILENAME", name);
+		if(locktoken){
+			request.setRequestHeader('If','<'+locktoken+'>');
 		};
+		request.send('');
+	};
 		
 		this.DavClient.prototype.UPLOADTOFACEBOOK = function(path,name,title,album,token,handler,context,locktoken){			
 			var request = this._getRequest('UPLOADTOFACEBOOK',path,handler,context);
@@ -691,6 +694,35 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
+		this.DavClient.prototype.UPLOADTOPICASA = function(path,name,title,uid,aid,token,handler,context,locktoken){
+			var request = this._getRequest('UPLOADTOPICASA',path,handler,context);
+			request.setRequestHeader("FILENAME", name);
+			request.setRequestHeader("TITLE", title);
+			request.setRequestHeader("UID", uid);
+			request.setRequestHeader("AID", aid);
+			request.setRequestHeader("TOKEN", token);			
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
+		this.DavClient.prototype.UPLOADTOTWITTER = function(path,name,title,token,secret,nonce,timestamp,signature,photo_size_limit,handler,context,locktoken){
+			var request = this._getRequest('UPLOADTOTWITTER',path,handler,context);
+			request.setRequestHeader("FILENAME", name);
+			request.setRequestHeader("TITLE", title);
+			request.setRequestHeader("TOKEN", token);			
+			request.setRequestHeader("SECRET", secret);
+			request.setRequestHeader("NONCE", nonce);
+			request.setRequestHeader("TIMESTAMP", timestamp);
+			request.setRequestHeader("SIGNATURE", signature);
+			request.setRequestHeader("PHOTOSIZELIMIT", photo_size_limit);
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
 		this.DavClient.prototype.GENROOTCERTIFICATE = function(path,keylen,caname,email,country,state,ln,orag,ounit,cn,handler,context,locktoken){			
 			var request = this._getRequest('GENROOTCERTIFICATE',path,handler,context);	
 			request.setRequestHeader("KEYLEN", keylen); //- Private key length
@@ -704,7 +736,29 @@ global.davlib = new function() {
 			request.setRequestHeader("CN", cn); //- Common Name(eg. your name or your server's hostname)
 			request.send('');
 		};
-				
+		
+		this.DavClient.prototype.SETROOTCERTIFICATE = function(path,key,cert,intermediate_crt,handler,context,locktoken){			
+			var request = this._getRequest('SETROOTCERTIFICATE',path,handler,context);
+			request.setRequestHeader('Content-type', 'text/xml; charset=UTF-8');
+			
+			var xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>';
+			xml += '<content>';
+			xml += '<key>' + key + '</key>';
+	 		xml += '<cert>' + cert + '</cert>';
+	 		
+	 		if(intermediate_crt!="")
+	 			xml += '<intermediate_crt>' + intermediate_crt + '</intermediate_crt>';
+	 				  
+			xml += '</content>'; 
+			 
+			request.send(xml);	
+		};
+		
+		this.DavClient.prototype.GETX509CERTINFO = function(path, handler,context,locktoken){			
+			var request = this._getRequest('GETX509CERTINFO',path,handler,context);
+			request.send('');
+		};
+			
 		this.DavClient.prototype.APPLYAPP = function(path, action, nvram, service, handler,context,locktoken){			
 			var request = this._getRequest('APPLYAPP',path,handler,context);
 			request.setRequestHeader("ACTION_MODE", action);
@@ -728,7 +782,7 @@ global.davlib = new function() {
 			var request = this._getRequest('GETMEMORYUSAGE',path,handler,context);
 			request.send('');
 		};
-		
+				
     	// XXX not sure about the order of the args here
     	this.DavClient.prototype.PROPPATCH = function(path, handler, context, 
                                                   setprops, delprops,
@@ -847,7 +901,9 @@ global.davlib = new function() {
 	                        //content = self._parseMultiStatus(content);                        
 	                    };
 	                    var statusstring = davlib.STATUS_CODES[status];
-	                    handler.call(context, status, statusstring, 
+	                    
+	                    if(handler!=null)
+	                    	handler.call(context, status, statusstring, 
 	                                    content, headers);
 	                };
 	            };

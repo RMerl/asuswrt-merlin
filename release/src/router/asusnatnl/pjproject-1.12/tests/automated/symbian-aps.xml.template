@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+<Scenario site="$(HOSTNAME)" url="http://my.cdash.org/submit.php?project=PJSIP" wdir="$(PJDIR)">
+    <!-- *********************************************************
+     ** This file contains scenario for APS and APS-Direct  **
+     ********************************************************* -->
+
+    <!-- ******************************
+         **            APS           **
+         ****************************** -->
+    <Submit group="Experimental" build="$(OS)-$(S60TARGETNAME)-APS" >
+        <Update />
+        <!-- Configure config_site.h -->
+		<FileWrite file="pjlib/include/pj/config_site.h">
+		  <![CDATA[
+/* Written by ccdash */
+#define PJMEDIA_AUDIO_DEV_HAS_SYMB_APS	1
+#define PJMEDIA_AUDIO_DEV_HAS_SYMB_MDA	0
+#include <pj/config_site_sample.h>
+]]>
+		</FileWrite>
+		<!-- Configure symbian_ua.mmp -->
+		<FileWrite file="build.symbian/symbian_ua.mmp" replace_begin="// =BEGIN" replace_end="// =END">
+		  <![CDATA[
+#define SND_HAS_APS	1
+#define SND_HAS_VAS	0
+#define SND_HAS_MDA	0
+]]>
+		</FileWrite>
+		<!-- Configure symbian_ua_gui.mmp -->
+		<FileWrite file="pjsip-apps/src/symbian_ua_gui/group/symbian_ua_gui.mmp" replace_begin="// =BEGIN" replace_end="// =END">
+		  <![CDATA[
+#define SND_HAS_APS	1
+#define SND_HAS_VAS	0
+#define SND_HAS_MDA	0
+]]>
+		</FileWrite>
+		<Configure cmd="cmd /c echo success" />
+		<Build wdir="build.symbian" cmd='cmd /C &quot;bldmake bldfiles &amp;&amp; abld reallyclean $(S60TARGET) &amp;&amp; abld build $(S60TARGET)&quot;' />
+	</Submit>
+
+
+    <!-- ******************************
+         **       APS-Direct         **
+         ****************************** -->
+    <Submit group="Experimental" build="$(OS)-$(S60TARGETNAME)-APS-Direct" >
+        <Update />
+        <!-- Configure config_site.h -->
+        <FileWrite file="pjlib/include/pj/config_site.h">
+            <![CDATA[
+/* Written by ccdash */
+#define PJ_CONFIG_NOKIA_APS_DIRECT
+#include <pj/config_site_sample.h>
+]]>
+        </FileWrite>
+        <Configure cmd="cmd /c echo success" />
+        <Build wdir="build.symbian" cmd='cmd /C &quot;bldmake bldfiles &amp;&amp; abld reallyclean $(S60TARGET) &amp;&amp; abld build $(S60TARGET)&quot;' />
+        
+        <!-- Restore symbian_ua.mmp -->
+        <FileWrite file="build.symbian/symbian_ua.mmp" replace_begin="// =BEGIN" replace_end="// =END">
+            <![CDATA[
+#define SND_HAS_APS	0
+#define SND_HAS_VAS	0
+#define SND_HAS_MDA	1
+]]>
+        </FileWrite>
+        <!-- Restore symbian_ua_gui.mmp -->
+        <FileWrite file="pjsip-apps/src/symbian_ua_gui/group/symbian_ua_gui.mmp" replace_begin="// =BEGIN" replace_end="// =END">
+            <![CDATA[
+#define SND_HAS_APS	0
+#define SND_HAS_VAS	0
+#define SND_HAS_MDA	1
+]]>
+        </FileWrite>
+
+    </Submit>
+
+</Scenario>
+

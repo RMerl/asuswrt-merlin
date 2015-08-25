@@ -1,0 +1,12 @@
+
+PRJ_PLATFORMS
+WINSCW ARMV5 GCCE
+
+PRJ_EXPORTS
+
+PRJ_MMPFILES
+
+gnumakefile icons_aif_scalable_dc.mk
+
+
+symbian_ua_gui.mmp

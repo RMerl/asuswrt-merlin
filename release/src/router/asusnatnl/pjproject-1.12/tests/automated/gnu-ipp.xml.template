@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<Scenario site="$(HOSTNAME)" url="http://my.cdash.org/submit.php?project=PJSIP" wdir="$(PJDIR)">
+	<Submit group="Experimental" build="$(SUFFIX)-$(GCC)-IPP" disabled="$(DISABLED)" >
+		<Update />
+		<FileWrite file="user.mak">
+		  <![CDATA[
+# Written by ccdash
+export CFLAGS += -Wno-unused-label -g
+]]>			
+		</FileWrite>
+		<FileWrite file="pjlib/include/pj/config_site.h">
+		  <![CDATA[
+/* Written by ccdash */
+#define PJ_HAS_IPV6		1
+#define PJMEDIA_HAS_G7221_CODEC 0
+#define PJMEDIA_HAS_INTEL_IPP	1
+]]>			
+		</FileWrite>
+		<Configure cmd='./aconfigure --enable-ipp --with-ipp="$(IPPROOT)" --with-ipp-samples="$(IPPSAMPLES)" --with-ipp-arch=$(IPPARCH)' />
+		<Build cmd="make dep &amp;&amp; make clean &amp;&amp; make" />
+		<Test name="pjlib-test" wdir="pjlib/bin" cmd="./pjlib-test-$(SUFFIX)" disabled=$(NOTEST) />
+		<Test name="pjlib-util-test" wdir="pjlib-util/bin" cmd="./pjlib-util-test-$(SUFFIX)" disabled=$(NOTEST) />
+		<Test name="pjnath-test" wdir="pjnath/bin" cmd="./pjnath-test-$(SUFFIX)" disabled=$(NOTEST) />
+		<Test name="pjmedia-test" wdir="pjmedia/bin" cmd="./pjmedia-test-$(SUFFIX)" disabled=$(NOTEST) />
+		<Test name="pjsip-test" wdir="pjsip/bin" cmd="./pjsip-test-$(SUFFIX)" disabled=$(NOTEST) />
+		$(PJSUA-TESTS)
+	</Submit>
+</Scenario>

@@ -23,14 +23,17 @@ ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_BCM7),y)
 SRCFILE = broadcom_arm_7
 else
-SRCFILE = broadcom_arm$(DPI)
+ifeq ($(ARMCPUSMP),up)
+SRCFILE = broadcom_arm_up
+else
+SRCFILE = broadcom_arm
+endif
 endif
 DSTDIR = $(INSTALLDIR)/lib/modules/2.6.36.4brcmarm/kernel/fs
 else
 SRCFILE = broadcom
 DSTDIR = $(INSTALLDIR)/lib/modules/2.6.22.19/kernel/fs
 endif
-
 endif
 
 
@@ -50,25 +53,13 @@ install:
 	@install -d $(INSTALLDIR)/usr/sbin
 ifeq ($(RTCONFIG_TFAT),y)
 	@cp -f $(SRCFILE)/fat/kernel-module/tfat.ko $(DSTDIR)
-ifeq ($(RTCONFIG_BCM7),y)
 	install -D $(SRCFILE)/fat/tools/fatfsck $(INSTALLDIR)/usr/sbin/fatfsck
-else
-	install -D $(SRCFILE)/fat/tools/fsck_msdos $(INSTALLDIR)/usr/sbin/fsck_msdos
-endif
 ifneq ($(NO_MKTOOLS),y)
-ifeq ($(RTCONFIG_BCM7),y)
 	install -D $(SRCFILE)/fat/tools/mkfatfs $(INSTALLDIR)/usr/sbin/mkfatfs
 	#install -D $(SRCFILE)/fat/tools/fatdebug $(INSTALLDIR)/usr/sbin/fatdebug
 	#install -D $(SRCFILE)/fat/tools/fatinfo $(INSTALLDIR)/usr/sbin/fatinfo
 	#install -D $(SRCFILE)/fat/tools/fatlabel $(INSTALLDIR)/usr/sbin/fatlabel
 	#install -D $(SRCFILE)/fat/tools/fatdump $(INSTALLDIR)/usr/sbin/fatdump
-else
-	install -D $(SRCFILE)/fat/tools/newfs_msdos $(INSTALLDIR)/usr/sbin/newfs_msdos
-	#install -D $(SRCFILE)/fat/tools/fatdebug $(INSTALLDIR)/usr/sbin/fatdebug
-	#install -D $(SRCFILE)/fat/tools/fatinfo $(INSTALLDIR)/usr/sbin/fatinfo
-	#install -D $(SRCFILE)/fat/tools/dosfslabel $(INSTALLDIR)/usr/sbin/dosfslabel
-	#install -D $(SRCFILE)/fat/tools/fatdump $(INSTALLDIR)/usr/sbin/fatdump
-endif
 endif
 endif
 ifeq ($(RTCONFIG_TUXERA_NTFS),y)
@@ -86,6 +77,7 @@ ifeq ($(RTCONFIG_TUXERA_HFS),y)
 	install -D $(SRCFILE)/hfsplus/tools/fsck_hfs $(INSTALLDIR)/usr/sbin/fsck_hfs
 ifneq ($(NO_MKTOOLS),y)
 	install -D $(SRCFILE)/hfsplus/tools/newfs_hfs $(INSTALLDIR)/usr/sbin/newfs_hfs
+	#install -D $(SRCFILE)/hfsplus/tools/thfslabel $(INSTALLDIR)/usr/sbin/thfslabel
 endif
 endif
 #ifeq ($(or $(RTCONFIG_TFAT),$(RTCONFIG_TUXERA_NTFS),$(RTCONFIG_TUXERA_HFS)),y)

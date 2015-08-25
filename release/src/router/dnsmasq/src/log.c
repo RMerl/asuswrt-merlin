@@ -421,18 +421,15 @@ void my_syslog(int priority, const char *format, ...)
     } 
 }
 
-void set_log_writer(fd_set *set, int *maxfdp)
+void set_log_writer(void)
 {
   if (entries && log_fd != -1 && connection_good)
-    {
-      FD_SET(log_fd, set);
-      bump_maxfd(log_fd, maxfdp);
-    }
+    poll_listen(log_fd, POLLOUT);
 }
 
-void check_log_writer(fd_set *set)
+void check_log_writer(int force)
 {
-  if (log_fd != -1 && (!set || FD_ISSET(log_fd, set)))
+  if (log_fd != -1 && (force || poll_check(log_fd, POLLOUT)))
     log_write();
 }
 

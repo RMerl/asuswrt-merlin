@@ -1,0 +1,70 @@
+.\"
+.\" Copyright 1992 by Jutta Degener and Carsten Bormann, Technische
+.\" Universitaet Berlin.  See the accompanying file "COPYRIGHT" for
+.\" details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+.\"
+.PU
+.TH BITTER 1 
+.SH NAME
+bitter, sweet \(em code-generators for packing bits
+.SH SYNOPSIS
+bitter < input > output
+.br
+sweet < input > output
+.SH "DESCRIPTION"
+Bitter and sweet are two filters which turn a description of the
+form 
+.nf
+	name	number-of-bits
+	name 	number-of-bits
+	...
+.nf
+into code.
+.PP
+Bitter generates code that packs the specified bits from their
+variables into an array of unsigned char referenced by an
+advancing pointer c.
+.PP
+Sweet generates code that unpacks the specified bits from an array
+of unsigned char referenced by a mutable pointer c into the
+named variables.
+.\" .SH OPTIONS
+.\" .SH "RETURN VALUE"
+.\" .SH ERRORS
+.SH EXAMPLES
+.nf
+% cat in
+amaretto 1
+banana 2
+cherry 3
+strawberry 4
+vanilla 15
+walnut 15
+
+% bitter < in
+	*c++ =   ((amaretto & 0x1) << 7)
+	       | ((banana & 0x3) << 5)
+	       | ((cherry & 0x7) << 2)
+	       | ((strawberry >> 2) & 0x3);
+	*c++ =   ((strawberry & 0x3) << 6)
+	       | ((vanilla >> 9) & 0x3F);
+	*c++ =   ((vanilla >> 1) & 0xFF);
+	*c++ =   ((vanilla & 0x1) << 7)
+	       | ((walnut >> 8) & 0x7F);
+	*c++ =   walnut & 0xFF;
+
+% sweet < in
+	amaretto  = (*c >> 7) & 0x1;
+	banana  = (*c >> 5) & 0x3;
+	cherry  = (*c >> 2) & 0x7;
+	strawberry  = (*c++ & 0x3) << 2;
+	strawberry |= (*c >> 6) & 0x3;
+	vanilla  = (*c++ & 0x3F) << 9;
+	vanilla |= (*c++ & 0xFF) << 1;
+	vanilla |= (*c >> 7) & 0x1;
+	walnut  = (*c++ & 0x7F) << 8;
+	walnut |= *c++;
+.SH NOTES
+This is a quick hack for the gsm_encode() and gsm_decode() routines.
+.SH BUGS
+Please direct bug reports to jutta@cs.tu-berlin.de and cabo@cs.tu-berlin.de.

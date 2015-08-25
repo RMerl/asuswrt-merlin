@@ -351,7 +351,9 @@ struct strbuf {
         unsigned int origsize;  /* unmodified orignal buffer size in bytes */
 };
 
-extern void str_binit(struct strbuf *b, char *buf, uint size);
+extern void str_binit(struct strbuf *b, char *buf, unsigned int size);
 extern int str_bprintf(struct strbuf *b, const char *fmt, ...);
 
 #endif /* _shutils_h_ */
+
+extern int strArgs(int argc, char **argv, char *fmt, ...);

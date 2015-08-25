@@ -1,0 +1,41 @@
+TARGET 		pjstun_client.exe
+TARGETTYPE 	exe
+UID		0x0 0xA000000A
+
+OPTION          ARMCC --gnu
+
+SOURCEPATH	..\pjnath\src\pjstun-client
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+// PJSTUN-CLIENT files
+
+SOURCE	client_main.c
+
+//SOURCE	main_symbian.cpp
+
+
+SYSTEMINCLUDE	..\pjlib\include
+SYSTEMINCLUDE	..\pjlib-util\include
+SYSTEMINCLUDE	..\pjnath\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+
+#if defined(PJ_BUILD_DLL)
+MACRO		PJ_DLL
+LIBRARY		pjnath.lib pjlib_util.lib pjlib.lib
+#else
+STATICLIBRARY	pjnath.lib pjlib_util.lib pjlib.lib
+#endif
+
+LIBRARY		esock.lib insock.lib charconv.lib euser.lib estlib.lib
+
+#ifdef WINSCW
+STATICLIBRARY   eexe.lib ecrt0.lib
+#endif
+
+
+CAPABILITY	None
+

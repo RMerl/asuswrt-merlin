@@ -21,5 +21,6 @@ char * Gobi_FwVersion(char *line, int size);		//get FW version string
 char * Gobi_QcnVersion(char *line, int size);		//get Qcn version string
 
 char * Gobi_SelectBand(const char *band, char *line, int size);	//set LTE band. could be B3/B7/B20/B38 .
+char * Gobi_BandChannel(char *line, int size);		//get Band and Channel
 
 #endif	/* ! __AT_CMD_H__ */

@@ -1,0 +1,34 @@
+:
+#
+# Copyright 1992 by Jutta Degener and Carsten Bormann, Technische
+# Universitaet Berlin.  See the accompanying file "COPYRIGHT" for
+# details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+#
+if [ ! -f 1.inp ] ; then
+	echo Sorry, but we cannot provide the test data with this release.
+	exit
+fi
+
+echo -n 'Linear to code: '
+for i in 1 2 3 4
+do 
+	echo -n $i..
+ 	./lin2cod  < $i.inp | cmp - $i.cod
+done
+echo ""
+
+echo -n 'Code to linear: '
+for i in 1 2 3 4
+do 
+	echo -n $i..
+	./cod2lin < $i.cod | cmp - $i.out
+done
+echo ""
+
+echo -n 'Toast: '
+for i in 1 2 3 4
+do
+	echo -n $i..
+	../bin/toast -l < $i.inp | ../bin/toast -dl | cmp - $i.out
+done
+echo ""

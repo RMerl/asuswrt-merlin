@@ -1,0 +1,69 @@
+#if defined(PJ_BUILD_DLL)
+
+TARGET		pjsip.dll
+TARGETTYPE	dll
+
+UID		0x0 0xA0000007
+
+
+CAPABILITY	None
+LIBRARY		pjsdp.lib pjlib_util.lib pjlib.lib esock.lib insock.lib charconv.lib euser.lib estlib.lib
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\pjsip.def
+
+#else
+
+TARGET 		pjsip.lib
+TARGETTYPE 	lib
+
+#endif
+
+SOURCEPATH	..\pjsip\src\pjsip
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+// Must compile as C++, otherwise exception would not work
+OPTION          CW -lang c++
+OPTION          ARMCC --cpp --gnu
+OPTION          GCC     -x c++
+OPTION          GCCE    -x c++
+
+// PJSIP-CORE files
+
+//SOURCE	sip_auth_aka.c
+SOURCE	sip_auth_client.c
+SOURCE	sip_auth_msg.c
+SOURCE	sip_auth_parser_wrap.cpp
+SOURCE	sip_auth_server.c
+SOURCE	sip_config.c
+SOURCE	sip_dialog_wrap.cpp
+SOURCE	sip_endpoint_wrap.cpp
+SOURCE	sip_errno.c
+SOURCE	sip_msg.c
+SOURCE	sip_multipart.c
+SOURCE	sip_parser_wrap.cpp
+SOURCE	sip_resolve.c
+SOURCE	sip_tel_uri_wrap.cpp
+SOURCE	sip_transaction.c
+SOURCE	sip_transport_wrap.cpp
+SOURCE	sip_transport_loop.c
+SOURCE	sip_transport_tcp.c
+SOURCE	sip_transport_udp.c
+SOURCE	sip_transport_tls.c
+SOURCE	sip_ua_layer.c
+SOURCE	sip_uri.c
+SOURCE	sip_util_wrap.cpp
+SOURCE	sip_util_proxy_wrap.cpp
+SOURCE	sip_util_statefull.c
+
+SYSTEMINCLUDE	..\pjlib\include 
+SYSTEMINCLUDE	..\pjlib-util\include 
+SYSTEMINCLUDE	..\pjsip\include
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+
+

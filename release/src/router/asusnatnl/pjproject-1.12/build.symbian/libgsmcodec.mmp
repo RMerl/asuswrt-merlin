@@ -1,0 +1,72 @@
+#if defined(PJ_BUILD_DLL)
+
+TARGET		libgsmcodec.dll
+TARGETTYPE	dll
+UID		0x0 0xA000000F
+
+CAPABILITY	None
+LIBRARY		pjlib.lib euser.lib estlib.lib
+MACRO		PJ_DLL
+MACRO		PJ_EXPORTING
+
+DEFFILE		.\libgsmcodec.def
+
+#else
+
+TARGET 		libgsmcodec.lib
+TARGETTYPE 	lib
+
+#endif
+
+//OPTION		CW -lang c++
+OPTION          ARMCC --gnu
+
+MACRO		PJ_M_I386=1
+MACRO		PJ_SYMBIAN=1
+
+//
+// GSM codec third party source
+//
+
+SOURCEPATH	..\third_party\gsm\src
+
+SOURCE		add.c
+SOURCE		code.c
+SOURCE		debug.c
+SOURCE		decode.c
+SOURCE		gsm_create.c
+SOURCE		gsm_decode.c
+SOURCE		gsm_destroy.c
+SOURCE		gsm_encode.c
+SOURCE		gsm_explode.c
+SOURCE		gsm_implode.c
+SOURCE		gsm_option.c
+SOURCE		gsm_print.c
+SOURCE		long_term.c
+SOURCE		lpc.c
+SOURCE		preprocess.c
+SOURCE		rpe.c
+SOURCE		short_term.c
+SOURCE		table.c
+
+
+//
+// GSM codec wrapper for pjmedia-codec
+//
+
+SOURCEPATH 	..\pjmedia\src\pjmedia-codec
+SOURCE		gsm.c
+
+//
+// Header files
+//
+
+
+SYSTEMINCLUDE	..\pjmedia\include
+SYSTEMINCLUDE	..\pjlib\include 
+SYSTEMINCLUDE	..\third_party\build\gsm
+SYSTEMINCLUDE	..\third_party\gsm\inc
+
+SYSTEMINCLUDE	\epoc32\include
+SYSTEMINCLUDE	\epoc32\include\libc
+
