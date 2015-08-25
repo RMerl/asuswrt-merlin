@@ -141,7 +141,7 @@ out:
 	return ret;
 }
 
-void addrandom(char * buf, unsigned int len)
+void addrandom(unsigned char * buf, unsigned int len)
 {
 	hash_state hs;
 
@@ -306,7 +306,7 @@ void gen_random_mpint(mp_int *max, mp_int *rand) {
 
 		/* keep regenerating until we get one satisfying
 		 * 0 < rand < max    */
-	} while (mp_cmp(rand, max) != MP_LT);
+	} while (!(mp_cmp(rand, max) == MP_LT && mp_cmp_d(rand, 0) == MP_GT));
 	m_burn(randbuf, len);
 	m_free(randbuf);
 }

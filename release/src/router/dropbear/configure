@@ -5336,7 +5336,7 @@ else
 int
 main ()
 {
- struct sockaddr_storage s;
+ if (sizeof(struct sockaddr_storage)) return 0
   ;
   return 0;
 }
@@ -5372,7 +5372,7 @@ else
 int
 main ()
 {
- struct sockaddr_in6 s; s.sin6_family = 0;
+ if (sizeof(struct sockaddr_in6)) return 0
   ;
   return 0;
 }
@@ -5409,7 +5409,7 @@ else
 int
 main ()
 {
- struct in6_addr s; s.s6_addr[0] = 0;
+ if (sizeof(struct in6_addr)) return 0
   ;
   return 0;
 }
@@ -5447,7 +5447,7 @@ else
 int
 main ()
 {
- struct addrinfo s; s.ai_flags = AI_PASSIVE;
+ if (sizeof(struct addrinfo)) return 0
   ;
   return 0;
 }
@@ -6798,6 +6798,7 @@ fi
 
 
 # XXX there must be a nicer way to do this
+if test $BUNDLED_LIBTOM = 1 ; then
 as_dir=libtomcrypt/src/ciphers/aes; as_fn_mkdir_p
 as_dir=libtomcrypt/src/ciphers/safer; as_fn_mkdir_p
 as_dir=libtomcrypt/src/ciphers/twofish; as_fn_mkdir_p
@@ -6848,9 +6849,11 @@ as_dir=libtomcrypt/src/pk/katja; as_fn_mkdir_p
 as_dir=libtomcrypt/src/pk/pkcs1; as_fn_mkdir_p
 as_dir=libtomcrypt/src/pk/rsa; as_fn_mkdir_p
 as_dir=libtomcrypt/src/prngs; as_fn_mkdir_p
+LIBTOM_FILES="libtomcrypt/Makefile libtommath/Makefile"
+fi
 ac_config_headers="$ac_config_headers config.h"
 
-ac_config_files="$ac_config_files Makefile libtomcrypt/Makefile libtommath/Makefile"
+ac_config_files="$ac_config_files Makefile $LIBTOM_FILES"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7543,8 +7546,7 @@ do
   case $ac_config_target in
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "libtomcrypt/Makefile") CONFIG_FILES="$CONFIG_FILES libtomcrypt/Makefile" ;;
-    "libtommath/Makefile") CONFIG_FILES="$CONFIG_FILES libtommath/Makefile" ;;
+    "$LIBTOM_FILES") CONFIG_FILES="$CONFIG_FILES $LIBTOM_FILES" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

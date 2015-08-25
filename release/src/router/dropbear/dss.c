@@ -165,7 +165,7 @@ int buf_dss_verify(buffer* buf, dropbear_dss_key *key, buffer *data_buf) {
 	DEF_MP_INT(val3);
 	DEF_MP_INT(val4);
 	char * string = NULL;
-	int stringlen;
+	unsigned int stringlen;
 
 	TRACE(("enter buf_dss_verify"))
 	dropbear_assert(key != NULL);
@@ -186,7 +186,7 @@ int buf_dss_verify(buffer* buf, dropbear_dss_key *key, buffer *data_buf) {
 	/* create the signature - s' and r' are the received signatures in buf */
 	/* w = (s')-1 mod q */
 	/* let val1 = s' */
-	bytes_to_mp(&val1, &string[SHA1_HASH_SIZE], SHA1_HASH_SIZE);
+	bytes_to_mp(&val1, (const unsigned char*) &string[SHA1_HASH_SIZE], SHA1_HASH_SIZE);
 
 	if (mp_cmp(&val1, key->q) != MP_LT) {
 		TRACE(("verify failed, s' >= q"))
@@ -208,7 +208,7 @@ int buf_dss_verify(buffer* buf, dropbear_dss_key *key, buffer *data_buf) {
 
 	/* u2 = ((r')w) mod q */
 	/* let val1 = r' */
-	bytes_to_mp(&val1, &string[0], SHA1_HASH_SIZE);
+	bytes_to_mp(&val1, (const unsigned char*) &string[0], SHA1_HASH_SIZE);
 	if (mp_cmp(&val1, key->q) != MP_LT) {
 		TRACE(("verify failed, r' >= q"))
 		goto out;

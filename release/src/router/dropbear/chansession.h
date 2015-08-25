@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _CHANSESSION_H_
-#define _CHANSESSION_H_
+#ifndef DROPBEAR_CHANSESSION_H_
+#define DROPBEAR_CHANSESSION_H_
 
 #include "loginrec.h"
 #include "channel.h"
@@ -39,14 +39,14 @@ struct exitinfo {
 
 struct ChanSess {
 
-	unsigned char * cmd; /* command to exec */
+	char * cmd; /* command to exec */
 	pid_t pid; /* child process pid */
 
 	/* pty details */
 	int master; /* the master terminal fd*/
 	int slave;
-	unsigned char * tty;
-	unsigned char * term;
+	char * tty;
+	char * term;
 
 	/* exit details */
 	struct exitinfo exit;
@@ -103,4 +103,4 @@ struct SigMap {
 
 extern const struct SigMap signames[];
 
-#endif /* _CHANSESSION_H_ */
+#endif /* DROPBEAR_CHANSESSION_H_ */

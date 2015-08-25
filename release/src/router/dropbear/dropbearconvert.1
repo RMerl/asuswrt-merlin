@@ -39,9 +39,9 @@ or
 An existing Dropbear or OpenSSH private key file
 .TP
 .B output file
-The path to write the converted private key file
+The path to write the converted private key file. For client authentication ~/.ssh/id_dropbear is loaded by default
 .SH EXAMPLE
- # dropbearconvert openssh dropbear ~/.ssh/id_rsa ~/.ssh/dropbear_priv
+ # dropbearconvert openssh dropbear ~/.ssh/id_rsa ~/.ssh/id_dropbear
 .SH AUTHOR
 Matt Johnston (matt@ucc.asn.au).
 .SH SEE ALSO

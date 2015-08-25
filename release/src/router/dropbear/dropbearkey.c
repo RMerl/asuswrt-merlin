@@ -76,7 +76,8 @@ static void printhelp(char * progname) {
 #ifdef DROPBEAR_ECDSA
 					"		ecdsa\n"
 #endif
-					"-f filename	Use filename for the secret key\n"
+					"-f filename    Use filename for the secret key.\n"
+					"               ~/.ssh/id_dropbear is recommended for client keys.\n"
 					"-s bits	Key size in bits, should be a multiple of 8 (optional)\n"
 #ifdef DROPBEAR_DSS
 					"           DSS has a fixed size of 1024 bits\n"

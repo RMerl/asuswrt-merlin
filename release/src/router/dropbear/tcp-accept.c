@@ -75,7 +75,7 @@ static void tcp_acceptor(struct Listener *listener, int sock) {
 	}
 
 	if (send_msg_channel_open_init(fd, tcpinfo->chantype) == DROPBEAR_SUCCESS) {
-		unsigned char* addr = NULL;
+		char* addr = NULL;
 		unsigned int port = 0;
 
 		if (tcpinfo->tcp_type == direct) {

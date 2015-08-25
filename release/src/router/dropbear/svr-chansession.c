@@ -234,7 +234,7 @@ static int newchansess(struct Channel *channel) {
 
 	struct ChanSess *chansess;
 
-	TRACE(("new chansess %p", channel))
+	TRACE(("new chansess %p", (void*)channel))
 
 	dropbear_assert(channel->typedata == NULL);
 
@@ -343,7 +343,7 @@ static void closechansess(struct Channel *channel) {
  * or x11/authagent forwarding. These are passed to appropriate handlers */
 static void chansessionrequest(struct Channel *channel) {
 
-	unsigned char * type = NULL;
+	char * type = NULL;
 	unsigned int typelen;
 	unsigned char wantreply;
 	int ret = 1;
@@ -406,7 +406,7 @@ out:
 static int sessionsignal(struct ChanSess *chansess) {
 
 	int sig = 0;
-	unsigned char* signame = NULL;
+	char* signame = NULL;
 	int i;
 
 	if (chansess->pid == 0) {
@@ -557,7 +557,7 @@ static void get_termmodes(struct ChanSess *chansess) {
 static int sessionpty(struct ChanSess * chansess) {
 
 	unsigned int termlen;
-	unsigned char namebuf[65];
+	char namebuf[65];
 	struct passwd * pw = NULL;
 
 	TRACE(("enter sessionpty"))
@@ -583,7 +583,7 @@ static int sessionpty(struct ChanSess * chansess) {
 		return DROPBEAR_FAILURE;
 	}
 	
-	chansess->tty = (char*)m_strdup(namebuf);
+	chansess->tty = m_strdup(namebuf);
 	if (!chansess->tty) {
 		dropbear_exit("Out of memory"); /* TODO disconnect */
 	}
@@ -603,6 +603,7 @@ static int sessionpty(struct ChanSess * chansess) {
 	return DROPBEAR_SUCCESS;
 }
 
+#ifndef USE_VFORK
 static void make_connection_string(struct ChanSess *chansess) {
 	char *local_ip, *local_port, *remote_ip, *remote_port;
 	size_t len;
@@ -624,6 +625,7 @@ static void make_connection_string(struct ChanSess *chansess) {
 	m_free(remote_ip);
 	m_free(remote_port);
 }
+#endif
 
 /* Handle a command request from the client. This is used for both shell
  * and command-execution requests, and passes the command to

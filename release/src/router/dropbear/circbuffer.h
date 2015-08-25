@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _CIRCBUFFER_H_
-#define _CIRCBUFFER_H_
+#ifndef DROPBEAR_CIRCBUFFER_H_
+#define DROPBEAR_CIRCBUFFER_H_
 struct circbuf {
 
 	unsigned int size;
@@ -40,10 +40,12 @@ void cbuf_free(circbuffer * cbuf);
 
 unsigned int cbuf_getused(circbuffer * cbuf); /* how much data stored */
 unsigned int cbuf_getavail(circbuffer * cbuf); /* how much we can write */
-unsigned int cbuf_readlen(circbuffer *cbuf); /* max linear read len */
 unsigned int cbuf_writelen(circbuffer *cbuf); /* max linear write len */
 
-unsigned char* cbuf_readptr(circbuffer *cbuf, unsigned int len);
+/* returns pointers to the two portions of the circular buffer that can be read */
+void cbuf_readptrs(circbuffer *cbuf, 
+	unsigned char **p1, unsigned int *len1, 
+	unsigned char **p2, unsigned int *len2);
 unsigned char* cbuf_writeptr(circbuffer *cbuf, unsigned int len);
 void cbuf_incrwrite(circbuffer *cbuf, unsigned int len);
 void cbuf_incrread(circbuffer *cbuf, unsigned int len);

@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _COMPAT_H_
-#define _COMPAT_H_
+#ifndef DROPBEAR_COMPAT_H_
+#define DROPBEAR_COMPAT_H_
 
 #include "includes.h"
 
@@ -49,8 +49,8 @@ void setusershell();
 void endusershell();
 #endif
 
-#ifndef _PATH_DEVNULL
-#define _PATH_DEVNULL "/dev/null"
+#ifndef DROPBEAR_PATH_DEVNULL
+#define DROPBEAR_PATH_DEVNULL "/dev/null"
 #endif
 
-#endif /* _COMPAT_H_ */
+#endif /* DROPBEAR_COMPAT_H_ */

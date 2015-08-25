@@ -37,11 +37,12 @@
 #include "chansession.h"
 #include "agentfwd.h"
 #include "crypto_desc.h"
+#include "netio.h"
 
-static void cli_remoteclosed();
+static void cli_remoteclosed() ATTRIB_NORETURN;
 static void cli_sessionloop();
 static void cli_session_init();
-static void cli_finished();
+static void cli_finished() ATTRIB_NORETURN;
 static void recv_msg_service_accept(void);
 static void cli_session_cleanup(void);
 static void recv_msg_global_request_cli(void);
@@ -93,20 +94,37 @@ static const struct ChanType *cli_chantypes[] = {
 	NULL /* Null termination */
 };
 
-void cli_session(int sock_in, int sock_out) {
+void cli_connected(int result, int sock, void* userdata, const char *errstring)
+{
+	struct sshsession *myses = userdata;
+	if (result == DROPBEAR_FAILURE) {
+		dropbear_exit("Connect failed: %s", errstring);
+	}
+	myses->sock_in = myses->sock_out = sock;
+	update_channel_prio();
+}
+
+void cli_session(int sock_in, int sock_out, struct dropbear_progress_connection *progress) {
 
 	common_session_init(sock_in, sock_out);
+
+	if (progress) {
+		connect_set_writequeue(progress, &ses.writequeue);
+	}
 
 	chaninitialise(cli_chantypes);
 
 	/* Set up cli_ses vars */
 	cli_session_init();
 
+
 	/* Ready to go */
 	sessinitdone = 1;
 
 	/* Exchange identification */
 	send_session_identification();
+
+	kexfirstinitialise(); /* initialise the kex state */
 
 	send_msg_kexinit();
 
@@ -356,10 +374,10 @@ static void cli_remoteclosed() {
 /* Operates in-place turning dirty (untrusted potentially containing control
  * characters) text into clean text. 
  * Note: this is safe only with ascii - other charsets could have problems. */
-void cleantext(unsigned char* dirtytext) {
+void cleantext(char* dirtytext) {
 
 	unsigned int i, j;
-	unsigned char c;
+	char c;
 
 	j = 0;
 	for (i = 0; dirtytext[i] != '\0'; i++) {

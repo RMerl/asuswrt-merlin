@@ -41,6 +41,9 @@ static int buf_writefile(buffer * buf, const char * filename) {
 
 out:
 	if (fd >= 0) {
+		if (fsync(fd) != 0) {
+			dropbear_log(LOG_ERR, "fsync of %s failed: %s", filename, strerror(errno));
+		}
 		m_close(fd);
 	}
 	return ret;

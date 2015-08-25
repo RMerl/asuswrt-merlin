@@ -56,7 +56,7 @@ const struct ChanType clichansess = {
 
 static void cli_chansessreq(struct Channel *channel) {
 
-	unsigned char* type = NULL;
+	char* type = NULL;
 	int wantreply;
 
 	TRACE(("enter cli_chansessreq"))
@@ -272,7 +272,7 @@ void cli_chansess_winchange() {
 
 static void send_chansess_pty_req(struct Channel *channel) {
 
-	unsigned char* term = NULL;
+	char* term = NULL;
 
 	TRACE(("enter send_chansess_pty_req"))
 
@@ -305,7 +305,7 @@ static void send_chansess_pty_req(struct Channel *channel) {
 
 static void send_chansess_shell_req(struct Channel *channel) {
 
-	unsigned char* reqtype = NULL;
+	char* reqtype = NULL;
 
 	TRACE(("enter send_chansess_shell_req"))
 
@@ -392,7 +392,7 @@ static const struct ChanType cli_chan_netcat = {
 
 void cli_send_netcat_request() {
 
-	const unsigned char* source_host = "127.0.0.1";
+	const char* source_host = "127.0.0.1";
 	const int source_port = 22;
 
 	TRACE(("enter cli_send_netcat_request"))
@@ -403,7 +403,7 @@ void cli_send_netcat_request() {
 		dropbear_exit("Couldn't open initial channel");
 	}
 
-	buf_putstring(ses.writepayload, cli_opts.netcat_host, 
+	buf_putstring(ses.writepayload, cli_opts.netcat_host,
 			strlen(cli_opts.netcat_host));
 	buf_putint(ses.writepayload, cli_opts.netcat_port);
 

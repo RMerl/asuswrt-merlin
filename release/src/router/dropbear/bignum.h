@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _BIGNUM_H_
-#define _BIGNUM_H_
+#ifndef DROPBEAR_BIGNUM_H_
+#define DROPBEAR_BIGNUM_H_
 
 #include "includes.h"
 #include "dbutil.h"
@@ -35,4 +35,4 @@ void bytes_to_mp(mp_int *mp, const unsigned char* bytes, unsigned int len);
 void hash_process_mp(const struct ltc_hash_descriptor *hash_desc, 
 				hash_state *hs, mp_int *mp);
 
-#endif /* _BIGNUM_H_ */
+#endif /* DROPBEAR_BIGNUM_H_ */

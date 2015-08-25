@@ -30,6 +30,7 @@
 #include "runopts.h"
 #include "session.h"
 #include "ssh.h"
+#include "netio.h"
 
 #ifdef ENABLE_CLI_REMOTETCPFWD
 static int newtcpforwarded(struct Channel * channel);
@@ -215,7 +216,6 @@ static int newtcpforwarded(struct Channel * channel) {
 	m_list_elem * iter = NULL;
 	struct TCPFwdEntry *fwd;
 	char portstring[NI_MAXSERV];
-	int sock;
 	int err = SSH_OPEN_ADMINISTRATIVELY_PROHIBITED;
 
 	origaddr = buf_getstring(ses.payload, NULL);
@@ -254,19 +254,7 @@ static int newtcpforwarded(struct Channel * channel) {
 	}
 	
 	snprintf(portstring, sizeof(portstring), "%d", fwd->connectport);
-	sock = connect_remote(fwd->connectaddr, portstring, 1, NULL);
-	if (sock < 0) {
-		TRACE(("leave newtcpdirect: sock failed"))
-		err = SSH_OPEN_CONNECT_FAILED;
-		goto out;
-	}
-
-	ses.maxfd = MAX(ses.maxfd, sock);
-
-	/* We don't set readfd, that will get set after the connection's
-	 * progress succeeds */
-	channel->writefd = sock;
-	channel->initconn = 1;
+	channel->conn_pending = connect_remote(fwd->connectaddr, portstring, channel_connect_done, channel);
 
 	channel->prio = DROPBEAR_CHANNEL_PRIO_UNKNOWABLE;
 	

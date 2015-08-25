@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _RSA_H_
-#define _RSA_H_
+#ifndef DROPBEAR_RSA_H_
+#define DROPBEAR_RSA_H_
 
 #include "includes.h"
 #include "buffer.h"
@@ -55,4 +55,4 @@ void rsa_key_free(dropbear_rsa_key *key);
 
 #endif /* DROPBEAR_RSA */
 
-#endif /* _RSA_H_ */
+#endif /* DROPBEAR_RSA_H_ */

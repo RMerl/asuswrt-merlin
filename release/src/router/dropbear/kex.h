@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _KEX_H_
-#define _KEX_H_
+#ifndef DROPBEAR_KEX_H_
+#define DROPBEAR_KEX_H_
 
 #include "includes.h"
 #include "algo.h"
@@ -113,4 +113,4 @@ int curve25519_donna(unsigned char *out, const unsigned char *secret, const unsi
 
 #define MAX_KEXHASHBUF 2000
 
-#endif /* _KEX_H_ */
+#endif /* DROPBEAR_KEX_H_ */

@@ -100,7 +100,8 @@ Print the version
 .TP
 Authorized Keys
 
-~/.ssh/authorized_keys can be set up to allow remote login with a RSA or DSS
+~/.ssh/authorized_keys can be set up to allow remote login with a RSA,
+ECDSA, or DSS
 key. Each line is of the form
 .TP
 [restrictions] ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIgAsp... [comment]
@@ -139,7 +140,7 @@ Host Key Files
 
 Host key files are read at startup from a standard location, by default
 /etc/dropbear/dropbear_dss_host_key, /etc/dropbear/dropbear_rsa_host_key, and 
-/etc/dropbear/dropbear-ecdsa_host_key
+/etc/dropbear/dropbear_ecdsa_host_key
 or specified on the commandline with -r. These are of the form generated
 by dropbearkey. The -R option can be used to automatically generate keys
 in the default location - keys will be generated after startup when the first

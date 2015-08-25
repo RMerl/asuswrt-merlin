@@ -1,5 +1,5 @@
-#ifndef _DROPBEAR_ECC_H
-#define _DROPBEAR_ECC_H
+#ifndef DROPBEAR_DROPBEAR_ECC_H
+#define DROPBEAR_DROPBEAR_ECC_H
 
 #include "includes.h"
 #include "options.h"
@@ -12,7 +12,7 @@ struct dropbear_ecc_curve {
 	int ltc_size; /* to match the byte sizes in ltc_ecc_sets[] */
 	const ltc_ecc_set_type *dp; /* curve domain parameters */
 	const struct ltc_hash_descriptor *hash_desc;
-	const unsigned char *name;
+	const char *name;
 };
 
 extern struct dropbear_ecc_curve ecc_curve_nistp256;
@@ -33,4 +33,4 @@ mp_int * dropbear_ecc_shared_secret(ecc_key *pub_key, ecc_key *priv_key);
 
 #endif
 
-#endif /* _DROPBEAR_ECC_H */
+#endif /* DROPBEAR_DROPBEAR_ECC_H */

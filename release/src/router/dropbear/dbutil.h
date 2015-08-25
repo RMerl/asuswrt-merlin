@@ -22,12 +22,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _DBUTIL_H_
+#ifndef DROPBEAR_DBUTIL_H_
 
-#define _DBUTIL_H_
+#define DROPBEAR_DBUTIL_H_
 
 #include "includes.h"
 #include "buffer.h"
+#include "queue.h"
 
 #ifndef DISABLE_SYSLOG
 void startsyslog();
@@ -58,32 +59,18 @@ void dropbear_trace(const char* format, ...) ATTRIB_PRINTF(1,2);
 void dropbear_trace2(const char* format, ...) ATTRIB_PRINTF(1,2);
 void printhex(const char * label, const unsigned char * buf, int len);
 void printmpint(const char *label, mp_int *mp);
+void debug_start_net();
 extern int debug_trace;
 #endif
 
-enum dropbear_prio {
-	DROPBEAR_PRIO_DEFAULT = 10,
-	DROPBEAR_PRIO_LOWDELAY = 11,
-	DROPBEAR_PRIO_BULK = 12,
-};
-
 char * stripcontrol(const char * text);
-void get_socket_address(int fd, char **local_host, char **local_port,
-		char **remote_host, char **remote_port, int host_lookup);
-void getaddrstring(struct sockaddr_storage* addr, 
-		char **ret_host, char **ret_port, int host_lookup);
-void set_sock_nodelay(int sock);
-void set_sock_priority(int sock, enum dropbear_prio prio);
-int dropbear_listen(const char* address, const char* port,
-		int *socks, unsigned int sockcount, char **errstring, int *maxfd);
+
 int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 		int *writefd, int *readfd, int *errfd, pid_t *pid);
 void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell);
 #ifdef ENABLE_CONNECT_UNIX
 int connect_unix(const char* addr);
 #endif
-int connect_remote(const char* remotehost, const char* remoteport,
-		int nonblocking, char ** errstring);
 int buf_readfile(buffer* buf, const char* filename);
 int buf_getline(buffer * line, FILE * authfile);
 
@@ -91,7 +78,7 @@ void m_close(int fd);
 void * m_malloc(size_t size);
 void * m_strdup(const char * str);
 void * m_realloc(void* ptr, size_t size);
-#define m_free(X) free(X); (X) = NULL;
+#define m_free(X) do {free(X); (X) = NULL;} while (0)
 void m_burn(void* data, unsigned int len);
 void setnonblocking(int fd);
 void disallow_core();
@@ -110,5 +97,6 @@ int constant_time_memcmp(const void* a, const void *b, size_t n);
 a real-world clock */
 time_t monotonic_now();
 
+char * expand_homedir_path(const char *inpath);
 
-#endif /* _DBUTIL_H_ */
+#endif /* DROPBEAR_DBUTIL_H_ */

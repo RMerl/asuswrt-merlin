@@ -43,9 +43,9 @@ void cli_auth_getmethods() {
 	TRACE(("enter cli_auth_getmethods"))
 	CHECKCLEARTOWRITE();
 	buf_putbyte(ses.writepayload, SSH_MSG_USERAUTH_REQUEST);
-	buf_putstring(ses.writepayload, cli_opts.username, 
+	buf_putstring(ses.writepayload, cli_opts.username,
 			strlen(cli_opts.username));
-	buf_putstring(ses.writepayload, SSH_SERVICE_CONNECTION, 
+	buf_putstring(ses.writepayload, SSH_SERVICE_CONNECTION,
 			SSH_SERVICE_CONNECTION_LEN);
 	buf_putstring(ses.writepayload, "none", 4); /* 'none' method */
 
@@ -75,7 +75,7 @@ void cli_auth_getmethods() {
 
 void recv_msg_userauth_banner() {
 
-	unsigned char* banner = NULL;
+	char* banner = NULL;
 	unsigned int bannerlen;
 	unsigned int i, linecount;
 
@@ -151,8 +151,8 @@ void recv_msg_userauth_specific_60() {
 
 void recv_msg_userauth_failure() {
 
-	unsigned char * methods = NULL;
-	unsigned char * tok = NULL;
+	char * methods = NULL;
+	char * tok = NULL;
 	unsigned int methlen = 0;
 	unsigned int partial = 0;
 	unsigned int i = 0;

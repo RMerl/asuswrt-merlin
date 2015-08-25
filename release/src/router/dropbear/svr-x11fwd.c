@@ -107,7 +107,7 @@ static void x11accept(struct Listener* listener, int sock) {
 
 	int fd;
 	struct sockaddr_in addr;
-	int len;
+	socklen_t len;
 	int ret;
 	struct ChanSess * chansess = (struct ChanSess *)(listener->typedata);
 
@@ -175,7 +175,7 @@ void x11cleanup(struct ChanSess *chansess) {
 	m_free(chansess->x11authprot);
 	m_free(chansess->x11authcookie);
 
-	TRACE(("chansess %p", chansess))
+	TRACE(("chansess %p", (void*)chansess))
 	if (chansess->x11listener != NULL) {
 		remove_listener(chansess->x11listener);
 		chansess->x11listener = NULL;

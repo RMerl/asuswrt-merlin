@@ -4,7 +4,7 @@
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "2014.66"
+#define DROPBEAR_VERSION "2015.68"
 #endif
 
 #define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION
@@ -47,7 +47,7 @@
  * the clearenv() function */
 #define ENV_SIZE 100
 
-#define MAX_CMD_LEN 1024 /* max length of a command */
+#define MAX_CMD_LEN 9000 /* max length of a command */
 #define MAX_TERM_LEN 200 /* max length of TERM name */
 
 #define MAX_HOST_LEN 254 /* max hostname len for tcp fwding */
@@ -153,7 +153,8 @@
 #define MAX_CHANNELS 100 /* simple mem restriction, includes each tcp/x11
 							connection, so can't be _too_ small */
 
-#define MAX_STRING_LEN 2400 /* Sun SSH needs this long for algos */
+#define MAX_STRING_LEN (MAX(MAX_CMD_LEN, 2400)) /* Sun SSH needs 2400 for algos,
+                                                   MAX_CMD_LEN is usually longer */
 
 /* For a 4096 bit DSS key, empirically determined */
 #define MAX_PUBKEY_SIZE 1700
@@ -256,7 +257,18 @@
 #define DROPBEAR_LISTEN_BACKLOG MAX_CHANNELS
 #endif
 
+/* free memory before exiting */
+#define DROPBEAR_CLEANUP
+
 /* Use this string since some implementations might special-case it */
 #define DROPBEAR_KEEPALIVE_STRING "keepalive@openssh.com"
+
+/* Linux will attempt TCP fast open, falling back if not supported by the kernel.
+ * Currently server is enabled but client is disabled by default until there
+ * is further compatibility testing */
+#ifdef __linux__
+#define DROPBEAR_SERVER_TCP_FAST_OPEN
+/* #define DROPBEAR_CLIENT_TCP_FAST_OPEN */
+#endif
 
 /* no include guard for this file */

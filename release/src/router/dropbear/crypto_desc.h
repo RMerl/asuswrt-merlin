@@ -1,9 +1,9 @@
-#ifndef _CRYPTO_DESC_H
-#define _CRYPTO_DESC_H
+#ifndef DROPBEAR_CRYPTO_DESC_H
+#define DROPBEAR_CRYPTO_DESC_H
 
 void crypto_init();
 
 extern int dropbear_ltc_prng;
 
-#endif /* _CRYPTO_DESC_H */
+#endif /* DROPBEAR_CRYPTO_DESC_H */
 
