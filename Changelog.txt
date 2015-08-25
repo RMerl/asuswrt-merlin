@@ -1,6 +1,18 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.56 (xx-xxxx-2015)
+   - NEW: Merged with GPL 7838.
+   - NEW: Support for Russian ISP Telenet (code by theMIROn)
+   - NEW: ipset support in dnsmasq (patch by ryzhov_al)
+   - CHANGED: Updated miniupnpd to 20150723 snapshot
+   - FIXED: Router crash when an invalid or corrupted DH parameter
+            is used on an OpenVPN server configuration.
+   - FIXED: 2.4 GHz temperature would be missing on the Sysinfo
+            page when disabling thee 5 GHz radio on the RT-AC3200.
+
+
+
 378.55 (17-July-2015)
    - FIXED: DHCP lease page could get confused by IPv6 clients on
             the LAN.
