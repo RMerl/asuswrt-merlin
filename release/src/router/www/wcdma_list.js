@@ -273,12 +273,12 @@ function gen_list(){
 		passlist = new Array("", "", "", "", "", "");
 	}
 	else if(country == "PL"){
-		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1");
-		isplist = new Array("Play", "Cyfrowy Polsat", "T-Mobile", "Orange", "Plus", "Heyah", "Aster", "SAMISWOI");
-		apnlist = new Array("internet", "multi.internet", "internet", "internet", "internet", "internet", "aster.internet", "www.plusgsm.pl");
-		daillist = new Array("*99#", "*99***1#", "*99***1#", "*99#", "*99***1#", "*99***1#", "*99#", "*99***1#");
-		userlist = new Array("", "", "", "internet", "plusgsm", "heyah", "internet", "internet");
-		passlist = new Array("", "", "", "internet", "plusgsm", "heyah", "internet", "internet");
+		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1", "1");
+		isplist = new Array("Play", "Cyfrowy Polsat", "T-Mobile", "Orange", "Plus", "Heyah", "Aster", "SAMISWOI", "Aero2");
+		apnlist = new Array("internet", "multi.internet", "internet", "internet", "internet", "internet", "aster.internet", "www.plusgsm.pl", "darmowy");
+		daillist = new Array("*99#", "*99***1#", "*99***1#", "*99#", "*99***1#", "*99***1#", "*99#", "*99***1#", "*99#");
+		userlist = new Array("", "", "", "internet", "plusgsm", "heyah", "internet", "internet", "");
+		passlist = new Array("", "", "", "internet", "plusgsm", "heyah", "internet", "internet", "");
 	}
 	else if(country == "PT"){
 		protolist = new Array("1", "1", "1");
