@@ -127,30 +127,21 @@ run_up_down (const char *command,
   gc_free (&gc);
 }
 
-/* Get the file we will later write our process ID to */
-void
-get_pid_file (const char* filename, struct pid_state *state)
-{
-  CLEAR (*state);
-  if (filename)
-    {
-      state->fp = platform_fopen (filename, "w");
-      if (!state->fp)
-	msg (M_ERR, "Open error on pid file %s", filename);
-      state->filename = filename;
-    }
-}
-
 /* Write our PID to a file */
 void
-write_pid (const struct pid_state *state)
+write_pid (const char *filename)
 {
-  if (state->filename && state->fp)
+  if (filename)
     {
-      unsigned int pid = platform_getpid (); 
-      fprintf(state->fp, "%u\n", pid);
-      if (fclose (state->fp))
-	msg (M_ERR, "Close error on pid file %s", state->filename);
+      unsigned int pid = 0;
+      FILE *fp = platform_fopen (filename, "w");
+      if (!fp)
+	msg (M_ERR, "Open error on pid file %s", filename);
+
+      pid = platform_getpid ();
+      fprintf(fp, "%u\n", pid);
+      if (fclose (fp))
+	msg (M_ERR, "Close error on pid file %s", filename);
     }
 }
 
@@ -1097,6 +1088,12 @@ get_user_pass_cr (struct user_pass *up,
        */
       else if (from_stdin)
 	{
+#ifndef WIN32
+	  /* did we --daemon'ize before asking for passwords? */
+	  if ( !isatty(0) && !isatty(2) )
+	    { msg(M_FATAL, "neither stdin nor stderr are a tty device, can't ask for %s password.  If you used --daemon, you need to use --askpass to make passphrase-protected keys work, and you can not use --auth-nocache.", prefix ); }
+#endif
+
 #ifdef ENABLE_CLIENT_CR
 	  if (auth_challenge && (flags & GET_USER_PASS_DYNAMIC_CHALLENGE))
 	    {

@@ -2774,8 +2774,8 @@ options_postprocess_filechecks (struct options *options)
 
   /* ** Password files ** */
 #ifdef ENABLE_SSL
-  errs |= check_file_access (CHKACC_FILE, options->key_pass_file, R_OK,
-                             "--askpass");
+  errs |= check_file_access (CHKACC_FILE|CHKACC_ACPTSTDIN,
+			     options->key_pass_file, R_OK, "--askpass");
 #endif /* ENABLE_SSL */
 #ifdef ENABLE_MANAGEMENT
   errs |= check_file_access (CHKACC_FILE|CHKACC_ACPTSTDIN,
@@ -3757,11 +3757,16 @@ read_inline_file (struct in_src *is, const char *close_tag, struct gc_arena *gc)
   char line[OPTION_LINE_SIZE];
   struct buffer buf = alloc_buf (8*OPTION_LINE_SIZE);
   char *ret;
+  bool endtagfound = false;
+
   while (in_src_get (is, line, sizeof (line)))
     {
       if (!strncmp (line, close_tag, strlen (close_tag)))
-	break;
-      if (!buf_safe (&buf, strlen(line)))
+	{
+	  endtagfound = true;
+	  break;
+	}
+      if (!buf_safe (&buf, strlen(line)+1))
 	{
 	  /* Increase buffer size */
 	  struct buffer buf2 = alloc_buf (buf.capacity * 2);
@@ -3772,6 +3777,8 @@ read_inline_file (struct in_src *is, const char *close_tag, struct gc_arena *gc)
 	}
       buf_printf (&buf, "%s", line);
     }
+  if (!endtagfound)
+    msg (M_WARN, "WARNING: Endtag %s missing", close_tag);
   ret = string_alloc (BSTR (&buf), gc);
   buf_clear (&buf);
   free_buf (&buf);
