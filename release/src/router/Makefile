@@ -1479,6 +1479,15 @@ wb: openssl libxml2 curl-7.21.7
 push_log: wb
 
 rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi)
+# Dig into our collection of prebuilt objects based on model and architecture.
+	@-rm -f rc/prebuild/*.o || true
+ifeq ($(RTCONFIG_BCMARM),y)
+	@-cp -f rc/prebuild/arm/* rc/prebuild/
+else
+	@-cp -f rc/prebuild/mips/* rc/prebuild/
+endif
+	@-cp -f rc/prebuild/models/$(BUILD_NAME)/* rc/prebuild/
+	@$(MAKE) -C rc
 
 bridge/stamp-h1:
 	cd bridge && CFLAGS="-Os -g $(EXTRACFLAGS)" \
@@ -1758,6 +1767,10 @@ miniupnpd$(MUVER)-install:
 
 # !!TB
 shared: busybox $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(RTCONFIG_HTTPS),openssl)
+# Dig into our collection of prebuilt objects based on model and architecture.
+	@-rm -f shared/prebuild/*.o || true
+	@-cp -f shared/prebuild/models/$(BUILD_NAME)/* shared/prebuild/
+
 ifeq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA),y)
 	make -C wireless_tools wireless.h	
 endif

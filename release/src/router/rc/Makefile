@@ -356,17 +356,7 @@ ifeq ($(RTCONFIG_TUNNEL),y)
 OBJS += natnl_api.o
 endif
 
-all: prebuilt rc
-
-prebuilt:
-# Dig into our collection of prebuilt objects based on model and architecture.
-	@-rm -f ./prebuild/*.o || true
-ifeq ($(RTCONFIG_BCMARM),y)
-	@-cp -f ./prebuild/arm/* ./prebuild/
-else
-	@-cp -f ./prebuild/mips/* ./prebuild/
-endif
-	@-cp -f ./prebuild/models/$(BUILD_NAME)/* ./prebuild/
+all: rc
 
 rc: $(OBJS)
 	@echo " [rc] CC $@"
