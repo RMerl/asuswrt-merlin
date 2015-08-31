@@ -18,7 +18,7 @@ all: pjproject-1.12/stamp-h1-$(ARCH)
 
 clean:
 	cd $(TOP)/asusnatnl/pjproject-1.12 && \
-	./$(CONFIGURE) && make distclean && \
+	./$(CONFIGURE) && make distclean && rm stamp-h1-$(ARCH) && \
 	cd $(TOP)/asusnatnl/miniupnpc-1.6 && make clean && \
 	cd $(TOP)/asusnatnl/udt && make clean && \
 	cd $(TOP)/asusnatnl/natnl && make clean
