@@ -5270,13 +5270,15 @@ show_message("asusddns_update: %d\n", retval);
           sock = socket(AF_INET, SOCK_STREAM, 0);
           if(get_if_addr(sock, interface, &sin) != 0)
           {
-            exit(1);
+            retval = 1;
+            goto exit_main;
           }
           close(sock);
           snprintf(ipbuf, sizeof(ipbuf), "%s", inet_ntoa(sin.sin_addr));
 #else
           show_message("interface lookup not enabled at compile time\n");
-          exit(1);
+          retval = 1;
+          goto exit_main;
 #endif
         }
         else
@@ -5288,7 +5290,8 @@ show_message("asusddns_update: %d\n", retval);
         {
           show_message("unable to write cache file \"%s\": %s\n",
               cache_file, error_string);
-          exit(1);
+          retval = 1;
+          goto exit_main;
         }
       }
       if(retval == 0 && post_update_cmd)
@@ -5331,10 +5334,8 @@ show_message("asusddns_update: %d\n", retval);
       show_message("no update needed at this time\n");
     }
   }
-//2007.03.14 Yau add
-#ifdef ASUS_DDNS
+
   exit_main:
-#endif
 
 #ifdef IF_LOOKUP
   if(sock > 0) { close(sock); }
