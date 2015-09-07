@@ -5,12 +5,17 @@ Asuswrt-Merlin Changelog
    - NEW: Merged with GPL 7838.
    - NEW: Support for Russian ISP Telenet (code by theMIROn)
    - NEW: ipset support in dnsmasq (patch by ryzhov_al)
+   - NEW: default loglevel is now configurable and defaults to 
+          5 (notice) instead of 0 (emergency)
+   - NEW: local syslogd loglevel is now configurable through the webui.
    - CHANGED: Updated miniupnpd to 20150723 snapshot
+   - CHANGED: Updated openvpn to 2.3.8
+   - CHANGED: Updated dropbear to 2015.68
    - FIXED: Router crash when an invalid or corrupted DH parameter
             is used on an OpenVPN server configuration.
    - FIXED: 2.4 GHz temperature would be missing on the Sysinfo
             page when disabling thee 5 GHz radio on the RT-AC3200.
-
+   - FIXED: Max tracked connection limit wasn't user-editable
 
 
 378.55 (17-July-2015)
