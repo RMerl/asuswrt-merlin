@@ -2948,13 +2948,13 @@ start_httpd(void)
 	enable = nvram_get_int("http_enable");
 	if(enable!=1){
 		_eval(httpd_argv, NULL, 0, &pid);
-		logmessage(LOGNAME, "start httpd");
+		logmessage("httpd", "start httpd");
 	}
 
 #ifdef RTCONFIG_HTTPS
 	if(enable!=0){
 		_eval(https_argv, NULL, 0, &pid_https);
-		logmessage(LOGNAME, "start httpd - SSL");
+		logmessage("httpd", "start httpd - SSL");
 	}
 #endif
 	chdir("/");
