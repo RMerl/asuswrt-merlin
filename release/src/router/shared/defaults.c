@@ -1532,6 +1532,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "log_size", "256"},
 	{ "log_level", "7" },		/* <  LOG_DEBUG */
 	{ "console_loglevel", "5"},	/* <  KERN_INFO */
+	{ "message_loglevel", "5"},	/* KERN_INFO */
 
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2)
 	{ "jffs2_enable", "1" },

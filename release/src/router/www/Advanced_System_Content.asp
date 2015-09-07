@@ -1077,13 +1077,6 @@ function toggle_jffs_visibility(state){
 						<td colspan="2">Persistent JFFS2 partition</td>
 					</tr>
 				</thead>
-				<!-- tr>
-					<th>Enable JFFS partition</th>
-					<td>
-						<input type="radio" name="jffs2_enable" class="input" value="1" onclick="toggle_jffs_visibility(1);" <% nvram_match("jffs2_enable", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_enable" class="input" value="0" onclick="toggle_jffs_visibility(0);" <% nvram_match("jffs2_enable", "0", "checked"); %>><#checkbox_No#>
-					</td>
-				</tr -->
 				<tr id="jffs2_format_tr">
 					<th>Format JFFS partition at next boot</th>
     				<td>
@@ -1176,6 +1169,36 @@ function toggle_jffs_visibility(state){
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
 					<td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
+				</tr>
+				<tr>
+					<th>Default message log level</th>
+					<td>
+						<select name="message_loglevel" class="input_option">
+							<option value="0" <% nvram_match("message_loglevel", "0", "selected"); %>>emergency</option>
+							<option value="1" <% nvram_match("message_loglevel", "1", "selected"); %>>alert</option>
+							<option value="2" <% nvram_match("message_loglevel", "2", "selected"); %>>critical</option>
+							<option value="3" <% nvram_match("message_loglevel", "3", "selected"); %>>error</option>
+							<option value="4" <% nvram_match("message_loglevel", "4", "selected"); %>>warning</option>
+							<option value="5" <% nvram_match("message_loglevel", "5", "selected"); %>>notice</option>
+							<option value="6" <% nvram_match("message_loglevel", "6", "selected"); %>>info</option>
+							<option value="7" <% nvram_match("message_loglevel", "7", "selected"); %>>debug</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>Log only messages more urgent than</th>
+					<td>
+						<select name="log_level" class="input_option">
+							<option value="1" <% nvram_match("log_level", "1", "selected"); %>>alert</option>
+							<option value="2" <% nvram_match("log_level", "2", "selected"); %>>critical</option>
+							<option value="3" <% nvram_match("log_level", "3", "selected"); %>>error</option>
+							<option value="4" <% nvram_match("log_level", "4", "selected"); %>>warning</option>
+							<option value="5" <% nvram_match("log_level", "5", "selected"); %>>notice</option>
+							<option value="6" <% nvram_match("log_level", "6", "selected"); %>>info</option>
+							<option value="7" <% nvram_match("log_level", "7", "selected"); %>>debug</option>
+							<option value="8" <% nvram_match("log_level", "8", "selected"); %>>all</option>
+						</select>
+					</td>
 				</tr>
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
