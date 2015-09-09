@@ -309,7 +309,7 @@ void start_vpnclient(int clientNum)
 
 		sprintf(&buffer[0], "vpn_crt_client%d_crl", clientNum);
 		if ( !ovpn_crt_is_empty(&buffer[0]) )
-			fprintf(fp, "secret static.key\n");
+			fprintf(fp, "crl-verify crl.pem\n");
 
 	}
 	else if ( cryptMode == SECRET )
