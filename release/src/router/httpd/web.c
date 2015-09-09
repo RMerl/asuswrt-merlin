@@ -1558,6 +1558,21 @@ ej_vpn_crt_server(int eid, webs_t wp, int argc, char **argv) {
 		}
 		websWrite(wp, "'];\n");
 
+		//vpn_crt_server_extra
+		memset(buf, 0, sizeof(buf));
+		memset(file_name, 0, sizeof(file_name));
+		sprintf(file_name, "vpn_crt_server%d_extra", idx);
+		get_parsed_crt(file_name, buf, sizeof(buf));
+		websWrite(wp, "%s=['", file_name);
+		for (c = buf; *c; c++) {
+			if (isprint(*c) &&
+				*c != '"' && *c != '&' && *c != '<' && *c != '>')
+					websWrite(wp, "%c", *c);
+			else
+			websWrite(wp, "&#%d", *c);
+		}
+		websWrite(wp, "'];\n");
+
 		websWrite(wp, "\n");
 	}
 	return 0;
@@ -1636,6 +1651,21 @@ ej_vpn_crt_client(int eid, webs_t wp, int argc, char **argv) {
 		memset(buf, 0, sizeof(buf));
 		memset(file_name, 0, sizeof(file_name));
 		sprintf(file_name, "vpn_crt_client%d_crl", idx);
+		get_parsed_crt(file_name, buf, sizeof(buf));
+		websWrite(wp, "%s=['", file_name);
+		for (c = buf; *c; c++) {
+			if (isprint(*c) &&
+				*c != '"' && *c != '&' && *c != '<' && *c != '>')
+					websWrite(wp, "%c", *c);
+			else
+				websWrite(wp, "&#%d", *c);
+		}
+		websWrite(wp, "'];\n");
+
+		//vpn_crt_client_extra
+		memset(buf, 0, sizeof(buf));
+		memset(file_name, 0, sizeof(file_name));
+		sprintf(file_name, "vpn_crt_client%d_extra", idx);
 		get_parsed_crt(file_name, buf, sizeof(buf));
 		websWrite(wp, "%s=['", file_name);
 		for (c = buf; *c; c++) {
@@ -7827,6 +7857,12 @@ do_vpnupload_cgi(char *url, FILE *stream)
 		else if(!strcmp(filetype, "scrl")) {
 			sprintf(nv, "vpn_crt_server%s_crl", unit);
 			set_crt_parsed(nv, VPN_CLIENT_UPLOAD);
+		}
+		else if(!strcmp(filetype, "extra")) {
+			sprintf(nv, "vpn_crt_client%s_extra", unit);
+			set_crt_parsed(nv, VPN_CLIENT_UPLOAD);
+			state = nvram_get_int("vpn_upload_state");
+			nvram_set_int("vpn_upload_state", state & (~VPN_UPLOAD_NEED_EXTRA));
 		}
 	}
 	else

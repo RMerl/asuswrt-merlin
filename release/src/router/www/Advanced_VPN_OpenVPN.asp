@@ -376,6 +376,7 @@ function applyRule(){
 		document.openvpnTLSKeyForm.vpn_crt_server1_key.disabled = true;
 		document.openvpnTLSKeyForm.vpn_crt_server1_dh.disabled = true;
 		document.openvpnTLSKeyForm.vpn_crt_server1_crl.disabled = true;
+		document.openvpnTLSKeyForm.vpn_crt_server1_extra.disabled = true;
 		document.openvpnTLSKeyForm.vpn_crt_server1_static.disabled = true;
 		document.openvpnTLSKeyForm.vpn_crt_server2_ca.disabled = true;
 		document.openvpnTLSKeyForm.vpn_crt_server2_crt.disabled = true;
@@ -383,6 +384,7 @@ function applyRule(){
 		document.openvpnTLSKeyForm.vpn_crt_server2_dh.disabled = true;
 		document.openvpnTLSKeyForm.vpn_crt_server2_crl.disabled = true;
 		document.openvpnTLSKeyForm.vpn_crt_server2_static.disabled = true;
+		document.openvpnTLSKeyForm.vpn_crt_server2_extra.disabled = true;
 
 		var get_group_value = function () {
 			var rule_num = document.getElementById("openvpnd_clientlist_table").rows.length;
@@ -788,6 +790,7 @@ function updateCRTValue(){
 					document.openvpnTLSKeyForm.edit_vpn_crt_server_dh.value = vpn_crt_server1_dh[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 					document.openvpnTLSKeyForm.edit_vpn_crt_server_crl.value = vpn_crt_server1_crl[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 					document.openvpnTLSKeyForm.edit_vpn_crt_server_static.value = vpn_crt_server1_static[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
+					document.openvpnTLSKeyForm.edit_vpn_crt_server_extra.value = vpn_crt_server1_extra[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 				} else if (openvpn_unit == 2) {
 					document.openvpnTLSKeyForm.edit_vpn_crt_server_ca.value = vpn_crt_server2_ca[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 					document.openvpnTLSKeyForm.edit_vpn_crt_server_crt.value = vpn_crt_server2_crt[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
@@ -795,6 +798,7 @@ function updateCRTValue(){
 					document.openvpnTLSKeyForm.edit_vpn_crt_server_dh.value = vpn_crt_server2_dh[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 					document.openvpnTLSKeyForm.edit_vpn_crt_server_crl.value = vpn_crt_server2_crl[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 					document.openvpnTLSKeyForm.edit_vpn_crt_server_static.value = vpn_crt_server2_static[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
+					document.openvpnTLSKeyForm.edit_vpn_crt_server_extra.value = vpn_crt_server2_extra[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 				}
 		}
 	})
@@ -922,30 +926,6 @@ function cancel_Key_panel() {
 	$("#tlsKey_panel").fadeOut(300);	
 }
 
-/*
-function openvpn_decodeKeys(entities){
-	var expr;
-
-	if (entities == 1)
-		expr = new RegExp('&#62;','gm');
-	else
-		expr = new RegExp('>','gm');
-
-	document.openvpnTLSKeyForm.edit_vpn_crt_server1_static.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_static.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server1_ca.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_ca.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server1_key.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_key.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server1_crt.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_crt.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server1_dh.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_dh.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server1_crl.value = document.openvpnTLSKeyForm.edit_vpn_crt_server1_crl.value.replace(expr,"\r\n");
-
-	document.openvpnTLSKeyForm.edit_vpn_crt_server2_static.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_static.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server2_ca.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_ca.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server2_key.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_key.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server2_crt.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_crt.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server2_dh.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_dh.value.replace(expr,"\r\n");
-	document.openvpnTLSKeyForm.edit_vpn_crt_server2_crl.value = document.openvpnTLSKeyForm.edit_vpn_crt_server2_crl.value.replace(expr,"\r\n");
-}
-*/
 
 function save_keys() {
 	if (openvpn_unit == "1") {
@@ -955,12 +935,14 @@ function save_keys() {
 		document.openvpnTLSKeyForm.vpn_crt_server1_dh.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_dh.value;
 		document.openvpnTLSKeyForm.vpn_crt_server1_crl.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_crl.value;
 		document.openvpnTLSKeyForm.vpn_crt_server1_static.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_static.value;
+		document.openvpnTLSKeyForm.vpn_crt_server1_extra.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_extra.value;
 		document.openvpnTLSKeyForm.vpn_crt_server1_static.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server1_ca.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server1_crt.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server1_key.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server1_dh.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server1_crl.disabled = false;
+		document.openvpnTLSKeyForm.vpn_crt_server1_extra.disabled = false;
 	} else {
 		document.openvpnTLSKeyForm.vpn_crt_server2_ca.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_ca.value;
 		document.openvpnTLSKeyForm.vpn_crt_server2_crt.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_crt.value;
@@ -968,12 +950,14 @@ function save_keys() {
 		document.openvpnTLSKeyForm.vpn_crt_server2_dh.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_dh.value;
 		document.openvpnTLSKeyForm.vpn_crt_server2_crl.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_crl.value;
 		document.openvpnTLSKeyForm.vpn_crt_server2_static.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_static.value;
+		document.openvpnTLSKeyForm.vpn_crt_server2_extra.value = document.openvpnTLSKeyForm.edit_vpn_crt_server_extra.value;
 		document.openvpnTLSKeyForm.vpn_crt_server2_static.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server2_ca.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server2_crt.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server2_key.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server2_dh.disabled = false;
 		document.openvpnTLSKeyForm.vpn_crt_server2_crl.disabled = false;
+		document.openvpnTLSKeyForm.vpn_crt_server2_extra.disabled = false;
 	}
 	document.openvpnTLSKeyForm.submit();
 	cancel_Key_panel();
@@ -1000,12 +984,14 @@ function save_keys() {
 		<input type="hidden" name="vpn_crt_server1_crt" value="" disabled>
 		<input type="hidden" name="vpn_crt_server1_key" value="" disabled>
 		<input type="hidden" name="vpn_crt_server1_dh" value="" disabled>
-		<input type="hidden" name="vpn_crt_server1_crl" value="" disabled>	
+		<input type="hidden" name="vpn_crt_server1_crl" value="" disabled>
+		<input type="hidden" name="vpn_crt_server1_extra" value="" disabled>
 		<input type="hidden" name="vpn_crt_server2_ca" value="" disabled>
 		<input type="hidden" name="vpn_crt_server2_crt" value="" disabled>
 		<input type="hidden" name="vpn_crt_server2_key" value="" disabled>
 		<input type="hidden" name="vpn_crt_server2_dh" value="" disabled>
 		<input type="hidden" name="vpn_crt_server2_crl" value="" disabled>
+		<input type="hidden" name="vpn_crt_server2_extra" value="" disabled>
 		<input type="hidden" name="vpn_crt_server1_static" value="" disabled>
 		<input type="hidden" name="vpn_crt_server2_static" value="" disabled>
 		<tr>
@@ -1059,6 +1045,11 @@ function save_keys() {
 									<th>Certificate Revocation List (Optional)</th>
 									<td>
 										<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server_crl" name="edit_vpn_crt_server_crl" cols="65" maxlength="3499"></textarea>
+									</td>
+								</tr>
+								<tr id="edit_tls6">
+									<th>Extra Chain Certificates (Optional)</th>
+										<td><textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_server_extra" name="edit_vpn_crt_server_extra" cols="65" maxlength="3499"></textarea>
 									</td>
 								</tr>
 							</table>

@@ -240,6 +240,7 @@ function setTLSTable(unit) {
 			document.getElementById('edit_vpn_crt_client_key').value = vpn_crt_client1_key[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			document.getElementById('edit_vpn_crt_client_static').value = vpn_crt_client1_static[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			document.getElementById('edit_vpn_crt_client_crl').value = vpn_crt_client1_crl[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
+			document.getElementById('edit_vpn_crt_client_extra').value = vpn_crt_client1_extra[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			break;
 		case "2" :
 			document.getElementById('edit_vpn_crt_client_ca').value = vpn_crt_client2_ca[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
@@ -247,6 +248,7 @@ function setTLSTable(unit) {
 			document.getElementById('edit_vpn_crt_client_key').value = vpn_crt_client2_key[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			document.getElementById('edit_vpn_crt_client_static').value = vpn_crt_client2_static[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			document.getElementById('edit_vpn_crt_client_crl').value = vpn_crt_client2_crl[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
+			document.getElementById('edit_vpn_crt_client_extra').value = vpn_crt_client2_extra[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			break;
 /*
 		case "3" :
@@ -340,11 +342,13 @@ function save_Keys(){
 			document.form.vpn_crt_client1_key.value = document.getElementById('edit_vpn_crt_client_key').value;
 			document.form.vpn_crt_client1_static.value = document.getElementById('edit_vpn_crt_client_static').value;
 			document.form.vpn_crt_client1_crl.value = document.getElementById('edit_vpn_crt_client_crl').value;
+			document.form.vpn_crt_client1_extra.value = document.getElementById('edit_vpn_crt_client_extra').value;
 			document.form.vpn_crt_client1_ca.disabled = false;
 			document.form.vpn_crt_client1_crt.disabled = false;
 			document.form.vpn_crt_client1_key.disabled = false;
 			document.form.vpn_crt_client1_static.disabled = false;
 			document.form.vpn_crt_client1_crl.disabled = false;
+			document.form.vpn_crt_client1_extra.disabled = false;
 			break;
 		case "2" :
 			document.form.vpn_crt_client2_ca.value = document.getElementById('edit_vpn_crt_client_ca').value;
@@ -352,11 +356,13 @@ function save_Keys(){
 			document.form.vpn_crt_client2_key.value = document.getElementById('edit_vpn_crt_client_key').value;
 			document.form.vpn_crt_client2_static.value = document.getElementById('edit_vpn_crt_client_static').value;
 			document.form.vpn_crt_client2_crl.value = document.getElementById('edit_vpn_crt_client_crl').value;
+			document.form.vpn_crt_client2_extra.value = document.getElementById('edit_vpn_crt_client_extra').value;
 			document.form.vpn_crt_client2_ca.disabled = false;
 			document.form.vpn_crt_client2_crt.disabled = false;
 			document.form.vpn_crt_client2_key.disabled = false;
 			document.form.vpn_crt_client2_static.disabled = false;
 			document.form.vpn_crt_client2_crl.disabled = false;
+			document.form.vpn_crt_client2_extra.disabled =  false;
 			break;
 /*
 		case "3" :
@@ -765,6 +771,12 @@ function validate_ipcidr(obj){
 												<textarea rows="8" class="textarea_ssh_table" id="edit_vpn_crt_client_crl" name="edit_vpn_crt_client_crl" cols="65" maxlength="3499"></textarea>
 											</td>
 										</tr>
+										<tr>
+											<th id="manualKey">Extra Chain Certificates (Optional)</th>
+											<td>
+												<textarea rows="8" class="textarea_ssh_table"id="edit_vpn_crt_client_extra" name="edit_vpn_crt_client_extra" cols="65" maxlength="3499"></textarea>
+											</td>
+										</tr>
 									</table>
 								</td>
 							</tr>						
@@ -804,11 +816,13 @@ function validate_ipcidr(obj){
 <input type="hidden" name="vpn_crt_client1_key" value="" disabled>
 <input type="hidden" name="vpn_crt_client1_static" value="" disabled>
 <input type="hidden" name="vpn_crt_client1_crl" value="" disabled>
+<input type="hidden" name="vpn_crt_client1_extra" value="" disabled>
 <input type="hidden" name="vpn_crt_client2_ca" value="" disabled>
 <input type="hidden" name="vpn_crt_client2_crt" value="" disabled>
 <input type="hidden" name="vpn_crt_client2_key" value="" disabled>
 <input type="hidden" name="vpn_crt_client2_static" value="" disabled>
 <input type="hidden" name="vpn_crt_client2_crl" value="" disabled>
+<input type="hidden" name="vpn_crt_client2_extra" value="" disabled>
 <input type="hidden" name="vpn_crt_client3_ca" value="" disabled>
 <input type="hidden" name="vpn_crt_client3_crt" value="" disabled>
 <input type="hidden" name="vpn_crt_client3_key" value="" disabled>
