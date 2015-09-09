@@ -8,6 +8,7 @@ Asuswrt-Merlin Changelog
    - NEW: default loglevel is now configurable and defaults to 
           5 (notice) instead of 0 (emergency)
    - NEW: local syslogd loglevel is now configurable through the webui.
+   - NEW: Support for extra-certs in OpenVPN
    - CHANGED: Updated miniupnpd to 20150723 snapshot
    - CHANGED: Updated openvpn to 2.3.8
    - CHANGED: Updated dropbear to 2015.68
@@ -16,6 +17,7 @@ Asuswrt-Merlin Changelog
    - FIXED: 2.4 GHz temperature would be missing on the Sysinfo
             page when disabling thee 5 GHz radio on the RT-AC3200.
    - FIXED: Max tracked connection limit wasn't user-editable
+   - FIXED: Resource leaks in ez-ipupdate if an update failed
 
 
 378.55 (17-July-2015)
