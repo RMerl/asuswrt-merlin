@@ -2706,6 +2706,25 @@ TRACE_PT("writing Parental Control\n");
 #endif
 	}
 
+	/* Clamp TCP MSS to PMTU of WAN interface before accepting RELATED packets */
+	if (!strcmp(wan_proto, "pptp") || !strcmp(wan_proto, "pppoe") || !strcmp(wan_proto, "l2tp"))
+	{
+		fprintf(fp, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+		if (strlen(macaccept)>0)
+			fprintf(fp, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#ifdef RTCONFIG_IPV6
+		switch (get_ipv6_service()) {
+		case IPV6_6IN4:
+		case IPV6_6TO4:
+		case IPV6_6RD:
+			fprintf(fp_ipv6, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+			if (strlen(macaccept)>0)
+			fprintf(fp_ipv6, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+			break;
+		}
+#endif
+	}
+
 // ~ oleg patch
 	fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
 #ifndef RTCONFIG_PARENTALCTRL
@@ -3755,6 +3774,34 @@ TRACE_PT("writing Parental Control\n");
 #endif
 	}
 
+	/* Clamp TCP MSS to PMTU of WAN interface before accepting RELATED packets */
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
+			continue;
+
+		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
+
+		if(!strcmp(wan_proto, "pppoe") || !strcmp(wan_proto, "pptp") || !strcmp(wan_proto, "l2tp")){
+			fprintf(fp, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+			if(strlen(macaccept) > 0)
+				fprintf(fp, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+#ifdef RTCONFIG_IPV6
+			switch(get_ipv6_service()){
+				case IPV6_6IN4:
+				case IPV6_6TO4:
+				case IPV6_6RD:
+					fprintf(fp_ipv6, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+					if(strlen(macaccept) > 0)
+						fprintf(fp_ipv6, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
+					break;
+			}
+#endif
+
+			break; // set one time.
+		}
+	}
+
 // ~ oleg patch
 	fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
 #ifndef RTCONFIG_PARENTALCTRL
@@ -4533,34 +4580,6 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	}
 #endif
 
-/* Clamp TCP MSS to PMTU of WAN interface before accepting RELATED packets */
-	unit = wan_prefix(wan_if, prefix);
-	if (unit < 0)
-		unit = WAN_UNIT_FIRST;
-	sprintf(prefix, "wan%d_", unit);
-
-	wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
-
-	if (
-#if defined(RTCONFIG_USB_MODEM)
-	    dualwan_unit__usbif(unit) ||
-#endif
-	    strcmp(wan_proto, "pppoe") == 0 ||
-	    strcmp(wan_proto, "pptp") == 0 ||
-	    strcmp(wan_proto, "l2tp") == 0) {
-		eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "-m", "tcp", "--tcp-flags", "SYN,RST", "SYN", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
-
-#ifdef RTCONFIG_IPV6
-		switch (get_ipv6_service()) {
-			case IPV6_6IN4:
-			case IPV6_6TO4:
-			case IPV6_6RD:
-				eval("ip6tables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "-m", "tcp", "--tcp-flags", "SYN,RST", "SYN", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
-				break;
-		}
-#endif
-	}
-
 #ifdef RTCONFIG_YANDEXDNS
 #ifdef RTCONFIG_IPV6
 	if (nvram_get_int("yadns_enable_x") && ipv6_enabled()) {
@@ -4676,7 +4695,6 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_if;
 	char *wan_ip;
-	char *wan_proto;
 
 	if(nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") != 1){
 		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
@@ -4744,35 +4762,6 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		}
 	}
 #endif
-
-/* Clamp TCP MSS to PMTU of WAN interface before accepting RELATED packets */
-	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
-		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		if (nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
-			continue;
-
-		wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
-		/* Clamp TCP MSS to PMTU of WAN interface before accepting RELATED packets */
-		if (
-#if defined(RTCONFIG_USB_MODEM)
-		    dualwan_unit__usbif(unit) ||
-#endif
-		    strcmp(wan_proto, "pppoe") == 0 ||
-		    strcmp(wan_proto, "pptp") == 0 ||
-		    strcmp(wan_proto, "l2tp") == 0) {
-			eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "-m", "tcp", "--tcp-flags", "SYN,RST", "SYN", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
-#ifdef RTCONFIG_IPV6
-			switch (get_ipv6_service()) {
-			case IPV6_6IN4:
-			case IPV6_6TO4:
-			case IPV6_6RD:
-				eval("ip6tables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "-m", "tcp", "--tcp-flags", "SYN,RST", "SYN", "-j", "TCPMSS", "--clamp-mss-to-pmtu");
-				break;
-			}
-#endif
-			break;	// set one time.
-		}
-	}
 
 #ifdef RTCONFIG_YANDEXDNS
 #ifdef RTCONFIG_IPV6
