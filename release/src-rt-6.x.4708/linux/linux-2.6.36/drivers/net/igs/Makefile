@@ -18,14 +18,9 @@
 # $Id: Makefile,v 1.3 2008-08-13 20:20:16 $
 #
 
-# Temporary workaround to separate different emf builds
-ifeq ($(RTCONFIG_BWDPI),y)
-export DPI := _dpi
-endif
-
 IGSSRCDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}/igs
 IGSCSRCDIR := ../../../../../../src-rt-6.x.4708/emf/igs
-EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}${DPI}
+EMFDIR := ../../../../../../src-rt-6.x.4708/router/emf${BCMEX}
 
 IGS_OBJS := $(IGSCSRCDIR)/igsc.o $(IGSCSRCDIR)/igsc_sdb.o $(IGSSRCDIR)/igs_linux.o \
 	    $(IGSCSRCDIR)/osl_linux.o
