@@ -1095,7 +1095,7 @@ CONFIG_EMF=m
 # CONFIG_PLC is not set
 # CONFIG_IFB is not set
 # CONFIG_DUMMY is not set
-# CONFIG_BONDING is not set
+CONFIG_BONDING=m
 # CONFIG_MACVLAN is not set
 # CONFIG_EQUALIZER is not set
 CONFIG_TUN=m
