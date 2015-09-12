@@ -1123,7 +1123,8 @@ int xhci_endpoint_init(struct xhci_hcd *xhci,
 			/* override max_packet to disable burst on BULK OUT for NS A0/C0 */
 			version = xhci_readl(xhci, echrbv) >> 16;
 			if (((version == 0x1000) || (version == 0x1100)) &&
-				(xhci_get_endpoint_type(udev, ep) == EP_TYPE(BULK_OUT_EP))) {
+				((xhci_get_endpoint_type(udev, ep) == EP_TYPE(BULK_OUT_EP)) ||
+				(xhci_get_endpoint_type(udev, ep) == EP_TYPE(BULK_IN_EP)))) {
 				max_packet = 0;
 				xhci_warn(xhci, "disable burst on ep %d\n",
 					usb_endpoint_num(&ep->desc));
