@@ -260,22 +260,28 @@ function changed_DHCP_IP_pool(){
 
 // Viz add 2011.10 default DHCP pool range{
 	for(i=0;i<nm.length;i++){
-				 if(post_lan_netmask==nm[i]){
-							gap=256-Number(nm[i]);							
-							subnet_set = 256/gap;
-							for(j=1;j<=subnet_set;j++){
-									if(post_lan_ipaddr < 1*gap && post_lan_ipaddr == 1){		//Viz add to avoid default (1st) LAN ip in DHCP pool (start)2011.11
-												pool_start=2;
-												pool_end=1*gap-2;
-												break;										//Viz add to avoid default (1st) LAN ip in DHCP pool (end)2011.11
-									}else if(post_lan_ipaddr < j*gap){
-												pool_start=(j-1)*gap+1;
-												pool_end=j*gap-2;
-												break;						
-									}
-							}																	
-							break;
-				 }
+		if(post_lan_netmask==nm[i]){
+			gap=256-Number(nm[i]);							
+			subnet_set = 256/gap;
+			for(j=1;j<=subnet_set;j++){
+				if(post_lan_ipaddr < j*gap && post_lan_ipaddr == (j-1)*gap+1){	//Viz add to avoid default (1st) LAN ip in DHCP pool
+					pool_start=(j-1)*gap+2;
+					pool_end=j*gap-2;
+					break;
+				}
+				else if(post_lan_ipaddr < j*gap && post_lan_ipaddr == j*gap-2){    //Viz add to avoid default (last) LAN ip in DHCP pool
+					pool_start=(j-1)*gap+1;
+					pool_end=j*gap-3;
+					break;
+				}
+				else if(post_lan_ipaddr < j*gap){
+					pool_start=(j-1)*gap+1;
+					pool_end=j*gap-2;
+					break;						
+				}
+			}																	
+			break;
+		 }
 	}
 	
 		var update_pool_start = subnetPostfix(document.form.dhcp_start.value, pool_start, 3);
@@ -288,9 +294,9 @@ function changed_DHCP_IP_pool(){
 						return false;	
 				}
 		}	
-			
-	return true;	
+				
 	//alert(document.form.dhcp_start.value+" , "+document.form.dhcp_end.value);//Viz
+	return true;
 	// } Viz add 2011.10 default DHCP pool range	
 	
 }

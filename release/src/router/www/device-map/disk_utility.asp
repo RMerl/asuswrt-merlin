@@ -38,10 +38,13 @@ a:active {
 }
 </style>
 <script type="text/javascript" src="/require/require.min.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
+if(parent.location.pathname.search("index") === -1) top.location.href = "../index.asp";
+
 var diskOrder = parent.getSelectedDiskOrder();
 var diskmon_status = '<% nvram_get("diskmon_status"); %>';
+var diskmon_usbport = '<% nvram_get("diskmon_usbport"); %>';
 var usb_path1_diskmon_freq = '<% nvram_get("usb_path1_diskmon_freq"); %>';
 var usb_path1_diskmon_freq_time = '<% nvram_get("usb_path1_diskmon_freq_time"); %>';
 var usb_path2_diskmon_freq = '<% nvram_get("usb_path2_diskmon_freq"); %>';
@@ -65,7 +68,10 @@ function initial(){
 }
 
 function load_schedule_value(){
-	document.form.diskmon_usbport.value = parent.usbPorts[diskOrder-1].node;
+	if(diskmon_usbport != parent.usbPorts[diskOrder-1].node){
+		document.usbUnit_form.diskmon_usbport.value = parent.usbPorts[diskOrder-1].node;
+		document.usbUnit_form.submit();
+	}
 
 	if(parseInt(parent.usbPorts[diskOrder-1].usbPath) == 1){
 		document.form.diskmon_freq.value = usb_path1_diskmon_freq;
@@ -167,7 +173,6 @@ function stop_diskmon(){
 	document.form.diskmon_freq.disabled = false;
 	document.form.diskmon_freq_time.disabled = true;
 	//document.form.diskmon_policy.disabled = true;
-	document.form.diskmon_usbport.disabled = true;
 	document.form.diskmon_part.disabled = true;
 	document.form.diskmon_force_stop.disabled = false;
 	document.form.diskmon_force_stop.value = "1";
@@ -261,7 +266,6 @@ function showLoadingUpdate(){
 				document.form.diskmon_freq.disabled = false;
 				document.form.diskmon_freq_time.disabled = false;
 				//document.form.diskmon_policy.disabled = false;
-				document.form.diskmon_usbport.disabled = false;
 				document.form.diskmon_part.disabled = false;
 				document.form.diskmon_force_stop.disabled = false;
 				return false;
@@ -391,14 +395,12 @@ function scan_manually(){
 	document.form.diskmon_freq.disabled = true;
 	document.form.diskmon_freq_time.disabled = true;
 	document.form.diskmon_force_stop.disabled = true;
-	document.form.diskmon_usbport.value = parent.usbPorts[diskOrder-1].node;
 	document.form.action_script.value = "start_diskscan";
 	document.form.submit();
 }
 
 function reset_force_stop(){
 	document.form.diskmon_freq_time.disabled = false;
-	document.form.diskmon_usbport.disabled = false;
 	document.form.diskmon_part.disabled = false;
 	document.form.diskmon_force_stop.disabled = true;
 	document.form.diskmon_force_stop.value = "0";
@@ -410,6 +412,14 @@ function reset_force_stop(){
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0" scrolling="no"></iframe>
 
 <body class="statusbody" onload="initial();">
+<form method="post" name="usbUnit_form" action="/apply.cgi" target="hidden_frame">
+<input type="hidden" name="action_mode" value="change_diskmon_unit">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="1">
+<input type="hidden" name="diskmon_usbport" value="">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="next_page" value="">
+</form>
 <form name="form" method="post" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="next_page" value="/device-map/disk_utility.asp">
 <input type="hidden" name="action_mode" value="apply">
@@ -418,7 +428,6 @@ function reset_force_stop(){
 <input type="hidden" name="diskmon_force_stop" value="<% nvram_get("diskmon_force_stop"); %>" >
 <input type="hidden" name="diskmon_freq_time" value="<% nvram_get("diskmon_freq_time"); %>">
 <input type="hidden" name="diskmon_policy" value="disk">
-<input type="hidden" name="diskmon_usbport" value="">
 <input type="hidden" name="diskmon_part" value="">
 <table height="30px;">
 	<tr>

@@ -262,6 +262,10 @@ enum ieee80211_ba_type {
 	IEEE80211_BA_IMMEDIATE = 1,
 };
 
+#define IEEE80211_OPER_CLASS_MAX	256
+#define	IEEE80211_OPER_CLASS_BYTES	32
+#define	IEEE80211_OPER_CLASS_BYTES_24G	8
+
 /* power index definition */
 enum ieee80211_power_index_beamforming {
 	PWR_IDX_BF_OFF = 0,
@@ -298,6 +302,7 @@ struct ieee80211_channel {
 	int8_t ic_minpower_normal;	/* backup min tx power for short-range workaround */
 	int8_t ic_maxpower_table[PWR_IDX_BF_MAX][PWR_IDX_SS_MAX][PWR_IDX_BW_MAX];	/* the maximum powers for different cases */
 	u_int32_t ic_radardetected; /* number that radar signal has been detected on this channel */
+	u_int8_t ic_center_f_40MHz;
 	u_int8_t ic_center_f_80MHz;
 	u_int8_t ic_center_f_160MHz;
 	u_int32_t ic_ext_flags;
@@ -335,6 +340,7 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_VHT80	0x00400000	/* VHT 80 */
 #define IEEE80211_CHAN_DFS_OCAC_DONE	0x00800000	/* Status: Off-channel CAC completed */
 #define IEEE80211_CHAN_DFS_CAC_IN_PROGRESS	0x01000000	/* Status: Valid CAC is in progress */
+#define IEEE80211_CHAN_WEATHER	0x02000000	/* Configuration: weather channel */
 
 #define IEEE80211_DEFAULT_2_4_GHZ_CHANNEL	1
 #define IEEE80211_DEFAULT_5_GHZ_CHANNEL		36
@@ -359,7 +365,7 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_VHT80_LU	0x00000002
 #define IEEE80211_CHAN_VHT80_UL	0x00000004
 #define IEEE80211_CHAN_VHT80_UU	0x00000008
-
+#define IEEE80211_CHAN_TDLS_OFF_CHAN	0x00000010
 
 /*
  * Useful combinations of channel characteristics.
@@ -606,6 +612,7 @@ struct ieee80211_channel {
 /*
  * 11ac MPDU size limit
  */
+#define IEEE80211_MPDU_VHT_1K		1500
 #define IEEE80211_MPDU_VHT_4K		3895
 #define IEEE80211_MPDU_VHT_8K		7991
 #define IEEE80211_MPDU_VHT_11K		11454
@@ -617,6 +624,7 @@ struct ieee80211_channel {
 #define IEEE80211_AMSDU_NONE		0
 #define IEEE80211_AMSDU_HT_4K		3839
 #define IEEE80211_AMSDU_HT_8K		7935
+#define IEEE80211_AMSDU_VHT_1K		(IEEE80211_MPDU_VHT_1K - IEEE80211_MPDU_ENCAP_OVERHEAD_MAX)
 #define IEEE80211_AMSDU_VHT_4K		(IEEE80211_MPDU_VHT_4K - IEEE80211_MPDU_ENCAP_OVERHEAD_MAX)
 #define IEEE80211_AMSDU_VHT_8K		(IEEE80211_MPDU_VHT_8K - IEEE80211_MPDU_ENCAP_OVERHEAD_MAX)
 #define IEEE80211_AMSDU_VHT_11K		(IEEE80211_MPDU_VHT_11K - IEEE80211_MPDU_ENCAP_OVERHEAD_MAX)
@@ -902,6 +910,7 @@ struct ieee80211_vhtcap {
 	u_int16_t			rxlgimaxrate;
 	u_int16_t			txmcsmap;
 	u_int16_t			txlgimaxrate;
+	u_int8_t			bfstscap_save;
 } __packed;
 
 /* VHT capability macros */
@@ -974,6 +983,23 @@ struct ieee80211_vhtop {
 	u_int8_t			centerfreq0;
 	u_int8_t			centerfreq1;
 	u_int16_t			basicvhtmcsnssset;
+} __packed;
+
+/* Max number of MU groups */
+#define IEEE80211_MU_GRP_NUM_MAX	64
+
+/* Max number of nodes in a MU group */
+#define IEEE80211_MU_GRP_NODES_MAX	4
+
+/* VHT MU membership & user position arrays */
+struct ieee80211_vht_mu_grp {
+#define IEEE80211_VHT_GRP_1ST_BIT_OFFSET	1
+#define IEEE80211_VHT_GRP_MAX_BIT_OFFSET	62
+#define IEEE80211_VHT_GRP_MEMBERSHIP_ARRAY_SIZE	(IEEE80211_MU_GRP_NUM_MAX/(sizeof(u_int8_t)*8))
+#define IEEE80211_VHT_USR_POS_ARRAY_SIZE	((IEEE80211_MU_GRP_NODES_MAX >> 1)*	\
+							IEEE80211_MU_GRP_NUM_MAX/(sizeof(u_int8_t)*8))
+	u_int8_t member[IEEE80211_VHT_GRP_MEMBERSHIP_ARRAY_SIZE];
+	u_int8_t pos[IEEE80211_VHT_USR_POS_ARRAY_SIZE];
 } __packed;
 
 struct ieee80211_action_data {
@@ -1202,6 +1228,8 @@ struct ieee80211_meas_report_ctrl {
 			u_int32_t sp_fail;
 			u_int32_t lp_fail;
 			u_int16_t others_time;
+			u_int8_t *extra_ie;
+			u_int16_t extra_ie_len;
 		} qtn_cca;
 		struct _rep_chan_load {
 			u_int8_t op_class;
@@ -1347,5 +1375,11 @@ struct ieee80211_neighbor_report_response {
 	 (_bi) : IEEE80211_BINTVAL_DEFAULT)
 
 #define IEEE80211_SCAN_TBL_LEN_MAX_DFLT	2000
+
+#define IEEE80211_BWSTR_20	"20"
+#define IEEE80211_BWSTR_40	"40"
+#define IEEE80211_BWSTR_80	"80"
+#define IEEE80211_BWSTR_160	"160"
+#define IEEE80211_BWSTR_80P80	"80+80"
 
 #endif /* _NET80211__IEEE80211_H_ */

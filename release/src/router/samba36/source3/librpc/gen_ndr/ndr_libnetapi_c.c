@@ -4814,7 +4814,7 @@ struct tevent_req *dcerpc_NetQueryDisplayInformation_send(TALLOC_CTX *mem_ctx,
 							  uint32_t _entries_requested /* [in]  */,
 							  uint32_t _prefmaxlen /* [in]  */,
 							  uint32_t *_entries_read /* [out] [ref] */,
-							  void **_buffer /* [out] [ref,noprint] */)
+							  void **_buffer /* [out] [noprint,ref] */)
 {
 	struct tevent_req *req;
 	struct dcerpc_NetQueryDisplayInformation_state *state;
@@ -4924,7 +4924,7 @@ NTSTATUS dcerpc_NetQueryDisplayInformation(struct dcerpc_binding_handle *h,
 					   uint32_t _entries_requested /* [in]  */,
 					   uint32_t _prefmaxlen /* [in]  */,
 					   uint32_t *_entries_read /* [out] [ref] */,
-					   void **_buffer /* [out] [ref,noprint] */,
+					   void **_buffer /* [out] [noprint,ref] */,
 					   enum NET_API_STATUS *result)
 {
 	struct NetQueryDisplayInformation r;

@@ -1,0 +1,34 @@
+##
+## Au1200/Au1550 PSC + DBDMA
+##
+config SND_SOC_AU1XPSC
+	tristate "SoC Audio for Au1200/Au1250/Au1550"
+	depends on SOC_AU1200 || SOC_AU1550
+	help
+	  This option enables support for the Programmable Serial
+	  Controllers in AC97 and I2S mode, and the Descriptor-Based DMA
+	  Controller (DBDMA) as found on the Au1200/Au1250/Au1550 SoC.
+
+config SND_SOC_AU1XPSC_I2S
+	tristate
+
+config SND_SOC_AU1XPSC_AC97
+	tristate
+	select AC97_BUS
+	select SND_AC97_CODEC
+	select SND_SOC_AC97_BUS
+
+
+##
+## Boards
+##
+config SND_SOC_DB1200
+	tristate "DB1200 AC97+I2S audio support"
+	depends on SND_SOC_AU1XPSC
+	select SND_SOC_AU1XPSC_AC97
+	select SND_SOC_AC97_CODEC
+	select SND_SOC_AU1XPSC_I2S
+	select SND_SOC_WM8731
+	help
+	  Select this option to enable audio (AC97 or I2S) on the
+	  Alchemy/AMD/RMI DB1200 demoboard.

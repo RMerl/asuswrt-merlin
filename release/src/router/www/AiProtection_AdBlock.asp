@@ -14,7 +14,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <style>
 #switch_menu{

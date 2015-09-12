@@ -317,15 +317,12 @@ void start_usb(void)
 
 			if (nvram_get_int("usb_usb3") == 1)
 				param = "u3intf=1";
-			_dprintf("ready to modprobe xhci\n");	// tmp test
 			modprobe(USB30_MOD, param);
 		}
 #elif defined(RTCONFIG_XHCIMODE)
-		_dprintf("ready to modprobe usb3/xhci\n");	// tmp test
 		modprobe(USB30_MOD);
 #else
 		if (nvram_get_int("usb_usb3") == 1) {
-			_dprintf("ready to modprobe usb3/xhci\n");	// tmp test
 			modprobe(USB30_MOD);
 		}
 #endif
@@ -359,7 +356,8 @@ void start_usb(void)
 #ifdef RTCONFIG_USB_MODEM
 		modprobe("usbnet");
 #ifdef RT4GAC55U
-		modprobe("gobi");
+		if(nvram_get_int("usb_gobi") == 1)
+			modprobe("gobi");
 #else
 		modprobe("asix");
 		modprobe("cdc_ether");
@@ -650,7 +648,6 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 	int dir_made;
 	char type[16];
 
-	_dprintf("[%s] chk mnt_dev:[%s], mnt_dir:[%s], type:[%s]\n", __func__, mnt_dev, mnt_dir, _type);	// tmp test
 	memset(type, 0, 16);
 	if(_type != NULL)
 		strncpy(type, _type, 16);
@@ -668,7 +665,6 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 
 	options[0] = 0;
 
-	_dprintf("[%s] chk 2\n", __func__);	// tmp test
 	if(strlen(type) > 0){
 #ifndef RTCONFIG_BCMARM
 		unsigned long flags = MS_NOATIME | MS_NODEV;
@@ -771,36 +767,27 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 				sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_hfs_opt"));
 		}
 
-		_dprintf("[%s] chk 3\n", __func__);	// tmp test
 
 		if (flags) {
-			_dprintf("[%s] chk 4\n", __func__);	// tmp test
 			if ((dir_made = mkdir_if_none(mnt_dir))) {
 				/* Create the flag file for remove the directory on dismount. */
 				sprintf(flagfn, "%s/.autocreated-dir", mnt_dir);
 				f_write(flagfn, NULL, 0, 0, 0);
 			}
-			_dprintf("[%s] chk 5:dir_make=%d, type:[%s]\n", __func__, dir_made, type);	// tmp test
 
 #ifdef RTCONFIG_TFAT
 			if(!strncmp(type, "vfat", 4)){
-				_dprintf("[%s] chk 6\n", __func__);	// tmp test
 				ret = eval("mount", "-t", "tfat", "-o", options, mnt_dev, mnt_dir);
 				if(ret != 0){
 					syslog(LOG_INFO, "USB %s(%s) failed to mount at the first try!" , mnt_dev, type);
 					TRACE_PT("USB %s(%s) failed to mount at the first try!\n", mnt_dev, type);
 				}
-				_dprintf("[%s] chk 7:ret=%d\n", __func__, ret);	// tmp test
 			}
 
 			else
 #endif
 			{
-				_dprintf("[%s] chk 8: (%d/%d)\n", __func__, MS_NODEV, MS_NOATIME | MS_NODEV);	// tmp test
-				_dprintf("[%s] chk 9:[%s][%s]\n", __func__, mnt_dev, mnt_dir);	// tmp test
-				_dprintf("[%s] chk 10:[%s][%d][%s]\n", __func__, type, flags, options[0] ? options : "");	// tmp test
 				ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
-				_dprintf("[%s] chk 11: ret = %d\n", __func__, ret);	// tmp test
 				if(ret != 0){
 					if(strncmp(type, "ext", 3)){
 						syslog(LOG_INFO, "USB %s(%s) failed to mount at the first try!", mnt_dev, type);
@@ -2189,10 +2176,12 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 	else
 		taskset_ret = eval("ionice", "-c1", "-n0", smbd_cmd, "-D", "-s", "/etc/smb.conf");
 #else
-	if(cpu_num > 1)
-		taskset_ret = cpu_eval(NULL, "1", smbd_cmd, "-D", "-s", "/etc/smb.conf");
-	else
-		taskset_ret = eval(smbd_cmd, "-D", "-s", "/etc/smb.conf");
+	if(!nvram_match("stop_taskset", "1")){
+		if(cpu_num > 1)
+			taskset_ret = cpu_eval(NULL, "1", smbd_cmd, "-D", "-s", "/etc/smb.conf");
+		else
+			taskset_ret = eval(smbd_cmd, "-D", "-s", "/etc/smb.conf");
+	}
 #endif
 
 	if(taskset_ret != 0)
@@ -3405,23 +3394,22 @@ static int stop_diskscan()
 }
 
 // -1: manully scan by diskmon_usbport, 1: scan the USB port 1,  2: scan the USB port 2.
-static void start_diskscan(char *usb_port)
+static void start_diskscan(char *port_path)
 {
 	disk_info_t *disk_list, *disk_info;
 	partition_info_t *partition_info;
-	char *policy, *monpart, devpath[16], port_path[16], d_port[16], *d_dot;
-	int port_num;
+	char *policy, *monpart, devpath[16], *ptr_path;
 
-	if (!usb_port || stop_diskscan())
+	if (!port_path || stop_diskscan())
 		return;
 
 	policy = nvram_safe_get("diskmon_policy");
 	monpart = nvram_safe_get("diskmon_part");
 
-	strlcpy(port_path, (atoi(usb_port) == -1)? nvram_safe_get("diskmon_usbport") : usb_port, sizeof(port_path));
-	port_num = atoi(port_path);
-	if (port_num <= 0)
-		return;
+	if(atoi(port_path) == -1)
+		ptr_path = nvram_safe_get("diskmon_usbport");
+	else
+		ptr_path = port_path;
 
 	disk_list = read_disk_data();
 	if(disk_list == NULL){
@@ -3433,12 +3421,7 @@ static void start_diskscan(char *usb_port)
 		/* If hub port number is not specified in port_path,
 		 * don't compare it with hub port number in disk_info->port.
 		 */
-		strlcpy(d_port, disk_info->port, sizeof(d_port));
-		d_dot = strchr(d_port, '.');
-		if (!strchr(port_path, '.') && d_dot)
-			*d_dot = '\0';
-
-		if (!strcmp(policy, "disk") && (port_num != -1 && strcmp(d_port, port_path)))
+		if (!strcmp(policy, "disk") && strcmp(disk_info->port, ptr_path))
 			continue;
 
 		for(partition_info = disk_info->partitions; partition_info != NULL; partition_info = partition_info->next){
@@ -3568,6 +3551,9 @@ int diskmon_main(int argc, char *argv[])
 	int wait_second[2] = {0, 0}, wait_hour = 0;
 	int diskmon_alarm_sec = 0;
 	char port_path[16];
+	int port_num;
+	char word[PATH_MAX], *next;
+	char nvram_name[32];
 
 	fp = fopen("/var/run/disk_monitor.pid", "w");
 	if(fp != NULL) {
@@ -3591,12 +3577,8 @@ int diskmon_main(int argc, char *argv[])
 	sigdelset(&mask, SIGUSR2);
 	sigdelset(&mask, SIGALRM);
 
-	int diskmon_enable, port_num;
-	char word[PATH_MAX], *next;
-	char nvram_name[32];
-
-	diskmon_enable = 0;
 	port_num = 0;
+
 	foreach(word, nvram_safe_get("ehci_ports"), next){
 		memset(nvram_name, 0, 32);
 		sprintf(nvram_name, "usb_path%d_diskmon_freq", (port_num+1));
@@ -3606,9 +3588,6 @@ int diskmon_main(int argc, char *argv[])
 			++port_num;
 			continue;
 		}
-
-		diskmon_enable += 1<<port_num;
-cprintf("disk_monitor: diskmon_enable=%d.\n", diskmon_enable);
 
 		memset(nvram_name, 0, 32);
 		sprintf(nvram_name, "usb_path%d_diskmon_freq_time", (port_num+1));
@@ -3636,11 +3615,6 @@ cprintf("disk_monitor: Port %d: val_day=%d, val_hour=%d.\n", port_num, val_day[p
 
 		++port_num;
 	}
-
-	/*if(diskmon_enable == 0){
-		cprintf("disk_monitor: Disable the disk_monitor.\n");
-		exit(0);
-	}//*/
 
 	while(1){
 		time(&now);

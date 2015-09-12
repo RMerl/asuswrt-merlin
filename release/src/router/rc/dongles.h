@@ -245,6 +245,8 @@ enum DONGLE_LIST_T {
 	SN_Onda_TM201_14_4			,
 	SN_Huawei_E3131				,
 	SN_Huawei_E3372				,
+	SN_Huawei_E303u				,
+	SN_Huawei_E3531s			,
 	SN_END
 };
 

@@ -12,7 +12,7 @@
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <style type="text/css">
 .title{
 	font-size:16px;
@@ -79,8 +79,17 @@
 .cpu_div{
 	margin-top:-5px;
 }
+
+.status_bar{
+  -webkit-transition: all 0.5s ease-in-out;
+  -moz-transition: all 0.5s ease-in-out;
+  -o-transition: all 0.5s ease-in-out;
+  transition: all 0.5s ease-in-out;
+
+}
 </style>
 <script>
+if(parent.location.pathname.search("index") === -1) top.location.href = "../index.asp";
 
 /*Initialize array*/
 var cpu_info_old = new Array();
@@ -114,11 +123,12 @@ function initial(){
 	if(band5g_support){
 		document.getElementById("t0").style.display = "";
 		document.getElementById("t1").style.display = "";
+
 		if(wl_info.band5g_2_support)
 			tab_reset(0);
 
-	if(smart_connect_support && parent.sw_mode != 4)
-		change_smart_connect('<% nvram_get("smart_connect_x"); %>');	
+		if(smart_connect_support && parent.sw_mode != 4)
+			change_smart_connect('<% nvram_get("smart_connect_x"); %>');	
 		
 		// disallow to use the other band as a wireless AP
 		if(parent.sw_mode == 4 && !localAP_support){
@@ -130,7 +140,14 @@ function initial(){
 	}
 	else{
 		document.getElementById("t0").style.display = "";
-	}	
+	}
+
+	if(parent.wlc_express == '1' && parent.sw_mode == '2'){
+		document.getElementById("t0").style.display = "none";
+	}
+	else if(parent.wlc_express == '2' && parent.sw_mode == '2'){
+		document.getElementById("t1").style.display = "none";
+	}
 
 	detect_CPU_RAM();
 }
@@ -144,6 +161,9 @@ function tabclickhandler(wl_unit){
 			document.form.wl_subunit.value = 1;
 		else
 			document.form.wl_subunit.value = -1;
+
+		if(parent.wlc_express != '0')
+			document.form.wl_subunit.value = 1;
 
 		document.form.wl_unit.value = wl_unit;
 		document.form.current_page.value = "device-map/router.asp";
@@ -281,7 +301,8 @@ function tab_reset(v){
 		document.getElementById("span0").innerHTML = "2.4GHz";
 		document.getElementById("span1").innerHTML = "5GHz-1 and 5GHz-2";
 		document.getElementById("t2").style.display = "none";	
-		document.getElementById("t1").style.width = "155px";
+		document.getElementById("t1").style.width = "143px";
+		document.getElementById("span1").style.padding = "5px 4px 5px 7px";
 	}
 }
 

@@ -10,10 +10,10 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
-var wl0_ssid_orig = '<% nvram_get("wl0_ssid"); %>';
-var wl1_ssid_orig = '<% nvram_get("wl1_ssid"); %>';
+var wl0_ssid_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>');
+var wl1_ssid_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
 
 if('<% nvram_get("x_Setting"); %>' == '0')
 	var smart_connect_tmp = '1';
@@ -124,7 +124,16 @@ var timezones_dst = {
 function QKWireless_load_body(){	
 	parent.document.title = "<#Web_Title#> - <#QKSet_wireless_webtitle#>";
 	parent.set_step("t3");	
-
+	
+	/*To Handle copy, paste for mobile device*/
+	document.getElementById("wl0_ssid").addEventListener("paste", function(e){setTimeout(function(){Sync_2ghz(2);},100);});
+	document.getElementById("wl0_wpa_psk").addEventListener("paste", function(e){setTimeout(function(){Sync_2ghz(2);},100);});
+	document.getElementById('wl1_ssid').addEventListener("paste", function(e){setTimeout(function(){Sync_2ghz(5);},100);});
+	document.getElementById('wl1_wpa_psk').addEventListener("paste", function(e){setTimeout(function(){Sync_2ghz(5);},100);});
+	if(wl_info.band5g_2_support){
+		document.getElementById('wl2_ssid').addEventListener("paste", function(e){setTimeout(function(){Sync_5ghz(5);},100);});
+		document.getElementById('wl2_wpa_psk').addEventListener("paste", function(e){setTimeout(function(){Sync_5ghz(5);},100);});
+	}
 	if(parent.ISMOBILE){
 		hideObjs();
 		document.getElementById("field_general").style.display = "none";
@@ -903,20 +912,22 @@ function Sync_2ghz(band){
 		}else if(document.form.sync_with_2ghz.checked == true){
 				document.form.wl1_wpa_psk.value = document.form.wl0_wpa_psk.value;
 				if(document.form.wl0_ssid.value != wl0_ssid_orig)
-					document.form.wl1_ssid.value = document.form.wl0_ssid.value + "_5G";
+					document.form.wl1_ssid.value = document.form.wl0_ssid.value.substring(0,29) + "_5G";
 
 				if(wl_info.band5g_2_support && document.form.sync_with_5ghz.checked == true){
 					document.form.wl2_wpa_psk.value = document.form.wl0_wpa_psk.value;
 					if(document.form.wl0_ssid.value != wl0_ssid_orig)
-						document.form.wl2_ssid.value = document.form.wl0_ssid.value + "_5G-2";
+						document.form.wl2_ssid.value = document.form.wl0_ssid.value.substring(0,27) + "_5G-2";
 				}
 		}
 	}else
 		document.form.sync_with_2ghz.checked = false;
 		if(wl_info.band5g_2_support && document.form.sync_with_5ghz.checked == true){
 			document.form.wl2_wpa_psk.value = document.form.wl1_wpa_psk.value;
-			if(document.form.wl1_ssid.value != wl1_ssid_orig)
-				document.form.wl2_ssid.value = document.form.wl1_ssid.value + "-2";
+			if(document.form.wl1_ssid.value != wl1_ssid_orig){
+				if(document.form.wl1_ssid.value.length < 30)
+					document.form.wl2_ssid.value = document.form.wl1_ssid.value + "-2";
+			}
 		}
 }
 
@@ -936,8 +947,12 @@ function Sync_5ghz(band){
 	if(band == 2){
 		if(document.form.sync_with_5ghz.checked == true){
 			document.form.wl2_wpa_psk.value = document.form.wl1_wpa_psk.value;
-			if(document.form.wl1_ssid.value != wl1_ssid_orig)
-				document.form.wl2_ssid.value = document.form.wl1_ssid.value + "-2";
+			if(document.form.wl1_ssid.value != wl1_ssid_orig){
+				if(document.form.wl1_ssid.value.substring(29,32) == "_5G")
+					document.form.wl2_ssid.value = document.form.wl1_ssid.value.substring(0,27).concat(document.form.wl1_ssid.value.substring(29,32)) + "-2";
+				else
+					document.form.wl2_ssid.value = document.form.wl1_ssid.value.substring(0,30) + "-2";
+			}
 		}
 	}
 	else

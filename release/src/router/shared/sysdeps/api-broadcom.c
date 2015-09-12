@@ -236,7 +236,6 @@ uint32_t traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx)
 			&& strncmp(port, RGMII_PORT, 1) != 0
 #endif
 		){
-			fprintf(stderr, "cal port: [%s]\n", port);
 			if (robo_ioctl_len(fd, 0 /* robord */, MIB_P0_PAGE + atoi(port), MIB_TX_REG, &value, 8) < 0)
 				_dprintf("et ioctl SIOCGETCROBORD failed!\n");
 			else{
@@ -645,7 +644,7 @@ int get_radio(int unit, int subunit)
 		}
 		else
 		{
-			ret = qcsapi_wifi_rfstatus(WIFINAME, (qcsapi_unsigned_int *) &n);
+			ret = qcsapi_wifi_rfstatus((qcsapi_unsigned_int *) &n);
 //			if (ret < 0)
 //				dbG("Qcsapi qcsapi_wifi_rfstatus %s error, return: %d\n", wl_vifname_qtn(unit, subunit), ret);
 

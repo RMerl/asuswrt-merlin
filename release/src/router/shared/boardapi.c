@@ -17,10 +17,12 @@
 #endif
 
 #ifdef RTCONFIG_RALINK
-
 // TODO: make it switch model dependent, not product dependent
 #include "rtkswitch.h"
+#endif
 
+#ifdef RTCONFIG_EXT_RTL8365MB
+#include <rtk_switch.h>
 #endif
 
 int led_control(int which, int mode);
@@ -774,9 +776,14 @@ int lanport_ctrl(int ctrl)
 
 #else
 	char word[100], *next;
-	int mask;
+	int mask = 0;
 
-	mask = 0;
+#ifdef RTCONFIG_EXT_RTL8365MB
+	if(ctrl)
+		rtkswitch_ioctl(POWERUP_LANPORTS, -1, -1);
+	else
+		rtkswitch_ioctl(POWERDOWN_LANPORTS, -1, -1);
+#endif
 
 	foreach(word, nvram_safe_get("lanports"), next) {
 		mask |= (0x0001<<atoi(word));

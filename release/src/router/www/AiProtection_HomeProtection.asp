@@ -13,7 +13,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/form.js"></script>
@@ -169,8 +169,8 @@ function enable_whole_security(){
 	var wan_ping_enable = document.form.misc_ping_x.value;
 	var port_trigger_enable = document.form.autofw_enable_x.value;
 	var port_forwarding_enable = document.form.vts_enable_x.value;
-	var ftp_account_mode = get_manage_type('ftp');
-	var samba_account_mode = get_manage_type('cifs');
+	var ftp_account_mode = document.form.st_ftp_mode.value;
+	var samba_account_mode = document.form.st_samba_mode.value;
 	var wrs_cc_enable = document.form.wrs_cc_enable.value;
 	var wrs_vp_enable = document.form.wrs_vp_enable.value;
 	var wrs_mals_enable = document.form.wrs_mals_enable.value;
@@ -180,6 +180,8 @@ function enable_whole_security(){
 	var restart_firewall = 0;
 	var restart_wrs = 0;
 	var restart_wireless = 0;
+	var restart_samba = 0;
+	var restart_ftp = 0;
 	
 	if(wps_enable == 1){
 		document.form.wps_enable.value = 0;
@@ -187,6 +189,7 @@ function enable_whole_security(){
 		document.form.wps_enable.disabled = false;
 		document.form.wps_sta_pin.disabled = false;
 		restart_wireless = 1;
+		document.form.action_wait.value = "20";
 	}
 	
 	if(wan0_upnp_enable == 1 || wan1_upnp_enable == 1){		
@@ -227,8 +230,20 @@ function enable_whole_security(){
 		restart_firewall = 1;
 	}
 	
-	if(ftp_account_mode == 0 || samba_account_mode == 0){	
-		switchAccount();
+	if(ftp_account_mode == 1){	
+		document.form.st_ftp_mode.value = 2;
+		document.form.st_ftp_force_mode.value = 2;
+		document.form.st_ftp_mode.disabled = false;
+		document.form.st_ftp_force_mode.disabled = false;
+		restart_ftp = 1
+	}
+	
+	if(samba_account_mode == 1){
+		document.form.st_samba_mode.value = 4;
+		document.form.st_samba_force_mode.value = 4;
+		document.form.st_samba_mode.disabled = false;
+		document.form.st_samba_force_mode.disabled = false;
+		restart_samba = 1;
 	}
 
 	if(wrs_cc_enable == 0){
@@ -286,11 +301,30 @@ function enable_whole_security(){
 		}	
 	}
 	
+	if(restart_samba == 1 && restart_ftp == 1){
+		if(action_script_temp == "")
+			action_script_temp += "restart_ftpsamba";
+		else	
+			action_script_temp += ";restart_ftpsamba";
+	}
+	else{
+		if(restart_samba == 1){
+			if(action_script_temp == "")
+				action_script_temp += "restart_samba";
+			else	
+				action_script_temp += ";restart_samba";
+		}
+	
+		if(restart_ftp == 1){
+			if(action_script_temp == "")
+				action_script_temp += "restart_ftpd";
+			else	
+				action_script_temp += ";restart_ftpd";
+		}	
+	}
+	
 	document.form.action_script.value = action_script_temp;
 	document.form.submit();
-	if(ftp_account_mode == 0 || samba_account_mode == 0){
-		document.samba_Form.submit();
-	}		
 }
 function check_login_name_password(){
 
@@ -462,9 +496,9 @@ function check_port_forwarding(){
 }
 
 function check_ftp_anonymous(){
-	var ftp_account_mode = get_manage_type('ftp');		//0: shared mode, 1: account mode
+	var ftp_account_mode = document.form.st_ftp_mode.value;		//1: shared mode, 2: account mode
 	
-	if(ftp_account_mode == 0){
+	if(ftp_account_mode == 1){
 		document.getElementById('ftp_account').innerHTML = "<a href='Advanced_AiDisk_ftp.asp' target='_blank'><#checkbox_No#></a>";
 		document.getElementById('ftp_account').className = "status_no";
 		document.getElementById('ftp_account').onmouseover = function(){overHint(19);}
@@ -477,9 +511,9 @@ function check_ftp_anonymous(){
 }
 
 function check_samba_anonymous(){
-	var samba_account_mode = get_manage_type('cifs');
+	var samba_account_mode = document.form.st_samba_mode.value;		//1: shared mode, 4: account mode
 	
-	if(samba_account_mode == 0){
+	if(samba_account_mode == 1){
 		document.getElementById('samba_account').innerHTML = "<a href='Advanced_AiDisk_samba.asp' target='_blank'><#checkbox_No#></a>";
 		document.getElementById('samba_account').className = "status_no";
 		document.getElementById('samba_account').onmouseover = function(){overHint(20);}
@@ -528,20 +562,6 @@ function check_TM_feature(){
 		document.getElementById('cc_service').onmouseover = function(){overHint(23);}
 		document.getElementById('cc_service').onmouseout = function(){nd();}
 	}
-}
-
-function switchAccount(){
-	document.samba_Form.action = "/aidisk/switch_share_mode.asp";
-	document.ftp_Form.action = "/aidisk/switch_share_mode.asp";
-	document.samba_Form.protocol.value = "cifs";
-	document.ftp_Form.protocol.value = "ftp";
-	document.samba_Form.mode.value = "account";
-	document.ftp_Form.mode.value = "account";
-}
-
-function resultOfSwitchShareMode(){
-	document.ftp_Form.submit();
-	setTimeout("refreshpage();",3000);
 }
 
 function show_tm_eula(){
@@ -878,16 +898,6 @@ function check_smtp_server_type(){
 	</table>
 </div>
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
-<form method="post" name="samba_Form" action="" target="hidden_frame">
-<input type="hidden" name="protocol" id="protocol" value="">
-<input type="hidden" name="mode" id="mode" value="">
-<input type="hidden" name="account" id="account" value="">
-</form>
-<form method="post" name="ftp_Form" action="" target="hidden_frame">
-<input type="hidden" name="protocol" id="protocol" value="">
-<input type="hidden" name="mode" id="mode" value="">
-<input type="hidden" name="account" id="account" value="">
-</form>
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="current_page" value="AiProtection_HomeProtection.asp">
@@ -918,6 +928,10 @@ function check_smtp_server_type(){
 <input type="hidden" name="PM_SMTP_AUTH_USER" value="<% nvram_get("PM_SMTP_AUTH_USER"); %>">
 <input type="hidden" name="PM_SMTP_AUTH_PASS" value="">
 <input type="hidden" name="wrs_mail_bit" value="<% nvram_get("wrs_mail_bit"); %>">
+<input type="hidden" name="st_ftp_force_mode" value="<% nvram_get("st_ftp_force_mode"); %>" disabled>
+<input type="hidden" name="st_ftp_mode" value="<% nvram_get("st_ftp_mode"); %>" disabled>
+<input type="hidden" name="st_samba_force_mode" value="<% nvram_get("st_samba_force_mode"); %>" disabled>
+<input type="hidden" name="st_samba_mode" value="<% nvram_get("st_samba_mode"); %>" disabled>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0" >
 	<tr>

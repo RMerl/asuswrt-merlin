@@ -15,7 +15,7 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
@@ -100,6 +100,7 @@ function Add_profile(){
 	document.form.vpnc_account_edit.value = "";
 	document.form.vpnc_pwd_edit.value = "";
 	document.form.selPPTPOption.value = "auto";
+	document.getElementById("pptpOptionHint").style.display = "none";
 	tabclickhandler(0);
 	document.getElementById("cancelBtn").style.display = "";
 	document.getElementById("pptpcTitle").style.display = "";
@@ -614,8 +615,9 @@ function Edit_Row(rowdata, flag){
 	else{	//default is auto
 		pptpOptionValue = "auto";
 	}
-	
+
 	document.form.selPPTPOption.value = pptpOptionValue;
+	pptpOptionChange();
 	for(var j=0; j<vpnc_clientlist_col.length; j++){
 		if(j == 0){
 			document.form.vpnc_des_edit.value = vpnc_clientlist_col[0];
@@ -702,6 +704,13 @@ function del_Row(rowdata, flag){
 	document.form.submit();
 }
 
+function pptpOptionChange() {
+	document.getElementById("pptpOptionHint").style.display = "none";
+	if(document.form.selPPTPOption.value == "+mppe-40") {
+		document.getElementById("pptpOptionHint").style.display = "";
+	}
+}
+
 </script>
 </head>
 
@@ -775,14 +784,17 @@ function del_Row(rowdata, flag){
 						</td>
 					</tr>
 					<tr id="trPPTPOptions">
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,17);"><#PPPConnection_x_PPTPOptions_itemname#></a></th>
+						<th><#PPPConnection_x_PPTPOptions_itemname#></th>
 						<td>
-							<select name="selPPTPOption" class="input_option">
+							<select name="selPPTPOption" class="input_option" onchange="pptpOptionChange();">
 								<option value="auto"><#Auto#></option>
 								<option value="-mppc"><#No_Encryp#></option>
 								<option value="+mppe-40">MPPE 40</option>
 								<option value="+mppe-128">MPPE 128</option>
 							</select>
+							<div id="pptpOptionHint" style="display:none;">
+								<span><#PPTPOptions_OpenVPN_hint#><!--untranslated--></span>
+							</div>
 						</td>	
 					</tr>
 					</table>

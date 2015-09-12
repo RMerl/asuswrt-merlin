@@ -13,6 +13,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script>
+if(parent.location.pathname.search("index") === -1) top.location.href = "../index.asp";
 
 <% login_state_hook(); %>
 

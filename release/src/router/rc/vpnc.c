@@ -165,9 +165,7 @@ start_vpnc(void)
 			fprintf(fp, "nomppe nomppc\n");
 		} else
 		if (nvram_match(strcat_r(prefix, "pptp_options_x", tmp), "+mppe-40")) {
-			fprintf(fp, "nomppe-56\n"
-                                    "nomppe-128\n"
-				    "require-mppe\n"
+			fprintf(fp, "require-mppe\n"
 				    "require-mppe-40\n");
 		} else
 		if (nvram_match(strcat_r(prefix, "pptp_options_x", tmp), "+mppe-56")) {

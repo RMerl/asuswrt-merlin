@@ -1,0 +1,73 @@
+#!/bin/bash
+# chkconfig: - 15 85
+# config: /etc/quagga/zebra.conf
+
+### BEGIN INIT INFO
+# Provides: zebra
+# Short-Description: GNU Zebra routing manager
+# Description: GNU Zebra routing manager
+### END INIT INFO
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# quagga command line options
+. /etc/sysconfig/quagga
+
+RETVAL=0
+PROG="zebra"
+cmd=zebra
+LOCK_FILE=/var/lock/subsys/zebra
+CONF_FILE=/etc/quagga/zebra.conf
+
+case "$1" in
+  start)
+	# Check that networking is up.
+	[ "${NETWORKING}" = "no" ] && exit 1
+
+	# The process must be configured first.
+	[ -f $CONF_FILE ] || exit 6
+	if [ `id -u` -ne 0 ]; then
+		echo $"Insufficient privilege" 1>&2
+		exit 4
+	fi
+
+	echo -n $"Starting $PROG: "
+	/sbin/ip route flush proto zebra
+	daemon $cmd -d $ZEBRA_OPTS -f $CONF_FILE
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch $LOCK_FILE
+	echo
+	;;
+  stop)
+	echo -n $"Shutting down $PROG: "
+	killproc $cmd
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
+	echo
+	;;
+  restart|reload|force-reload)
+	$0 stop
+	$0 start
+	RETVAL=$?
+	;;
+  condrestart|try-restart)
+	if [ -f $LOCK_FILE ]; then
+		$0 stop
+		$0 start
+	fi
+	RETVAL=$?
+	;;
+  status)
+	status $cmd
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|reload|force-reload|condrestart|try-restart|status}"
+	exit 2
+esac
+
+exit $RETVAL

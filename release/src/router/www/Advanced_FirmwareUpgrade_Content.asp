@@ -67,7 +67,7 @@
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
 var webs_state_update = '<% nvram_get("webs_state_update"); %>';
 var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
@@ -137,7 +137,7 @@ function get_helplink(){
 				var getlink="http://www.asus.com/Networking/DSLN55U_Annex_B/HelpDesk_Download/";
 			}
 			else{
-				if(based_modelid == "DSL-AC68U" || based_modelid == "DSL-AC68R" || based_modelid == "RT-N11P" || based_modelid == "RT-N12+")
+				if(based_modelid == "DSL-AC68U" || based_modelid == "DSL-AC68R" || based_modelid == "RT-N11P" || based_modelid == "RT-N300" || based_modelid == "RT-N12+")
 					href_lang = "/us/"; //MODELDEP:  US site, global only
 				
 				if(odmpid == "RT-N12+")

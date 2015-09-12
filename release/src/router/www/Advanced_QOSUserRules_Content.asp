@@ -77,7 +77,7 @@ function key_event(evt){
 function initial(){
 	show_menu();
 	if(bwdpi_support){
-		document.getElementById('content_title').innerHTML = "<#Adaptive_QoS#> - <#EzQoS_type_traditional#>";
+		document.getElementById('content_title').innerHTML = "<#menu5_3_2#> - <#EzQoS_type_traditional#>";
 	}
 	else{
 		document.getElementById('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";

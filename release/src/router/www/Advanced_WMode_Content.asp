@@ -60,7 +60,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/JavaScript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/JavaScript" src="/js/jquery.js"></script>
 <script>
 <% wl_get_parameter(); %>
 

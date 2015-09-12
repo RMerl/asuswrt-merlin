@@ -71,23 +71,23 @@ void am_send_mail(int type, char *path)
 	// mail title
 #ifdef RTCONFIG_BWDPI
 	if(type == TM_WRS_MAIL)
-		sprintf(title, "AiProtection alert! %s", date);
+		snprintf(title, sizeof(title), "AiProtection alert! %s", date);
 #endif
 #ifdef RTCONFIG_TRAFFIC_CONTROL
 	if(type == TRAFFIC_CONTROL_MAIL)
-		sprintf(title, "Traffic control alert! %s", date);
+		snprintf(title, sizeof(title), "Traffic control alert! %s", date);
 #endif
 	if(type == CONFIRM_MAIL)
-		sprintf(title, "%s Mail Alert Verify", nvram_safe_get("productid"));
+		snprintf(title, sizeof(title), "%s Mail Alert Verify", nvram_safe_get("productid"));
 
 	// create command (attachment or not)
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	if (path != NULL){
-		sprintf(cmd, "email -V -s \"%s\" %s -a \"%s\"", title, nvram_safe_get("PM_MY_EMAIL"), path);
+		snprintf(cmd, sizeof(cmd), "email -V -s \"%s\" %s -a \"%s\"", title, nvram_safe_get("PM_MY_EMAIL"), path);
 	}
 	else{
-		sprintf(cmd, "email -V -s \"%s\" %s", title, nvram_safe_get("PM_MY_EMAIL"));
+		snprintf(cmd, sizeof(cmd), "email -V -s \"%s\" %s", title, nvram_safe_get("PM_MY_EMAIL"));
 	}
 
 	// create popen
@@ -110,7 +110,7 @@ void am_send_mail(int type, char *path)
 		fprintf(fp, "2. Ensure your device is up to time in all its operating system patches as well as updates to all apps or programs.\n");
 		fprintf(fp, "3. You should take this opportunity to check for, and install, any router firmware updates.\n");
 		fprintf(fp, "4. If you continue to receive such alerts for similar attempted connections, investigation into the cause will be necessary.\n");
-		fprintf(fp, "Meanwhile, rest assured that AiProtection continues to help kepp you safe on the Internet.\n");
+		fprintf(fp, "Meanwhile, rest assured that AiProtection continues to help keep you safe on the Internet.\n");
 		fprintf(fp, "\n");
 		fprintf(fp, "You also can link to trend micro website to download security trial software for your client device protection.\n");
 		fprintf(fp, "http://www.trendmicro.com/\n");
@@ -164,11 +164,11 @@ void am_tm_wrs_mail()
 {
 	debug = nvram_get_int("alert_mail_debug");
 
-	char path[30];
+	char path[33];
 	memset(path, 0, sizeof(path));
 
 	// AiProtection wrs_vp.txt
-	int flag = merge_log(path);
+	int flag = merge_log(path, sizeof(path));
 
 	if(debug)
 	{

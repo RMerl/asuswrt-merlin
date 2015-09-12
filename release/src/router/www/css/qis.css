@@ -1,0 +1,16 @@
+﻿body {         
+	margin-left: 0px;
+	background-color:#000 !important; /*#AAD1E0*/
+}
+.filter_effect{
+	-webkit-filter: blur(5px);
+}
+#nav_rp:hover, #nav_ap:hover, #nav_mb:hover, #nav_info:hover, #nav_express_2g:hover, #nav_express_5g:hover, #nav_back:hover{
+	background-color:#555;
+}
+#pap_manual_band_option-button, #pap_manual_auth_option-button, #pap_ip_advanced_option-button{
+	padding: 22px;
+}
+a.ui-btn{
+	height:30px;
+}

@@ -1,0 +1,80 @@
+NEWFS_HFS(8)                                                      NEWFS_HFS(8)
+
+
+
+NAME
+       newfs_hfs - create a HFS+ file system
+
+SYNOPSIS
+       newfs_hfs [options] device
+
+DESCRIPTION
+       newfs_hfs  is used to create an HFS+ file system on a device (usually a
+       disk or flash partition) or image.  device is the special  file  corre‐
+       sponding  to  the  device (e.g.  /dev/sdXX, /dev/block/mmcblk1p1) or an
+       image file.
+
+OPTIONS
+       Below is a summary of all the options that newfs_hfs accepts.
+
+       -s,    Creates a case-sensitive HFS+ file-system. By  default  a  case-
+              insensitive file-system is created.
+
+       -w     Adds an HFS wrapper around the HFS+ file system.
+
+       -U UID Set owner of the file-system root directory.
+
+       -G GID Set group of the file-system root directory.
+
+       -M MASK
+              Set permission mask for the file-system root directory.
+
+       -b SIZE
+              Set  the  allocation  block size (in bytes) to SIZE. The default
+              value is 4096.
+
+       -v VOLUME-NAME
+              Volume name in ASCII or UTF-8 format.
+
+       -i FIRST-CNID
+              Sets the first catalog node ID for user files  and  directories.
+              The default value is 16.
+
+       -N PARTITION-SIZE
+              Print  summary of file-system parameters without actually creat‐
+              ing the file- system. This might be  useful  for  verifying  the
+              actual parameters before creating the file-system.
+
+       -J JOURNAL-SIZE
+              Creates  a  journaled  HFS+  volume. The default journal size is
+              8MB.
+
+       -c CLUMP-SIZE-LIST
+              Sets the clump and/or initial sizes, in allocation  blocks,  for
+              meta-data  files.  It  is  specified  with -c option followed by
+              comma seperated list of the form args=value.
+
+              Set the attribute file clump size.  Set  the  allocation  bitmap
+              file  clump  size.   Set  the  catalog file clump size.  Set the
+              extent overflow file clump size.
+
+
+       -n NODE-SIZE-LIST
+              Sets  b-tree node sizes, in bytes, for the various b-tree files.
+              It is specified with the -n option followed by a comma separated
+              list of the form arg=value.  Node size must be a  power  of  two
+              and  no  larger than 32768 bytes.  Set the attribute b-tree node
+              size.  Set the catalog b-tree node size.  Set the  extent  over‐
+              flow b-tree node size.
+
+
+BUGS
+       If  you  find a bug please send an email describing the problem to hfs-
+       support@tuxera.com.
+
+AVAILABILITY
+       newfs_hfs is part of the Tuxera HFS+ package.
+
+
+
+Tuxera HFS+ 3014.7.28            December 2013                    NEWFS_HFS(8)

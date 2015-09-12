@@ -1,0 +1,146 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1 maximum-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<script>
+var wantype = '';
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
+<% wanlink(); %>
+<% wanstate(); %>
+
+function QKfinish_load_body(){
+	wantype = wanlink_type();
+	
+	if(wansbstate == 2 && wantype != "dhcp" && wantype != "static"){
+		document.getElementById("FailReason").innerHTML = "<#qis_fail_desc1#>";
+		document.getElementById("AuthFail").style.display = "";
+	}
+	else if(wansbstate == 1 && wantype != "dhcp" && wantype != "static"){
+		document.getElementById("FailReason").innerHTML = "<#qis_fail_desc9#>";
+		document.getElementById("PPPConnFail").style.display = "";
+	
+		if(wantype == "pppoe")
+			document.getElementById("wanproto").innerHTML = "PPPoE";
+		else if(wantype == "pptp")
+			document.getElementById("wanproto").innerHTML = "PPTP";
+		else if(wantype == "l2tp")
+			document.getElementById("wanproto").innerHTML = "L2TP";
+		else
+			document.getElementById("wanproto").innerHTML = "<#qis_fail_desc8#>";
+	}
+	else{
+		document.getElementById("FailReason").innerHTML = "<#qis_fail_desc7#>";
+		document.getElementById("ConnFail").style.display = "";
+	}
+}
+
+function redirect_page(redirect_flag){
+	document.redirectForm.action = "QIS_"+redirect_flag+".htm";
+	document.redirectForm.submit();
+}
+
+function goWireless(){
+	location.href = 'QIS_wireless.htm';
+}
+</script>
+</head>
+
+<body onLoad="QKfinish_load_body();" >
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="current_page" value="QIS_fail.htm">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+
+<style>
+	body{
+		color: #FFF;
+		margin: 0;
+	}
+
+</style>
+
+
+<div>
+	<div id="FailReason" style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QIS_pass_desc1#></div>
+
+	<div id="ConnFail" style="display:none;">
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc5#></div>
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc4#></div>
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc3#></div>
+		<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+			<div style="width:100%;height:100%;display:table">
+				<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="redirect_page('internet_type');">
+					<div style="font-size:1em;color:#7E8593"><#QIS_type_title#></div>
+				</div>
+				<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="goWireless();">
+					<div style="font-size:1em;color:#FFF;"><#QKSet_wireless_webtitle#></div>
+				</div>
+			
+			</div>
+		</div>
+	</div>
+	
+	<div id="AuthFail" style="display:none;">
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc2#></div>
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc4#></div>		
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc3#></div>	
+		<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+			<div style="width:100%;height:100%;display:table">
+				<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="redirect_page('internet_type');">
+					<div style="font-size:1em;color:#7E8593"><#QIS_type_title#></div>
+				</div>
+				<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="goWireless();">
+					<div style="font-size:1em;color:#FFF;"><#QKSet_wireless_webtitle#></div>
+				</div>
+			
+			</div>
+		</div>
+	</div>
+	
+	<div id="PPPConnFail" style="display:none">
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc6#></div>
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#Connectiontype#></div>
+		<div style="margin:10px 27px 10px 15px" id="wanproto"></div>
+		
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PPPConnection_UserName_itemname#></div>
+		<div style="margin:10px 27px 10px 15px"><% nvram_get("wan_pppoe_username"); %></div>
+			
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PPPConnection_Password_itemname#></div>
+		<div style="margin:10px 27px 10px 15px"><% nvram_get("wan_pppoe_passwd"); %></div>
+		
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;">WAN IP</div>
+		<div style="margin:10px 27px 10px 15px"><% nvram_get("wan_ipaddr_x"); %></div>
+		
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;">WAN IP</div>
+		<div style="margin:10px 27px 10px 15px"><% nvram_get("lan_ipaddr"); %></div>
+
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#MAC_Address#></div>
+		<div style="margin:10px 27px 10px 15px"><% nvram_get("lan_hwaddr"); %></div>		
+				
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc4#></div>
+		<div style="margin-left:15px;font-size:1em"><#qis_fail_desc3#></div>		
+
+		<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+			<div style="width:100%;height:100%;display:table">
+				<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="redirect_page('internet_type');">
+					<div style="font-size:1em;color:#7E8593"><#QIS_type_title#></div>
+				</div>
+				<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="goWireless();">
+					<div style="font-size:1em;color:#FFF;"><#QKSet_wireless_webtitle#></div>
+				</div>
+			
+			</div>
+		</div>
+	</div>
+</div>
+</form>
+</body>
+</html>

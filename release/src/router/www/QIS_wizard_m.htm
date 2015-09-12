@@ -1,0 +1,885 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns:v>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<!--link rel="shortcut icon" href="images/favicon.png"-->
+<link rel="icon" href="images/favicon.png">
+<title><#Web_Title#> - Quickly Internet Setup</title>
+<link rel="stylesheet" type="text/css" href="css/qis.css">
+<link rel="stylesheet" type="text/css" href="css/icon.css">
+<!--link rel="stylesheet" type="text/css" href="css/jquery.mobile.css"-->
+<!--link rel="stylesheet" type="text/css" href="/other.css">
+<link rel="stylesheet" type="text/css" href="/qis/qis_style.css">
+<link rel="stylesheet" type="text/css" href="index_style.css"> 
+<link rel="stylesheet" type="text/css" href="form_style.css"-->
+<style>
+.ios_iframe{
+	overflow: scroll !important;
+	-webkit-overflow-scrolling:touch !important;
+}
+body{
+    overflow-x: hidden; 
+    overflow-y: hidden;
+}
+
+</style>
+<script type="text/JavaScript" src="state.js"></script>
+<script type="text/javascript" src="popup.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script>
+var sw_mode = '<% nvram_get("sw_mode"); %>';
+if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+	sw_mode = 4;
+if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+	sw_mode = 2;
+var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
+
+if(isMobile() && tmo_support && sw_mode != 2 && qisFlag != "sitesurvey_rep" && qisFlag != "sitesurvey_mb")
+	location.href = "MobileQIS_Login.asp";
+
+var parent_macaddr = '<% nvram_get("lan_hwaddr"); %>';
+
+var isRepeater = true;
+var reduced_internet_type = "disable";
+var targeturl = "/index.htm";
+var firmver = '<% nvram_get("firmver"); %>';
+var w_Setting_tmp = '<% nvram_get("w_Setting"); %>';
+var return_btn = 0;
+var flag_manual = 0;
+var isSubmit = false;
+var isrescan = 0;
+var getBand = '<% get_parameter("band"); %>';
+var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
+var ISMOBILE = false;
+var isPassChanged = false;
+var yadns_stage = 0;
+
+// live update
+
+var webs_state_update = '<% nvram_get("webs_state_update"); %>';
+var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
+var webs_state_error = '<% nvram_get("webs_state_error"); %>';
+var webs_state_info = '<% nvram_get("webs_state_info"); %>';
+var exist_firmver = "<% nvram_get("firmver"); %>";
+var Latest_firmver = "";
+var Latest_firm = "";
+var Latest_buildno = "";
+var Latest_extendno = "";
+var current_firm = "";
+var current_buildno = "";
+var current_extendno = "";
+var liveUpdateFinish = false;
+var new_FW = false;
+var retry = 0;
+var isStatic = false;
+var staticIP = false;
+
+var restartTime = false;
+var restartWireless = false;
+var sysReboot = false;
+var rebootTime = eval("<% get_default_reboot_time(); %>");
+
+var wan_autodet_state = "";
+var usb_connected = 0;
+
+function add_options_x2(o, arr, varr, orig){
+	free_options(o);
+	
+	for(var i = 0; i < arr.length; ++i){
+		if(orig == varr[i])
+			add_option(o, arr[i], varr[i], 1);
+		else
+			add_option(o, arr[i], varr[i], 0);
+	}
+}
+
+function detect_firmware(){
+	$.ajax({
+		url: '/detect_firmware.asp',
+		dataType: 'script',
+
+		error: function(xhr){
+				setTimeout("detect_firmware();", 1000);
+		},
+ 		success: function(){
+			if(retry > 10){
+				liveUpdateFinish = true;					
+			}
+			else if(webs_state_update==0){
+					setTimeout("detect_firmware();", 1000);
+					retry++;
+			}
+			else{
+				if(webs_state_error != 1){
+					var Latest_firmver = webs_state_info.split("_");
+					var Latest_firm = parseInt(Latest_firmver[0]);
+					var Latest_buildno = parseInt(Latest_firmver[1]);
+					var Latest_extendno = Latest_firmver[2];
+					var Latest_extendno_split = Latest_extendno.split("-g");
+	      			var Latest_extendno_comp = parseInt(Latest_extendno_split[0]);
+
+					if(Latest_firm && Latest_buildno && Latest_extendno){	//match model FW
+						current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
+      					current_buildno = parseInt("<% nvram_get("buildno"); %>");
+      					current_extendno = "<% nvram_get("extendno"); %>";
+      					current_extendno_split = current_extendno.split("-g");
+      					current_extendno_comp = parseInt(current_extendno_split[0]);
+
+						if((current_buildno < Latest_buildno) || 
+      					(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
+      					(current_extendno_comp < Latest_extendno_comp && current_buildno == Latest_buildno && current_firm == Latest_firm))
+      			{
+							new_FW = true;
+						}
+					}
+				}
+				liveUpdateFinish = true;					
+			}
+		}
+	});
+}
+
+function detect_update(){
+	document.start_update.action_wait.value = "0";
+	document.start_update.action_script.value = "";
+	document.start_update.flag.value = "liveUpdate";
+	document.start_update.submit();
+}
+
+function set_step(focus_id){
+	return true;
+	document.getElementById("t1").className = "lefttabmid";
+	document.getElementById("t2").className = "lefttabmid";
+	document.getElementById("t3").className = "lefttabmid";
+
+	switch(focus_id){
+		case "t2":
+			document.getElementById("t2").className = "lefttabmidfocus";
+			break;
+		case "t3":
+			document.getElementById("t3").className = "lefttabmidfocus";
+			break;
+		default:	
+			document.getElementById("t1").className = "lefttabmidfocus";
+			break;
+	}
+}
+
+var based_modelid = '<% nvram_get("productid"); %>';
+var progress = 0;
+var sim_state = '<% nvram_get("usb_modem_act_sim"); %>';
+var modem_autoapn = '<% nvram_get("modem_autoapn"); %>';
+var usb_modem_auto_lines = '<% nvram_get("usb_modem_auto_lines"); %>';
+var usb_modem_auto_running = '<% nvram_get("usb_modem_auto_running"); %>';
+var usb_modem_auto_spn = '<% nvram_get("usb_modem_auto_spn"); %>';
+function update_apn_progress(){
+$.ajax({
+		url: '/ajax_autoapn_progress.asp',
+		dataType: 'script',
+
+		error: function(xhr){
+				setTimeout("update_apn_progress();", 1000);
+		},
+		success: function(){
+ 			if(usb_modem_auto_running.length != 0){
+				//document.getElementById("apn_div").style.display = "";
+				if(usb_modem_auto_running == usb_modem_auto_lines)
+				 	progress = 100;
+				 else
+				 	progress = Math.round(parseInt(usb_modem_auto_running)/parseInt(usb_modem_auto_lines)*100);
+
+				document.getElementById("apn_proceeding_img").style.width = progress+"%";
+				document.getElementById("apn_proceeding_img_text").innerHTML =  progress+"%";
+			}
+			/*else
+				document.getElementById("apn_div").style.display = "none"; */
+
+			if(progress != 100)
+				setTimeout("update_apn_progress();", 1000);
+		}
+	});	
+}
+
+function QIS_load_body(){
+	if(navigator.appVersion.indexOf("iPhone") != -1 || navigator.appVersion.indexOf("iPad") != -1){		//let iframe works on ios
+		$("#contentM").addClass("ios_iframe");
+	}
+	
+	document.getElementById("menu").onclick = function(){
+		document.getElementById("menu_content").className = "menu-in";
+		document.getElementById("shadow").className = "shadow-in";
+	};
+	
+	document.getElementById("shadow").onclick = function(){
+		document.getElementById("menu_content").className = "menu-out";
+		document.getElementById("shadow").className = "shadow-out";	
+	}	
+	
+	document.getElementById("menu_expand").onclick = function(){
+		document.getElementById("menu_content").className = "menu-out";
+		document.getElementById("shadow").className = "shadow-out";	
+	}
+	
+	if(sw_mode == "1"){
+		document.getElementById("menu_rt").style.color = "#007AFF";
+	}
+	else if(sw_mode == "3"){
+		document.getElementById("menu_ap").style.color = "#007AFF";
+	}
+	else if(sw_mode == "4"){
+		document.getElementById("menu_mb").style.color = "#007AFF";
+	}
+	
+	var showCase;
+	showCase = (document.getElementById("flag").value == "") ? "welcome" : document.getElementById("flag").value;
+	winW_H();
+
+	if(based_modelid == "4G-AC55U" && sim_state == "1" && modem_autoapn == "1" && usb_modem_auto_spn.length == 0)
+		update_apn_progress();
+	else{
+		//document.getElementById("apn_div").style.display = "none";	
+	}
+		
+	if(psta_support){
+		if((document.QKform.sw_mode.value == 2 || document.QKform.sw_mode.value == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+			document.QKform.sw_mode.value = 4;
+	}
+
+	with(document.redirectForm){
+		switch(showCase){
+			case "remind":
+				action = "/qis_m/QIS_internet_success.htm";
+				submit();
+				break;
+			case "auto_way_static":
+				action = "/qis_m/QIS_internet_ip.htm";
+				flag.value = showCase;
+				prev_page.value = "/qis_m/QIS_detect.htm";
+				submit();
+				break;
+			case "auto_way_vpn":
+				action = "/qis_m/QIS_internet_ip.htm";
+				flag.value = showCase;
+				prev_page.value = "start_apply.htm";
+				submit();
+				break;
+			case "auto_way":
+				action = "/qis_m/QIS_internet_ip.htm";
+				flag.value = showCase;
+				submit();
+				break;				
+			case "verify_detect":
+				action = "/qis_m/QIS_verify_detect.htm";
+				flag.value = showCase;
+				submit();
+				break;				
+			case "adv_ap_mode":
+				document.QKform.sw_mode.value = "3";
+				action = "/qis_m/QIS_lanip.htm";
+				submit();
+				break;				
+			case "pppoe":
+				document.QKform.wan_proto.value = "pppoe";			
+				action = "/qis_m/QIS_internet_account.htm";
+				submit();
+				break;				
+			case "pptp":
+				document.QKform.wan_proto.value = "pptp";			
+				action = "/qis_m/QIS_internet_account.htm";
+				submit();
+				break;				
+			case "l2tp":
+				document.QKform.wan_proto.value = "l2tp";
+				action = "/qis_m/QIS_internet_account.htm";
+				submit();
+				break;				
+			case "account":
+				document.QKform.wan_proto.value = "pptp";
+				action = "/qis_m/QIS_internet_account.htm";
+				submit();
+				break;
+			case "sitesurvey_mb":
+				localAP_support = false;
+				isRepeater = false;
+				action = "/qis_m/QIS_sitesurvey.htm";
+				submit();
+				break;
+			case "sitesurvey_rep":
+				document.QKform.sw_mode.value = "2";
+				action = "/qis_m/QIS_sitesurvey.htm";
+				submit();
+				break;
+			case "lanip":
+				document.QKform.sw_mode.value = "3";
+				action = "/qis_m/QIS_lanip.htm";
+				submit();
+				break;
+			default:
+				if(showCase.split("?").length == 1)
+					action = "/qis_m/QIS_" + showCase + ".htm";
+				else
+					action = "/qis_m/QIS_" + showCase.split("?")[0] + ".htm?" + showCase.split("?")[1];
+				submit();
+				break;					
+		}
+	}
+}
+
+function set_internet_type_reducedmode(mode){
+	reduced_internet_type = mode;
+}
+
+function get_internet_type_reducedmode(mode){
+	return reduced_internet_type;
+}
+
+function set_next_step(topage){
+	targeturl = topage;
+}
+
+function get_next_step(){
+	return targeturl;
+}
+
+var failed_connection_reason = "";
+
+function set_failed_connection_reason(flag){
+	failed_connection_reason = flag;
+}
+
+function get_failed_connection_reason(){
+	return failed_connection_reason;
+}
+
+function gotoFinish(forward_page, page_flag){
+	with(document.redirectForm){
+		action = forward_page;
+		target = "";
+		flag.value = page_flag;
+		
+		submit();
+	}
+}
+
+function closeQIS(){
+	if(navigator.appName == "Netscape" && navigator.userAgent.indexOf("Safari") == -1){ //The appName of Safari is Netscape the same as Firefox and mozilla.
+		window.open('', '_self', '');
+		self.close(); 
+	}
+	else if(navigator.appName.indexOf("Microsoft") >= 0){
+		window.opener=null;
+		self.close();
+ 	}
+	else{
+		window.open('', '_self', ''); 
+		self.close();
+	}
+}
+
+var auto_detect_time = 0;
+
+function get_detect_time(){
+	return auto_detect_time;
+}
+
+function do_detect(){
+	++auto_detect_time;
+}
+
+var done_autoMAC = 0;
+
+function ifAutoMAC(){
+	return done_autoMAC;
+}
+
+function doAutoMAC(){
+	done_autoMAC = 1;
+}
+
+var done_resetModem = 0;
+
+function ifResetModem(){
+	return done_resetModem;
+}
+
+function doResetModem(){
+	done_resetModem = 1;
+}
+
+var result_of_detectWAN = 0;
+
+function get_detectWAN(){
+	return result_of_detectWAN;
+}
+
+function set_detectWAN(result){
+	result_of_detectWAN = result;
+}
+
+function gotoIndex(){
+	if(w_Setting_tmp == '0'){
+		alert("<#QIS_recommand_encryption#>");
+		location.href = '/QIS_wizard_m.htm?flag=wireless';
+	}
+	else
+		location.href = '/index.asp';
+}
+
+function check_DUT(){
+	$.ajax({
+		url: '/httpd_check.xml',
+		dataType: 'xml',
+		
+		error: function(xhr){
+			setTimeout("check_DUT();", 3000);
+		},
+		success: function(response){
+			setTimeout("location.href ='/QIS_wizard_m.htm?flag=verify_detect'", 3000);
+		}
+	});
+}
+
+function detect_httpd(){
+	$.ajax({
+    	url: '/httpd_check.xml',
+    	dataType: 'xml',
+		timeout: 1500,
+    	error: function(xhr){
+    		dead++;
+    		if(dead < 6){
+    			setTimeout("detect_httpd();", 1000);
+    		}else{
+    			document.getElementById('loading_block1').style.display = "none";
+    			document.getElementById('loading_block2').style.display = "none";
+    			document.getElementById('loading_block3').style.display = "";
+				if(findasus_support){
+    				document.getElementById('loading_block3').innerHTML = "<div>You can also go to <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> to search and enter device config page.</div>";
+				}else{
+					document.getElementById('loading_block3').innerHTML = "<div><#Main_alert_proceeding_desc3#>.<#LANConfig_ChangedLANIP#></div>";
+				}						
+    		}
+    	},
+    	success: function(){
+    		setTimeout("hideLoadingBar();",1000);
+      		location.href = "index.asp";
+  		}
+  	});
+}
+
+function switch_operation_mode(mode){
+	document.getElementById("menu_rt").style.color = "#FFF";
+	document.getElementById("menu_ap").style.color = "#FFF";
+	//document.getElementById("menu_mb").style.color = "#FFF";
+	if(mode == "1"){		//Router
+		document.getElementById("menu_rt").style.color = "#007AFF";
+		document.QKform.sw_mode.value = 1;
+		document.redirectForm.action = "/qis_m/QIS_internet_type.htm";
+		document.redirectForm.submit();
+	}
+	else if(mode == "2"){
+		document.QKform.sw_mode.value = 2;
+		localAP_support = true;
+		isRepeater = true;
+		document.redirectForm.action = "/qis_m/QIS_sitesurvey.htm";
+		document.redirectForm.submit();
+	}
+	else if(mode == "3"){		//Access Point
+		document.getElementById("menu_ap").style.color = "#007AFF";
+		parent.document.QKform.sw_mode.value = 3;
+		document.redirectForm.action = "/qis_m/QIS_lanip.htm";
+		document.redirectForm.submit();
+	}
+	else if(mode == "4"){		//Media Bridge
+		document.getElementById("menu_mb").style.color = "#007AFF";
+		document.QKform.sw_mode.value = 4;
+		localAP_support = false;
+		isRepeater = false;
+		document.redirectForm.action = "/qis_m/QIS_sitesurvey.htm";
+		document.redirectForm.submit();
+	}
+	
+	document.getElementById("menu_content").className = "menu-out";
+	document.getElementById("shadow").className = "shadow-out";	
+}
+
+function uploadSetting(){
+  var file_obj = document.form.file;
+	
+	if(file_obj.value == ""){
+		alert("<#JS_fieldblank#>");
+		file_obj.focus();
+	}
+	else if(file_obj.value.length < 6 ||
+					file_obj.value.lastIndexOf(".CFG")  < 0 || 
+					file_obj.value.lastIndexOf(".CFG") != (file_obj.value.length)-4){		
+		alert("<#Setting_upload_hint#>");
+		file_obj.focus();
+	}
+	else{
+		stopFlag = 1;
+		parent.document.getElementById('proceeding_img_text').style.display = "";
+		parent.document.getElementById('connHint').innerHTML = "<#SET_ok_desc#>";
+		document.form.action = "/upload.cgi";
+		document.form.enctype = "multipart/form-data";
+		document.form.submit();
+	}	
+}
+
+</script>
+
+<style>
+
+
+</style>
+</head>
+
+<body style="margin:0" onload="QIS_load_body();">
+<noscript>
+	<div class="popup_bg" style="visibility:visible; z-index:999;">
+		<div style="margin:200px auto; width:300px; background-color:#006699; color:#FFFFFF; line-height:150%; border:3px solid #FFF; padding:5px;"><#not_support_script#></p></div>
+	</div>
+</noscript>
+
+<div id="LoadingBar" class="popup_bar_bg" style="display:none">
+<table cellpadding="5" cellspacing="0" id="loadingBarBlock" class="loadingBarBlock" align="center">
+	<tr>
+		<td height="80">
+		<div class="Bar_container">
+			<span id="proceeding_img_text" style="display:none;"></span>
+			<div id="proceeding_img"></div>
+		</div>
+		<div id="connHint" style="margin:5px auto; width:85%;"><#APSurvey_msg_waiting_to_connect#> <span style="font-weight:bolder;" id="stassid"></span></div>
+		</td>
+	</tr>
+</table>
+<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
+</div>
+
+<div id="Loading" class="popup_bg" style="display:none">
+	<table cellpadding="5" cellspacing="0" id="loadingBlock" class="loadingBlock" align="center">
+		<tr>
+			<td width="20%" height="80" align="center"><img src="/images/loading.gif"></td>
+			<td><span id="proceeding_main_txt"><#Main_alert_proceeding_desc4#></span><span id="proceeding_txt" style="color:#FFFFCC;"></span></td>
+		</tr>
+	</table>
+<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
+</div>
+
+<div id="hiddenMask" class="popup_bg" style="display:none">
+	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center">
+		<tr>
+		<td>
+			<div class="drword" id="drword"><#Main_alert_proceeding_desc4#> <#Main_alert_proceeding_desc1#>...
+				<br/>
+				<div id="disconnect_hint" style="display:none;"><#Main_alert_proceeding_desc2#></div>
+				<br/>
+			</div>
+			<div id="wireless_client_detect" style="margin-left:10px;position:absolute;display:none;width:400px;">
+				<img src="images/loading.gif">
+				<div style="margin:-55px 0 0 75px;"><#QKSet_Internet_Setup_fail_method1#></div>
+			</div>   
+			<div id="alertImg" class="drImg"><img src="images/alertImg.png"></div>
+			<div style="height:100px; "></div>
+		</td>
+		</tr>
+	</table>
+</div>
+
+<!--For content in ifame-->	
+<!--[if !lte IE 6]>-->
+<!--div class="banner1" align="center">
+	<img src="images/New_ui/asustitle.png" width="218" height="54" align="left">
+	<span class="modelName_top" style="margin-top:20px;"><#Web_Title2#></span>
+</div-->
+<!--<![endif]-->
+<!--[if lte IE 6]>
+<div class="banner1" align="center">
+	<img src="images/New_ui/asustitle_ie6.png" width="218" height="54" align="left">
+	<span class="modelName_top" style="margin-top:20px;"><#Web_Title2#></span>
+</div>
+<![endif]-->
+
+<!--table width="998px" border="0" align="center" cellpadding="0" cellspacing="0">
+	<tr>
+		<td height="170px" width="998px" valign="top" background="/images/New_ui/midup_bg.png"></td>
+	</tr>
+</table-->
+
+
+  <!--tr-->
+		<!--td style="width:218px;*width:263px;" valign="top">
+			<div class="m_qis_r" style="margin-left: 15px;margin-top: -160px;cursor:pointer;" onclick="gotoIndex();"><table><tbody><tr><td><div class="_index"></div></td><td><div><#CTL_Setting#></div></td></tr></tbody></table></div>
+			<div class="lefttabhead" style="margin-left:15px;" id="option0"><table width="192px" height="37px"><tbody><tr><td><#QIS_title#></td></tr></tbody></table></div>
+			<div class="lefttabmid" id="t1" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep1.png"></td><td><div class="qismenu"><#QIS_step2#></div></td></tr></tbody></table></div>
+			<div class="lefttabmid" id="t2" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep2.png"></td><td><div class="qismenu"><#QIS_step3#></div></td></tr></tbody></table></div>
+			<div class="lefttabmid" id="t3" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep3.png"></td><td><div class="qismenu"><#QIS_step4#></div></td></tr></tbody></table></div>
+			<div id="apn_div" style="margin-left:15px; margin-top: 50px; display:none">
+				<div style="margin-left:31px; font-size:12px; font-weight:bold; text-shadow:1px 1px 0px black;">Auto APN Progressing</div>
+				<div id="apn_bar_container">
+					<div id="apn_proceeding_img_text"></div>
+					<div id="apn_proceeding_img"></div>
+				</div>
+			</div>			
+		</td-->
+
+		<!--td>
+      <div class="_contentM_qis"><iframe name="contentM" style="background-color:#4D595D;" id="contentM" class="contentM_qis" scrolling="auto" width="99%" height="540" frameborder="0"></iframe></div>
+    </td-->
+    <!--td width="8" height="365" valign="top"></td-->
+  <!--/tr-->
+
+	<!--tr>
+		<td height="27" colspan="3" style="background: url('/images/New_ui/bottom_bg.png') no-repeat">&nbsp;</td>
+	</tr-->
+<style>
+.header_bar{
+	padding:34px 0 0 28px;	
+	
+}
+
+.header_menu{
+	display:table-cell;
+	padding:0;
+	width:38px;
+}
+
+.background_img{
+	background: url('images/qis/pattern3-3_10_A15.png'),url('images/qis/pattern3_05_4.png'),url('images/qis/mainimage_img4.png') #1D1E1F no-repeat;
+}
+
+.background_position{
+	background-position-y: -70px;
+}
+
+.menu_field{
+	width:38px;
+	height:38px;
+}
+
+.header_logo{
+	display:table-cell;
+	padding:0;
+	width:130px;
+}
+
+	
+.logo_field{
+	width:130px;
+	height:38px;
+}
+	.menu-out{
+		margin-left: -80%;
+	}
+
+	.menu-in{
+		margin-left: 0;
+	}
+	.shadow-in{
+		margin-left: 0px;
+	}
+
+	.shadow-out{
+		margin-left: -100%;
+	}
+
+/*mobile device*/
+@media screen and (max-width: 1000px){
+	.header_bar{
+		padding:17px 0 0 14px;
+	}
+	
+	.header_menu{
+		display:table-cell;
+		padding:0;
+		width:19px;
+	}
+	
+	.background_position{
+		background-position-y: -36px;
+	}
+	
+	.menu_field{
+		width:19px;
+		height:19px;
+	}
+	
+	.header_logo{
+		display:table-cell;
+		padding:0;
+		width:65px;
+	}
+	
+	.logo_field{
+		width:65px;
+		height:19px;
+	}
+
+	#menu_content{
+		-webkit-transition: all 0.3s;
+		-moz-transition: all 0.3s;
+		-o-transition: all 0.3s;
+		transition: all 0.3s;
+	}
+
+	.menu-out{
+		margin-left: -80%;
+	}
+
+	.menu-in{
+		margin-left: 0;
+	}
+	.shadow-in{
+		margin-left: 0px;
+	}
+
+	.shadow-out{
+		margin-left: -100%;
+	}
+}
+
+</style>	
+<div class="background_img">
+	<div id="menu_content" class="menu-out" style="color:#FFF;background-color:#2A2A2A;width:80%;height:100%;z-index:10;position:absolute;top:0;">
+		<nav>
+			<div class="header_bar" style="width:22px;height:16px;display:inline-block;">
+				<div id="menu_expand" class="icon_menu_expand" style="width:43px;height:32px;background-size:60%;background-repeat:no-repeat;"></div>
+			</div>
+			<div style="width:63px;height:19px;display:inline-block;">
+				<div class="icon_logo" style="height:38px;width:126px;margin-left:10px;background-size:60%;background-repeat:no-repeat"></div>
+			</div>
+			<ul style="list-style:none;padding:0 10px;">
+				<li>
+					<div style="margin: 0 10px;padding:13px 5px;font-size:1.2em;color:#A8CBF4;border-bottom:1px solid #4C545E;">Operation Mode</div>
+					<ul  style="list-style:none;padding:0 10px;">
+						<li id="menu_rt" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;" onclick="switch_operation_mode('1')">Router</li>					
+						<li id="menu_ap" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;" onclick="switch_operation_mode('3')">Access Point (AP)</li>					
+						<!--li id="menu_mb" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;" onclick="switch_operation_mode('4')">Media Bridge</li-->					
+					</ul>
+				</li>
+				<li >
+					<div style="margin: 0 10px;padding:13px 5px;font-size:1.2em;color:#A8CBF4;border-bottom:1px solid #4C545E;">Other Item</div>
+					<div style="width:106px;height:31px;background-color:#DC6263;line-height:31px;margin:14px 0 7px 0;text-align:center;border-radius:4px;margin-left:10px;"><label for="upload_setting_profile" style="font-size:1em;color:#FFF;">Upload</label></div>
+				</li>
+			</ul>
+		</nav>
+	</div>
+	<div id="shadow" class="shadow-out" style="width:100%;height:100%;position:absolute;background: rgba(0, 0, 0, .4);top:0;z-index:5;"></div>
+	<div class="header_bar"><!--mobile css-->
+		<div id="menu" class="header_menu">
+			<div style="margin-right:10px;"><!--mobile css-->
+				<a href="#navigation">
+					<div class="icon_menu menu_field"></div><!--mobile css-->
+				</a>
+			</div>			
+		</div>
+		<div class="header_logo">
+			<div style="margin-right:18px;"><!--mobile css-->
+				<div class="icon_logo logo_field"></div><!--mobile css-->
+			</div>		
+		</div>	
+		<div style="padding:0;">
+			<div id="model_welcome" style="color:#FFF;font-size:1.875em;background-color:rgba(79,79,79,62);padding-left:11px;"></div>			
+		</div>
+	</div>
+	
+	<div style="height:100%;width:100%;position:fixed;">
+		<iframe id="contentM" name="contentM" class="background_img background_position" style="width:100%;height:100%;border:none;"></iframe>
+	</div>
+</div>
+<form method="post" name="QKform">
+	<!-- general -->
+	<input type="hidden" name="flag" id="flag" value='<% get_parameter("flag"); %>'>
+	<input type="hidden" name="prev_page" value="">
+	<input type="hidden" name="current_page" value="/QIS_wizard_m.htm">
+	<input type="hidden" name="next_page" value="">   
+	<input type="hidden" name="action_mode" value="apply">
+	<input type="hidden" name="action_script" value="restart_wan_if">
+	<input type="hidden" name="wan_unit" value="0">
+	<input type="hidden" name="action_wait" value="5">
+	<input type="hidden" name="modified" value="">  
+	<!-- system -->                  
+	<input type="hidden" name="machine_name" value="<% nvram_get("machine_name"); %>">
+	<input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>">
+	
+	
+	<input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
+	<input type="hidden" name="http_passwd" value=""> 
+	<input type="hidden" name="x_Setting" id="x_Setting" value="<% nvram_get("x_Setting"); %>" disabled>
+	<input type="hidden" name="sw_mode" value="<% nvram_get("sw_mode"); %>">
+	<!-- detect -->
+	<input type="hidden" name="wan_proto" value="<% nvram_get("wan_proto"); %>">
+	<!-- internet IP -->
+	<input type="hidden" name="wan_dhcpenable_x" value="<% nvram_get("wan_dhcpenable_x"); %>">
+	<input type="hidden" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>">
+	<input type="hidden" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>">
+	<input type="hidden" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>">
+	<input type="hidden" name="vpn_enable" value="">
+	<input type="hidden" name="wan_heartbeat_x" value="<% nvram_get("wan_heartbeat_x"); %>">
+	<input type="hidden" name="wan_dnsenable_x" value="<% nvram_get("wan_dnsenable_x"); %>">
+	<input type="hidden" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>"> 
+	<input type="hidden" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>"> 
+	<!-- internet ISP -->
+	<input type="hidden" name="wan_hostname" value="<% nvram_get("wan_hostname"); %>">
+	<input type="hidden" name="wan_hwaddr_x" value="<% nvram_get("wan_hwaddr_x"); %>">
+	<!-- internet Account -->
+	<input type="hidden" name="wan_pppoe_username" value="<% nvram_get("wan_pppoe_username"); %>">
+	<input type="hidden" name="wan_pppoe_passwd" value="<% nvram_get("wan_pppoe_passwd"); %>">
+	<!-- ap lan -->
+	<input type="hidden" name="lan_proto" value="<% nvram_get("lan_proto"); %>">
+	<input type="hidden" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>">
+	<input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>">
+	<input type="hidden" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>">
+	<input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">
+	<input type="hidden" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>">
+	<input type="hidden" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>">
+	<input type="hidden" name="lan_ipaddr_rt" value="<% nvram_get("lan_ipaddr_rt"); %>">
+	<input type="hidden" name="lan_netmask_rt" value="<% nvram_get("lan_netmask_rt"); %>">
+	<!-- unifi -->
+	<input type="hidden" name="switch_wantag" value="<% nvram_get("switch_wantag"); %>">
+	<input type="hidden" name="switch_wan0tagid" value="<% nvram_get("switch_wan0tagid"); %>">
+	<input type="hidden" name="switch_wan0prio" value="<% nvram_get("switch_wan0prio"); %>">
+	<input type="hidden" name="switch_wan1tagid" value="<% nvram_get("switch_wan1tagid"); %>">
+	<input type="hidden" name="switch_wan1prio" value="<% nvram_get("switch_wan1prio"); %>">
+	<input type="hidden" name="switch_wan2tagid" value="<% nvram_get("switch_wan2tagid"); %>">
+	<input type="hidden" name="switch_wan2prio" value="<% nvram_get("switch_wan2prio"); %>">
+	<input type="hidden" name="switch_stb_x" value="<% nvram_get("switch_stb_x"); %>">
+	<!-- wireless client -->
+	<input type="hidden" name="wlc_band" value="<% nvram_get("wlc_band"); %>">
+	<input type="hidden" name="wlc_ssid" value="<% nvram_char_to_ascii("", "wlc_ssid"); %>">
+	<input type="hidden" name="wlc_wep" value="<% nvram_get("wlc_wep"); %>">
+	<input type="hidden" name="wlc_key" value="<% nvram_get("wlc_key"); %>">
+	<input type="hidden" name="wlc_wep_key" value="<% nvram_get("wlc_wep_key"); %>">
+	<input type="hidden" name="wlc_auth_mode" value="<% nvram_get("wlc_auth_mode"); %>">
+	<input type="hidden" name="wlc_crypto" value="<% nvram_get("wlc_crypto"); %>">
+	<input type="hidden" name="wlc_wpa_psk" value="<% nvram_get("wlc_wpa_psk"); %>">
+	<input type="hidden" name="wlc_nbw_cap" value="<% nvram_get("wlc_nbw_cap"); %>">
+</form>
+
+<form method="post" name="redirectForm" action="" target="contentM">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="prev_page" value="">
+</form>
+
+<form method="post" name="start_update" action="/start_apply2.htm" target="hidden_frame">
+	<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+	<input type="hidden" name="flag" value="">
+	<input type="hidden" name="current_page" value="">
+	<input type="hidden" name="next_page" value="">
+	<input type="hidden" name="action_mode" value="apply">
+	<input type="hidden" name="action_script" value="">
+	<input type="hidden" name="action_wait" value="3">
+	<input type="hidden" name="x_Setting" value="1">
+</form>
+<form method="post" name="form" action="/start_apply.htm">
+<div style="display:none">
+	<input id="upload_setting_profile" type="file" name="file" class="input" style="color:#FFCC00;" onchange="uploadSetting();">
+</div>
+</div>
+<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
+</body>
+</html>

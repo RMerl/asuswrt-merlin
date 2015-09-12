@@ -303,6 +303,12 @@ enum ASUS_IOCTL_SUBCMD {
 #define OFFSET_PLC_MAC			(MTD_FACTORY_BASE_ADDRESS + 0x0D18E)	// 6
 #define OFFSET_PLC_NMK			(MTD_FACTORY_BASE_ADDRESS + 0x0D194)	// 16
 #endif
+/*
+ * disable DHCP client and DHCP override during ATE
+ */
+#ifdef RTCONFIG_DEFAULT_AP_MODE
+#define OFFSET_FORCE_DISABLE_DHCP	(MTD_FACTORY_BASE_ADDRESS + 0x0D1AA)	// 1
+#endif
 
 #define OFFSET_DEV_FLAGS		(MTD_FACTORY_BASE_ADDRESS + 0x0ffa0)	//device dependent flags
 #define OFFSET_ODMPID			(MTD_FACTORY_BASE_ADDRESS + 0x0ffb0)	//the shown model name (for Bestbuy and others)

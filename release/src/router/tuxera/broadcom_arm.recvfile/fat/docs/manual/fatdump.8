@@ -1,0 +1,86 @@
+.\" Copyright (c) 2013-2014 Sougata Santra / Tuxera Inc.
+.\" Copyright (c) 2011 Erik Larsson / Tuxera Inc.
+.\"
+.TH FATDUMP 8 "June 2013" "Tuxera TFATprogs 3014.9.11"
+.SH NAME
+fatdump \- Efficiently dump the contents of a FAT volume.
+.SH SYNOPSIS
+.B fatdump
+[\fIoptions\fR] \fIdevice|image\fR
+.SH DESCRIPTION
+.B fatdump
+will efficiently extract all relevant metadata and (optionally) data from an
+FAT volume and dump it to standard output.
+It works at disk sector level and copies only the used data. Unused disk space
+becomes zero.
+
+.B fatdump
+can be useful to make backups, an exact snapshot of a FAT filesystem to
+restore later on, or for developers to troubleshoot/investigate users' issues
+using the clone without the risk of destroying the original filesystem.
+.SH OPTIONS
+Below is a summary of all the options that
+.B fatdump
+accepts.  Nearly all options have two equivalent names.  The short name is
+preceded by
+.B \-
+and the long name is preceded by
+.B \-\- .
+.TP
+\fB\-m\fR, \fB\-\-metadata\fR
+Clone
+.B ONLY METADATA
+(for FAT experts). A metadata dump contains all of the FAT volume structures
+but none of the user data, i.e. all file content will be omitted but the
+directory structure will be preserved. The output from this command will be
+relatively small if compressed.
+.TP
+\fB\-n\fR, \fB\-\-ntfsclone-image\fR
+Emit an ntfsclone packed image (special image format) as output. This saves
+space since all the non-allocated regions (and in the case of '\-m'
+/'\-\-metadata' all the non-metadata regions) will not be written out
+explicitly, but instead marked as a 'hole' in the image.
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Suppress non-error output on stderr.
+.TP
+\fB\-f\fR, \fB\-\-force\fR
+Force a clone, ignoring errors from cluster accounting.
+.SH EXIT CODES
+The exit code is 0 on success, non\-zero otherwise.
+.SH EXAMPLES
+Dump FAT file system on /dev/sda1 to a compressed metadata image:
+.RS
+.sp
+.B fatdump /dev/sda1 | bzip2 > sda1.img.bz2
+.sp
+.RE
+Dump FAT file system metadata on /dev/sda1 to a compressed metadata image:
+.RS
+.sp
+.B fatdump \-m /dev/sda1 | bzip2 > sda1.img.bz2
+.sp
+.RE
+Dump a FAT volume to a remote host, using ssh. Please note that ssh may ask
+for a password!
+.RS
+.sp
+.B fatdump /dev/sda1 | bzip2 | ssh host 'cat > sda1.img.bzip2'
+.sp
+.RE
+.SH KNOWN ISSUES
+There are no known problems with
+.BR fatdump .
+If you think you have found a problem then please send an email describing it
+to fat-support@tuxera.com.
+.hy
+.SH AUTHORS
+.B fatdump
+was written by Sougata Santra, Tuxera Inc.
+.SH AVAILABILITY
+.B fatdump
+is part of the
+.B Tuxera FAT
+package.
+.SH SEE ALSO
+.BR fatdebug (8)

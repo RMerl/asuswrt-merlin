@@ -738,6 +738,9 @@ function submitForm(){
 			document.form.switch_wan2tagid.value = parent.document.QKform.switch_wan2tagid.value;
 			document.form.switch_wan2prio.value = parent.document.QKform.switch_wan2prio.value;
 			document.form.switch_stb_x.value = parent.document.QKform.switch_stb_x.value;
+			document.form.mr_enable_x.value = parent.document.QKform.mr_enable_x.value;
+			document.form.emf_enable.value = parent.document.QKform.emf_enable.value;
+			document.form.ttl_inc_enable.value = parent.document.QKform.ttl_inc_enable.value;
 			document.form.flag.value = "verify_detect";
   			if(original_switch_wantag != document.form.switch_wantag.value){
 				/*
@@ -904,6 +907,9 @@ function displayDNSCtrl(){
 <input type="hidden" name="switch_wan2tagid" value="">
 <input type="hidden" name="switch_wan2prio" value="">
 <input type="hidden" name="switch_stb_x" value="">
+<input type="hidden" name="mr_enable_x" value="">
+<input type="hidden" name="emf_enable" value="">
+<input type="hidden" name="ttl_inc_enable" value="">
 <div class="QISmain" id="QISmain">
 		<div>
 			<table width="730px">

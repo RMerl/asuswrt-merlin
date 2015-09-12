@@ -1,0 +1,96 @@
+.\" Copyright (c) 2013 Tuxera Inc.
+.\"
+.TH NEWFS_HFS 8 "December 2013" "Tuxera HFS+ 3014.7.28"
+.SH NAME
+newfs_hfs \- create a HFS+ file system
+.SH SYNOPSIS
+.B newfs_hfs
+[\fIoptions\fR] \fIdevice\fR
+.SH DESCRIPTION
+.B newfs_hfs
+is used to create an HFS+ file system on a device (usually a disk or flash
+partition) or image.
+.I device
+is the special file corresponding to the device (e.g.
+.IR /dev/sdXX, 
+.IR /dev/block/mmcblk1p1 )
+or an image file.
+.SH OPTIONS
+Below is a summary of all the options that
+.B newfs_hfs
+accepts.
+.TP
+\fB\-s\fR,
+Creates a case-sensitive HFS+ file-system. By default a case-insensitive
+file-system is created.
+.TP
+\fB\-w\fR
+Adds an HFS wrapper around the HFS+ file system.
+.TP
+\fB\-U\fR UID
+Set owner of the file-system root directory.
+.TP
+\fB\-G\fR GID
+Set group of the file-system root directory.
+.TP
+\fB\-M\fR MASK
+Set permission mask for the file-system root directory.
+.TP
+\fB\-b\fR SIZE
+Set the allocation block size (in bytes) to \fBSIZE\fR. The default value
+is 4096.
+.TP
+\fB\-v\fR VOLUME-NAME
+Volume name in ASCII or UTF-8 format.
+.TP
+\fB\-i\fR FIRST-CNID
+Sets the first catalog node ID for user files and directories. The default
+value is 16.
+.TP
+\fB\-N\fR PARTITION-SIZE
+Print summary of file-system parameters without actually creating the file-
+system. This might be useful for verifying the actual parameters before
+creating the file-system.
+.TP
+\fB\-J\fR JOURNAL-SIZE
+Creates a journaled HFS+ volume. The default journal size is 8MB.
+.TP
+\fB\-c\fR CLUMP-SIZE-LIST
+Sets the clump and/or initial sizes, in allocation blocks, for meta-data
+files. It is specified with -c option followed by comma seperated list
+of the form args=value.
+
+.Bl -tag -width Fl
+.It Em a=blocks
+Set the attribute file clump size.
+.It Em b=blocks
+Set the allocation bitmap file clump size.
+.It Em c=blocks
+Set the catalog file clump size.
+.It Em e=blocks
+Set the extent overflow file clump size.
+.El
+
+.TP
+\fB\-n\fR NODE-SIZE-LIST
+Sets  b-tree node sizes, in bytes, for the various b-tree files. It is specified
+with the -n option followed by a comma separated list of the form arg=value.
+Node size must be a power of two and no larger than 32768 bytes. 
+.Bl -tag -width Fl
+.It Em a=bytes
+Set the attribute b-tree node size.
+.It Em c=bytes
+Set the catalog b-tree node size.
+.It Em e=bytes
+Set the extent overflow b-tree node size.
+.El
+
+.SH BUGS
+If you find a bug please send an email describing the problem to 
+hfs-support@tuxera.com.
+.SH AVAILABILITY
+.B newfs_hfs
+is part of the
+.B Tuxera HFS+
+package.
+.hy

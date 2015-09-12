@@ -1,0 +1,112 @@
+@node  Zebra Protocol
+@appendix Zebra Protocol
+@appendixsection Overview of the Zebra Protocol
+
+Zebra Protocol is used by protocol daemons to communicate with the
+zebra daemon.
+
+Each protocol daemon may request and send information to and from the
+zebra daemon such as interface states, routing state,
+nexthop-validation, and so on. Protocol daemons may also install routes
+with zebra. The zebra daemon manages which route is installed into the
+forwarding table with the kernel.
+
+Zebra Protocol is a streaming protocol, with a common header. Two
+versions of the header are in use. Version 0 is implicitely versioned.
+Version 1 has an explicit version field. Version 0 can be distinguished
+from all other versions by examining the 3rd byte of the header, which
+contains a marker value for all versions bar version 0. The marker byte
+corresponds to the command field in version 0, and the marker value is
+a reserved command in version 0.
+
+We do not anticipate there will be further versions of the header for
+the foreseeable future, as the command field in version 1 is wide
+enough to allow for future extensions to done compatibly through
+seperate commands.
+
+Version 0 is used by all versions of GNU Zebra as of this writing, and
+versions of Quagga up to and including Quagga 0.98. Version 1 will be
+used as of Quagga 1.0.
+
+@appendixsection Zebra Protocol Definition
+@appendixsubsec Zebra Protocol Header (version 0)
+@example
+@group
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-------------------------------+---------------+
+|           Length (2)          |   Command (1) |
++-------------------------------+---------------+
+@end group
+@end example
+
+@appendixsubsec Zebra Protocol Common Header (version 1)
+@example
+@group
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-------------------------------+---------------+-------------+
+|           Length (2)          |   Marker (1)  | Version (1) |
++-------------------------------+---------------+-------------+
+|          Command (2)          |
++-------------------------------+
+@end group
+@end example
+
+@appendixsubsec Zebra Protocol Header Field Definitions
+@table @samp
+@item Length
+Total packet length including this header. The minimum length is 3
+bytes for version 0 messages and 6 bytes for version 1 messages.
+
+@item Marker
+Static marker with a value of 255 always. This is to allow version 0
+Zserv headers (which do not include version explicitely) to be
+distinguished from versioned headers. Not present in version 0
+messages.
+
+@item Version
+Version number of the Zserv message. Clients should not continue
+processing messages past the version field for versions they do not
+recognise. Not present in version 0 messages.
+
+@item Command
+The Zebra Protocol command.
+@end table
+
+@appendixsubsec Zebra Protocol Commands
+@multitable {ZEBRA_REDISTRIBUTE_DEFAULT_DELETE_WHATEVER} {99999}
+@headitem Command @tab Value
+@item ZEBRA_INTERFACE_ADD	
+@tab 1
+@item ZEBRA_INTERFACE_DELETE
+@tab 2
+@item ZEBRA_INTERFACE_ADDRESS_ADD
+@tab 3
+@item ZEBRA_INTERFACE_ADDRESS_DELETE
+@tab 4
+@item ZEBRA_INTERFACE_UP
+@tab 5
+@item ZEBRA_INTERFACE_DOWN
+@tab 6
+@item ZEBRA_IPV4_ROUTE_ADD
+@tab 7
+@item ZEBRA_IPV4_ROUTE_DELETE
+@tab 8
+@item ZEBRA_IPV6_ROUTE_ADD
+@tab 9
+@item ZEBRA_IPV6_ROUTE_DELETE
+@tab 10
+@item ZEBRA_REDISTRIBUTE_ADD
+@tab 11
+@item ZEBRA_REDISTRIBUTE_DELETE
+@tab 12
+@item ZEBRA_REDISTRIBUTE_DEFAULT_ADD
+@tab 13
+@item ZEBRA_REDISTRIBUTE_DEFAULT_DELETE
+@tab 14
+@item ZEBRA_IPV4_NEXTHOP_LOOKUP
+@tab 15
+@item ZEBRA_IPV6_NEXTHOP_LOOKUP
+@tab 16
+@end multitable

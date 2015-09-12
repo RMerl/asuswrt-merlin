@@ -1,0 +1,504 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<!--link rel="stylesheet" type="text/css" href="../form_style.css">
+<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/JavaScript" src="/state.js"></script-->
+<script>
+<% wanlink(); %>
+
+var now_flag = '<% get_parameter("flag"); %>';
+var reIP = '<% nvram_get("lan_ipaddr"); %>';
+
+if(parent.get_failed_connection_reason().length > 0){
+	now_flag = parent.get_failed_connection_reason();
+}
+
+var wsc_config_state = '<% nvram_get("wsc_config_state"); %>';
+var orig_x_Setting = '<% nvram_get("x_Setting"); %>';
+
+var wan_ip = wanlink_ipaddr();
+var wan_dns = wanlink_ipaddr();
+var result_of_detectWAN = parent.get_detectWAN();
+
+var got_ntp = result_of_detectWAN&0x1;
+var got_wan_dns = (result_of_detectWAN&0x2)>>1;
+var got_more_dns = (result_of_detectWAN&0x4)>>2;
+
+function QKfinish_load_body(){
+	parent.document.title = "<#Web_Title#>";
+	parent.set_step("t3");
+	
+	if(orig_x_Setting != "1"){
+		set_x_Setting("1", "/qis_m/QIS_internet_success.htm");
+	}
+	
+	if(now_flag.length > 0){
+		document.getElementById("fail_to_connect").style.display = "";
+		document.getElementById("succeed_to_connect").style.display = "none";
+		
+		show_fail_response();
+		
+		showtext(document.getElementById("title_item"), "<#PPPConnection_x_WANLink_itemname#>");
+	}
+	else{
+		document.getElementById("fail_to_connect").style.display = "none";
+		document.getElementById("succeed_to_connect").style.display = "";
+		document.getElementById("li_of_wireless").style.display = "";		
+		showtext(document.getElementById("title_item"), "<#QKSet_finish_desc#>");
+	}
+
+}
+
+function show_fail_response(){
+	var html_code = "";
+	
+	if(now_flag.indexOf("dhcp_wrong_") >= 0){
+		document.getElementById("link_id").onclick = function(){
+				gotoDetect();
+			};
+		showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+		
+		//html_code += "<#QKSet_Internet_Setup_fail_reason1#><br>\n";
+		html_code += "<br>\n";
+		if(wan_ip.length > 0){
+			if(got_wan_dns){
+				html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+				html_code += "(2) <#QIS_internet_success_item2_1#>: <b>"+wan_dns+"</b><br>\n";
+				html_code += "<b>(3) <#QIS_internet_success_item3_2#>:<br>";
+				html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+				html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+				html_code += "<#QIS_internet_success_desc1#>\n";
+			}
+			else if(got_more_dns){
+				html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+				html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"</b><br>\n";
+				html_code += "(3) <#QIS_internet_success_item3_1#>:<br>";
+				html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+				html_code += "<b>8.8.8.8, 208.67.220.220</b><br>\n";
+				html_code += "<#QIS_internet_success_desc2#>\n";
+			}
+			else{
+				html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+				html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"<br>\n";
+				html_code += "(3) <#QIS_internet_success_item3_2#>:<br>";
+				html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+				html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+				html_code += "<#QIS_internet_success_desc3#>\n";
+			}
+		}
+		else{
+			html_code += "<#QIS_internet_success_desc4#>\n";
+		}
+		
+		document.getElementById("link_reason").innerHTML = html_code;
+	}
+	else if(now_flag.indexOf("pppoe_wrong_") >= 0){
+		if(now_flag == "pppoe_wrong_input"){
+			document.getElementById("link_id").onclick = function(){
+					gotoPPPoE();
+				};
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
+			showtext(document.getElementById("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
+		}
+		else{
+			document.getElementById("link_id").onclick = function(){
+					gotoDetect();
+				};
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+			
+			//html_code += "<#QKSet_Internet_Setup_fail_reason3#><br>\n";
+			html_code += "<br>\n";
+			if(wan_ip.length > 0){
+				if(got_wan_dns){
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "(2) <#QIS_internet_success_item2_1#>: <b>"+wan_dns+"</b><br>\n";
+					html_code += "<b>(3) <#QIS_internet_success_item3_2#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc1#>\n";
+				}
+				else if(got_more_dns){
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"</b><br>\n";
+					html_code += "(3) <#QIS_internet_success_item3_1#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "<b>8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc2#>\n";
+				}
+				else{
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"<br>\n";
+					html_code += "(3) <#QIS_internet_success_item3_2#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc3#>\n";
+				}
+			}
+			else{
+				html_code += "<#QIS_internet_success_desc4#>\n";
+			}
+			
+			document.getElementById("link_reason").innerHTML = html_code;
+		}
+	}
+	else if(now_flag.indexOf("pptp_wrong_") >= 0){
+		if(now_flag == "pptp_wrong_input"){
+			document.getElementById("link_id").onclick = function(){
+					gotoPPTP();
+				};
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
+			showtext(document.getElementById("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
+		}
+		else{
+			document.getElementById("link_id").onclick = function(){
+					gotoDetect();
+				};
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+			
+			//html_code += "<#QKSet_Internet_Setup_fail_reason4#><br>\n";
+			html_code += "<br>\n";
+			if(wan_ip.length > 0){
+				if(got_wan_dns){
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "(2) <#QIS_internet_success_item2_1#>: <b>"+wan_dns+"</b><br>\n";
+					html_code += "<b>(3) <#QIS_internet_success_item3_2#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc1#>\n";
+				}
+				else if(got_more_dns){
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"</b><br>\n";
+					html_code += "(3) <#QIS_internet_success_item3_1#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "<b>8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc2#>\n";
+				}
+				else{
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"<br>\n";
+					html_code += "(3) <#QIS_internet_success_item3_2#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc3#>\n";
+				}
+			}
+			else{
+				html_code += "<#QIS_internet_success_desc4#>\n";
+			}
+			
+			document.getElementById("link_reason").innerHTML = html_code;
+		}
+	}
+	else if(now_flag.indexOf("l2tp_wrong_") >= 0){
+		if(now_flag == "l2tp_wrong_input"){
+			document.getElementById("link_id").onclick = function(){
+					gotoL2TP();
+				};
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method2#>");
+			showtext(document.getElementById("link_reason"), "<#QKSet_Internet_Setup_fail_reason2#>");
+		}
+		else{
+			document.getElementById("link_id").onclick = function(){
+					gotoDetect();
+				};
+			showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+			
+			//html_code += "<#QKSet_Internet_Setup_fail_reason5#><br>\n";
+			html_code += "<br>\n";
+			if(wan_ip.length > 0){
+				if(got_wan_dns){
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "(2) <#QIS_internet_success_item2_1#>: <b>"+wan_dns+"</b><br>\n";
+					html_code += "<b>(3) <#QIS_internet_success_item3_2#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc1#>\n";
+				}
+				else if(got_more_dns){
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"</b><br>\n";
+					html_code += "(3) <#QIS_internet_success_item3_1#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "<b>8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc2#>\n";
+				}
+				else{
+					html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+					html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"<br>\n";
+					html_code += "(3) <#QIS_internet_success_item3_2#>:<br>";
+					html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+					html_code += "<#QIS_internet_success_desc3#>\n";
+				}
+			}
+			else{
+				html_code += "<#QIS_internet_success_desc4#>\n";
+			}
+			
+			document.getElementById("link_reason").innerHTML = html_code;
+		}
+	}
+	else if(now_flag.indexOf("static_wrong_") >= 0){
+		document.getElementById("link_id").onclick = function(){
+				gotoDetect();
+			};
+		showtext(document.getElementById("link_str"), "<#QKSet_Internet_Setup_fail_method1#>");
+		
+		//html_code += "<#QKSet_Internet_Setup_fail_reason6#><br>\n";
+		html_code += "<br>\n";
+		if(wan_ip.length > 0){
+			if(got_wan_dns){
+				html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+				html_code += "(2) <#QIS_internet_success_item2_1#>: <b>"+wan_dns+"</b><br>\n";
+				html_code += "<b>(3) <#QIS_internet_success_item3_2#>:<br>";
+				html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+				html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+				html_code += "<#QIS_internet_success_desc1#>\n";
+			}
+			else if(got_more_dns){
+				html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+				html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"</b><br>\n";
+				html_code += "(3) <#QIS_internet_success_item3_1#>:<br>";
+				html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+				html_code += "<b>8.8.8.8, 208.67.220.220</b><br>\n";
+				html_code += "<#QIS_internet_success_desc2#>\n";
+			}
+			else{
+				html_code += "(1) <#QIS_internet_success_item1#>: <b>"+wan_ip+"</b><br>\n";
+				html_code += "<b>(2) <#QIS_internet_success_item2_2#>: "+wan_dns+"<br>\n";
+				html_code += "(3) <#QIS_internet_success_item3_2#>:<br>";
+				html_code += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+				html_code += "8.8.8.8, 208.67.220.220</b><br>\n";
+				html_code += "<#QIS_internet_success_desc3#>\n";
+			}
+		}
+		else{
+			html_code += "<#QIS_internet_success_desc4#>\n";
+		}
+		
+		document.getElementById("link_reason").innerHTML = html_code;
+	}
+}
+
+function gotoInternet(){
+	//set_x_Setting("1", "/qis/QIS_internet_success.htm");
+	
+	if(navigator.appName.indexOf("Microsoft") >= 0)
+		window.open("about:home");
+	
+	parent.location.href = "/gotoHomePage.htm";
+}
+
+function gotoASUS(){
+	parent.location.href = "http://www.asus.com/support/";
+}
+
+function gotoAdvSetting(){
+	//set_x_Setting("1", "/qis/QIS_internet_success.htm");
+	
+	parent.location.href = "/Advanced_WAN_Content.asp"
+}
+
+function gotoWireless(){
+	parent.set_failed_connection_reason(now_flag);
+	
+	with(document.resultForm){
+		action = "/qis_m/QIS_wireless.htm";
+		target = "";
+		
+		document.getElementById("flag").value = "";
+		
+		submit();
+	}
+}
+
+function gotoDetect(){
+	with(document.resultForm){
+		action = "/QIS_wizard_m.htm";
+		target = "_parent";
+		
+		document.getElementById("flag").value = "detect";
+		
+		submit();
+	}
+}
+
+function gotoPPPoE(){
+	with(document.resultForm){
+		action = "/QIS_wizard_m.htm";
+		target = "_parent";
+		
+		document.getElementById("flag").value = "pppoe";
+		
+		submit();
+	}
+}
+
+function gotoPPTP(){
+	with(document.resultForm){
+		action = "/QIS_wizard_m.htm";
+		target = "_parent";
+		
+		document.getElementById("flag").value = "pptp";
+		
+		submit();
+	}
+}
+
+function gotoL2TP(){
+	with(document.resultForm){
+		action = "/QIS_wizard_m.htm";
+		target = "_parent";
+		
+		document.getElementById("flag").value = "l2tp";
+		
+		submit();
+	}
+}
+
+function set_x_Setting(set, page){
+	with(document.resultForm){
+		action = "/start_apply.htm";
+		target = "hidden_frame";
+		
+		current_page.value = page;
+		next_page.value = page;
+		document.getElementById("x_Setting").disabled = false;
+		x_Setting.value = set;
+		
+		document.getElementById("flag").value = "";
+		submit();
+	}
+}
+function addBookmarkForBrowser(sTitle) {
+	 sTitle = sTitle+" - "+ reIP;
+	 
+   if (document.all){
+      window.external.addFavorite('http://'+reIP, sTitle);
+   }
+   else if (window.sidebar && window.sidebar.addPanel){
+      window.sidebar.addPanel(sTitle, 'http://'+reIP, "");
+   }
+   else {
+			addBookmarkForBrowser = function() {
+				alert("<#Browser_action_not_support_addfavorite#>");
+			}
+   }
+}
+
+</script>
+</head>
+
+<body onLoad="QKfinish_load_body();">
+<style>
+body{
+	margin: 0;
+	color: #FFF;
+}
+
+</style>
+
+<div>
+	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QKSet_finish_desc#></div>
+	
+	<div>
+		<ol>
+			<li id="fail_to_connect" style="display:none;">
+				<a id="link_id" href="javascript:;"><span id="link_str"></span></a>: <span id="link_reason"></span>
+			</li>
+			<li id="succeed_to_connect" style="display:none;">
+				<a href="javascript:gotoASUS();"><#QKSet_finish_moveto1#></a><br/>
+				<span><#QKSet_finish_moveto9#></span>
+			</li>
+			<li id="li_of_wireless" style="display:none;">
+				<a href="javascript:gotoWireless();"><#QKSet_finish_moveto5#></a>: 
+				<#QKSet_finish_moveto6#>
+			</li>
+			<li style="display:;">
+				<a href="javascript:gotoAdvSetting();"><#QKSet_finish_moveto7#></a>: 
+				<#QKSet_finish_moveto8#>
+			</li>
+			<li>
+				<a href="javascript:addBookmarkForBrowser('<#Web_Title#>');"><#Browser_action_addfavorite#></a>: 
+				<#Browser_action_addfavorite_hint2#>
+			</li>				
+		</ol>	
+	
+	
+	
+	</div>
+	
+	<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+		<div style="width:100%;height:100%;line-height:50px;text-align:center;background-color:#007AFF" onclick="location.href='QIS_wireless.htm';">
+			<div id="sim_ok_button" style="font-size:1em;color:#FFF;"><#QKSet_wireless_webtitle#></div>
+		</div>
+	</div>
+</div>
+
+<!--div class="QISmain">
+<div class="formfonttitle" style="padding:6 0 0 10;">
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<div class="description_down"><#QKSet_finish_desc#></div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+</div>
+
+<table id="tblsetting_1" class="QISform" style="line-height:30px;font-size:15px;" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+	<tr>
+		<td>
+			<ol>
+					<li id="fail_to_connect" style="display:none;">
+						<a id="link_id" href="javascript:;"><span id="link_str"></span></a>: <span id="link_reason"></span>
+					</li>
+					 <li id="succeed_to_connect" style="display:none;">
+						<a href="javascript:gotoASUS();"><#QKSet_finish_moveto1#></a><br/>
+						<span class="hint_word"><#QKSet_finish_moveto9#></span>
+					  </li>
+					  <li id="li_of_wireless" style="display:none;">
+						<a href="javascript:gotoWireless();"><#QKSet_finish_moveto5#></a>: 
+						<#QKSet_finish_moveto6#>
+					  </li>
+					<li style="display:;">
+						<a href="javascript:gotoAdvSetting();"><#QKSet_finish_moveto7#></a>: 
+						<#QKSet_finish_moveto8#>
+					</li>
+					<li>
+						<a href="javascript:addBookmarkForBrowser('<#Web_Title#>');"><#Browser_action_addfavorite#></a>: 
+						<#Browser_action_addfavorite_hint2#>
+					</li>				
+			</ol>
+		</td>
+	</tr>
+</table>
+
+<div class="apply_gen" style="margin-top:30px">
+	<input type="button" id="nextButton" value="<#QKSet_wireless_webtitle#>" onclick="location.href='QIS_wireless.htm';" class="button_gen_long">
+</div>
+
+</div-->
+
+<br>
+<iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
+<form method="post" name="resultForm" action="">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="x_Setting" id="x_Setting" value="" disabled>
+
+<input type="hidden" name="flag" id="flag" value="">
+</form>
+
+<!--div class="QISfoot"></div-->
+</body>

@@ -1,0 +1,197 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Aug 10 14:21:00 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>NEWFS_HFS</title>
+
+</head>
+<body>
+
+<h1 align="center">NEWFS_HFS</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">newfs_hfs
+&minus; create a HFS+ file system</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>newfs_hfs</b>
+[<i>options</i>] <i>device</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>newfs_hfs</b></i>
+is used to create an HFS+ file system on a device (usually a
+disk or flash partition) or image. <i>device</i> is the
+special file corresponding to the device (e.g. <i>/dev/sdXX,
+/dev/block/mmcblk1p1</i>) or an image file.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>newfs_hfs</b>
+accepts.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>&minus;s</b>,</p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Creates a case-sensitive HFS+ file-system. By default a
+case-insensitive file-system is created.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>&minus;w</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Adds an HFS wrapper around the HFS+ file system.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>&minus;U</b> UID</p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Set owner of the file-system root directory.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>&minus;G</b> GID</p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>Set group of the file-system root directory.</p></td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>&minus;M</b> MASK</p>
+
+<p style="margin-left:22%;">Set permission mask for the
+file-system root directory.</p>
+
+<p style="margin-left:11%;"><b>&minus;b</b> SIZE</p>
+
+<p style="margin-left:22%;">Set the allocation block size
+(in bytes) to <b>SIZE</b>. The default value is 4096.</p>
+
+<p style="margin-left:11%;"><b>&minus;v</b> VOLUME-NAME</p>
+
+<p style="margin-left:22%;">Volume name in ASCII or UTF-8
+format.</p>
+
+<p style="margin-left:11%;"><b>&minus;i</b> FIRST-CNID</p>
+
+<p style="margin-left:22%;">Sets the first catalog node ID
+for user files and directories. The default value is 16.</p>
+
+<p style="margin-left:11%;"><b>&minus;N</b>
+PARTITION-SIZE</p>
+
+<p style="margin-left:22%;">Print summary of file-system
+parameters without actually creating the file- system. This
+might be useful for verifying the actual parameters before
+creating the file-system.</p>
+
+<p style="margin-left:11%;"><b>&minus;J</b>
+JOURNAL-SIZE</p>
+
+<p style="margin-left:22%;">Creates a journaled HFS+
+volume. The default journal size is 8MB.</p>
+
+<p style="margin-left:11%;"><b>&minus;c</b>
+CLUMP-SIZE-LIST</p>
+
+<p style="margin-left:22%;">Sets the clump and/or initial
+sizes, in allocation blocks, for meta-data files. It is
+specified with -c option followed by comma seperated list of
+the form args=value.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Set the
+attribute file clump size. Set the allocation bitmap file
+clump size. Set the catalog file clump size. Set the extent
+overflow file clump size.</p>
+
+<p style="margin-left:11%;"><b>&minus;n</b>
+NODE-SIZE-LIST</p>
+
+<p style="margin-left:22%;">Sets b-tree node sizes, in
+bytes, for the various b-tree files. It is specified with
+the -n option followed by a comma separated list of the form
+arg=value. Node size must be a power of two and no larger
+than 32768 bytes. Set the attribute b-tree node size. Set
+the catalog b-tree node size. Set the extent overflow b-tree
+node size.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+bug please send an email describing the problem to
+hfs-support@tuxera.com.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>newfs_hfs</b>
+is part of the <b>Tuxera HFS+</b> package.</p>
+<hr>
+</body>
+</html>

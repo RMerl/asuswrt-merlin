@@ -1,0 +1,38 @@
+menu "Support for Broadcom MIPS based boards"
+
+config BCM947XX
+        bool "Support for Broadcom BCM947XX"
+        depends on MIPS_BRCM
+	default y
+
+#config BCM47XX
+#        bool "Support for Broadcom BCM47XX processors"
+#        depends on BCM947XX
+
+config BCMIPDSCP
+        bool "Support for Using DSCP based IP forwarding"
+        depends on BCM947XX
+
+config HND_BMIPS3300_PROF
+        bool "Support for performance profiling"
+        depends on BCM947XX
+
+config RAM_SIZE
+        int "Memory size (in megabytes)"
+        depends on BCM947XX
+
+config SHRINKMEM
+        bool "Support for shrink memory"
+        depends on BCM947XX
+        select PM
+
+config GENERIC_GPIO
+        bool "Generic GPIO"
+        default n
+
+config CROSS_COMPILE
+	default "mipsel-uclibc-linux26-"
+
+endmenu
+
+

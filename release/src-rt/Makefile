@@ -238,7 +238,7 @@ ifeq ($(CONFIG_RALINK),y)
 		echo -n "PA/LNA: " ; \
 		if [ "`grep -c \"^CONFIG_INTERNAL_PA_INTERNAL_LNA\>\" $(LINUXDIR)/.config`" -gt 0 ] ; then \
 			echo "Internal PA + Internal LNA" ; \
-			if [ "$(BUILD_NAME)" = "RT-N14U" ] || [ "$(BUILD_NAME)" = "RT-AC51U" ] || [ "$(BUILD_NAME)" = "RT-N11P" ]  || [ "$(BUILD_NAME)" = "RT-N54U" ] || [ "$(BUILD_NAME)" = "RT-AC54U" ] ; then \
+			if [ "$(BUILD_NAME)" = "RT-N14U" ] || [ "$(BUILD_NAME)" = "RT-AC51U" ] || [ "$(BUILD_NAME)" = "RT-N11P" ] || [ "$(BUILD_NAME)" = "RT-N300" ] || [ "$(BUILD_NAME)" = "RT-N54U" ] || [ "$(BUILD_NAME)" = "RT-AC54U" ] ; then \
 				echo "Check PA/LNA: OK" ; \
 			else \
 				mv -f image/$(IMGNAME).trx image/$(IMGNAME)_int_PA_int_LNA.trx ; \
@@ -497,11 +497,7 @@ define RouterOptions
 		sed -i "/RTCONFIG_WIRELESSWAN/d" $(1); \
 		echo "RTCONFIG_WIRELESSWAN=y" >>$(1); \
 	fi; \
-	if [ "$(PARENTAL)" = "y" ]; then \
-		sed -i "/RTCONFIG_OLD_PARENTALCTRL/d" $(1); \
-		echo "RTCONFIG_OLD_PARENTALCTRL=y" >>$(1); \
-	fi; \
-	if [ "$(PARENTAL2)" = "y" ]; then \
+	if [ "$(PARENTAL2)" = "y" -o "$(PARENTAL)" = "y" ]; then \
 		sed -i "/RTCONFIG_PARENTALCTRL/d" $(1); \
 		echo "RTCONFIG_PARENTALCTRL=y" >>$(1); \
 	fi; \
@@ -1176,6 +1172,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_GEOIP/d" $(1); \
 		echo "RTCONFIG_GEOIP=y" >>$(1); \
 	fi; \
+	if [ "$(TRANSMISSION)" = "y" ]; then \
+		sed -i "/RTCONFIG_TRANSMISSION/d" $(1); \
+		echo "RTCONFIG_TRANSMISSION=y" >>$(1); \
+	fi; \
 	if [ "$(SINGLE_2G)" = "y" ]; then \
 		sed -i "/RTCONFIG_HAS_5G/d" $(1); \
 		echo "# RTCONFIG_HAS_5G is not set" >>$(1); \
@@ -1385,6 +1385,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_TUNNEL/d" $(1); \
 		echo "RTCONFIG_TUNNEL=y" >>$(1); \
 	fi; \
+	if [ "$(ERPTEST)" = "y" ]; then \
+		sed -i "/RTCONFIG_ERP_TEST/d" $(1); \
+		echo "RTCONFIG_ERP_TEST=y" >>$(1); \
+	fi; \
 	if [ "$(RESET_SWITCH)" = "y" ]; then \
 		sed -i "/RTCONFIG_RESET_SWITCH/d" $(1); \
 		echo "RTCONFIG_RESET_SWITCH=y" >>$(1); \
@@ -1546,7 +1550,7 @@ define BusyboxOptions
 		sed -i "/CONFIG_TFTP_DEBUG/d" $(1); \
 		echo "# CONFIG_TFTP_DEBUG is not set" >>$(1); \
 	fi; \
-	if [ "$(RTN11P)" = "y" ]; then \
+	if [ "$(RTN11P)" = "y" ] || [ "$(RTN300)" = "y" ]; then \
 		sed -i "/CONFIG_LESS/d" $(1); \
 		echo "# CONFIG_LESS is not set" >>$(1); \
 		sed -i "/CONFIG_DU\b/d" $(1); \
@@ -1737,7 +1741,7 @@ define KernelConfig
 		sed -i "/CONFIG_CPU_MIPSR1/d" $(1); \
 		echo "CONFIG_CPU_MIPSR2=y" >>$(1); \
 	fi; \
-	if [ "$(RTN11P)" = "y" ]; then \
+	if [ "$(RTN11P)" = "y" ] || [ "$(RTN300)" = "y" ]; then \
 		sed -i "/CONFIG_USB/d" $(1); \
 		echo "# CONFIG_USB is not set" >>$(1); \
 		sed -i "/CONFIG_USB_SUPPORT/d" $(1); \
@@ -2135,11 +2139,7 @@ define KernelConfig
 			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0x01810000" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
-		elif [ "$(BUILD_NAME)" = "RT-AC68U" ]; then \
-			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
-			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0xC0000000" >>$(1); \
-			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2500" >>$(1); \
-		elif [ "$(BUILD_NAME)" = "RT-AC3200" ]; then \
+		elif [ "$(ARM)" = "y" ]; then \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0xC0000000" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x3000" >>$(1); \
@@ -2433,7 +2433,20 @@ endif
 	$(call RouterOptions, router/config_$(lowercase_B))
 	$(call KernelConfig, $(LINUXDIR)/config_$(lowercase_B))
 	$(call BusyboxOptions, router/busybox/config_$(lowercase_B))
-
+ifeq ($(CONFIG_RALINK),y)
+	@if [ "$(BUILD_NAME)" = "RT-N56UB1" ] ; then \
+		if [ "$(MT7603_EXTERNAL_PA_EXTERNAL_LNA)" = "y" ] ; then \
+			echo "build epa+elna fw" ; \
+			gcc -DCONFIG_MT7603E_EXTERNAL_PA_EXTERNAL_LNA -g $(LINUXDIR)/drivers/net/wireless/rlt_wifi_7603E/tools/bin2h.c \
+			-o $(LINUXDIR)/drivers/net/wireless/rlt_wifi_7603E/tools/bin2h ; \
+		elif [ "$(MT7603_INTERNAL_PA_EXTERNAL_LNA)" = "y" ] ; then \
+			echo "build ipa+elna fw" ; \
+			gcc -DCONFIG_MT7603E_INTERNAL_PA_EXTERNAL_LNA -g $(LINUXDIR)/drivers/net/wireless/rlt_wifi_7603E/tools/bin2h.c \
+			-o $(LINUXDIR)/drivers/net/wireless/rlt_wifi_7603E/tools/bin2h ; \
+		fi ; \
+		$(MAKE) -C $(LINUXDIR)/drivers/net/wireless/rlt_wifi_7603E build_e2fw; \
+	fi
+endif
 	@$(MAKE) setprofile
 	$(MAKE) all
 
@@ -2468,6 +2481,7 @@ define save_src_config
 		echo "export $${var}" >> .config ; \
 		export $${var} ; \
 	done ;
+
 	@echo "";
 endef
 
@@ -2600,6 +2614,14 @@ gen_prebuilt:
 
 %-tags: dummy
 	@[ ! -d router/$* ] || ctags -a -R $(CTAGS_EXCLUDE_OPT) $(SRCBASE)/../src/router/$*
+
+#
+# check extendno
+#
+
+get_extendno:
+	@if [ "$(ID)" == "" ]; then echo "No ID is assigned"; exit 1; fi
+	git log --pretty=oneline asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)..$(ID) | wc -l
 
 .PHONY: all clean distclean cleanimage cleantools cleankernel prepk what setprofile libc help image default bin_file
 .PHONY: a b c d m Makefile allversions

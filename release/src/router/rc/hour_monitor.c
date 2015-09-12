@@ -4,9 +4,6 @@
 
 #include <rc.h>
 
-// debug mode
-#define DEBUG		0
-
 // define function bit, you can define more functions as below
 #define TRAFFIC_CONTROL		0x01
 #define TRAFFIC_ANALYZER	0x02
@@ -15,6 +12,7 @@
 static int sig_cur = -1;
 static int debug = 0;
 static int value = 0;
+static int is_first = 1;
 
 void hm_traffic_analyzer_save()
 {
@@ -29,6 +27,7 @@ void hm_traffic_analyzer_save()
 
 	if(!f_exists("/dev/detector") || !f_exists("/dev/idpfw")){
 		_dprintf("%s : dpi engine doesn't exist, not to save any database\n", __FUNCTION__);
+		logmessage("hour monitor", "dpi engine doesn't exist");
 		return;
 	}
 
@@ -63,7 +62,10 @@ void hm_traffic_analyzer_save()
 		return;
 	}
 
-	if(debug) dbg("%s : db_mode = %d, buf = %s\n", __FUNCTION__, db_mode, buf);
+	if(debug) {
+		logmessage("hour monitor", "buf=%s", buf);
+		dbg("%s : db_mode = %d, buf = %s\n", __FUNCTION__, db_mode, buf);
+	}
 
 	system(buf);
 }
@@ -194,6 +196,11 @@ int hour_monitor_main(int argc, char **argv)
 	signal(SIGTERM, catch_sig);
 	signal(SIGALRM, catch_sig);
 
+	if(debug) {
+		_dprintf("%s: ntp_ready=%d, DST=%s\n", __FUNCTION__, nvram_get_int("ntp_ready"), nvram_safe_get("time_zone_x"));
+		logmessage("hour monitor", "ntp_ready=%d, DST=%s", nvram_get_int("ntp_ready"), nvram_safe_get("time_zone_x"));
+	}
+
 	while(1)
 	{
 		if (nvram_get_int("ntp_ready"))
@@ -206,30 +213,37 @@ int hour_monitor_main(int argc, char **argv)
 			localtime_r(&now, &local);
 			if(debug) dbg("%s: %d-%d-%d, %d:%d:%d\n", __FUNCTION__,
 				local.tm_year+1900, local.tm_mon+1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec);
+			if(debug) logmessage("hour_monitor", "%d-%d-%d, %d:%d:%d\n", 
+				local.tm_year+1900, local.tm_mon+1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec);
 
-#if DEBUG
-			/* every 30 secs */
-			if(local.tm_sec < 30 && local.tm_sec >= 0)
-				diff_sec = 30 - local.tm_sec;
-			else if(local.tm_sec < 60 && local.tm_sec >= 30)
-				diff_sec = 60 - local.tm_sec;
-			alarm(diff_sec);
-#else
 			/* every hour */
 			if((local.tm_min != 0) || (local.tm_sec != 0)){
 				diff_sec = 3600 - (local.tm_min * 60 + local.tm_sec);
-				alarm(diff_sec);
+
+				// delay 15 sec to wait for DST NTP sync done
+				if (strstr(nvram_safe_get("time_zone_x"), "DST")) diff_sec += 15;
 			}
 			else{
-				alarm(3600);
+				diff_sec = 3600;
 			}
-#endif
+
+			if(is_first){
+				diff_sec = 120;
+				is_first = 0;
+			}
+			
+			if(debug) {
+				_dprintf("%s: diff_sec=%d\n", __FUNCTION__, diff_sec);
+				logmessage("hour monitor", "diff_sec=%d", diff_sec);
+			}
+
+			alarm(diff_sec);
 			pause();
 		}
 		else
 		{
 			if(debug) _dprintf("%s: ntp is not syn ... \n", __FUNCTION__);
-			if(debug) logmessage("hour monitor", "ntp is not syn");
+			logmessage("hour monitor", "ntp is not syn");
 			exit(0);
 		}
 	}

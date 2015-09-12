@@ -137,7 +137,7 @@
 }
 
 </style>
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
 var rescan = 0;
 

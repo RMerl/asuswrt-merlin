@@ -380,6 +380,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #ifdef RTCONFIG_QCA_PLC_UTILS
 			ate_ctl_plc_led();
 #endif
+#ifdef SW_DEVLED
+			stop_sw_devled();
+#endif
 #if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
 			start_envrams();
 #endif
@@ -753,7 +756,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		modprobe_r("hw_nat");
 		modprobe("hw_nat");
 		stop_wanduck();
-		killall_tk("udhcpc");
+		stop_udhcpc(-1);
 		return 0;
 	}
 #if defined(RTAC1200HP) || defined(RTN56UB1)
@@ -1032,7 +1035,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #ifdef RTCONFIG_RALINK
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U)
 	else if (!strcmp(command, "Ra_FWRITE")) {
 		return FWRITE(value, value2);
 	}
@@ -1204,8 +1207,8 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	else if (!strcmp(command, "Set_ART2")) {
 		// temp solution
 		killall_tk("rstats");
-		killall_tk("udhcpc");
 		stop_wanduck();
+		stop_udhcpc(-1);
 		killall_tk("networkmap");
 		killall_tk("hostapd");
 		ifconfig("ath0", 0, NULL, NULL);
@@ -1414,7 +1417,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
                 getTerritoryCode();
                 return 0;
         }
-#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_QCA)
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
         else if (!strcmp(command, "Set_PSK")) {
 #if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
 		if (!chk_envrams_proc())
@@ -1464,6 +1467,24 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		if (!getPLC_PWD()) {
 			puts("ATE_ERROR");
 			return EINVAL;
+		}
+		return 0;
+	}
+#endif
+#ifdef RTCONFIG_DEFAULT_AP_MODE
+	else if(!strcmp(command, "Set_ForceDisableDHCP")) {
+		FWrite("1", OFFSET_FORCE_DISABLE_DHCP, 1);
+		puts("1");
+		return 0;
+	}
+	else if(!strcmp(command, "Set_FreeDisableDHCP")) {
+		char buf[2];
+		FWrite("0", OFFSET_FORCE_DISABLE_DHCP, 1);
+		if (FRead(buf, OFFSET_FORCE_DISABLE_DHCP, 1) < 0)
+			puts("ATE_ERROR");
+		else {
+			buf[1] = '\0';
+			puts(buf);
 		}
 		return 0;
 	}

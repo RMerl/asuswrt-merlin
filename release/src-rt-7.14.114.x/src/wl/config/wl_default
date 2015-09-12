@@ -1,0 +1,62 @@
+# Broadcom 802.11abg Networking Device Driver Configuration file
+#
+# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# default wl driver config file
+#
+# $Id: wl_default,v 1.42 2011-02-08 04:36:15 $
+
+# wl driver base
+WL=1
+
+# features
+WLLED=1
+WME=1
+WLPIO=1
+WL11AC=1
+WL11N=1
+WLATF=1
+WL11H=1
+WL11D=1
+DBAND=1
+WLRM=1
+WLCQ=1
+BCMDMA32=1
+WLCNT=1
+WLTINYDUMP=1
+WLAMPDU=1
+WLAMPDU_UCODE=0
+WLAMPDU_HW=1
+PKTQ_LOG=1
+WLAMSDU=1
+WLAMSDU_SWDEAGG=1
+BCMROMOFFLOAD=0
+BTC2WIRE=1
+WLCOEX=1
+WL_NOPHYIPA=0
+WLHOSTVARS=1
+WLOLPC=1
+WLTXBF=1
+WL_PROT_OBSS=1
+
+# BCMEXTNVM = 1, is used for Windows internal & external driver debug & BU. 
+# It enables NVRAM file read for the external & internal Windows drivers,
+# which otherwise is prohibited. Hence by default set to 0. 
+BCMEXTNVM=0
+
+BCMECICOEX=1
+#ifndef LINUX_CRYPTO
+LINUX_CRYPTO=0
+#endif

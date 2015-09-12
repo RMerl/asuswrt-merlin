@@ -1,0 +1,2 @@
+PKG="QUAGGAdaemons"
+NAME="@PACKAGE_NAME@ - @PACKAGE_NAME@ daemons"

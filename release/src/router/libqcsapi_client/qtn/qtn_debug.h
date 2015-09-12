@@ -81,6 +81,11 @@ prints it. */
 #define DBGMACFMT_LE(a) \
 	(a)[5], (a)[4], (a)[3], (a)[2], (a)[1], (a)[0]
 
+#define DBGFMT_BYTEFLD3_P	"%u.%u.%u"
+#define DBGFMT_BYTEFLD3_V(_v)	(_v >> 16) & 0xff, (_v >> 8) & 0xff, _v & 0xff
+#define DBGFMT_BYTEFLD4_P	"%u.%u.%u.%u"
+#define DBGFMT_BYTEFLD4_V(_v)	(_v >> 24) & 0xff, (_v >> 16) & 0xff, (_v >> 8) & 0xff, _v & 0xff
+
 #ifndef BIT
 #define BIT(x) (1 << (x))
 #endif

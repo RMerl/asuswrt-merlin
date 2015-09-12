@@ -269,6 +269,19 @@ var validator = {
 			return true;
 	},
 
+	haveFullWidthChar: function(obj) {
+		var re = /[^\x00-\xff]/g;
+		if (obj.value.match(re)) {
+			alert('<#JS_validchar#>');
+			obj.focus();
+			obj.select();
+			return false;
+		}
+		else {
+			return true;
+		}
+	},
+
 	hostName: function (obj){
 		var re = new RegExp("^[a-zA-Z0-9][a-zA-Z0-9\-\_]+$","gi");
 		if(re.test(obj.value)){

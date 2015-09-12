@@ -63,6 +63,8 @@ typedef enum {
 	e_qcsapi_set_api_without_parameter,
 	/*GET API without interface name as parameter*/
 	e_qcsapi_get_api_without_ifname,
+	/*SET API without interface name as parameter*/
+	e_qcsapi_set_api_without_ifname,
 	e_qcsapi_nosuch_typeof_api = 0,
 } qcsapi_typeof_api;
 
@@ -112,9 +114,9 @@ typedef enum {
 	e_qcsapi_interface_get_mac_addr,
 	e_qcsapi_interface_set_mac_addr,
 	e_qcsapi_interface_get_counter,
+	e_qcsapi_interface_get_counter64,
 	e_qcsapi_interface_get_status,
-	e_qcsapi_interface_get_netmask,
-	e_qcsapi_interface_set_ip4,
+	e_qcsapi_interface_get_ip4,
 
 	e_qcsapi_pm_get_counter,
 	e_qcsapi_pm_get_elapsed_time,
@@ -125,6 +127,8 @@ typedef enum {
 
 	e_qcsapi_system_get_time_since_start,
 	e_qcsapi_get_system_status,
+	e_qcsapi_get_random_seed,
+	e_qcsapi_set_random_seed,
 
 	e_qcsapi_led_get,
 	e_qcsapi_led_set,
@@ -152,12 +156,15 @@ typedef enum {
 	e_qcsapi_wifi_reload_in_mode,
 	e_qcsapi_wifi_rfenable,
 	e_qcsapi_service_control,
+	e_qcsapi_wfa_cert,
 	e_qcsapi_wifi_rfstatus,
 	e_qcsapi_wifi_startprod,
 	e_qcsapi_wifi_get_bw,
 	e_qcsapi_wifi_set_bw,
 	e_qcsapi_wifi_get_BSSID,
 	e_qcsapi_wifi_get_config_BSSID,
+	e_qcsapi_wifi_ssid_set_bssid,
+	e_qcsapi_wifi_ssid_get_bssid,
 	e_qcsapi_wifi_get_SSID,
 	e_qcsapi_wifi_set_SSID,
 	e_qcsapi_wifi_get_channel,
@@ -171,6 +178,7 @@ typedef enum {
 	e_qcsapi_wifi_set_assoc_limit,
 	e_qcsapi_wifi_get_bss_assoc_limit,
 	e_qcsapi_wifi_set_bss_assoc_limit,
+	e_qcsapi_interface_set_ip4,
 	e_qcsapi_wifi_get_list_channels,
 	e_qcsapi_wifi_get_mode_switch,
 	e_qcsapi_wifi_get_noise,
@@ -206,11 +214,15 @@ typedef enum {
 	e_qcsapi_wifi_set_regulatory_tx_power_cap,
 	e_qcsapi_wifi_restore_regulatory_tx_power,
 	e_qcsapi_wifi_set_chan_pri_inactive,
+	e_qcsapi_wifi_set_chan_disabled,
+	e_qcsapi_wifi_get_chan_disabled,
 
 	e_qcsapi_wifi_get_tx_power,
 	e_qcsapi_wifi_set_tx_power,
 	e_qcsapi_wifi_get_tx_power_ext,
 	e_qcsapi_wifi_set_tx_power_ext,
+	e_qcsapi_wifi_get_chan_power_table,
+	e_qcsapi_wifi_set_chan_power_table,
 	e_qcsapi_wifi_get_bw_power,
 	e_qcsapi_wifi_set_bw_power,
 	e_qcsapi_wifi_get_bf_power,
@@ -257,6 +269,39 @@ typedef enum {
 	e_qcsapi_wifi_set_WPA_encryption_modes,
 	e_qcsapi_wifi_get_WPA_authentication_mode,
 	e_qcsapi_wifi_set_WPA_authentication_mode,
+
+	e_qcsapi_wifi_get_interworking,
+	e_qcsapi_wifi_set_interworking,
+	e_qcsapi_wifi_get_80211u_params,
+	e_qcsapi_wifi_set_80211u_params,
+	e_qcsapi_security_get_nai_realms,
+	e_qcsapi_security_add_nai_realm,
+	e_qcsapi_security_del_nai_realm,
+	e_qcsapi_security_add_roaming_consortium,
+	e_qcsapi_security_del_roaming_consortium,
+	e_qcsapi_security_get_roaming_consortium,
+	e_qcsapi_security_get_venue_name,
+	e_qcsapi_security_add_venue_name,
+	e_qcsapi_security_del_venue_name,
+	e_qcsapi_security_get_oper_friendly_name,
+	e_qcsapi_security_add_oper_friendly_name,
+	e_qcsapi_security_del_oper_friendly_name,
+	e_qcsapi_security_add_hs20_conn_capab,
+	e_qcsapi_security_get_hs20_conn_capab,
+	e_qcsapi_security_del_hs20_conn_capab,
+
+	e_qcsapi_wifi_get_hs20_status,
+	e_qcsapi_wifi_set_hs20_status,
+	e_qcsapi_wifi_get_hs20_params,
+	e_qcsapi_wifi_set_hs20_params,
+	e_qcsapi_wifi_get_proxy_arp,
+	e_qcsapi_wifi_set_proxy_arp,
+	e_qcsapi_wifi_get_l2_ext_filter,
+	e_qcsapi_wifi_set_l2_ext_filter,
+
+	e_qcsapi_remove_11u_param,
+	e_qcsapi_remove_hs20_param,
+
 	e_qcsapi_wifi_get_IEEE11i_encryption_modes,
 	e_qcsapi_wifi_set_IEEE11i_encryption_modes,
 	e_qcsapi_wifi_get_IEEE11i_authentication_mode,
@@ -264,14 +309,11 @@ typedef enum {
 	e_qcsapi_wifi_get_michael_errcnt,
 	e_qcsapi_wifi_get_pre_shared_key,
 	e_qcsapi_wifi_set_pre_shared_key,
-	e_qcsapi_wifi_get_eap_radius_ipaddr,
-	e_qcsapi_wifi_set_eap_radius_ipaddr,
-	e_qcsapi_wifi_get_eap_radius_port,
-	e_qcsapi_wifi_set_eap_radius_port,
+	e_qcsapi_wifi_add_radius_auth_server_cfg,
+	e_qcsapi_wifi_del_radius_auth_server_cfg,
+	e_qcsapi_wifi_get_radius_auth_server_cfg,
 	e_qcsapi_wifi_set_own_ip_addr,
 	e_qcsapi_wifi_set_own_ip_address,
-	e_qcsapi_wifi_get_eap_shared_key,
-	e_qcsapi_wifi_set_eap_shared_key,
 	e_qcsapi_wifi_get_psk_auth_failures,
 	e_qcsapi_wifi_get_key_passphrase,
 	e_qcsapi_wifi_set_key_passphrase,
@@ -407,6 +449,9 @@ typedef enum {
 	e_qcsapi_wifi_deny_mac_address,
 	e_qcsapi_wifi_remove_mac_address,
 	e_qcsapi_wifi_clear_mac_address_filters,
+	e_qcsapi_wifi_set_mac_address_reserve,
+	e_qcsapi_wifi_get_mac_address_reserve,
+	e_qcsapi_wifi_clear_mac_address_reserve,
 
 	e_qcsapi_wifi_backoff_fail_max,
 	e_qcsapi_wifi_backoff_timeout,
@@ -481,6 +526,8 @@ typedef enum {
 	e_qcsapi_wifi_set_dfs_s_radio_duration,
 	e_qcsapi_wifi_set_dfs_s_radio_cac_time,
 	e_qcsapi_wifi_set_dfs_s_radio_report_only,
+	e_qcsapi_wifi_set_dfs_s_radio_wea_duration,
+	e_qcsapi_wifi_set_dfs_s_radio_wea_cac_time,
 
 	e_qcsapi_wifi_set_ap_isolate,
 	e_qcsapi_wifi_get_ap_isolate,
@@ -506,6 +553,7 @@ typedef enum {
 	e_qcsapi_eth_phy_power_off,
 	e_qcsapi_test_traffic,
 	e_qcsapi_aspm_l1,
+	e_qcsapi_l1,
 
 	e_qcsapi_get_temperature,
 
@@ -514,10 +562,12 @@ typedef enum {
 	e_qcsapi_set_soc_macaddr,
 
 	e_qcsapi_run_script,
-	e_qcsapi_vsp,
+	e_qcsapi_qtm,
 
 	e_qcsapi_set_accept_oui_filter,
 	e_qcsapi_get_accept_oui_filter,
+
+	e_qcsapi_get_swfeat_list,
 
 	e_qcsapi_wifi_set_vht,
 	e_qcsapi_wifi_get_vht,
@@ -549,6 +599,7 @@ typedef enum {
 	e_qcsapi_get_carrier_id,
 	e_qcsapi_set_carrier_id,
 	e_qcsapi_wifi_enable_tdls,
+	e_qcsapi_wifi_enable_tdls_over_qhop,
 	e_qcsapi_wifi_get_tdls_status,
 	e_qcsapi_wifi_set_tdls_params,
 	e_qcsapi_wifi_get_tdls_params,
@@ -596,18 +647,46 @@ typedef enum {
 	e_qcsapi_wifi_get_tx_amsdu,
 	e_qcsapi_wifi_set_tx_amsdu,
 
-	e_qcsapi_get_bb_param,
-	e_qcsapi_set_bb_param,
+	e_qcsapi_is_startprod_done,
 
 	e_qcsapi_wifi_disassociate_sta,
 	e_qcsapi_wifi_reassociate,
+
+	e_qcsapi_get_bb_param,
+	e_qcsapi_set_bb_param,
 
 	e_qcsapi_wifi_set_scan_buf_max_size,
 	e_qcsapi_wifi_get_scan_buf_max_size,
 	e_qcsapi_wifi_set_scan_table_max_len,
 	e_qcsapi_wifi_get_scan_table_max_len,
 
-	e_qcsapi_is_startprod_done,
+	e_qcsapi_wifi_set_enable_mu,
+	e_qcsapi_wifi_get_enable_mu,
+	e_qcsapi_wifi_set_mu_use_precode,
+	e_qcsapi_wifi_get_mu_use_precode,
+	e_qcsapi_wifi_set_mu_use_eq,
+	e_qcsapi_wifi_get_mu_use_eq,
+	e_qcsapi_wifi_get_mu_groups,
+	e_qcsapi_get_emac_switch,
+	e_qcsapi_set_emac_switch,
+	e_qcsapi_eth_dscp_map,
+
+	e_qcsapi_send_file,
+	e_qcsapi_wifi_verify_repeater_mode,
+	e_qcsapi_wifi_set_ap_interface_name,
+	e_qcsapi_wifi_get_ap_interface_name,
+
+	e_qcsapi_set_optim_stats,
+
+	e_qcsapi_set_sys_time,
+	e_qcsapi_get_sys_time,
+
+	e_qcsapi_get_eth_info,
+	e_qcsapi_wifi_block_bss,
+	e_qcsapi_wifi_set_txba_disable,
+	e_qcsapi_wifi_get_txba_disable,
+	e_qcsapi_wifi_set_rxba_decline,
+	e_qcsapi_wifi_get_rxba_decline,
 
 	e_qcsapi_nosuch_api = 0
 } qcsapi_entry_point;
@@ -626,6 +705,8 @@ typedef struct qcsapi_generic_parameter {
 		qcsapi_mimo_type	modulation;
 		qcsapi_board_parameter_type board_param;
 		char			the_SSID[ IW_ESSID_MAX_SIZE + 10 ];
+		qcsapi_tdls_type	type_of_tdls;
+		qcsapi_tdls_oper	tdls_oper;
 		qcsapi_extender_type type_of_extender;
 	} parameter_type;
 } qcsapi_generic_parameter;

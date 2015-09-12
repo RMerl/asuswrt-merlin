@@ -487,7 +487,7 @@ int add_multi_routes(void)
 			wan_weight = atoi(b);
 			if(wan_weight > 0 && strlen(wan_multi_gate[unit]) > 0){
 				if(strlen(cmd) == 0)
-					strcpy(cmd, "ip route replace default equalize");
+					strcpy(cmd, "ip route replace default");
 
 				ptr = cmd+strlen(cmd);
 				sprintf(ptr, " nexthop via %s dev %s weight %d", wan_multi_gate[unit], wan_multi_if[unit], wan_weight);
@@ -1199,6 +1199,9 @@ start_wan_if(int unit)
 #ifdef RTCONFIG_USB_BECEEM
 	unsigned int uvid, upid;
 #endif
+#ifdef SET_USB_MODEM_MTU_ETH
+	int modem_mtu;
+#endif
 #endif
 	int mtu;
 	struct vlan_ioctl_args ifv;
@@ -1279,7 +1282,6 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 
 		/* Stop dhcp client */
 		stop_udhcpc(unit);
-		stop_zcip(unit);
 
 #if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 		unsigned long long rx, tx;
@@ -1337,12 +1339,8 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 			// run as ppp proto.
 			nvram_set(strcat_r(prefix, "proto", tmp), "pppoe");
 #ifndef RTCONFIG_DUALWAN
-#if 1 /* TODO: tmporary change! remove after WEB UI support */
 			nvram_set(strcat_r(prefix, "dhcpenable_x", tmp), "1");
 			nvram_set(strcat_r(prefix, "vpndhcp", tmp), "0");
-#else /* TODO: tmporary change! remove after WEB UI support */
-			nvram_set(strcat_r(prefix, "dhcpenable_x", tmp), "2");
-#endif
 			nvram_set(strcat_r(prefix, "dnsenable_x", tmp), "1");
 #endif
 
@@ -1394,36 +1392,36 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 				return;
 			}
 
-			strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
-			if((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0){
-				TRACE_PT("Couldn't open the socket!\n");
-				update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_SYSTEM_ERR);
-				return;
-			}
+#ifdef SET_USB_MODEM_MTU_ETH
+			modem_mtu = nvram_get_int("modem_mtu");
+#endif
+			ifr.ifr_flags = 0;
+			for (i = 0; i < 3; i++) {
+				int flags, mtu = 0;
 
-			if(ioctl(s, SIOCGIFFLAGS, &ifr)){
-				close(s);
-				TRACE_PT("Couldn't read the flags of %s!\n", wan_ifname);
-				update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_SYSTEM_ERR);
-				return;
-			}
-
-			i = 0;
-			while(!(ifr.ifr_flags & IFF_UP) && (i++ < 3)){
-				ifconfig(wan_ifname, IFUP, NULL, NULL);
-				TRACE_PT("%s: wait %s be up, %d second...!\n", __FUNCTION__, wan_ifname, i);
-				sleep(1);
-
-				if(ioctl(s, SIOCGIFFLAGS, &ifr)){
-					close(s);
-					TRACE_PT("Couldn't read the flags of %s(%d)!\n", wan_ifname, i);
+				if (_ifconfig_get(wan_ifname, &flags, NULL, NULL, NULL, &mtu) < 0) {
+					TRACE_PT("Couldn't read the flags of %s!\n", wan_ifname);
 					update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_SYSTEM_ERR);
 					return;
 				}
-			}
-			close(s);
+				ifr.ifr_flags = flags;
+#ifdef SET_USB_MODEM_MTU_ETH
+				mtu = (modem_mtu >= 576 && modem_mtu < mtu) ? modem_mtu : 0;
+				if ((flags & IFF_UP) && !mtu)
+					break;
+				_ifconfig(wan_ifname, flags | IFUP, NULL, NULL, NULL, mtu);
+				if ((flags & IFF_UP))
+					break;
+#else
+				if ((flags & IFF_UP))
+					break;
+				ifconfig(wan_ifname, flags | IFUP, NULL, NULL);
+#endif
+				TRACE_PT("%s: wait %s be up, %d second...!\n", __FUNCTION__, wan_ifname, i);
+				sleep(1);
+			};
 
-			if(!(ifr.ifr_flags & IFF_UP)){
+			if (!(ifr.ifr_flags & IFF_UP)) {
 				TRACE_PT("Interface %s couldn't be up!\n", wan_ifname);
 				update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_SYSTEM_ERR);
 				return;
@@ -1436,8 +1434,14 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 
 			// Android phone, RNDIS, QMI interface, Gobi.
 			if(!strncmp(wan_ifname, "usb", 3)){
-				if(nvram_get_int("stop_conn_3g") != 1)
+				if(nvram_get_int("stop_conn_3g") != 1){
+#ifdef RTCONFIG_TCPDUMP
+					char *tcpdump_argv[] = { "/usr/sbin/tcpdump", "-i", wan_ifname, "-nnXw", "/tmp/udhcpc.pcap", NULL};
+					_eval(tcpdump_argv, NULL, 0, &pid);
+					sleep(2);
+#endif
 					start_udhcpc(wan_ifname, unit, &pid);
+				}
 				else
 					TRACE_PT("stop_conn_3g was set.\n");
 			}
@@ -1622,10 +1626,6 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 			char *ipaddr = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 			char *netmask = nvram_safe_get(strcat_r(prefix, "xnetmask", tmp));
 			int dhcpenable = nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp));
-#if 1 /* TODO: tmporary change! remove after WEB UI support */
-			if (dhcpenable && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0"))
-				dhcpenable = 2;
-#endif /* TODO: tmporary change! remove after WEB UI support */
 			int demand = nvram_get_int(strcat_r(prefix, "pppoe_idletime", tmp)) &&
 					strcmp(wan_proto, "l2tp");	/* L2TP does not support idling */
 
@@ -1677,11 +1677,8 @@ _dprintf("start_wan_if: USB modem is scanning...\n");
 
 			/* launch dhcp client and wait for lease forawhile */
 			if (dhcpenable) {
-				/* Skip DHCP, but ZCIP for PPPOE, if desired */
-				if (strcmp(wan_proto, "pppoe") == 0 && dhcpenable == 2)
-					start_zcip(wan_ifname, unit);
-				else
-					start_udhcpc(wan_ifname, unit, NULL);
+				start_udhcpc(wan_ifname, unit,
+					(strcmp(wan_proto, "pppoe") == 0) ? &pid : NULL);
 			} else {
 				char *gateway = nvram_safe_get(strcat_r(prefix, "xgateway", tmp));
 
@@ -1943,7 +1940,6 @@ stop_wan_if(int unit)
 
 	/* Stop dhcp client */
 	stop_udhcpc(unit);
-	stop_zcip(unit);
 
 	/* Stop pre-authenticator */
 	stop_auth(unit, 0);
@@ -2449,8 +2445,11 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	/* Set default route to gateway if specified */
 	if (strcmp(wan_proto, "dhcp") == 0 || strcmp(wan_proto, "static") == 0) {
 		/* the gateway is in the local network */
-		if (gateway)
+		if (gateway &&
+		    inet_addr_(gateway) != inet_addr_(nvram_safe_get(strcat_r(prefix, "ipaddr", tmp))))
 			route_add(wan_ifname, 0, gateway, NULL, "255.255.255.255");
+		/* replaced with add_multi_routes()
+		route_add(wan_ifname, 0, "0.0.0.0", gateway, "0.0.0.0"); */
 	}
 
 	/* hack: avoid routing cycles, when both peer and server has the same IP */
@@ -2647,6 +2646,10 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		//_eval(getip, ">>/tmp/log.txt", 0, &pid);
 		_eval(getip, ">>/dev/null", 0, &pid);
 	}
+#endif
+
+#ifdef RTCONFIG_TCPDUMP
+	eval("killall", "tcpdump");
 #endif
 
 _dprintf("%s(%s): done.\n", __FUNCTION__, wan_ifname);

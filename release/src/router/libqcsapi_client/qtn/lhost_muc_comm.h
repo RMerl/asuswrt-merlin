@@ -97,6 +97,7 @@ struct host_txdesc {
 #define HTXD_FLAG_NO_UPDATE_NAV		0x00000008	/* Don't update NAV for this frame */
 #define HTXD_FLAG_NO_RETRY		0x00000010	/* Don't retry this frame if tx failed */
 #define HTXD_FLAG_NO_RETURN		0x00000020	/* Don't return txdesc from MuC to lhost */
+#define HTXD_FLAG_IMM_RETURN		0x00000040	/* Immediately return txdesc from Muc to lhost */
 	uint32_t	hd_flags;
 };
 
@@ -119,7 +120,7 @@ struct host_txdesc {
 
 /* host_ioctl_hifinfo */
 
-#define NAMESIZE		8
+#define NAMESIZE		16
 #define VERSION_SIZE		16
 #define MAC_ADDR_LEN		6
 #define MAC_STR_BUF_SIZE	18
@@ -305,11 +306,24 @@ struct qtn_baparams_args {
 #define IOCTL_DEV_VSP			42	/* Configure QVSP */
 #define IOCTL_DEV_SET_11G_ERP           43      /* set 11bg ERP on/off */
 #define IOCTL_DEV_BGSCAN_CHANNEL	44
-#define IOCTL_DEV_UPDATE_DTLS_PRESENT   45      /* update wheather DTLS session deteced or not */
 #define IOCTL_DEV_SET_OCAC		46
 #define IOCTL_DEV_MEAS_CHANNEL		47	/* notify MUC to execute measurement */
 #define IOCTL_DEV_GET_LINK_MARGIN_INFO	48	/* get rssi info */
+#define	IOCTL_DEV_SET_TDLS_PARAM	49	/* set tdls related paramters */
+#define	IOCTL_DEV_GET_TDLS_PARAM	50	/* set tdls related paramters */
+#define	IOCTL_DEV_POWER_SAVE		51	/* enter/leave power save state */
+#define	IOCTL_DEV_REMAIN_CHANNEL	52	/* Remain on target channel */
+#define IOCTL_DEV_SCS_UPDATE_SCAN_STATS	53
+#define IOCTL_DEV_SET_SCANMODE_STA	54
+#define IOCTL_DEV_GET_MU_GRP		55	/* get MU groups other releated data */
 #define IOCTL_DEV_SET_RX_GAIN_PARAMS	56	/* Set RX gain params */
+#define IOCTL_DEV_GET_MU_ENABLE		57	/* get MU enable flag */
+#define IOCTL_DEV_GET_PRECODE_ENABLE	58	/* get MU precode enable flag */
+#define IOCTL_DEV_GET_MU_USE_EQ		59	/* get EQ enable flag */
+#define IOCTL_DEV_SET_CHAN_POWER_TABLE	60	/* Set MuC power table */
+#define	IOCTL_DEV_ENABLE_VLAN		61	/* Set Global Vlan mode */
+#define	IOCTL_DEV_NODE_UPDATE		62	/* Update node information again after association */
+#define IOCTL_DEV_FWT_SW_SYNC		63	/* sync FWT timestamp base between Lhost and MUC */
 
 #define IOCTL_DEV_CMD_MEMDBG_DUMP	1	/* Dump MuC memory */
 #define IOCTL_DEV_CMD_MEMDBG_DUMPCFG	2	/* Configuration for dumping MuC memory */
@@ -367,6 +381,8 @@ struct qtn_baparams_args {
 #define IOCTL_HLINK_BA_ADD_START	15	/* start Tx ADDBA REQ sequence */
 #define IOCTL_HLINK_PEER_RTS		16	/* Peer RTS enable or disable */
 #define IOCTL_HLINK_DYN_WMM		17	/* Dynamic WMM enable or disable */
+#define IOCTL_HLINK_TDLS_EVENTS		18	/* TDLS Events from MuCfw */
+#define IOCTL_HLINK_RATE_TRAIN		19	/* Per-node rate training hash */
 
 enum {
 	BW_INVALID = 0,
@@ -446,8 +462,7 @@ struct qtn_meas_chan_info {
 	uint32_t meas_dur_ms;
 	union {
 		struct {
-			uint32_t cca_pri_cnt;
-			uint32_t cca_sec_cnt;
+			uint32_t cca_busy_cnt;
 			uint32_t cca_try_cnt;
 			uint32_t cca_try_ms;
 			uint32_t cca_busy_ms;
@@ -564,6 +579,25 @@ struct qtn_scs_info_set {
 	struct qtn_scs_scan_info scan_info[IEEE80211_CHAN_MAX];
 };
 
+struct qtn_remain_chan_info {
+	uint32_t chipid;
+	uint32_t data_channel;		/* Data channel to return to */
+	uint32_t off_channel;		/* The required remain channel */
+	uint32_t duration_usecs;	/* Duration in microseconds to stay on remain channel */
+	uint64_t start_tsf;		/* tsf at which to switch to remain channel */
+
+#define QTN_REM_CHAN_STATUS_IDLE		0x0
+#define QTN_REM_CHAN_STATUS_HOST_IOCTL_SENT	0x1
+#define QTN_REM_CHAN_STATUS_MUC_SCHEDULED	0x2
+#define QTN_REM_CHAN_STATUS_MUC_STARTED	0x3
+#define QTN_REM_CHAN_STATUS_MUC_COMPLETE	0x4
+#define QTN_REM_CHAN_STATUS_MUC_CANCELLED	0x5
+	uint32_t status;		/* channel switch status */
+
+	uint8_t peer_mac[IEEE80211_ADDR_LEN];	/* peer node mac address */
+};
+
+
 #define QTN_CCA_CNT2MS(_cnt)   RUBY_TIMER_MUC_CCA_CNT2MS(_cnt)
 #define QTN_CCA_INTV           RUBY_TIMER_MUC_CCA_INTV
 
@@ -611,8 +645,13 @@ struct qtn_scan_chan_info {
 #define QTN_SCAN_CHAN_MUC_PROBING		0x2
 #define QTN_SCAN_CHAN_MUC_COMPLETED		0x3
 #define QTN_SCAN_CHAN_MUC_FAILED		0x4
+#define QTN_SCAN_CHAN_MUC_SCHEDULED		0x5
 	uint32_t	muc_status;		/* written only by MuC */
-#define QTN_SCAN_CHAN_FLAG_ACTIVE		0x1
+#define QTN_SCAN_CHAN_FLAG_ACTIVE		0x00000001
+#define QTN_SCNA_CHAN_FLAG_PASSIVE_FAST		0x00000002
+#define QTN_SCNA_CHAN_FLAG_PASSIVE_NORMAL	0x00000004
+#define QTN_SCNA_CHAN_FLAG_PASSIVE_SLOW		0x00000008
+#define QTN_SCAN_CHAN_TURNOFF_RF		0x00000010
 	uint32_t	scan_flags;
 	uint32_t	start_txdesc_host;	/* The frame sent before go scan channel,
 						 * e.g. pwrsav frame in STA mode */
@@ -711,19 +750,16 @@ enum qdrv_cmd_muc_memdbgcnf_s {
 	QDRV_CMD_MUC_MEMDBG_LAST
 };
 
-/* must keep these two file lists in sync */
-#ifdef TOPAZ_PLATFORM
-#define	NUM_CAL_FILES			16
-#else
-#define NUM_CAL_FILES			15
-#endif
-
+/* The following file indexes and file lists must all be kept in sync */
 #define FOPS_FD_EP_SAMPLES		9
 #define FOPS_FD_DCACHE_SAMPLES		10
+#ifdef PROFILE_MUC_SAMPLE_IPTR_AUC
+#define FOPS_FD_IPTR_SAMPLES		15
+#else
 #define FOPS_FD_IPTR_SAMPLES		11
+#endif
 #define FOPS_FD_UBOOT_ENV		12
 
-#ifndef TOPAZ_PLATFORM
 #define LHOST_CAL_FILES		{	\
 	NULL,				\
 	"/proc/bootcfg/bf_factor",	\
@@ -738,29 +774,10 @@ enum qdrv_cmd_muc_memdbgcnf_s {
 	"/mnt/jffs2/profile_dcache_muc",\
 	"/mnt/jffs2/profile_iptr_muc",	\
 	"/proc/bootcfg/env",		\
-	"/etc/mtest",		\
-	"/tmp/bond_opt.txt",	\
+	"/etc/mtest",			\
+	"/proc/bootcfg/rx_iq.cal",	\
+	"/mnt/jffs2/profile_iptr_auc",	\
 }
-#else
-#define LHOST_CAL_FILES         {       \
-        NULL,                           \
-        "/proc/bootcfg/bf_factor",      \
-        "/tmp/txpower.txt",             \
-        "/proc/bootcfg/txpower.cal",    \
-        "/proc/bootcfg/dc_iq.cal",      \
-        "/mnt/jffs2/mon.out",           \
-        "/mnt/jffs2/gmon.out",          \
-        "/mnt/jffs2/pecount.out",       \
-        "/proc/bootcfg/pdetector.cal",  \
-        "/mnt/jffs2/profile_ep_muc",    \
-        "/mnt/jffs2/profile_dcache_muc",\
-        "/mnt/jffs2/profile_iptr_muc",  \
-        "/proc/bootcfg/env",            \
-        "/etc/mtest",           \
-        "/proc/bootcfg/rx_iq.cal", \
-		"/tmp/bond_opt.txt",	\
-}
-#endif
 
 #define MUC_CAL_FILES		{	\
 	NULL,				\
@@ -778,6 +795,24 @@ enum qdrv_cmd_muc_memdbgcnf_s {
 	NULL,				\
 }
 
+enum tdls_ioctl_params {
+	IOCTL_TDLS_STATUS = 1,
+	IOCTL_TDLS_UAPSD_IND_WND,
+	IOCTL_TDLS_PTI_CTRL,
+	IOCTL_TDLS_PTI,
+	IOCTL_TDLS_PTI_PENDING,
+	IOCTL_TDLS_DBG_LEVEL,
+	IOCTL_TDLS_PTI_DELAY,
+	IOCTL_TDLS_PTI_EVENT = 100
+};
+
+struct qtn_tdls_args {
+	uint8_t		ni_macaddr[IEEE80211_ADDR_LEN];
+	uint16_t	ni_ncidx;
+	uint32_t	tdls_cmd;
+	uint32_t	tdls_params;
+};
+
 struct qtn_node_args
 {
 	/* header */
@@ -788,7 +823,7 @@ struct qtn_node_args
 	uint8_t	ni_htnrates;
 	uint8_t	ni_htrates[IEEE80211_HT_RATE_MAXSIZE];
 	uint16_t	ni_associd;	/* assoc response */
-	uint16_t	ni_node_idx;	/* local node index */
+	uint16_t	ni_node_idx;
 	uint16_t	ni_flags;	/* special-purpose state */
 	struct wmm_params	wmm_params[WME_NUM_AC];
 	uint8_t	ni_implicit_ba_rx; /* The RX side of the implicit BA. Zero for no implicit RX BA */
@@ -798,14 +833,21 @@ struct qtn_node_args
 	uint8_t ni_vendor;
 	uint8_t ni_bbf_disallowed;      /* flag to disallow BBF */
 	uint8_t ni_std_bf_disallowed;      /* flag to disallow standard BF */
+	uint8_t ni_uapsd;	/* U-APSD per-node flags matching WMM STA Qos Info field */
 	uint8_t	ni_htcap[sizeof(struct ieee80211_htcap)];	/* Processed HT capabilities */
 	uint8_t	ni_htinfo[sizeof(struct ieee80211_htinfo)];	/* Processed HT info */
 	uint8_t	ni_vhtcap[sizeof(struct ieee80211_vhtcap)];	/* Processed VHT capabilities */
 	uint8_t	ni_vhtop[sizeof(struct ieee80211_vhtop)];	/* Processed VHT operational info */
 	struct qtn_node_shared_stats *ni_shared_stats;
+	uint32_t	ni_ver_sw;
 	uint32_t	ni_qtn_flags;
-	u_int16_t ni_rsn_caps;		/* optional rsn capabilities */
-	u_int8_t rsn_ucastcipher;	/* selected unicast cipher */
+	uint32_t	ni_tdls_status;
+	uint8_t		ni_mu_grp[sizeof(struct ieee80211_vht_mu_grp)];
+	uint16_t	ni_rsn_caps;		/* optional rsn capabilities */
+	uint8_t		rsn_ucastcipher;	/* selected unicast cipher */
+	uint16_t	tdls_peer_associd;	/* tdls peer AID allocated by AP, unique in BSS */
+	uint32_t	ni_rate_train;
+	uint32_t	ni_rate_train_peer;
 };
 
 struct qtn_beacon_args
@@ -849,6 +891,12 @@ struct qtn_key_args
 	uint8_t	wk_addr[IEEE80211_ADDR_LEN];
 };
 
+struct qtn_power_save_args
+{
+	uint32_t enable;
+	uint8_t ni_addr[IEEE80211_ADDR_LEN];
+};
+
 struct lhost_txdesc
 {
 	struct host_txdesc	hw_desc;	/* shared between muc and lhost */
@@ -869,6 +917,46 @@ struct qtn_link_margin_info {
 #define QTN_LINK_MARGIN_REASON_SUCC		0
 #define QTN_LINK_MARGIN_REASON_NOSUCHNODE	1
 	uint8_t		mac_addr[IEEE80211_ADDR_LEN];
+};
+
+#define QTN_RESERVED_DEVIDS		2
+#define QTN_WLANID_FROM_DEVID(devid)	\
+	((devid < QTN_RESERVED_DEVIDS)? 0 : (devid - QTN_RESERVED_DEVIDS))
+
+struct qtn_mu_grp_args {
+	/* MU group ID. 0 means the group is not used and grp_ni is empty*/
+	uint8_t grp_id;
+	/* mu QMat installation status */
+	/* QMat is not installed and not used */
+#define MU_QMAT_DISABLED	0
+	/* QMat is installed and used */
+#define MU_QMAT_ENABLED		1
+	/* QMat is installed, used but not updated */
+#define MU_QMAT_FREEZED		2
+	/* QMat is installed, not used and not updated */
+#define MU_QMAT_NOT_USED	3
+	uint8_t qmat_installed;
+	/* the index of the grp_ni[], is also the user position */
+	uint16_t aid[IEEE80211_MU_GRP_NODES_MAX];
+	uint8_t ncidx[IEEE80211_MU_GRP_NODES_MAX];
+	/* matrix addr offsets in sram */
+	unsigned int u0_1ss_u1_1ss;
+	unsigned int u0_2ss_u1_1ss;
+	unsigned int u0_3ss_u1_1ss;
+	unsigned int u0_1ss_u1_2ss;
+	unsigned int u0_1ss_u1_3ss;
+	unsigned int u0_2ss_u1_2ss;
+	/* stats */
+	uint32_t upd_cnt;
+	int32_t rank;
+};
+
+struct qtn_fwt_sw_params {
+	uint32_t muc_hz;
+	uint32_t muc_jiffies_base;
+	uint64_t *muc_fwt_ts_mirror;
+	uint64_t *muc_fwt_ts_mirror_bus;
+	uint64_t m2h_op;
 };
 
 #endif	// _LHOST_MUC_COMM_H

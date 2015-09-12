@@ -256,7 +256,7 @@ define platformKernelConfig
 			fi; \
 			if [ -d $(SRCBASE)/router/wl_arm_7/prebuilt ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
-				cp $(SRCBASE)/router/wl_arm_7/prebuilt/wl_apsta.o $(SRCBASE)/wl/linux ; \
+				cp $(SRCBASE)/router/wl_arm_7/prebuilt/wl*.o $(SRCBASE)/wl/linux ; \
 				mkdir -p $(SRCBASE)/../../dhd/src/dhd/linux ; \
 				cp $(SRCBASE)/router/wl_arm_7/prebuilt/dhd.o $(SRCBASE)/../../dhd/src/dhd/linux ; \
 			fi; \
@@ -268,7 +268,7 @@ define platformKernelConfig
 		elif [ "$(BCM_10)" = "y" ]; then \
 			if [ -d $(SRCBASE)/router/wl_arm_10/prebuilt ]; then \
 				mkdir $(SRCBASE)/wl/linux ; \
-				cp $(SRCBASE)/router/wl_arm_10/prebuilt/wl_apsta.o $(SRCBASE)/wl/linux ; \
+				cp $(SRCBASE)/router/wl_arm_10/prebuilt/wl*.o $(SRCBASE)/wl/linux ; \
 			fi; \
 		else \
 			if [ -d $(SRCBASE)/router/wl_arm/$(BUILD_NAME) ]; then \

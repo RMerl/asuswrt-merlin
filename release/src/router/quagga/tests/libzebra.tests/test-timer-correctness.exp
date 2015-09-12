@@ -1,0 +1,7 @@
+set timeout 10
+set testprefix "test-timer-correctness"
+set aborted 0
+
+spawn "./test-timer-correctness"
+
+onesimple "" "Expected output and actual output match."

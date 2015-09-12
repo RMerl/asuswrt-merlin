@@ -166,10 +166,9 @@ elif [ "${wifi0_mode}" = "sta" ]; then
 			${INVOKE_QCSAPI} SSID_set_passphrase wifi0 "${wifi0_SSID}" 0 "${wifi0_passphrase}"
 		fi
 	fi
+	echo_with_logging "=== Applying security configuration"
+	${INVOKE_QCSAPI} apply_security_config wifi0
 fi
-
-echo_with_logging "=== Applying security configuration"
-${INVOKE_QCSAPI} apply_security_config wifi0
 
 echo_with_logging "=== Apply some hardware wireless setting"
 # ifconfig br0 169.254.39.2 netmask 255.255.255.0

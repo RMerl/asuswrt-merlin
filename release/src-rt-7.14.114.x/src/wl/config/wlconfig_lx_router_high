@@ -1,0 +1,74 @@
+# Broadcom 802.11abg Networking Device Driver Configuration file
+#
+# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# $Id: wlconfig_lx_router_high,v 1.31 2011-02-10 11:01:24 $
+#
+# src/wl/linux driver config file
+
+# get common 
+include $(WLCFGDIR)/wl_default
+include $(WLCFGDIR)/wl_hnd
+
+# features
+include $(WLCFGDIR)/wlconfig_apdef
+include $(WLCFGDIR)/wlconfig_lx_wl_stadef
+
+OSLLX=1
+
+# BMAC split
+WL_HIGH=1
+WL_LOW=0
+BCMDBUS=1
+# The TRX format is version 2 when CPU is cr4 defined in dongle/rte/Makerules
+BCMTRXV2=1
+RPC_NOCOPY=1
+#DBUS_LINUX_RXDPC=1
+BCMDMA32=1
+BCM_RPC_TP_DBUS_NTXQ=80
+BCM_RPC_TP_DBUS_NRXQ=200
+# On 5358/43236 HSIC USBAP, I've seen 35600 ms return time when doing linux image update during
+# 4-stream Chariot throughput test. Set it to double the value for safety.
+RPC_RETURN_WAIT_TIMEOUT_MSEC=64000
+
+# Embed 43526b and 43236b image
+EMBED_IMAGE_43236b=1
+EMBED_IMAGE_43526b=1
+EMBED_IMAGE_43556b1=1
+BCM_DNGL_EMBEDIMAGE=1
+DNGL_WD_KEEP_ALIVE=1
+RXCHAIN_PWRSAVE=1
+RADIO_PWRSAVE=1
+
+USBAP=1
+WLLED=1
+WLPIO=0
+WLTUNEFILE=wltunable_rte_usbap.h
+WMF=1
+BTC2WIRE=0
+WL_AP_TPC=1
+WLCHANIM=1
+SMF_STATS=1
+PHYMON=1
+BCM_DCS=1
+WET=1
+PSTA=1
+DWDS=1
+
+# Overrides
+WLEXTLOG=0
+WLDPT=0
+BCMAUTH_PSK=0
+WL_MONITOR=0

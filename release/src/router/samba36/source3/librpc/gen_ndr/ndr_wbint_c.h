@@ -34,8 +34,8 @@ struct tevent_req *dcerpc_wbint_LookupSid_send(TALLOC_CTX *mem_ctx,
 					       struct dcerpc_binding_handle *h,
 					       struct dom_sid *_sid /* [in] [ref] */,
 					       enum lsa_SidType *_type /* [out] [ref] */,
-					       const char **_domain /* [out] [charset(UTF8),ref] */,
-					       const char **_name /* [out] [charset(UTF8),ref] */);
+					       const char **_domain /* [out] [ref,charset(UTF8)] */,
+					       const char **_name /* [out] [ref,charset(UTF8)] */);
 NTSTATUS dcerpc_wbint_LookupSid_recv(struct tevent_req *req,
 				     TALLOC_CTX *mem_ctx,
 				     NTSTATUS *result);
@@ -43,8 +43,8 @@ NTSTATUS dcerpc_wbint_LookupSid(struct dcerpc_binding_handle *h,
 				TALLOC_CTX *mem_ctx,
 				struct dom_sid *_sid /* [in] [ref] */,
 				enum lsa_SidType *_type /* [out] [ref] */,
-				const char **_domain /* [out] [charset(UTF8),ref] */,
-				const char **_name /* [out] [charset(UTF8),ref] */,
+				const char **_domain /* [out] [ref,charset(UTF8)] */,
+				const char **_name /* [out] [ref,charset(UTF8)] */,
 				NTSTATUS *result);
 
 struct tevent_req *dcerpc_wbint_LookupSids_r_send(TALLOC_CTX *mem_ctx,
@@ -78,7 +78,7 @@ NTSTATUS dcerpc_wbint_LookupName_r(struct dcerpc_binding_handle *h, TALLOC_CTX *
 struct tevent_req *dcerpc_wbint_LookupName_send(TALLOC_CTX *mem_ctx,
 						struct tevent_context *ev,
 						struct dcerpc_binding_handle *h,
-						const char *_domain /* [in] [charset(UTF8),ref] */,
+						const char *_domain /* [in] [ref,charset(UTF8)] */,
 						const char *_name /* [in] [ref,charset(UTF8)] */,
 						uint32_t _flags /* [in]  */,
 						enum lsa_SidType *_type /* [out] [ref] */,
@@ -88,7 +88,7 @@ NTSTATUS dcerpc_wbint_LookupName_recv(struct tevent_req *req,
 				      NTSTATUS *result);
 NTSTATUS dcerpc_wbint_LookupName(struct dcerpc_binding_handle *h,
 				 TALLOC_CTX *mem_ctx,
-				 const char *_domain /* [in] [charset(UTF8),ref] */,
+				 const char *_domain /* [in] [ref,charset(UTF8)] */,
 				 const char *_name /* [in] [ref,charset(UTF8)] */,
 				 uint32_t _flags /* [in]  */,
 				 enum lsa_SidType *_type /* [out] [ref] */,
@@ -104,7 +104,7 @@ NTSTATUS dcerpc_wbint_Sid2Uid_r(struct dcerpc_binding_handle *h, TALLOC_CTX *mem
 struct tevent_req *dcerpc_wbint_Sid2Uid_send(TALLOC_CTX *mem_ctx,
 					     struct tevent_context *ev,
 					     struct dcerpc_binding_handle *h,
-					     const char *_dom_name /* [in] [charset(UTF8),unique] */,
+					     const char *_dom_name /* [in] [unique,charset(UTF8)] */,
 					     struct dom_sid *_sid /* [in] [ref] */,
 					     uint64_t *_uid /* [out] [ref] */);
 NTSTATUS dcerpc_wbint_Sid2Uid_recv(struct tevent_req *req,
@@ -112,7 +112,7 @@ NTSTATUS dcerpc_wbint_Sid2Uid_recv(struct tevent_req *req,
 				   NTSTATUS *result);
 NTSTATUS dcerpc_wbint_Sid2Uid(struct dcerpc_binding_handle *h,
 			      TALLOC_CTX *mem_ctx,
-			      const char *_dom_name /* [in] [charset(UTF8),unique] */,
+			      const char *_dom_name /* [in] [unique,charset(UTF8)] */,
 			      struct dom_sid *_sid /* [in] [ref] */,
 			      uint64_t *_uid /* [out] [ref] */,
 			      NTSTATUS *result);
@@ -126,7 +126,7 @@ NTSTATUS dcerpc_wbint_Sid2Gid_r(struct dcerpc_binding_handle *h, TALLOC_CTX *mem
 struct tevent_req *dcerpc_wbint_Sid2Gid_send(TALLOC_CTX *mem_ctx,
 					     struct tevent_context *ev,
 					     struct dcerpc_binding_handle *h,
-					     const char *_dom_name /* [in] [charset(UTF8),unique] */,
+					     const char *_dom_name /* [in] [unique,charset(UTF8)] */,
 					     struct dom_sid *_sid /* [in] [ref] */,
 					     uint64_t *_gid /* [out] [ref] */);
 NTSTATUS dcerpc_wbint_Sid2Gid_recv(struct tevent_req *req,
@@ -134,7 +134,7 @@ NTSTATUS dcerpc_wbint_Sid2Gid_recv(struct tevent_req *req,
 				   NTSTATUS *result);
 NTSTATUS dcerpc_wbint_Sid2Gid(struct dcerpc_binding_handle *h,
 			      TALLOC_CTX *mem_ctx,
-			      const char *_dom_name /* [in] [charset(UTF8),unique] */,
+			      const char *_dom_name /* [in] [unique,charset(UTF8)] */,
 			      struct dom_sid *_sid /* [in] [ref] */,
 			      uint64_t *_gid /* [out] [ref] */,
 			      NTSTATUS *result);

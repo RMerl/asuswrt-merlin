@@ -1,0 +1,529 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1 maximum-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="icon" href="../images/favicon.png">
+<script type="text/javascript" src="../state.js"></script>
+<script type="text/JavaScript" src="../js/jquery.js"></script>
+<script type="text/javascript">
+<% start_autodet(); %>
+
+var now_flag = '<% get_parameter("flag"); %>';
+var new_wan_link_str = "";
+var detectType = "";
+
+var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
+if(wans_dualwan != ""){
+	var ewan_index = wans_dualwan.indexOf("wan");
+	var usb_index = wans_dualwan.indexOf("usb");
+	var autodet_state = (ewan_index == 0)? '<% nvram_get("autodet_state"); %>': '<% nvram_get("autodet1_state"); %>';
+	var autodet_auxstate = (ewan_index == 0)? '<% nvram_get("autodet_auxstate"); %>': '<% nvram_get("autodet1_auxstate"); %>';
+}
+else{
+	var autodet_state = '<% nvram_get("autodet_state"); %>';
+	var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';	
+}
+var none_index = wans_dualwan.indexOf("none");
+var wantype = '';
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
+var RetryCountDown_fail = 10;
+var qtn_ready_fail_count = 15;
+var first_wanstate = -1;
+var first_wansbstate = -1;
+var first_wanauxstate = -1;
+var second_wanstate = -1;
+var second_wansbstate = -1;
+var second_wanauxstate = -1;
+var wan_wanstate = -1;
+var wan_wansbstate = -1;
+var wan_wanauxstate = -1;
+var usb_wanstate = -1;
+var usb_wansbstate = -1;
+var usb_wanauxstate = -1;
+var apps_sq = '<% nvram_get("apps_sq"); %>';
+var based_modelid = '<% nvram_get("productid"); %>';
+var modem_autoapn = '<% nvram_get("modem_autoapn"); %>';
+var usb_modem_auto_lines = "";
+var usb_modem_auto_running = "";
+var usb_modem_auto_spn = "";
+var sim_state = -1;
+var wans_mode = '<% nvram_get("wans_mode"); %>';
+var g3err_pin = '<% nvram_get("g3err_pin"); %>';
+var pin_remaining_count = '<% nvram_get("usb_modem_act_auth_pin"); %>';
+var puk_remaining_count = '<% nvram_get("usb_modem_act_auth_puk"); %>';
+
+<% dual_wanstate(); %>
+
+function QKDetect_load_body(){
+	setTimeout('getWANStatus();', 1000);
+	if(gobi_support && (pin_remaining_count == "" || pin_remaining_count == "0")){
+		getSimAuth();
+	}
+}
+
+function getDualWANState(){
+	if( ewan_index == 0 ){
+		wan_wanstate = first_wanstate;
+		wan_wansbstate = first_wansbstate;
+		wan_wanauxstate = first_wanauxstate;
+	}
+	else if(ewan_index == 1){
+		wan_wanstate = second_wanstate;
+		wan_wansbstate = second_wansbstate;
+		wan_wanauxstate = second_wanauxstate;
+	}
+
+	if( usb_index == 0 ){
+		usb_wanstate = first_wanstate;
+		usb_wansbstate = first_wansbstate;
+		usb_wanauxstate = first_wanauxstate;
+	}
+	else if(usb_index == 1){
+		usb_wanstate = second_wanstate;
+		usb_wansbstate = second_wansbstate;
+		usb_wanauxstate = second_wanauxstate;
+	}
+
+	if(usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0)
+		parent.usb_connected = 1;
+}
+
+var wait_autoisp = 2;
+var run_update_apn = 1;
+function getWANStatus(){
+	$.ajax({
+		url: '../result_of_get_changed_status_QIS.asp',
+		dataType: 'script',
+		error: function(xhr){
+			--RetryCountDown_fail;
+			if(RetryCountDown_fail < 1){
+				alert("<#Disconnected#>!");
+				parent.refreshpage();
+			}
+			else
+				getWANStatus();
+		},
+		success: function(response){
+			parent.wan_autodet_state = autodet_state;
+			RetryCountDown_fail = 10;
+			if(based_modelid == "4G-AC55U"){
+				getDualWANState();
+				if(wans_mode == 'lb'){
+					if(wan_wanstate == 2){
+						wanstate = wan_wanstate;
+						wansbstate = wan_wansbstate;
+						wanauxstate = wan_wanauxstate;
+					}
+					else if(usb_wanstate == 2){
+						wanstate = usb_wanstate;
+						wansbstate = usb_wansbstate;
+						wanauxstate = usb_wanauxstate;
+					}
+				}				
+			}
+
+			if(autodet_state == "" || autodet_state == "0"){
+				setTimeout('getWANStatus();', 500);
+			}
+			else if(qtn_ready_t != "1" && '<% nvram_get("productid"); %>' == "RT-AC87U"){
+				if(apps_sq == '1'){
+					if(qtn_ready_fail_count < 1)
+						alert("QTN not ready");
+					else{
+						--qtn_ready_fail_count;
+						setTimeout('getWANStatus();', 500);
+					}
+				}else{
+					setTimeout('getWANStatus();', 500);
+				}
+			}
+			else if(autodet_state == "2" && autodet_auxstate == "6"){
+				redirect_page("internet_type");
+			}
+			else if(now_flag != "sim" && autodet_state == "5" && autodet_auxstate != "4"){
+				redirect_page("internet_type");
+			}
+			else if(wanstate == 4 && wansbstate == 4){
+				parent.location.href = "../error_page.htm?flag=6";
+			}
+			else if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
+				if(based_modelid == "4G-AC55U")
+				{
+					if((wan_wanstate == 2 && wan_wansbstate == 0 && wan_wanauxstate == 0) &&
+					   (usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0)){
+							redirect_page("wireless");
+					}	
+					else if(wan_wanstate == 2 && wan_wansbstate == 0 && wan_wanauxstate == 0){
+						if(sim_state == 1){
+							if(modem_autoapn == "1"){
+								if(run_update_apn){
+									parent.update_apn_progress();
+									run_update_apn = 0;
+								}
+
+								if(usb_modem_auto_spn.length != 0){
+									setTimeout('getWANStatus();', 1000);
+								}
+								else{				
+									if(usb_modem_auto_running.length == 0 || usb_modem_auto_lines.length == 0){
+										setTimeout('getWANStatus();', 3000);
+									}
+									else{
+										if(usb_modem_auto_running != usb_modem_auto_lines)
+											setTimeout('getWANStatus();', 5000);
+										else{
+											if(wait_autoisp > 0 ){
+												setTimeout('getWANStatus();', 1000);
+												wait_autoisp--;
+											}
+											else{
+												redirect_page("modem");	
+											}
+										}
+									}
+								}
+							}
+							else{
+								redirect_page("modem");
+							}
+						}
+						else if(sim_state == 2){
+							document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_pin_hint#></strong>";
+							document.getElementById("sim_pin_tr").style.display = "";
+							document.getElementById("sim_pin_hd").innerHTML = "<#PIN_code#>";
+							document.getElementById("save_pin_ckb_span").style.display = "";			
+							if(pin_remaining_count == 3)
+								document.getElementById("pincode_status").style.display="none";		
+								
+							document.getElementById("pin_remaining").innerHTML = '<#Mobile_remaining_num#>: ' + pin_remaining_count;					
+							document.getElementById("tblsetting_1").style.display = "none";						
+							document.getElementById("sim_pin").style.display = "";	
+							document.getElementById('sim_ok_button').onclick = function(){ 
+								setPin(); 
+							}; 					
+						}
+						else if(sim_state == 3 || sim_state == 5){
+							document.form.pincode.value="";		
+							document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_puk_hint#></strong>";						
+							document.getElementById("sim_pin_tr").style.display="";
+							document.getElementById("sim_pin_hd").innerHTML = "<#Mobile_new_pin#>";							
+							document.getElementById("save_pin_ckb_span").style.display = "none";
+							document.getElementById("sim_puk_tr").style.display="";	
+							if(puk_remaining_count == 10)
+								document.getElementById("pincode_status").style.display="none";
+								
+							document.getElementById("pin_remaining").innerHTML = '<#Mobile_remaining_num#>: ' + puk_remaining_count;
+							document.getElementById("tblsetting_1").style.display = "none";		
+							document.getElementById("sim_pin").style.display = "";	
+							document.getElementById('sim_ok_button').onclick = function(){ 
+								unblock_pin(); 
+							}; 
+						}						
+						else
+							redirect_page("dualconnect_status");
+					}
+					else if(usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0){
+						if(autodet_state == "2" && wan_wanauxstate != "1"){
+							redirect_page("internet_type");
+						}
+						else{
+							redirect_page("dualconnect_status");
+						}
+					}	
+				}
+				else{
+				   setTimeout('$("#img_obj")[0].src = "../images/checked_qis.png";document.getElementById("img_obj").style.width="20px"',100);
+				   setTimeout('document.getElementById("wan_sucess_desc").style.display = "";', 500);
+				   setTimeout('redirect_page("wireless");', 1000);
+				}
+			}			
+			else if(autodet_state == 4 && parent.hadPlugged("modem")){ // ethernet did not plug
+				if(based_modelid == "4G-AC55U"){
+					if(sim_state == 1){
+						if(modem_autoapn == "1"){
+							if(run_update_apn){
+								parent.update_apn_progress();
+								run_update_apn = 0;
+							}
+								
+							if(usb_modem_auto_spn.length != 0){
+								setTimeout('getWANStatus();', 1000);
+							}
+							else{
+								if(usb_modem_auto_running.length == 0 || usb_modem_auto_lines.length == 0 ){
+										setTimeout('getWANStatus();', 2000);
+								}
+								else{
+									if(usb_modem_auto_running != usb_modem_auto_lines)
+										setTimeout('getWANStatus();', 5000);
+									else{
+										if(wait_autoisp > 0 ){
+											setTimeout('getWANStatus();', 1000);
+											wait_autoisp--;
+										}
+										else{
+											redirect_page("modem");	
+										}
+									}
+								}
+							}
+						}
+						else{
+							redirect_page("modem");
+						}	
+					}
+					else if(sim_state == 2){
+						document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_pin_hint#></strong>";
+						document.getElementById("sim_pin_tr").style.display = "";
+						document.getElementById("sim_pin_hd").innerHTML = "<#PIN_code#>";
+						document.getElementById("save_pin_ckb_span").style.display = "";			
+						if(pin_remaining_count == 3)
+							document.getElementById("pincode_status").style.display="none";											
+						document.getElementById("pin_remaining").innerHTML = '<#Mobile_remaining_num#>: ';
+						document.getElementById("pin_remaining").innerHTML += pin_remaining_count;							
+						document.getElementById("tblsetting_1").style.display = "none";						
+						document.getElementById("sim_pin").style.display = "";	
+						document.getElementById('sim_ok_button').onclick = function(){ 
+							setPin(); 
+						}; 
+					}	
+					else if(sim_state == 3 || sim_state == 5){
+						document.form.pincode.value="";		
+						document.getElementById("sim_desc").innerHTML = "<strong><#Mobile_puk_hint#></strong>";						
+						document.getElementById("sim_pin_tr").style.display="";
+						document.getElementById("sim_pin_hd").innerHTML = "<#Mobile_new_pin#>";							
+						document.getElementById("save_pin_ckb_span").style.display = "none";
+						document.getElementById("sim_puk_tr").style.display="";	
+						if(puk_remaining_count == 10)
+							document.getElementById("pincode_status").style.display="none";
+						document.getElementById("pin_remaining").innerHTML = '<#Mobile_remaining_num#>: ';
+						document.getElementById("pin_remaining").innerHTML += puk_remaining_count;	
+						document.getElementById("tblsetting_1").style.display = "none";		
+						document.getElementById("sim_pin").style.display = "";	
+						document.getElementById('sim_ok_button').onclick = function(){ 
+							unblock_pin(); 
+						}; 
+					}
+					else{
+						redirect_page("unplug_ethsim");
+					}
+				}
+				else{
+					redirect_page("modem");
+				}
+			}	
+			else if(autodet_state == "2" && wanauxstate != "1"){
+				if(parent.hadPlugged("modem")){
+					redirect_page("modem");
+				}	
+				else{
+					redirect_page("wireless");
+				}
+			}
+			else if(autodet_state == "6"){
+				document.getElementById("tblsetting_1").style.display = "none";
+				document.getElementById("pppoe_detected").style.display = "";
+			}
+			else
+				redirect_page("internet_type");
+		}
+	});
+}
+
+function GoToPPPoESetting(){
+	parent.document.QKform.wan_proto.value = "pppoe";
+	redirect_page("internet_account");
+}
+
+function redirect_page(redirect_flag){
+	document.form.action = "QIS_"+redirect_flag+".htm";
+	document.form.submit();
+}
+
+function setPin(){
+	if(document.form.pincode.value !=""){
+		if(document.form.pincode.value.search(/^\d{4,8}$/)==-1){
+			document.getElementById("pincode_status").innerHTML='<#JS_InvalidPIN#> ';
+			document.getElementById("pincode_status").style.display="";
+		}
+		else{
+			document.getElementById("tblsetting_1").style.display = "";
+			document.getElementById("sim_pin").style.display = "none";
+			document.simact_form.g3err_pin.value = "0";
+			document.simact_form.action_mode.value = "start_simpin";	
+			document.simact_form.sim_pincode.value = document.form.pincode.value;
+			if(document.form.save_pin_ckb.checked == true)
+				document.simact_form.save_pin.value = "1";
+			else
+				document.simact_form.save_pin.value = "0";	
+			document.simact_form.wan_unit.value = usb_index;
+			document.simact_form.submit();
+			setTimeout("getWANStatus();", 10000);
+		}
+	}
+	else{
+		document.getElementById("pincode_status").innerHTML="<#Mobile_pin_hint#>";
+		document.getElementById("pincode_status").style.display="";
+	}	
+}
+
+function unblock_pin(){
+	var puk_check = 0;
+	var newPin_check = 0;
+	if(document.form.sim_puk.value != ""){
+		document.getElementById("puk_status").style.display="none";
+		document.simact_form.sim_puk.value = document.form.sim_puk.value;
+		puk_check = 1;
+	}	
+	else{
+		document.getElementById("puk_status").innerHTML="&nbsp;&nbsp;<#Mobile_puk_hint#>";
+		document.getElementById("puk_status").style.display="";
+	}	
+
+	if(document.form.pincode.value !=""){
+		if(document.form.pincode.value.search(/^\d{4,8}$/)==-1){
+			document.getElementById("pincode_status").innerHTML='<#JS_InvalidPIN#> ';
+			document.getElementById("pincode_status").style.display="";
+		}
+		else{
+			document.simact_form.sim_newpin.value = document.form.pincode.value;
+			newPin_check = 1;
+		}
+	}	
+	else{
+		document.getElementById("pincode_status").innerHTML="<#Mobile_pin_hint#>";
+		document.getElementById("pincode_status").style.display="";
+	}
+
+	if(puk_check && newPin_check){
+		document.getElementById("tblsetting_1").style.display = "";	
+		document.getElementById("sim_pin").style.display = "none";
+		document.simact_form.action_mode.value = "start_simpuk";
+		document.simact_form.g3err_pin.value = "0";		
+		document.simact_form.wan_unit.value = usb_index;		
+		document.simact_form.submit();
+		setTimeout("getWANStatus();", 5000);	
+	}
+}
+
+function getSimAuth(){
+	document.simact_form.action_mode.value = "restart_simauth";
+	document.simact_form.submit();
+}
+
+</script>
+</head>
+
+<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
+<body onLoad="QKDetect_load_body();">
+<form method="post" name="form" action="" target="">
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="current_page" value="QIS_detect.htm">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="wan_proto" value="">
+<input type="hidden" name="wan_dhcpenable_x" id="wan_dhcpenable_x" value="1" disabled>
+<input type="hidden" name="wan_dnsenable_x" id="wan_dnsenable_x" value="1" disabled>
+<input type="hidden" name="x_Setting" id="x_Setting" value="" disabled>
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="g3err_pin" value="">
+<input name="foilautofill" style="display: none;" type="password">
+<style>
+body{
+	margin: 0;
+	color: #FFF;
+}
+
+</style>
+<div>
+	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QKSet_detect_desc1#></div>
+	
+	<div id="pppoe_detected" style="display:none">
+		<div style="color:#FC0;margin-left:15px;font-weight:bold"><#QIS_detect_desc1#></div>
+		<div style="margin-left:15px;font-size:1em"><#QIS_detect_desc2#></div>
+		<div style="margin-left:15px;font-size:1em"><#QIS_detect_desc3#></div>
+		<div style="margin-left:15px;font-size:1em"><#QIS_detect_desc4#></div>
+		<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+			<div style="width:100%;height:100%;display:table">
+				<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="redirect_page('internet_type');">
+					<div style="font-size:1em;color:#7E8593"><#QIS_type_title#></div>
+				</div>
+				<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;background-color:#007AFF" onclick="GoToPPPoESetting();">
+					<div style="font-size:1em;color:#FFF;"><#CTL_next#></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="tblsetting_1" style="margin-left:15px;">
+		<div>
+			<div style="display:table-cell;">
+				<img id="img_obj" style="width:20px;" src="../images/InternetScan.gif" ></span>
+			</div>
+			<div style="display:table-cell;padding-left:10px;">
+				<div ><#QKSet_detect_waitdesc#></div>
+			</div>
+		</div>
+		<div id="wan_sucess_desc" style="display:none;">
+			<div style="display:table-cell;">
+				<img style="width:20px;" src="../images/checked_qis.png"></span>
+			</div>
+			<div style="display:table-cell;padding-left:10px;">
+				<div><#QIS_autoMAC_result_desc2#></div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="sim_pin" style="display:none">
+		<div id="sim_desc" class="qisMobileHint" style="margin-top:-10px; margin-left:93px;"></div>
+		<div id="pinsetting">
+			<div id="sim_puk_tr" style="display:none">
+				<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#Mobile_puk#></div>
+				<div style="margin:10px 27px 10px 15px">
+					<input type="text" maxlength="8" name="sim_puk" style="height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocorrect="off" autocapitalize="off"><span id="puk_status" style="display:none;"></span>
+				</div>
+			</div>
+			<div id="sim_pin_tr" style="display:none">
+				<div id="sim_pin_hd" style="font-size:1em;color:#B8D8FF;margin-left:15px;"></div>
+				<div style="margin:10px 27px 10px 15px">
+					<input id="pincode" name="pincode" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);" style="height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocorrect="off" autocapitalize="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/><span id="save_pin_ckb_span"><input type="checkbox" name="save_pin_ckb" id="save_pin_ckb" value="" onclick=""><#Mobile_save_pin#></input></span>
+				</div>			
+			</div>
+			<div>
+				<span id="pincode_status" style="display:none;"></span><span id="pin_remaining" style=""></span>
+			</div>
+			
+		</div>	
+		<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+			<div style="width:100%;height:100%;line-height:50px;text-align:center;background-color:#007AFF">
+				<div id="sim_ok_button" style="font-size:1em;color:#FFF;"><#CTL_ok#></div>
+			</div>
+		</div>
+	</div>
+</div>
+</form>
+
+<form method="post" name="redirectForm" action="">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="prev_page" value="">
+</form>
+<form method="post" name="simact_form" action="../apply.cgi" target="hidden_frame">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="sim_pincode" value="">
+<input type="hidden" name="sim_newpin" value="">
+<input type="hidden" name="sim_puk" value="">
+<input type="hidden" name="save_pin" value="">
+<input type="hidden" name="g3err_pin" value="0">
+<input type="hidden" name="wan_unit" value="">
+</form>
+</body>

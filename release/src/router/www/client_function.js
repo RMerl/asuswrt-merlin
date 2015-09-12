@@ -89,7 +89,7 @@ function convType(str){
 	XBoxOne			17
 	Printer			18
 	*/
-	var siganature = [[], ["win", "pc"], [], [], ["nas", "storage"], ["cam"], [], 
+	var siganature = [[], ["win", "pc"], ["rt-", "rp-", "dsl-", "ea-", "wmp-", "pl-"], [], ["nas", "storage"], ["cam"], [], 
 					  ["play station", "playstation"], ["xbox"], ["android", "htc"], 
 					  ["iphone", "ipad", "ipod"], ["appletv", "apple tv", "apple-tv"], [], 
 					  ["nb"], ["mac", "mbp", "mba", "apple"], [], [], [], ["epson", "fuji xerox", "hp", "canon", "brother"]];
@@ -137,7 +137,7 @@ var originData = {
 	wlListInfo_2g: [<% wl_stainfo_list_2g(); %>],
 	wlListInfo_5g: [<% wl_stainfo_list_5g(); %>],
 	wlListInfo_5g_2: [<% wl_stainfo_list_5g_2(); %>],
-	qosRuleList: decodeURIComponent('<% nvram_char_to_ascii("", "qos_rulelist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('>'),
+	qosRuleList: decodeURIComponent('<% nvram_char_to_ascii("", "qos_rulelist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	time_scheduling_enable: decodeURIComponent('<% nvram_char_to_ascii("", "MULTIFILTER_ENABLE"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('>'),
 	time_scheduling_mac: decodeURIComponent('<% nvram_char_to_ascii("", "MULTIFILTER_MAC"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('>'),
 	time_scheduling_devicename: decodeURIComponent('<% nvram_char_to_ascii("", "MULTIFILTER_DEVICENAME"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('>'),
@@ -226,6 +226,9 @@ function genClientList(){
 		var dhcpMac = originData.fromDHCPLease[i][0].toUpperCase();
 		var dhcpName = decodeURIComponent(originData.fromDHCPLease[i][1]);
 		if(dhcpMac != "") {
+			if(dhcpName == "*") {
+				dhcpName = dhcpMac;
+			}
 			leaseArray.mac.push(dhcpMac);
 			leaseArray.hostname.push(dhcpName);
 		}
@@ -287,6 +290,11 @@ function genClientList(){
 		clientList[thisClientMacAddr].type = "2";// asus default setting router icon
 		clientList[thisClientMacAddr].defaultType = "2";
 		clientList[thisClientMacAddr].name = thisClient[1];
+		//Exception Handling AiCam type
+		if(thisClient[1].toString().toLowerCase().search("cam") != -1) {
+			clientList[thisClientMacAddr].type = "5";// AiCam icon
+			clientList[thisClientMacAddr].defaultType = "5";
+		}
 		clientList[thisClientMacAddr].ip = thisClient[2];
 		clientList[thisClientMacAddr].mac = thisClient[3];
 		clientList[thisClientMacAddr].isGateway = (thisClient[2] == '<% nvram_get("lan_ipaddr"); %>') ? true : false;
@@ -296,6 +304,15 @@ function genClientList(){
 		clientList[thisClientMacAddr].opMode = (typeof thisClient[7] == "undefined") ? 0 : thisClient[7];
 		clientList[thisClientMacAddr].isOnline = true;
 		totalClientNum.online++;
+
+		var ouiVenderName = "";
+		if(ouiClientListArray[thisClientMacAddr] != undefined) {
+			ouiVenderName = ouiClientListArray[thisClientMacAddr];
+			ouiVenderName = ouiVenderName.toLowerCase();
+			ouiVenderName = ouiVenderName.toUpperCase().charAt(0) + ouiVenderName.substring(1);
+		}
+		clientList[thisClientMacAddr].dpiVender = ouiVenderName;
+		updateTimeScheduling();
 	}
 
 	for(var i=0; i<originData.fromNetworkmapd.length; i++){
@@ -312,10 +329,16 @@ function genClientList(){
 			clientList[thisClientMacAddr].from = "networkmapd";
 		}
 		else{
-			if(clientList[thisClientMacAddr].from == "networkmapd")
-				clientList[thisClientMacAddr].macRepeat++;
-			else
+			//because asusDevice had count, so not need count again.
+			if(clientList[thisClientMacAddr].from == "asusDevice") {
 				clientList[thisClientMacAddr].from = "networkmapd";
+				continue;
+			}
+			else {			
+				clientList[thisClientMacAddr].macRepeat++;
+				totalClientNum.online++;
+				continue;
+			}
 		}
 
 		if(clientList[thisClientMacAddr].type == "") {
@@ -326,15 +349,31 @@ function genClientList(){
 		clientList[thisClientMacAddr].ip = thisClient[2];
 		clientList[thisClientMacAddr].mac = thisClient[3];
 
+		var ori_name = (thisClient[1].trim() != "") ? thisClient[1].trim() : retHostName(clientList[thisClientMacAddr].mac);
 		if(clientList[thisClientMacAddr].name == ""){
-			clientList[thisClientMacAddr].name = (thisClient[1] != "") ? thisClient[1].trim() : retHostName(clientList[thisClientMacAddr].mac);
+			var replaceClientName = function(_name, _mac) {
+				var filterStr = "android";
+				var replaceName = _name;
+				if(replaceName == _mac) {
+					if(ouiClientListArray[_mac]) {
+						replaceName = ouiClientListArray[_mac].toUpperCase().charAt(0) + ouiClientListArray[_mac].substring(1);
+					}
+				}
+				else {
+					if(_name.search(filterStr) != -1) {
+						if(ouiClientListArray[_mac]) {
+							replaceName = ouiClientListArray[_mac].toUpperCase().charAt(0) + ouiClientListArray[_mac].substring(1);
+						}
+					}
+				}
+				return replaceName;
+			};
+			clientList[thisClientMacAddr].name = replaceClientName(ori_name, thisClientMacAddr);
 		}
 
-		if(!clientList[thisClientMacAddr].isASUS) {
-			if(clientList[thisClientMacAddr].name != clientList[thisClientMacAddr].mac){
-				clientList[thisClientMacAddr].type = convType(clientList[thisClientMacAddr].name);
-				clientList[thisClientMacAddr].defaultType = convType(clientList[thisClientMacAddr].name);
-			}
+		if(ori_name != clientList[thisClientMacAddr].mac){
+			clientList[thisClientMacAddr].type = convType(ori_name);
+			clientList[thisClientMacAddr].defaultType = clientList[thisClientMacAddr].type;
 		}
 
 		clientList[thisClientMacAddr].isGateway = (thisClient[2] == '<% nvram_get("lan_ipaddr"); %>') ? true : false;
@@ -342,8 +381,7 @@ function genClientList(){
 		clientList[thisClientMacAddr].isPrinter = (thisClient[5] == 0) ? false : true;
 		clientList[thisClientMacAddr].isITunes = (thisClient[6] == 0) ? false : true;
 		clientList[thisClientMacAddr].isOnline = true;
-		if(!clientList[thisClientMacAddr].isASUS) //because asusDevice had count, so not need count again.
-			totalClientNum.online++;
+		totalClientNum.online++;
 
 		var ouiVenderName = "";
 		if(ouiClientListArray[thisClientMacAddr] != undefined) {
@@ -363,26 +401,38 @@ function genClientList(){
 			continue;
 		}
 
+		var networkmapd_name = clientList[thisClientMacAddr].name;
+		var bwdpi_name = "";
+
 		if(thisClient[1] != ""){
-			clientList[thisClientMacAddr].name = thisClient[1];
+			var replaceClientName = function(_name, _mac) {
+				var filterStr = "android";
+				var replaceName = _name.trim();
+				if(replaceName.search(filterStr) != -1) {
+					if(ouiClientListArray[_mac]) {
+						replaceName = ouiClientListArray[_mac].toUpperCase().charAt(0) + ouiClientListArray[_mac].substring(1);
+					}
+				}
+				return replaceName;
+			};
+			clientList[thisClientMacAddr].name = replaceClientName(thisClient[1], thisClientMacAddr);
 			clientList[thisClientMacAddr].type = convType(thisClient[1]);
-			clientList[thisClientMacAddr].defaultType = convType(thisClient[1]);
+			clientList[thisClientMacAddr].defaultType = clientList[thisClientMacAddr].type;
+			bwdpi_name = thisClient[1];
 		}
 
 		if(thisClient[2] != "" && thisClient[2] != undefined){
-			if(clientList[thisClientMacAddr].dpiVender == "") {
-				var venderMatch = thisClient[2].trim().toLowerCase().match(venderArrayRE);
-				var venderName = "";
-				if(Boolean(venderMatch)) {
-					venderName = venderMatch[0].toLowerCase();
-					venderName = venderName.toUpperCase().charAt(0) + venderName.substring(1);
-					clientList[thisClientMacAddr].dpiVender = venderName;
-				}
-				else {
-					venderName = thisClient[2].trim().toLowerCase();
-					venderName = venderName.toUpperCase().charAt(0) + venderName.substring(1);
-					clientList[thisClientMacAddr].dpiVender = venderName;
-				}
+			var venderMatch = thisClient[2].trim().toLowerCase().match(venderArrayRE);
+			var venderName = "";
+			if(Boolean(venderMatch)) {
+				venderName = venderMatch[0].toLowerCase();
+				venderName = venderName.toUpperCase().charAt(0) + venderName.substring(1);
+				clientList[thisClientMacAddr].dpiVender = venderName;
+			}
+			else {
+				venderName = thisClient[2].trim().toLowerCase();
+				venderName = venderName.toUpperCase().charAt(0) + venderName.substring(1);
+				clientList[thisClientMacAddr].dpiVender = venderName;
 			}
 		}
 
@@ -392,6 +442,20 @@ function genClientList(){
 
 		if(thisClient[4] != "" && thisClient[4] != undefined){
 			clientList[thisClientMacAddr].dpiDevice = thisClient[4].trim();
+		}
+
+		if(thisClient[3] != "" && thisClient[3] != undefined && thisClient[4] != "" && thisClient[4] != undefined) {
+			var filterStr = "android";
+			var replaceName = clientList[thisClientMacAddr].name;
+			if(networkmapd_name.toLowerCase().search(filterStr) != -1 || bwdpi_name.toLowerCase().search(filterStr) != -1) {
+				if(thisClient[3].toLowerCase().search(filterStr) != -1 && thisClient[4].toLowerCase().search(filterStr) != -1) {
+					replaceName = clientList[thisClientMacAddr].dpiVender + "(Android)";
+				}
+				else {
+					replaceName = thisClient[4];
+				}
+			}
+			clientList[thisClientMacAddr].name = replaceName;
 		}
 	}
 
@@ -690,11 +754,11 @@ function hide_edit_client_block() {
 		fadeOut(document.getElementById("edit_client_block"), 10, 0);
 		if(temp_clickedObj.className.search("clientIcon") != -1) {
 			temp_clickedObj.className = temp_clickedObj.className.replace("clientIcon_clicked","clientIcon");
-			temp_clickedObj.className = temp_clickedObj.className.replace(" clicked", "");
+			temp_clickedObj.className = temp_clickedObj.className.replace(" card_clicked", "");
 		}
 		else if(temp_clickedObj.className.search("venderIcon") != -1) {
 			temp_clickedObj.className = temp_clickedObj.className.replace("venderIcon_clicked","venderIcon");
-			temp_clickedObj.className = temp_clickedObj.className.replace(" clicked", "");
+			temp_clickedObj.className = temp_clickedObj.className.replace(" card_clicked", "");
 		}
 		document.body.onclick = null;
 		temp_clickedObj = null;
@@ -772,7 +836,7 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 	if(ip != "" && ip != undefined)
 		clientInfo.ip = ip;	
 
-	if(obj.className.search("clicked") != -1) {
+	if(obj.className.search("card_clicked") != -1) {
 		return true;
 	}
 
@@ -840,13 +904,13 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 	code += '<input id="card_client_name" name="card_client_name" type="text" value="" class="input_32_table" maxlength="32" style="width:275px;">';
 	code += '</div>';
 	code += '<div style="margin-top:10px;">';
-	code += '<input id="client_ipaddr_field" type="text" value="" class="input_32_table disabled" style="width:275px;" disabled>';
+	code += '<input id="client_ipaddr_field" type="text" value="" class="input_32_table client_input_text_disabled" disabled>';
 	code += '</div>';
 	code += '<div style="margin-top:10px;">';
-	code += '<input id="client_macaddr_field" type="text" value="" class="input_32_table disabled" style="width:275px;" disabled>';
+	code += '<input id="client_macaddr_field" type="text" value="" class="input_32_table client_input_text_disabled" disabled>';
 	code += '</div>';
 	code += '<div style="margin-top:10px;">';
-	code += '<input id="client_manufacturer_field" type="text" value="Loading manufacturer.." class="input_32_table disabled" style="width:275px;" disabled>';
+	code += '<input id="client_manufacturer_field" type="text" value="Loading manufacturer.." class="input_32_table client_input_text_disabled" disabled>';
 	code += '</div>';
 	code += '</td>';
 	code += '</tr>';
@@ -876,22 +940,22 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 	if(temp_clickedObj != null) {
 		if(temp_clickedObj.className.search("clientIcon") != -1) {
 			temp_clickedObj.className = temp_clickedObj.className.replace("clientIcon_clicked","clientIcon");
-			temp_clickedObj.className = temp_clickedObj.className.replace(" clicked", "");
+			temp_clickedObj.className = temp_clickedObj.className.replace(" card_clicked", "");
 		}
 		else if(temp_clickedObj.className.search("venderIcon") != -1) {
 			temp_clickedObj.className = temp_clickedObj.className.replace("venderIcon_clicked","venderIcon");
-			temp_clickedObj.className = temp_clickedObj.className.replace(" clicked", "");
+			temp_clickedObj.className = temp_clickedObj.className.replace(" card_clicked", "");
 		}
 		temp_clickedObj = null;
 	}
 	temp_clickedObj = obj;
 	if(obj.className.search("clientIcon") != -1) {
 		obj.className = obj.className.replace("clientIcon","clientIcon_clicked");
-		obj.className = obj.className  + " clicked";
+		obj.className = obj.className  + " card_clicked";
 	}
 	else if(obj.className.search("venderIcon") != -1) {
 		obj.className = obj.className.replace("venderIcon","venderIcon_clicked");
-		obj.className = obj.className  + " clicked";
+		obj.className = obj.className  + " card_clicked";
 	}
 	
 	fadeIn(document.getElementById("edit_client_block"));
@@ -917,7 +981,7 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 						cell.id = "tdCardUserIcon";
 						cell.className = "client_icon_list_td";
 						cell.innerHTML = '<div id="divCardUserIcon" class="client_upload_div" style="display:none;">+' +
-						'<input type="file" name="cardUploadIcon" id="cardUploadIcon" class="client_upload_file" onchange="previewCardUploadIcon(this);" /></div>';
+						'<input type="file" name="cardUploadIcon" id="cardUploadIcon" class="client_upload_file" onchange="previewCardUploadIcon(this);" title="Upload client icon" /></div>';/*untranslated*/
 					}
 				}
 			}
@@ -1211,7 +1275,10 @@ function card_confirm(callBack) {
 			document.getElementById("card_client_name").select();
 			document.getElementById("card_client_name").value = "";		
 			return false;
-		}	
+		}
+		else if(!validator.haveFullWidthChar(document.getElementById("card_client_name"))) {
+			return false;
+		}
 		return true;
 	};
 	var custom_name = originData.customList;
@@ -1299,6 +1366,9 @@ function card_confirm(callBack) {
 							case "GuestNetwork" :
 								showWLMACList();
 								show_wl_maclist_x();
+								break;
+							case "WebProtector" :
+								genMain_table();
 								break;
 							default :
 								refreshpage();

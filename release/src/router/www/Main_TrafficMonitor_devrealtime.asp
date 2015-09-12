@@ -27,25 +27,11 @@
 
 // disable auto log out
 AUTOLOGOUT_MAX_MINUTE = 0;
-
+iptraffic = [];
 <% backup_nvram("wan_ifname,cstats_enable,lan_ipaddr,lan_netmask,dhcp_staticlist"); %>;
-
 var client_list_array = '<% get_client_detail_info(); %>';
-
 var cstats_busy = 0;
-
-try {
-	<% iptraffic(); %>
-}
-catch (ex) {
-	iptraffic = [];
-	cstats_busy = 1;
-}
-
-if (typeof(iptraffic) == 'undefined') {
-	iptraffic = [];
-	cstats_busy = 1;
-}
+<% iptraffic(); %>;
 
 sortColumn = 0;
 var updating = 0;
@@ -462,8 +448,8 @@ function init() {
 		setRadioValue(document.form._f_show_hostnames , (c == 1))
 	}
 
+	show_menu();
 	update_visibility();
-
 	ref.start();
 }
 
@@ -487,7 +473,7 @@ function switchPage(page){
 </script>
 </head>
 
-<body onload="show_menu();init();" >
+<body onload="init();">
 
 <div id="TopBanner"></div>
 

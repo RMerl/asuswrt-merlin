@@ -1,0 +1,1007 @@
+execute relaxed 'area 0 virtual-link 1.2.3.4 authentication null message-digest-key 1 md5 VARIABLE'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (authentication|) (message-digest|null) (message-digest-key|) <1-255> md5 KEY': '0', '1.2.3.4', 'authentication', 'null', 'message-digest-key', '1', 'VARIABLE'
+execute strict 'area 0 virtual-link 1.2.3.4 authentication null message-digest-key 1 md5 VARIABLE'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (authentication|) (message-digest|null) (message-digest-key|) <1-255> md5 KEY': '0', '1.2.3.4', 'authentication', 'null', 'message-digest-key', '1', 'VARIABLE'
+complete 'area 0 virtual-link 1.2.3.4 authentication null message-digest-key 1 md5 VARIABLE'@23: rv==2
+describe 'area 0 virtual-link 1.2.3.4 authentication null message-digest-key 1 md5 VARIABLE'@23: rv==0
+  'KEY' 'The OSPF password (key)'
+execute relaxed 'area 0 virtual-link 1.2.3.4 dead-interval 1 hello-interval 1 retransmit-interval 1 transmit-delay 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '0', '1.2.3.4', 'dead-interval', '1', 'hello-interval', '1', 'retransmit-interval', '1', 'transmit-delay', '1'
+execute strict 'area 0 virtual-link 1.2.3.4 dead-interval 1 hello-interval 1 retransmit-interval 1 transmit-delay 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '0', '1.2.3.4', 'dead-interval', '1', 'hello-interval', '1', 'retransmit-interval', '1', 'transmit-delay', '1'
+complete 'area 0 virtual-link 1.2.3.4 dead-interval 1 hello-interval 1 retransmit-interval 1 transmit-delay 1'@23: rv==2
+describe 'area 0 virtual-link 1.2.3.4 dead-interval 1 hello-interval 1 retransmit-interval 1 transmit-delay 1'@23: rv==0
+  '<1-65535>' 'Seconds'
+execute relaxed 'area 0 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 dead-interval 1 retransmit-interval 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '0', '1.2.3.4', 'retransmit-interval', '1', 'retransmit-interval', '1', 'dead-interval', '1', 'retransmit-interval', '1'
+execute strict 'area 0 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 dead-interval 1 retransmit-interval 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '0', '1.2.3.4', 'retransmit-interval', '1', 'retransmit-interval', '1', 'dead-interval', '1', 'retransmit-interval', '1'
+complete 'area 0 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 dead-interval 1 retransmit-interval 1'@23: rv==2
+describe 'area 0 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 dead-interval 1 retransmit-interval 1'@23: rv==0
+  '<1-65535>' 'Seconds'
+execute relaxed 'area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 hello-interval 1 dead-interval 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '1.2.3.4', '1.2.3.4', 'hello-interval', '1', 'hello-interval', '1', 'dead-interval', '1'
+execute strict 'area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 hello-interval 1 dead-interval 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '1.2.3.4', '1.2.3.4', 'hello-interval', '1', 'hello-interval', '1', 'dead-interval', '1'
+complete 'area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 hello-interval 1 dead-interval 1'@23: rv==2
+describe 'area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 hello-interval 1 dead-interval 1'@23: rv==0
+  '<1-65535>' 'Seconds'
+execute relaxed 'area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 transmit-delay 1 dead-interval 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '1.2.3.4', '1.2.3.4', 'retransmit-interval', '1', 'retransmit-interval', '1', 'transmit-delay', '1', 'dead-interval', '1'
+execute strict 'area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 transmit-delay 1 dead-interval 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '1.2.3.4', '1.2.3.4', 'retransmit-interval', '1', 'retransmit-interval', '1', 'transmit-delay', '1', 'dead-interval', '1'
+complete 'area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 transmit-delay 1 dead-interval 1'@23: rv==2
+describe 'area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval 1 retransmit-interval 1 transmit-delay 1 dead-interval 1'@23: rv==0
+  '<1-65535>' 'Seconds'
+execute relaxed 'clear bgp 1 out'@4: rv==0, 'clear bgp <1-4294967295> out': '1'
+execute strict 'clear bgp 1 out'@4: rv==0, 'clear bgp <1-4294967295> out': '1'
+complete 'clear bgp 1 out'@4: rv==7
+  'out'
+describe 'clear bgp 1 out'@4: rv==0
+  'out' 'Soft reconfig outbound update'
+execute relaxed 'clear bgp ipv6 2001:db8::1 out'@4: rv==0, 'clear bgp ipv6 (A.B.C.D|X:X::X:X) out': '2001:db8::1'
+execute strict 'clear bgp ipv6 2001:db8::1 out'@4: rv==0, 'clear bgp ipv6 (A.B.C.D|X:X::X:X) out': '2001:db8::1'
+complete 'clear bgp ipv6 2001:db8::1 out'@4: rv==7
+  'out'
+describe 'clear bgp ipv6 2001:db8::1 out'@4: rv==0
+  'out' 'Soft reconfig outbound update'
+execute relaxed 'clear bgp view VARIABLE * soft'@4: rv==0, 'clear bgp view WORD * soft': 'VARIABLE'
+execute strict 'clear bgp view VARIABLE * soft'@4: rv==0, 'clear bgp view WORD * soft': 'VARIABLE'
+complete 'clear bgp view VARIABLE * soft'@4: rv==7
+  'soft'
+describe 'clear bgp view VARIABLE * soft'@4: rv==0
+  'soft' 'Soft reconfig'
+execute relaxed 'clear ip bgp 1.2.3.4 ipv4 multicast out'@4: rv==0, 'clear ip bgp A.B.C.D ipv4 (unicast|multicast) out': '1.2.3.4', 'multicast'
+execute strict 'clear ip bgp 1.2.3.4 ipv4 multicast out'@4: rv==0, 'clear ip bgp A.B.C.D ipv4 (unicast|multicast) out': '1.2.3.4', 'multicast'
+complete 'clear ip bgp 1.2.3.4 ipv4 multicast out'@4: rv==7
+  'out'
+describe 'clear ip bgp 1.2.3.4 ipv4 multicast out'@4: rv==0
+  'out' 'Soft reconfig outbound update'
+execute relaxed 'ipv6 nd prefix 2001:db8::/32 infinite infinite no-autoconfig'@11: rv==0, 'ipv6 nd prefix X:X::X:X/M (<0-4294967295>|infinite) (<0-4294967295>|infinite) (no-autoconfig|)': '2001:db8::/32', 'infinite', 'infinite', 'no-autoconfig'
+execute strict 'ipv6 nd prefix 2001:db8::/32 infinite infinite no-autoconfig'@11: rv==0, 'ipv6 nd prefix X:X::X:X/M (<0-4294967295>|infinite) (<0-4294967295>|infinite) (no-autoconfig|)': '2001:db8::/32', 'infinite', 'infinite', 'no-autoconfig'
+complete 'ipv6 nd prefix 2001:db8::/32 infinite infinite no-autoconfig'@11: rv==7
+  'no-autoconfig'
+describe 'ipv6 nd prefix 2001:db8::/32 infinite infinite no-autoconfig'@11: rv==0
+  'no-autoconfig' 'Do not use prefix for autoconfiguration'
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@5: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@5: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@5: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@5: rv==0
+  '<1-255>' 'Distance value for this prefix'
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@9: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@9: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@9: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@9: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@10: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@10: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@10: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@10: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@11: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@11: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@11: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@11: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@12: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@12: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@12: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@12: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@14: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@14: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@14: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@14: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@15: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@15: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@15: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@15: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@16: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@16: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@16: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@16: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@17: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@17: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@17: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@17: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@18: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@18: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@18: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@18: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@19: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@19: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@19: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@19: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@20: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@20: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@20: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@20: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@21: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@21: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@21: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@21: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@22: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@22: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@22: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@22: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@23: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@23: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@23: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@23: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@24: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@24: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@24: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@24: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@25: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@25: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@25: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@25: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@35: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@35: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@35: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@35: rv==2
+execute relaxed 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@40: rv==0, 'ipv6 route X:X::X:X/M X:X::X:X INTERFACE <1-255>': '2001:db8::/32', '2001:db8::1', 'VARIABLE', '1'
+execute strict 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@40: rv==2
+complete 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@40: rv==2
+describe 'ipv6 route 2001:db8::/32 2001:db8::1 VARIABLE 1'@40: rv==2
+execute relaxed 'network 1.0.0.0/8 area 0'@23: rv==0, 'network A.B.C.D/M area (A.B.C.D|<0-4294967295>)': '1.0.0.0/8', '0'
+execute strict 'network 1.0.0.0/8 area 0'@23: rv==0, 'network A.B.C.D/M area (A.B.C.D|<0-4294967295>)': '1.0.0.0/8', '0'
+complete 'network 1.0.0.0/8 area 0'@23: rv==2
+describe 'network 1.0.0.0/8 area 0'@23: rv==0
+  '<0-4294967295>' 'OSPF area ID as a decimal value'
+  'A.B.C.D' 'OSPF area ID in IP address format'
+execute relaxed 'no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval hello-interval transmit-delay'@23: rv==0, 'no area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval)': '1.2.3.4', '1.2.3.4', 'hello-interval', 'dead-interval', 'hello-interval', 'transmit-delay'
+execute strict 'no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval hello-interval transmit-delay'@23: rv==0, 'no area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval)': '1.2.3.4', '1.2.3.4', 'hello-interval', 'dead-interval', 'hello-interval', 'transmit-delay'
+complete 'no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval hello-interval transmit-delay'@23: rv==7
+  'transmit-delay'
+describe 'no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval hello-interval transmit-delay'@23: rv==0
+  'transmit-delay' 'Seconds'
+execute relaxed 'no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval retransmit-interval transmit-delay'@23: rv==0, 'no area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval)': '1.2.3.4', '1.2.3.4', 'hello-interval', 'dead-interval', 'retransmit-interval', 'transmit-delay'
+execute strict 'no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval retransmit-interval transmit-delay'@23: rv==0, 'no area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval)': '1.2.3.4', '1.2.3.4', 'hello-interval', 'dead-interval', 'retransmit-interval', 'transmit-delay'
+complete 'no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval retransmit-interval transmit-delay'@23: rv==7
+  'transmit-delay'
+describe 'no area 1.2.3.4 virtual-link 1.2.3.4 hello-interval dead-interval retransmit-interval transmit-delay'@23: rv==0
+  'transmit-delay' 'Seconds'
+execute relaxed 'no area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval dead-interval retransmit-interval hello-interval'@23: rv==0, 'no area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval)': '1.2.3.4', '1.2.3.4', 'retransmit-interval', 'dead-interval', 'retransmit-interval', 'hello-interval'
+execute strict 'no area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval dead-interval retransmit-interval hello-interval'@23: rv==0, 'no area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval)': '1.2.3.4', '1.2.3.4', 'retransmit-interval', 'dead-interval', 'retransmit-interval', 'hello-interval'
+complete 'no area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval dead-interval retransmit-interval hello-interval'@23: rv==7
+  'hello-interval'
+describe 'no area 1.2.3.4 virtual-link 1.2.3.4 retransmit-interval dead-interval retransmit-interval hello-interval'@23: rv==0
+  'hello-interval' 'Link state transmit delay'
+execute relaxed 'no area 1.2.3.4 virtual-link 1.2.3.4 transmit-delay retransmit-interval retransmit-interval hello-interval'@23: rv==0, 'no area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval)': '1.2.3.4', '1.2.3.4', 'transmit-delay', 'retransmit-interval', 'retransmit-interval', 'hello-interval'
+execute strict 'no area 1.2.3.4 virtual-link 1.2.3.4 transmit-delay retransmit-interval retransmit-interval hello-interval'@23: rv==0, 'no area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval) (hello-interval|retransmit-interval|transmit-delay|dead-interval)': '1.2.3.4', '1.2.3.4', 'transmit-delay', 'retransmit-interval', 'retransmit-interval', 'hello-interval'
+complete 'no area 1.2.3.4 virtual-link 1.2.3.4 transmit-delay retransmit-interval retransmit-interval hello-interval'@23: rv==7
+  'hello-interval'
+describe 'no area 1.2.3.4 virtual-link 1.2.3.4 transmit-delay retransmit-interval retransmit-interval hello-interval'@23: rv==0
+  'hello-interval' 'Link state transmit delay'
+execute relaxed 'no bgp graceful-restart'@17: rv==0, 'no bgp graceful-restart'
+execute strict 'no bgp graceful-restart'@17: rv==0, 'no bgp graceful-restart'
+complete 'no bgp graceful-restart'@17: rv==7
+  'graceful-restart'
+describe 'no bgp graceful-restart'@17: rv==0
+  'graceful-restart' 'Graceful restart capability parameters'
+execute relaxed 'no bgp graceful-restart'@18: rv==0, 'no bgp graceful-restart'
+execute strict 'no bgp graceful-restart'@18: rv==2
+complete 'no bgp graceful-restart'@18: rv==2
+describe 'no bgp graceful-restart'@18: rv==2
+execute relaxed 'no bgp graceful-restart'@19: rv==0, 'no bgp graceful-restart'
+execute strict 'no bgp graceful-restart'@19: rv==2
+complete 'no bgp graceful-restart'@19: rv==2
+describe 'no bgp graceful-restart'@19: rv==2
+execute relaxed 'no bgp graceful-restart'@20: rv==0, 'no bgp graceful-restart'
+execute strict 'no bgp graceful-restart'@20: rv==2
+complete 'no bgp graceful-restart'@20: rv==2
+describe 'no bgp graceful-restart'@20: rv==2
+execute relaxed 'no bgp graceful-restart'@21: rv==0, 'no bgp graceful-restart'
+execute strict 'no bgp graceful-restart'@21: rv==2
+complete 'no bgp graceful-restart'@21: rv==2
+describe 'no bgp graceful-restart'@21: rv==2
+execute relaxed 'no bgp graceful-restart'@22: rv==0, 'no bgp graceful-restart'
+execute strict 'no bgp graceful-restart'@22: rv==2
+complete 'no bgp graceful-restart'@22: rv==2
+describe 'no bgp graceful-restart'@22: rv==2
+execute relaxed 'no ipv6 nd mtu 1'@11: rv==0, 'no ipv6 nd mtu <1-65535>': '1'
+execute strict 'no ipv6 nd mtu 1'@11: rv==0, 'no ipv6 nd mtu <1-65535>': '1'
+complete 'no ipv6 nd mtu 1'@11: rv==2
+describe 'no ipv6 nd mtu 1'@11: rv==0
+  '<1-65535>' 'MTU in bytes'
+execute relaxed 'no neighbor 1.2.3.4 distribute-list 1 in'@17: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+execute strict 'no neighbor 1.2.3.4 distribute-list 1 in'@17: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+complete 'no neighbor 1.2.3.4 distribute-list 1 in'@17: rv==7
+  'in'
+describe 'no neighbor 1.2.3.4 distribute-list 1 in'@17: rv==0
+  'in' 'Filter incoming updates'
+execute relaxed 'no neighbor 1.2.3.4 distribute-list 1 in'@18: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+execute strict 'no neighbor 1.2.3.4 distribute-list 1 in'@18: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+complete 'no neighbor 1.2.3.4 distribute-list 1 in'@18: rv==7
+  'in'
+describe 'no neighbor 1.2.3.4 distribute-list 1 in'@18: rv==0
+  'in' 'Filter incoming updates'
+execute relaxed 'no neighbor 1.2.3.4 distribute-list 1 in'@19: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+execute strict 'no neighbor 1.2.3.4 distribute-list 1 in'@19: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+complete 'no neighbor 1.2.3.4 distribute-list 1 in'@19: rv==7
+  'in'
+describe 'no neighbor 1.2.3.4 distribute-list 1 in'@19: rv==0
+  'in' 'Filter incoming updates'
+execute relaxed 'no neighbor 1.2.3.4 distribute-list 1 in'@20: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+execute strict 'no neighbor 1.2.3.4 distribute-list 1 in'@20: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+complete 'no neighbor 1.2.3.4 distribute-list 1 in'@20: rv==7
+  'in'
+describe 'no neighbor 1.2.3.4 distribute-list 1 in'@20: rv==0
+  'in' 'Filter incoming updates'
+execute relaxed 'no neighbor 1.2.3.4 distribute-list 1 in'@21: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+execute strict 'no neighbor 1.2.3.4 distribute-list 1 in'@21: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+complete 'no neighbor 1.2.3.4 distribute-list 1 in'@21: rv==7
+  'in'
+describe 'no neighbor 1.2.3.4 distribute-list 1 in'@21: rv==0
+  'in' 'Filter incoming updates'
+execute relaxed 'no neighbor 1.2.3.4 distribute-list 1 in'@22: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+execute strict 'no neighbor 1.2.3.4 distribute-list 1 in'@22: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) distribute-list (<1-199>|<1300-2699>|WORD) (in|out)': '1.2.3.4', '1', 'in'
+complete 'no neighbor 1.2.3.4 distribute-list 1 in'@22: rv==7
+  'in'
+describe 'no neighbor 1.2.3.4 distribute-list 1 in'@22: rv==0
+  'in' 'Filter incoming updates'
+execute relaxed 'no neighbor 2001:db8::1 send-community both'@17: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+execute strict 'no neighbor 2001:db8::1 send-community both'@17: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+complete 'no neighbor 2001:db8::1 send-community both'@17: rv==7
+  'both'
+describe 'no neighbor 2001:db8::1 send-community both'@17: rv==0
+  'both' 'Send Standard and Extended Community attributes'
+execute relaxed 'no neighbor 2001:db8::1 send-community both'@18: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+execute strict 'no neighbor 2001:db8::1 send-community both'@18: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+complete 'no neighbor 2001:db8::1 send-community both'@18: rv==7
+  'both'
+describe 'no neighbor 2001:db8::1 send-community both'@18: rv==0
+  'both' 'Send Standard and Extended Community attributes'
+execute relaxed 'no neighbor 2001:db8::1 send-community both'@19: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+execute strict 'no neighbor 2001:db8::1 send-community both'@19: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+complete 'no neighbor 2001:db8::1 send-community both'@19: rv==7
+  'both'
+describe 'no neighbor 2001:db8::1 send-community both'@19: rv==0
+  'both' 'Send Standard and Extended Community attributes'
+execute relaxed 'no neighbor 2001:db8::1 send-community both'@20: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+execute strict 'no neighbor 2001:db8::1 send-community both'@20: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+complete 'no neighbor 2001:db8::1 send-community both'@20: rv==7
+  'both'
+describe 'no neighbor 2001:db8::1 send-community both'@20: rv==0
+  'both' 'Send Standard and Extended Community attributes'
+execute relaxed 'no neighbor 2001:db8::1 send-community both'@21: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+execute strict 'no neighbor 2001:db8::1 send-community both'@21: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+complete 'no neighbor 2001:db8::1 send-community both'@21: rv==7
+  'both'
+describe 'no neighbor 2001:db8::1 send-community both'@21: rv==0
+  'both' 'Send Standard and Extended Community attributes'
+execute relaxed 'no neighbor 2001:db8::1 send-community both'@22: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+execute strict 'no neighbor 2001:db8::1 send-community both'@22: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) send-community (both|extended|standard)': '2001:db8::1', 'both'
+complete 'no neighbor 2001:db8::1 send-community both'@22: rv==7
+  'both'
+describe 'no neighbor 2001:db8::1 send-community both'@22: rv==0
+  'both' 'Send Standard and Extended Community attributes'
+execute relaxed 'no neighbor VARIABLE maximum-prefix'@17: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+execute strict 'no neighbor VARIABLE maximum-prefix'@17: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+complete 'no neighbor VARIABLE maximum-prefix'@17: rv==7
+  'maximum-prefix'
+describe 'no neighbor VARIABLE maximum-prefix'@17: rv==0
+  'maximum-prefix' 'Maximum number of prefix accept from this peer'
+execute relaxed 'no neighbor VARIABLE maximum-prefix'@18: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+execute strict 'no neighbor VARIABLE maximum-prefix'@18: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+complete 'no neighbor VARIABLE maximum-prefix'@18: rv==7
+  'maximum-prefix'
+describe 'no neighbor VARIABLE maximum-prefix'@18: rv==0
+  'maximum-prefix' 'Maximum number of prefix accept from this peer'
+execute relaxed 'no neighbor VARIABLE maximum-prefix'@19: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+execute strict 'no neighbor VARIABLE maximum-prefix'@19: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+complete 'no neighbor VARIABLE maximum-prefix'@19: rv==7
+  'maximum-prefix'
+describe 'no neighbor VARIABLE maximum-prefix'@19: rv==0
+  'maximum-prefix' 'Maximum number of prefix accept from this peer'
+execute relaxed 'no neighbor VARIABLE maximum-prefix'@20: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+execute strict 'no neighbor VARIABLE maximum-prefix'@20: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+complete 'no neighbor VARIABLE maximum-prefix'@20: rv==7
+  'maximum-prefix'
+describe 'no neighbor VARIABLE maximum-prefix'@20: rv==0
+  'maximum-prefix' 'Maximum number of prefix accept from this peer'
+execute relaxed 'no neighbor VARIABLE maximum-prefix'@21: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+execute strict 'no neighbor VARIABLE maximum-prefix'@21: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+complete 'no neighbor VARIABLE maximum-prefix'@21: rv==7
+  'maximum-prefix'
+describe 'no neighbor VARIABLE maximum-prefix'@21: rv==0
+  'maximum-prefix' 'Maximum number of prefix accept from this peer'
+execute relaxed 'no neighbor VARIABLE maximum-prefix'@22: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+execute strict 'no neighbor VARIABLE maximum-prefix'@22: rv==0, 'no neighbor (A.B.C.D|X:X::X:X|WORD) maximum-prefix': 'VARIABLE'
+complete 'no neighbor VARIABLE maximum-prefix'@22: rv==7
+  'maximum-prefix'
+describe 'no neighbor VARIABLE maximum-prefix'@22: rv==0
+  'maximum-prefix' 'Maximum number of prefix accept from this peer'
+execute relaxed 'redistribute isis route-map VARIABLE metric 0 metric-type 2'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'isis', '0', '2', 'VARIABLE'
+execute strict 'redistribute isis route-map VARIABLE metric 0 metric-type 2'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'isis', '0', '2', 'VARIABLE'
+complete 'redistribute isis route-map VARIABLE metric 0 metric-type 2'@23: rv==7
+  '2'
+describe 'redistribute isis route-map VARIABLE metric 0 metric-type 2'@23: rv==0
+  '2' 'Set OSPF External Type 2 metrics'
+execute relaxed 'redistribute rip metric 0 route-map VARIABLE metric-type 1'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'rip', '0', '1', 'VARIABLE'
+execute strict 'redistribute rip metric 0 route-map VARIABLE metric-type 1'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'rip', '0', '1', 'VARIABLE'
+complete 'redistribute rip metric 0 route-map VARIABLE metric-type 1'@23: rv==7
+  '1'
+describe 'redistribute rip metric 0 route-map VARIABLE metric-type 1'@23: rv==0
+  '1' 'Set OSPF External Type 1 metrics'
+execute relaxed 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@1: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+execute strict 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@1: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+complete 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@1: rv==7
+  'exact-match'
+describe 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@1: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@2: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+execute strict 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@2: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+complete 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@2: rv==7
+  'exact-match'
+describe 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@4: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+execute strict 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@4: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+complete 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@4: rv==7
+  'exact-match'
+describe 'show bgp community VARIABLE local-AS no-export VARIABLE exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp ipv6 community no-advertise no-export no-export no-export'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-export', 'no-export', 'no-export'
+execute strict 'show bgp ipv6 community no-advertise no-export no-export no-export'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-export', 'no-export', 'no-export'
+complete 'show bgp ipv6 community no-advertise no-export no-export no-export'@1: rv==7
+  'no-export'
+describe 'show bgp ipv6 community no-advertise no-export no-export no-export'@1: rv==0
+  'AA:NN' 'community number'
+  'no-export' 'Do not export to next AS (well-known community)'
+execute relaxed 'show bgp ipv6 community no-advertise no-export no-export no-export'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-export', 'no-export', 'no-export'
+execute strict 'show bgp ipv6 community no-advertise no-export no-export no-export'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-export', 'no-export', 'no-export'
+complete 'show bgp ipv6 community no-advertise no-export no-export no-export'@2: rv==7
+  'no-export'
+describe 'show bgp ipv6 community no-advertise no-export no-export no-export'@2: rv==0
+  'AA:NN' 'community number'
+  'no-export' 'Do not export to next AS (well-known community)'
+execute relaxed 'show bgp ipv6 community no-advertise no-export no-export no-export'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-export', 'no-export', 'no-export'
+execute strict 'show bgp ipv6 community no-advertise no-export no-export no-export'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-export', 'no-export', 'no-export'
+complete 'show bgp ipv6 community no-advertise no-export no-export no-export'@4: rv==7
+  'no-export'
+describe 'show bgp ipv6 community no-advertise no-export no-export no-export'@4: rv==0
+  'AA:NN' 'community number'
+  'no-export' 'Do not export to next AS (well-known community)'
+execute relaxed 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'local-AS', 'no-advertise'
+execute strict 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'local-AS', 'no-advertise'
+complete 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@1: rv==7
+  'exact-match'
+describe 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@1: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'local-AS', 'no-advertise'
+execute strict 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'local-AS', 'no-advertise'
+complete 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@2: rv==7
+  'exact-match'
+describe 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'local-AS', 'no-advertise'
+execute strict 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'local-AS', 'no-advertise'
+complete 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@4: rv==7
+  'exact-match'
+describe 'show bgp ipv6 community VARIABLE local-AS local-AS no-advertise exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'VARIABLE', 'local-AS'
+execute strict 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'VARIABLE', 'local-AS'
+complete 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@1: rv==7
+  'exact-match'
+describe 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@1: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'VARIABLE', 'local-AS'
+execute strict 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'VARIABLE', 'local-AS'
+complete 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@2: rv==7
+  'exact-match'
+describe 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'VARIABLE', 'local-AS'
+execute strict 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'VARIABLE', 'local-AS'
+complete 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@4: rv==7
+  'exact-match'
+describe 'show bgp ipv6 community VARIABLE local-AS VARIABLE local-AS exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp view VARIABLE'@1: rv==4
+execute strict 'show bgp view VARIABLE'@1: rv==4
+complete 'show bgp view VARIABLE'@1: rv==2
+describe 'show bgp view VARIABLE'@1: rv==0
+  'WORD' 'View name'
+execute relaxed 'show bgp view VARIABLE'@2: rv==0, 'show bgp view WORD': 'VARIABLE'
+execute strict 'show bgp view VARIABLE'@2: rv==0, 'show bgp view WORD': 'VARIABLE'
+complete 'show bgp view VARIABLE'@2: rv==2
+describe 'show bgp view VARIABLE'@2: rv==0
+  'WORD' 'View name'
+execute relaxed 'show bgp view VARIABLE'@4: rv==0, 'show bgp view WORD': 'VARIABLE'
+execute strict 'show bgp view VARIABLE'@4: rv==0, 'show bgp view WORD': 'VARIABLE'
+complete 'show bgp view VARIABLE'@4: rv==2
+describe 'show bgp view VARIABLE'@4: rv==0
+  'WORD' 'View name'
+execute relaxed 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'no-export', 'no-export', 'local-AS', 'VARIABLE'
+execute strict 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'no-export', 'no-export', 'local-AS', 'VARIABLE'
+complete 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@1: rv==2
+describe 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'no-export', 'no-export', 'local-AS', 'VARIABLE'
+execute strict 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'no-export', 'no-export', 'local-AS', 'VARIABLE'
+complete 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@2: rv==2
+describe 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'no-export', 'no-export', 'local-AS', 'VARIABLE'
+execute strict 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'no-export', 'no-export', 'local-AS', 'VARIABLE'
+complete 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@4: rv==2
+describe 'show bgp view VARIABLE ipv4 multicast community no-export no-export local-AS VARIABLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertise', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertise', 'no-advertise', 'local-AS'
+complete 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@1: rv==7
+  'local-AS'
+describe 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@1: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertise', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertise', 'no-advertise', 'local-AS'
+complete 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@2: rv==7
+  'local-AS'
+describe 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@2: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertise', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertise', 'no-advertise', 'local-AS'
+complete 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@4: rv==7
+  'local-AS'
+describe 'show bgp view VARIABLE ipv4 unicast community local-AS no-advertise no-advertise local-AS'@4: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'no-export', 'VARIABLE', 'no-advertise'
+execute strict 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'no-export', 'VARIABLE', 'no-advertise'
+complete 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@1: rv==7
+  'no-advertise'
+describe 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@1: rv==0
+  'AA:NN' 'community number'
+  'no-advertise' 'Do not advertise to any peer (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'no-export', 'VARIABLE', 'no-advertise'
+execute strict 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'no-export', 'VARIABLE', 'no-advertise'
+complete 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@2: rv==7
+  'no-advertise'
+describe 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@2: rv==0
+  'AA:NN' 'community number'
+  'no-advertise' 'Do not advertise to any peer (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'no-export', 'VARIABLE', 'no-advertise'
+execute strict 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'no-export', 'VARIABLE', 'no-advertise'
+complete 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@4: rv==7
+  'no-advertise'
+describe 'show bgp view VARIABLE ipv4 unicast community no-export VARIABLE no-advertise'@4: rv==0
+  'AA:NN' 'community number'
+  'no-advertise' 'Do not advertise to any peer (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+execute strict 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+complete 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@1: rv==2
+describe 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+execute strict 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+complete 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@2: rv==2
+describe 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+execute strict 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'unicast', 'VARIABLE', 'local-AS', 'no-export', 'VARIABLE'
+complete 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@4: rv==2
+describe 'show bgp view VARIABLE ipv4 unicast community VARIABLE local-AS no-export VARIABLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv6', 'multicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv6', 'multicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+complete 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@1: rv==7
+  'local-AS'
+describe 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@1: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv6', 'multicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv6', 'multicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+complete 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@2: rv==7
+  'local-AS'
+describe 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@2: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv6', 'multicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv6', 'multicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+complete 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@4: rv==7
+  'local-AS'
+describe 'show bgp view VARIABLE ipv6 multicast community no-advertise VARIABLE no-advertise local-AS'@4: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@1: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'local-AS', 'no-advertise', 'VARIABLE'
+execute strict 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@1: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'local-AS', 'no-advertise', 'VARIABLE'
+complete 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@1: rv==2
+describe 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@2: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'local-AS', 'no-advertise', 'VARIABLE'
+execute strict 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@2: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'local-AS', 'no-advertise', 'VARIABLE'
+complete 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@2: rv==2
+describe 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@4: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'local-AS', 'no-advertise', 'VARIABLE'
+execute strict 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@4: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'local-AS', 'no-advertise', 'VARIABLE'
+complete 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@4: rv==2
+describe 'show ip bgp community no-advertise local-AS no-advertise VARIABLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@1: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+execute strict 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@1: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+complete 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@1: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@1: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@2: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+execute strict 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@2: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+complete 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@2: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@4: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+execute strict 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@4: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'VARIABLE', 'no-advertise', 'local-AS'
+complete 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@4: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-advertise VARIABLE no-advertise local-AS exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@1: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'local-AS', 'VARIABLE'
+execute strict 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@1: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'local-AS', 'VARIABLE'
+complete 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@1: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@1: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@2: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'local-AS', 'VARIABLE'
+execute strict 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@2: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'local-AS', 'VARIABLE'
+complete 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@2: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@4: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'local-AS', 'VARIABLE'
+execute strict 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@4: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'local-AS', 'VARIABLE'
+complete 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@4: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-export VARIABLE local-AS VARIABLE exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@1: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'no-export', 'local-AS'
+execute strict 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@1: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'no-export', 'local-AS'
+complete 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@1: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@1: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@2: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'no-export', 'local-AS'
+execute strict 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@2: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'no-export', 'local-AS'
+complete 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@2: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@4: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'no-export', 'local-AS'
+execute strict 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@4: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-export', 'VARIABLE', 'no-export', 'local-AS'
+complete 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@4: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-export VARIABLE no-export local-AS exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 bgp community no-export no-export VARIABLE VARIABLE'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'no-export', 'VARIABLE', 'VARIABLE'
+execute strict 'show ipv6 bgp community no-export no-export VARIABLE VARIABLE'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'no-export', 'VARIABLE', 'VARIABLE'
+complete 'show ipv6 bgp community no-export no-export VARIABLE VARIABLE'@2: rv==2
+describe 'show ipv6 bgp community no-export no-export VARIABLE VARIABLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ipv6 bgp community no-export no-export VARIABLE VARIABLE'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'no-export', 'VARIABLE', 'VARIABLE'
+execute strict 'show ipv6 bgp community no-export no-export VARIABLE VARIABLE'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'no-export', 'VARIABLE', 'VARIABLE'
+complete 'show ipv6 bgp community no-export no-export VARIABLE VARIABLE'@4: rv==2
+describe 'show ipv6 bgp community no-export no-export VARIABLE VARIABLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-advertise', 'no-advertise'
+execute strict 'show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-advertise', 'no-advertise'
+complete 'show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match'@2: rv==7
+  'exact-match'
+describe 'show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-advertise', 'no-advertise'
+execute strict 'show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABLE', 'local-AS', 'no-advertise', 'no-advertise'
+complete 'show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match'@4: rv==7
+  'exact-match'
+describe 'show ipv6 bgp community VARIABLE local-AS no-advertise no-advertise exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match'@2: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'local-AS', 'local-AS', 'local-AS', 'VARIABLE'
+execute strict 'show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match'@2: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'local-AS', 'local-AS', 'local-AS', 'VARIABLE'
+complete 'show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match'@2: rv==7
+  'exact-match'
+describe 'show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match'@4: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'local-AS', 'local-AS', 'local-AS', 'VARIABLE'
+execute strict 'show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match'@4: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'local-AS', 'local-AS', 'local-AS', 'VARIABLE'
+complete 'show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match'@4: rv==7
+  'exact-match'
+describe 'show ipv6 mbgp community local-AS local-AS local-AS VARIABLE exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 mbgp community local-AS local-AS no-export no-export exact-match'@2: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'local-AS', 'local-AS', 'no-export', 'no-export'
+execute strict 'show ipv6 mbgp community local-AS local-AS no-export no-export exact-match'@2: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'local-AS', 'local-AS', 'no-export', 'no-export'
+complete 'show ipv6 mbgp community local-AS local-AS no-export no-export exact-match'@2: rv==7
+  'exact-match'
+describe 'show ipv6 mbgp community local-AS local-AS no-export no-export exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 mbgp community local-AS local-AS no-export no-export exact-match'@4: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'local-AS', 'local-AS', 'no-export', 'no-export'
+execute strict 'show ipv6 mbgp community local-AS local-AS no-export no-export exact-match'@4: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'local-AS', 'local-AS', 'no-export', 'no-export'
+complete 'show ipv6 mbgp community local-AS local-AS no-export no-export exact-match'@4: rv==7
+  'exact-match'
+describe 'show ipv6 mbgp community local-AS local-AS no-export no-export exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 mbgp community no-export no-export local-AS no-export exact-match'@2: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'no-export', 'no-export', 'local-AS', 'no-export'
+execute strict 'show ipv6 mbgp community no-export no-export local-AS no-export exact-match'@2: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'no-export', 'no-export', 'local-AS', 'no-export'
+complete 'show ipv6 mbgp community no-export no-export local-AS no-export exact-match'@2: rv==7
+  'exact-match'
+describe 'show ipv6 mbgp community no-export no-export local-AS no-export exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 mbgp community no-export no-export local-AS no-export exact-match'@4: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'no-export', 'no-export', 'local-AS', 'no-export'
+execute strict 'show ipv6 mbgp community no-export no-export local-AS no-export exact-match'@4: rv==0, 'show ipv6 mbgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'no-export', 'no-export', 'local-AS', 'no-export'
+complete 'show ipv6 mbgp community no-export no-export local-AS no-export exact-match'@4: rv==7
+  'exact-match'
+describe 'show ipv6 mbgp community no-export no-export local-AS no-export exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 ospf6 database as-external dump'@2: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) (detail|dump|internal)': 'as-external', 'dump'
+execute strict 'show ipv6 ospf6 database as-external dump'@2: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) (detail|dump|internal)': 'as-external', 'dump'
+complete 'show ipv6 ospf6 database as-external dump'@2: rv==7
+  'dump'
+describe 'show ipv6 ospf6 database as-external dump'@2: rv==0
+  'dump' 'Dump LSAs'
+execute relaxed 'show ipv6 ospf6 database as-external dump'@4: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) (detail|dump|internal)': 'as-external', 'dump'
+execute strict 'show ipv6 ospf6 database as-external dump'@4: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) (detail|dump|internal)': 'as-external', 'dump'
+complete 'show ipv6 ospf6 database as-external dump'@4: rv==7
+  'dump'
+describe 'show ipv6 ospf6 database as-external dump'@4: rv==0
+  'dump' 'Dump LSAs'
+execute relaxed 'show ipv6 ospf6 database inter-prefix 1.2.3.4 detail'@2: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) A.B.C.D (detail|dump|internal)': 'inter-prefix', '1.2.3.4', 'detail'
+execute strict 'show ipv6 ospf6 database inter-prefix 1.2.3.4 detail'@2: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) A.B.C.D (detail|dump|internal)': 'inter-prefix', '1.2.3.4', 'detail'
+complete 'show ipv6 ospf6 database inter-prefix 1.2.3.4 detail'@2: rv==7
+  'detail'
+describe 'show ipv6 ospf6 database inter-prefix 1.2.3.4 detail'@2: rv==0
+  'detail' 'Display details of LSAs'
+execute relaxed 'show ipv6 ospf6 database inter-prefix 1.2.3.4 detail'@4: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) A.B.C.D (detail|dump|internal)': 'inter-prefix', '1.2.3.4', 'detail'
+execute strict 'show ipv6 ospf6 database inter-prefix 1.2.3.4 detail'@4: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) A.B.C.D (detail|dump|internal)': 'inter-prefix', '1.2.3.4', 'detail'
+complete 'show ipv6 ospf6 database inter-prefix 1.2.3.4 detail'@4: rv==7
+  'detail'
+describe 'show ipv6 ospf6 database inter-prefix 1.2.3.4 detail'@4: rv==0
+  'detail' 'Display details of LSAs'
+execute relaxed 'show ipv6 ospf6 database intra-prefix 1.2.3.4 internal'@2: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) A.B.C.D (detail|dump|internal)': 'intra-prefix', '1.2.3.4', 'internal'
+execute strict 'show ipv6 ospf6 database intra-prefix 1.2.3.4 internal'@2: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) A.B.C.D (detail|dump|internal)': 'intra-prefix', '1.2.3.4', 'internal'
+complete 'show ipv6 ospf6 database intra-prefix 1.2.3.4 internal'@2: rv==7
+  'internal'
+describe 'show ipv6 ospf6 database intra-prefix 1.2.3.4 internal'@2: rv==0
+  'internal' 'Display LSA's internal information'
+execute relaxed 'show ipv6 ospf6 database intra-prefix 1.2.3.4 internal'@4: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) A.B.C.D (detail|dump|internal)': 'intra-prefix', '1.2.3.4', 'internal'
+execute strict 'show ipv6 ospf6 database intra-prefix 1.2.3.4 internal'@4: rv==0, 'show ipv6 ospf6 database (router|network|inter-prefix|inter-router|as-external|group-membership|type-7|link|intra-prefix) A.B.C.D (detail|dump|internal)': 'intra-prefix', '1.2.3.4', 'internal'
+complete 'show ipv6 ospf6 database intra-prefix 1.2.3.4 internal'@4: rv==7
+  'internal'
+describe 'show ipv6 ospf6 database intra-prefix 1.2.3.4 internal'@4: rv==0
+  'internal' 'Display LSA's internal information'
+execute relaxed 'area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 dead-interva 1 retransmit-interval 1 transmit-delay 1'@23: rv==0, 'area (A.B.C.D|<0-4294967295>) virtual-link A.B.C.D (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535> (hello-interval|retransmit-interval|transmit-delay|dead-interval) <1-65535>': '1.2.3.4', '1.2.3.4', 'hello-interval', '1', 'dead-interva', '1', 'retransmit-interval', '1', 'transmit-delay', '1'
+execute strict 'area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 dead-interva 1 retransmit-interval 1 transmit-delay 1'@23: rv==2
+complete 'area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 dead-interva 1 retransmit-interval 1 transmit-delay 1'@23: rv==2
+describe 'area 1.2.3.4 virtual-link 1.2.3.4 hello-interval 1 dead-interva 1 retransmit-interval 1 transmit-delay 1'@23: rv==0
+  '<1-65535>' 'Seconds'
+execute relaxed 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@1: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABL', 'no-agdvertise', 'locl-AS', 'no-advertise'
+execute strict 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@1: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABL', 'no-agdvertise', 'locl-AS', 'no-advertise'
+complete 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@1: rv==7
+  'exact-match'
+describe 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@1: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@2: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABL', 'no-agdvertise', 'locl-AS', 'no-advertise'
+execute strict 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@2: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABL', 'no-agdvertise', 'locl-AS', 'no-advertise'
+complete 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@2: rv==7
+  'exact-match'
+describe 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@4: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABL', 'no-agdvertise', 'locl-AS', 'no-advertise'
+execute strict 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@4: rv==0, 'show bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABL', 'no-agdvertise', 'locl-AS', 'no-advertise'
+complete 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@4: rv==7
+  'exact-match'
+describe 'show bgp community VARIABL no-agdvertise locl-AS no-advertise exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'local-AS', 'no-expor', 'no-xport', 'VARIABCLE'
+execute strict 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'local-AS', 'no-expor', 'no-xport', 'VARIABCLE'
+complete 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@1: rv==2
+describe 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'local-AS', 'no-expor', 'no-xport', 'VARIABCLE'
+execute strict 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'local-AS', 'no-expor', 'no-xport', 'VARIABCLE'
+complete 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@2: rv==2
+describe 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'local-AS', 'no-expor', 'no-xport', 'VARIABCLE'
+execute strict 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'local-AS', 'no-expor', 'no-xport', 'VARIABCLE'
+complete 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@4: rv==2
+describe 'show bgp ipv6 community local-AS no-expor no-xport VARIABCLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-adsertise', 'local-AS', 'no8-advertise', 'VARIABLE'
+execute strict 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-adsertise', 'local-AS', 'no8-advertise', 'VARIABLE'
+complete 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@1: rv==2
+describe 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-adsertise', 'local-AS', 'no8-advertise', 'VARIABLE'
+execute strict 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-adsertise', 'local-AS', 'no8-advertise', 'VARIABLE'
+complete 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@2: rv==2
+describe 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-adsertise', 'local-AS', 'no8-advertise', 'VARIABLE'
+execute strict 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-adsertise', 'local-AS', 'no8-advertise', 'VARIABLE'
+complete 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@4: rv==2
+describe 'show bgp ipv6 community no-adsertise local-AS no8-advertise VARIABLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no6-export', 'lcal-AS', 'local-AS'
+execute strict 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no6-export', 'lcal-AS', 'local-AS'
+complete 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@1: rv==7
+  'local-AS'
+describe 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@1: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no6-export', 'lcal-AS', 'local-AS'
+execute strict 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no6-export', 'lcal-AS', 'local-AS'
+complete 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@2: rv==7
+  'local-AS'
+describe 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@2: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no6-export', 'lcal-AS', 'local-AS'
+execute strict 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no6-export', 'lcal-AS', 'local-AS'
+complete 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@4: rv==7
+  'local-AS'
+describe 'show bgp ipv6 community no-advertise no6-export lcal-AS local-AS'@4: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-advertise', 'no-advertiseno-xport', 'exact-math'
+execute strict 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-advertise', 'no-advertiseno-xport', 'exact-math'
+complete 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@1: rv==2
+describe 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-advertise', 'no-advertiseno-xport', 'exact-math'
+execute strict 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-advertise', 'no-advertiseno-xport', 'exact-math'
+complete 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@2: rv==2
+describe 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-advertise', 'no-advertiseno-xport', 'exact-math'
+execute strict 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-advertise', 'no-advertise', 'no-advertiseno-xport', 'exact-math'
+complete 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@4: rv==2
+describe 'show bgp ipv6 community no-advertise no-advertise no-advertiseno-xport exact-math'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'local-AS', 'no-adertise', 'no-adve-tie'
+execute strict 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'local-AS', 'no-adertise', 'no-adve-tie'
+complete 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@1: rv==2
+describe 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'local-AS', 'no-adertise', 'no-adve-tie'
+execute strict 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'local-AS', 'no-adertise', 'no-adve-tie'
+complete 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@2: rv==2
+describe 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'local-AS', 'no-adertise', 'no-adve-tie'
+execute strict 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'local-AS', 'no-adertise', 'no-adve-tie'
+complete 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@4: rv==2
+describe 'show bgp ipv6 community no-export local-AS no-adertise no-adve-tie'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'yno-advertis', 'VAyRIABLE', 'no-advertise', 'VARIABLE'
+execute strict 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@1: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'yno-advertis', 'VAyRIABLE', 'no-advertise', 'VARIABLE'
+complete 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@1: rv==2
+describe 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'yno-advertis', 'VAyRIABLE', 'no-advertise', 'VARIABLE'
+execute strict 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@2: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'yno-advertis', 'VAyRIABLE', 'no-advertise', 'VARIABLE'
+complete 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@2: rv==2
+describe 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'yno-advertis', 'VAyRIABLE', 'no-advertise', 'VARIABLE'
+execute strict 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@4: rv==0, 'show bgp ipv6 community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'yno-advertis', 'VAyRIABLE', 'no-advertise', 'VARIABLE'
+complete 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@4: rv==2
+describe 'show bgp ipv6 community yno-advertis VAyRIABLE no-advertise VARIABLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VAR0IABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertie', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VAR0IABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertie', 'no-advertise', 'local-AS'
+complete 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@1: rv==7
+  'local-AS'
+describe 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@1: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VAR0IABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertie', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VAR0IABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertie', 'no-advertise', 'local-AS'
+complete 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@2: rv==7
+  'local-AS'
+describe 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@2: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VAR0IABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertie', 'no-advertise', 'local-AS'
+execute strict 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VAR0IABLE', 'ipv4', 'unicast', 'local-AS', 'no-advertie', 'no-advertise', 'local-AS'
+complete 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@4: rv==7
+  'local-AS'
+describe 'show bgp view VAR0IABLE ipv4 unicast community local-AS no-advertie no-advertise local-AS'@4: rv==0
+  'AA:NN' 'community number'
+  'local-AS' 'Do not send outside local AS (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'local-AS', 'VARIABLE', 'loqal-AS', 'no-export'
+execute strict 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@1: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'local-AS', 'VARIABLE', 'loqal-AS', 'no-export'
+complete 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@1: rv==7
+  'no-export'
+describe 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@1: rv==0
+  'AA:NN' 'community number'
+  'no-export' 'Do not export to next AS (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'local-AS', 'VARIABLE', 'loqal-AS', 'no-export'
+execute strict 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@2: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'local-AS', 'VARIABLE', 'loqal-AS', 'no-export'
+complete 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@2: rv==7
+  'no-export'
+describe 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@2: rv==0
+  'AA:NN' 'community number'
+  'no-export' 'Do not export to next AS (well-known community)'
+execute relaxed 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'local-AS', 'VARIABLE', 'loqal-AS', 'no-export'
+execute strict 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@4: rv==0, 'show bgp view WORD (ipv4|ipv6) (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLE', 'ipv4', 'multicast', 'local-AS', 'VARIABLE', 'loqal-AS', 'no-export'
+complete 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@4: rv==7
+  'no-export'
+describe 'show bgp view VARIABLE ipv4 multicast community local-AS VARIABLE loqal-AS no-export'@4: rv==0
+  'AA:NN' 'community number'
+  'no-export' 'Do not export to next AS (well-known community)'
+execute relaxed 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@1: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-expor', 'VARIABLEono-export', 'VARIAuBLE'
+execute strict 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@1: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-expor', 'VARIABLEono-export', 'VARIAuBLE'
+complete 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@1: rv==2
+describe 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@2: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-expor', 'VARIABLEono-export', 'VARIAuBLE'
+execute strict 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@2: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-expor', 'VARIABLEono-export', 'VARIAuBLE'
+complete 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@2: rv==2
+describe 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@4: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-expor', 'VARIABLEono-export', 'VARIAuBLE'
+execute strict 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@4: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-expor', 'VARIABLEono-export', 'VARIAuBLE'
+complete 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@4: rv==2
+describe 'show ip bgp community no-expor VARIABLEono-export VARIAuBLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@1: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLElocal-AS', 'no-advertise', 'local-AS', 'xack-match'
+execute strict 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@1: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLElocal-AS', 'no-advertise', 'local-AS', 'xack-match'
+complete 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@1: rv==2
+describe 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@1: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@2: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLElocal-AS', 'no-advertise', 'local-AS', 'xack-match'
+execute strict 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@2: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLElocal-AS', 'no-advertise', 'local-AS', 'xack-match'
+complete 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@2: rv==2
+describe 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@4: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLElocal-AS', 'no-advertise', 'local-AS', 'xack-match'
+execute strict 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@4: rv==0, 'show ip bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'VARIABLElocal-AS', 'no-advertise', 'local-AS', 'xack-match'
+complete 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@4: rv==2
+describe 'show ip bgp community VARIABLElocal-AS no-advertise local-AS xack-match'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@1: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'no-export', 'no-advrtWise', 'mno-export'
+execute strict 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@1: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'no-export', 'no-advrtWise', 'mno-export'
+complete 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@1: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@1: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@2: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'no-export', 'no-advrtWise', 'mno-export'
+execute strict 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@2: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'no-export', 'no-advrtWise', 'mno-export'
+complete 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@2: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@4: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'no-export', 'no-advrtWise', 'mno-export'
+execute strict 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@4: rv==0, 'show ip bgp ipv4 (unicast|multicast) community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'unicast', 'no-advertise', 'no-export', 'no-advrtWise', 'mno-export'
+complete 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@4: rv==7
+  'exact-match'
+describe 'show ip bgp ipv4 unicast community no-advertise no-export no-advrtWise mno-export exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'noeexport', 'VARIABLE', 'VARIABLE', 'no-aMdverise'
+execute strict 'show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'noeexport', 'VARIABLE', 'VARIABLE', 'no-aMdverise'
+complete 'show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match'@2: rv==7
+  'exact-match'
+describe 'show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'noeexport', 'VARIABLE', 'VARIABLE', 'no-aMdverise'
+execute strict 'show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'noeexport', 'VARIABLE', 'VARIABLE', 'no-aMdverise'
+complete 'show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match'@4: rv==7
+  'exact-match'
+describe 'show ipv6 bgp community noeexport VARIABLE VARIABLE no-aMdverise exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'loal-AS', 'noK-advertise', 'VARIABLE'
+execute strict 'show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'loal-AS', 'noK-advertise', 'VARIABLE'
+complete 'show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE'@2: rv==2
+describe 'show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'loal-AS', 'noK-advertise', 'VARIABLE'
+execute strict 'show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'no-export', 'loal-AS', 'noK-advertise', 'VARIABLE'
+complete 'show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE'@4: rv==2
+describe 'show ipv6 bgp community no-export loal-AS noK-advertise VARIABLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABaE', 'no-export', 'no-adertise', 'lo0cal-AS'
+execute strict 'show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABaE', 'no-export', 'no-adertise', 'lo0cal-AS'
+complete 'show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match'@2: rv==7
+  'exact-match'
+describe 'show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match'@2: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABaE', 'no-export', 'no-adertise', 'lo0cal-AS'
+execute strict 'show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) exact-match': 'VARIABaE', 'no-export', 'no-adertise', 'lo0cal-AS'
+complete 'show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match'@4: rv==7
+  'exact-match'
+describe 'show ipv6 bgp community VARIABaE no-export no-adertise lo0cal-AS exact-match'@4: rv==0
+  'exact-match' 'Exact match of the communities'
+execute relaxed 'show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'wARIBLE', 'VARIABLE', '8ARIABLE'
+execute strict 'show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE'@2: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'wARIBLE', 'VARIABLE', '8ARIABLE'
+complete 'show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE'@2: rv==2
+describe 'show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE'@2: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'wARIBLE', 'VARIABLE', '8ARIABLE'
+execute strict 'show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE'@4: rv==0, 'show ipv6 bgp community (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export) (AA:NN|local-AS|no-advertise|no-export)': 'wARIBLE', 'VARIABLE', '8ARIABLE'
+complete 'show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE'@4: rv==2
+describe 'show ipv6 bgp community wARIBLE VARIABLE 8ARIABLE'@4: rv==0
+  'AA:NN' 'community number'
+execute relaxed 'redistribute bgp'@14: rv==0, 'redistribute (kernel|connected|static|ospf|isis|bgp|babel)': 'bgp'
+execute strict 'redistribute bgp'@14: rv==0, 'redistribute (kernel|connected|static|ospf|isis|bgp|babel)': 'bgp'
+complete 'redistribute bgp'@14: rv==7
+  'bgp'
+describe 'redistribute bgp'@14: rv==0
+  'bgp' 'Border Gateway Protocol (BGP)'
+execute relaxed 'redistribute bgp'@15: rv==0, 'redistribute (kernel|connected|static|ospf6|isis|bgp|babel)': 'bgp'
+execute strict 'redistribute bgp'@15: rv==0, 'redistribute (kernel|connected|static|ospf6|isis|bgp|babel)': 'bgp'
+complete 'redistribute bgp'@15: rv==7
+  'bgp'
+describe 'redistribute bgp'@15: rv==0
+  'bgp' 'Border Gateway Protocol (BGP)'
+execute relaxed 'redistribute bgp'@16: rv==0, 'redistribute (kernel|connected|static|rip|ripng|ospf|ospf6|isis|bgp)': 'bgp'
+execute strict 'redistribute bgp'@16: rv==0, 'redistribute (kernel|connected|static|rip|ripng|ospf|ospf6|isis|bgp)': 'bgp'
+complete 'redistribute bgp'@16: rv==7
+  'bgp'
+describe 'redistribute bgp'@16: rv==0
+  'bgp' 'Border Gateway Protocol (BGP)'
+execute relaxed 'redistribute bgp'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'bgp', '(null)', '(null)', '(null)'
+execute strict 'redistribute bgp'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'bgp', '(null)', '(null)', '(null)'
+complete 'redistribute bgp'@23: rv==7
+  'bgp'
+describe 'redistribute bgp'@23: rv==0
+  'bgp' 'Border Gateway Protocol (BGP)'
+execute relaxed 'redistribute bgp'@24: rv==0, 'redistribute (kernel|connected|static|ripng|isis|bgp|babel)': 'bgp'
+execute strict 'redistribute bgp'@24: rv==0, 'redistribute (kernel|connected|static|ripng|isis|bgp|babel)': 'bgp'
+complete 'redistribute bgp'@24: rv==7
+  'bgp'
+describe 'redistribute bgp'@24: rv==0
+  'bgp' 'Border Gateway Protocol (BGP)'
+execute relaxed 'redistribute bgp m 10'@14: rv==0, 'redistribute (kernel|connected|static|ospf|isis|bgp|babel) metric <0-16>': 'bgp', '10'
+execute strict 'redistribute bgp m 10'@14: rv==2
+complete 'redistribute bgp m 10'@14: rv==2
+describe 'redistribute bgp m 10'@14: rv==0
+  '<0-16>' 'Metric value'
+execute relaxed 'redistribute bgp m 10'@15: rv==0, 'redistribute (kernel|connected|static|ospf6|isis|bgp|babel) metric <0-16>': 'bgp', '10'
+execute strict 'redistribute bgp m 10'@15: rv==2
+complete 'redistribute bgp m 10'@15: rv==2
+describe 'redistribute bgp m 10'@15: rv==0
+  '<0-16>' 'Metric value'
+execute relaxed 'redistribute bgp m 10'@23: rv==3
+execute strict 'redistribute bgp m 10'@23: rv==2
+complete 'redistribute bgp m 10'@23: rv==3
+describe 'redistribute bgp m 10'@23: rv==3
+execute relaxed 'redistribute bgp metric 10 metric-type 1'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'bgp', '10', '1', '(null)'
+execute strict 'redistribute bgp metric 10 metric-type 1'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'bgp', '10', '1', '(null)'
+complete 'redistribute bgp metric 10 metric-type 1'@23: rv==7
+  '1'
+describe 'redistribute bgp metric 10 metric-type 1'@23: rv==0
+  '1' 'Set OSPF External Type 1 metrics'
+execute relaxed 'redistribute bgp route-map RMAP_REDIST_BGP'@14: rv==0, 'redistribute (kernel|connected|static|ospf|isis|bgp|babel) route-map WORD': 'bgp', 'RMAP_REDIST_BGP'
+execute strict 'redistribute bgp route-map RMAP_REDIST_BGP'@14: rv==0, 'redistribute (kernel|connected|static|ospf|isis|bgp|babel) route-map WORD': 'bgp', 'RMAP_REDIST_BGP'
+complete 'redistribute bgp route-map RMAP_REDIST_BGP'@14: rv==2
+describe 'redistribute bgp route-map RMAP_REDIST_BGP'@14: rv==0
+  'WORD' 'Pointer to route-map entries'
+execute relaxed 'redistribute bgp route-map RMAP_REDIST_BGP'@15: rv==0, 'redistribute (kernel|connected|static|ospf6|isis|bgp|babel) route-map WORD': 'bgp', 'RMAP_REDIST_BGP'
+execute strict 'redistribute bgp route-map RMAP_REDIST_BGP'@15: rv==0, 'redistribute (kernel|connected|static|ospf6|isis|bgp|babel) route-map WORD': 'bgp', 'RMAP_REDIST_BGP'
+complete 'redistribute bgp route-map RMAP_REDIST_BGP'@15: rv==2
+describe 'redistribute bgp route-map RMAP_REDIST_BGP'@15: rv==0
+  'WORD' 'Pointer to route-map entries'
+execute relaxed 'redistribute bgp route-map RMAP_REDIST_BGP'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'bgp', '(null)', '(null)', 'RMAP_REDIST_BGP'
+execute strict 'redistribute bgp route-map RMAP_REDIST_BGP'@23: rv==0, 'redistribute (kernel|connected|static|rip|isis|bgp|babel) {metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'bgp', '(null)', '(null)', 'RMAP_REDIST_BGP'
+complete 'redistribute bgp route-map RMAP_REDIST_BGP'@23: rv==2
+describe 'redistribute bgp route-map RMAP_REDIST_BGP'@23: rv==0
+  'WORD' 'Pointer to route-map entries'
+execute relaxed 'redistribute bgp route-map RMAP_REDIST_BGP'@24: rv==0, 'redistribute (kernel|connected|static|ripng|isis|bgp|babel) route-map WORD': 'bgp', 'RMAP_REDIST_BGP'
+execute strict 'redistribute bgp route-map RMAP_REDIST_BGP'@24: rv==0, 'redistribute (kernel|connected|static|ripng|isis|bgp|babel) route-map WORD': 'bgp', 'RMAP_REDIST_BGP'
+complete 'redistribute bgp route-map RMAP_REDIST_BGP'@24: rv==2
+describe 'redistribute bgp route-map RMAP_REDIST_BGP'@24: rv==0
+  'WORD' 'Route map name'
+execute relaxed 'default-information originate metric-type 1 metric 10'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': '(null)', '10', '1', '(null)'
+execute strict 'default-information originate metric-type 1 metric 10'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': '(null)', '10', '1', '(null)'
+complete 'default-information originate metric-type 1 metric 10'@23: rv==2
+describe 'default-information originate metric-type 1 metric 10'@23: rv==0
+  '<0-16777214>' 'OSPF metric'
+execute relaxed 'default-information originate always metric-type 1 metric 10'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'always', '10', '1', '(null)'
+execute strict 'default-information originate always metric-type 1 metric 10'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'always', '10', '1', '(null)'
+complete 'default-information originate always metric-type 1 metric 10'@23: rv==2
+describe 'default-information originate always metric-type 1 metric 10'@23: rv==0
+  '<0-16777214>' 'OSPF metric'
+execute relaxed 'default-information originate route-map RMAP_DEFAULT'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': '(null)', '(null)', '(null)', 'RMAP_DEFAULT'
+execute strict 'default-information originate route-map RMAP_DEFAULT'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': '(null)', '(null)', '(null)', 'RMAP_DEFAULT'
+complete 'default-information originate route-map RMAP_DEFAULT'@23: rv==2
+describe 'default-information originate route-map RMAP_DEFAULT'@23: rv==0
+  'WORD' 'Pointer to route-map entries'
+execute relaxed 'default-information originate route-map RMAP_DEFAULT metric 10'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': '(null)', '10', '(null)', 'RMAP_DEFAULT'
+execute strict 'default-information originate route-map RMAP_DEFAULT metric 10'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': '(null)', '10', '(null)', 'RMAP_DEFAULT'
+complete 'default-information originate route-map RMAP_DEFAULT metric 10'@23: rv==2
+describe 'default-information originate route-map RMAP_DEFAULT metric 10'@23: rv==0
+  '<0-16777214>' 'OSPF metric'
+execute relaxed 'default-information originate always metric-type 2 metric 23'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'always', '23', '2', '(null)'
+execute strict 'default-information originate always metric-type 2 metric 23'@23: rv==0, 'default-information originate {always|metric <0-16777214>|metric-type (1|2)|route-map WORD}': 'always', '23', '2', '(null)'
+complete 'default-information originate always metric-type 2 metric 23'@23: rv==2
+describe 'default-information originate always metric-type 2 metric 23'@23: rv==0
+  '<0-16777214>' 'OSPF metric'

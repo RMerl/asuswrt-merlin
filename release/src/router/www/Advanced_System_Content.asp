@@ -218,6 +218,10 @@ function applyRule(){
 			return false;
 		}
 
+		if(document.form.http_clientlist.value != '<% nvram_get("http_clientlist"); %>'){
+			document.form.action_script.value = "restart_time;restart_httpd";
+		}
+
 		if(document.form.http_passwd2.value.length > 0){
 			document.form.http_passwd.value = document.form.http_passwd2.value;
 			document.form.http_passwd.disabled = false;
@@ -354,28 +358,33 @@ function validForm(){
 		}else{
 			document.form.v_password2.focus();
 			document.form.v_password2.select();
-		}	
-
+		}
 		return false;
 	}
 
 	if(is_KR_sku){		/* MODELDEP by Territory Code */
 		if(document.form.http_passwd2.value.length > 0 || document.form.http_passwd2.value.length > 0){
-				if(!validator.string_KR(document.form.http_passwd2)){
-						document.form.http_passwd2.focus();
-						document.form.http_passwd2.select();
-						return false;
-				}
+			if(!validator.string_KR(document.form.http_passwd2)){
+				document.form.http_passwd2.focus();
+				document.form.http_passwd2.select();
+				return false;
+			}
 		}
 	}
 	else{
 		if(!validator.string(document.form.http_passwd2)){
-				document.form.http_passwd2.focus();
-				document.form.http_passwd2.select();
-				return false;
+			document.form.http_passwd2.focus();
+			document.form.http_passwd2.select();
+			return false;
 		}	
 	}	
-	
+
+	if(document.form.http_passwd2.value == '<% nvram_default_get("http_passwd"); %>'){	
+		showtext(document.getElementById("alert_msg2"),"* <#QIS_adminpass_confirm0#>");
+		document.form.http_passwd2.focus();
+		document.form.http_passwd2.select();		
+		return false;
+	}	
 
 	if(!validator.ipAddrFinal(document.form.log_ipaddr, 'log_ipaddr')
 			|| !validator.string(document.form.ntp_server0)
@@ -389,10 +398,7 @@ function validForm(){
 			&& document.form.dst_start_d.value == document.form.dst_end_d.value){
 		alert("<#FirewallConfig_URLActiveTime_itemhint4#>");	//At same day
 		return false;
-	}
-
-	if(document.form.http_passwd2.value.length > 0)
-		alert("<#File_Pop_content_alert_desc10#>");
+	}	
 		
 	if (document.form.misc_http_x[0].checked) {
 		if (!validator.range(document.form.misc_httpport_x, 1024, 65535))
@@ -445,6 +451,9 @@ function validForm(){
 	else if(!validator.rangeAllowZero(document.form.http_autologout, 10, 999, '<% nvram_get("http_autologout"); %>'))
 		return false;
 
+	if(document.form.http_passwd2.value.length > 0)	//password setting changed
+		alert("<#File_Pop_content_alert_desc10#>");
+		
 	return true;
 }
 
@@ -1210,27 +1219,27 @@ function toggle_jffs_visibility(state){
 					</td>
 				</tr>
 				<tr id="dst_changes_start" style="display:none;">
-					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,7)">DST time zone changes starts</a></th>
+					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,7)"><#LANHostConfig_x_TimeZone_DSTStart#></a></th>
 					<td>
 								<div id="dst_start" style="color:white;display:none;">
 									<div>
-										<select name="dst_start_m" class="input_option"></select>&nbsp;month &nbsp;
+										<select name="dst_start_m" class="input_option"></select>&nbsp;<#month#> &nbsp;
 										<select name="dst_start_w" class="input_option"></select>&nbsp;
-										<select name="dst_start_d" class="input_option"></select>&nbsp;weekday &nbsp;
-										<select name="dst_start_h" class="input_option"></select>&nbsp;hour &nbsp;
+										<select name="dst_start_d" class="input_option"></select>&nbsp;<#weekday#> &nbsp;
+										<select name="dst_start_h" class="input_option"></select>&nbsp;<#hour_time#> &nbsp;
 									</div>
 								</div>
 					</td>	
 				</tr>
 				<tr id="dst_changes_end" style="display:none;">
-					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,8)">DST time zone changes ends</a></th>
+					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,8)"><#LANHostConfig_x_TimeZone_DSTEnd#></a></th>
 					<td>
 								<div id="dst_end" style="color:white;display:none;">
 									<div>
-										<select name="dst_end_m" class="input_option"></select>&nbsp;month &nbsp;
+										<select name="dst_end_m" class="input_option"></select>&nbsp;<#month#> &nbsp;
 										<select name="dst_end_w" class="input_option"></select>&nbsp;
-										<select name="dst_end_d" class="input_option"></select>&nbsp;weekday &nbsp;
-										<select name="dst_end_h" class="input_option"></select>&nbsp;hour &nbsp;
+										<select name="dst_end_d" class="input_option"></select>&nbsp;<#weekday#> &nbsp;
+										<select name="dst_end_h" class="input_option"></select>&nbsp;<#hour_time#> &nbsp;
 									</div>
 								</div>
 					</td>
@@ -1295,7 +1304,7 @@ function toggle_jffs_visibility(state){
 				</tr>
 
 				<tr>
-					<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,6);">Enable WAN down browser redirect notice</a></th>
+					<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,6);"><#Enable_redirect_notice#></a></th>
 					<td>
 						<input type="radio" name="nat_redirect_enable" class="input" value="1" <% nvram_match_x("","nat_redirect_enable","1", "checked"); %> ><#checkbox_Yes#>
 						<input type="radio" name="nat_redirect_enable" class="input" value="0" <% nvram_match_x("","nat_redirect_enable","0", "checked"); %> ><#checkbox_No#>

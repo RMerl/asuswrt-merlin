@@ -328,7 +328,7 @@ typedef enum _RT_802_11_PHY_MODE {
 #define OFFSET_EEPROM_VER	0x40002
 #define OFFSET_BOOT_VER		0x4018A
 #define OFFSET_COUNTRY_CODE	0x40188
-#if defined(RTN14U) || defined(RTN11P)
+#if defined(RTN14U) || defined(RTN11P) || defined(RTN300)
 #define OFFSET_MAC_ADDR		0x40004
 #define OFFSET_MAC_ADDR_2G	0x40004 //only one MAC
 #define OFFSET_MAC_GMAC2	0x4018E
@@ -358,6 +358,7 @@ typedef enum _RT_802_11_PHY_MODE {
 #define REGSPEC_ADDR		0x40248 // 4 bytes
 #endif /* RTCONFIG_NEW_REGULATION_DOMAIN */
 
+#define OFFSET_PSK		0x4ff80 //15bytes
 #define OFFSET_TERRITORY_CODE	0x4ff90	/* 5 bytes, e.g., US/01, US/02, TW/01, etc. */
 #define OFFSET_DEV_FLAGS	0x4ffa0 //device dependent flags
 #define OFFSET_ODMPID		0x4ffb0 //the shown model name (for Bestbuy and others)

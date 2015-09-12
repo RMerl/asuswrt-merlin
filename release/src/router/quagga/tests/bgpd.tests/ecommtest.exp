@@ -1,0 +1,13 @@
+set timeout 10
+set testprefix "ecommtest "
+set aborted 0
+set color 0
+
+spawn "./ecommtest"
+
+# proc simpletest { start } {
+
+simpletest "ipaddr"
+simpletest "ipaddr-so"
+simpletest "asn"
+simpletest "asn4"

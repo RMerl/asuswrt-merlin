@@ -3,94 +3,215 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - Blocking Page</title>                          
+<title><#Web_Title#> - Blocking Page</title>  
+<script type="text/JavaScript" src="/js/jquery.js"></script>                       
 <style>
 body{
-	background-color:#21333e;
-	margin:10px auto;
 	color:#FFF;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-family: Arial;
 }
-
-.erTable thead{
-	font-weight:bold;
-	font-size:16px;
-	text-align:center;
-	line-height:25px;
+.wrapper{
+	background:url(images/New_ui/login_bg.png) #283437 no-repeat;
+	background-size: 1280px 1076px;
+	background-position: center 0%;
+	margin: 0px; 
 }
-.erTable th{
-	font-weight:bolder;
-	font-size:14px;
-	line-height:25px;
-	text-align:left;
+.title_name {
+	font-size: 32px;
+	color:#93D2D9;
 }
-.erTable thead td{
-	height:52px;
-	background: #7d7e7d; /* Old browsers */
-	background: -moz-linear-gradient(top, #7d7e7d 0%, #0e0e0e 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7d7e7d), color-stop(100%,#0e0e0e)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* Opera11.10+ */
-	background: -ms-linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* IE10+ */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7d7e7d', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
-	background: linear-gradient(top, #7d7e7d 0%,#0e0e0e 100%); /* W3C */
-	border-top-left-radius: 10px;
-	border-top-right-radius: 10px;
+.title_text{
+	width:520px;
 }
-
-.erTable tbody th{
-	background: #000; /* Old browsers */
-	font-size:16px;
+.prod_madelName{
+	font-size: 26px;
+	color:#fff;
+	margin-left:78px;
+	margin-top: 10px;
 }
-
-.erpage_td{
-	background: #000; /* Old browsers */
-}.Epagecontent{
-	font-size:12px;
-	border:1px dashed #333;
-	background-color:#FFF;
-	width:90%;
-	padding:5px;
-	margin:2px 0px 10px 20px;
-	line-height:20px;
-	color:#000;
+.login_img{
+	width:43px;
+	height:43px;
+	background-image: url('images/New_ui/icon_titleName.png');
+	background-repeat: no-repeat;
 }
-
-.Epagetitle{
-	font-size:14px;
+.p1{
+	font-size: 16px;
+	color:#fff;
+	width: 480px;
+}
+.button{
+	background-color:#007AFF;
+	/*background:rgba(255,255,255,0.1);
+	border: solid 1px #6e8385;*/
+	border-radius: 4px ;
+	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
+	height: 68px;
+	width: 300px;
+	font-size: 28px;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	text-align: center;
+	float:right; 
+	margin:25px 0 0 78px;
+	line-height:68px;
+}
+.form_input{
+	background-color:rgba(255,255,255,0.2);
+	border-radius: 4px;
+	padding:26px 22px;
+	width: 480px;
+	border: 0;
+	height:25px;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	font-size:28px
+}
+.nologin{
+	margin:10px 0px 0px 78px;
+	background-color:rgba(255,255,255,0.2);
+	padding:20px;
+	line-height:36px;
+	border-radius: 5px;
+	width: 600px;
+	border: 0;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	font-size: 18px;
+}
+.div_table{
+	display:table;
+}
+.div_tr{
+	display:table-row;
+}
+.div_td{
+	display:table-cell;
+}
+.title_gap{
+	margin:10px 0px 0px 78px;
+}
+.img_gap{
+	padding-right:30px;
+	vertical-align:middle;
+}
+.password_gap{
+	margin:30px 0px 0px 78px;
+}
+.error_hint{
+	color: rgb(255, 204, 0);
+	margin:10px 0px -10px 78px; 
+	font-size: 18px;
 	font-weight: bolder;
-	line-height:30px;
-	color:#FFF;
-	margin:0px 0px 0px 20px;
 }
-
-.er_title{
-	color:#FC0;
-	background-color:#000000;
-	font-weight:bolder;
-	width:450px;
-	height:30px;
-	line-height:24px;
-	margin:5px 0px 0px 20px;
-}	
-
-.modelName{
-	color:#FFFFFF;
-	font-size:22px;
+.main_field_gap{
+	margin:100px auto 0;
+}
+ul{
+	margin: 0;
+}
+li{
+	margin: 10px 0;
+}
+#wanLink{
+	cursor: pointer;
+}
+.button_background{
+	background-color: transparent;
+}
+.tm_logo{
+	background:url('images/New_ui/tm_logo_1.png');
+	width:268px;
+	height:48px;
+}
+#tm_block{
+	margin-top: 110px;
+}
+.desc_info{
 	font-weight:bold;
-	border:0px solid #333;
-	width:300px;
-	position:absolute;
-	height:20px;
-	letter-spacing:1px;
-	margin:10px 0px 0px 18px;
 }
-
-
+/*for mobile device*/
+@media screen and (max-width: 1000px){
+	.title_name {
+		font-size: 1.2em;
+		color:#93d2d9;
+		margin-left:15px;
+	}
+	.prod_madelName{
+		font-size: 1.2em;
+		margin-left: 15px;
+	}
+	.p1{
+		font-size: 16px;
+		width:100%;
+	}
+	.login_img{
+		background-size: 75%;
+	}
+	.title_text{
+		width: 100%;
+	}
+	.form_input{	
+		padding:13px 11px;
+		width: 100%;
+		height:25px;
+		font-size:16px
+	}
+	.button{
+		height: 50px;
+		width: 100%;
+		font-size: 16px;
+		text-align: center;
+		float:right; 
+		margin: 25px -30px 0 0;
+		line-height:50px;
+		padding: 0 10px;
+	}
+	.nologin{
+		margin-left:10px; 
+		padding:5px;
+		line-height:18px;
+		width: 100%;
+		font-size:14px;
+	}
+	.error_hint{
+		margin-left:10px; 
+	}
+	.main_field_gap{
+		width:80%;
+		margin:30px 0 0 15px;
+		/*margin:30px auto 0;*/
+	}
+	.title_gap{
+		margin-left:15px; 
+	}
+	.password_gap{
+		margin-left:15px; 
+	}
+	.img_gap{
+		padding-right:0;
+		vertical-align:middle;
+	}
+	ul{
+		margin-left:-20px;
+	}
+	li{
+		margin: 10px 0;
+	}
+	.tm_logo{
+		width: 225px;
+		background-repeat: no-repeat;
+		background-size: 100%;
+	}
+	#tm_block{
+		margin-top: 90px;
+	}
+}
 </style>	
 <script type="text/javascript">
 var bwdpi_support = ('<% nvram_get("rc_support"); %>'.search('bwdpi') == -1) ? false : true;
@@ -192,7 +313,7 @@ function get_target_info(){
 	}
 	else{		//for Parental Controls (Time Scheduling)
 		target_info.mac = mac_parameter;
-		target_info.desc = "This device is blocked to access the Internet at this time";
+		target_info.desc = "This device is blocked to access the Internet at this time";//untranslated string
 	}
 }
 
@@ -238,19 +359,27 @@ function show_information(){
 	document.getElementById('detail_info').innerHTML = code;
 	
 	if(target_info.category_type == "Parental Controls"){
-		code_title = "<div class='er_title' style='height:auto;'>The web page category is filtered</div>"
+		code_title = "<div class='er_title' style='height:auto;'>The web page category is filtered</div>"//untranslated string
 		code_suggestion = "<ul>";
-		code_suggestion += "<li><span>If you are a manager and still want to visit this website, please go to <a href='AiProtection_WebProtector.asp'>Parental Controls</a> for configuration change.</span></li>";
-		code_suggestion += "<li><span>If you are a client and have any problems, please contact your manager.</span></li>";		
+		code_suggestion += "<li><span>If you are a manager and still want to visit this website, please go to for configuration change.</span></li>";//untranslated string
+		code_suggestion += "<li><span>If you are a client and have any problems, please contact your manager.</span></li>";		//untranslated string
 		code_suggestion += "</ul>";
 		document.getElementById('tm_block').style.display = "";
+		$("#go_btn").click(function(){
+			location.href = "AiProtection_WebProtector.asp";
+		});
+		document.getElementById('go_btn').style.display = "";
 	}
 	else if(target_info.category_type == "Home Protection"){
-		code_title = "<div class='er_title' style='height:auto;'>Warning! The website contains malware. Visiting this site may harm your computer</div>"
+		code_title = "<div class='er_title' style='height:auto;'>Warning! The website contains malware. Visiting this site may harm your computer</div>"//untranslated string
 		code_suggestion = "<ul>";
-		code_suggestion += "If you are a manager and want to disable this protection, please go to <a href='AiProtection_HomeProtection.asp'>Home Protection</a> for configuration";
+		code_suggestion += "If you are a manager and want to disable this protection, please go to Home Protection for configuration";//untranslated string
 		code_suggestion += "</ul>";
 		document.getElementById('tm_block').style.display = "";
+		$("#go_btn").click(function(){
+			location.href = "AiProtection_HomeProtection.asp";
+		});
+		document.getElementById('go_btn').style.display = "";
 	}
 	else{		//for Parental Control(Time Scheduling)
 		code_title = "<div class='er_title' style='height:auto;'>Warning! The device can't access the Internet now.</div>"
@@ -260,10 +389,13 @@ function show_information(){
 		else
 			parental_string = "<#Parental_Control#>";
 
-		code_suggestion += "If you are a manager and want to access the Internet, please go to <a href='ParentalControl.asp'>"+ parental_string +"</a> for configuration change.";
-		code_suggestion += "<br>";	
-		code_suggestion += "If you are a client and have any problems, please contact your manager.";	
-		code_suggestion += "</ul>";	
+		code_suggestion += "<li>If you are a manager and want to access the Internet, please go to "+ parental_string +" for configuration change.</li>";	//untranslated string
+		code_suggestion += "<li>If you are a client and have any problems, please contact your manager.</li>";//untranslated string
+		code_suggestion += "</ul>";
+		$("#go_btn").click(function(){
+			location.href = "ParentalControl.asp";
+		});
+		document.getElementById('go_btn').style.display = "";
 		document.getElementById('tm_block').style.display = "none";
 	}
 
@@ -271,88 +403,42 @@ function show_information(){
 	document.getElementById('suggestion').innerHTML = code_suggestion;
 }
 </script>
-<style>
-.footer{
-	height:36px;
-	background: #0e0e0e; /* Old browsers */
-	background: -moz-linear-gradient(top, #0e0e0e 0%, #7d7e7d 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#0e0e0e), color-stop(100%,#7d7e7d)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* Opera11.10+ */
-	background: -ms-linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* IE10+ */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0e0e0e', endColorstr='#7d7e7d',GradientType=0 ); /* IE6-9 */
-	background: linear-gradient(top, #0e0e0e 0%,#7d7e7d 100%); /* W3C */
-	border-bottom-right-radius: 10px;
-	border-bottom-left-radius: 10px;
-}
-
-.tm_logo{
-	background:url('images/New_ui/tm_logo_1.png');
-	width:268px;
-	height:48px;
-	float:right;
-}
-.desc_info{
-	font-weight:bold;
-	font-size:14px;
-}
-#detail_info{
-	color:red
-}
-
-#tm_block{
-	margin-top:20px;
-}
-
-.erTable tbody th{
-	height:40px;
-}
-</style>
 </head>
-
-<body onload="initial();">
-<br><br>
-<table width="500" border="0" align="center" cellspacing="0" class="erTable">
-	<thead>
-		<tr>
-			<td height="52" align="left" valign="top"><span class="modelName"><#Web_Title2#></span></td>
-		</tr>
-	</thead>
-	<tr>
-		<th valign="top" id="page_title"></th>
-	</tr>
-	<tr>
-		<td  valign="top" class="erpage_td">
-			<span class="Epagetitle">Detailed informations:</span>	  
-			<div id="detail_info" class="Epagecontent"></div>	  
-			<div class="Epagetitle">
-				<div>
-					<span><#web_redirect_suggestion0#>:</span>
-				</div>		
+<body class="wrapper" onload="initial();">
+	<div class="div_table main_field_gap">
+		<div class="title_name">
+			<div class="div_td img_gap">
+				<div class="login_img"></div>
 			</div>
-			<div class="Epagecontent">
+			<div id="page_title" class="div_td title_text"></div>
+		</div>		
+		<div class="prod_madelName"><#Web_Title2#></div>
+		
+		<div class="p1 title_gap">Detailed informations:</div><!--untranslated string-->
+		<div ></div>	
+		<div>
+			<div class="p1 title_gap"></div>
+			<div class="nologin">
+				<div id="detail_info"></div>
+			</div>
+		</div>
+		
+		<div class="p1 title_gap"><#web_redirect_suggestion0#></div>	
+		<div>
+			<div class="p1 title_gap"></div>
+			<div class="nologin">
+				<div id="case_content"></div>
 				<div id="suggestion"></div>
 			</div>
-			<div id="tm_block" class="Epagecontent" style="display:none">
-				<table>
-					<tr>				
-						<td>
-							<div>For your client side advanced internet security protection. Trend Micro offer you more advanced home security solution. Please <a href="http://www.trendmicro.com" target="_blank">visit the site</a> for free trial or online scan service.</div>	
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<div class="tm_logo"></div>
-						</td>						
-					</tr>
-				</table>
-			</div>
-		</td>
-	</tr>
-	<tr>
-		<td height="22" class="footer"><span></span></td>
-	</tr>
-</table>
+		</div>
+
+		<div id="go_btn" class='button' style="display:none;"><#btn_go#></div>		
+		<div id="tm_block" class="nologin" style="display:none">
+			<div>For your client side advanced internet security protection. Trend Micro offer you more advanced home security solution. Please <a href="http://www.trendmicro.com" target="_blank">visit the site</a> for free trial or online scan service.</div>
+			<!--untranslated string-->
+			<div class="tm_logo"></div>
+		</div>
+	</div>
 </body>
 </html>
 

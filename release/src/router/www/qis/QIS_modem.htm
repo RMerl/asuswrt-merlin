@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<link rel="stylesheet" type="text/css" href="/form_style.css">
+<link rel="stylesheet" type="text/css" href="../form_style.css">
 <style>
 #ClientList_Block_PC{
 	border:1px outset #999;
@@ -42,14 +42,14 @@
 	background-color:#3366FF;
 	color:#FFFFFF;
 	cursor:default;
-}	
-</style>	
-<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
-<script type="text/JavaScript" src="/state.js"></script>
-<script type="text/JavaScript" src="/general.js"></script>
-<script type="text/javascript" src="/wcdma_list.js"></script>
-<script type="text/JavaScript" src="/help.js"></script>
-<script type="text/javaScript" src="/jquery.js"></script>
+}
+</style>
+<script type="text/javascript" src="QISMobilePlugin.js"></script>
+<script type="text/JavaScript" src="../state.js"></script>
+<script type="text/JavaScript" src="../general.js"></script>
+<script type="text/javascript" src="../wcdma_list.js"></script>
+<script type="text/JavaScript" src="../help.js"></script>
+<script type="text/javaScript" src="../js/jquery.js"></script>
 <script type="text/JavaScript">
 var modem = '<% nvram_get("Dev3G"); %>';
 var country = '<% nvram_get("modem_country"); %>';
@@ -136,12 +136,6 @@ function check_dongle_status(){
 }
 
 function submitForm(){
-	document.form.http_username.value = parent.document.QKform.http_username.value;
-	if(parent.document.QKform.http_passwd.value != ""){
-		document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
-		document.form.http_passwd.disabled = false;
-	}
-
 	//check pin code
 	if(pin_opt && document.form.modem_pincode.value != ""){
 		if(document.form.modem_pincode.value.search(/^\d{4,8}$/)==-1) {
@@ -154,14 +148,6 @@ function submitForm(){
 	document.getElementById("nextButton").style.display = "none";
 	document.getElementById("loadingIcon").style.display = "";
 	changeiuiBackground(1);
-	/*if(dualwan_set){
-		document.getElementById("loadingNote1m").style.display = "";
-		document.form.action_wait.value	= 60;
-	}
-	else{
-		document.getElementById("loadingNote").style.display = "";	
-		document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 30");
-	}*/
 
 	if(document.form.modem_country.value == ""){
 		var valueStr = "";
@@ -170,21 +156,33 @@ function submitForm(){
 		document.form.modem_isp.options[0] = new Option(valueStr, valueStr, false, true);
 	}
 
+	if(parent.based_modelid == "4G-AC55U" && parent.flag_manual){
+		document.form.flag.value = "manual";
+	}
+
+	parent.QKform.wans_dualwan.disabled = false;
+	parent.QKform.modem_enable.value = document.form.modem_enable.value;
+	parent.QKform.modem_country.value = document.form.modem_country.value;
+	parent.QKform.modem_isp.value = document.form.modem_isp.value;
+	parent.QKform.modem_apn.value = document.form.modem_apn.value;
+	parent.QKform.modem_dialnum.value = document.form.modem_dialnum.value;
+	parent.QKform.modem_pincode.value = document.form.modem_pincode.value;
+	parent.QKform.modem_user.value = document.form.modem_user.value;
+	parent.QKform.modem_pass.value = document.form.modem_pass.value;
+	parent.QKform.modem_ttlsid.value = document.form.modem_ttlsid.value;
+	parent.QKform.Dev3G.value = document.form.Dev3G.value;
+
 	// move reboot to finish page
 	if(document.form.action_script.value == "reboot"){
 		var reboot_time = eval("<% get_default_reboot_time(); %> + 30");
-		document.form.action_script.value = "saveNvram";
-		document.form.action_wait.value = "0";
 		parent.sysReboot = true;
 		
 		if(reboot_time > parent.rebootTime)
 			parent.rebootTime = reboot_time;
 	}
 
-	document.form.submit();
-	setTimeout(function(){
-		location.href = "/qis/QIS_wireless.htm";
-	}, 500)
+	location.href = document.form.next_page.value;
+	return true;
 }
 
 var wanstate;

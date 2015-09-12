@@ -1,0 +1,11 @@
+# $Copyright Open Broadcom Corporation$
+#
+# $Id: README,v 1.4 2003-10-31 21:28:05 mthawani Exp $
+
+The text files in this directory contain default nv ram data used by trx.exe to insert 
+the default nvram "string=value" set into the PMON boot loader image.
+
+Each file corresponds to a particular embedded board type.
+There may be one or more files per board type -- customers may
+require differing ethernet mac addresses for example.
+

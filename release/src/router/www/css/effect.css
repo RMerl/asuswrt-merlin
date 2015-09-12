@@ -1,0 +1,97 @@
+*,
+*:before,
+*:after {
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.switch_radio {
+	height: 35px;
+	margin-bottom: 10px;
+	position: relative;
+	width: 72px;
+}
+.switch_radio .off_state,
+.switch_radio .on_state {
+	-webkit-transition: opacity 0.2s ease-out 0.1s;
+	-moz-transition: opacity 0.2s ease-out 0.1s;
+	-o-transition: opacity 0.2s ease-out 0.1s;
+	transition: opacity 0.2s ease-out 0.1s;
+	cursor: pointer;
+	display: block;
+	font-size: 1em;
+	font-weight: bold;
+	line-height: 1em;
+	position: absolute;
+	top: 7px;
+	text-transform: uppercase;
+}
+.switch_radio .off_state {
+	right: 30px;
+}
+.switch_radio .on_state {
+	color: #fefefe;
+	opacity: 0;
+	left: 10px;
+}
+.switch_radio .switch {
+	height: 0;
+	left: 0;
+	line-height: 0;
+	position: absolute;
+	top: 0;
+	width: 0;
+}
+.switch_radio .switch:before,
+.switch_radio .switch:after {
+	content: '';
+	position: absolute;
+}
+.switch_radio .switch:before {
+	-moz-border-radius: 20px;
+	-webkit-border-radius: 20px;
+	border-radius: 20px;
+	-webkit-transition: background-color 0.2s ease-out 0.1s;
+	-moz-transition: background-color 0.2s ease-out 0.1s;
+	-o-transition: background-color 0.2s ease-out 0.1s;
+	transition: background-color 0.2s ease-out 0.1s;
+	background: #bdc3c7;
+	height: 25px;
+	left: -4px;
+	top: 0;
+	width: 72px;
+}
+.switch_radio .switch:after {
+	-moz-border-radius: 50%;
+	-webkit-border-radius: 50%;
+	border-radius: 50%;
+	-webkit-transition: -webkit-transform 0.2s ease-out 0.1s;
+	-moz-transition: -moz-transform 0.2s ease-out 0.1s;
+	-o-transition: -o-transform 0.2s ease-out 0.1s;
+	transition: transform 0.2s ease-out 0.1s;
+	-webkit-transform: translate(0, 0);
+	-moz-transform: translate(0, 0);
+	-ms-transform: translate(0, 0);
+	-o-transform: translate(0, 0);
+	transform: translate(0, 0);
+	background: #fefefe;
+	height: 24px;
+	width: 24px;
+}
+.switch_radio .switch:checked:after {
+	-webkit-transform: translate(40px, 0);
+	-moz-transform: translate(40px, 0);
+	-ms-transform: translate(40px, 0);
+	-o-transform: translate(40px, 0);
+	transform: translate(40px, 0);
+}
+.switch_radio .switch:checked ~ .off_state {
+	opacity: 0;
+}
+.switch_radio .switch:checked ~ .on_state {
+	opacity: 1;
+}
+.switch_radio .switch:checked:before{
+	background: #007AFF;
+}

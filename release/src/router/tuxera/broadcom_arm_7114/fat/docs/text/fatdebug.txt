@@ -1,0 +1,55 @@
+FATDEBUG(8)                                                        FATDEBUG(8)
+
+
+
+NAME
+       fatdebug  -  Create  a  metadata  dump of a FAT volume suitable for bug
+       reporting.
+
+SYNOPSIS
+       fatdebug device|image
+
+DESCRIPTION
+       fatdebug will efficiently extract all metadata relevant  for  debugging
+       from  a  FAT  volume  and dump it to standard output.  It works at disk
+       sector level and copies only the metadata of the  FAT  volume  (so  the
+       resulting output is relatively small).
+
+       fatdebug is mostly useful when sending bug reports to FAT developers.
+
+EXIT CODES
+       The exit code is 0 on success, non-zero otherwise.
+
+EXAMPLES
+       Dump FAT file system metadata on /dev/sda1 to a local image file:
+
+              fatdebug /dev/sda1 > sda1.img
+
+       Dump  FAT file system metadata on /dev/sda1 to a bzip2-compressed local
+       image file:
+
+              fatdebug /dev/sda1 | bzip2 > sda1.img
+
+       Dump FAT file system metadata to a remote host, using ssh. Please  note
+       that ssh may ask for a password!
+
+              fatdebug /dev/sda1 | ssh host 'cat > sda1.img'
+
+
+KNOWN ISSUES
+       There are no known problems with fatdebug.  If you think you have found
+       a problem then please send an email describing it  to  fat-support@tux‐
+       era.com.
+
+AUTHORS
+       fatdebug was written by Sougata Santra, Tuxera Inc.
+
+AVAILABILITY
+       fatdebug is part of the Tuxera TFATprogs package.
+
+SEE ALSO
+       fatdump(8)
+
+
+
+Tuxera TFATprogs 3014.9.11         June 2013                       FATDEBUG(8)

@@ -1148,7 +1148,7 @@ void rpc_set_radio(int unit, int subunit, int on)
 		}
 	}
 	else {
-		ret = qcsapi_wifi_rfenable(WIFINAME,(qcsapi_unsigned_int) on);
+		ret = qcsapi_wifi_rfenable((qcsapi_unsigned_int) on);
 		if (ret < 0)
 			dbG("Qcsapi qcsapi_wifi_rfenable %s, return: %d\n", WIFINAME, ret);
 	}
@@ -1161,7 +1161,7 @@ int rpc_update_ap_isolate(const char *ifname, const int isolate)
 	if(!rpc_qtn_ready())
 		return -1;
 
-	qcsapi_wifi_rfenable(WIFINAME,(qcsapi_unsigned_int) 0 /* off */);
+	qcsapi_wifi_rfenable((qcsapi_unsigned_int) 0 /* off */);
 	ret = qcsapi_wifi_set_ap_isolate(ifname, isolate);
 	if(ret < 0){
 		dbG("qcsapi_wifi_set_ap_isolate %s error, return: %d\n", ifname, ret);
@@ -1169,7 +1169,8 @@ int rpc_update_ap_isolate(const char *ifname, const int isolate)
 	}else{
 		dbG("qcsapi_wifi_set_ap_isolate OK\n");
 	}
-	qcsapi_wifi_rfenable(WIFINAME,(qcsapi_unsigned_int) 1 /* on */);
+	if(nvram_get_int("wl1_radio") == 1)
+		qcsapi_wifi_rfenable((qcsapi_unsigned_int) 1 /* on */);
 
 	return 0;
 }

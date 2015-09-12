@@ -1,0 +1,119 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Tue Aug 11 07:21:27 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>THFSLABEL</title>
+
+</head>
+<body>
+
+<h1 align="center">THFSLABEL</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">thfslabel
+&minus; Display/change the label on an HFS+ file system.</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>thfslabel</b>
+[<i>options</i>] <i>device</i> [<i>new&minus;label</i>]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>thfslabel</b>
+will display or change the file system label on the HFS+
+file system located on <i>device</i>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If the optional
+argument <i>new&minus;label</i> is not present,
+<b>thfslabel</b> will simply print the current file system
+label as a UTF-8 string.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If the optional
+argument <i>new&minus;label</i> is present, then
+<b>thfslabel</b> will set the file system label to be the
+string <i>new&minus;label</i>, given in UTF-8 format. <br>
+HFS+ file system labels can be at most 255 UTF-16 code units
+of decomposed Unicode long; if <i>new&minus;label</i> is
+longer than 255 UTF-16 code units of decomposed Unicode,
+<b>thfslabel</b> will truncate it and print a warning
+message. Note that the string in <i>new&minus;label</i> will
+be decomposed automatically by <b>thfslabel</b>.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>thfslabel</b> accepts.
+<b><br>
+&minus;&minus;output-mode</b>=[mode]</p>
+
+<p style="margin-left:22%;">Specify the output mode when
+printing the volume label. Currently the supported output
+modes are <b>raw</b> and <b>composed</b>. <br>
+Raw mode means that the label is converted from UTF-16 to
+UTF-8 without any further transformation. This implies that
+the output will be in decomposed Unicode since this is how
+strings are stored in HFS+. <br>
+Composed mode means that the label is converted from the
+on-disk decomposed form into composed Unicode, which is what
+most operating systems expect (Mac OS X being the
+exception). <br>
+The default behaviour (when this option is not given) is the
+behaviour of the <b>composed</b> option.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+bug please send an email describing the problem to
+hfs-support@tuxera.com.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>thfslabel</b>
+is part of the <b>Tuxera HFS+ Utilities</b> package.</p>
+<hr>
+</body>
+</html>

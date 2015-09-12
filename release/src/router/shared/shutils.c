@@ -1813,3 +1813,26 @@ strArgs(int argc, char **argv, char *fmt, ...)
 
 	return arg;
 }
+
+/**
+** trimNL()
+** trim trailing new line character(including '\r' and '\n')
+**/
+char *trimNL(char *str)
+{
+	int len = 0;
+
+	if(!str)
+	{
+		return NULL;
+	}
+
+	len = strlen(str);
+
+	while((len!=0)&&((str[len-1] == '\r' || str[len-1] == '\n')))
+	{
+		len--;
+	}
+	str[len] = '\0';
+	return str;
+}

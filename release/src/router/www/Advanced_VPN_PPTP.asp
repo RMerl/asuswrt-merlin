@@ -17,7 +17,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <style>
@@ -52,6 +52,18 @@ var pptpd_connected_clients = [];
 var pptpd_sr_rulelist_array_ori = '<% nvram_char_to_ascii("","pptpd_sr_rulelist"); %>';
 var pptpd_sr_rulelist_array = decodeURIComponent(pptpd_sr_rulelist_array_ori);
 var pptpd_sr_edit_username = "";
+
+var max_shift = "";	/*MODELDEP (include dict #PPTP_desc2# #vpn_max_clients# #vpn_maximum_clients#) : 
+				RT-AC5300/RT-AC3200/RT-AC3100/RT-AC88U/RT-AC87U/RT-AC68U/RT-AC66U/RT-AC56U/RT-N66U/RT-N18U */
+if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC3100" ||
+		based_modelid == "RT-AC88U" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" ||
+		based_modelid == "RT-AC66U" || based_modelid == "RT-AC56U" ||
+		based_modelid == "RT-N66U" || based_modelid == "RT-N18U"){
+	max_shift = parseInt("29");
+}
+else{
+	max_shift = parseInt("9");
+}
 
 function initial(){
 	var dualwan_mode = '<% nvram_get("wans_mode"); %>';
@@ -665,7 +677,7 @@ function setEnd() {
 	var pptpd_clients_start_ip = parseInt(document.form._pptpd_clients_start.value.split(".")[3]);														
 	document.getElementById("pptpd_subnet").innerHTML = pptpd_clients_subnet;
 
-	end = pptpd_clients_start_ip + 9;
+	end = pptpd_clients_start_ip + max_shift;
 	if(end > 254) {
 		end = 254;
 	}
@@ -690,7 +702,7 @@ function check_pptpd_clients_range(){
 		return false;
 	}
 
-	if( (pptpd_clients_end_ip - pptpd_clients_start_ip) > 9 ) {
+	if( (pptpd_clients_end_ip - pptpd_clients_start_ip) > max_shift ) {
 		alert("<#vpn_max_clients#>");
 		document.form._pptpd_clients_start.focus();
 		document.form._pptpd_clients_start.select();

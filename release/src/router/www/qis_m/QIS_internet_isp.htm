@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<!--link rel="stylesheet" type="text/css" href="/form_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script-->
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/javascript" src="/alttxt.js"></script>
+<script type="text/javascript" src="/general.js"></script>
+<script type="text/JavaScript" src="/help.js"></script>
+<script type="text/JavaScript" src="/validator.js"></script>
+<script type="text/javascript">
+<% login_state_hook(); %>
+
+var now_flag = '<% get_parameter("flag"); %>';
+<% wan_get_parameter(); %>
+
+function QKISP_load_body(){
+	show_next_button();	
+	document.getElementById("nextButton").focus();
+	get_value_from_parent();
+}
+
+function get_value_from_parent(){
+	document.form.wan_hostname.value = parent.document.QKform.wan_hostname.value;
+	document.form.wan_hwaddr_x.value = parent.document.QKform.wan_hwaddr_x.value;
+	
+	if(now_flag == "auto_way_static" || now_flag == "auto_way"){
+		document.form.flag.value = now_flag;
+		document.form.prev_page.value = parent.document.QKform.prev_page.value;	
+		document.form.wan_proto.value = parent.document.QKform.wan_proto.value;
+		document.form.wan_dhcpenable_x.value = parent.document.QKform.wan_dhcpenable_x.value;
+		document.form.wan_ipaddr_x.value = parent.document.QKform.wan_ipaddr_x.value;
+		document.form.wan_netmask_x.value = parent.document.QKform.wan_netmask_x.value;
+		document.form.wan_gateway_x.value = parent.document.QKform.wan_gateway_x.value;
+		document.form.wan_dnsenable_x.value = parent.document.QKform.wan_dnsenable_x.value;
+		document.form.wan_dns1_x.value = parent.document.QKform.wan_dns1_x.value;
+		document.form.wan_dns2_x.value = parent.document.QKform.wan_dns2_x.value;
+		document.form.wan_heartbeat_x.value = parent.document.QKform.wan_heartbeat_x.value;
+		document.form.x_Setting.value = '<% nvram_get("x_Setting"); %>';
+	}
+	else
+		document.form.prev_page.value = "QIS_internet_type.htm";
+}
+
+function show_next_button(){
+	if(now_flag == "auto_way_static" || now_flag == "auto_way")
+		document.getElementById("nextButton").value = '<#CTL_apply1#>';
+	else
+		document.getElementById("nextButton").value = '<#CTL_next#>';
+}
+
+function showMAC(){
+	var tempMAC = "";
+	document.form.wan_hwaddr_x.value = login_mac_str().toUpperCase();
+	document.form.wan_hwaddr_x.focus();
+}
+
+function validForm(){
+	if(!validator.string(document.form.wan_hostname)){
+		document.form.wan_hostname.select();
+		document.form.wan_hostname.focus();
+		return false;
+	}
+	
+	if(!check_macaddr(document.form.wan_hwaddr_x,check_hwaddr_flag(document.form.wan_hwaddr_x))){
+		document.form.wan_hwaddr_x.select();
+		document.form.wan_hwaddr_x.focus();
+		return false;
+	}
+	
+	return true;
+}
+
+function submitForm(){
+	if(validForm() == true){		
+		if(now_flag == "auto_way_static" || now_flag == "auto_way"){
+			document.form.wan_proto.disabled = false;
+			document.form.wan_dhcpenable_x.disabled = false;
+			document.form.wan_ipaddr_x.disabled = false;
+			document.form.wan_netmask_x.disabled = false;
+			document.form.wan_gateway_x.disabled = false;
+			document.form.wan_dnsenable_x.disabled = false;
+			document.form.wan_dns1_x.disabled = false;
+			document.form.wan_dns2_x.disabled = false;
+			document.form.wan_heartbeat_x.disabled = false;
+			document.form.x_Setting.disabled = false;
+			document.form.flag.value = "verify_detect";
+			document.form.next_page.value = "../QIS_wizard_m.htm";
+			document.form.submit();
+		}
+	
+		parent.document.QKform.wan_hostname.value = document.form.wan_hostname.value;
+		parent.document.QKform.wan_hwaddr_x.value = document.form.wan_hwaddr_x.value;
+		document.form.action = document.form.next_page.value;
+		location.href = document.form.next_page.value;
+		return true;
+	}
+	else
+		return false;
+}
+
+function check_macaddr(obj,flag){ //control hint of input mac address
+	if(flag == 1){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		return false;
+	}else if(flag == 2){
+		var childsel=document.createElement("div");
+		childsel.setAttribute("id","check_mac");
+		childsel.style.color="#FFCC00";
+		obj.parentNode.appendChild(childsel);
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		return false;
+	}else{
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
+		return true;
+	}
+}
+
+function submitenter(myfield,e){	
+	var keycode;
+	if (window.event) 
+		keycode = window.event.keyCode;
+	else if (e) 
+		keycode = e.which;
+	else 
+		return true;
+
+	if (keycode == 13){
+		submitForm();
+		return false;
+	}
+	else
+		return true;
+}
+</script>
+</head>
+
+<body onLoad="QKISP_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>	
+<div id="navtxt" class="navtext" style="position:absolute; top:50px; left:-100px; visibility:hidden; font-family:Arial, Verdana"></div>
+<form method="post" name="form" onsubmit="return submitForm();">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="restart_wan_if">
+<input type="hidden" name="action_wait" value="5">
+<input type="hidden" name="current_page" value="QIS_internet_isp.htm">
+<input type="hidden" name="next_page" value="QIS_internet_ip.htm">
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="wan_proto" value="" disabled>
+<input type="hidden" name="wan_dhcpenable_x" value="" disabled>
+<input type="hidden" name="wan_ipaddr_x" value="" disabled>
+<input type="hidden" name="wan_netmask_x" value="" disabled>
+<input type="hidden" name="wan_gateway_x" value="" disabled>
+<input type="hidden" name="wan_dnsenable_x" value="" disabled>
+<input type="hidden" name="wan_dns1_x" value="" disabled>
+<input type="hidden" name="wan_dns2_x" value="" disabled>
+<input type="hidden" name="wan_heartbeat_x" value="" disabled>
+<input type="hidden" name="wan_unit" value="0">
+<input type="hidden" name="x_Setting" id="x_Setting" value="" disabled>
+<style>
+body{
+	color: #FFF;
+	margin: 0;
+}
+
+</style>
+
+<div>
+	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QIS_auto_ip_conn_Setup#></div>
+	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;" onclick="overlib('<#PPPConnection_x_HostNameForISP_itemdesc#>');" onmouseout="return nd();"><#BOP_isp_host_item#></div>
+	<div style="margin:10px 27px 10px 15px">
+		<input type="text" name="wan_hostname" tabindex="1" onkeypress="return validator.isString(this, event);" maxlength="32" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocorrect="off" autocapitalize="off"/>
+	</div>
+	<div style="display:table;width:100%;">
+		<div style="display:table-row">
+			<div style="display:table-cell;font-size:1em;color:#B8D8FF;padding-left:15px;" onclick="overlib('<#PPPConnection_x_MacAddressForISP_itemdesc#>', FIXX, 270, FIXY, 30);" onmouseout="return nd();"><#BOP_isp_mac_item#></div>
+			<div style="display:table-cell;background-image:url('../images/qis/icon_MAC_clone.svg');background-repeat:no-repeat;width:66px;height:20px;" onclick="showMAC();"></div>
+		</div>
+	</div>
+	<div style="margin:10px 27px 10px 15px">
+		<input type="text" name="wan_hwaddr_x" tabindex="2" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" onkeypress="return validator.isHWAddr(this,event);" maxlength="17" autocorrect="off" autocapitalize="off"/>
+	</div>
+
+	<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+		<div style="width:100%;height:100%;display:table">
+			<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="gotoprev(document.form);">
+				<div style="font-size:1em;color:#7E8593"><#CTL_prev#></div>
+			</div>
+			<div id="nextButton" style="display:table-cell;width:50%;vertical-align:middle;text-align:center;background-color:#007AFF" onclick="submitForm();">
+				<div style="font-size:1em;color:#FFF;"><#CTL_next#></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!--div>
+<ul class="QISGeneralFont"><#qis_isp_desc1#><br><br>
+	<li><#qis_isp_desc2#></li>
+	<li><#qis_isp_desc3#></li>
+</ul>	
+</div-->
+
+</form>
+</body>
+</html>

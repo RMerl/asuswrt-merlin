@@ -50,14 +50,17 @@
 	#define TOPAZ_RX_ACCELERATE	0
 #endif
 
-/*
- * HBM buffer process in MuC requires that TOPAZ_AUC_RX is dependent on TOPAZ_RX_ACCELERATE, so let's
- * enable TOPAZ_AUC_RX only when TOPAZ_RX_ACCELERATE is enabled.
- */
-#if TOPAZ_RX_ACCELERATE
-#define TOPAZ_AUC_RX	1
+/* If MU-MIMO done in HDP or SDP */
+#ifdef TOPAZ_PLATFORM
+	#define QTN_HDP_MU		1
 #else
-#define TOPAZ_AUC_RX	0
+	#define QTN_HDP_MU		0
+#endif
+
+#if QTN_HDP_MU
+#define QTN_HDP_MU_FCS_WORKROUND	1
+#else
+#define QTN_HDP_MU_FCS_WORKROUND	0
 #endif
 
 #if TOPAZ_MMAP_ALIAS && !TOPAZ_MMAP_UNIFIED
@@ -157,6 +160,8 @@
 	#define TOPAZ_128_NODE_MODE		1
 
 	#define TOPAZ_ETH_REFLECT_SW_FWD	0
+
+	#define DSP_ENABLE_STATS		1
 #else
 	#ifndef PLATFORM_ARC7_MMU_VER
 		#define PLATFORM_ARC7_MMU_VER	2

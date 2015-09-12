@@ -1,0 +1,118 @@
+@c -*-texinfo-*-
+@c This is part of the Quagga Manual.
+@c @value{COPYRIGHT_STR}
+@c See file quagga.texi for copying conditions.
+@node Babel
+@chapter Babel
+
+Babel is an interior gateway protocol that is suitable both for wired
+networks and for wireless mesh networks.  Babel has been described as
+``RIP on speed'' --- it is based on the same principles as RIP, but
+includes a number of refinements that make it react much faster to
+topology changes without ever counting to infinity, and allow it to
+perform reliable link quality estimation on wireless links.  Babel is
+a double-stack routing protocol, meaning that a single Babel instance
+is able to perform routing for both IPv4 and IPv6.
+
+Quagga implements Babel as described in RFC6126.
+
+@menu
+* Configuring babeld::          
+* Babel configuration::         
+* Babel redistribution::        
+* Show Babel information::      
+* Babel debugging commands::    
+@end menu
+
+@node Configuring babeld, Babel configuration, Babel, Babel
+@section Configuring babeld
+
+The @command{babeld} daemon can be invoked with any of the common
+options (@pxref{Common Invocation Options}).
+
+The @command{zebra} daemon must be running before @command{babeld} is
+invoked. Also, if @command{zebra} is restarted then @command{babeld}
+must be too.
+
+Configuration of @command{babeld} is done in its configuration file
+@file{babeld.conf}.
+
+@node Babel configuration, Babel redistribution, Configuring babeld, Babel
+@section Babel configuration
+
+@deffn Command {router babel} {}
+@deffnx Command {no router babel} {}
+Enable or disable Babel routing.
+@end deffn
+
+@deffn {Babel Command} {network @var{ifname}} {}
+@deffnx {Babel Command} {no network @var{ifname}} {}
+Enable or disable Babel on the given interface.
+@end deffn
+
+@deffn {Interface Command} {babel wired} {}
+@deffnx {Interface Command} {babel wireless} {}
+Specifies whether this interface is wireless, which disables a number
+of optimisations that are only correct on wired interfaces.
+Specifying @code{wireless} (the default) is always correct, but may
+cause slower convergence and extra routing traffic.
+@end deffn
+
+@deffn {Interface Command} {babel split-horizon}
+@deffnx {Interface Command} {no babel split-horizon}
+Specifies whether to perform split-horizon on the interface.
+Specifying @code{no babel split-horizon} (the default) is always
+correct, while @code{babel split-horizon} is an optimisation that
+should only be used on symmetric and transitive (wired) networks.
+@end deffn
+
+@deffn {Interface Command} {babel hello-interval <20-655340>}
+Specifies the time in milliseconds between two scheduled hellos.  On
+wired links, Babel notices a link failure within two hello intervals;
+on wireless links, the link quality value is reestimated at every
+hello interval.  The default is 4000@dmn{ms}.
+@end deffn
+
+@deffn {Interface Command} {babel update-interval <20-655340>}
+Specifies the time in milliseconds between two scheduled updates.
+Since Babel makes extensive use of triggered updates, this can be set
+to fairly high values on links with little packet loss.  The default
+is 20000@dmn{ms}.
+@end deffn
+
+@deffn {Babel Command} {babel resend-delay <20-655340>}
+Specifies the time in milliseconds after which an ``important''
+request or update will be resent.  The default is 2000@dmn{ms}.  You
+probably don't want to tweak this value.
+@end deffn
+
+@node Babel redistribution, Show Babel information, Babel configuration, Babel
+@section Babel redistribution
+
+@deffn {Babel command} {redistribute @var{kind}}
+@deffnx {Babel command} {no redistribute @var{kind}}
+Specify which kind of routes should be redistributed into Babel.
+@end deffn
+
+@node Show Babel information, Babel debugging commands, Babel redistribution, Babel
+@section Show Babel information
+
+@deffn {Command} {show babel database} {}
+@deffnx {Command} {show babel interface} {}
+@deffnx {Command} {show babel neighbour} {}
+@deffnx {Command} {show babel parameters} {}
+These commands dump various parts of @command{babeld}'s internal
+state.  They are mostly useful for troubleshooting.
+@end deffn
+
+@node Babel debugging commands,  , Show Babel information, Babel
+@section Babel debugging commands
+
+@deffn {Babel Command} {debug babel @var{kind}} {}
+@deffnx {Babel Command} {no debug babel @var{kind}} {}
+Enable or disable debugging messages of a given kind.  @var{kind} can
+be one of @samp{common}, @samp{kernel}, @samp{filter}, @samp{timeout},
+@samp{interface}, @samp{route} or @samp{all}.  Note that if you have
+compiled with the NO_DEBUG flag, then these commands aren't available.
+@end deffn
+

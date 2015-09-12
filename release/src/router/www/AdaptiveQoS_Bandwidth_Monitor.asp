@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - <#EZQoS#></title>
+<title><#Web_Title#> - <#Bandwidth_monitor_WANLAN#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
@@ -17,7 +17,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script> 
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
@@ -110,7 +110,6 @@
 }
 
 .imgUserIcon{
-	position: relative;
 	margin-left: 2px;
 	margin-top: 2px;
 	width: 51px;
@@ -121,7 +120,6 @@
 }
 .divUserIcon{
 	cursor: pointer;
-	position: relative;
 	margin-left:10px;
 	width:56px;
 	height:56px;
@@ -129,6 +127,19 @@
 	-moz-border-radius: 10px;
 	border-radius: 10px;
 	border-radius:10px;
+}
+.traffic_bar{
+	width: 0%;
+	background-color: #93E7FF;
+	height: 8px;
+	border-radius:5px;
+}
+
+.transition_style{
+	-webkit-transition: all 0.5s ease-in-out;
+	-moz-transition: all 0.5s ease-in-out;
+	-o-transition: all 0.5s ease-in-out;
+	transition: all 0.5s ease-in-out;
 }
 </style>
 <script>
@@ -452,7 +463,7 @@ function show_clients(priority_type){
 		code += '<tr>';
 		code += '<td style="width:385px">';
 		code += '<div style="height:8px;padding:3px;background-color:#000;border-radius:10px;">';	
-		code += '<div id="'+clientObj.mac+'_upload_bar" style="width:0%;background-color:#93E7FF;height:8px;black;border-radius:5px;"></div>';
+		code += '<div id="'+clientObj.mac+'_upload_bar" class="traffic_bar transition_style"></div>';
 		code += '</div>';
 		code += '</td>';
 		code += '<td style="text-align:right;">';
@@ -468,7 +479,7 @@ function show_clients(priority_type){
 		code += '<tr>';
 		code += '<td>';
 		code +=	'<div style="height:8px;padding:3px;background-color:#000;border-radius:10px;">';
-		code += '<div id="'+clientObj.mac+'_download_bar" style="width:0%;background-color:#93E7FF;height:8px;black;border-radius:5px;"></div>';
+		code += '<div id="'+clientObj.mac+'_download_bar" class="traffic_bar transition_style"></div>';
 		code +=	'</div>';
 		code += '</td>';
 		code += '<td style="text-align:right;">';
@@ -1219,7 +1230,7 @@ function cancel(){
 								<table width="100%">
 									<tr>
 										<td class="formfonttitle" align="left">								
-											<div><#Adaptive_QoS#> - <#Bandwidth_monitor_WANLAN#></div>
+											<div><#menu5_3_2#> - <#Bandwidth_monitor_WANLAN#></div>
 										</td>
 										<td>
 											<div>
@@ -1285,7 +1296,7 @@ function cancel(){
 												<div style="position:absolute;margin:150px 0px 0px 275px;font-size:16px;display:none;"></div>
 												<div id="upload_speed" style="position:absolute;margin:147px 0px 0px 187px;font-size:24px;width:60px;text-align:center;">0.00</div>
 												<div style="background-image:url('images/New_ui/speedmeter.png');height:188px;width:270px;background-repeat:no-repeat;margin:-10px 0px 0px 70px"></div>
-												<div id="indicator_upload" style="background-image:url('images/New_ui/indicator.png');position:absolute;height:100px;width:50px;background-repeat:no-repeat;margin:-110px 0px 0px 194px;"></div>
+												<div id="indicator_upload" class="transition_style" style="background-image:url('images/New_ui/indicator.png');position:absolute;height:100px;width:50px;background-repeat:no-repeat;margin:-110px 0px 0px 194px;"></div>
 											</td>
 											<td id="download_unit">	
 												<div style="margin:-10px 0 5px -55px;font-size:16px;text-align:center;"><#download_bandwidth#></div>
@@ -1296,7 +1307,7 @@ function cancel(){
 												<div style="position:absolute;margin:150px 0px 0px 250px;font-size:16px;display:none;"></div>
 												<div id="download_speed" style="position:absolute;margin:147px 0px 0px 130px;font-size:24px;text-align:center;width:60px;">0.00</div>
 												<div style="background-image:url('images/New_ui/speedmeter.png');height:188px;width:270px;background-repeat:no-repeat;margin:-10px 0px 0px 10px"></div>
-												<div id="indicator_download" style="background-image:url('images/New_ui/indicator.png');position:absolute;height:100px;width:50px;background-repeat:no-repeat;margin:-110px 0px 0px 133px;"></div>		
+												<div id="indicator_download" class="transition_style" style="background-image:url('images/New_ui/indicator.png');position:absolute;height:100px;width:50px;background-repeat:no-repeat;margin:-110px 0px 0px 133px;"></div>		
 											</td>
 										</tr>
 									</table>	

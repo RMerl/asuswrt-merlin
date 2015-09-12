@@ -16,7 +16,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
-<script type="text/javaScript" src="/jquery.js"></script>
+<script type="text/javaScript" src="/js/jquery.js"></script>
 <script>
 <% wanlink(); %>
 var ddns_hostname_x_t = '<% nvram_get("ddns_hostname_x"); %>';
@@ -40,8 +40,8 @@ function init(){
 
     ddns_load_body();
 
-	if(dualWAN_support && wans_mode == "lb")
-		document.getElementById("lb_note").style.display = "";
+	//if(dualWAN_support && wans_mode == "lb")
+	//	document.getElementById("lb_note").style.display = "";
 
 	if(no_phddns){
 		for(var i = 0; i < document.form.ddns_server_x.length; i++){

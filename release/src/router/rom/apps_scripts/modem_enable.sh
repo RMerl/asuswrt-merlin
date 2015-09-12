@@ -200,11 +200,12 @@ if [ "$modem_act_node" == "" ]; then
 fi
 
 echo "VAR: modem_enable($modem_enable) modem_autoapn($modem_autoapn) modem_act_node($modem_act_node) modem_type($modem_type) modem_vid($modem_vid) modem_pid($modem_pid)";
-echo "     modem_isp($modem_isp) modem_apn($modem_apn) modem_pin($modem_pin)";
+echo "     modem_isp($modem_isp) modem_apn($modem_apn)";
 
 if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim" -o "$modem_type" == "gobi" ]; then
 	nvram_reset=`nvram get modem_act_reset`
-	if [ "$nvram_reset" == "1" -o "$modem_vid" == "6610" -a "$modem_pid" == "644" ]; then
+	#if [ "$nvram_reset" == "1" -o "$modem_vid" == "6610" -a "$modem_pid" == "644" ]; then # ZTE MF880
+	if [ "$nvram_reset" == "1" ]; then
 		# Reset modem.
 		echo "Reset modem."
 		nvram set usb_modem_act_reset=1
@@ -406,6 +407,13 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		fi
 
 		echo "Gobi: Successfull to set the ISP profile."
+	else
+		echo "$modem_type: set the ISP profile."
+		at_ret=`$at_lock modem_at.sh "+CGDCONT=1,\"IP\",\"$modem_apn\"" |grep "OK" 2>/dev/null`
+		if [ "$at_ret" != "OK" ]; then
+			echo "$modem_type: Fail to set the profile."
+			exit 0
+		fi
 	fi
 
 	# set COPS.
@@ -413,10 +421,14 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	if [ "$at_ret" == "OK" ]; then
 		echo "COPS: Can execute +COPS..."
 
-		at_ret=`$at_lock modem_at.sh '+COPS=2' "$modem_reg_time" |grep "OK" 2>/dev/null`
-		if [ "$at_ret" != "OK" ]; then
-			echo "Can't deregister from network."
-			exit 6
+		if [ "$modem_vid" == "6797" -a "$modem_pid" == "4098" ]; then # BandLuxe C120.
+			echo "COPS: BandLuxe C120 start with CFUN=0, so don't need to unregister the network."
+		else
+			at_ret=`$at_lock modem_at.sh '+COPS=2' "$modem_reg_time" |grep "OK" 2>/dev/null`
+			if [ "$at_ret" != "OK" ]; then
+				echo "Can't deregister from network."
+				exit 6
+			fi
 		fi
 
 		# Home service.
@@ -530,7 +542,16 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		wdm=`_get_wdm_by_usbnet $modem_dev`
 
 		if [ "$modem_user" != "" -o "$modem_pass" != "" ]; then
-			flag_auth="--auth-type both"
+			if [ "$modem_authmode" == "3" ]; then
+				flag_auth="--auth-type both"
+			elif [ "$modem_authmode" == "2" ]; then
+				flag_auth="--auth-type chap"
+			elif [ "$modem_authmode" == "1" ]; then
+				flag_auth="--auth-type pap"
+			else
+				flag_auth="--auth-type none"
+			fi
+
 			if [ "$modem_user" != "" ]; then
 				flag_auth="$flag_auth --username $modem_user"
 			fi
@@ -542,8 +563,18 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		fi
 
 		echo "QMI($wdm): set the ISP profile."
-		uqmi -d $wdm --keep-client-id wds --start-network $modem_apn $flag_auth
-		if [ "$?" != "0" ]; then
+		tries=1
+		ret=1
+		while [ $tries -le 6 -a "$ret" != "0" ]; do
+			echo "QMI: set the ISP profile $tries times..."
+			uqmi -d $wdm --keep-client-id wds --start-network $modem_apn $flag_auth
+			ret=$?
+
+			sleep 1
+			tries=$((tries+1))
+		done
+
+		if [ "$ret" != "0" ]; then
 			echo "QMI: Fail to set the profile."
 			exit 0
 		elif [ "$modem_vid" == "4817" -a "$modem_pid" == "5132" ]; then

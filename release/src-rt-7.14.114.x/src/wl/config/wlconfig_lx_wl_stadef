@@ -1,0 +1,42 @@
+# Broadcom 802.11abg Networking Device Driver Configuration file
+#
+# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# $Id: wlconfig_lx_wl_stadef,v 1.18 2010-02-25 07:23:32 $
+#
+# src/wl/linux driver config file
+
+# get common
+include $(WLCFGDIR)/wl_default
+include $(WLCFGDIR)/wl_hnd
+
+# features
+STA=1
+
+WLDPT=1
+BCMSUP_PSK=1
+BCMAUTH_PSK=1
+WL_MONITOR=1
+
+WLEXTLOG=1
+BCMASSERT_LOG=1
+BCMNVRAMW=1
+SAMPLE_COLLECT=1
+CCA_STATS=1
+BCM_DCS=1
+WL_ASSOC_RECREATE=1
+WL_LTR=1
+WL11N_STBC_RX_ENABLED=1
+BCMECICOEX=1

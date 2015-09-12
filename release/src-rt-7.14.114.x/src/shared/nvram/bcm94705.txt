@@ -1,0 +1,170 @@
+# Broadcom 4705 reference design, including a 4321mp
+boardtype=0x489
+boardnum=${serno}
+# Board revision 1.0
+boardrev=0x10
+# BFL_ENETROBO, BFL_ENETVLAN
+boardflags=0x110
+
+# MIPS clock frequency in MHz
+clkfreq=300,150,37
+
+# 64 MB DDR SDRAM (16 Meg x 16 x 2)
+sdram_init=0x0009
+sdram_config=0x0062
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# Ethernet 
+et0macaddr=00:90:4c:b9:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Reset 
+reset_gpio=7
+
+# SES Button on GPIO 8
+gpio8=ses_button
+
+# Variables used by CFE and run-time OS image
+# which may be modified by the run-time OS image
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+
+# Ethernet switch config (vlan1:LAN, vlan2:WAN)
+vlan1ports=0 1 2 3 8*
+vlan1hwname=et0
+vlan2ports=4 8u
+
+# bootloader/OS glue
+landevs=vlan1 wl0
+wandevs=et0
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+
+# CFE variables
+boot_wait=on
+wait_time=5
+
+# The following should be uncommented if the 4321mp does not have an srom.
+
+## Variables for the 4321mp:
+#pci/1/1/venid=0x14e4
+#pci/1/1/devid=0x4328
+#pci/1/1/sromrev=4
+#pci/1/1/boardtype=0x46c
+#pci/1/1/boardvendor=0x14e4
+#pci/1/1/boardrev=0x34
+#pci/1/1/boardflags=0x4a01
+#pci/1/1/boardflags2=0
+#pci/1/1/macaddr=00:90:4c:98:${maclo}
+#pci/1/1/ccode=
+#pci/1/1/regrev=0
+#pci/1/1/ledbh0=-1
+#pci/1/1/ledbh1=-1
+#pci/1/1/ledbh2=-1
+#pci/1/1/ledbh3=-1
+#pci/1/1/aa2g=3
+#pci/1/1/aa5g=3
+#pci/1/1/ag0=2
+#pci/1/1/ag1=2
+#pci/1/1/txpid2ga0=91
+#pci/1/1/txpid2ga1=91
+#pci/1/1/txpid5ga0=91
+#pci/1/1/txpid5ga1=91
+#pci/1/1/txpid5gla0=91
+#pci/1/1/txpid5gla1=91
+#pci/1/1/txpid5gha0=91
+#pci/1/1/txpid5gha1=91
+#pci/1/1/txpt2g=0x3c
+#pci/1/1/txpt5g=0x30
+#pci/1/1/txpt5gl=0x30
+#pci/1/1/txpt5gh=0x30
+#pci/1/1/itt2ga0=0
+#pci/1/1/maxp2ga0=0
+#pci/1/1/pa2gw0a0=0
+#pci/1/1/pa2gw1a0=0
+#pci/1/1/pa2gw2a0=0
+#pci/1/1/pa2gw3a0=0
+#pci/1/1/itt5ga0=0
+#pci/1/1/maxp5ga0=0
+#pci/1/1/pa5gw0a0=0
+#pci/1/1/pa5gw1a0=0
+#pci/1/1/pa5gw2a0=0
+#pci/1/1/pa5gw3a0=0
+#pci/1/1/maxp5gla0=0
+#pci/1/1/pa5glw0a0=0
+#pci/1/1/pa5glw1a0=0
+#pci/1/1/pa5glw2a0=0
+#pci/1/1/pa5glw3a0=0
+#pci/1/1/maxp5gha0=0
+#pci/1/1/pa5ghw0a0=0
+#pci/1/1/pa5ghw1a0=0
+#pci/1/1/pa5ghw2a0=0
+#pci/1/1/pa5ghw3a0=0
+#pci/1/1/itt2ga1=0
+#pci/1/1/maxp2ga1=0
+#pci/1/1/pa2gw0a1=0
+#pci/1/1/pa2gw1a1=0
+#pci/1/1/pa2gw2a1=0
+#pci/1/1/pa2gw3a1=0
+#pci/1/1/itt5ga1=0
+#pci/1/1/maxp5ga1=0
+#pci/1/1/pa5gw0a1=0
+#pci/1/1/pa5gw1a1=0
+#pci/1/1/pa5gw2a1=0
+#pci/1/1/pa5gw3a1=0
+#pci/1/1/maxp5gla1=0
+#pci/1/1/pa5glw0a1=0
+#pci/1/1/pa5glw1a1=0
+#pci/1/1/pa5glw2a1=0
+#pci/1/1/pa5glw3a1=0
+#pci/1/1/maxp5gha1=0
+#pci/1/1/pa5ghw0a1=0
+#pci/1/1/pa5ghw1a1=0
+#pci/1/1/pa5ghw2a1=0
+#pci/1/1/pa5ghw3a1=0
+#pci/1/1/cck2gpo=0
+#pci/1/1/ofdm2gpo=0
+#pci/1/1/ofdm5gpo=0
+#pci/1/1/ofdm5lgpo=0
+#pci/1/1/ofdm5hgpo=0
+#pci/1/1/mcs2gpo0=0
+#pci/1/1/mcs2gpo1=0
+#pci/1/1/mcs2gpo2=0
+#pci/1/1/mcs2gpo3=0
+#pci/1/1/mcs2gpo4=0
+#pci/1/1/mcs2gpo5=0
+#pci/1/1/mcs2gpo6=0
+#pci/1/1/mcs2gpo7=0
+#pci/1/1/mcs5gpo0=0
+#pci/1/1/mcs5gpo1=0
+#pci/1/1/mcs5gpo2=0
+#pci/1/1/mcs5gpo3=0
+#pci/1/1/mcs5gpo4=0
+#pci/1/1/mcs5gpo5=0
+#pci/1/1/mcs5gpo6=0
+#pci/1/1/mcs5gpo7=0
+#pci/1/1/mcs5glpo0=0
+#pci/1/1/mcs5glpo1=0
+#pci/1/1/mcs5glpo2=0
+#pci/1/1/mcs5glpo3=0
+#pci/1/1/mcs5glpo4=0
+#pci/1/1/mcs5glpo5=0
+#pci/1/1/mcs5glpo6=0
+#pci/1/1/mcs5glpo7=0
+#pci/1/1/mcs5ghpo0=0
+#pci/1/1/mcs5ghpo1=0
+#pci/1/1/mcs5ghpo2=0
+#pci/1/1/mcs5ghpo3=0
+#pci/1/1/mcs5ghpo4=0
+#pci/1/1/mcs5ghpo5=0
+#pci/1/1/mcs5ghpo6=0
+#pci/1/1/mcs5ghpo7=0
+#pci/1/1/ccdpo=0
+#pci/1/1/stbcpo=0
+#pci/1/1/bw40po=0
+#pci/1/1/bwduppo=0

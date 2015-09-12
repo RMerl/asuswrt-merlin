@@ -36,6 +36,7 @@
 //#include <stapriv.h>
 #include <shared.h>
 #include "flash_mtd.h"
+#include "ate.h"
 
 #define MAX_FRW 64
 #define MACSIZE 12
@@ -136,175 +137,6 @@ char *get_non_wpsifname()
 }
 #endif
 
-void hexdump(unsigned char *pt, unsigned short len)
-{
-	unsigned short i;
-	for (i=0;i<len;i++) {
-		if (i%32==0) printf("%s%04x: ",i?"\n":"",i);
-		printf("%02x ",pt[i]);
-	}
-	printf("\n");
-}
-
-int getMAC_5G(void)
-{
-	unsigned char buffer[6];
-	char macaddr[18];
-	memset(buffer, 0, sizeof(buffer));
-	memset(macaddr, 0, sizeof(macaddr));
-
-	if (FRead(buffer, OFFSET_MAC_ADDR, 6) < 0)
-		dbg("READ MAC address: Out of scope\n");
-	else {
-		ether_etoa(buffer, macaddr);
-		puts(macaddr);
-	}
-	return 0;
-}
-
-int getMAC_2G(void)
-{
-	unsigned char buffer[6];
-	char macaddr[18];
-	memset(buffer, 0, sizeof(buffer));
-	memset(macaddr, 0, sizeof(macaddr));
-
-	if (FRead(buffer, OFFSET_MAC_ADDR_2G, 6) < 0)
-		dbg("READ MAC address 2G: Out of scope\n");
-	else {
-		ether_etoa(buffer, macaddr);
-		puts(macaddr);
-	}
-	return 0;
-}
-
-int getEEPROM(unsigned char *outbuf, unsigned short *lenpt, char *area)
-{
-	unsigned long offset;
-	int ret;
-	if (strstr(area,"5G")) {
-		if (*lenpt>QC98XX_EEPROM_SIZE_LARGEST)
-			*lenpt=QC98XX_EEPROM_SIZE_LARGEST;
-		offset=OFFSET_MAC_ADDR-QC98XX_EEPROM_MAC_OFFSET;
-	} else if (strstr(area,"2G")) {
-		if (*lenpt>QCA9557_EEPROM_SIZE)
-			*lenpt=QCA9557_EEPROM_SIZE;
-		offset=OFFSET_MAC_ADDR_2G-QCA9557_EEPROM_MAC_OFFSET;
-	} else
-		return -1;
-
-	if (strstr(area,"CAL"))
-		ret=CalRead(outbuf, offset-MTD_FACTORY_BASE_ADDRESS, *lenpt);
-	else
-		ret=FRead(outbuf, offset, *lenpt);
-	if (ret < 0)
-		return -1;
-	return 0;
-}
-
-int setMAC_5G(const char *mac)
-{
-	char ea[ETHER_ADDR_LEN];
-
-	if (mac == NULL || !isValidMacAddr(mac))
-		return 0;
-	if (ether_atoe(mac, ea)) {
-#if 1 // QCA98xx eeprom need to update checksum after modification
-		unsigned char eeprom[QC98XX_EEPROM_SIZE_LARGEST];
-		int i;
-
-		if (FRead(eeprom, OFFSET_MAC_ADDR-QC98XX_EEPROM_MAC_OFFSET, QC98XX_EEPROM_SIZE_LARGEST) < 0)
-			dbg("READ MAC address 5G: Out of scope\n");
-		else {
-			//1. check original checksum first
-			if (qc98xx_verify_checksum(eeprom))
-				dbg("Invalid 5G eeprom\n");
-			else {
-				unsigned short *p_half;
-				unsigned short cur_sum;
-				cur_sum = __le16_to_cpu(*((unsigned short *)eeprom + 1));
-				//dbg("org_sum:%04x\n",cur_sum);
-				p_half = (unsigned short *)&eeprom[QC98XX_EEPROM_MAC_OFFSET];
-				for (i = 0; i < 3; i++) // clear original
-					cur_sum ^= __le16_to_cpu(p_half[i]);
-				memcpy(eeprom+QC98XX_EEPROM_MAC_OFFSET, ea , 6); // update MAC
-				for (i = 0; i < 3; i++) // compute new one
-					cur_sum ^= __le16_to_cpu(p_half[i]);
-				*((unsigned short *)eeprom + 1) = __cpu_to_le16(cur_sum);
-				//dbg("new_sum:%04x\n",cur_sum);
-				FWrite(eeprom, OFFSET_MAC_ADDR-QC98XX_EEPROM_MAC_OFFSET, QC98XX_EEPROM_SIZE_LARGEST);
-				getMAC_5G();
-			}
-		}
-#else // no checksum platform
-		FWrite(ea, OFFSET_MAC_ADDR, 6);
-		getMAC_5G();
-#endif
-	}
-	return 1;
-}
-
-int setMAC_2G(const char *mac)
-{
-	char ea[ETHER_ADDR_LEN];
-
-	if (mac == NULL || !isValidMacAddr(mac))
-		return 0;
-	if (ether_atoe(mac, ea)) {
-		FWrite(ea, OFFSET_MAC_ADDR_2G, 6);
-		getMAC_2G();
-	}
-	return 1;
-}
-
-int
-getCountryCode_2G()
-{
-	unsigned char CC[3];
-
-	memset(CC, 0, sizeof(CC));
-	FRead(CC, OFFSET_COUNTRY_CODE, 2);
-	if (CC[0] == 0xff && CC[1] == 0xff)	// 0xffff is default
-		;
-	else
-		puts(CC);
-	return 1;
-}
-
-void ctl_update(char *, int);
-int
-setCountryCode_2G(const char *cc)
-{
-	char CC[3];
-
-	if (cc==NULL || !isValidCountryCode(cc))
-		return 0;
-	/* Please refer to ISO3166 code list for other countries and can be found at
-	 * http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html#sz
-	 */
-	else if (!strcasecmp(cc, "US")) ;
-	else if (!strcasecmp(cc, "CA")) ;
-	else if (!strcasecmp(cc, "TW")) ;
-	else if (!strcasecmp(cc, "CN")) ;
-	else if (!strcasecmp(cc, "SG")) ;
-	else if (!strcasecmp(cc, "GB")) ;
-	else if (!strcasecmp(cc, "DE")) ;
-	else if (!strcasecmp(cc, "HU")) ;
-	else if (!strcasecmp(cc, "DB")) ;
-	else
-	{
-		return 0;
-	}
-
-	memset(&CC[0], toupper(cc[0]), 1);
-	memset(&CC[1], toupper(cc[1]), 1);
-	memset(&CC[2], 0, 1);
-
-	FWrite(CC, OFFSET_COUNTRY_CODE, 2);
-	puts(CC);
-	return 1;
-}
-
 static unsigned char nibble_hex(char *c)
 {
 	int val;
@@ -380,309 +212,6 @@ int FWRITE(const char *da, const char *str_hex)
 		FREAD(addr_da, len);
 	}
 	return 0;
-}
-
-int getSN(void)
-{
-	char sn[SERIAL_NUMBER_LENGTH + 1];
-
-	if (FRead(sn, OFFSET_SERIAL_NUMBER, SERIAL_NUMBER_LENGTH) < 0)
-		dbg("READ Serial Number: Out of scope\n");
-	else {
-		sn[SERIAL_NUMBER_LENGTH] = '\0';
-		puts(sn);
-	}
-	return 1;
-}
-
-int setSN(const char *SN)
-{
-	if (SN == NULL || !isValidSN(SN))
-		return 0;
-
-	if (FWrite(SN, OFFSET_SERIAL_NUMBER, SERIAL_NUMBER_LENGTH) < 0)
-		return 0;
-
-	getSN();
-	return 1;
-}
-
-#ifdef RTCONFIG_ODMPID
-int setMN(const char *MN)
-{
-	char modelname[16];
-
-	if (MN == NULL || !is_valid_hostname(MN))
-		return 0;
-
-	memset(modelname, 0, sizeof(modelname));
-	strncpy(modelname, MN, sizeof(modelname) - 1);
-	FWrite(modelname, OFFSET_ODMPID, sizeof(modelname));
-
-	nvram_set("odmpid", modelname);
-	puts(nvram_safe_get("odmpid"));
-	return 1;
-}
-
-int getMN(void)
-{
-	puts(nvram_safe_get("odmpid"));
-	return 1;
-}
-#endif
-int setPIN(const char *pin)
-{
-	if (pincheck(pin)) {
-		FWrite(pin, OFFSET_PIN_CODE, 8);
-		char PIN[9];
-		memset(PIN, 0, 9);
-		memcpy(PIN, pin, 8);
-		puts(PIN);
-		return 1;
-	}
-	return 0;
-}
-
-int getPIN(void)
-{
-	unsigned char PIN[9];
-	memset(PIN, 0, sizeof(PIN));
-	FRead(PIN, OFFSET_PIN_CODE, 8);
-	if (PIN[0] != 0xff)
-		puts(PIN);
-	return 0;
-}
-
-int getBootVer(void)
-{
-	unsigned char btv[5];
-	char output_buf[32];
-	memset(btv, 0, sizeof(btv));
-	memset(output_buf, 0, sizeof(output_buf));
-	FRead(btv, OFFSET_BOOT_VER, 4);
-	sprintf(output_buf, "%s-%c.%c.%c.%c", nvram_safe_get("productid"),
-		btv[0], btv[1], btv[2], btv[3]);
-	puts(output_buf);
-
-	return 0;
-}
-
-//Supports both RTL8367M and RTL8367R Realtek switch
-/*
- * This function is used by factory only and always
- * think the LAN port next to WAN port as LAN1
- * even WebUI/case define another LAN port as LAN1.
- */
-int GetPhyStatus(int verbose)
-{
-	ATE_qca8337_port_status();
-	return 1;
-}
-
-/* Turn on ALL LED except WAN RED LED which should be turn on by setAllLedOn2(). */
-int setAllLedOn(void)
-{
-	int model = get_model();
-
-	led_control(LED_POWER, LED_ON);
-	led_control(LED_WAN, LED_ON);
-	led_control(LED_LAN, LED_ON);
-	led_control(LED_USB, LED_ON);
-
-	if (have_usb3_led(get_model()))
-		led_control(LED_USB3, LED_ON);
-
-	__wps_led_control(LED_ON);
-
-#ifdef RT4GAC55U
-	led_control(LED_LTE, LED_ON);
-	led_control(LED_SIG1, LED_ON);
-	led_control(LED_SIG2, LED_ON);
-	led_control(LED_SIG3, LED_ON);
-#endif
-
-	switch (model) {
-	case MODEL_RTAC55U:
-	case MODEL_RTAC55UHP:
-	case MODEL_RT4GAC55U:
-	case MODEL_PLAC66U:
-		wan_red_led_control(LED_OFF);					/* Turn off WAN RED LED */
-		led_control(LED_2G, LED_ON);
-#if defined(RTCONFIG_ETRON_XHCI_USB3_LED)
-		/* SR1 */
-		eval("iwpriv", "wifi1", "gpio_config", "1", "0", "0", "0");	/* Configure 5G LED as GPIO */
-		eval("iwpriv", "wifi1", "gpio_output", "1", "1");		/* Turn on 5G LED */
-#else
-		led_control(LED_5G, LED_ON);
-#endif
-		break;
-#if defined(RTN14U)
-	case MODEL_RTN14U:
-		led_control(LED_2G, LED_ON);
-		break;
-#endif
-#ifdef PLN12
-	case MODEL_PLN12:
-		led_control(LED_POWER_RED, LED_ON);
-		led_control(LED_2G_GREEN, LED_ON);
-		led_control(LED_2G_ORANGE, LED_ON);
-		led_control(LED_2G_RED, LED_ON);
-		break;
-#endif
-#ifdef PLAC56
-	case MODEL_PLAC56:
-		led_control(LED_2G_GREEN, LED_ON);
-		led_control(LED_2G_RED, LED_ON);
-		led_control(LED_5G_GREEN, LED_ON);
-		led_control(LED_5G_RED, LED_ON);
-		break;
-#endif
-	}
-
-#ifdef RTCONFIG_LED_ALL
-	led_control(LED_ALL, LED_ON);
-#endif
-
-	puts("1");
-	return 0;
-}
-
-/* Same as setAllLedOn() except WAN RED LED is turn on. */
-int setAllLedOn2(void)
-{
-	int model = get_model();
-
-	setAllLedOn();
-	switch (model) {
-	case MODEL_RTAC55U:
-	case MODEL_RTAC55UHP:
-	case MODEL_RT4GAC55U:
-		wan_red_led_control(LED_ON);
-		led_control(LED_WAN, LED_OFF);
-		break;
-	}
-
-	return 0;
-}
-
-int setAllLedOff(void)
-{
-	int model = get_model();
-
-	led_control(LED_POWER, LED_OFF);
-	led_control(LED_WAN, LED_OFF);
-	led_control(LED_LAN, LED_OFF);
-	led_control(LED_USB, LED_OFF);
-
-	if (have_usb3_led(get_model()))
-		led_control(LED_USB3, LED_OFF);
-
-	__wps_led_control(LED_OFF);
-
-#ifdef RT4GAC55U
-	led_control(LED_LTE, LED_OFF);
-	led_control(LED_SIG1, LED_OFF);
-	led_control(LED_SIG2, LED_OFF);
-	led_control(LED_SIG3, LED_OFF);
-#endif
-
-	switch (model) {
-	case MODEL_RTAC55U:
-	case MODEL_RTAC55UHP:
-	case MODEL_RT4GAC55U:
-	case MODEL_PLAC66U:
-		wan_red_led_control(LED_OFF);
-		led_control(LED_2G, LED_OFF);
-#if defined(RTCONFIG_ETRON_XHCI_USB3_LED)
-		/* SR1 */
-		eval("iwpriv", "wifi1", "gpio_config", "1", "0", "0", "0");	/* Configure 5G LED as GPIO */
-		eval("iwpriv", "wifi1", "gpio_output", "1", "0");	/* Turn off 5G LED */
-#else
-		led_control(LED_5G, LED_OFF);
-#endif
-		break;
-#if defined(RTN14U)
-	case MODEL_RTN14U:
-		led_control(LED_2G, LED_OFF);
-		break;
-#endif
-#ifdef PLN12
-	case MODEL_PLN12:
-		led_control(LED_POWER_RED, LED_OFF);
-		led_control(LED_2G_GREEN, LED_OFF);
-		led_control(LED_2G_ORANGE, LED_OFF);
-		led_control(LED_2G_RED, LED_OFF);
-		break;
-#endif
-#ifdef PLAC56
-	case MODEL_PLAC56:
-		led_control(LED_2G_GREEN, LED_OFF);
-		led_control(LED_2G_RED, LED_OFF);
-		led_control(LED_5G_GREEN, LED_OFF);
-		led_control(LED_5G_RED, LED_OFF);
-		break;
-#endif
-	}
-
-#ifdef RTCONFIG_LED_ALL
-	led_control(LED_ALL, LED_OFF);
-#endif
-
-	puts("1");
-	return 0;
-}
-
-int ResetDefault(void)
-{
-	eval("mtd-erase", "-d", "nvram");
-	puts("1");
-	return 0;
-}
-
-int set40M_Channel_2G(char *channel)
-{
-	puts("0");
-	return 1;
-}
-
-int set40M_Channel_5G(char *channel)
-{
-	puts("0");
-	return 1;
-}
-
-int Get_channel_list(int unit)
-{
-	unsigned char countryCode[3];
-	char chList[256];
-
-	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
-
-	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-	memset(countryCode, 0, sizeof(countryCode));
-	strncpy(countryCode,
-		nvram_safe_get(strcat_r(prefix, "country_code", tmp)), 2);
-
-	if (get_channel_list_via_driver(unit, chList, sizeof(chList)) > 0) {
-		puts(chList);
-	} else if (countryCode[0] != 0xff && countryCode[1] != 0xff)	// 0xffff is default
-	{
-		if (get_channel_list_via_country
-		    (unit, countryCode, chList, sizeof(chList)) > 0) {
-			puts(chList);
-		}
-	}
-	return 1;
-}
-
-int Get_ChannelList_2G(void)
-{
-	return Get_channel_list(0);
-}
-
-int Get_ChannelList_5G(void)
-{
-	return Get_channel_list(1);
 }
 
 //End of new ATE Command
@@ -1640,12 +1169,11 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 					   	caps=0x77;
 				}
 				else	
-				   	caps=0x77;
+				   	caps=0x3;
 			}
 			else
 				caps=0x07;
 	
-				
 			fprintf(fp2,"wlanconfig %s nawds override 1\n",wif);
 			fprintf(fp2,"wlanconfig %s nawds defcaps %d\n",wif,caps);
 			if(WdsEnable!=2 || nvram_match(strcat_r(prefix, "wdsapply_x", tmp),"1"))
@@ -1653,7 +1181,7 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 			   
 			for(i=0;i<4;i++)
 				if(strlen(wds_mac[i]) && nvram_match(strcat_r(prefix, "wdsapply_x", tmp),"1"))
-					fprintf(fp2,"wlanconfig %s nawds add-repeater %s %d\n",wif,wds_mac[i],caps);
+					fprintf(fp2,"wlanconfig %s nawds add-repeater %s 0\n",wif,wds_mac[i]);
 
 			if(WdsEncrypType==0)
 		      		dbg("WDS:open/none");
@@ -2467,12 +1995,6 @@ void wsc_user_commit(void)
 {
 }
 
-#define FAIL_LOG_MAX 100
-
-struct FAIL_LOG {
-	unsigned char num;
-	unsigned char bits[15];
-};
 
 void Get_fail_log(char *buf, int size, unsigned int offset)
 {
@@ -2495,60 +2017,6 @@ void Get_fail_log(char *buf, int size, unsigned int offset)
 	}
 }
 
-void Gen_fail_log(const char *logStr, int max, struct FAIL_LOG *log)
-{
-	const char *p = logStr;
-	char *next;
-	int num;
-	int x, y;
-
-	memset(log, 0, sizeof(struct FAIL_LOG));
-	if (max > FAIL_LOG_MAX)
-		log->num = FAIL_LOG_MAX;
-	else
-		log->num = max;
-
-	if (logStr == NULL)
-		return;
-
-	while (*p != '\0') {
-		while (*p != '\0' && !isdigit(*p))
-			p++;
-		if (*p == '\0')
-			break;
-		num = strtoul(p, &next, 0);
-		if (num > FAIL_LOG_MAX)
-			break;
-		x = num >> 3;
-		y = num & 0x7;
-		log->bits[x] |= (1 << y);
-		p = next;
-	}
-}
-
-void Get_fail_ret(void)
-{
-	unsigned char str[OFFSET_FAIL_BOOT_LOG - OFFSET_FAIL_RET];
-	FRead(str, OFFSET_FAIL_RET, sizeof(str));
-	if (str[0] == 0 || str[0] == 0xff)
-		return;
-	str[sizeof(str) - 1] = '\0';
-	puts(str);
-}
-
-void Get_fail_reboot_log(void)
-{
-	char str[512];
-	Get_fail_log(str, sizeof(str), OFFSET_FAIL_BOOT_LOG);
-	puts(str);
-}
-
-void Get_fail_dev_log(void)
-{
-	char str[512];
-	Get_fail_log(str, sizeof(str), OFFSET_FAIL_DEV_LOG);
-	puts(str);
-}
 
 void ate_commit_bootlog(char *err_code)
 {
@@ -2570,54 +2038,7 @@ void ate_commit_bootlog(char *err_code)
 
 	FWrite(fail_buffer, OFFSET_FAIL_RET, sizeof(fail_buffer));
 }
-
-#define DEV_FLAGS_MAGIC "FL"
-struct device_flags {
-	char magic[2];
-	union {
-		__u16 value;
-		__u16 reserve:15, has_thermal_pad:1;
-	} u;
-};
-
-int Get_Device_Flags(void)
-{
-	struct device_flags dev_flags;
-	int ret = -1;
-	if (FRead((char *)&dev_flags, OFFSET_DEV_FLAGS, 4) < 0)
-		dbg("READ DEV Flags: Out of scope\n");
-	else if (memcmp
-		 (&dev_flags.magic, DEV_FLAGS_MAGIC,
-		  sizeof(dev_flags.magic)) != 0)
-		dbg("READ DEV Flags: no contents !\n");
-	else {
-		char buf[128];
-		char *p = buf;
-		if (dev_flags.u.has_thermal_pad)
-			p += sprintf(p, " Has Thermal Pad.");
-		printf("Flags: 0x%04x\n%s\n", (__u16) dev_flags.u.value, buf);
-		ret = 0;
-	}
-	return ret;
-}
-
-int Set_Device_Flags(const char *flags_str)
-{
-	struct device_flags dev_flags;
-
-	if (flags_str == NULL || strlen(flags_str) != 6
-	    || strncmp(flags_str, "0x", 2) != 0)
-		return -1;
-
-	memset(&dev_flags, 0, sizeof(dev_flags));
-	memcpy(&dev_flags.magic, DEV_FLAGS_MAGIC, sizeof(dev_flags.magic));
-	dev_flags.u.value = strtoul(flags_str, NULL, 16);
-	FWrite((const char *)&dev_flags, OFFSET_DEV_FLAGS, 4);
-	return Get_Device_Flags();
-}
-
-#endif
-
+#endif  //RTCONFIG_QCA
 
 #ifdef RTCONFIG_USER_LOW_RSSI
 typedef struct _WLANCONFIG_LIST {
@@ -2711,106 +2132,6 @@ void rssi_check_unit(int unit)
 			fclose(fp);
 			unlink(STA_LOW_RSSI_PATH);
 		}
-}
-#endif
-
-#ifdef RTCONFIG_ATEUSB3_FORCE
-int getForceU3(void)
-{
-	char value='0';
-
-	FRead(&value, OFFSET_FORCE_USB3, 1);
-	puts(value=='1'?"1":"0");
-
-	return 0;
-}
-
-int setForceU3(const char *val)
-{
-	if (val[0]!='0' && val[0]!='1')
-		return -1;
-	FWrite(val, OFFSET_FORCE_USB3, 1);
-
-	if (val[0] == '0')
-		nvram_unset("usb_usb3");
-	else
-		nvram_set("usb_usb3", "1");
-	nvram_commit();
-
-	return 0;
-}
-#endif
-
-#if defined(RTCONFIG_TCODE)
-int getTerritoryCode(void)
-{
-	char buf[6];
-
-	memset(buf, 0, sizeof(buf));
-	FRead((unsigned char*)&buf, OFFSET_TERRITORY_CODE, 5);
-	if ((unsigned char)buf[0] != 0xFF)
-		puts(buf);
-
-	return 0;
-}
-
-int setTerritoryCode(const char *tcode)
-{
-	unsigned char buf[5];
-
-	/* special case
-	 * if tcode == "FFFFF", Write FF, FF, FF, FF, FF to OFFSET_TERRITORY_CODE
-	 */
-	if (!strcmp(tcode, "FFFFF")) {
-		memset(buf, 0xFF, sizeof(buf));
-		FWrite(buf, OFFSET_TERRITORY_CODE, 5);
-		nvram_unset("territory_code");
-
-		return 0;
-	}
-
-	/* [A-Z][A-Z]/[0-9][0-9] */
-	if (tcode[2] != '/' ||
-	    !isupper(tcode[0]) || !isupper(tcode[1]) ||
-	    !isdigit(tcode[3]) || !isdigit(tcode[4]))
-	{
-		return -1;
-	}
-
-	FWrite(tcode, OFFSET_TERRITORY_CODE, 5);
-	nvram_set("territory_code", tcode);
-
-	return 0;
-}
-
-int
-getPSK(void)
-{
-	char buffer[15];
-	memset(buffer,0,sizeof(buffer));
-	FRead(buffer, OFFSET_PSK, 14);
-	puts(buffer);
-	return 0;
-}
-
-int
-setPSK(const char *psk)
-{
-	int i;
-	char buffer[15];
-	if (psk == NULL || strlen(psk) < 8 ||strlen(psk) > 32)
-		return -1;
-
-        for (i = 0; i < strlen(psk) ; i++) {
-		if (psk[i] == '0' || psk[i] == '1' || psk[i] == '8')
-			return -1;
-		else if (psk[i] != '_' && !isalnum(psk[i]))
-			return -1;
-        }
-	memset(buffer,0,sizeof(buffer));
-	memcpy(buffer,psk,14);
-	FWrite(buffer, OFFSET_PSK, 15);
-	return 0;
 }
 #endif
 
@@ -3270,5 +2591,4 @@ int wlcscan_core(char *ofile, char *wif)
 
 	return 0;
 }	
-
 

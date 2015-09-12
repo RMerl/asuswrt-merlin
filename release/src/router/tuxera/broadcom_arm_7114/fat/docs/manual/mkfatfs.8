@@ -1,0 +1,96 @@
+.\" Copyright (c) 2014 Sougata Santra / Tuxera Inc.
+.\" Copyright (c) 2011 Erik Larsson / Tuxera Inc.
+.\"
+.TH MKFATFS 8 "March 2014" "Tuxera TFATprogs 3014.9.11"
+.SH NAME
+mkfatfs \- create a FAT file system
+.SH SYNOPSIS
+.B mkfatfs
+[\fIoptions\fR] \fIdevice\fR
+.SH DESCRIPTION
+.B mkfatfs
+is used to create a FAT file system on a device (usually a disk or flash
+partition).
+.I device
+is the special file corresponding to the device (e.g.
+.IR /dev/sdXX, 
+.IR /dev/block/mmcblk1p1 ).
+.SH OPTIONS
+Below is a summary of all the options that
+.B mkfatfs
+accepts.  Nearly all options have two equivalent names.  The short name is
+preceded by
+.B \-
+and the long name is preceded by
+.BR \-\- .
+.TP
+.TP
+\fB\-f\fR, \fB\-\-force\fR
+Allow formatting a FAT volume for which the physical sector size cannot be
+automatically detected (for example an image file).
+.TP
+\fB\-l\fR, \fB\-\-volume\-label\fR STRING
+Set the volume label for the filesystem. The volume label can be up to 11
+ASCII units long, i.e. in most cases 11 bytes.
+.TP
+\fB\-i\fR, \fB\-\-volume\-id\fR STRING
+Sets the volume-id for the volume to \fBSTRING\fR.
+.TP
+\fB\-r\fR, \fB\-\-rootdir\-entries\fR NUMBER
+Set the count of 32 bytes directory entries in the root directory to \fBNUMBER\fR.
+For FAT32 volumes this value is ignored and set to zero. For FAT 12/16 volume the
+default value is 512.
+.TP
+\fB\-f\fR, \fB\-\-fat\-type\fR FATBITS
+Set the FAT bits for the volume to \fBFATBITS\fR. The legal values for
+this field are [12, 16, 32].
+.TP
+\fB\-S\fR, \fB\-\-sector\-size\fR SIZE
+Set the volume sector size (in bytes) to \fBSIZE\fR. The default is to
+detect sector size automatically. Note: This option should probably never be
+used when formatting devices directly as most FAT drivers won't be able to use
+a FAT volume where the volume sector size doesn't match the physical sector
+size.
+.TP
+\fB\-s\fR, \fB\-\-sectors\-per\-cluster\fR VALUE
+Set the volume cluster size (in bytes) to \fBVALUE\fR * \fBsector_size\fR.
+The default value is calculated dynamically depending on FAT type
+(FAT 12/16/32) and the size of the volume. The legal values for this field
+are [1, 2, 4, 8, 16, 32, 64, 128], such that \fBVALUE\fR * \fBsector_size\fR
+does not exceed 32K.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Makes
+.B mkfatfs
+emit certain status messages related to the formatting process.
+.TP
+\fB\-\-sda\-strict\fR
+Forces the formatted volume to adhere to SD Association recommendations.
+.TP
+\fB\-\-sda\-whole\fR
+Performs a whole device formatting, including partition table, according to the
+SD Association recommendations. This option should only be used with whole
+devices (e.g. \fI/dev/mmcblk0\fR) and never partitions (e.g. \fI/dev/mmcblk0p1\fR).
+.TP
+\fB\-\-sda\-relax\fR
+Relaxes sanity checks for \fB\-\-sda\-strict\fR and \fB\-\-sda\-whole\fR to
+allow formatting devices that don't comply to the size specifications of SD
+cards to be formatted according to the SD Association guidelines.
+
+NOTE: This option is only a modifier to \fB\-\-sda\-strict\fR and
+\fB\-\-sda\-whole\fR and does not do anything on its own.
+.TP
+\fB\-\-discard\fR
+This option sends a 'discard' command, like TRIM, to the device
+which will zero all data on it.
+.SH BUGS
+If you find a bug please send an email describing the problem to 
+fat-support@tuxera.com.
+.SH AUTHORS
+.B mkfatfs
+was written by Sougata Santra, Tuxera Inc.
+.SH AVAILABILITY
+.B mkfatfs
+is part of the
+.B Tuxera FATprogs
+package.

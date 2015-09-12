@@ -19,7 +19,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <style>
@@ -460,7 +460,7 @@ function enable_macMode(){
 							</tr>
 						</thead>
 							<tr>
-								<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">Client's MAC address<!--untranslated--></th> 
+								<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">Client Name (MAC address)<!--untranslated--></th> 
 								<th width="20%"><#list_add_delete#></th>
 							</tr>
 							<tr>

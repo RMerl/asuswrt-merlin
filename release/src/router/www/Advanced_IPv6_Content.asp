@@ -17,7 +17,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/JavaScript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/JavaScript" src="/js/jquery.js"></script>
 <script>
 
 <% wan_get_parameter(); %>

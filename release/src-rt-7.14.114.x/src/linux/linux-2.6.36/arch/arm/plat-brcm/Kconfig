@@ -1,0 +1,156 @@
+# Broadcom platforms selection
+
+config PLAT_MPCORE
+	bool "ARM A9 MPCORE architecture support"
+	select CPU_V7
+	select ARM_GIC
+	select HAVE_ARM_TWD
+	select HAVE_ARM_SCU
+	select EARLY_PRINTK
+	select GENERIC_CLOCKEVENTS_BUILD
+	select GENERIC_CLOCKEVENTS
+	select LOCAL_TIMERS
+	help
+	  Support for ARM A9 MPCORE subsystem
+
+config CACHE_L310
+	bool "PL310 Level-2 Cache Controller"
+        select OUTER_CACHE
+        select OUTER_CACHE_SYNC
+
+config PLAT_IPROC
+	bool "Broadcom iProc common SoC platform"
+	depends on PLAT_MPCORE
+
+config PLAT_IHOST
+	bool "Broadcom iHost common SoC peripherals"
+	depends on PLAT_IPROC
+
+config PLAT_BCM5301X
+	bool "Broadcom BCM5301X SoC support"
+	select FPE_FASTFPE
+	select COMMON_CLKDEV
+	select CACHE_L310 
+	select PCI
+	select PCI_DOMAINS if PCI
+	select ARCH_SPARSEMEM_ENABLE
+	select ZONE_DMA if SPARSEMEM
+	depends on PLAT_MPCORE
+	depends on PLAT_IPROC
+	depends on PLAT_IHOST
+
+config ARCH_HAS_HEAD_FIXUP
+	bool "Machine needs fixup after the boot monitor"
+	help
+	Inserts a platform-specific assembly fix-up function
+	after boot rom monitor to work around a non-compliant
+	boot monitor or certain hardware issues that are not taken
+	care of by the boot monitor.
+
+config PLAT_NAND_JFFS2
+	bool "BCM5301X NAND Flash driver for JFFS file system"
+	depends on PLAT_BCM5301X
+	depends on JFFS2_FS
+	depends on MTD_NAND
+	depends on MTD
+	depends on !MTD_BRCMNAND
+        depends on !MTD_NFLASH
+	help
+	Support for JFFS2 on NAND Flash memory connected to the SoC
+	NAND controller.
+
+config PLAT_MUX_CONSOLE
+	bool "Support UART1(CCA) console"
+	depends on PLAT_BCM5301X
+	default n
+	help
+	Using Top-level Muxing to support UART1 on ChipCommonA (CCA) console.  Otherwise default is GPIO pins.
+
+config PLAT_MUX_CONSOLE_CCB
+	bool "Support UART0(CCB) console"
+	depends on PLAT_BCM5301X
+	default n
+	help
+	Using Top-level Muxing to support UART0 on ChipCommonB (CCB) console.  Otherwise default is GPIO pins.
+
+config PLAT_CCA_GPIO_IRQ
+	bool "Support CCA GPIO interrupts"
+	depends on PLAT_BCM5301X
+	depends on GENERIC_GPIO
+	default n
+	help
+	This should be enabled to support CCA GPIO interrupts.
+
+config PLAT_GPIOLIB
+	bool "Support GPIO exporting to user-space"
+	depends on PLAT_BCM5301X
+	select GENERIC_GPIO
+	select GPIOLIB
+	select GPIO_SYSFS
+	default n
+	help
+	This should be enabled to support exporting of GPIO to userspace.
+
+config PLAT_GPIOLIB_NAME
+	string
+	depends on PLAT_GPIOLIB
+	default "gpiolib"
+
+config PLAT_UART_CLOCKS
+	bool "Precise configuration of UART clocks and dividers"
+	depends on PLAT_BCM5301X
+	default n
+
+choice
+	prompt "Clock source for ChipCommon_A UART"
+	depends on PLAT_UART_CLOCKS
+	default PLAT_CCA_UART_CLK_DEFAULT
+
+config PLAT_CCA_UART_CLK_DEFAULT
+	bool "Use after reset default settings"
+
+config PLAT_CCA_UART_CLK_INTERNAL_OVERRIDE
+	bool "ALP(APB) (125Mhz as for now) clock used as CCA UARTs clock"
+
+config PLAT_CCA_UART_CLK_INTERNAL_DIVIDER
+	bool "ALP(APB) (125Mhz as for now) clock with divider applied used as CCA UARTs clock"
+	help
+	   CCA UARTs clock will be ALB(APB) divided by PLAT_CCA_UART_CLK_INTERNAL_DIVIDER_VAL
+
+config PLAT_CCA_UART_CLK_EXTERNAL
+	bool "External 25Mhz clock used as CCA UARTs clock"
+
+endchoice
+
+config PLAT_CCA_UART_CLK_INTERNAL_DIVIDER_VAL
+	int "Divider value"
+	depends on PLAT_CCA_UART_CLK_INTERNAL_DIVIDER
+	default 48
+
+config PLAT_CCA_UART0_DIVIDER
+	int "Divider value for CCA UART0"
+	depends on PLAT_UART_CLOCKS
+	help
+	  If requested baud rate is 38400, it will be ignored and this divider be used instead.
+	  Baud rate will be CCA UARTs clock divided by 16 and then divided by current value.
+	  Divider is 16 bit, so default setting above maximum 16 bit value switch off this feature.
+	default 65536
+
+config PLAT_CCA_UART1_DIVIDER
+	int "Divider value for CCA UART1"
+	depends on PLAT_UART_CLOCKS
+	help
+	  If requested baud rate is 38400, it will be ignored and this divider be used instead.
+	  Baud rate will be CCA UARTs clock divided by 16 and then divided by current value.
+	  Divider is 16 bit, so default setting above maximum 16 bit value switch off this feature.
+	default 65536
+
+config PLAT_CCB_UART0_DIVIDER
+	int "Divider value for CCA UART0"
+	depends on PLAT_UART_CLOCKS
+	help
+	  If requested baud rate is 38400, it will be ignored and this divider be used instead.
+	  Baud rate will be CCB UART clock divided by 16 and then divided by current value.
+	  Divider is 16 bit, so default setting above maximum 16 bit value switch off this feature.
+	  CCB UART clock is always same - ALP(APB) (125Mhz as for now) clock.
+	default 65536

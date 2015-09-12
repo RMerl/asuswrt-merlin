@@ -178,15 +178,13 @@
 23877,Telenor,*99#,,,internet.sp.dk,Onfone GPRS
 23877,Telenor,*99#,,,internet,Telenor Internet
 240017,Halebop Internet,*99#,,,halebop.telia.se,Halebop Internet
-24001,Telia,*99#,,,halebop.telia.se,Halebop Online
 24001,Telia,*99#,,,online.telia.se,Telia SE Internet
 24002,3,*99#,,,data.tre.se,3 HUTCHISON
 24006,Telenor,*99#,,,services.telenor.se,Telenor Mobilsurf
 24007,Tele2,*99#,,,internet.ventelo.se,Ventelo Internet
 24007,Tele2,*99#,wap,wap,internet.tele2.no,Tele2 Internet
 24007,Tele2,*99#,wap,wap,internet.tele2.se,Tele2 Internet
-24008,Telenor,*99#,,,internet.glocalnet.se,Glocalnet Data
-24008,Telenor,*99#,,,services.telenor.se,Telenor surf
+24008,Telenor,*99#,,,internet.telenor.se,Telenor
 24009,TelenorMobilsurf,*99#,,,services.telenor.se,TelenorMobilsurf
 24010,Spring Mobile,*99#,,,data.springmobil.se,Spring data
 24201,Telenor,*99#,,,internet.ventelo.no,Ventelo Internett

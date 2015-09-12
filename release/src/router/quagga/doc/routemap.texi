@@ -1,0 +1,231 @@
+@node Route Map
+@chapter Route Map
+
+Route maps provide a means to both filter and/or apply actions to
+route, hence allowing policy to be applied to routes.
+
+@menu
+* Route Map Command::           
+* Route Map Match Command::     
+* Route Map Set Command::
+* Route Map Call Command::
+* Route Map Exit Action Command::
+* Route Map Examples::
+@end menu
+
+Route-maps are an ordered list of route-map entries. Each entry may
+specify up to four distincts sets of clauses:
+
+@table @samp
+@item Matching Policy
+
+This specifies the policy implied if the @samp{Matching Conditions} are
+met or not met, and which actions of the route-map are to be taken, if
+any. The two possibilities are:
+
+@itemize @minus
+@item
+@samp{permit}: If the entry matches, then carry out the @samp{Set
+Actions}. Then finish processing the route-map, permitting the route,
+unless an @samp{Exit Action} indicates otherwise.
+
+@item
+@samp{deny}: If the entry matches, then finish processing the route-map and
+deny the route (return @samp{deny}).
+@end itemize
+
+The @samp{Matching Policy} is specified as part of the command which
+defines the ordered entry in the route-map. See below.
+
+@item Matching Conditions
+
+A route-map entry may, optionally, specify one or more conditions which
+must be matched if the entry is to be considered further, as governed
+by the Match Policy. If a route-map entry does not explicitely specify
+any matching conditions, then it always matches.
+
+@item Set Actions
+
+A route-map entry may, optionally, specify one or more @samp{Set
+Actions} to set or modify attributes of the route.
+
+@item Call Action
+
+Call to another route-map, after any @samp{Set Actions} have been
+carried out. If the route-map called returns @samp{deny} then
+processing of the route-map finishes and the route is denied,
+regardless of the @samp{Matching Policy} or the @samp{Exit Policy}. If
+the called route-map returns @samp{permit}, then @samp{Matching Policy}
+and @samp{Exit Policy} govern further behaviour, as normal.
+
+@item Exit Policy
+
+An entry may, optionally, specify an alternative @samp{Exit Policy} to
+take if the entry matched, rather than the normal policy of exiting the
+route-map and permitting the route. The two possibilities are:
+
+@itemize @minus 
+@item
+@samp{next}: Continue on with processing of the route-map entries.
+
+@item
+@samp{goto N}: Jump ahead to the first route-map entry whose order in
+the route-map is >= N. Jumping to a previous entry is not permitted.
+@end itemize
+@end table
+
+The default action of a route-map, if no entries match, is to deny.
+I.e. a route-map essentially has as its last entry an empty @samp{deny}
+entry, which matches all routes. To change this behaviour, one must
+specify an empty @samp{permit} entry as the last entry in the route-map.
+
+To summarise the above:
+
+@multitable {permit} {action} {No Match}
+@headitem           @tab Match  @tab No Match
+@item @emph{Permit} @tab action @tab cont
+@item @emph{Deny}   @tab deny   @tab cont
+@end multitable
+
+@table @samp
+
+@item action
+@itemize @minus
+@item
+Apply @emph{set} statements
+
+@item
+If @emph{call} is present, call given route-map. If that returns a @samp{deny}, finish
+processing and return @samp{deny}.
+
+@item
+If @samp{Exit Policy} is @emph{next}, goto next route-map entry
+
+@item
+If @samp{Exit Policy} is @emph{goto}, goto first entry whose order in the list
+is >= the given order.
+
+@item
+Finish processing the route-map and permit the route.
+@end itemize
+
+@item deny
+@itemize @minus
+@item
+The route is denied by the route-map (return @samp{deny}).
+@end itemize
+
+@item cont
+@itemize @minus
+@item
+goto next route-map entry
+@end itemize
+@end table
+
+@node Route Map Command
+@section Route Map Command
+
+@deffn {Command} {route-map @var{route-map-name} (permit|deny) @var{order}} {}
+
+Configure the @var{order}'th entry in @var{route-map-name} with
+@samp{Match Policy} of either @emph{permit} or @emph{deny}.
+
+@end deffn
+
+@node Route Map Match Command
+@section Route Map Match Command
+
+@deffn {Route-map Command} {match ip address @var{access_list}} {}
+Matches the specified @var{access_list}
+@end deffn
+
+@deffn {Route-map Command} {match ip next-hop @var{ipv4_addr}} {}
+Matches the specified @var{ipv4_addr}.
+@end deffn
+
+@deffn {Route-map Command} {match aspath @var{as_path}} {}
+Matches the specified @var{as_path}.
+@end deffn
+
+@deffn {Route-map Command} {match metric @var{metric}} {}
+Matches the specified @var{metric}.
+@end deffn
+
+@deffn {Route-map Command} {match community @var{community_list}} {}
+Matches the specified  @var{community_list}
+@end deffn
+
+@node Route Map Set Command
+@section Route Map Set Command
+
+@deffn {Route-map Command} {set ip next-hop @var{ipv4_address}} {}
+Set the BGP nexthop address.
+@end deffn
+
+@deffn {Route-map Command} {set local-preference @var{local_pref}} {}
+Set the BGP local preference.
+@end deffn
+
+@deffn {Route-map Command} {set weight @var{weight}} {}
+Set the route's weight.
+@end deffn
+
+@deffn {Route-map Command} {set metric @var{metric}} {}
+Set the BGP attribute MED.
+@end deffn
+
+@deffn {Route-map Command} {set as-path prepend @var{as_path}} {}
+Set the BGP AS path to prepend.
+@end deffn
+
+@deffn {Route-map Command} {set community @var{community}} {}
+Set the BGP community attribute.
+@end deffn
+
+@deffn {Route-map Command} {set ipv6 next-hop global @var{ipv6_address}} {}
+Set the BGP-4+ global IPv6 nexthop address.
+@end deffn
+
+@deffn {Route-map Command} {set ipv6 next-hop local @var{ipv6_address}} {}
+Set the BGP-4+ link local IPv6 nexthop address.
+@end deffn
+
+@node Route Map Call Command
+@section Route Map Call Command
+
+@deffn {Route-map Command} {call @var{name}} {}
+Call route-map @var{name}. If it returns deny, deny the route and
+finish processing the route-map.
+@end deffn
+
+@node Route Map Exit Action Command
+@section Route Map Exit Action Command
+
+@deffn {Route-map Command} {on-match next} {}
+@deffnx {Route-map Command} {continue} {}
+Proceed on to the next entry in the route-map.
+@end deffn
+
+@deffn {Route-map Command} {on-match goto @var{N}} {}
+@deffnx {Route-map Command} {continue @var{N}} {}
+Proceed processing the route-map at the first entry whose order is >= N
+@end deffn
+
+@node Route Map Examples
+@section Route Map Examples
+
+A simple example of a route-map:
+
+@example
+@group
+route-map test permit 10
+ match ip address 10
+ set local-preference 200
+@end group
+@end example
+
+This means that if a route matches ip access-list number 10 it's
+local-preference value is set to 200.
+
+See @ref{BGP Configuration Examples} for examples of more sophisticated
+useage of route-maps, including of the @samp{call} action.

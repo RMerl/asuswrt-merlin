@@ -1,0 +1,488 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1 maximum-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="icon" href="../images/favicon.png">
+<script type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/javascript">
+<% start_autodet(); %> // initial QIS detecting process.
+<% check_modem_sim(); %>
+var based_modelid = '<% nvram_get("productid"); %>';
+var hw_ver = '<% nvram_get("hardware_version"); %>';
+var usb_flag = '<% nvram_get("ehci_ports"); %>';
+
+var odmpid = '<% nvram_get("odmpid"); %>';
+var ttc = '<% nvram_get("territory_code"); %>';
+var color = '<% nvram_get("color"); %>';
+color = color.toUpperCase();
+var update_color = '';
+var MP_png_path = '';
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
+<% wanstate(); %>
+<% wanlink(); %>
+
+var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
+if(wans_dualwan != ""){
+	var ewan_index = wans_dualwan.indexOf("wan");
+	var autodet_state = (ewan_index == 0)? '<% nvram_get("autodet_state"); %>': '<% nvram_get("autodet1_state"); %>';
+	var autodet_auxstate = (ewan_index == 0)? '<% nvram_get("autodet_auxstate"); %>': '<% nvram_get("autodet1_auxstate"); %>';
+}
+else{
+	var autodet_state = '<% nvram_get("autodet_state"); %>';
+	var autodet_auxstate = '<% nvram_get("autodet_auxstate"); %>';
+}
+
+function LinkCheck(url){
+    var http = new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    return http.status!="404";
+}
+
+function gotoPage(dst_url, flag, isParent){
+	if(isParent && isParent == 1)
+		document.redirectForm.target = "_parent";
+	else
+		document.redirectForm.target = "";
+		
+	document.redirectForm.action = dst_url;
+	document.redirectForm.flag.value = flag;
+	document.redirectForm.submit();
+}
+
+
+/* MODELDEP by Territory Code */
+function assign_color(){		
+	if(based_modelid == "RT-AC87U"){		//MODELDEP: RT-AC87U
+		if(ttc == "JP/02" || ttc == "AP/02" || ttc == "SG/02")						
+			return "R";
+		else if(ttc == "JP/02")
+			return "W";
+		else
+			return color;
+	}
+	else if(odmpid == "RT-N66W" || odmpid == "RT-AC66W" || odmpid == "RT-AC68W" || odmpid == "RT-AC68RW"){
+		return "W";
+	}
+	else
+		return color;
+}
+
+function QKinternettype_load_body(){
+	if(wanstate == 4 && wansbstate == 4){
+		gotoPage("../error_page.htm", "6", 1);
+		return;
+	}
+
+	update_color = assign_color();
+	MP_png_path = "../images/Model_product_"+ update_color +".png";	
+
+	
+	//load Product img
+	if(update_color.length > 0 && (LinkCheck(MP_png_path) || odmpid != based_modelid)){		//if file exist, odmpid MODELDEP
+		document.getElementById("ModelPid_img").src = MP_png_path;
+		document.getElementById("ModelPid_img_desktop").src = MP_png_path;
+	}	
+	else{
+		document.getElementById("ModelPid_img").src="../images/Model_product.png";
+		document.getElementById("ModelPid_img_desktop").src="../images/Model_product.png";
+	}	
+
+	var check_desc1 = "<#QIS_welcome_feature1#>";	
+	var check_desc2 = "<#QIS_welcome_feature2#>";	
+	var check_desc3 = "<#QIS_welcome_feature3#>";	
+	var check_desc4 = "<#QIS_welcome_feature4#>";	
+		
+	if(based_modelid == "RT-N12" || based_modelid == "AP-N12" || hw_ver.search("N12") != -1){	//MODELDEP : N12 serious
+		var desc1_split = check_desc1.split("#ZVSPLITVZ#");
+		var desc2_split = check_desc2.split("#ZVSPLITVZ#");
+		var desc3_split = check_desc3.split("#ZVSPLITVZ#");
+		var desc4_split = check_desc4.split("#ZVSPLITVZ#");							
+		var index = 0;
+
+		if(desc1_split.length == 3 && desc2_split.length == 3 && desc3_split.length == 3 && desc4_split.length == 3){			//MODELDEP : RT-N12HP, AP-N12HP
+			if(hw_ver.search("RTN12HP") != -1)
+				index = 1;
+			else if(hw_ver.search("APN12HP") != -1)
+				index = 2;
+		}
+		
+		document.getElementById("Productdesc_1").innerHTML = desc1_split[index];
+		document.getElementById("Productdesc_2").innerHTML = desc2_split[index];
+		document.getElementById("Productdesc_3").innerHTML = desc3_split[index];
+		document.getElementById("Productdesc_4").innerHTML = desc4_split[index];
+	}
+	else{
+		document.getElementById("Productdesc_1").innerHTML = check_desc1;
+		document.getElementById("Productdesc_2").innerHTML = check_desc2;
+		document.getElementById("Productdesc_3").innerHTML = check_desc3;
+		document.getElementById("Productdesc_4").innerHTML = check_desc4;
+	}
+
+	// Need to check
+	if(based_modelid == "4G-AC55U"){
+		document.getElementById("main_manual").style.display = "none";
+		document.getElementById("lte_manual").style.display = "";
+	}
+	
+	document.getElementById("btn_next_step").focus();
+}
+
+function redirect_page(redirect_flag){
+	document.redirectForm.action = "QIS_"+redirect_flag+".htm";
+	document.redirectForm.submit();
+}
+
+function submitForm(mode){
+	if(mode == 0)
+		parent.flag_manual = 1;
+	else if(mode == 3)
+		parent.document.QKform.sw_mode.value = "3";	
+	else if(mode == "modem")
+		parent.flag_manual = "modem";
+
+	document.form.flag.value = "";
+	document.form.action = "QIS_admin_pass.htm";
+	document.form.submit();
+}
+
+function detect_if_wan_plug(flag){
+	if(parent.tmo_support && parent.ISMOBILE)
+		submitForm(1);
+
+	$.ajax({
+		url: '../result_of_get_changed_status_QIS.asp',
+		dataType: 'script',
+		
+		error: function(xhr){
+			detect_if_wan_plug();		
+		},
+		success: function(response){
+			document.getElementById("btn_next_step").style.display = "";
+			document.getElementById("loadingIcon").style.display = "none";
+			if(autodet_state == "4"){// ethernet did not plug
+				if(based_modelid == "4G-AC55U"){
+					if( sim_state == "-1")
+						redirect_page("unplug_ethsim");
+					else
+						submitForm(1);
+				}	
+				else if(parent.hadPlugged("modem")){
+					submitForm("modem");
+				}	
+				else if(flag == null){
+					document.getElementById("producticon").style.display = "none";
+					document.getElementById("producticon_desktop").style.display = "none";
+					if(based_modelid == "RT-AC87U"){
+						document.getElementById("noti_wan_uplus").style.display = "none";
+						document.getElementById("Productdesc_1").innerHTML = "<#web_redirect_suggestion1#>";
+						document.getElementById("Productdesc_1").style.color = "#FC0";
+						document.getElementById("Productdesc_2").innerHTML = '<#web_redirect_suggestion7#>';
+						document.getElementById("Productdesc_3").innerHTML = '<#web_redirect_suggestion8#>';
+						document.getElementById("Productdesc_4").innerHTML = '<#web_redirect_suggestion9#>';
+					}
+
+					document.getElementById("wan_unplug").style.display = "";
+					setTimeout("startPoll();", 2000);
+					document.getElementById("btn_next_step").style.display = "";
+					document.getElementById("loadingIcon").style.display = "none";
+				}
+				
+				setTimeout("update_wan_info(1);", 2000);
+			}
+			else if(autodet_state == "0"){
+				detect_if_wan_plug();
+			}
+			else if(autodet_state == ""){
+				if(flag == null)
+					update_wan_info();
+				else
+					update_wan_info(1);
+			}
+			else
+				submitForm(1);
+		}
+	});	
+}
+
+function update_wan_info(flag){
+	$.ajax({
+		url: '../start_autodet.asp',
+		dataType: 'script',
+		error: function(xhr){
+			update_wan_info();		
+		},
+		success: function(response){
+			document.getElementById("btn_next_step").style.display = "none";
+			document.getElementById("loadingIcon").style.display = "";
+			if(flag == null){
+				setTimeout("detect_if_wan_plug();", 2000);
+			}
+			else{
+				setTimeout("detect_if_wan_plug(1);", 2000);
+			}
+		}
+	});	
+}
+
+function startPoll(){
+	if(usb_flag != "" && based_modelid != "RT-AC87U"){
+		if(document.getElementById("unplugImg1").style.display == "none"){
+			$("#unplugImg2").fadeOut(500);
+			setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
+		}
+		else{
+			$("#unplugImg1").fadeOut(500);	
+			setTimeout('$("#unplugImg2").fadeIn(500);', 500);	
+		}
+	}
+	else{
+		$("#unplugImg1").fadeOut(500);	
+		setTimeout('$("#unplugImg1").fadeIn(500);', 500);			
+	}
+
+	setTimeout("startPoll();", 2500);
+}
+
+function submitenter(myfield,e){	
+	var keycode;
+	if (window.event) 
+		keycode = window.event.keyCode;
+	else if (e) 
+		keycode = e.which;
+	else 
+		return true;
+
+	if (keycode == 13){
+		update_wan_info();
+		return false;
+	}
+	else
+		return true;
+}
+
+function uploadSetting(){
+  var file_obj = document.form.file;
+	
+	if(file_obj.value == ""){
+		alert("<#JS_fieldblank#>");
+		file_obj.focus();
+	}
+	else if(file_obj.value.length < 6 ||
+					file_obj.value.lastIndexOf(".CFG")  < 0 || 
+					file_obj.value.lastIndexOf(".CFG") != (file_obj.value.length)-4){		
+		alert("<#Setting_upload_hint#>");
+		file_obj.focus();
+	}
+	else{
+		stopFlag = 1;
+		parent.document.getElementById('proceeding_img_text').style.display = "";
+		parent.document.getElementById('connHint').innerHTML = "<#SET_ok_desc#>";
+		document.form.action = "/upload.cgi";
+		document.form.enctype = "multipart/form-data";
+		document.form.submit();
+	}	
+}
+
+
+</script>
+
+<style>
+
+
+.desktop_left_field{
+	display:table-cell;
+	width:300px;
+	color:#007AFE;
+	text-align:right;	
+}
+
+.table_td{
+	display:table-cell;
+	width:700px;
+}
+
+.model_img_desktop{
+	display:table-cell;
+	vertical-align:middle;
+}
+
+/*model image*/
+#producticon{
+	display:none;
+}
+
+#model_description{
+	color:#FFF;
+
+}
+
+.button_welcome{
+	text-align:center;
+	margin: 32px 0;
+}
+
+.button_welcome > div{
+	width:250px;
+	height:66px;
+	line-height:66px;		
+	font-size:2.4em;
+}
+
+.button_active{
+	border-radius:4px;
+	color:#FFF;
+	background-color:#007AFF;
+	margin:auto;
+}
+
+#model_welcome_field{
+	display:none
+}
+
+#ModelPid_img{
+	width:auto;
+}
+
+/*mobile device*/
+@media screen and (max-width: 1000px){		
+	.desktop_left_field{
+		display:none;
+	}
+
+	/*model image*/
+	.model_img_desktop{
+		display:none;
+	}
+	
+	#producticon{
+		margin-top:36px;
+		text-align:center;
+		display:block
+	}
+	
+	@media screen and (max-height: 500px){
+		#producticon{
+			display:none;
+		}
+	}
+	
+	#model_description{
+		display:none;
+	}
+	
+	.button_welcome{
+		text-align:center;
+		margin:16px 0;
+	}
+	
+	.button_welcome > div{
+		width:167px;
+		height:44px;
+		line-height:44px;		
+		font-size:1.2em;
+	}
+	
+	#model_welcome_field{
+		text-align:center;
+		color:#757575;
+		font-size:15pt;
+		line-height:12px;
+		margin:11px 0;
+		display:block;
+	}
+	
+	#ModelPid_img{
+		width:220px;
+	}
+}
+</style>
+</head>  
+<body onLoad="QKinternettype_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="flag" value="">
+</form>
+<form method="post" name="form" action="/start_apply.htm">
+<input type="hidden" name="current_page" value="QIS_welcome.htm">
+<input type="hidden" name="next_page" value="">   
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="sw_mode" value="1">
+<div>
+	<div class="desktop_left_field">
+		<div style="font-size:42px"><#Web_Title2#></div>
+	</div>
+	<div class="table_td">
+		<div style="font-size:3em;color:#FFF;line-height:50px;margin:15px 23px 0 23px;text-align:center;">Welcome</div><!--mobile css-->
+		<div style="font-size:1.4em;color:#007AFF;text-align:center;margin: 0 23px;">ASUS Netowrking Family</div><!--mobile css-->
+		<div id="model_description">
+			<ul>							
+				<li style="line-height:40px;font-size:20px;" id="Productdesc_1"></li>
+				<li style="line-height:40px;font-size:20px;" id="Productdesc_2"></li>
+				<li style="line-height:40px;font-size:20px;" id="Productdesc_3"></li>
+				<li style="line-height:40px;font-size:20px;" id="Productdesc_4"></li>
+			</ul>		
+	
+		</div>
+		<div id="producticon"><img id="ModelPid_img" style="width:200px;"></div><!--mobile css--><!--adjust width for mobile layout-->
+		<div id="wan_unplug" style="display:none;text-align:center;">
+			<div id="noti_wan_uplus" class="QISGeneralFont" style="color:#FC0;text-align:left;margin:10px 15px;"><#web_redirect_suggestion1#></div>
+			<div><img id="unplugImg"  src="/images/WANunplug.png"></div>
+			<div><img id="unplugImg1" style="margin-top:-198px;" src="/images/WANunplug_eth.png"></div>
+			<div><img id="unplugImg2" style="margin-top:-198px;display:none;" src="/images/WANunplug_usb.png"></div>
+		</div>	
+		<div id="model_welcome_field"><#Web_Title2#></div>
+
+		<div class="button_welcome">
+			<div id="btn_next_step" class="button_active" onclick="update_wan_info();">START</div>
+			<div id="loadingIcon" style="width:100%;margin-top:20px;display:none;"><img src="/images/InternetScan.gif"></div>
+		</div>
+	</div>
+	<div class="model_img_desktop">
+		<div id="producticon_desktop"><img id="ModelPid_img_desktop"></div>
+	</div>
+</div>		
+	<!--table  border=0 align="center" cellpadding="2" cellspacing="0">
+
+		<tr>
+			<td>
+				<table style="margin-left:20px;" width="98%" border=0 align="center" cellpadding="5" cellspacing="0">
+					<tr>
+						<td colspan="3" align="left">
+							<input class="button_gen" type="button" value="<#Manual_Setting_btn#>" onclick="submitForm(0);" style="margin-left:30px;">
+						</td>
+					</tr>
+				</table>
+			</td>	
+		</tr>	
+		<tr>
+			<td>
+				<div id="AreaHint" style="margin-top:25px;">
+					<div><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+					<div id="main_manual" style="padding-left:20px;margin-top:10px">
+						<span><#QKset_skip_setup#> </span>
+						<span><#QKset_setup_manual_1#> <#OP_AP_item#></span>
+						<span id="repeater_title" style="display:none">/ <#OP_RE_item#></span>
+						<span id="mediaBridge_title" style="display:none">/ Media Bridge</span>
+						<span id="wisp_title" style="display:none">/ WISP</span>
+						<span>. </span>
+						<span><#QKset_restore_0#></span>
+					</div>	
+					<div id="lte_manual" style="padding-left:20px;margin-top:10px;display:none">
+						<span><#QKset_setup_manual_0#> </span>
+						<span><#QKset_restore_1#></span>
+					</div>
+					<div style="height:30px;display:none">
+						<input id="upload_setting_profile" type="file" name="file" class="input" style="color:#FFCC00;" onchange="uploadSetting();">
+					</div>
+				</div>
+			</td>
+		</tr>	
+	</table-->
+</form>
+</body> 

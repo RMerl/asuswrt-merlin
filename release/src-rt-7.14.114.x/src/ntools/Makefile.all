@@ -1,0 +1,97 @@
+include version
+
+#
+# Change cfe/kernel size if necessary
+#
+
+CFE_SIZE = 0x200000
+KERNEL_SIZE = 0x1E00000
+
+#-----------------------------------------------
+
+#
+# CFE Image Information
+#
+CFE_DIR = ../cfe
+CFE_IMAGE = cfe_rt-ac56u.bin
+
+#
+# Linux Firmware Image Information
+#
+KERNEL_DIR = ../image
+
+#
+# Single Image Information
+#
+PACKED_DIR = .
+PACKED_IMAGE = single_image.bin
+
+#
+# bit_errors Information
+#
+TOOL_DIR = .
+TOOL_NAME = bit_errors
+
+all: check_img
+
+	@echo ""
+	@echo "Flash layout:"
+	@echo " +--------------------+--------+-----------------------------+"
+	@echo " |         CFE        | NVRAM  |    Linux Firmware Image     |"
+	@echo " +--------------------+--------+-----------------------------+"
+	@echo " |<----------$(CFE_SIZE)---------->|<-------$(KERNEL_SIZE)------------>|"
+	
+	@echo -e "\n-Original CFE Image Size"
+	@wc -c $(CFE_DIR)/$(CFE_IMAGE)
+
+	@echo -e "\n-Original Firmware Image Size"
+	@wc -c $(KERNEL_DIR)/$(KERNEL_IMAGE)
+
+# Copy CFE 
+	@cp $(CFE_DIR)/$(CFE_IMAGE) $(PACKED_DIR)/$(PACKED_IMAGE)
+
+# Finish CFE Padding
+	@SIZE=`wc -c $(CFE_DIR)/$(CFE_IMAGE) | awk '{ print $$1 }'` ; \
+	CFE_PART_SIZE=`printf "%d" $(CFE_SIZE)` ; \
+	PAD=`expr $$CFE_PART_SIZE - $$SIZE` ; \
+	dd if=/dev/zero count=1 bs=$$PAD 2> /dev/null | \
+	tr \\000 \\377 >> $(PACKED_DIR)/$(PACKED_IMAGE)
+
+# Copy Kernel
+	@cat $(KERNEL_DIR)/$(KERNEL_IMAGE) >> $(PACKED_DIR)/$(PACKED_IMAGE)
+
+# Finish Kernel Padding
+	@SIZE=`wc -c $(KERNEL_DIR)/$(KERNEL_IMAGE) | awk '{ print $$1 }'` ; \
+	KERNEL_PART_SIZE=`printf "%d" $(KERNEL_SIZE)` ; \
+	PAD=`expr $$KERNEL_PART_SIZE - $$SIZE` ; \
+	dd if=/dev/zero count=1 bs=$$PAD 2> /dev/null | \
+	tr \\000 \\377 >> $(PACKED_DIR)/$(PACKED_IMAGE)
+
+# Packed Image Size
+	@echo -e "\n-Packed Image Size"
+	@wc -c $(PACKED_DIR)/$(PACKED_IMAGE)
+	$(TOOL_DIR)/$(TOOL_NAME) -i $(PACKED_DIR)/$(PACKED_IMAGE) -b 8
+	@mv $(PACKED_DIR)/.out $(PACKED_DIR)/single_image.out
+	@mv $(PACKED_DIR)/.inj $(PACKED_DIR)/single_image.inj
+
+clean:
+	rm -f $(PACKED_DIR)/$(PACKED_IMAGE)
+	rm -f $(PACKED_DIR)/*.out
+	rm -f $(PACKED_DIR)/*.inj
+	@rm -f $(PACKED_DIR)/.out
+	@rm -f $(PACKED_DIR)/.inj
+
+check_img:
+	@if [ ! -f $(CFE_DIR)/$(CFE_IMAGE) ]; then \
+	echo "" ; \
+	echo "Please copy \"$(CFE_IMAGE)\" to current directory"; \
+	echo "" ; \
+	exit 1; \
+	fi 
+
+	@if [ ! -f $(KERNEL_DIR)/$(KERNEL_IMAGE) ]; then \
+	echo "" ; \
+	echo "Please copy \"$(KERNEL_IMAGE)\" to current directory"; \
+	echo "" ; \
+	exit 1; \
+	fi

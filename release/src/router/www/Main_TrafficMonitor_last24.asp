@@ -196,6 +196,9 @@ function init()
 	initCommon(1, 0, 0, 1);	   //Viz 2010.09
 	ref.initX();
 	document.getElementById("faq0").href = "http://www.asus.com"+ href_lang +"support/Search-Result-Detail/69B50762-C9C0-15F1-A5B8-C7B652F50ACF/?keyword=ASUSWRT%20Traffic%20Monitor" ;
+	if(bwdpi_support){
+		document.getElementById('content_title').innerHTML = "<#menu5_3_2#> - <#traffic_monitor#>";
+	}	
 }
 
 function switchPage(page){
@@ -285,7 +288,7 @@ function Zoom(func){
 						<table width="100%" >
 							<tr>
 							<td  class="formfonttitle" align="left">
-										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
+										<div id="content_title" style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 									</td>
 							<td>
      						<div align="right">

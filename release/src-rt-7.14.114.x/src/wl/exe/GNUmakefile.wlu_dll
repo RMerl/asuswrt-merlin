@@ -1,0 +1,153 @@
+#
+# GNUmakefile.nok
+# $Id: GNUmakefile.wlu_dll,v 1.17 2010-09-13 14:20:43 $
+#
+
+WLAN_ComponentsInUse := bcmwifi ppr
+include ../../makefiles/WLAN_Common.mk
+SRCBASE = $(WLAN_SrcBaseR)
+
+TARGETTYPE=DLL
+REQUIRE_MSDEV=1
+REQUIRE_WDM7600=1
+REQUIRE_SDK60=1
+
+NOK_DLL = wlu_nokia.dll
+MFG_DLL = brcm_wlu.dll		
+
+REL_MFG_DIR = obj/mfg_dll/free
+DEB_MFG_DIR = obj/mfg_dll/checked
+
+include $(SRCBASE)/makefiles/env.mk
+
+CFLAGS += 
+
+vpath %.c $(SRCBASE)/shared $(WLAN_StdSrcDirsR) $(WLAN_ComponentSrcDirsR)
+
+# env defined NEWPATH...
+empty:=
+space:= $(empty) $(empty)
+export PATH:=$(subst $(space),:,$(strip $(NEWPATH))):$(PATH)
+
+DEPENDS_CC = gcc
+CC  = cl
+RC  = rc
+LD  = link
+LIBCMD = lib
+
+# Temporary patch to find mt.exe in SDK60
+# This needs to be reset to just "mt", in SDK70
+MT = $(firstword $(wildcard $(MSDEV)/VC/bin/mt.exe Z:/projects/hnd/tools/win/msdev/$(lastword $(subst /, ,$(MSDEV)))/VC/bin/mt.exe))
+
+C_DEFINES  = -D WIN32 -D _WINDOWS -D _MBCS -D _USRDLL -D BCMDLL -D SERDOWNLOAD \
+	     -D RWL_SERIAL -D RWL_DONGLE -D RWL_SOCKET -D RWL_WIFI -D D11AC_IOTYPES -D PPR_API
+
+# Olymic_RWL flag
+ifeq ($(OLYMPIC_RWL),1)
+     C_DEFINES += -D OLYMPIC_RWL
+endif 
+
+$(REL_MFG_DIR)/%.obj : C_DEFINES += -D NDEBUG
+$(DEB_MFG_DIR)/%.obj : C_DEFINES += -D BCMINTERNAL -D BCMDBG
+
+INCLUDES = $(SRCBASE)/include $(SRCBASE)/common/include $(SRCBASE)/wl/sys $(SRCBASE)/tools/shared \
+	   $(WLAN_ComponentIncDirs) $(WLAN_StdIncDirsA)
+MSINCLUDE=.;$(strip $(INCLUDES));$(MSDEV.INCLUDE)
+CPPFLAGS = $(patsubst %,-I%,$(subst ;, ,$(MSINCLUDE)))
+DEPENDS_CPPFLAGS = $(patsubst %,-I%,$(INCLUDES))
+
+LIBPATHS=
+
+LIBS = advapi32.lib
+LIBS += iphlpapi.lib
+LIBS += $(WDM7600WDK)/lib/wxp/i386/cfgmgr32.lib 
+LIBS += ws2_32.lib
+LIBS += user32.lib
+
+$(REL_MFG_DIR)/%	: LIBS += $(SRCBASE)/tools/epictrl/free/bcmctrl.lib
+$(DEB_MFG_DIR)/%	: LIBS += $(SRCBASE)/tools/epictrl/checked/bcmctrl.lib
+
+SOURCES = wlu.c wlu_common.c wlu_cmd.c wlu_iov.c wlu_ndis.c bcmutils.c bcmwifi_channels.c bcmstdlib.c wlu_client_shared.c wlu_pipe.c wlu_pipe_win32.c miniopt.c bcm_app_utils.c wlu_rates_matrix.c wlc_ppr.c
+
+SOURCES.OBJ	:= $(filter %.c,$(SOURCES))
+SOURCES.OBJ	:= $(SOURCES.OBJ:%.c=%.obj)
+
+all: mfg
+
+#For use with this nok_cli in src/mfgc
+mfg: $(DEB_MFG_DIR)/$(MFG_DLL) $(REL_MFG_DIR)/$(MFG_DLL)
+
+# Make mfg dll for use with nok_cli in src/tools/mfg
+$(REL_MFG_DIR)/$(MFG_DLL) : $(REL_MFG_DIR)/NUL \
+	$(addprefix $(REL_MFG_DIR)/,$(SOURCES.OBJ)) \
+	$(SRCBASE)/tools/epictrl/free/bcmctrl.lib 
+	@$(LINK_FILES)
+
+$(DEB_MFG_DIR)/$(MFG_DLL) : $(DEB_MFG_DIR)/NUL \
+	$(addprefix $(DEB_MFG_DIR)/,$(SOURCES.OBJ)) \
+	$(SRCBASE)/tools/epictrl/checked/bcmctrl.lib 
+	@$(LINK_FILES)
+
+Debug/% :: LINKFLAGS = /debug 
+
+# Define the command used to link all the objet files together into
+# our final target.
+#
+define LINK_FILES
+	echo "Linking DLL - $@"
+	echo $(LIBS) $(LINKFLAGS)  /nologo /dll $(DEFFILE:%=/def:%) /pdb:"${@:%.dll=%.pdb}" /machine:I386 /NOD:libc.lib /NOD:libcmt.lib -OUT:$@ $(LIBPATHS) >$${TEMP}/LNK$${PPID}.tmp
+	$(foreach p,$(filter %.obj %.res,$^),echo $(p) >>$${TEMP}/LNK$${PPID}.tmp; )
+	echo "["
+	cat $${TEMP}/LNK$${PPID}.tmp
+	echo "]"
+	LIB="$(MSSDK)/lib;$(MSDEV)/VC/LIB;$(MSDEV)/VC98/MFC/LIB" \
+	$(LD) @`cygpath -w $${TEMP}`/LNK$${PPID}.tmp
+        echo "$(MT) -manifest $(@).manifest -outputresource:$@\;2"
+	$(MT) -manifest $(@).manifest -outputresource:$@\;2
+	rm $${TEMP}/LNK$${PPID}.tmp
+endef
+
+$(REL_MFG_DIR)/%.obj: %.c
+	@echo "Compiling - $(notdir $<)"
+ifeq ($(REQUIRE_SDK60), 1)
+	$(CC) /nologo /MD /W3 /EHsc /O2 /Fo"$(@D)/" /Fd"$(@D)/" /FD /c $(C_DEFINES) $(CPPFLAGS)   $<
+else
+	$(CC) /nologo /MD /W3 /WX /GX /O2 /Fo"$(@D)/" /Fd"$(@D)/" /FD /c $(C_DEFINES) $(CPPFLAGS)   $<
+endif
+
+$(DEB_MFG_DIR)/%.obj :  %.c
+	@echo "Compiling - $(notdir $<)"
+ifeq ($(REQUIRE_SDK60), 1)
+	$(CC) /nologo /MDd /W3 /EHsc /ZI /Od /Fo"$(@D)/" /Fd"$(@D)/" /FD /RTC1  /c  $(C_DEFINES) $(CPPFLAGS) $<
+else
+	$(CC) /nologo /MDd /W3 /WX /GX /ZI /Od /Fo"$(@D)/" /Fd"$(@D)/" /FD /GZ  /c  $(C_DEFINES) $(CPPFLAGS) $<
+endif
+
+$(REL_MFG_DIR)/NUL $(DEB_MFG_DIR)/NUL : % :
+	mkdir -p $(@D)
+
+$(SRCBASE)/epiprot/lib/free/bcmctrl.lib :
+	$(MAKE) -C $(SRCBASE)/epiprot/lib release
+
+$(SRCBASE)/epiprot/lib/checked/bcmctrl.lib :
+	$(MAKE) -C $(SRCBASE)/epiprot/lib debug
+
+$(SRCBASE)/wl/cpl/preflib/Release/preflib.lib :
+	$(MAKE) -C $(SRCBASE)/wl/cpl/preflib debug
+
+$(SRCBASE)/wl/cpl/preflib/Debug/preflib.lib :
+	$(MAKE) -C $(SRCBASE)/wl/cpl/preflib debug
+
+clean:
+	rm -f .*.d
+	rm -f $(REL_MFG_DIR)/*.obj $(DEB_MFG_DIR)/*.obj 
+
+clobber:
+	rm -f .*.d
+	rm -rf  $(REL_MFG_DIR) $(DEB_MFG_DIR)
+
+.PHONY: all clean clobber install # debug free
+
+ifeq (,$(filter clean clobber install,$(MAKECMDGOALS)))
+-include $(SOURCES.OBJ:%.obj=.%.d)
+endif

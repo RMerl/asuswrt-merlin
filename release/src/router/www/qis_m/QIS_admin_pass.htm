@@ -1,0 +1,267 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1 maximum-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="apple-touch-icon" href="../images/map-iconRouter_iphone.png" />
+<link rel="icon" href="../images/favicon.png">
+<link rel="stylesheet" type="text/css" href="../pwdmeter.css">
+<link rel="stylesheet" type="text/css" href="../css/icon.css">
+<script type="text/javascript" language="JavaScript" src="../state.js"></script>
+<script type="text/javascript" language="JavaScript" src="../help.js"></script>
+<script type="text/JavaScript" language="JavaScript" src="../js/jquery.js"></script>
+<script type="text/JavaScript" language="JavaScript" src="../validator.js"></script>
+<script type="text/javascript">
+var accounts = [<% get_all_accounts(); %>];
+
+if(accounts.length == 0)
+	accounts = ['<% nvram_get("http_username"); %>'];
+
+for(var i=0; i<accounts.length; i++){
+	accounts[i] = decodeURIComponent(accounts[i]);	
+}
+
+function QKinternettype_load_body(){	
+	document.form.http_passwd.focus();
+
+	if(dsl_support){
+		document.getElementById("prev_btn").style.display = "none";
+		var detect_status = "<% nvram_get("dsltmp_autodet_state"); %>";	
+		if( (detect_status == "Detecting") || (detect_status == "wait_for_init") || 
+			(detect_status == "init") || (detect_status == "initializing") || 
+			(detect_status == "up") || (detect_status == "wait") || (detect_status == "down")) {
+			document.form.next_page.value = "QIS_detect.htm";
+		}
+		else if( (detect_status == "pppoe") || (detect_status == "pppoa") ) { //1:PPPoE, 2:PPPoA
+			document.form.next_page.value = "QIS_ppp_cfg.htm";
+		}
+		else if( detect_status == "dhcp") { //2:MER
+			document.form.next_page.value = "QIS_mer_cfg.htm";		
+		}
+		else if( detect_status == "Fail") {
+			document.form.next_page.value = "QIS_manual_setting.htm";				
+		}
+		else{		
+			if(parent.based_modelid == "DSL-AC68U")
+				document.form.next_page.value = "QIS_detect.htm";
+			else
+				document.form.next_page.value = "QIS_manual_setting.htm";				
+		}
+	}
+	
+	document.form.http_username.value= accounts[0];	
+	if(parent.based_modelid == "DSL-AC68U"){	//dsl detect trigger, MODELDEP : DSL-AC68U
+		var RetryCountDown_fail = 5;
+		update_dsl_info();
+	}
+
+	parent.restartTime = true;
+}
+
+function submitForm(){
+	document.getElementById("alert_msg1").innerHTML = "";
+	document.getElementById("alert_msg2").innerHTML = "";
+
+	if(document.form.http_username.value.length == 0){		//username can not be blank
+		document.getElementById("alert_msg1").innerHTML = "<#File_Pop_content_alert_desc1#>";
+		document.getElementById("alert_msg1").style.display = "";
+		document.form.http_username.focus();
+		document.form.http_username.select();
+		return false;
+	}
+	else{
+		var alert_str = validator.hostName(document.form.http_username);
+		if(alert_str != ""){
+			document.getElementById("alert_msg1").innerHTML = alert_str;
+			document.getElementById("alert_msg1").style.display = "";
+			document.form.http_username.focus();
+			document.form.http_username.select();
+			return false;
+		}else{
+			document.getElementById("alert_msg1").style.display = "none";
+		}
+
+		document.form.http_username.value = trim(document.form.http_username.value);
+		if(document.form.http_username.value == "root" || document.form.http_username.value == "guest" || document.form.http_username.value == "anonymous"){
+			document.getElementById("alert_msg1").innerHTML = "<#USB_Application_account_alert#>";
+			document.getElementById("alert_msg1").style.display = "";
+			document.form.http_username.focus();
+			document.form.http_username.select();
+			return false;
+		}
+		else if(accounts.getIndexByValue(document.form.http_username.value) > 0 && document.form.http_username.value != accounts[0]){		
+			document.getElementById("alert_msg1").innerHTML = "<#File_Pop_content_alert_desc5#>";
+			document.getElementById("alert_msg1").style.display = "";
+			document.form.http_username.focus();
+			document.form.http_username.select();
+			return false;
+		}else{
+			document.getElementById("alert_msg1").style.display = "none";
+		}
+	}	
+	
+	/*check password*/
+	if(document.form.http_passwd.value.length <= 0 || document.form.v_password2.value.length <= 0){
+		document.getElementById("alert_msg2").innerHTML = "*<#File_Pop_content_alert_desc6#>";
+		if(document.form.http_passwd.value.length <= 0){
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+		}else{
+			document.form.v_password2.focus();
+			document.form.v_password2.select();
+		}
+
+		return false;
+	}
+
+	if(document.form.http_passwd.value != document.form.v_password2.value){
+		document.getElementById("alert_msg2").innerHTML = "*<#File_Pop_content_alert_desc7#>";
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();
+		return false;
+	}
+
+	if(is_KR_sku){		/* MODELDEP by Territory Code */
+		if(!validator.string_KR(document.form.http_passwd)){
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			return false;
+		}
+	}
+	else{
+		if(!validator.string(document.form.http_passwd)){
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			return false;
+		}
+	}
+
+	if(dsl_support) {		// if it is dsl, just write to a temp variable	
+		document.form.dsltmp_qis_admin_username.value = document.form.http_username.value;
+		document.form.dsltmp_qis_admin_passwd.value = document.form.http_passwd.value;	
+		document.form.action_script.value = "";
+		document.form.dsltmp_qis_admin_username.disabled = false;
+		document.form.dsltmp_qis_admin_passwd.disabled = false;
+		document.form.dsltmp_qis_admin_passwd_set.disabled = false;
+		document.form.http_username.disabled = true;
+		document.form.http_passwd.disabled = true;
+		document.form.v_password2.disabled = true;
+		document.form.submit();
+		return;
+	}
+
+	if(document.form.http_passwd.value == 'admin'){
+		alert("<#QIS_adminpass_confirm0#>");
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();
+		return false;
+	}
+
+	parent.document.QKform.http_username.value = document.form.http_username.value;
+	parent.document.QKform.http_passwd.value = document.form.http_passwd.value;
+	isPassChanged = true;
+	document.form.flag.value = "";
+
+	if(parent.tmo_support && parent.ISMOBILE)
+		document.form.action = "QIS_wireless.htm";
+	else if(parent.flag_manual == 1)
+		document.form.action = "QIS_manual.htm";
+	else if(parent.flag_manual == "modem")
+		document.form.action = "QIS_modem.htm";
+	else if(parent.document.QKform.sw_mode.value == "1")
+		document.form.action = "QIS_detect.htm";
+	else
+		document.form.action = "QIS_lanip.htm";
+		
+	document.form.submit();
+}
+
+function gotoPrev(){
+	if (dsl_support){
+		location.href = "QIS_detect.htm";	
+	}
+	else{
+		location.href = "QIS_welcome.htm";
+	}
+}
+
+/* password item show or not */
+function pass_checked(obj){
+	switchType(obj, document.form.show_pass_1.checked, true);
+}
+
+function update_dsl_info(){
+	$.ajax({
+		url: '../start_dsl_autodet.asp',
+		dataType: 'script',
+		error: function(xhr){
+			update_dsl_info();		
+		},
+		success: function(response){
+				// trigger hook only
+		}
+	});	
+}
+
+function clean_scorebar(obj){
+	if(obj.value == "")
+		document.getElementById("scorebarBorder").style.display = "none";
+}
+</script>
+
+<style>
+body{
+	color:#FFF;
+	margin:0;
+}
+</style>
+</head>  
+<body onLoad="QKinternettype_load_body();">
+<form method="post" name="form" action="/start_apply.htm" target="" onsubmit="return submitForm();">
+<input type="hidden" name="current_page" value="/qis_m/QIS_admin_pass.htm">
+<input type="hidden" name="next_page" value="/QIS_wizard_m.htm">   
+<input type="hidden" name="prev_page" value="/QIS_wizard_m.htm">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="restart_time">
+<input type="hidden" name="action_wait" value="0">
+<input type="hidden" name="dsltmp_qis_admin_username" value="" disabled>
+<input type="hidden" name="dsltmp_qis_admin_passwd" value="" disabled>
+<input type="hidden" name="dsltmp_qis_admin_passwd_set" value="1" disabled>
+<input type="hidden" name="flag" value="detect">
+<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+<input type="hidden" name="sw_mode" value="1">
+<div>
+	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QIS_pass_desc1#></div>
+	<div id="alert_msg2" style="color:#FC0;margin-left:15px;"></div>
+	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#Router_Login_Name#></div>
+	<div style="margin:1px 27px 10px 15px">
+		<input type="text" name="http_username" tabindex="1" style="width:100%;height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" maxlength="20" value="<% nvram_get("http_username"); %>" autocomplete="off" autocorrect="off" autocapitalize="off" onBlur="clean_scorebar(this);">
+	</div>
+	<div id="alert_msg1" style="color:#FC0;margin-left:15px;display:none;"></div>
+	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PASS_new#></div>
+	<div style="margin:10px 27px 10px 15px;">
+		<input type="password" name="http_passwd" tabindex="2" style="width:100%;height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" maxlength="16" onpaste="return false;"/ onBlur="clean_scorebar(this);" autocomplete="off" autocorrect="off" autocapitalize="off">
+	</div>
+	<div id="scorebarBorder" style="display:none;margin-left:15px" title="<#LANHostConfig_x_Password_itemSecur#>">
+		<div id="score"></div>
+		<div id="scorebar">&nbsp;</div>        	
+	</div>
+	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PASS_retype#></div>
+	<div style="margin:10px 27px 120px 15px">
+		<input type="password" name="v_password2" tabindex="3" style="width:100%;height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" maxlength="16" onpaste="return false;" autocomplete="off" autocorrect="off" autocapitalize="off"/ onBlur="clean_scorebar(this);">
+	</div>
+	<div id="bottom_button" style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+		<div style="width:100%;height:100%;display:table">
+			<div id="prev_btn" style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="gotoPrev();">
+				<div style="font-size:1em;color:#7E8593"><#CTL_prev#></div>
+			</div>
+			<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;background-color:#007AFF" onclick="submitForm();">
+				<div style="font-size:1em;color:#FFF;"><#CTL_next#></div>
+			</div>
+		</div>
+	</div>
+</div>
+</form>
+</body> 

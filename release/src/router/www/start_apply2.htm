@@ -17,7 +17,6 @@ var action_mode = '<% get_parameter("action_mode"); %>';
 var action_wait = '<% get_parameter("action_wait"); %>';
 var group_id = '<% get_parameter("group_id"); %>';
 var getflag = '<% get_parameter("flag"); %>';
-var next_sw_mode = '<% get_parameter("sw_mode"); %>';
 
 function started_validating(){
 }
@@ -89,6 +88,24 @@ var makeRequest = {
 };
 
 function showWlHint(){
+	var isSwMode = function(mode){
+		var ui_sw_mode = "rt";
+		var sw_mode = '<% nvram_get("sw_mode"); %>';
+		var wlc_psta = '<% nvram_get("wlc_psta"); %>';
+		var wlc_express = '<% nvram_get("wlc_express"); %>';
+
+		if(sw_mode == '2' && wlc_express == '0') ui_sw_mode = "re"; // Repeater
+		else if(sw_mode == '3' && wlc_psta == '0') ui_sw_mode = "ap"; // AP
+		else if(sw_mode == '3' && wlc_psta == '1') ui_sw_mode = "mb"; // MediaBridge
+		else if(sw_mode == '2' && wlc_express != '0') ui_sw_mode = "ew"; // Express Way
+		else if(sw_mode == '5') ui_sw_mode = 'hs'; // Hotspot
+		else ui_sw_mode = "rt"; // Router
+
+		return (ui_sw_mode == mode);
+	}
+
+	if(!isSwMode('rt') && !isSwMode('ap')) return false;
+
 	var wl_nband_title = (function(){
 		String.prototype.toArray = function(){
 			var ret = eval(this.toString());
@@ -104,134 +121,20 @@ function showWlHint(){
 		for (var j=0; j<wl_nband_array.length; j++) {
 			if(wl_nband_array[j] == '2'){
 				band2g_count++;
-				wl_nband_title.push("2.4GHz-" + band2g_count);
+				wl_nband_title.push("2.4 GHz-" + band2g_count);
 			}
 			else if(wl_nband_array[j] == '1'){
 				band5g_count++;
-				wl_nband_title.push("5GHz-" + band5g_count);
+				wl_nband_title.push("5 GHz-" + band5g_count);
 			}
 		}
-		if(wl_nband_title.indexOf("2.4GHz-2") == -1) wl_nband_title[wl_nband_title.indexOf("2.4GHz-1")] = "2.4GHz";
-		if(wl_nband_title.indexOf("5GHz-2") == -1) wl_nband_title[wl_nband_title.indexOf("5GHz-1")] = "5GHz";
+		if(wl_nband_title.indexOf("2.4 GHz-2") == -1) wl_nband_title[wl_nband_title.indexOf("2.4 GHz-1")] = "2.4 GHz";
+		if(wl_nband_title.indexOf("5 GHz-2") == -1) wl_nband_title[wl_nband_title.indexOf("5 GHz-1")] = "5 GHz";
 
 		return wl_nband_title;
 	})();
 
-	var doRedirect = function(){
-		var getXMLAndRedirect = function(){
-			if(makeRequest._notSupportXML){
-				if(current_page.length > 0){
-					top.location.href = current_page;
-				}
-			}
-
-			makeRequest.start('/httpd_check.xml', function(xhr){
-				if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/index.asp";
-
-				var httpds = xhr.responseXML.getElementsByTagName("httpd");
-				if (httpds !== null && httpds[0] !== null) {
-					if(top.document.getElementById("connectedHint")){
-						top.document.getElementById("connectedHint").innerHTML = "<#DrSurf_sweet_advise2#>";
-					}
-
-					setTimeout(function(){
-						top.location.href = current_page;
-						if(top.document.getElementById("wlHint")) top.document.getElementById("wlHint").style.display = "none";
-					}, 300);
-				}
-			}, getXMLAndRedirect);
-		};
-		
-		getXMLAndRedirect();
-	};
-
-	var getWlHint = function(wlObj){
-		if(wlObj.length == 0 || typeof wlObj == "undefined") return false;
-
-		var wlHintCss = document.createElement("style");
-		wlHintCss.type = "text/css";
-		wlHintCss.innerHTML += ".dr_sweet_advise_wl_hint{";
-		wlHintCss.innerHTML += "filter:alpha(opacity=90);";
-		wlHintCss.innerHTML += "opacity:.90;";
-		wlHintCss.innerHTML += "-webkit-border-radius: 10px;";
-		wlHintCss.innerHTML += "-moz-border-radius: 10px;";
-		wlHintCss.innerHTML += "border-radius: 10px;";
-		wlHintCss.innerHTML += "behavior: url(/PIE.htc);";
-		wlHintCss.innerHTML += "border-radius: 10px 10px 10px 10px;";
-		wlHintCss.innerHTML += "border: 0px;";
-		wlHintCss.innerHTML += "width:90%;";
-		wlHintCss.innerHTML += "max-width: 900px;";
-		wlHintCss.innerHTML += "margin-top: 100px;";
-		wlHintCss.innerHTML += "font-size:26px;";
-		wlHintCss.innerHTML += "color:#FFFFFF;";
-		wlHintCss.innerHTML += "background-color:#000000;";
-		wlHintCss.innerHTML += "font-family:Arial, Helvetica, sans-serif;";
-		wlHintCss.innerHTML += "}";
-		wlHintCss.innerHTML += ".wl_hint_content{";
-		wlHintCss.innerHTML += "-webkit-border-radius: 10px;";
-		wlHintCss.innerHTML += "-moz-border-radius: 10px;";
-		wlHintCss.innerHTML += "border-radius: 10px;";
-		wlHintCss.innerHTML += "background-color:#FFFFFF;";
-		wlHintCss.innerHTML += "color:#006699;";
-		wlHintCss.innerHTML += "border:1px solid #999;";
-		wlHintCss.innerHTML += "margin:10px;";
-		wlHintCss.innerHTML += "text-align:left;";
-		wlHintCss.innerHTML += "padding:10px;";
-		wlHintCss.innerHTML += "font-size:18px;";
-		wlHintCss.innerHTML += "font-family:Arial, Verdana, Helvetica, sans-serif;";
-		wlHintCss.innerHTML += "line-height:130%;";
-		wlHintCss.innerHTML += "}";
-		wlHintCss.innerHTML += ".wl_hint_content span{";
-		wlHintCss.innerHTML += "color:#FF6600;";
-		wlHintCss.innerHTML += "}";
-		top.document.body.appendChild(wlHintCss);
-
-		var wlHintDiv = document.createElement("div");
-		var htmlCode = '';
-		wlHintDiv.setAttribute("id", "wlHint");
-		htmlCode += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;text-align:center;z-index:99999;background-color:#444F53;overflow:hidden;">';
-		htmlCode += '<table cellpadding="5" cellspacing="0" class="dr_sweet_advise_wl_hint" align="center">';
-		htmlCode += '<tbody>';
-		htmlCode += '<tr>';
-		htmlCode += '<td>';
-		htmlCode += '<div class="wl_hint_content">';
-		htmlCode += "<#DrSurf_sweet_advise1#>";
-		htmlCode += '<div id="wireless_client_detect" style="margin-top:15px;">';
-		htmlCode += '<#qis_tutor_title1#>:';
-		htmlCode += '<ul>';
-
-		for(var i=0; i<wlObj.length; i++){
-			htmlCode += (wlObj.length == 1) ? "" : '<li style="font-family:Lucida Console; margin-top: 10px;"><b>' + wlObj[i].band + ':</b>';
-			htmlCode += '<ul>';
-			htmlCode += '<li>';
-			htmlCode += '<#Wireless_name#>: <span style="font-weight:bold;font-size:20px;font-family:Lucida Console;">'
-			htmlCode += wlObj[i].ssid;
-			htmlCode += '</span>';
-			htmlCode += '</li>';
-			htmlCode += '<li> ';
-			htmlCode += '<#Network_key#>: <span style="font-weight:bold;font-size:20px;font-family:Lucida Console;">'
-			htmlCode += (wlObj[i].key == "") ? "Open System" : wlObj[i].key;
-			htmlCode += '</span>';
-			htmlCode += '</li>';
-			htmlCode += '</ul>';
-			htmlCode += (wlObj.length == 1) ? "" : '</li>';
-		}		
-		
-		htmlCode += '</ul>';
-		htmlCode += '</div>';
-		htmlCode += '<div style="text-align: right;"><span style="font-size:28px;margin-right:5px;" id="connectedHint"></span>';
-		htmlCode += '<img width="32px" src="images/InternetScan.gif" />';
-		htmlCode += '</div>';
-		htmlCode += '</div>';
-		htmlCode += '</td>';
-		htmlCode += '</tr>';
-		htmlCode += '</tbody>';
-		htmlCode += '</table></div>';
-		wlHintDiv.innerHTML = htmlCode;
-		top.document.body.appendChild(wlHintDiv);
-	};
-
-	var genWlObj = function(){
+	var genWlObj = (function(){
 		var wlObj = [];
 		var wlUnit = function(_band, _ssid, _key){
 			this.band = _band;
@@ -242,6 +145,7 @@ function showWlHint(){
 		var ssid_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>')];
 		var auth_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_auth_mode_x"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_auth_mode_x"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_auth_mode_x"); %>')];
 		var key_nvram = [decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>'), decodeURIComponent('<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>')];
+		var smart_connect_nvram = '<% nvram_get("smart_connect_x"); %>';
 
 		var ssid_param = [decodeURIComponent('<% get_ascii_parameter("wl0_ssid"); %>'), decodeURIComponent('<% get_ascii_parameter("wl1_ssid"); %>'), decodeURIComponent('<% get_ascii_parameter("wl2_ssid"); %>')];
 		var auth_param = [decodeURIComponent('<% get_ascii_parameter("wl0_auth_mode_x"); %>'), decodeURIComponent('<% get_ascii_parameter("wl1_auth_mode_x"); %>'), decodeURIComponent('<% get_ascii_parameter("wl2_auth_mode_x"); %>')];
@@ -262,11 +166,6 @@ function showWlHint(){
 
 		if(applyParam.ssid != ""){
 			// handle wl
-			if(applyParam.smartConnect == 1){
-				applyParam.unit = 0;
-				wlObj.length = 1;
-			}
-
 			wlObj[applyParam.unit].ssid = applyParam.ssid;
 			wlObj[applyParam.unit].key = (applyParam.auth == "open") ? "" : applyParam.key;				
 		}
@@ -280,11 +179,147 @@ function showWlHint(){
 			}			
 		}
 
-		return wlObj;
-	};
+		// handle smart connect
+		if(applyParam.smartConnect == ""){
+			if(smart_connect_nvram == 1){
+				// Tri band steering
+				wlObj.length = 1;
+				wlObj[0].band = "Tri-band Smart Connect";
+			}
+			else if(smart_connect_nvram == 2){
+				// 5GHz band steering
+				wlObj.length = 2;
+				wlObj[1].band = "5 GHz Smart Connect";
+			}
+		}
+		else if(applyParam.smartConnect == 1){
+			// Tri band steering
+			wlObj.length = 1;
+			wlObj[0].band = "Tri-band Smart Connect";
+		}
+		else if(applyParam.smartConnect == 2){
+			// 5GHz band steering
+			wlObj.length = 2;
+			wlObj[1].band = "5 GHz Smart Connect";
+		}
 
-	getWlHint(genWlObj());	
-	setTimeout(function(){doRedirect();}, 5000);
+		return wlObj;
+	})();
+
+	(function(wlObj){
+		if(wlObj.length == 0 || typeof wlObj == "undefined") return false;
+
+		var wlHintCss = "";
+		wlHintCss += "<style type='text/css'>"
+		// Desktop style sheet
+		wlHintCss += "#wlHint{";
+		wlHintCss += "font-family: Arial;";
+		wlHintCss += "background:url(/images/New_ui/login_bg.png) #283437 no-repeat;";
+		wlHintCss += "background-size: 1280px 1076px;";
+		wlHintCss += "z-index:9999;";
+		wlHintCss += "position:absolute;";
+		wlHintCss += "left:0;";
+		wlHintCss += "top:0;";
+		wlHintCss += "width:100%;";
+		wlHintCss += "height:100%;";
+		wlHintCss += "background-position: center 0%;";
+		wlHintCss += "margin: 0px;";
+		wlHintCss += "}.prod_madelName{";
+		wlHintCss += "font-size: 26pt;";
+		wlHintCss += "color:#fff;";
+		wlHintCss += "margin-top: 10px;";
+		wlHintCss += "}.nologin{";
+		wlHintCss += "word-break: break-all;";
+		wlHintCss += "margin:10px 0px 0px 78px;";
+		wlHintCss += "background-color:rgba(255,255,255,0.2);";
+		wlHintCss += "padding:20px;";
+		wlHintCss += "line-height:36px;";
+		wlHintCss += "border-radius: 5px;";
+		wlHintCss += "width: 480px;";
+		wlHintCss += "border: 0;";
+		wlHintCss += "color:#fff;";
+		wlHintCss += "color:#000\9;"; /* IE6 IE7 IE8 */
+		wlHintCss += "font-size:16pt;";
+		wlHintCss += "}.div_table{";
+		wlHintCss += "display:table;";
+		wlHintCss += "}.div_tr{";
+		wlHintCss += "display:table-row;";
+		wlHintCss += "}.div_td{";
+		wlHintCss += "display:table-cell;";
+		wlHintCss += "}.title_gap{";
+		wlHintCss += "margin:20px 0px 0px 78px;";
+		wlHintCss += "width: 480px;";
+		wlHintCss += "font-size: 16pt;";
+		wlHintCss += "color:#fff;";
+		wlHintCss += "}.main_field_gap{";
+		wlHintCss += "margin:100px auto 0;";
+		wlHintCss += "}b{color:#00BBFF;";
+		wlHintCss += "}.title_name{";
+		wlHintCss += "font-size: 40pt;";
+		wlHintCss += "color:#93d2d9;";
+		wlHintCss += "}.img_gap{";
+		wlHintCss += "padding-right:30px;";
+		wlHintCss += "vertical-align:middle;";
+		wlHintCss += "}.login_img{";
+		wlHintCss += "width:43px;";
+		wlHintCss += "height:43px;";
+		wlHintCss += "background-image: url('images/New_ui/icon_titleName.png');";
+		wlHintCss += "background-repeat: no-repeat;}";
+		// Mobile style sheet
+		wlHintCss += "@media screen and (max-width: 1000px){";
+		if(top.location.pathname.search("QIS") != -1){
+			wlHintCss += "#wlHint{background:url('/images/qis/pattern3-3_10_A15.png'),url('/images/qis/pattern3_05_4.png'),url('/images/qis/mainimage_img4.png') #1D1E1F no-repeat;";
+			wlHintCss += "background-size:auto;}b{color:#007AFF;}";
+		}
+		wlHintCss += ".prod_madelName{";
+		wlHintCss += "font-size: 13pt;";
+		wlHintCss += "}.nologin{";
+		wlHintCss += "margin-left:10px;";
+		wlHintCss += "padding:10px;";
+		wlHintCss += "line-height:18pt;";
+		wlHintCss += "width: 100%;";
+		wlHintCss += "font-size:14px;";
+		wlHintCss += "}.main_field_gap{";
+		wlHintCss += "width:82%;";
+		wlHintCss += "margin:10px 0 0 15px;";
+		wlHintCss += "}.title_name{";
+		wlHintCss += "font-size:20pt;";
+		wlHintCss += "margin-left:15px;";
+		wlHintCss += "}.login_img{";
+		wlHintCss += "background-size: 75%;";
+		wlHintCss += "}.img_gap{";
+		wlHintCss += "padding-right:0;";
+		wlHintCss += "vertical-align:middle;";
+		wlHintCss += "}.title_gap{";
+		wlHintCss += "margin:15px 0px 0px 15px;";
+		wlHintCss += "width: 100%;";
+		wlHintCss += "font-size: 12pt;";
+		wlHintCss += "}}";
+		wlHintCss += "</style>";
+
+		var wlHintJs = '<script>setInterval(function(){var a;if(window.XMLHttpRequest)a=new XMLHttpRequest;else{if(!window.ActiveXObject)return!1;a=new ActiveXObject("Microsoft.XMLHTTP")}a.onreadystatechange=function(){4==a.readyState&&200==a.status&&(top.location.href="/")},a.open("GET","/httpd_check.xml",!0),a.send(null)},3e3);<\x2Fscript>';
+
+		var wlHintHtml = '';
+		wlHintHtml += '<meta content="telephone=no" name="format-detection"><meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">';
+		wlHintHtml += '<div id="wlHint">';
+		wlHintHtml += '<div class="div_table main_field_gap">';
+		wlHintHtml += '<div class="div_tr">';
+		wlHintHtml += '<div class="prod_madelName"><div class="title_name"><div class="div_td img_gap"><div class="login_img"></div></div><div class="div_td"><#Web_Title2#></div></div></div>';
+		wlHintHtml += '<div id="login_filed">';
+		wlHintHtml += "<div class='p1 title_gap'><#DrSurf_sweet_advise1#></div>";
+		for(var i=0; i<wlObj.length; i++){
+			wlHintHtml += '<div class="p1 title_gap">'+ wlObj[i].band +'</div>';
+			wlHintHtml += '<div class="nologin">';
+			wlHintHtml += '<#Wireless_name#>: <b>';
+			wlHintHtml += wlObj[i].ssid + '</b><br>';
+			wlHintHtml += '<#Network_key#>: <b>';
+			wlHintHtml += (wlObj[i].key == "") ? "Open System" : wlObj[i].key;
+			wlHintHtml += '</b></div>';
+		}
+		wlHintHtml += '</div></div></div></div>';
+
+		top.document.write(wlHintCss + wlHintJs + wlHintHtml);
+	})(genWlObj);
 }
 
 function showdr_advise(setting){

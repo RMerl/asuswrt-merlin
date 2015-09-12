@@ -1,6 +1,8 @@
 include ../common.mak
 include $(SRCBASE)/.config
 
+DSTDIR = $(INSTALLDIR)/lib/modules/$(LINUX_KERNEL)/kernel/fs
+
 ifeq ($(RTCONFIG_RALINK),y)
 # Ralink/MTK platform
 
@@ -9,12 +11,13 @@ SRCFILE = ralink_3.0.0
 else
 SRCFILE = ralink_2.6.2219
 endif
-DSTDIR = $(INSTALLDIR)/lib/modules/$(LINUX_KERNEL)/kernel/fs
 
 else ifeq ($(RTCONFIG_QCA),y)
 # QCA platform
 SRCFILE = qca
-DSTDIR = $(INSTALLDIR)/lib/modules/3.3.8/kernel/fs
+ifeq ($(RT4GAC55U),y)
+SRCFILE = qca_4gac55u
+endif
 
 else
 # Broadcom platform
@@ -23,14 +26,22 @@ ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_BCM7),y)
 SRCFILE = broadcom_arm_7
 else
+ifeq ($(RTCONFIG_BCM_7114),y)
+SRCFILE = broadcom_arm_7114
+else
 ifeq ($(ARMCPUSMP),up)
 SRCFILE = broadcom_arm_up
 else
+ifeq ($(RTCONFIG_RECVFILE),y)
+SRCFILE = broadcom_arm.recvfile
+else
 SRCFILE = broadcom_arm
 endif
-endif
+endif # ARMCPUSMP
+endif # RTCONFIG_BCM_7114
+endif # RTCONFIG_BCM7
 DSTDIR = $(INSTALLDIR)/lib/modules/2.6.36.4brcmarm/kernel/fs
-else
+else # RTCONFIG_BCMARM
 SRCFILE = broadcom
 DSTDIR = $(INSTALLDIR)/lib/modules/2.6.22.19/kernel/fs
 endif

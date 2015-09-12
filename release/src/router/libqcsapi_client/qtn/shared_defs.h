@@ -108,10 +108,14 @@ enum qtn_vap_scs_cmds {
 	IEEE80211_SCS_SET_PMP_STATS_CLEAR_INTERVAL,
 	IEEE80211_SCS_SET_PMP_TXTIME_COMPENSATION,
 	IEEE80211_SCS_SET_PMP_RXTIME_COMPENSATION,
+	IEEE80211_SCS_SET_PMP_TDLSTIME_COMPENSATION,
 	IEEE80211_SCS_SET_SWITCH_CHANNEL_MANUALLY,
 	IEEE80211_SCS_SET_AS_RX_TIME_SMTH_FCTR,
 	IEEE80211_SCS_SET_AS_TX_TIME_SMTH_FCTR,
 	IEEE80211_SCS_SET_STATS_START,
+	IEEE80211_SCS_SET_CCA_IDLE_SMTH_FCTR,
+	IEEE80211_SCS_SET_PMBL_ERR_THRSHLD,
+	IEEE80211_SCS_SET_CCA_INTF_DFS_MARGIN,
 	IEEE80211_SCS_SET_MAX
 };
 
@@ -138,12 +142,15 @@ enum qtn_vap_scs_cmds {
 #define IEEE80211_SCS_THRSHLD_SMPL_PKTNUM_MAX	1000	/* packet number */
 #define IEEE80211_SCS_THRSHLD_SMPL_PKTNUM_MIN	1	/* packet number */
 #ifdef TOPAZ_PLATFORM
-#define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_DEFAULT	100	/* ms */
+#define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_DEFAULT	200	/* ms */
 #else
 #define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_DEFAULT	300	/* ms */
 #endif
 #define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_MAX	1000	/* ms */
 #define IEEE80211_SCS_THRSHLD_SMPL_AIRTIME_MIN	1	/* ms */
+#define IEEE80211_SCS_THRSHLD_PMBL_ERR_MAX	10000	/* count */
+#define IEEE80211_SCS_THRSHLD_PMBL_ERR_MIN	1	/* count */
+
 /*
  * Packet rate threshold is determined by how many packets we can hold in buffer without drop
  * during off-channel period. It is limited by:
@@ -193,13 +200,16 @@ enum qtn_vap_scs_cmds {
 #define IEEE80211_SCS_BRCM_RXGLITCH_THRSHLD_SCALE_DFT    40
 #define IEEE80211_SCS_PMBL_ERR_SMTH_FCTR_MIN    0
 #define IEEE80211_SCS_PMBL_ERR_SMTH_FCTR_MAX    100
-#define IEEE80211_SCS_PMBL_ERR_SMTH_FCTR_DFT    50
+#define IEEE80211_SCS_PMBL_ERR_SMTH_FCTR_DFT    66
+#define IEEE80211_SCS_CCA_IDLE_SMTH_FCTR_MIN    0
+#define IEEE80211_SCS_CCA_IDLE_SMTH_FCTR_MAX    100
+#define IEEE80211_SCS_CCA_IDLE_SMTH_FCTR_DFT    50
 #define IEEE80211_SCS_PMP_RPT_CCA_SMTH_FCTR_MAX    100
-#define IEEE80211_SCS_PMP_RPT_CCA_SMTH_FCTR_DFT    50
+#define IEEE80211_SCS_PMP_RPT_CCA_SMTH_FCTR_DFT    66
 #define IEEE80211_SCS_PMP_RX_TIME_SMTH_FCTR_MAX    100
-#define IEEE80211_SCS_PMP_RX_TIME_SMTH_FCTR_DFT    50
+#define IEEE80211_SCS_PMP_RX_TIME_SMTH_FCTR_DFT    66
 #define IEEE80211_SCS_PMP_TX_TIME_SMTH_FCTR_MAX    100
-#define IEEE80211_SCS_PMP_TX_TIME_SMTH_FCTR_DFT    50
+#define IEEE80211_SCS_PMP_TX_TIME_SMTH_FCTR_DFT    66
 #define IEEE80211_SCS_PMP_STATS_STABLE_PERCENT_MAX  100
 #define IEEE80211_SCS_PMP_STATS_STABLE_PERCENT_DFT  30
 #define IEEE80211_SCS_PMP_STATS_STABLE_RANGE_MAX    1000
@@ -252,6 +262,14 @@ enum qtn_vap_scs_cmds {
 #define IEEE80211_SCS_CCA_INTF_CC               (IEEE80211_SCS_STA_CCA_REQ_CC | IEEE80211_SCS_SELF_CCA_CC)
 #define IEEE80211_SCS_INTF_CC                   (IEEE80211_SCS_CCA_INTF_CC | IEEE80211_SCS_BRCM_STA_TRIGGER_CC)
 
+#define	IEEE80211_REMAIN_CHAN_MIN_RSV_PERD	2
+
+enum ieee80211_scs_update_mode {
+	IEEE80211_SCS_OFFCHAN,		/* off-channel, use smoothing and omit current channel */
+	IEEE80211_SCS_COCHAN,		/* co-channel mode */
+	IEEE80211_SCS_INIT_SCAN,	/* like off-channel but include current channel */
+};
+
 #define SCSLOG_CRIT                             0
 #define SCSLOG_NOTICE                           1
 #define SCSLOG_INFO                             2
@@ -290,6 +308,8 @@ enum qtn_ocac_cmds {
 	IEEE80211_OCAC_SET_TIMER_EXPIRE_INIT,
 	IEEE80211_OCAC_SET_SECURE_DWELL_TIME,
 	IEEE80211_OCAC_SET_BEACON_INTERVAL,
+	IEEE80211_OCAC_SET_WEATHER_DURATION,
+	IEEE80211_OCAC_SET_WEATHER_CAC_TIME,
 	IEEE80211_OCAC_SET_MAX
 };
 
@@ -318,6 +338,12 @@ enum qtn_ocac_get_cmds {
 #define IEEE80211_OCAC_CAC_TIME_MIN		1	/* seconds */
 #define IEEE80211_OCAC_CAC_TIME_MAX		64800	/* seconds */
 #define IEEE80211_OCAC_CAC_TIME_DEFAULT		145	/* seconds */
+
+#define IEEE80211_OCAC_WEA_DURATION_MIN		60	/* seconds */
+#define IEEE80211_OCAC_WEA_DURATION_MAX		86400	/* seconds */
+
+#define IEEE80211_OCAC_WEA_CAC_TIME_MIN		1	/* seconds */
+#define IEEE80211_OCAC_WEA_CAC_TIME_MAX		86400	/* seconds */
 
 #define IEEE80211_OCAC_THRESHOLD_FAT_MIN	1	/* percent */
 #define IEEE80211_OCAC_THRESHOLD_FAT_MAX	100	/* percent */
@@ -362,6 +388,8 @@ enum qtn_ocac_get_cmds {
 #define IEEE80211_OCAC_VALUE_M			0xffff
 #define IEEE80211_OCAC_COMMAND_S		16
 #define IEEE80211_OCAC_COMMAND_M		0xffff
+#define IEEE80211_OCAC_COMPRESS_VALUE_F		0x8000
+#define IEEE80211_OCAC_COMPRESS_VALUE_M		0x7fff
 
 #define IEEE80211_OCAC_TIME_MARGIN		2000	/* microseconds */
 
@@ -379,8 +407,13 @@ enum qtn_ocac_get_cmds {
         } while (0)
 #endif
 
-#define QTN_M2A_EVENT_TYPE_DTIM 1
-
+#define QTN_M2A_EVENT_TYPE_DTIM		1
+#define	QTN_M2A_PS_EVENT_PM_ENABLE	2		/* enable power management */
+#define	QTN_M2A_PS_EVENT_PM_DISABLE	3		/* disable power management */
+#define	QTN_M2A_PS_EVENT_PS_POLL	4		/* ps poll */
+#define	QTN_M2A_EVENT_TYPE_UAPSD_SP	5		/* U-APSD SP */
+#define QTN_M2A_EVENT_PTID_FLAG_SET     6               /* Set per-TID flag(muc) */
+#define QTN_M2A_EVENT_TYPE_TXBA_DISABLE	7		/* per VAP TX BA est control */
 
 /* Common definitions for flags used to indicate ieee80211_node's states */
 #define	IEEE80211_NODE_AUTH		0x0001	/* authorized for data */
@@ -393,11 +426,18 @@ enum qtn_ocac_get_cmds {
 #define	IEEE80211_NODE_PS_POLL		0x0080	/* power save ps poll mode */
 #define	IEEE80211_NODE_AREF		0x0020	/* authentication ref held */
 #define IEEE80211_NODE_2_TX_CHAINS      0x0400  /* this node needs to use 2 TX chain only, for IOT purpose */
-#define IEEE80211_NODE_UAPSD_TRIG	0x0800
 #define IEEE80211_NODE_UAPSD		0x1000
 #define IEEE80211_NODE_WDS_PEER		0x2000	/* this node is the wds peer in a wds vap */
 #define IEEE80211_NODE_VHT		0x4000	/* VHT enabled */
 #define IEEE80211_NODE_TPC		0x8000	/* indicate tpc capability */
+
+/* Common definitions for ext_flags */
+#define IEEE80211_NODE_TDLS_PTI_REQ	0x0001	/* Should sending PTI request to peer */
+#define IEEE80211_NODE_TDLS_PTI_PENDING	0x0002	/* PTI request xmit to peer but not responsed */
+#define IEEE80211_NODE_UAPSD_SP_IN_PROGRESS	0x0004	/* U-APSD SP in progress */
+#define IEEE80211_NODE_TDLS_PTI_RESP	0x0008	/* PTI response frame received */
+
+#define	IEEE80211_NODE_TDLS_MASK	0x000B	/* Mask for TDLS bits */
 
 #define QTN_VAP_PRIORITY_RESERVED	2	/* reserve the low values for internal use */
 #define QTN_VAP_PRIORITY_NUM		4
@@ -408,32 +448,43 @@ enum qtn_ocac_get_cmds {
 
 /* Quantenna specific flags (ni_qtn_flags), do not modify in Auc */
 #define QTN_IS_BCM_NODE			0x0000001
-#define QTN_IS_IPAD_NODE		0x0000002
-#define QTN_IS_IPHONE5_NODE		0x0000004
-#define QTN_IS_IPAD3_NODE		0x0000008
-#define QTN_IS_INTEL_5100_NODE		0x0000010
-#define QTN_IS_INTEL_5300_NODE		0x0000020
-#define QTN_IS_SAMSUNG_GALAXY_NODE	0x0000040
-#define QTN_IS_NOT_4ADDR_CAPABLE_NODE	0x0000080
-#define QTN_AC_BE_INHERITANCE_UPTO_VO	0x0000100
-#define QTN_AC_BE_INHERITANCE_UPTO_VI	0x0000200
-#define QTN_IS_INTEL_NODE		0x0000400
-#define QTN_IS_IPAD_AIR_NODE		0x0000800
-#define QTN_IS_IPAD4_NODE		0x0001000
-#define QTN_IS_REALTEK_NODE		0x0004000
-#define	QTN_NODE_TX_RESTRICTED		0x0008000 /* restricted tx enabled */
-#define	QTN_NODE_TX_RESTRICT_RTS	0x0010000 /* use RTS to confirm node is lost */
-#define QTN_IS_NO_RXAMSDU_NO_BF_NODE	0x0020000
-#define QTN_NODE_RXAMSDU_SUPPORT	0x0040000 /* node support TX amsdu */
-#define QTN_NODE_11N_TXAMSDU_OFF        0x0080000
+#define QTN_IS_INTEL_5100_NODE		0x0000002
+#define QTN_IS_INTEL_5300_NODE		0x0000004
+#define QTN_IS_GALAXY_NOTE_4_NODE	0x0000008
+#define QTN_IS_NOT_4ADDR_CAPABLE_NODE	0x0000010
+#define QTN_AC_BE_INHERITANCE_UPTO_VO	0x0000020
+#define QTN_AC_BE_INHERITANCE_UPTO_VI	0x0000040
+#define QTN_IS_INTEL_NODE		0x0000080
+#define QTN_IS_REALTEK_NODE		0x0000100
+#define	QTN_NODE_TX_RESTRICTED		0x0000200 /* restricted tx enabled */
+#define	QTN_NODE_TX_RESTRICT_RTS	0x0000400 /* use RTS to confirm node is lost */
+#define QTN_IS_NO_RXAMSDU_NO_BF_NODE	0x0000800
+#define QTN_NODE_RXAMSDU_SUPPORT	0x0001000 /* node support TX amsdu */
+#define QTN_NODE_11N_TXAMSDU_OFF	0x0002000
+#define	QTN_NODE_TXOP_RESTRICTED	0x0004000
+/*
+ * Bits that can be updated again by Lhost after association creation. Explicit definition helps
+ * avoid overwriting bits maintained by MuC itself.
+ */
+#define QTN_FLAGS_UPDATABLE_BITS	(QTN_IS_INTEL_NODE)
 
-/* QTN bandwidth definition */
+/* QTN bandwidth definition - make sure this is up-to-date with regards
+ * to txbf_common.h
+ */
 #define QTN_BW_20M	0
 #define QTN_BW_40M	1
 #define QTN_BW_80M	2
 #define QTN_BW_MAX	QTN_BW_80M
 
 #define QTN_MAILBOX_INVALID	0xffffffff	/* Invalid value to indicate mailbox is disabled */
+
+enum ni_tdls_status {
+	IEEE80211_TDLS_NODE_STATUS_NONE = 0,
+	IEEE80211_TDLS_NODE_STATUS_INACTIVE = 1,
+	IEEE80211_TDLS_NODE_STATUS_STARTING = 2,
+	IEEE80211_TDLS_NODE_STATUS_ACTIVE = 3,
+	IEEE80211_TDLS_NODE_STATUS_IDLE = 4
+};
 
 /* WoWLAN APIs */
 enum qtn_vap_wowlan_cmds {
@@ -523,6 +574,97 @@ do {						\
 		;				\
 	}					\
 } while(0)
+
+/**@addtogroup DFSAPIs
+ *@{*/
+/**
+ * Reason for channel change
+ */
+enum ieee80211_csw_reason {
+	/**
+	 * Reason is unknown
+	 */
+	IEEE80211_CSW_REASON_UNKNOWN,
+	/**
+	 * Smart channel selection
+	 */
+	IEEE80211_CSW_REASON_SCS,
+	/**
+	 * Radar detection
+	 */
+	IEEE80211_CSW_REASON_DFS,
+	/**
+	 * Channel set by user
+	 */
+	IEEE80211_CSW_REASON_MANUAL,
+	/**
+	 * Configuration change
+	 */
+	IEEE80211_CSW_REASON_CONFIG,
+	/**
+	 * Scan initiated by user
+	 */
+	IEEE80211_CSW_REASON_SCAN,
+	/**
+	 * Off-channel CAC
+	 */
+	IEEE80211_CSW_REASON_OCAC,
+	/**
+	 * Channel switch announcement
+	 */
+	IEEE80211_CSW_REASON_CSA,
+	/**
+	 * TDLS Channel switch announcement
+	 */
+	IEEE80211_CSW_REASON_TDLS_CS,
+	/**
+	 * Number of values
+	 */
+	IEEE80211_CSW_REASON_MAX
+};
+/**@}*/
+
+/*
+ * Reasons for channel switches that are not recorded and therefore
+ * should not be listed in QCSAPI documentation
+ */
+enum ieee80211_csw_reason_private {
+	IEEE80211_CSW_REASON_SAMPLING = IEEE80211_CSW_REASON_MAX,
+	IEEE80211_CSW_REASON_OCAC_RUN,
+	IEEE80211_CSW_REASON_BGSCAN,
+};
+
+/* Keep this in sync with swfeat_desc */
+enum swfeat {
+	SWFEAT_ID_MODE_AP,
+	SWFEAT_ID_MODE_STA,
+	SWFEAT_ID_MODE_REPEATER,
+	SWFEAT_ID_PCIE_RC,
+	SWFEAT_ID_VHT,
+	SWFEAT_ID_2X2,
+	SWFEAT_ID_2X4,
+	SWFEAT_ID_4X4,
+	SWFEAT_ID_HS20,
+	SWFEAT_ID_WPA2_ENT,
+	SWFEAT_ID_MESH,
+	SWFEAT_ID_TDLS,
+	SWFEAT_ID_OCAC,
+	SWFEAT_ID_QHOP,
+	SWFEAT_ID_QSV,
+	SWFEAT_ID_QSV_NEIGH,
+	SWFEAT_ID_MU_MIMO,
+	SWFEAT_ID_DUAL_CHAN_VIRT,
+	SWFEAT_ID_DUAL_CHAN,
+	SWFEAT_ID_DUAL_BAND_VIRT,
+	SWFEAT_ID_DUAL_BAND,
+	SWFEAT_ID_QTM_PRIO,
+	SWFEAT_ID_QTM,
+	SWFEAT_ID_SPEC_ANALYZER,
+	SWFEAT_ID_MAX
+};
+
+#define SWFEAT_MAP_SIZE (SWFEAT_ID_MAX / 8 + 1)
+
 /* Used to scale temperature measurements */
 #define QDRV_TEMPSENS_COEFF    100000
 #define QDRV_TEMPSENS_COEFF10  (10 * QDRV_TEMPSENS_COEFF)

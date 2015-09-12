@@ -1,0 +1,100 @@
+.TH VTYSH 1 "27 July 2006" "Quagga VTY shell" "Version 0.96.5"
+.SH NAME
+vtysh \- a integrated shell for Quagga routing software
+.SH SYNOPSIS
+.B vtysh
+[
+.B \-b
+]
+.br
+.B vtysh
+[
+.B \-E
+] [
+.B \-d
+.I daemon
+]
+] [
+.B \-c
+.I command
+]
+.SH DESCRIPTION
+.B vtysh
+is a integrated shell for
+.B Quagga
+routing engine.
+.SH OPTIONS
+Options available for the
+.B vtysh
+command:
+.IP "\fB\-b, \-\-boot\fP"
+Execute boot startup configuration. It makes sense only if integrated config
+file is in use (not default in Quagga). See Info file \fBQuagga\fR for more
+info.
+.IP "\fB\-c, \-\-command \fIcommand\fP"
+Specify command to be executed under batch mode. It behaves like -c option in
+any other shell -
+.I command
+is executed and
+.B vtysh
+exits.
+
+It's useful for gathering info from Quagga routing software or reconfiguring
+daemons from inside shell scripts, etc.
+Note that multiple commands may be executed by using more than one
+-c option and/or embedding linefeed characters inside the
+.I command
+string.
+.IP "\fB\-d, \-\-daemon \fIdaemon_name\fP"
+Specify which daemon to connect to.  By default,
+.B vtysh
+attempts to connect to all Quagga daemons running on the system.  With this
+flag, one can specify a single daemon to connect to instead.  For example,
+specifying '-d ospfd' will connect only to ospfd.  This can be particularly
+useful inside scripts with -c where the command is targeted for a single daemon.
+.IP "\fB\-e, \-\-execute \fIcommand\fP"
+Alias for -c. It's here only for compatibility with Zebra routing software and
+older Quagga versions. This will be removed in future.
+.IP "\fB\-E, \-\-echo\fP"
+When the -c option is being used, this flag will cause the standard
+.B vtysh
+prompt and command to be echoed prior to displaying the results.
+This is particularly useful to separate the results
+when executing multiple commands.
+.IP "\fB\-h, \-\-help\fP"
+Display a usage message on standard output and exit.
+.SH ENVIRONMENT VARIABLES
+.IP "\fBVTYSH_PAGER\fR"
+This should be the name of the pager to use. Default is \fBmore\fR.
+.SH FILES
+.TP
+.BI /usr/local/etc/vtysh.conf
+The default location of the 
+.B vtysh
+config file.
+.TP
+.BI /usr/local/etc/Quagga.conf
+The default location of the integrated Quagga routing engine config file
+if integrated config file is in use (not default).
+.SH WARNING
+This man page is intended to be a quick reference for command line
+options. The definitive document is the Info file \fBQuagga\fR.
+.SH "SEE ALSO"
+.BR bgpd (8),
+.BR ripd (8),
+.BR ripngd (8),
+.BR ospfd (8),
+.BR ospf6d (8),
+.BR isisd (8),
+.BR zebra (8)
+.SH BUGS
+.B vtysh
+eats bugs for breakfast. If you have food for the maintainers try 
+.BI http://bugzilla.quagga.net
+.SH AUTHORS
+See
+.BI http://www.zebra.org
+and
+.BI http://www.quagga.net
+or the Info file for an accurate list of authors.
+

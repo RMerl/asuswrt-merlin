@@ -10,15 +10,17 @@
 <link rel="stylesheet" type="text/css" href="ParentalControl.css">
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
-<script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
-<script type="text/javascript" src="/form.js"></script>
-<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
-<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
+<script type="text/javascript" src="state.js"></script>
+<script type="text/javascript" src="popup.js"></script>
+<script type="text/javascript" src="general.js"></script>
+<script type="text/javascript" src="help.js"></script>
+<script type="text/javascript" src="validator.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="form.js"></script>
+<script type="text/javascript" src="switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="client_function.js"></script>
+<script type="text/javascript" src="jquery.xdomainajax.js"></script>
 <style>
 #switch_menu{
 	text-align:right
@@ -334,7 +336,7 @@ function genMain_table(){
 	code += '<th width="5%" height="30px" title="<#select_all#>">';
 	code += '<input id="selAll" type="checkbox" onclick="selectAll(this, 0);" value="">';
 	code += '</th>';
-	code += '<th width="40%">Client\'s MAC address</th>';/*untranslated*/
+	code += '<th width="40%">Client Name (MAC address)</th>';/*untranslated*/
 	code += '<th width="40%"><#AiProtection_filter_category#></th>';
 	code += '<th width="10%"><#list_add_delete#></th>';
 	code += '</tr>';
@@ -371,14 +373,23 @@ function genMain_table(){
 	else{
 		for(k=0;k< apps_filter_row.length;k++){
 			var apps_filter_col = apps_filter_row[k].split('>');
-			var apps_client_name = "";
-			var apps_client_mac = apps_filter_col[1];
-			var clientObj = clientList[apps_client_mac];
-			if(clientObj == undefined) {
-				apps_client_name = "";
+			
+			//user icon
+			var userIconBase64 = "NoIcon";
+			var clientName, clientMac, clientIP, deviceType, deviceVender;
+			var clientMac = apps_filter_col[1];
+			var clientObj = clientList[clientMac];
+			if(clientObj) {
+				clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
+				clientIP = clientObj.ip;
+				deviceType = clientObj.type;
+				deviceVender = clientObj.dpiVender;
 			}
 			else {
-				apps_client_name = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
+				clientName = "New device";
+				clientIP = "offline";
+				deviceType = 0;
+				deviceVender = "";
 			}
 
 			code += '<tr>';
@@ -390,10 +401,36 @@ function genMain_table(){
 							
 			code += '</td>';
 
-			if(apps_client_name != "")
-				code += '<td title="' + apps_client_mac + '">'+ apps_client_name + '<br>(' +  apps_filter_col[1]  +')</td>';
-			else
-				code += '<td title="' + apps_client_mac + '">' + apps_client_mac + '</td>';
+			code +='<td title="' + clientMac + '">';
+			code += '<table style="width:100%;"><tr><td style="width:40%;height:56px;border:0px;">';
+			if(clientObj == undefined) {
+				code += '<div style="width:80px;height:56px;float:right;" class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"></div>';
+			}
+			else {
+				if(usericon_support) {
+					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
+				}
+				if(userIconBase64 != "NoIcon") {
+					code += '<div style="width:80px;height:56px;float:right;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+				}
+				else if( (deviceType != "0" && deviceType != "6") || deviceVender == "") {
+					code += '<div style="width:80px;height:56px;float:right;" class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"></div>';
+				}
+				else if(deviceVender != "" ) {
+					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
+					if(venderIconClassName != "") {
+						code += '<div style="width:80px;height:56px;float:right;" class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"></div>';
+					}
+					else {
+						code += '<div style="width:80px;height:56px;float:right;" class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"></div>';
+					}
+				}
+			}
+			code += '</td><td style="width:60%;border:0px;text-align:left;">';
+			code += '<div>' + clientName + '</div>';
+			code += '<div>' + clientMac + '</div>';
+			code += '</td></tr></table>';
+			code +='</td>';
 			
 			code += '<td style="text-align:left;">';	
 			for(i=0;i<category_name.length;i++){

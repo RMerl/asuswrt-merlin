@@ -170,7 +170,7 @@ static int rctest_main(int argc, char *argv[])
 					f_write_string("/proc/sys/net/ipv4/conf/all/force_igmp_version", "2", 0, 0);
 #endif
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U)
 					if (!(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")))
 #endif
 					{
@@ -388,6 +388,7 @@ static const applets_t applets[] = {
 	{ "bwdpi",			bwdpi_main			},
 	{ "bwdpi_check",		bwdpi_check_main		},
 	{ "bwdpi_wred_alive",		bwdpi_wred_alive_main		},
+	{ "bwdpi_db_10",		bwdpi_db_10_main		},
 	{ "rsasign_sig_check",		rsasign_sig_check_main		},
 #endif
 	{ "hour_monitor",		hour_monitor_main		},
@@ -735,7 +736,8 @@ int main(int argc, char **argv)
 	}
 #endif
 #endif
-#ifdef CONFIG_BCMWL5
+
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
 	else if(!strcmp(base, "set_factory_mode")) {
 		set_factory_mode();
 		return 0;
@@ -818,7 +820,7 @@ int main(int argc, char **argv)
 	}
 
 #ifdef RTCONFIG_BCMARM
-#if defined(RTAC1200G)
+#if defined(RTAC1200G) || defined(RTAC1200GP)
 	/* mtd-erase2 [device] */
 	else if (!strcmp(base, "mtd-erase2")) {
 		if (argv[1] && ((!strcmp(argv[1], "boot")) ||

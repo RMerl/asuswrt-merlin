@@ -106,11 +106,11 @@ function suspendconn(wan_index, wanenable){
 }
 
 function enableMonomode(){
-	showLoading(2);
 	document.titleForm.action = "/apply.cgi";
+	document.titleForm.current_page.value = top.location.pathname;
 	document.titleForm.action_mode.value = "mfp_monopolize";
-	document.titleForm.current_page.value = "/device-map/printer.asp";
-	document.form.target = "hidden_frame";
+	document.titleForm.action_wait.value = "2";
+	showLoading(2);
 	document.titleForm.submit();
 }
 
@@ -132,7 +132,7 @@ function gotocooler(){
 }
 
 function priority_change(){
-	top.location.href = "/AdaptiveQoS_Adaptive.asp";
+	top.location.href = "/QoS_EZQoS.asp";
 }
 
 function qos_disable(){	
@@ -307,17 +307,17 @@ function overHint(itemNum){
 	// Viz add 2015.07 bwdpi : Adpative QoS mode start
 	if(itemNum == "A"){
 		statusmenu = "<div class='StatusHint'><#Adaptive_QoS#> :</div>";
-		if(bwdpi_app_rulelist == "9,20<8<4<0,5,6,15,17<13,24<1,3,14<7,10,11,21,23<<"){
-			modeDesc = "Game mode";
+		if(bwdpi_app_rulelist == "9,20<8<4<0,5,6,15,17<13,24<1,3,14<7,10,11,21,23<<game"){
+			modeDesc = "Game mode";		/* untranslated */
 		}	
-		else if(bwdpi_app_rulelist == "9,20<4<0,5,6,15,17<8<13,24<1,3,14<7,10,11,21,23<<"){
-			modeDesc = "Media Streaming mode";
+		else if(bwdpi_app_rulelist == "9,20<4<0,5,6,15,17<8<13,24<1,3,14<7,10,11,21,23<<media"){
+			modeDesc = "Media Streaming mode";		/* untranslated */
 		}	
-		else if(bwdpi_app_rulelist == "9,20<13,24<4<0,5,6,15,17<8<1,3,14<7,10,11,21,23<<"){
-			modeDesc = "Web Surfing mode";
+		else if(bwdpi_app_rulelist == "9,20<13,24<4<0,5,6,15,17<8<1,3,14<7,10,11,21,23<<web"){
+			modeDesc = "Web Surfing mode";		/* untranslated */
 		}	
 		else{
-			modeDesc = "Customize mode";
+			modeDesc = "Customize mode";		/* untranslated */
 		}		
 		
 		statusmenu += "<span>" + modeDesc + "</span>";
@@ -884,8 +884,8 @@ function openHint(hint_array_id, hint_show_id, flag){
 		var _caption = "";
 
 		if(hint_show_id == 9){	//2015.07 Viz add for bwdpi : Adaptive QoS mode
-			statusmenu = "<span class='StatusClickHint' onclick='priority_change();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Change priority mode</span><br>";
-			statusmenu += "<span class='StatusClickHint' onclick='qos_disable();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Disable QoS</span>";
+			statusmenu = "<span class='StatusClickHint' onclick='priority_change();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Change priority mode</span><br>";	/* untranslated */
+			statusmenu += "<span class='StatusClickHint' onclick='qos_disable();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Disable QoS</span>";	/* untranslated */
 			_caption = "<#Adaptive_QoS#>";
 		}
 		else if(hint_show_id == 8){	//2014.10 Viz add for dsl dslx_diag_state

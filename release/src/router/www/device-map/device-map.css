@@ -418,9 +418,9 @@ Printer			18
 	cursor: pointer;
 	background-color:#2B373B !important;
 }
-.disabled{
+.client_input_text_disabled {
 	background:#475a5f;
-	width:200px;
+	width:275px;
 	height:15px;
 	padding:5px 0px 5px 5px;
 	margin-left:2px;
@@ -573,7 +573,7 @@ Printer			18
 }
 .internetTimeLimits {
 	cursor: default;
-	background-image: url('/images/New_ui/TimeLimits.png');
+	background-image: url('/images/New_ui/TimeLimitsSmall.png');
 	background-repeat:no-repeat;
 	height: 28px;
 	width: 35px;

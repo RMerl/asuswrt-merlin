@@ -8,19 +8,19 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - <#EZQoS#></title>
+<title><#Web_Title#> - <#Adaptive_History#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script>
 function initial(){
-	show_menu();
+	show_menu();	
 	getWebHistory();
 	genClientListOption()
 }
@@ -52,8 +52,10 @@ function parsingAjaxResult(rawData){
 	for(var i=0; i<data_array.length; i++){	
 		code += "<tr style='line-height:15px;'>";
 		code += "<td>" + convertTime(data_array[i][1]) + "</td>";
-		if(clientList[data_array[i][0]] != undefined)
-			code += "<td title="+ data_array[i][0] +">" + clientList[data_array[i][0]].name + "</td>";
+		if(clientList[data_array[i][0]] != undefined) {
+			var clientName = (clientList[data_array[i][0]].nickName == "") ? clientList[data_array[i][0]].name : clientList[data_array[i][0]].nickName;
+			code += "<td title="+ data_array[i][0] + ">" + clientName + "</td>";
+		}
 		else
 			code += "<td>" + data_array[i][0] + "</td>";
 		
@@ -147,7 +149,8 @@ function genClientListOption(){
 		if(clientObj.isGateway || !clientObj.isOnline)
 			continue;
 
-		var newItem = new Option(clientObj.name, clientObj.mac);
+		var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
+		var newItem = new Option(clientName, clientObj.mac);
 		document.getElementById("clientListOption").options.add(newItem); 
 	}
 }
@@ -198,7 +201,7 @@ function change_page(flag){
 							<tr>
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
-									<div class="formfonttitle"><#Adaptive_QoS#> - Web Histroy</div>
+									<div id="content_title" class="formfonttitle"><#menu5_3_2#> - <#Adaptive_History#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<div class="formfontdesc">
 										<#Adaptive_History_desc#>

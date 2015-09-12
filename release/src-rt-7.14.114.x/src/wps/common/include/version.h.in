@@ -1,0 +1,35 @@
+/*
+ * Copyright (C) 2015, Broadcom Corporation
+ * All Rights Reserved.
+ * 
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * the contents of this file may not be disclosed to third parties, copied
+ * or duplicated in any form, in whole or in part, without the prior
+ * written permission of Broadcom Corporation.
+ *
+ * $Id: version.h.in,v 1.2 2008-05-14 18:13:47 $
+ *
+*/
+
+#ifndef _version_h_
+#define _epivers_h_
+
+#define	MOD_MAJOR_VERSION	@MOD_MAJOR_VERSION@
+
+#define	MOD_MINOR_VERSION	@MOD_MINOR_VERSION@
+
+#define	MOD_RC_NUMBER		@MOD_RC_NUMBER@
+
+#define	MOD_INCREMENTAL_NUMBER	@MOD_INCREMENTAL_NUMBER@
+
+#define	MOD_BUILD_NUMBER	@MOD_BUILD_NUMBER@
+
+#define	MOD_VERSION		@MOD_VERSION@
+
+#define	MOD_VERSION_NUM		@MOD_VERSION_NUM@
+
+/* Driver Version String, ASCII, 32 chars max */
+#define	MOD_VERSION_STR		"@MOD_VERSION_STR@"
+#define	MOD_ROUTER_VERSION_STR	"@MOD_ROUTER_VERSION_STR@"
+
+#endif /* _version_h_ */

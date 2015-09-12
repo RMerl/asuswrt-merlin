@@ -1,0 +1,9 @@
+set timeout 10
+set testprefix "tabletest "
+set aborted 0
+
+spawn "./tabletest"
+
+for {set i 0} {$i <  6} {incr i 1} { onesimple "cmp $i" "Verifying cmp"; }
+for {set i 0} {$i < 11} {incr i 1} { onesimple "succ $i" "Verifying successor"; }
+onesimple "pause" "Verified pausing"

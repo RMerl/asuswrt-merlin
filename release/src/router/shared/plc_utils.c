@@ -261,11 +261,13 @@ void ate_ctl_plc_led(void)
 	int i = 0;
 
 	for (i = 0; i < 18; i++) {
-		if (i == 11) /* Power event */
-			continue;
 #if defined(RTCONFIG_AR7420)
+		if (i == 7) /* Power event */
+			continue;
 		modify_pib_byte((0x1B13 + (8 * i)), 0x1);
 #elif defined(RTCONFIG_QCA7500)
+		if (i == 11) /* Power event */
+			continue;
 		modify_pib_byte((0x21A7 + (8 * i)), 0x1);
 #endif
 	}
@@ -278,7 +280,7 @@ int set_plc_all_led_onoff(int on)
 {
 	if (on) {
 #if defined(RTCONFIG_AR7420)
-		modify_pib_byte(0x1B69, 0x61);	/* GPIO 0, 5, 6 */
+		modify_pib_byte(0x1B49, 0x61);	/* GPIO 0, 5, 6 */
 #elif defined(RTCONFIG_QCA7500)
 		modify_pib_byte(0x21FD, 0xC0);	/* GPIO 6, 7 */
 		modify_pib_byte(0x21FE, 0x0);
@@ -286,7 +288,7 @@ int set_plc_all_led_onoff(int on)
 	}
 	else {
 #if defined(RTCONFIG_AR7420)
-		modify_pib_byte(0x1B69, 0x0);
+		modify_pib_byte(0x1B49, 0x0);
 #elif defined(RTCONFIG_QCA7500)
 		modify_pib_byte(0x21FD, 0x0);
 		modify_pib_byte(0x21FE, 0x02);	/* GPIO 9 */
@@ -707,6 +709,8 @@ void turn_led_pwr_off(void)
 {
 	if (!nvram_match("asus_mfg", "0"))
 		return;
+
+	nvram_set("plc_ready", "1");
 
 #if defined(PLN12)
 	led_control(LED_POWER_RED, LED_OFF);

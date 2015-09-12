@@ -1,0 +1,141 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Aug 10 14:21:18 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>FATDEBUG</title>
+
+</head>
+<body>
+
+<h1 align="center">FATDEBUG</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#EXIT CODES">EXIT CODES</a><br>
+<a href="#EXAMPLES">EXAMPLES</a><br>
+<a href="#KNOWN ISSUES">KNOWN ISSUES</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">fatdebug
+&minus; Create a metadata dump of a FAT volume suitable for
+bug reporting.</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdebug</b>
+<i>device|image</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>fatdebug</b></i>
+will efficiently extract all metadata relevant for debugging
+from a FAT volume and dump it to standard output. It works
+at disk sector level and copies only the metadata of the FAT
+volume (so the resulting output is relatively small).</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdebug</b>
+is mostly useful when sending bug reports to FAT
+developers.</p>
+
+<h2>EXIT CODES
+<a name="EXIT CODES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The exit code
+is 0 on success, non&minus;zero otherwise.</p>
+
+<h2>EXAMPLES
+<a name="EXAMPLES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Dump FAT file
+system metadata on /dev/sda1 to a local image file:</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>fatdebug
+/dev/sda1 &gt; sda1.img</b></p>
+
+<p style="margin-left:11%; margin-top: 1em">Dump FAT file
+system metadata on /dev/sda1 to a bzip2-compressed local
+image file:</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>fatdebug
+/dev/sda1 | bzip2 &gt; sda1.img</b></p>
+
+<p style="margin-left:11%; margin-top: 1em">Dump FAT file
+system metadata to a remote host, using ssh. Please note
+that ssh may ask for a password!</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>fatdebug
+/dev/sda1 | ssh host &rsquo;cat &gt; sda1.img&rsquo;</b></p>
+
+<h2>KNOWN ISSUES
+<a name="KNOWN ISSUES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">There are no
+known problems with <b>fatdebug</b>. If you think you have
+found a problem then please send an email describing it to
+fat-support@tuxera.com.</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdebug</b>
+was written by Sougata Santra, Tuxera Inc.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdebug</b>
+is part of the <b>Tuxera TFATprogs</b> package.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdump</b>(8)</p>
+<hr>
+</body>
+</html>

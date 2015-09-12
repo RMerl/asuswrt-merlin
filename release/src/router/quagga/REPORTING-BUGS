@@ -1,0 +1,34 @@
+This file describes the procedure for reporting Quagga bugs. You are not
+obliged to follow this format, but it would be great help for Quagga developers
+if you report a bug as described below.
+
+Bugs submitted with woefully incomplete information may be summarily
+closed.  Submitters of bugs against old versions may be asked to
+retest against the latest release.  Submitters may be asked for
+additional information.  Bugs may be closed after 30 days of
+non-response to requests to reconfirm or supply additional
+information.
+
+Report bugs http://bugzilla.quagga.net
+
+Please supply the following information:
+1. Your Quagga version or if it is from git then the  commit reference.
+   Please try to report bugs against git master or the latest release.
+2. Quagga daemons you run e.g. bgpd or ripd and full name of your OS. Any
+   specific options you compiled Quagga with. 
+3. Problem description. Copy and paste relative commands and their output to
+   describe your network setup e.g. "zebra>show ip route".
+   Please, also give your simple network layout and output of relative OS
+   commands (e.g., ifconfig (BSD) or ip (Linux)).
+4. All Quagga configuration files you use. If you don't want to publish your
+   network numbers change 2 middle bytes in IPv4 address to be XXX (e.g.
+   192.XXX.XXX.32/24). Similar could be done with IPv6.
+5. If any Quagga daemon core dumped, please, supply stack trace using the
+   following commands: host> gdb exec_file core_file , (gdb) bt .
+6. Run all Quagga daemons with full debugging on (see documentation on
+   debugging) and send _only_ part of logs which are relative to your problem.
+7. If the problem is difficult to reproduce please send a shell script to
+   reproduce it.
+8. Patches, workarounds, fixes are always welcome.
+
+Thank You.

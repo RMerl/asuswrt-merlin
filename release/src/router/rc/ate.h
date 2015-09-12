@@ -44,4 +44,16 @@ static inline int getTerritoryCode(void) { return -1; }
 static inline int setTerritoryCode(const char *tcode) { return -1; }
 #endif
 
+/* fail log */
+#define FAIL_LOG_MAX 100
+struct FAIL_LOG
+{
+	unsigned char num;
+	unsigned char bits[15];
+};
+
+extern void Get_fail_log(char *buf, int size, unsigned int offset);
+extern void Gen_fail_log(const char *logStr, int max, struct FAIL_LOG *log);
+
+
 #endif

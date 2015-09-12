@@ -28,9 +28,10 @@ a:active {
 }
 </style>
 <script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+if(parent.location.pathname.search("index") === -1) top.location.href = "../index.asp";
 
 var diskOrder = parent.getSelectedDiskOrder();
 
@@ -59,7 +60,7 @@ function initial(){
 	if(noaidisk_support)
 		document.getElementById("aidisk_hyperlink").style.display = "none";
 	
-	if(based_modelid == "RT-AC87U" && parent.currentUsbPort == 0){
+	if((based_modelid == "RT-AC87U" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100") && parent.currentUsbPort == 0){
 		document.getElementById('reduce_usb3_table').style.display = "";
 	}		
 }

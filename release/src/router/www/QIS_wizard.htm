@@ -82,18 +82,22 @@
 </style>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
 var sw_mode = '<% nvram_get("sw_mode"); %>';
+var based_modelid = '<% nvram_get("productid"); %>';
 if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 4;
-if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+if(based_modelid == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
 var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
 
 if(isMobile() && tmo_support && sw_mode != 2 && qisFlag != "sitesurvey_rep" && qisFlag != "sitesurvey_mb")
 	location.href = "MobileQIS_Login.asp";
 
+if(isMobile() && (based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300"))
+	location.href = "QIS_wizard_m.htm";	
+	
 var parent_macaddr = '<% nvram_get("lan_hwaddr"); %>';
 
 var isRepeater = true;
@@ -226,7 +230,6 @@ function set_step(focus_id){
 	}
 }
 
-var based_modelid = '<% nvram_get("productid"); %>';
 var progress = 0;
 var sim_state = '<% nvram_get("usb_modem_act_sim"); %>';
 var modem_autoapn = '<% nvram_get("modem_autoapn"); %>';
@@ -448,6 +451,10 @@ function set_detectWAN(result){
 }
 
 function gotoIndex(){
+
+	if('<% check_asus_model(); %>' == '0')
+		return;
+
 	if(w_Setting_tmp == '0'){
 		alert("<#QIS_recommand_encryption#>");
 		location.href = '/QIS_wizard.htm?flag=wireless';
@@ -656,6 +663,9 @@ function detect_httpd(){
 	<input type="hidden" name="switch_wan2tagid" value="<% nvram_get("switch_wan2tagid"); %>">
 	<input type="hidden" name="switch_wan2prio" value="<% nvram_get("switch_wan2prio"); %>">
 	<input type="hidden" name="switch_stb_x" value="<% nvram_get("switch_stb_x"); %>">
+	<input type="hidden" name="mr_enable_x" value="<% nvram_get("mr_enable_x"); %>">
+	<input type="hidden" name="emf_enable" value="<% nvram_get("emf_enable"); %>">
+	<input type="hidden" name="ttl_inc_enable" value="<% nvram_get("ttl_inc_enable"); %>">
 	<!-- wireless client -->
 	<input type="hidden" name="wlc_band" value="<% nvram_get("wlc_band"); %>">
 	<input type="hidden" name="wlc_ssid" value="<% nvram_char_to_ascii("", "wlc_ssid"); %>">
@@ -666,6 +676,18 @@ function detect_httpd(){
 	<input type="hidden" name="wlc_crypto" value="<% nvram_get("wlc_crypto"); %>">
 	<input type="hidden" name="wlc_wpa_psk" value="<% nvram_get("wlc_wpa_psk"); %>">
 	<input type="hidden" name="wlc_nbw_cap" value="<% nvram_get("wlc_nbw_cap"); %>">
+	<!--USB Modem-->
+	<input type="hidden" name="wans_dualwan" value="wan usb" disabled>
+	<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">
+	<input type="hidden" name="modem_country" value="<% nvram_get("modem_country"); %>">
+	<input type="hidden" name="modem_isp" value="<% nvram_get("modem_isp"); %>">
+	<input type="hidden" name="modem_apn" value="<% nvram_get("modem_apn"); %>">
+	<input type="hidden" name="modem_dialnum" value="<% nvram_get("modem_dialnum"); %>">
+	<input type="hidden" name="modem_pincode" value="<% nvram_get("modem_pincode"); %>">
+	<input type="hidden" name="modem_user" value="<% nvram_get("modem_user"); %>">
+	<input type="hidden" name="modem_pass" value="<% nvram_get("modem_pass"); %>">
+	<input type="hidden" name="modem_ttlsid" value="<% nvram_get("modem_ttlsid"); %>">
+	<input type="hidden" name="Dev3G" value="<% nvram_get("Dev3G"); %>">
 </form>
 
 <form method="post" name="redirectForm" action="" target="contentM">

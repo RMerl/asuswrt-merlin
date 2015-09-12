@@ -84,6 +84,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_counter,
 	  e_qcsapi_unsigned_int
 	},
+	{ e_qcsapi_interface_get_counter64,
+	  e_qcsapi_get_api,
+	  e_qcsapi_counter,
+	  e_qcsapi_unsigned_int
+	},
 	{ e_qcsapi_pm_get_counter,
 	  e_qcsapi_get_api,
 	  e_qcsapi_counter,
@@ -113,6 +118,16 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_get_system_value,
 	  e_qcsapi_none,
 	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_get_random_seed,
+	  e_qcsapi_get_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_nosuch_specific_parameter
+	},
+	{ e_qcsapi_set_random_seed,
+	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_nosuch_specific_parameter
 	},
 	{ e_qcsapi_led_get,
 	  e_qcsapi_get_system_value,
@@ -215,12 +230,12 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_wifi_mode
 	},
 	{ e_qcsapi_wifi_rfenable,
-	  e_qcsapi_set_api,
+	  e_qcsapi_set_system_value,
 	  e_qcsapi_none,
 	  e_qcsapi_unsigned_int
 	},
 	{ e_qcsapi_wifi_rfstatus,
-	  e_qcsapi_get_api,
+	  e_qcsapi_get_api_without_ifname,
 	  e_qcsapi_none,
 	  e_qcsapi_unsigned_int
 	},
@@ -247,6 +262,16 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	{ e_qcsapi_wifi_get_config_BSSID,
 	  e_qcsapi_get_api,
 	  e_qcsapi_none,
+	  e_qcsapi_mac_addr
+	},
+	{ e_qcsapi_wifi_ssid_get_bssid,
+	  e_qcsapi_get_api,
+	  e_qcsapi_select_SSID,
+	  e_qcsapi_mac_addr
+	},
+	{ e_qcsapi_wifi_ssid_set_bssid,
+	  e_qcsapi_set_api,
+	  e_qcsapi_select_SSID,
 	  e_qcsapi_mac_addr
 	},
 	{ e_qcsapi_wifi_get_SSID,
@@ -319,13 +344,13 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
-	{ e_qcsapi_interface_get_netmask,
-	  e_qcsapi_get_api,
+	{ e_qcsapi_interface_set_ip4,
+	  e_qcsapi_set_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
-	{ e_qcsapi_interface_set_ip4,
-	  e_qcsapi_set_api,
+	{ e_qcsapi_interface_get_ip4,
+	  e_qcsapi_get_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
@@ -474,6 +499,16 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_unsigned_int
 	},
+	{ e_qcsapi_wifi_set_chan_disabled,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_chan_disabled,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
 	{ e_qcsapi_wifi_get_tx_power,
 	  e_qcsapi_get_api,
 	  e_qcsapi_none,
@@ -490,6 +525,16 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_string
 	},
 	{ e_qcsapi_wifi_set_tx_power_ext,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_get_chan_power_table,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_set_chan_power_table,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
@@ -639,6 +684,151 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
+	{ e_qcsapi_wifi_get_interworking,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_wifi_set_interworking,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_wifi_get_80211u_params,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_wifi_set_80211u_params,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_get_nai_realms,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_add_nai_realm,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_del_nai_realm,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_add_roaming_consortium,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_del_roaming_consortium,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_get_roaming_consortium,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_get_venue_name,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_add_venue_name,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_del_venue_name,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_get_oper_friendly_name,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_add_oper_friendly_name,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_del_oper_friendly_name,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_security_get_hs20_conn_capab,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_security_add_hs20_conn_capab,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_security_del_hs20_conn_capab,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_get_hs20_status,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_wifi_set_hs20_status,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_wifi_get_proxy_arp,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_wifi_set_proxy_arp,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_wifi_get_l2_ext_filter,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_set_l2_ext_filter,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_hs20_params,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_wifi_set_hs20_params,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_remove_11u_param,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
+	{ e_qcsapi_remove_hs20_param,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_string
+        },
 	{ e_qcsapi_wifi_get_IEEE11i_encryption_modes,
 	  e_qcsapi_get_api,
 	  e_qcsapi_none,
@@ -674,37 +864,22 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_index,
 	  e_qcsapi_string
 	},
-	{ e_qcsapi_wifi_get_eap_radius_ipaddr,
-	  e_qcsapi_get_api,
-	  e_qcsapi_none,
-	  e_qcsapi_string
-	},
-	{ e_qcsapi_wifi_set_eap_radius_ipaddr,
+	{ e_qcsapi_wifi_add_radius_auth_server_cfg,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
-	{ e_qcsapi_wifi_get_eap_radius_port,
-	  e_qcsapi_get_api,
+	{ e_qcsapi_wifi_del_radius_auth_server_cfg,
+	  e_qcsapi_set_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
-	{ e_qcsapi_wifi_set_eap_radius_port,
-	  e_qcsapi_set_api,
+	{ e_qcsapi_wifi_get_radius_auth_server_cfg,
+	  e_qcsapi_get_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
 	{ e_qcsapi_wifi_set_own_ip_addr,
-	  e_qcsapi_set_api,
-	  e_qcsapi_none,
-	  e_qcsapi_string
-	},
-	{ e_qcsapi_wifi_get_eap_shared_key,
-	  e_qcsapi_get_api,
-	  e_qcsapi_none,
-	  e_qcsapi_string
-	},
-	{ e_qcsapi_wifi_set_eap_shared_key,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
@@ -785,6 +960,21 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_mac_addr
 	},
 	{ e_qcsapi_wifi_clear_mac_address_filters,
+	  e_qcsapi_set_api_without_parameter,
+	  e_qcsapi_none,
+	  e_qcsapi_nosuch_specific_parameter
+	},
+	{ e_qcsapi_wifi_set_mac_address_reserve,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_nosuch_specific_parameter
+	},
+	{ e_qcsapi_wifi_get_mac_address_reserve,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_nosuch_specific_parameter
+	},
+	{ e_qcsapi_wifi_clear_mac_address_reserve,
 	  e_qcsapi_set_api_without_parameter,
 	  e_qcsapi_none,
 	  e_qcsapi_nosuch_specific_parameter
@@ -1279,6 +1469,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_string,
 	},
+	{ e_qcsapi_wfa_cert,
+	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_integer,
+	},
 	{ e_qcsapi_wifi_enable_scs,
 	  e_qcsapi_get_api,
 	  e_qcsapi_none,
@@ -1445,6 +1640,16 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_string
 	},
 	{ e_qcsapi_wifi_set_dfs_s_radio_report_only,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_set_dfs_s_radio_wea_duration,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_set_dfs_s_radio_wea_cac_time,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
@@ -1793,6 +1998,12 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_string
 	},
 	{
+	  e_qcsapi_l1,
+	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{
 	  e_qcsapi_test_traffic,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
@@ -1819,7 +2030,7 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
-	{ e_qcsapi_vsp,
+	{ e_qcsapi_qtm,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
 	  e_qcsapi_nosuch_specific_parameter
@@ -1833,6 +2044,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_get_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
+	},
+	{ e_qcsapi_get_swfeat_list,
+	  e_qcsapi_get_api_without_ifname_parameter,
+	  e_qcsapi_none,
+	  e_qcsapi_nosuch_specific_parameter
 	},
 	{ e_qcsapi_wifi_set_vht,
 	  e_qcsapi_set_api,
@@ -1945,6 +2161,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_string
 	},
 	{ e_qcsapi_wifi_enable_tdls,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_enable_tdls_over_qhop,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
 	  e_qcsapi_string
@@ -2124,6 +2345,11 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_unsigned_int
 	},
+	{ e_qcsapi_is_startprod_done,
+	  e_qcsapi_get_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
 	{ e_qcsapi_wifi_disassociate_sta,
 	  e_qcsapi_set_api,
 	  e_qcsapi_none,
@@ -2174,8 +2400,118 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_unsigned_int
 	},
-        { e_qcsapi_is_startprod_done,
+	{ e_qcsapi_wifi_set_enable_mu,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_enable_mu,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_set_mu_use_precode,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_mu_use_precode,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_set_mu_use_eq,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_mu_use_eq,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_mu_groups,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_send_file,
 	  e_qcsapi_get_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_get_emac_switch,
+	  e_qcsapi_get_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_set_emac_switch,
+	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_eth_dscp_map,
+	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+        { e_qcsapi_set_optim_stats,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_unsigned_int
+        },
+	{ e_qcsapi_set_sys_time,
+	  e_qcsapi_set_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_get_sys_time,
+	  e_qcsapi_get_system_value,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_get_eth_info,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_block_bss,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_verify_repeater_mode,
+	  e_qcsapi_get_api_without_ifname,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_set_ap_interface_name,
+	  e_qcsapi_set_api_without_ifname,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_get_ap_interface_name,
+	  e_qcsapi_get_api_without_ifname,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_set_txba_disable,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_txba_disable,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_set_rxba_decline,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_unsigned_int
+	},
+	{ e_qcsapi_wifi_get_rxba_decline,
+	  e_qcsapi_get_api,
 	  e_qcsapi_none,
 	  e_qcsapi_unsigned_int
 	},

@@ -140,7 +140,11 @@ config RTCONFIG_JFFSV1
 
 config RTCONFIG_ZEBRA
 	bool "Zebra"
-	default y
+	default n
+
+config RTCONFIG_QUAGGA
+	bool "Quagga"
+	default n
 
 config RTCONFIG_DDNS
 	bool "Dynamic DNS"
@@ -248,10 +252,6 @@ config RTCONFIG_IPERF
 
 config RTCONFIG_TCPDUMP
 	bool "tcpdump"
-	default n
-
-config RTCONFIG_OLD_PARENTALCTRL
-	bool "Parental Control Function Old UI"
 	default n
 
 config RTCONFIG_PARENTALCTRL
@@ -966,6 +966,10 @@ config RTCONFIG_ROG
 
 config RTCONFIG_GEOIP
 	bool "determine country by IP address"
+	default n
+
+config RTCONFIG_TRANSMISSION
+	bool "Transmission A Fast, Easy and Free BitTorrent client"
 	default n
 
 config RTCONFIG_NOWL

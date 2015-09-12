@@ -1,0 +1,196 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Aug 10 14:21:23 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>NTFSCK</title>
+
+</head>
+<body>
+
+<h1 align="center">NTFSCK</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#EXIT CODE">EXIT CODE</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">ntfsck &minus;
+check and repair an NTFS file system</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>ntfsck</b>
+[<i>options</i>] <i>device</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>ntfsck</b></i>
+will check and repair an NTFS file system located on
+<i>device</i> or an NTFS image file.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>ntfsck</b> accepts.
+Nearly all options have two equivalent names. The short name
+is preceded by <b>&minus;</b> and the long name is preceded
+by <b>&minus;&minus;</b>. Any single letter options, that
+don&rsquo;t take an argument, can be combined into a single
+command, e.g. <b>&minus;fv</b> is equivalent to <b>&minus;f
+&minus;v</b>. Long named options can be abbreviated to any
+unique prefix of their name. <b><br>
+&minus;a</b>,
+<b>&minus;&minus;automatic&minus;repair</b></p>
+
+<p style="margin-left:22%;">Repair the volume if it appears
+to be in need of a repair. This options makes <b>ntfsck</b>
+exit immediately if the volume appears to be in order (no
+dirty flag set, logfile clean, no hibernated Windows
+session, ...), but otherwise a full repair is performed.</p>
+
+<p style="margin-left:11%;"><b>&minus;c</b>,
+<b>&minus;&minus;fast&minus;check</b></p>
+
+<p style="margin-left:22%;">Check if volume is dirty then
+exit. If the volume is dirty then the exit value will be
+100.</p>
+
+<p style="margin-left:11%;"><b>&minus;P</b>,
+<b>&minus;&minus;no&minus;progress&minus;bar</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t show progress
+bars.</p>
+
+<p style="margin-left:11%;"><b>&minus;C</b>,
+<b>&minus;&minus;no&minus;alloc&minus;check</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t check cluster
+allocations. This option speeds up <b>ntfsck.</b> Use this
+option with caution.</p>
+
+<p style="margin-left:11%;"><b>&minus;O</b>,
+<b>&minus;&minus;no&minus;orpan&minus;check</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t check for orphaned
+files. This option speeds up <b>ntfsck.</b></p>
+
+<p style="margin-left:11%;"><b>&minus;M</b>,
+<b>&minus;&minus;no&minus;mft&minus;scan</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t scan $MFT. This
+option typically slows down <b>ntfsck.</b></p>
+
+<p style="margin-left:11%;"><b>&minus;S</b>,
+<b>&minus;&minus;no&minus;sync</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t sync NTFS metadata
+before exit. This option speeds up <b>ntfsck</b> however
+it&rsquo;s safe to use only if device is not
+removed/ejected.</p>
+
+<p style="margin-left:11%;"><b>&minus;F</b>,
+<b>&minus;&minus;file</b> FILE</p>
+
+<p style="margin-left:22%;">Check and repair FILE only.
+FILE is absolute path to a file or directory.</p>
+
+<p style="margin-left:11%;"><b>&minus;i</b>,
+<b>&minus;&minus;inode</b> NUMBER</p>
+
+<p style="margin-left:22%;">Correct inode NUMBER only and
+its children.</p>
+
+<p style="margin-left:11%;"><b>&minus;f</b>,
+<b>&minus;&minus;force</b></p>
+
+<p style="margin-left:22%;">This will override some
+sensible defaults. Use this option with caution.</p>
+
+<p style="margin-left:11%;"><b>&minus;h</b>,
+<b>&minus;&minus;help</b></p>
+
+<p style="margin-left:22%;">Show a list of options with a
+brief description of each one.</p>
+
+<p style="margin-left:11%;"><b>&minus;V</b>,
+<b>&minus;&minus;version</b></p>
+
+<p style="margin-left:22%;">Show the version number of
+<b>ntfsck</b>.</p>
+
+<h2>EXIT CODE
+<a name="EXIT CODE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The exit code
+returned by <b>ntfsck</b> is one of the followings: &nbsp;
+<br>
+0&nbsp; &minus;&nbsp;No errors or file system was
+successfully repaired &nbsp; <br>
+1&nbsp; &minus;&nbsp;File system errors could not be
+corrected &nbsp; <br>
+23&nbsp; &minus;&nbsp;Volume is read-only &nbsp; <br>
+100&nbsp; &minus;&nbsp;Volume is dirty, needs check
+(&minus;&minus;fast-check was used)</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+bug please send an email describing the problem to
+ntfs-support@tuxera.com.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>ntfsck</b>
+is part of the <b>Tuxera NTFS</b> package.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkntfs</b>(8)</p>
+<hr>
+</body>
+</html>

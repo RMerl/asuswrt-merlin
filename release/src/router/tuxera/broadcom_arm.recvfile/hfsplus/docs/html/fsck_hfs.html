@@ -1,0 +1,235 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Aug 10 14:21:00 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>FSCK_HFS</title>
+
+</head>
+<body>
+
+<h1 align="center">FSCK_HFS</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#EXIT STATUS">EXIT STATUS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">fsck_hfs
+&minus; check and repair an HFS+ volume</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fsck_hfs</b>
+[<i>options</i>] <i>device</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>fsck_hfs</b></i>
+will check an HFS+ volume for errors, and optionally correct
+them. Run fsck_hfs without arguments for a full list of
+options.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>fsck_hfs</b> accepts.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;q</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Do only a quick test to check if the file-system will
+mount properly. This is useful when you want to do a fast
+check to find out if the volume was unmounted cleanly. It
+returns a non non-zero exit value if the volume was not
+unmounted cleanly, otherwise an exit value of 0 is
+returned.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;d</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Verbose output. This is useful for debugging when
+<b>fsck_hfs</b> cannot repair a corrupted HFS+ volume.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;f</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Force <b>fsck_hfs</b> to check and repair journaled HFS+
+file-system. When used with <b>&minus;p</b> option, forces
+<b>fsck_hfs</b> to check &rsquo;clean&rsquo; file
+systems.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;l</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Lock the file-system and perform a read-only check. This
+is useful when you want to check a mounted volume, without
+trying to repair it.</p></td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>&minus;m</b> MODE</p>
+
+<p style="margin-left:22%;">Set permissions for the
+lost+found directory when created. It accepts an octal value
+that will be used to set the permission. <b>fsck_hfs</b>
+places orphaned files and directories in lost+found
+directory (located in the root directory). Default mode is
+01777.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;p</b></p></td>
+<td width="8%"></td>
+<td width="49%">
+
+
+<p>Preen the specified file-system.</p></td>
+<td width="29%">
+</td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>&minus;c</b> SIZE</p>
+
+<p style="margin-left:22%;">Specify the internal cache size
+used by <b>fsck_hfs</b>. Bigger size can ensure better
+performance but can deadlock when used with <b>&minus;l</b>
+option. It accepts size value as an argument, which can be a
+decimal, octal, or a hexadecimal number. Numbers ending with
+a &rsquo;k&rsquo;, &rsquo;m&rsquo; or &rsquo;g&rsquo; are
+multiplied by 1024 (1K), 1048576 (1M) or 1073741824 (1G),
+respectively.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;r</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Rebuild the catalog file on the specified
+file-system.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;y</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Always try to repair every corruption that is found.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>&minus;n</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Never try to repair any corruption that is found.</p></td></tr>
+</table>
+
+<h2>EXIT STATUS
+<a name="EXIT STATUS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>0</b>:
+Success quick test, file-system was cleanly unmounted.
+<b><br>
+3</b>: File-system Dirty, no checks. <b><br>
+4</b>: Writeable Root File-system was fixed. <b><br>
+8</b>: Standard error exit.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+bug please send an email describing the problem to
+hfs-support@tuxera.com.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fsck_hfs</b>
+is part of the <b>Tuxera HFS+</b> package.</p>
+<hr>
+</body>
+</html>

@@ -4,7 +4,7 @@ CFLAGS	+= -Os -Wall $(EXTRACFLAGS) #-mips32
 CFLAGS	+= -I$(SRCBASE)/include -I$(TOP)/shared -DRTCONFIG_ISP_METER -DDEBUG
 LDFLAGS	= -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300),y)
 CFLAGS += -DRA_ESW
 endif
 

@@ -1,0 +1,42 @@
+# BCM94704mpcb board
+# $Copyright (C) 2003 Broadcom Corporation$
+# $Id: bcm94704mpcb-sdr.txt,v 1.3 2006-11-13 23:52:50 gmo Exp $
+boardtype=0x0472
+boardnum=${serno}
+# Board revision 2.2
+boardrev=0x22
+# BCM5325 RoboSwitch requires reverse MII initialization
+boardflags=0x10
+
+# MIPS clock frequency in MHz
+clkfreq=264
+
+# 64 MB SDR SDRAM (16 Meg x 16 x 2)
+sdram_init=0x0008
+sdram_config=0x0032
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# BCM5325F
+et0macaddr=00:90:4c:a0:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# BCM5325F Wan port
+et1macaddr=00:90:4c:a1:${maclo}
+et1phyaddr=4
+et1mdcport=0
+
+# BCM5325F reset
+gpio0=robo_reset
+
+# Bootloader variables
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+boot_wait=on
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Reset 
+reset_gpio=7

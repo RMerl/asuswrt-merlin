@@ -239,13 +239,16 @@ function setTimeRange(sh, sm, eh, em){
 function change_firewall(r){
 	if (r == "0"){
 		inputCtrl(document.form.fw_log_x, 0);
+		inputRCtrl1(document.form.fw_dos_x, 0);
 		inputRCtrl1(document.form.misc_ping_x, 0);
 	}
 	else{		//r=="1"
 		inputCtrl(document.form.fw_log_x, 1);
+		inputRCtrl1(document.form.fw_dos_x, 1);
 		inputRCtrl1(document.form.misc_ping_x, 1);
 	}
 }
+
 function change_wireless_bridge(m){
 	if (m == "0"){
 		inputRCtrl2(document.form.wl_wdsapply_x, 1);

@@ -1,0 +1,124 @@
+#
+# Broadcom Home Networking Division (HND) driver configuration
+#
+# $Copyright Open Broadcom Corporation$
+#
+# $Id: Kconfig,v 1.6 2010-07-05 07:01:45 chihsien Exp $
+#
+
+menu "Broadcom HND network devices"
+	depends on PCI
+config HND
+	bool "Broadcom HND network device support"
+config ET
+	tristate "10/100 Ethernet support"
+	depends on HND
+config ET_47XX
+	bool "BCM47xx support"
+	depends on ET
+choice
+	prompt "ET ALL PASSIVE mode"
+	depends on ET
+	
+config ET_ALL_PASSIVE_ON
+	bool "ET ALL PASSIVE on"
+config ET_ALL_PASSIVE_RUNTIME
+	bool "ET ALL PASSIVE with runtime setting"
+endchoice
+config BCM_AGG
+	bool "BCM HW Port Trunking/Aggregation support"
+	depends on HND
+config BCM_CTF
+	tristate "BCMCTF support"
+	depends on HND
+config BCM_FA
+	bool "BCM HW Flow Accelerator support"
+	depends on BCM_CTF
+config BCM_GMAC3
+	bool "BCM 3 GMAC Forwarding support"
+	depends on BCM_CTF
+config WL_EMULATOR
+	bool "WL emulation using Gigabit ethernet"
+	depends on HND
+config BCM57XX
+	tristate "BCM57xx support is ON"
+	depends on WL_EMULATOR
+config WL
+	tristate "Wireless feature variant is set to AP"
+	depends on WL_EMULATOR
+	select WL_USE_AP
+config BCM57XX
+	tristate "BCM57xx Gigabit Ethernet support"
+	depends on HND && !WL_EMULATOR
+config DHDAP
+	tristate "BCM DHD support"
+	depends on HND && !WL_EMULATOR
+config WL
+	tristate "BCM43xx 802.11 Wireless support"
+	depends on HND && !WL_EMULATOR
+config WAPI
+	bool "Wireless Authentication Privacy Infrastructure (WAPI) support"
+	depends on HND && !WL_EMULATOR && WL
+	select MTD_BCMCONF_PARTS
+choice
+	prompt "Wireless feature variant"
+	depends on HND && !WL_EMULATOR && WL
+config WL_USE_AP
+	bool "Config file for basic AP variant"
+config WL_USE_AP_SDSTD
+	bool "Config file for basic AP sdstd variant"
+config WL_USE_STA
+	bool "Config file for basic STA variant"
+config WL_USE_APSTA
+	bool "Config file for basic APSTA variant"
+config WL_USE_AP_ONCHIP_G
+	bool "Config file for AP 1chipG variant"
+config WL_USE_STA_ONCHIP_G
+	bool "Config file for STA 1chipG variant"
+config WL_USE_APSTA_ONCHIP_G
+	bool "Config file for APSTA 1chipG variant"
+endchoice
+config WL_USBAP
+	bool "USB/HSIC Wireless Access Point support"
+#if defined(WLSRC) || defined(PREBUILD)
+config WL_AP 
+	string "Config file for basic AP variant"
+	default "wlconfig_lx_router_ap"
+config WL_AP_SDSTD
+	string "Config file for basic AP sdstd variant"
+	default "wlconfig_lx_router_ap_sdstd"
+config WL_STA 
+	string "Config file for basic STA variant"
+	default "wlconfig_lx_router_sta"
+config WL_APSTA 
+	string "Config file for basic APSTA variant"
+	default "wlconfig_lx_router_apsta"
+config WL_AP_ONCHIP_G 
+	string "Config file for AP 1chipG variant"
+	default "wlconfig_lx_router_ap_1chipG"
+config WL_STA_ONCHIP_G 
+	string "Config file for STA 1chipG variant"
+	default "wlconfig_lx_router_sta_1chipG"
+config WL_HIGH 
+	string "Config file for high/bmac split variant"
+	default "wlconfig_lx_router_high"
+
+choice
+	prompt "WL ALL PASSIVE mode"
+	depends on WL
+	
+config WL_ALL_PASSIVE_ON
+	bool "WL ALL PASSIVE on"
+config WL_ALL_PASSIVE_RUNTIME
+	bool "WL ALL PASSIVE with runtime setting"
+endchoice
+#endif
+config DPSTA
+	tristate "Broadcom dualband wireless proxy repeater support"
+	depends on WL
+config LACP
+	tristate "Broadcom lacp support"
+config EMF
+	tristate "Efficient Multicast Forwarding & IGMP Snooping Layers"
+	depends on NETFILTER
+endmenu

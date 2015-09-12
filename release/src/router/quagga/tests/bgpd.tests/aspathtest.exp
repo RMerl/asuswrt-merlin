@@ -1,0 +1,76 @@
+set timeout 10
+set testprefix "aspathtest "
+set aborted 0
+set color 1
+
+spawn "./aspathtest"
+
+# proc onetest { test_name note start } {
+# proc headerline { line } {
+ 
+set parserno 0
+proc parsertest { test_name } {
+	global parserno
+	headerline "test $parserno"
+	onetest "parse $test_name" " ($parserno)" "$test_name:"
+	onetest "parse $test_name +empty_prepend" " (#$parserno)" "empty prepend $test_name:"
+	incr parserno 1
+}
+set attrno 0
+proc attrtest { test_name } {
+	global attrno
+	headerline "aspath_attr test $attrno"
+	onetest "attr $test_name" " (#$attrno)" "$test_name"
+	incr attrno 1
+}
+
+
+parsertest "seq1"
+parsertest "seq2"
+parsertest "seq3"
+parsertest "seqset"
+parsertest "seqset2"
+parsertest "multi"
+parsertest "confed"
+parsertest "confed2"
+parsertest "confset"
+parsertest "confmulti"
+parsertest "seq4"
+parsertest "tripleseq1"
+parsertest "someprivate"
+parsertest "allprivate"
+parsertest "long"
+parsertest "seq1extra"
+parsertest "empty"
+parsertest "redundantset"
+parsertest "reconcile_lead_asp"
+parsertest "reconcile_new_asp"
+parsertest "reconcile_confed"
+parsertest "reconcile_start_trans"
+parsertest "reconcile_start_trans4"
+parsertest "reconcile_start_trans_error"
+parsertest "redundantset2"
+parsertest "zero-size overflow"
+parsertest "zero-size overflow + valid segment"
+parsertest "invalid segment type"
+
+for {set i 0} {$i < 10} {incr i 1} { onetest "prepend $i" "" "prepend test $i"; }
+for {set i 0} {$i <  5} {incr i 1} { onetest "aggregate $i" "" "aggregate test $i"; }
+for {set i 0} {$i <  5} {incr i 1} { onetest "reconcile $i" "" "reconcile test $i"; }
+for {set i 0} {$i < 22} {incr i 1} { onetest "compare $i" "" "left cmp "; }
+
+onetest "empty_get" "" "empty_get_test"
+attrtest "basic test"
+attrtest "length too short"
+attrtest "length too long"
+attrtest "incorrect flag"
+attrtest "as4_path, with as2 format data"
+attrtest "as4, with incorrect attr length"
+attrtest "basic 4-byte as-path"
+attrtest "4b AS_PATH: too short"
+attrtest "4b AS_PATH: too long"
+attrtest "4b AS_PATH: too long2"
+attrtest "4b AS_PATH: bad flags"
+attrtest "4b AS4_PATH w/o AS_PATH"
+attrtest "4b AS4_PATH: confed"
+

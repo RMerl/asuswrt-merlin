@@ -1,0 +1,61 @@
+NTFSINFO(8)                                                        NTFSINFO(8)
+
+
+
+NAME
+       ntfsinfo - show NTFS volume, file, inode, attribute information
+
+SYNOPSIS
+       ntfsinfo [options] device
+
+DESCRIPTION
+       ntfsinfo  will  show  the  attributes of inode inode-number or the file
+       path-filename and/or information about the mft with the -m option.  Run
+       ntfsinfo without arguments for a full list of options.
+
+OPTIONS
+       Below is a summary of all the options that ntfsinfo accepts. Nearly all
+       options have two equivalent names. The short name is preceded by -  and
+       the long name is preceded by --.  Any single letter options, that don't
+       take an argument, can be combined into a single command, e.g.   -fv  is
+       equivalent  to  -f  -v.   Long  named options can be abbreviated to any
+       unique prefix of their name.
+
+       -F, --file FILE
+              Show information about this file
+
+       -f, --force
+              This will override some sensible defaults, such as not overwrit‐
+              ing an existing file.  Use this option with caution.
+
+       -h, --help
+              Show a list of options with a brief description of each one.
+
+       -i, --inode NUM
+              Show information about this inode.
+
+       -m, --mft
+              Show information about the volume.
+
+       -q, --quiet
+              Produce less output.
+
+       -t, --notime
+              Do not display timestamps in the output.
+
+       -v, --verbose
+              Increase the amount of output that ntfsinfo prints.
+
+       -V, --version
+              Show the version number, copyright and license.
+
+BUGS
+       If  you  find  a  bug  please  send  an email describing the problem to
+       ntfs-support@tuxera.com.
+
+AVAILABILITY
+       ntfsinfo is part of the Tuxera NTFS package.
+
+
+
+Tuxera NTFS Utilities 3014.5.21    Sept 2011                       NTFSINFO(8)

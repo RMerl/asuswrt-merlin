@@ -1,0 +1,34 @@
+##
+## This is a common config file that is used mainly by modules
+## or brand makefiles. The ".usf" suffix stands for "universal
+## settings file". The important feature is that this file is
+## both legal makefile and shell syntax, and could be parsed as
+## a properties file by any language (Perl, Python, Java, ...)
+## which understands properties.
+##
+## Rules: Each line is either an assignment, a comment, or blank.
+## Assignments MUST be of the form "foo=bar" (no spaces) and
+## comments have a leading "#" character.
+##
+## It can be included by common templates like WLAN_Common.mk,
+## or by brand makefiles, or sourced by build scripts.
+##
+## $Id: WLAN.usf 436246 2013-11-13 17:39:29Z $
+##
+
+# Current list of components
+# This list is used in module makefiles to set vpath search
+# paths and include paths
+
+WLAN_COMPONENT_PATHS=src/shared/bcmwifi src/wl/clm src/wl/lwip src/wl/plqmr src/wl/ppr src/wl/rel_mcast src/wl/gas src/wl/encode src/wl/olpc src/wl/proxd
+
+# This is a staging area for generated content that need to be shared
+# between build step and packaging step. E.g when CLM data files
+# need to be packaged, they are first staged to $(WLAN_GEN_BASEDIR)
+# and packaged from there.
+
+WLAN_GEN_BASEDIR=generated
+
+# This is the conventional Windows mount point for network files.
+
+WLAN_WINPFX=Z:

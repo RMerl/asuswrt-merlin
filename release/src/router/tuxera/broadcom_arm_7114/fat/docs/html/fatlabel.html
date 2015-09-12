@@ -1,0 +1,116 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Tue Aug 11 07:21:28 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>FATLABEL</title>
+
+</head>
+<body>
+
+<h1 align="center">FATLABEL</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">fatlabel
+&minus; display/change the label on a FAT file system</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatlabel</b>
+[<i>options</i>] <i>device</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>fatlabel</b></i>
+will display or change the file system label on the FAT file
+system located on <i>device</i>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If the option
+<b>&minus;l</b> is not specified, the current volume label
+will be printed to standard output and no modifications will
+be made.</p>
+
+<p style="margin-left:11%; margin-top: 1em">It is also
+possible to set the file system label using the
+<b>&minus;l</b> option of <b>mkfatfs</b>(8) during creation
+of the file system.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>fatlabel</b> accepts.
+Nearly all options have two equivalent names. The short name
+is preceded by <b>&minus;</b> and the long name is preceded
+by <b>&minus;&minus;</b>. <b><br>
+&minus;l</b>, <b>&minus;&minus;label</b> LABEL</p>
+
+<p style="margin-left:22%;">Set the volume label of a FAT
+volume to <b>LABEL</b>. The volume label is limited to 11
+ASCII units, i.e. 11 bytes in most cases.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">There are no
+known problems with <b>fatlabel</b>. If you find a bug
+please send an email describing the problem to
+fat-support@tuxera.com.</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatlabel</b>
+was written by Sougata Santra, Tuxera Inc.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatlabel</b>
+is part of the <b>Tuxera TFATprogs</b> package.</p>
+<hr>
+</body>
+</html>

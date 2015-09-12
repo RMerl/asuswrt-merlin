@@ -1,0 +1,2574 @@
+Note: this file lists major user-visible changes only.
+
+* Changes in Quagga 0.99.24
+
+User-visible changes:
+- [pimd] New daemon: pimd provides IPv4 PIM-SSM multicast routing.
+- [bgpd] New feature: "next-hop-self all" to override nexthop on iBGP route
+    reflector setups.
+- [bgpd] route-maps have a new action "set ipv6 next-hop peer-address"
+- [bgpd] route-maps have a new action "set as-path prepend last-as"
+- [bgpd] Update validity checking (particularly MP-BGP / IPv6 routes) was
+    touched up significantly.  Please report possible bugs.
+- [ripd] New feature: RIP for IPv4 now supports equal-cost multipath (ECMP)
+- [zebra] Multicast RIB support has been extended.  It still is IPv4 only.
+- [zebra] "no link-detect" is now printed in configurations since it won't
+    be the default anymore soon.  To retain current behaviour, re-save your
+    configuration after updating to 0.99.24.
+
+Distributor-visible changes:
+- --enable-pimd is added to enable pimd.  It is considered experimental, though
+    unless the distribution target is embedded systems with little flash, there
+    is no reason to not include it in packages.
+- --disable-ipv6 no longer exists as an option.  It's 2015, your C library
+    really needs to have IPv6 support by now.
+- --disable-netlink no longer exists as an option.  It didn't work anyway.
+- --disable-solaris no longer exists as an option.  It only controlled some
+    init scripts.
+- --enable-isisd is now the default.
+- mrlg.cgi is no longer included (it was severely outdated).  It can be found
+    independently at http://mrlg.op-sec.us/
+- build on Linux with the musl C library should now work
+
+* Changes in Quagga 0.99.23
+
+Known issues:
+- [bgpd] setting an extcommunity in a route map on a route that already has
+  an extcommunity attribute will cause bgpd to crash.  This issue will be
+  fixed in a followup minor release.
+
+User-visible changes:
+- [lib] Performance enhancements on hashes and timers.
+- [bgpd] New feature: iBGP TTL security.
+- [bgpd] New feature: relaxed bestpath criteria for multipath and improved
+  display of multipath routes in "show ip bgp".  Scripts parsing this output
+  may need to be updated.
+- [bgpd] Multiprotocol peerings over IPv6 now try to find a more appropriate
+  IPv4 nexthop by looking at the interface.
+- [ospf6d] A large amount of changes has been merged for ospf6d.  Careful
+  evaluation prior to deployment is recommended.
+- [zebra] Recursive route support has been overhauled.  Scripts parsing
+  "show ip route" output may need adaptation.
+- [zebra] IPv6 address management has been improved regarding tentative
+  addresses.  This is visible in that a freshly configured address will not
+  immediately be marked as usable.
+- [*] a lot of bugs have been fixed, please refer to the git log
+
+* Changes in Quagga 0.99.22
+
+- [bgpd] The semantics of default-originate route-map have changed.
+  The route-map is now used to advertise the default route conditionally.
+  The old behaviour which allowed to set attributes on the originated
+  default route is no longer supported.
+- [bgpd] There is now a replace-as option to neighbor ... local-as ...
+  no-prepend.  For details, refer to the user documentation.
+- [zebra] An FPM interface has been added.  This provides an alternate
+  interface to routing information and is geared at OpenFlow & co.
+- [snmp] AgentX is now supported;  the old smux backend is considered
+  deprecated.  ospf6d has also had OSPFV3-MIB added.
+- [*] several issues with configuration save/load/apply have been fixed,
+  in particular on ospf "max-metric router-lsa administrative" and
+  "distribute-list", bgpd "no neighbor activate", isisd "metric-style",
+- [*] a lot of bugs have been fixed, please refer to the git log
+
+* Changes in Quagga 0.99.21
+
+- [bgpd] BGP multipath support has been merged
+- [bgpd] SAFI (Multicast topology) support has been extended to propagate
+  the topology to zebra.
+- [bgpd] AS path limit functionality has been removed
+- [babeld] a new routing daemon implementing the BABEL ad-hoc mesh routing
+  protocol has been merged.
+- [isisd] a major overhaul has been picked up. Please note that isisd is
+  STILL NOT SUITABLE FOR PRODUCTION USE.
+- [*] a lot of bugs have been fixed, please refer to the git log
+
+* Changes in Quagga 0.99.10
+
+- [bgpd] 4-byte AS support added
+- [bgpd] MRT format changes to version 2. Those relying on
+  bgpd MRT table dumps may need to update their tools.
+- [bgpd] Added new route-map set statement: "as-path exclude"
+- Zebra RIB updates queue has evolved into a multi-level
+  structure to address RIB consistency issues.
+
+* Changes in Quagga 0.99.2
+
+- [bgpd] Work queues added to bgpd to split up update processing,
+  particularly beneficial when a peer session goes down. AS_PATH
+  parsing rewritten to be clearer, more robust and ready for 4-byte.
+
+- [ripd] Simple authentication is no longer the default authentication
+  mode for ripd. The default is now no-authentication. Any setups which
+  used simple authentication will probably need to update their
+  configuration manually.
+
+- [ospfd] 1s dead-interval with sub-second Hellos feature added.
+  SPF timers now specified in milliseconds, and with adaptive
+  hold-time support. RFC3137 Stub-router support added. Default ABR
+  type is now 'cisco'.
+
+- Solaris least privileges support added.
+
+* Changes in Quagga 0.99.1
+
+- Zserv is now buffered via threads and non-blocking in most cases for both
+  clients and zebra, which should improve responsiveness of daemons when
+  they must send many messages to zebra.
+
+- 'show thread cpu' now displays both cpu+system and wall-clock time,
+  where getrusage() is available.
+
+- Background threads added and workqueue API added, with a
+  'show work-queues' command. Thread scheduling improved slightly.
+
+- Zebra now has a work-queue for RIB processing. See 'show work-queues' in
+  the zebra daemon vty.
+
+- Support for interface renaming on Linux netlink systems.
+
+- GNU Zebra bgpd merges, including BGP Graceful-restart and "match ip
+  route-source" command.
+
+- Automatic logging of backtraces should daemons crash to assist in
+  diagnosis. See the documentation for more information on configuring
+  logging correctly, and set --enable-gcc-rdynamic if compiling with gcc.
+
+* Changes in Quagga 0.98.0
+
+- Logging facilities upgraded.  One can now specify a severity level
+  for each logging destination.  And a new "show logging" command gives
+  thorough information on the current logging system configuration.
+
+- Watchquagga daemon added.  This is not well tested yet.  Please try
+  monitor mode first before enabling restart features.  It is important
+  to make sure that the various timers are configured with appropriate
+  values for your site.
+
+- BGP route-server support added. See the texinfo documentation.
+
+- OSPF API initialisation is disabled by default even if compiled in. You
+  can enable it with -a/--apiserver command line switch.
+
+- "write-config integrated" vtysh command replaced with "service
+  integrated-vtysh-config" command.
+
+- Router id is now handled by zebra daemon and all daemons receive changes
+  from it. Router id can be overriden in daemons' configurations of course.
+  To fix common router id in zebra daemon you can either install non-127
+  address on loopback or use "router-id x.x.x.x" command.
+
+- "secondary" keyword is removed from ip address configuration. All
+  supported OS'es have their own vision what's secondary address and
+  how to handle it.
+
+- Zebra no longer enables forwarding by default. If you rely on zebra to
+  enable forwarding make sure to add '<ip|ip6> forwarding' statements
+  to your zebra configuration file.
+
+- All libraries are built and used shared, on platforms where libtool
+  supports shared libraries.
+
+- Router advertisement syntax is changed. In usual cases (if you didn't do
+  any fancy stuff) it's enough to change lines in configuration from:
+  "ipv6 nd prefix-advertisement X:X:X:X::/X 2592000 604800 autoconfig on-link"
+  to:
+  "ipv6 nd prefix X:X:X:X::/X"
+
+  All router advertisement options are documented in texi documentation.
+
+- --enable-nssa configure switch is removed. NSSA support is stable enough.
+
+- Daemons don't look at current directory for config file any more.
+
+* Changes in Quagga 0.96.5
+
+- include files are installed in $(prefix)/include/quagga.  Programs
+  building against these includes should -I$(prefix)/include and e.g.
+  #include <quagga/routemap.h>
+
+- New option --enable-exampledir puts example files in a separate
+  directory from $(sysconfdir), easing NetBSD pkgsrc hierarchy rules
+  compliance.
+
+- New configure options --enable-configfile-mask and
+  --enable-logfile-mask to set umask values for config and log
+  values.  Masks default to 0600, matching previous behavior.
+
+- Import current CVS isisd from SourceForge, then merge it with
+  the Quagga's Framework.
+
+* Changes in Quagga 0.96.4
+
+- Further fixes to ospfd, some relating to the PtP revert. Interface
+lookups should be a lot more robust now. 
+
+- Fix for a remote triggerable crash in vty layer.
+
+- Improvements to ripd, and addition of split horizon support.
+
+- Improved bgpd table support, now dumps at time of day intervals rather
+than time from startup intervals. Much improved support for IPv6 table
+dumps. show commands for views improved.
+
+* Changes in Quagga 0.96.3
+
+- revert the 'generic PtP' patch. Means Quagga will no longer work with
+FreeSWAN, however, on the plus side this gets rid of a lot of niggly bugs
+which the PtP patch introduced.
+
+* Changes in Quagga 0.96.2
+
+- Fix crash in ospfd
+
+* Changes in Quagga 0.96.1
+
+- Iron out problem with the privileges definitions
+
+* Changes in Quagga 0.96
+
+- Privilege support, daemons now run with the minimal privileges needed, see
+  the documentation for details.
+  
+- NSSA ABR support in ospfd.
+
+- OSPF-API support merged in.
+
+- 6WIND patch merged in.
+
+* Changes in zebra-0.93
+
+* Changes in bgpd
+
+** Configuration is changed to new format.
+
+* Changes in ospfd
+
+** Crush bugs which reported on Zebra ML is fixed.
+
+** Opaque LSA and TE LSA support is added by KDD R&D Laboratories,
+   Inc.
+
+* Chages in ospf6d
+
+** Many bugs are fixed.
+
+* Changes in zebra-0.92a
+
+* Changes in bgpd
+
+** Fix "^$" community list bug.
+
+** Below command's Address Family specific configurations are added
+
+  nexthop-self
+  route-reflector-client
+  route-server-client
+  soft-reconfiguration inbound
+
+* Changes in zebra
+
+** Treat kernel type routes as EGP routes.
+
+* Changes in zebra-0.92
+
+** Overall security is improved.  Default umask is 0077.
+
+* Changes in ripd
+
+** If output interface is in simple password authentication mode,
+substruct one from rtemax.
+
+* Changes in bgpd
+
+** IPv4 multicast and IPv6 unicast configuration is changed to so
+called new config.  All of AFI and SAFI specific configuration is
+moved to "address-family" node.  When you have many IPv6 only
+configuration, you will see many "no neighbor X:X::X:X activate" line
+in your configuration to disable IPv4 unicast NLRI exchange.  In that
+case please use "no bgp default ipv4-unicast" command to suppress the
+output.  Until zebra-0.93, old config is still left for compatibility.
+
+Old config
+==========
+router bgp 7675
+ bgp router-id 10.0.0.1
+ redistribute connected
+ network 192.168.0.0/24
+ neighbor 10.0.0.2 remote-as 7675
+ ipv6 bgp network 3ffe:506::/33
+ ipv6 bgp network 3ffe:1800:e800::/40
+ ipv6 bgp aggregate-address 3ffe:506::/32
+ ipv6 bgp redistribute connected
+ ipv6 bgp neighbor 3ffe:506:1000::2 remote-as 1
+
+New config
+==========
+router bgp 7675
+ bgp router-id 10.0.0.1
+ network 192.168.0.0/24
+ redistribute connected
+ neighbor 10.0.0.2 remote-as 7675
+ neighbor 3ffe:506:1000::2 remote-as 1
+ no neighbor 3ffe:506:1000::2 activate
+!
+ address-family ipv6
+  network 3ffe:506::/33
+  network 3ffe:1800:e800::/40
+  aggregate-address 3ffe:506::/32
+  redistribute connected
+  neighbor 3ffe:506:1000::2 activate
+ exit-address-family
+
+* Changes in ospfd
+
+** Internal interface treatment is changed.  Now ospfd can handle
+multiple IP address for an interface.
+
+** Redistribution of loopback interface's address works fine.
+
+* Changes in zebra-0.91
+
+** --enable-oldrib configure option is removed.
+
+** HAVE_IF_PSEUDO part is removed.  Same feature is now supported by
+default.
+
+* Changes in ripd
+
+** When redistributed route is withdrawn, perform poisoned reverse.
+
+* Changes in zebra
+
+** When interface's address is removed, kernel route pointing out to
+the address is removed.
+
+** IPv6 RIB is now based upon new RIB code.
+
+** zebra can handle same connected route to one interface.
+
+** New command for interface address.  Currently this commands are
+only supported on GNU/Linux with netlink interface.
+
+"ip address A.B.C.D secondary"
+"ip address A.B.C.D label LABEL"
+
+* Changes in bgpd
+
+** BGP flap dampening bugs are fixed.
+
+** BGP non-blocking TCP connection bug is fixed.
+
+** "show ip bgp summary" shows AS path and community entry number.
+
+** New commands have been added.
+  "show ip bgp cidr-only"
+  "show ip bgp ipv4 (unicast|multicast) cidr-only"
+  "show ip bgp A.B.C.D/M longer-prefixes"
+  "show ip bgp ipv4 (unicast|multicast) A.B.C.D/M longer-prefixes"
+  "show ipv6 bgp X:X::X:X/M longer-prefixes"
+  "show ipv6 mbgp X:X::X:X/M longer-prefixes"
+
+** IPv6 IBGP nexthop change is monitored.
+
+** Unknown transitive attribute is passed with partial flag bit on.
+
+* Changes in ospfd
+
+** Fix bug of LSA MaxAge flood.
+
+** Fix bug of NSSA codes.
+
+* Changes in zebra-0.90
+
+** From this beta release, --enable-unixdomain and --enable-newrib
+becomes default.  So both options are removed from configure.in.  To
+revert old behavior please specify below option.
+
+--enable-tcp-zebra # TCP/IP socket is used for protocol daemon and zebra.
+--enable-oldrib    # Turn on old RIB implementation.
+
+Old RIB implementation will be removed in zebra-0.91.
+
+** From this beta release --enable-multipath is supported.  This
+option is only effective on GNU/Linux kernel with
+CONFIG_IP_ADVANCED_ROUTER and CONFIG_IP_ROUTE_MULTIPATH is set.
+
+--enable-multipath=ARG  # ARG must be digit.  When ARG is 0 unlimit multipath number.
+
+** From this release we do not include guile files.
+
+* Changes in lib
+
+** newlist.[ch] is merged with linklist.[ch].
+
+** Now Zebra works on MacOS X public beta.
+
+** Access-list can have remark.  "access-list WORD remark LINE" define
+remark for specified access-list.
+
+** Key of key-chain is sorted by it's idetifier value.
+
+** prefix-list rule is slightly changed.  The rule of "len <= ge-value
+<= le-value" is changed to "len < ge-value <= le-value".
+
+** According to above prefix-list rule change, add automatic
+conversion function of an old rule. ex.) 10.0.0.0/8 ge 8 -> 10.0.0.0/8
+le 32
+
+** SMUX can handle SNMP trap.
+
+** In our event library, event thread is executed before any other
+thread like timer, read and write event.
+
+** Robust method for writing configuration file and recover from
+backing up config file.
+
+** Display "end" at the end of configuration.
+
+** Fix memory leak in vtysh_read().
+
+** Fix memroy leak about access-list and prefix-list name.
+
+* Changes in zebra
+
+** UNIX domain socket server of zebra protocol is added.
+
+** Fix PointoPoint interface network bug.  The destination network
+should be installed into routing table instead of local network.
+
+** Metric value is reflected to kernel routing table.
+
+** "show ip route" display uptime of RIP,OSPF,BGP routes.
+
+** New RIB implementation is added.
+
+Now we have enhanced RIB (routing information base) implementation in
+zebra.  New RIB has many new features and fixed some bugs which exist
+in old RIB code.
+
+*** Static route with distance value
+
+    Static route can be specified with administrative distance.  The
+  distance value 255 means it is not installed into the kernel.
+  Default value of distance for static route is 1.
+  
+    ip route A.B.C.D/M A.B.C.D <1-255>
+    ip route A.B.C.D/M IFNAME <1-255>
+  
+    If the least distance value's route's nexthop are unreachable,
+  select the least distance value route which has reachable nexthop is
+  selected.
+  
+    ip route 0.0.0.0/0 10.0.0.1
+    ip route 0.0.0.0/0 11.0.0.1 2
+  
+    In this case, when 10.0.0.1 is unreachable and 11.0.0.1 is
+  reachable.  The route with nexthop 11.0.0.1 will be installed into
+  forwarding table.
+  
+    zebra> show ip route
+    S>* 0.0.0.0/0 [2/0] via 11.0.0.1
+    S   0.0.0.0/0 [1/0] via 10.0.0.1 inactive
+  
+    If the nexthop is unreachable "inactive" is displayed.  You can
+  specify any string to IFNAME.  There is no need of the interface is
+  there when you configure the route.
+  
+    ip route 1.1.1.1/32 ppp0
+  
+  When ppp0 comes up, the route is installed properly.
+
+*** Multiple nexthop routes for one prefix
+
+    Multiple nexthop routes can be specified for one prefix.  Even the
+  kernel support only one nexthop for one prefix user can configure
+  multiple nexthop.
+  
+    When you configure routes like below, prefix 10.0.0.1 has three
+  nexthop.
+  
+    ip route 10.0.0.1/32 10.0.0.2
+    ip route 10.0.0.1/32 10.0.0.3
+    ip route 10.0.0.1/32 eth0
+  
+    If there is no route to 10.0.0.2 and 10.0.0.3.  And interface eth0
+    is reachable, then the last route is installed into the kernel.
+  
+    zebra> show ip route
+    S>  10.0.0.1/32 [1/0] via 10.0.0.2 inactive
+                          via 10.0.0.3 inactive
+      *                   is directly connected, eth0
+  
+    '*' means this nexthop is installed into the kernel. 
+
+*** Multipath (more than one nexthop for one prefix) can be installed into the kernel.
+
+    When the kernel support multipath, zebra can install multipath
+  routes into the kernel.  Before doing that please make it sure that
+  setting --enable-multipath=ARG to configure script.  ARG must be digit
+  value.  When specify 0 to ARG, there is no limitation of the number
+  of the multipath.  Currently only GNU/Linux with netlink interface is
+  supported.
+  
+    ip route 10.0.0.1/32 10.0.0.2
+    ip route 10.0.0.1/32 10.0.0.3
+    ip route 10.0.0.1/32 eth0
+  
+    zebra> show ip route
+    S>* 10.0.0.1/32 [1/0] via 10.0.0.2
+      *                   via 10.0.0.3
+                          is directly connected, eth0
+
+*** Kernel message delete installed route.
+
+    After zebra install static or dynamic route into the kernel.
+  
+    R>* 0.0.0.0/0 [120/3] via 10.0.0.1
+  
+    If you delete this route outside zebra, old zebra does not reinstall
+  route again.  Now the route is re-processed and properly reinstall the
+  static or dynamic route into the kernel.
+
+** GNU/Linux netlink socket handling is improved to fix race condition
+between kernel message and user command responce.
+
+* Changes in bgpd
+
+** Add show neighbor's routes command.
+
+  "show ip bgp neighbors (A.B.C.D|X:X::X:X) routes"
+  "show ip bgp ipv4 (unicast|multicast) neighbors (A.B.C.D|X:X::X:X) routes"
+  "show ipv6 bgp neighbors (A.B.C.D|X:X::X:X) routes"
+  "show ipv6 mbgp neighbors (A.B.C.D|X:X::X:X) routes"
+
+** BGP passive peer support problem is fixed.
+
+** Redistributed IGP nexthop is passed to BGP nexthop.
+
+** On multiaccess media, if the nexthop is reachable nexthop is passed
+as it is.
+
+** Remove zebra-0.88 compatibility commands.
+
+  "match ip prefix-list WORD"
+  "match ipv6 prefix-list WORD"
+
+  Instead of above please use below commands.
+
+  "match ip address prefix-list WORD"
+  "match ipv6 address prefix-list WORD"
+
+** Fix bug of holdtimer is not reset when bgp cleared.
+
+** "show ip bgp summary" display peer establish/drop count.
+
+** Change "match ip next-hop" argument from IP address to access-list
+name.
+
+** When "bgp enforce-first-as" is enabled, check EBGP peer's update
+has it's AS number in the first AS number in AS sequence.
+
+** New route-map command "set community-delete COMMUNITY-LIST" is
+added.  Community matched the CoMMUNITY-LIST is removed from the
+community.
+
+** BGP-MIB implementation is finished.
+
+** When BGP connection comes from unconfigured IP address, close
+socket immediately.
+
+** Do not compare router ID when the routes comes from EBGP peer.
+When originator ID is same, take shorter cluster-list route.  If
+cluster-list is same take smaller IP address neighbor's route.
+
+** Add "bgp bestpath as-path ignore" command.  When this option is
+set, do not concider AS path length when route selection.
+
+** Add "bgp bestpath compare-routerid".  When this option is set,
+compare router ID when the routes comes from EBGP peer.
+
+** Add "bgp deterministic-med" process.
+
+** BGP flap dampening feature is added.
+
+** When IBGP nexthop is changed, it is reflected to RIB.
+
+** Change "neighbor route-refresh" command to "neighbor capability
+route-refresh".
+
+* Changes in ripd
+
+** Change "match ip next-hop" argument from IP address to access-list
+name.
+
+** "no ip rip (send|receive)" command accept version number argument.
+
+** Memory leak related classfull network generation is fixed.
+
+** When a route is in garbage collection process (invalid with metric
+16) and a router receives the same route with valid metric then route
+was not installed into zebra rib, but only into ripd rib. Moreover ,
+it will never get into zebra rib, because ripd wrongly assumes it's
+already there.
+
+* Change in ospfd
+
+** Fix bug of refreshing default route.
+
+** --enable-nssa turn on undergoing NSSA feature.
+
+** Fix bug of Hello packet's option is not properly set when interface
+comes up.
+
+** Reduce unconditional logging.
+
+** Add nexthop to OSPF path only when it is not there.
+
+** When there is no DR on network (suppose you have only one router
+with interface priority 0). It's router LSA does not contain the link
+information about this network.
+
+** When you change a priority of interface from/to 0
+ISM_NeighborChange event should be scheduled in order to elect new
+DR/BDR on the network.
+
+** When we add some LSA into retransmit list we need to check whether
+the present old LSA in retransmit list is not more recent than the new
+one.
+
+** In states Loading and Full the slave must resend its last Database
+Description packet in response to duplicate Database Description
+packets received from the master.  For this reason the slave must wait
+RouterDeadInterval seconds before freeing the last Database
+Description packet. Reception of a Database Description packet from
+the master after this interval will generate a SeqNumberMismatch
+neighbor event. RFC2328 Section 10.8
+
+** Virtual link can not configured in stub area.
+
+** Clear a ls_upd_queue queue of the interface when interface goes
+down.
+
+** "no router ospf" unregister redistribution requests from zebra.
+
+** New command for virtual-link configuration is added.
+
+  "area A.B.C.D virtual-link A.B.C.D"
+  "area A.B.C.D virtual-link A.B.C.D hello-interval <1-65535> retransmit-interval <3-65535> transmit-delay <1-65535> dead-interval <1-65535>"
+  "area A.B.C.D virtual-link A.B.C.D hello-interval <1-65535> retransmit-interval <3-65535> transmit-delay <1-65535> dead-interval <1-65535> authentication-key AUTH_KEY"
+  "area A.B.C.D virtual-link A.B.C.D authentication-key AUTH_KEY"
+  "area A.B.C.D virtual-link A.B.C.D hello-interval <1-65535> retransmit-interval <3-65535> transmit-delay <1-65535> dead-interval <1-65535> message-digest-key <1-255> md5 KEY"
+  "area A.B.C.D virtual-link A.B.C.D message-digest-key <1-255> md5 KEY"
+
+** Clear cryptographic sequence number when neighbor status is changed
+to NSM down.
+
+** Make Summary LSA's origination and refreshment as same as other
+type of LSA.
+
+** New OSPF pakcet read method. Now maximum packet length may be 65535
+bytes (maximum IP packet length).
+
+** Checking the age of the found LSA and if the LSA is MAXAGE we
+should call refresh instead of originate.
+
+** Install multipath information to zebra.
+
+** Fix socket descriptor leak when system call failed.
+
+* Changes in ospf6d
+
+** Whole functionality has been rewritten as new code. new command
+"show ipv6 ospf6 spf node", "show ipv6 ospf6 spf tree", "show ipv6
+ospf6 spf table" has been added.
+
+** Change to do not send garbage route whose nexthop is not linklocal
+address.
+
+** "redistribute ospf6" was generated in "router ospf6" in config
+file. It is fixed.
+
+** LSDB sync bug is fixed.
+
+** Fix bug of using unavailable route.
+
+* Changes in vtysh
+
+** route-map and access-list configuration is merged into one
+configuration.
+
+** /usr/local/etc/Zebra.conf is integrated configuration file.  "write
+memory" in vtysh will write whole configuration to this file.
+
+** When -b option is specified to vtysh, vtysh read
+/usr/local/etc/Zebra.conf file then pass the confuguration to proper
+protocol daemon.  So make all protocol daemon's configuration file
+empty then invoke all daemon.  After that vtysh -b will setup saved
+configuration.
+
+zebrastart.sh
+=============
+/usr/local/sbin/zebra -d
+/usr/local/sbin/ripd -d
+/usr/local/sbin/ospfd -d
+/usr/local/sbin/bgpd -d
+/usr/local/bin/vtysh -b
+
+* Changes in zebra-0.89
+
+* Changes in lib
+
+** distribute-list can set all interface's access-list and prefix-list
+configuration.
+
+* Changes in ripd
+
+** "show ip protocols" display proper distribute-list settings and
+distance settings.
+
+** When metric infinity route received withdraw the route from kernel
+immediately it used to be wait garbage collection.
+
+** key-chain can be used for simple password authentication.
+
+** RIPv2 MIB getnext interface bug is fixed.
+
+* Changes in vtysh
+
+** --with-libpam enable PAM authentication for vtysh.
+
+** Now vtysh read vtysh.conf.  This file should be
+${SYSCONFDIR}/etc/vtysh.conf for security reason.  Usually it is
+/usr/local/etc/vtysh.conf.
+
+** "username WORD nopassword" command is added to vtysh.
+
+* Chagees in ospfd
+
+** NBMA interface support is added.
+
+** OSPF area is sorted by area ID.
+
+** New implementation of OSPF refreesh.
+
+** OSPF-MIB read function is partly added.
+
+* Changes in bgpd
+
+** When the peering is done by ebgp-multihop, nexthop is looked up
+like IBGP routes.
+
+** "show ip mbgp" commands are changed to "show ip bgp ipv4
+multicast".
+
+** New terminal commands are added.
+  "show ip bgp ipv4 (unicast|multicast) filter-list WORD"
+  "show ip bgp ipv4 (unicast|multicast) community"
+  "show ip bgp ipv4 (unicast|multicast) community-list WORD"
+  "show ip bgp ipv4 (unicast|multicast) community-list WORD exact-match"
+
+** MBGP soft-reconfiguration command is added.
+  "clear ip bgp x.x.x.x ipv4 (unicast|multicast) in"
+  "clear ip bgp x.x.x.x ipv4 (unicast|multicast) out"
+  "clear ip bgp x.x.x.x ipv4 (unicast|multicast) soft"
+  "clear ip bgp <1-65535> ipv4 (unicast|multicast) in"
+  "clear ip bgp <1-65535> ipv4 (unicast|multicast) out"
+  "clear ip bgp <1-65535> ipv4 (unicast|multicast) soft"
+  "clear ip bgp * ipv4 (unicast|multicast) in"
+  "clear ip bgp * ipv4 (unicast|multicast) out"
+  "clear ip bgp * ipv4 (unicast|multicast) soft"
+
+** MED related commands are added.
+  "bgp deterministic-med"
+  "bgp bestpath med confed"
+  "bgp bestpath med missing-as-worst"
+
+** "bgp default local-preference" command is added.
+
+** BGP confederation peer's routes are passed to zebra like IBGP route.
+
+** Community match command is added.
+  "show ip bgp community <val>"
+  "show ip bgp community <val> exact-match"
+
+** EBGP multihop route treatment bug is fixed.  Now nexthop is
+resolved by IGP routes.
+
+** Some commands are added to show routes by filter-list and community
+value.
+  "show ip bgp ipv4 (unicast|multicast) filter-list WORD"
+  "show ip bgp ipv4 (unicast|multicast) community"
+  "show ip bgp ipv4 (unicast|multicast) community-list WORD"
+  "show ip bgp ipv4 (unicast|multicast) community-list WORD exact-match"
+
+* Changes in zebra
+
+** zebra read interface's address information using getifaddrs() when
+it is available.
+
+** Reflect IPv6 interface's address change to protocol daemons.
+
+* Changes in zebra-0.88
+
+* Changes in lib
+
+** "exact-match" option is added to "access-list" and "ipv6
+access-list" command.  If this option is specified, the prefix and
+prefix length is compared as exact match mode.
+
+* Changes in zebra
+
+** New Zebra message ZEBRA_REDISTRIBUTE_DEFAULT_ADD and
+ZEBRA_REDISTRIBUTE_DEFAULT_DELTE are added.
+
+** Default administrative distance value is changed.
+
+            Old         New
+------------------------------------------
+system      10           0
+kernel      20           0
+connected   30           0
+static      40           1
+rip         50         120
+ripng       50         120
+ospf        60         110
+ospf6       49         110
+bgp         70         200(iBGP)  20(eBGP)
+------------------------------------------
+
+** Distance value can be passed from protocol daemon to zebra.
+
+** "show ip route" shows [metric/distance] value pair.
+
+** Zebra Protocol is changed to support multi-path route and distance
+value.
+
+* Changes in ospfd
+
+** "default-information originate [always]" command is added.
+
+** "default-metric <0-16777214>" command is added.
+
+** "show ip ospf database" command is integrated.  LS-ID and AdvRouter can
+   be specifed.  The commands are
+
+   show ip ospf database TYPE LS-ID
+   show ip ospf database TYPE LS-ID ADV-ROUTER
+   show ip ospf database TYPE LS-ID self-originate
+   show ip ospf database TYPE self-originate
+
+** route-map support for `redistribute' command are added.
+   Supported `match' statements are
+
+   match interface
+   match ip address
+   match next-hop
+
+   Supported `set' statements are
+
+   set metric
+   set metric-type
+
+** Pass OSPF metric value to zebra daemon.
+
+* Changes in ripd
+
+** When specified route-map does not exist, it means all deny.
+
+** "default-metric <1-16>" command is added.
+
+** "offset-list ACCESS-LIST-NAME <0-16>" and "offset-list
+ACCESS-LIST-NAME <0-16> IFNAME" commands are added.
+
+** "redistribute ROUTE-TYPE metric <0-16>" command is added.
+
+** "default-information originate" command is added.
+
+** "ip split-horizon" and "no ip split-horizon" is added to interface
+configuration.
+
+** "no router rip" command is added.
+
+** "ip rip authentication mode (md5|text)" is added to interface
+configuration.
+
+** "ip rip authentication key-chain KEY-CHAIN" is added to interface
+configuration.
+
+** Pass RIP metric value to zebra daemon.
+
+** Distance manipulation functions are added.
+
+* Changes in bgpd
+
+** Fix bug of next hop treatment for MPLS-VPN route exchange.
+
+** BGP peer MIB is updated.
+
+** Aggregated route has origin IGP, atomic-aggregate and proper
+aggregator attribute.
+
+** Suppressed route now installed into BGP table.  It is only
+suppressed from announcement.
+
+** BGP router-id is properly set after "no router bgp ASN" and "router
+bgp ASN".
+
+** Add check for nexthop is accessible or not for IBGP routes.
+
+** Add cehck for nexthop is on connected or not for EBGP routes.
+
+** "dump bgp route" command is changed to "dump bgp route-mrt" for
+generating MRT compatible dump output.
+
+** Soft reconfiguration inbound and outbound is supported.
+
+** Route refresh feature is supported.
+
+* Changes in vtysh
+
+** VTY shell is now included into the distribution.
+
+* Changes in zebra-0.87
+
+* Changes in lib
+
+** "show startup-config" command is added.
+
+** "show history" command is added.
+
+** Memory statistics command is changed.  New command
+
+   show memory all
+   show memory lib
+   show memory rip
+   show memory ospf
+   show memory bgp
+
+are added.
+
+** Filters can be removed only specify it's name.  New command
+
+   no access-list NAME
+   no ip community-list NAME
+   no ip as-path access-list NAME
+   no route-map NAME
+
+are added.
+
+** At any node, user can view/save user configuration.
+
+   write terminal
+   write file
+   wirte memory
+
+are added to every node in default.
+
+** LCD completion is added.  For example both "ip" and "ipv6" command
+are exist, "i" then press TAB will be expanded to "ip".
+
+* Changes in bgpd
+
+** "show ip bgp" family shows total number of prefixes.
+
+** "no bgp default ipv4-unicast" command is added.
+
+** Extended Communities support is added.
+
+** "no neighbor PEER send-community extended" command is added.
+
+** MPLS-VPN PE-RR support is added.
+
+ New address family vpnv4 unicast is introduced.
+
+  !
+  address-family vpnv4 unicast
+   neighobr PEER activate
+   network A.B.C.D rd RD tag TAG
+  exit-address-family
+  !
+
+ To make it route-reflector, please configure it under normal router
+bgp ASN.
+
+  !
+  router bgp 7675
+   no bgp default ipv4-unicast
+   bgp router-id 10.0.0.100
+   bgp cluster-id 10.0.0.100
+   neighbor 10.0.0.1 remote-as 65535
+   neighbor 10.0.0.1 route-reflector-client
+   neighbor 10.0.0.2 remote-as 65535
+   neighbor 10.0.0.2 route-reflector-client
+   neighbor 10.0.0.3 remote-as 65535
+   neighbor 10.0.0.3 route-reflector-client
+  !
+  address-family vpnv4 unicast
+   neighbor 10.0.0.1 activate
+   neighbor 10.0.0.2 activate
+   neighbor 10.0.0.3 activate
+  exit-address-family
+  !
+
+* Changes in ospfd
+
+** Many many bugs are fixed.
+
+* Changes in ripd
+
+** Better interface up/down event handle.
+
+* Changes in zebra
+
+** Better interface up/down event handle.
+
+* Changes in zebra-0.86
+
+* Changes in lib
+
+** Fix bug of exec-timeout command which may cause crush.
+
+** Multiple same policy for "access-list", "ip prefix-list, "as-path
+access-list", "ip community-list" is not duplicated.
+
+** It used to be "ip prefix-list A.B.C.D/M" match routes which mask >=
+M.  Now default behavior is exact match so it only match routes which
+mask == M.
+
+* Changes in bgpd
+
+** "match ip address prefix-list" is added to route-map.
+
+** A route without local preference is evaluated as 100 local preference.
+
+** Select smaller router-id route when other values are same.
+
+** Compare MED only both routes comes from same neighboring AS.
+
+** "bgp always-compare-med" command is added.
+
+** Now MED value is passed to IBGP peer.
+
+** When neighbor's filter is configured with non-existent access-list,
+as-path access-list, ip prefix-list, route-map.  The behavior is
+changed from all permit to all deny.
+
+* Changes in ospfd
+
+** Fix bug of external route tag byte order.
+
+** OSPF Neighbor deletion bug which cause crush is fixed.
+
+** Some route calculation bug are fixed.
+
+** Add sanity check with router	routing table.
+
+** Fix bug of memory leak about linklist.
+
+** Fix bug of 1-WayReceived in NSM.
+
+** Take care of BIGENDIAN architecture.
+
+** Fix bug of NSM state flapping between ExStart and Exchange.
+
+** Fix bug of Network-LSA originated in stub network.
+
+** Fix bug of MS flag unset.
+
+** Add to schedule router_lsa origination when the interface cost
+changes.
+
+** Increment LS age by configured interface transmit_delay.
+
+** distribute-list is reimplemented.
+
+** Fix bug of refresh never occurs.
+
+** Fix bug of summary-LSAs reorigination.  Correctly copy
+OSPF_LSA_APPROVED flag to new LSA. when summary-LSA is reoriginatd.
+
+** Fix bug of re-origination when a neighbor disappears.
+
+** Fix bug of segmentation fault with DD retransmission.
+
+** Fix network-LSA re-origination problem.
+
+** Fix problem of remaining withdrawn routes on zebra.
+
+* Changes in ripd
+
+** Do not leave from multicast group when interface goes down bug is
+fixed.
+
+* Changes in zebra
+
+** Remove client structure when client dies.
+
+** Take care static route when interface goes up/down.
+
+* Changes in zebra-0.85
+
+* Changes in bgpd
+
+** "transparent-nexthop" and "transparenet-as" commands are added.
+
+** Route reflector's originator-id bug is fixed.
+
+* Changes in ospfd
+
+** Fix bug of OSPF LSA memory leak.
+
+** Fix bug of OSPF external route memory leak.
+
+** AS-external-LSA origination bug was fixed.
+
+** LS request treatment is completely rewritten.  Now performance is
+drastically improved.
+
+* Changes in ripd
+
+** RIPv1 update is done by class-full manner.
+
+* Changes in zebra-0.84b
+
+* Changes in lib
+
+** Fix bug of inet_pton return value handling
+
+* Changes in bgpd
+
+** Fix bug of BGP-4+ link-local address nexthop check for IBGP peer.
+
+** Don't allocate whole buffer for displaying "show ip bgp".  Now it
+consume only one screen size memory.
+
+* Changes in ripd
+
+** Fix debug output string.
+
+** Add RIP peer handling.  RIP peer are shown by "show ip protocols".
+
+* Changes in zebra-0.84a
+
+* Changes in bgpd
+
+** Fix serious bug of BGP-4+ peering under IPv6 link-local address.
+   Due to the bug BGP-4+ peering may not be established.
+
+* Changes in zebra-0.84
+
+* Changes in lib
+
+** IPv6 address and prefix parser is added to VTY by Toshiaki Takada
+   <takada@zebra.org>.  DEFUN string is "X:X::X:X" for IPv6 address,
+   "X:X::X:X/M" for IPv6 prefix.  You can use it like this.
+
+   DEFUN (func, cmd, "neighbor (A.B.C.D|X:X::X:X) remote-as <1-65535>")
+
+** VTY configuration is locked during configuration.  This is for
+   avoiding unconditional crush from two terminals modify the
+   configuration at the same time.  "who" command shows which termnal
+   lock the configuration.  VTY which has '*' character at the head of
+   line is locking the configuration.
+
+** Old logging functions are removed.  Functions like
+   log_open,log_close,openlog are deleted.  Instead of that please use
+   zlog_* functions.  zvlog_* used in ospf6d are deleted also.
+
+** "terminal monitor" command is added.  "no terminal monitor" is for
+   disabling.  This command simply display logging information to the
+   VTY.
+
+** dropline.[ch] files are deleted.
+
+* Changes in bgpd
+
+** BGP neighbor configuration are sorted by it's IP address.
+
+** BGP peer configuration and actual peer is separated.  This is
+   preparation for Route Server support.
+
+** "no neighbor PEER" command is added. You can delete neighbor
+   without specifying AS number.
+
+** "no neighbor ebgp-multihop" command is added.
+
+** "no neighbor port PORT" command is added.
+
+** To conform RFC1771, "neighbor PEER send-community" is default
+   behavior.  If you want to disable sending community attribute,
+   please specify "no neighbor PEER send-community" to the peer.
+
+** "neighbor maximum-prefix NUMBER" command is added.
+
+** Multi-protocol extention NLRI is proceeded only when the peer is
+   configured proper Address Family and Subsequent Address Family.  If
+   not, those NLRI are simply ignored.
+
+** Aggregate-address support is improved.  Currently below commands
+   works.
+
+  "aggregate-address"
+  "aggregate-address summary-only"
+  "no aggregate-address"
+  "no aggregate-address summary-only"
+
+  "ipv6 bgp aggregate-address"
+  "ipv6 bgp aggregate-address summary-only"
+  "no ipv6 bgp aggregate-address"
+  "no ipv6 bgp aggregate-address summary-only"
+
+** redistribute route-map bug is fixed.
+
+** MBGP support becomes default.  "configure" option --enable-mbgp is
+   removed.
+
+** New command "neighbor PEER timers connect <1-65535>" is added.
+
+** New command "neighbor PEER override-capability" is added.
+
+** New command "show ip bgp neighbor A.B.C.D advertised-route" is added.
+
+** New command "show ip bgp neighbor A.B.C.D routes" is added.  To use
+   this command, you have to configure neighbor with
+   "neighbor A.B.C.D soft-reconfiguration inbound" beforehand.
+   
+
+* Changes in zebra-0.83
+
+* bgpd
+
+** Serious bug fix about fetching global and link-local address at the
+same time.  Due to this bug, corrupted IPv6 prefix is generated.  If
+you uses bgpd for BGP-4+ please update to this version.  The bug is
+introduced in zebra-0.82.
+
+** When bgpd send Notify message, don't use thread manager.  It is now
+send to neighbor immediately.
+
+* Changes in zebra-0.82
+
+** Solaris 2.6 support is added by Michael Handler
+<handler@sub-rosa.com>.
+
+** MBGP support is added by Robert Olsson <Robert.Olsson@data.slu.se>.
+Please specify --enable-mbgp to configure script.  This option will be
+removed in the future and MBGP support will be default.
+
+* Changes in zebra
+
+** When interface goes down, withdraw connected routes from routing
+table.  When interface goes up, restore the routes to the routing
+table.
+
+** `show interface' show interface's statistics on Linux and BSD with
+routing socket.
+
+** Now zebra can get MTU value on BSDI/OS.
+
+* Changes in bgpd
+
+** Add capability option support based upon
+draft-ietf-idr-bgp4-cap-neg-04.txt.
+
+** Add `show ipv6 bgp prefix-list' command.
+
+** Check self AS appeared in received routes.
+
+** redistribute route-map support is added.
+
+** BGP packet dump feature compatible with MRT.
+
+* Changes in ripd
+
+** Fix bug of `timers basic' command's argument format.
+
+* Changes in ripngd
+
+** Calculate max RTE using interface's MTU value.
+
+* Changes in ospfd
+
+** Some correction to LSU processing.
+
+** Add check for lsa->refresh_list.
+
+* Changes in ospf6d
+
+** Many debug feature is added.
+
+* Changes in zebra-0.81
+
+** SNMP support is disabled in default.--enable-snmp option is added
+to configure script.
+
+* Changes in bgpd
+
+** Fix FSM bug which introduced in zebra-0.80.
+
+* Changes in zebra-0.80
+
+* access-list
+
+  New access-list name space `ipv6 access-list' is added.  At the same
+  time, `access-list' statemant only accepts IPv4 prefix.  Please be
+  careful if you use IPv6 filtering.  You will need to change your
+  configuration.  For IPv6 filtering please use `ipv6 access-list'.
+  
+  As of zebra-0.7x, user can use `access-list' for both IPv4 and IPv6
+  filtering.
+  
+  ! zebra-0.7x
+  access-list DML-net permit 203.181.89.0/24
+  access-list DML-net permit 3ffe:506::0/32
+  access-list DML-net deny any
+  !
+  
+  Above configuration is not valid for zebra-08x.  Please add `ipv6'
+  before 'access-list' when you configure IPv6 filtering.
+  
+  ! zebra-0.8x
+  access-list DML-net permit 203.181.89.0/24
+  access-list DML-net deny any
+  !
+  ipv6 access-list DML-net permit 3ffe:506::0/32
+  ipv6 access-list DML-net deny any
+  !
+
+* prefix-list
+
+  And also new prefix-list name space `ipv6 prefix-list' is added.  It
+  is the same as the change of `access-list'. `ip prefix-list' now only
+  accept IPv4 prefix.  It was source of confusion that `ip prefix-list'
+  can be used both IPv4 and IPv6 filtering.  Now name space is separated
+  to clear the meaning of the filter.
+  
+  If you use `ip prefix-list' for IPv6 filtering, please change the
+  stetement.
+  
+  ! zebra-0.7x
+  ip prefix-list 6bone-filter seq 5 permit 3ffe::/17 le 24 ge 24
+  ip prefix-list 6bone-filter seq 10 permit 3ffe:8000::/17 le 28 ge 28
+  ip prefix-list 6bone-filter seq 12 deny 3ffe::/16
+  ip prefix-list 6bone-filter seq 15 permit 2000::/3 le 16 ge 16
+  ip prefix-list 6bone-filter seq 20 permit 2001::/16 le 35 ge 35
+  ip prefix-list 6bone-filter seq 30 deny any
+  !
+  
+  Now user can explicitly configure it as IPv6 prefix-list.
+  
+  ! zebra-0.8x
+  ipv6 prefix-list 6bone-filter seq 5 permit 3ffe::/17 le 24 ge 24
+  ipv6 prefix-list 6bone-filter seq 10 permit 3ffe:8000::/17 le 28 ge 28
+  ipv6 prefix-list 6bone-filter seq 12 deny 3ffe::/16
+  ipv6 prefix-list 6bone-filter seq 15 permit 2000::/3 le 16 ge 16
+  ipv6 prefix-list 6bone-filter seq 20 permit 2001::/16 le 35 ge 35
+  ipv6 prefix-list 6bone-filter seq 30 deny any
+  !
+
+* RIP configuration
+
+  If you want to filter only default route (0.0.0.0/0) and permit other
+  routes, it was hard to do that.  Now `ip prefix-list' can be used for
+  RIP route filtering.
+  
+  New statement:
+  
+  `distribute-list prefix PLIST_NAME (in|out) IFNAME'
+  
+  is added to ripd.  So you can configure on eth0 interface accept all
+  routes other than default routes.
+  
+  !
+  router rip
+   distribute-list prefix filter-default in eth0
+  !
+  ip prefix-list filter-default deny 0.0.0.0/0 le 0
+  ip prefix-list filter-default permit any
+  !
+
+* RIPng configuration
+
+  Same change is done for ripngd.  You can use `ipv6 prefix-list' for
+  filtering.
+  
+  !
+  router ripng
+   distribute-list prefix filter-default in eth0
+  !
+  ipv6 prefix-list filter-default deny ::/0 le 0
+  ipv6 prefix-list filter-default permit any
+  !
+
+* BGP configuration
+
+  So far, Multiprotocol Extensions for BGP-4 (RFC2283) configuration is
+  done with traditional IPv4 peering statement like blow.
+  
+  !
+  router bgp 7675
+   neighbor 3ffe:506::1 remote-as 2500
+   neighbor 3ffe:506::1 prefix-list 6bone-filter out
+  !
+  
+  For separating configuration IPv4 and IPv6, and for retaining Cisco
+  configuration compatibility, now IPv6 configuration is done by IPv6
+  specific statement.  IPv6 BGP configuration is done by statement which
+  start from `ipv6 bgp'.
+  
+  !
+  router bgp 7675
+  !
+  ipv6 bgp neighbor 3ffe:506::1 remote-as 2500
+  ipv6 bgp neighbor 3ffe:506::1 prefix-list 6bone-filter out
+  !
+  
+  At the same time some IPv6 specific commands are deleted from IPv4
+  configuration.
+  
+  o redistribute ripng
+  o redistribute ospf6
+  o neighbor PEER version BGP_VERSION
+  o neighbor PEER interface IFNAME
+  
+  Those commands are only accepted as like below.
+  
+  o ipv6 bgp redistribute ripng
+  o ipv6 bgp redistribute ospf6
+  o ipv6 bgp neighbor PEER version BGP_VERSION
+  o ipv6 bgp neighbor PEER interface IFNAME
+  
+  And below new commands are added.
+  
+  o ipv6 bgp network IPV6_PREFIX
+  o ipv6 bgp redistribute static
+  o ipv6 bgp redistribute connected
+  o ipv6 bgp neighbor PEER remote-as <1-65535> [passive]
+  o ipv6 bgp neighbor PEER ebgp-multihop [TTL]
+  o ipv6 bgp neighbor PEER description DESCRIPTION
+  o ipv6 bgp neighbor PEER shutdown
+  o ipv6 bgp neighbor PEER route-reflector-client
+  o ipv6 bgp neighbor PEER update-source IFNAME
+  o ipv6 bgp neighbor PEER next-hop-self
+  o ipv6 bgp neighbor PEER timers holdtime <0-65535>
+  o ipv6 bgp neighbor PEER timers keepalive <0-65535>
+  o ipv6 bgp neighbor PEER send-community
+  o ipv6 bgp neighbor PEER weight <0-65535>
+  o ipv6 bgp neighbor PEER default-originate
+  o ipv6 bgp neighbor PEER filter-list FILTER_LIST_NAME (in|out)
+  o ipv6 bgp neighbor PEER prefix-list PREFIX_LIST_NAME (in|out)
+  o ipv6 bgp neighbor PEER distribute-list AS_LIST_NAME (in|out)
+  o ipv6 bgp neighbor PEER route-map ROUTE_MAP_NAME (in|out)
+  
+  And some utility commands are introduced.
+  
+  o clear ipv6 bgp [PEER]
+  o show ipv6 bgp neighbors [PEER]
+  o show ipv6 bgp summary
+  
+  I hope these changes are easy to understand for current Zebra users...
+
+* To restrict connection to VTY interface.
+
+  It used to be both IPv4 and IPv6 filter can be specified with one
+  access-list.  Then the access-list can be appried to VTY interface
+  with `access-class' stetement in `line vty' node.  Below is example in
+  zebra-0.7x.
+  
+  !
+  access-list local-only permit 127.0.0.1/32
+  access-list local-only permit ::1/128
+  access-list local-only deny any
+  !
+  line vty
+   access-class local-only
+  !
+  
+  Now IPv4 and IPv6 filter have each name space.  It is not possible to
+  specify IPv4 and IPv6 filter with one access-list.  For setting IPv6
+  access-list in `line vty', `ipv6 access-class' statement is
+  introduced.  Let me show the configuration in zebra-0.8x.
+  
+  !
+  access-list local-only permit 127.0.0.1/32
+  access-list local-only deny any
+  !
+  ipv6 access-list local-only permit ::1/128
+  ipv6 access-list local-only dny any
+  !
+  line vty
+   access-class local-only
+   ipv6 access-class local-only
+  !
+
+* route-map
+
+  New IPv6 related route-map match commands are added.
+  
+  o match ipv6 address
+  o match ipv6 next-hop
+  
+  Please change your configuration if you use IP match statement for
+  IPv6 route.
+  
+  zebra-0.7x config
+  =================
+  !
+  access-list all permit any
+  !
+  route-map set-nexthop permit 10
+   match ip address all
+   set ipv6 next-hop global 3ffe:506::1
+   set ipv6 next-hop local fe80::cbb5:591a
+  !
+  
+  zebra-0.8x config
+  =================
+  !
+  ipv6 access-list all permit any
+  !
+  route-map set-nexthop permit 10
+   match ipv6 address all
+   set ipv6 next-hop global 3ffe:506::1
+   set ipv6 next-hop local fe80::cbb5:591a
+  !
+
+* zebra connection
+
+  Protocol daemon such as ripd, bgpd, ospfd will reconnect zebra daemon
+  when the connection fail.  Those daemons try to connect zebra every 10
+  seconds first three trial, then the interval changed to 60 seconds.
+  After all, if ten connections are fail, protocol daemon give up the
+  connection to the zebra daemon.
+
+* SNMP support (is not yet finished)
+
+  Zebra uses SMUX protocol (RFC1227) for making communication with SNMP
+  agent.  Currently lib/smux.c can be compiled only with ucd-snmp-4.0.1
+  and http://ucd-snmp.ucdavis.edu/patches/012.patch.  It can not be
+  compiled with ucd-snmp-3.6.2.
+  
+  After applying the patch to ucd-snmp-4.0.1, please configure it with
+  SMUX module.
+  
+  % configure --with-mib-modules=smux
+  
+  After compile & install ucd-snmp-4.0.1, you will need to configure
+  smuxpeer.  I'm now using below configuration.
+  
+  /usr/local/share/snmp/snmpd.conf
+  ================================
+  smuxpeer 1.3.6.1.6.3.1 test
+  
+  Above 1.3.6.1.6.3.1 and test is temporary configuration which is hard
+  coded in lib/smux.c. Yes, I know it is bad, I'll change it ASAP.
+
+* HUP signal treatment
+
+  From zebra-0.80, ripd will reload it's configuration file when ripd
+  receives HUP signal.  Other daemon such as bgpd, ospfd will support
+  HUP signal treatment soon.
+
+* Changes in zebra-0.79
+
+* Changes in zebra
+
+** Broadcast address setting on Linux box bug is fixed.
+
+** Protocol daemon can install connected IPv6 route into the kernel.
+
+** Now zebra can handle blackhole route.
+
+* Changes in ripd
+
+** Add route-map feature for RIP protocol.
+
+** In case of RIP version 2 routing table entry has IPv4 address and
+netmask pair which host part bit is on, ignore the entry.
+
+* Changes in ripngd
+
+** Change CMSG_DATA cast from (u_char *) to (int *).  (u_char *) does
+not work for NetBSD-currnet on SparcStation 10.
+
+* Changes in ospfd
+
+** MaxAge LSA treatment is added.
+
+** ABR/ASBR functionality is added.
+
+** Virtual Link funtionality is added.
+
+** ABR behaviors IBM/Cisco/Shortcut is added.
+
+* Changes in ospf6d
+
+** Enclosed KAME specific part with #ifdef #endif
+
+* Changes in zebra-0.78
+
+* Changes in lib
+
+** SNMP support is started.
+
+** Now Zebra can work on BSD/OS 4.X.
+
+** Now Zebra can compiled on vanilla OpenBSD 2.5 but not yet working correcltly.
+
+* Changes in zebra
+
+** Interface index detection using ioctl() bug is fixed.
+
+** Interface information protocol is changed.  Now interface
+addition/deletion and interface's address addition/deletion is
+separated.
+
+* Changes in bgpd
+
+** BGP hold timer bug is fixed.
+
+** BGP keepavlie timer becomes configurable.
+
+* Changes in ripd
+
+** When making reply to rip's REQUEST message, fill in
+RIP_METRIC_INFINITY with network byte order using htonl ().
+
+** Pass host byte order address to IN_CLASSC and IN_CLASSB macro.
+
+* Changes in ospfd
+
+** LSA flooding works.
+
+** Fix bug of DD processing.
+
+** Fix bug of originating router-LSA bug is fixed.
+
+** LSA structure is changed to support LSA aging.
+
+* Changes in ospf6d
+
+** `ip6' statement in configuration is changed to `ipv6'.
+
+* Changes in zebra-0.77
+
+* Changes in lib
+
+** SIGUSR1 reopen logging file.
+
+** route-map is extended to support multi-protocol routing
+information.
+
+** When compiling under GNU libc 2.1 environment don't use inet6-apps.
+
+* Changes in zebra
+
+** Basic IPv6 router advertisement codes added.  It is not yet usable.
+
+** Fix IPv6 route addition/deletion bug is fixed.
+
+** `show ip route A.B.C.D' works
+
+* Changes in bgpd
+
+** When invalid unfeasible routes length comes, bgpd send notify then
+continue to process the packet.  Now bgpd stop parsing invalid packet
+then return to main loop.
+
+** BGP-4+ withdrawn routes parse bug is fixed.
+
+** When BGP-4+ information passed to non shared network's peer, trim
+link-local next-hop information.
+
+** `no redistribute ROUTE_TYPE' withdraw installed routes from BGP
+routing information.
+
+** `show ipv6 route IPV6ADDR' command added.
+
+** BGP start timer has jitter.
+
+** Holdtimer configuration bug is fixed.  Now configuration does not
+show unconfigured hold time value.
+
+* Changes in ripngd
+
+** Now update timer (default 30 seconds) has +/- 50% jitter value.
+
+** Add timers basic command.
+
+** `network' configuration is dynamically reflected.
+
+** `timers basic <update> <timeout> <garbage>' added.
+
+* Changes in ripd
+
+** Reconstruct almost codes.
+
+** `network' configuration is dynamically reflected.
+
+** RIP timers now conforms to RFC2453.  So user can configure update,
+timeout, garbage timer.
+
+** `timers basic <update> <timeout> <garbage>' works.
+
+* Changes in ospfd
+
+** Bug of originating network LSA is fixed.
+
+** `no router ospf' core dump bug is fixed.
+
+* Changes in ospf6d
+
+** Redistribute route works.
+
+* Changes in zebra-0.76
+
+* Changes in lib
+
+** configure.in Linux IPv6 detection problem is fixed.
+
+** Include SERVICES file to the distribution
+
+** Update zebra.texi to zebra-0.76.
+
+* Changes in zebra-0.75
+
+* Changes in lib
+
+** `termnal length 0' bug is fixed.
+
+* Changes in zebra
+
+** When zebra starts up, sweep all zebra installed routes.  If -k or
+--keep_kernel option is specified to zebra dameon.  This function is
+not performed.
+
+* Changes in ripngd
+
+** Aggreagte address command supported.  In router ripngd,
+`aggregate-address IPV6PREFIX' works.
+
+* Changes in bgpd
+
+** Input route-map's bug which cause segmentation violation is fixed.
+
+** route-map method improved.
+
+** BGP-4+ nexthop detection improved.
+
+** BGP-4+ route re-selection bug is fixed.
+
+** BGP-4+ iBGP route's nexthop calculation works.
+
+** After connection Established `show ip bgp neighbor' display BGP TCP
+connection's source and destination address.
+
+** In case of BGP-4+ `show ip bgp neighbor' display BGP-4+ global and
+local nexthop which used for originated route.  This address will be
+used when `next-hop-self'.
+
+* Changes in ospfd
+
+** Fix bug of DR election.
+
+** Set IP precedence field with IPTOS_PREC_INTERNET_CONTROL.
+
+** Schedule NeighborChange event if NSM status change.
+
+** Never include a neighbor in Hello packet, when the neighbor goes
+down.
+
+* Changes in zebra-0.74
+
+* Changes in lib
+
+** Now `terminal length 0' means no line output control.
+
+** `line LINES' command deleted.  Instead of this please use `terminal
+length <0-512>'.
+
+** `terminal length <0-512>' is each vty specific configuration so it
+can not be configured in the configuration file.  If you want to
+configure system wide line control, please use `service
+terminal-length <0-512>'.  This configuration affects to the all vty
+interface.
+
+* Changes in zebra
+
+** Installation of IPv6 route bug is fixed.
+
+* Changes in bgpd
+
+** Very serious bug of bgp_stop () is fixed. When multiple route to
+the same destination exist, bgpd try to announce the information to
+stopped peer.  Then add orphan write thread is added.  This cause
+many strange behavior of bgpd.
+
+** Router-id parsing bug is fixed.
+
+** With BGP-4+ nexthop installation was done with global address but
+it should be link-local address.  This bug is fixed now.
+
+** When incoming route-map prepend AS, old AS path remained.  Now bgpd
+free old AS path.
+
+** `neighbor PEER weight <0-65535>' command added.
+
+* Changes in ripngd
+
+** Almost codes are rewritten to conform to RFC2080.
+
+* Changes in ospfd
+
+** SPF calculation timer is added.  Currently it is set to 30 seconds.
+
+** SPF calculation works now.
+
+** OSPF routing table codes are added.
+
+** OSPF's internal routes installed into the kernel routing table.
+
+** Now `ospfd' works as non-area, non-external route support OSPF
+router.
+
+** Call of log_rotate() is removed.
+
+* Changes in ospf6d
+
+** LSA data structure is changed.
+
+** Call of log_rotate() is removed.
+
+* Changes in zebra-0.73
+
+* Changes in lib
+
+** `config terminal' is changed to `configure terminal'.
+
+** `terminal length <0-512>' command is added.
+
+** Variable length argument was specified by `...'.  Now all strings
+started with character `.' is variable length argument.
+
+* Changes in zebra
+
+** Internal route (such as iBGP, internal OSPF route) handling works
+correctly.
+
+** In interface node, `ipv6 address' and `no ipv6 address' works.
+
+** Interface's address remain after `no ip address' bug is fixed.
+
+** Host route such as IPv4 with /32 mask and IPv6 with /128 mask
+didn't set RTF_GATEWAY even it has gateway.  This bug if fixed now.
+
+* Changes in bgpd
+
+** `match as-path' argument is used to be specify AS PATH value itself
+directly (e.g. ^$).  But it is changed to specify `ip as-apth
+access-list' name.
+
+** iBGP route handle works without getting error from the kernel.
+
+** `set aggregator as AS A.B.C.D' command is added to route-map.
+
+** `set atomic-aggregate' command is added to bgpd's routemap.
+
+** Announcement of atomic aggregate attribute and aggregator attribute
+works.
+
+** `update-source' bug is fixed.
+
+** When a route learned from eBGP is announced to iBGP, local
+preference was set to zero.  But now it set to
+DEFAULT_LOCAL_PREF(100).
+
+* Changes in ripd
+
+** RIPv1 route filter bug is fixed.
+
+** Some memory leak is fixed.
+
+* Changes in ospfd
+
+** Fix bug of DR Election.
+
+** Fix bug of adjacency forming.
+
+* Changes in ospf6d
+
+** Clean up logging message.
+
+** Reflect routing information to zebra daemon.
+
+* Changes in zebra-0.72
+
+* Changes in lib
+
+** When getsockname return IPv4 mapped IPv6 address.  Convert it to
+IPv4 address.
+
+* Changes in bgpd
+
+** Change route-map's next-hop related settings.
+
+set ip nexthop          -> set ip next-hop
+set ipv6 nexthop global -> set ipv6 next-hop global
+set ipv6 nexthop local  -> set ipv6 next-hop local
+
+** Add `next-hop-self' command.
+
+* Changes in ospfd
+
+** Fix bug of multiple `network area' directive crashes.
+
+* Changes in zebra-0.71
+
+* Changes in lib
+
+** `log syslog' command is added.
+
+** Use getaddrinfo function to bind IPv4/IPv6 server socket.
+
+** `no banner motd' will suppress motd output when user connect to VTY.
+
+** Bind `quit' command to major nodes.
+
+* Changes in zebra
+
+** Point-to-point link address handling bug is fixed.
+
+* Changes in bgpd
+
+** AS path validity check is added.  If malformed AS path is received
+NOTIFY Malformed AS path is send to the peer.
+
+** Use getaddrinfo function to bind IPv4/IPv6 server socket.
+
+* Changes in ripd
+
+** Connected network announcement bug is fixed.
+
+** `broadcast' command is deleted.
+
+** `network' command is added.
+
+** `neighbor' command is added.
+
+** `redistribute' command is added.
+
+** `timers basic' command is added.
+
+** `route' command is added.
+
+* Changes in ripngd
+
+** Fix metric calculation bug.
+
+* Changes in ospfd
+
+** Check sum bug is fixed.
+
+* Chanegs in ospf6d
+
+** Routing table code is rewritten.
+
+* Changes in zebra-0.70
+
+* Changes in zebra
+
+** Critical routing information base calculation bug check is fixed.
+
+** zebra ipv4 message is extended to support external/internal route
+flavor.
+
+** Now if internal route doesn't has direct connected nexthop, then
+nexthop is calculated by looking up IGP routing table.
+
+* Changes in bgpd
+
+** `neighbor PEER update-source IFNAME' command added as ALIAS to
+`neighbor PEER interface IFNAME'.
+
+* Changes in ospfd
+
+** DD null pointer bug is fixed.
+
+* Changes in zebra-0.69
+
+* Changes in zebra
+
+** zebra redistirbution supports dynamic notification of the route
+change.  If you add static route while running zebra, it will be
+reflected to other protocol daemon which set `redistribute static'.
+
+** If static route installation is failed due to the error.  The
+static route is not added to the configuration and zebra routing
+table.
+
+** zebra sets forwarding flag to on when it starts up.
+
+** `no ip forwarding' turn off IPv4 forwarding.
+
+** `no ipv6 forwarding' turn off IPv6 forwarding.
+
+** Change `show ipforward' command to `show ip forwarding'.
+
+** Change `show ipv6forward' command to `show ipv6 forwarding'.
+
+** `ip route A.B.C.D/M INTERFACE' works.  So you can set `ip route
+10.0.0.0/8 eth0'.
+
+* Changes in bgpd
+
+** `neighbor PEER send-community' command is added.  If the option is
+set, bgpd will send community attribute to the peer.
+
+** When a BGP route has no-export community attribute and
+send-community is set to the peer, the route is not announced to the
+peer.
+
+* Changes in ripngd
+
+** When ripngd terminates, delete all installed route.
+
+** `redistribute static', `redistribute connected' works.
+
+** Change `debug ripng event' to `debug ripng events'.
+
+** Change `show debug ripng' to `show debugging ripng'.
+
+** Bug of static route deletion is fixed.
+
+* Changes in ospfd
+
+** LS request and LS update can be send and received.
+
+* Changes in zebra-0.68
+
+* Changes in lib
+
+** DEFUN() is extended to support (a|b|c) statement.
+
+** Input buffer overflow bug is fixed.
+
+* Changes in bgpd
+
+** `ip community-list' is added.
+
+** set community and match community is added to route-map statement.
+
+** aggregate-address A.B.C.D/M partly works.  Now it works only
+summary-only mode.
+
+* Changes in zebra
+
+** IPv6 network address delete bug is fixed.
+
+* Changes in ospfd
+
+** DR election bug fixed.
+
+** Now Database Description can be send or received.
+
+** Neighbor State Machine goes to Full state.
+
+* Changes in ospf6d
+
+** router zebra related bug is fixed.
+
+* Changes in zebra-0.67
+
+* Changes in lib
+
+** `service password-encryption' is added for encrypted password.
+
+* Changes in bgpd
+
+** `set as-path prepend ASPATH' is added to route-map command.
+
+** `set weight WEIGHT' is added to route-map command.
+
+** `no set ipv6 nexthop global' and `no set ipv6 nexthop local'
+command is added to route-map.
+
+** `neighbor IP_ADDR version BGP_VERSION' command's BGP_VERSION
+argument changed.
+
+Old               New
+=====================
+bgp4              4
+bgp4+             4+
+bgp4+-draft-00    4-
+=====================
+
+If you want to peer with old draft version of BGP-4+, please configure
+like below:
+
+router bgp ASN
+ neighbor PEER version 4-
+
+** Some AS path isn't correctly compared during route selection.  Now
+it is fixed.
+
+* Changes in ospfd
+
+** `router zebra' is default behavior.
+
+* Changes in ospf6d
+
+** `router zebra' is default behavior.
+
+* Changes in zebra-0.66
+
+* Changes in zebra
+
+** When other daemon such as gated install routes into the kernel then
+zebra blocks.  This is only occur with netlink socket.  Now socket is
+set as NONBLOCKING and problem is fixed.  Reported and fixed by
+Patrick Koppen <koppen@rhrk.uni-kl.de>
+
+* Changes in bgpd
+
+** Now `router zebra' is not needed to insert BGP routes into the
+kernel.  It is default behavior.  If you don't want to install the BGP
+routes to the kernel, please configure like below:
+
+!
+router zebra
+ no redistribute bgp
+!
+
+** redistribute connected works.
+
+** redistribute static now filter local loopback routes and link local
+network.
+
+* Changes in ripd
+
+** Some network check is added.  Patch is done by Carlos Alberto
+Barcenilla <barce@frlp.utn.edu.ar>
+
+* Changes in ripngd
+
+** Sometimes ripngd install wrong nexthop into the kernel.  This bug
+is fixed now.
+
+** Now `router zebra' is not needed to insert RIPng routes into the
+kernel.  It is default behavior. If you don't want to install the BGP
+routes to the kernel, please configure like below:
+
+!
+router zebra
+ no redistribute ripng
+!
+
+* Changes in zebra-0.65
+
+* Changes in lib
+
+** `C-c' changes current node to ENABLE_NODE.  Previously it doesn't.
+
+** In ENABLE_NODE, `exit' command close vty connection.
+
+** `service advanced-vty' enable advanced vty function.  If this
+service is specified one can directly connect to ENABLE_NODE when
+enable password is not set.
+
+** `lines LINES' command is added by Stephen R. van den Berg
+<srb@cuci.nl>.
+
+* Changes in zebra
+
+** Basic Linux policy based routing table support is added by Stephen
+R. van den Berg <srb@cuci.nl>.
+
+* Changes in bgpd
+
+** route-map command is improved:
+  `match ip next-hop': New command.
+  `match metric': New command.
+  `set metric': Doc fixed.
+  `set local-preference': DEFUN added.
+
+* Changes in ripd
+
+** Check of announced network is added.  Now multicast address is
+filtered.  Reported by Carlos Alberto Barcenilla
+<barce@frlp.utn.edu.ar>
+
+** Check of network 127 is added.  Reported by Carlos Alberto
+Barcenilla <barce@frlp.utn.edu.ar>
+
+* Changes in ripngd
+
+** Aging route bug is fixed.
+
+** `router zebra' semantics changed.  ripngd automatically connect to
+zebra.
+
+* Changes in ospfd
+
+** `no router ospf' works.
+
+* Changes in ospf6d
+
+** Bug fix about network vertex.
+
+* Changes in zebra-0.64.1.
+
+This is bug fix release.
+
+* Changes in lib
+
+** Add check of sin6_scope_id in struct sockaddr_in6.  For compilation
+on implementation which doesn't have sin6_scope_id.  Reported by Wim
+Biemolt <Wim.Biemolt@ipv6.surfnet.nl>.
+
+* Changes in zebra
+
+** Fix bug of display BGP routes as "O" instead of "B".  Reported by
+"William F. Maton" <wmaton@enterprise.ic.gc.ca> and Dave Hartzell
+<hartzell@greatplains.net>.
+
+* Changes in bgpd
+
+** `no network IPV6_NETWORK' statement and `no neighbor IP_ADDR timers
+holdtime [TIMER]' statement doesn't work. Reported by Georg Hitsch
+<georg@atnet.at>.  Now both statement work.
+
+* Changes in ospfd
+
+** Last interface is not updated by ospf_if_update().  Reported by
+Dave Hartzell <hartzell@greatplains.net>.
+
+* Changes in ospf6d
+
+** Byte order of ifid is changed.  Due to this change, this code will
+not work with previous version, sorry.
+
+** Fix `show ip route' route type mismatch.
+
+** Fix bug of no network IPV6_NETWORK.
+
+** Important bug fix about intra-area-prefix-lsa.
+
+* Changes in zebra-0.64.
+
+* Changes in lib
+
+** prefix-list based filtering routine is added.  Currently used in
+bgpd but it will be in other daemons.
+
+* Changes in bgpd
+
+** `no router bgp' works.  But network statement is not cleared.  This
+should be fixed in next beta.
+
+** Route reflector related statement is added.
+
+  router bgp ASN
+    bgp cluster-id a.b.c.d
+    neighbor a.b.c.d route-reflector-client
+
+  is added.
+
+** Prefix list based filtering is added.
+
+  router bgp ASN
+    neighbor a.b.c.d prefix-list PREFIX_LIST_NAME
+
+** Prefix list based routing display works.
+
+  show ip bgp prefix-list PREFIX_LIST_NAME
+
+* Changes in ripd
+
+** Fix route metric check bug.  Reported from Mr. Carlos Alberto
+Barcenilla.
+
+* Changes in ospf6d
+
+** There are many changes.  If you have interested in ospf6d please
+visit ospf6d/README file.
+
+* Changes in zebra-0.63 first beta package.
+
+* Changes in lib
+
+** `copy running-config stgartup-config' command is added.
+
+** prefix length check bug is fixed.  Thanks Marlos Barcenilla
+<barce@frip.utn.edu.ar>.
+
+* Changes in ospfd
+
+** DR and BDR election works.
+
+** OSPF Hello simple authentication works.
+
+* Changes in ospf6d
+
+** Now ospf6d can be compiled on both Linux and *BSD system.
+
+* Changes in zebra-19990420 snapshot
+
+** `make dist' at top directory works now.
+
+* Changes in lib
+
+** VTY has now access-class to restrict remote connection.
+Implemented by Alex Bligh <amb@gxn.net>.
+
+!
+line vty
+  access-class ACCESS-LIST-NAME
+!
+
+** `show version' command added.  Implemented by Carlos Alberto
+Barcenilla <barce@frlp.utn.edu.ar>
+
+* Changes in zebra
+
+** `ip address' command on *BSD bug is fixed.
+
+** `no ip address' works now for IPv4 address.
+
+** Now `write terminal' display `ip address' configuration.
+
+* Changes in bgpd
+
+** Redistribute static works now.  Please run both zebra and bgpd.
+bgpd.conf should be like this:
+
+!
+router zebra
+!
+router bgp ASN
+  redisitribute static
+!
+
+* Changes in guile
+
+** configure --enable-guile turns on zebra-guile build.
+
+** (router-bgp ASN) allocates real bgp structre.
+
+* Changes in zebra-19990416 snapshot
+
+** Set version to 0.60 for preparation of beta release.
+
+** New directory guile is added for linking with guile interpreter.
+
+* Changes in zebra
+
+** On GNU/Linux Kernel 2.2.x (with netlink support), zebra detects
+asynchronous routing updates.  *BSD support is not yet finished.
+
+* Changes in bgpd
+
+** `show ip bgp regexp ASPATH_REGEX' uses CISCO like regular expression 
+instead of RPSL like regular expression.  I'm planing to provide RPSL
+like regular expression with `show ip bgp rpsl' or something.
+
+* Changes in lib
+
+** Press '?' at variable mandatory argument, vty prints nothing.  Now
+vty outputs description about the argument.  Fixed by Alex Bligh
+<amb@gxn.net>
+
+** buffer.c has some ugly bugs.  Due to the bug, vty interface hangs
+when large output date exists.  This bug is fixed. Reported by Alex
+Bligh <amb@gxn.net>.
+
+* Changes in ospfd
+
+** DR and BDR information is shown by `show ip ospf interface' command.
+
+* Changes in zebra-19990408 snapshot
+
+* Changes in bgpd
+
+** Old BGP-4+ specification (described in old draft) treatment bug is
+fixed.  It seems that mrtd uses this format as default.  So if you
+have problem peering with mrtd and want to use old draft format please
+use version statement like this.
+
+neighbor PEER_ADDRESS remote-as ASN
+neighbor PEER_ADDRESS version bgp4+-draft-00
+
+** When AS path is epmty (routes generated by bgpd), SEGV is occur
+when announce the routes to eBGP peer.  Reported by
+kad@gibson.skif.net.
+
+** ip as-path access-list command is added.
+
+** neighbor PEER_ADDRESS filter-list AS_LIST [in|out] command is added.
+
+** neighbor PEER_ADDRESS timers holdtimer TIMER command is added.
+
+* Changes in all daemons
+
+** With KAME stack, terminal interface is now bind AF_INET socket
+instead of AF_INET6 one.
+
+* Changes in zebra-19990403 snapshot
+
+* Changes in bgpd
+
+** When bgpd has 'router zebra', bgpd automatically select it's router
+ID as most highest interface's IP Address.
+
+** When AS path is empty (in case of iBGP), it doesn't include any AS
+segment.  This change is for announcement to gated under iBGP.
+
+* Changes in ospfd
+
+** OSPF hello packet send/receive works.
+
+* Changes in ospf6d
+
+** Yasuhiro Ohara's ospf6d codes is imported.  It is under development
+and can't be compiled on any platform.
+
+* Changes in zebra-19990327 snapshot
+
+* Changes in bgpd
+
+** When BGP-4+ connection is done by IPv6 link-local address.  One
+have to specify interface index for the connection.  So I've added
+interface statement to the neighbor commmand.  Please specify
+interface name for getting interface index like below.  This statement
+only works on GNU/Linux.  I'll support BSD ASAP.
+
+router bgp 7675
+ neighbor fe80::200:f8ff:fe01:5fd3 remote-as 2500
+ neighbor fe80::200:f8ff:fe01:5fd3 interface sit3
+
+** For disable BGP peering `shutdown' command is added.
+
+router bgp 7675
+ neighbor 10.0.0.1 shutdown
+
+** `description' command is added to neighbor statement.
+
+router bgp 7675
+ neighbor 10.0.0.1 description peering with Norway.
+
+** `show ip bgp regexp AS-REGEXP' works again.
+
+show ip bgp regexp AS7675
+
+will show routes which include AS7675.
+
+** When a route which is made from `network' statement is send to
+neighbor.  Set it's nexthop to self.  So 10.0.0.0/8 is announced to
+the peer A with source address 192.168.1.1.  The routes nexthop is set
+to 192.168.1.1.
+
+* Changes in zebra
+
+** In zebra/rtread_sysctl.c, function rtm_read() may overrun allocated
+buffer when the address family is not supported and the length is big
+(i.e link address).  Reported Achim Patzner <ap@bnc.net>.
+
+* Changes in ospfd
+
+** Now ospfd receive OSPF packet.
+
+* Changes in zebra-19990319 snapshot
+
+* Changes in configuration and libraries
+
+** User can disable IPv6 feature and/or pthread feature by configure
+   option.
+
+  To disable IPv6:    configure --disable-ipv6
+  To disable pthread: configure --disable-pthread
+
+** User can disable specified daemon by configure option.
+
+  Don't make zebra:  configure --disable-zebra
+  Don't make bgpd:   configure --disable-bgpd
+  Don't make ripd:   configure --disable-ripd
+  Don't make ripngd: configure --disable-ripngd
+  Don't make ospfd:  configure --disable-ospfd
+  Don't make ospf6d: configure --disable-ospf6d
+
+** Sample configuration files are installed as 600 file flag.
+   Suggested by Jeroen Ruigrok/Asmodai <asmodai@wxs.nl>.
+
+** syslog logging feature is added by Peter Galbavy
+   <Peter.Galbavy@knowledge.com>
+
+** Inclusion of standard header files is reworked by Peter Galbavy
+   <Peter.Galbavy@knowledge.com>
+
+** Change description from GNU/Linux 2.1.X to GNU/Linux 2.2.X
+
+** If daemon function exists in standard C library use it.
+
+** To generate configure script we upgrade autoconf to 2.13.  To
+generate Makefile.in we upgrade automake to 1.4.
+
+** doc/texinfo.tex is added to distribution.
+
+** Update ports/pkg/DESCR description.
+
+** Update doc/zebra.texi.
+
+** logfile FILENAME statement deleted.  Instead of that please use log
+file FILENAME.
+
+* Changes in zebra
+
+* Changes in bgpd
+
+** Communication between zebra and bgpd works now.  So if there is
+   `router zebra' line in bgpd.conf, selected route is installed
+   into kernel routing table.
+
+** Delete all routes which inserted by bgpd when bgpd dies.  If you
+want to retain routes even bgpd dies please specify [-r|--retain]
+option to bgpd.
+
+** BGP announcement code is reworked.  Now bgpd announce selected
+   routes to other peer.
+
+** All output bgp packet is buffered.  It's written to the socket when
+   it gets ready.
+
+** Output route-map works now.  You can specify output route-map by:
+
+   neighbor IP_ADDR route-map ROUTE_MAP_NAME out
+
+** New route-map command added.
+
+   set ip nexthop IP_ADDR
+   set ipv6 nexthop global IP_ADDR
+
+** Fix bug about unlock of the route_node structure.
+
+** BGP-4+ support is added.  bgpd can listen and speak BGP-4+ packet
+specified in RFC2283. You can view IPv6 bgp table by: `show ipv6 bgp'.
+
+** Meny packet overflow check is added.
+
+* Changes in ripd
+
+* Changes in ripngd
+
+* Changes in ospfd
+
+** ospfd work is started by Toshiaki Takada <takada@zebra.org>.  Now
+several files are included in ospfd directory.
+
+** ospf6d codes are merged from Yasuhiro Ohara <yasu@sfc.wide.ad.jp>'s
+ospfd work.  Now codes are located in ospf6d directory.
+
+
+Local variables:
+mode: outline
+paragraph-separate: "[ 	]*$"
+end:

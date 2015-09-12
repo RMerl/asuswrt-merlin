@@ -20,24 +20,12 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.xdomainajax.js"></script>
 <script type='text/javascript'>
-
+daily_history = [];
 <% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;
-
-try {
-	<% ipt_bandwidth("daily"); %>
-}
-catch (ex) {
-	daily_history = [];
-}
-cstats_busy = 0;
-if (typeof(daily_history) == 'undefined') {
-	daily_history = [];
-	cstats_busy = 1;
-}
-
+<% ipt_bandwidth("daily"); %>
 
 var filterip = [];
 var filteripe = [];
@@ -57,6 +45,10 @@ function redraw() {
 
 	var style_open;
 	var style_close;
+
+	var getYMD = function(n){
+		return [(((n >> 16) & 0xFF) + 1900), ((n >>> 8) & 0xFF), (n & 0xFF)];
+	}
 
 	rows = 0;
 	filtered = 0;
@@ -253,7 +245,6 @@ function popupWindow(ip) {
 
 
 function init() {
-
 	if (nvram.cstats_enable == '1') {
 		selGroup = E('page_select');
 
@@ -322,6 +313,7 @@ function init() {
 		setRadioValue(document.form._f_show_hostnames , (c == 1))
 	}
 
+	show_menu();
 	update_visibility();
 	initDate('ymd');
 	daily_history.sort(cmpDualFields);
@@ -422,7 +414,7 @@ function updateClientList(e){
 </script>
 </head>
 
-<body onload="show_menu();init();" >
+<body onload="init();" >
 
 <div id="TopBanner"></div>
 

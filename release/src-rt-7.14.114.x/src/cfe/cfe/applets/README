@@ -1,0 +1,21 @@
+
+This directory contains "applets" - simple programs to let
+us test the callbacks into CFE.
+
+You should be able to compile these programs and load them
+via the TFTP loader in CFE, and when run, they will call
+the APIs in CFE to display messages and such.
+
+The files cfe_api.c, cfe_api.h, and cfe_api_int.h are versions
+of the same files from ../applets, customized to build with this
+stand-alone build environment.  Typically you won't want to copy
+these.  Instead, you'll want to copy the versions in ../applets and
+customize them as needed.
+
+Pay particular attention to the MIPS calling conventions
+you are using.  In particular, CFE uses 64-bit register
+values.  If you compile your program with -mips1 or -mips2,
+the 64-bit arguments will be passed as 2 32-bt registers.
+
+In most cases, CFE only uses the lower 32 bits, since
+it can be called from either 32 or 64-bit applications.

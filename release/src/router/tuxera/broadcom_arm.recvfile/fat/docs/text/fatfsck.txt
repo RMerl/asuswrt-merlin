@@ -1,0 +1,83 @@
+FATFSCK(8)                                                          FATFSCK(8)
+
+
+
+NAME
+       fatfsck - check and repair a FAT volume
+
+SYNOPSIS
+       fatfsck [options] device
+
+DESCRIPTION
+       fatfsck  will  check  a  FAT  volume for errors, and optionally correct
+       them.  Run fatfsck without arguments for a full list of options.
+
+OPTIONS
+       Below is a summary of all the options that fatfsck accepts.  Nearly all
+       options have two equivalent names.  The short name is preceded by - and
+       the long name is preceded by --.
+
+       -b, --basic
+              Do only a basic file system check or repair. This option  limits
+              fatfsck  to checking/repairing the boot region, FAT and the root
+              directory. All other directories and  allocations  are  ignored.
+              This  is  useful  when  you want to do a fast check/repair which
+              makes sure that the volume will mount properly and that the root
+              directory will be accessible.
+
+       -p, --probe
+              Probe  for a FAT file system. This runs some tests on the device
+              to check if the file system is FAT.
+
+       -q, --quiet
+              Suppresses informational messages. Only  error/warning  messages
+              and the final summary is displayed during execution.
+
+       -r, --repair
+              Repair on-disk inconsistencies encountered.
+
+       -a, --automatic-repair
+              If  the volume is marked dirty, then repair on-disk inconsisten‐
+              cies encountered (equivalent to the -r/--repair option).  Other‐
+              wise exit immediately with no action.
+
+       -s, --strict
+              Turns on strict checking. This includes checking things that are
+              not normally required to make sure the volume follows FAT speci‐
+              fications. This may increase the execution time for fatfsck.
+
+       -t, --timeout SECONDS
+              Timeout   in  seconds  before  fatfsck  will  abort  the  volume
+              check/repair. If specified, this sets an upper limit on the exe‐
+              cution  time  of fatfsck. After the timeout occurs, fatfsck will
+              clear all its pending tasks and return as soon as possible.
+
+       -v, --verbose
+              Verbose output. This makes fatfsck print more information  about
+              what  it's  doing,  for  instance which directory/file it's cur‐
+              rently processing.
+
+EXIT STATUS
+       0: Success. fatfsck did what it was instructed to do successfully.
+
+       1: Unknown error. Error came from outside fatfsck (libraries, operating
+       system kernel, ...).
+
+       2: Invalid arguments. An error was detected when parsing the options.
+
+       3:  FAT  volume  errors  were  detected (when checking) or could not be
+       repaired (when repairing)
+
+BUGS
+       If you find a bug please send an email describing the problem  to  fat-
+       support@tuxera.com.
+
+AUTHORS
+       fatfsck was written by Sougata Santra, Tuxera Inc.
+
+AVAILABILITY
+       fatfsck is part of the Tuxera FATprogs package.
+
+
+
+Tuxera TFATprogs 3014.9.11        March 2014                        FATFSCK(8)

@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<!--link type="text/css" rel="stylesheet" href="/form_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script-->
+<script type="text/JavaScript" src="/js/jquery.js"></script>
+<script type="text/javascript">
+var now_flag = '<% get_parameter("flag"); %>';
+
+function initial(){
+	if(parent.ISMOBILE){
+		parent.set_step("internet_type");
+		hideObjs();
+		document.getElementById("QISmain").style.display = "none";
+		//document.getElementById("QISmain_m").style.display = "";		
+	}
+	else{
+		parent.set_step("t1");
+		document.getElementById("button1").focus();
+	}
+
+	parent.doResetModem();
+	setTimeout("gotoPage('/qis_m/QIS_resetModem2.htm', now_flag, 0);", 2*60*1000);
+}
+
+function gotoPage(dst_url, flag, isParent){
+	if(isParent && isParent == 1)
+		document.redirectForm.target = "_parent";
+	else
+		document.redirectForm.target = "";
+	document.redirectForm.action = dst_url;
+	document.redirectForm.flag.value = flag;
+	document.redirectForm.submit();
+}
+
+function redirect_page(redirect_flag){
+	document.redirectForm.action = "/qis_m/QIS_"+redirect_flag+".htm";
+	document.redirectForm.submit();
+}
+
+function submitenter(myfield,e)
+{	
+	var keycode;
+	if (window.event) keycode = window.event.keyCode;
+	else if (e) keycode = e.which;
+	else return true;
+
+	if (keycode == 13){
+		gotoPage('/qis_m/QIS_resetModem2.htm', now_flag, 0);
+   	return false;
+  }
+	else
+   	return true;
+}
+</script>
+</head>
+<style>
+body{
+	marign:0;
+	color:#FFF;
+}
+
+</style>
+<body onLoad="initial();" onKeyPress="submitenter(this,event)">
+<div>
+	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QIS_modem_desc1#></div>
+	<div style="margin-left:15px;"><#QIS_modem_desc2#></div>
+	<div style="margin-left:15px;"><#QIS_modem_desc3#></div>
+	<div style="text-align:center;">
+		<img style="width:100%;" src="/images/modem_unplug.png">
+	</div>
+	<div style="margin-left:15px;"><#QIS_modem_desc4#></div>
+	<div style="margin-left:15px;"><#QIS_modem_desc5#></div>
+	
+	<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+		<div style="width:100%;height:100%;display:table">
+			<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="redirect_page('internet_type');">
+				<div style="font-size:1em;color:#7E8593"><#Connectiontype#></div>
+			</div>
+			<div id="button1" style="display:table-cell;width:50%;vertical-align:middle;text-align:center;background-color:#007AFF" onclick="gotoPage('/qis_m/QIS_resetModem2.htm', now_flag, 0);">
+				<div style="font-size:1em;color:#FFF;"><#CTL_next#></div>
+			</div>	
+		</div>
+	</div>
+</div>
+
+<!--div class="QISmain" id="QISmain">
+	<div id='waitarea'>
+		<div class="formfonttitle" style="padding:6 0 0 10;">
+				<div>
+					<table width="730px">
+						<tr>
+							<td align="left">
+								<div class="description_down"><#QIS_modem_desc1#></div>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		</div>
+		<p class="QISGeneralFont"><#QIS_modem_desc2#></p>
+		<p class="QISGeneralFont"><#QIS_modem_desc3#></p>
+	
+		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="3" cellspacing="0" style="margin-top:-25px;">
+			<tr>
+				<td align="center" colspan="2">
+					<br/><br/><img src="/images/modem_unplug.png"></span>
+				</td>
+			</tr>
+		</table>
+		<br/>
+		<p class="QISGeneralFont"><#QIS_modem_desc4#><br/><#QIS_modem_desc5#></p>
+
+		<div class='apply_gen'>
+			<div id="fresharea">
+				<input type="button" id="nextButton" value="<#Connectiontype#>" onclick="redirect_page('internet_type');" class="button_gen_long">
+				<input type="button" id="button1" class="button_gen" onclick="gotoPage('/qis/QIS_resetModem2.htm', now_flag, 0);" value="<#CTL_next#>">
+			</div>
+		</div>
+
+	</div>
+</div-->
+
+
+
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="flag" value="">
+</form>
+</body>

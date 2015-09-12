@@ -1,0 +1,90 @@
+Summary of CLI commands, expanded for Opaque-LSA/MPLS-TE.
+---------------------------------------------------------
+
+router>
+
+  show ip ospf database (asbr-summary|external|max-age|network|router|self-originate|summary|opaque-link|opaque-area|opaque-external)
+
+  show ip ospf database (asbr-summary|external|network|router|summary|opaque-link|opaque-area|opaque-external) (self-originate|)
+
+  show ip ospf database (asbr-summary|external|network|router|summary|opaque-link|opaque-area|opaque-external) A.B.C.D
+
+  show ip ospf database (asbr-summary|external|network|router|summary|opaque-link|opaque-area|opaque-external) A.B.C.D (self-originate|)
+
+  show ip ospf database (asbr-summary|external|network|router|summary|opaque-link|opaque-area|opaque-external) A.B.C.D adv-router A.B.C.D
+
+  show ip ospf database (asbr-summary|external|network|router|summary|opaque-link|opaque-area|opaque-external) adv-router A.B.C.D
+
+  --> Add database items: opaque-link, opaque-area, opaque-external
+
+  show mpls-te interface [INTERFACE]
+
+  --> Show current MPLS-TE link-TLV parameters.
+      If [INTERFACE] is omitted, all interfaces will be displayed.
+
+  show mpls-te router
+
+  --> Show current MPLS-TE Router-TLV parameters.
+
+router> enable
+router#
+router# configure terminal
+router(config)# interface [INTERFACE]
+router(config-if)#
+
+  mpls-te link max-bw BANDWIDTH
+
+  --> Set MPLS-TE link-TLV parameter: Maximum Bandwidth (Bytes/sec).
+      In integer or floating point format (1000, or 1.0e3)
+
+  mpls-te link max-rsv-bw BANDWIDTH
+
+  --> Set MPLS-TE link-TLV parameter: Maximum Reservable Bandwidth (Bytes/sec).
+      In integer or floating point format (1000, or 1.0e3)
+
+  mpls-te link metric <0-4294967295>
+
+  --> Set MPLS-TE link-TLV parameter: MPLS-TE metric.
+
+  mpls-te link rsc-clsclr BITPATTERN
+
+  --> Set MPLS-TE link-TLV parameter: Resource Class/Color.
+      In 32-bit hexadecimal format, with leading "0x" (0x0 - 0xffffffff)
+
+  mpls-te link unrsv-bw <0-7> BANDWIDTH
+
+  --> Set MPLS-TE link-TLV parameter: Unreserved Bandwidth (Bytes/sec).
+      In integer or floating point format (1000, or 1.0e3)
+
+router(config-if)# exit
+router(config)# router ospf
+router(config-router)#
+
+  mpls-te
+
+  --> Enable MPLS-TE functionality.
+      Note that master-switch "ospf opaque-lsa" must also be specified.
+
+  mpls-te on
+
+  --> Alias of "mpls-te" command.
+
+  mpls-te router-address A.B.C.D
+
+  --> Set MPLS-TE Router-TLV parameter: Router Address.
+
+  no mpls-te
+
+  --> Disable MPLS-TE functionality.
+
+  no ospf opaque-lsa
+
+  --> Disable Opaque-LSAs capability.
+      This node behaves Opaque-incapable node.
+
+  ospf opaque-lsa
+
+  --> Enable Opaque-LSAs capability.
+      This is the master-switch to make this node Opaque-capable.
+
+router# exit

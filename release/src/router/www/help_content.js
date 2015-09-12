@@ -71,7 +71,8 @@ helpcontent[3] = new Array("",
 							"<#WLANConfig11b_x_ReduceUSB3_desc#>",
 							"<#RTS_for_AMPDU#>",
 							"<#WLANConfig11b_x_roamingassit_desc#>",	//31
-							"Provide Airtime Fairness between multiple links" 
+							"Provide Airtime Fairness between multiple links",
+							"<#WLANConfig11b_x_Auto#>"
 							 );
 
 helpcontent[4] = new Array("",
@@ -177,7 +178,7 @@ helpcontent[13] = new Array("",
 //UPnP
 helpcontent[14] = new Array("",
 							"<#UPnPMediaServer_Help#>",
-							"<#vpnc_reconnection_desc#>");
+							"");
 //AiDisk Wizard
 helpcontent[15] = new Array("",
 							"", /*<#AiDisk_moreconfig#>*/
@@ -220,7 +221,7 @@ helpcontent[20] = new Array("",
 							"<#bound_zero_desc#>",
 							"<#EzQoS_type_adaptive_desc#>",
 							"<#EzQoS_type_traditional_desc#>",
-							"Bandwidth Limiter helps you to control download and upload max speed of your cleint devices.");	//untranslated string
+							"<#Bandwidth_Limiter_hint#>");
 // HSDPA
 helpcontent[21] = new Array("",
 							"<#HSDPAConfig_hsdpa_mode_itemdesc#>",

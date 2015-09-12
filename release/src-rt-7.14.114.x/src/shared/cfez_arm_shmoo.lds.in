@@ -1,0 +1,69 @@
+/*
+ * This is the "template" linker script.  It gets run through the C preprocessor
+ * (via cpp) to construct the real linker script.
+ */
+
+OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(startup)
+SECTIONS
+{
+	. = TEXT_START;
+	. = ALIGN(4);
+	.text : {
+		_ftext = . ;
+		text_start = .;
+		*(.text.startup)
+		*(.text)
+		*(.text.*)
+		_etext = .;
+		text_end = .;
+	}
+
+	. = ALIGN(4);
+	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) }
+
+	. = ALIGN(4);
+	.data1 : {
+		data1_start = .;
+		_fdata = .;
+		*(.data.*)
+		data1_end = .;
+	}
+
+	. = ALIGN(4);
+	_fbss = .;
+	.bss : {
+		bss_start = .;
+                *(.bss)
+                *(.bss.*)
+                *(.sbss)
+                *(.scommon)
+                *(COMMON)
+		 . = ALIGN(4);
+		bss_end = .;
+	}
+
+	.mmu_table : {
+		. = ALIGN(0x4000);
+		*(section_mmu_table)
+	}
+
+	. = ALIGN(4);
+	.data : {
+		data_start = .;
+		*(.data)
+		data_end = .;
+	}
+
+	. = ALIGN(4);
+	_edata = .;
+
+	/DISCARD/ : { *(.dynstr*) }
+	/DISCARD/ : { *(.dynamic*) }
+	/DISCARD/ : { *(.plt*) }
+	/DISCARD/ : { *(.interp*) }
+	/DISCARD/ : { *(.gnu*) }
+
+	_end = .;
+}

@@ -152,8 +152,8 @@ struct qvsp_cfg_param {
 };
 
 #define QVSP_CFG_PARAMS {											\
-	{ "enabled",		"VSP enabled",				"number",	0,	0,	1},	\
-	{ "enabled_always",	"VSP enabled when no VSP peers",	"number",	0,	0,	1},	\
+	{ "enabled",		"QTM enabled",				"number",	0,	0,	1},	\
+	{ "enabled_always",	"QTM enabled when no QTM peers",	"number",	0,	0,	1},	\
 	{ "fat_min",		"Min free airtime",			"msps",		100,	1,	1000 },	\
 	{ "fat_min_soft",	"Soft min free airtime",		"msps",		170,	1,	1000 },	\
 	{ "fat_min_soft_consec","Consecutive soft min free airtime",	"number",	3,	1,	255 },	\

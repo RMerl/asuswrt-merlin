@@ -1,0 +1,40 @@
+# Broadcom 802.11abg Networking Device Driver Configuration file
+#
+# Copyright (C) 2015, Broadcom Corporation
+# All Rights Reserved.
+# 
+# This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+# the contents of this file may not be disclosed to third parties, copied
+# or duplicated in any form, in whole or in part, without the prior
+# written permission of Broadcom Corporation.
+#
+# $Id: wlconfig_rte_43236b1_usbap,v 1.2 2011-02-10 10:00:25 $
+
+# basic common code
+WL=1
+BCMNVRAMR=0
+BCMNVRAMW=1
+
+# BMAC split
+WL_LOW=1
+WL_HIGH=0
+
+# features
+AP=1
+STA=1
+MBSS=1
+WLRM=1
+BCMCCX=1
+WME=1
+WL11N=1
+
+BCMSIBUS=1
+SOCI_AI=1
+
+WLCNT=1
+WLDIAG=1
+WLLED=1
+WL_DMA_TX_FREE=1
+
+BCM_RPC_TP_FLOWCTL_QWM_HIGH=48
+BCMPHYCORENUM=2

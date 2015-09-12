@@ -1,0 +1,413 @@
+@node Zebra
+@chapter Zebra
+
+@c SYNOPSIS
+@command{zebra} is an IP routing manager.  It provides kernel routing
+table updates, interface lookups, and redistribution of routes between
+different routing protocols.
+
+@menu
+* Invoking zebra::              Running the program
+* Interface Commands::          Commands for zebra interfaces
+* Static Route Commands::       Commands for adding static routes
+* Multicast RIB Commands::      Commands for controlling MRIB behavior
+* zebra Route Filtering::       Commands for zebra route filtering
+* zebra FIB push interface::    Interface to optional FPM component
+* zebra Terminal Mode Commands::  Commands for zebra's VTY
+@end menu
+
+
+@node Invoking zebra
+@section Invoking zebra
+
+Besides the common invocation options (@pxref{Common Invocation Options}), the
+@command{zebra} specific invocation options are listed below.
+
+@table @samp
+@item -b
+@itemx --batch
+Runs in batch mode.  @command{zebra} parses configuration file and terminates
+immediately.
+
+@item -k
+@itemx --keep_kernel
+When zebra starts up, don't delete old self inserted routes.
+
+@item -r
+@itemx --retain
+When program terminates, retain routes added by zebra.
+
+@end table
+
+@node Interface Commands
+@section Interface Commands
+
+@deffn Command {interface @var{ifname}} {}
+@end deffn
+
+@deffn {Interface Command} {shutdown} {}
+@deffnx {Interface Command} {no shutdown} {}
+Up or down the current interface.
+@end deffn
+
+@deffn {Interface Command} {ip address @var{address/prefix}} {}
+@deffnx {Interface Command} {ipv6 address @var{address/prefix}} {}
+@deffnx {Interface Command} {no ip address @var{address/prefix}} {}
+@deffnx {Interface Command} {no ipv6 address @var{address/prefix}} {}
+Set the IPv4 or IPv6 address/prefix for the interface.
+@end deffn
+
+@deffn {Interface Command} {ip address @var{address/prefix} secondary} {}
+@deffnx {Interface Command} {no ip address @var{address/prefix} secondary} {}
+Set the secondary flag for this address. This causes ospfd to not treat the
+address as a distinct subnet.
+@end deffn
+
+@deffn {Interface Command} {description @var{description} ...} {}
+Set description for the interface.
+@end deffn
+
+@deffn {Interface Command} {multicast} {}
+@deffnx {Interface Command} {no multicast} {}
+Enable or disables multicast flag for the interface.
+@end deffn
+
+@deffn {Interface Command} {bandwidth <1-10000000>} {}
+@deffnx {Interface Command} {no bandwidth <1-10000000>} {}
+Set bandwidth value of the interface in kilobits/sec.  This is for 
+calculating OSPF cost. This command does not affect the actual device 
+configuration.
+@end deffn
+
+@deffn {Interface Command} {link-detect} {}
+@deffnx {Interface Command} {no link-detect} {}
+Enable/disable link-detect on platforms which support this. Currently 
+only Linux and Solaris, and only where network interface drivers support reporting
+link-state via the IFF_RUNNING flag.
+@end deffn
+
+@node Static Route Commands
+@section Static Route Commands
+
+Static routing is a very fundamental feature of routing technology.  It
+defines static prefix and gateway.
+
+@deffn Command {ip route @var{network} @var{gateway}} {}
+@var{network} is destination prefix with format of A.B.C.D/M.
+@var{gateway} is gateway for the prefix.  When @var{gateway} is
+A.B.C.D format.  It is taken as a IPv4 address gateway.  Otherwise it
+is treated as an interface name. If the interface name is @var{null0} then
+zebra installs a blackhole route.
+
+@example
+ip route 10.0.0.0/8 10.0.0.2
+ip route 10.0.0.0/8 ppp0
+ip route 10.0.0.0/8 null0
+@end example
+
+First example defines 10.0.0.0/8 static route with gateway 10.0.0.2.
+Second one defines the same prefix but with gateway to interface ppp0. The
+third install a blackhole route.
+@end deffn
+
+@deffn Command {ip route @var{network} @var{netmask} @var{gateway}} {}
+This is alternate version of above command.  When @var{network} is
+A.B.C.D format, user must define @var{netmask} value with A.B.C.D
+format.  @var{gateway} is same option as above command
+
+@example
+ip route 10.0.0.0 255.255.255.0 10.0.0.2
+ip route 10.0.0.0 255.255.255.0 ppp0
+ip route 10.0.0.0 255.255.255.0 null0
+@end example
+
+These statements are equivalent to those in the previous example.
+@end deffn
+
+@deffn Command {ip route @var{network} @var{gateway} @var{distance}} {}
+Installs the route with the specified distance.
+@end deffn
+
+Multiple nexthop static route
+
+@example
+ip route 10.0.0.1/32 10.0.0.2
+ip route 10.0.0.1/32 10.0.0.3
+ip route 10.0.0.1/32 eth0
+@end example
+
+If there is no route to 10.0.0.2 and 10.0.0.3, and interface eth0
+is reachable, then the last route is installed into the kernel.
+
+If zebra has been compiled with multipath support, and both 10.0.0.2 and
+10.0.0.3 are reachable, zebra will install a multipath route via both
+nexthops, if the platform supports this.
+
+@example
+zebra> show ip route
+S>  10.0.0.1/32 [1/0] via 10.0.0.2 inactive
+                      via 10.0.0.3 inactive
+  *                   is directly connected, eth0
+@end example
+
+@example
+ip route 10.0.0.0/8 10.0.0.2
+ip route 10.0.0.0/8 10.0.0.3
+ip route 10.0.0.0/8 null0 255
+@end example
+
+This will install a multihop route via the specified next-hops if they are
+reachable, as well as a high-metric blackhole route, which can be useful to
+prevent traffic destined for a prefix to match less-specific routes (eg
+default) should the specified gateways not be reachable. Eg:
+
+@example
+zebra> show ip route 10.0.0.0/8             
+Routing entry for 10.0.0.0/8
+  Known via "static", distance 1, metric 0
+    10.0.0.2 inactive
+    10.0.0.3 inactive
+
+Routing entry for 10.0.0.0/8
+  Known via "static", distance 255, metric 0
+    directly connected, Null0
+@end example
+
+@deffn Command {ipv6 route @var{network} @var{gateway}} {}
+@deffnx Command {ipv6 route @var{network} @var{gateway} @var{distance}} {}
+These behave similarly to their ipv4 counterparts.
+@end deffn
+
+
+@deffn Command {table @var{tableno}} {}
+Select the primary kernel routing table to be used.  This only works
+for kernels supporting multiple routing tables (like GNU/Linux 2.2.x
+and later).  After setting @var{tableno} with this command, 
+static routes defined after this are added to the specified table.
+@end deffn
+
+@node Multicast RIB Commands
+@section Multicast RIB Commands
+
+The Multicast RIB provides a separate table of unicast destinations which
+is used for Multicast Reverse Path Forwarding decisions.  It is used with
+a multicast source's IP address, hence contains not multicast group
+addresses but unicast addresses.
+
+This table is fully separate from the default unicast table.  However,
+RPF lookup can include the unicast table.
+
+WARNING: RPF lookup results are non-responsive in this version of Quagga,
+i.e. multicast routing does not actively react to changes in underlying
+unicast topology!
+
+@deffn Command {ip multicast rpf-lookup-mode @var{mode}} {}
+@deffnx Command {no ip multicast rpf-lookup-mode [@var{mode}]} {}
+
+@var{mode} sets the method used to perform RPF lookups.  Supported modes:
+
+@table @samp
+@item urib-only
+Performs the lookup on the Unicast RIB.  The Multicast RIB is never used.
+@item mrib-only
+Performs the lookup on the Multicast RIB.  The Unicast RIB is never used.
+@item mrib-then-urib
+Tries to perform the lookup on the Multicast RIB.  If any route is found,
+that route is used.  Otherwise, the Unicast RIB is tried.
+@item lower-distance
+Performs a lookup on the Multicast RIB and Unicast RIB each.  The result
+with the lower administrative distance is used;  if they're equal, the
+Multicast RIB takes precedence.
+@item longer-prefix
+Performs a lookup on the Multicast RIB and Unicast RIB each.  The result
+with the longer prefix length is used;  if they're equal, the
+Multicast RIB takes precedence.
+@end table
+
+The @code{mrib-then-urib} setting is the default behavior if nothing is
+configured.  If this is the desired behavior, it should be explicitly
+configured to make the configuration immune against possible changes in
+what the default behavior is.
+
+WARNING: Unreachable routes do not receive special treatment and do not
+cause fallback to a second lookup.
+@end deffn
+
+@deffn Command {show ip rpf @var{addr}} {}
+
+Performs a Multicast RPF lookup, as configured with
+@command{ip multicast rpf-lookup-mode @var{mode}}.  @var{addr} specifies
+the multicast source address to look up.
+
+@example
+> show ip rpf 192.0.2.1
+Routing entry for 192.0.2.0/24 using Unicast RIB
+  Known via "kernel", distance 0, metric 0, best
+  * 198.51.100.1, via eth0
+@end example
+
+Indicates that a multicast source lookup for 192.0.2.1 would use an
+Unicast RIB entry for 192.0.2.0/24 with a gateway of 198.51.100.1.
+@end deffn
+
+@deffn Command {show ip rpf} {}
+
+Prints the entire Multicast RIB.  Note that this is independent of the
+configured RPF lookup mode, the Multicast RIB may be printed yet not
+used at all.
+@end deffn
+
+@deffn Command {ip mroute @var{prefix} @var{nexthop} [@var{distance}]} {}
+@deffnx Command {no ip mroute @var{prefix} @var{nexthop} [@var{distance}]} {}
+
+Adds a static route entry to the Multicast RIB.  This performs exactly as
+the @command{ip route} command, except that it inserts the route in the
+Multicast RIB instead of the Unicast RIB.
+@end deffn
+
+
+@node zebra Route Filtering
+@section zebra Route Filtering
+Zebra supports @command{prefix-list} and @command{route-map} to match
+routes received from other quagga components.  The
+@command{permit}/@command{deny} facilities provided by these commands
+can be used to filter which routes zebra will install in the kernel.
+
+@deffn Command {ip protocol @var{protocol} route-map @var{routemap}} {}
+Apply a route-map filter to routes for the specified protocol. @var{protocol}
+can be @b{any} or one of
+@b{system},
+@b{kernel},
+@b{connected},
+@b{static},
+@b{rip},
+@b{ripng},
+@b{ospf},
+@b{ospf6},
+@b{isis},
+@b{bgp},
+@b{hsls}.
+@end deffn
+
+@deffn {Route Map} {set src @var{address}}
+Within a route-map, set the preferred source address for matching routes
+when installing in the kernel.
+@end deffn
+
+@example
+The following creates a prefix-list that matches all addresses, a route-map
+that sets the preferred source address, and applies the route-map to all
+@command{rip} routes.
+
+@group
+ip prefix-list ANY permit 0.0.0.0/0 le 32
+route-map RM1 permit 10
+     match ip address prefix-list ANY
+     set src 10.0.0.1
+
+ip protocol rip route-map RM1
+@end group
+@end example
+
+@node zebra FIB push interface
+@section zebra FIB push interface
+
+Zebra supports a 'FIB push' interface that allows an external
+component to learn the forwarding information computed by the Quagga
+routing suite.
+
+In Quagga, the Routing Information Base (RIB) resides inside
+zebra. Routing protocols communicate their best routes to zebra, and
+zebra computes the best route across protocols for each prefix. This
+latter information makes up the Forwarding Information Base
+(FIB). Zebra feeds the FIB to the kernel, which allows the IP stack in
+the kernel to forward packets according to the routes computed by
+Quagga. The kernel FIB is updated in an OS-specific way. For example,
+the @code{netlink} interface is used on Linux, and route sockets are
+used on FreeBSD.
+
+The FIB push interface aims to provide a cross-platform mechanism to
+support scenarios where the router has a forwarding path that is
+distinct from the kernel, commonly a hardware-based fast path. In
+these cases, the FIB needs to be maintained reliably in the fast path
+as well. We refer to the component that programs the forwarding plane
+(directly or indirectly) as the Forwarding Plane Manager or FPM.
+
+The FIB push interface comprises of a TCP connection between zebra and
+the FPM. The connection is initiated by zebra -- that is, the FPM acts
+as the TCP server.
+
+The relevant zebra code kicks in when zebra is configured with the
+@code{--enable-fpm} flag. Zebra periodically attempts to connect to
+the well-known FPM port. Once the connection is up, zebra starts
+sending messages containing routes over the socket to the FPM. Zebra
+sends a complete copy of the forwarding table to the FPM, including
+routes that it may have picked up from the kernel. The existing
+interaction of zebra with the kernel remains unchanged -- that is, the
+kernel continues to receive FIB updates as before.
+
+The format of the messages exchanged with the FPM is defined by the
+file @file{fpm/fpm.h} in the quagga tree.
+
+The zebra FPM interface uses replace semantics. That is, if a 'route
+add' message for a prefix is followed by another 'route add' message,
+the information in the second message is complete by itself, and
+replaces the information sent in the first message.
+
+If the connection to the FPM goes down for some reason, zebra sends
+the FPM a complete copy of the forwarding table(s) when it reconnects.
+
+@node zebra Terminal Mode Commands
+@section zebra Terminal Mode Commands
+
+@deffn Command {show ip route} {}
+Display current routes which zebra holds in its database.
+
+@example
+@group
+Router# show ip route 
+Codes: K - kernel route, C - connected, S - static, R - RIP, 
+       B - BGP * - FIB route.
+
+K* 0.0.0.0/0              203.181.89.241
+S  0.0.0.0/0              203.181.89.1
+C* 127.0.0.0/8            lo
+C* 203.181.89.240/28      eth0
+@end group
+@end example
+@end deffn
+
+@deffn Command {show ipv6 route} {}
+@end deffn
+
+@deffn Command {show interface} {}
+@end deffn
+
+@deffn Command {show ip prefix-list [@var{name}]} {}
+@end deffn
+
+@deffn Command {show route-map [@var{name}]} {}
+@end deffn
+
+@deffn Command {show ip protocol} {}
+@end deffn
+
+@deffn Command {show ipforward} {}
+Display whether the host's IP forwarding function is enabled or not.
+Almost any UNIX kernel can be configured with IP forwarding disabled.
+If so, the box can't work as a router.
+@end deffn
+
+@deffn Command {show ipv6forward} {}
+Display whether the host's IP v6 forwarding is enabled or not.
+@end deffn
+
+@deffn Command {show zebra fpm stats} {}
+Display statistics related to the zebra code that interacts with the
+optional Forwarding Plane Manager (FPM) component.
+@end deffn
+
+@deffn Command {clear zebra fpm stats} {}
+Reset statistics related to the zebra code that interacts with the
+optional Forwarding Plane Manager (FPM) component.
+@end deffn

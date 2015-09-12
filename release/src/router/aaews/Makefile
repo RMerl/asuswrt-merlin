@@ -64,7 +64,6 @@ aicam:$(TARGET)
 ifeq ($(wildcard $(TOP)/aaews/*.c),)
 router:
 	-cp -f $(TOP)/aaews/prebuild/aaews aaews
-	-cp -f $(TOP)/aaews/prebuild/mastiff mastiff
 else
 router: $(WSLIB) $(TARGET)
 endif

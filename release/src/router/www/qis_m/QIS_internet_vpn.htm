@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<!--link rel="stylesheet" type="text/css" href="/form_style.css"> 
+<link rel="stylesheet" type="text/css" href="qis_style.css">
+
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/javascript" src="/alttxt.js"></script>
+<script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/validator.js"></script-->
+<script>
+var now_flag = '<% get_parameter("flag"); %>';
+
+function initial(){
+//	load_alttxt_enviroment();
+	parent.document.title = "<#Web_Title#> - <#QKSet_account_webtitle#>";
+	parent.set_step("t2");
+
+	hideLinkTag();
+	flash_button();
+	
+	get_value_from_parent();
+	
+	show_prev_button();
+	document.getElementById("wan_heartbeat_x").focus();
+} 
+
+function get_value_from_parent(){
+	if(now_flag == "auto_way")
+		document.form.flag.value = now_flag;
+	
+	document.form.wan_heartbeat_x.value = parent.document.QKform.wan_heartbeat_x.value;
+	
+	if(parent.document.QKform.wan_proto.value == "l2tp")
+		document.form.wan_proto[1].checked = 1;
+	else
+		document.form.wan_proto[0].checked = 1;
+	
+	document.form.wan_heartbeat_x.value = parent.document.QKform.wan_heartbeat_x.value;
+}
+
+function get_value_to_parent(){
+	parent.document.QKform.wan_heartbeat_x.value = document.form.wan_heartbeat_x.value;
+	
+	if(document.form.wan_proto[1].checked)
+		parent.document.QKform.wan_proto.value = "l2tp";
+	else
+		parent.document.QKform.wan_proto.value = "pptp";
+	
+	parent.document.QKform.wan_heartbeat_x.value = document.form.wan_heartbeat_x.value;
+}
+
+function show_prev_button(){
+	if(now_flag == "auto_way")
+		document.form.prev_page.value = parent.document.QKform.prev_page.value;
+	else
+		document.form.prev_page.value = "/qis/QIS_internet_type.htm";
+}
+
+function gotoAccount(){
+	if(document.form.wan_heartbeat_x.value.length <= 0){
+		alert("<#QIS_internet_vpn_alert#>");
+		document.form.wan_heartbeat_x.focus();
+		document.form.wan_heartbeat_x.select();
+		return false;
+	}
+	
+	if(!validator.string(document.form.wan_heartbeat_x))
+		return false;
+	
+	get_value_to_parent();
+	
+	parent.document.QKform.prev_page.value = "/qis/QIS_internet_vpn.htm";
+	document.form.action = "/qis/QIS_internet_account.htm";
+		
+	document.form.submit();
+}
+
+function submitenter(myfield,e)
+{	
+	var keycode;
+	if (window.event) keycode = window.event.keyCode;
+	else if (e) keycode = e.which;
+	else return true;
+
+	if (keycode == 13){
+		submitForm();
+   	return false;
+  }
+	else
+   	return true;
+}
+
+function focus_radio(obj){
+	if(obj.value == "1")		
+ 			document.form.wan_proto[1].focus();
+ 	else
+ 			document.form.wan_proto[0].focus(); 			 			
+}
+</script>                                          
+</head>   
+
+<body onLoad="initial();" onunLoad="">
+<div id="navtxt" class="navtext" style="position:absolute; top:50px; left:-100px; visibility:hidden; font-family:Arial, Verdana"></div>
+<form method="post" name="form" action="/start_apply.htm" onsubmit="gotoAccount();">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="prev_page" value="">
+<style>
+	body{
+		margin: 0;
+		color: #FFF;
+	}
+
+	
+</style>
+<div>
+	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QIS_internet_vpn_title#></div>
+	<div>
+		<input type="radio" name="wan_proto" class="input" value="pptp" tabindex="1" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">PPTP
+		<input type="radio" name="wan_proto" class="input" value="l2tp" tabindex="2" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">L2TP
+	</div>
+	
+	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#BOP_isp_heart_item#></div>
+	<div style="margin:1px 27px 10px 15px">
+		<input type="text" name="wan_heartbeat_x" tabindex="3" size="36" maxlength="64" title="<#BOP_isp_heart_item#>" style="height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" disabled autocorrect="off" autocapitalize="off">
+	</div>
+	
+	<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+		<div style="width:100%;height:100%;display:table">
+			<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;" onclick="gotoprev(document.form);">
+				<div style="font-size:1em;color:#7E8593"><#CTL_prev#></div>
+			</div>
+			<div style="display:table-cell;width:50%;vertical-align:middle;text-align:center;background-color:#007AFF" onclick="gotoAccount();">
+				<div style="font-size:1em;color:#FFF;"><#CTL_next#></div>
+			</div>
+		</div>
+	</div>
+</div>
+<!--div class="QISmain">
+<div class="formfonttitle" style="padding:6 0 0 10;">
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<div class="description_down"><#QIS_internet_vpn_title#></div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+</div>
+<fieldset>
+<legend>
+	<#QIS_internet_vpn_type#>
+	<input type="radio" name="wan_proto" class="input" value="pptp" tabindex="1" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">PPTP
+	<input type="radio" name="wan_proto" class="input" value="l2tp" tabindex="2" onClick="focus_radio(this)" onKeyPress="return submitenter(this,event)">L2TP
+</legend>
+	<table class="QISform" width="400" border="0" align="center" cellpadding="3" cellspacing="0">
+		<tr>
+			<th width="180">
+				<span onmouseout="return nd();" onclick="overlib('<#BOP_isp_heart_desc2#>', FIXX, 270, FIXY, 30);" style="cursor:help;"><#BOP_isp_heart_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+			</th>
+			<td class="QISformtd">
+				<input type="text" id="wan_heartbeat_x" name="wan_heartbeat_x" tabindex="3" title="<#BOP_isp_heart_item#>" value="" size="36" maxlength="64" onkeypress="return validator.isString(this, event);" class="input_32_table" autocorrect="off" autocapitalize="off">
+			</td>
+		</tr>
+	</table>
+</fieldset>
+
+<div class="apply_gen">
+  <input type="button" id="prevButton" value="<#CTL_prev#>" tabindex="5" onclick="gotoprev(document.form);" class="button_gen" width="70" align="center">
+  <input type="submit" id="nextButton" value="<#CTL_next#>" tabindex="4" class="button_gen" width="70" align="center">
+</div>
+
+</div-->
+
+</form> 
+</body> 
+</html>

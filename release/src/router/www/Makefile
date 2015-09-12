@@ -315,7 +315,6 @@ ifneq ($(RTCONFIG_KYIVSTAR),y)
 endif
 
 ifneq ($(RTCONFIG_BWDPI),y)
-	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Adaptive.asp
 	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_Bandwidth_Monitor.asp
 	rm -rf $(INSTALLDIR)/www/AdaptiveQoS_WebHistory.asp
 	rm -rf $(INSTALLDIR)/www/AiProtection_HomeSecurity.asp
@@ -370,16 +369,10 @@ ifneq ($(RTCONFIG_SNMPD), y)
 	rm -rf $(INSTALLDIR)/www/Advanced_SNMP_Content.asp
 endif
 
-ifneq ($(RTCONFIG_OLD_PARENTALCTRL), y)	
-	rm -rf $(INSTALLDIR)/www/Advanced_MACFilter_Content.asp
-endif
-
-ifneq ($(BUILD_NAME),RT-AC3200)
-ifneq ($(BUILD_NAME),RT-AC5300)
+ifneq ($(BUILD_NAME),$(filter $(BUILD_NAME), RT-AC3200 RT-AC5300))
 	rm -rf $(INSTALLDIR)/www/Advanced_Smart_Connect.asp
 	rm -rf $(INSTALLDIR)/www/images/New_ui/smart_connect.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/smart_connect_concept.gif
-endif
 endif
 
 ifneq ($(RTCONFIG_FINDASUS), y)
@@ -417,3 +410,19 @@ ifeq ($(BUILD_NAME),4G-AC55U)
 endif
 
 
+ifneq ($(BUILD_NAME),$(filter $(BUILD_NAME), RT-AC88U RT-AC3100 RT-AC5300 RT-AC3200))
+	rm -rf $(INSTALLDIR)/www/QIS_wizard_m.htm
+	rm -rf $(INSTALLDIR)/www/css
+	rm -rf $(INSTALLDIR)/www/qis_m
+	rm -rf $(INSTALLDIR)/www/images/qis/icon_MAC_clone.svg
+	rm -rf $(INSTALLDIR)/www/images/qis/loading.gif
+	rm -rf $(INSTALLDIR)/www/images/qis/logo.png
+	rm -rf $(INSTALLDIR)/www/images/qis/mainimage_img4.png
+	rm -rf $(INSTALLDIR)/www/images/qis/pattern3-3_10_A15.png
+	rm -rf $(INSTALLDIR)/www/images/qis/pattern3_05_4.png
+endif
+
+ifneq ($(RTCONFIG_DISK_MONITOR), y)
+	rm -rf $(INSTALLDIR)/www/device-map/disk_utility.asp
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/backgroud_move_8P_2.0.gif
+endif

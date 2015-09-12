@@ -695,6 +695,7 @@ int get_dhcpd_lmax()
 
 void stop_hour_monitor_service()
 {
+	//logmessage("hour monitor", "stop_hour_monitor_service");
 	killall("hour_monitor", SIGTERM);
 }
 
@@ -706,8 +707,10 @@ void start_hour_monitor_service()
 	if(nvram_get_int("sw_mode") != SW_MODE_ROUTER)
 		return;
 	
-	if(!pids("hour_monitor"))
+	if(!pids("hour_monitor")){
+	//logmessage("hour monitor", "start again due to not pid");
 		_eval(cmd, NULL, 0, &pid);
+	}
 }
 
 void check_hour_monitor_service()
@@ -778,9 +781,7 @@ static void traffic_control_limitdata_service()
 
 	// stop primary wan
 	if(((val & 0x1) != 0)
-		&& (nvram_match("wan0_state_t", "2"))
-		&& (nvram_match("wan0_sbstate_t", "0"))
-		&& (nvram_match("wan0_auxstate_t", "0")))
+			&& is_wan_connect(0))
 	{
 		// send limit SMS
 		if(nvram_get_int("modem_sms_limit")) traffic_control_sendSMS(1);
@@ -792,9 +793,7 @@ static void traffic_control_limitdata_service()
 
 	// stop secondary wan
 	if(((val & 0x2) != 0)
-		&& (nvram_match("wan1_state_t", "2"))
-		&& (nvram_match("wan1_sbstate_t", "0"))
-		&& (nvram_match("wan1_auxstate_t", "0")))
+			&& is_wan_connect(1))
 	{
 		// send limit SMS
 		if(nvram_get_int("modem_sms_limit")) traffic_control_sendSMS(1);
@@ -909,6 +908,9 @@ static void link_up(void)
 int restart_dnsmasq(int need_link_DownUp)
 {
 	if (need_link_DownUp) {
+#if (defined(PLN12) || defined(PLAC56))
+		nvram_set("plc_ready", "0");
+#endif
 		link_down();
 		sleep(9);
 	}
@@ -917,8 +919,12 @@ int restart_dnsmasq(int need_link_DownUp)
 	sleep(1);
 	start_dnsmasq();
 
-	if (need_link_DownUp)
+	if (need_link_DownUp) {
 		link_up();
+#if (defined(PLN12) || defined(PLAC56))
+		nvram_set("plc_ready", "1");
+#endif
+	}
 
 	return 0;
 }
@@ -996,7 +1002,11 @@ void start_dnsmasq()
 #ifdef RTCONFIG_REDIRECT_DNAME
 	if (nvram_get_int("sw_mode") == SW_MODE_AP) {
 #ifdef RTCONFIG_DHCP_OVERRIDE
-		if (nvram_match("dhcp_enable_x", "1") && nvram_match("dnsqmode", "2")) {
+		if (nvram_match("dhcp_enable_x", "1") && nvram_match("dnsqmode", "2") 
+#ifdef RTCONFIG_DEFAULT_AP_MODE
+				&& !nvram_match("ate_flag", "1")
+#endif
+		) {
 			if ((fp = fopen("/etc/dnsmasq.conf", "w+")) != NULL) {
 				/* DHCP range */
 				char dhcp_start[16], dhcp_end[16], lan_netmask[16];
@@ -2694,6 +2704,10 @@ _dprintf("%s:\n", __FUNCTION__);
 	start_syslogd();
 	start_klogd();
 
+#ifdef DUMP_PREV_OOPS_MSG && defined(RTCONFIG_BCMARM)
+	eval("et", "dump_oops");
+#endif
+
 	return 0;
 }
 
@@ -2889,8 +2903,8 @@ start_telnetd(void)
 		killall_tk("telnetd");
 
 	set_hostname();
-
-	chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));	// vsftpd also needs
+	setup_passwd();
+	//chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));	// vsftpd also needs
 
 	return xstart("telnetd");
 }
@@ -2914,7 +2928,8 @@ run_telnetd(void)
 		killall_tk("telnetd");
 
 	set_hostname();
-	chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));
+	setup_passwd();
+	//chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));
 
 	return xstart("telnetd");
 }
@@ -3731,7 +3746,6 @@ start_services(void)
 #ifdef RTCONFIG_DUALWAN
 	restart_dualwan();
 #endif
-	start_hour_monitor_service();
 #ifdef RTCONFIG_FANCTRL
 	start_phy_tempsense();
 #endif
@@ -3776,6 +3790,7 @@ start_services(void)
 #ifdef RTCONFIG_BWDPI
 	start_bwdpi_check();
 #endif
+	start_hour_monitor_service();
 
 #ifdef RTCONFIG_IPERF
 	start_iperf();
@@ -3811,6 +3826,7 @@ stop_services(void)
 	stop_lteled();
 #endif
 
+	stop_hour_monitor_service();
 #ifdef RTCONFIG_BWDPI
 	stop_bwdpi_wred_alive();
 	stop_bwdpi_check();
@@ -3845,7 +3861,6 @@ stop_services(void)
 	stop_upnp();
 	stop_lltd();
 	stop_watchdog();
-	stop_hour_monitor_service();
 #ifdef RTCONFIG_FANCTRL
 	stop_phy_tempsense();
 #endif
@@ -4402,7 +4417,7 @@ again:
 		if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56S,U/RT-AC68U/RT-N18U */
 			eval("mtd-erase2", "nvram");
 		else
-#if defined(RTAC1200G)
+#if defined(RTAC1200G) || defined(RTAC1200GP)
 			eval("mtd-erase2", "nvram");
 #else
 			eval("mtd-erase", "-d", "nvram");
@@ -4417,6 +4432,10 @@ again:
 		kill(1, SIGTERM);
 	}
 	else if (strcmp(script, "all") == 0) {
+#ifdef RTCONFIG_QCA_PLC_UTILS
+		stop_plchost();
+		eval("/usr/local/bin/plctool", "-i", "br0", "-R");
+#endif
 		sleep(2); // wait for all httpd event done
 		stop_lan_port();
 		start_lan_port(6);
@@ -4424,6 +4443,7 @@ again:
 	}
 	else if(strcmp(script, "upgrade") == 0) {
 		if(action & RC_SERVICE_STOP) {
+			stop_hour_monitor_service();
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 			_dprintf("modem data: save the data during upgrading\n");
 			eval("modem_status.sh", "bytes+");
@@ -4465,7 +4485,7 @@ again:
 
 #endif
 			remove_conntrack();
-			killall("udhcpc", SIGTERM);
+			stop_udhcpc(-1);
 #ifdef RTCONFIG_IPV6
 			stop_dhcp6c();
 #endif
@@ -4561,7 +4581,7 @@ again:
 				if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56S,U/RT-AC68U/RT-N16UHP */
 					eval("mtd-write2", upgrade_file, "linux");
 				else
-#if defined(RTAC1200G)
+#if defined(RTAC1200G) || defined(RTAC1200GP)
 					eval("mtd-write2", upgrade_file, "linux");
 #else
 					eval("mtd-write", "-i", upgrade_file, "-d", "linux");
@@ -5868,6 +5888,7 @@ check_ddr_done:
 	else if (strcmp(script, "time") == 0)
 	{
 		if(action & RC_SERVICE_STOP) {
+			stop_hour_monitor_service();
 			stop_telnetd();
 #ifdef RTCONFIG_SSH
 			stop_sshd();
@@ -5884,6 +5905,7 @@ check_ddr_done:
 #endif
 			//start_httpd();
 			start_firewall(wan_primary_ifunit(), 0);
+			start_hour_monitor_service();
 		}
 	}
 	else if (strcmp(script, "wps_method")==0)
@@ -6685,14 +6707,14 @@ void set_acs_ifnames()
 
 #if defined(RTAC3200) || defined(RTAC5300)
 	nvram_set("wl0_acs_excl_chans", "");
-	if (nvram_match("wl1_country_code", "E0")) {
+	if (nvram_match("wl1_country_code", "E0") || nvram_match("mr_ccode", "E0")) {
 		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
 		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80 */
 		nvram_set("wl2_acs_excl_chans",
 			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a");
-	} else if (nvram_match("wl1_country_code", "JP")) {
+	} else if (nvram_match("wl1_country_code", "JP") || nvram_match("mr_ccode", "JP")) {
 		/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 116l, 116/80, 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80, 132, 132l, 136, 136u, 140 */
 		nvram_set("wl1_acs_excl_chans",
 			  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd876,0xe07a,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a,0xd084,0xd886,0xd088,0xd986,0xd08c");
@@ -6705,6 +6727,17 @@ void set_acs_ifnames()
 			  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
 		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
 		nvram_set("wl2_acs_excl_chans",
+			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
+	}
+#elif defined(RTAC88U) || defined(RTAC3100)
+	nvram_set("wl0_acs_excl_chans", "");
+	if (nvram_match("wl1_country_code", "E0") || nvram_match("wl1_country_code", "JP") || nvram_match("mr_test", "1")) {
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 116l, 116/80, 120, 120u, 120/80, 124, 124l, 124/80, 128, 128u, 128/80, 132, 132l, 136, 136u, 140 */
+		nvram_set("wl1_acs_excl_chans",
+			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd876,0xe07a,0xd078,0xd976,0xe17a,0xd07c,0xd87e,0xe27a,0xd080,0xd97e,0xe37a,0xd084,0xd886,0xd088,0xd986,0xd08c");
+	} else {
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
+		nvram_set("wl1_acs_excl_chans",
 			  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
 	}
 #else

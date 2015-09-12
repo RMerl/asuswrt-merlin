@@ -1,4 +1,4 @@
-﻿define(["/jquery.js"], function(){
+﻿define(["/js/jquery.js"], function(){
 	var $j = jQuery.noConflict();
 	
 	var diskList = function(){};

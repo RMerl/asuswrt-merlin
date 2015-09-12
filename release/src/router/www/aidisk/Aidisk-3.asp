@@ -12,7 +12,7 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javaScript" src="/general.js"></script>
 <script type="text/javaScript" src="/validator.js"></script>
-<script type="text/javaScript" src="/jquery.js"></script>
+<script type="text/javaScript" src="/js/jquery.js"></script>
 <script>
 var ddns_server_x = '<% nvram_get("ddns_server_x"); %>';
 var ddns_hostname_x = '<% nvram_get("ddns_hostname_x"); %>';

@@ -233,6 +233,7 @@ enum {
 	MODEL_DSLAC68U,
 	MODEL_EAN66,
 	MODEL_RTN11P,
+	MODEL_RTN300,
 	MODEL_RTN13U,
 	MODEL_RTN14U,
 	MODEL_RTAC52U,
@@ -1096,23 +1097,28 @@ static inline int is_usb3_port(char *usb_node)
 
 #if defined(RTN18U) || defined(RTAC56U) || defined(RTAC56S) || defined(RTAC68U) || defined(RTAC3200) || defined(DSL_AC68U)
 #define CPU_PORT "5"
+#define WAN0DEV "vlan2"
 #endif
 
 #ifdef RTAC5300
 #define CPU_PORT "7"
+#define WAN0DEV "vlan2"
 #endif
 
 #if defined(RTAC88U) || defined(RTAC3100)/* || defined(RTAC5300)*/
 #ifdef RTCONFIG_EXT_RTL8365MB
 #define CPU_PORT "7"
+#define WAN0DEV "vlan2"
 #else
 #define CPU_PORT "5"
+#define WAN0DEV "vlan2"
 #endif
 #endif
 
 #ifdef RTAC87U
 #define CPU_PORT "7"	/* RT-AC87U */
 #define RGMII_PORT "5"	/* RT-AC87U */
+#define WAN0DEV "vlan2"
 #endif
 #endif	/* RTCONFIG_BCM5301X_TRAFFIC_MONITOR */
 

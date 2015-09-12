@@ -139,12 +139,8 @@ void convert_dsl_wan()
 			if (nvram_match("dsl8_proto","pppoe")) {
 				nvram_set("wan0_proto", "pppoe");
 				/* Turn off DHCP on MAN interface */
-#if 1 /* TODO: tmporary change! remove after WEB UI support */
 				nvram_set("wan0_dhcpenable_x", "1");
 				nvram_set("wan0_vpndhcp", "0");
-#else /* TODO: tmporary change! remove after WEB UI support */
-				nvram_set("wan0_dhcpenable_x", "2");
-#endif
 			}
 			else if (nvram_match("dsl8_proto","bridge")) {
 				nvram_set("wan0_nat_x","0");
@@ -158,12 +154,8 @@ void convert_dsl_wan()
 			if (nvram_match("dsl0_proto","pppoe") || nvram_match("dsl0_proto","pppoa")) {
 				nvram_set("wan0_proto","pppoe");
 				/* Turn off DHCP on MAN interface */
-#if 1 /* TODO: tmporary change! remove after WEB UI support */
 				nvram_set("wan0_dhcpenable_x", "1");
 				nvram_set("wan0_vpndhcp", "0");
-#else /* TODO: tmporary change! remove after WEB UI support */
-				nvram_set("wan0_dhcpenable_x", "2");
-#endif
 			}
 			else if (nvram_match("dsl0_proto","ipoa")) {
 				nvram_set("wan0_proto","static");

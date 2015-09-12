@@ -21,6 +21,7 @@ static const struct model_s model_list[] = {
 #endif
 	{ "EA-N66",	MODEL_EAN66	},
 	{ "RT-N11P",	MODEL_RTN11P	},
+	{ "RT-N300",	MODEL_RTN300	},
 	{ "RT-N13U",	MODEL_RTN13U	},
 	{ "RT-N14U",	MODEL_RTN14U	},
 	{ "RT-AC52U",	MODEL_RTAC52U	},

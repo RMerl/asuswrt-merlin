@@ -1,0 +1,41 @@
+NTFSDEBUG(8)                                                      NTFSDEBUG(8)
+
+
+
+NAME
+       ntfsdebug - Efficiently dump the metadata contents of an NTFS volume.
+
+SYNOPSIS
+       ntfsdebug device|image
+
+DESCRIPTION
+       ntfsdebug  will  efficiently extract all relevant metadata from an NTFS
+       volume and dump it to standard output. It works at  disk  sector  level
+       and copies only the used data. Unused disk space becomes zero.  ntfsde‐
+       bug can be useful to exact the metadata snapshot of an NTFS file system
+       for  developers to investigate and troubleshoot users' issues using the
+       clone without the risk of destroying the original file system.
+
+EXIT CODES
+       The exit code is 0 on success, non-zero otherwise.
+
+EXAMPLES
+       Dump NTFS metadata on /dev/sda1 to a compressed metadata image:
+
+              ntfsdebug /dev/sda1 | bzip2 > sda1.img.bz2
+
+       Dump NTFS metadata to a remote host, using ssh. Please  note  that  ssh
+       may ask for a password.
+
+              ntfsdebug /dev/sda1 | bzip2 | ssh host 'cat > sda1.img.bzip2'
+
+KNOWN ISSUES
+       If  you find a problem then please send an email describing it to ntfs-
+       support@tuxera.com.
+
+AVAILABILITY
+       ntfsdebug is part of the Tuxera NTFS package.
+
+
+
+Tuxera NTFS Utilities 3014.5.21    Sept 2011                      NTFSDEBUG(8)

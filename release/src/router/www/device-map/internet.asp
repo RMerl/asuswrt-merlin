@@ -12,9 +12,11 @@
 <link rel="stylesheet" type="text/css" href="/index_style.css">
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+if(parent.location.pathname.search("index") === -1) top.location.href = "../index.asp";
+
 <% wanlink(); %>
 <% first_wanlink(); %>
 <% secondary_wanlink(); %>
@@ -561,23 +563,23 @@ function goToWAN(){
 			document.act_form.wan_unit.value = 1;
 		}
 		document.act_form.action_mode.value = "change_wan_unit";
-		document.act_form.target = "";		
-		document.act_form.submit();
-
+		document.act_form.target = "";
 		if(wans_dualwan.split(" ")[wan_selected].toUpperCase() == "USB"){
 			if(gobi_support)
-				parent.location.href = "/Advanced_MobileBroadband_Content.asp";
+				document.act_form.current_page.value = "Advanced_MobileBroadband_Content.asp";
 			else
-				parent.location.href = "/Advanced_Modem_Content.asp";
+				document.act_form.current_page.value = "Advanced_Modem_Content.asp";
 		}
 		else if(wans_dualwan.split(" ")[wan_selected].toUpperCase() == "WAN" || wans_dualwan.split(" ")[wan_selected].toUpperCase() == "LAN"){
-			parent.location.href = "/Advanced_WAN_Content.asp";
+			document.act_form.current_page.value = "Advanced_WAN_Content.asp";
 		}
 		else if(wans_dualwan.split(" ")[wan_selected].toUpperCase() == "DSL")
-			parent.location.href = "/Advanced_DSL_Content.asp";
+			document.act_form.current_page.value = "Advanced_DSL_Content.asp";
+
+		document.act_form.submit();
 	}
 	else{
-		if(dsl_support)			
+		if(dsl_support)
 			parent.location.href = '/Advanced_DSL_Content.asp';
 		else
 			parent.location.href = '/Advanced_WAN_Content.asp';
@@ -884,7 +886,7 @@ function manualSetup(){
 </tr>
 <tr id="goDualWANSetting">
 	<td height="50" style="padding:10px 15px 0px 15px;">
-		<p class="formfonttitle_nwm" style="float:left;width:116px;">Dual WAN setting</p>
+		<p class="formfonttitle_nwm" style="float:left;width:116px;"><#Dualwan_setting#></p>
 		<input type="button" class="button_gen_long" onclick="goToDualWAN();" value="<#btn_go#>" style="position:absolute;right:25px;margin-top:-10px;margin-left:115px;">
 		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
 	</td>

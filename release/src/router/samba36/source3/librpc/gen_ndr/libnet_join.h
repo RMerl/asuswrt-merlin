@@ -68,7 +68,7 @@ struct libnet_UnjoinCtx {
 		struct ads_struct *ads;/* [unique] */
 		uint8_t debug;
 		uint8_t use_kerberos;
-		struct messaging_context *msg_ctx;/* [ref,noprint] */
+		struct messaging_context *msg_ctx;/* [noprint,ref] */
 	} in;
 
 	struct {

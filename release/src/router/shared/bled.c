@@ -661,57 +661,57 @@ void set_wifiled(int mode)
 {
 	switch (mode) {
 	case 1: /* on */
-		set_bled_udef_pattern("led_2g_green_gpio", 1000, "1 1");
-		set_bled_udef_pattern_mode("led_2g_green_gpio");
-		set_bled_udef_pattern("led_2g_orange_gpio", 1000, "1 1");
-		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		//set_bled_udef_pattern("led_2g_green_gpio", 1000, "1 1");
+		//set_bled_udef_pattern_mode("led_2g_green_gpio");
+		//set_bled_udef_pattern("led_2g_orange_gpio", 1000, "1 1");
+		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
 		set_bled_udef_pattern("led_2g_red_gpio", 1000, "1 1");
 		set_bled_udef_pattern_mode("led_2g_red_gpio");
 		break;
 	case 2: /* off */
-		set_bled_udef_pattern("led_2g_green_gpio", 1000, "0 0");
-		set_bled_udef_pattern_mode("led_2g_green_gpio");
-		set_bled_udef_pattern("led_2g_orange_gpio", 1000, "0 0");
-		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		//set_bled_udef_pattern("led_2g_green_gpio", 1000, "0 0");
+		//set_bled_udef_pattern_mode("led_2g_green_gpio");
+		//set_bled_udef_pattern("led_2g_orange_gpio", 1000, "0 0");
+		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
 		set_bled_udef_pattern("led_2g_red_gpio", 1000, "0 0");
 		set_bled_udef_pattern_mode("led_2g_red_gpio");
 		break;
 	case 3:	/* WPS */
-		set_bled_udef_pattern("led_2g_green_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
-		set_bled_udef_pattern_mode("led_2g_green_gpio");
-		set_bled_udef_pattern("led_2g_orange_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
-		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		//set_bled_udef_pattern("led_2g_green_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
+		//set_bled_udef_pattern_mode("led_2g_green_gpio");
+		//set_bled_udef_pattern("led_2g_orange_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
+		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
 		set_bled_udef_pattern("led_2g_red_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
 		set_bled_udef_pattern_mode("led_2g_red_gpio");
 		break;
 	case 4: /* WPS success */
-		set_bled_udef_pattern("led_2g_green_gpio", 100, "0 1");
-		set_bled_udef_pattern_mode("led_2g_green_gpio");
-		set_bled_udef_pattern("led_2g_orange_gpio", 100, "0 1");
-		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		//set_bled_udef_pattern("led_2g_green_gpio", 100, "0 1");
+		//set_bled_udef_pattern_mode("led_2g_green_gpio");
+		//set_bled_udef_pattern("led_2g_orange_gpio", 100, "0 1");
+		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
 		set_bled_udef_pattern("led_2g_red_gpio", 100, "0 1");
 		set_bled_udef_pattern_mode("led_2g_red_gpio");
 		break;
 	case 5: /* press reset button */
-		set_bled_udef_pattern("led_2g_green_gpio", 500, "0 1");
-		set_bled_udef_pattern_mode("led_2g_green_gpio");
-		set_bled_udef_pattern("led_2g_orange_gpio", 500, "0 1");
-		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		//set_bled_udef_pattern("led_2g_green_gpio", 500, "0 1");
+		//set_bled_udef_pattern_mode("led_2g_green_gpio");
+		//set_bled_udef_pattern("led_2g_orange_gpio", 500, "0 1");
+		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
 		set_bled_udef_pattern("led_2g_red_gpio", 500, "0 1");
 		set_bled_udef_pattern_mode("led_2g_red_gpio");
 		break;
 	case 6: /* firmware upgrade */
-		set_bled_udef_pattern("led_2g_green_gpio", 1000, "0 1");
-		set_bled_udef_pattern_mode("led_2g_green_gpio");
-		set_bled_udef_pattern("led_2g_orange_gpio", 1000, "0 1");
-		set_bled_udef_pattern_mode("led_2g_orange_gpio");
+		//set_bled_udef_pattern("led_2g_green_gpio", 1000, "0 1");
+		//set_bled_udef_pattern_mode("led_2g_green_gpio");
+		//set_bled_udef_pattern("led_2g_orange_gpio", 1000, "0 1");
+		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
 		set_bled_udef_pattern("led_2g_red_gpio", 1000, "0 1");
 		set_bled_udef_pattern_mode("led_2g_red_gpio");
 		break;
 	default:
 		/* normal mode */
-		set_bled_normal_mode("led_2g_green_gpio");
-		set_bled_normal_mode("led_2g_orange_gpio");
+		//set_bled_normal_mode("led_2g_green_gpio");
+		//set_bled_normal_mode("led_2g_orange_gpio");
 		set_bled_normal_mode("led_2g_red_gpio");
 	}
 }

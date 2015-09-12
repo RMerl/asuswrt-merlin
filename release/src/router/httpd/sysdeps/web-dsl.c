@@ -178,16 +178,9 @@ int wanlink_hook_dsl(int eid, webs_t wp, int argc, char_t **argv){
 //	    strcmp(wan_proto, "pptp") == 0 ||
 //	    strcmp(wan_proto, "l2tp") == 0) {
 //		int dhcpenable = nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp));
-//#if 1 /* TODO: tmporary change! remove after WEB UI support */
-//		if (strcmp(wan_proto, "pppoe") == 0 &&
-//		    dhcpenable && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0"))
-//			dhcpenable = 2;
-//#endif /* TODO: tmporary change! remove after WEB UI support */
-//
-//		if (dhcpenable == 0)
-//			xtype = "static";
-//		else if (dhcpenable != 2 || strcmp(wan_proto, "pppoe") != 0)
-//			xtype = "dhcp";
+//		xtype = (dhcpenable == 0) ? "static" :
+//			(strcmp(wan_proto, "pppoe") == 0 && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0")) ? "" : /* zeroconf */
+//			"dhcp";
 //		xip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 //		xnetmask = nvram_safe_get(strcat_r(prefix, "xnetmask", tmp));
 //		xgateway = nvram_safe_get(strcat_r(prefix, "xgateway", tmp));

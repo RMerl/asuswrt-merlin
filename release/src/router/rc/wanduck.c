@@ -140,7 +140,6 @@ static void safe_leave(int signo){
 	}
 #endif
 
-	if(rule_setup == 1){
 		int len;
 		char *fn = NAT_RULES, ln[PATH_MAX];
 		struct stat s;
@@ -193,7 +192,6 @@ static void safe_leave(int signo){
 			logmessage("wanduck exit", "initial the nat_rules!");
 		}
 #endif
-	}
 
 	remove(WANDUCK_PID_FILE);
 
@@ -338,6 +336,41 @@ static void get_network_nvram(int signo){
 #endif
 }
 
+/* 87u,3200: 	  have each led on every port. 
+ * 88u,3100,5300: have one led to hint wan port but this led is the union of all ports 
+ * force led_on on usb modem case */
+
+void enable_wan_wled()
+{
+	int usb_wan = get_dualwan_by_unit(wan_primary_ifunit()) == WANS_DUALWAN_IF_USB ? 1:0;
+
+	if(usb_wan) {
+        	switch (get_model()) {
+                	case MODEL_RTAC3200:
+                	case MODEL_RTAC87U:
+				eval("et", "robowr", "0", "0x18", "0x01ff");
+				eval("et", "robowr", "0", "0x1a", "0x01fe");
+                        return;
+
+                	case MODEL_RTAC5300:
+                	case MODEL_RTAC88U:
+                	case MODEL_RTAC3100:
+				eval("et", "robowr", "0", "0x18", "0x01ff");
+				eval("et", "robowr", "0", "0x1a", "0");
+                        return;
+        	}
+	}
+
+	eval("et", "robowr", "0", "0x18", "0x01ff");
+	eval("et", "robowr", "0", "0x1a", "0x01ff");
+}
+
+void disable_wan_wled()
+{
+	eval("et", "robowr", "0", "0x18", "0x01fe");
+	eval("et", "robowr", "0", "0x1a", "0x01fe");
+}
+
 static void wan_led_control(int sig) {
 #if 0
 #if defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
@@ -353,12 +386,10 @@ static void wan_led_control(int sig) {
 #if defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300) 
 		if (rule_setup) {
 			led_control(LED_WAN, LED_ON);
-			eval("et", "robowr", "0", "0x18", "0x01fe");
-			eval("et", "robowr", "0", "0x1a", "0x01fe");
+			disable_wan_wled();
 		} else {
 			led_control(LED_WAN, LED_OFF);
-			eval("et", "robowr", "0", "0x18", "0x01ff");
-			eval("et", "robowr", "0", "0x1a", "0x01ff");
+			enable_wan_wled();
 		}
 #elif defined(DSL_AC68U)
 		if (rule_setup) {
@@ -880,7 +911,7 @@ int if_wan_phyconnected(int wan_unit){
 		int wan_state = nvram_get_int(nvram_state[wan_unit]);
 
 #ifdef RT4GAC55U
-		if(strlen(usb_if) <= 0){
+		if(strlen(usb_if) <= 0 && nvram_get_int("usb_gobi") == 1){
 			snprintf(usb_if, 16, "%s", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 csprintf("wanduck: try to get usb_if=%s.\n", usb_if);
 		}
@@ -983,6 +1014,8 @@ _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state
 
 		if(link_wan[wan_unit] != nvram_get_int(wired_link_nvram)){
 			nvram_set_int(wired_link_nvram, link_wan[wan_unit]);
+			if(link_wan[wan_unit] != 0)
+				record_wan_state_nvram(wan_unit, -1, -1, WAN_AUXSTATE_NONE);
 
 			if(link_wan[wan_unit] == 2)
 				logmessage("wanduck", "The local subnet is the same with the USB ethernet.");
@@ -2824,9 +2857,7 @@ _dprintf("wanduck(%d)(all   end): state %d, state_old %d, changed %d, wan_state 
 #ifdef RTCONFIG_DSL	//TODO: general case
 			int internet_led = 0;
 			for(wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit){
-				if(nvram_match(nvram_state[wan_unit], "2")
-					&& nvram_match(nvram_sbstate[wan_unit], "0")
-					&& nvram_match(nvram_auxstate[wan_unit], "0") )	//since not update current_state[wan_unit] in USB modem case
+				if(is_wan_connect(wan_unit))	//since not update current_state[wan_unit] in USB modem case
 					internet_led = 1;
 			}
 			if(internet_led) {
@@ -2990,8 +3021,7 @@ _dprintf("wanduck(%d)(all   end): state %d, state_old %d, changed %d, wan_state 
 
 							if(nvram_match("AllLED", "1")){
 								led_control(LED_WAN, LED_ON);
-								eval("et", "robowr", "0", "0x18", "0x01fe");
-								eval("et", "robowr", "0", "0x1a", "0x01fe");
+								disable_wan_wled();
 							}
 						}
 #endif
@@ -3059,8 +3089,7 @@ _dprintf("wanduck(%d)(all   end): state %d, state_old %d, changed %d, wan_state 
 #elif defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
 					if(nvram_match("AllLED", "1")){
 						led_control(LED_WAN, LED_OFF);
-						eval("et", "robowr", "0", "0x18", "0x01ff");
-						eval("et", "robowr", "0", "0x1a", "0x01ff");
+						enable_wan_wled();
 					}
 #endif
 				}
@@ -3146,15 +3175,13 @@ _dprintf("wanduck(%d)(all   end): state %d, state_old %d, changed %d, wan_state 
 				if(link_status) {
 					if(wanred_led_status != 2 ){
 						led_control(LED_WAN, LED_OFF);
-						eval("et", "robowr", "0", "0x18", "0x01ff");
-						eval("et", "robowr", "0", "0x1a", "0x01ff");
+						enable_wan_wled();
 						wanred_led_status = 2;
 					}
 				}else{
 					if(wanred_led_status != 1 ){
 						led_control(LED_WAN, LED_ON);
-						eval("et", "robowr", "0", "0x18", "0x01fe");
-						eval("et", "robowr", "0", "0x1a", "0x01fe");
+						disable_wan_wled();
 						wanred_led_status = 1;
 					}
 				}

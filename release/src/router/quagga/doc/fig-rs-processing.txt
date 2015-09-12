@@ -1,0 +1,47 @@
+From Peer A
+ | From RS-Client B
+ |  | From RS-Client C
+ |  |  | From RS-Client D
+ |  |  |  |
+ |  |  |  |           Main / Normal RIB
+ |  |  |  |      ________________________________
+ |  |  |  |     /    _________     _________     \
+ |  |  |  +--->|(D)-|Best     |   | Main    |     |
+ |  |  +--|--->|(C)-|Path     |-->|Local-RIB|->[A]|--->To Peer A
+ |  +--|--|--->|(B)-|Selection|   |         |     |
+ +--|--|--|--->|(A)-|_________|   |_________|     |
+ |  |  |  |     \________________________________/
+ |  |  |  |
+ |  |  |  |          ________________________________
+ |  |  |  |          /    _________     _________     \
+ |  |  |  +--->*D*->|{B}-|Best     |   |RS-Client|     |
+ |  |  +--|--->*C*->|{B}-|Path     |-->|Local-RIB|->[B]|--->To RS-Client B
+ |  |  |  |         |    |Selection|   |  for B  |     |
+ +--|--|--|-------->|{B}-|_________|   |_________|     |
+ |  |  |  |          \________________________________/
+ |  |  |  |
+ |  |  |  |          ________________________________
+ |  |  |  |          /    _________     _________     \
+ |  |  |  +--->*D*->|{C}-|Best     |   |RS-Client|     |
+ |  |  |  |         |    |Path     |-->|Local-RIB|->[C]|--->To RS-Client C
+ |  +--|--|--->*B*->|{C}-|Selection|   |  for C  |     |
+ +--|--|--|-------->|{C}-|_________|   |_________|     |
+ |  |  |             \________________________________/
+ |  |  |
+ |  |  |              ________________________________
+ |  |  |             /    _________     _________     \
+ |  |  |            |    |Best     |   |RS-Client|     |
+ |  |  +------>*C*->|{D}-|Path     |-->|Local-RIB|->[D]|--->To RS-Client D
+ |  +--------->*B*->|{D}-|Selection|   |  for D  |     |
+ +----------------->|{D}-|_________|   |_________|     |
+                     \________________________________/
+
+
+Key:  (X) - 'In'  Filter applied to Peer X's announcements before
+            considering announcement for the normal main Local-RIB
+      [X] - 'Out' Filter applied to announcements to Peer X
+      *X* - 'Export' Filter of RS-Client X, to apply X's policies
+	    before its routes may be considered for other RS-Clients
+            RIBs.
+      {X} - 'Import' Filter of RS-Client X, to apply X's policies
+            on routes before allowing them into X's RIB.

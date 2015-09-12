@@ -1706,7 +1706,7 @@ struct NetQueryDisplayInformation {
 
 	struct {
 		uint32_t *entries_read;/* [ref] */
-		void **buffer;/* [ref,noprint] */
+		void **buffer;/* [noprint,ref] */
 		enum NET_API_STATUS result;
 	} out;
 

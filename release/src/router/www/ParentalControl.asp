@@ -21,7 +21,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script> 
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/jquery.xdomainajax.js"></script>
@@ -290,7 +290,7 @@ function gen_mainTable(){
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
 	code +='<thead><tr><td colspan="4"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;16)</td></tr></thead>';
 	code +='<tr><th width="10%" height="30px" title="<#select_all#>"><input id="selAll" type=\"checkbox\" onclick=\"selectAll(this, 0);\" value=\"\"/></th>';
-	code +='<th width="50%">Client\'s MAC address</th>';/*untranslated*/
+	code +='<th width="50%">Client Name (MAC address)</th>';/*untranslated*/
 	code +='<th width="20%"><#ParentalCtrl_time#></th>';
 	code +='<th width="20%"><#list_add_delete#></th></tr>';
 

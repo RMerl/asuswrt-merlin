@@ -1,0 +1,182 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Aug 10 14:21:18 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>FATDUMP</title>
+
+</head>
+<body>
+
+<h1 align="center">FATDUMP</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#EXIT CODES">EXIT CODES</a><br>
+<a href="#EXAMPLES">EXAMPLES</a><br>
+<a href="#KNOWN ISSUES">KNOWN ISSUES</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">fatdump &minus;
+Efficiently dump the contents of a FAT volume.</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdump</b>
+[<i>options</i>] <i>device|image</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>fatdump</b></i>
+will efficiently extract all relevant metadata and
+(optionally) data from an FAT volume and dump it to standard
+output. It works at disk sector level and copies only the
+used data. Unused disk space becomes zero.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdump</b>
+can be useful to make backups, an exact snapshot of a FAT
+filesystem to restore later on, or for developers to
+troubleshoot/investigate users&rsquo; issues using the clone
+without the risk of destroying the original filesystem.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>fatdump</b> accepts.
+Nearly all options have two equivalent names. The short name
+is preceded by <b>&minus;</b> and the long name is preceded
+by <b>&minus;&minus; . <br>
+&minus;m</b>, <b>&minus;&minus;metadata</b></p>
+
+<p style="margin-left:22%;">Clone <b>ONLY METADATA</b> (for
+FAT experts). A metadata dump contains all of the FAT volume
+structures but none of the user data, i.e. all file content
+will be omitted but the directory structure will be
+preserved. The output from this command will be relatively
+small if compressed.</p>
+
+<p style="margin-left:11%;"><b>&minus;n</b>,
+<b>&minus;&minus;ntfsclone-image</b></p>
+
+<p style="margin-left:22%;">Emit an ntfsclone packed image
+(special image format) as output. This saves space since all
+the non-allocated regions (and in the case of
+&rsquo;&minus;m&rsquo; /&rsquo;&minus;&minus;metadata&rsquo;
+all the non-metadata regions) will not be written out
+explicitly, but instead marked as a &rsquo;hole&rsquo; in
+the image.</p>
+
+<p style="margin-left:11%;"><b>&minus;q</b>,
+<b>&minus;&minus;quiet</b></p>
+
+<p style="margin-left:22%;">Suppress non-error output on
+stderr.</p>
+
+<p style="margin-left:11%;"><b>&minus;f</b>,
+<b>&minus;&minus;force</b></p>
+
+<p style="margin-left:22%;">Force a clone, ignoring errors
+from cluster accounting.</p>
+
+<h2>EXIT CODES
+<a name="EXIT CODES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The exit code
+is 0 on success, non&minus;zero otherwise.</p>
+
+<h2>EXAMPLES
+<a name="EXAMPLES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Dump FAT file
+system on /dev/sda1 to a compressed metadata image:</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>fatdump
+/dev/sda1 | bzip2 &gt; sda1.img.bz2</b></p>
+
+<p style="margin-left:11%; margin-top: 1em">Dump FAT file
+system metadata on /dev/sda1 to a compressed metadata
+image:</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>fatdump
+&minus;m /dev/sda1 | bzip2 &gt; sda1.img.bz2</b></p>
+
+<p style="margin-left:11%; margin-top: 1em">Dump a FAT
+volume to a remote host, using ssh. Please note that ssh may
+ask for a password!</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>fatdump
+/dev/sda1 | bzip2 | ssh host &rsquo;cat &gt;
+sda1.img.bzip2&rsquo;</b></p>
+
+<h2>KNOWN ISSUES
+<a name="KNOWN ISSUES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">There are no
+known problems with <b>fatdump</b>. If you think you have
+found a problem then please send an email describing it to
+fat-support@tuxera.com.</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdump</b>
+was written by Sougata Santra, Tuxera Inc.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdump</b>
+is part of the <b>Tuxera FAT</b> package.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdebug</b>(8)</p>
+<hr>
+</body>
+</html>

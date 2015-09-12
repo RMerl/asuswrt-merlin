@@ -17,7 +17,7 @@ endif
 
 include $(SRCBASE)/.config
 
-ifeq ($(RTN11P),y)
+ifeq ($(RTN11P)$(RTN300),y)
 CFLAGS += -DBAND_2G_ONLY
 endif
 
@@ -25,7 +25,7 @@ ifeq ($(RTN14U),y)
 CFLAGS += -DBAND_2G_ONLY
 endif
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTAC54U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTAC54U),y)
 CFLAGS += -DRA_ESW
 endif
 

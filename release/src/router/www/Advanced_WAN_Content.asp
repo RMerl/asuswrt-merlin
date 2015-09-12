@@ -740,6 +740,13 @@ function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
+function change_pptp_options(obj){
+	if(obj.value == "+mppe-40")
+		document.getElementById("pptp_options_hint").style.display = "";
+	else
+		document.getElementById("pptp_options_hint").style.display = "none";
+}
+
 </script>
 </head>
 
@@ -1006,13 +1013,14 @@ function pass_checked(obj){
 		<tr>
 		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,17);"><#PPPConnection_x_PPTPOptions_itemname#></a></th>
 		<td>
-		<select name="wan_pptp_options_x" class="input_option">
+		<select name="wan_pptp_options_x" class="input_option" onChange="change_pptp_options(this);">
 			<option value="" <% nvram_match("wan_pptp_options_x", "","selected"); %>><#Auto#></option>
 			<option value="-mppc" <% nvram_match("wan_pptp_options_x", "-mppc","selected"); %>><#No_Encryp#></option>
 			<option value="+mppe-40" <% nvram_match("wan_pptp_options_x", "+mppe-40","selected"); %>>MPPE 40</option>
 			<!--option value="+mppe-56" <% nvram_match("wan_pptp_options_x", "+mppe-56","selected"); %>>MPPE 56</option-->
 			<option value="+mppe-128" <% nvram_match("wan_pptp_options_x", "+mppe-128","selected"); %>>MPPE 128</option>
 		</select>
+		<div id="pptp_options_hint" style="display:none; color:#FFCC00;"><#PPTPOptions_hint#></div>
 		</td>
 		</tr>
 		<tr>

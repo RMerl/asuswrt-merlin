@@ -104,10 +104,6 @@ wl_iovar_getbuf(char *ifname, char *iovar, void *param, int paramlen, void *bufp
 	memcpy(bufptr, iovar, namelen);	/* copy iovar name including null */
 	memcpy((int8*)bufptr + namelen, param, paramlen);
 
-#if defined(RTAC5300) || defined(RTAC88U) || defined(RTAC3100)
-	if(strcmp(iovar, "clm_data_ver") == 0)
-		wlc_cmd = 310;
-#endif
 	err = wl_ioctl(ifname, wlc_cmd, bufptr, buflen);
 
 	return (err);

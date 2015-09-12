@@ -1,0 +1,426 @@
+# $QuaggaId: $Format:%an, %ai, %h$ $
+
+T1 DONE Implement debug command
+   test pim receive join
+
+T2 DONE Implement debug command
+   test pim receive prune
+
+T3 DONE Per-interface Downstream (S,G) state machine
+   (RFC 4601 4.5.3. Receiving (S,G) Join/Prune Messages)
+
+T4 DONE Upstream (S,G) state machine
+   (RFC 4601 4.5.7. Sending (S,G) Join/Prune Messages)
+
+T5 DONE Verify Data Packet Forwarding Rules
+   RFC 4601 4.2.  Data Packet Forwarding Rules
+   RFC 4601 4.8.2.  PIM-SSM-Only Routers
+
+   Additionally, the Packet forwarding rules of Section 4.2 can be
+   simplified in a PIM-SSM-only router:
+
+     iif is the incoming interface of the packet.
+     oiflist = NULL
+     if (iif == RPF_interface(S) AND UpstreamJPState(S,G) == Joined) {
+       oiflist = inherited_olist(S,G)
+     } else if (iif is in inherited_olist(S,G)) {
+       send Assert(S,G) on iif
+     }
+     oiflist = oiflist (-) iif
+     forward packet on all interfaces in oiflist
+
+   Macro:
+     inherited_olist(S,G) =
+       joins(S,G) (+) pim_include(S,G) (-) lost_assert(S,G)
+
+T6 DONE Implement (S,G) Assert state machine (RFC 4601, section 4.6.1).
+   Changes in pim_ifchannel.ifassert_winner should trigger
+   pim_upstream_update_join_desired().
+   Depends on TODO T27.
+   Depends on TODO T33.
+   See also CAVEAT C7.
+   See also: RFC 4601 4.5.7. Sending (S,G) Join/Prune Messages
+    Transitions from Joined State
+     RPF'(S,G) changes due to an Assert
+
+   http://www.hep.ucl.ac.uk/~ytl/multi-cast/pim-dm_01.html:
+
+     The PIM Assert mechanism is used to shutoff duplicate flows onto
+     the same multiaccess network. Routers detect this condiction when
+     they receive an (S,G) packet via a multi-access interface that is
+     in the (S,G) OIL. This causes the routers to send Assert
+     Messages.
+
+   Note that neighbors will not accept Join/Prune or Assert messages
+   from a router unless they have first heard a Hello message from that
+   router.  Thus, if a router needs to send a Join/Prune or Assert
+   message on an interface on which it has not yet sent a Hello message
+   with the currently configured IP address, then it MUST immediately
+   send the relevant Hello message without waiting for the Hello Timer
+   to expire, followed by the Join/Prune or Assert message.
+
+T7 DONE Implement hello option: LAN Prune Delay
+
+T8 DONE Implement J/P_Override_Interval(I)
+   Depends on TODO T7.
+   See pim_ifchannel.c, pim_ifchannel_prune(), jp_override_interval.
+
+T9 DONE Detect change in IGMPv3 RPF interface/next-hop for S and update.
+   channel_oil vif index accordingly ?
+   Beware accidentaly adding looped MFC entries (IIF=OIF).
+
+T10 DONE React to (S,G) join directed to another upstream address. See
+    also:
+    
+    RFC 4601: 4.5.7.  Sending (S,G) Join/Prune Messages
+
+    If a router wishes to propagate a Join(S,G) upstream, it must also
+    watch for messages on its upstream interface from other routers on
+    that subnet, and these may modify its behavior.  If it sees a
+    Join(S,G) to the correct upstream neighbor, it should suppress its
+    own Join(S,G).  If it sees a Prune(S,G), Prune(S,G,rpt), or
+    Prune(*,G) to the correct upstream neighbor towards S, it should
+    be prepared to override that prune by scheduling a Join(S,G) to be
+    sent almost immediately.
+
+T11 DONE Review protocol modifications for SSM
+    (RFC 4601 4.8.1.  Protocol Modifications for SSM Destination
+    Addresses)
+
+T12 DONE Review updates of RPF entries.
+    FIXME pim_upstream.c send_join():
+    Currently only one upstream state is affected by detection of RPF change.
+    RPF change should affect all upstream states sharing the RPF cache.
+
+T13 DONE Check that RFC macros using S,G,RPF_interface(S) are actually
+    implemented with this strategy:
+    rpf_ifch=find_ifch(up->rpf->interface).
+    See pim_rpf.c pim_rpf_find_rpf_addr() for a correct example.
+
+    $ grep -i macro pimd/*.c
+    pimd/pim_iface.c:  RFC 4601: 4.1.6.  State Summarization Macros
+    pimd/pim_ifchannel.c:    RFC 4601: 4.6.5.  Assert State Macros
+    pimd/pim_ifchannel.c:  RFC 4601: 4.1.6.  State Summarization Macros
+    pimd/pim_ifchannel.c:  RFC 4601: 4.1.6.  State Summarization Macros
+    pimd/pim_ifchannel.c:  RFC 4601: 4.6.5.  Assert State Macros
+    pimd/pim_ifchannel.c:  Macro:
+    pimd/pim_rpf.c:  RFC 4601: 4.1.6.  State Summarization Macros
+
+T14 DONE Send Assert(S,G) on iif as response to WRONGVIF kernel upcall.
+    See pim_mroute.c mroute_msg().
+
+T15 DONE Interface command to statically join (S,G).
+    interface eth0
+     ip igmp join-group 239.1.1.1 source 1.1.1.1
+
+T16 DONE RPF'(S,G) lookup is not working for S reachable with default route.
+    See "RPF'(S,G) not found" in pim_rpf_update() from pim_rpf.c.
+    Zebra daemon RIB is not reflecting changes in kernel routes
+    accurately?
+
+T17 DONE Prevent CLI from creating bogus interfaces.
+    Example:
+    conf t
+     interface xxx
+
+T18 Consider reliable pim solution (refresh reduction)
+    A Reliable Transport Mechanism for PIM
+    http://tools.ietf.org/wg/pim/draft-ietf-pim-port/
+    PORT=PIM-Over-Reliable-Transport
+
+T19 DONE Fix self as neighbor 
+    See mailing list post:
+    http://lists.gnu.org/archive/html/qpimd-users/2009-04/msg00000.html
+
+T20 DONE Fix debug message: "pim_neighbor_update: internal error:
+    trying to replace same prefix list"
+    See mailing list post:
+    http://lists.gnu.org/archive/html/qpimd-users/2009-04/msg00000.html
+
+T21 DONE Clean-up PIM/IGMP interface mismatch debugging
+    See option PIM_CHECK_RECV_IFINDEX_SANITY in pimd/Makefile.am
+    See mailing list post:
+    http://lists.nongnu.org/archive/html/qpimd-users/2009-04/msg00003.html
+
+T22 DONE IGMP must be protected against adding looped MFC entries
+    created by both source and receiver attached to the same
+    interface.
+
+T23 DONE libzebra crash after zclient_lookup_nexthop.
+    See mailing list post:
+    http://lists.nongnu.org/archive/html/qpimd-users/2009-04/msg00008.html
+
+T24 DONE zserv may return recursive routes:
+     - nexthop type is set to ZEBRA_NEXTHOP_IPV4
+     - ifindex is not reported
+     - calls expecting ifindex (fib_lookup_if_vif_index) are disrupted
+    See also this mailing list post:
+    [PATCH 21/21] Link detect and recursive routes
+    http://www.gossamer-threads.com/lists/quagga/dev/17564
+
+T25 DONE Zclient nexthop lookup missing OSPF route to 1.1.1.1/32
+    See also:
+    pim_zlookup.c zclient_lookup_nexthop misses OSPF 1.1.1.1/32
+    zebra/zebra_vty.c show_ip_route_addr_cmd hits OSPF 1.1.1.1/32
+
+T26 DONE Zebra daemon is marking recursive static route as inactive.
+
+    FIXED: zebra daemon was incorrectly marking recursive routes
+    pointing to kernel routes as inactive:
+      zebra/zebra_rib.c nexthop_active_ipv4:
+        -- Original:
+	  else if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_INTERNAL))
+        -- Fixed:
+	  else if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_INTERNAL) ||
+		   match->type == ZEBRA_ROUTE_KERNEL)
+
+    Old problem description:
+
+    This prevents rib_match_ipv4 from returning its nexthop:
+    client: pim_zlookup.c zclient_read_nexthop
+    server: zebra/zserv.c zsend_ipv4_nexthop_lookup_v2 -> rib_match_ipv4
+
+    Kernel route is injected into zebra in zebra_rib.c rib_add_ipv4
+    Examples:
+    rt_netlink.c:726: rib_add_ipv4 (ZEBRA_ROUTE_KERNEL, flags, &p, gate, src, index, table, metric, 0);
+    rt_netlink.c:864: rib_add_ipv4 (ZEBRA_ROUTE_KERNEL, 0, &p, gate, src, index, table, 0, 0);
+
+    This patch didn't fix the issue:
+    [PATCH 21/21] Link detect and recursive routes
+    http://www.gossamer-threads.com/lists/quagga/dev/17564
+
+    See the example below for the route 2.2.2.2.
+
+bash# route add -host 1.1.1.1 gw 127.0.0.1
+bash# route add -host 2.2.2.2 gw 1.1.1.1
+bash# netstat -nvr
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+2.2.2.2         1.1.1.1         255.255.255.255 UGH       0 0          0 lo
+1.1.1.1         127.0.0.1       255.255.255.255 UGH       0 0          0 lo
+192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+0.0.0.0         192.168.0.2     0.0.0.0         UG        0 0          0 eth0
+bash# 
+
+zebra# sh ip route         
+Codes: K - kernel route, C - connected, S - static, R - RIP, O - OSPF,
+       I - ISIS, B - BGP, > - selected route, * - FIB route
+
+K>* 0.0.0.0/0 via 192.168.0.2, eth0
+K>* 1.1.1.1/32 via 127.0.0.1, lo
+K * 2.2.2.2/32 via 1.1.1.1, lo inactive
+C>* 127.0.0.0/8 is directly connected, lo
+C>* 192.168.0.0/24 is directly connected, eth0
+
+quagga-pimd-router# sh ip route 1.1.1.1
+Address         NextHop         Interface Metric Preference
+1.1.1.1         127.0.0.1       lo             0          0
+quagga-pimd-router# 
+quagga-pimd-router# sh ip route 2.2.2.2
+Address         NextHop         Interface Metric Preference
+2.2.2.2         192.168.0.2     eth0           0          0
+quagga-pimd-router# 
+
+T27 DONE Implement debug command
+    test pim receive assert
+    See also TODO T6: (S,G) Assert state machine.
+
+T28 DONE Bad IPv4 address family=02 in Join/Prune dump
+    Reported by Andrew Lunn <andrew.lunn@ascom.ch>
+    
+    # 58-byte pim v2 Join/Prune dump
+    # ------------------------------
+    # IPv4 address family=02 is wrong, correct IPv4 address family is 01
+    # See http://www.iana.org/assignments/address-family-numbers
+    #
+    c8XX YY03 : ip src 200.xx.yy.3
+    e000 000d : ip dst 224.0.0.13
+    9404 0000 : ip router alert option 148.4.0.0
+    2300 ab13 : pimv2,type=3 res=00 checksum=ab13
+    0200      : upstream family=02, encoding=00
+    c8XX YY08 : upstream 200.xx.yy.8
+    0001 00d2 : res=00 groups=01 holdtime=00d2
+    0200 0020 : group family=02, encoding=00, res=00, mask_len=20
+    ef01 0101 : group address 239.1.1.1
+    0001 0000 : joined=0001 pruned=0000
+    0200 0020 : source family=02, encoding=00, res=00, mask_len=20
+    0101 0101 : source address 1.1.1.1
+
+T29 DONE Reset interface PIM-hello-sent counter when primary address changes
+    See pim_ifp->pim_ifstat_hello_sent
+
+    RFC 4601: 4.3.1.  Sending Hello Messages
+
+    Thus, if a router needs to send a Join/Prune or Assert message on
+    an interface on which it has not yet sent a Hello message with the
+    currently configured IP address, then it MUST immediately send the
+    relevant Hello message without waiting for the Hello Timer to
+    expire, followed by the Join/Prune or Assert message.
+
+T30 DONE Run interface DR election when primary address changes
+    Reported by Andrew Lunn <andrew.lunn@ascom.ch>
+    See pim_if_dr_election().
+
+T31 If an interface changes one of its secondary IP addresses, a Hello
+    message with an updated Address_List option and a non-zero
+    HoldTime should be sent immediately.
+    See also detect_secondary_address_change
+    See also CAVEAT C15.
+    See also RFC 4601: 4.3.1.  Sending Hello Messages
+
+T32 FIXED Detection of interface primary address changes may fail when
+    there are multiple addresses.
+    See also CAVEAT C14.
+
+    pim_find_primary_addr() should return interface primary address
+    from connected list. Currently it returns the first address.
+
+    Zebra daemon "show int" is able to keep the primary address as
+    first address.
+
+T33 DONE Implement debug command: test pim receive upcall
+    See also TODO T6: (S,G) Assert state machine.
+
+T34 DONE assert_action_a1
+
+T35 DONE Review macros depending on interface I.
+
+    See also: grep ,I\) pimd/*.c
+
+    For the case (S,G,I) check if I is either
+    1) interface attached to this per-interface S,G state (don't think so)
+    or
+    2) an arbitrary interface (most probably)
+
+    For the arbitrary interface case (2), consider representing
+    interface ifp as its primary address (struct in_addr ifaddr).  The
+    benefit is in_addr does not need to be dereferenced, so it does
+    not demand protection against crashes.
+
+T36 DONE React to zebra daemon link-detect up/down notification.
+    pim_ifp->primary_address is managed by detect_primary_address_change()
+    depending on to ifp->connected (managed by zebra_interface_address_read()).
+
+T37 DONE Review list of variables which may affect pim_upstream.c
+    pim_upstream_evaluate_join_desired().
+    Call pim_upstream_update_join_desired() accordingly.
+
+    See the order of invokation:
+      pim_if_dr_election(ifp);
+      pim_if_update_join_desired(pim_ifp); /* depends on DR */
+      pim_if_update_could_assert(ifp); /* depends on DR */
+      pim_if_update_my_assert_metric(ifp); /* depends on could_assert */
+
+    join_desired depends on:
+      pim_ifp->primary_address
+      pim_ifp->pim_dr_addr
+      ch->ifassert_winner_metric
+      ch->ifassert_winner
+      ch->local_ifmembership 
+      ch->ifjoin_state
+      ch->upstream->rpf.source_nexthop.mrib_metric_preference
+      ch->upstream->rpf.source_nexthop.mrib_route_metric
+      ch->upstream->rpf.source_nexthop.interface
+
+T38 DONE Detect change in AssertTrackingDesired(S,G,I)
+
+    See the order of invokation:
+      dr_election: none
+      update_join_desired: depends on DR
+      update_tracking_desired: depends on DR, join_desired
+
+    AssertTrackingDesired(S,G,I) depends on:
+      pim_ifp->primary_address
+      pim_ifp->pim_dr_addr
+      ch->local_ifmembership
+      ch->ifassert_winner
+      ch->ifjoin_state
+      ch->upstream->rpf.source_nexthop.interface
+      PIM_UPSTREAM_FLAG_TEST_DR_JOIN_DESIRED(ch->upstream->flags)
+
+T39 DONE AssertTrackingDesired: flags is not matching evaluation
+    
+    # show ip pim assert-internal 
+    CA:   CouldAssert
+    ECA:  Evaluate CouldAssert
+    ATD:  AssertTrackingDesired
+    eATD: Evaluate AssertTrackingDesired
+
+    Interface Address         Source          Group           CA  eCA ATD eATD
+    eth0      192.168.1.100   1.1.1.1         239.1.1.1       no  no  no  yes 
+    # 
+
+T40 Lightweight MLDv2
+    http://tools.ietf.org/html/draft-ietf-mboned-lightweight-igmpv3-mldv2-05
+    http://www.ietf.org/internet-drafts/draft-ietf-mboned-lightweight-igmpv3-mldv2-05.txt
+    http://www.ietf.org/html.charters/mboned-charter.html
+
+T41 DONE ssmping support
+
+    See also:
+      http://www.venaas.no/multicast/ssmping/
+      draft-ietf-mboned-ssmping-07
+      http://tools.ietf.org/html/draft-ietf-mboned-ssmping-07
+
+    Example:
+
+    debug ssmpingd
+    
+    conf t
+     ip ssmpingd 1.1.1.1
+    
+    show ip ssmpingd
+
+T42 Static igmp join fails when loading config at boot time
+
+    ! Wrong behavior seen at boot time:
+    !
+    2010/02/22 08:59:00 PIM: igmp_source_forward_start: ignoring request for
+    looped MFC entry (S,G)=(3.3.3.3,239.3.3.3): igmp_sock=12 oif=eth0 vif_index=2
+
+    ! Correct behavior seen later:
+    !
+    2010/02/22 09:03:16 PIM: igmp_source_forward_start: ignoring request for
+    looped MFC entry (S,G)=(2.2.2.2,239.2.2.2): igmp_sock=17 oif=lo vif_index=1
+
+    ! To see the wrong message at boot:    
+    !
+    debug igmp trace
+    !
+    interface lo
+     ip igmp
+     ip igmp join 239.2.2.2 2.2.2.2
+     ip igmp join 239.3.3.3 3.3.3.3
+    !
+
+    ! Interfaces indexes:
+    Interface Address         ifi Vif  PktsIn PktsOut    BytesIn   BytesOut
+    eth0      200.202.112.3     2   2       0       0          0          0
+    lo        127.0.0.1         1   1       0       0          0          0
+
+T43 PIM Neighbor Reduction
+    https://datatracker.ietf.org/doc/draft-wijnands-pim-neighbor-reduction/
+    
+    "In a transit LAN (no directly connected source or receiver), many
+    of the PIM procedures don't apply. (...) This proposal describes
+    a procedure to reduce the amount of neighbors established over a
+    transit LAN."
+
+T44 Single Stream Multicast Fast Reroute (SMFR) Method
+    https://datatracker.ietf.org/doc/draft-liu-pim-single-stream-multicast-frr/
+
+    "This document proposes an IP multicast fast convergence method
+    based on differentiating primary and backup PIM join."
+
+T45 RFC5384 - The Join Attribute Format
+    "This document describes a modification of the Join message that
+    allows a node to associate attributes with a particular tree."
+
+T46 PIM Multi-Topology ID (MT-ID) Join-Attribute
+    http://tools.ietf.org/html/draft-cai-pim-mtid-00
+    Depends on T45.
+
+    "This draft introduces a new type of PIM Join Attribute used to
+    encode the identity of the topology PIM uses for RPF."
+    
+-x-

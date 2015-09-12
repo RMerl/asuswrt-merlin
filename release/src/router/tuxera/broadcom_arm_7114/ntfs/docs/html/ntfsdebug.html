@@ -1,0 +1,114 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Tue Aug 11 07:21:34 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>NTFSDEBUG</title>
+
+</head>
+<body>
+
+<h1 align="center">NTFSDEBUG</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#EXIT CODES">EXIT CODES</a><br>
+<a href="#EXAMPLES">EXAMPLES</a><br>
+<a href="#KNOWN ISSUES">KNOWN ISSUES</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">ntfsdebug
+&minus; Efficiently dump the metadata contents of an NTFS
+volume.</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>ntfsdebug</b>
+<i>device|image</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>ntfsdebug</b></i>
+will efficiently extract all relevant metadata from an NTFS
+volume and dump it to standard output. It works at disk
+sector level and copies only the used data. Unused disk
+space becomes zero. <b>ntfsdebug</b> can be useful to exact
+the metadata snapshot of an NTFS file system for developers
+to investigate and troubleshoot users&rsquo; issues using
+the clone without the risk of destroying the original file
+system.</p>
+
+<h2>EXIT CODES
+<a name="EXIT CODES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The exit code
+is 0 on success, non&minus;zero otherwise.</p>
+
+<h2>EXAMPLES
+<a name="EXAMPLES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Dump NTFS
+metadata on /dev/sda1 to a compressed metadata image:</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>ntfsdebug
+/dev/sda1 | bzip2 &gt; sda1.img.bz2</b></p>
+
+<p style="margin-left:11%; margin-top: 1em">Dump NTFS
+metadata to a remote host, using ssh. Please note that ssh
+may ask for a password.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><b>ntfsdebug
+/dev/sda1 | bzip2 | ssh host &rsquo;cat &gt;
+sda1.img.bzip2&rsquo;</b></p>
+
+<h2>KNOWN ISSUES
+<a name="KNOWN ISSUES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+problem then please send an email describing it to
+ntfs-support@tuxera.com.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>ntfsdebug</b>
+is part of the <b>Tuxera NTFS</b> package.</p>
+<hr>
+</body>
+</html>

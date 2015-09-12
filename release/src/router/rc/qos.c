@@ -985,14 +985,15 @@ void stop_iQos(void)
 #define TYPE_IPRANGE 2
 #define TYPE_GUEST 3
 
-static void address_checker(int *addr_type, char *addr_old, char *addr_new)
+static void address_checker(int *addr_type, char *addr_old, char *addr_new, int len)
 {
 	char *second, *last_dot;
 	int len_to_minus, len_to_dot;
 
-	// to ignore guestnetwork interface
-	if (strstr(addr_old, "guest")){
+	// guestnetwork interface
+	if (strstr(addr_old, "wl")){
 		*addr_type = TYPE_GUEST;
+		strncpy(addr_new, addr_old, len);
 		return;
 	}
 
@@ -1002,7 +1003,7 @@ static void address_checker(int *addr_type, char *addr_old, char *addr_new)
 		*addr_type = TYPE_IPRANGE;
 		if (strchr(second+1, '.') != NULL){
 			// long notation
-			strcpy(addr_new, addr_old);
+			strncpy(addr_new, addr_old, len);
 		}
 		else{
 			// short notation
@@ -1020,7 +1021,7 @@ static void address_checker(int *addr_type, char *addr_old, char *addr_new)
 			*addr_type = TYPE_MAC;
 		else
 			*addr_type = TYPE_IP;
-		strcpy(addr_new, addr_old);
+		strncpy(addr_new, addr_old, len);
 	}
 }
 
@@ -1032,21 +1033,27 @@ static int add_bandwidth_limiter_rules(char *pcWANIF)
 	char lan_addr[32];
 	char addr_new[32];
 	int addr_type;
+	char *action = NULL;
 
 	if ((fn = fopen(mangle_fn, "w")) == NULL) return -2;
 	del_iQosRules(); // flush all rules in mangle table
 
-#ifdef RTCONFIG_RALINK
-	const char *action = "CONNMARK --set-return";
-#else
-	const char *action = "MARK --set-mark";
-#endif
+	switch (get_model()){
+		case MODEL_DSLN55U:
+		case MODEL_RTN13U:
+		case MODEL_RTN56U:
+			action = "CONNMARK --set-return";
+			break;
+		default:
+			action = "MARK --set-mark";
+			break;
+	}
 
 	/* ASUSWRT
 	qos_bw_rulelist :
 		enable>addr>DL-Ceil>UL-Ceil>prio
 		enable : enable or disable this rule
-		addr : (source) IP or MAC or IP-range
+		addr : (source) IP or MAC or IP-range or wireless interface(wl0.1, wl0.2, etc.)
 		DL-Ceil : the max download bandwidth
 		UL-Ceil : the max upload bandwidth
 		prio : priority for client
@@ -1067,8 +1074,8 @@ static int add_bandwidth_limiter_rules(char *pcWANIF)
 		if ((vstrsep(p, ">", &enable, &addr, &dlc, &upc, &prio)) != 5) continue;
 		if (!strcmp(enable, "0")) continue;
 		memset(addr_new, 0, sizeof(addr_new));
-		address_checker(&addr_type, addr, addr_new);
-		//_dprintf("[BWLIT] %s: addr_type=%d, addr=%s, add_new=%s, lan_addr=%s\n", __FUNCTION__, addr_type, addr, addr_new, lan_addr);
+		address_checker(&addr_type, addr, addr_new, sizeof(addr_new));
+		_dprintf("[BWLIT] %s: addr_type=%d, addr=%s, add_new=%s, lan_addr=%s\n", __FUNCTION__, addr_type, addr, addr_new, lan_addr);
 
 		if (addr_type == TYPE_IP){
 			fprintf(fn,
@@ -1092,6 +1099,7 @@ static int add_bandwidth_limiter_rules(char *pcWANIF)
 				, addr_new, lan_addr, action, atoi(prio)+10
 				);
 		}
+		else if (addr_type == TYPE_GUEST) continue;
 	}
 	free(buf);
 
@@ -1104,6 +1112,8 @@ static int add_bandwidth_limiter_rules(char *pcWANIF)
 	return 0;
 }
 
+static int guest; // qdisc root only 3: ~ 12: (9 guestnetwork)
+
 static int start_bandwidth_limiter(void)
 {
 	FILE *f = NULL;
@@ -1113,6 +1123,9 @@ static int start_bandwidth_limiter(void)
 	int s[6]; // strip mac address
 	int addr_type;
 	char addr_new[30];
+
+	// init guest 3: ~ 12: (9 guestnetwork), start number = 3
+	guest = 3;
 
 	if ((f = fopen(qosfn, "w")) == NULL) return -2;
 	fprintf(f,
@@ -1132,10 +1145,10 @@ static int start_bandwidth_limiter(void)
 		"TFA=\"tc filter add dev br0\"\n"
 		"\n"
 		"$TQA root handle 1: htb\n"
-		"$TCA parent 1: classid 1:1 htb rate 1024000kbit\n"
+		"$TCA parent 1: classid 1:1 htb rate 4096000kbit\n"
 		"\n"
 		"$TQAU root handle 2: htb\n"
-		"$TCAU parent 2: classid 2:1 htb rate 1024000kbit\n"
+		"$TCAU parent 2: classid 2:1 htb rate 4096000kbit\n"
 		, get_wan_ifname(0)
 	);
 
@@ -1143,7 +1156,7 @@ static int start_bandwidth_limiter(void)
 	qos_bw_rulelist :
 		enable>addr>DL-Ceil>UL-Ceil>prio
 		enable : enable or disable this rule
-		addr : (source) IP or MAC or IP-range
+		addr : (source) IP or MAC or IP-range or wireless interface(wl0.1, wl0.2, etc.)
 		DL-Ceil : the max download bandwidth
 		UL-Ceil : the max upload bandwidth
 		prio : priority for client
@@ -1155,7 +1168,7 @@ static int start_bandwidth_limiter(void)
 		if ((vstrsep(p, ">", &enable, &addr, &dlc, &upc, &prio)) != 5) continue;
 		if (!strcmp(enable, "0")) continue;
 
-		address_checker(&addr_type, addr, addr_new);
+		address_checker(&addr_type, addr, addr_new, sizeof(addr_new));
 		class = atoi(prio) + 10;
 		if (addr_type == TYPE_MAC)
 		{
@@ -1196,90 +1209,68 @@ static int start_bandwidth_limiter(void)
 				, prio, class, class
 			);
 		}
-	}
-	free(buf);
-
-	// flush ebtables
-	if(etable_flag == 1){
-		eval("ebtables", "-t", "nat", "-F");
-		etable_flag = 0;
-	}
-
-	// add bandwidth limiter for guestnetwork
-	int UnitNum = 2; 	// wl0.x, wl1.x
-	int GuestNum = 3;	// wlx.0, wlx.1, wlx.2
-	char mssid_if[32];
-	char mssid_enable[32], mssid_bw[32], mssid_ul[32], mssid_dl[32], mssid_ifname[32],mssid_mark[3];
-	int i, j;
-	int guest = 3; // qdisc root only 3: ~ 8: (6 guestnetwork)
-	int guest_mark = 50; // guest mark only 50~55 (6 guestnetwork)
-	memset(mssid_mark, 0, sizeof(mssid_mark));
-	for (i = 0; i < UnitNum; i++)
-	{
-		for (j = 1; j <= GuestNum; j++ )
+		else if (addr_type == TYPE_GUEST)
 		{
-			snprintf(mssid_if, sizeof(mssid_if), "wl%d.%d", i, j);
-			snprintf(mssid_enable, sizeof(mssid_enable), "%s_bss_enabled", mssid_if);
-			snprintf(mssid_bw, sizeof(mssid_bw), "%s_bw_enabled", mssid_if);
-			snprintf(mssid_ul, sizeof(mssid_ul), "%s_bw_ul", mssid_if);
-			snprintf(mssid_dl, sizeof(mssid_dl), "%s_bw_dl", mssid_if);
-			snprintf(mssid_ifname, sizeof(mssid_ifname), "%s_ifname", mssid_if);
-
+			// setup guest network's bandwidth limiter
+			char mssid_mark[4];
 			char *wl_if = NULL;
+			int i, j;
+
+			if(sscanf(addr_new, "wl%d.%d", &i, &j) != 2){
+				_dprintf("[BWLIT] %s: fail to strip i, j from wlx.x\n", __FUNCTION__);
+			}
+
+			snprintf(mssid_mark, sizeof(mssid_mark), "%d", class);
+			
 			if(get_model()==MODEL_RTAC87U && (i == 1)){
 				if(j == 1) wl_if = "vlan4000";
 				if(j == 2) wl_if = "vlan4001";
 				if(j == 3) wl_if = "vlan4002";
 			}
 			else{
-				wl_if = nvram_safe_get(mssid_ifname);
+				wl_if = addr_new;
 			}
 
-			if(!strcmp(nvram_safe_get(mssid_enable), "1") && !strcmp(nvram_safe_get(mssid_bw), "1"))
-			{
-				sprintf(mssid_mark, "%d", guest_mark);
-				eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", wl_if, "-j", "mark", "--set-mark", mssid_mark, "--mark-target", "ACCEPT");
-				eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", wl_if, "-j", "mark", "--set-mark", mssid_mark, "--mark-target", "ACCEPT");
-				etable_flag |= 1;
+			eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", wl_if, "-j", "mark", "--set-mark", mssid_mark, "--mark-target", "ACCEPT");
+			eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", wl_if, "-j", "mark", "--set-mark", mssid_mark, "--mark-target", "ACCEPT");
 
-				fprintf(f,
-					"\n"
-					"tc qdisc del dev %s root 2>/dev/null\n"
-					"GUEST%d%d=%s\n"
-					"TQA%d%d=\"tc qdisc add dev $GUEST%d%d\"\n"
-					"TCA%d%d=\"tc class add dev $GUEST%d%d\"\n"
-					"TFA%d%d=\"tc filter add dev $GUEST%d%d\"\n" // 5
-					"\n"
-					"$TQA%d%d root handle %d: htb\n"
-					"$TCA%d%d parent %d: classid %d:1 htb rate %skbit\n" // 7
-					"\n"
-					"$TCA%d%d parent %d:1 classid %d:%d htb rate 1kbit ceil %skbit prio %d\n"
-					"$TQA%d%d parent %d:%d handle %d: $SFQ\n"
-					"$TFA%d%d parent %d: prio %d protocol ip handle %d fw flowid %d:%d\n" // 10
-					"\n"
-					"$TCAU parent 2:1 classid 2:%d htb rate 1kbit ceil %skbit prio %d\n"
-					"$TQAU parent 2:%d handle %d: $SFQ\n"
-					"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n" // 13
-					, wl_if
-					, i, j, wl_if
-					, i, j, i, j
-					, i, j, i, j
-					, i, j, i, j // 5
-					, i, j, guest
-					, i, j, guest, guest, nvram_safe_get(mssid_dl) //7
-					, i, j, guest, guest, guest_mark, nvram_safe_get(mssid_dl), guest_mark
-					, i, j, guest, guest_mark, guest_mark
-					, i, j, guest, guest_mark, guest_mark, guest, guest_mark // 10
-					, guest_mark, nvram_safe_get(mssid_ul), guest_mark
-					, guest_mark, guest_mark
-					, guest_mark, guest_mark, guest_mark //13
-				);
-				guest++;
-				guest_mark++;
-				_dprintf("[BWLIT] %s: create %s bandwidth limiter\n", __FUNCTION__, wl_if);
-			}
+			fprintf(f,
+				"\n"
+				"tc qdisc del dev %s root 2>/dev/null\n"
+				"GUEST%d%d=%s\n"
+				"TQA%d%d=\"tc qdisc add dev $GUEST%d%d\"\n"
+				"TCA%d%d=\"tc class add dev $GUEST%d%d\"\n"
+				"TFA%d%d=\"tc filter add dev $GUEST%d%d\"\n" // 5
+				"\n"
+				"$TQA%d%d root handle %d: htb\n"
+				"$TCA%d%d parent %d: classid %d:1 htb rate %skbit\n" // 7
+				"\n"
+				"$TCA%d%d parent %d:1 classid %d:%d htb rate 1kbit ceil %skbit prio %d\n"
+				"$TQA%d%d parent %d:%d handle %d: $SFQ\n"
+				"$TFA%d%d parent %d: prio %d protocol ip handle %d fw flowid %d:%d\n" // 10
+				"\n"
+				"$TCAU parent 2:1 classid 2:%d htb rate 1kbit ceil %skbit prio %d\n"
+				"$TQAU parent 2:%d handle %d: $SFQ\n"
+				"$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n" // 13
+				, wl_if
+				, i, j, wl_if
+				, i, j, i, j
+				, i, j, i, j
+				, i, j, i, j // 5
+				, i, j, guest
+				, i, j, guest, guest, dlc //7
+				, i, j, guest, guest, class, dlc, class
+				, i, j, guest, class, class
+				, i, j, guest, class, class, guest, class // 10
+				, class, upc, class
+				, class, class
+				, class, class, class //13
+			);
+			_dprintf("[BWLIT] %s: create %s bandwidth limiter, qdisc=%d, class=%d\n", __FUNCTION__, wl_if, guest, class);
+			guest++; // add guest 3: ~ 12: (9 guestnetwork)
 		}
 	}
+	free(buf);
 
 	fclose(f);
 	chmod(qosfn, 0700);

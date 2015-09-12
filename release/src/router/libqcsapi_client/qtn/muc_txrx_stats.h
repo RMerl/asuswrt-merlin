@@ -14,6 +14,8 @@
 #ifndef _MUC_TXRX_STATS_H_
 #define _MUC_TXRX_STATS_H_
 
+#include <qtn/muc_share_def.h>
+
 #ifdef ENABLE_STATS
 #define MUC_UPDATE_STATS(_a, _b)	(_a += _b)
 #define MUC_SETSTAT(_a, _b)		(_a = _b)
@@ -25,7 +27,7 @@
 /**
  * \defgroup MUCSTATS MuC generated statistics
  */
-/* @{ */
+/** @{ */
 
 /**
  * \brief MuC transmit statistics
@@ -153,6 +155,16 @@ struct muc_tx_stats {
 	u_int32_t	tx_released;
 	u_int32_t	tx_reserve_fail;
 	u_int32_t	tx_release_err;
+	u_int32_t	tx_mu_reserved;
+	u_int32_t	tx_mu_released;
+	u_int32_t	tx_mu_reserve_fail;
+	u_int32_t	tx_mu_release_err;
+	u_int32_t	txalert_mu_ndp_update;
+	u_int32_t	txalert_mu_rpt_poll;
+	u_int32_t	txalert_mu_queue_full;
+	u_int32_t	txalert_mu_queue_fail;
+	u_int32_t	sample_rate_mu;
+	u_int32_t	sample_bw_mu;
 	u_int32_t	txdone_intr;
 	u_int32_t	txalert_intr;
 	u_int32_t	txalert_tasklet;
@@ -163,6 +175,8 @@ struct muc_tx_stats {
 	u_int32_t	txdone_mgmt;
 	u_int32_t	txdone_data;
 	u_int32_t	tx_pwr;
+	u_int32_t	bcn_scheme_power_save;
+	u_int32_t	bcn_scheme;
 
 	/**
 	 * This counter shows the number of multicast frames sent while a
@@ -212,6 +226,7 @@ struct muc_tx_stats {
 	u_int32_t	sample_bw;
 	uint32_t	ra_flags;
 	u_int32_t	fd_balance;
+	uint32_t	invalid_delay;
 	uint32_t	halt_tx;
 	uint32_t	resume_tx;
 	uint32_t	rfctrl_on;
@@ -223,9 +238,21 @@ struct muc_tx_stats {
 	uint32_t	off_chan_sample;
 	uint32_t	off_chan_scan;
 	uint32_t	off_chan_cac;
+	uint32_t	cca_pri;
+	uint32_t	cca_sec;
+	uint32_t	cca_sec40;
+	uint32_t	cca_busy;
 	uint32_t	cca_fat;
 	uint32_t	cca_intf;
 	uint32_t	cca_trfc;
+	/**
+	 * These counter show the information of MU frames.
+	 */
+	uint32_t	mu_prec_snd_tx;
+	uint32_t	mu_prec_snd_wait_done;
+	uint32_t	mu_grp_sel_snd_tx;
+	uint32_t	mu_grp_sel_snd_wait_done;
+
 	uint32_t	oc_auctx_timeout;
 	uint32_t	oc_auctx_overwrite;
 	uint32_t	oc_auctx_fail;
@@ -253,13 +280,21 @@ struct muc_tx_stats {
 	uint32_t	nc_csr_done_watermark;	/* Node cache done retries high watermark */
 	uint32_t	nc_csr_watermark_count; /* Number of times read retries reached max */
 	uint32_t	auc_dtim_notify;
+	uint32_t	auc_ps_notify;
 	uint32_t	tx_beacon_done;
 	uint32_t	sfs_peer_rts;
 	uint32_t	sfs_peer_rts_flags;
-	uint32_t	sfs_local_rts;
-	uint32_t	sfs_local_rts_flags;
+	uint32_t	sfs_ap_local_rts;
+	uint32_t	sfs_ap_local_rts_flags;
+	uint32_t	sfs_sta_local_rts;
+	uint32_t	sfs_sta_local_rts_flags;
 	uint32_t	sfs_dyn_wmm;
 	uint32_t	sfs_dyn_wmm_flags;
+	uint32_t	auc_wmm_ps_notify;
+	uint32_t	tx_wmm_ps_null_frames;
+	uint32_t	qtn_bcn_stop;
+	uint32_t	mu_grp_snd_queue_is_not_empty;
+	uint32_t	mu_prec_snd_queue_is_not_empty;
 };
 
 /**
@@ -307,12 +342,19 @@ struct muc_rx_stats {
 	u_int32_t	accel_msdu;
 	u_int32_t	accel_no_buffer;
 	u_int32_t	accel_fwt_lu_timeout;
+	u_int32_t	accel_fwt_false_miss;
 	u_int32_t	accel_mcast_send;
 	u_int32_t	accel_mcast_drop;
 	u_int32_t	accel_no_match;
 	u_int32_t	accel_drop;
 	u_int32_t	accel_err;
-	u_int32_t	accel_train;
+
+	u_int32_t	rate_train_chk;
+	u_int32_t	rate_train_err;
+	u_int32_t	rate_train_delay;
+	u_int32_t	rate_train_none;
+	u_int32_t	rate_train_hash_bad;
+	u_int32_t	rate_train_hash_good;
 
 	/**
 	 * This counter shows the number of MPDUs within an AMPDU that have been
@@ -351,6 +393,7 @@ struct muc_rx_stats {
 	u_int32_t	rx_ctrl;
 	u_int32_t	rx_pspoll;
 	u_int32_t	rx_pwr_mgmt;
+	u_int32_t	rx_delba;
 	/**
 	 * This counter shows the number of times the powersave bit is set
 	 * in the frame control field of packets received.
@@ -527,6 +570,10 @@ struct muc_rx_stats {
 	u_int32_t	bb_irq_tx_td_oflow_intr;
 	u_int32_t	bb_irq_tx_td_uflow_intr;
 	u_int32_t	bb_irq_rx_sm_wdg_intr;
+	/* BB spends more than 6.8ms (short GI)/7.55ms (long GI) to receive one packet */
+	u_int32_t	bb_irq_rx_long_dur;
+        /* BB spends more than 5.4ms (standard defined limit) to receive one 11ac packet. */
+	u_int32_t	bb_irq_rx_11ac_timeout;
 	u_int32_t	bb_irq_tx_sm_wdg_intr;
 
 	/**
@@ -673,6 +720,18 @@ struct muc_rx_stats {
 	u_int32_t	ac_adj;
 	u_int32_t	rx_gain;
 	u_int32_t	rd_cache_indx;
+	u_int32_t	logger_sreset_wmac1_dma_rx_inprog;
+	u_int32_t	logger_sreset_wmac1_dma_tx_inprog;
+	u_int32_t	logger_sreset_wmac1_dma_rx_max_wait;
+	u_int32_t	logger_sreset_wmac1_dma_tx_max_wait;
+	u_int32_t	logger_sreset_wmac1_dma_tx_hang;
+	u_int32_t	logger_sreset_wmac1_dma_rx_hang;
+	u_int32_t	logger_sreset_wmac1_dma_rx_wait_timeout;
+	u_int32_t	logger_sreset_wmac1_dma_tx_wait_timeout;
+	/**
+	 * These counter show the information of MU frames.
+	 */
+	u_int32_t	mu_rx_pkt;
 
 	/**
 	 * \internal
@@ -695,6 +754,7 @@ struct muc_rx_stats {
 	u_int32_t	soft_ring_add_force;
 	u_int32_t	soft_ring_add_to_head;
 	u_int32_t	soft_ring_add_continue;
+	u_int32_t	soft_ring_free_pool_empty;
 	u_int32_t	mimo_ps_mode_switch;	/* times STA switch MIMO power-save mode by HT action */
 
 	u_int32_t	rx_vlan_drop;
@@ -719,6 +779,48 @@ struct muc_rx_stats {
 	u_int32_t	rx_bw_80;
 	u_int32_t	rx_bw_40;
 	u_int32_t	rx_bw_20;
+
+	/* U-APSD rx stats */
+	uint32_t	rx_wmm_ps_trigger;
+	uint32_t	rx_wmm_ps_set;
+	uint32_t	rx_wmm_ps_reset;
+
+	uint32_t	rx_intr_next_ptr_0;
+	uint32_t	rx_hbm_pool_depleted;
+
+	uint32_t	rxq_intr[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_fill[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_nobuf[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_stop[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_pkt[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_bad_status[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_pkt_oversize[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_pkt_delivered[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_status_hole_chk_num[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_status_hole_chk_step_sum[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_status_hole_chk_step_max[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_status_hole[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_status_hole_max_size[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_process_max[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_process_sum[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_process_num[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_process_limited[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rxq_desc_chain_empty[QTN_FW_WMAC_RX_QNUM];
+	uint32_t	rx_data_last_seqfrag;
+	uint32_t	rx_data_last_ip_id;
+
+	/**
+	 * This counter is incremented once per packet which is sent via the
+	 * external filter (HotSpot functionality).
+	 */
+	uint32_t	accel_l2_ext_filter;
+	uint32_t	accel_mc_send_l2_ext_filter;
+
+	/**
+	 * This counter is incremented once per multicast packet dropped without
+	 * forwording to the external filter (HotSpot functionality).
+	 */
+	uint32_t	accel_mc_drop_l2_ext_filter;
 };
 
 #define MUC_HT_NUM_RATES	77
@@ -730,22 +832,40 @@ struct muc_rx_rates {
 
 #define QTN_STATS_NUM_BF_SLOTS	10
 struct muc_rx_bf_stats {
+	u_int32_t	rx_bf_valid[QTN_STATS_NUM_BF_SLOTS];
 	u_int32_t	rx_bf_aid[QTN_STATS_NUM_BF_SLOTS];
 	u_int32_t	rx_bf_ng[QTN_STATS_NUM_BF_SLOTS];
 	u_int32_t	rx_bf_11n_ndp[QTN_STATS_NUM_BF_SLOTS];
 	u_int32_t	rx_bf_11ac_ndp[QTN_STATS_NUM_BF_SLOTS];
 	u_int32_t	rx_bf_11n_act[QTN_STATS_NUM_BF_SLOTS];
+	/* Total number of 11ac BF feedbacks */
 	u_int32_t	rx_bf_11ac_act[QTN_STATS_NUM_BF_SLOTS];
+	/* Number of MU group selection BF feedbacks */
+	u_int32_t	rx_bf_11ac_grp_sel[QTN_STATS_NUM_BF_SLOTS];
+	/* Number of MU precoding BF feedbacks */
+	u_int32_t	rx_bf_11ac_prec[QTN_STATS_NUM_BF_SLOTS];
+	/* Number of SU BF feedbacks */
+	u_int32_t	rx_bf_11ac_su[QTN_STATS_NUM_BF_SLOTS];
+	/* Number of corrupted BF feedbacks */
+	u_int32_t	rx_bf_11ac_bad[QTN_STATS_NUM_BF_SLOTS];
+	/* Number of MuC to DSP IPC failures while sending BF feedbacks */
+	u_int32_t	rx_bf_11ac_dsp_fail[QTN_STATS_NUM_BF_SLOTS];
+	/* Number of times QMat for this node has been updated (the node was added to MU group) */
+	u_int32_t	mu_grp_add[QTN_STATS_NUM_BF_SLOTS];
+	/* Number of times the node was removed from MU group */
+	u_int32_t	mu_grp_del[QTN_STATS_NUM_BF_SLOTS];
+	u_int32_t	msg_buf_alloc_fail;
 };
 
-/* @} */
+/** @} */
 
 extern struct muc_rx_stats uc_rx_stats;
 extern struct muc_rx_rates uc_rx_rates;
 extern struct muc_rx_bf_stats uc_rx_bf_stats;
 extern struct muc_tx_stats uc_tx_stats;
 extern struct qtn_rate_tx_stats_per_sec uc_tx_rates;
-extern uint32_t uc_rate_stats_read;
+extern uint32_t uc_su_rate_stats_read;
+extern uint32_t uc_mu_rate_stats_read;
 
 /*
  * Rate adaption data collected for packet logger
@@ -756,10 +876,19 @@ extern uint32_t uc_rate_stats_read;
 #define RATES_STATS_NUM_RX_RATES	8	/* Must be a multiple of word size */
 #define RATES_STATS_EVM_CNT		4
 
+/*
+ * Currently only two user positions are supported for MU group
+ * the following define should be aligned
+ * with IEEE80211_MU_GRP_NODES_MAX (4) in future.
+ * for now we don't want to take care about 2x extra zero-filled
+ * huge arrays in rate stats
+ */
+#define RATES_STATS_MAX_USER_IN_GROUP   2
+
 /**
  * \addtogroup MUCSTATS
  */
-/* @{ */
+/** @{ */
 struct qtn_rate_stats_mcs_data {
 	uint16_t	mcs_rate;
 	uint16_t	rate_index;
@@ -771,13 +900,17 @@ struct qtn_rate_stats_mcs_data {
 	uint16_t	avg_per;
 } __attribute__((packed));
 
-struct qtn_rate_tx_stats {
+struct qtn_rate_su_tx_stats {
 	uint32_t			seq_no;
 	uint32_t			timestamp;
 	uint32_t			flags;
 	uint16_t			sampling_index;
 	uint16_t			sampling_rate;
 	struct qtn_rate_stats_mcs_data	mcs_data[RATES_STATS_NUM_TX_RATES];
+} __attribute__((packed));
+
+struct qtn_rate_mu_tx_stats {
+	struct qtn_rate_su_tx_stats group_stats[RATES_STATS_MAX_USER_IN_GROUP];
 } __attribute__((packed));
 
 struct qtn_rate_gen_stats {
@@ -795,8 +928,9 @@ struct qtn_rate_gen_stats {
 } __attribute__((packed));
 
 struct qtn_rate_tx_stats_per_sec {
-	struct qtn_rate_tx_stats	stats[RATES_STATS_NUM_ADAPTATIONS];
+	struct qtn_rate_su_tx_stats  stats_su[RATES_STATS_NUM_ADAPTATIONS];
+	struct qtn_rate_mu_tx_stats  stats_mu[RATES_STATS_NUM_ADAPTATIONS];
 };
-/* @} */
+/** @} */
 
 #endif	/* _STATS_H_ */

@@ -3,16 +3,17 @@
 <html xmlns:v>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta charset="utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<link rel="shortcut icon" href="images/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <link rel="icon" href="images/favicon.png">
 <title><#Web_Title#> - <#errormessage_title#></title>
+<script type="text/JavaScript" src="/js/jquery.js"></script>
 <style>
-.content{
-	width:580px;
-	background:rgba(40,52,55,0.1); 
+body{
+	color:#FFF;
+	font-family: Arial;
 }
 .wrapper{
 	background:url(images/New_ui/login_bg.png) #283437 no-repeat;
@@ -21,40 +22,44 @@
 	margin: 0px; 
 }
 .title_name {
-	font-family:Arial;
-	font-size: 26pt;
-	color:#93d2d9;
+	font-size: 2.5em;
+	color:#93D2D9;
+}
+.title_text{
+	width:520px;
 }
 .prod_madelName{
-	font-family: Arial;
-	font-size: 22pt;
+	font-size: 26pt;
 	color:#fff;
+	margin-left:78px;
+	margin-top: 10px;
+}
+.login_img{
+	width:43px;
+	height:43px;
+	background-image: url('images/New_ui/icon_titleName.png');
+	background-repeat: no-repeat;
 }
 .p1{
-	font-family: Arial;
 	font-size: 16pt;
 	color:#fff;
+	width:480px;
 }
 .button{
-	background:rgba(255,255,255,0.1);
-	border: solid 1px #6e8385;
+	background-color:#007AFF;
+	/*background:rgba(255,255,255,0.1);
+	border: solid 1px #6e8385;*/
 	border-radius: 4px ;
 	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
 	height: 68px;
 	width: 300px;
-	font-family: Arial;
 	font-size: 28pt;
 	color:#fff;
 	color:#000\9; /* IE6 IE7 IE8 */
-	text-align:center;
-	vertical-align:center
-}
-.button_text{
-	font-family: Arial;
-	font-size: 28pt;
-	color:#fff;
-	text-align:center;
-	vertical-align:center
+	text-align: center;
+	float:right; 
+	margin:25px 0 0 78px;
+	line-height:68px;
 }
 .form_input{
 	background-color:rgba(255,255,255,0.2);
@@ -67,65 +72,144 @@
 	color:#000\9; /* IE6 IE7 IE8 */
 	font-size:28px
 }
-.form_input_text{
-	font-family: Arial;
-	font-size: 28pt;
-	color:#a9a9a9;
+.nologin{
+	margin:10px 0px 0px 78px;
+	background-color:rgba(255,255,255,0.2);
+	padding:20px;
+	line-height:36px;
+	border-radius: 5px;
+	width: 480px;
+	border: 0;
+	color:#fff;
+	color:#000\9; /* IE6 IE7 IE8 */
+	font-size:28px;
 }
-.p2{
-	font-family: Arial;
-	font-size: 18pt;
-	color:#28fff7;
+.div_table{
+	display:table;
 }
-.button_gen{
+.div_tr{
+	display:table-row;
+}
+.div_td{
+	display:table-cell;
+}
+.title_gap{
+	margin:10px 0px 0px 78px;
+}
+.img_gap{
+	padding-right:30px;
+	vertical-align:middle;
+}
+.password_gap{
+	margin:30px 0px 0px 78px;
+}
+.error_hint{
+	color: rgb(255, 204, 0);
+	margin:10px 0px -10px 78px; 
+	font-size: 18px;
 	font-weight: bolder;
-	text-shadow: 1px 1px 0px black;
-	background: transparent url(/images/New_ui/contentbt_normal.png) no-repeat scroll center top;
-	_background: transparent url(/images/New_ui/contentbt_normal_ie6.png) no-repeat scroll center top;
-	border:0;
-	color: #FFFFFF;
-	height:33px;
-	font-family:Verdana;
-	font-size:12px;
-	padding:0 .70em 0 .70em;  
-	width:122px;
-	overflow:visible;
-	cursor:pointer;
-	outline: none; /* for Firefox */
-	hlbr:expression(this.onFocus=this.blur()); /* for IE */
-	white-space:normal;
 }
-.button_gen:hover{
-	font-weight: bolder;
-	background:url(/images/New_ui/contentbt_over.png) no-repeat;
-	height:33px;
-	width:122px;
-	padding:0 .70em 0 .70em;  
-	background-position:0px;
-	cursor:pointer;
-	outline: none; /* for Firefox */
-	hlbr:expression(this.onFocus=this.blur()); /* for IE */
+.main_field_gap{
+	margin:100px auto 0;
 }
-a{
+ul{
+	margin: 0;
+}
+li{
+	margin: 10px 0;
+}
+#wanLink{
 	cursor: pointer;
-	color:#FFF;
-	text-decoration:underline;
+}
+.button_background{
+	background-color: transparent;
+}
+/*for mobile device*/
+@media screen and (max-width: 1000px){
+	.title_name {
+		font-size: 1.2em;
+		color:#93d2d9;
+		margin-left:15px;
+	}
+	.prod_madelName{
+		font-size: 1.2em;
+		margin-left: 15px;
+	}
+	.p1{
+		font-size: 12pt;
+		width:100%;
+	}
+	.login_img{
+		background-size: 75%;
+	}
+	.title_text{
+		width: 100%;
+	}
+	.form_input{	
+		padding:13px 11px;
+		width: 100%;
+		height:25px;
+		font-size:16px
+	}
+	.button{
+		height: 50px;
+		width: 100%;
+		font-size: 14pt;
+		text-align: center;
+		float:right; 
+		margin: 25px -30px 0 0;
+		line-height:50px;
+		padding: 0 10px;
+	}
+	.nologin{
+		margin-left:10px; 
+		padding:10px;
+		line-height:18px;
+		width: 100%;
+		font-size:14px;
+	}
+	.error_hint{
+		margin-left:10px; 
+	}
+	.main_field_gap{
+		width:80%;
+		margin:30px 0 0 15px;
+		/*margin:30px auto 0;*/
+	}
+	.title_gap{
+		margin-left:15px; 
+	}
+	.password_gap{
+		margin-left:15px; 
+	}
+	.img_gap{
+		padding-right:0;
+		vertical-align:middle;
+	}
+	ul{
+		margin-left:-20px;
+	}
+	li{
+		margin: 10px 0;
+	}
 }
 </style>
-<script type="text/JavaScript" src="/jquery.js"></script>
 <script type="text/javascript">
 // get the wan state at the first time.
 var casenum = '<% get_parameter("flag"); %>';
 var sw_mode = '<% nvram_get("sw_mode"); %>';
-if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
+var wlc_psta = '<% nvram_get("wlc_psta"); %>';
+var wlc_express = '<% nvram_get("wlc_express"); %>';
+if((sw_mode == 2 || sw_mode == 3) && wlc_psta == 1)
 	sw_mode = 4;
-if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+	
+if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && wlc_psta == 2)
 	sw_mode = 2;
 
-<% wanstate(); %>
 var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
+<% wanstate(); %>
 
 //2014.05 Viz add for T-MOBILE 
 var isSupport = function(_ptn){return ('<% nvram_get("rc_support"); %>'.search(_ptn) == -1) ? false : true;}
@@ -135,12 +219,12 @@ var dsl_support = isSupport("dsl");
 //Dual WAN unit
 var wans_dualwan_orig = '<% nvram_get("wans_dualwan"); %>';
 var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1 : 0;
-if(wans_dualwan_orig.search(" ") == -1) wans_flag = 0;
+if(wans_dualwan_orig.search(" ") == -1) 
+	wans_flag = 0;
 
 var new_lan_ip = (function(){
 	var current_lanip = '<% nvram_get("lan_ipaddr"); %>';
 	var current_mask = '<% nvram_get("lan_netmask"); %>';
-
 	var inet_aton = function(ip_str){
 		if(!ip_str)
 			return -1;
@@ -192,6 +276,7 @@ function initial(){
 	var LoginIP = login_ip_str();
 	var nowIP = login_ip_str_now();
 	var html_code = '';
+	var url_flag = "";
 	var html_code_notlogin = "<ul><li>Please check with your network administrator.</li></ul>";	
 	var showtext = function(obj, str){if(obj)obj.innerHTML=str;}
 
@@ -200,23 +285,33 @@ function initial(){
 		html_code += "<ul>";
 		html_code += "<li><#web_redirect_suggestion1#></li>";
 		html_code += "</ul>";
+		
+		$("#wanLink").click(function(){
+			detect_general();
+		});
 	}
 	else if(casenum == 2){
 		html_code += "<ul>";					
-		html_code += "<li>";												
+		html_code += "<li>";
 		if(wansbstate == 2 || wanauxstate == 3){
 			showtext($("#failReason1")[0], "<#web_redirect_reason2_1#>");			
 			html_code += "<div>";
-			html_code += "<a href='javascript:pppoeLink();'><#web_redirect_suggestion2_1#></a>";
+			html_code += "<span><#web_redirect_suggestion2_1#></span>";
 			html_code += "<span><#web_redirect_suggestion2_1_desc#></span>";
 			html_code += "</div>";
+			$("#wanLink").click(function(){
+				pppoeLink();
+			});
 		}
 		else{
 			showtext($("#failReason1")[0], "<#web_redirect_reason2_2#>");
 			html_code += "<div>";
-			html_code += "<a href='javascript:detectLink();'><#web_redirect_suggestion2_2#></a>";
+			html_code += "<span><#web_redirect_suggestion2_2#></span>";
 			html_code += "<span><#web_redirect_suggestion2_2_desc#></span>";
-			html_code += "</div>";		
+			html_code += "</div>";	
+			$("#wanLink").click(function(){
+				detectLink();
+			});
 		}	
 		
 		html_code += "</li>";					
@@ -227,12 +322,18 @@ function initial(){
 		html_code += "<ul>";
 		html_code += "<li><#web_redirect_suggestion3#></li>";
 		html_code += "</ul>";
+		$("#wanLink").click(function(){
+			detect_general();
+		});
 	}
 	else if(casenum == 4){
 		showtext($("#failReason1")[0], "<#web_redirect_reason4#>");
 		html_code += "<ul>";					
 		html_code += "<li><#web_redirect_suggestion4#></li>";					
-		html_code += "</ul>";		
+		html_code += "</ul>";
+		$("#wanLink").click(function(){
+			detect_general();
+		});
 	}
 	else if(casenum == 5){
 		if(wanstate == 5)
@@ -248,10 +349,14 @@ function initial(){
 		
 		html_code += '</ul>';
 		if(wanstate == 5){
-			html_code += '<ul>';
-			html_code += '<li><a href="javascript:manually_start_wan_Link();"><#web_redirect_suggestion_manually_start_wan#></a></li>';
-			html_code += '</ul>';
-		}	
+			$("#wanLink").click(function(){
+				manually_start_wan_Link();
+			});
+		}else{
+			$("#wanLink").click(function(){
+				detect_general();
+			});
+		}
 	}
 	else if(casenum.search("6") !== -1){
 		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
@@ -261,36 +366,44 @@ function initial(){
 			showtext($("#failReason1")[0], "<#web_redirect_reason6#>");
 			html_code += "<ul>";
 			html_code += "<li><#web_redirect_case6_desc1#>";
-			html_code += "<span style='font-weight:bolder'>"+new_lan_ip+"</span></li>";
-			html_code += "<br><li><#web_redirect_case6_desc2#></li>";
-			html_code += "<br><li><#web_redirect_suggestion0_1#></li>";
+			html_code += "<span style='font-weight:bolder'>"+ new_lan_ip +"</span></li>";
+			html_code += "<li><#web_redirect_case6_desc2#></li>";
+			html_code += "<li><#web_redirect_suggestion0_1#></li>";
 			html_code += "</ul>";
-			html_code += "<div id='submitBtn' style=\"text-align: right;\">";
-			html_code += "<input type=\"button\" class=\"button_gen\" width=\"72\" onclick=\"change_lan_subnet();\" value=\"<#CTL_next#>\">";
-			html_code += "</div>";	
 		}			
 
+		$("#wanLink").html("<#CTL_next#>");
+		$("#wanLink").click(function(){
+			change_lan_subnet();
+		});
 		$("#suggestion").hide();
 	}
 	else if(casenum == 8){
-		showtext($("#failReason1")[0], "<#APSurvey_action_ConnectingStatus0#>");		
+		showtext($("#failReason1")[0], "<#APSurvey_action_ConnectingStatus0#>");	
 		if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
 			html_code = html_code_notlogin;
+			$("#wanLink").hide();
 		}
 		else{		
 			html_code += "<ul>";
-
-			html_code += "<li><a href='/QIS_wizard.htm?flag=";
-			if(sw_mode == "2")
-				html_code += "sitesurvey_rep";
+			html_code += "<li><a href='/QIS_wizard.htm?flag=manual'><#QKSet_finish_moveto8#></a></li>";
+			html_code += "<li><#web_redirect_suggestion0_1#></li>";
+			html_code += "</ul>";
+			
+			if(sw_mode == "2"){
+				if(wlc_express == '1') 
+					url_flag += "sitesurvey_exp2";
+				else if(wlc_express == '2') 
+					url_flag += "sitesurvey_exp5";
+				else 
+					url_flag += "sitesurvey_rep";
+			}
 			else
-				html_code += "sitesurvey_mb";
-			html_code += "'><#APSurvey_action_search_again_hint2#></a>";
-			html_code += "</li>";
-
-			html_code += "<br><li><a href='/QIS_wizard.htm?flag=manual'><#QKSet_finish_moveto8#></a></li>";
-			html_code += "<br><li><#web_redirect_suggestion0_1#></li>";
-			html_code += "</ul>";						
+				url_flag += "sitesurvey_mb";
+				
+			$("#wanLink").click(function(){
+				top.location.href = "/QIS_wizard.htm?flag=" + url_flag;
+			});
 		}
 		
 		$("#suggestion").hide();
@@ -315,7 +428,6 @@ function initial(){
 			return 800;
 	})();
 
-	document.getElementById("loginTable").style.height = windowHeight + "px";
 	document.getElementById("loginTable").style.display = "";
 }
 
@@ -332,7 +444,9 @@ function manually_start_wan_Link(){
 }
 
 function change_lan_subnet(){
-	send_setting(); 
+	send_setting();
+	$("#wanLink").hide();
+	$("#submitBtn").show();
 	$("#submitBtn").html('<span><#CTL_reconnection#>&nbsp</span><img src="/images/InternetScan.gif">')
 }
 
@@ -363,7 +477,6 @@ function detect_router(){
 		url: location.origin.replace(location.hostname, new_lan_ip) + "/httpd_check.json",
 		dataType: 'jsonp',
 		timeout: 2000,
-
 		error: function(xhr){
 			setTimeout(detect_router, 1000);
 			setTimeout(function(){
@@ -372,88 +485,68 @@ function detect_router(){
 		}
 	});
 }
+
+function detect_general(){
+	$("#wanLink").click(function(){
+		if(wans_flag){
+		    if(wans_dualwan_orig.split(" ")[0].toUpperCase == "USB")
+				top.location.href = '/Advanced_Modem_Content.asp';
+			else if(dsl_support){
+				if(wans_dualwan_orig.split(" ")[0].toUpperCase == "WAN" || wans_dualwan_orig.split(" ")[0].toUpperCase == "LAN")
+					top.location.href = '/Advanced_WAN_Content.asp';
+				else
+				    top.location.href = '/Advanced_DSL_Content.asp';
+			}
+			else
+				top.location.href = '/Advanced_WAN_Content.asp';
+		}
+		else{
+			if(dsl_support)                 
+			    top.location.href = '/Advanced_DSL_Content.asp';
+			else if(sw_mode == 3)
+			    top.location.href = '/index.asp';
+		    else
+				top.location.href = '/Advanced_WAN_Content.asp';
+		}
+	});	
+}
 </script>
+
 </head>
 <body class="wrapper" onload="initial();">
-<table id="loginTable" align="center" cellpadding="0" cellspacing="0" style="display:none">
-	<tr>
-		<td>
-			<div>
-				<table class="content">
-					<tr style="height:43px;">
-						<td style="width:73px" align="left">
-							<div><img src="/images/New_ui/icon_titleName.png"></div>
-						</td>
-						<td align="left">
-							<div class="title_name"><#web_redirect_message#></div>
-						</td>
-					</tr>
-					<tr style="height:60px;"> 
-						<td colspan="2"><div class="prod_madelName" style="margin-left:78px;"><#Web_Title2#></div></td>
-					</tr>
-
-					<tr valign="top">
-						<td colspan="2">
-							<div class="p1" style="margin:20px 0px 0px 78px;">
-								<#web_redirect_fail_reason0#>
-							</div>
-
-							<div class="p1" style="margin:10px 0px 0px 78px;background-color:rgba(255,255,255,0.2);padding:15px;line-height:30px;border-radius:5px;"> 
-								<span id="failReason1"></span>
-							</div>
-						</td>
-					</tr>					
-
-					<tr valign="top">
-						<td colspan="2">
-							<div class="p1" style="margin:20px 0px 0px 78px;">
-								<#web_redirect_suggestion0#>
-							</div>
-
-							<div class="p1" style="margin:10px 0px 0px 78px;background-color:rgba(255,255,255,0.2);padding:10px;line-height:30px;border-radius:5px;">
-								<div id="case_content"></div>
-
-								<div id="suggestion">
-									<ul>
-										<li> 
-											<span><#web_redirect_suggestion_final#></span>
-											<a id="wanLink"><#web_redirect_suggestion_etc#></a>
-											<script>
-												$("#wanLink").click(function(){
-													if(wans_flag){
-												        if(wans_dualwan_orig.split(" ")[0].toUpperCase == "USB")
-															top.location.href = '/Advanced_Modem_Content.asp';
-												        else if(dsl_support){
-												            if(wans_dualwan_orig.split(" ")[0].toUpperCase == "WAN" || wans_dualwan_orig.split(" ")[0].toUpperCase == "LAN")
-																top.location.href = '/Advanced_WAN_Content.asp';
-												            else
-												                top.location.href = '/Advanced_DSL_Content.asp';
-												        }
-												        else
-															top.location.href = '/Advanced_WAN_Content.asp';
-												    }
-												    else{
-												        if(dsl_support)                 
-												            top.location.href = '/Advanced_DSL_Content.asp';
-												        else if(sw_mode == 3)
-												            top.location.href = '/index.asp';
-												        else
-												            top.location.href = '/Advanced_WAN_Content.asp';
-												    }
-												})
-											</script>
-										</li> 
-									</ul>
-								</div>
-							</div>
-						</td>
-					</tr>					
-
-				</table>
+	<div id="loginTable" class="div_table main_field_gap" style="display:none">
+		<div class="title_name">
+			<div class="div_td img_gap">
+				<div class="login_img"></div>
 			</div>
-		</td>
-	</tr>
-</table>
-</form>
+			<div class="div_td title_text"><#web_redirect_message#></div>
+		</div>		
+		<div class="prod_madelName"><#Web_Title2#></div>
+		
+		<div class="p1 title_gap"><#web_redirect_fail_reason0#></div>	
+		<div>
+			<div class="p1 title_gap"></div>
+			<div class="nologin">
+				<div id="failReason1"></div>
+			</div>
+		</div>
+		
+		<div class="p1 title_gap"><#web_redirect_suggestion0#></div>	
+		<div>
+			<div class="p1 title_gap"></div>
+			<div class="nologin">
+				<div id="case_content"></div>
+				<div id="suggestion">
+					<ul>
+						<li>
+							<span><#web_redirect_suggestion_final#></span>						
+						</li> 
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div id="wanLink" class='button'><#btn_go#></div>
+		<div id="submitBtn" class='button button_background' style="display:none"></div>
+	</div>
 </body>
 </html>

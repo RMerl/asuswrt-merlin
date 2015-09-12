@@ -56,7 +56,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/wcdma_list.js"></script>
-<script type="text/javaScript" src="/jquery.js"></script>
+<script type="text/javaScript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 
@@ -127,7 +127,7 @@ function initial(){
 			change_apn_mode();
 		}
 		else{
-			hide_usb_settings();
+			hide_usb_settings(1);
 			document.getElementById("android_desc").style.display="";
 		}
 	}
@@ -153,7 +153,7 @@ function initial(){
 			}
 			else{
 				document.getElementById("android_desc").style.display="";					
-				hide_usb_settings();
+				hide_usb_settings(1);
 			}				
 		},
 		function() {
@@ -295,6 +295,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
 		inputCtrl(document.form.modem_ttlsid, 0);
+		inputCtrl(document.form.modem_mtu, 1);
 		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "2"){ // CDMA2000
@@ -307,6 +308,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
 		inputCtrl(document.form.modem_ttlsid, 0);
+		inputCtrl(document.form.modem_mtu, 1);
 		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "3"){ // TD-SCDMA
@@ -319,6 +321,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
 		inputCtrl(document.form.modem_ttlsid, 0);
+		inputCtrl(document.form.modem_mtu, 1);
 		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "4"){	// WiMAX
@@ -331,6 +334,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
 		inputCtrl(document.form.modem_ttlsid, 1);
+		inputCtrl(document.form.modem_mtu, 1);
 		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else{	// Disable (mode == 0)
@@ -344,6 +348,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_user, 0);
 		inputCtrl(document.form.modem_pass, 0);
 		inputCtrl(document.form.modem_ttlsid, 0);
+		inputCtrl(document.form.modem_mtu, 0);
 		//document.getElementById("hsdpa_hint").style.display = "none";
 		document.form.modem_enable.value = "0";
 	}
@@ -585,7 +590,7 @@ function check_dongle_status(){
    });
 }
 
-function hide_usb_settings(){
+function hide_usb_settings(_flag){
 	inputCtrl(document.form.modem_autoapn, 0);
 	inputCtrl(document.form.modem_enable_option, 0);
 	inputCtrl(document.form.modem_country, 0);
@@ -598,6 +603,7 @@ function hide_usb_settings(){
 	inputCtrl(document.form.modem_authmode, 0);
 	inputCtrl(document.form.modem_ttlsid, 0);
 	inputCtrl(document.form.Dev3G, 0);
+	inputCtrl(document.form.modem_mtu, (typeof(_flag) != 'undefined' && _flag) ? 1 : 0);
 	document.getElementById("modem_enable_div_tr").style.display = "none";
 	document.getElementById("modem_apn_div_tr").style.display = "none";
 	document.getElementById("modem_dialnum_div_tr").style.display = "none";
@@ -617,7 +623,7 @@ function select_usb_device(obj){
 	}
 	else{
 		document.getElementById("android_desc").style.display="";
-		hide_usb_settings();
+		hide_usb_settings(1);
 	}
 
 }
@@ -933,6 +939,13 @@ function change_apn_mode(){
 						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,13);"><#HSDPAConfig_USBAdapter_itemname#></a></th>
 						<td>
 							<select name="Dev3G" id="shown_modems" class="input_option" disabled="disabled"></select>
+						</td>
+					</tr>
+
+					<tr>
+						<th>USB MTU</th>
+						<td>
+							<input type="text" maxlength="5" name="modem_mtu" class="input_6_table" value="<% nvram_get("modem_mtu"); %>" onKeyPress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off"/>
 						</td>
 					</tr>
 				</table>	

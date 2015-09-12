@@ -18,7 +18,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <style type="text/css">
@@ -169,7 +169,7 @@ function formShowAndHide(server_enable, server_type) {
 			document.getElementById('exportViaEmail').style.display = "none";
 					
 		showopenvpnd_clientlist();
-		parseOpenVPNClients();
+		update_vpn_client_state();
 		openvpnd_connected_status();
 		check_vpn_server_state();
 		document.getElementById("divApply").style.display = "";
@@ -192,16 +192,15 @@ function openvpnd_connected_status(){
 		var ind = x;
 		username_status = "conn"+ind;
 		if(openvpnd_connected_clients.length >0){
+			if(document.getElementById(username_status)) {
+				document.getElementById(username_status).innerHTML = '<#Disconnected#>';
+			}
 			for(var y=0; y<openvpnd_connected_clients.length; y++){
 				if(document.getElementById("openvpnd_clientlist_table").rows[x].cells[1].title == openvpnd_connected_clients[y].username){
 					document.getElementById(username_status).innerHTML = '<a class="hintstyle2" href="javascript:void(0);" onClick="showOpenVPNClients(\''+openvpnd_connected_clients[y].username+'\');"><#Connected#></a>';
 					break;
 				}		
 			}
-			
-			if(document.getElementById(username_status).innerHTML == ""){
-				document.getElementById(username_status).innerHTML = '<#Disconnected#>';
-			}			
 		}else if(document.getElementById(username_status)){
 			document.getElementById(username_status).innerHTML = '<#Disconnected#>';
 		}	
@@ -551,8 +550,10 @@ function del_Row(rowdata){
 	}
 
 	vpn_server_clientlist_array = vpn_server_clientlist_value;
-	if(vpn_server_clientlist_array == "")
+	if(vpn_server_clientlist_array == "") {
 		showopenvpnd_clientlist();
+		openvpnd_connected_status();
+	}
 }
 
 var overlib_str2 = new Array();	//Viz add 2013.10 for record longer VPN client username/pwd for OpenVPN
@@ -599,8 +600,9 @@ function showopenvpnd_clientlist(){
 	document.getElementById("openvpnd_clientlist_Block").innerHTML = code;
 }
 
-function parseOpenVPNClients(){		//192.168.123.82:46954 10.8.0.6 pine\n	
-	var Loginfo = document.getElementById("openvpn_connected_info").firstChild.innerHTML;
+function parseOpenVPNClients(client_status){		//192.168.123.82:46954 10.8.0.6 pine\n	
+	openvpnd_connected_clients = [];
+	var Loginfo = client_status;
 	if (Loginfo == "") {return;}
 
 	Loginfo = Loginfo.replace('\r\n', '\n');
@@ -964,6 +966,24 @@ function save_keys() {
 }
 /* Advanced Setting end */ 
 
+function update_vpn_client_state() {
+	$.ajax({
+		url: '/ajax_openvpn_client_status.xml',
+		dataType: 'xml',
+
+		error: function(xml) {
+			setTimeout("update_vpn_client_state();", 1000);
+		},
+
+		success: function(xml) {
+			var vpnserverXML = xml.getElementsByTagName("vpnserver");
+			var client_status = vpnserverXML[0].firstChild.nodeValue;
+			parseOpenVPNClients(client_status);
+			openvpnd_connected_status();
+			setTimeout("update_vpn_client_state();", 3000);
+		}
+	});	
+}
 </script>
 </head>
 <body onload="initial();">
@@ -1071,7 +1091,6 @@ function save_keys() {
 <div id="Loading" class="popup_bg"></div>
 
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-<div id="openvpn_connected_info" style="display:none;"><pre><% nvram_dump("openvpn_connected",""); %></pre></div>
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="Advanced_VPN_OpenVPN.asp">
 <input type="hidden" name="next_page" value="Advanced_VPN_OpenVPN.asp">
@@ -1223,7 +1242,7 @@ function save_keys() {
 											<p><#vpn_openvpn_desc3#><br />
 											<p><#vpn_openvpn_hint1#><br />
 											<p><#vpn_openvpn_hint2#><br />
-											<p>Before changing any value in advanced settings, please check the openVPN client software ability.
+											<p><#vpn_openvpn_hint3#>
 										</div>
 										<!-- Advanced setting table start-->
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">

@@ -57,8 +57,8 @@ function initial(){
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "DMZ"]);
 	dmz_enable_check();
 
-	if(dualWAN_support && wans_mode == "lb")
-		document.getElementById("lb_note").style.display = "";
+	//if(dualWAN_support && wans_mode == "lb")
+	//	document.getElementById("lb_note").style.display = "";
 }
 
 function dmz_enable_check(){

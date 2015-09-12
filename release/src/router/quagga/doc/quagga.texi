@@ -1,0 +1,139 @@
+\input texinfo @c -*- texinfo -*-
+
+@c %**start of header
+@setfilename quagga.info
+@c Set variables - sourced from defines.texi
+@include defines.texi
+@settitle @uref{http://www.quagga.net,,@value{PACKAGE_NAME}}
+@c %**end of header
+
+@c automake will automatically generate version.texi
+@c and set EDITION, VERSION, UPDATED and UPDATED-MONTH
+@include version.texi
+
+@copying
+@value{COPYRIGHT_STR}
+@quotation
+
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation
+approved by Kunihiro Ishiguro.
+@end quotation
+@end copying
+
+@c Info entry
+@dircategory Routing Software:
+@direntry
+* @value{PACKAGE_NAME}: (quagga).		The Quagga Software Routing Suite
+@end direntry
+
+@c @smallbook
+
+@ifinfo
+This file documents the Quagga Software Routing Suite which manages common
+TCP/IP routing protocols.
+
+This is Edition @value{EDITION}, last updated @value{UPDATED} of
+@cite{The Quagga Manual}, for @uref{http://www.quagga.net/,,@value{PACKAGE_NAME}}
+Version @value{VERSION}.
+
+@insertcopying
+@end ifinfo
+
+@titlepage
+@title @uref{http://www.quagga.net,,Quagga}
+@subtitle A routing software package for TCP/IP networks
+@subtitle @uref{http://www.quagga.net,,@value{PACKAGE_NAME}} @value{VERSION}
+@subtitle @value{UPDATED-MONTH}
+@author @value{AUTHORS}
+
+@page
+@vskip 0pt plus 1filll
+
+@insertcopying
+@end titlepage
+@page
+
+@ifnottex
+@node Top
+@top Quagga
+		     
+@uref{http://www.quagga.net,,Quagga} is an advanced routing software package
+that provides a suite of TCP/IP based routing protocols.  This is the Manual
+for @value{PACKAGE_STRING}. @uref{http://www.quagga.net,,Quagga} is a fork of 
+@uref{http://www.zebra.org,,GNU Zebra}.
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Overview::
+* Installation::
+* Basic commands::
+* Zebra::
+* RIP::
+* RIPng::
+* OSPFv2::
+* OSPFv3::
+* Babel::
+* BGP::
+* Configuring Quagga as a Route Server::
+* VTY shell::
+* Filtering::
+* Route Map::
+* IPv6 Support::
+* Kernel Interface::
+* SNMP Support::
+* Zebra Protocol::
+* Packet Binary Dump Format::
+* Command Index::
+* VTY Key Index::
+* Index::
+@end menu
+@contents
+
+@include overview.texi
+@include install.texi
+@include basic.texi
+@include main.texi
+@include ripd.texi
+@include ripngd.texi
+@include ospfd.texi
+@include ospf6d.texi
+@include babeld.texi
+@include bgpd.texi
+@include routeserver.texi
+@include vtysh.texi
+@include filter.texi
+@include routemap.texi
+@include ipv6.texi
+@include kernel.texi
+@include snmp.texi
+@include protocol.texi
+@include appendix.texi
+
+@node Command Index
+@unnumbered Command Index
+
+@printindex fn
+
+@node VTY Key Index
+@unnumbered VTY Key Index
+
+@printindex ky
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+@bye

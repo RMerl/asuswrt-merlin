@@ -257,7 +257,7 @@ GEN_CONF:
 			eval("wl", "-i", ifname, "ldpc_cap", "1");	// driver default setting
 #endif
 #ifdef RTCONFIG_BCMWL6
-#ifndef RTCONFIG_BCM7
+#if !defined(RTCONFIG_BCM7) && !defined(RTCONFIG_BCM_7114)
 		if (nvram_match(strcat_r(prefix, "ack_ratio", tmp), "1"))
 			eval("wl", "-i", ifname, "ack_ratio", "4");
 		else
@@ -266,7 +266,7 @@ GEN_CONF:
 		if (nvram_match(strcat_r(prefix, "ampdu_mpdu", tmp), "1"))
 			eval("wl", "-i", ifname, "ampdu_mpdu", "64");
 		else
-#ifndef RTCONFIG_BCM7
+#if !defined(RTCONFIG_BCM7)
 			eval("wl", "-i", ifname, "ampdu_mpdu", "-1");	// driver default setting
 #else
 			eval("wl", "-i", ifname, "ampdu_mpdu", "32");	// driver default setting
@@ -276,7 +276,7 @@ GEN_CONF:
 			eval("wl", "-i", ifname, "ampdu_rts", "1");	// driver default setting
 		else
 			eval("wl", "-i", ifname, "ampdu_rts", "0");
-#ifndef RTCONFIG_BCM7
+#if !defined(RTCONFIG_BCM7) && !defined(RTCONFIG_BCM_7114)
 		if (nvram_match(strcat_r(prefix, "itxbf", tmp), "1"))
 			eval("wl", "-i", ifname, "txbf_imp", "1");	// driver default setting
 		else
@@ -1043,8 +1043,8 @@ gen_qca_wifi_cfgs(void)
 #endif
 
 #if defined(PLN12)
-	led_control(LED_2G_GREEN, led_onoff[0]);
-	led_control(LED_2G_ORANGE, led_onoff[0]);
+	//led_control(LED_2G_GREEN, led_onoff[0]);
+	//led_control(LED_2G_ORANGE, led_onoff[0]);
 	led_control(LED_2G_RED, led_onoff[0]);
 	set_wifiled(1);
 #elif defined(PLAC56)
@@ -1842,8 +1842,11 @@ gmac3_no_swbr:
 #endif
 	start_snooper(lan_ifname);
 
-	if(nvram_match("lan_proto", "dhcp"))
-	{
+	if (nvram_match("lan_proto", "dhcp") 
+#ifdef RTCONFIG_DEFAULT_AP_MODE
+			&& !nvram_match("ate_flag", "1")
+#endif
+	) {
 		// only none routing mode need lan_proto=dhcp
 		if (pids("udhcpc"))
 		{
@@ -2502,7 +2505,6 @@ NEITHER_WDS_OR_PSTA:
 
 			/* Stop dhcp client */
 			stop_udhcpc(unit);
-			stop_zcip(unit);
 		}
 	}
 	// Beceem dongle, ASIX USB to RJ45 converter, ECM, rndis(LU-150: ethX with RNDIS).
@@ -2606,7 +2608,6 @@ NEITHER_WDS_OR_PSTA:
 
 			/* Stop dhcp client */
 			stop_udhcpc(unit);
-			stop_zcip(unit);
 
 #ifdef RTCONFIG_USB_BECEEM
 			if(strlen(port_path) <= 0)

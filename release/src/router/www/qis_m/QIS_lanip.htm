@@ -1,0 +1,445 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<!--link rel="stylesheet" type="text/css" href="/form_style.css">
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script-->
+<link type="text/css" rel="stylesheet"  href="../css/effect.css">
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/JavaScript" src="/general.js"></script>
+<script type="text/JavaScript" src="/help.js"></script>
+<script type="text/JavaScript" src="/validator.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/JavaScript">
+function QKInternet_load_body(){
+	if(parent.document.QKform.sw_mode.value == 4) {
+		document.getElementById("nextButton").value = "<#CTL_apply#>";
+	}
+	
+	document.getElementById("lan_proto_button").onclick = function(){change_ip_setting();}
+	document.getElementById("lan_dns_button").onclick = function(){display_lan_dns();}
+	
+	
+	if(parent.sw_mode == "3"){	// protocol checkbox		
+		if('<% nvram_get("lan_proto"); %>' == 'static'){		
+			change_ip_setting('static');
+	    }
+	    else{
+			change_ip_setting('dhcp');
+	    }
+			
+	    if('<% nvram_get("lan_dnsenable_x"); %>' == '0'){		// dns checkbox
+			display_lan_dns("manual");
+	    }
+	    else{
+			display_lan_dns("auto");
+	    }
+	}
+	else{ // if mode switching, DHCP	
+		change_ip_setting('dhcp');		// force to set lan_proto to dhcp			
+		display_lan_dns("auto");		// force to set lan_dns to automatic
+	}
+	
+	document.getElementById("nextButton").focus();
+}
+
+function display_lan_dns(){
+	if(document.getElementById("lan_dns_button").checked){		//Automatic
+		document.getElementById("dns_field").style.display = "none";
+		document.form.lan_dns1_x.disabled = true;
+		document.form.lan_dns2_x.disabled = true;
+	}
+	else{		//Manually
+		document.getElementById("dns_field").style.display = "";
+		document.form.lan_dns1_x.disabled = false;
+		document.form.lan_dns2_x.disabled = false;
+	}
+}
+
+function change_ip_setting(){
+	if(document.getElementById("lan_proto_button").checked){		//DHCP
+		document.getElementById("ip_field").style.display = "none";
+		document.getElementById("dns_button_field").style.display = "table";
+		document.form.lan_ipaddr.disabled = true;
+		document.form.lan_netmask.disabled = true;
+		document.form.lan_gateway.disabled = true;
+		document.getElementById("lan_dns_button").checked = true;
+		display_lan_dns();
+	}
+	else {		//Static IP
+		document.getElementById("ip_field").style.display = "";
+		document.getElementById("dns_button_field").style.display = "none";		
+		document.form.lan_ipaddr.disabled = false;
+		document.form.lan_netmask.disabled = false;
+		document.form.lan_gateway.disabled = false;
+		document.getElementById("lan_dns_button").checked = false;
+		display_lan_dns();
+	}
+}
+
+function submitForm(){
+	if(validForm()){
+		parent.document.QKform.lan_ipaddr.value = document.form.lan_ipaddr.value;
+		parent.document.QKform.lan_proto.value = document.form.lan_proto.value;
+		parent.document.QKform.lan_netmask.value = document.form.lan_netmask.value;
+		parent.document.QKform.lan_gateway.value = document.form.lan_gateway.value;
+		parent.document.QKform.lan_dnsenable_x.value = document.form.lan_dnsenable_x.value;		
+		parent.document.QKform.lan_dns1_x.value = document.form.lan_dns1_x.value;
+		parent.document.QKform.lan_dns2_x.value = document.form.lan_dns2_x.value;
+
+		if(parent.sw_mode == "1"){
+			parent.document.QKform.lan_ipaddr_rt.value = '<% nvram_get("lan_ipaddr"); %>';
+			parent.document.QKform.lan_netmask_rt.value = '<% nvram_get("lan_netmask"); %>';
+		}
+
+		if(parent.document.QKform.sw_mode.value == 4) {
+			document.mbform.lan_ipaddr.value = document.form.lan_ipaddr.value;
+			document.mbform.lan_proto.value = document.form.lan_proto.value;
+			document.mbform.lan_netmask.value = document.form.lan_netmask.value;
+			document.mbform.lan_gateway.value = document.form.lan_gateway.value;
+			document.mbform.lan_dnsenable_x.value =  document.form.lan_dnsenable_x.value;			
+			document.mbform.lan_dns1_x.value = document.form.lan_dns1_x.value;
+			document.mbform.lan_dns2_x.value = document.form.lan_dns2_x.value;
+
+			if(parent.sw_mode == "1") {
+				document.mbform.lan_ipaddr_rt.disabled = false;
+				document.mbform.lan_netmask_rt.disabled = false;
+				document.mbform.lan_ipaddr_rt.value = parent.document.QKform.lan_ipaddr_rt.value;
+				document.mbform.lan_netmask_rt.value = parent.document.QKform.lan_netmask_rt.value;
+			}
+
+			document.mbform.wlc_band.value = parent.document.QKform.wlc_band.value;
+			document.mbform.wlc_ssid.value = parent.document.QKform.wlc_ssid.value;
+			document.mbform.wlc_wep.value = parent.document.QKform.wlc_wep.value;
+			document.mbform.wlc_key.value = parent.document.QKform.wlc_key.value;
+			document.mbform.wlc_wep_key.value = parent.document.QKform.wlc_wep_key.value;
+			document.mbform.wlc_auth_mode.value = parent.document.QKform.wlc_auth_mode.value;
+			document.mbform.wlc_crypto.value = parent.document.QKform.wlc_crypto.value;
+			document.mbform.wlc_wpa_psk.value = parent.document.QKform.wlc_wpa_psk.value;
+
+			document.mbform.http_username.value = parent.document.QKform.http_username.value;
+			if(parent.document.QKform.http_passwd.value != ""){
+				document.mbform.http_passwd.value = parent.document.QKform.http_passwd.value;
+				document.mbform.http_passwd.disabled = false;
+			}
+
+			if(Rawifi_support || Qcawifi_support) {
+				document.mbform.sw_mode.value = 2;
+			}
+			else {
+				document.mbform.sw_mode.value = 3;
+			}
+			document.mbform.submit();
+		}
+		else {
+			location.href = document.form.next_page.value;
+		}
+	}
+}
+
+function validForm(){
+	// test if LAN IP is a private IP.
+	var A_class_start = inet_network("10.0.0.0");
+	var A_class_end = inet_network("10.255.255.255");
+	var B_class_start = inet_network("172.16.0.0");
+	var B_class_end = inet_network("172.31.255.255");
+	var C_class_start = inet_network("192.168.0.0");
+	var C_class_end = inet_network("192.168.255.255");
+	
+	var ip_obj = document.form.lan_ipaddr;
+	var ip_num = inet_network(ip_obj.value);
+	var ip_class = "";
+
+	if(document.getElementById("lan_dns_button").checked)
+		document.form.lan_dnsenable_x.value = 1;
+	else
+		document.form.lan_dnsenable_x.value = 0;
+
+	if(document.getElementById("lan_proto_button").checked){
+		document.form.lan_proto.value = "dhcp";
+		return true;
+	}
+	else{
+		parent.staticIP = document.form.lan_ipaddr.value;
+		parent.isStatic = true;
+		document.form.lan_proto.value = "static";
+	}
+	
+	if(ip_num > A_class_start && ip_num < A_class_end)
+		ip_class = 'A';
+	else if(ip_num > B_class_start && ip_num < B_class_end)
+		ip_class = 'B';
+	else if(ip_num > C_class_start && ip_num < C_class_end)
+		ip_class = 'C';
+	else{
+		alert(ip_obj.value+" <#JS_validip#>");
+		ip_obj.value = "";
+		ip_obj.focus();
+		ip_obj.select();
+		return false;
+	}
+	
+	// test if netmask is valid.
+	var netmask_obj = document.form.lan_netmask;
+	var netmask_num = inet_network(netmask_obj.value);
+	var netmask_reverse_num = ~netmask_num;
+	var default_netmask = "";
+	var wrong_netmask = 0;
+
+	if(netmask_num < 0) wrong_netmask = 1;	
+
+	if(ip_class == 'A')
+		default_netmask = "255.0.0.0";
+	else if(ip_class == 'B')
+		default_netmask = "255.255.0.0";
+	else
+		default_netmask = "255.255.255.0";
+	
+	var test_num = netmask_reverse_num;
+	while(test_num != 0){
+		if((test_num+1)%2 == 0)
+			test_num = (test_num+1)/2-1;
+		else{
+			wrong_netmask = 1;
+			break;
+		}
+	}
+	if(wrong_netmask == 1){
+		alert(netmask_obj.value+" <#JS_validip#>");
+		netmask_obj.value = default_netmask;
+		netmask_obj.focus();
+		netmask_obj.select();
+		return false;
+	}
+	
+	var subnet_head = getSubnet(ip_obj.value, netmask_obj.value, "head");
+	var subnet_end = getSubnet(ip_obj.value, netmask_obj.value, "end");
+	
+	if(ip_num == subnet_head || ip_num == subnet_end){
+		alert(ip_obj.value+" <#JS_validip#>");
+		ip_obj.value = "";
+		ip_obj.focus();
+		ip_obj.select();
+		return false;
+	}
+	return true;
+}
+
+function done_validating(action){
+	refreshpage();
+}
+
+function back_to_Adv(){
+	parent.location.href = '/Advanced_OperationMode_Content.asp';
+}
+
+function submitenter(myfield,e)
+{	
+	var keycode;
+	if (window.event) keycode = window.event.keyCode;
+	else if (e) keycode = e.which;
+	else return true;
+
+	if (keycode == 13){
+		submitForm();
+   	return false;
+  }
+	else
+   	return true;
+}
+
+var retValHandler = {
+	"errCounter" : 0,
+
+	"forceHideLoading" : function(){
+		parent.hideLoading();
+		if(parent.document.getElementById("LoadingBar")){
+			parent.document.getElementById("LoadingBar").style.visibility = "hidden";
+			parent.document.getElementById("LoadingBar").style.display = "none";
+		}
+	},
+
+	"doQuery" : function(){
+		child_macaddr = '';
+	
+		$.ajax({
+			url: '/httpd_check.xml',
+			dataType: 'xml',
+			timeout: 2000,
+			error: function(xhr){
+				setTimeout("retValHandler.doQuery();", 1000);
+				retValHandler.errCounter++;
+				if(retValHandler.errCounter > 5){ // assume it in in connected and the IP of DUT has been changed
+					genErrorHint();
+					retValHandler.forceHideLoading();
+				}
+			},
+			success: function(response){
+				retValHandler.wlc_isConnected();
+			}
+		});	
+	},
+
+	"wlc_isConnected" : function(){
+		$.ajax({
+			url: '/ajax_wlc_state.asp',
+			dataType: 'script',
+			timeout: 2000,
+			error: function(xhr){
+				setTimeout("retValHandler.wlc_isConnected();", 1000);
+			},
+			success: function(response){
+				retValHandler.forceHideLoading();
+				if(parent.parent_macaddr && child_macaddr){
+					if(child_macaddr != parent.parent_macaddr){
+						genErrorHint();
+						return false;
+					}
+				}
+				else{
+					genErrorHint();
+					return false;
+				}
+
+				if(retValHandler.isConnected(wlc_state)){ // connected
+					location.href = '/qis_m/QIS_finish.htm';
+				}
+				else{
+					parent.isSubmit = true;
+					parent.isrescan = 120;
+					location.href = '/qis_m/QIS_sitesurvey.htm';
+				}
+			}
+		});	
+	},
+
+	"isConnected" : function(retVal){
+		if(retVal == 1)	
+			return true;
+		else
+			return false;
+	}
+}
+</script>
+</head>
+
+<body onLoad="QKInternet_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
+<form method="post" name="mbform" action="/start_apply2.htm" target="hidden_frame">
+<!-- submit needed -->
+<input type="hidden" name="current_page" value="/QIS_wizard_m.htm">
+<input type="hidden" name="next_page" value="/QIS_wizard_m.htm">   
+<input type="hidden" name="prev_page" value="/QIS_wizard_m.htm">
+<input type="hidden" name="flag" value="wlcconnect">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_wait" value="50">
+<input type="hidden" name="action_script" value="reboot">
+<!-- ap lan -->
+<input type="hidden" name="lan_proto" value="<% nvram_get("lan_proto"); %>">
+<input type="hidden" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>">
+<input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>">
+<input type="hidden" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>">
+<input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">
+<input type="hidden" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>">
+<input type="hidden" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>">
+<input type="hidden" name="lan_ipaddr_rt" value="<% nvram_get("lan_ipaddr_rt"); %>" disabled>
+<input type="hidden" name="lan_netmask_rt" value="<% nvram_get("lan_netmask_rt"); %>" disabled>
+<!-- wireless client -->
+<input type="hidden" name="wlc_psta" value="1">
+<input type="hidden" name="wlc_band" value="<% nvram_get("wlc_band"); %>">
+<input type="hidden" name="wlc_ssid" value="<% nvram_char_to_ascii("", "wlc_ssid"); %>">
+<input type="hidden" name="wlc_wep" value="<% nvram_get("wlc_wep"); %>">
+<input type="hidden" name="wlc_key" value="<% nvram_get("wlc_key"); %>">
+<input type="hidden" name="wlc_wep_key" value="<% nvram_get("wlc_wep_key"); %>">
+<input type="hidden" name="wlc_auth_mode" value="<% nvram_get("wlc_auth_mode"); %>">
+<input type="hidden" name="wlc_crypto" value="<% nvram_get("wlc_crypto"); %>">
+<input type="hidden" name="wlc_wpa_psk" value="<% nvram_get("wlc_wpa_psk"); %>">
+<input type="hidden" name="wlc_nbw_cap" value="2">
+<!-- system end -->
+<input type="hidden" name="sw_mode" value="<% nvram_get("sw_mode"); %>">
+<input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
+<input type="hidden" name="http_passwd" value="" disabled> 
+<input type="hidden" name="x_Setting" value="1">
+<input type="hidden" name="w_Setting" value="1">
+</form>
+
+<form method="post" name="form" action="/start_apply.htm" onsubmit="return submitForm();">
+<input type="hidden" name="current_page" value="QIS_lanip.htm">
+<input type="hidden" name="next_page" value="QIS_wireless.htm">   
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="flag" value="adv_ap_mode">
+<input type="hidden" name="lan_proto" value="<% nvram_get("lan_proto"); %>">
+<input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">
+<style>
+body{
+	margin:0;
+	color:#FFF;
+
+}
+
+</style>
+<div>
+	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#LANHostConfig_display1_sectionname#></div>
+
+	<div style="display:table;width:100%;padding-left:15px;">
+		<div style="display:table-row">
+			<div style="font-size:1em;color:#B8D8FF;display:table-cell;vertical-align:middle;"><#LANHostConfig_x_LAN_DHCP_itemname#></div>
+			<div class="switch_radio" style="display:table-cell;padding-right:90px;">
+				<input type="checkbox" id="lan_proto_button" name="lan_proto_button"  class="switch" checked>
+				<label for="lan_proto_button" class="on_state"><#checkbox_Yes#></label>
+				<label for="lan_proto_button" class="off_state"><#checkbox_No#></label>	
+			</div>
+		</div>
+	</div>
+	
+	<div id="ip_field">
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px"><#IPConnection_ExternalIPAddress_itemname#></div>
+		<div style="margin:10px 15px 10px 15px">	
+			<input type="text" id="lan_ipaddr" name="lan_ipaddr" tabindex="3" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocorrect="off" autocapitalize="off">
+		</div>
+		
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#IPConnection_x_ExternalSubnetMask_itemname#></div>
+		<div style="margin:10px 15px 10px 15px">	
+			<input type="text" name="lan_netmask" tabindex="4" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocorrect="off" autocapitalize="off">
+		</div>
+
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#IPConnection_x_ExternalGateway_itemname#></div>
+		<div style="margin:10px 15px 10px 15px">	
+			<input type="text" name="lan_gateway" tabindex="5" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocorrect="off" autocapitalize="off">
+		</div>
+	</div>
+	
+	<div id="dns_button_field" style="display:table;width:100%;margin:0 0 10px 0;padding-left:15px;">
+		<div style="display:table-row">
+			<div style="font-size:1em;color:#B8D8FF;display:table-cell;vertical-align:middle;"><#IPConnection_x_DNSServerEnable_itemname#></div>
+			<div class="switch_radio" style="display:table-cell;padding-right:90px;">
+				<input type="checkbox" id="lan_dns_button" name="lan_dns_button" class="switch" checked>
+				<label for="lan_dns_button" class="on_state"><#checkbox_Yes#></label>
+				<label for="lan_dns_button" class="off_state"><#checkbox_No#></label>	
+			</div>
+		</div>
+	</div>
+	
+	<div id="dns_field">
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#IPConnection_x_DNSServer1_itemname#></div>
+		<div style="margin:10px 15px 10px 15px">	
+			<input type="text" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" tabindex="8" onkeypress="return validator.isIPAddr(this, event)" maxlength="15" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocorrect="off" autocapitalize="off">
+		</div>
+		
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#IPConnection_x_DNSServer2_itemname#></div>
+		<div style="margin:10px 15px 10px 15px">	
+			<input type="text" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" tabindex="9" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" onkeypress="return validator.isIPAddr(this, event)" maxlength="15" autocorrect="off" autocapitalize="off">	
+		</div>
+	</div>
+	
+	<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
+		<div style="width:100%;height:100%;line-height:50px;text-align:center;background-color:#007AFF" onclick="submitForm();">
+			<div id="nextButton" style="font-size:1em;color:#FFF;"><#CTL_next#></div>
+		</div>
+	</div>
+</div>
+</form>
+</body>

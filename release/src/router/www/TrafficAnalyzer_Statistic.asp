@@ -13,7 +13,7 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <link rel="stylesheet" type="text/css" href="datepicker.css">
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script> 
 <script type="text/javascript" src="/chart.js"></script>
 <script type="text/javascript" src="/state.js"></script>
@@ -198,7 +198,7 @@ function get_client_used_apps_info(client_index, used_data_array, top5_info, typ
 				code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + used_data_array[i][0] + "</td>";
 			else{
 				if(clientList[used_data_array[i][0]] != undefined)
-					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + clientList[used_data_array[i][0]].name + "</td>";
+					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + getClientCurrentName(used_data_array[i][0]) + "</td>";
 				else
 					code += "<td style='padding:5px 0px 0px 20px;font-size:14px;width:100px;cursor:pointer' onClick=\"show_individual_info_block(\'"+used_data_array[i][0]+"\', \'"+ type +"\')\">" + used_data_array[i][0] + "</td>";
 			}	
@@ -287,12 +287,13 @@ function get_client_info(list_info, type){
 			}
 	
 			if(match_flag == 1){
-				code += "<option value=" + all_client_traffic[i][0] + ">" + clientList[all_client_traffic[i][0]].name + "</option>";
+				var clientName = getClientCurrentName(all_client_traffic[i][0]);
+				code += "<option value=" + all_client_traffic[i][0] + ">" + clientName + "</option>";
 				if(i<6){
 					top5_client_array[i] = all_client_traffic[i][0];	
 					top5_client_array[all_client_traffic[i][0]] = {
 					"mac":all_client_traffic[i][0], 
-					"name":clientList[all_client_traffic[i][0]].name,
+					"name":clientName,
 					"tx":all_client_traffic[i][1],				
 					"rx":all_client_traffic[i][2]};
 				}
@@ -472,7 +473,7 @@ function show_detail_info(mac, used_data_array, type){
 	if(clientList[mac] == undefined)
 		code += '<th colspan="4">Client: '+ mac +'</th>';
 	else
-		code += '<th colspan="4">Client: '+ clientList[mac].name +'</th>';
+		code += '<th colspan="4">Client: '+ getClientCurrentName(mac); +'</th>';
 	
 	code += '</tr>';
 	code += '<tr style="font-size:13px;">';
@@ -509,7 +510,7 @@ function show_all_info(mac, type){
 		if(clientList[mac] == undefined)
 			code += "<th colspan='4'>Client's Name: "+ mac +"</th>";
 		else
-			code += "<th colspan='4'>Client's Name: "+ clientList[mac].name +"</th>";
+			code += "<th colspan='4'>Client's Name: "+ getClientCurrentName(mac) +"</th>";
 		
 		code += "</tr>";
 		code += '<tr style="font-size:13px;">';
@@ -1377,6 +1378,15 @@ function introduce_demo(){
 	time_flag = setTimeout(function(){cancel_demo();}, "41000");
 
 }
+
+function getClientCurrentName(_mac) {
+	var clientName = _mac;
+	var clientObj = clientList[_mac];
+	if(clientObj) {
+		clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
+	}
+	return clientName;
+}
 </script>
 </head>
 <body onload="initial();" onunload="unload_body();">
@@ -1432,7 +1442,7 @@ function introduce_demo(){
 													<div>
 														<table align="right">
 															<tr>
-																<td style="cursor:pointer;" onclick="introduce_demo();" id="introduce_demo"><div id="play_icon" class="icon_play" style="padding:1px;display:table-cell;width:22px;height:22px;"></div><div style="display:table-cell;font-size:16px;text-decoration:underline;padding-left:7px;" >Introduce demo</div></td>
+																<td style="cursor:pointer;" onclick="introduce_demo();" id="introduce_demo"><div id="play_icon" class="icon_play" style="padding:1px;display:table-cell;width:22px;height:18px;"></div><div style="display:table-cell;font-size:16px;text-decoration:underline;padding-left:7px;" >Introduce demo</div></td>
 																<!--td>														
 																	<div class="formfonttitle" style="margin-bottom:0px;margin-left:20px;" title="<#traffic_analysis_desc#>">Traffic Statistic</div>
 																</td-->

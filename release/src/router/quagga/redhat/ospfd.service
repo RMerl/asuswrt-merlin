@@ -1,0 +1,14 @@
+[Unit]
+Description=OSPF routing daemon
+BindTo=zebra.service
+After=syslog.target network.target zebra.service
+ConditionPathExists=/etc/quagga/ospfd.conf
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/sysconfig/quagga
+ExecStart=/usr/sbin/ospfd -d $OSPFD_OPTS -f /etc/quagga/ospfd.conf
+Restart=on-abort
+
+[Install]
+WantedBy=network.target

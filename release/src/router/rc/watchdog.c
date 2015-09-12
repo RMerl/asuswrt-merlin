@@ -168,6 +168,15 @@ extern int g_isEnrollee[MAX_NR_WL_IF];
 static int ddns_check_count = 0;
 static int freeze_duck_count = 0;
 
+/* ErP Test */
+#ifdef RTCONFIG_ERP_TEST
+#define MODE_NORMAL 0
+#define MODE_PWRSAVE 1
+#define NO_ASSOC_CHECK 6 // 6x30 sec
+static int pwrsave_status = MODE_NORMAL;
+static int no_assoc_check = 0;
+#endif
+
 void
 sys_exit()
 {
@@ -219,7 +228,7 @@ void led_control_normal(void)
 
 	led_control(LED_POWER, LED_ON);
 
-#if defined(RTN11P)
+#if defined(RTN11P) || defined(RTN300)
 	led_control(LED_WPS, LED_ON);	//wps led is also 2g led. and NO power led.
 #else
 	if (nvram_get_int("led_pwr_gpio") != nvram_get_int("led_wps_gpio"))
@@ -268,6 +277,19 @@ int init_toggle(void)
 		default:
 			return BTN_WPS;
 	}
+}
+
+void service_check(void)
+{
+	static int boot_ready = 0;
+
+	if(boot_ready > 6)
+		return;
+
+	if(!nvram_match("success_start_service", "1"))
+		return;
+
+	led_control(LED_POWER, ++boot_ready%2);
 }
 
 void btn_check(void)
@@ -659,7 +681,7 @@ void btn_check(void)
 
 				kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
 #endif
-#ifdef RTAC1200G
+#if defined(RTAC1200G) || defined(RTAC1200GP)
 				eval("et", "robowr", "0", "0x18", "0x01ff");    // lan/wan ethernet/giga led
 				eval("et", "robowr", "0", "0x1a", "0x01ff");
 				eval("wl", "-i", "eth3", "ledbh", "3", "2");
@@ -1231,11 +1253,11 @@ void timecheck(void)
 
 		/*transfer wl_sched NULL value to 000000 value, because
 		of old version firmware with wrong default value*/
-		/*if(!strcmp(nvram_safe_get("wl_sched"), "") || !strcmp(nvram_safe_get(strcat_r(prefix, "sched", tmp)), ""))
+		if(!strcmp(nvram_safe_get(strcat_r(prefix, "sched", tmp)), ""))
 		{
 			nvram_set(strcat_r(prefix, "sched", tmp),"000000");
-			nvram_set("wl_sched", "000000");
-		}*/
+			//nvram_set("wl_sched", "000000");
+		}
 
 		schedTime = nvram_safe_get(strcat_r(prefix, "sched", tmp));
 
@@ -1956,6 +1978,84 @@ void wanduck_check(void)
 		nvram_set_int("freeze_duck", --freeze_duck_count);
 }
 #endif
+
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+static int client_check_cnt = 0;
+static int no_client_cnt = 0;
+static int plc_port_power = 1;
+
+static void client_check(void)
+{
+	#define WIFI_STA_LIST_PATH "/tmp/wifi_sta_list"
+	FILE *fp;
+	char word[256], *next, ifnames[128];
+	char buf[512];
+	int i, n = 0;
+
+#if (defined(PLN12) || defined(PLAC56))
+	if (!nvram_match("plc_ready", "1"))
+		return;
+#endif
+
+	/* every 2 seconds check */
+	if (client_check_cnt++ > 0) {
+		client_check_cnt = 0;
+		return;
+	}
+	//dbg("%s:\n", __func__);
+
+	/* check wireless client */
+	i = 0;
+	strcpy(ifnames, nvram_safe_get("wl_ifnames"));
+	foreach(word, ifnames, next) {
+		doSystem("wlanconfig %s list > %s", get_wifname(i), WIFI_STA_LIST_PATH);
+
+		fp = fopen(WIFI_STA_LIST_PATH, "r");
+		if (!fp) {
+			dbg("%s: fopen fail\n", __func__);
+			return;
+		}
+		while (fgets(buf, 512, fp) != NULL)
+			n++;
+		fclose(fp);
+		unlink(WIFI_STA_LIST_PATH);
+
+		++i;
+	}
+
+	/* check wire port */
+	if (get_lanports_status())
+		n++;
+
+	if (n == 0)
+		no_client_cnt++;
+	else
+		no_client_cnt = 0;
+
+	if (plc_port_power == 1 && no_client_cnt >= 5) {
+		//dbg("%s: link down ethernet port (of connect to PLC)\n", __func__);
+#if defined(PLN12)
+		doSystem("swconfig dev %s port 1 set power 0", MII_IFNAME);
+#else
+#error TBD: PL-AC56 and PL-AC66U...
+#endif
+		plc_port_power = 0;
+	}
+	else if (plc_port_power == 0 && no_client_cnt == 0) {
+		//dbg("%s: link up ethernet port (of connect to PLC)\n", __func__);
+#if defined(PLN12)
+		doSystem("swconfig dev %s port 1 set power 1", MII_IFNAME);
+#else
+#error TBD: PL-AC56 and PL-AC66U...
+#endif
+		plc_port_power = 1;
+	}
+
+	if (no_client_cnt >= 5)
+		no_client_cnt = 0;
+}
+#endif
+
 void regular_ddns_check(void)
 {
 	struct in_addr ip_addr;
@@ -1983,8 +2083,7 @@ void regular_ddns_check(void)
 void ddns_check(void)
 {
 	//_dprintf("ddns_check... %d\n", ddns_check_count);
-	if(nvram_match("ddns_enable_x", "1") &&
-	  (nvram_match("wan0_state_t", "2") && nvram_match("wan0_auxstate_t", "0")) )
+	if(nvram_match("ddns_enable_x", "1") && is_wan_connect(0))
 	{
 		if (pids("ez-ipupdate")) //ez-ipupdate is running!
 			return;
@@ -2041,6 +2140,9 @@ void httpd_check()
 
 void watchdog_check()
 {
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
+	/* Do nothing. */
+#else
 	if (!pids("watchdog")){
 		if(nvram_get_int("upgrade_fw_status") == FW_INIT){
 			logmessage("watchdog02", "no wathdog, restarting");
@@ -2048,6 +2150,7 @@ void watchdog_check()
 		}
 	}
 	return;
+#endif
 }
 
 #ifdef RTAC87U
@@ -2056,6 +2159,9 @@ void qtn_module_check(void)
 	int ret;
 	uint32_t p_bw;
 	static int waiting = 0;
+
+	if (nvram_get_int("ATEMODE") == 1)
+		return;
 
 	if(waiting < 2){
 		waiting++;
@@ -2725,6 +2831,138 @@ static void Tor_microdes_check(){
 #endif
 #endif
 
+#ifdef RTCONFIG_ERP_TEST
+static void ErP_Test() {
+       
+	int i;
+	int unit = 0;
+	char nv_param[NVRAM_MAX_PARAM_LEN];
+	char *temp, *name;
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+	int val = 0;
+	struct maclist *mac_list;
+	int mac_list_size;
+	char name_vif[] = "wlX.Y_XXXXXXXXXX";
+	char ifname[32];
+	char *next;
+	int assoc_count = 0;
+
+	if (!nvram_get_int("wlready"))
+		return;
+
+_dprintf("### ErP Check... ###\n");
+	for (unit = 0; unit < DEV_NUMIFS; unit++) {
+               sprintf(nv_param, "wl%d_unit", unit);
+               temp = nvram_get(nv_param);
+
+               if (temp && strlen(temp) > 0) {
+
+                       snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+                       name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+                       wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
+                       val &= WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE;
+
+                       if (val)
+                       {
+                               dbg("%s radio is disabled\n",
+                                       nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+                               continue;
+                       }
+
+                       /* buffers and length */
+                       mac_list_size = sizeof(mac_list->count) + 128 * sizeof(struct ether_addr);
+                       mac_list = malloc(mac_list_size);
+
+                       if (!mac_list)
+                               goto exit;
+
+                       memset(mac_list, 0, mac_list_size);
+
+                       /* query wl for authenticated sta list */
+                       strcpy((char*) mac_list, "authe_sta_list");
+                       if (wl_ioctl(name, WLC_GET_VAR, mac_list, mac_list_size))
+                               goto exit;
+
+                       if(mac_list->count) {
+                               assoc_count += mac_list->count;
+                               break;
+                       }
+
+       
+                       for (i = 1; i < 4; i++) {
+                               sprintf(prefix, "wl%d.%d_", unit, i);
+                               if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1")) {
+                                       sprintf(name_vif, "wl%d.%d", unit, i);
+
+                                       memset(mac_list, 0, mac_list_size);
+
+                                       /* query wl for authenticated sta list */
+                                       strcpy((char*) mac_list, "authe_sta_list");
+                                       if (wl_ioctl(name_vif, WLC_GET_VAR, mac_list, mac_list_size))
+                                               goto exit;
+                               
+                                       if(mac_list->count) {
+                                               assoc_count += mac_list->count;
+                                               break;
+                                       }
+                               }
+
+                       }
+               }
+       }//end unit for loop
+
+       if(assoc_count) {
+               //Back to Normal
+               if(pwrsave_status == MODE_PWRSAVE) {
+               
+                       _dprintf("ErP: Back to normal mode\n");
+                       no_assoc_check = 0;
+
+                       eval("wl", "-i", "eth2", "radio", "on"); // Turn on 5G-1 radio
+
+                      foreach(ifname, nvram_safe_get("wl_ifnames"), next) {
+                               eval("wl", "-i", ifname, "txchain", "0xf");
+                                eval("wl", "-i", ifname, "rxchain", "0xf");
+                                eval("wl", "-i", ifname, "down");
+                                eval("wl", "-i", ifname, "up");
+                       }
+
+                       pwrsave_status = MODE_NORMAL;
+               }
+       }
+       else {
+               //No sta assoc. Enter PWESAVE Mode
+               if(pwrsave_status == MODE_NORMAL) {
+                       
+                       no_assoc_check++;
+                       _dprintf("ErP: no_assoc_check = %d\n", no_assoc_check);
+
+                       if(no_assoc_check >= NO_ASSOC_CHECK) {
+                               _dprintf("ErP: Enter Power Save Mode\n");
+                               foreach(ifname, nvram_safe_get("wl_ifnames"), next) {
+                                       eval("wl", "-i", ifname, "txchain", "0x1");
+                                       eval("wl", "-i", ifname, "rxchain", "0x1");
+                                       eval("wl", "-i", ifname, "down");
+                                       eval("wl", "-i", ifname, "up");
+                               }
+
+                               eval("wl", "-i", "eth2", "radio", "off"); // Turn off 5G-1 radio
+
+                               no_assoc_check = 0;
+                               pwrsave_status = MODE_PWRSAVE;
+                       }
+               }
+       }
+
+       /* error/exit */
+exit:
+       if (mac_list) free(mac_list);
+
+       return;
+}
+#endif
+
+
 #if 0
 static time_t	tt=0, tt_old=0;
 static int 	bcnt=0;
@@ -2773,6 +3011,8 @@ void watchdog(int sig)
 		&& nvram_get_int("AllLED")
 #endif
 	)
+
+	service_check();
 	
 	/* some io func will delay whole process in urgent mode, move this to sw_devled process */
 	//led_check();
@@ -2799,6 +3039,10 @@ void watchdog(int sig)
 
 	/* if timer is set to less than 1 sec, then bypass the following */
 	if (itv.it_value.tv_sec == 0) return;
+
+#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+	client_check();
+#endif
 
 	if (!nvram_match("asus_mfg", "0")) return;
 
@@ -2868,6 +3112,7 @@ void watchdog(int sig)
 	alert_mail_service();
 #endif
 
+	check_hour_monitor_service();
 #ifdef RTCONFIG_TRAFFIC_CONTROL
 	traffic_control_limitdata_check();
 #endif
@@ -2876,6 +3121,12 @@ void watchdog(int sig)
 	if(nvram_get_int("Tor_enable"))
 		Tor_microdes_check();
 #endif
+
+
+#ifdef RTCONFIG_ERP_TEST
+	ErP_Test();
+#endif
+
 	return;
 }
 

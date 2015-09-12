@@ -10,13 +10,14 @@
 <link rel="stylesheet" type="text/css" href="ParentalControl.css">
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
-<script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
-<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="state.js"></script>
+<script type="text/javascript" src="popup.js"></script>
+<script type="text/javascript" src="general.js"></script>
+<script type="text/javascript" src="help.js"></script>
+<script type="text/javascript" src="validator.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="client_function.js"></script>
 <style>
 #switch_menu{
 	text-align:right
@@ -44,15 +45,11 @@
 }
 </style>
 <script>
-
-var client_list_array = '<% get_client_detail_info(); %>';	
-var client_list_row = client_list_array.split('<');
-var custom_name = decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
-var custom_name_row = custom_name.split('<');
 var qos_bw_rulelist = "<% nvram_get("qos_bw_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
-
 var over_var = 0;
 var isMenuopen = 0;
+var ctf_disable = '<% nvram_get("ctf_disable"); %>';
+var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 
 function initial(){
 	show_menu();
@@ -138,6 +135,7 @@ function addRow_main(obj, length){
 	if(qos_bw_rulelist.search(PC_mac) > -1 && PC_mac != ""){		//check same target
 		alert("<#JS_duplicate#>");
 		document.form.PC_devicename.focus();
+		PC_mac = "";
 		return false;
 	}
 	
@@ -215,7 +213,6 @@ function addRow_main(obj, length){
 }
 					 
 function genMain_table(){
-	var match_flag = 0;
 	var qos_bw_rulelist_row = qos_bw_rulelist.split("<");
 	var code = "";	
 	code += '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
@@ -225,7 +222,7 @@ function genMain_table(){
 	code += '<tbody>';
 	code += '<tr>';
 	code += '<th width="5%" height="30px" title="<#select_all#>">';
-	code += '<input id="selAll" type="checkbox" onclick="selectAll(this, 0);" value="">';
+	code += '<input id="selAll" type="checkbox" onclick="enable_check(this);">';
 	code += '</th>';
 	code += '<th width="45%"><#NetworkTools_target#></th>';
 	code += '<th width="20%"><#download_bandwidth#></th>';
@@ -235,7 +232,7 @@ function genMain_table(){
 	
 	code += '<tr id="main_element">';	
 	code += '<td style="border-bottom:2px solid #000;" title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>">';
-	code += '<input type="checkbox" checked="">';
+	code += '<input type="checkbox" checked>';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
 	code += '<input type="text" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>" autocorrect="off" autocapitalize="off">';
@@ -255,43 +252,28 @@ function genMain_table(){
 			var qos_bw_rulelist_col = qos_bw_rulelist_row[k].split('>');
 			var apps_client_name = "";
 
-			for(i=0;i<custom_name_row.length;i++){
-				var custom_name_col = custom_name_row[i].split(">");
-				if(custom_name_col[1] == qos_bw_rulelist_col[1]){
-					apps_client_name =  custom_name_col[0];
-					match_flag = 1;
-				}
+			var apps_client_mac = qos_bw_rulelist_col[1];
+			var clientObj = clientList[apps_client_mac];
+			if(clientObj == undefined) {
+				apps_client_name = "";
 			}
-			
-			if(match_flag == 0){		//if doesn't match client name by custom client list
-				for(i=1;i<client_list_row.length;i++){
-					var client_list_col = client_list_row[i].split('>');
-					if(client_list_col[3] == qos_bw_rulelist_col[1]){
-						apps_client_name = client_list_col[1];
-						match_flag = 1;			
-					}				
-				}		
+			else {
+				apps_client_name = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
 			}
 
 			code += '<tr>';
 			code += '<td title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>">';
 			if(qos_bw_rulelist_col[0] == 1)
-				code += '<input type="checkbox" checked>';
+				code += '<input id="'+k+'" type="checkbox" onclick="enable_check(this)" checked>';
 			else	
-				code += '<input type="checkbox">';
+				code += '<input id="'+k+'" type="checkbox" onclick="enable_check(this)">';
 							
 			code += '</td>';	
-			if(match_flag == 1){
-				code += '<td title="'+qos_bw_rulelist_col[1]+'">'+ apps_client_name + '<br>(' +  qos_bw_rulelist_col[1]  +')</td>';
-			}
-			else{
-				if(qos_bw_rulelist_col[1] == ""){		//input manually
-					code += '<td title="'+document.form.PC_devicename.value+'">'+ document.form.PC_devicename.value +'</td>';	
-				}
-				else{
-					code += '<td title="'+qos_bw_rulelist_col[1]+'">'+ qos_bw_rulelist_col[1] +'</td>';	
-				}	
-			}
+
+			if(apps_client_name != "")
+				code += '<td title="' + apps_client_mac + '">'+ apps_client_name + '<br>(' +  apps_client_mac +')</td>';
+			else
+				code += '<td title="' + apps_client_mac + '">' + apps_client_mac + '</td>';
 			
 			code += '<td style="text-align:center;">'+qos_bw_rulelist_col[2]/1024+' Mb/s</td>';
 			
@@ -299,8 +281,6 @@ function genMain_table(){
 
 			code += '<td><input class="remove_btn" type="button" onclick="deleteRow_main(this);"></td>';
 			code += '</tr>';
-		
-			match_flag = 0;
 		}
 	}
 	
@@ -312,49 +292,11 @@ function genMain_table(){
 
 function showLANIPList(){
 	var code = "";
-	var show_name = "";
-	var custom_col_temp = new Array();
-	var match_flag = 0;
-	var custom_name_temp = "";
-	if(custom_name_row != ""){
-		for(i=0;i<custom_name_row.length;i++){
-			custom_col_temp[i] = custom_name_row[i].split('>');	
-		}
-	}
-	
-	for(var i = 1; i < client_list_row.length; i++){
-		var client_list_col = client_list_row[i].split('>');
-		if(client_list_col[1] && client_list_col[1].length > 20)
-			show_name = client_list_col[1].substring(0, 16) + "..";
-		else
-			show_name = client_list_col[1];
-			
-		if(custom_name != ""){	
-			for(k=0;k<custom_name_row.length;k++){
-				if(custom_col_temp[k][1] == client_list_col[3]){
-					match_flag = 1;									
-					custom_name_temp = custom_col_temp[k][0];
-				}
-			}
-		}		
+	for(var i = 0; i < clientList.length; i += 1) {
+		var clientObj = clientList[clientList[i]];
+		var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
 
-		if(match_flag){
-			code += '<a><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+ custom_name_temp +'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[3]+'</strong> ';
-			if(show_name && show_name.length > 0)
-				code += '( '+custom_name_temp+')';
-				
-			match_flag =0;	
-		}
-		else{
-			if(client_list_col[1])
-				code += '<a><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[1]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[3]+'</strong> ';
-			else
-				code += '<a><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[3]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[3]+'</strong> ';			
-		
-			if(show_name && show_name.length > 0)
-				code += '( '+show_name+')';
-		}	
-				
+		code += '<a title=' + clientList[i] + '><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'' + clientName + '\', \'' + clientObj.mac + '\');"><strong>' + clientName + '</strong> ';
 		code += ' </div></a>';
 	}
 	
@@ -383,8 +325,8 @@ function applyRule(){
 	
 	document.form.qos_bw_rulelist.value = qos_bw_rulelist;
 	document.form.qos_enable.value = 1;
-	if(document.form.qos_enable.value != qos_enable_ori || document.form.qos_type.value != 2){
-		document.form.qos_type.value = 2;
+	document.form.qos_type.value = 2;
+	if(ctf_disable == 0 && ctf_fa_mode == 2){
 		document.form.action_script.value = "reboot";
 		document.form.action_wait.value = "<% nvram_get("reboot_time"); %>";
 	}
@@ -400,6 +342,35 @@ function switchPage(page){
 		location.href = "/Bandwidth_Limiter.asp";
 	else
 		return false;
+}
+
+function enable_check(obj){
+	var qos_bw_rulelist_row = qos_bw_rulelist.split("<");
+	var rulelist_row_temp = "";
+	for(i=0;i<qos_bw_rulelist_row.length;i++){
+		var qos_bw_rulelist_col = qos_bw_rulelist_row[i].split(">");
+		var rulelist_col_temp = "";
+		for(j=0;j<qos_bw_rulelist_col.length;j++){
+			if(i == obj.id && j == 0){
+				qos_bw_rulelist_col[j] = obj.checked ? 1 : 0;
+			}
+			else if(obj.id == "selAll" && j == 0){
+				qos_bw_rulelist_col[j] = obj.checked ? 1 : 0;
+			}
+		
+			rulelist_col_temp += qos_bw_rulelist_col[j];
+			if(j != qos_bw_rulelist_col.length-1)
+				rulelist_col_temp += ">";
+		}
+
+		rulelist_row_temp += rulelist_col_temp;
+		if(i != qos_bw_rulelist_row.length-1)
+			rulelist_row_temp += "<";
+			
+		rulelist_col_temp = "";	
+	}
+	
+	qos_bw_rulelist = rulelist_row_temp;
 }
 </script>
 </head>
@@ -447,7 +418,7 @@ function switchPage(page){
 									<table width="730px">
 										<tr>
 											<td align="left" class="formfonttitle">
-												<div  style="width:400px">QoS - Bandwidth Limiter</div><!--untranslated-->
+												<div  style="width:400px"><#menu5_3_2#> - Bandwidth Limiter</div><!--untranslated-->
 											</td>
 											<td align="right">
 												<div>
@@ -471,6 +442,7 @@ function switchPage(page){
 											<td style="font-size: 14px;">
 												<!--untranslated-->
 												<div>Bandwidth Limiter allows you to control the max connection speed of the client device. You can select the host name from target or fill in IP address / IP Range / MAC address for limited speed profile setting.</div>
+												<div><a style="text-decoration:underline;" href="http://www.asus.com/support/FAQ/1013333/" target="_blank">Bandwidth Limiter FAQ</a></div>	
 											</td>
 										</tr>
 									</table>

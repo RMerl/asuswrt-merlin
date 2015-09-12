@@ -1624,6 +1624,16 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "TargetProductList=%s\n",	"14db,14dc");
 			fprintf(fp, "HuaweiNewMode=1\n");
 			break;
+		case SN_Huawei_E303u:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x15ca);
+			fprintf(fp, "HuaweiNewMode=1\n");
+			break;
+		case SN_Huawei_E3531s:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x15cd);
+			fprintf(fp, "HuaweiNewMode=1\n");
+			break;
 		case SN_Teracom_LW272:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x230d);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0103);
@@ -2185,6 +2195,10 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_Huawei_E3131, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x157d)
 			write_3g_conf(fp, SN_Huawei_E3372, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x15ca)
+			write_3g_conf(fp, SN_Huawei_E303u, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x15cd)
+			write_3g_conf(fp, SN_Huawei_E3531s, 1, vid, pid);
 		else if(vid == 0x12d1)
 			write_3g_conf(fp, UNKNOWNDEV, 1, vid, pid);
 		else{
@@ -2379,6 +2393,9 @@ int write_3g_ppp_conf(void){
 	int wan_unit;
 	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
 	int retry, lock;
+#ifdef SET_USB_MODEM_MTU_PPP
+	int modem_mtu;
+#endif
 
 	snprintf(modem_node, 16, "%s", nvram_safe_get("usb_modem_act_int"));
 	if(strlen(modem_node) <= 0){
@@ -2479,6 +2496,11 @@ int write_3g_ppp_conf(void){
 	}
 	fprintf(fp, "persist\n");
 	fprintf(fp, "holdoff %s\n", nvram_invmatch(strcat_r(prefix, "pppoe_holdoff", tmp), "")?nvram_safe_get(tmp):"10");
+#ifdef SET_USB_MODEM_MTU_PPP
+	modem_mtu = nvram_get_int("modem_mtu");
+	if (modem_mtu >= 576)
+		fprintf(fp, "mtu %d\n", modem_mtu);
+#endif
 	if(!strcmp(modem_enable, "2")){
 		fprintf(fp, "connect \"/bin/comgt -d /dev/%s -s %s/ppp/3g/EVDO_conn.scr\"\n", modem_node, MODEM_SCRIPTS_DIR);
 		fprintf(fp, "disconnect \"/bin/comgt -d /dev/%s -s %s/ppp/3g/EVDO_disconn.scr\"\n", modem_node, MODEM_SCRIPTS_DIR);
@@ -3710,10 +3732,21 @@ int asus_sr(const char *device_name, const char *action){
 		return 0;
 	}
 
-	memset(nvram_name, 0, 32);
-	sprintf(nvram_name, "usb_path%s", port_path);
-	memset(nvram_value, 0, 32);
-	strcpy(nvram_value, nvram_safe_get(nvram_name));
+	snprintf(nvram_name, 32, "usb_path%s", port_path);
+	snprintf(nvram_value, 32, "%s", nvram_safe_get(nvram_name));
+
+	// Storage interface is first up with some composite devices,
+	// so needs to wait that other interfaces wake up.
+	int i;
+	for(i = 0; i < 3; ++i){
+		if(strcmp(nvram_value, "printer") && strcmp(nvram_value, "modem")){
+			usb_dbg("%s: wait for the printer/modem interface...\n", __FUNCTION__);
+			sleep(1);
+			snprintf(nvram_value, 32, "%s", nvram_safe_get(nvram_name));
+		}
+		else
+			break;
+	}
 	if(!strcmp(nvram_value, "printer") || !strcmp(nvram_value, "modem")){
 		usb_dbg("(%s): Already there was a other interface(%s).\n", usb_node, nvram_value);
 		file_unlock(isLock);
@@ -4427,12 +4460,13 @@ int asus_usb_interface(const char *device_name, const char *action){
 	else if((nvram_get_int("usb_gobi") == 1 && strcmp(port_path, "2"))
 			|| (nvram_get_int("usb_gobi") != 1 && !strcmp(port_path, "2"))
 			){
-		if(nvram_get_int("usb_gobi") == 1)
+		if(nvram_get_int("usb_gobi") == 1){
 			usb_dbg("(%s): Just use the built-in Gobi and disable the USB modem.\n", device_name);
+			file_unlock(isLock);
+			return 0;
+		}
 		else
 			usb_dbg("(%s): Just use the USB modem and disable the built-in Gobi.\n", device_name);
-		file_unlock(isLock);
-		return 0;
 	}
 #endif
 
@@ -4523,7 +4557,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 	else if(!strcmp(nvram_safe_get("stop_ui_insmod"), "1")){
 		usb_dbg("(%s): Don't insmod the serial modules.\n", device_name);
 	}
-	else if(isSerialInterface(device_name, 1, vid, pid) && vid == 0x05c6 && pid == 0x9026){
+	else if(isSerialInterface(device_name, 1, vid, pid) && vid == 0x05c6 && pid == 0x9026 && nvram_get_int("usb_gobi") == 1){
 		usb_dbg("(%s): Runing Gobi ...\n", device_name);
 	}
 	else if(!(vid == 0x05c6 && pid == 0x9026) &&

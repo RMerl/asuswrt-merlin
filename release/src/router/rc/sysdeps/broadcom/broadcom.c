@@ -189,7 +189,11 @@ ResetDefault(void)
 	if (nvram_contains_word("rc_support", "nandflash"))	/* RT-AC56S,U/RT-AC68U/RT-N18U */
 		ret = eval("mtd-erase2", "nvram");
 	else
+#if defined(RTAC1200G) || defined(RTAC1200GP)
+		ret = eval("mtd-erase2", "nvram");
+#else
 		ret = eval("mtd-erase","-d","nvram");
+#endif
 	if(ret >= 0) {
 		sleep(3);
 		puts("1");

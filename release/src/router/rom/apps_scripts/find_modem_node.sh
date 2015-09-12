@@ -219,7 +219,7 @@ echo "act_devs=$act_devs."
 io_devs=`_find_in_out_devs "$act_devs"`
 echo "io_devs=$io_devs."
 
-if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
+if [ "$modem_type" == "tty" ] && [ "$modem_vid" == "6610" -o "$modem_vid" == "1032" ]; then # e.q. ZTE MF637U, ROYAL Q110.
 	first_int_dev=`_find_first_int_dev "$io_devs"`
 	echo "first_int_dev=$first_int_dev."
 

@@ -16,7 +16,7 @@
 <link rel="stylesheet" type="text/css" href="rog.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <style>

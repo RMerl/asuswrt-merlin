@@ -154,6 +154,9 @@ function submitForm(o, s){
 		document.form.switch_wan2tagid.value = parent.document.QKform.switch_wan2tagid.value;
 		document.form.switch_wan2prio.value = parent.document.QKform.switch_wan2prio.value;
 		document.form.switch_stb_x.value = parent.document.QKform.switch_stb_x.value;
+		document.form.mr_enable_x.value = parent.document.QKform.mr_enable_x.value;
+		document.form.emf_enable.value = parent.document.QKform.emf_enable.value;
+		document.form.ttl_inc_enable.value = parent.document.QKform.ttl_inc_enable.value;
 		if(original_switch_wantag != document.form.switch_wantag.value){
 			/*
 			document.form.action_script.value	= "reboot";
@@ -302,6 +305,9 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 <input type="hidden" name="switch_wan2tagid" value="<% nvram_get("switch_wan2tagid"); %>">
 <input type="hidden" name="switch_wan2prio" value="<% nvram_get("switch_wan2prio"); %>">
 <input type="hidden" name="switch_stb_x" value="<% nvram_get("switch_stb_x"); %>">
+<input type="hidden" name="mr_enable_x" value="<% nvram_get("mr_enable_x"); %>">
+<input type="hidden" name="emf_enable" value="<% nvram_get("emf_enable"); %>">
+<input type="hidden" name="ttl_inc_enable" value="<% nvram_get("ttl_inc_enable"); %>">
 
 <div class="QISmain" id="QISmain">
 		<div>

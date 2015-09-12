@@ -6,7 +6,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <link rel="stylesheet" type="text/css" href="qis_style.css">
-<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
@@ -26,7 +26,7 @@ var profile = function(_profile){
 	if(_profile == null)
 		_profile = ["", "", "", "", "", "", "", "", ""];
 	var band_s = parseInt(_profile[2]);
-	this.band = based_modelid == "RT-AC3200" ? ((band_s >= 1 && band_s <= 14) ? "2.4GHz": ((band_s >= 36 && band_s <= 48) ? "5GHz-1":((band_s >= 149 && band_s <= 165) ? "5GHz-2":"undefine"))):_profile[0] == "2G" ? "2.4GHz": "5GHz",
+	this.band = (based_modelid == "RT-AC3200" || based_modelid == "RT-AC5300") ? ((band_s >= 1 && band_s <= 14) ? "2.4GHz": ((band_s >= 36 && band_s <= 48) ? "5GHz-1":((band_s >= 149 && band_s <= 165) ? "5GHz-2":"undefine"))):_profile[0] == "2G" ? "2.4GHz": "5GHz",
 	this.ssid = decodeURIComponent(_profile[1]),
 	this.channel = _profile[2],
 	this.auth = _profile[3],
@@ -59,7 +59,7 @@ var localAP = function(ssid, key){
 
 var wlcKey = function(obj){
 
-	if(based_modelid == "RT-AC3200"){
+	if(based_modelid == "RT-AC3200" || based_modelid == "RT-AC5300"){
 		if(obj.band == "2.4GHz" || obj.band == "0")
 			this.band = "0";
 		else if (obj.band == "5GHz-1" || obj.band == "1")
@@ -924,7 +924,7 @@ function QKInternet_load_body(){
 	if(!parent.band5g_support)
 		document.getElementById('wl_unit_field').style.display = "none";
 
-	if(based_modelid == "RT-AC3200"){
+	if(based_modelid == "RT-AC3200" || based_modelid == "RT-AC5300"){
 		parent.regen_band(document.form.wlc_band_manual);
 	}
 }

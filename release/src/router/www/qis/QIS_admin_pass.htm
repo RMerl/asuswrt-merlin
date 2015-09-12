@@ -20,7 +20,7 @@
 </style>
 <script type="text/javascript" language="JavaScript" src="/state.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
-<script type="text/JavaScript" language="JavaScript" src="/jquery.js"></script>
+<script type="text/JavaScript" language="JavaScript" src="/js/jquery.js"></script>
 <script type="text/JavaScript" language="JavaScript" src="/validator.js"></script>
 <script type="text/javascript">
 var accounts = [<% get_all_accounts(); %>];
@@ -33,7 +33,7 @@ for(var i=0; i<accounts.length; i++){
 }
 
 function QKinternettype_load_body(){
-	if(parent.based_modelid == "RT-N11P" || parent.based_modelid == "PL-N12" || parent.based_modelid == "PL-AC56"){
+	if(parent.based_modelid == "RT-N11P" || parent.based_modelid == "RT-N300" || parent.based_modelid == "PL-N12" || parent.based_modelid == "PL-AC56"){
 			document.getElementById("point4").style.display = "none";
 	}
 	else{
@@ -153,9 +153,9 @@ function submitForm(){
 	
 	if(document.form.http_passwd.value.length <= 0 || document.form.v_password2.value.length <= 0){
 		if(parent.ISMOBILE)
-			showtext(document.getElementById("_alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+			showtext(document.getElementById("_alert_msg2"),"* <#File_Pop_content_alert_desc6#>");
 		else
-			showtext(document.getElementById("alert_msg2"),"*<#File_Pop_content_alert_desc6#>");
+			showtext(document.getElementById("alert_msg2"),"* <#File_Pop_content_alert_desc6#>");
 		if(document.form.http_passwd.value.length <= 0){
 			document.form.http_passwd.focus();
 			document.form.http_passwd.select();
@@ -170,9 +170,9 @@ function submitForm(){
 
 	if(document.form.http_passwd.value != document.form.v_password2.value){
 		if(parent.ISMOBILE)
-			showtext(document.getElementById("_alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
+			showtext(document.getElementById("_alert_msg2"),"* <#File_Pop_content_alert_desc7#>");
 		else
-			showtext(document.getElementById("alert_msg2"),"*<#File_Pop_content_alert_desc7#>");
+			showtext(document.getElementById("alert_msg2"),"* <#File_Pop_content_alert_desc7#>");
 		document.form.http_passwd.focus();
 		document.form.http_passwd.select();
 		changeiuiBackground(0);
@@ -181,20 +181,31 @@ function submitForm(){
 
 	if(is_KR_sku){		/* MODELDEP by Territory Code */
 		if(!validator.string_KR(document.form.http_passwd)){
-				document.form.http_passwd.focus();
-				document.form.http_passwd.select();
-				changeiuiBackground(0);
-				return false;
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			changeiuiBackground(0);
+			return false;
 		}
 	}
 	else{
 		if(!validator.string(document.form.http_passwd)){
-				document.form.http_passwd.focus();
-				document.form.http_passwd.select();
-				changeiuiBackground(0);
-				return false;
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			changeiuiBackground(0);
+			return false;
 		}
 	}
+	
+	if(document.form.http_passwd.value == '<% nvram_default_get("http_passwd"); %>'){	
+		if(parent.ISMOBILE)
+			showtext(document.getElementById("_alert_msg2"),"* <#QIS_adminpass_confirm0#>");
+		else
+			showtext(document.getElementById("alert_msg2"),"* <#QIS_adminpass_confirm0#>");
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();
+		changeiuiBackground(0);
+		return false;
+	}	
 
 	if(dsl_support) {
 		// if it is dsl, just write to a temp variable
@@ -209,15 +220,7 @@ function submitForm(){
 		document.form.v_password2.disabled = true;
 		document.form.submit();
 		return;
-	}
-
-	if(document.form.http_passwd.value == 'admin'){
-			alert("<#QIS_adminpass_confirm0#>");
-			document.form.http_passwd.focus();
-			document.form.http_passwd.select();
-			changeiuiBackground(0);
-			return false;
-	}
+	}	
 
 	parent.document.QKform.http_username.value = document.form.http_username.value;
 	parent.document.QKform.http_passwd.value = document.form.http_passwd.value;
@@ -330,7 +333,7 @@ function clean_scorebar(obj){
 		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 <br/>
 
-<div style="margin-left:30px ;" id="mainDiv">
+<div style="margin-top:-10px;margin-left:30px;" id="mainDiv">
 	<span id="pass_Desc1" class="QISGeneralFont" style="margin-left:0px;"><#QIS_pass_desc1#></span><br><br>
 	<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="display:none;Font-Family:Segoe UI, Arial, sans-serif;">
 		<tr>
@@ -360,9 +363,8 @@ function clean_scorebar(obj){
 				<div style="margin:-25px 0px 0px 175px;"><input type="checkbox" name="show_pass_1" tabindex="4" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 			</td>
 		</tr>
-		<tr>
-			<th width="240"></th>
-			<td>
+		<tr>			
+			<td colspan="2">
 				<span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
 			</td>
 		</tr>

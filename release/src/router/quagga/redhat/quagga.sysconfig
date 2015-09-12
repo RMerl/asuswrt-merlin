@@ -1,0 +1,24 @@
+#
+# Default: Bind all daemon vtys to the loopback(s) only
+#
+BABELD_OPTS="-A 127.0.0.1"
+BGPD_OPTS="-A 127.0.0.1"
+ISISD_OPTS="-A ::1"
+OSPF6D_OPTS="-A ::1"
+OSPFD_OPTS="-A 127.0.0.1"
+RIPD_OPTS="-A 127.0.0.1"
+RIPNGD_OPTS="-A ::1"
+ZEBRA_OPTS="-A 127.0.0.1"
+
+# Watchquagga configuration for LSB initscripts
+#
+# (Not needed with systemd: the service files are configured to automatically
+# restart any daemon on failure. If zebra fails, all running daemons will be
+# stopped; zebra will be started again; and then the previously running daemons
+# will be started again.)
+#
+# Uncomment and edit this line to reflect the daemons you are actually using:
+#WATCH_DAEMONS="zebra bgpd ospfd ospf6d ripd ripngd"
+#
+# Timer values can be adjusting by editing this line:
+WATCH_OPTS="-Az -b_ -r/sbin/service_%s_restart -s/sbin/service_%s_start -k/sbin/service_%s_stop"

@@ -1,0 +1,156 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Aug 10 14:21:23 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>NTFSLABEL</title>
+
+</head>
+<body>
+
+<h1 align="center">NTFSLABEL</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">ntfslabel
+&minus; display/change the label on an NTFS file system</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>ntfslabel</b>
+[<i>options</i>] <i>device</i> [<i>new&minus;label</i>]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>ntfslabel</b>
+will display or change the file system label on the ntfs
+file system located on <i>device</i>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If the optional
+argument <i>new&minus;label</i> is not present,
+<b>ntfslabel</b> will simply display the current file system
+label.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If the optional
+argument <i>new&minus;label</i> is present, then
+<b>ntfslabel</b> will set the file system label to be
+<i>new&minus;label</i>. NTFS file system labels can be at
+most 128 Unicode characters long; if <i>new&minus;label</i>
+is longer than 128 Unicode characters, <b>ntfslabel</b> will
+truncate it and print a warning message.</p>
+
+<p style="margin-left:11%; margin-top: 1em">It is also
+possible to set the file system label using the
+<b>&minus;L</b> option of <b>mkntfs</b>(8) during creation
+of the file system.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>ntfslabel</b> accepts.
+Nearly all options have two equivalent names. The short name
+is preceded by <b>&minus;</b> and the long name is preceded
+by <b>&minus;&minus;</b>. Any single letter options, that
+don&rsquo;t take an argument, can be combined into a single
+command, e.g. <b>&minus;fv</b> is equivalent to <b>&minus;f
+&minus;v</b>. Long named options can be abbreviated to any
+unique prefix of their name. <b><br>
+&minus;f</b>, <b>&minus;&minus;force</b></p>
+
+<p style="margin-left:22%;">This will override some
+sensible defaults, such as not working with a mounted
+volume. Use this option with caution.</p>
+
+<p style="margin-left:11%;"><b>&minus;h</b>,
+<b>&minus;&minus;help</b></p>
+
+<p style="margin-left:22%;">Show a list of options with a
+brief description of each one.</p>
+
+<p style="margin-left:11%;"><b>&minus;n</b>,
+<b>&minus;&minus;no&minus;action</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t actually write to
+disk.</p>
+
+<p style="margin-left:11%;"><b>&minus;q</b>,
+<b>&minus;&minus;quiet</b></p>
+
+<p style="margin-left:22%;">Reduce the amount of output to
+a minimum.</p>
+
+<p style="margin-left:11%;"><b>&minus;v</b>,
+<b>&minus;&minus;verbose</b></p>
+
+<p style="margin-left:22%;">Increase the amount of output
+that <b>ntfslabel</b> prints.</p>
+
+<p style="margin-left:11%;"><b>&minus;V</b>,
+<b>&minus;&minus;version</b></p>
+
+<p style="margin-left:22%;">Show the version number,
+copyright and license for <b>ntfslabel</b>.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+bug please send an email describing the problem to
+ntfs-support@tuxera.com.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>ntfslabel</b>
+is part of the <b>Tuxera NTFS</b> package.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkntfs</b>(8)</p>
+<hr>
+</body>
+</html>

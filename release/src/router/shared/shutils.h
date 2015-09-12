@@ -357,3 +357,4 @@ extern int str_bprintf(struct strbuf *b, const char *fmt, ...);
 #endif /* _shutils_h_ */
 
 extern int strArgs(int argc, char **argv, char *fmt, ...);
+extern char *trimNL(char *str);

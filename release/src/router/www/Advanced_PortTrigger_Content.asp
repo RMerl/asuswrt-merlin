@@ -26,8 +26,8 @@ function initial(){
 	well_known_apps();
 	showautofw_rulelist();
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "port", "trigger"]);
-	if(dualWAN_support && wans_mode == "lb")
-		document.getElementById("lb_note").style.display = "";
+	//if(dualWAN_support && wans_mode == "lb")
+	//	document.getElementById("lb_note").style.display = "";
 }
 
 function well_known_apps(){

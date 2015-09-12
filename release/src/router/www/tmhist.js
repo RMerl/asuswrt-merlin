@@ -13,7 +13,7 @@ function changeScale(e)
 {
 	scale = e.value * 1;
 	redraw();
-	save();
+	cookie.set('daily', scale, 31);
 }
 
 function makeRow(rclass, rtitle, dl, ul, total)

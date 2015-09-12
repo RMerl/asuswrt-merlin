@@ -1,0 +1,39 @@
+! -*- isis -*-
+!
+! ISISd sample configuration file
+!
+hostname isisd 
+password foo
+enable password foo
+log stdout 
+!log file /tmp/isisd.log
+! 
+! 
+router isis DEAD
+  net 47.0023.0000.0003.0300.0100.0102.0304.0506.00
+!  is-type level-1
+
+!  -- set the lifetime either for level-1, level-2 or both
+!  lsp-lifetime level-1 65535
+!  lsp-lifetime level-2 65535
+!  lsp-lifetime 65535
+
+!  hostname isisd-router
+!  area-password foobar
+!  domain-password foobar
+
+interface eth0
+ ip router isis DEAD
+! isis hello-interval 5
+! isis lsp-interval 1000
+
+! -- optional
+! isis circuit-type level-1
+! isis password lallaa level-1 
+! isis metric 1 level-1
+! isis csnp-interval 5 level-1
+! isis retransmit-interval 10
+! isis retransmit-throttle-interval
+! isis hello-multiplier 2 level-1
+! isis priority 64
+! 

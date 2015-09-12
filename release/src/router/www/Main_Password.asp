@@ -37,8 +37,8 @@
 	color:#fff;
 }
 .button{
-	background:rgba(255,255,255,0.1);
-	border: solid 1px #6e8385;
+	background-color: #007AFF;
+	border: 0px;
 	border-radius: 4px ;
 	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
 	height: 68px;

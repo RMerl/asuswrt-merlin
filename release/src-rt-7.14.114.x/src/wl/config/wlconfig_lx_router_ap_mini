@@ -1,0 +1,47 @@
+# Broadcom 802.11abg Networking Device Driver Configuration file
+#
+# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# $Id: wlconfig_lx_router_ap_mini,v 1.2 2010-05-25 15:55:21 $
+#
+# Linux Kernel wl driver config file
+
+# get common 
+include $(WLCFGDIR)/wl_default
+
+# tunables
+WLTUNEFILE=wltunable_lx_router_mini.h
+
+# features
+include $(WLCFGDIR)/wlconfig_apdef
+include $(WLCFGDIR)/wlconfig_lx_wl_clm
+APCS=1
+WL11AC=0
+WLPIO=0
+SMF_STATS=0
+PHYMON=0
+BCMECICOEX=0
+BCM_DCS=0
+BTC2WIRE=0
+DBAND=0
+LPCONF=0
+ACONF=0
+GCONF=0
+HTCONF=0
+LCNCONF=0
+LCN40CONF=0
+MINIAP=1
+WL_STA_MONITOR=1
+WL_MONITOR=1

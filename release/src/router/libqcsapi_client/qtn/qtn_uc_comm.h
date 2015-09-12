@@ -10,9 +10,11 @@
 #if defined(TOPAZ_PLATFORM) && defined(TOPAZ_128_NODE_MODE)
 #define QTN_NCIDX_MAX			128
 #define QTN_NODE_TBL_SIZE_LHOST		118
+#define QTN_NODETID_NODE_SHIFT		7
 #else
 #define QTN_NCIDX_MAX			64
 #define QTN_NODE_TBL_SIZE_LHOST		56
+#define QTN_NODETID_NODE_SHIFT		6
 #endif
 #define QTN_MAX_BSS_VAPS		8
 #define QTN_MAX_WDS_VAPS		8

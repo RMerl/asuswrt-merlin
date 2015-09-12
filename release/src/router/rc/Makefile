@@ -40,6 +40,9 @@ LDFLAGS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TO
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DHAVE_TYPE_FLOAT
 CFLAGS += -I$(SRCBASE)/common/include
+ifneq ($(findstring CONFIG_DUMP_PREV_OOPS_MSG=, $(shell cat $(LINUXDIR)/.config)),)
+CFLAGS += -DDUMP_PREV_OOPS_MSG
+endif
 LDFLAGS += -L$(TOP)/libbcm -lbcm
 LDFLAGS += -lgcc_s
 ifeq ($(RTCONFIG_QTN),y)
@@ -80,6 +83,11 @@ LDFLAGS += -L$(TOP)/libdisk -ldisk
 ifeq ($(BCM_MMC),y)
 CFLAGS += -DBCM_MMC
 endif
+endif
+
+ifeq ($(RTCONFIG_USB_MODEM),y)
+CFLAGS += -DSET_USB_MODEM_MTU_ETH
+CFLAGS += -DSET_USB_MODEM_MTU_PPP
 endif
 
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
@@ -134,12 +142,12 @@ OBJS += bcmutils.o
 endif
 
 ifeq ($(RTCONFIG_RALINK),y)
-OBJS += init-ralink.o wps-ralink.o ralink.o
+OBJS += init-ralink.o wps-ralink.o ralink.o ate-ralink.o
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += init-ralink-dsl.o 
 endif
 else ifeq ($(RTCONFIG_QCA),y)
-OBJS += init-qca.o wps-qca.o qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.o,prebuild/ctl.o)
+OBJS += init-qca.o wps-qca.o qca.o ate-qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.o,prebuild/ctl.o)
 else
 OBJS += init-broadcom.o wps-broadcom.o broadcom.o ate-broadcom.o
 ifeq ($(RTCONFIG_DSL),y)
@@ -200,10 +208,6 @@ endif
 ifeq ($(RTCONFIG_OPENVPN),y)
 CFLAGS += -DRTCONFIG_CROND
 OBJS += openvpn.o
-endif
-
-ifeq ($(RTCONFIG_OLD_PARENTALCTRL),y)
-OBJS += parental_ctrl.o
 endif
 
 ifeq ($(RTCONFIG_PARENTALCTRL),y)
@@ -281,6 +285,7 @@ ifeq ($(RTCONFIG_BWDPI),y)
 OBJS += bwdpi.o
 OBJS += bwdpi_check.o
 OBJS += bwdpi_wred_alive.o
+OBJS += bwdpi_db_10.o
 endif
 
 OBJS += hour_monitor.o
@@ -293,8 +298,11 @@ ifeq ($(RTCONFIG_IPERF),y)
 OBJS += monitor.o
 endif
 
+
 ifeq ($(RTCONFIG_HTTPS),y)
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 OBJS += pwdec.o
+endif
 endif
 
 ifeq ($(RT4GAC55U),y)
@@ -504,7 +512,8 @@ ifeq ($(RTCONFIG_DSL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc gen_ralink_config
 endif
 endif
-ifeq ($(CONFIG_BCMWL5),y)
+
+ifeq ($(or $(CONFIG_BCMWL5),$(RTCONFIG_RALINK),$(RTCONFIG_QCA)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc set_factory_mode
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd 
@@ -543,6 +552,7 @@ ifeq ($(RTCONFIG_BWDPI),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_check
 	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_wred_alive
+	@cd $(INSTALLDIR)/sbin && ln -sf rc bwdpi_db_10
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hour_monitor
 ifeq ($(RTCONFIG_SPEEDTEST),y)
@@ -592,10 +602,6 @@ dsl_diag.o:
 	@-cp -f ./prebuild/dsl_diag.o .
 endif
 endif
-ifeq ($(RTCONFIG_HTTPS),y)
-pwdec.o:
-	@-cp -f ./prebuild/pwdec.o .
-endif
 else
 ifeq ($(RTCONFIG_HTTPS),y)
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
@@ -609,10 +615,34 @@ endif
 endif
 endif
 
+ifeq ($(RTCONFIG_HTTPS),y)
+ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+ifneq ($(wildcard ./prebuild/ate-broadcom.o),)
+pwdec.o:
+	@-cp -f ./prebuild/pwdec.o .
+endif
+endif
+endif
+
 ifeq ($(CONFIG_BCMWL5),y)
 ifneq ($(wildcard ./prebuild/ate-broadcom.o),)
 ate-broadcom.o:
 	@-cp -f ./prebuild/ate-broadcom.o .
+endif
+endif
+
+
+ifeq ($(RTCONFIG_RALINK),y)
+ifneq ($(wildcard ./prebuild/ate-ralink.o),)
+ate-ralink.o:
+	@-cp -f ./prebuild/ate-ralink.o .
+endif
+endif
+
+ifeq ($(RTCONFIG_QCA),y)
+ifneq ($(wildcard ./prebuild/ate-qca.o),)
+ate-qca.o:
+	@-cp -f ./prebuild/ate-qca.o .
 endif
 endif
 

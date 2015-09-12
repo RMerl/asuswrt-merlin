@@ -193,6 +193,9 @@ extern char *get_cgi_json(char *name, json_object *root);
 void add_asus_token(char *token);
 
 #define wan_prefix(unit, prefix)	snprintf(prefix, sizeof(prefix), "wan%d_", unit)
+
+#define nvram_default_safe_get(name) (nvram_default_get(name) ? : "")
+
 /*
 #define csprintf(fmt, args...) do{\
 	FILE *cp = fopen("/dev/console", "w");\
@@ -540,17 +543,8 @@ ej_nvram_get(int eid, webs_t wp, int argc, char_t **argv)
 		return -1;
 	}
 
-	if(!strcmp(name, "modem_spn")){
-		char buf[128];
-
-		snprintf(buf, 128, "%s", nvram_safe_get(name));
-		if(strlen(buf) <= 0)
-			snprintf(buf, 128, "%s", nvram_safe_get("modem_isp"));
-
-		ret = websWrite(wp, "%s", nvram_safe_get(name));
-
-		return ret;
-	}
+	if (strcmp(name, "modem_spn") == 0 && !nvram_invmatch(name, ""))
+		name = "modem_isp";
 
 	for (c = nvram_safe_get(name); *c; c++) {
 		if (isprint(*c) &&
@@ -603,7 +597,7 @@ ej_nvram_default_get(int eid, webs_t wp, int argc, char_t **argv)
 		return -1;
 	}
 
-	for (c = nvram_default_get(name); *c; c++) {
+	for (c = nvram_default_safe_get(name); *c; c++) {
 		if (isprint(*c) &&
 		    *c != '"' && *c != '&' && *c != '<' && *c != '>')
 			ret += websWrite(wp, "%c", *c);
@@ -1387,6 +1381,8 @@ ej_wl_get_guestnetwork(int eid, webs_t wp, int argc, char_t **argv)
 		ret += webWriteNvram(wp, strcat_r(word2, "_mbss", tmp));	// gn_array[][15]
 		ret += websWrite(wp, "\", \"");
 		ret += webWriteNvram2(wp, strcat_r(word2, "_maclist_x", tmp));	// gn_array[][16]
+		ret += websWrite(wp, "\", \"");
+		ret += webWriteNvram2(wp, strcat_r(word2, "_phrase_x", tmp));	// gn_array[][17]
 		ret += websWrite(wp, "\"]");
 	}
 	ret += websWrite(wp, "]");
@@ -2025,7 +2021,7 @@ static int validate_apply(webs_t wp, json_object *root) {
 	struct nvram_tuple *t;
 	char *value;
 	char name[64];
-	char tmp[3500], prefix[32], unit_str[16];
+	char tmp[3500], prefix[32];
 	int unit=-1, subunit=-1;
 	int nvram_modified = 0;
 	int nvram_modified_wl = 0;
@@ -2081,15 +2077,6 @@ static int validate_apply(webs_t wp, json_object *root) {
 					nvram_modified=1;
 				}
 			}
-#ifdef RTCONFIG_DISK_MONITOR
-			else if(!strcmp(name, "diskmon_usbport")) {
-				strlcpy(unit_str, value, sizeof(unit_str));
-				if (strcmp(value, nvram_safe_get("diskmon_usbport"))) {
-					nvram_set(name, value);
-					nvram_modified = 1;
-				}
-			}
-#endif
 			else if(!strcmp(name, "wl_subunit")) {
 				subunit = atoi(value);
 				if(subunit!=nvram_get_int(name)) {
@@ -2196,8 +2183,8 @@ static int validate_apply(webs_t wp, json_object *root) {
 				_dprintf("set %s=%s\n", name, value);
 			}
 #ifdef RTCONFIG_DISK_MONITOR
-			else if(!strncmp(name, "diskmon_", 8) && atoi(unit_str) != -1) {
-				snprintf(prefix, sizeof(prefix), "usb_path%s_diskmon_", unit_str);
+			else if(!strncmp(name, "diskmon_", 8)) {
+				snprintf(prefix, sizeof(prefix), "usb_path%s_diskmon_", nvram_safe_get("diskmon_usbport"));
 				(void)strcat_r(prefix, name+8, tmp);
 
 				if(strcmp(nvram_safe_get(tmp), value)) {
@@ -3428,16 +3415,9 @@ static int wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 	    strcmp(wan_proto, "pptp") == 0 ||
 	    strcmp(wan_proto, "l2tp") == 0) {
 		int dhcpenable = nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp));
-#if 1 /* TODO: tmporary change! remove after WEB UI support */
-		if (strcmp(wan_proto, "pppoe") == 0 &&
-		    dhcpenable && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0"))
-			dhcpenable = 2;
-#endif /* TODO: tmporary change! remove after WEB UI support */
-
-		if (dhcpenable == 0)
-			xtype = "static";
-		else if (dhcpenable != 2 || strcmp(wan_proto, "pppoe") != 0)
-			xtype = "dhcp";
+		xtype = (dhcpenable == 0) ? "static" :
+			(strcmp(wan_proto, "pppoe") == 0 && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0")) ? "" : /* zeroconf */
+			"dhcp";
 		xip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 		xnetmask = nvram_safe_get(strcat_r(prefix, "xnetmask", tmp));
 		xgateway = nvram_safe_get(strcat_r(prefix, "xgateway", tmp));
@@ -3604,16 +3584,9 @@ static int first_wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 	    strcmp(wan_proto, "pptp") == 0 ||
 	    strcmp(wan_proto, "l2tp") == 0) {
 		int dhcpenable = nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp));
-#if 1 /* TODO: tmporary change! remove after WEB UI support */
-		if (strcmp(wan_proto, "pppoe") == 0 &&
-		    dhcpenable && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0"))
-			dhcpenable = 2;
-#endif /* TODO: tmporary change! remove after WEB UI support */
-
-		if (dhcpenable == 0)
-			xtype = "static";
-		else if (dhcpenable != 2 || strcmp(wan_proto, "pppoe") != 0)
-			xtype = "dhcp";
+		xtype = (dhcpenable == 0) ? "static" :
+			(strcmp(wan_proto, "pppoe") == 0 && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0")) ? "" : /* zeroconf */
+			"dhcp";
 		xip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 		xnetmask = nvram_safe_get(strcat_r(prefix, "xnetmask", tmp));
 		xgateway = nvram_safe_get(strcat_r(prefix, "xgateway", tmp));
@@ -3710,7 +3683,7 @@ static int secondary_wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 		}
 	}
 	else{
-		if(wan_state == WAN_STATE_STOPPED && wan_sbstate == WAN_STOPPED_REASON_INVALID_IPADDR){
+		if(wan_state == WAN_STATE_STOPPED){
 			status = 0;
 		}
 		else if(wan_state == WAN_STATE_INITIALIZING){
@@ -3764,16 +3737,9 @@ static int secondary_wanlink_hook(int eid, webs_t wp, int argc, char_t **argv){
 	    strcmp(wan_proto, "pptp") == 0 ||
 	    strcmp(wan_proto, "l2tp") == 0) {
 		int dhcpenable = nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp));
-#if 1 /* TODO: tmporary change! remove after WEB UI support */
-		if (strcmp(wan_proto, "pppoe") == 0 &&
-		    dhcpenable && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0"))
-			dhcpenable = 2;
-#endif /* TODO: tmporary change! remove after WEB UI support */
-
-		if (dhcpenable == 0)
-			xtype = "static";
-		else if (dhcpenable != 2 || strcmp(wan_proto, "pppoe") != 0)
-			xtype = "dhcp";
+		xtype = (dhcpenable == 0) ? "static" :
+			(strcmp(wan_proto, "pppoe") == 0 && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0")) ? "" : /* zeroconf */
+			"dhcp";
 		xip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 		xnetmask = nvram_safe_get(strcat_r(prefix, "xnetmask", tmp));
 		xgateway = nvram_safe_get(strcat_r(prefix, "xgateway", tmp));
@@ -4031,16 +3997,9 @@ static int wanlink_state_hook(int eid, webs_t wp, int argc, char_t **argv){
 	    strcmp(wan_proto, "pptp") == 0 ||
 	    strcmp(wan_proto, "l2tp") == 0) {
 		int dhcpenable = nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp));
-#if 1 /* TODO: tmporary change! remove after WEB UI support */
-		if (strcmp(wan_proto, "pppoe") == 0 &&
-		    dhcpenable && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0"))
-			dhcpenable = 2;
-#endif /* TODO: tmporary change! remove after WEB UI support */
-
-		if (dhcpenable == 0)
-			xtype = "static";
-		else if (dhcpenable != 2 || strcmp(wan_proto, "pppoe") != 0)
-			xtype = "dhcp";
+		xtype = (dhcpenable == 0) ? "static" :
+			(strcmp(wan_proto, "pppoe") == 0 && nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0")) ? "" : /* zeroconf */
+			"dhcp";
 		xip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 		xnetmask = nvram_safe_get(strcat_r(prefix, "xnetmask", tmp));
 		xgateway = nvram_safe_get(strcat_r(prefix, "xgateway", tmp));
@@ -7023,6 +6982,15 @@ wps_finish:
 		doSystem("echo -n 0 > /jffs/traffic_control/%s/tmp", ifmap);	// reset current traffic
 	}
 #endif
+#ifdef RTCONFIG_DISK_MONITOR
+	else if (!strcmp(action_mode, "change_diskmon_unit"))
+	{
+		action_para = get_cgi_json("diskmon_usbport", root);
+
+		if(action_para)
+			nvram_set("diskmon_usbport", action_para);
+	}
+#endif
 	json_object_put(root);
 	return 1;
 }
@@ -7413,7 +7381,7 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 #endif
 	upgrade_err = 0;
 
-#if defined(RTCONFIG_QCA) || defined(RTN65U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P)
+#if defined(RTCONFIG_QCA) || defined(RTN65U) || defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300)
 	if (!stop_upgrade_once) {
 		notify_rc_and_wait_1min("stop_upgrade");
 		stop_upgrade_once = 1;
@@ -8210,14 +8178,16 @@ prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, cha
 	char model_name;
 	
 	model_name = get_model();
-	
-	if(model_name == MODEL_RTN56U || model_name == MODEL_RTAC87U){
+#ifdef RTCONFIG_RGMII_BRCM5301X
+	ddns_mac = nvram_get("et1macaddr");
+#else	
+	if(model_name == MODEL_RTN56U){
 		ddns_mac = nvram_get("et1macaddr");
 	}
 	else{
 		ddns_mac = nvram_get("et0macaddr");	
 	}
-	
+#endif	
 	ddns_flag = websGetVar(wp, "path", "");
 	if(strcmp(ddns_flag, "0") == 0){
 		strncpy(ddns_hostname_tmp, nvram_get("ddns_hostname_x"), sizeof(ddns_hostname_tmp));
@@ -8920,12 +8890,28 @@ struct mime_handler mime_handlers[] = {
 	{ "ure_success.htm", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "ureip.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "remote.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "jquery.js", "text/javascript", no_cache_IE7, NULL, do_file, NULL }, // 2010.09 James.
+	{ "js/jquery.js", "text/javascript", no_cache_IE7, NULL, do_file, NULL }, // 2010.09 James.
 	{ "require/require.min.js", "text/javascript", no_cache_IE7, NULL, do_file, NULL },
 	{ "httpd_check.xml", "text/xml", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "httpd_check.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "findasus.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "get_webdavInfo.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "appGet_image_path.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_image_path_cgi, NULL },
+	{ "login.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_login_cgi, NULL },
+	{ "update_clients.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "manifest.appcache", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "offline.htm", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "wcdma_list.js", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "help_content.js", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "httpd_check.htm", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "manifest.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "update_cloudstatus.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "update_applist.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+	{ "update_appstate.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+#ifdef RTCONFIG_FINDASUS
+	{ "findasus.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_findasus_cgi, NULL },
+	{ "find_device.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+#endif
 	{ "**.xml", "text/xml", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "**.htm*", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "**.asp*", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
@@ -8957,6 +8943,7 @@ struct mime_handler mime_handlers[] = {
 	{ "**.CFG", "application/force-download", NULL, do_html_post_and_get, do_prf_file, do_auth },
 	{ "ftpServerTree.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_ftpServerTree_cgi, do_auth },//andi
 	{ "**.ovpn", "application/force-download", NULL, NULL, do_prf_ovpn_file, do_auth },
+	{ "QIS_default.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_qis_default, do_auth },
 	{ "apply.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "applyapp.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "appGet.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_cgi, do_auth },
@@ -8968,6 +8955,9 @@ struct mime_handler mime_handlers[] = {
 #endif
 #ifdef RTCONFIG_USB_MODEM
 	{ "modemlog.txt*", "application/force-download", modemlog_txt, do_html_post_and_get, do_modemlog_cgi, do_auth },
+#endif
+#ifdef RTCONFIG_TCPDUMP
+	{ "udhcpc.pcap*", "application/force-download", NULL, NULL, do_file, NULL },
 #endif
 #ifdef RTCONFIG_DSL
 	{ "dsllog.cgi*", "text/txt", no_cache_IE7, do_html_post_and_get, do_adsllog_cgi, do_auth },
@@ -8984,27 +8974,6 @@ struct mime_handler mime_handlers[] = {
 #ifdef RTCONFIG_OPENVPN
 	{ "vpnupload.cgi*", "text/html", no_cache_IE7, do_vpnupload_post, do_vpnupload_cgi, do_auth },
 #endif
-#ifdef RTCONFIG_FINDASUS
-	{ "findasus.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_findasus_cgi, NULL },
-#endif
-	{ "appGet_image_path.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_image_path_cgi, NULL },
-	{ "login.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_login_cgi, NULL },
-	{ "update_clients.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "manifest.appcache", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "offline.htm", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "wcdma_list.js", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "help_content.js", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "httpd_check.htm", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "manifest.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "update_cloudstatus.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "update_applist.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "update_appstate.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "update_applist.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "update_applist.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "QIS_default.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_qis_default, do_auth },
-#ifdef RTCONFIG_FINDASUS
-	{ "find_device.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-#endif
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -9013,7 +8982,7 @@ struct except_mime_handler except_mime_handlers[] = {
 	{ "QIS_default.cgi", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "images/New_ui/login_bg.png", MIME_EXCEPTION_MAINPAGE},
 	{ "images/New_ui/icon_titleName.png", MIME_EXCEPTION_MAINPAGE},
-/*
+#if 0
 	{ "QIS_*", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "qis/*", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
 	{ "*.css", MIME_EXCEPTION_NOAUTH_FIRST|MIME_EXCEPTION_NORESETTIME},
@@ -9075,7 +9044,7 @@ struct except_mime_handler except_mime_handlers[] = {
 	{ "help_content.js", MIME_EXCEPTION_NOAUTH_ALL},
 	{ "wcdma_list.js", MIME_EXCEPTION_NOAUTH_ALL},
 	{ "update_clients.asp", MIME_EXCEPTION_NOAUTH_ALL},
-*/
+#endif
 	{ NULL, 0 }
 };
 
@@ -11796,6 +11765,11 @@ static int ej_netdev(int eid, webs_t wp, int argc, char_t **argv)
 					}
 #endif
 				}
+				if(nvram_match("wans_dualwan", "wan none")){
+					if(strcmp(ifname, "eth0")==0){
+						traffic_wanlan(WAN0DEV, &rx, &tx);
+					}
+				}
 #endif	/* RTCONFIG_BCM5301X_TRAFFIC_MONITOR */
 				if (!netdev_calc(ifname, ifname_desc, &rx, &tx, ifname_desc2, &rx2, &tx2)) continue;
 
@@ -12997,6 +12971,19 @@ ej_get_clientlist(int eid, webs_t wp, int argc, char **argv){
 	return 0;
 }
 
+static int
+ej_check_asus_model(int eid, webs_t wp, int argc, char **argv)
+{
+#ifdef RTCONFIG_HTTPS
+	if (check_model_name())
+		return websWrite(wp, "1");
+	else
+		return websWrite(wp, "0");
+#else
+	return websWrite(wp, "1");
+#endif
+}
+
 struct ej_handler ej_handlers[] = {
 	{ "nvram_get", ej_nvram_get},
 	{ "nvram_default_get", ej_nvram_default_get},
@@ -13271,6 +13258,7 @@ struct ej_handler ej_handlers[] = {
 	{ "get_upload_icon_count_list", ej_get_upload_icon_count_list},
 #endif
 	{ "findasus", ej_findasus},
+	{ "check_asus_model", ej_check_asus_model},
 	{ NULL, NULL }
 };
 

@@ -11,10 +11,11 @@
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/state.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+if(parent.location.pathname.search("index") === -1) top.location.href = "../index.asp";
 
 <% wl_get_parameter(); %>
 var flag = '<% get_parameter("flag"); %>';
@@ -27,54 +28,7 @@ if(yadns_support){
 }
 
 function initial(){
-	if(sw_mode == 2){
-		if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
-			tabclickhandler('<% nvram_get("wl_unit"); %>');
-		}
-		else if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' == '1'){
-			tabclickhandler('<% nvram_get("wl_unit"); %>');
-		}
-	}
-	else if(sw_mode == 4){
-		if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
-			document.getElementById("WLnetworkmap").style.display = "none";
-			document.getElementById("applySecurity").style.display = "none";
-			document.getElementById("WLnetworkmap_re").style.display = "";
-		}
-		else{
-			if('<% nvram_get("wl_subunit"); %>' != '-1'){
-				tabclickhandler('<% nvram_get("wl_unit"); %>');
-			}
-			else{
-				tabclickhandler('<% nvram_get("wlc_band"); %>');
-			}
-		}
-	}
-	else{
-		if("<% nvram_get("wl_subunit"); %>" != "-1"){
-			tabclickhandler(0);
-		}
-	}
-
-	if("<% nvram_get("wl_unit"); %>" == "-1"){
-		tabclickhandler(0);
-	}
-
-	// modify wlX.1_ssid(SSID to end clients) under repeater mode
-	if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == '<% nvram_get("wl_unit"); %>')
-		document.form.wl_subunit.value = 1;
-	else
-		document.form.wl_subunit.value = -1;
-	
-	if(smart_connect_support){
-		if(based_modelid == "RT-AC5300")
-			if('<% nvram_get("smart_connect_x"); %>' !=0){
-				document.getElementById("smart_connect_field").style.display = '';
-		}else{
-			document.getElementById("smartcon_enable_field").style.display = '';
-			document.getElementById("smartcon_enable_line").style.display = '';
-		}
-	}
+	var wl_subunit = '<% nvram_get("wl_subunit"); %>';
 
 	if(band5g_support){
 		document.getElementById("t0").style.display = "";
@@ -94,6 +48,65 @@ function initial(){
 	}
 	else{
 		document.getElementById("t0").style.display = "";	
+	}
+
+	if(parent.sw_mode == 2){
+		if(parent.wlc_express != 0){
+			if(parent.wlc_express == 1){
+				document.getElementById("t0").style.display = "none";
+				if(wl_subunit != '1' || '<% nvram_get("wl_unit"); %>' != 1){
+					tabclickhandler(1);
+				}
+			}
+			else if(parent.wlc_express == 2){
+				document.getElementById("t1").style.display = "none";
+				if(wl_subunit != '1' || '<% nvram_get("wl_unit"); %>' != 0){
+					tabclickhandler(0);
+				}
+			}
+		}
+		else{
+			if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && wl_subunit != '1'){
+				tabclickhandler('<% nvram_get("wl_unit"); %>');
+			}
+			else if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>' && wl_subunit == '1'){
+				tabclickhandler('<% nvram_get("wl_unit"); %>');
+			}
+		}
+	}
+	else if(parent.sw_mode == 4){
+		if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>'){
+			tabclickhandler('<% nvram_get("wlc_band"); %>');
+		}
+
+		document.getElementById("WLnetworkmap").style.display = "none";
+		document.getElementById("applySecurity").style.display = "none";
+		document.getElementById("WLnetworkmap_re").style.display = "";
+	}
+	else{
+		if(wl_subunit != "-1"){
+			tabclickhandler(0);
+		}
+	}
+
+	// modify wlX.1_ssid(SSID to end clients) under repeater mode
+	if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == '<% nvram_get("wl_unit"); %>')
+		document.form.wl_subunit.value = 1;
+	else
+		document.form.wl_subunit.value = -1;
+
+	// modify wlX.1_ssid(SSID to end clients) under concurrent repeater mode
+	if(parent.sw_mode == 2 && parent.concurrep_support)
+		document.form.wl_subunit.value = 1;
+
+	if(smart_connect_support){
+		if(based_modelid == "RT-AC5300"){
+			if('<% nvram_get("smart_connect_x"); %>' !=0)
+				document.getElementById("smart_connect_field").style.display = '';
+		}else{
+			document.getElementById("smartcon_enable_field").style.display = '';
+			document.getElementById("smartcon_enable_line").style.display = '';
+		}
 	}
 
 	change_tabclick();
@@ -127,12 +140,20 @@ function initial(){
 			change_smart_connect(smart_connect_flag_t);	
 	}
 
-	if(parent.sw_mode == 4)
-		parent.show_middle_status('<% nvram_get("wlc_auth_mode"); %>', 0);		
+	if(parent.sw_mode == 4){
+		var wlc_auth_mode = '<% nvram_get("wlc_auth_mode"); %>';
+		if(wlc_auth_mode == "") wlc_auth_mode = '<% nvram_get("wlc0_auth_mode"); %>';
+		if(wlc_auth_mode == "") wlc_auth_mode = '<% nvram_get("wlc1_auth_mode"); %>';
+		if(wlc_auth_mode == "") wlc_auth_mode = 'unknown';
+
+		parent.show_middle_status(wlc_auth_mode, 0);
+	}
 	else
 		parent.show_middle_status(document.form.wl_auth_mode_x.value, parseInt(document.form.wl_wep_x.value));
 
 	flash_button();	
+
+	if(history.pushState != undefined) history.pushState("", document.title, window.location.pathname);
 }
 
 function change_tabclick(){
@@ -151,10 +172,15 @@ function tabclickhandler(wl_unit){
 		location.href = "router_status.asp";
 	}
 	else{
-		if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == wl_unit)
+		if(parent.sw_mode == 2 && parent.wlc_express != 0){
 			document.form.wl_subunit.value = 1;
-		else
+		}
+		else if((parent.sw_mode == 2 || parent.sw_mode == 4) && '<% nvram_get("wlc_band"); %>' == wl_unit){
+			document.form.wl_subunit.value = 1;
+		}
+		else{
 			document.form.wl_subunit.value = -1;
+		}
 
 		document.form.wl_unit.value = wl_unit;
 
@@ -511,7 +537,8 @@ function tab_reset(v){
 		document.getElementById("span0").innerHTML = "2.4GHz";
 		document.getElementById("span1").innerHTML = "5GHz-1 and 5GHz-2";
 		document.getElementById("t2").style.display = "none";	
-		document.getElementById("t1").style.width = "155px";
+		document.getElementById("t1").style.width = "148px";
+		document.getElementById("span1").style.padding = "5px 4px 5px 9px";
 	}
 }
 
@@ -625,7 +652,7 @@ function change_smart_connect(v){
                                <select style="*margin-top:-7px;" name="smart_connect_t" class="input_option" onchange="change_smart_connect(this.value);">
                                        <option value="0" <% nvram_match("smart_connect_x", "0", "selected"); %>>none</option>
                                        <option value="1" <% nvram_match("smart_connect_x", "1", "selected"); %>>Tri-band Smart Connect</option>
-                                       <option value="2" <% nvram_match("smart_connect_x", "2", "selected"); %>>5Ghz Smart Connect</option>
+                                       <option value="2" <% nvram_match("smart_connect_x", "2", "selected"); %>>5GHz Smart Connect</option>
                                </select>                               
                                <img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
                        </td>

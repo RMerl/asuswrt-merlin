@@ -72,7 +72,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 
@@ -123,10 +123,10 @@ function initial(){
     	else
     		document.form.wans_mode.value = wans_mode_orig;
 
-		document.getElementById("fo_detection_count_hd").innerHTML = "Failover Retry Count";
+		document.getElementById("fo_detection_count_hd").innerHTML = "<#Failover_retry_count#>";
 		document.getElementById("fo_seconds").style.display = "none";
 		document.getElementById("fo_tail_msg").style.display = "";		
-    	document.getElementById("wandog_title").innerHTML = "Enable User-Defined Target";
+    	document.getElementById("wandog_title").innerHTML = "<#Enable_user_target#>";
 
     	update_consume_bytes();
     }
@@ -471,7 +471,7 @@ function appendModeOption(v){
 		var wandog_enable_orig = '<% nvram_get("wandog_enable"); %>';
 		if(v == "lb"){
 			document.getElementById("lb_note").style.display = "";
-			document.getElementById("lb_note2").style.display = "";
+			//document.getElementById("lb_note2").style.display = "";
 			inputCtrl(document.form.wans_lb_ratio_0, 1);
 			inputCtrl(document.form.wans_lb_ratio_1, 1);
 			document.form.wans_lb_ratio_0.value = '<% nvram_get("wans_lb_ratio"); %>'.split(':')[0];
@@ -517,7 +517,7 @@ function appendModeOption(v){
 		}
 		else{ //Failover / Failback
 			document.getElementById('lb_note').style.display = "none";
-			document.getElementById("lb_note2").style.display = "none";
+			//document.getElementById("lb_note2").style.display = "none";
 			inputCtrl(document.form.wans_lb_ratio_0, 0);
 			inputCtrl(document.form.wans_lb_ratio_1, 0);
 			inputCtrl(document.form.wans_isp_unit[0], 0);

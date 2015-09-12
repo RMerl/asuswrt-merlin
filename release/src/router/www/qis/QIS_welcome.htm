@@ -10,7 +10,7 @@
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <link rel="stylesheet" type="text/css" href="/usp_style.css">
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript">
 <% start_autodet(); %> // initial QIS detecting process.
 <% check_modem_sim(); %>
@@ -76,6 +76,13 @@ function assign_color(){
 }
 
 function QKinternettype_load_body(){
+
+	if('<% check_asus_model(); %>' == '0'){
+		document.getElementById("warming_field").style.display ="";
+		document.getElementById("main_manual").style.display ="none";
+		disable_button();
+	}
+
 	if(wanstate == 4 && wansbstate == 4){
 		gotoPage("/error_page.htm", "6", 1);
 		return;
@@ -339,32 +346,44 @@ function skip(){
 }
 
 function startPoll(){
-	if(parent.ISMOBILE){	
-		if(document.getElementById("unplugImg1_m").style.display == "none"){
-			$("#unplugImg2_m").fadeOut(500);
-			setTimeout('$("#unplugImg1_m").fadeIn(500);', 500);	
+	if(parent.modem_support){
+		if(parent.ISMOBILE){
+			if(document.getElementById("unplugImg1_m").style.display == "none"){
+				$("#unplugImg2_m").fadeOut(500);
+				setTimeout('$("#unplugImg1_m").fadeIn(500);', 500);	
+			}
+			else{
+				$("#unplugImg1_m").fadeOut(500);	
+				setTimeout('$("#unplugImg2_m").fadeIn(500);', 500);	
+			}
 		}
 		else{
-			$("#unplugImg1_m").fadeOut(500);	
-			setTimeout('$("#unplugImg2_m").fadeIn(500);', 500);	
-		}
-	}
-	else{
-		if(usb_flag != "" && based_modelid != "RT-AC87U"){
-			if(document.getElementById("unplugImg1").style.display == "none"){
-				$("#unplugImg2").fadeOut(500);
-				setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
+			if(usb_flag != "" && based_modelid != "RT-AC87U"){
+				if(document.getElementById("unplugImg1").style.display == "none"){
+					$("#unplugImg2").fadeOut(500);
+					setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
+				}
+				else{
+					$("#unplugImg1").fadeOut(500);	
+					setTimeout('$("#unplugImg2").fadeIn(500);', 500);	
+				}
 			}
 			else{
 				$("#unplugImg1").fadeOut(500);	
-				setTimeout('$("#unplugImg2").fadeIn(500);', 500);	
+				setTimeout('$("#unplugImg1").fadeIn(500);', 500);			
 			}
+		}
+	}
+	else{
+		if(parent.ISMOBILE){
+			$("#unplugImg1_m").fadeOut(500);	
+			setTimeout('$("#unplugImg1_m").fadeIn(500);', 500);	
 		}
 		else{
 			$("#unplugImg1").fadeOut(500);	
-			setTimeout('$("#unplugImg1").fadeIn(500);', 500);			
+			setTimeout('$("#unplugImg1").fadeIn(500);', 500);	
 		}
-	}
+	}	
 
 	setTimeout("startPoll();", 2500);
 }
@@ -406,6 +425,13 @@ function uploadSetting(){
 	}	
 }
 
+function disable_button(){
+	var disable_button_x = document.getElementsByClassName('button_gen');
+	for(x=disable_button_x.length-1;x>=0;x--){
+		disable_button_x[x].disabled = true;
+	}
+}
+
 </script>
 </head>  
 <body onLoad="QKinternettype_load_body();" onunload="" onKeyPress="submitenter(this,event)">
@@ -426,6 +452,7 @@ function uploadSetting(){
 		<tr>
 			<td>
 				<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+				<div id="warming_field" style="display:none" class="warming_desc">Note: the router you are using is not an ASUS device or has not been authorised by ASUS. ASUSWRT might not work properly on this device.</div>
 			</td>
 		</tr>	
 		<tr>
@@ -461,8 +488,8 @@ function uploadSetting(){
 					</tr>
 					<tr>
 						<td colspan="3" align="left">
-							<input class="button_gen" type="button" value="<#Manual_Setting_btn#>" onclick="submitForm(0);" style="margin-left:30px;">
-							<input class="button_gen" id="btn_next_step" type="button" value="<#btn_go#>" onclick="startDetect();" style="margin-left:50px;">
+							<input class="button_gen_long" type="button" value="<#Manual_Setting_btn#>" onclick="submitForm(0);" style="margin-left:30px;">
+							<input class="button_gen_long" id="btn_next_step" type="button" value="<#btn_go#>" onclick="startDetect();" style="margin-left:50px;">
 							<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 						</td>
 					</tr>

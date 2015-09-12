@@ -1,0 +1,535 @@
+.\" Copyright (c) 2000-2005 Broadcom Corporation
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation.
+.\"
+.\" bcm5700.4,v 5.9 
+.\"
+.TH BCM5700 4 "10/28/05" "Broadcom Corporation"
+.\"
+.\" NAME part
+.\"
+.SH NAME
+bcm5700 \- Broadcom NetXtreme BCM5700 series Gigabit Ethernet device driver
+.\"
+.\" SYNOPSIS part
+.\"
+.SH SYNOPSIS
+.B insmod bcm5700.o
+.RB [ line_speed=\c
+.IR n,... ]
+.RB [ auto_speed=\c
+.IR n,... ]
+.RB [ full_duplex=\c
+.IR n,... ]
+.RB [ rx_flow_control=\c
+.IR n,... ]
+.RB [ tx_flow_control=\c
+.IR n,... ]
+.RB [ auto_flow_control=\c
+.IR n,... ]
+.RB [ mtu=\c
+.IR n,... ]
+.RB [ tx_checksum=\c
+.IR n,... ]
+.RB [ rx_checksum=\c
+.IR n,... ]
+.RB [ scatter_gather=\c
+.IR n,... ]
+.RB [ nic_tx_bd=\c
+.IR n,... ]
+.RB [ tx_pkt_desc_cnt=\c
+.IR n,... ]
+.RB [ rx_std_desc_cnt=\c
+.IR n,... ]
+.RB [ rx_jumbo_desc_cnt=\c
+.IR n,... ]
+.RB [ adaptive_coalesce=\c
+.IR n,... ]
+.RB [ rx_coalesce_ticks=\c
+.IR n,... ]
+.RB [ rx_max_coalesce_frames=\c
+.IR n,... ]
+.RB [ tx_coalesce_ticks=\c
+.IR n,... ]
+.RB [ tx_max_coalesce_frames=\c
+.IR n,... ]
+.RB [ stats_coalesce_ticks=\c
+.IR n,... ]
+.RB [ enable_wol=\c
+.IR n,... ]
+.RB [ enable_tso=\c
+.IR n,... ]
+.RB [ vlan_tag_mode=\c
+.IR n,... ]
+.RB [ delay_link=\c
+.IR n,... ]
+.RB [ disable_d3hot=\c
+.IR n,... ]
+.\"
+.\" DESCRIPTION part
+.\"
+.SH DESCRIPTION
+.I bcm5700
+is the low-level device driver for the Broadcom
+.B NetXtreme BCM5700
+series PCI/PCI-X and PCI Express Gigabit Ethernet NIC. The driver has
+been tested on most 2.4.x and 2.6.x kernels up to 2.4.27 and 2.6.8 for
+i386, ia64, and x86_64 systems.
+It should also work on other big-endian and little-endian CPU platforms,
+but only very limited testing has been done and minor modifications to the
+Makefile and source files may be required.
+.PP
+The driver supports up to 16 NICs and allocates the next available ethernet
+device (eth0..eth#) for each NIC found. The driver is available as a loadable
+module or can be compiled into the kernel. The loadable module binary
+\fBbcm5700.o\fP or \fBbcm5700.ko\fP is installed in the following path:
+.PP
+2.2.x kernels:
+.RS
+/lib/modules/<kernel_version>/net/bcm5700.o
+.RE
+.PP
+2.4.x kernels:
+.RS
+/lib/modules/<kernel_version>/kernel/drivers/net/bcm5700.o
+.RE
+.PP
+2.4.x kernels with bcm5700 as an addon driver (e.g. Red Hat 7.3, 2.1AS):
+.RS
+/lib/modules/<kernel_version>/kernel/drivers/net/bcm/bcm5700.o
+.PP
+or
+.PP
+/lib/modules/<kernel_version>/kernel/drivers/addon/bcm5700/bcm5700.o
+.RE
+.PP
+2.6.x kernels:
+.RS
+/lib/modules/<kernel_version>/kernel/drivers/net/bcm5700.ko
+.RE
+.PP
+2.6.x kernels with bcm5700 as an addon driver (e.g. SusE 9 SLES):
+.RS
+/lib/modules/<kernel_version>/kernel/drivers/net/bcm/bcm5700.ko
+.RE
+.PP
+
+Note: If loading the driver on Red Hat 7.3, 2.1AS or other newer kernels
+with the tg3 driver, it may be necessary to unload the tg3 driver first if
+it is loaded. While tg3 is a fully functioning driver written by Red Hat et al,
+Broadcom recommends users to use the bcm5700 driver written and tested by
+Broadcom. Use ifconfig to bring down all eth# interfaces used by tg3
+and use rmmod to unload tg3.
+It may also be necessary to manually edit the file /etc/modules.conf to
+change interface alias names from tg3 to bcm5700. See the man page for
+modules.conf for more details.
+
+.PP
+Refer to various Linux documentations
+on how to configure network protocol and address.
+.\"
+.\" PARAMETER part
+.\"
+.SH PARAMETERS
+Optional parameters for the driver can be supplied as command line arguments 
+to the insmod command. These parameters can also be set in the file
+/etc/modules.conf (see the man page for modules.conf). These parameters take
+the form
+.PP
+.B <parameter>=n1[,n2,...]
+.PP
+where the multiple values n1,n2,... are for multiple NICs installed in the
+system.
+.PP
+Note that default or other meaningful values will be used when invalid values
+are selected. Some combinations of parameters may conflict and lead to
+failures. The driver cannot detect all such conflicting combinations.
+.PP
+All the parameters are listed below.
+.TP
+.B line_speed
+Selects the line speed of the link. This parameter is used together with
+\fBfull_duplex\fP and \fBauto_speed\fP to select the speed and
+duplexity of the link and the setting of autonegotiation. The valid values are:
+.RS
+.TP
+.B 0
+Autonegotiate for highest speed supported by link partner (default)
+.TP
+.B 10
+10 Mbps
+.TP
+.B 100
+100 Mbps
+.TP
+.B 1000
+1000 Mbps
+.PP
+If \fBline_speed\fP is set to \fB10\fP, \fB100\fP, or \fB1000\fP,
+the NIC will autonegotiate for
+the selected speed (and selected duplexity) if \fBauto_speed\fP is set to
+\fB1\fP. If \fBauto_speed\fP is set to \fB0\fP, the selected speed and
+duplexity will be set without autonegotiation. Note that 1000 Mbps must be
+negotiated for copper twisted pair links.
+.RE
+.TP
+.B auto_speed
+Enables or disables autonegotiation. The valid values are:
+.RS
+.TP
+.B 0
+Autonegotiation disabled
+.TP
+.B 1
+Autonegotiation enabled (default)
+.PP
+Note that this parameter is ignored and assumed \fB1\fP if \fBline_speed\fP is
+set to \fB0\fP.
+.RE
+.TP    
+.B full_duplex
+Selects the duplexity of the link. This paramter is used together with
+\fBline_speed\fP to select the speed and duplexity of the link. Note that this
+parameter is ignored if \fBline_speed\fP is \fB0\fP. The valid values are:
+.RS
+.TP
+.B 0
+half duplex
+.TP
+.B 1
+full duplex (default)
+.RE
+.TP
+.B rx_flow_control
+Enables or disables receiving flow control (pause) frames. This parameter
+is used together with \fBauto_flow_control\fP. The valid values are:
+.RS
+.TP
+.B 0
+pause receive disabled
+.TP
+.B 1
+pause receive enabled if \fBauto_flow_control\fP is set to \fB0\fP, or pause
+receive advertised if \fBauto_flow_control\fP is set to \fB1\fP (default)
+.RE
+.TP
+.B tx_flow_control
+Enables or disables transmitting flow control (pause) frames. This parameter
+is used together with \fBauto_flow_control\fP. The valid values are:
+.RS
+.TP
+.B 0
+pause transmit disabled
+.TP
+.B 1
+pause transmit enabled if \fBauto_flow_control\fP is set to \fB0\fP, or pause
+transmit advertised if \fBauto_flow_control\fP is set to \fB1\fP (default)
+.RE
+.TP
+.B auto_flow_control
+Enables or disables autonegotiation of flow control. This parameter is used
+together with \fBrx_flow_control\fP and \fBtx_flow_control\fP to determine the
+advertised flow control capability. The valid values are:
+.RS
+.TP
+.B 0
+flow control autonegotiation disabled
+.TP
+.B 1
+flow control autonegotiation enabled with capability specified in
+\fBrx_flow_control\fP and \fBtx_flow_control\fP (only valid if \fBline_speed\fP
+is set to \fB0\fP or \fBauto_speed\fP is set to \fB1\fP) (default)
+.RE
+.TP
+.B mtu
+Enables jumbo frames up to the specified MTU size. The valid range for
+this parameter is 1500 to 9000. Default is 1500 which is standard
+ethernet (non-jumbo) MTU size. Note that the MTU size excludes the
+ethernet header size of 14 bytes. Actual frame size is MTU size + 14 bytes.
+Jumbo MTU sizes are not supported on BCM5705 chips.
+
+.RS
+The MTU size can also be changed using ifconfig after the driver is loaded.
+See the ifconfig man page for details.
+.RE
+.TP
+.B tx_checksum
+Enables or disables hardware transmit TCP/UDP checksum. The valid values
+are:
+.RS
+.TP
+.B 0
+checksum disabled
+.TP
+.B 1
+checksum enabled (default)
+.RE
+.TP
+.B rx_checksum
+Enables or disables hardware receive TCP/UDP checksum validation. The
+valid values are:
+.RS
+.TP
+.B 0
+checksum disabled
+.TP
+.B 1
+checksum enabled (default)
+.RE
+.TP
+.B
+scatter_gather
+Enables or disables scatter-gather and 64-bit DMA on x86. This option is only
+useful when running on TUX-enabled kernels or newer kernels with zero-copy TCP.
+The valid values are:
+.RS
+.TP
+.B 0
+scatter-gather and 64-bit DMA on x86 disabled
+.TP
+.B 1
+scatter-gather and 64-bit DMA on x86 enabled (default)
+.RE
+.TP
+.B
+nic_tx_bd
+Enables either NIC based or host based transmit buffer descriptors (Tx BDs).
+NIC based Tx BDs may be slightly faster on certain machines on earlier
+2.4 kernels where each transmit packet is usually entirely contiguous. On
+later kernels with scatter-gather and TCP segmentation option, host based
+Tx BDs using DMA transfer are usually faster. NIC based Tx BDs are not
+supported on 5705 family controllers. The valid values are:
+.RS
+.TP
+.B 0
+NIC based transmit buffer descriptors disabled (using host based
+transmit buffer descriptors) (default)
+.TP
+.B 1
+NIC based transmit buffer descriptors enabled (not supported
+on 5705 family controllers)
+.RE
+.TP
+.B tx_pkt_desc_cnt
+Configures the number of transmit descriptors. Default is 120. The
+valid range is from 1 to 511. Note that the driver may not be able to
+allocate the required amount of memory if this parameter is set too high.
+Depending on kernel and CPU architecture, each descriptor may require up
+to about 268 bytes. This parameter should not be set less than \fB80\fP if
+\fBadaptive_coalesce\fP (see below) is enabled.
+
+.TP
+.B rx_std_desc_cnt
+Configures the number of receive descriptors for frames up to 1528 bytes.
+Default is 200. The valid range is from 1 to 511. This parameter should
+not be set less than \fB80\fP on systems with high network traffic. Setting this
+parameter higher allows the NIC to buffer larger bursts of network
+traffic without dropping frames, especially on slower systems. Note that
+the driver may not be able to allocate the required amount of memory if
+this parameter is set too high. Depending on kernel and CPU architecture,
+each descriptor may require up to about 268 bytes. Each descriptor also
+requires a socket buffer of at least 1536 bytes. This parameter should not
+be set less than \fB50\fP if \fBadaptive_coalesce\fP (see below) is enabled.
+
+.TP
+.B rx_jumbo_desc_cnt
+Configures the number of receive descriptors for jumbo frames larger
+than 1528 bytes. Default is 128 and valid range is from 1 to 255.
+When jumbo frames larger than 1528 bytes are used, this parameter should
+not be set lower than \fB60\fP on systems with high network traffic. Setting
+this parameter higher allows the NIC to buffer larger bursts of jumbo
+traffic without dropping frames, especially on slower systems. Depending
+on kernel and CPU architecture, each descriptor may require up to about
+268 bytes. Each descriptor also requires a socket buffer the size of a
+maximum jumbo frame. On systems with insufficient memory, it may be
+necessary to reduce this parameter. This parameter should not be set less
+than \fB50\fP if \fBadaptive_coalesce\fP (see below) is enabled. When the maximum
+frame size is 1528 or smaller (MTU size 1514 or smaller), this parameter
+is not used and is always 0.
+
+.TP
+.B adaptive_coalesce
+Enables or disables adaptive adjustments to the various interrupt
+coalescing parameters. Enabling it allows the driver to dynamically
+adjust the interrupt coalescing parameters to achieve high throughput
+during heavy traffic and low latency during light traffic. 
+\fBrx_std_desc_cnt\fP, (and \fBrx_jumbo_desc_cnt\fP if using jumbo frames)
+should not be set less than \fB50\fP, and \fBtx_pkt_desc_cnt\fP should not be
+set less than \fB80\fP when this parameter is enabled. Note that if the
+kernel supports the NAPI receive polling mode, interrupt coalescing will
+be handled in a different way and this parameter will not be used. The valid
+values are:
+.RS
+.TP
+.B 0
+disabled (always disabled in NAPI mode)
+.TP
+.B 1
+enabled (default)
+.RE
+.TP
+.B rx_coalesce_ticks
+Configures the number of 1 usec ticks before the NIC
+generates receive interrupt after receiving a frame. This parameter works
+in conjunction with the \fBrx_max_coalesce_frames\fP parameter. Interrupt will
+be generated when either of these thresholds is exceeded. \fB0\fP means this
+parameter is ignored and interrupt will be generated when the
+\fBrx_max_coalesce_frames\fP threshold is reached. The valid range is from 0
+to 500, and default is 60 (18 if using NAPI mode). This parameter is not
+used and will be adjusted
+automatically if \fBadaptive_coalesce\fP is set to \fB1\fP.
+.TP
+.B rx_max_coalesce_frames
+Configures the number of received frames before the
+NIC generates receive interrupt. The valid range is from 0 to 100, and default
+is 15 (6 if using NAPI mode). This parameter and
+\fBrx_coalesce_ticks\fP cannot be both \fB0\fP,
+otherwise no receive interrupts will be generated. It should also be set
+lower than \fBrx_std_desc_cnt\fP (and \fBrx_jumbo_desc_cnt\fP
+if using jumbo frames). This parameter is not
+used and will be adjusted automatically if
+\fBadaptive_coalesce\fP is set to \fB1\fP.
+.TP
+.B tx_coalesce_ticks
+Configures the number of 1 usec ticks before the NIC
+generates transmit interrupt after transmitting a frame. This parameter
+works in conjunction with the \fBtx_max_coalesce_frames\fP parameter. Interrupt
+will be generated when either of these thresholds is exceeded. \fB0\fP means
+this parameter is ignored and interrupt will be generated when the
+\fBtx_max_coalesce_frames\fP threshold is reached. The valid range is from 0 to
+500, and default is 200. This parameter is not used and will be adjusted
+automatically if \fBadaptive_coalesce\fP is set to \fB1\fP.
+.TP
+.B tx_max_coalesce_frames
+Configures the number of transmitted frames before
+the NIC generates transmit interrupt. The valid range is from 0 to 100, and
+default is 35. This parameter and \fBtx_coalesce_ticks\fP cannot be both
+\fB0\fP, otherwise no transmit completion interrupts will be generated. This
+parameter should always be set lower than \fBtx_pkt_desc_cnt\fP.
+This parameter is not used and will be adjusted
+automatically if \fBadaptive_coalesce\fP is set to \fB1\fP.
+.TP
+.B stats_coalesce_ticks
+Configures the number of 1 usec ticks between
+periodic statistics block DMAs. The valid range is from 100 to 3600000000, and
+default is 1000000 (1 sec.). 0 is also valid and is used to disable
+statistics updates. This parameter is not used and will be set to default
+if \fBadaptive_coalesce\fP is set to \fB1\fP.
+.TP
+.B enable_wol
+Enables or disables magic packet Wake-On-LAN when the system is shutdown.
+Note that not all systems support Wake-On-LAN. The valid values are:
+.RS
+.TP
+.B 0
+magic packet Wake-On-LAN disabled (default)
+.TP
+.B 1
+magic packet Wake-On-LAN enabled
+.RE
+.TP
+.B enable_tso
+Enables or disables TCP Segmentation Option (TSO) when using kernels that
+support it. This parameter is only defined on newer kernels that support
+TSO. The valid values are:
+.RS
+.TP
+.B 0
+TSO disabled
+.TP
+.B 1
+TSO enabled (default)
+.RE
+.TP
+.B vlan_tag_mode
+This parameter controls the stripping of VLAN tags on incoming packets,
+and is used to allow VLAN tagged ASF or IPMI packets to be received
+properly. The valid values are:
+.RS
+.TP
+.B 0
+Auto mode (default)
+.TP
+.B 1
+Normal strip mode
+.TP
+.B 2
+Forced strip mode
+.PP
+In normal mode, VLAN tags are only stripped if VLANs are registered
+by the 802.1q VLAN module or BASP. In forced strip mode, VLAN tags
+are always stripped. Auto mode will select normal strip mode if ASF/IPMI
+is disabled, or forced strip mode if ASF/IPMI is enabled.
+.RE    
+.TP
+.B delay_link
+If set to 1, this parameter will cause the driver to return 
+-EOPNOTSUPP when the SIOCGMIIREG or ETHTOOL_GLINK ioctls are called
+during the first 6 seconds after driver reset. When the driver resets
+the NIC during ifconfig, the link will drop and it may take several
+seconds for the link to come up after autonegotiation completes. Some
+applications, such as ifup, may not wait long enough for the link
+before giving up. Setting this parameter to 1 may get around such
+problems. The default value is 0, which means that the driver will
+always return true link states to all ioctl calls, when applicable.
+.TP
+.B disable_d3hot
+If set to 1, this parameter will cause the driver to never
+put the device in D3Hot power state when the NIC is shutdown or
+suspended. If set, this parameter will also disable the Wake-On-Lan
+setting. A rare D3Hot related problem was seen during repeated shutdown of
+PCI Express devices on systems running 2.6 kernels.
+
+.\"
+.\" DRIVER MESSAGES part
+.\"
+.SH DRIVER MESSAGES
+The following are the most common sample messages that may be logged in the file
+/var/log/messages. Use dmesg -n <level> to control the level at which messages
+will appear on the console. Most systems are set to level 6 by default.
+.PP
+.B Broadcom Gigabit Ethernet Driver bcm5700 with Broadcom NIC Extension (NICE) ver. 8.3.9 (09/30/05)
+.RS
+Driver signon
+.RE
+.PP
+.B eth#: Broadcom BCM5704 1000Base-T found at mem faff0000, IRQ 16, node addr 0010180402d8
+.PP
+.B eth#: Broadcom BCM5704 Integrated Copper transceiver found
+.PP
+.B eth#: Scatter-gather ON, 64-bit DMA ON, Tx Checksum ON, Rx Checksum ON, 802.1Q VLAN ON, NAPI ON
+.RS
+NIC detected
+.RE
+.PP
+.B bcm5700: eth# NIC Link is Up, 1000 Mbps full duplex, receive & transmit flow control ON
+.RS
+Link up and speed indication
+.RE
+.PP
+.B bcm5700: eth# NIC Link is Down
+.RS
+ Link down indication
+.RE
+.\"
+.\" FILES part
+.\"
+.SH FILES
+.I /proc/net/nicinfo/eth#.info
+.RS
+Detailed statistics and configuration file.
+.RE
+.\"
+.\" AUTHOR part
+.\"
+.SH AUTHOR
+Michael Chan \- mchan@broadcom.com
+.\"
+.\" SEE ALSO part
+.\"
+.SH SEE ALSO
+.BR ifconfig (8),
+.BR insmod (8),
+.BR modules.conf (5).
+

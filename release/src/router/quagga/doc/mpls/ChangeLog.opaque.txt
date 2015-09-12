@@ -1,0 +1,179 @@
+----- * ----- * ----- * ----- * ----- * ----- * ----- * ----- * ----- * -----
+Changes 2001.12.03
+
+1. Bug fixes
+
+  1.1 Though a new member "oi" has added to "struct ospf_lsa" to control
+      flooding scope of type-9 Opaque-LSAs, the value was always NULL
+      because no one set it.
+
+  1.2 In the function "show_ip_ospf_database_summary()" and "show_lsa_
+      detail_adv_router()", VTY output for type-11 Opaque-LSAs did not
+      work properly.
+
+  1.3 URL for the opaque-type assignment reference has changed.
+
+  1.4 In the file "ospf_mpls_te.c", printf formats have changed to
+      avoid compiler warning messages; "%lu" -> "%u", "%lx" -> "%x".
+      Note that this hack depends on OS, compiler and their versions. 
+
+  1.5 One of attached documentation "opaque_lsa.txt" has changed to
+      reflect the latest coding.
+
+2. Feature enhancements
+
+  2.1 Knowing that it is an ugly hack, an "officially unallocated"
+      opaque-type value 0 has newly introduced as a "wildcard",
+      which matches to all opaque-type.
+      This value must not be flooded to the network, of course.
+
+  2.2 The Opaque-core module makes use of newly introduced hooks to
+      dispatch every LSDB change (LSA installation and deletion) to
+      preregistered opaque users.
+      Therefore, by providing appropriate callback functions as new
+      parameters of "ospf_register_opaque_functab()", an opaque user
+      can refer to every LSA instance to be installed into, or to be
+      deleted from, the LSDB.
+
+----- * ----- * ----- * ----- * ----- * ----- * ----- * ----- * ----- * -----
+Changes 2001.10.31
+
+1. Bug fixes
+
+  1.1 Since each LSA has their own lifetime, they will remain in a
+      routing domain (being stored in LSDB of each router), until their
+      age naturally reach to MaxAge or explicitly being flushed by the
+      originated router. Therefore, if a router restarted with a short
+      downtime, it is possible that previously flooded self-originated
+      LSAs might received if the NSM status is not less than Exchange.
+
+      There were some problems in the way of handling self-originated
+      Opaque-LSAs if they are contained in a received LSUpd message,
+      but not installed to the local LSDB yet.
+      Regardless of some conditions to start originating Opaque-LSAs
+      (there should be at least one opaque-capable full-state neighbor),
+      the function "ospf_flood()" will be called to flood and install
+      this brand-new looking LSA.
+      As the result, when the NSM of an opaque-capable neighbor gets
+      full, internal state inconsistency happens; a user of Opaque-LSA
+      such as MPLS-TE can refer to self-originated LSAs in the local
+      LSDB, but cannot modify their contents...
+
+      Above problems have fixed with a policy "flush it from the whole
+      routing domain and keep silent until the flushing completed".
+      By using this sweeping technique, we can be free from confusion
+      caused by self-originated LSAs received via network. 
+
+  1.2 The function "ospf_opaque_type_name()" contained massive ifdefs
+      corresponding to each "opaque-type".
+      These unnecessary ifdefs are removed completely.
+
+  1.3 In the function "ospf_delete_opaque_functab()", there was an
+      improper loop control that causes illegal memory access.
+      Original coding was "next = nextnode (node)".
+
+  1.4 The function "ospf_mpls_te_ism_change()" could not handle the
+      case when the ISM changes from Waiting to DR/BDR/Other.
+      So, there was a case that even if one of an ISM become
+      operational and MPLS-TE module has started, the corresponding
+      Opaque-LSA cannot be originated.
+
+  1.5 The function "ospf_opaque_lsa_reoriginate_schedule()" did not
+      allow to be called multiple times, simply because handling
+      module for the given "lsa-type & opaque-type" already exists.
+      But this assumption seems to be wrong.
+      Change the policy to allow this function to be called multiple
+      times and let the caller to decide what should do when the
+      corresponding callback function "(* functab->lsa_originator)()"
+      is called.
+
+2. Feature enhancements
+
+  2.1 The global bitmap "opaque" has introduced instead of former flag
+      "OpaqueCapable", to store complex conditions to handle Opaque-LSAs.
+
+  2.2 The MPLS-TE module now referes to "draft-katz-yeung-ospf-traffic
+      -06.txt", no significant changes with 05 version, though.
+
+----- * ----- * ----- * ----- * ----- * ----- * ----- * ----- * ----- * -----
+Changes 2001.08.03
+
+1. Bug fixes
+
+  1.1 Even if the ospfd started with opaque capability enabled, when
+      the ospfd receives an unknown opaque-type (unregistered by the
+      function "ospf_register_opaque_functab()" beforehand), the LSA
+      was discarded. As the result, only the opaque-LSAs that have
+      commonly registered by opaque-capable ospf routers can be
+      flooded in a routing domain.
+
+      This behavior has fixed so that arbitrary opaque-type LSAs can
+      be flooded among opaque-capable ospf routers.
+      If the ospfd has opaque-LSA capability but disabled at runtime,
+      received opaque-LSAs can be accepted and registered to LSDB as
+      is, but not be flooded to the network; those opaque LSAs will
+      remain in LSDB until explicitly flushed by incoming LSUpd
+      messages with MaxAge, or their age naturally reaches to MaxAge.
+
+  1.2 The function "ospf_register_opaque_functab()" did not check
+      if the entry corresponding to the given "lsa-type, opaque-type"
+      combination already exists or not.
+      This problem has fixed not to allow multiple registration.
+
+  1.3 Since type-11 (AS external) LSAs will be flooded beyond areas,
+      there is little relationship between "struct lsa" and "struct
+      area". More specifically, the pointer address "lsa->area" can
+      be NULL if the lsa-type is 11, thus an illegal memory access
+      will happen. This problem has fixed.
+
+  1.4 When self-originated opaque-LSAs are received via network and
+      if the corresponding opaque-type functions are not available
+      (they have already deleted) at that time, those LSAs were
+      dropped due to "unknown opaque-type" error.
+      After the problem 1.1 has fixed, those "self-originated" LSAs
+      were registered to LSDB and then flooded to the network, even
+      if the processing functions did not exist...
+
+      After all, this problem has fixed so that those LSAs should
+      explicitly be flushed from the routing domain immediately, if
+      the processing functions cannot find at that time.
+
+  1.5 Some typo have fixed.
+
+      --- EXAMPLE ---
+      static int
+      opaque_lsa_originate_callback (list funclist, void *lsa_type_dependent)
+                                                          ^^^^^
+      --- EXAMPLE ---
+
+2. Feature enhancements
+
+  2.1 According to the description of rfc2328 in section 10.8, any
+      change in the router's optional capabilities should trigger
+      the option re-negotiation procedures with neighbors.
+
+      --- EXCERPT ---
+                              If for some reason the router's optional
+        capabilities change, the Database Exchange procedure should be
+        restarted by reverting to neighbor state ExStart.
+      --- EXCERPT ---
+
+      For the opaque-capability changes, this feature has implemented.
+      More specifically, if "ospf opaque-lsa" or "no ospf opaque-lsa"
+      VTY command is given at runtime, all self-originated LSAs will
+      be flushed immediately and then all neighbor status will be
+      forced to ExStart by generating SeqNumberMismatch events.
+
+  2.1 When we change opaque-capability dynamically (ON -> OFF -> ON),
+      there was no trigger at "OFF->ON" timing to reactivate opaque
+      LSA handling modules (such as MPLS-TE) that have once forcibly
+      stopped at "ON->OFF" timing.
+      Now this dynamic reactivation feature has added.
+
+  2.2 The MPLS-TE module now referes to "draft-katz-yeung-ospf-traffic
+      -05.txt", no significant changes with 04 version, though.
+
+----- * ----- * ----- * ----- * ----- * ----- * ----- * ----- * ----- * -----
+Changes 2001.03.28
+
+  Initial release of Opaque-LSA/MPLS-TE extensions for the zebra/ospfd.

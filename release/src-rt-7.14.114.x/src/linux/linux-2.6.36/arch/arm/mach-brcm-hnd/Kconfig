@@ -1,0 +1,76 @@
+
+if ARCH_BRCM
+
+choice
+	prompt "Broadcom ARM Board type"
+
+config MACH_BRCM_NS
+	select PLAT_IPROC
+	select PLAT_BCM5301x
+	select EMBEDDED
+	select ARCH_HAS_HEAD_FIXUP
+        bool "Northstar ptototype"
+
+config MACH_BRCM_NS_QT
+	select PLAT_IPROC
+	select PLAT_BCM5301x
+	select ARCH_HAS_HEAD_FIXUP
+	# select CPU_DCACHE_DISABLE	# D-Cache is broken
+	select CPU_DCACHE_WRITETHROUGH	# D-Cache is broken
+	# select CPU_BPREDICT_DISABLE	# no BP breaks XIP
+	select EMBEDDED
+	# select XIP_KERNEL
+	# select ZBOOT_ROM - this feature is broken
+        bool "Northstar emulation model"
+
+endchoice
+
+config BOARD_ZRELADDR
+	hex
+	default 0x80208000 if MACH_BRCM_GEN
+	default 0x80008000 if MACH_BRCM_NS_QT
+	default 0x00008000 if MACH_BRCM_NS
+	help
+	Must be consistent with the definition of "textaddr-y" in
+	arch/arm/Makefile; 
+	BOARD_ZRELADDR == virt_to_phys(TEXTADDR)
+
+config BOARD_PARAMS_PHYS
+	hex
+	default 0x80200000 if MACH_BRCM_GEN
+	default 0x80000000 if MACH_BRCM_NS_QT
+	default 0x00000000 if MACH_BRCM_NS
+   	help
+	BOARD_PARAMS_PHYS must be within 4MB of ZRELADDR
+
+config DEBUG_UART_ADDR
+	hex
+	default 0x18000300 if MACH_BRCM_NS
+	default 0x18000300 if MACH_BRCM_NS_QT
+	help
+	Physical address of the UART used in early kernel debugging.
+
+config DRAM_BASE
+	hex "DRAM physical base address"
+	default 0x00000000
+
+config XTAL_FREQ
+	int "Reference clock frequency (Hz)"
+	default 25000000 if MACH_BRCM_NS
+	default 17594 if MACH_BRCM_NS_QT
+
+config CR4_OFFLOAD
+	bool "CR4 ARM Processor"
+	default n
+
+config	HZ
+	default 2 if MACH_BRCM_NS_QT
+	default 100 if MACH_BRCM_NS
+
+config XIP_PHYS_ADDR
+        hex "XIP Kernel Physical Location"
+        depends on XIP_KERNEL
+        default 0x1e030000 if MACH_BRCM_NS_QT
+        default 0x1e040000 if MACH_BRCM_NS
+
+endif

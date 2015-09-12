@@ -33,11 +33,24 @@
 #include <shutils.h>
 #include <rc.h>
 
-/* Zeroconf support if DHCP fails */
-#undef DHCP_ZEROCONF
-
 /* Support for Domain Search List */
 #undef DHCP_RFC3397
+
+/* set nvram to value
+ * returns:
+ *  0 if not changed
+ *  1 if new/changed/removed */
+static int
+nvram_set_check(const char *name, const char *value)
+{
+	char *nvalue = nvram_get(name);
+
+	if (nvalue == value || strcmp(nvalue ? : "", value ? : "") == 0)
+		return 0;
+
+	nvram_set(name, value);
+	return 1;
+}
 
 /* set nvram to env value
  * returns:
@@ -46,17 +59,12 @@
 static int
 nvram_set_env(const char *name, const char *env)
 {
-	char *nvalue = nvram_get(name);
 	char *evalue = getenv(env);
 
 	if (evalue)
 		evalue = trim_r(evalue);
 
-	if (nvalue == evalue || strcmp(nvalue ? : "", evalue ? : "") == 0)
-		return 0;
-
-	nvram_set(name, evalue);
-	return 1;
+	return nvram_set_check(name, evalue);
 }
 
 static int
@@ -142,18 +150,27 @@ bound(void)
 		snprintf(prefix, sizeof(prefix), "wan%d_x", ifunit);
 	else	snprintf(prefix, sizeof(prefix), "wan%d_", ifunit);
 
-#ifdef DHCP_ZEROCONF
+	/* Stop zcip to avoid races */
 	stop_zcip(ifunit);
-#endif
 
 	changed += nvram_set_env(strcat_r(prefix, "ipaddr", tmp), "ip");
+#if defined(RTCONFIG_USB_MODEM) && defined(RT4GAC55U)
+	if (get_dualwan_by_unit(ifunit) == WANS_DUALWAN_IF_USB &&
+	    nvram_match("usb_modem_act_type", "gobi")) {
+		changed += nvram_set_check(strcat_r(prefix, "netmask", tmp), "255.255.255.255");
+		if ((gateway = getenv("ip")))
+			nvram_set(strcat_r(prefix, "gateway", tmp), trim_r(gateway));
+	} else
+#endif
+{
 	changed += nvram_set_env(strcat_r(prefix, "netmask", tmp), "subnet");
 	if ((gateway = getenv("router")))
 		nvram_set(strcat_r(prefix, "gateway", tmp), trim_r(gateway));
+}
 
 	if (nvram_get_int(strcat_r(wanprefix, "dnsenable_x", tmp))) {
 		/* ex: android phone, the gateway is the DNS server. */
-		if ((value = getenv("dns") ? : gateway))
+		if ((value = getenv("dns") ? : getenv("router")))
 			nvram_set(strcat_r(prefix, "dns", tmp), trim_r(value));
 #ifdef DHCP_RFC3397
 		if ((value = getenv("search")) && *value) {
@@ -269,16 +286,28 @@ renew(void)
 	if ((value = getenv("ip")) == NULL ||
 	    !nvram_match(strcat_r(prefix, "ipaddr", tmp), trim_r(value)))
 		return bound();
+#if defined(RTCONFIG_USB_MODEM) && defined(RT4GAC55U)
+	if (get_dualwan_by_unit(ifunit) == WANS_DUALWAN_IF_USB &&
+	    nvram_match("usb_modem_act_type", "gobi")) {
+		if (!nvram_match(strcat_r(prefix, "netmask", tmp), "255.255.255.255"))
+			return bound();
+		if ((gateway = getenv("ip")) == NULL ||
+		    !nvram_match(strcat_r(prefix, "gateway", tmp), trim_r(gateway)))
+			return bound();
+	} else
+#endif
+{
 	if ((value = getenv("subnet")) == NULL ||
 	    !nvram_match(strcat_r(prefix, "netmask", tmp), trim_r(value)))
 		return bound();
 	if ((gateway = getenv("router")) == NULL ||
 	    !nvram_match(strcat_r(prefix, "gateway", tmp), trim_r(gateway)))
 		return bound();
+}
 
 	if (nvram_get_int(strcat_r(wanprefix, "dnsenable_x", tmp))) {
 		/* ex: android phone, the gateway is the DNS server. */
-		if ((value = getenv("dns") ? : gateway)) {
+		if ((value = getenv("dns") ? : getenv("router"))) {
 			changed += !nvram_match(strcat_r(prefix, "dns", tmp), trim_r(value));
 			nvram_set(strcat_r(prefix, "dns", tmp), trim_r(value));
 		}
@@ -320,26 +349,28 @@ renew(void)
 	return 0;
 }
 
-#ifdef DHCP_ZEROCONF
 static int
 leasefail(void)
 {
 	char *wan_ifname = safe_getenv("interface");
-	char prefix[sizeof("wanXXXXXXXXXX_")];
-	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
+	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
+	char pid[sizeof("/var/run/zcipXXXXXXXXXX.pid")];
 	int unit;
 
 	/* Figure out nvram variable name prefix for this i/f */
 	if ((unit = wan_prefix(wan_ifname, prefix)) < 0)
 		return -1;
 
+	/* Start zcip for pppoe only */
+	if (!nvram_match(strcat_r(prefix, "proto", tmp), "pppoe"))
+		return 0;
+
 	snprintf(pid, sizeof(pid), "/var/run/zcip%d.pid", unit);
 	if (kill_pidfile_s(pid, 0) == 0)
 		return 0;
 
-	return start_zcip(wan_ifname, unit);
+	return start_zcip(wan_ifname, unit, NULL);
 }
-#endif
 
 int
 udhcpc_wan(int argc, char **argv)
@@ -356,10 +387,8 @@ udhcpc_wan(int argc, char **argv)
 		return bound();
 	else if (strstr(argv[1], "renew"))
 		return renew();
-#ifdef DHCP_ZEROCONF
 	else if (strstr(argv[1], "leasefail"))
 		return leasefail();
-#endif
 /*	else if (strstr(argv[1], "nak")) */
 
 	return 0;
@@ -372,7 +401,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
 	char clientid[sizeof("61:") + (32+32+1)*2];
 	char *value;
-	char *dhcp_argv[] = { "udhcpc",
+	char *dhcp_argv[] = { "/sbin/udhcpc",
 		"-i", wan_ifname,
 		"-p", (snprintf(pid, sizeof(pid), "/var/run/udhcpc%d.pid", unit), pid),
 		"-s", "/tmp/udhcpc",
@@ -410,8 +439,15 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	/* Use unit */
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
-	if (nvram_get_int("dhcpc_mode") == 0)
-	{
+	/* Stop zcip to avoid races */
+	stop_zcip(unit);
+
+	/* Skip dhcp and start zcip for pppoe, if desired */
+	if (nvram_match(strcat_r(prefix, "proto", tmp), "pppoe") &&
+	    nvram_match(strcat_r(prefix, "vpndhcp", tmp), "0"))
+		return start_zcip(wan_ifname, unit, ppid);
+
+	if (nvram_get_int("dhcpc_mode") == 0) {
 		/* 2 discover packets max (default 3 discover packets) */
 		dhcp_argv[index++] = "-t2";
 		/* 5 seconds between packets (default 3 seconds) */
@@ -508,9 +544,6 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	dhcp_argv[index++] = vivso;
 #endif
 
-#ifdef DHCP_ZEROCONF
-	stop_zcip(unit);
-#endif
 	return _eval(dhcp_argv, NULL, 0, ppid);
 }
 
@@ -519,13 +552,21 @@ stop_udhcpc(int unit)
 {
 	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
 
-#ifdef DHCP_ZEROCONF
-	/* stop zcip before udhcpc to avoid races */
+	/* Stop zcip before udhcpc to avoid races */
 	stop_zcip(unit);
-#endif
+
+	/* Stop all instances */
+	if (unit < 0) {
+		killall_tk("udhcpc");
+		return;
+	}
+
+	/* Stop unit instance only */
 	snprintf(pid, sizeof(pid), "/var/run/udhcpc%d.pid", unit);
-	kill_pidfile_s(pid, SIGUSR2);
-	kill_pidfile_s(pid, SIGTERM);
+	if (kill_pidfile_s(pid, SIGUSR2) == 0) {
+		usleep(10000);
+		kill_pidfile_s(pid, SIGTERM);
+	}
 }
 
 /*
@@ -609,23 +650,30 @@ zcip_wan(int argc, char **argv)
 }
 
 int
-start_zcip(char *wan_ifname, int unit)
+start_zcip(char *wan_ifname, int unit, pid_t *ppid)
 {
 	char pid[sizeof("/var/run/zcipXXXXXXXXXX.pid")];
-	char *zcip_argv[] = { "zcip",
+	char *zcip_argv[] = { "/sbin/zcip",
 		"-p", (snprintf(pid, sizeof(pid), "/var/run/zcip%d.pid", unit), pid),
 		wan_ifname,
 		"/tmp/zcip",
 		NULL };
 
-	return _eval(zcip_argv, NULL, 0, NULL);
+	return _eval(zcip_argv, NULL, 0, ppid);
 }
 
 void
 stop_zcip(int unit)
 {
-	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
+	char pid[sizeof("/var/run/zcipXXXXXXXXXX.pid")];
 
+	/* Stop all instances */
+	if (unit < 0) {
+		killall_tk("zcip");
+		return;
+	}
+
+	/* Stop unit instance only */
 	snprintf(pid, sizeof(pid), "/var/run/zcip%d.pid", unit);
 	kill_pidfile_s(pid, SIGTERM);
 }

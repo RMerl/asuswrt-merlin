@@ -126,4 +126,13 @@ if [ "$1" == "lan4_led_ctrl" ]; then
 	exit 0
 fi
 
+if [ "$1" == "diagnostics" ]; then
+	sed -i "s/QTN_RPC_CLIENT/${2}/g" /scripts/gather_info
+	gather_info &
+fi
+
+if [ "$1" == "sync_time" ]; then
+	date -s ${2}
+fi
+
 exit 0

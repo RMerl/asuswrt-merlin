@@ -1,0 +1,102 @@
+
+# every test should always be run and always return some status.
+# so, if we lose sync with a multi-test program, aborted will be used
+# to flag the remainder of the tests as untested.
+#set aborted 0
+
+# only match with color codes since "failed" / "OK" might otherwise
+# be part of the output...
+#set color 1
+
+set xfail 0
+
+proc onesimple { test_name match } {
+	global verbose
+	global aborted
+	global testprefix
+	if { $aborted > 0 } {
+		untested "$testprefix$test_name"
+		return
+	}
+	if { $verbose > 0 } {
+		send_user "$testprefix$test_name$note\n"
+	}
+	expect {
+		"$match"	{ pass "$testprefix$test_name"; }
+		eof		{ fail "$testprefix$test_name"; set aborted 1; }
+		timeout		{ unresolved "$testprefix$test_name"; set aborted 1; }
+	}
+}
+
+proc onetest { test_name note start } {
+	global aborted
+	global testprefix
+	global verbose
+	global color
+	global xfail
+
+	if { $aborted > 0 } {
+		untested "$testprefix$test_name"
+		return
+	}
+
+	if { $verbose > 0 } {
+		send_user "$testprefix$test_name$note\n"
+	}
+	expect {
+		"$start"	{ }
+
+		eof	{ unresolved "$testprefix$test_name"; set aborted 1; }
+		timeout	{ unresolved "$testprefix$test_name"; set aborted 1; }
+	}
+
+	if { $aborted > 0 } {
+		send_user "sync failed: $testprefix$test_name$note -- $testprefix aborted!\n"
+		return
+	}
+
+	if { $color } {
+		set pat "(32mOK|31mfailed)"
+	} else {
+		set pat "(OK|failed)"
+	}
+	expect {
+		# need this because otherwise expect will skip over a "failed" and
+		# grab the next "OK" (or the other way around)
+		-re "$pat"  {
+			if { "$expect_out(0,string)" == "32mOK" || "$expect_out(0,string)" == "OK" } {
+				pass "$testprefix$test_name"
+			} else {
+				if { $xfail } {
+					xfail "$testprefix$test_name"
+				} else {
+					fail "$testprefix$test_name"
+				}
+			}
+			return
+		}
+
+		eof	{ unresolved "$testprefix$test_name"; set aborted 1; }
+		timeout	{ unresolved "$testprefix$test_name"; set aborted 1; }
+	}
+
+	if { $aborted > 0 } {
+		send_user "failed: $testprefix$test_name$note -- $testprefix aborted!\n"
+		return
+	}
+}
+
+proc headerline { line } {
+	global aborted
+	if { $aborted > 0 } { return; }
+	expect {
+		$line	{ return; }
+		eof	{ send_user "numbering mismatch!\n"; set aborted 1; }
+		timeout	{ send_user "numbering mismatch!\n"; set aborted 1; }
+	}
+}
+
+proc simpletest { start } {
+	onetest "$start" "" "$start"
+}
+

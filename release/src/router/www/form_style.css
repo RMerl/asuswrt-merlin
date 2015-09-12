@@ -367,7 +367,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -379,7 +379,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -391,7 +391,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -403,7 +403,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -415,7 +415,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -427,7 +427,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -439,7 +439,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -451,7 +451,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -463,7 +463,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -475,7 +475,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -487,7 +487,7 @@
 	line-height:23px \9;	/*IE*/
 	font-size:12px;
 	font-family: Lucida Console;
-	background-image:url(/images/New_ui/inputbg.png);
+	background-image:url(images/New_ui/inputbg.png);
 	border-width:0;
 	color:#FFFFFF;
 }
@@ -496,7 +496,7 @@
 .titledownbutton{
 	text-shadow: 1px 1px 0px black;
 	font-weight: bolder;
- 	background: transparent url(/images/New_ui/contentbt_normal.png) no-repeat scroll center top;
+ 	background: transparent url(images/New_ui/contentbt_normal.png) no-repeat scroll center top;
  	border:0;
  	color: #FFFFFF;
 	height:34px;
@@ -509,7 +509,7 @@
  	overflow:visible;
 }
 .titledownbutton:hover		/*, .button:active*/{
-	background:url(/images/New_ui/contentbt_over.png) no-repeat;
+	background:url(images/New_ui/contentbt_over.png) no-repeat;
 	height:34px;
   width:122px;
 	/*margin-right:5px;
@@ -522,8 +522,8 @@
 .button_gen{
 	font-weight: bolder;
 	text-shadow: 1px 1px 0px black;
-  background: transparent url(/images/New_ui/contentbt_normal.png) no-repeat scroll center top;
-  _background: transparent url(/images/New_ui/contentbt_normal_ie6.png) no-repeat scroll center top;
+  background: transparent url(images/New_ui/contentbt_normal.png) no-repeat scroll center top;
+  _background: transparent url(images/New_ui/contentbt_normal_ie6.png) no-repeat scroll center top;
   border:0;
   color: #FFFFFF;
 	height:33px;
@@ -539,7 +539,7 @@
 }
 .button_gen:hover{
 	font-weight: bolder;
-	background:url(/images/New_ui/contentbt_over.png) no-repeat;
+	background:url(images/New_ui/contentbt_over.png) no-repeat;
 	height:33px;
  	width:122px;
  	padding:0 .70em 0 .70em;  
@@ -551,8 +551,8 @@
 .button_gen_dis{
 	font-weight: bolder;
 	text-shadow: 1px 1px 0px black;
-  background: transparent url(/images/New_ui/contentbt_normal.png) no-repeat scroll center top;
-  _background: transparent url(/images/New_ui/contentbt_normal_ie6.png) no-repeat scroll center top;
+  background: transparent url(images/New_ui/contentbt_normal.png) no-repeat scroll center top;
+  _background: transparent url(images/New_ui/contentbt_normal_ie6.png) no-repeat scroll center top;
   border:0;
   color: #333333;
 	height:33px;
@@ -566,7 +566,7 @@
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
 }
 .button_gen_dis:hover{
-	background:url(/images/New_ui/contentbt_over.png) no-repeat;
+	background:url(images/New_ui/contentbt_over.png) no-repeat;
 	height:33px;
  	width:122px;
  	padding:0 .70em 0 .70em;  
@@ -577,7 +577,7 @@
 }
 .button_gen_touch{
   color: #FFFFFF;
-	background:url(/images/New_ui/contentbt_over.png) no-repeat;
+	background:url(images/New_ui/contentbt_over.png) no-repeat;
 	height:33px;
  	width:122px;
  	padding:0 .70em 0 .70em;  
@@ -589,7 +589,7 @@
 .button_gen_long{
 	font-weight: bolder;
 	text-shadow: 1px 1px 0px black;
-  background: transparent url(/images/New_ui/logout_bt.png) no-repeat scroll center top;
+  background: transparent url(images/New_ui/logout_bt.png) no-repeat scroll center top;
   border:0;
   color: #FFFFFF;
 	height:34px;
@@ -603,7 +603,7 @@
  	white-space:normal;
 }
 .button_gen_long:hover	/*, .button:active*/{
-  background: transparent url(/images/New_ui/logout_btover.png) no-repeat scroll center top;
+  background: transparent url(images/New_ui/logout_btover.png) no-repeat scroll center top;
   border:0;
   color: #FFFFFF;
 	height:34px;
@@ -619,7 +619,7 @@
 .button_gen_long_dis{
 	font-weight: bolder;
 	text-shadow: 1px 1px 0px black;
-  background: transparent url(/images/New_ui/logout_bt.png) no-repeat scroll center top;
+  background: transparent url(images/New_ui/logout_bt.png) no-repeat scroll center top;
   border:0;
   color: #333333;
 	height:34px;
@@ -633,7 +633,7 @@
  	white-space:normal;
 }
 .button_gen_long_dis:hover	/*, .button:active*/{
-  background: transparent url(/images/New_ui/logout_btover.png) no-repeat scroll center top;
+  background: transparent url(images/New_ui/logout_btover.png) no-repeat scroll center top;
   border:0;
   color: #333333;
 	height:34px;
@@ -648,7 +648,7 @@
 }
 .button_gen_long_touch{
   color: #FFFFFF;
-	background:url(/images/New_ui/contentbt_over.png) no-repeat;
+	background:url(images/New_ui/contentbt_over.png) no-repeat;
 	height:33px;
  	width:155px;
  	padding:0 .70em 0 .70em;  
@@ -659,7 +659,7 @@
 .button_gen_short{
 	font-weight: bolder;
 	text-shadow: 1px 1px 0px black;
-  background: transparent url(/images/New_ui/flowbt_normal.png) no-repeat scroll center top;
+  background: transparent url(images/New_ui/flowbt_normal.png) no-repeat scroll center top;
   border:0;
   color: #FFFFFF;
 	height:33px;
@@ -674,7 +674,7 @@
 }
 .button_gen_short:hover{
 	font-weight: bolder;
-	background:url(/images/New_ui/flowbt_over.png) no-repeat;
+	background:url(images/New_ui/flowbt_over.png) no-repeat;
 	height:33px;
  	width:91px;
  	padding:0 .70em 0 .70em;  
@@ -1011,14 +1011,13 @@ textarea{
 
 /* btns in table */
 .add_btn{
- 	background: transparent url(/images/New_ui/accountadd.png) no-repeat scroll center top;
+ 	background: transparent url(images/New_ui/accountadd.png) no-repeat scroll center top;
  	border:0;
 	height:34px;
  	width:35px;
  	cursor:pointer;
 }
 .add_btn:hover, .add_btn:active{
- 	/*background: transparent url(/images/New_ui/UserAdd_0.png) no-repeat scroll center top;*/
  	border:0;
 	height:34px;
  	width:35px;
@@ -1026,21 +1025,20 @@ textarea{
 }
 
 .remove_btn{
- 	background: transparent url(/images/New_ui/accountdelete.png) no-repeat scroll center top;
+ 	background: transparent url(images/New_ui/accountdelete.png) no-repeat scroll center top;
 	border:0;
 	height:30px;
  	width:35px;
  	cursor:pointer;
 }
 .remove_btn:hover, .remove_btn:active{
- 	/*background: transparent url(/images/New_ui/UserDel_0.png) no-repeat scroll center top;*/
 	border:0;
 	height:30px;
  	width:35px;
  	cursor:pointer;
 }
 .remove_btn_NM{
- 	background: transparent url(/images/zoomout.png) no-repeat scroll center top;
+ 	background: transparent url(images/zoomout.png) no-repeat scroll center top;
 	border:0;
 	height:27px;
  	width:23px;
@@ -1049,14 +1047,13 @@ textarea{
 }
 
 .edit_btn{
-  background: transparent url(/images/New_ui/accountedit.png) no-repeat scroll center top;
+  background: transparent url(images/New_ui/accountedit.png) no-repeat scroll center top;
   border:0;
 	height:34px;
  	width:35px;
  	cursor:pointer;
 }
 .edit_btn:hover, .edit_btn:active{
- 	/*background: transparent url(/images/New_ui/UserMod_0.png) no-repeat scroll center top;*/
  	border:0;
 	height:34px;
  	width:35px;
@@ -1074,7 +1071,7 @@ textarea{
 /*Viz add apply_gen */
 
 .zoomin_btn{
- 	background: transparent url(/images/zoomin.png) no-repeat scroll center top;
+ 	background: transparent url(images/zoomin.png) no-repeat scroll center top;
  	border:0;
 	height:28px;
  	width:35px;
@@ -1082,7 +1079,7 @@ textarea{
 }
 
 .zoomout_btn{
- 	background: transparent url(/images/zoomout.png) no-repeat scroll center top;
+ 	background: transparent url(images/zoomout.png) no-repeat scroll center top;
 	border:0;
 	height:28px;
  	width:35px;
@@ -1091,7 +1088,7 @@ textarea{
 
 .help_icon{
 	padding-right: 20px;
-	background: url(/images/New_ui/helpicon.png) no-repeat;
+	background: url(images/New_ui/helpicon.png) no-repeat;
 }
 /* CSS Document */
 body{
@@ -1202,7 +1199,7 @@ color:#FFFFFF;
 	cursor: pointer;
 } 
 .tab {	
-	background: transparent url(/images/New_ui/hightaba.png) no-repeat scroll right top;
+	background: transparent url(images/New_ui/hightaba.png) no-repeat scroll right top;
 	color: White;
 	float: left;
 	height: 40px;
@@ -1214,7 +1211,7 @@ color:#FFFFFF;
 	z-index: -1;
 }
 .tab span {
-	background: transparent url(/images/New_ui/hightabspan.png) no-repeat;
+	background: transparent url(images/New_ui/hightabspan.png) no-repeat;
 	height: 40px;
 	padding-left: 6px;
 	padding-top: 10px \9;
@@ -1228,7 +1225,7 @@ color:#FFFFFF;
 	z-index: -1;
 }
 .tabclick {	   
-	background: transparent url(/images/New_ui/hightabclicka.png) no-repeat scroll right top;
+	background: transparent url(images/New_ui/hightabclicka.png) no-repeat scroll right top;
 	color: White;
 	float: left;
 	height: 40px;
@@ -1239,7 +1236,7 @@ color:#FFFFFF;
 	font-family: Verdana;
 }
 .tabclick span {
-	background: transparent url(/images/New_ui/hightabclickspan.png) repeat;
+	background: transparent url(images/New_ui/hightabclickspan.png) repeat;
 	height: 40px;
 	padding-left: 6px;
 	padding-top: 10px \9;
@@ -1431,7 +1428,7 @@ padding-top:1px;
 	cursor: pointer;
 }
 .coolerstatuson{
-	background-image:url(/images/New_ui/coolerstatus.png);
+	background-image:url(images/New_ui/coolerstatus.png);
 	background-repeat:no-repeat;	
 	background-position:2px 2px;
 	height:29px;
@@ -1439,7 +1436,7 @@ padding-top:1px;
 	cursor: pointer;
 }
 .coolerstatusoff{
-	background-image:url(/images/New_ui/coolerstatus.png);
+	background-image:url(images/New_ui/coolerstatus.png);
 	background-repeat:no-repeat;	
 	background-position:2px -48px;
 	height:29px;
@@ -1448,24 +1445,24 @@ padding-top:1px;
 }
 
 .wifihwswstatuson{
-	background-image:url(/images/wifi_hw_sw.png);
-	background-repeat:no-repeat;	
+	background-image:url(images/wifi_hw_sw.png);
+	background-repeat:no-repeat;
 	background-position:2px 2px;
 	height:29px;
 	width:30px;
 	cursor: pointer;
 }
 .wifihwswstatuspartial{
-        background-image:url(/images/wifi_hw_sw.png);
-        background-repeat:no-repeat;    
+        background-image:url(images/wifi_hw_sw.png);
+        background-repeat:no-repeat;
         background-position:2px -73px;
         height:29px;
         width:30px;
         cursor: pointer;
 }
 .wifihwswstatusoff{
-	background-image:url(/images/wifi_hw_sw.png);
-	background-repeat:no-repeat;	
+	background-image:url(images/wifi_hw_sw.png);
+	background-repeat:no-repeat;
 	background-position:2px -48px;
 	height:29px;
 	width:30px;
@@ -1473,16 +1470,16 @@ padding-top:1px;
 }
 
 .guestnetworkstatuson{
-	background-image:url(/images/New_ui/multiplessidstatus.png);
-	background-repeat:no-repeat;	
+	background-image:url(images/New_ui/multiplessidstatus.png);
+	background-repeat:no-repeat;
 	background-position:2px 2px;
 	height:29px;
 	width:30px;
 	cursor: pointer;
 }
 .guestnetworkstatusoff{
-	background-image:url(/images/New_ui/multiplessidstatus.png);
-	background-repeat:no-repeat;	
+	background-image:url(images/New_ui/multiplessidstatus.png);
+	background-repeat:no-repeat;
 	background-position:2px -48px;
 	height:29px;
 	width:30px;
@@ -1524,7 +1521,7 @@ padding-top:1px;
 
 /*Viz add 2013.03 for adsl sync status      start*/
 .linestatusup{
-	background-image:url(/images/New_ui/DSLstatus.png);
+	background-image:url(images/New_ui/DSLstatus.png);
 	background-repeat:no-repeat;	
 	background-position:2px 0px;
 	height:29px;
@@ -1532,7 +1529,7 @@ padding-top:1px;
 	cursor: pointer;
 }
 .linestatuselse{
-	background-image:url(/images/New_ui/DSL_Act.gif);
+	background-image:url(images/New_ui/DSL_Act.gif);
 	background-repeat:no-repeat;	
 	background-position:3px 2px;
 	height:29px;
@@ -1540,7 +1537,7 @@ padding-top:1px;
 	cursor: pointer;
 }
 .linestatusdown{
-	background-image:url(/images/New_ui/DSLstatus.png);
+	background-image:url(images/New_ui/DSLstatus.png);
 	background-repeat:no-repeat;	
 	background-position:2px -50px;
 	height:29px;
@@ -1550,7 +1547,7 @@ padding-top:1px;
 /*Viz add 2013.03 for adsl sync status      end*/
 /*Viz add 2014.10 for adsl diag status      start*/
 .linestatusdiag{
-	background-image:url(/images/New_ui/DSL_diag.gif);
+	background-image:url(images/New_ui/DSL_diag.gif);
 	background-repeat:no-repeat;	
 	background-position:3px 2px;
 	height:29px;
@@ -1952,7 +1949,7 @@ padding-top:1px;
 	color:#FFFFFF;
 }
 .notification_on{
-	background-image:url(/images/New_ui/notification.png);
+	background-image:url(images/New_ui/notification.png);
 	background-repeat:no-repeat;	
 	background-position:2px 2px;
 	height:29px;
@@ -1974,15 +1971,15 @@ padding-top:1px;
 .bwdpistatus_game{
 	height:20px;
 	width:22px;
-	background-image:url(/images/New_ui/QoS_quick/game_icon.svg);
+	background-image:url(images/New_ui/QoS_quick/game_icon.svg);
 	background-repeat:no-repeat;	
 	background-position:0px 2px;
 }
 
 .bwdpistatus_media{
-	height:22px;
-	width:22px;
-	background-image:url(/images/New_ui/QoS_quick/media_icon.svg);
+	height:20px;
+	width:21px;
+	background-image:url(images/New_ui/QoS_quick/media_icon.svg);
 	background-repeat:no-repeat;
 	background-position:0px 2px;
 }
@@ -1990,21 +1987,21 @@ padding-top:1px;
 .bwdpistatus_web{
 	height:20px;
 	width:22px;
-	background-image:url(/images/New_ui/QoS_quick/web_icon.svg);
+	background-image:url(images/New_ui/QoS_quick/web_icon.svg);
 	background-repeat:no-repeat;
 	background-position:2px 0px;
 }
 
 .bwdpistatus_customize{
-	height:22px;
-	width:24px;
-	background-image:url(/images/New_ui/QoS_quick/customize_icon.svg);
+	height:21px;
+	width:23px;
+	background-image:url(images/New_ui/QoS_quick/customize_icon.svg);
 	background-repeat:no-repeat;	
 	background-position:2px 2px;
 }
 
 .vpnstatuson{
-	background-image:url(/images/New_ui/vpnstatus.png);
+	background-image:url(images/New_ui/vpnstatus.png);
 	background-repeat:no-repeat;	
 	background-position:2px 2px;
 	height:29px;
@@ -2013,7 +2010,7 @@ padding-top:1px;
 	display: none;
 }
 .vpnstatusoff{
-	background-image:url(/images/New_ui/vpnstatus.png);
+	background-image:url(images/New_ui/vpnstatus.png);
 	background-repeat:no-repeat;	
 	background-position:2px -48px;
 	height:29px;
@@ -2281,40 +2278,40 @@ padding-top:1px;
 	line-height:25px;
 }
 .single_wan_connected{
-	background-image:url(/images/New_ui/networkmap/line_dualwan.png);
+	background-image:url(images/New_ui/networkmap/line_dualwan.png);
 	background-repeat:no-repeat;
 	height:40px;
 	width:20px;
 }
 .single_wan_disconnected{
-	background-image:url(/images/New_ui/networkmap/line_dualwan_disconnected.png);
+	background-image:url(images/New_ui/networkmap/line_dualwan_disconnected.png);
 	background-repeat:no-repeat;
 	height:40px;
 	width:20px;
 }
 .primary_wan_connected{
-	background-image:url(/images/New_ui/networkmap/line_dualwan.png);
+	background-image:url(images/New_ui/networkmap/line_dualwan.png);
 	background-repeat:no-repeat;
 	margin-left:68px;
 	height:40px;
 	width:20px;
 }
 .primary_wan_disconnected{
-	background-image:url(/images/New_ui/networkmap/line_dualwan_disconnected.png);
+	background-image:url(images/New_ui/networkmap/line_dualwan_disconnected.png);
 	background-repeat:no-repeat;
 	margin-left:68px;
 	height:40px;
 	width:20px;
 }
 .primary_wan_standby{
-	background-image:url(/images/New_ui/networkmap/line_dualwan_dot.png);
+	background-image:url(images/New_ui/networkmap/line_dualwan_dot.png);
 	background-repeat:no-repeat;
 	margin-left:68px;
 	height:40px;
 	width:20px;
 }
 .secondary_wan_connected{
-	background-image:url(/images/New_ui/networkmap/line_dualwan.png);
+	background-image:url(images/New_ui/networkmap/line_dualwan.png);
 	background-repeat:no-repeat;
 	margin-left:105px;
 	*margin-left:103px;
@@ -2322,7 +2319,7 @@ padding-top:1px;
 	width:20px;
 }
 .secondary_wan_disconnected{
-	background-image:url(/images/New_ui/networkmap/line_dualwan_disconnected.png);
+	background-image:url(images/New_ui/networkmap/line_dualwan_disconnected.png);
 	background-repeat:no-repeat;
 	margin-left:105px;
 	*margin-left:103px;
@@ -2330,7 +2327,7 @@ padding-top:1px;
 	width:20px;
 }
 .secondary_wan_standby{
-	background-image:url(/images/New_ui/networkmap/line_dualwan_dot.png);
+	background-image:url(images/New_ui/networkmap/line_dualwan_dot.png);
 	background-repeat:no-repeat;
 	margin-left:105px;
 	*margin-left:103px;

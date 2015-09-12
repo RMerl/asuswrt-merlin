@@ -1,0 +1,178 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Aug 10 14:21:18 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>FATFSCK</title>
+
+</head>
+<body>
+
+<h1 align="center">FATFSCK</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#EXIT STATUS">EXIT STATUS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">fatfsck &minus;
+check and repair a FAT volume</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatfsck</b>
+[<i>options</i>] <i>device</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>fatfsck</b></i>
+will check a FAT volume for errors, and optionally correct
+them. Run fatfsck without arguments for a full list of
+options.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>fatfsck</b> accepts.
+Nearly all options have two equivalent names. The short name
+is preceded by <b>&minus;</b> and the long name is preceded
+by <b>&minus;&minus;</b>. <b><br>
+&minus;b</b>, <b>&minus;&minus;basic</b></p>
+
+<p style="margin-left:22%;">Do only a basic file system
+check or repair. This option limits fatfsck to
+checking/repairing the boot region, FAT and the root
+directory. All other directories and allocations are
+ignored. This is useful when you want to do a fast
+check/repair which makes sure that the volume will mount
+properly and that the root directory will be accessible.</p>
+
+<p style="margin-left:11%;"><b>&minus;p</b>,
+<b>&minus;&minus;probe</b></p>
+
+<p style="margin-left:22%;">Probe for a FAT file system.
+This runs some tests on the device to check if the file
+system is FAT.</p>
+
+<p style="margin-left:11%;"><b>&minus;q</b>,
+<b>&minus;&minus;quiet</b></p>
+
+<p style="margin-left:22%;">Suppresses informational
+messages. Only error/warning messages and the final summary
+is displayed during execution.</p>
+
+<p style="margin-left:11%;"><b>&minus;r</b>,
+<b>&minus;&minus;repair</b></p>
+
+<p style="margin-left:22%;">Repair on-disk inconsistencies
+encountered.</p>
+
+<p style="margin-left:11%;"><b>&minus;a</b>,
+<b>&minus;&minus;automatic&minus;repair</b></p>
+
+<p style="margin-left:22%;">If the volume is marked dirty,
+then repair on-disk inconsistencies encountered (equivalent
+to the <b>&minus;r</b>/<b>&minus;&minus;repair</b> option).
+Otherwise exit immediately with no action.</p>
+
+<p style="margin-left:11%;"><b>&minus;s</b>,
+<b>&minus;&minus;strict</b></p>
+
+<p style="margin-left:22%;">Turns on strict checking. This
+includes checking things that are not normally required to
+make sure the volume follows FAT specifications. This may
+increase the execution time for fatfsck.</p>
+
+<p style="margin-left:11%;"><b>&minus;t</b>,
+<b>&minus;&minus;timeout</b> SECONDS</p>
+
+<p style="margin-left:22%;">Timeout in seconds before
+fatfsck will abort the volume check/repair. If specified,
+this sets an upper limit on the execution time of fatfsck.
+After the timeout occurs, fatfsck will clear all its pending
+tasks and return as soon as possible.</p>
+
+<p style="margin-left:11%;"><b>&minus;v</b>,
+<b>&minus;&minus;verbose</b></p>
+
+<p style="margin-left:22%;">Verbose output. This makes
+fatfsck print more information about what it&rsquo;s doing,
+for instance which directory/file it&rsquo;s currently
+processing.</p>
+
+<h2>EXIT STATUS
+<a name="EXIT STATUS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>0</b>:
+Success. <b>fatfsck</b> did what it was instructed to do
+successfully. <b><br>
+1</b>: Unknown error. Error came from outside <b>fatfsck</b>
+(libraries, operating <br>
+system kernel, ...). <b><br>
+2</b>: Invalid arguments. An error was detected when parsing
+the options. <b><br>
+3</b>: FAT volume errors were detected (when checking) or
+could not be <br>
+repaired (when repairing)</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+bug please send an email describing the problem to
+fat-support@tuxera.com.</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatfsck</b>
+was written by Sougata Santra, Tuxera Inc.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatfsck</b>
+is part of the <b>Tuxera FATprogs</b> package.</p>
+<hr>
+</body>
+</html>

@@ -1410,29 +1410,6 @@ int get_meminfo_item(const char *name)
 	return mem;
 }
 
-#ifdef RTCONFIG_OLD_PARENTALCTRL
-int nvram_set_by_seq(char *name, unsigned int seq, char *value)
-{
-	char tmp_name_local[255];
-
-	snprintf(tmp_name_local, sizeof(tmp_name_local), "%s%d", name, seq);
-	nvram_set(tmp_name_local, value);
-
-	return 1;
-}
-
-char * nvram_get_by_seq(char *name, unsigned int seq)
-{
-	char tmp_name_local[255];
-
-	snprintf(tmp_name_local, sizeof(tmp_name_local), "%s%d", name, seq);
-
-	return nvram_safe_get(tmp_name_local);
-
-}
-
-#endif	/* RTCONFIG_OLD_PARENTALCTRL */
-
 #ifdef RTCONFIG_SHP
 void restart_lfp()
 {

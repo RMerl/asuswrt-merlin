@@ -1,0 +1,14 @@
+[Unit]
+Description=RIP routing daemon
+BindTo=zebra.service
+After=syslog.target network.target zebra.service
+ConditionPathExists=/etc/quagga/ripd.conf
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/sysconfig/quagga
+ExecStart=/usr/sbin/ripd -d $RIPD_OPTS -f /etc/quagga/ripd.conf
+Restart=on-abort
+
+[Install]
+WantedBy=network.target

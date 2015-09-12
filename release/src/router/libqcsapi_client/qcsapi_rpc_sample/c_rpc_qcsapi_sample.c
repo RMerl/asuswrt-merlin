@@ -196,42 +196,6 @@ int c_rpc_qcsapi_get_ap_properties()
 }
 
 /*=============================================================================
-FUNCTION:		c_rpc_qcsapi_init
-DESCRIPTION:		Connect the RPC server. Try 15 times every 5 sec.
-ARGUMENTS PASSED:
-RETURN VALUE:		0:success, other:error
-=============================================================================*/
-int c_rpc_qcsapi_init()
-{
-	const char *host;
-	CLIENT *clnt;
-	int retry = 0;
-	/* setup RPC based on udp protocol */
-	do {
-		host = client_qcsapi_find_host_addr(0, NULL);
-		if (!host) {
-			printf("Cannot find the host\n");
-			continue;
-		}
-
-		if (!s_c_rpc_use_udp) {
-			clnt = clnt_create(host, QCSAPI_PROG, QCSAPI_VERS, "tcp");
-		} else {
-			clnt = clnt_create(host, QCSAPI_PROG, QCSAPI_VERS, "udp");
-		}
-		if (clnt == NULL) {
-			clnt_pcreateerror(host);
-			continue;
-		} else {
-			client_qcsapi_set_rpcclient(clnt);
-			return 0;
-		}
-		sleep(5);
-	} while (retry++ < MAX_RETRY_TIMES);
-	return -1;
-}
-
-/*=============================================================================
 FUNCTION:		print_help
 DESCRIPTION:		Print the supported option list
 ARGUMENTS PASSED:
@@ -292,18 +256,48 @@ void process_option(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	int ret = 0;
-	if (argc==1){
+	int retry = 0;
+	const char *host;
+	CLIENT *clnt;
+
+	/* print help if no arguments */
+	if (argc == 1) {
 		print_help();
-		return 0;
+		exit(1);
 	}
 
-	ret = c_rpc_qcsapi_init();
-	if (ret < 0) {
-		return -1;
+	/* setup RPC based on udp protocol */
+	while (retry++ < MAX_RETRY_TIMES) {
+
+		host = client_qcsapi_find_host_addr(&argc, &argv);
+		if (!host) {
+			client_qcsapi_find_host_errmsg(argv[0]);
+			sleep(1);
+			continue;
+		}
+
+		if (!s_c_rpc_use_udp) {
+			clnt = clnt_create(host, QCSAPI_PROG, QCSAPI_VERS, "tcp");
+		} else {
+			clnt = clnt_create(host, QCSAPI_PROG, QCSAPI_VERS, "udp");
+		}
+		if (clnt == NULL) {
+			clnt_pcreateerror(host);
+			sleep(1);
+			continue;
+		} else {
+			client_qcsapi_set_rpcclient(clnt);
+			break;
+		}
 	}
+
+	/* could not find host or create a client, exit */
+	if (retry >= MAX_RETRY_TIMES)
+		exit(1);
 
 	process_option(argc, argv);
+
+	clnt_destroy(clnt);
 
 	return 0;
 }

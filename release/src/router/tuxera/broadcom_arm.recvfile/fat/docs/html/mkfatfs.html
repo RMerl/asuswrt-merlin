@@ -1,0 +1,202 @@
+<!-- Creator     : groff version 1.21 -->
+<!-- CreationDate: Mon Aug 10 14:21:18 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>MKFATFS</title>
+
+</head>
+<body>
+
+<h1 align="center">MKFATFS</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#AVAILABILITY">AVAILABILITY</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">mkfatfs &minus;
+create a FAT file system</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkfatfs</b>
+[<i>options</i>] <i>device</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i><b>mkfatfs</b></i>
+is used to create a FAT file system on a device (usually a
+disk or flash partition). <i>device</i> is the special file
+corresponding to the device (e.g. <i>/dev/sdXX,
+/dev/block/mmcblk1p1</i>).</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Below is a
+summary of all the options that <b>mkfatfs</b> accepts.
+Nearly all options have two equivalent names. The short name
+is preceded by <b>&minus;</b> and the long name is preceded
+by <b>&minus;&minus;</b>.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;f</b>,
+<b>&minus;&minus;force</b></p>
+
+<p style="margin-left:22%;">Allow formatting a FAT volume
+for which the physical sector size cannot be automatically
+detected (for example an image file).</p>
+
+<p style="margin-left:11%;"><b>&minus;l</b>,
+<b>&minus;&minus;volume&minus;label</b> STRING</p>
+
+<p style="margin-left:22%;">Set the volume label for the
+filesystem. The volume label can be up to 11 ASCII units
+long, i.e. in most cases 11 bytes.</p>
+
+<p style="margin-left:11%;"><b>&minus;i</b>,
+<b>&minus;&minus;volume&minus;id</b> STRING</p>
+
+<p style="margin-left:22%;">Sets the volume-id for the
+volume to <b>STRING</b>.</p>
+
+<p style="margin-left:11%;"><b>&minus;r</b>,
+<b>&minus;&minus;rootdir&minus;entries</b> NUMBER</p>
+
+<p style="margin-left:22%;">Set the count of 32 bytes
+directory entries in the root directory to <b>NUMBER</b>.
+For FAT32 volumes this value is ignored and set to zero. For
+FAT 12/16 volume the default value is 512.</p>
+
+<p style="margin-left:11%;"><b>&minus;f</b>,
+<b>&minus;&minus;fat&minus;type</b> FATBITS</p>
+
+<p style="margin-left:22%;">Set the FAT bits for the volume
+to <b>FATBITS</b>. The legal values for this field are [12,
+16, 32].</p>
+
+<p style="margin-left:11%;"><b>&minus;S</b>,
+<b>&minus;&minus;sector&minus;size</b> SIZE</p>
+
+<p style="margin-left:22%;">Set the volume sector size (in
+bytes) to <b>SIZE</b>. The default is to detect sector size
+automatically. Note: This option should probably never be
+used when formatting devices directly as most FAT drivers
+won&rsquo;t be able to use a FAT volume where the volume
+sector size doesn&rsquo;t match the physical sector
+size.</p>
+
+<p style="margin-left:11%;"><b>&minus;s</b>,
+<b>&minus;&minus;sectors&minus;per&minus;cluster</b>
+VALUE</p>
+
+<p style="margin-left:22%;">Set the volume cluster size (in
+bytes) to <b>VALUE</b> * <b>sector_size</b>. The default
+value is calculated dynamically depending on FAT type (FAT
+12/16/32) and the size of the volume. The legal values for
+this field are [1, 2, 4, 8, 16, 32, 64, 128], such that
+<b>VALUE</b> * <b>sector_size</b> does not exceed 32K.</p>
+
+<p style="margin-left:11%;"><b>&minus;v</b>,
+<b>&minus;&minus;verbose</b></p>
+
+<p style="margin-left:22%;">Makes <b>mkfatfs</b> emit
+certain status messages related to the formatting
+process.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;sda&minus;strict</b></p>
+
+<p style="margin-left:22%;">Forces the formatted volume to
+adhere to SD Association recommendations.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;sda&minus;whole</b></p>
+
+<p style="margin-left:22%;">Performs a whole device
+formatting, including partition table, according to the SD
+Association recommendations. This option should only be used
+with whole devices (e.g. <i>/dev/mmcblk0</i>) and never
+partitions (e.g. <i>/dev/mmcblk0p1</i>).</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;sda&minus;relax</b></p>
+
+<p style="margin-left:22%;">Relaxes sanity checks for
+<b>&minus;&minus;sda&minus;strict</b> and
+<b>&minus;&minus;sda&minus;whole</b> to allow formatting
+devices that don&rsquo;t comply to the size specifications
+of SD cards to be formatted according to the SD Association
+guidelines.</p>
+
+<p style="margin-left:22%; margin-top: 1em">NOTE: This
+option is only a modifier to
+<b>&minus;&minus;sda&minus;strict</b> and
+<b>&minus;&minus;sda&minus;whole</b> and does not do
+anything on its own.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;discard</b></p>
+
+<p style="margin-left:22%;">This option sends a
+&rsquo;discard&rsquo; command, like TRIM, to the device
+which will zero all data on it.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If you find a
+bug please send an email describing the problem to
+fat-support@tuxera.com.</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkfatfs</b>
+was written by Sougata Santra, Tuxera Inc.</p>
+
+<h2>AVAILABILITY
+<a name="AVAILABILITY"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mkfatfs</b>
+is part of the <b>Tuxera FATprogs</b> package.</p>
+<hr>
+</body>
+</html>

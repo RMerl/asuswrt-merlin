@@ -783,9 +783,12 @@ void fix_script_err(char *orig_str, char *new_str)
 	str_len = strlen(orig_str);
 
 	for ( i = 0; i < str_len; i++ ){
-		if(orig_str[i] == '$'){
+		if(orig_str[i] == '$' ||
+			orig_str[i] == '`' ||
+			orig_str[i] == '"' ||
+			orig_str[i] == '\\'){
 			new_str[j] = '\\';
-			new_str[j+1] = '$';
+			new_str[j+1] = orig_str[i];
 			j = j + 2;
 		}else{
 			new_str[j] = orig_str[i];
@@ -806,14 +809,18 @@ int gen_stateless_conf(void)
 	char beacon[] = "WPAand11i";
 	char encryption[] = "TKIPandAESEncryption";
 	char key[130];
-	char real_key_str[130];
-	char ssid[65];
+	char tmpkey[130];
+	char ssid[66];
+	char tmpssid[66];
 	char region[5] = {0};
 	int channel = wf_chspec_ctlchan(wf_chspec_aton(nvram_safe_get("wl1_chanspec")));
 	int bw = atoi(nvram_safe_get("wl1_bw"));
 	uint32_t index = 0;
 
 	sprintf(ssid, "%s", nvram_safe_get("wl1_ssid"));
+	fix_script_err(ssid, tmpssid);
+	strncpy(ssid, tmpssid, sizeof(ssid));
+
 	sprintf(region, "%s", nvram_safe_get("wl1_country_code"));
 	if(strlen(region) == 0)
 		sprintf(region, "%s", nvram_safe_get("1:ccode"));
@@ -831,12 +838,12 @@ int gen_stateless_conf(void)
 		strncpy(auth, nvram_safe_get("wlc_auth_mode"), sizeof(auth));
 		strncpy(crypto, nvram_safe_get("wlc_crypto"), sizeof(crypto));
 		strncpy(key, nvram_safe_get("wlc_wpa_psk"), sizeof(key));
-		if(strchr(key, '$') != NULL){
-			fix_script_err(key, real_key_str);
-			strncpy(key, real_key_str, sizeof(key));
-		}
+		fix_script_err(key, tmpkey);
+		strncpy(key, tmpkey, sizeof(key));
 
 		strncpy(ssid, nvram_safe_get("wlc_ssid"), sizeof(ssid));
+		fix_script_err(ssid, tmpssid);
+		strncpy(ssid, tmpssid, sizeof(ssid));
 		fprintf(fp, "wifi0_SSID=\"%s\"\n", ssid);
 
 		logmessage("start_psta", "ssid=%s, auth=%s, crypto=%s, encryption=%s, key=%s\n", ssid, auth, crypto, encryption, key);
@@ -875,13 +882,13 @@ int gen_stateless_conf(void)
 		strncpy(auth, nvram_safe_get("wl1_auth_mode_x"), sizeof(auth));
 		strncpy(crypto, nvram_safe_get("wl1_crypto"), sizeof(crypto));
 		strncpy(key, nvram_safe_get("wl1_wpa_psk"), sizeof(key));
-		if(strchr(key, '$') != NULL){
-			fix_script_err(key, real_key_str);
-			strncpy(key, real_key_str, sizeof(key));
-		}
+		fix_script_err(key, tmpkey);
+		strncpy(key, tmpkey, sizeof(key));
 
 
 		strncpy(ssid, nvram_safe_get("wl1_ssid"), sizeof(ssid));
+		fix_script_err(ssid, tmpssid);
+		strncpy(ssid, tmpssid, sizeof(ssid));
 		fprintf(fp, "wifi0_SSID=\"%s\"\n", ssid);
 
 		if(!strcmp(auth, "psk2") && !strcmp(crypto, "aes")){

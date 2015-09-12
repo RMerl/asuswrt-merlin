@@ -1,0 +1,164 @@
+#
+# $QuaggaId: $Format:%an, %ai, %h$ $
+#
+
+INTRODUCTION
+
+        qpimd aims to implement a PIM (Protocol Independent Multicast)
+	daemon for the Quagga Routing Suite.
+
+	Initially qpimd targets only PIM SSM (Source-Specific
+	Multicast) mode as defined in section 4.8.2 (PIM-SSM-Only
+	Routers) of RFC 4601.
+
+	In order to deliver end-to-end multicast routing control
+	plane, qpimd includes the router-side of IGMPv3	(RFC 3376).
+
+LICENSE
+
+        qpimd - pimd for quagga
+        Copyright (C) 2008 Everton da Silva Marques
+
+        qpimd is free software; you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as
+        published by the Free Software Foundation; either version 2,
+        or (at your option) any later version.
+
+        qpimd is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public
+        License along with qpimd; see the file COPYING.  If not, write
+        to the Free Software Foundation, Inc., 59 Temple Place - Suite
+        330, Boston, MA 02111-1307, USA.
+
+HOME SITE
+
+        qpimd lives at:
+
+        https://github.com/udhos/qpimd
+
+PLATFORMS
+
+	qpimd has been tested with Debian Lenny under Linux 2.6.
+
+REQUIREMENTS
+
+	qpimd requires Quagga (0.99.11 or higher from http://www.quagga.net)
+
+	The GNU Build System (Autotools) is required to build from
+	source code repository.
+
+	gawk is also needed to build with Autotools. Any other awk
+	usually won't work.
+
+BUILDING FROM QUAGGA GIT REPOSITORY
+
+	1) Get the latest quagga source tree
+
+	# git clone git://code.quagga.net/quagga.git quagga
+
+	2) Apply qpimd patch into quagga source tree
+
+	# patch -p1 -d quagga < pimd-0.153-quagga-git20090623.patch
+
+	3) Compile and install quagga
+
+	# cd quagga
+	# ./bootstrap.sh
+	# ./configure --prefix=/usr/local/quagga --enable-pimd
+	# make
+	# make install
+
+BUILDING FROM QUAGGA TARBALL
+
+	1) Get the latest quagga tarball
+
+	# wget http://www.quagga.net/download/quagga-0.99.13.tar.gz
+
+	2) Unpack the quagga tarball
+
+	# tar xzf quagga-0.99.13.tar.gz
+
+	3) Apply qpimd patch into quagga source tree
+
+	# patch -p1 -d quagga-0.99.13 < pimd-0.153-quagga-0.99.13.patch
+
+	4) Compile and install quagga
+
+	# cd quagga-0.99.13
+	# ./configure --prefix=/usr/local/quagga --enable-pimd
+	# make
+	# make install
+
+USAGE
+
+	1) Configure and start the zebra daemon
+
+	# cp /usr/local/quagga/etc/zebra.conf.sample /usr/local/quagga/etc/zebra.conf
+	# vi /usr/local/quagga/etc/zebra.conf
+	# /usr/local/quagga/sbin/zebra
+
+	2) Configure and start the pimd daemon
+
+	# cp /usr/local/quagga/etc/pimd.conf.sample /usr/local/quagga/etc/pimd.conf
+	# vi /usr/local/quagga/etc/pimd.conf
+	# /usr/local/quagga/sbin/pimd
+
+	3) Access pimd vty interface at port TCP 2611
+
+	# telnet localhost 2611
+
+CONFIGURATION COMMANDS
+
+	See available commands in the file pimd/COMMANDS.
+
+KNOWN CAVEATS
+
+	See list of known caveats in the file pimd/CAVEATS.
+
+SUPPORT
+
+	Please post comments, questions, patches, bug reports at the
+	support site:
+
+        https://github.com/udhos/qpimd
+
+RELATED WORK
+
+	igmprt:	An IGMPv3-router implementation
+	- http://www.loria.fr/~lahmadi/igmpv3-router.html
+
+	USC pimd: PIMv2-SM daemon
+	- http://netweb.usc.edu/pim/pimd (URL broken in 2008-12-23)
+	- http://packages.debian.org/source/sid/pimd (from Debian)
+
+	troglobit pimd: This is the original USC pimd from
+	http://netweb.usc.edu/pim/. In January 16, 2010 it was revived
+	with the intention to collect patches floating around in
+	Debian, Gentoo, Lintrack and other distribution repositories
+	and to provide a central point of collaboration.
+	- http://github.com/troglobit/pimd
+
+	zpimd: zpimd is not dependent of zebra or any other routing daemon
+	- ftp://robur.slu.se/pub/Routing/Zebra
+	- http://sunsite2.icm.edu.pl/pub/unix/routing/zpimd
+
+	mrd6: an IPv6 Multicast Router for Linux systems
+	- http://fivebits.net/proj/mrd6/
+
+	MBGP: Implementation of RFC 2858 for Quagga
+	- git://git.coplanar.net/~balajig/quagga
+	- http://www.gossamer-threads.com/lists/quagga/dev/18000
+
+REFERENCES
+
+	IANA Protocol Independent Multicast (PIM) Parameters
+	http://www.iana.org/assignments/pim-parameters/pim-parameters.txt
+
+	Address Family Numbers
+	http://www.iana.org/assignments/address-family-numbers
+
+                              -- END --

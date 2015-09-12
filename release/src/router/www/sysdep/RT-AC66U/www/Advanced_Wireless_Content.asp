@@ -21,7 +21,7 @@
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/chanspec.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 <% wl_get_parameter(); %>
@@ -159,6 +159,7 @@ function initial(){
 
 		enableSmartCon(smart_connect_flag_t);
 	}
+	if(history.pushState != undefined) history.pushState("", document.title, window.location.pathname);
 }
 
 
@@ -755,7 +756,7 @@ function regen_auto_option(obj){
 			    		<br>
 			    	</div>
 						
-			    	<div id="radio_smartcon_enable" class="left" style="width: 94px;display:table-cell;"></div><div id="smartcon_rule_link" style="display:table-cell; vertical-align: bottom;"><a href="Advanced_Smart_Connect.asp" style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;">Smart Connect Rule</a></div>
+			    	<div id="radio_smartcon_enable" class="left" style="width: 94px;display:table-cell;"></div><div id="smartcon_rule_link" style="display:table-cell; vertical-align: middle;"><a href="Advanced_Smart_Connect.asp" style="font-family:Lucida Console;color:#FC0;text-decoration:underline;cursor:pointer;">Smart Connect Rule</a></div>
 						<div class="clear"></div>					
 						<script type="text/javascript">
 								var flag = '<% get_parameter("flag"); %>';
@@ -766,7 +767,7 @@ function regen_auto_option(obj){
 							else
 								smart_connect_flag_t = flag;
 
-								$('#radio_smartcon_enable').iphoneSwitch(smart_connect_flag_t>0, 
+								$('#radio_smartcon_enable').iphoneSwitch( smart_connect_flag_t > 0, 
 								 function() {
 									enableSmartCon(1);
 								 },
@@ -778,8 +779,8 @@ function regen_auto_option(obj){
 		  	  </td>
 			</tr>
 				<tr id="smart_connect_field" style="display:none;">                     
-					<th>Smart Connect Combo</th>                                            
-					<td id="smart_connect_switch" style="display:;">
+					<th>Smart Connect</th>                                            
+					<td id="smart_connect_switch">
 					<select name="smart_connect_t" class="input_option" onChange="_change_smart_connect(this.value);">
 						<option class="content_input_fd" value="1" >Tri-band Smart Connect (2.4GHz, 5GHz-1 and 5GHz-2)</optio>
 						<option class="content_input_fd" value="2">5GHz Smart Connect (5GHz-1 and 5GHz-2)</option>

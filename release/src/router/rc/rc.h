@@ -118,12 +118,6 @@ static inline int before(int ver1, int ver2)
 #define XSTR(s) STR(s)
 #define STR(s) #s
 
-#ifdef RTCONFIG_OLD_PARENTALCTRL
-int nvram_set_by_seq(char *name, unsigned int seq, char *value);
-char * nvram_get_by_seq(char *name, unsigned int seq);
-int parental_ctrl(void);
-#endif	/* RTCONFIG_OLD_PARENTALCTRL */
-
 //	#define DEBUG_IPTFILE
 //	#define DEBUG_RCTEST
 //	#define DEBUG_NOISY
@@ -530,7 +524,7 @@ extern int udhcpc_lan(int argc, char **argv);
 extern int start_udhcpc(char *wan_ifname, int unit, pid_t *ppid);
 extern void stop_udhcpc(int unit);
 extern int zcip_wan(int argc, char **argv);
-extern int start_zcip(char *wan_ifname, int unit);
+extern int start_zcip(char *wan_ifname, int unit, pid_t *ppid);
 extern void stop_zcip(int unit);
 
 #ifdef RTCONFIG_IPV6
@@ -939,6 +933,7 @@ extern int bwdpi_check_main(int argc, char **argv);
 extern int bwdpi_wred_alive_main(int argc, char **argv);
 extern int show_wrs_main(int argc, char **argv);
 extern int rsasign_sig_check_main(int argc, char *argv[]);
+extern int bwdpi_db_10_main(int argc, char **argv);
 #endif
 
 // hour_monitor.c

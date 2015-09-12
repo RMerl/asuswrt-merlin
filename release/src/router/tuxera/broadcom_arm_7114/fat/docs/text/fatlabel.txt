@@ -1,0 +1,42 @@
+FATLABEL(8)                                                        FATLABEL(8)
+
+
+
+NAME
+       fatlabel - display/change the label on a FAT file system
+
+SYNOPSIS
+       fatlabel [options] device
+
+DESCRIPTION
+       fatlabel  will  display or change the file system label on the FAT file
+       system located on device.
+
+       If the option -l  is not specified, the current volume  label  will  be
+       printed to standard output and no modifications will be made.
+
+       It is also possible to set the file system label using the -l option of
+       mkfatfs(8) during creation of the file system.
+
+OPTIONS
+       Below is a summary of all the options that  fatlabel  accepts.   Nearly
+       all options have two equivalent names.  The short name is preceded by -
+       and the long name is preceded by --.
+
+       -l, --label LABEL
+              Set the volume label of a FAT volume to LABEL. The volume  label
+              is limited to 11 ASCII units, i.e. 11 bytes in most cases.
+
+BUGS
+       There  are  no  known problems with fatlabel.  If you find a bug please
+       send an email describing the problem to fat-support@tuxera.com.
+
+AUTHORS
+       fatlabel was written by Sougata Santra, Tuxera Inc.
+
+AVAILABILITY
+       fatlabel is part of the Tuxera TFATprogs package.
+
+
+
+Tuxera TFATprogs 3014.9.11        March 2014                       FATLABEL(8)

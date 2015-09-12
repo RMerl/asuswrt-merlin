@@ -1,0 +1,59 @@
+# Broadcom 802.11abg Networking Device Driver Configuration file
+#
+# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# $Id: wlconfig_lx_router_media,v 1.1 2010-12-06 20:57:20 $
+#
+# Linux Kernel wl driver config file
+
+# get common
+include $(WLCFGDIR)/wl_default
+
+# tunables
+WLTUNEFILE=wltunable_lx_router_media.h
+
+# features
+include $(WLCFGDIR)/wlconfig_apdef
+include $(WLCFGDIR)/wlconfig_lx_wl_clm
+STA=1
+BCMSUP_PSK=1
+WET=1
+MAC_SPOOF=1
+ROUTER_SECURE_IBSS=1
+WMF=1
+IGMP_UCQUERY=1
+BTC2WIRE=0
+RXCHAIN_PWRSAVE=1
+RADIO_PWRSAVE=1
+MCAST_REGEN=1
+APCS=1
+WL_AP_TPC=1
+WLCHANIM=1
+SMF_STATS=1
+PHYMON=1
+BCM_DCS=1
+WIFI_ACT_FRAME=1
+WL11U=1
+WLPROBRESP_SW=1
+ifeq ($(WLPROBRESP_SW),1)
+WLPROBRESP_MAC_FILTER=1
+endif
+PSTA=1
+TRAFFIC_MGMT=1
+TRAFFIC_MGMT_RSSI_POLICY=1
+WET_TUNNEL=1
+WLNAR=1
+PSPRETEND=1
+WLTAF=1

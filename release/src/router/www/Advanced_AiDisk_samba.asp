@@ -18,7 +18,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript">
 <% get_AiDisk_status(); %>

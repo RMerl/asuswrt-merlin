@@ -1,0 +1,12 @@
+set timeout 10
+set testprefix "testbgpmpath "
+set aborted 0
+set color 1
+
+spawn "./testbgpmpath"
+
+# proc simpletest { start } {
+
+simpletest "bgp maximum-paths config"
+simpletest "bgp_mp_list"
+simpletest "bgp_info_mpath_update"

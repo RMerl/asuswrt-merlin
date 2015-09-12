@@ -208,8 +208,10 @@ _dprintf("%s: unit=%d.\n", __FUNCTION__, unit);
 	fprintf(fp, "novj nobsdcomp nodeflate\n");
 
 	/* echo failures */
-	fprintf(fp, "lcp-echo-interval 6\n");
-	fprintf(fp, "lcp-echo-failure 10\n");
+	if(nvram_get_int(strcat_r(prefix, "ppp_echo", tmp)) == 1){
+		fprintf(fp, "lcp-echo-interval 6\n");
+		fprintf(fp, "lcp-echo-failure 10\n");
+	}
 
 	/* pptp has Echo Request/Reply, l2tp has Hello packets */
 	if (nvram_match(strcat_r(prefix, "proto", tmp), "pptp") ||

@@ -64,8 +64,8 @@ function initial(){
 		document.form.vts_ftpport.parentNode.parentNode.style.display = "none";
 	}
 
-	if(dualWAN_support && wans_mode == "lb")
-		document.getElementById("lb_note").style.display = "";
+	//if(dualWAN_support && wans_mode == "lb")
+	//	document.getElementById("lb_note").style.display = "";
 }
 
 function isChange(){

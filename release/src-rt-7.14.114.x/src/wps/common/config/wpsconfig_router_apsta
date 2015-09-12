@@ -1,0 +1,19 @@
+# Broadcom WPS Configuration file for router APSTA
+#
+# $Copyright Broadcom Corporation$
+
+# default wps config file
+#
+# $Id: $
+
+WCN_NET = 0
+EXTERNAL_OPENSSL = 0
+WPS_AP = 1
+WPS_STA = 1
+WPS_ROUTER = 1
+WPS_WFI = 1
+WPS_UPNP_DEVICE = 1
+WPS_ENR = 1
+WPS_REG = 1
+WPS_CRYPT = 0
+WPS_NFC_DEVICE ?= 0

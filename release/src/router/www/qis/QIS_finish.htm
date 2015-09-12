@@ -24,7 +24,7 @@ span{
 }
 </style>
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
-<script type="text/JavaScript" src="/jquery.js"></script>
+<script type="text/JavaScript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 
 <script>
@@ -943,11 +943,16 @@ function QKfinish_load_body(){
 			}
 		}
 		else{
-			if(wan_primary == "wan0")
-				$("#wantype")[0].innerHTML = wanlink_type_conv;
-			else if(wan_primary == "wan1")
-				$("#wantype")[0].innerHTML = secondary_wanlink_type_conv;
-		}	
+			if(parent.QKform.wans_dualwan.disabled == false && parent.QKform.wans_dualwan.value == "wan usb"){
+				$("#wantype")[0].innerHTML = "USB Modem";
+			}
+			else{
+				if(wan_primary == "wan0")
+					$("#wantype")[0].innerHTML = wanlink_type_conv;
+				else if(wan_primary == "wan1")
+					$("#wantype")[0].innerHTML = secondary_wanlink_type_conv;
+			}
+		}
 	}
 	else
 		$("#wantype")[0].innerHTML = wanlink_type_conv;
@@ -986,11 +991,13 @@ function QKfinish_load_body(){
 					else //Load-balance
 						document.getElementById("wanstatus1").innerHTML = "<#Status_Active#>";
 				}
-				else
+				else{
+					document.getElementById("wanip").style.display = "none";
 					document.getElementById("wanstatus1").innerHTML = "<#Status_Inactive#>";
+				}
 				
 				if(parent.wans_dualwan_array[1] != "none"){
-					document.getElementById("wanip2").innerHTML = secondary_wanlink_ipaddr();	
+					document.getElementById("wanip2").innerHTML = secondary_wanlink_ipaddr();
 					if(secondary_wanlink_ipaddr() != "0.0.0.0"){
 						if(wans_mode == "fb" || wans_mode == "fo"){
 							if( wan_primary == "wan1" )
@@ -1001,19 +1008,32 @@ function QKfinish_load_body(){
 						else //Load-balance
 							document.getElementById("wanstatus2").innerHTML = "<#Status_Active#>";
 					}
-					else
+					else{
+						document.getElementById("wanip2").style.display = "none";
 						document.getElementById("wanstatus2").innerHTML = "<#Status_Inactive#>";
+					}
 				}
 			}
 			else{
-				if(wan_primary == "wan0")
-					$("#wanip")[0].innerHTML = wanlink_ipaddr();
-				else if(wan_primary == "wan1")	 
-					$("#wanip")[0].innerHTML = secondary_wanlink_ipaddr();
+				if(wan_primary == "wan0"){
+					if(wanlink_ipaddr() != "0.0.0.0")
+						$("#wanip")[0].innerHTML = wanlink_ipaddr();
+					else
+						document.getElementById("wanip_tr").style.display = "none";
+				}
+				else if(wan_primary == "wan1"){
+					if(secondary_wanlink_ipaddr() != "0.0.0.0")
+						$("#wanip")[0].innerHTML = secondary_wanlink_ipaddr();
+					else
+						document.getElementById("wanip_tr").style.display = "none";
+				}
 			}
 		}
 		else{
-			$("#wanip")[0].innerHTML = wanlink_ipaddr();
+			if(wanlink_ipaddr() != "0.0.0.0")
+				$("#wanip")[0].innerHTML = wanlink_ipaddr();
+			else
+				document.getElementById("wanip_tr").style.display = "none";
 		}
 
 		$("#lanip_item")[0].innerHTML = "<#LAN_IP#>";
@@ -1123,6 +1143,31 @@ function goto_index(){
 		document.restartForm.wans_dualwan.disabled = false;
 		document.restartForm.wans_dualwan.value = "usb wan";
 		parent.sysReboot = true;
+	}
+
+	if(parent.QKform.wans_dualwan.disabled == false){
+		document.restartForm.wans_dualwan.disabled = false;
+		document.restartForm.wans_dualwan.value = parent.QKform.wans_dualwan.value;
+		document.restartForm.modem_enable.disabled = false;
+		document.restartForm.modem_enable.value = parent.QKform.modem_enable.value;
+		document.restartForm.modem_country.disabled = false;
+		document.restartForm.modem_country.value = parent.QKform.modem_country.value;
+		document.restartForm.modem_isp.disabled = false;
+		document.restartForm.modem_isp.value = parent.QKform.modem_isp.value;
+		document.restartForm.modem_apn.disabled = false;
+		document.restartForm.modem_apn.value = parent.QKform.modem_apn.value;
+		document.restartForm.modem_dialnum.disabled = false;
+		document.restartForm.modem_dialnum.value = parent.QKform.modem_dialnum.value;
+		document.restartForm.modem_pincode.disabled = false;
+		document.restartForm.modem_pincode.value = parent.QKform.modem_pincode.value;
+		document.restartForm.modem_user.disabled = false;
+		document.restartForm.modem_user.value = parent.QKform.modem_user.value;
+		document.restartForm.modem_pass.disabled = false;
+		document.restartForm.modem_pass.value = parent.QKform.modem_pass.value;
+		document.restartForm.modem_ttlsid.disabled = false;
+		document.restartForm.modem_ttlsid.value = parent.QKform.modem_ttlsid.value;
+		document.restartForm.Dev3G.disabled = false;
+		document.restartForm.Dev3G.value = parent.QKform.Dev3G.value;
 	}
 
 	if(parent.sysReboot){
@@ -1459,13 +1504,13 @@ function chkMBConState(){
 	<tr class="reItem wanItem" id="wanstatus_tr1">
 	  <th width="180"><#Status_Str#> </th>
 	  <td class="QISformtd"><span id="wanstatus1"></span></td>
-	  <td class="QISformtd"><span id="wanstatus2" style="display: none;"></span></td>	  
-	</tr>  
-	<tr class="reItem wanItem">
+	  <td class="QISformtd"><span id="wanstatus2" style="display: none;"></span></td>
+	</tr>
+	<tr class="reItem wanItem" id="wanip_tr">
 	  <th width="180"><span id="wanip_item"></span></th>
 	  <td class="QISformtd"><span id="wanip"></span></td>
-	  <td class="QISformtd"><span id="wanip2" style="display: none;"></span></td>	  
-	</tr>  
+	  <td class="QISformtd"><span id="wanip2" style="display: none;"></span></td>
+	</tr>
 
 	<!-- LAN -->
 	<tr class="reItem">
@@ -1748,6 +1793,17 @@ function chkMBConState(){
 	<input type="hidden" name="force_change" value="<% nvram_get("force_change"); %>">
 	<input type="hidden" name="wans_mode" value="fo" disabled>
 	<input type="hidden" name="wans_dualwan" value="<% nvram_get("wans_dualwan"); %>" disabled>
+	<!--USB Modem-->
+	<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>" disabled>
+	<input type="hidden" name="modem_country" value="<% nvram_get("modem_country"); %>" disabled>
+	<input type="hidden" name="modem_isp" value="<% nvram_get("modem_isp"); %>" disabled>
+	<input type="hidden" name="modem_apn" value="<% nvram_get("modem_apn"); %>" disabled>
+	<input type="hidden" name="modem_dialnum" value="<% nvram_get("modem_dialnum"); %>" disabled>
+	<input type="hidden" name="modem_pincode" value="<% nvram_get("modem_pincode"); %>" disabled>
+	<input type="hidden" name="modem_user" value="<% nvram_get("modem_user"); %>" disabled>
+	<input type="hidden" name="modem_pass" value="<% nvram_get("modem_pass"); %>" disabled>
+	<input type="hidden" name="modem_ttlsid" value="<% nvram_get("modem_ttlsid"); %>" disabled>
+	<input type="hidden" name="Dev3G" value="<% nvram_get("Dev3G"); %>" disabled>
 </form>
 
 </body>

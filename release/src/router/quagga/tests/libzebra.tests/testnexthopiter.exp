@@ -1,0 +1,8 @@
+set timeout 10
+set testprefix "testnexthopiter "
+set aborted 0
+
+spawn "./testnexthopiter"
+
+onesimple "simple" "Simple test passed."
+onesimple "prng" "PRNG test passed."

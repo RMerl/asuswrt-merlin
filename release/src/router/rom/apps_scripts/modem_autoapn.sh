@@ -16,8 +16,8 @@ modem_prefix="test_modem_"
 
 
 act_node=
-#if [ "$modem_type" == "tty" -o "$modem_type" == "mbim" ]; then
-#	if [ "$modem_type" == "tty" -a "$modem_vid" == "6610" ]; then # e.q. ZTE MF637U
+#if [ "$modem_type" = "tty" -o "$modem_type" = "mbim" ]; then
+#	if [ "$modem_type" = "tty" -a "$modem_vid" = "6610" ]; then # e.q. ZTE MF637U
 #		act_node=$act_node1
 #	else
 #		act_node=$act_node2
@@ -27,69 +27,65 @@ act_node=
 #fi
 
 modem_act_node=`nvram get $act_node`
-if [ "$modem_act_node" == "" ]; then
+if [ -z "$modem_act_node" ]; then
 	find_modem_node.sh
 
 	modem_act_node=`nvram get $act_node`
-	if [ "$modem_act_node" == "" ]; then
+	if [ -z "$modem_act_node" ]; then
 		echo "Can't get $act_node!"
 		exit 1
 	fi
 fi
 
-if [ "$1" == "set" ]; then
+if [ "$1" = "set" ]; then
 	modem_imsi=$2
 else
 	modem_imsi=`nvram get usb_modem_act_imsi |cut -c '1-6' 2>/dev/null`
 fi
-if [ "$modem_imsi" == "" ]; then
+if [ -z "$modem_imsi" ]; then
 	modem_status.sh imsi
 	modem_imsi=`nvram get usb_modem_act_imsi |cut -c '1-6' 2>/dev/null`
-	if [ "$modem_imsi" == "" ]; then
+	if [ -z "$modem_imsi" ]; then
 		echo "Can't get IMI of SIM!"
 		exit 2
 	fi
 fi
 
-if [ "$1" == "set" ]; then
-	content=`grep "$modem_imsi," $dataf 2>/dev/null`
+if [ "$1" = "set" ]; then
+	content=`awk '/^'"$modem_imsi"',/ {print $0 "," NR; exit}' $dataf 2>/dev/null`
 else
 	total_line=`wc -l $dataf |awk '{print $1}' 2>/dev/null`
 	nvram set usb_modem_auto_lines=$total_line
 	nvram set usb_modem_auto_running=1
 
 	modem_imsi_s=`echo $modem_imsi |cut -c 1-6 2>/dev/null`
-	data_num=`grep "$modem_imsi_s," $dataf |wc -l 2>/dev/null`
-	if [ $data_num -eq 0 ]; then
+	content=`awk '/^'"$modem_imsi_s"',/ {print $0 "," NR; exit}' $dataf 2>/dev/null`
+	if [ -z "$content" ]; then
 		modem_imsi_s=`echo $modem_imsi |cut -c 1-5 2>/dev/null`
-		data_num=`grep "$modem_imsi_s," $dataf |wc -l 2>/dev/null`
-	fi
-
-	if [ $data_num -ne 0 ]; then
-		content=`grep "$modem_imsi_s," $dataf 2>/dev/null`
+		content=`awk '/^'"$modem_imsi_s"',/ {print $0 "," NR; exit}' $dataf 2>/dev/null`
 	fi
 
 	nvram set usb_modem_auto_running=$total_line
 fi
 
-if [ "$content" == "" ]; then
+if [ -z "$content" ]; then
 	nvram set g3err_imsi=1
 	echo "Can't get the APN mapping automatically!"
 	exit 3
 fi
 
+compare=`echo "$content" |awk '{FS=","; print $1}' 2>/dev/null`
 modem_isp=`echo "$content" |awk '{FS=","; print $2}' 2>/dev/null`
 modem_spn=`echo "$content" |awk '{FS=","; print $7}' 2>/dev/null`
-if [ "$modem_spn" == "" ]; then
-	modem_spn=$modem_isp
-fi
+[ -z "$modem_spn" ] && modem_spn="$modem_isp"
 modem_apn=`echo "$content" |awk '{FS=","; print $6}' 2>/dev/null`
 modem_dial=`echo "$content" |awk '{FS=","; print $3}' 2>/dev/null`
 modem_user=`echo "$content" |awk '{FS=","; print $4}' 2>/dev/null`
 modem_pass=`echo "$content" |awk '{FS=","; print $5}' 2>/dev/null`
+line=`echo "$content" |awk '{FS=","; print $8}' 2>/dev/null`
 
 modem_country_num=`echo $modem_imsi |cut -c 1-3 2>/dev/null`
-if [ "$modem_country_num" == "" ]; then
+if [ -z "$modem_country_num" ]; then
 	echo "Cant get the country number from IMSI."
 elif [ $modem_country_num -eq 505 ]; then
 	modem_country=AU
@@ -175,7 +171,7 @@ elif [ $modem_country_num -eq 425 ]; then
 	modem_country=IL
 fi
 
-if [ "$1" == "console" ]; then
+if [ "$1" = "console" ]; then
 	echo "   line: $line."
 	echo "   imsi: $modem_imsi."
 	echo "country: $modem_country."
@@ -185,7 +181,7 @@ if [ "$1" == "console" ]; then
 	echo "   dial: $modem_dial."
 	echo "   user: $modem_user."
 	echo "   pass: $modem_pass."
-elif [ "$1" == "set" ]; then
+elif [ "$1" = "set" ]; then
 	nvram set usb_modem_auto_imsi="$modem_imsi"
 	nvram set modem_country="$modem_country"
 	modem_isp=`nvram get modem_roaming_isp`
@@ -205,7 +201,7 @@ else
 	nvram set usb_modem_auto_user="$modem_user"
 	nvram set usb_modem_auto_pass="$modem_pass"
 
-	if [ "$modem_autoapn" == "1" ]; then
+	if [ "$modem_autoapn" = "1" ]; then
 		nvram set modem_country="$modem_country"
 		nvram set modem_isp="$modem_isp"
 		nvram set modem_spn="$modem_spn"
@@ -215,4 +211,3 @@ else
 		nvram set modem_pass="$modem_pass"
 	fi
 fi
-
