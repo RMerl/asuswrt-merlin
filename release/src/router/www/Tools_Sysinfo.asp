@@ -84,7 +84,11 @@ function update_temperatures(){
 			if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
-			if ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC3200")) {
+			if ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || 
+			    (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || 
+			    (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC68U") || 
+			    (based_modelid == "RT-AC3200") || based_modelid == "RT-AC88U") || 
+			    (based_modelid == "RT-AC5300") || (based_modelid == "RT-AC3100")) {
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + curr_coreTmp_cpu +"&deg;C</span>";
 			}
 			document.getElementById("temp_td").innerHTML = code;
