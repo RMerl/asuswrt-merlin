@@ -2328,7 +2328,7 @@ TRACE_PT("writing Parental Control\n");
 			  "-A INPUT -m state --state RELATED,ESTABLISHED -j %s\n"
 			  "-A INPUT -i lo -m state --state NEW -j %s\n"
 			  "-A INPUT -i %s -m state --state NEW -j %s\n"
-			,wan_if, logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
+			,logdrop, logaccept, "ACCEPT", lan_if, "ACCEPT");
 #ifdef RTCONFIG_IPV6
 		if (ipv6_enabled())
 		fprintf(fp_ipv6, "-A INPUT -m rt --rt-type 0 -j %s\n"
