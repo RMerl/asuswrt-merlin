@@ -2507,16 +2507,14 @@ iperf-clean:
 	[ ! -f iperf/Makefile ] || $(MAKE) -C iperf distclean
 
 libevent-2.0.21: libevent-2.0.21/Makefile
-	$(MAKE) -C $@
-	@mkdir -p libevent-2.0.21/staged
-	$(MAKE) -C $@ install
+	$(MAKE) -C $@ && $(MAKE) $@-stage
 
 libevent-2.0.21/Makefile:
 	$(MAKE) libevent-2.0.21-configure
 
 libevent-2.0.21-configure:
 	( cd libevent-2.0.21 ; CFLAGS="$(CFLAGS) -Os -Wall $(EXTRACFLAGS)" \
-		$(CONFIGURE) --prefix=$(TOP)/libevent-2.0.21/staged --enable-static \
+		$(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
 	)
 
 libevent-2.0.21-install: libevent-2.0.21
@@ -2526,15 +2524,13 @@ libevent-2.0.21-install: libevent-2.0.21
 libevent-2.0.21-clean:
 	[ ! -f libevent-2.0.21/Makefile ] || $(MAKE) -C libevent-2.0.21 clean
 	@rm -f libevent-2.0.21/Makefile
-	@rm -rf libevent-2.0.21/staged
 
 tor: openssl zlib libevent-2.0.21 tor/Makefile
 	@$(SEP)
 	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 tor/Makefile:
-	(cd tor ; CFLAGS="-O2 $(EXTRACFLAGS)" $(CONFIGURE) \
-					--enable-static-libevent --with-libevent-dir=$(TOP)/libevent-2.0.21/staged \
+	(cd tor ; $(CONFIGURE) --enable-static-libevent --with-libevent-dir=$(STAGEDIR)/usr \
 					--with-openssl-dir=$(TOP)/openssl \
 					--with-zlib-dir=$(TOP)/zlib \
 					--disable-asciidoc)
@@ -3067,16 +3063,16 @@ endif
 emf$(BCMEX)$(EX7)-clean:
 	-@$(MAKE) -C emf$(BCMEX)$(EX7)/emfconf clean
 
-igs$(BCMEX)$(DPI)$(EX7):
+igs$(BCMEX)$(EX7):
 	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE)
 
-igs$(BCMEX)$(DPI)$(EX7)-install:
+igs$(BCMEX)$(EX7)-install:
 ifeq ($(RTCONFIG_EMF),y)
 	install -d $(TARGETDIR)
 	$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf CROSS=$(CROSS_COMPILE) INSTALLDIR=$(INSTALLDIR) install
 endif
 
-igs$(BCMEX)$(DPI)$(EX7)-clean:
+igs$(BCMEX)$(EX7)-clean:
 	-@$(MAKE) -C emf$(BCMEX)$(EX7)/igsconf clean
 
 ebtables: kernel_header dummy
