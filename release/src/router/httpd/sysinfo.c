@@ -289,6 +289,9 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				strcpy(result,"<unknown>");
 #endif
 		} else if(strcmp(type,"cfe_version") == 0 ) {
+#if defined(RTCONFIG_CFEZ)
+			snprintf(result, sizeof result, "%s", nvram_get("bl_version"));
+#else
 			system("cat /dev/mtd0ro | grep bl_version >/tmp/output.txt");
 			char *buffer = read_whole_file("/tmp/output.txt");
 
@@ -296,10 +299,15 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (buffer) {
 				tmp = strstr(buffer, "bl_version=");
 
-				if (tmp) sscanf(tmp, "bl_version=%s", result);
+				if (tmp) {
+					sscanf(tmp, "bl_version=%s", result);
+				} else {
+					snprintf(result, sizeof result, "%s", nvram_get("bl_version"));
+				}
 				free(buffer);
 			}
 			unlink("/tmp/output.txt");
+#endif
 		} else if(strncmp(type,"pid",3) ==0 ) {
 			char service[32];
 			sscanf(type, "pid.%31s", service);
