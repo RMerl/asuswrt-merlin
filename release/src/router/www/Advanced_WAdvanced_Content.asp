@@ -334,23 +334,6 @@ function initial(){
 		add_option(document.form.wl_mrate_x, mcast_rates[i][0], mcast_rates[i][1], (mcast_rate == mcast_rates[i][1]) ? 1 : 0);
 	}
 
-	var reg_mode = '<% nvram_get("wl_reg_mode"); %>';
-	if ('<% nvram_get("wl_unit"); %>' == '0') { // 2.4GHz
-		add_option(document.form.wl_reg_mode, "Off", "off", (reg_mode == "off") ? 1 : 0);
-		add_option(document.form.wl_reg_mode, "802.11d", "d", (reg_mode == "d") ? 1 : 0);
-	} else {	// 5GHz
-		// EU region enforces 802.11h due to DFS
-		if ("<% nvram_get("wl1_country_code"); %>" != "EU"){
-			add_option(document.form.wl_reg_mode, "Off", "off", (reg_mode == "off") ? 1 : 0);
-			add_option(document.form.wl_reg_mode, "802.11d", "d", (reg_mode == "d") ? 1 : 0);
-		} else {
-			if ((reg_mode == "off") || (reg_mode == "d")) reg_mode = "h";
-		}
-	        add_option(document.form.wl_reg_mode, "802.11h", "strict_h", (reg_mode == "strict_h") ? 1 : 0);
-	        add_option(document.form.wl_reg_mode, "802.11d+h", "h", (reg_mode == "h") ? 1 : 0);
-	}
-
-
 	if(repeater_support || psta_support){		//with RE mode
 		document.getElementById("DLSCapable").style.display = "none";	
 	}	
@@ -1492,14 +1475,6 @@ function control_TimeField(){
 							<select name="wl_itxbf" class="input_option" disabled>
 									<option value="0" <% nvram_match("wl_itxbf", "0","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 									<option value="1" <% nvram_match("wl_itxbf", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
-							</select>
-						</td>
-					</tr>					
-
-					<tr id="wl_regmode_field">
-						<th>Regulation mode</th>
-						<td>
-							<select name="wl_reg_mode" class="input_option">
 							</select>
 						</td>
 					</tr>					
