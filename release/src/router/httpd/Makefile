@@ -140,6 +140,10 @@ CFLAGS += -I$(TOP)/GeoIP-1.6.2/libGeoIP
 LIBS += -L$(TOP)/GeoIP-1.6.2/libGeoIP/.libs -lGeoIP
 endif
 
+ifeq ($(RTCONFIG_EXT_RTL8365MB),y)
+CFLAGS += -I$(LINUXDIR)/drivers/char/rtl8365mb
+endif
+
 ifeq ($(RTCONFIG_QCA),y)
 LIBS += -lpthread -ldl
 endif

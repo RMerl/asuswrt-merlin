@@ -66,10 +66,34 @@ typedef unsigned long long u64;
 #include "web-qtn.h"
 #endif
 
-unsigned int get_qtn_temperature(void);
+#ifdef RTCONFIG_EXT_RTL8365MB
+#include <linux/major.h>
+#include <rtk_switch.h>
+#include <rtk_types.h>
+
+#define RTKSWITCH_DEV   "/dev/rtkswitch"
+
+typedef struct {
+        unsigned int link[4];
+        unsigned int speed[4];
+} phyState;
+#endif
+
+
+
 unsigned int get_phy_temperature(int radio);
 unsigned int get_wifi_clients(int radio, int querytype);
+
+#ifdef RTCONFIG_QTN
+unsigned int get_qtn_temperature(void);
 unsigned int get_qtn_version(char *version, int len);
+int GetPhyStatus_qtn(void);
+#endif
+
+#ifdef RTCONFIG_EXT_RTL8365MB
+void GetPhyStatus_rtk(int *states);
+#endif
+
 
 #define MBYTES 1024 / 1024
 #define KBYTES 1024
@@ -341,6 +365,24 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					}
 				}
 			}
+#ifdef RTCONFIG_EXT_RTL8365MB
+		} else if(strcmp(type,"ethernet.rtk") == 0 ) {
+			int states[4];
+
+			states[0] = states[1] = states[2] = states[3] = 0;
+
+			GetPhyStatus_rtk(&states);
+
+			snprintf(result, sizeof result, "[[\"%d\", \"%d\"],"
+			                                " [\"%d\", \"%d\"],"
+			                                " [\"%d\", \"%d\"],"
+			                                " [\"%d\", \"%d\"]]",
+			                                 5, states[0],
+			                                 6, states[1],
+			                                 7, states[2],
+			                                 8, states[3]);
+#endif
+
 		} else if(strcmp(type,"ethernet") == 0 ) {
 			int len, j;
 
@@ -521,3 +563,70 @@ exit:
 	free(clientlist);
 	return count;
 }
+
+
+#ifdef RTCONFIG_EXT_RTL8365MB
+void GetPhyStatus_rtk(int *states)
+{
+	int model;
+	int *o;
+	int fd = open(RTKSWITCH_DEV, O_RDONLY);
+
+	if (fd < 0) {
+		perror(RTKSWITCH_DEV);
+		return;
+	}
+
+	phyState pS;
+
+	pS.link[0] = pS.link[1] = pS.link[2] = pS.link[3] = 0;
+	pS.speed[0] = pS.speed[1] = pS.speed[2] = pS.speed[3] = 0;
+
+        switch(model = get_model()) {
+        case MODEL_RTAC5300:
+		{
+		/* RTK_LAN  BRCM_LAN  WAN  POWER */
+		/* R0 R1 R2 R3 B4 B0 B1 B2 B3 */
+		/* L8 L7 L6 L5 L4 L3 L2 L1 W0 */
+
+		const int porder[4] = {3,2,1,0};
+		o = porder;
+
+		break;
+		}
+        case MODEL_RTAC88U:
+		{
+		/* RTK_LAN  BRCM_LAN  WAN  POWER */
+		/* R3 R2 R1 R0 B3 B2 B1 B0 B4 */
+		/* L8 L7 L6 L5 L4 L3 L2 L1 W0 */
+
+		const int porder[4] = {0,1,2,3};
+		o = porder;
+
+		break;
+		}
+	default:
+		{
+		const int porder[4] = {0,1,2,3};
+		o = porder;
+
+		break;
+		}
+	}
+
+
+	if (ioctl(fd, GET_RTK_PHYSTATES, &pS) < 0) {
+		perror("rtkswitch ioctl");
+		close(fd);
+		return;
+	}
+
+	close(fd);
+
+	states[0] = (pS.link[o[0]] == 1) ? (pS.speed[o[0]] == 2) ? 1000 : 100 : 0;
+	states[1] = (pS.link[o[1]] == 1) ? (pS.speed[o[1]] == 2) ? 1000 : 100 : 0;
+	states[2] = (pS.link[o[2]] == 1) ? (pS.speed[o[2]] == 2) ? 1000 : 100 : 0;
+	states[3] = (pS.link[o[3]] == 1) ? (pS.speed[o[3]] == 2) ? 1000 : 100 : 0;
+}
+#endif
+

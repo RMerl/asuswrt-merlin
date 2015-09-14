@@ -84,10 +84,10 @@ function update_temperatures(){
 			if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
-			if ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || 
-			    (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || 
-			    (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC68U") || 
-			    (based_modelid == "RT-AC3200") || based_modelid == "RT-AC88U") || 
+			if ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") ||
+			    (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") ||
+			    (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC68U") ||
+			    (based_modelid == "RT-AC3200") || (based_modelid == "RT-AC88U") ||
 			    (based_modelid == "RT-AC5300") || (based_modelid == "RT-AC3100")) {
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + curr_coreTmp_cpu +"&deg;C</span>";
 			}
@@ -151,15 +151,38 @@ function show_etherstate(){
 	var state, state2;
 	var hostname, devicename, devicemac, overlib_str, port;
 	var tmpPort;
-	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th style="width:15%;">Port</th><th style="width:15%;">VLAN</th><th style="width:25%;">Link State</th>';
-	code += '<th style="width:45%;">Last Device Seen</th></tr>';
+	var line;
+
+	if (based_modelid == "RT-AC88U")
+		coldisplay = "display:none;";
+	else
+		coldisplay = "";
+
+	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th style="width:15%;">Port</th><th style="width:15%;' + coldisplay + '">VLAN</th><th style="width:25%;">Link State</th>';
+	code += '<th style="width:45%;' + coldisplay + '">Last Device Seen</th></tr>';
 
 	var code_ports = "";
 	var entry;
 
+	if (based_modelid == "RT-AC88U")
+	{
+		var rtkswitch = <% sysinfo("ethernet.rtk"); %>;
+
+		for (var i = rtkswitch.length - 1; i >= 0; --i) {
+			line = rtkswitch[i];
+			if (line[1] == "0")
+				state = "Down"
+			else
+				state = line[1] + " Mbps";
+
+			code += '<tr><td>LAN ' + line[0] + '</td><td style="' + coldisplay +'">' + '<span class="ClientName">&lt;unknown&gt;</span>' + '</td><td><span>' + state + '</span></td><td style="' + coldisplay +'">'+ '<span class="ClientName">&lt;unknown&gt;</span>' +'</td></tr>';
+		}
+
+	}
+
 	var t = etherstate.split('>');
 	for (var i = 0; i < t.length; ++i) {
-		var line = t[i].split(/[\s]+/);
+		line = t[i].split(/[\s]+/);
 		if (line[11])
 			devicemac = line[11].toUpperCase();
 		else
@@ -193,7 +216,7 @@ function show_etherstate(){
 
 			if (tmpPort == "8") {		// CPU Port
 				continue;
-			} else if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S")) {
+			} else if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC88U")) {
 				tmpPort++;		// Port starts at 0
 				if (tmpPort == "5") tmpPort = 0;	// Last port is WAN
 			} else if (based_modelid == "RT-AC87U") {
@@ -207,11 +230,12 @@ function show_etherstate(){
 			if (tmpPort == "0") {
 				port = "WAN";
 			} else {
-				if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U") || (based_modelid == "RT-AC3200"))  tmpPort = 5 - tmpPort;
+				if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U")
+				    || (based_modelid == "RT-AC3200") || (based_modelid == "RT-AC88U"))  tmpPort = 5 - tmpPort;
 				port = "LAN "+tmpPort;
 			}
-			entry = '<tr><td>' + port + '</td><td>' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td>';
-			entry += '<td>'+ devicename +'</td></tr>';
+			entry = '<tr><td>' + port + '</td><td style="' + coldisplay +'">' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td>';
+			entry += '<td style="' + coldisplay +'">'+ devicename +'</td></tr>';
 
 			if (based_modelid == "RT-N16")
 				code_ports = entry + code_ports;
