@@ -7341,7 +7341,7 @@ void setup_leds()
 	model = get_model();
 
 	if (nvram_get_int("led_disable") == 1) {
-		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC56S) || (model == MODEL_RTAC68U) || (model == MODEL_RTAC87U) || (model == MODEL_RTAC3200)) {
+		if ((model == MODEL_RTAC56U) || (model == MODEL_RTAC56S) || (model == MODEL_RTAC68U) || (model == MODEL_RTAC87U) || (model == MODEL_RTAC3200) || (model == MODEL_RTAC88U) || (model == MODEL_RTAC3100) || (model == MODEL_RTAC3100)) {
 			setAllLedOff();
 			if (model == MODEL_RTAC87U)
 				led_control_atomic(LED_5G, LED_OFF);

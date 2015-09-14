@@ -539,6 +539,11 @@ int led_control_atomic(int which, int mode)
 					eval("wl", "ledbh", "10", "7");
 				else if (mode == LED_OFF)
 					eval("wl", "ledbh", "10", "0");
+			} else if ((model == MODEL_RTAC88U) || (model == MODEL_RTAC3100) || (model == MODEL_RTAC3100)) {
+				if (mode == LED_ON)
+					eval("wl", "ledbh", "9", "7");
+				else if (mode == LED_OFF)
+					eval("wl", "ledbh", "9", "0");
 			}
 			break;
 		case LED_5G_FORCED:
@@ -550,6 +555,11 @@ int led_control_atomic(int which, int mode)
 					nvram_set("led_5g", "0");
 					eval("wl", "-i", "eth2", "ledbh", "10", "0");
 				}
+			} else if ((model == MODEL_RTAC88U) || (model == MODEL_RTAC3100) || (model == MODEL_RTAC3100)) {
+				if (mode == LED_ON)
+					eval("wl", "-i", "eth2", "ledbh", "9", "7");
+				else if (mode == LED_OFF)
+					eval("wl", "-i", "eth2", "ledbh", "9", "0");
 			}
 			// Fall through regular LED_5G to handle other models
 		case LED_5G:
