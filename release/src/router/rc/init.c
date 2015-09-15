@@ -3502,7 +3502,7 @@ int init_nvram(void)
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
 #ifdef RTCONFIG_PUSH_EMAIL
-		add_rc_support("feedback");
+//		add_rc_support("feedback");
 #endif
 
 		if (nvram_match("bl_version", "1.0.0.0"))
@@ -3740,7 +3740,7 @@ int init_nvram(void)
 		add_rc_support("nandflash");
 		add_rc_support("smart_connect");
 #ifdef RTCONFIG_PUSH_EMAIL
-		add_rc_support("feedback");
+//		add_rc_support("feedback");
 #endif
 #ifdef RTCONFIG_LED_BTN
 		nvram_set_int("AllLED", 1);
@@ -3869,7 +3869,7 @@ int init_nvram(void)
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
 #ifdef RTCONFIG_PUSH_EMAIL
-		add_rc_support("feedback");
+//		add_rc_support("feedback");
 #endif
 #ifdef RTCONFIG_LED_BTN
 		nvram_set_int("AllLED", 1);
@@ -4090,7 +4090,7 @@ int init_nvram(void)
 		nvram_set("mmc_irq", "177");
 #endif
 #ifdef RTCONFIG_PUSH_EMAIL
-		add_rc_support("feedback");
+//		add_rc_support("feedback");
 #endif
 #if defined(RTAC5300)
 		add_rc_support("smart_connect");
@@ -4452,7 +4452,7 @@ int init_nvram(void)
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
 #ifdef RTCONFIG_PUSH_EMAIL
-		add_rc_support("feedback");
+//		add_rc_support("feedback");
 #endif
 		break;
 #endif
@@ -4564,7 +4564,7 @@ int init_nvram(void)
 		add_rc_support("pwrctrl");
 		add_rc_support("WIFI_LOGO");
 #ifdef RTCONFIG_PUSH_EMAIL
-		add_rc_support("feedback");
+//		add_rc_support("feedback");
 #endif
 		break;
 #endif
