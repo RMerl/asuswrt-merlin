@@ -313,6 +313,11 @@ mod_create_captcha_image_la_SOURCES = mod_create_captcha_image.c
 mod_create_captcha_image_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 mod_create_captcha_image_la_LIBADD = $(common_libadd)
 
+lib_LTLIBRARIES += mod_query_field_json.la
+mod_query_field_json_la_SOURCES = mod_query_field_json.c
+mod_query_field_json_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
+mod_query_field_json_la_LIBADD = $(common_libadd) $(PCRE_LIB)
+
 hdr = server.h buffer.h network.h log.h keyvalue.h \
       response.h request.h fastcgi.h chunk.h \
       settings.h http_chunk.h http_auth_digest.h \
