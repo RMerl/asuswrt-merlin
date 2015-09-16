@@ -104,8 +104,10 @@ function initial() {
 	if (document.form.usb_idle_exclude.value.indexOf("i") != -1)
 		document.form.usb_idle_exclude_i.checked = true;
 
-	if ((productid == "RT-AC56U") || (productid == "RT-AC68U") || (productid == "RT-AC87U") || (productid == "RT-AC3200"))
+	if ((productid == "RT-AC56U") || (productid == "RT-AC68U") || (productid == "RT-AC87U"))
 		document.getElementById("ct_established_default").innerHTML = "Default: 432000 (5 days)";
+	else if ((productid == "RT-AC3200") || (productid == "RT-AC88U") || (productid == "RT-AC3100") || (productid == "RT-AC5300"))
+		document.getElementById("ct_established_default").innerHTML = "Default: 2400";
 
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
