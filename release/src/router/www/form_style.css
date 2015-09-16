@@ -1938,13 +1938,12 @@ padding-top:1px;
 .textarea_ssh_table{
 	margin-left:2px;
 	padding-left:0.4em;
-	width: 500px;
+	width:500px;
 	height:184px;
-	line-height:23px;    /*IE*/
+	line-height:18px;
 	font-size:12px;
-	font-family: Lucida Console;
-	background: #576D73;
-	border: 2px ridge #777;
+	background:#576D73;
+	border:2px ridge #777;
 	border-style:bevel;
 	color:#FFFFFF;
 }
