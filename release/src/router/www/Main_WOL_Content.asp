@@ -100,7 +100,7 @@ function onSubmitCtrl(o, s) {
 }
 
 function updateOptions(){
-	document.form.SystemCmd.value = "ether-wake -i br0 " + document.form.destIP.value;
+	document.form.SystemCmd.value = "ether-wake -i br0 -b " + document.form.destIP.value;
 	document.form.submit();
 	document.getElementById("cmdBtn").disabled = true;
 	document.getElementById("cmdBtn").style.color = "#666";
