@@ -530,6 +530,14 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 
 	return false;
 }
+
+
+function validate_hostname(o){
+	if ((o.value != "") && (validator.hostName(o) != "")) {
+	        alert("Hostname must only contain alphanumeric characters, underline and dash symbol. The first character cannot be dash \"-\" or underline \"_\".");
+	        o.select();
+	}
+}
 </script>
 </head>
 
@@ -720,7 +728,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			  	<tr>
 		  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
         		<th><#IPConnection_ExternalIPAddress_itemname#></th>
-			<th>Name</th>
+			<th>Hostame</th>
         		<th><#list_add_delete#></th>
 			  	</tr>
 			  	<tr>
@@ -734,7 +742,7 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
             				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off">
             			</td>
             			<td width="27%">
-					<input type="text" class="input_15_table" maxlenght="15" onkeypress="return is_alphanum(this,event);" onblur="validator.safeName(this);" name="dhcp_staticname_x_0" autocorrect="off" autocapitalize="off">
+					<input type="text" class="input_15_table" maxlenght="30" onkeypress="return is_alphanum(this, event);" onblur="validate_hostname(this);" name="dhcp_staticname_x_0" autocorrect="off" autocapitalize="off">
 				</td>
 				<td width="19%">
 										<div>
