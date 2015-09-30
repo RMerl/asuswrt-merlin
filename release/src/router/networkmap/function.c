@@ -248,6 +248,24 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
     return 0;
 }
 
+#if 1
+/***** Printer server detect function *****/
+int lpd515(unsigned char *dest_ip)
+{
+        int sockfd1;
+
+        if ((sockfd1 = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        {
+                NMP_DEBUG_F("LPD515: socket create error.\n");
+                return -1;
+        }
+
+        /* Don't talk to the LPR service, as it will bring the printer out of sleep mode */
+        /* Assume that answering port 515 = printer server */
+        close(sockfd1);
+        return 0;
+}
+#else
 /***** Printer server detect function *****/
 int lpd515(unsigned char *dest_ip)
 {
@@ -302,6 +320,7 @@ int lpd515(unsigned char *dest_ip)
 	close(sockfd1);
        	return -1;
 }
+#endif
 
 int raw9100(unsigned char *dest_ip)
 {
