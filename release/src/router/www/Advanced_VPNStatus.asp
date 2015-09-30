@@ -30,51 +30,91 @@ var overlib_str0 = new Array();	//Viz add 2013.04 for record longer VPN client u
 var overlib_str1 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
 vpnc_clientlist_array = decodeURIComponent('<% nvram_char_to_ascii("","vpnc_clientlist"); %>');
 
-
 function initial(){
-	var state_r = " - Running";
-	var state_s = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
-
 	show_menu();
 
-	if (openvpnd_support){
-		if (server1pid > 0)
-			document.getElementById("server1_Block_Running").innerHTML = state_r;
-		else
-			document.getElementById("server1_Block_Running").innerHTML = state_s;
-
-		if (client1pid > 0)
-			document.getElementById("client1_Block_Running").innerHTML = state_r;
-		else
-			document.getElementById("client1_Block_Running").innerHTML = state_s;
-
-		if (server2pid > 0)
-			document.getElementById("server2_Block_Running").innerHTML = state_r;
-		else
-			document.getElementById("server2_Block_Running").innerHTML = state_s;
-
-		if (client2pid > 0)
-			document.getElementById("client2_Block_Running").innerHTML = state_r;
-		else
-			document.getElementById("client2_Block_Running").innerHTML = state_s;
-
-        
-		parseStatus(document.form.status_server1.value, "server1_Block");
-		parseStatus(document.form.status_client1.value, "client1_Block");
-		parseStatus(document.form.status_server2.value, "server2_Block");
-		parseStatus(document.form.status_client2.value, "client2_Block");
+	if (openvpnd_support) {
+		setTimeout("refreshState()",3000);
 	} else {
 		showhide("server1", 0);
 		showhide("server2", 0);
 		showhide("client1", 0);
 		showhide("client2", 0);
+		showhide("client3", 0);
+		showhide("client4", 0);
+		showhide("client5", 0);
 	}
+}
+
+
+function refreshState(){
+	var state_s_r = " - Running";
+	var state_s_s = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
+	var state_c_ced = " - Connected";
+	var state_c_cing = " - Connecting...";
+	var state_c_err = " - Error connecting!";
+	var state_c_disc = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
+
+//	setTimeout("refreshState()",3000);
+
+	if (server1pid > 0)
+		document.getElementById("server1_Block_Running").innerHTML = state_s_r;
+	else
+		document.getElementById("server1_Block_Running").innerHTML = state_s_s;
+
+	if (server2pid > 0)
+		document.getElementById("server2_Block_Running").innerHTML = state_s_r;
+	else
+		document.getElementById("server2_Block_Running").innerHTML = state_s_s;
+
+	for (var unit = 1; unit < 6; unit++) {
+		switch (unit) {
+			case 1:
+				client_state = vpnc_state_t1;
+				break;
+			case 2:
+				client_state = vpnc_state_t2;
+				break;
+			case 3:
+				client_state = vpnc_state_t3;
+				break;
+			case 4:
+				client_state = vpnc_state_t4;
+				break;
+			case 5:
+				client_state = vpnc_state_t5;
+				break;
+		}
+
+		switch (client_state) {
+			case "0":
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_c_disc;
+				break;
+			case "1":
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_c_cing;
+				break;
+			case "2":
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_c_ced;
+				break;
+			case "-1":
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_c_err;
+				break;
+		}
+	}        
+
+	parseStatus(document.form.status_server1.value, "server1_Block");
+	parseStatus(document.form.status_server2.value, "server2_Block");
+	parseStatus(document.form.status_client1.value, "client1_Block");
+	parseStatus(document.form.status_client2.value, "client2_Block");
+	parseStatus(document.form.status_client3.value, "client3_Block");
+	parseStatus(document.form.status_client4.value, "client4_Block");
+	parseStatus(document.form.status_client5.value, "client5_Block");
 
 	if (pptpd_support) {
 		if (pptpdpid > 0)
-			document.getElementById("pptp_Block_Running").innerHTML = state_r;
+			document.getElementById("pptp_Block_Running").innerHTML = state_s_r;
 		else
-			document.getElementById("pptp_Block_Running").innerHTML = state_s;
+			document.getElementById("pptp_Block_Running").innerHTML = state_s_s;
 		parsePPTPClients();
 
 	} else {
@@ -83,8 +123,6 @@ function initial(){
 
 	if ( (vpnc_support) && (vpnc_clientlist_array != "") ) {
 		show_vpnc_rulelist();
-		// Update state after a few seconds, when Ajax status is up-to-date
-		setTimeout("show_vpnc_rulelist();", 3000);
 	} else {
 		showhide("vpnc", 0);
 	}
@@ -388,6 +426,9 @@ function show_vpnc_rulelist(){
 <input type="hidden" name="status_server2" value="<% sysinfo("vpnstatus.server.2"); %>">
 <input type="hidden" name="status_client1" value="<% sysinfo("vpnstatus.client.1"); %>">
 <input type="hidden" name="status_client2" value="<% sysinfo("vpnstatus.client.2"); %>">
+<input type="hidden" name="status_client3" value="<% sysinfo("vpnstatus.client.3"); %>">
+<input type="hidden" name="status_client4" value="<% sysinfo("vpnstatus.client.4"); %>">
+<input type="hidden" name="status_client5" value="<% sysinfo("vpnstatus.client.5"); %>">
 <input type="hidden" name="status_pptp" value="<% nvram_dump("pptp_connected",""); %>">
 <input type="hidden" name="vpnc_proto" value="<% nvram_get("vpnc_proto"); %>">
 <input type="hidden" name="vpnc_pppoe_username" value="<% nvram_get("vpnc_pppoe_username"); %>">
@@ -487,6 +528,49 @@ function show_vpnc_rulelist(){
 					<tr>
 						<td style="border: none;">
 							<div id="client2_Block"></div>
+						</td>
+					</tr>
+
+				</table>
+
+			<br>
+				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td><span id="client3_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 3<span id="client3_Block_Running" style="background: transparent;"></span></td>
+						</tr>
+					</thead>
+					<tr>
+						<td style="border: none;">
+							<div id="client3_Block"></div>
+						</td>
+					</tr>
+
+				</table>
+			<br>
+				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+					<thead>
+						<tr>
+							<td><span id="client4_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 4<span id="client4_Block_Running" style="background: transparent;"></span></td>
+						</tr>
+					</thead>
+					<tr>
+						<td style="border: none;">
+							<div id="client4_Block"></div>
+						</td>
+					</tr>
+
+				</table>
+			<br>
+				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+					<thead>
+						<tr>
+							<td><span id="client5_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 5<span id="client5_Block_Running" style="background: transparent;"></span></td>
+						</tr>
+					</thead>
+					<tr>
+						<td style="border: none;">
+							<div id="client5_Block"></div>
 						</td>
 					</tr>
 

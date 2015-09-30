@@ -1681,10 +1681,9 @@ ej_vpn_crt_client(int eid, webs_t wp, int argc, char **argv) {
 
 
 //2008.08 magic {
-// Largest POST will be the OpenVPN pages with keys:
-// 5 keys * 2 server instances = 10 large fields total
-// Each field can have up to 3500 characters, for a potential
-// total of 35KB.  Going for 40KB to account for additional POST/GET data.
+// Largest POST will be the OpenVPN server page with keys:
+// 7 key/certs, each with up to 3500 characters, for a potential
+// size of 25KB.  Add other fields + policy lists, 40KB should be safe enough.
 
 static char post_buf[40000] = { 0 };
 static char post_buf_backup[40000] = { 0 };
@@ -2002,7 +2001,7 @@ int validate_instance(webs_t wp, char *name, json_object *root)
 		}
 	}
 	else if(strncmp(name, "vpn_client_", 11)==0) {
-		for(i=1;i<3;i++) {
+		for(i=1;i<6;i++) {
 			sprintf(prefix, "vpn_client%d_", i);
 			value = get_cgi_json(strcat_r(prefix, name+11, tmp),root);
 			if(value && strcmp(nvram_safe_get(tmp), value)) {

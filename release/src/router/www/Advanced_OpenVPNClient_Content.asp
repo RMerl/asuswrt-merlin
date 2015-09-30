@@ -134,12 +134,24 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 
 openvpn_unit = '<% nvram_get("vpn_client_unit"); %>';
 
-if (openvpn_unit == 1)
-	service_state = (<% sysinfo("pid.vpnclient1"); %> > 0);
-else if (openvpn_unit == 2)
-	service_state = (<% sysinfo("pid.vpnclient2"); %> > 0);
-else
-	service_state = false;
+client_state = false;
+switch (openvpn_unit) {
+	case "1":
+		client_state = (<% sysinfo("pid.vpnclient1"); %> > 0);
+		break;
+	case "2":
+		client_state = (<% sysinfo("pid.vpnclient2"); %> > 0);
+		break;
+	case "3":
+		client_state = (<% sysinfo("pid.vpnclient3"); %> > 0);
+		break;
+	case "4":
+		client_state = (<% sysinfo("pid.vpnclient4"); %> > 0);
+		break;
+	case "5":
+		client_state = (<% sysinfo("pid.vpnclient5"); %> > 0);
+		break;
+}
 
 enforce_ori = "<% nvram_get("vpn_client_enforce"); %>";
 policy_ori = "<% nvram_get("vpn_client_rgw"); %>";
@@ -250,7 +262,6 @@ function setTLSTable(unit) {
 			document.getElementById('edit_vpn_crt_client_crl').value = vpn_crt_client2_crl[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			document.getElementById('edit_vpn_crt_client_extra').value = vpn_crt_client2_extra[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			break;
-/*
 		case "3" :
 			document.getElementById('edit_vpn_crt_client_ca').value = vpn_crt_client3_ca[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			document.getElementById('edit_vpn_crt_client_crt').value = vpn_crt_client3_crt[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
@@ -272,7 +283,6 @@ function setTLSTable(unit) {
 			document.getElementById('edit_vpn_crt_client_static').value = vpn_crt_client5_static[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			document.getElementById('edit_vpn_crt_client_crl').value = vpn_crt_client5_crl[0].replace(/&#10/g, "\n").replace(/&#13/g, "\r");
 			break;
-*/
 	}
 }
 
@@ -364,7 +374,6 @@ function save_Keys(){
 			document.form.vpn_crt_client2_crl.disabled = false;
 			document.form.vpn_crt_client2_extra.disabled =  false;
 			break;
-/*
 		case "3" :
 			document.form.vpn_crt_client3_ca.value = document.getElementById('edit_vpn_crt_client_ca').value;
 			document.form.vpn_crt_client3_crt.value = document.getElementById('edit_vpn_crt_client_crt').value;
@@ -401,7 +410,6 @@ function save_Keys(){
 			document.form.vpn_crt_client5_static.disabled = false;
 			document.form.vpn_crt_client5_crl.disabled = false;
 			break;
-*/
 	}
 	
 	this.FromObject ="0";
@@ -436,13 +444,13 @@ function cal_panel_block(){
 function applyRule(){
 	showLoading();
 
-	if (service_state) {
+	if (client_state) {
 		document.form.action_script.value = "restart_vpnclient"+openvpn_unit;
 	}
 
 	tmp_value = "";
 
-	for (var i=1; i < 3; i++) {
+	for (var i=1; i < 6; i++) {
 		if (i == openvpn_unit) {
 			if (getRadioValue(document.form.vpn_client_x_eas) == 1)
 				tmp_value += ""+i+",";
@@ -473,7 +481,7 @@ function applyRule(){
 
 	if (((enforce_ori != getRadioValue(document.form.vpn_client_enforce)) ||
 	     (policy_ori != document.form.vpn_client_rgw.value)) &&
-	    (!service_state))
+	    (!client_state))
 		document.form.action_script.value += "start_vpnrouting"+openvpn_unit;
 
 	document.form.submit();
@@ -880,9 +888,12 @@ function validate_ipcidr(obj){
 					<tr id="client_unit">
 						<th>Select client instance</th>
 						<td>
-			        		<select name="vpn_client_unit" class="input_option" onChange="change_vpn_unit(this.value);">
+							<select name="vpn_client_unit" class="input_option" onChange="change_vpn_unit(this.value);">
 								<option value="1" <% nvram_match("vpn_client_unit","1","selected"); %> >Client 1</option>
 								<option value="2" <% nvram_match("vpn_client_unit","2","selected"); %> >Client 2</option>
+								<option value="3" <% nvram_match("vpn_client_unit","3","selected"); %> >Client 3</option>
+								<option value="4" <% nvram_match("vpn_client_unit","4","selected"); %> >Client 4</option>
+								<option value="5" <% nvram_match("vpn_client_unit","5","selected"); %> >Client 5</option>
 							</select>
 			   			</td>
 					</tr>
@@ -892,7 +903,7 @@ function validate_ipcidr(obj){
 							<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_service_enable"></div>
 							<script type="text/javascript">
 
-								$('#radio_service_enable').iphoneSwitch(service_state,
+								$('#radio_service_enable').iphoneSwitch((client_state!=0),
 									 function() {
 										document.form.action_script.value = "start_vpnclient" + openvpn_unit;
 										parent.showLoading();
@@ -1159,7 +1170,7 @@ function validate_ipcidr(obj){
 				<table id="selectiveTable" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 					<thead>
 						<tr>
-							<td colspan="5">Rules for routing client traffic through the tunnel (<#List_limit#>&nbsp;128)</td>
+							<td colspan="5">Rules for routing client traffic through the tunnel (<#List_limit#>&nbsp;100)</td>
 						</tr>
 					</thead>
 					<tr>
@@ -1189,7 +1200,7 @@ function validate_ipcidr(obj){
 						</td>
 						<td width="12%">
 							<div>
-								<input type="button" class="add_btn" onClick="addRow_Group(128);" value="">
+								<input type="button" class="add_btn" onClick="addRow_Group(100);" value="">
 							</div>
 						</td>
 					</tr>

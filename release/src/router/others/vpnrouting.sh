@@ -89,27 +89,44 @@ then
 	VPN_TBL=111
 	VPN_REDIR=$(nvram get vpn_client1_rgw)
 	VPN_FORCE=$(nvram get vpn_client1_enforce)
-	WAN_PRIO=1000
-	VPN_PRIO=1200
-	START_PRIO=1000
-	END_PRIO=1399
-	VPN_INSTANCE=1
-
+	VPN_UNIT=1
 elif [ "$dev" == "tun12" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client2_clientlist)
 	VPN_TBL=112
 	VPN_REDIR=$(nvram get vpn_client2_rgw)
 	VPN_FORCE=$(nvram get vpn_client2_enforce)
-	WAN_PRIO=1400
-	VPN_PRIO=1600
-	START_PRIO=1400
-	END_PRIO=1799
-	VPN_INSTANCE=2
+	VPN_UNIT=2
+elif [ "$dev" == "tun13" ]
+then
+	VPN_IP_LIST=$(nvram get vpn_client3_clientlist)
+	VPN_TBL=113
+	VPN_REDIR=$(nvram get vpn_client3_rgw)
+	VPN_FORCE=$(nvram get vpn_client3_enforce)
+	VPN_UNIT=3
+elif [ "$dev" == "tun14" ]
+then
+	VPN_IP_LIST=$(nvram get vpn_client4_clientlist)
+	VPN_TBL=114
+	VPN_REDIR=$(nvram get vpn_client4_rgw)
+	VPN_FORCE=$(nvram get vpn_client4_enforce)
+	VPN_UNIT=4
+elif [ "$dev" == "tun15" ]
+then
+	VPN_IP_LIST=$(nvram get vpn_client5_clientlist)
+	VPN_TBL=115
+	VPN_REDIR=$(nvram get vpn_client5_rgw)
+	VPN_FORCE=$(nvram get vpn_client5_enforce)
+	VPN_UNIT=5
 else
 	run_custom_script
 	exit 0
 fi
+
+START_PRIO=$((1000+(200*($VPN_UNIT-1))))
+END_PRIO=$(($START_PRIO+199))
+WAN_PRIO=$START_PRIO
+VPN_PRIO=$(($START_PRIO+100))
 
 export VPN_GW VPN_IP VPN_TBL VPN_FORCE
 
@@ -117,7 +134,7 @@ export VPN_GW VPN_IP VPN_TBL VPN_FORCE
 # webui reports that vpn_force changed while vpn client was down
 if [ $script_type = "rmupdate" ]
 then
-	logger -t "openvpn-routing" "Refreshing policy rules for client $VPN_INSTANCE"
+	logger -t "openvpn-routing" "Refreshing policy rules for client $VPN_UNIT"
 	purge_client_list
 
 	if [ $VPN_FORCE == "1" -a $VPN_REDIR == "2" ]
@@ -137,12 +154,12 @@ fi
 
 if [ $script_type == "route-up" -a $VPN_REDIR != "2" ]
 then
-	logger -t "openvpn-routing" "Skipping, client $VPN_INSTANCE not in routing policy mode"
+	logger -t "openvpn-routing" "Skipping, client $VPN_UNIT not in routing policy mode"
 	run_custom_script
 	exit 0
 fi
 
-logger -t "openvpn-routing" "Configuring policy rules for client $VPN_INSTANCE"
+logger -t "openvpn-routing" "Configuring policy rules for client $VPN_UNIT"
 
 if [ $script_type == "route-pre-down" ]
 then
