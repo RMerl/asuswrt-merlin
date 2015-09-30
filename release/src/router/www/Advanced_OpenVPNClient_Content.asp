@@ -134,7 +134,6 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 
 openvpn_unit = '<% nvram_get("vpn_client_unit"); %>';
 
-client_state = false;
 switch (openvpn_unit) {
 	case "1":
 		client_state = (<% sysinfo("pid.vpnclient1"); %> > 0);
@@ -151,7 +150,11 @@ switch (openvpn_unit) {
 	case "5":
 		client_state = (<% sysinfo("pid.vpnclient5"); %> > 0);
 		break;
+	default:
+		client_state = false;
+		break;
 }
+
 
 enforce_ori = "<% nvram_get("vpn_client_enforce"); %>";
 policy_ori = "<% nvram_get("vpn_client_rgw"); %>";
@@ -228,6 +231,8 @@ function initial()
 
 	getTLS(openvpn_unit);
 	update_visibility();
+
+	setTimeout("getConnStatus()", 2000);
 }
 
 function getTLS(unit){
@@ -724,6 +729,55 @@ function validate_ipcidr(obj){
 
 }
 
+function getConnStatus() {
+	switch (openvpn_unit) {
+		case "1":
+			client_state = vpnc_state_t1;
+			client_errno = vpnc_errno_t1;
+			break;
+		case "2":
+			client_state = vpnc_state_t2;
+			client_errno = vpnc_errno_t2;
+			break;
+		case "3":
+			client_state = vpnc_state_t3;
+			client_errno = vpnc_errno_t3;
+			break;
+		case "4":
+			client_state = vpnc_state_t4;
+			client_errno = vpnc_errno_t4;
+			break;
+		case "5":
+			client_state = vpnc_state_t5;
+			client_errno = vpnc_errno_t5;
+			break;
+	}
+
+	if (client_state == "-1") {
+		switch (client_errno) {
+			case "1":
+				code = "Error - IP conflict!";
+				break;
+			case "2":
+				code = "Error - Routing conflict!";
+				break;
+			case "4":
+				code = "Error - SSL/TLS issue!";
+				break;
+			case "5":
+				code = "Error - DH issue!";
+				break;
+			case "6":
+				code = "Error - Authentication failure!";
+				break;
+			default:
+				code = "Error - check configuration!";
+				break;
+		}
+		document.getElementById("vpn_error_msg").innerHTML = "<span>" + code + "</span>";
+	}
+}
+
 </script>
 </head>
 
@@ -922,6 +976,7 @@ function validate_ipcidr(obj){
 								);
 							</script>
 							<span>Warning: any unsaved change will be lost.</span>
+							<div id="vpn_error_msg"></div>
 					    </td>
 					</tr>
 					<tr>
