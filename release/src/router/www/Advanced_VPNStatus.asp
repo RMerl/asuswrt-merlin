@@ -48,56 +48,64 @@ function initial(){
 
 
 function refreshState(){
-	var state_s_r = " - Running";
-	var state_s_s = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
-	var state_c_ced = " - Connected";
-	var state_c_cing = " - Connecting...";
-	var state_c_err = " - Error connecting!";
-	var state_c_disc = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
-
-//	setTimeout("refreshState()",3000);
+	var state_srv_run = " - Running";
+	var state_srv_stop = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
+	var state_clnt_ced = " - Connected";
+	var state_clnt_cing = " - Connecting...";
+	var state_clnt_err = " - Error connecting";
+	var state_clnt_disc = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
 
 	if (server1pid > 0)
-		document.getElementById("server1_Block_Running").innerHTML = state_s_r;
+		document.getElementById("server1_Block_Running").innerHTML = state_srv_run;
 	else
-		document.getElementById("server1_Block_Running").innerHTML = state_s_s;
+		document.getElementById("server1_Block_Running").innerHTML = state_srv_stop;
 
 	if (server2pid > 0)
-		document.getElementById("server2_Block_Running").innerHTML = state_s_r;
+		document.getElementById("server2_Block_Running").innerHTML = state_srv_run;
 	else
-		document.getElementById("server2_Block_Running").innerHTML = state_s_s;
+		document.getElementById("server2_Block_Running").innerHTML = state_srv_stop;
 
 	for (var unit = 1; unit < 6; unit++) {
 		switch (unit) {
 			case 1:
 				client_state = vpnc_state_t1;
+				client_errno = vpnc_errno_t1;
 				break;
 			case 2:
 				client_state = vpnc_state_t2;
+				client_errno = vpnc_errno_t2;
 				break;
 			case 3:
 				client_state = vpnc_state_t3;
+				client_errno = vpnc_errno_t3;
 				break;
 			case 4:
 				client_state = vpnc_state_t4;
+				client_errno = vpnc_errno_t4;
 				break;
 			case 5:
 				client_state = vpnc_state_t5;
+				client_errno = vpnc_errno_t5;
 				break;
 		}
 
 		switch (client_state) {
 			case "0":
-				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_c_disc;
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_clnt_disc;
 				break;
 			case "1":
-				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_c_cing;
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_clnt_cing;
 				break;
 			case "2":
-				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_c_ced;
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_clnt_ced;
 				break;
 			case "-1":
-				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_c_err;
+				code = state_clnt_err;
+				if (client_errno == 1 || client_errno == 2 || client_errno == 3)
+					code += ' - <#vpn_openvpn_conflict#>';
+				else if(client_errno == 4 || client_errno == 5 || client_errno == 6)
+					code += ' - <#qis_fail_desc1#>';
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = code;
 				break;
 		}
 	}        
@@ -137,7 +145,6 @@ function applyRule(){
 
 
 function parsePPTPClients() {
-
 	text = document.form.status_pptp.value;
 
 	if ((text == "")) {
@@ -165,8 +172,6 @@ function parsePPTPClients() {
 
 
 function parseStatus(text, block){
-
-	// Clear it
 	document.getElementById(block).innerHTML = "";
 	var code = "";
 
@@ -195,9 +200,8 @@ function parseStatus(text, block){
 		{
 		case "TITLE":
 			break;
-		case "TIME":
-		case "Updated":
-			document.getElementById(block + "_UpdateTime").innerHTML = 'Last updated: ' + fields[1];
+                case "TIME":
+                case "Updated":
 			break;
 		case "HEADER":
 			switch ( fields[1] )
@@ -460,7 +464,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" id="pptpserver" class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="pptp_Block_UpdateTime" style="float: right; background: transparent;"></span>PPTP VPN Server<span id="pptp_Block_Running" style="background: transparent;"></span></td>
+							<td>PPTP VPN Server<span id="pptp_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -476,7 +480,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" id="server1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="server1_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Server 1<span id="server1_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN Server 1<span id="server1_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -492,7 +496,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" id="server2" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="server2_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Server 2<span id="server2_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN Server 2<span id="server2_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -508,7 +512,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="client1_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 1<span id="client1_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN Client 1<span id="client1_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -524,7 +528,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" id="client2" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="client2_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 2<span id="client2_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN Client 2<span id="client2_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -539,7 +543,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="client3_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 3<span id="client3_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN Client 3<span id="client3_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -553,7 +557,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="client4_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 4<span id="client4_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN Client 4<span id="client4_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -567,7 +571,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="client5_Block_UpdateTime" style="float: right; background: transparent;"></span>OpenVPN Client 5<span id="client5_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN Client 5<span id="client5_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -583,7 +587,7 @@ function show_vpnc_rulelist(){
 				<table width="100%" id="vpnc" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td><span id="vpnc_Block_UpdateTime" style="float: right; background: transparent;"></span>PPTP/L2TP Clients<span id="vpnc_Block_Running" style="background: transparent;"></span></td>
+							<td>PPTP/L2TP Clients<span id="vpnc_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
