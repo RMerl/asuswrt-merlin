@@ -312,15 +312,16 @@ function parseStatus(text, block){
 /*** Stats ***/
 
 	if (statsPtr > 0) {
-		code += '<table width="50%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="2">Statistics</td></tr></thead>';
+		code += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="4">Statistics</td></tr></thead>';
 
 		for (i = 0; i < statsTableEntries.length; ++i)
 		{
-			code += '<tr>';
+			if (i % 2 == 0) code += '<tr>';
 			code += '<th width="80%" style="text-align:left;">' + statsTableEntries[i][0] +'</th>';
-			code += '<td width="20%" align="left" style="text-align:left;">' + statsTableEntries[i][1] +'</td>';
-			code += '</tr>';
+			code += '<td width="20%" align="left" style="text-align:left;">' + Number(statsTableEntries[i][1]).toLocaleString() +'</td>';
+			if (i % 2 == 1) code += '</tr>';
 		}
+		if (i % 2 == 0) code += '</tr>';
 		code += '</table>';
 	}
 
@@ -329,15 +330,16 @@ function parseStatus(text, block){
 
 	if (staticstatsPtr > 0) {
 
-		code += '<table width="50%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="2">Statistics</td></tr></thead>';
+		code += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="4">Statistics</td></tr></thead>';
 
 		for (i = 0; i < staticstatsTableEntries.length; ++i)
 		{
-			code += '<tr>';
+			if (i % 2 == 0) code += '<tr>';
 			code += '<th width="80%" style="text-align:left;">' + staticstatsTableEntries[i][0] +'</th>';
-			code += '<td width="20%" align="left" style="text-align:left;">' + staticstatsTableEntries[i][1] +'</td>';
-			code += '</tr>';
+			code += '<td width="20%" align="left" style="text-align:left;">' + Number(staticstatsTableEntries[i][1]).toLocaleString() +'</td>';
+			if (i % 2 == 1) code += '</tr>';
 		}
+		if (i % 2 == 0) code += '</tr>';
 		code += '</table>';
 	}
 	document.getElementById(block).innerHTML += code;
