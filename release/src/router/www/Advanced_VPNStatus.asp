@@ -22,8 +22,6 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 server1pid = '<% sysinfo("pid.vpnserver1"); %>';
 server2pid = '<% sysinfo("pid.vpnserver2"); %>';
-client1pid = '<% sysinfo("pid.vpnclient1"); %>';
-client2pid = '<% sysinfo("pid.vpnclient2"); %>';
 pptpdpid = '<% sysinfo("pid.pptpd"); %>';
 
 var overlib_str0 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
