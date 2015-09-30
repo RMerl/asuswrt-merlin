@@ -3120,12 +3120,10 @@ function refreshStatus(xhr){
 
 	vpnc_sbstate_t = vpnStatus[2].firstChild.nodeValue.replace("vpnc_sbstate_t=", "");
 
-//TODO: Make sure the index values are properly adjusted (I added 3 to them)!
 	if('<% nvram_get("vpn_server_unit"); %>' == 1)
-		vpnd_state = vpnStatus[11].firstChild.nodeValue.replace("vpn_server1_state=", "");
+		vpnd_state = vpnStatus[14].firstChild.nodeValue.replace("vpn_server1_state=", "");
 	else    //unit 2
-		vpnd_state = vpnStatus[12].firstChild.nodeValue.replace("vpn_server2_state=", "");
-//	vpnd_state = vpnStatus[5].firstChild.nodeValue;
+		vpnd_state = vpnStatus[15].firstChild.nodeValue.replace("vpn_server2_state=", "");
 
 	if(location.pathname == "/"+ QISWIZARD)
 		return false;	
