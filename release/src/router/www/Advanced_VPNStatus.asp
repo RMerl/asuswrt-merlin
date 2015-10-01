@@ -267,6 +267,8 @@ function parseStatus(text, block){
 			{
 				if (j == 0) {
 					code += '<td style="white-space:nowrap; text-align:left;">' + clientTableEntries[i][j] + '<br><span style="color: cyan; background: transparent;">' + clientTableEntries[i][clientTableEntries[i].length-2] +'</span></td>';
+				} else if ((j == 3) || (j == 4)) {
+					code += '<td style="vertical-align:top; text-align:left;">' + Number(clientTableEntries[i][j]).toLocaleString() + '</td>';
 				} else {
 					code += '<td style="vertical-align:top; text-align:left;">' + clientTableEntries[i][j] + '</td>';
 				}
