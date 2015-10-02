@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <shared.h>
 #include "httpd.h"
@@ -452,6 +453,7 @@ add_option (char *p[], int line, int unit)
 			snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, buf);
 			fp = fopen(file_path, "w");
 			if(fp) {
+				chmod(file_path, S_IRUSR|S_IWUSR);
 				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
 				fclose(fp);
 			}
@@ -473,6 +475,7 @@ add_option (char *p[], int line, int unit)
 			snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, buf);
 			fp = fopen(file_path, "w");
 			if(fp) {
+				chmod(file_path, S_IRUSR|S_IWUSR);
 				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
 				fclose(fp);
 			}
@@ -494,6 +497,7 @@ add_option (char *p[], int line, int unit)
 			snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, buf);
 			fp = fopen(file_path, "w");
 			if(fp) {
+				chmod(file_path, S_IRUSR|S_IWUSR);
 				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
 				fclose(fp);
 			}
@@ -515,6 +519,7 @@ add_option (char *p[], int line, int unit)
 			snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, buf);
 			fp = fopen(file_path, "w");
 			if(fp) {
+				chmod(file_path, S_IRUSR|S_IWUSR);
 				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
 				fclose(fp);
 			}
@@ -542,6 +547,7 @@ add_option (char *p[], int line, int unit)
 			snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, buf);
 			fp = fopen(file_path, "w");
 			if(fp) {
+				chmod(file_path, S_IRUSR|S_IWUSR);
 				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
 				fclose(fp);
 			}
@@ -563,6 +569,7 @@ add_option (char *p[], int line, int unit)
 			snprintf(file_path, sizeof(file_path) -1, "%s/%s", OVPN_FS_PATH, buf);
 			fp = fopen(file_path, "w");
 			if(fp) {
+				chmod(file_path, S_IRUSR|S_IWUSR);
 				fprintf(fp, "%s", strstr(p[2], "-----BEGIN"));
 				fclose(fp);
 			}
