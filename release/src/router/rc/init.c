@@ -3932,7 +3932,7 @@ int init_nvram(void)
 	case MODEL_RTAC88U:
 	case MODEL_RTAC3100:
 
-		ldo_patch();
+//		ldo_patch();
 
 		nvram_set("0:ledbh9", "0x7");
 		nvram_set("1:ledbh9", "0x7");

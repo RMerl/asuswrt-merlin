@@ -11856,13 +11856,13 @@ static int ej_netdev(int eid, webs_t wp, int argc, char_t **argv)
 #ifdef RTCONFIG_LACP
 					if(nvram_get_int("lacp_enabled") == 1 &&
 							strcmp(ifname, "vlan1") == 0){
-						traffic_trunk(1, &rx_lacp1, &tx_lacp1);
+						//traffic_trunk(1, &rx_lacp1, &tx_lacp1);
 						netdev_calc("lacp1", "LACP1",
 								&rx_lacp1, &tx_lacp1,
 								ifname_desc2_lacp1,
 								&rx2_lacp1, &tx2_lacp1);
 
-						traffic_trunk(2, &rx_lacp2, &tx_lacp2);
+						//traffic_trunk(2, &rx_lacp2, &tx_lacp2);
 						netdev_calc("lacp2", "LACP2",
 								&rx_lacp2, &tx_lacp2,
 								ifname_desc2_lacp2,
