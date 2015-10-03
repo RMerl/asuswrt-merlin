@@ -92,6 +92,9 @@ function initial(){
 
 	regen_band(document.form.wl_unit);
 
+	if(!band5g_support)
+		document.getElementById("wl_unit_field").style.display = "none";
+
 	var wl_maclist_x_row = wl_maclist_x_array.split('&#60');
 	var clientName = "New device";
 	for(var i = 1; i < wl_maclist_x_row.length; i += 1) {

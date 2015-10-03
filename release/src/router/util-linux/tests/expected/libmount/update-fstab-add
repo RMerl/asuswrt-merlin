@@ -1,3 +1,0 @@
-/dev/sda1 /mnt/foo ext3 rw,bbb,ccc,fff=FFF,ddd,noexec 1 2
-/dev/sda2 /mnt/bar auto defaults 1 2
-/dev/sda3 /mnt/bar auto rw,context="some,selinux,junk",noatime 1 2

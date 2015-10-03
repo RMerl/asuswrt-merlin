@@ -1,2 +1,0 @@
-@OUTPUT_FORMAT@
-GROUP ( @rootlibdir@/libntfs-3g.so  )

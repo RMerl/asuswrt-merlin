@@ -115,12 +115,11 @@ int init_gpio(void)
 #ifdef RT4GAC55U
 		, "led_lte_gpio", "led_sig1_gpio", "led_sig2_gpio", "led_sig3_gpio"
 #endif
-#ifdef PLN12
-		, "led_pwr_red_gpio", "led_2g_green_gpio", "led_2g_orange_gpio", "led_2g_red_gpio"
-#endif
-#ifdef PLAC56
-		, "led_2g_green_gpio", "led_2g_red_gpio"
-		, "led_5g_green_gpio", "led_5g_red_gpio"
+#if (defined(PLN12) || defined(PLAC56))
+		, "plc_wake_gpio"
+		, "led_pwr_red_gpio"
+		, "led_2g_green_gpio", "led_2g_orange_gpio", "led_2g_red_gpio"
+		, "led_5g_green_gpio", "led_5g_orange_gpio", "led_5g_red_gpio"
 #endif
 #ifdef RTCONFIG_MMC_LED
 		, "led_mmc_gpio"
@@ -186,7 +185,7 @@ int init_gpio(void)
 #endif	/* RT4GAC55U */
 	}
 
-#ifdef PLN12
+#if (defined(PLN12) || defined(PLAC56))
 	if((gpio_pin = (use_gpio = nvram_get_int("led_pwr_red_gpio")) & 0xff) != 0xff)
 #else
 	if((gpio_pin = (use_gpio = nvram_get_int("led_pwr_gpio")) & 0xff) != 0xff)
@@ -214,6 +213,13 @@ int init_gpio(void)
 	if((gpio_pin = (use_gpio = nvram_get_int("rpm_fan_gpio")) & 0xff) != 0xff){
 	enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
 	set_gpio(gpio_pin, enable);
+	}
+#endif
+
+#ifdef PLAC56
+	if((gpio_pin = (use_gpio = nvram_get_int("plc_wake_gpio")) & 0xff) != 0xff){
+		enable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 1 : 0;
+		set_gpio(gpio_pin, enable);
 	}
 #endif
 
@@ -320,16 +326,14 @@ void get_gpio_values_once(void)
 	led_gpio_table[RPM_FAN] = __get_gpio("rpm_fan_gpio");
 #endif
 
-#ifdef PLN12
+#if (defined(PLN12) || defined(PLAC56))
+	led_gpio_table[PLC_WAKE] = __get_gpio("plc_wake_gpio");
 	led_gpio_table[LED_POWER_RED] = __get_gpio("led_pwr_red_gpio");
 	led_gpio_table[LED_2G_GREEN] = __get_gpio("led_2g_green_gpio");
 	led_gpio_table[LED_2G_ORANGE] = __get_gpio("led_2g_orange_gpio");
 	led_gpio_table[LED_2G_RED] = __get_gpio("led_2g_red_gpio");
-#endif
-#ifdef PLAC56
-	led_gpio_table[LED_2G_GREEN] = __get_gpio("led_2g_green_gpio");
-	led_gpio_table[LED_2G_RED] = __get_gpio("led_2g_red_gpio");
 	led_gpio_table[LED_5G_GREEN] = __get_gpio("led_5g_green_gpio");
+	led_gpio_table[LED_5G_ORANGE] = __get_gpio("led_5g_orange_gpio");
 	led_gpio_table[LED_5G_RED] = __get_gpio("led_5g_red_gpio");
 #endif
 

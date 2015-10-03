@@ -3837,6 +3837,7 @@ int asus_tty(const char *device_name, const char *action){
 		nvram_unset(buf1);
 		snprintf(act_dev, 8, "%s", nvram_safe_get("usb_modem_act_dev"));
 
+		usb_dbg("(%s): usb_modem_act_path=%s.\n", usb_node, current_act);
 		if(!strcmp(current_act, usb_node)){
 			if(get_path_by_node(usb_node, port_path, 8) == NULL){
 				usb_dbg("(%s): Fail to get usb path.\n", usb_node);

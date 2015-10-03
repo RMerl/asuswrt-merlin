@@ -1,4 +1,0 @@
-ID_FS_LABEL=test-romfs
-ID_FS_LABEL_ENC=test-romfs
-ID_FS_TYPE=romfs
-ID_FS_USAGE=filesystem

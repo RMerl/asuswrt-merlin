@@ -66,6 +66,7 @@
 #define IOV_PORTSTATS		13
 #define IOV_SW_MCTBL		14
 #define IOV_FA_REV		15
+#define IOV_DUMP_OOPS		16
 
 #if defined(linux) || defined(__ECOS)
 #define SIOCSETCUP		(SIOCDEVPRIVATE + ETCUP)

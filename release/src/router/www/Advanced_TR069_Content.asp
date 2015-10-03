@@ -37,7 +37,8 @@
 
 
 window.onresize = cal_panel_block;
-tr_enable = '<% nvram_get("tr_enable"); %>';
+var tr_enable = '<% nvram_get("tr_enable"); %>';
+var tr_acs_url = '<% nvram_get("tr_acs_url"); %>';
 
 var jffs2_support = isSupport("jffs2");
 
@@ -54,6 +55,15 @@ function initial(){
 }
 
 function applyRule(){
+	if (document.form.tr_enable[0].checked) {
+		if (document.form.tr_acs_url.value == "")
+			document.form.tr_discovery.value = "1";
+		else if (document.form.tr_acs_url.value != tr_acs_url)
+			document.form.tr_discovery.value = "0";
+		document.form.action_script.value = "restart_tr";
+		if (document.form.tr_discovery.value != "0")
+			document.form.action_script.value += ";restart_wan_if";
+	}
 	showLoading();
 	document.form.submit();	
 }
@@ -187,6 +197,7 @@ function cal_panel_block(){
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
+<input type="hidden" name="tr_discovery" value="<% nvram_get("tr_discovery"); %>">
 <input type="hidden" name="tr_ca_cert" value="<% nvram_clean_get("tr_ca_cert"); %>">
 <input type="hidden" name="tr_client_cert" value="<% nvram_clean_get("tr_client_cert"); %>">
 <input type="hidden" name="tr_client_key" value="<% nvram_clean_get("tr_client_key"); %>">

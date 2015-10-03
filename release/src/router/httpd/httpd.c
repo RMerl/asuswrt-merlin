@@ -212,7 +212,7 @@ static void send_error( int status, char* title, char* extra_header, char* text 
 static void send_page( int status, char* title, char* extra_header, char* text , int fromapp);
 //#endif
 static void send_headers( int status, char* title, char* extra_header, char* mime_type, int fromapp);
-static void send_token_headers( int status, char* title, char* extra_header, char* mime_type );
+static void send_token_headers( int status, char* title, char* extra_header, char* mime_type, int fromapp);
 static int match( const char* pattern, const char* string );
 static int match_one( const char* pattern, int patternlen, const char* string );
 static void handle_request(void);
@@ -267,7 +267,8 @@ void sethost(char *host)
 
 	if(!host) return;
 
-	strcpy(host_name, host);
+	memset(host_name, 0, sizeof(host_name));
+	strncpy(host_name, host, sizeof(host_name));
 
 	cp = host_name;
 	for ( cp = cp + 7; *cp && *cp != '\r' && *cp != '\n'; cp++ );
@@ -538,7 +539,9 @@ send_headers( int status, char* title, char* extra_header, char* mime_type, int 
     (void) fprintf( conn_fp, "Server: %s\r\n", SERVER_NAME );
     if (fromapp == 1){
 	(void) fprintf( conn_fp, "Cache-Control: no-store\r\n");	
-	(void) fprintf( conn_fp, "Pragma: no-cache\r\n");	
+	(void) fprintf( conn_fp, "Pragma: no-cache\r\n");
+	(void) fprintf( conn_fp, "AiHOMEAPILevel: %d\r\n", EXTEND_AIHOME_API_LEVEL );
+	(void) fprintf( conn_fp, "Httpd_AiHome_Ver: %d\r\n", EXTEND_HTTPD_AIHOME_VER );
     }
     now = time( (time_t*) 0 );
     (void) strftime( timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &now ) );
@@ -557,7 +560,7 @@ send_headers( int status, char* title, char* extra_header, char* mime_type, int 
 }
 
 static void
-send_token_headers( int status, char* title, char* extra_header, char* mime_type )
+send_token_headers( int status, char* title, char* extra_header, char* mime_type, int fromapp)
 {
     time_t now;
     char timebuf[100];
@@ -573,6 +576,10 @@ send_token_headers( int status, char* title, char* extra_header, char* mime_type
 
     (void) fprintf( conn_fp, "%s %d %s\r\n", PROTOCOL, status, title );
     (void) fprintf( conn_fp, "Server: %s\r\n", SERVER_NAME );
+    if (fromapp == 1){
+    	(void) fprintf( conn_fp, "AiHOMEAPILevel: %d\r\n", EXTEND_AIHOME_API_LEVEL );
+    	(void) fprintf( conn_fp, "Httpd_AiHome_Ver: %d\r\n", EXTEND_HTTPD_AIHOME_VER );
+    }
     now = time( (time_t*) 0 );
     (void) strftime( timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &now ) );
     (void) fprintf( conn_fp, "Date: %s\r\n", timebuf );
@@ -1104,7 +1111,7 @@ handle_request(void)
 #endif
 			}
 
-			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,".CFG")) && !check_if_file_exist(file)
+			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,"uploadIconFile.tar")) && !(strstr(file,"networkmap.tar")) && !(strstr(file,".CFG")) && !(strstr(file,".log")) && !check_if_file_exist(file)
 #ifdef RTCONFIG_USB_MODEM
 					&& !strstr(file, "modemlog.txt")
 #endif
@@ -1122,15 +1129,16 @@ handle_request(void)
 				}else
 					snprintf(referer_host,sizeof(host_name),"%s",host_name);
 
-				send_token_headers( 200, "Ok", handler->extra_header, handler->mime_type );
+				send_token_headers( 200, "Ok", handler->extra_header, handler->mime_type, fromapp);
 
 			}else if(strncmp(url, "login.cgi", strlen(url))!=0){
 				send_headers( 200, "Ok", handler->extra_header, handler->mime_type, fromapp);
 			}
 
 			if(strncmp(url, "login.cgi", strlen(url))==0){	//set user-agent
+				memset(user_agent, 0, sizeof(user_agent));
 				if(useragent != NULL)
-					strcpy(user_agent, useragent);
+					strncpy(user_agent, useragent, sizeof(user_agent));
 				else
 					strcpy(user_agent, "");
 			}

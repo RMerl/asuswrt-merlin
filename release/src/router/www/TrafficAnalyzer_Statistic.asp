@@ -1092,6 +1092,7 @@ function draw_flow(date, traffic){
 	var traffic_unit = new Array();
 	var traffic_temp = new Array();	
 	var hour_temp = date_array[3], date_temp = date_array[2], month_temp = date_array[1], year_temp = date_array[0];
+	router_total_traffic = 0;
 	if(document.getElementById('duration_option').value == "daily"){	
 		for(i=0;i<24;i++){
 			if(traffic[i] == undefined)
@@ -1436,7 +1437,7 @@ function getClientCurrentName(_mac) {
 										<table width="100%">
 											<tr>
 												<td class="formfonttitle" align="left">								
-													<div>Traffic Analyzer - Statistic</div>
+													<div><#Traffic_Analyzer#> - Statistic</div>
 												</td>
 												<td>
 													<div>

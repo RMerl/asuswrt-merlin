@@ -154,9 +154,6 @@ var mcast_rates = [
 	["CCK 11",	 "6",  1, 0, 1]
 ];
 
-var wl_version = "<% nvram_get("wl_version"); %>";
-var sdk_version_array = new Array();
-sdk_version_array = wl_version.split(".");
 var sdk_6 = sdk_version_array[0] == "6" ? true:false
 var sdk_7 = sdk_version_array[0] == "7" ? true:false
 var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
@@ -256,7 +253,7 @@ function initial(){
 			based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "DSL-AC68U" ||
 			based_modelid == "RT-AC87U" || based_modelid == "EA-AC87" ||
 			based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || 
-			based_modelid == "RT-AC5300")
+			based_modelid == "RT-AC5300" || based_modelid == "RT-AC1200G" || based_modelid == "RT-AC1200G+")
 		{
 			document.getElementById('wl_txbf_desc').innerHTML = "802.11ac Beamforming";
 			inputCtrl(document.form.wl_txbf, 1);
@@ -407,25 +404,27 @@ function initial(){
 /* MODELDEP by Territory Code */
 function generate_region(){
 	//var region_name = ["Asia", "Australia", "Brazil", "Canada", "China", "Europe", "Japan", "Korea", "Malaysia", "Middle East", "Russia", "Singapore", "Turkey", "Taiwan", "Ukraine", "United States"];
-	var region_name = ["Asia", "China", "Europe", "Korea", "Russia", "Singapore", "United States"];	//Viz mod 2015.06.15
 	//var region_value = ["APAC", "AU", "BZ", "CA", "CN", "EU", "JP", "KR", "MY", "ME", "RU", "SG", "TR", "TW", "UA", "US"];
-	region_value = ["AP", "CN", "EU", "KR", "RU", "SG", "US"]; //Viz mod 2015.06.15
+	var region_name = ["Asia", "China", "Europe", "Korea", "Russia", "Singapore", "United States"];	//Viz mod 2015.06.15
+	var region_value = ["AP", "CN", "EU", "KR", "RU", "SG", "US"]; //Viz mod 2015.06.15
 	var current_region = '<% nvram_get("location_code"); %>';
-	if(current_region == '')
-		current_region = ttc.split("/")[0];
-
 	var is_CN_sku = (function(){
-		if(productid !== "RT-AC87U" && productid !== "RT-AC68U" && productid !== "RT-AC66U" && productid !== "RT-N66U" && productid !== "RT-N18U" && productid != "RT-AC51U")	return false;
+		if( productid !== "RT-AC87U" && productid !== "RT-AC68U" && productid !== "RT-AC66U" && productid !== "RT-N66U" && productid !== "RT-N18U" && productid != "RT-AC51U" &&
+			productid !== "RT-N12+" && productid !== "RT-N12D1" && productid !== "RT-N12HP_B1" && productid !== "RT-N12HP" && productid !== "RT-AC55U" && productid !== "RT-AC1200" && productid != "RT-AC51U" &&
+			productid !== "RT-AC88U" && productid !== "RT-AC5300" && productid !== "RT-AC55U"
+		  )	return false;
 		return ('<% nvram_get("territory_code"); %>'.search("CN") == -1) ? false : true;
 	})();
+
+	if(current_region == '')
+		current_region = ttc.split("/")[0];
 
 	if(is_CN_sku){
 		region_name.push("Australia");
 		region_value.push("XX");
 	} 
 
-	if(productid == "RT-AC51U")
-	{
+	if(productid == "RT-AC51U"){
 		var idx = region_value.getIndexByValue("US");
 		region_value.splice(idx, 1);
 		region_name.splice(idx, 1);
@@ -1238,9 +1237,9 @@ function control_TimeField(){
 								<option value="0" <% nvram_match("wl_user_rssi", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 							</select>
 							<span id="rssiDbm" style="color:#FFF">
-								Disconnect clients with RSSI lower than
+								<!-- untranslated -->Disconnect clients with RSSI lower than
 			  				<input type="text" maxlength="3" name="wl_user_rssi" class="input_3_table" value="<% nvram_get("wl_user_rssi"); %>" autocorrect="off" autocapitalize="off">
-								dB
+								dBm
 							</span>
 						</td>
 					</tr>

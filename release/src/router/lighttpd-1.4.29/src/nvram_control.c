@@ -98,6 +98,7 @@
 #define WEBDAV_HTTP_PORT "webdav_http_port"
 #define WEBDAV_HTTPS_PORT "webdav_https_port"
 #define HTTP_ENABLE "http_enable"
+#define LAN_HTTPS_PORT "https_lanport"
 #define MISC_HTTP_X "misc_http_x"
 #define MISC_HTTP_PORT "misc_httpport_x"
 #define MISC_HTTPS_PORT "misc_httpsport_x"
@@ -297,8 +298,98 @@ char *get_productid(void)
         return productid;
 }
 
+//test{
+
+#include <fcntl.h>
+#include <sys/mman.h>
+//#include <utils.h>
+#include <errno.h>
+
+#define NVRAM_SPACE		0x8000
+/* For CFE builds this gets passed in thru the makefile */
+#define MAX_NVRAM_SPACE		NVRAM_SPACE
+
+#define PATH_DEV_NVRAM "/dev/nvram"
+
+/* Globals */
+static int nvram_fd = -1;
+static char *nvram_buf = NULL;
+
+int
+nvram_init(void *unused)
+{
+        if (nvram_fd >= 0)
+                return 0;
+
+        if ((nvram_fd = open(PATH_DEV_NVRAM, O_RDWR)) < 0)
+                goto err;
+
+        /* Map kernel string buffer into user space */
+        nvram_buf = mmap(NULL, MAX_NVRAM_SPACE, PROT_READ, MAP_SHARED, nvram_fd, 0);
+        if (nvram_buf == MAP_FAILED) {
+                close(nvram_fd);
+                nvram_fd = -1;
+                goto err;
+        }
+
+        fcntl(nvram_fd, F_SETFD, FD_CLOEXEC);
+
+        return 0;
+
+err:
+        perror(PATH_DEV_NVRAM);
+        return errno;
+}
+char *nvram_get_original(char *name);
 char *nvram_get(char *name)
 {
+    //fprintf(stderr,"name = %s\n",name);
+    //if(!strcmp(name,"computer_name"))
+        //return nvram_get_original(name);
+
+        char tmp[100];
+        char *value;
+        char *out;
+        size_t count = strlen(name) + 1;
+        unsigned long *off = (unsigned long *)tmp;
+
+        if (nvram_fd < 0) {
+                if (nvram_init(NULL) != 0) //return NULL;
+                {
+                    return nvram_get_original(name);
+                }
+        }
+
+        if (count > sizeof(tmp)) {
+                if ((off = malloc(count)) == NULL) return NULL;
+        }
+
+        /* Get offset into mmap() space */
+        strcpy((char *) off, name);
+        count = read(nvram_fd, off, count);
+
+        if (count == sizeof(*off)) {
+                value = &nvram_buf[*off];
+                out = malloc(strlen(value)+1);
+                memset(out,0,strlen(value)+1);
+                sprintf(out,"%s",value);
+        }
+        else {
+                value = NULL;
+                out = NULL;
+                if (count < 0) perror(PATH_DEV_NVRAM);
+        }
+
+        if (off != (unsigned long *)tmp) free(off);
+        //fprintf(stderr,"value = %s\n",out);
+         return out;
+}
+//end test}
+
+char *nvram_get_original(char *name)
+//char *nvram_get(char *name)
+{
+    fprintf(stderr,"name = %s\n",name);
 #if 0
 
     if(strcmp(name,"webdav_aidisk")==0 ||strcmp(name,"webdav_proxy")==0||strcmp(name,"webdav_smb_pc")==0
@@ -526,7 +617,84 @@ int nvram_set_file(const char *key, const char *fname, int max)
         }
         return r;
 }
+void start_ssl()
+{
+    fprintf(stderr,"\nstart ssl\n");
+    int ok;
+    int save;
+    int retry;
+    unsigned long long sn;
+    char t[32];
 
+    retry = 1;
+    while (retry) {
+        char *https_crt_save = nvram_get("https_crt_save");
+        if(https_crt_save != NULL)
+        {
+            if(atoi(https_crt_save) == 1)
+                save = 1; //pem nvram is exit
+            else
+                save = 0;
+        }
+        else
+            save = 0;
+        free(https_crt_save);
+        //save = nvram_match("https_crt_save", "1");
+
+        if (1) {
+            ok = 0;
+            if (save) {
+                fprintf(stderr, "Save SSL certificate...\n"); // tmp test
+                if (nvram_get_file("https_crt_file", "/tmp/cert.tgz", 8192)) {
+                        system("tar -xzf /tmp/cert.tgz -C / etc/cert.pem etc/key.pem");
+                        usleep(1000*100);
+                        system("cat /etc/key.pem /etc/cert.pem > /etc/server.pem");
+                        ok = 1;
+                    unlink("/tmp/cert.tgz");
+                }
+            }
+            if (!ok) {
+                fprintf(stderr, "Generating SSL certificate...\n"); // tmp test
+                // browsers seems to like this when the ip address moves...	-- zzz
+                f_read("/dev/urandom", &sn, sizeof(sn));
+
+                sprintf(t, "%llu", sn & 0x7FFFFFFFFFFFFFFFULL);
+                char *cmd_app=NULL;
+                cmd_app=(char *)malloc(sizeof(char)*(strlen(t)+64));
+                memset(cmd_app,'\0',sizeof(cmd_app));
+                sprintf(cmd_app,"%s %s","/opt/etc/apps_asus_script/gencert.sh",t);
+                system(cmd_app);
+                while(-1==access("/etc/cert.pem",F_OK)||-1==access("/etc/key.pem",F_OK))
+                {
+                    usleep(1000*100);
+                }
+                free(cmd_app);
+
+                system("tar -C / -czf /tmp/cert.tgz etc/cert.pem etc/key.pem");
+                while(-1==access("/tmp/cert.tgz",F_OK))
+                {
+                    usleep(1000*100);
+                }
+
+                save = 1;
+            }
+        }
+        fprintf(stderr,"\n nvram get https_crt_file\n");
+        if ((save) && (*nvram_safe_get("https_crt_file")) == 0) {
+
+            if (nvram_setfile_https_crt_file("/tmp/cert.tgz", 8192)) {
+                Cdbg(DBE, "complete nvram_setfile_https_crt_file");
+                nvram_set_https_crt_save("1");
+                nvram_do_commit();
+                Cdbg(DBE, "end nvram_setfile_https_crt_file");
+            }
+
+            unlink("/tmp/cert.tgz");
+        }
+        fprintf(stderr,"\n over ssl \n");
+        retry = 0;
+    }
+}
 #elif defined USE_TCAPI
 
 #else
@@ -901,6 +1069,14 @@ char* nvram_get_http_enable(void)
 	return 0;
 #else
 	return nvram_get(HTTP_ENABLE);
+#endif
+}
+
+char* nvram_get_lan_https_port(void){
+#ifdef USE_TCAPI
+	return 0;
+#else
+	return nvram_get(LAN_HTTPS_PORT);
 #endif
 }
 

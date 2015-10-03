@@ -353,6 +353,10 @@ struct inodes_stat_t {
 #define SYNC_FILE_RANGE_WRITE		2
 #define SYNC_FILE_RANGE_WAIT_AFTER	4
 
+#if defined(CONFIG_BCM_RECVFILE)
+#define MAX_PAGES_PER_RECVFILE		32
+#endif /* CONFIG_BCM_RECVFILE */
+
 #ifdef __KERNEL__
 
 #include <linux/linkage.h>

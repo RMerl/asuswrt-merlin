@@ -58,13 +58,13 @@ $(document).ready(function(){
 	var browserVer = navigator.userAgent;
 	
 	if( browserVer.indexOf("Chrome") != -1 ||
+	    browserVer.indexOf("Firefox") != -1 ||
 	    ( browserVer.indexOf("Safari") != -1 && ( isMacOS() || isWinOS() ) ) ){
 		g_jplayer_solution = "html,flash";
 		g_jplayer_supplied = "mp3";
 	}
 	else if( isIE() ||
-		       browserVer.indexOf("Firefox") != -1 ||
-		       browserVer.indexOf("Opera") != -1 ){	  
+		     browserVer.indexOf("Opera") != -1 ){	  
 		g_jplayer_solution = "flash";
 		g_jplayer_supplied = "mp3";
 	}
@@ -77,12 +77,14 @@ $(document).ready(function(){
 	
 	showHideAudioInterface(false);
 	showHideAudioList(false);
-
+	
 	if(generate_sharelink==1){
 		var media_hostName = window.location.host;
-		if(media_hostName.indexOf(":")!=-1)
-			media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
-		media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
+		//if(media_hostName.indexOf(":")!=-1)
+		//	media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
+		//media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
+		
+		media_hostName = window.location.protocol + "//" + media_hostName + "/";
 		
 		var timer = setInterval(function(){
 			

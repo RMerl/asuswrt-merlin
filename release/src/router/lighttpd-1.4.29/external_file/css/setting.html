@@ -689,6 +689,13 @@ function refreshCertificateInfo(){
 			$("#label_https_crt_issuer").text(issuer);
 			$("#label_https_crt_end_date").text(crt_end_date);
 			//alert(content + ", " + statusstring);
+			
+			if(issuer==""){
+				$("#btn_export_crt").attr("disabled", true);
+			}
+			else{
+				$("#btn_export_crt").attr("disabled", false);
+			}
 		}
 			
 		client = null;	
@@ -791,7 +798,7 @@ function onDoImportCrt(){
 				});		
 			}
 			else{
-				alert("Fail to set pem file!");
+				alert("Fail to import certificate file! Maybe the imported file is invalid, please check and try again.");
 			}
 		}, null );
 	}
@@ -799,12 +806,12 @@ function onDoImportCrt(){
 	read_file(g_key_file, function(evt, bSliceAsBinary){
 		//alert("done: " +　evt.target.result.byteLength + ", " + bSliceAsBinary + ", " + evt.target.result);
 		var content = evt.target.result;
-		
+		/*
 		if(content.indexOf("-----BEGIN RSA PRIVATE KEY-----")!=0){
 			alert("Invalid key file format!");
 			return;
 		}
-		
+		*/
 		key_pem = content;
 		
 		set_pem_content();
@@ -812,12 +819,12 @@ function onDoImportCrt(){
 	
 	read_file(g_crt_file, function(evt, bSliceAsBinary){
 		var content = evt.target.result;
-		
+		/*
 		if(content.indexOf("-----BEGIN CERTIFICATE-----")!=0){
 			alert("Invalid cert file format!");
 			return;
 		}
-		
+		*/
 		crt_pem = content;
 		
 		set_pem_content();
@@ -825,12 +832,12 @@ function onDoImportCrt(){
 	
 	read_file(g_intermediate_crt_file, function(evt, bSliceAsBinary){
 		var content = evt.target.result;
-		
+		/*
 		if(content.indexOf("-----BEGIN CERTIFICATE-----")!=0){
 			alert("Invalid intermediate cert file format!");
 			return;
 		}
-		
+		*/
 		intermediate_crt_pem = content;
 				
 		set_pem_content();

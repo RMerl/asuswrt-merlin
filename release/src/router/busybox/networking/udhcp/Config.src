@@ -171,14 +171,6 @@ config UDHCPC_SLACK_FOR_BUGGY_SERVERS
 	    28 bytes too large.
 	  Seednet (ISP) VDSL: sends packets 2 bytes too large.
 
-config FEATURE_UDHCP_VIVSO
-	bool "Support for V-I Vendor-specific Information option"
-	default n
-	depends on UDHCPC
-	help
-	  If selected, udhcpc will process V-I Vendor-specific Information
-	  option from dhcp server.
-
 config DHCP6C
 	bool "DHCPv6 client daemon (dhcp6c)"
 	default n

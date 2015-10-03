@@ -95,7 +95,7 @@ typedef struct {
         unsigned char   mac_addr[255][6];
 	unsigned char   user_define[255][16];
 	unsigned char   device_name[255][32];
-	unsigned char	apl_dev[255][16];
+	unsigned char	apple_model[255][16];
         int             type[255];
         int             http[255];
         int             printer[255];

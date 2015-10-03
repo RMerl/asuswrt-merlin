@@ -1,6 +1,0 @@
-#!/bin/sh
-	cd /bin
-	mkdir /var/local
-	endpoint&
-	cd ..
-

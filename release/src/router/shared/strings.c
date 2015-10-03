@@ -42,7 +42,9 @@ int char_to_ascii_safe(const char *output, const char *input, int outsize)
 		} else {
 			if (dst + 3 > end)
 				break;
-			dst += sprintf(dst, "%%%.02X", (unsigned char)*src);
+			if( (unsigned char)*src >= 32 && (unsigned char)*src <= 127) {
+				dst += sprintf(dst, "%%%.02X", (unsigned char)*src);
+			}
 		}
 	}
 	if (dst <= end)

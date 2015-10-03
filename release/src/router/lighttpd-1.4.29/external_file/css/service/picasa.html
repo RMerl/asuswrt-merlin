@@ -207,7 +207,7 @@ function google_login(){
 			  "&scope=https://www.googleapis.com%2Fauth%2Fuserinfo.email+https://www.googleapis.com%2Fauth%2Fuserinfo.profile+https://picasaweb.google.com%2Fdata" + 
 			  "&state=/callback=" + callback_function + "+ps5host=" + redirect_url;
 		
-	window.open(url,"mywindow","menubar=1,resizable=0,width=630,height=250, top=100, left=300");
+	window.open(url,"mywindow","menubar=1,resizable=1,width=630,height=250, top=100, left=300");
 }
 
 function onGoogleLogin( token, uid ){

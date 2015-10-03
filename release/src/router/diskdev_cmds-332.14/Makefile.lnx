@@ -1,8 +1,0 @@
-CC := $(CROSS_COMPILE)gcc
-CFLAGS := -g3 -Wall -I$(PWD)/include -DDEBUG_BUILD=0 -D_FILE_OFFSET_BITS=64 -D LINUX=1 -D BSD=1
-SUBDIRS := newfs_hfs.tproj fsck_hfs.tproj
-
-all clean:
-	for d in $(SUBDIRS); do $(MAKE) -C $$d -f Makefile.lnx $@; done
-
-export CC CFLAGS

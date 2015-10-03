@@ -1,7 +1,0 @@
-ID_FS_LABEL=test-nilfs2
-ID_FS_LABEL_ENC=test-nilfs2
-ID_FS_TYPE=nilfs2
-ID_FS_USAGE=filesystem
-ID_FS_UUID=524025fb-6d31-40e6-baad-1db36cfdf806
-ID_FS_UUID_ENC=524025fb-6d31-40e6-baad-1db36cfdf806
-ID_FS_VERSION=2

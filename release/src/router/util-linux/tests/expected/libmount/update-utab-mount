@@ -1,3 +1,0 @@
-SRC=/dev/sdb1 TARGET=/mnt/bar ROOT=/ OPTS=user
-SRC=/dev/sda2 TARGET=/mnt/xyz ROOT=/ OPTS=loop=/dev/loop0,uhelper=hal
-TARGET=/proc ROOT=/ OPTS=user

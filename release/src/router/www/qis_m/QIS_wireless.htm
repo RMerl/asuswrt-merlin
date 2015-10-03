@@ -303,6 +303,15 @@ function submitForm(){
 					return false;
 				}
 			}
+
+			//confirm common string combination     #JS_common_passwd#
+                        var is_common_string0 = check_common_string(document.form.wl0_wpa_psk.value, "wpa_key");
+                        if(is_common_string0){
+                                if(confirm("<#JS_common_passwd#>")){
+                                        return false;
+                                }
+                        }
+
 		}else
 		{
 			document.form.wl0_auth_mode_x.value = "open";
@@ -383,6 +392,14 @@ function submitForm(){
 					else{
 						if(!validator.psk(document.form.wl1_wpa_psk)){
 							//changeiuiBackground(0);
+							return false;
+						}
+					}
+
+					//confirm common string combination     #JS_common_passwd#
+		                        var is_common_string1 = check_common_string(document.form.wl1_wpa_psk.value, "wpa_key");
+                		        if(is_common_string1){
+                                		if(confirm("<#JS_common_passwd#>")){
 							return false;
 						}
 					}
@@ -469,10 +486,18 @@ function submitForm(){
 								return false;
 						}
 					}
-				}else
-				{
-						document.form.wl2_auth_mode_x.value = "open";
-						document.form.wl2_wep_x.value = "0";
+					//confirm common string combination     #JS_common_passwd#
+                        		var is_common_string2 = check_common_string(document.form.wl2_wpa_psk.value, "wpa_key");
+		                        if(is_common_string2){
+		                                if(confirm("<#JS_common_passwd#>")){
+                       			                return false;
+		                                }
+                       			}
+
+				}
+				else{
+					document.form.wl2_auth_mode_x.value = "open";
+					document.form.wl2_wep_x.value = "0";
 				}
 
 		}else{
@@ -668,7 +693,7 @@ function submitForm(){
 			document.getElementById("wl2_key4").name = "wl2.1_key4";
 		}
 
-		if(based_modelid == "RT-AC3200"){
+		if(sdk_7_up){
 			document.form.sw_mode.value = 3;
 			document.form.wlc_psta.value = 2;
 		}else{
@@ -732,6 +757,7 @@ function submitForm(){
 					document.form.time_zone_dst.value = "0";	//Do disable manual dstoff
 				}
 
+				parent.restartTime = true;
 				timezone_by_preferred_lang(document.form.time_zone.value);
 	}
 
@@ -1415,7 +1441,7 @@ body{
 </style>
 
 <div>
-	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QKSet_wireless_webtitle#></div>
+	<div style="font-size:1em;padding:10px 0 10px 15px;text-align:left;"><#QKSet_wireless_webtitle#></div>
 	
 	<div id="smart_connect_desc" style="display:none">
 		<div><span style="font-weight:bold; font-style:italic;color:#FC0"><#triband_smart_connect#></span>&nbsp<#triband_smart_connect_desc#></div>

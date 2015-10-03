@@ -656,63 +656,91 @@ int is_swports_bled(const char *led_gpio)
 /*
  * model dependence
  */
-#if defined(PLN12)
+#if (defined(PLN12) || defined(PLAC56))
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(ary) (sizeof(ary) / sizeof((ary)[0]))
+#endif
+
 void set_wifiled(int mode)
 {
+	int i;
+	struct wifi_led {
+		char *gpio[2];
+	} p = {
+		.gpio = {
+#if defined(PLN12)
+			"led_2g_red_gpio",
+			NULL
+#elif defined(PLAC56)
+			"led_2g_green_gpio",
+			"led_5g_green_gpio"
+#endif
+		}
+	};
+
 	switch (mode) {
 	case 1: /* on */
-		//set_bled_udef_pattern("led_2g_green_gpio", 1000, "1 1");
-		//set_bled_udef_pattern_mode("led_2g_green_gpio");
-		//set_bled_udef_pattern("led_2g_orange_gpio", 1000, "1 1");
-		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
-		set_bled_udef_pattern("led_2g_red_gpio", 1000, "1 1");
-		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		for (i = 0; i < ARRAY_SIZE(p.gpio); ++i) {
+			if (!p.gpio[i])
+				break;
+
+			set_bled_udef_pattern(p.gpio[i], 1000, "1 1");
+			set_bled_udef_pattern_mode(p.gpio[i]);
+		}
 		break;
 	case 2: /* off */
-		//set_bled_udef_pattern("led_2g_green_gpio", 1000, "0 0");
-		//set_bled_udef_pattern_mode("led_2g_green_gpio");
-		//set_bled_udef_pattern("led_2g_orange_gpio", 1000, "0 0");
-		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
-		set_bled_udef_pattern("led_2g_red_gpio", 1000, "0 0");
-		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		for (i = 0; i < ARRAY_SIZE(p.gpio); ++i) {
+			if (!p.gpio[i])
+				break;
+
+			set_bled_udef_pattern(p.gpio[i], 1000, "0 0");
+			set_bled_udef_pattern_mode(p.gpio[i]);
+		}
 		break;
 	case 3:	/* WPS */
-		//set_bled_udef_pattern("led_2g_green_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
-		//set_bled_udef_pattern_mode("led_2g_green_gpio");
-		//set_bled_udef_pattern("led_2g_orange_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
-		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
-		set_bled_udef_pattern("led_2g_red_gpio", 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
-		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		for (i = 0; i < ARRAY_SIZE(p.gpio); ++i) {
+			if (!p.gpio[i])
+				break;
+
+			set_bled_udef_pattern(p.gpio[i], 50, "0 1 0 1 0 1 0 1 0 0 0 0 0 0 0 0");
+			set_bled_udef_pattern_mode(p.gpio[i]);
+		}
 		break;
 	case 4: /* WPS success */
-		//set_bled_udef_pattern("led_2g_green_gpio", 100, "0 1");
-		//set_bled_udef_pattern_mode("led_2g_green_gpio");
-		//set_bled_udef_pattern("led_2g_orange_gpio", 100, "0 1");
-		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
-		set_bled_udef_pattern("led_2g_red_gpio", 100, "0 1");
-		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		for (i = 0; i < ARRAY_SIZE(p.gpio); ++i) {
+			if (!p.gpio[i])
+				break;
+
+			set_bled_udef_pattern(p.gpio[i], 100, "0 1");
+			set_bled_udef_pattern_mode(p.gpio[i]);
+		}
 		break;
 	case 5: /* press reset button */
-		//set_bled_udef_pattern("led_2g_green_gpio", 500, "0 1");
-		//set_bled_udef_pattern_mode("led_2g_green_gpio");
-		//set_bled_udef_pattern("led_2g_orange_gpio", 500, "0 1");
-		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
-		set_bled_udef_pattern("led_2g_red_gpio", 500, "0 1");
-		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		for (i = 0; i < ARRAY_SIZE(p.gpio); ++i) {
+			if (!p.gpio[i])
+				break;
+
+			set_bled_udef_pattern(p.gpio[i], 500, "0 1");
+			set_bled_udef_pattern_mode(p.gpio[i]);
+		}
 		break;
 	case 6: /* firmware upgrade */
-		//set_bled_udef_pattern("led_2g_green_gpio", 1000, "0 1");
-		//set_bled_udef_pattern_mode("led_2g_green_gpio");
-		//set_bled_udef_pattern("led_2g_orange_gpio", 1000, "0 1");
-		//set_bled_udef_pattern_mode("led_2g_orange_gpio");
-		set_bled_udef_pattern("led_2g_red_gpio", 1000, "0 1");
-		set_bled_udef_pattern_mode("led_2g_red_gpio");
+		for (i = 0; i < ARRAY_SIZE(p.gpio); ++i) {
+			if (!p.gpio[i])
+				break;
+
+			set_bled_udef_pattern(p.gpio[i], 1000, "0 1");
+			set_bled_udef_pattern_mode(p.gpio[i]);
+		}
 		break;
 	default:
 		/* normal mode */
-		//set_bled_normal_mode("led_2g_green_gpio");
-		//set_bled_normal_mode("led_2g_orange_gpio");
-		set_bled_normal_mode("led_2g_red_gpio");
+		for (i = 0; i < ARRAY_SIZE(p.gpio); ++i) {
+			if (!p.gpio[i])
+				break;
+
+			set_bled_normal_mode(p.gpio[i]);
+		}
 	}
 }
 #endif

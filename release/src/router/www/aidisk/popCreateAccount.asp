@@ -126,7 +126,7 @@ function validForm(){
       </td>
     </tr>
     <tr>
-      <th><#PPPConnection_Password_itemname#>: </th>
+      <th><#HSDPAConfig_Password_itemname#>: </th>
       <td><input type="password" class="input_15_table" name="password" id="password" onKeyPress="return validator.isString(this, event);" maxlength="17" autocorrect="off" autocapitalize="off"></td>
     </tr>
     <tr>

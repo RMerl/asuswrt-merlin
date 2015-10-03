@@ -1,2 +1,0 @@
-OTHER_GENERATED_OFILES = $(VERS_OFILE)
--include ../Makefile.include

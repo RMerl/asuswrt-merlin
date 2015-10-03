@@ -687,9 +687,25 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif	/* RTCONFIG_HAS_5G */
 	else if (!strcmp(command, "Set_RestoreDefault")) {
+#ifdef RTAC87U
+		int ret_reset;
+#endif
 		nvram_set("restore_defaults", "1");
 		nvram_set(ASUS_STOP_COMMIT, "1");
+#ifdef RTAC87U
+		ret_reset = ResetDefault();
+		if(ret_reset == 0){
+			logmessage("ATE", "Set_RestoreDefault OK");
+			sleep(3);
+			puts("1");
+		}else{
+			logmessage("ATE", "Set_RestoreDefault failed");
+			sleep(3);
+			puts("0");
+		}
+#else
 		ResetDefault();
+#endif
 		return 0;
 	}
 	else if (!strcmp(command, "Set_Eject")) {
@@ -1410,7 +1426,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
                         puts("ATE_ERROR_INCORRECT_PARAMETER");
                         return EINVAL;
                 }
+#ifndef CONFIG_BCMWL5
                 getTerritoryCode();
+#endif
                 return 0;
         }
         else if (!strcmp(command, "Get_TerritoryCode")) {
@@ -1429,7 +1447,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
 		}
+#ifndef CONFIG_BCMWL5
 		getPSK();
+#endif
 	        return 0;
 	}
 	else if (!strcmp(command, "Get_PSK")) {

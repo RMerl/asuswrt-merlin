@@ -360,7 +360,7 @@ Printer			18
 	border-radius: 10px;
 }
 .client_icon_list table{
-	border: 1px solid #000000;
+	border: 1px solid #1A1C1D;
 	border-collapse: collapse;
 }
 .client_icon_list div{
@@ -375,7 +375,7 @@ Printer			18
 	background-image:url('/images/New_ui/networkmap/client-listover.png');
 }
 .client_icon_list td{
-	border: 1px solid #000000;
+	border: 1px solid #1A1C1D;
 	border-collapse: collapse;
 }
 .client_icon_list td:hover{
@@ -616,4 +616,16 @@ Printer			18
 	font-weight: bolder;
 	color: #FFFFFF;
 	padding-left: 0.4em;
+}
+
+.clientList_line {
+	background: #000000; /* Old browsers */
+	background: -moz-linear-gradient(top, #000000 0%, #474E50 50%, #656C6F 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#000000), color-stop(50%,#474E50), color-stop(100%,#656C6F)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #000000 0%,#474E50 50%,#656C6F 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #000000 0%,#474E50 50%,#656C6F 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #000000 0%,#474E50 50%,#656C6F 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #000000 0%,#474E50  70%,#656C6F  100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#000000', endColorstr='#656C6F',GradientType=0 ); /* IE6-9 */
+	height: 2px;
 }

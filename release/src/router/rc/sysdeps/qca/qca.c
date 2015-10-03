@@ -2232,6 +2232,10 @@ getSiteSurvey(int band,char* ofile)
 		memset(buf,0,sizeof(buf));
 		memset(temp1,0,sizeof(temp1));
 		snprintf(prefix_header, sizeof(prefix_header), "Cell %02d - Address:",apCount);
+
+  		if(feof(fp)) 
+		   break;
+
 		while(fgets(temp1,sizeof(temp1),fp))
 		{
 			if(strstr(temp1,prefix_header)!=NULL)
@@ -2262,13 +2266,10 @@ getSiteSurvey(int band,char* ofile)
 
 		}
 
-  		if(feof(fp)) 
-		   break;
-
-
-		apCount++;
 
 		dbg("\napCount=%d\n",apCount);
+		apCount++;
+
 		//ch
 	        pt1 = strstr(buf[2], "Channel ");	
 		if(pt1)

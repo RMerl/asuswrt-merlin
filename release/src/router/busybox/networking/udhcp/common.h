@@ -96,9 +96,7 @@ enum {
 	OPTION_DNS_STRING,  /* RFC1035 compressed domain name list */
 	OPTION_SIP_SERVERS,
 #endif
-#if ENABLE_FEATURE_UDHCP_VIVSO
-	OPTION_VIVSO,
-#endif
+
 	OPTION_TYPE_MASK = 0x0f,
 	/* Client requests this option by default */
 	OPTION_REQ  = 0x10,

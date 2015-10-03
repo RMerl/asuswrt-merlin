@@ -471,7 +471,9 @@ function initial(){
 					setTimeout("parent.detect3GConn();", restart_time*1000);
 					return;
 				}
-				else{
+				else if(getflag == "no_wait"){	//for internet_type 
+					//no wait
+				}else{
 					if(isMobile())
 						setTimeout("qis_delay_redirect('/qis_m/QIS_verify_detect.htm');", restart_time*1000);
 					else

@@ -28,23 +28,24 @@
 
 wl_channel_list_2g = <% channel_list_2g(); %>;
 wl_channel_list_5g = <% channel_list_5g(); %>;
-
+var cur_control_channel = [<% wl_control_channel(); %>][0];
+var wl_unit = <% nvram_get("wl_unit"); %>;
 var country = '';
-if('<% nvram_get("wl_unit"); %>' == '1')
-		country = '<% nvram_get("wl1_country_code"); %>';
+if(wl_unit == '1')
+	country = '<% nvram_get("wl1_country_code"); %>';
 else		
-		country = '<% nvram_get("wl0_country_code"); %>';
+	country = '<% nvram_get("wl0_country_code"); %>';
 
 function initial(){
 	show_menu();
 	if(band5g_11ac_support){
-		regen_5G_mode(document.form.wl_nmode_x,'<% nvram_get("wl_unit"); %>')		
+		regen_5G_mode(document.form.wl_nmode_x, wl_unit)		
 	}
 	
-	genBWTable('<% nvram_get("wl_unit"); %>');	
+	genBWTable(wl_unit);	
 
-	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
-		_change_wl_unit('<% nvram_get("wl_unit"); %>');
+	if((sw_mode == 2 || sw_mode == 4) && wl_unit == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
+		_change_wl_unit(wl_unit);
 	}
 
 	//Change wireless mode help desc
@@ -63,7 +64,7 @@ function initial(){
 	}
 
 	// special case after modifing GuestNetwork
-	if("<% nvram_get("wl_unit"); %>" == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
+	if(wl_unit == "-1" && "<% nvram_get("wl_subunit"); %>" == "-1"){
 		change_wl_unit();
 	}
 
@@ -110,7 +111,7 @@ function initial(){
 		document.getElementById("wl_unit_field").style.display = "none";
 
 	if(sw_mode == 2 || sw_mode == 4)
-		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
+		document.form.wl_subunit.value = (wl_unit == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
 				
 	change_wl_nmode(document.form.wl_nmode_x);
 	if(country == "EU"){		//display checkbox of DFS channel under 5GHz
@@ -119,7 +120,7 @@ function initial(){
 		|| based_modelid == "RT-AC3200"
 		|| (based_modelid == "RT-AC66U" && wl1_dfs == "1")		//0: A2 not support, 1: B0 support
 		|| based_modelid == "RT-N66U"){
-				if(document.form.wl_channel.value  == '0' && '<% nvram_get("wl_unit"); %>' == '1'){
+				if(document.form.wl_channel.value  == '0' && wl_unit == '1'){
 						document.getElementById('dfs_checkbox').style.display = "";
 						check_DFS_support(document.form.acs_dfs_checkbox);
 				}
@@ -132,7 +133,7 @@ function initial(){
 		|| based_modelid == "RT-AC66U"
 		|| based_modelid == "RT-N66U"
 		|| based_modelid == "RT-AC53U"){		
-			if(document.form.wl_channel.value  == '0' && '<% nvram_get("wl_unit"); %>' == '1')
+			if(document.form.wl_channel.value  == '0' && wl_unit == '1')
 				document.getElementById('acs_band1_checkbox').style.display = "";					
 		}
 	}
@@ -160,6 +161,11 @@ function initial(){
 		enableSmartCon(smart_connect_flag_t);
 	}
 	if(history.pushState != undefined) history.pushState("", document.title, window.location.pathname);
+	
+	if(document.form.wl_channel.value  == '0'){
+		document.getElementById("auto_channel").style.display = "";
+		document.getElementById("auto_channel").innerHTML = "Current control channel: "+cur_control_channel[wl_unit];
+	}
 }
 
 
@@ -176,7 +182,7 @@ function change_wl_nmode(o){
 
 	
 	wl_chanspec_list_change();
-	genBWTable('<% nvram_get("wl_unit"); %>');
+	genBWTable(wl_unit);
 }
 
 function genBWTable(_unit){
@@ -331,7 +337,7 @@ function applyRule(){
                        document.form.smart_connect_x.value = document.form.smart_connect_t.value;
 
 		showLoading();
-		if(based_modelid == "RT-AC87U" && "<% nvram_get("wl_unit"); %>" == "1")
+		if(based_modelid == "RT-AC87U" && wl_unit == "1")
 			stopFlag = '0';
 			
 		document.form.wps_config_state.value = "1";		
@@ -344,7 +350,7 @@ function applyRule(){
 		if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius")
 			document.form.next_page.value = "/Advanced_WSecurity_Content.asp";
 
-		if(document.form.wl_nmode_x.value == "1" && "<% nvram_get("wl_unit"); %>" == "0")
+		if(document.form.wl_nmode_x.value == "1" && wl_unit == "0")
 			document.form.wl_gmode_protection.value = "off";			
 
 		if(sw_mode == 2 || sw_mode == 4)
@@ -365,7 +371,7 @@ function applyRule(){
 			}	
 		}
 
-		if(country == "EU" && based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1'){			//Interlocking setting to enable 'wl1_80211h' in EU RT-AC87U under 5GHz
+		if(country == "EU" && based_modelid == "RT-AC87U" && wl_unit == '1'){			//Interlocking setting to enable 'wl1_80211h' in EU RT-AC87U under 5GHz
 			if(document.form.wl_channel.value  == '0' && document.form.acs_dfs.value == '1')			//Auto channel with DFS channel
 				document.form.wl1_80211h.value = "1";	
 		}
@@ -373,7 +379,7 @@ function applyRule(){
 		if(smart_connect_support && document.form.smart_connect_x.value == '1')
 			document.form.wl_unit.value = 0;
 
-		if (based_modelid == "RT-AC87U" && "<% nvram_get("wl_unit"); %>" == "1")
+		if (based_modelid == "RT-AC87U" && wl_unit == "1")
 			detect_qtn_ready();
 		else
 			document.form.submit();
@@ -402,6 +408,16 @@ function validForm(){
 		else{
 			if(!validator.psk(document.form.wl_wpa_psk))
 				return false;
+		}
+		
+		//confirm common string combination	#JS_common_passwd#
+		var is_common_string = check_common_string(document.form.wl_wpa_psk.value, "wpa_key");
+		if(is_common_string){
+			if(confirm("<#JS_common_passwd#>")){
+				document.form.wl_wpa_psk.focus();
+				document.form.wl_wpa_psk.select();
+				return false;	
+			}	
 		}
 		
 		if(!validator.range(document.form.wl_wpa_gtk_rekey, 0, 2592000))
@@ -450,7 +466,7 @@ function _change_wl_unit(val){
 }
 
 function _change_smart_connect(val){
-	current_band = '<% nvram_get("wl_unit"); %>';
+	current_band = wl_unit;
 	document.getElementById("wl_unit_field").style.display = "";
 	var band_desc = new Array();
 	var band_value = new Array();
@@ -475,7 +491,7 @@ function checkBW(){
 	if(document.form.wl_channel.value != 0 && document.form.wl_bw.value == 0){	//Auto but set specific channel
 		if(document.form.wl_channel.value == "165")	// channel 165 only for 20MHz
 			document.form.wl_bw.selectedIndex = 1;
-		else if('<% nvram_get("wl_unit"); %>' == 0)	//2.4GHz for 40MHz
+		else if(wl_unit == 0)	//2.4GHz for 40MHz
 			document.form.wl_bw.selectedIndex = 2;
 		else{	//5GHz else for 80MHz
 			if(band5g_11ac_support)
@@ -496,7 +512,7 @@ function check_NOnly_to_GN(){
 	// Viz add 2012.11.05 restriction for 'N Only' mode  ( start 	
 	
 	if(document.form.wl_nmode_x.value == "0" || document.form.wl_nmode_x.value == "1"){
-		if("<% nvram_get("wl_unit"); %>" == "1"){		//5G
+		if(wl_unit == "1"){		//5G
 			for(var i=0;i<gn_array_5g.length;i++){
 				if(gn_array_5g[i][0] == "1" && (gn_array_5g[i][3] == "tkip" || gn_array_5g[i][5] == "1" || gn_array_5g[i][5] == "2")){
 					if(document.form.wl_nmode_x.value == "0")
@@ -513,7 +529,7 @@ function check_NOnly_to_GN(){
 				}
 			}		
 		}
-		else if("<% nvram_get("wl_unit"); %>" == "0"){		//2.4G
+		else if(wl_unit == "0"){		//2.4G
 			for(var i=0;i<gn_array_2g.length;i++){
 				if(gn_array_2g[i][0] == "1" && (gn_array_2g[i][3] == "tkip" || gn_array_2g[i][5] == "1" || gn_array_2g[i][5] == "2")){
 					if(document.form.wl_nmode_x.value == "0")
@@ -572,7 +588,7 @@ function tmo_wl_nmode(){
 	var tmo2nmode = [["0",  "<#Auto#>"],["6",       "B Only"],["5", "G Only"],["1", "N Only"],["2",	"B/G Mixed"],["4", "G/N Mixed"]];
 	var tmo5nmode = [["0",  "<#Auto#>"],["7",       "A Only"],["1", "N Only"],["3", "AC Only"],["4", "A/N Mixed"]];
 	free_options(document.form.wl_nmode_x);
-	if("<% nvram_get("wl_unit"); %>" == "0"){               //2.4GHz
+	if(wl_unit == "0"){               //2.4GHz
 		for(var i = 0; i < tmo2nmode.length; i++){
 			add_option(document.form.wl_nmode_x,tmo2nmode[i][1], tmo2nmode[i][0],(document.form.wl_nmode_x_orig.value == tmo2nmode[i][0]));
 		}
@@ -601,7 +617,7 @@ function enableSmartCon(val){
 			document.getElementById("wl_gmode_checkbox").style.display = "";
 		}
 		if(band5g_11ac_support){
-			regen_5G_mode(document.form.wl_nmode_x,'<% nvram_get("wl_unit"); %>')		
+			regen_5G_mode(document.form.wl_nmode_x, wl_unit)		
 		}else{
 			free_options(document.form.wl_nmode_x);
 			obj.options[0] = new Option("<#Auto#>", 0);
@@ -855,9 +871,10 @@ function regen_auto_option(obj){
 					<th>						
 						<a id="wl_channel_select" class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 3);"><#WLANConfig11b_Channel_itemname#></a>						
 					</th>
-					<td>
+					<td>			
 				 		<select name="wl_channel" class="input_option" onChange="change_channel(this);"></select>
-						<span id="dfs_checkbox" style="display:none;"><input type="checkbox" onClick="check_DFS_support(this);" name="acs_dfs_checkbox" <% nvram_match("acs_dfs", "1", "checked"); %>><#WLANConfig11b_EChannel_dfs#></input></span>
+						<span id="auto_channel" style="display:none;margin-left:10px;"></span><br>
+						<span id="dfs_checkbox" style="display:none"><input type="checkbox" onClick="check_DFS_support(this);" name="acs_dfs_checkbox" <% nvram_match("acs_dfs", "1", "checked"); %>><#WLANConfig11b_EChannel_dfs#></input></span>
 						<span id="acs_band1_checkbox" style="display:none;"><input type="checkbox" onClick="check_acs_band1_support(this);" <% nvram_match("acs_band1", "1", "checked"); %>><#WLANConfig11b_EChannel_band1#></input></span>
 					</td>
 			  </tr> 

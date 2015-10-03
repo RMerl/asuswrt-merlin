@@ -864,7 +864,7 @@ function check_smtp_server_type(){
 						</td>
 					</tr>
 					<tr>
-						<th><#PPPConnection_Password_itemname#></th>
+						<th><#HSDPAConfig_Password_itemname#></th>
 						<td>
 							<div>
 								<input type="password" class="input_30_table" id="mail_password" maxlength="100" value="" autocorrect="off" autocapitalize="off">

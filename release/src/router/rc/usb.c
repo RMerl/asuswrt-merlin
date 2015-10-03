@@ -229,9 +229,6 @@ void start_usb(void)
 	tune_bdflush();
 
 	if (nvram_get_int("usb_enable")) {
-#ifdef RTCONFIG_BCMARM
-		hotplug_usb_init();
-#endif
 		modprobe(USBCORE_MOD);
 
 		/* mount usb device filesystem */
@@ -711,7 +708,10 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 			sprintf(options + strlen(options), ",shortname=winnt" + (options[0] ? 0 : 1));
 #ifdef RTCONFIG_TFAT
 #if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_QCA)
-			sprintf(options + strlen(options), ",nodev,iostreaming" + (options[0] ? 0 : 1));
+			if(nvram_get_int("stop_iostreaming"))
+				sprintf(options + strlen(options), ",nodev" + (options[0] ? 0 : 1));
+			else
+				sprintf(options + strlen(options), ",nodev,iostreaming" + (options[0] ? 0 : 1));
 #else
 			sprintf(options + strlen(options), ",noatime" + (options[0] ? 0 : 1));
 #endif

@@ -356,6 +356,16 @@ main(int ac, char *av[])
 
 		printf("%s\n", dbuf);
 		DUMP_BUF_FREE(dbuf_alloc, dbuf);
+	} else if ((strcmp(av[optind], "dump_oops") == 0)) {
+		var.set = 0;
+		var.cmd = IOV_DUMP_OOPS;
+		var.buf = NULL;
+		var.len = 0;
+
+		ifr.ifr_data = (caddr_t)&var;
+		if (ioctl(s, SIOCSETGETVAR, (caddr_t)&ifr) < 0) {
+			syserr("dump_oops");
+		}
 	} else if ((strcmp(av[optind], "dump") == 0) && (ac > 2)) {
 		if (strcmp(av[optind + 1], "ctf") == 0) {
 			if (ac == (optind + 2))

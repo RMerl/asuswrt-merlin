@@ -961,7 +961,7 @@ function pass_checked(obj1, obj2){
 
 function QKInternet_load_body(){
 	//parent.set_step("t2");
-	viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRecan"]);
+	//viewHandler.displayObj(["PAPSurvey", "btnManual", "btnRecan"]);
 
 	if(btnAction.curState == "showResult"){
 		showSiteTable();
@@ -1012,14 +1012,31 @@ function show_pap_info_previous(){
 }
 
 function pap_connect(obj){
-	parent.document.QKform.wlc_band.value = obj.band;
+	if(obj.band == "5GHz")
+		parent.document.QKform.wlc_band.value = "1";
+	else if(obj.band == "5GHz-2")
+		parent.document.QKform.wlc_band.value = "2";
+	else
+		parent.document.QKform.wlc_band.value = "0";	// 2.4 GHz
+	
 	parent.document.QKform.wlc_ssid.value = obj.ssid;
-	parent.document.QKform.wlc_wep.value = obj.wep;
-	parent.document.QKform.wlc_key.value = obj.key;
-	parent.document.QKform.wlc_wep_key.value = obj.wep_key;
-	parent.document.QKform.wlc_auth_mode.value = obj.auth_mode;
-	parent.document.QKform.wlc_crypto.value = obj.crypt;
-	parent.document.QKform.wlc_wpa_psk.value = obj.wpa_psk;
+	parent.document.QKform.wlc_wep.value = "0";
+	parent.document.QKform.wlc_key.value = "1";
+	//parent.document.QKform.wlc_wep_key.value = obj.wep_key;
+	if(obj.auth == "WPA2-Personal"){
+		parent.document.QKform.wlc_auth_mode.value = "psk2";
+		parent.document.QKform.wlc_crypto.value = "aes";
+	}	
+	else if(obj.auth == "WPA-Personal"){
+		parent.document.QKform.wlc_auth_mode.value = "psk";
+		parent.document.QKform.wlc_crypto.value = "tkip";
+	}	
+	else{
+		parent.document.QKform.wlc_auth_mode.value = "open";
+		parent.document.QKform.wlc_crypto.value = "none";
+	}
+	
+	parent.document.QKform.wlc_wpa_psk.value = document.getElementById("pap_key").value;
 	parent.document.QKform.wlc_nbw_cap.value = 2;
 	parent.document.QKform.sw_mode.value = 4;				
 	sw_mode_submit = 4;
@@ -1154,7 +1171,7 @@ body{
 
 </style>
 <div>
-	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#APSurvey_main_title#></div>
+	<div style="font-size:1em;padding:10px 0 10px 15px;text-align:left;"><#APSurvey_main_title#></div>
 	
 	
 	<div id="wlscan_table" style="margin-bottom:100px;">
@@ -1279,8 +1296,8 @@ body{
 		</div>
 	</div>
 	
-	<div id="sort_background" style="width:100%;height:90%;position:absolute;top:0;background-color:rgba(0,0,0,.7);display:block" onclick="show_sort_field();"></div>
-	<div id="sort_field" style="width:100%;height:100%;background:rgba(64,64,64,.9);border-radius:4px 4px 0 0;display:block;position:absolute;top:0;">
+	<div id="sort_background" style="width:100%;height:90%;position:absolute;top:0;background-color:rgba(0,0,0,.7);display:none" onclick="show_sort_field();"></div>
+	<div id="sort_field" style="width:100%;height:100%;background:rgba(64,64,64,.9);border-radius:4px 4px 0 0;display:none;position:absolute;top:0;">
 		<div>
 			<table style="border-spacing:0;width:100%;padding-top:30px;">
 				<tr>

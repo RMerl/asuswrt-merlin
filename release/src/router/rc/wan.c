@@ -924,6 +924,10 @@ void update_wan_state(char *prefix, int state, int reason)
 		nvram_set(strcat_r(prefix, "6rd_prefix", tmp), "");
 		nvram_set(strcat_r(prefix, "6rd_prefixlen", tmp), "");
 #endif
+#ifdef RTCONFIG_TR069
+//		nvram_unset(strcat_r(prefix, "tr_acs_url", tmp));
+//		nvram_unset(strcat_r(prefix, "tr_pvgcode", tmp));
+#endif
 	}
 	else if (state == WAN_STATE_STOPPED) {
 		// Save Stopped Reason

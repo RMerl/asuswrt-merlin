@@ -1,5 +1,0 @@
-OTHER_GENERATED_OFILES = $(VERS_OFILE)
-DUMP_CFILES = dumprmt.c
-#OTHER_OFILES = $(DUMP_CFILES:.c=.o)
-VPATH_POSTAMBLE = :.:../dump
--include ../Makefile.include

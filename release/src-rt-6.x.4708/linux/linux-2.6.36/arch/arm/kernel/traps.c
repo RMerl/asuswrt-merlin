@@ -31,9 +31,6 @@
 #include <asm/traps.h>
 #include <asm/unwind.h>
 #include <asm/tls.h>
-#ifdef CONFIG_DUMP_PREV_OOPS_MSG
-#include <linux/kernel.h>
-#endif
 
 #include "ptrace.h"
 #include "signal.h"
@@ -289,9 +286,6 @@ void die(const char *str, struct pt_regs *regs, int err)
 	add_taint(TAINT_DIE);
 	spin_unlock_irq(&die_lock);
 	oops_exit();
-#ifdef CONFIG_DUMP_PREV_OOPS_MSG
-        enable_oopsbuf(1);
-#endif
 	if (in_interrupt())
 		panic("Fatal exception in interrupt");
 	if (panic_on_oops)

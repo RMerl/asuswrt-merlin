@@ -1,7 +1,0 @@
-after_install:
-	install -m 755 -o root -g wheel -d $(DSTROOT)/usr/share/man/man8
-	install -m 644 -o root -g wheel -c mountd.8 $(DSTROOT)/usr/share/man/man8
-	install -m 755 -o root -g wheel -d $(DSTROOT)/usr/share/man/man5
-	install -m 644 -o root -g wheel -c exports.5 $(DSTROOT)/usr/share/man/man5
-	install -m 755 -o root -g wheel -d $(DSTROOT)/usr/share/man/man5
-	install -m 644 -o root -g wheel -c netgroup.5 $(DSTROOT)/usr/share/man/man5

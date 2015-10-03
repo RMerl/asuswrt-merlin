@@ -1,9 +1,0 @@
-PKG=bonnie++
-ARCH=sparc
-VERSION=@version@
-CATEGORY=application
-NAME=Bonnie++
-DESC=Hard drive benchmark suite
-VENDOR=Russell Coker
-EMAIL=russell@coker.com.au
-MAXINST=1

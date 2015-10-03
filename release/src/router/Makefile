@@ -226,6 +226,7 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 # standard packages
 #
 obj-$(RTCONFIG_QTN) += libqcsapi_client
+obj-$(RTCONFIG_QTN) += qtnimage
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
 obj-$(RTCONFIG_DHDAP) += dhd $(if $(RTCONFIG_BCM7),pciefd)
@@ -233,6 +234,17 @@ obj-$(RTCONFIG_BCM_7114) += dhd_monitor
 obj-y += busybox
 obj-y += shared
 obj-y += nvram$(BCMEX)
+#obj-$(RTCONFIG_BCMARM) += ctf_arm
+#obj-$(RTAC53U) += ctf_5358
+#ifneq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA),y)
+#obj-y += ctf
+#endif
+ifeq ($(RTCONFIG_BCMARM),y)
+ifeq ($(RTCONFIG_CFEZ),y)
+obj-y += envram_bin
+endif
+endif
+obj-$(RTCONFIG_DPSTA) += dpsta
 
 ifeq ($(RTCONFIG_RALINK),y)
 #################################################################################
@@ -311,6 +323,7 @@ endif
 obj-$(RTCONFIG_BWDPI) += bwdpi
 obj-$(RTCONFIG_BWDPI) += sqlite
 obj-$(RTCONFIG_BWDPI) += bwdpi_sqlite
+obj-$(RTCONFIG_BWDPI) += bwdpi_bin
 #obj-$(RTCONFIG_SPEEDTEST) += curl-7.21.7
 obj-y += curl-7.21.7
 obj-$(RTCONFIG_TRAFFIC_CONTROL) += traffic_control
@@ -402,7 +415,11 @@ obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.2.3
 endif
 endif
 else
+ifeq ($(RTCONFIG_BCMWL6),y)
+obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-2.2.3
+else
 obj-$(RTCONFIG_USB_MODEM) += usbmodeswitch
+endif
 endif
 
 obj-$(RTCONFIG_USB_BECEEM) += madwimax-0.1.1 # for Samsung WiMAX
@@ -523,6 +540,7 @@ obj-y += expat-2.0.1
 else
 obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 endif
+obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 
 #add for snmpd
 SNMPD_CFLAGS += -D$(BUILD_NAME)
@@ -570,6 +588,7 @@ obj-$(RTCONFIG_WEBDAV) += libexif
 obj-$(RTCONFIG_IXIAEP) += ixia_endpoint$(BCMEX)
 
 # Add for ASUS Components
+obj-y += miniupnpc
 obj-y += miniupnpd$(MUVER)
 obj-y += igmpproxy
 obj-y += snooper
@@ -596,6 +615,8 @@ endif
 else
 obj-y += lldt
 endif
+obj-$(RTCONFIG_JFFS2USERICON) += lltdc
+
 obj-$(RTCONFIG_TOAD) += toad
 obj-$(RTCONFIG_BCMBSD) += bsd
 obj-$(RTCONFIG_BCMSSD) += ssd
@@ -1136,31 +1157,6 @@ endif
 #endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
-ifeq ($(or $(RTCONFIG_BCM7),$(RTCONFIG_BCM_7114)),y)
-ifeq ($(RTCONFIG_BCM7),y)
-	cp $(TOP)/bwdpi_bin/bwdpi_bcm7/* $(TOP)/bwdpi_bin/
-else
-	cp $(TOP)/bwdpi_bin/bwdpi_bcm7114/* $(TOP)/bwdpi_bin/
-endif
-else
-ifeq ($(RTCONFIG_BCMSMP),y)
-ifeq ($(RTCONFIG_CTF_PPTP_L2TP),y)
-	# SMP with PPTP_L2TP
-	cp $(TOP)/bwdpi_bin/bwdpi_bcm6_smp_pptp/* $(TOP)/bwdpi_bin/
-else
-	# SMP without PPTP_L2TP
-	cp $(TOP)/bwdpi_bin/bwdpi_bcm6_smp/* $(TOP)/bwdpi_bin/
-endif
-else
-ifeq ($(RTCONFIG_CTF_PPTP_L2TP),y)
-	# UP with PPTP_L2TP
-	cp $(TOP)/bwdpi_bin/bwdpi_bcm6_up_pptp/* $(TOP)/bwdpi_bin/
-else
-	# UP without PPTP_L2TP
-	cp $(TOP)/bwdpi_bin/bwdpi_bcm6_up/* $(TOP)/bwdpi_bin/
-endif
-endif
-endif
 	install -d $(TARGETDIR)/usr/bwdpi/
 	cp -f bwdpi_bin/*.so $(TARGETDIR)/usr/lib/
 	cp -f bwdpi_bin/*.so.0.1 $(TARGETDIR)/usr/lib/
@@ -1770,6 +1766,16 @@ miniupnpd_1.4-clean:
 miniupnpd$(MUVER)-install:
 	install -D miniupnpd$(MUVER)/miniupnpd $(INSTALLDIR)/miniupnpd$(MUVER)/usr/sbin/miniupnpd
 	$(STRIP) $(INSTALLDIR)/miniupnpd$(MUVER)/usr/sbin/miniupnpd
+
+miniupnpc:
+	$(MAKE) -C miniupnpc
+
+miniupnpc-clean:
+	-@$(MAKE) -C miniupnpc clean
+
+miniupnpc-install:
+	install -D miniupnpc/upnpc-static $(INSTALLDIR)/miniupnpc/usr/sbin/miniupnpc
+	$(STRIP) $(INSTALLDIR)/miniupnpc/usr/sbin/miniupnpc
 
 # !!TB
 shared: busybox $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(RTCONFIG_HTTPS),openssl)
@@ -2395,7 +2401,6 @@ tr069-install: tr069
 	install -D tr069/test/notify $(INSTALLDIR)/tr069/sbin/notify
 	install -D tr069/test/udpclient $(INSTALLDIR)/tr069/sbin/udpclient
 ifeq ($(RTCONFIG_TR181),y)
-	install -D tr069/conf/ASUSWRT/tr_181.xml $(INSTALLDIR)/tr069/usr/tr/tr.xml
 ifeq ($(RTCONFIG_DSL),y)
 	install -D tr069/conf/ASUSWRT/tr_181.xml.dsl $(INSTALLDIR)/tr069/usr/tr/tr.xml
 else
@@ -3285,7 +3290,7 @@ else
 	cd lighttpd-1.4.29 && ./preconfigure-script-qtn touch $@
 endif
 
-lighttpd-1.4.29: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif lighttpd-1.4.29/stamp-h1
+lighttpd-1.4.29: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl lighttpd-1.4.29/stamp-h1
 	$(MAKE) -C lighttpd-1.4.29 $(PARALLEL_BUILD)
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_QTN),y)
@@ -3936,17 +3941,17 @@ ipset-install:
 	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
 
 tftp:
-	cd tftp-1.0 && CC=$(CC) && $(MAKE)
+	cd tftp && CC=$(CC) && $(MAKE)
 
 tftp-clean:
-	cd tftp-1.0 && $(MAKE) clean
+	cd tftp && $(MAKE) clean
 
 tftp-install:
 	# TPTP server
-	install -D tftp-1.0/tftpd $(INSTALLDIR)/tftp/usr/sbin/tftpd
+	install -D tftp/tftpd $(INSTALLDIR)/tftp/usr/sbin/tftpd
 	$(STRIP) -s $(INSTALLDIR)/tftp/usr/sbin/tftpd
 	# TFTP client
-	#install -D tftp-1.0/tftpc $(INSTALLDIR)/tftp/usr/sbin/tftpc
+	#install -D tftp/tftpc $(INSTALLDIR)/tftp/usr/sbin/tftpc
 	#$(STRIP) -s $(INSTALLDIR)/tftp/usr/sbin/tftpc
 
 bwdpi: nvram$(BCMEX)

@@ -1,5 +1,0 @@
------- fs:
-source: UUID=de1bc6e9-34ab-4151-a1d7-900042eee8d9
-target: /mnt/mountpoint2
-fstype: auto
-optstr: defaults

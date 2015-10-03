@@ -27,10 +27,6 @@
 	font-size:16px;
 	padding:3px;
 }
-/*#switch_menu span:hover{
-	box-shadow:0px 0px 5px 3px white;
-	background-color:#97CBFF;
-}*/
 .click:hover{
 	box-shadow:0px 0px 5px 3px white;
 	background-color:#97CBFF;
@@ -151,20 +147,8 @@ function addRow_main(obj, length){
 		return false;
 	}
 	
-	if(document.getElementById("download_rate").value < 1){
-		alert("The minimum value is 1 Mbps");
-		document.getElementById("download_rate").focus();
-		return false;
-	}
-	
 	if(document.getElementById("upload_rate").value == ""){
 		alert("<#JS_fieldblank#>");
-		document.getElementById("upload_rate").focus();
-		return false;
-	}
-	
-	if(document.getElementById("upload_rate").value < 1){
-		alert("The minimum value is 1 Mbps");
 		document.getElementById("upload_rate").focus();
 		return false;
 	}
@@ -235,12 +219,12 @@ function genMain_table(){
 	code += '<input type="checkbox" checked>';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
-	code += '<input type="text" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>" autocorrect="off" autocapitalize="off">';
+	code += '<input type="text" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeyup="device_filter(this);" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>" autocorrect="off" autocapitalize="off" autocomplete="off">';
 	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code += '<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>';	
 	code += '</td>';
-	code += '<td style="border-bottom:2px solid #000;text-align:left;"><input type="text" id="download_rate" class="input_12_table" maxlength="12" onkeypress="return validator.isNumber(this, event);"> Mb/s</td>';
-	code += '<td style="border-bottom:2px solid #000;text-align:left;"><input type="text" id="upload_rate" class="input_12_table" maxlength="12" onkeypress="return validator.isNumber(this, event);"> Mb/s</td>';
+	code += '<td style="border-bottom:2px solid #000;text-align:right;"><input type="text" id="download_rate" class="input_6_table" maxlength="6" onkeypress="return bandwidth_code(this, event);"><span style="margin: 0 5px;color:#FFF;">Mb/s</span></td>';
+	code += '<td style="border-bottom:2px solid #000;text-align:right;"><input type="text" id="upload_rate" class="input_6_table" maxlength="6" onkeypress="return bandwidth_code(this, event);"><span style="margin: 0 5px;color:#FFF;">Mb/s</span></td>';
 	code += '<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onclick="addRow_main(this, 32)" value=""></td>';
 	code += '</tr>';
 	
@@ -288,6 +272,50 @@ function genMain_table(){
 	code += '</table>';
 	document.getElementById('mainTable').innerHTML = code;
 	showLANIPList();
+}
+
+function bandwidth_code(o,event){
+	var keyPressed = event.keyCode ? event.keyCode : event.which;
+	var target = o.value.split(".");
+	
+	if (validator.isFunctionButton(event))
+		return true;
+		
+	if((keyPressed == 46) && (target.length > 1))
+		return false;
+
+	if((target.length > 1) && (target[1].length > 0))
+		return false;
+
+	if ((keyPressed == 46) || (keyPressed > 47 && keyPressed < 58))
+		return true;
+	else
+		return false;
+}
+
+function device_filter(obj){
+	var target_obj = document.getElementById("ClientList_Block_PC");
+	if(obj.value == ""){
+		hideClients_Block();
+		showLANIPList();
+	}
+	else{
+		obj.src = "/images/arrow-top.gif"
+		document.getElementById("ClientList_Block_PC").style.display = 'block';		
+		document.form.PC_devicename.focus();
+		var code = "";
+		for(var i = 0; i < clientList.length; i += 1) {
+			var clientObj = clientList[clientList[i]];
+			var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
+			if(clientList[i].indexOf(obj.value) == -1 && clientName.indexOf(obj.value) == -1)
+				continue;
+			
+			code += '<a title=' + clientList[i] + '><div style="height:auto;" onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'' + clientName + '\', \'' + clientObj.mac + '\');"><strong>' + clientName + '</strong> ';
+			code += ' </div></a>';
+		}		
+		
+		document.getElementById("ClientList_Block_PC").innerHTML = code;		
+	}
 }
 
 function showLANIPList(){

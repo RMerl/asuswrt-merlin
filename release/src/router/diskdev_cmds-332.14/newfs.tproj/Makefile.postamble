@@ -1,3 +1,0 @@
-after_install::
-	install -m 755 -o root -g wheel -d $(DSTROOT)/usr/share/man/man8
-	install -m 644 -o root -g wheel -c newfs.8 $(DSTROOT)/usr/share/man/man8

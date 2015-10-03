@@ -1010,7 +1010,6 @@ config RTCONFIG_TR181
 config RTCONFIG_STAINFO
 	bool "STA informtion support"
 	default n
-
 config RTCONFIG_CLOUDCHECK
 	bool "Cloudcheck support"
 	default n
@@ -1041,4 +1040,16 @@ config RTCONFIG_KEY_GUARD
 
 config RTCONFIG_RECVFILE
 	bool "Bcm recvfile support"
+	default n
+
+config RTCONFIG_WTFAST
+        bool "WTFast support"
+        default n
+
+config RTCONFIG_ERP_TEST
+	bool "erp test"
+	default n
+
+config RTCONFIG_REBOOT_SCHEDULE
+	bool "Reboot_schedule"
 	default n

@@ -1,7 +1,0 @@
-OTHER_GENERATED_OFILES = $(VERS_OFILE)
-
-#SYS_UFS_FFS_CFILES = ffs_subr.c ffs_tables.c
-#OTHER_OFILES = $(SYS_UFS_FFS_CFILES:.c=.o)
-#VPATH_PREAMBLE = ../XProj/sys/ufs/ffs:
--include ../Makefile.include
-OTHER_CFLAGS = -DREV_ENDIAN_FS=1

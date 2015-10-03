@@ -558,6 +558,8 @@ static const char * country_to_code(char *ctry, int band)
 		return "702";
 	else if (strcmp(ctry, "HU") == 0)
 		return "348";
+	else if (strcmp(ctry, "AU") == 0)
+		return "37";
 	else { // "DB"
 		if (band == 2)
 			return "392"; // ch1-ch14
@@ -899,6 +901,11 @@ void init_syspara(void)
 
 #if !defined(RTCONFIG_TCODE) // move the verification later bcz TCODE/LOC
 	verify_ctl_table();
+#endif
+
+#ifdef RTCONFIG_QCA_PLC_UTILS
+	getPLC_MAC(macaddr);
+	nvram_set("plc_macaddr", macaddr);
 #endif
 
 #ifdef RTCONFIG_DEFAULT_AP_MODE

@@ -56,8 +56,6 @@ function QKinternettype_load_body(){
 		var RetryCountDown_fail = 5;
 		update_dsl_info();
 	}
-
-	parent.restartTime = true;
 }
 
 function submitForm(){
@@ -104,7 +102,7 @@ function submitForm(){
 	
 	/*check password*/
 	if(document.form.http_passwd.value.length <= 0 || document.form.v_password2.value.length <= 0){
-		document.getElementById("alert_msg2").innerHTML = "*<#File_Pop_content_alert_desc6#>";
+		document.getElementById("alert_msg2").innerHTML = "* <#File_Pop_content_alert_desc6#>";
 		if(document.form.http_passwd.value.length <= 0){
 			document.form.http_passwd.focus();
 			document.form.http_passwd.select();
@@ -115,9 +113,16 @@ function submitForm(){
 
 		return false;
 	}
+	
+	if(document.form.http_passwd.value.length > 0 && document.form.http_passwd.value.length < 5){
+		showtext(document.getElementById("alert_msg2"),"* <#JS_short_password#>");
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();
+		return false;
+	}		
 
 	if(document.form.http_passwd.value != document.form.v_password2.value){
-		document.getElementById("alert_msg2").innerHTML = "*<#File_Pop_content_alert_desc7#>";
+		document.getElementById("alert_msg2").innerHTML = "* <#File_Pop_content_alert_desc7#>";
 		document.form.http_passwd.focus();
 		document.form.http_passwd.select();
 		return false;
@@ -136,6 +141,23 @@ function submitForm(){
 			document.form.http_passwd.select();
 			return false;
 		}
+	}
+	
+	if(document.form.http_passwd.value == '<% nvram_default_get("http_passwd"); %>'){			
+		showtext(document.getElementById("alert_msg2"),"* <#QIS_adminpass_confirm0#>");
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();		
+		return false;
+	}	
+	
+	//confirm common string combination	#JS_common_passwd#
+	var is_common_string = check_common_string(document.form.http_passwd.value, "httpd_password");
+	if(is_common_string){
+		if(confirm("<#JS_common_passwd#>")){
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			return false;	
+		}	
 	}
 
 	if(dsl_support) {		// if it is dsl, just write to a temp variable	
@@ -233,7 +255,7 @@ body{
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="sw_mode" value="1">
 <div>
-	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#QIS_pass_desc1#></div>
+	<div style="font-size:1em;padding:10px 0 10px 15px;text-align:left;"><#QIS_pass_desc1#></div>
 	<div id="alert_msg2" style="color:#FC0;margin-left:15px;"></div>
 	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#Router_Login_Name#></div>
 	<div style="margin:1px 27px 10px 15px">

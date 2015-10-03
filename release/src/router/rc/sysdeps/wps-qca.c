@@ -115,7 +115,7 @@ int is_wps_stopped(void)
 #if (defined(RTCONFIG_WPS_ENROLLEE) && defined(RTCONFIG_WIFI_CLONE))
 			if (nvram_match("wps_enrollee", "1")) {
 				nvram_set("wps_e_success", "1");
-#if defined(PLN12)
+#if (defined(PLN12) || defined(PLAC56))
 				set_wifiled(4);
 #endif
 				wifi_clone(i);

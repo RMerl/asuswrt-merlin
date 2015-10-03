@@ -1,8 +1,0 @@
-create minix fs
-1728 inodes
-5120 blocks
-Firstdatazone=58 (58)
-Zonesize=1024
-Maxsize=268966912
-
-fsck minix fs

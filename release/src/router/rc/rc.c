@@ -100,10 +100,12 @@ static int rctest_main(int argc, char *argv[])
 			if(on) start_watchdog();
 			else stop_watchdog();
 		}
+#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 		else if (strcmp(argv[1], "watchdog02") == 0) {
 			if(on) start_watchdog02();
 			else stop_watchdog02();
 		}
+#endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
 		else if (strcmp(argv[1], "sw_devled") == 0) {
 			if(on) start_sw_devled();
 			else stop_sw_devled();
@@ -205,7 +207,7 @@ static int rctest_main(int argc, char *argv[])
 			if(argc>=4) set_gpio(atoi(argv[2]), atoi(argv[3]));
 		}
 		else if (strcmp(argv[1], "gpior") == 0) {
-			_dprintf("%d\n", get_gpio(atoi(argv[2])));
+			printf("%d\n", get_gpio(atoi(argv[2])));
 		}
 		else if (strcmp(argv[1], "gpiod") == 0) {
 			if(argc>=4) gpio_dir(atoi(argv[2]), atoi(argv[3]));
@@ -307,7 +309,9 @@ static const applets_t applets[] = {
 	{ "mtd-unlock",			mtd_unlock_erase_main		},
 #endif
 	{ "watchdog",			watchdog_main			},
+#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 	{ "watchdog02",			watchdog02_main			},
+#endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
 	{ "sw_devled",			sw_devled_main			},
 #ifdef RTCONFIG_FANCTRL
 	{ "phy_tempsense",		phy_tempsense_main		},

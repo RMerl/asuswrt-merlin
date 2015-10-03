@@ -68,6 +68,8 @@ int getStorageStatus(STORAGE_INFO_T *st)
 		st->u.wt.EnableDDNS = 0;
 	}
 
+	st->u.dev.sw.AiHOMEAPILevel = EXTEND_AIHOME_API_LEVEL;
+
 	// setup st->u.WANIPAddr
 	st->u.wt.WANIPAddr = __cpu_to_le32(inet_network(get_wanip()));
 

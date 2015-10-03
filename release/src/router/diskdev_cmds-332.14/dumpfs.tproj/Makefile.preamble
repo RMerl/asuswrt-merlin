@@ -1,3 +1,0 @@
-OTHER_GENERATED_OFILES = $(VERS_OFILE)
--include ../Makefile.include
-OTHER_CFLAGS = -DREV_ENDIAN_FS=1

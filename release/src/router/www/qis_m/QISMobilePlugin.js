@@ -1,6 +1,6 @@
 var child_macaddr = '<% nvram_get("lan_hwaddr"); %>';
 var sw_mode_submit = '<% nvram_get("sw_mode"); %>';
-if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode_submit == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+if(sw_mode_submit == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode_submit = 2;
 if(parent.document.QKform.sw_mode)
 	sw_mode_submit = parent.document.QKform.sw_mode.value;

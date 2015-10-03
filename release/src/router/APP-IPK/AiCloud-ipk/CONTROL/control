@@ -2,7 +2,7 @@ Package: aicloud
 Architecture: mipsel
 Priority: optional
 Section: net
-Version: 2.0.1.0
+Version: 2.0.1.1
 Maintainer: ASUS
 Source: http://nw-dlcdnet.asus.com/asusware/mipsel/stable
 URL: https://192.168.1.1:443

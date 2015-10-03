@@ -227,7 +227,7 @@ function checkPasswdValid(obj){
             	<table width="80%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#7ea7bd" class="FormTable_table">
                 	<tr>
                   	<th width="100"><#AiDisk_Account#></th>
-                  	<th><#PPPConnection_Password_itemname#></th>
+                  	<th><#HSDPAConfig_Password_itemname#></th>
                   	<th width="50" ><#AiDisk_Read#></th>
                   	<th width="50" ><#AiDisk_Write#></th>
                 	</tr>

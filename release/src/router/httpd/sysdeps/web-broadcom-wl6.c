@@ -4061,7 +4061,8 @@ ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 
-	if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta"))
+	if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta") &&
+	    !nvram_match(strcat_r(prefix, "mode", tmp), "psr"))
 		goto PSTA_ERR;
 
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));

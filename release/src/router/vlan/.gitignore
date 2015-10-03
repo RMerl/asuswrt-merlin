@@ -1,6 +1,0 @@
-*.orig
-*.diff
-*~
-*.o
-*.depend
-vconfig

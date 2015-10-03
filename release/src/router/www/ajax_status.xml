@@ -40,8 +40,7 @@
   <vpn>vpn_server1_state=<% nvram_get("vpn_server1_state"); %></vpn>
   <vpn>vpn_server2_state=<% nvram_get("vpn_server2_state"); %></vpn>
   <qtn>qtn_state=<% nvram_get("qtn_ready"); %></qtn>
-  <% secondary_ajax_wanstate(); %>
-	<usb>'<% show_usb_path(); %>'</usb>
+  <usb>'<% show_usb_path(); %>'</usb>
   <usb>modem_enable=<% nvram_get("modem_enable"); %></usb>
   <% ajax_dualwanstate(); %>
   <sim>sim_state=<% nvram_get("usb_modem_act_sim"); %></sim>

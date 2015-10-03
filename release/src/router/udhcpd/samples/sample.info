@@ -1,9 +1,0 @@
-interface eth0
-ip 192.168.10.22
-subnet 255.255.255.0
-router 192.168.10.2
-dns 192.168.10.2 192.168.10.10
-wins 192.168.10.10
-lease 36000
-dhcptype 5
-serverid 192.168.10.11

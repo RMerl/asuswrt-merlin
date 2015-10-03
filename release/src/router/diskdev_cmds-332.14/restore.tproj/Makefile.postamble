@@ -1,7 +1,0 @@
-INSTALL_AS_GROUP = tty      # (probably want to set both of these) 
-INSTALL_PERMISSIONS = 6555  # If set, 'install' chmod's executable to this
-
-after_install::
-	$(LN) -f $(INSTALLED_PRODUCTS) $(DSTROOT)$(INSTALLDIR)/rrestore
-	install -m 755 -o root -g wheel -d $(DSTROOT)/usr/share/man/man8
-	install -m 644 -o root -g wheel -c restore.8 $(DSTROOT)/usr/share/man/man8

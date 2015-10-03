@@ -73,6 +73,9 @@ OBJS += bcmwifi_channels.o
 endif
 ifeq ($(RTCONFIG_BCM_7114),y)
 OBJS += confmtd_utils.o
+ifeq ($(RTCONFIG_GMAC3),y)
+OBJS += et_linux.o
+endif
 endif
 
 ifeq ($(RTCONFIG_RALINK),y)

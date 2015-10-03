@@ -2558,6 +2558,53 @@ if ((olNs4 || olNs6 || olIe4)) {
 	ver3fix = true;
 }
 
+// ---------- Viz add common string check for password 2015.09 start--------
+function check_common_string(pwd, flag){
+	//Sequential
+	var termAlphas = "abcdefghijklmnopqrstuvwxyz";
+	var termNumerics = "01234567890";
+	var termSymbols = "~!@#$%^&*()_+";
+	var termKeyboards1 = "qwertyuiop";
+	var termKeyboards2 = "asdfghjkl";
+	var termKeyboards3 = "zxcvbnm";
+	var termCommon5 = ["123123","abc123","ashley","bailey","dragon","letmein","master","michael","monkey","qazwsx","shadow"];
+	var termCommon8 = ["adminpassword","baseball","football","iloveyou","loginpassword","passw0rd","password","sunshine","superman","trustno1","useradmin","userpassword"];
+	var nSeqString = 0;
+	if(flag == "httpd_password"){	//at lease length 5		
+		if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termNumerics.toLowerCase().indexOf(pwd) != -1 || termNumerics.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termSymbols.toLowerCase().indexOf(pwd) != -1 || termSymbols.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards1.toLowerCase().indexOf(pwd) != -1 || termKeyboards1.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards2.toLowerCase().indexOf(pwd) != -1 || termKeyboards2.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards3.toLowerCase().indexOf(pwd) != -1 || termKeyboards3.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		for(var s=0;s<termCommon5.length;s++){
+			if(pwd == termCommon5[s])	{ nSeqString++; }	
+		}
+		for(var t=0;t<termCommon8.length;t++){
+			if(pwd == termCommon8[t])	{ nSeqString++; }	
+		}		
+	}
+	else if(flag == "wpa_key"){	//at lease length 8
+		if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termNumerics.toLowerCase().indexOf(pwd) != -1 || termNumerics.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termSymbols.toLowerCase().indexOf(pwd) != -1 || termSymbols.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards1.toLowerCase().indexOf(pwd) != -1 || termKeyboards1.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		if(termKeyboards2.toLowerCase().indexOf(pwd) != -1 || termKeyboards2.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+		for(var s=0;s<termCommon8.length;s++){
+			if(pwd == termCommon8[s])	{ nSeqString++; }	
+		}		
+	}
+	
+	//pure repeat character string
+	if(pwd == pwd.charAt(0).repeat(pwd.length)) { nSeqString++; }
+	
+	if(nSeqString > 0)
+		return true;
+	else		
+		return false;
+}
+// ---------- Viz add common string check for password 2015.09 end--------
+
 // ---------- Viz add for pwd strength check [Start] 2012.12 -----
 
 function chkPass(pwd, flag) {

@@ -1,6 +1,0 @@
-size: 8388608, sector size: 512, PT: dos, offset: 446
----
-#1:         32       7648  0x83
-#2:       7680       8704  0xa5
-#5:       7936       4864  0x7 (freebsd)
-#6:      12544       3584  0x7 (freebsd)

@@ -1,7 +1,0 @@
-OTHER_GENERATED_OFILES = $(VERS_OFILE)
-
-FSCK_CFILES = preen.c
-#OTHER_OFILES = $(FSCK_CFILES:.c=.o)
-VPATH_PREAMBLE = ../fsck:
--include ../Makefile.include
-OTHER_CFLAGS = -DREV_ENDIAN_FS=1

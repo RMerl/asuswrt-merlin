@@ -1,5 +1,0 @@
-INSTALL_PERMISSIONS = 4555  # If set, 'install' chmod's executable to this
-
-after_install:
-	install -m 755 -o root -g wheel -d $(DSTROOT)/usr/share/man/man8
-	install -m 644 -o root -g wheel -c umount.8 $(DSTROOT)/usr/share/man/man8

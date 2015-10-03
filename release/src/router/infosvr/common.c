@@ -324,7 +324,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port)
 		     return pdubuf_res;
 
 		case NET_CMD_ID_GETINFO:
-			_dprintf("NET CMD GETINFO\n");
+			//_dprintf("NET CMD GETINFO\n");
 		     ginfo=(PKT_GET_INFO *)(pdubuf_res+sizeof(IBOX_COMM_PKT_RES));
 		     memset(ginfo, 0, sizeof(ginfo));
 #if 0

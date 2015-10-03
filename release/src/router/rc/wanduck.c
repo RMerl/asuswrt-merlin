@@ -805,7 +805,12 @@ int chk_proto(int wan_unit, int wan_state){
 			return DISCONN;
 		}
 		else if(wan_state == WAN_STATE_STOPPED){
-			disconn_case[wan_unit] = CASE_PPPFAIL;
+			if(wan_sbstate == WAN_STOPPED_REASON_INVALID_IPADDR)
+				disconn_case[wan_unit] = CASE_THESAMESUBNET;
+			else if(!strcmp(wan_proto, "dhcp"))
+				disconn_case[wan_unit] = CASE_DHCPFAIL;
+			else
+				disconn_case[wan_unit] = CASE_PPPFAIL;
 			return DISCONN;
 		}
 #if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
@@ -1017,9 +1022,7 @@ _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state
 			if(link_wan[wan_unit] != 0)
 				record_wan_state_nvram(wan_unit, -1, -1, WAN_AUXSTATE_NONE);
 
-			if(link_wan[wan_unit] == 2)
-				logmessage("wanduck", "The local subnet is the same with the USB ethernet.");
-			else if(link_wan[wan_unit] == 3){
+			if(link_wan[wan_unit] == 3){
 				if(sim_state == 3)
 					logmessage("wanduck", "The modem need the PUK code to reset PIN.");
 				else
@@ -1033,9 +1036,7 @@ _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state
 				link_changed = 1;
 		}
 
-		if(link_wan[wan_unit] == 2)
-			return SET_ETH_MODEM;
-		else if(link_wan[wan_unit] == 3)
+		if(link_wan[wan_unit] == 3)
 			return SET_PIN;
 		else if(link_wan[wan_unit] == 4)
 			return SET_USBSCAN;
@@ -1336,19 +1337,11 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 
 	// TODO: Only send pages for the wan(0)'s state.
 #ifdef RTCONFIG_USB_MODEM
-	if (dualwan_unit__usbif(wan_unit)) {
-		if(conn_changed_state[wan_unit] == SET_ETH_MODEM)
-			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/error_page.htm?flag=", CASE_THESAMESUBNET, "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
 #if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
-		else if((conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN) && disconn_case[wan_unit] == CASE_DATALIMIT)
-			sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
-#endif
-		else{
-			close_socket(sfd, T_HTTP);
-			return;
-		}
-	}
+	if((conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN) && disconn_case[wan_unit] == CASE_DATALIMIT)
+		sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
 	else
+#endif
 #endif
 	if((conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN) && disconn_case[wan_unit] == CASE_THESAMESUBNET)
 		sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
@@ -2271,11 +2264,7 @@ _dprintf("wanduck(%d): detect the modem to be reset...\n", wan_unit);
 					}
 				}
 
-				if(conn_state[wan_unit] == SET_ETH_MODEM){
-					conn_changed_state[wan_unit] = SET_ETH_MODEM;
-					set_disconn_count(wan_unit, S_IDLE);
-				}
-				else if(conn_state[wan_unit] == SET_PIN){
+				if(conn_state[wan_unit] == SET_PIN){
 					conn_changed_state[wan_unit] = SET_PIN;
 					set_disconn_count(wan_unit, S_IDLE);
 				}
@@ -2422,13 +2411,6 @@ _dprintf("wanduck(%d)(fo   conn): state %d, state_old %d, changed %d, wan_state 
 				}
 			}
 #ifdef RTCONFIG_USB_MODEM
-			else if(conn_state[current_wan_unit] == SET_ETH_MODEM){
-				conn_changed_state[current_wan_unit] = SET_ETH_MODEM;
-
-				conn_state_old[current_wan_unit] = DISCONN;
-				// The USB modem is a router type dongle, and must let the local subnet not be the "192.168.1.x".
-				set_disconn_count(current_wan_unit, S_IDLE);
-			}
 			else if(conn_state[current_wan_unit] == SET_PIN){
 				conn_changed_state[current_wan_unit] = SET_PIN;
 
@@ -2574,13 +2556,6 @@ _dprintf("wanduck(%d) fail-back: state %d, state_old %d, changed %d, wan_state %
 				}
 			}
 #ifdef RTCONFIG_USB_MODEM
-			else if(conn_state[current_wan_unit] == SET_ETH_MODEM){
-				conn_changed_state[current_wan_unit] = SET_ETH_MODEM;
-
-				conn_state_old[current_wan_unit] = DISCONN;
-				// The USB modem is a router type dongle, and must let the local subnet not be the "192.168.1.x".
-				set_disconn_count(current_wan_unit, S_IDLE);
-			}
 			else if(conn_state[current_wan_unit] == SET_PIN){
 				conn_changed_state[current_wan_unit] = SET_PIN;
 
@@ -2711,7 +2686,7 @@ _dprintf("wanduck(%d): detect the modem to be reset...\n", current_wan_unit);
 			}
 #endif
 			else{
-#if !defined(RTN14U)			  
+#if !defined(RTN14U) && !defined(RTAC1200GP)			  
 				conn_state[current_wan_unit] = if_wan_phyconnected(current_wan_unit);
 #endif				
 				if(conn_state[current_wan_unit] == CONNED){
@@ -2734,13 +2709,6 @@ _dprintf("wanduck(%d): detect the modem to be reset...\n", current_wan_unit);
 				}
 			}
 #ifdef RTCONFIG_USB_MODEM
-			else if(conn_state[current_wan_unit] == SET_ETH_MODEM){
-				conn_changed_state[current_wan_unit] = SET_ETH_MODEM;
-
-				conn_state_old[current_wan_unit] = DISCONN;
-				// The USB modem is a router type dongle, and must let the local subnet not be the "192.168.1.x".
-				set_disconn_count(current_wan_unit, S_IDLE);
-			}
 			else if(conn_state[current_wan_unit] == SET_PIN){
 				conn_changed_state[current_wan_unit] = SET_PIN;
 

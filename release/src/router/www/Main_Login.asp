@@ -325,7 +325,6 @@ function login(){
 	document.form.login_authorization.value = btoa(document.form.login_username.value + ':' + document.form.login_passwd.value);
 	document.form.login_username.disabled = true;
 	document.form.login_passwd.disabled = true;
-	document.form.foilautofill.disabled = true;
 	if(redirect_page == "" || redirect_page == "Logout.asp" || redirect_page == "Main_Login.asp")
 		document.form.next_page.value = "index.asp";
 	else
@@ -355,7 +354,6 @@ function disable_button(){
 <input type="hidden" name="current_page" value="Main_Login.asp">
 <input type="hidden" name="next_page" value="Main_Login.asp">
 <input type="hidden" name="login_authorization" value="">
-<input name="foilautofill" style="display: none;" type="password">
 <div class="div_table main_field_gap">
 	<div class="div_tr">
 		<div id="warming_field" style="display:none;" class="warming_desc">Note: the router you are using is not an ASUS device or has not been authorised by ASUS. ASUSWRT might not work properly on this device.</div>
@@ -374,7 +372,7 @@ function disable_button(){
 				<input type="text" id="login_username" name="login_username" tabindex="1" class="form_input" maxlength="20" autocapitalization="off" autocomplete="off" placeholder="<#HSDPAConfig_Username_itemname#>">
 			</div>
 			<div class="password_gap">
-				<input type="password" name="login_passwd" tabindex="2" class="form_input" maxlength="16" onpaste="return false;" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalization="off" autocomplete="off">
+				<input type="password" name="login_passwd" tabindex="2" class="form_input" maxlength="16" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalization="off" autocomplete="off">
 			</div>
 			<div class="error_hint" style="display:none;" id="error_status_field"></div>
 				<div class="button" onclick="login();"><#CTL_signin#></div>

@@ -1,6 +1,0 @@
-INSTALL_AS_USER =	root
-INSTALL_PERMISSIONS =4555
-
-after_install:
-	install -m 755 -o root -g wheel -d $(DSTROOT)/usr/share/man/man1
-	install -m 644 -o root -g wheel -c quota.1 $(DSTROOT)/usr/share/man/man1

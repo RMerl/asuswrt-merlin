@@ -1,2 +1,0 @@
-/dev/mapper/kzak-home on /home/kzak: REMOUNTED from 'rw,noatime,barrier=1,data=ordered' to 'ro,noatime,barrier=1,data=ordered'
-//foo.home/bar/ on /mnt/sounds: REMOUNTED from 'rw,relatime,unc=\\foo.home\bar,username=kzak,domain=SRGROUP,uid=0,noforceuid,gid=0,noforcegid,addr=192.168.111.1,posixpaths,serverino,acl,rsize=16384,wsize=57344' to 'ro,relatime,unc=\\foo.home\bar,username=kzak,domain=SRGROUP,uid=0,noforceuid,gid=0,noforcegid,addr=192.168.111.1,posixpaths,serverino,acl,rsize=16384,wsize=57344'

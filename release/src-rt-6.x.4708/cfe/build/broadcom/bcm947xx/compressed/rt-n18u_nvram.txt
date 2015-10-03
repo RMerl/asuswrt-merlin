@@ -418,17 +418,17 @@ devpath0=pci/1/1
 #0:leddc=0xFFFF
 
 #temperature setting
-0:temps_period=5
-0:tempthresh=120
-0:temps_hysteresis=5
-0:phycal_tempdelta=0
-0:tempoffset=0
+#0:temps_period=5
+#0:tempthresh=120
+#0:temps_hysteresis=5
+#0:phycal_tempdelta=0
+#0:tempoffset=0
 
 
 
 
 # Bootloader version
-bl_version=2.0.0.7
+bl_version=2.0.0.8
 
 # for NAND flash
 bootflags=1

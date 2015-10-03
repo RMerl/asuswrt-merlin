@@ -90,8 +90,6 @@ function QKinternettype_load_body(){
 		var RetryCountDown_fail = 5;
 		update_dsl_info();
 	}
-
-	parent.restartTime = true;
 }
 
 function submitForm(){
@@ -167,6 +165,17 @@ function submitForm(){
 		changeiuiBackground(0);
 		return false;
 	}
+	
+	if(document.form.http_passwd.value.length > 0 && document.form.http_passwd.value.length < 5){
+		if(parent.ISMOBILE)
+			showtext(document.getElementById("_alert_msg2"),"* <#JS_short_password#>");
+		else
+			showtext(document.getElementById("alert_msg2"),"* <#JS_short_password#>");			
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();
+		changeiuiBackground(0);
+		return false;
+	}	
 
 	if(document.form.http_passwd.value != document.form.v_password2.value){
 		if(parent.ISMOBILE)
@@ -206,6 +215,17 @@ function submitForm(){
 		changeiuiBackground(0);
 		return false;
 	}	
+	
+	//confirm common string combination	#JS_common_passwd#
+	var is_common_string = check_common_string(document.form.http_passwd.value, "httpd_password");
+	if(is_common_string){
+			if(confirm("<#JS_common_passwd#>")){
+				document.form.http_passwd.focus();
+				document.form.http_passwd.select();
+				changeiuiBackground(0);
+				return false;	
+			}	
+	}
 
 	if(dsl_support) {
 		// if it is dsl, just write to a temp variable

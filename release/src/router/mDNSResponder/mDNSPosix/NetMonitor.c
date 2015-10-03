@@ -144,6 +144,10 @@ void setlinebuf( FILE * fp ) {}
 #	include "mDNSPosix.h"      // Defines the specific types needed to run mDNS on this platform
 #endif
 #include "ExampleClientApp.h"
+#include "mDNSEmbeddedAPI.h"
+#include <fcntl.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 //*************************************************************************************************************
 // Types and structures
@@ -191,6 +195,14 @@ struct FilterList_struct
 	mDNSAddr FilterAddr;
 	};
 
+typedef struct ClientList_struct ClientList;
+struct ClientList_struct
+{
+	unsigned char IPaddr[255][4];
+	char Name[255][32];
+	char Model[255][16];
+};
+
 //*************************************************************************************************************
 // Constants
 
@@ -214,6 +226,11 @@ static int NumProbes, NumGoodbyes, NumQuestions, NumLegacy, NumAnswers, NumAddit
 
 static ActivityStat *stats;
 
+static ClientList *clients;
+
+int shm_lock, shm_client_list_id, log, debug;
+
+FILE *fp_log;
 #define OPBanner "Total Ops   Probe   Goodbye  BrowseQ  BrowseA ResolveQ ResolveA"
 
 //*************************************************************************************************************
@@ -229,7 +246,12 @@ mDNSlocal mDNSu32 mprintf(const char *format, ...)
 	va_start(ptr,format);
 	length = mDNS_vsnprintf((char *)buffer, sizeof(buffer), format, ptr);
 	va_end(ptr);
-	printf("%s", buffer);
+
+	if(log)
+		fprintf(fp_log, "%s", buffer);
+	else
+		printf("%s", buffer);
+	
 	return(length);
 	}
 
@@ -272,6 +294,8 @@ typedef struct
 
 static HostList IPv4HostList = { 0, 0, 0 };
 static HostList IPv6HostList = { 0, 0, 0 };
+
+mDNSlocal void SaveInfo(const mDNSAddr *srcaddr, char *Dname, char *AppModel);
 
 mDNSlocal HostEntry *FindHost(const mDNSAddr *addr, HostList *list)
 	{
@@ -322,6 +346,8 @@ mDNSlocal HostEntry *AddHost(const mDNSAddr *addr, HostList *list)
 		MakeDomainNameFromDNSNameString(&entry->revname, buffer);
 		}
 
+	SaveInfo(addr, NULL, NULL);
+
 	return(entry);
 	}
 
@@ -349,6 +375,7 @@ mDNSlocal void RecordHostInfo(HostEntry *entry, const ResourceRecord *const pktr
 			// Should really check that the rdata in the address record matches the source address of this packet
 			entry->NumQueries = 0;
 			AssignDomainName(&entry->hostname, pktrr->name);
+			SaveInfo(&entry->addr, &entry->hostname.c, NULL);
 			}
 
 		if (pktrr->rrtype == kDNSType_PTR)
@@ -356,6 +383,7 @@ mDNSlocal void RecordHostInfo(HostEntry *entry, const ResourceRecord *const pktr
 				{
 				entry->NumQueries = 0;
 				AssignDomainName(&entry->hostname, &pktrr->rdata->u.name);
+				SaveInfo(&entry->addr, &entry->hostname.c, NULL);
 				}
 		}
 	else if (pktrr->rrtype == kDNSType_HINFO)
@@ -367,6 +395,7 @@ mDNSlocal void RecordHostInfo(HostEntry *entry, const ResourceRecord *const pktr
 		if (sw + 1 + sw[0] <= rdend)
 			{
 			AssignDomainName(&entry->hostname, pktrr->name);
+			SaveInfo(&entry->addr, &entry->hostname.c, NULL);
 			mDNSPlatformMemCopy(entry->HIHardware.c, hw, 1 + (mDNSu32)hw[0]);
 			mDNSPlatformMemCopy(entry->HISoftware.c, sw, 1 + (mDNSu32)sw[0]);
 			}
@@ -559,6 +588,7 @@ mDNSlocal void DisplayPacketHeader(mDNS *const m, const DNSMessage *const msg, c
 	struct tm tm;
 	const mDNSu32 index = mDNSPlatformInterfaceIndexfromInterfaceID(m, InterfaceID);
 	char if_name[IFNAMSIZ];		// Older Linux distributions don't define IF_NAMESIZE
+
 	if_indextoname(index, if_name);
 	gettimeofday(&tv, NULL);
 	localtime_r((time_t*)&tv.tv_sec, &tm);
@@ -751,6 +781,123 @@ mDNSlocal void DisplayQuery(mDNS *const m, const DNSMessage *const msg, const mD
 	if (entry) AnalyseHost(m, entry, InterfaceID);
 	}
 
+//SaveInfo(srcaddr, pkt.r, NULL); //IP, Hostname, Apple device.
+mDNSlocal void SaveInfo(const mDNSAddr *srcaddr, char *Dname, char *AppModel)
+{
+	int i;
+	char *name_ptr;
+	unsigned char *a;
+
+	name_ptr = NULL;
+	a = (char unsigned *)&srcaddr->ip.v4;
+
+        if(Dname) {
+        	if((name_ptr = strstr(Dname, "local")) != NULL)
+                {
+                        *(name_ptr-1) = '\0';
+			name_ptr = Dname+1;
+                        //printf("Remove \".local\" Dname=%s=\n\n", name_ptr);
+                }
+	}
+	mprintf("\n======== Save:%d.%d.%d.%d/%s/%s ========\n",a[0],a[1],a[2],a[3], name_ptr, AppModel);
+
+        shm_lock = file_lock("mDNSNetMonitor");
+
+	ClientList *c = clients;
+	i = 0;
+	while(c->IPaddr[i][0]!=NULL && memcmp(c->IPaddr[i], a, 4)) i++;
+	
+	if(i>=255) {
+		file_unlock(shm_lock);
+		return;
+	}
+
+	if(c->IPaddr[i][0]==NULL) {
+		memcpy(c->IPaddr[i], a, 4); 
+		if(name_ptr) 
+			strcpy(c->Name[i], name_ptr);
+		if(AppModel)
+			strcpy(c->Model[i], AppModel);
+	}
+	else {
+		a = c->IPaddr[i];
+		//mprintf("Got the Same Dev, IP: %d.%d.%d.%d-%s-%s-\n", a[0],a[1],a[2],a[3], c->Name[i], c->Model[i]);
+		if((name_ptr != NULL) && (strcmp(c->Name[i], name_ptr))) 
+			strcpy(c->Name[i], name_ptr);
+                if((AppModel != NULL) &&(strcmp(c->Model[i], AppModel)))
+                        strcpy(c->Model[i], AppModel);		
+
+		//mprintf("Update IP: %d.%d.%d.%d-%s-%s-\n", a[0],a[1],a[2],a[3], c->Name[i], c->Model[i]);
+	}
+
+	file_unlock(shm_lock);
+	return;
+}	
+
+mDNSlocal void PrintClientList(void)
+{
+	int i;
+	unsigned char *a;
+        ClientList *c = clients;
+
+	i = 0;
+	mprintf("\n=== Print Client List ===\n");
+        while(c->IPaddr[i][0] != 0) {
+		a = c->IPaddr[i];
+                mprintf("   =%d.%d.%d.%d/%s/%s=\n", a[0],a[1],a[2],a[3], c->Name[i], c->Model[i]);
+		i++;
+	}
+}
+
+/* Serialize using fcntl() calls 
+ */
+
+int file_lock(char *tag)
+{
+        char fn[64];
+        struct flock lock;
+        int lockfd = -1;
+        pid_t lockpid;
+
+        sprintf(fn, "/var/lock/%s.lock", tag);
+        if ((lockfd = open(fn, O_CREAT | O_RDWR, 0666)) < 0)
+                goto lock_error;
+
+        pid_t pid = getpid();
+        if (read(lockfd, &lockpid, sizeof(pid_t))) {
+                // check if we already hold a lock
+                if (pid == lockpid) {
+                        // don't close the file here as that will release all locks
+                        return -1;
+                }
+        }
+
+        memset(&lock, 0, sizeof(lock));
+        lock.l_type = F_WRLCK;
+        lock.l_pid = pid;
+
+        if (fcntl(lockfd, F_SETLKW, &lock) < 0) {
+                close(lockfd);
+                goto lock_error;
+        }
+
+        lseek(lockfd, 0, SEEK_SET);
+        write(lockfd, &pid, sizeof(pid_t));
+        return lockfd;
+lock_error:
+        // No proper error processing
+        //syslog(LOG_DEBUG, "Error %d locking %s, proceeding anyway", errno, fn);
+        return -1;
+}
+
+void file_unlock(int lockfd)
+{
+        if (lockfd >= 0) {
+                ftruncate(lockfd, 0);
+                close(lockfd);
+        }
+}
+
 mDNSlocal void DisplayResponse(mDNS *const m, const DNSMessage *const msg, const mDNSu8 *end,
 	const mDNSAddr *srcaddr, mDNSIPPort srcport, const mDNSAddr *dstaddr, const mDNSInterfaceID InterfaceID)
 	{
@@ -783,6 +930,40 @@ mDNSlocal void DisplayResponse(mDNS *const m, const DNSMessage *const msg, const
 			{
 			NumAnswers++;
 			DisplayResourceRecord(srcaddr, (pkt.r.resrec.RecordType & kDNSRecordTypePacketUniqueMask) ? "(AN)" : "(AN+)", &pkt.r.resrec);
+
+			unsigned char *a;
+			if(!strcmp(DNSTypeName(pkt.r.resrec.rrtype), "PTR"))
+			{
+				if(strstr((char *)pkt.r.resrec.name->c, "_apple-mobdev2")) {
+			                a = (unsigned char *)&srcaddr->ip.v4;
+			                mprintf("\n========== %d.%d.%d.%d is iPhone ==========\n\n",a[0],a[1],a[2],a[3]);
+					SaveInfo(srcaddr, NULL,"iPhone"); //IP, Hostname, Apple device.
+				}
+			}
+ 		        if(!strcmp(DNSTypeName(pkt.r.resrec.rrtype), "TXT"))
+		        {
+		        	char *p;
+				mDNSu8 *t = pkt.r.resrec.rdata->u.txt.c;
+				t++;
+				if((t = (mDNSu8 *)strstr((char *)t, "model="))!=NULL) {
+					t = t+6;
+					p = t;
+
+                                        while(p != NULL) {
+				                if ( !((( *p >= '0' ) && ( *p <= '9' ))
+				                     ||(( *p >= 'a' ) && ( *p <= 'z' ))
+				                     ||(( *p >= 'A' ) && ( *p <= 'Z' ))) ) {
+                                                	*p = '\0';
+							break;
+						}
+						p++;
+				        }
+
+					mprintf("\n=========== Get Apple MODEL= %s ==========\n\n", t);
+					SaveInfo(srcaddr, NULL, (char *)t); //IP, Hostname, Apple device.
+				}
+			}
+
 			if (msg->h.id.NotAnInteger != 0xFFFF) recordstat(entry, pkt.r.resrec.name, OP_answer, pkt.r.resrec.rrtype);
 			if (entry) RecordHostInfo(entry, &pkt.r.resrec);
 			}
@@ -885,6 +1066,53 @@ mDNSexport void mDNSCoreReceive(mDNS *const m, DNSMessage *const msg, const mDNS
 		}
 	}
 
+#if 0
+mDNSexport void EventLoop(mDNS *const m)
+{
+	return;
+}
+
+
+static void BrowseCallback(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, QC_result AddRecord)
+    // A callback from the core mDNS code that indicates that we've received a 
+    // response to our query.  Note that this code runs on the main thread 
+    // (in fact, there is only one thread!), so we can safely printf the results.
+{
+	return;
+}
+
+#define RR_CACHE_SIZE 500
+static CacheEntity gRRCache[RR_CACHE_SIZE];
+
+static const char kDefaultServiceType[] = "_services._dns-sd._udp";
+static const char kDefaultDomain[]      = "local.";
+static const char *gServiceType      = kDefaultServiceType;
+static const char *gServiceDomain    = kDefaultDomain;
+
+mDNSlocal void mDNSQuery(void)
+{
+        mStatus     status;
+        DNSQuestion question;
+        domainname  type;
+        domainname  domain;
+
+printf("\n=== Send mDNS Query ===\n\n");
+        MakeDomainNameFromDNSNameString(&type, gServiceType);
+        MakeDomainNameFromDNSNameString(&domain, gServiceDomain);
+
+        status = mDNS_StartBrowse(&mDNSStorage, &question, &type, &domain, mDNSInterface_Any, mDNSfalse, BrowseCallback, NULL);
+
+printf("=== status = %d ===\n", status);
+        if (status == mStatus_NoError) {
+                fprintf(stderr, "Query: %s\n", gServiceType);
+                EventLoop(&mDNSStorage);
+                mDNS_StopQuery(&mDNSStorage, &question);
+        }
+
+	return;
+}
+#endif
+
 mDNSlocal mStatus mDNSNetMonitor(void)
 	{
 	struct tm tm;
@@ -892,7 +1120,6 @@ mDNSlocal mStatus mDNSNetMonitor(void)
 #if !defined(WIN32)
 	sigset_t signals;
 #endif
-	
 	mStatus status = mDNS_Init(&mDNSStorage, &PlatformStorage,
 		mDNS_Init_NoCache, mDNS_Init_ZeroCacheSize,
 		mDNS_Init_DontAdvertiseLocalAddresses,
@@ -906,7 +1133,6 @@ mDNSlocal mStatus mDNSNetMonitor(void)
 #else
 	mDNSPosixListenForSignalInEventLoop(SIGINT);
 	mDNSPosixListenForSignalInEventLoop(SIGTERM);
-
 	do 
 		{
 		struct timeval	timeout = { 0x3FFFFFFF, 0 };	// wait until SIGINT or SIGTERM
@@ -968,6 +1194,8 @@ mDNSlocal mStatus mDNSNetMonitor(void)
 	mprintf("\n");
 	printstats(kReportTopServices);
 
+	PrintClientList();
+
 	if (!ExactlyOneFilter)
 		{
 		ShowSortedHostList(&IPv4HostList, kReportTopHosts);
@@ -981,11 +1209,13 @@ mDNSlocal mStatus mDNSNetMonitor(void)
 mDNSexport int main(int argc, char **argv)
 	{
 	const char *progname = strrchr(argv[0], '/') ? strrchr(argv[0], '/') + 1 : argv[0];
+	char if_name[IFNAMSIZ];
 	int i;
 	mStatus status;
 	
 	setlinebuf(stdout);				// Want to see lines as they appear, not block buffered
-
+	log = 1;
+	
 	for (i=1; i<argc; i++)
 		{
 		if (i+1 < argc && !strcmp(argv[i], "-i") && atoi(argv[i+1]))
@@ -994,6 +1224,7 @@ mDNSexport int main(int argc, char **argv)
 			i += 2;
 			printf("Monitoring interface %d\n", FilterInterface);
 			}
+		else if (!strcmp(argv[i], "-l")) log = 1;
 		else
 			{
 			struct in_addr s4;
@@ -1022,6 +1253,35 @@ mDNSexport int main(int argc, char **argv)
 			Filters = f;
 			}
 		}
+
+        if(log)
+                fp_log = fopen("/tmp/mDNSNetMonitor.log", "w");
+
+	for(FilterInterface=0; FilterInterface<10; FilterInterface++)
+	{
+		if_indextoname(FilterInterface, if_name);
+		if(!strcmp(if_name, "br0")) 
+		{
+			mprintf("Monitoring interface %d:br0\n", FilterInterface);
+			break;
+		}
+	}
+
+	//alloc shared memrory
+        shm_lock = file_lock("mDNSNetMonitor");
+
+        shm_client_list_id = shmget((key_t)1002, sizeof(ClientList), 0666|IPC_CREAT);
+
+        if (shm_client_list_id == -1){
+            fprintf(stderr,"shmget failed\n");
+            file_unlock(shm_lock);
+        }
+	else {
+        	clients = (ClientList *)shmat(shm_client_list_id,(void *) 0,0);
+	        //Reset shared memory
+	        memset(clients, 0x00, sizeof(ClientList));
+		file_unlock(shm_lock);
+	}
 
 	status = mDNSNetMonitor();
 	if (status) { fprintf(stderr, "%s: mDNSNetMonitor failed %d\n", progname, (int)status); return(status); }

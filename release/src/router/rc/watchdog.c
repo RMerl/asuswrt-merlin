@@ -397,7 +397,7 @@ void btn_check(void)
 				if (++btn_count > RESET_WAIT_COUNT)
 				{
 					fprintf(stderr, "You can release RESET button now!\n");
-#if defined(PLN12)
+#if (defined(PLN12) || defined(PLAC56))
 					if (btn_pressed == 1)
 						set_wifiled(5);
 #endif
@@ -524,7 +524,7 @@ void btn_check(void)
 #endif	/* ! RTCONFIG_WPS_RST_BTN */
 		{
 			led_control(LED_POWER, LED_OFF);
-#if defined(PLN12)
+#if (defined(PLN12) || defined(PLAC56))
 			set_wifiled(2);
 #endif
 			alarmtimer(0, 0);
@@ -682,7 +682,7 @@ void btn_check(void)
 				kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
 #endif
 #if defined(RTAC1200G) || defined(RTAC1200GP)
-				eval("et", "robowr", "0", "0x18", "0x01ff");    // lan/wan ethernet/giga led
+				eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 				eval("et", "robowr", "0", "0x1a", "0x01ff");
 				eval("wl", "-i", "eth3", "ledbh", "3", "2");
 				eval("wl", "-i", "eth2", "ledbh", "11", "2");
@@ -898,7 +898,7 @@ void btn_check(void)
 		    nvram_match("btn_ez_radiotoggle", "0") &&
 #endif
 #ifdef RTCONFIG_WPS_ALLLED_BTN
-			nvram_match("btn_ez_mode", "0") &&
+		    nvram_match("btn_ez_mode", "0") &&
 #endif
 		    !nvram_match("wps_ign_btn", "1"))
 #endif	/* ! RTCONFIG_WPS_RST_BTN */
@@ -914,20 +914,24 @@ void btn_check(void)
 				}
 				else
 				{	/* Whenever it is pushed steady */
+#if 0
 					if (++btn_count_setup > WPS_WAIT_COUNT)
+#else
+					if (++btn_count_setup)
+#endif
 					{
 						btn_pressed_setup = BTNSETUP_START;
 						btn_count_setup = 0;
 						btn_count_setup_second = 0;
 						nvram_set("wps_ign_btn", "1");
 #ifdef RTCONFIG_WIFI_CLONE
-						if (nvram_match("x_Setting", "0") 
-								&& (nvram_get_int("sw_mode") == SW_MODE_ROUTER 
+						if (nvram_match("x_Setting", "0")
+								&& (nvram_get_int("sw_mode") == SW_MODE_ROUTER
 									|| nvram_get_int("sw_mode") == SW_MODE_AP)) {
 							nvram_set("wps_enrollee", "1");
 							nvram_set("wps_e_success", "0");
 						}
-#if defined(PLN12)
+#if (defined(PLN12) || defined(PLAC56))
 						set_wifiled(3);
 #endif
 #endif
@@ -973,7 +977,11 @@ void btn_check(void)
 			    !wps_band_ssid_broadcast_off(get_radio_band(0)))
 			{
 				/* Whenever it is pushed steady, again... */
+#if 0
 				if (++btn_count_setup_second > WPS_WAIT_COUNT)
+#else
+				if (++btn_count_setup_second)
+#endif
 				{
 					btn_pressed_setup = BTNSETUP_START;
 					btn_count_setup_second = 0;
@@ -1008,12 +1016,12 @@ void btn_check(void)
 #endif
 #ifdef RTCONFIG_WIFI_CLONE
 				if (nvram_match("wps_e_success", "1")) {
-#if defined(PLN12)
+#if (defined(PLN12) || defined(PLAC56))
 					set_wifiled(2);
 #endif
 					notify_rc("restart_wireless");
 				}
-#if defined(PLN12)
+#if (defined(PLN12) || defined(PLAC56))
 				else
 					set_wifiled(1);
 #endif
@@ -1039,73 +1047,73 @@ void btn_check(void)
 #define DAYEND (60*60*23 + 60*59 + 60) // 86400
 static int in_sched(int now_mins, int now_dow, int (*enableTime)[24])
 {
-        //cprintf("%s: now_mins=%d sched_begin=%d sched_end=%d sched_begin2=%d sched_end2=%d now_dow=%d sched_dow=%d\n", __FUNCTION__, now_mins, sched_begin, sched_end, sched_begin2, sched_end2, now_dow, sched_dow);
-        int currentTime;
-        int x=0,y=0;
-        int tableTimeStart, tableTimeEnd;
-        // 8*60*60 = AM0.00~AM8.00
-        currentTime = (now_mins*60) + now_dow*DAYEND;
+	//cprintf("%s: now_mins=%d sched_begin=%d sched_end=%d sched_begin2=%d sched_end2=%d now_dow=%d sched_dow=%d\n", __FUNCTION__, now_mins, sched_begin, sched_end, sched_begin2, sched_end2, now_dow, sched_dow);
+	int currentTime;
+	int x=0,y=0;
+	int tableTimeStart, tableTimeEnd;
+	// 8*60*60 = AM0.00~AM8.00
+	currentTime = (now_mins*60) + now_dow*DAYEND;
 
-        for(;x<7;x++)
-        {
-                y=0;
-                for(;y<24;y++)
-                {
-                        if(enableTime[x][y]==1)
-                        {
-                                tableTimeStart = x*DAYEND + y*60*60;
-                                tableTimeEnd = x*DAYEND + (y+1)*60*60;
+	for(;x<7;x++)
+	{
+		y=0;
+		for(;y<24;y++)
+		{
+			if(enableTime[x][y]==1)
+			{
+				tableTimeStart = x*DAYEND + y*60*60;
+				tableTimeEnd = x*DAYEND + (y+1)*60*60;
 
 				if(y==23)
 				tableTimeEnd = tableTimeEnd - 1; //sunday = 0 ~ 86399
 				//_dprintf("tableTimeStart == %d  %d  %d\n",tableTimeStart,tableTimeEnd,currentTime);
 
-                                if(tableTimeStart<=currentTime && currentTime < tableTimeEnd)
-                                {
-                                        return 1;
-                                }
-                        }
+				if(tableTimeStart<=currentTime && currentTime < tableTimeEnd)
+				{
+					return 1;
+				}
+			}
 		}
-        }
-        return 0;
+	}
+	return 0;
 
 }
 
 int timecheck_item(char *activeTime)
 {
 	int current, active;
-        int now_dow;
-        time_t now;
-        struct tm *tm;
-        char Date[] = "XX";
-        char startTime[] = "XX";
-        char endTime[] = "XX";
-        int tableAllOn = 0;	// 0: wifi time all off 1: wifi time all on  2: check&calculate wifi open slot
-        int schedTable[7][24];
-        int x=0, y=0, z=0;   //for first, second, third loop
+	int now_dow;
+	time_t now;
+	struct tm *tm;
+	char Date[] = "XX";
+	char startTime[] = "XX";
+	char endTime[] = "XX";
+	int tableAllOn = 0;	// 0: wifi time all off 1: wifi time all on  2: check&calculate wifi open slot
+	int schedTable[7][24];
+	int x=0, y=0, z=0;   //for first, second, third loop
 
-        /* current router time */
-        setenv("TZ", nvram_safe_get("time_zone_x"), 1);
-        time(&now);
-        tm = localtime(&now);
-        now_dow = tm->tm_wday;
-        current = tm->tm_hour * 60 + tm->tm_min; //minutes
-        //active = 0;
+	/* current router time */
+	setenv("TZ", nvram_safe_get("time_zone_x"), 1);
+	time(&now);
+	tm = localtime(&now);
+	now_dow = tm->tm_wday;
+	current = tm->tm_hour * 60 + tm->tm_min; //minutes
+	//active = 0;
 
 //if(current % 60 == 0)   //and apply setting
-//{     
-        /*initial time table*/
-        x=0;
-        for(;x<7;x++)
-        {
-                y=0;
-                for(;y<24;y++)
-                {
-                        schedTable[x][y]=0;
-                }
+//{
+	/*initial time table*/
+	x=0;
+	for(;x<7;x++)
+	{
+		y=0;
+		for(;y<24;y++)
+		{
+			schedTable[x][y]=0;
+		}
 	 }
 
-        active = 0;
+	active = 0;
 	if(activeTime[0] == '0' && activeTime[1] == '0' && activeTime[2] == '0' && activeTime[3] == '0'
 		&& activeTime[4] == '0' && activeTime[5] == '0')
 	{
@@ -1116,57 +1124,57 @@ int timecheck_item(char *activeTime)
 		tableAllOn = 0; // all close
 	}
 	else
-        {
+	{
 		tableAllOn = 2;
-                /* Counting variables quantity*/
-                x=0;
-                int schedCount = 1;    //how many variables in activeTime    111014<222024<331214 count will be 3
-                for(;x<strlen(activeTime);x++)
-                {
-                        if(activeTime[x] == '<')
-                        schedCount++;
-                }
+		/* Counting variables quantity*/
+		x=0;
+		int schedCount = 1; // how many variables in activeTime	111014<222024<331214 count will be 3
+		for(;x<strlen(activeTime);x++)
+		{
+			if(activeTime[x] == '<')
+			schedCount++;
+		}
 
-                /* analyze for sched Date, startTime, endTime*/
-                x=0;
-                int loopCount=0;
-                for(;x<schedCount;x++)
-                {
-                        do
-                        {
-                                if(loopCount < (2 + (7*x)))
-                                {
-                                Date[loopCount-7*x] = activeTime[loopCount];
-                                }
-                                else if(loopCount < (4 + (7*x)))
-                                {
-                                  startTime[loopCount - (2+7*x)] = activeTime[loopCount];
-                                }
-                                else
-                                {
-                                  endTime[loopCount - (4+7*x)] = activeTime[loopCount];
-                                        if((loopCount - (4+7*x)) == 1&& atoi(endTime) == 0){
-                                                endTime[0] = '2';
-                                                endTime[1] = '4';
-                                                if(Date[1] == '0')
-                                                Date[1] = '6';
-                                                else
-                                                Date[1]=Date[1]-1;
-                                        }
-                                }
-                                loopCount++;
-                        }while(activeTime[loopCount]!='<' && loopCount < strlen(activeTime));
-                                loopCount++;
-                                /*Check which time will enable or disable wifi radio*/
-                                int offSet=0;
-                                if(Date[0] == Date[1])
-                                {
-                                        z=0;
-                                        for(;z<(atoi(endTime) - atoi(startTime));z++)
-                                                schedTable[Date[0]-'0'][atoi(startTime)+z] = 1;
-                                }
-                                else
-                                {
+		/* analyze for sched Date, startTime, endTime*/
+		x=0;
+		int loopCount=0;
+		for(;x<schedCount;x++)
+		{
+			do
+			{
+				if(loopCount < (2 + (7*x)))
+				{
+				Date[loopCount-7*x] = activeTime[loopCount];
+				}
+				else if(loopCount < (4 + (7*x)))
+				{
+				  startTime[loopCount - (2+7*x)] = activeTime[loopCount];
+				}
+				else
+				{
+				  endTime[loopCount - (4+7*x)] = activeTime[loopCount];
+					if((loopCount - (4+7*x)) == 1&& atoi(endTime) == 0){
+						endTime[0] = '2';
+						endTime[1] = '4';
+						if(Date[1] == '0')
+						Date[1] = '6';
+						else
+						Date[1]=Date[1]-1;
+					}
+				}
+				loopCount++;
+			}while(activeTime[loopCount]!='<' && loopCount < strlen(activeTime));
+				loopCount++;
+				/*Check which time will enable or disable wifi radio*/
+				int offSet=0;
+				if(Date[0] == Date[1])
+				{
+					z=0;
+					for(;z<(atoi(endTime) - atoi(startTime));z++)
+						schedTable[Date[0]-'0'][atoi(startTime)+z] = 1;
+				}
+				else
+				{
 									z=0;
 									for(;z<((atoi(endTime) - atoi(startTime))+24*(Date[1] - Date[0]));z++)
 									{
@@ -1177,8 +1185,8 @@ int timecheck_item(char *activeTime)
 										}
 									}
 								}
-                }//end for loop (schedCount)
-        }
+		}//end for loop (schedCount)
+	}
 
 	if(tableAllOn==0)
 		active = 0;
@@ -1187,11 +1195,43 @@ int timecheck_item(char *activeTime)
 	else
 		active = in_sched(current, now_dow, schedTable);
 
-        //cprintf("[watchdoe] active: %d\n", active);
+	//cprintf("[watchdoe] active: %d\n", active);
 //}//60 sec
 
-        return active;
+	return active;
 
+}
+
+
+int timecheck_reboot(char *activeSchedule)
+{
+	int active, current_time, current_date, Time2Active, Date2Active;
+	time_t now;
+	struct tm *tm;
+	int i;
+
+	setenv("TZ", nvram_safe_get("time_zone_x"), 1);
+
+	time(&now);
+	tm = localtime(&now);
+	current_time = tm->tm_hour * 60 + tm->tm_min;
+	current_date = 1 << (6-tm->tm_wday);
+	active = 0;
+	Time2Active = 0;
+	Date2Active = 0;
+
+	Time2Active = ((activeSchedule[7]-'0')*10 + (activeSchedule[8]-'0'))*60 + ((activeSchedule[9]-'0')*10 + (activeSchedule[10]-'0'));
+
+	for(i=0;i<=6;i++){
+		Date2Active += (activeSchedule[i]-'0') << (6-i);
+	}
+
+	if((current_time == Time2Active) && (Date2Active & current_date))       active = 1;
+
+	//dbG("[watchdog] current_time=%d, ActiveTime=%d, current_date=%d, ActiveDate=%d, active=%d\n",
+	//      current_time, Time2Active, current_date, Date2Active, active);
+
+	return active;
 }
 
 
@@ -1200,18 +1240,18 @@ int svcStatus[12] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 /* Check for time-reated service 	*/
 /* 1. Wireless Radio			*/
 /* 2. Guess SSID expire time 		*/
+/* 3. Reboot Schedule                   */
 //int timecheck(int argc, char *argv[])
 void timecheck(void)
 {
 	int activeNow;
-        char *schedTime;
-        char prefix[]="wlXXXXXX_", tmp[100], tmp2[100];
-        char word[256], *next;
-        int unit, item;
-        char *lan_ifname;
-        char wl_vifs[256], nv[40];
-        int expire, need_commit = 0;
-	
+	char *schedTime;
+	char prefix[]="wlXXXXXX_", tmp[100], tmp2[100];
+	char word[256], *next;
+	int unit, item;
+	char *lan_ifname;
+	char wl_vifs[256], nv[40];
+	int expire, need_commit = 0;
 
 	item = 0;
 	unit = 0;
@@ -1262,17 +1302,17 @@ void timecheck(void)
 		schedTime = nvram_safe_get(strcat_r(prefix, "sched", tmp));
 
 
-                activeNow = timecheck_item(schedTime);
-                snprintf(tmp, sizeof(tmp), "%d", unit);
+		activeNow = timecheck_item(schedTime);
+		snprintf(tmp, sizeof(tmp), "%d", unit);
 
 
-                if(svcStatus[item]!=activeNow) {
-                        svcStatus[item] = activeNow;
-                        if(activeNow==1) eval("radio", "on", tmp);
-                        else eval("radio", "off", tmp);
-                }
-                item++;
-                unit++;
+		if(svcStatus[item]!=activeNow) {
+			svcStatus[item] = activeNow;
+			if(activeNow==1) eval("radio", "on", tmp);
+			else eval("radio", "off", tmp);
+		}
+		item++;
+		unit++;
 
 	}
 
@@ -1319,6 +1359,26 @@ void timecheck(void)
 			nvram_commit();
 		}
 	}
+
+	#ifdef RTCONFIG_REBOOT_SCHEDULE
+	/* Reboot Schedule */
+	char* reboot_schedule;
+	if (nvram_match("ntp_ready", "1") && nvram_match("reboot_schedule_enable", "1"))
+	{
+		//SMTWTFSHHMM
+		//XXXXXXXXXXX
+		reboot_schedule = nvram_safe_get("reboot_schedule");
+		if(strlen(reboot_schedule) == 11 && atoi(reboot_schedule) > 2359)
+		{       
+			if(timecheck_reboot(reboot_schedule))
+			{
+				_dprintf("reboot plan alert...\n");
+				sleep(1);
+				eval("reboot");
+			}
+		}
+	}       
+	#endif 
 
 	return;
 }
@@ -1521,6 +1581,7 @@ unsigned long get_etlan_count()
 }
 
 static int lstatus = 0;
+static int allstatus = 0;
 void fake_etlan_led(void)
 {
 	static unsigned int blink_etlan_check = 0;
@@ -1532,9 +1593,14 @@ void fake_etlan_led(void)
 	static int status = -1;
 	static int status_old;
 
-	if(nvram_match("AllLED", "0"))
+	if(nvram_match("AllLED", "0")) {
+		if(allstatus)
+			led_control(LED_LAN, LED_OFF);
+		allstatus = 0;
 		return;
-	
+	}
+	allstatus = 1;
+
 	if(!GetPhyStatus(0)) {
 		if(lstatus)
 			led_control(LED_LAN, LED_OFF);
@@ -1750,7 +1816,7 @@ void fake_wl_led_5g(void)
 }
 #endif
 
-void led_check(void)
+void led_check(int sig)
 {
 #ifdef RTCONFIG_WLAN_LED
 	if (nvram_contains_word("rc_support", "led_2g"))
@@ -1785,7 +1851,7 @@ void led_check(void)
 			p1_node = nvram_safe_get("usb_path1_node");	// xhci node
 			p2_node = nvram_safe_get("usb_path2_node");	// ehci node
 			break;
-        }
+	}
 
 	ehci_ports = nvram_safe_get("ehci_ports");
 	xhci_ports = nvram_safe_get("xhci_ports");
@@ -1814,14 +1880,14 @@ void led_check(void)
 #endif
 	{
 #if defined(RTN53)
-                if(nvram_get_int("wl1_radio") == 0)
-                        led_control(LED_5G, LED_OFF);
-                else
+		if(nvram_get_int("wl1_radio") == 0)
+			led_control(LED_5G, LED_OFF);
+		else
 #endif
 		fake_wl_led_5g();
 	}
 #endif
-	
+
 // it is not really necessary, but if required, add internet led check here
 // using wan_primary_ifunit() to get current working wan unit wan0 or wan1
 // using wan0_state_t or wan1_state_t to get status of working wan,
@@ -1982,7 +2048,7 @@ void wanduck_check(void)
 #if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
 static int client_check_cnt = 0;
 static int no_client_cnt = 0;
-static int plc_port_power = 1;
+static int plc_wake = 1;
 
 static void client_check(void)
 {
@@ -2032,23 +2098,27 @@ static void client_check(void)
 	else
 		no_client_cnt = 0;
 
-	if (plc_port_power == 1 && no_client_cnt >= 5) {
-		//dbg("%s: link down ethernet port (of connect to PLC)\n", __func__);
+	if (plc_wake == 1 && no_client_cnt >= 5) {
+		//dbg("%s: trigger Powerline to sleep...\n", __func__);
 #if defined(PLN12)
 		doSystem("swconfig dev %s port 1 set power 0", MII_IFNAME);
+#elif defined(PLAC56)
+		set_gpio((nvram_get_int("plc_wake_gpio") & 0xff), 1);
 #else
-#error TBD: PL-AC56 and PL-AC66U...
+#warning TBD: PL-AC66U...
 #endif
-		plc_port_power = 0;
+		plc_wake = 0;
 	}
-	else if (plc_port_power == 0 && no_client_cnt == 0) {
-		//dbg("%s: link up ethernet port (of connect to PLC)\n", __func__);
+	else if (plc_wake == 0 && no_client_cnt == 0) {
+		//dbg("%s: trigger Powerline to wake...\n", __func__);
 #if defined(PLN12)
 		doSystem("swconfig dev %s port 1 set power 1", MII_IFNAME);
+#elif defined(PLAC56)
+		set_gpio((nvram_get_int("plc_wake_gpio") & 0xff), 0);
 #else
-#error TBD: PL-AC56 and PL-AC66U...
+#warning TBD: PL-AC66U...
 #endif
-		plc_port_power = 1;
+		plc_wake = 1;
 	}
 
 	if (no_client_cnt >= 5)
@@ -2087,13 +2157,13 @@ void ddns_check(void)
 	{
 		if (pids("ez-ipupdate")) //ez-ipupdate is running!
 			return;
-                if (pids("phddns")) //ez-ipupdate is running!
-                        return;
+		if (pids("phddns")) //ez-ipupdate is running!
+			return;
 
 		if (nvram_match("ddns_regular_check", "1")&& !nvram_match("ddns_server_x", "WWW.ASUS.COM")) {
 			int period = nvram_get_int("ddns_regular_period");
 			if (period < 30) period = 60;
-		    	if (ddns_check_count >= (period*2)) {
+			if (ddns_check_count >= (period*2)) {
 				regular_ddns_check();
 				ddns_check_count = 0;
 			return;
@@ -2138,6 +2208,7 @@ void httpd_check()
 	}
 }
 
+#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 void watchdog_check()
 {
 #if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
@@ -2152,6 +2223,7 @@ void watchdog_check()
 	return;
 #endif
 }
+#endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
 
 #ifdef RTAC87U
 void qtn_module_check(void)
@@ -2800,7 +2872,7 @@ static void Tor_microdes_check(){
 	char *ifname, *p;
 	unsigned long counter1, counter2;
 	struct stat tmp_db_stat, jffs_db_stat;
-        int tmp_stat, jffs_stat;
+	int tmp_stat, jffs_stat;
 
 	if(++tor_check_count >= TOR_CHECK_PERIOD) {
 		tor_check_count = 0;
@@ -2811,29 +2883,28 @@ static void Tor_microdes_check(){
 		}
 
 		tmp_stat = stat("/tmp/.tordb/cached-microdesc-consensus", &tmp_db_stat);
-        	if(tmp_stat == -1){
-                	return;
+		if(tmp_stat == -1){
+			return;
 		}
 
 		if((f = fopen("/tmp/torlog", "r"))==NULL) return -1;
 
 		while (fgets(buf, sizeof(buf), f)) {
-                	if((p=strstr(buf, "now have enough directory"))==NULL) continue;
-                	*p = 0;
+			if((p=strstr(buf, "now have enough directory"))==NULL) continue;
+			*p = 0;
 			eval("cp", "-rf", "/tmp/.tordb", "/jffs/.tordb");
 			break;
-        	}
-        	fclose(f);
+		}
+		fclose(f);
 	}
 
-        return;
+	return;
 }
 #endif
 #endif
 
 #ifdef RTCONFIG_ERP_TEST
 static void ErP_Test() {
-       
 	int i;
 	int unit = 0;
 	char nv_param[NVRAM_MAX_PARAM_LEN];
@@ -2852,113 +2923,109 @@ static void ErP_Test() {
 
 _dprintf("### ErP Check... ###\n");
 	for (unit = 0; unit < DEV_NUMIFS; unit++) {
-               sprintf(nv_param, "wl%d_unit", unit);
-               temp = nvram_get(nv_param);
+		sprintf(nv_param, "wl%d_unit", unit);
+		temp = nvram_get(nv_param);
 
-               if (temp && strlen(temp) > 0) {
+		if (temp && strlen(temp) > 0) {
 
-                       snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-                       name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-                       wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
-                       val &= WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE;
+			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+			name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+			wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
+			val &= WL_RADIO_SW_DISABLE | WL_RADIO_HW_DISABLE;
 
-                       if (val)
-                       {
-                               dbg("%s radio is disabled\n",
-                                       nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
-                               continue;
-                       }
+			if (val)
+			{
+				dbg("%s radio is disabled\n",
+				nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+				continue;
+			}
 
-                       /* buffers and length */
-                       mac_list_size = sizeof(mac_list->count) + 128 * sizeof(struct ether_addr);
-                       mac_list = malloc(mac_list_size);
+			/* buffers and length */
+			mac_list_size = sizeof(mac_list->count) + 128 * sizeof(struct ether_addr);
+			mac_list = malloc(mac_list_size);
 
-                       if (!mac_list)
-                               goto exit;
+			if (!mac_list)
+				goto exit;
 
-                       memset(mac_list, 0, mac_list_size);
+			memset(mac_list, 0, mac_list_size);
 
-                       /* query wl for authenticated sta list */
-                       strcpy((char*) mac_list, "authe_sta_list");
-                       if (wl_ioctl(name, WLC_GET_VAR, mac_list, mac_list_size))
-                               goto exit;
+			/* query wl for authenticated sta list */
+			strcpy((char*) mac_list, "authe_sta_list");
+			if (wl_ioctl(name, WLC_GET_VAR, mac_list, mac_list_size))
+				goto exit;
 
-                       if(mac_list->count) {
-                               assoc_count += mac_list->count;
-                               break;
-                       }
+			if(mac_list->count) {
+				assoc_count += mac_list->count;
+				break;
+			}
 
-       
-                       for (i = 1; i < 4; i++) {
-                               sprintf(prefix, "wl%d.%d_", unit, i);
-                               if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1")) {
-                                       sprintf(name_vif, "wl%d.%d", unit, i);
+			for (i = 1; i < 4; i++) {
+				sprintf(prefix, "wl%d.%d_", unit, i);
+				if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1")) {
+					sprintf(name_vif, "wl%d.%d", unit, i);
 
-                                       memset(mac_list, 0, mac_list_size);
+					memset(mac_list, 0, mac_list_size);
 
-                                       /* query wl for authenticated sta list */
-                                       strcpy((char*) mac_list, "authe_sta_list");
-                                       if (wl_ioctl(name_vif, WLC_GET_VAR, mac_list, mac_list_size))
-                                               goto exit;
-                               
-                                       if(mac_list->count) {
-                                               assoc_count += mac_list->count;
-                                               break;
-                                       }
-                               }
+					/* query wl for authenticated sta list */
+					strcpy((char*) mac_list, "authe_sta_list");
+					if (wl_ioctl(name_vif, WLC_GET_VAR, mac_list, mac_list_size))
+						goto exit;
 
-                       }
-               }
-       }//end unit for loop
+					if(mac_list->count) {
+						assoc_count += mac_list->count;
+						break;
+					}
+				}
+			}
+		}
+	}//end unit for loop
 
-       if(assoc_count) {
-               //Back to Normal
-               if(pwrsave_status == MODE_PWRSAVE) {
-               
-                       _dprintf("ErP: Back to normal mode\n");
-                       no_assoc_check = 0;
+	if(assoc_count) {
+		//Back to Normal
+		if(pwrsave_status == MODE_PWRSAVE) {
+			_dprintf("ErP: Back to normal mode\n");
+			no_assoc_check = 0;
 
-                       eval("wl", "-i", "eth2", "radio", "on"); // Turn on 5G-1 radio
+			eval("wl", "-i", "eth2", "radio", "on"); // Turn on 5G-1 radio
 
-                      foreach(ifname, nvram_safe_get("wl_ifnames"), next) {
-                               eval("wl", "-i", ifname, "txchain", "0xf");
-                                eval("wl", "-i", ifname, "rxchain", "0xf");
-                                eval("wl", "-i", ifname, "down");
-                                eval("wl", "-i", ifname, "up");
-                       }
+			foreach(ifname, nvram_safe_get("wl_ifnames"), next) {
+				eval("wl", "-i", ifname, "txchain", "0xf");
+				eval("wl", "-i", ifname, "rxchain", "0xf");
+				eval("wl", "-i", ifname, "down");
+				eval("wl", "-i", ifname, "up");
+			}
 
-                       pwrsave_status = MODE_NORMAL;
-               }
-       }
-       else {
-               //No sta assoc. Enter PWESAVE Mode
-               if(pwrsave_status == MODE_NORMAL) {
-                       
-                       no_assoc_check++;
-                       _dprintf("ErP: no_assoc_check = %d\n", no_assoc_check);
+			pwrsave_status = MODE_NORMAL;
+		}
+	}
+	else {
+		//No sta assoc. Enter PWESAVE Mode
+		if(pwrsave_status == MODE_NORMAL) {
+			no_assoc_check++;
+			_dprintf("ErP: no_assoc_check = %d\n", no_assoc_check);
 
-                       if(no_assoc_check >= NO_ASSOC_CHECK) {
-                               _dprintf("ErP: Enter Power Save Mode\n");
-                               foreach(ifname, nvram_safe_get("wl_ifnames"), next) {
-                                       eval("wl", "-i", ifname, "txchain", "0x1");
-                                       eval("wl", "-i", ifname, "rxchain", "0x1");
-                                       eval("wl", "-i", ifname, "down");
-                                       eval("wl", "-i", ifname, "up");
-                               }
+			if(no_assoc_check >= NO_ASSOC_CHECK) {
+				_dprintf("ErP: Enter Power Save Mode\n");
+				foreach(ifname, nvram_safe_get("wl_ifnames"), next) {
+					eval("wl", "-i", ifname, "txchain", "0x1");
+					eval("wl", "-i", ifname, "rxchain", "0x1");
+					eval("wl", "-i", ifname, "down");
+					eval("wl", "-i", ifname, "up");
+				}
 
-                               eval("wl", "-i", "eth2", "radio", "off"); // Turn off 5G-1 radio
+				eval("wl", "-i", "eth2", "radio", "off"); // Turn off 5G-1 radio
 
-                               no_assoc_check = 0;
-                               pwrsave_status = MODE_PWRSAVE;
-                       }
-               }
-       }
+				no_assoc_check = 0;
+				pwrsave_status = MODE_PWRSAVE;
+			}
+		}
+	}
 
-       /* error/exit */
+	/* error/exit */
 exit:
-       if (mac_list) free(mac_list);
+	if (mac_list) free(mac_list);
 
-       return;
+	return;
 }
 #endif
 
@@ -3013,7 +3080,7 @@ void watchdog(int sig)
 	)
 
 	service_check();
-	
+
 	/* some io func will delay whole process in urgent mode, move this to sw_devled process */
 	//led_check();
 
@@ -3130,11 +3197,13 @@ void watchdog(int sig)
 	return;
 }
 
+#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 void watchdog02(int sig)
 {
 	watchdog_check();
 	return;
 }
+#endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
 
 int
 watchdog_main(int argc, char *argv[])
@@ -3216,6 +3285,7 @@ watchdog_main(int argc, char *argv[])
 	return 0;
 }
 
+#if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 /* to check watchdog alive */
 int watchdog02_main(int argc, char *argv[])
 {
@@ -3236,6 +3306,7 @@ int watchdog02_main(int argc, char *argv[])
 	}
 	return 0;
 }
+#endif	/* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
 
 /* to control misc dev led */
 int sw_devled_main(int argc, char *argv[])

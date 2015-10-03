@@ -1259,6 +1259,10 @@ define RouterOptions
 		echo "RTCONFIG_TRAFFIC_MGMT_RSSI_POLICY=y" >>$(1); \
 		sed -i "/RTCONFIG_WLEXE/d" $(1); \
 		echo "RTCONFIG_WLEXE=y" >>$(1); \
+		if [ "$(GMAC3)" = "y" ]; then \
+			sed -i "/RTCONFIG_GMAC3/d" $(1); \
+			echo "RTCONFIG_GMAC3=y" >>$(1); \
+		fi; \
 	fi; \
 	if [ "$(BCM10)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCM10/d" $(1); \
@@ -1408,6 +1412,14 @@ define RouterOptions
 	if [ "$(KEY_GUARD)" = "y" ]; then \
 		sed -i "/RTCONFIG_KEY_GUARD/d" $(1); \
 		echo "RTCONFIG_KEY_GUARD=y" >>$(1); \
+	fi; \
+    if [ "$(WTFAST)" = "y" ]; then \
+            sed -i "/RTCONFIG_WTFAST/d" $(1); \
+            echo "RTCONFIG_WTFAST=y" >>$(1); \
+    fi; \
+	if [ "$(REBOOT_SCHEDULE)" = "y" ]; then \
+		sed -i "/RTCONFIG_REBOOT_SCHEDULE/d" $(1); \
+		echo "RTCONFIG_REBOOT_SCHEDULE=y" >>$(1); \
 	fi; \
 	)
 	$(call platformRouterOptions, $(1))
@@ -1678,12 +1690,6 @@ define BusyboxOptions
 	if [ "$(WANRED_LED)" = "y" ]; then \
 		sed -i "/CONFIG_ARPING/d" $(1); \
 		echo "CONFIG_ARPING=y" >>$(1); \
-	fi; \
-	if [ "$(TR069)" = "y" ]; then \
-		if [ "$(TR181)" = "y" ]; then \
-			sed -i "/CONFIG_FEATURE_UDHCP_VIVSO/d" $(1); \
-			echo "CONFIG_FEATURE_UDHCP_VIVSO=y" >>$(1); \
-		fi; \
 	fi; \
 	if [ "$(HTTPS)" = "y" ]; then \
 		sed -i "/CONFIG_WGET/d" $(1); \
@@ -2139,6 +2145,10 @@ define KernelConfig
 			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0x01810000" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x2000" >>$(1); \
+		elif [ "$(BUILD_NAME)" = "RT-AC56S" ]; then \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0xC0522000" >>$(1); \
+			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_LEN=0x3000" >>$(1); \
 		elif [ "$(ARM)" = "y" ]; then \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG=y" >>$(1); \
 			echo "CONFIG_DUMP_PREV_OOPS_MSG_BUF_ADDR=0xC0000000" >>$(1); \

@@ -1,3 +1,0 @@
-user : x-bar,x-foo=foodata,user=kzak,loop=/dev/loop0
-vfs  : noexec,nosuid
-fs   : aaa,bbb=BBB,ccc

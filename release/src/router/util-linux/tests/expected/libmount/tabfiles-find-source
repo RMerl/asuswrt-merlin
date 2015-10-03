@@ -1,8 +1,0 @@
------- fs:
-source: UUID=fef7ccb3-821c-4de8-88dc-71472be5946f
-target: /boot
-fstype: ext3
-optstr: noatime,defaults
-VFS-optstr: noatime
-freq:   1
-pass:   2

@@ -1124,6 +1124,16 @@ void init_syspara(void)
 #endif
 			nvram_unset("odmpid");
 	}
+#if defined(RTCONFIG_TCODE) && defined(RTN11P)
+	if (nvram_match("odmpid", "RT-N12+") && nvram_match("reg_spec", "CN"))
+	{
+		char *str;
+		str = nvram_get("territory_code");
+		if(str == NULL || str[0] == '\0') {
+			nvram_set("territory_code", "CN/01");
+		}
+	}
+#endif	/* RTCONFIG_TCODE && RTN11P */
 
 	nvram_set("firmver", rt_version);
 	nvram_set("productid", rt_buildname);

@@ -35,7 +35,7 @@ body{
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 4;
-if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
 var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
 
@@ -246,6 +246,7 @@ function QIS_load_body(){
 	}
 		
 	if(psta_support){
+		document.getElementById("menu_mb").style.display = "";
 		if((document.QKform.sw_mode.value == 2 || document.QKform.sw_mode.value == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 			document.QKform.sw_mode.value = 4;
 	}
@@ -474,7 +475,9 @@ function detect_httpd(){
 function switch_operation_mode(mode){
 	document.getElementById("menu_rt").style.color = "#FFF";
 	document.getElementById("menu_ap").style.color = "#FFF";
-	//document.getElementById("menu_mb").style.color = "#FFF";
+	if(psta_support)
+		document.getElementById("menu_mb").style.color = "#FFF";
+		
 	if(mode == "1"){		//Router
 		document.getElementById("menu_rt").style.color = "#007AFF";
 		document.QKform.sw_mode.value = 1;
@@ -756,9 +759,9 @@ function uploadSetting(){
 				<li>
 					<div style="margin: 0 10px;padding:13px 5px;font-size:1.2em;color:#A8CBF4;border-bottom:1px solid #4C545E;">Operation Mode</div>
 					<ul  style="list-style:none;padding:0 10px;">
-						<li id="menu_rt" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;" onclick="switch_operation_mode('1')">Router</li>					
-						<li id="menu_ap" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;" onclick="switch_operation_mode('3')">Access Point (AP)</li>					
-						<!--li id="menu_mb" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;" onclick="switch_operation_mode('4')">Media Bridge</li-->					
+						<li id="menu_rt" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;" onclick="switch_operation_mode('1')"><#OP_GW_item#></li>					
+						<li id="menu_ap" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;" onclick="switch_operation_mode('3')"><#OP_AP_item#></li>					
+						<li id="menu_mb" style="padding:13px 0 13px 20px;border-bottom:1px solid #4C545E;display:none" onclick="switch_operation_mode('4')"><#OP_MB_item#></li>					
 					</ul>
 				</li>
 				<li >

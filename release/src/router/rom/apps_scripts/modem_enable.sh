@@ -402,6 +402,9 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			sleep 3
 		else
 			# set the default profile to auto-connect.
+			if [ -z "$modem_isp" ]; then
+				modem_isp="space"
+			fi
 			echo -n "5,$modem_pdp,$modem_isp,$modem_apn,$modem_authmode,$modem_user,$modem_pass" >> $cmd_pipe
 			sleep 1
 		fi

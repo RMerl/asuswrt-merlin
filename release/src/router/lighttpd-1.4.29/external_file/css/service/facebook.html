@@ -220,7 +220,7 @@ function facebook_login(){
 	//var url = "http://www.facebook.com/dialog/oauth/?scope=photo_upload%2Cpublish_stream%2Cread_stream%2Cpublish_stream%2Cuser_photos%2Coffline_access&client_id=" + g_app_id + "&display=popup&redirect_uri=" + encodeURIComponent(auth_url) + redirect_url;
 	var url = "http://www.facebook.com/dialog/oauth/?scope=publish_stream%2Cuser_photos%2Coffline_access&client_id=" + g_app_id + "&display=popup&redirect_uri=" + encodeURIComponent(auth_url) + redirect_url;
 	
-	window.open(url,"mywindow","menubar=1,resizable=0,width=630,height=250, top=100, left=300");
+	window.open(url,"mywindow","menubar=1,resizable=1,width=630,height=250, top=100, left=300");
 }
 
 function facebook_get_userprofile(){

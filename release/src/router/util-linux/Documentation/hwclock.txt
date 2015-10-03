@@ -1,3 +1,0 @@
-Hwclock is a program that runs under Linux and sets and queries the 
-Hardware Clock, which is often called the Real Time Clock, RTC, or
-CMOS clock.

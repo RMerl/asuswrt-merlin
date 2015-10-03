@@ -1,4 +1,0 @@
-*.o
-dosfsck
-dosfslabel
-mkdosfs

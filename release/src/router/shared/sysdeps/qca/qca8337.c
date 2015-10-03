@@ -522,6 +522,26 @@ static void link_down_up_qca8337_PHY(unsigned int mask, int status)
 	}
 }
 
+int get_qca8337_PHY_power(int port)
+{
+	FILE *fp;
+	int rlen;
+	char buf[64];
+
+	sprintf(buf, "swconfig dev %s port %d get power", MII_IFNAME, port);
+	fp = popen(buf, "r");
+	if (fp) {
+		rlen = fread(buf, 1, sizeof(buf), fp);
+		pclose(fp);
+		if (rlen > 1) {
+			buf[rlen-1] = '\0';
+			return atoi(buf);
+		}
+	}
+
+	return 0;
+}
+
 void set_mt7620_esw_broadcast_rate(int bsr)
 {
 #if 0

@@ -130,9 +130,11 @@ function get_mp3_url(audio_list, generate_sharelink, complete_handler){
 	if(generate_sharelink){
 		
 		var media_hostName = window.location.host;
-		if(media_hostName.indexOf(":")!=-1)
-			media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
-		media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
+		//if(media_hostName.indexOf(":")!=-1)
+		//	media_hostName = media_hostName.substring(0, media_hostName.indexOf(":"));
+		//media_hostName = "http://" + media_hostName + ":" + g_storage.get("http_port") + "/";
+		
+		media_hostName = window.location.protocol + "//" + media_hostName + "/";
 		
 		var timer = setInterval(function(){
 			
@@ -480,12 +482,12 @@ function initAudioPlayer(){
 	var browserVer = navigator.userAgent;	
 	
 	if( browserVer.indexOf("Chrome") != -1 ||
+	    browserVer.indexOf("Firefox") != -1 ||
 	    ( browserVer.indexOf("Safari") != -1 && ( isMacOS() || isWinOS() ) ) ){
 		jplayer_solution = "html,flash";
 		jplayer_supplied = "mp3";
 	}
 	else if( isIE() ||
-		     browserVer.indexOf("Firefox") != -1 ||
 		     browserVer.indexOf("Opera") != -1 ){	  
 		jplayer_solution = "flash";
 		jplayer_supplied = "mp3";

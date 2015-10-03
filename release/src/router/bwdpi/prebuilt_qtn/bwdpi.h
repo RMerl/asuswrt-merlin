@@ -119,7 +119,7 @@ struct mail_info{
 
 //iqos.c
 extern char *dev_lan;
-extern void check_qosd_wan_setting(char *dev_wan);
+extern void check_qosd_wan_setting(char *dev_wan, int len);
 extern void setup_qos_conf();
 extern void stop_tm_qos();
 extern void start_tm_qos();

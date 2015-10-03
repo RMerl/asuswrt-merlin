@@ -1,3 +1,0 @@
-version=3
-opts=uversionmangle=s/\.(gz|bz2|lzma)$// \
-ftp://ftp.gnu.org/gnu/coreutils/coreutils-([\d+\.]+)\.tar\.(gz|bz2|lzma) debian uupdate

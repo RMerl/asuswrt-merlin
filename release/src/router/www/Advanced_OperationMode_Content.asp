@@ -99,7 +99,7 @@ window.onresize = function() {
 		cal_panel_block("routerSSID", 0.25);
 	}
 } 
-if(based_modelid == "RT-AC3200" && sw_mode_orig == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+if(sw_mode_orig == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode_orig = 2;
 
 function initial(){

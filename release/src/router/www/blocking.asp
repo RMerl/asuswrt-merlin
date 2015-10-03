@@ -129,11 +129,11 @@ li{
 	width:268px;
 	height:48px;
 }
-#tm_block{
-	margin-top: 110px;
-}
 .desc_info{
 	font-weight:bold;
+}
+#tm_block{
+	margin: 0 20px;
 }
 /*for mobile device*/
 @media screen and (max-width: 1000px){
@@ -207,9 +207,6 @@ li{
 		width: 225px;
 		background-repeat: no-repeat;
 		background-size: 100%;
-	}
-	#tm_block{
-		margin-top: 90px;
 	}
 }
 </style>	
@@ -429,16 +426,14 @@ function show_information(){
 			<div class="nologin">
 				<div id="case_content"></div>
 				<div id="suggestion"></div>
+				<div id="tm_block" style="display:none">
+					<div>For your client side advanced internet security protection. Trend Micro offer you more advanced home security solution. Please <a href="http://www.trendmicro.com" target="_blank">visit the site</a> for free trial or online scan service.</div>
+					<!--untranslated string-->
+					<div class="tm_logo"></div>
+				</div>
 			</div>
 		</div>
-
 		<div id="go_btn" class='button' style="display:none;"><#btn_go#></div>		
-		<div id="tm_block" class="nologin" style="display:none">
-			<div>For your client side advanced internet security protection. Trend Micro offer you more advanced home security solution. Please <a href="http://www.trendmicro.com" target="_blank">visit the site</a> for free trial or online scan service.</div>
-			<!--untranslated string-->
-			<div class="tm_logo"></div>
-		</div>
 	</div>
 </body>
 </html>
-

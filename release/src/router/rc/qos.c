@@ -1131,24 +1131,9 @@ static int start_bandwidth_limiter(void)
 	fprintf(f,
 		"#!/bin/sh\n"
 		"WAN=%s\n"
-		"tc qdisc del dev $WAN root 2>/dev/null\n"
-		"tc qdisc del dev $WAN ingress 2>/dev/null\n"
-		"tc qdisc del dev br0 root 2>/dev/null\n"
-		"tc qdisc del dev br0 ingress 2>/dev/null\n"
 		"\n"
-		"TQAU=\"tc qdisc add dev $WAN\"\n"
-		"TCAU=\"tc class add dev $WAN\"\n"
-		"TFAU=\"tc filter add dev $WAN\"\n"
-		"SFQ=\"sfq perturb 10\"\n"
-		"TQA=\"tc qdisc add dev br0\"\n"
-		"TCA=\"tc class add dev br0\"\n"
-		"TFA=\"tc filter add dev br0\"\n"
-		"\n"
-		"$TQA root handle 1: htb\n"
-		"$TCA parent 1: classid 1:1 htb rate 4096000kbit\n"
-		"\n"
-		"$TQAU root handle 2: htb\n"
-		"$TCAU parent 2: classid 2:1 htb rate 4096000kbit\n"
+		"case \"$1\" in\n"
+		"start)\n"
 		, get_wan_ifname(0)
 	);
 
@@ -1163,6 +1148,31 @@ static int start_bandwidth_limiter(void)
 	*/
 
 	g = buf = strdup(nvram_safe_get("qos_bw_rulelist"));
+
+	// if no qos_bw_rulelist, shouldn't set tc rule
+	if (strcmp(g, "")) {
+		fprintf(f,
+		"tc qdisc del dev $WAN root 2>/dev/null\n"
+		"tc qdisc del dev $WAN ingress 2>/dev/null\n"
+		"tc qdisc del dev br0 root 2>/dev/null\n"
+		"tc qdisc del dev br0 ingress 2>/dev/null\n"
+		"\n"
+		"TQAU=\"tc qdisc add dev $WAN\"\n"
+		"TCAU=\"tc class add dev $WAN\"\n"
+		"TFAU=\"tc filter add dev $WAN\"\n"
+		"SFQ=\"sfq perturb 10\"\n"
+		"TQA=\"tc qdisc add dev br0\"\n"
+		"TCA=\"tc class add dev br0\"\n"
+		"TFA=\"tc filter add dev br0\"\n"
+		"\n"
+		"$TQA root handle 1: htb\n"
+		"$TCA parent 1: classid 1:1 htb rate 10240000kbit\n"
+		"\n"
+		"$TQAU root handle 2: htb\n"
+		"$TCAU parent 2: classid 2:1 htb rate 10240000kbit\n"
+		);
+	}
+
 	while (g) {
 		if ((p = strsep(&g, "<")) == NULL) break;
 		if ((vstrsep(p, ">", &enable, &addr, &dlc, &upc, &prio)) != 5) continue;
@@ -1272,9 +1282,23 @@ static int start_bandwidth_limiter(void)
 	}
 	free(buf);
 
+	fprintf(f,
+		";;\n"
+		"stop)\n"
+		"tc qdisc del dev $WAN root 2>/dev/null\n"
+		"tc qdisc del dev $WAN ingress 2>/dev/null\n"
+		"tc qdisc del dev br0 root 2>/dev/null\n"
+		"tc qdisc del dev br0 ingress 2>/dev/null\n"
+		";;\n"
+		"*)\n"
+		"tc -s -d class ls dev $WAN\n"
+		"tc -s -d class ls dev br0\n"
+		"esac"
+	);
+
 	fclose(f);
 	chmod(qosfn, 0700);
-	eval((char *)qosfn);
+	eval((char *)qosfn, "start");
 	_dprintf("[BWLIT] %s: create bandwidth limiter\n", __FUNCTION__);
 
 	return 0;

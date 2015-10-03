@@ -294,9 +294,15 @@ int main(int argc, char *argv[])
 		fprintf(fp, "max connections = %s\n", nvram_safe_get("st_max_user"));
 
         /* remove socket options due to NIC compatible issue */
-#ifndef RTCONFIG_BCMARM
-        fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE SO_RCVBUF=65536 SO_SNDBUF=65536\n");
+	if(!nvram_get_int("stop_samba_speedup")){
+#ifdef RTCONFIG_BCMARM
+#ifdef RTCONFIG_BCM_7114
+		fprintf(fp, "socket options = IPTOS_LOWDELAY TCP_NODELAY SO_RCVBUF=131072 SO_SNDBUF=131072\n");
 #endif
+#else
+		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE SO_RCVBUF=65536 SO_SNDBUF=65536\n");
+#endif
+	}
 	fprintf(fp, "obey pam restrictions = no\n");
 	fprintf(fp, "use spnego = no\n");		// ASUS add
 	fprintf(fp, "client use spnego = no\n");	// ASUS add

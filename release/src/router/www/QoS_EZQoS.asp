@@ -39,10 +39,10 @@
 	text-align:left; 
 }	
 	
-.contentM_qis{
+#priority_panel{
 	width:740px;	
-	margin-top:200px;
-	margin-left:380px;
+	margin-top:55px; 
+	margin-left:5px;
 	position:absolute;
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
@@ -196,12 +196,6 @@ else
 var dsl_DataRateDown = parseInt("<% nvram_get("dsllog_dataratedown"); %>");
 var dsl_DataRateUp = parseInt("<% nvram_get("dsllog_datarateup"); %>");
 
-window.onresize = function() {
-	if(document.getElementById("priority_panel").style.display == "block") {
-		cal_panel_block("priority_panel", 0.25);
-	}
-}
-
 var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");
 var category_title = ["", "<#Adaptive_Game#>", "<#Adaptive_Stream#>","<#Adaptive_Message#>", "<#Adaptive_WebSurf#>","<#Adaptive_FileTransfer#>", "<#Adaptive_Others#>"];
 var cat_id_array = [[9,20], [8], [4], [0,5,6,15,17], [13,24], [1,3,14], [7,10,11,21,23]];
@@ -323,7 +317,7 @@ function submitQoS(){
 				document.form.obw.select();
 				return;
 			}
-			else if( document.form.obw.value == 0){		// To check field is 0
+			else if(document.form.qos_type.value == 0 && document.form.obw.value == 0){		// To check field is 0 && Traditional QoS
 				alert("Upload Bandwidth can not be 0");
 				document.form.obw.focus();
 				document.form.obw.select();
@@ -343,7 +337,7 @@ function submitQoS(){
 				document.form.ibw.select();
 				return;
 			}
-			else if(document.form.ibw.value == 0){
+			else if(document.form.qos_type.value == 0 && document.form.ibw.value == 0){		// To check field is 0 && Traditional QoS
 				alert("Download Bandwidth can not be 0");
 				document.form.ibw.focus();
 				document.form.ibw.select();
@@ -428,6 +422,7 @@ function change_qos_type(value){
 			document.form.next_page.value = "Advanced_QOSUserRules_Content.asp";
 		}
 		show_settings("NonAdaptive");
+		$("#hint_zero").hide();
 	}	
 	else if(value == 1){		//Adaptive QoS
 		document.getElementById('int_type').checked = true;
@@ -443,6 +438,7 @@ function change_qos_type(value){
 		}
 		
 		show_settings("Adaptive_quick");
+		$("#hint_zero").show();
 	}
 	else{		// Bandwidth Limiter
 		document.getElementById('int_type').checked = false;
@@ -624,88 +620,10 @@ function register_overHint(){
 </script>
 </head>	
 <body onload="initial();" id="body_id" onunload="unload_body();" onClick="">	
-<div id="priority_panel"  class="contentM_qis">
-	<!--===================================Beginning of priority Content===========================================-->
-	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
-	<form method="post" name="PriorityForm" action="/start_apply.htm" target="hidden_frame">
-		<input type="hidden" name="current_page" value="QoS_EZQoS.asp">
-		<input type="hidden" name="next_page" value="QoS_EZQoS.asp">
-		<input type="hidden" name="modified" value="0">
-		<input type="hidden" name="flag" value="background">
-		<input type="hidden" name="action_mode" value="apply">
-		<input type="hidden" name="action_script" value="saveNvram">
-		<input type="hidden" name="action_wait" value="1">
-		<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
-		<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-		<input type="hidden" name="bwdpi_app_rulelist_edit" value="<% nvram_get("bwdpi_app_rulelist"); %>">
-		<tr>
-			<div class="description_down"><#Adaptive_QoS#> - <#Adaptive_QoS#></div>
-		</tr>
-		<tr>
-			<div style="margin-left:30px; margin-top:10px;">
-				<div class="formfontdesc" style="line-height:20px;font-size:14px;"><#Adaptive_QoS_desc#></div>
-			</div>
-			<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
-		</tr>				
-		<tr>
-			<td valign="top">
-				<table width="700px" border="0" cellpadding="4" cellspacing="0">
-					<tbody>
-					<tr>
-						<td valign="top">
-							<table id="category_table" width="100%">							
-							<tr>
-								<td colspan="2">
-									<div class="priority priority_highest"><#Highest#></div>
-								</td>
-							</tr>
-							<tr>
-								<td colspan="2">	
-									<div id="category_list"></div>
-								</td>
-							</tr>
-							<tr>
-								<td colspan="2">
-									<div class="priority priority_lowest"><#Lowest#></div>	
-								</td>
-							</tr>
-						</table>
-						</td>
-					</tr>						
-					</tbody>						
-				</table>
-				<div style="margin-top:5px;width:100%;text-align:center;">
-					<input class="button_gen" id="btn_cancel_priority" type="button" onclick="cancel_priority_panel();" value="<#CTL_Cancel#>">
-					<input class="button_gen" type="button" onclick="save_priority();" value="<#CTL_onlysave#>">	
-				</div>					
-			</td>
-		</tr>
-	</form>
-	</table>
-	<!--===================================Ending of priority Content===========================================-->			
-</div>
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
-
-<form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
-<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="current_page" value="/QoS_EZQoS.asp">
-<input type="hidden" name="next_page" value="/QoS_EZQoS.asp">
-<input type="hidden" name="group_id" value="">
-<input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="">
-<input type="hidden" name="action_wait" value="5">
-<input type="hidden" name="flag" value="">
-<input type="hidden" name="qos_enable" value="<% nvram_get("qos_enable"); %>">
-<input type="hidden" name="qos_enable_orig" value="<% nvram_get("qos_enable"); %>">
-<input type="hidden" name="qos_type" value="<% nvram_get("qos_type"); %>">
-<input type="hidden" name="qos_type_orig" value="<% nvram_get("qos_type"); %>">
-<input type="hidden" name="qos_obw" value="<% nvram_get("qos_obw"); %>" disabled>
-<input type="hidden" name="qos_ibw" value="<% nvram_get("qos_ibw"); %>" disabled>
-<input type="hidden" name="bwdpi_app_rulelist" value="<% nvram_get("bwdpi_app_rulelist"); %>" disabled>
 <table id="main_table" class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>	
@@ -718,6 +636,83 @@ function register_overHint(){
 		<td valign="top">
 			<div id="tabMenu" class="submenuBlock"></div>
 		<!--===================================Beginning of Main Content===========================================-->
+			<div id="priority_panel">
+				<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
+				<form method="post" name="PriorityForm" action="/start_apply.htm" target="hidden_frame">
+					<input type="hidden" name="current_page" value="QoS_EZQoS.asp">
+					<input type="hidden" name="next_page" value="QoS_EZQoS.asp">
+					<input type="hidden" name="modified" value="0">
+					<input type="hidden" name="flag" value="background">
+					<input type="hidden" name="action_mode" value="apply">
+					<input type="hidden" name="action_script" value="saveNvram">
+					<input type="hidden" name="action_wait" value="1">
+					<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+					<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
+					<input type="hidden" name="bwdpi_app_rulelist_edit" value="<% nvram_get("bwdpi_app_rulelist"); %>">
+					<tr>
+						<div class="description_down"><#Adaptive_QoS#> - <#Adaptive_QoS#></div>
+					</tr>
+					<tr>
+						<div style="margin-left:30px; margin-top:10px;">
+							<div class="formfontdesc" style="line-height:20px;font-size:14px;"><#Adaptive_QoS_desc#></div>
+						</div>
+						<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+					</tr>				
+					<tr>
+						<td valign="top">
+							<table width="700px" border="0" cellpadding="4" cellspacing="0">
+								<tbody>
+								<tr>
+									<td valign="top">
+										<table id="category_table" width="100%">							
+										<tr>
+											<td colspan="2">
+												<div class="priority priority_highest"><#Highest#></div>
+											</td>
+										</tr>
+										<tr>
+											<td colspan="2">	
+												<div id="category_list"></div>
+											</td>
+										</tr>
+										<tr>
+											<td colspan="2">
+												<div class="priority priority_lowest"><#Lowest#></div>	
+											</td>
+										</tr>
+									</table>
+									</td>
+								</tr>						
+								</tbody>						
+							</table>
+							<div style="margin-top:5px;width:100%;text-align:center;">
+								<input class="button_gen" id="btn_cancel_priority" type="button" onclick="cancel_priority_panel();" value="<#CTL_Cancel#>">
+								<input class="button_gen" type="button" onclick="save_priority();" value="<#CTL_onlysave#>">	
+							</div>					
+						</td>
+					</tr>
+				</form>
+				</table>
+			</div>
+
+			<form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
+			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
+			<input type="hidden" name="current_page" value="/QoS_EZQoS.asp">
+			<input type="hidden" name="next_page" value="/QoS_EZQoS.asp">
+			<input type="hidden" name="group_id" value="">
+			<input type="hidden" name="action_mode" value="apply">
+			<input type="hidden" name="action_script" value="">
+			<input type="hidden" name="action_wait" value="5">
+			<input type="hidden" name="flag" value="">
+			<input type="hidden" name="qos_enable" value="<% nvram_get("qos_enable"); %>">
+			<input type="hidden" name="qos_enable_orig" value="<% nvram_get("qos_enable"); %>">
+			<input type="hidden" name="qos_type" value="<% nvram_get("qos_type"); %>">
+			<input type="hidden" name="qos_type_orig" value="<% nvram_get("qos_type"); %>">
+			<input type="hidden" name="qos_obw" value="<% nvram_get("qos_obw"); %>" disabled>
+			<input type="hidden" name="qos_ibw" value="<% nvram_get("qos_ibw"); %>" disabled>
+			<input type="hidden" name="bwdpi_app_rulelist" value="<% nvram_get("bwdpi_app_rulelist"); %>" disabled>
+
 			<table width="95%" border="0" align="left" cellpadding="0" cellspacing="0" class="FormTitle" id="FormTitle" style="height:820px;">
 				<tr>
 					<td bgcolor="#4D595D" valign="top">
@@ -841,7 +836,13 @@ function register_overHint(){
 												<label style="margin-left:5px;">Mb/s</label>
 											</td>
 											<td rowspan="2" style="width:250px;">
-												<div>Get the bandwidth information from ISP or go to <a href="http://speedtest.net" target="_blank" style="text-decoration:underline;color:#FC0">Speedtest</a> to check bandwidth</div>
+												<div>
+													<ul style="padding:0 10px;margin:5px 0;">
+														<li>Get the bandwidth information from ISP or go to <a href="http://speedtest.net" target="_blank" style="text-decoration:underline;color:#FC0">Speedtest</a> to check bandwidth</li>
+														<li id="hint_zero">The default is 0, which means unlimited bandwidth</li>
+													</ul>
+												</div>
+												
 											</td>
 										</tr>											
 										<tr id="download_tr">
@@ -913,7 +914,7 @@ function register_overHint(){
 		</td>	
 	</tr>
 </table>
-
+</form>
 <div id="footer"></div>
 </body>
 </html>

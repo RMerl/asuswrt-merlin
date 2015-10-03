@@ -451,11 +451,11 @@ devpath0=pci/1/1
 #0:leddc=0xFFFF
 
 #temperature setting
-0:temps_period=5
-0:tempthresh=120
-0:temps_hysteresis=5
-0:phycal_tempdelta=0
-0:tempoffset=0
+#0:temps_period=5
+#0:tempthresh=120
+#0:temps_hysteresis=5
+#0:phycal_tempdelta=0
+#0:tempoffset=0
 
 #4360_5G nvram
 devpath1=pci/2/1
@@ -575,14 +575,14 @@ devpath1=pci/2/1
 #1:leddc=0xFFFF
 
 # Temperature parameters
-1:temps_period=5
-1:tempthresh=120
-1:temps_hysteresis=5
-1:phycal_tempdelta=0
-1:tempoffset=0
+#1:temps_period=5
+#1:tempthresh=120
+#1:temps_hysteresis=5
+#1:phycal_tempdelta=0
+#1:tempoffset=0
 
 # Bootloader version
-bl_version=1.0.2.6
+bl_version=1.0.2.7
 
 # for NAND flash
 bootflags=1

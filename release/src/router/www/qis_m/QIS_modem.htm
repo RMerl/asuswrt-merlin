@@ -2,53 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>                                     
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<!--link rel="stylesheet" type="text/css" href="/form_style.css">
-<style>
-#ClientList_Block_PC{
-	border:1px outset #999;
-	background-color:#576D73;
-	position:absolute;
-	*margin-top:26px;	
-	margin-left:2px;
-	*margin-left:-189px;
-	width:181px;
-	text-align:left;	
-	height:auto;
-	overflow-y:auto;
-	z-index:200;
-	padding: 1px;
-	display:none;
-}
-#ClientList_Block_PC div{
-	background-color:#576D73;
-	height:auto;
-	*height:20px;
-	line-height:20px;
-	text-decoration:none;
-	font-family: Lucida Console;
-	padding-left:2px;
-}
-
-#ClientList_Block_PC a{
-	background-color:#EFEFEF;
-	color:#FFF;
-	font-size:12px;
-	font-family:Arial, Helvetica, sans-serif;
-	text-decoration:none;	
-}
-#ClientList_Block_PC div:hover, #ClientList_Block a:hover{
-	background-color:#3366FF;
-	color:#FFFFFF;
-	cursor:default;
-}	
-</style>	
-<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/JavaScript" src="/general.js"></script>
 <script type="text/javascript" src="/wcdma_list.js"></script>
-<script type="text/JavaScript" src="/help.js"></script-->
+<script type="text/JavaScript" src="/help.js"></script>
 <script type="text/javaScript" src="/js/jquery.js"></script>
 <script type="text/JavaScript">
 var modem = '<% nvram_get("Dev3G"); %>';
@@ -72,18 +32,6 @@ var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
 var dualwan_set = 1;
 
 function QKInternet_load_body(){
-	parent.document.title = "<#Web_Title#> - <#menu5_4_4#>";
-
-	if(parent.ISMOBILE){
-		parent.set_step("internet_type");
-		hideObjs();
-		//document.getElementById("theFieldset_apply").style.display = "";
-		document.getElementById("tblsetting_1").style.marginTop = "-15px";
-	}
-	else{
-		parent.set_step("t2");
-	}
-
 	switch_modem_mode('<% nvram_get("modem_enable"); %>');
 	gen_country_list();
 	reloadProfile();
@@ -153,15 +101,6 @@ function submitForm(){
 	document.getElementById("skipButton").style.display = "none";
 	document.getElementById("nextButton").style.display = "none";
 	document.getElementById("loadingIcon").style.display = "";
-	//changeiuiBackground(1);
-	/*if(dualwan_set){
-		document.getElementById("loadingNote1m").style.display = "";
-		document.form.action_wait.value	= 60;
-	}
-	else{
-		document.getElementById("loadingNote").style.display = "";	
-		document.form.action_wait.value	= eval("<% get_default_reboot_time(); %> + 30");
-	}*/
 
 	if(document.form.modem_country.value == ""){
 		var valueStr = "";
@@ -254,7 +193,6 @@ function connVerify(conn){
 	}	
 	else if(conn == 3){ // IP conflict!
 		document.getElementById("newIp").innerHTML = get_new_lanip();
-
 		document.getElementById("IpConflict").style.display = "";
 		document.getElementById("Conn3GFail").style.display = "none";
 		document.getElementById("tblsetting_1").style.display = "none";
@@ -271,43 +209,25 @@ function connVerify(conn){
 		document.getElementById("Conn3GFail").style.display = "none";
 		document.getElementById("tblsetting_1").style.display = "none";
 		document.getElementById("Conn3GRetry").style.display = "";
-
-		if(parent.ISMOBILE){
-			//changeiuiBackground(0);
-			document.getElementById("resetField").style.display = "none";
-			document.getElementById("theFieldset").style.display = "none";			
-			//document.getElementById("theFieldset_apply").style.display = "none";
-		}
-		else{
-			document.getElementById("nextButton").style.display = "";
-			document.getElementById("loadingIcon").style.display = "none";
-			document.getElementById("loadingNote").style.display = "none";
-			document.getElementById("loadingNote1m").style.display = "none";			
-			document.getElementById("resetField").style.display = "none";	
-			//document.getElementById("theFieldset").style.display = "none";			
-			document.getElementById("applyBtn").style.display = "none";
-		}
+		document.getElementById("nextButton").style.display = "";
+		document.getElementById("loadingIcon").style.display = "none";
+		document.getElementById("loadingNote").style.display = "none";
+		document.getElementById("loadingNote1m").style.display = "none";			
+		document.getElementById("resetField").style.display = "none";	
+		//document.getElementById("theFieldset").style.display = "none";			
+		document.getElementById("applyBtn").style.display = "none";
 	}	
 	else{ // conn fail!
 		document.getElementById("Conn3GFail").style.display = "";
 		document.getElementById("tblsetting_1").style.display = "none";
 		document.getElementById("Conn3GRetry").style.display = "";
-
-		if(parent.ISMOBILE){
-			//changeiuiBackground(0);
-			document.getElementById("resetField").style.display = "none";
-			//document.getElementById("theFieldset").style.display = "";			
-			//document.getElementById("theFieldset_apply").style.display = "none";
-		}
-		else{
-			document.getElementById("nextButton").style.display = "";
-			document.getElementById("loadingIcon").style.display = "none";
-			document.getElementById("loadingNote").style.display = "none";
-			document.getElementById("loadingNote1m").style.display = "none";			
-			document.getElementById("resetField").style.display = "";			
-			//document.getElementById("theFieldset").style.display = "none";			
-			document.getElementById("applyBtn").style.display = "none";
-		}
+		document.getElementById("nextButton").style.display = "";
+		document.getElementById("loadingIcon").style.display = "none";
+		document.getElementById("loadingNote").style.display = "none";
+		document.getElementById("loadingNote1m").style.display = "none";			
+		document.getElementById("resetField").style.display = "";			
+		//document.getElementById("theFieldset").style.display = "none";			
+		document.getElementById("applyBtn").style.display = "none";
 	}
 }
 
@@ -316,13 +236,7 @@ function reset3G(){
 	document.getElementById("Conn3GFail").style.display = "none";
 	document.getElementById("Conn3GRetry").style.display = "none";
 	document.getElementById("skipButton").style.display = "";
-
-	if(parent.ISMOBILE){
-		//document.getElementById("theFieldset_apply").style.display = "";
-	}
-	else{
-		document.getElementById("applyBtn").style.display = "";
-	}
+	document.getElementById("applyBtn").style.display = "";
 }
 
 function reloadProfile(){
@@ -428,12 +342,25 @@ function switch_modem_mode(mode){
 		if(!gobi_support)
 			inputCtrl(document.form.Dev3G, 1);
 		inputCtrl(document.form.modem_country, 1);
-		inputCtrl(document.form.modem_isp, 1);
-		inputCtrl(document.form.modem_apn, 1);
-		if(pin_opt) inputCtrl(document.form.modem_pincode, 1);
-		inputCtrl(document.form.modem_dialnum, 1);
-		inputCtrl(document.form.modem_user, 1);
-		inputCtrl(document.form.modem_pass, 1);
+	
+		document.getElementById("modem_isp_div").style.display = "";
+		document.getElementById("modem_isp").disabled = false;
+		document.getElementById("modem_apn_div").style.display = "";
+		document.getElementById("modem_apn").disabled = false;			
+		if(pin_opt){
+			document.getElementById("modem_pincode_div").style.display = "";
+			document.getElementById("modem_pincode").disabled = false;
+		} 
+
+		document.getElementById("modem_dialnum_div").style.display = "";
+		document.getElementById("modem_dialnum").disabled = false;
+		document.getElementById("modem_user_div").style.display = "";
+		document.getElementById("modem_user").disabled = false;
+		document.getElementById("modem_pass_div").style.display = "";
+		document.getElementById("modem_pass").disabled = false;
+		document.getElementById("modem_ttlsid_div").style.display = "none";
+		document.getElementById("modem_ttlsid").disabled = true;
+		
 		inputCtrl(document.form.modem_ttlsid, 0);
 		//document.getElementById("hsdpa_hint").style.display = "";
 	}
@@ -441,39 +368,69 @@ function switch_modem_mode(mode){
 		if(!gobi_support)
 			inputCtrl(document.form.Dev3G, 1);
 		inputCtrl(document.form.modem_country, 1);
-		inputCtrl(document.form.modem_isp, 1);
-		inputCtrl(document.form.modem_apn, 1);
-		if(pin_opt) inputCtrl(document.form.modem_pincode, 1);
-		inputCtrl(document.form.modem_dialnum, 1);
-		inputCtrl(document.form.modem_user, 1);
-		inputCtrl(document.form.modem_pass, 1);
-		inputCtrl(document.form.modem_ttlsid, 0);
+		document.getElementById("modem_isp_div").style.display = "";
+		document.getElementById("modem_isp").disabled = false;
+		document.getElementById("modem_apn_div").style.display = "";
+		document.getElementById("modem_apn").disabled = false;	
+		if(pin_opt){
+			document.getElementById("modem_pincode_div").style.display = "";
+			document.getElementById("modem_pincode").disabled = false;
+		} 
+		
+		document.getElementById("modem_dialnum_div").style.display = "";
+		document.getElementById("modem_dialnum").disabled = false;
+		document.getElementById("modem_user_div").style.display = "";
+		document.getElementById("modem_user").disabled = false;
+		document.getElementById("modem_pass_div").style.display = "";
+		document.getElementById("modem_pass").disabled = false;
+		document.getElementById("modem_ttlsid_div").style.display = "none";
+		document.getElementById("modem_ttlsid").disabled = true;
 		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "3"){ // TD-SCDMA
 		if(!gobi_support)
 			inputCtrl(document.form.Dev3G, 1);
 		inputCtrl(document.form.modem_country, 1);
-		inputCtrl(document.form.modem_isp, 1);
-		inputCtrl(document.form.modem_apn, 1);
-		if(pin_opt) inputCtrl(document.form.modem_pincode, 1);
-		inputCtrl(document.form.modem_dialnum, 1);
-		inputCtrl(document.form.modem_user, 1);
-		inputCtrl(document.form.modem_pass, 1);
-		inputCtrl(document.form.modem_ttlsid, 0);
+		document.getElementById("modem_isp_div").style.display = "";
+		document.getElementById("modem_isp").disabled = false;
+		document.getElementById("modem_apn_div").style.display = "";
+		document.getElementById("modem_apn").disabled = false;	
+		if(pin_opt){
+			document.getElementById("modem_pincode_div").style.display = "";
+			document.getElementById("modem_pincode").disabled = false;
+		} 
+		
+		document.getElementById("modem_dialnum_div").style.display = "";
+		document.getElementById("modem_dialnum").disabled = false;
+		document.getElementById("modem_user_div").style.display = "";
+		document.getElementById("modem_user").disabled = false;
+		document.getElementById("modem_pass_div").style.display = "";
+		document.getElementById("modem_pass").disabled = false;
+		document.getElementById("modem_ttlsid_div").style.display = "none";
+		document.getElementById("modem_ttlsid").disabled = true;
 		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else if(mode == "4"){	// WiMAX
 		if(!gobi_support)
 			inputCtrl(document.form.Dev3G, 1);
 		inputCtrl(document.form.modem_country, 1);
-		inputCtrl(document.form.modem_isp, 1);
-		inputCtrl(document.form.modem_apn, 0);
-		if(pin_opt) inputCtrl(document.form.modem_pincode, 1);
-		inputCtrl(document.form.modem_dialnum, 0);
-		inputCtrl(document.form.modem_user, 1);
-		inputCtrl(document.form.modem_pass, 1);
-		inputCtrl(document.form.modem_ttlsid, 1);
+		document.getElementById("modem_isp_div").style.display = "";
+		document.getElementById("modem_isp").disabled = false;
+		document.getElementById("modem_apn_div").style.display = "none";
+		document.getElementById("modem_apn").disabled = true;	
+		if(pin_opt){
+			document.getElementById("modem_pincode_div").style.display = "";
+			document.getElementById("modem_pincode").disabled = false;
+		} 
+		
+		document.getElementById("modem_dialnum_div").style.display = "none";
+		document.getElementById("modem_dialnum").disabled = true;
+		document.getElementById("modem_user_div").style.display = "";
+		document.getElementById("modem_user").disabled = false;
+		document.getElementById("modem_pass_div").style.display = "";
+		document.getElementById("modem_pass").disabled = false;
+		document.getElementById("modem_ttlsid_div").style.display = "";
+		document.getElementById("modem_ttlsid").disabled = false;
 		//document.getElementById("hsdpa_hint").style.display = "";
 	}
 	else{	// Disable (mode == 0)
@@ -481,13 +438,23 @@ function switch_modem_mode(mode){
 			inputCtrl(document.form.Dev3G, 0);
 		inputCtrl(document.form.modem_enable_option, 0);
 		inputCtrl(document.form.modem_country, 0);
-		inputCtrl(document.form.modem_isp, 0);
-		inputCtrl(document.form.modem_apn, 0);
-		if(pin_opt) inputCtrl(document.form.modem_pincode, 0);
-		inputCtrl(document.form.modem_dialnum, 0);
-		inputCtrl(document.form.modem_user, 0);
-		inputCtrl(document.form.modem_pass, 0);
-		inputCtrl(document.form.modem_ttlsid, 0);
+		document.getElementById("modem_isp_div").style.display = "none";
+		document.getElementById("modem_isp").disabled = true;
+		document.getElementById("modem_apn_div").style.display = "none";
+		document.getElementById("modem_apn").disabled = true;	
+		if(pin_opt){
+			document.getElementById("modem_pincode_div").style.display = "none";
+			document.getElementById("modem_pincode").disabled = true;
+		}
+		
+		document.getElementById("modem_dialnum_div").style.display = "none";
+		document.getElementById("modem_dialnum").disabled = true;
+		document.getElementById("modem_user_div").style.display = "none";
+		document.getElementById("modem_user").disabled = true;
+		document.getElementById("modem_pass_div").style.display = "none";
+		document.getElementById("modem_pass").disabled = true;
+		document.getElementById("modem_ttlsid_div").style.display = "none";
+		document.getElementById("modem_ttlsid").disabled = true;
 		//document.getElementById("hsdpa_hint").style.display = "none";
 		document.form.modem_enable.value = "0";
 	}
@@ -540,11 +507,14 @@ function show_APN_list(){
 	
 	/* use manual or location */
 	if(document.form.modem_country.value == ""){
-		inputCtrl(document.form.modem_isp, 0);
+		document.getElementById("modem_isp_div").style.display = "none";
+		document.getElementById("modem_isp").disabled = true;
 		inputCtrl(document.form.modem_enable_option, 1);
 	}
 	else{
-		inputHideCtrl(document.form.modem_isp, 1);
+	
+		document.getElementById("modem_isp_div").style.display = "";
+		document.getElementById("modem_isp").disabled = false;
 		inputHideCtrl(document.form.modem_enable_option, 0);
 		if(protolist[isp_order] == "")
 			protolist[isp_order] = 1;
@@ -750,15 +720,17 @@ body{
 
 </style>
 <div>
-	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#menu5_4_4#></div>
+	<div style="font-size:1em;padding:10px 0 10px 15px;text-align:left;"><#menu5_4_4#></div>
 	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_Country_itemname#></div>
 	<div style="margin:1px 27px 10px 15px">
 		<select name="modem_country" tabindex="3" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"><option>2222</option></select>
 	</div>
 	
-	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_ISP_itemname#></div>
-	<div style="margin:1px 27px 10px 15px">
-		<select name="modem_isp" tabindex="4" onchange="show_APN_list();"></select>
+	<div id="modem_isp_div"> 
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_ISP_itemname#></div>
+		<div style="margin:1px 27px 10px 15px">
+			<select id="modem_isp" name="modem_isp" tabindex="4" onchange="show_APN_list();"></select>
+		</div>
 	</div>
 	
 	
@@ -771,51 +743,63 @@ body{
 			<option value="4" <% nvram_match("modem_enable", "4", "selected"); %>>WiMAX</option>
 		</select>	
 	</div>
-	
-	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_private_apn_itemname#></div>
-	<div style="margin:1px 27px 10px 15px">
-		<input id="modem_apn" type="text" value="" name="modem_apn" tabindex="6" class="input_20_table" autocorrect="off" autocapitalize="off"/>
-     	<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
+		
+	<div id="modem_apn_div">
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_private_apn_itemname#></div>
+		<div style="margin:1px 27px 10px 15px">
+			<input id="modem_apn" name="modem_apn" type="text" tabindex="6" value="" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocomplete="off" autocorrect="off" autocapitalize="off"/>
+		</div>
+		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 		<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
-	</div>		
-
-	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_DialNum_itemname#></div>
-	<div style="margin:1px 27px 10px 15px">
-		<input id="modem_dialnum" name="modem_dialnum" tabindex="7" style="height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" type="text" autocorrect="off" autocapitalize="off"/>
-	</div>	
-	
-	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PIN_code#></div>
-	<div style="margin:1px 27px 10px 15px">
-		<input id="modem_pincode" name="modem_pincode" tabindex="8" style="height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" type="password" maxLength="8" value="<% nvram_get("modem_pincode"); %>" autocomplete="off" autocorrect="off" autocapitalize="off"/>
-		<br><span id="pincode_status" style="display:none;"><#pincode_wrong#></span>
 	</div>
 
-	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_Username_itemname#></div>
-	<div style="margin:1px 27px 10px 15px">
-		<input id="modem_user" name="modem_user" tabindex="9" style="height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" type="text" value="<% nvram_get("modem_user"); %>" autocomplete="off" autocorrect="off" autocapitalize="off"/>
-	</div>	
-	
- 	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PPPConnection_Password_itemname#></div>
-	<div style="margin:1px 27px 10px 15px">
-		<input id="modem_pass" name="modem_pass" tabindex="10" style="height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" type="password" value="<% nvram_get("modem_pass"); %>" autocomplete="off" autocorrect="off" autocapitalize="off"/>
-	</div>  
-	
-	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;">E-mail</div>
-	<div style="margin:1px 27px 10px 15px">
-		<input id="modem_ttlsid" name="modem_ttlsid" tabindex="11" style="height:25px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" value="<% nvram_get("modem_ttlsid"); %>"/>
+	<div id="modem_dialnum_div">
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_DialNum_itemname#></div>
+		<div style="margin:1px 27px 10px 15px">
+			<input id="modem_dialnum" name="modem_dialnum" type="text" tabindex="7" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocorrect="off" autocapitalize="off"/>
+		</div>
 	</div>
-                          
+	
+	<div id="modem_pincode_div">
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PIN_code#></div>
+		<div style="margin:1px 27px 10px 15px">
+			<input id="modem_pincode" name="modem_pincode" type="password" tabindex="8" value="<% nvram_get("modem_pincode"); %>" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="off"/>
+			<br><span id="pincode_status" style="display:none;"><#pincode_wrong#></span>
+		</div>
+	</div>
+	
+	<div id="modem_user_div">
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_Username_itemname#></div>
+		<div style="margin:1px 27px 10px 15px">
+			<input id="modem_user" name="modem_user" type="text" tabindex="9" value="<% nvram_get("modem_user"); %>" onkeyup="Sync_2ghz(2);" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocomplete="off" autocorrect="off" autocapitalize="off"/>
+		</div>
+	</div>
+	
+	<div id="modem_pass_div"> 	
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#PPPConnection_Password_itemname#></div>
+		<div style="margin:1px 27px 10px 15px">
+			<input id="modem_pass" name="modem_pass" type="password" tabindex="10" value="<% nvram_get("modem_pass"); %>" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B" autocomplete="off" autocorrect="off" autocapitalize="off"/>
+		</div>
+	</div>
+	
+	<div id="modem_ttlsid_div">
+		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;">E-mail</div>
+		<div style="margin:1px 27px 10px 15px">
+			<input id="modem_ttlsid" name="modem_ttlsid" type="text" tabindex="11" value="<% nvram_get("modem_ttlsid"); %>" style="width:100%;height:30px;padding-left:9px;font-size:0.9em;color:#9BA7B1;background-color:rgba(28,28,28,1);border:1px solid #43474B">
+		</div>
+	</div>	
+	                          
 	<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_USBAdapter_itemname#></div>
-	<div style="margin:1px 27px 10px 15px">
+	<div style="margin:1px 27px 10px 15px;margin-bottom:150px;">
 		<select name="Dev3G" id="shown_modems" class="input_option" disabled="disabled"></select>
 	</div>
 
-	<div id="Conn3GRetry">
+	<div id="Conn3GRetry" style="display:none">
 		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#QKSet_detect_desc2#></div>
 		<div id="retryCount" style="margin:1px 27px 10px 15px"></div>
 	</div>
 	
-	<div id="Conn3GFail">
+	<div id="Conn3GFail" style="display:none">
 		<div style="font-size:1em;color:#B8D8FF;margin-left:15px;"><#HSDPAConfig_Conn3GFail#></div>
 		<div style="position:fixed;bottom:36px;width:100%;height:50px;background:rgb(34,34,34);z-index:2;">
 			<div style="width:100%;height:100%;display:table" id="resetField">

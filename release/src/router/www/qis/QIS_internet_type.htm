@@ -84,7 +84,7 @@ function QKinternettype_load_body(){
 			parent.based_modelid != "RT-AC51U" &&
 			parent.based_modelid != "RT-N66U" &&
 			parent.based_modelid != "RT-N18U"
-		){	// MODELDEP: RT-AC3200, RT-AC87U, RT-AC68U, RT-AC66U, RT-AC51U, RT-N66U, RT-N18U
+		){	// MODELDEP: RT-AC3200, RT-AC87U@sysdep/RT-AC55U, RT-AC68U, RT-AC66U, RT-AC51U, RT-N66U, RT-N18U
 			document.getElementById('meoOption').outerHTML = "";
 		}	
 	
@@ -601,7 +601,7 @@ function detect_if_wan_plug(flag){
 				<option value="maxis_fiber_iptv" <% nvram_match("switch_wantag", "maxis_fiber_iptv", "selected"); %>>Maxis-Fiber-IPTV</option>
 				<option value="maxis_fiber_sp_iptv" <% nvram_match("switch_wantag", "maxis_fiber_sp_iptv", "selected"); %>>Maxis-Fiber-Special-IPTV</option>
 -->				
-				<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>>Manual</option>
+				<option value="manual" <% nvram_match( "switch_wantag", "manual", "selected"); %>><#Manual_Setting_btn#></option>
 			</select>
 		</span>
 

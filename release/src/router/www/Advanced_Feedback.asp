@@ -37,6 +37,7 @@ function initial(){
 		document.form.attach_syslog_id.checked = true;
 		document.form.attach_cfgfile_id.checked = true;
 		document.form.attach_iptables.checked = false;
+		document.form.attach_modemlog.checked = true;
 		document.getElementById("attach_iptables_span").style.display = "none";		
 		inputCtrl(document.form.dslx_diag_enable[0], 0);
 		inputCtrl(document.form.dslx_diag_enable[1], 0);
@@ -46,7 +47,12 @@ function initial(){
 		gen_ptype_list(orig_page);
 		Reload_pdesc(document.form.fb_ptype,orig_page);
 	}		
-	
+
+	if(modem_support == -1){
+		document.form.attach_modemlog.checked = false;
+		document.getElementById("attach_modem_span").style.display = "none";
+	}
+
 	setTimeout("check_wan_state();", 300);
 }
 
@@ -58,6 +64,7 @@ function check_wan_state(){
 		document.form.fb_email.disabled = "true";
 		document.form.attach_syslog.disabled = "true";
 		document.form.attach_cfgfile.disabled = "true";
+		document.form.attach_modemlog.disabled = "true";
 		document.form.fb_comment.disabled = "true";
 		document.form.btn_send.disabled = "true";
 		if(dsl_support){
@@ -80,6 +87,7 @@ function check_wan_state(){
 		document.form.fb_country.disabled = "";
 		document.form.fb_email.disabled = "";
 		document.form.attach_syslog.disabled = "";
+		document.form.attach_modemlog.disabled = "";
 		document.form.attach_cfgfile.disabled = "";
 		document.form.fb_comment.disabled = "";
 		document.form.btn_send.disabled = "";
@@ -146,7 +154,7 @@ function Reload_pdesc(obj, url){
 		desclist.push(["<#EzQoS_type_traditional#>","Traditional QoS"]);
 		url_group.push(["AiProtection"]);
 
-		desclist.push(["<#Menu_TrafficManager#>","Traffic Analyzer"]);
+		desclist.push(["<#Menu_TrafficManager#>","<#Traffic_Analyzer#>"]);	/* untranslated */
 		url_group.push(["TrafficMonitor"]);
 
 		desclist.push(["<#Parental_Control#>","Parental Ctrl"]);
@@ -294,6 +302,10 @@ function applyRule(){
 			document.form.PM_attach_cfgfile.value = 1;
 		else
 			document.form.PM_attach_cfgfile.value = 0;
+		if(document.form.attach_modemlog.checked == true)
+			document.form.PM_attach_modemlog.value = 1;
+		else
+			document.form.PM_attach_modemlog.value = 0;
 		if(dsl_support){
 			if(document.form.attach_iptables.checked == true)
 				document.form.PM_attach_iptables.value = 1;
@@ -389,6 +401,7 @@ function change_dsl_diag_enable(value) {
 <input type="hidden" name="PM_attach_syslog" value="">
 <input type="hidden" name="PM_attach_cfgfile" value="">
 <input type="hidden" name="PM_attach_iptables" value="">	
+<input type="hidden" name="PM_attach_modemlog" value="">
 <input type="hidden" name="feedbackresponse" value="<% nvram_get("feedbackresponse"); %>">
 <input type="hidden" name="fb_experience" value="<% nvram_get("fb_experience"); %>">
 <input type="hidden" name="fb_browserInfo" value="">
@@ -447,6 +460,7 @@ function change_dsl_diag_enable(value) {
 	<input type="checkbox" class="input" name="attach_syslog" id="attach_syslog_id"><label for="attach_syslog_id"><#System_Log#></label>&nbsp;&nbsp;&nbsp;
 	<input type="checkbox" class="input" name="attach_cfgfile" id="attach_cfgfile_id"><label for="attach_cfgfile_id">Setting file</label>&nbsp;&nbsp;&nbsp;
 	<span id="attach_iptables_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_iptables" id="attach_iptables_id"><label for="attach_iptables_id">Iptable setting</label></span>
+	<span id="attach_modem_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_modemlog" id="attach_modemlog_id"><label for="attach_modemlog_id">3G/4G log</label></span>
 </td>
 </tr>
 

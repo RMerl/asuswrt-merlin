@@ -111,6 +111,9 @@ static void do_sync_work(struct work_struct *work)
 	 * Sync twice to reduce the possibility we skipped some inodes / pages
 	 * because they were temporarily locked
 	 */
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+	enable_oopsbuf(1);
+#endif
 	sync_filesystems(0);
 	sync_filesystems(0);
 	printk("Emergency Sync complete\n");

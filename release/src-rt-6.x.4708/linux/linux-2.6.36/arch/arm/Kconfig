@@ -1163,6 +1163,11 @@ config FAILSAFE_UPGRADE
         depends on BCM947XX
         default n
 
+config BCM_RECVFILE
+	bool "Recvfile Support"
+	depends on BCM947XX
+	default y
+
 config CRASHLOG
 	bool "Store Crashlog in nvram"
 	depends on BCM947XX

@@ -67,6 +67,9 @@ if(yadns_support){
 	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
 }
 
+var pppoe_username = decodeURIComponent('<% nvram_char_to_ascii("", "wan_pppoe_username"); %>');
+var pppoe_password = decodeURIComponent('<% nvram_char_to_ascii("", "wan_pppoe_passwd"); %>');
+
 function initial(){
 	if(!dualWAN_support){
 		if(wan_unit_flag == 1){	
@@ -86,8 +89,8 @@ function initial(){
 	var wan_type = document.form.wan_proto.value;
 	if(wan_type == "pppoe" || wan_type == "pptp" || wan_type == "l2tp" ||
 	   document.form.wan_auth_x.value != ""){
-		document.form.wan_pppoe_username.value = decodeURIComponent('<% nvram_char_to_ascii("", "wan_pppoe_username"); %>');
-		document.form.wan_pppoe_passwd.value = decodeURIComponent('<% nvram_char_to_ascii("", "wan_pppoe_passwd"); %>');
+		document.form.wan_pppoe_username.value = pppoe_username;
+		document.form.wan_pppoe_passwd.value = pppoe_password;
 	}
 
 	if(yadns_support){
@@ -133,9 +136,11 @@ function change_wan_unit(obj){
 	if(obj.options[obj.selectedIndex].text == "USB") {
 		document.form.current_page.value = "Advanced_Modem_Content.asp";
 	}else if(obj.options[obj.selectedIndex].text == "WAN" 
+			|| obj.options[obj.selectedIndex].text == "WAN2"
 			|| obj.options[obj.selectedIndex].text == "Ethernet LAN"
 			|| obj.options[obj.selectedIndex].text == "Ethernet WAN"){
-		if(wans_dualwan == "wan lan" || wans_dualwan == "lan wan"){
+		if((wans_dualwan == "wan lan" || wans_dualwan == "lan wan")
+				 || (wans_dualwan == "wan2 wan" || wans_dualwan == "wan wan2")){
 			if(obj.selectedIndex != wan_unit_flag){
 				document.form.wan_unit.value = obj.selectedIndex;
 			}	
@@ -177,7 +182,7 @@ function genWANSoption(){
 
 function applyRule(){
 	if(ctf.dhcpToPppoe() && ctf.getLevel() == 2){
-		if(confirm("<#ctf_confirm#>")){	/*Level 2 CTF can not be supported under PPPoE、PPTP or L2TP. If you want to switch to Level 1 CTF, please click confirm.*/
+		if(confirm("Level 2 CTF can not be supported under PPPoE、PPTP or L2TP. If you want to switch to Level 1 CTF, please click confirm.")){
 			document.form.ctf_disable_force.value = 0;
 			document.form.ctf_fa_mode.value = 0;	
 			FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
@@ -342,10 +347,25 @@ function validForm(){
 	
 	if(wan_type == "pppoe" || wan_type == "pptp" || wan_type == "l2tp" ||
 	   document.form.wan_auth_x.value != ""){
-		if(!validator.string(document.form.wan_pppoe_username)
-				|| !validator.string(document.form.wan_pppoe_passwd)
-				)
+	   	
+		if(document.form.wan_pppoe_username.value.length <= 0){
+			alert("<#WANJS9Text#>");
+			document.form.wan_pppoe_username.focus();
 			return false;
+		}
+		if(!validator.string(document.form.wan_pppoe_username)){
+			document.form.wan_pppoe_username.focus();
+			return false;
+		}
+		if(document.form.wan_pppoe_passwd.value.length <= 0){
+			alert("<#WANJS9Text#>");
+			document.form.wan_pppoe_passwd.focus();
+			return false;
+		}
+		if(!validator.string(document.form.wan_pppoe_passwd)){
+			document.form.wan_pppoe_passwd.focus();
+			return false;
+		}
 	}
 	
 	if(wan_type == "pppoe" || wan_type == "pptp" || wan_type == "l2tp"){
@@ -444,6 +464,10 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 0);
 		document.getElementById("vpn_dhcp").style.display = "";
+		if(based_modelid.toUpperCase().substr(0,3) != "DSL"){
+			inputCtrl(document.form.wan_ppp_echo[0], 1);
+			inputCtrl(document.form.wan_ppp_echo[1], 1);
+		}
 	}
 	else if(wan_type == "pptp"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
@@ -467,6 +491,8 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 1);
 		document.getElementById("vpn_dhcp").style.display = "none";
+		inputCtrl(document.form.wan_ppp_echo[0], 0);
+		inputCtrl(document.form.wan_ppp_echo[1], 0);
 	}
 	else if(wan_type == "l2tp"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
@@ -490,6 +516,8 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 1);
 		document.getElementById("vpn_dhcp").style.display = "none";
+		inputCtrl(document.form.wan_ppp_echo[0], 0);
+		inputCtrl(document.form.wan_ppp_echo[1], 0);
 	}
 	else if(wan_type == "static"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 0);
@@ -513,6 +541,8 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 0);
 		document.getElementById("vpn_dhcp").style.display = "none";
+		inputCtrl(document.form.wan_ppp_echo[0], 0);
+		inputCtrl(document.form.wan_ppp_echo[1], 0);
 	}
 	else{	// Automatic IP or 802.11 MD or ""		
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
@@ -536,6 +566,8 @@ function change_wan_type(wan_type, flag){
 		// 2008.03 James. patch for Oleg's patch. }
 		inputCtrl(document.form.wan_heartbeat_x, 0);
 		document.getElementById("vpn_dhcp").style.display = "none";
+		inputCtrl(document.form.wan_ppp_echo[0], 0);
+		inputCtrl(document.form.wan_ppp_echo[1], 0);
 	}
 }
 
@@ -740,13 +772,6 @@ function pass_checked(obj){
 	switchType(obj, document.form.show_pass_1.checked, true);
 }
 
-function change_pptp_options(obj){
-	if(obj.value == "+mppe-40")
-		document.getElementById("pptp_options_hint").style.display = "";
-	else
-		document.getElementById("pptp_options_hint").style.display = "none";
-}
-
 </script>
 </head>
 
@@ -781,10 +806,8 @@ function change_pptp_options(obj){
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" />
-<input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" />
-<input type="hidden" name="wan_pppoe_username_org" value="<% nvram_char_to_ascii("", "wan_pppoe_username"); %>" />
-<input type="hidden" name="wan_pppoe_passwd_org" value="<% nvram_char_to_ascii("", "wan_pppoe_passwd"); %>" />
+<input type="hidden" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>">
+<input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>">
 <input type="hidden" name="ctf_fa_mode" value="<% nvram_get("ctf_fa_mode"); %>">
 <input type="hidden" name="ctf_disable_force" value="<% nvram_get("ctf_disable_force"); %>">
 
@@ -932,10 +955,10 @@ function change_pptp_options(obj){
 							</tr>
 						</table>
 
-						<table id="DNSsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+				<table id="DNSsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
           		<thead>
             	<tr>
-              <td colspan="2"><#IPConnection_x_DNSServerEnable_sectionname#></td>
+            	<td colspan="2"><#IPConnection_x_DNSServerEnable_sectionname#></td>
             	</tr>
           		</thead>
          			<tr>
@@ -957,7 +980,7 @@ function change_pptp_options(obj){
           		</tr>
         		</table>
 
-		  			<table id="PPPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+		  		<table id="PPPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
             	<thead>
             	<tr>
               	<td colspan="2"><#PPPConnection_UserName_sectionname#></td>
@@ -977,15 +1000,15 @@ function change_pptp_options(obj){
 							</tr>
             	<tr>
               	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,4);"><#PPPConnection_UserName_itemname#></a></th>
-              	<td><input type="text" maxlength="64" class="input_32_table" name="wan_pppoe_username" value="<% nvram_get("wan_pppoe_username"); %>" autocomplete="off" onkeypress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off"></td>
+              	<td><input type="text" maxlength="64" class="input_32_table" name="wan_pppoe_username" value="" autocomplete="off" onkeypress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off"></td>
             	</tr>
             	<tr>
               	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,5);"><#PPPConnection_Password_itemname#></a></th>
               	<td>
-					<input type="password" maxlength="64" class="input_32_table" style="margin-top:2px;" id="wan_pppoe_passwd" name="wan_pppoe_passwd" value="<% nvram_get("wan_pppoe_passwd"); %>" autocomplete="off" autocorrect="off" autocapitalize="off">
-					<div style="margin-top:1px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.wan_pppoe_passwd);"><#QIS_show_pass#></div>
-				</td>
-            	</tr>
+									<input type="password" maxlength="64" class="input_32_table" style="margin-top:2px;" id="wan_pppoe_passwd" name="wan_pppoe_passwd" value="" autocomplete="off" autocorrect="off" autocapitalize="off">
+									<div style="margin-top:1px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.wan_pppoe_passwd);"><#QIS_show_pass#></div>
+								</td>
+            	</tr>            	
 							<tr style="display:none">
               	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,6);"><#PPPConnection_IdleDisconnectTime_itemname#></a></th>
               	<td>
@@ -1013,14 +1036,13 @@ function change_pptp_options(obj){
 		<tr>
 		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,17);"><#PPPConnection_x_PPTPOptions_itemname#></a></th>
 		<td>
-		<select name="wan_pptp_options_x" class="input_option" onChange="change_pptp_options(this);">
+		<select name="wan_pptp_options_x" class="input_option">
 			<option value="" <% nvram_match("wan_pptp_options_x", "","selected"); %>><#Auto#></option>
 			<option value="-mppc" <% nvram_match("wan_pptp_options_x", "-mppc","selected"); %>><#No_Encryp#></option>
 			<option value="+mppe-40" <% nvram_match("wan_pptp_options_x", "+mppe-40","selected"); %>>MPPE 40</option>
 			<!--option value="+mppe-56" <% nvram_match("wan_pptp_options_x", "+mppe-56","selected"); %>>MPPE 56</option-->
 			<option value="+mppe-128" <% nvram_match("wan_pptp_options_x", "+mppe-128","selected"); %>>MPPE 128</option>
 		</select>
-		<div id="pptp_options_hint" style="display:none; color:#FFCC00;"><#PPTPOptions_hint#></div>
 		</td>
 		</tr>
 		<tr>
@@ -1028,6 +1050,13 @@ function change_pptp_options(obj){
 		<td><input type="text" name="wan_pppoe_options_x" value="<% nvram_get("wan_pppoe_options_x"); %>" class="input_32_table" maxlength="255" onKeyPress="return validator.isString(this, event)" onBlur="validator.string(this)" autocorrect="off" autocapitalize="off"></td>
 		</tr>
 		<!-- 2008.03 James. patch for Oleg's patch. } -->
+		<tr>
+			<th><a class="hintstyle" href="javascript:void(0);">Enable PPP Echo Detect</a></th><!--untranslated-->
+			<td>
+				<input type="radio" name="wan_ppp_echo" class="input" value="1" <% nvram_match("wan_ppp_echo", "1", "checked"); %> /><#checkbox_Yes#>
+				<input type="radio" name="wan_ppp_echo" class="input" value="0" <% nvram_match("wan_ppp_echo", "0", "checked"); %> /><#checkbox_No#>
+			</td>
+		</tr>		
           </table>
 
       <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -1042,9 +1071,9 @@ function change_pptp_options(obj){
           	<!-- 2008.03 James. patch for Oleg's patch. { -->
           	<input type="text" name="wan_heartbeat_x" class="input_32_table" maxlength="256" value="<% nvram_get("wan_heartbeat_x"); %>" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off"></td>
           	<!-- 2008.03 James. patch for Oleg's patch. } -->
-		</tr>
+        	</tr>
 		<tr id="vpn_dhcp">
-		<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,);"--><#PPPConnection_x_vpn_dhcp_itemname#><!--/a--></th><!-- Enable VPN + DHCP Connection -->
+		<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,);"-->Enable VPN + DHCP Connection<!--/a--></th>
 		<td><input type="radio" name="wan_vpndhcp" class="input" value="1" onclick="return change_common_radio(this, 'IPConnection', 'wan_vpndhcp', 1)" <% nvram_match("wan_vpndhcp", "1", "checked"); %> /><#checkbox_Yes#>
 		    <input type="radio" name="wan_vpndhcp" class="input" value="0" onclick="return change_common_radio(this, 'IPConnection', 'wan_vpndhcp', 0)" <% nvram_match("wan_vpndhcp", "0", "checked"); %> /><#checkbox_No#>
 		</td>
@@ -1086,9 +1115,9 @@ function change_pptp_options(obj){
 				</td>
 		</tr>	
 		</table>
-	  <div class="apply_gen" style="height:auto">
+		<div class="apply_gen" style="height:auto">
 			<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
-	  </div>
+		</div>
 
                     </td>
                     </tr>

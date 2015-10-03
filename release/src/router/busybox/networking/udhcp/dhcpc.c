@@ -118,9 +118,6 @@ static const uint8_t len_of_option_as_string[] = {
 //	[OPTION_S16             ] = sizeof("-32768 "),
 	[OPTION_U32             ] = sizeof("4294967295 "),
 	[OPTION_S32             ] = sizeof("-2147483684 "),
-#if ENABLE_FEATURE_UDHCP_VIVSO
-	[OPTION_VIVSO			] = 1,
-#endif
 };
 
 /* note: ip is a pointer to an IP in network order, possibly misaliged */
@@ -208,10 +205,7 @@ static NOINLINE char *xmalloc_optname_optval(uint8_t *option, const struct dhcp_
 	unsigned upper_length;
 	int len, type, optlen;
 	char *dest, *ret;
-#if ENABLE_FEATURE_UDHCP_VIVSO
-	char oui[64], class[64], serial[64];
-#endif
-	
+
 	/* option points to OPT_DATA, need to go back to get OPT_LEN */
 	len = option[-OPT_DATA + OPT_LEN];
 
@@ -392,38 +386,6 @@ static NOINLINE char *xmalloc_optname_optval(uint8_t *option, const struct dhcp_
 					option += 4;
 				}
 			}
-			return ret;
-#endif
-#if ENABLE_FEATURE_UDHCP_VIVSO
-		case OPTION_VIVSO:
-			option += 5;
-			len -= 5;
-			while (1) {
-				int c = *option++;
-				int len_t = *option++;
-
-				//bb_info_msg("c: %d, len_t: %d", c, len_t);
-				switch(c) {
-					case 4:
-						snprintf(oui, len_t + 1, "%s", option);
-						break;
-					case 5:
-						snprintf(serial, len_t + 1, "%s", option);
-						break;
-					case 6:
-						snprintf(class, len_t + 1, "%s", option);
-						break;
-				}
-				
-				len -= 2 + len_t;
-				if (len <= 0)
-						break;
-				option += len_t;
-			}
-
-			if(oui[0] && class[0] && serial[0])
-				dest += sprintf(dest, "%s,%s,%s", oui, serial, class);
-
 			return ret;
 #endif
 		} /* switch */

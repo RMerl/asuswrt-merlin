@@ -96,6 +96,17 @@ function submitForm(){
 		}
 
 		if(parent.document.QKform.sw_mode.value == 4) {
+			if(document.form.lan_proto.value == "dhcp"){
+				document.mbform.lan_ipaddr.disabled  = true;
+				document.mbform.lan_netmask.disabled = true;
+				document.mbform.lan_gateway.disabled = true;
+			}
+			else{
+				document.mbform.lan_ipaddr.disabled  = false;
+				document.mbform.lan_netmask.disabled = false;
+				document.mbform.lan_gateway.disabled = false;			
+			}
+			
 			document.mbform.lan_ipaddr.value = document.form.lan_ipaddr.value;
 			document.mbform.lan_proto.value = document.form.lan_proto.value;
 			document.mbform.lan_netmask.value = document.form.lan_netmask.value;
@@ -132,6 +143,7 @@ function submitForm(){
 			else {
 				document.mbform.sw_mode.value = 3;
 			}
+			
 			document.mbform.submit();
 		}
 		else {
@@ -382,7 +394,7 @@ body{
 
 </style>
 <div>
-	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#LANHostConfig_display1_sectionname#></div>
+	<div style="font-size:1em;padding:10px 0 10px 15px;text-align:left;"><#LANHostConfig_display1_sectionname#></div>
 
 	<div style="display:table;width:100%;padding-left:15px;">
 		<div style="display:table-row">

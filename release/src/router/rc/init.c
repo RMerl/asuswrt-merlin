@@ -595,9 +595,15 @@ restore_defaults_wifi(int all)
 	unsigned int max_mssid;
 	char prefix[]="wlXXXXXX_", tmp[100];
 
-#if !defined(RTCONFIG_QCA) || !defined(RTCONFIG_RALINK)
+#if !defined(RTCONFIG_QCA) && !defined(RTCONFIG_RALINK)
+#ifdef RTAC1200G
+	if (strncmp(nvram_safe_get("territory_code"), "US", 2) && 
+	    strncmp(nvram_safe_get("territory_code"), "CA", 2))
+		return;
+#else 
 	if (strncmp(nvram_safe_get("territory_code"), "KR", 2))
 		return;
+#endif
 #endif
 
 	if (!strlen(nvram_safe_get("wifi_psk")))
@@ -1141,7 +1147,7 @@ restore_defaults(void)
 		case MODEL_RTAC5300:
 		case MODEL_RTAC88U:
 		case MODEL_RTAC3100:
-			nvram_set("reboot_time", "100");
+			nvram_set("reboot_time", "140");
 			break;
 		case MODEL_RTAC3200:
 		case MODEL_RTAC1200G:
@@ -1830,6 +1836,7 @@ int init_nvram(void)
 	nvram_set("dsllog_interleavedepthdown", "");//downstream interleave depth
 	nvram_set("dsllog_pathmodeup", "");//upstream path mode
 	nvram_set("dsllog_interleavedepthup", "");//upstream interleave depth
+	nvram_set("dsllog_vdslcurrentprofile", "");//VDSL current profile
 #endif
 
 #ifdef RTCONFIG_PUSH_EMAIL
@@ -2602,6 +2609,7 @@ int init_nvram(void)
 		nvram_set_int("led_2g_red_gpio", 17|GPIO_ACTIVE_LOW);
 
 		/* enable bled */
+		config_swports_bled_sleep("led_lan_gpio", 0);
 		//config_netdev_bled("led_2g_green_gpio", "ath0");
 		//config_netdev_bled("led_2g_orange_gpio", "ath0");
 		config_netdev_bled("led_2g_red_gpio", "ath0");
@@ -2646,6 +2654,8 @@ int init_nvram(void)
 
 		nvram_set_int("btn_rst_gpio", 2|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 1|GPIO_ACTIVE_LOW);
+		nvram_set_int("plc_wake_gpio", 14|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_pwr_red_gpio", 15|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_lan_gpio", 6|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_2g_green_gpio", 19|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_2g_red_gpio", 20|GPIO_ACTIVE_LOW);
@@ -2653,13 +2663,11 @@ int init_nvram(void)
 		nvram_set_int("led_5g_red_gpio", 7|GPIO_ACTIVE_LOW);
 
 		/* enable bled */
-#if 0
-		config_netdev_bled("led_lan_gpio", "eth0");
+		config_swports_bled_sleep("led_lan_gpio", 0);
 		config_netdev_bled("led_2g_green_gpio", "ath0");
-		config_netdev_bled("led_2g_red_gpio", "ath0");
+		//config_netdev_bled("led_2g_red_gpio", "ath0");
 		config_netdev_bled("led_5g_green_gpio", "ath1");
-		config_netdev_bled("led_5g_red_gpio", "ath1");
-#endif
+		//config_netdev_bled("led_5g_red_gpio", "ath1");
 
 		nvram_set("ct_max", "300000"); // force
 
@@ -3923,16 +3931,21 @@ int init_nvram(void)
 		nvram_set("wl2_vifnames", "wl2.1 wl2.2 wl2.3");
 	case MODEL_RTAC88U:
 	case MODEL_RTAC3100:
+
+		ldo_patch();
+
 		nvram_set("0:ledbh9", "0x7");
 		nvram_set("1:ledbh9", "0x7");
 #ifdef RTCONFIG_RGMII_BRCM5301X
-		nvram_unset("et0macaddr");
-		nvram_unset("et0mdcport");
-		nvram_unset("et0phyaddr");
-		nvram_set("vlan1hwname", "et1");
-		nvram_set("vlan2hwname", "et1");
-		nvram_set("et1mdcport", "0");
-		nvram_set("et1phyaddr", "30");
+		if(nvram_get_int("gmac3_enable")!=1){
+			nvram_unset("et0macaddr");
+			nvram_unset("et0mdcport");
+			nvram_unset("et0phyaddr");
+			nvram_set("vlan1hwname", "et1");
+			nvram_set("vlan2hwname", "et1");
+			nvram_set("et1mdcport", "0");
+			nvram_set("et1phyaddr", "30");
+		}
 		nvram_set("rgmii_port", "5");
 #else
 		nvram_unset("et1macaddr");
@@ -3963,7 +3976,8 @@ int init_nvram(void)
 				add_lan_phy("eth1");
 			if (!(get_wans_dualwan()&WANSCAP_5G)) {
 				add_lan_phy("eth2");
-				add_lan_phy("eth3");
+				if(model == MODEL_RTAC5300)
+					add_lan_phy("eth3");
 			}
 
 			if (nvram_get("wans_dualwan")) {
@@ -4709,8 +4723,8 @@ int init_nvram(void)
 		break;
 	case MODEL_RTN12HP:
 	case MODEL_RTN12HP_B1:
-		yadns_support = (nvram_match("regulation_domain", "RU")) ||
-				(nvram_match("regulation_domain", "EU") && nvram_match("sb/1/regrev", "5"));
+		yadns_support = (nvram_match("regulation_domain", "RU"));
+			//||(nvram_match("regulation_domain", "EU") && nvram_match("sb/1/regrev", "5"));
 		break;
 	}
 	if (yadns_support == 0)
@@ -4997,9 +5011,26 @@ int init_nvram(void)
 	add_rc_support("lacp");
 #endif
 #ifdef RTCONFIG_KEY_GUARD
-add_rc_support("keyGuard");
+	add_rc_support("keyGuard");
 #endif
-
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
+	if(!nvram_match("wifi_psk", ""))
+		add_rc_support("defpsk");
+#endif
+#ifdef RTCONFIG_REBOOT_SCHEDULE
+	add_rc_support("reboot_schedule");
+	// tmp to add default nvram
+	if(nvram_match("reboot_schedule_enable", ""))
+		nvram_set("reboot_schedule_enable", "0");
+	if(nvram_match("reboot_schedule", ""))
+		nvram_set("reboot_schedule", "00000000000");
+#endif
+#ifdef RTCONFIG_WTFAST
+	add_rc_support("wtfast");
+#endif
+#ifdef RTCONFIG_WIFILOGO
+	add_rc_support("wifilogo");
+#endif
 	return 0;
 }
 
@@ -5011,8 +5042,11 @@ int init_nvram2(void)
 
 	macp = get_lan_hwaddr();
 	ether_atoe(macp, mac_binary);
+#ifdef RTAC1200GP
+	sprintf(friendly_name, "%s-%02X%02X", "RT-AC1200GPLUS", mac_binary[4], mac_binary[5]);
+#else
 	sprintf(friendly_name, "%s-%02X%02X", get_productid(), mac_binary[4], mac_binary[5]);
-
+#endif
 	if (restore_defaults_g)
 	{
 		nvram_set("computer_name", friendly_name);
@@ -5366,22 +5400,47 @@ gmac3_override_nvram()
 	char newlists[NVRAM_MAX_PARAM_LEN];
 
 	/* back up old embedded nvram */
+#if defined(RTAC5300) || defined(RTAC88U)
+	if(strcmp(nvram_safe_get("et1macaddr"), "00:00:00:00:00:00") !=0 )
+		GMAC3_ENVRAM_BACKUP("et1macaddr");
+	if(strcmp(nvram_safe_get("vlan1hwname"), "et1") == 0 )
+		GMAC3_ENVRAM_BACKUP("vlan1hwname");
+	if(strcmp(nvram_safe_get("vlan1ports"), " 8u") == NULL)
+		GMAC3_ENVRAM_BACKUP("vlan1ports");
+	if(strcmp(nvram_safe_get("vlan2hwname"), "et1") ==0 )
+		GMAC3_ENVRAM_BACKUP("vlan2hwname");
+	if(strcmp(nvram_safe_get("vlan2ports"), " 8u") == NULL)
+		GMAC3_ENVRAM_BACKUP("vlan2ports");
+	if(strcmp(nvram_safe_get("wandevs"), "et1") ==0 )
+		GMAC3_ENVRAM_BACKUP("wandevs");
+#else
 	GMAC3_ENVRAM_BACKUP("et0macaddr");
 	GMAC3_ENVRAM_BACKUP("et1macaddr");
 	GMAC3_ENVRAM_BACKUP("et2macaddr");
+	GMAC3_ENVRAM_BACKUP("vlan1hwname");
+	GMAC3_ENVRAM_BACKUP("vlan1ports");
+	GMAC3_ENVRAM_BACKUP("vlan2hwname");
+	GMAC3_ENVRAM_BACKUP("vlan2ports");
+	GMAC3_ENVRAM_BACKUP("wandevs");
+#endif
 	GMAC3_ENVRAM_BACKUP("et0mdcport");
 	GMAC3_ENVRAM_BACKUP("et1mdcport");
 	GMAC3_ENVRAM_BACKUP("et2mdcport");
 	GMAC3_ENVRAM_BACKUP("et0phyaddr");
 	GMAC3_ENVRAM_BACKUP("et1phyaddr");
 	GMAC3_ENVRAM_BACKUP("et2phyaddr");
-	GMAC3_ENVRAM_BACKUP("vlan1ports");
-	GMAC3_ENVRAM_BACKUP("vlan2ports");
-	GMAC3_ENVRAM_BACKUP("vlan1hwname");
-	GMAC3_ENVRAM_BACKUP("vlan2hwname");
-	GMAC3_ENVRAM_BACKUP("wandevs");
 
 	/* change mac, mdcport, phyaddr */
+#if defined(RTAC5300) || defined(RTAC3100) || defined(RTAC88U)
+	if(strcmp(nvram_safe_get("et1macaddr"), "00:00:00:00:00:00") !=0 )
+		nvram_set("et2macaddr", nvram_get("et1macaddr"));
+	nvram_set("et2mdcport", nvram_get("et1mdcport"));
+	nvram_set("et2phyaddr", nvram_get("et1phyaddr"));
+	nvram_set("et0mdcport", nvram_get("et1mdcport"));
+	nvram_set("et0phyaddr", nvram_get("et1phyaddr"));
+	nvram_set("et0macaddr", "00:00:00:00:00:00");
+	nvram_set("et1macaddr", "00:00:00:00:00:00");
+#else
 	nvram_set("et2macaddr", nvram_get("et0macaddr"));
 	nvram_set("et2mdcport", nvram_get("et0mdcport"));
 	nvram_set("et2phyaddr", nvram_get("et0phyaddr"));
@@ -5389,6 +5448,7 @@ gmac3_override_nvram()
 	nvram_set("et1phyaddr", nvram_get("et0phyaddr"));
 	nvram_set("et0macaddr", "00:00:00:00:00:00");
 	nvram_set("et1macaddr", "00:00:00:00:00:00");
+#endif
 
 	/* change vlan ports */
 	if (!(lists = nvram_get("vlan1ports"))) {
@@ -5460,7 +5520,13 @@ gmac3_override_nvram()
 	}
 
 	/* set fwddevs */
+#if defined(RTAC5300)
 	nvram_set("fwddevs", "fwd0 fwd1");
+#else	/* RTAC88U */
+	nvram_set("fwddevs", "fwd1");
+	nvram_set("fwd_cpumap", "d:x:2:163:1 d:l:5:169:1");
+	nvram_set("fwd_wlandevs", "eth1 eth2");
+#endif
 }
 
 #define GMAC3_ENVRAM_RESTORE(name)				\
@@ -5481,7 +5547,12 @@ gmac3_restore_nvram()
 {
 	/* back up old embedded nvram */
 	GMAC3_ENVRAM_RESTORE("et0macaddr");
+#if defined(RTAC5300)|| defined(RTAC88U)
+	if(strcmp(nvram_safe_get("old_et1macaddr"), "00:00:00:00:00:00") != 0 )
+		GMAC3_ENVRAM_RESTORE("et1macaddr");
+#else
 	GMAC3_ENVRAM_RESTORE("et1macaddr");
+#endif
 	GMAC3_ENVRAM_RESTORE("et2macaddr");
 	GMAC3_ENVRAM_RESTORE("et0mdcport");
 	GMAC3_ENVRAM_RESTORE("et1mdcport");
@@ -5525,8 +5596,13 @@ gmac3_nvram_adjust()
 
 	/* nvram variables will be changed when gmac3_enable */
 	if (!strcmp(nvram_safe_get("wandevs"), "et2") &&
+#if defined(RTAC5300) || defined(RTAC88U)
+	    nvram_get("fwd_wlandevs") && (strlen(nvram_get("fwd_wlandevs")) > 3) &&
+	    nvram_get("fwddevs"))
+#else
 	    nvram_get("fwd_wlandevs") &&
 	    nvram_get("fwddevs"))
+#endif
 		gmac3_configured = TRUE;
 
 	fa_mode = nvram_get_int("ctf_fa_mode");
@@ -5550,7 +5626,12 @@ gmac3_nvram_adjust()
 			_reboot = TRUE;
 		} else {
 			_dprintf("\nGMAC3 off.\n");
-			if (gmac3_configured) {
+#if defined(RTAC5300) || defined(RTAC88U)
+			if (gmac3_configured ||
+				(strlen(nvram_safe_get("fwd_wlandevs")) > 0 || strlen(nvram_safe_get("fwddevs") ) > 0)) {
+#else
+			if (gmac3_configured){
+#endif
 				gmac3_restore_nvram();
 				_reboot = TRUE;
 			}
@@ -6383,9 +6464,13 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			 */
 			if (state == SIGHUP /* RESTART */)
 				add_remove_usbhost("-1", 1);
-#endif
+
 #ifdef RTCONFIG_USB_PRINTER
 			start_usblpsrv();
+#endif
+#ifdef RTCONFIG_BCMARM
+			hotplug_usb_init();
+#endif
 #endif
 
 			nvram_set("success_start_service", "1");

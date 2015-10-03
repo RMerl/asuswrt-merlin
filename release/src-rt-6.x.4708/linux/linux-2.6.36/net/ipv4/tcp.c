@@ -1467,8 +1467,27 @@ int BCMFASTPATH_HOST tcp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msg
 	do {
 		u32 offset;
 
+#if defined(CONFIG_BCM_RECVFILE)
+		if (flags & MSG_NOCATCHSIG) {
+			if (signal_pending(current)) {
+				if (sigismember(&current->pending.signal, SIGQUIT) ||
+				    sigismember(&current->pending.signal, SIGABRT) ||
+				    sigismember(&current->pending.signal, SIGKILL) ||
+				    sigismember(&current->pending.signal, SIGTERM) ||
+				    sigismember(&current->pending.signal, SIGSTOP)) {
+					if (copied)
+						break;
+					copied = timeo ? sock_intr_errno(timeo) : -EAGAIN;
+					break;
+				}
+			}
+		}
+		else if (tp->urg_data && tp->urg_seq == *seq)
+#else /* !CONFIG_BCM_RECVFILE */
 		/* Are we at urgent data? Stop if we have read anything or have SIGURG pending. */
-		if (tp->urg_data && tp->urg_seq == *seq) {
+		if (tp->urg_data && tp->urg_seq == *seq)
+#endif /* CONFIG_BCM_RECVFILE */
+		{
 			if (copied)
 				break;
 			if (signal_pending(current)) {
@@ -1697,8 +1716,17 @@ do_prequeue:
 			} else
 #endif
 			{
+#if defined(CONFIG_BCM_RECVFILE)
+				if(msg->msg_flags & MSG_KERNSPACE) {
+					err = skb_copy_datagram_to_kernel_iovec(skb,
+							offset, msg->msg_iov, used);
+				}
+				else
+#endif /* CONFIG_BCM_RECVFILE */
+				{
 				err = skb_copy_datagram_iovec(skb, offset,
 						msg->msg_iov, used);
+				}
 				if (err) {
 					/* Exception. Bailout! */
 					if (!copied)

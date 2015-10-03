@@ -426,3 +426,11 @@ ifneq ($(RTCONFIG_DISK_MONITOR), y)
 	rm -rf $(INSTALLDIR)/www/device-map/disk_utility.asp
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/backgroud_move_8P_2.0.gif
 endif
+
+ifneq ($(RTCONFIG_WTFAST), y)
+	rm -rf $(INSTALLDIR)/www/Advanced_WTFast_Content.asp
+	rm -rf $(INSTALLDIR)/www/js/fire.js
+	rm -rf $(INSTALLDIR)/www/images/fire.jpg
+	rm -rf $(INSTALLDIR)/www/images/wtfast_bg.jpg
+	rm -rf $(INSTALLDIR)/www/images/wtfast_logo.png
+endif

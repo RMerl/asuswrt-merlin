@@ -1,6 +1,0 @@
-Now, the STP instance is fully shutdown when the bridge is down, so it
-is not possible to reconfigure RSTP at that time.
-
-We need better notifications about bridges and bridge ports getting
-added and removed, independent of whether the interfaces are up or
-down.

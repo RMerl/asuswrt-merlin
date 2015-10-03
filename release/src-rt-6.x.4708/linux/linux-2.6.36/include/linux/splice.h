@@ -57,6 +57,16 @@ struct splice_pipe_desc {
 	void (*spd_release)(struct splice_pipe_desc *, unsigned int);
 };
 
+#if defined(CONFIG_BCM_RECVFILE)
+struct recvfile_ctl_blk
+{
+	struct page *rv_page;
+	loff_t rv_pos;
+	size_t rv_count;
+	void *rv_fsdata;
+};
+#endif /* CONFIG_BCM_RECVFILE */
+
 typedef int (splice_actor)(struct pipe_inode_info *, struct pipe_buffer *,
 			   struct splice_desc *);
 typedef int (splice_direct_actor)(struct pipe_inode_info *,

@@ -66,6 +66,7 @@ copy-prebuild:
 		cp ../prebuild/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
 		cp ../prebuild/mod_sharelink.so.l .libs/mod_sharelink.so; \
 		cp ../prebuild/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
+		cp ../prebuild/mod_query_field_json.so.l .libs/mod_query_field_json.so; \
 	fi
 
 copy-prebuild-arm:
@@ -74,6 +75,7 @@ copy-prebuild-arm:
 		cp ../prebuild_arm/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
 		cp ../prebuild_arm/mod_sharelink.so.l .libs/mod_sharelink.so; \
 		cp ../prebuild_arm/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
+		cp ../prebuild_arm/mod_query_field_json.so.l .libs/mod_query_field_json.so; \
 	fi
 
 copy-prebuild-arm-qtn:
@@ -82,6 +84,7 @@ copy-prebuild-arm-qtn:
 		cp ../prebuild_arm_qtn/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
 		cp ../prebuild_arm_qtn/mod_sharelink.so.l .libs/mod_sharelink.so; \
 		cp ../prebuild_arm_qtn/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
+		cp ../prebuild_arm_qtn/mod_query_field_json.so.l .libs/mod_query_field_json.so; \
 	fi
 BUILT_SOURCES = parsers versionstamp 
 MAINTAINERCLEANFILES = configparser.c configparser.h mod_ssi_exprparser.c mod_ssi_exprparser.h

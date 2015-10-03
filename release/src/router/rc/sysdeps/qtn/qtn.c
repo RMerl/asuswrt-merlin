@@ -818,6 +818,7 @@ int gen_stateless_conf(void)
 	uint32_t index = 0;
 
 	sprintf(ssid, "%s", nvram_safe_get("wl1_ssid"));
+	memset(tmpssid, 0, sizeof(tmpssid));
 	fix_script_err(ssid, tmpssid);
 	strncpy(ssid, tmpssid, sizeof(ssid));
 
@@ -838,10 +839,12 @@ int gen_stateless_conf(void)
 		strncpy(auth, nvram_safe_get("wlc_auth_mode"), sizeof(auth));
 		strncpy(crypto, nvram_safe_get("wlc_crypto"), sizeof(crypto));
 		strncpy(key, nvram_safe_get("wlc_wpa_psk"), sizeof(key));
+		memset(tmpkey, 0, sizeof(tmpkey));
 		fix_script_err(key, tmpkey);
 		strncpy(key, tmpkey, sizeof(key));
 
 		strncpy(ssid, nvram_safe_get("wlc_ssid"), sizeof(ssid));
+		memset(tmpssid, 0, sizeof(tmpssid));
 		fix_script_err(ssid, tmpssid);
 		strncpy(ssid, tmpssid, sizeof(ssid));
 		fprintf(fp, "wifi0_SSID=\"%s\"\n", ssid);
@@ -882,11 +885,13 @@ int gen_stateless_conf(void)
 		strncpy(auth, nvram_safe_get("wl1_auth_mode_x"), sizeof(auth));
 		strncpy(crypto, nvram_safe_get("wl1_crypto"), sizeof(crypto));
 		strncpy(key, nvram_safe_get("wl1_wpa_psk"), sizeof(key));
+		memset(tmpkey, 0, sizeof(tmpkey));
 		fix_script_err(key, tmpkey);
 		strncpy(key, tmpkey, sizeof(key));
 
 
 		strncpy(ssid, nvram_safe_get("wl1_ssid"), sizeof(ssid));
+		memset(tmpssid, 0, sizeof(tmpssid));
 		fix_script_err(ssid, tmpssid);
 		strncpy(ssid, tmpssid, sizeof(ssid));
 		fprintf(fp, "wifi0_SSID=\"%s\"\n", ssid);
@@ -933,6 +938,11 @@ int gen_stateless_conf(void)
 		fprintf(fp, "wifi0_bf=1\n");
 	}else{
 		fprintf(fp, "wifi0_bf=0\n");
+	}
+	if(nvram_get_int("wl1_mumimo") == 1){
+		fprintf(fp, "wifi0_mu=1\n");
+	}else{
+		fprintf(fp, "wifi0_mu=0\n");
 	}
 	fprintf(fp, "wifi0_staticip=1\n");
 	fprintf(fp, "slave_ipaddr=\"192.168.1.111/16\"\n");

@@ -331,6 +331,9 @@ void oops_enter(void)
 	/* can't trust the integrity of the kernel anymore: */
 	debug_locks_off();
 	do_oops_enter_exit();
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+	enable_oopsbuf(1);
+#endif
 }
 
 /*

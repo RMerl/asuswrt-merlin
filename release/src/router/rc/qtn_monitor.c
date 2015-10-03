@@ -156,8 +156,18 @@ void rpc_parse_nvram_from_httpd(int unit, int subunit)
 			if (ret < 0)
 				dbG("rpc_qcsapi_wifi_disable_wps %s error, return: %d\n", WIFINAME, ret);
 		}
-
-
+		if(nvram_get_int("sw_mode") == SW_MODE_ROUTER ||
+			(nvram_get_int("sw_mode") == SW_MODE_AP && nvram_get_int("wlc_psta") == 1)){
+			if(nvram_get_int("wl1_mumimo") == 1){
+				dbG("mu-mimo: enable MU-MIMO\n");
+				ret = qcsapi_wifi_set_enable_mu(WIFINAME, 1);
+			}else{
+				dbG("mu-mimo: disable MU-MIMO\n");
+				 qcsapi_wifi_set_enable_mu(WIFINAME, 0);
+			}
+			if (ret < 0)
+				dbG("enable_mu %s error, return: %d\n", WIFINAME, ret);
+		}
 	}else if (unit == 1 && subunit == 1){
 		if(nvram_get_int("wl1.1_bss_enabled") == 1){
 			rpc_update_mbss("wl1.1_ssid", nvram_safe_get("wl1.1_ssid"));

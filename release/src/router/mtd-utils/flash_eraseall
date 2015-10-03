@@ -1,4 +1,0 @@
-#!/bin/sh
-echo "${0##*/} has been replaced by \`flash_erase <mtddev> 0 0\`; please use it" 1>&2
-[ $# -ne 0 ] && set -- "$@" 0 0
-exec flash_erase "$@"

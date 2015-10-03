@@ -2,7 +2,6 @@
 # $Id: Makefile 382663 2013-02-03 04:40:03Z $
 #
 
-include ../../common.mak
 CROSS =
 CC = $(CROSS)gcc
 AR = $(CROSS)ar
@@ -29,8 +28,8 @@ $(ALL_OBJS): %.o: %.c
 	$(CC) $(CCFLAGS) -c $<
 
 install: all
-	install -d $(INSTALLDIR)/igs$(BCMEX)$(DPI)$(EX7)/usr/sbin
-	install -m 755 igs $(INSTALLDIR)/igs$(BCMEX)$(DPI)$(EX7)/usr/sbin
+	install -d $(INSTALLDIR)/igs$(BCMEX)/usr/sbin
+	install -m 755 igs $(INSTALLDIR)/igs$(BCMEX)/usr/sbin
 
 .PHONY:	clean
 clean:

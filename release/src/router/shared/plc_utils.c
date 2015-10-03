@@ -59,6 +59,33 @@ key_etoa(const unsigned char *e, char *a)
 }
 
 /*
+ * increase n to mac last 24 bits and handle a carry problem
+ */
+static void inc_mac(unsigned char n, unsigned char *mac)
+{
+	int c = 0;
+
+	//dbg("MAC + %u\n", n);
+
+	if (mac[5] >= (0xff - n + 1))
+		c = 1;
+	else
+		c = 0;
+	mac[5] += n;
+
+	if (c == 1) {
+		if (mac[4] >= 0xff)
+			c = 1;
+		else
+			c = 0;
+		mac[4] += 1;
+
+		if (c == 1)
+			mac[3] += 1;
+	}
+}
+
+/*
  * check PLC MAC/Key
  * reference isValidMacAddr() in rc/ate.c
  */
@@ -153,6 +180,7 @@ static int __getPLC_PWD(unsigned char *emac, char *pwd)
 	int len;
 	char cmd[64], buf[32];
 
+	inc_mac(2, emac);
 	sprintf(cmd, "/usr/local/bin/mac2pw -q %02x%02x%02x%02x%02x%02x", emac[0], emac[1], emac[2], emac[3], emac[4], emac[5]);
 	fp = popen(cmd, "r");
 	if (fp) {
@@ -712,7 +740,7 @@ void turn_led_pwr_off(void)
 
 	nvram_set("plc_ready", "1");
 
-#if defined(PLN12)
+#if (defined(PLN12) || defined(PLAC56))
 	led_control(LED_POWER_RED, LED_OFF);
 #endif
 }

@@ -131,6 +131,7 @@ var originData = {
 	staticList: decodeURIComponent('<% nvram_char_to_ascii("", "dhcp_staticlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	fromNetworkmapd: '<% get_client_detail_info(); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	fromBWDPI: '<% bwdpi_device_info(); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
+	nmpClient: decodeURIComponent('<% nvram_char_to_ascii("", "nmp_client_list"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'), //Record the client connected to the router before.
 	wlList_2g: [<% wl_sta_list_2g(); %>],
 	wlList_5g: [<% wl_sta_list_5g(); %>],
 	wlList_5g_2: [<% wl_sta_list_5g_2(); %>],
@@ -305,13 +306,7 @@ function genClientList(){
 		clientList[thisClientMacAddr].isOnline = true;
 		totalClientNum.online++;
 
-		var ouiVenderName = "";
-		if(ouiClientListArray[thisClientMacAddr] != undefined) {
-			ouiVenderName = ouiClientListArray[thisClientMacAddr];
-			ouiVenderName = ouiVenderName.toLowerCase();
-			ouiVenderName = ouiVenderName.toUpperCase().charAt(0) + ouiVenderName.substring(1);
-		}
-		clientList[thisClientMacAddr].dpiVender = ouiVenderName;
+		clientList[thisClientMacAddr].dpiVender = "Asus";
 		updateTimeScheduling();
 	}
 
@@ -380,6 +375,7 @@ function genClientList(){
 		clientList[thisClientMacAddr].isWebServer = (thisClient[4] == 0) ? false : true;
 		clientList[thisClientMacAddr].isPrinter = (thisClient[5] == 0) ? false : true;
 		clientList[thisClientMacAddr].isITunes = (thisClient[6] == 0) ? false : true;
+		clientList[thisClientMacAddr].dpiDevice = (typeof thisClient[7] == "undefined") ? "" : thisClient[7]; //This field just for apple model
 		clientList[thisClientMacAddr].isOnline = true;
 		totalClientNum.online++;
 
@@ -487,6 +483,54 @@ function genClientList(){
 				ouiVenderName = ouiVenderName.toUpperCase().charAt(0) + ouiVenderName.substring(1);
 			}
 			clientList[thisClientMacAddr].dpiVender = ouiVenderName;
+		}
+	}
+
+	for(var i = 0; i < originData.nmpClient.length; i += 1) {
+		var thisClient = originData.nmpClient[i].split(">");
+		var thisClientMacAddr = ((typeof thisClient[0] == "undefined") || thisClient[0] == "" || thisClient[0].length != 12) ? false : thisClient[0].toUpperCase().substring(0, 2) + ":" + 
+		thisClient[0].toUpperCase().substring(2, 4) + ":" + thisClient[0].toUpperCase().substring(4, 6) + ":" + thisClient[0].toUpperCase().substring(6, 8) + ":" + 
+		thisClient[0].toUpperCase().substring(8, 10) + ":" + thisClient[0].toUpperCase().substring(10, 12);
+
+		if(!thisClientMacAddr) {
+			continue;
+		}
+
+		if(typeof clientList[thisClientMacAddr] == "undefined") {
+			var thisClientType = (typeof thisClient[4] == "undefined") ? "0" : thisClient[4];
+			var thisClientName = (typeof thisClient[2] == "undefined") ? thisClientMacAddr : thisClient[2].trim();
+
+			clientList.push(thisClientMacAddr);
+			clientList[thisClientMacAddr] = new setClientAttr();
+			clientList[thisClientMacAddr].from = "nmpClient";
+
+			clientList[thisClientMacAddr].type = thisClientType;
+			clientList[thisClientMacAddr].defaultType = thisClientType;
+			clientList[thisClientMacAddr].mac = thisClientMacAddr;
+
+			var replaceClientName = function(_name, _mac) {
+				var filterStr = "android";
+				var replaceName = _name;
+				if(replaceName == _mac) {
+					if(ouiClientListArray[_mac]) {
+						replaceName = ouiClientListArray[_mac].toUpperCase().charAt(0) + ouiClientListArray[_mac].substring(1);
+					}
+				}
+				else {
+					if(_name.search(filterStr) != -1) {
+						if(ouiClientListArray[_mac]) {
+							replaceName = ouiClientListArray[_mac].toUpperCase().charAt(0) + ouiClientListArray[_mac].substring(1);
+						}
+					}
+				}
+				return replaceName;
+			};
+			clientList[thisClientMacAddr].name = replaceClientName(thisClientName, thisClientMacAddr);
+
+			if(thisClientName != thisClientMacAddr) {
+				clientList[thisClientMacAddr].type = convType(thisClientName);
+				clientList[thisClientMacAddr].defaultType = clientList[thisClientMacAddr].type;
+			}
 		}
 	}
 
@@ -883,7 +927,7 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 	code += '</td></tr>';
 	//device title info. end
 
-	code += '<tr><td colspan="2"><img style="width:100%;height:2px" src="/images/New_ui/networkmap/linetwo2.png"></td></tr>';
+	code += '<tr><td colspan="2"><div class="clientList_line"></div></td></tr>';
 
 	//device icon and device info. start
 	code += '<tr>';
@@ -1083,7 +1127,7 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 		document.getElementById("card_client_iTunes").innerHTML = "iTunes"; /*untranslated*/
 	}
 	if(clientInfo.opMode != 0) {
-		var opModeDes = ["none", "<#wireless_router#>", "<#OP_RE_item#>", "<#OP_AP_item#>", "Media bridge"];
+		var opModeDes = ["none", "<#wireless_router#>", "<#OP_RE_item#>", "<#OP_AP_item#>", "<#OP_MB_item#>"];
 		document.getElementById("card_client_opMode").style.display = "";
 		document.getElementById("card_client_opMode").innerHTML = opModeDes[clientInfo.opMode];
 	}

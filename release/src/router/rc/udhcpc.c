@@ -36,6 +36,55 @@
 /* Support for Domain Search List */
 #undef DHCP_RFC3397
 
+/* returns: pointer to dest
+ * dest size must be lagre enough to accept n bytes from
+   src in hex representation plus one \0 byte */
+static char *
+bin2hex(char *dest, size_t size, const void *src, size_t n)
+{
+	unsigned char *sptr = (unsigned char *) src;
+	unsigned char *send = sptr + n;
+	char *dptr = dest;
+
+	while (sptr < send && size > 2) {
+		n = snprintf(dptr, size, "%02x", *sptr++);
+		dptr += n;
+		size -= n;
+	}
+	return dest;
+}
+
+#ifdef RTCONFIG_TR069
+/* returns:
+ *  NULL on NULL value or alloc error
+ *  binary representation of hex value on success
+ * if size if specified, returns actual size of parsed value
+ * note: value is alloced and needs to be free() */
+static char *
+hex2bin(const char *value, size_t *size)
+{
+	char buf[3], *src, *tmp;
+	unsigned char *dst, *ptr;
+
+	if (!(src = (char *) value) ||
+	    !(dst = calloc(1, strlen(src)/2 + 1)))
+		return NULL;
+
+	memset(buf, 0, sizeof(buf));
+	for (ptr = dst; src[0] && src[1]; ptr++) {
+		buf[0] = *src++;
+		buf[1] = *src++;
+		*ptr = strtoul(buf, &tmp, 16);
+		if (tmp == buf || *tmp)
+			break;
+	}
+	if (size)
+		*size = ptr - dst;
+
+	return dst;
+}
+#endif
+
 /* set nvram to value
  * returns:
  *  0 if not changed
@@ -66,6 +115,88 @@ nvram_set_env(const char *name, const char *env)
 
 	return nvram_set_check(name, evalue);
 }
+
+struct viopt_hdr {
+	unsigned int entnum;
+	unsigned char len;
+	unsigned char data[0];
+} __attribute__ ((__packed__));
+
+struct opt_hdr {
+	unsigned char id;
+	unsigned char len;
+	unsigned char data[0];
+} __attribute__ ((__packed__));
+
+#ifdef RTCONFIG_TR069
+#ifdef RTCONFIG_TR181
+static struct viopt_hdr *
+viopt_get(const void *buf, size_t size, unsigned int entnum)
+{
+	struct viopt_hdr *opt;
+	unsigned char *ptr = (unsigned char *) buf;
+	unsigned char *end = (unsigned char *) buf + size;
+
+	while (ptr + sizeof(*opt) <= end) {
+		opt = (struct viopt_hdr *) ptr;
+		if ((ptr += sizeof(*opt) + opt->len) > end)
+			break;
+		if (opt->entnum == entnum)
+			return opt;
+	}
+
+	return NULL;
+}
+#endif
+
+static struct opt_hdr *
+opt_get(const void *buf, size_t size, unsigned char id)
+{
+	struct opt_hdr *opt;
+	unsigned char *ptr = (unsigned char *) buf;
+	unsigned char *end = (unsigned char *) buf + size;
+
+	while (ptr + sizeof(*opt) <= end) {
+		opt = (struct opt_hdr *) ptr;
+		if (opt->id == 0) {
+			ptr++;
+			continue;
+		} else if (opt->id == 255)
+			break;
+		if ((ptr += sizeof(*opt) + opt->len) > end)
+			break;
+		if (opt->id == id)
+			return opt;
+	}
+
+	return NULL;
+}
+
+static char
+*stropt(const struct opt_hdr *opt, char *buf)
+{
+	strncpy(buf, opt->data, opt->len);
+	buf[opt->len] = '\0';
+	return buf;
+}
+
+#ifdef RTCONFIG_TR181
+static int
+opt_add(const void *buf, size_t size, unsigned char id, void *data, unsigned char len)
+{
+	struct opt_hdr *opt = (struct opt_hdr *) buf;
+
+	if (size >= sizeof(*opt) + len) {
+		opt->id = id;
+		opt->len = len;
+		memcpy(opt->data, data, len);
+		return sizeof(*opt) + len;
+	}
+
+	return 0;
+}
+#endif
+#endif
 
 static int
 expires(char *wan_ifname, unsigned int in)
@@ -142,6 +273,9 @@ bound(void)
 	char wanprefix[sizeof("wanXXXXXXXXXX_")];
 	int unit, ifunit;
 	int changed = 0;
+#ifdef RTCONFIG_TR069
+	int size;
+#endif
 
 	/* Figure out nvram variable name prefix for this i/f */
 	if ((ifunit = wan_prefix(wan_ifname, wanprefix)) < 0)
@@ -196,12 +330,6 @@ bound(void)
 		expires(wan_ifname, lease);
 	}
 
-#if defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181)
-	if ((value = getenv("vivso")))
-		nvram_set("vivso", trim_r(value));
-	else	nvram_unset("vivso");
-#endif
-
 	/* classful static routes */
 	nvram_set(strcat_r(prefix, "routes", tmp), getenv("routes"));
 	/* ms classless static routes */
@@ -226,6 +354,48 @@ bound(void)
 		}
 		free(ptr);
 	}
+#endif
+
+#ifdef RTCONFIG_TR069
+	if ((value = getenv("opt43")) && nvram_get_int("tr_discovery") &&
+	    (value = hex2bin(value, &size))) {
+		struct opt_hdr *opt;
+		char buf[256], *url = NULL;
+		if ((opt = opt_get(value, size, 1)) &&
+		    strstr(stropt(opt, buf), "://") > buf)
+			url = buf;
+		else if (strstr(value, "://") > value)
+			url = trim_r(value);
+		if (url && *url) {
+			nvram_set("tr_acs_url", url);
+			nvram_set_int("tr_enable", 1);
+		}
+		//if ((opt = opt_get(value, size, 1)))
+		//	nvram_set(strcat_r(wanprefix, "tr_acs_url", tmp), stropt(opt, buf));
+		//if ((opt = opt_get(value, size, 2)))
+		//	nvram_set(strcat_r(wanprefix, "tr_pvgcode", tmp), stropt(opt, buf));
+		free(value);
+	}
+#ifdef RTCONFIG_TR181
+	nvram_unset("vivso");
+	if ((value = hex2bin(getenv("opt125"), &size))) {
+		struct viopt_hdr *viopt;
+		struct opt_hdr *oui, *serial, *class;
+		if ((viopt = viopt_get(value, size, htonl(3561))) &&
+		    (oui = opt_get(viopt->data, viopt->len, 4)) &&
+		    (serial = opt_get(viopt->data, viopt->len, 5))) {
+			char vivso[6 + 64 + 64 + 3];
+			char *ptr = vivso;
+			char *end = ptr + sizeof(vivso);
+			ptr += snprintf(ptr, end - ptr, "%s,", stropt(oui, tmp));
+			ptr += snprintf(ptr, end - ptr, "%s,", stropt(serial, tmp));
+			if ((class = opt_get(viopt->data, viopt->len, 6)))
+				ptr += snprintf(ptr, end - ptr, "%s", stropt(class, tmp));
+			nvram_set("vivso", vivso);
+		}
+		free(value);
+	}
+#endif
 #endif
 
 	// check if the ipaddr is safe to apply
@@ -400,6 +570,11 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
 	char clientid[sizeof("61:") + (32+32+1)*2];
+#if defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181)
+	unsigned char optbuf[sizeof(struct viopt_hdr) + 128];
+	unsigned char hwaddr[6];
+	char vivopts[sizeof("125:") + sizeof(optbuf)*2];
+#endif
 	char *value;
 	char *dhcp_argv[] = { "/sbin/udhcpc",
 		"-i", wan_ifname,
@@ -420,22 +595,18 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 #ifdef RTCONFIG_DSL
 		NULL, NULL,	/* -x 61:wan_clientid */
 #endif
-#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
-		NULL, 		/* -x 125:vivso */
+#ifdef RTCONFIG_TR069
+		NULL, NULL,	/* -V dslforum.org */
+		NULL,		/* -O43 */
+#ifdef RTCONFIG_TR181
+		NULL, NULL,	/* -x 125:vivopts */
+#endif
 #endif
 		NULL, NULL,	/* -x 61:wan_clientid (non-DSL) */
 		NULL };
 	int index = 7;		/* first NULL */
 	int dr_enable;
-#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
-	unsigned char hwaddr[6];
-	char buf_tmp[128], serial_buf[128], oui_buf[32], class_buf[128];
-	char vivso[256];
-	int i = 0;
-	char *c = NULL;
-	int len = 0;
-	char tmp_str[4];
-#endif
+
 	/* Use unit */
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
@@ -486,10 +657,8 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 #ifdef RTCONFIG_DSL
 	value = nvram_safe_get(strcat_r(prefix, "clientid", tmp));
 	if (*value) {
-		char *ptr = clientid;
-		ptr += sprintf(ptr, "61:");
-		while (*value && (ptr - clientid) < sizeof(clientid) - 2)
-			ptr += sprintf(ptr, "%02x", *value++);
+		int len = snprintf(clientid, sizeof(clientid), "61:");
+		bin2hex(clientid + len, sizeof(clientid) - len, value, strlen(value));
 		dhcp_argv[index++] = "-x";
 		dhcp_argv[index++] = clientid;
 	}
@@ -505,43 +674,42 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		dhcp_argv[index++] = clientid;
 	}
 
-#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
-	/* convert serial number */
-	memset(buf_tmp, 0, sizeof(buf_tmp));
-	memset(serial_buf, 0, sizeof(serial_buf));
-	ether_atoe(get_lan_hwaddr(), hwaddr);
-	snprintf(buf_tmp, sizeof(buf_tmp), "%02X%02X%02X%02X%02X%02X", hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
-	len = strlen(buf_tmp);
-	for (i = 0; i < len; i ++) {
-		snprintf(tmp_str, sizeof(tmp_str), "%02x", buf_tmp[i]);
-		strcat(serial_buf, tmp_str);
+#ifdef RTCONFIG_TR069
+	if (!nvram_invmatch("tr_acs_url", ""))
+		nvram_set_int("tr_discovery", 1);
+	if (nvram_get_int("tr_enable") && nvram_get_int("tr_discovery")) {
+		dhcp_argv[index++] = "-V";
+		dhcp_argv[index++] = "dslforum.org";
+		dhcp_argv[index++] = "-O43";
 	}
+#ifdef RTCONFIG_TR181
+	if (ether_atoe(get_lan_hwaddr(), hwaddr)) {
+		struct viopt_hdr *viopt = (struct viopt_hdr *) optbuf;
+		unsigned char *ptr = viopt->data;
+		unsigned char *end = optbuf + sizeof(optbuf);
+		int len;
 
-	/* convert oui */
-	memset(buf_tmp, 0, sizeof(buf_tmp));
-	memset(oui_buf, 0, sizeof(oui_buf));
-	ether_atoe(get_lan_hwaddr(), hwaddr);
-	snprintf(buf_tmp, sizeof(buf_tmp), "%02X%02X%02X", hwaddr[0], hwaddr[1], hwaddr[2]);
-	len = strlen(buf_tmp);
-	for (i = 0; i < len; i ++) {
-		snprintf(tmp_str, sizeof(tmp_str), "%02x", buf_tmp[i]);
-		strcat(oui_buf, tmp_str);
+		/* OUI */
+		len = snprintf(tmp, sizeof(tmp), "%02X%02X%02X", hwaddr[0], hwaddr[1], hwaddr[2]);
+		ptr += opt_add(ptr, end - ptr, 1, tmp, len);
+		/* Serial */
+		len = snprintf(tmp, sizeof(tmp), "%02X%02X%02X%02X%02X%02X",
+			       hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
+		ptr += opt_add(ptr, end - ptr, 2, tmp, len);
+		/* Class */
+		len = snprintf(tmp, sizeof(tmp), "%s", nvram_safe_get("productid"));
+		ptr += opt_add(ptr, end - ptr, 3, tmp, len);
+
+		viopt->entnum = htonl(3561);
+		viopt->len = ptr - viopt->data;
+
+		len = snprintf(vivopts, sizeof(vivopts), "125:");
+		bin2hex(vivopts + len, sizeof(vivopts) - len, viopt, sizeof(*viopt) + viopt->len);
+
+		dhcp_argv[index++] = "-x";
+		dhcp_argv[index++] = vivopts;
 	}
-
-	/* convert class */
-	memset(class_buf, 0, sizeof(class_buf));
-	c = nvram_safe_get("productid");
-	len = strlen(c);
-	for (i = 0; i < len; i ++) {
-		snprintf(tmp_str, sizeof(tmp_str), "%02x", c[i]);
-		strcat(class_buf, tmp_str);
-	}
-	
-	/* convert vivso */
-	snprintf(vivso, sizeof(vivso), "125:%08x%02x01%02x%s02%02x%s03%02x%s", 3561, 6 + (strlen(oui_buf) / 2) + (strlen(serial_buf) /2) + (strlen(class_buf) / 2), strlen(oui_buf) / 2, oui_buf, strlen(serial_buf) / 2, serial_buf, strlen(class_buf) / 2, class_buf);
-
-	dhcp_argv[index++] = "-x";
-	dhcp_argv[index++] = vivso;
+#endif
 #endif
 
 	return _eval(dhcp_argv, NULL, 0, ppid);
@@ -604,14 +772,17 @@ config(void)
 	nvram_unset(strcat_r(prefix, "lease", tmp));
 	nvram_unset(strcat_r(prefix, "expires", tmp));
 
-#if defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181)
-	nvram_unset("vivso");
-#endif
-
 	nvram_unset(strcat_r(prefix, "routes", tmp));
 	nvram_unset(strcat_r(prefix, "routes_ms", tmp));
 	nvram_unset(strcat_r(prefix, "routes_rfc", tmp));
 
+#ifdef RTCONFIG_TR069
+//	nvram_unset(strcat_r(prefix, "tr_acs_url", tmp));
+//	nvram_unset(strcat_r(prefix, "tr_pvgcode", tmp));
+#ifdef RTCONFIG_TR181
+	nvram_unset("vivso");
+#endif
+#endif
 	/* Clean nat conntrack for this interface,
 	 * but skip physical VPN subinterface for PPTP/L2TP */
 	if (changed && !(unit < 0 &&
@@ -737,6 +908,10 @@ bound_lan(void)
 {
 	char *lan_ifname = safe_getenv("interface");
 	char *value;
+#if defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181)
+	char tmp[100];
+	int size;
+#endif
 
 	if ((value = getenv("ip"))) {
 		/* restart httpd after lan_ipaddr udpating through lan dhcp client */
@@ -757,10 +932,25 @@ bound_lan(void)
 	if (nvram_get_int("lan_dnsenable_x") && (value = getenv("dns")))
 		nvram_set("lan_dns", trim_r(value));
 
-#if (defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181))
+#if defined(RTCONFIG_TR069) && defined(RTCONFIG_TR181)
 	nvram_unset("vivso");
-	if ((value = getenv("vivso")))
-		nvram_set("vivso", trim_r(value));
+	if ((value = hex2bin(getenv("opt125"), &size))) {
+		struct viopt_hdr *viopt;
+		struct opt_hdr *oui, *serial, *class;
+		if ((viopt = viopt_get(value, size, htonl(3561))) &&
+		    (oui = opt_get(viopt->data, viopt->len, 4)) &&
+		    (serial = opt_get(viopt->data, viopt->len, 5))) {
+			char vivso[6 + 64 + 64 + 3];
+			char *ptr = vivso;
+			char *end = ptr + sizeof(vivso);
+			ptr += snprintf(ptr, end - ptr, "%s,", stropt(oui, tmp));
+			ptr += snprintf(ptr, end - ptr, "%s,", stropt(serial, tmp));
+			if ((class = opt_get(viopt->data, viopt->len, 6)))
+				ptr += snprintf(ptr, end - ptr, "%s", stropt(class, tmp));
+			nvram_set("vivso", vivso);
+		}
+		free(value);
+	}
 #endif
 
 _dprintf("%s: IFUP.\n", __FUNCTION__);
@@ -1071,8 +1261,6 @@ start_dhcp6c(void)
 	stop_dhcp6c();
 
 	if (ether_atoe(nvram_safe_get("wan0_hwaddr"), duid.ea)) {
-		unsigned char *ptr = (void *) &duid;
-
 		/* Generate DUID-LL */
 		duid.type = htons(3);	/* DUID-LL */
 		duid.hwtype = htons(1);	/* Ethernet */
@@ -1082,8 +1270,7 @@ start_dhcp6c(void)
 			((unsigned long)(duid.ea[4]) << 8) |
 			((unsigned long)(duid.ea[5]));
 
-		for (i = 0; i < sizeof(duid); i++)
-			snprintf(&duid_arg[i*2], sizeof("xx"), "%02x", *ptr++);
+		bin2hex(duid_arg, sizeof(duid_arg), &duid, sizeof(duid));
 
 		dhcp6c_argv[index++] = "-c";
 		dhcp6c_argv[index++] = duid_arg;

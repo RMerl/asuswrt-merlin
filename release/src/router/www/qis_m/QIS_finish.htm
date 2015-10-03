@@ -15,7 +15,7 @@
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 4;
-if('<% nvram_get("productid"); %>' == "RT-AC3200" && sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
+if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
 var wan_primary = "";
 var wan0_primary = '<% nvram_get("wan0_primary"); %>';
@@ -937,7 +937,7 @@ function QKfinish_load_body(){
 		$(".reItem").css("display", "none");
 		$(".wlcItem").css("display", "");
 		$(".wlItem").css("display", "none");
-		document.getElementById("tdWlcItem").innerHTML = "Media bridge";
+		document.getElementById("tdWlcItem").innerHTML = "<#OP_MB_item#>";
 	}
 	else{
 		if(parent.dualWAN_support){
@@ -1312,7 +1312,7 @@ body{
 <input type="hidden" name="time_zone_x" value="<% nvram_get("time_zone_x"); %>" disabled>
 <input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>" disabled>
 <div>
-	<div style="font-size:1em;color:#808080;padding:10px 0 10px 15px;text-align:left;"><#qis_finish_title1#></div>
+	<div style="font-size:1em;padding:10px 0 10px 15px;text-align:left;"><#qis_finish_title1#></div>
 	<div style="margin:0 15px;">
 		<div>
 			<!--div>2.4 GHz</div-->

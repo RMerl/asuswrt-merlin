@@ -11,6 +11,7 @@
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
@@ -66,11 +67,16 @@ function initial(){
 			}
 		}
 		else{
-			if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && wl_subunit != '1'){
-				tabclickhandler('<% nvram_get("wl_unit"); %>');
+			if(!parent.concurrep_support){
+				if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && wl_subunit != '1'){
+					tabclickhandler('<% nvram_get("wl_unit"); %>');
+				}
+				else if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>' && wl_subunit == '1'){
+					tabclickhandler('<% nvram_get("wl_unit"); %>');
+				}
 			}
-			else if('<% nvram_get("wl_unit"); %>' != '<% nvram_get("wlc_band"); %>' && wl_subunit == '1'){
-				tabclickhandler('<% nvram_get("wl_unit"); %>');
+			else{
+				if(wl_subunit != '1') tabclickhandler('<% nvram_get("wl_unit"); %>');
 			}
 		}
 	}
@@ -445,6 +451,16 @@ function submitForm(){
 			if(!validator.psk(document.form.wl_wpa_psk))
 				return false;
 		}
+		
+		//confirm common string combination	#JS_common_passwd#
+		var is_common_string = check_common_string(document.form.wl_wpa_psk.value, "wpa_key");
+		if(is_common_string){
+			if(confirm("<#JS_common_passwd#>")){
+				document.form.wl_wpa_psk.focus();
+				document.form.wl_wpa_psk.select();
+				return false;	
+			}	
+		}		
 	}
 	else if(auth_mode == "wpa" || auth_mode == "wpa2" || auth_mode == "wpawpa2" || auth_mode == "radius"){
 		document.form.target = "";

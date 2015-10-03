@@ -771,14 +771,14 @@ function pptpOptionChange() {
 					</tr>
 
 					<tr>
-						<th><#PPPConnection_UserName_itemname#></th>
+						<th><#HSDPAConfig_Username_itemname#></th>
 						<td>
 							<input type="text" maxlength="64" name="vpnc_account_edit" value="" class="input_32_table" style="float:left;" autocomplete="off" autocorrect="off" autocapitalize="off"></input>
 						</td>
 					</tr>
 
 					<tr>
-						<th><#PPPConnection_Password_itemname#></th>
+						<th><#HSDPAConfig_Password_itemname#></th>
 						<td>
 							<input type="text" maxlength="64" name="vpnc_pwd_edit" value="" class="input_32_table" style="float:left;" autocomplete="off" autocorrect="off" autocapitalize="off"></input>
 						</td>
