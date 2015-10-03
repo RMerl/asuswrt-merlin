@@ -365,8 +365,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					}
 				}
 			}
-#ifdef RTCONFIG_EXT_RTL8365MB
 		} else if(strcmp(type,"ethernet.rtk") == 0 ) {
+#ifdef RTCONFIG_EXT_RTL8365MB
 			int states[4];
 
 			states[0] = states[1] = states[2] = states[3] = 0;
@@ -381,6 +381,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			                                 6, states[1],
 			                                 7, states[2],
 			                                 8, states[3]);
+#else
+			strcpy(result, "[]");
 #endif
 
 		} else if(strcmp(type,"ethernet") == 0 ) {
