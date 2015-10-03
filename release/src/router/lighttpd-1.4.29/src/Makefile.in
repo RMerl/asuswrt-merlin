@@ -290,15 +290,6 @@ mod_proxy_la_OBJECTS = $(am_mod_proxy_la_OBJECTS)
 mod_proxy_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(mod_proxy_la_LDFLAGS) $(LDFLAGS) -o $@
-mod_query_field_json_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1)
-am_mod_query_field_json_la_OBJECTS = mod_query_field_json.lo
-mod_query_field_json_la_OBJECTS =  \
-	$(am_mod_query_field_json_la_OBJECTS)
-mod_query_field_json_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(mod_query_field_json_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
 mod_redirect_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_2)
 am_mod_redirect_la_OBJECTS = mod_redirect.lo
@@ -509,17 +500,16 @@ SOURCES = $(liblightcomp_la_SOURCES) $(liblightsql_la_SOURCES) \
 	$(mod_extforward_la_SOURCES) $(mod_fastcgi_la_SOURCES) \
 	$(mod_flv_streaming_la_SOURCES) $(mod_indexfile_la_SOURCES) \
 	$(mod_magnet_la_SOURCES) $(mod_mysql_vhost_la_SOURCES) \
-	$(mod_proxy_la_SOURCES) $(mod_query_field_json_la_SOURCES) \
-	$(mod_redirect_la_SOURCES) $(mod_rewrite_la_SOURCES) \
-	$(mod_rrdtool_la_SOURCES) $(mod_scgi_la_SOURCES) \
-	$(mod_secdownload_la_SOURCES) $(mod_setenv_la_SOURCES) \
-	$(mod_simple_vhost_la_SOURCES) $(mod_ssi_la_SOURCES) \
-	$(mod_staticfile_la_SOURCES) $(mod_status_la_SOURCES) \
-	$(mod_trigger_b4_dl_la_SOURCES) $(mod_userdir_la_SOURCES) \
-	$(mod_usertrack_la_SOURCES) $(mod_webdav_la_SOURCES) \
-	$(lemon_SOURCES) $(lighttpd_SOURCES) $(lighttpd_angel_SOURCES) \
-	$(lighttpd_arpping_SOURCES) $(lighttpd_monitor_SOURCES) \
-	$(proc_open_SOURCES)
+	$(mod_proxy_la_SOURCES) $(mod_redirect_la_SOURCES) \
+	$(mod_rewrite_la_SOURCES) $(mod_rrdtool_la_SOURCES) \
+	$(mod_scgi_la_SOURCES) $(mod_secdownload_la_SOURCES) \
+	$(mod_setenv_la_SOURCES) $(mod_simple_vhost_la_SOURCES) \
+	$(mod_ssi_la_SOURCES) $(mod_staticfile_la_SOURCES) \
+	$(mod_status_la_SOURCES) $(mod_trigger_b4_dl_la_SOURCES) \
+	$(mod_userdir_la_SOURCES) $(mod_usertrack_la_SOURCES) \
+	$(mod_webdav_la_SOURCES) $(lemon_SOURCES) $(lighttpd_SOURCES) \
+	$(lighttpd_angel_SOURCES) $(lighttpd_arpping_SOURCES) \
+	$(lighttpd_monitor_SOURCES) $(proc_open_SOURCES)
 DIST_SOURCES = $(am__liblightcomp_la_SOURCES_DIST) \
 	$(liblightsql_la_SOURCES) $(mod_access_la_SOURCES) \
 	$(mod_accesslog_la_SOURCES) $(mod_alias_la_SOURCES) \
@@ -531,17 +521,17 @@ DIST_SOURCES = $(am__liblightcomp_la_SOURCES_DIST) \
 	$(mod_extforward_la_SOURCES) $(mod_fastcgi_la_SOURCES) \
 	$(mod_flv_streaming_la_SOURCES) $(mod_indexfile_la_SOURCES) \
 	$(mod_magnet_la_SOURCES) $(mod_mysql_vhost_la_SOURCES) \
-	$(mod_proxy_la_SOURCES) $(mod_query_field_json_la_SOURCES) \
-	$(mod_redirect_la_SOURCES) $(mod_rewrite_la_SOURCES) \
-	$(mod_rrdtool_la_SOURCES) $(mod_scgi_la_SOURCES) \
-	$(mod_secdownload_la_SOURCES) $(mod_setenv_la_SOURCES) \
-	$(mod_simple_vhost_la_SOURCES) $(mod_ssi_la_SOURCES) \
-	$(mod_staticfile_la_SOURCES) $(mod_status_la_SOURCES) \
-	$(mod_trigger_b4_dl_la_SOURCES) $(mod_userdir_la_SOURCES) \
-	$(mod_usertrack_la_SOURCES) $(mod_webdav_la_SOURCES) \
-	$(lemon_SOURCES) $(am__lighttpd_SOURCES_DIST) \
-	$(lighttpd_angel_SOURCES) $(lighttpd_arpping_SOURCES) \
-	$(lighttpd_monitor_SOURCES) $(proc_open_SOURCES)
+	$(mod_proxy_la_SOURCES) $(mod_redirect_la_SOURCES) \
+	$(mod_rewrite_la_SOURCES) $(mod_rrdtool_la_SOURCES) \
+	$(mod_scgi_la_SOURCES) $(mod_secdownload_la_SOURCES) \
+	$(mod_setenv_la_SOURCES) $(mod_simple_vhost_la_SOURCES) \
+	$(mod_ssi_la_SOURCES) $(mod_staticfile_la_SOURCES) \
+	$(mod_status_la_SOURCES) $(mod_trigger_b4_dl_la_SOURCES) \
+	$(mod_userdir_la_SOURCES) $(mod_usertrack_la_SOURCES) \
+	$(mod_webdav_la_SOURCES) $(lemon_SOURCES) \
+	$(am__lighttpd_SOURCES_DIST) $(lighttpd_angel_SOURCES) \
+	$(lighttpd_arpping_SOURCES) $(lighttpd_monitor_SOURCES) \
+	$(proc_open_SOURCES)
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -745,7 +735,7 @@ lib_LTLIBRARIES = $(am__append_1) liblightsql.la mod_flv_streaming.la \
 	mod_expire.la mod_evhost.la mod_simple_vhost.la mod_fastcgi.la \
 	mod_extforward.la mod_access.la mod_compress.la mod_auth.la \
 	mod_rewrite.la mod_redirect.la mod_status.la mod_accesslog.la \
-	mod_create_captcha_image.la mod_query_field_json.la
+	mod_create_captcha_image.la
 @NO_RDYNAMIC_TRUE@liblightcomp_la_SOURCES = $(common_src)
 @NO_RDYNAMIC_TRUE@liblightcomp_la_CFLAGS = $(AM_CFLAGS) $(LIBEV_CFLAGS)
 @NO_RDYNAMIC_TRUE@liblightcomp_la_LDFLAGS = -avoid-version -no-undefined
@@ -860,9 +850,6 @@ mod_accesslog_la_LIBADD = $(common_libadd)
 mod_create_captcha_image_la_SOURCES = mod_create_captcha_image.c
 mod_create_captcha_image_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
 mod_create_captcha_image_la_LIBADD = $(common_libadd)
-mod_query_field_json_la_SOURCES = mod_query_field_json.c
-mod_query_field_json_la_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined
-mod_query_field_json_la_LIBADD = $(common_libadd) $(PCRE_LIB)
 hdr = server.h buffer.h network.h log.h keyvalue.h \
       response.h request.h fastcgi.h chunk.h \
       settings.h http_chunk.h http_auth_digest.h \
@@ -1007,8 +994,6 @@ mod_mysql_vhost.la: $(mod_mysql_vhost_la_OBJECTS) $(mod_mysql_vhost_la_DEPENDENC
 	$(AM_V_CCLD)$(mod_mysql_vhost_la_LINK) -rpath $(libdir) $(mod_mysql_vhost_la_OBJECTS) $(mod_mysql_vhost_la_LIBADD) $(LIBS)
 mod_proxy.la: $(mod_proxy_la_OBJECTS) $(mod_proxy_la_DEPENDENCIES) $(EXTRA_mod_proxy_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_proxy_la_LINK) -rpath $(libdir) $(mod_proxy_la_OBJECTS) $(mod_proxy_la_LIBADD) $(LIBS)
-mod_query_field_json.la: $(mod_query_field_json_la_OBJECTS) $(mod_query_field_json_la_DEPENDENCIES) $(EXTRA_mod_query_field_json_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(mod_query_field_json_la_LINK) -rpath $(libdir) $(mod_query_field_json_la_OBJECTS) $(mod_query_field_json_la_LIBADD) $(LIBS)
 mod_redirect.la: $(mod_redirect_la_OBJECTS) $(mod_redirect_la_DEPENDENCIES) $(EXTRA_mod_redirect_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(mod_redirect_la_LINK) -rpath $(libdir) $(mod_redirect_la_OBJECTS) $(mod_redirect_la_LIBADD) $(LIBS)
 mod_rewrite.la: $(mod_rewrite_la_OBJECTS) $(mod_rewrite_la_DEPENDENCIES) $(EXTRA_mod_rewrite_la_DEPENDENCIES) 
@@ -1221,7 +1206,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_magnet_la-mod_magnet_cache.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_mysql_vhost_la-mod_mysql_vhost.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_proxy.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_query_field_json.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_redirect.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rewrite.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rrdtool.Plo@am__quote@
@@ -1949,6 +1933,7 @@ copy-prebuild:
 		cp ../prebuild/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
 		cp ../prebuild/mod_sharelink.so.l .libs/mod_sharelink.so; \
 		cp ../prebuild/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
+		cp ../prebuild/mod_query_field_json.so.l .libs/mod_query_field_json.so; \
 	fi
 
 copy-prebuild-arm:
@@ -1957,6 +1942,7 @@ copy-prebuild-arm:
 		cp ../prebuild_arm/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
 		cp ../prebuild_arm/mod_sharelink.so.l .libs/mod_sharelink.so; \
 		cp ../prebuild_arm/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
+		cp ../prebuild_arm/mod_query_field_json.so.l .libs/mod_query_field_json.so; \
 	fi
 
 copy-prebuild-arm-qtn:
@@ -1965,6 +1951,7 @@ copy-prebuild-arm-qtn:
 		cp ../prebuild_arm_qtn/mod_aidisk_access.so.l .libs/mod_aidisk_access.so; \
 		cp ../prebuild_arm_qtn/mod_sharelink.so.l .libs/mod_sharelink.so; \
 		cp ../prebuild_arm_qtn/mod_aicloud_auth.so.l .libs/mod_aicloud_auth.so; \
+		cp ../prebuild_arm_qtn/mod_query_field_json.so.l .libs/mod_query_field_json.so; \
 	fi
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
