@@ -482,7 +482,7 @@ endif
 ifeq ($(RTCONFIG_HFS),y)
 obj-$(RTCONFIG_PARAGON_HFS) += ufsd
 obj-$(RTCONFIG_TUXERA_HFS) += tuxera
-obj-$(RTCONFIG_KERNEL_HFSPLUS) += diskdev_cmds-332.14
+#obj-$(RTCONFIG_KERNEL_HFSPLUS) += diskdev_cmds-332.14
 endif
 obj-$(RTCONFIG_EBTABLES) += ebtables
 obj-$(RTCONFIG_IPV6) += odhcp6c
@@ -632,7 +632,6 @@ obj-$(RTCONFIG_STRACE) += strace
 obj-$(RTCONFIG_GDB) += gdb
 obj-$(RTCONFIG_LLDP) += openlldp
 
-obj-n += lsof
 obj-$(RTCONFIG_IPERF) += iperf
 
 obj-$(RTCONFIG_PUSH_EMAIL) += zlib # for libxml2, curl.
@@ -645,9 +644,9 @@ obj-$(RTCONFIG_PUSH_EMAIL) += push_log
 
 obj-$(RTCONFIG_NORTON) += norton${BCMEX}
 
-obj-$(UBI) += mtd-utils
-obj-$(UBIFS) += mtd-utils
-obj-$(UBIFS) += util-linux lzo zlib
+#obj-$(UBI) += mtd-utils
+#obj-$(UBIFS) += mtd-utils
+#obj-$(UBIFS) += util-linux lzo zlib
 ifeq ($(RTCONFIG_RALINK),y)
 obj-$(RA_SKU) += ra_SingleSKU
 endif
