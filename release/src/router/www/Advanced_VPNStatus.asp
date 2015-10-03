@@ -118,9 +118,9 @@ function refreshState(){
 
 	if (pptpd_support) {
 		if (pptpdpid > 0)
-			document.getElementById("pptp_Block_Running").innerHTML = state_s_r;
+			document.getElementById("pptp_Block_Running").innerHTML = state_srv_run;
 		else
-			document.getElementById("pptp_Block_Running").innerHTML = state_s_s;
+			document.getElementById("pptp_Block_Running").innerHTML = state_srv_stop;
 		parsePPTPClients();
 
 	} else {
@@ -133,6 +133,7 @@ function refreshState(){
 		showhide("vpnc", 0);
 	}
 
+	showhide("waitmsg", 0);
 }
 
 
@@ -460,8 +461,8 @@ function show_vpnc_rulelist(){
                 <div>&nbsp;</div>
                 <div class="formfonttitle">VPN - Status</div>
                 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-
-				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" id="pptpserver" class="FormTable">
+		<div class="formfontdesc" style="height:15px;"><span id="waitmsg" style="color:#FC0;">Updating, please wait...</span></div>
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" id="pptpserver" class="FormTable"></br>
 					<thead>
 						<tr>
 							<td>PPTP VPN Server<span id="pptp_Block_Running" style="background: transparent;"></span></td>
