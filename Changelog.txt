@@ -2,7 +2,7 @@ Asuswrt-Merlin Changelog
 ========================
 
 378.56 (xx-xxxx-2015)
-   - NEW: Merged with GPL 7838.
+   - NEW: Merged with GPL 9177.
    - NEW: Support for Russian ISP Telenet (code by theMIROn)
    - NEW: ipset support in dnsmasq (patch by ryzhov_al)
    - NEW: default loglevel is now configurable and defaults to 
@@ -12,12 +12,27 @@ Asuswrt-Merlin Changelog
    - CHANGED: Updated miniupnpd to 20150723 snapshot
    - CHANGED: Updated openvpn to 2.3.8
    - CHANGED: Updated dropbear to 2015.68
+   - CHANGED: Support up to 5 different OpenVPN clients (to match Asus)
+   - CHANGED: Maximum openvpn policy rules reduced from 128 to 100, fewer
+              priority slots wasted in the RPDB tables (could have been a
+              problem with the increase in the number of supported clients)
+   - CHANGED: Improvements to VPN Status page
+   - CHANGED: Connection failure reason shown on the OpenVPN client
+              configuration page.
+   - CHANGED: Updated minidlna to 1.1.5.
    - FIXED: Router crash when an invalid or corrupted DH parameter
             is used on an OpenVPN server configuration.
    - FIXED: 2.4 GHz temperature would be missing on the Sysinfo
-            page when disabling thee 5 GHz radio on the RT-AC3200.
+            page when disabling the 5 GHz radio on the RT-AC3200.
    - FIXED: Max tracked connection limit wasn't user-editable
    - FIXED: Resource leaks in ez-ipupdate if an update failed
+   - FIXED: Networked printers coming out of sleep every time 
+            networkmap queried their LPR service
+   - FIXED: Resource leak in networkmap when scanning for
+            printer servers
+   - REMOVED: Regulation mode setting on Wireless -> Professional.
+              This can't be adjusted anymore, as it was moved to
+              a closed source component.
 
 
 378.55 (17-July-2015)
