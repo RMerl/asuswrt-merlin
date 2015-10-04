@@ -526,6 +526,7 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
 	}
 	else if(cinfo.output_components == 1)
 	{
+		int rx, ry;
 		ofs = 0;
 		for(i = 0; i < cinfo.rec_outbuf_height; i++)
 		{
@@ -543,12 +544,19 @@ image_new_from_jpeg(const char *path, int is_file, const uint8_t *buf, int size,
 		}
 		for(y = 0; y < h; y += cinfo.rec_outbuf_height)
 		{
+			ry = (rotate & (ROTATE_90|ROTATE_180)) ? (y - h + 1) * -1 : y;
 			jpeg_read_scanlines(&cinfo, line, cinfo.rec_outbuf_height);
 			for(i = 0; i < cinfo.rec_outbuf_height; i++)
 			{
 				for(x = 0; x < w; x++)
 				{
-					vimage->buf[ofs++] = COL(line[i][x], line[i][x], line[i][x]);
+					rx = (rotate & (ROTATE_180|ROTATE_270)) ?
+						(x - w + 1) * -1 : x;
+					ofs = (rotate & (ROTATE_90|ROTATE_270)) ?
+						ry + (rx * h) : rx + (ry * w);
+					if( ofs < maxbuf )
+						vimage->buf[ofs] =
+							COL(line[i][x], line[i][x], line[i][x]);
 				}
 			}
 		}

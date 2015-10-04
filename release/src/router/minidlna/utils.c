@@ -195,14 +195,16 @@ unescape_tag(const char *tag, int force_alloc)
 {
 	char *esc_tag = NULL;
 
-	if( strstr(tag, "&amp;") || strstr(tag, "&lt;") || strstr(tag, "&gt;")
-			|| strstr(tag, "&quot;") )
+	if (strchr(tag, '&') &&
+	    (strstr(tag, "&amp;") || strstr(tag, "&lt;") || strstr(tag, "&gt;") ||
+	     strstr(tag, "&quot;") || strstr(tag, "&apos;")))
 	{
 		esc_tag = strdup(tag);
 		esc_tag = modifyString(esc_tag, "&amp;", "&", 1);
 		esc_tag = modifyString(esc_tag, "&lt;", "<", 1);
 		esc_tag = modifyString(esc_tag, "&gt;", ">", 1);
 		esc_tag = modifyString(esc_tag, "&quot;", "\"", 1);
+		esc_tag = modifyString(esc_tag, "&apos;", "'", 1);
 	}
 	else if( force_alloc )
 		esc_tag = strdup(tag);

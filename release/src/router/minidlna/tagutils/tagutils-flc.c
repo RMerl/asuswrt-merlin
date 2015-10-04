@@ -37,8 +37,9 @@ _get_flctags(char *filename, struct song_metadata *psong)
 
 	if(!FLAC__metadata_simple_iterator_init(iterator, filename, true, true))
 	{
-		DPRINTF(E_ERROR, L_SCANNER, "Cannot extract tag from %s\n", filename);
-		return -1;
+		DPRINTF(E_ERROR, L_SCANNER, "Cannot extract tag from %s [%s]\n", filename,
+			FLAC__Metadata_SimpleIteratorStatusString[FLAC__metadata_simple_iterator_status(iterator)]);
+		goto _exit;
 	}
 
 	do {
@@ -52,6 +53,8 @@ _get_flctags(char *filename, struct song_metadata *psong)
 		switch(block->type)
 		{
 		case FLAC__METADATA_TYPE_STREAMINFO:
+			if (!block->data.stream_info.sample_rate)
+				break; /* Info is crap, avoid div-by-zero. */
 			sec = (unsigned int)(block->data.stream_info.total_samples /
 			                     block->data.stream_info.sample_rate);
 			ms = (unsigned int)(((block->data.stream_info.total_samples %
@@ -75,6 +78,10 @@ _get_flctags(char *filename, struct song_metadata *psong)
 			break;
 #if FLAC_API_VERSION_CURRENT >= 10
 		case FLAC__METADATA_TYPE_PICTURE:
+			if (psong->image) {
+				DPRINTF(E_MAXDEBUG, L_SCANNER, "Ignoring additional image [%s]\n", filename);
+				break;
+			}
 			psong->image_size = block->data.picture.data_length;
 			if((psong->image = malloc(psong->image_size)))
 				memcpy(psong->image, block->data.picture.data, psong->image_size);

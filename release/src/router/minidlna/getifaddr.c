@@ -325,7 +325,7 @@ reload_ifaces(int force_notify)
 	do {
 		getifaddr(runtime_vars.ifaces[i]);
 		i++;
-	} while (runtime_vars.ifaces[i]);
+	} while (i < MAX_LAN_ADDR && runtime_vars.ifaces[i]);
 
 	for (i = 0; i < n_lan_addr; i++)
 	{

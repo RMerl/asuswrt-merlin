@@ -162,6 +162,10 @@ ParseHttpHeaders(struct upnphttp * h)
 				while(*p && (*p < '0' || *p > '9'))
 					p++;
 				h->req_contentlen = atoi(p);
+				if(h->req_contentlen < 0) {
+					DPRINTF(E_WARN, L_HTTP, "Invalid Content-Length %d", h->req_contentlen);
+					h->req_contentlen = 0;
+				}
 			}
 			else if(strncasecmp(line, "SOAPAction", 10)==0)
 			{
@@ -408,9 +412,7 @@ ParseHttpHeaders(struct upnphttp * h)
 next_header:
 		line = strstr(line, "\r\n");
 		if (!line)
-		{
 			return;
-		}
 		line += 2;
 	}
 	if( h->reqflags & FLAG_CHUNKED )
@@ -825,8 +827,6 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 	for(i = 0; i<15 && *p && *p != '\r'; i++)
 		HttpVer[i] = *(p++);
 	HttpVer[i] = '\0';
-	/*DPRINTF(E_INFO, L_HTTP, "HTTP REQUEST : %s %s (%s)\n",
-	       HttpCommand, HttpUrl, HttpVer);*/
 
 	/* set the interface here initially, in case there is no Host header */
 	for(i = 0; i<n_lan_addr; i++)
@@ -1610,8 +1610,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	char *key, *val;
 	char *saveptr, *item = NULL;
 	int rotate = 0;
-	/* Not implemented yet *
-	char *pixelshape=NULL; */
+	int pixw = 0, pixh = 0;
 	long long id;
 	int rows=0, chunked, ret;
 	image_s *imsrc = NULL, *imdst = NULL;
@@ -1664,11 +1663,12 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 			rotate = (rotate + atoi(val)) % 360;
 			sql_exec(db, "UPDATE DETAILS set ROTATION = %d where ID = %lld", rotate, id);
 		}
-		/* Not implemented yet *
 		else if( strcasecmp(key, "pixelshape") == 0 )
 		{
-			pixelshape = val;
-		} */
+			ret = sscanf(val, "%d:%d", &pixw, &pixh);
+			if( ret != 2 )
+				pixw = pixh = 0;
+		}
 	}
 
 #if USE_FORK
@@ -1721,6 +1721,14 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	{
 		dsth = height;
 		dstw = (((height<<10)/srch) * srcw>>10);
+	}
+	/* Account for pixel shape */
+	if( pixw && pixh )
+	{
+		if( pixh > pixw )
+			dsth = dsth * pixw / pixh;
+		else if( pixw > pixh )
+			dstw = dstw * pixh / pixw;
 	}
 
 	if( dstw <= 160 && dsth <= 160 )

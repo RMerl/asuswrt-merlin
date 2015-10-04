@@ -780,11 +780,13 @@ ScanDirectory(const char *dir, const char *parent, media_types dir_types)
 			break;
 		default:
 			n = -1;
+			errno = EINVAL;
 			break;
 	}
 	if( n < 0 )
 	{
-		DPRINTF(E_WARN, L_SCANNER, "Error scanning %s\n", dir);
+		DPRINTF(E_WARN, L_SCANNER, "Error scanning %s [%s]\n",
+			dir, strerror(errno));
 		return;
 	}
 
