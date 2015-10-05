@@ -33,7 +33,7 @@ endif
 
 vpath %.c $(SRCPATH) $(UPNPLIB)/linux
 ifeq ($(RTCONFIG_BCMARM),y)
-vpath %.o $(UPNPLIB)/prebuilt.$(BCMEX)$(EX7)
+vpath %.o $(UPNPLIB)/prebuilt$(BCMEX)$(EX7)
 else
 vpath %.o $(UPNPLIB)/prebuilt.mipsel
 endif
@@ -44,13 +44,13 @@ SRCFILES = upnp.c upnp_ssdp.c upnp_http.c upnp_gena.c upnp_soap.c \
 
 OBJFILES = ${SRCFILES:.c=.o}
 
-ifeq ($(wildcard ./upnp),)
-all:
-	cp -f ./prebuilt/$(UPNPLIB_NAME) .
-else
+#ifeq ($(wildcard ./upnp),)
+#all:
+#	cp -f ./prebuilt/$(UPNPLIB_NAME) .
+#else
 all: $(OBJFILES)
 	$(LD) -shared -o $(UPNPLIB_NAME) $^
-endif
+#endif
 
 install: all
 	install -d $(INSTALLDIR)/usr/lib
