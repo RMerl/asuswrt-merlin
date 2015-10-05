@@ -227,7 +227,7 @@ function edit_Row(r){
 	document.form.dhcp_staticmac_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[0].innerHTML;
 	document.form.dhcp_staticip_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[1].innerHTML;
 	document.form.dhcp_staticname_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[2].innerHTML;
-  del_Row(r);
+ 	del_Row(r);
 }
 
 function showdhcp_staticlist(){
@@ -249,7 +249,7 @@ function showdhcp_staticlist(){
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
-  code +='</table>';
+	code +='</table>';
 	document.getElementById("dhcp_staticlist_Block").innerHTML = code;
 }
 
@@ -394,7 +394,7 @@ function get_default_pool(ip, netmask){
 	}
 	var post_lan_netmask = document.form.lan_netmask.value.substr(tmp_nm,3);
 
-var nm = new Array("0", "128", "192", "224", "240", "248", "252");
+	var nm = new Array("0", "128", "192", "224", "240", "248", "252");
 	for(i=0;i<nm.length;i++){
 				 if(post_lan_netmask==nm[i]){
 							gap=256-Number(nm[i]);
@@ -726,10 +726,10 @@ function validate_hostname(o){
 			  	</thead>
 
 			  	<tr>
-		  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
-        		<th><#IPConnection_ExternalIPAddress_itemname#></th>
-			<th>Hostame</th>
-        		<th><#list_add_delete#></th>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
+					<th><#IPConnection_ExternalIPAddress_itemname#></th>
+					<th>Hostame</th>
+					<th><#list_add_delete#></th>
 			  	</tr>
 			  	<tr>
 				<!-- client info -->
@@ -745,9 +745,9 @@ function validate_hostname(o){
 					<input type="text" class="input_15_table" maxlenght="30" onkeypress="return is_alphanum(this, event);" onblur="validate_hostname(this);" name="dhcp_staticname_x_0" autocorrect="off" autocapitalize="off">
 				</td>
 				<td width="19%">
-										<div>
-											<input type="button" class="add_btn" onClick="addRow_Group(128);" value="">
-										</div>
+					<div>
+						<input type="button" class="add_btn" onClick="addRow_Group(128);" value="">
+					</div>
             			</td>
 			  	</tr>
 			  </table>
