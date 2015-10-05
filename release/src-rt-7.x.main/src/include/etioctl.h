@@ -72,6 +72,7 @@
 #define IOV_MACWR			19
 #define IOV_DUMP_FWDER		20
 #define IOV_CAP			21
+#define IOV_DUMP_OOPS		22
 #define IOV_FA_REV              51
 
 #if defined(linux) || defined(__ECOS)

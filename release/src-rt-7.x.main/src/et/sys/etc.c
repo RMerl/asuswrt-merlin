@@ -252,6 +252,10 @@ etc_down(etc_info_t *etc, int reset)
 	return (callback);
 }
 
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+extern void dump_previous_oops(void);
+#endif
+
 /* common iovar handler. return 0=ok, -1=error */
 int
 etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg, int len)
@@ -395,6 +399,12 @@ etc_iovar(etc_info_t *etc, uint cmd, uint set, void *arg, int len)
 				etc_dumpetc(etc, &b);
 			}
 			break;
+
+#ifdef CONFIG_DUMP_PREV_OOPS_MSG
+		case IOV_DUMP_OOPS:
+			dump_previous_oops();
+			break;
+#endif
 
 #ifdef HNDCTF
 		case IOV_DUMP_CTF:
