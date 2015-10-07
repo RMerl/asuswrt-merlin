@@ -2404,7 +2404,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		add_routes(prefix, "mroute", wan_ifname);
 
 		/* and one supplied via DHCP */
-		add_dhcp_routes(prefix_x, wan_ifname, 0);
+		add_dhcp_routes(prefix_x, wan_ifname, 1);
 
 		/* and default route with metric 1 */
 		gateway = nvram_safe_get(strcat_r(prefix_x, "gateway", tmp));
