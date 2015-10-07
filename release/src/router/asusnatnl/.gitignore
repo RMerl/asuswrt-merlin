@@ -26,7 +26,7 @@ pjproject-1.12/pjsip/bin/
 pjproject-1.12/pjsip/build/os-auto.mak
 pjproject-1.12/pjsip/include/pjsip/sip_autoconf.h
 pjproject-1.12/pjsip/lib/
-pjproject-1.12/stamp-h1-ARM
+pjproject-1.12/stamp-h1-*
 pjproject-1.12/third_party/build/os-auto.mak
 pjproject-1.12/third_party/build/portaudio/os-auto.mak
 pjproject-1.12/third_party/lib/
