@@ -28,8 +28,8 @@ WSLIB_OBJS := $(WS_SOURCES:%.c=$(OUTPUT)/%.o)
 
 ifeq ($(wildcard $(TOP)/aaews/*.c),)
 all:
-	-cp -f $(TOP)/aaews/prebuild/aaews aaews
-	-cp -f $(TOP)/aaews/prebuild/mastiff mastiff
+	-cp -f $(TOP)/aaews/prebuild$(BCMEX)/aaews aaews
+	-cp -f $(TOP)/aaews/prebuild$(BCMEX)/mastiff mastiff
 else
 all: $(WSLIB) $(TARGET)
 endif

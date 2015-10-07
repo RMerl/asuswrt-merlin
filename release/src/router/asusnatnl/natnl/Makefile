@@ -1,5 +1,6 @@
 #Modify this to point to the PJSIP location.
 include ../version.mak
+include ../../common.mak
 PJBASE=../pjproject-1.12
 UPNPBASE=../miniupnpc-1.6
 UDTBASE=../udt
@@ -89,7 +90,7 @@ android-lib: main.c $(OBJS)
 #	NATLIB_NAME=libnatnl.so
 ifeq ($(wildcard $(TOP)/asusnatnl/natnl/*.c),)
 linux-lib:
-	-cp -f $(TOP)/asusnatnl/natnl/prebuild/libasusnatnl.so libasusnatnl.so
+	-cp -f $(TOP)/asusnatnl/natnl/prebuild$(BCMEX)/libasusnatnl.so libasusnatnl.so
 else
 linux-lib: main.c $(OBJS)
 	$(CXX) -shared -o libasusnatnl.so $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS)
