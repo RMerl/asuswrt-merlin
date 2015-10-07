@@ -76,9 +76,6 @@ LIBS += $(IPTABLESPATH)/libiptc/.libs/libip6tc.o
 endif
 else	# ifeq ($(TEST), 1)
 LIBS = $(IPTABLESPATH)/libiptc/libiptc.a
-ifeq ($(RTCONFIG_IPV6), y)
-LIBS += $(IPTABLESPATH)/libiptc/libip6tc.a
-endif
 endif	# ifeq ($(TEST), 1)
 else	#ifdef IPTABLESPATH
 
