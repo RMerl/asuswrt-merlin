@@ -1570,8 +1570,9 @@ void start_vpn_eas()
 	}
 
 	// Setup client routing in case some are set to be blocked when tunnel is down
-	update_vpnrouting(1);
-	update_vpnrouting(2);
+	for( i = 1; i < 6; i++ ) {
+		update_vpnrouting(i);
+	}
 
 	// Parse and start clients
 	strlcpy(&buffer[0], nvram_safe_get("vpn_clientx_eas"), sizeof(buffer));
