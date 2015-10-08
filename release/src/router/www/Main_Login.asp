@@ -71,13 +71,13 @@ body{
 	margin:10px 0px 0px 78px;
 	background-color:rgba(255,255,255,0.2);
 	padding:20px;
-	line-height:36px;
+	line-height:18px;
 	border-radius: 5px;
-	width: 480px;
+	width: 380px;
 	border: 0;
 	color:#fff;
 	color:#000\9; /* IE6 IE7 IE8 */
-	font-size:12px;
+	font-size:16px;
 }
 .div_table{
 	display:table;
