@@ -62,6 +62,7 @@ libssl.pc
 libssl.so.1.0.0
 openssl.pc
 crypto/*/*.S
+crypto/*/*.s
 certs/demo/.0
 include/openssl/rc5.h
 rehash.time
