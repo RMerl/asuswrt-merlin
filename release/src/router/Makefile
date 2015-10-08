@@ -2522,8 +2522,8 @@ libevent-2.0.21-configure:
 	)
 
 libevent-2.0.21-install: libevent-2.0.21
-	install -D $(STAGEDIR)/usr/lib/libevent-2.0.so.5 $(INSTALLDIR)/$</usr/lib/libevent-2.0.so.5
-	$(STRIP) $(INSTALLDIR)/$</usr/lib/libevent-2.0.so*
+	install -D $(STAGEDIR)/usr/lib/libevent-2.0.so.5 $(INSTALLDIR)/libevent-2.0.21/usr/lib/libevent-2.0.so.5
+	$(STRIP) $(INSTALLDIR)/libevent-2.0.21/usr/lib/libevent-2.0.so*
 
 libevent-2.0.21-clean:
 	[ ! -f libevent-2.0.21/Makefile ] || $(MAKE) -C libevent-2.0.21 clean
