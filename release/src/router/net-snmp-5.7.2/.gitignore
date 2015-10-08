@@ -28,3 +28,5 @@ snmplib/snmpsm_init.h
 snmplib/snmpsm_shutdown.h
 snmplib/transports/snmp_transport_inits.h
 stamp-h
+agent/mibgroup/asus-mib/wireless.c
+agent/mibgroup/asus-mib/wireless.h
