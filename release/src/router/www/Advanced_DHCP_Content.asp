@@ -442,7 +442,7 @@ function showLANIPList(){
 	for(var i=0; i<clientList.length;i++){
 		var clientObj = clientList[clientList[i]];
 
-		if(clientObj.ip == "offline") clientObj.ip = "";
+		if(clientObj.ip == "offline") continue;
 		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
 
 		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
