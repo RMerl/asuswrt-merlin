@@ -3,6 +3,7 @@ WSLIB=libws.so
 DOG=mastiff
 
 include $(TOP)/.config
+include ../common.mak
 
 CURL_DIR=$(TOP)/curl-7.21.7
 XML2_DIR=$(TOP)/libxml2
@@ -53,7 +54,7 @@ LDFLAGS = -L$(OPENSSL_DIR) -L$(CURL_DIR)/lib/.libs -L$(XML2_DIR)/.libs -L. $(ROU
 
 ifeq ($(wildcard $(TOP)/aaews/*.c),)
 $(DOG):
-	-cp -f $(TOP)/aaews/prebuild/mastiff mastiff
+	-cp -f $(TOP)/aaews/prebuild$(BCMEX)/mastiff mastiff
 else
 $(DOG): $(DOG).o nat_nvram.o  ws_caller.o nw_util.o natapi.o $(WSLIB_OBJS) stun.o
 	$(CC) -fPIC $(CFLAGS) $(LDFLAGS) $(LIBS) $(ROUTER_LDFLAGS) $(ROUTER_LIBS) -o $@ $^ 
@@ -63,7 +64,7 @@ aicam:$(TARGET)
 
 ifeq ($(wildcard $(TOP)/aaews/*.c),)
 router:
-	-cp -f $(TOP)/aaews/prebuild/aaews aaews
+	-cp -f $(TOP)/aaews/prebuild$(BCMEX)/aaews aaews
 else
 router: $(WSLIB) $(TARGET)
 endif
