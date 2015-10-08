@@ -20,11 +20,11 @@ body{
 	margin: 0px; 
 }
 .title_name {
-	font-size: 40pt;
+	font-size: 30pt;
 	color:#93d2d9;
 }
 .prod_madelName{
-	font-size: 26pt;
+	font-size: 20pt;
 	color:#fff;
 	margin-left:78px;
 	margin-top: 10px;
@@ -36,7 +36,7 @@ body{
 	background-repeat: no-repeat;
 }
 .p1{
-	font-size: 16pt;
+	font-size: 12pt;
 	color:#fff;
 	width:480px;
 }
@@ -46,26 +46,26 @@ body{
 	border: solid 1px #6e8385;*/
 	border-radius: 4px ;
 	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
-	height: 68px;
-	width: 300px;
-	font-size: 28pt;
+	height: 48px;
+	width: 200px;
+	font-size: 14pt;
 	color:#fff;
 	color:#000\9; /* IE6 IE7 IE8 */
 	text-align: center;
 	float:right; 
-	margin:50px 0px 0px 78px;
-	line-height:68px;
+	margin:25px 0px 0px 39px;
+	line-height:48px;
 }
 .form_input{
 	background-color:rgba(255,255,255,0.2);
 	border-radius: 4px;
-	padding:26px 22px;
-	width: 480px;
+	padding:13px 11px;
+	width: 380px;
 	border: 0;
 	height:25px;
 	color:#fff;
 	color:#000\9; /* IE6 IE7 IE8 */
-	font-size:28px
+	font-size:18px
 }
 .nologin{
 	margin:10px 0px 0px 78px;
@@ -77,7 +77,7 @@ body{
 	border: 0;
 	color:#fff;
 	color:#000\9; /* IE6 IE7 IE8 */
-	font-size:28px;
+	font-size:12px;
 }
 .div_table{
 	display:table;
@@ -101,14 +101,14 @@ body{
 .error_hint{
 	color: rgb(255, 204, 0);
 	margin:10px 0px -10px 78px; 
-	font-size: 18px;
+	font-size: 12px;
 	font-weight: bolder;
 }
 .main_field_gap{
 	margin:100px auto 0;
 }
 .warming_desc{
-	font-size: 16px;
+	font-size: 12px;
 	color:#FC0;
 	width: 600px;
 }
