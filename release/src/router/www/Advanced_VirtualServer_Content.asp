@@ -51,6 +51,12 @@ var vts_rulelist_array = "<% nvram_char_to_ascii("","vts_rulelist"); %>";
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 var wans_mode ='<% nvram_get("wans_mode"); %>';
 
+var backup_desc = "";
+var backup_port = "";
+var backup_ipaddr = "";
+var backup_lport = "";
+var backup_proto = "";
+
 function initial(){
 	show_menu();
 	loadAppOptions();
@@ -84,6 +90,7 @@ function isChange(){
 }
 
 function applyRule(){
+	cancel_edit();
 
 	if(parent.usb_support){
 		if(!validator.numberRange(document.form.vts_ftpport, 1, 65535)){
@@ -344,6 +351,12 @@ function addRow_Group(upper){
 		addRow(document.form.vts_ipaddr_x_0, 0);
 		addRow(document.form.vts_lport_x_0, 0);
 		addRow(document.form.vts_proto_x_0, 0);
+		backup_desc = "";
+		backup_port = "";
+		backup_ipaddr = "";
+		backup_lport = "";
+		backup_proto = "";
+
 		document.form.vts_proto_x_0.value="TCP";
 		showvts_rulelist();
 	}
@@ -417,6 +430,8 @@ function check_multi_range(obj, mini, maxi, allow_range){
 
 
 function edit_Row(r){ 	
+	cancel_Edit();
+
 	var i=r.parentNode.parentNode.rowIndex;
   	
 	document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].innerHTML;
@@ -424,8 +439,25 @@ function edit_Row(r){
 	document.form.vts_ipaddr_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[2].innerHTML; 
 	document.form.vts_lport_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[3].innerHTML;
 	document.form.vts_proto_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[4].innerHTML;
-	
-  del_Row(r);	
+
+	backup_desc = document.form.vts_desc_x_0.value;
+	backup_port = document.form.vts_port_x_0.value;
+	backup_ipaddr = document.form.vts_ipaddr_x_0.value;
+	backup_lport = document.form.vts_lport_x_0.value;
+	backup_proto = document.form.vts_proto_x_0.value;
+
+	del_Row(r);
+}
+
+function cancel_Edit(){
+	if (backup_desc != "") {
+		document.form.vts_desc_x_0.value = backup_desc;
+		document.form.vts_port_x_0.value = backup_port;
+		document.form.vts_ipaddr_x_0.value = backup_ipaddr;
+		document.form.vts_lport_x_0.value = backup_lport;
+		document.form.vts_proto_x_0.value = backup_proto;
+		addRow_Group(128);
+	}
 }
 
 function del_Row(r){
@@ -488,7 +520,7 @@ function showvts_rulelist(){
 						}
 						
 				}
-				code +='<td width="14%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
+				code +='<td width="14%"><input class="edit_btn" onclick="edit_Row(this);" value=""/>';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
