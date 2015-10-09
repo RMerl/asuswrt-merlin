@@ -230,12 +230,7 @@ function del_Row(r){
 }
 
 function edit_Row(r){
-	if (backup_mac != "") {
-		document.form.dhcp_staticmac_x_0.value = backup_mac;
-		document.form.dhcp_staticip_x_0.value = backup_ip;
-		document.form.dhcp_staticname_x_0.value = backup_name;
-		addRow_Group(128);
-	}
+	cancel_Edit();
 
 	var i=r.parentNode.parentNode.rowIndex;
 	document.form.dhcp_staticmac_x_0.value = document.getElementById('dhcp_staticlist_table').rows[i].cells[0].innerHTML;
@@ -245,6 +240,15 @@ function edit_Row(r){
 	backup_ip = document.form.dhcp_staticip_x_0.value;
 	backup_name = document.form.dhcp_staticname_x_0.value;
  	del_Row(r);
+}
+
+function cancel_Edit(){
+	if (backup_mac != "") {
+		document.form.dhcp_staticmac_x_0.value = backup_mac;
+		document.form.dhcp_staticip_x_0.value = backup_ip;
+		document.form.dhcp_staticname_x_0.value = backup_name;
+		addRow_Group(128);
+	}
 }
 
 function showdhcp_staticlist(){
@@ -271,6 +275,8 @@ function showdhcp_staticlist(){
 }
 
 function applyRule(){
+	cancel_Edit();
+
 	if(validForm()){
 		var rule_num = document.getElementById('dhcp_staticlist_table').rows.length;
 		var item_num = document.getElementById('dhcp_staticlist_table').rows[0].cells.length;
