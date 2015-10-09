@@ -440,14 +440,14 @@ function validForm(){
 		alert("<#FirewallConfig_URLActiveTime_itemhint4#>");	//At same day
 		return false;
 	}	
+
+	if (HTTPS_support && (document.form.http_enable[0].selected != true) && !validator.range(document.form.https_lanport, 1024, 65535) && !tmo_support)
+		return false;
 		
 	if (document.form.misc_http_x[0].checked) {
 		if (!validator.range(document.form.misc_httpport_x, 1024, 65535))
 			return false;
 	
-		if (HTTPS_support && !validator.range(document.form.https_lanport, 1024, 65535) && !tmo_support)
-			return false;
-
 		if (HTTPS_support && !validator.range(document.form.misc_httpsport_x, 1024, 65535))
 			return false;
 	}
