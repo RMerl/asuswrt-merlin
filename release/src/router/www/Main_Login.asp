@@ -56,6 +56,9 @@ body{
 	margin:25px 0px 0px 39px;
 	line-height:48px;
 }
+.button:hover{
+	cursor:pointer;
+}
 .form_input{
 	background-color:rgba(255,255,255,0.2);
 	border-radius: 4px;
