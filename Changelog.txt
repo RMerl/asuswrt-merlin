@@ -9,6 +9,9 @@ Asuswrt-Merlin Changelog
           5 (notice) instead of 0 (emergency)
    - NEW: local syslogd loglevel is now configurable through the webui.
    - NEW: Support for extra-certs in OpenVPN
+   - NEW: Editable DHCP static leases list, virtual servers, port triggers.
+   - NEW: IP addresses on the Network Service Filter page can now be 
+          subnets in CIDR format (i.e. 10.0.0.0/24)
    - CHANGED: Updated miniupnpd to 20150723 snapshot
    - CHANGED: Updated openvpn to 2.3.8
    - CHANGED: Updated dropbear to 2015.68
