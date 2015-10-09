@@ -21,6 +21,12 @@
 var autofw_rulelist_array = '<% nvram_char_to_ascii("","autofw_rulelist"); %>';
 var wans_mode ='<% nvram_get("wans_mode"); %>';
 
+var backup_outport = "";
+var backup_outproto = "";
+var backup_inport = "";
+var backup_inproto = "";
+var backup_desc = "";
+
 function initial(){
 	show_menu();
 	well_known_apps();
@@ -39,6 +45,8 @@ function well_known_apps(){
 	}
 }
 function applyRule(){
+	cancel_Edit();
+
 	var rule_num = document.getElementById('autofw_rulelist_table').rows.length;
 	var item_num = document.getElementById('autofw_rulelist_table').rows[0].cells.length;
 	var tmp_value = "";
@@ -153,11 +161,19 @@ function addRow_Group(upper){
 		addRow(document.form.autofw_inport_x_0, 0);
 		addRow(document.form.autofw_inproto_x_0, 0);
 		document.form.autofw_inproto_x_0.value="TCP";
+
+		backup_outport = "";
+		backup_outproto = "";
+		backup_inport = "";
+		backup_inproto = "";
+		backup_desc = "";
 		showautofw_rulelist();
 	}	
 }
 
 function edit_Row(r){ 	
+	cancel_Edit();
+
 	var i=r.parentNode.parentNode.rowIndex;
   	
 	document.form.autofw_desc_x_0.value = document.getElementById('autofw_rulelist_table').rows[i].cells[0].innerHTML;
@@ -165,8 +181,25 @@ function edit_Row(r){
 	document.form.autofw_outproto_x_0.value = document.getElementById('autofw_rulelist_table').rows[i].cells[2].innerHTML; 
 	document.form.autofw_inport_x_0.value = document.getElementById('autofw_rulelist_table').rows[i].cells[3].innerHTML;
 	document.form.autofw_inproto_x_0.value = document.getElementById('autofw_rulelist_table').rows[i].cells[4].innerHTML;
+
+	backup_outport = document.form.autofw_outport_x_0.value;
+	backup_outproto = document.form.autofw_outproto_x_0.value;
+	backup_inport = document.form.autofw_inport_x_0.value;
+	backup_inproto = document.form.autofw_inproto_x_0.value;
+	backup_desc = document.form.autofw_desc_x_0.value;
 	
   del_Row(r);	
+}
+
+function cancel_Edit(){
+	if (backup_desc != "") {
+		document.form.autofw_outport_x_0.value = backup_outport;
+		document.form.autofw_outproto_x_0.value = backup_outproto;
+		document.form.autofw_inport_x_0.value = backup_inport;
+		document.form.autofw_inproto_x_0.value = backup_inproto;
+		document.form.autofw_desc_x_0.value = backup_desc;
+		addRow_Group(128);
+	}
 }
 
 function del_Row(r){
@@ -204,7 +237,7 @@ function showautofw_rulelist(){
 				for(var j = 0; j < autofw_rulelist_col.length; j++){
 					code +='<td width="'+wid[j]+'%">'+ autofw_rulelist_col[j] +'</td>';		//IP  width="98"
 				}
-				code +='<td width="16%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
+				code +='<td width="16%"><input class="edit_btn" onclick="edit_Row(this);" value=""/>';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
@@ -333,10 +366,10 @@ function trigger_validate_duplicate(o, v, l, off){
           
 	          <tr>
           		<td width="22%">
-              		<input type="text" maxlength="18" class="input_15_table" name="autofw_desc_x_0" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
+              		<input type="text" maxlength="18" class="input_15_table" name="autofw_desc_x_0" onKeyPress="return is_alphanum(this, event)" onblur="validator.safeName(this);" autocorrect="off" autocapitalize="off">
             	</td>
             	<td width="21%">            		
-              		<input type="text" maxlength="11" class="input_12_table"  name="autofw_outport_x_0" onKeyPress="return validator.isPortRange(this,event)" autocorrect="off" autocapitalize="off">
+			<input type="text" maxlength="11" class="input_12_table"  name="autofw_outport_x_0" onKeyPress="return validator.isPortRange(this,event)" autocorrect="off" autocapitalize="off">
             	</td>
             	<td width="10%">
               		<select name="autofw_outproto_x_0" class="input_option">
@@ -346,7 +379,7 @@ function trigger_validate_duplicate(o, v, l, off){
               		</div>
             	</td>
             	<td width="21%">
-              		<input type="text" maxlength="11" class="input_12_table" name="autofw_inport_x_0" onKeyPress="return validator.isPortRange(this,event)" autocorrect="off" autocapitalize="off">
+			<input type="text" maxlength="11" class="input_12_table" name="autofw_inport_x_0" onKeyPress="return validator.isPortRange(this,event)" autocorrect="off" autocapitalize="off">
             	</td>
             	<td width="10%">
               		<select name="autofw_inproto_x_0" class="input_option">
