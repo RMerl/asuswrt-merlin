@@ -1027,13 +1027,13 @@ textarea{
 .remove_btn{
  	background: transparent url(images/New_ui/accountdelete.png) no-repeat scroll center top;
 	border:0;
-	height:30px;
+	height:34px;
  	width:35px;
  	cursor:pointer;
 }
 .remove_btn:hover, .remove_btn:active{
 	border:0;
-	height:30px;
+	height:34px;
  	width:35px;
  	cursor:pointer;
 }
