@@ -177,9 +177,9 @@ function del_Row(r){
 	for(k=0; k<document.getElementById('autofw_rulelist_table').rows.length; k++){
 		for(j=0; j<document.getElementById('autofw_rulelist_table').rows[k].cells.length-1; j++){
 			if(j == 0)	
-				autofw_rulelist_value += "&#60";
+				autofw_rulelist_value += "<";
 			else
-				autofw_rulelist_value += "&#62";
+				autofw_rulelist_value += ">";
 			autofw_rulelist_value += document.getElementById('autofw_rulelist_table').rows[k].cells[j].innerHTML;		
 		}
 	}
@@ -333,10 +333,10 @@ function trigger_validate_duplicate(o, v, l, off){
           
 	          <tr>
           		<td width="22%">
-              		<input type="text" maxlength="18" class="input_15_table" name="autofw_desc_x_0" onKeyPress="return is_alphanum(this, event)" onblur="validator.safeName(this);" autocorrect="off" autocapitalize="off">
+              		<input type="text" maxlength="18" class="input_15_table" name="autofw_desc_x_0" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
             	</td>
             	<td width="21%">            		
-              		<input type="text" maxlength="11" class="input_12_table"  name="autofw_outport_x_0" onKeyPress="return is_portrange(this,event)" autocorrect="off" autocapitalize="off">
+              		<input type="text" maxlength="11" class="input_12_table"  name="autofw_outport_x_0" onKeyPress="return validator.isPortRange(this,event)" autocorrect="off" autocapitalize="off">
             	</td>
             	<td width="10%">
               		<select name="autofw_outproto_x_0" class="input_option">
