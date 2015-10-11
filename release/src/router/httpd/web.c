@@ -5229,9 +5229,9 @@ static int ej_get_client_detail_info(int eid, webs_t wp, int argc, char_t **argv
 	p_client_info_tab = (P_CLIENT_DETAIL_INFO_TABLE)shared_client_info;
 	for(i=0; i<p_client_info_tab->ip_mac_num; i++) {
 		if(strcmp(p_client_info_tab->user_define[i], ""))
-			strcpy(dev_name, p_client_info_tab->user_define[i]);
+			strcpy(dev_name, p_client_info_tab->user_define[i], sizeof (dev_name) - 1);
 		else
-			strcpy(dev_name, p_client_info_tab->device_name[i]);
+			strcpy(dev_name, p_client_info_tab->device_name[i], sizeof (dev_name) - 1);
 
 		memset(output_buf, 0, 256);
 		memset(devname, 0, LINE_SIZE);
