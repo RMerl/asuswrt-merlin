@@ -342,18 +342,18 @@ check_nmp_db(CLIENT_DETAIL_INFO_TABLE *p_client_tab, int client_no)
 
         	if (!strcmp(db_mac, new_mac)) {
 			NMP_DEBUG("*** %s at DB!!! Update to memory\n",new_mac);
-			strcpy((char *)p_client_tab->user_define[client_no], db_user_def);
-		        strcpy((char *)p_client_tab->device_name[client_no], db_device_name);
-			strcpy((char *)p_client_tab->apple_model[client_no], db_apple_model);
+			strncpy((char *)p_client_tab->user_define[client_no], db_user_def, sizeof (p_client_tab->user_define[client_no])-1);
+		        strncpy((char *)p_client_tab->device_name[client_no], db_device_name, sizeof (p_client_tab->device_name[client_no]) -1);
+			strncpy((char *)p_client_tab->apple_model[client_no], db_apple_model, sizeof (p_client_tab->apple_model[client_no]) -1);
 		        p_client_tab->type[client_no] = atoi(db_type);
 			p_client_tab->http[client_no] = atoi(db_http);
 			p_client_tab->printer[client_no] = atoi(db_printer);
 			p_client_tab->itune[client_no] = atoi(db_itune);
 #ifdef RTCONFIG_BWDPI
-                        strcpy(p_client_tab->bwdpi_host[client_no], db_bwdpi_host);
-			strcpy(p_client_tab->bwdpi_vendor[client_no], db_bwdpi_vendor);
-			strcpy(p_client_tab->bwdpi_type[client_no], db_bwdpi_type);
-                        strcpy(p_client_tab->bwdpi_device[client_no], db_bwdpi_device);
+                        strncpy(p_client_tab->bwdpi_host[client_no], db_bwdpi_host, sizeof (p_client_tab->bwdpi_host[client_no]) -1);
+			strncpy(p_client_tab->bwdpi_vendor[client_no], db_bwdpi_vendor, sizeof (p_client_tab->bwdpi_vendor[client_no]) -1);
+			strncpy(p_client_tab->bwdpi_type[client_no], db_bwdpi_type, sizeof (p_client_tab->bwdpi_type[client_no]) -1);
+                        strncpy(p_client_tab->bwdpi_device[client_no], db_bwdpi_device, sizeof (p_client_tab->bwdpi_device[client_no]) -1);
 #endif
 			break;
 		}
