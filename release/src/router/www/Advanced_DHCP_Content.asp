@@ -207,7 +207,7 @@ function addRow_Group(upper){
 			backup_mac = "";
 			backup_ip = "";
 			backup_name = "";
-			document.getElementById('dhcp_staticlist_table').rows[rule_num].scrollIntoViewIfNeeded();
+			document.getElementById('dhcp_staticlist_table').rows[rule_num-1].scrollIntoViewIfNeeded();
 		}
 	}else{
 		return false;

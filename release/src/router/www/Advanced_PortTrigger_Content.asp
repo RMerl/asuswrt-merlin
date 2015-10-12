@@ -170,7 +170,7 @@ function addRow_Group(upper){
 			backup_inport = "";
 			backup_inproto = "";
 			backup_desc = "";
-			document.getElementById('autofw_rulelist_table').rows[rule_num].scrollIntoViewIfNeeded();
+			document.getElementById('autofw_rulelist_table').rows[rule_num-1].scrollIntoViewIfNeeded();
 		}
 	}	
 }

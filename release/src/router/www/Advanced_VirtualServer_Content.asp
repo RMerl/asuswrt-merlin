@@ -361,7 +361,7 @@ function addRow_Group(upper){
 			backup_ipaddr = "";
 			backup_lport = "";
 			backup_proto = "";
-			document.getElementById('vts_rulelist_table').rows[rule_num].scrollIntoViewIfNeeded();
+			document.getElementById('vts_rulelist_table').rows[rule_num-1].scrollIntoViewIfNeeded();
 		}
 	}
 }
