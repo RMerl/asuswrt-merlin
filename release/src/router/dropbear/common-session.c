@@ -159,6 +159,16 @@ void session_loop(void(*loophandler)()) {
 		FD_ZERO(&readfd);
 		dropbear_assert(ses.payload == NULL);
 
+		/* We get woken up when signal handlers write to this pipe.
+		   SIGCHLD in svr-chansession is the only one currently. */
+		FD_SET(ses.signal_pipe[0], &readfd);
+
+		/* set up for channels which can be read/written */
+		setchannelfds(&readfd, &writefd, writequeue_has_space);
+
+		/* Pending connections to test */
+		set_connect_fds(&writefd);
+
 		/* We delay reading from the input socket during initial setup until
 		after we have written out our initial KEXINIT packet (empty writequeue). 
 		This means our initial packet can be in-flight while we're doing a blocking
@@ -170,19 +180,12 @@ void session_loop(void(*loophandler)()) {
 			&& writequeue_has_space) {
 			FD_SET(ses.sock_in, &readfd);
 		}
+
+		/* Ordering is important, this test must occur after any other function
+		might have queued packets (such as connection handlers) */
 		if (ses.sock_out != -1 && !isempty(&ses.writequeue)) {
 			FD_SET(ses.sock_out, &writefd);
 		}
-		
-		/* We get woken up when signal handlers write to this pipe.
-		   SIGCHLD in svr-chansession is the only one currently. */
-		FD_SET(ses.signal_pipe[0], &readfd);
-
-		/* set up for channels which can be read/written */
-		setchannelfds(&readfd, &writefd, writequeue_has_space);
-
-		/* Pending connections to test */
-		set_connect_fds(&writefd);
 
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
 
