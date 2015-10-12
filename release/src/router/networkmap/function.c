@@ -1652,6 +1652,7 @@ Asus_Device_Discovery(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DE
 			if(UnpackGetInfo(txPdubuf, &get_info)) {
 				NMP_DEBUG_F("DD: productID= %s~\n", get_info.ProductID);
 				memcpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], get_info.ProductID, 16);
+				fixstr(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
 				p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 3;
 				break;
 			}
