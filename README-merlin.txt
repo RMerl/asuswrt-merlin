@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.56 (xx-xxxx-2015)
-============================================
+Asuswrt-Merlin - build 378.56 Beta (12-Oct-2015)
+================================================
 
 About
 -----
@@ -36,6 +36,7 @@ Supported devices are:
  * RT-AC68P
  * RT-AC87U
  * RT-AC3200
+ * RT-AC88U
 
 Devices that are no longer officially supported (but forked builds might
 exist from other developers):

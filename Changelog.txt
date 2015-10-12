@@ -1,8 +1,9 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.56 (xx-xxxx-2015)
+378.56 (12-Oct-2015)
    - NEW: Merged with GPL 9177.
+   - NEW: Added support for the RT-AC88U.
    - NEW: Support for Russian ISP Telenet (code by theMIROn)
    - NEW: ipset support in dnsmasq (patch by ryzhov_al)
    - NEW: default loglevel is now configurable and defaults to 
@@ -14,7 +15,8 @@ Asuswrt-Merlin Changelog
           subnets in CIDR format (i.e. 10.0.0.0/24)
    - CHANGED: Updated miniupnpd to 20150723 snapshot
    - CHANGED: Updated openvpn to 2.3.8
-   - CHANGED: Updated dropbear to 2015.68
+   - CHANGED: Updated dropbear to 2015.68 + upstream patches
+   - CHANGED: Updated minidlna to 1.1.5.
    - CHANGED: Support up to 5 different OpenVPN clients (to match Asus)
    - CHANGED: Maximum openvpn policy rules reduced from 128 to 100, fewer
               priority slots wasted in the RPDB tables (could have been a
@@ -22,7 +24,6 @@ Asuswrt-Merlin Changelog
    - CHANGED: Improvements to VPN Status page
    - CHANGED: Connection failure reason shown on the OpenVPN client
               configuration page.
-   - CHANGED: Updated minidlna to 1.1.5.
    - FIXED: Router crash when an invalid or corrupted DH parameter
             is used on an OpenVPN server configuration.
    - FIXED: 2.4 GHz temperature would be missing on the Sysinfo
