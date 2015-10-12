@@ -90,7 +90,7 @@ function isChange(){
 }
 
 function applyRule(){
-	cancel_edit();
+	cancel_Edit();
 
 	if(parent.usb_support){
 		if(!validator.numberRange(document.form.vts_ftpport, 1, 65535)){
