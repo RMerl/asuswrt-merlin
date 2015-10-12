@@ -630,7 +630,7 @@ static int QuerymUPnPCInfo(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab, 
 				if(p_client_detail_info_tab->device_name[x] == NULL) {
 				    if((strcmp(upnpc_friendlyname, "") && !strstr(upnpc_friendlyname, "UPnP Access Point")))
 					NMP_DEBUG("MiniUPnP get name: %s\n", upnpc_friendlyname);
-					strcpy(p_client_detail_info_tab->device_name[x], upnpc_friendlyname);
+					strncpy(p_client_detail_info_tab->device_name[x], upnpc_friendlyname, sizeof (p_client_detail_info_tab->device_name[x]) - 1);
 				}
 			}
 		}
@@ -660,7 +660,7 @@ p_client_detail_info_tab->ip_addr[x][3]
 			NMP_DEBUG("Query mDNS get: %d, %d.%d.%d.%d/%s/%s_\n", i,
                         a[0],a[1],a[2],a[3], shmClientList->Name[i], shmClientList->Model[i]);
 			if(shmClientList->Name[i]!=NULL && strcmp(shmClientList->Name[i],p_client_detail_info_tab->device_name[x]))
-				strcpy(p_client_detail_info_tab->device_name[x], shmClientList->Name[i]);
+				strncpy(p_client_detail_info_tab->device_name[x], shmClientList->Name[i], sizeof (p_client_detail_info_tab->device_name[x]) - 1);
                         if(shmClientList->Model[i]!=NULL && strcmp(shmClientList->Name[i],p_client_detail_info_tab->apple_model[x]))
                                 AppleModelCheck(p_client_detail_info_tab->apple_model[x],
 						p_client_detail_info_tab->device_name[x],
