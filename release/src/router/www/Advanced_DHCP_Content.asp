@@ -200,10 +200,15 @@ function addRow_Group(upper){
 		addRow(document.form.dhcp_staticmac_x_0 ,1);
 		addRow(document.form.dhcp_staticip_x_0, 0);
 		addRow(document.form.dhcp_staticname_x_0, 0);
-		backup_mac = "";
-		backup_ip = "";
-		backup_name = "";
+
 		showdhcp_staticlist();
+
+		if (backup_mac != "") {
+			backup_mac = "";
+			backup_ip = "";
+			backup_name = "";
+			document.getElementById('dhcp_staticlist_table').rows[rule_num].scrollIntoViewIfNeeded();
+		}
 	}else{
 		return false;
 	}
@@ -240,6 +245,7 @@ function edit_Row(r){
 	backup_ip = document.form.dhcp_staticip_x_0.value;
 	backup_name = document.form.dhcp_staticname_x_0.value;
  	del_Row(r);
+	document.form.dhcp_staticmac_x_0.focus();
 }
 
 function cancel_Edit(){

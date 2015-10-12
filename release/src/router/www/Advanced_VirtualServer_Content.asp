@@ -351,14 +351,18 @@ function addRow_Group(upper){
 		addRow(document.form.vts_ipaddr_x_0, 0);
 		addRow(document.form.vts_lport_x_0, 0);
 		addRow(document.form.vts_proto_x_0, 0);
-		backup_desc = "";
-		backup_port = "";
-		backup_ipaddr = "";
-		backup_lport = "";
-		backup_proto = "";
 
 		document.form.vts_proto_x_0.value="TCP";
 		showvts_rulelist();
+
+		if (backup_desc != "") {
+			backup_desc = "";
+			backup_port = "";
+			backup_ipaddr = "";
+			backup_lport = "";
+			backup_proto = "";
+			document.getElementById('vts_rulelist_table').rows[rule_num].scrollIntoViewIfNeeded();
+		}
 	}
 }
 
@@ -447,6 +451,7 @@ function edit_Row(r){
 	backup_proto = document.form.vts_proto_x_0.value;
 
 	del_Row(r);
+	document.form.vts_desc_x_0.focus();
 }
 
 function cancel_Edit(){

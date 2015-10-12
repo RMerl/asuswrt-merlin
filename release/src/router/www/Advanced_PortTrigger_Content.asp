@@ -162,12 +162,16 @@ function addRow_Group(upper){
 		addRow(document.form.autofw_inproto_x_0, 0);
 		document.form.autofw_inproto_x_0.value="TCP";
 
-		backup_outport = "";
-		backup_outproto = "";
-		backup_inport = "";
-		backup_inproto = "";
-		backup_desc = "";
 		showautofw_rulelist();
+
+		if (backup_desc != "") {
+			backup_outport = "";
+			backup_outproto = "";
+			backup_inport = "";
+			backup_inproto = "";
+			backup_desc = "";
+			document.getElementById('autofw_rulelist_table').rows[rule_num].scrollIntoViewIfNeeded();
+		}
 	}	
 }
 
@@ -188,7 +192,8 @@ function edit_Row(r){
 	backup_inproto = document.form.autofw_inproto_x_0.value;
 	backup_desc = document.form.autofw_desc_x_0.value;
 	
-  del_Row(r);	
+	del_Row(r);
+	document.form.autofw_desc_x_0.focus();
 }
 
 function cancel_Edit(){
