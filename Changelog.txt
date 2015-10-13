@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.56 (12-Oct-2015)
+378.56 Beta 1 (12-Oct-2015)
    - NEW: Merged with GPL 9177.
    - NEW: Added support for the RT-AC88U.
    - NEW: Support for Russian ISP Telenet (code by theMIROn)
