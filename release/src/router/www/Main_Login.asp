@@ -53,7 +53,7 @@ body{
 	color:#000\9; /* IE6 IE7 IE8 */
 	text-align: center;
 	float:right; 
-	margin:25px 0px 0px 39px;
+	margin:25px 79px 0px 39px;
 	line-height:48px;
 }
 .button:hover{
