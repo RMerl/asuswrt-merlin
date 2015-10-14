@@ -130,6 +130,7 @@ int ntp_main(int argc, char *argv[])
 	char *args[] = {"ntpclient", "-h", server, "-i", "3", "-l", "-s", NULL};
 
 	strcpy(server, nvram_safe_get("ntp_server0"));
+	args[2] = server;
 
 	fp = fopen("/var/run/ntp.pid", "w");
 	if (fp == NULL)
