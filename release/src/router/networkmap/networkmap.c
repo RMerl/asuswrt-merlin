@@ -1078,7 +1078,6 @@ int main(int argc, char *argv[])
 	    if(p_client_detail_info_tab->detail_info_num < p_client_detail_info_tab->ip_mac_num) {
 		nvram_set("networkmap_status", "1");
 		FindAllApp(my_ipaddr, p_client_detail_info_tab);
-		FindHostname(p_client_detail_info_tab);
 		StringChk(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num]);
 		#ifdef RTCONFIG_BWDPI
 		query_ret = QueryBwdpiInfo(p_client_detail_info_tab, i);
