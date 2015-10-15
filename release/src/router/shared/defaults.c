@@ -30,6 +30,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "restore_defaults",	"0"	},	// Set to 0 to not restore defaults on boot
 #ifdef RPAC68U
 	{ "sw_mode", "2" 		}, 	// big switch for different mode
+#elif defined(RTCONFIG_DEFAULT_AP_MODE)
+	{ "sw_mode", "3"		},	// big switch for different mode
 #else
 	{ "sw_mode", "1" 		}, 	// big switch for different mode
 #endif
@@ -265,7 +267,6 @@ struct nvram_tuple router_defaults[] = {
 #else
 	{ "wl_optimizexbox", "0"},		/* Optimize WiFi packet for Xbox */
 #endif
-	{ "wl_frameburst", "on"},		/* BRCM Frambursting mode (off|on) */
 	{ "wl_wme", "auto", 0 },		/* WME mode (off|on|auto) */
 #ifdef RTCONFIG_RALINK
 #elif defined(RTCONFIG_QCA)
@@ -603,8 +604,6 @@ struct nvram_tuple router_defaults[] = {
 //	{ "wl1_HT_TxStream", "2" }, // move to init_nvram for model dep.
 //	{ "wl1_HT_RxStream", "3" }, // move to init_nvram for model dep.
 	{ "wl_HT_STBC", "1" },
-	{ "wl_McastPhyMode", "0" },
-	{ "wl_McastMcs", "0" },
 	// the following for ralink 5g only
 	{ "wl_IEEE80211H", "0" },
 	{ "wl_CSPeriod", "10" },
@@ -2470,15 +2469,21 @@ struct nvram_tuple router_defaults[] = {
 #endif
 	{ "rast_idlrt",			"2"},		/* roaming assistant idle rate (Kbps) */
 #endif
-	{ "webui_resolve_conn", "0"},
-	{ "led_disable", "0"},
-
+	{ "webui_resolve_conn",		"0"},
+	{ "led_disable",		"0"},
+	{ "custom_clientlist",		""},		/* for customize device name */
+	{ "nmp_client_list",		""},
+	{ "ttl_inc_enable",		"0"},		/* enable TTL increment */
 #ifdef RTCONFIG_TOR
 	{ "Tor_enable",                 "0"},           /* enable Tor Transparent Proxy */
 	{ "Tor_socksport",              "9050"},
 	{ "Tor_transport",              "9040"},
 	{ "Tor_dnsport",                "9053"},
 	{ "Tor_redir_list",             ""},
+#endif
+#ifdef RTCONFIG_JFFS2USERICON
+	{ "custom_usericon",	""},
+	{ "custom_usericon_del",	""},
 #endif
 #ifdef RTCONFIG_TRAFFIC_CONTROL
 	{ "traffic_control_enable", "0"},
@@ -2868,12 +2873,6 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "data_usage_limit", "8"},
 	{ "data_usage_warning", "6"},
 	{ "modem_idletime", "600"},
-	{ "nmp_client_list",		""},
-	{ "ttl_inc_enable",		"0"},		/* enable TTL increment */
-#ifdef RTCONFIG_JFFS2USERICON
-	{ "custom_usericon",	""},
-	{ "custom_usericon_del",	""},
-#endif
 	{ NULL, NULL }
 };
 
