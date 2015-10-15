@@ -248,41 +248,6 @@ int Nbns_query(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_IN
     return 0;
 }
 
-#if 1
-/***** Printer server detect function *****/
-int lpd515(unsigned char *dest_ip)
-{
-        int sockfd1;
-	struct sockaddr_in other_addr1;
-	struct timeval timeout={1, 0};
-
-        if ((sockfd1 = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-        {
-                NMP_DEBUG_F("LPD515: socket create error.\n");
-                return -1;
-        }
-
-	memset(&other_addr1, 0, sizeof(other_addr1));
-	other_addr1.sin_family = AF_INET;
-	other_addr1.sin_port = htons(LPD_PORT);
-	memcpy(&other_addr1.sin_addr, dest_ip, 4);
-
-	setsockopt(sockfd1, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-	setsockopt(sockfd1, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-
-	if (connect(sockfd1, (struct sockaddr*)&other_addr1, sizeof(other_addr1)) == -1)
-	{
-		NMP_DEBUG_F("LPD515: socket connect failed!\n");
-		close(sockfd1);
-		return -1;
-	}
-
-        /* Don't talk to the LPR service, as it will bring the printer out of sleep mode */
-        /* Assume that answering port 515 = printer server */
-        close(sockfd1);
-        return 0;
-}
-#else
 /***** Printer server detect function *****/
 int lpd515(unsigned char *dest_ip)
 {
@@ -339,7 +304,6 @@ int lpd515(unsigned char *dest_ip)
 	close(sockfd1);
        	return -1;
 }
-#endif
 
 int raw9100(unsigned char *dest_ip)
 {
