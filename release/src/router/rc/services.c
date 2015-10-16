@@ -1363,17 +1363,10 @@ void start_dnsmasq()
 	/* Don't log DHCP queries */
 	if (nvram_match("dhcpd_querylog","0")) {
 		fprintf(fp,"quiet-dhcp\n");
-#ifndef RTCONFIG_WIDEDHCP6
+#ifdef RTCONFIG_IPV6
 		fprintf(fp,"quiet-dhcp6\n");
+		fprintf(fp,"quiet-ra\n");
 #endif
-	} else {
-		if (nvram_get_int("log_level") < 7) {
-			nvram_set("log_level", "7");
-			if (pids("syslogd")) {
-				stop_syslogd();
-				start_syslogd();
-			}
-		}
 	}
 #ifdef RTCONFIG_FINDASUS
 	fprintf(fp, "address=/findasus.local/%s\n", lan_ipaddr);
