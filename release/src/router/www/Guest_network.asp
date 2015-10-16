@@ -1135,7 +1135,7 @@ function setClientmac(macaddr){
 							<table id="maclistTable" width="80%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 								<thead>
 									<tr>
-										<td colspan="2"><#FirewallConfig_MFList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;16)</td>
+										<td colspan="2"><#FirewallConfig_MFList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;64)</td>
 									</tr>
 								</thead>
 									<tr>
@@ -1149,7 +1149,7 @@ function setClientmac(macaddr){
 											<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
 										</td>
 										<td width="20%">	
-											<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, 16);" value="">
+											<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, 64);" value="">
 										</td>
 									</tr>      		
 							</table>
