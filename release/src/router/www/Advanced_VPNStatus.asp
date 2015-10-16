@@ -100,9 +100,9 @@ function refreshState(){
 			case "-1":
 				code = state_clnt_err;
 				if (client_errno == 1 || client_errno == 2 || client_errno == 3)
-					code += ' - <#vpn_openvpn_conflict#>';
+					code += " - <#vpn_openvpn_conflict#>";
 				else if(client_errno == 4 || client_errno == 5 || client_errno == 6)
-					code += ' - <#qis_fail_desc1#>';
+					code += " - <#qis_fail_desc1#>";
 				document.getElementById("client"+unit+"_Block_Running").innerHTML = code;
 				break;
 		}
