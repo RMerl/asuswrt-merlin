@@ -1,6 +1,20 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.56 Beta 2 (xx-xxx-2015)
+   - CHANGED: Increased Guest MAC filter entries limit to 64.
+   - CHANGED: DHCP query logging no longer override configured
+              syslog level, and option was renamed to "Hide queries"
+              to be more intuitive in regard to the level logging
+              configured.
+   - CHANGED: Enabling Hide DHCP queries also silences any RA 
+              routine event.
+   - FIXED: QoS page layout in Firefox
+   - FIXED: curl wasn't using the firmware's CA list (regression)
+   - FIXED: Models with 128 KB support were only reporting 64 KB
+            in the nvram userspace tool
+
+
 378.56 Beta 1 (12-Oct-2015)
    - NEW: Merged with GPL 9177.
    - NEW: Added support for the RT-AC88U.
