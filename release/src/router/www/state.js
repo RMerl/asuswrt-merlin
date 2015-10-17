@@ -795,17 +795,17 @@ if(bwdpi_support){
 		else{
 			menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", AiProtection_title_add_br, Adaptive_QoS_add_br, "<#Traffic_Analyzer#>" ,"<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
 			menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiProtection_HomeSecurity.asp", "AdaptiveQoS_Bandwidth_Monitor.asp", "Main_TrafficMonitor_realtime.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
-		}		
+		}
 	}
 	else{
 		if(wtfast_support){		
 			menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", AiProtection_title_add_br, Adaptive_QoS_add_br, "Game Boost", "<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
 			menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiProtection_HomeSecurity.asp", "AdaptiveQoS_Bandwidth_Monitor.asp", "Advanced_WTFast_Content.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
-		}		
+		}
 		else{
 			menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", AiProtection_title_add_br, Adaptive_QoS_add_br, "<#Menu_usb_application#>", AiCloud_Title_add_br, "Tools", "<#menu5#>");
 			menuL1_link = new Array("", "index.asp", "Guest_network.asp", "AiProtection_HomeSecurity.asp", "AdaptiveQoS_Bandwidth_Monitor.asp", "APP_Installation.asp", "cloud_main.asp", "Tools_Sysinfo.asp", "");
-		}		
+		}
 	}
 }
 else{
@@ -831,6 +831,10 @@ else{
 }
 
 var traffic_L2_dx = 12;
+
+if(wtfast_support){
+	tools_L1++;
+}
 
 function remove_url(){
 	remove_menu_item("Advanced_Modem_Content.asp");
@@ -1312,6 +1316,9 @@ function show_menu(){
 			else{
 				L3 = 2;				
 			}
+			if(wtfast_support){
+				L3++;
+			}
 		}		
 		else if(current_url.indexOf("Main_Spectrum_") == 0){
 			L1 = traffic_L1_dx;
@@ -1395,6 +1402,9 @@ function show_menu(){
 			L1 = 5;
 			L2 = traffic_L2_dx;
 			L3 = traffic_L3_dx;
+			if (wtfast_support){
+				L1++;
+			}
 		}
 	
 		if(current_url.indexOf("Main_TrafficMonitor") == 0){
@@ -1403,7 +1413,11 @@ function show_menu(){
 			L1 = 5;
 			L2 = traffic_L2_dx;
 			L3 = traffic_L3_dx;
+			if (wtfast_support){
+				L1++;
+			}
 		}
+
 	}
 	
 	if(current_url.indexOf("AdaptiveQoS_Adaptive") == 0){
