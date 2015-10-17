@@ -206,7 +206,6 @@ function initial(){
 		document.form.telnetd_enable[1].disabled = false;
 	}	
 
-	toggle_jffs_visibility('<% nvram_get("jffs2_enable"); %>');
 }
 
 var time_zone_tmp="";
@@ -1033,12 +1032,6 @@ function display_spec_IP(flag){
 	}
 }
 
-function toggle_jffs_visibility(state){
-	var visibility = ( state == 1 ? "" : "none");
-
-	document.getElementById('jffs2_format_tr').style.display = visibility;
-	document.getElementById('jffs2_scripts_tr').style.display = visibility;
-}
 
 function hide_reboot_option(flag){
 	document.getElementById("reboot_schedule_date_tr").style.display = (flag == 1) ? "" : "none";
@@ -1171,19 +1164,19 @@ function updateDateTime()
 						<td colspan="2">Persistent JFFS2 partition</td>
 					</tr>
 				</thead>
-				<tr id="jffs2_format_tr">
+				<tr>
 					<th>Format JFFS partition at next boot</th>
-    				<td>
-    					<input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
-					<input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
+					<td>
+						<input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
-				<tr id="jffs2_scripts_tr">
+				<tr>
 					<th>Enable JFFS custom scripts and configs</th>
 					<td>
 						<input type="radio" name="jffs2_scripts" class="input" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" name="jffs2_scripts" class="input" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#checkbox_No#>
-						</td>
+					</td>
 				</tr>
 			</table>
 			<table id="ssh_table" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
