@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 378.56 Beta (12-Oct-2015)
+Asuswrt-Merlin - build 378.56 Beta (18-Oct-2015)
 ================================================
 
 About

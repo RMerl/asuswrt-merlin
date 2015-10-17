@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.56 Beta 2 (xx-xxx-2015)
+378.56 Beta 2 (18-Oct-2015)
    - CHANGED: Increased Guest MAC filter entries limit to 64.
    - CHANGED: DHCP query logging no longer override configured
               syslog level, and option was renamed to "Hide queries"
@@ -9,10 +9,17 @@ Asuswrt-Merlin Changelog
               configured.
    - CHANGED: Enabling Hide DHCP queries also silences any RA 
               routine event.
+   - CHANGED: Reverted networkmap's printer detection change
+              as it didn't resolve the printer wakeups.
+   - CHANGED: Reorganized settings on the System page
    - FIXED: QoS page layout in Firefox
    - FIXED: curl wasn't using the firmware's CA list (regression)
    - FIXED: Models with 128 KB support were only reporting 64 KB
             in the nvram userspace tool
+   - FIXED: Traditional QoS not working when IPv6 is enabled
+            (patch by charlie2alpha)
+   - FIXED: Smart Connect page fails to save interface policies
+   - FIXED: VPNStatus page was broken on French locale
 
 
 378.56 Beta 1 (12-Oct-2015)
