@@ -798,6 +798,14 @@ function applyRule(){
 		document.form['wl'+i+'_bsd_if_qualify_policy'].value = bsd_if_qualify_policy[i].toString().replace(/,/g,' ');
 	else
 		document.form['wl'+i+'_bsd_if_qualify_policy_x'].value = bsd_if_qualify_policy[i].toString().replace(/,/g,' ');
+
+	bsd_if_select_policy[i][0] = wl_ifnames[wl_name.indexOf(wl_names[i][document.form['wl'+i+'_bsd_if_select_policy_first'].value])];
+	bsd_if_select_policy[i][1] = wl_ifnames[wl_name.indexOf(wl_names[i][document.form['wl'+i+'_bsd_if_select_policy_second'].value])];
+	if('<% nvram_get("smart_connect_x"); %>' != '2')
+		document.form['wl'+i+'_bsd_if_select_policy'].value = bsd_if_select_policy[i].toString().replace(/,/g,' ');
+	else
+		document.form['wl'+i+'_bsd_if_select_policy_x'].value = bsd_if_select_policy[i].toString().replace(/,/g,' ');
+
   }
 
 	bsd_bounce_detect[0] = document.form.windows_time_sec.value;
@@ -838,7 +846,7 @@ function restoreRule(){
 		document.form.wl1_bsd_if_qualify_policy.value = '<% nvram_default_get("wl1_bsd_if_qualify_policy"); %>';
 		document.form.wl2_bsd_if_qualify_policy.value = '<% nvram_default_get("wl2_bsd_if_qualify_policy"); %>';
 		document.form.bsd_bounce_detect.value = '<% nvram_default_get("bsd_bounce_detect"); %>';
-		document.form.bsd_ifnames_x.value = '<% nvram_default_get("bsd_ifnames"); %>';
+		document.form.bsd_ifnames.value = '<% nvram_default_get("bsd_ifnames"); %>';
 	}
 	document.form.submit();
 }
