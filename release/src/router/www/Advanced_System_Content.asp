@@ -1238,48 +1238,13 @@ function updateDateTime()
 					</td>
 				</tr>
 			</table>
-			
+	
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
 				<thead>
 					<tr>
-					  <td colspan="2"><#t2Misc#></td>
+					  <td colspan="2">Logging</td>
 					</tr>
 				</thead>
-				<tr id="btn_ez_radiotoggle_tr">
-					<th><#WPS_btn_behavior#></th>
-					<td>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_WPS" class="input" style="display:none;" value="0"><label for="turn_WPS"><#WPS_btn_actWPS#></label>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_WiFi" class="input" style="display:none;" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><label for="turn_WiFi" id="turn_WiFi_str"><#WPS_btn_toggle#></label>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_LED" class="input" style="display:none;" value="0" <% nvram_match_x("", "btn_ez_mode", "1", "checked"); %>><label for="turn_LED" id="turn_LED_str">Turn LED On/Off</label>
-					</td>
-				</tr>				
-				</tr>
-                                <tr id="reboot_schedule_enable_tr">
-                                        <th width="40%" align="right">Enable Reboot Schedule</th>
-                                        <td width="300"><input type="radio" value="1" name="reboot_schedule_enable"  onClick="hide_reboot_option(1);return change_common_radio(this, 'LANHostConfig', 'reboot_schedule_enable', '1')" <% nvram_match_x("LANHostConfig","reboot_schedule_enable", "1", "checked"); %>><#checkbox_Yes#>
-                                        <input type="radio" value="0" name="reboot_schedule_enable"  onClick="hide_reboot_option(0);return change_common_radio(this, 'LANHostConfig', 'reboot_schedule_enable', '0')" <% nvram_match_x("LANHostConfig","reboot_schedule_enable", "0", "checked"); %>><#checkbox_No#>
-                                        </td>
-                                </tr>
-                                <tr id="reboot_schedule_date_tr">
-                                        <th>Date to Reboot</th>
-                                        <td>
-                                        <input type="checkbox" name="reboot_date_x_Sun" class="input" onChange="return changeDate();"><#date_Sun_itemdesc#>
-                                        <input type="checkbox" name="reboot_date_x_Mon" class="input" onChange="return changeDate();"><#date_Mon_itemdesc#>
-                                        <input type="checkbox" name="reboot_date_x_Tue" class="input" onChange="return changeDate();"><#date_Tue_itemdesc#>
-                                        <input type="checkbox" name="reboot_date_x_Wed" class="input" onChange="return changeDate();"><#date_Wed_itemdesc#>
-                                        <input type="checkbox" name="reboot_date_x_Thu" class="input" onChange="return changeDate();"><#date_Thu_itemdesc#>
-                                        <input type="checkbox" name="reboot_date_x_Fri" class="input" onChange="return changeDate();"><#date_Fri_itemdesc#>
-                                        <input type="checkbox" name="reboot_date_x_Sat" class="input" onChange="return changeDate();"><#date_Sat_itemdesc#>
-                                        </td>
-                                </tr>
-                                <tr id="reboot_schedule_time_tr">
-                                        <th>Time of Day to Reboot</th>
-                                        <td>
-                                        <input type="text" maxlength="2" class="input_3_table" name="reboot_time_x_hour" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 0);" autocorrect="off" autocapitalize="off"> :
-                                        <input type="text" maxlength="2" class="input_3_table" name="reboot_time_x_min" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 1);" autocorrect="off" autocapitalize="off">
-                                        </td>
-                                </tr>
-
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
 					<td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
@@ -1314,6 +1279,47 @@ function updateDateTime()
 						</select>
 					</td>
 				</tr>
+			</table>
+		
+			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
+				<thead>
+					<tr>
+					  <td colspan="2"><#t2Misc#></td>
+					</tr>
+				</thead>
+				<tr id="btn_ez_radiotoggle_tr">
+					<th><#WPS_btn_behavior#></th>
+					<td>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_WPS" class="input" style="display:none;" value="0"><label for="turn_WPS"><#WPS_btn_actWPS#></label>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_WiFi" class="input" style="display:none;" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><label for="turn_WiFi" id="turn_WiFi_str"><#WPS_btn_toggle#></label>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_LED" class="input" style="display:none;" value="0" <% nvram_match_x("", "btn_ez_mode", "1", "checked"); %>><label for="turn_LED" id="turn_LED_str">Turn LED On/Off</label>
+					</td>
+				</tr>				
+	                            <tr id="reboot_schedule_enable_tr">
+                                        <th width="40%" align="right">Enable Reboot Schedule</th>
+                                        <td width="300"><input type="radio" value="1" name="reboot_schedule_enable"  onClick="hide_reboot_option(1);return change_common_radio(this, 'LANHostConfig', 'reboot_schedule_enable', '1')" <% nvram_match_x("LANHostConfig","reboot_schedule_enable", "1", "checked"); %>><#checkbox_Yes#>
+                                        <input type="radio" value="0" name="reboot_schedule_enable"  onClick="hide_reboot_option(0);return change_common_radio(this, 'LANHostConfig', 'reboot_schedule_enable', '0')" <% nvram_match_x("LANHostConfig","reboot_schedule_enable", "0", "checked"); %>><#checkbox_No#>
+                                        </td>
+                                </tr>
+                                <tr id="reboot_schedule_date_tr">
+                                        <th>Date to Reboot</th>
+                                        <td>
+                                        <input type="checkbox" name="reboot_date_x_Sun" class="input" onChange="return changeDate();"><#date_Sun_itemdesc#>
+                                        <input type="checkbox" name="reboot_date_x_Mon" class="input" onChange="return changeDate();"><#date_Mon_itemdesc#>
+                                        <input type="checkbox" name="reboot_date_x_Tue" class="input" onChange="return changeDate();"><#date_Tue_itemdesc#>
+                                        <input type="checkbox" name="reboot_date_x_Wed" class="input" onChange="return changeDate();"><#date_Wed_itemdesc#>
+                                        <input type="checkbox" name="reboot_date_x_Thu" class="input" onChange="return changeDate();"><#date_Thu_itemdesc#>
+                                        <input type="checkbox" name="reboot_date_x_Fri" class="input" onChange="return changeDate();"><#date_Fri_itemdesc#>
+                                        <input type="checkbox" name="reboot_date_x_Sat" class="input" onChange="return changeDate();"><#date_Sat_itemdesc#>
+                                        </td>
+                                </tr>
+                                <tr id="reboot_schedule_time_tr">
+                                        <th>Time of Day to Reboot</th>
+                                        <td>
+                                        <input type="text" maxlength="2" class="input_3_table" name="reboot_time_x_hour" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 0);" autocorrect="off" autocapitalize="off"> :
+                                        <input type="text" maxlength="2" class="input_3_table" name="reboot_time_x_min" onKeyPress="return validator.isNumber(this,event);" onblur="validator.timeRange(this, 1);" autocorrect="off" autocapitalize="off">
+                                        </td>
+                                </tr>
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
 					<td>
@@ -1364,6 +1370,15 @@ function updateDateTime()
 						<input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match("telnetd_enable", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
+			</table>
+
+			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
+				<thead>
+					<tr>
+					  <td colspan="2">Web interface</td>
+					</tr>
+				</thead>
+
 				<tr id="https_tr">
 					<th><#WLANConfig11b_AuthenticationMethod_itemname#></th>
 					<td>
