@@ -157,6 +157,9 @@ static int add_qos_rules(char *pcWANIF)
 	int v4v6_ok;
 
 	if((fn = fopen(mangle_fn, "w")) == NULL) return -2;
+#ifdef RTCONFIG_IPV6
+	if(ipv6_enabled() && (fn_ipv6 = fopen(mangle_fn_ipv6, "w")) == NULL) return -3;
+#endif
 
 	inuse = sticky_enable = 0;
 
