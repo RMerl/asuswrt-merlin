@@ -175,7 +175,7 @@ function show_etherstate(){
 			else
 				state = line[1] + " Mbps";
 
-			code += '<tr><td>LAN ' + line[0] + '</td><td style="' + coldisplay +'">' + '<span class="ClientName">&lt;unknown&gt;</span>' + '</td><td><span>' + state + '</span></td><td style="' + coldisplay +'">'+ '<span class="ClientName">&lt;unknown&gt;</span>' +'</td></tr>';
+			code += '<tr><td>LAN ' + line[0] + ' (RTL)</td><td style="' + coldisplay +'">' + '<span class="ClientName">&lt;unknown&gt;</span>' + '</td><td><span>' + state + '</span></td><td style="' + coldisplay +'">'+ '<span class="ClientName">&lt;unknown&gt;</span>' +'</td></tr>';
 		}
 
 	}
