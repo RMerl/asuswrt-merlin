@@ -757,7 +757,7 @@ function validate_hostname(o){
 			  	<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#MAC_Address#></a></th>
 					<th><#IPConnection_ExternalIPAddress_itemname#></th>
-					<th>Hostame</th>
+					<th>Hostname</th>
 					<th><#list_add_delete#></th>
 			  	</tr>
 			  	<tr>
