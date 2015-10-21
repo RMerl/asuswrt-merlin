@@ -437,9 +437,19 @@ function edit_Row(r){
 	cancel_Edit();
 
 	var i=r.parentNode.parentNode.rowIndex;
-  	
-	document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].innerHTML;
-	document.form.vts_port_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML; 
+
+	if (document.getElementById('vts_rulelist_table').rows[i].cells[j].innerHTML.lastIndexOf("...") <0 ) {
+		document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].innerHTML;
+	}else{
+		document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].title;
+	}
+
+	if (document.getElementById('vts_rulelist_table').rows[i].cells[j].innerHTML.lastIndexOf("...") <0 ) {
+		document.form.vts_port_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML;
+	}else{
+		document.form.vts_port_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[1].title;
+	}
+
 	document.form.vts_ipaddr_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[2].innerHTML; 
 	document.form.vts_lport_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[3].innerHTML;
 	document.form.vts_proto_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[4].innerHTML;
