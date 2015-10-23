@@ -1,6 +1,18 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.56 Beta 3 (xx-xxx-2015)
+   - CHANGED: nameserver handling is more resilient to
+              scenarios where dnsmasq fails to start due
+              to a broken configuration
+   - FIXED: PPTP/L2TP client page broken on French locale
+   - FIXED: Entries on the Virtual Server page with ellipsis 
+            in their name or port range weren't properly 
+            copied to the Add fields when edited.
+   - FIXED: Additionnal fixes to truncated hostnames related
+            to networkmap
+
+
 378.56 Beta 2 (18-Oct-2015)
    - CHANGED: Increased Guest MAC filter entries limit to 64.
    - CHANGED: DHCP query logging no longer override configured
