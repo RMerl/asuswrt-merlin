@@ -178,9 +178,9 @@ int ntp_main(int argc, char *argv[])
 			if (strlen(nvram_safe_get("ntp_server0")))
 			{
 				if (server_idx)
-					strcpy(server, nvram_safe_get("ntp_server1"));
+					strlcpy(server, nvram_safe_get("ntp_server1"), sizeof (server));
 				else
-					strcpy(server, nvram_safe_get("ntp_server0"));
+					strlcpy(server, nvram_safe_get("ntp_server0"), sizeof (server));
 
 				server_idx = (server_idx + 1) % 2;
 			}
