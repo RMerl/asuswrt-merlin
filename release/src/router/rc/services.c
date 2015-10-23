@@ -935,7 +935,7 @@ void start_dnsmasq()
 	FILE *fp;
 	char *lan_ifname, *lan_ipaddr;
 	char *value;
-	int /*i,*/ have_dhcp = 0;
+	int i, have_dhcp = 0;
 	int unit;
 	char prefix[8];
 
@@ -1385,10 +1385,6 @@ void start_dnsmasq()
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
 
-	// Make the router use dnsmasq for its own local resolution
-	unlink("/etc/resolv.conf");
-	symlink("/rom/etc/resolv.conf", "/etc/resolv.conf");    // nameserver 127.0.0.1
-
 	/* Create resolv.dnsmasq with empty server list */
 	f_write(dmservers, NULL, 0, FW_APPEND, 0666);
 
@@ -1397,6 +1393,17 @@ void start_dnsmasq()
 #else
 	eval("dnsmasq", "--log-async");
 #endif
+
+	for ( i = 1; i < 4; i++ ) {
+                if (!pids("dnsmasq")) {
+			sleep(i);
+		} else {
+			// Make the router use dnsmasq for its own local resolution if it did start
+			unlink("/etc/resolv.conf");
+			symlink("/rom/etc/resolv.conf", "/etc/resolv.conf");	// nameserver 127.0.0.1
+			i = 4;
+		}
+	}
 
 /* TODO: remove it for here !!!*/
 	char nvram_name[16], wan_proto[16];
@@ -1420,6 +1427,7 @@ void start_dnsmasq()
 			refresh_ntpc();
 		}
 	}
+
 /* TODO: remove it */
 
 	TRACE_PT("end\n");
