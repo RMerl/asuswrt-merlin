@@ -342,18 +342,18 @@ check_nmp_db(CLIENT_DETAIL_INFO_TABLE *p_client_tab, int client_no)
 
         	if (!strcmp(db_mac, new_mac)) {
 			NMP_DEBUG("*** %s at DB!!! Update to memory\n",new_mac);
-			strncpy((char *)p_client_tab->user_define[client_no], db_user_def, sizeof (p_client_tab->user_define[client_no])-1);
-		        strncpy((char *)p_client_tab->device_name[client_no], db_device_name, sizeof (p_client_tab->device_name[client_no]) -1);
-			strncpy((char *)p_client_tab->apple_model[client_no], db_apple_model, sizeof (p_client_tab->apple_model[client_no]) -1);
+			strlcpy((char *)p_client_tab->user_define[client_no], db_user_def, sizeof (p_client_tab->user_define[client_no]));
+		        strlcpy((char *)p_client_tab->device_name[client_no], db_device_name, sizeof (p_client_tab->device_name[client_no]));
+			strlcpy((char *)p_client_tab->apple_model[client_no], db_apple_model, sizeof (p_client_tab->apple_model[client_no]));
 		        p_client_tab->type[client_no] = atoi(db_type);
 			p_client_tab->http[client_no] = atoi(db_http);
 			p_client_tab->printer[client_no] = atoi(db_printer);
 			p_client_tab->itune[client_no] = atoi(db_itune);
 #ifdef RTCONFIG_BWDPI
-                        strncpy(p_client_tab->bwdpi_host[client_no], db_bwdpi_host, sizeof (p_client_tab->bwdpi_host[client_no]) -1);
-			strncpy(p_client_tab->bwdpi_vendor[client_no], db_bwdpi_vendor, sizeof (p_client_tab->bwdpi_vendor[client_no]) -1);
-			strncpy(p_client_tab->bwdpi_type[client_no], db_bwdpi_type, sizeof (p_client_tab->bwdpi_type[client_no]) -1);
-                        strncpy(p_client_tab->bwdpi_device[client_no], db_bwdpi_device, sizeof (p_client_tab->bwdpi_device[client_no]) -1);
+			strlcpy(p_client_tab->bwdpi_host[client_no], db_bwdpi_host, sizeof (p_client_tab->bwdpi_host[client_no]));
+			strlcpy(p_client_tab->bwdpi_vendor[client_no], db_bwdpi_vendor, sizeof (p_client_tab->bwdpi_vendor[client_no]));
+			strlcpy(p_client_tab->bwdpi_type[client_no], db_bwdpi_type, sizeof (p_client_tab->bwdpi_type[client_no]));
+			strlcpy(p_client_tab->bwdpi_device[client_no], db_bwdpi_device, sizeof (p_client_tab->bwdpi_device[client_no]));
 #endif
 			break;
 		}
@@ -629,8 +629,10 @@ static int QuerymUPnPCInfo(P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab, 
 				
 				if(p_client_detail_info_tab->device_name[x] == NULL) {
 				    if((strcmp(upnpc_friendlyname, "") && !strstr(upnpc_friendlyname, "UPnP Access Point")))
+				    {
 					NMP_DEBUG("MiniUPnP get name: %s\n", upnpc_friendlyname);
-					strncpy(p_client_detail_info_tab->device_name[x], upnpc_friendlyname, sizeof (p_client_detail_info_tab->device_name[x]) - 1);
+					strlcpy(p_client_detail_info_tab->device_name[x], upnpc_friendlyname, sizeof (p_client_detail_info_tab->device_name[x]));
+				   }
 				}
 			}
 		}
@@ -660,7 +662,7 @@ p_client_detail_info_tab->ip_addr[x][3]
 			NMP_DEBUG("Query mDNS get: %d, %d.%d.%d.%d/%s/%s_\n", i,
                         a[0],a[1],a[2],a[3], shmClientList->Name[i], shmClientList->Model[i]);
 			if(shmClientList->Name[i]!=NULL && strcmp(shmClientList->Name[i],p_client_detail_info_tab->device_name[x]))
-				strncpy(p_client_detail_info_tab->device_name[x], shmClientList->Name[i], sizeof (p_client_detail_info_tab->device_name[x]) - 1);
+				strlcpy(p_client_detail_info_tab->device_name[x], shmClientList->Name[i], sizeof (p_client_detail_info_tab->device_name[x]));
                         if(shmClientList->Model[i]!=NULL && strcmp(shmClientList->Name[i],p_client_detail_info_tab->apple_model[x]))
                                 AppleModelCheck(p_client_detail_info_tab->apple_model[x],
 						p_client_detail_info_tab->device_name[x],

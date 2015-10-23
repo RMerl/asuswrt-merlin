@@ -1662,7 +1662,7 @@ get_name_from_dhcp_lease(unsigned char *mac, char *dev_name)
 
 		if(!strcmp(dev_mac, hwaddr)) {
 			NMP_DEBUG_F("Find the same MAC(%s)! copy device name\n", dev_mac);
-			strncpy(dev_name, name, 15);
+			strlcpy(dev_name, name, 16);
 			break;
 		}
 	}

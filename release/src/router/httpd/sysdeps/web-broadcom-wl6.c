@@ -4174,7 +4174,7 @@ dump_bss_info_array(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *
 	wl_format_ssid(ssidbuftmp, bi->SSID, bi->SSID_len);
 
 	if (str_escape_quotes(ssidbuf, ssidbuftmp, sizeof(ssidbuf)) == 0 )
-		strncpy(ssidbuf, ssidbuftmp, sizeof(ssidbuf));
+		strlcpy(ssidbuf, ssidbuftmp, sizeof(ssidbuf));
 
 	retval += websWrite(wp, "\"%s\",", ssidbuf);
 	retval += websWrite(wp, "\"%d\",", (int16)(dtoh16(bi->RSSI)));
@@ -4236,7 +4236,7 @@ wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		wl_format_ssid(ssidbuftmp, ssid.SSID, dtoh32(ssid.SSID_len));
 
 		if (str_escape_quotes(ssidbuf, ssidbuftmp, sizeof(ssidbuf)) == 0 )
-			strncpy(ssidbuf, ssidbuftmp, sizeof(ssidbuf));
+			strlcpy(ssidbuf, ssidbuftmp, sizeof(ssidbuf));
 
 		retval += websWrite(wp, "%s\",\"\",\"\",\"\",\"\",\"\",", ssidbuf);
 	}
@@ -4471,7 +4471,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				}
 			}
 			if ((found) && (str_escape_quotes(hostnameentry, tmp, sizeof(hostnameentry)) == 0 ))
-				strncpy(hostnameentry, tmp, sizeof(hostnameentry));
+				strlcpy(hostnameentry, tmp, sizeof(hostnameentry));
 
 			if (found == 0) {
 				// Not in arplist nor in leaselist
@@ -4591,7 +4591,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					}
 
 					if ((found) && (str_escape_quotes(hostnameentry, tmp,sizeof(hostnameentry)) == 0 ))
-						strncpy(hostnameentry, tmp, sizeof(hostnameentry));
+						strlcpy(hostnameentry, tmp, sizeof(hostnameentry));
 
 					if (found == 0) {
 						// Not in arplist nor in leaselist

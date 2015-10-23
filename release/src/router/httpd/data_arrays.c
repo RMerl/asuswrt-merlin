@@ -217,7 +217,7 @@ ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 			proto, eport, iaddr, iport, timestamp, desc) < 6) continue;
 
 		if (str_escape_quotes(desc2, desc, sizeof(desc2)) == 0)
-			strncpy(desc2, desc, sizeof(desc2));
+			strlcpy(desc2, desc, sizeof(desc2));
 
 		ret += websWrite(wp, "[\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"],\n",
 			proto, eport, iaddr, iport, timestamp, desc2);
