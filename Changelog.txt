@@ -1,8 +1,18 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.56 Beta 3 (xx-xxx-2015)
-   - CHANGED: nameserver handling is more resilient to
+378.56 (25-Oct-2015)
+     NOTE: There is no 378.56 build for the RT-N66U at
+           this time, as Asus hasn't released updated 
+           source code for this model yet, and there are
+           new closed source binary components that are
+           necessary for this new release.
+
+           Make sure to read the changelog of the two
+           previous betas for the complete list of
+           changes since 378.55.
+
+   - CHANGED: Nameserver handling is more resilient to
               scenarios where dnsmasq fails to start due
               to a broken configuration
    - FIXED: PPTP/L2TP client page broken on French locale
