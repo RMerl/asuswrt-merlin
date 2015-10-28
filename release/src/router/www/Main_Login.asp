@@ -394,7 +394,8 @@ function disable_button(){
 		<div id="logout_field" style="display:none;">
 			<div class="p1 title_gap"></div>
 			<div class="nologin"><#logoutmessage#>
-			<p>Click <a style="color: #FFFFFF; font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_Login.asp">here</a> to log back in.</div>
+				<br><br>Click <a style="color: #FFFFFF; font-weight: bolder;text-decoration:underline;" class="hyperlink" href="Main_Login.asp">here</a> to log back in.
+			</div>
 		</div>
 	</div>
 </div>
