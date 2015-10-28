@@ -1,6 +1,15 @@
 Asuswrt-Merlin Changelog
 ========================
 
+378.56_2 (xx-xxx-2015)
+    - FIXED: EMF wasn't working on AC56/AC68/AC87.
+    - FIXED: Couldn't connect to ISPs using VLANs (RT-AC87U)
+    - FIXED: Editing Port Forward entry with ellipsis in
+             the description or the port range would
+             still edit the shortened version instead 
+             of the full content.
+
+
 378.56 (25-Oct-2015)
      NOTE: There is no 378.56 build for the RT-N66U at
            this time, as Asus hasn't released updated 
@@ -19,7 +28,7 @@ Asuswrt-Merlin Changelog
    - FIXED: Entries on the Virtual Server page with ellipsis 
             in their name or port range weren't properly 
             copied to the Add fields when edited.
-   - FIXED: Additionnal fixes to truncated hostnames related
+   - FIXED: Additional fixes to truncated hostnames related
             to networkmap
 
 
