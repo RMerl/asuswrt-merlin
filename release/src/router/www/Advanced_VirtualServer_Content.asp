@@ -438,13 +438,13 @@ function edit_Row(r){
 
 	var i=r.parentNode.parentNode.rowIndex;
 
-	if (document.getElementById('vts_rulelist_table').rows[i].cells[j].innerHTML.lastIndexOf("...") <0 ) {
+	if (document.getElementById('vts_rulelist_table').rows[i].cells[0].innerHTML.lastIndexOf("...") <0 ) {
 		document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].innerHTML;
 	}else{
 		document.form.vts_desc_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[0].title;
 	}
 
-	if (document.getElementById('vts_rulelist_table').rows[i].cells[j].innerHTML.lastIndexOf("...") <0 ) {
+	if (document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML.lastIndexOf("...") <0 ) {
 		document.form.vts_port_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[1].innerHTML;
 	}else{
 		document.form.vts_port_x_0.value = document.getElementById('vts_rulelist_table').rows[i].cells[1].title;
