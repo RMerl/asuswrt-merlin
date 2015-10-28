@@ -4320,7 +4320,7 @@ int init_nvram(void)
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("nandflash");
 #ifdef RTCONFIG_PUSH_EMAIL
-		add_rc_support("feedback");
+//		add_rc_support("feedback");
 #endif
 #ifdef RTCONFIG_LED_BTN
 		nvram_set_int("AllLED", 1);
