@@ -2496,6 +2496,9 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_CLOUDCHECK
 	{ "enable_cloudcheck",	"0"},
 #endif
+#ifdef RTCONFIG_BCMARM
+	{ "drop_caches", "1"},
+#endif
 #ifdef RTCONFIG_RESTRICT_GUI
 	{ "fw_restrict_gui",	"0"},
 	{ "fw_restrict_gui_mac",	""},
