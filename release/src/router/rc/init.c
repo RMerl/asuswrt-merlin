@@ -6501,7 +6501,7 @@ if (nvram_match("commit_test", "1")) {
 		} while (ret);
 #ifdef RTCONFIG_BCMARM
 		/* free pagecache */
-//		f_write_string("/proc/sys/vm/drop_caches", "1", 0, 0);
+		f_write_string("/proc/sys/vm/drop_caches", "1", 0, 0);
 #endif
 	}
 
