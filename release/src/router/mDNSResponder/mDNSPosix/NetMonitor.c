@@ -1214,7 +1214,7 @@ mDNSexport int main(int argc, char **argv)
 	mStatus status;
 	
 	setlinebuf(stdout);				// Want to see lines as they appear, not block buffered
-	log = 1;
+	log = 0;
 	
 	for (i=1; i<argc; i++)
 		{
