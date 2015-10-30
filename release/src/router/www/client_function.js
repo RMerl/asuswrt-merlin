@@ -155,6 +155,7 @@ var totalClientNum = {
 }
 
 var setClientAttr = function(){
+	this.hostname = "";
 	this.type = "";
 	this.defaultType = "0";
 	this.name = "";
@@ -623,6 +624,7 @@ function genClientList(){
 			continue;
 		}
 
+		clientList[thisClientMacAddr].hostname = thisClient[2];
 		if(typeof clientList[thisClientMacAddr] != "undefined"){
 			if(clientList[thisClientMacAddr].ipMethod == "DHCP") {
 				if(clientList[thisClientMacAddr].ip == thisClient[1] || clientList[thisClientMacAddr].ip == "offline")

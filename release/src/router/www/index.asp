@@ -985,6 +985,8 @@ function validForm(){
 					tmpArray[index] = document.getElementById("macaddr_field").value;
 					tmpArray[index] += ">";
 					tmpArray[index] += document.getElementById("ipaddr_field").value;
+					tmpArray[index] += ">";
+					tmpArray[index] += document.getElementById("hostname_field").value;
 					document.list_form.dhcp_staticlist.value = tmpArray.join("<");
 				}
 			});
@@ -1431,6 +1433,8 @@ function popupEditBlock(clientObj){
 		document.getElementById('ipaddr_field_orig').value = clientObj.ip;
 		document.getElementById('ipaddr_field').value = clientObj.ip;
 
+		document.getElementById('hostname_field').value = clientObj.hostname;
+
 		document.getElementById('ipaddr_field').disabled = true;
 		$("#ipaddr_field").addClass("client_input_text_disabled");
 		if(sw_mode == "1") {
@@ -1719,6 +1723,8 @@ function addToList(macAddr){
 		document.list_form.dhcp_staticlist.value += macAddr;
 		document.list_form.dhcp_staticlist.value += ">";
 		document.list_form.dhcp_staticlist.value += document.getElementById("ipaddr_field").value;
+		document.list_form.dhcp_staticlist.value += ">";
+		document.list_form.dhcp_staticlist.value += document.getElementById("hostname_field").value;
 	}
 }
 
@@ -2049,6 +2055,7 @@ function setDefaultIcon() {
 			<td style="vertical-align:top;width:280px;">
 				<div>	
 					<input id="client_name" name="client_name" type="text" value="" class="input_32_table" maxlength="32" style="width:275px;" autocorrect="off" autocapitalize="off">
+					<input id="hostname_field" type="hidden" value="">
 				</div>
 				<div style="margin-top:10px;">				
 					<input id="ipaddr_field_orig" type="hidden" value="" disabled="">
