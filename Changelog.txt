@@ -2,12 +2,26 @@ Asuswrt-Merlin Changelog
 ========================
 
 378.56_2 (xx-xxx-2015)
+    - CHANGED: Reverted the memory buffering optimization
+               for ARM devices, as people keep panicking
+               over the lower amount of free RAM.  You can 
+               manually re-enable the optimization by setting
+               "drop_caches=0" in nvram.
+    - CHANGED: Allow using a port < 1024 for http(s) webui
+               interface.
     - FIXED: EMF wasn't working on AC56/AC68/AC87.
     - FIXED: Couldn't connect to ISPs using VLANs (RT-AC87U)
     - FIXED: Editing Port Forward entry with ellipsis in
              the description or the port range would
              still edit the shortened version instead 
              of the full content.
+    - FIXED: Debug log from mDNSNetMonitor could gradually
+             fill up RAM - disabled it.
+    - FIXED: Router crash if pasting SSH key > 2047
+             characters.
+    - FIXED: Editing an entry on the networkmap would
+             clear the hostname if entry existed in
+             the DHCP static list.
 
 
 378.56 (25-Oct-2015)
