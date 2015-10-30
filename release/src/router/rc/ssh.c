@@ -30,6 +30,7 @@ char *get_parsed_key(const char *name, char *buf)
 	value = nvram_safe_get(name);
 
 	len = strlen(value);
+	if (len > 3500) len = 3500;
 
 	for (i=0; (i < len); i++) {
 		if (value[i] == '>')
@@ -46,7 +47,7 @@ char *get_parsed_key(const char *name, char *buf)
 void start_sshd(void)
 {
 	int dirty = 0;
-	char buf[2048];
+	char buf[3500];
 
         if (!nvram_match("sshd_enable", "1"))
                 return;
