@@ -744,7 +744,6 @@ void start_vpnserver(int serverNum)
 	chmod(&buffer[0], S_IRUSR|S_IWUSR);
 	fprintf(fp, "# Automatically generated configuration\n");
 	fprintf(fp, "daemon\n");
-	fprintf(fp, "topology subnet\n");
 
 	sprintf(&buffer[0], "/etc/openvpn/server%d/client.ovpn", serverNum);
 	fp_client = fopen(&buffer[0], "w");
@@ -754,6 +753,7 @@ void start_vpnserver(int serverNum)
 	{
 		if ( ifType == TUN )
 		{
+			fprintf(fp, "topology subnet\n");
 			sprintf(&buffer[0], "vpn_server%d_sn", serverNum);
 			fprintf(fp, "server %s ", nvram_safe_get(&buffer[0]));
 			sprintf(&buffer[0], "vpn_server%d_nm", serverNum);
