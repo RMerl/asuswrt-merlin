@@ -898,7 +898,7 @@ int nvram_get_file(const char *key, const char *fname, int max)
 	}
 	return r;
 /*
-	char b[2048];
+	char b[3499];
 	int n;
 	char *p;
 
@@ -935,8 +935,8 @@ int nvram_set_file(const char *key, const char *fname, int max)
 	}
 	return r;
 /*
-	char a[2048];
-	char b[4096];
+	char a[3499];
+	char b[7000];
 	int n;
 
 	if (((n = f_read(fname, &a, sizeof(a))) > 0) && (n <= max)) {
