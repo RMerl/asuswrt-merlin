@@ -22,6 +22,16 @@ Asuswrt-Merlin Changelog
     - FIXED: Editing an entry on the networkmap would
              clear the hostname if entry existed in
              the DHCP static list.
+    - FIXED: OpenVPN server in secret key mode 
+             would fail to start.
+    - FIXED: Couldn't add entries to the MAC Filter list
+             of Guest Networks (reverted our previous
+             implementation which conflicted with
+             Asus's new one).
+    - FIXED: NTP failing to refresh for some cases.
+             Implemented temporary workaround.
+    - FIXED: Some services not properly starting at
+             boot time (like Parental Control or Tor)
 
 
 378.56 (25-Oct-2015)
