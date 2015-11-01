@@ -941,7 +941,7 @@ void start_dnsmasq()
 
 	TRACE_PT("begin\n");
 
-	if(getpid() != 1){
+	if (getpid() != 1) {
 		notify_rc("start_dnsmasq");
 		return;
 	}
@@ -1155,7 +1155,7 @@ void start_dnsmasq()
 				lan, start, lan, start + count - 1, nvram_safe_get("lan_netmask"), dhcp_lease);
 		}
 
-/* Gateway, if not set, force use lan ipaddr to avoid repeater issue */
+		/* Gateway, if not set, force use lan ipaddr to avoid repeater issue */
 		value = nvram_safe_get("dhcp_gateway_x");
 		value = (*value && inet_addr(value)) ? value : lan_ipaddr;
 		fprintf(fp, "dhcp-option=lan,3,%s\n", value);
@@ -1437,7 +1437,7 @@ void stop_dnsmasq(void)
 {
 	TRACE_PT("begin\n");
 
-	if(getpid() != 1){
+	if (getpid() != 1) {
 		notify_rc("stop_dnsmasq");
 		return;
 	}
@@ -1648,7 +1648,7 @@ void stop_ipv6(void)
 	eval("ip", "-6", "route", "flush", "scope", "global");
 	eval("ip", "-6", "neigh", "flush", "dev", lan_ifname);
 }
-#endif /* RTCONFIG_IPV6 */
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -3902,6 +3902,35 @@ start_services(void)
 	start_samba();	// We might need it for wins/browsing services
 #endif
 
+#ifdef RT4GAC55U
+	start_lteled();
+#endif
+
+#ifdef RTCONFIG_PARENTALCTRL
+	start_pc_block();
+#endif
+
+#ifdef RTCONFIG_TOR
+	start_Tor_proxy();
+#endif
+
+#ifdef RTCONFIG_CLOUDCHECK
+	start_cloudcheck();
+#endif
+
+#ifdef RTCONFIG_QCA_PLC_UTILS
+	start_plchost();
+#endif
+#if ((defined(RTCONFIG_USER_LOW_RSSI) && defined(RTCONFIG_BCMARM)) || defined(RTCONFIG_NEW_USER_LOW_RSSI))
+	start_roamast();
+#endif
+
+#if defined(RTCONFIG_KEY_GUARD)
+	start_keyguard();
+#endif
+
+	start_ecoguard();
+
 	run_custom_script("services-start", NULL);
 
 	return 0;
@@ -4146,7 +4175,7 @@ stop_watchdog02(void)
 	/* do nothing */
 	return;
 }
-#endif
+#endif  /* ! (RTCONFIG_QCA || RTCONFIG_RALINK) */
 
 void
 stop_sw_devled(void)
@@ -4463,7 +4492,7 @@ again:
 		script = &cmd[0][5];
 	}
 	else if(strncmp(cmd[0], "restart_", 8)==0) {
-		action |=(RC_SERVICE_START | RC_SERVICE_STOP);
+		action |= (RC_SERVICE_START | RC_SERVICE_STOP);
 		script = &cmd[0][8];
 	}
 	else {
@@ -4559,7 +4588,7 @@ again:
 		kill(1, SIGTERM);
 	}
 	else if(strcmp(script, "upgrade") == 0) {
-		if(action & RC_SERVICE_STOP) {
+		if(action&RC_SERVICE_STOP) {
 			stop_hour_monitor_service();
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
 			_dprintf("modem data: save the data during upgrading\n");
@@ -4593,7 +4622,7 @@ again:
 				modprobe_r("wl");
 			}
 
-#if !defined(RTN53)
+#if !defined(RTN53) && !defined(RTN56UB1)
 			stop_usb();
 			stop_usbled();
 			remove_storage_main(1);
@@ -4759,13 +4788,12 @@ again:
 #endif
 	}
 	else if (strcmp(script, "allnet") == 0) {
-		if(action & RC_SERVICE_STOP) {
+		if(action&RC_SERVICE_STOP) {
 			// including switch setting
 			// used for system mode change and vlan setting change
 			sleep(2); // wait for all httpd event done
 			stop_networkmap();
 			stop_httpd();
-
 			stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			stop_mdns();
@@ -4778,7 +4806,10 @@ again:
 			stop_bsd();
 #endif
 #ifdef BCM_SSD
-		stop_ssd();
+			stop_ssd();
+#endif
+#if defined(RTCONFIG_DHDAP)
+			stop_dhd_monitor();
 #endif
 			stop_igmp_proxy();
 #ifdef RTCONFIG_HSPOT
@@ -4810,17 +4841,14 @@ again:
 			start_dsl();
 #endif
 			start_lan();
-
 			start_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			start_mdns();
 #endif
 			start_wan();
-#ifndef RT4GAC55U
 #ifdef RTCONFIG_USB_MODEM
 			if((unit = get_usbif_dualwan_unit()) >= 0)
 				start_wan_if(unit);
-#endif
 #endif
 #ifdef CONFIG_BCMWL5
 			start_eapd();
@@ -4867,9 +4895,6 @@ again:
 #endif
 			stop_networkmap();
 			stop_httpd();
-#ifdef RTCONFIG_DHCP_OVERRIDE
-			stop_detectWAN_arp();
-#endif
 			stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			stop_mdns();
@@ -4909,16 +4934,15 @@ again:
 			//start_vlan();
 			start_lan();
 			start_dnsmasq();
-#ifdef RTCONFIG_DHCP_OVERRIDE
-			start_detectWAN_arp();
-#endif
 #if defined(RTCONFIG_MDNS)
 			start_mdns();
 #endif
 			start_wan();
+#ifndef RT4GAC55U
 #ifdef RTCONFIG_USB_MODEM
 			if((unit = get_usbif_dualwan_unit()) >= 0)
 				start_wan_if(unit);
+#endif
 #endif
 #ifdef CONFIG_BCMWL5
 			start_eapd();
@@ -4979,6 +5003,9 @@ again:
 #endif
 			stop_networkmap();
 			stop_httpd();
+#ifdef RTCONFIG_DHCP_OVERRIDE
+			stop_detectWAN_arp();
+#endif
 			stop_dnsmasq();
 #if defined(RTCONFIG_MDNS)
 			stop_mdns();
@@ -5023,6 +5050,9 @@ again:
 			//start_vlan();
 			start_lan();
 			start_dnsmasq();
+#ifdef RTCONFIG_DHCP_OVERRIDE
+			start_detectWAN_arp();
+#endif
 #if defined(RTCONFIG_MDNS)
 			start_mdns();
 #endif
@@ -5178,7 +5208,7 @@ _dprintf("multipath(%s): unit_now: (%d, %d, %s), unit_next: (%d, %d, %s).\n", mo
 	}
 #endif
 	else if (strcmp(script, "wireless") == 0) {
-		if(action & RC_SERVICE_STOP) {
+		if(action&RC_SERVICE_STOP) {
 #ifdef RTCONFIG_WIRELESSREPEATER
 			stop_wlcconnect();
 
@@ -5325,13 +5355,13 @@ check_ddr_done:
 		}
 	}
 	else if (strcmp(script, "dsl_wireless") == 0) {
-		if(action & RC_SERVICE_STOP) {
+		if(action&RC_SERVICE_STOP) {
 #ifdef RTCONFIG_USB_PRINTER
 			stop_u2ec();
 #endif
 			stop_networkmap();
 		}
-		if((action & RC_SERVICE_STOP) && (action & RC_SERVICE_START)) {
+		if((action&RC_SERVICE_STOP) && (action & RC_SERVICE_START)) {
 // qis
 			remove_dsl_autodet();
 			stop_wan_if(atoi(cmd[1]));
@@ -5405,11 +5435,11 @@ check_ddr_done:
 #ifdef RTCONFIG_USB
 	else if (strcmp(script, "nasapps") == 0)
 	{
-		if(action & RC_SERVICE_STOP){
+		if(action&RC_SERVICE_STOP){
 //_dprintf("restart_nas_services(%d): test 10.\n", getpid());
 			restart_nas_services(1, 0);
 		}
-		if(action & RC_SERVICE_START){
+		if(action&RC_SERVICE_START){
 //_dprintf("restart_nas_services(%d): test 11.\n", getpid());
 			restart_nas_services(0, 1);
 		}
@@ -5519,7 +5549,7 @@ check_ddr_done:
 		if(action & RC_SERVICE_STOP && action & RC_SERVICE_START)
 			fromUI = 1;
 
-		if(action & RC_SERVICE_STOP){
+		if(action&RC_SERVICE_STOP){
 			if(cmd[1])
 				stop_cloudsync(atoi(cmd[1]));
 			else
@@ -5892,7 +5922,7 @@ check_ddr_done:
 	}
 	else if (strcmp(script, "qos") == 0)
 	{
-		if(action & RC_SERVICE_STOP) {
+		if(action&RC_SERVICE_STOP) {
 #ifdef RTCONFIG_BWDPI
 			stop_dpi_engine_service(0);
 #else
@@ -6922,9 +6952,9 @@ void set_acs_ifnames()
 		if (nvram_match("acs_band1", "1"))
 			nvram_set("wl1_acs_excl_chans", "");
 		else
-		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
+		/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80, 165 */
 			nvram_set("wl1_acs_excl_chans",
-				  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a");
+				  "0xd024,0xd826,0xe02a,0xd028,0xd926,0xe12a,0xd02c,0xd82e,0xe22a,0xd030,0xd92e,0xe32a,0xd0a5");
 	}
 #endif
 	nvram_set_int("wl1_acs_dfs", dfs_in_use ? 2 : 0);
@@ -7104,35 +7134,6 @@ firmware_check_main(int argc, char *argv[])
 	}
 #endif
 #endif
-
-#ifdef RT4GAC55U
-	start_lteled();
-#endif
-
-#ifdef RTCONFIG_PARENTALCTRL
-	start_pc_block();
-#endif
-
-#ifdef RTCONFIG_TOR
-	start_Tor_proxy();
-#endif
-
-#ifdef RTCONFIG_CLOUDCHECK
-	start_cloudcheck();
-#endif
-
-#ifdef RTCONFIG_QCA_PLC_UTILS
-	start_plchost();
-#endif
-#if ((defined(RTCONFIG_USER_LOW_RSSI) && defined(RTCONFIG_BCMARM)) || defined(RTCONFIG_NEW_USER_LOW_RSSI))
-	start_roamast();
-#endif
-
-#if defined(RTCONFIG_KEY_GUARD)
-	start_keyguard();
-#endif
-
-	start_ecoguard();
 
 	return 0;
 
