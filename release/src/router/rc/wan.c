@@ -941,6 +941,22 @@ void update_wan_state(char *prefix, int state, int reason)
 		sprintf(tmp,"%c",prefix[3]);
                 run_custom_script("wan-start", tmp);
         }
+
+#ifdef RTCONFIG_DUALWAN
+#if defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+	refresh_ntpc();
+#endif
+#endif
+#if defined(RTCONFIG_WANRED_LED)
+	if (state == WAN_STATE_INITIALIZING || state == WAN_STATE_STOPPED || state == WAN_STATE_CONNECTING || state == WAN_STATE_STOPPING || state == WAN_STATE_CONNECTED) {
+		int unit = 0;
+
+		/* update WAN LED(s) as soon as possible. */
+		if (!strncmp(prefix, "wan1_", 5))
+			unit = 1;
+		update_wan_leds(unit);
+	}
+#endif
 }
 
 #ifdef RTCONFIG_IPV6
@@ -963,21 +979,6 @@ void update_wan6_state(char *prefix, int state, int reason)
 		nvram_set_int(strcat_r(prefix, "sbstate_t", tmp), reason);
 	}
 
-#ifdef RTCONFIG_DUALWAN
-#if defined(RTAC87U) || defined(RTAC3200) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
-	refresh_ntpc();
-#endif
-#endif
-#if defined(RTCONFIG_WANRED_LED)
-	if (state == WAN_STATE_INITIALIZING || state == WAN_STATE_STOPPED || state == WAN_STATE_CONNECTING || state == WAN_STATE_STOPPING || state == WAN_STATE_CONNECTED) {
-		int unit = 0;
-
-		/* update WAN LED(s) as soon as possible. */
-		if (!strncmp(prefix, "wan1_", 5))
-			unit = 1;
-		update_wan_leds(unit);
-	}
-#endif
 }
 #endif
 
