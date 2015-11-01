@@ -1209,7 +1209,7 @@ restore_defaults(void)
 		case MODEL_PLN12:
 		case MODEL_PLAC56:
 		case MODEL_PLAC66U:
-			nvram_set("reboot_time", "80"); // default is 70 sec			break;
+			nvram_set("reboot_time", "80"); // default is 70 sec
 			break;
 #endif
 		default:
