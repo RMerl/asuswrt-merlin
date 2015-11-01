@@ -2057,11 +2057,11 @@ void fini_wl(void)
 		(get_model() == MODEL_RTAC1200G) ||
 		(get_model() == MODEL_RTAC1200GP) ||
 		(get_model() == MODEL_RTN12HP_B1))
-	eval("rmmod","wl");
+	eval("rmmod", "wl");
 #endif
 #ifdef RTCONFIG_NOWL
 #ifdef RTCONFIG_DHDAP
-	eval("rmmod","dhd");
+	eval("rmmod", "dhd");
 #endif
 #endif
 }
