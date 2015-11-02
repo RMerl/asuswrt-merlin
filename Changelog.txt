@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-378.56_2 (xx-xxx-2015)
+378.56_2 (2-Nov-2015)
     - CHANGED: Reverted the memory buffering optimization
                for ARM devices, as people keep panicking
                over the lower amount of free RAM.  You can 
