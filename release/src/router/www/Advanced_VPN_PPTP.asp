@@ -869,7 +869,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 											<thead>
 											<tr>
-												<td colspan="5"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;16)</td>
+												<td colspan="5"><#Username_Pwd#>&nbsp;(<#List_limit#>&nbsp;32)</td>
 											</tr>
 											</thead>								
 											<tr>
@@ -888,7 +888,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 													<input type="text" class="input_22_table" maxlength="64" name="pptpd_clientlist_password" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 												</td>
 												<td width="15%">
-													<div><input type="button" class="add_btn" onClick="addRow_Group(16);" value=""></div>
+													<div><input type="button" class="add_btn" onClick="addRow_Group(32);" value=""></div>
 												</td>
 												<td width="10%">-</td>
 											</tr>	 			  
