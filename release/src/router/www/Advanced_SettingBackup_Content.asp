@@ -30,7 +30,11 @@ function initial(){
 	show_menu();
 	if(ddns_enable == 1 && ddns_server == "WWW.ASUS.COM")
 		document.getElementById("transfer_ddns_field").style.display = "";
-		
+
+	if ('<% nvram_get("jffs2_enable"); %>' != '1') {
+		document.getElementById("jffsrestore").style.display = "none";
+		document.getElementById("jffsbackup").style.display = "none";
+	}
 }
 
 function restoreRule(){
@@ -82,6 +86,32 @@ function uploadSetting(){
 		document.getElementById('loading_block3').style.display = "none";
 		document.form.submit();
 	}	
+}
+
+function saveJFFS(){
+	location.href='backup_jffs.tar';
+}
+
+function uploadJFFS(){
+	var file_obj = document.form.file2;
+
+	if(file_obj.value == ""){
+		alert("<#JS_fieldblank#>");
+		file_obj.focus();
+	}
+	else if(file_obj.value.length < 6 ||
+			file_obj.value.lastIndexOf(".tar")  < 0 ||
+			file_obj.value.lastIndexOf(".tar") != (file_obj.value.length)-4){
+		alert("Invalid file!  Make sure you select a valid JFFS backup.");
+		file_obj.focus();
+	}
+	else{
+		disableCheckChangedStatus();
+		showtext(document.getElementById("loading_block2"), "<#SET_ok_desc#>");
+		document.getElementById('loading_block3').style.display = "none";
+		document.form.action = "jffsupload.cgi";
+		document.form.submit();
+	}
 }
 
 var dead = 0;
@@ -221,6 +251,33 @@ function detect_httpd(){
 																</td>
 																<td style="border:0px">
 																	<input type="file" name="file" class="input" style="color:#FFCC00;"/>
+																</td>
+															</tr>
+														</table>
+													</div>
+												</td>
+											</tr>
+											<tr id="jffsbackup">
+												<th align="right">
+													Backup JFFS partition
+												</th>
+												<td>
+													<input class="button_gen" onclick="saveJFFS();" type="button" value="<#CTL_onlysave#>" name="action10" />
+												</td>
+											</tr>
+											<tr id="jffsrestore">
+												<th align="right">
+													Restore JFFS partition
+												</th>
+												<td>
+													<div style="margin-left:-10px;">
+														<table>
+															<tr>
+																<td style="border:0px">
+																	<input type="button" class="button_gen" onclick="uploadJFFS();" value="<#CTL_upload#>"/>
+																</td>
+																<td style="border:0px">
+																	<input type="file" name="file2" class="input" style="color:#FFCC00;"/>
 																</td>
 															</tr>
 														</table>
