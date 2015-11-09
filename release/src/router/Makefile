@@ -3160,7 +3160,7 @@ openvpn-configure:
 		$(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
 			--disable-debug --enable-management --disable-small \
 			--disable-selinux --disable-socks --enable-password-save \
-			--enable-plugin-auth-pam \
+			--enable-plugin-auth-pam --enable-iproute2 \
 			ac_cv_lib_resolv_gethostbyname=no \
 	)
 
