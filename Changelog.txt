@@ -1,6 +1,16 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.57 (xx-xxx-2015)
+    - NEW: Merged with 380_858 GPL (from RT-AC88U)
+    - NEW: Added RT-AC3100 support
+    - NEW: Backup/Restore of the content of the JFFS
+           partition (under Administration Restore/Save Settings)
+    - CHANGED: Increased user account limit from 16 to 32 on
+               the VPN server pages.
+    - FIXED: CTF not automatically disabled when enabling IPTraffic.
+
+
 378.56_2 (2-Nov-2015)
     - CHANGED: Reverted the memory buffering optimization
                for ARM devices, as people keep panicking

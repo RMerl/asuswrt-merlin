@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 378.56_2 (2-Nov-2015)
-============================================
+Asuswrt-Merlin - build 380.57 (xx-xxx-2015)
+===========================================
 
 About
 -----
@@ -37,6 +37,7 @@ Supported devices are:
  * RT-AC87U
  * RT-AC3200
  * RT-AC88U
+ * RT-AC3100
 
 Devices that are no longer officially supported (but forked builds might
 exist from other developers):
@@ -55,7 +56,7 @@ Here is a list of features that Asuswrt-merlin adds over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.378_9177 source code from Asus
+   - Based on 3.0.0.4.380_858 source code from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
