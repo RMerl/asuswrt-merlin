@@ -407,7 +407,7 @@ main(int argc, char *argv[])
 		perror("SIOCETHTOOL: your ethernet module is either unsupported or outdated");
 		exit(1);
 	} else
-	if (strcmp(info.driver, "et0") && strcmp(info.driver, "et1") &&
+	if (strcmp(info.driver, "et0") && strcmp(info.driver, "et1") && strcmp(info.driver, "et2") &&
 	    strcmp(info.driver, "b44")) {
 		fprintf(stderr, "No suitable module found for %s (managed by %s)\n", 
 			robo.ifr.ifr_name, info.driver);
@@ -832,9 +832,9 @@ main(int argc, char *argv[])
 			val32 = robo_read32(&robo, ROBO_VLAN_PAGE, ROBO_VLAN_READ);
 			if ((val32 & (robo535x == 3 ? (1 << 24) : (1 << 20))) /* valid */) {
 				val16 = (robo535x == 3)
-					? ((val32 & 0xff000) >> 12)
-					: ((val32 & 0xff000) >> 12) << 4;
-				printf("%4d: vlan%d:", i, val16 | i);
+					? ((val32 & 0x00fff000) >> 12)
+					: (((val32 & 0xff000) >> 12) << 4) | i;
+				printf("%4d: vlan%d:", i, val16);
 				for (j = 0; j < 6; j++) {
 					if (val32 & (1 << j)) {
 						printf(" %d%s", j, (val32 & (1 << (j + 6))) ? 
